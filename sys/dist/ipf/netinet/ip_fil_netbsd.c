@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.45.4.3 2009/08/19 18:47:30 yamt Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.45.4.4 2010/03/11 15:04:10 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.45.4.3 2009/08/19 18:47:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.45.4.4 2010/03/11 15:04:10 yamt Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.66 2009/05/17 17:45:26 darrenr Exp";
@@ -115,6 +115,11 @@ MALLOC_DECLARE(M_IPFILTER);
 #if __NetBSD_Version__ < 200000000
 extern	struct	protosw	inetsw[];
 #endif
+
+#if (__NetBSD_Version__ >= 599002000)
+static kauth_listener_t ipf_listener;
+#endif
+
 #if (__NetBSD_Version__ < 399001400)
 extern int ip6_getpmtu __P((struct route_in6 *, struct route_in6 *,
 			    struct ifnet *, struct in6_addr *, u_long *,
@@ -300,6 +305,28 @@ char *s;
 }
 #endif /* IPFILTER_LKM */
 
+#if (__NetBSD_Version__ >= 599002000)
+static int
+ipf_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+	enum kauth_network_req req;
+
+	result = KAUTH_RESULT_DEFER;
+	req = (enum kauth_network_req)arg0;
+
+	if (action != KAUTH_NETWORK_FIREWALL)
+		return result;
+
+	/* These must have came from device context. */
+	if ((req == KAUTH_REQ_NETWORK_FIREWALL_FW) ||
+	    (req == KAUTH_REQ_NETWORK_FIREWALL_NAT))
+		result = KAUTH_RESULT_ALLOW;
+
+	return result;
+}
+#endif
 
 /*
  * Try to detect the case when compiling for NetBSD with pseudo-device
@@ -313,6 +340,12 @@ ipfilterattach(int count)
 	RWLOCK_INIT(&ipf_mutex, "ipf filter rwlock");
 	RWLOCK_INIT(&ipf_frcache, "ipf cache rwlock");
 # endif
+
+#if (__NetBSD_Version__ >= 599002000)
+	ipf_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    ipf_listener_cb, NULL);
+#endif
+
 }
 #endif
 
@@ -453,6 +486,7 @@ int ipfattach(void)
 #else
 	timeout(fr_slowtimer, NULL, (hz / IPF_HZ_DIVIDE) * IPF_HZ_MULT);
 #endif
+
 	return 0;
 
 #if __NetBSD_Version__ >= 105110000

@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.84.2.4 2009/08/19 18:46:52 yamt Exp $
+#	$NetBSD: files.xen,v 1.84.2.5 2010/03/11 15:03:09 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -13,6 +13,9 @@ defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
+
+# splraise()/spllower() debug
+defflag	opt_spldebug.h			SPLDEBUG
 
 # Beep on halt
 defflag opt_beep.h		BEEP_ONHALT
@@ -292,8 +295,6 @@ device vcpu
 attach vcpu at xendevbus
 
 file	arch/xen/x86/cpu.c		cpu | vcpu
-
-file	arch/x86/x86/msr_ipifuncs.c
 
 #
 # Compatibility modules

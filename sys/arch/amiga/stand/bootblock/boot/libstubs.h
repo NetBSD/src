@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.h,v 1.5.78.1 2008/05/16 02:21:53 yamt Exp $ */
+/* $NetBSD: libstubs.h,v 1.5.78.2 2010/03/11 15:02:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,6 +54,10 @@ struct AmigaIO *CheckIO(struct AmigaIO *);
 void *WaitPort(struct MsgPort *);
 void AbortIO(struct AmigaIO *);
 u_int8_t WaitIO(struct AmigaIO *);
+
+void RawIOInit(void);
+int32_t RawPutChar(int32_t c);
+int32_t RawMayGetChar(void);
 
 int OpenDevice(const char *, u_int32_t, struct AmigaIO *, u_int32_t);
 #ifdef _PRIMARY_BOOT

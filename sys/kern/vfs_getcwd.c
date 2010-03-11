@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.41.10.2 2009/05/04 08:13:49 yamt Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.41.10.3 2010/03/11 15:04:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.41.10.2 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.41.10.3 2010/03/11 15:04:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,7 +248,7 @@ unionread:
 
 		uvp = uvp->v_mount->mnt_vnodecovered;
 		vput(tvp);
-		VREF(uvp);
+		vref(uvp);
 		*uvpp = uvp;
 		vn_lock(uvp, LK_EXCLUSIVE | LK_RETRY);
 		goto unionread;
@@ -353,8 +353,8 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 			rvp = rootvnode;
 	}
 
-	VREF(rvp);
-	VREF(lvp);
+	vref(rvp);
+	vref(lvp);
 
 	/*
 	 * Error handling invariant:
@@ -409,7 +409,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 				error = ENOENT;
 				goto out;
 			}
-			VREF(lvp);
+			vref(lvp);
 			error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
 			if (error != 0) {
 				vrele(lvp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.16.2.5 2009/08/19 18:48:16 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.16.2.6 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16.2.5 2009/08/19 18:48:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.16.2.6 2010/03/11 15:04:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -527,7 +527,12 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		splx(s);
 
 		/* Run the handler. */
-		if ((sh->sh_flags & SOFTINT_MPSAFE) == 0 && !havelock) {
+		if (sh->sh_flags & SOFTINT_MPSAFE) {
+			if (havelock) {
+				KERNEL_UNLOCK_ONE(l);
+				havelock = false;
+			}
+		} else if (!havelock) {
 			KERNEL_LOCK(1, l);
 			havelock = true;
 		}
@@ -716,17 +721,21 @@ softint_overlay(void)
 	int s;
 
 	l = curlwp;
+	KASSERT((l->l_pflag & LP_INTR) == 0);
+
+	/*
+	 * Arrange to elevate priority if the LWP blocks.  Also, bind LWP
+	 * to the CPU.  Note: disable kernel preemption before doing that.
+	 */
+	s = splhigh();
 	ci = l->l_cpu;
 	si = ((softcpu_t *)ci->ci_data.cpu_softcpu)->sc_int;
 
-	KASSERT((l->l_pflag & LP_INTR) == 0);
-
-	/* Arrange to elevate priority if the LWP blocks. */
-	s = splhigh();
 	obase = l->l_kpribase;
 	l->l_kpribase = PRI_KERNEL_RT;
 	oflag = l->l_pflag;
 	l->l_pflag = oflag | LP_INTR | LP_BOUND;
+
 	while ((softints = ci->ci_data.cpu_softints) != 0) {
 		if ((softints & (1 << SOFTINT_SERIAL)) != 0) {
 			ci->ci_data.cpu_softints &= ~(1 << SOFTINT_SERIAL);

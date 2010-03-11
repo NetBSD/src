@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.15.10.3 2009/09/16 13:37:58 yamt Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.15.10.4 2010/03/11 15:04:05 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,9 +40,7 @@
  *
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.15.10.3 2009/09/16 13:37:58 yamt Exp $");
-#include "bpfilter.h"
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.15.10.4 2010/03/11 15:04:05 yamt Exp $");
 #ifdef	__NetBSD__
 #include "opt_inet.h"
 #endif
@@ -65,11 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.15.10.3 2009/09/16 13:37:58 yamt Exp $
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
-
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <net/if_ether.h>
 #ifdef INET
@@ -154,10 +148,12 @@ cdce_attach(device_t parent, device_t self, void *aux)
 	const usb_cdc_ethernet_descriptor_t *ue;
 	char				 eaddr_str[USB_MAX_ENCODED_STRING_LEN];
 
-	devinfop = usbd_devinfo_alloc(dev, 0);
+	sc->cdce_dev = self;
+
 	aprint_naive("\n");
 	aprint_normal("\n");
-	sc->cdce_dev = self;
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -347,10 +343,8 @@ cdce_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -714,10 +708,8 @@ cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	(*(ifp)->if_input)((ifp), (m));
 
@@ -788,16 +780,13 @@ cdce_activate(device_t self, enum devact act)
 	struct cdce_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(GET_IFP(sc));
 		sc->cdce_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 

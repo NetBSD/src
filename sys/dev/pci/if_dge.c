@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.21.4.2 2009/05/16 10:41:34 yamt Exp $ */
+/*	$NetBSD: if_dge.c,v 1.21.4.3 2010/03/11 15:03:45 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,9 +80,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.21.4.2 2009/05/16 10:41:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.21.4.3 2010/03/11 15:03:45 yamt Exp $");
 
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -108,9 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.21.4.2 2009/05/16 10:41:34 yamt Exp $")
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <netinet/in.h>			/* XXX for struct ip */
 #include <netinet/in_systm.h>		/* XXX for struct ip */
@@ -258,7 +255,6 @@ struct dge_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 
 	int sc_flags;			/* flags; see below */
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
@@ -618,7 +614,7 @@ static int	dge_ioctl(struct ifnet *, u_long, void *);
 static int	dge_init(struct ifnet *);
 static void	dge_stop(struct ifnet *, int);
 
-static void	dge_shutdown(void *);
+static bool	dge_shutdown(device_t, int);
 
 static void	dge_reset(struct dge_softc *);
 static void	dge_rxdrain(struct dge_softc *);
@@ -713,8 +709,8 @@ dge_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
@@ -963,9 +959,11 @@ dge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
-	sc->sc_sdhook = shutdownhook_establish(dge_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish shutdown hook\n");
+	if (pmf_device_register1(self, NULL, NULL, dge_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 	/*
@@ -1001,12 +999,15 @@ dge_attach(device_t parent, device_t self, void *aux)
  *
  *	Make sure the interface is stopped at reboot time.
  */
-static void
-dge_shutdown(void *arg)
+static bool
+dge_shutdown(device_t self, int howto)
 {
-	struct dge_softc *sc = arg;
+	struct dge_softc *sc;
 
+	sc = device_private(self);
 	dge_stop(&sc->sc_ethercom.ec_if, 1);
+
+	return true;
 }
 
 /*
@@ -1347,11 +1348,9 @@ dge_start(struct ifnet *ifp)
 		sc->sc_txsfree--;
 		sc->sc_txsnext = DGE_NEXTTXS(sc->sc_txsnext);
 
-#if NBPFILTER > 0
 		/* Pass the packet to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree <= 2) {
@@ -1772,11 +1771,9 @@ dge_rxintr(struct dge_softc *sc)
 
 		ifp->if_ipackets++;
 
-#if NBPFILTER > 0
 		/* Pass this up to any BPF listeners. */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

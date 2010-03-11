@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.52.18.1 2009/05/04 08:12:29 yamt Exp $
+#	$NetBSD: newvers.sh,v 1.52.18.2 2010/03/11 15:03:20 yamt Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -13,11 +13,7 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by the University of
-#	California, Berkeley and its contributors.
-# 4. Neither the name of the University nor the names of its contributors
+# 3. Neither the name of the University nor the names of its contributors
 #    may be used to endorse or promote products derived from this software
 #    without specific prior written permission.
 #
@@ -47,10 +43,28 @@ d=$(pwd)
 cwd=$(dirname $0)
 copyright=$(awk '{ printf("\"%s\\n\"", $0); }' ${cwd}/copyright)
 
-if [ -f ident ]; then
-	id="$(cat ident)"
-else
-	id=$(basename ${d})
+while [ $# -gt 0 ]; do
+	case "$1" in
+	-r)
+		rflag=true
+		;;
+	-i)
+		id="$2"
+		shift
+		;;
+	-n)
+		nflag=true
+		;;
+	esac
+	shift
+done
+
+if [ -z "${id}" ]; then
+	if [ -f ident ]; then
+		id="$(cat ident)"
+	else
+		id=$(basename ${d})
+	fi
 fi
 
 osrelcmd=${cwd}/osrelease.sh
@@ -58,14 +72,13 @@ osrelcmd=${cwd}/osrelease.sh
 ost="NetBSD"
 osr=$(sh $osrelcmd)
 
-case $1 in
--r)
+if [ ! -z "${rflag}" ]; then
 	fullversion="${ost} ${osr} (${id})\n"
-	;;
-*)
+else
 	fullversion="${ost} ${osr} (${id}) #${v}: ${t}\n\t${u}@${h}:${d}\n"
-	;;
-esac
+fi
+
+echo $(expr ${v} + 1) > version
 
 cat << _EOF > vers.c
 /*
@@ -86,6 +99,11 @@ const char kernel_ident[] = "${id}";
 const char copyright[] =
 ${copyright}
 "\n";
+_EOF
+
+[ ! -z "${nflag}" ] && exit 0
+
+cat << _EOF >> vers.c
 
 /*
  * NetBSD identity note.
@@ -109,4 +127,3 @@ __asm(
 );
 
 _EOF
-echo $(expr ${v} + 1) > version

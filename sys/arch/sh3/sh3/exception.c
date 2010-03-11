@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.46.10.1 2009/05/04 08:11:52 yamt Exp $	*/
+/*	$NetBSD: exception.c,v 1.46.10.2 2010/03/11 15:02:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.10.1 2009/05/04 08:11:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.10.2 2010/03/11 15:02:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46.10.1 2009/05/04 08:11:52 yamt Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
 

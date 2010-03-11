@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.50.4.1 2009/05/04 08:12:04 yamt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.50.4.2 2010/03/11 15:03:06 yamt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,14 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.50.4.1 2009/05/04 08:12:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.50.4.2 2010/03/11 15:03:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h> /* just for boothowto --eichin */
 
@@ -165,7 +164,7 @@ kdb_trap(struct trapframe *frame)
 
 			df = (void *)frame->fp; /* start of debug's calls */
 			pf = (void *)df->ca_fp; /* start of panic's calls */
-			memcpy( &ddb_regs.r0, &pf->ca_argno, sizeof(int) * 12);
+			memcpy(&ddb_regs.r0, &pf->ca_argno, sizeof(int) * 12);
 			ddb_regs.fp = pf->ca_fp;
 			ddb_regs.pc = pf->ca_pc;
 			ddb_regs.ap = pf->ca_ap;
@@ -195,9 +194,9 @@ kdb_trap(struct trapframe *frame)
 #endif
 #ifndef MULTIPROCESSOR
 	if (!panicstr)
-		memcpy( &ddb_regs, frame, sizeof(struct trapframe));
+		memcpy(&ddb_regs, frame, sizeof(struct trapframe));
 #else
-	memcpy( &ddb_regs, stopcpu->ci_ddb_regs, sizeof(struct trapframe));
+	memcpy(&ddb_regs, stopcpu->ci_ddb_regs, sizeof(struct trapframe));
 	printf("stopped on CPU %d\n", stopcpu->ci_cpuid);
 #endif
 
@@ -213,9 +212,9 @@ kdb_trap(struct trapframe *frame)
 
 #ifndef MULTIPROCESSOR
 	if (!panicstr)
-		memcpy( frame, &ddb_regs, sizeof(struct trapframe));
+		memcpy(frame, &ddb_regs, sizeof(struct trapframe));
 #else
-	memcpy( stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
+	memcpy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 #endif
 	frame->sp = mfpr(PR_USP);
 #ifdef MULTIPROCESSOR
@@ -408,10 +407,9 @@ db_stack_trace_print(
 	const char	*modif,		/* pointer to flag modifier 't' */
 	void		(*pr)(const char *, ...)) /* Print function */
 {
-	extern struct user *proc0paddr;
 	struct lwp	*l = curlwp;
 	struct proc	*p = l->l_proc;
-	struct user	*uarea;
+	struct pcb	*pcb;
 	int		trace_proc;
 	pid_t		curpid;
 	const char	*s;
@@ -483,39 +481,33 @@ db_stack_trace_print(
 		}
 #endif
 	}
-	if (p == NULL) {
-		uarea = proc0paddr;
-		curpid = 0;
-	} else {
-		uarea = l->l_addr;
-		curpid = p->p_pid;
-	}
+	KASSERT(l != NULL);
+	pcb = lwp_getpcb(l);
+	curpid = p->p_pid;
 	(*pr)("Process %d.%d\n", curpid, l->l_lid);
 	(*pr)("	 PCB contents:\n");
-	(*pr)(" KSP = 0x%x\n", (unsigned int)(uarea->u_pcb.KSP));
-	(*pr)(" ESP = 0x%x\n", (unsigned int)(uarea->u_pcb.ESP));
-	(*pr)(" SSP = 0x%x\n", (unsigned int)(uarea->u_pcb.SSP));
-	(*pr)(" USP = 0x%x\n", (unsigned int)(uarea->u_pcb.USP));
+	(*pr)(" KSP = 0x%x\n", (unsigned int)(pcb->KSP));
+	(*pr)(" ESP = 0x%x\n", (unsigned int)(pcb->ESP));
+	(*pr)(" SSP = 0x%x\n", (unsigned int)(pcb->SSP));
+	(*pr)(" USP = 0x%x\n", (unsigned int)(pcb->USP));
 	(*pr)(" R[00] = 0x%08x	  R[06] = 0x%08x\n", 
-		(unsigned int)(uarea->u_pcb.R[0]), (unsigned int)(uarea->u_pcb.R[6]));
+		(unsigned int)(pcb->R[0]), (unsigned int)(pcb->R[6]));
 	(*pr)(" R[01] = 0x%08x	  R[07] = 0x%08x\n", 
-		(unsigned int)(uarea->u_pcb.R[1]), (unsigned int)(uarea->u_pcb.R[7]));
+		(unsigned int)(pcb->R[1]), (unsigned int)(pcb->R[7]));
 	(*pr)(" R[02] = 0x%08x	  R[08] = 0x%08x\n", 
-		(unsigned int)(uarea->u_pcb.R[2]), (unsigned int)(uarea->u_pcb.R[8]));
+		(unsigned int)(pcb->R[2]), (unsigned int)(pcb->R[8]));
 	(*pr)(" R[03] = 0x%08x	  R[09] = 0x%08x\n", 
-		(unsigned int)(uarea->u_pcb.R[3]), (unsigned int)(uarea->u_pcb.R[9]));
+		(unsigned int)(pcb->R[3]), (unsigned int)(pcb->R[9]));
 	(*pr)(" R[04] = 0x%08x	  R[10] = 0x%08x\n", 
-		(unsigned int)(uarea->u_pcb.R[4]), (unsigned int)(uarea->u_pcb.R[10]));
+		(unsigned int)(pcb->R[4]), (unsigned int)(pcb->R[10]));
 	(*pr)(" R[05] = 0x%08x	  R[11] = 0x%08x\n", 
-		(unsigned int)(uarea->u_pcb.R[5]), (unsigned int)(uarea->u_pcb.R[11]));
-	(*pr)(" AP = 0x%x\n", (unsigned int)(uarea->u_pcb.AP));
-	(*pr)(" FP = 0x%x\n", (unsigned int)(uarea->u_pcb.FP));
-	(*pr)(" PC = 0x%x\n", (unsigned int)(uarea->u_pcb.PC));
-	(*pr)(" PSL = 0x%x\n", (unsigned int)(uarea->u_pcb.PSL));
-	(*pr)(" Trap frame pointer: 0x%x\n", 
-							(unsigned int)(uarea->u_pcb.framep));
-	db_dump_stack((VAX_CALLFRAME *)(uarea->u_pcb.FP),
-	    (u_int) uarea->u_pcb.KSP, pr);
+		(unsigned int)(pcb->R[5]), (unsigned int)(pcb->R[11]));
+	(*pr)(" AP = 0x%x\n", (unsigned int)(pcb->AP));
+	(*pr)(" FP = 0x%x\n", (unsigned int)(pcb->FP));
+	(*pr)(" PC = 0x%x\n", (unsigned int)(pcb->PC));
+	(*pr)(" PSL = 0x%x\n", (unsigned int)(pcb->PSL));
+	(*pr)(" Trap frame pointer: 0x%x\n", (unsigned int)(pcb->framep));
+	db_dump_stack((VAX_CALLFRAME *)(pcb->FP), (u_int)pcb->KSP, pr);
 	return;
 #if 0
 	while (((u_int)(cur_frame->vax_fp) > stackbase) && 
@@ -581,12 +573,7 @@ db_stack_trace_print(
 			printf("Don't know what to do without panic\n");
 			return;
 		}
-		if (p)
-			paddr = (u_int)p->p_addr;
-		else
-			paddr = proc0paddr;
-
-		stackbase = (ddb_regs.psl & PSL_IS ? istack : paddr);
+		stackbase = (ddb_regs.psl & PSL_IS ? istack : pcb);
 	}
 #endif
 }
@@ -631,9 +618,9 @@ db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	if ((ci != curcpu()) && ((ci->ci_flags & CI_STOPPED) == 0))
 		return db_printf("CPU %ld not stopped???\n", addr);
 
-	memcpy( stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
+	memcpy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 	stopcpu = ci;
-	memcpy( &ddb_regs, stopcpu->ci_ddb_regs, sizeof(struct trapframe));
+	memcpy(&ddb_regs, stopcpu->ci_ddb_regs, sizeof(struct trapframe));
 	db_printf("using CPU %ld", addr);
 	if (ci->ci_curlwp)
 		db_printf(" in proc %d.%d (%s)\n",

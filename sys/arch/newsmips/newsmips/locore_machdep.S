@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.14 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.14.78.1 2010/03/11 15:02:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,8 @@
 #include <mips/cpuregs.h>
 #include <machine/machConst.h>
 #include <machine/param.h>
+
+#include "assym.h"
 
 	.set	noreorder
 

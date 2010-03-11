@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.26.78.1 2009/05/04 08:12:03 yamt Exp $ */
+/*	$NetBSD: boot.c,v 1.26.78.2 2010/03/11 15:03:05 yamt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -280,7 +280,7 @@ loadpcs(void)
 		if (*cp == ')' || *cp == ':')
 			break;
 	if (*cp) {
-		memcpy( pcs, line, 99);
+		memcpy(pcs, line, 99);
 		pcs[99] = 0;
 		i = cp - line + 1;
 	} else

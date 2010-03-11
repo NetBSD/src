@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.75.20.1 2009/05/04 08:10:46 yamt Exp $
+# $NetBSD: HADES,v 1.75.20.2 2010/03/11 15:02:08 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.9 2009/01/24 00:19:47 abs Exp $
-#		NetBSD: GENERIC.in,v 1.80 2009/03/06 23:38:07 abs Exp $
+#		NetBSD: GENERIC.in,v 1.83 2010/02/21 17:57:03 tsutsui Exp $
 include "arch/atari/conf/std.hades"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -36,7 +36,7 @@ file-system NULLFS # Loopback filesystem
 file-system OVERLAY # overlay filesystem
 file-system UNION # union file system
 file-system UMAPFS # null file system (with uid & gid remapping)
-file-system PORTAL # portal file system
+file-system PUFFS # Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system EXT2FS # second extended file system (linux)
 file-system PTYFS # /dev/pts/N support
 options WAPBL # File system journaling support - Experimental
@@ -85,6 +85,7 @@ pseudo-device pppoe # PPP over Ethernet (RFC 2516)
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device md 3 # Boot memory disk
+pseudo-device putter # for puffs and pud
 pseudo-device vnd # 3 pseudo disks (see vnconfig)
 pseudo-device bpfilter # berkeley packet filters
 pseudo-device tun # network tunnel
@@ -96,6 +97,7 @@ pseudo-device fss 4 # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
+pseudo-device ksyms # /dev/ksyms
 exphy* at mii? phy ? # 3Com internal PHYs
 inphy* at mii? phy ? # Intel 82555 PHYs
 iophy* at mii? phy ? # Intel 82553 PHYs

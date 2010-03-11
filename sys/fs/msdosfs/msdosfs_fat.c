@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.15.22.1 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.15.22.2 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.15.22.1 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.15.22.2 2010/03/11 15:04:13 yamt Exp $");
 
 /*
  * kernel include files.
@@ -954,7 +954,8 @@ fillinusemap(struct msdosfsmount *pmp)
 		if (readcn == 0)
 			usemap_free(pmp, cn);
 	}
-	brelse(bp, 0);
+	if (bp)
+		brelse(bp, 0);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.40.2.2 2009/05/04 08:10:38 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.40.2.3 2010/03/11 15:02:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40.2.2 2009/05/04 08:10:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40.2.3 2010/03/11 15:02:04 yamt Exp $");
 
 #include "opt_sa.h"
 
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40.2.2 2009/05/04 08:10:38 yamt Exp $"
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
@@ -102,6 +101,7 @@ void
 swi_handler(trapframe_t *frame)
 {
 	lwp_t *l = curlwp;
+	struct pcb *pcb;
 	uint32_t insn;
 
 	/*
@@ -170,7 +170,8 @@ swi_handler(trapframe_t *frame)
 #endif
 	}
 
-	l->l_addr->u_pcb.pcb_tf = frame;
+	pcb = lwp_getpcb(l);
+	pcb->pcb_tf = frame;
 
 #ifdef CPU_ARM7
 	/*
@@ -269,7 +270,6 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 	    || (error = trace_enter(code, args, nargs)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
-		KASSERT(l->l_holdcnt == 0);
 		error = (*callp->sy_call)(l, args, rval);
 	}
 
@@ -323,7 +323,8 @@ void
 child_return(void *arg)
 {
 	lwp_t *l = arg;
-	struct trapframe *frame = l->l_addr->u_pcb.pcb_tf;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct trapframe *frame = pcb->pcb_tf;
 
 	frame->tf_r0 = 0;
 #ifdef __PROG32

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.152.4.4 2009/09/16 13:37:58 yamt Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.152.4.5 2010/03/11 15:04:07 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.152.4.4 2009/09/16 13:37:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.152.4.5 2010/03/11 15:04:07 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -68,10 +68,8 @@ extern int usbdebug;
 
 Static usbd_status usbd_set_config(usbd_device_handle, int);
 Static void usbd_devinfo(usbd_device_handle, int, char *, size_t);
-Static void usbd_devinfo_vp(usbd_device_handle dev,
-			    char *v,
-			    char *p, int usedev,
-			    int useencoded );
+Static void usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p,
+			    int usedev, int useencoded);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 Static int usbd_print(void *, const char *);
 Static int usbd_ifprint(void *, const char *);
@@ -190,8 +188,8 @@ usbd_trim_spaces(char *p)
 }
 
 Static void
-usbd_devinfo_vp(usbd_device_handle dev, char *v,
-		char *p, int usedev, int useencoded)
+usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev,
+		int useencoded)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
 #ifdef USBVERBOSE
@@ -1130,8 +1128,9 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 		/* Max packet size must be 64 (sec 5.5.3). */
 		if (dd->bMaxPacketSize != USB_2_MAX_CTRL_PACKET) {
 #ifdef DIAGNOSTIC
-			printf("usbd_new_device: addr=%d bad max packet size\n",
-			       addr);
+			printf("usbd_new_device: addr=%d bad max packet "
+			    "size=%d. adjusting to %d.\n",
+			    addr, dd->bMaxPacketSize, USB_2_MAX_CTRL_PACKET);
 #endif
 			dd->bMaxPacketSize = USB_2_MAX_CTRL_PACKET;
 		}
@@ -1481,34 +1480,38 @@ usb_free_device(usbd_device_handle dev)
  * Called from process context when we discover that a port has
  * been disconnected.
  */
-void
-usb_disconnect_port(struct usbd_port *up, device_t parent)
+int
+usb_disconnect_port(struct usbd_port *up, device_t parent, int flags)
 {
 	usbd_device_handle dev = up->device;
+	device_t subdev;
+	char subdevname[16];
 	const char *hubname = device_xname(parent);
-	int i;
+	int i, rc;
 
 	DPRINTFN(3,("uhub_disconnect: up=%p dev=%p port=%d\n",
 		    up, dev, up->portno));
 
-#ifdef DIAGNOSTIC
 	if (dev == NULL) {
+#ifdef DIAGNOSTIC
 		printf("usb_disconnect_port: no device\n");
-		return;
-	}
 #endif
+		return 0;
+	}
 
 	if (dev->subdevlen > 0) {
 		DPRINTFN(3,("usb_disconnect_port: disconnect subdevs\n"));
 		for (i = 0; i < dev->subdevlen; i++) {
-			if (!dev->subdevs[i])
+			if ((subdev = dev->subdevs[i]) == NULL)
 				continue;
-			printf("%s: at %s", device_xname(dev->subdevs[i]),
-			       hubname);
+			strlcpy(subdevname, device_xname(subdev),
+			    sizeof(subdevname));
+			if ((rc = config_detach(subdev, flags)) != 0)
+				return rc;
+			printf("%s: at %s", subdevname, hubname);
 			if (up->portno != 0)
 				printf(" port %d", up->portno);
 			printf(" (addr %d) disconnected\n", dev->address);
-			config_detach(dev->subdevs[i], DETACH_FORCE);
 		}
 		KASSERT(!dev->nifaces_claimed);
 	}
@@ -1517,4 +1520,5 @@ usb_disconnect_port(struct usbd_port *up, device_t parent)
 	dev->bus->devices[dev->address] = NULL;
 	up->device = NULL;
 	usb_free_device(dev);
+	return 0;
 }

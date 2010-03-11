@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.74.10.1 2009/05/04 08:12:25 yamt Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.74.10.2 2010/03/11 15:03:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -44,6 +44,7 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/ucontext.h>
+#include <sys/ucred.h>
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
 
@@ -250,6 +251,17 @@ struct netbsd32_statfs {
 	char	f_fstypename[MFSNAMELEN]; /* fs type name */
 	char	f_mntonname[MNAMELEN];	  /* directory on which mounted */
 	char	f_mntfromname[MNAMELEN];  /* mounted file system */
+};
+
+struct netbsd32_export_args30 {
+	int	ex_flags;		/* export related flags */
+	uid_t	ex_root;		/* mapping for root uid */
+	struct	uucred ex_anon;		/* mapping for anonymous user */
+	netbsd32_pointer_t ex_addr;	/* net address to which exported */
+	int	ex_addrlen;		/* and the net address length */
+	netbsd32_pointer_t ex_mask;	/* mask of valid bits in saddr */
+	int	ex_masklen;		/* and the smask length */
+	netbsd32_charp ex_indexfile;	/* index file for WebNFS URLs */ 
 };
 
 /* from <sys/poll.h> */
@@ -813,6 +825,25 @@ struct netbsd32_kevent {
 typedef netbsd32_pointer_t netbsd32_sched_paramp_t;
 typedef netbsd32_pointer_t netbsd32_cpusetp_t;
 
+/* from <fs/cd9660/cd9660_mount.h> */
+struct netbsd32_iso_args {
+	netbsd32_charp fspec;
+	struct export_args30 _pad1;
+	int	flags;
+};
+
+/* from <ufs/ufs/ufs_mount.h> */
+struct netbsd32_ufs_args {
+	netbsd32_charp		fspec;
+};
+
+struct netbsd32_mfs_args {
+	netbsd32_charp		fspec;
+	struct netbsd32_export_args30	_pad1;
+	netbsd32_voidp		base;
+	netbsd32_u_long		size;
+};
+
 #if 0
 int	netbsd32_kevent(struct lwp *, void *, register_t *);
 #endif
@@ -832,10 +863,10 @@ int	netbsd32_kevent(struct lwp *, void *, register_t *);
 	    SCARG(uap, name) = (type)(long)SCARG(s32uap, name)
 
 /* and some standard versions */
-#define	NETBSD32TO64_UAP(name)		NETBSD32TO64(uap, &ua, name);
-#define	NETBSD32TOP_UAP(name, type)	NETBSD32TOP(uap, &ua, name, type);
-#define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type);
-#define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type);
+#define	NETBSD32TO64_UAP(name)		NETBSD32TO64(uap, &ua, name)
+#define	NETBSD32TOP_UAP(name, type)	NETBSD32TOP(uap, &ua, name, type)
+#define	NETBSD32TOX_UAP(name, type)	NETBSD32TOX(uap, &ua, name, type)
+#define	NETBSD32TOX64_UAP(name, type)	NETBSD32TOX64(uap, &ua, name, type)
 
 #define	SCARG_P32(uap, name) NETBSD32PTR64(SCARG(uap, name))
 

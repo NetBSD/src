@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.20.4.2 2009/08/19 18:47:20 yamt Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.20.4.3 2010/03/11 15:04:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,9 +24,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.20.4.2 2009/08/19 18:47:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.20.4.3 2010/03/11 15:04:05 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -43,9 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.20.4.2 2009/08/19 18:47:20 yamt Exp $")
 #include <machine/endian.h>
 #include <sys/intr.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
@@ -107,6 +104,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_RT2573 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_WUA1340 },
+	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWA111 },
 	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWB01GS },
 	{ USB_VENDOR_GIGABYTE,		USB_PRODUCT_GIGABYTE_GNWI05GS },
 	{ USB_VENDOR_GIGASET,		USB_PRODUCT_GIGASET_RT2573 },
@@ -150,9 +148,7 @@ Static void		rum_txeof(usbd_xfer_handle, usbd_private_handle,
 			    usbd_status);
 Static void		rum_rxeof(usbd_xfer_handle, usbd_private_handle,
 			    usbd_status);
-#if NBPFILTER > 0
 Static uint8_t		rum_rxrate(const struct rum_rx_desc *);
-#endif
 Static int		rum_ack_rate(struct ieee80211com *, int);
 Static uint16_t		rum_txtime(int, int, uint32_t);
 Static uint8_t		rum_plcp_signal(int);
@@ -311,8 +307,10 @@ USB_ATTACH(rum)
 	sc->sc_udev = uaa->device;
 	sc->sc_flags = 0;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -455,9 +453,9 @@ USB_ATTACH(rum)
 	ic->ic_newstate = rum_newstate;
 	ieee80211_media_init(ic, rum_media_change, ieee80211_media_status);
 
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
-	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN, &sc->sc_drvbpf);
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
+	    &sc->sc_drvbpf);
 
 	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
@@ -466,7 +464,6 @@ USB_ATTACH(rum)
 	sc->sc_txtap_len = sizeof sc->sc_txtapu;
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2573_TX_RADIOTAP_PRESENT);
-#endif
 
 	ieee80211_announce(ic);
 
@@ -508,9 +505,7 @@ USB_DETACH(rum)
 		usbd_close_pipe(sc->sc_tx_pipeh);
 	}
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+	bpf_ops->bpf_detach(ifp);
 	ieee80211_ifdetach(ic);	/* free all nodes */
 	if_detach(ifp);
 
@@ -884,7 +879,6 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	s = splnet();
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct rum_rx_radiotap_header *tap = &sc->sc_rxtap;
 
@@ -895,9 +889,8 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		tap->wr_antenna = sc->rx_ant;
 		tap->wr_antsignal = desc->rssi;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
-#endif
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, (struct ieee80211_frame_min *)wh);
@@ -922,7 +915,6 @@ skip:	/* setup a new transfer */
  * This function is only used by the Rx radiotap code. It returns the rate at
  * which a given frame was received.
  */
-#if NBPFILTER > 0
 Static uint8_t
 rum_rxrate(const struct rum_rx_desc *desc)
 {
@@ -950,7 +942,6 @@ rum_rxrate(const struct rum_rx_desc *desc)
 	}
 	return 2;	/* should not get there */
 }
-#endif
 
 /*
  * Return the expected ack rate for a frame transmitted at rate `rate'.
@@ -1131,7 +1122,6 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 			flags |= RT2573_TX_TIMESTAMP;
 	}
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct rum_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -1141,9 +1131,8 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
-#endif
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RT2573_TX_DESC_SIZE);
 	rum_setup_tx_desc(sc, desc, flags, 0, m0->m_pkthdr.len, rate);
@@ -1223,7 +1212,6 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		*(uint16_t *)wh->i_dur = htole16(dur);
 	}
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct rum_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -1233,9 +1221,8 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
-#endif
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RT2573_TX_DESC_SIZE);
 	rum_setup_tx_desc(sc, desc, flags, 0, m0->m_pkthdr.len, rate);
@@ -1289,10 +1276,8 @@ rum_start(struct ifnet *ifp)
 
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
-#if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 			if (rum_tx_mgt(sc, m0, ni) != 0)
 				break;
 
@@ -1317,19 +1302,15 @@ rum_start(struct ifnet *ifp)
 				m_freem(m0);
 				continue;
 			}
-#if NBPFILTER > 0
 			if (ifp->if_bpf != NULL)
-				bpf_mtap(ifp->if_bpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
 				continue;
 			}
-#if NBPFILTER > 0
 			if (ic->ic_rawbpf != NULL)
-				bpf_mtap(ic->ic_rawbpf, m0);
-#endif
+				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
 			if (rum_tx_data(sc, m0, ni) != 0) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;
@@ -2284,13 +2265,10 @@ int
 rum_activate(device_ptr_t self, enum devact act)
 {
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return EOPNOTSUPP;
-
 	case DVACT_DEACTIVATE:
 		/*if_deactivate(&sc->sc_ic.ic_if);*/
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-
-	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20.10.1 2009/05/04 08:11:43 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.20.10.2 2010/03/11 15:02:49 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20.10.1 2009/05/04 08:11:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20.10.2 2010/03/11 15:02:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20.10.1 2009/05/04 08:11:43 yamt Exp $");
 
 #include <powerpc/cpu.h>
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 
 
 /*

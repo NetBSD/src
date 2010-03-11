@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.23 2006/03/13 15:31:11 shige Exp $ */
+/* $NetBSD: opb.c,v 1.23.68.1 2010/03/11 15:02:50 yamt Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.23 2006/03/13 15:31:11 shige Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.23.68.1 2010/03/11 15:02:50 yamt Exp $");
 
 #include "locators.h"
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.23 2006/03/13 15:31:11 shige Exp $");
 #include <sys/extent.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 #include <powerpc/ibm4xx/ibm405gp.h>

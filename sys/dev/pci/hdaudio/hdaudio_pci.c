@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.2.2.2 2009/09/16 13:37:56 yamt Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.2.2.3 2010/03/11 15:04:00 yamt Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.2.2.2 2009/09/16 13:37:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.2.2.3 2010/03/11 15:04:00 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,7 +65,7 @@ static void		hdaudio_pci_childdet(device_t, device_t);
 static int		hdaudio_pci_intr(void *);
 
 /* power management */
-static bool		hdaudio_pci_resume(device_t PMF_FN_PROTO);
+static bool		hdaudio_pci_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL2_NEW(
     hdaudio_pci,
@@ -144,8 +144,8 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
@@ -205,7 +205,7 @@ hdaudio_pci_intr(void *opaque)
 }
 
 static bool
-hdaudio_pci_resume(device_t self PMF_FN_ARGS)
+hdaudio_pci_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct hdaudio_pci_softc *sc = device_private(self);
 

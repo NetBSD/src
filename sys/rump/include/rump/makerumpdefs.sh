@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.3.10.2 2009/05/04 08:14:29 yamt Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.3.10.3 2010/03/11 15:04:37 yamt Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -35,6 +35,12 @@ printf '#endif /* EJUSTRETURN */\n'
 
 fromvers ../../../sys/lock.h
 sed -n '/#define.*LK_[A-Z]/s/LK_/RUMP_LK_/gp' <../../../sys/lock.h	\
+    | sed 's,/\*.*$,,'
+
+fromvers ../../../sys/reboot.h
+sed -n '/#define.*RB_[A-Z]/s/RB_/RUMP_RB_/gp' <../../../sys/reboot.h	\
+    | sed 's,/\*.*$,,'
+sed -n '/#define.*AB_[A-Z]/s/AB_/RUMP_AB_/gp' <../../../sys/reboot.h	\
     | sed 's,/\*.*$,,'
 
 printf '\n#endif /* _RUMP_RUMPDEFS_H_ */\n'

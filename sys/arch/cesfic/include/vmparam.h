@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9.78.2 2009/09/16 13:37:37 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9.78.3 2010/03/11 15:02:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -87,7 +87,7 @@
  * We use 4K pages on the cesfic.  Override the PAGE_* definitions
  * to be compile-time constants.
  */
-#define	PAGE_SHIFT	12
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 

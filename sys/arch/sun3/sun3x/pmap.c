@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98.20.3 2009/08/19 18:46:48 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98.20.4 2010/03/11 15:03:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98.20.3 2009/08/19 18:46:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98.20.4 2010/03/11 15:03:04 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98.20.3 2009/08/19 18:46:48 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/kcore.h>
 
@@ -1121,7 +1120,7 @@ pmap_init_a_tables(void)
 		a_tbl->at_dtbl = &mmuAbase[i * MMU_A_TBL_SIZE];
 
 		/*
-		 * Initialize the MMU A table with the table in the `proc0',
+		 * Initialize the MMU A table with the table in the `lwp0',
 		 * or kernel, mapping.  This ensures that every process has
 		 * the kernel mapped in the top part of its address space.
 		 */
@@ -2149,7 +2148,7 @@ pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 }
 
 void 
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	mmu_short_pte_t	*pte;
 
@@ -2471,8 +2470,8 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 #endif
 
 	/* Map pages as non-cacheable to avoid cache polution? */
-	pmap_kenter_pa(srcva, srcpa, VM_PROT_READ);
-	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_kenter_pa(srcva, srcpa, VM_PROT_READ, 0);
+	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	/* Hand-optimized version of memcpy(dst, src, PAGE_SIZE) */
 	copypage((char *)srcva, (char *)dstva);
@@ -2507,7 +2506,7 @@ pmap_zero_page(paddr_t dstpa)
 #endif
 
 	/* The comments in pmap_copy_page() above apply here also. */
-	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE);
+	pmap_kenter_pa(dstva, dstpa, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	/* Hand-optimized version of memset(ptr, 0, PAGE_SIZE) */
 	zeropage((char *)dstva);
@@ -2517,19 +2516,6 @@ pmap_zero_page(paddr_t dstpa)
 	--tmp_vpages_inuse;
 #endif
 	splx(s);
-}
-
-/* pmap_collect			INTERFACE
- **
- * Called from the VM system when we are about to swap out
- * the process using this pmap.  This should give up any
- * resources held here, including all its MMU tables.
- */
-void 
-pmap_collect(pmap_t pmap)
-{
-
-	/* XXX - todo... */
 }
 
 /* pmap_pinit			INTERNAL

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.29.10.1 2009/05/04 08:14:04 yamt Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.29.10.2 2010/03/11 15:04:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.29.10.1 2009/05/04 08:14:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.29.10.2 2010/03/11 15:04:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -144,7 +144,7 @@ layerfs_root(struct mount *mp, struct vnode **vpp)
 		*vpp = NULL;
 		return (EINVAL);
 	}
-	VREF(vp);
+	vref(vp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
 	return 0;

@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.68.10.1 2009/05/04 08:11:10 yamt Exp $
+#	$NetBSD: JORNADA720,v 1.68.10.2 2010/03/11 15:02:24 yamt Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68.10.1 $"
+#ident 		"GENERIC-$Revision: 1.68.10.2 $"
 
 # estimated number of users
 maxusers	32
@@ -42,7 +42,6 @@ file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay filesystem
-#file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system

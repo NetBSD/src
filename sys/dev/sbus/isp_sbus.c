@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.73.4.4 2009/09/16 13:37:57 yamt Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.73.4.5 2010/03/11 15:04:02 yamt Exp $ */
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73.4.4 2009/09/16 13:37:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.73.4.5 2010/03/11 15:04:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ static const struct ispmdvec mdvec = {
 
 struct isp_sbussoftc {
 	ispsoftc_t	sbus_isp;
-	struct sbusdev	sbus_sd;
 	sdparam		sbus_dev;
 	struct scsipi_channel sbus_chan;
 	bus_space_tag_t	sbus_bustag;
@@ -202,7 +201,6 @@ isp_sbus_attach(device_t parent, device_t self, void *aux)
 	/* Establish interrupt channel */
 	bus_intr_establish(sbc->sbus_bustag, sbc->sbus_pri, IPL_BIO,
 	    isp_sbus_intr, sbc);
-	sbus_establish(&sbc->sbus_sd, self);
 
 	/*
 	 * Set up logging levels.

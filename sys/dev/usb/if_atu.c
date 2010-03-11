@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.28.20.2 2009/09/16 13:37:57 yamt Exp $ */
+/*	$NetBSD: if_atu.c,v 1.28.20.3 2010/03/11 15:04:04 yamt Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,9 +48,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.28.20.2 2009/09/16 13:37:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.28.20.3 2010/03/11 15:04:04 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -77,10 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.28.20.2 2009/09/16 13:37:57 yamt Exp $"
 #include <dev/microcode/atmel/atmel_rfmd2958_fw.h>
 #include <dev/microcode/atmel/atmel_rfmd_fw.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -652,7 +649,7 @@ atu_initial_config(struct atu_softc *sc)
 	/*
 	 * TODO:
 	 * read reg domain MIB_PHY @ 0x17 (1 byte), (reply = 0x30)
-	 * we should do something usefull with this info. right now it's just
+	 * we should do something useful with this info. right now it's just
 	 * ignored
 	 */
 	err = atu_get_mib(sc, MIB_PHY__REG_DOMAIN, &reg_domain);
@@ -1182,9 +1179,10 @@ atu_attach(device_t parent, device_t self, void *aux)
 	sc->atu_dev = self;
 	sc->sc_state = ATU_S_UNCONFIG;
 
-	devinfop = usbd_devinfo_alloc(dev, 0);
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(dev, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -1428,17 +1426,15 @@ atu_activate(device_t self, enum devact act)
 	struct atu_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
 	case DVACT_DEACTIVATE:
 		if (sc->sc_state != ATU_S_UNCONFIG) {
 			if_deactivate(&sc->atu_ec.ec_if);
 			sc->sc_state = ATU_S_DEAD;
 		}
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 /*
@@ -1856,10 +1852,8 @@ atu_start(struct ifnet *ifp)
 				splx(s);
 				break;
 			}
-#if NBPFILTER > 0
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			ni = ieee80211_find_txnode(ic,
 			    mtod(m, struct ether_header *)->ether_dhost);
 			if (ni == NULL) {
@@ -1888,10 +1882,8 @@ atu_start(struct ifnet *ifp)
 			/* sc->sc_stats.ast_tx_mgmt++; */
 		}
 
-#if NBPFILTER > 0
 		if (ic->ic_rawbpf)
-			bpf_mtap(ic->ic_rawbpf, m);
-#endif
+			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
 
 		if (atu_tx_start(sc, ni, c, m)) {
 bad:

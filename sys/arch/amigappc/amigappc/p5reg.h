@@ -1,4 +1,4 @@
-/*	$NetBSD: p5reg.h,v 1.1.2.2 2009/08/19 18:45:56 yamt Exp $ */
+/*	$NetBSD: p5reg.h,v 1.1.2.3 2010/03/11 15:02:02 yamt Exp $ */
 
 /*
  * Copyright (C) 2000 Adam Ciarcinski.
@@ -85,6 +85,8 @@
 #define	P5_PPC_IPL1	0x02
 #define	P5_PPC_IPL0	0x01
 
+#define P5_IPL_MASK	0x07
+
 /* INT_LVL */
 #define	P5_LVL7		0x40
 #define	P5_LVL6		0x20
@@ -98,13 +100,13 @@
 #define P5read(reg, val)						\
 	do {								\
 		(val) = *(volatile unsigned char *)(P5BASE + (reg));	\
-		__asm volatile("sync");					\
+		__asm volatile("eieio");					\
 	} while (0);
 
 #define P5write(reg, val)						\
 	do {								\
 		*(volatile unsigned char *)(P5BASE + (reg)) = (val);	\
-		__asm volatile("sync");					\
+		__asm volatile("eieio");					\
 	} while (0);
 
 #endif /* _P5REG_H_ */

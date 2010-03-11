@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.120.20.4 2009/09/16 13:37:40 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.120.20.5 2010/03/11 15:02:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120.20.4 2009/09/16 13:37:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120.20.5 2010/03/11 15:02:41 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120.20.4 2009/09/16 13:37:40 yamt E
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 #include <sys/sa.h>
@@ -105,131 +104,110 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120.20.4 2009/09/16 13:37:40 yamt E
 paddr_t kvtophys(vaddr_t);	/* XXX */
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
+ * cpu_lwp_fork: Finish a fork operation, with lwp l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
  *
- * Rig the child's kernel stack so that it will start out in
- * lwp_trampoline() and call child_return() with p2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
+ * First LWP (l1) is the lwp being forked.  If it is &lwp0, then we are
+ * creating a kthread, where return path and argument are specified
+ * with `func' and `arg'.
  *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path and argument are specified with
- * `func' and `arg'.
+ * Rig the child's kernel stack so that it will start out in lwp_trampoline()
+ * and call child_return() with l2 as an argument. This causes the
+ * newly-created child process to go directly to user level with an apparent
+ * return value of 0 from fork(), while the parent process returns normally.
  *
  * If an alternate user-level stack is requested (with non-zero values
- * in both the stack and stacksize args), set up the user stack pointer
- * accordingly.
+ * in both the stack and stacksize arguments), then set up the user stack
+ * pointer accordingly.
  */
 void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
+	struct pcb *pcb1, *pcb2;
 	struct frame *f;
+	vaddr_t uv;
+
+	KASSERT(l1 == curlwp || l1 == &lwp0);
+
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
 
 	l2->l_md.md_ss_addr = 0;
 	l2->l_md.md_ss_instr = 0;
 	l2->l_md.md_astpending = 0;
 
-#ifdef DIAGNOSTIC
-	/*
-	 * If l1 != curlwp && l1 == &lwp0, we're creating a kernel thread.
-	 */
-	if (l1 != curlwp && l1 != &lwp0)
-		panic("cpu_lwp_fork: curlwp");
-#endif
+	/* If parent LWP was using FPU, then save the FPU h/w state. */
 	if ((l1->l_md.md_flags & MDP_FPUSED) && l1 == fpcurlwp)
 		savefpregs(l1);
 
+	/* Copy the PCB from parent. */
+	*pcb2 = *pcb1;
+
 	/*
-	 * Copy pcb from proc p1 to p2.
-	 * Copy p1 trapframe atop on p2 stack space, so return to user mode
+	 * Copy the trapframe from parent, so that return to userspace
 	 * will be to right address, with correct registers.
 	 */
-	memcpy(&l2->l_addr->u_pcb, &l1->l_addr->u_pcb, sizeof(struct pcb));
-	f = (struct frame *)((char *)l2->l_addr + USPACE) - 1;
-	memcpy(f, l1->l_md.md_regs, sizeof(struct frame));
+	uv = uvm_lwp_getuarea(l2);
+	f = (struct frame *)(uv + USPACE) - 1;
+	*f = *l1->l_md.md_regs;
 
-	/*
-	 * If specified, give the child a different stack.
-	 */
+	/* If specified, set a different user stack for a child. */
 	if (stack != NULL)
-		f->f_regs[_R_SP] = (uintptr_t)stack + stacksize;
+		f->f_regs[_R_SP] = (intptr_t)stack + stacksize;
 
-	l2->l_md.md_regs = (void *)f;
+	l2->l_md.md_regs = f;
 	l2->l_md.md_flags = l1->l_md.md_flags & MDP_FPUSED;
 #if USPACE > PAGE_SIZE
 	{
-		size_t i;
 		const int x = (MIPS_HAS_R4K_MMU) ?
-		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
-		    MIPS1_PG_G;
-		pt_entry_t *pte = kvtopte(l2->l_addr);
-		for (i = 0; i < UPAGES; i++)
+		    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) : MIPS1_PG_G;
+		pt_entry_t *pte = kvtopte(uv);
+
+		for (size_t i = 0; i < UPAGES; i++)
 			l2->l_md.md_upte[i] = pte[i].pt_entry &~ x;
 	}
 #endif
-
-	pcb = &l2->l_addr->u_pcb;
-	pcb->pcb_context[0] = (intptr_t)func;		/* S0 */
-	pcb->pcb_context[1] = (intptr_t)arg;		/* S1 */
-	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;/* S? */
-	pcb->pcb_context[8] = (intptr_t)f;		/* SP */
-	pcb->pcb_context[10] = (intptr_t)lwp_trampoline;/* RA */
+	/*
+	 * Rig kernel stack so that it would start out in lwp_trampoline()
+	 * and call child_return() with l2 as an argument.  This causes the
+	 * newly-created child process to go directly to user level with a
+	 * parent return value of 0 from fork(), while the parent process
+	 * returns normally.
+	 */
+	pcb2->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
+	pcb2->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
+	pcb2->pcb_context.val[MIPS_CURLWP_CARD - 16] = (intptr_t)l2;	/* S? */
+	pcb2->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
+	pcb2->pcb_context.val[_L_RA] = (intptr_t)lwp_trampoline;	/* RA */
+#ifdef _LP64
+	KASSERT(pcb2->pcb_context.val[_L_SR] & MIPS_SR_KX);
+#endif
 #ifdef IPL_ICU_MASK
-	pcb->pcb_ppl = 0;	/* machine dependent interrupt mask */
+	/* Machine depenedend interrupt mask. */
+	pcb2->pcb_ppl = 0;
 #endif
 }
 
-/*
- * Set the given LWP to start at the given function via the
- * lwp_trampoline.
- */
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
-	struct frame *f;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct frame *f = l->l_md.md_regs;
 
-	f = (struct frame *)((char *)l->l_addr + USPACE) - 1;
-	KASSERT(l->l_md.md_regs == f);
+	KASSERT(f == (struct frame *)((uintptr_t)uvm_lwp_getuarea(l) + USPACE) - 1);
 
-	pcb = &l->l_addr->u_pcb;
-	pcb->pcb_context[0] = (intptr_t)func;			/* S0 */
-	pcb->pcb_context[1] = (intptr_t)arg;			/* S1 */
-	pcb->pcb_context[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
-	pcb->pcb_context[8] = (intptr_t)f;			/* SP */
-	pcb->pcb_context[10] = (intptr_t)setfunc_trampoline;	/* RA */
-#ifdef IPL_ICU_MASK
-	pcb->pcb_ppl = 0;	/* machine depenedend interrupt mask */
+	pcb->pcb_context.val[_L_S0] = (intptr_t)func;			/* S0 */
+	pcb->pcb_context.val[_L_S1] = (intptr_t)arg;			/* S1 */
+	pcb->pcb_context.val[MIPS_CURLWP_CARD - 16] = (intptr_t)l;	/* S? */
+	pcb->pcb_context.val[_L_SP] = (intptr_t)f;			/* SP */
+	pcb->pcb_context.val[_L_RA] = (intptr_t)setfunc_trampoline;	/* RA */
+#ifdef _LP64
+	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
-}	
-
-/*
- * Finish a swapin operation.
- * We neded to update the cached PTEs for the user area in the
- * machine dependent part of the proc structure.
- */
-void
-cpu_swapin(struct lwp *l)
-{
-#if USPACE > PAGE_SIZE
-	pt_entry_t *pte;
-	int i, x;
-
-	/*
-	 * Cache the PTEs for the user area in the machine dependent
-	 * part of the proc struct so cpu_switchto() can quickly map
-	 * in the user struct and kernel stack.
-	 */
-	x = (MIPS_HAS_R4K_MMU) ?
-	    (MIPS3_PG_G | MIPS3_PG_RO | MIPS3_PG_WIRED) :
-	    MIPS1_PG_G;
-	pte = kvtopte(l->l_addr);
-	for (i = 0; i < UPAGES; i++)
-		l->l_md.md_upte[i] = pte[i].pt_entry &~ x;
+#ifdef IPL_ICU_MASK
+	/* Machine depenedend interrupt mask. */
+	pcb->pcb_ppl = 0;
 #endif
 }
 
@@ -238,7 +216,8 @@ cpu_lwp_free(struct lwp *l, int proc)
 {
 
 	if ((l->l_md.md_flags & MDP_FPUSED) && l == fpcurlwp)
-		fpcurlwp = NULL;
+		fpcurlwp = &lwp0;	/* save some NULL checks */
+	KASSERT(fpcurlwp != l);
 }
 
 void
@@ -318,29 +297,33 @@ kvtophys(vaddr_t kva)
 	pt_entry_t *pte;
 	paddr_t phys;
 
-	if (kva >= MIPS_KSEG2_START) {
+	if (kva >= VM_MIN_KERNEL_ADDRESS) {
 		if (kva >= VM_MAX_KERNEL_ADDRESS)
 			goto overrun;
 
 		pte = kvtopte(kva);
-		if ((size_t) (pte - Sysmap) > Sysmapsize)  {
+		if ((size_t) (pte - Sysmap) >= Sysmapsize)  {
 			printf("oops: Sysmap overrun, max %d index %zd\n",
 			       Sysmapsize, pte - Sysmap);
 		}
 		if (!mips_pg_v(pte->pt_entry)) {
-			printf("kvtophys: pte not valid for %lx\n", kva);
+			printf("kvtophys: pte not valid for %#"PRIxVADDR"\n",
+			    kva);
 		}
 		phys = mips_tlbpfn_to_paddr(pte->pt_entry) | (kva & PGOFSET);
 		return phys;
 	}
-	if (kva >= MIPS_KSEG1_START)
+	if (MIPS_KSEG1_P(kva))
 		return MIPS_KSEG1_TO_PHYS(kva);
 
-	if (kva >= MIPS_KSEG0_START)
+	if (MIPS_KSEG0_P(kva))
 		return MIPS_KSEG0_TO_PHYS(kva);
-
+#ifdef _LP64
+	if (MIPS_XKPHYS_P(kva))
+		return MIPS_XKPHYS_TO_PHYS(kva);
+#endif
 overrun:
-	printf("Virtual address %lx: cannot map to physical\n", kva);
+	printf("Virtual address %#"PRIxVADDR": cannot map to physical\n", kva);
 #ifdef DDB
 	Debugger();
 	return 0;	/* XXX */

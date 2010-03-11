@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.43.4.3 2009/05/16 10:41:41 yamt Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.43.4.4 2010/03/11 15:04:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,10 +105,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.43.4.3 2009/05/16 10:41:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.43.4.4 2010/03/11 15:04:00 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,10 +138,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.43.4.3 2009/05/16 10:41:41 yamt Exp $")
 #include <netinet/if_inarp.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 /*
  * Let these be patchable variables, initialized from macros that can
@@ -671,10 +668,8 @@ cnw_start(struct ifnet *ifp)
 		if (m0 == 0)
 			break;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 
 		cnw_transmit(sc, m0);
 		++ifp->if_opackets;
@@ -859,10 +854,8 @@ cnw_recv(struct cnw_softc *sc)
 		}
 		++ifp->if_ipackets;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Pass the packet up. */
 		(*ifp->if_input)(ifp, m);
@@ -895,12 +888,9 @@ cnw_intr(void *arg)
 		status = bus_space_read_1(sc->sc_memt, sc->sc_memh,
 		    sc->sc_memoff + CNW_IOM_OFF + CNW_REG_CCSR);
 #endif
-		if (!(status & 0x02)) {
-			if (ret == 0)
-				printf("%s: spurious interrupt\n",
-				    device_xname(&sc->sc_dev));
+		if (!(status & 0x02))
+			/* No more commands, or shared IRQ */
 			return (ret);
-		}
 		ret = 1;
 #ifndef MEMORY_MAPPED
 		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, CNW_REG_ASR);
@@ -1179,20 +1169,14 @@ int
 cnw_activate(device_t self, enum devact act)
 {
 	struct cnw_softc *sc = (struct cnw_softc *)self;
-	int rv = 0, s;
 
-	s = splnet();
 	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->sc_ethercom.ec_if);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	splx(s);
-	return (rv);
 }
 
 int

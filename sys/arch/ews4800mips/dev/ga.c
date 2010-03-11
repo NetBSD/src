@@ -1,4 +1,4 @@
-/*	$NetBSD: ga.c,v 1.3.46.1 2008/05/16 02:22:19 yamt Exp $	*/
+/*	$NetBSD: ga.c,v 1.3.46.2 2010/03/11 15:02:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Graphic Adaptor  (350, 360) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ga.c,v 1.3.46.1 2008/05/16 02:22:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ga.c,v 1.3.46.2 2010/03/11 15:02:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ ga_map(struct ga *ga)
 	}
 
 	for (tva = va; pa < epa; pa += PAGE_SIZE, tva += PAGE_SIZE)
-		pmap_kenter_pa(tva, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(tva, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	pmap_update(pmap_kernel());
 

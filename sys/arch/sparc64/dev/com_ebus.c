@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.27.4.1 2009/05/04 08:11:57 yamt Exp $	*/
+/*	$NetBSD: com_ebus.c,v 1.27.4.2 2010/03/11 15:03:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.27.4.1 2009/05/04 08:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.27.4.2 2010/03/11 15:03:00 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,6 +63,7 @@ CFATTACH_DECL_NEW(com_ebus, sizeof(struct com_softc),
 static const char *com_names[] = {
 	"su",
 	"su_pnp",
+	"rsc-console",
 	NULL
 };
 
@@ -148,11 +149,13 @@ com_ebus_attach(device_t parent, device_t self, void *aux)
 	com_is_output = (ea->ea_node == prom_instance_to_package(prom_stdout()));
 
 	if (com_is_input || com_is_output) {
-		extern struct consdev comcons;
 		struct consdev *cn_orig;
 
 		/* Record some info to attach console. */
-		kma.kmta_baud = 9600;
+		if (strcmp(ea->ea_name, "rsc-console") == 0)
+			kma.kmta_baud = 115200;
+		else
+			kma.kmta_baud = 9600;
 		kma.kmta_cflag = (CREAD | CS8 | HUPCL);
 
 		/* Attach com as the console. */
@@ -161,17 +164,17 @@ com_ebus_attach(device_t parent, device_t self, void *aux)
 			sc->sc_frequency, COM_TYPE_NORMAL, kma.kmta_cflag)) {
 			aprint_error("Error: comcnattach failed\n");
 		}
-		cn_tab = cn_orig;
 		if (com_is_input) {
-			cn_tab->cn_dev = comcons.cn_dev;
-			cn_tab->cn_probe = comcons.cn_probe;
-			cn_tab->cn_init = comcons.cn_init;
-			cn_tab->cn_getc = comcons.cn_getc;
-			cn_tab->cn_pollc = comcons.cn_pollc;
+			cn_orig->cn_dev = cn_tab->cn_dev;
+			cn_orig->cn_probe = cn_tab->cn_probe;
+			cn_orig->cn_init = cn_tab->cn_init;
+			cn_orig->cn_getc = cn_tab->cn_getc;
+			cn_orig->cn_pollc = cn_tab->cn_pollc;
 		}
 		if (com_is_output) {
-			cn_tab->cn_putc = comcons.cn_putc;
+			cn_orig->cn_putc = cn_tab->cn_putc;
 		}
+		cn_tab = cn_orig;
 		kma.kmta_consdev = cn_tab;
 	}
 	/* Now attach the driver */

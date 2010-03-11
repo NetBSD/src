@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.31.10.2 2009/05/04 08:14:22 yamt Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.31.10.3 2010/03/11 15:04:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.31.10.2 2009/05/04 08:14:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.31.10.3 2010/03/11 15:04:31 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.31.10.2 2009/05/04 08:14:22 yamt
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/vnode.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

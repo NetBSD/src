@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.25.2.3 2009/07/18 14:53:23 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.25.2.4 2010/03/11 15:04:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.25.2.3 2009/07/18 14:53:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.25.2.4 2010/03/11 15:04:21 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/bitops.h>
 
 #ifdef _KERNEL
 #include <sys/param.h>
@@ -205,9 +206,9 @@ static int wapbl_write_inodes(struct wapbl *wl, off_t *offp);
 
 static int wapbl_replay_process(struct wapbl_replay *wr, off_t, off_t);
 
-static __inline size_t wapbl_space_free(size_t avail, off_t head,
+static inline size_t wapbl_space_free(size_t avail, off_t head,
 	off_t tail);
-static __inline size_t wapbl_space_used(size_t avail, off_t head,
+static inline size_t wapbl_space_used(size_t avail, off_t head,
 	off_t tail);
 
 #ifdef _KERNEL
@@ -226,7 +227,7 @@ static void wapbl_inodetrk_free(struct wapbl *wl);
 static struct wapbl_ino *wapbl_inodetrk_get(struct wapbl *wl, ino_t ino);
 
 static size_t wapbl_transaction_len(struct wapbl *wl);
-static __inline size_t wapbl_transaction_inodes_len(struct wapbl *wl);
+static inline size_t wapbl_transaction_inodes_len(struct wapbl *wl);
 
 #if 0
 int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
@@ -317,8 +318,8 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	struct vnode *devvp;
 	daddr_t logpbn;
 	int error;
-	int log_dev_bshift = DEV_BSHIFT;
-	int fs_dev_bshift = DEV_BSHIFT;
+	int log_dev_bshift = ilog2(blksize);
+	int fs_dev_bshift = log_dev_bshift;
 	int run;
 
 	WAPBL_PRINTF(WAPBL_PRINT_OPEN, ("wapbl_start: vp=%p off=%" PRId64
@@ -501,7 +502,6 @@ wapbl_discard(struct wapbl *wl)
 
 #ifdef WAPBL_DEBUG_PRINT
 	{
-		struct wapbl_entry *we;
 		pid_t pid = -1;
 		lwpid_t lid = -1;
 		if (curproc)
@@ -691,7 +691,7 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 	bp->b_blkno = pbn;
 
 	WAPBL_PRINTF(WAPBL_PRINT_IO,
-	    ("wapbl_doio: %s %d bytes at block %"PRId64" on dev 0x%x\n",
+	    ("wapbl_doio: %s %d bytes at block %"PRId64" on dev 0x%"PRIx64"\n",
 	    BUF_ISWRITE(bp) ? "write" : "read", bp->b_bcount,
 	    bp->b_blkno, bp->b_dev));
 
@@ -703,7 +703,7 @@ wapbl_doio(void *data, size_t len, struct vnode *devvp, daddr_t pbn, int flags)
 	if (error) {
 		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
 		    ("wapbl_doio: %s %zu bytes at block %" PRId64
-		    " on dev 0x%x failed with error %d\n",
+		    " on dev 0x%"PRIx64" failed with error %d\n",
 		    (((flags & (B_WRITE | B_READ)) == B_WRITE) ?
 		     "write" : "read"),
 		    len, pbn, devvp->v_rdev, error));
@@ -736,6 +736,7 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 	size_t slen;
 	off_t off = *offp;
 	int error;
+	daddr_t pbn;
 
 	KDASSERT(((len >> wl->wl_log_dev_bshift) <<
 	    wl->wl_log_dev_bshift) == len);
@@ -744,16 +745,22 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 		off = wl->wl_circ_off;
 	slen = wl->wl_circ_off + wl->wl_circ_size - off;
 	if (slen < len) {
-		error = wapbl_write(data, slen, wl->wl_devvp,
-		    wl->wl_logpbn + (off >> wl->wl_log_dev_bshift));
+		pbn = wl->wl_logpbn + (off >> wl->wl_log_dev_bshift);
+#ifdef _KERNEL
+		pbn = btodb(pbn << wl->wl_log_dev_bshift);
+#endif
+		error = wapbl_write(data, slen, wl->wl_devvp, pbn);
 		if (error)
 			return error;
 		data = (uint8_t *)data + slen;
 		len -= slen;
 		off = wl->wl_circ_off;
 	}
-	error = wapbl_write(data, len, wl->wl_devvp,
-			    wl->wl_logpbn + (off >> wl->wl_log_dev_bshift));
+	pbn = wl->wl_logpbn + (off >> wl->wl_log_dev_bshift);
+#ifdef _KERNEL
+	pbn = btodb(pbn << wl->wl_log_dev_bshift);
+#endif
+	error = wapbl_write(data, len, wl->wl_devvp, pbn);
 	if (error)
 		return error;
 	off += len;
@@ -784,16 +791,20 @@ wapbl_begin(struct wapbl *wl, const char *file, int line)
 		   wl->wl_bufbytes_max / 2) ||
 		  ((wl->wl_bufcount + (lockcount * 10)) >
 		   wl->wl_bufcount_max / 2) ||
-		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2);
+		  (wapbl_transaction_len(wl) > wl->wl_circ_size / 2) ||
+		  (wl->wl_dealloccnt >=
+		   (wl->wl_dealloclim - (wl->wl_dealloclim >> 8)));
 	mutex_exit(&wl->wl_mtx);
 
 	if (doflush) {
 		WAPBL_PRINTF(WAPBL_PRINT_FLUSH,
 		    ("force flush lockcnt=%d bufbytes=%zu "
-		    "(max=%zu) bufcount=%zu (max=%zu)\n",
+		    "(max=%zu) bufcount=%zu (max=%zu) "
+		    "dealloccnt %d (lim=%d)\n",
 		    lockcount, wl->wl_bufbytes,
 		    wl->wl_bufbytes_max, wl->wl_bufcount,
-		    wl->wl_bufcount_max));
+		    wl->wl_bufcount_max,
+		    wl->wl_dealloccnt, wl->wl_dealloclim));
 	}
 
 	if (doflush) {
@@ -955,7 +966,7 @@ wapbl_resize_buf(struct wapbl *wl, struct buf *bp, long oldsz, long oldcnt)
 /* Some utility inlines */
 
 /* This is used to advance the pointer at old to new value at old+delta */
-static __inline off_t
+static inline off_t
 wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
 {
 	off_t new;
@@ -983,7 +994,7 @@ wapbl_advance(size_t size, size_t off, off_t old, size_t delta)
 	return new;
 }
 
-static __inline size_t
+static inline size_t
 wapbl_space_used(size_t avail, off_t head, off_t tail)
 {
 
@@ -994,14 +1005,14 @@ wapbl_space_used(size_t avail, off_t head, off_t tail)
 	return ((head + (avail - 1) - tail) % avail) + 1;
 }
 
-static __inline size_t
+static inline size_t
 wapbl_space_free(size_t avail, off_t head, off_t tail)
 {
 
 	return avail - wapbl_space_used(avail, head, tail);
 }
 
-static __inline void
+static inline void
 wapbl_advance_head(size_t size, size_t off, size_t delta, off_t *headp,
 		   off_t *tailp)
 {
@@ -1016,7 +1027,7 @@ wapbl_advance_head(size_t size, size_t off, size_t delta, off_t *headp,
 	*tailp = tail;
 }
 
-static __inline void
+static inline void
 wapbl_advance_tail(size_t size, size_t off, size_t delta, off_t *headp,
 		   off_t *tailp)
 {
@@ -1668,8 +1679,14 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 	wapbl_jlock_assert(wl);
 
 	/* XXX should eventually instead tie this into resource estimation */
-	/* XXX this KASSERT needs locking/mutex analysis */
-	KASSERT(wl->wl_dealloccnt < wl->wl_dealloclim);
+	/*
+	 * XXX this panic needs locking/mutex analysis and the
+	 * ability to cope with the failure.
+	 */
+	/* XXX this XXX doesn't have enough XXX */
+	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim))
+		panic("wapbl_register_deallocation: out of resources");
+
 	wl->wl_deallocblks[wl->wl_dealloccnt] = blk;
 	wl->wl_dealloclens[wl->wl_dealloccnt] = len;
 	wl->wl_dealloccnt++;
@@ -1765,7 +1782,7 @@ wapbl_unregister_inode(struct wapbl *wl, ino_t ino, mode_t mode)
 
 /****************************************************************/
 
-static __inline size_t
+static inline size_t
 wapbl_transaction_inodes_len(struct wapbl *wl)
 {
 	int blocklen = 1<<wl->wl_log_dev_bshift;
@@ -1818,13 +1835,14 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	struct timespec ts;
 	int error;
 	int force = 1;
+	daddr_t pbn;
 
 	/* XXX Calc checksum here, instead we do this for now */
 	error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force, FWRITE, FSCRED);
 	if (error) {
 		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
-		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%x "
-		    "returned %d\n", wl->wl_devvp->v_rdev, error));
+		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%"PRIx64
+		    " returned %d\n", wl->wl_devvp->v_rdev, error));
 	}
 
 	wc->wc_head = head;
@@ -1844,16 +1862,19 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	 * over second commit header before trying to write both headers.
 	 */
 
-	error = wapbl_write(wc, wc->wc_len, wl->wl_devvp,
-	    wl->wl_logpbn + wc->wc_generation % 2);
+	pbn = wl->wl_logpbn + (wc->wc_generation % 2);
+#ifdef _KERNEL
+	pbn = btodb(pbn << wc->wc_log_dev_bshift);
+#endif
+	error = wapbl_write(wc, wc->wc_len, wl->wl_devvp, pbn);
 	if (error)
 		return error;
 
 	error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force, FWRITE, FSCRED);
 	if (error) {
 		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
-		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%x "
-		    "returned %d\n", wl->wl_devvp->v_rdev, error));
+		    ("wapbl_write_commit: DIOCCACHESYNC on dev 0x%"PRIx64
+		    " returned %d\n", wl->wl_devvp->v_rdev, error));
 	}
 
 	/*
@@ -2168,23 +2189,31 @@ wapbl_circ_read(struct wapbl_replay *wr, void *data, size_t len, off_t *offp)
 	size_t slen;
 	off_t off = *offp;
 	int error;
+	daddr_t pbn;
 
 	KASSERT(((len >> wr->wr_log_dev_bshift) <<
 	    wr->wr_log_dev_bshift) == len);
+
 	if (off < wr->wr_circ_off)
 		off = wr->wr_circ_off;
 	slen = wr->wr_circ_off + wr->wr_circ_size - off;
 	if (slen < len) {
-		error = wapbl_read(data, slen, wr->wr_devvp,
-		    wr->wr_logpbn + (off >> wr->wr_log_dev_bshift));
+		pbn = wr->wr_logpbn + (off >> wr->wr_log_dev_bshift);
+#ifdef _KERNEL
+		pbn = btodb(pbn << wr->wr_log_dev_bshift);
+#endif
+		error = wapbl_read(data, slen, wr->wr_devvp, pbn);
 		if (error)
 			return error;
 		data = (uint8_t *)data + slen;
 		len -= slen;
 		off = wr->wr_circ_off;
 	}
-	error = wapbl_read(data, len, wr->wr_devvp,
-	    wr->wr_logpbn + (off >> wr->wr_log_dev_bshift));
+	pbn = wr->wr_logpbn + (off >> wr->wr_log_dev_bshift);
+#ifdef _KERNEL
+	pbn = btodb(pbn << wr->wr_log_dev_bshift);
+#endif
+	error = wapbl_read(data, len, wr->wr_devvp, pbn);
 	if (error)
 		return error;
 	off += len;
@@ -2230,8 +2259,9 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 	struct wapbl_wc_header *wch;
 	struct wapbl_wc_header *wch2;
 	/* Use this until we read the actual log header */
-	int log_dev_bshift = DEV_BSHIFT;
+	int log_dev_bshift = ilog2(blksize);
 	size_t used;
+	daddr_t pbn;
 
 	WAPBL_PRINTF(WAPBL_PRINT_REPLAY,
 	    ("wapbl_replay_start: vp=%p off=%"PRId64 " count=%zu blksize=%zu\n",
@@ -2253,7 +2283,6 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 	if ((off + count) * blksize > vp->v_size)
 		return EINVAL;
 #endif
-
 	if ((error = VOP_BMAP(vp, off, &devvp, &logpbn, 0)) != 0) {
 		return error;
 	}
@@ -2264,7 +2293,11 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 
 	scratch = wapbl_malloc(MAXBSIZE);
 
-	error = wapbl_read(scratch, 2<<log_dev_bshift, devvp, logpbn);
+	pbn = logpbn;
+#ifdef _KERNEL
+	pbn = btodb(pbn << log_dev_bshift);
+#endif
+	error = wapbl_read(scratch, 2<<log_dev_bshift, devvp, pbn);
 	if (error)
 		goto errout;
 
@@ -2373,7 +2406,7 @@ wapbl_replay_process_blocks(struct wapbl_replay *wr, off_t *offp)
 		 */
 		n = wc->wc_blocks[i].wc_dlen >> wr->wr_fs_dev_bshift;
 		for (j = 0; j < n; j++) {
-			wapbl_blkhash_ins(wr, wc->wc_blocks[i].wc_daddr + j,
+			wapbl_blkhash_ins(wr, wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen),
 			    *offp);
 			wapbl_circ_advance(wr, fsblklen, offp);
 		}
@@ -2385,6 +2418,7 @@ wapbl_replay_process_revocations(struct wapbl_replay *wr)
 {
 	struct wapbl_wc_blocklist *wc =
 	    (struct wapbl_wc_blocklist *)wr->wr_scratch;
+	int fsblklen = 1 << wr->wr_fs_dev_bshift;
 	int i, j, n;
 
 	for (i = 0; i < wc->wc_blkcount; i++) {
@@ -2393,7 +2427,7 @@ wapbl_replay_process_revocations(struct wapbl_replay *wr)
 		 */
 		n = wc->wc_blocks[i].wc_dlen >> wr->wr_fs_dev_bshift;
 		for (j = 0; j < n; j++)
-			wapbl_blkhash_rem(wr, wc->wc_blocks[i].wc_daddr + j);
+			wapbl_blkhash_rem(wr, wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen));
 	}
 }
 
@@ -2529,7 +2563,7 @@ wapbl_replay_verify(struct wapbl_replay *wr, struct vnode *fsdevvp)
 					for (j = 0; j < n; j++) {
 						struct wapbl_blk *wb =
 						   wapbl_blkhash_get(wr,
-						   wc->wc_blocks[i].wc_daddr + j);
+						   wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen));
 						if (wb && (wb->wb_off == off)) {
 							foundcnt++;
 							error =
@@ -2573,7 +2607,7 @@ wapbl_replay_verify(struct wapbl_replay *wr, struct vnode *fsdevvp)
 						for (j = 0; j < n; j++) {
 							struct wapbl_blk *wb =
 							   wapbl_blkhash_get(wr,
-							   wc->wc_blocks[i].wc_daddr + j);
+							   wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen));
 							if (wb &&
 							  (wb->wb_off == off)) {
 								wapbl_blkhash_rem(wr, wb->wb_blk);

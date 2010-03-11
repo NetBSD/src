@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.33 2007/03/04 06:00:39 christos Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.33.44.1 2010/03/11 15:02:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,9 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.33 2007/03/04 06:00:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.33.44.1 2010/03/11 15:02:54 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.33 2007/03/04 06:00:39 christos Exp $");
 #include <net/if_media.h>
 #include <net/if_ether.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -118,7 +115,7 @@ static void	sq_txring_hpc1(struct sq_softc *);
 static void	sq_txring_hpc3(struct sq_softc *);
 static void	sq_reset(struct sq_softc *);
 static int 	sq_add_rxbuf(struct sq_softc *, int);
-static void 	sq_dump_buffer(u_int32_t addr, u_int32_t len);
+static void 	sq_dump_buffer(paddr_t addr, psize_t len);
 static void	sq_trace_dump(struct sq_softc *);
 
 static void	enaddr_aton(const char*, u_int8_t*);
@@ -151,7 +148,7 @@ sq_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct hpc_attach_args *ha = aux;
 
 	if (strcmp(ha->ha_name, cf->cf_name) == 0) {
-		uint32_t reset, txstat;
+		vaddr_t reset, txstat;
 
 		reset = MIPS_PHYS_TO_KSEG1(ha->ha_sh +
 		    ha->ha_dmaoff + ha->hpc_regs->enetr_reset);
@@ -632,13 +629,11 @@ sq_start(struct ifnet *ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-#if NBPFILTER > 0
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m0);
-#endif /* NBPFILTER > 0 */
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
 		if (m != NULL) {
 			m_freem(m0);
 			m0 = m;
@@ -1029,10 +1024,8 @@ sq_rxintr(struct sq_softc *sc)
 		SQ_DPRINTF(("%s: sq_rxintr: buf %d len %d\n",
 			    sc->sc_dev.dv_xname, i, framelen));
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		(*ifp->if_input)(ifp, m);
 	}
 
@@ -1323,10 +1316,10 @@ sq_add_rxbuf(struct sq_softc *sc, int idx)
 }
 
 void
-sq_dump_buffer(u_int32_t addr, u_int32_t len)
+sq_dump_buffer(paddr_t addr, psize_t len)
 {
 	u_int i;
-	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1((void *)addr);
+	u_char* physaddr = (char*) MIPS_PHYS_TO_KSEG1(addr);
 
 	if (len == 0)
 		return;

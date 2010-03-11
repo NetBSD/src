@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.119.4.1 2008/05/16 02:26:00 yamt Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.119.4.2 2010/03/11 15:04:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.119.4.1 2008/05/16 02:26:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.119.4.2 2010/03/11 15:04:45 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -226,8 +226,11 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	/*
 	 * Just return and not update modification times.
 	 */
-	if (oip->i_size == length)
+	if (oip->i_size == length) {
+		/* still do a uvm_vnp_setsize() as writesize may be larger */
+		uvm_vnp_setsize(ovp, length);
 		return (0);
+	}
 
 	if (ovp->v_type == VLNK &&
 	    (oip->i_size < ump->um_maxsymlinklen ||
@@ -407,6 +410,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 
 	oip->i_size = oip->i_ffs1_size = length;
 	uvm_vnp_setsize(ovp, length);
+
 	/*
 	 * Calculate index into inode's block list of
 	 * last direct and indirect blocks (if any)

@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.c,v 1.6.74.1 2009/05/04 08:12:51 yamt Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.6.74.2 2010/03/11 15:03:40 yamt Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm.c,v 1.6.74.1 2009/05/04 08:12:51 yamt Exp $");
+__RCSID("$NetBSD: aicasm.c,v 1.6.74.2 2010/03/11 15:03:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -594,6 +594,7 @@ output_listing(char *ifilename)
 			if (isatty(fileno(stdin)) == 0)
 				putchar(input);
 		}
+		free(func_values);
 		fprintf(stdout, "\nThanks!\n");
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.8.10.1 2009/05/04 08:13:43 yamt Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.8.10.2 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.8.10.1 2009/05/04 08:13:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.8.10.2 2010/03/11 15:04:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ hfs_libcb_closedev(hfs_volume* in_vol, hfs_callback_args* cbargs)
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp,
 			    in_vol->readonly ? FREAD : FREAD | FWRITE, NOCRED);
-			/* XXX do we need a VOP_UNLOCK() here? */
+			VOP_UNLOCK(devvp, 0);
 		}
 
 		free(in_vol->cbdata, M_HFSMNT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.36.2.4 2009/09/16 13:37:40 yamt Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.36.2.5 2010/03/11 15:02:34 yamt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,13 +117,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.36.2.4 2009/09/16 13:37:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.36.2.5 2010/03/11 15:02:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/user.h>
 #include <sys/pool.h>
 
 #include <machine/pte.h>
@@ -231,6 +230,7 @@ struct kpt_page *kpt_pages;
  * Segtabzero is an empty segment table which all processes share til they
  * reference something.
  */
+paddr_t		Sysseg_pa;
 st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
@@ -240,6 +240,8 @@ static struct pmap kernel_pmap_store;
 struct pmap	*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*st_map, *pt_map;
 struct vm_map_kernel st_map_store, pt_map_store;
+
+vaddr_t		lwp0uarea;	/* lwp0 u-area VA, initialized in bootstrap */
 
 paddr_t		avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
@@ -270,7 +272,7 @@ int		pv_nfree;
 int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #endif
 #if defined(M68040) || defined(M68060)
-int		protostfree;	/* prototype (default) free ST map */
+u_int		protostfree;	/* prototype (default) free ST map */
 #endif
 
 pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
@@ -280,7 +282,6 @@ struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
 
 struct pv_entry *pmap_alloc_pv(void);
 void	pmap_free_pv(struct pv_entry *);
-void	pmap_collect_pv(void);
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized && uvm_pageismanaged(pa))
 
@@ -297,13 +298,11 @@ pa_to_pvh(paddr_t pa)
  * Internal routines
  */
 void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
-void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
 bool	pmap_testbit(paddr_t, int);
 bool	pmap_changebit(paddr_t, int, int);
 int	pmap_enter_ptpage(pmap_t, vaddr_t, bool);
 void	pmap_ptpage_addref(vaddr_t);
 int	pmap_ptpage_delref(vaddr_t);
-void	pmap_collect1(pmap_t, paddr_t, paddr_t);
 void	pmap_pinit(pmap_t);
 void	pmap_release(pmap_t);
 
@@ -316,6 +315,61 @@ void pmap_check_wiring(const char *, vaddr_t);
 #define	PRM_TFLUSH	0x01
 #define	PRM_CFLUSH	0x02
 #define	PRM_KEEPPTPAGE	0x04
+
+/*
+ * pmap_bootstrap_finalize:	[ INTERFACE ]
+ *
+ *	Initialize lwp0 uarea, curlwp, and curpcb after MMU is turned on,
+ *	using lwp0uarea variable saved during pmap_bootstrap().
+ */
+void
+pmap_bootstrap_finalize(void)
+{
+
+#if !defined(amiga) && !defined(atari)
+	/*
+	 * XXX
+	 * amiga and atari have different pmap initialization functions
+	 * and they require this earlier.
+	 */
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+#endif
+
+	/*
+	 * Initialize protection array.
+	 * XXX: Could this have port specific values? Can't this be static?
+	 */
+	protection_codes[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_NONE]     = 0;
+	protection_codes[VM_PROT_READ|VM_PROT_NONE|VM_PROT_NONE]     = PG_RO;
+	protection_codes[VM_PROT_READ|VM_PROT_NONE|VM_PROT_EXECUTE]  = PG_RO;
+	protection_codes[VM_PROT_NONE|VM_PROT_NONE|VM_PROT_EXECUTE]  = PG_RO;
+	protection_codes[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_NONE]    = PG_RW;
+	protection_codes[VM_PROT_NONE|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
+	protection_codes[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_NONE]    = PG_RW;
+	protection_codes[VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW;
+
+	/*
+	 * Initialize pmap_kernel().
+	 */
+	pmap_kernel()->pm_stpa = (st_entry_t *)Sysseg_pa;
+	pmap_kernel()->pm_stab = Sysseg;
+	pmap_kernel()->pm_ptab = Sysmap;
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040)
+		pmap_kernel()->pm_stfree = protostfree;
+#endif
+	simple_lock_init(&pmap_kernel()->pm_lock);
+	pmap_kernel()->pm_count = 1;
+
+	/*
+	 * Initialize lwp0 uarea, curlwp, and curpcb.
+	 */
+	memset((void *)lwp0uarea, 0, USPACE);
+	uvm_lwp_setuarea(&lwp0, lwp0uarea);
+	curlwp = &lwp0;
+	curpcb = lwp_getpcb(&lwp0);
+}
 
 /*
  * pmap_virtual_space:		[ INTERFACE ]
@@ -593,6 +647,7 @@ pmap_free_pv(struct pv_entry *pv)
  *
  *	Perform compaction on the PV list, called via pmap_collect().
  */
+#ifdef notyet
 void
 pmap_collect_pv(void)
 {
@@ -654,6 +709,7 @@ pmap_collect_pv(void)
 		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE, UVM_KMF_WIRED);
 	}
 }
+#endif
 
 /*
  * pmap_map:
@@ -852,13 +908,6 @@ pmap_deactivate(struct lwp *l)
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
-
-	pmap_do_remove(pmap, sva, eva, 1);
-}
-
-void
-pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
-{
 	vaddr_t nssva;
 	pt_entry_t *pte;
 	int flags;
@@ -877,7 +926,6 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
 
 		/*
 		 * Invalidate every valid mapping within this segment.
-		 * If remove_wired is zero, skip the wired pages.
 		 */
 
 		pte = pmap_pte(pmap, sva);
@@ -893,10 +941,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
 				break;
 			}
 
-
-
-			if (pmap_pte_v(pte) &&
-			    (remove_wired || !pmap_pte_w(pte))) {
+			if (pmap_pte_v(pte)) {
 #ifdef M68K_MMU_HP
 				if (pmap_aliasmask) {
 
@@ -1428,7 +1473,7 @@ validate:
 }
 
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pmap_t pmap = pmap_kernel();
 	pt_entry_t *pte;
@@ -1665,52 +1710,6 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 }
 
 /*
- * pmap_collect:		[ INTERFACE ]
- *
- *	Garbage collects the physical map system for pages which are no
- *	longer used.  Success need not be guaranteed -- that is, there
- *	may well be pages which are not referenced, but others may be
- *	collected.
- *
- *	Called by the pageout daemon when pages are scarce.
- */
-void
-pmap_collect(pmap_t pmap)
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_collect(%p)\n", pmap));
-
-	if (pmap == pmap_kernel()) {
-		int bank, s;
-
-		/*
-		 * XXX This is very bogus.  We should handle kernel PT
-		 * XXX pages much differently.
-		 */
-
-		s = splvm();
-		for (bank = 0; bank < vm_nphysseg; bank++)
-			pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
-			    ptoa(vm_physmem[bank].end));
-		splx(s);
-	} else {
-		/*
-		 * This process is about to be swapped out; free all of
-		 * the PT pages by removing the physical mappings for its
-		 * entire address space.  Note: pmap_remove() performs
-		 * all necessary locking.
-		 */
-		pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS, 0);
-		pmap_update(pmap);
-	}
-
-#ifdef notyet
-	/* Go compact and garbage-collect the pv_table. */
-	pmap_collect_pv();
-#endif
-}
-
-/*
  * pmap_collect1():
  *
  *	Garbage-collect KPT pages.  Helper for the above (bogus)
@@ -1719,7 +1718,7 @@ pmap_collect(pmap_t pmap)
  *	Note: THIS SHOULD GO AWAY, AND BE REPLACED WITH A BETTER
  *	WAY OF HANDLING PT PAGES!
  */
-void
+static inline void
 pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 {
 	paddr_t pa;
@@ -1819,6 +1818,39 @@ pmap_collect1(pmap_t pmap, paddr_t startpa, paddr_t endpa)
 			    ste, *ste);
 #endif
 	}
+}
+
+/*
+ * pmap_collect:
+ *
+ *	Helper for pmap_enter_ptpage().
+ *
+ *	Garbage collects the physical map system for pages which are no
+ *	longer used.  Success need not be guaranteed -- that is, there
+ *	may well be pages which are not referenced, but others may be
+ *	collected.
+ */
+static void
+pmap_collect(void)
+{
+	int bank, s;
+
+	/*
+	 * XXX This is very bogus.  We should handle kernel PT
+	 * XXX pages much differently.
+	 */
+
+	s = splvm();
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		pmap_collect1(pmap_kernel(), ptoa(vm_physmem[bank].start),
+		    ptoa(vm_physmem[bank].end));
+	}
+	splx(s);
+
+#ifdef notyet
+	/* Go compact and garbage-collect the pv_table. */
+	pmap_collect_pv();
+#endif
 }
 
 /*
@@ -2617,7 +2649,7 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 			 */
 			PMAP_DPRINTF(PDB_COLLECT,
 			    ("enter: no KPT pages, collecting...\n"));
-			pmap_collect(pmap_kernel());
+			pmap_collect();
 			if ((kpt = kpt_free_list) == NULL)
 				panic("pmap_enter_ptpage: can't get KPT page");
 		}
@@ -2885,9 +2917,8 @@ pmap_pvdump(paddr_t pa)
 	printf("pa %lx", pa);
 	pvh = pa_to_pvh(pa);
 	for (pv = &pvh->pvh_first; pv; pv = pv->pv_next)
-		printf(" -> pmap %p, va %lx, ptste %p, ptpmap %p, flags %x",
-		    pv->pv_pmap, pv->pv_va, pv->pv_ptste, pv->pv_ptpmap,
-		    pv->pv_flags);
+		printf(" -> pmap %p, va %lx, ptste %p, ptpmap %p",
+		    pv->pv_pmap, pv->pv_va, pv->pv_ptste, pv->pv_ptpmap);
 	printf("\n");
 }
 

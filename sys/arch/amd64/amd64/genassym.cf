@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.27.2.2 2009/05/04 08:10:32 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.27.2.3 2010/03/11 15:01:58 yamt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@ include <sys/param.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
 include <sys/device.h>
-include <sys/user.h>
 include <sys/mbuf.h>
 include <sys/mutex.h>
 include <sys/rwlock.h>
@@ -148,7 +147,7 @@ define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 
 define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
 
-define	L_ADDR			offsetof(struct lwp, l_addr)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
@@ -325,7 +324,6 @@ define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
 define	IPL_CLOCK		IPL_CLOCK
 define	IPL_HIGH		IPL_HIGH
-define	IPL_IPI			IPL_IPI
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER

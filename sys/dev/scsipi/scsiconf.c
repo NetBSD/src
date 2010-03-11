@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.246.4.3 2009/05/16 10:41:44 yamt Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.246.4.4 2010/03/11 15:04:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.246.4.3 2009/05/16 10:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.246.4.4 2010/03/11 15:04:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,13 +89,12 @@ static int	scsi_probe_device(struct scsibus_softc *, int, int);
 
 static int	scsibusmatch(device_t, cfdata_t, void *);
 static void	scsibusattach(device_t, device_t, void *);
-static int	scsibusactivate(device_t, enum devact);
 static int	scsibusdetach(device_t, int flags);
 static int	scsibusrescan(device_t, const char *, const int *);
 static void	scsidevdetached(device_t, device_t);
 
 CFATTACH_DECL3_NEW(scsibus, sizeof(struct scsibus_softc),
-    scsibusmatch, scsibusattach, scsibusdetach, scsibusactivate,
+    scsibusmatch, scsibusattach, scsibusdetach, NULL,
     scsibusrescan, scsidevdetached, DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver scsibus_cd;
@@ -233,42 +232,6 @@ scsibus_config(struct scsipi_channel *chan, void *arg)
 	scsipi_adapter_delref(chan->chan_adapter);
 
 	config_pending_decr();
-}
-
-static int
-scsibusactivate(device_t self, enum devact act)
-{
-	struct scsibus_softc *sc = device_private(self);
-	struct scsipi_channel *chan = sc->sc_channel;
-	struct scsipi_periph *periph;
-	int target, lun, error = 0, s;
-
-	s = splbio();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		error = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		for (target = 0; target < chan->chan_ntargets;
-		     target++) {
-			if (target == chan->chan_id)
-				continue;
-			for (lun = 0; lun < chan->chan_nluns; lun++) {
-				periph = scsipi_lookup_periph(chan,
-				    target, lun);
-				if (periph == NULL)
-					continue;
-				error = config_deactivate(periph->periph_dev);
-				if (error)
-					goto out;
-			}
-		}
-		break;
-	}
- out:
-	splx(s);
-	return (error);
 }
 
 static int
@@ -794,8 +757,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 		while (len < 3 + 28 + 20 + 1 + 1 + (8*2))
 			extension[len++] = ' ';
 	}
-	if (scsipi_inquire(periph, &inqbuf,
-	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK | XS_CTL_SILENT) != 0)
+	if (scsipi_inquire(periph, &inqbuf, XS_CTL_DISCOVERY | XS_CTL_SILENT))
 		goto bad;
 
 	periph->periph_type = inqbuf.device & SID_TYPE;

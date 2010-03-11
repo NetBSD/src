@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.4.4.4 2009/08/19 18:47:18 yamt Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.4.4.5 2010/03/11 15:04:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.4.4.4 2009/08/19 18:47:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.4.4.5 2010/03/11 15:04:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.4.4.4 2009/08/19 18:47:18 yamt Exp
 
 struct gem_sbus_softc {
 	struct	gem_softc	gsc_gem;	/* GEM device */
-	struct sbusdev		gsc_sd;
 	void			*gsc_ih;
 	bus_space_handle_t	gsc_sbus_regs_h;
 };
@@ -124,7 +123,6 @@ gemattach_sbus(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
-	sbus_establish(&gsc->gsc_sd, self);
 	prom_getether(sa->sa_node, enaddr);
 
 	if (!strcmp("serdes", prom_getpropstring(sa->sa_node, "shared-pins")))

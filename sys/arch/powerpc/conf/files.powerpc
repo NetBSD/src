@@ -1,9 +1,9 @@
-#	$NetBSD: files.powerpc,v 1.69.10.1 2009/05/04 08:11:43 yamt Exp $
+#	$NetBSD: files.powerpc,v 1.69.10.2 2010/03/11 15:02:49 yamt Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
 defparam opt_ppcparam.h	L2CR_CONFIG L3CR_CONFIG INTSTK CLOCKBASE
-defflag	opt_ppcarch.h	PPC_OEA PPC_OEA601 PPC_OEA64 PPC_OEA64_BRIDGE PPC_MPC8XX PPC_IBM4XX PPC_IBM403
+defflag	opt_ppcarch.h	PPC_OEA PPC_OEA601 PPC_OEA64 PPC_OEA64_BRIDGE PPC_MPC8XX PPC_IBM4XX PPC_IBM403 PPC_BOOKE
 defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS
 defparam opt_pmap.h	PTEGCOUNT PMAP_MEMLIMIT
 
@@ -54,6 +54,14 @@ file	arch/powerpc/oea/pmap64_bridge.c		ppc_oea64_bridge
 file	arch/powerpc/oea/pmap_kernel.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 file	arch/powerpc/powerpc/fpu.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
 file	arch/powerpc/powerpc/trap.c			ppc_oea | ppc_oea64 | ppc_oea64_bridge | ppc_oea601
+
+# PPC BookE (MPC85xx) Family files
+file	arch/powerpc/booke/booke_machdep.c		ppc_booke
+file	arch/powerpc/booke/clock.c			ppc_booke
+file	arch/powerpc/booke/copyinstr.c			ppc_booke
+file	arch/powerpc/booke/copyoutstr.c			ppc_booke
+file	arch/powerpc/booke/pmap.c			ppc_booke
+file	arch/powerpc/booke/trap.c			ppc_booke
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
 file	arch/powerpc/powerpc/compat_13_machdep.c	compat_13

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.12.10.1 2009/05/04 08:10:32 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12.10.2 2010/03/11 15:01:58 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,12 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12.10.1 2009/05/04 08:10:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12.10.2 2010/03/11 15:01:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h> 
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
@@ -338,7 +337,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	} else {
 		if (trace_thread) {
 			struct proc *p;
-			struct user *u;
+			struct pcb *pcb;
 			struct lwp *l;
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
@@ -355,17 +354,13 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if (!(l->l_flag & LW_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
-			u = l->l_addr;
+			pcb = lwp_getpcb(l);
 			if (p == curproc && l == curlwp) {
 				frame = (long *)ddb_regs.tf_rbp;
 				callpc = (db_addr_t)ddb_regs.tf_rip;
 				(*pr)("at %p\n", frame);
 			} else {
-				frame = (long *)u->u_pcb.pcb_rbp;
+				frame = (long *)pcb->pcb_rbp;
 				callpc = (db_addr_t)
 				    db_get_value((long)(frame + 1), 8, false);
 				(*pr)("at %p\n", frame);

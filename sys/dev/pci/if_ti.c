@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.81.4.2 2009/05/16 10:41:35 yamt Exp $ */
+/* $NetBSD: if_ti.c,v 1.81.4.3 2010/03/11 15:03:48 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,9 +81,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.81.4.2 2009/05/16 10:41:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.81.4.3 2010/03/11 15:03:48 yamt Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -105,9 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.81.4.2 2009/05/16 10:41:35 yamt Exp $");
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -151,7 +148,7 @@ static const struct ti_type ti_devs[] = {
 static const struct ti_type *ti_type_match(struct pci_attach_args *);
 static int ti_probe(device_t, cfdata_t, void *);
 static void ti_attach(device_t, device_t, void *);
-static void ti_shutdown(void *);
+static bool ti_shutdown(device_t, int);
 static void ti_txeof_tigon1(struct ti_softc *);
 static void ti_txeof_tigon2(struct ti_softc *);
 static void ti_rxeof(struct ti_softc *);
@@ -1673,17 +1670,11 @@ ti_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
-	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing do could allow DMA to corrupt kernel memory during the
-	 * reboot before the driver initializes.
-	 */
-	(void) shutdownhook_establish(ti_shutdown, sc);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	if (ti_chipinit(sc)) {
 		aprint_error_dev(self, "chip initialization failed\n");
@@ -1879,6 +1870,16 @@ ti_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
+	/*
+	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
+	 * doing do could allow DMA to corrupt kernel memory during the
+	 * reboot before the driver initializes.
+	 */
+	if (pmf_device_register1(self, NULL, NULL, ti_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 fail2:
 	pci_intr_disestablish(pc, sc->sc_ih);
@@ -1971,7 +1972,6 @@ ti_rxeof(struct ti_softc *sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 
-#if NBPFILTER > 0
 		/*
 	 	 * Handle BPF listeners. Let the BPF user see the packet, but
 	 	 * don't pass it up to the ether_input() layer unless it's
@@ -1979,8 +1979,7 @@ ti_rxeof(struct ti_softc *sc)
 	 	 * address or the interface is in promiscuous mode.
 	 	 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		eh = mtod(m, struct ether_header *);
 		switch (ntohs(eh->ether_type)) {
@@ -2448,10 +2447,8 @@ ti_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 	}
 
 	/* Transmit */
@@ -2866,10 +2863,13 @@ ti_stop(struct ti_softc *sc)
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
-static void
-ti_shutdown(void *v)
+static bool
+ti_shutdown(device_t self, int howto)
 {
-	struct ti_softc		*sc = v;
+	struct ti_softc *sc;
 
+	sc = device_private(self);
 	ti_chipinit(sc);
+
+	return true;
 }

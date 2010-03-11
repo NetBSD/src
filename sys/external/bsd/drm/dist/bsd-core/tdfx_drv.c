@@ -140,7 +140,7 @@ tdfxdrm_attach(device_t parent, device_t self, void *aux)
 }
 
 CFATTACH_DECL_NEW(tdfxdrm, sizeof(struct drm_device),
-    tdfxdrm_probe, tdfxdrm_attach, drm_detach, drm_activate);
+    tdfxdrm_probe, tdfxdrm_attach, drm_detach, NULL);
 
 #ifdef _MODULE
 

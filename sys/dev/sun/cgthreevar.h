@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthreevar.h,v 1.4.74.2 2009/05/04 08:13:19 yamt Exp $ */
+/*	$NetBSD: cgthreevar.h,v 1.4.74.3 2010/03/11 15:04:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 /* per-display variables */
 struct cgthree_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;	/* phys address for device mmap() */

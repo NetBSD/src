@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14.44.2 2009/08/19 18:45:57 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.44.3 2010/03/11 15:02:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -36,6 +36,9 @@
 #if defined(_KERNEL)
 #define	CPU_MAXNUM	1
 
+/*
+ * Amiga models
+ */
 #define A1200		1200
 #define A3000		3000
 #define A4000		4000
@@ -57,7 +60,23 @@ int     is_a4000 (void);
  * Prototypes from machdep.c
  */
 int dma_cachectl(void *, int);
-#endif
+
+/*
+ * Prototypes from powerpc/powerpc/trap.c
+ */
+int badaddr_read(void *, size_t, int *);
+
+#endif /* _KERNEL */
+
+/*
+ * Reorder protection when accessing device registers.
+ */
+#define amiga_membarrier() __asm volatile ("eieio")
+
+/*
+ * Finish all bus operations and flush pipelines.
+ */
+#define amiga_cpu_sync() __asm volatile ("sync; isync")
 
 #include <powerpc/cpu.h>
 

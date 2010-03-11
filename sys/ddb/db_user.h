@@ -1,4 +1,4 @@
-/*	$NetBSD: db_user.h,v 1.1.4.2 2009/05/04 08:12:32 yamt Exp $	*/
+/*	$NetBSD: db_user.h,v 1.1.4.3 2010/03/11 15:03:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>

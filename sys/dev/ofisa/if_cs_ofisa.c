@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.17.4.3 2009/05/16 10:41:31 yamt Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.17.4.4 2010/03/11 15:03:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.17.4.3 2009/05/16 10:41:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.17.4.4 2010/03/11 15:03:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,10 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.17.4.3 2009/05/16 10:41:31 yamt Ex
 #include <dev/ic/cs89x0var.h>
 #include <dev/isa/cs89x0isavar.h>
 
-int	cs_ofisa_match(device_t, cfdata_t, void *);
-void	cs_ofisa_attach(device_t, device_t, void *);
+static int	cs_ofisa_match(device_t, cfdata_t, void *);
+static void	cs_ofisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(cs_ofisa, sizeof(struct cs_softc_isa),
+CFATTACH_DECL_NEW(cs_ofisa, sizeof(struct cs_softc_isa),
     cs_ofisa_match, cs_ofisa_attach, NULL, NULL);
 
 int
@@ -93,8 +93,8 @@ cs_ofisa_match(device_t parent, cfdata_t cf, void *aux)
 void
 cs_ofisa_attach(device_t parent, device_t self, void *aux)
 {
-	struct cs_softc *sc = device_private(self);
-	struct cs_softc_isa *isc = (void *)sc;
+	struct cs_softc_isa *isc = device_private(self);
+	struct cs_softc *sc = &isc->sc_cs;
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg[2];
 	struct ofisa_intr_desc intr;
@@ -105,6 +105,7 @@ cs_ofisa_attach(device_t parent, device_t self, void *aux)
 	const char *message = NULL;
 	u_int8_t enaddr[6];
 
+	sc->sc_dev = self;
 	isc->sc_ic = aa->ic;
 	sc->sc_iot = aa->iot;
 	sc->sc_memt = aa->memt;
@@ -232,17 +233,17 @@ cs_ofisa_attach(device_t parent, device_t self, void *aux)
 		printf("\n");
 
 	if (message != NULL)
-		printf("%s: %s\n", device_xname(&sc->sc_dev), message);
+		printf("%s: %s\n", device_xname(self), message);
 
 	if (defmedia == -1) {
-		aprint_error_dev(&sc->sc_dev, "unable to get default media\n");
+		aprint_error_dev(self, "unable to get default media\n");
 		defmedia = media[0];	/* XXX What to do? */
 	}
 
 	sc->sc_ih = isa_intr_establish(isc->sc_ic, sc->sc_irq, intr.share,
 	    IPL_NET, cs_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt\n");
+		aprint_error_dev(self, "unable to establish interrupt\n");
 		return;
 	}
 

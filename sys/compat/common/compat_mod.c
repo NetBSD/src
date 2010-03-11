@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.7.8.3 2009/08/19 18:46:57 yamt Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.7.8.4 2010/03/11 15:03:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.7.8.3 2009/08/19 18:46:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.7.8.4 2010/03/11 15:03:12 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -231,8 +231,6 @@ static const struct syscall_package compat_syscalls[] = {
 # endif
 	{ SYS_compat_50___fhstat40, 0, (sy_call_t *)compat_50_sys___fhstat40 },
 	{ SYS_compat_50_aio_suspend, 0, (sy_call_t *)compat_50_sys_aio_suspend },
-	{ SYS_compat_50_mq_timedreceive, 0, (sy_call_t *)compat_50_sys_mq_timedreceive },
-	{ SYS_compat_50_mq_timedsend, 0, (sy_call_t *)compat_50_sys_mq_timedsend },
 #endif
 	{ 0, 0, NULL },
 };
@@ -288,8 +286,9 @@ compat_modcmd(modcmd_t cmd, void *arg)
 		if (p != NULL) {
 			return EBUSY;
 		}
+		sendsig_sigcontext_vec = NULL;
 #endif
-		/* Unlink the the system calls. */
+		/* Unlink the system calls. */
 		error = syscall_disestablish(NULL, compat_syscalls);
 		if (error != 0) {
 			return error;

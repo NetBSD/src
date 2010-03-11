@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.33.10.1 2009/05/04 08:11:34 yamt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.33.10.2 2010/03/11 15:02:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *   This product includes software developed by Dale Rahn.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -31,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33.10.1 2009/05/04 08:11:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33.10.2 2010/03/11 15:02:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

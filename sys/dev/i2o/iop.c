@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.69.4.3 2009/05/16 10:41:21 yamt Exp $	*/
+/*	$NetBSD: iop.c,v 1.69.4.4 2010/03/11 15:03:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.69.4.3 2009/05/16 10:41:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.69.4.4 2010/03/11 15:03:27 yamt Exp $");
 
 #include "iop.h"
 
@@ -928,7 +928,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 	    BUS_DMASYNC_PREWRITE);
 	memset(st, 0, sizeof(*st));
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*st),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTWRITE);
 
 	if ((rv = iop_post(sc, (u_int32_t *)&mf)) != 0)
 		return (rv);
@@ -990,17 +990,17 @@ iop_ofifo_init(struct iop_softc *sc)
 	mb[0] += 2 << 16;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_POSTWRITE);
 	*sw = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	if ((rv = iop_post(sc, mb)) != 0)
 		return (rv);
 
 	POLL(5000,
 	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_POSTREAD),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD),
 	    *sw == htole32(I2O_EXEC_OUTBOUND_INIT_COMPLETE)));
 
 	if (*sw != htole32(I2O_EXEC_OUTBOUND_INIT_COMPLETE)) {
@@ -1091,9 +1091,7 @@ iop_hrt_get(struct iop_softc *sc)
 	struct i2o_hrt hrthdr, *hrt;
 	int size, rv;
 
-	uvm_lwp_hold(curlwp);
 	rv = iop_hrt_get0(sc, &hrthdr, sizeof(hrthdr));
-	uvm_lwp_rele(curlwp);
 	if (rv != 0)
 		return (rv);
 
@@ -1266,16 +1264,10 @@ iop_field_get_all(struct iop_softc *sc, int tid, int group, void *buf,
 	pgop->oat.fieldcount = htole16(0xffff);
 	pgop->oat.group = htole16(group);
 
-	if (ii == NULL)
-		uvm_lwp_hold(curlwp);
-
 	memset(buf, 0, size);
 	iop_msg_map(sc, im, mb, pgop, sizeof(*pgop), 1, NULL);
 	iop_msg_map(sc, im, mb, buf, size, 0, NULL);
 	rv = iop_msg_post(sc, im, mb, (ii == NULL ? 30000 : 0));
-
-	if (ii == NULL)
-		uvm_lwp_rele(curlwp);
 
 	/* Detect errors; let partial transfers to count as success. */
 	if (ii == NULL && rv == 0) {
@@ -1375,7 +1367,6 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 	pgop.oat.group = htole16(group);
 	pgop.oat.fields[0] = htole16(0);
 
-	uvm_lwp_hold(curlwp);
 	iop_msg_map(sc, im, mb, &pgop, sizeof(pgop), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 30000);
 	if (rv != 0)
@@ -1383,7 +1374,6 @@ iop_table_clear(struct iop_softc *sc, int tid, int group)
 		    tid, group);
 
 	iop_msg_unmap(sc, im);
-	uvm_lwp_rele(curlwp);
 	iop_msg_free(sc, im);
 	return (rv);
 }
@@ -1512,14 +1502,12 @@ iop_systab_set(struct iop_softc *sc)
 		}
 	}
 
-	uvm_lwp_hold(curlwp);
 	iop_msg_map(sc, im, mb, iop_systab, iop_systab_size, 1, NULL);
 	iop_msg_map(sc, im, mb, mema, sizeof(mema), 1, NULL);
 	iop_msg_map(sc, im, mb, ioa, sizeof(ioa), 1, NULL);
 	rv = iop_msg_post(sc, im, mb, 5000);
 	iop_msg_unmap(sc, im);
 	iop_msg_free(sc, im);
-	uvm_lwp_rele(curlwp);
 	return (rv);
 }
 
@@ -1547,7 +1535,7 @@ iop_reset(struct iop_softc *sc)
 	mf.statushigh = (u_int32_t)((u_int64_t)pa >> 32);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_POSTWRITE);
 	*sw = htole32(0);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
@@ -1557,7 +1545,7 @@ iop_reset(struct iop_softc *sc)
 
 	POLL(2500,
 	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_POSTREAD), *sw != 0));
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD), *sw != 0));
 	if (*sw != htole32(I2O_RESET_IN_PROGRESS)) {
 		aprint_error_dev(&sc->sc_dv, "reset rejected, status 0x%x\n",
 		    le32toh(*sw));

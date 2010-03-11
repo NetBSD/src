@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.6 2006/09/05 19:32:57 matt Exp $ */
+/*	$NetBSD: clock.h,v 1.6.60.1 2010/03/11 15:03:05 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -69,10 +69,10 @@ extern	volatile short *clk_page;
 extern	int clk_adrshift, clk_tweak;
 
 /* Prototypes */
-int generic_gettime(volatile struct timeval *);
-void generic_settime(volatile struct timeval *);
-int chip_gettime(volatile struct timeval *);
-void chip_settime(volatile struct timeval *);
+int generic_gettime(struct timeval *);
+void generic_settime(struct timeval *);
+int chip_gettime(struct timeval *);
+void chip_settime(struct timeval *);
 int yeartonum(int);
 int numtoyear(int);
 

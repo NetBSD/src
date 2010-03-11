@@ -1,0 +1,5 @@
+# $NetBSD: files.suser,v 1.1.4.2 2010/03/11 15:04:41 yamt Exp $
+
+defflag secmodel_suser
+
+file	secmodel/suser/secmodel_suser.c	secmodel_suser

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.30.2.2 2009/05/04 08:13:48 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.30.2.3 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.30.2.2 2009/05/04 08:13:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.30.2.3 2010/03/11 15:04:18 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -431,7 +431,7 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, bool shared,
 		if ((ld->ld_flags & LD_SLEEPER) != 0) {
 			if (ld->ld_lwp == l && !(shared && trylock))
 				recurse = true;
-		} else if (ld->ld_cpu == (uint16_t)cpu_number())
+		} else if (ld->ld_cpu == (uint16_t)cpu_index(curcpu()))
 			recurse = true;
 	}
 	if (cpu_intr_p()) {
@@ -507,7 +507,7 @@ lockdebug_locked(volatile void *lock, void *cvlock, uintptr_t where,
 			    ld, ld_chain);
 		}
 	}
-	ld->ld_cpu = (uint16_t)cpu_number();
+	ld->ld_cpu = (uint16_t)cpu_index(curcpu());
 	ld->ld_lwp = l;
 	__cpu_simple_unlock(&ld->ld_spinlock);
 	splx(s);
@@ -554,7 +554,7 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 		ld->ld_shares--;
 		if (ld->ld_lwp == l)
 			ld->ld_lwp = NULL;
-		if (ld->ld_cpu == (uint16_t)cpu_number())
+		if (ld->ld_cpu == (uint16_t)cpu_index(curcpu()))
 			ld->ld_cpu = (uint16_t)-1;
 	} else {
 		if ((ld->ld_flags & LD_LOCKED) == 0) {
@@ -573,7 +573,7 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 			ld->ld_lwp = NULL;
 			TAILQ_REMOVE(&l->l_ld_locks, ld, ld_chain);
 		} else {
-			if (ld->ld_cpu != (uint16_t)cpu_number()) {
+			if (ld->ld_cpu != (uint16_t)cpu_index(curcpu())) {
 				lockdebug_abort1(ld, s, __func__,
 				    "not held by current CPU", true);
 				return;
@@ -732,7 +732,7 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...))
 		    "last locked  : %#018lx unlocked : %#018lx\n",
 		    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
 		    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
-		    (unsigned)cpu_number(), (unsigned)ld->ld_cpu,
+		    (unsigned)cpu_index(curcpu()), (unsigned)ld->ld_cpu,
 		    (long)curlwp, (long)ld->ld_lwp,
 		    (long)ld->ld_locked, (long)ld->ld_unlocked);
 	}
@@ -792,12 +792,18 @@ lockdebug_lock_print(void *addr, void (*pr)(const char *, ...))
 	lockdebug_t *ld;
 
 	TAILQ_FOREACH(ld, &ld_all, ld_achain) {
-		if (ld->ld_lock == addr) {
+		if (ld->ld_lock == NULL)
+			continue;
+		if (addr == NULL || ld->ld_lock == addr) {
 			lockdebug_dump(ld, pr);
-			return;
+			if (addr != NULL)
+				return;
 		}
 	}
-	(*pr)("Sorry, no record of a lock with address %p found.\n", addr);
+	if (addr != NULL) {
+		(*pr)("Sorry, no record of a lock with address %p found.\n",
+		    addr);
+	}
 #else
 	(*pr)("Sorry, kernel not built with the LOCKDEBUG option.\n");
 #endif	/* LOCKDEBUG */
@@ -836,8 +842,8 @@ lockdebug_abort(volatile void *lock, lockops_t *ops, const char *func,
 		    "lock address : %#018lx\n"
 		    "current cpu  : %18d\n"
 		    "current lwp  : %#018lx\n",
-		    ops->lo_name, func, msg, (long)lock, (int)cpu_number(),
-		    (long)curlwp);
+		    ops->lo_name, func, msg, (long)lock,
+		    (int)cpu_index(curcpu()), (long)curlwp);
 		(*ops->lo_dump)(lock);
 		printf_nolog("\n");
 	}

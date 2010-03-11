@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.34.2.1 2009/05/04 08:14:05 yamt Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.34.2.2 2010/03/11 15:04:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.34.2.1 2009/05/04 08:14:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.34.2.2 2010/03/11 15:04:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,12 +148,9 @@ procfs_dostatus(
 	if (*sep != ',')
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "noflags");
 
-	if (l->l_flag & LW_INMEM)
-		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %lld,%ld",
-		    (long long)p->p_stats->p_start.tv_sec,
-		    (long)p->p_stats->p_start.tv_usec);
-	else
-		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " -1,-1");
+	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %lld,%ld",
+	    (long long)p->p_stats->p_start.tv_sec,
+	    (long)p->p_stats->p_start.tv_usec);
 
 	{
 		struct timeval ut, st;

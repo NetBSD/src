@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.133.2.6 2009/09/16 13:38:00 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.133.2.7 2010/03/11 15:04:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.133.2.6 2009/09/16 13:38:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.133.2.7 2010/03/11 15:04:15 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -96,6 +96,10 @@ uid_t security_setidcore_owner = 0;
 gid_t security_setidcore_group = 0;
 mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
 
+/* Initialized in sysctl_init() for now... */
+extern kmutex_t sysctl_file_marker_lock;
+static u_int sysctl_file_marker = 1;
+
 static const u_int sysctl_flagmap[] = {
 	PK_ADVLOCK, P_ADVLOCK,
 	PK_EXEC, P_EXEC,
@@ -136,7 +140,6 @@ static const u_int sysctl_stflagmap[] = {
 };
 
 static const u_int sysctl_lwpflagmap[] = {
-	LW_INMEM, P_INMEM,
 	LW_SINTR, P_SINTR,
 	LW_SYSTEM, P_SYSTEM,
 	LW_SA, P_SA,	/* WRS ??? */
@@ -213,96 +216,6 @@ static void fill_file(struct kinfo_file *, const file_t *, const fdfile_t *,
  * functions. They're never called or referenced from anywhere else.
  * ********************************************************************
  */
-
-/*
- * sets up the base nodes...
- */
-SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern",
-		       SYSCTL_DESCR("High kernel"),
-		       NULL, 0, NULL, 0,
-		       CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vm",
-		       SYSCTL_DESCR("Virtual memory"),
-		       NULL, 0, NULL, 0,
-		       CTL_VM, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs",
-		       SYSCTL_DESCR("Filesystem"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "net",
-		       SYSCTL_DESCR("Networking"),
-		       NULL, 0, NULL, 0,
-		       CTL_NET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "debug",
-		       SYSCTL_DESCR("Debugging"),
-		       NULL, 0, NULL, 0,
-		       CTL_DEBUG, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "hw",
-		       SYSCTL_DESCR("Generic CPU, I/O"),
-		       NULL, 0, NULL, 0,
-		       CTL_HW, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "machdep",
-		       SYSCTL_DESCR("Machine dependent"),
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_EOL);
-	/*
-	 * this node is inserted so that the sysctl nodes in libc can
-	 * operate.
-	 */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "user",
-		       SYSCTL_DESCR("User-level"),
-		       NULL, 0, NULL, 0,
-		       CTL_USER, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ddb",
-		       SYSCTL_DESCR("In-kernel debugger"),
-		       NULL, 0, NULL, 0,
-		       CTL_DDB, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "proc",
-		       SYSCTL_DESCR("Per-process"),
-		       NULL, 0, NULL, 0,
-		       CTL_PROC, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_NODE, "vendor",
-		       SYSCTL_DESCR("Vendor specific"),
-		       NULL, 0, NULL, 0,
-		       CTL_VENDOR, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "emul",
-		       SYSCTL_DESCR("Emulation settings"),
-		       NULL, 0, NULL, 0,
-		       CTL_EMUL, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "security",
-		       SYSCTL_DESCR("Security"),
-		       NULL, 0, NULL, 0,
-		       CTL_SECURITY, CTL_EOL);
-}
 
 /*
  * this setup routine is a replacement for kern_sysctl()
@@ -1303,6 +1216,40 @@ sysctl_kern_clockrate(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
+/*
+ * Expects to be called with proc_lock and sysctl_file_marker_lock locked.
+ */
+static void
+sysctl_file_marker_reset(void)
+{
+	struct proc *p;
+
+	PROCLIST_FOREACH(p, &allproc) {
+		struct filedesc *fd = p->p_fd;
+		fdtab_t *dt;
+		u_int i;
+
+		mutex_enter(&fd->fd_lock);
+
+		dt = fd->fd_dt;
+		for (i = 0; i < dt->dt_nfiles; i++) {
+			struct file *fp;
+			fdfile_t *ff;
+
+			if ((ff = dt->dt_ff[i]) == NULL) {
+				continue;
+			}
+
+			if ((fp = ff->ff_file) == NULL) {
+				continue;
+			}
+
+			fp->f_marker = 0;
+		}
+
+		mutex_exit(&fd->fd_lock);
+	}
+}
 
 /*
  * sysctl helper routine for kern.file pseudo-subtree.
@@ -1312,12 +1259,12 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 {
 	int error;
 	size_t buflen;
-	struct file *fp, *dp, *np, fbuf;
+	struct file *fp, fbuf;
 	char *start, *where;
+	struct proc *p;
 
 	start = where = oldp;
 	buflen = *oldlenp;
-	dp = NULL;
 	
 	if (where == NULL) {
 		/*
@@ -1345,59 +1292,105 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	where += sizeof(filehead);
 
 	/*
-	 * allocate dummy file descriptor to make position in list
-	 */
-	if ((dp = fgetdummy()) == NULL) {
-	 	sysctl_relock();
-		return ENOMEM;
-	}
-
-	/*
 	 * followed by an array of file structures
 	 */
-	mutex_enter(&filelist_lock);
-	for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
-	    	np = LIST_NEXT(fp, f_list);
-	    	mutex_enter(&fp->f_lock);
-	    	if (fp->f_count == 0) {
-		    	mutex_exit(&fp->f_lock);
-	    		continue;
-		}
-		/*
-		 * XXX Need to prevent that from being an alternative way
-		 * XXX to getting process information.
-		 */
-		if (kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0) {
-		    	mutex_exit(&fp->f_lock);
+	mutex_enter(&sysctl_file_marker_lock);
+	mutex_enter(proc_lock);
+	PROCLIST_FOREACH(p, &allproc) {
+		struct filedesc *fd;
+		fdtab_t *dt;
+		u_int i;
+
+		if (p->p_stat == SIDL) {
+			/* skip embryonic processes */
 			continue;
 		}
-		if (buflen < sizeof(struct file)) {
-			*oldlenp = where - start;
-		    	mutex_exit(&fp->f_lock);
-			error = ENOMEM;
-			break;
+		mutex_enter(p->p_lock);
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CANSEE, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_OPENFILES),
+		    NULL, NULL);
+		mutex_exit(p->p_lock);
+		if (error != 0) {
+			/*
+			 * Don't leak kauth retval if we're silently
+			 * skipping this entry.
+			 */
+			error = 0;
+			continue;
 		}
-		memcpy(&fbuf, fp, sizeof(fbuf));
-		LIST_INSERT_AFTER(fp, dp, f_list);
-	    	mutex_exit(&fp->f_lock);
-		mutex_exit(&filelist_lock);
-		error = dcopyout(l, &fbuf, where, sizeof(fbuf));
-		if (error) {
-			mutex_enter(&filelist_lock);
-			LIST_REMOVE(dp, f_list);
-			break;
+
+		/*
+		 * Grab a hold on the process.
+		 */
+		if (!rw_tryenter(&p->p_reflock, RW_READER)) {
+			continue;
 		}
-		buflen -= sizeof(struct file);
-		where += sizeof(struct file);
-		mutex_enter(&filelist_lock);
-		np = LIST_NEXT(dp, f_list);
-		LIST_REMOVE(dp, f_list);
+		mutex_exit(proc_lock);
+
+		fd = p->p_fd;
+		mutex_enter(&fd->fd_lock);
+		dt = fd->fd_dt;
+		for (i = 0; i < dt->dt_nfiles; i++) {
+			fdfile_t *ff;
+
+			if ((ff = dt->dt_ff[i]) == NULL) {
+				continue;
+			}
+			if ((fp = ff->ff_file) == NULL) {
+				continue;
+			}
+
+			mutex_enter(&fp->f_lock);
+
+			if ((fp->f_count == 0) ||
+			    (fp->f_marker == sysctl_file_marker)) {
+				mutex_exit(&fp->f_lock);
+				continue;
+			}
+
+			/* Check that we have enough space. */
+			if (buflen < sizeof(struct file)) {
+				*oldlenp = where - start;
+			    	mutex_exit(&fp->f_lock);
+				error = ENOMEM;
+				break;
+			}
+
+			memcpy(&fbuf, fp, sizeof(fbuf));
+			mutex_exit(&fp->f_lock);
+			error = dcopyout(l, &fbuf, where, sizeof(fbuf));
+			if (error) {
+				break;
+			}
+			buflen -= sizeof(struct file);
+			where += sizeof(struct file);
+
+			fp->f_marker = sysctl_file_marker;
+		}
+		mutex_exit(&fd->fd_lock);
+
+		/*
+		 * Release reference to process.
+		 */
+		mutex_enter(proc_lock);
+		rw_exit(&p->p_reflock);
+
+		if (error)
+			break;
 	}
-	mutex_exit(&filelist_lock);
+
+	sysctl_file_marker++;
+	/* Reset all markers if wrapped. */
+	if (sysctl_file_marker == 0) {
+		sysctl_file_marker_reset();
+		sysctl_file_marker++;
+	}
+
+	mutex_exit(proc_lock);
+	mutex_exit(&sysctl_file_marker_lock);
+
 	*oldlenp = where - start;
- 	if (dp != NULL)
-		fputdummy(dp);
  	sysctl_relock();
 	return (error);
 }
@@ -1968,7 +1961,7 @@ static int
 sysctl_kern_file2(SYSCTLFN_ARGS)
 {
 	struct proc *p;
-	struct file *fp, *tp, *np;
+	struct file *fp;
 	struct filedesc *fd;
 	struct kinfo_file kf;
 	char *dp;
@@ -1999,66 +1992,24 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 
 	switch (op) {
 	case KERN_FILE_BYFILE:
-		/*
-		 * doesn't use arg so it must be zero
-		 */
-		if (arg != 0)
-			return (EINVAL);
-		sysctl_unlock();
-		/*
-		 * allocate dummy file descriptor to make position in list
-		 */
-		if ((tp = fgetdummy()) == NULL) {
-		 	sysctl_relock();
-			return ENOMEM;
-		}
-		mutex_enter(&filelist_lock);
-		for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
-			np = LIST_NEXT(fp, f_list);
-			mutex_enter(&fp->f_lock);
-			if (fp->f_count == 0) {
-				mutex_exit(&fp->f_lock);
-				continue;
-			}
-			/*
-			 * XXX Need to prevent that from being an alternative
-			 * XXX way for getting process information.
-			 */
-			if (kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0) {
-				mutex_exit(&fp->f_lock);
-				continue;
-			}
-			if (len >= elem_size && elem_count > 0) {
-				fill_file(&kf, fp, NULL, 0, 0);
-				LIST_INSERT_AFTER(fp, tp, f_list);
-				mutex_exit(&fp->f_lock);
-				mutex_exit(&filelist_lock);
-				error = dcopyout(l, &kf, dp, out_size);
-				mutex_enter(&filelist_lock);
-				np = LIST_NEXT(tp, f_list);
-				LIST_REMOVE(tp, f_list);
-				if (error) {
-					break;
-				}
-				dp += elem_size;
-				len -= elem_size;
-			} else {
-				mutex_exit(&fp->f_lock);
-			}
-			needed += elem_size;
-			if (elem_count > 0 && elem_count != INT_MAX)
-				elem_count--;
-		}
-		mutex_exit(&filelist_lock);
-		fputdummy(tp);
-		sysctl_relock();
-		break;
 	case KERN_FILE_BYPID:
-		if (arg < -1)
+		/*
+		 * We're traversing the process list in both cases; the BYFILE
+		 * case does additional work of keeping track of files already
+		 * looked at.
+		 */
+
+		/* doesn't use arg so it must be zero */
+		if ((op == KERN_FILE_BYFILE) && (arg != 0))
+			return EINVAL;
+
+		if ((op == KERN_FILE_BYPID) && (arg < -1))
 			/* -1 means all processes */
 			return (EINVAL);
+
 		sysctl_unlock();
+		if (op == KERN_FILE_BYFILE)
+			mutex_enter(&sysctl_file_marker_lock);
 		mutex_enter(proc_lock);
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_stat == SIDL) {
@@ -2093,7 +2044,6 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			}
 			mutex_exit(proc_lock);
 
-			/* XXX Do we need to check permission per file? */
 			fd = p->p_fd;
 			mutex_enter(&fd->fd_lock);
 			dt = fd->fd_dt;
@@ -2102,6 +2052,11 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 					continue;
 				}
 				if ((fp = ff->ff_file) == NULL) {
+					continue;
+				}
+
+				if ((op == KERN_FILE_BYFILE) &&
+				    (fp->f_marker == sysctl_file_marker)) {
 					continue;
 				}
 				if (len >= elem_size && elem_count > 0) {
@@ -2116,6 +2071,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 					dp += elem_size;
 					len -= elem_size;
 				}
+				if (op == KERN_FILE_BYFILE)
+					fp->f_marker = sysctl_file_marker;
 				needed += elem_size;
 				if (elem_count > 0 && elem_count != INT_MAX)
 					elem_count--;
@@ -2128,7 +2085,18 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			mutex_enter(proc_lock);
 			rw_exit(&p->p_reflock);
 		}
+		if (op == KERN_FILE_BYFILE) {
+			sysctl_file_marker++;
+
+			/* Reset all markers if wrapped. */
+			if (sysctl_file_marker == 0) {
+				sysctl_file_marker_reset();
+				sysctl_file_marker++;
+			}
+		}
 		mutex_exit(proc_lock);
+		if (op == KERN_FILE_BYFILE)
+			mutex_exit(&sysctl_file_marker_lock);
 		sysctl_relock();
 		break;
 	default:
@@ -2376,6 +2344,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
  			LIST_REMOVE(marker, p_list);
 		} else {
 			rw_exit(&p->p_reflock);
+			next = LIST_NEXT(p, p_list);
 		}
 	}
 	mutex_exit(proc_lock);
@@ -2966,7 +2935,8 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	ki->p_ru = PTRTOUINT64(&p->p_stats->p_ru);
 	ki->p_eflag = 0;
 	ki->p_exitsig = p->p_exitsig;
-	ki->p_flag = sysctl_map_flags(sysctl_flagmap, p->p_flag);
+	ki->p_flag = L_INMEM;   /* Process never swapped out */
+	ki->p_flag |= sysctl_map_flags(sysctl_flagmap, p->p_flag);
 	ki->p_flag |= sysctl_map_flags(sysctl_sflagmap, p->p_sflag);
 	ki->p_flag |= sysctl_map_flags(sysctl_slflagmap, p->p_slflag);
 	ki->p_flag |= sysctl_map_flags(sysctl_lflagmap, p->p_lflag);
@@ -3044,7 +3014,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 			ki->p_schedflags = l->l_cpu->ci_schedstate.spc_flags;
 		else
 			ki->p_schedflags = 0;
-		ki->p_holdcnt = l->l_holdcnt;
 		ki->p_priority = lwp_eprio(l);
 		ki->p_usrpri = l->l_priority;
 		if (l->l_wchan)
@@ -3142,7 +3111,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_addr = PTRTOUINT64(l->l_addr);
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
-	kl->l_flag = sysctl_map_flags(sysctl_lwpprflagmap, l->l_prflag);
+	kl->l_flag = L_INMEM;
+	kl->l_flag |= sysctl_map_flags(sysctl_lwpprflagmap, l->l_prflag);
 	kl->l_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
 
 	kl->l_swtime = l->l_swtime;
@@ -3151,7 +3121,6 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 		kl->l_schedflags = l->l_cpu->ci_schedstate.spc_flags;
 	else
 		kl->l_schedflags = 0;
-	kl->l_holdcnt = l->l_holdcnt;
 	kl->l_priority = lwp_eprio(l);
 	kl->l_usrpri = l->l_priority;
 	if (l->l_wchan)

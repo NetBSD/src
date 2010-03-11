@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.24.4.3 2009/08/19 18:47:06 yamt Exp $	*/
+/*	$NetBSD: athvar.h,v 1.24.4.4 2010/03/11 15:03:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -175,6 +175,8 @@ struct ath_tx99;
 
 struct ath_softc {
 	device_t 		sc_dev;
+	struct device_suspensor	sc_suspensor;
+	pmf_qual_t		sc_qual;
 	struct ethercom		sc_ec;		/* interface common */
 	struct ath_stats	sc_stats;	/* interface statistics */
 	struct ieee80211com	sc_ic;		/* IEEE 802.11 common */
@@ -241,7 +243,7 @@ struct ath_softc {
 	u_int16_t		sc_ledoff;	/* off time for current blink */
 	struct callout		sc_ledtimer;	/* led off timer */
 
-	void *			sc_drvbpf;
+	struct bpf_if *		sc_drvbpf;
 	union {
 		struct ath_tx_radiotap_header th;
 		u_int8_t	pad[64];

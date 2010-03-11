@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.48.4.1 2009/05/04 08:12:04 yamt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.48.4.2 2010/03/11 15:03:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48.4.1 2009/05/04 08:12:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48.4.2 2010/03/11 15:03:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48.4.1 2009/05/04 08:12:04 yamt Exp $
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -260,7 +259,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	if ((error = biowait(bp)))
 		goto done;
 	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
-	memcpy( dlp, lp, sizeof(struct disklabel));
+	memcpy(dlp, lp, sizeof(struct disklabel));
 	bp->b_oflags &= ~(BO_DONE);
 	bp->b_flags &= ~(B_READ);
 	bp->b_flags |= B_WRITE;

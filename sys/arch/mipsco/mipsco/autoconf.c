@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18.18.1 2009/05/04 08:11:32 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.18.2 2010/03/11 15:02:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.18.1 2009/05/04 08:11:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.18.2 2010/03/11 15:02:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ int	cpuspeed = 25;	/* approx # instr per usec. */
 
 extern int initcpu(void);		/*XXX*/
 
-void	findroot(struct device **, int *);
+void	findroot(device_t *, int *);
 
 struct mipsco_intrhand intrtab[MAX_INTR_COOKIES];
 
@@ -154,18 +154,24 @@ int	boot_id, boot_lun, boot_part;
  * Attempt to find the device from which we were booted.
  */
 void
-findroot(struct device **devpp, int *partp)
+findroot(device_t *devpp, int *partp)
 {
-	struct device *dv;
+	device_t dv;
+	deviter_t di;
 
-	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
+	for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+	     dv != NULL;
+	     dv = deviter_next(&di)) {
 		if (device_class(dv) == boot_class &&
 		    /* XXX device_unit() abuse */
-		    device_unit(dv) == boot_id) {
-			*devpp = dv;
-			*partp = boot_part;
-			return;
-		}
+		    device_unit(dv) == boot_id)
+		    	break;
+	}
+	deviter_release(&di);
+	if (dv != NULL) {
+		*devpp = dv;
+		*partp = boot_part;
+		return;
 	}
 
 	/*

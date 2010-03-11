@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.184.20.2 2009/08/19 18:46:48 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.184.20.3 2010/03/11 15:03:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.20.2 2009/08/19 18:46:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.20.3 2010/03/11 15:03:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.20.2 2009/08/19 18:46:48 yamt Exp 
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/mount.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
@@ -143,7 +142,6 @@ extern char etext[];
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;
@@ -258,13 +256,6 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 false, NULL);
-
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
@@ -291,9 +282,10 @@ cpu_startup(void)
  * Set registers on exec.
  */
 void 
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	tf->tf_sr = PSL_USERSET;
 	tf->tf_pc = pack->ep_entry & ~1;
@@ -315,9 +307,9 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_regs[SP] = stack;
 
 	/* restore a null state frame */
-	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	pcb->pcb_fpregs.fpf_null = 0;
 	if (fputype)
-		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
+		m68881_restore(&pcb->pcb_fpregs);
 
 	l->l_md.md_flags = 0;
 }
@@ -691,7 +683,7 @@ dumpsys(void)
 	do {
 		if ((todo & 0xf) == 0)
 			printf_nolog("\r%4d", todo);
-		pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ);
+		pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ, 0);
 		pmap_update(pmap_kernel());
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);
 		pmap_kremove(vmmap, PAGE_SIZE);

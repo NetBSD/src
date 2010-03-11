@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.4.2.2 2009/05/04 08:12:41 yamt Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.4.2.3 2010/03/11 15:03:29 yamt Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -636,7 +636,6 @@ struct bwi_softc {
 	int			 sc_txpwr_calib;
 	int			 sc_debug;	/* BWI_DBG_ */
 
-#if NBPFILTER > 0
 	struct bpf_if		*sc_drvbpf;
  
 	union {
@@ -652,7 +651,6 @@ struct bwi_softc {
 	}			 sc_txtapu;
 #define sc_txtap		 sc_txtapu.th
 	int			 sc_txtap_len;
-#endif
 };
 
 #define BWI_F_BUS_INITED	0x1
@@ -792,7 +790,7 @@ int		bwi_attach(struct bwi_softc *);
 void		bwi_detach(struct bwi_softc *);
 
 /* Power Management Framework */
-bool		bwi_suspend(device_t db PMF_FN_ARGS);
-bool		bwi_resume(device_t db PMF_FN_ARGS);
+bool		bwi_suspend(device_t, const pmf_qual_t *);
+bool		bwi_resume(device_t, const pmf_qual_t *);
 
 #endif	/* !_DEV_IC_BWIVAR_H */

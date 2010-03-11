@@ -1,22 +1,25 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.6.2.5 2009/09/16 13:38:05 yamt Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.6.2.6 2010/03/11 15:04:39 yamt Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
 
 LIB=	rumpvfs
 
-.PATH:	${RUMPTOP}/librump/rumpvfs				\
+.PATH:	${RUMPTOP}/librump/rumpvfs ${RUMPTOP}/librump		\
 	${RUMPTOP}/../kern					\
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs	\
 	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
-	${RUMPTOP}/../compat/common ${RUMPTOP}/../uvm
+	${RUMPTOP}/../compat/common ${RUMPTOP}/../uvm		\
+	${RUMPTOP}/../dev ${RUMPTOP}/../ufs/mfs
 
 #
 # Source modules, first the ones specifically implemented for librump.
 # 
-SRCS=	rump_vfs.c devnodes.c rumpblk.c rumpfs.c vm_vfs.c
+SRCS=	rump_vfs.c devnodes.c devnull.c rumpblk.c rumpfs.c vm_vfs.c
 
 SRCS+=	fstrans_stub.c vfsops_stub.c
+
+SRCS+=	rumpvfs_if_wrappers.c
 
 # sys/kern I/O
 SRCS+=	kern_physio.c
@@ -25,6 +28,9 @@ SRCS+=	kern_physio.c
 SRCS+=	vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c vfs_getcwd.c	\
 	vfs_hooks.c vfs_init.c vfs_lockf.c vfs_lookup.c vfs_subr.c	\
 	vfs_syscalls.c vfs_vnops.c vfs_wapbl.c vfs_xattr.c
+
+# sys/kern module (and syscall)
+SRCS+=	kern_module_vfs.c subr_kobj_vfs.c sys_module.c
 
 # sys/uvm
 SRCS+=	uvm_vnode.c
@@ -42,6 +48,13 @@ SRCS+=	genfs_io.c genfs_vfsops.c genfs_vnops.c spec_vnops.c
 SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 	bufq_readprio.c
 
+# MFS miniroot support
+SRCS+=	mfs_miniroot.c
+
+# dev
+# firmload is technically part of rumpdev, but it's pure vfs in nature.
+SRCS+=	firmload.c
+
 # compat syscalls
 SRCS+=	vfs_syscalls_50.c compat.c
 
@@ -52,7 +65,6 @@ SHLIB_MAJOR=    0
 SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
-CFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

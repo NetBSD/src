@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.28.4.1 2009/05/04 08:14:14 yamt Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.28.4.2 2010/03/11 15:04:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,9 +58,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.28.4.1 2009/05/04 08:14:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.28.4.2 2010/03/11 15:04:26 yamt Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
 
@@ -79,9 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.28.4.1 2009/05/04 08:14:14 yamt Exp
 #include <net/netisr.h>
 #include <net/route.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <net/ethertypes.h>
@@ -135,9 +132,7 @@ eco_ifattach(struct ifnet *ifp, const uint8_t *lla)
 
 	LIST_INIT(&ec->ec_retries);
 
-#if NBPFILTER > 0
-	bpfattach(ifp, ifp->if_dlt, ECO_HDR_LEN);
-#endif
+	bpf_ops->bpf_attach(ifp, ifp->if_dlt, ECO_HDR_LEN, &ifp->if_bpf);
 }
 
 #define senderr(e) do {							\
@@ -265,7 +260,8 @@ eco_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			    ECO_ADDR_LEN);
 		else {
 			tha = ar_tha(ah);
-			KASSERT(tha != NULL);
+			if (tha == NULL)
+				return 0;
 			memcpy(ehdr.eco_dhost, tha, ECO_ADDR_LEN);
 		}
 

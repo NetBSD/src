@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.36.20.2 2009/08/19 18:46:11 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.36.20.3 2010/03/11 15:02:18 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.2 2009/08/19 18:46:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.3 2010/03/11 15:02:18 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.20.2 2009/08/19 18:46:11 yamt Exp $
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -163,13 +162,10 @@ int	aucomcnrate = 0;
 
 #include "ohci.h"
 
-struct	user *proc0paddr;
-
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int maxmem;			/* max memory per process */
@@ -189,7 +185,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	void *kernend;
 	const char *cp;
 	u_long first, last;
-	void *v;
 	int freqok, howto, i;
 	const struct alchemy_board *board;
 
@@ -362,13 +357,9 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	pmap_bootstrap();
 
 	/*
-	 * Init mapping for u page(s) for proc0.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = (void *) uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
@@ -438,7 +429,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	board = board_info();
 	KASSERT(board != NULL);

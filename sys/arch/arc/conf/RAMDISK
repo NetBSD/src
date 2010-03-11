@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.75.10.1 2009/05/04 08:10:37 yamt Exp $
+#	$NetBSD: RAMDISK,v 1.75.10.2 2010/03/11 15:02:03 yamt Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -38,7 +38,6 @@ no file-system	FDESC
 no file-system	KERNFS
 no file-system	NULLFS
 no file-system	OVERLAY
-no file-system	PORTAL
 no file-system	UMAPFS
 no file-system	UNION
 no file-system	TMPFS

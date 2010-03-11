@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3.c,v 1.11.2.1 2009/05/04 08:11:37 yamt Exp $	*/
+/*	$NetBSD: dmac3.c,v 1.11.2.2 2010/03/11 15:02:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.11.2.1 2009/05/04 08:11:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmac3.c,v 1.11.2.2 2010/03/11 15:02:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,7 +103,7 @@ dmac3_attach(device_t parent, device_t self, void *aux)
 	dmac3_reset(sc);
 
 	aprint_normal(" slot%d addr 0x%lx", apa->apa_slotno, apa->apa_hwbase);
-	aprint_normal(": ctlnum = %d, map = %p, va = %lx",
+	aprint_normal(": ctlnum = %d, map = %p, va = %#"PRIxVADDR,
 	       apa->apa_ctlnum, sc->sc_dmamap, sc->sc_dmaaddr);
 	aprint_normal("\n");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.1.8.2 2009/05/04 08:12:04 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.1.8.3 2010/03/11 15:03:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.8.2 2009/05/04 08:12:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.8.3 2010/03/11 15:03:06 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.8.2 2009/05/04 08:12:04 ya
 #include <sys/systm.h>
 #include <sys/extent.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <sys/kernel.h>
@@ -142,11 +141,12 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */
 	struct proc *p = l->l_proc;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *scf;
 	struct sigcontext *ucntx;
 	struct sigcontext ksc;
 
-	scf = l->l_addr->u_pcb.framep;
+	scf = pcb->framep;
 	ucntx = SCARG(uap, sigcntxp);
 
 	if (copyin((void *)ucntx, (void *)&ksc, sizeof(struct sigcontext)))

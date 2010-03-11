@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.31.4.1 2009/05/04 08:11:26 yamt Exp $
+#	$NetBSD: SMALLRAM,v 1.31.4.2 2010/03/11 15:02:34 yamt Exp $
 #
 # This is an example of how to configure a small, efficient kernel for
 # a system with limited RAM. Even so it's capable of doing quite a
@@ -53,7 +53,6 @@ no file-system 	FDESC
 no file-system 	KERNFS
 no file-system 	NULLFS
 no file-system 	OVERLAY
-no file-system 	PORTAL
 no file-system 	PROCFS
 no file-system 	UMAPFS
 no file-system 	UNION

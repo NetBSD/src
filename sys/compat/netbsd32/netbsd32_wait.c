@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.18.2.1 2009/05/04 08:12:26 yamt Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.18.2.2 2010/03/11 15:03:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.18.2.1 2009/05/04 08:12:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.18.2.2 2010/03/11 15:03:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,14 +55,12 @@ netbsd32___wait450(struct lwp *l, const struct netbsd32___wait450_args *uap,
 		syscallarg(int) options;
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */
-	int		status, error;
-	int		was_zombie;
-	struct rusage	ru;
-	struct netbsd32_rusage	ru32;
-	int pid = SCARG(uap, pid);
+	int error, status, pid = SCARG(uap, pid);
+	struct netbsd32_rusage ru32;
+	struct rusage ru;
 
-	error = do_sys_wait(l, &pid, &status, SCARG(uap, options),
-	    SCARG_P32(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, SCARG(uap, options),
+	    SCARG_P32(uap, rusage) != NULL ? &ru : NULL);
 
 	retval[0] = pid;
 	if (pid == 0)

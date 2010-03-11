@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.7 2008/03/14 15:09:10 cube Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.7.4.1 2010/03/11 15:02:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.7 2008/03/14 15:09:10 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.7.4.1 2010/03/11 15:02:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.7 2008/03/14 15:09:10 cube Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>

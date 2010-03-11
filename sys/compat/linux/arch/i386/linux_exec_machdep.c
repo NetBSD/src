@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.4.20.2 2009/05/04 08:12:20 yamt Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.4.20.3 2010/03/11 15:03:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.4.20.2 2009/05/04 08:12:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.4.20.3 2010/03/11 15:03:15 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -137,7 +137,7 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 static __inline void
 load_gs(u_int sel)
 {
-        __asm __volatile("movl %0,%%gs" : : "rm" (sel)); 
+        __asm __volatile("movw %0,%%gs" : : "rm" ((unsigned short)sel)); 
 }
 
 
@@ -145,7 +145,7 @@ int
 linux_init_thread_area(struct lwp *l, struct lwp *l2)
 {
 	struct trapframe *tf = l->l_md.md_regs, *tf2 = l2->l_md.md_regs;
-	struct pcb *pcb2 = &l2->l_addr->u_pcb;
+	struct pcb *pcb2 = lwp_getpcb(l2);
 	struct linux_user_desc info;
 	struct segment_descriptor sd;
 	int error, idx, a[2];
@@ -195,7 +195,7 @@ int
 linux_sys_set_thread_area(struct lwp *l,
     const struct linux_sys_set_thread_area_args *uap, register_t *retval)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct linux_user_desc info;
 	struct segment_descriptor sd;
 	int error, idx, a[2];
@@ -277,7 +277,7 @@ int
 linux_sys_get_thread_area(struct lwp *l,
     const struct linux_sys_get_thread_area_args *uap, register_t *retval)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct linux_user_desc info;
 	struct linux_desc_struct desc;
 	struct segment_descriptor sd;

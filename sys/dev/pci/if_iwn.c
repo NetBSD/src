@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.9.4.4 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.9.4.5 2010/03/11 15:03:46 yamt Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.49 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*-
@@ -23,9 +23,8 @@
  * 802.11 network adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.9.4.4 2009/09/16 13:37:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.9.4.5 2010/03/11 15:03:46 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -48,9 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.9.4.4 2009/09/16 13:37:51 yamt Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
@@ -273,7 +270,7 @@ static void	iwn_hw_stop(struct iwn_softc *);
 static int	iwn_init(struct ifnet *);
 static void	iwn_stop(struct ifnet *, int);
 static void	iwn_fix_channel(struct ieee80211com *, struct mbuf *);
-static bool	iwn_resume(device_t PMF_FN_PROTO);
+static bool	iwn_resume(device_t, const pmf_qual_t *);
 
 #define IWN_DEBUG
 #ifdef IWN_DEBUG
@@ -389,7 +386,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
 	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal(": %s (rev. 0x%2x)\n", devinfo, revision);
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
@@ -398,7 +395,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	error = pci_get_capability(sc->sc_pct, sc->sc_pcitag,
 	    PCI_CAP_PCIEXPRESS, &sc->sc_cap_off, NULL);
 	if (error == 0) {
-		printf(": PCIe capability structure not found!\n");
+		aprint_error_dev(self, "PCIe capability structure not found!\n");
 		return;
 	}
 
@@ -435,7 +432,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	/* Install interrupt handler. */
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		aprint_error_dev(self, "could not map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(sc->sc_pct, ih);
@@ -514,7 +511,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	/* Clear pending interrupts. */
 	IWN_WRITE(sc, IWN_INT, 0xffffffff);
 
-	printf(", MIMO %dT%dR, %.4s, address %s\n", sc->ntxchains,
+	aprint_normal_dev(self, "MIMO %dT%dR, %.4s, address %s\n", sc->ntxchains,
 	    sc->nrxchains, sc->eeprom_domain, ether_sprintf(ic->ic_myaddr));
 
 	/* Initialization firmware has not been loaded yet. */
@@ -614,10 +611,8 @@ iwn_detach(device_t self, int flags __unused)
 	int ac;
 
 	iwn_stop(ifp, 1);
-#if NBPFILTER > 0
 	if (ifp != NULL)
-		bpfdetach(ifp);
-#endif
+		bpf_ops->bpf_detach(ifp);
 	ieee80211_ifdetach(&sc->sc_ic);
 	if (ifp != NULL)
 		if_detach(ifp);
@@ -740,10 +735,10 @@ static void
 iwn_radiotap_attach(struct iwn_softc *sc)
 {
 	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-#if NBPFILTER > 0
-	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
-		   sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
-		   &sc->sc_drvbpf);
+
+	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
+	    &sc->sc_drvbpf);
 
 	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
@@ -752,7 +747,6 @@ iwn_radiotap_attach(struct iwn_softc *sc)
 	sc->sc_txtap_len = sizeof sc->sc_txtapu;
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(IWN_TX_RADIOTAP_PRESENT);
-#endif
 }
 
 #if 0 /* XXX */
@@ -2032,7 +2026,6 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		iwn_fix_channel(ic, m);
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct iwn_rx_radiotap_header *tap = &sc->sc_rxtap;
 
@@ -2065,9 +2058,8 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		default:  tap->wr_rate =   0;
 		}
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
-#endif
 
 	/* Send the frame to the 802.11 layer. */
 	ieee80211_input(ic, m, ni, rssi, 0);
@@ -2803,7 +2795,6 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	}
 	rinfo = &iwn_rates[ridx];
 
-#if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
 		struct iwn_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -2815,9 +2806,8 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
+		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
 	}
-#endif
 
 	totlen = m->m_pkthdr.len;
 
@@ -3136,20 +3126,16 @@ iwn_start(struct ifnet *ifp)
 		/* no QoS encapsulation for EAPOL frames */
 		ac = (eh->ether_type != htons(ETHERTYPE_PAE)) ?
 		    M_WME_GETAC(m) : WME_AC_BE;
-#if NBPFILTER > 0
 		if (ifp->if_bpf != NULL)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;
 			continue;
 		}
 sendit:
-#if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap(ic->ic_rawbpf, m);
-#endif
+			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
 		if (iwn_tx(sc, m, ni, ac) != 0) {
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;
@@ -5822,7 +5808,7 @@ iwn_stop(struct ifnet *ifp, int disable)
 }
 
 static bool
-iwn_resume(device_t dv PMF_FN_ARGS)
+iwn_resume(device_t dv, const pmf_qual_t *qual)
 {
 #if 0
 	struct iwn_softc *sc = device_private(dv);

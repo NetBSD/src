@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57.20.1 2009/05/04 08:11:32 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57.20.2 2010/03/11 15:02:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.20.1 2009/05/04 08:11:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.20.2 2010/03/11 15:02:42 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.20.1 2009/05/04 08:11:32 yamt Exp $
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -131,7 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57.20.1 2009/05/04 08:11:32 yamt Exp $
 
 #include <sys/boot_flag.h>
 
-#include "fs_mfs.h"
 #include "opt_execfmt.h"
 
 #include "zsc.h"			/* XXX */
@@ -143,7 +141,6 @@ struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* max supported memory, changes to actual */
@@ -181,7 +178,6 @@ extern void stacktrace(void); /*XXX*/
  * disables mips1 FPU interrupts.
  */
 int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
-extern struct user *proc0paddr;
 
 /* locore callback-vector setup */
 extern void mips_vector_init(void);
@@ -231,7 +227,7 @@ void
 mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 {
 	u_long first, last;
-	char *kernend, *v;
+	char *kernend;
 	char *cp;
 	int i, howto;
 	extern char edata[], end[];
@@ -340,14 +336,12 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 		kgdb_connect(0);
 #endif
 
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
 	if (boothowto & RB_MINIROOT)
 		kernend += round_page(mfs_initminiroot(kernend));
-#endif
 
 	/*
 	 * Load the rest of the available pages into the VM system.
@@ -368,13 +362,9 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 	pmap_bootstrap();
 
 	/*
-	 * Allocate space for proc0's USPACE.
+	 * Allocate uarea page for lwp0 and set it.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE); 
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 
 	/*
 	 * Set up interrupt handling and I/O addresses.
@@ -471,7 +461,7 @@ cpu_reboot(volatile int howto, char *bootstr)
 {
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)

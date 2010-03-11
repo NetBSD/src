@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.7.20.1 2009/05/04 08:12:15 yamt Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.7.20.2 2010/03/11 15:03:11 yamt Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.7.20.1 2009/05/04 08:12:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.7.20.2 2010/03/11 15:03:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +154,8 @@ static void	lcd_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(zlcd, sizeof(struct pxa2x0_lcd_softc),
 	lcd_match, lcd_attach, NULL, NULL);
 
-static bool	lcd_suspend(device_t dv PMF_FN_ARGS);
-static bool	lcd_resume(device_t dv PMF_FN_ARGS);
+static bool	lcd_suspend(device_t dv, const pmf_qual_t *);
+static bool	lcd_resume(device_t dv, const pmf_qual_t *);
 
 void	lcd_cnattach(void);
 int	lcd_max_brightness(void);
@@ -208,7 +208,7 @@ lcd_cnattach(void)
  * power management
  */
 static bool
-lcd_suspend(device_t dv PMF_FN_ARGS)
+lcd_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct pxa2x0_lcd_softc *sc = device_private(dv);
 
@@ -219,7 +219,7 @@ lcd_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-lcd_resume(device_t dv PMF_FN_ARGS)
+lcd_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct pxa2x0_lcd_softc *sc = device_private(dv);
 

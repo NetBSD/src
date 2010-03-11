@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.24.10.1 2008/05/16 02:22:31 yamt Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.24.10.2 2010/03/11 15:02:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.24.10.1 2008/05/16 02:22:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.24.10.2 2010/03/11 15:02:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -833,7 +833,7 @@ __sh_hd64465_map(vaddr_t va, paddr_t pa, size_t sz, uint32_t flags)
 
 	epa = pa + sz;
 	while (pa < epa) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pte = __pmap_kpte_lookup(va);
 		KDASSERT(pte);
 		*pte |= flags;  /* PTEA PCMCIA assistant bit */

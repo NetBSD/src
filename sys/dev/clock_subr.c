@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.12.74.1 2009/05/04 08:12:32 yamt Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.12.74.2 2010/03/11 15:03:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.12.74.1 2009/05/04 08:12:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.12.74.2 2010/03/11 15:03:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ leapyear(int year)
 				rv = 1;
 		}
 	}
-	return (rv);
+	return rv;
 }
 
 time_t
@@ -136,7 +136,8 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	 * Compute days since start of time
 	 * First from years, then from months.
 	 */
-	if (year < POSIX_BASE_YEAR) return -1;
+	if (year < POSIX_BASE_YEAR)
+		return -1;
 	days = 0;
 	for (i = POSIX_BASE_YEAR; i < year; i++)
 		days += days_in_year(i);
@@ -154,16 +155,18 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	    * 60 + dt->dt_min)
 	    * 60 + dt->dt_sec;
 
-	if ((time_t)secs != secs) return -1;
-	return (secs);
+	if ((time_t)secs != secs)
+		return -1;
+	return secs;
 }
 
 void
 clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 {
 	int mthdays[12];
-	int i, days;
-	int rsec;	/* remainder seconds */
+	int i;
+	time_t days;
+	time_t rsec;	/* remainder seconds */
 
 	/*
 	 * This function uses a local copy of month_days[]

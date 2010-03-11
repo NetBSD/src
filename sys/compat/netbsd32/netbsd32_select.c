@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.14.10.1 2009/05/04 08:12:25 yamt Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.14.10.2 2010/03/11 15:03:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.14.10.1 2009/05/04 08:12:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.14.10.2 2010/03/11 15:03:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.14.10.1 2009/05/04 08:12:25 ya
 #include <compat/netbsd32/netbsd32_conv.h>
 
 int
-netbsd32___select50(struct lwp *l, const struct netbsd32___select50_args *uap, register_t *retval)
+netbsd32___select50(struct lwp *l,
+    const struct netbsd32___select50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) nd;
@@ -73,12 +74,13 @@ netbsd32___select50(struct lwp *l, const struct netbsd32___select50_args *uap, r
 		ts = &ats;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG_P32(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, NULL);
 }
 
 int
-netbsd32___pselect50(struct lwp *l, const struct netbsd32___pselect50_args *uap, register_t *retval)
+netbsd32___pselect50(struct lwp *l,
+    const struct netbsd32___pselect50_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) nd;
@@ -107,12 +109,13 @@ netbsd32___pselect50(struct lwp *l, const struct netbsd32___pselect50_args *uap,
 		mask = &amask;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG_P32(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG_P32(uap, in),
 	    SCARG_P32(uap, ou), SCARG_P32(uap, ex), ts, mask);
 }
 
 int
-netbsd32___pollts50(struct lwp *l, const struct netbsd32___pollts50_args *uap, register_t *retval)
+netbsd32___pollts50(struct lwp *l, const struct netbsd32___pollts50_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(struct netbsd32_pollfdp_t) fds;
@@ -139,6 +142,6 @@ netbsd32___pollts50(struct lwp *l, const struct netbsd32___pollts50_args *uap, r
 		mask = &amask;
 	}
 
-	return pollcommon(l, retval, SCARG_P32(uap, fds),
+	return pollcommon(retval, SCARG_P32(uap, fds),
 	    SCARG(uap, nfds), ts, mask);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_apm.c,v 1.1.12.2 2009/05/04 08:10:45 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_apm.c,v 1.1.12.3 2010/03/11 15:02:08 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_apm.c,v 1.28 2007/03/29 18:42:38 uwe Exp $	*/
 
 /*-
@@ -443,7 +443,7 @@ apm_thread(void *v)
 		apm_battlow = apm_suspends = apm_userstandbys = 0;
 
 		APM_UNLOCK(sc);
-		tsleep(&lbolt, PWAIT, "apmev", 0);
+		kpause("apmev", false, hz, NULL);
 	}
 }
 

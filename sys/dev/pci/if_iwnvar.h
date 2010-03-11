@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_iwnvar.h,v 1.8 2008/12/03 17:17:08 damien Exp $	*/
-/*	$NetBSD: if_iwnvar.h,v 1.3.16.2 2009/09/16 13:37:51 yamt Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.3.16.3 2010/03/11 15:03:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -287,8 +287,7 @@ struct iwn_softc {
 	int			sc_tx_timer;
 	void			*powerhook;
 
-#if NBPFILTER > 0
-	void *			sc_drvbpf;
+	struct bpf_if *		sc_drvbpf;
 
 	union {
 		struct iwn_rx_radiotap_header th;
@@ -303,7 +302,6 @@ struct iwn_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
-#endif
 	bool		is_scanning;
 	bool		sc_radio;
 };

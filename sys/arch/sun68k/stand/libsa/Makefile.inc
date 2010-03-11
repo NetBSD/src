@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.4.2 2009/05/04 08:12:02 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.1.4.3 2010/03/11 15:03:04 yamt Exp $
 
 S!=	cd ${SA_EXTRADIR}/../../../..; pwd
 
@@ -11,7 +11,8 @@ SRCS+=	clock.c dev_disk.c devopen.c \
 	promboot.c promcons.c promdev.c putstr.c \
 	sun2.c sun3.c sun3x.c xxboot.c
 
-SRCS+=	${S}/arch/sun68k/sun68k/ctrlsp.S
+.PATH.S: ${S}/arch/sun68k/sun68k
+SRCS+=	ctrlsp.S
 
 # XXX libkern builds these only on m68000
 .PATH.S: ${S}/../common/lib/libc/arch/m68k/gen

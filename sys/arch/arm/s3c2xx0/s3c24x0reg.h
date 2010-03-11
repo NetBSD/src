@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0reg.h,v 1.8 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: s3c24x0reg.h,v 1.8.80.1 2010/03/11 15:02:07 yamt Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation  All rights reserved.
@@ -335,8 +335,6 @@
 /* diffs to s3c2800 */
 #define	 UMCON_AFC	(1<<4)	/* auto flow control */
 #define	 UMSTAT_DCTS	(1<<2)	/* CTS change */
-#define	 ULCON_IR  	(1<<6)
-#define	 ULCON_PARITY_SHIFT  3
 
 #define	S3C24X0_UART_SIZE 	0x2c
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.205.2.5 2009/09/16 13:37:35 yamt Exp $
+# $NetBSD: GENERIC,v 1.205.2.6 2010/03/11 15:01:59 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.205.2.5 $"
+#ident 		"GENERIC-$Revision: 1.205.2.6 $"
 
 maxusers	64		# estimated number of users
 
@@ -144,7 +144,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	SMBFS		# experimental - SMB/CIFS file-system
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
@@ -242,6 +242,9 @@ options 	PCDISPLAY_SOFTCURSOR
 options 	WSDISPLAY_SCROLLSUPPORT
 # enable VGA raster mode capable of displaying multilingual text on console
 #options 	VGA_RASTERCONSOLE
+# enable splash screen support; requires genfb or radeonfb
+#options        SPLASHSCREEN
+#options        SPLASHSCREEN_PROGRESS
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -264,7 +267,6 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
-#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 options 	VGA_POST		# in-kernel support for VGA POST
 
 # ACPI devices
@@ -278,10 +280,12 @@ acpidalb*	at acpi?		# Direct Application Launch Button
 acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
 acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
+#acpismbus*	at acpi?		# ACPI SMBus CMI (experimental)
 acpitz* 	at acpi?		# ACPI Thermal Zone
+acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
-aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
+aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface
@@ -298,7 +302,8 @@ spic* 		at acpi?		# Sony Programmable I/O Controller
 wsmouse* 	at spic?		# mouse
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
-wss* 		at acpi?		# NeoMagic 256AV in wss mode
+wb*		at acpi?		# Winbond W83L518D SD/MMC reader
+sdmmc*		at wb?			# SD/MMC bus
 
 #apm0	at mainbus0			# Advanced power management
 
@@ -419,11 +424,21 @@ lpt1	at isa? port 0x278
 
 amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 
+# Winbond LPC Super I/O
+#wbsio*	at isa? port 0x2e
+#wbsio*	at isa? port 0x4e
+
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+# Use flags to select temp sensor type (see lm(4) man page for details)
+#lm0	at isa?	port 0x290 flags 0x0	# other common ports: 0x280, 0x310
+#lm*	at wbsio?
 
 # SMSC LPC47B397 hardware monitor functions
 #smsc0   at isa? port 0x02e
+
+# SMSC LPC47M192 hardware monitor
+#smscmon*	at iic? addr 0x2c
+#smscmon*	at iic? addr 0x2d	# (alternate address)
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
@@ -563,6 +578,7 @@ siisata*	at pci? dev ? function ?	# SiI SteelVine controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 svwsata* at pci? dev ? function ?	# ServerWorks SATA controllers
+toshide* at pci? dev ? function ?	# TOSHIBA PICCOLO controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # PCMCIA IDE controllers
@@ -790,6 +806,10 @@ ucycom*	at uhidev? reportid ?
 # USB Generic HID devices
 uhid*	at uhidev? reportid ?
 
+# USB LCDs and USB-VGA adaptors
+udl*	at uhub? port ?		# DisplayLink DL-1x0/1x5
+wsdisplay* at udl?
+
 # USB Printer
 ulpt*	at uhub? port ? configuration ? interface ?
 
@@ -797,9 +817,8 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
-# Huawei E220 3G/HSDPA modem
-uhmodem* at uhub? port ? configuration ? interface ?
-ucom*   at uhmodem? portno ?
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
@@ -898,10 +917,9 @@ radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
-# On ugen bulk endpoints, perform read-ahead and write-behind.
-options	UGEN_BULK_RA_WB
 
 # USB 3G datacards
+u3ginit* at uhub? port ?
 u3g*	at uhub? port ?
 ucom*	at u3g?
 
@@ -933,7 +951,7 @@ auich*	at pci? dev ? function ?	# Intel/AMD/nVidia AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA AC'97 audio
-azalia*	at pci? dev ? function ?	# High Definition Audio
+#azalia*	at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
@@ -1070,6 +1088,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
+pseudo-device	putter			# for puffs and pud
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 options		MEMORY_DISK_HOOKS	# enable root ramdisk

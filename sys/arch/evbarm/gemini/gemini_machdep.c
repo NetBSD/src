@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.11.8.3 2009/08/19 18:46:06 yamt Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.11.8.4 2010/03/11 15:02:14 yamt Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.11.8.3 2009/08/19 18:46:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.11.8.4 2010/03/11 15:02:14 yamt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -259,8 +259,6 @@ unsigned long gemini_ipmq_vbase = GEMINI_IPMQ_VBASE;
 #endif	/* DEBUG */
 #endif	/* NGEMINIIPM > 0 */
 
-
-extern struct user *proc0paddr;
 
 /*
  * Macros to translate between physical and virtual for a subset of the
@@ -687,8 +685,7 @@ initarm(void *arg)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init.
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");
@@ -1244,7 +1241,7 @@ printf("%s:%d: pmap_link_l2pt ipmq_pt\n", __FUNCTION__, __LINE__);
 #endif
 
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(l1_pa);
+	cpu_setttb(l1_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 

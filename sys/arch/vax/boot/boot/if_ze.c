@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ze.c,v 1.12.112.1 2009/05/04 08:12:03 yamt Exp $	*/
+/*	$NetBSD: if_ze.c,v 1.12.112.2 2010/03/11 15:03:05 yamt Exp $	*/
 /*
  * Copyright (c) 1998 James R. Maynard III.  All rights reserved.
  *
@@ -251,7 +251,7 @@ ze_put(struct iodesc *desc, void *pkt, size_t len)
 		;
 
 	/* Copy the packet to the buffer we allocated. */
-	memcpy( (void *)ze_tdes_list[0].ze_bufaddr, pkt, len);
+	memcpy((void *)ze_tdes_list[0].ze_bufaddr, pkt, len);
 
 	/* Set the packet length in the descriptor, increasing it to the
 		minimum size if needed. */

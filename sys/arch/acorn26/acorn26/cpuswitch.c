@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.15.18.1 2009/05/04 08:10:23 yamt Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.15.18.2 2010/03/11 15:01:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.15.18.1 2009/05/04 08:10:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.15.18.2 2010/03/11 15:01:54 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.15.18.1 2009/05/04 08:10:23 yamt Exp
 #include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/cpu.h>
 
@@ -62,6 +61,7 @@ lwp_t *
 cpu_switchto(lwp_t *old, lwp_t *new, bool returning)
 {
 	struct cpu_info * const ci = curcpu();
+	struct pcb *pcb;
 	struct proc *p2;
 
 	/*
@@ -73,13 +73,14 @@ cpu_switchto(lwp_t *old, lwp_t *new, bool returning)
 #endif
 
 	curlwp = new;
-	ci->ci_curpcb = &curlwp->l_addr->u_pcb;
+	pcb = lwp_getpcb(curlwp);
+	ci->ci_curpcb = pcb;
 
 	if ((new->l_flag & LW_SYSTEM) == 0) {
 		/* Check for Restartable Atomic Sequences. */
 		p2 = new->l_proc;
 		if (p2->p_raslist != NULL) {
-			struct trapframe *tf = new->l_addr->u_pcb.pcb_tf;
+			struct trapframe *tf = pcb->pcb_tf;
 			void *pc;
 
 			pc = ras_lookup(p2, (void *)(tf->tf_r15 & R15_PC));

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.100.10.2 2009/06/20 07:20:10 yamt Exp $ */
+/*	$NetBSD: intr.c,v 1.100.10.3 2010/03/11 15:02:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100.10.2 2009/06/20 07:20:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100.10.3 2010/03/11 15:02:58 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100.10.2 2009/06/20 07:20:10 yamt Exp $")
 #endif
 
 #if defined(MULTIPROCESSOR)
+static int intr_biglock_wrapper(void *);
+
 void *xcall_cookie;
 
 /* Stats */
@@ -633,9 +635,19 @@ uninst_fasttrap(int level)
  */
 void
 intr_establish(int level, int classipl,
-	       struct intrhand *ih, void (*vec)(void))
+	       struct intrhand *ih, void (*vec)(void),
+	       bool maybe_mpsafe)
 {
 	int s = splhigh();
+#ifdef MULTIPROCESSOR
+	bool mpsafe;
+#endif /* MULTIPROCESSOR */
+	if (classipl == 0)
+		classipl = level;
+
+#ifdef MULTIPROCESSOR
+	mpsafe = (classipl != IPL_VM) || maybe_mpsafe;
+#endif
 
 #ifdef DIAGNOSTIC
 	if (CPU_ISSUN4C) {
@@ -662,9 +674,6 @@ intr_establish(int level, int classipl,
 		inst_fasttrap(level, vec);
 	}
 
-	if (classipl == 0)
-		classipl = level;
-
 	/* A requested IPL cannot exceed its device class level */
 	if (classipl < level)
 		panic("intr_establish: class lvl (%d) < pil (%d)\n",
@@ -672,6 +681,15 @@ intr_establish(int level, int classipl,
 
 	/* pre-shift to PIL field in %psr */
 	ih->ih_classipl = (classipl << 8) & PSR_PIL;
+
+#ifdef MULTIPROCESSOR
+	if (!mpsafe) {
+		ih->ih_realfun = ih->ih_fun;
+		ih->ih_realarg = ih->ih_arg;
+		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_arg = ih;
+	}
+#endif /* MULTIPROCESSOR */
 
 	ih_insert(&intrhand[level], ih);
 	splx(s);
@@ -722,6 +740,9 @@ sparc_softintr_establish(int level, void (*fun)(void *), void *arg)
 	struct intrhand *ih;
 	int pilreq;
 	int pil;
+#ifdef MULTIPROCESSOR
+	bool mpsafe = (level != IPL_VM);
+#endif /* MULTIPROCESSOR */
 
 	/*
 	 * On a sun4m, the processor interrupt level is stored
@@ -750,8 +771,18 @@ sparc_softintr_establish(int level, void (*fun)(void *), void *arg)
 	sic->sic_pil = pil;
 	sic->sic_pilreq = pilreq;
 	ih = &sic->sic_hand;
-	ih->ih_fun = (int (*)(void *))fun;
-	ih->ih_arg = arg;
+#ifdef MULTIPROCESSOR
+	if (!mpsafe) {
+		ih->ih_realfun = (int (*)(void *))fun;
+		ih->ih_realarg = arg;
+		ih->ih_fun = intr_biglock_wrapper;
+		ih->ih_arg = ih;
+	} else
+#endif /* MULTIPROCESSOR */
+	{
+		ih->ih_fun = (int (*)(void *))fun;
+		ih->ih_arg = arg;
+	}
 
 	/*
 	 * Always run the handler at the requested level, which might
@@ -803,23 +834,26 @@ sparc_softintr_schedule(void *cookie)
 #endif
 
 #ifdef MULTIPROCESSOR
+
 /*
- * Called by interrupt stubs, etc., to lock/unlock the kernel.
+ * intr_biglock_wrapper: grab biglock and call a real interrupt handler.
  */
-void
-intr_lock_kernel(void)
+
+static int
+intr_biglock_wrapper(void *vp)
 {
+	struct intrhand *ih = vp;
+	int ret;
 
 	KERNEL_LOCK(1, NULL);
-}
 
-void
-intr_unlock_kernel(void)
-{
+	ret = (*ih->ih_realfun)(ih->ih_realarg);
 
 	KERNEL_UNLOCK_ONE(NULL);
+
+	return ret;
 }
-#endif
+#endif /* MULTIPROCESSOR */
 
 bool
 cpu_intr_p(void)

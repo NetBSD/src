@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.62.10.1 2009/05/04 08:12:00 yamt Exp $	*/
+/*	$NetBSD: fd.c,v 1.62.10.2 2010/03/11 15:03:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62.10.1 2009/05/04 08:12:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62.10.2 2010/03/11 15:03:03 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -185,13 +185,13 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int	fdcmatch(device_t, cfdata_t, void *);
-void	fdcattach(device_t, device_t, void *);
+static int	fdcmatch(device_t, cfdata_t, void *);
+static void	fdcattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(fdc, sizeof(struct fdc_softc),
     fdcmatch, fdcattach, NULL, NULL);
 
-inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static inline struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -216,7 +216,7 @@ struct fd_type {
 };
 
 /* The order of entries in the following table is important -- BEWARE! */
-struct fd_type fd_types[] = {
+static struct fd_type fd_types[] = {
 	{ 18, 2, 36, 2, 0xff, 0xcf, 0x18, 0x50, 80, 2880, 1,
 	    FDC_500KBPS, 0xf6, 1, "1.44MB"    }, /* 1.44MB diskette */
 	{ 15, 2, 30, 2, 0xff, 0xdf, 0x1b, 0x54, 80, 2400, 1,
@@ -258,8 +258,6 @@ struct fd_softc {
 	int sc_cylin;		/* where we think the head is */
 	int sc_opts;		/* user-set options */
 
-	void	*sc_sdhook;	/* shutdownhook cookie */
-
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct bufq_state *sc_q;/* pending I/O requests */
@@ -267,8 +265,8 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int	fdmatch(device_t, cfdata_t, void *);
-void	fdattach(device_t, device_t, void *);
+static int	fdmatch(device_t, cfdata_t, void *);
+static void	fdattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
@@ -289,33 +287,32 @@ const struct cdevsw fd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-void fdgetdisklabel(dev_t);
-int fd_get_parms(struct fd_softc *);
-void fdstart(struct fd_softc *);
-int fdprint(void *, const char *);
+static bool fd_shutdown(device_t, int);
+static void fdgetdisklabel(dev_t);
+static void fdstart(struct fd_softc *);
+static int fdprint(void *, const char *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-struct	fd_type *fd_nvtotype(char *, int, int);
-void	fd_set_motor(struct fdc_softc *);
-void	fd_motor_off(void *);
-void	fd_motor_on(void *);
-int	fdcresult(struct fdc_softc *);
-int	out_fdc(struct fdc_softc *, u_char);
-void	fdcstart(struct fdc_softc *);
-void	fdcstatus(device_t, int, const char *);
-void	fdc_reset(struct fdc_softc *);
-void	fdctimeout(void *);
-void	fdcpseudointr(void *);
-int	fdchwintr(void *);
-void	fdcswintr(void *);
-int	fdcstate(struct fdc_softc *);
-void	fdcretry(struct fdc_softc *);
-void	fdfinish(struct fd_softc *, struct buf *);
-int	fdformat(dev_t, struct ne7_fd_formb *, struct proc *);
-void	fd_do_eject(struct fdc_softc *, int);
-void	fd_mountroot_hook(device_t);
-static void fdconf(struct fdc_softc *);
+static void	fd_set_motor(struct fdc_softc *);
+static void	fd_motor_off(void *);
+static void	fd_motor_on(void *);
+static int	fdcresult(struct fdc_softc *);
+static int	out_fdc(struct fdc_softc *, u_char);
+static void	fdcstart(struct fdc_softc *);
+static void	fdcstatus(device_t, int, const char *);
+static void	fdc_reset(struct fdc_softc *);
+static void	fdctimeout(void *);
+static void	fdcpseudointr(void *);
+static int	fdchwintr(void *);
+static void	fdcswintr(void *);
+static int	fdcstate(struct fdc_softc *);
+static void	fdcretry(struct fdc_softc *);
+static void	fdfinish(struct fd_softc *, struct buf *);
+static int	fdformat(dev_t, struct ne7_fd_formb *, struct proc *);
+static void	fd_do_eject(struct fdc_softc *, int);
+static void	fd_mountroot_hook(device_t);
+static void	fdconf(struct fdc_softc *);
 
 #define IPL_SOFTFD	IPL_BIO
 #define	FDC_SOFTPRI	2
@@ -613,7 +610,19 @@ fdattach(device_t parent, device_t self, void *aux)
 	mountroothook_establish(fd_mountroot_hook, self);
 
 	/* Make sure the drive motor gets turned off at shutdown time. */
-	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
+	if (!pmf_device_register1(self, NULL, NULL, fd_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+bool
+fd_shutdown(device_t self, int howto)
+{
+	struct fd_softc *fd;
+
+	fd = device_private(self);
+	fd_motor_off(fd);
+
+	return true;
 }
 
 inline struct fd_type *

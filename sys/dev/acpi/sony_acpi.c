@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.5.4.2 2009/08/19 18:47:03 yamt Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.5.4.3 2010/03/11 15:03:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,20 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.4.2 2009/08/19 18:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.5.4.3 2010/03/11 15:03:23 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>
-#include <sys/callout.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
-#include <machine/bus.h>
-
-#include <dev/acpi/acpica.h>
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("sony_acpi")
 
 #define	SONY_NOTIFY_FnKeyEvent			0x92
 #define	SONY_NOTIFY_BrightnessDownPressed	0x85
@@ -88,8 +85,8 @@ static ACPI_STATUS sony_acpi_eval_set_integer(ACPI_HANDLE, const char *,
     ACPI_INTEGER, ACPI_INTEGER *);
 static void	sony_acpi_quirk_setup(struct sony_acpi_softc *);
 static void	sony_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
-static bool	sony_acpi_suspend(device_t PMF_FN_PROTO);
-static bool	sony_acpi_resume(device_t PMF_FN_PROTO);
+static bool	sony_acpi_suspend(device_t, const pmf_qual_t *);
+static bool	sony_acpi_resume(device_t, const pmf_qual_t *);
 static void	sony_acpi_brightness_down(device_t);
 static void	sony_acpi_brightness_up(device_t);
 static ACPI_STATUS sony_acpi_find_pic(ACPI_HANDLE, UINT32, void *, void **);
@@ -288,14 +285,14 @@ sony_acpi_attach(device_t parent, device_t self, void *aux)
 	    ACPI_DEVICE_NOTIFY, sony_acpi_notify_handler, self);
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(self,
-		    "couldn't install notify handler (%d)\n", rv);
+		    "couldn't install notify handler (%u)\n", rv);
 
 	/* Install sysctl handler */
 	rv = AcpiWalkNamespace(ACPI_TYPE_METHOD,
 	    sc->sc_node->ad_handle, 1, sony_walk_cb, sc, NULL);
 #ifdef DIAGNOSTIC
 	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self, "Cannot walk ACPI namespace (%d)\n",
+		aprint_error_dev(self, "Cannot walk ACPI namespace (%u)\n",
 		    rv);
 #endif
 
@@ -388,7 +385,7 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 }
 
 static bool
-sony_acpi_suspend(device_t dv PMF_FN_ARGS)
+sony_acpi_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct sony_acpi_softc *sc = device_private(dv);
 
@@ -398,7 +395,7 @@ sony_acpi_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-sony_acpi_resume(device_t dv PMF_FN_ARGS)
+sony_acpi_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct sony_acpi_softc *sc = device_private(dv);
 
@@ -458,7 +455,7 @@ sony_acpi_find_pic(ACPI_HANDLE hdl, UINT32 level, void *opaque, void **status)
 	    strncmp(devinfo->HardwareId.String, "SNY6001", 7) == 0)
 		sc->sc_has_pic = true;
 
-	AcpiOsFree(devinfo);
+	ACPI_FREE(devinfo);
 
 	return AE_OK;
 }

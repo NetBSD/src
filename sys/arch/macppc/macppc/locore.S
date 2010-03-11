@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.60.10.1 2009/05/04 08:11:29 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.60.10.2 2010/03/11 15:02:36 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,6 +53,8 @@
 #include <machine/vmparam.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
+
 /*
  * Some instructions gas doesn't understand (yet?)
  */
@@ -64,8 +66,6 @@
 	.data
 GLOBAL(esym)
 	.long	0			/* end of symbol table */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
 GLOBAL(oeacpufeat)
 	.long	0			/* cpu features */
 

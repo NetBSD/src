@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.9.18.3 2009/08/19 18:46:55 yamt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.9.18.4 2010/03/11 15:03:10 yamt Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9.18.3 2009/08/19 18:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9.18.4 2010/03/11 15:03:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 	int (*ih_fun)(void *), void *ih_arg)
 {
 	int evtch;
-	char evname[8];
+	char evname[16];
 	struct xen_intr_handle ih;
 #if NIOAPIC > 0
 	struct ioapic_softc *pic = NULL;

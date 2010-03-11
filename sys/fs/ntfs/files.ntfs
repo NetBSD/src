@@ -1,6 +1,6 @@
-#	$NetBSD: files.ntfs,v 1.1 2002/12/23 17:38:31 jdolecek Exp $
+#	$NetBSD: files.ntfs,v 1.1.106.1 2010/03/11 15:04:13 yamt Exp $
 
-deffs	fs_ntfs.h		NTFS
+deffs	NTFS
 
 defflag	opt_ntfs.h		NTFS_DEBUG
 

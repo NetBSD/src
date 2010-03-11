@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220.2.6 2009/08/19 18:46:47 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.220.2.7 2010/03/11 15:03:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.6 2009/08/19 18:46:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.7 2010/03/11 15:03:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.2.6 2009/08/19 18:46:47 yamt Exp $
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/buf.h>
@@ -147,7 +146,6 @@ int sigpid = 0;
 #endif
 #endif
 
-struct vm_map *mb_map = NULL;
 extern vaddr_t avail_end;
 
 int	physmem;
@@ -182,7 +180,6 @@ cpu_startup(void)
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
-	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
 #ifdef DEBUG
@@ -196,14 +193,6 @@ cpu_startup(void)
 	/*identifycpu();*/
 	format_bytes(pbuf, sizeof(pbuf), ctob((uint64_t)physmem));
 	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-        mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
@@ -271,9 +260,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		break;
 	}
 #endif
-	tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
-		((pstate)<<TSTATE_PSTATE_SHIFT) | 
-		(tf->tf_tstate & TSTATE_CWP);
+	tstate = ((int64_t)ASI_PRIMARY_NO_FAULT << TSTATE_ASI_SHIFT) |
+	    (pstate << TSTATE_PSTATE_SHIFT) | (tf->tf_tstate & TSTATE_CWP);
 	if ((fs = l->l_md.md_fpstate) != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
@@ -822,7 +810,7 @@ dumpsys(void)
 				    todo / (1024*1024));
 			for (off = 0; off < n; off += PAGE_SIZE)
 				pmap_kenter_pa(dumpspace+off, maddr+off,
-				    VM_PROT_READ);
+				    VM_PROT_READ, 0);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
 					(void *)dumpspace, (size_t)n);
@@ -1039,7 +1027,6 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *sbuf,
 	/*
 	 * We always use just one segment.
 	 */
-	map->dm_mapsize = buflen;
 	i = 0;
 	map->dm_segs[i].ds_addr = 0UL;
 	map->dm_segs[i].ds_len = 0;
@@ -1051,23 +1038,24 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *sbuf,
 		incr = min(sgsize, incr);
 
 		(void) pmap_extract(pmap_kernel(), vaddr, &pa);
-		sgsize -= incr;
-		vaddr += incr;
 		if (map->dm_segs[i].ds_len == 0)
 			map->dm_segs[i].ds_addr = pa;
 		if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
 		    && ((map->dm_segs[i].ds_len + incr) <= map->dm_maxsegsz)) {
 			/* Hey, waddyaknow, they're contiguous */
 			map->dm_segs[i].ds_len += incr;
-			incr = PAGE_SIZE;
-			continue;
+		} else {
+			if (++i >= map->_dm_segcnt)
+				return (EFBIG);
+			map->dm_segs[i].ds_addr = pa;
+			map->dm_segs[i].ds_len = incr;
 		}
-		if (++i >= map->_dm_segcnt)
-			return (EFBIG);
-		map->dm_segs[i].ds_addr = pa;
-		map->dm_segs[i].ds_len = incr = PAGE_SIZE;
+		sgsize -= incr;
+		vaddr += incr;
+		incr = PAGE_SIZE;
 	}
 	map->dm_nsegs = i + 1;
+	map->dm_mapsize = buflen;
 	/* Mapping is bus dependent */
 	return (0);
 }
@@ -1083,7 +1071,14 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m,
 	int i;
 	size_t len;
 
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+
+	if (m->m_pkthdr.len > map->_dm_size)
+		return EINVAL;
 
 	/* Record mbuf for *_unload */
 	map->_dm_type = _DM_TYPE_MBUF;
@@ -1196,6 +1191,10 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	struct proc *p = uio->uio_lwp->l_proc;
 	struct pmap *pm;
 
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
+	map->dm_nsegs = 0;
 	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
@@ -1214,7 +1213,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 * Lock the part of the user address space involved
 		 *    in the transfer.
 		 */
-		uvm_lwp_hold(p);
 		if (__predict_false(uvm_vslock(p->p_vmspace, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
 			    VM_PROT_WRITE : VM_PROT_READ) != 0)) {
@@ -1248,7 +1246,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 			i++;
 		}
 		uvm_vsunlock(p->p_vmspace, bp->b_data, todo);
-		uvm_lwp_rele(p);
  		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
 			return EFBIG;
@@ -1302,7 +1299,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 			 * We should be flushing a subrange, but we
 			 * don't know where the segments starts.
 			 */
-			dcache_flush_page(pa);
+			dcache_flush_page_all(pa);
 		}
 	}
 
@@ -1350,16 +1347,21 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 				if (offset < PAGE_SIZE) {
 					start = VM_PAGE_TO_PHYS(pg) + offset;
+					size -= offset;
 					if (size > len)
 						size = len;
 					cache_flush_phys(start, size, 0);
 					len -= size;
+					if (len == 0)
+						goto done;
+					offset = 0;
 					continue;
 				}
 				offset -= size;
 			}
 		}
 	}
+ done:
 	if (ops & BUS_DMASYNC_POSTWRITE) {
 		/* Nothing to do.  Handled by the bus controller. */
 	}
@@ -1500,7 +1502,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
-	if ((u_long)kva & PAGE_MASK)
+	if ((u_long)kva & PGOFSET)
 		panic("_bus_dmamem_unmap");
 #endif
 
@@ -1711,7 +1713,7 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	else
 		hp->_asi = ASI_PRIMARY;
 
-	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
+	pa = trunc_page(addr);
 	if (!(flags&BUS_SPACE_MAP_READONLY))
 		pm_prot |= VM_PROT_WRITE;
 
@@ -1726,7 +1728,7 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 			__func__, 
 			(unsigned long long)pa, (char *)v,
 			(unsigned long long)hp->_ptr));
-		pmap_kenter_pa(v, pa | pm_flags, pm_prot);
+		pmap_kenter_pa(v, pa | pm_flags, pm_prot, 0);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

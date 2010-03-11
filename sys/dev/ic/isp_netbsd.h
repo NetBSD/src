@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.65.4.3 2009/09/16 13:37:48 yamt Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.65.4.4 2010/03/11 15:03:32 yamt Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -44,7 +44,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kthread.h>
 
 #include <sys/bus.h>
@@ -79,7 +78,8 @@ struct isposinfo {
 	bus_dma_tag_t		dmatag;
 	bus_dmamap_t		rqdmap;
 	bus_dmamap_t		rsdmap;
-	bus_dmamap_t		scdmap;	/* FC only */
+	bus_dmamap_t		scdmap;		/* FC only */
+	uint64_t 		wwns[256];	/* FC only */
 	int			splsaved;
 	int			mboxwaiting;
 	uint32_t		islocked;
@@ -269,11 +269,13 @@ default:							\
 #define	DEFAULT_NODEWWN(isp, chan)	(isp)->isp_osinfo.wwn
 #define	DEFAULT_PORTWWN(isp, chan)	(isp)->isp_osinfo.wwn
 #define	ACTIVE_NODEWWN(isp, chan)				\
-	(isp)->isp_osinfo.wwn? (isp)->isp_osinfo.wwn :	\
-	FCPARAM(isp, chan)->isp_wwnn_nvram
+	((isp)->isp_osinfo.wwn? (isp)->isp_osinfo.wwn :	\
+	(FCPARAM(isp, chan)->isp_wwnn_nvram?		\
+	 FCPARAM(isp, chan)->isp_wwnn_nvram : 0x400000007F000008ull))
 #define	ACTIVE_PORTWWN(isp, chan)				\
-	(isp)->isp_osinfo.wwn? (isp)->isp_osinfo.wwn :	\
-	FCPARAM(isp, chan)->isp_wwpn_nvram
+	((isp)->isp_osinfo.wwn? (isp)->isp_osinfo.wwn :	\
+	(FCPARAM(isp, chan)->isp_wwpn_nvram?		\
+	 FCPARAM(isp, chan)->isp_wwpn_nvram : 0x400000007F000008ull))
 
 #if	_BYTE_ORDER == _BIG_ENDIAN
 #ifdef	ISP_SBUS_SUPPORTED

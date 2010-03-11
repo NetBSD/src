@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.10.4.3 2009/08/19 18:47:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.10.4.4 2010/03/11 15:03:36 yamt Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -67,7 +67,7 @@ __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24
 
 #include "ndis_driver_data.h"
 
-#ifndef NDIS_LKM
+#ifndef _MODULE
 #include <compat/ndis/hal_var.h>
 #endif
 
@@ -101,7 +101,7 @@ extern int ndis_intr(void *);
 
 extern unsigned char drv_data[];
 
-#ifndef NDIS_LKM
+#ifndef _MODULE
 //static funcptr ndis_txeof_wrap;
 //static funcptr ndis_rxeof_wrap;
 //static funcptr ndis_linksts_wrap;
@@ -123,8 +123,7 @@ CFATTACH_DECL(
 
 
 
-extern int
-ndis_lkm_handle(struct lkm_table *lkmtp, int cmd);
+#ifdef _MODULE
 extern int 
 ndisdrv_modevent(module_t mod, int cmd);
 
@@ -143,6 +142,7 @@ void load_ndisdrv(void *arg)
 {
 	ndisdrv_modevent(NULL, MOD_LOAD);
 }
+#endif
 
 /*static*/ int
 ndis_probe_pci(device_t parent, cfdata_t match, void *aux)
@@ -165,12 +165,10 @@ ndis_probe_pci(device_t parent, cfdata_t match, void *aux)
 			       t->ndis_vid, t->ndis_did);
 #endif
 		if((vendor  == t->ndis_vid) && (product == t->ndis_did)) {
-#ifndef NDIS_LKM	
-			ndis_lkm_handle(NULL, LKM_E_LOAD);
-			//kthread_create(load_ndisapi, NULL);
-#endif /* NDIS_LKM */
+#ifdef _MODULE	
 			ndisdrv_modevent(NULL, MOD_LOAD);
 			//kthread_create(load_ndisdrv, NULL);
+#endif /* _MODULE */
 				
 			drv = windrv_lookup(0, "PCI Bus");
 			printf("Matching vendor: %x, product: %x, name: %s\n", vendor, product, t->ndis_name);

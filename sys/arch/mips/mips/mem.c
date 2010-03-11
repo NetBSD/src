@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35.20.1 2009/05/04 08:11:31 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.35.20.2 2010/03/11 15:02:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,7 +80,7 @@
 #include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.20.1 2009/05/04 08:11:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.20.2 2010/03/11 15:02:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -94,6 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35.20.1 2009/05/04 08:11:31 yamt Exp $");
 #include <machine/cpu.h>
 
 #include <mips/cache.h>
+#ifdef _LP64
+#include <mips/mips3_pte.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -143,7 +146,11 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			 */
 			if (v + c > ctob(physmem))
 				return (EFAULT);
-			v += MIPS_KSEG0_START;
+#ifdef _LP64
+			v = MIPS_PHYS_TO_XKPHYS_CACHED(v);
+#else
+			v = MIPS_PHYS_TO_KSEG0(v);
+#endif
 			error = uiomove((void *)v, c, uio);
 #if defined(MIPS3_PLUS)
 			if (mips_cache_virtual_alias)
@@ -154,6 +161,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
+			if (v < MIPS_KSEG0_START)
 			if (v < MIPS_KSEG0_START)
 				return (EFAULT);
 			if (v > MIPS_PHYS_TO_KSEG0(avail_end +

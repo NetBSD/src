@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.1.4.2 2009/05/04 08:13:18 yamt Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.1.4.3 2010/03/11 15:04:03 yamt Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.1.4.2 2009/05/04 08:13:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.1.4.3 2010/03/11 15:04:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -250,7 +250,7 @@ sdmmc_io_function_enable(struct sdmmc_function *sf)
 	
 	retry = 5;
 	while (!sdmmc_io_function_ready(sf) && retry-- > 0)
-		tsleep(&lbolt, PPAUSE, "pause", 0);
+		kpause("pause", false, hz, NULL);
 	return (retry >= 0) ? 0 : ETIMEDOUT;
 }
 

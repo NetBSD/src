@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.12.36.2 2009/05/04 08:13:22 yamt Exp $	*/
+/*	$NetBSD: uyap.c,v 1.12.36.3 2010/03/11 15:04:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.12.36.2 2009/05/04 08:13:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.12.36.3 2010/03/11 15:04:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,10 @@ USB_ATTACH(uyap)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 

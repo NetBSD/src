@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.17.10.1 2009/05/04 08:11:48 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.17.10.2 2010/03/11 15:02:53 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.10.1 2009/05/04 08:11:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.10.2 2010/03/11 15:02:53 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17.10.1 2009/05/04 08:11:48 yamt Exp $");
 #include <mips/sibyte/include/sb1250_scd.h>
 #include <mips/sibyte/dev/sbscdvar.h>
 
-#define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
+#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
 
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);

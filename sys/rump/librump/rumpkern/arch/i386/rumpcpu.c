@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcpu.c,v 1.3.2.2 2009/05/04 08:14:30 yamt Exp $	*/
+/*	$NetBSD: rumpcpu.c,v 1.3.2.3 2010/03/11 15:04:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.3.2.2 2009/05/04 08:14:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.3.2.3 2010/03/11 15:04:38 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -37,20 +37,27 @@ __KERNEL_RCSID(0, "$NetBSD: rumpcpu.c,v 1.3.2.2 2009/05/04 08:14:30 yamt Exp $")
 
 #include "rump_private.h"
 
-struct cpu_info *cpu_info_list = &rump_cpu;
+struct cpu_info *cpu_info_list;
+
+void
+rump_cpu_bootstrap(struct cpu_info *ci)
+{
+
+	cpu_info_list = ci;
+}
 
 struct cpu_info *
 x86_curcpu()
 {
 
-	return &rump_cpu;
+	return curlwp->l_cpu;
 }
 
 struct lwp *
 x86_curlwp()
 {
 
-	return rump_get_curlwp();
+	return rumpuser_get_curlwp();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.6.40.2 2009/05/04 08:13:50 yamt Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.6.40.3 2010/03/11 15:04:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <machine/reg.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: bcopy.S,v 1.6.40.2 2009/05/04 08:13:50 yamt Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.6.40.3 2010/03/11 15:04:22 yamt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -515,10 +515,10 @@ Lspcopy_curlwp_bad:
 Lspcopy_curlwp_ok:
 #endif /* DIAGNOSTIC */
 	ldil    L%spcopy_fault, %r1
-	ldw     L_ADDR(%r31), %r31
+	ldw     L_PCB(%r31), %r31
 	ldo     R%spcopy_fault(%r1), %r1
 	ldi	EFAULT, %ret0
-	stw     %r1, U_PCB+PCB_ONFAULT(%r31)
+	stw     %r1, PCB_ONFAULT(%r31)
 
 	/* Setup the space registers. */
 	mfsp	%sr2, %ret1
@@ -534,7 +534,7 @@ _LABEL(_done):
 	/* Return. */
 	copy	%r0, %ret0
 ALTENTRY(spcopy_fault)
-	stw     %r0, U_PCB+PCB_ONFAULT(%r31)
+	stw     %r0, PCB_ONFAULT(%r31)
 	bv	%r0(%rp)
 	mtsp	%ret1, %sr2
 EXIT(spcopy)

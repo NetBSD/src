@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.8.78.2 2009/05/16 10:41:10 yamt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.8.78.3 2010/03/11 15:01:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,12 +32,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8.78.2 2009/05/16 10:41:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8.78.3 2010/03/11 15:01:54 yamt Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 #include <arm/undefined.h>
 #include <machine/fpureg.h>
 #include <machine/pcb.h>

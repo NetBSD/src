@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.16.40.1 2009/05/04 08:13:44 yamt Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.16.40.2 2010/03/11 15:04:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -135,7 +135,8 @@ int  smbfs_smb_lock(struct smbnode *np, int op, void *id,
 	off_t start, off_t end,	struct smb_cred *scred);
 int  smbfs_smb_statvfs(struct smb_share *ssp, struct statvfs *sbp,
 	struct smb_cred *scred);
-int  smbfs_smb_setfsize(struct smbnode *np, int newsize, struct smb_cred *scred);
+int  smbfs_smb_setfsize(struct smbnode *np, u_quad_t newsize,
+			struct smb_cred *scred);
 
 int  smbfs_smb_setpattr(struct smbnode *np, u_int16_t attr,
 	struct timespec *mtime, struct smb_cred *scred);

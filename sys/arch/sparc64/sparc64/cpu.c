@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.75.4.2 2009/06/20 07:20:11 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.75.4.3 2010/03/11 15:03:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75.4.2 2009/06/20 07:20:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75.4.3 2010/03/11 15:03:01 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -77,7 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75.4.2 2009/06/20 07:20:11 yamt Exp $");
 int ecache_min_line_size;
 
 /* Linked list of all CPUs in system. */
+#if defined(MULTIPROCESSOR)
 int sparc_ncpus = 0;
+#endif
 struct cpu_info *cpus = NULL;
 
 volatile sparc64_cpuset_t cpus_active;/* set of active cpus */
@@ -92,6 +94,12 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
 
+/* These are used in locore.s, and are maximums */
+int	dcache_line_size;
+int	dcache_size;
+int	icache_line_size;
+int	icache_size;
+
 #ifdef MULTIPROCESSOR
 static const char *ipi_evcnt_names[IPI_EVCNT_NUM] = IPI_EVCNT_NAMES;
 #endif
@@ -104,6 +112,18 @@ int cpu_match(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(cpu, sizeof(struct device),
     cpu_match, cpu_attach, NULL, NULL);
+
+static int
+upaid_from_node(u_int cpu_node)
+{
+	int portid;
+
+	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0 &&
+	    OF_getprop(cpu_node, "portid", &portid, sizeof(portid)) <= 0)
+		panic("cpu node w/o upa-portid");
+
+	return portid;
+}
 
 struct cpu_info *
 alloc_cpuinfo(u_int cpu_node)
@@ -118,9 +138,7 @@ alloc_cpuinfo(u_int cpu_node)
 	/*
 	 * Check for UPAID in the cpus list.
 	 */
-	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0 &&
-	    OF_getprop(cpu_node, "portid", &portid, sizeof(portid)) <= 0)
-		panic("alloc_cpuinfo: upa-portid");
+	portid = upaid_from_node(cpu_node);
 
 	for (cpi = cpus; cpi != NULL; cpi = cpi->ci_next)
 		if (cpi->ci_cpuid == portid)
@@ -136,7 +154,7 @@ alloc_cpuinfo(u_int cpu_node)
 	cpu0paddr += sz;
 
 	for (pa = pa0; pa < cpu0paddr; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 	pmap_update(pmap_kernel());
 
@@ -177,7 +195,21 @@ cpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	return (strcmp(cf->cf_name, ma->ma_name) == 0);
+	if (strcmp(cf->cf_name, ma->ma_name) != 0)
+		return 0;
+
+	/*
+	 * If we are going to only attach a single cpu, make sure
+	 * to pick the one we are running on right now.
+	 */
+	if (upaid_from_node(ma->ma_node) != CPU_UPAID) {
+#ifdef MULTIPROCESSOR
+		if (boothowto & RB_MD1)
+#endif
+			return 0;
+	}
+
+	return 1;
 }
 
 static void
@@ -216,8 +248,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	int bigcache, cachesize;
 	char buf[100];
 	int 	totalsize = 0;
-	int 	linesize;
-	static bool passed = false;
+	int 	linesize, dcachesize, icachesize;
 
 	/* tell them what we have */
 	node = ma->ma_node;
@@ -234,8 +265,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 * For other cpus, we need to call mi_cpu_attach()
 	 * and complete setting up cpcb.
 	 */
-	if (!passed) {
-		passed = true;
+	if (ci->ci_flags & CPUF_PRIMARY) {
 		fpstate_cache = pool_cache_init(sizeof(struct fpstate64),
 					BLOCK_SIZE, 0, 0, "fpstate", NULL,
 					IPL_NONE, NULL, NULL, NULL);
@@ -244,13 +274,13 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 #ifdef MULTIPROCESSOR
 	else {
 		mi_cpu_attach(ci);
-		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
+		ci->ci_cpcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 	}
 	for (i = 0; i < IPI_EVCNT_NUM; ++i)
-		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_MISC,
+		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_INTR,
 				     NULL, device_xname(dev), ipi_evcnt_names[i]);
 #endif
-	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_MISC, NULL,
+	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
 			     device_xname(dev), "timer");
 
 	clk = prom_getpropint(node, "clock-frequency", 0);
@@ -275,15 +305,18 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 	bigcache = 0;
 
-	linesize = l =
-		prom_getpropint(node, "icache-line-size", 0);
+	icachesize = prom_getpropint(node, "icache-size", 0);
+	if (icachesize > icache_size)
+		icache_size = icachesize;
+	linesize = l = prom_getpropint(node, "icache-line-size", 0);
+	if (linesize > icache_line_size)
+		icache_line_size = linesize;
+
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
-	totalsize =
-		prom_getpropint(node, "icache-size", 0) *
-		prom_getpropint(node, "icache-associativity", 1);
+	totalsize = icachesize;
 	if (totalsize == 0)
 		totalsize = l *
 			prom_getpropint(node, "icache-nlines", 64) *
@@ -301,15 +334,18 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		sep = ", ";
 	}
 
-	linesize = l =
-		prom_getpropint(node, "dcache-line-size",0);
+	dcachesize = prom_getpropint(node, "dcache-size", 0);
+	if (dcachesize > dcache_size)
+		dcache_size = dcachesize;
+	linesize = l = prom_getpropint(node, "dcache-line-size", 0);
+	if (linesize > dcache_line_size)
+		dcache_line_size = linesize;
+
 	for (i = 0; (1 << i) < l && l; i++)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
-	totalsize =
-		prom_getpropint(node, "dcache-size", 0) *
-		prom_getpropint(node, "dcache-associativity", 1);
+	totalsize = dcachesize;
 	if (totalsize == 0)
 		totalsize = l *
 			prom_getpropint(node, "dcache-nlines", 128) *
@@ -333,9 +369,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
-	totalsize = 
-		prom_getpropint(node, "ecache-size", 0) *
-		prom_getpropint(node, "ecache-associativity", 1);
+	totalsize = prom_getpropint(node, "ecache-size", 0);
 	if (totalsize == 0)
 		totalsize = l *
 			prom_getpropint(node, "ecache-nlines", 32768) *

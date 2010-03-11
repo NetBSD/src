@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.16.4.2 2009/05/16 10:41:43 yamt Exp $	*/
+/*	$NetBSD: sio16.c,v 1.16.4.3 2010/03/11 15:04:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.16.4.2 2009/05/16 10:41:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.16.4.3 2010/03/11 15:04:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -73,7 +73,6 @@ static u_char	sio16_ackfunc(void *, int who);
  */
 struct sio16_softc {
 	struct device	sc_dev;			/* must be first */
-	struct sbusdev	sc_sd;			/* for sbus drivers */
 
 	/* sbus information */
 	bus_space_tag_t	sc_tag;			/* bus tag for below */
@@ -126,7 +125,7 @@ void
 sio16_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
-	struct sio16_softc *sc = (struct sio16_softc *)self;
+	struct sio16_softc *sc = device_private(self);
 	bus_space_handle_t h;
 	char *mode, *model;
 	int i;
@@ -206,9 +205,6 @@ sio16_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* set up our sbus connections */
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-
 	/* establish interrupt channel */
 	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY,
 	    cd18xx_hardintr, sc);
@@ -285,7 +281,7 @@ clcd_match(device_t parent, cfdata_t cf, void *aux)
 static void
 clcd_attach(device_t parent, device_t self, void *aux)
 {
-	struct cd18xx_softc *sc = (struct cd18xx_softc *)self;
+	struct cd18xx_softc *sc = device_private(self);
 	struct sio16_attach_args *args = aux;
 
 	sc->sc_tag = args->cd_tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18.20.1 2009/05/04 08:11:56 yamt Exp $	*/
+/*	$NetBSD: boot.c,v 1.18.20.2 2010/03/11 15:02:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -297,14 +297,14 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
 	 * strings.
 	 */
 	l = strlen(args) + 1;
-	memcpy( args + l, &esym, sizeof(esym));
+	memcpy(args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
 
 	/*
 	 * Tell the kernel we're an OpenFirmware system.
 	 */
 	machine_tag = SPARC_MACHINE_OPENFIRMWARE;
-	memcpy( args + l, &machine_tag, sizeof(machine_tag));
+	memcpy(args + l, &machine_tag, sizeof(machine_tag));
 	l += sizeof(machine_tag);
 
 	/* 
@@ -359,6 +359,7 @@ start_kernel(char *kernel, char *bootline, void *ofw)
 		(void)printf("Loading %s: ", kernel);
 
 		if (fdloadfile(fd, marks, LOAD_ALL) != -1) {
+			close(fd);
 			jump_to_kernel(marks, kernel, bootline, ofw);
 		}
 	}

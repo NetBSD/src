@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.18.42.1 2009/05/04 08:12:32 yamt Exp $	*/
+/*	$NetBSD: db_access.c,v 1.18.42.2 2010/03/11 15:03:20 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.18.42.1 2009/05/04 08:12:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.18.42.2 2010/03/11 15:03:20 yamt Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_kgdb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -41,7 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.18.42.1 2009/05/04 08:12:32 yamt Exp
 /*
  * Access unaligned data items on aligned (longword)
  * boundaries.
+ *
+ * This file is shared by ddb, kgdb and crash(8).
  */
+
+#if defined(DDB) || !defined(DDB) && !defined(KGDB)
+#define	_COMPILE_THIS
+#endif
+
+#if defined(_COMPILE_THIS) || defined(KGDB) && defined(SOFTWARE_SSTEP)
 
 const int db_extend[] = {	/* table for sign-extending */
 	0,
@@ -91,6 +103,10 @@ db_put_value(db_addr_t addr, size_t size, db_expr_t value)
 	db_write_bytes(addr, size, data);
 }
 
+#endif	/* _COMPILE_THIS || KGDB && SOFTWARE_SSTEP */
+
+#ifdef	_COMPILE_THIS
+
 void *
 db_read_ptr(const char *name)
 {
@@ -120,3 +136,5 @@ db_read_int(const char *name)
 	db_read_bytes((db_addr_t)val, sizeof(p), (char *)&p);
 	return p;
 }
+
+#endif	/* _COMPILE_THIS */

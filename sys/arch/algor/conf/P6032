@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.45.10.1 2009/05/04 08:10:27 yamt Exp $
+#	$NetBSD: P6032,v 1.45.10.2 2010/03/11 15:01:56 yamt Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.45.10.1 $"
+#ident 		"P6032-$Revision: 1.45.10.2 $"
 
 maxusers 32
 
@@ -341,6 +341,9 @@ fd*	at	fdc? drive ?
 # USB Modem
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?

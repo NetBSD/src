@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.178.4.5 2009/08/19 18:47:03 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.178.4.6 2010/03/11 15:03:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,10 +130,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.4.5 2009/08/19 18:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.178.4.6 2010/03/11 15:03:21 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "fs_nfs.h"
 #include "opt_vnd.h"
 #endif
 
@@ -874,6 +873,7 @@ vndiodone(struct buf *bp)
 	struct vndxfer *vnx = VND_BUFTOXFER(bp);
 	struct vnd_softc *vnd = vnx->vx_vnd;
 	struct buf *obp = bp->b_private;
+	int s = splbio();
 
 	KASSERT(&vnx->vx_buf == bp);
 	KASSERT(vnd->sc_active > 0);
@@ -889,6 +889,7 @@ vndiodone(struct buf *bp)
 	if (vnd->sc_active == 0) {
 		wakeup(&vnd->sc_tab);
 	}
+	splx(s);
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
 	buf_destroy(bp);
@@ -1037,6 +1038,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	switch (cmd) {
 	case VNDIOCSET:
 	case VNDIOCCLR:
+#ifdef VNDIOOCSET
+	case VNDIOOCSET:
+	case VNDIOOCCLR:
+#endif
 	case DIOCSDINFO:
 	case DIOCWDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
@@ -1052,6 +1057,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/* Must be initialized for these... */
 	switch (cmd) {
 	case VNDIOCCLR:
+#ifdef VNDIOOCCLR
+	case VNDIOOCCLR:
+#endif
 	case DIOCGDINFO:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
@@ -1071,6 +1079,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	switch (cmd) {
+#ifdef VNDIOOCSET
+	case VNDIOOCSET:
+#endif
 	case VNDIOCSET:
 		if (vnd->sc_flags & VNF_INITED)
 			return EBUSY;
@@ -1088,6 +1099,9 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = VOP_GETATTR(nd.ni_vp, &vattr, l->l_cred);
 		if (!error && nd.ni_vp->v_type != VREG)
 			error = EOPNOTSUPP;
+		if (!error && vattr.va_bytes < vattr.va_size)
+			/* File is definitely sparse, reject here */
+			error = EINVAL;
 		if (error) {
 			VOP_UNLOCK(nd.ni_vp, 0);
 			goto close_and_exit;
@@ -1272,7 +1286,11 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			goto close_and_exit;
 
 		vndthrottle(vnd, vnd->sc_vp);
-		vio->vnd_size = dbtob(vnd->sc_size);
+		vio->vnd_osize = dbtob(vnd->sc_size);
+#ifdef VNDIOOCSET
+		if (cmd != VNDIOOCSET)
+#endif
+			vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
 
 		/* create the kernel thread, wait for it to be up */
@@ -1295,6 +1313,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* Attach the disk. */
 		disk_attach(&vnd->sc_dkdev);
+		disk_blocksize(&vnd->sc_dkdev, vnd->sc_geom.vng_secsize);
 
 		/* Initialize the xfer and buffer pools. */
 		pool_init(&vnd->sc_vxpool, sizeof(struct vndxfer), 0,
@@ -1328,6 +1347,9 @@ unlock_and_exit:
 		vndunlock(vnd);
 		return error;
 
+#ifdef VNDIOOCCLR
+	case VNDIOOCCLR:
+#endif
 	case VNDIOCCLR:
 		part = DISKPART(dev);
 		pmask = (1 << part);
@@ -1537,13 +1559,10 @@ vndsetcred(struct vnd_softc *vnd, kauth_cred_t cred)
 static void
 vndthrottle(struct vnd_softc *vnd, struct vnode *vp)
 {
-#ifdef NFS
-	extern int (**nfsv2_vnodeop_p)(void *);
 
-	if (vp->v_op == nfsv2_vnodeop_p)
+	if (vp->v_tag == VT_NFS)
 		vnd->sc_maxactive = 2;
 	else
-#endif
 		vnd->sc_maxactive = 8;
 
 	if (vnd->sc_maxactive < 1)

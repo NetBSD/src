@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1.2.2 2009/09/16 13:38:04 yamt Exp $	*/
+/*	$NetBSD: component.c,v 1.1.2.3 2010/03/11 15:04:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.2 2009/09/16 13:38:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.3 2010/03/11 15:04:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -34,13 +34,13 @@ __KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.2.2 2009/09/16 13:38:04 yamt Exp $
 #include <sys/rnd.h>
 #include <sys/stat.h>
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
 void rndattach(int);
 
-void
-rump_dev_rnd_init()
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct cdevsw rnd_cdevsw;
 	devmajor_t bmaj, cmaj;
@@ -54,10 +54,10 @@ rump_dev_rnd_init()
 		panic("cannot attach rnd: %d", error);
 
 	/* XXX: truly hideous interface abuse */
-	if ((error = rump_vfs_makedevnodes(S_IFCHR, "random", 0,
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/random", 0,
 	    cmaj, RND_DEV_RANDOM, 1)) != 0)
 		panic("cannot create /dev/random: %d", error);
-	if ((error = rump_vfs_makedevnodes(S_IFCHR, "urandom", 0,
+	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/urandom", 0,
 	    cmaj, RND_DEV_URANDOM, 1)) != 0)
 		panic("cannot create /dev/urandom: %d", error);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.29.4.2 2009/07/18 14:52:52 yamt Exp $ */
+/*	$NetBSD: lpt.c,v 1.29.4.3 2010/03/11 15:02:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,13 +56,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.29.4.2 2009/07/18 14:52:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.29.4.3 2010/03/11 15:02:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/ioctl.h>

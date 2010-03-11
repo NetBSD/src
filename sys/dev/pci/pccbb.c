@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.167.4.4 2009/08/19 18:47:12 yamt Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.167.4.5 2010/03/11 15:03:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by HAYAKAWA Koichi.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167.4.4 2009/08/19 18:47:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167.4.5 2010/03/11 15:03:49 yamt Exp $");
 
 /*
 #define CBB_DEBUG
@@ -138,11 +133,10 @@ static void *pccbb_cb_intr_establish(cardbus_chipset_tag_t,
     cardbus_intr_line_t irq, int level, int (*ih) (void *), void *sc);
 static void pccbb_cb_intr_disestablish(cardbus_chipset_tag_t ct, void *ih);
 
-static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int);
-static void pccbb_free_tag(cardbus_chipset_tag_t, cardbustag_t);
-static cardbusreg_t pccbb_conf_read(cardbus_chipset_tag_t, cardbustag_t, int);
-static void pccbb_conf_write(cardbus_chipset_tag_t, cardbustag_t, int,
-    cardbusreg_t);
+static pcitag_t pccbb_make_tag(cardbus_chipset_tag_t, int, int);
+static pcireg_t pccbb_conf_read(cardbus_chipset_tag_t, pcitag_t, int);
+static void pccbb_conf_write(cardbus_chipset_tag_t, pcitag_t, int,
+    pcireg_t);
 static void pccbb_chipinit(struct pccbb_softc *);
 static void pccbb_intrinit(struct pccbb_softc *);
 
@@ -204,8 +198,8 @@ void pccbb_winlist_show(struct pccbb_win_chain *);
 /* for config_defer */
 static void pccbb_pci_callback(device_t);
 
-static bool pccbb_suspend(device_t PMF_FN_PROTO);
-static bool pccbb_resume(device_t PMF_FN_PROTO);
+static bool pccbb_suspend(device_t, const pmf_qual_t *);
+static bool pccbb_resume(device_t, const pmf_qual_t *);
 
 #if defined SHOW_REGS
 static void cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag,
@@ -242,7 +236,6 @@ static const struct cardbus_functions pccbb_funcs = {
 	pccbb_ctrl,
 	pccbb_power_ct,
 	pccbb_make_tag,
-	pccbb_free_tag,
 	pccbb_conf_read,
 	pccbb_conf_write,
 };
@@ -1902,22 +1895,17 @@ cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag, bus_space_tag_t memt,
 #endif
 
 /*
- * static cardbustag_t pccbb_make_tag(cardbus_chipset_tag_t cc,
+ * static pcitag_t pccbb_make_tag(cardbus_chipset_tag_t cc,
  *                                    int busno, int function)
  *   This is the function to make a tag to access config space of
  *  a CardBus Card.  It works same as pci_conf_read.
  */
-static cardbustag_t
+static pcitag_t
 pccbb_make_tag(cardbus_chipset_tag_t cc, int busno, int function)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
 
 	return pci_make_tag(sc->sc_pc, busno, 0, function);
-}
-
-static void
-pccbb_free_tag(cardbus_chipset_tag_t cc, cardbustag_t tag)
-{
 }
 
 /*
@@ -1926,12 +1914,12 @@ pccbb_free_tag(cardbus_chipset_tag_t cc, cardbustag_t tag)
  * This is the function to read the config space of a CardBus card.
  * It works the same as pci_conf_read(9).
  */
-static cardbusreg_t
-pccbb_conf_read(cardbus_chipset_tag_t cc, cardbustag_t tag, int offset)
+static pcireg_t
+pccbb_conf_read(cardbus_chipset_tag_t cc, pcitag_t tag, int offset)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
 	pcitag_t brtag = sc->sc_tag;
-	cardbusreg_t reg;
+	pcireg_t reg;
 
 	/*
 	 * clear cardbus master abort status; it is OK to write without
@@ -1954,8 +1942,7 @@ pccbb_conf_read(cardbus_chipset_tag_t cc, cardbustag_t tag, int offset)
  * card.  It works the same as pci_conf_write(9).
  */
 static void
-pccbb_conf_write(cardbus_chipset_tag_t cc, cardbustag_t tag, int reg,
-    cardbusreg_t val)
+pccbb_conf_write(cardbus_chipset_tag_t cc, pcitag_t tag, int reg, pcireg_t val)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
 
@@ -3067,8 +3054,8 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 	pcitag_t tag;
 	bus_addr_t mask = ~(align - 1);
 	struct {
-		cardbusreg_t win_start;
-		cardbusreg_t win_limit;
+		pcireg_t win_start;
+		pcireg_t win_limit;
 		int win_flags;
 	} win[2];
 	struct pccbb_win_chain *chainp;
@@ -3184,7 +3171,7 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 #endif /* rbus */
 
 static bool
-pccbb_suspend(device_t dv PMF_FN_ARGS)
+pccbb_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct pccbb_softc *sc = device_private(dv);
 	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
@@ -3219,7 +3206,7 @@ pccbb_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-pccbb_resume(device_t dv PMF_FN_ARGS)
+pccbb_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct pccbb_softc *sc = device_private(dv);
 	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */

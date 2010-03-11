@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.15.4.4 2009/09/16 13:37:52 yamt Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.15.4.5 2010/03/11 15:03:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.15.4.4 2009/09/16 13:37:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.15.4.5 2010/03/11 15:03:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,11 +440,11 @@ voodoofb_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(self), intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 #endif
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);

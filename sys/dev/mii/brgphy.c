@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.37.4.5 2009/08/19 18:47:09 yamt Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.37.4.6 2010/03/11 15:03:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,11 +41,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -67,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.37.4.5 2009/08/19 18:47:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.37.4.6 2010/03/11 15:03:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +113,8 @@ static void	brgphy_adc_bug(struct mii_softc *);
 static void	brgphy_5704_a0_bug(struct mii_softc *);
 static void	brgphy_ber_bug(struct mii_softc *);
 static void	brgphy_crc_bug(struct mii_softc *);
+static void	brgphy_jumbo_settings(struct mii_softc *);
+static void	brgphy_eth_wirespeed(struct mii_softc *);
 
 
 static const struct mii_phy_funcs brgphy_funcs = {
@@ -140,11 +137,14 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM54K2,
 	  MII_STR_BROADCOM_BCM54K2 },
 
-	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5464,
-	  MII_STR_BROADCOM_BCM5464 },
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5461,
+	  MII_STR_BROADCOM_BCM5461 },
 
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5462,
 	  MII_STR_BROADCOM_BCM5462 },
+
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5464,
+	  MII_STR_BROADCOM_BCM5464 },
 
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5701,
 	  MII_STR_BROADCOM_BCM5701 },
@@ -173,14 +173,26 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5708C,
 	  MII_STR_BROADCOM_BCM5708C },
 
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5709C,
+	  MII_STR_BROADCOM2_BCM5709C },
+
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5709CAX,
+	  MII_STR_BROADCOM2_BCM5709CAX },
+
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5722,
 	  MII_STR_BROADCOM2_BCM5722 },
 
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5755,
 	  MII_STR_BROADCOM2_BCM5755 },
 
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5761,
+	  MII_STR_BROADCOM2_BCM5761 },
+
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5754,
 	  MII_STR_BROADCOM2_BCM5754 },
+
+	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5784,
+	  MII_STR_BROADCOM2_BCM5784 },
 
 	{ MII_OUI_xxBROADCOM_ALT1,	MII_MODEL_xxBROADCOM_ALT1_BCM5906,
 	  MII_STR_xxBROADCOM_ALT1_BCM5906 },
@@ -242,8 +254,9 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	if (device_is_a(parent, "bge")) {
 		bsc->sc_isbge = 1;
 		dict = device_properties(parent);
-		prop_dictionary_get_uint32(dict, "phyflags",
-		    &bsc->sc_bge_flags);
+		if (!prop_dictionary_get_uint32(dict, "phyflags",
+			&bsc->sc_bge_flags))
+			aprint_error("failed to get phyflags");
 	} else if (device_is_a(parent, "bnx")) {
 		bsc->sc_isbnx = 1;
 		dict = device_properties(parent);
@@ -308,8 +321,8 @@ setit:
 			}
 
 			PHY_WRITE(sc, MII_100T2CR, 0);
-			PHY_WRITE(sc, MII_BMCR, speed);
 			PHY_WRITE(sc, MII_ANAR, ANAR_CSMA);
+			PHY_WRITE(sc, MII_BMCR, speed);
 
 			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
 				break;
@@ -553,21 +566,19 @@ brgphy_reset(struct mii_softc *sc)
 			if (bsc->sc_bge_flags & BGE_PHY_CRC_BUG)
 				brgphy_crc_bug(sc);
 
-#if 0
 			/* Set Jumbo frame settings in the PHY. */
-			if (bsc->sc_bge_flags & BGE_JUMBO_CAP)
+			if (bsc->sc_bge_flags & BGE_JUMBO_CAPABLE)
 				brgphy_jumbo_settings(sc);
-#endif
 
 			/* Adjust output voltage */
 			if (sc->mii_mpd_model == MII_MODEL_BROADCOM2_BCM5906)
 				PHY_WRITE(sc, BRGPHY_MII_EPHY_PTEST, 0x12);
 
-#if 0
 			/* Enable Ethernet@Wirespeed */
 			if (!(bsc->sc_bge_flags & BGE_NO_ETH_WIRE_SPEED))
 				brgphy_eth_wirespeed(sc);
 
+#if 0
 			/* Enable Link LED on Dell boxes */
 			if (bsc->sc_bge_flags & BGE_NO_3LED) {
 				PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL, 
@@ -805,4 +816,37 @@ brgphy_crc_bug(struct mii_softc *sc)
 
 	for (i = 0; dspcode[i].reg != 0; i++)
 		PHY_WRITE(sc, dspcode[i].reg, dspcode[i].val);
+}
+
+static void
+brgphy_jumbo_settings(struct mii_softc *sc)
+{
+	u_int32_t val;
+
+	/* Set Jumbo frame settings in the PHY. */
+	if (sc->mii_mpd_model == MII_MODEL_BROADCOM_BCM5401) {
+		/* Cannot do read-modify-write on the BCM5401 */
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x4c20);
+	} else {
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7);
+		val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+		PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
+			val & ~(BRGPHY_AUXCTL_LONG_PKT | 0x7));
+	}
+
+	val = PHY_READ(sc, BRGPHY_MII_PHY_EXTCTL);
+	PHY_WRITE(sc, BRGPHY_MII_PHY_EXTCTL,
+		val & ~BRGPHY_PHY_EXTCTL_HIGH_LA);
+}
+
+static void
+brgphy_eth_wirespeed(struct mii_softc *sc)
+{
+	u_int32_t val;
+
+	/* Enable Ethernet@Wirespeed */
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL, 0x7007);
+	val = PHY_READ(sc, BRGPHY_MII_AUXCTL);
+	PHY_WRITE(sc, BRGPHY_MII_AUXCTL,
+		(val | (1 << 15) | (1 << 4)));
 }

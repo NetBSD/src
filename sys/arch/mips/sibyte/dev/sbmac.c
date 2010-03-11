@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.28.10.2 2009/08/19 18:46:32 yamt Exp $ */
+/* $NetBSD: sbmac.c,v 1.28.10.3 2010/03/11 15:02:42 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,9 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.10.2 2009/08/19 18:46:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.10.3 2010/03/11 15:02:42 yamt Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 #include "opt_ns.h"
 
@@ -55,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28.10.2 2009/08/19 18:46:32 yamt Exp $")
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -119,8 +116,8 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 #define	dprintf(x)
 #endif
 
-#define	SBMAC_READCSR(t) mips3_ld((uint64_t *) (t))
-#define	SBMAC_WRITECSR(t, v) mips3_sd((uint64_t *) (t), (v))
+#define	SBMAC_READCSR(t) mips3_ld((volatile uint64_t *) (t))
+#define	SBMAC_WRITECSR(t, v) mips3_sd((volatile uint64_t *) (t), (v))
 
 #define	PKSEG1(x) ((sbmac_port_t) MIPS_PHYS_TO_KSEG1(x))
 
@@ -252,7 +249,7 @@ static sbmac_state_t sbmac_set_channel_state(struct sbmac_softc *,
 static void sbmac_promiscuous_mode(struct sbmac_softc *sc, int onoff);
 static void sbmac_init_and_start(struct sbmac_softc *sc);
 static uint64_t sbmac_addr2reg(u_char *ptr);
-static void sbmac_intr(void *xsc, uint32_t status, uint32_t pc);
+static void sbmac_intr(void *xsc, uint32_t status, vaddr_t pc);
 static void sbmac_start(struct ifnet *ifp);
 static void sbmac_setmulti(struct sbmac_softc *sc);
 static int sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data);
@@ -626,7 +623,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 		d->sbdma_dscrtable[dsc].dscr_b =
 		    V_DMA_DSCRB_OPTIONS(K_DMA_ETHTX_APPENDCRC_APPENDPAD) |
 		    V_DMA_DSCRB_A_SIZE((m->m_len +
-		      (mtod(m,unsigned int) & 0x0000001F))) |
+		      (mtod(m,uintptr_t) & 0x0000001F))) |
 		    V_DMA_DSCRB_PKT_SIZE_MSB((m->m_pkthdr.len & 0xc000) >> 14) |
 		    V_DMA_DSCRB_PKT_SIZE(m->m_pkthdr.len & 0x3fff);
 
@@ -936,7 +933,6 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			 */
 			sbdma_add_rcvbuffer(d, NULL);
 
-#if (NBPFILTER > 0)
 			/*
 			 * Handle BPF listeners. Let the BPF user see the
 			 * packet, but don't pass it up to the ether_input()
@@ -946,8 +942,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			 */
 
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 			/*
 			 * Pass the buffer to the kernel
 			 */
@@ -1731,7 +1726,7 @@ sbmac_set_duplex(struct sbmac_softc *s, sbmac_duplex_t duplex, sbmac_fc_t fc)
 
 /* ARGSUSED */
 static void
-sbmac_intr(void *xsc, uint32_t status, uint32_t pc)
+sbmac_intr(void *xsc, uint32_t status, vaddr_t pc)
 {
 	struct sbmac_softc *sc = (struct sbmac_softc *) xsc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1817,10 +1812,8 @@ sbmac_start(struct ifnet *ifp)
 			 * If there's a BPF listener, bounce a copy of this
 			 * frame to it.
 			 */
-#if (NBPFILTER > 0)
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m_head);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 			if (!sc->sbm_pass3_dma) {
 				/*
 				 * Don't free mbuf if we're not copying to new
@@ -1976,7 +1969,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				ina->x_host =
 				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				memcpy( LLADDR(ifp->if_sadl), ina->x_host.c_host,
+				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
 				    ifp->if_addrlen);
 			/* Set new address. */
 			sbmac_init_and_start(sc);
@@ -2345,7 +2338,7 @@ sbmac_attach(struct device *parent, struct device *self, void *aux)
 
 	ifp = &sc->sc_ethercom.ec_if;
 	ifp->if_softc = sc;
-	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST |
 	    IFF_NOTRAILERS;
 	ifp->if_ioctl = sbmac_ioctl;

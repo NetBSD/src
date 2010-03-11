@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.51.4.3 2009/07/18 14:52:59 yamt Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.51.4.4 2010/03/11 15:03:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,20 +59,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.51.4.3 2009/07/18 14:52:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.51.4.4 2010/03/11 15:03:22 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/condvar.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
+#include <sys/systm.h>
 
-#include <sys/bus.h>
-
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_ecvar.h>
+
+#define _COMPONENT          ACPI_EC_COMPONENT
+ACPI_MODULE_NAME            ("acpi_ec")
 
 /* Maximum time to wait for global ACPI lock in ms */
 #define	EC_LOCK_TIMEOUT		5
@@ -148,8 +151,8 @@ static void acpiec_attach(device_t, device_t, void *);
 static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
     bus_addr_t, bus_addr_t, ACPI_HANDLE, uint8_t);
 
-static bool acpiec_suspend(device_t PMF_FN_PROTO);
-static bool acpiec_resume(device_t PMF_FN_PROTO);
+static bool acpiec_suspend(device_t, const pmf_qual_t *);
+static bool acpiec_resume(device_t, const pmf_qual_t *);
 static bool acpiec_shutdown(device_t, int);
 
 static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
@@ -186,7 +189,7 @@ acpiecdt_find(device_t parent, ACPI_HANDLE *ec_handle,
 
 	if (ecdt->Control.BitWidth != 8 || ecdt->Data.BitWidth != 8) {
 		aprint_error_dev(parent,
-		    "ECDT register width invalid (%d/%d)\n",
+		    "ECDT register width invalid (%u/%u)\n",
 		    ecdt->Control.BitWidth, ecdt->Data.BitWidth);
 		return false;
 	}
@@ -395,7 +398,7 @@ post_data_map:
 }
 
 static bool
-acpiec_suspend(device_t dv PMF_FN_ARGS)
+acpiec_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	acpiec_cold = true;
 
@@ -403,7 +406,7 @@ acpiec_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-acpiec_resume(device_t dv PMF_FN_ARGS)
+acpiec_resume(device_t dv, const pmf_qual_t *qual)
 {
 	acpiec_cold = false;
 
@@ -438,52 +441,41 @@ acpiec_parse_gpe_package(device_t self, ACPI_HANDLE ec_handle,
 	if (p->Type == ACPI_TYPE_INTEGER) {
 		*gpe_handle = NULL;
 		*gpebit = p->Integer.Value;
-		AcpiOsFree(p);
+		ACPI_FREE(p);
 		return true;
 	}
 
 	if (p->Type != ACPI_TYPE_PACKAGE) {
 		aprint_error_dev(self, "_GPE is neither integer nor package\n");
-		AcpiOsFree(p);
+		ACPI_FREE(p);
 		return false;
 	}
 	
 	if (p->Package.Count != 2) {
 		aprint_error_dev(self, "_GPE package does not contain 2 elements\n");
-		AcpiOsFree(p);
+		ACPI_FREE(p);
 		return false;
 	}
 
 	c = &p->Package.Elements[0];
-	switch (c->Type) {
-	case ACPI_TYPE_LOCAL_REFERENCE:
-	case ACPI_TYPE_ANY:
-		*gpe_handle = c->Reference.Handle;
-		break;
-	case ACPI_TYPE_STRING:
-		/* XXX should be using real scope here */
-		rv = AcpiGetHandle(NULL, p->String.Pointer, gpe_handle);
-		if (rv != AE_OK) {
-			aprint_error_dev(self,
-			    "_GPE device reference unresolvable\n");
-			AcpiOsFree(p);
-			return false;
-		}
-		break;
-	default:
-		aprint_error_dev(self, "_GPE device reference incorrect\n");
-		AcpiOsFree(p);
+	rv = acpi_eval_reference_handle(c, gpe_handle);
+
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self, "failed to evaluate _GPE handle\n");
+		ACPI_FREE(p);
 		return false;
 	}
+
 	c = &p->Package.Elements[1];
+
 	if (c->Type != ACPI_TYPE_INTEGER) {
 		aprint_error_dev(self,
 		    "_GPE package needs integer as 2nd field\n");
-		AcpiOsFree(p);
+		ACPI_FREE(p);
 		return false;
 	}
 	*gpebit = c->Integer.Value;
-	AcpiOsFree(p);
+	ACPI_FREE(p);
 	return true;
 }
 

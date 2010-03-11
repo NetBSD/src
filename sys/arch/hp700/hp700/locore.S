@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.29.4.3 2009/06/20 07:20:03 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.29.4.4 2010/03/11 15:02:23 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
  *  suitability of this software for any purpose.
  */
 
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
@@ -148,32 +149,15 @@
 	.import	esym, data
 	.import virtual_avail, data
 	.import	lwp0, data
-	.import	proc0paddr, data
 	.import	kpsw, data
 	.import	panic, code
 	.import fpu_csw, data
 	.import fpu_cur_uspace, data
 	.import hp700_int_regs, data
 
-#if 0
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(kernelmapped, 4)	/* set when kernel is mapped */
 	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
-#else
-	.section .bss
-
-	.export	pdc_stack, data
-pdc_stack:			/* temp stack for PDC call */
-	.block	4
-
-	.export	kernelmapped, data
-kernelmapped:			/* set when kernel is mapped */
-	.block	4
-
-	.export hppa_vtop, data
-hppa_vtop:			/* a vtop translation table addr (pa=va) */
-	.block	4
-#endif
 
 	.text
 	.import kernel_setup, entry
@@ -243,15 +227,15 @@ L$start_zero_tf:
 	stws,ma %r0, 4(%t2)	/* XXX could use ,bc here, but gas is broken */
 
 	/*
-	 * kernel stack starts a page and a trapframe above l_addr.
+	 * kernel stack starts a page and a trapframe above uarea address.
 	 */
 	ldo	NBPG+TRAPFRAME_SIZEOF(%t3), %sp
 	mtctl	%t3, CR_UPADDR
 
 	/* initialize the pcb */
-	stw	%r0, U_PCB+PCB_ONFAULT(%t3)
-	stw	%r0, U_PCB+PCB_SPACE(%t3)	/* XXX HPPA_SID_KERNEL == 0 */
-	stw	%t3, U_PCB+PCB_UVA(%t3)
+	stw	%r0, PCB_ONFAULT(%t3)
+	stw	%r0, PCB_SPACE(%t3)	/* XXX HPPA_SID_KERNEL == 0 */
+	stw	%t3, PCB_UVA(%t3)
 
 	/*
 	 * Setup various pointers.
@@ -262,10 +246,8 @@ L$start_zero_tf:
 	ldil	L%USPACE, %r4
 	add	%t3, %r4, %r4
 
-	ldil	L%proc0paddr, %t1
-	stw	%t3, R%proc0paddr(%t1)
 	ldil	L%lwp0, %t2
-	stw	%t3, R%lwp0+L_ADDR(%t2)
+	stw	%t3, R%lwp0+L_PCB(%t2)		/* XXXuvm_lwp_getuarea */
 	ldo	NBPG(%t3), %t1
 	stw	%t1, R%lwp0+L_MD_REGS(%t2)
 
@@ -768,7 +750,7 @@ EXIT(cpu_die)
 
 /*
  * struct lwp *
- * cpu_switchto(struct lwp *curl, struct lwp *newl)
+ * cpu_switchto(struct lwp *oldl, struct lwp *newl, bool returning)
  */
 	.align	32
 ENTRY(cpu_switchto,128)
@@ -805,11 +787,11 @@ switch_diag:
 	comb,=,n %arg0, %arg1, kstack_ok
 
 	/*
-	 * cpu_lwp_fork sets the initial stack to a page above l_addr.
-	 * Check that the stack is above this value for curl.
+	 * cpu_lwp_fork sets the initial stack to a page above uarea address.
+	 * Check that the stack is above this value for oldl.
 	 */
-	ldw	L_ADDR(%arg1), %arg2
-	ldw	U_PCB+PCB_KSP(%arg2), %t1	/* t1 for switch_error */
+	ldw	L_PCB(%arg1), %arg2
+	ldw	PCB_KSP(%arg2), %t1		/* t1 for switch_error */
 	ldo	NBPG(%arg2), %arg2
 	comb,>>,n %arg2, %t1, switch_error
 	nop
@@ -823,19 +805,19 @@ switch_diag:
 kstack_ok:
 #endif
 
-	/* If old LWP exited, don't bother. */
+	/* If old LWP exited, don't bother saving anything. */
 	comb,=,n %r0, %arg0, switch_exited
 
 	/*
 	 * save old LWP context
 	 *
-	 * arg0: old LWP (curl)
+	 * arg0: old LWP (oldl)
 	 * arg1: new LWP (newl)
 	 */
 
-	ldw	L_ADDR(%arg0), %t3	/* curl pcb */
-	stw	%sp, U_PCB+PCB_KSP(%t3)
-	fdc	%r0(%t3)		/* flush curl pcb  - surely fdc U_PCB+PCB_KSP(%t3) */
+	ldw	L_PCB(%arg0), %t3	/* oldl pcb */
+	stw	%sp, PCB_KSP(%t3)
+	fdc	%r0(%t3)		/* flush oldl pcb  - surely fdc PCB_KSP(%t3) */
 
 	/*
 	 * Save the callee-save registers. We don't need to do
@@ -860,13 +842,13 @@ kstack_ok:
 	/*
 	 * restore new LWP context
 	 *
-	 * arg0: old LWP (curl)
+	 * arg0: old LWP (oldl)
 	 * arg1: new LWP (newl)
 	 */
 switch_exited:
 	ldw	L_MD(%arg1), %t1
-	ldw	L_ADDR(%arg1), %t3
-	ldw	U_PCB+PCB_KSP(%t3), %sp		/* restore stack of newl */
+	ldw	L_PCB(%arg1), %t3
+	ldw	PCB_KSP(%t3), %sp		/* restore stack of newl */
 
 	fdc	%r0(%t3)			/* Flush newl PCB - why? */
 
@@ -912,12 +894,12 @@ switch_exited:
 	/*
 	 * Save some caller-saves we want to preserve.
 	 *
-	 * We save curl (%arg0) and newl (%arg1) for the benefit of
+	 * We save oldl (%arg0) and newl (%arg1) for the benefit of
 	 * lwp_trampoline() for when it calls lwp_startup().
 	 *
-	 * curl (%arg0) is saved as it's the return value
+	 * oldl (%arg0) is saved as it's the return value
 	 */
-	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)		/* curl */
+	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)		/* oldl */
 	stw	%arg1, HPPA_FRAME_ARG(1)(%r3)		/* newl */
 
 	copy	%arg1, %arg0
@@ -972,7 +954,7 @@ EXIT(cpu_switchto)
  * the first kernel function to call, and its argument.
  *
  * cpu_switchto() also makes sure that %arg0 and %arg1 are (still)
- * curl and newl respectively.
+ * oldl and newl respectively.
  */
 ENTRY_NOPROFILE(lwp_trampoline,HPPA_FRAME_SIZE)
 	/* no return point */

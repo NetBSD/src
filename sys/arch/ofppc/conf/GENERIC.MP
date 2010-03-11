@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.1.4.1 2009/05/04 08:11:39 yamt Exp $
+# $NetBSD: GENERIC.MP,v 1.1.4.2 2010/03/11 15:02:46 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.4.1 $"
+#ident 		"GENERIC-$Revision: 1.1.4.2 $"
 
 maxusers	32
 
@@ -97,7 +97,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal file system (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -138,7 +138,6 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
-options 	NMBCLUSTERS=1024
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -341,6 +340,7 @@ ucycom*	at uhidev? reportid ?				# USB serial adapter
 uhid*	at uhidev? reportid ?				# USB Generic HID
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 umodem*	at uhub? port ? configuration ?			# USB Modem
+uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
 ucom*	at umodem?
 #uaudio*	at uhub? port ? configuration ?			# USB audio
 
@@ -425,6 +425,7 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	putter			# for puffs and pud
 
 # Veriexec
 #

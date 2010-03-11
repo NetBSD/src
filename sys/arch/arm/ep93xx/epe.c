@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.16.10.1 2009/05/04 08:10:40 yamt Exp $	*/
+/*	$NetBSD: epe.c,v 1.16.10.2 2010/03/11 15:02:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -34,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.16.10.1 2009/05/04 08:10:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.16.10.2 2010/03/11 15:02:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,11 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.16.10.1 2009/05/04 08:10:40 yamt Exp $");
 #include <netns/ns_if.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <arm/ep93xx/ep93xxreg.h>
 #include <arm/ep93xx/epereg.h> 
@@ -153,7 +143,7 @@ epe_attach(struct device *parent, struct device *self, void *aux)
 		panic("%s: Cannot map registers", self->dv_xname);
 
 	/* Fetch the Ethernet address from property if set. */
-	enaddr = prop_dictionary_get(device_properties(self), "mac-addr");
+	enaddr = prop_dictionary_get(device_properties(self), "mac-address");
 	if (enaddr != NULL) {
 		KASSERT(prop_object_type(enaddr) == PROP_TYPE_DATA);
 		KASSERT(prop_data_size(enaddr) == ETHER_ADDR_LEN);
@@ -245,10 +235,8 @@ begin:
 				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
 				sc->rxq[bi].m->m_pkthdr.len = 
 					sc->rxq[bi].m->m_len = fl;
-#if NBPFILTER > 0
 				if (ifp->if_bpf) 
-					bpf_mtap(ifp->if_bpf, sc->rxq[bi].m);
-#endif /* NBPFILTER > 0 */
+					bpf_ops->bpf_mtap(ifp->if_bpf, sc->rxq[bi].m);
                                 (*ifp->if_input)(ifp, sc->rxq[bi].m);
 				sc->rxq[bi].m = m;
 				bus_dmamap_load(sc->sc_dmat, 
@@ -621,10 +609,8 @@ more:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf) 
-		bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	nsegs = sc->txq[bi].m_dmamap->dm_nsegs;
 	segs = sc->txq[bi].m_dmamap->dm_segs;

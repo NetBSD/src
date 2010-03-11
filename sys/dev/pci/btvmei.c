@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.18.4.2 2009/05/16 10:41:32 yamt Exp $ */
+/* $NetBSD: btvmei.c,v 1.18.4.3 2010/03/11 15:03:43 yamt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.18.4.2 2009/05/16 10:41:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.18.4.3 2010/03/11 15:03:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,8 @@ b3_617_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);

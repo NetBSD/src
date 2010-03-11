@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18.46.2 2009/06/20 07:20:00 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18.46.3 2010/03/11 15:02:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,12 +133,11 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.46.2 2009/06/20 07:20:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.46.3 2010/03/11 15:02:04 yamt Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 
 #include <machine/frame.h>
 #include <machine/pcb.h>

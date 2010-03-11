@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.34 2007/11/19 18:51:36 ad Exp $ */
+/* $NetBSD: promcons.c,v 1.34.18.1 2010/03/11 15:01:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.34 2007/11/19 18:51:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.34.18.1 2010/03/11 15:01:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.34 2007/11/19 18:51:36 ad Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>

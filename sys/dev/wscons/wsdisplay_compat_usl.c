@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.45 2008/04/24 15:35:28 ad Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.45.2.1 2010/03/11 15:04:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.45 2008/04/24 15:35:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.45.2.1 2010/03/11 15:04:09 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -191,8 +191,10 @@ usl_detachproc(void *cookie, int waitok,
 	 */
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
-	if (!usl_sync_check_sig(sd, sd->s_relsig, SF_DETACHPENDING))	
-		return (0);
+	if (waitok) {
+		if (!usl_sync_check_sig(sd, sd->s_relsig, SF_DETACHPENDING))	
+			return (0);
+	}
 
 	callout_schedule(&sd->s_detach_ch, wscompat_usl_synctimeout * hz);
 	return (EAGAIN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.14.4.2 2009/05/04 08:11:36 yamt Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.14.4.3 2010/03/11 15:02:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.14.4.2 2009/05/04 08:11:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_hb.c,v 1.14.4.3 2010/03/11 15:02:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -139,7 +139,7 @@ timer_hb_initclocks(int prof, int stat)
 
 /*
  * Clock interrupt handler.
- * This is is called by the "custom" interrupt handler.
+ * This is called by the "custom" interrupt handler.
  *
  * from sun3/sun3x/clock.c -tsutsui
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.18.44.3 2009/09/16 13:37:34 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.18.44.4 2010/03/11 15:01:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18.44.3 2009/09/16 13:37:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18.44.4 2010/03/11 15:01:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
+	paddr_t pa;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
 
@@ -137,9 +138,10 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		 */
 		if (!VMSPACE_IS_KERNEL_P(vm))
 			(void) pmap_extract(vm_map_pmap(&vm->vm_map),
-			    vaddr, &curaddr);
+			    vaddr, &pa);
 		else
-			curaddr = kvtophys(vaddr);
+			pa = kvtophys(vaddr);
+		curaddr = pa;
 
 		/*
 		 * If we're beyond the current DMA window, indicate

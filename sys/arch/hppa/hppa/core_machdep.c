@@ -1,9 +1,9 @@
-/*	$NetBSD: core_machdep.c,v 1.1.12.3 2009/08/19 18:46:17 yamt Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.1.12.4 2010/03/11 15:02:26 yamt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
 /*
- * Copyright (c) 1999-2000 Michael Shalayeff
+ * Copyright (c) 1999-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,11 +14,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -34,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.3 2009/08/19 18:46:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.4 2010/03/11 15:02:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.3 2009/08/19 18:46:17 yamt E
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/user.h>
 #include <sys/ptrace.h>
 #include <sys/exec.h>
 #include <sys/core.h>

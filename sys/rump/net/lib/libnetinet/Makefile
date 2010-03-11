@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3.16.2 2009/05/04 08:14:33 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.16.3 2010/03/11 15:04:40 yamt Exp $
 #
 
 LIB=	rumpnet_netinet
 
-SRCS=	dummy.c
+SRCS=	component.c
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

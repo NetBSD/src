@@ -12,9 +12,6 @@ Important unimplemented features in current device-mapper implementation
 
 * Integrate LVM with the sysinst, so we can configure LVM during installation
 
-* Parse whole config line for every target in NetBSD libdevmapper and do not 
-  work with strings in the kernel.
-
 			Pain in the sky tasks
 
 * Implement multipath target for network attached storage devices.

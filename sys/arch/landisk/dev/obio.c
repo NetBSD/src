@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.5.4.2 2009/08/19 18:46:27 yamt Exp $	*/
+/*	$NetBSD: obio.c,v 1.5.4.3 2010/03/11 15:02:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5.4.2 2009/08/19 18:46:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.5.4.3 2010/03/11 15:02:33 yamt Exp $");
 
 #include "btn_obio.h"
 #include "pwrsw_obio.h"
@@ -296,7 +296,7 @@ obio_iomem_add_mapping(bus_addr_t bpa, bus_size_t size, int type,
 #undef MODE
 
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		pte = __pmap_kpte_lookup(va);
 		KDASSERT(pte);
 		*pte |= m;  /* PTEA PCMCIA assistant bit */

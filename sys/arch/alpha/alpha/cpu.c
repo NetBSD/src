@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.81.4.3 2009/09/16 13:37:34 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.81.4.4 2010/03/11 15:01:57 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.81.4.3 2009/09/16 13:37:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.81.4.4 2010/03/11 15:01:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.81.4.3 2009/09/16 13:37:34 yamt Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 
@@ -156,10 +155,10 @@ struct cputable_struct {
  *
  * As we find processors during the autoconfiguration sequence, all
  * processors have idle stacks and PCBs created for them, including
- * the primary (although the primary idles on proc0's PCB until its
+ * the primary (although the primary idles on lwp0's PCB until its
  * idle PCB is created).
  *
- * Right before calling uvm_scheduler(), main() calls, on proc0's
+ * Right before calling uvm_scheduler(), main() calls, on lwp0's
  * context, cpu_boot_secondary_processors().  This is our key to
  * actually spin up the additional processor's we've found.  We
  * run through our cpu_info[] array looking for secondary processors
@@ -425,7 +424,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 	struct pcb *pcb;
 	u_long cpumask;
 
-	pcb = &ci->ci_data.cpu_idlelwp->l_addr->u_pcb;
+	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 	primary_pcsp = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
 	pcsp = LOCATE_PCS(hwrpb, ci->ci_cpuid);
 	cpumask = (1UL << ci->ci_cpuid);

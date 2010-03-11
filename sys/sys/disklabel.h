@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.101.32.3 2009/08/19 18:48:32 yamt Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.101.32.4 2010/03/11 15:04:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -306,6 +306,7 @@ x(CGD,		17,	"cgd")		/* cryptographic pseudo-disk */ \
 x(VINUM,	18,	"vinum")	/* vinum volume */ \
 x(FLASH,	19,	"flash")	/* flash memory devices */ \
 x(DM,           20,     "dm")           /* device-mapper pseudo-disk devices */\
+x(RUMPD,	21,     "rumpd")	/* rump virtual disk */ \
     
 #ifndef _LOCORE
 #define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
@@ -424,6 +425,7 @@ struct format_op {
 	int	 df_reg[8];		/* result */
 };
 
+#ifdef _KERNEL
 /*
  * Structure used internally to retrieve information about a partition
  * on a disk.
@@ -432,8 +434,6 @@ struct partinfo {
 	struct disklabel *disklab;
 	struct partition *part;
 };
-
-#ifdef _KERNEL
 
 struct disk;
 

@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.4.4 2009/08/19 18:48:21 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.4.5 2010/03/11 15:04:23 yamt Exp $
+
+.include <bsd.own.mk>
 
 # For all platforms
 
@@ -6,6 +8,7 @@ SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
+SUBDIR+=	bpf
 SUBDIR+=	cd9660
 SUBDIR+=	coda
 SUBDIR+=	coda5
@@ -33,7 +36,6 @@ SUBDIR+=	nilfs
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	overlay
-SUBDIR+=	portal
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
@@ -41,8 +43,12 @@ SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	miniroot
+SUBDIR+=	secmodel_bsd44
+SUBDIR+=	secmodel_overlay
+SUBDIR+=	securelevel
 SUBDIR+=	smbfs
 SUBDIR+=	sysvbfs
+SUBDIR+=	suser
 SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap
@@ -51,6 +57,9 @@ SUBDIR+=	vnd
 SUBDIR+=	tprof
 .if (defined(NOTYET))
 SUBDIR+=	unionfs
+.endif
+.if ${MKBINUTILS} != "no"
+SUBDIR+=	xldscripts
 .endif
 
 # Machine dependent section
@@ -88,6 +97,7 @@ SUBDIR+=	drm
 SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
+SUBDIR+=	viadrm
 .endif
 
 .include <bsd.own.mk>
@@ -95,6 +105,19 @@ SUBDIR+=	radeondrm
 # we need our device mapper for LVM
 .if (${MKLVM} != "no")
 SUBDIR+= 	dm
+.endif
+
+.if (${MKDTRACE} != "no")
+SUBDIR+=	dtrace
+.endif
+
+# we need solaris for the dtrace and zfs modules
+.if (${MKDTRACE} != "no" || ${MKZFS} != "no")
+SUBDIR+=        solaris
+.endif
+
+.if (${MKZFS} != "no")
+SUBDIR+=	zfs
 .endif
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: explora_start.S,v 1.4.62.1 2008/05/16 02:22:15 yamt Exp $	*/
+/*	$NetBSD: explora_start.S,v 1.4.62.2 2010/03/11 15:02:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -49,14 +49,12 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
 #include <powerpc/ibm4xx/pmap.h>
 
 #include "opt_ddb.h"
 #include "opt_ppcparam.h"
-
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
 
 /*
  * Initially the dram starts at 0x01000000. This is way too high.

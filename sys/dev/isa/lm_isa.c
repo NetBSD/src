@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.19.4.2 2009/05/04 08:12:48 yamt Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.19.4.3 2010/03/11 15:03:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.19.4.2 2009/05/04 08:12:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.19.4.3 2010/03/11 15:03:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,9 @@ struct lm_isa_softc {
 };
 
 CFATTACH_DECL_NEW(lm_isa, sizeof(struct lm_isa_softc),
+    lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
+
+CFATTACH_DECL_NEW(lm_wbsio, sizeof(struct lm_isa_softc),
     lm_isa_match, lm_isa_attach, lm_isa_detach, NULL);
 
 int

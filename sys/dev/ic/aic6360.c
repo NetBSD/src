@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.94.4.2 2009/05/16 10:41:21 yamt Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.94.4.3 2010/03/11 15:03:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.94.4.2 2009/05/16 10:41:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.94.4.3 2010/03/11 15:03:28 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -127,7 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.94.4.2 2009/05/16 10:41:21 yamt Exp $"
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <sys/bus.h>
@@ -261,7 +260,7 @@ aicattach(struct aic_softc *sc)
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
-	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_dev = sc->sc_dev;
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_openings = 8;
 	adapt->adapt_max_periph = 1;
@@ -283,7 +282,7 @@ aicattach(struct aic_softc *sc)
 	 * config_found() to make sure the adatper is disabled.
 	 */
 	if (scsipi_adapter_addref(adapt) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to enable controller\n");
+		aprint_error_dev(sc->sc_dev, "unable to enable controller\n");
 		return;
 	}
 
@@ -292,36 +291,14 @@ aicattach(struct aic_softc *sc)
 	/*
 	 * Ask the adapter what subunits are present
 	 */
-	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	sc->sc_child = config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 	scsipi_adapter_delref(adapt);
-}
-
-int
-aic_activate(device_t self, enum devact act)
-{
-	struct aic_softc *sc = (struct aic_softc *) self;
-	int s, rv = 0;
-
-	s = splhigh();
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		break;
-	}
-	splx(s);
-
-	return (rv);
 }
 
 int
 aic_detach(device_t self, int flags)
 {
-	struct aic_softc *sc = (struct aic_softc *) self;
+	struct aic_softc *sc = device_private(self);
 	int rv = 0;
 
 	if (sc->sc_child != NULL)
@@ -506,7 +483,7 @@ aic_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph;
-	struct aic_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	struct aic_softc *sc = device_private(chan->chan_adapter->adapt_dev);
 	struct aic_acb *acb;
 	int s, flags;
 
@@ -520,7 +497,7 @@ aic_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 		    periph->periph_target));
 
-		if (! device_is_active(&sc->sc_dev)) {
+		if (!device_is_active(sc->sc_dev)) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
 			return;
@@ -756,7 +733,8 @@ aic_reselect(struct aic_softc *sc, int message)
 	 */
 	selid = sc->sc_selid & ~(1 << sc->sc_initiator);
 	if (selid & (selid - 1)) {
-		aprint_error_dev(&sc->sc_dev, "reselect with invalid selid %02x; "
+		aprint_error_dev(sc->sc_dev,
+		    "reselect with invalid selid %02x; "
 		    "sending DEVICE RESET\n", selid);
 		AIC_BREAK();
 		goto reset;
@@ -778,7 +756,7 @@ aic_reselect(struct aic_softc *sc, int message)
 	}
 	if (acb == NULL) {
 		printf("%s: reselect from target %d lun %d with no nexus; "
-		    "sending ABORT\n", device_xname(&sc->sc_dev), target, lun);
+		    "sending ABORT\n", device_xname(sc->sc_dev), target, lun);
 		AIC_BREAK();
 		goto abort;
 	}
@@ -828,7 +806,7 @@ aic_sched(struct aic_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
-	if (! device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return;
 
 	/*
@@ -1084,7 +1062,8 @@ nextbyte:
 			if (sc->sc_dleft < 0) {
 				periph = acb->xs->xs_periph;
 				printf("%s: %ld extra bytes from %d:%d\n",
-				    device_xname(&sc->sc_dev), (long)-sc->sc_dleft,
+				    device_xname(sc->sc_dev),
+				    (long)-sc->sc_dleft,
 				    periph->periph_target, periph->periph_lun);
 				sc->sc_dleft = 0;
 			}
@@ -1194,7 +1173,8 @@ nextbyte:
 
 			default:
 				printf("%s: unrecognized MESSAGE EXTENDED; "
-				    "sending REJECT\n", device_xname(&sc->sc_dev));
+				    "sending REJECT\n",
+				    device_xname(sc->sc_dev));
 				AIC_BREAK();
 				goto reject;
 			}
@@ -1202,7 +1182,7 @@ nextbyte:
 
 		default:
 			printf("%s: unrecognized MESSAGE; sending REJECT\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			AIC_BREAK();
 		reject:
 			aic_sched_msgout(sc, SEND_REJECT);
@@ -1213,7 +1193,7 @@ nextbyte:
 	case AIC_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
 			printf("%s: reselect without IDENTIFY; "
-			    "sending DEVICE RESET\n", device_xname(&sc->sc_dev));
+			    "sending DEVICE RESET\n", device_xname(sc->sc_dev));
 			AIC_BREAK();
 			goto reset;
 		}
@@ -1222,7 +1202,8 @@ nextbyte:
 		break;
 
 	default:
-		aprint_error_dev(&sc->sc_dev, "unexpected MESSAGE IN; sending DEVICE RESET\n");
+		aprint_error_dev(sc->sc_dev,
+		    "unexpected MESSAGE IN; sending DEVICE RESET\n");
 		AIC_BREAK();
 	reset:
 		aic_sched_msgout(sc, SEND_DEV_RESET);
@@ -1369,7 +1350,8 @@ nextmsg:
 		break;
 
 	default:
-		aprint_error_dev(&sc->sc_dev, "unexpected MESSAGE OUT; sending NOOP\n");
+		aprint_error_dev(sc->sc_dev,
+		    "unexpected MESSAGE OUT; sending NOOP\n");
 		AIC_BREAK();
 		sc->sc_omess[0] = MSG_NOOP;
 		n = 1;
@@ -1720,7 +1702,7 @@ aicintr(void *arg)
 	struct aic_tinfo *ti;
 	int n;
 
-	if (! device_is_active(&sc->sc_dev))
+	if (!device_is_active(sc->sc_dev))
 		return (0);
 
 	/*
@@ -1739,7 +1721,7 @@ loop:
 	AIC_MISC(("sstat1:0x%02x ", sstat1));
 
 	if ((sstat1 & SCSIRSTI) != 0) {
-		printf("%s: SCSI bus reset\n", device_xname(&sc->sc_dev));
+		printf("%s: SCSI bus reset\n", device_xname(sc->sc_dev));
 		goto reset;
 	}
 
@@ -1747,7 +1729,7 @@ loop:
 	 * Check for less serious errors.
 	 */
 	if ((sstat1 & SCSIPERR) != 0) {
-		printf("%s: SCSI bus parity error\n", device_xname(&sc->sc_dev));
+		printf("%s: SCSI bus parity error\n", device_xname(sc->sc_dev));
 		bus_space_write_1(iot, ioh, CLRSINT1, CLRSCSIPERR);
 		if (sc->sc_prevphase == PH_MSGIN) {
 			sc->sc_flags |= AIC_DROP_MSGIN;
@@ -1777,7 +1759,7 @@ loop:
 			 * We don't currently support target mode.
 			 */
 			printf("%s: target mode selected; going to BUS FREE\n",
-			    device_xname(&sc->sc_dev));
+			    device_xname(sc->sc_dev));
 			bus_space_write_1(iot, ioh, SCSISIG, 0);
 
 			goto sched;
@@ -1810,7 +1792,7 @@ loop:
 			 */
 			if (sc->sc_state != AIC_SELECTING) {
 				printf("%s: selection out while idle; "
-				    "resetting\n", device_xname(&sc->sc_dev));
+				    "resetting\n", device_xname(sc->sc_dev));
 				AIC_BREAK();
 				goto reset;
 			}
@@ -1855,7 +1837,7 @@ loop:
 
 			if (sc->sc_state != AIC_SELECTING) {
 				printf("%s: selection timeout while idle; "
-				    "resetting\n", device_xname(&sc->sc_dev));
+				    "resetting\n", device_xname(sc->sc_dev));
 				AIC_BREAK();
 				goto reset;
 			}
@@ -1873,7 +1855,7 @@ loop:
 			if (sc->sc_state != AIC_IDLE) {
 				printf("%s: BUS FREE while not idle; "
 				    "state=%d\n",
-				    device_xname(&sc->sc_dev), sc->sc_state);
+				    device_xname(sc->sc_dev), sc->sc_state);
 				AIC_BREAK();
 				goto out;
 			}
@@ -1949,7 +1931,8 @@ loop:
 				 * disconnecting, and this is necessary to
 				 * clean up their state.
 				 */
-				aprint_error_dev(&sc->sc_dev, "unexpected disconnect; "
+				aprint_error_dev(sc->sc_dev,
+				    "unexpected disconnect; "
 				    "sending REQUEST SENSE\n");
 				AIC_BREAK();
 				aic_sense(sc, acb);
@@ -2055,7 +2038,7 @@ dophase:
 		goto loop;
 	}
 
-	aprint_error_dev(&sc->sc_dev, "unexpected bus phase; resetting\n");
+	aprint_error_dev(sc->sc_dev, "unexpected bus phase; resetting\n");
 	AIC_BREAK();
 reset:
 	aic_init(sc, 1);
@@ -2106,7 +2089,7 @@ aic_timeout(void *arg)
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct aic_softc *sc =
-	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
+	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	int s;
 
 	scsipi_printaddr(periph);

@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.30.4.1 2009/05/04 08:11:53 yamt Exp $
+#	$NetBSD: OFWGENCFG,v 1.30.4.2 2010/03/11 15:02:56 yamt Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -47,7 +47,6 @@ file-system	NFS
 #file-system	FILECORE	# Acorn filecore file system
 file-system	KERNFS		# /kern
 #file-system	NULLFS		# loopback file system
-#file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.20.2.6 2009/08/19 18:48:30 yamt Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.20.2.7 2010/03/11 15:04:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.20.2.6 2009/08/19 18:48:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.20.2.7 2010/03/11 15:04:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.20.2.6 2009/08/19 18:48:30 yamt Exp $
 #include "rump_private.h"
 #include "rump_vfs_private.h"
 
-static struct cwdinfo rump_cwdi;
+struct cwdinfo cwdi0;
 
 static void rump_rcvp_lwpset(struct vnode *, struct vnode *, struct lwp *);
 
@@ -75,10 +75,13 @@ pvfs_rele(struct proc *p)
 void
 rump_vfs_init(void)
 {
+	extern struct vfsops rumpfs_vfsops;
 	char buf[64];
 	int error;
+	int rv, i;
+	extern int dovfsusermount; /* XXX */
 
-	dovfsusermount = 1;
+	dovfsusermount = 1; /* XXX */
 
 	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
@@ -88,98 +91,57 @@ rump_vfs_init(void)
 
 	rumpblk_init();
 
-	cache_cpu_init(&rump_cpu);
+	for (i = 0; i < ncpu; i++) {
+		struct cpu_info *ci = cpu_lookup(i);
+		cache_cpu_init(ci);
+	}
 	vfsinit();
 	bufinit();
 	wapbl_init();
 	cwd_sys_init();
 	lf_init();
+	spec_init();
 
-	rumpuser_bioinit(rump_biodone);
-	rumpfs_init();
+	if (rump_threads) {
+		if ((rv = kthread_create(PRI_BIO, KTHREAD_MPSAFE, NULL,
+		    rumpuser_biothread, rump_biodone, NULL, "rmpabio")) != 0)
+			panic("syncer thread create failed: %d", rv);
+	}
+
+	rootfstype = ROOT_FSTYPE_ANY;
+	root_device = &rump_rootdev;
+
+	/* bootstrap cwdi (rest done in vfs_mountroot() */
+	rw_init(&cwdi0.cwdi_lock);
+	proc0.p_cwdi = &cwdi0;
+	proc0.p_cwdi = cwdinit();
+
+	vfs_attach(&rumpfs_vfsops);
+	vfs_mountroot();
+
+	/* "mtree": create /dev */
+	do_sys_mkdir("/dev", 0777, UIO_SYSSPACE);
+	rump_devnull_init();
 
 	rump_proc_vfs_init = pvfs_init;
 	rump_proc_vfs_release = pvfs_rele;
 
-	/* bootstrap cwdi */
-	rw_init(&rump_cwdi.cwdi_lock);
-	rump_cwdi.cwdi_cdir = rootvnode;
-	vref(rump_cwdi.cwdi_cdir);
-	proc0.p_cwdi = &rump_cwdi;
-	proc0.p_cwdi = cwdinit();
-
 	if (rump_threads) {
-		int rv;
-
 		if ((rv = kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL,
 		    sched_sync, NULL, NULL, "ioflush")) != 0)
 			panic("syncer thread create failed: %d", rv);
 	} else {
 		syncdelay = 0;
 	}
-}
 
-struct mount *
-rump_mnt_init(struct vfsops *vfsops, int mntflags)
-{
-	struct mount *mp;
-
-	mp = kmem_zalloc(sizeof(struct mount), KM_SLEEP);
-
-	mp->mnt_op = vfsops;
-	mp->mnt_flag = mntflags;
-	TAILQ_INIT(&mp->mnt_vnodelist);
-	rw_init(&mp->mnt_unmounting);
-	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
-	mp->mnt_refcnt = 1;
-	mp->mnt_vnodecovered = rootvnode;
-
-	mount_initspecific(mp);
-
-	return mp;
-}
-
-int
-rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
-{
-	struct vnode *rvp;
-	int rv;
-
-	rv = VFS_MOUNT(mp, path, data, dlen);
-	if (rv)
-		return rv;
-
-	(void) VFS_STATVFS(mp, &mp->mnt_stat);
-	rv = VFS_START(mp, 0);
-	if (rv) {
-		VFS_UNMOUNT(mp, MNT_FORCE);
-		return rv;
-	}
-
-	/*
-	 * XXX: set a root for lwp0.  This is strictly not correct,
-	 * but makes things work for single fs case without having
-	 * to manually call rump_rcvp_set().
-	 */
-	VFS_ROOT(mp, &rvp);
-	rump_rcvp_lwpset(rvp, rvp, &lwp0);
-	vput(rvp);
-
-	return rv;
+	module_init_class(MODULE_CLASS_VFS);
 }
 
 void
-rump_mnt_destroy(struct mount *mp)
+rump_vfs_fini(void)
 {
 
-	/* See rcvp XXX above */
-	rump_cwdi.cwdi_rdir = NULL;
-	vref(rootvnode);
-	rump_cwdi.cwdi_cdir = rootvnode;
-
-	mount_finispecific(mp);
-	kmem_free(mp, sizeof(*mp));
+	vfs_shutdown();
 }
 
 struct componentname *
@@ -192,7 +154,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp = kmem_zalloc(sizeof(struct componentname), KM_SLEEP);
 
 	cnp->cn_nameiop = nameiop;
-	cnp->cn_flags = flags | HASBUF;
+	cnp->cn_flags = flags;
 
 	cnp->cn_pnbuf = PNBUF_GET();
 	strcpy(cnp->cn_pnbuf, name);
@@ -212,13 +174,21 @@ rump_freecn(struct componentname *cnp, int flags)
 	if (flags & RUMPCN_FREECRED)
 		rump_cred_put(cnp->cn_cred);
 
-	if (cnp->cn_flags & SAVENAME) {
-		if (flags & RUMPCN_ISLOOKUP || cnp->cn_flags & SAVESTART)
-			PNBUF_PUT(cnp->cn_pnbuf);
-	} else {
+	if ((cnp->cn_flags & SAVENAME) == 0 || flags & RUMPCN_FORCEFREE)
 		PNBUF_PUT(cnp->cn_pnbuf);
-	}
 	kmem_free(cnp, sizeof(*cnp));
+}
+
+int
+rump_checksavecn(struct componentname *cnp)
+{
+
+	if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0) {
+		return 0;
+	} else {
+		cnp->cn_flags |= HASBUF;
+		return 1;
+	}
 }
 
 /* hey baby, what's your namei? */
@@ -266,7 +236,8 @@ rump_namei(uint32_t op, uint32_t flags, const char *namep,
 }
 
 void
-rump_getvninfo(struct vnode *vp, enum vtype *vtype, voff_t *vsize, dev_t *vdev)
+rump_getvninfo(struct vnode *vp, enum vtype *vtype,
+	voff_t *vsize, dev_t *vdev)
 {
 
 	*vtype = vp->v_type;
@@ -351,9 +322,7 @@ void
 rump_vp_incref(struct vnode *vp)
 {
 
-	mutex_enter(&vp->v_interlock);
-	++vp->v_usecount;
-	mutex_exit(&vp->v_interlock);
+	vref(vp);
 }
 
 int
@@ -361,40 +330,6 @@ rump_vp_getref(struct vnode *vp)
 {
 
 	return vp->v_usecount;
-}
-
-void
-rump_vp_decref(struct vnode *vp)
-{
-
-	mutex_enter(&vp->v_interlock);
-	--vp->v_usecount;
-	mutex_exit(&vp->v_interlock);
-}
-
-/*
- * Really really recycle with a cherry on top.  We should be
- * extra-sure we can do this.  For example with p2k there is
- * no problem, since puffs in the kernel takes care of refcounting
- * for us.
- */
-void
-rump_vp_recycle_nokidding(struct vnode *vp)
-{
-
-	mutex_enter(&vp->v_interlock);
-	vp->v_usecount = 1;
-	/*
-	 * XXX: NFS holds a reference to the root vnode, so don't clean
-	 * it out.  This is very wrong, but fixing it properly would
-	 * take too much effort for now
-	 */
-	if (vp->v_tag == VT_NFS && vp->v_vflag & VV_ROOT) {
-		mutex_exit(&vp->v_interlock);
-		return;
-	}
-	vclean(vp, DOCLOSE);
-	vrelel(vp, 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.24.4.2 2009/05/04 08:11:28 yamt Exp $	*/
+/*	$NetBSD: esp.c,v 1.24.4.3 2010/03/11 15:02:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.24.4.2 2009/05/04 08:11:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.24.4.3 2010/03/11 15:02:36 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.24.4.2 2009/05/04 08:11:28 yamt Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
@@ -114,18 +113,18 @@ CFATTACH_DECL_NEW(esp, sizeof(struct esp_softc),
 /*
  * Functions and the switch for the MI code.
  */
-uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
-void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
-int	esp_dma_isintr(struct ncr53c9x_softc *);
-void	esp_dma_reset(struct ncr53c9x_softc *);
-int	esp_dma_intr(struct ncr53c9x_softc *);
-int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **,
-	    size_t *, int, size_t *);
-void	esp_dma_go(struct ncr53c9x_softc *);
-void	esp_dma_stop(struct ncr53c9x_softc *);
-int	esp_dma_isactive(struct ncr53c9x_softc *);
+static uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
+static void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
+static int	esp_dma_isintr(struct ncr53c9x_softc *);
+static void	esp_dma_reset(struct ncr53c9x_softc *);
+static int	esp_dma_intr(struct ncr53c9x_softc *);
+static int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **,
+		    size_t *, int, size_t *);
+static void	esp_dma_go(struct ncr53c9x_softc *);
+static void	esp_dma_stop(struct ncr53c9x_softc *);
+static int	esp_dma_isactive(struct ncr53c9x_softc *);
 
-struct ncr53c9x_glue esp_glue = {
+static struct ncr53c9x_glue esp_glue = {
 	esp_read_reg,
 	esp_write_reg,
 	esp_dma_isintr,
@@ -139,7 +138,7 @@ struct ncr53c9x_glue esp_glue = {
 };
 
 static int espdmaintr(struct esp_softc *);
-static void esp_shutdownhook(void *);
+static bool esp_shutdown(device_t, int);
 
 int
 espmatch(device_t parent, cfdata_t cf, void *aux)
@@ -237,9 +236,6 @@ espattach(device_t parent, device_t self, void *aux)
 	/* and the interuppts */
 	intr_establish(esc->sc_pri, IST_EDGE, IPL_BIO, ncr53c9x_intr, sc);
 
-	/* Reset SCSI bus when halt. */
-	shutdownhook_establish(esp_shutdownhook, sc);
-
 	/* Do the common parts of attachment. */
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
@@ -247,6 +243,10 @@ espattach(device_t parent, device_t self, void *aux)
 
 	/* Turn on target selection using the `DMA' method */
 	sc->sc_features |= NCR_F_DMASELECT;
+
+	/* Reset SCSI bus when halt. */
+	if (!pmf_device_register1(self, NULL, NULL, esp_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*
@@ -499,10 +499,15 @@ espdmaintr(struct esp_softc *sc)
 	return 0;
 }
 
-void
-esp_shutdownhook(void *arg)
+bool
+esp_shutdown(device_t self, int howto)
 {
-	struct ncr53c9x_softc *sc = arg;
+	struct esp_softc *esc;
+	struct ncr53c9x_softc *sc;
 
+	esc = device_private(self);
+	sc = &esc->sc_ncr53c9x;
 	NCRCMD(sc, NCRCMD_RSTSCSI);
+
+	return true;
 }

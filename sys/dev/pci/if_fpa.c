@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.49.4.2 2009/05/16 10:41:34 yamt Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.49.4.3 2010/03/11 15:03:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.49.4.2 2009/05/16 10:41:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.49.4.3 2010/03/11 15:03:46 yamt Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -59,11 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.49.4.2 2009/05/16 10:41:34 yamt Exp $")
 #include <net/if_dl.h>
 #include <net/route.h>
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #if defined(__FreeBSD__)
 #include <netinet/if_fddi.h>
@@ -477,8 +474,8 @@ pdq_pci_attach(device_t const parent, device_t const self, void *const aux)
     if (sc->sc_ih == NULL) {
 	aprint_error_dev(self, "couldn't establish interrupt");
 	if (intrstr != NULL)
-	    aprint_normal(" at %s", intrstr);
-	aprint_normal("\n");
+	    aprint_error(" at %s", intrstr);
+	aprint_error("\n");
 	return;
     }
 

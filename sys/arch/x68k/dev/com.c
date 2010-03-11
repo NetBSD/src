@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.50.18.2 2009/05/04 08:12:06 yamt Exp $	*/
+/*	$NetBSD: com.c,v 1.50.18.3 2010/03/11 15:03:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.50.18.2 2009/05/04 08:12:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.50.18.3 2010/03/11 15:03:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.50.18.2 2009/05/04 08:12:06 yamt Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

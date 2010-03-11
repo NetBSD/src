@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.279.2.3 2009/05/16 10:41:22 yamt Exp $ */
+/* $NetBSD: com.c,v 1.279.2.4 2010/03/11 15:03:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.279.2.3 2009/05/16 10:41:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.279.2.4 2010/03/11 15:03:29 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -104,7 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.279.2.3 2009/05/16 10:41:22 yamt Exp $");
 #include <sys/poll.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
@@ -173,9 +172,11 @@ int	com_to_tiocm(struct com_softc *);
 void	com_iflush(struct com_softc *);
 
 int	com_common_getc(dev_t, struct com_regs *);
-void	com_common_putc(dev_t, struct com_regs *, int);
+static void	com_common_putc(dev_t, struct com_regs *, int);
 
 int	cominit(struct com_regs *, int, int, int, tcflag_t);
+
+static int comcnreattach(void);
 
 int	comcngetc(dev_t);
 void	comcnputc(dev_t, int);
@@ -200,6 +201,17 @@ dev_type_stop(comstop);
 dev_type_tty(comtty);
 dev_type_poll(compoll);
 
+static struct comcons_info comcons_info;
+
+/*
+ * Following are all routines needed for COM to act as console
+ */
+static struct consdev comcons = {
+	NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL, NULL, NULL,
+	NODEV, CN_NORMAL
+};
+
+
 const struct cdevsw com_cdevsw = {
 	comopen, comclose, comread, comwrite, comioctl,
 	comstop, comtty, compoll, nommap, ttykqfilter, D_TTY
@@ -215,10 +227,7 @@ u_int com_rbuf_size = COM_RING_SIZE;
 u_int com_rbuf_hiwat = (COM_RING_SIZE * 1) / 4;
 u_int com_rbuf_lowat = (COM_RING_SIZE * 3) / 4;
 
-static struct com_regs comconsregs;
 static int comconsattached;
-static int comconsrate;
-static tcflag_t comconscflag;
 static struct cnm_state com_cnm_state;
 
 #ifdef KGDB
@@ -383,9 +392,14 @@ com_attach_subr(struct com_softc *sc)
 
 	CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
 
-	if (regsp->cr_iot == comconsregs.cr_iot &&
-	    regsp->cr_iobase == comconsregs.cr_iobase) {
+	if (regsp->cr_iot == comcons_info.regs.cr_iot &&
+	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
 		comconsattached = 1;
+
+		if (cn_tab == NULL && comcnreattach() != 0) {
+			printf("can't re-init serial console @%lx\n",
+			    (u_long)comcons_info.regs.cr_iobase);
+		}
 
 		/* Make sure the console is always "hardwired". */
 		delay(10000);			/* wait for output to finish */
@@ -605,14 +619,41 @@ com_config(struct com_softc *sc)
 		com_enable_debugport(sc);
 }
 
+#if 0
+static int
+comcngetc_detached(dev_t dev)
+{
+	return 0;
+}
+
+static void
+comcnputc_detached(dev_t dev, int c)
+{
+}
+#endif
+
 int
 com_detach(device_t self, int flags)
 {
 	struct com_softc *sc = device_private(self);
 	int maj, mn;
 
-        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
 		return EBUSY;
+
+        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) &&
+	    (flags & DETACH_SHUTDOWN) != 0)
+		return EBUSY;
+
+	if (sc->disable != NULL && sc->enabled != 0) {
+		(*sc->disable)(sc);
+		sc->enabled = 0;
+	}
+
+        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		comconsattached = 0;
+		cn_tab = NULL;
+	}
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
@@ -653,33 +694,6 @@ com_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_lock);
 
 	return (0);
-}
-
-int
-com_activate(device_t self, enum devact act)
-{
-	struct com_softc *sc = device_private(self);
-	int rv = 0;
-
-	switch (act) {
-	case DVACT_ACTIVATE:
-		rv = EOPNOTSUPP;
-		break;
-
-	case DVACT_DEACTIVATE:
-		if (sc->sc_hwflags & (COM_HW_CONSOLE|COM_HW_KGDB)) {
-			rv = EBUSY;
-			break;
-		}
-
-		if (sc->disable != NULL && sc->enabled != 0) {
-			(*sc->disable)(sc);
-			sc->enabled = 0;
-		}
-		break;
-	}
-
-	return (rv);
 }
 
 void
@@ -811,8 +825,8 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 * sticky bits from TIOCSFLAGS.
 		 */
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-			t.c_ospeed = comconsrate;
-			t.c_cflag = comconscflag;
+			t.c_ospeed = comcons_info.rate;
+			t.c_cflag = comcons_info.cflag;
 		} else {
 			t.c_ospeed = TTYDEF_SPEED;
 			t.c_cflag = TTYDEF_CFLAG;
@@ -2110,7 +2124,7 @@ com_common_getc(dev_t dev, struct com_regs *regsp)
 	return (c);
 }
 
-void
+static void
 com_common_putc(dev_t dev, struct com_regs *regsp, int c)
 {
 	int s = splserial();
@@ -2210,24 +2224,15 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 	return (0);
 }
 
-/*
- * Following are all routines needed for COM to act as console
- */
-struct consdev comcons = {
-	NULL, NULL, comcngetc, comcnputc, comcnpollc, NULL, NULL, NULL,
-	NODEV, CN_NORMAL
-};
-
-
 int
 comcnattach1(struct com_regs *regsp, int rate, int frequency, int type,
     tcflag_t cflag)
 {
 	int res;
 
-	comconsregs = *regsp;
+	comcons_info.regs = *regsp;
 
-	res = cominit(&comconsregs, rate, frequency, type, cflag);
+	res = cominit(&comcons_info.regs, rate, frequency, type, cflag);
 	if (res)
 		return (res);
 
@@ -2235,8 +2240,10 @@ comcnattach1(struct com_regs *regsp, int rate, int frequency, int type,
 	cn_init_magic(&com_cnm_state);
 	cn_set_magic("\047\001"); /* default magic is BREAK */
 
-	comconsrate = rate;
-	comconscflag = cflag;
+	comcons_info.frequency = frequency;
+	comcons_info.type = type;
+	comcons_info.rate = rate;
+	comcons_info.cflag = cflag;
 
 	return (0);
 }
@@ -2258,11 +2265,18 @@ comcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, int frequency,
 	return comcnattach1(&regs, rate, frequency, type, cflag);
 }
 
+static int
+comcnreattach(void)
+{
+	return comcnattach1(&comcons_info.regs, comcons_info.rate,
+	    comcons_info.frequency, comcons_info.type, comcons_info.cflag);
+}
+
 int
 comcngetc(dev_t dev)
 {
 
-	return (com_common_getc(dev, &comconsregs));
+	return (com_common_getc(dev, &comcons_info.regs));
 }
 
 /*
@@ -2272,7 +2286,7 @@ void
 comcnputc(dev_t dev, int c)
 {
 
-	com_common_putc(dev, &comconsregs, c);
+	com_common_putc(dev, &comcons_info.regs, c);
 }
 
 void
@@ -2288,13 +2302,13 @@ com_kgdb_attach1(struct com_regs *regsp, int rate, int frequency, int type,
 {
 	int res;
 
-	if (regsp->cr_iot == comconsregs.cr_iot &&
-	    regsp->cr_iobase == comconsregs.cr_iobase) {
+	if (regsp->cr_iot == comcons_info.regs.cr_iot &&
+	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
 #if !defined(DDB)
 		return (EBUSY); /* cannot share with console */
 #else
 		comkgdbregs = *regsp;
-		comkgdbregs.cr_ioh = comconsregs.cr_ioh;
+		comkgdbregs.cr_ioh = comcons_info.regs.cr_ioh;
 #endif
 	} else {
 		comkgdbregs = *regsp;
@@ -2357,8 +2371,9 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
 	bus_space_handle_t help;
 
 	if (!comconsattached &&
-	    iot == comconsregs.cr_iot && iobase == comconsregs.cr_iobase)
-		help = comconsregs.cr_ioh;
+	    iot == comcons_info.regs.cr_iot &&
+	    iobase == comcons_info.regs.cr_iobase)
+		help = comcons_info.regs.cr_ioh;
 #ifdef KGDB
 	else if (!com_kgdb_attached &&
 	    iot == comkgdbregs.cr_iot && iobase == comkgdbregs.cr_iobase)
@@ -2389,9 +2404,14 @@ com_cleanup(device_t self, int how)
 }
 
 bool
-com_suspend(device_t self PMF_FN_ARGS)
+com_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct com_softc *sc = device_private(self);
+
+#if 0
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE) && cn_tab == &comcons)
+		cn_tab = &comcons_suspend;
+#endif
 
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, 0);
 	(void)CSR_READ_1(&sc->sc_regs, COM_REG_IIR);
@@ -2400,7 +2420,7 @@ com_suspend(device_t self PMF_FN_ARGS)
 }
 
 bool
-com_resume(device_t self PMF_FN_ARGS)
+com_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct com_softc *sc = device_private(self);
 

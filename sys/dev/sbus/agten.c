@@ -1,4 +1,4 @@
-/*	$NetBSD: agten.c,v 1.9.4.5 2009/09/16 13:37:56 yamt Exp $ */
+/*	$NetBSD: agten.c,v 1.9.4.6 2010/03/11 15:04:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.9.4.5 2009/09/16 13:37:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.9.4.6 2010/03/11 15:04:02 yamt Exp $");
 
 /*
  * a driver for the Fujitsu AG-10e SBus framebuffer
@@ -74,7 +74,10 @@ __KERNEL_RCSID(0, "$NetBSD: agten.c,v 1.9.4.5 2009/09/16 13:37:56 yamt Exp $");
 #include <dev/ic/i128reg.h>
 #include <dev/ic/i128var.h>
 
+#include <uvm/uvm_extern.h>
+
 #include "opt_agten.h"
+#include "ioconf.h"
 
 static int	agten_match(device_t, cfdata_t, void *);
 static void	agten_attach(device_t, device_t, void *);
@@ -85,7 +88,6 @@ static void	agten_init_screen(void *, struct vcons_screen *, int, long *);
 
 struct agten_softc {
 	device_t	sc_dev;		/* base device */
-	struct sbusdev	sc_sd;		/* sbus device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 
 	struct vcons_screen sc_console_screen;
@@ -163,7 +165,6 @@ struct wsdisplay_accessops agten_accessops = {
 };
 
 /* /dev/fb* stuff */
-extern struct cfdriver agten_cd;
 
 static int agten_fb_open(dev_t, int, int, struct lwp *);
 static int agten_fb_close(dev_t, int, int, struct lwp *);
@@ -247,7 +248,7 @@ agten_attach(device_t parent, device_t dev, void *aux)
 	sc->sc_i128_fbsz = prom_getpropint(node, "i128_fb_size", -1);
 	if (sbus_bus_map(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg,
-	    sc->sc_stride * sc->sc_height,
+	    round_page(sc->sc_stride * sc->sc_height),
 	    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE, 
 	    &sc->sc_i128_fbh) != 0) {
 
@@ -281,8 +282,6 @@ agten_attach(device_t parent, device_t dev, void *aux)
 	reg = prom_getpropint(node, "glint_reg_physaddr", -1);
 	sc->sc_glint_regs = sbus_bus_addr(sc->sc_bustag,
 	    sa->sa_reg[0].oa_space, sa->sa_reg[0].oa_base + reg);
-
-	sbus_establish(&sc->sc_sd, sc->sc_dev);
 
 #if 0
 	bus_intr_establish(sc->sc_bustag, sa->sa_pri, IPL_BIO,

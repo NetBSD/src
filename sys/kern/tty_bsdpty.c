@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.13.16.2 2009/05/04 08:13:49 yamt Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.13.16.3 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.13.16.2 2009/05/04 08:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.13.16.3 2010/03/11 15:04:20 yamt Exp $");
 
 #include "opt_ptm.h"
 
@@ -136,7 +136,7 @@ static void
 /*ARGSUSED*/
 pty_getvattr(struct ptm_pty *ptm, struct lwp *l, struct vattr *vattr)
 {
-	VATTR_NULL(vattr);
+	vattr_null(vattr);
 	/* get real uid */
 	vattr->va_uid = kauth_cred_getuid(l->l_cred);
 	vattr->va_gid = TTY_GID;

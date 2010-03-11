@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55.10.1 2009/05/04 08:12:09 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55.10.2 2010/03/11 15:03:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.10.1 2009/05/04 08:12:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.10.2 2010/03/11 15:03:07 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -170,6 +170,7 @@ scsi_find(dev_t bdev)
 	int ifid;
 	char tname[16];
 	device_t scsibus;
+	deviter_t di;
 	struct scsibus_softc *sbsc;
 	struct scsipi_periph *periph;
 
@@ -196,13 +197,16 @@ scsi_find(dev_t bdev)
 		sprintf(tname, "%s%" PRIu64,
 			name_scsiif[ifid], B_X68K_SCSI_IF_UN(bdev));
 
-		for (scsibus = TAILQ_FIRST(&alldevs); scsibus;
-					scsibus = TAILQ_NEXT(scsibus, dv_list))
+		for (scsibus = deviter_first(&di, DEVITER_F_ROOT_FIRST);
+		     scsibus != NULL;
+		     scsibus = deviter_next(&di)) {
 			if (device_parent(scsibus)
-			    && !strcmp(tname, device_xname(device_parent(scsibus))))
+			    && strcmp(tname, device_xname(device_parent(scsibus))) == 0)
 				break;
+		}
+		deviter_release(&di);
 	}
-	if (!scsibus)
+	if (scsibus == NULL)
 		return NULL;
 	sbsc = device_private(scsibus);
 	periph = scsipi_lookup_periph(sbsc->sc_channel,

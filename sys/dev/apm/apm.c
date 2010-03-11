@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.20.4.2 2009/05/04 08:12:34 yamt Exp $ */
+/*	$NetBSD: apm.c,v 1.20.4.3 2010/03/11 15:03:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.20.4.2 2009/05/04 08:12:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.20.4.3 2010/03/11 15:03:23 yamt Exp $");
 
 #include "opt_apm.h"
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.20.4.2 2009/05/04 08:12:34 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
@@ -309,7 +308,7 @@ apm_suspend(struct apm_softc *sc)
 	sc->sc_power_state = PWR_SUSPEND;
  
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		pmf_system_suspend(PMF_F_NONE);
+		pmf_system_suspend(PMF_Q_NONE);
 		apm_spl = splhigh();
 	}
 
@@ -335,7 +334,7 @@ apm_standby(struct apm_softc *sc)
 	sc->sc_power_state = PWR_STANDBY;
 
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		pmf_system_suspend(PMF_F_NONE);
+		pmf_system_suspend(PMF_Q_NONE);
 		apm_spl = splhigh();
 	}
 	error = (*sc->sc_ops->aa_set_powstate)(sc->sc_cookie, APM_DEV_ALLDEVS,
@@ -366,7 +365,7 @@ apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 	inittodr(time_second);
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
 		splx(apm_spl);
-		pmf_system_resume(PMF_F_NONE);
+		pmf_system_resume(PMF_Q_NONE);
 	}
 
 	apm_record_event(sc, event_type);

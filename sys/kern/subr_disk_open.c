@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.1.2.2 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.1.2.3 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.1.2.2 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.1.2.3 2010/03/11 15:04:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -79,4 +79,32 @@ opendisk(struct device *dv)
 	}
 
 	return tmpvn;
+}
+
+int
+getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned *secsizep)
+{
+	struct partinfo dpart;
+	struct dkwedge_info dkw;
+	struct disk *pdk;
+	int error;
+
+	error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
+	if (error == 0) {
+		*secsizep = dpart.disklab->d_secsize;
+		*numsecp  = dpart.part->p_size;
+		return 0;
+	}
+
+	error = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD, NOCRED);
+	if (error == 0) {
+		pdk = disk_find(dkw.dkw_parent);
+		if (pdk != NULL) {
+			*secsizep = DEV_BSIZE << pdk->dk_blkshift;
+			*numsecp  = dkw.dkw_size;
+		} else
+			error = ENODEV;
+	}
+
+	return error;
 }

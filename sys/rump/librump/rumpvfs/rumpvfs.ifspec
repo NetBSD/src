@@ -1,0 +1,65 @@
+;       $NetBSD: rumpvfs.ifspec,v 1.1.4.2 2010/03/11 15:04:39 yamt Exp $
+
+NAME|vfs
+PUBHDR|include/rump/rumpvfs_if_pub.h
+PRIVHDR|librump/rumpvfs/rumpvfs_if_priv.h
+WRAPPERS|librump/rumpvfs/rumpvfs_if_wrappers.c
+
+; type          | name          | args		| attrs
+;
+
+void		|getvninfo	|struct vnode *, enum vtype *, off_t *, dev_t *
+
+
+struct vfsops *	|vfslist_iterate|struct vfsops *
+struct vfsops *	|vfs_getopsbyname|const char *
+
+struct vattr *	|vattr_init	|void
+void		|vattr_settype	|struct vattr *, enum vtype
+void		|vattr_setmode	|struct vattr *, mode_t
+void		|vattr_setrdev	|struct vattr *, dev_t
+void		|vattr_free	|struct vattr *
+
+void		|vp_incref	|struct vnode *
+int		|vp_getref	|struct vnode *
+void		|vp_rele	|struct vnode *
+
+void		|vp_interlock	|struct vnode *
+
+int		|etfs_register	|const char *, const char *, enum rump_etfs_type
+int		|etfs_register_withsize	|const char *, const char *,	\
+					 enum rump_etfs_type, uint64_t,	\
+					 uint64_t
+int		|etfs_remove	|const char *
+
+void		|freecn		|struct componentname *, int
+int		|checksavecn	|struct componentname *
+int		|namei		|uint32_t, uint32_t, const char *,	\
+				 struct vnode **, struct vnode **,	\
+				 struct componentname **
+struct componentname *|makecn	|u_long, u_long, const char *, size_t,	\
+				 kauth_cred_t, struct lwp *
+
+int		|vfs_unmount	|struct mount *, int
+int		|vfs_root	|struct mount *, struct vnode **, int
+int		|vfs_statvfs	|struct mount *, struct statvfs *
+int		|vfs_sync	|struct mount *, int, kauth_cred_t
+int		|vfs_fhtovp	|struct mount *, struct fid *, struct vnode **
+int		|vfs_vptofh	|struct vnode *, struct fid *, size_t *
+void		|vfs_syncwait	|struct mount *
+int		|vfs_getmp	|const char *, struct mount **
+
+void		|rcvp_set	|struct vnode *, struct vnode *
+struct vnode *	|cdir_get	|void
+
+; I picked the wrong header to stop sniffin' glue
+int		|syspuffs_glueinit	|int, int *	|WEAK
+
+; compat syscalls.  these are currently hand-"generated"
+int		|sys___stat30		|const char *, struct stat *
+int		|sys___lstat30		|const char *, struct stat *
+
+; Other compat glue (for sniffing purposes)
+; XXX: (lack of) types
+void		|vattr50_to_vattr	|const struct vattr *, struct vattr *
+void		|vattr_to_vattr50	|const struct vattr *, struct vattr *

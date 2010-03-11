@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.58.20.1 2009/05/04 08:10:35 yamt Exp $ */
+/*	$NetBSD: siop.c,v 1.58.20.2 2010/03/11 15:02:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.58.20.1 2009/05/04 08:10:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.58.20.2 2010/03/11 15:02:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: siop.c,v 1.58.20.1 2009/05/04 08:10:35 yamt Exp $");
 #include <machine/cpu.h>
 #ifdef __m68k__
 #include <m68k/cacheops.h>
+#else
+#define DCIAS(pa)
 #endif
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/isr.h>
@@ -266,7 +268,7 @@ siop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		acb->flags = ACB_ACTIVE;
 		acb->xs = xs;
-		memcpy( &acb->cmd, xs->cmd, xs->cmdlen);
+		memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
 		acb->clen = xs->cmdlen;
 		acb->daddr = xs->data;
 		acb->dleft = xs->datalen;

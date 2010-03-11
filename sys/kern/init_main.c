@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.353.2.7 2010/03/11 15:04:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.7 2010/03/11 15:04:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -112,7 +112,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp
 #include "opt_pax.h"
 #include "opt_compat_netbsd.h"
 #include "opt_wapbl.h"
+#include "opt_ptrace.h"
 
+#include "drvctl.h"
 #include "ksyms.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
@@ -128,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp
 #include <sys/errno.h>
 #include <sys/callout.h>
 #include <sys/cpu.h>
+#include <sys/spldebug.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
@@ -149,8 +152,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp
 #include <sys/pset.h>
 #include <sys/sysctl.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
-#include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
 #include <sys/sched.h>
@@ -200,6 +201,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp
 #include <sys/savar.h>
 #endif
 #include <net80211/ieee80211_netbsd.h>
+#ifdef PTRACE
+#include <sys/ptrace.h>
+#endif /* PTRACE */
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -212,6 +216,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <sys/cpu.h>
 
@@ -227,10 +232,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.353.2.6 2009/09/16 13:38:00 yamt Exp
 #include <dev/sysmon/sysmonvar.h>
 #endif
 
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/raw_cb.h>
-
-#include <secmodel/secmodel.h>
 
 #include <prop/proplib.h>
 
@@ -248,7 +252,6 @@ struct timeval50 boottime50;
 
 extern struct proc proc0;
 extern struct lwp lwp0;
-extern struct cwdinfo cwdi0;
 extern time_t rootfstime;
 
 #ifndef curlwp
@@ -268,14 +271,6 @@ static void start_init(void *);
 static void configure(void);
 static void configure2(void);
 void main(void);
-
-void __secmodel_none(void);
-__weak_alias(secmodel_start,__secmodel_none);
-void
-__secmodel_none(void)
-{
-	return;
-}
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -342,6 +337,20 @@ main(void)
 	/* Initialize callouts, part 1. */
 	callout_startup();
 
+	/* Initialize the kernel authorization subsystem. */
+	kauth_init();
+
+	spec_init();
+
+	/*
+	 * Set BPF op vector.  Can't do this in bpf attach, since
+	 * network drivers attach before bpf.
+	 */
+	bpf_setops();
+
+	/* Start module system. */
+	module_init();
+
 	/*
 	 * Initialize the kernel authorization subsystem and start the
 	 * default security model, if any. We need to do this early
@@ -350,8 +359,7 @@ main(void)
 	 * credential inheritance policy, it is needed at least before
 	 * any process is created, specifically proc0.
 	 */
-	kauth_init();
-	secmodel_start();
+	module_init_class(MODULE_CLASS_SECMODEL);
 
 	/* Initialize the buffer cache */
 	bufinit();
@@ -380,7 +388,7 @@ main(void)
 	/* Initialize resource management. */
 	resource_init();
 
-	/* Create process 0 (the swapper). */
+	/* Create process 0. */
 	proc0_init();
 
 	/* Disable preemption during boot. */
@@ -399,6 +407,8 @@ main(void)
 	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
+
+	sched_init();
 
 	/* Initialize processor-sets */
 	psets_init();
@@ -422,8 +432,8 @@ main(void)
 	/* Initialize the log device. */
 	loginit();
 
-	/* Start module system. */
-	module_init();
+	/* Second part of module system initialization. */
+	module_init2();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
@@ -486,6 +496,8 @@ main(void)
 	/* Initialize interfaces. */
 	ifinit1();
 
+	spldebug_start();
+
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
 
@@ -501,6 +513,11 @@ main(void)
 	/* Initialize System V style shared memory. */
 	shminit();
 #endif
+
+	vmem_rehash_start();	/* must be before exec_init */
+
+	/* Initialize exec structures */
+	exec_init(1);		/* seminit calls exithook_establish() */
 
 #ifdef SYSVSEM
 	/* Initialize System V style semaphores. */
@@ -556,6 +573,11 @@ main(void)
 	ktrinit();
 #endif
 
+#ifdef PTRACE
+	/* Initialize ptrace. */
+	ptrace_init();
+#endif /* PTRACE */
+
 	/* Initialize the UUID system calls. */
 	uuid_init();
 
@@ -563,6 +585,8 @@ main(void)
 	/* Initialize write-ahead physical block logging. */
 	wapbl_init();
 #endif
+
+	machdep_init();
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
@@ -589,6 +613,8 @@ main(void)
 	 */
 	config_finalize();
 
+	sysctl_finalize();
+
 	/*
 	 * Now that autoconfiguration has completed, we can determine
 	 * the root and dump devices.
@@ -598,7 +624,7 @@ main(void)
 
 	/* Mount the root file system. */
 	do {
-		domountroothook();
+		domountroothook(root_device);
 		if ((error = vfs_mountroot())) {
 			printf("cannot mount root, error = %d\n", error);
 			boothowto |= RB_ASKNAME;
@@ -614,30 +640,6 @@ main(void)
 	 * don't have a non-volatile time-of-day device.
 	 */
 	inittodr(rootfstime);
-
-	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
-	CIRCLEQ_FIRST(&mountlist)->mnt_op->vfs_refcount++;
-
-	/*
-	 * Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to
-	 * reference it.
-	 */
-	error = VFS_ROOT(CIRCLEQ_FIRST(&mountlist), &rootvnode);
-	if (error)
-		panic("cannot find root vnode, error=%d", error);
-	cwdi0.cwdi_cdir = rootvnode;
-	VREF(cwdi0.cwdi_cdir);
-	VOP_UNLOCK(rootvnode, 0);
-	cwdi0.cwdi_rdir = NULL;
-
-	/*
-	 * Now that root is mounted, we can fixup initproc's CWD
-	 * info.  All other processes are kthreads, which merely
-	 * share proc0's CWD info.
-	 */
-	initproc->p_cwdi->cwdi_cdir = rootvnode;
-	VREF(initproc->p_cwdi->cwdi_cdir);
-	initproc->p_cwdi->cwdi_rdir = NULL;
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
@@ -688,11 +690,6 @@ main(void)
 	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
 		panic("fork aiodoned");
 
-	vmem_rehash_start();
-
-	/* Initialize exec structures */
-	exec_init(1);
-
 	/*
 	 * Okay, now we can let init(8) exec!  It's off to userland!
 	 */
@@ -714,7 +711,7 @@ configure(void)
 {
 
 	/* Initialize autoconf data structures. */
-	config_init();
+	config_init_mi();
 	/*
 	 * XXX
 	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
@@ -775,7 +772,7 @@ configure2(void)
 
 	/* Setup the runqueues and scheduler. */
 	runq_init();
-	sched_init();
+	synch_init();
 
 	/*
 	 * Bus scans can make it appear as if the system has paused, so
@@ -940,7 +937,7 @@ start_init(void *arg)
 			*flagsp++ = '\0';
 			i = flagsp - flags;
 #ifdef DEBUG
-			printf("init: copying out flags `%s' %d\n", flags, i);
+			aprint_normal("init: copying out flags `%s' %d\n", flags, i);
 #endif
 			arg1 = STACK_ALLOC(ucp, i);
 			ucp = STACK_MAX(arg1, i);
@@ -952,7 +949,7 @@ start_init(void *arg)
 		 */
 		i = strlen(path) + 1;
 #ifdef DEBUG
-		printf("init: copying out path `%s' %d\n", path, i);
+		aprint_normal("init: copying out path `%s' %d\n", path, i);
 #else
 		if (boothowto & RB_ASKNAME || path != initpaths[0])
 			printf("init: trying %s\n", path);

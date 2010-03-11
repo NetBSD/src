@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.79.10.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.79.10.3 2010/03/11 15:04:07 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.79.10.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.79.10.3 2010/03/11 15:04:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,8 +229,10 @@ USB_ATTACH(ulpt)
 
 	sc->sc_dev = self;
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	devinfop = usbd_devinfo_alloc(dev, 0);
-	USB_ATTACH_SETUP;
 	aprint_normal_dev(self, "%s, iclass %d/%d\n",
 	       devinfop, ifcd->bInterfaceClass, ifcd->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
@@ -362,14 +364,12 @@ ulpt_activate(device_ptr_t self, enum devact act)
 	struct ulpt_softc *sc = device_private(self);
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 #endif
 

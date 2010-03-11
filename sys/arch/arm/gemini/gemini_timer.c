@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_timer.c,v 1.3.2.2 2009/05/04 08:10:41 yamt Exp $	*/
+/*	$NetBSD: gemini_timer.c,v 1.3.2.3 2010/03/11 15:02:06 yamt Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_geminitmr.c,v 1.1 2008/08/27 11:03:10 matt Exp
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.3.2.2 2009/05/04 08:10:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.3.2.3 2010/03/11 15:02:06 yamt Exp $");
 
 #include "opt_gemini.h"
 #include "opt_cpuoptions.h"
@@ -233,7 +233,7 @@ gemini_get_timecount(struct timecounter *tc)
 int
 clockintr(void *frame)
 {
-	struct geminitmr_softc *sc = clock_sc;;
+	struct geminitmr_softc *sc = clock_sc;
 
 	_timer_intr_clr(sc);
 	_timer_reload(sc, sc->sc_tf.tf_counter);
@@ -246,7 +246,7 @@ clockintr(void *frame)
 int
 statintr(void *frame)
 {
-	struct geminitmr_softc *sc = stat_sc;;
+	struct geminitmr_softc *sc = stat_sc;
 
 	_timer_intr_clr(sc);
 	_timer_reload(sc, sc->sc_tf.tf_counter);

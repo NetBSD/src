@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.25.10.2 2009/08/19 18:46:56 yamt Exp $ */
+/* $NetBSD: privcmd.c,v 1.25.10.3 2010/03/11 15:03:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christian Limpach.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.25.10.2 2009/08/19 18:46:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.25.10.3 2010/03/11 15:03:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +336,7 @@ privcmd_ioctl(void *v)
 		privcmd_mmap_t *mcmd = ap->a_data;
 		privcmd_mmap_entry_t mentry;
 		vaddr_t va;
-		u_long ma;
+		paddr_t ma;
 		struct vm_map *vmm = &curlwp->l_proc->p_vmspace->vm_map;
 
 		for (i = 0; i < mcmd->num; i++) {
@@ -362,7 +357,7 @@ privcmd_ioctl(void *v)
 			if (maddr == NULL)
 				return ENOMEM;
 			va = mentry.va & ~PAGE_MASK;
-			ma = mentry.mfn <<  PGSHIFT; /* XXX ??? */
+			ma = ((paddr_t)mentry.mfn) <<  PGSHIFT; /* XXX ??? */
 			for (j = 0; j < mentry.npages; j++) {
 				maddr[j] = ma;
 				ma += PAGE_SIZE;
@@ -379,7 +374,8 @@ privcmd_ioctl(void *v)
 		int i;
 		privcmd_mmapbatch_t* pmb = ap->a_data;
 		vaddr_t va0, va;
-		u_long mfn, ma;
+		u_long mfn;
+		paddr_t ma;
 		struct vm_map *vmm;
 		struct vm_map_entry *entry;
 		vm_prot_t prot;
@@ -425,7 +421,7 @@ privcmd_ioctl(void *v)
 				    UVM_KMF_VAONLY);
 				return error;
 			}
-			ma = mfn << PGSHIFT;
+			ma = ((paddr_t)mfn) << PGSHIFT;
 			if (pmap_enter_ma(pmap_kernel(), trymap, ma, 0,
 			    prot, PMAP_CANFAIL, pmb->dom)) {
 				mfn |= 0xF0000000;
@@ -517,7 +513,7 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj, NULL);
 			pmap_update(ufi->orig_map->pmap);
-			uvm_wait("udv_fault");
+			uvm_wait("privpgop_fault");
 			return (ERESTART);
 		}
 		if (error) {

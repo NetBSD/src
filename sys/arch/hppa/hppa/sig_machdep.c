@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.20.2.2 2009/05/04 08:11:14 yamt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.20.2.3 2010/03/11 15:02:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20.2.2 2009/05/04 08:11:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20.2.3 2010/03/11 15:02:26 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -112,7 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.20.2.2 2009/05/04 08:11:14 yamt Ex
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 
@@ -157,6 +156,7 @@ sendsig_siginfo(const struct ksiginfo *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct sigacts *ps = p->p_sigacts;
 	struct sigframe_siginfo *fp, frame;
 	struct trapframe *tf;
@@ -209,7 +209,7 @@ sendsig_siginfo(const struct ksiginfo *ksi, const sigset_t *mask)
 	tf->tf_r3 = (__greg_t)&fp->sf_uc;
 
 	fp++;
-	tf->tf_iisq_head = tf->tf_iisq_tail = l->l_addr->u_pcb.pcb_space;
+	tf->tf_iisq_head = tf->tf_iisq_tail = pcb->pcb_space;
 	tf->tf_iioq_head =
 		(__greg_t)ps->sa_sigdesc[sig].sd_tramp | HPPA_PC_PRIV_USER;
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;

@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.23.20.1 2009/05/04 08:11:25 yamt Exp $ */
+/* $NetBSD: disksubr.c,v 1.23.20.2 2010/03/11 15:02:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23.20.1 2009/05/04 08:11:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.23.20.2 2010/03/11 15:02:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	error = biowait(bp);
 	if (!error) {
 		/* Save the whole block in case it has info we need. */
-		memcpy( clp->cd_block, bp->b_data, sizeof(clp->cd_block));
+		memcpy(clp->cd_block, bp->b_data, sizeof(clp->cd_block));
 	}
 	brelse(bp, 0);
 	if (error)
@@ -295,7 +295,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, str
 
 	/* Get a buffer and copy the new label into it. */
 	bp = geteblk((int)lp->d_secsize);
-	memcpy( bp->b_data, clp->cd_block, sizeof(clp->cd_block));
+	memcpy(bp->b_data, clp->cd_block, sizeof(clp->cd_block));
 
 	/* Write out the updated label. */
 	bp->b_dev = dev;

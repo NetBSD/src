@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.26 2008/02/23 19:38:47 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.26.4.1 2010/03/11 15:02:50 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -123,7 +123,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 
 #define	ASMSTR		.asciz
 
-#define RCSID(x)	.text; .asciz x
+#define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
@@ -175,8 +175,8 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 	stint	tmp2,CI_INTRDEPTH(tmp1);				\
 	li	tmp2,0;							\
 	stptr	tmp2,-CALLFRAMELEN(er);	/* terminate idle stack chain */\
-	lis	tmp1,_C_LABEL(proc0paddr)@ha;				\
-	stptr	er,_C_LABEL(proc0paddr)@l(tmp1);			\
+	lis	tmp1,_C_LABEL(lwp0)+L_PCB@ha; /* XXXuvm_lwp_getuarea */	\
+	stptr	er,_C_LABEL(lwp0)+L_PCB@l(tmp1);			\
 	addi	er,er,USPACE;		/* stackpointer for proc0 */	\
 	addi	sp,er,-FRAMELEN;	/* stackpointer for proc0 */	\
 		/* er = end of mem reserved for kernel */		\

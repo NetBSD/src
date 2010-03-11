@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.46.2.2 2009/05/04 08:12:24 yamt Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.46.2.3 2010/03/11 15:03:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.46.2.2 2009/05/04 08:12:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.46.2.3 2010/03/11 15:03:17 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,7 +174,6 @@ mach_thread_create_running(struct mach_trap_args *args)
 	vaddr_t uaddr;
 	int flags;
 	int error;
-	int inmem;
 	int end_offset;
 
 	/* Sanity check req_count */
@@ -190,16 +189,16 @@ mach_thread_create_running(struct mach_trap_args *args)
 	mctc.mctc_child_done = 0;
 	mctc.mctc_state = req->req_state;
 
-        inmem = uvm_uarea_alloc(&uaddr);
-        if (__predict_false(uaddr == 0))
-                return (ENOMEM);
+	uaddr = uvm_uarea_alloc();
+	if (__predict_false(uaddr == 0))
+		return ENOMEM;
 
 	flags = 0;
-	if ((error = lwp_create(l, p, uaddr, inmem, flags, NULL, 0,
+	if ((error = lwp_create(l, p, uaddr, flags, NULL, 0,
 	    mach_create_thread_child, (void *)&mctc, &mctc.mctc_lwp,
 	    SCHED_OTHER)) != 0)
 	{
-		uvm_uarea_free(uaddr, curcpu());
+		uvm_uarea_free(uaddr);
 		return mach_msg_error(args, error);
 	}
 

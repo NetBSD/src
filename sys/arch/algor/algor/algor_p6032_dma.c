@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_dma.c,v 1.3.78.1 2008/05/16 02:21:43 yamt Exp $	*/
+/*	$NetBSD: algor_p6032_dma.c,v 1.3.78.2 2010/03/11 15:01:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_dma.c,v 1.3.78.1 2008/05/16 02:21:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_dma.c,v 1.3.78.2 2010/03/11 15:01:56 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -75,7 +75,7 @@ algor_p6032_dma_init(struct p6032_config *acp)
 	t->_dmamem_mmap = _bus_dmamem_mmap;
 
 	/*
-	 * Initialize the DMA tag usd for ISA DMA.
+	 * Initialize the DMA tag used for ISA DMA.
 	 */
 	t = &acp->ac_isa_dmat;
 	t->_cookie = acp;

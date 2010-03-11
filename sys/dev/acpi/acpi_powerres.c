@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.6 2008/04/14 00:30:30 jmcneill Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.6.4.1 2010/03/11 15:03:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,16 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.6 2008/04/14 00:30:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.6.4.1 2010/03/11 15:03:22 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
-#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
@@ -147,8 +142,7 @@ acpi_pwr_register_resource(ACPI_HANDLE res)
 	rp->ap_resource = res;
 
 	/* get the Power Resource object */
-	buf.Length = ACPI_ALLOCATE_BUFFER;
-	status = AcpiEvaluateObject(res, NULL, NULL, &buf);
+	status = acpi_eval_struct(res, NULL, &buf);
 	if (ACPI_FAILURE(status)) {
 		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
 				     "no power resource object\n"));
@@ -184,7 +178,7 @@ acpi_pwr_register_resource(ACPI_HANDLE res)
 			     acpi_name(res)));
  out:
 	if (buf.Pointer != NULL)
-		AcpiOsFree(buf.Pointer);
+		ACPI_FREE(buf.Pointer);
 	if (ACPI_FAILURE(status) && (rp != NULL))
 		free(rp, M_ACPIPWR);
 	return_ACPI_STATUS(status);
@@ -370,8 +364,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 		if (ACPI_FAILURE(AcpiGetHandle(consumer, "_PR0", &pr0_handle))) {
 			goto bad;
 		}
-		reslist_buffer.Length = ACPI_ALLOCATE_BUFFER;
-		status = AcpiEvaluateObject(pr0_handle, NULL, NULL, &reslist_buffer);
+		status = acpi_eval_struct(pr0_handle, NULL, &reslist_buffer);
 		if (ACPI_FAILURE(status))
 			goto bad;
 		reslist_object = (ACPI_OBJECT *)reslist_buffer.Pointer;
@@ -379,7 +372,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 		    (reslist_object->Package.Count == 0)) {
 			goto bad;
 		}
-		AcpiOsFree(reslist_buffer.Pointer);
+		ACPI_FREE(reslist_buffer.Pointer);
 		reslist_buffer.Pointer = NULL;
 		reslist_object = NULL;
 	}
@@ -388,9 +381,8 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 	 * Check that we can actually fetch the list of power resources
 	 */
 	if (reslist_handle != NULL) {
-		reslist_buffer.Length = ACPI_ALLOCATE_BUFFER;
-		status = AcpiEvaluateObject(reslist_handle, NULL, NULL,
-		    &reslist_buffer);
+		status = acpi_eval_struct(reslist_handle,
+		    NULL, &reslist_buffer);
 		if (ACPI_FAILURE(status)) {
 			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "can't evaluate resource list %s\n",
 					     acpi_name(reslist_handle)));
@@ -398,7 +390,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 		}
 		reslist_object = (ACPI_OBJECT *)reslist_buffer.Pointer;
 		if (reslist_object->Type != ACPI_TYPE_PACKAGE) {
-			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "resource list is not ACPI_TYPE_PACKAGE (%d)\n",
+			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "resource list is not ACPI_TYPE_PACKAGE (%u)\n",
 					     reslist_object->Type));
 			status = AE_TYPE;
 			goto out;
@@ -426,7 +418,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 	 */
 	if (reslist_object != NULL) {
 		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-				     "referencing %d new resources\n",
+				     "referencing %u new resources\n",
 				     reslist_object->Package.Count));
 		acpi_foreach_package_object(reslist_object,
 		    acpi_pwr_reference_resource, pc);
@@ -471,7 +463,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 
  out:
 	if (reslist_buffer.Pointer != NULL)
-		AcpiOsFree(reslist_buffer.Pointer);
+		ACPI_FREE(reslist_buffer.Pointer);
 	return_ACPI_STATUS(status);
 }
 
@@ -490,36 +482,10 @@ acpi_pwr_reference_resource(ACPI_OBJECT *obj, void *arg)
 
 	ACPI_FUNCTION_TRACE(__func__);
 
-	/* check the object type */
-	switch (obj->Type) {
-	case ACPI_TYPE_LOCAL_REFERENCE:
-	case ACPI_TYPE_ANY:
-		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "building reference from %s to %s\n",
-				     acpi_name(pc->ac_consumer), acpi_name(obj->Reference.Handle)));
+	status = acpi_eval_reference_handle(obj, &res);
 
-		res = obj->Reference.Handle;
-		break;
-
-	case ACPI_TYPE_STRING:
-		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-				     "building reference from %s to %s\n",
-				     acpi_name(pc->ac_consumer),
-				     obj->String.Pointer));
-
-		/* get the handle of the resource */
-		status = AcpiGetHandle(NULL, obj->String.Pointer, &res);
-		if (ACPI_FAILURE(status)) {
-			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-					     "couldn't find power resource %s\n",
-					     obj->String.Pointer));
-			return_ACPI_STATUS(AE_OK);
-		}
-		break;
-
-	default:
-		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-				     "don't know how to create a power reference to object type %d\n",
-				     obj->Type));
+	if (ACPI_FAILURE(status)) {
+		ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "failed to get handle\n"));
 		return_ACPI_STATUS(AE_OK);
 	}
 
@@ -583,9 +549,9 @@ acpi_pwr_switch_power(void)
 		status = acpi_eval_integer(rp->ap_resource, "_STA", &cur);
 		if (ACPI_FAILURE(status)) {
 			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS,
-					     "can't get status of %s - %d\n",
+					     "can't get status of %s - %s\n",
 					     acpi_name(rp->ap_resource),
-					     status));
+					     AcpiFormatException(status)));
 			/* XXX is this correct?  Always switch if in doubt? */
 			continue;
 		}

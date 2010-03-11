@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.42.20.1 2009/05/04 08:11:39 yamt Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.42.20.2 2010/03/11 15:02:46 yamt Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.42.20.1 2009/05/04 08:11:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.42.20.2 2010/03/11 15:02:46 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -65,10 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.42.20.1 2009/05/04 08:11:39 yamt Exp $"
 
 
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -119,7 +116,7 @@ mb8795_config(struct mb8795_softc *sc, int *media, int nmedia, int defmedia)
 	DPRINTF(("%s: mb8795_config()\n",sc->sc_dev.dv_xname));
 
 	/* Initialize ifnet structure. */
-	memcpy( ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_start = mb8795_start;
 	ifp->if_ioctl = mb8795_ioctl;
@@ -332,13 +329,11 @@ mb8795_rint(struct mb8795_softc *sc)
 			}
 #endif
 
-#if NBPFILTER > 0
 			/*
 			 * Pass packet to bpf if there is a listener.
 			 */
 			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif
+				bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 			{
 				ifp->if_ipackets++;
@@ -725,13 +720,11 @@ mb8795_start(struct ifnet *ifp)
 			return;
 		}
 
-#if NBPFILTER > 0
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		s = spldma();
 		IF_ENQUEUE(&sc->sc_tx_snd, m);

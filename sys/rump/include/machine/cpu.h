@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3.20.1 2009/05/04 08:14:29 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3.20.2 2010/03/11 15:04:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -72,12 +72,11 @@ static __inline void cpu_handle_ipi(void) {}
 void __syncicache(void *, size_t);
 #endif
 
-extern struct cpu_info rump_cpu;
-#define curcpu() (&rump_cpu)
-#define cpu_number() 0 /* XXX: good enuf? */
+struct lwp *rumpuser_get_curlwp(void);
+#define curlwp rumpuser_get_curlwp()
 
-struct lwp *rump_get_curlwp(void); /* XXX */
-#define curlwp rump_get_curlwp()
+#define curcpu() (curlwp->l_cpu)
+#define cpu_number() 0 /* XXX: not good enuf */
 
 #endif /* !_LOCORE */
 

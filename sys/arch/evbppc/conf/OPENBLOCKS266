@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.38.10.1 2009/05/04 08:11:02 yamt Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.38.10.2 2010/03/11 15:02:20 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.38.10.1 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.38.10.2 $"
 
 maxusers	32
 
@@ -63,7 +63,8 @@ options 	COMPAT_15		# NetBSD 1.5,
 options 	COMPAT_16		# NetBSD 1.6,
 options 	COMPAT_20		# NetBSD 2.0,
 options 	COMPAT_30		# NetBSD 3.0,
-options 	COMPAT_40		# NetBSD 4.0 compatibility.
+options 	COMPAT_40		# NetBSD 4.0,
+options 	COMPAT_50		# NetBSD 5.0 compatibility.
 options 	COMPAT_43		# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART	# recognize old partition ID
 options		COMPAT_BSDPTY		# /dev/[pt]ty?? ptys.
@@ -84,7 +85,7 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system 	PORTAL		# portal filesystem (still experimental)
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -147,7 +148,7 @@ config		netbsd	root on ? type ?
 
 plb0 at root				# Processor Local Bus
 cpu0	at plb?				# CPU
-ecc0	at plb? irq 16			# On-chip ECC controller
+ecc0	at plb? irq 17			# On-chip ECC controller
 pchb0	at plb?				# PCI-Host bridges
 
 # On-chip Peripheral Bus support
@@ -223,3 +224,4 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	putter			# for puffs and pud

@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.6.4.1 2009/08/19 18:47:06 yamt Exp $ */
+/* $NetBSD: hpet.c,v 1.6.4.2 2010/03/11 15:03:31 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.6.4.1 2009/08/19 18:47:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.6.4.2 2010/03/11 15:03:31 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.6.4.1 2009/08/19 18:47:06 yamt Exp $");
 #include <dev/ic/hpetvar.h>
 
 static u_int	hpet_get_timecount(struct timecounter *);
-static bool	hpet_resume(device_t PMF_FN_PROTO);
+static bool	hpet_resume(device_t, const pmf_qual_t *);
 
 int
 hpet_detach(device_t dv, int flags)
@@ -83,6 +83,10 @@ hpet_attach_subr(device_t dv)
 
 	/* Get frequency */
 	val = bus_space_read_4(sc->sc_memt, sc->sc_memh, HPET_PERIOD);
+	if (val == 0) {
+		aprint_error_dev(dv, "invalid timer period\n");
+		return;
+	}
 	tc->tc_frequency = 1000000000000000ULL / val;
 
 	/* Enable timer */
@@ -109,7 +113,7 @@ hpet_get_timecount(struct timecounter *tc)
 }
 
 static bool
-hpet_resume(device_t dv PMF_FN_ARGS)
+hpet_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct hpet_softc *sc = device_private(dv);
 	uint32_t val;

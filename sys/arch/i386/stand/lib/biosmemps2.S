@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmemps2.S,v 1.2.108.1 2008/05/16 02:22:39 yamt Exp $	*/
+/*	$NetBSD: biosmemps2.S,v 1.2.108.2 2010/03/11 15:02:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ ENTRY(getextmemps2)
 
 getmem:
 	# move the parameter to right register
+	push	%ds
 	movl	%edx, %esi
 	andl	$0xf, %esi
 	shrl	$4, %edx
@@ -81,6 +82,7 @@ getmem:
 	movb	$0xc7, %ah
 	int	$0x15
 	setc	%bl		# save carry
+	pop	%ds
 
 out:
 	calll	_C_LABEL(real_to_prot)

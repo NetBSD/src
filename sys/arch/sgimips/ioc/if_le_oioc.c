@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_oioc.c,v 1.1.4.2 2009/05/04 08:11:50 yamt Exp $	*/
+/*	$NetBSD: if_le_oioc.c,v 1.1.4.3 2010/03/11 15:02:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -25,10 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.1.4.2 2009/05/04 08:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.1.4.3 2010/03/11 15:02:55 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

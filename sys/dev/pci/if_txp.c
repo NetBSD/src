@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.26.4.1 2009/05/04 08:12:58 yamt Exp $ */
+/* $NetBSD: if_txp.c,v 1.26.4.2 2010/03/11 15:03:48 yamt Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.26.4.1 2009/05/04 08:12:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.26.4.2 2010/03/11 15:03:48 yamt Exp $");
 
-#include "bpfilter.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -63,9 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.26.4.1 2009/05/04 08:12:58 yamt Exp $")
 
 #include <net/if_media.h>
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <uvm/uvm_extern.h>              /* for PAGE_SIZE */
 #include <sys/bus.h>
@@ -91,7 +88,7 @@ int txp_probe(device_t, cfdata_t, void *);
 void txp_attach(device_t, device_t, void *);
 int txp_intr(void *);
 void txp_tick(void *);
-void txp_shutdown(void *);
+bool txp_shutdown(device_t, int);
 int txp_ioctl(struct ifnet *, u_long, void *);
 void txp_start(struct ifnet *);
 void txp_stop(struct txp_softc *);
@@ -345,8 +342,10 @@ txp_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
 
-	shutdownhook_establish(txp_shutdown, sc);
-
+	if (pmf_device_register1(self, NULL, NULL, txp_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
@@ -724,13 +723,11 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 		}
 #endif
 
-#if NBPFILTER > 0
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
 			sumflags |= (M_CSUM_IPv4|M_CSUM_IPv4_BAD);
@@ -907,10 +904,12 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r, struct txp_dma_alloc
 		ifp->if_timer = 0;
 }
 
-void
-txp_shutdown(void *vsc)
+bool
+txp_shutdown(device_t self, int howto)
 {
-	struct txp_softc *sc = (struct txp_softc *)vsc;
+	struct txp_softc *sc;
+
+	sc = device_private(self);
 
 	/* mask all interrupts */
 	WRITE_REG(sc, TXP_IMR,
@@ -921,6 +920,8 @@ txp_shutdown(void *vsc)
 	txp_command(sc, TXP_CMD_TX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 0);
 	txp_command(sc, TXP_CMD_RX_DISABLE, 0, 0, 0, NULL, NULL, NULL, 0);
 	txp_command(sc, TXP_CMD_HALT, 0, 0, 0, NULL, NULL, NULL, 0);
+
+	return true;
 }
 
 int
@@ -1506,10 +1507,8 @@ txp_start(struct ifnet *ifp)
 
 		ifp->if_timer = 5;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		txd->tx_flags |= TX_FLAGS_VALID;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_txhiring_dma.dma_map,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2008/03/22 03:23:27 uwe Exp $	*/
+/*	$NetBSD: cpu.h,v 1.53.4.1 2010/03/11 15:02:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -70,12 +70,7 @@ extern struct cpu_info cpu_info_store;
  * referenced in generic code
  */
 #define	cpu_number()			0
-/*
- * Can't swapout u-area, (__SWAP_BROKEN)
- * since we use P1 converted address for trapframe.
- */
-#define	cpu_swapin(p)			/* nothing */
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+
 #define	cpu_proc_fork(p1, p2)		/* nothing */
 
 /*

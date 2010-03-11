@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18.18.1 2009/05/04 08:10:53 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18.18.2 2010/03/11 15:02:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.18.1 2009/05/04 08:10:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.18.18.2 2010/03/11 15:02:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ mainbus_map(u_long physaddr, int size, int cacheable, void ** virtaddr)
 
 	*virtaddr = (void*)(va + (physaddr & PGOFSET));
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		if (!cacheable) {
 			pt_entry_t *pte = kvtopte(va);
 			*pte |= PG_CI;

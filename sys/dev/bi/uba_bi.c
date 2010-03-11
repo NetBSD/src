@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_bi.c,v 1.13.4.1 2009/05/04 08:12:35 yamt Exp $ */
+/*	$NetBSD: uba_bi.c,v 1.13.4.2 2010/03/11 15:03:24 yamt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.13.4.1 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_bi.c,v 1.13.4.2 2010/03/11 15:03:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 

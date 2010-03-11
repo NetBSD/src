@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.2.4.3 2009/08/19 18:46:22 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2.4.4 2010/03/11 15:02:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/user.h>
 
 #include <machine/frame.h>
 #include <machine/md_var.h>
@@ -49,7 +48,17 @@ void lwp_trampoline(void);
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-printf("%s: not yet\n", __func__);
+
+	/* XXX: Not yet. */
+	(void)l;
+	(void)proc;
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
+{
+
+	(void)l;
 }
 
 /*
@@ -74,26 +83,27 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb;
+	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 
-        /* Copy pcb from lwp l1 to l2. */
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
+
+	/* Copy pcb from lwp l1 to l2. */
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
-		savectx(&l1->l_addr->u_pcb);
+		savectx(pcb1);
 #if 0
-//		ia64_highfp_save(???);
+		/* ia64_highfp_save(???); */
 #endif
+	} else {
+		KASSERT(l1 == &lwp0);
 	}
-#ifdef DIAGNOSTIC
-	else if (l1 != &lwp0)
-		panic("cpu_lwp_fork: curlwp");
-#endif
-	pcb = &l2->l_addr->u_pcb;
-	*pcb = l1->l_addr->u_pcb;
+
+	*pcb2 = *pcb1;
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
-	l2->l_md.md_tf = (struct trapframe *)((vaddr_t)l2->l_addr + USPACE) - 1;
+	l2->l_md.md_tf = (struct trapframe *)(uvm_lwp_getuarea(l2) + USPACE) - 1;
 	l2->l_md.md_astpending = 0;
 
         /*
@@ -120,37 +130,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	tf->tf_scratch.gr2 = (unsigned long)FDESC_FUNC(func);
 	tf->tf_scratch.gr3 = (unsigned long)arg;
-	pcb->pcb_special.sp = (unsigned long)tf - 16;
-	pcb->pcb_special.rp = (unsigned long)FDESC_FUNC(lwp_trampoline);
-	pcb->pcb_special.pfs = 0;
+	pcb2->pcb_special.sp = (unsigned long)tf - 16;
+	pcb2->pcb_special.rp = (unsigned long)FDESC_FUNC(lwp_trampoline);
+	pcb2->pcb_special.pfs = 0;
 
-	return;
-}
-
-/*
- * Finish a swapin operation.
- *
- * We need to cache the physical address of the PCB, so we can
- * swap context to it easily.
- */
-void
-cpu_swapin(struct lwp *l)
-{
-printf("%s: not yet\n", __func__);
-	return;
-}
-
-/*
- * cpu_swapout is called immediately before a process's 'struct user'
- * and kernel stack are unwired (which are in turn done immediately
- * before it's P_INMEM flag is cleared).  If the process is the
- * current owner of the floating point unit, the FP state has to be
- * saved, so that it goes out with the pcb, which is in the user area.
- */
-void
-cpu_swapout(struct lwp *l)
-{
-printf("%s: not yet\n", __func__);
 	return;
 }
 

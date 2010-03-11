@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.11.78.2 2009/09/16 13:37:40 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11.78.3 2010/03/11 15:02:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -80,10 +80,10 @@
 #define _MACHINE_VMPARAM_H_
 
 /*
- * We use 4K pages on the hp300.  Override the PAGE_* definitions
+ * We use 4K pages on the luna68k.  Override the PAGE_* definitions
  * to be compile-time constants.
  */
-#define	PAGE_SHIFT	12
+#define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
@@ -136,10 +136,8 @@
 #define VM_MAX_ADDRESS		((vaddr_t)0xFFFC0000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0x40000000-PAGE_SIZE*NPTEPG))
-#define	SYSMAP_VA		(VM_MAX_KERNEL_ADDRESS)
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */

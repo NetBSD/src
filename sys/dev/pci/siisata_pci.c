@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.2.4.4 2009/07/18 14:53:09 yamt Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.2.4.5 2010/03/11 15:03:59 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +25,7 @@
  *
  */
 
-/*-
+/*
  * Copyright (c) 2007, 2008, 2009 Jonathan A. Kollasch.
  * All rights reserved.
  *
@@ -53,11 +48,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
 #include <sys/cdefs.h>
-
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.2.4.5 2010/03/11 15:03:59 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -81,7 +75,7 @@ struct siisata_pci_softc {
 static int siisata_pci_match(device_t, cfdata_t, void *);
 static void siisata_pci_attach(device_t, device_t, void *);
 static int siisata_pci_detach(device_t, int);
-static bool siisata_pci_resume(device_t PMF_FN_PROTO);
+static bool siisata_pci_resume(device_t, const pmf_qual_t *);
 
 struct siisata_pci_board {
 	pci_vendor_id_t		spb_vend;
@@ -304,7 +298,7 @@ siisata_pci_detach(device_t dv, int flags)
 }
 
 static bool
-siisata_pci_resume(device_t dv PMF_FN_ARGS)
+siisata_pci_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct siisata_pci_softc *psc = device_private(dv);
 	struct siisata_softc *sc = &psc->si_sc;

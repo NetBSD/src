@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.229.2.3 2009/06/20 07:20:34 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.229.2.4 2010/03/11 15:04:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.229.2.3 2009/06/20 07:20:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.229.2.4 2010/03/11 15:04:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -394,6 +394,8 @@ tcp_init(void)
 #ifdef INET6
 	icmp6_mtudisc_callback_register(tcp6_mtudisc_callback);
 #endif
+
+	tcp_usrreq_init();
 
 	/* Initialize timer state. */
 	tcp_timer_init();

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.78.3 2009/08/19 18:46:21 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.78.4 2010/03/11 15:02:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.78.3 2009/08/19 18:46:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.78.4 2010/03/11 15:02:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

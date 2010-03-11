@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.48.20.1 2009/05/04 08:10:36 yamt Exp $
+#	$NetBSD: ARCTIC,v 1.48.20.2 2010/03/11 15:02:03 yamt Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -77,7 +77,6 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system

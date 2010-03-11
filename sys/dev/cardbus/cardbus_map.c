@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus_map.c,v 1.26.4.1 2009/05/04 08:12:35 yamt Exp $	*/
+/*	$NetBSD: cardbus_map.c,v 1.26.4.2 2010/03/11 15:03:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by HAYAKAWA Koichi.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -33,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.26.4.1 2009/05/04 08:12:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.26.4.2 2010/03/11 15:03:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,16 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus_map.c,v 1.26.4.1 2009/05/04 08:12:35 yamt Ex
 
 
 static int cardbus_io_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
-				cardbustag_t, int, cardbusreg_t,
+				pcitag_t, int, pcireg_t,
 				bus_addr_t *, bus_size_t *, int *);
 static int cardbus_mem_find(cardbus_chipset_tag_t, cardbus_function_tag_t,
-				 cardbustag_t, int, cardbusreg_t,
+				 pcitag_t, int, pcireg_t,
 				 bus_addr_t *, bus_size_t *, int *);
 
 /*
  * static int cardbus_io_find(cardbus_chipset_tag_t cc,
- *			      cardbus_function_tag_t cf, cardbustag_t tag,
- *			      int reg, cardbusreg_t type, bus_addr_t *basep,
+ *			      cardbus_function_tag_t cf, pcitag_t tag,
+ *			      int reg, pcireg_t type, bus_addr_t *basep,
  *			      bus_size_t *sizep, int *flagsp)
  * This code is stolen from sys/dev/pci_map.c.
  */
@@ -76,14 +70,14 @@ static int
 cardbus_io_find(
     cardbus_chipset_tag_t cc,
     cardbus_function_tag_t cf,
-    cardbustag_t tag,
+    pcitag_t tag,
     int reg,
-    cardbusreg_t type,
+    pcireg_t type,
     bus_addr_t *basep,
     bus_size_t *sizep,
     int *flagsp)
 {
-	cardbusreg_t address, mask;
+	pcireg_t address, mask;
 	int s;
 
 	/* EXT ROM is able to map on memory space ONLY. */
@@ -139,15 +133,15 @@ cardbus_io_find(
 
 /*
  * static int cardbus_mem_find(cardbus_chipset_tag_t cc,
- *			       cardbus_function_tag_t cf, cardbustag_t tag,
- *			       int reg, cardbusreg_t type, bus_addr_t *basep,
+ *			       cardbus_function_tag_t cf, pcitag_t tag,
+ *			       int reg, pcireg_t type, bus_addr_t *basep,
  *			       bus_size_t *sizep, int *flagsp)
  * This code is stolen from sys/dev/pci_map.c.
  */
 static int
-cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf, cardbustag_t tag, int reg, cardbusreg_t type, bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
+cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf, pcitag_t tag, int reg, pcireg_t type, bus_addr_t *basep, bus_size_t *sizep, int *flagsp)
 {
-	cardbusreg_t address, mask;
+	pcireg_t address, mask;
 	int s;
 
 	if (reg != CARDBUS_ROM_REG &&
@@ -222,7 +216,7 @@ cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf, cardbustag
 
 
 /*
- * int cardbus_mapreg_map(struct cardbus_softc *, int, int, cardbusreg_t,
+ * int cardbus_mapreg_map(struct cardbus_softc *, int, int, pcireg_t,
  *			  int bus_space_tag_t *, bus_space_handle_t *,
  *			  bus_addr_t *, bus_size_t *)
  *    This function maps bus-space on the value of Base Address
@@ -232,20 +226,18 @@ cardbus_mem_find(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf, cardbustag
  *   written on the BAR.
  */
 int
-cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, cardbusreg_t type, int busflags, bus_space_tag_t *tagp, bus_space_handle_t *handlep, bus_addr_t *basep, bus_size_t *sizep)
+cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, pcireg_t type, int busflags, bus_space_tag_t *tagp, bus_space_handle_t *handlep, bus_addr_t *basep, bus_size_t *sizep)
 {
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
 	bus_space_tag_t bustag;
-#if rbus
 	rbus_tag_t rbustag;
-#endif
 	bus_space_handle_t handle;
 	bus_addr_t base;
 	bus_size_t size;
 	int flags;
 	int status = 0;
-	cardbustag_t tag;
+	pcitag_t tag;
 
 	size = 0;	/* XXX gcc */
 	flags = 0;	/* XXX gcc */
@@ -260,20 +252,15 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, cardbusreg_t typ
 			status = 1;
 		}
 		bustag = sc->sc_iot;
-#if rbus
 		rbustag = sc->sc_rbus_iot;
-#endif
 	} else {
 		if (cardbus_mem_find(cc, cf, tag, reg, type, &base, &size, &flags)){
 			status = 1;
 		}
 		bustag = sc->sc_memt;
-#if rbus
 		rbustag = sc->sc_rbus_memt;
-#endif
 	}
 	if (status == 0) {
-#if rbus
 		bus_addr_t mask = size - 1;
 		if (base != 0) {
 			mask = 0xffffffff;
@@ -282,17 +269,6 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, cardbusreg_t typ
 		    size, busflags | flags, &base, &handle)) {
 			panic("io alloc");
 		}
-#else
-		bus_addr_t start = 0x8300;
-		bus_addr_t end = 0x8400;
-		if (base != 0) {
-			bus_addr_t start = base;
-			bus_addr_t end = base + size;
-		}
-		if (bus_space_alloc(bustag, start, end, size, size, 0, 0, &base, &handle)) {
-			panic("io alloc");
-		}
-#endif
 	}
 	cardbus_conf_write(cc, cf, tag, reg, base);
 
@@ -310,7 +286,6 @@ cardbus_mapreg_map(struct cardbus_softc *sc, int func, int reg, cardbusreg_t typ
 	if (sizep != 0) {
 		*sizep = size;
 	}
-	cardbus_free_tag(cc, cf, tag);
 
 	return 0;
 }
@@ -338,8 +313,7 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_
 	cardbus_chipset_tag_t cc = sc->sc_cc;
 	cardbus_function_tag_t cf = sc->sc_cf;
 	int st = 1;
-	cardbustag_t cardbustag;
-#if rbus
+	pcitag_t cardbustag;
 	rbus_tag_t rbustag;
 
 	if (sc->sc_iot == tag) {
@@ -353,17 +327,12 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_
 	} else {
 		return 1;
 	}
-#endif
 
 	cardbustag = cardbus_make_tag(cc, cf, sc->sc_bus, func);
 
 	cardbus_conf_write(cc, cf, cardbustag, reg, 0);
 
-#if rbus
 	(*cf->cardbus_space_free)(cc, rbustag, handle, size);
-#endif
-
-	cardbus_free_tag(cc, cf, cardbustag);
 
 	return st;
 }
@@ -380,20 +349,18 @@ cardbus_mapreg_unmap(struct cardbus_softc *sc, int func, int reg, bus_space_tag_
  */
 int cardbus_save_bar(cardbus_devfunc_t ct)
 {
-	cardbustag_t tag = Cardbus_make_tag(ct);
+	pcitag_t tag = Cardbus_make_tag(ct);
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	ct->ct_bar[0] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE0_REG);
-	ct->ct_bar[1] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE1_REG);
-	ct->ct_bar[2] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE2_REG);
-	ct->ct_bar[3] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE3_REG);
-	ct->ct_bar[4] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE4_REG);
-	ct->ct_bar[5] = cardbus_conf_read(cc, cf, tag, CARDBUS_BASE5_REG);
+	ct->ct_bar[0] = cardbus_conf_read(cc, cf, tag, PCI_BAR0);
+	ct->ct_bar[1] = cardbus_conf_read(cc, cf, tag, PCI_BAR1);
+	ct->ct_bar[2] = cardbus_conf_read(cc, cf, tag, PCI_BAR2);
+	ct->ct_bar[3] = cardbus_conf_read(cc, cf, tag, PCI_BAR3);
+	ct->ct_bar[4] = cardbus_conf_read(cc, cf, tag, PCI_BAR4);
+	ct->ct_bar[5] = cardbus_conf_read(cc, cf, tag, PCI_BAR5);
 
 	DPRINTF(("cardbus_save_bar: %x %x\n", ct->ct_bar[0], ct->ct_bar[1]));
-
-	Cardbus_free_tag(ct, tag);
 
 	return 0;
 }
@@ -408,18 +375,16 @@ int cardbus_save_bar(cardbus_devfunc_t ct)
  */
 int cardbus_restore_bar(cardbus_devfunc_t ct)
 {
-	cardbustag_t tag = Cardbus_make_tag(ct);
+	pcitag_t tag = Cardbus_make_tag(ct);
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE0_REG, ct->ct_bar[0]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE1_REG, ct->ct_bar[1]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE2_REG, ct->ct_bar[2]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE3_REG, ct->ct_bar[3]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE4_REG, ct->ct_bar[4]);
-	cardbus_conf_write(cc, cf, tag, CARDBUS_BASE5_REG, ct->ct_bar[5]);
-
-	Cardbus_free_tag(ct, tag);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR0, ct->ct_bar[0]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR1, ct->ct_bar[1]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR2, ct->ct_bar[2]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR3, ct->ct_bar[3]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR4, ct->ct_bar[4]);
+	cardbus_conf_write(cc, cf, tag, PCI_BAR5, ct->ct_bar[5]);
 
 	return 0;
 }

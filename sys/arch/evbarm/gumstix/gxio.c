@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.7.20.3 2009/08/19 18:46:06 yamt Exp $ */
+/*	$NetBSD: gxio.c,v 1.7.20.4 2010/03/11 15:02:14 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.7.20.3 2009/08/19 18:46:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.7.20.4 2010/03/11 15:02:14 yamt Exp $");
 
 #include "opt_gxio.h"
 
@@ -123,6 +123,10 @@ static struct pxa2x0_gpioconf pxa255dep_gpioconf[] = {
 static struct pxa2x0_gpioconf verdexdep_gpioconf[] = {
 	/* Bluetooth module configuration */
 	{   9, GPIO_ALT_FN_3_OUT },	/* CHOUT<0> */
+	{  12, GPIO_OUT | GPIO_SET },
+
+	/* LCD configuration */
+	{  17, GPIO_IN },		/* backlight on */
 
 	/* FFUART configuration */
 	{  27, GPIO_ALT_FN_3_OUT },	/* FFRTS */
@@ -275,7 +279,11 @@ gxio_config_pin(void)
 #endif
 
 	/* XXX: turn off for power of bluetooth module */
+#if defined(CPU_XSCALE_PXA250)
 	pxa2x0_gpio_set_function(7, GPIO_OUT | GPIO_CLR);
+#elif defined(CPU_XSCALE_PXA270)
+	pxa2x0_gpio_set_function(12, GPIO_OUT | GPIO_CLR);
+#endif
 	delay(100);
 
 #if defined(CPU_XSCALE_PXA270) && defined(CPU_XSCALE_PXA250)
@@ -483,7 +491,7 @@ netwifimicrosd_config(void)
 	cfstix_config();
 	/* However use pxamci. */
 	pxa2x0_gpio_set_function(111, GPIO_CLR | GPIO_ALT_FN_1_IN);
-	/* XXXX: Power to Marvell 88W8385??? */
+	/* Power to Marvell 88W8385 */
 	pxa2x0_gpio_set_function(80, GPIO_OUT | GPIO_SET);
 }
 
@@ -501,7 +509,7 @@ wifistix_config(void)
 
 	cfstix_config();
 
-	/* XXXX: Power to Marvell 88W8385??? */
+	/* Power to Marvell 88W8385 */
 	pxa2x0_gpio_set_function(80, GPIO_OUT | GPIO_SET);
 }
 
@@ -523,6 +531,6 @@ wifistix_cf_config(void)
 
 	cfstix_config();
 
-	/* XXXX: Power to Marvell 88W8385??? */
+	/* Power to Marvell 88W8385 */
 	pxa2x0_gpio_set_function(80, GPIO_OUT | GPIO_SET);
 }

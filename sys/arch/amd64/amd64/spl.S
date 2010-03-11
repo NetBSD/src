@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.17.10.2 2009/05/04 08:10:32 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.17.10.3 2010/03/11 15:01:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -99,8 +99,8 @@ IDTVEC(softintr)
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movq	CPUVAR(CURLWP),%r15
 	movq	IS_LWP(%rax),%rdi	/* switch to handler LWP */
-	movq	L_ADDR(%rdi),%rdx
-	movq	L_ADDR(%r15),%rcx
+	movq	L_PCB(%rdi),%rdx
+	movq	L_PCB(%r15),%rcx
 	movq	%rdi,CPUVAR(CURLWP)
 	movq	%rsp,PCB_RSP(%rcx)
 	movq	%rbp,PCB_RBP(%rcx)
@@ -110,7 +110,7 @@ IDTVEC(softintr)
 	movl	IS_MAXLEVEL(%rax),%esi	/* ipl to run at */
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	cli
-	movq	L_ADDR(%r15),%rcx
+	movq	L_PCB(%r15),%rcx
 	movq	PCB_RSP(%rcx),%rsp
 	xchgq	%r15,CPUVAR(CURLWP)	/* must be globally visible */
 	popq	%r15			/* unwind switchframe */
@@ -265,7 +265,7 @@ LABEL(cx8_spllower_end)
  * It is important that the bit scan instruction is bsr, it will get
  * the highest 2 bits (currently the IPI and clock handlers) first,
  * to avoid deadlocks where one CPU sends an IPI, another one is at
- * splipi() and defers it, lands in here via splx(), and handles
+ * splhigh() and defers it, lands in here via splx(), and handles
  * a lower-prio one first, which needs to take the kernel lock -->
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).

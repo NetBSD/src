@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.8.2.3 2009/06/20 07:20:37 yamt Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.8.2.4 2010/03/11 15:04:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.8.2.3 2009/06/20 07:20:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.8.2.4 2010/03/11 15:04:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -34,9 +34,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.8.2.3 2009/06/20 07:20:37 yamt Exp $")
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
+#include <sys/poll.h>
 #include <sys/sockio.h>
 #include <sys/socketvar.h>
 
+#include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_tap.h>
@@ -207,27 +209,47 @@ virtif_worker(void *arg)
 		m = m_gethdr(M_WAIT, MT_DATA);
 		MEXTMALLOC(m, plen, M_WAIT);
 
+ again:
 		n = rumpuser_read(sc->sc_tapfd, mtod(m, void *), plen, &error);
 		KASSERT(n < ETHER_MAX_LEN_JUMBO);
 		if (n <= 0) {
+			/*
+			 * work around tap bug: /dev/tap is opened in
+			 * non-blocking mode if it previously was
+			 * non-blocking.
+			 */
+			if (n == -1 && error == EAGAIN) {
+				struct pollfd pfd;
+
+				pfd.fd = sc->sc_tapfd;
+				pfd.events = POLLIN;
+
+				rumpuser_poll(&pfd, 1, INFTIM, &error);
+				goto again;
+			}
 			m_freem(m);
 			break;
 		}
 		m->m_len = m->m_pkthdr.len = n;
 		m->m_pkthdr.rcvif = ifp;
+		if (ifp->if_bpf) {
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		}
 		ether_input(ifp, m);
 	}
 
 	panic("virtif_workin is a lazy boy %d\n", error);
 }
 
+/* lazy bum stetson-harrison magic value */
+#define LB_SH 32
 static void
 virtif_sender(void *arg)
 {
 	struct ifnet *ifp = arg;
 	struct virtif_sc *sc = ifp->if_softc;
 	struct mbuf *m, *m0;
-	struct rumpuser_iovec io[16];
+	struct rumpuser_iovec io[LB_SH];
 	int i, error;
 
 	mutex_enter(&sc->sc_sendmtx);
@@ -240,13 +262,16 @@ virtif_sender(void *arg)
 		mutex_exit(&sc->sc_sendmtx);
 
 		m = m0;
-		for (i = 0; i < 16 && m; i++) {
+		for (i = 0; i < LB_SH && m; i++) {
 			io[i].iov_base = mtod(m, void *);
 			io[i].iov_len = m->m_len;
 			m = m->m_next;
 		}
-		if (i == 16)
+		if (i == LB_SH)
 			panic("lazy bum");
+		if (ifp->if_bpf) {
+			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		}
 		rumpuser_writev(sc->sc_tapfd, io, i, &error);
 		m_freem(m0);
 		mutex_enter(&sc->sc_sendmtx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.49.20.1 2009/05/04 08:11:39 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.49.20.2 2010/03/11 15:02:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -330,9 +330,8 @@ Lstart3:
  *
  * Is this all really necessary, or am I paranoid??
  */
-	RELOC(Sysseg, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a KVA)
-	addl	%a5,%d1			| convert to PA
+	RELOC(Sysseg_pa, %a0)		| system segment table addr
+	movl	%a0@,%d1		| read value (a PA)
 
 	RELOC(mmutype, %a0)
 #if defined(ENABLE_HP_CODE)
@@ -452,22 +451,17 @@ Lehighcode:
  * Should be running mapped from this point on
  */
 Lenab1:
-/* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-	jbsr	_C_LABEL(uvm_setpagesize) | select software page size
 	bsr     Lpushpc			| Push the PC on the stack.
 Lpushpc:
 
-
-/* set kernel stack, user %SP, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1 | get lwp0 pcb addr
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr
-	movl	%a2,_C_LABEL(curlwp)	|   and curlwp so that
-	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
+/* call final pmap setup */
+	jbsr	_C_LABEL(pmap_bootstrap_finalize)
+/* set kernel stack, user SP */
+	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area 
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
-	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
@@ -490,7 +484,7 @@ Lenab3:
 
 /* Final setup for call to main(). */
 /*
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
@@ -1383,9 +1377,6 @@ GLOBAL(protorp)
 
 GLOBAL(prototc)
 	.long	0		| prototype translation control
-
-GLOBAL(proc0paddr)
-	.long	0		| KVA of lwp0 u-area
 
 GLOBAL(intiobase)
 	.long	INTIOBASE	| KVA of base of internal IO space

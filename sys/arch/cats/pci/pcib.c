@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.8.80.2 2009/05/04 08:10:53 yamt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.8.80.3 2010/03/11 15:02:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.8.80.2 2009/05/04 08:10:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.8.80.3 2010/03/11 15:02:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ pcibmatch(struct device *parent, struct cfdata *match, void *aux)
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_ALI:
 		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ALI_M1543:
+		case PCI_PRODUCT_ALI_M1533:
 			return (1);
 		}
 		break;

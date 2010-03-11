@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.46.4.2 2009/05/04 08:11:54 yamt Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.46.4.3 2010/03/11 15:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.46.4.2 2009/05/04 08:11:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.46.4.3 2010/03/11 15:02:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.46.4.2 2009/05/04 08:11:54 yamt Exp $");
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

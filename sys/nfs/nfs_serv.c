@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.138.6.2 2009/06/20 07:20:34 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.138.6.3 2010/03/11 15:04:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138.6.2 2009/06/20 07:20:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138.6.3 2010/03/11 15:04:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ nfsrv_setattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *
 	memset(&guard, 0, sizeof guard);	/* XXX gcc */
 
 	nfsm_srvmtofh(&nsfh);
-	VATTR_NULL(&va);
+	vattr_null(&va);
 	if (v3) {
 		nfsm_srvsattr(&va);
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
@@ -428,8 +428,8 @@ nfsrv_lookup(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			ind.ni_cnd.cn_nameptr = ind.ni_cnd.cn_pnbuf =
 			    nfs_pub.np_index;
 			ind.ni_startdir = nd.ni_vp;
-			VREF(ind.ni_startdir);
-			error = lookup(&ind);
+			vref(ind.ni_startdir);
+			error = lookup_for_nfsd_index(&ind);
 			if (!error) {
 				/*
 				 * Found an index file. Get rid of
@@ -714,7 +714,7 @@ nfsrv_read(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lwp
 			/* map pages */
 			for (i = 0; i < npages; i++) {
 				pmap_kenter_pa(lva, VM_PAGE_TO_PHYS(pgpp[i]),
-				    VM_PROT_READ);
+				    VM_PROT_READ, 0);
 				lva += PAGE_SIZE;
 			}
 
@@ -1427,7 +1427,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 		return (0);
 	}
 	abort = 1;
-	VATTR_NULL(&va);
+	vattr_null(&va);
 	if (v3) {
 		va.va_mode = 0;
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
@@ -1482,7 +1482,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			if (!error) {
 				if (exclusive_flag) {
 					exclusive_flag = 0;
-					VATTR_NULL(&va);
+					vattr_null(&va);
 					/*
 					 * XXX
 					 * assuming NFSX_V3CREATEVERF
@@ -1542,7 +1542,7 @@ nfsrv_create(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 			if (!error) {
 				nqsrv_getl(vp, ND_WRITE);
 				tempsize = va.va_size;
-				VATTR_NULL(&va);
+				vattr_null(&va);
 				va.va_size = tempsize;
 				error = VOP_SETATTR(vp, &va, cred);
 			}
@@ -1653,7 +1653,7 @@ nfsrv_mknod(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 		error = NFSERR_BADTYPE;
 		goto abort;
 	}
-	VATTR_NULL(&va);
+	vattr_null(&va);
 	va.va_mode = 0;
 	nfsm_srvsattr(&va);
 	if (vtyp == VCHR || vtyp == VBLK) {
@@ -1863,7 +1863,7 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	saved_uid = kauth_cred_geteuid(cred);
 	fromnd.ni_cnd.cn_cred = cred;
 	fromnd.ni_cnd.cn_nameiop = DELETE;
-	fromnd.ni_cnd.cn_flags = LOCKPARENT | SAVESTART;
+	fromnd.ni_cnd.cn_flags = LOCKPARENT | SAVESTART | INRENAME;
 	error = nfs_namei(&fromnd, &fnsfh, len, slp, nam, &md,
 		&dpos, &fdirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (fdirp && v3) {
@@ -1934,7 +1934,8 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	kauth_cred_seteuid(cred, saved_uid);
 	tond.ni_cnd.cn_cred = cred;
 	tond.ni_cnd.cn_nameiop = RENAME;
-	tond.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART;
+	tond.ni_cnd.cn_flags = LOCKPARENT | LOCKLEAF | NOCACHE |
+	    SAVESTART | INRENAME;
 	error = nfs_namei(&tond, &tnsfh, len2, slp, nam, &md,
 		&dpos, &tdirp, lwp, (nfsd->nd_flag & ND_KERBAUTH), false);
 	if (tdirp && v3) {
@@ -2208,7 +2209,7 @@ nfsrv_symlink(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *
 	if (error)
 		goto out;
 	abort = 1;
-	VATTR_NULL(&va);
+	vattr_null(&va);
 	va.va_type = VLNK;
 	if (v3) {
 		va.va_mode = 0;
@@ -2346,7 +2347,7 @@ nfsrv_mkdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 		return (0);
 	}
 	abort = 1;
-	VATTR_NULL(&va);
+	vattr_null(&va);
 	if (v3) {
 		va.va_mode = 0;
 		nfsm_srvsattr(&va);

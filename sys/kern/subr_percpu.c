@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.6.2.2 2009/05/04 08:13:48 yamt Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.6.2.3 2010/03/11 15:04:18 yamt Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.6.2.2 2009/05/04 08:13:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.6.2.3 2010/03/11 15:04:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -147,10 +147,8 @@ percpu_cpu_enlarge(size_t size)
 		} else {
 			uint64_t where;
 
-			uvm_lwp_hold(curlwp); /* don't swap out pcc */
 			where = xc_unicast(0, percpu_cpu_swap, ci, &pcc, ci);
 			xc_wait(where);
-			uvm_lwp_rele(curlwp);
 		}
 		KASSERT(pcc.pcc_size < size);
 		if (pcc.pcc_data != NULL) {

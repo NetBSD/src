@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.10.22.4 2009/08/19 18:48:14 yamt Exp $ */
+/* $NetBSD: udf.h,v 1.10.22.5 2010/03/11 15:04:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -190,9 +190,10 @@ extern int udf_verbose;
 #define UDF_WRITE_LVINT		  0x10	/* write out open lvint              */
 #define UDF_WRITE_PART_BITMAPS	  0x20	/* write out partition space bitmaps */
 #define UDF_APPENDONLY_LVINT	  0x40	/* no shifting, only appending       */
+#define UDF_WRITE_METAPART_NODES  0x80	/* write out metadata partition nodes*/
 #define UDFLOGVOL_BITS "\20\1OPEN_SESSION\2CLOSE_SESSION\3FINALISE_DISC" \
 			"\4WRITE_VAT\5WRITE_LVINT\6WRITE_PART_BITMAPS" \
-			"\7APPENDONLY_LVINT"
+			"\7APPENDONLY_LVINT\10WRITE_METAPART_NODES"
 
 /* logical volume error handling actions */
 #define UDF_UPDATE_TRACKINFO	  0x01	/* update trackinfo and re-shedule   */
@@ -330,6 +331,9 @@ struct udf_mount {
 	struct udf_node 	*metadatabitmap_node;	/* system node       */
 	struct space_bitmap_desc*metadata_unalloc_dscr;
 	struct udf_bitmap	 metadata_unalloc_bits;
+	uint32_t		 metadata_alloc_unit_size;
+	uint16_t		 metadata_alignment_unit_size;
+	uint8_t			 metadata_flags;
 
 	/* rb tree for lookup icb to udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;

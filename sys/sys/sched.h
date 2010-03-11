@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.52.2.2 2009/05/04 08:14:36 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.52.2.3 2010/03/11 15:04:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -228,6 +228,7 @@ struct cpu_info;
 
 /* Scheduler initialization */
 void		runq_init(void);
+void		synch_init(void);
 void		sched_init(void);
 void		sched_rqinit(void);
 void		sched_cpuattach(struct cpu_info *);

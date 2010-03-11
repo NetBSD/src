@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_impl.h,v 1.1.2.2 2009/06/20 07:20:38 yamt Exp $	*/
+/*	$NetBSD: kobj_impl.h,v 1.1.2.3 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -99,6 +99,9 @@ typedef enum kobjtype {
 	KT_MEMORY
 } kobjtype_t;
 
+typedef int (*kobj_read_fn)(kobj_t, void **, size_t, off_t, bool);
+typedef void (*kobj_close_fn)(kobj_t);
+
 struct kobj {
 	char		ko_name[MAXMODNAME];
 	kobjtype_t	ko_type;
@@ -122,6 +125,12 @@ struct kobj {
 	int		ko_nprogtab;
 	bool		ko_ksyms;
 	bool		ko_loaded;
+	kobj_read_fn	ko_read;
+	kobj_close_fn	ko_close;
 };
+
+#ifdef _KERNEL
+int	kobj_load(kobj_t);
+#endif
 
 #endif	/* _SYS_KOBJ_IMPL_H_ */

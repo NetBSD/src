@@ -1,4 +1,4 @@
-/* $Id: imxuartreg.h,v 1.1.24.1 2008/05/16 02:21:56 yamt Exp $ */
+/* $Id: imxuartreg.h,v 1.1.24.2 2010/03/11 15:02:06 yamt Exp $ */
 /*
  * register definitions for Freescale i.MX31 and i.MX31L UARTs
  *
@@ -108,7 +108,7 @@
 #define IMX_UCR2_RTSEN		BIT(4)		/* rw */
 #define IMX_UCR2_WS		BIT(5)		/* rw */
 #define IMX_UCR2_STPB		BIT(6)		/* rw */
-#define IMX_UCR2_PRDE		BIT(7)		/* rw */
+#define IMX_UCR2_PROE		BIT(7)		/* rw */
 #define IMX_UCR2_PREN		BIT(8)		/* rw */
 #define IMX_UCR2_RTEC		BITS(10,9)	/* rw */
 #define IMX_UCR2_ESCEN		BIT(11)		/* rw */

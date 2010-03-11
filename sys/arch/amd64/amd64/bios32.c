@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.12.4.3 2009/05/16 10:41:12 yamt Exp $	*/
+/*	$NetBSD: bios32.c,v 1.12.4.4 2010/03/11 15:01:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.12.4.3 2009/05/16 10:41:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.12.4.4 2010/03/11 15:01:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,9 +173,9 @@ bios32_init(void)
 
     		for (; pa < end; pa+= NBPG, eva+= NBPG)
 #ifdef XEN
-			pmap_kenter_ma(eva, pa, VM_PROT_READ);
+			pmap_kenter_ma(eva, pa, VM_PROT_READ, 0);
 #else
-			pmap_kenter_pa(eva, pa, VM_PROT_READ);
+			pmap_kenter_pa(eva, pa, VM_PROT_READ, 0);
 #endif
 		pmap_update(pmap_kernel());
 

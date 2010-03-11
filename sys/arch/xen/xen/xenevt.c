@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.27.2.2 2009/08/19 18:46:56 yamt Exp $      */
+/*      $NetBSD: xenevt.c,v 1.27.2.3 2010/03/11 15:03:11 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -11,11 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.27.2.2 2009/08/19 18:46:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.27.2.3 2010/03/11 15:03:11 yamt Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -86,7 +81,7 @@ static const struct fileops xenevt_fileops = {
 	.fo_stat = fbadop_stat,
 	.fo_close = xenevt_fclose,
 	.fo_kqfilter = /* xenevt_fkqfilter */ fnullop_kqfilter,
-	.fo_drain = fnullop_drain,
+	.fo_restart = fnullop_restart,
 };
 
 dev_type_open(xenevtopen);

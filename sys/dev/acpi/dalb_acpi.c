@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.2.22.2 2009/05/04 08:12:34 yamt Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.2.22.3 2010/03/11 15:03:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.2.22.2 2009/05/04 08:12:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.2.22.3 2010/03/11 15:03:23 yamt Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -35,24 +35,20 @@ __KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.2.22.2 2009/05/04 08:12:34 yamt Exp 
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/proc.h>
-#include <sys/kernel.h>
-#include <sys/callout.h>
-#include <sys/sysctl.h>
+#include <sys/systm.h>
 
-#include <machine/bus.h>
-
-#include <dev/acpi/acpica.h>
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+
+#define _COMPONENT          ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME            ("dalb_acpi")
 
 #define DALB_ID_INVALID		-1
 
 struct acpi_dalb_softc {
 	device_t sc_dev;
 	struct acpi_devnode *sc_node;
-	struct sysctllog *sc_log;
 
 	ACPI_INTEGER sc_usageid;
 
@@ -64,14 +60,15 @@ struct acpi_dalb_softc {
 
 static int	acpi_dalb_match(device_t, cfdata_t, void *);
 static void	acpi_dalb_attach(device_t, device_t, void *);
+static int	acpi_dalb_detach(device_t, int);
 static void	acpi_dalb_notify_handler(ACPI_HANDLE, UINT32, void *);
-static bool	acpi_dalb_resume(device_t PMF_FN_PROTO);
+static bool	acpi_dalb_resume(device_t, const pmf_qual_t *);
 
 static void	acpi_dalb_get_wakeup_hotkeys(void *opaque);
 static void	acpi_dalb_get_runtime_hotkeys(void *opaque);
 
 CFATTACH_DECL_NEW(acpidalb, sizeof(struct acpi_dalb_softc),
-    acpi_dalb_match, acpi_dalb_attach, NULL, NULL);
+    acpi_dalb_match, acpi_dalb_attach, acpi_dalb_detach, NULL);
 
 static const char * const acpi_dalb_ids[] = {
         "PNP0C32", /* Direct Application Launch Button */
@@ -120,10 +117,7 @@ acpi_dalb_init(device_t dev)
 	ACPI_STATUS rv;
 	ACPI_BUFFER ret;
 
-	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_BUFFER;
-
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GHID", NULL, &ret);
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "GHID", &ret);
 	if (ACPI_FAILURE(rv) || ret.Pointer == NULL) {
 		aprint_error_dev(dev,
 			"couldn't enable notify handler: (%s)\n",
@@ -134,7 +128,7 @@ acpi_dalb_init(device_t dev)
 	obj = (ACPI_OBJECT *)ret.Pointer;
 	if (obj->Type != ACPI_TYPE_BUFFER) {
 		sc->sc_usageid = DALB_ID_INVALID;
-		aprint_debug_dev(dev, "invalid ACPI type: %d\n", obj->Type);
+		aprint_debug_dev(dev, "invalid ACPI type: %u\n", obj->Type);
 		goto out;
 	}
 
@@ -156,7 +150,7 @@ acpi_dalb_init(device_t dev)
 	}
 
 out:
-	AcpiOsFree(ret.Pointer);
+	ACPI_FREE(ret.Pointer);
 }
 
 static void
@@ -187,6 +181,24 @@ acpi_dalb_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, acpi_dalb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static int
+acpi_dalb_detach(device_t self, int flags)
+{
+	struct acpi_dalb_softc *sc = device_private(self);
+	ACPI_STATUS rv;
+
+	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
+	    ACPI_ALL_NOTIFY, acpi_dalb_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
+
+	pmf_device_deregister(self);
+	sysmon_pswitch_unregister(&sc->sc_smpsw);
+
+	return 0;
 }
 
 static void
@@ -245,23 +257,20 @@ acpi_dalb_get_runtime_hotkeys(void *opaque)
 }
 
 static bool
-acpi_dalb_resume(device_t dev PMF_FN_ARGS)
+acpi_dalb_resume(device_t dev, const pmf_qual_t *qual)
 {
 	struct acpi_dalb_softc *sc = device_private(dev);
 	ACPI_STATUS rv;
 	ACPI_BUFFER ret;
 
-	ret.Pointer = NULL;
-	ret.Length = ACPI_ALLOCATE_BUFFER;
-
-	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "GHID", NULL, &ret);
+	rv = acpi_eval_struct(sc->sc_node->ad_handle, "GHID", &ret);
 	if (ACPI_FAILURE(rv)) {
 		aprint_error_dev(dev, "couldn't evaluate GHID: %s\n",
 		    AcpiFormatException(rv));
 		return false;
 	}
 	if (ret.Pointer)
-		AcpiOsFree(ret.Pointer);
+		ACPI_FREE(ret.Pointer);
 
 	return true;
 }

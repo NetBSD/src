@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.91.2.3 2009/06/20 07:20:17 yamt Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.91.2.4 2010/03/11 15:03:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.91.2.3 2009/06/20 07:20:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.91.2.4 2010/03/11 15:03:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -114,6 +114,7 @@ int linux_to_bsd_so_sockopt(int);
 int linux_to_bsd_ip_sockopt(int);
 int linux_to_bsd_tcp_sockopt(int);
 int linux_to_bsd_udp_sockopt(int);
+int linux_getifname(struct lwp *, register_t *, void *);
 int linux_getifconf(struct lwp *, register_t *, void *);
 int linux_getifhwaddr(struct lwp *, register_t *, u_int, void *);
 static int linux_get_sa(struct lwp *, int, struct mbuf **,
@@ -848,6 +849,8 @@ linux_to_bsd_ip_sockopt(int lopt)
 		return IP_TOS;
 	case LINUX_IP_TTL:
 		return IP_TTL;
+	case LINUX_IP_HDRINCL:
+		return IP_HDRINCL;
 	case LINUX_IP_MULTICAST_TTL:
 		return IP_MULTICAST_TTL;
 	case LINUX_IP_MULTICAST_LOOP:
@@ -1002,6 +1005,29 @@ linux_sys_getsockopt(struct lwp *l, const struct linux_sys_getsockopt_args *uap,
 	SCARG(&bga, name) = name;
 
 	return sys_getsockopt(l, &bga, retval);
+}
+
+int
+linux_getifname(struct lwp *l, register_t *retval, void *data)
+{
+	struct ifnet *ifp;
+	struct linux_ifreq ifr;
+	int error;
+
+	error = copyin(data, &ifr, sizeof(ifr));
+	if (error)
+		return error;
+
+	if (ifr.ifr_ifru.ifru_ifindex >= if_indexlim)
+		return ENODEV;
+	
+	ifp = ifindex2ifnet[ifr.ifr_ifru.ifru_ifindex];
+	if (ifp == NULL)
+		return ENODEV;
+
+	strncpy(ifr.ifr_name, ifp->if_xname, sizeof(ifr.ifr_name));
+
+	return copyout(&ifr, data, sizeof(ifr));
 }
 
 int
@@ -1225,6 +1251,10 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 	retval[0] = 0;
 
 	switch (com) {
+	case LINUX_SIOCGIFNAME:
+		error = linux_getifname(l, retval, SCARG(uap, data));
+		dosys = 0;
+		break;
 	case LINUX_SIOCGIFCONF:
 		error = linux_getifconf(l, retval, SCARG(uap, data));
 		dosys = 0;
@@ -1246,6 +1276,9 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		break;
 	case LINUX_SIOCGIFNETMASK:
 		SCARG(&ia, com) = OOSIOCGIFNETMASK;
+		break;
+	case LINUX_SIOCGIFMTU:
+		SCARG(&ia, com) = OSIOCGIFMTU;
 		break;
 	case LINUX_SIOCADDMULTI:
 		SCARG(&ia, com) = OSIOCADDMULTI;

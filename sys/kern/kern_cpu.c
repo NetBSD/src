@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.28.2.2 2009/05/04 08:13:46 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.28.2.3 2010/03/11 15:04:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.28.2.2 2009/05/04 08:13:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.28.2.3 2010/03/11 15:04:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,10 @@ mi_cpu_attach(struct cpu_info *ci)
 	CIRCLEQ_INSERT_TAIL(&cpu_queue, ci, ci_data.cpu_qchain);
 	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
 	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);
+
+	/* This is useful for eg, per-cpu evcnt */
+	snprintf(ci->ci_data.cpu_name, sizeof(ci->ci_data.cpu_name), "cpu%d",
+		 cpu_index(ci));
 
 	sched_cpuattach(ci);
 

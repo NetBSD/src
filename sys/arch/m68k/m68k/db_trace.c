@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.52.20.1 2009/05/04 08:11:26 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.52.20.2 2010/03/11 15:02:34 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.52.20.1 2009/05/04 08:11:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.52.20.2 2010/03/11 15:02:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 
 #include <machine/db_machdep.h>
@@ -87,7 +86,6 @@ db_var_short(const struct db_variable *varp, db_expr_t *valp, int op)
 
 #define	MAXINT	0x7fffffff
 
-extern struct pcb *curpcb;
 #define	INKERNEL(va,pcb)	(((u_int)(va) > (u_int)(pcb)) && \
 				 ((u_int)(va) < ((u_int)(pcb) + USPACE)))
 
@@ -405,7 +403,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	db_addr_t	regp;
 	const char *	name;
 	struct stackpos pos;
-	struct pcb	*pcb = curpcb;
+	struct pcb	*pcb;
 	bool		kernel_only = true;
 	bool		trace_thread = false;
 	bool		lwpaddr = false;
@@ -430,8 +428,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	else {
 		if (trace_thread) {
 			struct proc *p;
-			struct user *u;
 			struct lwp *l;
+
 			if (lwpaddr) {
 				l = (struct lwp *)addr;
 				p = l->l_proc;
@@ -447,20 +445,15 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
-			if (!(l->l_flag & LW_INMEM)) {
-				(*pr)("swapped out\n");
-				return;
-			}
-			u = l->l_addr;
-			pos.k_fp = u->u_pcb.pcb_regs[PCB_REGS_FP];
+			pcb = lwp_getpcb(l);
+			pos.k_fp = pcb->pcb_regs[PCB_REGS_FP];
 			/*
 			 * Note: The following only works because cpu_switch()
 			 * doesn't push anything on the stack before it saves
 			 * the process' context in the pcb.
 			 */
-			pos.k_pc = get(u->u_pcb.pcb_regs[PCB_REGS_SP], DSP);
+			pos.k_pc = get(pcb->pcb_regs[PCB_REGS_SP], DSP);
 			(*pr)("at %p\n", (void *)pos.k_fp);
-			pcb = &u->u_pcb;
 		} else {
 			pos.k_fp = addr;
 			pos.k_pc = MAXINT;
@@ -561,6 +554,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		 * Stop tracing if frame ptr no longer points into kernel
 		 * stack.
 		 */
+		pcb = lwp_getpcb(curlwp);
 		if (kernel_only && !INKERNEL(pos.k_fp, pcb))
 			break;
 		if (nextframe(&pos, pcb, kernel_only, pr) == 0)

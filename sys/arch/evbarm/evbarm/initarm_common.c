@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.6.10.1 2009/08/19 18:46:05 yamt Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.6.10.2 2010/03/11 15:02:14 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,13 +69,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.6.10.1 2009/08/19 18:46:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.6.10.2 2010/03/11 15:02:14 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
@@ -96,8 +96,6 @@ vm_offset_t msgbufphys;
 vm_offset_t physical_start;
 vm_offset_t physical_end;
 pv_addr_t systempage;
-
-struct user *proc0paddr;
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;
@@ -410,7 +408,7 @@ initarm_common(const struct initarm_config *ic)
 
 	/* Switch tables */
 	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
-	setttb(kernel_l1pt.pv_pa);
+	cpu_setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 
@@ -418,8 +416,7 @@ initarm_common(const struct initarm_config *ic)
 	 * Moved from cpu_startup() as data_abort_handler() references
 	 * this during uvm init
 	 */
-	proc0paddr = (struct user *)kernelstack.pv_va;
-	lwp0.l_addr = proc0paddr;
+	uvm_lwp_setuarea(&lwp0, kernelstack.pv_va);
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");

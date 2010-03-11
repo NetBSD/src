@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.80.4.2 2009/06/20 07:20:12 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.80.4.3 2010/03/11 15:03:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,14 +50,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.4.2 2009/06/20 07:20:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.4.3 2010/03/11 15:03:02 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -100,7 +99,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 		/* Now map the page into kernel space. */
-		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
@@ -161,7 +160,7 @@ void setfunc_trampoline(void);
 inline void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *npcb = &l->l_addr->u_pcb;
+	struct pcb *npcb = lwp_getpcb(l);
 	struct rwindow *rp;
 
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
@@ -194,8 +193,8 @@ void lwp_trampoline(void);
 void
 cpu_lwp_fork(register struct lwp *l1, register struct lwp *l2, void *stack, size_t stacksize, void (*func)(void *), void *arg)
 {
-	struct pcb *opcb = &l1->l_addr->u_pcb;
-	struct pcb *npcb = &l2->l_addr->u_pcb;
+	struct pcb *opcb = lwp_getpcb(l1);
+	struct pcb *npcb = lwp_getpcb(l2);
 	struct trapframe *tf2;
 	struct rwindow *rp;
 

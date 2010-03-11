@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.h,v 1.10.10.1 2008/05/16 02:23:24 yamt Exp $	*/
+/*	$NetBSD: ibcs2_machdep.h,v 1.10.10.2 2010/03/11 15:03:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 struct exec_package;
 struct exec_vmcmd;
 
-void	ibcs2_setregs (struct lwp *, struct exec_package *, u_long);
+void	ibcs2_setregs (struct lwp *, struct exec_package *, vaddr_t);
 void	ibcs2_sendsig (const ksiginfo_t *, const sigset_t *);
 int	ibcs2_sys_sysmachine (struct lwp *, void *, register_t *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.83.4.3 2009/07/18 14:53:11 yamt Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.83.4.4 2010/03/11 15:04:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.83.4.3 2009/07/18 14:53:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.83.4.4 2010/03/11 15:04:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,6 +93,8 @@ static void sme_remove_userprops(void);
 static int sme_add_property_dictionary(struct sysmon_envsys *, prop_array_t,
 				       prop_dictionary_t);
 static void sme_initial_refresh(void *);
+static uint32_t sme_get_max_value(struct sysmon_envsys *,
+     bool (*)(const envsys_data_t*), bool);
 
 /*
  * sysmon_envsys_init:
@@ -985,7 +987,8 @@ sme_initial_refresh(void *arg)
 	mutex_enter(&sme->sme_mtx);
 	sysmon_envsys_acquire(sme, true);
 	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head)
-		(*sme->sme_refresh)(sme, edata);
+		if ((sme->sme_flags & SME_DISABLE_REFRESH) == 0)
+			(*sme->sme_refresh)(sme, edata);
 	sysmon_envsys_release(sme, true);
 	mutex_exit(&sme->sme_mtx);
 }
@@ -1056,6 +1059,18 @@ sme_remove_userprops(void)
 			if (edata->upropset & PROP_BATTWARN) {
 				prop_dictionary_remove(sdict,
 				    "warning-capacity");
+				ptype = PENVSYS_EVENT_CAPACITY;
+			}
+
+			if (edata->upropset & PROP_BATTHIGH) {
+				prop_dictionary_remove(sdict,
+				    "high-capacity");
+				ptype = PENVSYS_EVENT_CAPACITY;
+			}
+
+			if (edata->upropset & PROP_BATTMAX) {
+				prop_dictionary_remove(sdict,
+				    "maximum-capacity");
 				ptype = PENVSYS_EVENT_CAPACITY;
 			}
 			if (ptype != 0)
@@ -1412,6 +1427,71 @@ bad:
 }
 
 /*
+ * Find the maximum of all currently reported values.
+ * The provided callback decides wether a sensor is part of the
+ * maximum calculation (by returning true) or ignored (callback
+ * returns false). Example usage: callback selects temperature
+ * sensors in a given thermal zone, the function calculates the
+ * maximum currently reported temperature in this zone.
+ * If the parameter "refresh" is true, new values will be aquired
+ * from the hardware, if not, the last reported value will be used.
+ */
+uint32_t
+sysmon_envsys_get_max_value(bool (*predicate)(const envsys_data_t*),
+	bool refresh)
+{
+	struct sysmon_envsys *sme;
+	uint32_t maxv, v;
+
+	maxv = 0;
+	mutex_enter(&sme_global_mtx);
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+		sysmon_envsys_acquire(sme, false);
+		v = sme_get_max_value(sme, predicate, refresh);
+		sysmon_envsys_release(sme, false);
+		if (v > maxv)
+			maxv = v;
+	}
+	mutex_exit(&sme_global_mtx);
+	return maxv;
+}
+
+static uint32_t
+sme_get_max_value(struct sysmon_envsys *sme,
+    bool (*predicate)(const envsys_data_t*),
+    bool refresh)
+{
+	envsys_data_t *edata;
+	uint32_t maxv, v;
+
+	/* 
+	 * Iterate over all sensors that match the predicate
+	 */
+	maxv = 0;
+	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
+		if (!(*predicate)(edata))
+			continue;
+
+		/* 
+		 * refresh sensor data via sme_refresh only if the
+		 * flag is not set.
+		 */
+		if (refresh && (sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
+			mutex_enter(&sme->sme_mtx);
+			(*sme->sme_refresh)(sme, edata);
+			mutex_exit(&sme->sme_mtx);
+		}
+
+		v = edata->value_cur;
+		if (v > maxv)
+			maxv = v;
+
+	}
+
+	return maxv;
+}
+
+/*
  * sme_update_dictionary:
  *
  * 	+ Update per-sensor dictionaries with new values if there were
@@ -1652,6 +1732,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 	envsys_data_t *edata;
 	prop_dictionary_t dict, tdict = NULL;
 	prop_object_t obj, obj1, obj2, tobj = NULL;
+	uint32_t props;
 	uint64_t refresh_timo = 0;
 	sysmon_envsys_lim_t lims;
 	int i, error = 0;
@@ -1717,7 +1798,7 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		if (!prop_string_equals(obj1, obj))
 			continue;
 
-		lims.sel_flags = 0;
+		props = 0;
 
 		/*
 		 * Check if a new description operation was
@@ -1791,14 +1872,8 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "critical-capacity");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
-			    (edata->flags & ENVSYS_FPERCENT) == 0) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_critmin = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_BATTCAP;
+			props |= PROP_BATTCAP;
 		}
 
 		/* 
@@ -1807,14 +1882,28 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "warning-capacity");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if ((edata->flags & ENVSYS_FMONNOTSUPP) ||
-			    (edata->flags & ENVSYS_FPERCENT) == 0) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_warnmin = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_BATTWARN;
+			props |= PROP_BATTWARN;
+		}
+
+		/* 
+		 * did the user want to set a high capacity event?
+		 */
+		obj2 = prop_dictionary_get(udict, "high-capacity");
+		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
+			targetfound = true;
+			lims.sel_warnmin = prop_number_integer_value(obj2);
+			props |= PROP_BATTHIGH;
+		}
+
+		/* 
+		 * did the user want to set a maximum capacity event?
+		 */
+		obj2 = prop_dictionary_get(udict, "maximum-capacity");
+		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
+			targetfound = true;
+			lims.sel_warnmin = prop_number_integer_value(obj2);
+			props |= PROP_BATTMAX;
 		}
 
 		/* 
@@ -1823,15 +1912,8 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "critical-max");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags &
-				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_critmax = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_CRITMAX;
+			props |= PROP_CRITMAX;
 		}
 
 		/* 
@@ -1840,15 +1922,8 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "warning-max");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags &
-				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_warnmax = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_WARNMAX;
+			props |= PROP_WARNMAX;
 		}
 
 		/* 
@@ -1857,15 +1932,8 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "critical-min");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags &
-				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
-				error = ENOTSUP;
-				goto out;
-			}
-
 			lims.sel_critmin = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_CRITMIN;
+			props |= PROP_CRITMIN;
 		}
 
 		/* 
@@ -1874,31 +1942,25 @@ sme_userset_dictionary(struct sysmon_envsys *sme, prop_dictionary_t udict,
 		obj2 = prop_dictionary_get(udict, "warning-min");
 		if (obj2 && prop_object_type(obj2) == PROP_TYPE_NUMBER) {
 			targetfound = true;
-			if (edata->units == ENVSYS_INDICATOR ||
-			    edata->flags &
-				    (ENVSYS_FPERCENT | ENVSYS_FMONNOTSUPP)) {
+			lims.sel_warnmin = prop_number_integer_value(obj2);
+			props |= PROP_WARNMIN;
+		}
+
+		if (props) {
+			if (edata->flags & ENVSYS_FMONNOTSUPP) {
 				error = ENOTSUP;
 				goto out;
 			}
-
-			lims.sel_warnmin = prop_number_integer_value(obj2);
-			lims.sel_flags |= PROP_WARNMIN;
-		}
-
-		if (lims.sel_flags) {
 			error = sme_event_register(dict, edata, sme, &lims,
-					      (edata->flags & ENVSYS_FPERCENT)?
+					props,
+					(edata->flags & ENVSYS_FPERCENT)?
 						PENVSYS_EVENT_CAPACITY:
 						PENVSYS_EVENT_LIMITS,
-					      sdt[i].crittype);
+					sdt[i].crittype);
 			if (error == EEXIST)
 				error = 0;
 			if (error) 
 				goto out;
-
-			mutex_enter(&sme->sme_mtx);
-			edata->upropset |= lims.sel_flags;
-			mutex_exit(&sme->sme_mtx);
 		}
 
 		/*

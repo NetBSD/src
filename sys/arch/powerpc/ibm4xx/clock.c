@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.21 2008/01/09 06:50:36 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.21.10.1 2010/03/11 15:02:49 yamt Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2008/01/09 06:50:36 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21.10.1 2010/03/11 15:02:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.21 2008/01/09 06:50:36 simonb Exp $");
 #include <machine/cpu.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.

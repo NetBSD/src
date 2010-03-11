@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $	*/
+/*	$Id: at91emac.c,v 1.1.20.2 2010/03/11 15:02:04 yamt Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.1.20.2 2010/03/11 15:02:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -18,13 +18,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -40,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.1.20.2 2010/03/11 15:02:04 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,11 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.1.20.1 2009/05/04 08:10:39 yamt Exp $
 #include <netns/ns_if.h>
 #endif
 
-#include "bpfilter.h"
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #ifdef IPKDB_AT91	// @@@
 #include <ipkdb/ipkdb.h>
@@ -181,7 +171,7 @@ emac_attach(device_t parent, device_t self, void *aux)
 	EMAC_WRITE(ETH_RSR, (u & (ETH_RSR_OVR|ETH_RSR_REC|ETH_RSR_BNA)));
 
 	/* Fetch the Ethernet address from property if set. */
-	enaddr = prop_dictionary_get(device_properties(self), "mac-addr");
+	enaddr = prop_dictionary_get(device_properties(self), "mac-address");
 
 	if (enaddr != NULL) {
 		KASSERT(prop_object_type(enaddr) == PROP_TYPE_DATA);
@@ -294,10 +284,8 @@ emac_intr(void *arg)
 				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
 				sc->rxq[bi].m->m_pkthdr.len = 
 					sc->rxq[bi].m->m_len = fl;
-#if NBPFILTER > 0
 				if (ifp->if_bpf) 
-					bpf_mtap(ifp->if_bpf, sc->rxq[bi].m);
-#endif /* NBPFILTER > 0 */
+					bpf_ops->bpf_mtap(ifp->if_bpf, sc->rxq[bi].m);
 				DPRINTFN(2,("received %u bytes packet\n", fl));
                                 (*ifp->if_input)(ifp, sc->rxq[bi].m);
 				if (mtod(m, intptr_t) & 3) {
@@ -688,10 +676,8 @@ start:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 	}
 
-#if NBPFILTER > 0
 	if (ifp->if_bpf) 
-		bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	nsegs = sc->txq[bi].m_dmamap->dm_nsegs;
 	segs = sc->txq[bi].m_dmamap->dm_segs;

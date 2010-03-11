@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.20.44.2 2009/08/19 18:46:02 yamt Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.20.44.3 2010/03/11 15:02:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -12,11 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Leo Weppelman.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.20.44.2 2009/08/19 18:46:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.20.44.3 2010/03/11 15:02:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +185,7 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 	maj = cdevsw_lookup_major(&grf_cdevsw);
 
 	/*
-	 * Handle exeption case: early console init
+	 * Handle exception case: early console init
 	 */
 	if(dp == NULL) {
 		congrf.g_unit    = cfdata_grf->cf_unit;

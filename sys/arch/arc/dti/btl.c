@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.19.78.1 2009/05/04 08:10:37 yamt Exp $	*/
+/*	$NetBSD: btl.c,v 1.19.78.2 2010/03/11 15:02:03 yamt Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.19.78.1 2009/05/04 08:10:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.19.78.2 2010/03/11 15:02:03 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.19.78.1 2009/05/04 08:10:37 yamt Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <machine/intr.h>
 #include <machine/pio.h>
@@ -867,7 +866,7 @@ bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
 			thisbounce = PHYSTOKV(phystol(sg->seg_addr));
 			bytes_this_page = phystol(sg->seg_len);
 			if(xs->xs_control & XS_CTL_DATA_IN) {
-				memcpy( (void *)thiskv, (void *)thisbounce, bytes_this_page);
+				memcpy((void *)thiskv, (void *)thisbounce, bytes_this_page);
 			}
 			bt_free_buf(sc, (struct bt_buf *)thisbounce);
 			thiskv += bytes_this_page;
@@ -887,7 +886,7 @@ bt_done(struct bt_softc *sc, struct bt_ccb *ccb)
  * Find the board and find it's irq/drq
  */
 int
-bt_find(struct isa_attach_args *ia, struct bt_softc *sc0
+bt_find(struct isa_attach_args *ia, struct bt_softc *sc)
 {
 	int iobase = ia->ia_iobase;
 	int i;
@@ -1252,7 +1251,7 @@ bt_scsi_cmd(struct scsipi_xfer *xs)
 		}
 		ccb->opcode = (xs->datalen ? BT_INIT_SCAT_GATH_CCB
 					   : BT_INITIATOR_CCB);
-		memcpy( &ccb->scsi_cmd, xs->cmd,
+		memcpy(&ccb->scsi_cmd, xs->cmd,
 		    ccb->scsi_cmd_length = xs->cmdlen);
 	}
 
@@ -1278,7 +1277,7 @@ bt_scsi_cmd(struct scsipi_xfer *xs)
 			ltophys(KVTOPHYS(thisbounce), sg->seg_addr);
 			bytes_this_page = min(sizeof(struct bt_buf), datalen);
 			if (control & XS_CTL_DATA_OUT) {
-				memcpy( (void *)thisbounce, (void *)thiskv, bytes_this_page);
+				memcpy((void *)thisbounce, (void *)thiskv, bytes_this_page);
 			}
 			thiskv += bytes_this_page;
 			datalen -= bytes_this_page;

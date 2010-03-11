@@ -1,11 +1,11 @@
 #
-# $NetBSD: SMALL030,v 1.2.2.2 2009/05/04 08:10:46 yamt Exp $
+# $NetBSD: SMALL030,v 1.2.2.3 2010/03/11 15:02:08 yamt Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.80 2009/03/06 23:38:07 abs Exp $
+#		NetBSD: GENERIC.in,v 1.83 2010/02/21 17:57:03 tsutsui Exp $
 include "arch/atari/conf/std.atari"
 makeoptions COPTS="-Os"
 maxusers 16
@@ -40,6 +40,7 @@ pseudo-device sl # Slip
 pseudo-device pty # pseudo-terminals
 pseudo-device loop # Loopback network
 pseudo-device md 3 # Boot memory disk
+pseudo-device putter # for puffs and pud
 pseudo-device view 4 # View (graphics mapping)
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
 zs0 at mainbus0 # Serial support through 8530

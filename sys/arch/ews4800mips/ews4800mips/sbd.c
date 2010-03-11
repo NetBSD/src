@@ -1,4 +1,4 @@
-/*	$NetBSD: sbd.c,v 1.1.80.1 2008/05/16 02:22:19 yamt Exp $	*/
+/*	$NetBSD: sbd.c,v 1.1.80.2 2010/03/11 15:02:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbd.c,v 1.1.80.1 2008/05/16 02:22:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbd.c,v 1.1.80.2 2010/03/11 15:02:21 yamt Exp $");
 
 /* System board */
 #include "opt_sbd.h"
@@ -153,15 +153,15 @@ sbd_memcluster_check(void)
 	phys_ram_seg_t *p;
 	paddr_t start;
 	size_t size;
-	int i, j;
+	size_t i, j;
 
 	/* Very slow */
 	for (i = 1; i < mem_cluster_cnt; i++) {
 		p = &mem_clusters[i];
 		start = p->start;
 		size = p->size;
-		printf("[%d] %#lx-%#lx, %#x (%dMB)\n", i, start, start + size,
-		    size, size >>20);
+		printf("[%u] %#"PRIxPADDR"-%#"PRIxPADDR", %#x (%uMB)\n",
+		    i, start, start + size, size, size >>20);
 		m = (uint32_t *)MIPS_PHYS_TO_KSEG1(start);
 		mend = (uint32_t *)MIPS_PHYS_TO_KSEG1(start + size);
 		for (; m < mend; m++) {

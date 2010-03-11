@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.146.18.2 2009/08/19 18:46:49 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.146.18.3 2010/03/11 15:03:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146.18.2 2009/08/19 18:46:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146.18.3 2010/03/11 15:03:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,7 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146.18.2 2009/08/19 18:46:49 yamt Exp 
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/mount.h>
-#include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/vnode.h>
@@ -152,7 +151,6 @@ char	machine[] = MACHINE;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
@@ -298,13 +296,6 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	/*
-	 * Finally, allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 false, NULL);
-
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
@@ -323,9 +314,10 @@ cpu_startup(void)
  * Set registers on exec.
  */
 void
-setregs(struct lwp *l, struct exec_package *pack, u_long stack)
+setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	frame->f_sr = PSL_USERSET;
 	frame->f_pc = pack->ep_entry & ~1;
@@ -347,9 +339,9 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	frame->f_regs[SP] = stack;
 
 	/* restore a null state frame */
-	l->l_addr->u_pcb.pcb_fpregs.fpf_null = 0;
+	pcb->pcb_fpregs.fpf_null = 0;
 	if (fputype)
-		m68881_restore(&l->l_addr->u_pcb.pcb_fpregs);
+		m68881_restore(&pcb->pcb_fpregs);
 }
 
 /*
@@ -467,9 +459,11 @@ int	power_switch_is_off = 0;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	struct pcb *pcb = lwp_getpcb(curlwp);
+
 	/* take a snap shot before clobbering any registers */
-	if (curlwp->l_addr)
-		savectx(&curlwp->l_addr->u_pcb);
+	if (pcb != NULL)
+		savectx(pcb);
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.16.18.2 2009/09/16 13:38:07 yamt Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.16.18.3 2010/03/11 15:04:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -48,11 +48,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -80,9 +75,15 @@
  * the root inode is 2.
  * Inode 3 to 10 are reserved in ext2fs.
  */
-#define	EXT2_ROOTINO	((ino_t)2)
-#define	EXT2_RESIZEINO	((ino_t)7)
-#define	EXT2_FIRSTINO	((ino_t)11)
+#define	EXT2_BADBLKINO		((ino_t)1)
+#define	EXT2_ROOTINO		((ino_t)2)
+#define	EXT2_ACLIDXINO		((ino_t)3)
+#define	EXT2_ACLDATAINO		((ino_t)4)
+#define	EXT2_BOOTLOADERINO	((ino_t)5)
+#define	EXT2_UNDELDIRINO	((ino_t)6)
+#define	EXT2_RESIZEINO		((ino_t)7)
+#define	EXT2_JOURNALINO		((ino_t)8)
+#define	EXT2_FIRSTINO		((ino_t)11)
 
 /*
  * A dinode contains all the meta-data associated with a UFS file.

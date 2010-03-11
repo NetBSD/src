@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.39.4.2 2009/05/16 10:41:32 yamt Exp $	*/
+/*	$NetBSD: autri.c,v 1.39.4.3 2010/03/11 15:03:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.39.4.2 2009/05/16 10:41:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.39.4.3 2010/03/11 15:03:43 yamt Exp $");
 
 #include "midi.h"
 
@@ -97,7 +97,7 @@ static int	autri_write_codec(void *, uint8_t, uint16_t);
 static int	autri_reset_codec(void *);
 static enum ac97_host_flags	autri_flags_codec(void *);
 
-static bool autri_resume(device_t PMF_FN_PROTO);
+static bool autri_resume(device_t, const pmf_qual_t *);
 static int  autri_init(void *);
 static struct autri_dma *autri_find_dma(struct autri_softc *, void *);
 static void autri_setup_channel(struct autri_softc *, int,
@@ -552,8 +552,8 @@ autri_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
@@ -601,7 +601,7 @@ CFATTACH_DECL(autri, sizeof(struct autri_softc),
     autri_match, autri_attach, NULL, NULL);
 
 static bool
-autri_resume(device_t dv PMF_FN_ARGS)
+autri_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct autri_softc *sc = device_private(dv);
 

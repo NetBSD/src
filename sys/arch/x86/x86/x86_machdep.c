@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.15.16.4 2009/08/19 18:46:52 yamt Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.15.16.5 2010/03/11 15:03:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.15.16.4 2009/08/19 18:46:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.15.16.5 2010/03/11 15:03:09 yamt Exp $");
 
 #include "opt_modular.h"
 
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.15.16.4 2009/08/19 18:46:52 yamt E
 #include <sys/sysctl.h>
 #include <sys/extent.h>
 
-#include <x86/cpu_msr.h>
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 #include <x86/machdep.h>
@@ -74,6 +73,8 @@ int check_pa_acc(paddr_t, vm_prot_t);
 struct bootinfo bootinfo;
 
 /* --------------------------------------------------------------------- */
+
+static kauth_listener_t x86_listener;
 
 /*
  * Given the type of a bootinfo entry, looks for a matching item inside
@@ -122,15 +123,6 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 
 	return kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
-}
-
-/*
- * This function is to initialize the mutex used by x86/msr_ipifuncs.c.
- */
-void
-x86_init(void)
-{
-	msr_cpu_broadcast_initmtx();
 }
 
 #ifdef MODULAR
@@ -257,6 +249,7 @@ bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {
 	struct cpu_info *ci;
+	struct pcb *pcb;
 	lwp_t *l;
 
 	KASSERT(kpreempt_disabled());
@@ -275,7 +268,8 @@ cpu_kpreempt_enter(uintptr_t where, int s)
 	}
 
 	/* Must save cr2 or it could be clobbered. */
-	((struct pcb *)l->l_addr)->pcb_cr2 = rcr2();
+	pcb = lwp_getpcb(l);
+	pcb->pcb_cr2 = rcr2();
 
 	return true;
 }
@@ -288,6 +282,7 @@ void
 cpu_kpreempt_exit(uintptr_t where)
 {
 	extern char x86_copyfunc_start, x86_copyfunc_end;
+	struct pcb *pcb;
 
 	KASSERT(kpreempt_disabled());
 
@@ -302,7 +297,8 @@ cpu_kpreempt_exit(uintptr_t where)
 	}
 
 	/* Restore cr2 only after the pmap, as pmap_load can block. */
-	lcr2(((struct pcb *)curlwp->l_addr)->pcb_cr2);
+	pcb = lwp_getpcb(curlwp);
+	lcr2(pcb->pcb_cr2);
 }
 
 /*
@@ -371,9 +367,13 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 	int i;
 
 #ifdef i386
-#define TOPLIMIT	0x100000000ULL
+#ifdef PAE
+#define TOPLIMIT	0x1000000000ULL	/* 64GB */
 #else
-#define TOPLIMIT	0x100000000000ULL
+#define TOPLIMIT	0x100000000ULL	/* 4GB */
+#endif
+#else
+#define TOPLIMIT	0x100000000000ULL /* 16TB */
 #endif
 
 	if (seg_end > TOPLIMIT) {
@@ -532,7 +532,7 @@ initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 		 *   Avoid Compatibility Holes.
 		 * XXX  Holes within memory space that allow access
 		 * XXX to be directed to the PC-compatible frame buffer
-		 * XXX (0xa0000-0xbffff),to adapter ROM space
+		 * XXX (0xa0000-0xbffff), to adapter ROM space
 		 * XXX (0xc0000-0xdffff), and to system BIOS space
 		 * XXX (0xe0000-0xfffff).
 		 * XXX  Some laptop(for example,Toshiba Satellite2550X)
@@ -636,6 +636,9 @@ initx86_load_memmap(paddr_t first_avail)
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
 	int first16q, x;
+#ifdef VM_FREELIST_FIRST4G
+	int first4gq;
+#endif
 
 	/*
 	 * If we have 16M of RAM or less, just put it all on
@@ -644,10 +647,27 @@ initx86_load_memmap(paddr_t first_avail)
 	 * all of the ISA DMA'able memory won't be eaten up
 	 * first-off).
 	 */
-	if (avail_end <= (16 * 1024 * 1024))
+#define ADDR_16M (16 * 1024 * 1024)
+
+	if (avail_end <= ADDR_16M)
 		first16q = VM_FREELIST_DEFAULT;
 	else
 		first16q = VM_FREELIST_FIRST16;
+
+#ifdef VM_FREELIST_FIRST4G
+	/*
+	 * If we have 4G of RAM or less, just put it all on
+	 * the default free list.  Otherwise, put the first
+	 * 4G of RAM on a lower priority free list (so that
+	 * all of the 32bit PCI DMA'able memory won't be eaten up
+	 * first-off).
+	 */
+#define ADDR_4G (4ULL * 1024 * 1024 * 1024)
+	if (avail_end <= ADDR_4G)
+		first4gq = VM_FREELIST_DEFAULT;
+	else
+		first4gq = VM_FREELIST_FIRST4G;
+#endif /* defined(VM_FREELIST_FIRST4G) */
 
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
@@ -700,18 +720,19 @@ initx86_load_memmap(paddr_t first_avail)
 
 		/* First hunk */
 		if (seg_start != seg_end) {
-			if (seg_start < (16 * 1024 * 1024) &&
+			if (seg_start < ADDR_16M &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				uint64_t tmp;
 
-				if (seg_end > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
+				if (seg_end > ADDR_16M)
+					tmp = ADDR_16M;
 				else
 					tmp = seg_end;
 
 				if (tmp != seg_start) {
 #ifdef DEBUG_MEMLOAD
-					printf("loading 0x%"PRIx64"-0x%"PRIx64
+					printf("loading first16q 0x%"PRIx64
+					    "-0x%"PRIx64
 					    " (0x%"PRIx64"-0x%"PRIx64")\n",
 					    seg_start, tmp,
 					    (uint64_t)atop(seg_start),
@@ -724,9 +745,36 @@ initx86_load_memmap(paddr_t first_avail)
 				seg_start = tmp;
 			}
 
+#ifdef VM_FREELIST_FIRST4G
+			if (seg_start < ADDR_4G &&
+			    first4gq != VM_FREELIST_DEFAULT) {
+				uint64_t tmp;
+
+				if (seg_end > ADDR_4G)
+					tmp = ADDR_4G;
+				else
+					tmp = seg_end;
+
+				if (tmp != seg_start) {
+#ifdef DEBUG_MEMLOAD
+					printf("loading first4gq 0x%"PRIx64
+					    "-0x%"PRIx64
+					    " (0x%"PRIx64"-0x%"PRIx64")\n",
+					    seg_start, tmp,
+					    (uint64_t)atop(seg_start),
+					    (uint64_t)atop(tmp));
+#endif
+					uvm_page_physload(atop(seg_start),
+					    atop(tmp), atop(seg_start),
+					    atop(tmp), first4gq);
+				}
+				seg_start = tmp;
+			}
+#endif /* defined(VM_FREELIST_FIRST4G) */
+
 			if (seg_start != seg_end) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				printf("loading default 0x%"PRIx64"-0x%"PRIx64
 				    " (0x%"PRIx64"-0x%"PRIx64")\n",
 				    seg_start, seg_end,
 				    (uint64_t)atop(seg_start),
@@ -740,18 +788,19 @@ initx86_load_memmap(paddr_t first_avail)
 
 		/* Second hunk */
 		if (seg_start1 != seg_end1) {
-			if (seg_start1 < (16 * 1024 * 1024) &&
+			if (seg_start1 < ADDR_16M &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				uint64_t tmp;
 
-				if (seg_end1 > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
+				if (seg_end1 > ADDR_16M)
+					tmp = ADDR_16M;
 				else
 					tmp = seg_end1;
 
 				if (tmp != seg_start1) {
 #ifdef DEBUG_MEMLOAD
-					printf("loading 0x%"PRIx64"-0x%"PRIx64
+					printf("loading first16q 0x%"PRIx64
+					    "-0x%"PRIx64
 					    " (0x%"PRIx64"-0x%"PRIx64")\n",
 					    seg_start1, tmp,
 					    (uint64_t)atop(seg_start1),
@@ -764,9 +813,36 @@ initx86_load_memmap(paddr_t first_avail)
 				seg_start1 = tmp;
 			}
 
+#ifdef VM_FREELIST_FIRST4G
+			if (seg_start1 < ADDR_4G &&
+			    first4gq != VM_FREELIST_DEFAULT) {
+				uint64_t tmp;
+
+				if (seg_end1 > ADDR_4G)
+					tmp = ADDR_4G;
+				else
+					tmp = seg_end1;
+
+				if (tmp != seg_start1) {
+#ifdef DEBUG_MEMLOAD
+					printf("loading first4gq 0x%"PRIx64
+					    "-0x%"PRIx64
+					    " (0x%"PRIx64"-0x%"PRIx64")\n",
+					    seg_start1, tmp,
+					    (uint64_t)atop(seg_start1),
+					    (uint64_t)atop(tmp));
+#endif
+					uvm_page_physload(atop(seg_start1),
+					    atop(tmp), atop(seg_start1),
+					    atop(tmp), first4gq);
+				}
+				seg_start1 = tmp;
+			}
+#endif /* defined(VM_FREELIST_FIRST4G) */
+
 			if (seg_start1 != seg_end1) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				printf("loading default 0x%"PRIx64"-0x%"PRIx64
 				    " (0x%"PRIx64"-0x%"PRIx64")\n",
 				    seg_start1, seg_end1,
 				    (uint64_t)atop(seg_start1),
@@ -825,4 +901,36 @@ x86_reset(void)
 		outb(0x92, b | 0x1);
 		DELAY(500000);  /* wait 0.5 sec to see if that did it */
 	}
+}
+
+static int
+x86_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
+    void *arg0, void *arg1, void *arg2, void *arg3)
+{
+	int result;
+
+	result = KAUTH_RESULT_DEFER;
+
+	switch (action) {
+	case KAUTH_MACHDEP_IOPERM_GET:
+	case KAUTH_MACHDEP_LDT_GET:
+	case KAUTH_MACHDEP_LDT_SET:
+	case KAUTH_MACHDEP_MTRR_GET:
+		result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	default:
+		break;
+	}
+
+	return result;
+}
+
+void
+machdep_init(void)
+{
+
+	x86_listener = kauth_listen_scope(KAUTH_SCOPE_MACHDEP,
+	    x86_listener_cb, NULL);
 }

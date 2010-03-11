@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.20.2.2 2009/05/04 08:11:58 yamt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.20.2.3 2010/03/11 15:03:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.20.2.2 2009/05/04 08:11:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.20.2.3 2010/03/11 15:03:01 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.20.2.2 2009/05/04 08:11:58 y
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/signal.h>

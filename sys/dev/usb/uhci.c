@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.216.4.2 2009/05/04 08:13:21 yamt Exp $	*/
+/*	$NetBSD: uhci.c,v 1.216.4.3 2010/03/11 15:04:06 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -35,32 +35,23 @@
  * USB Universal Host Controller driver.
  * Handles e.g. PIIX3 and PIIX4.
  *
- * UHCI spec: http://developer.intel.com/design/USB/UHCI11D.htm
- * USB spec: http://www.usb.org/developers/docs/usbspec.zip
+ * UHCI spec: http://www.intel.com/technology/usb/spec.htm
+ * USB spec: http://www.usb.org/developers/docs/
  * PIIXn spec: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
  *             ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.216.4.2 2009/05/04 08:13:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.216.4.3 2010/03/11 15:04:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #include <sys/select.h>
 #include <sys/extent.h>
 #include <uvm/uvm_extern.h>
-#elif defined(__FreeBSD__)
-#include <sys/module.h>
-#include <sys/bus.h>
-#include <machine/bus_pio.h>
-#if defined(DIAGNOSTIC) && defined(__i386__)
-#include <sys/cpu.h>
-#endif
-#endif
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/bus.h>
@@ -80,17 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.216.4.2 2009/05/04 08:13:21 yamt Exp $");
 /* Use bandwidth reclamation for control transfers. Some devices choke on it. */
 /*#define UHCI_CTL_LOOP */
 
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
 
-#define delay(d)		DELAY(d)
-#endif
-
-#if defined(__OpenBSD__)
-struct cfdriver uhci_cd = {
-	NULL, "uhci", DV_DULL
-};
-#endif
 
 #ifdef UHCI_DEBUG
 uhci_softc_t *thesc;
@@ -98,9 +79,6 @@ uhci_softc_t *thesc;
 #define DPRINTFN(n,x)	if (uhcidebug>(n)) printf x
 int uhcidebug = 0;
 int uhcinoloop = 0;
-#ifndef __NetBSD__
-#define snprintb((q), (f), "%b", q,f,b,l) snprintf((b), (l))
-#endif
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -110,15 +88,6 @@ int uhcinoloop = 0;
  * The UHCI controller is little endian, so on big endian machines
  * the data stored in memory needs to be swapped.
  */
-#if defined(__FreeBSD__) || defined(__OpenBSD__)
-#if BYTE_ORDER == BIG_ENDIAN
-#define htole32(x) (bswap32(x))
-#define le32toh(x) (bswap32(x))
-#else
-#define htole32(x) (x)
-#define le32toh(x) (x)
-#endif
-#endif
 
 struct uhci_pipe {
 	struct usbd_pipe pipe;
@@ -434,10 +403,8 @@ uhci_init(uhci_softc_t *sc)
 	uhci_globalreset(sc);			/* reset the controller */
 	uhci_reset(sc);
 
-#ifdef __NetBSD__
 	usb_setup_reserve(sc->sc_dev, &sc->sc_dma_reserve, sc->sc_bus.dmatag,
 	    USB_MEM_RESERVE);
-#endif
 
 	/* Allocate and initialize real frame array. */
 	err = usb_allocmem(&sc->sc_bus,
@@ -570,24 +537,18 @@ uhci_init(uhci_softc_t *sc)
 	return err;
 }
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 uhci_activate(device_t self, enum devact act)
 {
 	struct uhci_softc *sc = device_private(self);
-	int rv = 0;
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
-		if (sc->sc_child != NULL)
-			rv = config_deactivate(sc->sc_child);
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (rv);
 }
 
 void
@@ -627,7 +588,6 @@ uhci_detach(struct uhci_softc *sc, int flags)
 
 	return (rv);
 }
-#endif
 
 usbd_status
 uhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
@@ -660,23 +620,19 @@ uhci_allocm(struct usbd_bus *bus, usb_dma_t *dma, u_int32_t size)
 
 
 	status = usb_allocmem(&sc->sc_bus, size, 0, dma);
-#ifdef __NetBSD__
 	if (status == USBD_NOMEM)
 		status = usb_reserve_allocm(&sc->sc_dma_reserve, dma, size);
-#endif
 	return status;
 }
 
 void
 uhci_freem(struct usbd_bus *bus, usb_dma_t *dma)
 {
-#ifdef __NetBSD__
 	if (dma->block->flags & USB_DMA_RESERVE) {
 		usb_reserve_freem(&((struct uhci_softc *)bus)->sc_dma_reserve,
 		    dma);
 		return;
 	}
-#endif
 	usb_freemem(&((struct uhci_softc *)bus)->sc_bus, dma);
 }
 
@@ -735,7 +691,7 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
  * are almost suspended anyway.
  */
 bool
-uhci_resume(device_t dv PMF_FN_ARGS)
+uhci_resume(device_t dv, const pmf_qual_t *qual)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;
@@ -780,7 +736,7 @@ uhci_resume(device_t dv PMF_FN_ARGS)
 }
 
 bool
-uhci_suspend(device_t dv PMF_FN_ARGS)
+uhci_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;

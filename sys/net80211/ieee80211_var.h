@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.26.40.1 2009/05/04 08:14:16 yamt Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.26.40.2 2010/03/11 15:04:28 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -143,7 +143,7 @@ struct ieee80211com {
 	u_int8_t		ic_dtim_period;	/* DTIM period */
 	u_int8_t		ic_dtim_count;	/* DTIM count for last bcn */
 	struct ifmedia		ic_media;	/* interface media config */
-	void *			ic_rawbpf;	/* packet filter structure */
+	struct bpf_if *		ic_rawbpf;	/* packet filter structure */
 	struct ieee80211_node	*ic_bss;	/* information for this node */
 	struct ieee80211_channel *ic_ibss_chan;
 	struct ieee80211_channel *ic_curchan;	/* current channel */

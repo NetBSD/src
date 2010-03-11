@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12.10.3 2009/08/19 18:46:50 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.12.10.4 2010/03/11 15:03:08 yamt Exp $	*/
 
 /*
  *
@@ -106,7 +106,7 @@
 
 #define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
 
-/* size of a PDP: usually one page, exept for PAE */
+/* size of a PDP: usually one page, except for PAE */
 #ifdef PAE
 #define PDP_SIZE 4
 #else
@@ -176,7 +176,7 @@ struct pmap {
 #endif
 
 /*
- * MD flags that we use for pmap_enter:
+ * MD flags that we use for pmap_enter and pmap_kenter_pa:
  */
 #define PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
 
@@ -402,7 +402,7 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 #define XPMAP_UPDATE_DIRECT	1	/* Update direct map entry flags too */
 
 /* pmap functions with machine addresses */
-void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
+void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t, u_int);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);

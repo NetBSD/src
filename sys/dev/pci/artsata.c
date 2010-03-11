@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.17.4.1 2008/05/16 02:24:42 yamt Exp $	*/
+/*	$NetBSD: artsata.c,v 1.17.4.2 2010/03/11 15:03:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.17.4.1 2008/05/16 02:24:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.17.4.2 2010/03/11 15:03:42 yamt Exp $");
 
 #include "opt_pciide.h"
 
@@ -148,8 +148,8 @@ artisea_mapregs(struct pci_attach_args *pa, struct pciide_channel *cp,
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 			    "couldn't establish native-PCI interrupt");
 			if (intrstr != NULL)
-				aprint_normal(" at %s", intrstr);
-			aprint_normal("\n");
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
 			goto bad;
 		}
 	}

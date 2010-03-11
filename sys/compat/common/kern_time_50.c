@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.1.6.2 2009/08/19 18:46:57 yamt Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.1.6.3 2010/03/11 15:03:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.6.2 2009/08/19 18:46:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.6.3 2010/03/11 15:03:12 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -386,13 +386,13 @@ compat_50_sys_aio_suspend(struct lwp *l,
 			return error;
 		timespec50_to_timespec(&ts50, &ts);
 	}
-	list = kmem_zalloc(nent * sizeof(struct aio_job), KM_SLEEP);
-	error = copyin(SCARG(uap, list), list, nent * sizeof(struct aiocb));
+	list = kmem_alloc(nent * sizeof(*list), KM_SLEEP);
+	error = copyin(SCARG(uap, list), list, nent * sizeof(*list));
 	if (error)
 		goto out;
 	error = aio_suspend1(l, list, nent, SCARG(uap, timeout) ? &ts : NULL);
 out:
-	kmem_free(list, nent * sizeof(struct aio_job));
+	kmem_free(list, nent * sizeof(*list));
 	return error;
 #else
 	return ENOSYS;
@@ -400,7 +400,8 @@ out:
 }
 
 int
-compat_50_sys_select(struct lwp *l, const struct compat_50_sys_select_args *uap, register_t *retval)
+compat_50_sys_select(struct lwp *l,
+    const struct compat_50_sys_select_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int)			nd;
@@ -422,7 +423,7 @@ compat_50_sys_select(struct lwp *l, const struct compat_50_sys_select_args *uap,
 		ts = &ats;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG(uap, in),
 	    SCARG(uap, ou), SCARG(uap, ex), ts, NULL);
 }
 
@@ -457,7 +458,7 @@ compat_50_sys_pselect(struct lwp *l,
 		mask = &amask;
 	}
 
-	return selcommon(l, retval, SCARG(uap, nd), SCARG(uap, in),
+	return selcommon(retval, SCARG(uap, nd), SCARG(uap, in),
 	    SCARG(uap, ou), SCARG(uap, ex), ts, mask);
 }
 int
@@ -489,8 +490,7 @@ compat_50_sys_pollts(struct lwp *l, const struct compat_50_sys_pollts_args *uap,
 		mask = &amask;
 	}
 
-	return pollcommon(l, retval, SCARG(uap, fds), SCARG(uap, nfds),
-	    ts, mask);
+	return pollcommon(retval, SCARG(uap, fds), SCARG(uap, nfds), ts, mask);
 }
 
 int
@@ -538,10 +538,9 @@ compat_50_sys_mq_timedsend(struct lwp *l,
 		syscallarg(const struct timespec50 *) abs_timeout;
 	} */
 #ifdef MQUEUE
-	int t;
-	int error;
 	struct timespec50 ts50;
-	struct timespec ts;
+	struct timespec ts, *tsp;
+	int error;
 
 	/* Get and convert time value */
 	if (SCARG(uap, abs_timeout)) {
@@ -549,14 +548,13 @@ compat_50_sys_mq_timedsend(struct lwp *l,
 		if (error)
 			return error;
 		timespec50_to_timespec(&ts50, &ts);
-		error = abstimeout2timo(&ts, &t);
-		if (error)
-			return error;
-	} else
-		t = 0;
+		tsp = &ts;
+	} else {
+		tsp = NULL;
+	}
 
-	return mq_send1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG(uap, msg_prio), t);
+	return mq_send1(SCARG(uap, mqdes), SCARG(uap, msg_ptr),
+	    SCARG(uap, msg_len), SCARG(uap, msg_prio), tsp);
 #else
 	return ENOSYS;
 #endif
@@ -574,10 +572,10 @@ compat_50_sys_mq_timedreceive(struct lwp *l,
 		syscallarg(const struct timespec50 *) abs_timeout;
 	} */
 #ifdef MQUEUE
-	int error, t;
-	ssize_t mlen;
-	struct timespec ts;
+	struct timespec ts, *tsp;
 	struct timespec50 ts50;
+	ssize_t mlen;
+	int error;
 
 	/* Get and convert time value */
 	if (SCARG(uap, abs_timeout)) {
@@ -586,14 +584,13 @@ compat_50_sys_mq_timedreceive(struct lwp *l,
 			return error;
 
 		timespec50_to_timespec(&ts50, &ts);
-		error = abstimeout2timo(&ts, &t);
-		if (error)
-			return error;
-	} else
-		t = 0;
+		tsp = &ts;
+	} else {
+		tsp = NULL;
+	}
 
-	error = mq_receive1(l, SCARG(uap, mqdes), SCARG(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG(uap, msg_prio), t, &mlen);
+	error = mq_recv1(SCARG(uap, mqdes), SCARG(uap, msg_ptr),
+	    SCARG(uap, msg_len), SCARG(uap, msg_prio), tsp, &mlen);
 	if (error == 0)
 		*retval = mlen;
 
@@ -632,7 +629,7 @@ compat_50_sys___sigtimedwait(struct lwp *l,
     const struct compat_50_sys___sigtimedwait_args *uap, register_t *retval)
 {
 
-	return __sigtimedwait1(l,
+	return sigtimedwait1(l,
 	    (const struct sys_____sigtimedwait50_args *)uap, retval, copyout,
 	    tscopyin, tscopyout);
 }
@@ -826,7 +823,8 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 	return (error);
 }
 int
-compat_50_sys_wait4(struct lwp *l, const struct compat_50_sys_wait4_args *uap, register_t *retval)
+compat_50_sys_wait4(struct lwp *l, const struct compat_50_sys_wait4_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int)			pid;
@@ -834,14 +832,12 @@ compat_50_sys_wait4(struct lwp *l, const struct compat_50_sys_wait4_args *uap, r
 		syscallarg(int)			options;
 		syscallarg(struct rusage50 *)	rusage;
 	} */
-	int		status, error;
-	int		was_zombie;
-	struct rusage	ru;
-	struct rusage50	ru50;
-	int pid = SCARG(uap, pid);
+	int status, error, pid = SCARG(uap, pid);
+	struct rusage50 ru50;
+	struct rusage ru;
 
-	error = do_sys_wait(l, &pid, &status, SCARG(uap, options),
-	    SCARG(uap, rusage) != NULL ? &ru : NULL, &was_zombie);
+	error = do_sys_wait(&pid, &status, SCARG(uap, options),
+	    SCARG(uap, rusage) != NULL ? &ru : NULL);
 
 	retval[0] = pid;
 	if (pid == 0)

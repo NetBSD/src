@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.70.4.2 2009/06/20 07:20:00 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.70.4.3 2010/03/11 15:02:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -111,8 +111,6 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
-#define	cpu_swapout(p)			/* nothing */
 #define	cpu_number()			0
 
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -214,7 +212,6 @@ void	drsc_handler(void);
  * Prototypes from locore.s
  */
 struct fpframe;
-struct user;
 
 void	clearseg(vm_offset_t);
 void	doboot(void) __attribute__((__noreturn__));
@@ -239,5 +236,15 @@ void	bootsync(void);
 void	pmap_bootstrap(vm_offset_t, vm_offset_t);
 
 #endif /* _KERNEL */
+
+/*
+ * Reorder protection when accessing device registers.
+ */
+#define amiga_membarrier()
+
+/*
+ * Finish all bus operations and flush pipelines.
+ */
+#define amiga_cpu_sync() __asm volatile ("nop")
 
 #endif /* !_MACHINE_CPU_H_ */

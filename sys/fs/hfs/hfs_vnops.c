@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.9.10.3 2009/07/18 14:53:21 yamt Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.9.10.4 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9.10.3 2009/07/18 14:53:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9.10.4 2010/03/11 15:04:13 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -378,7 +378,7 @@ hfs_vop_lookup(void *v)
 
 /*	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = vdp;
-		VREF(vdp);
+		vref(vdp);
 		return (0);
 	}*/
 	
@@ -394,7 +394,7 @@ hfs_vop_lookup(void *v)
 /*	} else if (dp->h_rec.u.cnid == rec.file.u.cnid) {*/
 	} else if (cnp->cn_namelen == 1 && pname[0] == '.') {
 /*printf("DOT ");*/
-		VREF(vdp);	/* we want ourself, ie "." */
+		vref(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
 		hfs_callback_args cbargs;

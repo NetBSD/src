@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.49.4.1 2009/05/04 08:12:05 yamt Exp $	*/
+/*	$NetBSD: ka820.c,v 1.49.4.2 2010/03/11 15:03:06 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.49.4.1 2009/05/04 08:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.49.4.2 2010/03/11 15:03:06 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.49.4.1 2009/05/04 08:12:05 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -83,8 +82,8 @@ static void ka820_attach(device_t, device_t, void*);
 static void ka820_memerr(void);
 static void ka820_conf(void);
 static int ka820_mchk(void *);
-static int ka820_gettime(volatile struct timeval *);
-static void ka820_settime(volatile struct timeval *);
+static int ka820_gettime(struct timeval *);
+static void ka820_settime(struct timeval *);
 static void rxcdintr(void *);
 static void vaxbierr(void *);
 
@@ -481,7 +480,7 @@ rxchar(void)
 #endif
 
 int
-ka820_gettime(volatile struct timeval *tvp)
+ka820_gettime(struct timeval *tvp)
 {
 	struct clock_ymdhms c;
 	int s;
@@ -513,7 +512,7 @@ ka820_gettime(volatile struct timeval *tvp)
 }
 
 void
-ka820_settime(volatile struct timeval *tvp)
+ka820_settime(struct timeval *tvp)
 {
 	struct clock_ymdhms c;
 
@@ -535,6 +534,7 @@ ka820_settime(volatile struct timeval *tvp)
 static void
 ka820_startslave(struct cpu_info *ci)
 {
+	const struct pcb *pcb = lwp_getpcb(ci->ci_data.cpu_onproc);
 	const int id = ci->ci_slotid;
 	int i;
 
@@ -548,8 +548,7 @@ ka820_startslave(struct cpu_info *ci)
 	ka820_txrx(id, "D/I 4 %x\r", ci->ci_istack);	/* Interrupt stack */
 	ka820_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka820_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
-	ka820_txrx(id, "D/I 10 %x\r",			/* PCB for idle proc */
-	    ci->ci_data.cpu_onproc->l_addr->u_pcb.pcb_paddr);
+	ka820_txrx(id, "D/I 10 %x\r", pcb->pcb_paddr);	/* PCB for idle proc */
 	ka820_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka820_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN));	/* Enable MM */
 	ka820_txrx(id, "S %x\r", (int)&vax_mp_tramp);	/* Start! */

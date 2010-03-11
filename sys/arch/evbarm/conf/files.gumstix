@@ -1,9 +1,11 @@
-#	$NetBSD: files.gumstix,v 1.10.4.3 2009/08/19 18:46:05 yamt Exp $
+#	$NetBSD: files.gumstix,v 1.10.4.4 2010/03/11 15:02:14 yamt Exp $
 #
 # Gumstix. Inc. Gumstix boards configuration info
 #
 
 file	arch/evbarm/gumstix/gumstix_machdep.c
+defflag opt_gumstix.h				GUMSTIX_NETBSD_ARGS_BUSHEADER
+						GUMSTIX_NETBSD_ARGS_CONSOLE
 
 # CPU support and integrated peripherals
 include "arch/arm/xscale/files.pxa2x0"

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.113.2.4 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.113.2.5 2010/03/11 15:04:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.113.2.4 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.113.2.5 2010/03/11 15:04:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,7 +454,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * is not locked, so when changing so2->so_lock
 		 * another thread can grab it while so->so_lock is still
 		 * pointing to the (locked) uipc_lock.
-		 * this should be harmless, exept that this makes
+		 * this should be harmless, except that this makes
 		 * solocked2() and solocked() unreliable.
 		 * Another problem is that unp_setaddr() expects the
 		 * the socket locked. Grabing sotounpcb(so2)->unp_streamlock
@@ -907,7 +907,7 @@ unp_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 		error = EADDRINUSE;
 		goto bad;
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);

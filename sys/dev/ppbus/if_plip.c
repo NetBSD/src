@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.21.4.1 2009/05/04 08:13:15 yamt Exp $ */
+/* $NetBSD: if_plip.c,v 1.21.4.2 2010/03/11 15:04:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.21.4.1 2009/05/04 08:13:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.21.4.2 2010/03/11 15:04:00 yamt Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.21.4.1 2009/05/04 08:13:15 yamt Exp $"
 
 #include "opt_inet.h"
 #include "opt_plip.h"
-#include "bpfilter.h"
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -101,10 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.21.4.1 2009/05/04 08:13:15 yamt Exp $"
 #include <net/if_types.h>
 #include <net/netisr.h>
 
-#if NBPFILTER > 0
 #include <sys/time.h>
 #include <net/bpf.h>
-#endif
 
 #ifdef INET
 #include <netinet/in_var.h>
@@ -244,9 +241,7 @@ lp_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-#if NBPFILTER > 0
-	bpfattach(ifp, DLT_NULL, sizeof(u_int32_t));
-#endif
+	bpf_ops->bpf_attach(ifp, DLT_NULL, sizeof(u_int32_t), &ifp->if_bpf);
 
 	if(lp_count++ == 0)
 		lpinittables();
@@ -515,7 +510,6 @@ clpinbyte (int spin, device_t ppbus)
 	return (ctrecvl[cl] | ctrecvh[c]);
 }
 
-#if NBPFILTER > 0
 static void
 lptap(struct ifnet *ifp, struct mbuf *m)
 {
@@ -531,9 +525,8 @@ lptap(struct ifnet *ifp, struct mbuf *m)
 	m0.m_next = m;
 	m0.m_len = sizeof(u_int32_t);
 	m0.m_data = (char *)&af;
-	bpf_mtap(ifp->if_bpf, &m0);
+	bpf_ops->bpf_mtap(ifp->if_bpf, &m0);
 }
-#endif
 
 /* Soft interrupt handler called by hardware interrupt handler */
 static void
@@ -650,10 +643,8 @@ end:
 		LP_PRINTF("DROP");
 		goto err;
 	}
-#if NBPFILTER > 0
 	if(ifp->if_bpf)
 		lptap(ifp, top);
-#endif
 	IF_ENQUEUE(&ipintrq, top);
 	schednetisr(NETISR_IP);
 	ifp->if_ipackets++;
@@ -935,10 +926,8 @@ nend:
 		else {
 			/* Dequeue packet on success */
 			IFQ_DEQUEUE(&ifp->if_snd, m);
-#if NBPFILTER > 0
 			if(ifp->if_bpf)
 				lptap(ifp, m);
-#endif
 			ifp->if_opackets++;
 			ifp->if_obytes += m->m_pkthdr.len;
 			m_freem(m);

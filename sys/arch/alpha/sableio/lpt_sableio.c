@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_sableio.c,v 1.5.4.1 2008/05/16 02:21:48 yamt Exp $ */
+/* $NetBSD: lpt_sableio.c,v 1.5.4.2 2010/03/11 15:01:58 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.5.4.1 2008/05/16 02:21:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.5.4.2 2010/03/11 15:01:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_sableio.c,v 1.5.4.1 2008/05/16 02:21:48 yamt Exp
 #include <sys/select.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>

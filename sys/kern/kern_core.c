@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.12.2.1 2009/05/04 08:13:46 yamt Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.12.2.2 2010/03/11 15:04:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.12.2.1 2009/05/04 08:13:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.12.2.2 2010/03/11 15:04:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -186,7 +186,7 @@ coredump(struct lwp *l, const char *pattern)
 		error = EINVAL;
 		goto out;
 	}
-	VATTR_NULL(&vattr);
+	vattr_null(&vattr);
 	vattr.va_size = 0;
 
 	if ((p->p_flag & PK_SUGID) && security_setidcore_dump) {

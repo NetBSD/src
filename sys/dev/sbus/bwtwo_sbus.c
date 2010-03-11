@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.20.4.3 2009/05/16 10:41:43 yamt Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.20.4.4 2010/03/11 15:04:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.20.4.3 2009/05/16 10:41:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.20.4.4 2010/03/11 15:04:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,13 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.20.4.3 2009/05/16 10:41:43 yamt Exp
 static void	bwtwoattach_sbus (device_t, device_t, void *);
 static int	bwtwomatch_sbus (device_t, cfdata_t, void *);
 
-/* Allocate an `sbusdev' in addition to the bwtwo softc */
-struct bwtwo_sbus_softc {
-	struct bwtwo_softc bss_softc;
-	struct sbusdev bss_sd;
-};
-
-CFATTACH_DECL(bwtwo_sbus, sizeof(struct bwtwo_sbus_softc),
+CFATTACH_DECL_NEW(bwtwo_sbus, sizeof(struct bwtwo_softc),
     bwtwomatch_sbus, bwtwoattach_sbus, NULL, NULL);
 
 static int	bwtwo_get_video (struct bwtwo_softc *);
@@ -126,7 +120,10 @@ bwtwomatch_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_name, sa->sa_name) == 0);
+	if (strcmp(cf->cf_name, sa->sa_name) == 0)
+		return 100;	/* beat genfb(4) */
+
+	return 0;
 }
 
 
@@ -136,21 +133,21 @@ bwtwomatch_sbus(device_t parent, cfdata_t cf, void *aux)
 void
 bwtwoattach_sbus(device_t parent, device_t self, void *args)
 {
-	struct bwtwo_softc *sc = (struct bwtwo_softc *)self;
-	struct sbusdev *sd = &((struct bwtwo_sbus_softc *)self)->bss_sd;
+	struct bwtwo_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
 	struct fbdevice *fb = &sc->sc_fb;
 	bus_space_handle_t bh;
 	int isconsole, node;
 	const char *name;
 
+	sc->sc_dev = self;
 	node = sa->sa_node;
 
 	/* Remember cookies for bwtwo_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
 
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags;
+	fb->fb_flags = device_cfdata(self)->cf_flags;
 	fb->fb_type.fb_depth = 1;
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
 
@@ -194,7 +191,6 @@ bwtwoattach_sbus(device_t parent, device_t self, void *args)
 		sc->sc_fb.fb_pixels = (char *)bus_space_vaddr(sa->sa_bustag, bh);
 	}
 
-	sbus_establish(sd, &sc->sc_dev);
 	bwtwoattach(sc, name, isconsole);
 }
 

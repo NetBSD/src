@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.11.18.1 2009/05/04 08:13:42 yamt Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.11.18.2 2010/03/11 15:04:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.11.18.1 2009/05/04 08:13:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.11.18.2 2010/03/11 15:04:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ found:
 		nocache = 1;
 	}
 	if (vdp == *vpp)
-		VREF(vdp);
+		vref(vdp);
 found_lockdone:
 	if ((cnp->cn_flags & MAKEENTRY) && nocache == 0)
 		cache_enter(vdp, *vpp, cnp);

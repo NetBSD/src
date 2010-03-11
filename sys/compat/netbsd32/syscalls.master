@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69.2.2 2009/06/20 07:20:18 yamt Exp $
+	$NetBSD: syscalls.master,v 1.69.2.3 2010/03/11 15:03:18 yamt Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -42,9 +42,6 @@
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_posix.h"
-
-#include "fs_lfs.h"
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -321,7 +318,7 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
-155	STD		{ int|netbsd32||nfssvc(int flag, netbsd32_voidp argp); }
+155	UNIMPL		netbsd32_nfssvc
 156	COMPAT_43	{ int|netbsd32||ogetdirentries(int fd, \
 			    netbsd32_charp buf, u_int count, \
 			    netbsd32_longp basep); }
@@ -384,21 +381,10 @@
 181	STD		{ int|netbsd32||setgid(gid_t gid); }
 182	STD		{ int|netbsd32||setegid(gid_t egid); }
 183	STD		{ int|netbsd32||seteuid(uid_t euid); }
-#if defined(LFS) || !defined(_KERNEL_OPT)
-184	STD		{ int|netbsd32||lfs_bmapv(netbsd32_fsid_tp_t fsidp, \
-			    netbsd32_block_infop_t blkiov, int blkcnt); }
-185	STD		{ int|netbsd32||lfs_markv(netbsd32_fsid_tp_t fsidp, \
-			    netbsd32_block_infop_t blkiov, int blkcnt); }
-186	STD		{ int|netbsd32||lfs_segclean(netbsd32_fsid_tp_t fsidp, \
-			    netbsd32_u_long segment); }
-187	COMPAT_50	{ int|netbsd32||lfs_segwait(netbsd32_fsid_tp_t fsidp, \
-			    netbsd32_timeval50p_t tv); }
-#else
 184	EXCL		netbsd32_lfs_bmapv
 185	EXCL		netbsd32_lfs_markv
 186	EXCL		netbsd32_lfs_segclean
 187	EXCL		netbsd32_lfs_segwait
-#endif
 188	COMPAT_12	{ int|netbsd32||stat12(netbsd32_charp path, \
 			    netbsd32_stat12p_t ub); }
 189	COMPAT_12	{ int|netbsd32||fstat12(int fd, netbsd32_stat12p_t sb); }
@@ -866,7 +852,9 @@
 408	UNIMPL
 409	UNIMPL
 
-410	UNIMPL		sys___mount50
+410	STD		{ int|netbsd32||__mount50(netbsd32_charp type, \
+			    netbsd32_charp path, int flags, \
+			    netbsd32_voidp data, netbsd32_size_t data_len); }
 411	STD 		{ netbsd32_voidp|netbsd32||mremap( \
 			    netbsd32_voidp old_address, \
 			    netbsd32_size_t old_size, \
@@ -893,13 +881,7 @@
 421	STD		{ int|netbsd32|50|adjtime( \
 			    const netbsd32_timevalp_t delta, \
 			    netbsd32_timevalp_t olddelta); }
-#if defined(LFS) || !defined(_KERNEL_OPT)
-422	STD		{ int|netbsd32|50|lfs_segwait( \
-			    netbsd32_fsid_tp_t fsidp, \
-			    netbsd32_timevalp_t tv); }
-#else
 422	EXCL		__lfs_segwait50
-#endif
 423	STD 		{ int|netbsd32|50|futimes(int fd, \
 			    const netbsd32_timevalp_t tptr); }
 424	STD  		{ int|netbsd32|50|lutimes(const netbsd32_charp path, \

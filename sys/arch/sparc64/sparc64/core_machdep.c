@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.1.12.3 2009/08/19 18:46:47 yamt Exp $ */
+/*	$NetBSD: core_machdep.c,v 1.1.12.4 2010/03/11 15:03:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,12 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.3 2009/08/19 18:46:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1.12.4 2010/03/11 15:03:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/buf.h>
 #include <sys/exec.h>

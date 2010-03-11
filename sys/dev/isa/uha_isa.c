@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_isa.c,v 1.33.4.3 2009/05/16 10:41:26 yamt Exp $	*/
+/*	$NetBSD: uha_isa.c,v 1.33.4.4 2010/03/11 15:03:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.33.4.3 2009/05/16 10:41:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.33.4.4 2010/03/11 15:03:37 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: uha_isa.c,v 1.33.4.3 2009/05/16 10:41:26 yamt Exp $"
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 
 #include <sys/bus.h>
 #include <sys/intr.h>

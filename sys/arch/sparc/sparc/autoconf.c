@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.227.10.1 2009/05/04 08:11:55 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.227.10.2 2010/03/11 15:02:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.227.10.1 2009/05/04 08:11:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.227.10.2 2010/03/11 15:02:57 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -73,11 +73,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.227.10.1 2009/05/04 08:11:55 yamt Exp
 #include <sys/malloc.h>
 #include <sys/queue.h>
 #include <sys/msgbuf.h>
-#include <sys/user.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 
 #include <net/if.h>
+#include <net/if_ether.h>
 
 #include <dev/cons.h>
 
@@ -263,7 +263,7 @@ static void bootstrapIIep(void);
 void
 bootstrap(void)
 {
-	extern struct user *proc0paddr;
+	extern uint8_t u0[];
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
 #else
@@ -274,9 +274,7 @@ bootstrap(void)
 
 	/* Find the number of CPUs as early as possible */
 	sparc_ncpus = find_cpus();
-
-	/* Attach user structure to proc0 */
-	lwp0.l_addr = proc0paddr;
+	uvm_lwp_setuarea(&lwp0, (vaddr_t)u0);
 
 	cpuinfo.master = 1;
 	getcpuinfo(&cpuinfo, 0);
@@ -335,7 +333,7 @@ bootstrap(void)
 		/* Map Interrupt Enable Register */
 		pmap_kenter_pa(INTRREG_VA,
 		    INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
-		    VM_PROT_READ | VM_PROT_WRITE);
+		    VM_PROT_READ | VM_PROT_WRITE, 0);
 		pmap_update(pmap_kernel());
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;
@@ -915,6 +913,7 @@ st_crazymap(int n)
 void
 cpu_configure(void)
 {
+	struct pcb *pcb0;
 
 	/* initialise the softintr system */
 	sparc_softintr_init();
@@ -970,14 +969,12 @@ cpu_configure(void)
 		panic("mainbus not configured");
 
 	/*
-	 * XXX Re-zero proc0's user area, to nullify the effect of the
+	 * XXX Re-zero lwp0's pcb, to nullify the effect of the
 	 * XXX stack running into it during auto-configuration.
 	 * XXX - should fix stack usage.
 	 */
-	{
-		extern struct user *proc0paddr;
-		memset(proc0paddr, 0, sizeof(struct user));
-	}
+	pcb0 = lwp_getpcb(&lwp0);
+	memset(pcb0, 0, sizeof(struct pcb));
 
 	spl0();
 }
@@ -1491,6 +1488,7 @@ static int bus_class(struct device *);
 static const char *bus_compatible(const char *);
 static int instance_match(struct device *, void *, struct bootpath *);
 static void nail_bootdev(struct device *, struct bootpath *);
+static void set_network_props(struct device *, void *);
 
 static struct {
 	const char	*name;
@@ -1569,6 +1567,45 @@ bus_class(struct device *dev)
 		class = BUSCLASS_SBUS;
 
 	return (class);
+}
+
+static void
+set_network_props(struct device *dev, void *aux)
+{
+	struct mainbus_attach_args *ma;
+	struct sbus_attach_args *sa;
+	struct iommu_attach_args *iom;
+	struct pci_attach_args *pa;
+	uint8_t eaddr[ETHER_ADDR_LEN];
+	prop_dictionary_t dict;
+	prop_data_t blob;
+	int ofnode;
+
+	ofnode = 0;
+	switch (bus_class(device_parent(dev))) {
+	case BUSCLASS_MAINBUS:
+		ma = aux;
+		ofnode = ma->ma_node;
+		break;
+	case BUSCLASS_SBUS:
+		sa = aux;
+		ofnode = sa->sa_node;
+		break;
+	case BUSCLASS_IOMMU:
+		iom = aux;
+		ofnode = iom->iom_node;
+		break;
+	case BUSCLASS_PCI:
+		pa = aux;
+		ofnode = PCITAG_NODE(pa->pa_tag);
+		break;
+	}
+
+	prom_getether(ofnode, eaddr);
+	dict = device_properties(dev);
+	blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
+	prop_dictionary_set(dict, "mac-address", blob);
+	prop_object_release(blob);
 }
 
 int
@@ -1745,7 +1782,11 @@ device_register(struct device *dev, void *aux)
 		}
 	} else if (device_is_a(dev, "le") ||
 		   device_is_a(dev, "hme") ||
-		   device_is_a(dev, "be")) {
+		   device_is_a(dev, "be") ||
+		   device_is_a(dev, "ie")) {
+
+		set_network_props(dev, aux);
+
 		/*
 		 * LANCE, Happy Meal, or BigMac ethernet device
 		 */

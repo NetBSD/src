@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.7 2007/07/09 21:01:23 ad Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.7.32.1 2010/03/11 15:04:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.7 2007/07/09 21:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.7.32.1 2010/03/11 15:04:04 yamt Exp $");
 
 /*
  *
@@ -49,8 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.7 2007/07/09 21:01:23 ad Exp $");
 #include <sys/wdog.h>
 #include <dev/sysmon/sysmonvar.h>
 
-#include "swwdog.h"
-
+#define NSWWDOG 1
 struct swwdog_softc {
 	struct sysmon_wdog sc_smw;
 	struct callout sc_c;
@@ -151,7 +150,7 @@ swwdog_panic(void *vsc)
 	swwdog_reboot = 1;
 	callout_schedule(&sc->sc_c, 60 * hz);	/* deliberate double-panic */
 
-	printf("%s: %d second timer expired", sc->sc_name,
+	printf("%s: %d second timer expired\n", sc->sc_name,
 	    sc->sc_smw.smw_period);
 
 	if (do_panic)

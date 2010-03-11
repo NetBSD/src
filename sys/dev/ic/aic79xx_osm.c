@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.19.4.3 2009/09/16 13:37:47 yamt Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.19.4.4 2010/03/11 15:03:28 yamt Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.19.4.3 2009/09/16 13:37:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx_osm.c,v 1.19.4.4 2010/03/11 15:03:28 yamt Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -64,8 +64,8 @@ static void	ahd_setup_data(struct ahd_softc *ahd, struct scsipi_xfer *xs,
 static void	ahd_set_recoveryscb(struct ahd_softc *ahd, struct scb *scb);
 #endif
 
-static bool	ahd_pmf_suspend(device_t PMF_FN_PROTO);
-static bool	ahd_pmf_resume(device_t PMF_FN_PROTO);
+static bool	ahd_pmf_suspend(device_t, const pmf_qual_t *);
+static bool	ahd_pmf_resume(device_t, const pmf_qual_t *);
 static bool	ahd_pmf_shutdown(device_t, int);
 
 /*
@@ -82,7 +82,7 @@ ahd_attach(struct ahd_softc *ahd)
 
 	ahd_lock(ahd, &s);
 
-	ahd->sc_adapter.adapt_dev = &ahd->sc_dev;
+	ahd->sc_adapter.adapt_dev = ahd->sc_dev;
 	ahd->sc_adapter.adapt_nchannels = 1;
 
 	ahd->sc_adapter.adapt_openings = ahd->scb_data.numscbs - 1;
@@ -100,16 +100,16 @@ ahd_attach(struct ahd_softc *ahd)
 	ahd->sc_channel.chan_id = ahd->our_id;
 	ahd->sc_channel.chan_flags |= SCSIPI_CHAN_CANGROW;
 
-	ahd->sc_child = config_found(&ahd->sc_dev, &ahd->sc_channel, scsiprint);
+	ahd->sc_child = config_found(ahd->sc_dev, &ahd->sc_channel, scsiprint);
 
 	ahd_intr_enable(ahd, TRUE);
 
 	if (ahd->flags & AHD_RESET_BUS_A)
 		ahd_reset_channel(ahd, 'A', TRUE);
 
-	if (!pmf_device_register1(&ahd->sc_dev,
+	if (!pmf_device_register1(ahd->sc_dev,
 	    ahd_pmf_suspend, ahd_pmf_resume, ahd_pmf_shutdown))
-		aprint_error_dev(&ahd->sc_dev,
+		aprint_error_dev(ahd->sc_dev,
 		    "couldn't establish power handler\n");
 
 	ahd_unlock(ahd, &s);
@@ -118,7 +118,7 @@ ahd_attach(struct ahd_softc *ahd)
 }
 
 static bool
-ahd_pmf_suspend(device_t dev PMF_FN_ARGS)
+ahd_pmf_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	struct ahd_softc *sc = device_private(dev);
 #if 0
@@ -130,7 +130,7 @@ ahd_pmf_suspend(device_t dev PMF_FN_ARGS)
 }
 
 static bool
-ahd_pmf_resume(device_t dev PMF_FN_ARGS)
+ahd_pmf_resume(device_t dev, const pmf_qual_t *qual)
 {
 #if 0
 	struct ahd_softc *sc = device_private(dev);
@@ -811,7 +811,7 @@ ahd_detach(struct ahd_softc *ahd, int flags)
 	if (ahd->sc_child != NULL)
 		rv = config_detach(ahd->sc_child, flags);
 
-	pmf_device_deregister(&ahd->sc_dev);
+	pmf_device_deregister(ahd->sc_dev);
 
 	ahd_free(ahd);
 

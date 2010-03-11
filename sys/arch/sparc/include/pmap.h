@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.82.10.2 2009/08/19 18:46:46 yamt Exp $ */
+/*	$NetBSD: pmap.h,v 1.82.10.3 2010/03/11 15:02:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -252,7 +252,6 @@ void		pmap_bootstrap(int nmmu, int nctx, int nregion);
 void		pmap_prefer(vaddr_t, vaddr_t *);
 int		pmap_pa_exists(paddr_t);
 void		pmap_unwire(pmap_t, vaddr_t);
-void		pmap_collect(pmap_t);
 void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
 pmap_t		pmap_create(void);
 void		pmap_destroy(pmap_t);
@@ -268,7 +267,6 @@ vaddr_t		pmap_growkernel(vaddr_t);
 #endif
 void		pmap_redzone(void);
 void		kvm_uncache(char *, int);
-struct user;
 int		mmu_pagein(struct pmap *pm, vaddr_t, int);
 void		pmap_writetext(unsigned char *, int);
 void		pmap_globalize_boot_cpuinfo(struct cpu_info *);
@@ -284,7 +282,7 @@ int		pmap_enter4_4c(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		pmap_extract4_4c(pmap_t, vaddr_t, paddr_t *);
 bool		pmap_is_modified4_4c(struct vm_page *);
 bool		pmap_is_referenced4_4c(struct vm_page *);
-void		pmap_kenter_pa4_4c(vaddr_t, paddr_t, vm_prot_t);
+void		pmap_kenter_pa4_4c(vaddr_t, paddr_t, vm_prot_t, u_int);
 void		pmap_kremove4_4c(vaddr_t, vsize_t);
 void		pmap_kprotect4_4c(vaddr_t, vsize_t, vm_prot_t);
 void		pmap_page_protect4_4c(struct vm_page *, vm_prot_t);
@@ -304,7 +302,7 @@ int		pmap_enter4m(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 bool		pmap_extract4m(pmap_t, vaddr_t, paddr_t *);
 bool		pmap_is_modified4m(struct vm_page *);
 bool		pmap_is_referenced4m(struct vm_page *);
-void		pmap_kenter_pa4m(vaddr_t, paddr_t, vm_prot_t);
+void		pmap_kenter_pa4m(vaddr_t, paddr_t, vm_prot_t, u_int);
 void		pmap_kremove4m(vaddr_t, vsize_t);
 void		pmap_kprotect4m(vaddr_t, vsize_t, vm_prot_t);
 void		pmap_page_protect4m(struct vm_page *, vm_prot_t);
@@ -350,7 +348,7 @@ extern int	(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
 extern bool	 (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 extern bool	(*pmap_is_modified_p)(struct vm_page *);
 extern bool	(*pmap_is_referenced_p)(struct vm_page *);
-extern void	(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
+extern void	(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t, u_int);
 extern void	(*pmap_kremove_p)(vaddr_t, vsize_t);
 extern void	(*pmap_kprotect_p)(vaddr_t, vsize_t, vm_prot_t);
 extern void	(*pmap_page_protect_p)(struct vm_page *, vm_prot_t);

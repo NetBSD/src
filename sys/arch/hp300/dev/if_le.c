@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.60.4.1 2008/05/16 02:22:22 yamt Exp $	*/
+/*	$NetBSD: if_le.c,v 1.60.4.2 2010/03/11 15:02:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,10 +64,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.60.4.1 2008/05/16 02:22:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.60.4.2 2010/03/11 15:02:22 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

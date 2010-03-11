@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.31.4.2 2009/05/16 10:41:33 yamt Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.31.4.3 2010/03/11 15:03:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.31.4.2 2009/05/16 10:41:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.31.4.3 2010/03/11 15:03:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.31.4.2 2009/05/16 10:41:33 yamt Exp
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/firewirereg.h>
@@ -62,8 +63,8 @@ struct fwohci_pci_softc {
 static int fwohci_pci_match(device_t, cfdata_t, void *);
 static void fwohci_pci_attach(device_t, device_t, void *);
 
-static bool fwohci_pci_suspend(device_t PMF_FN_PROTO);
-static bool fwohci_pci_resume(device_t PMF_FN_PROTO);
+static bool fwohci_pci_suspend(device_t, const pmf_qual_t *);
+static bool fwohci_pci_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(fwohci_pci, sizeof(struct fwohci_pci_softc),
     fwohci_pci_match, fwohci_pci_attach, NULL, NULL);
@@ -74,6 +75,15 @@ fwohci_pci_match(device_t parent, cfdata_t match,
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
+	/*
+	 * XXX
+	 * Firewire controllers used in some G3 PowerBooks hang the system
+	 * when trying to discover devices - don't attach to those for now
+	 * until someone with the right hardware can investigate
+	 */
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE) &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PBG3_FW))
+	    return 0;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_FIREWIRE &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
@@ -156,7 +166,7 @@ fail:
 }
 
 static bool
-fwohci_pci_suspend(device_t dv PMF_FN_ARGS)
+fwohci_pci_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct fwohci_pci_softc *psc = device_private(dv);
 	int s;
@@ -169,7 +179,7 @@ fwohci_pci_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-fwohci_pci_resume(device_t dv PMF_FN_ARGS)
+fwohci_pci_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct fwohci_pci_softc *psc = device_private(dv);
 	int s;

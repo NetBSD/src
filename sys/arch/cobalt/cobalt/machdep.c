@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95.4.2 2009/05/04 08:10:54 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.4.3 2010/03/11 15:02:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.4.2 2009/05/04 08:10:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.4.3 2010/03/11 15:02:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.4.2 2009/05/04 08:10:54 yamt Exp $"
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/user.h>
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
@@ -98,11 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.4.2 2009/05/04 08:10:54 yamt Exp $"
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* Total physical memory */
-char	*bootinfo = NULL;	/* pointer to bootinfo structure */
+void	*bootinfo = NULL;	/* pointer to bootinfo structure */
 
 char	bootstring[512];	/* Boot command */
 int	netboot;		/* Are we netbooting? */
@@ -127,7 +125,7 @@ static const char * const cobalt_model[] =
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-void	mach_init(unsigned int, u_int, char*);
+void	mach_init(intptr_t, u_int, int32_t);
 void	decode_bootstring(void);
 static char *strtok_light(char *, const char);
 static u_int read_board_id(void);
@@ -139,17 +137,15 @@ static u_int read_board_id(void);
 int	safepri = MIPS1_PSL_LOWIPL;
 
 extern char *esym;
-extern struct user *proc0paddr;
-
-
 
 /*
  * Do all the stuff that locore normally does before calling main().
  */
 void
-mach_init(unsigned int memsize, u_int bim, char *bip)
+mach_init(intptr_t memsize, u_int bim, int32_t bip32)
 {
-	char *kernend, *v;
+	void *bip = (void *)(intptr_t)bip32;
+	char *kernend;
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;
@@ -203,12 +199,17 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 
 		bootinfo = bip;
 		bi_magic = lookup_bootinfo(BTINFO_MAGIC);
-		if (bi_magic == NULL || bi_magic->magic != BOOTINFO_MAGIC)
-			bi_msg = "invalid bootinfo structure.\n";
-		else
+		if (bi_magic == NULL) {
+			bi_msg = "missing bootinfo structure";
+			bim = (uintptr_t)bip;
+		} else if (bi_magic->magic != BOOTINFO_MAGIC) {
+			bi_msg = "invalid bootinfo structure";
+			bim = bi_magic->magic;
+		} else
 			bi_msg = NULL;
-	} else
-		bi_msg = "invalid bootinfo (standalone boot?)\n";
+	} else {
+		bi_msg = "invalid bootinfo (standalone boot?)";
+	}
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
@@ -216,8 +217,8 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/* Load symbol table if present */
 	if (bi_syms != NULL) {
 		nsym = bi_syms->nsym;
-		ssym = (void *)bi_syms->ssym;
-		esym = (void *)bi_syms->esym;
+		ssym = (void *)(intptr_t)bi_syms->ssym;
+		esym = (void *)(intptr_t)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
 	}
 #endif
@@ -260,7 +261,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	consinit();
 
 	if (bi_msg != NULL)
-		printf(bi_msg);
+		printf("%s: magic=%#x\n", bi_msg, bim);
 
 	uvm_setpagesize();
 
@@ -314,14 +315,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 
 	pmap_bootstrap();
 
-	/*
-	 * Allocate space for proc0's USPACE.
-	 */
-	v = (char *)uvm_pageboot_alloc(USPACE);
-	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
+	mips_init_lwp0_uarea();
 }
 
 /*
@@ -366,7 +360,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Take a snapshot before clobbering any registers. */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -504,7 +498,7 @@ strtok_light(char *str, const char sep)
  * Look up information in bootinfo of boot loader.
  */
 void *
-lookup_bootinfo(int type)
+lookup_bootinfo(unsigned int type)
 {
 	struct btinfo_common *bt;
 	char *help = bootinfo;
@@ -517,7 +511,7 @@ lookup_bootinfo(int type)
 
 	do {
 		bt = (struct btinfo_common *)help;
-		printf("Type %d @0x%x\n", bt->type, (u_int)bt);
+		printf("Type %d @%p\n", bt->type, (void *)(intptr_t)bt);
 		if (bt->type == type)
 			return (void *)help;
 		help += bt->next;

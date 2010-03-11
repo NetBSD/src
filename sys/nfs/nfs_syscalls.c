@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.134.2.6 2009/09/16 13:38:03 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.134.2.7 2010/03/11 15:04:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.134.2.6 2009/09/16 13:38:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.134.2.7 2010/03/11 15:04:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,7 +433,6 @@ nfssvc_nfsd(struct nfsd_srvargs *nsd, void *argp, struct lwp *l)
 	cacherep = RC_DOIT;
 	writes_todo = 0;
 #endif
-	uvm_lwp_hold(l);
 	if (nfsd == NULL) {
 		nsd->nsd_nfsd = nfsd = kmem_alloc(sizeof(*nfsd), KM_SLEEP);
 		memset(nfsd, 0, sizeof (struct nfsd));
@@ -566,7 +565,6 @@ nfssvc_nfsd(struct nfsd_srvargs *nsd, void *argp, struct lwp *l)
 				    !copyout(nfsd->nfsd_verfstr,
 				    nsd->nsd_verfstr, nfsd->nfsd_verflen) &&
 				    !copyout(nsd, argp, sizeof (*nsd))) {
-					uvm_lwp_rele(l);
 					return (ENEEDAUTH);
 				}
 				cacherep = RC_DROPIT;
@@ -702,7 +700,6 @@ done:
 	nsd->nsd_nfsd = NULL;
 	if (doreinit)
 		nfsrv_init(true);	/* Reinitialize everything */
-	uvm_lwp_rele(l);
 	return (error);
 }
 

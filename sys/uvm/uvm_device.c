@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.53.10.2 2009/07/18 14:53:28 yamt Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.53.10.3 2010/03/11 15:04:46 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.53.10.2 2009/07/18 14:53:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.53.10.3 2010/03/11 15:04:46 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.53.10.2 2009/07/18 14:53:28 yamt Ex
 #include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>

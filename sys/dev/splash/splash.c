@@ -1,4 +1,4 @@
-/* $NetBSD: splash.c,v 1.4.20.1 2009/05/16 10:41:44 yamt Exp $ */
+/* $NetBSD: splash.c,v 1.4.20.2 2010/03/11 15:04:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.4.20.1 2009/05/16 10:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.4.20.2 2010/03/11 15:04:04 yamt Exp $");
 
 #include "opt_splash.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: splash.c,v 1.4.20.1 2009/05/16 10:41:44 yamt Exp $")
 #define	NSPLASH32 1
 
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/kernel.h>

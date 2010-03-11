@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.15.4.2 2009/05/16 10:41:53 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.15.4.3 2010/03/11 15:04:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -160,7 +160,12 @@ typedef struct kmutex kmutex_t;
 
 #define	MUTEX_BIT_SPIN			0x01
 #define	MUTEX_BIT_WAITERS		0x02
-#define	MUTEX_BIT_DEBUG			0x04
+
+#if defined(LOCKDEBUG)
+#define	MUTEX_BIT_NODEBUG		0x04	/* LOCKDEBUG disabled */
+#else
+#define	MUTEX_BIT_NODEBUG		0x00	/* do nothing */
+#endif	/* LOCKDEBUG */
 
 #define	MUTEX_SPIN_IPL(mtx)		((mtx)->mtx_ipl)
 #define	MUTEX_SPIN_OLDSPL(ci)		((ci)->ci_mtx_oldspl)

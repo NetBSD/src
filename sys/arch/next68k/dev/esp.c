@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.55.4.3 2009/09/16 13:37:41 yamt Exp $	*/
+/*	$NetBSD: esp.c,v 1.55.4.4 2010/03/11 15:02:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.55.4.3 2009/09/16 13:37:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.55.4.4 2010/03/11 15:02:46 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -86,7 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.55.4.3 2009/09/16 13:37:41 yamt Exp $");
 #include <sys/device.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm_extern.h>

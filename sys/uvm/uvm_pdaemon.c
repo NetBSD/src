@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.92.4.2 2009/08/19 18:48:36 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.92.4.3 2010/03/11 15:04:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.92.4.2 2009/08/19 18:48:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.92.4.3 2010/03/11 15:04:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -972,21 +972,6 @@ uvmpd_scan(void)
 	}
 
 	uvmpdpol_balancequeue(swap_shortage);
-
-	/*
-	 * swap out some processes if we are still below the minimum
-	 * free target.  we need to unlock the page queues for this.
-	 */
-
-	if (uvmexp.free < uvmexp.freemin && uvmexp.nswapdev != 0 &&
-	    uvm.swapout_enabled) {
-		uvmexp.pdswout++;
-		UVMHIST_LOG(pdhist,"  free %d < min %d: swapout",
-		    uvmexp.free, uvmexp.freemin, 0, 0);
-		mutex_exit(&uvm_pageqlock);
-		uvm_swapout_threads();
-		mutex_enter(&uvm_pageqlock);
-	}
 
 	/*
 	 * if still below the minimum target, try unloading kernel

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.4.4.4 2009/09/16 13:37:43 yamt Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.4.4.5 2010/03/11 15:03:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.4.4.4 2009/09/16 13:37:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.4.4.5 2010/03/11 15:03:07 yamt Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -142,7 +142,7 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 #define WAKECODE_BCOPY(offset, type, val) do	{		\
 	void	**addr;						\
 	addr = (void **)(acpi_wakeup_vaddr + offset);		\
-	memcpy( addr, &(val), sizeof(type));			\
+	memcpy(addr, &(val), sizeof(type));			\
 } while (0)
 
 	paddr_t				tmp_pdir;
@@ -150,7 +150,7 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 	tmp_pdir = pmap_init_tmp_pgtbl(acpi_wakeup_paddr);
 
 	/* Execute Sleep */
-	memcpy( (void *)acpi_wakeup_vaddr, wakecode, sizeof(wakecode));
+	memcpy((void *)acpi_wakeup_vaddr, wakecode, sizeof(wakecode));
 
 	if (CPU_IS_PRIMARY(ci)) {
 		WAKECODE_FIXUP(WAKEUP_vesa_modenum, uint16_t, acpi_md_vesa_modenum);
@@ -195,11 +195,13 @@ enter_s4_with_bios(void)
 
 	/* run the _PTS and _GTS methods */
 
-	ACPI_MEMSET(&ArgList, 0, sizeof(ArgList));
+	(void)memset(&ArgList, 0, sizeof(ArgList));
+
 	ArgList.Count = 1;
 	ArgList.Pointer = &Arg;
 
-	ACPI_MEMSET(&Arg, 0, sizeof(Arg));
+	(void)memset(&Arg, 0, sizeof(Arg));
+
 	Arg.Type = ACPI_TYPE_INTEGER;
 	Arg.Integer.Value = ACPI_STATE_S4;
 
@@ -424,7 +426,7 @@ acpi_md_sleep_init(void)
 		panic("acpi: can't allocate address for wakecode.\n");
 
 	pmap_kenter_pa(acpi_wakeup_vaddr, acpi_wakeup_paddr,
-	    VM_PROT_READ | VM_PROT_WRITE);
+	    VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 }
 

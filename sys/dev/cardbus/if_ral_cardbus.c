@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.11.4.3 2009/05/16 10:41:19 yamt Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.11.4.4 2010/03/11 15:03:25 yamt Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,9 +22,8 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.11.4.3 2009/05/16 10:41:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.11.4.4 2010/03/11 15:03:25 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -86,7 +85,7 @@ struct ral_cardbus_softc {
 	/* cardbus specific goo */
 	struct ral_opns		*sc_opns;
 	cardbus_devfunc_t	sc_ct;
-	cardbustag_t		sc_tag;
+	pcitag_t		sc_tag;
 	void			*sc_ih;
 	bus_size_t		sc_mapsize;
 	pcireg_t		sc_bar_val;
@@ -143,7 +142,7 @@ ral_cardbus_attach(device_t parent, device_t self,
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
 	csc->sc_opns =
-	    (CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_RALINK_RT2560) ?
+	    (PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_RALINK_RT2560) ?
 	    &ral_rt2560_opns : &ral_rt2661_opns;
 
 	sc->sc_dmat = ca->ca_dmat;
@@ -156,8 +155,8 @@ ral_cardbus_attach(device_t parent, device_t self,
 	sc->sc_disable = ral_cardbus_disable;
 
 	/* map control/status registers */
-	error = Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG,
-	    CARDBUS_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &base,
+	error = Cardbus_mapreg_map(ct, PCI_BAR0,
+	    PCI_MAPREG_TYPE_MEM, 0, &sc->sc_st, &sc->sc_sh, &base,
 	    &csc->sc_mapsize);
 	if (error != 0) {
 		printf(": could not map memory space\n");
@@ -169,12 +168,12 @@ ral_cardbus_attach(device_t parent, device_t self,
 	(*cf->cardbus_mem_open)(cc, 0, base, base + csc->sc_mapsize);
 #endif
 
-	csc->sc_bar_val = base | CARDBUS_MAPREG_TYPE_MEM;
+	csc->sc_bar_val = base | PCI_MAPREG_TYPE_MEM;
 
 	/* set up the PCI configuration registers */
 	ral_cardbus_setup(csc);
 
-	(*csc->sc_opns->attach)(sc, CARDBUS_PRODUCT(ca->ca_id));
+	(*csc->sc_opns->attach)(sc, PCI_PRODUCT(ca->ca_id));
 
 	Cardbus_function_disable(ct);
 }
@@ -200,7 +199,7 @@ ral_cardbus_detach(device_t self, int flags)
 	}
 
 	/* release bus space and close window */
-	Cardbus_mapreg_unmap(ct, CARDBUS_BASE0_REG, sc->sc_st, sc->sc_sh,
+	Cardbus_mapreg_unmap(ct, PCI_BAR0, sc->sc_st, sc->sc_sh,
 	    csc->sc_mapsize);
 
 	return 0;
@@ -253,22 +252,13 @@ void
 ral_cardbus_setup(struct ral_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	pcireg_t reg;
 
 	/* program the BAR */
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_BASE0_REG,
-	    csc->sc_bar_val);
-
-	/* make sure the right access type is on the cardbus bridge */
-	(*cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
-	(*cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
+	Cardbus_conf_write(ct, csc->sc_tag, PCI_BAR0, csc->sc_bar_val);
 
 	/* enable the appropriate bits in the PCI CSR */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	reg |= CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->sc_tag, CARDBUS_COMMAND_STATUS_REG,
-	    reg);
+	reg = Cardbus_conf_read(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	Cardbus_conf_write(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
 }

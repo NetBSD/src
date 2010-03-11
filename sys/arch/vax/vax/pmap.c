@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.160.2.1 2009/05/04 08:12:05 yamt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.160.2.2 2010/03/11 15:03:06 yamt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160.2.1 2009/05/04 08:12:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160.2.2 2010/03/11 15:03:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160.2.1 2009/05/04 08:12:05 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/extent.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
@@ -259,8 +258,6 @@ calc_kvmsize(vsize_t usrptsize)
 	return kvmsize;
 }
 
-extern struct user *proc0paddr;
-
 /*
  * pmap_bootstrap().
  * Called as part of vm bootstrap, allocates internal pmap structures.
@@ -270,7 +267,7 @@ extern struct user *proc0paddr;
 void
 pmap_bootstrap(void)
 {
-	struct pcb * const pcb = &proc0paddr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(&lwp0);
 	struct pmap * const pmap = pmap_kernel();
 	struct cpu_info *ci;
 	extern unsigned int etext;
@@ -354,7 +351,7 @@ pmap_bootstrap(void)
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	*(struct rpb *) 0 = *(struct rpb *) ((char *)proc0paddr + REDZONEADDR);
+	*(struct rpb *)0 = *(struct rpb *)(uvm_lwp_getuarea(&lwp0) + REDZONEADDR);
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();
@@ -675,16 +672,28 @@ rmspace(struct pmap *pm)
 }
 
 /*
- * Find a process to remove the process space for.
- * This is based on uvm_swapout_threads().
+ * Find a process to remove the process space for. *sigh*
  * Avoid to remove ourselves.
  */
 
-#undef swappable
-#define swappable(l, pm)						\
-	(((l)->l_flag & (LW_SYSTEM | LW_INMEM | LW_WEXIT)) == LW_INMEM	\
-	 && (l)->l_holdcnt == 0						\
-	 && (l)->l_proc->p_vmspace->vm_map.pmap != pm)
+static inline bool
+pmap_vax_swappable(struct lwp *l, struct pmap *pm)
+{
+
+	if (l->l_flag & (LW_SYSTEM | LW_WEXIT))
+		return false;
+	if (l->l_proc->p_vmspace->vm_map.pmap == pm)
+		return false;
+	if ((l->l_pflag & LP_RUNNING) != 0)
+		return false;
+	if (l->l_class != SCHED_OTHER)
+		return false;
+	if (l->l_syncobj == &rw_syncobj || l->l_syncobj == &mutex_syncobj)
+		return false;
+	if (l->l_proc->p_stat != SACTIVE && l->l_proc->p_stat != SSTOP)
+		return false;
+	return true;
+}
 
 static int
 pmap_rmproc(struct pmap *pm)
@@ -700,7 +709,7 @@ pmap_rmproc(struct pmap *pm)
 	outpri = outpri2 = 0;
 	mutex_enter(proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
-		if (!swappable(l, pm))
+		if (!pmap_vax_swappable(l, pm))
 			continue;
 		ppm = l->l_proc->p_vmspace->vm_map.pmap;
 		if (ppm->pm_p0lr == 0 && ppm->pm_p1lr == NPTEPERREG)
@@ -810,7 +819,7 @@ grow_p0(struct pmap *pm, int reqlen)
 	    from, to, srclen, dstlen));
 
 	if (inuse)
-		memcpy( to, from, srclen);
+		memcpy(to, from, srclen);
 	memset(to+srclen, 0, dstlen-srclen);
 	p0br = (u_long)pm->pm_p0br;
 	pm->pm_p0br = (struct pte *)nptespc;
@@ -845,7 +854,7 @@ grow_p1(struct pmap *pm, int len)
 	 */
 	memset(kvtopte(nptespc), 0, vax_btop(nlen-olen) * PPTESZ);
 	if (optespc)
-		memcpy( kvtopte(nptespc+nlen-olen), kvtopte(optespc),
+		memcpy(kvtopte(nptespc+nlen-olen), kvtopte(optespc),
 		    vax_btop(olen) * PPTESZ);
 
 	pm->pm_p1ap = (struct pte *)nptespc;
@@ -989,7 +998,7 @@ vaddrtopte(struct pv_entry *pv)
  * without tracking it in the MD code.
  */
 void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	int *ptp, opte;
 
@@ -1652,7 +1661,7 @@ pmap_remove_pcb(struct pmap *pm, struct pcb *thispcb)
 void
 pmap_activate(struct lwp *l)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct pmap * const pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	PMDEBUG(("pmap_activate: l %p\n", l));
@@ -1682,7 +1691,7 @@ pmap_activate(struct lwp *l)
 void	
 pmap_deactivate(struct lwp *l)
 {
-	struct pcb * const pcb = &l->l_addr->u_pcb;
+	struct pcb * const pcb = lwp_getpcb(l);
 	struct pmap * const pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	PMDEBUG(("pmap_deactivate: l %p\n", l));
@@ -1824,40 +1833,4 @@ free_ptp(paddr_t v)
 	v |= KERNBASE;
 	*(int *)v = (int)ptpp;
 	ptpp = (int *)v;
-}
-
-/*
- * Called when a process is about to be swapped, to remove the page tables.
- */
-void
-cpu_swapout(struct lwp *l)
-{
-	struct proc *p = l->l_proc;
-	pmap_t pm;
-
-	PMDEBUG(("Swapout pid %d\n", p->p_pid));
-
-	pm = p->p_vmspace->vm_map.pmap;
-	rmspace(pm);
-	pmap_deactivate(l);
-}
-
-/*
- * Kernel stack red zone need to be set when a process is swapped in.
- * Be sure that all pages are valid.
- */
-void
-cpu_swapin(struct lwp *l)
-{
-	struct pte *pte;
-	int i;
-
-	PMDEBUG(("Swapin pid %d.%d\n", l->l_proc->p_pid, l->l_lid));
-
-	pte = kvtopte((vaddr_t)l->l_addr);
-	for (i = 0; i < (USPACE/VAX_NBPG); i ++)
-		pte[i].pg_v = 1;
-	l->l_addr->u_pcb.pcb_paddr = kvtophys(l->l_addr);
-	kvtopte((vaddr_t)l->l_addr + REDZONEADDR)->pg_v = 0;
-	pmap_activate(l);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.210.10.2 2009/06/20 07:20:09 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.210.10.3 2010/03/11 15:02:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.210.10.2 2009/06/20 07:20:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.210.10.3 2010/03/11 15:02:57 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -348,7 +348,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 	/* Stuff to only run on the boot CPU */
 	cpu_setup();
 	snprintf(buf, sizeof buf, "%s @ %s MHz, %s FPU",
-		cpi->cpu_name, clockfreq(cpi->hz), cpi->fpu_name);
+		cpi->cpu_longname, clockfreq(cpi->hz), cpi->fpu_name);
 	snprintf(cpu_model, sizeof cpu_model, "%s (%s)",
 		machine_model, buf);
 	printf(": %s\n", buf);
@@ -428,7 +428,7 @@ cpu_attach_non_boot(struct cpu_softc *sc, struct cpu_info *cpi, int node)
 	 * The %wim register will be initialized in cpu_hatch().
 	 */
 	cpi->ci_curlwp = cpi->ci_data.cpu_idlelwp;
-	cpi->curpcb = (struct pcb *)cpi->ci_curlwp->l_addr;
+	cpi->curpcb = lwp_getpcb(cpi->ci_curlwp);
 	cpi->curpcb->pcb_wim = 1;
 
 	/* for now use the fixed virtual addresses setup in autoconf.c */
@@ -437,7 +437,7 @@ cpu_attach_non_boot(struct cpu_softc *sc, struct cpu_info *cpi, int node)
 
 	/* Now start this CPU */
 	cpu_spinup(cpi);
-	printf(": %s @ %s MHz, %s FPU\n", cpi->cpu_name,
+	printf(": %s @ %s MHz, %s FPU\n", cpi->cpu_longname,
 		clockfreq(cpi->hz), cpi->fpu_name);
 
 	cache_print(sc);
@@ -1498,7 +1498,7 @@ cpumatch_turbosparc(struct cpu_info *sc, struct module_info *mp, int node)
 	 * A cloaked Turbosparc: clear any items in cpuinfo that
 	 * might have been set to uS2 versions during bootstrap.
 	 */
-	sc->cpu_name = 0;
+	sc->cpu_longname = 0;
 	sc->mmu_ncontext = 0;
 	sc->cpu_type = 0;
 	sc->cacheinfo.c_vactype = 0;
@@ -1590,7 +1590,7 @@ static	int mxcc = -1;
 			sc->flags |= CPUFLG_CACHEPAGETABLES;
 	} else {
 #ifdef MULTIPROCESSOR
-		if ((sparc_ncpus > 1) && (sc->cacheinfo.ec_totalsize == 0))
+		if (sparc_ncpus > 1 && sc->cacheinfo.ec_totalsize == 0)
 			sc->cache_flush = srmmu_cache_flush;
 #endif
 	}
@@ -1879,8 +1879,8 @@ getcpuinfo(struct cpu_info *sc, int node)
 			/* Additional fixups */
 			mp->minfo->cpu_match(sc, mp->minfo, node);
 		}
-		if (sc->cpu_name == 0)
-			sc->cpu_name = mp->name;
+		if (sc->cpu_longname == 0)
+			sc->cpu_longname = mp->name;
 
 		if (sc->mmu_ncontext == 0)
 			sc->mmu_ncontext = mp->minfo->ncontext;

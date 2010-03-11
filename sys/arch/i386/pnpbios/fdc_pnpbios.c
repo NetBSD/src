@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.13.4.1 2008/05/16 02:22:38 yamt Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.13.4.2 2010/03/11 15:02:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.13.4.1 2008/05/16 02:22:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.13.4.2 2010/03/11 15:02:30 yamt Exp $");
 
 #include "rnd.h"
 
@@ -92,6 +92,7 @@ fdc_pnpbios_attach(device_t parent, device_t self, void *aux)
         
 	aprint_normal("\n");
 
+	fdc->sc_dev = self;
 	fdc->sc_ic = aa->ic;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &fdc->sc_iot,

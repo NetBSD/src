@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.47.4.2 2009/06/20 07:20:23 yamt Exp $      */
+/*      $NetBSD: esm.c,v 1.47.4.3 2010/03/11 15:03:43 yamt Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47.4.2 2009/06/20 07:20:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47.4.3 2010/03/11 15:03:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,8 @@ static void		esmch_set_format(struct esm_chinfo *,
 static void		esmch_combine_input(struct esm_softc *,
 			    struct esm_chinfo *);
 
-static bool		esm_suspend(device_t PMF_FN_PROTO);
-static bool		esm_resume(device_t PMF_FN_PROTO);
+static bool		esm_suspend(device_t, const pmf_qual_t *);
+static bool		esm_resume(device_t, const pmf_qual_t *);
 static void		esm_childdet(device_t, device_t);
 static int		esm_match(device_t, cfdata_t, void *);
 static void		esm_attach(device_t, device_t, void *);
@@ -1647,8 +1647,8 @@ esm_attach(device_t parent, device_t self, void *aux)
 	if (ess->ih == NULL) {
 		aprint_error_dev(ess->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
-			aprint_normal(" at %s", intrstr);
-		aprint_normal("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal_dev(ess->sc_dev, "interrupting at %s\n",
@@ -1766,7 +1766,7 @@ esm_detach(device_t self, int flags)
 }
 
 static bool
-esm_suspend(device_t dv PMF_FN_ARGS)
+esm_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct esm_softc *ess = device_private(dv);
 	int x;
@@ -1789,7 +1789,7 @@ esm_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-esm_resume(device_t dv PMF_FN_ARGS)
+esm_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct esm_softc *ess = device_private(dv);
 	int x;

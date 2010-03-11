@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95.20.1 2009/05/04 08:11:11 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.20.2 2010/03/11 15:02:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.20.1 2009/05/04 08:11:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.20.2 2010/03/11 15:02:25 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -116,11 +116,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.20.1 2009/05/04 08:11:11 yamt Exp $
 #include "opt_modular.h"
 #include "opt_spec_platform.h"
 #include "biconsdev.h"
-#include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_rtc_offset.h"
-#include "fs_nfs.h"
 #include "opt_kloader.h"
 #include "opt_kloader_kernel_path.h"
 #include "debug_hpc.h"
@@ -131,7 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.20.1 2009/05/04 08:11:11 yamt Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -181,19 +178,17 @@ static int __bicons_enable;
 #define DPRINTF(arg)
 #endif /* NBICONSDEV > 0 */
 
-#ifdef NFS
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-#endif
 
 #ifdef MEMORY_DISK_DYNAMIC
 #include <dev/md.h>
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char	cpu_name[40];			/* set CPU depend xx_init() */
+char	hpcmips_cpuname[40];		/* set CPU depend xx_init() */
 
 struct cpu_info cpu_info_store;		/* only one CPU */
 int	cpuspeed = 1;			/* approx # instr per usec. */
@@ -220,7 +215,6 @@ static char kernel_path[] = KLOADER_KERNEL_PATH;
 #endif /* KLOADER */
 
 /* maps for VM objects */
-struct vm_map *mb_map;
 struct vm_map *phys_map;
 
 /* physical memory */
@@ -260,7 +254,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #ifdef KLOADER
 	struct kloader_bootinfo kbi;
 #endif
-	extern struct user *proc0paddr;
 	extern char edata[], end[];
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern void *esym;
@@ -417,14 +410,10 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 			case 'b':
 				/* boot device: -b=sd0 etc. */
-#ifdef NFS
 				if (strcmp(cp+2, "nfs") == 0)
 					rootfstype = MOUNT_NFS;
 				else
 					makebootdev(cp+2);
-#else /* NFS */
-				makebootdev(cp+2);
-#endif /* NFS */
 				cp += strlen(cp);
 				break;
 			default:
@@ -433,7 +422,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 			}
 		}
 	}
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
@@ -446,24 +434,12 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif /* MEMORY_DISK_DYNAMIC */
 		kernend = (char *)kernend + fssz;
 	}
-#endif /* MFS */
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
 		ksyms_addsyms_elf(symbolsz, &end, esym);
 #endif /* DDB */
-	/*
-	 * Alloc u pages for lwp0 stealing KSEG0 memory.
-	 */
-	lwp0.l_addr = proc0paddr = (struct user *)kernend;
-	lwp0.l_md.md_regs =
-	    (struct frame *)((char *)kernend + UPAGES * PAGE_SIZE) - 1;
-	memset(kernend, 0, UPAGES * PAGE_SIZE);
-	proc0paddr->u_pcb.pcb_context[11] =
-	    MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
-
-	kernend = (char *)kernend + UPAGES * PAGE_SIZE;
 
 	/* Initialize console and KGDB serial port. */
 	(*platform.cons_init)();
@@ -504,20 +480,21 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	printf("mem_cluster_cnt = %d\n", mem_cluster_cnt);
 	physmem = 0;
 	for (i = 0; i < mem_cluster_cnt; i++) {
-		printf("mem_clusters[%d] = {0x%lx,0x%lx}\n", i,
+		printf("mem_clusters[%d] = {%#"PRIxPADDR",%#"PRIxPSIZE"}\n", i,
 		    (paddr_t)mem_clusters[i].start,
-		    (paddr_t)mem_clusters[i].size);
+		    (psize_t)mem_clusters[i].size);
 		physmem += atop(mem_clusters[i].size);
 	}
 
 	/* Cluster 0 is always the kernel, which doesn't get loaded. */
 	for (i = 1; i < mem_cluster_cnt; i++) {
-		paddr_t start, size;
+		paddr_t start;
+		psize_t size;
 
 		start = (paddr_t)mem_clusters[i].start;
-		size = (paddr_t)mem_clusters[i].size;
+		size = (psize_t)mem_clusters[i].size;
 
-		printf("loading 0x%lx,0x%lx\n", start, size);
+		printf("loading %#"PRIxPADDR",%#"PRIxPSIZE"\n", start, size);
 
 		memset((void *)MIPS_PHYS_TO_KSEG1(start), 0, size);
 
@@ -535,6 +512,11 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * Initialize the virtual memory system.
 	 */
 	pmap_bootstrap();
+
+	/*
+	 * Initialize lwp0's uarea.
+	 */
+	mips_init_lwp0_uarea();
 }
 
 /*
@@ -546,7 +528,7 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-	u_int i;
+	size_t i;
 #ifdef DEBUG
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
@@ -558,7 +540,7 @@ cpu_startup(void)
 	 * Good {morning,afternoon,evening,night}.
 	 */
 	printf("%s%s", copyright, version);
-	sprintf(cpu_model, "%s (%s)", platid_name(&platid), cpu_name);
+	sprintf(cpu_model, "%s (%s)", platid_name(&platid), hpcmips_cpuname);
 	printf("%s\n", cpu_model);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
@@ -566,10 +548,11 @@ cpu_startup(void)
 		/* show again when verbose mode */
 		printf("total memory banks = %d\n", mem_cluster_cnt);
 		for (i = 0; i < mem_cluster_cnt; i++) {
-			printf("memory bank %d = 0x%08lx %ldKB(0x%08lx)\n", i,
+			printf("memory bank %zu = "
+			    "0x%08"PRIxPADDR" %"PRIdPSIZE"KB(0x%08"PRIxPSIZE")\n", i,
 			    (paddr_t)mem_clusters[i].start,
-			    (paddr_t)mem_clusters[i].size/1024,
-			    (paddr_t)mem_clusters[i].size);
+			    (psize_t)mem_clusters[i].size/1024,
+			    (psize_t)mem_clusters[i].size);
 		}
 	}
 
@@ -600,7 +583,7 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp)
-		savectx((struct user *)curpcb);
+		savectx(curpcb);
 
 #ifdef DEBUG
 	if (panicstr)

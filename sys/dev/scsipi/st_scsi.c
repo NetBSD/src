@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.26.52.3 2009/08/19 18:47:19 yamt Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.26.52.4 2010/03/11 15:04:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.26.52.3 2009/08/19 18:47:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.26.52.4 2010/03/11 15:04:03 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -75,7 +75,7 @@ static int	st_scsibus_mode_sense(struct st_softc *, int);
 static int	st_scsibus_cmprss(struct st_softc *, int, int);
 
 CFATTACH_DECL(st_scsibus, sizeof(struct st_softc),
-    st_scsibus_match, st_scsibus_attach, stdetach, stactivate);
+    st_scsibus_match, st_scsibus_attach, stdetach, NULL);
 
 static const struct scsipi_inquiry_pattern st_scsibus_patterns[] = {
 	{T_SEQUENTIAL, T_REMOV,
@@ -151,8 +151,7 @@ st_scsibus_read_block_limits(struct st_softc *st, int flags)
 	 */
 	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
 	    (void *)&block_limits, sizeof(block_limits),
-	    ST_RETRIES, ST_CTL_TIME, NULL,
-	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
+	    ST_RETRIES, ST_CTL_TIME, NULL, flags | XS_CTL_DATA_IN);
 	if (error)
 		return (error);
 
@@ -197,7 +196,7 @@ st_scsibus_mode_sense(struct st_softc *st, int flags)
 	 * it away.
 	 */
 	error = scsipi_mode_sense(st->sc_periph, 0, SMS_PCTRL_CURRENT,
-	    &scsipi_sense.header, scsipi_sense_len, flags | XS_CTL_DATA_ONSTACK,
+	    &scsipi_sense.header, scsipi_sense_len, flags,
 	    ST_RETRIES, ST_CTL_TIME);
 	if (error)
 		return (error);
@@ -252,8 +251,7 @@ st_scsibus_cmprss(struct st_softc *st, int flags, int onoff)
 again:
 	memset(&scsi_pdata, 0, scsi_dlen);
 	error = scsipi_mode_sense(periph, byte2, page,
-	    &scsi_pdata.header, scsi_dlen, flags | XS_CTL_DATA_ONSTACK,
-	    ST_RETRIES, ST_CTL_TIME);
+	    &scsi_pdata.header, scsi_dlen, flags, ST_RETRIES, ST_CTL_TIME);
 
 	if (error) {
 		if (byte2 != SMS_DBD) {
@@ -332,7 +330,7 @@ again:
 	 * Do the command
 	 */
 	error = scsipi_mode_select(periph, SMS_PF, &scsi_pdata.header,
-	    scsi_dlen, flags | XS_CTL_DATA_ONSTACK, ST_RETRIES, ST_CTL_TIME);
+	    scsi_dlen, flags, ST_RETRIES, ST_CTL_TIME);
 
 	if (error && (page & SMS_PAGE_MASK) == 0xf) {
 		/*

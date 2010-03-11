@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.23.4.1 2009/05/04 08:11:28 yamt Exp $	*/
+/*	$NetBSD: kauai.c,v 1.23.4.2 2010/03/11 15:02:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.23.4.1 2009/05/04 08:11:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.23.4.2 2010/03/11 15:02:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ static void kauai_set_modes(struct ata_channel *);
 static void calc_timing_kauai(struct kauai_softc *, int);
 
 CFATTACH_DECL_NEW(kauai, sizeof(struct kauai_softc),
-    kauai_match, kauai_attach, NULL, wdcactivate);
+    kauai_match, kauai_attach, NULL, NULL);
 
 int
 kauai_match(device_t parent, cfdata_t match, void *aux)

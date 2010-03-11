@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2000/12/01 17:57:44 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4.130.1 2010/03/11 15:02:45 yamt Exp $	*/
 
 #include <mips/vmparam.h>
 
@@ -6,6 +6,3 @@
  * NEWS has one physical memory segment.
  */
 #define	VM_PHYSSEG_MAX		1
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0

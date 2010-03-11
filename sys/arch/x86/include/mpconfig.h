@@ -1,4 +1,4 @@
-/*	$NetBSD: mpconfig.h,v 1.10.4.1 2009/05/04 08:12:09 yamt Exp $	*/
+/*	$NetBSD: mpconfig.h,v 1.10.4.2 2010/03/11 15:03:08 yamt Exp $	*/
 
 /*
  * Definitions originally from the mpbios code, but now used for ACPI
@@ -59,7 +59,7 @@ struct mp_intr_map
 	int type;		/* from mp spec intr record */
  	int flags;		/* from mp spec intr record */
 	uint32_t redir;
-	int cpu_id;
+	uint32_t cpu_id;
 	int global_int;		/* ACPI global interrupt number */
 	int sflags;		/* other, software flags (see below) */
 	void *linkdev;

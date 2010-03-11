@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_sbus.c,v 1.4.4.2 2009/05/16 10:41:43 yamt Exp $ */
+/*	$NetBSD: genfb_sbus.c,v 1.4.4.3 2010/03/11 15:04:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -29,7 +29,7 @@
 /* an SBus frontend for the generic fb console driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.4.4.2 2009/05/16 10:41:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.4.4.3 2010/03/11 15:04:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfb_sbus.c,v 1.4.4.2 2009/05/16 10:41:43 yamt Exp 
 
 struct genfb_sbus_softc {
 	struct genfb_softc sc_gen;
-	struct sbusdev sc_sd;
 	bus_space_tag_t sc_tag;
 	paddr_t sc_paddr;
 };
@@ -70,7 +69,7 @@ CFATTACH_DECL(genfb_sbus, sizeof(struct genfb_sbus_softc),
  * Match a graphics device.
  */
 static int
-genfb_match_sbus(device_t parent,	cfdata_t cf, void *aux)
+genfb_match_sbus(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -90,8 +89,7 @@ genfb_match_sbus(device_t parent,	cfdata_t cf, void *aux)
 static void
 genfb_attach_sbus(device_t parent, device_t self, void *args)
 {
-	struct genfb_sbus_softc *sc = (struct genfb_sbus_softc *)self;
-	struct sbusdev *sd = &sc->sc_sd;
+	struct genfb_sbus_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
 	struct genfb_ops ops;
 	prop_dictionary_t dict;
@@ -149,7 +147,6 @@ genfb_attach_sbus(device_t parent, device_t self, void *args)
 	}
 	sc->sc_gen.sc_fbaddr = (void *)bus_space_vaddr(sa->sa_bustag, bh);
 
-	sbus_establish(sd, self);
 	ops.genfb_ioctl = genfb_ioctl_sbus;
 	ops.genfb_mmap = genfb_mmap_sbus;
 

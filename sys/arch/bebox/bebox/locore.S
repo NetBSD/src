@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16.10.1 2009/05/04 08:10:51 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.10.2 2010/03/11 15:02:10 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  */
 
 #include "opt_ddb.h"
-#include "fs_kernfs.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
 #include "opt_modular.h"
@@ -53,6 +52,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 /*
  * Some instructions gas doesn't understand (yet?)
@@ -66,8 +66,6 @@ GLOBAL(startsym)
 	.long	0			/* start symbol table */
 GLOBAL(endsym)
 	.long	0			/* end symbol table */
-GLOBAL(proc0paddr)
-	.long	0			/* proc0 p_addr */
 GLOBAL(oeacpufeat)
 	.long	0				/* cpu features */
 
@@ -154,7 +152,7 @@ __start_cpu1_loop:
 __start_cpu0:
 
 /* compute end of kernel memory */
-#if defined(DDB) || defined(KERNFS) || NKSYMS || defined(MODULAR)
+#if defined(DDB) || NKSYMS || defined(MODULAR)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
 	stw	3,0(7)

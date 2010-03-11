@@ -1,4 +1,4 @@
-/*	$NetBSD: ztp.c,v 1.5.20.1 2009/05/04 08:12:15 yamt Exp $	*/
+/*	$NetBSD: ztp.c,v 1.5.20.2 2010/03/11 15:03:11 yamt Exp $	*/
 /* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.5.20.1 2009/05/04 08:12:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ztp.c,v 1.5.20.2 2010/03/11 15:03:11 yamt Exp $");
 
 #include "lcd.h"
 
@@ -116,8 +116,8 @@ CFATTACH_DECL_NEW(ztp, sizeof(struct ztp_softc),
 
 static int	ztp_enable(void *);
 static void	ztp_disable(void *);
-static bool	ztp_suspend(device_t dv PMF_FN_ARGS);
-static bool	ztp_resume(device_t dv PMF_FN_ARGS);
+static bool	ztp_suspend(device_t dv, const pmf_qual_t *);
+static bool	ztp_resume(device_t dv, const pmf_qual_t *);
 static void	ztp_poll(void *);
 static int	ztp_irq(void *);
 static int	ztp_ioctl(void *, u_long, void *, int, struct lwp *);
@@ -237,7 +237,7 @@ ztp_disable(void *v)
 }
 
 static bool
-ztp_suspend(device_t dv PMF_FN_ARGS)
+ztp_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct ztp_softc *sc = device_private(dv);
 
@@ -258,7 +258,7 @@ ztp_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-ztp_resume(device_t dv PMF_FN_ARGS)
+ztp_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct ztp_softc *sc = device_private(dv);
 
@@ -535,7 +535,7 @@ ztp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case WSMOUSEIO_SCALIBCOORDS:
 	case WSMOUSEIO_GCALIBCOORDS:
-		return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
+		return tpcalib_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
 	}
 
 	return EPASSTHROUGH;

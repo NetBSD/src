@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.49.2.2 2009/05/04 08:12:22 yamt Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.49.2.3 2010/03/11 15:03:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.49.2.2 2009/05/04 08:12:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.49.2.3 2010/03/11 15:03:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -306,6 +306,7 @@ void
 linux_to_bsd_msqid_ds(struct linux_msqid_ds *lmp, struct msqid_ds *bmp)
 {
 
+	memset(bmp, 0, sizeof(*bmp));
 	linux_to_bsd_ipc_perm(&lmp->l_msg_perm, &bmp->msg_perm);
 	bmp->_msg_first = lmp->l_msg_first;
 	bmp->_msg_last = lmp->l_msg_last;
@@ -322,6 +323,8 @@ linux_to_bsd_msqid_ds(struct linux_msqid_ds *lmp, struct msqid_ds *bmp)
 void
 linux_to_bsd_msqid64_ds(struct linux_msqid64_ds *lmp, struct msqid_ds *bmp)
 {
+
+	memset(bmp, 0, sizeof(*bmp));
 	linux_to_bsd_ipc64_perm(&lmp->l_msg_perm, &bmp->msg_perm);
 	bmp->msg_stime = lmp->l_msg_stime;
 	bmp->msg_rtime = lmp->l_msg_rtime;
@@ -337,6 +340,7 @@ void
 bsd_to_linux_msqid_ds(struct msqid_ds *bmp, struct linux_msqid_ds *lmp)
 {
 
+	memset(lmp, 0, sizeof(*lmp));
 	bsd_to_linux_ipc_perm(&bmp->msg_perm, &lmp->l_msg_perm);
 	lmp->l_msg_first = bmp->_msg_first;
 	lmp->l_msg_last = bmp->_msg_last;
@@ -353,6 +357,8 @@ bsd_to_linux_msqid_ds(struct msqid_ds *bmp, struct linux_msqid_ds *lmp)
 void
 bsd_to_linux_msqid64_ds(struct msqid_ds *bmp, struct linux_msqid64_ds *lmp)
 {
+
+	memset(lmp, 0, sizeof(*lmp));
 	bsd_to_linux_ipc64_perm(&bmp->msg_perm, &lmp->l_msg_perm);
 	lmp->l_msg_stime = bmp->msg_stime;
 	lmp->l_msg_rtime = bmp->msg_rtime;

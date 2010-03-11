@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.3.4.3 2009/05/04 08:13:47 yamt Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.3.4.4 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.3.4.3 2009/05/04 08:13:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.3.4.4 2010/03/11 15:04:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -147,7 +147,6 @@ sched_cpuattach(struct cpu_info *ci)
 	runqueue_t *ci_rq;
 	void *rq_ptr;
 	u_int i, size;
-	char *cpuname;
 
 	if (ci->ci_schedstate.spc_lwplock == NULL) {
 		ci->ci_schedstate.spc_lwplock =
@@ -180,17 +179,14 @@ sched_cpuattach(struct cpu_info *ci)
 
 	ci->ci_schedstate.spc_sched_info = ci_rq;
 
-	cpuname = kmem_alloc(8, KM_SLEEP);
-	snprintf(cpuname, 8, "cpu%d", cpu_index(ci));
-
 	evcnt_attach_dynamic(&ci_rq->r_ev_pull, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue pull");
+	   cpu_name(ci), "runqueue pull");
 	evcnt_attach_dynamic(&ci_rq->r_ev_push, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue push");
+	   cpu_name(ci), "runqueue push");
 	evcnt_attach_dynamic(&ci_rq->r_ev_stay, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue stay");
+	   cpu_name(ci), "runqueue stay");
 	evcnt_attach_dynamic(&ci_rq->r_ev_localize, EVCNT_TYPE_MISC, NULL,
-	   cpuname, "runqueue localize");
+	   cpu_name(ci), "runqueue localize");
 }
 
 /*
@@ -472,10 +468,10 @@ sched_catchlwp(struct cpu_info *ci)
 
 	for (;;) {
 		/* Check the first and next result from the queue */
-		if (l == NULL)
+		if (l == NULL) {
 			break;
+		}
 		KASSERT(l->l_stat == LSRUN);
-		KASSERT(l->l_flag & LW_INMEM);
 
 		/* Look for threads, whose are allowed to migrate */
 		if ((l->l_pflag & LP_BOUND) || lwp_cache_hot(l) ||
@@ -486,6 +482,17 @@ sched_catchlwp(struct cpu_info *ci)
 
 		/* Grab the thread, and move to the local run queue */
 		sched_dequeue(l);
+
+		/*
+		 * If LWP is still context switching, we may need to
+		 * spin-wait before changing its CPU.
+		 */
+		if (__predict_false(l->l_ctxswtch != 0)) {
+			u_int count;
+			count = SPINLOCK_BACKOFF_MIN;
+			while (l->l_ctxswtch)
+				SPINLOCK_BACKOFF(count);
+		}
 		l->l_cpu = curci;
 		ci_rq->r_ev_pull.ev_count++;
 		lwp_unlock_to(l, curspc->spc_mutex);
@@ -885,8 +892,6 @@ sched_print_runqueue(void (*pr)(const char *, ...)
 	    "LID", "PRI", "EPRI", "FL", "ST", "LWP", "CPU", "TCI", "LRTICKS");
 
 	PROCLIST_FOREACH(p, &allproc) {
-		if ((p->p_flag & PK_MARKER) != 0)
-			continue;
 		(*pr)(" /- %d (%s)\n", (int)p->p_pid, p->p_comm);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			ci = l->l_cpu;

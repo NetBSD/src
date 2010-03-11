@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.4.20.1 2009/05/04 08:11:48 yamt Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.4.20.2 2010/03/11 15:02:54 yamt Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.4.20.1 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.4.20.2 $"
 
 maxusers	32
 
@@ -104,7 +104,6 @@ file-system 	MSDOSFS		# MS-DOS file system
 file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	OVERLAY		# overlay file system
-#file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 #file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #file-system 	UNION		# union file system

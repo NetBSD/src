@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26.20.2 2009/06/20 07:20:06 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26.20.3 2010/03/11 15:02:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26.20.2 2009/06/20 07:20:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26.20.3 2010/03/11 15:02:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.26.20.2 2009/06/20 07:20:06 yamt Ex
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/user.h>
 #include <sys/core.h>
 #include <sys/exec.h>
 
@@ -125,11 +124,12 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l2->l_addr->u_pcb;
+	struct pcb *pcb1, *pcb2;
 	struct trapframe *tf;
 	struct switchframe *sf;
-	extern struct pcb *curpcb;
-	extern void lwp_trampoline(void);
+
+	pcb1 = lwp_getpcb(l1);
+	pcb2 = lwp_getpcb(l2);
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
 
@@ -137,17 +137,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
+	} else {
+		KASSERT(l1 == &lwp0);
 	}
-#ifdef DIAGNOSTIC
-	else if (l1 != &lwp0)
-		panic("cpu_lwp_fork: curlwp");
-#endif
-	*pcb = l1->l_addr->u_pcb;
+
+	*pcb2 = *pcb1;
 
 	/*
 	 * Copy the trap frame.
 	 */
-	tf = (struct trapframe *)((u_int)l2->l_addr + USPACE) - 1;
+	tf = (struct trapframe *)(uvm_lwp_getuarea(l2) + USPACE) - 1;
 	l2->l_md.md_regs = (int *)tf;
 	*tf = *(struct trapframe *)l1->l_md.md_regs;
 
@@ -159,20 +158,19 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)lwp_trampoline;
-	pcb->pcb_regs[6] = (int)func;		/* A2 */
-	pcb->pcb_regs[7] = (int)arg;		/* A3 */
-	pcb->pcb_regs[8] = (int)l2;		/* A4 */
-	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-	pcb->pcb_ps = PSL_LOWIPL;		/* start kthreads at IPL 0 */
+	pcb2->pcb_regs[6] = (int)func;		/* A2 */
+	pcb2->pcb_regs[7] = (int)arg;		/* A3 */
+	pcb2->pcb_regs[8] = (int)l2;		/* A4 */
+	pcb2->pcb_regs[11] = (int)sf;		/* SSP */
+	pcb2->pcb_ps = PSL_LOWIPL;		/* start kthreads at IPL 0 */
 }
 
 void
 cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 	struct trapframe *tf = (struct trapframe *)l->l_md.md_regs;
 	struct switchframe *sf = (struct switchframe *)tf - 1;
-	extern void setfunc_trampoline(void);
 
 	sf->sf_pc = (u_int)setfunc_trampoline;
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
@@ -226,7 +224,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 		pmap_enter(kpmap, kva, pa, VM_PROT_READ | VM_PROT_WRITE,
 		    PMAP_WIRED);
 #else
-		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 #endif
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
@@ -312,3 +310,4 @@ kvtop(void *addr)
 }
 
 #endif
+

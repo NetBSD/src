@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.21.4.3 2009/05/16 10:41:16 yamt Exp $	*/
+/*	$NetBSD: fdc.c,v 1.21.4.4 2010/03/11 15:03:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.21.4.3 2009/05/16 10:41:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.21.4.4 2010/03/11 15:03:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -324,7 +324,7 @@ struct fd_softc {
 int	fdmatch(struct device *, struct cfdata *, void *);
 void	fdattach(struct device *, struct device *, void *);
 bool	fdshutdown(device_t, int);
-bool	fdsuspend(device_t PMF_FN_PROTO);
+bool	fdsuspend(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
@@ -979,7 +979,7 @@ bool fdshutdown(device_t self, int how)
 	return true;
 }
 
-bool fdsuspend(device_t self PMF_FN_ARGS)
+bool fdsuspend(device_t self, const pmf_qual_t *qual)
 {
 
 	return fdshutdown(self, boothowto);

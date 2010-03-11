@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.110.10.2 2009/09/16 13:37:57 yamt Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.110.10.3 2010/03/11 15:04:05 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,10 +77,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.110.10.2 2009/09/16 13:37:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.110.10.3 2010/03/11 15:04:05 yamt Exp $");
 
 #include "opt_inet.h"
-#include "bpfilter.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -101,11 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.110.10.2 2009/09/16 13:37:57 yamt Exp $
 #include <net/if_dl.h>
 #include <net/if_media.h>
 
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
-
-#if NBPFILTER > 0
 #include <net/bpf.h>
-#endif
 
 #include <net/if_ether.h>
 #ifdef INET
@@ -742,9 +737,10 @@ aue_attach(device_t parent, device_t self, void *aux)
 
 	sc->aue_dev = self;
 
-	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
@@ -828,7 +824,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	 * A Pegasus chip was detected. Inform the world.
 	 */
 	ifp = GET_IFP(sc);
-	aprint_error_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(eaddr));
 
 	/* Initialize interface info.*/
 	ifp->if_softc = sc;
@@ -954,16 +950,13 @@ aue_activate(device_t self, enum devact act)
 	DPRINTFN(2,("%s: %s: enter\n", device_xname(sc->aue_dev), __func__));
 
 	switch (act) {
-	case DVACT_ACTIVATE:
-		return (EOPNOTSUPP);
-		break;
-
 	case DVACT_DEACTIVATE:
 		if_deactivate(&sc->aue_ec.ec_if);
 		sc->aue_dying = 1;
-		break;
+		return 0;
+	default:
+		return EOPNOTSUPP;
 	}
-	return (0);
 }
 
 /*
@@ -1172,7 +1165,6 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-#if NBPFILTER > 0
 	/*
 	 * Handle BPF listeners. Let the BPF user see the packet, but
 	 * don't pass it up to the ether_input() layer unless it's
@@ -1180,8 +1172,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * address or the interface is in promiscuous mode.
 	 */
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->aue_dev),
 		    __func__, m->m_len));
@@ -1386,14 +1377,12 @@ aue_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-#if NBPFILTER > 0
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
 	if (ifp->if_bpf)
-		BPF_MTAP(ifp, m_head);
-#endif
+		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

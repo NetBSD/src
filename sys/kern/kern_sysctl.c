@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.215.4.3 2009/09/16 13:38:01 yamt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.215.4.4 2010/03/11 15:04:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.215.4.3 2009/09/16 13:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.215.4.4 2010/03/11 15:04:17 yamt Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -140,6 +140,8 @@ __link_set_decl(sysctl_funcs, sysctl_setup_func);
  * copying data out with the lock held is insane.
  */
 krwlock_t sysctl_treelock;
+
+kmutex_t sysctl_file_marker_lock;
 
 /*
  * Attributes stored in the kernel.
@@ -236,13 +238,21 @@ sysctl_init(void)
 		(*f)(NULL);
 	}
 
-	/*
-	 * setting this means no more permanent nodes can be added,
-	 * trees that claim to be readonly at the root now are, and if
-	 * the main tree is readonly, *everything* is.
-	 */
-	sysctl_root.sysctl_flags |= CTLFLAG_PERMANENT;
+	mutex_init(&sysctl_file_marker_lock, MUTEX_DEFAULT, IPL_NONE);
+}
 
+/*
+ * Setting this means no more permanent nodes can be added,
+ * trees that claim to be readonly at the root now are, and if
+ * the main tree is readonly, *everything* is.
+ *
+ * Call this at the end of kernel init.
+ */
+void
+sysctl_finalize(void)
+{
+
+	sysctl_root.sysctl_flags |= CTLFLAG_PERMANENT;
 }
 
 /*

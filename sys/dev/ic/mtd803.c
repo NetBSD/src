@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.19.4.3 2009/05/16 10:41:23 yamt Exp $ */
+/* $NetBSD: mtd803.c,v 1.19.4.4 2010/03/11 15:03:33 yamt Exp $ */
 
 /*-
  *
@@ -44,9 +44,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.19.4.3 2009/05/16 10:41:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.19.4.4 2010/03/11 15:03:33 yamt Exp $");
 
-#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -68,10 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.19.4.3 2009/05/16 10:41:23 yamt Exp $")
 #include <netinet/ip.h>
 #endif
 
-#if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
 
 #include <sys/bus.h>
 
@@ -477,10 +474,8 @@ mtd_start(struct ifnet *ifp)
 		if (m == NULL)
 			break;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 
 		/* Copy mbuf chain into tx buffer */
 		len = mtd_put(sc, sc->cur_tx, m);
@@ -687,10 +682,8 @@ mtd_rxirq(struct mtd_softc *sc)
 
 		++ifp->if_ipackets;
 
-#if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
+			bpf_ops->bpf_mtap(ifp->if_bpf, m);
 		/* Pass the packet up */
 		(*ifp->if_input)(ifp, m);
 	}

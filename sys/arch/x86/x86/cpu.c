@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.33.2.2 2009/05/04 08:12:10 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.33.2.3 2010/03/11 15:03:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.2 2009/05/04 08:12:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.3 2010/03/11 15:03:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.2 2009/05/04 08:12:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
@@ -121,8 +120,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33.2.2 2009/05/04 08:12:10 yamt Exp $");
 int     cpu_match(device_t, cfdata_t, void *);
 void    cpu_attach(device_t, device_t, void *);
 
-static bool	cpu_suspend(device_t PMF_FN_PROTO);
-static bool	cpu_resume(device_t PMF_FN_PROTO);
+static bool	cpu_suspend(device_t, const pmf_qual_t *);
+static bool	cpu_resume(device_t, const pmf_qual_t *);
 
 struct cpu_softc {
 	device_t sc_dev;		/* device tree glue */
@@ -199,7 +198,7 @@ cpu_init_first(void)
 	cmos_data_mapping = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
 	if (cmos_data_mapping == 0)
 		panic("No KVA for page 0");
-	pmap_kenter_pa(cmos_data_mapping, 0, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(cmos_data_mapping, 0, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 }
 
@@ -295,8 +294,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)kmem_alloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
-		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
-		    ~(CACHE_LINE_SIZE - 1));
+		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		memset(ci, 0, sizeof(*ci));
 		ci->ci_curldt = -1;
 #ifdef TRAPLOG
@@ -425,14 +423,15 @@ cpu_attach(device_t parent, device_t self, void *aux)
 
 	if (mp_verbose) {
 		struct lwp *l = ci->ci_data.cpu_idlelwp;
+		struct pcb *pcb = lwp_getpcb(l);
 
 		aprint_verbose_dev(self,
 		    "idle lwp at %p, idle sp at %p\n",
 		    l,
 #ifdef i386
-		    (void *)l->l_addr->u_pcb.pcb_esp
+		    (void *)pcb->pcb_esp
 #else
-		    (void *)l->l_addr->u_pcb.pcb_rsp
+		    (void *)pcb->pcb_rsp
 #endif
 		);
 	}
@@ -543,7 +542,7 @@ static void
 cpu_init_idle_lwp(struct cpu_info *ci)
 {
 	struct lwp *l = ci->ci_data.cpu_idlelwp;
-	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pcb *pcb = lwp_getpcb(l);
 
 	pcb->pcb_cr0 = rcr0();
 }
@@ -607,9 +606,9 @@ cpu_start_secondary(struct cpu_info *ci)
 #endif
 	} else {
 		/*
-		 * Synchronize time stamp counters.  Invalidate cache and do twice
-		 * to try and minimize possible cache effects.  Disable interrupts
-		 * to try and rule out any external interference.
+		 * Synchronize time stamp counters. Invalidate cache and do
+		 * twice to try and minimize possible cache effects. Disable
+		 * interrupts to try and rule out any external interference.
 		 */
 		psl = x86_read_psl();
 		x86_disable_intr();
@@ -664,6 +663,7 @@ void
 cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
+	struct pcb *pcb;
 	int s, i;
 
 #ifdef __x86_64__
@@ -712,8 +712,11 @@ cpu_hatch(void *v)
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
 	lcr3(pmap_kernel()->pm_pdirpa);
-	curlwp->l_addr->u_pcb.pcb_cr3 = pmap_kernel()->pm_pdirpa;
-	lcr0(ci->ci_data.cpu_idlelwp->l_addr->u_pcb.pcb_cr0);
+	pcb = lwp_getpcb(curlwp);
+	pcb->pcb_cr3 = pmap_kernel()->pm_pdirpa;
+	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
+	lcr0(pcb->pcb_cr0);
+
 	cpu_init_idt();
 	gdt_init_cpu(ci);
 	lapic_enable();
@@ -788,7 +791,7 @@ cpu_copy_trampoline(void)
 	    UVM_KMF_VAONLY);
 
 	pmap_kenter_pa(mp_trampoline_vaddr, mp_trampoline_paddr,
-	    VM_PROT_READ | VM_PROT_WRITE);
+	    VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memcpy((void *)mp_trampoline_vaddr,
 	    cpu_spinup_trampoline,
@@ -993,7 +996,7 @@ cpu_offline_md(void)
 
 /* XXX joerg restructure and restart CPUs individually */
 static bool
-cpu_suspend(device_t dv PMF_FN_ARGS)
+cpu_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
@@ -1021,7 +1024,7 @@ cpu_suspend(device_t dv PMF_FN_ARGS)
 }
 
 static bool
-cpu_resume(device_t dv PMF_FN_ARGS)
+cpu_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
