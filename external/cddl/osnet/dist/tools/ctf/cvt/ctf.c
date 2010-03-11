@@ -369,14 +369,16 @@ write_type(void *arg1, void *arg2)
 			i++; /* count up enum members */
 
 		if (i > CTF_MAX_VLEN) {
-			terminate("enum %s has too many values: %d > %d\n",
+			printf("enum %s has too many values: %d > %d, truncating\n",
 			    tdesc_name(tp), i, CTF_MAX_VLEN);
+
+		    i = CTF_MAX_VLEN;
 		}
 
 		ctt.ctt_info = CTF_TYPE_INFO(CTF_K_ENUM, isroot, i);
 		write_sized_type_rec(b, &ctt, tp->t_size);
 
-		for (ep = tp->t_emem; ep != NULL; ep = ep->el_next) {
+		for (ep = tp->t_emem; i && ep != NULL; ep = ep->el_next, i--) {
 			offset = strtab_insert(&b->ctb_strtab, ep->el_name);
 			cte.cte_name = CTF_TYPE_NAME(CTF_STRTAB_0, offset);
 			cte.cte_value = ep->el_number;
@@ -818,7 +820,7 @@ resurrect_objects(ctf_header_t *h, tdata_t *td, tdesc_t **tdarr, int tdsize,
 			debug(3, "Skipping null object\n");
 			continue;
 		} else if (id >= tdsize) {
-			parseterminate("Reference to invalid type %d", id);
+			parseterminate("(1) Reference to invalid type %d", id);
 		}
 
 		ii = iidesc_new(symit_name(si));
@@ -869,7 +871,7 @@ resurrect_functions(ctf_header_t *h, tdata_t *td, tdesc_t **tdarr, int tdsize,
 		dptr += 2;
 
 		if (retid >= tdsize)
-			parseterminate("Reference to invalid type %d", retid);
+			parseterminate("(2) Reference to invalid type %d", retid);
 
 		ii = iidesc_new(symit_name(si));
 		ii->ii_dtype = tdarr[retid];
@@ -887,8 +889,8 @@ resurrect_functions(ctf_header_t *h, tdata_t *td, tdesc_t **tdarr, int tdsize,
 			v = (void *) dptr;
 			ushort_t id = *((ushort_t *)v);
 			if (id >= tdsize)
-				parseterminate("Reference to invalid type %d",
-				    id);
+				parseterminate("(3) Reference to invalid type %d (tdsize %d) ii_nargs %d %s",
+				    id, tdsize, ii->ii_nargs, ii->ii_name);
 			ii->ii_args[i] = tdarr[id];
 		}
 
@@ -943,7 +945,7 @@ resurrect_types(ctf_header_t *h, tdata_t *td, tdesc_t **tdarr, int tdsize,
 			break;
 
 		if (tid >= tdsize)
-			parseterminate("Reference to invalid type %d", tid);
+			parseterminate("(4) Reference to invalid type %d", tid);
 
 		void *v = (void *) dptr;
 		ctt = v;
