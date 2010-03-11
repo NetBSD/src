@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 2010/03/11 21:41:50 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.78 2010/03/11 21:43:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77 2010/03/11 21:41:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2010/03/11 21:43:15 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -735,7 +735,12 @@ do_onfault:
 
 		hppa_fpu_flush(l);
 		fpp = pcb->pcb_fpregs;
-		pex = (uint32_t *)&fpp[1];
+
+		/* skip the status register */
+		pex = (uint32_t *)&fpp[0];
+		pex++;
+
+		/* loop through the exception registers */
 		for (i = 1; i < 8 && !*pex; i++, pex++)
 			;
 		KASSERT(i < 8);
