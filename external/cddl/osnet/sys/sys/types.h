@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.10 2010/03/10 23:41:56 darran Exp $	*/
+/*	$NetBSD: types.h,v 1.11 2010/03/11 23:28:07 darran Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -68,10 +68,15 @@
 #else
 #include <sys/stdint.h>
 #endif
+#ifdef _NETBSD_SOURCE
+#include_next <sys/types.h>
+#include_next <sys/ccompile.h>
+#else
 #define _NETBSD_SOURCE
 #include_next <sys/types.h>
 #include_next <sys/ccompile.h>
 #undef _NETBSD_SOURCE
+#endif
 
 #ifndef _KERNEL
 #include <stdarg.h>
