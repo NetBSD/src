@@ -2299,6 +2299,7 @@ extern int dtrace_blksuword32(uintptr_t, uint32_t *, int);
 extern void dtrace_getfsr(uint64_t *);
 #endif
 
+#if defined(sun)
 #define	DTRACE_CPUFLAG_ISSET(flag) \
 	(cpu_core[curcpu_id].cpuc_dtrace_flags & (flag))
 
@@ -2307,6 +2308,16 @@ extern void dtrace_getfsr(uint64_t *);
 
 #define	DTRACE_CPUFLAG_CLEAR(flag) \
 	(cpu_core[curcpu_id].cpuc_dtrace_flags &= ~(flag))
+#else
+#define	DTRACE_CPUFLAG_ISSET(flag) \
+	(cpu_core[cpu_number()].cpuc_dtrace_flags & (flag))
+
+#define	DTRACE_CPUFLAG_SET(flag) \
+	(cpu_core[cpu_number()].cpuc_dtrace_flags |= (flag))
+
+#define	DTRACE_CPUFLAG_CLEAR(flag) \
+	(cpu_core[cpu_number()].cpuc_dtrace_flags &= ~(flag))
+#endif
 
 #endif /* _KERNEL */
 
