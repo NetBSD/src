@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.h,v 1.7.28.4 2010/03/01 23:55:49 matt Exp $ */
+/* $NetBSD: systemsw.h,v 1.7.28.5 2010/03/11 08:20:59 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -56,7 +56,8 @@ extern struct systemsw systemsw;
 bool	system_set_clockfns(void *, void (*)(void *));
 
 void	sb1250_icu_init(void);
-void	sb1250_cpu_init(struct cpu_info *);
+struct cpu_softc;
+void	sb1250_cpu_init(struct cpu_softc *);
 
 #define	cpu_intr_establish(n,s,f,a)	((*systemsw.s_intr_establish)(n,s,f,a))
 
