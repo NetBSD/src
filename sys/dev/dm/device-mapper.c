@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.19 2010/02/27 00:31:57 jakllsch Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.20 2010/03/12 16:26:26 haad Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -424,6 +424,10 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 {
 	dm_dev_t *dmv;
 
+	/* disk ioctls make sense only on block devices */
+	if (minor(dev) == 0)
+		return ENOTTY;
+	
 	switch(cmd) {
 	case DIOCGWEDGEINFO:
 	{
