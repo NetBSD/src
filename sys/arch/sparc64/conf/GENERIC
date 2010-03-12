@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120 2010/03/10 03:11:49 macallan Exp $
+# $NetBSD: GENERIC,v 1.121 2010/03/12 14:50:55 roy Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.120 $"
+#ident 		"GENERIC-$Revision: 1.121 $"
 
 maxusers	64
 
@@ -901,7 +901,8 @@ wskbd0 at kbd0
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-options 	WSEMUL_SUN		# sun terminal emulation
+#options	WSEMUL_SUN              # sun terminal emulation
+options 	WSEMUL_VT100		# allow us to be wsvt25
 options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WSDISPLAY_COMPAT_USL		# VT handling
@@ -945,8 +946,8 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
+pseudo-device	pf			# PF packet filter
+pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	bcsp			# BlueCore Serial Protocol
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
