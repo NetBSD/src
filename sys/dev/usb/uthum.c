@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.4 2010/03/07 11:28:46 jdc Exp $   */
+/*	$NetBSD: uthum.c,v 1.5 2010/03/12 09:02:15 jdc Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -103,7 +103,8 @@ int uthum_activate(device_t, enum devact);
 
 int uthum_read_data(struct uthum_softc *, uint8_t, uint8_t *, size_t, int);
 int uthum_check_sensortype(struct uthum_softc *);
-int uthum_sht1x_temp(unsigned int);
+int uthum_temper_temp(uint8_t, uint8_t);
+int uthum_sht1x_temp(uint8_t, uint8_t);
 int uthum_sht1x_rh(unsigned int, int);
 
 void uthum_intr(struct uhidev *, void *, u_int);
@@ -297,8 +298,10 @@ int
 uthum_check_sensortype(struct uthum_softc *sc)
 {
 	uint8_t buf[8];
-	static uint8_t sht1x_sig[] =
+	static uint8_t sht1x_sig0[] =
 	    { 0x57, 0x5a, 0x13, 0x00, 0x14, 0x00, 0x53, 0x00 };
+	static uint8_t sht1x_sig1[] =
+	    { 0x57, 0x5a, 0x14, 0x00, 0x14, 0x00, 0x53, 0x00 };
 	static uint8_t temper_sig[] =
 	    { 0x57, 0x58, 0x14, 0x00, 0x14, 0x00, 0x53, 0x00 };
 
@@ -312,10 +315,16 @@ uthum_check_sensortype(struct uthum_softc *sc)
 	 * therefore, compare full bytes.
 	 * TEMPerHUM HID (SHT1x version) will return:
 	 *   { 0x57, 0x5a, 0x13, 0x00, 0x14, 0x00, 0x53, 0x00 }
-	 * TEMPer HID (SHT1x version) will return:
+	 *   { 0x57, 0x5a, 0x14, 0x00, 0x14, 0x00, 0x53, 0x00 }
+	 * TEMPer HID (TEMPer version) will return:
 	 *   { 0x57, 0x58, 0x14, 0x00, 0x14, 0x00, 0x53, 0x00 }
 	 */
-	if (0 == memcmp(buf, sht1x_sig, sizeof(sht1x_sig)))
+	DPRINTF(("uthum: device signature: "
+	    "0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x\n",
+	    buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]));
+	if (0 == memcmp(buf, sht1x_sig0, sizeof(sht1x_sig0)))
+		return UTHUM_TYPE_SHT1x;
+	if (0 == memcmp(buf, sht1x_sig1, sizeof(sht1x_sig1)))
 		return UTHUM_TYPE_SHT1x;
 	if (0 == memcmp(buf, temper_sig, sizeof(temper_sig)))
 		return UTHUM_TYPE_TEMPER;
@@ -329,7 +338,7 @@ uthum_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct uthum_softc *sc = sme->sme_cookie;
 	uint8_t buf[8];
-	unsigned int temp_tick, humidity_tick;
+	unsigned int humidity_tick;
 	int temp, rh;
 
 	switch (sc->sc_sensortype) {
@@ -340,11 +349,14 @@ uthum_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			sc->sc_sensor[UTHUM_HUMIDITY].state = ENVSYS_SINVALID;
 			return;
 		}
+		DPRINTF(("%s: read SHT1x data "
+		    "0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x\n",
+		    sc->sc_sme->sme_name, buf[0], buf[1], buf[2], buf[3],
+		    buf[4], buf[5], buf[6], buf[7]));
 
-		temp_tick = (buf[0] * 256 + buf[1]) & 0x3fff;
 		humidity_tick = (buf[2] * 256 + buf[3]) & 0x0fff;
 
-		temp = uthum_sht1x_temp(temp_tick);
+		temp = uthum_sht1x_temp(buf[0], buf[1]);
 		rh = uthum_sht1x_rh(humidity_tick, temp);
 
 		sc->sc_sensor[UTHUM_HUMIDITY].value_cur = rh / 1000;
@@ -356,8 +368,11 @@ uthum_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			sc->sc_sensor[UTHUM_TEMP].state = ENVSYS_SINVALID;
 			return;
 		}
-		temp_tick = (buf[0] * 256 + buf[1]) & 0xffff;
-		temp = uthum_sht1x_temp(temp_tick);
+		DPRINTF(("%s: read TEMPER data "
+		    "0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x 0x%0x\n",
+		    sc->sc_sme->sme_name, buf[0], buf[1], buf[2], buf[3],
+		    buf[4], buf[5], buf[6], buf[7]));
+		temp = uthum_temper_temp(buf[0], buf[1]);
 		break;
 	default:
 		/* do nothing */
@@ -370,9 +385,26 @@ uthum_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 /* return C-degree * 100 value */
 int
-uthum_sht1x_temp(unsigned int ticks)
+uthum_temper_temp(uint8_t msb, uint8_t lsb)
 {
-	return (ticks - 4010);
+	int val;
+
+	val = (msb << 8) | lsb;
+	if (val >= 32768) {
+		val = val - 65536;
+	}
+	val = (val * 100) >> 8;
+	return val;
+}
+
+/* return C-degree * 100 value */
+int
+uthum_sht1x_temp(uint8_t msb, uint8_t lsb)
+{
+	int val;
+
+	val = ((msb << 8) + lsb) - 4096;
+	return val;
 }
 
 /* return %RH * 1000 */
