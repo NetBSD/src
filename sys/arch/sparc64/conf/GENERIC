@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121 2010/03/12 14:50:55 roy Exp $
+# $NetBSD: GENERIC,v 1.122 2010/03/12 15:12:12 roy Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.121 $"
+#ident 		"GENERIC-$Revision: 1.122 $"
 
 maxusers	64
 
@@ -946,8 +946,8 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	pf			# PF packet filter
-pseudo-device	pflog			# PF log if
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
 #pseudo-device	bcsp			# BlueCore Serial Protocol
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
