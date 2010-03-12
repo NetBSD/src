@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/08/10 22:55:08 haad Exp $
+#	$NetBSD: Makefile,v 1.4 2010/03/12 21:37:37 darran Exp $
 
 .include "../Makefile.inc"
 
@@ -64,6 +64,7 @@ SRCS+=	mod.c
 SRCS+=	printf.c
 SRCS+=	taskq.c
 SRCS+=	vfs.c
+SRCS+=	opensolaris.c
 
 WARNS=		0
 NOGCCERROR=	yes

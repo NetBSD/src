@@ -1,4 +1,4 @@
-/*	$NetBSD: mod.c,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: mod.c,v 1.2 2010/03/12 21:37:37 darran Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,13 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mod.c,v 1.1 2009/08/07 20:57:57 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mod.c,v 1.2 2010/03/12 21:37:37 darran Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
 #include <sys/kthread.h>
 #include <sys/callb.h>
+
+void opensolaris_init(void *);
+void opensolaris_fini(void *);
 
 MODULE(MODULE_CLASS_MISC, solaris, NULL);
 
@@ -47,9 +50,11 @@ solaris_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_INIT:
 		callb_init(NULL);
 		taskq_init();
+		opensolaris_init(NULL);
 		break;
 
 	case MODULE_CMD_FINI:
+		opensolaris_fini(NULL);
 		taskq_fini();
 		callb_fini(NULL);
 		break;
