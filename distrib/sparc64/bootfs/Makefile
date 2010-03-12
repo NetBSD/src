@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/03/02 08:05:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2010/03/12 23:07:13 martin Exp $
 #
 # boot.fs is the image for cdrom booting.
 #
@@ -15,7 +15,7 @@
 .include <bsd.kernobj.mk>
 
 IMAGE=		boot.fs
-IMAGESIZE=	6m
+IMAGESIZE=	9m
 IMAGEENDIAN=	be
 
 LISTS=		${.CURDIR}/list
