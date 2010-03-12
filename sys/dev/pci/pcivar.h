@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.84 2010/02/23 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.85 2010/03/12 21:55:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -128,6 +128,10 @@ struct pci_attach_args {
 #define	PCI_FLAGS_MRM_OKAY	0x08		/* Memory Read Multiple okay */
 #define	PCI_FLAGS_MWI_OKAY	0x10		/* Memory Write and Invalidate
 						   okay */
+#define	PCI_FLAGS_MSI_OKAY	0x20		/* Message Signaled Interrupts
+						   okay */
+#define	PCI_FLAGS_MSIX_OKAY	0x40		/* Message Signaled Interrupts
+						   (Extended) okay */
 
 /*
  * PCI device 'quirks'.
