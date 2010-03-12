@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.450.2.6 2010/01/22 21:05:06 snj Exp $
+# $NetBSD: shl.mi,v 1.450.2.7 2010/03/12 21:58:42 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -20,7 +20,7 @@
 ./lib/libevent.so.2.1				base-sys-shlib		dynamicroot
 ./lib/libipsec.so.2.2				base-net-shlib		dynamicroot
 ./lib/libkvm.so.5.3				base-sys-shlib		dynamicroot
-./lib/libm.so.0.6				base-sys-shlib		dynamicroot
+./lib/libm.so.0.7				base-sys-shlib		dynamicroot
 ./lib/libprop.so.0.7				base-sys-shlib		dynamicroot
 ./lib/libradius.so.2.0				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
@@ -91,7 +91,7 @@
 ./usr/lib/libldap.so.2.5			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.2.5			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so.1.1			base-bind-shlib
-./usr/lib/libm.so.0.6				base-sys-shlib
+./usr/lib/libm.so.0.7				base-sys-shlib
 ./usr/lib/libmagic.so.1.0			base-sys-shlib
 ./usr/lib/libmenu.so.5.0			base-sys-shlib
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
