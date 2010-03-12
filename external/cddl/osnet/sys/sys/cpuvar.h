@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.5 2010/03/01 11:19:39 darran Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.6 2010/03/12 21:37:37 darran Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -33,6 +33,25 @@
 #include <sys/cpuvar_defs.h>
 
 #ifdef _KERNEL
+
+typedef struct {
+	int		cpuid;
+        struct cyc_cpu *cpu_cyclic;
+	uint32_t	cpu_flags;
+	uint_t		cpu_intr_actv;
+	uintptr_t	cpu_profile_pc;
+	uintptr_t	cpu_profile_upc;
+	uintptr_t	cpu_dtrace_caller;	/* DTrace: caller, if any */
+	hrtime_t	cpu_dtrace_chillmark;	/* DTrace: chill mark time */
+	hrtime_t	cpu_dtrace_chilled;	/* DTrace: total chill time */
+} solaris_cpu_t; 
+
+/* Some code may choose to redefine this if pcpu_t would be more useful. */
+#define cpu_t	solaris_cpu_t
+#define	cpu_id	cpuid
+
+extern solaris_cpu_t    solaris_cpu[];
+
 #define	CPU_CACHE_COHERENCE_SIZE	64
 
 /*
@@ -81,6 +100,47 @@ extern cpu_core_t cpu_core[];
 				CPU_DTRACE_UPRIV | CPU_DTRACE_TUPOFLOW | \
 				CPU_DTRACE_BADSTACK)
 #define	CPU_DTRACE_ERROR	(CPU_DTRACE_FAULT | CPU_DTRACE_DROP)
+
+/*
+ * Flags in the CPU structure.
+ *
+ * These are protected by cpu_lock (except during creation).
+ *
+ * Offlined-CPUs have three stages of being offline:
+ *
+ * CPU_ENABLE indicates that the CPU is participating in I/O interrupts
+ * that can be directed at a number of different CPUs.  If CPU_ENABLE
+ * is off, the CPU will not be given interrupts that can be sent elsewhere,
+ * but will still get interrupts from devices associated with that CPU only,
+ * and from other CPUs.
+ *
+ * CPU_OFFLINE indicates that the dispatcher should not allow any threads
+ * other than interrupt threads to run on that CPU.  A CPU will not have
+ * CPU_OFFLINE set if there are any bound threads (besides interrupts).
+ *
+ * CPU_QUIESCED is set if p_offline was able to completely turn idle the
+ * CPU and it will not have to run interrupt threads.  In this case it'll
+ * stay in the idle loop until CPU_QUIESCED is turned off.
+ *
+ * CPU_FROZEN is used only by CPR to mark CPUs that have been successfully
+ * suspended (in the suspend path), or have yet to be resumed (in the resume
+ * case).
+ *
+ * On some platforms CPUs can be individually powered off.
+ * The following flags are set for powered off CPUs: CPU_QUIESCED,
+ * CPU_OFFLINE, and CPU_POWEROFF.  The following flags are cleared:
+ * CPU_RUNNING, CPU_READY, CPU_EXISTS, and CPU_ENABLE.
+ */
+#define	CPU_RUNNING	0x001		/* CPU running */
+#define	CPU_READY	0x002		/* CPU ready for cross-calls */
+#define	CPU_QUIESCED	0x004		/* CPU will stay in idle */
+#define	CPU_EXISTS	0x008		/* CPU is configured */
+#define	CPU_ENABLE	0x010		/* CPU enabled for interrupts */
+#define	CPU_OFFLINE	0x020		/* CPU offline via p_online */
+#define	CPU_POWEROFF	0x040		/* CPU is powered off */
+#define	CPU_FROZEN	0x080		/* CPU is frozen via CPR suspend */
+#define	CPU_SPARE	0x100		/* CPU offline available for use */
+#define	CPU_FAULTED	0x200		/* CPU offline diagnosed faulty */
 
 typedef enum {
 	CPU_INIT,
