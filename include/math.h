@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.47.8.1 2010/03/06 22:02:41 sborrill Exp $	*/
+/*	$NetBSD: math.h,v 1.47.8.2 2010/03/12 21:58:42 riz Exp $	*/
 
 /*
  * ====================================================
@@ -359,6 +359,15 @@ float	nextafterf(float, float);
 #define islessequal(x, y)	(!isunordered((x), (y)) && (x) <= (y))
 #define islessgreater(x, y)	(!isunordered((x), (y)) && \
 				 ((x) > (y) || (y) > (x)))
+double	fdim(double, double);
+double	fmax(double, double);
+double	fmin(double, double);
+float	fdimf(float, float);
+float	fmaxf(float, float);
+float	fminf(float, float);
+long double fdiml(long double, long double);
+long double fmaxl(long double, long double);
+long double fminl(long double, long double);
 
 #endif /* !_ANSI_SOURCE && ... */
 
