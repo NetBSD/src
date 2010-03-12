@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.213 2010/03/09 14:31:35 msaitoh Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.214 2010/03/12 22:02:02 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16916,4 +16916,24 @@ sys/dev/usb/ugen.c				1.109
 	possible to race into the device method for whatever reason and
 	you get a kernel panic.
 	[pooka, ticket #1332]
+
+distrib/sets/lists/base/md.amd64		1.70 via patch
+distrib/sets/lists/base/md.sparc64		1.63 via patch
+distrib/sets/lists/base/shl.mi			1.495 via patch
+distrib/sets/lists/comp/mi			1.1317
+include/math.h					1.49
+lib/libm/Makefile				1.90
+lib/libm/man/fdim.3				1.1-1.3
+lib/libm/man/fmax.3				1.1-1.2
+lib/libm/shlib_version				1.10
+lib/libm/src/s_fdim.c				1.1-1.2
+lib/libm/src/s_fmax.c				1.1
+lib/libm/src/s_fmaxf.c				1.1
+lib/libm/src/s_fmaxl.c				1.1
+lib/libm/src/s_fmin.c				1.1
+lib/libm/src/s_fminf.c				1.1
+lib/libm/src/s_fminl.c				1.1
+
+	Add f{min,max,dim}{,l,f} from FreeBSD.
+	[snj, ticket #1330]
 
