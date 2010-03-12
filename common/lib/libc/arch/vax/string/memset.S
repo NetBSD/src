@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.3 2003/08/07 16:42:32 agc Exp $	*/
+/*	$NetBSD: memset.S,v 1.1 2010/03/12 09:12:34 uwe Exp $	*/
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 /* void *memset(base, c, length) */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 ENTRY(memset, 0)
 	movl	4(%ap),%r3
