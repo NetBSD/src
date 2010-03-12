@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.24 2010/03/10 19:23:57 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.25 2010/03/12 19:03:14 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.24 2010/03/10 19:23:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.25 2010/03/12 19:03:14 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -831,6 +831,8 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	struct ata_command *ata_c = xfer->c_cmd;
+	uint16_t *idwordbuf;
+	int i;
 
 	AHCIDEBUG_PRINT(("ahci_cmd_done channel %d\n", chp->ch_channel),
 	    DEBUG_FUNCS);
@@ -848,6 +850,15 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 
 	AHCI_CMDH_SYNC(sc, achp, slot,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+	/* ata(4) expects IDENTIFY data to be in host endianess */
+	if (ata_c->r_command == WDCC_IDENTIFY ||
+	    ata_c->r_command == ATAPI_IDENTIFY_DEVICE) {
+		idwordbuf = xfer->c_databuf;
+		for (i = 0; i < (xfer->c_bcount / sizeof(*idwordbuf)); i++) {
+			idwordbuf[i] = le16toh(idwordbuf[i]);
+		}
+	}
 
 	ata_c->flags |= AT_DONE;
 	if (achp->ahcic_cmdh[slot].cmdh_prdbc)
