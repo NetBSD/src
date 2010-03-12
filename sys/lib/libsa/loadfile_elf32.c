@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.24 2008/09/25 20:59:38 christos Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.25 2010/03/12 21:43:11 darran Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -271,6 +271,8 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		uint8_t		name[ELF_NOTE_NETBSD_NAMESZ + 1];
 		uint8_t		desc[ELF_NOTE_NETBSD_DESCSZ];
 	} note;
+	char *shstr = NULL;
+	int boot_load_ctf=1;
 
 	/* some ports dont use the offset */
 	offset = offset;
@@ -406,13 +408,66 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 #endif /* ! _STANDALONE */
 
 		/*
+		 * First load the section names section.
+		 */
+		if (boot_load_ctf && (elf->e_shstrndx != 0)) {
+		    if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
+			SEEK_SET) == -1) {
+			    WARN(("lseek symbols"));
+			    goto freeshp;
+		    }
+		    nr = READ(fd, maxp, shp[elf->e_shstrndx].sh_size);
+		    if (nr == -1) {
+			    WARN(("read symbols"));
+			    goto freeshp;
+		    }
+		    if (nr != (ssize_t)shp[elf->e_shstrndx].sh_size) {
+			    errno = EIO;
+			    WARN(("read symbols"));
+			    goto freeshp;
+		    }
+
+		    shstr = ALLOC(shp[elf->e_shstrndx].sh_size);
+		    if (lseek(fd, shp[elf->e_shstrndx].sh_offset,
+			SEEK_SET) == -1) {
+			    WARN(("lseek symbols"));
+			    goto freeshp;
+		    }
+		    nr = read(fd, shstr, shp[elf->e_shstrndx].sh_size);
+		    if (nr == -1) {
+			    WARN(("read symbols"));
+			    goto freeshp;
+		    }
+
+		    shp[elf->e_shstrndx].sh_offset = maxp - elfp;
+		    maxp += roundup(shp[elf->e_shstrndx].sh_size, ELFROUND);
+		}
+
+		/*
 		 * Now load the symbol sections themselves.  Make sure
 		 * the sections are aligned. Don't bother with any
 		 * string table that isn't referenced by a symbol
 		 * table.
 		 */
 		for (first = 1, i = 0; i < elf->e_shnum; i++) {
+		    	if (i == elf->e_shstrndx) {
+			    /* already loaded this section */
+			    continue;
+			}
 			switch (shp[i].sh_type) {
+			case SHT_PROGBITS:
+			    	if (boot_load_ctf && shstr) {
+					/* got a CTF section? */
+					if (strncmp(".SUNW_ctf",
+						    &shstr[shp[i].sh_name],
+						    10) == 0) {
+					    	goto havesym;
+					}
+				}
+
+				/* Not loading this, so zero out the offset. */
+				shp[i].sh_offset = 0;
+			    	break;
 			case SHT_STRTAB:
 				for (j = 0; j < elf->e_shnum; j++)
 					if (shp[j].sh_type == SHT_SYMTAB &&
@@ -479,8 +534,6 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				shp[i].sh_offset = 0;
 				break;
 			}
-			/* Since we don't load .shstrtab, zero the name. */
-			shp[i].sh_name = 0;
 		}
 		if (flags & LOAD_SYM) {
 #ifndef _STANDALONE
@@ -496,6 +549,10 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 		DEALLOC(shp, sz);
 	}
+	
+	if (shstr) {
+	    DEALLOC(shstr, shp[elf->e_shstrndx].sh_size);
+	}
 
 	/*
 	 * Frob the copied ELF header to give information relative
@@ -506,7 +563,6 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		elf->e_shoff = sizeof(Elf_Ehdr);
 		elf->e_phentsize = 0;
 		elf->e_phnum = 0;
-		elf->e_shstrndx = SHN_UNDEF;
 		externalize_ehdr(elf->e_ident[EI_DATA], elf);
 		BCOPY(elf, elfp, sizeof(*elf));
 		internalize_ehdr(elf->e_ident[EI_DATA], elf);

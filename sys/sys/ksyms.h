@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.24 2010/03/01 21:10:13 darran Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.25 2010/03/12 21:43:10 darran Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -49,6 +49,8 @@ struct ksyms_symtab {
 	bool sd_gone;		/* dead but around for open() */
 	void *sd_ctfstart;	/* Address of CTF contents */
 	int sd_ctfsize;		/* Size in bytes of CTF contents */
+	uint32_t *sd_nmap;	/* Name map for sorted symbols */
+	int sd_nmapsize;	/* Total span of map */
 };
 
 /*
@@ -101,12 +103,18 @@ struct ksyms_gsymbol {
 #define KSYMS_PROC	0100	/* Procedures only */
 #define KSYMS_ANY	0200	/* Also local symbols (DDB use only) */
 
+typedef int (*ksyms_callback_t)(const char *, int, void *,
+	uint32_t, int, void *);
+
 /*
  * Prototypes
  */
+
 int ksyms_getname(const char **, const char **, vaddr_t, int);
 int ksyms_getval(const char *, const char *, unsigned long *, int);
 int ksyms_getval_unlocked(const char *, const char *, unsigned long *, int);
+struct ksyms_symtab *ksyms_get_mod(const char *);
+int ksyms_mod_foreach(const char *mod, ksyms_callback_t, void *);
 int ksyms_addsymtab(const char *, void *, vsize_t, char *, vsize_t);
 int ksyms_delsymtab(const char *);
 void ksyms_init(void);
