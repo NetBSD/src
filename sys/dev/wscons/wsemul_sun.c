@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.27 2010/01/28 22:36:19 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.28 2010/03/12 08:40:50 jdc Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.27 2010/01/28 22:36:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.28 2010/03/12 08:40:50 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,6 +576,10 @@ wsemul_sun_translate(void *cookie, keysym_t in, const char **out)
 	case KS_KP_Home:
 	case KS_KP_Begin:
 		*out = "\033[214z";
+		return (6);
+	case KS_End:
+	case KS_KP_End:
+		*out = "\033[220z";
 		return (6);
 	case KS_Prior:
 	case KS_KP_Prior:
