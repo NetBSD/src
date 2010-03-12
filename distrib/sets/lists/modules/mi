@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.11 2010/03/03 16:13:42 tron Exp $
+# $NetBSD: mi,v 1.12 2010/03/12 21:53:16 darran Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -40,6 +40,8 @@
 ./@MODULEDIR@/exec_script/exec_script.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ext2fs				base-kernel-modules	kmod
 ./@MODULEDIR@/ext2fs/ext2fs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/fbt				base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/fbt/fbt.kmod			base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/fdesc				base-kernel-modules	kmod
 ./@MODULEDIR@/fdesc/fdesc.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/ffs				base-kernel-modules	kmod

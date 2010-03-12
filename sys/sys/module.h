@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.20 2010/03/05 20:10:05 pooka Exp $	*/
+/*	$NetBSD: module.h,v 1.21 2010/03/12 21:53:16 darran Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@ typedef struct module {
 	u_int			mod_nrequired;
 	modsrc_t		mod_source;
 	time_t			mod_autotime;
+	void 			*mod_ctf;
+	u_int			mod_fbtentries;	/* DTrace FBT entrie count */
 } module_t;
 
 /*

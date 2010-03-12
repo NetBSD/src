@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: fbt.c,v 1.3 2010/03/12 21:53:15 darran Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -21,6 +21,7 @@
  * CDDL HEADER END
  *
  * Portions Copyright 2006-2008 John Birrell jb@freebsd.org
+ * Portions Copyright 2010 Darran Hunt darran@NetBSD.org
  *
  * $FreeBSD: src/sys/cddl/dev/fbt/fbt.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
  *
@@ -38,9 +39,9 @@
 #include <sys/cpuvar.h>
 #include <sys/fcntl.h>
 #include <sys/filio.h>
-#include <sys/kdb.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 #include <sys/kthread.h>
 #include <sys/limits.h>
 #include <sys/linker.h>
@@ -48,20 +49,30 @@
 #include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
-#include <sys/pcpu.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/selinfo.h>
-#include <sys/smp.h>
 #include <sys/syscall.h>
-#include <sys/sysent.h>
-#include <sys/sysproto.h>
 #include <sys/uio.h>
 #include <sys/unistd.h>
 #include <machine/stdarg.h>
 
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
+#include <machine/specialreg.h>
+#if 0
+#include <x86/cpuvar.h>
+#endif
+#include <x86/cputypes.h>
+
+#define ELFSIZE ARCH_ELFSIZE
+#include <sys/exec_elf.h>
+
 #include <sys/dtrace.h>
 #include <sys/dtrace_bsd.h>
+#include <sys/kern_ctf.h>
+
+mod_ctf_t *modptr;
 
 MALLOC_DEFINE(M_FBT, "fbt", "Function Boundary Tracing");
 
@@ -83,14 +94,14 @@ MALLOC_DEFINE(M_FBT, "fbt", "Function Boundary Tracing");
 #define	FBT_PATCHVAL		0xf0
 #endif
 
-static d_open_t	fbt_open;
+static dev_type_open(fbt_open);
 static int	fbt_unload(void);
 static void	fbt_getargdesc(void *, dtrace_id_t, void *, dtrace_argdesc_t *);
-static void	fbt_provide_module(void *, modctl_t *);
+static void	fbt_provide_module(void *, dtrace_modctl_t *);
 static void	fbt_destroy(void *, dtrace_id_t, void *);
-static void	fbt_enable(void *, dtrace_id_t, void *);
+static int	fbt_enable(void *, dtrace_id_t, void *);
 static void	fbt_disable(void *, dtrace_id_t, void *);
-static void	fbt_load(void *);
+static void	fbt_load(void);
 static void	fbt_suspend(void *, dtrace_id_t, void *);
 static void	fbt_resume(void *, dtrace_id_t, void *);
 
@@ -99,10 +110,10 @@ static void	fbt_resume(void *, dtrace_id_t, void *);
 #define	FBT_ADDR2NDX(addr)	((((uintptr_t)(addr)) >> 4) & fbt_probetab_mask)
 #define	FBT_PROBETAB_SIZE	0x8000		/* 32k entries -- 128K total */
 
-static struct cdevsw fbt_cdevsw = {
-	.d_version	= D_VERSION,
-	.d_open		= fbt_open,
-	.d_name		= "fbt",
+static const struct cdevsw fbt_cdevsw = {
+	fbt_open, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+	D_OTHER
 };
 
 static dtrace_pattr_t fbt_attr = {
@@ -135,7 +146,7 @@ typedef struct fbt_probe {
 	uintptr_t	fbtp_roffset;
 	dtrace_id_t	fbtp_id;
 	const char	*fbtp_name;
-	modctl_t	*fbtp_ctl;
+	dtrace_modctl_t	*fbtp_ctl;
 	int		fbtp_loadcnt;
 	int		fbtp_primary;
 	int		fbtp_invop_cnt;
@@ -164,10 +175,11 @@ fbt_doubletrap(void)
 	}
 }
 
+
 static int
 fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 {
-	solaris_cpu_t *cpu = &solaris_cpu[curcpu];
+	solaris_cpu_t *cpu = &solaris_cpu[cpu_number()];
 	uintptr_t stack0, stack1, stack2, stack3, stack4;
 	fbt_probe_t *fbt = fbt_probetab[FBT_ADDR2NDX(addr)];
 
@@ -224,15 +236,20 @@ fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 }
 
 static int
-fbt_provide_module_function(linker_file_t lf, int symindx,
-    linker_symval_t *symval, void *opaque)
+fbt_provide_module_cb(const char *name, int symindx, void *value,
+	uint32_t size, int type, void *opaque)
 {
-	char *modname = opaque;
-	const char *name = symval->name;
 	fbt_probe_t *fbt, *retfbt;
-	int j;
-	int size;
 	u_int8_t *instr, *limit;
+	dtrace_modctl_t *mod = opaque;
+	const char *modname = mod->mod_info->mi_name;
+	int j;
+	int ind;
+
+	/* got a function? */
+	if (ELF_ST_TYPE(type) != STT_FUNC) {
+	    return 0;
+	}
 
 	if (strncmp(name, "dtrace_", 7) == 0 &&
 	    strncmp(name, "dtrace_safe_", 12) != 0) {
@@ -248,10 +265,8 @@ fbt_provide_module_function(linker_file_t lf, int symindx,
 	if (name[0] == '_' && name[1] == '_')
 		return (0);
 
-	size = symval->size;
-
-	instr = (u_int8_t *) symval->value;
-	limit = (u_int8_t *) symval->value + symval->size;
+	instr = (u_int8_t *) value;
+	limit = (u_int8_t *) value + size;
 
 #ifdef __amd64__
 	while (instr < limit) {
@@ -273,23 +288,24 @@ fbt_provide_module_function(linker_file_t lf, int symindx,
 		return (0);
 	}
 #else
-	if (instr[0] != FBT_PUSHL_EBP)
+	if (instr[0] != FBT_PUSHL_EBP) {
 		return (0);
+	}
 
 	if (!(instr[1] == FBT_MOVL_ESP_EBP0_V0 &&
 	    instr[2] == FBT_MOVL_ESP_EBP1_V0) &&
 	    !(instr[1] == FBT_MOVL_ESP_EBP0_V1 &&
-	    instr[2] == FBT_MOVL_ESP_EBP1_V1))
+	    instr[2] == FBT_MOVL_ESP_EBP1_V1)) {
 		return (0);
+	}
 #endif
-
 	fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
 	fbt->fbtp_name = name;
 	fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
 	    name, FBT_ENTRY, 3, fbt);
 	fbt->fbtp_patchpoint = instr;
-	fbt->fbtp_ctl = lf;
-	fbt->fbtp_loadcnt = lf->loadcnt;
+	fbt->fbtp_ctl = mod;
+	/* fbt->fbtp_loadcnt = lf->loadcnt; */
 	fbt->fbtp_rval = DTRACE_INVOP_PUSHL_EBP;
 	fbt->fbtp_savedval = *instr;
 	fbt->fbtp_patchval = FBT_PATCHVAL;
@@ -297,130 +313,132 @@ fbt_provide_module_function(linker_file_t lf, int symindx,
 
 	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
 	fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
-
-	lf->fbt_nentries++;
+	mod->mod_fbtentries++;
 
 	retfbt = NULL;
-again:
-	if (instr >= limit)
-		return (0);
 
-	/*
-	 * If this disassembly fails, then we've likely walked off into
-	 * a jump table or some other unsuitable area.  Bail out of the
-	 * disassembly now.
-	 */
-	if ((size = dtrace_instr_size(instr)) <= 0)
-		return (0);
+	while (instr < limit) {
+		if (instr >= limit)
+			return (0);
+
+		/*
+		 * If this disassembly fails, then we've likely walked off into
+		 * a jump table or some other unsuitable area.  Bail out of the
+		 * disassembly now.
+		 */
+		if ((size = dtrace_instr_size(instr)) <= 0)
+			return (0);
 
 #ifdef __amd64__
-	/*
-	 * We only instrument "ret" on amd64 -- we don't yet instrument
-	 * ret imm16, largely because the compiler doesn't seem to
-	 * (yet) emit them in the kernel...
-	 */
-	if (*instr != FBT_RET) {
-		instr += size;
-		goto again;
-	}
+		/*
+		 * We only instrument "ret" on amd64 -- we don't yet instrument
+		 * ret imm16, largely because the compiler doesn't seem to
+		 * (yet) emit them in the kernel...
+		 */
+		if (*instr != FBT_RET) {
+			instr += size;
+			continue;
+		}
 #else
-	if (!(size == 1 &&
-	    (*instr == FBT_POPL_EBP || *instr == FBT_LEAVE) &&
-	    (*(instr + 1) == FBT_RET ||
-	    *(instr + 1) == FBT_RET_IMM16))) {
-		instr += size;
-		goto again;
-	}
+		if (!(size == 1 &&
+		    (*instr == FBT_POPL_EBP || *instr == FBT_LEAVE) &&
+		    (*(instr + 1) == FBT_RET ||
+		    *(instr + 1) == FBT_RET_IMM16))) {
+			instr += size;
+			continue;
+		}
 #endif
 
-	/*
-	 * We (desperately) want to avoid erroneously instrumenting a
-	 * jump table, especially given that our markers are pretty
-	 * short:  two bytes on x86, and just one byte on amd64.  To
-	 * determine if we're looking at a true instruction sequence
-	 * or an inline jump table that happens to contain the same
-	 * byte sequences, we resort to some heuristic sleeze:  we
-	 * treat this instruction as being contained within a pointer,
-	 * and see if that pointer points to within the body of the
-	 * function.  If it does, we refuse to instrument it.
-	 */
-	for (j = 0; j < sizeof (uintptr_t); j++) {
-		caddr_t check = (caddr_t) instr - j;
-		uint8_t *ptr;
+		/*
+		 * We (desperately) want to avoid erroneously instrumenting a
+		 * jump table, especially given that our markers are pretty
+		 * short:  two bytes on x86, and just one byte on amd64.  To
+		 * determine if we're looking at a true instruction sequence
+		 * or an inline jump table that happens to contain the same
+		 * byte sequences, we resort to some heuristic sleeze:  we
+		 * treat this instruction as being contained within a pointer,
+		 * and see if that pointer points to within the body of the
+		 * function.  If it does, we refuse to instrument it.
+		 */
+		for (j = 0; j < sizeof (uintptr_t); j++) {
+			caddr_t check = (caddr_t) instr - j;
+			uint8_t *ptr;
 
-		if (check < symval->value)
-			break;
+			if (check < (caddr_t)value)
+				break;
 
-		if (check + sizeof (caddr_t) > (caddr_t)limit)
-			continue;
+			if (check + sizeof (caddr_t) > (caddr_t)limit)
+				continue;
 
-		ptr = *(uint8_t **)check;
+			ptr = *(uint8_t **)check;
 
-		if (ptr >= (uint8_t *) symval->value && ptr < limit) {
-			instr += size;
-			goto again;
+			if (ptr >= (uint8_t *) value && ptr < limit) {
+				instr += size;
+				continue;
+			}
 		}
-	}
 
-	/*
-	 * We have a winner!
-	 */
-	fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
-	fbt->fbtp_name = name;
+		/*
+		 * We have a winner!
+		 */
+		fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
+		fbt->fbtp_name = name;
 
-	if (retfbt == NULL) {
-		fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
-		    name, FBT_RETURN, 3, fbt);
-	} else {
-		retfbt->fbtp_next = fbt;
-		fbt->fbtp_id = retfbt->fbtp_id;
-	}
+		if (retfbt == NULL) {
+			fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
+			    name, FBT_RETURN, 3, fbt);
+		} else {
+			retfbt->fbtp_next = fbt;
+			fbt->fbtp_id = retfbt->fbtp_id;
+		}
 
-	retfbt = fbt;
-	fbt->fbtp_patchpoint = instr;
-	fbt->fbtp_ctl = lf;
-	fbt->fbtp_loadcnt = lf->loadcnt;
-	fbt->fbtp_symindx = symindx;
+		retfbt = fbt;
+		fbt->fbtp_patchpoint = instr;
+		fbt->fbtp_ctl = mod;
+		/* fbt->fbtp_loadcnt = lf->loadcnt; */
+		fbt->fbtp_symindx = symindx;
 
 #ifndef __amd64__
-	if (*instr == FBT_POPL_EBP) {
-		fbt->fbtp_rval = DTRACE_INVOP_POPL_EBP;
-	} else {
-		ASSERT(*instr == FBT_LEAVE);
-		fbt->fbtp_rval = DTRACE_INVOP_LEAVE;
-	}
-	fbt->fbtp_roffset =
-	    (uintptr_t)(instr - (uint8_t *) symval->value) + 1;
+		if (*instr == FBT_POPL_EBP) {
+			fbt->fbtp_rval = DTRACE_INVOP_POPL_EBP;
+		} else {
+			ASSERT(*instr == FBT_LEAVE);
+			fbt->fbtp_rval = DTRACE_INVOP_LEAVE;
+		}
+		fbt->fbtp_roffset =
+		    (uintptr_t)(instr - (uint8_t *) value) + 1;
 
 #else
-	ASSERT(*instr == FBT_RET);
-	fbt->fbtp_rval = DTRACE_INVOP_RET;
-	fbt->fbtp_roffset =
-	    (uintptr_t)(instr - (uint8_t *) symval->value);
+		ASSERT(*instr == FBT_RET);
+		fbt->fbtp_rval = DTRACE_INVOP_RET;
+		fbt->fbtp_roffset =
+		    (uintptr_t)(instr - (uint8_t *) value);
 #endif
 
-	fbt->fbtp_savedval = *instr;
-	fbt->fbtp_patchval = FBT_PATCHVAL;
-	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
-	fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
+		fbt->fbtp_savedval = *instr;
+		fbt->fbtp_patchval = FBT_PATCHVAL;
+		fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
+		fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
 
-	lf->fbt_nentries++;
+		mod->mod_fbtentries++;
 
-	instr += size;
-	goto again;
+		instr += size;
+	}
+
+	return 0;
 }
 
 static void
-fbt_provide_module(void *arg, modctl_t *lf)
+fbt_provide_module(void *arg, dtrace_modctl_t *mod)
 {
 	char modname[MAXPATHLEN];
 	int i;
 	size_t len;
 
-	strlcpy(modname, lf->filename, sizeof(modname));
+	strlcpy(modname, mod->mod_info->mi_name, sizeof(modname));
 	len = strlen(modname);
-	if (len > 3 && strcmp(modname + len - 3, ".ko") == 0)
-		modname[len - 3] = '\0';
+	if (len > 5 && strcmp(modname + len - 3, ".kmod") == 0)
+		modname[len - 4] = '\0';
 
 	/*
 	 * Employees of dtrace and their families are ineligible.  Void
@@ -442,11 +460,13 @@ fbt_provide_module(void *arg, modctl_t *lf)
 	 * symbols like dtrace_register(). All modules with such a
 	 * dependency are ineligible for FBT tracing.
 	 */
-	for (i = 0; i < lf->ndeps; i++)
-		if (strncmp(lf->deps[i]->filename, "dtrace", 6) == 0)
+	for (i = 0; i < mod->mod_nrequired; i++) {
+		if (strncmp(mod->mod_required[i]->mod_info->mi_name,
+			    "dtrace", 6) == 0)
 			return;
+	}
 
-	if (lf->fbt_nentries) {
+	if (mod->mod_fbtentries) {
 		/*
 		 * This module has some FBT entries allocated; we're afraid
 		 * to screw with it.
@@ -457,20 +477,20 @@ fbt_provide_module(void *arg, modctl_t *lf)
 	/*
 	 * List the functions in the module and the symbol values.
 	 */
-	(void) linker_file_function_listall(lf, fbt_provide_module_function, modname);
+	ksyms_mod_foreach(modname, fbt_provide_module_cb, mod);
 }
 
 static void
 fbt_destroy(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg, *next, *hash, *last;
-	modctl_t *ctl;
+	dtrace_modctl_t *ctl;
 	int ndx;
 
 	do {
 		ctl = fbt->fbtp_ctl;
 
-		ctl->fbt_nentries--;
+		ctl->mod_fbtentries--;
 
 		/*
 		 * Now we need to remove this probe from the fbt_probetab.
@@ -498,12 +518,16 @@ fbt_destroy(void *arg, dtrace_id_t id, void *parg)
 	} while (fbt != NULL);
 }
 
-static void
+static int
 fbt_enable(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg;
-	modctl_t *ctl = fbt->fbtp_ctl;
+	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+	u_long psl;
+	u_long cr0;
 
+
+#if 0	/* XXX TBD */
 	ctl->nenabled++;
 
 	/*
@@ -520,96 +544,196 @@ fbt_enable(void *arg, dtrace_id_t id, void *parg)
 
 		return;
 	}
+#endif
+
+	/* Disable interrupts. */
+	psl = x86_read_psl();
+	x86_disable_intr();
+
+	/* Disable write protection in supervisor mode. */
+	cr0 = rcr0();
+	lcr0(cr0 & ~CR0_WP);
 
 	for (; fbt != NULL; fbt = fbt->fbtp_next) {
 		*fbt->fbtp_patchpoint = fbt->fbtp_patchval;
 	}
+
+	/* Write back and invalidate cache, flush pipelines. */
+	wbinvd();
+	x86_flush();
+	x86_write_psl(psl);
+
+	/* Re-enable write protection. */
+	lcr0(cr0);
+
+	return 0;
 }
 
 static void
 fbt_disable(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg;
-	modctl_t *ctl = fbt->fbtp_ctl;
+	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+	u_long psl;
+	u_long cr0;
 
+#if 0	/* XXX TBD */
 	ASSERT(ctl->nenabled > 0);
 	ctl->nenabled--;
 
 	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
 		return;
+#endif
+	/* Disable interrupts. */
+	psl = x86_read_psl();
+	x86_disable_intr();
+
+	/* Disable write protection in supervisor mode. */
+	cr0 = rcr0();
+	lcr0(cr0 & ~CR0_WP);
 
 	for (; fbt != NULL; fbt = fbt->fbtp_next)
 		*fbt->fbtp_patchpoint = fbt->fbtp_savedval;
+
+	/* Write back and invalidate cache, flush pipelines. */
+	wbinvd();
+	x86_flush();
+	x86_write_psl(psl);
+
+	/* Re-enable write protection. */
+	lcr0(cr0);
 }
 
 static void
 fbt_suspend(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg;
-	modctl_t *ctl = fbt->fbtp_ctl;
+	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+	u_long psl;
+	u_long cr0;
 
+#if 0	/* XXX TBD */
 	ASSERT(ctl->nenabled > 0);
 
 	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
 		return;
+#endif
+
+	/* Disable interrupts. */
+	psl = x86_read_psl();
+	x86_disable_intr();
+
+	/* Disable write protection in supervisor mode. */
+	cr0 = rcr0();
+	lcr0(cr0 & ~CR0_WP);
 
 	for (; fbt != NULL; fbt = fbt->fbtp_next)
 		*fbt->fbtp_patchpoint = fbt->fbtp_savedval;
+
+	/* Write back and invalidate cache, flush pipelines. */
+	wbinvd();
+	x86_flush();
+	x86_write_psl(psl);
+
+	/* Re-enable write protection. */
+	lcr0(cr0);
 }
 
 static void
 fbt_resume(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg;
-	modctl_t *ctl = fbt->fbtp_ctl;
+	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+	u_long psl;
+	u_long cr0;
 
+#if 0	/* XXX TBD */
 	ASSERT(ctl->nenabled > 0);
 
 	if ((ctl->loadcnt != fbt->fbtp_loadcnt))
 		return;
+#endif
+	/* Disable interrupts. */
+	psl = x86_read_psl();
+	x86_disable_intr();
+
+	/* Disable write protection in supervisor mode. */
+	cr0 = rcr0();
+	lcr0(cr0 & ~CR0_WP);
 
 	for (; fbt != NULL; fbt = fbt->fbtp_next)
 		*fbt->fbtp_patchpoint = fbt->fbtp_patchval;
+
+	/* Write back and invalidate cache, flush pipelines. */
+	wbinvd();
+	x86_flush();
+	x86_write_psl(psl);
+
+	/* Re-enable write protection. */
+	lcr0(cr0);
 }
 
 static int
-fbt_ctfoff_init(modctl_t *lf, linker_ctf_t *lc)
+fbt_ctfoff_init(dtrace_modctl_t *mod, mod_ctf_t *mc)
 {
-	const Elf_Sym *symp = lc->symtab;;
+	const Elf_Sym *symp = mc->symtab;
 	const char *name;
-	const ctf_header_t *hp = (const ctf_header_t *) lc->ctftab;
-	const uint8_t *ctfdata = lc->ctftab + sizeof(ctf_header_t);
+	const ctf_header_t *hp = (const ctf_header_t *) mc->ctftab;
+	const uint8_t *ctfdata = mc->ctftab + sizeof(ctf_header_t);
 	int i;
 	uint32_t *ctfoff;
 	uint32_t objtoff = hp->cth_objtoff;
 	uint32_t funcoff = hp->cth_funcoff;
 	ushort_t info;
 	ushort_t vlen;
+	int nsyms = (mc->nmap != NULL) ? mc->nmapsize : mc->nsym;
 
 	/* Sanity check. */
 	if (hp->cth_magic != CTF_MAGIC) {
-		printf("Bad magic value in CTF data of '%s'\n",lf->pathname);
+		printf("Bad magic value in CTF data of '%s'\n",
+			mod->mod_info->mi_name);
 		return (EINVAL);
 	}
 
-	if (lc->symtab == NULL) {
-		printf("No symbol table in '%s'\n",lf->pathname);
+	if (mc->symtab == NULL) {
+		printf("No symbol table in '%s'\n",
+			mod->mod_info->mi_name);
 		return (EINVAL);
 	}
 
-	if ((ctfoff = malloc(sizeof(uint32_t) * lc->nsym, M_LINKER, M_WAITOK)) == NULL)
+	if ((ctfoff = malloc(sizeof(uint32_t) * nsyms, M_FBT, M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	*lc->ctfoffp = ctfoff;
+	mc->ctfoffp = ctfoff;
 
-	for (i = 0; i < lc->nsym; i++, ctfoff++, symp++) {
+	for (i = 0; i < nsyms; i++, ctfoff++, symp++) {
+	   	if (mc->nmap != NULL) {
+			if (mc->nmap[i] == 0) {
+				printf("%s.%d: Error! Got zero nmap!\n",
+					__func__, __LINE__);
+				continue;
+			}
+
+			/* CTF expects the pre-sorted symbol ordering, 
+			 * so map it from that to the current sorted
+			 * and trimmed symbol table.
+			 * ctfoff[new-ind] = oldind symbol info.
+			 */
+
+			/* map old index to new symbol table */
+			symp = &mc->symtab[mc->nmap[i] - 1];
+
+			/* map old index to new ctfoff index */
+			ctfoff = &mc->ctfoffp[mc->nmap[i]-1];
+		}
+
 		if (symp->st_name == 0 || symp->st_shndx == SHN_UNDEF) {
 			*ctfoff = 0xffffffff;
 			continue;
 		}
 
-		if (symp->st_name < lc->strcnt)
-			name = lc->strtab + symp->st_name;
+		if (symp->st_name < mc->strcnt)
+			name = mc->strtab + symp->st_name;
 		else
 			name = "(?)";
 
@@ -680,17 +804,16 @@ fbt_get_ctt_size(uint8_t version, const ctf_type_t *tp, ssize_t *sizep,
 }
 
 static int
-fbt_typoff_init(linker_ctf_t *lc)
+fbt_typoff_init(mod_ctf_t *mc)
 {
-	const ctf_header_t *hp = (const ctf_header_t *) lc->ctftab;
+	const ctf_header_t *hp = (const ctf_header_t *) mc->ctftab;
 	const ctf_type_t *tbuf;
 	const ctf_type_t *tend;
 	const ctf_type_t *tp;
-	const uint8_t *ctfdata = lc->ctftab + sizeof(ctf_header_t);
+	const uint8_t *ctfdata = mc->ctftab + sizeof(ctf_header_t);
 	int ctf_typemax = 0;
 	uint32_t *xp;
 	ulong_t pop[CTF_K_MAX + 1] = { 0 };
-
 
 	/* Sanity check. */
 	if (hp->cth_magic != CTF_MAGIC)
@@ -779,12 +902,12 @@ fbt_typoff_init(linker_ctf_t *lc)
 		pop[kind]++;
 	}
 
-	*lc->typlenp = ctf_typemax;
+	mc->typlen = ctf_typemax;
 
-	if ((xp = malloc(sizeof(uint32_t) * ctf_typemax, M_LINKER, M_ZERO | M_WAITOK)) == NULL)
+	if ((xp = malloc(sizeof(uint32_t) * ctf_typemax, M_FBT, M_ZERO | M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	*lc->typoffp = xp;
+	mc->typoffp = xp;
 
 	/* type id 0 is used as a sentinel value */
 	*xp++ = 0;
@@ -990,14 +1113,14 @@ ctf_decl_fini(ctf_decl_t *cd)
 }
 
 static const ctf_type_t *
-ctf_lookup_by_id(linker_ctf_t *lc, ctf_id_t type)
+ctf_lookup_by_id(mod_ctf_t *mc, ctf_id_t type)
 {
 	const ctf_type_t *tp;
 	uint32_t offset;
-	uint32_t *typoff = *lc->typoffp;
+	uint32_t *typoff = mc->typoffp;
 
-	if (type >= *lc->typlenp) {
-		printf("%s(%d): type %d exceeds max %ld\n",__func__,__LINE__,(int) type,*lc->typlenp);
+	if (type >= mc->typlen) {
+		printf("%s(%d): type %d exceeds max %ld\n",__func__,__LINE__,(int) type,mc->typlen);
 		return(NULL);
 	}
 
@@ -1007,22 +1130,22 @@ ctf_lookup_by_id(linker_ctf_t *lc, ctf_id_t type)
 		return(NULL);
 	}
 
-	tp = (const ctf_type_t *)(lc->ctftab + offset + sizeof(ctf_header_t));
+	tp = (const ctf_type_t *)(mc->ctftab + offset + sizeof(ctf_header_t));
 
 	return (tp);
 }
 
 static void
-fbt_array_info(linker_ctf_t *lc, ctf_id_t type, ctf_arinfo_t *arp)
+fbt_array_info(mod_ctf_t *mc, ctf_id_t type, ctf_arinfo_t *arp)
 {
-	const ctf_header_t *hp = (const ctf_header_t *) lc->ctftab;
+	const ctf_header_t *hp = (const ctf_header_t *) mc->ctftab;
 	const ctf_type_t *tp;
 	const ctf_array_t *ap;
 	ssize_t increment;
 
 	bzero(arp, sizeof(*arp));
 
-	if ((tp = ctf_lookup_by_id(lc, type)) == NULL)
+	if ((tp = ctf_lookup_by_id(mc, type)) == NULL)
 		return;
 
 	if (CTF_INFO_KIND(tp->ctt_info) != CTF_K_ARRAY)
@@ -1037,21 +1160,21 @@ fbt_array_info(linker_ctf_t *lc, ctf_id_t type, ctf_arinfo_t *arp)
 }
 
 static const char *
-ctf_strptr(linker_ctf_t *lc, int name)
+ctf_strptr(mod_ctf_t *mc, int name)
 {
-	const ctf_header_t *hp = (const ctf_header_t *) lc->ctftab;;
+	const ctf_header_t *hp = (const ctf_header_t *) mc->ctftab;;
 	const char *strp = "";
 
 	if (name < 0 || name >= hp->cth_strlen)
 		return(strp);
 
-	strp = (const char *)(lc->ctftab + hp->cth_stroff + name + sizeof(ctf_header_t));
+	strp = (const char *)(mc->ctftab + hp->cth_stroff + name + sizeof(ctf_header_t));
 
 	return (strp);
 }
 
 static void
-ctf_decl_push(ctf_decl_t *cd, linker_ctf_t *lc, ctf_id_t type)
+ctf_decl_push(ctf_decl_t *cd, mod_ctf_t *mc, ctf_id_t type)
 {
 	ctf_decl_node_t *cdp;
 	ctf_decl_prec_t prec;
@@ -1061,41 +1184,41 @@ ctf_decl_push(ctf_decl_t *cd, linker_ctf_t *lc, ctf_id_t type)
 	const ctf_type_t *tp;
 	ctf_arinfo_t ar;
 
-	if ((tp = ctf_lookup_by_id(lc, type)) == NULL) {
+	if ((tp = ctf_lookup_by_id(mc, type)) == NULL) {
 		cd->cd_err = ENOENT;
 		return;
 	}
 
 	switch (kind = CTF_INFO_KIND(tp->ctt_info)) {
 	case CTF_K_ARRAY:
-		fbt_array_info(lc, type, &ar);
-		ctf_decl_push(cd, lc, ar.ctr_contents);
+		fbt_array_info(mc, type, &ar);
+		ctf_decl_push(cd, mc, ar.ctr_contents);
 		n = ar.ctr_nelems;
 		prec = CTF_PREC_ARRAY;
 		break;
 
 	case CTF_K_TYPEDEF:
-		if (ctf_strptr(lc, tp->ctt_name)[0] == '\0') {
-			ctf_decl_push(cd, lc, tp->ctt_type);
+		if (ctf_strptr(mc, tp->ctt_name)[0] == '\0') {
+			ctf_decl_push(cd, mc, tp->ctt_type);
 			return;
 		}
 		prec = CTF_PREC_BASE;
 		break;
 
 	case CTF_K_FUNCTION:
-		ctf_decl_push(cd, lc, tp->ctt_type);
+		ctf_decl_push(cd, mc, tp->ctt_type);
 		prec = CTF_PREC_FUNCTION;
 		break;
 
 	case CTF_K_POINTER:
-		ctf_decl_push(cd, lc, tp->ctt_type);
+		ctf_decl_push(cd, mc, tp->ctt_type);
 		prec = CTF_PREC_POINTER;
 		break;
 
 	case CTF_K_VOLATILE:
 	case CTF_K_CONST:
 	case CTF_K_RESTRICT:
-		ctf_decl_push(cd, lc, tp->ctt_type);
+		ctf_decl_push(cd, mc, tp->ctt_type);
 		prec = cd->cd_qualp;
 		is_qual++;
 		break;
@@ -1150,7 +1273,7 @@ ctf_decl_sprintf(ctf_decl_t *cd, const char *format, ...)
 }
 
 static ssize_t
-fbt_type_name(linker_ctf_t *lc, ctf_id_t type, char *buf, size_t len)
+fbt_type_name(mod_ctf_t *mc, ctf_id_t type, char *buf, size_t len)
 {
 	ctf_decl_t cd;
 	ctf_decl_node_t *cdp;
@@ -1158,11 +1281,11 @@ fbt_type_name(linker_ctf_t *lc, ctf_id_t type, char *buf, size_t len)
 	int ptr, arr;
 	uint_t k;
 
-	if (lc == NULL && type == CTF_ERR)
+	if (mc == NULL && type == CTF_ERR)
 		return (-1); /* simplify caller code by permitting CTF_ERR */
 
 	ctf_decl_init(&cd, buf, len);
-	ctf_decl_push(&cd, lc, type);
+	ctf_decl_push(&cd, mc, type);
 
 	if (cd.cd_err != 0) {
 		ctf_decl_fini(&cd);
@@ -1189,8 +1312,8 @@ fbt_type_name(linker_ctf_t *lc, ctf_id_t type, char *buf, size_t len)
 		    cdp != NULL; cdp = ctf_list_next(cdp)) {
 
 			const ctf_type_t *tp =
-			    ctf_lookup_by_id(lc, cdp->cd_type);
-			const char *name = ctf_strptr(lc, tp->ctt_name);
+			    ctf_lookup_by_id(mc, cdp->cd_type);
+			const char *name = ctf_strptr(mc, tp->ctt_name);
 
 			if (k != CTF_K_POINTER && k != CTF_K_ARRAY)
 				ctf_decl_sprintf(&cd, " ");
@@ -1252,49 +1375,56 @@ fbt_getargdesc(void *arg __unused, dtrace_id_t id __unused, void *parg, dtrace_a
 {
 	const ushort_t *dp;
 	fbt_probe_t *fbt = parg;
-	linker_ctf_t lc;
-	modctl_t *ctl = fbt->fbtp_ctl;
+	mod_ctf_t mc;
+	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
 	int ndx = desc->dtargd_ndx;
 	int symindx = fbt->fbtp_symindx;
 	uint32_t *ctfoff;
 	uint32_t offset;
 	ushort_t info, kind, n;
+	int nsyms;
 
 	desc->dtargd_ndx = DTRACE_ARGNONE;
 
 	/* Get a pointer to the CTF data and it's length. */
-	if (linker_ctf_get(ctl, &lc) != 0)
+	if (mod_ctf_get(ctl, &mc) != 0) {
 		/* No CTF data? Something wrong? *shrug* */
 		return;
+	}
+
+	nsyms = (mc.nmap != NULL) ? mc.nmapsize : mc.nsym;
 
 	/* Check if this module hasn't been initialised yet. */
-	if (*lc.ctfoffp == NULL) {
+	if (mc.ctfoffp == NULL) {
 		/*
 		 * Initialise the CTF object and function symindx to
 		 * byte offset array.
 		 */
-		if (fbt_ctfoff_init(ctl, &lc) != 0)
+		if (fbt_ctfoff_init(ctl, &mc) != 0) {
 			return;
+		}
 
 		/* Initialise the CTF type to byte offset array. */
-		if (fbt_typoff_init(&lc) != 0)
+		if (fbt_typoff_init(&mc) != 0) {
 			return;
+		}
 	}
 
-	ctfoff = *lc.ctfoffp;
+	ctfoff = mc.ctfoffp;
 
-	if (ctfoff == NULL || *lc.typoffp == NULL)
+	if (ctfoff == NULL || mc.typoffp == NULL) {
 		return;
+	}
 
 	/* Check if the symbol index is out of range. */
-	if (symindx >= lc.nsym)
+	if (symindx >= nsyms)
 		return;
 
 	/* Check if the symbol isn't cross-referenced. */
 	if ((offset = ctfoff[symindx]) == 0xffffffff)
 		return;
 
-	dp = (const ushort_t *)(lc.ctftab + offset + sizeof(ctf_header_t));
+	dp = (const ushort_t *)(mc.ctftab + offset + sizeof(ctf_header_t));
 
 	info = *dp++;
 	kind = CTF_INFO_KIND(info);
@@ -1317,19 +1447,16 @@ fbt_getargdesc(void *arg __unused, dtrace_id_t id __unused, void *parg, dtrace_a
 	/* Skip the return type and arguments up to the one requested. */
 	dp += ndx + 1;
 
-	if (fbt_type_name(&lc, *dp, desc->dtargd_native, sizeof(desc->dtargd_native)) > 0)
+	if (fbt_type_name(&mc, *dp, desc->dtargd_native, sizeof(desc->dtargd_native)) > 0) {
 		desc->dtargd_ndx = ndx;
+	}
 
 	return;
 }
 
 static void
-fbt_load(void *dummy)
+fbt_load(void)
 {
-	/* Create the /dev/dtrace/fbt entry. */
-	fbt_cdev = make_dev(&fbt_cdevsw, 0, UID_ROOT, GID_WHEEL, 0600,
-	    "dtrace/fbt");
-
 	/* Default the probe table size if not specified. */
 	if (fbt_probetab_size == 0)
 		fbt_probetab_size = FBT_PROBETAB_SIZE;
@@ -1351,7 +1478,7 @@ fbt_load(void *dummy)
 
 
 static int
-fbt_unload()
+fbt_unload(void)
 {
 	int error = 0;
 
@@ -1369,45 +1496,33 @@ fbt_unload()
 	fbt_probetab = NULL;
 	fbt_probetab_mask = 0;
 
-	destroy_dev(fbt_cdev);
-
 	return (error);
 }
 
+
 static int
-fbt_modevent(module_t mod __unused, int type, void *data __unused)
+fbt_modcmd(modcmd_t cmd, void *data)
 {
+	int bmajor = -1, cmajor = -1;
 	int error = 0;
 
-	switch (type) {
-	case MOD_LOAD:
-		break;
-
-	case MOD_UNLOAD:
-		break;
-
-	case MOD_SHUTDOWN:
-		break;
-
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		fbt_load();
+		return devsw_attach("fbt", NULL, &bmajor,
+		    &fbt_cdevsw, &cmajor);
+	case MODULE_CMD_FINI:
+		fbt_unload();
+		return devsw_detach(NULL, &fbt_cdevsw);
 	default:
-		error = EOPNOTSUPP;
-		break;
-
+		return ENOTTY;
 	}
-
-	return (error);
 }
 
 static int
-fbt_open(struct cdev *dev __unused, int oflags __unused, int devtype __unused, struct thread *td __unused)
+fbt_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	return (0);
 }
 
-SYSINIT(fbt_load, SI_SUB_DTRACE_PROVIDER, SI_ORDER_ANY, fbt_load, NULL);
-SYSUNINIT(fbt_unload, SI_SUB_DTRACE_PROVIDER, SI_ORDER_ANY, fbt_unload, NULL);
-
-DEV_MODULE(fbt, fbt_modevent, NULL);
-MODULE_VERSION(fbt, 1);
-MODULE_DEPEND(fbt, dtrace, 1, 1, 1);
-MODULE_DEPEND(fbt, opensolaris, 1, 1, 1);
+MODULE(MODULE_CLASS_MISC, fbt, "dtrace");

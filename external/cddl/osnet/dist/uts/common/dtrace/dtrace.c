@@ -140,6 +140,11 @@
 #include "dtrace_debug.c"
 #endif
 
+#if !defined(sun)
+/* fake module entry for netbsd */
+module_t *mod_nbsd = NULL;
+#endif
+
 /*
  * DTrace Tunable Variables
  *
@@ -8016,7 +8021,17 @@ dtrace_probe_provide(dtrace_probedesc_t *desc, dtrace_provider_t *prv)
 
 		} while ((ctl = ctl->mod_next) != &modules);
 #else
+
+		/* Fake netbsd module first */
+		if (mod_nbsd == NULL) {
+		    mod_nbsd = kmem_zalloc(sizeof(*mod_nbsd), KM_SLEEP);
+		    mod_nbsd->mod_info = kmem_zalloc(sizeof(modinfo_t), KM_SLEEP);
+		    mod_nbsd->mod_refcnt = 1;
+		    *((char **)&mod_nbsd->mod_info->mi_name) = "netbsd";
+		}
+
 		mutex_enter(&module_lock);
+		prv->dtpv_pops.dtps_provide_module(prv->dtpv_arg, mod_nbsd);
 		TAILQ_FOREACH(mod, &module_list, mod_chain) {
 			prv->dtpv_pops.dtps_provide_module(prv->dtpv_arg, mod);
 		}
@@ -16654,7 +16669,7 @@ static int		dtrace_unload(void);
 #include <dtrace_hacks.c>
 #include <dtrace_isa.c>
 
-MODULE(MODULE_CLASS_MISC, dtrace, NULL);
+MODULE(MODULE_CLASS_MISC, dtrace, "solaris");
 
 #if 0
 DEV_MODULE(dtrace, dtrace_modevent, NULL);
