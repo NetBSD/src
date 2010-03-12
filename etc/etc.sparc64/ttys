@@ -1,15 +1,15 @@
-#	$NetBSD: ttys,v 1.9 2008/10/07 10:00:02 abs Exp $
+#	$NetBSD: ttys,v 1.10 2010/03/12 14:50:54 roy Exp $
 #
 #	@(#)ttys	5.1 (Berkeley) 4/17/89
 #
 # name	getty				type	status		comments
 #
-console	"/usr/libexec/getty suncons"	sun-ss5	on secure
-constty	"/usr/libexec/getty suncons"	sun-ss5	off secure
-ttyE0	"/usr/libexec/getty suncons"	sun-ss5	off secure
-ttyE1	"/usr/libexec/getty suncons"	sun-ss5	off secure
-ttyE2	"/usr/libexec/getty suncons"	sun-ss5	off secure
-ttyE3	"/usr/libexec/getty suncons"	sun-ss5	off secure
+console	"/usr/libexec/getty suncons"	wsvt25	on secure
+constty	"/usr/libexec/getty suncons"	wsvt25	off secure
+ttyE0	"/usr/libexec/getty suncons"	wsvt25	off secure
+ttyE1	"/usr/libexec/getty suncons"	wsvt25	off secure
+ttyE2	"/usr/libexec/getty suncons"	wsvt25	off secure
+ttyE3	"/usr/libexec/getty suncons"	wsvt25	off secure
 ttya	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyb	"/usr/libexec/getty std.9600"	unknown	off secure
 ttyh0   "/usr/libexec/getty std.9600"   unknown off secure
