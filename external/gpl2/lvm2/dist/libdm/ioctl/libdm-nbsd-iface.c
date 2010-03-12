@@ -1,4 +1,4 @@
-/*      $NetBSD: libdm-nbsd-iface.c,v 1.6 2009/12/09 00:15:51 haad Exp $        */
+/*      $NetBSD: libdm-nbsd-iface.c,v 1.7 2010/03/12 16:24:40 haad Exp $        */
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -358,6 +358,45 @@ static int _unmarshal_status(struct dm_task *dmt, struct dm_ioctl *dmi)
 	return 1;
 }
 
+static char *
+get_dev_name(char *d_name, uint32_t d_major, uint32_t d_minor)
+{
+	static char d_buf[MAXPATHLEN];
+	struct dirent *dire;
+	struct stat st;
+	DIR *dev_dir;
+
+	int err;
+	char *name;
+
+	dev_dir = opendir("/dev");
+
+	while ((dire = readdir(dev_dir)) != NULL) {
+
+		if (strstr(dire->d_name, d_name) == NULL)
+			continue;
+
+		snprintf(d_buf, MAXPATHLEN, "/dev/%s", dire->d_name);
+
+		if ((err = stat(d_buf, &st)) < 0)
+			printf("stat failed with %d", err);
+
+		if (st.st_mode & S_IFBLK){
+			if ((major(st.st_rdev) == d_major) && (minor(st.st_rdev) == d_minor)) {
+				strncpy(d_buf, dire->d_name, strlen(dire->d_name) + 1);
+				name = d_buf;
+				break;
+			}
+		}
+
+		memset(d_buf, '0', sizeof(d_buf));
+	}
+
+	(void)closedir(dev_dir);
+
+	return name;
+}
+
 /*
  * @dev_major is major number of char device
  *
@@ -409,16 +448,17 @@ int dm_format_dev(char *buf, int bufsize, uint32_t dev_major,
 	dev = MKDEV(major,dev_minor);
 
 	mode |= S_IFBLK;
-	
-	name = devname(dev,mode);
+
+	if ((name = devname(dev,mode)) == NULL)
+		name = get_dev_name(kd[i].d_name, major, dev_minor);
 
 	r = snprintf(buf, (size_t) bufsize, "/dev/%s",name);
 
 	free(kd);
-	
+
 	if (r < 0 || r > bufsize - 1 || name == NULL)
 		return 0;
-	
+
 	return 1;
 }
 
