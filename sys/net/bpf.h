@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.53 2010/01/25 22:18:17 pooka Exp $	*/
+/*	$NetBSD: bpf.h,v 1.54 2010/03/13 20:38:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -139,6 +139,9 @@ struct bpf_version {
 #define BIOCSSEESENT	 _IOW('B',121, u_int)
 #define BIOCSRTIMEOUT	 _IOW('B',122, struct timeval)
 #define BIOCGRTIMEOUT	 _IOR('B',123, struct timeval)
+#define BIOCGFEEDBACK	 _IOR('B',124, u_int)
+#define BIOCSFEEDBACK	 _IOW('B',125, u_int)
+#define BIOCFEEDBACK     BIOCSFEEDBACK		/* FreeBSD name */
 
 /*
  * Structure prepended to each packet. This is "wire" format, so we
