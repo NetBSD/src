@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.45 2010/01/27 18:34:02 christos Exp $   */
+/*      $NetBSD: raidctl.c,v 1.46 2010/03/13 07:21:37 jld Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.45 2010/01/27 18:34:02 christos Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.46 2010/03/13 07:21:37 jld Exp $");
 #endif
 
 
@@ -504,7 +504,7 @@ rf_output_pmstat(int fd, int raidID)
 		    st.ctrs.nwrite, st.ctrs.ncachesync, st.ctrs.nclearing);
 
 		dr = 0;
-		for (i = 0; i < RF_PARITYMAP_NREG; i++)
+		for (i = 0; i < st.params.regions; i++)
 			if (isset(st.dirty, i))
 				dr++;
 		printf("raid%d: %d dirty region%s\n", raidID, dr,
