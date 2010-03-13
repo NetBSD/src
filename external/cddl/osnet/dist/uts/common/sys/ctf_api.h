@@ -40,7 +40,7 @@
 #ifndef	_CTF_API_H
 #define	_CTF_API_H
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
+/* #pragma ident	"%Z%%M%	%I%	%E% SMI" */
 
 #include <sys/types.h>
 #include <sys/param.h>
