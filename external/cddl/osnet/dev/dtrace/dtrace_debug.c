@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_debug.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_debug.c,v 1.3 2010/03/13 22:31:15 christos Exp $	*/
 
 /*-
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>.
@@ -110,7 +110,6 @@ dtrace_debug_unlock(int cpu)
 static void
 dtrace_debug_init(void *dummy)
 {
-	int i;
 	struct dtrace_debug_data *d;
 	CPU_INFO_ITERATOR cpuind;
 	struct cpu_info *cinfo;

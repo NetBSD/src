@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.c,v 1.5 2010/03/05 02:21:41 darran Exp $	*/
+/*	$NetBSD: sdt.c,v 1.6 2010/03/13 22:31:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
 
@@ -79,7 +80,9 @@ static dtrace_pops_t sdt_pops = {
 	sdt_destroy
 };
 
+#ifdef notyet
 static struct cdev		*sdt_cdev;
+#endif
 
 /*
  * Provider and probe definitions 
@@ -144,10 +147,7 @@ static int sdt_count = 0;	/* number of registered providers */
 static void
 sdt_getargdesc(void *arg, dtrace_id_t id, void *parg, dtrace_argdesc_t *desc)
 {
-    	sdt_provider_t *sprov = arg;
 	sdt_probe_t *sprobe = parg;
-	int res;
-	int ind;
 
 #ifdef SDT_DEBUG
 	printf("sdt: %s probe %d\n", __func__, id);
@@ -381,7 +381,6 @@ static void
 sdt_load(void *dummy)
 {
     	int ind;
-	int res;
 
 #ifdef SDT_DEBUG
 	printf("sdt: %s\n", __func__);
@@ -389,8 +388,8 @@ sdt_load(void *dummy)
 
 	sdt_init(dtrace_probe);
 
-	sdt_list = (sdt_provider_t **)kmem_alloc(
-			    sizeof(sdt_provider_t *) * SDT_MAX_PROVIDER);
+	sdt_list = kmem_alloc(sizeof(sdt_provider_t *) * SDT_MAX_PROVIDER,
+	    KM_SLEEP);
 
 	mutex_init(&sdt_mutex, "sdt_mutex", MUTEX_DEFAULT, NULL);
 
@@ -454,7 +453,6 @@ static int
 sdt_modcmd(modcmd_t cmd, void *data)
 {
 	int bmajor = -1, cmajor = -1;
-	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

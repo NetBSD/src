@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.3 2010/03/13 22:31:15 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -35,13 +35,19 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/kmem.h>
-#include <sys/smp.h>
+#include <sys/xcall.h>
+#include <sys/cpu.h>
+#include <sys/cpuvar.h>
+//#include <sys/smp.h>
 #include <sys/dtrace_impl.h>
 #include <sys/dtrace_bsd.h>
-#include <machine/clock.h>
 #include <machine/frame.h>
-#include <vm/pmap.h>
+#include <machine/cpu_counter.h>
+#include <uvm/uvm_pglist.h>
+#include <uvm/uvm_prot.h>
+#include <uvm/uvm_pmap.h>
 
+extern uintptr_t 	kernelbase;
 extern uintptr_t 	dtrace_in_probe_addr;
 extern int		dtrace_in_probe;
 
@@ -53,6 +59,8 @@ typedef struct dtrace_invop_hdlr {
 } dtrace_invop_hdlr_t;
 
 dtrace_invop_hdlr_t *dtrace_invop_hdlr;
+void dtrace_gethrtime_init(void *);
+
 
 int
 dtrace_invop(uintptr_t addr, uintptr_t *stack, uintptr_t eax)
@@ -109,34 +117,35 @@ dtrace_invop_remove(int (*func)(uintptr_t, uintptr_t *, uintptr_t))
 void
 dtrace_toxic_ranges(void (*func)(uintptr_t base, uintptr_t limit))
 {
-	(*func)(0, (uintptr_t) addr_PTmap);
+	(*func)(0, kernelbase);
+}
+
+static void
+xcall_func(void *arg0, void *arg1)
+{
+    	dtrace_xcall_t func = arg0;
+
+    	(*func)(arg1);
 }
 
 void
 dtrace_xcall(processorid_t cpu, dtrace_xcall_t func, void *arg)
 {
-	cpumask_t cpus;
+	uint64_t where;
 
-	critical_enter();
+	if (cpu == DTRACE_CPUALL) {
+		where = xc_broadcast(0, xcall_func, func, arg);
+	} else {
+		struct cpu_info *cinfo = cpu_lookup(cpu);
 
-	if (cpu == DTRACE_CPUALL)
-		cpus = all_cpus;
-	else
-		cpus = (cpumask_t) (1 << cpu);
-
-	/* If the current CPU is in the set, call the function directly: */
-	if ((cpus & (1 << curcpu)) != 0) {
-		(*func)(arg);
-
-		/* Mask the current CPU from the set */
-		cpus &= ~(1 << curcpu);
+		KASSERT(cinfo != NULL);
+		where = xc_unicast(0, xcall_func, func, arg, cinfo);
 	}
+	xc_wait(where);
 
-	/* If there are any CPUs in the set, cross-call to those CPUs */
-	if (cpus != 0)
-		smp_rendezvous_cpus(cpus, NULL, func, smp_no_rendevous_barrier, arg);
-
-	critical_exit();
+	/* XXX Q. Do we really need the other cpus to wait also? 
+	 * (see solaris:xc_sync())
+	 */
 }
 
 static void
@@ -365,14 +374,17 @@ dtrace_safe_defer_signal(void)
 }
 #endif
 
+#ifdef notyet
 static int64_t	tgt_cpu_tsc;
 static int64_t	hst_cpu_tsc;
-static int64_t	tsc_skew[MAXCPU];
+#endif
+static int64_t	tsc_skew[MAXCPUS];
 static uint64_t	nsec_scale;
 
 /* See below for the explanation of this macro. */
 #define SCALE_SHIFT	28
 
+#ifdef notyet
 static void
 dtrace_gethrtime_init_sync(void *arg)
 {
@@ -384,7 +396,7 @@ dtrace_gethrtime_init_sync(void *arg)
 	 */
 	uintptr_t cpu = (uintptr_t) arg;
 
-	if (cpu == curcpu) {
+	if (cpu == cpu_number()) {
 		int i;
 		for (i = 0; i < 1000000000; i++)
 			tgt_cpu_tsc = rdtsc();
@@ -398,18 +410,20 @@ dtrace_gethrtime_init_cpu(void *arg)
 {
 	uintptr_t cpu = (uintptr_t) arg;
 
-	if (cpu == curcpu)
+	if (cpu == cpu_number())
 		tgt_cpu_tsc = rdtsc();
 	else
 		hst_cpu_tsc = rdtsc();
 }
+#endif
 
-static void
+void
 dtrace_gethrtime_init(void *arg)
 {
 	uint64_t tsc_f;
-	cpumask_t map;
-	int i;
+	CPU_INFO_ITERATOR cpuind;
+	struct cpu_info *cinfo = curcpu();
+	cpuid_t cur_cpuid = cpu_number();	/* current cpu id */
 
 	/*
 	 * Get TSC frequency known at this moment.
@@ -417,7 +431,7 @@ dtrace_gethrtime_init(void *arg)
 	 * Otherwise tick->time conversion will be inaccurate, but
 	 * will preserve monotonic property of TSC.
 	 */
-	tsc_f = tsc_freq;
+	tsc_f = cpu_frequency(cinfo);
 
 	/*
 	 * The following line checks that nsec_scale calculated below
@@ -425,7 +439,8 @@ dtrace_gethrtime_init(void *arg)
 	 * another 32-bit integer without overflowing 64-bit.
 	 * Thus minimum supported TSC frequency is 62.5MHz.
 	 */
-	KASSERT(tsc_f > (NANOSEC >> (32 - SCALE_SHIFT)), ("TSC frequency is too low"));
+	//KASSERT(tsc_f > (NANOSEC >> (32 - SCALE_SHIFT)), ("TSC frequency is too low"));
+	KASSERT(tsc_f > (NANOSEC >> (32 - SCALE_SHIFT)));
 
 	/*
 	 * We scale up NANOSEC/tsc_f ratio to preserve as much precision
@@ -439,8 +454,15 @@ dtrace_gethrtime_init(void *arg)
 	nsec_scale = ((uint64_t)NANOSEC << SCALE_SHIFT) / tsc_f;
 
 	/* The current CPU is the reference one. */
-	tsc_skew[curcpu] = 0;
+	tsc_skew[cur_cpuid] = 0;
 
+	for (CPU_INFO_FOREACH(cpuind, cinfo)) {
+		/* use skew relative to cpu 0 */
+		tsc_skew[cpu_index(cinfo)] = cinfo->ci_data.cpu_cc_skew;
+	}
+
+	/* Already handled in x86/tsc.c for ci_data.cpu_cc_skew */
+#if 0
 	for (i = 0; i <= mp_maxid; i++) {
 		if (i == curcpu)
 			continue;
@@ -458,9 +480,8 @@ dtrace_gethrtime_init(void *arg)
 
 		tsc_skew[i] = tgt_cpu_tsc - hst_cpu_tsc;
 	}
+#endif
 }
-
-SYSINIT(dtrace_gethrtime_init, SI_SUB_SMP, SI_ORDER_ANY, dtrace_gethrtime_init, NULL);
 
 /*
  * DTrace needs a high resolution time function which can
@@ -482,7 +503,7 @@ dtrace_gethrtime()
 	 * (see nsec_scale calculations) taking into account 32-bit shift of
 	 * the higher half and finally add.
 	 */
-	tsc = rdtsc() + tsc_skew[curcpu];
+	tsc = rdtsc() + tsc_skew[cpu_number()];
 	lo = tsc;
 	hi = tsc >> 32;
 	return (((lo * nsec_scale) >> SCALE_SHIFT) +
@@ -510,7 +531,7 @@ dtrace_trap(struct trapframe *frame, u_int type)
 	 * Check if DTrace has enabled 'no-fault' mode:
 	 *
 	 */
-	if ((cpu_core[curcpu].cpuc_dtrace_flags & CPU_DTRACE_NOFAULT) != 0) {
+	if ((cpu_core[cpu_number()].cpuc_dtrace_flags & CPU_DTRACE_NOFAULT) != 0) {
 		/*
 		 * There are only a couple of trap types that are expected.
 		 * All the rest will be handled in the usual way.
@@ -522,7 +543,7 @@ dtrace_trap(struct trapframe *frame, u_int type)
 		/* General protection fault. */
 		case T_PROTFLT:
 			/* Flag an illegal operation. */
-			cpu_core[curcpu].cpuc_dtrace_flags |= CPU_DTRACE_ILLOP;
+			cpu_core[cpu_number()].cpuc_dtrace_flags |= CPU_DTRACE_ILLOP;
 
 			/*
 			 * Offset the instruction pointer to the instruction
@@ -533,8 +554,8 @@ dtrace_trap(struct trapframe *frame, u_int type)
 		/* Page fault. */
 		case T_PAGEFLT:
 			/* Flag a bad address. */
-			cpu_core[curcpu].cpuc_dtrace_flags |= CPU_DTRACE_BADADDR;
-			cpu_core[curcpu].cpuc_dtrace_illval = frame->tf_addr;
+			cpu_core[cpu_number()].cpuc_dtrace_flags |= CPU_DTRACE_BADADDR;
+			cpu_core[cpu_number()].cpuc_dtrace_illval = rcr2();
 
 			/*
 			 * Offset the instruction pointer to the instruction

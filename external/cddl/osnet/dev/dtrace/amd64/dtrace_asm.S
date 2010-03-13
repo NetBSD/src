@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_asm.S,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_asm.S,v 1.3 2010/03/13 22:31:15 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -32,11 +32,14 @@
 
 #define _ASM
 
-#include <machine/asmacros.h>
+
 #include <sys/cpuvar_defs.h>
 #include <sys/dtrace.h>
+#include <machine/asm.h>
+#define END(a)
+#define MEXITCOUNT
 
-#include "assym.s"
+#include "assym.h"
 
 #define INTR_POP				\
 	MEXITCOUNT;				\
@@ -78,7 +81,7 @@
 	pushq	(%rsi)
 	movq	%rsp, %rsi
 	call	dtrace_invop
-	ALTENTRY(dtrace_invop_callsite)
+//	ALTENTRY(dtrace_invop_callsite)
 	addq	$8, %rsp
 	cmpl	$DTRACE_INVOP_PUSHL_EBP, %eax
 	je	bp_push
@@ -144,7 +147,7 @@ bp_nop:
 	/*NOTREACHED*/
 
 bp_ret:
-	INTR_POP
+//	INTR_POP
 	pushq	%rax			/* push temp */
 	movq	32(%rsp), %rax		/* load %rsp */
 	movq	(%rax), %rax		/* load calling RIP */

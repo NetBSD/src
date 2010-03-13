@@ -32,7 +32,7 @@
 #ifndef _SYS_PROCESSOR_H
 #define	_SYS_PROCESSOR_H
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
+/* #pragma ident	"%Z%%M%	%I%	%E% SMI" */
 
 #include <sys/types.h>
 #include <sys/procset.h>

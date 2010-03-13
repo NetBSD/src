@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_asm.S,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_asm.S,v 1.3 2010/03/13 22:31:15 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -33,6 +33,7 @@
 #include <sys/cpuvar_defs.h>
 #include <sys/dtrace.h>
 #include <machine/asm.h>
+#include <machine/frameasm.h>
 
 	ENTRY(dtrace_invop_start)
 

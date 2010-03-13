@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: proc.h,v 1.5 2010/03/13 22:31:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -94,12 +94,12 @@ typedef struct lwp	*kthread_id_t;
 struct contract {
 };
 
-kthread_t *thread_create(void *, size_t, void (*)(), void *, size_t,
+kthread_t *thread_create(void *, size_t, void (*)(void *), void *, size_t,
 			 proc_t *, int, pri_t);
 void	thread_exit(void);
 void	thread_join(uint64_t);
 
-int newproc(void (*)(), caddr_t, id_t, int, struct contract **, pid_t);
+int newproc(void (*)(void *), caddr_t, id_t, int, struct contract **, pid_t);
 
 #endif	/* _KERNEL */
 
