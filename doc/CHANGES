@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1369 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1370 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -565,3 +565,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	uhso(4): Add a driver for Option N.V. Wireless WAN modems.
 		[plunky 20100306]
 	openldap: Update to 2.4.21.  [lukem 20100308]
+	atari: Add support for the SMC Elite Ultra Ethernet with
+		the SMC_TT VME-ISA bridge. [tsutsui 20100313]
