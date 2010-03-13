@@ -1,4 +1,4 @@
-/*      $NetBSD: lubbock_pcic.c,v 1.5 2009/05/29 14:15:44 rjs Exp $	*/
+/*      $NetBSD: lubbock_pcic.c,v 1.6 2010/03/13 11:13:31 bsh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.5 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_pcic.c,v 1.6 2010/03/13 11:13:31 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,11 @@ lubbock_socket_setup(struct sapcic_socket *sp)
 static void
 sacpcic_attach(device_t parent, device_t self, void *aux)
 {
+	struct sacpcic_softc *sc = device_private(self);
+
+	sc->sc_pc.sc_dev = self;
 	sacpcic_attach_common(device_private(parent),
-	    device_private(self), aux, lubbock_socket_setup);
+	    sc, aux, lubbock_socket_setup);
 }
 
 
