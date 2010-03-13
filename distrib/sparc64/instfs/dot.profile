@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.4 2010/03/12 21:36:52 martin Exp $
+# $NetBSD: dot.profile,v 1.5 2010/03/13 14:05:39 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -40,8 +40,8 @@ export PATH
 # the terminal type accordingly.
 # There is no /var/db/dev.db, so sysctl might not map the devicename properly;
 # ttyE0 is 90,0 -> 0x5a00
-case $(sysctl kern.consdev 2>/dev/null) in
- kern.consdev\ =\ ttyE*|kern.consdev\ =\ 0x5a0*)
+case $(sysctl -nx kern.consdev) in
+ 0000000000005a0*)
    TERM=wsvt25
    ;;
  *)
