@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 2010/03/06 21:22:42 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 2010/03/13 16:17:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 2010/03/06 21:22:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2010/03/13 16:17:59 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -229,6 +229,7 @@ void pmap_check_alias(struct vm_page *, struct pv_entry *, vaddr_t,
     pt_entry_t *);
 static bool __changebit(struct vm_page *, u_int, u_int);
 
+/* un-invert PVF_REF */
 #define pmap_pvh_attrs(a) \
 	(((a) & (PVF_MOD|PVF_REF|PVF_WRITE|PVF_UNCACHEABLE)) ^ PVF_REF)
 
