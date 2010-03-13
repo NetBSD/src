@@ -1,11 +1,11 @@
 #
-# $NetBSD: FALCON,v 1.93 2010/02/21 18:00:13 tsutsui Exp $
+# $NetBSD: FALCON,v 1.94 2010/03/13 16:31:38 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.83 2010/02/21 17:57:03 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.84 2010/03/13 16:30:02 tsutsui Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
