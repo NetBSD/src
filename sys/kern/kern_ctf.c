@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.1 2010/03/12 21:43:11 darran Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.2 2010/03/13 01:41:14 christos Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -29,6 +29,7 @@
 
 #define ELFSIZE ARCH_ELFSIZE
 #include <sys/module.h>
+#include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
