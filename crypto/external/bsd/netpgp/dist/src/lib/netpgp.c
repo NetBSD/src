@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.42 2010/03/05 16:30:05 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.43 2010/03/13 23:30:41 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -163,7 +163,7 @@ resultp(__ops_io_t *io,
 		pubkey = __ops_getkeybyid(io, ring,
 			(const uint8_t *) res->valid_sigs[i].signer_id,
 			&from);
-		__ops_print_keydata(io, pubkey, "pub", &pubkey->key.pubkey);
+		__ops_print_keydata(io, ring, pubkey, "pub", &pubkey->key.pubkey, 0);
 	}
 }
 
@@ -534,9 +534,9 @@ netpgp_end(netpgp_t *netpgp)
 
 /* list the keys in a keyring */
 int
-netpgp_list_keys(netpgp_t *netpgp)
+netpgp_list_keys(netpgp_t *netpgp, const int psigs)
 {
-	return __ops_keyring_list(netpgp->io, netpgp->pubring);
+	return __ops_keyring_list(netpgp->io, netpgp->pubring, psigs);
 }
 
 DEFINE_ARRAY(strings_t, char *);
@@ -547,7 +547,7 @@ DEFINE_ARRAY(strings_t, char *);
 
 /* find and list some keys in a keyring */
 int
-netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp)
+netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const int psigs)
 {
 	const __ops_key_t	*key;
 	unsigned		 k;
@@ -570,10 +570,10 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp)
 						key, &pubs.v[pubs.c],
 						&key->key.pubkey);
 			} else {
-				__ops_sprint_keydata(
+				__ops_sprint_keydata(netpgp->io, netpgp->pubring,
 						key, &pubs.v[pubs.c],
 						"pub",
-						&key->key.pubkey);
+						&key->key.pubkey, psigs);
 			}
 			pubs.c += 1;
 			k += 1;
@@ -662,8 +662,9 @@ netpgp_get_key(netpgp_t *netpgp, const char *name, const char *fmt)
 		return (__ops_hkp_sprint_keydata(key, &newkey,
 				&key->key.pubkey) > 0) ? newkey : NULL;
 	}
-	return (__ops_sprint_keydata(key, &newkey, "pub",
-				&key->key.pubkey) > 0) ? newkey : NULL;
+	return (__ops_sprint_keydata(netpgp->io, netpgp->pubring,
+				key, &newkey, "pub",
+				&key->key.pubkey, 0) > 0) ? newkey : NULL;
 }
 
 /* export a given key */
@@ -706,7 +707,7 @@ netpgp_import_key(netpgp_t *netpgp, char *f)
 				f);
 		return 0;
 	}
-	return __ops_keyring_list(io, netpgp->pubring);
+	return __ops_keyring_list(io, netpgp->pubring, 0);
 }
 
 /* generate a new key */
@@ -876,10 +877,10 @@ netpgp_sign_file(netpgp_t *netpgp,
 			if (pubkey == NULL) {
 				(void) fprintf(io->errs,
 					"netpgp: warning - using pubkey from secring\n");
-				__ops_print_keydata(io, keypair, "pub",
-					&keypair->key.seckey.pubkey);
+				__ops_print_keydata(io, netpgp->pubring, keypair, "pub",
+					&keypair->key.seckey.pubkey, 0);
 			} else {
-				__ops_print_keydata(io, pubkey, "pub", &pubkey->key.pubkey);
+				__ops_print_keydata(io, netpgp->pubring, pubkey, "pub", &pubkey->key.pubkey, 0);
 			}
 		}
 		if (netpgp_getvar(netpgp, "ssh keys") == NULL) {
@@ -989,10 +990,10 @@ netpgp_sign_memory(netpgp_t *netpgp,
 			if (pubkey == NULL) {
 				(void) fprintf(io->errs,
 					"netpgp: warning - using pubkey from secring\n");
-				__ops_print_keydata(io, keypair, "pub",
-					&keypair->key.seckey.pubkey);
+				__ops_print_keydata(io, netpgp->pubring, keypair, "pub",
+					&keypair->key.seckey.pubkey, 0);
 			} else {
-				__ops_print_keydata(io, pubkey, "pub", &pubkey->key.pubkey);
+				__ops_print_keydata(io, netpgp->pubring, pubkey, "pub", &pubkey->key.pubkey, 0);
 			}
 		}
 		/* now decrypt key */

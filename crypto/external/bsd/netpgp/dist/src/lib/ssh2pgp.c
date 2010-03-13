@@ -333,7 +333,8 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 		__ops_fingerprint(&key->fingerprint, pubkey);
 		free(userid.userid);
 		if (__ops_get_debug_level(__FILE__)) {
-			__ops_print_keydata(io, key, "pub", pubkey);
+			/*__ops_print_keydata(io, keyring, key, "pub", pubkey, 0);*/
+			__OPS_USED(io); /* XXX */
 		}
 	}
 	(void) free(bin);
@@ -358,7 +359,8 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 		return 0;
 	}
 	if (__ops_get_debug_level(__FILE__)) {
-		__ops_print_keydata(io, key, "sec", &key->key.seckey.pubkey);
+		/*__ops_print_keydata(io, key, "sec", &key->key.seckey.pubkey, 0);*/
+		/* XXX */
 	}
 	/* let's add some sane defaults */
 	(void) memcpy(&key->key.seckey.pubkey, pubkey, sizeof(*pubkey));
