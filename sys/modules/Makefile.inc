@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/01/16 12:34:56 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2010/03/13 22:06:30 christos Exp $
 
-S!=		cd ${.CURDIR}/../..;pwd
+S!=		cd ${.PARSEDIR}/..;pwd
 CPPFLAGS+=	-I${NETBSDSRCDIR}/common/include
 USE_FORT=	no
 WARNS?=		1
