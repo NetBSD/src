@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.19 2008/06/23 10:46:25 ad Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.19.4.1 2010/03/13 00:53:32 riz Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.19 2008/06/23 10:46:25 ad Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.19.4.1 2010/03/13 00:53:32 riz Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -2855,25 +2855,38 @@ huge_ralloc(void *ptr, size_t size, size_t oldsize)
 			/* size_t wrap-around */
 			return (NULL);
 		}
+
+		/*
+		 * Remove the old region from the tree now.  If mremap()
+		 * returns the region to the system, other thread may
+		 * map it for same huge allocation and insert it to the
+		 * tree before we acquire the mutex lock again.
+		 */
+		malloc_mutex_lock(&chunks_mtx);
+		key.chunk = __DECONST(void *, ptr);
+		/* LINTED */
+		node = RB_FIND(chunk_tree_s, &huge, &key);
+		assert(node != NULL);
+		assert(node->chunk == ptr);
+		assert(node->size == oldcsize);
+		RB_REMOVE(chunk_tree_s, &huge, node);
+		malloc_mutex_unlock(&chunks_mtx);
+
 		newptr = mremap(ptr, oldcsize, NULL, newcsize,
 		    MAP_ALIGNED(chunksize_2pow));
-		if (newptr != MAP_FAILED) {
+		if (newptr == MAP_FAILED) {
+			/* We still own the old region. */
+			malloc_mutex_lock(&chunks_mtx);
+			RB_INSERT(chunk_tree_s, &huge, node);
+			malloc_mutex_unlock(&chunks_mtx);
+		} else {
 			assert(CHUNK_ADDR2BASE(newptr) == newptr);
 
-			/* update tree */
+			/* Insert new or resized old region. */
 			malloc_mutex_lock(&chunks_mtx);
-			key.chunk = __DECONST(void *, ptr);
-			/* LINTED */
-			node = RB_FIND(chunk_tree_s, &huge, &key);
-			assert(node != NULL);
-			assert(node->chunk == ptr);
-			assert(node->size == oldcsize);
 			node->size = newcsize;
-			if (ptr != newptr) {
-				RB_REMOVE(chunk_tree_s, &huge, node);
-				node->chunk = newptr;
-				RB_INSERT(chunk_tree_s, &huge, node);
-			}
+			node->chunk = newptr;
+			RB_INSERT(chunk_tree_s, &huge, node);
 #ifdef MALLOC_STATS
 			huge_nralloc++;
 			huge_allocated += newcsize - oldcsize;
