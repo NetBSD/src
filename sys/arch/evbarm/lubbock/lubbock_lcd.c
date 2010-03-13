@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.10 2009/05/29 14:15:44 rjs Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.11 2010/03/13 11:15:52 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.10 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.11 2010/03/13 11:15:52 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,10 +174,18 @@ static const struct lcd_panel_geometry sharp_LM8V31 =
 void lcd_attach( device_t parent, device_t self, void *aux )
 {
 	struct pxa2x0_lcd_softc *sc = device_private(self);
+	struct obio_attach_args *oba = aux;
+	struct pxaip_attach_args paa;
 
 	sc->dev = self;
 
-	pxa2x0_lcd_attach_sub(sc, aux, &sharp_LM8V31);
+	paa.pxa_name = "obio";
+	paa.pxa_iot = oba->oba_iot;
+	paa.pxa_addr = oba->oba_addr;
+	paa.pxa_size = 0;		/* XXX */
+	paa.pxa_intr = oba->oba_intr;
+
+	pxa2x0_lcd_attach_sub(sc, &paa, &sharp_LM8V31);
 
 
 #if NWSDISPLAY > 0
@@ -195,8 +203,6 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 		aa.accessops = &lcd_accessops;
 		aa.accesscookie = sc;
 
-		printf( "\n" );
-
 		(void) config_found(self, &aa, wsemuldisplaydevprint);
 	}
 #else
@@ -209,8 +215,6 @@ void lcd_attach( device_t parent, device_t self, void *aux )
 			sc->active = screen;
 			pxa2x0_lcd_start_dma( sc, screen );
 		}
-
-		printf( "\n" );
 	}
 #endif
 
