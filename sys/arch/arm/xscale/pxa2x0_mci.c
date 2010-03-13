@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.3 2009/12/05 13:56:43 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.4 2010/03/13 12:28:44 nonaka Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.3 2009/12/05 13:56:43 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.4 2010/03/13 12:28:44 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -554,9 +554,9 @@ pxamci_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	int timo;
 	int s;
 
-	DPRINTF(1,("%s: start cmd %d arg=%#x data=%p dlen=%d flags=%#x\n"
-	    "proc=%p \"%s\"\n", device_xname(sc->sc_dev), cmd->c_opcode,
-	    cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags));
+	DPRINTF(1,("%s: start cmd %d arg=%#x data=%p dlen=%d flags=%#x\n",
+	    device_xname(sc->sc_dev), cmd->c_opcode, cmd->c_arg, cmd->c_data,
+	    cmd->c_datalen, cmd->c_flags));
 
 	s = splsdmmc();
 
