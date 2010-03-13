@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.215 2010/03/13 00:56:09 riz Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.216 2010/03/13 07:31:59 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16941,4 +16941,14 @@ lib/libc/stdlib/jemalloc.c			1.21
 
 	Fix race condition on reallocation of huge category. PR#42876.
 	[enami, ticket #1327]
+
+sys/dev/apm/apm.c				1.26
+
+	Fix apm(4) suspend/resume.
+	[bouyer, ticket #1337]
+
+lib/libpam/modules/pam_unix/pam_unix.c		1.14
+
+	When changing the password, don't clear PAM_AUTHTOK at the beginning.
+	[drochner, ticket #1336]
 
