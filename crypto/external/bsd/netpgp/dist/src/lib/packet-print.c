@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.28 2010/03/08 07:37:24 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.29 2010/03/13 23:30:41 agc Exp $");
 #endif
 
 #include <string.h>
@@ -382,28 +382,60 @@ ptimestr(char *dest, size_t size, time_t t)
 	return dest;
 }
 
+/* print the sub key binding signature info */
+static int
+psubkeybinding(char *buf, size_t size, __ops_subsig_t *subsig, const __ops_pubkey_t *pubkey, char *expired)
+{
+	char	keyid[512];
+	char	t[32];
+
+	return snprintf(buf, size, "sub %d/%s %s %s %s\n",
+		numkeybits(pubkey),
+		__ops_show_pka(subsig->sig.info.key_alg),
+		strhexdump(keyid, subsig->sig.info.signer_id, OPS_KEY_ID_SIZE, ""),
+		ptimestr(t, sizeof(t), subsig->sig.info.birthtime),
+		expired);
+}
+
+static int
+isrevoked(const __ops_key_t *key, unsigned uid)
+{
+	unsigned	r;
+
+	for (r = 0 ; r < key->revokec ; r++) {
+		if (key->revokes[r].uid == uid) {
+			return r;
+		}
+	}
+	return -1;
+}
+
 #ifndef KB
 #define KB(x)	((x) * 1024)
 #endif
 
 /* print into a string (malloc'ed) the pubkeydata */
 int
-__ops_sprint_keydata(const __ops_key_t *key, char **buf, const char *header,
-		const __ops_pubkey_t *pubkey)
+__ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
+		const __ops_key_t *key, char **buf, const char *header,
+		const __ops_pubkey_t *pubkey, const int psigs)
 {
-	unsigned	 i;
-	time_t		 now;
-	char		 uidbuf[KB(128)];
-	char		 keyid[OPS_KEY_ID_SIZE * 3];
-	char		 fp[(OPS_FINGERPRINT_SIZE * 3) + 1];
-	char		 expired[128];
-	char		 t[32];
-	int		 cc;
-	int		 n;
+	const __ops_key_t	*trustkey;
+	unsigned	 	 from;
+	unsigned		 i;
+	unsigned		 j;
+	time_t			 now;
+	char			 uidbuf[KB(128)];
+	char			 keyid[OPS_KEY_ID_SIZE * 3];
+	char			 fp[(OPS_FINGERPRINT_SIZE * 3) + 1];
+	char			 expired[128];
+	char			 t[32];
+	int			 cc;
+	int			 n;
+	int			 r;
 
-	for (i = 0, n = 0; i < key->uidc; i++) {
-		n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
-			"uid              %s\n", key->uids[i].userid);
+	if (key->revoked) {
+		return -1;
 	}
 	now = time(NULL);
 	if (pubkey->duration > 0) {
@@ -416,6 +448,41 @@ __ops_sprint_keydata(const __ops_key_t *key, char **buf, const char *header,
 		cc += snprintf(&expired[cc], sizeof(expired) - cc, "]");
 	} else {
 		expired[0] = 0x0;
+	}
+	for (i = 0, n = 0; i < key->uidc; i++) {
+		if ((r = isrevoked(key, i)) >= 0 &&
+		    key->revokes[r].code == OPS_REVOCATION_COMPROMISED) {
+			continue;
+		}
+		n += snprintf(&uidbuf[n], sizeof(uidbuf) - n, "uid%s%s%s\n",
+				(psigs) ? "    " : "              ",
+				key->uids[i].userid,
+				(isrevoked(key, i) >= 0) ? " [REVOKED]" : "");
+		for (j = 0 ; j < key->subsigc ; j++) {
+			if (psigs) {
+				if (key->subsigs[j].uid != i) {
+					continue;
+				}
+			} else {
+				if (!(key->subsigs[j].sig.info.version == 4 &&
+					key->subsigs[j].sig.info.type == OPS_SIG_SUBKEY &&
+					i == key->uidc - 1)) {
+						continue;
+				}
+			}
+			from = 0;
+			trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from);
+			if (key->subsigs[j].sig.info.version == 4 &&
+					key->subsigs[j].sig.info.type == OPS_SIG_SUBKEY) {
+				psubkeybinding(&uidbuf[n], sizeof(uidbuf) - n, &key->subsigs[j], pubkey, expired);
+			} else {
+				n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
+					"sig        %s  %s  %s\n",
+					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, OPS_KEY_ID_SIZE, ""),
+					ptimestr(t, sizeof(t), key->subsigs[j].sig.info.birthtime),
+					(trustkey) ? (char *)trustkey->uids[trustkey->uid0].userid : "[unknown]");
+			}
+		}
 	}
 	return __ops_asprintf(buf, "%s %d/%s %s %s %s\nKey fingerprint: %s\n%s",
 		header,
@@ -455,12 +522,13 @@ __ops_hkp_sprint_keydata(const __ops_key_t *key, char **buf,
 
 /* print the key data for a pub or sec key */
 void
-__ops_print_keydata(__ops_io_t *io, const __ops_key_t *key, const char *header,
-		const __ops_pubkey_t *pubkey)
+__ops_print_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
+		const __ops_key_t *key, const char *header,
+		const __ops_pubkey_t *pubkey, const int psigs)
 {
 	char	*cp;
 
-	if (__ops_sprint_keydata(key, &cp, header, pubkey)) {
+	if (__ops_sprint_keydata(io, keyring, key, &cp, header, pubkey, psigs) >= 0) {
 		(void) fprintf(io->res, "%s", cp);
 		free(cp);
 	}

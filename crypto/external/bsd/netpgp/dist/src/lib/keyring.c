@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.32 2010/03/12 01:22:01 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.33 2010/03/13 23:30:41 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -480,36 +480,6 @@ __ops_add_subpacket(__ops_key_t *keydata, const __ops_subpacket_t *packet)
 
 /**
 \ingroup Core_Keys
-\brief Add signed User ID to key
-\param keydata Key to which to add signed User ID
-\param userid User ID to add
-\param sigpacket Packet to add
-*/
-void 
-__ops_add_signed_userid(__ops_key_t *keydata,
-		const __ops_userid_t *userid,
-		const __ops_subpacket_t *sigpacket)
-{
-	__ops_subpacket_t	*pkt;
-	__ops_userid_t		*uid;
-
-	uid = __ops_add_userid(keydata, userid);
-	pkt = __ops_add_subpacket(keydata, sigpacket);
-
-	/*
-         * add entry in sigs array to link the userid and sigpacket
-	 * and add ptr to it from the sigs array */
-	EXPAND_ARRAY(keydata, sig);
-
-	/**setup new entry in array */
-	keydata->sigs[keydata->sigc].userid = uid;
-	keydata->sigs[keydata->sigc].packet = pkt;
-
-	keydata->sigc++;
-}
-
-/**
-\ingroup Core_Keys
 \brief Add selfsigned User ID to key
 \param keydata Key to which to add user ID
 \param userid Self-signed User ID to add
@@ -551,7 +521,8 @@ __ops_add_selfsigned_userid(__ops_key_t *keydata, __ops_userid_t *userid)
 	sigpacket.raw = __ops_mem_data(mem_sig);
 
 	/* add userid to keydata */
-	__ops_add_signed_userid(keydata, userid, &sigpacket);
+	(void) __ops_add_userid(keydata, userid);
+	(void) __ops_add_subpacket(keydata, &sigpacket);
 
 	/* cleanup */
 	__ops_create_sig_delete(sig);
@@ -583,7 +554,6 @@ __ops_keydata_init(__ops_key_t *keydata, const __ops_content_tag_t type)
 	}
 }
 
-
 /* used to point to data during keyring read */
 typedef struct keyringcb_t {
 	__ops_keyring_t		*keyring;	/* the keyring we're reading */
@@ -594,6 +564,8 @@ static __ops_cb_ret_t
 cb_keyring_read(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	__ops_keyring_t	*keyring;
+	__ops_revoke_t	*revocation;
+	__ops_key_t	*key;
 	keyringcb_t	*cb;
 
 	cb = __ops_callback_arg(cbinfo);
@@ -602,11 +574,27 @@ cb_keyring_read(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_PARSER_PTAG:
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
 		/* we get these because we didn't prompt */
+		break;
 	case OPS_PTAG_CT_SIGNATURE_HEADER:
-	case OPS_PTAG_CT_SIGNATURE_FOOTER:
+		key = &keyring->keys[keyring->keyc - 1];
+		EXPAND_ARRAY(key, subsig);
+		key->subsigs[key->subsigc].uid = key->uidc - 1;
+		(void) memcpy(&key->subsigs[key->subsigc].sig, &pkt->u.sig,
+				sizeof(pkt->u.sig));
+		key->subsigc += 1;
+		break;
 	case OPS_PTAG_CT_SIGNATURE:
+		key = &keyring->keys[keyring->keyc - 1];
+		EXPAND_ARRAY(key, subsig);
+		key->subsigs[key->subsigc].uid = key->uidc - 1;
+		(void) memcpy(&key->subsigs[key->subsigc].sig, &pkt->u.sig,
+				sizeof(pkt->u.sig));
+		key->subsigc += 1;
+		break;
 	case OPS_PTAG_CT_TRUST:
-	case OPS_PARSER_ERRCODE:
+		key = &keyring->keys[keyring->keyc - 1];
+		key->subsigs[key->subsigc - 1].trustlevel = pkt->u.ss_trust.level;
+		key->subsigs[key->subsigc - 1].trustamount = pkt->u.ss_trust.amount;
 		break;
 	case OPS_PTAG_SS_KEY_EXPIRY:
 		EXPAND_ARRAY(keyring, key);
@@ -614,6 +602,47 @@ cb_keyring_read(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			keyring->keys[keyring->keyc - 1].key.pubkey.duration = pkt->u.ss_time.time;
 		}
 		break;
+	case OPS_PTAG_SS_ISSUER_KEY_ID:
+		key = &keyring->keys[keyring->keyc - 1];
+		(void) memcpy(&key->subsigs[key->subsigc - 1].sig.info.signer_id,
+			      pkt->u.ss_issuer.key_id,
+			      sizeof(pkt->u.ss_issuer.key_id));
+		key->subsigs[key->subsigc - 1].sig.info.signer_id_set = 1;
+		break;
+	case OPS_PTAG_SS_CREATION_TIME:
+		key = &keyring->keys[keyring->keyc - 1];
+		key->subsigs[key->subsigc - 1].sig.info.birthtime = pkt->u.ss_time.time;
+		key->subsigs[key->subsigc - 1].sig.info.birthtime_set = 1;
+		break;
+	case OPS_PTAG_SS_EXPIRATION_TIME:
+		key = &keyring->keys[keyring->keyc - 1];
+		key->subsigs[key->subsigc - 1].sig.info.duration = pkt->u.ss_time.time;
+		key->subsigs[key->subsigc - 1].sig.info.duration_set = 1;
+		break;
+	case OPS_PTAG_SS_PRIMARY_USER_ID:
+		key = &keyring->keys[keyring->keyc - 1];
+		key->uid0 = key->uidc - 1;
+		break;
+	case OPS_PTAG_SS_REVOCATION_REASON:
+		key = &keyring->keys[keyring->keyc - 1];
+		if (key->uidc == 0) {
+			/* revoke whole key */
+			key->revoked = 1;
+			revocation = &key->revocation;
+		} else {
+			/* revoke the user id */
+			EXPAND_ARRAY(key, revoke);
+			revocation = &key->revokes[key->revokec];
+			key->revokes[key->revokec].uid = key->uidc - 1;
+			key->revokec += 1;
+		}
+		revocation->code = pkt->u.ss_revocation.code;
+		revocation->reason = netpgp_strdup(__ops_show_ss_rr_code(pkt->u.ss_revocation.code));
+		break;
+	case OPS_PTAG_CT_SIGNATURE_FOOTER:
+	case OPS_PARSER_ERRCODE:
+		break;
+
 	default:
 		break;
 	}
@@ -968,7 +997,7 @@ __ops_getnextkeybyname(__ops_io_t *io,
    \return none
 */
 int
-__ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring)
+__ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring, const int psigs)
 {
 	__ops_key_t		*key;
 	unsigned		 n;
@@ -977,15 +1006,16 @@ __ops_keyring_list(__ops_io_t *io, const __ops_keyring_t *keyring)
 		(keyring->keyc == 1) ? "" : "s");
 	for (n = 0, key = keyring->keys; n < keyring->keyc; ++n, ++key) {
 		if (__ops_is_key_secret(key)) {
-			__ops_print_keydata(io, key, "sec",
-				&key->key.seckey.pubkey);
+			__ops_print_keydata(io, keyring, key, "sec",
+				&key->key.seckey.pubkey, 0);
 		} else {
-			__ops_print_keydata(io, key, "pub", &key->key.pubkey);
+			__ops_print_keydata(io, keyring, key, "pub", &key->key.pubkey, psigs);
 		}
 		(void) fputc('\n', io->res);
 	}
 	return 1;
 }
+
 
 /* this interface isn't right - hook into callback for getting passphrase */
 char *
