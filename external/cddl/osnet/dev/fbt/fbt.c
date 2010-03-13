@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.4 2010/03/13 01:10:01 darran Exp $	*/
+/*	$NetBSD: fbt.c,v 1.5 2010/03/13 22:31:15 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -41,6 +41,7 @@
 #include <sys/filio.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/ksyms.h>
 #include <sys/cpu.h>
 #include <sys/kthread.h>
 #include <sys/limits.h>
@@ -154,12 +155,14 @@ typedef struct fbt_probe {
 	struct fbt_probe *fbtp_next;
 } fbt_probe_t;
 
+#ifdef notyet
 static struct cdev		*fbt_cdev;
+static int			fbt_verbose = 0;
+#endif
 static dtrace_provider_id_t	fbt_id;
 static fbt_probe_t		**fbt_probetab;
 static int			fbt_probetab_size;
 static int			fbt_probetab_mask;
-static int			fbt_verbose = 0;
 
 static void
 fbt_doubletrap(void)
@@ -244,7 +247,6 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 	dtrace_modctl_t *mod = opaque;
 	const char *modname = mod->mod_info->mi_name;
 	int j;
-	int ind;
 	int size;
 
 	/* got a function? */
@@ -523,7 +525,9 @@ static int
 fbt_enable(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg;
+#if 0
 	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+#endif
 	u_long psl;
 	u_long cr0;
 
@@ -574,7 +578,9 @@ static void
 fbt_disable(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg;
+#if 0
 	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+#endif
 	u_long psl;
 	u_long cr0;
 
@@ -609,7 +615,9 @@ static void
 fbt_suspend(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg;
+#if 0
 	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+#endif
 	u_long psl;
 	u_long cr0;
 
@@ -644,7 +652,9 @@ static void
 fbt_resume(void *arg, dtrace_id_t id, void *parg)
 {
 	fbt_probe_t *fbt = parg;
+#if 0
 	dtrace_modctl_t *ctl = fbt->fbtp_ctl;
+#endif
 	u_long psl;
 	u_long cr0;
 
@@ -1505,7 +1515,6 @@ static int
 fbt_modcmd(modcmd_t cmd, void *data)
 {
 	int bmajor = -1, cmajor = -1;
-	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

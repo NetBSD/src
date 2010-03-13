@@ -26,7 +26,7 @@
  * Use is subject to license terms.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
+/* #pragma ident	"%Z%%M%	%I%	%E% SMI" */
 
 /*
  * DTrace - Dynamic Tracing for Solaris
@@ -1209,7 +1209,7 @@ dtrace_priv_proc_common_user(dtrace_state_t *state)
 	    gid_t gid;
 
 	    uid = kauth_cred_getuid(s_cr);
-	    uid = kauth_cred_getgid(s_cr);
+	    gid = kauth_cred_getgid(s_cr);
 
 		if (uid == kauth_cred_getuid(cr) &&
 		    uid == kauth_cred_geteuid(cr) &&
@@ -2737,6 +2737,7 @@ dtrace_dif_varstr(uintptr_t addr, dtrace_state_t *state,
 	return (ret);
 }
 
+#ifdef notyet
 /*
  * Return a string from a memoy address which is known to have one or
  * more concatenated, individually zero terminated, sub-strings.
@@ -2774,6 +2775,7 @@ dtrace_dif_varstrz(uintptr_t addr, size_t strsz, dtrace_state_t *state,
 	mstate->dtms_scratch_ptr += strsz;
 	return (ret);
 }
+#endif
 
 /*
  * This function implements the DIF emulator's variable lookups.  The emulator
@@ -10773,7 +10775,6 @@ err:
 
 	return (ENOMEM);
 #else
-	int i;
 
 #if defined(__amd64__)
 	/*
@@ -11788,12 +11789,12 @@ dtrace_dof_char(char c) {
 static dof_hdr_t *
 dtrace_dof_property(const char *name)
 {
+	dof_hdr_t *dof = NULL;
+#if defined(sun)
 	uchar_t *buf;
 	uint64_t loadsz;
 	unsigned int len, i;
-	dof_hdr_t *dof = NULL;
 
-#if defined(sun)
 	/*
 	 * Unfortunately, array of values in .conf files are always (and
 	 * only) interpreted to be integer arrays.  We must read our DOF
@@ -13500,7 +13501,7 @@ dtrace_state_go(dtrace_state_t *state, processorid_t *cpu)
 	if ((rval = kthread_create(PRI_BIO, KTHREAD_MPSAFE,
 			    NULL, dtrace_state_deadman, state,
 			    &dtrace_deadman_proc, "dtrace_deadman")) != 0) {
-		printf("failed to create deadman thread %s, error=%d\n", rval);
+		printf("failed to create deadman thread, error=%d\n", rval);
 		goto out;
 	}
 #endif
