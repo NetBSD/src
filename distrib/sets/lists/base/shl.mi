@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.525 2010/03/08 12:32:17 pooka Exp $
+# $NetBSD: shl.mi,v 1.526 2010/03/13 23:33:52 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -106,7 +106,7 @@
 ./usr/lib/libm.so.0.8				base-sys-shlib
 ./usr/lib/libmagic.so.3.0			base-sys-shlib
 ./usr/lib/libmenu.so.6.0			base-sys-shlib
-./usr/lib/libnetpgp.so.2.0			base-crypto-shlib	crypto
+./usr/lib/libnetpgp.so.3.0			base-crypto-shlib	crypto
 ./usr/lib/libnvpair.so.0.0			base-zfs-shlib		zfs,dynamicroot
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4

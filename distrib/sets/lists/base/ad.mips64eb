@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.11 2010/03/08 06:40:05 lukem Exp $
+# $NetBSD: ad.mips64eb,v 1.12 2010/03/13 23:33:52 agc Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib		compat
@@ -129,8 +129,8 @@
 ./usr/lib/64/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/64/libmenu.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/64/libnetpgp.so.2			base-compat-shlib	compat,pic
-./usr/lib/64/libnetpgp.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/64/libnetpgp.so.3			base-compat-shlib	compat,pic
+./usr/lib/64/libnetpgp.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/64/libobjc.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libopcodes.so.4			base-compat-shlib	compat,pic
@@ -361,8 +361,8 @@
 ./usr/lib/o32/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/o32/libmenu.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/o32/libnetpgp.so.2			base-compat-shlib	compat,pic
-./usr/lib/o32/libnetpgp.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/o32/libnetpgp.so.3			base-compat-shlib	compat,pic
+./usr/lib/o32/libnetpgp.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/o32/libobjc.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libopcodes.so.4			base-compat-shlib	compat,pic
