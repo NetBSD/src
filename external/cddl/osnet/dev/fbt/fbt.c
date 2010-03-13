@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.3 2010/03/12 21:53:15 darran Exp $	*/
+/*	$NetBSD: fbt.c,v 1.4 2010/03/13 01:10:01 darran Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -237,7 +237,7 @@ fbt_invop(uintptr_t addr, uintptr_t *stack, uintptr_t rval)
 
 static int
 fbt_provide_module_cb(const char *name, int symindx, void *value,
-	uint32_t size, int type, void *opaque)
+	uint32_t symsize, int type, void *opaque)
 {
 	fbt_probe_t *fbt, *retfbt;
 	u_int8_t *instr, *limit;
@@ -245,6 +245,7 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 	const char *modname = mod->mod_info->mi_name;
 	int j;
 	int ind;
+	int size;
 
 	/* got a function? */
 	if (ELF_ST_TYPE(type) != STT_FUNC) {
@@ -266,7 +267,7 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 		return (0);
 
 	instr = (u_int8_t *) value;
-	limit = (u_int8_t *) value + size;
+	limit = (u_int8_t *) value + symsize;
 
 #ifdef __amd64__
 	while (instr < limit) {
