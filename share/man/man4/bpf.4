@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.42 2010/01/16 18:47:50 pooka Exp $
+.\"	$NetBSD: bpf.4,v 1.43 2010/03/13 20:39:54 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd January 16, 2010
+.Dd March 13, 2010
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -297,8 +297,23 @@ By default, the flag is disabled (value is 0).
 Enable/disable or get the
 .Dq see sent
 flag status.
-If enabled, packets sent will be passed to the filter.
+If enabled, packets sent by the host (not from
+.Nm )
+will be passed to the filter.
 By default, the flag is enabled (value is 1).
+.It Dv BIOCFEEDBACK BIOCSFEEDBACK BIOCGFEEDBACK (u_int)
+Set (or get)
+.Dq packet feedback mode .
+This allows injected packets to be fed back as input to the interface when
+output via the interface is successful.
+The first name is meant for FreeBSD compatibility, the two others follow
+the Get/Set convention.
+.\"When
+.\".Dv BPF_D_INOUT
+.\"direction is set, injected
+Injected
+outgoing packets are not returned by BPF to avoid
+duplication. This flag is initialized to zero by default.
 .El
 .Sh STANDARD IOCTLS
 .Nm
