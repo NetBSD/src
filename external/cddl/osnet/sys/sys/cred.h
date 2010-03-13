@@ -1,4 +1,4 @@
-/*	$NetBSD: cred.h,v 1.3 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: cred.h,v 1.4 2010/03/13 22:31:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -72,7 +72,7 @@ crgetgroups(cred_t *cr)
 	return gids;
 }
 
-static int
+static __inline int
 groupmember(gid_t gid, cred_t *cr) 
 {
   int result;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.6 2010/03/12 21:37:37 darran Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.7 2010/03/13 22:31:15 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -153,6 +153,7 @@ typedef enum {
 } cpu_setup_t;
 
 typedef int cpu_setup_func_t(cpu_setup_t, int, void *);
+#define mp_maxid ncpu
 
 
 #endif /* _COMPAT_OPENSOLARIS_SYS_CPUVAR_H */

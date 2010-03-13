@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_modevent.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_modevent.c,v 1.3 2010/03/13 22:31:15 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -29,7 +29,6 @@ static int
 dtrace_modcmd(modcmd_t cmd, void *data)
 {
 	int bmajor = -1, cmajor = -1;
-	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
