@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.46 2010/03/13 07:21:37 jld Exp $   */
+/*      $NetBSD: raidctl.c,v 1.47 2010/03/13 13:45:05 plunky Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.46 2010/03/13 07:21:37 jld Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.47 2010/03/13 13:45:05 plunky Exp $");
 #endif
 
 
@@ -483,8 +483,8 @@ static void
 rf_output_pmstat(int fd, int raidID)
 {
 	char srs[7];
-	int i, j, dr;
-	int dis;
+	unsigned int i, j;
+	int dis, dr;
 	struct rf_pmstat st;
 
 	do_ioctl(fd, RAIDFRAME_PARITYMAP_STATUS, &st,
