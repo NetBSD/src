@@ -53,6 +53,7 @@ static const char *usage =
 	"\t--generate-key [options] OR\n"
 	"\t--import-key [options] OR\n"
 	"\t--list-keys [options] OR\n"
+	"\t--list-sigs [options] OR\n"
 	"\t--get-key keyid [options] OR\n"
 	"\t--version\n"
 	"where options are:\n"
@@ -65,6 +66,7 @@ static const char *usage =
 enum optdefs {
 	/* commands */
 	LIST_KEYS = 1,
+	LIST_SIGS,
 	FIND_KEY,
 	EXPORT_KEY,
 	IMPORT_KEY,
@@ -95,6 +97,7 @@ enum optdefs {
 static struct option options[] = {
 	/* key-management commands */
 	{"list-keys",	no_argument,		NULL,	LIST_KEYS},
+	{"list-sigs",	no_argument,		NULL,	LIST_SIGS},
 	{"find-key",	no_argument,		NULL,	FIND_KEY},
 	{"export-key",	no_argument,		NULL,	EXPORT_KEY},
 	{"import-key",	no_argument,		NULL,	IMPORT_KEY},
@@ -148,7 +151,9 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 
 	switch (p->cmd) {
 	case LIST_KEYS:
-		return (f == NULL) ? netpgp_list_keys(netpgp) : netpgp_match_keys(netpgp, f, "human", stdout);
+		return (f == NULL) ? netpgp_list_keys(netpgp, 0) : netpgp_match_keys(netpgp, f, "human", stdout, 0);
+	case LIST_SIGS:
+		return (f == NULL) ? netpgp_list_keys(netpgp, 1) : netpgp_match_keys(netpgp, f, "human", stdout, 1);
 	case FIND_KEY:
 		return netpgp_find_key(netpgp, netpgp_getvar(netpgp, "userid"));
 	case EXPORT_KEY:
@@ -205,9 +210,6 @@ main(int argc, char **argv)
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
-		case LIST_KEYS:
-			p.cmd = options[optindex].val;
-			break;
 		case COREDUMPS:
 			netpgp_setvar(&netpgp, "coredumps", "allowed");
 			p.cmd = options[optindex].val;
@@ -216,6 +218,8 @@ main(int argc, char **argv)
 			netpgp_setvar(&netpgp, "userid checks", "skip");
 			p.cmd = options[optindex].val;
 			break;
+		case LIST_KEYS:
+		case LIST_SIGS:
 		case FIND_KEY:
 		case EXPORT_KEY:
 		case IMPORT_KEY:

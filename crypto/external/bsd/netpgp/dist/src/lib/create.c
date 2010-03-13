@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.23 2010/03/05 16:01:09 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.24 2010/03/13 23:30:41 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -518,7 +518,7 @@ write_struct_pubkey(__ops_output_t *output, const __ops_pubkey_t *key)
 
 unsigned 
 __ops_write_xfer_pubkey(__ops_output_t *output,
-			const __ops_key_t *keydata,
+			const __ops_key_t *key,
 			const unsigned armoured)
 {
 	unsigned    i, j;
@@ -527,30 +527,20 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 		__ops_writer_push_armoured(output, OPS_PGP_PUBLIC_KEY_BLOCK);
 	}
 	/* public key */
-	if (!write_struct_pubkey(output, &keydata->key.seckey.pubkey)) {
+	if (!write_struct_pubkey(output, &key->key.seckey.pubkey)) {
 		return 0;
 	}
 
 	/* TODO: revocation signatures go here */
 
 	/* user ids and corresponding signatures */
-	for (i = 0; i < keydata->uidc; i++) {
-		__ops_userid_t  *uid = &keydata->uids[i];
-
-		if (!__ops_write_struct_userid(output, uid)) {
+	for (i = 0; i < key->uidc; i++) {
+		if (!__ops_write_struct_userid(output, &key->uids[i])) {
 			return 0;
 		}
-
-		/* find signature for this packet if it exists */
-		for (j = 0; j < keydata->sigc; j++) {
-			sigpacket_t    *sig = &keydata->sigs[i];
-
-			if (strcmp((char *) sig->userid->userid,
-					(char *) uid->userid) == 0) {
-				if (!__ops_write(output, sig->packet->raw,
-						sig->packet->length)) {
-					return 0;
-				}
+		for (j = 0; j < key->packetc; j++) {
+			if (!__ops_write(output, key->packets[j].raw, key->packets[j].length)) {
+				return 0;
 			}
 		}
 	}
@@ -584,7 +574,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 
 unsigned 
 __ops_write_xfer_seckey(__ops_output_t *output,
-				const __ops_key_t *keydata,
+				const __ops_key_t *key,
 				const uint8_t *passphrase,
 				const size_t pplen,
 				unsigned armoured)
@@ -595,7 +585,7 @@ __ops_write_xfer_seckey(__ops_output_t *output,
 		__ops_writer_push_armoured(output, OPS_PGP_PRIVATE_KEY_BLOCK);
 	}
 	/* public key */
-	if (!__ops_write_struct_seckey(&keydata->key.seckey, passphrase,
+	if (!__ops_write_struct_seckey(&key->key.seckey, passphrase,
 			pplen, output)) {
 		return 0;
 	}
@@ -603,23 +593,13 @@ __ops_write_xfer_seckey(__ops_output_t *output,
 	/* TODO: revocation signatures go here */
 
 	/* user ids and corresponding signatures */
-	for (i = 0; i < keydata->uidc; i++) {
-		__ops_userid_t  *uid = &keydata->uids[i];
-
-		if (!__ops_write_struct_userid(output, uid)) {
+	for (i = 0; i < key->uidc; i++) {
+		if (!__ops_write_struct_userid(output, &key->uids[i])) {
 			return 0;
 		}
-
-		/* find signature for this packet if it exists */
-		for (j = 0; j < keydata->sigc; j++) {
-			sigpacket_t    *sig = &keydata->sigs[i];
-
-			if (strcmp((char *) sig->userid->userid,
-					(char *) uid->userid) == 0) {
-				if (!__ops_write(output, sig->packet->raw,
-						sig->packet->length)) {
-					return 0;
-				}
+		for (j = 0; j < key->packetc; j++) {
+			if (!__ops_write(output, key->packets[j].raw, key->packets[j].length)) {
+				return 0;
 			}
 		}
 	}

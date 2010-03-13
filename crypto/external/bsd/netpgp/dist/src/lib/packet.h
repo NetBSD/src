@@ -296,6 +296,14 @@ typedef enum {
 					 * with errcode returned */
 } __ops_content_tag_t;
 
+enum {
+	OPS_REVOCATION_NO_REASON	= 0,
+	OPS_REVOCATION_SUPERSEDED	= 1,
+	OPS_REVOCATION_COMPROMISED	= 2,
+	OPS_REVOCATION_RETIRED		= 3,
+	OPS_REVOCATION_NO_LONGER_VALID	= 0x20
+};
+
 typedef __ops_content_tag_t __ops_packet_tag_t;
 typedef __ops_content_tag_t __ops_ss_type_t;
 
@@ -757,7 +765,6 @@ typedef struct {
 } __ops_ss_embedded_sig_t;
 
 /** __ops_subpacket_t */
-
 typedef struct __ops_subpacket_t {
 	size_t          length;
 	uint8_t		*raw;
@@ -1077,12 +1084,18 @@ int __ops_print_packet(__ops_printstate_t *, const __ops_packet_t *);
 #define EXPAND_ARRAY(str, arr) do {					\
 	if (str->arr##c == str->arr##vsize) {				\
 		void	*__newarr;					\
-		str->arr##vsize = (str->arr##vsize * 2) + 10; 		\
-		if ((__newarr = realloc(str->arr##s,			\
-			str->arr##vsize * sizeof(*str->arr##s))) == NULL) { \
+		char	*__newarrc;					\
+		unsigned	__newsize;				\
+		__newsize = (str->arr##vsize * 2) + 10; 		\
+		if ((__newarrc = __newarr = realloc(str->arr##s,	\
+			__newsize * sizeof(*str->arr##s))) == NULL) {	\
 			(void) fprintf(stderr, "EXPAND_ARRAY - bad realloc\n"); \
+		} else {						\
+			(void) memset(&__newarrc[str->arr##vsize * sizeof(*str->arr##s)], \
+				0x0, (__newsize - str->arr##vsize) * sizeof(*str->arr##s)); \
+			str->arr##s = __newarr;				\
+			str->arr##vsize = __newsize;			\
 		}							\
-		str->arr##s = __newarr;					\
 	}								\
 } while(/*CONSTCOND*/0)
 
@@ -1094,24 +1107,40 @@ typedef union {
 } __ops_keydata_key_t;
 
 
-/** sigpacket_t */
+/* sigpacket_t */
 typedef struct {
 	__ops_userid_t		*userid;
 	__ops_subpacket_t	*packet;
 } sigpacket_t;
 
-/* XXX: gonna have to expand this to hold onto subkeys, too... */
-/** \struct __ops_keydata
- * \todo expand to hold onto subkeys
- */
+/* user revocation info */
+typedef struct __ops_revoke_t {
+	uint32_t		 uid;		/* index in uid array */
+	uint8_t			 code;		/* revocation code */
+	char			*reason;	/* c'mon, spill the beans */
+} __ops_revoke_t;
+
+/** signature subpackets */
+typedef struct __ops_subsig_t {
+	uint32_t		uid;		/* index in userid array in key */
+	__ops_sig_t		sig;		/* trust signature */
+	uint8_t			trustlevel;	/* level of trust */
+	uint8_t			trustamount;	/* amount of trust */
+} __ops_subsig_t;
+
+/* describes a user's key */
 struct __ops_key_t {
-	DYNARRAY(__ops_userid_t, uid);
-	DYNARRAY(__ops_subpacket_t, packet);
-	DYNARRAY(sigpacket_t, sig);
+	DYNARRAY(__ops_userid_t, uid);		/* array of user ids */
+	DYNARRAY(__ops_subpacket_t, packet);	/* array of raw subpackets */
+	DYNARRAY(__ops_subsig_t, subsig);	/* array of signature subkeys */
+	DYNARRAY(__ops_revoke_t, revoke);	/* array of signature revocations */
 	uint8_t			key_id[OPS_KEY_ID_SIZE];
-	__ops_fingerprint_t	fingerprint;
-	__ops_content_tag_t	type;
-	__ops_keydata_key_t	key;
+	__ops_fingerprint_t	fingerprint;	/* pgp fingerprint */
+	__ops_content_tag_t	type;		/* type of key */
+	__ops_keydata_key_t	key;		/* pubkey/seckey data */
+	uint32_t		uid0;		/* primary uid index in uids array */
+	uint8_t			revoked;
+	__ops_revoke_t		revocation;
 };
 
 #define MDC_PKT_TAG	0xd3
