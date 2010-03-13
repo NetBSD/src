@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.21 2010/03/13 15:42:09 tsutsui Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.22 2010/03/13 15:46:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.21 2010/03/13 15:42:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.22 2010/03/13 15:46:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ CFATTACH_DECL_NEW(we_isa, sizeof(struct we_softc),
     we_isa_probe, we_isa_attach, NULL, NULL);
 
 static const char *we_params(bus_space_tag_t, bus_space_handle_t,
-		u_int8_t *, bus_size_t *, u_int8_t *, int *);
+    uint8_t *, bus_size_t *, uint8_t *, int *);
 
 static const int we_584_irq[] = {
 	9, 3, 5, 7, 10, 11, 15, 4,
@@ -111,7 +111,7 @@ we_isa_probe(device_t parent, cfdata_t cf, void *aux)
 	bus_size_t memsize;
 	int asich_valid, memh_valid;
 	int i, is790, rv = 0;
-	u_int8_t x, type;
+	uint8_t x, type;
 
 	asict = ia->ia_iot;
 	memt = ia->ia_memt;
@@ -119,22 +119,22 @@ we_isa_probe(device_t parent, cfdata_t cf, void *aux)
 	asich_valid = memh_valid = 0;
 
 	if (ia->ia_nio < 1)
-		return (0);
+		return 0;
 	if (ia->ia_niomem < 1)
-		return (0);
+		return 0;
 	if (ia->ia_nirq < 1)
-		return (0);
+		return 0;
 
 	if (ISA_DIRECT_CONFIG(ia))
-		return (0);
+		return 0;
 
 	/* Disallow wildcarded i/o addresses. */
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
-		return (0);
+		return 0;
 
 	/* Disallow wildcarded mem address. */
 	if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM)
-		return (0);
+		return 0;
 
 	/* Attempt to map the device. */
 	if (bus_space_map(asict, ia->ia_io[0].ir_addr, WE_NPORTS, 0, &asich))
@@ -202,7 +202,7 @@ we_isa_probe(device_t parent, cfdata_t cf, void *aux)
 	 * and use it.
 	 */
 	if (is790) {
-		u_int8_t hwr;
+		uint8_t hwr;
 
 		/* Assemble together the encoded interrupt number. */
 		hwr = bus_space_read_1(asict, asich, WE790_HWR);
@@ -253,7 +253,7 @@ we_isa_probe(device_t parent, cfdata_t cf, void *aux)
 		bus_space_unmap(asict, asich, WE_NPORTS);
 	if (memh_valid)
 		bus_space_unmap(memt, memh, memsize);
-	return (rv);
+	return rv;
 }
 
 void
@@ -343,13 +343,13 @@ we_isa_attach(device_t parent, device_t self, void *aux)
 }
 
 static const char *
-we_params(bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *typep,
-    bus_size_t *memsizep, u_int8_t *flagp, int *is790p)
+we_params(bus_space_tag_t asict, bus_space_handle_t asich, uint8_t *typep,
+    bus_size_t *memsizep, uint8_t *flagp, int *is790p)
 {
 	const char *typestr;
 	bus_size_t memsize;
 	int is16bit, is790;
-	u_int8_t type;
+	uint8_t type;
 
 	memsize = 8192;
 	is16bit = is790 = 0;
@@ -404,7 +404,7 @@ we_params(bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *typep,
 	case WE_TYPE_SMC8216C:
 	case WE_TYPE_SMC8216T:
 	    {
-		u_int8_t hwr;
+		uint8_t hwr;
 
 		typestr = (type == WE_TYPE_SMC8216C) ?
 		    "SMC8216/SMC8216C" : "SMC8216T";
@@ -450,7 +450,7 @@ we_params(bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *typep,
 #endif
 	default:
 		/* Not one we recognize. */
-		return (NULL);
+		return NULL;
 	}
 
 	/*
@@ -486,5 +486,5 @@ we_params(bus_space_tag_t asict, bus_space_handle_t asich, u_int8_t *typep,
 		*flagp |= WE_16BIT_ENABLE;
 	if (is790p != NULL)
 		*is790p = is790;
-	return (typestr);
+	return typestr;
 }
