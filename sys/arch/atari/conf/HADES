@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.85 2010/02/21 18:00:13 tsutsui Exp $
+# $NetBSD: HADES,v 1.86 2010/03/13 16:31:38 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.9 2009/01/24 00:19:47 abs Exp $
-#		NetBSD: GENERIC.in,v 1.83 2010/02/21 17:57:03 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.84 2010/03/13 16:30:02 tsutsui Exp $
 include "arch/atari/conf/std.hades"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
