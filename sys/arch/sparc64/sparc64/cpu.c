@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.93 2010/03/11 03:54:56 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.94 2010/03/13 15:01:53 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.93 2010/03/11 03:54:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.94 2010/03/13 15:01:53 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -326,7 +326,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	    prom_getpropint(node, "icache-associativity", 1);
 	bigcache = cachesize;
 
-	sep = " ";
+	sep = "";
 	if (totalsize > 0) {
 		aprint_normal("%s%ldK instruction (%ld b/l)", sep,
 		       (long)totalsize/1024,
