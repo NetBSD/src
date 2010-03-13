@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.33 2010/03/07 09:39:42 plunky Exp $
+#	$NetBSD: TWINTAIL,v 1.34 2010/03/13 11:37:47 bsh Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -352,6 +352,22 @@ xi*	at xirc?
 mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
 com*	at mhzc?
 sm*	at mhzc?
+
+# DMAC support
+pxadmac0 at pxaip? addr 0x40000000 intr 25
+options 	PXA2X0_DMAC_DMOVER_CONCURRENCY=4 # Enable dmover(9) backend
+#options 	PXA2X0_DMAC_FIXED_PRIORITY	# Don't want multiple priority
+
+
+# MMC/SD contoller in PXA255
+#  (attached on obio for card detect and write protect signal)
+pxamci0 at obio?
+sdmmc* at pxamci?
+#options 	PXAMCI_DEBUG
+#options 	SDMMC_DEBUG
+#options 	SDMMC_DUMP_CSD
+
+ld* at sdmmc?				# MMC/SD card
 
 # Pseudo-Devices
 
