@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.klinks.mk,v 1.6 2009/11/27 13:50:29 pooka Exp $
+#	$NetBSD: bsd.klinks.mk,v 1.7 2010/03/13 22:05:49 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -39,8 +39,10 @@ CLEANFILES+=	x86
 .BEGIN:
 	@rm -f machine && \
 	    ln -s $S/arch/${MACHINE}/include machine
-	@rm -f ${MACHINE_CPU} && \
-	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
+	@if [ -d $S/arch/${MACHINE_CPU} ]; then \
+	    rm -f ${MACHINE_CPU} && \
+	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}; \
+	 fi
 # XXX. it gets worse..
 .if ${MACHINE} == "sun2" || ${MACHINE} == "sun3"
 	@rm -f sun68k && \
