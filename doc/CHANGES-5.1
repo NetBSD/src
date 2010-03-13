@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.216 2010/03/13 07:31:59 riz Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.217 2010/03/13 18:27:55 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16951,4 +16951,9 @@ lib/libpam/modules/pam_unix/pam_unix.c		1.14
 
 	When changing the password, don't clear PAM_AUTHTOK at the beginning.
 	[drochner, ticket #1336]
+
+usr.sbin/pppd/pppd/sys-bsd.c			1.62
+
+	PR/42943: Takashi Sogabe: pppd generates invalid netmask
+	[christos, ticket #1335]
 
