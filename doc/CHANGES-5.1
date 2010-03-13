@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.214 2010/03/12 22:02:02 riz Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.215 2010/03/13 00:56:09 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16936,4 +16936,9 @@ lib/libm/src/s_fminl.c				1.1
 
 	Add f{min,max,dim}{,l,f} from FreeBSD.
 	[snj, ticket #1330]
+
+lib/libc/stdlib/jemalloc.c			1.21
+
+	Fix race condition on reallocation of huge category. PR#42876.
+	[enami, ticket #1327]
 
