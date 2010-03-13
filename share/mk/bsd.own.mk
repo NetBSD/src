@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.622 2010/03/13 17:07:28 haad Exp $
+#	$NetBSD: bsd.own.mk,v 1.623 2010/03/13 19:31:51 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -717,7 +717,8 @@ MKKMOD=		no
 .endif
 
 #
-# MK* options which default to "no".
+# MK* options which default to "no".  Note that MKZFS has a different
+# default for some platforms, see above.
 #
 _MKVARS.no= \
 	MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
@@ -725,7 +726,7 @@ _MKVARS.no= \
 	MKMANDOC MKMANZ MKOBJDIRS \
 	MKPCC MKPCCCMDS \
 	MKSOFTFLOAT MKSTRIPIDENT \
-	MKUNPRIVED MKUPDATE MKX11
+	MKUNPRIVED MKUPDATE MKX11 MKZFS
 .for var in ${_MKVARS.no}
 ${var}?=no
 .endfor
