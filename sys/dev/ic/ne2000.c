@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.69 2010/03/13 15:08:24 tsutsui Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.70 2010/03/13 15:27:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.69 2010/03/13 15:08:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.70 2010/03/13 15:27:40 tsutsui Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -92,16 +92,18 @@ __KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.69 2010/03/13 15:08:24 tsutsui Exp $");
 
 #include <dev/ic/ax88190reg.h>
 
-int	ne2000_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
-int	ne2000_ring_copy(struct dp8390_softc *, int, void *, u_short);
-void	ne2000_read_hdr(struct dp8390_softc *, int, struct dp8390_ring *);
-int	ne2000_test_mem(struct dp8390_softc *);
+static int	ne2000_write_mbuf(struct dp8390_softc *, struct mbuf *, int);
+static int	ne2000_ring_copy(struct dp8390_softc *, int, void *, u_short);
+static void	ne2000_read_hdr(struct dp8390_softc *, int,
+		    struct dp8390_ring *);
+static int	ne2000_test_mem(struct dp8390_softc *);
 
-void	ne2000_writemem(bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t, uint8_t *, int, size_t,
-	    int, int);
-void	ne2000_readmem(bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t, int, uint8_t *, size_t, int);
+static void	ne2000_writemem(bus_space_tag_t, bus_space_handle_t,
+		    bus_space_tag_t, bus_space_handle_t, const uint8_t *, int,
+		    size_t, int, int);
+static void	ne2000_readmem(bus_space_tag_t, bus_space_handle_t,
+		    bus_space_tag_t, bus_space_handle_t, int, uint8_t *,
+		    size_t, int);
 
 #ifdef NE2000_DETECT_8BIT
 static bool	ne2000_detect_8bit(bus_space_tag_t, bus_space_handle_t,
@@ -333,7 +335,7 @@ int
 ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich,
     bus_space_tag_t asict, bus_space_handle_t asich)
 {
-	static uint8_t test_pattern[32] = "THIS is A memory TEST pattern";
+	const uint8_t test_pattern[32] = "THIS is A memory TEST pattern";
 	uint8_t test_buffer[32], tmp;
 	int i, rv = NE2000_TYPE_UNKNOWN;
 	int useword;
@@ -821,7 +823,7 @@ ne2000_readmem(bus_space_tag_t nict, bus_space_handle_t nich,
 void
 ne2000_writemem(bus_space_tag_t nict, bus_space_handle_t nich,
     bus_space_tag_t asict, bus_space_handle_t asich,
-    uint8_t *src, int dst, size_t len, int useword, int quiet)
+    const uint8_t *src, int dst, size_t len, int useword, int quiet)
 {
 	int maxwait = 100;	/* about 120us */
 
@@ -852,7 +854,7 @@ ne2000_writemem(bus_space_tag_t nict, bus_space_handle_t nich,
 	ASIC_BARRIER(asict, asich);
 	if (useword)
 		bus_space_write_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
-		    (uint16_t *)src, len >> 1);
+		    (const uint16_t *)src, len >> 1);
 	else
 		bus_space_write_multi_1(asict, asich, NE2000_ASIC_DATA,
 		    src, len);
