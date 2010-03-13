@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2010/03/12 15:12:12 roy Exp $
+# $NetBSD: GENERIC,v 1.123 2010/03/13 08:36:06 mrg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.122 $"
+#ident 		"GENERIC-$Revision: 1.123 $"
 
 maxusers	64
 
@@ -228,9 +228,10 @@ options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 
-#### Main bus and CPU .. all systems.
+#### Main bus and CPUs .. all systems.
 mainbus0 at root
-cpu0	at mainbus0
+options 	MULTIPROCESSOR		# include multiprocessor support
+cpu* 		at mainbus0		# declare additional CPUs
 
 #### Bus types found on SPARC systems.
 
