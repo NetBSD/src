@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9.36.9 2010/03/12 00:18:24 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.9.36.10 2010/03/13 03:14:13 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.9 2010/03/12 00:18:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.10 2010/03/13 03:14:13 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -266,15 +266,6 @@ sb1250_icu_init(void)
 	    imr_all);
 
 #ifdef MULTIPROCESSOR
-	/*
-	 * For now, deliver all IPIs at IPL_SCHED.  Eventually some will be
-	 * at IPL_VM.
-	 */
-	sb1250_intr_establish(K_INT_MBOX_0, IPL_SCHED, sb1250_ipi_intr, NULL);
-	sb1250_intr_establish(K_INT_MBOX_1, IPL_SCHED, sb1250_ipi_intr, NULL);
-	sb1250_intr_establish(K_INT_MBOX_2, IPL_SCHED, sb1250_ipi_intr, NULL);
-	sb1250_intr_establish(K_INT_MBOX_3, IPL_SCHED, sb1250_ipi_intr, NULL);
-
 	mips_locoresw.lsw_send_ipi = sb1250_lsw_send_ipi;
 	mips_locoresw.lsw_cpu_init = sb1250_lsw_cpu_init;
 #endif /* MULTIPROCESSOR */
