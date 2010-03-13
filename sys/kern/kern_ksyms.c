@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.56 2010/03/12 21:43:11 darran Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.57 2010/03/13 16:27:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.56 2010/03/12 21:43:11 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.57 2010/03/13 16:27:06 christos Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -474,8 +474,8 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 			ctfsize = shdr[i].sh_size;
 			ksyms_ctfsz = ctfsize;
 #ifdef DEBUG
-			aprint_normal("Found CTF at 0x%x, size 0x%x\n",
-				(uint32_t)ctfstart, ctfsize);
+			aprint_normal("Found CTF at %p, size 0x%zx\n",
+			    ctfstart, ctfsize);
 #endif
 			break;
 		}
