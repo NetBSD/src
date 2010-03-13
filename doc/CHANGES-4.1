@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.196 2010/02/01 21:46:44 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.197 2010/03/13 18:25:31 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4053,4 +4053,9 @@ crypto/dist/openssl/crypto/comp/c_zlib.c		patch
 
 	Fix to deal with CVE-2009-4355 from OpenSSL's repositroy.
 	[taca, ticket #1378]
+
+usr.sbin/pppd/pppd/sys-bsd.c			1.62
+
+	PR/42943: Takashi Sogabe: pppd generates invalid netmask
+	[christos, ticket #1389]
 
