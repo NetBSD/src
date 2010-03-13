@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_isa.c,v 1.20 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_we_isa.c,v 1.21 2010/03/13 15:42:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.20 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.21 2010/03/13 15:42:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_we_isa.c,v 1.20 2008/04/28 20:23:52 martin Exp $"
 #include <dev/ic/wereg.h>
 #include <dev/ic/wevar.h>
 
+#include "ioconf.h"
+
 #ifndef __BUS_SPACE_HAS_STREAM_METHODS
 #define	bus_space_read_region_stream_2	bus_space_read_region_2
 #define	bus_space_write_stream_2	bus_space_write_2
@@ -89,51 +91,16 @@ void	we_isa_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(we_isa, sizeof(struct we_softc),
     we_isa_probe, we_isa_attach, NULL, NULL);
 
-extern struct cfdriver we_cd;
-
 static const char *we_params(bus_space_tag_t, bus_space_handle_t,
 		u_int8_t *, bus_size_t *, u_int8_t *, int *);
 
 static const int we_584_irq[] = {
 	9, 3, 5, 7, 10, 11, 15, 4,
 };
-#define	NWE_584_IRQ	(sizeof(we_584_irq) / sizeof(we_584_irq[0]))
 
 static const int we_790_irq[] = {
 	ISA_UNKNOWN_IRQ, 9, 3, 5, 7, 10, 11, 15,
 };
-#define	NWE_790_IRQ	(sizeof(we_790_irq) / sizeof(we_790_irq[0]))
-
-/*
- * Delay needed when switching 16-bit access to shared memory.
- */
-#define	WE_DELAY(wsc) delay(3)
-
-/*
- * Enable card RAM, and 16-bit access.
- */
-#define	WE_MEM_ENABLE(wsc) \
-do { \
-	if ((wsc)->sc_16bitp) \
-		bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-		    WE_LAAR, (wsc)->sc_laar_proto | WE_LAAR_M16EN); \
-	bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-	    WE_MSR, wsc->sc_msr_proto | WE_MSR_MENB); \
-	WE_DELAY((wsc)); \
-} while (0)
-
-/*
- * Disable card RAM, and 16-bit access.
- */
-#define	WE_MEM_DISABLE(wsc) \
-do { \
-	bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-	    WE_MSR, (wsc)->sc_msr_proto); \
-	if ((wsc)->sc_16bitp) \
-		bus_space_write_1((wsc)->sc_asict, (wsc)->sc_asich, \
-		    WE_LAAR, (wsc)->sc_laar_proto); \
-	WE_DELAY((wsc)); \
-} while (0)
 
 int
 we_isa_probe(device_t parent, cfdata_t cf, void *aux)
