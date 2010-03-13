@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.155 2010/01/26 01:06:23 pooka Exp $	*/
+/*	$NetBSD: bpf.c,v 1.156 2010/03/13 20:38:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.155 2010/01/26 01:06:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.156 2010/03/13 20:38:48 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -407,6 +407,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK|M_ZERO);
 	d->bd_bufsize = bpf_bufsize;
 	d->bd_seesent = 1;
+	d->bd_feedback = 0;
 	d->bd_pid = l->l_proc->p_pid;
 	getnanotime(&d->bd_btime);
 	d->bd_atime = d->bd_mtime = d->bd_btime;
@@ -622,7 +623,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 {
 	struct bpf_d *d = fp->f_data;
 	struct ifnet *ifp;
-	struct mbuf *m;
+	struct mbuf *m, *mc;
 	int error, s;
 	static struct sockaddr_storage dst;
 
@@ -659,8 +660,24 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	if (d->bd_hdrcmplt)
 		dst.ss_family = pseudo_AF_HDRCMPLT;
 
+	if (d->bd_feedback) {
+		mc = m_dup(m, 0, M_COPYALL, M_NOWAIT);
+		if (mc != NULL)
+			mc->m_pkthdr.rcvif = ifp;
+		/* Set M_PROMISC for outgoing packets to be discarded. */
+		if (1 /*d->bd_direction == BPF_D_INOUT*/)
+			m->m_flags |= M_PROMISC;
+	} else  
+		mc = NULL;
+
 	s = splsoftnet();
 	error = (*ifp->if_output)(ifp, m, (struct sockaddr *) &dst, NULL);
+
+	if (mc != NULL) {
+		if (error == 0)
+			(*ifp->if_input)(ifp, mc);
+	} else
+		m_freem(mc);
 	splx(s);
 	KERNEL_UNLOCK_ONE(NULL);
 	/*
@@ -704,6 +721,10 @@ reset_d(struct bpf_d *d)
  *  BIOCVERSION		Get filter language version.
  *  BIOCGHDRCMPLT	Get "header already complete" flag.
  *  BIOCSHDRCMPLT	Set "header already complete" flag.
+ *  BIOCSFEEDBACK	Set packet feedback mode.
+ *  BIOCGFEEDBACK	Get packet feedback mode.
+ *  BIOCGSEESENT  	Get "see sent packets" mode.
+ *  BIOCSSEESENT  	Set "see sent packets" mode.
  */
 /* ARGSUSED */
 static int
@@ -973,6 +994,20 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 	 */
 	case BIOCSSEESENT:
 		d->bd_seesent = *(u_int *)addr;
+		break;
+
+	/*
+	 * Set "feed packets from bpf back to input" mode
+	 */
+	case BIOCSFEEDBACK:
+		d->bd_feedback = *(u_int *)addr;
+		break;
+
+	/*
+	 * Get "feed packets from bpf back to input" mode
+	 */
+	case BIOCGFEEDBACK:
+		*(u_int *)addr = d->bd_feedback;
 		break;
 
 	case FIONBIO:		/* Non-blocking I/O */
@@ -1356,6 +1391,12 @@ bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 	u_int pktlen;
 	struct mbuf mb;
 
+	/* Skip outgoing duplicate packets. */
+	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif == NULL) {
+		m->m_flags &= ~M_PROMISC;
+		return;
+	}
+
 	pktlen = m_length(m) + dlen;
 
 	/*
@@ -1381,6 +1422,12 @@ bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 	u_int pktlen, buflen;
 	void *marg;
 
+	/* Skip outgoing duplicate packets. */
+	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif == NULL) {
+		m->m_flags &= ~M_PROMISC;
+		return;
+	}
+
 	pktlen = m_length(m);
 
 	if (pktlen == m->m_len) {
@@ -1388,7 +1435,6 @@ bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 		marg = mtod(m, void *);
 		buflen = pktlen;
 	} else {
-/*###1299 [cc] warning: assignment from incompatible pointer type%%%*/
 		cpfn = bpf_mcpy;
 		marg = m;
 		buflen = 0;
