@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.36 2010/02/24 22:37:58 dyoung Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.37 2010/03/14 21:25:59 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -168,7 +168,7 @@ enum atw_revision {
 
 struct atw_softc {
 	device_t		sc_dev;
-	struct device_suspensor	sc_suspensor;
+	device_suspensor_t	sc_suspensor;
 	pmf_qual_t		sc_qual;
 
 	struct ethercom		sc_ec;
