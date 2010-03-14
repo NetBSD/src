@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.57 2010/03/13 16:27:06 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.58 2010/03/14 21:27:49 darran Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.57 2010/03/13 16:27:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.58 2010/03/14 21:27:49 darran Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -298,10 +298,12 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_maxsym = 0;
 	tab->sd_usroffset = 0;
 	tab->sd_gone = false;
+#ifdef KDTRACE_HOOKS
 	tab->sd_ctfstart = ctfstart;
 	tab->sd_ctfsize = ctfsize;
 	tab->sd_nmap = nmap;
 	tab->sd_nmapsize = nsyms;
+#endif
 #ifdef KSYMS_DEBUG
 	printf("newstart %p sym %p ksyms_symsz %d str %p strsz %d send %p\n",
 	    newstart, symstart, symsize, strstart, strsize,
@@ -345,6 +347,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 		/* Save symbol. Set it as an absolute offset */
 		nsym[n] = sym[i];
 
+#ifdef KDTRACE_HOOKS
 		if (nmap != NULL) {
 			/* Save the size, replace it with the symbol id so
 			 * the mapping can be done after the cleanup and sort.
@@ -352,6 +355,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 			nmap[i] = nsym[n].st_size;
 			nsym[n].st_size = i+1;	/* zero is reserved */
 		}
+#endif
 
 		nsym[n].st_shndx = SHBSS;
 		j = strlen(nsym[n].st_name + str) + 1;
@@ -377,6 +381,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	if (kheapsort(nsym, n, sizeof(Elf_Sym), addsymtab_compar, &ts) != 0)
 		panic("addsymtab");
 
+#ifdef KDTRACE_HOOKS
 	/* 
 	 * Build the mapping from original symbol id to new symbol table.
 	 * Deleted symbols will have a zero map, indices will be one based
@@ -395,6 +400,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 			nsym[new].st_size = size;
 		}
 	}
+#endif
 
 	/* ksymsread() is unlocked, so membar. */
 	membar_producer();
@@ -416,7 +422,6 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 	Elf_Ehdr *ehdr;
 	char *ctfstart = NULL;
 	size_t ctfsize = 0;
-	char *shstr = NULL;
 
 	if (symsize <= 0) {
 		printf("[ Kernel symbol table missing! ]\n");
@@ -461,10 +466,12 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 		break;
 	}
 
+#ifdef KDTRACE_HOOKS
 	/* Find the CTF section */
 	shdr = (Elf_Shdr *)((uint8_t *)start + ehdr->e_shoff);
 	if (ehdr->e_shstrndx != 0) {
-		shstr = (uint8_t*)start + shdr[ehdr->e_shstrndx].sh_offset;
+		char *shstr = (uint8_t*)start +
+				shdr[ehdr->e_shstrndx].sh_offset;
 		for (i = 1; i < ehdr->e_shnum; i++) {
 			if (shdr[i].sh_type != SHT_PROGBITS)
 				continue;
@@ -480,6 +487,7 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 			break;
 		}
 	}
+#endif
 
 	if (!ksyms_verify(symstart, strstart))
 		return;
@@ -875,6 +883,7 @@ ksyms_hdr_init(void *hdraddr)
 	ksyms_hdr.kh_shdr[SHBSS].sh_addralign = PAGE_SIZE;
 	ksyms_hdr.kh_shdr[SHBSS].sh_flags = SHF_ALLOC | SHF_EXECINSTR;
 
+#ifdef KDTRACE_HOOKS
 	/* Sixth section header; ".SUNW_ctf" */
 	ksyms_hdr.kh_shdr[SHCTF].sh_name = 32; /* Section 6 offset */
 	ksyms_hdr.kh_shdr[SHCTF].sh_type = SHT_PROGBITS;
@@ -882,6 +891,7 @@ ksyms_hdr_init(void *hdraddr)
 /*	ksyms_hdr.kh_shdr[SHCTF].sh_size = filled in at open */
 	ksyms_hdr.kh_shdr[SHCTF].sh_link = SYMTAB; /* Corresponding symtab */
 	ksyms_hdr.kh_shdr[SHCTF].sh_addralign = sizeof(char);
+#endif
 
 	/* Set section names */
 	strlcpy(&ksyms_hdr.kh_strtab[1], ".symtab",
@@ -892,8 +902,10 @@ ksyms_hdr_init(void *hdraddr)
 	    sizeof(ksyms_hdr.kh_strtab) - 17);
 	strlcpy(&ksyms_hdr.kh_strtab[27], ".bss",
 	    sizeof(ksyms_hdr.kh_strtab) - 27);
+#ifdef KDTRACE_HOOKS
 	strlcpy(&ksyms_hdr.kh_strtab[32], ".SUNW_ctf",
 	    sizeof(ksyms_hdr.kh_strtab) - 32);
+#endif
 }
 
 static int
@@ -913,9 +925,11 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	ksyms_hdr.kh_shdr[STRTAB].sh_offset = ksyms_symsz +
 	    ksyms_hdr.kh_shdr[SYMTAB].sh_offset;
 	ksyms_hdr.kh_shdr[STRTAB].sh_size = ksyms_strsz;
+#ifdef KDTRACE_HOOKS
 	ksyms_hdr.kh_shdr[SHCTF].sh_offset = ksyms_strsz +
 	    ksyms_hdr.kh_shdr[STRTAB].sh_offset;
 	ksyms_hdr.kh_shdr[SHCTF].sh_size = ksyms_ctfsz;
+#endif
 	ksyms_isopen = true;
 	mutex_exit(&ksyms_lock);
 
@@ -950,9 +964,12 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 static int
 ksymsread(dev_t dev, struct uio *uio, int ioflag)
 {
-	struct ksyms_symtab *st, *cst;
+	struct ksyms_symtab *st;
 	size_t filepos, inpos, off;
 	int error;
+#ifdef KDTRACE_HOOKS
+	struct ksyms_symtab *cst;
+#endif
 
 	/*
 	 * First: Copy out the ELF header.   XXX Lose if ksymsopen()
@@ -1001,6 +1018,7 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 		filepos += st->sd_strsize;
 	}
 
+#ifdef KDTRACE_HOOKS
 	/*
 	 * Copy out the CTF table.
 	 */
@@ -1017,7 +1035,7 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 		}
 		filepos += cst->sd_ctfsize;
 	}
-
+#endif
 
 	return 0;
 }
