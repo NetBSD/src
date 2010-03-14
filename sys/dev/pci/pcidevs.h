@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1021 2010/02/25 03:20:02 macallan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1022 2010/03/14 03:54:59 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1023 2010/02/16 10:10:04 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1025 2010/03/14 03:13:04 mrg Exp
  */
 
 /*
@@ -2834,6 +2834,12 @@
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* S21152BA,S21154AE/BE PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_21555	0xb555		/* 21555 Non-Transparent PCI-PCI Bridge */
+#define	PCI_PRODUCT_INTEL_CP_QPI_LINK	0xd150		/* Core Processor QPI Link */
+#define	PCI_PRODUCT_INTEL_CP_QPI_RPREGS	0xd151		/* Core Processor QPI Routing and Protocol Registers */
+#define	PCI_PRODUCT_INTEL_CP_SYS_MREGS	0xd155		/* Core Processor System Management Registers */
+#define	PCI_PRODUCT_INTEL_CP_SS_REGS	0xd156		/* Core Processor Semaphore and Scratchpad Registers */
+#define	PCI_PRODUCT_INTEL_CP_SCS_REGS	0xd157		/* Core Processor System Control and Status Registers */
+#define	PCI_PRODUCT_INTEL_CP_MISC_REGS	0xd158		/* Core Processor Miscellaneous Registers */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
@@ -3754,6 +3760,9 @@
 #define	PCI_PRODUCT_RICOH_Rx5C847	0x0847		/* 5C847 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/Firewire */
 #define	PCI_PRODUCT_RICOH_RxDPCC	0x0852		/* xD-Picture Card Controller */
 #define	PCI_PRODUCT_RICOH_Rx5C853	0x0853		/* 5C853 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/SC/Firewire */
+#define	PCI_PRODUCT_RICOH_Rx5U230	0xe230		/* 5U230 Memory Stick Controller */
+#define	PCI_PRODUCT_RICOH_Rx5U832	0xe832		/* 5U832 Firewire Controller */
+#define	PCI_PRODUCT_RICOH_Rx5C852	0xe852		/* 5C852 xD Controller */
 
 /* RISCom (SDL Communications?) products */
 #define	PCI_PRODUCT_RISCOM_N2	0x5568		/* N2 */
