@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.61 2009/08/19 08:24:44 he Exp $
+# $NetBSD: md.pmax,v 1.62 2010/03/14 08:24:18 mrg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
 ./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
@@ -65,4 +65,3 @@
 ./usr/include/pmax/varargs.h			comp-c-include
 ./usr/include/pmax/vmparam.h			comp-c-include
 ./usr/include/pmax/wchar_limits.h		comp-c-include
-./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
