@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1024 2010/02/25 03:18:44 macallan Exp $
+$NetBSD: pcidevs,v 1.1025 2010/03/14 03:13:04 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2827,6 +2827,12 @@ product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
 product INTEL 21152		0xb152	S21152BB PCI-PCI Bridge
 product INTEL 21154		0xb154	S21152BA,S21154AE/BE PCI-PCI Bridge
 product INTEL 21555		0xb555	21555 Non-Transparent PCI-PCI Bridge
+product INTEL CP_QPI_LINK	0xd150	Core Processor QPI Link
+product INTEL CP_QPI_RPREGS	0xd151	Core Processor QPI Routing and Protocol Registers
+product INTEL CP_SYS_MREGS	0xd155	Core Processor System Management Registers
+product INTEL CP_SS_REGS	0xd156	Core Processor Semaphore and Scratchpad Registers
+product INTEL CP_SCS_REGS	0xd157	Core Processor System Control and Status Registers
+product INTEL CP_MISC_REGS	0xd158	Core Processor Miscellaneous Registers
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
@@ -3747,6 +3753,9 @@ product RICOH Rx5C843	0x0843 5C843 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/Firewire
 product RICOH Rx5C847	0x0847 5C847 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/Firewire
 product RICOH RxDPCC	0x0852 xD-Picture Card Controller
 product RICOH Rx5C853	0x0853 5C853 PCI-CardBus Bridge/SD/MMC/MMC+/MS/xD/SC/Firewire
+product RICOH Rx5U230	0xe230 5U230 Memory Stick Controller
+product RICOH Rx5U832	0xe832 5U832 Firewire Controller
+product RICOH Rx5C852	0xe852 5C852 xD Controller
 
 /* RISCom (SDL Communications?) products */
 product RISCOM N2	0x5568	N2
