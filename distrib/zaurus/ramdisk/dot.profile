@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1 2008/03/31 23:59:07 chris Exp $
+# $NetBSD: dot.profile,v 1.2 2010/03/14 12:36:32 nonaka Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# set up some sane defaults
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^? 38400
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
 
 	# mount the ramdisk read write
