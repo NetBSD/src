@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/12/18 13:57:10 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.11 2010/03/14 00:26:10 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -39,7 +39,7 @@ SRCS=		${SRCS.libgcc.a}
 
 CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 
-.c.so:
+.c.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp1
 	${NM} -pg ${.TARGET}.tmp1 | \
@@ -53,7 +53,7 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 .endif
 	rm -f ${.TARGET}.tmp1
 
-.S.so .s.so:
+.S.pico .s.pico:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.tmp1
 	${NM} -pg ${.TARGET}.tmp1 | \
