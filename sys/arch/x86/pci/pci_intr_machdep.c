@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.15 2010/02/25 20:51:10 dyoung Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.16 2010/03/14 20:19:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.15 2010/02/25 20:51:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.16 2010/03/14 20:19:06 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,8 +121,15 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int bus, dev, func;
 #endif
 
-	if ((pc = pa->pa_pc) != NULL && pc->pc_intr_map != NULL)
-		return (*pc->pc_intr_map)(pa, ihp);
+	if ((pc = pa->pa_pc) != NULL) {
+		if (pc->pc_intr_map != NULL)
+			return (*pc->pc_intr_map)(pa, ihp);
+		if (pc->pc_super != NULL) {
+			struct pci_attach_args paclone = *pa;
+			paclone.pa_pc = pc->pc_super;
+			return pci_intr_map(&paclone, ihp);
+		}
+	}
 
 	if (pin == 0) {
 		/* No IRQ used. */
@@ -210,8 +217,12 @@ bad:
 const char *
 pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
-	if (pc != NULL && pc->pc_intr_string != NULL)
-		return (*pc->pc_intr_string)(pc, ih);
+	if (pc != NULL) {
+		if (pc->pc_intr_string != NULL)
+			return (*pc->pc_intr_string)(pc, ih);
+		if (pc->pc_super != NULL)
+			return pci_intr_string(pc->pc_super, ih);
+	}
 
 	return intr_string(ih & ~MPSAFE_MASK);
 }
@@ -221,8 +232,12 @@ const struct evcnt *
 pci_intr_evcnt(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
-	if (pc != NULL && pc->pc_intr_evcnt != NULL)
-		return (*pc->pc_intr_evcnt)(pc, ih);
+	if (pc != NULL) {
+		if (pc->pc_intr_evcnt != NULL)
+			return (*pc->pc_intr_evcnt)(pc, ih);
+		if (pc->pc_super != NULL)
+			return pci_intr_evcnt(pc->pc_super, ih);
+	}
 
 	/* XXX for now, no evcnt parent reported */
 	return NULL;
@@ -258,8 +273,16 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 #endif
 	bool mpsafe;
 
-	if (pc != NULL && pc->pc_intr_establish != NULL)
-		return (*pc->pc_intr_establish)(pc, ih, level, func, arg);
+	if (pc != NULL) {
+		if (pc->pc_intr_establish != NULL) {
+			return (*pc->pc_intr_establish)(pc, ih, level, func,
+			    arg);
+		}
+		if (pc->pc_super != NULL) {
+			return pci_intr_establish(pc->pc_super, ih, level, func,
+			    arg);
+		}
+	}
 
 	pic = &i8259_pic;
 	pin = irq = (ih & ~MPSAFE_MASK);
@@ -289,9 +312,15 @@ void
 pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 {
 
-	if (pc != NULL && pc->pc_intr_disestablish != NULL) {
-		(*pc->pc_intr_disestablish)(pc, cookie);
-		return;
+	if (pc != NULL) {
+		if (pc->pc_intr_disestablish != NULL) {
+			(*pc->pc_intr_disestablish)(pc, cookie);
+			return;
+		}
+		if (pc->pc_super != NULL) {
+			pci_intr_disestablish(pc->pc_super, cookie);
+			return;
+		}
 	}
 
 	intr_disestablish(cookie);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.40 2010/02/25 20:51:10 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.41 2010/03/14 20:19:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40 2010/02/25 20:51:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2010/03/14 20:19:06 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -344,8 +344,14 @@ pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 {
 	pcitag_t tag;
 
-	if (pc != NULL && pc->pc_make_tag != NULL)
-		return (*pc->pc_make_tag)(pc, bus, device, function);
+	if (pc != NULL) {
+		if (pc->pc_make_tag != NULL)
+			return (*pc->pc_make_tag)(pc, bus, device, function);
+		if (pc->pc_super != NULL) {
+			return pci_make_tag(pc->pc_super, bus, device,
+			    function);
+		}
+	}
 
 	switch (pci_mode) {
 	case 1:
@@ -373,9 +379,15 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
     int *bp, int *dp, int *fp)
 {
 
-	if (pc != NULL && pc->pc_decompose_tag != NULL) {
-		(*pc->pc_decompose_tag)(pc, tag, bp, dp, fp);
-		return;
+	if (pc != NULL) {
+		if (pc->pc_decompose_tag != NULL) {
+			(*pc->pc_decompose_tag)(pc, tag, bp, dp, fp);
+			return;
+		}
+		if (pc->pc_super != NULL) {
+			pci_decompose_tag(pc->pc_super, tag, bp, dp, fp);
+			return;
+		}
 	}
 
 	switch (pci_mode) {
@@ -409,8 +421,12 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 
 	KASSERT((reg & 0x3) == 0);
 
-	if (pc != NULL && pc->pc_conf_read != NULL)
-		return (*pc->pc_conf_read)(pc, tag, reg);
+	if (pc != NULL) {
+		if (pc->pc_conf_read != NULL)
+			return (*pc->pc_conf_read)(pc, tag, reg);
+		if (pc->pc_super != NULL)
+			return pci_conf_read(pc->pc_super, tag, reg);
+	}
 
 #if defined(__i386__) && defined(XBOX)
 	if (arch_i386_is_xbox) {
@@ -437,9 +453,15 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 
 	KASSERT((reg & 0x3) == 0);
 
-	if (pc != NULL && pc->pc_conf_write != NULL) {
-		(*pc->pc_conf_write)(pc, tag, reg, data);
-		return;
+	if (pc != NULL) {
+		if (pc->pc_conf_write != NULL) {
+			(*pc->pc_conf_write)(pc, tag, reg, data);
+			return;
+		}
+		if (pc->pc_super != NULL) {
+			pci_conf_write(pc->pc_super, tag, reg, data);
+			return;
+		}
 	}
 
 #if defined(__i386__) && defined(XBOX)
