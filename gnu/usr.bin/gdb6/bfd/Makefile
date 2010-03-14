@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/25 22:27:35 apb Exp $
+#	$NetBSD: Makefile,v 1.5 2010/03/14 00:26:09 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,7 @@ COPTS.elf64.c=                -O1
 .endif
 
 ${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
-targets.o targets.so: targmatch.h Makefile
+targets.o targets.pico: targmatch.h Makefile
 
 targmatch.h: config.bfd targmatch.sed
 	${_MKTARGET_CREATE}
