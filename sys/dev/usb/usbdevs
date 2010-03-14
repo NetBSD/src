@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.546 2010/03/11 10:35:22 enami Exp $
+$NetBSD: usbdevs,v 1.547 2010/03/14 08:44:46 explorer Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -699,6 +699,7 @@ product APPLE SPEAKERS		0x1101	Speakers
 product APPLE IPHONE		0x1290	iPhone
 product APPLE IPOD_TOUCH	0x1291	iPod Touch
 product APPLE IPHONE_3G		0x1292	iPhone 3G
+product	APPLE IPHONE_3GS	0x1294	iPhone 3GS
 product APPLE ETHERNET		0x1402	Apple USB to Ethernet
 
 /* ArkMicroChips products */
