@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.13 2009/12/03 14:44:12 sborrill Exp $ */
+/* $NetBSD: coretemp.c,v 1.14 2010/03/14 18:04:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.13 2009/12/03 14:44:12 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.14 2010/03/14 18:04:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,7 +138,6 @@ coretemp_register(struct cpu_info *ci)
 	 */
 	sc->sc_sensor.units = ENVSYS_STEMP;
 	sc->sc_sensor.flags = ENVSYS_FMONCRITICAL;
-	sc->sc_sensor.monitor = true;
 	(void)snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc),
 	    "%s temperature", device_xname(ci->ci_dev));
 

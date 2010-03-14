@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.43 2010/02/14 23:07:59 pgoyette Exp $ */
+/*	$NetBSD: ipmi.c,v 1.44 2010/03/14 18:04:29 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.43 2010/02/14 23:07:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.44 2010/03/14 18:04:29 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1877,7 +1877,6 @@ ipmi_thread(void *cookie)
 		ipmi_s->i_props = 0;
 		sc->sc_sensor[i].units = ipmi_s->i_envtype;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;
-		sc->sc_sensor[i].monitor = true;
 		/*
 		 * Monitor threshold limits in the sensors.
 		 */
