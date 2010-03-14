@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.19 2010/03/10 18:36:05 kiyohara Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.20 2010/03/14 10:03:49 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.19 2010/03/10 18:36:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.20 2010/03/14 10:03:49 kiyohara Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -167,6 +167,8 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 			    sizeof(model_name));
 		model_init();
 	}
+	/* Initialize bus_space */
+	ofwoea_bus_space_init();
 
 	ofwoea_consinit();
 
@@ -583,6 +585,10 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		 */
 		if (range == -1) {
 			/* we found a rangeless isa bus */
+			if (iomem == RANGE_IO)
+				size = 0x10000;
+			else
+				size = 0x1000000;
 		}
 		DPRINTF("found isa stuff\n");
 		for (i=0; i < range; i++)
@@ -595,7 +601,10 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 					DPRINTF("found IO\n");
 					tag->pbs_offset = list[i].addr;
 					tag->pbs_limit = size;
-					error = bus_space_init(tag, name, NULL, 0);
+					error = bus_space_init(tag, name,
+					    ex_storage[exmap],
+					    sizeof(ex_storage[exmap]));
+					exmap++;
 					return error;
 				}
 		} else {
@@ -605,7 +614,10 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 					DPRINTF("found mem\n");
 					tag->pbs_offset = list[i].addr;
 					tag->pbs_limit = size;
-					error = bus_space_init(tag, name, NULL, 0);
+					error = bus_space_init(tag, name,
+					    ex_storage[exmap],
+					    sizeof(ex_storage[exmap]));
+					exmap++;
 					return error;
 				}
 		}

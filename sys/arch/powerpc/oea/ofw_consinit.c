@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.9 2010/03/10 18:36:05 kiyohara Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.10 2010/03/14 10:03:49 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.9 2010/03/10 18:36:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.10 2010/03/14 10:03:49 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -219,9 +219,9 @@ cninit_kd(void)
 		return;
 	}
 
-#if NAKBD > 0
 	memset(name, 0, sizeof(name));
 	OF_getprop(OF_parent(node), "name", name, sizeof(name));
+#if NAKBD > 0
 	if (strcmp(name, "adb") == 0) {
 		printf("console keyboard type: ADB\n");
 		akbd_cnattach();
@@ -229,8 +229,6 @@ cninit_kd(void)
 	}
 #endif
 #if NADBKBD > 0
-	memset(name, 0, sizeof(name));
-	OF_getprop(OF_parent(node), "name", name, sizeof(name));
 	if (strcmp(name, "adb") == 0) {
 		printf("console keyboard type: ADB\n");
 		adbkbd_cnattach();
@@ -238,9 +236,7 @@ cninit_kd(void)
 	}
 #endif
 #if NPCKBC > 0
-	memset(name, 0, sizeof(name));
-	OF_getprop(OF_parent(node), "name", name, sizeof(name));
-	if (strcmp(name, "keyboard") == 0) {
+	if (strcmp(name, "isa") == 0) {
 		printf("console keyboard type: PC Keyboard\n");
 		pckbc_cnattach(&genppc_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
