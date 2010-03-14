@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.96 2010/02/15 22:32:04 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.97 2010/03/14 18:03:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.96 2010/02/15 22:32:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.97 2010/03/14 18:03:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -92,6 +92,8 @@ static void sysmon_envsys_destroy_plist(prop_array_t);
 static void sme_remove_userprops(void);
 static int sme_add_property_dictionary(struct sysmon_envsys *, prop_array_t,
 				       prop_dictionary_t);
+static sme_event_drv_t * sme_add_sensor_dictionary(struct sysmon_envsys *,
+	prop_array_t, prop_dictionary_t, envsys_data_t *);
 static void sme_initial_refresh(void *);
 static uint32_t sme_get_max_value(struct sysmon_envsys *,
      bool (*)(const envsys_data_t*), bool);
@@ -633,6 +635,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	prop_dictionary_t dict, dict2;
 	envsys_data_t *edata = NULL;
 	sme_event_drv_t *this_evdrv;
+	int nevent;
 	int error = 0;
 
 	KASSERT(sme != NULL);
@@ -756,13 +759,15 @@ out:
 	 * and make an initial data refresh if was requested.
 	 */
 	if (error == 0) {
+		nevent = 0;
 		sysmon_task_queue_init();
 		SLIST_FOREACH(evdv, &sme_evdrv_list, evdrv_head) {
 			sysmon_task_queue_sched(0,
 			    sme_event_drvadd, evdv->evdrv);
+			nevent++;
 		}
-		DPRINTF(("%s: driver '%s' registered (nsens=%d)\n",
-		    __func__, sme->sme_name, sme->sme_nsensors));
+		DPRINTF(("%s: driver '%s' registered (nsens=%d nevent=%d)\n",
+		    __func__, sme->sme_name, sme->sme_nsensors, nevent));
 
 		if (sme->sme_flags & SME_INIT_REFRESH)
 			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
@@ -1184,7 +1189,7 @@ out:
  * 	  to a sme_event_drv_t object if a monitoring flag was set
  * 	  (or NULL otherwise).
  */
-sme_event_drv_t *
+static sme_event_drv_t *
 sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		    	  prop_dictionary_t dict, envsys_data_t *edata)
 {
@@ -1408,9 +1413,9 @@ sme_add_sensor_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	}
 
 	/*
-	 * Register a new event if a monitoring flag was set.
+	 * Register new event(s) if any monitoring flag was set.
 	 */
-	if (edata->monitor) {
+	if (edata->flags & ENVSYS_FMONANY) {
 		sme_evdrv_t = kmem_zalloc(sizeof(*sme_evdrv_t), KM_SLEEP);
 		sme_evdrv_t->sed_sdict = dict;
 		sme_evdrv_t->sed_edata = edata;
