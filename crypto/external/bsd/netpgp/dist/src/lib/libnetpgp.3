@@ -1,6 +1,6 @@
-.\" $NetBSD: libnetpgp.3,v 1.11 2009/12/22 06:03:24 agc Exp $
+.\" $NetBSD: libnetpgp.3,v 1.12 2010/03/14 00:55:32 agc Exp $
 .\"
-.\" Copyright (c) 2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This manual page is derived from software contributed to The
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 21, 2009
+.Dd March 13, 2010
 .Dt LIBNETPGP 3
 .Os
 .Sh NAME
@@ -89,7 +89,7 @@ The following function sets the home directory:
 The following functions are used for key management:
 .Ft int
 .Fo netpgp_list_keys
-.Fa "netpgp_t *netpgp"
+.Fa "netpgp_t *netpgp" "const int printsigs"
 .Fc
 .Ft int
 .Fo netpgp_match_list_keys
@@ -192,6 +192,8 @@ returns 1 on sucess, 0 on failure.
 To list all the keys in a keyring, the
 .Fn netpgp_list_keys
 function is used.
+The signature subkey fields can also be displayed
+using this function.
 The
 .Fn netpgp_match_list_keys
 function is used to match (via regular expression)
