@@ -1,4 +1,4 @@
-#	$NetBSD: md.sparc64,v 1.7 2010/03/14 06:49:31 mrg Exp $
+#	$NetBSD: md.sparc64,v 1.8 2010/03/14 23:19:18 mrg Exp $
 ./usr/X11R6/include/X11/extensions/dpms.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/dpmsstr.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86misc.h		-unknown-	x11
@@ -10,7 +10,9 @@
 ./usr/X11R7/include/X11/extensions/xf86dga1str.h	-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/xf86dgastr.h		-unknown-	xorg
 ./usr/X11R7/lib/libXxf86dga.a				-unknown-	xorg
+./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	obsolete

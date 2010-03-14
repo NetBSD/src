@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.19 2009/09/04 17:46:06 christos Exp $
+# $NetBSD: md.amd64,v 1.20 2010/03/14 23:19:18 mrg Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -86,7 +86,9 @@
 ./usr/libdata/debug/usr/X11R6/bin/scanpci.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/xf86cfg.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/xf86config.debug	-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/ioport.debug		-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
