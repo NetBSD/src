@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/09/11 22:36:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/03/14 00:26:09 mrg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -52,7 +52,7 @@ INFOFLAGS=	-I${DIST}/bfd/doc
 .include <bsd.info.mk>
 
 ${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
-targets.o targets.so: targmatch.h Makefile
+targets.o targets.pico: targmatch.h Makefile
 .else
 .include <bsd.prog.mk> # do nothing
 .endif

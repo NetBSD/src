@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2009/08/11 17:30:43 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2010/03/14 00:26:10 mrg Exp $
 
 SRCS+=  bzero.S ffs.S strlen.S
 NO_SRCS+= memset.S
@@ -9,16 +9,16 @@ NO_SRCS+= memset.S
 .if ${MACHINE} == "evbppc"
 bcopy.o: bcopy.c
 bcopy.po: bcopy.c
-bcopy.so: bcopy.c
+bcopy.pico: bcopy.c
 memcpy.o: memcpy.c
 memcpy.po: memcpy.c
-memcpy.so: memcpy.c
+memcpy.pico: memcpy.c
 memcmp.o: memcmp.c
 memcmp.po: memcmp.c
-memcmp.so: memcmp.c
+memcmp.pico: memcmp.c
 memmove.o: memmove.c
 memmove.po: memmove.c
-memmove.so: memmove.c
+memmove.pico: memmove.c
 .else
 SRCS+=	memcmp.S bcopy.S memcpy.S memmove.S
 .endif
