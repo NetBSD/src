@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.61 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.62 2010/03/14 18:05:07 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.61 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.62 2010/03/14 18:05:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -677,7 +677,6 @@ acpitz_init_envsys(device_t dv)
 	sc->sc_sme->sme_name = device_xname(dv);
 	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
 
-	sc->sc_temp_sensor.monitor = true;
 	sc->sc_temp_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
 	sc->sc_temp_sensor.units = ENVSYS_STEMP;
 	strlcpy(sc->sc_temp_sensor.desc,
@@ -686,7 +685,6 @@ acpitz_init_envsys(device_t dv)
 		goto out;
 
 	if (sc->sc_have_fan) {
-		sc->sc_fan_sensor.monitor = true;
 		sc->sc_fan_sensor.flags =
 		    ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
 		sc->sc_fan_sensor.units = ENVSYS_SFANRPM;
