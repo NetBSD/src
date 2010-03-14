@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.272 2010/03/01 14:51:58 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.273 2010/03/14 21:11:41 jld Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.272 2010/03/01 14:51:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.273 2010/03/14 21:11:41 jld Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1506,11 +1506,15 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return (0);
 
 	case RAIDFRAME_PARITYMAP_STATUS:
+		if (rf_paritymap_ineligible(raidPtr))
+			return EINVAL;
 		rf_paritymap_status(raidPtr->parity_map,
 		    (struct rf_pmstat *)data);
 		return 0;
 
 	case RAIDFRAME_PARITYMAP_SET_PARAMS:
+		if (rf_paritymap_ineligible(raidPtr))
+			return EINVAL;
 		if (raidPtr->parity_map == NULL)
 			return ENOENT; /* ??? */
 		if (0 != rf_paritymap_set_params(raidPtr->parity_map, 
@@ -1519,10 +1523,14 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return 0;
 
 	case RAIDFRAME_PARITYMAP_GET_DISABLE:
+		if (rf_paritymap_ineligible(raidPtr))
+			return EINVAL;
 		*(int *) data = rf_paritymap_get_disable(raidPtr);
 		return 0;
 
 	case RAIDFRAME_PARITYMAP_SET_DISABLE:
+		if (rf_paritymap_ineligible(raidPtr))
+			return EINVAL;
 		rf_paritymap_set_disable(raidPtr, *(int *)data);
 		/* XXX should errors be passed up? */
 		return 0;

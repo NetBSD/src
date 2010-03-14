@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.c,v 1.4 2010/03/03 14:23:27 oster Exp $ */
+/* $NetBSD: rf_paritymap.c,v 1.5 2010/03/14 21:11:41 jld Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.4 2010/03/03 14:23:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritymap.c,v 1.5 2010/03/14 21:11:41 jld Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -590,6 +590,18 @@ rf_paritymap_detach(RF_Raid_t *raidPtr)
 }
 
 /*
+ * Is this RAID set ineligible for parity-map use due to not actually
+ * having any parity?  (If so, rf_paritymap_attach is a no-op, but
+ * rf_paritymap_{get,set}_disable will still pointlessly act on the
+ * component labels.)
+ */
+int
+rf_paritymap_ineligible(RF_Raid_t *raidPtr)
+{
+	return raidPtr->Layout.map->faultsTolerated == 0;
+}
+
+/*
  * Attach a parity map to a RAID set if appropriate.  Includes
  * configure-time processing of parity-map fields of component label.
  */
@@ -604,7 +616,7 @@ rf_paritymap_attach(RF_Raid_t *raidPtr, int force)
 	u_int flags, regions;
 	struct rf_pmparams params;
 
-	if (raidPtr->Layout.map->faultsTolerated == 0) {
+	if (rf_paritymap_ineligible(raidPtr)) {
 		/* There isn't any parity. */
 		return;
 	}

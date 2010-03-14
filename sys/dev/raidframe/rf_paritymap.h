@@ -1,4 +1,4 @@
-/* $NetBSD: rf_paritymap.h,v 1.1 2009/11/17 18:54:26 jld Exp $ */
+/* $NetBSD: rf_paritymap.h,v 1.2 2010/03/14 21:11:41 jld Exp $ */
 
 /*-
  * Copyright (c) 2009 Jed Davis.
@@ -112,6 +112,7 @@ int rf_paritymap_rewrite(struct rf_paritymap *);
 int rf_paritymap_merge(struct rf_paritymap_ondisk *,
     struct rf_paritymap_ondisk *);
 
+int rf_paritymap_ineligible(RF_Raid_t *);
 void rf_paritymap_attach(RF_Raid_t *, int);
 void rf_paritymap_detach(RF_Raid_t *); /* Not while the RAID is live! */
 
