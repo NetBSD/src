@@ -1,6 +1,8 @@
+.\" $NetBSD: bpf.4,v 1.44 2010/03/14 11:32:39 wiz Exp $
+.\"
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.43 2010/03/13 20:39:54 christos Exp $
+.\"	$NetBSD: bpf.4,v 1.44 2010/03/14 11:32:39 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -306,8 +308,9 @@ Set (or get)
 .Dq packet feedback mode .
 This allows injected packets to be fed back as input to the interface when
 output via the interface is successful.
-The first name is meant for FreeBSD compatibility, the two others follow
-the Get/Set convention.
+The first name is meant for
+.Fx
+compatibility, the two others follow the Get/Set convention.
 .\"When
 .\".Dv BPF_D_INOUT
 .\"direction is set, injected
