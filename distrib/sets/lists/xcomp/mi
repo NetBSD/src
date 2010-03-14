@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.100 2009/10/08 19:06:49 snj Exp $
+#	 $NetBSD: mi,v 1.101 2010/03/14 23:19:18 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9115,7 +9115,6 @@
 ./usr/libdata/debug/usr/X11R6/libexec/chooser.debug	-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/libexec/rstartd.real.debug	-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R7/bin/Xnest.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/appres.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/atobm.debug		-unknown-	debug,xorg
@@ -9124,7 +9123,6 @@
 ./usr/libdata/debug/usr/X11R7/bin/beforelight.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/bitmap.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/bmtoa.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/cxpm.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/dga.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/editres.debug		-unknown-	debug,xorg
@@ -9137,7 +9135,6 @@
 ./usr/libdata/debug/usr/X11R7/bin/fstobdf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/glxgears.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/glxinfo.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/iceauth.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/ico.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/imake.debug		-unknown-	debug,xorg

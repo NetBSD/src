@@ -1,7 +1,9 @@
-# $NetBSD: md.sgimips,v 1.7 2010/03/14 06:49:31 mrg Exp $
+# $NetBSD: md.sgimips,v 1.8 2010/03/14 23:19:18 mrg Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
+./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/cvt.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	obsolete
