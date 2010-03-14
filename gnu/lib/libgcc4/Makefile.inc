@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2009/12/18 13:57:10 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2010/03/14 00:26:10 mrg Exp $
 
 .if ${MKGCC} != "no"
 .if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk)
@@ -101,7 +101,7 @@ ${LIB2_EH:.c=.o}:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -fexceptions ${COPTS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC}
 
-${LIB2_EH:.c=.so}:
+${LIB2_EH:.c=.pico}:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${CPICFLAGS} -fexceptions ${COPTS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC}
 
@@ -109,7 +109,7 @@ ${G_LIB2_DIVMOD_FUNCS:=.o}:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} -fexceptions -fnon-call-exceptions ${COPTS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC}
 
-${G_LIB2_DIVMOD_FUNCS:=.so}:
+${G_LIB2_DIVMOD_FUNCS:=.pico}:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${CPICFLAGS} -fexceptions -fnon-call-exceptions ${COPTS.${.IMPSRC:T}} -o ${.TARGET} ${.IMPSRC}
 

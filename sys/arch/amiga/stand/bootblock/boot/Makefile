@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2009/12/29 20:21:45 elad Exp $
+#	$NetBSD: Makefile,v 1.42 2010/03/14 00:26:10 mrg Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -32,7 +32,7 @@ LIBZ= ${ZLIB}
 # prefer our assembler versions over assembler, and assembler over C:
 
 .SUFFIXES:
-.SUFFIXES: .out .o .po .so .s .S .c .cc .C .f .y .l .ln .m4 .sh
+.SUFFIXES: .out .o .po .pico .so .s .S .c .cc .C .f .y .l .ln .m4 .sh
 
 FILES= boot.amiga
 BINDIR=/usr/mdec
