@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.124 2010/03/07 09:39:43 plunky Exp $
+# $NetBSD: GENERIC,v 1.125 2010/03/14 10:14:14 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+#ident 		"GENERIC-$Revision: 1.125 $"
 
 maxusers	32
 
@@ -218,6 +218,10 @@ com1	at isa? port 0x2f8 irq 3
 # Parallel Printer Interfaces
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x3bc irq 7	# standard PC parallel ports
+
+# ISA floppy
+fdc0		at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fd*		at fdc? drive ?			# the drives themselves
 
 # SCSI Controllers and Devices
 siop*		at pci? dev ? function ?	# Symbios 53c8xx SCSI
