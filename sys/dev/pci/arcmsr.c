@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.22 2008/09/23 22:22:41 christos Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.23 2010/03/14 18:07:01 pgoyette Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.22 2008/09/23 22:22:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.23 2010/03/14 18:07:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1745,7 +1745,6 @@ arc_create_sensors(void *arg)
 			goto bad;
 
 		sc->sc_sensors[count].units = ENVSYS_DRIVE;
-		sc->sc_sensors[count].monitor = true;
 		sc->sc_sensors[count].flags = ENVSYS_FMONSTCHANGED;
 
 		/* Skip passthrough volumes */		
@@ -1773,7 +1772,6 @@ arc_create_sensors(void *arg)
 		/* Attach disk sensors for this volume */
 		for (j = 0; j < bv.bv_nodisk; j++) {
 			sc->sc_sensors[count].units = ENVSYS_DRIVE;
-			sc->sc_sensors[count].monitor = true;
 			sc->sc_sensors[count].flags = ENVSYS_FMONSTCHANGED;
 
 			snprintf(sc->sc_sensors[count].desc,

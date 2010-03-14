@@ -1,4 +1,4 @@
-/*	$NetBSD: atk0110.c,v 1.10 2010/03/08 11:54:35 cnst Exp $	*/
+/*	$NetBSD: atk0110.c,v 1.11 2010/03/14 18:05:07 pgoyette Exp $	*/
 /*	$OpenBSD: atk0110.c,v 1.1 2009/07/23 01:38:16 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.10 2010/03/08 11:54:35 cnst Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atk0110.c,v 1.11 2010/03/14 18:05:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -246,7 +246,6 @@ aibs_attach_sif(device_t self, enum envsys_units st)
 		as[i].h = oi[3].Integer.Value;
 		as[i].s.units = st;
 		as[i].s.flags |= ENVSYS_FMONLIMITS;
-		as[i].s.monitor = true;
 		aprint_verbose_dev(self, "%c%i: "
 		    "0x%08"PRIx64" %20s %5"PRIi64" / %5"PRIi64"  "
 		    "0x%"PRIx64"\n",

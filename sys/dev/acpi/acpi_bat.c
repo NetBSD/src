@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.85 2010/03/08 11:45:45 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.86 2010/03/14 18:05:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.85 2010/03/08 11:45:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.86 2010/03/14 18:05:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -685,7 +685,6 @@ acpibat_init_envsys(device_t dv)
 #undef INITDATA
 
 	/* Enable monitoring for the charge state sensor */
-	sc->sc_sensor[ACPIBAT_CHARGE_STATE].monitor = true;
 	sc->sc_sensor[ACPIBAT_CHARGE_STATE].flags |= ENVSYS_FMONSTCHANGED;
 
 	/* Disable userland monitoring on these sensors */
