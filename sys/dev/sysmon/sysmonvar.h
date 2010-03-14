@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.32 2010/02/28 20:04:04 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.33 2010/03/14 18:03:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -86,7 +86,6 @@ struct envsys_data {
 	int32_t		value_avg;	/* avg value */
 	sysmon_envsys_lim_t limits;	/* thresholds for monitoring */
 	int		upropset;	/* userland property set? */
-	bool		monitor;	/* monitoring enabled/disabled */
 	char		desc[ENVSYS_DESCLEN];	/* sensor description */
 };
 
@@ -103,6 +102,8 @@ typedef struct envsys_data envsys_data_t;
 #define ENVSYS_FMONCRITICAL	0x00000020	/* monitor a critical state */
 #define ENVSYS_FMONLIMITS	0x00000040	/* monitor limits/thresholds */
 #define ENVSYS_FMONSTCHANGED	0x00000400	/* monitor a battery/drive state */
+#define ENVSYS_FMONANY	\
+	(ENVSYS_FMONCRITICAL | ENVSYS_FMONLIMITS | ENVSYS_FMONSTCHANGED)
 #define ENVSYS_FMONNOTSUPP	0x00000800	/* monitoring not supported */
 #define ENVSYS_FNEED_REFRESH	0x00001000	/* sensor needs refreshing */
 
