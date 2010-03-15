@@ -1,4 +1,4 @@
-/*	$NetBSD: uyurex.c,v 1.1 2010/03/11 10:38:37 enami Exp $ */
+/*	$NetBSD: uyurex.c,v 1.2 2010/03/15 03:27:49 enami Exp $ */
 /*	$OpenBSD: uyurex.c,v 1.3 2010/03/04 03:47:22 deraadt Exp $ */
 
 /*
@@ -165,7 +165,6 @@ USB_ATTACH(uyurex)
 	sc->sc_sensor_val.units = ENVSYS_INTEGER;
 	sc->sc_sensor_val.state = ENVSYS_SINVALID;
 	sc->sc_sensor_val.flags = ENVSYS_FMONCRITICAL;	/* abuse XXX */
-	sc->sc_sensor_val.monitor = true;
 	strlcpy(sc->sc_sensor_val.desc, "BBU",
 		sizeof(sc->sc_sensor_val.desc));
 	sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor_val);
