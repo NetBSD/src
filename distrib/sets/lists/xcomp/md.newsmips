@@ -1,0 +1,3 @@
+# $NetBSD: md.newsmips,v 1.1 2010/03/15 07:27:05 mrg Exp $
+./usr/libdata/debug/usr/X11R6/bin/Xnewsmips.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug
