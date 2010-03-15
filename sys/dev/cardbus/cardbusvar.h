@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.53 2010/03/15 19:48:31 dyoung Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.54 2010/03/15 19:50:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -177,7 +177,6 @@ typedef struct cardbus_devfunc {
 	int ct_bus;			/* bus number */
 	int ct_func;			/* function number */
 
-	pcireg_t ct_bar[6];		/* Base Address Regs 0 to 6 */
 	pcireg_t ct_bhlc;		/* Latency timer and cache line size */
 	/* u_int32_t ct_cisreg; */	/* CIS reg: is it needed??? */
 
