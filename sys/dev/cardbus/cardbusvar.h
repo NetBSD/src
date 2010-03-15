@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.51 2010/03/04 22:37:38 dyoung Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.52 2010/03/15 19:43:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -176,9 +176,6 @@ typedef struct cardbus_devfunc {
 	struct cardbus_softc *ct_sc;	/* pointer to the parent */
 	int ct_bus;			/* bus number */
 	int ct_func;			/* function number */
-
-	rbus_tag_t ct_rbus_iot;		/* CardBus i/o rbus tag */
-	rbus_tag_t ct_rbus_memt;	/* CardBus mem rbus tag */
 
 	pcireg_t ct_bar[6];		/* Base Address Regs 0 to 6 */
 	pcireg_t ct_bhlc;		/* Latency timer and cache line size */
