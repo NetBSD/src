@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.45 2010/03/07 09:18:51 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.46 2010/03/15 13:18:59 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -162,7 +162,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=450000
+options 	SYMTAB_SPACE=500000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
@@ -409,7 +409,7 @@ pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
-#pseudo-device	wsmux			# mouse & keyboard multiplexor
+pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
 # data mover pseudo-devices
