@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.25 2007/02/09 22:49:47 ad Exp $
+# $NetBSD: md.mmeye,v 1.26 2010/03/15 07:27:04 mrg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mmeye				comp-c-include
 ./usr/include/mmeye/_G_config.h			comp-obsolete		obsolete
@@ -59,3 +59,5 @@
 ./usr/include/mmeye/vmparam.h			comp-c-include
 ./usr/include/mmeye/wchar_limits.h		comp-c-include
 ./usr/include/sh3/db_disasm.h			comp-obsolete		obsolete
+./usr/libdata/debug/usr/mdec/bootelf.debug	-unknown-		debug
+./usr/libdata/debug/usr/mdec/osloader.debug	-unknown-		debug
