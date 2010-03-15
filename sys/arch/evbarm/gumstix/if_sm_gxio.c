@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.7 2009/08/09 07:10:13 kiyohara Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.8 2010/03/15 13:11:23 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.7 2009/08/09 07:10:13 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.8 2010/03/15 13:11:23 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,7 +136,7 @@ sm_gxio_match(device_t parent, struct cfdata *match, void *aux)
 	 * Switch to bank 0 and perform the test again.
 	 * XXX INVASIVE!
 	 */
-	bus_space_write_1(iot, ioh, BANK_SELECT_REG_W, 0);
+	bus_space_write_2(iot, ioh, BANK_SELECT_REG_W, 0);
 	tmp = bus_space_read_2(iot, ioh, BANK_SELECT_REG_W);
 	if ((tmp & BSR_DETECT_MASK) != BSR_DETECT_VALUE)
 		goto out;
@@ -145,7 +145,7 @@ sm_gxio_match(device_t parent, struct cfdata *match, void *aux)
 	 * Check for a recognized chip id.
 	 * XXX INVASIVE!
 	 */
-	bus_space_write_1(iot, ioh, BANK_SELECT_REG_W, 3);
+	bus_space_write_2(iot, ioh, BANK_SELECT_REG_W, 3);
 	tmp = bus_space_read_2(iot, ioh, REVISION_REG_W);
 	if (smc91cxx_idstrs[RR_ID(tmp)] == NULL)
 		goto out;
