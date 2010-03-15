@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.36 2010/02/28 15:52:16 snj Exp $ */
+/*	$NetBSD: if_atu.c,v 1.37 2010/03/15 00:17:55 jakllsch Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.36 2010/02/28 15:52:16 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.37 2010/03/15 00:17:55 jakllsch Exp $");
 
 
 #include <sys/param.h>
@@ -131,8 +131,6 @@ struct atu_type atu_devs[] = {
 	{ USB_VENDOR_ACERP,	USB_PRODUCT_ACERP_AWL400,
 	  RadioRFMD,		ATU_NO_QUIRK },
 	{ USB_VENDOR_ATMEL,	USB_PRODUCT_ATMEL_WL1130,
-	  RadioRFMD2958,	ATU_NO_QUIRK },
-	{ USB_VENDOR_LINKSYS3,	USB_PRODUCT_LINKSYS3_WUSB11V28,
 	  RadioRFMD2958,	ATU_NO_QUIRK },
 	{ USB_VENDOR_AINCOMM,	USB_PRODUCT_AINCOMM_AWU2000B,
 	  RadioRFMD2958,	ATU_NO_QUIRK },
