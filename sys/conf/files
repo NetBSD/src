@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.982 2010/03/13 08:33:26 darran Exp $
+#	$NetBSD: files,v 1.983 2010/03/15 20:35:19 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -109,6 +109,7 @@ defparam opt_pax.h		PAX_MPROTECT
  				PAX_ASLR_DELTA_STACK_LSB
  				PAX_ASLR_DELTA_STACK_LEN
  				PAX_ASLR_DELTA_PROG_LEN
+				PAX_ASLR_DEBUG
 
 defflag	opt_fileassoc.h		FILEASSOC
 
