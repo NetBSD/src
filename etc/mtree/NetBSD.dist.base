@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.10 2010/01/26 15:11:56 wiz Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.11 2010/03/15 19:00:53 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1108,6 +1108,8 @@
 ./usr/tests/net/sys
 ./usr/tests/rump
 ./usr/tests/rump/rumpkern
+./usr/tests/sys
+./usr/tests/sys/rc
 ./usr/tests/syscall
 ./usr/tests/util
 ./usr/tests/util/awk
