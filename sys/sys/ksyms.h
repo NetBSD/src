@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.26 2010/03/14 21:27:50 darran Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.27 2010/03/15 02:28:59 darran Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -31,6 +31,11 @@
 #define _SYS_KSYMS_H_
 
 #ifdef _KSYMS_PRIVATE
+
+#if defined(_KERNEL_OPT)
+#include "opt_dtrace.h"
+#endif
+
 #define	ELFSIZE	ARCH_ELFSIZE
 #include <sys/exec_elf.h>
 #include <sys/queue.h>
