@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.61 2010/02/27 12:16:50 martin Exp $
+# $NetBSD: mi,v 1.62 2010/03/15 19:03:33 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -959,6 +959,13 @@
 ./usr/tests/rump/rumpkern/Atffile		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_modcmd		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_modlinkset		tests-rump-tests	atf
+./usr/tests/sys				tests-sys-tests
+./usr/tests/sys/Atffile			tests-sys-tests	atf
+./usr/tests/sys/rc				tests-sys-tests
+./usr/tests/sys/rc/Atffile			tests-sys-tests	atf
+./usr/tests/sys/rc/h_args.sh			tests-sys-tests	atf
+./usr/tests/sys/rc/h_simple.sh			tests-sys-tests	atf
+./usr/tests/sys/rc/t_rc_d_cli			tests-sys-tests	atf
 ./usr/tests/syscall				tests-syscall-tests
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
 ./usr/tests/syscall/t_cmsg			tests-syscall-tests	atf
