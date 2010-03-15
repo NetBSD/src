@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.39 2009/12/15 22:17:12 snj Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.40 2010/03/15 20:02:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -89,10 +89,8 @@ struct pccbb_softc {
 	bus_space_tag_t sc_memt;
 	bus_dma_tag_t sc_dmat;
 
-#if rbus
 	rbus_tag_t sc_rbus_iot;		/* rbus for i/o donated from parent */
 	rbus_tag_t sc_rbus_memt;	/* rbus for mem donated from parent */
-#endif
 
 	bus_space_tag_t sc_base_memt;
 	bus_space_handle_t sc_base_memh;
