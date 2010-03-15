@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.114 2010/02/24 22:37:58 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.115 2010/03/15 23:21:08 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.114 2010/02/24 22:37:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.115 2010/03/15 23:21:08 dyoung Exp $");
 
 
 #include <sys/param.h>
@@ -2095,19 +2095,19 @@ rtw_suspend_ticks(struct rtw_softc *sc)
 static inline void
 rtw_resume_ticks(struct rtw_softc *sc)
 {
-	uint32_t tsftrl0, tsftrl1, next_tick;
+	uint32_t tsftrl0, tsftrl1, next_tint;
 
 	tsftrl0 = RTW_READ(&sc->sc_regs, RTW_TSFTRL);
 
 	tsftrl1 = RTW_READ(&sc->sc_regs, RTW_TSFTRL);
-	next_tick = tsftrl1 + 1000000;
-	RTW_WRITE(&sc->sc_regs, RTW_TINT, next_tick);
+	next_tint = tsftrl1 + 1000000;
+	RTW_WRITE(&sc->sc_regs, RTW_TINT, next_tint);
 
 	sc->sc_do_tick = 1;
 
 	RTW_DPRINTF(RTW_DEBUG_TIMEOUT,
 	    ("%s: resume ticks delta %#08x now %#08x next %#08x\n",
-	    device_xname(sc->sc_dev), tsftrl1 - tsftrl0, tsftrl1, next_tick));
+	    device_xname(sc->sc_dev), tsftrl1 - tsftrl0, tsftrl1, next_tint));
 }
 
 static void

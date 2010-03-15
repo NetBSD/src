@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.42 2010/02/24 22:37:58 dyoung Exp $ */
+/* $NetBSD: rtwvar.h,v 1.43 2010/03/15 23:21:08 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -111,6 +111,48 @@ struct rtw_regs {
 	bus_size_t		r_sz;
 	enum rtw_access		r_access;
 };
+
+/*
+ * Bus barrier
+ *
+ * Complete outstanding read and/or write ops on [reg0, reg1]
+ * ([reg1, reg0]) before starting new ops on the same region. See
+ * acceptable bus_space_barrier(9) for the flag definitions.
+ */
+static inline void
+rtw_barrier(const struct rtw_regs *r, int reg0, int reg1, int flags)
+{
+	bus_space_barrier(r->r_bt, r->r_bh, MIN(reg0, reg1),
+	    MAX(reg0, reg1) - MIN(reg0, reg1) + 4, flags);
+}
+
+/*
+ * Barrier convenience macros.
+ */
+/* sync */
+#define RTW_SYNC(regs, reg0, reg1)				\
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_SYNC)
+
+/* write-before-write */
+#define RTW_WBW(regs, reg0, reg1)				\
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE)
+
+/* write-before-read */
+#define RTW_WBR(regs, reg0, reg1)				\
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_WRITE_BEFORE_READ)
+
+/* read-before-read */
+#define RTW_RBR(regs, reg0, reg1)				\
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_READ_BEFORE_READ)
+
+/* read-before-write */
+#define RTW_RBW(regs, reg0, reg1)				\
+	rtw_barrier(regs, reg0, reg1, BUS_SPACE_BARRIER_READ_BEFORE_WRITE)
+
+#define RTW_WBRW(regs, reg0, reg1)				\
+		rtw_barrier(regs, reg0, reg1,			\
+		    BUS_SPACE_BARRIER_WRITE_BEFORE_READ |	\
+		    BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE)
 
 #define RTW_SR_GET(sr, ofs) \
     (((sr)->sr_content[(ofs)/2] >> (((ofs) % 2 == 0) ? 0 : 8)) & 0xff)
