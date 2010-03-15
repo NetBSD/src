@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.52 2010/03/15 19:43:17 dyoung Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.53 2010/03/15 19:48:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -278,9 +278,6 @@ int cardbus_mapreg_map(struct cardbus_softc *, int, int, pcireg_t,
     int, bus_space_tag_t *, bus_space_handle_t *, bus_addr_t *, bus_size_t *);
 int cardbus_mapreg_unmap(struct cardbus_softc *, int, int,
     bus_space_tag_t, bus_space_handle_t, bus_size_t);
-
-int cardbus_save_bar(cardbus_devfunc_t);
-int cardbus_restore_bar(cardbus_devfunc_t);
 
 int cardbus_function_enable(struct cardbus_softc *, int);
 int cardbus_function_disable(struct cardbus_softc *, int);
