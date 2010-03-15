@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.80 2009/09/14 22:30:30 apb Exp $
+# $NetBSD: rc.subr,v 1.81 2010/03/15 18:59:47 jmmv Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -311,11 +311,11 @@ wait_for_pids()
 }
 
 #
-# run_rc_command argument
+# run_rc_command argument [parameters]
 #	Search for argument in the list of supported commands, which is:
 #		"start stop restart rcvar status poll ${extra_commands}"
 #	If there's a match, run ${argument}_cmd or the default method
-#	(see below).
+#	(see below), and pass the optional list of parameters to it.
 #
 #	If argument has a given prefix, then change the operation as follows:
 #		Prefix	Operation
@@ -503,6 +503,7 @@ run_rc_command()
 	if [ -z "$rc_arg" ]; then
 		rc_usage "$_keywords"
 	fi
+	shift	# remove $rc_arg from the positional parameters
 
 	if [ -n "$flags" ]; then	# allow override from environment
 		rc_flags=$flags
@@ -565,11 +566,15 @@ run_rc_command()
 				return 1
 			fi
 
-			if ! eval $_cmd && [ -z "$rc_force" ]; then
+			if ! eval $_cmd \"\${@}\" && [ -z "$rc_force" ]; then
 				return 1
 			fi
 			eval $_postcmd
 			return 0
+		fi
+
+		if [ ${#} -gt 0 ]; then
+			err 1 "the $rc_arg command does not take any parameters"
 		fi
 
 		case "$rc_arg" in	# default operations...
