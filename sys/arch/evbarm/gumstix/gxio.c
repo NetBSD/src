@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.13 2009/12/02 13:05:09 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.14 2010/03/15 13:16:56 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.13 2009/12/02 13:05:09 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.14 2010/03/15 13:16:56 kiyohara Exp $");
 
 #include "opt_gxio.h"
 
@@ -70,6 +70,7 @@ static void basix_config(void);
 static void cfstix_config(void);
 static void etherstix_config(void);
 static void netcf_config(void);
+static void netcf_vx_config(void);
 static void netduommc_config(void);
 static void netduo_config(void);
 static void netmicrosd_config(void);
@@ -129,10 +130,8 @@ static struct pxa2x0_gpioconf verdexdep_gpioconf[] = {
 	{  17, GPIO_IN },		/* backlight on */
 
 	/* FFUART configuration */
-	{  27, GPIO_ALT_FN_3_OUT },	/* FFRTS */
 	{  34, GPIO_ALT_FN_1_IN },	/* FFRXD */
 	{  39, GPIO_ALT_FN_2_OUT },	/* FFTXD */
-	{ 100, GPIO_ALT_FN_3_IN },	/* FFCTS */
 
 	/* BTUART configuration */
 	{  42, GPIO_ALT_FN_1_IN },	/* BTRXD */
@@ -152,7 +151,7 @@ static const struct gxioconf busheader_conf[] = {
 	{ "cfstix",		cfstix_config },
 	{ "etherstix",		etherstix_config },
 	{ "netcf",		netcf_config },
-	{ "netcf-vx",		netcf_config },
+	{ "netcf-vx",		netcf_vx_config },
 	{ "netduo-mmc",		netduommc_config },
 	{ "netduo",		netduo_config },
 	{ "netmicrosd",		netmicrosd_config },
@@ -436,6 +435,23 @@ etherstix_config(void)
 static void
 netcf_config(void)
 {
+
+	etherstix_config();
+	cfstix_config();
+}
+
+static void
+netcf_vx_config(void)
+{
+
+	/*
+	 * XXXX: More power is necessary for NIC and USB???
+	 * (no document.  from Linux)
+	 */
+
+	pxa2x0_gpio_set_function(27, GPIO_IN);
+	pxa2x0_gpio_set_function(107, GPIO_OUT | GPIO_CLR);
+	pxa2x0_gpio_set_function(118, GPIO_ALT_FN_1_IN | GPIO_CLR);
 
 	etherstix_config();
 	cfstix_config();
