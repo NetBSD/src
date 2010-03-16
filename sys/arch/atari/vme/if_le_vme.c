@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.28 2010/01/19 22:06:19 pooka Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.29 2010/03/16 17:56:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.28 2010/01/19 22:06:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.29 2010/03/16 17:56:41 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -124,7 +124,7 @@ struct le_addresses {
 } lestd[] = {
 	{ 0xfe00fff0, 0xfe010000, IRQUNK, 16, 64*1024,
 				LE_OLD_RIEBL|LE_NEW_RIEBL }, /* Riebl	*/
-	{ 0xffcffff0, 0xffcf0000,      5, 16, 64*1024,
+	{ 0xfecffff0, 0xfecf0000,      5, 16, 64*1024,
 				LE_PAM },		     /* PAM	*/
 	{ 0xfecffff0, 0xfecf0000,      5, 16, 64*1024,
 				LE_ROTHRON },		     /* Rhotron	*/
