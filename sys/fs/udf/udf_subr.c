@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.104 2010/02/25 16:15:57 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.104.2.1 2010/03/16 15:38:08 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104 2010/02/25 16:15:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.104.2.1 2010/03/16 15:38:08 rmind Exp $");
 #endif /* not lint */
 
 
@@ -3443,7 +3443,7 @@ loop:
 		udf_node = RBTOUDFNODE(rb_node);
 		vp = udf_node->vnode;
 		assert(vp);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&ump->ihash_lock);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 			goto loop;
@@ -6374,7 +6374,7 @@ derailed:
 		udf_node->i_flags &= ~IN_SYNCED;
 		vp = udf_node->vnode;
 
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		n_udf_node = RBTOUDFNODE(rb_tree_iterate(
 			&ump->udf_node_tree, &udf_node->rbnode,
 			RB_DIR_RIGHT));
@@ -6384,7 +6384,7 @@ derailed:
 
 		/* system nodes are not synced this way */
 		if (vp->v_vflag & VV_SYSTEM) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 
@@ -6396,7 +6396,7 @@ derailed:
 			&& UVM_OBJ_IS_CLEAN(&vp->v_uobj);
 		if (on_type || (on_flags || on_vnode)) { /* XXX */
 			/* not dirty (enough?) */
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 

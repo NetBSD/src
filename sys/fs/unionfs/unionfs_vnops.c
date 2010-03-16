@@ -1539,7 +1539,7 @@ unionfs_lock(void *v)
 	error = 0;
 
 	if ((flags & LK_INTERLOCK) != 0) {
-		mutex_exit(&ap->a_vp->v_interlock);
+		mutex_exit(ap->a_vp->v_interlock);
 		flags &= ~LK_INTERLOCK;
 	}
 
@@ -1757,11 +1757,11 @@ unionfs_putpages(void *v)
 	unp = VTOUNIONFS(ap->a_vp);
 	tvp = (unp->un_uppervp != NULLVP ? unp->un_uppervp : unp->un_lowervp);
 
-	mutex_exit(&ap->a_vp->v_interlock);
+	mutex_exit(ap->a_vp->v_interlock);
 	if (ap->a_flags & PGO_RECLAIM) {
 		return 0;
 	}
-	mutex_enter(&tvp->v_interlock);
+	mutex_enter(tvp->v_interlock);
 
 	return VOP_PUTPAGES(tvp, ap->a_offlo, ap->a_offhi, ap->a_flags);
 }
@@ -1779,8 +1779,8 @@ unionfs_getpages(void *v)
 	if (ap->a_flags & PGO_LOCKED) {
 		return EBUSY;
 	}
-	mutex_exit(&ap->a_vp->v_interlock);
-	mutex_enter(&tvp->v_interlock);
+	mutex_exit(ap->a_vp->v_interlock);
+	mutex_enter(tvp->v_interlock);
 
 	return VOP_GETPAGES(tvp, ap->a_offset, ap->a_m, ap->a_count,
 	    ap->a_centeridx, ap->a_access_type, ap->a_advice, ap->a_flags);

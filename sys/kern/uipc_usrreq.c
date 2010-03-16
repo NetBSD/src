@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.129 2010/02/09 23:05:16 wiz Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.129.2.1 2010/03/16 15:38:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.129 2010/02/09 23:05:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.129.2.1 2010/03/16 15:38:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -823,7 +823,7 @@ unp_detach(struct unpcb *unp)
 		sounlock(so);
 		/* Acquire v_interlock to protect against unp_connect(). */
 		/* XXXAD racy */
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_socket = NULL;
 		vrelel(vp, 0);
 		solock(so);
@@ -980,21 +980,21 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	if ((error = VOP_ACCESS(vp, VWRITE, l->l_cred)) != 0)
 		goto bad;
 	/* Acquire v_interlock to protect against unp_detach(). */
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	so2 = vp->v_socket;
 	if (so2 == NULL) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		error = ECONNREFUSED;
 		goto bad;
 	}
 	if (so->so_type != so2->so_type) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		error = EPROTOTYPE;
 		goto bad;
 	}
 	solock(so);
 	unp_resetlock(so);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	if ((so->so_proto->pr_flags & PR_CONNREQUIRED) != 0) {
 		/*
 		 * This may seem somewhat fragile but is OK: if we can

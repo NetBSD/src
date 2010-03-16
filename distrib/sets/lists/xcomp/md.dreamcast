@@ -1,3 +1,0 @@
-# $NetBSD: md.dreamcast,v 1.1 2010/03/15 08:03:02 mrg Exp $
-./usr/libdata/debug/usr/X11R6/bin/Xdreamcast.debug	-unknown-	debug
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug

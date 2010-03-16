@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.4.1 2010/03/16 15:38:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.1 2010/03/16 15:38:17 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -168,7 +168,7 @@ ubc_init(void)
 	 * map in ubc_object.
 	 */
 
-	UVM_OBJ_INIT(&ubc_object.uobj, &ubc_pager, UVM_OBJ_KERN);
+	uvm_obj_init(&ubc_object.uobj, &ubc_pager, NULL, UVM_OBJ_KERN);
 
 	ubc_object.umap = kmem_zalloc(ubc_nwins * sizeof(struct ubc_map),
 	    KM_SLEEP);
@@ -286,7 +286,7 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 
 again:
 	memset(pgs, 0, sizeof (pgs));
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 
 	UVMHIST_LOG(ubchist, "slot_offset 0x%x writeoff 0x%x writelen 0x%x ",
 	    slot_offset, umap->writeoff, umap->writelen, 0);
@@ -336,7 +336,7 @@ again:
 		}
 
 		uobj = pg->uobject;
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
@@ -345,7 +345,7 @@ again:
 			mutex_enter(&uvm_pageqlock);
 			uvm_pagefree(pg);
 			mutex_exit(&uvm_pageqlock);
-			mutex_exit(&uobj->vmobjlock);
+			mutex_exit(uobj->vmobjlock);
 			continue;
 		}
 		if (pg->loan_count != 0) {
@@ -363,7 +363,7 @@ again:
 				newpg = uvm_loanbreak(pg);
 				if (newpg == NULL) {
 					uvm_page_unbusy(&pg, 1);
-					mutex_exit(&uobj->vmobjlock);
+					mutex_exit(uobj->vmobjlock);
 					uvm_wait("ubc_loanbrk");
 					continue; /* will re-fault */
 				}
@@ -391,7 +391,7 @@ again:
 		mutex_exit(&uvm_pageqlock);
 		pg->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		if (error) {
 			UVMHIST_LOG(ubchist, "pmap_enter fail %d",
 			    error, 0, 0, 0);
@@ -452,13 +452,13 @@ ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 	 */
 
 again:
-	mutex_enter(&ubc_object.uobj.vmobjlock);
+	mutex_enter(ubc_object.uobj.vmobjlock);
 	umap = ubc_find_mapping(uobj, umap_offset);
 	if (umap == NULL) {
 		UBC_EVCNT_INCR(wincachemiss);
 		umap = TAILQ_FIRST(UBC_QUEUE(offset));
 		if (umap == NULL) {
-			mutex_exit(&ubc_object.uobj.vmobjlock);
+			mutex_exit(ubc_object.uobj.vmobjlock);
 			kpause("ubc_alloc", false, hz, NULL);
 			goto again;
 		}
@@ -501,7 +501,7 @@ again:
 
 	umap->refcount++;
 	umap->advice = advice;
-	mutex_exit(&ubc_object.uobj.vmobjlock);
+	mutex_exit(ubc_object.uobj.vmobjlock);
 	UVMHIST_LOG(ubchist, "umap %p refs %d va %p flags 0x%x",
 	    umap, umap->refcount, va, flags);
 
@@ -522,7 +522,7 @@ again:
 		}
 again_faultbusy:
 		memset(pgs, 0, sizeof(pgs));
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 		error = (*uobj->pgops->pgo_get)(uobj, trunc_page(offset), pgs,
 		    &npages, 0, VM_PROT_READ | VM_PROT_WRITE, advice, gpflags);
 		UVMHIST_LOG(ubchist, "faultbusy getpages %d", error, 0, 0, 0);
@@ -534,17 +534,17 @@ again_faultbusy:
 
 			KASSERT(pg->uobject == uobj);
 			if (pg->loan_count != 0) {
-				mutex_enter(&uobj->vmobjlock);
+				mutex_enter(uobj->vmobjlock);
 				if (pg->loan_count != 0) {
 					pg = uvm_loanbreak(pg);
 				}
-				mutex_exit(&uobj->vmobjlock);
+				mutex_exit(uobj->vmobjlock);
 				if (pg == NULL) {
 					pmap_kremove(va, ubc_winsize);
 					pmap_update(pmap_kernel());
-					mutex_enter(&uobj->vmobjlock);
+					mutex_enter(uobj->vmobjlock);
 					uvm_page_unbusy(pgs, npages);
-					mutex_exit(&uobj->vmobjlock);
+					mutex_exit(uobj->vmobjlock);
 					uvm_wait("ubc_alloc");
 					goto again_faultbusy;
 				}
@@ -612,15 +612,15 @@ ubc_release(void *va, int flags)
 		mutex_exit(&uvm_pageqlock);
 		pmap_kremove(umapva, ubc_winsize);
 		pmap_update(pmap_kernel());
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		unmapped = true;
 	} else {
 		unmapped = false;
 	}
 
-	mutex_enter(&ubc_object.uobj.vmobjlock);
+	mutex_enter(ubc_object.uobj.vmobjlock);
 	umap->writeoff = 0;
 	umap->writelen = 0;
 	umap->refcount--;
@@ -650,7 +650,7 @@ ubc_release(void *va, int flags)
 		}
 	}
 	UVMHIST_LOG(ubchist, "umap %p refs %d", umap, umap->refcount, 0, 0);
-	mutex_exit(&ubc_object.uobj.vmobjlock);
+	mutex_exit(ubc_object.uobj.vmobjlock);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.80 2010/03/15 09:20:10 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.80.2.1 2010/03/16 15:38:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.80 2010/03/15 09:20:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.80.2.1 2010/03/16 15:38:16 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -145,9 +145,9 @@ ufs_inactive(void *v)
 		ip->i_mode = 0;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_iflag |= VI_FREEING;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		UFS_VFREE(vp, ip->i_number, mode);
 	}
 
@@ -265,14 +265,14 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	len += delta;
 
  retry:
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_WRITE, 0,
 	    PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC|PGO_NOTIMESTAMP);
 	if (error) {
 		goto out;
 	}
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
@@ -281,7 +281,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 		uvm_pageactivate(pgs[i]);
 	}
 	mutex_exit(&uvm_pageqlock);
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
 	/*
 	 * now allocate the range.
@@ -295,13 +295,13 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	struct genfs_node *gp = VTOG(vp); /* XXX */
 
 	if (!rw_tryenter(&gp->g_glock, RW_WRITER)) {
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 		for (i = 0; i < npages; i++)
 			pgs[i]->flags |= PG_RELEASED | PG_CLEAN;
 		mutex_enter(&uvm_pageqlock);
 		uvm_page_unbusy(pgs, npages);
 		mutex_exit(&uvm_pageqlock);
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		kpause("uballo", false, 1, NULL);
 		goto retry;
 	}}
@@ -315,7 +315,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	 */
 
 	GOP_SIZE(vp, off + len, &eob, 0);
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
 		if (off <= pagestart + (i << PAGE_SHIFT) &&
 		    pagestart + ((i + 1) << PAGE_SHIFT) <= eob) {
@@ -331,7 +331,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	} else {
 		uvm_page_unbusy(pgs, npages);
 	}
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
  out:
  	kmem_free(pgs, pgssize);

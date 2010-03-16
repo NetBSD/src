@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.55 2009/10/19 18:41:17 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.55.4.1 2010/03/16 15:38:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.55 2009/10/19 18:41:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.55.4.1 2010/03/16 15:38:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,13 +325,13 @@ ext2fs_write(void *v)
 			 */
 
 			if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 				error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 				    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
 			}
 		}
 		if (error == 0 && ioflag & IO_SYNC) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, trunc_page(oldoff),
 			    round_page(blkroundup(fs, uio->uio_offset)),
 			    PGO_CLEANIT | PGO_SYNCIO);

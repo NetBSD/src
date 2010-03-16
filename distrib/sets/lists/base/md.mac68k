@@ -1,3 +1,0 @@
-# $NetBSD: md.mac68k,v 1.41 2008/11/29 17:57:34 tsutsui Exp $
-./sbin/pdisk					base-sysutil-root
-./usr/lkm/iwmfd.o				base-obsolete	obsolete

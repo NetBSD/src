@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.56 2009/11/11 09:59:41 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.56.4.1 2010/03/16 15:38:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56 2009/11/11 09:59:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.56.4.1 2010/03/16 15:38:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -340,7 +340,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 	for (;;) {
 		mutex_enter(&node->tn_vlock);
 		if ((vp = node->tn_vnode) != NULL) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			mutex_exit(&node->tn_vlock);
 			error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 			if (error == ENOENT) {
@@ -906,9 +906,9 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 
 		uobj = node->tn_spec.tn_reg.tn_aobj;
 
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 		uao_dropswap_range(uobj, newpages, oldpages);
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 	}
 
 	error = 0;

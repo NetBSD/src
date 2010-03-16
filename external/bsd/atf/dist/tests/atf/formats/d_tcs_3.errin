@@ -1,8 +1,0 @@
-first stderr line for first-test
-second stderr line for first-test
-__atf_tc_separator__
-first stderr line for second-test
-second stderr line for second-test
-__atf_tc_separator__
-first stderr line for third-test
-second stderr line for third-test

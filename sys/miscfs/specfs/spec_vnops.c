@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.127 2009/11/14 18:36:57 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.127.4.1 2010/03/16 15:38:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.127 2009/11/14 18:36:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.127.4.1 2010/03/16 15:38:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -742,11 +742,11 @@ spec_ioctl(void *v)
 
 	vp = ap->a_vp;
 	dev = NODEV;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specnode) {
 		dev = vp->v_rdev;
 	}
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	if (dev == NODEV) {
 		return ENXIO;
 	}
@@ -786,11 +786,11 @@ spec_poll(void *v)
 
 	vp = ap->a_vp;
 	dev = NODEV;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	if ((vp->v_iflag & VI_XLOCK) == 0 && vp->v_specnode) {
 		dev = vp->v_rdev;
 	}
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	if (dev == NODEV) {
 		return POLLERR;
 	}

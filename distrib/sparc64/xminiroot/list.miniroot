@@ -1,3 +1,0 @@
-#	$NetBSD: list.miniroot,v 1.1 2002/05/07 14:41:38 lukem Exp $
-
-COPY	${OBJDIR}/netbsd.gz	netbsd

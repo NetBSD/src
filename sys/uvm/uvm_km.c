@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.105 2010/02/08 19:02:33 joerg Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.105.2.1 2010/03/16 15:38:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -127,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105 2010/02/08 19:02:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105.2.1 2010/03/16 15:38:17 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -410,16 +410,16 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 	KASSERT(startva < endva);
 	KASSERT(endva <= VM_MAX_KERNEL_ADDRESS);
 
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 
 	for (curoff = start; curoff < end; curoff = nextoff) {
 		nextoff = curoff + PAGE_SIZE;
 		pg = uvm_pagelookup(uobj, curoff);
 		if (pg != NULL && pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
-			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
+			UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, 0,
 				    "km_pgrm", 0);
-			mutex_enter(&uobj->vmobjlock);
+			mutex_enter(uobj->vmobjlock);
 			nextoff = curoff;
 			continue;
 		}
@@ -439,7 +439,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 			mutex_exit(&uvm_pageqlock);
 		}
 	}
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
 	if (swpgonlydelta > 0) {
 		mutex_enter(&uvm_swap_data_lock);
@@ -502,10 +502,10 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 			    (void *)va, (long long)pa);
 		}
 		if ((map->flags & VM_MAP_INTRSAFE) == 0) {
-			mutex_enter(&uvm_kernel_object->vmobjlock);
+			mutex_enter(uvm_kernel_object->vmobjlock);
 			pg = uvm_pagelookup(uvm_kernel_object,
 			    va - vm_map_min(kernel_map));
-			mutex_exit(&uvm_kernel_object->vmobjlock);
+			mutex_exit(uvm_kernel_object->vmobjlock);
 			if (pg) {
 				panic("uvm_km_check_empty: "
 				    "has page hashed at %p", (const void *)va);
