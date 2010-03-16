@@ -1,0 +1,11 @@
+# $NetBSD: md.ofppc,v 1.1 2010/03/16 01:48:53 mrg Exp $
+./usr/libdata/debug/usr/X11R6/bin/XFree86.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/gtf.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/kbd_mode.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/mmapr.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/mmapw.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/pcitweak.debug	-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/scanpci.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/xf86cfg.debug		-unknown-	debug
+./usr/libdata/debug/usr/X11R6/bin/xf86config.debug	-unknown-	debug
