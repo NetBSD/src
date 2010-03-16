@@ -27,14 +27,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef HKPD_H_
-#define HKPD_H_	20091022
+#define HKPD_H_	20100315
 
 #include <netpgp.h>
 
-#define HKPD_VERSION	20091022
+#define HKPD_VERSION	20100315
 
-int hkpd_sock_bind(int, const char *, const int);
-int hkpd_sock_get(void);
-int hkpd(netpgp_t *, int);
+int hkpd_sock_bind(const char */*hostname*/, const int /*port*/, const int /*family*/);
+int hkpd(netpgp_t */*netpgp*/, int /*sock4*/, int /*sock6*/);
 
 #endif
