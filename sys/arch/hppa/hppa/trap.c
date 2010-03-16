@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 2010/03/11 21:43:15 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.79 2010/03/16 16:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2010/03/11 21:43:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2010/03/16 16:20:19 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -423,6 +423,7 @@ do {							\
 	}						\
 } while (/* CONSTCOND */ 0)
 
+	KASSERT(l != NULL);
 	SANITY((tf->tf_ipsw & kpsw) == kpsw);
 	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
@@ -457,17 +458,13 @@ do {							\
 		maxsp = uv + USPACE + PAGE_SIZE;
 		minsp = uv + PAGE_SIZE;
 
-		SANITY(l != NULL || (tf->tf_sp >= minsp && tf->tf_sp < maxsp));
+		SANITY(tf->tf_sp >= minsp && tf->tf_sp < maxsp);
 	} else {
-		bool ok;
-		paddr_t pa;
-
-		ok = pmap_extract(pmap_kernel(), uvm_lwp_getuarea(l), &pa);
-		KASSERT(ok);
+		struct pcb *pcb = lwp_getpcb(l);
 
 		SANITY(USERMODE(tf->tf_iioq_head));
 		SANITY(USERMODE(tf->tf_iioq_tail));
-		SANITY(l != NULL && tf->tf_cr30 == pa);
+		SANITY(tf->tf_cr30 == (u_int)pcb->pcb_fpregs);
 	}
 #undef SANITY
 out:
@@ -734,7 +731,7 @@ do_onfault:
 		int i;
 
 		hppa_fpu_flush(l);
-		fpp = pcb->pcb_fpregs;
+		fpp = (uint64_t *)pcb->pcb_fpregs;
 
 		/* skip the status register */
 		pex = (uint32_t *)&fpp[0];
