@@ -1,5 +1,0 @@
-#	$NetBSD: NetBSD.dist.x86_64,v 1.1 2009/12/13 01:02:25 mrg Exp $
-
-./usr/lib/i386
-./usr/lib/i386/i18n
-./usr/lib/i386/security

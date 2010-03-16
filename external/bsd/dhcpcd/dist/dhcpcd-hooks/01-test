@@ -1,6 +1,0 @@
-# Just echo our DHCP options we have
-
-if [ "$reason" = "TEST" ]; then
-	set | grep "^\(interface\|metric\|pid\|reason\|skip_hooks\)=" | sort
-	set | grep "^\(new_\|old_\)" | sort
-fi

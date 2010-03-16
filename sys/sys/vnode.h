@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.214 2010/02/11 23:16:35 haad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.214.2.1 2010/03/16 15:38:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -372,9 +372,9 @@ static __inline void
 holdrele(struct vnode *vp)
 {
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	holdrelel(vp);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 
 /*
@@ -384,9 +384,9 @@ static __inline void
 vhold(struct vnode *vp)
 {
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	vholdl(vp);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 
 static __inline bool
@@ -402,9 +402,9 @@ static __inline void
 VN_KNOTE(struct vnode *vp, long hint)
 {
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	KNOTE(&vp->v_klist, hint);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.70 2009/12/04 17:57:16 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.70.4.1 2010/03/16 15:38:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70 2009/12/04 17:57:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.4.1 2010/03/16 15:38:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -166,7 +166,7 @@ ao_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 		if (pg) {
 			if (pg->flags & PG_BUSY) {
 				pg->flags |= PG_WANTED;
-				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
+				UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, 0,
 				    "aogetpg", 0);
 				goto retrylookup;
 			}
@@ -177,7 +177,7 @@ ao_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 			pgs[i] = pg;
 		}
 	}
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
 	return 0;
 
@@ -190,13 +190,13 @@ ao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 
 	/* we only free all pages for now */
 	if ((flags & PGO_FREE) == 0 || (flags & PGO_ALLPAGES) == 0) {
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		return 0;
 	}
 
 	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL)
 		uvm_pagefree(pg);
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
 	return 0;
 }
@@ -207,9 +207,9 @@ uao_create(vsize_t size, int flags)
 	struct uvm_object *uobj;
 
 	uobj = kmem_zalloc(sizeof(struct uvm_object), KM_SLEEP);
+	uobj->vmobjlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	uobj->pgops = &aobj_pager;
 	TAILQ_INIT(&uobj->memq);
-	mutex_init(&uobj->vmobjlock, MUTEX_DEFAULT, IPL_NONE);
 
 	return uobj;
 }
@@ -218,9 +218,9 @@ void
 uao_detach(struct uvm_object *uobj)
 {
 
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	ao_put(uobj, 0, 0, PGO_ALLPAGES | PGO_FREE);
-	mutex_destroy(&uobj->vmobjlock);
+	mutex_obj_free(uobj->vmobjlock);
 	kmem_free(uobj, sizeof(*uobj));
 }
 

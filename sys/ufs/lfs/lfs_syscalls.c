@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.136 2010/02/16 23:20:30 mlelstv Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.136.2.1 2010/03/16 15:38:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.136 2010/02/16 23:20:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.136.2.1 2010/03/16 15:38:16 rmind Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -734,7 +734,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			vp = ufs_ihashlookup(ump->um_dev, blkp->bi_inode);
 			if (vp != NULL && !(vp->v_iflag & VI_XLOCK)) {
 				ip = VTOI(vp);
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 				mutex_exit(&ufs_ihash_lock);
 				if (lfs_vref(vp)) {
 					v_daddr = LFS_UNUSED_DADDR;
@@ -1026,13 +1026,13 @@ lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 
 	mutex_enter(&ufs_ihash_lock);
 	if ((vp = ufs_ihashlookup(dev, ino)) != NULL) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&ufs_ihash_lock);
 		if (vp->v_iflag & VI_XLOCK) {
 			DLOG((DLOG_CLEAN, "lfs_fastvget: ino %d VI_XLOCK\n",
 			      ino));
 			lfs_stats.clean_vnlocked++;
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			return EAGAIN;
 		}
 		if (lfs_vref(vp)) {

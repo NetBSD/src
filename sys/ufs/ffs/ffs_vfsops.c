@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.258 2010/02/11 00:06:16 mlelstv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.258.2.1 2010/03/16 15:38:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.258 2010/02/11 00:06:16 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.258.2.1 2010/03/16 15:38:14 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -772,7 +772,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&mntvnode_lock);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
 			(void)vunmark(mvp);
@@ -1580,7 +1580,7 @@ loop:
 		 */
 		if (vismarker(vp))
 			continue;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		ip = VTOI(vp);
 
 		/*
@@ -1588,7 +1588,7 @@ loop:
 		 */
 		if (ip == NULL || (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0 ||
 		    vp->v_type == VNON) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 
@@ -1611,11 +1611,11 @@ loop:
 		    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 		    (waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		    UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		if (vp->v_type == VBLK && is_suspending) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		vmark(mvp, vp);
@@ -2055,7 +2055,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 	pflags = PGO_ALLPAGES | PGO_CLEANIT;
 	if ((flags & FSYNC_WAIT) != 0)
 		pflags |= PGO_SYNCIO;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	error = VOP_PUTPAGES(vp, 0, 0, pflags);
 	if (error)
 		return error;
@@ -2083,10 +2083,10 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 		}
 
 		if ((flags & FSYNC_WAIT) != 0) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			while (vp->v_numoutput)
-				cv_wait(&vp->v_cv, &vp->v_interlock);
-			mutex_exit(&vp->v_interlock);
+				cv_wait(&vp->v_cv, vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 
 		return 0;
@@ -2140,11 +2140,11 @@ loop:
 	}
 
 	if ((flags & FSYNC_WAIT) != 0) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		while (vp->v_numoutput) {
-			cv_wait(&vp->v_cv, &vp->v_interlock);
+			cv_wait(&vp->v_cv, vp->v_interlock);
 		}
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 
 		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			/*

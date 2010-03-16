@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.90 2009/09/07 15:12:03 njoly Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.90.4.1 2010/03/16 15:38:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.90 2009/09/07 15:12:03 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.90.4.1 2010/03/16 15:38:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,16 +428,16 @@ loop:
 		 */
 		if (vp->v_mount != mp || vismarker(vp))
 			continue;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		np = VTOSMB(vp);
 		if (np == NULL) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);

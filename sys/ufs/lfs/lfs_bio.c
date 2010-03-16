@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.117 2010/02/16 23:20:30 mlelstv Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.117.2.1 2010/03/16 15:38:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.117 2010/02/16 23:20:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.117.2.1 2010/03/16 15:38:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,13 +500,13 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		fs->lfs_avail -= fsb;
 
 		mutex_enter(&bufcache_lock);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		bp->b_oflags = (bp->b_oflags | BO_DELWRI) & ~BO_DONE;
 		LFS_LOCK_BUF(bp);
 		bp->b_flags &= ~B_READ;
 		bp->b_error = 0;
 		reassignbuf(bp, bp->b_vp);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	} else {
 		mutex_enter(&bufcache_lock);
 	}
@@ -771,9 +771,9 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_private = fs;
 
 	mutex_enter(&bufcache_lock);
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	bgetvp(vp, bp);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	mutex_exit(&bufcache_lock);
 
 	return (bp);
@@ -786,9 +786,9 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 
 	if ((vp = bp->b_vp) != NULL) {
 		mutex_enter(&bufcache_lock);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		brelvp(bp);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		mutex_exit(&bufcache_lock);
 	}
 	if (!(bp->b_cflags & BC_INVAL)) { /* BC_INVAL indicates a "fake" buffer */

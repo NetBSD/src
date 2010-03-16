@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.87 2010/02/17 14:32:08 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.87.2.1 2010/03/16 15:38:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.87 2010/02/17 14:32:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.87.2.1 2010/03/16 15:38:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -515,10 +515,10 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 		if (vp->v_mount != mp || vismarker(vp))
 			continue;
 
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		pn = VPTOPP(vp);
 		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 
@@ -551,15 +551,15 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 
 		/* hmm.. is the FAF thing entirely sensible? */
 		if (waitfor == MNT_LAZY) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			pn->pn_stat |= PNODE_FAF;
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 		rv = VOP_FSYNC(vp, cred, waitfor, 0, 0);
 		if (waitfor == MNT_LAZY) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			pn->pn_stat &= ~PNODE_FAF;
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 		if (rv)
 			error = rv;

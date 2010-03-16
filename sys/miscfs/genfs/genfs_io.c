@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36 2010/01/30 12:06:20 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.4.1 2010/03/16 15:38:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36 2010/01/30 12:06:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.4.1 2010/03/16 15:38:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ startover:
 
 	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= memeof) {
 		if ((flags & PGO_LOCKED) == 0) {
-			mutex_exit(&uobj->vmobjlock);
+			mutex_exit(uobj->vmobjlock);
 		}
 		UVMHIST_LOG(ubchist, "off 0x%x count %d goes past EOF 0x%x",
 		    origoffset, *ap->a_count, memeof,0);
@@ -238,7 +238,7 @@ startover:
 		error = (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 		goto out_err;
 	}
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
 	/*
 	 * find the requested pages and make some simple checks.
@@ -298,7 +298,7 @@ startover:
 	} else {
 		rw_enter(&gp->g_glock, RW_READER);
 	}
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	if (vp->v_size < origvsize) {
 		genfs_node_unlock(vp);
 		if (pgs != pgs_onstack)
@@ -311,7 +311,7 @@ startover:
 		genfs_node_unlock(vp);
 		KASSERT(async != 0);
 		genfs_rel_pages(&pgs[ridx], orignmempages);
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		error = EBUSY;
 		goto out_err_free;
 	}
@@ -379,13 +379,13 @@ startover:
 			genfs_node_unlock(vp);
 			KASSERT(async != 0);
 			genfs_rel_pages(pgs, npages);
-			mutex_exit(&uobj->vmobjlock);
+			mutex_exit(uobj->vmobjlock);
 			error = EBUSY;
 			goto out_err_free;
 		}
 	}
 
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
     {
 	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
@@ -630,7 +630,7 @@ loopdone:
 	putiobuf(mbp);
     }
 
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 
 	/*
 	 * we're almost done!  release the pages...
@@ -655,7 +655,7 @@ loopdone:
 		mutex_enter(&uvm_pageqlock);
 		uvm_page_unbusy(pgs, npages);
 		mutex_exit(&uvm_pageqlock);
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
 		goto out_err_free;
 	}
@@ -696,7 +696,7 @@ out:
 		}
 	}
 	mutex_exit(&uvm_pageqlock);
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
 		    orignmempages * sizeof(struct vm_page *));
@@ -778,7 +778,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
     int origflags, struct vm_page **busypg)
 {
 	struct uvm_object * const uobj = &vp->v_uobj;
-	kmutex_t * const slock = &uobj->vmobjlock;
+	kmutex_t * const slock = uobj->vmobjlock;
 	off_t off;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
 #define maxpages (MAXPHYS >> PAGE_SHIFT)
@@ -1315,9 +1315,9 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	KASSERT(bytes != 0);
 
 	if (iowrite) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		vp->v_numoutput += 2;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 	mbp = getiobuf(vp, true);
 	UVMHIST_LOG(ubchist, "vp %p mbp %p num now %d bytes 0x%x",
@@ -1473,16 +1473,16 @@ genfs_compat_getpages(void *v)
 		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
 	}
 	if (origoffset + (ap->a_centeridx << PAGE_SHIFT) >= vp->v_size) {
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		return (EINVAL);
 	}
 	if ((ap->a_flags & PGO_SYNCIO) == 0) {
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		return 0;
 	}
 	npages = orignpages;
 	uvn_findpages(uobj, origoffset, &npages, pgs, UFP_ALL);
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 	kva = uvm_pagermapin(pgs, npages,
 	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 	for (i = 0; i < npages; i++) {
@@ -1508,7 +1508,7 @@ genfs_compat_getpages(void *v)
 		}
 	}
 	uvm_pagermapout(kva, npages);
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
@@ -1523,7 +1523,7 @@ genfs_compat_getpages(void *v)
 		uvm_page_unbusy(pgs, npages);
 	}
 	mutex_exit(&uvm_pageqlock);
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 	return (error);
 }
 
@@ -1554,9 +1554,9 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	/* XXX vn_lock */
 	error = VOP_WRITE(vp, &uio, 0, cred);
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	vp->v_numoutput++;
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	bp = getiobuf(vp, true);
 	bp->b_cflags = BC_BUSY | BC_AGE;
@@ -1735,7 +1735,7 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
 
 	spoff = trunc_page(off);
 	epoff = round_page(off + len);
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	error = VOP_PUTPAGES(vp, spoff, epoff, pgoflags);
 	if (error) {
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.33 2008/05/10 12:57:18 tnn Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.33.20.1 2010/03/16 15:38:04 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.33 2008/05/10 12:57:18 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.33.20.1 2010/03/16 15:38:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ irix_usema_close(void *v)
 	printf("irix_usema_close() vn = %p\n", vp);
 #endif
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 
 	/* vp is a vnode duplicated from rvp. eventually also close rvp */
 	rvp = (struct vnode *)(vp->v_data);
@@ -317,7 +317,7 @@ irix_usema_close(void *v)
 	if ((iur = iur_lookup_by_vn(vp)) != NULL)
 		iur_remove(iur);
 
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	return error;
 }

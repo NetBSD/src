@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.20 2009/03/15 17:22:38 cegger Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.20.4.1 2010/03/16 15:38:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.20 2009/03/15 17:22:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.20.4.1 2010/03/16 15:38:11 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -313,7 +313,7 @@ kernfs_hashget(kfstype type, struct mount *mp, const struct kern_target *kt, u_i
 		vp = KERNFSTOV(pp);
 		if (pp->kfs_type == type && vp->v_mount == mp &&
 		    pp->kfs_kt == kt && pp->kfs_value == value) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			mutex_exit(&kfs_ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;

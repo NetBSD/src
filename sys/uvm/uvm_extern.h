@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.162 2010/02/08 19:02:33 joerg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.162.2.1 2010/03/16 15:38:17 rmind Exp $	*/
 
 /*
  *
@@ -704,6 +704,9 @@ int			uvm_mremap(struct vm_map *, vaddr_t, vsize_t,
 			    struct proc *, int);
 
 /* uvm_object.c */
+void			uvm_obj_init(struct uvm_object *,
+			    const struct uvm_pagerops *, kmutex_t *, u_int);
+void			uvm_obj_destroy(struct uvm_object *, kmutex_t *);
 int			uobj_wirepages(struct uvm_object *uobj, off_t start,
 			    off_t end);
 void			uobj_unwirepages(struct uvm_object *uobj, off_t start,

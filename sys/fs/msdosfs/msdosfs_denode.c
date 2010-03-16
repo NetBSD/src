@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.37 2010/01/08 11:35:08 pooka Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.37.4.1 2010/03/16 15:38:06 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.37 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.37.4.1 2010/03/16 15:38:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ loop:
 			if (flags == 0) {
 				mutex_exit(&msdosfs_ihash_lock);
 			} else {
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 				mutex_exit(&msdosfs_ihash_lock);
 				if (vget(vp, flags | LK_INTERLOCK))
 					goto loop;

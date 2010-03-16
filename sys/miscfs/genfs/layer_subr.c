@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.28 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.28.4.1 2010/03/16 15:38:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.28 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.28.4.1 2010/03/16 15:38:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ loop:
 	LIST_FOREACH(a, hd, layer_hash) {
 		if (a->layer_lowervp == lowervp && LAYERTOV(a)->v_mount == mp) {
 			vp = LAYERTOV(a);
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			/*
 			 * If we find a node being cleaned out, then
 			 * ignore it and continue.  A thread trying to
@@ -162,7 +162,7 @@ loop:
 			 * lower file system.
 			 */
 			if ((vp->v_iflag & VI_XLOCK) != 0) {
-				mutex_exit(&vp->v_interlock);
+				mutex_exit(vp->v_interlock);
 				continue;
 			}
 			mutex_exit(&lmp->layerm_hashlock);
@@ -208,9 +208,9 @@ layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 	if (error != 0)
 		return (error);
 	vp->v_type = lowervp->v_type;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	vp->v_iflag |= VI_LAYER;
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	xp = kmem_alloc(lmp->layerm_size, KM_SLEEP);
 	if (xp == NULL) {

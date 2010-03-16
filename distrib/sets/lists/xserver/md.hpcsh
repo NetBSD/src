@@ -1,6 +1,0 @@
-# $NetBSD: md.hpcsh,v 1.7 2009/02/09 16:28:54 abs Exp $
-./usr/X11R6/bin/X					-unknown-	x11
-./usr/X11R6/bin/Xhpc					-unknown-	x11
-./usr/X11R6/man/cat1/Xhpc.0				-unknown-	.cat,x11
-./usr/X11R6/man/html1/Xhpc.html				-unknown-	html,x11
-./usr/X11R6/man/man1/Xhpc.1				-unknown-	.man,x11

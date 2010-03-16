@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.51 2008/01/18 10:48:23 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.51.32.1 2010/03/16 15:38:17 rmind Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.51 2008/01/18 10:48:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.51.32.1 2010/03/16 15:38:17 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -170,7 +170,7 @@ uvm_anfree(struct vm_anon *anon)
 			pg->loan_count--;
 			pg->uanon = NULL;
 			mutex_exit(&uvm_pageqlock);
-			mutex_exit(&pg->uobject->vmobjlock);
+			mutex_exit(pg->uobject->vmobjlock);
 		} else {
 
 			/*
@@ -305,7 +305,7 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 			mutex_enter(&uvm_pageqlock);
 			if (pg->uobject) {
 				locked =
-				    mutex_tryenter(&pg->uobject->vmobjlock);
+				    mutex_tryenter(pg->uobject->vmobjlock);
 			} else {
 				/* object disowned before we got PQ lock */
 				locked = true;
@@ -425,7 +425,7 @@ uvm_anon_pagein(struct vm_anon *anon)
 
 	mutex_exit(&anon->an_lock);
 	if (uobj) {
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 	}
 	return false;
 }

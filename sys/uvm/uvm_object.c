@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.7 2009/08/18 19:16:09 thorpej Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.7.4.1 2010/03/16 15:38:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,22 +34,62 @@
  *
  * TODO:
  *  1. Support PG_RELEASED-using objects
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7 2009/08/18 19:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.1 2010/03/16 15:38:18 rmind Exp $");
 
 #include "opt_ddb.h"
-#include "opt_uvmhist.h"
 
 #include <sys/param.h>
+#include <sys/mutex.h>
+#include <sys/queue.h>
+#include <sys/rb.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 
 /* We will fetch this page count per step */
 #define	FETCH_PAGECOUNT	16
+
+/*
+ * uvm_obj_init: initialize UVM memory object.
+ */
+void
+uvm_obj_init(struct uvm_object *uo, const struct uvm_pagerops *ops,
+    kmutex_t *lockptr, u_int refs)
+{
+
+	if (lockptr == NULL) {
+		uo->vmobjlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	} else {
+		uo->vmobjlock = lockptr;
+		mutex_init(uo->vmobjlock, MUTEX_DEFAULT, IPL_NONE);
+	}
+	uo->pgops = ops;
+	TAILQ_INIT(&uo->memq);
+	uo->uo_npages = 0;
+	uo->uo_refs = refs;
+	rb_tree_init(&uo->rb_tree, &uvm_page_tree_ops);
+}
+
+/*
+ * uvm_obj_destroy: destroy UVM memory object.
+ */
+void
+uvm_obj_destroy(struct uvm_object *uo, kmutex_t *lockptr)
+{
+#ifdef DIAGNOSTIC
+	void *tmp = NULL;
+	KASSERT(rb_tree_find_node_geq(&uo->rb_tree, &tmp) == NULL);
+#endif
+	if (lockptr) {
+		KASSERT(uo->vmobjlock == lockptr);
+		mutex_destroy(uo->vmobjlock);
+	} else {
+		mutex_obj_free(uo->vmobjlock);
+	}
+}
 
 /*
  * uobj_wirepages: wire the pages of entire uobj
@@ -68,7 +108,7 @@ uobj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
 
 	left = (end - start) >> PAGE_SHIFT;
 
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	while (left) {
 
 		npages = MIN(FETCH_PAGECOUNT, left);
@@ -82,7 +122,7 @@ uobj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
 		if (error)
 			goto error;
 
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 		for (i = 0; i < npages; i++) {
 
 			KASSERT(pgs[i] != NULL);
@@ -95,9 +135,9 @@ uobj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
 				while (pgs[i]->loan_count) {
 					pg = uvm_loanbreak(pgs[i]);
 					if (!pg) {
-						mutex_exit(&uobj->vmobjlock);
+						mutex_exit(uobj->vmobjlock);
 						uvm_wait("uobjwirepg");
-						mutex_enter(&uobj->vmobjlock);
+						mutex_enter(uobj->vmobjlock);
 						continue;
 					}
 				}
@@ -123,7 +163,7 @@ uobj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
 		left -= npages;
 		offset += npages << PAGE_SHIFT;
 	}
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 
 	return 0;
 
@@ -148,7 +188,7 @@ uobj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 	struct vm_page *pg;
 	off_t offset;
 
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	mutex_enter(&uvm_pageqlock);
 	for (offset = start; offset < end; offset += PAGE_SIZE) {
 		pg = uvm_pagelookup(uobj, offset);
@@ -159,7 +199,7 @@ uobj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 		uvm_pageunwire(pg);
 	}
 	mutex_exit(&uvm_pageqlock);
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)
@@ -167,7 +207,6 @@ uobj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 /*
  * uvm_object_printit: actually prints the object
  */
-
 void
 uvm_object_printit(struct uvm_object *uobj, bool full,
     void (*pr)(const char *, ...))
@@ -176,7 +215,7 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 	int cnt = 0;
 
 	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
-	    uobj, mutex_owned(&uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
+	    uobj, mutex_owned(uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		(*pr)("refs=<SYSTEM>\n");
 	else

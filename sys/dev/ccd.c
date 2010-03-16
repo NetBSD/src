@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.134 2009/06/05 19:21:02 haad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.134.4.1 2010/03/16 15:38:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.134 2009/06/05 19:21:02 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.134.4.1 2010/03/16 15:38:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -829,9 +829,9 @@ ccdstart(struct ccd_softc *cs)
 		addr += rcount;
 		vp = cbp->cb_buf.b_vp;
 		if ((cbp->cb_buf.b_flags & B_READ) == 0) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			vp->v_numoutput++;
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 		(void)VOP_STRATEGY(vp, &cbp->cb_buf);
 	}
@@ -923,7 +923,7 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
 	cbp->cb_buf.b_blkno = cbn + cboff;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_vp = ci->ci_vp;
-	cbp->cb_buf.b_objlock = &ci->ci_vp->v_interlock;
+	cbp->cb_buf.b_objlock = ci->ci_vp->v_interlock;
 	if (cs->sc_ileave == 0)
 		cbc = dbtob((u_int64_t)(ci->ci_size - cbn));
 	else

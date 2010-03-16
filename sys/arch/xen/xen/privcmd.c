@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.41 2010/02/06 03:06:42 uebayasi Exp $ */
+/* $NetBSD: privcmd.c,v 1.41.4.1 2010/03/16 15:38:04 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.41 2010/02/06 03:06:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.41.4.1 2010/03/16 15:38:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,24 +457,24 @@ static struct uvm_pagerops privpgops = {
 static void
 privpgop_reference(struct uvm_object *uobj)
 {
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	uobj->uo_refs++;
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 }
 
 static void
 privpgop_detach(struct uvm_object *uobj)
 {
 	struct privcmd_object *pobj = (struct privcmd_object *)uobj;
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
-		mutex_exit(&uobj->vmobjlock);
+		mutex_exit(uobj->vmobjlock);
 		return;
 	}
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 	kmem_free(pobj->maddr, sizeof(paddr_t) * pobj->npages);
-	UVM_OBJ_DESTROY(uobj);
+	uvm_obj_destroy(uobj, NULL);
 	kmem_free(pobj, sizeof(struct privcmd_object));
 	privcmd_nobjects--;
 }
@@ -563,12 +563,12 @@ privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
 	}
 
 	privcmd_nobjects++;
-	UVM_OBJ_INIT(&obj->uobj, &privpgops, 1);
-	mutex_enter(&obj->uobj.vmobjlock);
+	uvm_obj_init(&obj->uobj, &privpgops, NULL, 1);
+	mutex_enter(obj->uobj.vmobjlock);
 	obj->maddr = maddr;
 	obj->npages = npages;
 	obj->domid = domid;
-	mutex_exit(&obj->uobj.vmobjlock);
+	mutex_exit(obj->uobj.vmobjlock);
 	uvmflag = UVM_MAPFLAG(prot, prot, UVM_INH_NONE, UVM_ADV_NORMAL,
 	    UVM_FLAG_FIXED | UVM_FLAG_NOMERGE);
 	error = uvm_map(map, &newstart, size, &obj->uobj, 0, 0, uvmflag);

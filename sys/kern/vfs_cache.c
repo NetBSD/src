@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.84 2009/02/18 13:36:11 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.84.4.1 2010/03/16 15:38:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.84 2009/02/18 13:36:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.84.4.1 2010/03/16 15:38:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -369,7 +369,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
 	} else {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
 		error = vget(vp, LK_NOWAIT | LK_INTERLOCK);
@@ -467,7 +467,7 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
 	} else {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
 		error = vget(vp, LK_NOWAIT | LK_INTERLOCK);

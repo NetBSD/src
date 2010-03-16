@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.61 2009/07/03 21:17:40 elad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.61.4.1 2010/03/16 15:38:06 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.61 2009/07/03 21:17:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.61.4.1 2010/03/16 15:38:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,10 +210,10 @@ msdosfs_close(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	if (vp->v_usecount > 1)
 		DETIMES(dep, NULL, NULL, NULL, dep->de_pmp->pm_gmtoff);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	return (0);
 }
 
@@ -663,7 +663,7 @@ msdosfs_write(void *v)
 		 */
 
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
 		}
@@ -672,7 +672,7 @@ msdosfs_write(void *v)
 	/* set final size */
 	uvm_vnp_setsize(vp, dep->de_FileSize);
 	if (error == 0 && ioflag & IO_SYNC) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp, trunc_page(oldoff),
 		    round_page(oldoff + bytelen), PGO_CLEANIT | PGO_SYNCIO);
 	}

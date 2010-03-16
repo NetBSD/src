@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.4 2009/07/29 17:06:57 reinoud Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.4.6.1 2010/03/16 15:38:07 rmind Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4 2009/07/29 17:06:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.4.6.1 2010/03/16 15:38:07 rmind Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -780,7 +780,7 @@ loop:
 		if (node->ino == ino) {
 			vp = node->vnode;
 			assert(vp);
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			mutex_exit(&ump->ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.93 2010/01/08 11:35:12 pooka Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.93.4.1 2010/03/16 15:38:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93 2010/01/08 11:35:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.4.1 2010/03/16 15:38:19 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -146,7 +146,7 @@ uvn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 	struct vnode *vp = (struct vnode *)uobj;
 	int error;
 
-	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(mutex_owned(vp->v_interlock));
 	error = VOP_PUTPAGES(vp, offlo, offhi, flags);
 
 	return error;
@@ -186,7 +186,7 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
 	error = VOP_GETPAGES(vp, offset, pps, npagesp, centeridx,
 			     access_type, advice, flags);
 
-	KASSERT(((flags & PGO_LOCKED) != 0 && mutex_owned(&vp->v_interlock)) ||
+	KASSERT(((flags & PGO_LOCKED) != 0 && mutex_owned(vp->v_interlock)) ||
 	    (flags & PGO_LOCKED) == 0);
 	return error;
 }
@@ -261,9 +261,9 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 					UVMHIST_LOG(ubchist, "nowait",0,0,0,0);
 					return 0;
 				}
-				mutex_exit(&uobj->vmobjlock);
+				mutex_exit(uobj->vmobjlock);
 				uvm_wait("uvn_fp1");
-				mutex_enter(&uobj->vmobjlock);
+				mutex_enter(uobj->vmobjlock);
 				continue;
 			}
 			UVMHIST_LOG(ubchist, "alloced %p", pg,0,0,0);
@@ -281,9 +281,9 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 			}
 			pg->flags |= PG_WANTED;
 			UVMHIST_LOG(ubchist, "wait %p", pg,0,0,0);
-			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
+			UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, 0,
 					    "uvn_fp2", 0);
-			mutex_enter(&uobj->vmobjlock);
+			mutex_enter(uobj->vmobjlock);
 			continue;
 		}
 
@@ -333,7 +333,7 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	voff_t oldsize;
 	UVMHIST_FUNC("uvm_vnp_setsize"); UVMHIST_CALLED(ubchist);
 
-	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(uobj->vmobjlock);
 	UVMHIST_LOG(ubchist, "vp %p old 0x%x new 0x%x",
 	    vp, vp->v_size, newsize, 0);
 
@@ -352,24 +352,24 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 
 	if (oldsize > pgend) {
 		(void) uvn_put(uobj, pgend, 0, PGO_FREE | PGO_SYNCIO);
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 	}
 	vp->v_size = vp->v_writesize = newsize;
-	mutex_exit(&uobj->vmobjlock);
+	mutex_exit(uobj->vmobjlock);
 }
 
 void
 uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 {
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	KASSERT(newsize != VSIZENOTSET);
 	KASSERT(vp->v_size != VSIZENOTSET);
 	KASSERT(vp->v_writesize != VSIZENOTSET);
 	KASSERT(vp->v_size <= vp->v_writesize);
 	KASSERT(vp->v_size <= newsize);
 	vp->v_writesize = newsize;
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 
 bool

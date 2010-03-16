@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.17 2009/10/28 18:24:44 njoly Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.17.4.1 2010/03/16 15:38:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.17 2009/10/28 18:24:44 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.17.4.1 2010/03/16 15:38:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,7 +679,7 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 
 	case POSIX_FADV_DONTNEED:
 		vp = fp->f_data;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp, round_page(offset),
 		    trunc_page(endoffset), PGO_DEACTIVATE | PGO_CLEANIT);
 		break;

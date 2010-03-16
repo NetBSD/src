@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.176 2010/01/27 15:52:31 uebayasi Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.176.4.1 2010/03/16 15:38:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.176 2010/01/27 15:52:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.176.4.1 2010/03/16 15:38:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ genfs_lock(void *v)
 
 	if ((flags & LK_INTERLOCK) != 0) {
 		flags &= ~LK_INTERLOCK;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 
 	return (vlockmgr(vp->v_vnlock, flags));
@@ -323,7 +323,7 @@ genfs_nolock(void *v)
 	 * the interlock here.
 	 */
 	if (ap->a_flags & LK_INTERLOCK)
-		mutex_exit(&ap->a_vp->v_interlock);
+		mutex_exit(ap->a_vp->v_interlock);
 	return (0);
 }
 
@@ -364,7 +364,7 @@ genfs_null_putpages(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	KASSERT(vp->v_uobj.uo_npages == 0);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	return (0);
 }
 
@@ -399,9 +399,9 @@ filt_genfsdetach(struct knote *kn)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 
 static int
@@ -416,17 +416,17 @@ filt_genfsread(struct knote *kn, long hint)
 	 */
 	switch (hint) {
 	case NOTE_REVOKE:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		return (1);
 	case 0:
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		kn->kn_data = vp->v_size - ((file_t *)kn->kn_obj)->f_offset;
 		rv = (kn->kn_data != 0);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		return rv;
 	default:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		kn->kn_data = vp->v_size - ((file_t *)kn->kn_obj)->f_offset;
 		return (kn->kn_data != 0);
 	}
@@ -440,18 +440,18 @@ filt_genfsvnode(struct knote *kn, long hint)
 
 	switch (hint) {
 	case NOTE_REVOKE:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		kn->kn_flags |= EV_EOF;
 		if ((kn->kn_sfflags & hint) != 0)
 			kn->kn_fflags |= hint;
 		return (1);
 	case 0:
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		fflags = kn->kn_fflags;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		break;
 	default:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		if ((kn->kn_sfflags & hint) != 0)
 			kn->kn_fflags |= hint;
 		fflags = kn->kn_fflags;
@@ -491,9 +491,9 @@ genfs_kqfilter(void *v)
 
 	kn->kn_hook = vp;
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	return (0);
 }

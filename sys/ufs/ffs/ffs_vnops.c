@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.113 2009/11/04 09:45:05 hannken Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.113.4.1 2010/03/16 15:38:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.113 2009/11/04 09:45:05 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.113.4.1 2010/03/16 15:38:15 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -303,7 +303,7 @@ ffs_fsync(void *v)
 	 * First, flush all pages in range.
 	 */
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 	    round_page(ap->a_offhi), PGO_CLEANIT |
 	    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
@@ -372,10 +372,10 @@ ffs_fsync(void *v)
 	}
 
 	if (ap->a_flags & FSYNC_WAIT) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		while (vp->v_numoutput > 0)
-			cv_wait(&vp->v_cv, &vp->v_interlock);
-		mutex_exit(&vp->v_interlock);
+			cv_wait(&vp->v_cv, vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 	}
 
 	error = ffs_update(vp, NULL, NULL, UPDATE_CLOSE |
@@ -427,7 +427,7 @@ ffs_full_fsync(struct vnode *vp, int flags)
 		if (vp->v_type == VREG &&
 		    fstrans_getstate(mp) == FSTRANS_SUSPENDING)
 			pflags |= PGO_FREE;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, pflags);
 		if (error)
 			return error;
@@ -468,10 +468,10 @@ ffs_full_fsync(struct vnode *vp, int flags)
 		}
 
 		if ((flags & FSYNC_WAIT) != 0) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			while (vp->v_numoutput != 0)
-				cv_wait(&vp->v_cv, &vp->v_interlock);
-			mutex_exit(&vp->v_interlock);
+				cv_wait(&vp->v_cv, vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 		}
 
 		return error;
@@ -525,11 +525,11 @@ loop:
 	}
 
 	if ((flags & FSYNC_WAIT) != 0) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		while (vp->v_numoutput) {
-			cv_wait(&vp->v_cv, &vp->v_interlock);
+			cv_wait(&vp->v_cv, vp->v_interlock);
 		}
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 
 		/*
 		 * Ensure that any filesystem metadata associated
@@ -598,10 +598,10 @@ ffs_reclaim(void *v)
 	 * To interlock with ffs_sync().
 	 */
 	genfs_node_destroy(vp);
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	data = vp->v_data;
 	vp->v_data = NULL;
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	/*
 	 * XXX MFS ends up here, too, to free an inode.  Should we create

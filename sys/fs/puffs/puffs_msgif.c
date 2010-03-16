@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.80 2010/01/14 19:50:07 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.80.4.1 2010/03/16 15:38:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.80 2010/01/14 19:50:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.80.4.1 2010/03/16 15:38:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -823,7 +823,7 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 			break;
 		}
 
-		mutex_enter(&vp->v_uobj.vmobjlock);
+		mutex_enter(vp->v_uobj.vmobjlock);
 		rv = VOP_PUTPAGES(vp, offlo, offhi, flags);
 		break;
 

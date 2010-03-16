@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.c,v 1.6 2009/06/10 01:54:08 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.c,v 1.6.4.1 2010/03/16 15:38:18 rmind Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005, 2009 YAMAMOTO Takashi,
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.6 2009/06/10 01:54:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_readahead.c,v 1.6.4.1 2010/03/16 15:38:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -145,7 +145,7 @@ ra_startio(struct uvm_object *uobj, off_t off, size_t sz)
 		 * use UVM_ADV_RANDOM to avoid recursion.
 		 */
 
-		mutex_enter(&uobj->vmobjlock);
+		mutex_enter(uobj->vmobjlock);
 		error = (*uobj->pgops->pgo_get)(uobj, off, NULL,
 		    &npages, 0, VM_PROT_READ, UVM_ADV_RANDOM, 0);
 		DPRINTF(("%s:  off=%" PRIu64 ", bytelen=%zu -> %d\n",
@@ -207,7 +207,7 @@ uvm_ra_request(struct uvm_ractx *ra, int advice, struct uvm_object *uobj,
     off_t reqoff, size_t reqsize)
 {
 
-	KASSERT(mutex_owned(&uobj->vmobjlock));
+	KASSERT(mutex_owned(uobj->vmobjlock));
 
 	if (ra == NULL || advice == UVM_ADV_RANDOM) {
 		return;
@@ -315,9 +315,9 @@ do_readahead:
 		if (rasize >= RA_MINSIZE) {
 			off_t next;
 
-			mutex_exit(&uobj->vmobjlock);
+			mutex_exit(uobj->vmobjlock);
 			next = ra_startio(uobj, raoff, rasize);
-			mutex_enter(&uobj->vmobjlock);
+			mutex_enter(uobj->vmobjlock);
 			ra->ra_next = next;
 		}
 	}

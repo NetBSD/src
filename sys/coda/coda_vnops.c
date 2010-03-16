@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.71 2009/11/23 02:13:44 rmind Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.71.4.1 2010/03/16 15:38:04 rmind Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71 2009/11/23 02:13:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71.4.1 2010/03/16 15:38:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1787,7 +1787,7 @@ coda_lock(void *v)
     }
 
     if ((flags & LK_INTERLOCK) != 0) {
-    	mutex_exit(&vp->v_interlock);
+    	mutex_exit(vp->v_interlock);
     	flags &= ~LK_INTERLOCK;
     }
 
@@ -2006,7 +2006,7 @@ coda_getpages(void *v)
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
 		printf("coda_getpages: control object %p\n", vp);
-		mutex_exit(&vp->v_uobj.vmobjlock);
+		mutex_exit(vp->v_uobj.vmobjlock);
 		return(EINVAL);
 	}
 
@@ -2021,7 +2021,7 @@ coda_getpages(void *v)
 	waslocked = VOP_ISLOCKED(vp);
 
 	/* Drop the vmobject lock. */
-	mutex_exit(&vp->v_uobj.vmobjlock);
+	mutex_exit(vp->v_uobj.vmobjlock);
 
 	/* Get container file if not already present. */
 	if (cp->c_ovp == NULL) {
@@ -2069,7 +2069,7 @@ coda_getpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call getpages on it. */
-	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 
 	/* If we opened the vnode, we must close it. */
@@ -2110,7 +2110,7 @@ coda_putpages(void *v)
 	int error;
 
 	/* Drop the vmobject lock. */
-	mutex_exit(&vp->v_uobj.vmobjlock);
+	mutex_exit(vp->v_uobj.vmobjlock);
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
@@ -2131,7 +2131,7 @@ coda_putpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call putpages on it. */
-	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 
 	return error;

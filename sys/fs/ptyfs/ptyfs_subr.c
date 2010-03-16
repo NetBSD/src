@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.18 2009/03/24 22:05:24 haad Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.18.4.1 2010/03/16 15:38:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.18 2009/03/24 22:05:24 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.18.4.1 2010/03/16 15:38:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,7 +367,7 @@ loop:
 		    	if (flags == 0) {
 				mutex_exit(&ptyfs_used_slock);
 			} else {
-				mutex_enter(&vp->v_interlock);
+				mutex_enter(vp->v_interlock);
 				mutex_exit(&ptyfs_used_slock);
 				if (vget(vp, flags | LK_INTERLOCK))
 					goto loop;

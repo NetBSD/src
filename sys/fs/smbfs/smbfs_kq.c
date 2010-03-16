@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.22 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.22.22.1 2010/03/16 15:38:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.22 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.22.22.1 2010/03/16 15:38:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,9 +277,9 @@ filt_smbfsdetach(struct knote *kn)
 	struct vnode *vp = ke->vp;
 	struct smb_rq *rq = NULL;
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	SLIST_REMOVE(&ke->vp->v_klist, kn, knote, kn_selnext);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	/* Remove the vnode from watch list */
 	mutex_enter(&smbkq_lock);
@@ -339,16 +339,16 @@ filt_smbfsread(struct knote *kn, long hint)
 		 * filesystem is gone, so set the EOF flag and schedule
 		 * the knote for deletion.
 		 */
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		return (1);
 	}
 
 	/* There is no size info for directories */
 	if (hint == 0) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 	} else {
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 	}
 	if (vp->v_type == VDIR) {
 		/*
@@ -373,7 +373,7 @@ filt_smbfsread(struct knote *kn, long hint)
        		rv = (kn->kn_data != 0);
 	}
 	if (hint == 0) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 	}
 
 	return rv;
@@ -388,18 +388,18 @@ filt_smbfsvnode(struct knote *kn, long hint)
 
 	switch (hint) {
 	case NOTE_REVOKE:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		kn->kn_flags |= EV_EOF;
 		if ((kn->kn_sfflags & hint) != 0)
 			kn->kn_fflags |= hint;
 		return (1);
 	case 0:
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		fflags = kn->kn_fflags;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		break;
 	default:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		if ((kn->kn_sfflags & hint) != 0)
 			kn->kn_fflags |= hint;
 		fflags = kn->kn_fflags;
@@ -528,10 +528,10 @@ smbfs_kqfilter(void *v)
 		wakeup(smbkql);
 	}
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
 	kn->kn_hook = ke;
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	mutex_exit(&smbkq_lock);
 

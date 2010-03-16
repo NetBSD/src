@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.259 2010/03/10 06:57:22 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.259.2.1 2010/03/16 15:38:03 rmind Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259 2010/03/10 06:57:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259.2.1 2010/03/16 15:38:03 rmind Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1378,7 +1378,7 @@ pmap_create(void)
 	memset(pm, 0, sizeof *pm);
 	DPRINTF(PDB_CREATE, ("pmap_create(): created %p\n", pm));
 
-	UVM_OBJ_INIT(&pm->pm_obj, NULL, 1);
+	uvm_obj_init(&pm->pm_obj, NULL, &pm->pm_obj_lock, 1);
 	if (pm != pmap_kernel()) {
 		while (!pmap_get_page(&pm->pm_physaddr)) {
 			uvm_wait("pmap_create");
@@ -1435,7 +1435,7 @@ pmap_destroy(struct pmap *pm)
 		uvm_pagefree(pg);
 	}
 	pmap_free_page((paddr_t)(u_long)pm->pm_segs);
-	UVM_OBJ_DESTROY(&pm->pm_obj);
+	uvm_obj_destroy(&pm->pm_obj, &pm->pm_obj_lock);
 	pool_cache_put(&pmap_cache, pm);
 }
 

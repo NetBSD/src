@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.156 2010/02/11 19:50:34 mlelstv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.156.2.1 2010/03/16 15:38:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.156 2010/02/11 19:50:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.156.2.1 2010/03/16 15:38:14 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -615,7 +615,7 @@ loop:
 		/*
 		 * Step 5: invalidate all cached file data.
 		 */
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		mutex_exit(&mntvnode_lock);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
 			mutex_enter(&mntvnode_lock);
@@ -930,7 +930,7 @@ loop:
 		vmark(mvp, vp);
 		if (vp->v_mount != mp || vismarker(vp))
 			continue;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		ip = VTOI(vp);
 		if (ip == NULL || (vp->v_iflag & (VI_XLOCK|VI_CLEAN)) != 0 ||
 		    vp->v_type == VNON ||
@@ -939,7 +939,7 @@ loop:
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
 		{
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
