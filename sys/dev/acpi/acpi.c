@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.160 2010/03/16 05:48:42 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.161 2010/03/16 08:02:01 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.160 2010/03/16 05:48:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.161 2010/03/16 08:02:01 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -874,18 +874,12 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 	ACPI_STATUS rv;
 	int clear, i;
 
-	rv = AcpiGetType(handle, &type);
+	rv = AcpiGetObjectInfo(handle, &devinfo);
 
 	if (ACPI_FAILURE(rv))
 		return AE_OK;	/* Do not terminate the walk. */
 
-	rv = AcpiGetObjectInfo(handle, &devinfo);
-
-	if (ACPI_FAILURE(rv)) {
-		aprint_debug_dev(sc->sc_dev, "failed to get object "
-		    "information: %s\n", AcpiFormatException(rv));
-		return AE_OK;
-	}
+	type = devinfo->Type;
 
 	switch (type) {
 
