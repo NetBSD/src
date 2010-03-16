@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.62 2010/03/15 19:03:33 jmmv Exp $
+# $NetBSD: mi,v 1.63 2010/03/16 22:01:18 dogcow Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -963,8 +963,8 @@
 ./usr/tests/sys/Atffile			tests-sys-tests	atf
 ./usr/tests/sys/rc				tests-sys-tests
 ./usr/tests/sys/rc/Atffile			tests-sys-tests	atf
-./usr/tests/sys/rc/h_args.sh			tests-sys-tests	atf
-./usr/tests/sys/rc/h_simple.sh			tests-sys-tests	atf
+./usr/tests/sys/rc/h_args			tests-sys-tests	atf
+./usr/tests/sys/rc/h_simple			tests-sys-tests	atf
 ./usr/tests/sys/rc/t_rc_d_cli			tests-sys-tests	atf
 ./usr/tests/syscall				tests-syscall-tests
 ./usr/tests/syscall/Atffile			tests-syscall-tests	atf
