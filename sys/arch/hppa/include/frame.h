@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.9 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: frame.h,v 1.10 2010/03/16 16:20:19 skrll Exp $	*/
 
 /*	$OpenBSD: frame.h,v 1.11 1999/11/25 18:28:06 mickey Exp $	*/
 
@@ -134,7 +134,7 @@ struct trapframe {
 	u_int	tf_eirr;	/* cr23 - DDB */
 	u_int	tf_vtop;	/* cr25 - DDB */
 	u_int	tf_cr28;	/*      - DDB */
-	u_int	tf_cr30;	/* uaddr */
+	u_int	tf_cr30;	/* fpregs */
 
 	u_int	tf_pad[4];	/* pad to 256 bytes */
 };

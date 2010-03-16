@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2010/02/16 16:56:29 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2010/03/16 16:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2010/02/16 16:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2010/03/16 16:20:19 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2010/02/16 16:56:29 skrll Exp $");
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/kcore.h>
+#include <machine/pcb.h>
 
 #ifdef	KGDB
 #include "com.h"
@@ -243,6 +244,9 @@ u_int hppa_btlb_size_min, hppa_btlb_size_max;
  */
 struct extent *hp700_io_extent;
 static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
+
+struct pool hppa_fppl;
+struct fpreg lwp0_fpregs;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
@@ -397,6 +401,7 @@ hppa_init(paddr_t start, void *bi)
 	struct btlb_slot *btlb_slot;
 	int btlb_slot_i;
 	struct btinfo_symtab *bi_sym;
+	struct pcb *pcb0;
 
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
@@ -575,6 +580,13 @@ do {									\
 	/* We will shortly go virtual. */
 	pagezero_mapped = 0;
 	fcacheall();
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_fpregs = &lwp0_fpregs;
+	memset(&lwp0_fpregs, 0, sizeof(struct fpreg));
+
+	pool_init(&hppa_fppl, sizeof(struct fpreg), 16, 0, 0, "fppl", NULL,
+	    IPL_NONE);
 }
 
 void
@@ -1856,11 +1868,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	/* reset any of the pending FPU exceptions */
 	hppa_fpu_flush(l);
-	pcb->pcb_fpregs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
-	pcb->pcb_fpregs[1] = 0;
-	pcb->pcb_fpregs[2] = 0;
-	pcb->pcb_fpregs[3] = 0;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
+	pcb->pcb_fpregs->fpr_regs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
+	pcb->pcb_fpregs->fpr_regs[1] = 0;
+	pcb->pcb_fpregs->fpr_regs[2] = 0;
+	pcb->pcb_fpregs->fpr_regs[3] = 0;
 
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.46 2010/03/11 21:37:52 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.47 2010/03/16 16:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -510,7 +510,7 @@ syscall_return:
 	ldw	TF_CR0(%sr3, %t3), %t1
 	mtctl	%t1, %rctr
 	ldw	TF_CR30(%sr3, %t3), %t1
-	mtctl	%t1, CR_UPADDR
+	mtctl	%t1, CR_FPPADDR
 
 	/*
 	 * Clear the system mask, this puts us back into physical mode.  Reload
@@ -957,7 +957,7 @@ ALTENTRY(hppa_fpu_nop0)
 	/* Call hppa_fpu_swap. */
 	ldil	L%fpu_cur_uspace, %arg0
 	ldw	R%fpu_cur_uspace(%arg0), %arg0
-	mfctl	CR_UPADDR, %arg1
+	mfctl	CR_FPPADDR, %arg1
 	blr	0, %rp
 	b	hppa_fpu_swap
 	nop
@@ -1028,11 +1028,14 @@ L$emulate_fpu:
 EXIT(TLABEL(emu))
 
 /*
- * void hppa_fpu_swap(paddr_t out, paddr_t in);
- * or
- * void hppa_fpu_swap(struct pcb *out, NULL);
+ * void hppa_fpu_swapout(struct pcb *out);
+ * void hppa_fpu_swap(struct fpreg *out, struct fpreg *in);
  */
-LEAF_ENTRY_NOPROFILE(hppa_fpu_swap)
+LEAF_ENTRY_NOPROFILE(hppa_fpu_swapout)
+	ldw	PCB_FPREGS(%arg0), %arg0
+	copy	%r0, %arg1
+
+ALTENTRY(hppa_fpu_swap)
 
 	/*
 	 * Note that this function must work in physical mode as well as virtual
@@ -1055,7 +1058,6 @@ LEAF_ENTRY_NOPROFILE(hppa_fpu_swap)
 	/*
 	 * Swap out the current FPU state.
 	 */
-	ldo	PCB_FPREGS(%arg0), %arg0
 	fstds,ma %fr0 , 8(%arg0)	/* fr0 must be saved first */
 	fstds,ma %fr1 , 8(%arg0)
 	fstds,ma %fr2 , 8(%arg0)
@@ -1121,7 +1123,7 @@ L$fpu_swap_in:
 	/*
 	 * Swap in the new FPU state.
 	 */
-	ldo	PCB_FPREGS+31*8(%arg1), %arg1
+	ldo	31*8(%arg1), %arg1
 	fldds,ma -8(%arg1), %fr31
 	fldds,ma -8(%arg1), %fr30
 	fldds,ma -8(%arg1), %fr29
@@ -1183,7 +1185,7 @@ L$fpu_no_swap_in:
 	depi	0, 25, 2, %r1
 	b	L$fpu_swap_done
 	mtctl	%r1, %ccr
-EXIT(hppa_fpu_swap)
+EXIT(hppa_fpu_swapout)
 
 	/* Construct the virtual address tag. */
 	/* NB: it is legal for off and t to be the same. */
@@ -1976,10 +1978,10 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	comb,<>	%t1, %t2, L$trap_from_kernel	/* if %t1 != %t2 => kernel */
 	dep	%r0, 31, 6, %sp			/* Assumed stack align step 2 */
 
-	mfctl	CR_UPADDR, %t2
+	mfctl	CR_CURLWP, %t2
 	depi	1, T_USER_POS, 1, %r1
 	depi	1, TFF_LAST_POS, 1, %r1
-	ldw	PCB_UVA(%t2), %sp
+	ldw	L_PCB(%t2), %sp
 #ifdef DIAGNOSTIC
 	b	L$trap_have_stack
 #endif
@@ -2189,7 +2191,7 @@ trapnowvirt:
 	mfctl	%cr28, %t2
 	stw	%t2, TF_CR28(%t3)
 #endif
-	mfctl	CR_UPADDR, %t1
+	mfctl	CR_FPPADDR, %t1
 	stw	%t1, TF_CR30(%t3)
 
 	/*

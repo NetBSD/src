@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.19 2010/01/16 13:29:47 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.20 2010/03/16 16:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.19 2010/01/16 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.20 2010/03/16 16:20:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,8 +208,6 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	hppa_fpu_flush(l);
 	memcpy(&mcp->__fpregs, pcb->pcb_fpregs, sizeof(mcp->__fpregs));
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs,
-	    sizeof(pcb->pcb_fpregs));
 	*flags |= _UC_FPU;
 }
 
@@ -320,8 +318,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 		hppa_fpu_flush(l);
 		memcpy(pcb->pcb_fpregs, &mcp->__fpregs, sizeof(mcp->__fpregs));
-		fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs,
-		    sizeof(pcb->pcb_fpregs));
 	}
 
 	mutex_enter(p->p_lock);
