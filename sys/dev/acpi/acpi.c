@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.159 2010/03/10 09:42:46 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.160 2010/03/16 05:48:42 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.159 2010/03/10 09:42:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.160 2010/03/16 05:48:42 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -129,6 +129,7 @@ static int	acpi_detach(device_t, int);
 static int	acpi_rescan(device_t, const char *, const int *);
 static void	acpi_rescan1(struct acpi_softc *, const char *, const int *);
 static void	acpi_rescan_nodes(struct acpi_softc *);
+static void	acpi_rescan_capabilities(struct acpi_softc *);
 
 static int	acpi_print(void *aux, const char *);
 
@@ -697,7 +698,8 @@ acpi_build_tree(struct acpi_softc *sc)
 	}
 
 	acpi_rescan1(sc, NULL, NULL);
-	acpi_wakedev_scan(sc);
+	acpi_rescan_capabilities(sc);
+
 	acpi_pcidev_scan(sc);
 }
 
@@ -789,6 +791,71 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		    "acpinodebus", &aa, acpi_print);
 	}
 }
+
+#define ACPI_STA_DEV_VALID      \
+	(ACPI_STA_DEV_PRESENT | ACPI_STA_DEV_ENABLED | ACPI_STA_DEV_OK)
+
+/*
+ * acpi_rescan_capabilities:
+ *
+ *	Scan device capabilities.
+ */
+static void
+acpi_rescan_capabilities(struct acpi_softc *sc)
+{
+	struct acpi_devnode *ad;
+	ACPI_DEVICE_INFO *di;
+	ACPI_HANDLE tmp;
+	ACPI_STATUS rv;
+
+	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+
+		di = ad->ad_devinfo;
+
+		if (di->Type != ACPI_TYPE_DEVICE)
+			continue;
+
+		if ((di->Valid & ACPI_VALID_STA) != 0 &&
+		    (di->CurrentStatus & ACPI_STA_DEV_VALID) !=
+		     ACPI_STA_DEV_VALID)
+			continue;
+
+		/*
+		 * Scan power resource capabilities.
+		 */
+		rv = AcpiGetHandle(ad->ad_handle, "_PR0", &tmp);
+
+		if (ACPI_FAILURE(rv))
+			rv = AcpiGetHandle(ad->ad_handle, "_PSC", &tmp);
+
+		if (ACPI_SUCCESS(rv))
+			ad->ad_flags |= ACPI_DEVICE_POWER;
+
+		/*
+		 * Scan wake-up capabilities.
+		 */
+		rv = AcpiGetHandle(ad->ad_handle, "_PRW", &tmp);
+
+		if (ACPI_SUCCESS(rv)) {
+			ad->ad_flags |= ACPI_DEVICE_WAKEUP;
+			acpi_wakedev_add(ad);
+		}
+
+		if (ad->ad_flags != 0) {
+			aprint_debug_dev(sc->sc_dev, "%-5s ", ad->ad_name);
+
+			if ((ad->ad_flags & ACPI_DEVICE_POWER) != 0)
+				aprint_debug("power ");
+
+			if ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0)
+				aprint_debug("wake-up ");
+
+			aprint_debug("\n");
+		}
+	}
+}
+
+#undef ACPI_STA_DEV_VALID
 
 /*
  * acpi_make_devnode:
