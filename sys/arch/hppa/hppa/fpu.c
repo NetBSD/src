@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.19 2009/11/21 15:36:33 rmind Exp $	*/
+/*	$NetBSD: fpu.c,v 1.20 2010/03/16 16:20:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.19 2009/11/21 15:36:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2010/03/16 16:20:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,8 @@ u_int fpu_csw;
 paddr_t fpu_cur_uspace;
 
 /* In locore.S, this swaps states in and out of the FPU. */
-void hppa_fpu_swap(struct pcb *, struct pcb *);
+void hppa_fpu_swapout(struct pcb *);
+void hppa_fpu_swap(struct fpreg *, struct fpreg *);
 
 #ifdef FPEMUL
 /*
@@ -228,7 +229,7 @@ hppa_fpu_flush(struct lwp *l)
 		return;
 	}
 
-	hppa_fpu_swap(pcb, NULL);
+	hppa_fpu_swapout(pcb);
 	fpu_cur_uspace = 0;
 }
 
@@ -339,7 +340,6 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 	error = (inst & OPCODE_STORE) ?
 		copyout(fpreg, (void *) offset, 1 << log2size) :
 		copyin((const void *) offset, fpreg, 1 << log2size);
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)fpreg, sizeof(pcb->pcb_fpregs));
 	return error;
 }
 
@@ -445,7 +445,6 @@ hppa_fpu_emulate(struct trapframe *frame, struct lwp *l, u_int inst)
 		ksi.ksi_addr = (void *)frame->tf_iioq_head;
 		trapsignal(l, &ksi);
 	}
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)fpregs, sizeof(pcb->pcb_fpregs));
 }
 
 #endif /* FPEMUL */
