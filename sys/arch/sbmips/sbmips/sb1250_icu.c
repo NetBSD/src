@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9.36.10 2010/03/13 03:14:13 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.9.36.11 2010/03/16 02:34:48 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.10 2010/03/13 03:14:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.11 2010/03/16 02:34:48 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -295,12 +295,20 @@ sb1250_cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 
 		uint64_t sstatus = ints_for_ipl[ipl];
 		sstatus &= READ_REG(imr_base + R_IMR_INTERRUPT_SOURCE_STATUS);
-		for (int j = 63; sstatus != 0; j--) {
-			u_int n = __builtin_clz(sstatus);
-			KASSERT((sstatus >> (63-n)) & 1);
-			sstatus <<= n + 1;
-			j -= n;
+		while (sstatus != 0) {
+#ifndef __mips_o32
+			u_int n;
+			__asm("dclz %0,%1" : "=r"(n) : "r"(sstatus));
+#else
+			u_int n = (sstatus >> 32)
+			    ?  0 + __builtin_clz(sstatus >> 32)
+			    : 32 + __builtin_clz((uint32_t)sstatus);
+#endif
+			u_int j = 63 - n;
+			KASSERT(sstatus & (1ULL << j));
+			sstatus ^= (1ULL << j);
 			struct sb1250_ihand *ihp = &sb1250_ihands[j];
+			KASSERT(ihp->ih_fun);
 			(*ihp->ih_fun)(ihp->ih_arg, status, pc);
 			evcnts[j].ev_count++;
 		}
