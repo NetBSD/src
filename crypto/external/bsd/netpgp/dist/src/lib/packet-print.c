@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.29 2010/03/13 23:30:41 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.30 2010/03/16 04:14:29 agc Exp $");
 #endif
 
 #include <string.h>
@@ -496,20 +496,58 @@ __ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 }
 
 int
-__ops_hkp_sprint_keydata(const __ops_key_t *key, char **buf,
-		const __ops_pubkey_t *pubkey)
+__ops_hkp_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
+		const __ops_key_t *key, char **buf,
+		const __ops_pubkey_t *pubkey, const int psigs)
 {
-	unsigned	 i;
-	char		 uidbuf[KB(128)];
-	char		 fp[(OPS_FINGERPRINT_SIZE * 3) + 1];
-	int		 n;
+	const __ops_key_t	*trustkey;
+	unsigned	 	 from;
+	unsigned	 	 i;
+	unsigned	 	 j;
+	char			 keyid[OPS_KEY_ID_SIZE * 3];
+	char		 	 uidbuf[KB(128)];
+	char		 	 fp[(OPS_FINGERPRINT_SIZE * 3) + 1];
+	int		 	 n;
 
+	if (key->revoked) {
+		return -1;
+	}
 	for (i = 0, n = 0; i < key->uidc; i++) {
 		n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
-			"uid:%s:%lld:%lld:\n",
-			key->uids[i].userid,
+			"uid:%lld:%lld:%s\n",
 			(long long)pubkey->birthtime,
-			(long long)pubkey->duration);
+			(long long)pubkey->duration,
+			key->uids[i].userid);
+		for (j = 0 ; j < key->subsigc ; j++) {
+			if (psigs) {
+				if (key->subsigs[j].uid != i) {
+					continue;
+				}
+			} else {
+				if (!(key->subsigs[j].sig.info.version == 4 &&
+					key->subsigs[j].sig.info.type == OPS_SIG_SUBKEY &&
+					i == key->uidc - 1)) {
+						continue;
+				}
+			}
+			from = 0;
+			trustkey = __ops_getkeybyid(io, keyring, key->subsigs[j].sig.info.signer_id, &from);
+			if (key->subsigs[j].sig.info.version == 4 &&
+					key->subsigs[j].sig.info.type == OPS_SIG_SUBKEY) {
+				n += snprintf(&uidbuf[n], sizeof(uidbuf) - n, "sub:%d:%d:%s:%lld:%lld\n",
+					numkeybits(pubkey),
+					key->subsigs[j].sig.info.key_alg,
+					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, OPS_KEY_ID_SIZE, ""),
+					(long long)(key->subsigs[j].sig.info.birthtime),
+					(long long)pubkey->duration);
+			} else {
+				n += snprintf(&uidbuf[n], sizeof(uidbuf) - n,
+					"sig:%s:%lld:%s\n",
+					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, OPS_KEY_ID_SIZE, ""),
+					(long long)key->subsigs[j].sig.info.birthtime,
+					(trustkey) ? (char *)trustkey->uids[trustkey->uid0].userid : "");
+			}
+		}
 	}
 	return __ops_asprintf(buf, "pub:%s:%d:%d:%lld:%lld\n%s",
 		strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, ""),
