@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.7 2010/03/16 05:48:43 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.8 2010/03/16 07:18:55 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.7 2010/03/16 05:48:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.8 2010/03/16 07:18:55 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
-#include <sys/queue.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
