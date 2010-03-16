@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.47 2010/03/13 13:45:05 plunky Exp $   */
+/*      $NetBSD: raidctl.c,v 1.48 2010/03/16 03:23:47 jld Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.47 2010/03/13 13:45:05 plunky Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.48 2010/03/16 03:23:47 jld Exp $");
 #endif
 
 
@@ -487,8 +487,15 @@ rf_output_pmstat(int fd, int raidID)
 	int dis, dr;
 	struct rf_pmstat st;
 
-	do_ioctl(fd, RAIDFRAME_PARITYMAP_STATUS, &st,
-	    "RAIDFRAME_PARITYMAP_STATUS");
+	if (ioctl(fd, RAIDFRAME_PARITYMAP_STATUS, &st) == -1) {
+		if (errno == EINVAL) {
+			printf("raid%d: has no parity; parity map disabled\n",
+				raidID);
+			return;
+		}
+		err(1, "ioctl (%s) failed", "RAIDFRAME_PARITYMAP_STATUS");
+	}
+
 	if (st.enabled) {
 		if (0 > humanize_number(srs, 7, st.region_size * DEV_BSIZE, 
 			"B", HN_AUTOSCALE, HN_NOSPACE))
