@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_vme.c,v 1.1 2010/03/13 16:30:03 tsutsui Exp $	*/
+/*	$NetBSD: if_we_vme.c,v 1.2 2010/03/16 18:50:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_vme.c,v 1.1 2010/03/13 16:30:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_vme.c,v 1.2 2010/03/16 18:50:14 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,8 @@ static uint8_t smctt_bus_space_read_1(bus_space_tag_t, bus_space_handle_t,
     bus_size_t);
 static void    smctt_bus_space_write_1(bus_space_tag_t, bus_space_handle_t,
     bus_size_t, uint8_t);
+static int     smctt_bus_space_peek_1(bus_space_tag_t, bus_space_handle_t,
+    bus_size_t);
 
 struct we_vme_softc {
 	struct we_softc	sc_we;
@@ -155,6 +157,7 @@ we_vme_probe(device_t parent, cfdata_t cf, void *aux)
 	/* XXX setup only simple byte functions used in MI we(4) driver */
 	asict->abs_r_1 = smctt_bus_space_read_1;
 	asict->abs_w_1 = smctt_bus_space_write_1;
+	asict->abs_p_1 = smctt_bus_space_peek_1;
 
 	/*
 	 * Only 16 bit accesses are allowed for memory space on SMC_TT,
@@ -181,6 +184,11 @@ we_vme_probe(device_t parent, cfdata_t cf, void *aux)
 	asict->stride =
 	    (vaddr_t)bus_space_vaddr(asict, asich1) -
 	    (vaddr_t)bus_space_vaddr(asict, asich);
+
+	/* check if register regions are valid */
+	if (bus_space_peek_1(asict, asich, WE_PROM + 0) == 0 ||
+	    bus_space_peek_1(asict, asich, WE_PROM + 1) == 0)
+		goto out;
 
 	/*
 	 * Attempt to do a checksum over the station address PROM.
@@ -247,6 +255,10 @@ we_vme_probe(device_t parent, cfdata_t cf, void *aux)
 		goto out;
 	}
 	memh_valid = true;
+
+	/* check if memory region is valid */
+	if (bus_space_peek_2(memt, memh, 0) == 0)
+		goto out;
 
 	/*
 	 * Check the assigned interrupt number from the card.
@@ -420,4 +432,21 @@ smctt_bus_space_write_1(bus_space_tag_t bt, bus_space_handle_t bh,
 		/* even address space */
 		*(volatile uint8_t *)(bh + reg) = val;
 	}
+}
+
+static int
+smctt_bus_space_peek_1(bus_space_tag_t bt, bus_space_handle_t bh,
+    bus_size_t reg)
+{
+	uint8_t *va;
+
+	if ((reg & 0x01) != 0) {
+		/* odd address space */
+		va = (uint8_t *)(bh + bt->stride + (reg & ~0x01));
+	} else {
+		/* even address space */
+		va = (uint8_t *)(bh + reg);
+	}
+
+	return !badbaddr(va, sizeof(uint8_t));
 }
