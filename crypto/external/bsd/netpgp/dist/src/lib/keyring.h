@@ -119,8 +119,9 @@ void __ops_pkeyid(FILE *, const uint8_t *, size_t);
 int __ops_sprint_keydata(__ops_io_t *, const __ops_keyring_t *,
 			const __ops_key_t *, char **, const char *,
 			const __ops_pubkey_t *, const int);
-int __ops_hkp_sprint_keydata(const __ops_key_t *, char **,
-			const __ops_pubkey_t *);
+int __ops_hkp_sprint_keydata(__ops_io_t *, const __ops_keyring_t *,
+			const __ops_key_t *, char **,
+			const __ops_pubkey_t *, const int);
 void __ops_print_keydata(__ops_io_t *, const __ops_keyring_t *, const __ops_key_t *,
 			const char *, const __ops_pubkey_t *, const int);
 void __ops_print_sig(__ops_io_t *, const __ops_key_t *, const char *,

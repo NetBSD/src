@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.43 2010/03/13 23:30:41 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.44 2010/03/16 04:14:29 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -566,9 +566,9 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const
 			ALLOC(char *, pubs.v, pubs.size, pubs.c, 10, 10,
 					"netpgp_match_keys", return 0);
 			if (strcmp(fmt, "mr") == 0) {
-				__ops_hkp_sprint_keydata(
+				__ops_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
 						key, &pubs.v[pubs.c],
-						&key->key.pubkey);
+						&key->key.pubkey, psigs);
 			} else {
 				__ops_sprint_keydata(netpgp->io, netpgp->pubring,
 						key, &pubs.v[pubs.c],
@@ -659,12 +659,15 @@ netpgp_get_key(netpgp_t *netpgp, const char *name, const char *fmt)
 		return NULL;
 	}
 	if (strcmp(fmt, "mr") == 0) {
-		return (__ops_hkp_sprint_keydata(key, &newkey,
-				&key->key.pubkey) > 0) ? newkey : NULL;
+		return (__ops_hkp_sprint_keydata(netpgp->io, netpgp->pubring,
+				key, &newkey,
+				&key->key.pubkey,
+				netpgp_getvar(netpgp, "subkey sigs") != NULL) > 0) ? newkey : NULL;
 	}
 	return (__ops_sprint_keydata(netpgp->io, netpgp->pubring,
 				key, &newkey, "pub",
-				&key->key.pubkey, 0) > 0) ? newkey : NULL;
+				&key->key.pubkey,
+				netpgp_getvar(netpgp, "subkey sigs") != NULL) > 0) ? newkey : NULL;
 }
 
 /* export a given key */
@@ -1248,6 +1251,23 @@ netpgp_setvar(netpgp_t *netpgp, const char *name, const char *value)
 	}
 	netpgp->value[i] = netpgp_strdup(value);
 	return 1;
+}
+
+/* unset a variable */
+int
+netpgp_unsetvar(netpgp_t *netpgp, const char *name)
+{
+	int	i;
+
+	if ((i = findvar(netpgp, name)) >= 0) {
+		if (netpgp->value[i]) {
+			free(netpgp->value[i]);
+			netpgp->value[i] = NULL;
+		}
+		netpgp->value[i] = NULL;
+		return 1;
+	}
+	return 0;
 }
 
 /* get a variable's value (NULL if not set) */
