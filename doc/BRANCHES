@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.287 2010/02/11 05:29:01 uebayasi Exp $
+#	$NetBSD: BRANCHES,v 1.288 2010/03/16 15:49:58 rmind Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -486,6 +486,25 @@ Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
 Notes:		A more flexible infrastructure for third-party packages by
 		allowing multiple conflicting packages and versions to co-exist
 		within the same tree
+
+Branch:		rmind-uvmplock
+Description:	Reorganize locking in UVM for pmap(9)
+Status:		Active
+Start Date:	15 March 2010
+End Date:	
+Base Tag:	rmind-uvmplock-base
+Maintainer:	Mindaugas Rasiukevicius <rmind@netbsd.org>
+Scope:		Kernel
+Notes:		Goals:
+
+		- Reorganize locking in UVM and serialize pmap(9) operations
+		  on same page(s).  New lock order: [vmpage-lock] -> pmap-lock.
+		  Based on the patch from ad@.
+		- Simplify locking in pmap(9) modules by removing P->V locking.
+		- Use mutex_obj(9) on vmobjlock (and thus vnode_t::v_interlock)
+		  to share locks among UVM objects where necessary.
+		- Optimize pmap_remove() with tracking in struct vm_map_entry.
+		- Unify /dev/mem et al in MI code and provide required locking.
 
 Branch:		rpaulo-netinet-merge-pcb
 Description:	merge in6pcb with inpcb
