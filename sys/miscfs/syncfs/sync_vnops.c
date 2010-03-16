@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.27 2009/03/14 15:36:23 dsl Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.27.4.1 2010/03/16 15:38:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.27 2009/03/14 15:36:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.27.4.1 2010/03/16 15:38:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -137,10 +137,10 @@ vfs_allocate_syncvnode(struct mount *mp)
 		}
 		next = start;
 	}
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	vdelay = sync_delay(mp);
 	vn_syncer_add_to_worklist(vp, vdelay > 0 ? next % vdelay : 0);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	mp->mnt_syncer = vp;
 	return (0);
 }
@@ -155,10 +155,10 @@ vfs_deallocate_syncvnode(struct mount *mp)
 
 	vp = mp->mnt_syncer;
 	mp->mnt_syncer = NULL;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	vn_syncer_remove_from_worklist(vp);
 	vp->v_writecount = 0;
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	vgone(vp);
 }
 
@@ -187,9 +187,9 @@ sync_fsync(void *v)
 	/*
 	 * Move ourselves to the back of the sync list.
 	 */
-	mutex_enter(&syncvp->v_interlock);
+	mutex_enter(syncvp->v_interlock);
 	vn_syncer_add_to_worklist(syncvp, sync_delay(mp));
-	mutex_exit(&syncvp->v_interlock);
+	mutex_exit(syncvp->v_interlock);
 
 	/*
 	 * Walk the list of vnodes pushing all that are dirty and

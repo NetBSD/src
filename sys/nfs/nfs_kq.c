@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.23 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.23.8.1 2010/03/16 15:38:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.23 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.23.8.1 2010/03/16 15:38:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,9 +191,9 @@ filt_nfsdetach(struct knote *kn)
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 	struct kevq *ke;
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	/* Remove the vnode from watch list */
 	mutex_enter(&nfskq_lock);
@@ -230,17 +230,17 @@ filt_nfsread(struct knote *kn, long hint)
 	 */
 	switch (hint) {
 	case NOTE_REVOKE:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		return (1);
 	case 0:
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		kn->kn_data = vp->v_size - ((file_t *)kn->kn_obj)->f_offset;
 		rv = (kn->kn_data != 0);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		return rv;
 	default:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		kn->kn_data = vp->v_size - ((file_t *)kn->kn_obj)->f_offset;
 		return (kn->kn_data != 0);
 	}
@@ -254,18 +254,18 @@ filt_nfsvnode(struct knote *kn, long hint)
 
 	switch (hint) {
 	case NOTE_REVOKE:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		kn->kn_flags |= EV_EOF;
 		if ((kn->kn_sfflags & hint) != 0)
 			kn->kn_fflags |= hint;
 		return (1);
 	case 0:
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		fflags = kn->kn_fflags;
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		break;
 	default:
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		if ((kn->kn_sfflags & hint) != 0)
 			kn->kn_fflags |= hint;
 		fflags = kn->kn_fflags;
@@ -353,10 +353,10 @@ nfs_kqfilter(void *v)
 		SLIST_INSERT_HEAD(&kevlist, ke, kev_link);
 	}
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
 	kn->kn_hook = vp;
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	/* kick the poller */
 	cv_signal(&nfskq_cv);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.97 2009/11/07 07:27:50 cegger Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.97.4.1 2010/03/16 15:38:18 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.97 2009/11/07 07:27:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.97.4.1 2010/03/16 15:38:18 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -288,7 +288,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		(pg->pqflags & PQ_AOBJ) != 0;
 	if (!swap) {
 		uobj = pg->uobject;
-		slock = &uobj->vmobjlock;
+		slock = uobj->vmobjlock;
 		mutex_enter(slock);
 		mutex_enter(&uvm_pageqlock);
 	} else {
@@ -320,7 +320,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 
 		if (swap) {
 			if (pg->uobject != NULL) {
-				slock = &pg->uobject->vmobjlock;
+				slock = pg->uobject->vmobjlock;
 			} else {
 				slock = &pg->uanon->an_lock;
 			}

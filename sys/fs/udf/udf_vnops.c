@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.57 2010/01/08 11:35:09 pooka Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.57.4.1 2010/03/16 15:38:09 rmind Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57.4.1 2010/03/16 15:38:09 rmind Exp $");
 #endif /* not lint */
 
 
@@ -369,7 +369,7 @@ udf_write(void *v)
 		 */
 		if (!async && (vp->v_type != VDIR) &&
 		  (old_offset >> 16 != uio->uio_offset >> 16)) {
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (old_offset >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
 			old_offset = uio->uio_offset;
@@ -1302,16 +1302,16 @@ udf_close(void *v)
 	udf_node = udf_node;	/* shut up gcc */
 
 	if (!async && (vp->v_type != VDIR)) {
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_CLEANIT);
 		if (error)
 			return error;
 	}
 
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 		if (vp->v_usecount > 1)
 			udf_itimes(udf_node, NULL, NULL, NULL);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	return 0;
 }
@@ -2273,12 +2273,12 @@ udf_fsync(void *v)
 	/* wait until vp->v_numoutput reaches zero i.e. is finished */
 	if (wait) {
 		DPRINTF(SYNC, ("udf_fsync %p, waiting\n", udf_node));
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		while (vp->v_numoutput) {
 			DPRINTF(SYNC, ("udf_fsync %p, v_numoutput %d\n", udf_node, vp->v_numoutput));
-			cv_timedwait(&vp->v_cv, &vp->v_interlock, hz/8);
+			cv_timedwait(&vp->v_cv, vp->v_interlock, hz/8);
 		}
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		DPRINTF(SYNC, ("udf_fsync %p, fin wait\n", udf_node));
 	}
 

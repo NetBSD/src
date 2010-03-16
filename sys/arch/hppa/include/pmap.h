@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2010/03/06 21:22:42 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25.2.1 2010/03/16 15:38:03 rmind Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -51,6 +51,7 @@
 struct pmap {
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
 #define	pm_lock	pm_obj.vmobjlock
+	kmutex_t	pm_obj_lock;	/* lock for pm_obj */
 	struct vm_page	*pm_ptphint;
 	struct vm_page	*pm_pdir_pg;	/* vm_page for pdir */
 	volatile uint32_t *pm_pdir;	/* page dir (read-only after create) */

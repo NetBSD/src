@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.39 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.39.4.1 2010/03/16 15:38:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.39 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.39.4.1 2010/03/16 15:38:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,7 +604,7 @@ layer_lock(void *v)
 	int	flags = ap->a_flags, error;
 
 	if (flags & LK_INTERLOCK) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		flags &= ~LK_INTERLOCK;
 	}
 
@@ -654,7 +654,7 @@ layer_unlock(void *v)
 	int	flags = ap->a_flags;
 
 	if (flags & LK_INTERLOCK) {
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 		flags &= ~LK_INTERLOCK;
 	}
 
@@ -941,8 +941,8 @@ layer_getpages(void *v)
 		return EBUSY;
 	}
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	mutex_exit(&vp->v_interlock);
-	mutex_enter(&ap->a_vp->v_interlock);
+	mutex_exit(vp->v_interlock);
+	mutex_enter(ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 	return error;
 }
@@ -964,11 +964,11 @@ layer_putpages(void *v)
 	 */
 
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 	if (ap->a_flags & PGO_RECLAIM) {
 		return 0;
 	}
-	mutex_enter(&ap->a_vp->v_interlock);
+	mutex_enter(ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;
 }

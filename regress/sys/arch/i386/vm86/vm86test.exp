@@ -1,9 +1,0 @@
-# $NetBSD: vm86test.exp,v 1.1 2003/08/16 15:02:36 drochner Exp $
-# real output must start in line 4
-
-urghdl called @ip=0002, code=2001, eflags=00030002, stackflags=4
-urghdl called @ip=0005, code=2001, eflags=00030202, stackflags=4
-urghdl called @ip=0008, code=2101, eflags=00030002, stackflags=4
-urghdl called @ip=0002, code=2001, eflags=00030002, stackflags=1
-urghdl called @ip=0005, code=2001, eflags=00030202, stackflags=1
-urghdl called @ip=0008, code=2101, eflags=00030002, stackflags=1

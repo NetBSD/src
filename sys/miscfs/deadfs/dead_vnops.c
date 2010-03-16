@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.48 2009/03/14 21:04:24 dsl Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.48.4.1 2010/03/16 15:38:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.48 2009/03/14 21:04:24 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.48.4.1 2010/03/16 15:38:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,7 @@ dead_getpages(void *v)
 	} */ *ap = v;
 
 	if ((ap->a_flags & PGO_LOCKED) == 0)
-		mutex_exit(&ap->a_vp->v_interlock);
+		mutex_exit(ap->a_vp->v_interlock);
 
 	return (EFAULT);
 }
@@ -306,12 +306,12 @@ chkvnlock(struct vnode *vp, bool interlock)
 	int locked = 0;
 
 	if (!interlock)
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 	while (vp->v_iflag & VI_XLOCK) {
 		vwait(vp, VI_XLOCK);
 		locked = 1;
 	}
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 
 	return (locked);
 }

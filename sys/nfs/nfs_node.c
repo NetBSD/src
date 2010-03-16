@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.110 2009/03/15 17:20:10 cegger Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.110.4.1 2010/03/16 15:38:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110 2009/03/15 17:20:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110.4.1 2010/03/16 15:38:12 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -176,7 +176,7 @@ loop:
 	if (node != NULL) {
 		np = RBTONFSNODE(node);
 		vp = NFSTOV(np);
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		rw_exit(&nmp->nm_rbtlock);
 		error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK | lkflags);
 		if (error == EBUSY)

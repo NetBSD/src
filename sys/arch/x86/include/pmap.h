@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29 2010/02/09 22:51:13 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.1 2010/03/16 15:38:04 rmind Exp $	*/
 
 /*
  *
@@ -128,10 +128,10 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 /*
  * the pmap structure
  *
- * note that the pm_obj contains the simple_lock, the reference count,
+ * note that the pm_obj contains the lock pointer, the reference count,
  * page list, and number of PTPs within the pmap.
  *
- * pm_lock is the same as the spinlock for vm object 0. Changes to
+ * pm_lock is the same as the lock for vm object 0.  Changes to
  * the other objects may only be made if that lock has been taken
  * (the other object locks are only used when uvm_pagealloc is called)
  *
@@ -142,6 +142,7 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 struct pmap {
 	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
 #define	pm_lock	pm_obj[0].vmobjlock
+	kmutex_t pm_obj_lock[PTP_LEVELS-1];	/* locks for pm_objs, XXXrmind */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
 #ifdef PAE

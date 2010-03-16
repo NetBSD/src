@@ -1,5 +1,0 @@
-This package includes compilers and tools for the C++ programming language:
-
-	c++, g++ - C++ compiler
-	c++filt - tool for demangling C++ single function names
-	flex++ - C++ lexical analyzser generator (a C++ version of flex)

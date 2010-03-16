@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.31 2009/12/01 09:28:02 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.31.4.1 2010/03/16 15:38:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.31 2009/12/01 09:28:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.31.4.1 2010/03/16 15:38:08 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -311,7 +311,7 @@ sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	for (bnode = LIST_FIRST(&bmp->bnode_head); bnode != NULL;
 	    bnode = LIST_NEXT(bnode, link)) {
 		v = bnode->vnode;
-	    	mutex_enter(&v->v_interlock);
+	    	mutex_enter(v->v_interlock);
 		mutex_exit(&mntvnode_lock);
 		err = vget(v, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (err == 0) {
@@ -350,7 +350,7 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	    bnode = LIST_NEXT(bnode, link)) {
 		if (bnode->inode->number == ino) {
 			vp = bnode->vnode;
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			mutex_exit(&mntvnode_lock);
 			if (vget(vp, LK_EXCLUSIVE|LK_RETRY|LK_INTERLOCK) == 0) {
 				*vpp = vp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.36 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.36.4.1 2010/03/16 15:38:17 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.36 2009/10/21 21:12:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.36.4.1 2010/03/16 15:38:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,12 +147,6 @@ uvm_init(void)
 	uvm_pager_init();
 
 	/*
-	 * step 8: init the uvm_loan() facility.
-	 */
-
-	uvm_loan_init();
-
-	/*
 	 * Initialize pools.  This must be done before anyone manipulates
 	 * any vm_maps because we use a pool for some map entry structures.
 	 */
@@ -170,6 +164,11 @@ uvm_init(void)
 	 */
 
 	uvm_emap_sysinit();
+
+	/*
+	 * Init the uvm_loan() facility.
+	 */
+	uvm_loan_init();
 
 	/*
 	 * the VM system is now up!  now that kmem is up we can resize the

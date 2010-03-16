@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.41 2009/09/16 15:23:04 pooka Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.41.4.1 2010/03/16 15:38:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.41 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.41.4.1 2010/03/16 15:38:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ vn_syncer_add1(struct vnode *vp, int delayx)
 		 * position of the vnode.  syncer_data_lock
 		 * does not protect v_iflag.
 		 */
-		KASSERT(mutex_owned(&vp->v_interlock));
+		KASSERT(mutex_owned(vp->v_interlock));
 		vp->v_iflag |= VI_ONWORKLST;
 	}
 
@@ -188,7 +188,7 @@ void
 vn_syncer_add_to_worklist(struct vnode *vp, int delayx)
 {
 
-	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	mutex_enter(&syncer_data_lock);
 	vn_syncer_add1(vp, delayx);
@@ -203,7 +203,7 @@ vn_syncer_remove_from_worklist(struct vnode *vp)
 {
 	struct synclist *slp;
 
-	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT(mutex_owned(vp->v_interlock));
 
 	mutex_enter(&syncer_data_lock);
 
@@ -246,7 +246,7 @@ sched_sync(void *v)
 		while ((vp = TAILQ_FIRST(slp)) != NULL) {
 			/* We are locking in the wrong direction. */
 			synced = false;
-			if (mutex_tryenter(&vp->v_interlock)) {
+			if (mutex_tryenter(vp->v_interlock)) {
 				mutex_exit(&syncer_data_lock);
 				if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT |
 				    LK_INTERLOCK) == 0) {

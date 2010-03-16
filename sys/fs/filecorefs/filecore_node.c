@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.19 2009/03/15 22:16:50 cegger Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.19.4.1 2010/03/16 15:38:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.19 2009/03/15 22:16:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.19.4.1 2010/03/16 15:38:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ loop:
 	LIST_FOREACH(ip, &filecorehashtbl[INOHASH(dev, inum)], i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
-			mutex_enter(&vp->v_interlock);
+			mutex_enter(vp->v_interlock);
 			simple_unlock(&filecore_ihash_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;

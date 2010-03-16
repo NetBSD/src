@@ -1,3 +1,0 @@
-# $NetBSD: md.hpcmips,v 1.1 2010/03/14 17:20:08 mrg Exp $
-./usr/libdata/debug/usr/X11R6/bin/Xhpc.debug		-unknown-	debug
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug

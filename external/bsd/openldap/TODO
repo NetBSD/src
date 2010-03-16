@@ -1,9 +1,0 @@
-#	$NetBSD: TODO,v 1.2 2010/03/08 06:43:18 lukem Exp $
-
-install ldap.conf ?
-
-add patches from pkgsrc/databases/openldap/patches ?
-
-build server?
-
-build: slappasswd

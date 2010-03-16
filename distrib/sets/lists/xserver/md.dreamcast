@@ -1,6 +1,0 @@
-#	$NetBSD: md.dreamcast,v 1.9 2009/02/09 16:28:54 abs Exp $
-./usr/X11R6/bin/X					-unknown-	x11
-./usr/X11R6/bin/Xdreamcast				-unknown-	x11
-./usr/X11R6/man/cat1/Xdreamcast.0			-unknown-	x11,.cat
-./usr/X11R6/man/html1/Xdreamcast.html			-unknown-	x11,html
-./usr/X11R6/man/man1/Xdreamcast.1			-unknown-	x11,.man
