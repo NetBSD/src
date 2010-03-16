@@ -93,3 +93,4 @@ add expiry information to public key display
 trust subpackets
 add revocation information to public key display
 --list-sigs - these come out in __ops_check_subkey_sig()
+hkp to include sigs too
