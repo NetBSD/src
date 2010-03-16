@@ -1,4 +1,4 @@
-.\" $NetBSD: hkpd.8,v 1.1 2010/03/16 00:22:52 agc Exp $
+.\" $NetBSD: hkpd.8,v 1.2 2010/03/16 08:29:09 wiz Exp $
 .\"
 .\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,8 +36,8 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl DV
-.Op Fl H homedir
 .Op Fl f families
+.Op Fl H homedir
 .Op Fl h hostname
 .Op Fl p port
 .Op Fl v filename
@@ -55,16 +55,9 @@ The following options can be used to modify the behaviour
 of the daemon:
 .Bl -tag -width Ar
 .It Fl D
-do not detach the daemon from the controlling tty, and keep
-the
+Do not detach the daemon from the controlling tty, and keep the
 .Nm
 process running in the foreground.
-.It Fl H Ar homedir
-use the setting of
-.Dv homedir
-as the directory for the public key keyrings.
-.It Fl V
-display the version number of the daemon and exit.
 .It Fl f Ar protocol-families
 allows the address families for sockets to be selected.
 The argument is the string concatenating the families,
@@ -80,18 +73,22 @@ The default value for this parameter is
 .Dq 46
 which means that both INET4 and INET6 protocol
 families are used when setting up the sockets.
+.It Fl H Ar homedir
+Use the setting of
+.Dv homedir
+as the directory for the public key keyrings.
 .It Fl h Ar hostname
-set the hostname (for use in binding sockets).
+Set the hostname (for use in binding sockets).
 .It Fl p Ar port
-set the port number (for use in binding sockets).
-The default port number is
-the
+Set the port number (for use in binding sockets).
+The default port number is the
 .Dq hkp
 service, defined as port
 .Dv 11371 .
+.It Fl V
+Display the version number of the daemon and exit.
 .It Fl v Ar filename
-produce extra debugging output from the internal
-file named
+Produce extra debugging output from the internal file named
 .Dv filename .
 .El
 .Pp
@@ -103,7 +100,7 @@ and returns public key information as held in the
 public keyring of the user running the
 .Nm
 daemon utility by default.
-.Sh RETURN VALUES
+.Sh EXIT STATUS
 In normal operation, the
 .Nm
 daemon will not return.
@@ -116,5 +113,5 @@ The
 .Nm
 command first appeared in
 .Nx 6.0 .
-.Sh AUTHOR
+.Sh AUTHORS
 .An Alistair Crooks Aq agc@NetBSD.org .
