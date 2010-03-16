@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.13.46.4 2009/09/05 03:04:58 matt Exp $	*/
+/*	$NetBSD: cerror.S,v 1.13.46.5 2010/03/16 16:07:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 	RCSID("from: @(#)cerror.s	8.1 (Berkeley) 6/16/93")
 #else
-	RCSID("$NetBSD: cerror.S,v 1.13.46.4 2009/09/05 03:04:58 matt Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.13.46.5 2010/03/16 16:07:24 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,22 +47,23 @@
 NESTED_NOPROFILE(__cerror, CALLFRAME_SIZ, ra)
 	.mask	0x80000000, (CALLFRAME_RA - CALLFRAME_SIZ)
 	PIC_PROLOGUE(__cerror)
-	PTR_SUBU	sp, sp, CALLFRAME_SIZ
+	PTR_SUBU	sp, CALLFRAME_SIZ
 	PTR_S		ra, CALLFRAME_RA(sp)
 	INT_S		v0, CALLFRAME_S0(sp)	# save errno value
 
 	SAVE_GP(CALLFRAME_GP)
 
 	PTR_LA		t9, _C_LABEL(__errno)	# locate address of errno
-	jalr		t9
+	RESTORE_GP64				# restore GP (from t3)
+	jalr		t9			# __errno()
 
 	INT_L		t0, CALLFRAME_S0(sp)
 	PTR_L		ra, CALLFRAME_RA(sp)
 	INT_S		t0, 0(v0)		# update errno value
-	PTR_ADDU	sp, sp, CALLFRAME_SIZ
+	PTR_ADDU	sp, CALLFRAME_SIZ
 	li		v0, -1
 	li		v1, -1
-	PIC_RETURN()
+	j		ra			# GP has been restored.
 END(__cerror)
 #else		
 	.globl	_C_LABEL(errno)
