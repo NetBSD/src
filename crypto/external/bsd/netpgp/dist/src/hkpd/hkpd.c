@@ -230,8 +230,12 @@ hkpd(netpgp_t *netpgp, int sock4, int sock6)
 	(void) regcomp(&opterm, OPTERM, REG_EXTENDED);
 	(void) regcomp(&searchterm, SEARCHTERM, REG_EXTENDED);
 	(void) regcomp(&machreadterm, MACHREAD, REG_EXTENDED);
-	listen(sock4, 32);
-	listen(sock6, 32);
+	if (sock4 >= 0) {
+		listen(sock4, 32);
+	}
+	if (sock6 >= 0) {
+		listen(sock6, 32);
+	}
 	for (;;) {
 		/* find out which socket we have data on */
 		FD_ZERO(&sockets);
