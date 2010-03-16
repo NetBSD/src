@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.6 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.7 2010/03/16 17:58:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,11 +64,11 @@ struct le_softc {
 /*
  * Board Type:
  */
-#define	LE_PAM		0x00
 #define	LE_OLD_RIEBL	0x01
 #define	LE_NEW_RIEBL	0x02
 #define	LE_BVME410	0x04
 #define	LE_ROTHRON	0x08
+#define	LE_PAM		0x10
 
 /*
  * Determine type of RIEBL card by magic
