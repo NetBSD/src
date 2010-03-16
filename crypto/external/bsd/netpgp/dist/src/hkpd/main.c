@@ -77,10 +77,12 @@ int
 main(int argc, char **argv)
 {
 	netpgp_t	 netpgp;
+	char		*family;
 	char		*host;
 	int		 daemonise;
 	int		 port;
-	int		 sock;
+	int		 sock6;
+	int		 sock4;
 	int		 i;
 
 	(void) memset(&netpgp, 0x0, sizeof(netpgp));
@@ -89,7 +91,8 @@ main(int argc, char **argv)
 	port = 11371;
 	host = strdup("localhost");
 	daemonise = 1;
-	while ((i = getopt(argc, argv, "DH:Vh:p:v:")) != -1) {
+	family = strdup("46");
+	while ((i = getopt(argc, argv, "DH:Vf:h:p:v:")) != -1) {
 		switch(i) {
 		case 'D':
 			daemonise = 0;
@@ -100,6 +103,10 @@ main(int argc, char **argv)
 		case 'V':
 			printf("%s: Version %d\n", *argv, HKPD_VERSION);
 			exit(EXIT_SUCCESS);
+		case 'f':
+			(void) free(family);
+			family = strdup(optarg);
+			break;
 		case 'h':
 			(void) free(host);
 			host = strdup(optarg);
@@ -125,13 +132,18 @@ main(int argc, char **argv)
 		(void) fprintf(stderr, "can't initialise\n");
 		exit(EXIT_FAILURE);
 	}
-	if ((sock = hkpd_sock_get()) < 0) {
-		(void) fprintf(stderr,"hkpd: can't get a socket\n");
+	sock4 = sock6 = -1;
+	if (strchr(family, '4') != NULL &&
+	    (sock4 = hkpd_sock_bind(host, port, 4)) < 0) {
+		(void) fprintf(stderr,"hkpd: can't bind inet4 socket\n");
+	}
+	if (strchr(family, '6') != NULL &&
+	    (sock6 = hkpd_sock_bind(host, port, 6)) < 0) {
+		(void) fprintf(stderr,"hkpd: can't bind inet6 socket\n");
+	}
+	if (sock4 < 0 && sock6 < 0) {
+		(void) fprintf(stderr,"hkpd: no sockets available\n");
 		exit(EXIT_FAILURE);
 	}
-	if (hkpd_sock_bind(sock, host, port) < 0) {
-		(void) fprintf(stderr,"hkpd: can't connect socket\n");
-		exit(EXIT_FAILURE);
-	}
-	hkpd(&netpgp, sock);
+	hkpd(&netpgp, sock4, sock6);
 }

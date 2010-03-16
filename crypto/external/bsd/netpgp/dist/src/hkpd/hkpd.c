@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/param.h>
+#include <sys/select.h>
 
 #include <netinet/in.h>
 
@@ -121,54 +122,15 @@ response(int sock, const int code, const char *search, const int get, char *buf,
 	return 1;
 }
 
-/**************************************************************************/
-
-/* bind the socket to the server */
-int
-hkpd_sock_bind(int sock, const char *hostname, const int port)
-{
-        struct addrinfo  hints;
-        struct addrinfo *res;
-        char             portstr[32];
-        int              rc = 0;
-
-        (void) memset(&hints, 0, sizeof(hints));
-        hints.ai_family = PF_INET;
-        hints.ai_socktype = SOCK_STREAM;
-        (void) snprintf(portstr, sizeof(portstr), "%d", port);
-        /* Attempt connection */
-#ifdef AI_NUMERICSERV
-        hints.ai_flags = AI_NUMERICSERV;
-#endif
-        if ((rc = getaddrinfo(hostname, portstr, &hints, &res)) != 0) {
-                hints.ai_flags = 0;
-                if ((rc = getaddrinfo(hostname, "hkp", &hints, &res)) != 0) {
-                        (void) fprintf(stderr, "getaddrinfo: %s",
-					gai_strerror(rc));
-                        return -1;
-                }
-        }
-        if ((rc = bind(sock, res->ai_addr, res->ai_addrlen)) < 0) {
-                (void) fprintf(stderr, "bind failed %d\n", errno);
-                freeaddrinfo(res);
-                return -1;
-        }
-        freeaddrinfo(res);
-        if (rc < 0) {
-                (void) fprintf(stderr, "bind() to %s:%d failed (rc %d)\n",
-				hostname, port, rc);
-        }
-        return rc;
-}
-
 /* get a socket (we'll bind it later) */
-int
-hkpd_sock_get(void)
+static int
+hkpd_sock_get(const int fam)
 {
 	int	sock;
 	int	on = 1;
 
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	sock = socket((fam == 4) ? AF_INET : AF_INET6, SOCK_STREAM, 0);
+	if (sock < 0) {
 		(void) fprintf(stderr,"hkpd_sock_get: can't get a socket\n");
 		return -1;
         }
@@ -187,9 +149,55 @@ hkpd_sock_get(void)
 	return sock;
 }
 
+/**************************************************************************/
+
+/* get a socket and bind it to the server */
+int
+hkpd_sock_bind(const char *hostname, const int port, const int fam)
+{
+        struct addrinfo  hints;
+        struct addrinfo *res;
+        char             portstr[32];
+	int		 sock;
+        int              rc = 0;
+
+        (void) memset(&hints, 0, sizeof(hints));
+        hints.ai_family = (fam == 4) ? PF_INET : PF_INET6;
+        hints.ai_socktype = SOCK_STREAM;
+        (void) snprintf(portstr, sizeof(portstr), "%d", port);
+        /* Attempt connection */
+#ifdef AI_NUMERICSERV
+        hints.ai_flags = AI_NUMERICSERV;
+#endif
+        if ((rc = getaddrinfo(hostname, portstr, &hints, &res)) != 0) {
+                hints.ai_flags = 0;
+                if ((rc = getaddrinfo(hostname, "hkp", &hints, &res)) != 0) {
+                        (void) fprintf(stderr, "getaddrinfo: %s",
+					gai_strerror(rc));
+                        return -1;
+                }
+        }
+	if ((sock = hkpd_sock_get(fam)) < 0) {
+                (void) fprintf(stderr, "hkpd_sock_get failed %d\n", errno);
+                freeaddrinfo(res);
+                return -1;
+	}
+        if ((rc = bind(sock, res->ai_addr, res->ai_addrlen)) < 0) {
+                (void) fprintf(stderr, "bind failed %d\n", errno);
+                freeaddrinfo(res);
+                return -1;
+        }
+        freeaddrinfo(res);
+        if (rc < 0) {
+                (void) fprintf(stderr, "bind() to %s:%d failed (rc %d)\n",
+				hostname, port, rc);
+        }
+        return sock;
+}
+
 /* netpgp key daemon - does not return */
 int
-hkpd(netpgp_t *netpgp, int sock)
+hkpd(netpgp_t *netpgp, int sock4, int sock6)
 {
 	struct sockaddr_in	from;
 	regmatch_t		searchmatches[10];
@@ -200,10 +208,12 @@ hkpd(netpgp_t *netpgp, int sock)
 	regex_t			searchterm;
 	regex_t			opterm;
 	regex_t			get;
+	fd_set			sockets;
 	char			search[BUFSIZ];
 	char			buf[BUFSIZ];
 	char			*cp;
 	int			newsock;
+	int			sock;
 	int			code;
 	int			mr;
 	int			ok;
@@ -220,8 +230,22 @@ hkpd(netpgp_t *netpgp, int sock)
 	(void) regcomp(&opterm, OPTERM, REG_EXTENDED);
 	(void) regcomp(&searchterm, SEARCHTERM, REG_EXTENDED);
 	(void) regcomp(&machreadterm, MACHREAD, REG_EXTENDED);
-	listen(sock, 32);
+	listen(sock4, 32);
+	listen(sock6, 32);
 	for (;;) {
+		/* find out which socket we have data on */
+		FD_ZERO(&sockets);
+		if (sock4 >= 0) {
+			FD_SET(sock4, &sockets);
+		}
+		if (sock6 >= 0) {
+			FD_SET(sock6, &sockets);
+		}
+		if (select(32, &sockets, NULL, NULL, NULL) < 0) {
+			(void) fprintf(stderr, "bad select call\n");
+			continue;
+		}
+		sock = (sock4 >= 0 && FD_ISSET(sock4, &sockets)) ? sock4 : sock6;
 		/* read data from socket */
 		fromlen = sizeof(from);
 		newsock = accept(sock, (struct sockaddr *) &from, &fromlen);
