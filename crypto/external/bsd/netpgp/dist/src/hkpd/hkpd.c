@@ -98,8 +98,10 @@ htmlify(char *buf, size_t size, const int code, const int get, const char *title
 static int
 response(int sock, const int code, const char *search, const int get, char *buf, int cc, int mr)
 {
-	char	outbuf[BUFSIZ * 8];
+	char	outbuf[1024 * 512];
 	char	item[BUFSIZ];
+	int	tot;
+	int	wc;
 	int	n;
 
 	if (buf == NULL) {
@@ -116,8 +118,7 @@ response(int sock, const int code, const char *search, const int get, char *buf,
 			mr,
 			buf);
 	}
-	if (write(sock, outbuf, n) != n) {
-		(void) fprintf(stderr, "Short write\n");
+	for (tot = 0 ; (wc = write(sock, &outbuf[tot], n - tot)) > 0 && tot < n ; tot += wc) {
 	}
 	return 1;
 }
@@ -282,9 +283,18 @@ hkpd(netpgp_t *netpgp, int sock4, int sock6)
 			sizeof(search));
 		code = HKP_NOT_FOUND;
 		cc = 0;
-		if (strncmp(&buf[opmatches[1].rm_so], "vindex", 6) == 0 ||
-		    strncmp(&buf[opmatches[1].rm_so], "index", 5) == 0) {
+		if (strncmp(&buf[opmatches[1].rm_so], "vindex", 6) == 0) {
 			cc = 0;
+			netpgp_setvar(netpgp, "subkey sigs", "yes");
+			if ((cp = netpgp_get_key(netpgp, search, (mr) ? "mr" : "")) != NULL) {
+				cc = strlen(cp);
+				code = HKP_SUCCESS;
+			}
+			response(newsock, code, search, 0, cp, cc, mr);
+			netpgp_unsetvar(netpgp, "subkey sigs");
+		} else if (strncmp(&buf[opmatches[1].rm_so], "index", 5) == 0) {
+			cc = 0;
+			netpgp_unsetvar(netpgp, "subkey sigs");
 			if ((cp = netpgp_get_key(netpgp, search, (mr) ? "mr" : "")) != NULL) {
 				cc = strlen(cp);
 				code = HKP_SUCCESS;
