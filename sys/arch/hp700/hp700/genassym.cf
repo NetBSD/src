@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.20 2009/12/10 05:10:01 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.21 2010/03/16 16:20:19 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -189,7 +189,6 @@ struct	pcb
 member	PCB_FPREGS	pcb_fpregs
 member	PCB_ONFAULT	pcb_onfault
 member	PCB_SPACE	pcb_space
-member	PCB_UVA		pcb_uva
 member	PCB_KSP		pcb_ksp
 
 # system calls

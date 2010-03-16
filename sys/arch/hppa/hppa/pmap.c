@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71 2010/03/13 16:17:59 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72 2010/03/16 16:20:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 2010/03/13 16:17:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72 2010/03/16 16:20:19 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1684,8 +1684,6 @@ pmap_activate(struct lwp *l)
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	pa_space_t space = pmap->pm_space;
 	struct pcb *pcb = lwp_getpcb(l);
-
-	KASSERT(pcb->pcb_uva == uvm_lwp_getuarea(l));
 
 	/* space is cached for the copy{in,out}'s pleasure */
 	pcb->pcb_space = space;

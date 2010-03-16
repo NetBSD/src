@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43 2010/03/08 07:42:47 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.44 2010/03/16 16:20:19 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -230,12 +230,11 @@ L$start_zero_tf:
 	 * kernel stack starts a page and a trapframe above uarea address.
 	 */
 	ldo	NBPG+TRAPFRAME_SIZEOF(%t3), %sp
-	mtctl	%t3, CR_UPADDR
+	mtctl	%t3, CR_FPPADDR
 
 	/* initialize the pcb */
 	stw	%r0, PCB_ONFAULT(%t3)
 	stw	%r0, PCB_SPACE(%t3)	/* XXX HPPA_SID_KERNEL == 0 */
-	stw	%t3, PCB_UVA(%t3)
 
 	/*
 	 * Setup various pointers.
@@ -857,7 +856,7 @@ switch_exited:
 	mtctl	%t3, %pidr2			/* pmap_activate? */
 #endif
 	ldw	TF_CR30(%t1), %t2		/* pmap_activate? */
-	mtctl	%t2, CR_UPADDR			/* pmap_activate? */
+	mtctl	%t2, CR_FPPADDR			/* pmap_activate? */
 
 	mtctl	%arg1, CR_CURLWP
 
@@ -930,7 +929,7 @@ ALTENTRY(hppa_fpu_nop1)
 	 */
 	ldil	L%fpu_cur_uspace, %t1
 	mfctl	%ccr, %r1
-	mfctl	CR_UPADDR, %t2
+	mfctl	CR_FPPADDR, %t2
 	ldw	R%fpu_cur_uspace(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
 	comb,<>,n %t1, %t2, 0		; nullify if LWPs different
