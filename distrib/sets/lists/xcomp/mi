@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.71.2.6 2009/10/10 19:53:24 sborrill Exp $
+# $NetBSD: mi,v 1.71.2.7 2010/03/17 03:17:19 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9009,6 +9009,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/appres.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/atobm.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/bdftopcf.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/bdftruncate.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/beforelight.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/bitmap.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/bmtoa.debug		-unknown-	debug,xorg
