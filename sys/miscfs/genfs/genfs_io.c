@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.4 2010/02/28 06:29:19 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.5 2010/03/17 16:09:17 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.4 2010/02/28 06:29:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.5 2010/03/17 16:09:17 uebayasi Exp $");
 
 #include "opt_device_page.h"
 #include "opt_xip.h"
@@ -114,6 +114,7 @@ genfs_getpages(void *v)
 	} */ * const ap = v;
 	struct vnode * const vp = ap->a_vp;
 
+	/* XXX should be merged into genfs_do_getpages() */
 	if ((vp->v_vflag & VV_XIP) != 0)
 		return genfs_do_getpages_xip(v);
 	else
@@ -742,6 +743,7 @@ out_err:
 }
 
 #ifdef XIP
+/* XXX should be merged into genfs_do_getpages() */
 static int
 genfs_do_getpages_xip(void *v)
 {
