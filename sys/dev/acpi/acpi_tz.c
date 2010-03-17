@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.62 2010/03/14 18:05:07 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.63 2010/03/17 20:29:32 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.62 2010/03/14 18:05:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.63 2010/03/17 20:29:32 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -179,6 +179,7 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	sc->sc_devnode = aa->aa_node;
 
 	aprint_naive("\n");
+	aprint_normal(": ACPI Thermal Zone\n");
 
 	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TZP", &v);
 	if (ACPI_FAILURE(rv))
@@ -186,7 +187,7 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_zone.tzp = v;
 
-	aprint_debug(" sample rate %d.%ds\n",
+	aprint_debug_dev(self, "sample rate %d.%ds\n",
 	    sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
 
 	/* XXX a value of 0 means "polling is not necessary" */
@@ -205,6 +206,7 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	    "REGN", &sc->sc_zone.name);
 	if (ACPI_FAILURE(rv))
 		sc->sc_zone.name = __UNCONST("temperature");
+
 	acpitz_get_zone(self, 1);
 	acpitz_get_status(self);
 
@@ -248,10 +250,8 @@ acpitz_get_status(void *opaque)
 		acpitz_get_zone(dv, 0);
 	}
 
-	if (acpitz_get_integer(dv, "_TMP", &tmp)) {
-		aprint_error_dev(dv, "failed to evaluate _TMP\n");
+	if (acpitz_get_integer(dv, "_TMP", &tmp) != 0)
 		return;
-	}
 
 	sc->sc_zone.prevtmp = sc->sc_zone.tmp;
 	sc->sc_zone.tmp = tmp;
@@ -450,8 +450,7 @@ acpitz_get_zone(void *opaque, int verbose)
 				ACPI_FREE(sc->sc_zone.al[i].Pointer);
 			sc->sc_zone.al[i].Pointer = NULL;
 		}
-	} else
-		aprint_normal(":");
+	}
 
 	valid_levels = 0;
 
@@ -513,25 +512,31 @@ acpitz_get_zone(void *opaque, int verbose)
 	acpitz_sane_temp(&sc->sc_zone.hot);
 	acpitz_sane_temp(&sc->sc_zone.psv);
 
-	if (verbose) {
+	if (verbose != 0) {
+		aprint_verbose_dev(dv, "");
+
 		if (sc->sc_zone.crt != ATZ_TMP_INVALID)
-			aprint_normal(" critical %sC",
+			aprint_verbose("critical %s C",
 			    acpitz_celcius_string(sc->sc_zone.crt));
+
 		if (sc->sc_zone.hot != ATZ_TMP_INVALID)
-			aprint_normal(" hot %sC",
+			aprint_verbose(" hot %s C",
 			    acpitz_celcius_string(sc->sc_zone.hot));
+
 		if (sc->sc_zone.psv != ATZ_TMP_INVALID)
-			aprint_normal(" passive %sC",
+			aprint_normal(" passive %s C",
 			    acpitz_celcius_string(sc->sc_zone.psv));
 	}
 
 	if (valid_levels == 0) {
 		sc->sc_flags |= ATZ_F_PASSIVEONLY;
+
 		if (sc->sc_first)
-			aprint_normal(", passive cooling");
+			aprint_verbose(", passive cooling");
 	}
-	if (verbose)
-		aprint_normal("\n");
+
+	if (verbose != 0)
+		aprint_verbose("\n");
 
 	for (i = 0; i < ATZ_NLEVELS; i++)
 		acpitz_sane_temp(&sc->sc_zone.ac[i]);
@@ -539,7 +544,6 @@ acpitz_get_zone(void *opaque, int verbose)
 	acpitz_power_off(sc);
 	sc->sc_first = 0;
 }
-
 
 static void
 acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
@@ -588,12 +592,14 @@ acpitz_get_integer(device_t dv, const char *cm, UINT32 *val)
 	ACPI_INTEGER tmp;
 
 	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, cm, &tmp);
+
 	if (ACPI_FAILURE(rv)) {
-#ifdef ACPI_DEBUG
-		aprint_debug_dev(dv, "failed to evaluate %s: %s\n",
-		    cm, AcpiFormatException(rv));
-#endif
 		*val = ATZ_TMP_INVALID;
+
+		if (rv != AE_NOT_FOUND)
+			aprint_debug_dev(dv, "failed to evaluate %s: %s\n",
+			    cm, AcpiFormatException(rv));
+
 		return 1;
 	}
 
