@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.87 2010/03/17 07:40:34 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.88 2010/03/17 07:48:18 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.87 2010/03/17 07:40:34 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.88 2010/03/17 07:48:18 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -166,7 +166,7 @@ static const char * const bat_hid[] = {
 #define ACPIBAT_ST_CRITICAL	0x00000004  /* battery is critical */
 
 /*
- * A value used when _BST or _BIF is temporarily unknown (see ibid.).
+ * A value used when _BST or _BIF is temporarily unknown.
  */
 #define ACPIBAT_VAL_UNKNOWN	0xFFFFFFFF
 
@@ -415,13 +415,13 @@ acpibat_get_info(device_t dv)
 	sc->sc_sensor[ACPIBAT_CAPACITY].units = capunit;
 
 	/* Design capacity. */
-	val = elm[ACPIBAT_BIF_DCAPACITY].Integer.Value * 1000;
-	sc->sc_sensor[ACPIBAT_DCAPACITY].value_cur = val;
+	val = elm[ACPIBAT_BIF_DCAPACITY].Integer.Value;
+	sc->sc_sensor[ACPIBAT_DCAPACITY].value_cur = val * 1000;
 	sc->sc_sensor[ACPIBAT_DCAPACITY].state = ACPIBAT_VAL_ISVALID(val);
 
 	/* Last full charge capacity. */
-	val = elm[ACPIBAT_BIF_LFCCAPACITY].Integer.Value * 1000;
-	sc->sc_sensor[ACPIBAT_LFCCAPACITY].value_cur = val;
+	val = elm[ACPIBAT_BIF_LFCCAPACITY].Integer.Value;
+	sc->sc_sensor[ACPIBAT_LFCCAPACITY].value_cur = val * 1000;
 	sc->sc_sensor[ACPIBAT_LFCCAPACITY].state = ACPIBAT_VAL_ISVALID(val);
 
 	/* Battery technology. */
@@ -430,8 +430,8 @@ acpibat_get_info(device_t dv)
 	sc->sc_sensor[ACPIBAT_TECHNOLOGY].state = ACPIBAT_VAL_ISVALID(val);
 
 	/* Design voltage. */
-	val = elm[ACPIBAT_BIF_DVOLTAGE].Integer.Value * 1000;
-	sc->sc_sensor[ACPIBAT_DVOLTAGE].value_cur = val;
+	val = elm[ACPIBAT_BIF_DVOLTAGE].Integer.Value;
+	sc->sc_sensor[ACPIBAT_DVOLTAGE].value_cur = val * 1000;
 	sc->sc_sensor[ACPIBAT_DVOLTAGE].state = ACPIBAT_VAL_ISVALID(val);
 
 	/* Design low and warning capacity. */
@@ -510,15 +510,15 @@ acpibat_get_status(device_t dv)
 	}
 
 	/* Remaining capacity. */
-	val = elm[ACPIBAT_BST_CAPACITY].Integer.Value * 1000;
-	sc->sc_sensor[ACPIBAT_CAPACITY].value_cur = val;
+	val = elm[ACPIBAT_BST_CAPACITY].Integer.Value;
+	sc->sc_sensor[ACPIBAT_CAPACITY].value_cur = val * 1000;
 	sc->sc_sensor[ACPIBAT_CAPACITY].state = ACPIBAT_VAL_ISVALID(val);
 	sc->sc_sensor[ACPIBAT_CAPACITY].flags |=
 	    ENVSYS_FPERCENT | ENVSYS_FVALID_MAX;
 
 	/* Battery voltage. */
-	val = elm[ACPIBAT_BST_VOLTAGE].Integer.Value * 1000;
-	sc->sc_sensor[ACPIBAT_VOLTAGE].value_cur = val;
+	val = elm[ACPIBAT_BST_VOLTAGE].Integer.Value;
+	sc->sc_sensor[ACPIBAT_VOLTAGE].value_cur = val * 1000;
 	sc->sc_sensor[ACPIBAT_VOLTAGE].state = ACPIBAT_VAL_ISVALID(val);
 
 	sc->sc_sensor[ACPIBAT_CHARGE_STATE].state = ENVSYS_SVALID;
