@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.22 2008/05/31 08:00:34 nakayama Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.22.8.1 2010/03/17 03:10:39 snj Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.22 2008/05/31 08:00:34 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.22.8.1 2010/03/17 03:10:39 snj Exp $");
 
 #include "opt_ddb.h"
 
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.22 2008/05/31 08:00:34 nakayama Exp $
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <machine/sparc64.h>
+
+#include <sparc64/sparc64/cache.h>
 
 #if defined(DDB) || defined(KGDB)
 #ifdef DDB
@@ -69,6 +71,8 @@ void	sparc64_ipi_pause(void *);
 void	sparc64_ipi_flush_pte(void *);
 void	sparc64_ipi_flush_ctx(void *);
 void	sparc64_ipi_flush_all(void *);
+void	sparc64_ipi_dcache_flush_page(void *);
+void	sparc64_ipi_blast_dcache(void *);
 
 /*
  * Process cpu stop-self event.
@@ -410,6 +414,34 @@ smp_tlb_flush_all()
 
 	/* Flush others */
 	sparc64_broadcast_ipi(sparc64_ipi_flush_all, 0, 0);
+}
+
+/* XXX Spitfire specific for netbsd-5 branch */
+#define dcache_line_size	32
+#define dcache_size		(16 * 1024)
+
+/*
+ * Make sure this page is flushed from all CPUs.
+ */
+void
+smp_dcache_flush_page_all(paddr_t pa)
+{
+
+	sparc64_broadcast_ipi(sparc64_ipi_dcache_flush_page, pa,
+			      dcache_line_size);
+	dcache_flush_page(pa);
+}
+
+/*
+ * Flush the D$ on this set of CPUs.
+ */
+void
+smp_blast_dcache(sparc64_cpuset_t activecpus)
+{
+
+	sparc64_multicast_ipi(activecpus, sparc64_ipi_blast_dcache,
+			      dcache_size, dcache_line_size);
+	sp_blast_dcache();
 }
 
 /*

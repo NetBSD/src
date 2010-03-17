@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.225.4.1 2008/11/22 16:44:25 snj Exp $	*/
+/*	$NetBSD: pmap.c,v 1.225.4.2 2010/03/17 03:10:40 snj Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.225.4.1 2008/11/22 16:44:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.225.4.2 2010/03/17 03:10:40 snj Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1401,6 +1401,7 @@ pmap_destroy(pm)
 		nextpg = TAILQ_NEXT(pg, listq.queue);
 		TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
 		KASSERT(pg->mdpage.mdpg_pvh.pv_pmap == NULL);
+		dcache_flush_page_all(VM_PAGE_TO_PHYS(pg));
 		uvm_pagefree(pg);
 	}
 	pmap_free_page((paddr_t)(u_long)pm->pm_segs);
@@ -1681,10 +1682,10 @@ pmap_kremove(va, size)
 		 */
 
 		tlb_flush_pte(va, pm);
+		dcache_flush_page_all(pa);
 	}
 	if (flush) {
 		REMOVE_STAT(flushes);
-		blast_dcache();
 	}
 }
 
@@ -1967,6 +1968,7 @@ pmap_remove_all(pm)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
+	sparc64_cpuset_t pmap_cpus_active;
 #endif
 
 	if (pm == pmap_kernel()) {
@@ -1975,17 +1977,25 @@ pmap_remove_all(pm)
 	write_user_windows();
 	pm->pm_refs = 0;
 #ifdef MULTIPROCESSOR
+	CPUSET_CLEAR(pmap_cpus_active);
 	mutex_enter(&pmap_lock);
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (CPUSET_HAS(cpus_active, ci->ci_index))
+		if (CPUSET_HAS(cpus_active, ci->ci_index)) {
+			if (pm->pm_ctx[ci->ci_index] > 0)
+				CPUSET_ADD(pmap_cpus_active, ci->ci_index);
 			ctx_free(pm, ci);
+		}
 	}
 	mutex_exit(&pmap_lock);
 #else
 	ctx_free(pm);
 #endif
 	REMOVE_STAT(flushes);
-	blast_dcache();
+#ifdef MULTIPROCESSOR
+	smp_blast_dcache(pmap_cpus_active);
+#else   
+	sp_blast_dcache();
+#endif
 }
 
 /*
@@ -2079,10 +2089,10 @@ pmap_remove(pm, va, endva)
 		tsb_invalidate(va, pm);
 		REMOVE_STAT(tflushes);
 		tlb_flush_pte(va, pm);
+		dcache_flush_page_all(pa);
 	}
 	if (flush && pm->pm_refs) {
 		REMOVE_STAT(flushes);
-		blast_dcache();
 	}
 	DPRINTF(PDB_REMOVE, ("\n"));
 	pv_check();
@@ -2647,7 +2657,7 @@ pmap_clear_reference(pg)
 			}
 		}
 	}
-	dcache_flush_page(VM_PAGE_TO_PHYS(pg));
+	dcache_flush_page_all(VM_PAGE_TO_PHYS(pg));
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_referenced_locked(pg)) {
@@ -3020,9 +3030,8 @@ pmap_page_protect(pg, prot)
 				pv->pv_next = NULL;
 			}
 		}
-		if (needflush) {
-			dcache_flush_page(VM_PAGE_TO_PHYS(pg));
-		}
+		if (needflush)
+			dcache_flush_page_all(VM_PAGE_TO_PHYS(pg));
 	}
 	/* We should really only flush the pages we demapped. */
 	pv_check();
@@ -3481,6 +3490,7 @@ pmap_free_page(paddr_t pa)
 {
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
 
+	dcache_flush_page_all(pa);
 	uvm_pagefree(pg);
 }
 
@@ -3716,4 +3726,29 @@ pmap_update(struct pmap *pmap)
 	}
 	pmap->pm_refs = 1;
 	pmap_activate_pmap(pmap);
+}
+
+/*
+ * pmap_copy_page()/pmap_zero_page()
+ *
+ * we make sure that the destination page is flushed from all D$'s
+ * before we perform the copy/zero.
+ */
+extern int cold;
+void
+pmap_copy_page(paddr_t src, paddr_t dst)
+{
+
+	if (!cold)
+		dcache_flush_page_all(dst);
+	pmap_copy_page_phys(src, dst);
+}
+
+void
+pmap_zero_page(paddr_t pa)
+{
+
+	if (!cold)
+		dcache_flush_page_all(pa);
+	pmap_zero_page_phys(pa);
 }

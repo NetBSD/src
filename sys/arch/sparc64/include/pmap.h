@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.40 2008/03/14 15:40:02 nakayama Exp $	*/
+/*	$NetBSD: pmap.h,v 1.40.14.1 2010/03/17 03:10:39 snj Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -211,6 +211,9 @@ void		pmap_kprotect(vaddr_t, vm_prot_t);
 void sp_tlb_flush_pte(vaddr_t, int);
 void sp_tlb_flush_ctx(int);
 void sp_tlb_flush_all(void);
+
+void		pmap_copy_page_phys(paddr_t, paddr_t);
+void		pmap_zero_page_phys(paddr_t);
 
 #ifdef MULTIPROCESSOR
 void smp_tlb_flush_pte(vaddr_t, pmap_t);

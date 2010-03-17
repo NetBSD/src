@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.286.2.1 2009/06/05 18:28:34 snj Exp $	*/
+/*	$NetBSD: locore.s,v 1.286.2.2 2010/03/17 03:10:39 snj Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5648,14 +5648,14 @@ ENTRY(sp_tlb_flush_all)
 #endif
 
 /*
- * blast_dcache()
+ * sp_blast_dcache()
  *
  * Clear out all of D$ regardless of contents
  * Does not modify %o0
  *
  */
 	.align 8
-ENTRY(blast_dcache)
+ENTRY(sp_blast_dcache)
 /*
  * We turn off interrupts for the duration to prevent RED exceptions.
  */
@@ -5682,6 +5682,33 @@ ENTRY(blast_dcache)
 	retl
 	 wrpr	%o3, %pstate
 #endif
+
+#ifdef MULTIPROCESSOR
+/*
+ * void sparc64_ipi_blast_dcache(int dcache_size, int dcache_line_size)
+ *
+ * Clear out all of D$ regardless of contents
+ *
+ * On entry:
+ *	%g2 = dcache_size
+ *	%g3 = dcache_line_size
+ */
+	.align 8
+ENTRY(sparc64_ipi_blast_dcache)
+	sub	%g2, %g3, %g2
+1:
+	stxa	%g0, [%g2] ASI_DCACHE_TAG
+	membar	#Sync
+	brnz,pt	%g2, 1b
+	 sub	%g2, %g3, %g2
+
+	sethi	%hi(KERNBASE), %g5
+	flush	%g5
+	membar	#Sync
+
+	ba,a	ret_from_intr_vector
+	 nop
+#endif /* MULTIPROCESSOR */
 
 /*
  * blast_icache()
@@ -7112,22 +7139,19 @@ ENTRY(probeset)
 	 membar	#StoreStore|#StoreLoad
 
 /*
- * pmap_zero_page(pa)
+ * pmap_zero_page_phys(pa)
  *
  * Zero one page physically addressed
  *
  * Block load/store ASIs do not exist for physical addresses,
  * so we won't use them.
  *
- * While we do the zero operation, we also need to blast away
- * the contents of the D$.  We will execute a flush at the end
- * to sync the I$.
+ * We will execute a flush at the end to sync the I$.
+ *
+ * This version expects to have the dcache_flush_page_all(pa)
+ * to have been called before calling into here.
  */
-	.data
-paginuse:
-	.word	0
-	.text
-ENTRY(pmap_zero_page)
+ENTRY(pmap_zero_page_phys)
 #ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 #endif
@@ -7171,7 +7195,7 @@ ENTRY(pmap_zero_page)
 	 wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Make C code happy
 
 /*
- * pmap_copy_page(paddr_t src, paddr_t dst)
+ * pmap_copy_page_phys(paddr_t src, paddr_t dst)
  *
  * Copy one page physically addressed
  * We need to use a global reg for ldxa/stxa
@@ -7180,10 +7204,11 @@ ENTRY(pmap_zero_page)
  * 32-bit stack.  We will unroll the loop by 4 to
  * improve performance.
  *
- * XXX We also need to blast the D$ and flush like
- * XXX pmap_zero_page.
+ * This version expects to have the dcache_flush_page_all(pa)
+ * to have been called before calling into here.
+ *
  */
-ENTRY(pmap_copy_page)
+ENTRY(pmap_copy_page_phys)
 #ifndef _LP64
 	COMBINE(%o0, %o1, %o0)
 	COMBINE(%o2, %o3, %o1)
@@ -7239,6 +7264,7 @@ ENTRY(pmap_copy_page)
 	retl
 	 mov	%o4, %g1		! Restore g1
 #endif
+
 /*
  * extern int64_t pseg_get(struct pmap *pm, vaddr_t addr);
  *
@@ -9592,6 +9618,48 @@ ENTRY(sparc64_ipi_drop_fpstate)
 	IPIEVC_INC(IPI_EVCNT_FPU_FLUSH,%g2,%g3)
 	ba,a	ret_from_intr_vector
 	 nop
+
+/*
+ * IPI handler to drop the current FPU state.
+ * void sparc64_ipi_dcache_flush_page(paddr_t pa, int line_size)
+ *
+ * On entry:
+ *	%g2 = pa
+ *	%g3 = line_size
+ */
+ENTRY(sparc64_ipi_dcache_flush_page)
+	mov	-1, %g1		! Generate mask for tag: bits [29..2]
+	srlx	%g2, 13-2, %g5	! Tag is PA bits <40:13> in bits <29:2>
+	clr	%g4
+	srl	%g1, 2, %g1	! Now we have bits <29:0> set
+	set	(2*NBPG), %g7
+	ba,pt	%icc, 1f
+	 andn	%g1, 3, %g1	! Now we have bits <29:2> set
+
+	.align 8
+1:
+	ldxa	[%g4] ASI_DCACHE_TAG, %g6
+	mov	%g4, %g2
+	deccc	32, %g7
+	bl,pn	%icc, 2f
+	 inc	32, %g4
+
+	xor	%g6, %g5, %g6
+	andcc	%g6, %g1, %g0
+	bne,pt	%xcc, 1b
+	 membar	#LoadStore
+
+	stxa	%g0, [%g2] ASI_DCACHE_TAG
+	ba,pt	%icc, 1b
+	 membar	#StoreLoad
+2:
+
+	sethi	%hi(KERNBASE), %g5
+	flush	%g5
+	membar	#Sync
+	ba,a	ret_from_intr_vector
+	 nop
+
 #endif
 
 /*
