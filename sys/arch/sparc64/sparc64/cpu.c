@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.78 2008/10/18 04:41:14 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.78.4.1 2010/03/17 02:51:09 snj Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78 2008/10/18 04:41:14 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78.4.1 2010/03/17 02:51:09 snj Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -279,9 +279,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad icache line size %d", l);
-	totalsize =
-		prom_getpropint(node, "icache-size", 0) *
-		prom_getpropint(node, "icache-associativity", 1);
+	totalsize = prom_getpropint(node, "icache-size", 0);
 	if (totalsize == 0)
 		totalsize = l *
 			prom_getpropint(node, "icache-nlines", 64) *
@@ -305,9 +303,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad dcache line size %d", l);
-	totalsize =
-		prom_getpropint(node, "dcache-size", 0) *
-		prom_getpropint(node, "dcache-associativity", 1);
+	totalsize = prom_getpropint(node, "dcache-size", 0);
 	if (totalsize == 0)
 		totalsize = l *
 			prom_getpropint(node, "dcache-nlines", 128) *
@@ -331,9 +327,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		/* void */;
 	if ((1 << i) != l && l)
 		panic("bad ecache line size %d", l);
-	totalsize = 
-		prom_getpropint(node, "ecache-size", 0) *
-		prom_getpropint(node, "ecache-associativity", 1);
+	totalsize = prom_getpropint(node, "ecache-size", 0);
 	if (totalsize == 0)
 		totalsize = l *
 			prom_getpropint(node, "ecache-nlines", 32768) *
