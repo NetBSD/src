@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.23 2008/04/28 20:23:41 martin Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.23.10.1 2010/03/17 02:59:52 snj Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.23 2008/04/28 20:23:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.23.10.1 2010/03/17 02:59:52 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -173,8 +173,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (char *)SCARG(uap, buf))
+	if (outp == (char *)SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:
@@ -324,8 +328,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (char *)SCARG(uap, buf))
+	if (outp == (char *)SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:
