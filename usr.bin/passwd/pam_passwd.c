@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_passwd.c,v 1.4 2007/05/06 09:19:44 jnemeth Exp $	*/
+/*	$NetBSD: pam_passwd.c,v 1.4.18.1 2010/03/17 03:03:58 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002 Networks Associates Technologies, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/usr.bin/passwd/passwd.c,v 1.23 2003/04/18 21:27:09 nectar Exp $");
 #else
-__RCSID("$NetBSD: pam_passwd.c,v 1.4 2007/05/06 09:19:44 jnemeth Exp $");
+__RCSID("$NetBSD: pam_passwd.c,v 1.4.18.1 2010/03/17 03:03:58 snj Exp $");
 #endif
 
 #include <sys/param.h>
@@ -102,7 +102,9 @@ pwpam_process(const char *username, int argc, char **argv)
 
 	/* initialize PAM -- always use the program name "passwd" */
 	pam_err = pam_start("passwd", username, &pamc, &pamh);
-	pam_check("unable to start PAM session");
+	if (pam_err != PAM_SUCCESS)
+		errx(1, "unable to start PAM session: %s",
+		    pam_strerror(NULL, pam_err));
 
 	pam_err = pam_set_item(pamh, PAM_TTY, ttyname(STDERR_FILENO));
 	pam_check("unable to set TTY");
