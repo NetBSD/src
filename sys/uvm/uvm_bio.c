@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.4.1 2010/03/16 15:38:17 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.4.2 2010/03/17 06:03:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.1 2010/03/16 15:38:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.2 2010/03/17 06:03:17 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -238,7 +238,7 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 	 */
 
 	if (flags & PGO_LOCKED) {
-		uvmfault_unlockall(ufi, NULL, &ubc_object.uobj, NULL);
+		uvmfault_unlockall(ufi, NULL, &ubc_object.uobj);
 		flags &= ~PGO_LOCKED;
 	}
 
@@ -451,15 +451,15 @@ ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 	 * the object is always locked here, so we don't need to add a ref.
 	 */
 
-again:
 	mutex_enter(ubc_object.uobj.vmobjlock);
+again:
 	umap = ubc_find_mapping(uobj, umap_offset);
 	if (umap == NULL) {
 		UBC_EVCNT_INCR(wincachemiss);
 		umap = TAILQ_FIRST(UBC_QUEUE(offset));
 		if (umap == NULL) {
-			mutex_exit(ubc_object.uobj.vmobjlock);
-			kpause("ubc_alloc", false, hz, NULL);
+			kpause("ubc_alloc", false, hz,
+			    ubc_object.uobj.vmobjlock);
 			goto again;
 		}
 
@@ -516,13 +516,14 @@ again:
 		KASSERT(umap->refcount == 1);
 
 		UBC_EVCNT_INCR(faultbusy);
+again_faultbusy:
+		mutex_enter(uobj->vmobjlock);
 		if (umap->flags & UMAP_MAPPING_CACHED) {
 			umap->flags &= ~UMAP_MAPPING_CACHED;
 			pmap_remove(pmap_kernel(), va, va + ubc_winsize);
 		}
-again_faultbusy:
 		memset(pgs, 0, sizeof(pgs));
-		mutex_enter(uobj->vmobjlock);
+
 		error = (*uobj->pgops->pgo_get)(uobj, trunc_page(offset), pgs,
 		    &npages, 0, VM_PROT_READ | VM_PROT_WRITE, advice, gpflags);
 		UVMHIST_LOG(ubchist, "faultbusy getpages %d", error, 0, 0, 0);
@@ -538,16 +539,15 @@ again_faultbusy:
 				if (pg->loan_count != 0) {
 					pg = uvm_loanbreak(pg);
 				}
-				mutex_exit(uobj->vmobjlock);
 				if (pg == NULL) {
 					pmap_kremove(va, ubc_winsize);
 					pmap_update(pmap_kernel());
-					mutex_enter(uobj->vmobjlock);
 					uvm_page_unbusy(pgs, npages);
 					mutex_exit(uobj->vmobjlock);
 					uvm_wait("ubc_alloc");
 					goto again_faultbusy;
 				}
+				mutex_exit(uobj->vmobjlock);
 				pgs[i] = pg;
 			}
 			pmap_kenter_pa(va + slot_offset + (i << PAGE_SHIFT),
@@ -599,6 +599,7 @@ ubc_release(void *va, int flags)
 			memset((char *)umapva + endoff, 0, zerolen);
 		}
 		umap->flags &= ~UMAP_PAGES_LOCKED;
+		mutex_enter(uobj->vmobjlock);
 		mutex_enter(&uvm_pageqlock);
 		for (i = 0; i < npages; i++) {
 			rv = pmap_extract(pmap_kernel(),
@@ -612,7 +613,6 @@ ubc_release(void *va, int flags)
 		mutex_exit(&uvm_pageqlock);
 		pmap_kremove(umapva, ubc_winsize);
 		pmap_update(pmap_kernel());
-		mutex_enter(uobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
 		mutex_exit(uobj->vmobjlock);
 		unmapped = true;
@@ -632,9 +632,10 @@ ubc_release(void *va, int flags)
 			 * This is typically used to avoid leaving
 			 * incompatible cache aliases around indefinitely.
 			 */
-
+			mutex_enter(uobj->vmobjlock);
 			pmap_remove(pmap_kernel(), umapva,
 				    umapva + ubc_winsize);
+			mutex_exit(uobj->vmobjlock);
 			umap->flags &= ~UMAP_MAPPING_CACHED;
 			pmap_update(pmap_kernel());
 			LIST_REMOVE(umap, hash);

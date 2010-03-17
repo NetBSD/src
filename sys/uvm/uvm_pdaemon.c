@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.100.4.1 2010/03/16 15:38:18 rmind Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.100.4.2 2010/03/17 06:03:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.100.4.1 2010/03/16 15:38:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.100.4.2 2010/03/17 06:03:19 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -431,7 +431,7 @@ uvmpd_trylockowner(struct vm_page *pg)
 		struct vm_anon *anon = pg->uanon;
 
 		KASSERT(anon != NULL);
-		slock = &anon->an_lock;
+		slock = anon->an_lock;
 	}
 
 	if (!mutex_tryenter(slock)) {
@@ -508,7 +508,7 @@ swapcluster_add(struct swapcluster *swc, struct vm_page *pg)
 	slot = swc->swc_slot + swc->swc_nused;
 	uobj = pg->uobject;
 	if (uobj == NULL) {
-		KASSERT(mutex_owned(&pg->uanon->an_lock));
+		KASSERT(mutex_owned(pg->uanon->an_lock));
 		pg->uanon->an_swslot = slot;
 	} else {
 		int result;

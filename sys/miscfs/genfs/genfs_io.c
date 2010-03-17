@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.4.1 2010/03/16 15:38:11 rmind Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.4.2 2010/03/17 06:03:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.4.1 2010/03/16 15:38:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.4.2 2010/03/17 06:03:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1757,11 +1757,13 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
 	kva = uvm_km_alloc(kernel_map, klen, 0,
 			   UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 	puva = trunc_page(uva);
+	mutex_enter(vp->v_interlock);
 	for (poff = 0; poff < klen; poff += PAGE_SIZE) {
 		rv = pmap_extract(upm, puva + poff, &pa);
 		KASSERT(rv);
 		pmap_enter(kpm, kva + poff, pa, prot, prot | PMAP_WIRED);
 	}
+	mutex_exit(vp->v_interlock);
 	pmap_update(kpm);
 
 	/*
@@ -1776,7 +1778,9 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
 	 * Tear down the kernel mapping.
 	 */
 
+	mutex_enter(vp->v_interlock);
 	pmap_remove(kpm, kva, kva + klen);
+	mutex_exit(vp->v_interlock);
 	pmap_update(kpm);
 	uvm_km_free(kernel_map, kva, klen, UVM_KMF_VAONLY);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.12.20.1 2010/03/17 06:03:19 rmind Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.12.20.1 2010/03/17 06:03:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,6 +174,7 @@ uvmpdpol_selectvictim(void)
 {
 	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
 	struct vm_page *pg;
+	kmutex_t *lock;
 
 	KASSERT(mutex_owned(&uvm_pageqlock));
 
@@ -202,10 +203,15 @@ uvmpdpol_selectvictim(void)
 		 * skip to next page.
 		 */
 
-		if (pmap_is_referenced(pg)) {
-			uvmpdpol_pageactivate(pg);
-			uvmexp.pdreact++;
-			continue;
+		lock = uvmpd_trylockowner(pg);
+		if (lock != NULL) {
+			if (pmap_is_referenced(pg)) {
+				uvmpdpol_pageactivate(pg);
+				uvmexp.pdreact++;
+				mutex_exit(lock);
+				continue;
+			}
+			mutex_exit(lock);
 		}
 
 		anon = pg->uanon;
@@ -247,6 +253,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 {
 	int inactive_shortage;
 	struct vm_page *p, *nextpg;
+	kmutex_t *lock;
 
 	/*
 	 * we have done the scan to get free pages.   now we work on meeting
@@ -273,11 +280,17 @@ uvmpdpol_balancequeue(int swap_shortage)
 		 * if there's a shortage of inactive pages, deactivate.
 		 */
 
-		if (inactive_shortage > 0) {
-			/* no need to check wire_count as pg is "active" */
+		if (inactive_shortage <= 0) {
+			continue;
+		}
+
+		/* no need to check wire_count as pg is "active" */
+		lock = uvmpd_trylockowner(p);
+		if (lock != NULL) {
 			uvmpdpol_pagedeactivate(p);
 			uvmexp.pddeact++;
 			inactive_shortage--;
+			mutex_exit(lock);
 		}
 	}
 }
@@ -286,7 +299,9 @@ void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
 
+	KASSERT(uvm_page_locked_p(pg));
 	KASSERT(mutex_owned(&uvm_pageqlock));
+
 	if (pg->pqflags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq.queue);
 		pg->pqflags &= ~PQ_ACTIVE;

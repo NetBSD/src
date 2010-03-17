@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.105.2.1 2010/03/16 15:38:17 rmind Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.105.2.2 2010/03/17 06:03:17 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -127,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105.2.1 2010/03/16 15:38:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105.2.2 2010/03/17 06:03:17 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -654,12 +654,19 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 
 	size = round_page(size);
 
+
 	if (flags & UVM_KMF_PAGEABLE) {
-		uvm_km_pgremove(addr, addr + size);
+		/*
+		 * no need to lock for pmap, as the kernel is
+		 * self-consistent.  the pages cannot be in
+		 * use elsewhere.
+		 */
+
 		pmap_remove(pmap_kernel(), addr, addr + size);
+		uvm_km_pgremove(addr, addr + size);
 	} else if (flags & UVM_KMF_WIRED) {
-		uvm_km_pgremove_intrsafe(map, addr, addr + size);
 		pmap_kremove(addr, size);
+		uvm_km_pgremove_intrsafe(map, addr, addr + size);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.26 2009/06/14 21:36:03 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.26.4.1 2010/03/17 06:03:17 rmind Exp $	*/
 
 /*
  *
@@ -52,14 +52,21 @@
  */
 
 struct vm_anon {
-	kmutex_t an_lock;	/* lock for an_ref */
-	struct vm_page *an_page;/* if in RAM [an_lock] */
-	int an_ref;		/* reference count [an_lock] */
+	kmutex_t		*an_lock;	/* Lock for an_ref */
+	union {
+		uintptr_t	au_ref;		/* Reference count [an_lock] */
+		struct vm_anon	*au_link;	/* Link for deferred free */
+	} an_u;
+#define	an_ref	an_u.au_ref
+#define	an_link	an_u.au_link
+	struct vm_page		*an_page;	/* If in RAM [an_lock] */
 #if defined(VMSWAP) || 1 /* XXX libkvm */
-	int an_swslot;		/* drum swap slot # (if != 0)
-				   [an_lock.  also, it is ok to read
-				   an_swslot if we hold an_page PG_BUSY] */
-#endif /* defined(VMSWAP) */
+	/*
+	 * Drum swap slot # (if != 0) [an_lock.  also, it is ok to read
+	 * an_swslot if we hold an_page PG_BUSY].
+	 */
+	int			an_swslot;
+#endif
 };
 
 /*
