@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.57.4.1 2010/03/16 15:38:17 rmind Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.57.4.2 2010/03/17 06:03:17 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.4.1 2010/03/16 15:38:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.4.2 2010/03/17 06:03:17 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -380,7 +380,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
 		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)",
 		entry->etype, 0,0,0);
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 		return(EIO);
 	}
 
@@ -391,7 +391,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	device = udv->u_device;
 	if (cdevsw_lookup(device) == NULL) {
 		/* XXX This should not happen */
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 		return (EIO);
 	}
 
@@ -444,13 +444,13 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			 */
 			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
-			    uobj, NULL);
+			    uobj);
 			uvm_wait("udv_fault");
 			return (ERESTART);
 		}
 	}
 
 	pmap_update(ufi->orig_map->pmap);
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	return (retval);
 }

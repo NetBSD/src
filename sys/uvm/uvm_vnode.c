@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.93.4.1 2010/03/16 15:38:19 rmind Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.93.4.2 2010/03/17 06:03:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.4.1 2010/03/16 15:38:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.93.4.2 2010/03/17 06:03:19 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -240,6 +240,8 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 	bool dirty;
 	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%lx", uobj, offset,0,0);
+
+	KASSERT(mutex_owned(uobj->vmobjlock));
 
 	if (*pgp != NULL) {
 		UVMHIST_LOG(ubchist, "dontcare", 0,0,0,0);
