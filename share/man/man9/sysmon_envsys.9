@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.33 2010/02/25 12:58:18 wiz Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.34 2010/03/17 07:31:14 jruoho Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,42 +55,46 @@ is the kernel part of the
 framework.
 With this framework you are able to register and unregister a
 .Nm
-device, attach or detach sensors into a device and enable or disable
+device, attach or detach sensors into a device, and enable or disable
 automatic monitoring for some sensors without any user interactivity,
 among other things.
 .Ss HOW TO USE THE FRAMEWORK
 To register a new driver to the
 .Nm
 framework, a
-.Sy sysmon_envsys
+.Em sysmon_envsys
 object must be allocated and initialized; the
 .Fn sysmon_envsys_create
 function is used for this.
-This returns a zero'ed pointer to a sysmon_envsys
-structure and takes care of initialization of some private features.
+This returns a zero'ed pointer to a
+.Em sysmon_envsys
+structure.
 .Pp
-Once we have the object we could start initializing sensors (see the
+Once the object has been initialized,
+actual sensors may be initialized and attached (see the
 .Sx SENSOR DETAILS
-section for more information) and attaching
-them to the device, this is accomplished by the
+section for more information).
+This is accomplished by the
 .Fn sysmon_envsys_sensor_attach
-function.
-This function attaches the envsys_data_t (sensor) specified
-as second argument into the sysmon_envsys object specified in the
-first argument.
+function, which will attach the
+.Em envsys_data_t
+(a sensor) specified as second argument into the
+.Em sysmon_envsys
+object specified in the first argument.
 .Pp
-Finally when the sensors are already attached, the device needs to set
-some required (and optional) members of the sysmon_envsys struct before
-calling the
+Finally, after all sensors have been attached,
+the device needs to set some required (and optional) members of the
+.Em sysmon_envsys
+structure before calling the
 .Fn sysmon_envsys_register
 function to register the device.
 .Pp
-If there's some error before registering the device, the
+In case of errors during the initialization, the
 .Fn sysmon_envsys_destroy
-function must be used to detach the sensors previously attached
-and free the sysmon_envsys object allocated by the
-.Fn sysmon_envsys_create
-function.
+function should be used.
+This detachs all previously attached sensors and deallocates the
+.Em sysmon_envsys
+object.
 .Pp
 The
 .Em sysmon_envsys
@@ -113,7 +117,7 @@ struct sysmon_envsys {
 .Pp
 The members have the following meaning:
 .Pp
-.Bl -tag -width "sme_sensor_data_xxxxxxxxx"
+.Bl -tag -width "sme_events_timeout"
 .It Fa sme_class
 This specifies the class of the sysmon envsys device.
 See the
@@ -130,7 +134,7 @@ Currently supporting
 If enabled, the
 .Ar sme_refresh
 function callback won't be used
-to refresh sensors data and the driver will use its own method (OPTIONAL).
+to refresh sensor data and the driver will use its own method (OPTIONAL).
 .It Fa sme_events_timeout
 This is used to specify the default timeout value (in seconds) that will be
 used to check for critical events if any monitoring flag was set (OPTIONAL).
@@ -140,9 +144,9 @@ If the driver wants to refresh sensors data via the
 .Nm
 framework, the following members may be specified:
 .Pp
-.Bl -tag -width "sme_sensor_data_xxxxxxxxx"
+.Bl -tag -width "sme_events_timeout"
 .It Fa sme_cookie
-Pointer to the device struct (also called
+Typically a pointer to the device struct (also called
 .Dq softc ) .
 This may be used in the
 .Sy sme_refresh ,
@@ -203,11 +207,11 @@ framework, the
 function must be used.
 If there were monitoring events registered for the
 driver, they all will be destroyed before the device is unregistered and
-its sensors will be detached; finally the
-.Nm
+its sensors are detached.
+Finally the
+.Em sysmon_envsys
 object will be freed, so there's no need to call
-.Fn sysmon_envsys_destroy
-if we are going to unregister a device.
+.Fn sysmon_envsys_destroy .
 .Ss DEVICE CLASSES
 The
 .Fa sme_class
@@ -245,12 +249,13 @@ event to the
 .Xr powerd 8
 daemon (if running) when all battery devices are in a critical state.
 (The critical state occurs when a battery is not currently charging
-and its charge state is low or critical).
+and its charge state is low or critical.)
 When the
 .Em low-power
 condition is met, an event is sent to the
 .Xr powerd 8
-daemon (if running) and will shutdown the system gracefully via the
+daemon (if running), which will shutdown the system gracefully
+by executing the
 .Fa /etc/powerd/scripts/sensor_battery
 script.
 .Pp
@@ -473,11 +478,11 @@ Enables and registers a new event to monitor a critical state.
 Enables and registers a new event to monitor a sensor's value crossing
 limits or thresholds.
 .It Dv ENVSYS_FMONSTCHANGED
-Enables and registers a new event to monitor Battery capacity or drive state
+Enables and registers a new event to monitor battery capacity or drive state
 sensors.
-It won't be effective if the
+The flag is not effective if the
 .Ar units
-member is not set to
+member is not
 .Dv ENVSYS_DRIVE
 or
 .Dv ENVSYS_BATTERY_CAPACITY .
@@ -485,13 +490,13 @@ or
 Disallows setting of limits (or thresholds) via the
 .Dv ENVSYS_SETDICTIONARY
 .Xr ioctl 2 .
-This flag has no effect on monitoring flags set in the driver and is
-only disables setting the limits from userland.
+This flag only disables setting the limits from userland.
+It has no effect on monitoring flags set by the driver.
 .El
 .Pp
 .Em If the driver has to use any of the
 .Ar value_max ,
-.Ar value_min
+.Ar value_min ,
 .Em or
 .Ar value_avg
 .Em members, they should be marked as valid with the appropriate flag .
@@ -547,13 +552,13 @@ member must be set to one of the following predefined capacity states:
 .Pp
 .Bl -tag -width "ENVSYS_BATTERY_CAPACITY_CRITICAL" -compact
 .It Dv ENVSYS_BATTERY_CAPACITY_NORMAL
-Battery charge is in normal capacity.
+Battery charge is normal.
 .It Dv ENVSYS_BATTERY_CAPACITY_CRITICAL
-Battery charge is in critical capacity.
+Battery charge is critical.
 .It Dv ENVSYS_BATTERY_CAPACITY_LOW
-Battery charge is in low capacity.
+Battery charge is low.
 .It Dv ENVSYS_BATTERY_CAPACITY_WARNING
-Battery charge is in warning capacity.
+Battery charge is on or below the warning capacity.
 .El
 .It
 The
@@ -576,7 +581,7 @@ The following types shouldn't need any conversion:
 .Dv ENVSYS_BATTERY_CAPACITY ,
 .Dv ENVSYS_BATTERY_CHARGE ,
 .Dv ENVSYS_INDICATOR ,
-.Dv ENVSYS_INTEGER
+.Dv ENVSYS_INTEGER ,
 and
 .Dv ENVSYS_DRIVE .
 .Pp
@@ -680,5 +685,5 @@ developers around the world.
 .Pp
 The first
 .Em envsys
-framework was implemented by Jason R. Thorpe, Tim Rightnour
-and Bill Squier.
+framework was implemented by
+Jason R. Thorpe, Tim Rightnour, and Bill Squier.
