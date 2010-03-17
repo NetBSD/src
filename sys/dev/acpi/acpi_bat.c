@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.90 2010/03/17 09:21:50 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.91 2010/03/17 11:07:59 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.90 2010/03/17 09:21:50 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.91 2010/03/17 11:07:59 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -438,7 +438,7 @@ out:
 static void
 acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 {
-	const char *tech;
+	const char *tech, *unit = "Wh";
 	int i;
 
 	for (i = ACPIBAT_BIF_OEM; i > ACPIBAT_BIF_GRANULARITY2; i--) {
@@ -453,6 +453,9 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 	tech = (elm[ACPIBAT_BIF_TECHNOLOGY].Integer.Value != 0) ?
 	    "secondary (rechargeable)" : "primary (non-rechargeable)";
 
+	if ((elm[ACPIBAT_BIF_UNIT].Integer.Value & ACPIBAT_PWRUNIT_MA) != 0)
+		unit = "Ah";
+
 	aprint_normal_dev(dv, "%s %s %s battery\n", tech,
 	    elm[ACPIBAT_BIF_OEM].String.Pointer,
 	    elm[ACPIBAT_BIF_TYPE].String.Pointer);
@@ -460,6 +463,24 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 	aprint_verbose_dev(dv, "serial number %s, model number %s\n",
 	    elm[ACPIBAT_BIF_SERIAL].String.Pointer,
 	    elm[ACPIBAT_BIF_MODEL].String.Pointer);
+
+#define SCALE(x) (((int)x) / 1000000), ((((int)x) % 1000000) / 1000)
+
+	/*
+	 * These values are defined as follows (ACPI 4.0, p. 388):
+	 *
+	 * Granularity 1.	"Battery capacity granularity between low
+	 *			 and warning in [mAh] or [mWh]. That is,
+	 *			 this is the smallest increment in capacity
+	 *			 that the battery is capable of measuring."
+	 *
+	 * Granularity 2.	"Battery capacity granularity between warning
+	 *			 and full in [mAh] or [mWh]. [...]"
+	 */
+	aprint_verbose_dev(dv,
+	    "granularity 1. %d.%03d %s, granularity 2. %d.%03d %s\n",
+	    SCALE(elm[ACPIBAT_BIF_GRANULARITY1].Integer.Value * 1000), unit,
+	    SCALE(elm[ACPIBAT_BIF_GRANULARITY2].Integer.Value * 1000), unit);
 }
 
 /*
