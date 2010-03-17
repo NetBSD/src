@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.217 2010/03/13 18:27:55 riz Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.218 2010/03/17 03:25:49 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -16956,4 +16956,65 @@ usr.sbin/pppd/pppd/sys-bsd.c			1.62
 
 	PR/42943: Takashi Sogabe: pppd generates invalid netmask
 	[christos, ticket #1335]
+
+sys/arch/sparc64/sparc64/cpu.c			1.91 via patch
+
+	Don't print cache sizes * associativity.
+	[mrg, ticket #1331]
+
+sys/compat/common/vfs_syscalls_30.c		1.31
+sys/compat/ibcs2/ibcs2_misc.c			1.110
+sys/compat/irix/irix_dirent.c			1.24
+sys/compat/linux/common/linux_file64.c		1.50
+sys/compat/linux/common/linux_misc.c		1.214
+sys/compat/linux32/common/linux32_dirent.c	1.10
+sys/compat/sunos/sunos_misc.c			1.166
+sys/compat/sunos32/sunos32_misc.c		1.69
+sys/compat/svr4/svr4_misc.c			1.149
+sys/compat/svr4_32/svr4_32_misc.c		1.68
+
+	When implementing "read directory", when there are too many empty
+	entries in a row, and we need to try to read the next block, and
+	have passed a non-NULL cookie pointer to VOP_READDIR, ensure that
+	we free the cookie buffer before re-doing VOP_READDIR, so that we
+	don't leak memory.  This fix is similar to nfs_serv.c revisions
+	1.115 + 1.124.
+	This should fix the long-standing problem observed by e.g. using
+	Linux-emulated programs to take backup of servers, which is one of
+	the problems which were reported in PR#42661.
+	[he, ticket #1323]
+
+usr.bin/passwd/pam_passwd.c			1.6
+
+	Do not call pam_end with an invalid handle if pam_start failed.
+	[joerg, ticket #1333]
+
+sys/arch/sparc64/include/pmap.h			patch
+sys/arch/sparc64/sparc64/cache.h		patch
+sys/arch/sparc64/sparc64/ipifuncs.c		patch
+sys/arch/sparc64/sparc64/locore.s		patch
+sys/arch/sparc64/sparc64/machdep.c		patch
+sys/arch/sparc64/sparc64/pmap.c			patch
+
+	- flush the dcache around pmap_{zero,copy}_page()
+	- convert all blast_dcache() / dcache_flush_page() calls to
+	  properly handle flushes in all cpus as necessary
+	[mrg, ticket #1343]
+
+distrib/sets/lists/comp/mi			patch
+distrib/sets/lists/xcomp/md.macppc		patch
+distrib/sets/lists/xcomp/md.sgimips		patch
+distrib/sets/lists/xcomp/md.sparc		patch
+distrib/sets/lists/xcomp/md.sparc64		patch
+distrib/sets/lists/xcomp/mi			patch
+
+	Fix some set list issues with MKDEBUG=yes.
+	Fixes PR toolchain/42938.
+	[mrg, ticket #1342]
+
+sys/dev/wscons/wsemul_sun.c			1.28
+
+	Add mappings for KS_End/KS_KP_End, so that the `End' key actually
+	does something.
+	[jdc, ticket #1340]
 
