@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.89 2010/03/17 08:07:27 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.90 2010/03/17 09:21:50 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.89 2010/03/17 08:07:27 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.90 2010/03/17 09:21:50 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -97,17 +97,16 @@ ACPI_MODULE_NAME		 ("acpi_bat")
  */
 enum {
 	ACPIBAT_PRESENT		 = 0,
-	ACPIBAT_TECHNOLOGY	 = 1,
-	ACPIBAT_DVOLTAGE	 = 2,
-	ACPIBAT_VOLTAGE		 = 3,
-	ACPIBAT_DCAPACITY	 = 4,
-	ACPIBAT_LFCCAPACITY	 = 5,
-	ACPIBAT_CAPACITY	 = 6,
-	ACPIBAT_CHARGERATE	 = 7,
-	ACPIBAT_DISCHARGERATE	 = 8,
-	ACPIBAT_CHARGING	 = 9,
-	ACPIBAT_CHARGE_STATE	 = 10,
-	ACPIBAT_COUNT		 = 11
+	ACPIBAT_DVOLTAGE	 = 1,
+	ACPIBAT_VOLTAGE		 = 2,
+	ACPIBAT_DCAPACITY	 = 3,
+	ACPIBAT_LFCCAPACITY	 = 4,
+	ACPIBAT_CAPACITY	 = 5,
+	ACPIBAT_CHARGERATE	 = 6,
+	ACPIBAT_DISCHARGERATE	 = 7,
+	ACPIBAT_CHARGING	 = 8,
+	ACPIBAT_CHARGE_STATE	 = 9,
+	ACPIBAT_COUNT		 = 10
 };
 
 /*
@@ -178,6 +177,7 @@ static int	    acpibat_detach(device_t, int);
 static int          acpibat_get_sta(device_t);
 static ACPI_OBJECT *acpibat_get_object(ACPI_HANDLE, const char *, int);
 static void         acpibat_get_info(device_t);
+static void	    acpibat_print_info(device_t, ACPI_OBJECT *);
 static void         acpibat_get_status(device_t);
 static void         acpibat_update_info(void *);
 static void         acpibat_update_status(void *);
@@ -349,14 +349,14 @@ acpibat_get_object(ACPI_HANDLE hdl, const char *pth, int count)
 /*
  * acpibat_get_info:
  *
- * 	Get, and possibly display, the battery info.
+ * 	Get the battery info.
  */
 static void
 acpibat_get_info(device_t dv)
 {
 	struct acpibat_softc *sc = device_private(dv);
 	ACPI_HANDLE hdl = sc->sc_node->ad_handle;
-	int capunit, i, j, rateunit, val;
+	int capunit, i, rateunit, val;
 	ACPI_OBJECT *elm, *obj;
 	ACPI_STATUS rv = AE_OK;
 
@@ -378,26 +378,6 @@ acpibat_get_info(device_t dv)
 
 		KDASSERT((uint64_t)elm[i].Integer.Value < INT_MAX);
 	}
-
-	aprint_verbose_dev(dv, "battery info: ");
-
-	for (i = j = ACPIBAT_BIF_OEM; i > ACPIBAT_BIF_GRANULARITY2; i--) {
-
-		if (elm[i].Type != ACPI_TYPE_STRING)
-			continue;
-
-		if (elm[i].String.Pointer == NULL)
-			continue;
-
-		aprint_verbose("%s ", elm[i].String.Pointer);
-
-		j = 0;
-	}
-
-	if (j != 0)
-		aprint_verbose("not available");
-
-	aprint_verbose("\n");
 
 	if ((elm[ACPIBAT_BIF_UNIT].Integer.Value & ACPIBAT_PWRUNIT_MA) != 0) {
 		capunit = ENVSYS_SAMPHOUR;
@@ -423,11 +403,6 @@ acpibat_get_info(device_t dv)
 	sc->sc_sensor[ACPIBAT_LFCCAPACITY].value_cur = val * 1000;
 	sc->sc_sensor[ACPIBAT_LFCCAPACITY].state = ACPIBAT_VAL_ISVALID(val);
 
-	/* Battery technology. */
-	val = elm[ACPIBAT_BIF_TECHNOLOGY].Integer.Value;
-	sc->sc_sensor[ACPIBAT_TECHNOLOGY].value_cur = val;
-	sc->sc_sensor[ACPIBAT_TECHNOLOGY].state = ACPIBAT_VAL_ISVALID(val);
-
 	/* Design voltage. */
 	val = elm[ACPIBAT_BIF_DVOLTAGE].Integer.Value;
 	sc->sc_sensor[ACPIBAT_DVOLTAGE].value_cur = val * 1000;
@@ -444,6 +419,8 @@ acpibat_get_info(device_t dv)
 	val = sc->sc_sensor[ACPIBAT_LFCCAPACITY].value_cur;
 	sc->sc_sensor[ACPIBAT_CAPACITY].value_max = val;
 
+	acpibat_print_info(dv, elm);
+
 out:
 	if (obj != NULL)
 		ACPI_FREE(obj);
@@ -454,9 +431,41 @@ out:
 }
 
 /*
+ * acpibat_print_info:
+ *
+ * 	Display the battery info.
+ */
+static void
+acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
+{
+	const char *tech;
+	int i;
+
+	for (i = ACPIBAT_BIF_OEM; i > ACPIBAT_BIF_GRANULARITY2; i--) {
+
+		if (elm[i].Type != ACPI_TYPE_STRING)
+			return;
+
+		if (elm[i].String.Pointer == NULL)
+			return;
+	}
+
+	tech = (elm[ACPIBAT_BIF_TECHNOLOGY].Integer.Value != 0) ?
+	    "secondary (rechargeable)" : "primary (non-rechargeable)";
+
+	aprint_normal_dev(dv, "%s %s %s battery\n", tech,
+	    elm[ACPIBAT_BIF_OEM].String.Pointer,
+	    elm[ACPIBAT_BIF_TYPE].String.Pointer);
+
+	aprint_verbose_dev(dv, "serial number %s, model number %s\n",
+	    elm[ACPIBAT_BIF_SERIAL].String.Pointer,
+	    elm[ACPIBAT_BIF_MODEL].String.Pointer);
+}
+
+/*
  * acpibat_get_status:
  *
- *	Get, and possibly display, the current battery line status.
+ *	Get the current battery status.
  */
 static void
 acpibat_get_status(device_t dv)
@@ -565,7 +574,7 @@ acpibat_update_info(void *arg)
 	if (rv > 0)
 		acpibat_get_info(dv);
 	else {
-		i = (rv < 0) ? 0 : ACPIBAT_TECHNOLOGY;
+		i = (rv < 0) ? 0 : ACPIBAT_DVOLTAGE;
 
 		while (i < ACPIBAT_COUNT) {
 			sc->sc_sensor[i].state = ENVSYS_SINVALID;
@@ -596,7 +605,7 @@ acpibat_update_status(void *arg)
 
 		acpibat_get_status(dv);
 	} else {
-		i = (rv < 0) ? 0 : ACPIBAT_TECHNOLOGY;
+		i = (rv < 0) ? 0 : ACPIBAT_DVOLTAGE;
 
 		while (i < ACPIBAT_COUNT) {
 			sc->sc_sensor[i].state = ENVSYS_SINVALID;
@@ -657,7 +666,6 @@ acpibat_init_envsys(device_t dv)
 	INITDATA(ACPIBAT_PRESENT, ENVSYS_INDICATOR, "present");
 	INITDATA(ACPIBAT_DCAPACITY, ENVSYS_SWATTHOUR, "design cap");
 	INITDATA(ACPIBAT_LFCCAPACITY, ENVSYS_SWATTHOUR, "last full cap");
-	INITDATA(ACPIBAT_TECHNOLOGY, ENVSYS_INTEGER, "technology");
 	INITDATA(ACPIBAT_DVOLTAGE, ENVSYS_SVOLTS_DC, "design voltage");
 	INITDATA(ACPIBAT_VOLTAGE, ENVSYS_SVOLTS_DC, "voltage");
 	INITDATA(ACPIBAT_CHARGERATE, ENVSYS_SWATTS, "charge rate");
@@ -677,7 +685,6 @@ acpibat_init_envsys(device_t dv)
 	sc->sc_sensor[ACPIBAT_DISCHARGERATE].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_sensor[ACPIBAT_DCAPACITY].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_sensor[ACPIBAT_LFCCAPACITY].flags = ENVSYS_FMONNOTSUPP;
-	sc->sc_sensor[ACPIBAT_TECHNOLOGY].flags = ENVSYS_FMONNOTSUPP;
 	sc->sc_sensor[ACPIBAT_DVOLTAGE].flags = ENVSYS_FMONNOTSUPP;
 
 	sc->sc_sme = sysmon_envsys_create();
