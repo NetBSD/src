@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.10 2006/10/21 23:49:29 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.10.66.1 2010/03/17 03:10:39 snj Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -75,11 +75,21 @@
 /* The following are for I$ and D$ flushes and are in locore.s */
 void 	dcache_flush_page(paddr_t);	/* flush page from D$ */
 void 	icache_flush_page(paddr_t);	/* flush page from I$ */
-void 	blast_dcache(void);		/* Clear entire D$ */
+void 	sp_blast_dcache(void);		/* Clear entire D$ */
 void 	blast_icache(void);		/* Clear entire I$ */
 
 /* The following flush a range from the D$ and I$ but not E$. */
 void	cache_flush_phys(paddr_t, psize_t, int);
+
+#ifdef MULTIPROCESSOR
+void smp_blast_dcache(sparc64_cpuset_t);
+void smp_dcache_flush_page_all(paddr_t pa);
+#define dcache_flush_page_all(pa)	smp_dcache_flush_page_all(pa)
+#define blast_dcache()                  smp_blast_dcache(cpus_active)
+#else
+#define dcache_flush_page_all(pa)	dcache_flush_page(pa)
+#define blast_dcache()			sp_blast_dcache()
+#endif
 
 /* Smallest E$ line size. */
 extern	int	ecache_min_line_size;
