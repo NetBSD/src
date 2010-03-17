@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.34 2008/10/26 08:32:02 bjs Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.34.16.1 2010/03/17 06:03:17 rmind Exp $	*/
 
 /*
  *
@@ -158,7 +158,7 @@ bool		amap_swap_off
  */
 
 struct vm_amap {
-	kmutex_t am_l;		/* lock [locks all vm_amap fields] */
+	kmutex_t *am_lock;	/* lock [locks all vm_amap fields] */
 	int am_ref;		/* reference count */
 	int am_flags;		/* flags */
 	int am_maxslot;		/* max # of slots allocated */
@@ -258,10 +258,10 @@ struct vm_amap {
  */
 
 #define amap_flags(AMAP)	((AMAP)->am_flags)
-#define amap_lock(AMAP)		mutex_enter(&(AMAP)->am_l)
-#define amap_lock_try(AMAP)	mutex_tryenter(&(AMAP)->am_l)
+#define amap_lock(AMAP)		mutex_enter((AMAP)->am_lock)
+#define amap_lock_try(AMAP)	mutex_tryenter((AMAP)->am_lock)
 #define amap_refs(AMAP)		((AMAP)->am_ref)
-#define amap_unlock(AMAP)	mutex_exit(&(AMAP)->am_l)
+#define amap_unlock(AMAP)	mutex_exit((AMAP)->am_lock)
 
 /*
  * if we enable PPREF, then we have a couple of extra functions that
@@ -273,11 +273,12 @@ struct vm_amap {
 #define PPREF_NONE ((int *) -1)	/* not using ppref */
 
 void		amap_pp_adjref		/* adjust references */
-			(struct vm_amap *, int, vsize_t, int);
+			(struct vm_amap *, int, vsize_t, int,
+			struct vm_anon **);
 void		amap_pp_establish	/* establish ppref */
 			(struct vm_amap *, vaddr_t);
 void		amap_wiperange		/* wipe part of an amap */
-			(struct vm_amap *, int, int);
+			(struct vm_amap *, int, int, struct vm_anon **);
 #endif	/* UVM_AMAP_PPREF */
 
 #endif /* _KERNEL */

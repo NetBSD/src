@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.77.4.1 2010/03/16 15:38:17 rmind Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.77.4.2 2010/03/17 06:03:18 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.77.4.1 2010/03/16 15:38:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.77.4.2 2010/03/17 06:03:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,8 +153,9 @@ uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 	/*
 	 * lock us the rest of the way down (we unlock before return)
 	 */
-	if (aref->ar_amap)
+	if (aref->ar_amap) {
 		amap_lock(aref->ar_amap);
+	}
 
 	/*
 	 * loop until done
@@ -179,12 +180,12 @@ uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 		} else if (UVM_ET_ISCOPYONWRITE(ufi->entry)) {
 			rv = uvm_loanzero(ufi, output, flags);
 		} else {
-			uvmfault_unlockall(ufi, aref->ar_amap, uobj, NULL);
+			uvmfault_unlockall(ufi, aref->ar_amap, uobj);
 			rv = -1;
 		}
 		/* locked: if (rv > 0) => map, amap, uobj  [o.w. unlocked] */
 		KASSERT(rv > 0 || aref->ar_amap == NULL ||
-		    !mutex_owned(&aref->ar_amap->am_l));
+		    !mutex_owned(aref->ar_amap->am_lock));
 		KASSERT(rv > 0 || uobj == NULL ||
 		    !mutex_owned(uobj->vmobjlock));
 
@@ -214,8 +215,9 @@ uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 	 * unlock what we locked, unlock the maps and return
 	 */
 
-	if (aref->ar_amap)
+	if (aref->ar_amap) {
 		amap_unlock(aref->ar_amap);
+	}
 	uvmfault_unlockmaps(ufi, false);
 	UVMHIST_LOG(loanhist, "done %d", result, 0,0,0);
 	return (result);
@@ -359,14 +361,14 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 	 */
 
 	if (flags & UVM_LOAN_TOANON) {
-		mutex_enter(&anon->an_lock);
+		KASSERT(mutex_owned(anon->an_lock));
 		pg = anon->an_page;
 		if (pg && (pg->pqflags & PQ_ANON) != 0 && anon->an_ref == 1) {
 			if (pg->wire_count > 0) {
 				UVMHIST_LOG(loanhist, "->A wired %p", pg,0,0,0);
 				uvmfault_unlockall(ufi,
 				    ufi->entry->aref.ar_amap,
-				    ufi->entry->object.uvm_obj, anon);
+				    ufi->entry->object.uvm_obj);
 				return (-1);
 			}
 			pmap_page_protect(pg, VM_PROT_READ);
@@ -374,7 +376,6 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 		anon->an_ref++;
 		**output = anon;
 		(*output)++;
-		mutex_exit(&anon->an_lock);
 		UVMHIST_LOG(loanhist, "->A done", 0,0,0,0);
 		return (1);
 	}
@@ -385,7 +386,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 	 * this for us.
 	 */
 
-	mutex_enter(&anon->an_lock);
+	KASSERT(mutex_owned(anon->an_lock));
 	error = uvmfault_anonget(ufi, ufi->entry->aref.ar_amap, anon);
 
 	/*
@@ -421,8 +422,7 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 		mutex_exit(&uvm_pageqlock);
 		UVMHIST_LOG(loanhist, "->K wired %p", pg,0,0,0);
 		KASSERT(pg->uobject == NULL);
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
-		    NULL, anon);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 		return (-1);
 	}
 	if (pg->loan_count == 0) {
@@ -434,10 +434,9 @@ uvm_loananon(struct uvm_faultinfo *ufi, void ***output, int flags,
 	**output = pg;
 	(*output)++;
 
-	/* unlock anon and return success */
+	/* unlock and return success */
 	if (pg->uobject)
 		mutex_exit(pg->uobject->vmobjlock);
-	mutex_exit(&anon->an_lock);
 	UVMHIST_LOG(loanhist, "->K done", 0,0,0,0);
 	return (1);
 }
@@ -626,7 +625,6 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_page *pg;
-	struct vm_anon *anon;
 	int error, npages;
 	bool locked;
 
@@ -658,7 +656,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	 */
 
 	if (error && error != EBUSY) {
-		uvmfault_unlockall(ufi, amap, uobj, NULL);
+		uvmfault_unlockall(ufi, amap, uobj);
 		return (-1);
 	}
 
@@ -667,7 +665,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	 */
 
 	if (error == EBUSY) {
-		uvmfault_unlockall(ufi, amap, NULL, NULL);
+		uvmfault_unlockall(ufi, amap, NULL);
 
 		/* locked: uobj */
 		npages = 1;
@@ -704,7 +702,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 		    (locked && amap && amap_lookup(&ufi->entry->aref,
 		    ufi->orig_rvaddr - ufi->entry->start))) {
 			if (locked)
-				uvmfault_unlockall(ufi, amap, NULL, NULL);
+				uvmfault_unlockall(ufi, amap, NULL);
 			locked = false;
 		}
 
@@ -743,7 +741,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 
 	if ((flags & UVM_LOAN_TOANON) == 0) {
 		if (uvm_loanpage(&pg, 1)) {
-			uvmfault_unlockall(ufi, amap, uobj, NULL);
+			uvmfault_unlockall(ufi, amap, uobj);
 			return (-1);
 		}
 		mutex_exit(uobj->vmobjlock);
@@ -752,6 +750,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 		return (1);
 	}
 
+#ifdef notdef
 	/*
 	 * must be a loan to an anon.   check to see if there is already
 	 * an anon associated with this page.  if so, then just return
@@ -761,9 +760,9 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 
 	if (pg->uanon) {
 		anon = pg->uanon;
-		mutex_enter(&anon->an_lock);
+		mutex_enter(anon->an_lock);
 		anon->an_ref++;
-		mutex_exit(&anon->an_lock);
+		mutex_exit(anon->an_lock);
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
@@ -792,7 +791,6 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 		pg->uanon = NULL;
 		anon->an_page = NULL;
 		anon->an_ref--;
-		mutex_exit(&anon->an_lock);
 		uvm_anfree(anon);
 		goto fail;
 	}
@@ -800,6 +798,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 		pmap_page_protect(pg, VM_PROT_READ);
 	}
 	pg->loan_count++;
+	anon->an_lock = 
 	uvm_pageactivate(pg);
 	mutex_exit(&uvm_pageqlock);
 	if (pg->flags & PG_WANTED) {
@@ -824,6 +823,7 @@ fail:
 	pg->flags &= ~(PG_WANTED|PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
 	uvmfault_unlockall(ufi, amap, uobj, NULL);
+#endif	/* notdef */
 	return (-1);
 }
 
@@ -844,7 +844,6 @@ static kmutex_t uvm_loanzero_lock;
 static int
 uvm_loanzero(struct uvm_faultinfo *ufi, void ***output, int flags)
 {
-	struct vm_anon *anon;
 	struct vm_page *pg;
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 
@@ -861,7 +860,7 @@ again:
 		while ((pg = uvm_pagealloc(&uvm_loanzero_object, 0, NULL,
 					   UVM_PGA_ZERO)) == NULL) {
 			mutex_exit(uvm_loanzero_object.vmobjlock);
-			uvmfault_unlockall(ufi, amap, NULL, NULL);
+			uvmfault_unlockall(ufi, amap, NULL);
 			uvm_wait("loanzero");
 			if (!uvmfault_relock(ufi)) {
 				return (0);
@@ -891,6 +890,7 @@ again:
 		return (1);
 	}
 
+#ifdef notdef
 	/*
 	 * loaning to an anon.  check to see if there is already an anon
 	 * associated with this page.  if so, then just return a reference
@@ -930,6 +930,9 @@ again:
 	**output = anon;
 	(*output)++;
 	return (1);
+#else
+	return (-1);
+#endif
 }
 
 
@@ -942,20 +945,22 @@ again:
 static void
 uvm_unloananon(struct vm_anon **aloans, int nanons)
 {
+#ifdef notdef
 	struct vm_anon *anon;
 
 	while (nanons-- > 0) {
 		int refs;
 
 		anon = *aloans++;
-		mutex_enter(&anon->an_lock);
+		mutex_enter(anon->an_lock);
 		refs = --anon->an_ref;
-		mutex_exit(&anon->an_lock);
+		mutex_exit(anon->an_lock);
 
 		if (refs == 0) {
 			uvm_anfree(anon);
 		}
 	}
+#endif	/* notdef */
 }
 
 /*
@@ -985,15 +990,13 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 			if (pg->uobject != NULL) {
 				slock = pg->uobject->vmobjlock;
 			} else {
-				slock = &pg->uanon->an_lock;
+				slock = pg->uanon->an_lock;
 			}
 			if (mutex_tryenter(slock)) {
 				break;
 			}
-			mutex_exit(&uvm_pageqlock);
 			/* XXX Better than yielding but inadequate. */
-			kpause("livelock", false, 1, NULL);
-			mutex_enter(&uvm_pageqlock);
+			kpause("livelock", false, 1, &uvm_pageqlock);
 			slock = NULL;
 		}
 
@@ -1193,7 +1196,7 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 {
 	struct vm_page *pg;
 
-	KASSERT(mutex_owned(&anon->an_lock));
+	KASSERT(mutex_owned(anon->an_lock));
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
 
 	/* get new un-owned replacement page */
@@ -1202,9 +1205,6 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 		return ENOMEM;
 	}
 
-	/*
-	 * copy data, kill loan, and drop uobj lock (if any)
-	 */
 	/* copy old -> new */
 	uvm_pagecopy(anon->an_page, pg);
 
