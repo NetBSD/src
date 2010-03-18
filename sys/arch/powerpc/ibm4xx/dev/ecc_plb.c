@@ -1,4 +1,4 @@
-/*	$NetBSD: ecc_plb.c,v 1.11 2006/05/05 18:04:42 thorpej Exp $	*/
+/*	$NetBSD: ecc_plb.c,v 1.12 2010/03/18 13:47:04 kiyohara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.11 2006/05/05 18:04:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.12 2010/03/18 13:47:04 kiyohara Exp $");
 
 #include "locators.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ecc_plb.c,v 1.11 2006/05/05 18:04:42 thorpej Exp $")
 #include <prop/proplib.h>
 
 #include <machine/cpu.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
 
 
