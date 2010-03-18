@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.3 2010/03/18 11:00:03 tron Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -48,6 +48,10 @@
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_pmap.h>
 
+#if defined(__amd64__) || defined(__i386__)
+#include <x86/include/cpu_counter.h>
+#endif
+
 extern uintptr_t 	kernelbase;
 extern uintptr_t 	dtrace_in_probe_addr;
 extern int		dtrace_in_probe;
@@ -60,6 +64,8 @@ typedef struct dtrace_invop_hdlr {
 } dtrace_invop_hdlr_t;
 
 dtrace_invop_hdlr_t *dtrace_invop_hdlr;
+
+void dtrace_gethrtime_init(void *arg);
 
 int
 dtrace_invop(uintptr_t addr, uintptr_t *stack, uintptr_t eax)
@@ -372,8 +378,10 @@ dtrace_safe_defer_signal(void)
 }
 #endif
 
+#if 0
 static int64_t	tgt_cpu_tsc;
 static int64_t	hst_cpu_tsc;
+#endif
 static int64_t	tsc_skew[MAXCPUS];
 static uint64_t	nsec_scale;
 
@@ -389,6 +397,7 @@ dtrace_rdtsc(void)
 	return (rv);
 }
 
+#if 0
 static void
 dtrace_gethrtime_init_sync(void *arg)
 {
@@ -408,7 +417,9 @@ dtrace_gethrtime_init_sync(void *arg)
 	}
 #endif
 }
+#endif
 
+#if 0
 static void
 dtrace_gethrtime_init_cpu(void *arg)
 {
@@ -419,6 +430,7 @@ dtrace_gethrtime_init_cpu(void *arg)
 	else
 		hst_cpu_tsc = dtrace_rdtsc();
 }
+#endif
 
 void
 dtrace_gethrtime_init(void *arg)
