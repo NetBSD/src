@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.89 2010/02/27 11:16:38 roy Exp $	 */
+/*	$NetBSD: rtld.h,v 1.90 2010/03/18 22:17:55 roy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -61,13 +61,14 @@ extern size_t _rtld_pagesz;
 
 /*
  * Fill in a DoneList with an allocation large enough to hold all of
- * the currently-loaded objects.
+ * the currently-loaded objects. Keep this in a macro since it calls
+ * alloca and we want that to occur within the scope of the caller.
  */
-#define _rtld_donelist_init(dlp)						\
-    ((dlp)->objs = xmalloc(_rtld_objcount * sizeof((dlp)->objs[0])),	\
-    (dlp)->num_alloc = _rtld_objcount,					\
+#define _rtld_donelist_init(dlp)					\
+    ((dlp)->num_alloc = _rtld_objcount,					\
+    (dlp)->objs = alloca((dlp)->num_alloc * sizeof((dlp)->objs[0])),	\
+    assert((dlp)->objs != NULL),					\
     (dlp)->num_used = 0)
-#define _rtld_donelist_clear(dlp)		xfree((dlp)->objs)
 
 #endif /* _RTLD_SOURCE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.51 2010/02/27 11:16:38 roy Exp $	 */
+/*	$NetBSD: symbol.c,v 1.52 2010/03/18 22:17:55 roy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.51 2010/02/27 11:16:38 roy Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.52 2010/03/18 22:17:55 roy Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -478,8 +478,6 @@ _rtld_symlook_default(const char *name, unsigned long hash,
 			defobj = &_rtld_objself;
 		}
 	}
-
-	_rtld_donelist_clear(&donelist);
 
 	if (def != NULL)
 		*defobj_out = defobj;
