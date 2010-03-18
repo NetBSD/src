@@ -1,5 +1,5 @@
-/*	$NetBSD: obs200_machdep.c,v 1.12 2010/03/18 14:15:38 kiyohara Exp $	*/
-/*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
+/*	$NetBSD: obs600_machdep.c,v 1.1 2010/03/18 14:15:38 kiyohara Exp $	*/
+/*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.12 2010/03/18 14:15:38 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs600_machdep.c,v 1.1 2010/03/18 14:15:38 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -76,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.12 2010/03/18 14:15:38 kiyohara
 #include "opt_modular.h"
 
 #include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/ksyms.h>
 #include <sys/mount.h>
@@ -88,17 +90,17 @@ __KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.12 2010/03/18 14:15:38 kiyohara
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/obs200.h>
-#include <machine/century_bios.h>
-#include <powerpc/spr.h>
-#include <powerpc/ibm4xx/spr.h>
+#include <machine/obs600.h>
+
+#include <powerpc/ibm4xx/amcc405ex.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
-#include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <powerpc/ibm4xx/dev/gpiicreg.h>
+#include <powerpc/ibm4xx/dev/opbvar.h>
+#include <powerpc/ibm4xx/spr.h>
+#include <powerpc/spr.h>
 
 #include <dev/ic/comreg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pciconf.h>
 
 #include "ksyms.h"
 
@@ -107,10 +109,10 @@ __KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.12 2010/03/18 14:15:38 kiyohara
 #include <sys/termios.h>
 
 #ifndef CONADDR
-#define CONADDR		IBM405GP_UART0_BASE
+#define CONADDR		AMCC405EX_UART0_BASE
 #endif
 #ifndef CONSPEED
-#define CONSPEED	B9600
+#define CONSPEED	B115200
 #endif
 #ifndef CONMODE
 			/* 8N1 */
@@ -118,7 +120,14 @@ __KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.12 2010/03/18 14:15:38 kiyohara
 #endif
 #endif	/* NCOM */
 
-#define	TLB_PG_SIZE 	(16*1024*1024)
+/*
+ * XXXX:
+ * It is very troublesome though we can calculate from various registers. X-<
+ */
+#define OBS600_CPU_FREQ	(600 * 1000 * 1000)
+#define OBS600_MEM_SIZE	(1 * 1024 * 1024 * 1024)
+
+#define	TLB_PG_SIZE 	(16 * 1024 * 1024)
 
 /*
  * Global variables used here and there
@@ -131,38 +140,37 @@ extern paddr_t msgbuf_paddr;
 void *startsym, *endsym;
 #endif
 
-void initppc(u_int, u_int, char *, void *);
+void initppc(u_int, u_int, int, char *[], char *);
 int lcsplx(int);
+static int read_eeprom(int, char *);
 
 
 void
-initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
+initppc(u_int startkernel, u_int endkernel, int argc, char *argv[],
+	char *argstr)
 {
-	u_int32_t pllmode;
-	u_int32_t psr;
 	vaddr_t va;
 	u_int memsize;
 
-	/* Disable all external interrupts */
-	mtdcr(DCR_UIC0_BASE + DCR_UIC_ER, 0);
-	pllmode = mfdcr(DCR_CPC0_PLLMR);
-	psr = mfdcr(DCR_CPC0_PSR);
+	memsize = OBS600_MEM_SIZE;
 
-	/* Setup board from BIOS */
-	bios_board_init(info_block, startkernel);
-	memsize = bios_board_memsize_get();
-
-	/* Linear map kernel memory. */
+	/* Linear map kernel memory */
 	for (va = 0; va < endkernel; va += TLB_PG_SIZE)
 		ppc4xx_tlb_reserve(va, va, TLB_PG_SIZE, TLB_EX);
 
-	/* Map console after physmem (see pmap_tlbmiss()). */
-	ppc4xx_tlb_reserve(CONADDR, roundup(memsize, TLB_PG_SIZE), TLB_PG_SIZE,
-	    TLB_I | TLB_G);
+	/*
+	 * Map console and I2C after RAM. (see pmap_tlbmiss())
+	 * All peripherals mapped on a page.
+	 */
+	ppc4xx_tlb_reserve(AMCC405EX_OPB_BASE, roundup(memsize, TLB_PG_SIZE),
+	    TLB_PG_SIZE, TLB_I | TLB_G);
 
-	/* Initialize IBM405GPr CPU */
+	/* Initialize AMCC 405EX CPU */
 	ibm40x_memsize_init(memsize, startkernel);
 	ibm4xx_init((void (*)(void))ext_intr);
+
+	/* Disable Watchdog, PIT and FIT interrupts. (u-boot uses PIT...) */
+	mtspr(SPR_TCR, 0);
 
 	/*
 	 * Set the page size.
@@ -174,11 +182,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#ifdef DEBUG
-	bios_board_print();
-	printf("  PLL Mode Register = 0x%08x\n", pllmode);
-	printf("  Chip Pin Strapping Register = 0x%08x\n", psr);
-#endif
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
@@ -202,8 +205,8 @@ consinit(void)
 {
 
 #if (NCOM > 0)
-	com_opb_cnattach(OBS200_COM_FREQ, CONADDR, CONSPEED, CONMODE);
-#endif
+	com_opb_cnattach(OBS600_COM_FREQ, CONADDR, CONSPEED, CONMODE);
+#endif /* NCOM */
 }
 
 int
@@ -220,16 +223,64 @@ lcsplx(int ipl)
 void
 cpu_startup(void)
 {
+	prop_number_t pn;
+	prop_data_t pd;
+	u_char *macaddr, *macaddr1;
+	static u_char buf[16];	/* MAC address x2 buffer */
 
 	/*
 	 * cpu common startup
 	 */
-	ibm4xx_cpu_startup("OpenBlockS S/R IBM PowerPC 405GP Board");
+	ibm4xx_cpu_startup("OpenBlockS600 AMCC PowerPC 405EX Board");
 
 	/*
 	 * Set up the board properties database.
 	 */
-	bios_board_info_set();
+	board_info_init();
+
+	read_eeprom(sizeof(buf), buf);
+	macaddr = &buf[0];
+	macaddr1 = &buf[8];
+
+	pn = prop_number_create_integer(OBS600_CPU_FREQ);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "processor-frequency", pn) ==
+	    false)
+		panic("setting processor-frequency");
+	prop_object_release(pn);
+
+	pn = prop_number_create_integer(OBS600_MEM_SIZE);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == false)
+		panic("setting mem-size");
+	prop_object_release(pn);
+
+#define ETHER_ADDR_LEN	6
+
+	pd = prop_data_create_data_nocopy(macaddr, ETHER_ADDR_LEN);
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(board_properties, "emac0-mac-addr", pd) ==
+	    false)
+		panic("setting emac0-mac-addr");
+	prop_object_release(pd);
+	pd = prop_data_create_data_nocopy(macaddr1, ETHER_ADDR_LEN);
+	KASSERT(pd != NULL);
+	if (prop_dictionary_set(board_properties, "emac1-mac-addr", pd) ==
+	    false)
+		panic("setting emac1-mac-addr");
+	prop_object_release(pd);
+
+	/* emac0 connects to phy 2 and emac1 to phy 3 via RGMII. */
+	pn = prop_number_create_integer(2);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "emac0-mii-phy", pn) == false)
+		panic("setting emac0-mii-phy");
+	prop_object_release(pn);
+	pn = prop_number_create_integer(3);
+	KASSERT(pn != NULL);
+	if (prop_dictionary_set(board_properties, "emac1-mii-phy", pn) == false)
+		panic("setting emac1-mii-phy");
+	prop_object_release(pn);
 
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
@@ -323,97 +374,67 @@ cpu_reboot(int howto, char *what)
 #endif
 }
 
-int
-pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+/* This function assume already initialized for I2C... */
+static int
+read_eeprom(int len, char *buf)
 {
+	bus_space_tag_t bst = opb_get_bus_space_tag();
+	bus_space_handle_t bsh;
+	uint8_t mdcntl, sts;
+	int cnt, i = 0;
 
-	/*
-	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
-	 * use, can have devices 0-32 (i.e. the `normal' range).
-	 */
-	return 31;
-}
+#define I2C_EEPROM_ADDR	0x52
 
-int
-pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	/*
-	 * We need to map the interrupt pin to the interrupt bit
-	 * in the UIC associated with it.
-	 *
-	 * This platform has 4 PCI devices.
-	 *
-	 # External IRQ Mappings:
-	 *  dev 7 (Ext IRQ3):	Realtek 8139 Ethernet
-	 *  dev 8 (Ext IRQ0):	PCI Connector
-	 */
-	static const int irqmap[15/*device*/][4/*pin*/] = {
-		{ -1, -1, -1, -1 },	/*  1: none */
-		{ -1, -1, -1, -1 },	/*  2: none */
-		{ -1, -1, -1, -1 },	/*  3: none */
-		{ -1, -1, -1, -1 },	/*  4: none */
-		{ -1, -1, -1, -1 },	/*  5: none */
-		{ -1, -1, -1, -1 },	/*  6: none */
-		{  3, -1, -1, -1 },	/*  7: none */
-		{  0, -1, -1, -1 },	/*  8: none */
-		{ -1, -1, -1, -1 },	/*  9: none */
-		{ -1, -1, -1, -1 },	/* 10: none */
-		{ -1, -1, -1, -1 },	/* 11: none */
-		{ -1, -1, -1, -1 },	/* 12: none */
-		{ -1, -1, -1, -1 },	/* 13: none */
-		{ -1, -1, -1, -1 },	/* 14: none */
-		{ -1, -1, -1, -1 },	/* 15: none */
-	};
+	if (bus_space_map(bst, AMCC405EX_IIC0_BASE, IIC_NREG, 0, &bsh))
+		return ENOMEM; /* ??? */
 
-	int pin, dev, irq;
+	/* Clear Stop Complete Bit */
+	bus_space_write_1(bst, bsh, IIC_STS, IIC_STS_SCMP);
+	/* Check init */
+	do {
+		/* Get status */
+		sts = bus_space_read_1(bst, bsh, IIC_STS);
+	} while ((sts & IIC_STS_PT));
 
-	pin = pa->pa_intrpin;
-	dev = pa->pa_device;
-        *ihp = -1;
+	mdcntl = bus_space_read_1(bst, bsh, IIC_MDCNTL);
+	bus_space_write_1(bst, bsh, IIC_MDCNTL,
+	    mdcntl | IIC_MDCNTL_FMDB | IIC_MDCNTL_FSDB);
 
-	/* if interrupt pin not used... */
-	if (pin == 0)
-		return 1;
+	/* 7-bit adressing */
+	bus_space_write_1(bst, bsh, IIC_HMADR, 0);
+	bus_space_write_1(bst, bsh, IIC_LMADR, I2C_EEPROM_ADDR << 1);
 
-	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
-		return 1;
-	}
+	bus_space_write_1(bst, bsh, IIC_MDBUF, 0);
+	bus_space_write_1(bst, bsh, IIC_CNTL, IIC_CNTL_PT);
+	do {
+		/* Get status */
+		sts = bus_space_read_1(bst, bsh, IIC_STS);
+	} while ((sts & IIC_STS_PT) && !(sts & IIC_STS_ERR));
 
-	if ((dev < 1) || (dev > 15)) {
-		printf("pci_intr_map: bad device %d\n", dev);
-		return 1;
-	}
+	cnt = 0;
+	while (cnt < len) {
+		/* always read 4byte */
+		bus_space_write_1(bst, bsh, IIC_CNTL,
+		    IIC_CNTL_PT | IIC_CNTL_RW | IIC_CNTL_TCT);
+		do {
+			/* Get status */
+			sts = bus_space_read_1(bst, bsh, IIC_STS);
+		} while ((sts & IIC_STS_PT) && !(sts & IIC_STS_ERR));
 
-
-	if ((irq = irqmap[dev - 1][pin - 1]) == -1) {
-		printf("pci_intr_map: no IRQ routing for device %d pin %d\n",
-			dev, pin);
-		return 1;
-	}
-
-	*ihp = irq + 25;
-	return 0;
-}
-
-void
-pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
-			int swiz, int *iline)
-{
-	static const int ilinemap[15/*device*/] = {
-		-1, -1, -1, -1,		/* device  1 -  4 */
-		-1, -1, 28, 25,		/* device  5 -  8 */
-		-1, -1, -1, -1,		/* device  9 - 12 */
-		-1, -1, -1,		/* device 13 - 15 */
-	};
-
-	if (bus == 0) {
-		if ((dev < 1) || (dev > 15)) {
-			printf("pci_intr_map: bad device %d\n", dev);
-			*iline = 0;
-			return;
+		if ((sts & IIC_STS_PT) || (sts & IIC_STS_ERR))
+			break;
+		if (sts & IIC_STS_MDBS) {
+			delay(1);
+			/* read 4byte */
+			for (i = 0; i < 4 && cnt < len; i++, cnt++)
+				buf[cnt] =
+				    bus_space_read_1(bst, bsh, IIC_MDBUF);
 		}
-		*iline = ilinemap[dev - 1];
-	} else
-		*iline = 19 + ((swiz + dev + 1) & 3);
+	}
+	for ( ; i < 4; i++)
+		(void) bus_space_read_1(bst, bsh, IIC_MDBUF);
+
+	bus_space_unmap(bst, bsh, IIC_NREG);
+
+	return (cnt == len) ? 0 : EINVAL;
 }

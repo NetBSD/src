@@ -1,13 +1,13 @@
-#	$NetBSD: OPENBLOCKS266,v 1.48 2010/03/18 14:15:38 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.1 2010/03/18 14:15:38 kiyohara Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
-include		"arch/evbppc/conf/std.obs266"
+include		"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.48 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.1 $"
 
 maxusers	32
 
@@ -149,38 +149,22 @@ config		netbsd	root on ? type ?
 plb0 at root				# Processor Local Bus
 cpu0	at plb?				# CPU
 ecc0	at plb? irq 17			# On-chip ECC controller
-pchb0	at plb?				# PCI-Host bridges
 
 # On-chip Peripheral Bus support
 opb*	at plb?				# On-chip Peripheral Bus
 wdog*	at opb?				# Watchdog timer
 com*	at opb? addr ? irq ?		# UARTs
-emac0	at opb? addr ? irq ?		# Ethernet Media Access Controller
+emac*	at opb? addr ? irq ?		# Ethernet Media Access Controller
 options	EMAC_EVENT_COUNTERS
-gpiic0	at opb? addr ? irq ?		# On-chip IIC controller
-iic0	at gpiic?			# I2C bus
-xrtc0	at iic? addr 0x6f		# RTC
+options	EMAC_RGMII_PHY
+gpiic*	at opb? addr ? irq ?		# On-chip IIC controller
+iic*	at gpiic?			# I2C bus
+m41trtc0 at iic? addr 0x68		# Dallas DS1340C Real Time Clock
 opbgpio0 at opb? addr ? irq ?		# On-chip GPIO controller
 gpio*	at opbgpio?			# GPIO framework
 
-# PCI bus support
-pci*	at pchb?
-options 	PCIVERBOSE		# verbose PCI device autoconfig messages
-#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
-options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever
-					# to configure PCI devices
-#options 	PCI_CONFIGURE_VERBOSE	# Show PCI config information
-ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-hptide* at pci? dev ? function ?	# Triones/HighPoint IDE controllers
-tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
-
-# ATA (IDE) bus support
-atabus* at ata?
-wd*	at atabus? drive ?
-
 # MII/PHY support
-dmphy*	at mii? phy ?			# Davicom DM9101/9102 PHYs
-lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
 options 	MIIVERBOSE		# verbose PHY autoconfig messages
 
 
@@ -203,9 +187,10 @@ pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+#options 	PPPOE_SERVER		# Enable PPPoE server via link0
 pseudo-device	sl			# Serial Line IP
 pseudo-device	strip			# Starmode Radio IP (Metricom)
-pseudo-device	irframetty		# IrDA frame line discipline
+#pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual ethernet
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	gre			# generic L3 over IP tunnel
