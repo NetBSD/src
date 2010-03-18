@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.37 2009/12/14 00:46:06 matt Exp $	*/
+/*	$NetBSD: mm_md.c,v 1.1.2.1 2010/03/18 04:36:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -6,7 +6,7 @@
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.c	8.3 (Berkeley) 1/12/94
+ *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
  */
+
 /*
+ * Copyright (c) 1994, 1995 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
- * Science Department and Ralph Campbell.
+ * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,141 +72,90 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.c	8.3 (Berkeley) 1/12/94
+ *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
  */
-
-/*
- * Memory special file
- */
-
-#include "opt_cputype.h"
-#include "opt_mips_cache.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.37 2009/12/14 00:46:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm_md.c,v 1.1.2.1 2010/03/18 04:36:52 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
-#include <sys/systm.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-#include <sys/msgbuf.h>
-#include <sys/event.h>
-
-#include <machine/cpu.h>
-
-#include <mips/cache.h>
-#ifdef _LP64
-#include <mips/mips3_pte.h>
-#endif
-
+#include <sys/errno.h>
 #include <uvm/uvm_extern.h>
+#include <machine/leds.h>
+#include <machine/pmap.h>
+#include <dev/mm.h>
 
-extern paddr_t avail_end;
-void *zeropage;
+#define DEV_VME16D16	5	/* minor device 5 is /dev/vme16d16 */
+#define DEV_VME24D16	6	/* minor device 6 is /dev/vme24d16 */
+#define DEV_EEPROM	11 	/* minor device 11 is eeprom */
+#define DEV_LEDS	13 	/* minor device 13 is leds */
 
-dev_type_read(mmrw);
-dev_type_ioctl(mmioctl);
-
-const struct cdevsw mem_cdevsw = {
-	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
-};
-
-#if defined(pmax)
-const struct cdevsw mem_ultrix_cdevsw = {
-	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
-};
-#endif /* defined(pmax) */
-
-/*ARGSUSED*/
 int
-mmrw(dev_t dev, struct uio *uio, int flags)
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
-	vaddr_t v;
-	int c;
-	struct iovec *iov;
-	int error = 0;
 
-	while (uio->uio_resid > 0 && error == 0) {
-		iov = uio->uio_iov;
-		if (iov->iov_len == 0) {
-			uio->uio_iov++;
-			uio->uio_iovcnt--;
-			if (uio->uio_iovcnt < 0)
-				panic("mmrw");
-			continue;
-		}
-		switch (minor(dev)) {
+	/* Allow access only in "managed" RAM. */
+	if (pa < avail_start || pa >= avail_end)
+		return EFAULT;
+	return 0;
+}
 
-		case DEV_MEM:
-			v = uio->uio_offset;
-			c = iov->iov_len;
-			/*
-			 * XXX Broken; assumes contiguous physical memory.
-			 */
-			if (v + c > ctob(physmem))
-				return (EFAULT);
-#ifdef _LP64
-			v = MIPS_PHYS_TO_XKPHYS_CACHED(v);
-#else
-			v = MIPS_PHYS_TO_KSEG0(v);
-#endif
-			error = uiomove((void *)v, c, uio);
-#if defined(MIPS3_PLUS)
-			if (mips_cache_virtual_alias)
-				mips_dcache_wbinv_range(v, c);
-#endif
-			continue;
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
 
-		case DEV_KMEM:
-			v = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
-			if (v < MIPS_KSEG0_START)
-			if (v < MIPS_KSEG0_START)
-				return (EFAULT);
-			if (v > MIPS_PHYS_TO_KSEG0(avail_end +
-					mips_round_page(MSGBUFSIZE) - c) &&
-			    (v < MIPS_KSEG2_START ||
-			    !uvm_kernacc((void *)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
-				return (EFAULT);
-			error = uiomove((void *)v, c, uio);
-#if defined(MIPS3_PLUS)
-			if (mips_cache_virtual_alias)
-				mips_dcache_wbinv_range(v, c);
-#endif
-			continue;
+	if (paddr >= avail_start)
+		return false;
+	*vaddr = paddr;
+	return true;
+}
 
-		case DEV_NULL:
-			if (uio->uio_rw == UIO_WRITE)
-				uio->uio_resid = 0;
-			return (0);
+/*
+ * Allow access to the PROM mapping similiar to uvm_kernacc().
+ */
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
 
-		case DEV_ZERO:
-			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
-			}
-			if (zeropage == NULL) {
-				zeropage = malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				memset(zeropage, 0, PAGE_SIZE);
-			}
-			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(zeropage, c, uio);
-			continue;
-
-		default:
-			return (ENXIO);
-		}
-		if (error)
-			break;
-		iov->iov_base = (char *)iov->iov_base + c;
-		iov->iov_len -= c;
-		uio->uio_offset += c;
-		uio->uio_resid -= c;
+	if ((vaddr_t)ptr < SUN2_PROM_BASE || (vaddr_t)ptr > SUN2_MONEND) {
+		*handled = false;
+		return 0;
 	}
-	return (error);
+
+	*handled = true;
+	/* Read in the PROM itself is OK, write not. */
+	if ((prot & VM_PROT_WRITE) == 0)
+		return 0;
+	return EFAULT;
+}
+
+int
+mm_md_readwrite(dev_t dev, struct uio *uio)
+{
+
+	switch (minor(dev)) {
+	case DEV_LEDS:
+		return leds_uio(uio);
+	default:
+		return ENXIO;
+	}
+}
+
+paddr_t 
+mm_md_mmap(dev_t dev, off_t off, int prot)
+{
+
+	switch (minor(dev)) {
+	case DEV_VME16D16:
+		if (off & 0xffff0000)
+			return -1;
+		off |= 0xff0000;
+		/* fall through */
+	case DEV_VME24D16:
+		if (off & 0xff000000)
+			return -1;
+		return (off | (off & 0x800000 ? PMAP_VME8: PMAP_VME0));
+	default:
+		return (-1);
+	}
 }

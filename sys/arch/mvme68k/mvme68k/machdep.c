@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 2010/02/08 19:02:30 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.142.2.1 2010/03/18 04:36:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2010/02/08 19:02:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142.2.1 2010/03/18 04:36:50 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -129,6 +129,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2010/02/08 19:02:30 joerg Exp $");
 #include <machine/vmparam.h>
 #include <m68k/include/cacheops.h>
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
@@ -1180,3 +1181,12 @@ const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_SCHED]      = PSL_S | PSL_IPL7,
 	[IPL_HIGH]       = PSL_S | PSL_IPL7,
 };
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	if (pa >= lowram && pa < 0xfffffffc)
+		return 0;
+	return EFAULT;
+}

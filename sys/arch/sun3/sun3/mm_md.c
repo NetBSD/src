@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35 2009/03/14 15:36:03 dsl Exp $	*/
+/*	$NetBSD: mm_md.c,v 1.1.2.1 2010/03/18 04:36:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,9 +32,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.c	8.3 (Berkeley) 1/12/94
+ *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
  */
+
 /*
+ * Copyright (c) 1994, 1995 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
  *
  * This code is derived from software contributed to Berkeley by
@@ -69,150 +72,74 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.c	8.3 (Berkeley) 1/12/94
- */
-
-/*
- * Memory special file
+ *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35 2009/03/14 15:36:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm_md.c,v 1.1.2.1 2010/03/18 04:36:53 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/systm.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-
+#include <sys/errno.h>
 #include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
-#include <machine/pte.h>
+#include <machine/eeprom.h>
+#include <machine/leds.h>
 #include <machine/pmap.h>
+#include <dev/mm.h>
 
-#include "nvr.h"
+#define DEV_VME16D16	5	/* minor device 5 is /dev/vme16d16 */
+#define DEV_VME24D16	6	/* minor device 6 is /dev/vme24d16 */
+#define DEV_VME32D16	7	/* minor device 7 is /dev/vme32d16 */
+#define DEV_VME16D32	8	/* minor device 8 is /dev/vme16d32 */
+#define DEV_VME24D32	9	/* minor device 9 is /dev/vme24d32 */
+#define DEV_VME32D32	10	/* minor device 10 is /dev/vme32d32 */
+#define DEV_EEPROM	11 	/* minor device 11 is eeprom */
+#define DEV_LEDS	13 	/* minor device 13 is leds */
 
-#define	DEV_NVRAM	11	/* Nvram minor-number */
-
-extern u_int lowram;
-static void *devzeropage;
-
-dev_type_read(mmrw);
-dev_type_ioctl(mmioctl);
-
-const struct cdevsw mem_cdevsw = {
-	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
-};
-
-/*ARGSUSED*/
 int
-mmrw(dev_t dev, struct uio *uio, int flags)
+mm_md_readwrite(dev_t dev, struct uio *uio)
 {
-	vsize_t		o, v;
-	int		c;
-	struct iovec	*iov;
-	struct memseg	*ms;
-	int		error = 0;
-	static int	physlock;
-	vm_prot_t	prot;
 
-	if (minor(dev) == DEV_MEM) {
-		/* lock against other uses of shared vmmap */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((void *)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
+	switch (minor(dev)) {
+	case DEV_EEPROM:
+		return eeprom_uio(uio);
+	case DEV_LEDS:
+		return leds_uio(uio);
+	default:
+		return ENXIO;
 	}
-	while (uio->uio_resid > 0 && error == 0) {
-		iov = uio->uio_iov;
-		if (iov->iov_len == 0) {
-			uio->uio_iov++;
-			uio->uio_iovcnt--;
-			if (uio->uio_iovcnt < 0)
-				panic("mmrw");
-			continue;
-		}
-		switch (minor(dev)) {
+}
 
-		case DEV_MEM:
-			v = uio->uio_offset;
+paddr_t 
+mm_md_mmap(dev_t dev, off_t off, int prot)
+{
 
-			/*
-			 * Limit access to RAM actually present
-			 */
-			for (ms = boot_segs; ms->start != ms->end; ms++)
-				if ((v >= ms->start) && (v < ms->end))
-					break;
-			if (ms->start == ms->end) {
-				error = EFAULT;
-				goto unlock;
-			}
+	switch (minor(dev)) {
+	case DEV_VME16D16:
+		if (off & 0xffff0000)
+			return -1;
+		off |= 0xff0000;
+		/* fall through */
+	case DEV_VME24D16:
+		if (off & 0xff000000)
+			return -1;
+		off |= 0xff000000;
+		/* fall through */
+	case DEV_VME32D16:
+		return (off | PMAP_VME16);
 
-			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
-			    VM_PROT_WRITE;
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v), prot, prot|PMAP_WIRED);
-			pmap_update(pmap_kernel());
-			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove(vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-			    (vaddr_t)vmmap + PAGE_SIZE);
-			pmap_update(pmap_kernel());
-			break;
-
-		case DEV_KMEM:
-			v = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((void *)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
-			error = uiomove((void *)v, c, uio);
-			break;
-
-		case DEV_NULL:
-			if (uio->uio_rw == UIO_WRITE)
-				uio->uio_resid = 0;
-			return (0);
-
-		case DEV_NVRAM:
-#if NNVR > 0
-			error = nvram_uio(uio);
-			return (error);
-#else
-			return (ENXIO);
-#endif
-
-		case DEV_ZERO:
-			if (uio->uio_rw == UIO_WRITE) {
-				c = iov->iov_len;
-				break;
-			}
-			if (devzeropage == NULL) {
-				devzeropage =
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK|M_ZERO);
-			}
-			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(devzeropage, c, uio);
-			break;
-
-		default:
-			return (ENXIO);
-		}
+	case DEV_VME16D32:
+		if (off & 0xffff0000)
+			return -1;
+		off |= 0xff0000;
+		/* fall through */
+	case DEV_VME24D32:
+		if (off & 0xff000000)
+			return -1;
+		off |= 0xff000000;
+		/* fall through */
+	case DEV_VME32D32:
+		return off | PMAP_VME32;
+	default:
+		return -1;
 	}
-	if (minor(dev) == 0) {
-unlock:
-		if (physlock > 1)
-			wakeup((void *)&physlock);
-		physlock = 0;
-	}
-	return (error);
 }

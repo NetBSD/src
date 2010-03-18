@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.122 2008/05/22 19:49:43 hauke Exp $
+#	$NetBSD: files.mac68k,v 1.122.20.1 2010/03/18 04:36:50 rmind Exp $
 
 # mac68k-specific configuration info
 
@@ -164,7 +164,6 @@ file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/macrom.c
 file	arch/mac68k/mac68k/macromasm.s
 file	arch/mac68k/mac68k/mainbus.c
-file	arch/mac68k/mac68k/mem.c
 file	arch/mac68k/mac68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/mac68k/mac68k/pram.c
 file	arch/mac68k/mac68k/pramasm.s

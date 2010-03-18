@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.42 2010/01/18 23:35:51 jmmv Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.42.4.1 2010/03/18 04:36:51 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42 2010/01/18 23:35:51 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42.4.1 2010/03/18 04:36:51 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42 2010/01/18 23:35:51 jmmv Ex
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/exec.h>
+#include <sys/kauth.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/sa.h>
@@ -50,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42 2010/01/18 23:35:51 jmmv Ex
 #include <sys/ucontext.h>
 #include <sys/cpu.h>
 #include <sys/module.h>
+#include <dev/mm.h>
 
 int cpu_timebase;
 int cpu_printfataltraps;
@@ -312,3 +314,14 @@ module_init_md(void)
 {
 }
 #endif /* MODULAR */
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	if (atop(pa) < physmem)
+		return 0;
+
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+}

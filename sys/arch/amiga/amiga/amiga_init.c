@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.118 2009/12/12 13:10:36 phx Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.118.4.1 2010/03/18 04:36:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.118 2009/12/12 13:10:36 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.118.4.1 2010/03/18 04:36:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.118 2009/12/12 13:10:36 phx Exp $")
 #include <sys/dkbad.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
+#include <dev/mm.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cc.h>
@@ -1119,3 +1120,19 @@ kernel_reload_write(struct uio *uio)
 	return(0);
 }
 #endif
+
+int
+mm_md_readwrite(dev_t dev, struct uio *uio)
+{
+
+	switch (minor(dev)) {
+#ifdef DEVRELOAD
+	case DEV_RELOAD:
+		if (uio->uio_rw == UIO_READ)
+			return 0;
+		return kernel_reload_write(uio);
+#endif
+	default:
+		return ENXIO;
+	}
+}

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.70 2009/08/21 04:12:27 thorpej Exp $
+#	$NetBSD: files.x68k,v 1.70.4.1 2010/03/18 04:36:53 rmind Exp $
 #
 # new style config file for x68k architecture
 #
@@ -31,7 +31,6 @@ file	arch/x68k/x68k/autoconf.c
 file	arch/x68k/x68k/conf.c
 file	arch/x68k/x68k/disksubr.c	disk
 file	arch/x68k/x68k/machdep.c
-file	arch/x68k/x68k/mem.c
 file	arch/x68k/x68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
 file	arch/x68k/x68k/trap.c
 file	arch/x68k/x68k/fpu.c

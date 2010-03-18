@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211 2010/02/08 19:02:28 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.2.1 2010/03/18 04:36:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2010/02/08 19:02:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.1 2010/03/18 04:36:48 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -131,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2010/02/08 19:02:28 joerg Exp $");
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
@@ -1276,4 +1277,27 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
 
 	return ENOEXEC;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+
+	/*
+	 * Do not allow reading intio or dio device space.  This could lead
+	 * to corruption of device registers.
+	 */
+	if (ISIIOVA(ptr) || ((uint8_t *)ptr >= extiobase &&
+	    (uint8_t *)ptr < extiobase + (EIOMAPSIZE * PAGE_SIZE))) {
+		*handled = true;
+		return EFAULT;
+	}
+	return 0;
 }

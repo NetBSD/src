@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.418 2010/02/05 11:06:36 cegger Exp $	*/
+/*	$NetBSD: init_main.c,v 1.418.4.1 2010/03/18 04:36:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418 2010/02/05 11:06:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.1 2010/03/18 04:36:54 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -508,6 +508,8 @@ main(void)
 	kpreempt_enable();
 
 	ubc_init();		/* must be after autoconfig */
+
+	mm_init();
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
