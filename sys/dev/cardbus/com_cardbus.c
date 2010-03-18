@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.28 2010/02/26 00:57:01 dyoung Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.29 2010/03/18 20:54:56 dyoung Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.28 2010/02/26 00:57:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.29 2010/03/18 20:54:56 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,15 +291,13 @@ com_cardbus_enable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
 	cardbus_devfunc_t ct = csc->cc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	Cardbus_function_enable(ct);
 
 	com_cardbus_setup(csc);
 
 	/* establish the interrupt. */
-	csc->cc_ih = cardbus_intr_establish(cc, cf, csc->cc_intrline,
+	csc->cc_ih = Cardbus_intr_establish(ct, csc->cc_intrline,
 					    IPL_SERIAL, comintr, sc);
 	if (csc->cc_ih == NULL) {
 		aprint_error_dev(DEVICET(csc),
@@ -315,10 +313,8 @@ com_cardbus_disable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
 	cardbus_devfunc_t ct = csc->cc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
-	cardbus_intr_disestablish(cc, cf, csc->cc_ih);
+	Cardbus_intr_disestablish(ct, csc->cc_ih);
 	csc->cc_ih = NULL;
 
 	Cardbus_function_disable(ct);
@@ -336,7 +332,7 @@ com_cardbus_detach(device_t self, int flags)
 		return error;
 
 	if (csc->cc_ih != NULL)
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->cc_ih);
+		Cardbus_intr_disestablish(ct, csc->cc_ih);
 
 	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_regs.cr_iot,
 	    sc->sc_regs.cr_ioh, csc->cc_size);
