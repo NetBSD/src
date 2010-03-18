@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.11 2010/02/25 23:33:44 matt Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.12 2010/03/18 13:47:04 kiyohara Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.11 2010/02/25 23:33:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.12 2010/03/18 13:47:04 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -90,9 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.11 2010/02/25 23:33:44 matt Exp
 #include <machine/cpu.h>
 #include <machine/obs266.h>
 #include <powerpc/spr.h>
-#include <powerpc/ibm4xx/spr.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/dev/comopbvar.h>
+#include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/openbios.h>
+#include <powerpc/ibm4xx/spr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
@@ -122,9 +124,6 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 {
 	vaddr_t va;
 	u_int memsize;
-
-	/* Disable all external interrupts */
-	mtdcr(DCR_UIC0_ER, 0);
 
 	/* Setup board from OpenBIOS */
 	openbios_board_init(info_block, startkernel);
@@ -295,6 +294,17 @@ cpu_reboot(int howto, char *what)
 	while (1)
 		/* nothing */;
 #endif
+}
+
+int
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+{
+
+	/*
+	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
+	 * use, can have devices 0-32 (i.e. the `normal' range).
+	 */
+	return 31;
 }
 
 int

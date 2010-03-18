@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.1 2010/02/25 23:30:05 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.2 2010/03/18 13:47:04 kiyohara Exp $	*/
 
 #ifndef _POWERPC_IBM4XX_SPR_H_
 #define	_POWERPC_IBM4XX_SPR_H_
@@ -21,6 +21,7 @@
 #define	  IBM401E2		  0x0025
 #define	  IBM401F2		  0x0026
 #define	  IBM401G2		  0x0027
+#define   AMCC405EX		  0x1291
 #define   XILVIRTEX		  0x2001
 #define	  IBM405GP		  0x4011
 #define   IBMSTB03		  0x4013

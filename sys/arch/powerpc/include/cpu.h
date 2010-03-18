@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68 2010/03/09 22:41:03 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.69 2010/03/18 13:47:05 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -309,6 +309,30 @@ cntlzw(uint32_t val)
 								\
 	__asm volatile("mfdcr %0,%1" : "=r"(__val) : "K"(reg)); \
 	__val;							\
+})
+
+#define mtcpr(reg, val)				\
+	do {					\
+		mtdcr(DCR_CPR0_CFGADDR, reg);	\
+		mtdcr(DCR_CPR0_CFGDATA, val);	\
+	} while (0/*CONSTCOND*/)
+
+#define mfcpr(reg)			\
+({					\
+	mtdcr(DCR_CPR0_CFGADDR, reg);	\
+	mfdcr(DCR_CPR0_CFGDATA);	\
+})
+
+#define mtsdr(reg, val)				\
+	do {					\
+		mtdcr(DCR_SDR0_CFGADDR, reg);	\
+		mtdcr(DCR_SDR0_CFGDATA, val);	\
+	} while (0/*CONSTCOND*/)
+
+#define mfsdr(reg)			\
+({					\
+	mtdcr(DCR_SDR0_CFGADDR, reg);	\
+	mfdcr(DCR_SDR0_CFGDATA);	\
 })
 #endif /* PPC_IBM4XX || PPC_IBM403 */
 
