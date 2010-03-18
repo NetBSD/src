@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.60 2010/03/05 20:10:05 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.61 2010/03/18 17:33:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.60 2010/03/05 20:10:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.61 2010/03/18 17:33:18 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1170,6 +1170,8 @@ module_thread(void *cookie)
 		mutex_enter(&module_lock);
 		for (mod = TAILQ_FIRST(&module_list); mod != NULL; mod = next) {
 			next = TAILQ_NEXT(mod, mod_chain);
+			if (mod->mod_source == MODULE_SOURCE_KERNEL)
+				continue;
 			if (uvmexp.free < uvmexp.freemin) {
 				module_thread_ticks = hz;
 			} else if (mod->mod_autotime == 0) {
