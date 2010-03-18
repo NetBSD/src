@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.11 2010/03/04 16:40:54 dyoung Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.12 2010/03/18 20:54:56 dyoung Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.11 2010/03/04 16:40:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.12 2010/03/18 20:54:56 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -74,10 +74,8 @@ struct siisata_cardbus_softc {
 	pcitag_t sc_tag;
 	bus_space_tag_t sc_iot;		/* CardBus I/O space tag */
 	bus_space_tag_t sc_memt;	/* CardBus MEM space tag */
-#if rbus
 	rbus_tag_t sc_rbus_iot;		/* CardBus i/o rbus tag */
 	rbus_tag_t sc_rbus_memt;	/* CardBus mem rbus tag */
-#endif
 
 	bus_size_t sc_grsize;
 	bus_size_t sc_prsize;
@@ -161,10 +159,8 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	csc->sc_iot = ca->ca_iot;
 	csc->sc_memt = ca->ca_memt;
-#if rbus
 	csc->sc_rbus_iot = ca->ca_rbus_iot;
 	csc->sc_rbus_memt = ca->ca_rbus_memt;
-#endif
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	aprint_naive(": SATA-II HBA\n");

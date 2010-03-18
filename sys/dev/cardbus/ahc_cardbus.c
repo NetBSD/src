@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.33 2010/02/26 00:57:01 dyoung Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.34 2010/03/18 20:54:56 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.33 2010/02/26 00:57:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.34 2010/03/18 20:54:56 dyoung Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -110,8 +110,6 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 	struct ahc_cardbus_softc *csc = device_private(self);
 	struct ahc_softc *ahc = &csc->sc_ahc;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	pcireg_t reg;
@@ -146,20 +144,20 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);
+	reg = Cardbus_conf_read(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG);
 	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
+	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
 	 * value.
 	 */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_BHLC_REG);
+	reg = Cardbus_conf_read(ct, ca->ca_tag, PCI_BHLC_REG);
 	if (PCI_LATTIMER(reg) < 0x20) {
 		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 		reg |= (0x20 << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, ca->ca_tag, PCI_BHLC_REG, reg);
+		Cardbus_conf_write(ct, ca->ca_tag, PCI_BHLC_REG, reg);
 	}
 
 	ahc_set_name(ahc, device_xname(ahc->sc_dev));
@@ -194,7 +192,7 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Establish the interrupt.
 	 */
-	ahc->ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
+	ahc->ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_BIO,
 	    ahc_intr, ahc);
 	if (ahc->ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
@@ -262,8 +260,7 @@ ahc_cardbus_detach(device_t self, int flags)
 		return rv;
 
 	if (ahc->ih) {
-		cardbus_intr_disestablish(csc->sc_ct->ct_cc,
-					  csc->sc_ct->ct_cf, ahc->ih);
+		Cardbus_intr_disestablish(csc->sc_ct, ahc->ih);
 		ahc->ih = 0;
 	}
 
