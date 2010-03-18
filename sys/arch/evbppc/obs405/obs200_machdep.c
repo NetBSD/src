@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.10 2010/02/25 23:33:44 matt Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.11 2010/03/18 13:47:04 kiyohara Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.10 2010/02/25 23:33:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.11 2010/03/18 13:47:04 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -92,8 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.10 2010/02/25 23:33:44 matt Exp
 #include <machine/century_bios.h>
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
-
+#include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/dev/comopbvar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
@@ -127,7 +128,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	u_int memsize;
 
 	/* Disable all external interrupts */
-	mtdcr(DCR_UIC0_ER, 0);
+	mtdcr(DCR_UIC0_BASE + DCR_UIC_ER, 0);
 	pllmode = mfdcr(DCR_CPC0_PLLMR);
 	psr = mfdcr(DCR_CPC0_PSR);
 
@@ -305,6 +306,17 @@ cpu_reboot(int howto, char *what)
 }
 
 int
+pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
+{
+
+	/*
+	 * Bus number is irrelevant.  Configuration Mechanism 1 is in
+	 * use, can have devices 0-32 (i.e. the `normal' range).
+	 */
+	return 31;
+}
+
+int
 pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	/*
@@ -384,7 +396,6 @@ pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin,
 			return;
 		}
 		*iline = ilinemap[dev - 1];
-        } else {
+        } else
 		*iline = 19 + ((swiz + dev + 1) & 3);
-        }
 }

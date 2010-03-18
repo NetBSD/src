@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.16 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.17 2010/03/18 13:47:04 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
 void 	intr_disestablish(void *);
 void 	intr_init(void);
+int 	uic_add(u_int, int);
 void 	ext_intr(void); 			/* for machdep */
 int 	splraise(int);
 int 	spllower(int);

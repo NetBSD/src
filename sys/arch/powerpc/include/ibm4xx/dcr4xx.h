@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr405gp.h,v 1.5 2006/05/30 22:44:14 freza Exp $	*/
+/*	$NetBSD: dcr4xx.h,v 1.1 2010/03/18 13:47:04 kiyohara Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,6 +41,10 @@
 /* Device Control Register declarations */
 
 /* DCRs used for indirect access */
+#define	DCR_CPR0_CFGADDR	0x00c	/* Clocking Configuration Address Register */
+#define	DCR_CPR0_CFGDATA	0x00d	/* Clocking Configuration Data Register */
+#define	DCR_SDR0_CFGADDR	0x00e	/* System DCR Configuration Address Register */
+#define	DCR_SDR0_CFGDATA	0x00f	/* System DCR Configuration Data Register */
 #define	DCR_SDRAM0_CFGADDR	0x010	/* Memory Controller Address Register */
 #define	DCR_SDRAM0_CFGDATA	0x011	/* Memory Controller Data Register */
 #define	DCR_EBC0_CFGADDR	0x012	/* Peripheral Controller Address Register */
@@ -64,6 +68,8 @@
 
 /* Clocking, Power management and Chip Control */
 #define	DCR_CPC0_PLLMR		0x0b0	/* PLL Mode Register */
+#define	  CPC0_PLLMR_CBDV(pllmr)  ((((pllmr) & 0x00060000) >> 17) + 1)
+#define	  CPC0_PLLMR_OPDV(pllmr)  ((((pllmr) & 0x00018000) >> 15) + 1)
 #define	DCR_CPC0_CR0		0x0b1	/* Chip Control Register 0 */
 #define	DCR_CPC0_CR1		0x0b2	/* Chip Control Register 1 */
 #define	  CPC0_CR1_CETE		  0x00800000	/* CPU External Timer Enable */
@@ -74,14 +80,21 @@
 #define	DCR_CPC0_FR		0x0ba	/* CPM Force Register */
 
 /* Universal Interrupt Controllers */
-#define	DCR_UIC0_SR		0x0c0	/* UIC0 Status Register */
-#define	DCR_UIC0_ER		0x0c2	/* UIC0 Enable Register */
-#define	DCR_UIC0_CR		0x0c3	/* UIC0 Critical Register */
-#define	DCR_UIC0_PR		0x0c4	/* UIC0 Polarity Register */
-#define	DCR_UIC0_TR		0x0c5	/* UIC0 Triggering Register */
-#define	DCR_UIC0_MSR		0x0c6	/* UIC0 Masked Status Register */
-#define	DCR_UIC0_VR		0x0c7	/* UIC0 Vector Register */
-#define	DCR_UIC0_VCR		0x0c8	/* UIC0 Vector Configuration Register */
+#define	DCR_UIC0_BASE		0x0c0	/* UIC0 Registers Base */
+#define	DCR_UIC1_BASE		0x0d0	/* UIC1 Registers Base */
+#define	DCR_UIC2_BASE		0x0e0	/* UIC2 Registers Base */
+#define	DCR_UIC3_BASE		0x0f0	/* UIC3 Registers Base */
+#define	DCR_UICB_BASE		0x200	/* UICB Registers Base */
+#define	DCR_UIC2_BASE_440GX	0x210	/* UIC2 Registers Base (440GX only) */
+
+#define	DCR_UIC_SR		  0x000	/* UIC Status Register */
+#define	DCR_UIC_ER		  0x002	/* UIC Enable Register */
+#define	DCR_UIC_CR		  0x003	/* UIC Critical Register */
+#define	DCR_UIC_PR		  0x004	/* UIC Polarity Register */
+#define	DCR_UIC_TR		  0x005	/* UIC Triggering Register */
+#define	DCR_UIC_MSR		  0x006	/* UIC Masked Status Register */
+#define	DCR_UIC_VR		  0x007	/* UIC Vector Register */
+#define	DCR_UIC_VCR		  0x008	/* UIC Vector Configuration Register */
 
 /* Direct Memory Access */
 #define	DCR_DMA0_CR0		0x100	/* DMA Channel Control Register 0 */
@@ -131,22 +144,54 @@
 #define	  MAL0_CFG_EOPIE	  0x00000004	/* End Of Packet Interrupt Enable */
 #define	  MAL0_CFG_LEA		  0x00000002	/* Locked Error Active */
 #define	  MAL0_CFG_SD		  0x00000001	/* MAL Scroll Descriptor */
+
+#define	  MAL0_CFG_RPP_MASK	  0x00c00000	/* Read priority mask */
+#define	  MAL0_CFG_RPP_0	  0x00000000	/*   Lowest */
+#define	  MAL0_CFG_RPP_1	  0x00400000
+#define	  MAL0_CFG_RPP_2	  0x00800000
+#define	  MAL0_CFG_RPP_3	  0x00c00000	/*   Highest */
+#define	  MAL0_CFG_RMBS_MASK	  0x00300000	/* Read Max Burst Size */
+#define	  MAL0_CFG_RMBS_4	  0x00000000	/*   Max burst size of 4 */
+#define	  MAL0_CFG_RMBS_8	  0x00100000	/*   Max burst size of 8 */
+#define	  MAL0_CFG_RMBS_16	  0x00200000	/*   Max burst size of 16 */
+#define	  MAL0_CFG_RMBS_32	  0x00300000	/*   Max burst size of 32 */
+#define	  MAL0_CFG_WPP_MASK	  0x000c0000	/* Write PLB Priority */
+#define	  MAL0_CFG_WPP_0	  0x00000000	/*   Lowest */
+#define	  MAL0_CFG_WPP_1	  0x00040000
+#define	  MAL0_CFG_WPP_2	  0x00080000
+#define	  MAL0_CFG_WPP_3	  0x000c0000	/*   Highest */
+#define	  MAL0_CFG_WMBS_MASK	  0x00030000	/* Write Max Burst Size */
+#define	  MAL0_CFG_WMBS_4	  0x00000000	/*   Max burst size of 4 */
+#define	  MAL0_CFG_WMBS_8	  0x00010000	/*   Max burst size of 8 */
+#define	  MAL0_CFG_WMBS_16	  0x00020000	/*   Max burst size of 16 */
+#define	  MAL0_CFG_WMBS_32	  0x00030000	/*   Max burst size of 32 */
+#define	  MAL0_CFG_PLBLE__EX	  0x00008000	/* PLB Lock Error */
+
 #define	DCR_MAL0_ESR		0x181	/* Error Status Register */
 #define	  MAL0_ESR_EVB		  0x80000000	/* Error Valid Bit */
 #define	  MAL0_ESR_CID_RX	  0x40000000	/* Receive Channel */
 #define	  MAL0_ESR_CID_MASK	  0x3e000000	/* Channel ID */
 #define	  MAL0_ESR_CID_SHIFT	  25
+#define	  MAL0_ESR_PTE		  0x00800000	/* PLB Timeout Error */
+#define	  MAL0_ESR_PRE		  0x00400000	/* PLB Read Error */
+#define	  MAL0_ESR_PWE		  0x00200000	/* PLB Write Error */
 #define	  MAL0_ESR_DE		  0x00100000	/* Descriptor Error */
 #define	  MAL0_ESR_ONE		  0x00080000	/* OPB Non-fullword Error */
 #define	  MAL0_ESR_OTE		  0x00040000	/* OPB Timeout Error */
 #define	  MAL0_ESR_OSE		  0x00020000	/* OPB Slave Error */
 #define	  MAL0_ESR_PEIN		  0x00010000	/* PLB Bus Error Indication */
+#define	  MAL0_ESR_PTEI		  0x00000080	/* PLB Timeout Error Interrupt */
+#define	  MAL0_ESR_PREI		  0x00000040	/* PLB Read Error Interrupt */
+#define	  MAL0_ESR_PWEI		  0x00000020	/* PLB Write Error Interrupt */
 #define	  MAL0_ESR_DEI		  0x00000010	/* Descriptor Error Interrupt */
 #define	  MAL0_ESR_ONEI		  0x00000008	/* OPB Non-fullword Error Interrupt */
 #define	  MAL0_ESR_OTEI		  0x00000004	/* OPB Timeout Error Interrupt */
 #define	  MAL0_ESR_OSEI		  0x00000002	/* OPB Slave Error Interrupt */
 #define	  MAL0_ESR_PBEI		  0x00000001	/* PLB Bus Error Interrupt */
 #define	DCR_MAL0_IER		0x182	/* Interrupt Enable Register */
+#define	  MAL0_IER_PT		  0x00000080	/* PLB Timeout Interrupt */
+#define	  MAL0_IER_PRE		  0x00000040	/* PLB Read Interrupt */
+#define	  MAL0_IER_PWE		  0x00000020	/* PLB Write Interrupt */
 #define	  MAL0_IER_DE		  0x00000010	/* Descriptor Error Interrupt */
 #define	  MAL0_IER_NWE		  0x00000008	/* Non-Word Transfer Error Interrupt */
 #define	  MAL0_IER_TO		  0x00000004	/* Time Out Error Interrupt */
@@ -154,28 +199,52 @@
 #define	  MAL0_IER_PLB		  0x00000001	/* PLB Error Interrupt */
 #define DCR_MALDBR		0x183	/* MAL Debug register */
 #define	DCR_MAL0_TXCASR		0x184	/* Tx Channel Active Register (Set) */
-#define	  MAL0_TXCASR_CHAN0	  0x80000000	/* Channel 0 Set Active */
-#define	  MAL0_TXCASR_CHAN1	  0x40000000	/* Channel 1 Set Active */
 #define	DCR_MAL0_TXCARR		0x185	/* Tx Channel Active Register (Reset) */
-#define	  MAL0_TXCARR_CHAN0	  0x80000000	/* Channel 0 Reset Active */
-#define	  MAL0_TXCARR_CHAN1	  0x40000000	/* Channel 1 Reset Active */
 #define	DCR_MAL0_TXEOBISR	0x186	/* Tx End of Buffer Interrupt Status Register */
-#define	  MAL0_TXEOBISR_CHAN0	  0x80000000	/* Channel 0 finished */
-#define	  MAL0_TXEOBISR_CHAN1	  0x40000000	/* Channel 1 finished */
 #define	DCR_MAL0_TXDEIR		0x187	/* Tx Descriptor Error Interrupt Register */
 #define	DCR_MAL0_RXCASR		0x190	/* Rx Channel Active Register (Set) */
-#define	  MAL0_RXCASR_CHAN0	  0x80000000	/* Channel 0 Set Active */
 #define	DCR_MAL0_RXCARR		0x191	/* Rx Channel Active Register (Reset) */
-#define	  MAL0_RXCARR_CHAN0	  0x80000000	/* Channel 0 Reset Active */
 #define	DCR_MAL0_RXEOBISR	0x192	/* Rx End of Buffer Interrupt Status Register */
-#define	  MAL0_RXEOBISR_CHAN0	  0x80000000	/* Channel 0 finished */
 #define	DCR_MAL0_RXDEIR		0x193	/* Rx Descriptor Error Interrupt Register */
+#define   MAL0__XCAR_CHAN(c)	  (0x80000000 >> (c))
 #define	DCR_MAL0_TXCTP0R	0x1a0	/* Channel Tx 0 Channel Table Pointer Register */
 #define	DCR_MAL0_TXCTP1R	0x1a1	/* Channel Tx 1 Channel Table Pointer Register */
 #define	DCR_MAL0_TXCTP2R	0x1a2	/* Channel Tx 2 Channel Table Pointer Register */
 #define	DCR_MAL0_TXCTP3R	0x1a3	/* Channel Tx 3 Channel Table Pointer Register */
 #define	DCR_MAL0_RXCTP0R	0x1c0	/* Channel Rx 0 Channel Table Pointer Register */
+#define	DCR_MAL0_RXCTP1R	0x1c1	/* Channel Rx 1 Channel Table Pointer Register */
+#define	DCR_MAL0_RXCTP2R	0x1c2	/* Channel Rx 2 Channel Table Pointer Register */
+#define	DCR_MAL0_RXCTP3R	0x1c3	/* Channel Rx 3 Channel Table Pointer Register */
 #define	DCR_MAL0_RCBS0		0x1e0	/* Channel Rx 0 Channel Buffer Size Register */
+#define	DCR_MAL0_RCBS1		0x1e1	/* Channel Rx 1 Channel Buffer Size Register */
+#define	DCR_MAL0_RCBS2		0x1e2	/* Channel Rx 2 Channel Buffer Size Register */
+#define	DCR_MAL0_RCBS3		0x1e3	/* Channel Rx 3 Channel Buffer Size Register */
+
+
+/* Indirectly accessed Clocking Controller DCRs */
+
+#define	DCR_CPR0_CLKUPD		0x020	/* Clocking Update Register */
+#define	DCR_CPR0_PLLC		0x040	/* SYS_PLL Control Register */
+#define	DCR_CPR0_PLLD		0x060	/* SYS_PLL Divider Register */
+#define	DCR_CPR0_CPUD		0x080	/* CPU Clock Divider Register */
+#define	DCR_CPR0_PLBD		0x0a0	/* PLB Clock Divider Register */
+#define	  CPR0_PLBDV0(x) \
+	((((x) & 0x07000000) >> 24) == 0 ? 8 : (((x) & 0x07000000) >> 24))
+#define	DCR_CPR0_OPBD		0x0c0	/* OPB Clock Divider Register */
+#define	  CPR0_OPBDV0(x) \
+	((((x) & 0x03000000) >> 24) == 0 ? 4 : (((x) & 0x03000000) >> 24))
+#define	DCR_CPR0_PERD		0x0e0	/* Peripheral Clock Divider Register */
+#define	DCR_CPR0_AHBD		0x100	/* AHB Clock Divider Register */
+#define	DCR_CPR0_ICFG		0x140	/* Initial Configuration Register */
+
+/* Indirectly accessed Clocking Controller DCRs */
+
+#define	DCR_SDR0_MFR		0x4300	/* Miscellaneous Function Register */
+#define	  SDR0_MFR_ECS(n)	  (1 << (27 - (n)))	/* Ethernet n Clock Selection */
+#define	  SDR0_MFR_ETXFL(n)	  (1 << (15 - ((n) << 2)))	/* Force Parity Error EMACn Tx FIFO Bits 0:63 */
+#define	  SDR0_MFR_ETXFH(n)	  (1 << (14 - ((n) << 2)))	/* Force Parity Error EMACn Tx FIFO Bits 64:127 */
+#define	  SDR0_MFR_ERXFL(n)	  (1 << (13 - ((n) << 2)))	/* Force Parity Error EMACn Rx FIFO Bits 0:63 */
+#define	  SDR0_MFR_ERXFH(n)	  (1 << (12 - ((n) << 2)))	/* Force Parity Error EMACn Rx FIFO Bits 64:127 */
 
 /* Indirectly accessed SDRAM Controller DCRs */
 
