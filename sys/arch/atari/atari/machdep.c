@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2010/02/08 19:02:26 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.1 2010/03/18 04:36:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2010/02/08 19:02:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.1 2010/03/18 04:36:48 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -127,8 +127,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2010/02/08 19:02:26 joerg Exp $");
 #include <machine/pte.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include "ksyms.h"
+#include "nvr.h"
+
+#define	DEV_NVRAM	11	/* Nvram minor-number */
 
 static void bootsync(void);
 static void call_sicallbacks(void);
@@ -896,3 +900,30 @@ nmihandler(void)
 	printf("nmihandler: plx_status = 0x%08lx\n", plx_status);
 }
 #endif
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+	struct memseg *ms;
+
+	for (ms = boot_segs; ms->start != ms->end; ms++) {
+		if ((pa >= ms->start) && (pa < ms->end))
+			return 0;
+	}
+	return EFAULT;
+}
+
+int
+mm_md_readwrite(dev_t dev, struct uio *uio)
+{
+	switch (minor(dev)) {
+	case DEV_NVRAM:
+#if NNVR > 0
+		return nvram_uio(uio);
+#else
+		return ENXIO;
+#endif
+	default:
+		return ENXIO;
+	}
+}

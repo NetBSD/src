@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2010/02/08 19:02:32 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.1 2010/03/18 04:36:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2010/02/08 19:02:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.1 2010/03/18 04:36:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2010/02/08 19:02:32 joerg Exp $");
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/signalvar.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
@@ -133,6 +134,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2010/02/08 19:02:32 joerg Exp $");
 #include <machine/kcore.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
@@ -1236,4 +1238,19 @@ cpu_intr_p(void)
 {
 
 	return idepth != 0;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+	int i;
+
+	for (i = 0; i < vm_nphysseg; i++) {
+		if (ctob(vm_physmem[i].start) <= pa &&
+		    pa < ctob(vm_physmem[i].end))
+			return 0;
+	}
+
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
 }

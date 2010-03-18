@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.162.2.1 2010/03/16 15:38:17 rmind Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.162.2.2 2010/03/18 04:36:54 rmind Exp $	*/
 
 /*
  *
@@ -624,7 +624,7 @@ int			uvm_coredump_walkmap(struct proc *,
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
 void			uvm_init_limits(struct proc *);
-bool			uvm_kernacc(void *, size_t, int);
+bool			uvm_kernacc(void *, vm_prot_t);
 __dead void		uvm_scheduler(void);
 vaddr_t			uvm_uarea_alloc(void);
 void			uvm_uarea_free(vaddr_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.197 2010/02/08 19:02:32 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.197.2.1 2010/03/18 04:36:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2010/02/08 19:02:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197.2.1 2010/03/18 04:36:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,11 +115,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2010/02/08 19:02:32 joerg Exp $");
 #include <sys/sysctl.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <machine/cpu.h>
 #include <machine/dvma.h>
 #include <machine/idprom.h>
 #include <machine/kcore.h>
+#include <machine/mon.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -730,4 +732,48 @@ int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	/* Allow access only in "managed" RAM. */
+	if (pa < avail_start || pa >= avail_end)
+		return EFAULT;
+	return 0;
+}
+
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+
+	if (paddr >= avail_start) 
+		return false;
+	*vaddr = KERNBASE + paddr;
+	return true;
+}
+
+/*
+ * Allow access to the PROM mapping similiar to uvm_kernacc().
+ */
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+
+	if ((vaddr_t)ptr < SUN3_PROM_BASE || (vaddr_t)ptr > SUN3_MONEND) {
+		*handled = false;
+		return 0;
+	}
+
+	*handled = true;
+	/* Read in the PROM itself is OK. */
+	if ((prot & VM_PROT_WRITE) == 0)
+		return 0;
+
+	/* PROM data page is OK for read/write. */
+	if ((vaddr_t)ptr >= SUN3_MONSHORTPAGE &&
+	    (vaddr_t)ptr < SUN3_MONSHORTPAGE + PAGE_SIZE)
+		return 0;
+	return EFAULT;
 }

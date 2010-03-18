@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.182 2010/01/18 17:53:35 pooka Exp $
+# $NetBSD: files.alpha,v 1.182.4.1 2010/03/18 04:36:46 rmind Exp $
 #
 # alpha-specific configuration info
 
@@ -398,7 +398,6 @@ file	arch/alpha/alpha/ipifuncs.c		multiprocessor
 file	arch/alpha/alpha/kobj_machdep.c		modular
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
-file	arch/alpha/alpha/mem.c
 file	arch/alpha/alpha/patch.c
 file	arch/alpha/alpha/pmap.c
 file	arch/alpha/alpha/process_machdep.c

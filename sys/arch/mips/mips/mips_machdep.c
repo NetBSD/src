@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.225 2010/01/23 15:55:54 mrg Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.225.4.1 2010/03/18 04:36:50 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225 2010/01/23 15:55:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.1 2010/03/18 04:36:50 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -147,6 +147,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225 2010/01/23 15:55:54 mrg Exp $
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <mips/cache.h>
 #include <mips/frame.h>
@@ -2178,4 +2179,55 @@ cpu_intr_p(void)
 {
 
 	return curcpu()->ci_idepth != 0;
+}
+
+#ifdef pmax	/* XXX compat_ultrix */
+
+const struct cdevsw mem_ultrix_cdevsw = {
+	nullopen, nullclose, mm_readwrite, mm_readwrite,
+	mm_ioctl, nostop, notty, nopoll, mm_mmap, nokqfilter,
+	D_MPSAFE
+};
+
+#endif
+
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+
+#ifdef _LP64
+	*vaddr = MIPS_PHYS_TO_XKPHYS_CACHED(paddr);
+#else
+	*vaddr = MIPS_PHYS_TO_KSEG0(paddr);
+#endif
+	return true;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa < ctob(physmem)) ? 0 : EFAULT;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+	extern paddr_t avail_end;
+
+	if (ptr < (void *)MIPS_KSEG0_START) {
+		*handled = true;
+		return EFAULT;
+	}
+	if (ptr < (void *)MIPS_PHYS_TO_KSEG0(avail_end +
+	    mips_round_page(MSGBUFSIZE))) {
+		*handled = true;
+		return 0;
+	}
+	if (ptr < (void *)MIPS_KSEG2_START) {
+		*handled = true;
+		return EFAULT;
+	}
+	*handled = false;
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2010/02/08 19:02:27 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.1 2010/03/18 04:36:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2010/02/08 19:02:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.1 2010/03/18 04:36:48 rmind Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -135,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2010/02/08 19:02:27 joerg Exp $");
 #include <sys/sysctl.h>
 #include <sys/device.h>
 #include <dev/cons.h>
+#include <dev/mm.h>
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
 #include <cesfic/dev/zsvar.h>
@@ -700,4 +701,11 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
 
 	return ENOEXEC;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }

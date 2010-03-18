@@ -1,4 +1,4 @@
-/* $NetBSD: alpha.h,v 1.24 2009/06/01 20:58:16 martin Exp $ */
+/* $NetBSD: alpha.h,v 1.24.4.1 2010/03/18 04:36:47 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -118,7 +118,6 @@ void	XentRestart(void);					/* MAGIC */
 void	XentSys(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
 void	XentUna(u_int64_t, u_int64_t, u_int64_t);		/* MAGIC */
 void	alpha_init(u_long, u_long, u_long, u_long, u_long);
-int	alpha_pa_access(u_long);
 void	ast(struct trapframe *);
 int	badaddr(void *, size_t);
 int	badaddr_read(void *, size_t, void *);

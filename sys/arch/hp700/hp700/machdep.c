@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2010/02/16 16:56:29 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79.2.1 2010/03/18 04:36:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2010/02/16 16:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.1 2010/03/18 04:36:49 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2010/02/16 16:56:29 skrll Exp $");
 #include <uvm/uvm.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <machine/pdc.h>
 #include <machine/iomod.h>
@@ -384,8 +385,6 @@ const struct hppa_cpu_info cpu_types[] = {
 #endif
 	{ "" }
 };
-
-extern kmutex_t vmmap_lock;
 
 void
 hppa_init(paddr_t start, void *bi)
@@ -884,8 +883,6 @@ cpu_startup(void)
 	 */
 	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-
-	mutex_init(&vmmap_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -1973,3 +1970,9 @@ module_init_md(void)
 }
 #endif /* MODULAR */
 
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (btoc(pa) > totalphysmem) ? EFAULT : 0;
+}

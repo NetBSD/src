@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2010/02/08 19:02:30 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.2.1 2010/03/18 04:36:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2010/02/08 19:02:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.2.1 2010/03/18 04:36:51 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -146,6 +146,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2010/02/08 19:02:30 joerg Exp $");
 #include <next68k/next68k/nextrom.h>
 #include <next68k/next68k/rtc.h>
 #include <next68k/next68k/seglist.h>
+
+#include <dev/mm.h>
 
 #include "ksyms.h"
 
@@ -935,4 +937,13 @@ int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	return ENOEXEC;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	if (pa >= lowram && pa < 0xfffffffc)
+		return 0;
+	return EFAULT;
 }
