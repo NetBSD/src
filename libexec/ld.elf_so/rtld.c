@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.129 2010/02/27 11:16:38 roy Exp $	 */
+/*	$NetBSD: rtld.c,v 1.130 2010/03/18 22:17:55 roy Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.129 2010/02/27 11:16:38 roy Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.130 2010/03/18 22:17:55 roy Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -822,8 +822,6 @@ _rtld_objmain_sym(const char *name)
 	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, false,
 	    &donelist);
 
-	_rtld_donelist_clear(&donelist);
-
 	if (def != NULL)
 		return obj->relocbase + def->st_value;
 	return(NULL);
@@ -919,10 +917,8 @@ dlsym(void *handle, const char *name)
 			_rtld_donelist_init(&depth);
 			def = _rtld_symlook_needed(name, hash, &fake, &defobj,
 			    false, &donelist, &depth);
-			_rtld_donelist_clear(&depth);
 		}
 
-		_rtld_donelist_clear(&donelist);
 		break;
 	}
 	
