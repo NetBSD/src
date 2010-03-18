@@ -1,4 +1,4 @@
-#	$NetBSD: files.virtex,v 1.3 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.virtex,v 1.4 2010/03/18 13:47:04 kiyohara Exp $
 #
 # Xilinx Virtex specific configuration
 
@@ -10,8 +10,6 @@ defflag 	opt_virtex.h 			DESIGN_DFC
 defparam 	opt_xintc.h 			DCR_XINTC_BASE
 defparam 	opt_cons.h 			CONADDR CONSDEV
 
-file 	arch/powerpc/ibm4xx/intr.c
-
 file	arch/evbppc/virtex/autoconf.c
 file	arch/evbppc/virtex/consinit.c
 file	arch/evbppc/virtex/machdep.c
@@ -20,14 +18,9 @@ file	arch/evbppc/virtex/dcr.c
 file 	arch/evbppc/virtex/design_gsrd1.c 	design_gsrd1
 file 	arch/evbppc/virtex/design_gsrd2.c 	design_gsrd2 | design_dfc
 
-# Board Properties
-file    arch/powerpc/ibm4xx/board_prop.c
-
 # Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks
 
-# FPU emulation
-include "arch/powerpc/fpu/files.fpu"
 
 # MI drivers
 include "dev/pckbport/files.pckbport"
@@ -36,16 +29,6 @@ include "dev/pckbport/files.pckbport"
 define 	llbus 	{ } 				# LocalLink
 define 	plbus 	{ } 				# PLB
 define 	xcvbus 	{ } 				# generic
-
-# Processor Local Bus 				XXX files.ibm4xx
-device  plb { [irq = -1] }
-attach  plb at root
-file    arch/powerpc/ibm4xx/dev/plb.c           plb
-
-# Processor 					XXX files.ibm4xx
-device  cpu { }
-attach  cpu at plb
-file    arch/powerpc/ibm4xx/cpu.c
 
 # Effective mainbus
 device 	xcvbus: xcvbus, plbus, llbus
