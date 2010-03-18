@@ -1,4 +1,4 @@
-/*	$NetBSD: obs405.h,v 1.7 2010/03/18 14:15:38 kiyohara Exp $	*/
+/*	$NetBSD: obs600_autoconf.c,v 1.1 2010/03/18 14:15:38 kiyohara Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -32,13 +32,54 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
  * DAMAGE.
  */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: obs600_autoconf.c,v 1.1 2010/03/18 14:15:38 kiyohara Exp $");
 
-#ifndef	_EVBPPC_OBS405_H_
-#define	_EVBPPC_OBS405_H_
+#include <sys/systm.h>
+#include <sys/device.h>
+
+#include <machine/intr.h>
+#include <machine/obs600.h>
+
+#include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
+
+#include <dev/ic/comreg.h>
+
 
 /*
- * extern variables and functions
+ * Determine device configuration for a machine.
  */
-extern void obs405_device_register(struct device *dev, void *aux, int com_freq);
+void
+cpu_configure(void)
+{
 
-#endif	/* _EVBPPC_OBS405_H_ */
+	/* Initialize intr and add UICs */
+	intr_init();
+	uic_add(DCR_UIC1_BASE, 28);	/* UIC1 cascade to irq 28 */
+	uic_add(DCR_UIC2_BASE, 30);	/* UIC2 cascade to irq 30 */
+
+	calc_delayconst();
+
+	/* Make sure that timers run at CPU frequency */
+	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
+
+	if (config_rootfound("plb", NULL) == NULL)
+		panic("configure: mainbus not configured");
+
+	printf("biomask %x netmask %x ttymask %x\n",
+	    imask[IPL_BIO], imask[IPL_NET], imask[IPL_TTY]);
+
+	(void)spl0();
+
+	/*
+	 * Now allow hardware interrupts.
+	 */
+	__asm volatile ("wrteei 1");
+}
+
+void device_register(struct device *dev, void *aux)
+{
+
+	obs405_device_register(dev, aux, OBS600_COM_FREQ);
+}
