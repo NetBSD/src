@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_isa.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_isa.c,v 1.3 2010/03/18 10:57:58 tron Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -400,7 +400,9 @@ dtrace_getarg(int arg, int aframes)
 
 	stack = (uintptr_t *)&fp[1];
 
+#if 0
 load:
+#endif
 	DTRACE_CPUFLAG_SET(CPU_DTRACE_NOFAULT);
 	val = stack[arg];
 	DTRACE_CPUFLAG_CLEAR(CPU_DTRACE_NOFAULT);
