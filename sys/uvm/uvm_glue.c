@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.144 2010/02/25 23:10:49 jym Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.144.2.1 2010/03/18 04:36:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.144 2010/02/25 23:10:49 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.144.2.1 2010/03/18 04:36:54 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -96,23 +96,21 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.144 2010/02/25 23:10:49 jym Exp $");
 /*
  * uvm_kernacc: can the kernel access a region of memory
  *
- * - used only by /dev/kmem driver (mem.c)
+ * - used only by /dev/kmem driver (dev/mm.c)
  */
 
 bool
-uvm_kernacc(void *addr, size_t len, int rw)
+uvm_kernacc(void *addr, vm_prot_t prot)
 {
+	vaddr_t saddr;
 	bool rv;
-	vaddr_t saddr, eaddr;
-	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
 	saddr = trunc_page((vaddr_t)addr);
-	eaddr = round_page((vaddr_t)addr + len);
 	vm_map_lock_read(kernel_map);
-	rv = uvm_map_checkprot(kernel_map, saddr, eaddr, prot);
+	rv = uvm_map_checkprot(kernel_map, saddr, saddr + 1, prot);
 	vm_map_unlock_read(kernel_map);
 
-	return(rv);
+	return rv;
 }
 
 #ifdef KGDB

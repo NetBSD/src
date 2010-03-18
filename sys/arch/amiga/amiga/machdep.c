@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.225 2010/02/08 19:02:26 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.225.2.1 2010/03/18 04:36:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2010/02/08 19:02:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225.2.1 2010/03/18 04:36:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2010/02/08 19:02:26 joerg Exp $");
 #include <machine/pte.h>
 #include <machine/kcore.h>
 #include <dev/cons.h>
+#include <dev/mm.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/amiga/custom.h>
 #ifdef DRACO
@@ -1301,3 +1302,10 @@ int ipl2spl_table[_NIPL] = {
 	[IPL_HIGH] = PSL_IPL7|PSL_S,
 #endif /* defined(LEV6_DEFER) */
 };
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (pa >= 0xfffffffc || pa < lowram) ? EFAULT : 0;
+}

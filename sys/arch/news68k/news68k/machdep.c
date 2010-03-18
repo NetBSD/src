@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2010/02/08 19:02:30 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85.2.1 2010/03/18 04:36:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2010/02/08 19:02:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85.2.1 2010/03/18 04:36:51 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2010/02/08 19:02:30 joerg Exp $");
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #define MAXMEM	64*1024		/* XXX - from cmap.h */
 #include <uvm/uvm_extern.h>
@@ -1080,4 +1081,24 @@ consinit(void)
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+	if (pa >= lowram && pa < 0xfffffffc)
+		return 0;
+	return EFAULT;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+
+	if (ISIIOVA(ptr)) {
+		*handled = true;
+		return EFAULT;
+	}
+	*handled = false;
+	return 0;
 }

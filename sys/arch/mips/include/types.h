@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.45 2009/12/14 00:46:05 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.45.4.1 2010/03/18 04:36:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -142,5 +142,8 @@ typedef	volatile int		__cpu_simple_lock_t;
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 #endif
+
+#define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
+#define	__HAVE_MM_MD_KERNACC
 
 #endif	/* _MACHTYPES_H_ */

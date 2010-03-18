@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.106 2009/11/03 05:23:28 dyoung Exp $
+#	$NetBSD: files.xen,v 1.106.4.1 2010/03/18 04:36:54 rmind Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -59,7 +59,6 @@ file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/longrun.c
-file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
@@ -92,7 +91,6 @@ file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
-file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs
 file	arch/amd64/amd64/trap.c

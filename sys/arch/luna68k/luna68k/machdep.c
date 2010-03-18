@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.74 2010/02/08 19:02:30 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.74.2.1 2010/03/18 04:36:49 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2010/02/08 19:02:30 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.2.1 2010/03/18 04:36:49 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2010/02/08 19:02:30 joerg Exp $");
 #include <sys/exec.h>
 #include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
+#include <sys/kauth.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
@@ -77,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2010/02/08 19:02:30 joerg Exp $");
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #if defined(DDB)
 #include <machine/db_machdep.h>
@@ -858,3 +860,15 @@ romcngetc(dev_t dev)
 	return c;
 }
 #endif
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+	extern u_int lowram;
+
+	if (pa >= lowram && pa < 0xfffffffc)
+		return 0;
+
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+}

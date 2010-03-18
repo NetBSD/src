@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.33 2010/02/08 19:02:25 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.33.2.1 2010/03/18 04:36:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2010/02/08 19:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2010/03/18 04:36:46 rmind Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2010/02/08 19:02:25 joerg Exp $");
 #include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+
+#include <dev/mm.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pcf8583var.h>
@@ -201,4 +203,32 @@ cmos_write(int location, int value)
 	KASSERT(iociic_bootstrap_cookie() != NULL);
 	return (pcfrtc_bootstrap_write(iociic_bootstrap_cookie(), 0x50,
 	    location, &val, 1));
+}
+
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+
+	*vaddr = (vaddr_t)MEMC_PHYS_BASE + paddr;
+	return true;
+}
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return (atop(pa) >= physmem) ? EFAULT : 0;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+
+	if (ptr >= MEMC_PHYS_BASE &&
+	    (char *)ptr < (char *)MEMC_PHYS_BASE + ptoa(physmem)) {
+		*handled = true;
+	} else {
+		*handled = false;
+	}
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.179 2010/02/08 19:02:32 joerg Exp $	 */
+/* $NetBSD: machdep.c,v 1.179.2.1 2010/03/18 04:36:53 rmind Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2010/02/08 19:02:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179.2.1 2010/03/18 04:36:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -111,8 +111,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2010/02/08 19:02:32 joerg Exp $");
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>
 #include <sys/ksyms.h>
+#include <sys/kauth.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
@@ -137,6 +139,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2010/02/08 19:02:32 joerg Exp $");
 
 #include "smg.h"
 #include "ksyms.h"
+#include "leds.h"
+
+#define DEV_LEDS	13	/* minor device 13 is leds */
 
 extern vaddr_t virtual_avail, virtual_end;
 /*
@@ -777,3 +782,27 @@ generic_reboot(int arg)
 	__asm("halt");
 }
 
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	if (pa < ctob(physmem))
+		return 0;
+
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+}
+
+int
+mm_md_readwrite(dev_t dev, struct uio *uio)
+{
+
+	switch (minor(dev)) {
+#if NLEDS
+	case DEV_LEDS:
+		return leds_uio(uio);
+#endif
+	default:
+		return ENXIO;
+	}
+}

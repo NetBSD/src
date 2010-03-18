@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.135 2009/06/20 19:24:27 mrg Exp $	*/
+/*	$NetBSD: conf.h,v 1.135.4.1 2010/03/18 04:36:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -245,6 +245,8 @@ devmajor_t devsw_name2blk(const char *, char *, size_t);
 devmajor_t devsw_name2chr(const char *, char *, size_t);
 dev_t devsw_chr2blk(dev_t);
 dev_t devsw_blk2chr(dev_t);
+
+void mm_init(void);
 #endif /* _KERNEL */
 
 #ifdef _KERNEL

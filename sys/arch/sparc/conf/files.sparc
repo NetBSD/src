@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.149 2010/01/15 20:57:12 bouyer Exp $
+#	$NetBSD: files.sparc,v 1.149.4.1 2010/03/18 04:36:51 rmind Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -295,7 +295,6 @@ file	arch/sparc/sparc/kobj_machdep.c		modular
 # because it must come first in the "ld" command line.
 file	arch/sparc/sparc/machdep.c
 file	arch/sparc/sparc/process_machdep.c
-file	arch/sparc/sparc/mem.c
 file	arch/sparc/sparc/promlib.c
 file	arch/sparc/sparc/openfirm.c
 file	arch/sparc/sparc/openprom.c

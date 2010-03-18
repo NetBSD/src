@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.29 2007/03/04 06:00:38 christos Exp $ */
+/*	$NetBSD: mm_md.c,v 1.1.2.1 2010/03/18 04:36:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,8 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.c	8.3 (Berkeley) 1/12/94
+ *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
  */
+
 /*
  * Copyright (c) 1988 University of Utah.
  *
@@ -69,105 +70,76 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mem.c	8.3 (Berkeley) 1/12/94
- */
-
-/*
- * Memory special file
+ *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29 2007/03/04 06:00:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm_md.c,v 1.1.2.1 2010/03/18 04:36:53 rmind Exp $");
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/buf.h>
-#include <sys/systm.h>
-#include <sys/uio.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/kauth.h>
-
+#include <sys/errno.h>
 #include <uvm/uvm_extern.h>
+#include <machine/eeprom.h>
+#include <machine/leds.h>
+#include <machine/pmap.h>
+#include <dev/mm.h>
 
-dev_type_read(mmrw);
-dev_type_ioctl(mmioctl);
-dev_type_mmap(mmmmap);
+#define DEV_VME16D16	5	/* minor device 5 is /dev/vme16d16 */
+#define DEV_VME24D16	6	/* minor device 6 is /dev/vme24d16 */
+#define DEV_VME32D16	7	/* minor device 7 is /dev/vme32d16 */
+#define DEV_VME16D32	8	/* minor device 8 is /dev/vme16d32 */
+#define DEV_VME24D32	9	/* minor device 9 is /dev/vme24d32 */
+#define DEV_VME32D32	10	/* minor device 10 is /dev/vme32d32 */
+#define DEV_EEPROM	11 	/* minor device 11 is eeprom */
+#define DEV_LEDS	13 	/* minor device 13 is leds */
 
-const struct cdevsw mem_cdevsw = {
-	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER,
-};
-
-/*ARGSUSED*/
 int
-mmrw(dev_t dev, struct uio *uio, int flags)
+mm_md_readwrite(dev_t dev, struct uio *uio)
 {
-	vaddr_t v;
-	u_int c;
-	struct iovec *iov;
-	int error = 0;
-	static void *zeropage;
-	
-	while (uio->uio_resid > 0 && !error) {
-		iov = uio->uio_iov;
-		if (iov->iov_len == 0) {
-			uio->uio_iov++;
-			uio->uio_iovcnt--;
-			if (uio->uio_iovcnt < 0)
-				panic("mmrw");
-			continue;
-		}
-		switch (minor(dev)) {
 
-		case DEV_MEM:
-			v = uio->uio_offset;
-			c = uio->uio_resid;
-			error = uiomove((void *)v, c, uio);
-			break;
-
-		case DEV_KMEM:
-			v = uio->uio_offset;
-			c = min(iov->iov_len, MAXPHYS);
-			error = uiomove((void *)v, c, uio);
-			break;
-
-		case DEV_NULL:
-			if (uio->uio_rw == UIO_WRITE)
-				uio->uio_resid = 0;
-			return (0);
-
-		case DEV_ZERO:
-			if (uio->uio_rw == UIO_WRITE) {
-				uio->uio_resid = 0;
-				return (0);
-			}
-			if (zeropage == NULL) {
-				zeropage = (void *)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				memset(zeropage, 0, PAGE_SIZE);
-			}
-			c = min(iov->iov_len, PAGE_SIZE);
-			error = uiomove(zeropage, c, uio);
-			break;
-
-		default:
-			return (ENXIO);
-		}
+	switch (minor(dev)) {
+	case DEV_EEPROM:
+		return eeprom_uio(uio);
+	case DEV_LEDS:
+		return leds_uio(uio);
+	default:
+		return ENXIO;
 	}
-	return (error);
 }
 
-paddr_t
-mmmmap(dev_t dev, off_t off, int prot)
+paddr_t 
+mm_md_mmap(dev_t dev, off_t off, int prot)
 {
-	struct lwp *l = curlwp;
 
-	if (minor(dev) != DEV_MEM)
-		return (-1);
+	switch (minor(dev)) {
+#if 0 /* not yet */
+	case DEV_VME16D16:
+		if (off & 0xffff0000)
+			return -1;
+		off |= 0xff0000;
+		/* fall through */
+	case DEV_VME24D16:
+		if (off & 0xff000000)
+			return -1;
+		off |= 0xff000000;
+		/* fall through */
+	case DEV_VME32D16:
+		return (off | PMAP_VME16);
 
-	if (atop(off) >= physmem && kauth_authorize_machdep(l->l_cred,
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0)
-		return (-1);
-	return (trunc_page((paddr_t)off));
+	case DEV_VME16D32:
+		if (off & 0xffff0000)
+			return -1;
+		off |= 0xff0000;
+		/* fall through */
+	case DEV_VME24D32:
+		if (off & 0xff000000)
+			return -1;
+		off |= 0xff000000;
+		/* fall through */
+	case DEV_VME32D32:
+		return off | PMAP_VME32;
+#endif
+	default:
+		return -1;
+	}
 }

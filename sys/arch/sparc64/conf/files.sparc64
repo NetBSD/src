@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.127 2010/03/06 23:26:10 mrg Exp $
+#	$NetBSD: files.sparc64,v 1.127.2.1 2010/03/18 04:36:52 rmind Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -212,7 +212,6 @@ file	arch/sparc64/sparc64/machdep.c
 file	arch/sparc64/sparc64/memcpyset.s
 file	arch/sparc64/sparc64/process_machdep.c
 file	arch/sparc64/sparc64/procfs_machdep.c	procfs
-file	arch/sparc64/sparc64/mem.c
 file	arch/sparc/sparc/openprom.c
 file	arch/sparc/sparc/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.326 2010/02/08 19:02:25 joerg Exp $ */
+/* $NetBSD: machdep.c,v 1.326.2.1 2010/03/18 04:36:46 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326 2010/02/08 19:02:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326.2.1 2010/03/18 04:36:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326 2010/02/08 19:02:25 joerg Exp $");
 #include <sys/sysctl.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <machine/autoconf.h>
 #include <machine/reg.h>
@@ -1808,28 +1809,43 @@ cpu_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 #endif /* EXEC_ECOFF */
 
 int
-alpha_pa_access(u_long pa)
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+	u_quad_t size;
 	int i;
 
 	for (i = 0; i < mem_cluster_cnt; i++) {
 		if (pa < mem_clusters[i].start)
 			continue;
-		if ((pa - mem_clusters[i].start) >=
-		    (mem_clusters[i].size & ~PAGE_MASK))
+		size = mem_clusters[i].size & ~PAGE_MASK;
+		if (pa >= (mem_clusters[i].start + size))
 			continue;
-		return (mem_clusters[i].size & PAGE_MASK);	/* prot */
+		if ((prot & mem_clusters[i].size & PAGE_MASK) == prot)
+			return 0;
+		return EFAULT;
 	}
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+}
 
-	/*
-	 * Address is not a memory address.  If we're secure, disallow
-	 * access.  Otherwise, grant read/write.
-	 */
-	if (kauth_authorize_machdep(kauth_cred_get(),
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0)
-		return (PROT_NONE);
-	else
-		return (PROT_READ | PROT_WRITE);
+bool
+mm_md_direct_mapped_io(void *addr, paddr_t *paddr)
+{
+	vaddr_t va = (vaddr_t)addr;
+
+	if (va >= ALPHA_K0SEG_BASE && va < ALPHA_K0SEG_END) {
+		*paddr = ALPHA_K0SEG_TO_PHYS(va);
+		return true;
+	}
+	return false;
+}
+ 
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+
+	*vaddr = ALPHA_PHYS_TO_K0SEG(paddr);
+	return true;
 }
 
 /* XXX XXX BEGIN XXX XXX */

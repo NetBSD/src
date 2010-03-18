@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.302 2010/02/08 19:02:31 joerg Exp $ */
+/*	$NetBSD: machdep.c,v 1.302.2.1 2010/03/18 04:36:52 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2010/02/08 19:02:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302.2.1 2010/03/18 04:36:52 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -104,6 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2010/02/08 19:02:31 joerg Exp $");
 #include <sys/module.h>
 #include <sys/mutex.h>
 
+#include <dev/mm.h>
+
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 
 #include <sys/sysctl.h>
@@ -122,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2010/02/08 19:02:31 joerg Exp $");
 #include <machine/oldmon.h>
 #include <machine/bsd_openprom.h>
 #include <machine/bootinfo.h>
+#include <machine/eeprom.h>
 
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cache.h>
@@ -2188,3 +2191,48 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	sparc_bus_space_write_4,	/* bus_space_write_4 */
 	sparc_bus_space_write_8		/* bus_space_write_8 */
 };
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	return pmap_pa_exists(pa) ? 0 : EFAULT;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+	extern vaddr_t prom_vstart;
+	extern vaddr_t prom_vend;
+
+	if (ptr >= (void *)MSGBUF_VA &&
+	    (char *)ptr < (char *)MSGBUF_VA + PAGE_SIZE) {
+		*handled = true;
+		return 0;
+	}
+
+	if (ptr >= (void *)prom_vstart && ptr < (void *)prom_vend) {
+		*handled = true;
+		return (prot & VM_PROT_WRITE) == 0 ? 0 : EFAULT;
+	}
+
+	*handled = false;
+	return 0;
+}
+
+int
+mm_md_readwrite(dev_t dev, struct uio *uio)
+{
+
+	switch (minor(dev)) {
+#if defined(SUN4)
+	case DEV_EEPROM:
+		if (cputyp == CPU_SUN4)
+			return eeprom_uio(uio);
+		else
+#endif
+		return ENXIO;
+	default:
+		return ENXIO;
+	}
+}

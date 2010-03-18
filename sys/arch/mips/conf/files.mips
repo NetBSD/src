@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.64 2009/12/14 00:46:04 matt Exp $
+#	$NetBSD: files.mips,v 1.64.4.1 2010/03/18 04:36:50 rmind Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -36,7 +36,6 @@ file	arch/mips/mips/db_disasm.c		ddb
 file	arch/mips/mips/db_interface.c		ddb | kgdb
 file	arch/mips/mips/db_trace.c		ddb
 file	arch/mips/mips/kgdb_machdep.c		kgdb
-file	arch/mips/mips/mem.c
 file	arch/mips/mips/pmap.c
 file	arch/mips/mips/trap.c			# trap handlers
 file	arch/mips/mips/syscall.c		# syscall entries

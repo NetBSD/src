@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.39 2008/02/20 21:43:34 drochner Exp $
+# $NetBSD: files.next68k,v 1.39.32.1 2010/03/18 04:36:51 rmind Exp $
 
 # next68k-specific configuration info
 
@@ -43,7 +43,6 @@ file	arch/m68k/m68k/vm_machdep.c
 # include "arch/m68k/fpe/files.fpe"
 
 file	arch/next68k/next68k/trap.c
-file	arch/next68k/next68k/mem.c
 file	arch/next68k/next68k/pmap_bootstrap.c
 file	arch/next68k/next68k/machdep.c
 file	arch/next68k/next68k/clock.c

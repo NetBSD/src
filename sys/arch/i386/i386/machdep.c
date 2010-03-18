@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.684 2010/03/01 01:35:11 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.684.2.1 2010/03/18 04:36:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,11 +67,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684 2010/03/01 01:35:11 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.1 2010/03/18 04:36:49 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_mach.h"	/* need to get the right segment def */
+#include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_svr4.h"
 #include "opt_cpureset_delay.h"
@@ -91,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684 2010/03/01 01:35:11 jym Exp $");
 #include "isa.h"
 #include "pci.h"
 
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
@@ -99,9 +99,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684 2010/03/01 01:35:11 jym Exp $");
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/exec.h>
+#include <sys/fcntl.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
+#include <sys/kauth.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
@@ -124,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684 2010/03/01 01:35:11 jym Exp $");
 #endif
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
@@ -1874,4 +1876,35 @@ cpu_initclocks(void)
 {
 
 	(*initclock_func)();
+}
+
+#define	DEV_IO 14		/* iopl for compat_10 */
+
+int
+mm_md_open(dev_t dev, int flag, int mode, struct lwp *l)
+{
+
+	switch (minor(dev)) {
+	case DEV_IO:
+		/*
+		 * This is done by i386_iopl(3) now.
+		 *
+		 * #if defined(COMPAT_10) || defined(COMPAT_FREEBSD)
+		 */
+		if (flag & FWRITE) {
+			struct trapframe *fp;
+			int error;
+
+			error = kauth_authorize_machdep(l->l_cred,
+			    KAUTH_MACHDEP_IOPL, NULL, NULL, NULL, NULL);
+			if (error)
+				return (error);
+			fp = curlwp->l_md.md_regs;
+			fp->tf_eflags |= PSL_IOPL;
+		}
+		break;
+	default:
+		break;
+	}
+	return 0;
 }

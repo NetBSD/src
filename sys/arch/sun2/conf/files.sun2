@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.19 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.sun2,v 1.19.32.1 2010/03/18 04:36:52 rmind Exp $
 
 #
 # sun2-specific configuration info
@@ -14,10 +14,10 @@ file arch/sun2/sun2/locore2.c
 file arch/sun2/sun2/machdep.c
 file arch/sun2/sun2/pmap.c
 file arch/sun2/sun2/control.c
-file arch/sun2/sun2/mem.c
 file arch/sun2/sun2/db_machdep.c		ddb
 file arch/sun2/sun2/db_memrw.c			ddb | kgdb
 file arch/sun2/sun2/leds.c
+file arch/sun2/sun2/mm_md.c
 file arch/sun2/sun2/idprom.c
 file arch/sun2/sun2/promlib.c
 file arch/sun2/sun2/sys_machdep.c

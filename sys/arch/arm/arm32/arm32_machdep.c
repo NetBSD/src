@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.73 2010/02/08 19:02:26 joerg Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.73.2.1 2010/03/18 04:36:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.73 2010/02/08 19:02:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.73.2.1 2010/03/18 04:36:47 rmind Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.73 2010/02/08 19:02:26 joerg Exp
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/proc.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -64,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.73 2010/02/08 19:02:26 joerg Exp
 #include <sys/module.h>
 
 #include <dev/cons.h>
+#include <dev/mm.h>
 
 #include <arm/arm32/katelib.h>
 #include <arm/arm32/machdep.h>
@@ -482,3 +484,14 @@ module_init_md(void)
 {
 }
 #endif /* MODULAR */
+
+int
+mm_md_physacc(paddr_t pa, vm_prot_t prot)
+{
+
+	if (pa < ctob(physmem))
+		return 0;
+
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+}
