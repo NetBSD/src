@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.3 2010/03/18 11:00:03 tron Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.4 2010/03/18 13:45:54 tron Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -48,9 +48,7 @@
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_pmap.h>
 
-#if defined(__amd64__) || defined(__i386__)
 #include <x86/include/cpu_counter.h>
-#endif
 
 extern uintptr_t 	kernelbase;
 extern uintptr_t 	dtrace_in_probe_addr;
