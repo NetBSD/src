@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.61 2010/03/18 17:33:18 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.62 2010/03/18 18:25:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.61 2010/03/18 17:33:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.62 2010/03/18 18:25:45 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -771,8 +771,10 @@ module_do_load(const char *name, bool isdep, int flags,
 	}
 	if (mod) {
 		if ((flags & MODCTL_LOAD_FORCE) == 0) {
-			module_error("use -f to reinstate "
-			    "builtin module \"%s\"", name);
+			if (!autoload) {
+				module_error("use -f to reinstate "
+				    "builtin module \"%s\"", name);
+			}
 			depth--;
 			return EPERM;
 		} else {
