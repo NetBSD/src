@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut_start.S,v 1.18 2010/02/25 23:33:44 matt Exp $	*/
+/*	$NetBSD: walnut_start.S,v 1.19 2010/03/18 14:04:07 kiyohara Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -89,7 +89,7 @@
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/spr.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/pmap.h>
 
 /* Function pointer for requesting board_config_data from openbios*/
