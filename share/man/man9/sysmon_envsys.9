@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.34 2010/03/17 07:31:14 jruoho Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.35 2010/03/18 22:11:48 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 25, 2010
+.Dd March 18, 2010
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -293,7 +293,6 @@ typedef struct envsys_data {
 	int32_t		value_avg;
 	sysmon_envsys_lim_t limits;
 	int		upropset;
-	bool		monitor;
 	char		desc[ENVSYS_DESCLEN];
 } envsys_data_t;
 .Ed
@@ -309,6 +308,16 @@ Used to set the units type.
 Used to set the current state.
 .It Fa flags
 Used to set additional flags.
+Among other uses, if one or more of the
+.Dv ENVSYS_FMONxxx
+flags are set, automatic sensor monitoring will be enabled.
+Periodically, the sensor's value will be checked and if certain
+conditions are met, an event will be sent to the
+.Xr powerd 8 
+daemon.
+.Em NOTE
+.Em that limits (or thresholds) can be set at any time to enable
+.Em monitoring that the sensor's value remains within those limits .
 .It Fa rpms
 Used to set the nominal RPM value for
 .Sy fan
@@ -329,23 +338,6 @@ Used to set the average value.
 Structure used to contain the sensor's alarm thresholds.
 .It Fa upropset
 Used to keep track of which sensor properties are set.
-.It Fa monitor
-Used to enable automatic sensor monitoring (by default
-it's disabled).
-The automatic sensor monitoring will check if
-a condition is met periodically and will send an event to the
-.Xr powerd 8
-daemon (if running).
-The monitoring event will be registered when this flag is
-.Dv true
-and one or more of the
-.Dv ENVSYS_FMONxxx
-flags were set in the
-.Ar flags
-member.
-.Em NOTE
-.Em that limits (or thresholds) can be set at any time to enable
-.Em monitoring that the sensor's value remains within those limits .
 .It Fa desc
 Used to set the description string.
 .Em NOTE
