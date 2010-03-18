@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.98 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.99 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -1465,7 +1465,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 	fix m_adj() in uipc_mbuf.c to adjust m_pkthdr.len in the correct
 		mbuf (deraadt)
 	implement better locking in mbuf.h, and fix cltom() macro (deraadt)
-	i386: 3c509 driver support for promiscious and multicast, and a few
+	i386: 3c509 driver support for promiscuous and multicast, and a few
 		other misc fixes (deraadt)
 	sparc: make swap work, make keyboard repeat work for ^@ (deraadt)
 	fix talk(1) to not trounce it arguments (deraadt)
