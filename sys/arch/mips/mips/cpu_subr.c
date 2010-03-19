@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.4 2010/03/11 08:19:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.5 2010/03/19 23:16:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -628,6 +628,9 @@ cpu_hatch(struct cpu_info *ci)
 	while ((cpus_running & cpu_mask) == 0) {
 		/* spin, spin, spin */
 	}
+	mips3_cp0_count_write(ci->ci_data.cpu_cc_skew);
+	mips3_cp0_compare_write(ci->ci_data.cpu_cc_skew + ci->ci_cycles_per_hz);
+	ci->ci_data.cpu_cc_skew = 0;
 
 	/*
 	 * Now turn on interrupts.
@@ -656,6 +659,7 @@ cpu_boot_secondary_processors(void)
 		if ((cpus_hatched & cpu_mask) == 0)
 			continue;
 
+		ci->ci_data.cpu_cc_skew = mips3_cp0_count_read();
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
 		atomic_or_ulong(&cpus_running, cpu_mask);
 	}
