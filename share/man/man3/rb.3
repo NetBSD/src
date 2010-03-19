@@ -1,4 +1,4 @@
-.\"     $NetBSD: rb.3,v 1.1 2010/03/19 18:02:22 dyoung Exp $
+.\"     $NetBSD: rb.3,v 1.2 2010/03/19 19:36:27 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,15 +53,15 @@ provides red-black trees.
 A red-black tree is a binary search tree with the node color as an
 extra attribute.
 It fulfills a set of conditions:
-.Bl -enum -compact -offset indent
-.It 
-every search path from the root to a leaf consists of the same number of
-black nodes,
-.It 
-each red node (except for the root) has a black parent,
-.It 
-each leaf node is black.
-.El 
+.Bl -enum -offset indent
+.It
+Every search path from the root to a leaf consists of the same number of
+black nodes.
+.It
+Each red node (except for the root) has a black parent.
+.It
+Each leaf node is black.
+.El
 .Pp
 Every operation on a red-black tree is bounded as O(lg n).
 The maximum height of a red-black tree is 2lg (n+1).
@@ -69,24 +69,26 @@ The maximum height of a red-black tree is 2lg (n+1).
 .Bl -tag -width compact
 .It Vt struct rb_tree
 A red-black tree.
-.It Vt typedef signed int (*const rbto_compare_nodes_fn)(const struct rb_node *, const struct rb_node *);
+.It Vt typedef signed int \
+(*const rbto_compare_nodes_fn)(const struct rb_node *, const struct rb_node *);
 The node-comparison operator.
 Defines an ordering on nodes.
 Returns a positive value if the first node precedes the second node.
 Returns a negative value if the first node follows the second node.
 Returns 0 if the first node and the second are identical according
 to the ordering.
-.It Vt typedef signed int (*const rbto_compare_key_fn)(const struct rb_node *, const void *);
+.It Vt typedef signed int \
+(*const rbto_compare_key_fn)(const struct rb_node *, const void *);
 The node-key comparison operator.
 Defines the order of nodes and keys.
 Returns a positive value if the node precedes the key.
 Returns a negative value if the node follows the key.
-Returns 0 if the node is identical to the ey according to the ordering.
+Returns 0 if the node is identical to the key according to the ordering.
 .It Vt struct rb_tree_ops
 Defines the operators for comparing two nodes in the same tree,
 and for comparing a node in the tree with a key.
 Members of
-.Vt rb_tree_ops 
+.Vt rb_tree_ops
 are
 .Bd -literal
         rbto_compare_nodes_fn rbto_compare_nodes;
@@ -121,7 +123,7 @@ Search the tree
 for a node exactly matching
 .Fa key .
 If no such node is in the tree, return
-.Dv NULL . 
+.Dv NULL .
 Otherwise, return the matching node.
 .It Fn rb_tree_find_node_geq "rbt" "key"
 Search the tree
@@ -132,7 +134,7 @@ and return it.
 If no such node is present, return the first node following
 .Fa key
 or, if no such node is in the tree, return
-.Dv NULL . 
+.Dv NULL .
 .It Fn rb_tree_find_node_leq "rbt" "key"
 Search the tree
 .Fa rbt
@@ -157,7 +159,7 @@ or, if
 is
 .Dv NULL ,
 return the last node in
-.Fa rbt 
+.Fa rbt
 or, if the tree is empty, return
 .Dv NULL .
 .Pp
@@ -174,7 +176,7 @@ or, if
 is
 .Dv NULL ,
 return the first node in
-.Fa rbt 
+.Fa rbt
 or, if the tree is empty, return
 .Dv NULL .
 .El
@@ -207,7 +209,7 @@ wrote
 .An Niels Provos Aq provos@citi.umich.edu
 wrote the
 .Xr tree 3
-manual page.  Portions of this page derive from that page. 
+manual page.  Portions of this page derive from that page.
 .\" .Sh CAVEATS
 .\" .Sh BUGS
 .\" .Sh SECURITY CONSIDERATIONS
