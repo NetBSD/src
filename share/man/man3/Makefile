@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.39 2010/03/01 16:36:15 jruoho Exp $
+#	$NetBSD: Makefile,v 1.40 2010/03/19 20:11:22 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __UNCONST.3 CMSG_DATA.3 \
 	__arraycount.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 \
-	gcq.3 intro.3 offsetof.3 queue.3 stdarg.3 sysexits.3 \
+	fast_divide32.3 gcq.3 intro.3 offsetof.3 queue.3 stdarg.3 sysexits.3 \
 	tgmath.3 timeradd.3 tree.3 varargs.3
 
 USETBL=	# used by queue.3
@@ -25,6 +25,8 @@ MLINKS+=bits.3 __BIT.3 \
 	bits.3 __SHIFTOUT.3 \
 	bits.3 __SHIFTOUT_MASK.3
 MLINKS+=end.3 edata.3 end.3 etext.3
+MLINKS+=fast_divide32.3 fast_divide32_prepare.3 \
+	fast_divide32.3 fast_remainder32.3
 MLINKS+=gcq.3 GCQ_INIT.3 \
 	gcq.3 GCQ_INIT_HEAD.3 \
 	gcq.3 gcq_init.3 \
