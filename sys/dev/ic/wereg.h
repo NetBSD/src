@@ -1,4 +1,4 @@
-/*	$NetBSD: wereg.h,v 1.2 2001/07/04 11:14:10 jdolecek Exp $	*/
+/*	$NetBSD: wereg.h,v 1.3 2010/03/19 15:59:22 tsutsui Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -135,10 +135,21 @@
 
 #define WE790_RAR	0x0b
 
+#define WE790_RAR_OFF	0x0f	/* memory address offset */
+#define WE790_RAR_SZ	0x30	/* mask of memory buffer size */
 #define WE790_RAR_SZ8	0x00	/* 8k memory buffer */
 #define WE790_RAR_SZ16	0x10	/* 16k memory buffer */
 #define WE790_RAR_SZ32	0x20	/* 32k memory buffer */
 #define WE790_RAR_SZ64	0x30	/* 64k memory buffer */
+#define WE790_RAR_BASE	0x40	/* mask of memory base address */
+#define WE790_RAR_BASE0	0x00	/* base is 0x0C0000 */
+#define WE790_RAR_BASE1	0x40	/* base is 0x0E0000 */
+#if 0
+#define WE790_RAR_BASE2	0x80	/* base is 0xFC0000 */
+#define WE790_RAR_BASE3	0xc0	/* base is 0xFE0000 */
+#endif
+#define WE790_RAR_BASE_SHIFT	17	/* base is switched by A17 */
+#define WE790_RAR_OFF_SHIFT	13	/* offset is specified by A16-A13 */
 
 /*
  * General Control Register (GCR)
