@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.18 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.19 2010/03/19 08:28:44 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -223,13 +223,13 @@ static __inline void _bus_space_write_4
 
 static __inline void _bus_space_write_multi_1
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int8_t *, bus_size_t);
+	     const u_int8_t *, bus_size_t);
 static __inline void _bus_space_write_multi_2
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int16_t *, bus_size_t);
+	     const u_int16_t *, bus_size_t);
 static __inline void _bus_space_write_multi_4
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
-	     u_int32_t *, bus_size_t);
+	     const u_int32_t *, bus_size_t);
 
 static __inline void _bus_space_write_region_1
 	(bus_space_tag_t, bus_space_handle_t, bus_size_t,
@@ -466,7 +466,7 @@ _bus_space_write_multi_1(t, bsh, offset, datap, count)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
 	bus_size_t offset;
-	u_int8_t *datap;
+	const u_int8_t *datap;
 	bus_size_t count;
 {
 #if X68K_BUS_PERFORMANCE_HACK
@@ -488,7 +488,7 @@ _bus_space_write_multi_2(t, bsh, offset, datap, count)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
 	bus_size_t offset;
-	u_int16_t *datap;
+	const u_int16_t *datap;
 	bus_size_t count;
 {
 #if X68K_BUS_PERFORMANCE_HACK
@@ -510,7 +510,7 @@ _bus_space_write_multi_4(t, bsh, offset, datap, count)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;
 	bus_size_t offset;
-	u_int32_t *datap;
+	const u_int32_t *datap;
 	bus_size_t count;
 {
 #if X68K_BUS_PERFORMANCE_HACK
