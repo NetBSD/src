@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2010/03/18 22:17:55 roy Exp $
+#	$NetBSD: Makefile,v 1.95 2010/03/19 20:53:50 roy Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -15,10 +15,6 @@ PIE_CFLAGS=
 PIE_LDFLAGS=
 .include <bsd.init.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
-
-# We use alloca
-USE_FORT=	no
-USE_SSP=	no
 
 .if defined(LDELFSO_MACHINE_CPU) && !empty(LDELFSO_MACHINE_CPU) && \
     exists(${.CURDIR}/arch/${LDELFSO_MACHINE_CPU})
@@ -120,3 +116,7 @@ MAN=		ld.elf_so.1
 
 .include <bsd.man.mk>
 .endif
+
+# We use alloca, so disable SSP warnings.
+# This has to come last in the CFLAGS ordering
+CFLAGS+=	-Wno-stack-protector
