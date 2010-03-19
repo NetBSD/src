@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.51 2010/03/10 21:00:36 dyoung Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.52 2010/03/19 01:34:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.51 2010/03/10 21:00:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.52 2010/03/19 01:34:46 dyoung Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -300,7 +300,7 @@ ex_cardbus_intr_ack(struct ex_softc *sc)
 }
 
 int
-ex_cardbus_detach(device_t self, int arg)
+ex_cardbus_detach(device_t self, int flags)
 {
 	struct ex_cardbus_softc *csc = device_private(self);
 	struct ex_softc *sc = &csc->sc_softc;
@@ -313,23 +313,23 @@ ex_cardbus_detach(device_t self, int arg)
 	}
 #endif
 
-	rv = ex_detach(sc);
-	if (rv == 0) {
-		/*
-		 * Unhook the interrupt handler.
-		 */
-		Cardbus_intr_disestablish(ct, sc->sc_ih);
+	if ((rv = ex_detach(sc)) != 0)
+		return rv;
 
-		if (csc->sc_cardtype == EX_CB_CYCLONE) {
-			Cardbus_mapreg_unmap(ct,
-			    CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
-			    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
-		}
+	/*
+	 * Unhook the interrupt handler.
+	 */
+	Cardbus_intr_disestablish(ct, sc->sc_ih);
 
-		Cardbus_mapreg_unmap(ct, PCI_BAR0, sc->sc_iot,
-		    sc->sc_ioh, csc->sc_mapsize);
+	if (csc->sc_cardtype == EX_CB_CYCLONE) {
+		Cardbus_mapreg_unmap(ct,
+		    CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
+		    csc->sc_funct, csc->sc_funch, csc->sc_funcsize);
 	}
-	return (rv);
+
+	Cardbus_mapreg_unmap(ct, PCI_BAR0, sc->sc_iot,
+	    sc->sc_ioh, csc->sc_mapsize);
+	return 0;
 }
 
 int
@@ -354,11 +354,11 @@ void
 ex_cardbus_disable(struct ex_softc *sc)
 {
 	struct ex_cardbus_softc *csc = (struct ex_cardbus_softc *)sc;
-	cardbus_function_tag_t cf = csc->sc_ct->ct_cf;
-	cardbus_chipset_tag_t cc = csc->sc_ct->ct_cc;
 
-	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
-	sc->sc_ih = NULL;
+	if (sc->sc_ih != NULL) {
+		Cardbus_intr_disestablish(csc->sc_ct, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
 
  	Cardbus_function_disable(csc->sc_ct);
 
