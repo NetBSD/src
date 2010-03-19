@@ -1,0 +1,213 @@
+.\"     $NetBSD: rb.3,v 1.1 2010/03/19 18:02:22 dyoung Exp $
+.\"
+.\" Copyright (c) 2010 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Matt Thomas, Niels Provos, and David Young.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd March 19, 2010
+.Dt RB 3
+.Os
+.Sh NAME
+.Nm rb
+.Nd red-black tree
+.Sh SYNOPSIS
+.In sys/rb.h
+.Ft void
+.Fn rb_tree_init "struct rb_tree *" "const struct rb_tree_ops *"
+.Ft bool
+.Fn rb_tree_insert_node "struct rb_tree *" "struct rb_node *"
+.Ft struct rb_node *
+.Fn rb_tree_find_node "struct rb_tree *" "const void *"
+.Ft struct rb_node *
+.Fn rb_tree_find_node_geq "struct rb_tree *" "const void *"
+.Ft struct rb_node *
+.Fn rb_tree_find_node_leq "struct rb_tree *" "const void *"
+.Ft struct rb_node *
+.Fn rb_tree_iterate "struct rb_tree *" "struct rb_node *" "const unsigned int"
+.Sh DESCRIPTION
+.Nm
+provides red-black trees.
+A red-black tree is a binary search tree with the node color as an
+extra attribute.
+It fulfills a set of conditions:
+.Bl -enum -compact -offset indent
+.It 
+every search path from the root to a leaf consists of the same number of
+black nodes,
+.It 
+each red node (except for the root) has a black parent,
+.It 
+each leaf node is black.
+.El 
+.Pp
+Every operation on a red-black tree is bounded as O(lg n).
+The maximum height of a red-black tree is 2lg (n+1).
+.Sh TYPES
+.Bl -tag -width compact
+.It Vt struct rb_tree
+A red-black tree.
+.It Vt typedef signed int (*const rbto_compare_nodes_fn)(const struct rb_node *, const struct rb_node *);
+The node-comparison operator.
+Defines an ordering on nodes.
+Returns a positive value if the first node precedes the second node.
+Returns a negative value if the first node follows the second node.
+Returns 0 if the first node and the second are identical according
+to the ordering.
+.It Vt typedef signed int (*const rbto_compare_key_fn)(const struct rb_node *, const void *);
+The node-key comparison operator.
+Defines the order of nodes and keys.
+Returns a positive value if the node precedes the key.
+Returns a negative value if the node follows the key.
+Returns 0 if the node is identical to the ey according to the ordering.
+.It Vt struct rb_tree_ops
+Defines the operators for comparing two nodes in the same tree,
+and for comparing a node in the tree with a key.
+Members of
+.Vt rb_tree_ops 
+are
+.Bd -literal
+        rbto_compare_nodes_fn rbto_compare_nodes;
+        rbto_compare_key_fn rbto_compare_key;
+.Ed
+.It Vt struct rb_node
+A node in a red-black tree.
+.Sh FUNCTIONS
+.Bl -tag -width compact
+.It Fn rb_tree_init "rbt" "ops"
+Initialize the red-black tree
+.Fa rbt .
+Let the comparison operators given by
+.Fa ops
+define the order of nodes in the tree for
+the purposes of insertion, search, and iteration.
+.Fn rb_tree_init
+always succeeds.
+.It Fn rb_tree_insert_node "rbt" "rb"
+Insert the node
+.Fa rb
+into the tree
+.Fa rbt .
+Return
+.Dv true
+on success,
+.Dv false
+on failure.
+.It Fn rb_tree_find_node "rbt" "key"
+Search the tree
+.Fa rbt
+for a node exactly matching
+.Fa key .
+If no such node is in the tree, return
+.Dv NULL . 
+Otherwise, return the matching node.
+.It Fn rb_tree_find_node_geq "rbt" "key"
+Search the tree
+.Fa rbt
+for a node that exactly matches
+.Fa key
+and return it.
+If no such node is present, return the first node following
+.Fa key
+or, if no such node is in the tree, return
+.Dv NULL . 
+.It Fn rb_tree_find_node_leq "rbt" "key"
+Search the tree
+.Fa rbt
+for a node that exactly matches
+.Fa key
+and return it.
+If no such node is present, return the first node preceding
+.Fa key
+or, if no such node is in the tree, return
+.Dv NULL .
+.It Fn rb_tree_iterate "rbt" "rb" "direction"
+If
+.Fa direction
+is
+.Dv RB_DIR_LEFT ,
+return the node in the tree
+.Fa rbt
+immediately preceding the node
+.Fa rb
+or, if
+.Fa rb
+is
+.Dv NULL ,
+return the last node in
+.Fa rbt 
+or, if the tree is empty, return
+.Dv NULL .
+.Pp
+If
+.Fa direction
+is
+.Dv RB_DIR_RIGHT ,
+return the node in the tree
+.Fa rbt
+immediately following the node
+.Fa rb
+or, if
+.Fa rb
+is
+.Dv NULL ,
+return the first node in
+.Fa rbt 
+or, if the tree is empty, return
+.Dv NULL .
+.El
+.Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where actual code implementing
+.Nm
+can be found.
+All pathnames are relative to
+.Pa /usr/src .
+.Pp
+.Nm
+is implemented within the file
+.Pa common/lib/libc/gen/rb.c .
+.\" .Sh EXAMPLES
+.Sh SEE ALSO
+.Xr tree 3 ,
+.Xr queue 3
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Nx 6.0 .
+.Sh AUTHORS
+.An Matt Thomas Aq matt@NetBSD.org
+wrote
+.Nm .
+.Pp
+.An Niels Provos Aq provos@citi.umich.edu
+wrote the
+.Xr tree 3
+manual page.  Portions of this page derive from that page. 
+.\" .Sh CAVEATS
+.\" .Sh BUGS
+.\" .Sh SECURITY CONSIDERATIONS
