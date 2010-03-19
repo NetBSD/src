@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.33 2010/03/19 01:16:44 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.34 2010/03/19 02:19:13 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -131,7 +131,6 @@ void	sme_events_destroy(struct sysmon_envsys *);
 void	sme_events_check(void *);
 void	sme_events_worker(struct work *, void *);
 void	sme_deliver_event(sme_event_t *);
-void	sme_deliver_typed_event(struct sysmon_envsys *, envsys_data_t *, int);
 
 /* 
  * common functions to create/update objects in a dictionary.
