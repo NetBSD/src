@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1406 2010/03/08 12:32:17 pooka Exp $
+#	$NetBSD: mi,v 1.1407 2010/03/19 20:11:21 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5682,6 +5682,9 @@
 ./usr/share/man/cat3/extattr_string_to_namespace.0	comp-c-catman		.cat
 ./usr/share/man/cat3/fabs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fabsf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fast_divide32.0		comp-c-catman		.cat
+./usr/share/man/cat3/fast_divide32_prepare.0	comp-c-catman		.cat
+./usr/share/man/cat3/fast_remainder32.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fclose.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdim.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdimf.0			comp-c-catman		.cat
@@ -11453,6 +11456,9 @@
 ./usr/share/man/html3/extattr_string_to_namespace.html	comp-c-htmlman		html
 ./usr/share/man/html3/fabs.html			comp-c-htmlman		html
 ./usr/share/man/html3/fabsf.html		comp-c-htmlman		html
+./usr/share/man/html3/fast_divide32.html		comp-c-htmlman		html
+./usr/share/man/html3/fast_divide32_prepare.html	comp-c-htmlman		html
+./usr/share/man/html3/fast_remainder32.html		comp-c-htmlman		html
 ./usr/share/man/html3/fclose.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdim.html			comp-c-htmlman		html
 ./usr/share/man/html3/fdimf.html		comp-c-htmlman		html
@@ -17134,6 +17140,9 @@
 ./usr/share/man/man3/extattr_string_to_namespace.3	comp-c-man		.man
 ./usr/share/man/man3/fabs.3			comp-c-man		.man
 ./usr/share/man/man3/fabsf.3			comp-c-man		.man
+./usr/share/man/man3/fast_divide32.3		comp-c-man		.man
+./usr/share/man/man3/fast_divide32_prepare.3	comp-c-man		.man
+./usr/share/man/man3/fast_remainder32.3		comp-c-man		.man
 ./usr/share/man/man3/fclose.3			comp-c-man		.man
 ./usr/share/man/man3/fdim.3			comp-c-man		.man
 ./usr/share/man/man3/fdimf.3			comp-c-man		.man
