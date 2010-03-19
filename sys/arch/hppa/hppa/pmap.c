@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 2010/03/19 07:29:44 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 2010/03/19 07:35:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2010/03/19 07:29:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2010/03/19 07:35:29 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -525,7 +525,7 @@ pmap_check_alias(struct vm_page *pg, vaddr_t va, pt_entry_t pte)
 		    (pte & PTE_PROT(TLB_WRITE))) {
 
 			DPRINTF(PDB_FOLLOW|PDB_ALIAS,
-                            ("%s: "aliased writable mapping 0x%x:0x%x\n",
+                            ("%s: aliased writable mapping 0x%x:0x%lx\n",
                             __func__, pve->pv_pmap->pm_space, pve->pv_va));
 			ret++;
 		}
