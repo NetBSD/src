@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.16 2010/03/19 14:57:52 tsutsui Exp $	*/
+/*	$NetBSD: we.c,v 1.17 2010/03/19 15:59:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.16 2010/03/19 14:57:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.17 2010/03/19 15:59:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,21 +190,23 @@ we_config(device_t self, struct we_softc *wsc, const char *typestr)
 	 * Set address and enable interface shared memory.
 	 */
 	if (sc->is790) {
-		/* XXX MAGIC CONSTANTS XXX */
-		x = bus_space_read_1(wsc->sc_asict, wsc->sc_asich, 0x04);
-		bus_space_write_1(wsc->sc_asict, wsc->sc_asich, 0x04, x | 0x80);
-		bus_space_write_1(wsc->sc_asict, wsc->sc_asich, 0x0b,
-		    ((wsc->sc_maddr >> 13) & 0x0f) |
-		    ((wsc->sc_maddr >> 11) & 0x40) |
-		    (bus_space_read_1(wsc->sc_asict, wsc->sc_asich, 0x0b) &
-		     0xb0));
-		bus_space_write_1(wsc->sc_asict, wsc->sc_asich, 0x04, x);
+		x = bus_space_read_1(wsc->sc_asict, wsc->sc_asich, WE790_HWR);
+		bus_space_write_1(wsc->sc_asict, wsc->sc_asich,
+		    WE790_HWR, x | WE790_HWR_SWH);
+		bus_space_write_1(wsc->sc_asict, wsc->sc_asich, WE790_RAR,
+		    ((wsc->sc_maddr >> WE790_RAR_OFF_SHIFT) & WE790_RAR_OFF) |
+		    ((wsc->sc_maddr & (1 << WE790_RAR_BASE_SHIFT)) != 0 ?
+		     WE790_RAR_BASE1 : WE790_RAR_BASE0) |
+		    (bus_space_read_1(wsc->sc_asict, wsc->sc_asich, WE790_RAR) &
+		     ~(WE790_RAR_OFF | WE790_RAR_BASE)));
+		bus_space_write_1(wsc->sc_asict, wsc->sc_asich, WE790_HWR, x);
 		wsc->sc_msr_proto = 0x00;
 		sc->cr_proto = 0x00;
 	} else {
 #ifdef TOSH_ETHER
 		if (wsc->sc_type == WE_TYPE_TOSHIBA1 ||
 		    wsc->sc_type == WE_TYPE_TOSHIBA4) {
+			/* XXX MAGIC CONSTANTS XXX */
 			bus_space_write_1(wsc->sc_asict, wsc->sc_asich,
 			    WE_MSR + 1,
 			    ((wsc->sc_maddr >> 8) & 0xe0) | 0x04);
