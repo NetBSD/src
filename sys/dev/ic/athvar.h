@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.32 2010/03/14 21:25:59 dyoung Exp $	*/
+/*	$NetBSD: athvar.h,v 1.33 2010/03/19 01:32:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -44,6 +44,12 @@
 #ifndef _DEV_ATH_ATHVAR_H
 #define _DEV_ATH_ATHVAR_H
 
+#include <net/if.h>
+#include <net/if_media.h>
+#include <net/if_ether.h>
+
+#include <net80211/ieee80211_netbsd.h>
+#include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <external/isc/atheros_hal/dist/ah.h>
