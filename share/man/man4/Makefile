@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.511 2010/03/11 10:38:37 enami Exp $
+#	$NetBSD: Makefile,v 1.512 2010/03/19 04:04:27 cnst Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 acpidalb.4 \
 	adbbt.4 adbkbd.4 adbms.4 \
 	adc.4 admtemp.4 adv.4 adw.4 age.4 agp.4 agr.4 ahb.4 ahc.4 \
 	ahcisata.4 ahd.4 \
-	aiboost.4 aibs.4 ale.4 alipm.4 altmem.4 amdpm.4 amdtemp.4 amhphy.4 \
+	aibs.4 ale.4 alipm.4 altmem.4 amdpm.4 amdtemp.4 amhphy.4 \
 	amr.4 aps.4 \
 	an.4 arcmsr.4 aria.4 artsata.4 ata.4 atalk.4 ataraid.4 \
 	ath.4 atphy.4 atppc.4 attimer.4 atw.4 \
@@ -144,6 +144,7 @@ MLINKS+=drm.4 tdfxdrm.4
 MLINKS+=drm.4 viadrm.4
 
 MLINKS+=acpiec.4 acpiecdt.4
+MLINKS+=aibs.4 aiboost.4
 MLINKS+=ata.4 atabus.4
 MLINKS+=audio.4 audioctl.4
 MLINKS+=audio.4 mixer.4

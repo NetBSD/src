@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.258 2010/03/11 10:38:37 enami Exp $
+#	$NetBSD: DEVNAMES,v 1.259 2010/03/19 04:04:27 cnst Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -61,7 +61,6 @@ ahd			MI
 ahsc			amiga
 ahsc			amigappc
 ai			MI
-aiboost			MI
 aibs			MI
 aic			MI
 akbd			mac68k
