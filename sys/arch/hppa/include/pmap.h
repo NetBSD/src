@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2010/03/06 21:22:42 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 2010/03/19 07:29:44 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -60,35 +60,9 @@ struct pmap {
 	struct pmap_statistics	pm_stats;
 };
 
-/*
- * Flags that indicate attributes of pages or mappings of pages.
- *
- * We need two flags for cacheability because pages/mappings can be marked
- * uncacheable for two reasons,
- *
- *	1) A page's contents may change under our feet and can never be
- *	   cacheable, e.g. I/O space, DMA buffers.
- *	2) A page has non-equivalent aliases and must be (temporarily)
- *	   marked uncachable.
- *
- * A page that is marked PVF_NC can *never* be marked cacheable and will have
- * all mappings marked PVF_UNCACHEABLE. A page marked PVF_UNCACHEABLE only
- * is done so due to non-equivalent aliases this maybe removed is the non-
- * equivalent aliases are removed. 
- *
- */
-
-#define	PVF_NC		0x2000			/* pg is never cacheable */
-
 #define	PVF_MOD		PTE_PROT(TLB_DIRTY)	/* pg/mp is modified */
 #define	PVF_REF		PTE_PROT(TLB_REFTRAP)	/* pg/mp (inv) is referenced */
 #define	PVF_WRITE	PTE_PROT(TLB_WRITE)	/* pg/mp is writable */
-#define	PVF_UNCACHEABLE	PTE_PROT(TLB_UNCACHEABLE)
-						/* pg/mp is uncacheable */
-
-#define	pmap_is_aliased(pg)	\
-	(((pg)->mdpage.pvh_attrs & PVF_NC) == 0 && \
-	 ((pg)->mdpage.pvh_attrs & PVF_UNCACHEABLE) != 0)
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd
@@ -123,10 +97,11 @@ static inline vaddr_t hppa_map_poolpage(paddr_t pa)
 static inline paddr_t hppa_unmap_poolpage(vaddr_t va)
 {
 	pdcache(HPPA_SID_KERNEL, va, PAGE_SIZE);
+
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || \
     defined(HP8500_CPU) || defined(HP8600_CPU)
-	pdtlb(HPPA_SID_KERNEL, va);
 	ficache(HPPA_SID_KERNEL, va, PAGE_SIZE);
+	pdtlb(HPPA_SID_KERNEL, va);
 	pitlb(HPPA_SID_KERNEL, va);
 #endif
 
