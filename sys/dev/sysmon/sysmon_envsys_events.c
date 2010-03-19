@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.86 2010/03/19 01:16:44 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.87 2010/03/19 02:19:13 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.86 2010/03/19 01:16:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.87 2010/03/19 02:19:13 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -642,14 +642,14 @@ out:
 }
 
 /*
- * sme_deliver_typed_event
+ * sysmon_envsys_sensor_event
  *
  *	+ Find the monitor event of a particular type for a given sensor
  *	  on a device and deliver the event if one is required.
  */
 void
-sme_deliver_typed_event(struct sysmon_envsys *sme, envsys_data_t *edata, 
-			int ev_type)
+sysmon_envsys_sensor_event(struct sysmon_envsys *sme, envsys_data_t *edata, 
+			   int ev_type)
 {
 	sme_event_t *see;
 
