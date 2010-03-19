@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.35 2010/03/18 22:11:48 pgoyette Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.36 2010/03/19 02:20:44 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,6 +47,8 @@
 .Fn sysmon_envsys_sensor_attach "struct sysmon_envsys *" "envsys_data_t *"
 .Ft int
 .Fn sysmon_envsys_sensor_detach "struct sysmon_envsys *" "envsys_data_t *"
+.Ft void
+.Fn sysmon_envsys_sensor_event "struct sysmon_envsys *" "envsys_data_t *" "int"
 .Sh DESCRIPTION
 .Pp
 .Nm
@@ -95,6 +97,17 @@ function should be used.
 This detachs all previously attached sensors and deallocates the
 .Em sysmon_envsys
 object.
+.Pp
+Some sensors can be monitored, and when the sensor value changes an event
+can be delivered to the
+.Xr powerd 8
+daemon.
+Sensor monitoring can be performed by the
+.Xr sysmon_envsys 9
+framework on a polled basis.
+Alternatively, the sensor's device driver can call the
+.Fn sysmon_envsys_sensor_event
+function to deliver the event without waiting for the device to be polled.
 .Pp
 The
 .Em sysmon_envsys
