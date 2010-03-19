@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1370 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1371 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -567,3 +567,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	openldap: Update to 2.4.21.  [lukem 20100308]
 	atari: Add support for the SMC Elite Ultra Ethernet with
 		the SMC_TT VME-ISA bridge. [tsutsui 20100313]
+	aibs(4): Remove aiboost(4) as obsolete and redundant
+		since the introduction of aibs(4).	[cnst 20100319]
