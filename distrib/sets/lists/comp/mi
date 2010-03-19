@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1407 2010/03/19 20:11:21 joerg Exp $
+#	$NetBSD: mi,v 1.1408 2010/03/19 20:31:50 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13849,7 +13849,7 @@
 ./usr/share/man/html3/towctrans.html		comp-c-htmlman		html
 ./usr/share/man/html3/towlower.html		comp-c-htmlman		html
 ./usr/share/man/html3/towupper.html		comp-c-htmlman		html
-./usr/share/man/html3/tparm.html		comp-c-catman		html
+./usr/share/man/html3/tparm.html		comp-c-htmlman		html
 ./usr/share/man/html3/tputs.html		comp-c-htmlman		html
 ./usr/share/man/html3/tree.html			comp-c-htmlman		html
 ./usr/share/man/html3/trunc.html		comp-c-htmlman		html
