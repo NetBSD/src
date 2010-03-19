@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.36 2010/03/19 02:20:44 pgoyette Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.37 2010/03/19 08:37:16 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,7 +103,7 @@ can be delivered to the
 .Xr powerd 8
 daemon.
 Sensor monitoring can be performed by the
-.Xr sysmon_envsys 9
+.Nm
 framework on a polled basis.
 Alternatively, the sensor's device driver can call the
 .Fn sysmon_envsys_sensor_event
@@ -326,7 +326,7 @@ Among other uses, if one or more of the
 flags are set, automatic sensor monitoring will be enabled.
 Periodically, the sensor's value will be checked and if certain
 conditions are met, an event will be sent to the
-.Xr powerd 8 
+.Xr powerd 8
 daemon.
 .Em NOTE
 .Em that limits (or thresholds) can be set at any time to enable
