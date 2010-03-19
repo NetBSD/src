@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.1 2010/02/21 05:16:29 cnst Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.2 2010/03/19 02:17:41 cnst Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -50,6 +50,7 @@
 #define WBSIO_ID_W83627DHG	0xa0
 #define WBSIO_ID_W83627SF	0x59
 #define WBSIO_ID_W83637HF	0x70
+#define WBSIO_ID_W83667HG	0xa5
 #define WBSIO_ID_W83697HF	0x60
 
 /* Logical Device Number (LDN) Assignments */
@@ -184,6 +185,9 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 		break;
 	case WBSIO_ID_W83637HF:
 		desc = "W83637HF";
+		break;
+	case WBSIO_ID_W83667HG:
+		desc = "W83667HG";
 		break;
 	case WBSIO_ID_W83697HF:
 		desc = "W83697HF";
