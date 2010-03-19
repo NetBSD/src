@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.h,v 1.9 2009/10/19 23:19:39 rmind Exp $ */
+/*	$NetBSD: ath_netbsd.h,v 1.10 2010/03/19 01:31:11 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -26,6 +26,8 @@
  */
 #ifndef _ATH_NETBSD_H
 #define _ATH_NETBSD_H
+
+#include <sys/sysctl.h>
 
 #undef KASSERT
 #define KASSERT(__cond, __complaint) if (!(__cond)) panic __complaint
