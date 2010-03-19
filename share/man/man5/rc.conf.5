@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.138 2009/10/24 11:22:48 reed Exp $
+.\"	$NetBSD: rc.conf.5,v 1.139 2010/03/19 19:17:54 jruoho Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" Copyright (c) 1997 Curt J. Sampson
 .\" Copyright (c) 1997 Michael W. Long
-.\" Copyright (c) 1998-2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998-2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This document is derived from works contributed to The NetBSD Foundation
@@ -334,9 +334,23 @@ Enables process accounting with
 Requires
 .Pa /var/account/acct
 to exist.
+.It Sy ccd
+Boolean value.
+Configures concatenated disk devices according to
+.Xr ccd.conf 5 .
+.It Sy cgd
+Boolean value.
+Configures cryptographic disk devices.
+Requires
+.Pa /etc/cgd/cgd.conf .
+See
+.Xr cgdconfig 8
+for additional details.
 .It Sy clear_tmp
 Boolean value.
-Clear /tmp after reboot.
+Clear
+.Pa /tmp
+after reboot.
 .It Sy dmesg
 Boolean value.
 Create
@@ -345,13 +359,26 @@ from the output of
 .Xr dmesg 8 .
 Passes
 .Sy dmesg_flags .
+.It Sy envsys
+Boolean value.
+Sets preferences for the environmental systems framework,
+.Xr envsys 4 .
+Requires
+.Pa /etc/envsys.conf ,
+which is described in
+.Xr envsys.conf 5 .
 .It Sy gpio
 Boolean value.
 Configure
 .Xr gpio 4
-devices .
+devices.
 See
 .Xr gpio.conf 5 .
+.It Sy ldconfig
+Boolean value.
+Configures
+.Xr a.out 5
+runtime link editor directory cache.
 .It Sy mixerctl
 Boolean value.
 Read
@@ -379,6 +406,19 @@ can be used to override the default location of the
 .Dq real
 temporary directories,
 .Dq Pa /private/tmp .
+.It Sy quota
+Boolean value.
+Checks and enables quotas by running
+.Xr quotacheck 1
+and
+.Xr quotaon 8 .
+.It Sy raidframe
+Boolean value.
+Configures
+.Xr raid 4 ,
+RAIDframe disk devices. See
+.Xr raidctl 8
+for additional details.
 .It Sy rndctl
 Boolean value.
 Runs the
@@ -426,6 +466,15 @@ the following commands will be executed:
 .Li "rndctl -c -e -d wd1" ;
 .Li "rndctl -c -e -t tty" ;
 .Li "rndctl -c -t net" .
+.It Sy rtclocaltime
+Boolean value.
+Sets the real time clock to local time by adjusting the
+.Xr sysctl 7
+value of
+.Pa kern.rtc_offset .
+The offset from UTC is calculated automatically according
+to the time zone information in the file
+.Pa /etc/localtime .
 .It Sy savecore
 Boolean value.
 Runs the
@@ -437,6 +486,15 @@ The directory where crash dumps are stored is specified by
 .Sy savecore_dir .
 The default setting is
 .Dq Pa /var/crash .
+.It Sy sysdb
+Boolean value.
+Builds various system databases, including
+.Pa /var/run/dev.db ,
+.Pa /etc/spwd.db ,
+.Pa /var/db/netgroup.db ,
+.Pa /var/db/services.db ,
+and entries for
+.Xr utmp 5 .
 .It Sy tpctl
 Boolean value.
 Run
@@ -466,6 +524,14 @@ Send notification mail to users if any recoverable files exist in
 Read
 .Xr virecover 8
 for more information.
+.It Sy wdogctl
+Boolean value.
+Configures watchdog timers.
+Passes
+.Sy wdogctl_flags .
+Refer to
+.Xr wdogctl 8
+for information on how to configure a timer.
 .El
 .Ss System security setting
 .Bl -tag -width net_interfaces
@@ -584,6 +650,11 @@ Boolean value.
 Flushes the route table on networking startup.
 Useful when coming up to multiuser mode after going down to
 single-user mode.
+.It Sy ftp_proxy
+Boolean value.
+Runs
+.Xr ftp-proxy 8 ,
+the proxy daemon for the Internet File Transfer Protocol.
 .It Sy hostapd
 Boolean value.
 Runs
@@ -876,6 +947,11 @@ Passes
 Boolean value.
 Run
 .Xr cron 8 .
+.It Sy ftpd
+Runs the
+.Xr ftpd 8
+daemon and passes
+.Sy ftpd_flags .
 .It Sy httpd
 Boolean value.
 Runs the
@@ -1285,6 +1361,19 @@ Passes
 .El
 .Ss Other daemons
 .Bl -tag -width net_interfaces
+.It Sy identd
+Boolean value.
+Runs
+.Xr identd 8 ,
+the daemon for the user identification protocol.
+Passes
+.Sy identd_flags .
+.It Sy iscsi_target
+Boolean value.
+Runs the server for iSCSI requests,
+.Xr iscsi-target 8 .
+Passes
+.Sy iscsi_target_flags .
 .It Sy isdnd
 Boolean value.
 Runs
