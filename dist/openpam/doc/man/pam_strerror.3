@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam_strerror.3,v 1.5 2008/01/27 01:22:58 christos Exp $
+.\"	$NetBSD: pam_strerror.3,v 1.6 2010/03/19 18:26:14 joerg Exp $
 .\"
 .\"-
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -55,9 +55,15 @@ The
 function returns a pointer to a string containing a
 textual description of the error indicated by the
 .Fa error_number
-argument, in the context of the PAM transaction described by the
-.Fa pamh
 argument.
+The
+.Fa pamh
+argument is ignored.
+For compatibility with other implementations, it should be either a
+valid PAM handle returned by a previous call to
+.Fn pam_start ,
+or
+.Dv NULL .
 .Sh RETURN VALUES
 The
 .Nm
