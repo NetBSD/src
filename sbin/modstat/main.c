@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2010/03/05 10:27:16 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2010/03/19 16:25:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.9 2010/03/05 10:27:16 pooka Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 2010/03/19 16:25:33 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -51,12 +51,14 @@ static const char *classes[] = {
 	"exec",
 	"secmodel",
 };
+const unsigned int class_max = __arraycount(classes);
 
 static const char *sources[] = {
 	"builtin",
 	"boot",
 	"filesys",
 };
+const unsigned int source_max = __arraycount(sources);
 
 int
 main(int argc, char **argv)
@@ -104,6 +106,9 @@ main(int argc, char **argv)
 	len = iov.iov_len / sizeof(modstat_t);
 	qsort(iov.iov_base, len, sizeof(modstat_t), modstatcmp);
 	for (ms = iov.iov_base; len != 0; ms++, len--) {
+		const char *class;
+		const char *source;
+
 		if (name != NULL && strcmp(ms->ms_name, name) != 0) {
 			continue;
 		}
@@ -117,9 +122,18 @@ main(int argc, char **argv)
 		} else {
 			snprintf(sbuf, sizeof(sbuf), "%u", ms->ms_size);
 		}
+		if (ms->ms_class <= class_max)
+			class = classes[ms->ms_class];
+		else
+			class = "UNKNOWN";
+		if (ms->ms_source < source_max)
+			source = sources[ms->ms_source];
+		else
+			source = "UNKNOWN";
+
 		printf("%-16s %-10s %-10s %-5d %-8s %s\n",
-		    ms->ms_name, classes[ms->ms_class], sources[ms->ms_source],
-		    ms->ms_refcnt, sbuf, ms->ms_required);
+		    ms->ms_name, class, source, ms->ms_refcnt, sbuf,
+		    ms->ms_required);
 	}
 
 	exit(EXIT_SUCCESS);
@@ -143,4 +157,3 @@ modstatcmp(const void *a, const void *b)
 
 	return strcmp(msa->ms_name, msb->ms_name);
 }
-
