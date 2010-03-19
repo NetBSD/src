@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.67 2010/02/09 03:19:51 cnst Exp $
+#	$NetBSD: files.acpi,v 1.68 2010/03/19 04:04:28 cnst Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -108,11 +108,6 @@ file	dev/acpi/ym_acpi.c		ym_acpi
 # High Precision Event Timer
 attach 	hpet at acpinodebus with hpet_acpi
 file 	dev/acpi/hpet_acpi.c		hpet_acpi
-
-# ASUS AI Booster Hardware monitor
-device	aiboost: sysmon_envsys
-attach	aiboost at acpinodebus
-file	dev/acpi/aiboost.c		aiboost
 
 # ASUS hotkey device
 device	asus: sysmon_envsys, sysmon_power
