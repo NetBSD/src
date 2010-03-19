@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.70 2010/03/13 15:27:40 tsutsui Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.71 2010/03/19 14:26:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.70 2010/03/13 15:27:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.71 2010/03/19 14:26:37 tsutsui Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -979,9 +979,6 @@ ne2000_ipkdb_attach(struct ipkdb_if *kip)
 
 	if (dp8390_ipkdb_attach(kip))
 		return -1;
-
-	dp->mem_ring = dp->mem_start
-		+ ((dp->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	if (!(kip->flags & IPKDB_MYHW)) {
 		char romdata[16];
