@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.1 2010/03/14 20:19:06 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.2 2010/03/20 00:02:59 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -153,5 +153,8 @@ void pci_device_foreach_min(pci_chipset_tag_t, int, int,
         
 void pci_bridge_foreach(pci_chipset_tag_t, int, int,
 	void (*) (pci_chipset_tag_t, pcitag_t, void *), void *);
+
+void pci_mmio_range_infer(pci_chipset_tag_t, int, int, bus_addr_t *,
+    bus_size_t *);
 
 #endif /* _X86_PCI_MACHDEP_COMMON_H_ */
