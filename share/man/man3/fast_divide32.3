@@ -1,4 +1,4 @@
-.\"	$NetBSD: fast_divide32.3,v 1.2 2010/03/20 10:26:06 jruoho Exp $
+.\"	$NetBSD: fast_divide32.3,v 1.3 2010/03/20 11:18:43 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ and
 using optimised CPU instructions.
 The constants
 .Fa m ,
-.Fa s1
+.Fa s1 ,
 and
 .Fa s2
 must first be preset for a given value of
@@ -80,7 +80,7 @@ The following example computes q=a/b and r=a%b:
 uint32_t a, b, q, r, m;
 uint8_t s1, s2;
 
-fast_divide32_prepare(b, &m, &s1, &s2);
+fast_divide32_prepare(b, \*[Am]m, \*[Am]s1, \*[Am]s2);
 
 q = fast_divide32(a, b, m, s1, s2);
 r = fast_remainder32(a, b, m, s1, s2);
