@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2009/07/19 23:44:20 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2010/03/20 02:07:33 uwe Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -9,9 +9,10 @@
 .include <bsd.own.mk>
 
 .if (${MKCRYPTO} != "no")
+SUBDIR+= ../bsd/openssl/lib
+SUBDIR+= .WAIT
 SUBDIR+= ../bsd/netpgp/lib
 SUBDIR+= ../bsd/openssh/lib
-SUBDIR+= ../bsd/openssl/lib
 .endif
 
 .include <bsd.subdir.mk>
