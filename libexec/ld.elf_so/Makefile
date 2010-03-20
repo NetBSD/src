@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95 2010/03/19 20:53:50 roy Exp $
+#	$NetBSD: Makefile,v 1.96 2010/03/20 16:36:35 skrll Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -85,6 +85,10 @@ DBG=		-O3 -fomit-frame-pointer
 CPPFLAGS+=	-DRTLD_DEFAULT_LIBRARY_PATH=\"${SHLIBDIR}:${LIBDIR}\"
 .endif
 
+# rtld.c and symbol.c use alloca, so disable SSP warnings.
+COPTS.rtld.c+=	-Wno-stack-protector
+COPTS.symbol.c+=-Wno-stack-protector
+
 LDADD+=		-L${CLIBOBJ} -L${DESTDIR}${LIBDIR}
 .if ${MKPICLIB} != "no"
 LDADD+=		-lc_pic
@@ -116,7 +120,3 @@ MAN=		ld.elf_so.1
 
 .include <bsd.man.mk>
 .endif
-
-# We use alloca, so disable SSP warnings.
-# This has to come last in the CFLAGS ordering
-CFLAGS+=	-Wno-stack-protector
