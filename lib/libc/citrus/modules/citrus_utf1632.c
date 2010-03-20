@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf1632.c,v 1.10 2010/03/15 15:00:58 tnozaki Exp $	*/
+/*	$NetBSD: citrus_utf1632.c,v 1.11 2010/03/20 18:15:32 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf1632.c,v 1.10 2010/03/15 15:00:58 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_utf1632.c,v 1.11 2010/03/20 18:15:32 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -155,9 +155,8 @@ refetch:
 					goto refetch;
 				}
 			}
-		} else {
-			psenc->current_endian = ei->preffered_endian;
 		}
+		psenc->current_endian = ei->preffered_endian;
 	}
 	endian = psenc->current_endian;
 
