@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.17 2010/03/20 01:47:12 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.18 2010/03/20 01:52:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.17 2010/03/20 01:47:12 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.18 2010/03/20 01:52:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -146,10 +146,10 @@ elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 			pax_align = PGSHIFT;
 		l2 = ilog2(pax_align);
 		delta = PAX_ASLR_DELTA(r, l2, PAX_ASLR_DELTA_EXEC_LEN);
-		uprintf("r=0x%x a=0x%x p=0x%x Delta=0x%lx\n", r, l2, PGSHIFT,
-		    delta);
 		offset = ELF_TRUNC(delta, pax_align) + PAGE_SIZE;
 #ifdef PAX_ASLR_DEBUG
+		uprintf("r=0x%x l2=0x%zx PGSHIFT=0x%x Delta=0x%zx\n", r, l2,
+		    PGSHIFT, delta);
 		uprintf("pax offset=0x%zx entry=0x%llx\n",
 		    offset, (unsigned long long)eh->e_entry);
 #endif /* PAX_ASLR_DEBUG */
@@ -158,7 +158,7 @@ elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 		offset = PAGE_SIZE;
 
 	for (i = 0; i < eh->e_phnum; i++)
-		ph[i].p_vaddr += pax_offset;
+		ph[i].p_vaddr += offset;
 	eh->e_entry += offset;
 }
 
@@ -888,7 +888,7 @@ bad:
 				printf("%s: bad tag %d: "
 				    "[%d %d, %d %d, %*.*s %*.*s]\n",
 				    epp->ep_name,
-				    np->n_type
+				    np->n_type,
 				    np->n_namesz, ELF_NOTE_PAX_NAMESZ,
 				    np->n_descsz, ELF_NOTE_PAX_DESCSZ,
 				    ELF_NOTE_PAX_NAMESZ,
