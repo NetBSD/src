@@ -1,4 +1,4 @@
-/*	$NetBSD: setfault.S,v 1.5 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: setfault.S,v 1.6 2010/03/20 23:31:30 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@ _C_LABEL(setfault):
 	mfcr	%r12
 	GET_CPUINFO(%r4)
 	ldptr	%r4,CI_CURPCB(%r4)
-	stptr	%r3,PCB_FAULT(%r4)
+	stptr	%r3,PCB_ONFAULT(%r4)
 	streg	%r0,FB_PC(%r3)			/* LR */
 	streg	%r1,FB_SP(%r3)			/* SP (R1) */
 	streg	%r2,FB_R2(%r3)			/* why?? */

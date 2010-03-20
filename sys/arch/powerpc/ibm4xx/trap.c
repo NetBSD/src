@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54 2010/02/25 23:31:47 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.55 2010/03/20 23:31:29 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54 2010/02/25 23:31:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2010/03/20 23:31:29 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -131,13 +131,13 @@ void
 trap(struct trapframe *frame)
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l ? l->l_proc : NULL;
+	struct proc *p = l->l_proc;
 	struct pcb *pcb;
 	int type = frame->exc;
 	int ftype, rv;
 	ksiginfo_t ksi;
 
-	KASSERT(l == NULL || (l->l_stat == LSONPROC));
+	KASSERT(l->l_stat == LSONPROC);
 
 	if (frame->srr1 & PSL_PR) {
 		LWP_CACHE_CREDS(l, p);
@@ -204,20 +204,24 @@ trap(struct trapframe *frame)
 			    frame->srr0,
 			    (ftype & VM_PROT_WRITE) ? "write" : "read",
 			    (void *)va, frame->tf_xtra[TF_ESR]));
+			
+			pcb = lwp_getpcb(l);
+			fb = pcb->pcb_onfault;
+			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(map, trunc_page(va), ftype);
+			pcb->pcb_onfault = fb;
 			if (map != kernel_map) {
 				l->l_pflag &= ~LP_SA_PAGEFAULT;
 			}
 			if (rv == 0)
 				goto done;
-			pcb = lwp_getpcb(l);
-			if ((fb = pcb->pcb_onfault) != NULL) {
+			if (fb != NULL) {
 				frame->tf_xtra[TF_PID] = KERNEL_PID;
 				frame->srr0 = fb->fb_pc;
 				frame->srr1 |= PSL_IR; /* Re-enable IMMU */
 				frame->fixreg[1] = fb->fb_sp;
 				frame->fixreg[2] = fb->fb_r2;
-				frame->fixreg[3] = 1; /* Return TRUE */
+				frame->fixreg[3] = rv;
 				frame->cr = fb->fb_cr;
 				memcpy(&frame->fixreg[13], fb->fb_fixreg,
 				    sizeof(fb->fb_fixreg));
@@ -241,6 +245,7 @@ trap(struct trapframe *frame)
 			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
+//		KASSERT(curpcb->pcb_onfault == NULL);
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
 		    ftype);
 		if (rv == 0) {
@@ -273,6 +278,7 @@ trap(struct trapframe *frame)
 		DBPRINTF(TDB_ALL,
 		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
 		    frame->srr0, frame));
+//		KASSERT(curpcb->pcb_onfault == NULL);
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    ftype);
 		if (rv == 0) {
@@ -346,7 +352,7 @@ trap(struct trapframe *frame)
 				frame->srr1 |= PSL_IR; /* Re-enable IMMU */
 				frame->fixreg[1] = fb->fb_sp;
 				frame->fixreg[2] = fb->fb_r2;
-				frame->fixreg[3] = 1; /* Return TRUE */
+				frame->fixreg[3] = EFAULT;
 				frame->cr = fb->fb_cr;
 				memcpy(&frame->fixreg[13], fb->fb_fixreg,
 				    sizeof(fb->fb_fixreg));
@@ -419,16 +425,16 @@ int
 copyin(const void *udaddr, void *kaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
-	int msr, pid, tmp, ctx, count=0;
+	int rv, msr, pid, tmp, ctx, count = 0;
 	struct faultbuf env;
 
 	/* For bigger buffers use the faster copy */
 	if (len > 1024)
 		return (bigcopyin(udaddr, kaddr, len));
 
-	if (setfault(&env)) {
-		curpcb->pcb_onfault = 0;
-		return EFAULT;
+	if ((rv = setfault(&env))) {
+		curpcb->pcb_onfault = NULL;
+		return rv;
 	}
 
 	if (!(ctx = pm->pm_ctx)) {
@@ -476,7 +482,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
 		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count));
 
-	curpcb->pcb_onfault = 0;
+	curpcb->pcb_onfault = NULL;
 	return 0;
 }
 
@@ -487,11 +493,8 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	char *kp = kaddr;
 	struct lwp *l = curlwp;
 	struct proc *p;
+	struct faultbuf env;
 	int error;
-
-	if (!l) {
-		return EFAULT;
-	}
 
 	p = l->l_proc;
 
@@ -500,31 +503,35 @@ bigcopyin(const void *udaddr, void *kaddr, size_t len)
 	 */
 	error = uvm_vslock(p->p_vmspace, __UNCONST(udaddr), len, VM_PROT_READ);
 	if (error) {
-		return EFAULT;
+		return error;
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len, VM_PROT_READ);
 
-	memcpy(kp, up, len);
+	if ((error = setfault(&env)) == 0) {
+		memcpy(kp, up, len);
+	}
+
+	curpcb->pcb_onfault = NULL;
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p->p_vmspace, __UNCONST(udaddr), len);
 
-	return 0;
+	return error;
 }
 
 int
 copyout(const void *kaddr, void *udaddr, size_t len)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
-	int msr, pid, tmp, ctx, count=0;
+	int rv, msr, pid, tmp, ctx, count = 0;
 	struct faultbuf env;
 
 	/* For big copies use more efficient routine */
 	if (len > 1024)
 		return (bigcopyout(kaddr, udaddr, len));
 
-	if (setfault(&env)) {
-		curpcb->pcb_onfault = 0;
-		return EFAULT;
+	if ((rv = setfault(&env))) {
+		curpcb->pcb_onfault = NULL;
+		return rv;
 	}
 
 	if (!(ctx = pm->pm_ctx)) {
@@ -572,7 +579,7 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
 		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count)); 
 
-	curpcb->pcb_onfault = 0;
+	curpcb->pcb_onfault = NULL;
 	return 0;
 }
 
@@ -583,11 +590,8 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	const char *kp = (const char *)kaddr;
 	struct lwp *l = curlwp;
 	struct proc *p;
+	struct faultbuf env;
 	int error;
-
-	if (!l) {
-		return EFAULT;
-	}
 
 	p = l->l_proc;
 
@@ -596,16 +600,20 @@ bigcopyout(const void *kaddr, void *udaddr, size_t len)
 	 */
 	error = uvm_vslock(p->p_vmspace, udaddr, len, VM_PROT_WRITE);
 	if (error) {
-		return EFAULT;
+		return error;
 	}
 	up = (char *)vmaprange(p, (vaddr_t)udaddr, len,
 	    VM_PROT_READ | VM_PROT_WRITE);
 
-	memcpy(up, kp, len);
+	if ((error = setfault(&env)) == 0) {
+		memcpy(up, kp, len);
+	}
+
+	curpcb->pcb_onfault = NULL;
 	vunmaprange((vaddr_t)up, len);
 	uvm_vsunlock(p->p_vmspace, udaddr, len);
 
-	return 0;
+	return error;
 }
 
 /*
@@ -622,11 +630,12 @@ int
 kcopy(const void *src, void *dst, size_t len)
 {
 	struct faultbuf env, *oldfault;
+	int rv;
 
 	oldfault = curpcb->pcb_onfault;
-	if (setfault(&env)) {
+	if ((rv = setfault(&env))) {
 		curpcb->pcb_onfault = oldfault;
-		return EFAULT;
+		return rv;
 	}
 
 	memcpy(dst, src, len);
@@ -652,7 +661,7 @@ badaddr_read(void *addr, size_t size, int *rptr)
 	__asm volatile ("sync; isync");
 
 	if (setfault(&env)) {
-		curpcb->pcb_onfault = 0;
+		curpcb->pcb_onfault = NULL;
 		__asm volatile ("sync");
 		return 1;
 	}
@@ -676,7 +685,7 @@ badaddr_read(void *addr, size_t size, int *rptr)
 	/* Make sure we took the machine check, if we caused one. */
 	__asm volatile ("sync; isync");
 
-	curpcb->pcb_onfault = 0;
+	curpcb->pcb_onfault = NULL;
 	__asm volatile ("sync");	/* To be sure. */
 
 	/* Use the value to avoid reorder. */

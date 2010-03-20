@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.181 2010/01/29 05:17:36 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.182 2010/03/20 23:31:30 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.181 2010/01/29 05:17:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182 2010/03/20 23:31:30 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -780,17 +780,19 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 	struct pcb *pcb;
 	struct vmspace *vm;
 	vaddr_t va;
-	int rv = EFAULT;
+	int rv;
 	vm_prot_t atype;
-	int onfault;
+	vaddr_t onfault;
 	u_quad_t sticks;
 	char bits[64];
 	ksiginfo_t ksi;
 
 	uvmexp.traps++;
-	if ((l = curlwp) == NULL)	/* safety check */
-		l = &lwp0;
+	l = curlwp;
 	p = l->l_proc;
+	pcb = lwp_getpcb(l);
+	onfault = (vaddr_t)pcb->pcb_onfault;
+
 	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
 
@@ -850,17 +852,20 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		pcb = lwp_getpcb(l);
-		if (pcb && pcb->pcb_onfault == Lfsbail)
+		if (onfault == (vaddr_t)Lfsbail) {
+			rv = EFAULT;
 			goto kfault;
+		}
 
 		/*
 		 * During autoconfiguration, faults are never OK unless
 		 * pcb_onfault is set.  Once running normally we must allow
 		 * exec() to cause copy-on-write faults to kernel addresses.
 		 */
-		if (cold)
+		if (cold) {
+			rv = EFAULT;
 			goto kfault;
+		}
 		if (va >= KERNBASE) {
 			rv = mmu_pagein(pmap_kernel(), va, atype);
 			if (rv < 0) {
@@ -869,7 +874,9 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 			}
 			if (rv > 0)
 				return;
+			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(kernel_map, va, atype);
+			pcb->pcb_onfault = (void *)onfault;
 			if (rv == 0)
 				return;
 			goto kfault;
@@ -903,7 +910,9 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		goto out;
 
 	/* alas! must call the horrible vm code */
+	pcb->pcb_onfault = NULL;
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, atype);
+	pcb->pcb_onfault = (void *)onfault;
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -938,8 +947,6 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 fault:
 		if (psr & PSR_PS) {
 kfault:
-			pcb = lwp_getpcb(l);
-			onfault = pcb ? (int)pcb->pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				snprintb(bits, sizeof(bits), SER_BITS, ser);
@@ -992,7 +999,7 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	struct pcb *pcb;
 	struct vmspace *vm;
 	vaddr_t va;
-	int rv = EFAULT;
+	int rv;
 	vm_prot_t atype;
 	int onfault;
 	u_quad_t sticks;
@@ -1001,11 +1008,12 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 
 	uvmexp.traps++;	/* XXXSMP */
 
-	if ((l = curlwp) == NULL)	/* safety check */
-		l = &lwp0;
+	l = curlwp;
 	p = l->l_proc;
 	LWP_CACHE_CREDS(l, p);
 	sticks = p->p_sticks;
+	pcb = lwp_getpcb(l);
+	onfault = (vaddr_t)pcb->pcb_onfault;
 
 #ifdef FPU_DEBUG
 	if ((tf->tf_psr & PSR_EF) != 0) {
@@ -1120,8 +1128,10 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 
 	if (((sfsr & SFSR_AT_TEXT) || type == T_TEXTFAULT) &&
 	    !(sfsr & SFSR_AT_STORE) && (sfsr & SFSR_OW)) {
-		if (psr & PSR_PS)	/* never allow in kernel */
+		if (psr & PSR_PS) {	/* never allow in kernel */
+			rv = EFAULT;
 			goto kfault;
+		}
 #if 0
 		/*
 		 * Double text fault. The evil "case 5" from the HS manual...
@@ -1133,8 +1143,11 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		if (cpuinfo.cpu_type == CPUTYP_HS_MBUS) {
 			/* On HS, we have va for both */
 			vm = p->p_vmspace;
-			if (uvm_fault(&vm->vm_map, trunc_page(pc),
-				      VM_PROT_READ) != 0)
+			pcb->pcb_onfault = NULL;
+			rv = uvm_fault(&vm->vm_map, trunc_page(pc),
+				      VM_PROT_READ);
+			pcb->pcb_onfault = onfault;
+			if (rv != 0)
 #ifdef DEBUG
 				printf("mem_access_fault: "
 					"can't pagein 1st text fault.\n")
@@ -1170,19 +1183,24 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		pcb = lwp_getpcb(l);
-		if (pcb && pcb->pcb_onfault == Lfsbail)
+		if (onfault == (vaddr_t)Lfsbail) {
+			rv = EFAULT;
 			goto kfault;
+		}
 
 		/*
 		 * During autoconfiguration, faults are never OK unless
 		 * pcb_onfault is set.  Once running normally we must allow
 		 * exec() to cause copy-on-write faults to kernel addresses.
 		 */
-		if (cold)
+		if (cold) {
+			rv = EFAULT;
 			goto kfault;
+		}
 		if (va >= KERNBASE) {
+			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(kernel_map, va, atype);
+			pcb->pcb_onfault = (void *)onfault;
 			if (rv == 0) {
 				return;
 			}
@@ -1205,7 +1223,9 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 	vm = p->p_vmspace;
 
 	/* alas! must call the horrible vm code */
+	pcb->pcb_onfault = NULL;
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, atype);
+	pcb->pcb_onfault = (void *)onfault;
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1225,8 +1245,6 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 fault:
 		if (psr & PSR_PS) {
 kfault:
-			pcb = lwp_getpcb(l);
-			onfault = pcb ? (int)pcb->pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
 				snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
