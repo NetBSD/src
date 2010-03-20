@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.29 2009/12/12 12:19:21 martin Exp $	   */
+/*	$NetBSD: subr.S,v 1.30 2010/03/20 23:31:30 chs Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -131,7 +131,7 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
 	movl	%r0,_C_LABEL(Sysmap)		# SPT start addr after KSP
 	movl	_C_LABEL(lwp0)+L_PCB,%r0	# get PCB virtual address
 	mfpr	$PR_PCBB,PCB_PADDR(%r0)		# save PCB physical address
-	movab	IFTRAP(%r0),ESP(%r0)		# Save trap address in ESP
+	movab	PCB_ONFAULT(%r0),ESP(%r0)	# Save trap address in ESP
 	mtpr	4(%r0),$PR_ESP			# Put it in ESP also
 
 # Set some registers in known state
@@ -145,7 +145,7 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
 	movl	%r1,P1BR(%r0)
 	mtpr	%r1,$PR_P0BR
 	mtpr	%r1,$PR_P1BR
-	clrl	IFTRAP(%r0)
+	clrl	PCB_ONFAULT(%r0)
 	mtpr	$0,$PR_SCBB
 
 # Copy the RPB to its new position
@@ -451,31 +451,31 @@ ENTRY(copyin, 0)
 	blss	3f		# kernel space
 	movl	8(%ap),%r3
 2:	mfpr	$PR_ESP,%r2
-	movab	1f,(%r2)
+	movab	1f,(%r2)	# set pcb_onfault
 4:	tstw	14(%ap)		# check if >= 64K
 	bneq	5f
 	movc3	12(%ap),(%r1),(%r3)
+	clrl	%r0
 1:	mfpr	$PR_ESP,%r2
-	clrl	(%r2)
+	clrl	(%r2)		# clear pcb_onfault
 	ret
 5:	movc3	$0xfffc,(%r1),(%r3)
 	subl2	$0xfffc,12(%ap)
 	brb	4b
 
-3:	mnegl	$1,%r0
+3:	movl	$EFAULT,%r0
 	ret
 
 ENTRY(kcopy,0)
 	mfpr	$PR_ESP,%r3
-	movl	(%r3),-(%sp)
-	movab	1f,(%r3)
+	movl	(%r3),-(%sp)	# save current pcb_onfault
+	movab	1f,(%r3)	# set pcb_onfault
 	movl	4(%ap),%r1
 	movl	8(%ap),%r2
 	movc3	12(%ap),(%r1), (%r2)
-	clrl	%r1
+	clrl	%r0
 1:	mfpr	$PR_ESP,%r3
-	movl	(%sp)+,(%r3)
-	movl	%r1,%r0
+	movl	(%sp)+,(%r3)	# restore pcb_onfault
 	ret
 
 /*
@@ -505,14 +505,16 @@ ENTRY(copystr,0)
 	movl	16(%ap),%r2	# copied
 	clrl	%r0
 	mfpr	$PR_ESP,%r1
-	movab	3f,(%r1)
+	movab	2f,(%r1)	# set pcb_onfault
 
 	tstl	%r3		# any chars to copy?
 	bneq	1f		# yes, jump for more
 0:	tstl	%r2		# save copied len?
 	beql	2f		# no
 	subl3	4(%ap),%r5,(%r2)	# save copied len
-2:	ret
+2:	mfpr	$PR_ESP,%r1
+	clrl	(%r1)		# clear pcb_onfault
+	ret
 
 1:	movb	(%r5)+,(%r4)+	# copy one char
 	beql	0b		# jmp if last char
@@ -520,60 +522,52 @@ ENTRY(copystr,0)
 	movl	$ENAMETOOLONG,%r0 # inform about too long string
 	brb	0b		# out of chars
 
-3:	mfpr	$PR_ESP,%r1
-	clrl	(%r1)
-	brb	0b
-
 ENTRY(subyte,0)
 	movl	4(%ap),%r0
 	blss	3f		# illegal space
 	mfpr	$PR_ESP,%r1
-	movab	1f,(%r1)
+	movab	1f,(%r1)	# set pcb_onfault
 	movb	8(%ap),(%r0)
-	clrl	%r1
-1:	mfpr	$PR_ESP,%r2
-	clrl	(%r2)
-	movl	%r1,%r0
+	clrl	%r0
+1:	mfpr	$PR_ESP,%r1
+	clrl	(%r1)		# clear pcb_onfault
 	ret
 
 ENTRY(suword,0)
 	movl	4(%ap),%r0
 	blss	3f		# illegal space
 	mfpr	$PR_ESP,%r1
-	movab	1f,(%r1)
+	movab	3f,(%r1)	# set pcb_onfault
 	movl	8(%ap),(%r0)
-	clrl	%r1
-1:	mfpr	$PR_ESP,%r2
-	clrl	(%r2)
-	movl	%r1,%r0
+	clrl	%r0
+1:	mfpr	$PR_ESP,%r1
+	clrl	(%r1)		# clear pcb_onfault
 	ret
 
 ENTRY(suswintr,0)
 	movl	4(%ap),%r0
 	blss	3f		# illegal space
 	mfpr	$PR_ESP,%r1
-	movab	1f,(%r1)
+	movab	3f,(%r1)	# set pcb_onfault
 	movw	8(%ap),(%r0)
-	clrl	%r1
-1:	mfpr	$PR_ESP,%r2
-	clrl	(%r2)
-	movl	%r1,%r0
+	clrl	%r0
+1:	mfpr	$PR_ESP,%r1
+	clrl	(%r1)		# clear pcb_onfault
 	ret
 
 3:	mnegl	$1,%r0
-	ret
+	brb	1b
 
 	.align	2
 ALTENTRY(fusword)
 ENTRY(fuswintr,0)
-	movl	4(%ap),%r0
+	movl	4(%ap),%r2
 	blss	3b
 	mfpr	$PR_ESP,%r1
-	movab	1f,(%r1)
-	movzwl	(%r0),%r1
-1:	mfpr	$PR_ESP,%r2
-	clrl	(%r2)
-	movl	%r1,%r0
+	movab	3b,(%r1)	# set pcb_onfault
+	movzwl	(%r2),%r0
+1:	mfpr	$PR_ESP,%r1
+	clrl	(%r1)		# clear pcb_onfault
 	ret
 
 JSBENTRY(Slock)

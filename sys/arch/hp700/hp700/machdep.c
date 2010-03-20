@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2010/03/16 16:20:19 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2010/03/20 23:31:27 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2010/03/16 16:20:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2010/03/20 23:31:27 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1820,20 +1820,6 @@ dumpsys(void)
 	case 0:		printf("succeeded\n");			break;
 	default:	printf("error %d\n", error);		break;
 	}
-}
-
-/* bcopy(), error on fault */
-int
-kcopy(const void *from, void *to, size_t size)
-{
-	struct pcb *pcb = lwp_getpcb(curlwp);
-	u_int oldh = pcb->pcb_onfault;
-
-	pcb->pcb_onfault = (u_int)&copy_on_fault;
-	memcpy(to, from, size);
-	pcb->pcb_onfault = oldh;
-
-	return 0;
 }
 
 /*

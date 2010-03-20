@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.122 2010/01/05 13:20:30 mbalmer Exp $     */
+/*	$NetBSD: trap.c,v 1.123 2010/03/20 23:31:30 chs Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2010/01/05 13:20:30 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2010/03/20 23:31:30 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -98,15 +98,6 @@ const char * const traptypes[]={
 int no_traps = 18;
 
 #define USERMODE_P(framep)   ((((framep)->psl) & (PSL_U)) == PSL_U)
-#define FAULTCHK(pcb)						\
-	if (pcb->iftrap) {					\
-		frame->pc = (unsigned)pcb->iftrap;		\
-		frame->psl &= ~PSL_FPD;				\
-		frame->r0 = EFAULT;/* for copyin/out */		\
-		frame->r1 = -1; /* for fetch/store */		\
-		return;						\
-	}
-
 
 void
 trap(struct trapframe *frame)
@@ -122,12 +113,14 @@ trap(struct trapframe *frame)
 	struct vmspace *vm;
 	struct vm_map *map;
 	vm_prot_t ftype;
+	void *onfault;
 
 	l = curlwp;
 	KASSERT(l != NULL);
+	pcb = lwp_getpcb(l);
+	onfault = pcb->pcb_onfault;
 	p = l->l_proc;
 	KASSERT(p != NULL);
-	pcb = lwp_getpcb(l);
 	uvmexp.traps++;
 	if (usermode) {
 		type |= T_USER;
@@ -158,7 +151,7 @@ fram:
 	case T_KSPNOTVAL:
 		panic("%d.%d (%s): KSP invalid %#x@%#x pcb %p fp %#x psl %#x)",
 		    p->p_pid, l->l_lid, l->l_name ? l->l_name : "??",
-		    mfpr(PR_KSP), (u_int)frame->pc, lwp_getpcb(l),
+		    mfpr(PR_KSP), (u_int)frame->pc, pcb,
 		    (u_int)frame->fp, (u_int)frame->psl);
 
 	case T_TRANSFLT|T_USER:
@@ -226,10 +219,17 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 
+		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, addr, ftype);
+		pcb->pcb_onfault = onfault;
 		if (rv != 0) {
 			if (!usermode) {
-				FAULTCHK(pcb);
+				if (onfault) {
+					frame->pc = (unsigned)onfault;
+					frame->psl &= ~PSL_FPD;
+					frame->r0 = rv;
+					return;
+				}
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
 			}
