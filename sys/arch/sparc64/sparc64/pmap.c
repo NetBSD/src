@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.259 2010/03/10 06:57:22 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.260 2010/03/20 20:36:23 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259 2010/03/10 06:57:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.260 2010/03/20 20:36:23 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1293,7 +1293,7 @@ pmap_init(void)
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
 
-	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pmap_lock, MUTEX_SPIN, IPL_VM);
 #if defined(USE_LOCKSAFE_PSEG_GETSET)
 	mutex_init(&pseg_lock, MUTEX_SPIN, IPL_VM);
 #endif
@@ -2621,8 +2621,6 @@ pmap_is_modified(struct vm_page *pg)
 	pv_entry_t pv, npv;
 	bool res = false;
 
-	KASSERT(!mutex_owned(&pmap_lock));
-
 	/* Check if any mapping has been modified */
 	pv = &pg->mdpage.mdpg_pvh;
 	if (pv->pv_va & PV_MOD)
@@ -2724,8 +2722,6 @@ pmap_is_referenced(struct vm_page *pg)
 {
 	pv_entry_t pv;
 	bool res = false;
-
-	KASSERT(!mutex_owned(&pmap_lock));
 
 	/* Check if any mapping has been referenced */
 	pv = &pg->mdpage.mdpg_pvh;
