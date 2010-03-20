@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1408 2010/03/19 20:31:50 joerg Exp $
+#	$NetBSD: mi,v 1.1409 2010/03/20 16:38:19 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7945,6 +7945,7 @@
 ./usr/share/man/cat3/start_color.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stat_flags.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stdarg.0			comp-c-catman		.cat
+./usr/share/man/cat3/stdint.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stdio.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stpcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stpncpy.0			comp-c-catman		.cat
@@ -13653,6 +13654,7 @@
 ./usr/share/man/html3/start_color.html		comp-c-htmlman		html
 ./usr/share/man/html3/stat_flags.html		comp-c-htmlman		html
 ./usr/share/man/html3/stdarg.html		comp-c-htmlman		html
+./usr/share/man/html3/stdint.html		comp-c-htmlman		html
 ./usr/share/man/html3/stdio.html		comp-c-htmlman		html
 ./usr/share/man/html3/stpcpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/stpncpy.html		comp-c-htmlman		html
@@ -19399,6 +19401,7 @@
 ./usr/share/man/man3/start_color.3		comp-c-man		.man
 ./usr/share/man/man3/stat_flags.3		comp-c-man		.man
 ./usr/share/man/man3/stdarg.3			comp-c-man		.man
+./usr/share/man/man3/stdint.3			comp-c-man		.man
 ./usr/share/man/man3/stdio.3			comp-c-man		.man
 ./usr/share/man/man3/stpcpy.3			comp-c-man		.man
 ./usr/share/man/man3/stpncpy.3			comp-c-man		.man
