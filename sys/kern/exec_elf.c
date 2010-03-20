@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.15 2010/03/19 22:08:13 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.16 2010/03/20 01:45:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.15 2010/03/19 22:08:13 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.16 2010/03/20 01:45:30 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -116,16 +116,16 @@ int	netbsd_elf_probe(struct lwp *, struct exec_package *, void *, char *,
 #define MAXSHNUM	32768
 #define MAXNOTESIZE	1024
 
-#ifdef PAX_ASLR
 /*
  * We don't move this code in kern_pax.c because it is compiled twice.
  */
 static void
-pax_aslr_elf(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
+elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
     Elf_Phdr *ph)
 {
-	size_t pax_offset, i;
+	size_t offset, i;
 
+#ifdef PAX_ASLR
 	if (pax_aslr_active(l)) {
 		size_t pax_align, l2, delta;
 		uint32_t r;
@@ -146,33 +146,19 @@ pax_aslr_elf(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 			pax_align = PGSHIFT;
 		l2 = ilog2(pax_align);
 		delta = PAX_ASLR_DELTA(r, l2, PAX_ASLR_DELTA_EXEC_LEN);
-#ifdef PAX_ASLR_DEBUG
 		uprintf("r=0x%x a=0x%x p=0x%x Delta=0x%lx\n", r, l2, PGSHIFT,
 		    delta);
-#endif
-		pax_offset = ELF_TRUNC(delta, pax_align) + PAGE_SIZE;
+		offset = ELF_TRUNC(delta, pax_align) + PAGE_SIZE;
+		uprintf("pax offset=0x%zx entry=0x%llx\n",
+		    pax_offset, (unsigned long long)eh->e_entry);
 	} else
-		pax_offset = PAGE_SIZE;
+#endif /* PAX_ASLR */
+		offset = PAGE_SIZE;
 
 	for (i = 0; i < eh->e_phnum; i++)
 		ph[i].p_vaddr += pax_offset;
-	eh->e_entry += pax_offset;
-#ifdef PAX_ASLR_DEBUG
-	uprintf("pax offset=0x%zx entry=0x%llx\n",
-	    pax_offset, (unsigned long long)eh->e_entry);
-#endif
+	eh->e_entry += offset;
 }
-#else
-static void
-elf_placedynexec(Elf_Ehdr *eh, Elf_Phdr *ph)
-{
-	int i;
-
-	for (i = 0; i < eh->e_phnum; i++)
-		ph[i].p_vaddr += PAGE_SIZE;
-	eh->e_entry += PAGE_SIZE;
-}
-#endif /* PAX_ASLR */
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
@@ -733,11 +719,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
 	if (is_dyn)
-#ifdef PAX_ASLR
-		pax_aslr_elf(l, epp, eh, ph);
-#else
-		elf_placedynexec(eh, ph);
-#endif /* PAX_ASLR */
+		elf_placedynexec(l, epp, eh, ph);
 
 	/*
 	 * Load all the necessary sections
