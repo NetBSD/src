@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.3 2010/03/19 16:48:55 joerg Exp $	*/
+/*	$NetBSD: bitops.h,v 1.4 2010/03/20 12:54:42 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ fls64(uint64_t _n)
 	-1) : ((sizeof(_n) >= 4 ? fls64(_n) : fls32(_n)) - 1) \
 )
 
-static inline void
+static __inline void
 fast_divide32_prepare(uint32_t _div, uint32_t * __restrict _m,
     uint8_t *__restrict _s1, uint8_t *__restrict _s2)
 {
@@ -267,22 +267,25 @@ fast_divide32_prepare(uint32_t _div, uint32_t * __restrict _m,
 
 	_l = fls32(_div - 1);
 	_mt = 0x100000000ULL * ((1ULL << _l) - _div);
+	/* LINTED */
 	*_m = _mt / _div + 1;
 	*_s1 = (_l > 1) ? 1 : _l;
 	*_s2 = (_l == 0) ? 0 : _l - 1;
 }
 
-static inline uint32_t
+/* ARGSUSED */
+static __inline uint32_t
 fast_divide32(uint32_t _v, uint32_t _div, uint32_t _m, uint8_t _s1,
     uint8_t _s2)
 {
 	uint32_t _t;
 
+	/* LINTED */
 	_t = ((uint64_t)_v * _m) >> 32;
 	return (_t + ((_v - _t) >> _s1)) >> _s2;
 }
 
-static inline uint32_t
+static __inline uint32_t
 fast_remainder32(uint32_t _v, uint32_t _div, uint32_t _m, uint8_t _s1,
     uint8_t _s2)
 {
