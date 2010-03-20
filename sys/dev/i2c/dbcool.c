@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.19 2010/03/20 02:42:19 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.20 2010/03/20 19:04:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.19 2010/03/20 02:42:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.20 2010/03/20 19:04:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1377,7 +1377,8 @@ dbcool_setup(device_t self)
 	else
 		sc->sc_root_sysctl_num = 0;
 
-	aprint_debug_dev(self, "Supply voltage %ld.%06ldV, %s temp range\n",
+	aprint_debug_dev(self,
+		"Supply voltage %"PRId64".%06"PRId64"V, %s temp range\n",
 		sc->sc_supply_voltage / 1000000,
 		sc->sc_supply_voltage % 1000000,
 		sc->sc_temp_offset ? "extended" : "normal");
