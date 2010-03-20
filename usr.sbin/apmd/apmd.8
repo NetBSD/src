@@ -1,6 +1,6 @@
-.\"	$NetBSD: apmd.8,v 1.20 2008/09/25 22:44:51 reed Exp $
+.\"	$NetBSD: apmd.8,v 1.21 2010/03/20 09:22:37 jruoho Exp $
 .\"
-.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 16, 2004
+.Dd March 20, 2010
 .Dt APMD 8
 .Os
 .Sh NAME
@@ -52,14 +52,29 @@
 .Op Fl f Ar devname
 .Ek
 .Sh DESCRIPTION
+The
 .Nm
-monitors the advanced power management (APM) pseudo-device, acting on
+daemon monitors the Advanced Power Management
+.Pq Tn APM
+pseudo-device, acting on
 signaled events and upon user requests as sent by the
 .Xr apm 8
 utility.
 The
 .Nm
 daemon is only installed on supported platforms.
+.Pp
+.Em The
+.Nm
+.Em is largely deprecated.
+Modern systems supporting
+.Tn ACPI
+should rely on
+.Xr acpi 4 ,
+.Xr powerd 8 ,
+and the
+.Xr envsys 4
+framework instead.
 .Pp
 For suspend and standby request events delivered by the BIOS, or via
 .Xr apm 8 ,
@@ -84,11 +99,13 @@ device).
 Suspends are announced with two high tones.
 .Pp
 .Nm
-periodically polls the APM driver for the current power state.
+periodically polls the
+.Tn APM
+driver for the current power state.
 If the battery charge level changes substantially or the external power
 status changes, the new status is logged.
 The polling rate defaults to
-once per 10 minutes, but may be specified using the
+once per 10 minutes, but this may be altered by using the
 .Fl t
 command-line flag.
 .Pp
@@ -210,11 +227,8 @@ The default device used to control the APM kernel driver.
 .Xr speaker 4 ,
 .Xr apm 8 ,
 .Xr syslogd 8
-.Sh REFERENCES
-Advanced Power Management (APM) BIOS Interface Specification (revision
-1.1), Intel Corporation and Microsoft Corporation.
 .Sh HISTORY
 The
 .Nm
-command appeared in
+daemon appeared in
 .Nx 1.3 .
