@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.121 2009/11/21 05:35:41 rmind Exp $ */
+/* $NetBSD: trap.c,v 1.122 2010/03/20 23:31:27 chs Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2009/11/21 05:35:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2010/03/20 23:31:27 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,6 +228,8 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 {
 	struct lwp *l;
 	struct proc *p;
+	struct pcb *pcb;
+	vaddr_t onfault;
 	ksiginfo_t ksi;
 	vm_prot_t ftype;
 	u_int64_t ucode;
@@ -379,6 +381,9 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		break;
 
 	case ALPHA_KENTRY_MM:
+		pcb = lwp_getpcb(l);
+		onfault = pcb->pcb_onfault;
+
 		switch (a1) {
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:
@@ -395,7 +400,6 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			vaddr_t va;
 			struct vmspace *vm = NULL;
 			struct vm_map *map;
-			struct pcb *pcb;
 			int rv;
 
 			switch (a2) {
@@ -442,11 +446,10 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				 * [fs]uswintr, in case another fault happens
 				 * when they are running.
 				 */
-				pcb = lwp_getpcb(l);
-				if (pcb->pcb_onfault == (u_long)fswintrberr &&
+
+				if (onfault == (vaddr_t)fswintrberr &&
 				    pcb->pcb_accessaddr == a0) {
-					framep->tf_regs[FRAME_PC] =
-					    pcb->pcb_onfault;
+					framep->tf_regs[FRAME_PC] = onfault;
 					pcb->pcb_onfault = 0;
 					goto out;
 				}
@@ -470,7 +473,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 do_fault:
 			pcb = lwp_getpcb(l);
 			if (user == 0 && (a0 >= VM_MIN_KERNEL_ADDRESS ||
-			    pcb->pcb_onfault == 0))
+					  onfault == 0))
 				map = kernel_map;
 			else {
 				vm = l->l_proc->p_vmspace;
@@ -478,7 +481,9 @@ do_fault:
 			}
 
 			va = trunc_page((vaddr_t)a0);
+			pcb->pcb_onfault = 0;
 			rv = uvm_fault(map, va, ftype);
+			pcb->pcb_onfault = onfault;
 
 			/*
 			 * If this was a stack access we keep track of the
@@ -504,15 +509,9 @@ do_fault:
 
 			if (user == 0) {
 				/* Check for copyin/copyout fault */
-				if (l == NULL) {
-					goto dopanic;
-				}
-				pcb = lwp_getpcb(l);
-				if (pcb->pcb_onfault != 0) {
-					framep->tf_regs[FRAME_PC] =
-					    pcb->pcb_onfault;
+				if (onfault != 0) {
+					framep->tf_regs[FRAME_PC] = onfault;
 					framep->tf_regs[FRAME_V0] = rv;
-					pcb->pcb_onfault = 0;
 					goto out;
 				}
 				goto dopanic;

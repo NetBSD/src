@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.111 2009/12/12 12:23:29 martin Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.112 2010/03/20 23:31:30 chs Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.111 2009/12/12 12:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.112 2010/03/20 23:31:30 chs Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -130,6 +130,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * already been allocated by way of pmap_create().
 	 * This writes the page table registers to the PCB.
 	 */
+	pcb2->pcb_pm = NULL;
 	pmap_activate(l2);
 
 	/* Mark guard page invalid in kernel stack */
@@ -152,13 +153,13 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Set up internal defs in PCB. This matches the "fake" CALLS frame
 	 * that were constructed earlier.
 	 */
-	pcb2->iftrap = NULL;
+	pcb2->pcb_onfault = NULL;
 	pcb2->AP = (uintptr_t)&cf->ca_argno;
 	pcb2->KSP = (uintptr_t)cf;
 	pcb2->FP = (uintptr_t)cf;
 	pcb2->PC = (uintptr_t)cpu_lwp_bootstrap + 2;
 	pcb2->PSL = PSL_HIGHIPL;
-	pcb2->ESP = (uintptr_t)&pcb2->iftrap;
+	pcb2->ESP = (uintptr_t)&pcb2->pcb_onfault;
 	pcb2->SSP = (uintptr_t)l2;
 
 	/* pcb->R[0] (oldlwp) set by Swtchto */

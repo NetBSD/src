@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.327 2010/03/10 06:57:22 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.328 2010/03/20 23:31:30 chs Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -5400,7 +5400,7 @@ ENTRY(copyinstr)
 	 mov	ENAMETOOLONG, %o0
 1:
 	LDPTR	[%o4 + %lo(CPCB)], %o4	! catch faults
-	set	Lcsfault, %o5
+	set	Lcsdone, %o5
 	membar	#Sync
 	STPTR	%o5, [%o4 + PCB_ONFAULT]
 
@@ -5447,7 +5447,7 @@ ENTRY(copyoutstr)
 	 mov	ENAMETOOLONG, %o0
 1:
 	LDPTR	[%o4 + %lo(CPCB)], %o4	! catch faults
-	set	Lcsfault, %o5
+	set	Lcsdone, %o5
 	membar	#Sync
 	STPTR	%o5, [%o4 + PCB_ONFAULT]
 
@@ -5471,21 +5471,6 @@ Lcsdone:				! done:
 1:
 	retl				! cpcb->pcb_onfault = 0;
 	 STPTR	%g0, [%o4 + PCB_ONFAULT]! return (error);
-
-Lcsfault:
-#ifdef NOTDEF_DEBUG
-	save	%sp, -CC64FSZ, %sp
-	set	5f, %o0
-	call	printf
-	 nop
-	restore
-	.data
-5:	.asciz	"Lcsfault: recovering\n"
-	_ALIGN
-	.text
-#endif
-	b	Lcsdone			! error = EFAULT;
-	 mov	EFAULT, %o0		! goto ret;
 
 /*
  * copystr(fromaddr, toaddr, maxlength, &lencopied)
@@ -5944,7 +5929,7 @@ Lcopyout_done:
 	retl			! New instr
 	 clr	%o0			! return 0
 
-! Copyin or copyout fault.  Clear cpcb->pcb_onfault and return EFAULT.
+! Copyin or copyout fault.  Clear cpcb->pcb_onfault and return error.
 ! Note that although we were in memcpy, there is no state to clean up;
 ! the only special thing is that we have to return to [g7 + 8] rather than
 ! [o7 + 8].
@@ -5964,9 +5949,8 @@ Lcopyfault:
 	_ALIGN
 	.text
 #endif
-	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
 	retl
-	 mov	EFAULT, %o0
+	 wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
 
 ENTRY(cpu_idle)
 	retl
@@ -7027,9 +7011,8 @@ Lkcerr:
 3:
 #endif
 	STPTR	%g1, [%o5 + PCB_ONFAULT]! restore fault handler
-	membar	#StoreStore|#StoreLoad
 	retl				! and return error indicator
-	 mov	EFAULT, %o0
+	 membar	#StoreStore|#StoreLoad
 	NOTREACHED
 
 #ifdef MULTIPROCESSOR
