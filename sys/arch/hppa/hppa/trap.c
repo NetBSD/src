@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 2010/03/16 16:20:19 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.80 2010/03/20 23:31:27 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2010/03/16 16:20:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2010/03/20 23:31:27 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -651,11 +651,13 @@ trap(int type, struct trapframe *frame)
 		break;
 
 	case T_DATALIGN:
-		if (pcb->pcb_onfault) {
+		onfault = pcb->pcb_onfault;
+		if (onfault) {
+			ret = EFAULT;
 do_onfault:
-			frame->tf_iioq_head = pcb->pcb_onfault;
-			frame->tf_iioq_tail = 4 + frame->tf_iioq_head;
-			pcb->pcb_onfault = 0;
+			frame->tf_iioq_head = onfault;
+			frame->tf_iioq_tail = frame->tf_iioq_head + 4;
+			frame->tf_ret0 = ret;
 			break;
 		}
 		/*FALLTHROUGH*/
@@ -911,7 +913,7 @@ do_onfault:
 				ksi.ksi_addr = (void *)va;
 				trapsignal(l, &ksi);
 			} else {
-				if (pcb->pcb_onfault) {
+				if (onfault) {
 					goto do_onfault;
 				}
 				panic("trap: uvm_fault(%p, %lx, %d): %d",
