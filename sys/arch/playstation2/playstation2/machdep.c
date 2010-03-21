@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.10.1 2009/09/07 23:46:46 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.10.2 2010/03/21 17:38:34 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.10.1 2009/09/07 23:46:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.10.2 2010/03/21 17:38:34 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -122,7 +122,7 @@ mach_init()
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	/*
 	 * Load the rest of the available pages into the VM system.

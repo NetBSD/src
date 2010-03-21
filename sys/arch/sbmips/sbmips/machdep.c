@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38.10.7 2010/02/28 23:46:18 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.38.10.8 2010/03/21 17:38:35 cliff Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.7 2010/02/28 23:46:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.8 2010/03/21 17:38:35 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"       /* for SYMTAB_SPACE */
@@ -217,7 +217,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 #ifdef DEBUG
 	printf("fwhandle=%08X magic=%08X bootdata=%08X reserved=%08X\n",

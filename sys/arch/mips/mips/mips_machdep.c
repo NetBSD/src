@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.40 2010/03/01 19:29:41 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.41 2010/03/21 17:38:32 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.40 2010/03/01 19:29:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.41 2010/03/21 17:38:32 cliff Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -184,27 +184,27 @@ static void mips3_tlb_probe(void);
 #endif
 
 #if defined(MIPS1)
-static void	mips1_vector_init(void);
+static void	mips1_vector_init(const struct splsw *);
 extern const struct locoresw mips1_locoresw;
 #endif
 
 #if defined(MIPS3)
 #if defined(MIPS3_5900)
-static void	r5900_vector_init(void);
+static void	r5900_vector_init(const struct splsw *);
 extern const struct locoresw mips5900_locoresw;
 #else
-static void	mips3_vector_init(void);
+static void	mips3_vector_init(const struct splsw *);
 extern const struct locoresw mips3_locoresw;
 #endif
 #endif
 
 #if defined(MIPS32)
-static void	mips32_vector_init(void);
+static void	mips32_vector_init(const struct splsw *);
 extern const struct locoresw mips32_locoresw;
 #endif
 
 #if defined(MIPS64)
-static void	mips64_vector_init(void);
+static void	mips64_vector_init(const struct splsw *);
 extern const struct locoresw mips64_locoresw;
 #endif
 
@@ -521,7 +521,7 @@ static const char * const cidnames[] = {
  */
 
 static void
-mips1_vector_init(void)
+mips1_vector_init(const struct splsw *splsw)
 {
 	extern const mips_locore_jumpvec_t mips1_locore_vec;
 	extern char mips1_utlb_miss[], mips1_utlb_miss_end[];
@@ -555,7 +555,7 @@ mips1_vector_init(void)
 
 #if defined(MIPS3)
 static void
-mips3_vector_init(void)
+mips3_vector_init(const struct splsw *splsw)
 {
 	extern const mips_locore_jumpvec_t mips3_locore_vec;
 	/* r4000 exception handler address and end */
@@ -603,7 +603,7 @@ mips3_vector_init(void)
 
 #if defined(MIPS3_5900)	/* XXX */
 static void
-r5900_vector_init(void)
+r5900_vector_init(const struct splsw *splsw)
 {
 	extern const mips_locore_jumpvec_t r5900_locore_vec;
 	extern char mips5900_exception[], mips5900_exception_end[];
@@ -639,7 +639,7 @@ r5900_vector_init(void)
 
 #if defined(MIPS32)
 static void
-mips32_vector_init(void)
+mips32_vector_init(const struct splsw *splsw)
 {
 	/* MIPS32 locore function vector */
 	extern const mips_locore_jumpvec_t mips32_locore_vec;
@@ -691,7 +691,7 @@ mips32_vector_init(void)
 
 #if defined(MIPS64)
 static void
-mips64_vector_init(void)
+mips64_vector_init(const struct splsw *splsw)
 {
 	/* MIPS64 locore function vector */
 	extern const mips_locore_jumpvec_t mips64_locore_vec;
@@ -766,7 +766,7 @@ mips64_vector_init(void)
  * of CPU the kernel is running on.
  */
 void
-mips_vector_init(void)
+mips_vector_init(const struct splsw *splsw)
 {
 	struct mips_options * const opts = &mips_options;
 	const struct pridtab *ct;
@@ -878,12 +878,17 @@ mips_vector_init(void)
 #endif
 
 	/*
-	 * Assume standard SPL with COP0 status/cause
+	 * if 'splsw' is NULL, use standard SPL with COP0 status/cause
+	 * otherwise use chip-specific splsw
 	 */
-	mips_splsw = std_splsw;
+	if (splsw == NULL) {
+		mips_splsw = std_splsw;
 #ifdef PARANOIA
-	std_splsw_test();	/* only works with std_splsw */
+		std_splsw_test();	/* only works with std_splsw */
 #endif
+	} else {
+		mips_splsw = *splsw;
+	}
 
 	/*
 	 * Determine cache configuration and initialize our cache
@@ -898,7 +903,7 @@ mips_vector_init(void)
 #if defined(MIPS1)
 	case CPU_ARCH_MIPS1:
 		mips1_tlb_invalidate_all();
-		mips1_vector_init();
+		mips1_vector_init(splsw);
 		mips_locoresw = mips1_locoresw;
 		break;
 #endif
@@ -911,7 +916,7 @@ mips_vector_init(void)
 		mips3_cp0_wired_write(0);
 		mips5900_tlb_invalidate_all();
 		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
-		r5900_vector_init();
+		r5900_vector_init(splsw);
 		mips_locoresw = mips5900_locoresw;
 #else /* MIPS3_5900 */
 #if defined(MIPS3_4100)
@@ -923,7 +928,7 @@ mips_vector_init(void)
 		mips3_cp0_wired_write(0);
 		mips3_tlb_invalidate_all();
 		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
-		mips3_vector_init();
+		mips3_vector_init(splsw);
 		mips_locoresw = mips3_locoresw;
 #endif /* MIPS3_5900 */
 		break;
@@ -935,7 +940,7 @@ mips_vector_init(void)
 		mips3_cp0_wired_write(0);
 		mips32_tlb_invalidate_all();
 		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
-		mips32_vector_init();
+		mips32_vector_init(splsw);
 		mips_locoresw = mips32_locoresw;
 		break;
 #endif
@@ -946,7 +951,7 @@ mips_vector_init(void)
 		mips3_cp0_wired_write(0);
 		mips64_tlb_invalidate_all();
 		mips3_cp0_wired_write(pmap_tlb0_info.ti_wired);
-		mips64_vector_init();
+		mips64_vector_init(splsw);
 		mips_locoresw = mips64_locoresw;
 		break;
 	}

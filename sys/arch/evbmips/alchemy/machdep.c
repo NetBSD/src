@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37.10.4 2010/02/01 04:17:50 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.37.10.5 2010/03/21 17:38:33 cliff Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.4 2010/02/01 04:17:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37.10.5 2010/03/21 17:38:33 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -212,7 +212,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * functions called during startup.
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	/*
 	 * Set the VM page size.

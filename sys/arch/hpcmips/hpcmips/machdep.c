@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96.10.4 2010/02/01 04:18:30 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96.10.5 2010/03/21 17:38:34 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.10.4 2010/02/01 04:18:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.10.5 2010/03/21 17:38:34 cliff Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -368,7 +368,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 	intr_init();
 
 #ifdef DEBUG

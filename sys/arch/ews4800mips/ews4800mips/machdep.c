@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14.10.3 2010/02/01 04:17:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14.10.4 2010/03/21 17:38:34 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.10.3 2010/02/01 04:17:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.10.4 2010/03/21 17:38:34 cliff Exp $");
 
 #include "opt_ddb.h"
 
@@ -137,7 +137,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	cn_tab = NULL;
 
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	memcpy((void *)0x80000200, ews4800mips_nmi_vec, 32); /* NMI */
 	mips_dcache_wbinv_all();
