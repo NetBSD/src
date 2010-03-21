@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.4 2010/02/05 07:39:53 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.10.5 2010/03/21 17:38:34 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.4 2010/02/05 07:39:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.5 2010/03/21 17:38:34 cliff Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -331,7 +331,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	/*
 	 * We know the CPU type now.  Initialize our DMA tags (might

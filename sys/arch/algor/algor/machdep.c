@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38.10.6 2010/02/24 00:09:31 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38.10.7 2010/03/21 17:38:32 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.6 2010/02/24 00:09:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.7 2010/03/21 17:38:32 cliff Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -232,7 +232,7 @@ mach_init(int argc, char *argv[], char *envp[])
 	 * We can no longer call into PMON after this.
 	 */
 	led_display('v', 'e', 'c', 'i');
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.

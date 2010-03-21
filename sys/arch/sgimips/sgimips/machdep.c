@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121.8.4 2010/02/01 04:18:32 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121.8.5 2010/03/21 17:38:35 cliff Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.4 2010/02/01 04:18:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121.8.5 2010/03/21 17:38:35 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -676,7 +676,7 @@ mach_init(int argc, char *argv[], uintptr_t magic, void *bip)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	/*
 	 * Initialize error message buffer (at end of core).

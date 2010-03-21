@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.13.10.5 2010/02/01 04:17:51 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.13.10.6 2010/03/21 17:38:34 cliff Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -147,7 +147,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.5 2010/02/01 04:17:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.10.6 2010/03/21 17:38:34 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -240,7 +240,7 @@ mach_init(void)
 	 * functions called during startup.
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	/*
 	 * Calibrate timers.

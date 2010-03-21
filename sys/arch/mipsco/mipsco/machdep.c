@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58.10.2 2010/02/01 04:18:31 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58.10.3 2010/03/21 17:38:34 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.10.2 2010/02/01 04:18:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.10.3 2010/03/21 17:38:34 cliff Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -182,7 +182,7 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 extern struct user *proc0paddr;
 
 /* locore callback-vector setup */
-extern void mips_vector_init  __P((void));
+extern void mips_vector_init  __P((const struct splsw *));
 extern void prom_init  __P((void));
 extern void pizazz_init __P((void));
 

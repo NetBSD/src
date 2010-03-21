@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28.10.7 2010/02/28 23:47:05 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.10.8 2010/03/21 17:38:34 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.7 2010/02/28 23:47:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.10.8 2010/03/21 17:38:34 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -228,7 +228,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	/* set the VM page size */
 	uvm_setpagesize();
