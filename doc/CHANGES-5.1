@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.218 2010/03/17 03:25:49 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.219 2010/03/21 03:46:42 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17017,4 +17017,10 @@ sys/dev/wscons/wsemul_sun.c			1.28
 	Add mappings for KS_End/KS_KP_End, so that the `End' key actually
 	does something.
 	[jdc, ticket #1340]
+
+sys/sys/null.h					1.8
+
+	Enclose (void *)0 in an extra set of parenthese to make the result
+	usable in arbitrary expressions.  Fixes PR/41890.
+	[joerg, ticket #1344]
 
