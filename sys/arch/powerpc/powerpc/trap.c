@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133 2010/02/25 23:31:48 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.134 2010/03/21 00:10:14 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2010/02/25 23:31:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2010/03/21 00:10:14 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -84,7 +84,6 @@ trap(struct trapframe *frame)
 	struct proc *p = l ? l->l_proc : NULL;
 	struct pcb *pcb = curpcb;
 	struct vm_map *map;
-	struct faultbuf *onfault;
 	ksiginfo_t ksi;
 	int type = frame->exc;
 	int ftype, rv;
@@ -121,7 +120,9 @@ trap(struct trapframe *frame)
 	case EXC_DSI: {
 		struct faultbuf *fb;
 		vaddr_t va = frame->dar;
+
 		ci->ci_ev_kdsi.ev_count++;
+		fb = pcb->pcb_onfault;
 
 		/*
 		 * Only query UVM if no interrupts are active.
@@ -169,10 +170,9 @@ trap(struct trapframe *frame)
 			else
 				ftype = VM_PROT_READ;
 
-			onfault = pcb->pcb_onfault;
 			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(map, trunc_page(va), ftype);
-			pcb->pcb_onfault = onfault;
+			pcb->pcb_onfault = fb;
 
 			if (map != kernel_map) {
 				/*
@@ -193,7 +193,7 @@ trap(struct trapframe *frame)
 			 */
 			rv = EFAULT;
 		}
-		if ((fb = pcb->pcb_onfault) != NULL) {
+		if (fb != NULL) {
 			frame->srr0 = fb->fb_pc;
 			frame->fixreg[1] = fb->fb_sp;
 			frame->fixreg[2] = fb->fb_r2;
@@ -241,6 +241,7 @@ trap(struct trapframe *frame)
 			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
+		KASSERT(pcb->pcb_onfault == NULL);
 		rv = uvm_fault(map, trunc_page(frame->dar), ftype);
 		if (rv == 0) {
 			/*
@@ -311,6 +312,7 @@ trap(struct trapframe *frame)
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 		ftype = VM_PROT_EXECUTE;
+		KASSERT(pcb->pcb_onfault == NULL);
 		rv = uvm_fault(map, trunc_page(frame->srr0), ftype);
 		if (rv == 0) {
 			l->l_pflag &= ~LP_SA_PAGEFAULT;
