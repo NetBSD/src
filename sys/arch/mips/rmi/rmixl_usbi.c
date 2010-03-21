@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_usbi.c,v 1.1.2.3 2010/01/29 00:24:33 cliff Exp $	*/
+/*	$NetBSD: rmixl_usbi.c,v 1.1.2.4 2010/03/21 21:30:16 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.3 2010/01/29 00:24:33 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.4 2010/03/21 21:30:16 cliff Exp $");
 
 #include "locators.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_usbi.c,v 1.1.2.3 2010/01/29 00:24:33 cliff Exp
 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
+#include <mips/rmi/rmixl_intr.h>
 #include <mips/rmi/rmixl_obiovar.h>
 #include <mips/rmi/rmixl_usbivar.h>
 
@@ -162,7 +163,6 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 #endif
 	RMIXL_USBI_GEN_WRITE(RMIXL_USB_BYTESWAP_EN, r);
 	aprint_normal(" byteswap enable=%d", r);
-
 	for (int intr=0; intr <= RMIXL_UB_INTERRUPT_MAX; intr++) {
 		evcnt_attach_dynamic(&sc->sc_dispatch[intr].count,
 			EVCNT_TYPE_INTR, NULL, "rmixl_usbi",
@@ -173,8 +173,9 @@ rmixl_usbi_attach(device_t parent, device_t self, void *aux)
 	RMIXL_USBI_GEN_WRITE(RMIXL_USB_INTERRUPT_ENABLE, 0);
 
 	/* establish interrupt */
-	ih = rmixl_intr_establish(obio->obio_intr, IPL_USB,
-                RMIXL_INTR_LEVEL, RMIXL_INTR_HIGH, rmixl_usbi_intr, sc);
+	ih = rmixl_intr_establish(obio->obio_intr, obio->obio_tmsk,
+		IPL_USB, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+		rmixl_usbi_intr, sc);
 	if (ih == NULL)
 		panic("%s: couldn't establish interrupt", device_xname(self));
 
