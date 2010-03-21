@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.14 2010/02/23 20:33:48 matt Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.15 2010/03/21 21:56:50 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -81,19 +81,6 @@ cpu_rmixlp(const struct pridtab *ct)
 	return false;
 }
 
-
-typedef enum {
-	RMIXL_INTR_EDGE=0,
-	RMIXL_INTR_LEVEL,
-} rmixl_intr_trigger_t;
-
-typedef enum {
-	RMIXL_INTR_RISING=0,
-	RMIXL_INTR_HIGH,
-	RMIXL_INTR_FALLING,
-	RMIXL_INTR_LOW,
-} rmixl_intr_polarity_t;
-
 typedef enum {
 	PSB_TYPE_UNKNOWN=0,
 	PSB_TYPE_RMI,
@@ -157,12 +144,6 @@ extern void rmixl_pcie_cfg_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pcie_ecfg_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pcie_bus_mem_init(bus_space_tag_t, void *);
 extern void rmixl_pcie_bus_io_init(bus_space_tag_t, void *);
-
-extern const char *rmixl_intr_string(int);
-extern void *rmixl_intr_establish(int, int,
-	rmixl_intr_trigger_t, rmixl_intr_polarity_t,
-	int (*)(void *), void *);
-extern void  rmixl_intr_disestablish(void *);
 
 extern void rmixl_addr_error_init(void);
 extern int  rmixl_addr_error_check(void);
