@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.91 2010/03/17 11:07:59 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.92 2010/03/21 07:09:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.91 2010/03/17 11:07:59 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.92 2010/03/21 07:09:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -789,28 +789,8 @@ acpibat_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 #ifdef _MODULE
 
 MODULE(MODULE_CLASS_DRIVER, acpibat, NULL);
-CFDRIVER_DECL(acpibat, DV_DULL, NULL);
 
-static int acpibatloc[] = { -1 };
-extern struct cfattach acpibat_ca;
-
-static struct cfparent acpiparent = {
-	"acpinodebus", NULL, DVUNIT_ANY
-};
-
-static struct cfdata acpibat_cfdata[] = {
-	{
-		.cf_name = "acpibat",
-		.cf_atname = "acpibat",
-		.cf_unit = 0,
-		.cf_fstate = FSTATE_STAR,
-		.cf_loc = acpibatloc,
-		.cf_flags = 0,
-		.cf_pspec = &acpiparent,
-	},
-
-	{ NULL }
-};
+#include "ioconf.c"
 
 static int
 acpibat_modcmd(modcmd_t cmd, void *context)
@@ -833,7 +813,7 @@ acpibat_modcmd(modcmd_t cmd, void *context)
 			return err;
 		}
 
-		err = config_cfdata_attach(acpibat_cfdata, 1);
+		err = config_cfdata_attach(cfdata_acpibat, 1);
 
 		if (err != 0) {
 			config_cfattach_detach("acpibat", &acpibat_ca);
@@ -845,7 +825,7 @@ acpibat_modcmd(modcmd_t cmd, void *context)
 
 	case MODULE_CMD_FINI:
 
-		err = config_cfdata_detach(acpibat_cfdata);
+		err = config_cfdata_detach(cfdata_acpibat);
 
 		if (err != 0)
 			return err;
