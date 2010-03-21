@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1412 2010/03/21 19:45:58 jruoho Exp $
+#	$NetBSD: mi,v 1.1413 2010/03/21 21:23:51 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6194,6 +6194,7 @@
 ./usr/share/man/cat3/isnanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isnormal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/iso_addr.0			comp-c-catman		.cat
+./usr/share/man/cat3/iso646.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isprint.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ispunct.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isspace.0			comp-c-catman		.cat
@@ -11968,6 +11969,7 @@
 ./usr/share/man/html3/isnanf.html		comp-c-htmlman		html
 ./usr/share/man/html3/isnormal.html		comp-c-htmlman		html
 ./usr/share/man/html3/iso_addr.html		comp-c-htmlman		html
+./usr/share/man/html3/iso646.html		comp-c-htmlman		html
 ./usr/share/man/html3/isprint.html		comp-c-htmlman		html
 ./usr/share/man/html3/ispunct.html		comp-c-htmlman		html
 ./usr/share/man/html3/isspace.html		comp-c-htmlman		html
@@ -17660,6 +17662,7 @@
 ./usr/share/man/man3/isnanf.3			comp-c-man		.man
 ./usr/share/man/man3/isnormal.3			comp-c-man		.man
 ./usr/share/man/man3/iso_addr.3			comp-c-man		.man
+./usr/share/man/man3/iso646.3			comp-c-man		.man
 ./usr/share/man/man3/isprint.3			comp-c-man		.man
 ./usr/share/man/man3/ispunct.3			comp-c-man		.man
 ./usr/share/man/man3/isspace.3			comp-c-man		.man
