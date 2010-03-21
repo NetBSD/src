@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.3,v 1.49 2009/04/09 00:04:34 joerg Exp $
+.\"	$NetBSD: printf.3,v 1.50 2010/03/21 19:55:19 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 16, 2008
+.Dd March 21, 2010
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -382,6 +382,14 @@ Similarly, when applied to an
 conversion, it indicates that the argument is a pointer to a signed type
 equivalent in size to a
 .Vt size_t .
+.Pp
+Note:
+if the standard integer types described in
+.Xr stdint 3
+are used, it is recommended that the predefined format string specifier
+macros are used when possible.
+These are further described in
+.Xr inttypes 3 .
 .Pp
 The following length modifier is valid for the
 .Cm a ,
