@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9 2010/03/21 13:10:38 nonaka Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10 2010/03/21 13:34:19 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 2010/03/21 13:10:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 2010/03/21 13:34:19 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	mapsize = sizeof(struct _bus_dmamap)
 		+ (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	mapstore = malloc(mapsize, M_DMAMAP, M_ZERO
-			  | (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+			  | ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK));
 	if (mapstore == NULL)
 		return ENOMEM;
 
