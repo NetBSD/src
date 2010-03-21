@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.8.12.1 2010/02/15 07:36:03 matt Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.8.12.2 2010/03/21 18:45:53 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.8.12.1 2010/02/15 07:36:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.8.12.2 2010/03/21 18:45:53 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,13 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.8.12.1 2010/02/15 07:36:03 mat
 
 #include <machine/locore.h>
 
-struct evcnt mips_int5_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "int 5 (clock)");
-struct evcnt mips_int5_missed_evcnt =
-    EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "mips", "missed int 5");
-
-uint32_t next_cp0_clk_intr;	/* used to schedule hard clock interrupts */
-
 /*
  * Handling to be done upon receipt of a MIPS 3 clock interrupt.  This
  * routine is to be called from the master interrupt routine
@@ -107,12 +100,14 @@ uint32_t next_cp0_clk_intr;	/* used to schedule hard clock interrupts */
 void
 mips3_clockintr(struct clockframe *cfp)
 {
+	struct cpu_info * const ci = curcpu();
 	uint32_t new_cnt;
 
-	mips_int5_evcnt.ev_count++;
+	ci->ci_count_compare_evcnt.ev_count++;
 
-	next_cp0_clk_intr += curcpu()->ci_cycles_per_hz;
-	mips3_cp0_compare_write(next_cp0_clk_intr);
+	KASSERT((ci->ci_cycles_per_hz & ~(0xffffffff)) == 0);
+	ci->ci_next_cp0_clk_intr += (uint32_t)(ci->ci_cycles_per_hz & 0xffffffff);
+	mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
 
 	/* Check for lost clock interrupts */
 	new_cnt = mips3_cp0_count_read();
@@ -121,11 +116,11 @@ mips3_clockintr(struct clockframe *cfp)
 	 * Missed one or more clock interrupts, so let's start 
 	 * counting again from the current value.
 	 */
-	if ((next_cp0_clk_intr - new_cnt) & 0x80000000) {
+	if ((ci->ci_next_cp0_clk_intr - new_cnt) & 0x80000000) {
 
-		next_cp0_clk_intr = new_cnt + curcpu()->ci_cycles_per_hz;
-		mips3_cp0_compare_write(next_cp0_clk_intr);
-		mips_int5_missed_evcnt.ev_count++;
+		ci->ci_next_cp0_clk_intr = new_cnt + curcpu()->ci_cycles_per_hz;
+		mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
+		curcpu()->ci_count_compare_missed_evcnt.ev_count++;
 	}
 
 	/*
@@ -144,10 +139,10 @@ mips3_clockintr(struct clockframe *cfp)
 void
 mips3_initclocks(void)
 {
-	evcnt_attach_static(&mips_int5_evcnt);
+	struct cpu_info * const ci = curcpu();
 
-	next_cp0_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
-	mips3_cp0_compare_write(next_cp0_clk_intr);
+	ci->ci_next_cp0_clk_intr = mips3_cp0_count_read() + ci->ci_cycles_per_hz;
+	mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
 
 	mips3_init_tc();
 
