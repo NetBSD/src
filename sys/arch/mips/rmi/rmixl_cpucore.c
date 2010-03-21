@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.5 2010/02/27 21:25:24 matt Exp $	*/
+/*	$NetBSD: rmixl_cpucore.c,v 1.1.2.6 2010/03/21 21:24:19 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.5 2010/02/27 21:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpucore.c,v 1.1.2.6 2010/03/21 21:24:19 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -96,7 +96,18 @@ cpucore_rmixl_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_core == 0) {
 		sc->sc_tlbinfo = &pmap_tlb0_info;
 	} else {
-		sc->sc_tlbinfo = &sc->sc_tlbinfo0;
+		const vaddr_t va = (vaddr_t)&sc->sc_tlbinfo0;
+		paddr_t pa;
+
+		if (! pmap_extract(pmap_kernel(), va, &pa))
+			panic("%s: pmap_extract fail, va %#"PRIxVADDR, __func__, va);
+#ifdef _LP64
+		sc->sc_tlbinfo = (struct pmap_tlb_info *)
+			MIPS_PHYS_TO_XKPHYS_CACHED(pa);
+#else
+		sc->sc_tlbinfo = (struct pmap_tlb_info *)
+			MIPS_PHYS_TO_KSEG0(pa);
+#endif
 		pmap_tlb_info_init(sc->sc_tlbinfo);
 	}
 #endif
