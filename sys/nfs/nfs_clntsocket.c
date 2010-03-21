@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsocket.c,v 1.1.2.2 2010/03/11 15:04:31 yamt Exp $	*/
+/*	$NetBSD: nfs_clntsocket.c,v 1.1.2.3 2010/03/21 13:05:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.1.2.2 2010/03/11 15:04:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.1.2.3 2010/03/21 13:05:34 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -447,11 +447,13 @@ nfsmout:
 
 				rt = &nfsrtt.rttl[nfsrtt.pos];
 				rt->proc = rep->r_procnum;
-				rt->rto = NFS_RTO(nmp, proct[rep->r_procnum]);
+				rt->rto = NFS_RTO(nmp, nfs_proct[rep->r_procnum]);
 				rt->sent = nmp->nm_sent;
 				rt->cwnd = nmp->nm_cwnd;
-				rt->srtt = nmp->nm_srtt[proct[rep->r_procnum] - 1];
-				rt->sdrtt = nmp->nm_sdrtt[proct[rep->r_procnum] - 1];
+				rt->srtt = nmp->nm_srtt[nfs_proct[
+				    rep->r_procnum] - 1];
+				rt->sdrtt = nmp->nm_sdrtt[nfs_proct[
+				    rep->r_procnum] - 1];
 				rt->fsid = nmp->nm_mountp->mnt_stat.f_fsidx;
 				getmicrotime(&rt->tstamp);
 				if (rep->r_flags & R_TIMING)
@@ -675,7 +677,7 @@ tryagain:
 	else
 		rep->r_retry = NFS_MAXREXMIT + 1;	/* past clip limit */
 	rep->r_rtt = rep->r_rexmit = 0;
-	if (proct[procnum] > 0)
+	if (nfs_proct[procnum] > 0)
 		rep->r_flags = R_TIMING;
 	else
 		rep->r_flags = 0;
