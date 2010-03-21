@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.260 2010/03/20 20:36:23 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.261 2010/03/21 22:38:08 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.260 2010/03/20 20:36:23 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.261 2010/03/21 22:38:08 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -330,6 +330,7 @@ static void pmap_free_page(paddr_t pa);
  * Global pmap lock.
  */
 static kmutex_t pmap_lock;
+static kmutex_t pmap_ctx_lock;
 static bool lock_available = false;
 
 /*
@@ -1293,7 +1294,8 @@ pmap_init(void)
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
 
-	mutex_init(&pmap_lock, MUTEX_SPIN, IPL_VM);
+	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pmap_ctx_lock, MUTEX_SPIN, IPL_VM);
 #if defined(USE_LOCKSAFE_PSEG_GETSET)
 	mutex_init(&pseg_lock, MUTEX_SPIN, IPL_VM);
 #endif
@@ -1415,7 +1417,7 @@ pmap_destroy(struct pmap *pm)
 		return;
 	}
 	DPRINTF(PDB_DESTROY, ("pmap_destroy: freeing pmap %p\n", pm));
-	mutex_enter(&pmap_lock);
+	mutex_enter(&pmap_ctx_lock);
 #ifdef MULTIPROCESSOR
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (CPUSET_HAS(cpus_active, ci->ci_index))
@@ -1424,7 +1426,7 @@ pmap_destroy(struct pmap *pm)
 #else
 	ctx_free(pm, curcpu());
 #endif
-	mutex_exit(&pmap_lock);
+	mutex_exit(&pmap_ctx_lock);
 
 	/* we could be a little smarter and leave pages zeroed */
 	for (pg = TAILQ_FIRST(&pm->pm_obj.memq); pg != NULL; pg = nextpg) {
@@ -1922,7 +1924,7 @@ pmap_remove_all(struct pmap *pm)
 	write_user_windows();
 	pm->pm_refs = 0;
 
-	mutex_enter(&pmap_lock);
+	mutex_enter(&pmap_ctx_lock);
 #ifdef MULTIPROCESSOR
 	CPUSET_CLEAR(pmap_cpus_active);
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
@@ -1935,7 +1937,7 @@ pmap_remove_all(struct pmap *pm)
 #else
 	ctx_free(pm, curcpu());
 #endif
-	mutex_exit(&pmap_lock);
+	mutex_exit(&pmap_ctx_lock);
 
 	REMOVE_STAT(flushes);
 #ifdef MULTIPROCESSOR
@@ -3071,7 +3073,7 @@ ctx_alloc(struct pmap *pm)
 
 	KASSERT(pm != pmap_kernel());
 	KASSERT(pm == curproc->p_vmspace->vm_map.pmap);
-	mutex_enter(&pmap_lock);
+	mutex_enter(&pmap_ctx_lock);
 	ctx = curcpu()->ci_pmap_next_ctx++;
 
 	/*
@@ -3106,7 +3108,7 @@ ctx_alloc(struct pmap *pm)
 	curcpu()->ci_ctxbusy[ctx] = pm->pm_physaddr;
 	LIST_INSERT_HEAD(&curcpu()->ci_pmap_ctxlist, pm, pm_list[cpu_number()]);
 	pmap_ctx(pm) = ctx;
-	mutex_exit(&pmap_lock);
+	mutex_exit(&pmap_ctx_lock);
 	DPRINTF(PDB_CTX_ALLOC, ("ctx_alloc: cpu%d allocated ctx %d\n",
 		cpu_number(), ctx));
 	return ctx;
@@ -3121,7 +3123,7 @@ ctx_free(struct pmap *pm, struct cpu_info *ci)
 	int oldctx;
 	int cpunum;
 
-	KASSERT(mutex_owned(&pmap_lock));
+	KASSERT(mutex_owned(&pmap_ctx_lock));
 
 #ifdef MULTIPROCESSOR
 	cpunum = ci->ci_index;
