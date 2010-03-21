@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1411 2010/03/21 12:30:24 jruoho Exp $
+#	$NetBSD: mi,v 1.1412 2010/03/21 19:45:58 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6167,6 +6167,7 @@
 ./usr/share/man/cat3/instr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/intrflush.0		comp-c-catman		.cat
 ./usr/share/man/cat3/intro.0			comp-c-catman		.cat
+./usr/share/man/cat3/inttypes.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ipsec_dump_policy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/ipsec_get_policylen.0	comp-c-catman		.cat
 ./usr/share/man/cat3/ipsec_set_policy.0		comp-c-catman		.cat
@@ -11940,6 +11941,7 @@
 ./usr/share/man/html3/instr.html		comp-c-htmlman		html
 ./usr/share/man/html3/intrflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/intro.html		comp-c-htmlman		html
+./usr/share/man/html3/inttypes.html		comp-c-htmlman		html
 ./usr/share/man/html3/ipsec_dump_policy.html	comp-c-htmlman		html
 ./usr/share/man/html3/ipsec_get_policylen.html	comp-c-htmlman		html
 ./usr/share/man/html3/ipsec_set_policy.html	comp-c-htmlman		html
@@ -17631,6 +17633,7 @@
 ./usr/share/man/man3/instr.3			comp-c-man		.man
 ./usr/share/man/man3/intrflush.3		comp-c-man		.man
 ./usr/share/man/man3/intro.3			comp-c-man		.man
+./usr/share/man/man3/inttypes.3			comp-c-man		.man
 ./usr/share/man/man3/ipsec_dump_policy.3	comp-c-man		.man
 ./usr/share/man/man3/ipsec_get_policylen.3	comp-c-man		.man
 ./usr/share/man/man3/ipsec_set_policy.3		comp-c-man		.man
