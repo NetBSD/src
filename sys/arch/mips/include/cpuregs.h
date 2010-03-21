@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.15 2010/02/27 07:52:25 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.16 2010/03/21 18:18:51 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -174,6 +174,7 @@
 #define	MIPS_SR_COP_USABILITY	0xf0000000
 #define	MIPS_SR_COP_0_BIT	0x10000000
 #define	MIPS_SR_COP_1_BIT	0x20000000
+#define	MIPS_SR_COP_2_BIT	0x40000000
 
 	/* r4k and r3k differences, see below */
 
