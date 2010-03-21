@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.63 2010/03/21 00:02:13 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.64 2010/03/21 14:29:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.63 2010/03/21 00:02:13 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.64 2010/03/21 14:29:04 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1513,8 +1513,10 @@ mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 {
 	tnode_t	*ntn;
 	tspec_t	t;
+#ifdef notyet
 	size_t l;
 	uint64_t rnum;
+#endif
 
 	ntn = getnode();
 
@@ -1524,6 +1526,7 @@ mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 	ntn->tn_right = rn;
 
 	switch (op) {
+#ifdef notyet
 	case SHR:
 		if (rn->tn_op != CON)
 			break;
@@ -1555,6 +1558,7 @@ mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 		if (t != ln->tn_type->t_tspec)
 			ntn->tn_type->t_tspec = t;
 		break;
+#endif
 	case STAR:
 	case FSEL:
 		if (ln->tn_type->t_tspec == PTR) {
