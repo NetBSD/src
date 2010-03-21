@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.13 2010/01/24 04:38:28 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.14 2010/03/21 21:26:13 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.13 2010/01/24 04:38:28 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.14 2010/03/21 21:26:13 cliff Exp $");
 
 #include "locators.h"
 #include "pci.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.13 2010/01/24 04:38:28 cliff Ex
 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
+#include <mips/rmi/rmixl_intr.h>
 #include <mips/rmi/rmixl_obiovar.h>
 #include <mips/rmi/rmixl_pcievar.h>
 
@@ -136,6 +137,8 @@ obio_print(void *aux, const char *pnp)
 		aprint_normal(" mult %d", obio->obio_mult);
 	if (obio->obio_intr != OBIOCF_INTR_DEFAULT)
 		aprint_normal(" intr %d", obio->obio_intr);
+	if (obio->obio_tmsk != OBIOCF_TMSK_DEFAULT)
+		aprint_normal(" tmsk %d", obio->obio_tmsk);
 
 	return (UNCONF);
 }
@@ -152,6 +155,7 @@ obio_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	obio.obio_size = cf->cf_loc[OBIOCF_SIZE];
 	obio.obio_mult = cf->cf_loc[OBIOCF_MULT];
 	obio.obio_intr = cf->cf_loc[OBIOCF_INTR];
+	obio.obio_tmsk = cf->cf_loc[OBIOCF_TMSK];
 	obio.obio_29bit_dmat = sc->sc_29bit_dmat;
 	obio.obio_32bit_dmat = sc->sc_32bit_dmat;
 	obio.obio_64bit_dmat = sc->sc_64bit_dmat;
@@ -275,10 +279,12 @@ rmixl_addr_error_init(void)
 
 	/*
 	 * establish address error ISR
-	 * XXX assuming "int 16 (bridge_tb)" is out irq
+	 * XXX assuming "int 16 (bridge_tb)" is our irq
+	 * XXX is true for XLS family only
 	 */
-	rmixl_intr_establish(16, IPL_HIGH, RMIXL_INTR_LEVEL, RMIXL_INTR_HIGH,
-		rmixl_addr_error_intr, NULL);
+	if (cpu_rmixls(mips_options.mips_cpu))
+		rmixl_intr_establish(16, 1, IPL_HIGH, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+			rmixl_addr_error_intr, NULL);
 }
 
 int
