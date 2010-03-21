@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.8 2010/01/29 00:23:54 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.9 2010/03/21 21:27:48 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.8 2010/01/29 00:23:54 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.9 2010/03/21 21:27:48 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.8 2010/01/29 00:23:54 cliff Exp
 
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
+#include <mips/rmi/rmixl_intr.h>
 #include <mips/rmi/rmixl_pcievar.h>
 
 #include <mips/rmi/rmixl_obiovar.h>
@@ -290,6 +291,8 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 	sc->sc_29bit_dmat = obio->obio_29bit_dmat;
 	sc->sc_32bit_dmat = obio->obio_32bit_dmat;
 	sc->sc_64bit_dmat = obio->obio_64bit_dmat;
+
+	sc->sc_tmsk = obio->obio_tmsk;
 
 	/*
 	 * get PCI config space base addr from SBC PCIe CFG BAR
@@ -771,8 +774,9 @@ rmixl_pcie_init_ecfg(struct rmixl_pcie_softc *sc)
 	case MIPS_XLS208:
 	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
-		sc->sc_fatal_ih = rmixl_intr_establish(29, IPL_HIGH, RMIXL_INTR_LEVEL,
-			RMIXL_INTR_HIGH, rmixl_pcie_error_intr, v);
+		sc->sc_fatal_ih = rmixl_intr_establish(29, sc->sc_tmsk,
+			IPL_HIGH, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+			rmixl_pcie_error_intr, v);
 		break;
 	default:
 		break;
@@ -1152,27 +1156,6 @@ rmixl_pcie_decompose_pih(pci_intr_handle_t pih, u_int *link, u_int *bitno, u_int
 	KASSERT((*irq >= 0) && (*irq < 31));
 }
 
-#if 0
-
-static void *
-rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
-	int (*func)(void *), void *arg)
-{
-	u_int link, bitno, irq;
-
-	rmixl_pcie_decompose_pih(pih, &link, &bitno, &irq);
-	return rmixl_intr_establish(irq, ipl,
-		RMIXL_INTR_LEVEL, RMIXL_INTR_HIGH, func, arg);
-}
-
-static void
-rmixl_pcie_intr_disestablish(void *v, void *ih)
-{
-	rmixl_intr_disestablish(ih);
-}
-
-#else	/* 0 */
-
 static void
 rmixl_pcie_intr_disestablish(void *v, void *ih)
 {
@@ -1184,7 +1167,8 @@ rmixl_pcie_intr_disestablish(void *v, void *ih)
 	u_int offset;
 	u_int other;
 
-	DPRINTF(("%s: link=%d bitno=%d irq=%d\n", __func__, dip->link, dip->bitno, dip->irq));
+	DPRINTF(("%s: link=%d pin=%d irq=%d\n",
+		__func__, dip->link, dip->bitno + 1, dip->irq));
 	LIST_REMOVE(dip, next);
 
 	rmixl_intr_disestablish(lip->ih);
@@ -1234,7 +1218,6 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	uint32_t bit;
 	u_int offset;
 	int s;
-	char strbuf[32];
 
 	if (pih == ~0) {
 		DPRINTF(("%s: bad pih=%#lx, implies PCI_INTERRUPT_PIN_NONE\n",
@@ -1243,7 +1226,7 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	}
 
 	rmixl_pcie_decompose_pih(pih, &link, &bitno, &irq);
-	DPRINTF(("%s: link=%d bitno=%d irq=%d\n", __func__, link, bitno, irq));
+	DPRINTF(("%s: link=%d pin=%d irq=%d\n", __func__, link, bitno + 1, irq));
 
 	lip = &sc->sc_link_intr[link];
 
@@ -1252,7 +1235,8 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 #ifdef DEBUG
 	LIST_FOREACH(dip, &lip->dispatch, next) {
 		if (dip->bitno == bitno)
-			panic("%s: bitno %d alread on dispatch list", __func__, bitno);
+			panic("%s: pin %d alread on dispatch list",
+				__func__, bitno + 1);
 	}
 #endif
 
@@ -1287,9 +1271,10 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	dip->irq = irq;
 	dip->func = func;
 	dip->arg = arg;
-	snprintf(strbuf, sizeof(strbuf), "link %d, bitno %d", link, bitno);
+	snprintf(dip->count_name, sizeof(dip->count_name),
+		"link %d, pin %d", link, bitno + 1);
 	evcnt_attach_dynamic(&dip->count, EVCNT_TYPE_INTR, NULL,
-		"rmixl_pcie", strbuf);
+		"rmixl_pcie", dip->count_name);
 
 	if (bitno < 32) {
 		offset = int_enb_offset[link].r0;
@@ -1305,8 +1290,9 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_PCIE_LE + offset, r); 
 
 	if (lip->enabled == false) {
-		lip->ih = rmixl_intr_establish(irq, ipl,
-			RMIXL_INTR_LEVEL, RMIXL_INTR_HIGH, rmixl_pcie_intr, lip);
+		lip->ih = rmixl_intr_establish(irq, sc->sc_tmsk,
+			ipl, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+			rmixl_pcie_intr, lip);
 		if (lip->ih == NULL)
 			panic("%s: cannot establish irq %d", __func__, link);
 
@@ -1364,8 +1350,6 @@ rmixl_pcie_link_error_intr(u_int link, uint32_t status0, uint32_t status1)
 	Debugger();
 #endif
 }
-
-#endif	/* 0 */
 
 #if defined(DEBUG) || defined(DDB)
 /* this function exists to facilitate call from ddb */
