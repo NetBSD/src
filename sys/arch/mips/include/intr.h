@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.8 2010/03/11 08:09:15 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.9 2010/03/21 18:21:15 cliff Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -84,6 +84,8 @@ struct splsw {
 struct ipl_sr_map {
 	uint32_t sr_bits[_IPL_N];
 };
+#else
+struct splsw;
 #endif /* __INTR_PRIVATE */
 
 typedef int ipl_t;
