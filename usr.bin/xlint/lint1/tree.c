@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.62 2009/10/02 21:04:03 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.63 2010/03/21 00:02:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.62 2009/10/02 21:04:03 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.63 2010/03/21 00:02:13 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1513,6 +1513,8 @@ mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 {
 	tnode_t	*ntn;
 	tspec_t	t;
+	size_t l;
+	uint64_t rnum;
 
 	ntn = getnode();
 
@@ -1521,7 +1523,40 @@ mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 	ntn->tn_left = ln;
 	ntn->tn_right = rn;
 
-	if (op == STAR || op == FSEL) {
+	switch (op) {
+	case SHR:
+		if (rn->tn_op != CON)
+			break;
+		rnum = rn->tn_val->v_quad;
+		l = tsize(ln->tn_type) / CHAR_BIT;
+		t = ln->tn_type->t_tspec;
+		switch (l) {
+		case 8:
+			if (rnum >= 56)
+				t = UCHAR;
+			else if (rnum >= 48)
+				t = USHORT;
+			else if (rnum >= 32)
+				t = UINT;
+			break;
+		case 4:
+			if (rnum >= 24)
+				t = UCHAR;
+			else if (rnum >= 16)
+				t = USHORT;
+			break;
+		case 2:
+			if (rnum >= 8)
+				t = UCHAR;
+			break;
+		default:
+			break;
+		}
+		if (t != ln->tn_type->t_tspec)
+			ntn->tn_type->t_tspec = t;
+		break;
+	case STAR:
+	case FSEL:
 		if (ln->tn_type->t_tspec == PTR) {
 			t = ln->tn_type->t_subt->t_tspec;
 			if (t != FUNC && t != VOID)
@@ -1529,9 +1564,12 @@ mktnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 		} else {
 			LERROR("mktnode()");
 		}
+		break;
+	default:
+		break;
 	}
 
-	return (ntn);
+	return ntn;
 }
 
 /*
