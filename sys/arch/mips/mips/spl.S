@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.2.3 2010/02/23 20:32:33 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.4 2010/03/21 18:50:45 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.1.2.3 2010/02/23 20:32:33 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.1.2.4 2010/03/21 18:50:45 cliff Exp $")
 
 #include "assym.h"
 
@@ -285,6 +285,7 @@ STATIC_LEAF(_splsw_splintr)
 	and	v1, ta1, MIPS_HARD_INT_MASK	# now have pending interrupts
 	li	v0, IPL_NONE			#  return IPL_NONE
 	beq	v1, zero, 2f			# quick exit if nothing pending
+	 nop
 
 	li	v0, IPL_VM			# start at IPL_VM
 	PTR_LA	ta3, _C_LABEL(ipl_sr_map) + 4*IPL_VM
