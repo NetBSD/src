@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.21 2008/04/30 14:07:14 ad Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.22 2010/03/21 19:53:52 plunky Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.21 2008/04/30 14:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.22 2010/03/21 19:53:52 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ pms_synaptics_enable(void *vsc)
 	res = pms_synaptics_send_command(psc->sc_kbctag, psc->sc_kbcslot,
 	    SYNAPTICS_MODE_ABSOLUTE | SYNAPTICS_MODE_W | SYNAPTICS_MODE_RATE);
 	cmd[0] = PMS_SET_SAMPLE;
-	cmd[1] = 0x14; /* doit */
+	cmd[1] = SYNAPTICS_CMD_SET_MODE2;
 	res |= pckbport_enqueue_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 2, 0,
 	    1, NULL);
 	sc->up_down = 0;
