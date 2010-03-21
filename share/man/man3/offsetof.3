@@ -1,4 +1,4 @@
-.\"	$NetBSD: offsetof.3,v 1.1 2010/02/27 22:04:38 wiz Exp $
+.\"	$NetBSD: offsetof.3,v 1.2 2010/03/21 12:36:21 jruoho Exp $
 .\"
 .\"	$OpenBSD: offsetof.3,v 1.2 2010/02/18 18:30:19 jmc Exp $
 .\"
@@ -41,6 +41,8 @@ from the start of the structure
 A compiler error will result if
 .Ar member
 is not aligned to a byte boundary (i.e. it is a bit-field).
+.Sh SEE ALSO
+.Xr stddef 3
 .Sh STANDARDS
 The
 .Fn offsetof
