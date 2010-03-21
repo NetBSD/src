@@ -1,4 +1,4 @@
-.\" $NetBSD: stddef.3,v 1.1 2010/03/21 12:27:51 jruoho Exp $
+.\" $NetBSD: stddef.3,v 1.2 2010/03/21 12:40:51 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,12 +70,15 @@ Some of the described types and macros may appear also in other headers.
 .Xr stdbool 3 ,
 .Xr stdint 3
 .Sh STANDARDS
-The
+As described here, the
 .In stddef.h
 header conforms to
 .St -isoC-99
 and
 .St -p1003.1-2001 .
+Some of the types and macros conform to earlier standards such as
+.St -ansiC .
+.Pp
 .Sh HISTORY
 The
 .In stddef.h
