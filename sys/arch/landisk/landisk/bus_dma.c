@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.10 2010/03/21 13:34:19 nonaka Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.11 2010/03/21 14:49:28 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 2010/03/21 13:34:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2010/03/21 14:49:28 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,21 +527,28 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			sh_dcache_wbinv_range(naddr, minlen);
+			if (SH_HAS_WRITEBACK_CACHE)
+				sh_dcache_wbinv_range(naddr, minlen);
+			else
+				sh_dcache_inv_range(naddr, minlen);
 			break;
 
 		case BUS_DMASYNC_PREREAD:
-			if (((naddr | minlen) & (~(sh_cache_line_size - 1))) == 0) {
-				sh_dcache_inv_range(naddr, minlen);
-			} else {
+			if (SH_HAS_WRITEBACK_CACHE &&
+			    ((naddr | minlen) & (sh_cache_line_size - 1)) != 0)
 				sh_dcache_wbinv_range(naddr, minlen);
-			}
+			else
+				sh_dcache_inv_range(naddr, minlen);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
-			if (SH_HAS_WRITEBACK_CACHE) {
+			if (SH_HAS_WRITEBACK_CACHE)
 				sh_dcache_wb_range(naddr, minlen);
-			}
+			break;
+
+		case BUS_DMASYNC_POSTREAD:
+		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+			sh_dcache_inv_range(naddr, minlen);
 			break;
 		}
 		offset = 0;
