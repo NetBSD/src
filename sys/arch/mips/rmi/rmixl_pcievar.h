@@ -1,4 +1,4 @@
-/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.3 2010/01/29 00:23:34 cliff Exp $	*/
+/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.4 2010/03/21 21:27:27 cliff Exp $	*/
 
 #ifndef _MIPS_RMI_PCIE_VAR_H_
 #define _MIPS_RMI_PCIE_VAR_H_
@@ -30,6 +30,7 @@ typedef struct rmixl_pcie_link_dispatch {
 	u_int bitno;
 	u_int irq;
 	struct evcnt count;
+	char count_name[32];
 } rmixl_pcie_link_dispatch_t;
 
 struct rmixl_pcie_softc;
@@ -54,6 +55,7 @@ typedef struct rmixl_pcie_softc {
 	bus_dma_tag_t			sc_32bit_dmat;
 	bus_dma_tag_t			sc_64bit_dmat;
 	rmixl_pcie_lnktab_t		sc_pcie_lnktab;
+	int				sc_tmsk;
 	void 			       *sc_fatal_ih;
 	rmixl_pcie_link_intr_t		sc_link_intr[RMIXL_PCIE_NLINKS_MAX];
 } rmixl_pcie_softc_t;
