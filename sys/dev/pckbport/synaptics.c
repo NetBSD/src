@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.22 2010/03/21 19:53:52 plunky Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.23 2010/03/21 19:57:05 plunky Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.22 2010/03/21 19:53:52 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.23 2010/03/21 19:57:05 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,6 +241,10 @@ pms_synaptics_probe_init(void *vsc)
 		const char comma[] = ", ";
 		const char *sep = "";
 		aprint_normal_dev(psc->sc_dev, "");
+		if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
+			aprint_normal("%sPassthrough", sep);
+			sep = comma;
+		}
 		if (sc->flags & SYN_FLAG_HAS_MIDDLE_BUTTON) {
 			aprint_normal("%sMiddle button", sep);
 			sep = comma;
@@ -276,8 +280,18 @@ pms_synaptics_enable(void *vsc)
 {
 	struct pms_softc *psc = vsc;
 	struct synaptics_softc *sc = &psc->u.synaptics;
-	u_char cmd[2];
+	u_char cmd[2], resp[2];
 	int res;
+
+	if (sc->flags & SYN_FLAG_HAS_PASSTHROUGH) {
+		/* 
+		 * Extended capability probes can confuse the passthrough device;
+		 * reset the touchpad now to cure that.
+		 */
+		cmd[0] = PMS_RESET;
+		res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd,
+		    1, 2, resp, 1);
+	}
 
 	/*
 	 * Enable Absolute mode with W (width) reporting, and set
