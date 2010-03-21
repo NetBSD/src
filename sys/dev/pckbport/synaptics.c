@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.23 2010/03/21 19:57:05 plunky Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.24 2010/03/21 20:04:43 plunky Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.23 2010/03/21 19:57:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.24 2010/03/21 20:04:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -630,13 +630,16 @@ pms_synaptics_send_command(pckbport_tag_t tag, pckbport_slot_t slot,
 	u_char cmd[2];
 	int res;
 
+	cmd[0] = PMS_SET_SCALE11;
+	res = pckbport_poll_cmd(tag, slot, cmd, 1, 0, NULL, 0);
+
 	/*
 	 * Need to send 4 Set Resolution commands, with the argument
 	 * encoded in the bottom most 2 bits.
 	 */
 	cmd[0] = PMS_SET_RES;
 	cmd[1] = syn_cmd >> 6;
-	res = pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
+	res |= pckbport_poll_cmd(tag, slot, cmd, 2, 0, NULL, 0);
 
 	cmd[0] = PMS_SET_RES;
 	cmd[1] = (syn_cmd & 0x30) >> 4;
