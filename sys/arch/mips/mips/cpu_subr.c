@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.5 2010/03/19 23:16:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.6 2010/03/21 18:43:28 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -137,7 +137,6 @@ cpu_info_alloc(struct pmap_tlb_info *ti, u_int cpu_id)
 #else
 	KASSERT(MIPS_KSEG0_P(ti));
 #endif
-	pmap_tlb_info_attach(ti, ci);
 
 #ifndef _LP64
 	/*
@@ -157,6 +156,8 @@ cpu_info_alloc(struct pmap_tlb_info *ti, u_int cpu_id)
 
 	mi_cpu_attach(ci);
 
+	pmap_tlb_info_attach(ti, ci);
+
 	/*
 	 * Switch the idle lwp to a direct mapped stack since we use its
 	 * stack and we won't have a TLB entry for it.
@@ -175,6 +176,14 @@ cpu_attach_common(device_t self, struct cpu_info *ci)
 	 */
 	ci->ci_dev = self;
 	self->dv_private = ci;
+	KASSERT(ci->ci_idepth == 0);
+
+	evcnt_attach_dynamic(&ci->ci_count_compare_evcnt,
+		EVCNT_TYPE_INTR, NULL, device_xname(self),
+		"int 5 (clock)");
+	evcnt_attach_dynamic(&ci->ci_count_compare_missed_evcnt,
+		EVCNT_TYPE_INTR, NULL, device_xname(self),
+		"int 5 (clock) missed");
 
 #ifdef MULTIPROCESSOR
 	if (ci != &cpu_info_store) {
@@ -628,8 +637,14 @@ cpu_hatch(struct cpu_info *ci)
 	while ((cpus_running & cpu_mask) == 0) {
 		/* spin, spin, spin */
 	}
+
+	/*
+	 * initialize the MIPS count/compare clock
+	 */
 	mips3_cp0_count_write(ci->ci_data.cpu_cc_skew);
-	mips3_cp0_compare_write(ci->ci_data.cpu_cc_skew + ci->ci_cycles_per_hz);
+	KASSERT(ci->ci_cycles_per_hz != 0);
+	ci->ci_next_cp0_clk_intr = ci->ci_data.cpu_cc_skew + ci->ci_cycles_per_hz;
+	mips3_cp0_compare_write(ci->ci_next_cp0_clk_intr);
 	ci->ci_data.cpu_cc_skew = 0;
 
 	/*
@@ -662,6 +677,9 @@ cpu_boot_secondary_processors(void)
 		ci->ci_data.cpu_cc_skew = mips3_cp0_count_read();
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
 		atomic_or_ulong(&cpus_running, cpu_mask);
+#if 1	/* XXX TMP */
+		cpu_send_ipi(ci, IPI_NOP);
+#endif
 	}
 }
 #endif /* MULTIPROCESSOR */
