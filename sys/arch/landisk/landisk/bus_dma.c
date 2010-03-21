@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8 2009/11/07 07:27:45 cegger Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9 2010/03/21 13:10:38 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2009/11/07 07:27:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 2010/03/21 13:10:38 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	size = round_page(size);
 
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY
-			  | (flags & BUS_DMA_NOWAIT) ? UVM_KMF_NOWAIT : 0);
+			  | ((flags & BUS_DMA_NOWAIT) ? UVM_KMF_NOWAIT : 0));
 	if (va == 0)
 		return (ENOMEM);
 
