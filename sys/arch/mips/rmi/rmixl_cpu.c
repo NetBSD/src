@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.6 2010/03/21 21:23:54 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.7 2010/03/21 22:03:16 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.6 2010/03/21 21:23:54 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.7 2010/03/21 22:03:16 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,7 +86,9 @@ struct cpu_info *
 CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct rmixl_cpu_softc),
 	cpu_rmixl_match, cpu_rmixl_attach, NULL, NULL); 
 
+#ifdef MULTIPROCESSOR
 static struct rmixl_cpu_trampoline_args rmixl_cpu_trampoline_args;
+#endif
 
 static int
 cpu_rmixl_match(device_t parent, cfdata_t cf, void *aux)
