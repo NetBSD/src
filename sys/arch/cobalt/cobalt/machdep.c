@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.10.3 2010/02/28 04:04:46 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.10.4 2010/03/21 17:38:33 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.3 2010/02/28 04:04:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.10.4 2010/03/21 17:38:33 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -261,7 +261,7 @@ mach_init(uint32_t memsize32, u_int bim, uint32_t bip32)
 	 * Initialize locore-function vector.
 	 * Clear out the I and D caches.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	/*
 	 * The boot command is passed in the top 512 bytes,

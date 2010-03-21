@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.10.3 2010/02/01 04:17:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.10.4 2010/03/21 17:38:33 cliff Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.10.3 2010/02/01 04:17:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.10.4 2010/03/21 17:38:33 cliff Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -378,7 +378,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	 *
 	 * This may clobber PTEs needed by the BIOS.
 	 */
-	mips_vector_init();
+	mips_vector_init(NULL);
 
 	/*
 	 * Map critical I/O spaces (e.g. for console printf(9)) on KSEG2.

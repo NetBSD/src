@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.21 2010/03/01 23:54:49 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.22 2010/03/21 17:38:32 cliff Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -363,6 +363,7 @@ struct mips_vmfreelist {
  */
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
 extern struct locoresw mips_locoresw;
+extern void mips_vector_init(const struct splsw *);
 
 #if    defined(MIPS1) && !defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64)
 #define tlb_set_asid		mips1_tlb_set_asid
