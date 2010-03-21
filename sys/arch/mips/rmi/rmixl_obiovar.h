@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.7 2009/12/14 07:18:26 cliff Exp $	*/
+/*	$NetBSD: rmixl_obiovar.h,v 1.1.2.8 2010/03/21 21:26:45 cliff Exp $	*/
 
 #ifndef _MIPS_RMI_RMIXL_OBIOVAR_H_
 #define _MIPS_RMI_RMIXL_OBIOVAR_H_
@@ -13,6 +13,7 @@ struct obio_attach_args {
 	bus_addr_t	obio_addr;
 	bus_size_t	obio_size;
 	int		obio_intr;
+	int		obio_tmsk;
 	unsigned int	obio_mult;
 	bus_dma_tag_t	obio_29bit_dmat;
 	bus_dma_tag_t	obio_32bit_dmat;
