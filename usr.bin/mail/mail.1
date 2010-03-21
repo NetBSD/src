@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.56 2009/04/10 13:08:25 christos Exp $
+.\"	$NetBSD: mail.1,v 1.57 2010/03/21 13:34:34 joerg Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -827,9 +827,9 @@ and
 For example, one use might be something like:
 .Bd -literal -offset 0
 if headersonly
-  set header-format="%P%Q%3i %-21.20f %m/%d %R %3K \\"%q\\""
+  set header-format="%P%Q%3i %-21.20f %m/%d %R %3K \e"%q\e""
 else
-  set header-format="%P%Q%?\*[Am] ?%3i %-21.20f %a %b %e %R %3K/%-5O \\"%q\\""
+  set header-format="%P%Q%?\*[Am] ?%3i %-21.20f %a %b %e %R %3K/%-5O \e"%q\e""
 endif
 .Ed
 .It Ic ifdef
@@ -1875,7 +1875,7 @@ Otherwise it will be extracted from the
 header falling back to the headline if that extraction fails.
 For example, the default format is:
 .Bd -literal -offset 0
-set header-format=\&"\&%??%P%Q%?* ?%3i \&%-21.20f \&%a \&%b \&%e \&%R \&%3K/%-5O \&\\"%q\\""
+set header-format=\&"\&%??%P%Q%?* ?%3i \&%-21.20f \&%a \&%b \&%e \&%R \&%3K/%-5O \&\e"%q\e""
 .Ed
 .Pp
 Note 1: The message status flag
@@ -1907,7 +1907,7 @@ and
 .Ar \&%t
 as used by
 .Xr strftime 3
-were redundant with \\t and \\n, respectively, so nothing is lost
+were redundant with \et and \en, respectively, so nothing is lost
 using them here.
 .It Ar ignoreeof
 An option related to
@@ -1941,7 +1941,7 @@ The format syntax is the same as for
 For example, the following:
 .Bd -literal -offset 0
 set indentpreamble=
-  \&"On \&%b \&%e \&%T, \&%Y \&%z (%Z), \&%n (%.50N) wrote:\\n-- Subject: \&%.65q\\n"
+  \&"On \&%b \&%e \&%T, \&%Y \&%z (%Z), \&%n (%.50N) wrote:\en-- Subject: \&%.65q\en"
 .Ed
 .Pp
 would insert something like
