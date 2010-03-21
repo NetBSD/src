@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.8 2010/01/29 00:21:49 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.9 2010/03/21 21:30:35 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -54,18 +54,109 @@
 #else
 #define _(n)    n
 #endif
-					/*		#sels --------------+	*/
-					/*		#regs -----------+  |	*/
-					/* What:	#bits --+	 |  |	*/
-					/*			v	 v  v 	*/
-#define RMIXL_COP_2_TXBUF	_(0)	/* Transmit Buffers	64	[1][4]	*/
-#define RMIXL_COP_2_RXBUF	_(1)	/* Receive Buffers	64	[1][4]	*/
-#define RMIXL_COP_2_MSG_STS	_(2)	/* Mesage Status	32	[1][2]	*/
-#define RMIXL_COP_2_MSG_CFG	_(3)	/* MEssage Config	32	[1][2]	*/
-#define RMIXL_COP_2_MSG_BSZ	_(4)	/* Message Bucket Size	32	[1][8]	*/
-#define RMIXL_COP_2_CREDITS	_(16)	/* Credit Counters	32     [16][8]	*/
+/*
+ * Note CP2 FMN register scope or "context"
+ *	L   : Local		: per thread register
+ *	G   : Global       	: per FMN Station (per core) register
+ *	L/G : "partly global"	: ???
+ * Global regs should be managed by a single thread
+ * (see XLS PRM "Coprocessor 2 Register Summary")
+ */
+					/*		context ---------------+	*/
+					/*		#sels --------------+  |	*/
+					/*		#regs -----------+  |  |	*/
+					/* What:	#bits --+	 |  |  |	*/
+					/*			v	 v  v  v	*/
+#define RMIXL_COP_2_TXBUF	_(0)	/* Transmit Buffers	64	[1][4] L	*/
+#define RMIXL_COP_2_RXBUF	_(1)	/* Receive Buffers	64	[1][4] L	*/
+#define RMIXL_COP_2_MSG_STS	_(2)	/* Mesage Status	32	[1][2] L/G	*/
+#define RMIXL_COP_2_MSG_CFG	_(3)	/* MEssage Config	32	[1][2] G	*/
+#define RMIXL_COP_2_MSG_BSZ	_(4)	/* Message Bucket Size	32	[1][8] G	*/
+#define RMIXL_COP_2_CREDITS	_(16)	/* Credit Counters	 8     [16][8] G	*/
 
-/* CP2 bit defines TBD */
+/*
+ * MsgStatus: RMIXL_COP_2_MSG_STS (CP2 Reg 2, Select 0) bits
+ */
+#define RMIXL_MSG_STS0_RFBE		__BITS(31,24)	/* RX FIFO Buckets bit mask
+							 *  0=not empty
+							 *  1=empty
+							 */
+#define RMIXL_MSG_STS0_RFBE_SHIFT	24
+#define RMIXL_MSG_STS0_RESV		__BIT(23)
+#define RMIXL_MSG_STS0_RMSID		__BITS(22,16)	/* Source ID */
+#define RMIXL_MSG_STS0_RMSID_SHIFT	16
+#define RMIXL_MSG_STS0_RMSC		__BITS(15,8)	/* RX Message Software Code */
+#define RMIXL_MSG_STS0_RMSC_SHIFT	8
+#define RMIXL_MSG_STS0_RMS		__BITS(7,6)	/* RX Message Size (minus 1) */
+#define RMIXL_MSG_STS0_RMS_SHIFT	6
+#define RMIXL_MSG_STS0_LEF		__BIT(5)	/* Load Empty Fail */
+#define RMIXL_MSG_STS0_LPF		__BIT(4)	/* Load Pending Fail */
+#define RMIXL_MSG_STS0_LMP		__BIT(3)	/* Load Message Pending */
+#define RMIXL_MSG_STS0_SCF		__BIT(2)	/* Send Credit Fail */
+#define RMIXL_MSG_STS0_SPF		__BIT(1)	/* Send Pending Fail */
+#define RMIXL_MSG_STS0_SMP		__BIT(0)	/* Send Message Pending */
+#define RMIXL_MSG_STS0_ERRS	\
+		(RMIXL_MSG_STS0_LEF|RMIXL_MSG_STS0_LPF|RMIXL_MSG_STS0_LMP \
+		|RMIXL_MSG_STS0_SCF|RMIXL_MSG_STS0_SPF|RMIXL_MSG_STS0_SMP)
+ 
+/*
+ * MsgStatus1: RMIXL_COP_2_MSG_STS (CP2 Reg 2, Select 1) bits
+ */
+#define RMIXL_MSG_STS1_RESV		__BIT(31)
+#define RMIXL_MSG_STS1_C		__BIT(30)	/* Credit Overrun Error */
+#define RMIXL_MSG_STS1_CCFCME		__BITS(29,23)	/* Credit Counter of Free Credit Message with Error */
+#define RMIXL_MSG_STS1_CCFCME_SHIFT	23
+#define RMIXL_MSG_STS1_SIDFCME		__BITS(22,16)	/* Source ID of Free Credit Message with Error */
+#define RMIXL_MSG_STS1_SIDFCME_SHIFT	16
+#define RMIXL_MSG_STS1_T		__BIT(15)	/* Invalid Target Error */
+#define RMIXL_MSG_STS1_F		__BIT(14)	/* Receive Queue "Write When Full" Error */
+#define RMIXL_MSG_STS1_SIDE		__BITS(13,7)	/* Source ID of incoming msg with Error */
+#define RMIXL_MSG_STS1_SIDE_SHIFT	7
+#define RMIXL_MSG_STS1_DIDE		__BITS(6,0)	/* Destination ID of the incoming message Message with Error */
+#define RMIXL_MSG_STS1_DIDE_SHIFT	0
+#define RMIXL_MSG_STS1_ERRS	\
+		(RMIXL_MSG_STS1_C|RMIXL_MSG_STS1_T|RMIXL_MSG_STS1_F)
+
+/*
+ * MsgConfig: RMIXL_COP_2_MSG_CFG (CP2 Reg 3, Select 0) bits
+ */
+#define RMIXL_MSG_CFG0_WM		__BITS(31,24)	/* Watermark level */
+#define RMIXL_MSG_CFG0_WMSHIFT		24
+#define RMIXL_MSG_CFG0_RESa		__BITS(23,22)
+#define RMIXL_MSG_CFG0_IV		__BITS(21,16)	/* Interrupt Vector */
+#define RMIXL_MSG_CFG0_IV_SHIFT		16
+#define RMIXL_MSG_CFG0_RESb		__BITS(15,12)
+#define RMIXL_MSG_CFG0_ITM		__BITS(11,8)	/* Interrupt Thread Mask */
+#define RMIXL_MSG_CFG0_ITM_SHIFT	8
+#define RMIXL_MSG_CFG0_RESc		__BITS(7,2)
+#define RMIXL_MSG_CFG0_WIE		__BIT(1)	/* Watermark Interrupt Enable */
+#define RMIXL_MSG_CFG0_EIE		__BIT(0)	/* Receive Queue Not Empty Enable */
+#define RMIXL_MSG_CFG0_RESV	\
+		(RMIXL_MSG_CFG0_RESa|RMIXL_MSG_CFG0_RESb|RMIXL_MSG_CFG0_RESc)
+
+/*
+ * MsgConfig1: RMIXL_COP_2_MSG_CFG (CP2 Reg 3, Select 1) bits
+ * Note: reg width is 64 bits in PRM reg description, but 32 bits in reg summary
+ */
+#define RMIXL_MSG_CFG1_RESV		__BITS(63,3)
+#define RMIXL_MSG_CFG1_T		__BIT(2)	/* Trace Mode Enable */
+#define RMIXL_MSG_CFG1_C		__BIT(1)	/* Credit Over-run Interrupt Enable */
+#define RMIXL_MSG_CFG1_M		__BIT(0)	/* Messaging Errors Interrupt Enable */
+
+
+/*
+ * MsgBucketSize: RMIXL_COP_2_MSG_BSZ (CP2 Reg 4, Select [0..7]) bits
+ * Note: reg width is 64 bits in PRM reg description, but 32 bits in reg summary
+ * Size:
+ * - 0 means bucket disabled, else
+ * - must be power of 2
+ * - must be >=4
+ */
+#define RMIXL_MSG_BSZ_RESV		__BITS(63,8)
+#define RMIXL_MSG_BSZ_SIZE		__BITS(7,0)
+
+
+
 
 /*
  * RMIXL Processor Control Register addresses
@@ -145,14 +236,18 @@
 #endif	/* MIPS64_XLR */
 #define RMIXL_IO_DEV_SAE	0x0b000	/* Security Acceleration Engine */
 #if defined(MIPS64_XLS)
-#define XAUI Interface_0	0x0c000	/* XAUI Interface_0 */
+#define XAUI_INTERFACE_0	0x0c000	/* XAUI Interface_0 */
 					/*  when SGMII Interface_[0-3] are not used */
+#define RMIXL_IO_DEV_GMAC_0	0x0c000	/* SGMII-Interface_0, Port SGMII0 */
+#define RMIXL_IO_DEV_GMAC_1	0x0d000	/* SGMII-Interface_1, Port SGMII1 */
+#define RMIXL_IO_DEV_GMAC_2	0x0e000	/* SGMII-Interface_2, Port SGMII2 */
+#define RMIXL_IO_DEV_GMAC_3	0x0f000	/* SGMII-Interface_3, Port SGMII3 */
 #endif	/* MIPS64_XLS */
-#define RMIXL_IO_DEV_GMAC_A	0x0c000	/* RGMII-Interface_A, Port RA */
-#define RMIXL_IO_DEV_GMAC_B	0x0d000	/* RGMII-Interface_B, Port RB */
-#define RMIXL_IO_DEV_GMAC_C	0x0e000	/* RGMII-Interface_C, Port RC */
-#define RMIXL_IO_DEV_GMAC_D	0x0f000	/* RGMII-Interface_D, Port RD */
 #if defined(MIPS64_XLR)
+#define RMIXL_IO_DEV_GMAC_A	0x0c000	/* RGMII-Interface_0, Port RA */
+#define RMIXL_IO_DEV_GMAC_B	0x0d000	/* RGMII-Interface_1, Port RB */
+#define RMIXL_IO_DEV_GMAC_C	0x0e000	/* RGMII-Interface_2, Port RC */
+#define RMIXL_IO_DEV_GMAC_D	0x0f000	/* RGMII-Interface_3, Port RD */
 #define RMIXL_IO_DEV_SPI4_A	0x10000	/* SPI-4.2-Interface_A, Port XA */
 #define RMIXL_IO_DEV_XGMAC_A	0x11000	/* XGMII-Interface_A, Port XA */
 #define RMIXL_IO_DEV_SPI4_B	0x12000	/* SPI-4.2-Interface_B, Port XB */
@@ -168,7 +263,7 @@
 #define RMIXL_IO_DEV_L2		0x1b000	/* L2 Cache */
 #define RMIXL_IO_DEV_TB		0x1c000	/* Trace Buffer */
 #if defined(MIPS64_XLS)
-#define RMIXL_IO_DEV_CMP	0x1d000	/* Compression/Decompression */
+#define RMIXL_IO_DEV_CDE	0x1d000	/* Compression/Decompression Engine */
 #define RMIXL_IO_DEV_PCIE_BE	0x1e000	/* PCI-Express_BE */
 #define RMIXL_IO_DEV_PCIE_LE	0x1f000	/* PCI-Express_LE */
 #define RMIXL_IO_DEV_SRIO_BE	0x1e000	/* SRIO_BE */
@@ -759,6 +854,67 @@
 #define RMIXL_USB_HOST_RESV		0xc00
 #define RMIXL_USB_HOST_MASK		0xc00
 
+
+/*
+ * FMN non-core station configuration registers
+ */
+#define RMIXL_FMN_BS_FIRST		_RMIXL_OFFSET(0x320)
+
+/*
+ * SGMII bucket size regs
+ */
+#define RMIXL_FMN_BS_SGMII_UNUSED0	_RMIXL_OFFSET(0x320)	/* initialize as 0 */
+#define RMIXL_FMN_BS_SGMII_FCB		_RMIXL_OFFSET(0x321)	/* Free Credit Bucket size */
+#define RMIXL_FMN_BS_SGMII_TX0		_RMIXL_OFFSET(0x322)
+#define RMIXL_FMN_BS_SGMII_TX1		_RMIXL_OFFSET(0x323)
+#define RMIXL_FMN_BS_SGMII_TX2		_RMIXL_OFFSET(0x324)
+#define RMIXL_FMN_BS_SGMII_TX3		_RMIXL_OFFSET(0x325)
+#define RMIXL_FMN_BS_SGMII_UNUSED1	_RMIXL_OFFSET(0x326)	/* initialize as 0 */
+#define RMIXL_FMN_BS_SGMII_FCB1		_RMIXL_OFFSET(0x321)	/* Free Credit Bucket1 size */
+
+/*
+ * SAE bucket size regs
+ */
+#define RMIXL_FMN_BS_SAE_PIPE0		_RMIXL_OFFSET(0x320)
+#define RMIXL_FMN_BS_SAE_RSA_PIPE	_RMIXL_OFFSET(0x321)
+
+/*
+ * DMA bucket size regs
+ */
+#define RMIXL_FMN_BS_DMA_CHAN0		_RMIXL_OFFSET(0x320)
+#define RMIXL_FMN_BS_DMA_CHAN1		_RMIXL_OFFSET(0x321)
+#define RMIXL_FMN_BS_DMA_CHAN2		_RMIXL_OFFSET(0x322)
+#define RMIXL_FMN_BS_DMA_CHAN3		_RMIXL_OFFSET(0x323)
+
+/*
+ * CDE bucket size regs
+ */
+#define RMIXL_FMN_BS_CDE_FREE_DESC	_RMIXL_OFFSET(0x320)
+#define RMIXL_FMN_BS_CDE_COMPDECOMP	_RMIXL_OFFSET(0x321)
+
+/*
+ * PCIe bucket size regs
+ */
+#define RMIXL_FMN_BS_PCIE_TX0		_RMIXL_OFFSET(0x320)
+#define RMIXL_FMN_BS_PCIE_RX0		_RMIXL_OFFSET(0x321)
+#define RMIXL_FMN_BS_PCIE_TX1		_RMIXL_OFFSET(0x322)
+#define RMIXL_FMN_BS_PCIE_RX1		_RMIXL_OFFSET(0x323)
+#define RMIXL_FMN_BS_PCIE_TX2		_RMIXL_OFFSET(0x324)
+#define RMIXL_FMN_BS_PCIE_RX2		_RMIXL_OFFSET(0x325)
+#define RMIXL_FMN_BS_PCIE_TX3		_RMIXL_OFFSET(0x326)
+#define RMIXL_FMN_BS_PCIE_RX3		_RMIXL_OFFSET(0x327)
+
+/*
+ * non-core Credit Counter offsets
+ */
+#define RMIXL_FMN_CC_FIRST		_RMIXL_OFFSET(0x380)
+#define RMIXL_FMN_CC_LAST		_RMIXL_OFFSET(0x3ff)
+
+/*
+ * non-core Credit Counter bit defines
+ */
+#define RMIXL_FMN_CC_RESV		__BITS(31,8)
+#define RMIXL_FMN_CC_COUNT		__BITS(7,0)
 
 #endif	/* _MIPS_RMI_RMIRMIXLEGS_H_ */
 
