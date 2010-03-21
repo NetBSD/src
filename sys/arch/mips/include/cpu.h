@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.27 2010/03/11 08:19:01 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.28 2010/03/21 18:17:21 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -76,8 +76,12 @@ struct cpu_info {
 	int ci_mtx_oldspl;		/* saved SPL value */
 	int ci_idepth;			/* hardware interrupt depth */
 	int ci_cpl;			/* current [interrupt] priority level */
+	uint32_t ci_next_cp0_clk_intr;	/* for hard clock intr scheduling */
+	struct evcnt ci_count_compare_evcnt;		/* hard clock intr counter */
+	struct evcnt ci_count_compare_missed_evcnt;	/* hard clock miss counter */
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
 #define	ci_softints	ci_data.cpu_softints
+
 	/*
 	 * Per-cpu pmap information
 	 */
@@ -86,8 +90,13 @@ struct cpu_info {
 	struct segtab *ci_pmap_segbase;
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
+
+
 #ifdef MULTIPROCESSOR
 	volatile u_long ci_flags;
+	volatile uint64_t ci_request_ipis;
+					/* bitmask of IPIs requested */
+					/*  use on chips where hw cannot pass tag */
 	uint64_t ci_active_ipis;	/* bitmask of IPIs being serviced */
 	uint32_t ci_ksp_tlb_slot;	/* tlb entry for kernel stack */
 	void *ci_fpsave_si;		/* FP sync softint handler */
@@ -105,6 +114,7 @@ struct cpu_info {
 #define	CPUF_FPUSAVE	0x10		/* CPU is currently in fpusave_cpu() */
 #define	CPUF_USERPMAP	0x20		/* CPU has a user pmap activated */
 #endif
+
 };
 
 #define	CPU_INFO_ITERATOR		int
@@ -185,7 +195,7 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	cpu_number()		(curcpu()->ci_cpuid)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 #else
-#define	cpu_number()		(0)
+#define	cpu_number()		(0L)
 #endif
 #define	cpu_proc_fork(p1, p2)	((void)((p2)->p_md.md_abi = (p1)->p_md.md_abi))
 
@@ -522,7 +532,6 @@ struct mips_vmfreelist;
 struct phys_ram_seg;
 void	dumpsys(void);
 int	savectx(struct user *);
-void	mips_vector_init(void);
 void	mips_init_msgbuf(void);
 void	mips_init_lwp0_uarea(void);
 void	mips_page_physload(vaddr_t, vaddr_t,
