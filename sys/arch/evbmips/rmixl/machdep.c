@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.24 2010/03/09 02:04:46 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.25 2010/03/21 21:22:28 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.24 2010/03/09 02:04:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.25 2010/03/21 21:22:28 cliff Exp $");
+
+#define __INTR_PRIVATE
 
 #include "opt_ddb.h"
 #include "opt_com.h"
@@ -157,10 +159,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.24 2010/03/09 02:04:46 matt Exp $"
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
-#include <mips/rmi/rmixl_comvar.h>
-#include <mips/rmi/rmixlvar.h>
-#include <mips/rmi/rmixl_firmware.h>
+#include <mips/include/intr.h>
+
 #include <mips/rmi/rmixlreg.h>
+#include <mips/rmi/rmixlvar.h>
+#include <mips/rmi/rmixl_intr.h>
+#include <mips/rmi/rmixl_firmware.h>
+#include <mips/rmi/rmixl_comvar.h>
 
 #ifdef MACHDEP_DEBUG
 int machdep_debug=MACHDEP_DEBUG;
@@ -252,8 +257,8 @@ static bool rmixl_fixup_cop0_oscratch(int32_t, uint32_t [2]);
 void rmixl_get_wakeup_info(struct rmixl_config *);
 #ifdef MACHDEP_DEBUG
 static void rmixl_wakeup_info_print(volatile rmixlfw_cpu_wakeup_info_t *);
-#endif
-#endif
+#endif	/* MACHDEP_DEBUG */
+#endif	/* MULTIPROCESSOR */
 
 
 /*
@@ -299,8 +304,10 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 	 * before comcnattach() is called (or at least before the
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
+	 *
+	 * specify chip-specific EIRR/EIMR based spl functions
 	 */
-	mips_vector_init();
+	mips_vector_init(&rmixl_splsw);
 
 	/* mips_vector_init initialized mips_options */
 	strcpy(cpu_model, mips_options.mips_cpu->cpu_name);
@@ -322,6 +329,9 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 
 	printf("\nNetBSD/rmixl\n");
 	printf("memsize = %#"PRIx64"\n", memsize);
+#ifdef MEMLIMIT
+	printf("memlimit = %#"PRIx64"\n", (uint64_t)MEMLIMIT);
+#endif
 
 #if defined(MULTIPROCESSOR) && defined(MACHDEP_DEBUG)
 	rmixl_wakeup_info_print(rcp->rc_cpu_wakeup_info);
@@ -410,7 +420,7 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 #endif
 
 #ifdef MEMLIMIT
-	/* reserve everything > MEMLIMIT */
+	/* reserve everything >= MEMLIMIT */
 	vm_cluster_cnt = ram_seg_resv(vm_clusters, vm_cluster_cnt,
 		(u_quad_t)MEMLIMIT, (u_quad_t)~0);
 #endif
@@ -446,7 +456,8 @@ mach_init(int argc, int32_t *argv, void *envp, int64_t infop)
 #endif
 #ifdef MULTIPROCESSOR
 	/*
-	 * Fix up the exception vector to use COP0 OSSCRATCH0
+	 * store (cpu#0) curcpu in COP0 OSSCRATCH0
+	 * used in exception vector
 	 */
 	__asm __volatile("dmtc0 %0,$%1"
 		:: "r"(&cpu_info_store), "n"(MIPS_COP_0_OSSCRATCH));
@@ -862,7 +873,7 @@ mem_clusters_init(
 
 #ifdef MULTIPROCESSOR
 /*
- * firmware passes wakeup info structure in CP0 OS Scratch reg #7
+ * RMI firmware passes wakeup info structure in CP0 OS Scratch reg #7
  * they do not explicitly give us the size of the wakeup area.
  * we "know" that firmware loader sets wip->gp thusly:
  *   gp = stack_start[vcpu] = round_page(wakeup_end) + (vcpu * (PAGE_SIZE * 2))
