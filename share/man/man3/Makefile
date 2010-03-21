@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.43 2010/03/21 12:27:51 jruoho Exp $
+#	$NetBSD: Makefile,v 1.44 2010/03/21 19:42:51 jruoho Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __UNCONST.3 CMSG_DATA.3 \
 	__arraycount.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 \
-	fast_divide32.3 gcq.3 intro.3 offsetof.3 queue.3 \
+	fast_divide32.3 gcq.3 intro.3 inttypes.3 offsetof.3 queue.3 \
 	stdarg.3 stdbool.3 stddef.3 stdint.3 sysexits.3 \
 	tgmath.3 timeradd.3 tree.3 varargs.3
 
