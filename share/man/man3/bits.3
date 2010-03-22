@@ -1,4 +1,4 @@
-.\"	$NetBSD: bits.3,v 1.5 2010/03/02 06:52:53 jruoho Exp $
+.\"	$NetBSD: bits.3,v 1.6 2010/03/22 08:04:25 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 David Young.  All rights reserved.
 .\"
@@ -52,7 +52,11 @@ A
 is a span of consecutive bits defined by a bitmask, where 1s select
 the bits in the bitfield.
 .Pp
-Use __BIT and __BITS to define bitmasks:
+Use
+.Fn __BIT
+and
+.Fn __BITS
+to define bitmasks:
 .Pp
 .Bl -tag -width __BITS -offset indent
 .It Fn __BIT "n"
@@ -143,8 +147,7 @@ The
 macros first appeared in
 .Xr atw 4 ,
 with different names and implementation.
-.Nm bits
-macros appeared with their current names and implementation in
+In their current these macros appeared in
 .Nx 4.0 .
 .Sh AUTHORS
 The
