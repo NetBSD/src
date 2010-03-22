@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.21 2010/03/22 17:11:19 dyoung Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.22 2010/03/22 23:03:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,11 +108,6 @@ struct ex_softc {
 #define EX_FLAGS_100MBIT		0x1000
 #define EX_FLAGS_POWERMGMT		0x2000
 #define EX_FLAGS_ATTACHED		0x4000	/* attach has succeeded */
-
-	u_char	ex_bustype;		/* parent bus type (currently unused) */
-
-#define EX_BUS_PCI	0
-#define EX_BUS_CARDBUS	1
 
 #if NRND > 0
 	rndsource_element_t rnd_source;

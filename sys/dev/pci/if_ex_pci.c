@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.52 2010/03/22 17:20:42 dyoung Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.53 2010/03/22 23:03:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.52 2010/03/22 17:20:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.53 2010/03/22 23:03:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,6 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	sc->ex_bustype = EX_BUS_PCI;
 	sc->ex_conf = epp->epp_flags;
 
 	/* Enable the card. */
