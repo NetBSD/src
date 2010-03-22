@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.15 2009/02/15 22:49:37 wiz Exp $
+.\"	$NetBSD: pmap.1,v 1.16 2010/03/22 18:34:14 joerg Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -240,7 +240,7 @@ MAP 0xcf7cac84: [0x0-\*[Gt]0xbfbfe000]
 .Pp
 The value of the flags field (in hexadecimal) is taken from
 the include file
-.Aq Pa uvm/uvm_map.h :
+.In uvm/uvm_map.h :
 .Bl -column VM_MAP_WIREFUTURE VM_MAP_WIREFUTURE -offset indent
 .It Dv "VM_MAP_PAGEABLE"   Ta No "0x01   entries are pageable"
 .It Dv "VM_MAP_INTRSAFE"   Ta No "0x02   interrupt safe map"
@@ -263,7 +263,7 @@ The
 \&(or protection) field, along with
 .Dq max
 \&(maximum protection allowed) are made up of the following flags from
-.Aq Pa uvm/uvm_extern.h :
+.In uvm/uvm_extern.h :
 .\" this column width specifically chosen so that all the header file
 .\" excerpts appear to line up cleanly
 .Bl -column VM_MAP_WIREFUTURE VM_MAP_WIREFUTURE -offset indent
