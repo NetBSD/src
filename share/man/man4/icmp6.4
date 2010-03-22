@@ -1,4 +1,4 @@
-.\"	$NetBSD: icmp6.4,v 1.16 2009/12/08 02:40:04 joerg Exp $
+.\"	$NetBSD: icmp6.4,v 1.17 2010/03/22 18:58:31 joerg Exp $
 .\"	$KAME: icmp6.4,v 1.6 2004/12/27 05:30:56 itojun Exp $
 .\"	$OpenBSD: icmp6.4,v 1.19 2004/12/23 20:33:03 jaredy Exp $
 .\"
@@ -161,7 +161,7 @@ struct icmp6_hdr {
 .Va icmp6_type
 describes the type of the message.
 Suitable values are defined in
-.Aq Pa netinet/icmp6.h .
+.In netinet/icmp6.h .
 .Va icmp6_code
 describes the sub-type of the message and depends on
 .Va icmp6_type .

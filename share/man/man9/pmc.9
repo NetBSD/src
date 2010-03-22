@@ -1,4 +1,4 @@
-.\" $NetBSD: pmc.9,v 1.9 2009/03/12 12:42:12 joerg Exp $
+.\" $NetBSD: pmc.9,v 1.10 2010/03/22 18:58:33 joerg Exp $
 .\"
 .\" Copyright (c) 2002, 2005 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -112,7 +112,7 @@ All function calls in this interface may be defined as
 macros.
 If any function is not implemented as a macro, its prototype must be
 defined by the port-specific header
-.Aq Pa machine/pmc.h .
+.In machine/pmc.h .
 .Pp
 Counters are numbered from 0 to
 .Dv N\-1

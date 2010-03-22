@@ -1,4 +1,4 @@
-.\"   $NetBSD: fdc.4,v 1.13 2008/04/30 13:10:56 martin Exp $
+.\"   $NetBSD: fdc.4,v 1.14 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ selects the default format for the attached floppy drive, as determined
 by the BIOS configuration for the diskette drive.
 .Sh FORMATTING
 The driver supports floppy disk formatting using the interfaces in
-.Aq Pa sys/fdio.h :
+.In sys/fdio.h :
 .Bl -tag -width FDIOCFORMAT_TRACK -compact
 .It Dv FDIOCGETFORMAT Fa struct fdformat_parms
 Fetch current formatting parameters.  This gets the default parameters

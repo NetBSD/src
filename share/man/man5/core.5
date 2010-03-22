@@ -1,4 +1,4 @@
-.\"	$NetBSD: core.5,v 1.24 2008/05/02 18:11:05 martin Exp $
+.\"	$NetBSD: core.5,v 1.25 2010/03/22 18:58:32 joerg Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -251,7 +251,7 @@ header file.
 The core file consists of a core header followed by a number of
 segments. Each segment is preceded by a core segment header.
 Both the core header and core segment header are defined in
-.Aq Pa sys/core.h .
+.In sys/core.h .
 .Pp
 The core header,
 .Fa struct core ,
@@ -286,7 +286,7 @@ These values may be extracted with the
 and
 .Fn CORE_GETFLAG
 macros. The machine ID values are listed in
-.Aq Pa sys/exec_aout.h .
+.In sys/exec_aout.h .
 For a valid core file, the magic value in the header must be
 .Dv COREMAGIC .
 No flags are defined for the core header.

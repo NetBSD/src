@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.34 2009/03/09 19:24:28 joerg Exp $
+.\" $NetBSD: wsdisplay.4,v 1.35 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
@@ -183,12 +183,12 @@ calls are provided by the
 .Nm
 driver or by devices which use it.
 Their definitions are found in
-.Aq Pa dev/wscons/wsconsio.h .
+.In dev/wscons/wsconsio.h .
 .Bl -tag -width Dv
 .It Dv WSDISPLAYIO_GTYPE Pq Li int
 Retrieve the type of the display.
 The list of types is in
-.Aq Pa dev/wscons/wsconsio.h .
+.In dev/wscons/wsconsio.h .
 .It Dv WSDISPLAYIO_GINFO Pq Li "struct wsdisplay_fbinfo"
 Retrieve basic information about a framebuffer display.
 The returned structure is as follows:

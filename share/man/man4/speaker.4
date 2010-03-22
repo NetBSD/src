@@ -1,4 +1,4 @@
-.\" $NetBSD: speaker.4,v 1.13 2009/03/15 10:39:36 joerg Exp $
+.\" $NetBSD: speaker.4,v 1.14 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -67,7 +67,7 @@ on a speaker file descriptor to control the speaker driver directly;
 definitions for the
 .Fn ioctl
 interface are in
-.Aq Pa machine/spkr.h .
+.In machine/spkr.h .
 The tone_t structure used in these calls has two fields,
 specifying a frequency (in hz) and a duration (in 1/100ths of a second).
 A frequency of zero is interpreted as a rest.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.32 2010/02/21 14:26:33 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.33 2010/03/22 18:58:32 joerg Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ See the
 manual page for programming examples.
 .Sh Top level names
 The top level names are defined with a CTL_ prefix in
-.Aq Pa sys/sysctl.h ,
+.In sys/sysctl.h ,
 and are as follows.
 The next and subsequent levels down are found in the include files
 listed here, and described in separate sections below.
@@ -773,19 +773,19 @@ Return information on the System V style message facility.
 The
 .Sy msg_sysctl_info
 structure is defined in
-.Aq Pa sys/msg.h .
+.In sys/msg.h .
 .It Li KERN_SYSVIPC_SEM_INFO
 Return information on the System V style semaphore facility.
 The
 .Sy sem_sysctl_info
 structure is defined in
-.Aq Pa sys/sem.h .
+.In sys/sem.h .
 .It Li KERN_SYSVIPC_SHM_INFO
 Return information on the System V style shared memory facility.
 The
 .Sy shm_sysctl_info
 structure is defined in
-.Aq Pa sys/shm.h .
+.In sys/shm.h .
 .El
 .It Li kern.ipc.shmmax ( KERN_SYSVIPC_SHMMAX )
 Max shared memory segment size in bytes.

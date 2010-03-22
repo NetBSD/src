@@ -1,4 +1,4 @@
-.\"	$NetBSD: dvbox.4,v 1.4 2003/08/07 10:31:06 agc Exp $
+.\"	$NetBSD: dvbox.4,v 1.5 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ Get Graphics Info
 Get info about device, setting the entries in the
 .Ar grfinfo
 structure, as defined in
-.Aq Pa hpdev/grfioctl.h .
+.In hpdev/grfioctl.h .
 For the standard 98730, the number of planes should be 4.  The number of
 colors would therefore be 15, excluding black.  If one 98732A frame buffer
 board is installed, there will still be 4 planes, with the 4 planes on the
@@ -101,7 +101,7 @@ Map Device to user space
 Map in control registers and frame buffer space. Once the device file is
 mapped, the frame buffer structure is accessible.  The structure describing
 the 98730 is defined in
-.Aq Pa hpdev/grf_dvreg.h .
+.In hpdev/grf_dvreg.h .
 .El
 .Sh FILES
 .Bl -tag -width /dev/MAKEDEV.hpux -compact

@@ -1,4 +1,4 @@
-.\"	$NetBSD: termios.4,v 1.33 2009/12/25 02:33:50 mrg Exp $
+.\"	$NetBSD: termios.4,v 1.34 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -829,7 +829,7 @@ characteristics
 do so by using the
 .Nm
 structure as defined in the header
-.Aq Pa termios.h .
+.In termios.h .
 This structure contains minimally four scalar elements of bit flags
 and one array of special characters.
 The scalar flag elements are named:
@@ -1520,7 +1520,7 @@ This table lists the array index, the corresponding special character,
 and the system default value.
 For an accurate list of
 the system defaults, consult the header file
-.Aq Pa ttydefaults.h .
+.In ttydefaults.h .
 .Pp
 .Bl -column "Index Name" "Special Character" -offset indent -compact
 .It Em "Index Name	Special Character	Default Value"
@@ -1568,7 +1568,7 @@ The initial values of the flags and control characters
 after
 .Xr open 2
 is set according to the values in the header
-.Aq Pa sys/ttydefaults.h .
+.In sys/ttydefaults.h .
 .Sh SEE ALSO
 .Xr tcsendbreak 3 ,
 .Xr tcsetattr 3

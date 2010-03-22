@@ -1,4 +1,4 @@
-.\"	$NetBSD: uiomove.9,v 1.14 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: uiomove.9,v 1.15 2010/03/22 18:58:33 joerg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ The
 argument is a pointer to a
 .Fa struct uio
 as defined by
-.Aq Pa sys/uio.h :
+.In sys/uio.h :
 .Bd -literal
 struct uio {
 	struct	iovec *uio_iov;	/* pointer to array of iovecs */

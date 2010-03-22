@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.13 2008/05/02 21:36:23 martin Exp $
+.\" $NetBSD: pci_intr.9,v 1.14 2010/03/22 18:58:33 joerg Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,9 +54,9 @@ The
 functions exist to allow device drivers machine-independent access to
 PCI bus interrupts.
 The functions described in this page are typically declared in a port's
-.Aq Pa machine/pci_machdep.h
+.In machine/pci_machdep.h
 header file; however, drivers should generally include
-.Aq Pa dev/pci/pcivar.h
+.In dev/pci/pcivar.h
 to get other PCI-specific declarations as well.
 .Pp
 Each driver has an

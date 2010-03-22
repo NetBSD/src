@@ -1,4 +1,4 @@
-.\"	$NetBSD: tp.4,v 1.17 2005/05/25 00:13:24 snj Exp $
+.\"	$NetBSD: tp.4,v 1.18 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -164,7 +164,7 @@ supports several options
 to control such things as negotiable options
 in the protocol and protocol strategies.
 The options are defined in
-.Aq Pa netiso/tp_user.h ,
+.In netiso/tp_user.h ,
 and are described below.
 .Pp
 In the tables below,
@@ -272,7 +272,7 @@ during a connection's lifetime.
 It can only be used with
 .Xr getsockopt 2 .
 The structure it returns is described in
-.Aq Pa netiso/tp_stat.h .
+.In netiso/tp_stat.h .
 .\" See
 .\" .Xr tpperf 8 .
 .It Dv TPOPT_FLAGS
@@ -293,7 +293,7 @@ or
 .Xr setsockopt 2
 system call.
 It is described in
-.Aq Pa netiso/tp_user.h .
+.In netiso/tp_user.h .
 .Pp
 The fields of the
 .Ar tp_conn_param
@@ -586,9 +586,9 @@ The
 entity returns
 .Va errno
 error values as defined in
-.Aq Pa sys/errno.h
+.In sys/errno.h
 and
-.Aq Pa netiso/iso_errno.h .
+.In netiso/iso_errno.h .
 .\" User programs may print messages associated with these value by
 .\" using an expanded version of
 .\" .Xr perror 3
