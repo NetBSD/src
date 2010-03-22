@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdarg.3,v 1.18 2003/09/08 17:54:34 wiz Exp $
+.\"	$NetBSD: stdarg.3,v 1.19 2010/03/22 18:36:27 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,7 @@
 A function may be called with a varying number of arguments of varying
 types.
 The include file
-.Aq Pa stdarg.h
+.In stdarg.h
 declares a type
 .Pq Em va_list
 and defines three macros for stepping
@@ -246,7 +246,7 @@ These macros are
 compatible with the historic macros they replace.
 A backward compatible version can be found in the include
 file
-.Aq Pa varargs.h .
+.In varargs.h .
 .Sh BUGS
 Unlike the
 .Em varargs
