@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgctl.2,v 1.14 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: msgctl.2,v 1.15 2010/03/22 19:30:55 joerg Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -67,7 +67,7 @@ The
 structure used inside the
 .Sy msgid_ds
 structure is defined in
-.Aq Pa sys/ipc.h
+.In sys/ipc.h
 and contains the following members:
 .Bd -literal
     uid_t cuid;  /* creator user id */
@@ -113,7 +113,7 @@ Values for
 that exceed the system limit
 .Pf ( Dv MSGMNB
 from
-.Aq Pa sys/msg.h )
+.In sys/msg.h )
 are silently truncated to that limit.
 .It Dv IPC_RMID
 Remove the message queue specified by

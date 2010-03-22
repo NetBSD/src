@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.23 2008/04/30 13:10:51 martin Exp $
+.\"	$NetBSD: ypclnt.3,v 1.24 2010/03/22 19:30:55 joerg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -290,7 +290,7 @@ Where:
 .Bl -tag -width "inkey, inval"
 .It Fa instatus
 Holds one of the return status values described in
-.Aq Pa rpcsvc/yp_prot.h :
+.In rpcsvc/yp_prot.h :
 see
 .Fn ypprot_err
 below for a function that will translate
@@ -298,7 +298,7 @@ below for a function that will translate
 protocol errors into a
 .Nm ypclnt
 layer error code as described in
-.Aq Pa rpcsvc/ypclnt.h .
+.In rpcsvc/ypclnt.h .
 .It Fa inkey, inval
 The key and value arguments are somewhat different here than described
 above.

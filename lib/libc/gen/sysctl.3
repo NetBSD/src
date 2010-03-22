@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.199 2009/09/26 04:43:48 elad Exp $
+.\"	$NetBSD: sysctl.3,v 1.200 2010/03/22 19:30:54 joerg Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -219,7 +219,7 @@ The numeric and text names of sysctl variables are described in
 .Xr sysctl 7 .
 The numeric names are defined as preprocessor macros.
 The top level names are defined with a CTL_ prefix in
-.Aq Pa sys/sysctl.h .
+.In sys/sysctl.h .
 The next and subsequent levels down have different prefixes for each
 subtree.
 .Pp
@@ -268,7 +268,7 @@ tree.
 .Pp
 The core interface to all of these meta-functions is the structure
 that the kernel uses to describe the tree internally, as defined in
-.Aq Pa sys/sysctl.h
+.In sys/sysctl.h
 as:
 .Pp
 .Bd -literal
