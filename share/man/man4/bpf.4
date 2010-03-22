@@ -1,8 +1,8 @@
-.\" $NetBSD: bpf.4,v 1.44 2010/03/14 11:32:39 wiz Exp $
+.\" $NetBSD: bpf.4,v 1.45 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.44 2010/03/14 11:32:39 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.45 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,7 +89,7 @@ Currently, only writes to Ethernets and SLIP links are supported.
 The
 .Xr ioctl 2
 command codes below are defined in
-.Aq Pa net/bpf.h .
+.In net/bpf.h .
 All commands require these includes:
 .Bd -literal -offset indent
 #include \*[Lt]sys/types.h\*[Gt]
@@ -131,7 +131,7 @@ is returned if no interface has been specified.
 The device types, prefixed with
 .Dq DLT_ ,
 are defined in
-.Aq Pa net/bpf.h .
+.In net/bpf.h .
 .It Dv BIOCGDLTLIST (struct bpf_dltlist)
 Returns an array of available type of the data link layer
 underlying the attached interface:
@@ -283,7 +283,7 @@ The current version numbers are given by
 and
 .Dv BPF_MINOR_VERSION
 from
-.Aq Pa net/bpf.h .
+.In net/bpf.h .
 An incompatible filter
 may result in undefined behavior (most likely, an error returned by
 .Xr ioctl 2
@@ -418,7 +418,7 @@ has some knowledge of how to get from packet to packet.
 The macro
 .Dv BPF_WORDALIGN
 is defined in
-.Aq Pa net/bpf.h
+.In net/bpf.h
 to facilitate this process.
 It rounds up its argument
 to the nearest word aligned value (where a word is
@@ -472,7 +472,7 @@ BPF_ALU, BPF_JMP, BPF_RET, and BPF_MISC.
 Various other mode and
 operator bits are or'd into the class to give the actual instructions.
 The classes and modes are defined in
-.Aq Pa net/bpf.h .
+.In net/bpf.h .
 .Pp
 Below are the semantics for each defined BPF instruction.
 We use the convention that A is the accumulator, X is the index register,

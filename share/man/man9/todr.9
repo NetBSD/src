@@ -1,4 +1,4 @@
-.\" $NetBSD: todr.9,v 1.15 2008/04/30 13:10:58 martin Exp $
+.\" $NetBSD: todr.9,v 1.16 2010/03/22 18:58:33 joerg Exp $
 .\"
 .\" Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,7 +108,7 @@ The
 .Fn todr_*
 functions return 0 if the requested operation was successful;
 otherwise an error code from
-.Aq Pa sys/errno.h
+.In sys/errno.h
 shall be returned.
 However, behaviour is undefined if an invalid
 .Fa todr_chip_handle_t

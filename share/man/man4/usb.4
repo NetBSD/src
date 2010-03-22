@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.91 2009/05/18 00:07:47 snj Exp $
+.\" $NetBSD: usb.4,v 1.92 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -445,7 +445,7 @@ can destroy the bus integrity.
 .El
 .Pp
 The include file
-.Aq Pa dev/usb/usb.h
+.In dev/usb/usb.h
 contains definitions for the types used by the various
 .Xr ioctl 2
 calls.
@@ -462,7 +462,7 @@ and
 macros to handle byte order and alignment properly.
 .Pp
 The include file
-.Aq Pa dev/usb/usbhid.h
+.In dev/usb/usbhid.h
 similarly contains the definitions for
 Human Interface Devices
 .Pq Tn HID .
