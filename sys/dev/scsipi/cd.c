@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.298 2010/03/11 04:00:36 mrg Exp $	*/
+/*	$NetBSD: cd.c,v 1.299 2010/03/22 16:49:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.298 2010/03/11 04:00:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.299 2010/03/22 16:49:41 martin Exp $");
 
 #include "rnd.h"
 
@@ -1270,6 +1270,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		case ODIOCEJECT:
 		case DIOCEJECT:
 		case DIOCCACHESYNC:
+		case DIOCTUR:
 		case SCIOCIDENTIFY:
 		case OSCIOCIDENTIFY:
 		case SCIOCCOMMAND:
@@ -1396,6 +1397,15 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		free(newlabel, M_TEMP);
 		return error;
 #endif
+
+	case DIOCTUR: {
+		/* test unit ready */
+		error = scsipi_test_unit_ready(cd->sc_periph, XS_CTL_SILENT);
+		*((int*)addr) = (error == 0);
+		if (error == ENODEV || error == EIO || error == 0)
+			return 0;			
+		return error;
+	}
 
 	case CDIOCPLAYTRACKS: {
 		/* PLAY_MSF command */
