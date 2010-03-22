@@ -1,4 +1,4 @@
-/*	$NetBSD: tutor.c,v 1.8 2009/08/12 05:17:57 dholland Exp $	*/
+/*	$NetBSD: tutor.c,v 1.9 2010/03/22 05:10:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tutor.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tutor.c,v 1.8 2009/08/12 05:17:57 dholland Exp $");
+__RCSID("$NetBSD: tutor.c,v 1.9 2010/03/22 05:10:19 mrg Exp $");
 #endif
 #endif				/* not lint */
 
@@ -89,7 +89,7 @@ tutor(void)
 		}
 		if (tflag)
 			curmove(18, 0);
-		text(*test[i].com);
+		wrtext(*test[i].com);
 		if (!tflag)
 			writec('\n');
 		if (i == maxmoves)

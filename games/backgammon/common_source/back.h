@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.16 2009/08/12 05:17:57 dholland Exp $	*/
+/*	$NetBSD: back.h,v 1.17 2010/03/22 05:10:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -165,7 +165,7 @@ void	recover(const char *);
 void	refresh(void);
 void	roll(void);
 void	save(int);
-int	text(const char *const *);
+int	wrtext(const char *const *);
 void	wrboard(void);
 void	wrhit(int);
 void	wrint(int);
