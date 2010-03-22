@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt_at_usb.c,v 1.1 2010/03/22 12:14:51 pooka Exp $	*/
+/*	$NetBSD: ubt_at_usb.c,v 1.2 2010/03/22 14:47:02 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -25,4 +25,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 
 	FLAWLESSCALL(config_cfdriver_attach(&ubt_cd));
 	FLAWLESSCALL(config_cfattach_attach("ubt", &ubt_ca));
+
+	FLAWLESSCALL(config_cfdriver_attach(&bthub_cd));
+	FLAWLESSCALL(config_cfattach_attach("bthub", &bthub_ca));
 }
