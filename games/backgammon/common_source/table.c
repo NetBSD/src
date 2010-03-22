@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.10 2009/08/12 05:17:57 dholland Exp $	*/
+/*	$NetBSD: table.c,v 1.11 2010/03/22 05:10:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.10 2009/08/12 05:17:57 dholland Exp $");
+__RCSID("$NetBSD: table.c,v 1.11 2010/03/22 05:10:19 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,7 +262,7 @@ dotable(int c, int i)
 					curmove(20, 0);
 				else
 					writec('\n');
-				(void) text(help2);
+				(void) wrtext(help2);
 				if (tflag) {
 					curmove(cturn == -1 ? 18 : 19, 39);
 				} else {
