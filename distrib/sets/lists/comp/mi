@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1414 2010/03/22 10:32:48 jruoho Exp $
+#	$NetBSD: mi,v 1.1415 2010/03/22 12:27:46 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2604,6 +2604,9 @@
 ./usr/lib/librumpdev_sysmon.a			comp-c-lib
 ./usr/lib/librumpdev_sysmon_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_sysmon_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_ubt.a			comp-c-lib
+./usr/lib/librumpdev_ubt_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_ubt_p.a			comp-c-proflib		profile
 ./usr/lib/librumpdev_ucom.a			comp-c-lib
 ./usr/lib/librumpdev_ucom_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_ucom_p.a			comp-c-proflib		profile
@@ -2681,6 +2684,9 @@
 ./usr/lib/librumpnet_local.a			comp-c-lib
 ./usr/lib/librumpnet_local_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_local_p.a			comp-c-proflib		profile
+./usr/lib/librumpnet_netbt.a			comp-c-lib
+./usr/lib/librumpnet_netbt_g.a			-unknown-		debuglib
+./usr/lib/librumpnet_netbt_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_net.a			comp-c-lib
 ./usr/lib/librumpnet_net80211.a			comp-c-lib
 ./usr/lib/librumpnet_net80211_g.a		-unknown-		debuglib
