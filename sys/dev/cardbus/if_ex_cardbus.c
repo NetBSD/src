@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.52 2010/03/19 01:34:46 dyoung Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.53 2010/03/22 17:23:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.52 2010/03/19 01:34:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.53 2010/03/22 17:23:44 dyoung Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -114,8 +114,9 @@ struct ex_cardbus_softc {
 
 };
 
-CFATTACH_DECL_NEW(ex_cardbus, sizeof(struct ex_cardbus_softc),
-    ex_cardbus_match, ex_cardbus_attach, ex_cardbus_detach, ex_activate);
+CFATTACH_DECL3_NEW(ex_cardbus, sizeof(struct ex_cardbus_softc),
+    ex_cardbus_match, ex_cardbus_attach, ex_cardbus_detach, ex_activate,
+    NULL, NULL, DVF_DETACH_SHUTDOWN);
 
 const struct ex_cardbus_product {
 	uint32_t	ecp_prodid;	/* CardBus product ID */
