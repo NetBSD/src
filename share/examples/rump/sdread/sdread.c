@@ -1,4 +1,4 @@
-/*	$NetBSD: sdread.c,v 1.4 2010/03/07 23:18:17 pooka Exp $	*/
+/*	$NetBSD: sdread.c,v 1.5 2010/03/22 20:37:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/dirent.h>
 #include <sys/mount.h>
+#include <sys/dkio.h>
 
 #include <ufs/ufs/ufsmount.h>
 #include <msdosfs/msdosfsmount.h>
@@ -50,6 +51,38 @@
  * Mount rump file system from device driver stack included in the
  * rump kernel.  Optionally copy a file out of the mounted file system.
  */
+
+/* recent -current, appease 5.0 etc. userland */
+#ifndef DIOCTUR
+#define DIOCTUR _IOR('d', 128, int)
+#endif
+
+static void
+waitcd(void)
+{
+	int fd, val = 0, rounds = 0;
+
+	fd = rump_sys_open("/dev/rcd0d", O_RDWR);
+	do {
+		if (rounds > 0) {
+			if (rounds == 1) {
+				printf("Waiting for CD device to settle ");
+			} else {
+				printf(".");
+			}
+			fflush(stdout);
+			sleep(1);
+		} 
+		if (rump_sys_ioctl(fd, DIOCTUR, &val) == -1)
+			err(1, "DIOCTUR");
+		rounds++;
+	} while (val == 0 || rounds >= 30);
+
+	if (!val)
+		printf(" giving up\n");
+	else
+		printf(" done!\n");
+}
 
 int
 main(int argc, char *argv[])
@@ -96,13 +129,11 @@ main(int argc, char *argv[])
 	    &args, sizeof(args)) == -1) {
 		if (rump_sys_mount(MOUNT_FFS, "/mp", MNT_RDONLY,
 		    &uargs, sizeof(uargs)) == -1) {
-			printf("Trying CD.  This might fail with "
-			    "\"media not present\".\n");
-			printf("If that happens, wait a while without "
-			    "unplugging the device and re-run.\n");
-			printf("Some devices apparently need a long time "
-			    "to settle after they are initialized.\n\n");
-
+			/*
+			 * Wait for CD media to settle.  In the end,
+			 * just try to do it anyway and see if we fail.
+			 */
+			waitcd();
 			if (rump_sys_mount(MOUNT_CD9660, "/mp", MNT_RDONLY,
 			    &iargs, sizeof(iargs)) == -1) {
 				err(1, "mount");
