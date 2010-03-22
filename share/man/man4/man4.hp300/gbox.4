@@ -1,4 +1,4 @@
-.\"	$NetBSD: gbox.4,v 1.4 2003/08/07 10:31:06 agc Exp $
+.\"	$NetBSD: gbox.4,v 1.5 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,7 +88,7 @@ Get Graphics Info
 Get info about device, setting the entries in the
 .Em grfinfo
 structure, as defined in
-.Aq Pa hpdev/grfioctl.h .
+.In hpdev/grfioctl.h .
 For the standard 98700, the number of planes should be 4.  The number of
 colors would therefore be 15, excluding black.  With the 98701 option installed
 there will be another 4 planes for a total of 8, giving 255 colors.
@@ -113,7 +113,7 @@ Map in control registers and framebuffer space. Once the device file is
 mapped, the frame buffer structure is accessible.
 The frame buffer structure describing the 98700
 is given in
-.Aq Pa hpdev/grf_gbreg.h .
+.In hpdev/grf_gbreg.h .
 .It Dv GRFIOCUNMAP
 Unmap Device
 .Pp

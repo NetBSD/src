@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.24 2009/10/19 18:41:10 bouyer Exp $
+.\"	$NetBSD: scsipi.9,v 1.25 2010/03/22 18:58:33 joerg Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -189,7 +189,7 @@ adapter's ID on this channel
 .It Va int chan_defquirks
 default device quirks.
 Quirks are defined in
-.Aq Pa dev/scsipi/scsipiconf.h
+.In dev/scsipi/scsipiconf.h
 and are usually set in the middle layer based on the device's inquiry
 data.
 For some kinds of adapters it may be convenient to have a set of
@@ -222,7 +222,7 @@ pointer to the device's
 pointer to the channel the device is connected to
 .It Va int periph_quirks
 device quirks, defined in
-.Aq Pa dev/scsipi/scsipiconf.h
+.In dev/scsipi/scsipiconf.h
 .It Va int periph_target
 target ID, or drive number on ATAPI
 .It Va int periph_lun
