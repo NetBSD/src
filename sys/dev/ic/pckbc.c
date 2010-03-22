@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.48 2010/02/24 22:37:58 dyoung Exp $ */
+/* $NetBSD: pckbc.c,v 1.49 2010/03/22 23:08:34 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.48 2010/02/24 22:37:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.49 2010/03/22 23:08:34 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,9 @@ int
 pckbc_is_console(bus_space_tag_t iot, bus_addr_t addr)
 {
 	if (pckbc_console && !pckbc_console_attached &&
+#if 0	/* XXX Comparing bus_space_tag_t is a no-no! */
 	    pckbc_consdata.t_iot == iot &&
+#endif
 	    pckbc_consdata.t_addr == addr)
 		return (1);
 	return (0);
