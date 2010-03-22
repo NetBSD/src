@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1413 2010/03/21 21:23:51 jruoho Exp $
+#	$NetBSD: mi,v 1.1414 2010/03/22 10:32:48 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8437,6 +8437,7 @@
 ./usr/share/man/cat9/CALLOUT_INITIALIZER_SETFUNC.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/CARDBUS_PRODUCT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/CARDBUS_VENDOR.0		comp-sys-catman		.cat
+./usr/share/man/cat9/CLR.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/CTASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/Cardbus_conf_read.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/Cardbus_conf_write.0	comp-sys-catman		.cat
@@ -8456,6 +8457,7 @@
 ./usr/share/man/cat9/FILE_USE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/FREE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/HOLDRELE.0			comp-obsolete		obsolete
+./usr/share/man/cat9/ISSET.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KDASSERT.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/KNOTE.0			comp-sys-catman		.cat
@@ -8487,6 +8489,7 @@
 ./usr/share/man/cat9/RUN_ONCE.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/SCHED_LOCK.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/SCHED_UNLOCK.0		comp-obsolete		obsolete
+./usr/share/man/cat9/SET.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/TC_DENSE_TO_SPARSE.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/TC_PHYS_TO_UNCACHED.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/VATTR_NULL.0		comp-obsolete		obsolete
@@ -14125,6 +14128,7 @@
 ./usr/share/man/html9/BOOT_FLAG.html		comp-sys-htmlman	html
 ./usr/share/man/html9/CARDBUS_PRODUCT.html	comp-sys-htmlman	html
 ./usr/share/man/html9/CARDBUS_VENDOR.html	comp-sys-htmlman	html
+./usr/share/man/html9/CLR.html			comp-sys-htmlman	html
 ./usr/share/man/html9/CTASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/Cardbus_conf_read.html	comp-sys-htmlman	html
 ./usr/share/man/html9/Cardbus_conf_write.html	comp-sys-htmlman	html
@@ -14144,6 +14148,7 @@
 ./usr/share/man/html9/FILE_USE.html		comp-sys-htmlman	html
 ./usr/share/man/html9/FREE.html			comp-sys-htmlman	html
 ./usr/share/man/html9/HOLDRELE.html		comp-obsolete	obsolete
+./usr/share/man/html9/ISSET.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KDASSERT.html		comp-sys-htmlman	html
 ./usr/share/man/html9/KNOTE.html		comp-sys-htmlman	html
@@ -14172,6 +14177,7 @@
 ./usr/share/man/html9/PCI_VENDOR.html		comp-sys-htmlman	html
 ./usr/share/man/html9/PMC_ENABLED.html		comp-sys-htmlman	html
 ./usr/share/man/html9/RUN_ONCE.html		comp-sys-htmlman	html
+./usr/share/man/html9/SET.html			comp-sys-htmlman	html
 ./usr/share/man/html9/TC_DENSE_TO_SPARSE.html	comp-sys-htmlman	html
 ./usr/share/man/html9/TC_PHYS_TO_UNCACHED.html	comp-sys-htmlman	html
 ./usr/share/man/html9/VATTR_NULL.html		comp-obsolete	obsolete
@@ -19900,6 +19906,7 @@
 ./usr/share/man/man9/CALLOUT_INITIALIZER_SETFUNC.9	comp-obsolete		obsolete
 ./usr/share/man/man9/CARDBUS_PRODUCT.9		comp-sys-man		.man
 ./usr/share/man/man9/CARDBUS_VENDOR.9		comp-sys-man		.man
+./usr/share/man/man9/CLR.9			comp-sys-man		.man
 ./usr/share/man/man9/CTASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/Cardbus_conf_read.9	comp-sys-man		.man
 ./usr/share/man/man9/Cardbus_conf_write.9	comp-sys-man		.man
@@ -19919,6 +19926,7 @@
 ./usr/share/man/man9/FILE_USE.9			comp-sys-man		.man
 ./usr/share/man/man9/FREE.9			comp-sys-man		.man
 ./usr/share/man/man9/HOLDRELE.9			comp-obsolete		obsolete
+./usr/share/man/man9/ISSET.9			comp-sys-man		.man
 ./usr/share/man/man9/KASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/KDASSERT.9			comp-sys-man		.man
 ./usr/share/man/man9/KNOTE.9			comp-sys-man		.man
@@ -19950,6 +19958,7 @@
 ./usr/share/man/man9/RUN_ONCE.9			comp-sys-man		.man
 ./usr/share/man/man9/SCHED_LOCK.9		comp-obsolete		obsolete
 ./usr/share/man/man9/SCHED_UNLOCK.9		comp-obsolete		obsolete
+./usr/share/man/man9/SET.9			comp-sys-man		.man
 ./usr/share/man/man9/TC_DENSE_TO_SPARSE.9	comp-sys-man		.man
 ./usr/share/man/man9/TC_PHYS_TO_UNCACHED.9	comp-sys-man		.man
 ./usr/share/man/man9/VATTR_NULL.9		comp-obsolete		obsolete
