@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2010/03/22 12:14:51 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/03/22 14:47:02 pooka Exp $
 #
 
-.PATH:	${.CURDIR}/../../../../dev/usb
+.PATH:	${.CURDIR}/../../../../dev/usb ${.CURDIR}/../../../../dev/bluetooth
 
 LIB=	rumpdev_ubt
 IOCONF= UBT.ioconf
 
-SRCS=	ubt.c
+SRCS=	ubt.c bthub.c
 
 SRCS+=	ubt_at_usb.c
 
