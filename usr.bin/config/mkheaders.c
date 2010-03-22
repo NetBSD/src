@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.17 2010/02/03 21:00:49 pooka Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.18 2010/03/22 14:40:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,6 @@
 
 static int emitcnt(struct nvlist *);
 static int emitopts(void);
-static int emitioconfh(void);
 static int emittime(void);
 static int herr(const char *, const char *, FILE *);
 static int defopts_print(const char *, void *, void *);
@@ -376,7 +375,7 @@ emitlocs(void)
  * Build the "ioconf.h" file with extern declarations for all configured
  * cfdrivers.
  */
-static int
+int
 emitioconfh(void)
 {
 	const char *tfname;
