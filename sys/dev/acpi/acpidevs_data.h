@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.12 2010/01/18 16:50:08 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.13 2010/03/22 11:16:02 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.14 2010/01/18 16:34:47 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.15 2010/03/22 11:13:23 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -467,6 +467,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0C14",
 	    "WMI mapper device",
+	},
+	{
+	    "PNP0C15",
+	    "ACPI docking station",
 	},
 	{
 	    "PNP0C80",
@@ -1345,7 +1349,11 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Wake Alarm Device",
 	},
 	{
+	    "IFX0102",
+	    "Infineon Trusted Platform Module",
+	},
+	{
 	    "INT0800",
-	    "Intel FWH Random Number Generator",
+	    "Intel Firmware Hub Device",
 	},
 };
