@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.41 2010/03/08 10:19:14 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.42 2010/03/22 14:40:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -388,6 +388,7 @@ main(int argc, char **argv)
 		pack();
 		mkioconf();
 		emitlocs();
+		emitioconfh();
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.33 2010/03/08 10:19:14 pooka Exp $	*/
+/*	$NetBSD: defs.h,v 1.34 2010/03/22 14:40:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -526,6 +526,7 @@ int	mkdevsw(void);
 int	mkheaders(void);
 int	moveifchanged(const char *, const char *);
 int	emitlocs(void);
+int	emitioconfh(void);
 
 /* mkioconf.c */
 int	mkioconf(void);
