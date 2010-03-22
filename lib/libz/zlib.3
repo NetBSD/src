@@ -1,4 +1,4 @@
-.\"	$NetBSD: zlib.3,v 1.6 2009/03/12 12:47:49 joerg Exp $
+.\"	$NetBSD: zlib.3,v 1.7 2010/03/22 21:56:42 joerg Exp $
 .\"	$OpenBSD: zlib.3,v 1.1 2003/09/25 09:12:09 jmc Exp $
 .\"
 .\"  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
@@ -169,7 +169,7 @@ and
 for consistency.
 If the first character differs, the library code actually used is
 not compatible with the
-.Aq Pa zlib.h
+.In zlib.h
 header file used by the application.
 This check is automatically made by
 .Fn deflateInit
@@ -713,7 +713,7 @@ memLevel=1 uses minimum memory but is slow and reduces compression ratio;
 memLevel=9 uses maximum memory for optimal speed.
 The default value is 8.
 See
-.Aq Pa zconf.h
+.In zconf.h
 for total memory usage as a function of
 .Fa windowBits
 and
@@ -1529,7 +1529,7 @@ and
 must be able to allocate exactly 65536 bytes,
 but will not be required to allocate more than this if the symbol MAXSEG_64K
 is defined (see
-.Aq Pa zconf.h ) .
+.In zconf.h ) .
 .Pp
 WARNING: On MSDOS, pointers returned by
 .Fa zalloc
@@ -1539,7 +1539,7 @@ The default allocation function provided by this library ensures this (see
 To reduce memory requirements and avoid any allocation of 64K objects,
 at the expense of compression ratio,
 compile the library with -DMAX_WBITS=14 (see
-.Aq Pa zconf.h ) .
+.In zconf.h ) .
 .Pp
 The fields
 .Fa total_in
@@ -1633,7 +1633,7 @@ GZIP File Format Specification.
 .Pa http://www.gzip.org/zlib/
 .Sh HISTORY
 This manual page is based on an HTML version of
-.Aq Pa zlib.h
+.In zlib.h
 converted by
 .An piaip Aq piaip@csie.ntu.edu.tw
 and was converted to mdoc format by the
