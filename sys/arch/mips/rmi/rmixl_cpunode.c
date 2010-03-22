@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpunode.c,v 1.1.2.3 2010/01/20 20:48:12 matt Exp $	*/
+/*	$NetBSD: rmixl_cpunode.c,v 1.1.2.4 2010/03/22 05:03:02 cliff Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.3 2010/01/20 20:48:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpunode.c,v 1.1.2.4 2010/03/22 05:03:02 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ cpunode_rmixl_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	ncores = MIPS_CIDFL_RMI_NTHREADS(cpu_cidflags);
+	ncores = MIPS_CIDFL_RMI_NCORES(cpu_cidflags);
 	aprint_normal("%s: %d %s on node\n", device_xname(self), ncores,
 		ncores == 1 ? "core" : "cores");
 
