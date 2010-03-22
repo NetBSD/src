@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.62 2009/08/18 16:52:42 dyoung Exp $	*/
+/*	$NetBSD: isadma.c,v 1.63 2010/03/22 22:30:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.62 2009/08/18 16:52:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.63 2010/03/22 22:30:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,10 @@ _isa_dmainit(struct isa_dma_state *ids, bus_space_tag_t bst, bus_dma_tag_t dmat,
 		 * configuration mechanisms, the space and dma tags
 		 * must be the same!
 		 */
+#if 0	/* XXX Comparing bus_space_tag_t is a no-no! */
 		if (ids->ids_bst != bst || ids->ids_dmat != dmat)
 			panic("_isa_dmainit: inconsistent ISA tags");
+#endif
 	} else {
 		ids->ids_bst = bst;
 		ids->ids_dmat = dmat;
