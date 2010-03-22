@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ctermid.3	5.2 (Berkeley) 4/19/91
-.\"	$NetBSD: cuserid.3,v 1.12 2005/04/01 12:51:07 christos Exp $
+.\"	$NetBSD: cuserid.3,v 1.13 2010/03/22 21:55:39 joerg Exp $
 .\"
 .Dd November 28, 1993
 .Dt CUSERID 3
@@ -64,7 +64,7 @@ is assumed to point to an array at least
 .Dv L_cuserid
 (as defined in the include
 file
-.Aq Pa stdio.h )
+.In stdio.h )
 bytes long.
 Otherwise, the user name is copied to a static buffer.
 .Sh RETURN VALUES

@@ -1,4 +1,4 @@
-.\"	$NetBSD: kvm_open.3,v 1.16 2009/09/14 19:34:12 apb Exp $
+.\"	$NetBSD: kvm_open.3,v 1.17 2010/03/22 21:55:06 joerg Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,7 @@ attempt to use the
 device indicated by
 .Dv _PATH_KSYMS
 in
-.Aq Pa paths.h ;
+.In paths.h ;
 if that fails, then they will use the file indicated by the
 .Xr sysctl 3
 variable
@@ -84,7 +84,7 @@ or (if the sysctl information is not available)
 the default kernel path indicated by
 .Dv _PATH_UNIX
 in
-.Aq Pa paths.h .
+.In paths.h .
 .Pp
 .Fa corefile
 is the kernel memory device file.
@@ -99,7 +99,7 @@ is
 the default indicated by
 .Dv _PATH_MEM
 from
-.Aq Pa paths.h
+.In paths.h
 is used.
 .Pp
 .Fa swapfile
@@ -108,7 +108,7 @@ If
 .Dv NULL ,
 .Dv _PATH_DRUM
 from
-.Aq Pa paths.h
+.In paths.h
 is used.
 .Pp
 The
@@ -199,7 +199,7 @@ will place any error message in the
 .Fa errbuf
 argument.
 This buffer should be _POSIX2_LINE_MAX characters large (from
-.Aq Pa limits.h ) .
+.In limits.h ) .
 .Sh RETURN VALUES
 The
 .Fn kvm_open
