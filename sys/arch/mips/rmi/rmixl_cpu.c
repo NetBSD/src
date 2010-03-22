@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.7 2010/03/21 22:03:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.8 2010/03/22 07:45:48 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.7 2010/03/21 22:03:16 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.8 2010/03/22 07:45:48 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -338,6 +338,28 @@ cpu_setup_trampoline_callback(struct device *self, struct cpu_info *ci)
 	struct rmixl_cpu_trampoline_args *ta = &rmixl_cpu_trampoline_args;
 	uintptr_t stacktop;
  
+#ifdef DIAGNOSTIC
+	/* Ensure our current stack can be used by the firmware */
+	uint64_t sp;
+	__asm__ volatile("move	%0, $sp\n" : "=r"(sp));
+#ifdef _LP64
+	/* can be made into a KSEG0 addr */
+	KASSERT(MIPS_XKPHYS_P(sp));
+	KASSERT((MIPS_XKPHYS_TO_PHYS(sp) >> 32) == 0);
+#else
+	/* is a KSEG0 addr */
+	KASSERT(MIPS_KSEG0_P(sp));
+#endif	/* _LP64 */
+#endif	/* DIAGNOSTIC */
+
+#ifndef _LP64
+	/*
+	 * Ensure 'ci' is a KSEG0 address for trampoline args
+	 * to avoid TLB fault in cpu_trampoline() when loading ci_idlelwp
+	 */
+	KASSERT(MIPS_KSEG0_P(ci));
+#endif
+
 	/*
 	 * Ensure 'ta' is a KSEG0 address for trampoline args
 	 * to avoid TLB fault in trampoline when loading args.
@@ -353,12 +375,14 @@ cpu_setup_trampoline_callback(struct device *self, struct cpu_info *ci)
 
 	/*
 	 * marshall args for rmixl_cpu_trampoline,
+	 * note for non-LP64 kernel, use of intptr_t
+	 * forces sign extension of 32 bit pointers
 	 */
 	stacktop = (uintptr_t)l->l_addr + USPACE
 			 - sizeof(struct trapframe) - CALLFRAME_SIZ;
-	ta->ta_sp = (uint64_t)(uintptr_t)stacktop;
-	ta->ta_lwp = (uint64_t)(uintptr_t)l;
-	ta->ta_cpuinfo = (uint64_t)(uintptr_t)ci;
+	ta->ta_sp = (uint64_t)(intptr_t)stacktop;
+	ta->ta_lwp = (uint64_t)(intptr_t)l;
+	ta->ta_cpuinfo = (uint64_t)(intptr_t)ci;
 
 #if _LP64
 	wakeup_cpu = (void *)rmixl_configuration.rc_psb_info.wakeup;
