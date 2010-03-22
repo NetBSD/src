@@ -1,4 +1,4 @@
-.\" $NetBSD: stddef.3,v 1.3 2010/03/21 15:42:19 wiz Exp $
+.\" $NetBSD: stddef.3,v 1.4 2010/03/22 09:46:17 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,9 +79,15 @@ and
 Some of the types and macros conform to earlier standards such as
 .St -ansiC .
 .Sh HISTORY
-The
+In the current form the
 .In stddef.h
 header was introduced in
 .Nx 0.8 ,
 the first official release of
 .Nx .
+Some definitions such as
+.Vt NULL
+were first introduced already in the
+.In nsys/param.h
+header of
+.At v4 .
