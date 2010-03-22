@@ -1,4 +1,4 @@
-.\"	$NetBSD: dbopen.3,v 1.17 2009/04/11 20:39:15 joerg Exp $
+.\"	$NetBSD: dbopen.3,v 1.18 2010/03/22 19:30:53 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@ The
 argument is of type
 .Vt DBTYPE
 (as defined in the
-.Aq Pa db.h
+.In db.h
 include file) and may be set to
 .Dv DB_BTREE ,
 .Dv DB_HASH ,
@@ -140,7 +140,7 @@ returns a pointer to a DB structure on success and
 .Dv NULL
 on error.
 The DB structure is defined in the
-.Aq Pa db.h
+.In db.h
 include file, and contains at least the following fields:
 .Bd -literal
 typedef struct {

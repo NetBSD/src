@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.26 2009/11/22 18:05:50 mbalmer Exp $
+.\"	$NetBSD: kqueue.2,v 1.27 2010/03/22 19:30:55 joerg Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -94,7 +94,7 @@ events to the user.
 is a pointer to an array of
 .Va kevent
 structures, as defined in
-.Aq Pa sys/event.h .
+.In sys/event.h .
 All changes contained in the
 .Fa changelist
 are applied before any pending events are read from the queue.
