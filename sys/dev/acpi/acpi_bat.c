@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.93 2010/03/22 09:31:24 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.94 2010/03/22 15:08:35 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.93 2010/03/22 09:31:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.94 2010/03/22 15:08:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -418,8 +418,6 @@ acpibat_get_info(device_t dv)
 	 */
 	val = sc->sc_sensor[ACPIBAT_LFCCAPACITY].value_cur;
 	sc->sc_sensor[ACPIBAT_CAPACITY].value_max = val;
-	sc->sc_sensor[ACPIBAT_CAPACITY].flags |=
-	    ENVSYS_FPERCENT | ENVSYS_FVALID_MAX;
 
 	acpibat_print_info(dv, elm);
 
@@ -697,7 +695,9 @@ acpibat_init_envsys(device_t dv)
 
 #undef INITDATA
 
-	sc->sc_sensor[ACPIBAT_CAPACITY].flags |= ENVSYS_FMONLIMITS;
+	sc->sc_sensor[ACPIBAT_CAPACITY].flags |=
+	    ENVSYS_FPERCENT | ENVSYS_FVALID_MAX | ENVSYS_FMONLIMITS;
+
 	sc->sc_sensor[ACPIBAT_CHARGE_STATE].flags |= ENVSYS_FMONSTCHANGED;
 
 	/* Disable userland monitoring on these sensors. */
