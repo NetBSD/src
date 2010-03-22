@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.53 2010/03/21 06:55:44 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.54 2010/03/22 05:39:00 mrg Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -69,6 +69,8 @@ DPSRCS+=	${RUMPTOP}/Makefile.rump
 _SYMQUIRK='|_gp_disp'
 .elif ${MACHINE_CPU} == "hppa"
 _SYMQUIRK='|\$$\$$'
+.elif ${MACHINE_ARCH} == "powerpc64"
+_SYMQUIRK='|\.(rump|RUMP)'
 .endif
 
 rump_symren: __archivebuild
