@@ -1,4 +1,4 @@
-.\"	$NetBSD: unix.4,v 1.20 2009/08/23 19:32:16 joerg Exp $
+.\"	$NetBSD: unix.4,v 1.21 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ filesystem pathnames for addressing.
 addresses are variable-length filesystem pathnames of
 at most 104 characters.
 The include file
-.Aq Pa sys/un.h
+.In sys/un.h
 defines this address:
 .Bd -literal -offset indent
 struct sockaddr_un {
@@ -89,7 +89,7 @@ and
 can be calculated by the macro
 .Fn SUN_LEN
 defined in
-.Aq Pa sys/un.h .
+.In sys/un.h .
 The
 .Ar sun_path
 field must be terminated by a NUL character to be used with
@@ -145,7 +145,7 @@ Any valid descriptor may be sent in a message.
 The file descriptor(s) to be passed are described using a
 .Ar struct cmsghdr
 that is defined in the include file
-.Aq Pa sys/socket.h .
+.In sys/socket.h .
 The type of the message is
 .Dv SCM_RIGHTS ,
 and the data portion of the messages is an array of integers
@@ -189,7 +189,7 @@ control message.
 The msg_control field in the msghdr structure points
 to a buffer that contains a cmsghdr structure followed by a variable
 length sockcred structure, defined in
-.Aq Pa sys/socket.h
+.In sys/socket.h
 as follows:
 .Bd -literal
 struct sockcred {
@@ -221,7 +221,7 @@ struct unpcbid {
 };
 .Ed
 as defined in
-.Aq Pa sys/un.h .
+.In sys/un.h .
 .Pp
 The
 .Fn SOCKCREDSIZE

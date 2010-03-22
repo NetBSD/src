@@ -1,4 +1,4 @@
-.\" $NetBSD: midi.4,v 1.29 2009/04/10 17:08:32 joerg Exp $
+.\" $NetBSD: midi.4,v 1.30 2010/03/22 18:58:31 joerg Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -381,7 +381,7 @@ sequencer.
 Reads and writes of
 .Pa /dev/music
 pass eight-byte event structures defined in
-.Aq Pa sys/midiio.h
+.In sys/midiio.h
 (which see for their documentation and examples of use).
 Some events correspond to
 .Tn MIDI
@@ -622,16 +622,16 @@ Some
 sequencer events and
 .Xr ioctl 2
 operations are unimplemented, as
-.Aq Pa sys/midiio.h
+.In sys/midiio.h
 notes.
 .Pp
 .Tn OSS
 source-compatible sequencer macros should be added to
-.Aq Pa sys/soundcard.h ,
+.In sys/soundcard.h ,
 implemented with the
 .Nx
 ones in
-.Aq Pa sys/midiio.h ,
+.In sys/midiio.h ,
 so sources written for OSS can be easily compiled.
 .Pp
 The sequencer blocks (or returns
