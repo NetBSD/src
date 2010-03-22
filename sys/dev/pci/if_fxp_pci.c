@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.73 2010/02/24 22:38:00 dyoung Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.74 2010/03/22 16:17:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.73 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.74 2010/03/22 16:17:43 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -80,22 +80,21 @@ struct fxp_pci_softc {
 	pcireg_t psc_regs[0x20>>2];	/* saved PCI config regs (sparse) */
 	pcitag_t psc_tag;		/* pci register tag */
 
-	int psc_pwrmgmt_csr_reg;	/* ACPI power management register */
-	pcireg_t psc_pwrmgmt_csr;	/* ...and the contents at D0 */
 	struct pci_conf_state psc_pciconf; /* standard PCI configuration regs */
 };
 
 static int	fxp_pci_match(device_t, cfdata_t, void *);
 static void	fxp_pci_attach(device_t, device_t, void *);
+static int	fxp_pci_detach(device_t, int);
 
 static int	fxp_pci_enable(struct fxp_softc *);
-static void	fxp_pci_disable(struct fxp_softc *);
 
 static void fxp_pci_confreg_restore(struct fxp_pci_softc *psc);
 static bool fxp_pci_resume(device_t dv, const pmf_qual_t *);
 
-CFATTACH_DECL_NEW(fxp_pci, sizeof(struct fxp_pci_softc),
-    fxp_pci_match, fxp_pci_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(fxp_pci, sizeof(struct fxp_pci_softc),
+    fxp_pci_match, fxp_pci_attach, fxp_pci_detach, NULL, NULL,
+    null_childdetached, DVF_DETACH_SHUTDOWN);
 
 static const struct fxp_pci_product {
 	uint32_t	fpp_prodid;	/* PCI product ID */
@@ -243,6 +242,26 @@ fxp_pci_resume(device_t dv, const pmf_qual_t *qual)
 	return true;
 }
 
+static int
+fxp_pci_detach(device_t self, int flags)
+{
+	struct fxp_pci_softc *psc = device_private(self);
+	struct fxp_softc *sc = &psc->psc_fxp;
+	int error;
+
+	/* Finish off the attach. */
+	if ((error = fxp_detach(sc, flags)) != 0)
+		return error;
+
+	pmf_device_deregister(self);
+
+	pci_intr_disestablish(psc->psc_pc, sc->sc_ih);
+
+	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_size);
+
+	return 0;
+}
+
 static void
 fxp_pci_attach(device_t parent, device_t self, void *aux)
 {
@@ -258,7 +277,6 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid;
 	bus_addr_t addr;
-	bus_size_t size;
 	int flags;
 	int error;
 
@@ -300,9 +318,9 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 	if (((pa->pa_flags & PCI_FLAGS_MEM_ENABLED) != 0) &&
 	    pci_mapreg_info(pa->pa_pc, pa->pa_tag, FXP_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT,
-	    &addr, &size, &flags) == 0) {
+	    &addr, &sc->sc_size, &flags) == 0) {
 		flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
-		if (bus_space_map(memt, addr, size, flags, &memh) == 0)
+		if (bus_space_map(memt, addr, sc->sc_size, flags, &memh) == 0)
 			memh_valid = 1;
 	}
 
@@ -446,7 +464,7 @@ fxp_pci_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 0: 
 		sc->sc_enable = fxp_pci_enable;
-		sc->sc_disable = fxp_pci_disable;
+		sc->sc_disable = NULL;
 		break;
 	default:
 		aprint_error_dev(self, "cannot activate %d\n", error);
@@ -497,34 +515,8 @@ fxp_pci_enable(struct fxp_softc *sc)
 	printf("%s: going to power state D0\n", device_xname(self));
 #endif
 
-	/* Bring the device into D0 power state. */
-	pci_conf_write(psc->psc_pc, psc->psc_tag,
-	    psc->psc_pwrmgmt_csr_reg, psc->psc_pwrmgmt_csr);
-
 	/* Now restore the configuration registers. */
 	fxp_pci_confreg_restore(psc);
 
 	return (0);
-}
-
-static void
-fxp_pci_disable(struct fxp_softc *sc)
-{
-	struct fxp_pci_softc *psc = (void *) sc;
-
-	/*
-	 * for some 82558_A4 and 82558_B0, entering D3 state makes
-	 * media detection disordered.
-	 */
-	if (sc->sc_rev <= FXP_REV_82558_B0)
-		return;
-
-#if 0
-	printf("%s: going to power state D3\n", device_xname(self));
-#endif
-
-	/* Put the device into D3 state. */
-	pci_conf_write(psc->psc_pc, psc->psc_tag,
-	    psc->psc_pwrmgmt_csr_reg, (psc->psc_pwrmgmt_csr &
-	    ~PCI_PMCSR_STATE_MASK) | PCI_PMCSR_STATE_D3);
 }
