@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.44 2009/03/09 23:01:08 wiz Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.45 2010/03/22 18:51:32 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1540,7 +1540,7 @@ of them.
 .ne 5
 .Bd -filled -offset indent
 .Bl -column "quote " "close " "open " "Enclose Stringx(in XX) " XXstringXX
-.Em " Quote	 Close	 Open	Function	Result"
+.It Em " Quote	 Close	 Open	Function	Result"
 .It Li ".Aq	.Ac	.Ao" Ta No Angle Bracket Enclosure	\*[Lt]string\*[Gt]
 .It Li ".Bq	.Bc	.Bo" Ta No Bracket Enclosure	[string]
 .It Li ".Dq	.Dc	.Do" Ta No Double Quote	``string''
@@ -1601,11 +1601,11 @@ mode.
 .Pp
 .ne 4
 Examples of quoting:
-.Bl -tag -width ".Aq Pa ctype.h ) ,xxxxxxxx" -compact -offset indent
+.Bl -tag -width ".Aq ENTER ) ,xxxxxxxx" -compact -offset indent
 .It Li \&.Aq
 .Aq
-.It Li \&.Aq \&Ar ctype.h\ )\ ,
-.Aq Ar ctype.h ) ,
+.It Li \&.Aq ENTER\ )\ ,
+.Aq ENTER ) ,
 .It Li \&.Bq
 .Bq
 .It Li \&.Bq \&Em Greek \&, French \&.
@@ -1794,9 +1794,7 @@ Produces
 .Bd -filled -offset indent
 .Bl -tag -width flag -compact
 .Sm off
-.It Xo Sy I Ar operation
-.No \en Ar count No \en
-.Xc
+.It Sy I Ar operation No \en Ar count No \en
 .Sm on
 .El
 .Ed
@@ -1815,10 +1813,7 @@ Produces
 .Bd -filled -offset indent
 .Bl -tag -width flag -compact
 .Sm off
-.It Cm S No \&/ Ar old_pattern Xo
-.No \&/ Ar new_pattern
-.No \&/ Op Cm g
-.Xc
+.It Cm S No \&/ Ar old_pattern No \&/ Ar new_pattern No \&/ Op Cm g
 .Sm on
 .El
 .Ed
@@ -1838,11 +1833,7 @@ Test the value of an variable.
 Produces
 .Bd -filled -offset indent
 .Bl -tag -width flag -compact
-.It Xo
-.Ic .ifndef
-.Oo \&! Oc Ns Ar variable
-.Op Ar operator variable ...
-.Xc
+.It Ic .ifndef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
 .El
 .Ed
 .Pp
@@ -1895,7 +1886,7 @@ The
 .Ql \&.Sh
 macro can take up to nine arguments.
 It is parsed but is not callable.
-.Bl -tag -width ".Sh SYNOPSIS"
+.Bl -tag -width "\&.Sh DESCRIPTION"
 .It Li \&.Sh NAME
 The
 .Ql \&.Sh NAME
