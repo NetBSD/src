@@ -1,7 +1,7 @@
-#	$NetBSD: bsd.ioconf.mk,v 1.1 2010/03/21 06:55:45 pooka Exp $
+#	$NetBSD: bsd.ioconf.mk,v 1.2 2010/03/22 14:42:01 pooka Exp $
 #
 
-# If IOCONF is defined, autocreate ioconf.c and locators.h.
+# If IOCONF is defined, autocreate ioconf.[ch] and locators.h.
 # This is useful mainly for devices.
 .if !empty(IOCONF)
 
@@ -14,7 +14,7 @@ ioconf.c: ${IOCONF}
 	# config doesn't change the files if they're unchanged.  however,
 	# here we want to satisfy our make dependency, so force a
 	# timestamp update
-	touch ioconf.c locators.h
+	touch ioconf.c ioconf.h locators.h
 
 .else # _BSD_IOCONF_MK_USER_
 
@@ -25,7 +25,8 @@ ioconf.c:
 .endif # _BSD_IOCONF_MK_USER_
 
 locators.h: ioconf.c
+ioconf.h: ioconf.c
 
-CLEANFILES+= ioconf.c locators.h
-DPSRCS+= ioconf.c locators.h
+CLEANFILES+= ioconf.c ioconf.h locators.h
+DPSRCS+= ioconf.c ioconf.h locators.h
 .endif
