@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.54 2009/12/31 15:58:26 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.55 2010/03/22 22:59:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.54 2009/12/31 15:58:26 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.55 2010/03/22 22:59:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -173,7 +173,7 @@ read__fixio(int fd __attribute__((__unused__)), int e)
 		return (e ? 0 : -1);
 
 	case EINTR:
-		return (-1);
+		return (0);
 
 	default:
 		return (-1);
