@@ -1,4 +1,4 @@
-.\" $NetBSD: stddef.3,v 1.4 2010/03/22 09:46:17 jruoho Exp $
+.\" $NetBSD: stddef.3,v 1.5 2010/03/22 10:15:00 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@ supported locales: the null character has the code value 0 and each member
 of the character set has a code value equal to its value when used
 as the lone character in an integer character constant;
 .It
-.Vt NULL ,
+.Dv NULL ,
 which expands to an implementation-defined null pointer constant; and
 .It
 .Fn offsetof ,
@@ -86,7 +86,7 @@ header was introduced in
 the first official release of
 .Nx .
 Some definitions such as
-.Vt NULL
+.Dv NULL
 were first introduced already in the
 .In nsys/param.h
 header of
