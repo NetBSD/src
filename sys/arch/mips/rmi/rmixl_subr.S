@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_subr.S,v 1.1.2.5 2010/03/21 21:29:45 cliff Exp $	*/
+/*	$NetBSD: rmixl_subr.S,v 1.1.2.6 2010/03/22 07:45:19 cliff Exp $	*/
 
 #include "opt_cputype.h"
 #include "opt_multiprocessor.h"
@@ -55,10 +55,14 @@ NESTED(rmixlfw_wakeup_cpu, CALLFRAME_SIZ+4*SZREG, ra)
 	REG_S		t0, CALLFRAME_SIZ+2*SZREG(sp)
 
 	move		s0, sp			/* save sp */
-	srl		t0, sp, 0		/* nuke upper half */
+#ifdef _LP64
+	dsll32		t0, sp, 0		/* nuke upper half */
+	dsrl32		t0, t0, 0		/*  "    "     "   */
 	li		t1, MIPS_KSEG0_START
+	or		sp, t0, t1		/* set MIPS_KSEG0_START */
+#endif
 	jalr		a3			/* callback to firmware */
-	 or		sp, t0, t1		/* set MIPS_KSEG0_START */
+	 nop
 	move		sp, s0			/* restore sp */
 
 	REG_L		t0, CALLFRAME_SIZ+2*SZREG(sp)
@@ -77,13 +81,14 @@ END(rmixlfw_wakeup_cpu)
 NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 #ifdef _LP64
 	li		t0, MIPS_SR_KX
+	li		t1, MIPS_KSEG0_START	/* reconstruct presumed upper half ... */
+	or		a0, a0, t1		/* ... of trampoline args addr */
 #else
 	li		t0, 0
 #endif
 
 	mtc0		zero, $9, 7	/* disable all in MIPS_COP_0_EIMR */
 
-	or		t0, MIPS_SR_INT_IE
 	mtc0		t0, MIPS_COP_0_STATUS
 
 	/* ensure COP_0_EBASE field 'EBASE' is 0 */
@@ -91,26 +96,22 @@ NESTED(rmixl_cpu_trampoline, CALLFRAME_SIZ, ra)
 	and		t0, t0, 0x3ff
 	mtc0		t0, $15, 1	/* MIPS_COP_0_EBASE */
 
-	/* XXX reconstruct presumed upper half of trampoline args addr */
-	li		t1, MIPS_KSEG0_START
-	or		a0, a0, t1
-
 	/*
 	 * load our stack pointer from trampoline args
 	 */
-	PTR_L		sp, 0*SZREG(a0)		/* XXX ta_sp */
+	REG_L		sp, 0*SZREG(a0)		/* XXX ta_sp */
 
 	/*
 	 * load our (idle) lwp from trampoline args
 	 * save in t8 reg dedicated as 'mips_curlwp'
 	 */
-	PTR_L		t8, 1*SZREG(a0)		/* XXX ta_lwp */
+	REG_L		t8, 1*SZREG(a0)		/* XXX ta_lwp */
 
 	/*
 	 * load our ta_cpuinfo from trampoline args and pass in a1
 	 * jump to common mips cpu_trampoline
 	 */
-	PTR_L		a1, 2*SZREG(a0)		/* XXX ta_cpuinfo */
+	REG_L		a1, 2*SZREG(a0)		/* XXX ta_cpuinfo */
 	j		cpu_trampoline
 	 mtc0		a1, $22, 0		/* MIPS_COP_0_OSSCRATCH */
 
