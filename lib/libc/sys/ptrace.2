@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.30 2007/03/12 12:50:42 skrll Exp $
+.\"	$NetBSD: ptrace.2,v 1.31 2010/03/22 19:30:55 joerg Exp $
 .\"
 .\" This file is in the public domain.
 .Dd March 12, 2007
@@ -296,7 +296,7 @@ Stops a process before and after executing each system call.
 Additionally, the following requests exist but are
 not available on all machine architectures.
 The file
-.Aq Pa machine/ptrace.h
+.In machine/ptrace.h
 lists which requests exist on a given machine.
 .Bl -tag -width 12n
 .It Dv PT_STEP
@@ -307,7 +307,7 @@ instruction, execution stops again.
 This request reads the traced process' machine registers into the
 .Dq Li "struct reg"
 (defined in
-.Aq Pa machine/reg.h )
+.In machine/reg.h )
 pointed to by
 .Fa addr .
 .It Dv PT_SETREGS
@@ -316,7 +316,7 @@ This request is the converse of
 it loads the traced process' machine registers from the
 .Dq Li "struct reg"
 (defined in
-.Aq Pa machine/reg.h )
+.In machine/reg.h )
 pointed to by
 .Fa addr .
 .It Dv PT_GETFPREGS
@@ -324,7 +324,7 @@ This request reads the traced process' floating-point registers into
 the
 .Dq Li "struct fpreg"
 (defined in
-.Aq Pa machine/reg.h )
+.In machine/reg.h )
 pointed to by
 .Fa addr .
 .It Dv PT_SETFPREGS
@@ -333,7 +333,7 @@ This request is the converse of
 it loads the traced process' floating-point registers from the
 .Dq Li "struct fpreg"
 (defined in
-.Aq Pa machine/reg.h )
+.In machine/reg.h )
 pointed to by
 .Fa addr .
 .\" .It Dv PT_SYSCALL
@@ -355,10 +355,10 @@ pointed to by
 .\" element is of type
 .\" .Dq Li "struct mdproc" ,
 .\" which should be declared by including
-.\" .Aq Pa sys/param.h ,
-.\" .Aq Pa sys/user.h ,
+.\" .In sys/param.h ,
+.\" .In sys/user.h ,
 .\" and
-.\" .Aq Pa machine/proc.h ,
+.\" .In machine/proc.h ,
 .\" and contains the following fields (among others):
 .\" .Bl -item -compact -offset indent
 .\" .It

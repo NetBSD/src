@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.3,v 1.27 2005/12/26 19:40:15 perry Exp $
+.\"	$NetBSD: rcmd.3,v 1.28 2010/03/22 19:30:54 joerg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -247,9 +247,9 @@ The first argument of
 is typed as
 .Fa "void *"
 to avoid dependency between
-.Aq Li unistd.h
+.In unistd.h
 and
-.Aq Li sys/socket.h .
+.In sys/socket.h .
 .Sh ENVIRONMENT
 .Bl -tag -width RCMD_CMDxx -compact
 .It Ev RCMD_CMD

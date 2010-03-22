@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.24 2008/10/09 14:40:11 christos Exp $
+.\"	$NetBSD: quotactl.2,v 1.25 2010/03/22 19:30:55 joerg Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,7 +104,7 @@ Get disk quota limits and current usage for the user or group
 is a pointer to a
 .Fa struct dqblk
 structure (defined in
-.Aq Pa ufs/ufs/quota.h ) .
+.In ufs/ufs/quota.h ) .
 .It Dv Q_SETQUOTA
 Set disk quota limits for the user or group
 (as determined by the command type) with identifier
@@ -113,7 +113,7 @@ Set disk quota limits for the user or group
 is a pointer to a
 .Fa struct dqblk
 structure (defined in
-.Aq Pa ufs/ufs/quota.h ) .
+.In ufs/ufs/quota.h ) .
 The usage fields of the
 .Fa dqblk
 structure are ignored.
@@ -126,7 +126,7 @@ Set disk usage for the user or group
 is a pointer to a
 .Fa struct dqblk
 structure (defined in
-.Aq Pa ufs/ufs/quota.h ) .
+.In ufs/ufs/quota.h ) .
 Only the usage fields are used.
 This call is restricted to the super-user.
 .It Dv Q_SYNC

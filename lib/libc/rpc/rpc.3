@@ -1,6 +1,6 @@
 .\" @(#)rpc.3n 1.31 93/08/31 SMI; from SVr4
 .\" Copyright 1989 AT&T
-.\"	$NetBSD: rpc.3,v 1.21 2009/04/11 15:51:44 joerg Exp $
+.\"	$NetBSD: rpc.3,v 1.22 2010/03/22 19:30:54 joerg Exp $
 .Dd May 7, 1993
 .Dt RPC 3
 .Os
@@ -22,11 +22,11 @@ to perform the requested service, and then sends back a reply.
 .Pp
 All
 RPC routines require the header
-.Aq Pa rpc/rpc.h .
+.In rpc/rpc.h .
 Routines that take a
 .Fa netconfig
 structure also require that
-.Aq Pa netconfig.h
+.In netconfig.h
 be included.
 .Ss Nettype
 Some of the high-level

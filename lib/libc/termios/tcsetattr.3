@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcsetattr.3,v 1.12 2004/05/01 08:15:54 wiz Exp $
+.\"	$NetBSD: tcsetattr.3,v 1.13 2010/03/22 19:30:55 joerg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,7 +94,7 @@ The input and output baud rates are found in the termios structure.
 The unsigned integer
 .Li speed_t
 is typdef'd in the include file
-.Aq Pa termios.h .
+.In termios.h .
 The value of the integer corresponds directly to the baud rate being
 represented, however, the following symbolic values are defined.
 .Bd -literal
@@ -216,7 +216,7 @@ The
 field is created by
 .Em or Ns 'ing
 the following values, as specified in the include file
-.Aq Pa termios.h .
+.In termios.h .
 .Bl -tag -width "TCSADRAIN"
 .It Fa TCSANOW
 The change occurs immediately.
