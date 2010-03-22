@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.53 2010/03/22 17:23:44 dyoung Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.54 2010/03/22 23:03:30 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.53 2010/03/22 17:23:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.54 2010/03/22 23:03:30 dyoung Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -221,7 +221,6 @@ ex_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	sc->ex_bustype = EX_BUS_CARDBUS;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ca->ca_ct;
 	csc->sc_intrline = ca->ca_intrline;
