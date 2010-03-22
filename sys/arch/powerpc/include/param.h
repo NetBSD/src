@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 2010/02/08 19:02:31 joerg Exp $	*/
+/*	$NetBSD: param.h,v 1.22 2010/03/22 02:14:28 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -91,7 +91,11 @@
  * of the hardware page size.
  */
 #ifndef MSIZE
+#ifdef _LP64
+#define	MSIZE		512		/* size of an mbuf */
+#else  /* _LP64 */
 #define	MSIZE		256		/* size of an mbuf */
+#endif /* _LP64 */
 #endif
 #ifndef MCLSHIFT
 #define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
