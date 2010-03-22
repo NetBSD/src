@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.623 2010/03/13 19:31:51 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.624 2010/03/22 03:35:26 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -14,7 +14,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mipse[bl]/mips/:C/mips64e[bl]/mips/:C/sh3e[bl]/sh3/:S/m68000/m68k/:S/armeb/arm/:S/powerpc64/powerpc/}
 
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
