@@ -270,7 +270,7 @@ read_file_media(MEDIA m, long long offset, unsigned long count, void *address)
     } else if (offset < 0 || offset % a->m.grain != 0) {
 	/* can't handle offset */
 	fprintf(stderr,"bad offset\n");
-    } else if (offset + count > a->m.size_in_bytes && a->m.size_in_bytes != (long long) 0) {
+    } else if (offset + (long long) count > a->m.size_in_bytes && a->m.size_in_bytes != (long long) 0) {
 	/* check for offset (and offset+count) too large */
 	fprintf(stderr,"offset+count too large\n");
     } else if (offset + count > (long long) LOFF_MAX) {
@@ -318,7 +318,7 @@ write_file_media(MEDIA m, long long offset, unsigned long count, void *address)
 	off = offset;
 	if ((off = llseek(a->fd, off, 0)) >= 0) {
 		if ((t = write(a->fd, address, count)) == (ssize_t)count) {
-		if (off + count > a->m.size_in_bytes) {
+		if (off + (long long) count > a->m.size_in_bytes) {
 			a->m.size_in_bytes = off + count;
 		}
 		rtn_value = 1;

@@ -90,7 +90,7 @@ dump_using_layout(void *buffer, layout *desc)
 	    byte_length = entry->bit_length / 8;
 	    
 	    if (entry->bit_offset != 0 || (entry->bit_length % 8) != 0) {
-		printf("entry %d, can't handle bitfields yet.\n", entry - desc);
+		printf("entry %d, can't handle bitfields yet.\n", (int)(entry - desc));
 		continue;
 	    }
 	    
@@ -102,11 +102,11 @@ dump_using_layout(void *buffer, layout *desc)
 	    }
 	} else {
 	    if (entry->bit_offset < 0 || entry->bit_offset > 8) {
-		printf("entry %d, bad bit offset (%d).\n", entry - desc, entry->bit_offset);
+		printf("entry %d, bad bit offset (%d).\n", (int)(entry - desc), entry->bit_offset);
 		continue;
 	    } else if (entry->bit_length <= 0 
 		    || entry->bit_length > (entry->bit_offset + 1)) {
-		printf("entry %d, bad bit length (%d,%d).\n", entry - desc,
+		printf("entry %d, bad bit length (%d,%d).\n", (int)(entry - desc),
 			entry->bit_offset, entry->bit_length);
 		continue;
 	    }
@@ -141,7 +141,7 @@ dump_using_layout(void *buffer, layout *desc)
 	    }
 	    break;
 	default:
-	    printf("entry %d, unknown format (%d).\n", entry - desc, entry->format);
+	    printf("entry %d, unknown format (%d).\n", (int)(entry - desc), entry->format);
 	    break;
 	}
     }
