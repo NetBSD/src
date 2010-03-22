@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.43 2010/01/19 22:06:25 pooka Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.44 2010/03/22 23:00:47 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -323,6 +323,7 @@ typedef struct _pdq_os_ctx_t {
     void *sc_ats;			/* shutdown hook */
     struct ethercom sc_ec;
     bus_dma_tag_t sc_dmatag;
+    bool sc_csr_memmapped;
 #define	sc_if		sc_ec.ec_if
 #elif defined(__FreeBSD__)
     struct kern_devconf *sc_kdc;	/* freebsd cruft */
