@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.18 2010/03/20 01:52:16 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.19 2010/03/22 22:10:10 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.18 2010/03/20 01:52:16 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.19 2010/03/22 22:10:10 drochner Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -116,29 +116,23 @@ int	netbsd_elf_probe(struct lwp *, struct exec_package *, void *, char *,
 #define MAXSHNUM	32768
 #define MAXNOTESIZE	1024
 
-/*
- * We don't move this code in kern_pax.c because it is compiled twice.
- */
 static void
 elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
     Elf_Phdr *ph)
 {
-	size_t offset, i;
+	Elf_Addr align, offset;
+	int i;
+
+	for (align = i = 0; i < eh->e_phnum; i++)
+		if (ph[i].p_type == PT_LOAD && ph[i].p_align > align)
+			align = ph[i].p_align;
 
 #ifdef PAX_ASLR
 	if (pax_aslr_active(l)) {
 		size_t pax_align, l2, delta;
 		uint32_t r;
 
-		/*
-		 * find align XXX: not all sections might have the same
-		 * alignment
-		 */
-		for (pax_align = i = 0; i < eh->e_phnum; i++)
-			if (ph[i].p_type == PT_LOAD) {
-				pax_align = ph[i].p_align;
-				break;
-			}
+		pax_align = align;
 
 		r = arc4random();
 
@@ -155,7 +149,7 @@ elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 #endif /* PAX_ASLR_DEBUG */
 	} else
 #endif /* PAX_ASLR */
-		offset = PAGE_SIZE;
+		offset = MAX(align, PAGE_SIZE);
 
 	for (i = 0; i < eh->e_phnum; i++)
 		ph[i].p_vaddr += offset;
