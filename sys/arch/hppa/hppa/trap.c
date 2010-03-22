@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 2010/03/22 23:26:06 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.82 2010/03/22 23:27:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2010/03/22 23:26:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2010/03/22 23:27:05 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -190,11 +190,9 @@ void frame_sanity_check(const char *, int, int, struct trapframe *,
 
 #ifdef USERTRACE
 /*
- * USERTRACE is a crude facility that traces the PC of
- * a single user process.  This tracing is normally
- * activated by the dispatching of a certain syscall
- * with certain arguments - see the activation code in
- * syscall().
+ * USERTRACE is a crude facility that traces the PC of a single user process.
+ * This tracing is normally activated by the dispatching of a certain syscall
+ * with certain arguments - see the activation code in syscall().
  */
 static void user_backtrace(struct trapframe *, struct lwp *, int);
 static void user_backtrace_raw(u_int, u_int);
@@ -375,16 +373,14 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 	user_backtrace_raw(tf->tf_iioq_head, fp);
 
 	/*
-	 * In case the frame pointer in r3 is not valid,
-	 * assuming the stack pointer is valid and the
-	 * faulting function is a non-leaf, if we can
-	 * find its prologue we can recover its frame
-	 * pointer.
+	 * In case the frame pointer in r3 is not valid, assuming the stack
+	 * pointer is valid and the faulting function is a non-leaf, if we can
+	 * find its prologue we can recover its frame pointer.
 	 */
 	pc = tf->tf_iioq_head;
 	fp = tf->tf_sp - HPPA_FRAME_SIZE;
 	printf("pid %d (%s) backtrace, starting with sp 0x%08x pc 0x%08x\n",
-		p->p_pid, p->p_comm, tf->tf_sp, pc);
+	    p->p_pid, p->p_comm, tf->tf_sp, pc);
 	for (pc &= ~HPPA_PC_PRIV_MASK; pc > 0; pc -= sizeof(inst)) {
 		inst = fuword((register_t *) pc);
 		if (inst == -1) {
@@ -404,9 +400,8 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 
 #ifdef DEBUG
 /*
- * This sanity-checks a trapframe.  It is full of various
- * assumptions about what a healthy CPU state should be,
- * with some documented elsewhere, some not.
+ * This sanity-checks a trapframe.  It is full of various assumptions about
+ * what a healthy CPU state should be, with some documented elsewhere, some not.
  */
 void
 frame_sanity_check(const char *func, int line, int type, struct trapframe *tf,
@@ -434,9 +429,8 @@ do {							\
 		uv = uvm_lwp_getuarea(l);
 
 		/*
-		 * If the trap happened in the gateway
-		 * page, we take the easy way out and 
-		 * assume that the trapframe is okay.
+		 * If the trap happened in the gateway page, we take the easy
+		 * way out and assume that the trapframe is okay.
 		 */
 		if ((tf->tf_iioq_head & ~PAGE_MASK) == SYSCALLGATE)
 			goto out;
