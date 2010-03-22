@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.110 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.111 2010/03/22 17:11:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.110 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.111 2010/03/22 17:11:19 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -180,6 +180,8 @@ ex_config(struct ex_softc *sc)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, error, attach_stage;
+
+	pmf_self_suspensor_init(sc->sc_dev, &sc->sc_suspensor, &sc->sc_qual);
 
 	callout_init(&sc->ex_mii_callout, 0);
 
@@ -1688,14 +1690,19 @@ ex_detach(struct ex_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ex_rxdesc *rxd;
-	int i;
+	int i, s;
 
 	/* Succeed now if there's no work to do. */
 	if ((sc->ex_flags & EX_FLAGS_ATTACHED) == 0)
 		return (0);
 
-	/* Unhook our tick handler. */
-	callout_stop(&sc->ex_mii_callout);
+	s = splnet();
+	/* Stop the interface. Callouts are stopped in it. */
+	ex_stop(ifp, 1);
+	splx(s);
+
+	/* Destroy our callout. */
+	callout_destroy(&sc->ex_mii_callout);
 
 	if (sc->ex_conf & EX_CONF_MII) {
 		/* Detach all PHYs */

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.20 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.21 2010/03/22 17:11:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
  */
 struct ex_softc {
 	device_t sc_dev;
+	device_suspensor_t sc_suspensor;
+	pmf_qual_t sc_qual;
 	void *sc_ih;
 
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
