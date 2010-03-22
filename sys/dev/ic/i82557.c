@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.133 2010/03/22 16:11:58 dyoung Exp $	*/
+/*	$NetBSD: i82557.c,v 1.134 2010/03/22 17:12:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.133 2010/03/22 16:11:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.134 2010/03/22 17:12:09 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -2496,14 +2496,14 @@ fxp_detach(struct fxp_softc *sc, int flags)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i, s;
 
+	/* Succeed now if there's no work to do. */
+	if ((sc->sc_flags & FXPF_ATTACHED) == 0)
+		return (0);
+
 	s = splnet();
 	/* Stop the interface. Callouts are stopped in it. */
 	fxp_stop(ifp, 1);
 	splx(s);
-
-	/* Succeed now if there's no work to do. */
-	if ((sc->sc_flags & FXPF_ATTACHED) == 0)
-		return (0);
 
 	/* Destroy our callout. */
 	callout_destroy(&sc->sc_callout);
