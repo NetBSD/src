@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.33 2010/03/23 21:22:25 dyoung Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.34 2010/03/23 21:51:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.33 2010/03/23 21:22:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.34 2010/03/23 21:51:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.33 2010/03/23 21:22:25 dyoung Exp $
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ic/hmevar.h>
+
+#define PCI_HME_BASEADDR	0x10
 
 struct hme_pci_softc {
 	struct	hme_softc	hsc_hme;	/* HME device */
@@ -145,7 +147,7 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 	aprint_naive(": Ethernet controller\n");
 
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_BAR(0));
+	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_HME_BASEADDR);
 
 	/*
 	 * enable io/memory-space accesses.  this is kinda of gross; but
@@ -180,7 +182,7 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 	 *
 	 */
 
-	if (pci_mapreg_map(pa, PCI_BAR(0), type, 0,
+	if (pci_mapreg_map(pa, PCI_HME_BASEADDR, type, 0,
 	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, NULL) != 0) {
 		aprint_error_dev(self, "unable to map device registers\n");
 		return;
