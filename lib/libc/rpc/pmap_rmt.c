@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.29 2000/07/06 03:10:34 christos Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.30 2010/03/23 20:28:59 drochner Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.29 2000/07/06 03:10:34 christos Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.30 2010/03/23 20:28:59 drochner Exp $");
 #endif
 #endif
 
@@ -71,7 +71,6 @@ __RCSID("$NetBSD: pmap_rmt.c,v 1.29 2000/07/06 03:10:34 christos Exp $");
 #include <rpc/pmap_rmt.h>
 
 #ifdef __weak_alias
-__weak_alias(pmap_rmtcall,_pmap_rmtcall)
 __weak_alias(xdr_rmtcall_args,_xdr_rmtcall_args)
 __weak_alias(xdr_rmtcallres,_xdr_rmtcallres)
 #endif

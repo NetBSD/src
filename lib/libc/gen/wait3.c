@@ -1,4 +1,4 @@
-/*	$NetBSD: wait3.c,v 1.8 2003/08/07 16:43:00 agc Exp $	*/
+/*	$NetBSD: wait3.c,v 1.9 2010/03/23 20:28:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)wait3.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wait3.c,v 1.8 2003/08/07 16:43:00 agc Exp $");
+__RCSID("$NetBSD: wait3.c,v 1.9 2010/03/23 20:28:59 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,10 +43,6 @@ __RCSID("$NetBSD: wait3.c,v 1.8 2003/08/07 16:43:00 agc Exp $");
 #include <sys/time.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
-
-#ifdef __weak_alias
-__weak_alias(wait3,_wait3)
-#endif
 
 pid_t
 wait3(istat, options, rup)
