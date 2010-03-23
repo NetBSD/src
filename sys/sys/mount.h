@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.195.2.1 2010/02/11 05:20:28 uebayasi Exp $	*/
+/*	$NetBSD: mount.h,v 1.195.2.2 2010/03/23 01:58:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -128,8 +128,6 @@ struct mount {
 	struct wapbl_replay
 			*mnt_wapbl_replay;	/* replay support XXX: what? */
 	uint64_t	mnt_gen;
-
-	paddr_t		mnt_phys_addr;		/* XIP */
 };
 
 /*
