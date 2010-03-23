@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.17 2010/02/28 11:36:27 martin Exp $ */
+/* $NetBSD: spdmem.c,v 1.18 2010/03/23 12:13:28 njoly Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.17 2010/02/28 11:36:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.18 2010/03/23 12:13:28 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -370,6 +370,7 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	aprint_naive("\n");
 	aprint_normal("\n");
 	aprint_normal_dev(self, "%s", type);
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
