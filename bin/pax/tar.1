@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.27 2008/11/23 09:51:10 dholland Exp $
+.\" $NetBSD: tar.1,v 1.28 2010/03/23 17:21:40 dholland Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -249,7 +249,7 @@ per line.
 A line may also specify the positional argument
 .Dq Fl C Ar directory .
 .It Fl X Ar file , Fl -exclude-from Ar file
-Exclude files listed in the given file.
+Exclude files matching the shell glob patterns listed in the given file.
 .\" exclude should be '-E' and '-X' should be one-file-system
 .Pp
 Note that it would be more standard to use this option to mean ``do not
