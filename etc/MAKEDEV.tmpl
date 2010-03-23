@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.132 2010/03/06 21:33:20 plunky Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.133 2010/03/23 19:22:41 jakllsch Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1476,7 +1476,7 @@ dpt*)
 altq)
 	makedir altq 755
 	unit=0
-	for dev in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq
+	for dev in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq jobs
 	do
 		mkdev altq/$dev c %altq_chr% $unit 644
 		unit=$(($unit + 1))
