@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.39 2009/11/14 18:36:57 elad Exp $	*/
+/*	$NetBSD: specdev.h,v 1.39.2.1 2010/03/23 01:58:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ typedef struct specdev {
 	u_int		sd_opencnt;
 	u_int		sd_refcnt;
 	dev_t		sd_rdev;
+	paddr_t		sd_phys_addr;	/* XIP */
 } specdev_t;
 
 /*
@@ -87,6 +88,7 @@ typedef struct specdev {
 #define v_rdev		v_specnode->sn_rdev
 #define v_speclockf	v_specnode->sn_dev->sd_lockf
 #define v_specmountpoint v_specnode->sn_dev->sd_mountpoint
+#define v_phys_addr	v_specnode->sn_dev->sd_phys_addr
 
 /*
  * Special device management

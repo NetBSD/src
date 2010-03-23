@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.257.2.2 2010/02/23 07:00:58 uebayasi Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.257.2.3 2010/03/23 01:58:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.2 2010/02/23 07:00:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.3 2010/03/23 01:58:14 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1184,7 +1184,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 			    cred) == 0) &&
 			    phys_addr != 0) {
 				mp->mnt_iflag |= IMNT_XIP;
-				mp->mnt_phys_addr = phys_addr;
+				devvp->v_phys_addr = phys_addr;	/* XXX */
 			} else
 				printf("device doesn't support DIOCGPHYSADDR\n");
 		}
