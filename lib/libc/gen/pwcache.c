@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.30 2008/04/28 20:22:59 martin Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.31 2010/03/23 20:28:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.30 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.31 2010/03/23 20:28:59 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -100,7 +100,6 @@ __RCSID("$NetBSD: pwcache.c,v 1.30 2008/04/28 20:22:59 martin Exp $");
 #ifdef __weak_alias
 __weak_alias(user_from_uid,_user_from_uid)
 __weak_alias(group_from_gid,_group_from_gid)
-__weak_alias(pwcache_userdb,_pwcache_userdb)
 __weak_alias(pwcache_groupdb,_pwcache_groupdb)
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.76 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.77 2010/03/23 20:28:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.76 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.77 2010/03/23 20:28:59 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -129,12 +129,6 @@ __RCSID("$NetBSD: getpwent.c,v 1.76 2009/01/11 02:46:27 christos Exp $");
 
 #ifdef __weak_alias
 __weak_alias(endpwent,_endpwent)
-__weak_alias(getpwent,_getpwent)
-__weak_alias(getpwent_r,_getpwent_r)
-__weak_alias(getpwnam,_getpwnam)
-__weak_alias(getpwnam_r,_getpwnam_r)
-__weak_alias(getpwuid,_getpwuid)
-__weak_alias(getpwuid_r,_getpwuid_r)
 __weak_alias(setpassent,_setpassent)
 __weak_alias(setpwent,_setpwent)
 #endif

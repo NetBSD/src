@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.20 2009/04/19 10:19:26 mrg Exp $	*/
+/*	$NetBSD: devname.c,v 1.21 2010/03/23 20:28:59 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)devname.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: devname.c,v 1.20 2009/04/19 10:19:26 mrg Exp $");
+__RCSID("$NetBSD: devname.c,v 1.21 2010/03/23 20:28:59 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,10 +83,6 @@ __RCSID("$NetBSD: devname.c,v 1.20 2009/04/19 10:19:26 mrg Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <err.h>
-
-#ifdef __weak_alias
-__weak_alias(devname,_devname)
-#endif
 
 #define	DEV_SZ		317	/* show be prime for best results */
 #define	VALID		1	/* entry and devname are valid */
