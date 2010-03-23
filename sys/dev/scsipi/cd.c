@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.300 2010/03/23 12:42:55 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.301 2010/03/23 18:56:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.300 2010/03/23 12:42:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.301 2010/03/23 18:56:18 martin Exp $");
 
 #include "rnd.h"
 
@@ -1881,8 +1881,13 @@ cd_size(struct cd_softc *cd, int flags)
 		return size;
 
 	if (blksize != 2048) {
-		if (cd_setblksize(cd) == 0)
+		if (cd_setblksize(cd) == 0) {
 			blksize = 2048;
+			error = read_cd_capacity(cd->sc_periph,
+			    &blksize, &size);
+			if (error)
+				return size;
+		}
 	}
 	cd->params.blksize     = blksize;
 	cd->params.disksize    = size;
