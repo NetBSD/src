@@ -1,4 +1,4 @@
-.\"	$NetBSD: intro.7,v 1.15 2005/06/10 20:48:59 wiz Exp $
+.\"	$NetBSD: intro.7,v 1.16 2010/03/23 07:43:54 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,65 +29,76 @@
 .\"
 .\"     @(#)intro.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd May 6, 2005
+.Dd March 23, 2010
 .Dt INTRO 7
 .Os
 .Sh NAME
 .Nm intro
 .Nd miscellaneous information pages
 .Sh DESCRIPTION
-This section contains miscellaneous documentation, including
-information on
-.Xr troff 1
-macro packages.
-.Pp
-.Bl -tag -width mailaddr
-.It Sy ascii
-map of ASCII character set
-.It Sy environ
+This section contains miscellaneous documentation, including:
+.Bl -tag -width "mdoc.samples(7)" -offset indent
+.It Xr ascii 7
+map of
+.Tn ASCII
+character set
+.It Xr environ 7
 user environment
 .\" .It Sy eqnchar
 .\" special character definitions for eqn
-.It Sy hier
-file system hierarchy
-.It Sy hostname
+.It Xr hier 7
+file system hierarchy in
+.Nx
+.It Xr hostname 7
 host name resolution description
-.It Sy mailaddr
+.It Xr mailaddr 7
 mail addressing description
 .\" .It Sy man
 .\" macros to typeset manual pages
-.It Sy mdoc
+.It Xr mdoc 7
 macros for typesetting
 .Nm \-mdoc
 style manual pages
-.It Sy mdoc.samples
+.It Xr mdoc.samples 7
 tutorial for writing BSD manuals with
 .Nm \-mdoc
 .\" .It Sy \&me
 .\" macros for formatting papers
 .\" .It Sy \&ms
 .\" macros for formatting manuscripts
-.It Sy operator
+.It Xr nls 7
+overview of national language support
+.It Xr operator 7
 C operator precedence and order of evaluation
-.It Sy release
+.It Xr pkgsrc 7
+the
+.Nx
+packages collection
+.It Xr release 7
 layout of
 .Nx
 releases and snapshots
-.It Sy script
+.It Xr script 7
 how interpreter scripts are executed
-.It Sy signal
+.It Xr setuid 7
+checklist for security and setuid programs
+.It Xr signal 7
 available signals under
 .Nx
-.It Sy sticky
+.It Xr sticky 7
 sticky bit
 .Pq Dv S_ISVTX
 handling
-.It Sy symlink
+.It Xr symlink 7
 symbolic link handling
+.It Xr sysctl 7
+system information variables in
+.Nx
 .\" .It Sy term
 .\" conventional names for terminals
 .El
 .Sh HISTORY
-.Nm
-appeared in
+The
+.Xr intro 7
+manual page appeared in
 .Bx 4.2 .
