@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.54 2009/01/18 12:14:17 lukem Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.55 2010/03/23 20:35:44 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.54 2009/01/18 12:14:17 lukem Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.55 2010/03/23 20:35:44 drochner Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: pthread_cond.c,v 1.54 2009/01/18 12:14:17 lukem Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 
-int	_sys_nanosleep(const struct timespec *, struct timespec *);
+int	_sys___nanosleep50(const struct timespec *, struct timespec *);
 
 extern int pthread__started;
 
@@ -356,7 +356,7 @@ pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
 	do {
 		pthread__testcancel(self);
 		pthread_mutex_unlock(mutex);
-		retval = _sys_nanosleep(&diff, NULL);
+		retval = _sys___nanosleep50(&diff, NULL);
 		pthread_mutex_lock(mutex);
 	} while (abstime == NULL && retval == 0);
 	pthread__testcancel(self);
