@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.87 2010/03/19 02:19:13 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.88 2010/03/23 16:52:02 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.87 2010/03/19 02:19:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.88 2010/03/23 16:52:02 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,8 +113,9 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	 * even if its ENVSYS_FPERCENT flag and value_max are set.
 	 */
 
-	DPRINTF(("%s: units %d props 0x%04x edata-flags 0x%04x\n",
-		__func__, edata->units, props, edata->flags));
+	DPRINTF(("%s: units %d props 0x%04x upropset 0x%04x max_val %"PRId64
+		" edata-flags 0x%04x\n", __func__, edata->units, props,
+		edata->upropset, edata->value_max, edata->flags));
 
 	if (props && edata->units == ENVSYS_INDICATOR)
 		return ENOTSUP;
