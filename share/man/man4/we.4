@@ -1,4 +1,4 @@
-.\"	$NetBSD: we.4,v 1.17 2010/03/23 14:51:49 tsutsui Exp $
+.\"	$NetBSD: we.4,v 1.18 2010/03/23 16:03:33 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,8 +49,8 @@ device driver supports Western Digital/SMC WD80x3, SMC Elite Ultra, and
 SMC EtherEZ Ethernet cards.
 .Sh FLAG VALUES
 For some clone boards the driver is not able to recognize 16bit or 8bit
-interfaces correctly. Since this makes a huge difference (see diagnostic
-section below)
+interfaces correctly.
+Since this makes a huge difference (see diagnostic section below)
 you can override this by specifying flags value in the config file:
 .Pp
 .Cd "we2 at isa? port 0x300 iomem 0xe0000 irq 15 flags 4"
@@ -60,14 +60,16 @@ The values to add together for flags are:
 .Bl -diag
 .It 2
 force adapter to be treated as 8bit, even if it probes
-as a 16bit interface. Improper use of this flag will make the
-driver fail or send invalid Ethernet packets.
+as a 16bit interface.
+Improper use of this flag will make the driver fail or send invalid
+Ethernet packets.
 .It 4
 force adapter to be treated as 16bit, even if it probes
-as a 8bit interface. For example the COMPEX ENT/U boards
-identify as WD8003 compatibles, but are in fact 16bit cards.
-Using this flag on a board that really is a 8bit board will
-result in bogus packets being sent.
+as a 8bit interface.
+For example the COMPEX ENT/U boards identify as WD8003 compatibles,
+but are in fact 16bit cards.
+Using this flag on a board that really is a 8bit board will result
+in bogus packets being sent.
 .It 8
 disable the use of double transmit buffers to save space in
 the on-board RAM for more receive buffers.
@@ -77,17 +79,20 @@ Note that all supported MCA cards are 16bit, and the SMC_TT VME-ISA bridge
 interface for atari supports only SMC Elite Ultra.
 .Sh MEDIA SELECTION
 The ability to select media from software is dependent on the particular
-model of WD/SMC card.  The following models support only manual configuration:
+model of WD/SMC card.
+The following models support only manual configuration:
 WD8003S, WD8003E, and WD8013EBT.
 .Pp
 Other WD/SMC 80x3 interfaces support two types of media on a single card.
-All support the AUI media type.  The other media is either BNC or UTP
-behind a transceiver.  Software cannot differentiate between BNC and UTP
-cards.  On some models, the AUI port is always active.
+All support the AUI media type.
+The other media is either BNC or UTP behind a transceiver.
+Software cannot differentiate between BNC and UTP cards.
+On some models, the AUI port is always active.
 .Pp
 The SMC Elite Ultra and SMC EtherEZ interfaces support three media
-a single card: AUI, BNC, and UTP.  If the transceiver is active, the BNC
-media is selected.  Otherwise, the AUI and UTP ports are both active.
+a single card: AUI, BNC, and UTP.
+If the transceiver is active, the BNC media is selected.
+Otherwise, the AUI and UTP ports are both active.
 .Pp
 To enable the AUI media, select the
 .Em 10base5
@@ -96,7 +101,8 @@ or
 media type with
 .Xr ifconfig 8 Ns 's
 .Cm media
-directive.  To select the other media (transceiver), select the
+directive.
+To select the other media (transceiver), select the
 .Em 10base2
 or
 .Em bnc
@@ -105,15 +111,17 @@ media type.
 .Bl -diag
 .It "we0: overriding IRQ \*[Lt]n\*[Gt] to \*[Lt]m\*[Gt]"
 The IRQ specified in the kernel configuration file is different from that
-found in the card's configuration registers.  The value in the kernel
-configuration file is being overridden by the one configured into the card.
+found in the card's configuration registers.
+The value in the kernel configuration file is being overridden by
+the one configured into the card.
 .It "we0: can't wildcard IRQ on a \*[Lt]model\*[Gt]"
 The IRQ was wildcarded in the kernel configuration file, and the card is
 a WD8003S, WD8003E, or WD8013EBT, which do not support software IRQ
 configuration.
 .It "we0: failed to clear shared memory at offset \*[Lt]off\*[Gt]"
 The memory test was unable to clear the interface's shared memory
-region.  This often indicates that the card is configured at a conflicting
+region.
+This often indicates that the card is configured at a conflicting
 .Em iomem
 address.
 .It we0: warning - receiver ring buffer overrun
@@ -121,28 +129,32 @@ The DP8390 Ethernet chip used by this board implements a shared-memory
 ring-buffer to store incoming packets.
 .Pp
 The 16bit boards (8013 series) have 16k of memory as well as
-fast memory access speed.  Typical memory access speed on these
-boards is about 4MB/second.  These boards generally have no
-problems keeping up with full Ethernet speed and the ring-buffer
-seldom overfills.
+fast memory access speed.
+Typical memory access speed on these boards is about 4MB/second.
+These boards generally have no problems keeping up with full Ethernet
+speed and the ring-buffer seldom overfills.
 .Pp
 However, the 8bit boards (8003) usually have only 8k bytes of shared
-memory.  This is only enough room for about 4 full-size (1500 byte)
-packets.  This can sometimes be a problem, especially on the original
-WD8003E, because these boards' shared-memory access speed is quite
-slow; typically only about 1MB/second.  The overhead of this slow
-memory access, and the fact that there is only room for 4 full-sized
-packets means that the ring-buffer will occasionally overrun.  When
-this happens, the board must be reset to avoid a lockup problem in
-early revision 8390's.  Resetting the board causes all of the data in
-the ring-buffer to be lost, requiring it to be retransmitted/received,
-congesting the board further.  Because of this, maximum throughput on
-these boards is only about 400-600k per second.
+memory.
+This is only enough room for about 4 full-size (1500 byte) packets.
+This can sometimes be a problem, especially on the original WD8003E,
+because these boards' shared-memory access speed is quite slow;
+typically only about 1MB/second.
+The overhead of this slow memory access, and the fact that there
+is only room for 4 full-sized packets means that the ring-buffer
+will occasionally overrun.
+When this happens, the board must be reset to avoid a lockup problem
+in early revision 8390's.
+Resetting the board causes all of the data in the ring-buffer to
+be lost, requiring it to be retransmitted/received, congesting the
+board further.
+Because of this, maximum throughput on these boards is only about
+400-600k per second.
 .Pp
 This problem is exasperated by NFS because the 8bit boards lack
 sufficient memory to support the default 8k byte packets that NFS and
-other protocols use as their default.  If these cards must be used
-with NFS, use the NFS
+other protocols use as their default.
+If these cards must be used with NFS, use the NFS
 .Fl r
 and
 .Fl w
