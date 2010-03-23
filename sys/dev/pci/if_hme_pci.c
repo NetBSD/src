@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.34 2010/03/23 21:51:39 dyoung Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.35 2010/03/23 21:54:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.34 2010/03/23 21:51:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.35 2010/03/23 21:54:23 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.34 2010/03/23 21:51:39 dyoung Exp $
 
 #include <dev/ic/hmevar.h>
 
-#define PCI_HME_BASEADDR	0x10
+#define PCI_HME_BASEADDR	PCI_BAR(0)
 
 struct hme_pci_softc {
 	struct	hme_softc	hsc_hme;	/* HME device */
