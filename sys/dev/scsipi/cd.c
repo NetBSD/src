@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.299 2010/03/22 16:49:41 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.300 2010/03/23 12:42:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.299 2010/03/22 16:49:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.300 2010/03/23 12:42:55 martin Exp $");
 
 #include "rnd.h"
 
@@ -510,6 +510,12 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct scsipi_periph *periph = cd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = CDPART(dev);
+	int silent = 0;
+
+	if (part == RAW_PART && ((cd->sc_dk.dk_label->d_npartitions == 0) ||
+	    (part < cd->sc_dk.dk_label->d_npartitions &&
+	    cd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)))
+		silent = XS_CTL_SILENT;
 
 	mutex_enter(&cd->sc_lock);
 
@@ -526,14 +532,14 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	if (cd->sc_dk.dk_openmask == 0) {
 		/* synchronise caches on last close */
-		cdcachesync(periph, 0);
+		cdcachesync(periph, silent);
 
 		/* drain outstanding calls */
 		scsipi_wait_drain(periph);
 
 		scsipi_prevent(periph, SPAMR_ALLOW,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    XS_CTL_IGNORE_NOT_READY);
+		    XS_CTL_IGNORE_NOT_READY | silent);
 		periph->periph_flags &= ~PERIPH_OPEN;
 
 		scsipi_wait_drain(periph);
