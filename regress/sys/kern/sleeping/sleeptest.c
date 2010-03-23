@@ -1,4 +1,4 @@
-/* $NetBSD: sleeptest.c,v 1.2 2006/07/16 22:18:46 kardel Exp $ */
+/* $NetBSD: sleeptest.c,v 1.3 2010/03/23 20:32:13 drochner Exp $ */
 
 /*-
  * Copyright (c) 2006 Frank Kardel
@@ -34,6 +34,8 @@
 #include <sys/signal.h>
 #include <string.h>
 #include <err.h>
+#include <unistd.h>
+#include <poll.h>
 
 #define FUZZ		30000000LL	/* scheduling fuzz accepted - 30 ms */
 #define MAXSLEEP	32000000000LL	/* 32 seconds */
