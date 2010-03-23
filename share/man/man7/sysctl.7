@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.33 2010/03/22 18:58:32 joerg Exp $
+.\"	$NetBSD: sysctl.7,v 1.34 2010/03/23 05:52:43 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1968,7 +1968,7 @@ The returned data consists of a
 .\" XXX vm.idlezero
 .El
 .Sh The ddb.* subtree ( CTL_DDB )
-The integer information available for the
+The information available for the
 .Li ddb
 level is detailed below.
 The changeable column shows whether a process with appropriate
@@ -1978,10 +1978,13 @@ privilege may change the value.
 .It Sy Second level name	Type	Changeable
 .It ddb.radix	integer	yes
 .It ddb.maxoff	integer	yes
+.It ddb.maxwidth	integer	yes
 .It ddb.lines	integer	yes
 .It ddb.tabstops	integer	yes
 .It ddb.onpanic	integer	yes
 .It ddb.fromconsole	integer	yes
+.It ddb.tee_msgbuf	integer	yes
+.It ddb.commandonenter	string	yes
 .El
 .Pp
 .Bl -tag -width "123456"
@@ -1989,6 +1992,8 @@ privilege may change the value.
 The input and output radix.
 .It Li ddb.maxoff ( DBCTL_MAXOFF )
 The maximum symbol offset.
+.It Li ddb.maxwidth ( DDBCTL_MAXWIDTH )
+The maximum output line width.
 .It Li ddb.lines ( DBCTL_LINES )
 Number of display lines.
 .It Li ddb.tabstops ( DBCTL_TABSTOPS )
@@ -1998,10 +2003,19 @@ If non-zero, DDB will be entered if the kernel panics.
 .It Li ddb.fromconsole ( DBCTL_FROMCONSOLE )
 If not zero, DDB may be entered by sending a break on a serial
 console or by a special key sequence on a graphics console.
-.\" XXX tee_msgbuf maxwidth commandonenter
+.It Li ddb.tee_msgbuf
+If not zero, DDB will output also to the kernel message buffer.
+.It Li ddb.commandonenter
+If not empty, a command to be executed on each enter to the
+.Tn DDB .
+.\"
+.\" XXX: (a) ddb.commandonenter is missing in ddb(4);
+.\"	 (b) No DDBCTL definitions for tee_msgbuf and commandonenter.
 .El
 .Pp
-These MIB nodes are also available as variables from within the DDB.
+Some of these
+.Tn MIB
+nodes are also available as variables from within the debugger.
 See
 .Xr ddb 4
 for more details.
