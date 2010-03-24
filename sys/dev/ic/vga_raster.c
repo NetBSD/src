@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.33 2008/10/19 17:47:38 jmcneill Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.34 2010/03/24 19:33:51 tnn Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.33 2008/10/19 17:47:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.34 2010/03/24 19:33:51 tnn Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.33 2008/10/19 17:47:38 jmcneill Exp
 #include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
-#include <dev/ic/videomode.h>
+#include <dev/videomode/videomode.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
