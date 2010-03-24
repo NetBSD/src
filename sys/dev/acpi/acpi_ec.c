@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.62 2010/03/05 14:00:16 jruoho Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.63 2010/03/24 01:13:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.62 2010/03/05 14:00:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.63 2010/03/24 01:13:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -149,7 +149,8 @@ static int acpiec_match(device_t, cfdata_t, void *);
 static void acpiec_attach(device_t, device_t, void *);
 
 static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
-    bus_addr_t, bus_addr_t, ACPI_HANDLE, uint8_t);
+    bus_space_tag_t, bus_addr_t, bus_space_tag_t, bus_addr_t,
+    ACPI_HANDLE, uint8_t);
 
 static bool acpiec_suspend(device_t, const pmf_qual_t *);
 static bool acpiec_resume(device_t, const pmf_qual_t *);
@@ -225,6 +226,7 @@ acpiecdt_match(device_t parent, cfdata_t match, void *aux)
 static void
 acpiecdt_attach(device_t parent, device_t self, void *aux)
 {
+	struct acpi_attach_args *aa = aux;
 	ACPI_HANDLE ec_handle;
 	bus_addr_t cmd_reg, data_reg;
 	uint8_t gpebit;
@@ -235,8 +237,8 @@ acpiecdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": ACPI Embedded Controller via ECDT\n");
 
-	acpiec_common_attach(parent, self, ec_handle, cmd_reg, data_reg,
-	    NULL, gpebit);
+	acpiec_common_attach(parent, self, ec_handle, aa->aa_iot, cmd_reg,
+	    aa->aa_iot, data_reg, NULL, gpebit);
 }
 
 static int
@@ -290,7 +292,8 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 	}
 
 	acpiec_common_attach(parent, self, aa->aa_node->ad_handle,
-	    io1->ar_base, io0->ar_base, gpe_handle, gpebit);
+	    aa->aa_iot, io1->ar_base, aa->aa_iot, io0->ar_base,
+	    gpe_handle, gpebit);
 
 free_res:
 	acpi_resource_cleanup(&ec_res);
@@ -298,12 +301,16 @@ free_res:
 
 static void
 acpiec_common_attach(device_t parent, device_t self,
-    ACPI_HANDLE ec_handle, bus_addr_t cmd_reg, bus_addr_t data_reg,
+    ACPI_HANDLE ec_handle, bus_space_tag_t cmdt, bus_addr_t cmd_reg,
+    bus_space_tag_t datat, bus_addr_t data_reg,
     ACPI_HANDLE gpe_handle, uint8_t gpebit)
 {
 	struct acpiec_softc *sc = device_private(self);
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
+
+	sc->sc_csr_st = cmdt;
+	sc->sc_data_st = datat;
 
 	sc->sc_ech = ec_handle;
 	sc->sc_gpeh = gpe_handle;
