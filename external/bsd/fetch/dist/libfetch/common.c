@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.8 2010/01/30 21:26:09 joerg Exp $	*/
+/*	$NetBSD: common.c,v 1.1.1.9 2010/03/24 20:51:41 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -231,6 +231,7 @@ fetch_reopen(int sd)
 	/* allocate and fill connection structure */
 	if ((conn = calloc(1, sizeof(*conn))) == NULL)
 		return (NULL);
+	conn->ftp_home = NULL;
 	conn->cache_url = NULL;
 	conn->next_buf = NULL;
 	conn->next_len = 0;
@@ -711,6 +712,7 @@ fetch_close(conn_t *conn)
 	ret = close(conn->sd);
 	if (conn->cache_url)
 		fetchFreeURL(conn->cache_url);
+	free(conn->ftp_home);
 	free(conn->buf);
 	free(conn);
 	return (ret);
