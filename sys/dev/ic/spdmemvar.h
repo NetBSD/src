@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.7 2008/11/22 19:25:38 pgoyette Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.1 2010/03/24 00:31:41 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -514,9 +514,12 @@ struct spdmem {
 #define	sm_selfrefresh	sm_fpm.fpm_selfrefresh
 
 #define SPDMEM_TYPE_MAXLEN 16
+
 struct spdmem_softc {
-	i2c_tag_t	sc_tag;
-	i2c_addr_t	sc_addr;
+	uint8_t		(*sc_read)(struct spdmem_softc *, uint8_t);
 	struct spdmem	sc_spd_data;
 	char		sc_type[SPDMEM_TYPE_MAXLEN];
 };
+
+int spdmem_common_probe(struct spdmem_softc *);
+void spdmem_common_attach(struct spdmem_softc *, device_t);

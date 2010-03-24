@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemreg.h,v 1.3 2009/02/22 17:28:50 pgoyette Exp $ */
+/* $NetBSD: spdmemreg.h,v 1.1 2010/03/24 00:31:41 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -27,10 +27,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-/* Constants for matching i2c bus address */
-#define SPDMEM_ADDRMASK	0x78
-#define SPDMEM_ADDR	0x50
 
 /* possible values for the memory type */
 #define	SPDMEM_MEMTYPE_FPM		0x01
