@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.113 2009/10/03 23:49:50 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.114 2010/03/24 07:27:22 explorer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.113 2009/10/03 23:49:50 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.114 2010/03/24 07:27:22 explorer Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -256,6 +256,8 @@ pthread__child_callback(void)
 	 * much. Anything that permits some pthread_* calls to work is
 	 * merely being polite.
 	 */
+	struct __pthread_st *self = pthread_self();
+	self->pt_lid = _lwp_self();
 	pthread__started = 0;
 }
 
