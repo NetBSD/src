@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.73 2010/03/01 06:14:17 macallan Exp $
+#	$NetBSD: INSTALL,v 1.74 2010/03/24 00:39:07 macallan Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -555,6 +555,11 @@ cgsix*		at sbus? slot ? offset ?
 ## Sun "tcx" accelerated color framebuffer.
 # there can be only one
 tcx0		at sbus? slot ? offset ?
+
+## Sun CG12 / Matrox SG3 accelerated 24bit framebuffer
+## runs monochrome only for now
+## since it occupies 3 SBus slots there's no way to use more than one
+cgtwelve0	at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m
