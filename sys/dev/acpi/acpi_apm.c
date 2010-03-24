@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.15 2010/03/05 14:00:16 jruoho Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.16 2010/03/24 01:45:37 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.15 2010/03/05 14:00:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.16 2010/03/24 01:45:37 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -262,7 +262,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 				      APM_BATT_FLAG_LOW |		      \
 				      APM_BATT_FLAG_HIGH)
 	int i, curcap, lowcap, warncap, cap, descap, lastcap, discharge;
-	int cap_valid, lastcap_valid, discharge_valid;
+	int cap_valid, lastcap_valid, discharge_valid, present;
 	envsys_tre_data_t etds;
 	envsys_basic_info_t ebis;
 
@@ -271,7 +271,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 
 	/* Prepare to aggregate these two variables over all batteries. */
 	cap = lastcap = discharge = 0;
-	cap_valid = lastcap_valid = discharge_valid = 0;
+	cap_valid = lastcap_valid = discharge_valid = present = 0;
 
 	(void)memset(pinfo, 0, sizeof(*pinfo));
 	pinfo->ac_state = APM_AC_UNKNOWN;
@@ -307,8 +307,8 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 			continue;
 		if (strstr(desc, " connected")) {
 			pinfo->ac_state = data ? APM_AC_ON : APM_AC_OFF;
-		} else if (strstr(desc, " present") && data == 0)
-			pinfo->battery_flags |= APM_BATT_FLAG_NO_SYSTEM_BATTERY;
+		} else if (strstr(desc, " present") && data != 0)
+			present++;
 		else if (strstr(desc, " charging") && data)
 			pinfo->battery_flags |= APM_BATT_FLAG_CHARGING;
 		else if (strstr(desc, " charging") && !data)
@@ -336,6 +336,9 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 		}
 	}
 	sysmonclose_envsys(0, 0, 0, &lwp0);
+
+	if (present == 0)
+		pinfo->battery_flags |= APM_BATT_FLAG_NO_SYSTEM_BATTERY;
 
 	if (cap_valid > 0)  {
 		if (warncap != -1 && cap < warncap)
