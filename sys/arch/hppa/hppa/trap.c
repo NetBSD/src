@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.83 2010/03/22 23:29:11 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.84 2010/03/24 12:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 2010/03/22 23:29:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2010/03/24 12:56:30 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -498,8 +498,10 @@ trap(int type, struct trapframe *frame)
 
 	trapnum = type & ~T_USER;
 	opcode = frame->tf_iir;
-	if (trapnum == T_ITLBMISS || trapnum == T_ITLBMISSNA ||
-	    trapnum == T_IBREAK || trapnum == T_TAKENBR) {
+
+	if (trapnum <= T_EXCEPTION || trapnum == T_HIGHERPL ||
+	    trapnum == T_LOWERPL || trapnum == T_TAKENBR ||
+	    trapnum == T_IDEBUG || trapnum == T_PERFMON) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
 		vftype = VM_PROT_EXECUTE;
