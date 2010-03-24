@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.94 2010/03/22 15:08:35 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.95 2010/03/24 12:18:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.94 2010/03/22 15:08:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.95 2010/03/24 12:18:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -721,7 +721,7 @@ acpibat_init_envsys(device_t dv)
 	sc->sc_sme->sme_cookie = dv;
 	sc->sc_sme->sme_refresh = acpibat_refresh;
 	sc->sc_sme->sme_class = SME_CLASS_BATTERY;
-	sc->sc_sme->sme_flags = SME_POLL_ONLY;
+	sc->sc_sme->sme_flags = SME_POLL_ONLY | SME_INIT_REFRESH;
 	sc->sc_sme->sme_get_limits = acpibat_get_limits;
 
 	acpibat_update_info(dv);
