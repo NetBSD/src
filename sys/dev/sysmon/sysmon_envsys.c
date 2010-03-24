@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.97 2010/03/14 18:03:15 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.98 2010/03/24 12:15:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.97 2010/03/14 18:03:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.98 2010/03/24 12:15:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -755,12 +755,20 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 
 out:
 	/*
-	 * No errors? register the events that were set in the driver
-	 * and make an initial data refresh if was requested.
+	 * No errors?  Make an initial data refresh if was requested,
+	 * then register the events that were set in the driver.  Do
+	 * the refresh first in case it is needed to establish the
+	 * limits or max_value needed by some events.
 	 */
 	if (error == 0) {
 		nevent = 0;
 		sysmon_task_queue_init();
+
+		if (sme->sme_flags & SME_INIT_REFRESH) {
+			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
+			DPRINTF(("%s: scheduled initial refresh for '%s'\n",
+				__func__, sme->sme_name));
+		}
 		SLIST_FOREACH(evdv, &sme_evdrv_list, evdrv_head) {
 			sysmon_task_queue_sched(0,
 			    sme_event_drvadd, evdv->evdrv);
@@ -768,9 +776,6 @@ out:
 		}
 		DPRINTF(("%s: driver '%s' registered (nsens=%d nevent=%d)\n",
 		    __func__, sme->sme_name, sme->sme_nsensors, nevent));
-
-		if (sme->sme_flags & SME_INIT_REFRESH)
-			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
 	}
 
 out2:
