@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.18 2010/03/23 12:13:28 njoly Exp $ */
+/* $NetBSD: spdmem.c,v 1.1 2010/03/24 00:31:41 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.18 2010/03/23 12:13:28 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.1 2010/03/24 00:31:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,14 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.18 2010/03/23 12:13:28 njoly Exp $");
 #include <machine/bswap.h>
 
 #include <dev/i2c/i2cvar.h>
-#include <dev/i2c/spdmemreg.h>
-#include <dev/i2c/spdmemvar.h>
+#include <dev/ic/spdmemreg.h>
+#include <dev/ic/spdmemvar.h>
 
-static int spdmem_match(device_t, cfdata_t, void *);
-static void spdmem_attach(device_t, device_t, void *);
 SYSCTL_SETUP_PROTO(sysctl_spdmem_setup);
-
-static uint8_t spdmem_read(struct spdmem_softc *, uint8_t);
 
 /* Routines for decoding spd data */
 static void decode_edofpm(const struct sysctlnode *, device_t, struct spdmem *);
@@ -66,9 +62,6 @@ static void decode_fbdimm(const struct sysctlnode *, device_t, struct spdmem *);
 static void decode_size_speed(const struct sysctlnode *, int, int, int, int,
 			      bool, const char *, int);
 static void decode_voltage_refresh(device_t, struct spdmem *);
-
-CFATTACH_DECL_NEW(spdmem, sizeof(struct spdmem_softc),
-    spdmem_match, spdmem_attach, NULL, NULL);
 
 #define IS_RAMBUS_TYPE (s->sm_len < 4)
 
@@ -145,7 +138,7 @@ static uint16_t spdcrc16 (struct spdmem_softc *sc, int count)
 	uint8_t val;
 	crc = 0;
 	for (j = 0; j <= count; j++) {
-		val = spdmem_read(sc, j);
+		val = (sc->sc_read)(sc, j);
 		crc = crc ^ val << 8;
 		for (i = 0; i < 8; ++i)
 			if (crc & 0x8000)
@@ -156,42 +149,24 @@ static uint16_t spdcrc16 (struct spdmem_softc *sc, int count)
 	return (crc & 0xFFFF);
 }
 
-static int
-spdmem_match(device_t parent, cfdata_t match, void *aux)
+int
+spdmem_common_probe(struct spdmem_softc *sc)
 {
-	struct i2c_attach_args *ia = aux;
-	struct spdmem_softc sc;
 	int cksum = 0;
 	uint8_t i, val, spd_type;
 	int spd_len, spd_crc_cover;
 	uint16_t crc_calc, crc_spd;
 
-	if (ia->ia_name) {
-		/* add other names as we find more firmware variations */
-		if (strcmp(ia->ia_name, "dimm-spd"))
-			return 0;
-	}
-
-	/* only do this lame test when not using direct config */
-	if (ia->ia_name == NULL) {
-		if ((ia->ia_addr & SPDMEM_ADDRMASK) != SPDMEM_ADDR)
-			return 0;
-	}
-
-	sc.sc_tag = ia->ia_tag;
-	sc.sc_addr = ia->ia_addr;
-
-	spd_type = spdmem_read(&sc, 2);
+	spd_type = (sc->sc_read)(sc, 2);
 
 	/* For older memory types, validate the checksum over 1st 63 bytes */
 	if (spd_type <= SPDMEM_MEMTYPE_DDR2SDRAM) {
 		for (i = 0; i < 63; i++)
-			cksum += spdmem_read(&sc, i);
+			cksum += (sc->sc_read)(sc, i);
 
-		val = spdmem_read(&sc, 63);
+		val = (sc->sc_read)(sc, 63);
 
 		if (cksum == 0 || (cksum & 0xff) != val) {
-			aprint_debug("spd addr 0x%2x: ", sc.sc_addr);
 			aprint_debug("spd checksum failed, calc = 0x%02x, "
 				     "spd = 0x%02x\n", cksum, val);
 			return 0;
@@ -201,7 +176,7 @@ spdmem_match(device_t parent, cfdata_t match, void *aux)
 
 	/* For DDR3 and FBDIMM, verify the CRC */
 	else if (spd_type <= SPDMEM_MEMTYPE_DDR3SDRAM) {
-		spd_len = spdmem_read(&sc, 0);
+		spd_len = (sc->sc_read)(sc, 0);
 		if (spd_len && SPDMEM_SPDCRC_116)
 			spd_crc_cover = 116;
 		else
@@ -221,11 +196,10 @@ spdmem_match(device_t parent, cfdata_t match, void *aux)
 		}
 		if (spd_crc_cover > spd_len)
 			return 0;
-		crc_calc = spdcrc16(&sc, spd_crc_cover);
-		crc_spd = spdmem_read(&sc, 127) << 8;
-		crc_spd |= spdmem_read(&sc, 126);
+		crc_calc = spdcrc16(sc, spd_crc_cover);
+		crc_spd = (sc->sc_read)(sc, 127) << 8;
+		crc_spd |= (sc->sc_read)(sc, 126);
 		if (crc_calc != crc_spd) {
-			aprint_debug("spd addr 0x%2x: ", sc.sc_addr);
 			aprint_debug("crc16 failed, covers %d bytes, "
 				     "calc = 0x%04x, spd = 0x%04x\n",
 				     spd_crc_cover, crc_calc, crc_spd);
@@ -238,11 +212,9 @@ spdmem_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-static void
-spdmem_attach(device_t parent, device_t self, void *aux)
+void
+spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 {
-	struct spdmem_softc *sc = device_private(self);
-	struct i2c_attach_args *ia = aux;
 	struct spdmem *s = &(sc->sc_spd_data);
 	const char *type;
 	const char *rambus_rev = "Reserved";
@@ -251,19 +223,13 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 	unsigned int spd_len, spd_size;
 	const struct sysctlnode *node = NULL;
 
-	sc->sc_tag = ia->ia_tag;
-	sc->sc_addr = ia->ia_addr;
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
 	/*
 	 * FBDIMM and DDR3 (and probably all newer) have a different
 	 * encoding of the SPD EEPROM used/total sizes
 	 */
-	s->sm_len = spdmem_read(sc, 0);
-	s->sm_size = spdmem_read(sc, 1);
-	s->sm_type = spdmem_read(sc, 2);
+	s->sm_len = (sc->sc_read)(sc, 0);
+	s->sm_size = (sc->sc_read)(sc, 1);
+	s->sm_type = (sc->sc_read)(sc, 2);
 
 	if (s->sm_type >= SPDMEM_MEMTYPE_FBDIMM) {
 		spd_size = 64 << (s->sm_len & SPDMEM_SPDSIZE_MASK);
@@ -292,7 +258,7 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 	if (spd_len > sizeof(struct spdmem))
 		spd_len = sizeof(struct spdmem);
 	for (i = 3; i < spd_len; i++)
-		((uint8_t *)s)[i] = spdmem_read(sc, i);
+		((uint8_t *)s)[i] = (sc->sc_read)(sc, i);
 
 #ifdef DEBUG
 	for (i = 0; i < spd_len;  i += 16) {
@@ -418,19 +384,6 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 		decode_fbdimm(node, self, s);
 		break;
 	}
-}
-
-static uint8_t
-spdmem_read(struct spdmem_softc *sc, uint8_t reg)
-{
-	uint8_t val;
-
-	iic_acquire_bus(sc->sc_tag, 0);
-	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
-		 &val, 1, 0);
-	iic_release_bus(sc->sc_tag, 0);
-
-	return val;
 }
 
 SYSCTL_SETUP(sysctl_spdmem_setup, "sysctl hw.spdmem subtree setup")

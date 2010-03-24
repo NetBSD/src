@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.983 2010/03/15 20:35:19 christos Exp $
+#	$NetBSD: files,v 1.984 2010/03/24 00:31:41 pgoyette Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -327,6 +327,13 @@ attach	video at videobus
 
 device	lm: sysmon_envsys
 file	dev/ic/nslm7x.c			lm			needs-flag
+
+# JEDEC standard SPD EPROM
+#
+# (included here so files.i2c can define an attachment)
+
+device	spdmem
+file	dev/ic/spdmem.c			spdmem
 
 # I2C device support
 include "dev/i2c/files.i2c"
