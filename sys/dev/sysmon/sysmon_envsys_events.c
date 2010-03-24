@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.88 2010/03/23 16:52:02 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.89 2010/03/24 13:11:41 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.88 2010/03/23 16:52:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.89 2010/03/24 13:11:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -646,7 +646,8 @@ out:
  * sysmon_envsys_sensor_event
  *
  *	+ Find the monitor event of a particular type for a given sensor
- *	  on a device and deliver the event if one is required.
+ *	  on a device and deliver the event if one is required.  If
+ *	  no event type is specified, deliver all events for the sensor.
  */
 void
 sysmon_envsys_sensor_event(struct sysmon_envsys *sme, envsys_data_t *edata, 
@@ -656,11 +657,14 @@ sysmon_envsys_sensor_event(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	mutex_enter(&sme->sme_mtx);
 	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
-		if (edata != see->see_edata ||
-		    see->see_type != ev_type)
-			continue; 
-		sme_deliver_event(see);
-		break;
+		if (edata != see->see_edata)
+			continue;
+		if (ev_type == 0 ||
+		    ev_type == see->see_type) {
+			sme_deliver_event(see);
+			if (ev_type != 0)
+				break;
+		}
 	}
 	mutex_exit(&sme->sme_mtx);
 }
