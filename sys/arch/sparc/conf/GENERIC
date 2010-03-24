@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.220 2010/03/01 06:14:17 macallan Exp $
+# $NetBSD: GENERIC,v 1.221 2010/03/24 00:39:07 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.220 $"
+#ident 		"GENERIC-$Revision: 1.221 $"
 
 maxusers	32
 
@@ -687,6 +687,10 @@ cgsix0		at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 ## Sun "tcx" accelerated color framebuffer.
 # there can be only one
 tcx0		at sbus? slot ? offset ?
+
+## Sun CG12 / Matrox SG3 accelerated 24bit framebuffer
+## runs monochrome only for now
+cgtwelve*	at sbus? slot ? offset ?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m
