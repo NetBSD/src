@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.6 2010/03/21 18:43:28 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.7 2010/03/24 19:23:24 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -481,7 +481,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	l->l_md.md_astpending = 1;		/* force call to ast() */
 #ifdef MULTIPROCESSOR
 	if (ci != cur_ci && (flags & RESCHED_IMMED)) {
-		cpu_send_ipi(ci, IPI_NOP);
+		cpu_send_ipi(ci, IPI_AST);
 	} 
 #endif
 }
@@ -677,9 +677,6 @@ cpu_boot_secondary_processors(void)
 		ci->ci_data.cpu_cc_skew = mips3_cp0_count_read();
 		atomic_or_ulong(&ci->ci_flags, CPUF_RUNNING);
 		atomic_or_ulong(&cpus_running, cpu_mask);
-#if 1	/* XXX TMP */
-		cpu_send_ipi(ci, IPI_NOP);
-#endif
 	}
 }
 #endif /* MULTIPROCESSOR */
