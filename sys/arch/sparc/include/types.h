@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.52.4.1 2010/03/18 04:36:52 rmind Exp $ */
+/*	$NetBSD: types.h,v 1.52.4.2 2010/03/24 06:02:48 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -116,15 +116,16 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS
-#define	__HAVE_MM_MD_READWRITE
 
 #ifdef SUN4U
-#define __HAVE_DEVICE_REGISTER_POSTCONFIG
+#define	__HAVE_DEVICE_REGISTER_POSTCONFIG
 #define	__HAVE_ATOMIC64_OPS
-#define __HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */
+#define	__HAVE_CPU_COUNTER	/* sparc v9 CPUs have %tick */
 #if defined(_KERNEL)
-#define __HAVE_RAS
+#define	__HAVE_RAS
 #endif
+#else
+#define	__HAVE_MM_MD_READWRITE
 #endif
 
 
