@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.9 2010/03/21 18:21:15 cliff Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.10 2010/03/24 19:23:02 cliff Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -55,11 +55,12 @@
 #define	IST_LEVEL_LOW	5		/* level triggered, active low */
 
 #define	IPI_NOP		0		/* do nothing, interrupt only */
-#define	IPI_SHOOTDOWN	1		/* do a tlb shootdown */
-#define	IPI_FPSAVE	2		/* save current fp registers */
-#define	IPI_SYNCICACHE	3		/* sync icache for pages */
-#define	IPI_KPREEMPT	4		/* schedule a kernel preemption */
-#define	NIPIS		5
+#define	IPI_AST		1		/* force ast */
+#define	IPI_SHOOTDOWN	2		/* do a tlb shootdown */
+#define	IPI_FPSAVE	3		/* save current fp registers */
+#define	IPI_SYNCICACHE	4		/* sync icache for pages */
+#define	IPI_KPREEMPT	5		/* schedule a kernel preemption */
+#define	NIPIS		6
 
 #ifdef __INTR_PRIVATE
 struct splsw {
