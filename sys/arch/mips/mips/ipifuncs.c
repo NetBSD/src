@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.2 2010/03/11 08:09:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.3 2010/03/24 19:23:46 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.2.2 2010/03/11 08:09:15 matt Exp $"
 
 static const char * const ipi_names[] = {
 	[IPI_NOP]	= "ipi nop",
+	[IPI_AST]	= "ipi ast",
 	[IPI_SHOOTDOWN]	= "ipi shootdown",
 	[IPI_FPSAVE]	= "ipi fpsave",
 	[IPI_SYNCICACHE]	= "ipi isync",
@@ -91,17 +92,31 @@ ipi_process(struct cpu_info *ci, uint64_t ipi_mask)
 {
 	KASSERT(cpu_intr_p());
 
-	if (ipi_mask & __BIT(IPI_NOP))
+	if (ipi_mask & __BIT(IPI_NOP)) {
+		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
 		ipi_nop(ci);
-	if (ipi_mask & __BIT(IPI_SHOOTDOWN))
+	}
+	if (ipi_mask & __BIT(IPI_AST)) {
+		ci->ci_evcnt_per_ipi[IPI_AST].ev_count++;
+		ipi_nop(ci);
+	}
+	if (ipi_mask & __BIT(IPI_SHOOTDOWN)) {
+		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
 		ipi_shootdown(ci);
-	if (ipi_mask & __BIT(IPI_FPSAVE))
+	}
+	if (ipi_mask & __BIT(IPI_FPSAVE)) {
+		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
 		ipi_fpsave(ci);
-	if (ipi_mask & __BIT(IPI_SYNCICACHE))
+	}
+	if (ipi_mask & __BIT(IPI_SYNCICACHE)) {
+		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
 		ipi_syncicache(ci);
+	}
 #ifdef IPI_HALT
-	if (ipi_mask & __BIT(IPI_HALT))
+	if (ipi_mask & __BIT(IPI_HALT)) {
+		ci->ci_evcnt_per_ipi[IPI_NOP].ev_count++;
 		ipi_halt();
+	}
 #endif
 }
 
@@ -115,6 +130,7 @@ ipi_init(struct cpu_info *ci)
 	    NULL, device_xname(ci->ci_dev), "ipi");
 
 	for (size_t i = 0; i < NIPIS; i++) {
+		KASSERT(ipi_names[i] != NULL);
 		evcnt_attach_dynamic(&ci->ci_evcnt_per_ipi[i], EVCNT_TYPE_INTR,
 		    NULL, device_xname(ci->ci_dev), ipi_names[i]);
 	}
