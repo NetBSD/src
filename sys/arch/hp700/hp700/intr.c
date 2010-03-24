@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22 2010/03/11 07:21:24 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.23 2010/03/24 12:38:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2010/03/11 07:21:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2010/03/24 12:38:55 skrll Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -175,7 +175,7 @@ hp700_intr_establish(device_t dv, int ipl, int (*handler)(void *),
 	
 	/* Panic on a bad interrupt bit. */
 	if (bit_pos < 0 || bit_pos >= HP700_INT_BITS)
-		panic("hp700_intr_establish: bad interrupt bit");
+		panic("%s: bad interrupt bit %d", __func__, bit_pos);
 
 	/*
 	 * Panic if this int bit is already handled,
