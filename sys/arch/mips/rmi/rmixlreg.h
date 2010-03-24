@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.9 2010/03/21 21:30:35 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.10 2010/03/24 19:14:09 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -453,7 +453,7 @@
 #define RMIXL_PIC_CONTROL_GEN_NMIn(n)	(((n) << 1) & RMIXL_PIC_CONTROL_GEN_NMI)
 #define RMIXL_PIC_CONTROL_RESa		__BITS(7,3)
 #define RMIXL_PIC_CONTROL_TIMER_ENB	__BITS(15,8)	/* per-Timer enable bits */
-#define RMIXL_PIC_CONTROL_TIMER_ENBn(n)	((1 << (n)) & RMIXL_PIC_CONTROL_TIMER_ENB)
+#define RMIXL_PIC_CONTROL_TIMER_ENBn(n)	((1 << (8 + (n))) & RMIXL_PIC_CONTROL_TIMER_ENB)
 #define RMIXL_PIC_CONTROL_RESb		__BITS(31,16)
 #define RMIXL_PIC_CONTROL_RESV		\
 		(RMIXL_PIC_CONTROL_RESa|RMIXL_PIC_CONTROL_RESb)
