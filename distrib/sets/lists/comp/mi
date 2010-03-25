@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1415 2010/03/22 12:27:46 pooka Exp $
+#	$NetBSD: mi,v 1.1416 2010/03/25 07:03:33 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7957,6 +7957,7 @@
 ./usr/share/man/cat3/stddef.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stdint.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stdio.0			comp-c-catman		.cat
+./usr/share/man/cat3/stdlib.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stpcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/stpncpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcasecmp.0		comp-c-catman		.cat
@@ -13673,6 +13674,7 @@
 ./usr/share/man/html3/stddef.html		comp-c-htmlman		html
 ./usr/share/man/html3/stdint.html		comp-c-htmlman		html
 ./usr/share/man/html3/stdio.html		comp-c-htmlman		html
+./usr/share/man/html3/stdlib.html		comp-c-htmlman		html
 ./usr/share/man/html3/stpcpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/stpncpy.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcasecmp.html		comp-c-htmlman		html
@@ -19427,6 +19429,7 @@
 ./usr/share/man/man3/stddef.3			comp-c-man		.man
 ./usr/share/man/man3/stdint.3			comp-c-man		.man
 ./usr/share/man/man3/stdio.3			comp-c-man		.man
+./usr/share/man/man3/stdlib.3			comp-c-man		.man
 ./usr/share/man/man3/stpcpy.3			comp-c-man		.man
 ./usr/share/man/man3/stpncpy.3			comp-c-man		.man
 ./usr/share/man/man3/strcasecmp.3		comp-c-man		.man
