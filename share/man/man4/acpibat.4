@@ -1,4 +1,4 @@
-.\" $NetBSD: acpibat.4,v 1.8 2010/03/17 17:16:43 jruoho Exp $
+.\" $NetBSD: acpibat.4,v 1.9 2010/03/25 15:34:30 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ discharge rate:  16.641                                        W
 .Pp
 Depending on the battery, the unit of measurement is either watt-hour
 .Tn Pq Wh
-or ampere hour
+or ampere-hour
 .Tn Pq Ah
 for the capacity related information.
 From these the
@@ -74,8 +74,8 @@ For example, when
 is disconnected, the
 .Dq discharge rate
 gives a coarse approximation of the current power consumption.
-The ratio between design capacity and last full capacity on the other hand
-reveals the overall
+The ratio between the design capacity and the last full capacity
+on the other hand reveals the overall
 .Dq health
 of deteriorating lithium-ion batteries.
 .Sh EVENTS
