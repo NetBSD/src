@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.322 2010/03/25 10:09:54 jruoho Exp $
+#       $NetBSD: Makefile,v 1.323 2010/03/25 14:59:36 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -290,6 +290,10 @@ MLINKS+=getiobuf.9 putiobuf.9
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
 MLINKS+=hashinit.9 hashdone.9
 MLINKS+=humanize_number.9 format_bytes.9
+MLINKS+=hz.9 profhz.9 \
+	hz.9 stathz.9 \
+	hz.9 tick.9 \
+	hz.9 tickadj.9
 MLINKS+=ieee80211.9 ieee80211_chan2ieee.9 \
 	ieee80211.9 ieee80211_chan2mode.9 \
 	ieee80211.9 ieee80211_ieee2mhz.9 \

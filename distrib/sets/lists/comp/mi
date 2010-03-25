@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1417 2010/03/25 10:21:09 jruoho Exp $
+#	$NetBSD: mi,v 1.1418 2010/03/25 14:59:36 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9365,6 +9365,7 @@
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf_nolog.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/proc_trampoline.0		comp-sys-catman		.cat
+./usr/share/man/cat9/profhz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_array_copyin_ioctl.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_array_copyout_ioctl.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_copy.0		comp-obsolete		obsolete
@@ -9511,6 +9512,7 @@
 ./usr/share/man/cat9/splvm.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/splx.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/stathz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/store.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/subyte.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/suibyte.0			comp-sys-catman		.cat
@@ -9567,6 +9569,8 @@
 ./usr/share/man/cat9/tc_syncbus.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_wmb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tcp_congctl.0		comp-sys-catman		.cat
+./usr/share/man/cat9/tick.0			comp-sys-catman		.cat
+./usr/share/man/cat9/tickadj.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/time.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/time_second.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/time_uptime.0		comp-sys-catman		.cat
@@ -15020,6 +15024,7 @@
 ./usr/share/man/html9/printf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf_nolog.html		comp-sys-htmlman	html
 ./usr/share/man/html9/proc_trampoline.html	comp-sys-htmlman	html
+./usr/share/man/html9/profhz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/prop_array_copyin_ioctl.html	comp-sys-htmlman	html
 ./usr/share/man/html9/prop_array_copyout_ioctl.html	comp-sys-htmlman	html
 ./usr/share/man/html9/prop_copyin_ioctl.html	comp-sys-htmlman	html
@@ -15148,6 +15153,7 @@
 ./usr/share/man/html9/splvm.html		comp-sys-htmlman	html
 ./usr/share/man/html9/splx.html			comp-sys-htmlman	html
 ./usr/share/man/html9/sprintf.html		comp-sys-htmlman	html
+./usr/share/man/html9/stathz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/store.html		comp-sys-htmlman	html
 ./usr/share/man/html9/subyte.html		comp-sys-htmlman	html
 ./usr/share/man/html9/suibyte.html		comp-sys-htmlman	html
@@ -15203,6 +15209,8 @@
 ./usr/share/man/html9/tc_syncbus.html		comp-sys-htmlman	html
 ./usr/share/man/html9/tc_wmb.html		comp-sys-htmlman	html
 ./usr/share/man/html9/tcp_congctl.html		comp-sys-htmlman	html
+./usr/share/man/html9/tick.html			comp-sys-htmlman	html
+./usr/share/man/html9/tickadj.html		comp-sys-htmlman	html
 ./usr/share/man/html9/time_second.html		comp-sys-htmlman	html
 ./usr/share/man/html9/time_uptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/timecounter.html		comp-sys-htmlman	html
@@ -20844,6 +20852,7 @@
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
 ./usr/share/man/man9/printf_nolog.9		comp-sys-man		.man
 ./usr/share/man/man9/proc_trampoline.9		comp-sys-man		.man
+./usr/share/man/man9/profhz.9			comp-sys-man		.man
 ./usr/share/man/man9/prop_array_copyin_ioctl.9	comp-sys-man		.man
 ./usr/share/man/man9/prop_array_copyout_ioctl.9	comp-sys-man		.man
 ./usr/share/man/man9/prop_copy.9		comp-obsolete		obsolete
@@ -20990,6 +20999,7 @@
 ./usr/share/man/man9/splvm.9			comp-sys-man		.man
 ./usr/share/man/man9/splx.9			comp-sys-man		.man
 ./usr/share/man/man9/sprintf.9			comp-sys-man		.man
+./usr/share/man/man9/stathz.9			comp-sys-man		.man
 ./usr/share/man/man9/store.9			comp-sys-man		.man
 ./usr/share/man/man9/subyte.9			comp-sys-man		.man
 ./usr/share/man/man9/suibyte.9			comp-sys-man		.man
@@ -21046,6 +21056,8 @@
 ./usr/share/man/man9/tc_syncbus.9		comp-sys-man		.man
 ./usr/share/man/man9/tc_wmb.9			comp-sys-man		.man
 ./usr/share/man/man9/tcp_congctl.9		comp-sys-man		.man
+./usr/share/man/man9/tick.9			comp-sys-man		.man
+./usr/share/man/man9/tickadj.9			comp-sys-man		.man
 ./usr/share/man/man9/time.9			comp-obsolete		obsolete
 ./usr/share/man/man9/time_second.9		comp-sys-man		.man
 ./usr/share/man/man9/time_uptime.9		comp-sys-man		.man
