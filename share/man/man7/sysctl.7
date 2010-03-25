@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.35 2010/03/23 05:54:34 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.36 2010/03/25 15:09:05 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -361,6 +361,9 @@ structure is returned.
 This structure contains the clock, statistics clock and profiling clock
 frequencies, the number of micro-seconds per hz tick, and the clock
 skew rate.
+Refer to
+.Xr hz 9
+for additional details.
 .It Li kern.consdev ( KERN_CONSDEV )
 Console device.
 .It Li kern.cp_id ( KERN_CP_ID )
