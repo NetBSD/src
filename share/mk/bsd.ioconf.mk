@@ -1,5 +1,7 @@
-#	$NetBSD: bsd.ioconf.mk,v 1.2 2010/03/22 14:42:01 pooka Exp $
+#	$NetBSD: bsd.ioconf.mk,v 1.3 2010/03/25 20:37:36 pooka Exp $
 #
+
+.include <bsd.own.mk>
 
 # If IOCONF is defined, autocreate ioconf.[ch] and locators.h.
 # This is useful mainly for devices.
@@ -9,7 +11,13 @@
 # when the kernel build procedures are unified.
 .if defined(_BSD_IOCONF_MK_USER_)
 
-ioconf.c: ${IOCONF}
+# XXX: ioconf.c doesn't need to depend on TOOL_CONFIG, but that helps
+# keep builds working while hashing out some of the experimental
+# features related to ioconf.
+.if ${USETOOLS} == "yes"
+CONFIGDEP=${TOOL_CONFIG}
+.endif
+ioconf.c: ${IOCONF} ${CONFIGDEP}
 	${TOOL_CONFIG} -b ${.OBJDIR} -s ${S} ${.CURDIR}/${IOCONF}
 	# config doesn't change the files if they're unchanged.  however,
 	# here we want to satisfy our make dependency, so force a
