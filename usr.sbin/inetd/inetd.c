@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.115 2009/10/22 22:50:35 tsarna Exp $	*/
+/*	$NetBSD: inetd.c,v 1.116 2010/03/25 16:36:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.115 2009/10/22 22:50:35 tsarna Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.116 2010/03/25 16:36:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -671,8 +671,12 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 				    ntohs(sep->se_ctrladdr_in.sin_port));
 			}
 			service = buf;
-			sockaddr_snprintf(abuf, sizeof(abuf), "%a",
-			    req.client->sin);
+			if (req.client->sin) {
+				sockaddr_snprintf(abuf, sizeof(abuf), "%a",
+				    req.client->sin);
+			} else {
+				strcpy(abuf, "(null)");
+			}
 		}
 		if (denied) {
 			syslog(deny_severity,
