@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1416 2010/03/25 07:03:33 jruoho Exp $
+#	$NetBSD: mi,v 1.1417 2010/03/25 10:21:09 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9208,6 +9208,7 @@
 ./usr/share/man/cat9/opencrypto.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/optstr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/optstr_get.0		comp-sys-catman		.cat
+./usr/share/man/cat9/p_find.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/panic.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_conf_hook.0		comp-sys-catman		.cat
@@ -9292,6 +9293,9 @@
 ./usr/share/man/cat9/pfil_hook_get.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_remove_hook.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pfil_run_hooks.0		comp-sys-catman		.cat
+./usr/share/man/cat9/pfind.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pg_find.0			comp-sys-catman		.cat
+./usr/share/man/cat9/pgfind.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pgsignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/physio.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pmap.0			comp-sys-catman		.cat
@@ -14860,6 +14864,7 @@
 ./usr/share/man/html9/opencrypto.html		comp-sys-htmlman	html
 ./usr/share/man/html9/optstr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/optstr_get.html		comp-sys-htmlman	html
+./usr/share/man/html9/p_find.html		comp-sys-htmlman	html
 ./usr/share/man/html9/panic.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pci.html			comp-sys-htmlman	html
 ./usr/share/man/html9/pci_conf_hook.html	comp-sys-htmlman	html
@@ -14943,6 +14948,9 @@
 ./usr/share/man/html9/pfil_hook_get.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_remove_hook.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pfil_run_hooks.html	comp-sys-htmlman	html
+./usr/share/man/html9/pfind.html		comp-sys-htmlman	html
+./usr/share/man/html9/pg_find.html		comp-sys-htmlman	html
+./usr/share/man/html9/pgfind.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pgsignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/physio.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pmap.html			comp-sys-htmlman	html
@@ -20679,6 +20687,7 @@
 ./usr/share/man/man9/opencrypto.9		comp-sys-man		.man
 ./usr/share/man/man9/optstr.9			comp-sys-man		.man
 ./usr/share/man/man9/optstr_get.9		comp-sys-man		.man
+./usr/share/man/man9/p_find.9			comp-sys-man		.man
 ./usr/share/man/man9/panic.9			comp-sys-man		.man
 ./usr/share/man/man9/pci.9			comp-sys-man		.man
 ./usr/share/man/man9/pci_conf_hook.9		comp-sys-man		.man
@@ -20763,6 +20772,9 @@
 ./usr/share/man/man9/pfil_hook_get.9		comp-sys-man		.man
 ./usr/share/man/man9/pfil_remove_hook.9		comp-sys-man		.man
 ./usr/share/man/man9/pfil_run_hooks.9		comp-sys-man		.man
+./usr/share/man/man9/pfind.9			comp-sys-man		.man
+./usr/share/man/man9/pg_find.9			comp-sys-man		.man
+./usr/share/man/man9/pgfind.9			comp-sys-man		.man
 ./usr/share/man/man9/pgsignal.9			comp-sys-man		.man
 ./usr/share/man/man9/physio.9			comp-sys-man		.man
 ./usr/share/man/man9/pmap.9			comp-sys-man		.man
