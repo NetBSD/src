@@ -1,4 +1,4 @@
-/*	$NetBSD: sdread.c,v 1.5 2010/03/22 20:37:26 pooka Exp $	*/
+/*	$NetBSD: sdread.c,v 1.6 2010/03/25 15:00:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -63,6 +63,9 @@ waitcd(void)
 	int fd, val = 0, rounds = 0;
 
 	fd = rump_sys_open("/dev/rcd0d", O_RDWR);
+	if (fd == -1)
+		return;
+
 	do {
 		if (rounds > 0) {
 			if (rounds == 1) {
@@ -82,6 +85,8 @@ waitcd(void)
 		printf(" giving up\n");
 	else
 		printf(" done!\n");
+
+	rump_sys_close(fd);
 }
 
 int
