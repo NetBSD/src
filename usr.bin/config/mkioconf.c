@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.16 2010/02/03 21:32:27 pooka Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.17 2010/03/25 19:39:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,9 +95,9 @@ mkioconf(void)
 	emitloc(fp);
 	emitparents(fp);
 	emitcfdata(fp);
+	emitcfattachinit(fp);
 
 	if (ioconfname == NULL) {
-		emitcfattachinit(fp);
 		emitroots(fp);
 		emitpseudo(fp);
 		if (!do_devsw)
@@ -237,11 +237,12 @@ emitcfdrivers(FILE *fp)
 
 	NEWLINE;
 
-	/* the initial list is not added to ioconf-only configs */
-	if (ioconfname)
-		return;
+	fprintf(fp,
+	    "%sstruct cfdriver * const cfdriver_%s_%s[] = {\n",
+	    ioconfname ? "static " : "",
+	    ioconfname ? "comp" : "list",
+	    ioconfname ? ioconfname : "initial");
 
-	fprintf(fp, "struct cfdriver * const cfdriver_list_initial[] = {\n");
 	TAILQ_FOREACH(d, &allbases, d_next) {
 		if (!devbase_has_instances(d, WILD))
 			continue;
@@ -289,7 +290,10 @@ emitcfattachinit(FILE *fp)
 	}
 
 	NEWLINE;
-	fprintf(fp, "const struct cfattachinit cfattachinit[] = {\n");
+	fprintf(fp, "%sconst struct cfattachinit cfattach%s%s[] = {\n",
+	    ioconfname ? "static " : "",
+	    ioconfname ? "_comp_" : "init",
+	    ioconfname ? ioconfname : "");
 
 	TAILQ_FOREACH(d, &allbases, d_next) {
 		if (!devbase_has_instances(d, WILD))
@@ -369,9 +373,10 @@ emitcfdata(FILE *fp)
 		"#define NORM FSTATE_NOTFOUND\n"
 		"#define STAR FSTATE_STAR\n"
 		"\n"
-		"struct cfdata cfdata%s%s[] = {\n"
+		"%sstruct cfdata cfdata%s%s[] = {\n"
 		"    /* driver           attachment    unit state "
 		"loc   flags pspec */\n",
+		    ioconfname ? "static " : "",
 		    ioconfname ? "_" : "",
 		    ioconfname ? ioconfname : "");
 	for (p = packed; (i = *p) != NULL; p++) {
