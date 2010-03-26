@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc_at_mainbus.c,v 1.2 2010/03/25 19:54:08 pooka Exp $	*/
+/*	$NetBSD: ugenhc_at_mainbus.c,v 1.3 2010/03/26 15:51:55 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -17,6 +17,6 @@ void tty_init(void);
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 
-	config_init_component(cfdriver_comp_ugenhc,
-	    cfattach_comp_ugenhc, cfdata_ugenhc);
+	config_init_component(cfdriver_ioconf_ugenhc,
+	    cfattach_ioconf_ugenhc, cfdata_ioconf_ugenhc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom_at_usb.c,v 1.6 2010/03/25 19:54:08 pooka Exp $	*/
+/*	$NetBSD: ucom_at_usb.c,v 1.7 2010/03/26 15:51:55 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -20,8 +20,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	extern struct cdevsw ucom_cdevsw;
 	devmajor_t cmaj, bmaj;
 
-	config_init_component(cfdriver_comp_ucom,
-	    cfattach_comp_ucom, cfdata_ucom);
+	config_init_component(cfdriver_ioconf_ucom,
+	    cfattach_ioconf_ucom, cfdata_ioconf_ucom);
 
 	bmaj = cmaj = -1;
 	FLAWLESSCALL(devsw_attach("ucom", NULL, &bmaj, &ucom_cdevsw, &cmaj));

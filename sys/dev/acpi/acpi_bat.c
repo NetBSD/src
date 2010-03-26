@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.96 2010/03/26 05:59:26 pooka Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.97 2010/03/26 15:51:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.96 2010/03/26 05:59:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.97 2010/03/26 15:51:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -799,12 +799,12 @@ acpibat_modcmd(modcmd_t cmd, void *context)
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-		return config_init_component(cfdriver_comp_acpibat,
-		    cfattach_comp_acpibat, cfdata_acpibat);
+		return config_init_component(cfdriver_ioconf_acpibat,
+		    cfattach_ioconf_acpibat, cfdata_ioconf_acpibat);
 
 	case MODULE_CMD_FINI:
-		return config_fini_component(cfdriver_comp_acpibat,
-		    cfattach_comp_acpibat, cfdata_acpibat);
+		return config_fini_component(cfdriver_ioconf_acpibat,
+		    cfattach_ioconf_acpibat, cfdata_ioconf_acpibat);
 
 	default:
 		return ENOTTY;

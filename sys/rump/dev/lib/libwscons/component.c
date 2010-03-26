@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.4 2010/03/25 19:54:08 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.5 2010/03/26 15:51:55 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -17,8 +17,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	extern struct cdevsw wskbd_cdevsw, wsmouse_cdevsw;
 	devmajor_t bmaj, cmaj;
 
-	config_init_component(cfdriver_comp_wscons,
-	    cfattach_comp_wscons, cfdata_wscons);
+	config_init_component(cfdriver_ioconf_wscons,
+	    cfattach_ioconf_wscons, cfdata_ioconf_wscons);
 
 	bmaj = cmaj = -1;
 	FLAWLESSCALL(devsw_attach("wskbd", NULL, &bmaj, &wskbd_cdevsw, &cmaj));
