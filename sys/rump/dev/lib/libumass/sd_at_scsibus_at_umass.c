@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.4 2010/03/25 19:54:08 pooka Exp $	*/
+/*	$NetBSD: sd_at_scsibus_at_umass.c,v 1.5 2010/03/26 15:51:55 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -20,8 +20,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	extern struct cdevsw sd_cdevsw, cd_cdevsw;
 	devmajor_t bmaj, cmaj;
 
-	config_init_component(cfdriver_comp_umass,
-	    cfattach_comp_umass, cfdata_umass);
+	config_init_component(cfdriver_ioconf_umass,
+	    cfattach_ioconf_umass, cfdata_ioconf_umass);
 
 	bmaj = cmaj = -1;
 	FLAWLESSCALL(devsw_attach("sd", &sd_bdevsw, &bmaj, &sd_cdevsw, &cmaj));

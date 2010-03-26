@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_at_ugenhc.c,v 1.2 2010/03/25 19:54:08 pooka Exp $	*/
+/*	$NetBSD: usb_at_ugenhc.c,v 1.3 2010/03/26 15:51:55 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -17,5 +17,6 @@ void tty_init(void);
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 
-	config_init_component(cfdriver_comp_usb, cfattach_comp_usb, cfdata_usb);
+	config_init_component(cfdriver_ioconf_usb,
+	    cfattach_ioconf_usb, cfdata_ioconf_usb);
 }

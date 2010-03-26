@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt_at_usb.c,v 1.4 2010/03/25 19:54:08 pooka Exp $	*/
+/*	$NetBSD: ulpt_at_usb.c,v 1.5 2010/03/26 15:51:55 pooka Exp $	*/
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -17,8 +17,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	extern struct cdevsw ulpt_cdevsw;
 	devmajor_t bmaj, cmaj;
 
-	config_init_component(cfdriver_comp_ulpt,
-	    cfattach_comp_ulpt, cfdata_ulpt);
+	config_init_component(cfdriver_ioconf_ulpt,
+	    cfattach_ioconf_ulpt, cfdata_ioconf_ulpt);
 
 	bmaj = cmaj = -1;
 	FLAWLESSCALL(devsw_attach("ulpt", NULL, &bmaj, &ulpt_cdevsw, &cmaj));
