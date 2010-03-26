@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.21 2010/03/23 15:09:45 jakllsch Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.22 2010/03/26 15:46:04 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -59,7 +59,9 @@ static dev_type_size(dmsize);
 
 /* attach and detach routines */
 void dmattach(int);
+#ifdef _MODULE
 static int dmdestroy(void);
+#endif
 
 static void dm_doinit(void);
 
@@ -297,6 +299,7 @@ dmattach(int n)
 	}
 }
 
+#ifdef _MODULE
 /* Destroy routine */
 static int
 dmdestroy(void)
@@ -313,6 +316,7 @@ dmdestroy(void)
 
 	return 0;
 }
+#endif /* _MODULE */
 
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
