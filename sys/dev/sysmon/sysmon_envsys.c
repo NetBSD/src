@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.98 2010/03/24 12:15:54 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.99 2010/03/26 12:36:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.98 2010/03/24 12:15:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.99 2010/03/26 12:36:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1141,6 +1141,7 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 			    prop_dictionary_t dict)
 {
 	prop_dictionary_t pdict;
+	const char *class;
 	int error = 0;
 
 	pdict = prop_dictionary_create();
@@ -1148,8 +1149,8 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		return EINVAL;
 
 	/*
-	 * Add the 'refresh-timeout' object into the 'device-properties'
-	 * dictionary. We use by default 30 seconds.
+	 * Add the 'refresh-timeout' and 'dev-class' objects into the
+	 * 'device-properties' dictionary.
 	 *
 	 * 	...
 	 * 	<dict>
@@ -1157,7 +1158,9 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<dict>
 	 * 			<key>refresh-timeout</key>
 	 * 			<integer>120</integer<
-	 * 		</dict<
+	 *			<key>device-class</key>
+	 *			<string>class_name</string>
+	 * 		</dict>
 	 * 	</dict>
 	 * 	...
 	 *
@@ -1167,6 +1170,16 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 
 	if (!prop_dictionary_set_uint64(pdict, "refresh-timeout",
 					sme->sme_events_timeout)) {
+		error = EINVAL;
+		goto out;
+	}
+	if (sme->sme_class == SME_CLASS_BATTERY)
+		class = "battery";
+	else if (sme->sme_class == SME_CLASS_ACADAPTER)
+		class = "ac-adapter";
+	else
+		class = "other";
+	if (!prop_dictionary_set_cstring_nocopy(pdict, "device-class", class)) {
 		error = EINVAL;
 		goto out;
 	}
