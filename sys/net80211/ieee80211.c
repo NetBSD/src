@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.50 2010/01/19 22:08:17 pooka Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.51 2010/03/26 17:18:05 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.50 2010/01/19 22:08:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.51 2010/03/26 17:18:05 dyoung Exp $");
 #endif
 
 /*
@@ -352,7 +352,7 @@ ieee80211_media_init(struct ieee80211com *ic,
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ifmediareq imr;
 	int i, j, mode, rate, maxrate, mword, mopt, r;
-	struct ieee80211_rateset *rs;
+	const struct ieee80211_rateset *rs;
 	struct ieee80211_rateset allrates;
 
 	/*
