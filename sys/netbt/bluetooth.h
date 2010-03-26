@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.8 2008/09/08 23:36:55 gmcgarry Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.9 2010/03/26 18:15:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -122,8 +122,6 @@ struct btproto {
 /*
  * Debugging stuff
  */
-#include "opt_bluetooth.h"
-
 #ifdef BLUETOOTH_DEBUG
 extern int bluetooth_debug;
 # define DPRINTF(fmt, args...)	do {			\
