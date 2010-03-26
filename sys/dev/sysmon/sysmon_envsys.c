@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.99 2010/03/26 12:36:59 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.100 2010/03/26 20:31:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.99 2010/03/26 12:36:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.100 2010/03/26 20:31:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2000,4 +2000,31 @@ out:
 		error = EINVAL;
 
 	return error;
+}
+
+/*
+ * + sysmon_envsys_foreach_sensor
+ *
+ *	Walk through the devices' sensor lists and execute the callback.
+ *	If the callback returns false, the remainder of the current
+ *	device's sensors are skipped.
+ */
+void   
+sysmon_envsys_foreach_sensor(bool(*func)(struct sysmon_envsys *,
+			     envsys_data_t *, void*), void *arg)
+{
+	struct sysmon_envsys *sme;
+	envsys_data_t *sensor;
+
+	mutex_enter(&sme_global_mtx);
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+
+		mutex_enter(&sme->sme_mtx);
+		TAILQ_FOREACH(sensor, &sme->sme_sensors_list, sensors_head) {
+			if ((*func)(sme, sensor, arg))
+				break;
+		}
+		mutex_exit(&sme->sme_mtx);
+	}
+	mutex_exit(&sme_global_mtx);
 }
