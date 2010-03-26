@@ -1,4 +1,4 @@
-.\" $NetBSD: pfind.9,v 1.1 2010/03/25 10:09:54 jruoho Exp $
+.\" $NetBSD: pfind.9,v 1.2 2010/03/26 19:43:04 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd March 25, 2010
-.Dt pfind 9
+.Dt PFIND 9
 .Os
 .Sh NAME
 .Nm pfind
@@ -88,7 +88,7 @@ The
 .Fn pfind
 and
 .Fn pgfind
-are equivalent to
+functions are equivalent to
 .Fn p_find
 and
 .Fn pg_find
@@ -97,7 +97,7 @@ with the
 argument specified as
 .Dv PFIND_UNLOCK .
 .Sh RETURN VALUES
-Upon succesful completion, the described functions return a pointer to either
+Upon successful completion, the described functions return a pointer to either
 .Em struct proc
 or
 .Em struct pgrp .
