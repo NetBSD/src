@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.17 2010/03/25 19:39:05 pooka Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.18 2010/03/26 15:51:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -240,7 +240,7 @@ emitcfdrivers(FILE *fp)
 	fprintf(fp,
 	    "%sstruct cfdriver * const cfdriver_%s_%s[] = {\n",
 	    ioconfname ? "static " : "",
-	    ioconfname ? "comp" : "list",
+	    ioconfname ? "ioconf" : "list",
 	    ioconfname ? ioconfname : "initial");
 
 	TAILQ_FOREACH(d, &allbases, d_next) {
@@ -292,7 +292,7 @@ emitcfattachinit(FILE *fp)
 	NEWLINE;
 	fprintf(fp, "%sconst struct cfattachinit cfattach%s%s[] = {\n",
 	    ioconfname ? "static " : "",
-	    ioconfname ? "_comp_" : "init",
+	    ioconfname ? "_ioconf_" : "init",
 	    ioconfname ? ioconfname : "");
 
 	TAILQ_FOREACH(d, &allbases, d_next) {
@@ -377,7 +377,7 @@ emitcfdata(FILE *fp)
 		"    /* driver           attachment    unit state "
 		"loc   flags pspec */\n",
 		    ioconfname ? "static " : "",
-		    ioconfname ? "_" : "",
+		    ioconfname ? "_ioconf_" : "",
 		    ioconfname ? ioconfname : "");
 	for (p = packed; (i = *p) != NULL; p++) {
 		/* the description */
