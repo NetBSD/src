@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.43 2010/03/05 18:41:46 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.44 2010/03/26 18:21:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43 2010/03/05 18:41:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.44 2010/03/26 18:21:28 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43 2010/03/05 18:41:46 pooka Exp $");
 #include "rump_vfs_private.h"
 
 struct cwdinfo cwdi0;
+const char *rootfstype = ROOT_FSTYPE_ANY;
 
 static void rump_rcvp_lwpset(struct vnode *, struct vnode *, struct lwp *);
 
@@ -108,7 +109,6 @@ rump_vfs_init(void)
 			panic("syncer thread create failed: %d", rv);
 	}
 
-	rootfstype = ROOT_FSTYPE_ANY;
 	root_device = &rump_rootdev;
 
 	/* bootstrap cwdi (rest done in vfs_mountroot() */
