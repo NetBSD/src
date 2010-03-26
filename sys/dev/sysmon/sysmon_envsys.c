@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.100 2010/03/26 20:31:06 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.101 2010/03/26 21:06:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.100 2010/03/26 20:31:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.101 2010/03/26 21:06:25 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2021,7 +2021,7 @@ sysmon_envsys_foreach_sensor(bool(*func)(struct sysmon_envsys *,
 
 		mutex_enter(&sme->sme_mtx);
 		TAILQ_FOREACH(sensor, &sme->sme_sensors_list, sensors_head) {
-			if ((*func)(sme, sensor, arg))
+			if (!(*func)(sme, sensor, arg))
 				break;
 		}
 		mutex_exit(&sme->sme_mtx);
