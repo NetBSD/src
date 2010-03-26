@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.95 2010/03/24 12:18:54 pgoyette Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.96 2010/03/26 05:59:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.95 2010/03/24 12:18:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.96 2010/03/26 05:59:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -795,45 +795,16 @@ MODULE(MODULE_CLASS_DRIVER, acpibat, NULL);
 static int
 acpibat_modcmd(modcmd_t cmd, void *context)
 {
-	int err;
 
 	switch (cmd) {
 
 	case MODULE_CMD_INIT:
-
-		err = config_cfdriver_attach(&acpibat_cd);
-
-		if (err != 0)
-			return err;
-
-		err = config_cfattach_attach("acpibat", &acpibat_ca);
-
-		if (err != 0) {
-			config_cfdriver_detach(&acpibat_cd);
-			return err;
-		}
-
-		err = config_cfdata_attach(cfdata_acpibat, 1);
-
-		if (err != 0) {
-			config_cfattach_detach("acpibat", &acpibat_ca);
-			config_cfdriver_detach(&acpibat_cd);
-			return err;
-		}
-
-		return 0;
+		return config_init_component(cfdriver_comp_acpibat,
+		    cfattach_comp_acpibat, cfdata_acpibat);
 
 	case MODULE_CMD_FINI:
-
-		err = config_cfdata_detach(cfdata_acpibat);
-
-		if (err != 0)
-			return err;
-
-		config_cfattach_detach("acpibat", &acpibat_ca);
-		config_cfdriver_detach(&acpibat_cd);
-
-		return 0;
+		return config_fini_component(cfdriver_comp_acpibat,
+		    cfattach_comp_acpibat, cfdata_acpibat);
 
 	default:
 		return ENOTTY;
