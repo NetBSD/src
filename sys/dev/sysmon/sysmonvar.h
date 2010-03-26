@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.34 2010/03/19 02:19:13 pgoyette Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.35 2010/03/26 20:31:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -207,6 +207,9 @@ uint32_t	sysmon_envsys_get_max_value(bool (*)(const envsys_data_t*), bool);
 
 void	sysmon_envsys_sensor_event(struct sysmon_envsys *, envsys_data_t *,
 				   int);
+
+void	sysmon_envsys_foreach_sensor(bool(*)(struct sysmon_envsys *,
+				     envsys_data_t *, void*), void *);
 
 void	sysmon_envsys_init(void);
 
