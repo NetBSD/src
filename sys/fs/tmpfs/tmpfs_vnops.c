@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.66 2010/01/08 11:35:09 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.67 2010/03/27 02:37:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.66 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.67 2010/03/27 02:37:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1336,7 +1336,7 @@ tmpfs_print(void *v)
 	printf("tag VT_TMPFS, tmpfs_node %p, flags 0x%x, links %d\n",
 	    node, node->tn_flags, node->tn_links);
 	printf("\tmode 0%o, owner %d, group %d, size %" PRIdMAX
-	    ", status 0x%x\n",
+	    ", status 0x%x",
 	    node->tn_mode, node->tn_uid, node->tn_gid,
 	    (uintmax_t)node->tn_size, node->tn_status);
 	if (vp->v_type == VFIFO)

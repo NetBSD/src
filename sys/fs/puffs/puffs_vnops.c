@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.142 2010/01/14 14:44:13 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.143 2010/03/27 02:37:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.142 2010/01/14 14:44:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.143 2010/03/27 02:37:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2055,10 +2055,11 @@ puffs_vnop_print(void *v)
 	int error;
 
 	/* kernel portion */
-	printf("tag VT_PUFFS, vnode %p, puffs node: %p,\n"
+	printf("tag VT_PUFFS, vnode %p, puffs node: %p"
 	    "    userspace cookie: %p\n", vp, pn, pn->pn_cookie);
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
+	printf("\n");
 
 	/* userspace portion */
 	if (EXISTSOP(pmp, PRINT)) {
