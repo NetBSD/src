@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.66 2008/04/28 20:24:08 martin Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.67 2010/03/27 02:33:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.66 2008/04/28 20:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.67 2010/03/27 02:33:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -528,9 +528,10 @@ fifo_printinfo(struct vnode *vp)
 {
 	struct fifoinfo	*fip;
 
-	fip = vp->v_fifoinfo;
-	printf(", fifo with %d readers and %d writers",
-	    fip->fi_readers, fip->fi_writers);
+	if ((fip = vp->v_fifoinfo) != NULL) {
+		printf(", fifo with %d readers and %d writers",
+		    fip->fi_readers, fip->fi_writers);
+	}
 }
 
 /*
