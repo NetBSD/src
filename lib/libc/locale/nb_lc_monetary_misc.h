@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_monetary_misc.h,v 1.2 2009/01/11 02:46:29 christos Exp $ */
+/* $NetBSD: nb_lc_monetary_misc.h,v 1.3 2010/03/27 15:25:22 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -38,31 +38,36 @@ static __inline void
 _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
     _MonetaryLocale * __restrict data)
 {
+	struct lconv *ldata;
+
 	_DIAGASSERT(cache != NULL);
+	_DIAGASSERT(cache->ldata != NULL);
+	_DIAGASSERT(cache->items != NULL);
 	_DIAGASSERT(data != NULL);
 
-	cache->ldata.int_curr_symbol   = __UNCONST(data->int_curr_symbol);
-	cache->ldata.currency_symbol   = __UNCONST(data->currency_symbol);
-	cache->ldata.mon_decimal_point = __UNCONST(data->mon_decimal_point);
-	cache->ldata.mon_thousands_sep = __UNCONST(data->mon_thousands_sep);
-	cache->ldata.mon_grouping      = __UNCONST(data->mon_grouping);
-	cache->ldata.positive_sign     = __UNCONST(data->positive_sign);
-	cache->ldata.negative_sign     = __UNCONST(data->negative_sign);
+	ldata = cache->ldata;
+	ldata->int_curr_symbol   = __UNCONST(data->int_curr_symbol);
+	ldata->currency_symbol   = __UNCONST(data->currency_symbol);
+	ldata->mon_decimal_point = __UNCONST(data->mon_decimal_point);
+	ldata->mon_thousands_sep = __UNCONST(data->mon_thousands_sep);
+	ldata->mon_grouping      = __UNCONST(data->mon_grouping);
+	ldata->positive_sign     = __UNCONST(data->positive_sign);
+	ldata->negative_sign     = __UNCONST(data->negative_sign);
 
-	cache->ldata.int_frac_digits    = data->int_frac_digits;
-	cache->ldata.frac_digits        = data->frac_digits;
-	cache->ldata.p_cs_precedes      = data->p_cs_precedes;
-	cache->ldata.p_sep_by_space     = data->p_sep_by_space;
-	cache->ldata.n_cs_precedes      = data->n_cs_precedes;
-	cache->ldata.n_sep_by_space     = data->n_sep_by_space;
-	cache->ldata.p_sign_posn        = data->p_sign_posn;
-	cache->ldata.n_sign_posn        = data->n_sign_posn;
-	cache->ldata.int_p_cs_precedes  = data->int_p_cs_precedes;
-	cache->ldata.int_n_cs_precedes  = data->int_n_cs_precedes;
-	cache->ldata.int_p_sep_by_space = data-> int_p_sep_by_space;
-	cache->ldata.int_n_sep_by_space = data->int_n_sep_by_space;
-	cache->ldata.int_p_sign_posn    = data->int_p_sign_posn;
-	cache->ldata.int_n_sign_posn    = data->int_n_sign_posn;
+	ldata->int_frac_digits    = data->int_frac_digits;
+	ldata->frac_digits        = data->frac_digits;
+	ldata->p_cs_precedes      = data->p_cs_precedes;
+	ldata->p_sep_by_space     = data->p_sep_by_space;
+	ldata->n_cs_precedes      = data->n_cs_precedes;
+	ldata->n_sep_by_space     = data->n_sep_by_space;
+	ldata->p_sign_posn        = data->p_sign_posn;
+	ldata->n_sign_posn        = data->n_sign_posn;
+	ldata->int_p_cs_precedes  = data->int_p_cs_precedes;
+	ldata->int_n_cs_precedes  = data->int_n_cs_precedes;
+	ldata->int_p_sep_by_space = data-> int_p_sep_by_space;
+	ldata->int_n_sep_by_space = data->int_n_sep_by_space;
+	ldata->int_p_sign_posn    = data->int_p_sign_posn;
+	ldata->int_n_sign_posn    = data->int_n_sign_posn;
 
 	cache->items[(size_t)CRNCYSTR] = NULL; /* NOT IMPLEMENTED YET */
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.3 2009/12/02 08:53:03 uebayasi Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.4 2010/03/27 15:25:22 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -44,8 +44,8 @@ struct _locale_cache_t {
 	const short *tolower_tab;
 	const short *toupper_tab;
 	size_t mb_cur_max;
-	struct lconv ldata;
-	const char *items[ALT_DIGITS + 1];
+	struct lconv *ldata;
+	const char **items;
 };
 
 struct _locale_impl_t {
