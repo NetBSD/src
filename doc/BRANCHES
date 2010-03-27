@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.290 2010/03/27 03:38:27 mrg Exp $
+#	$NetBSD: BRANCHES,v 1.291 2010/03/27 10:54:12 wiz Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -287,7 +287,7 @@ Notes:		This code was on a branch because it involves changes to
 
 Branch:		chris-arm-intr-rework
 Description:	Rework arm interrupt handling code
-Status:		Active
+Status:		Dormant
 Start Date:	11 Aug 2007
 End Date:
 Base Tag:	chris-arm-intr-rework-base
@@ -406,7 +406,7 @@ Notes:
 
 Branch:		matt-nb5-mips64
 Description:	Rototill the mips code to support LP64 mips and N32/N64 ABIs
-Status:		Mostly dead
+Status:		Active
 Start Date:	2009-08-01
 End Date:
 Base Tag:	netbsd-5-0-1-RELEASE
