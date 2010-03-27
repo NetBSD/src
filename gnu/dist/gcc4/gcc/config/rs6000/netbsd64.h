@@ -571,6 +571,4 @@ while (0)
 #define LINK_GCC_C_SEQUENCE_SPEC \
   "%{static:--start-group} %G %L %{static:--end-group}%{!static:%G}"
 
-#define MD_UNWIND_SUPPORT "config/rs6000/linux-unwind.h"
-
 #define POWERPC_NETBSD
