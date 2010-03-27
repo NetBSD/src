@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.4 2010/03/27 15:25:21 tnozaki Exp $ */
+/* $NetBSD: global_locale.c,v 1.5 2010/03/27 16:47:05 christos Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.4 2010/03/27 15:25:21 tnozaki Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.5 2010/03/27 16:47:05 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -115,7 +115,7 @@ static const char *_global_items[(size_t)ALT_DIGITS + 1] = {
 	[(size_t)ABMON_5    ] = "May",
 	[(size_t)ABMON_6    ] = "June",
 	[(size_t)ABMON_7    ] = "July",
-	[(size_t)ABMON_8    ] = "Augst",
+	[(size_t)ABMON_8    ] = "August",
 	[(size_t)ABMON_9    ] = "September",
 	[(size_t)ABMON_10   ] = "October",
 	[(size_t)ABMON_11   ] = "November",
