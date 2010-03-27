@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.289 2010/03/21 13:04:24 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.290 2010/03/27 03:38:27 mrg Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -51,7 +51,7 @@ Status:		Terminated
 Start Date:
 End Date:
 Base Tag:	comdex-fall-1999-base
-Maintainer:	?
+Maintainer:	mycroft
 Scope:		Entire tree.
 Notes:
 
@@ -297,21 +297,6 @@ Notes:		Rework arm interrupt code to provide a shared set of interrupt
 		routines, and allow improvements to be shared across all arm
 		based hardware.
 
-Branch:		gmcgarry_ctxsw
-Description:	Separate scheduler from context-switch code
-Status:		Dormant
-Start Date:	18 December 2002
-End Date:
-Base Tag:	gmcgarry_ctxsw_base
-Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
-Scope:		kernel
-Notes:		Removing knowledge of the scheduler and its run queues
-		from the machine-dependent context switch code is the
-		first step in cleaning up the scheduler.  It is necessary
-		for the newlock branch, making the scheduler SMP friendly,
-		adding real-time scheduler extensions, and reducing the
-		number of code paths for LWP and proc switching.
-
 Branch:		gmcgarry_ucred
 Description:	Integrate and encapsulate user credentials
 Status:		Dormant
@@ -452,17 +437,6 @@ Maintainer:	Matt Fleming <mjf@NetBSD.org>
 Scope:		kernel
 Notes:
 
-Branch:		nick-hppapmap
-Description:	Update of hppa pmap with OpenBSD code.
-Status: 	Terminated; merged to -current
-Start Date:	27 October 2008
-End Date:	30 April 2009
-Base Tag:	nick-hppapmap-base3
-Maintainer:	Nick Hudson <skrll@NetBSD.org>
-Scope:		sys/
-Notes:		Port of the OpenBSD pmap including support for PA2.0 CPUs in
-		32-bit mode.
-
 Branch:		nick-net80211-sync
 Description:	sync of net80211 with FreeBSD
 Status:		Active
@@ -535,22 +509,6 @@ Notes:		No longer active due to the lack of time. If you plan to
 		After the work is done, you are required to test the branch
 		(before the merge to -current) with an interop IPv6 test.
 		More info at: http://www.tahi.org/
-
-Branch:		rtr-xorg-branch
-Description:	xorg & static build alterations to src/x11
-Status:		Active
-Start Date:	Nov 15 2004
-End Date:	
-Base tag:	rtr-xorg-branch-base
-Maintainer:	Tyler R. Retzlaff <rtr@NetBSD.org>
-Scope:		x11
-		distrib/sets/lists
-		share/mk/bsd.x11.mk
-		share/mk/bsd.own.mk
-		etc/mtree/NetBSD.dist
-Notes:		Requires parts of xsrc/xfree (HEAD)
-		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
-		Requires xorg (XORG-6_8_1)
 
 Branch:  	wrstuden-fixsa
 Description:	Fix a number of issues present with Scheduler Activations.
@@ -647,80 +605,6 @@ Maintainer:	Reinoud Zandijk <reinoud@NetBSD.org>
 Scope:		src/sys and src/common
 Notes:		Used as experiment sandbox and if successful hopefully one day
 		to be integrated.
-
-Branch:		thorpej-atomic
-Description:	Implementation of an atomic memory operations API modeled
-		after the one in Solaris 10.
-Status:		Active
-Start Date:	Apr 11 2007
-End Date:
-Base tag:	thorpej-atomic-base
-Maintainer:	Jason Thorpe <thorpej@netbsd.org>
-Scope:		src/common
-		src/sys
-Notes:		Base atomic primitives need to be implemented for
-		all of the supported architectures:
-
-		alpha		DONE
-		arm		DONE
-		hppa
-		i386		DONE
-		ia64
-		m68k		DONE (except for 68010)
-		mips
-		ns32k
-		powerpc		DONE except for membar_*()
-		powerpc64	DONE except for membar_*()
-		sh3
-		sparc		DONE except for membar_*()
-		sparc64		DONE except for membar_*()
-		vax
-		x86_64		DONE
-
-		Tested:
-
-		alpha		NO
-		arm		NO
-		hppa		NO
-		i386		NO
-		ia64		NO
-		m68k		NO
-		mips		NO
-		ns32k		NO
-		powerpc		NO
-		powerpc64	NO
-		sh3		NO
-		sparc		NO
-		sparc64		NO
-		vax		NO
-		x86_64		NO
-
-		TODO:
-
-		all		- Need to replace mb_*() with membar_*().
-
-				- Audit MUTEX_CAS() and RWLOCK_CAS() uses
-				  to see of membar_enter() is required here.
-
-				- Talk to ad@ -- figure out of non-atomic
-				  mutex / rwlock release is actually safe.
-
-		arm		- Consider using a RAS technique like
-				  MIPS uses for _lock_cas() and the mutex
-				  stubs.  Possibly do more than one atomic
-				  op as a RAS.  Possibly implement mutex
-				  stubs using the technique.
-
-		m68k		- Need to do 68010 support.
-		
-		i386		- Need to change when x86_patch() is called
-				  so we can test ncpus.
-
-		powerpc		- Figure out if we need barriers in the
-				  atomic ops themselves (hopefully not!)
-
-		x86_64		- Need to change when x86_patch() is called
-				  so we can test ncpus.
 
 ########################################################################
 # Individual developers' branches (Terminated):
@@ -1752,6 +1636,123 @@ Base Tag:	christos-time_t-base
 Maintainer:	Christos Zoulas <christos@NetBSD.org>
 Scope:		kernel, libc, libutil, userland
 Notes:		Requires a major bump of all libraries except libc, libutil.
+
+Branch:		rtr-xorg-branch
+Description:	xorg & static build alterations to src/x11
+Status:		Dead; replaced by src/external/mit/xorg
+Start Date:	Nov 15 2004
+End Date:	?
+Base tag:	rtr-xorg-branch-base
+Maintainer:	Tyler R. Retzlaff <rtr@NetBSD.org>
+Scope:		x11
+		distrib/sets/lists
+		share/mk/bsd.x11.mk
+		share/mk/bsd.own.mk
+		etc/mtree/NetBSD.dist
+Notes:		Requires parts of xsrc/xfree (HEAD)
+		xsrc/local, xsrc/xfree/xc/programs/Xserver/hw/netbsd
+		Requires xorg (XORG-6_8_1)
+
+Branch:		gmcgarry_ctxsw
+Description:	Separate scheduler from context-switch code
+Status:		Dead; replaced by cpu_switchto / yamt-idlelwp branch
+Start Date:	18 December 2002
+End Date:
+Base Tag:	gmcgarry_ctxsw_base
+Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
+Scope:		kernel
+Notes:		Removing knowledge of the scheduler and its run queues
+		from the machine-dependent context switch code is the
+		first step in cleaning up the scheduler.  It is necessary
+		for the newlock branch, making the scheduler SMP friendly,
+		adding real-time scheduler extensions, and reducing the
+		number of code paths for LWP and proc switching.
+
+Branch:		nick-hppapmap
+Description:	Update of hppa pmap with OpenBSD code.
+Status: 	Terminated; merged to -current
+Start Date:	27 October 2008
+End Date:	30 April 2009
+Base Tag:	nick-hppapmap-base3
+Maintainer:	Nick Hudson <skrll@NetBSD.org>
+Scope:		sys/
+Notes:		Port of the OpenBSD pmap including support for PA2.0 CPUs in
+		32-bit mode.
+
+Branch:		thorpej-atomic
+Description:	Implementation of an atomic memory operations API modeled
+		after the one in Solaris 10.
+Status:		Terminated; merged to -current
+Start Date:	Apr 11 2007
+End Date:	Nov 18 2007
+Base tag:	thorpej-atomic-base
+Maintainer:	Jason Thorpe <thorpej@netbsd.org>
+Scope:		src/common
+		src/sys
+Notes:		Base atomic primitives need to be implemented for
+		all of the supported architectures:
+
+		alpha		DONE
+		arm		DONE
+		hppa
+		i386		DONE
+		ia64
+		m68k		DONE (except for 68010)
+		mips
+		ns32k
+		powerpc		DONE except for membar_*()
+		powerpc64	DONE except for membar_*()
+		sh3
+		sparc		DONE except for membar_*()
+		sparc64		DONE except for membar_*()
+		vax
+		x86_64		DONE
+
+		Tested:
+
+		alpha		NO
+		arm		NO
+		hppa		NO
+		i386		NO
+		ia64		NO
+		m68k		NO
+		mips		NO
+		ns32k		NO
+		powerpc		NO
+		powerpc64	NO
+		sh3		NO
+		sparc		NO
+		sparc64		NO
+		vax		NO
+		x86_64		NO
+
+		TODO:
+
+		all		- Need to replace mb_*() with membar_*().
+
+				- Audit MUTEX_CAS() and RWLOCK_CAS() uses
+				  to see of membar_enter() is required here.
+
+				- Talk to ad@ -- figure out of non-atomic
+				  mutex / rwlock release is actually safe.
+
+		arm		- Consider using a RAS technique like
+				  MIPS uses for _lock_cas() and the mutex
+				  stubs.  Possibly do more than one atomic
+				  op as a RAS.  Possibly implement mutex
+				  stubs using the technique.
+
+		m68k		- Need to do 68010 support.
+		
+		i386		- Need to change when x86_patch() is called
+				  so we can test ncpus.
+
+		powerpc		- Figure out if we need barriers in the
+				  atomic ops themselves (hopefully not!)
+
+		x86_64		- Need to change when x86_patch() is called
+				  so we can test ncpus.
+
 ########################################################################
 # Other:
 ########################################################################
