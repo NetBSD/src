@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.101 2010/03/26 21:06:25 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.102 2010/03/27 13:23:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.101 2010/03/26 21:06:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.102 2010/03/27 13:23:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2011,7 +2011,8 @@ out:
  */
 void   
 sysmon_envsys_foreach_sensor(bool(*func)(struct sysmon_envsys *,
-			     envsys_data_t *, void*), void *arg)
+					 envsys_data_t *, void*), void *arg,
+			     bool refresh)
 {
 	struct sysmon_envsys *sme;
 	envsys_data_t *sensor;
@@ -2019,12 +2020,18 @@ sysmon_envsys_foreach_sensor(bool(*func)(struct sysmon_envsys *,
 	mutex_enter(&sme_global_mtx);
 	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
 
-		mutex_enter(&sme->sme_mtx);
+		sysmon_envsys_acquire(sme, false);
 		TAILQ_FOREACH(sensor, &sme->sme_sensors_list, sensors_head) {
+			if (refresh &&
+			    (sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
+				mutex_enter(&sme->sme_mtx);
+				(*sme->sme_refresh)(sme, sensor);
+				mutex_exit(&sme->sme_mtx);
+			}
 			if (!(*func)(sme, sensor, arg))
 				break;
 		}
-		mutex_exit(&sme->sme_mtx);
+		sysmon_envsys_release(sme, false);
 	}
 	mutex_exit(&sme_global_mtx);
 }
