@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.250 2010/03/19 04:04:27 cnst Exp $
+# $NetBSD: ALL,v 1.251 2010/03/27 03:04:51 nonaka Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.250 $"
+#ident 		"ALL-$Revision: 1.251 $"
 
 maxusers	64		# estimated number of users
 
@@ -1333,10 +1333,13 @@ sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 # SD/MMC/SDIO Controller and Device support
 
-# SD/MMC controller
-sdhc*  at pci?				# SD Host Controller
-sdmmc* at sdhc? 			# SD/MMC bus
+# PCI SD/MMC controller
+sdhc*	at pci?				# SD Host Controller
 
+# CardBus SD/MMC controller
+sdhc*	at cardbus? function ?		# SD Host Controller
+
+sdmmc* at sdhc? 			# SD/MMC bus
 ld*	at sdmmc?
 
 
