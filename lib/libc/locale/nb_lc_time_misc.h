@@ -1,4 +1,4 @@
-/* $NetBSD: nb_lc_time_misc.h,v 1.2 2009/01/11 02:46:29 christos Exp $ */
+/* $NetBSD: nb_lc_time_misc.h,v 1.3 2010/03/27 15:25:22 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -48,6 +48,7 @@ _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
 	size_t i;
 
 	_DIAGASSERT(cache != NULL);
+	_DIAGASSERT(cache->items != NULL);
 	_DIAGASSERT(data != NULL);
 
         for (i = (size_t)ABDAY_1; i <= ABDAY_7;  ++i)
