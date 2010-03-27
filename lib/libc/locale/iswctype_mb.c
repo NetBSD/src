@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_mb.c,v 1.5 2009/01/18 22:03:19 tnozaki Exp $ */
+/* $NetBSD: iswctype_mb.c,v 1.6 2010/03/27 22:14:09 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_mb.c,v 1.5 2009/01/18 22:03:19 tnozaki Exp $");
+__RCSID("$NetBSD: iswctype_mb.c,v 1.6 2010/03/27 22:14:09 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -130,7 +130,7 @@ iswctype(wint_t wc, wctype_t charclass)
 		return 0;
 	}
 	rl = _RUNE_LOCALE();
-	te = (_WCTypeEntry const *)charclass;
+	te = (_WCTypeEntry const *)(void *)charclass;
 	return _iswctype_priv(rl, wc, te);
 }
 
@@ -145,7 +145,7 @@ towctrans(wint_t wc, wctrans_t charmap)
 		return wc;
 	}
 	rl = _RUNE_LOCALE();
-	te = (_WCTransEntry const *)charmap;
+	te = (_WCTransEntry const *)(void *)charmap;
 	return _towctrans_priv(rl, wc, te);
 }
 
