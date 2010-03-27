@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.102 2010/03/27 13:23:18 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.103 2010/03/27 13:34:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.102 2010/03/27 13:23:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.103 2010/03/27 13:34:16 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2010,9 +2010,9 @@ out:
  *	device's sensors are skipped.
  */
 void   
-sysmon_envsys_foreach_sensor(bool(*func)(struct sysmon_envsys *,
-					 envsys_data_t *, void*), void *arg,
-			     bool refresh)
+sysmon_envsys_foreach_sensor(bool(*func)(const struct sysmon_envsys *,
+					 const envsys_data_t *, void*),
+			     void *arg, bool refresh)
 {
 	struct sysmon_envsys *sme;
 	envsys_data_t *sensor;
