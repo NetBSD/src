@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.197 2010/03/13 18:25:31 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.198 2010/03/28 18:49:28 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4058,4 +4058,18 @@ usr.sbin/pppd/pppd/sys-bsd.c			1.62
 
 	PR/42943: Takashi Sogabe: pppd generates invalid netmask
 	[christos, ticket #1389]
+
+bin/pax/tar.1					1.28, 1.29 via patch
+
+	The -X option of tar names a file containing exception globs, not
+	exception filenames, same as in gtar. Fixes PR bin/41168.
+	[dholland, ticket #1391]
+
+crypto/dist/openssl/ssl/s3_pkt.c		patch
+
+	Apply patchset 19476 from openssl repository, fixing CVE-2010-0740.
+	From http://www.openssl.org/news/secadv_20100324.txt:
+	"In TLS connections, certain incorrectly formatted records can cause
+	an OpenSSL client or server to crash due to a read attempt at NULL".
+	[bouyer, ticket #1392]
 
