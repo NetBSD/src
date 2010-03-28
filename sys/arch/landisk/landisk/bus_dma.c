@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.11 2010/03/21 14:49:28 nonaka Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.12 2010/03/28 07:31:59 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.11 2010/03/21 14:49:28 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.12 2010/03/28 07:31:59 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -664,7 +664,7 @@ int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
     size_t size, void **kvap, int flags)
 {
-	vaddr_t va;
+	vaddr_t va, topva;
 	bus_addr_t addr;
 	int curseg;
 
@@ -695,6 +695,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			  | ((flags & BUS_DMA_NOWAIT) ? UVM_KMF_NOWAIT : 0));
 	if (va == 0)
 		return (ENOMEM);
+	topva = va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		DPRINTF(("%s: segs[%d]: ds_addr = 0x%08lx, ds_len = %ld\n",
@@ -714,7 +715,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	}
 
 	pmap_update(pmap_kernel());
-	*kvap = (void *)va;
+	*kvap = (void *)topva;
 	return (0);
 }
 
