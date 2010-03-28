@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.88 2010/01/19 22:06:25 pooka Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.89 2010/03/28 20:46:18 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.88 2010/01/19 22:06:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.89 2010/03/28 20:46:18 snj Exp $");
 
 #include "rnd.h"
 
@@ -1246,7 +1246,7 @@ rtk_start(struct ifnet *ifp)
 		 * fit in one DMA segment, and we need to copy.  Note,
 		 * the packet must also be aligned.
 		 * if the packet is too small, copy it too, so we're sure
-		 * so have enouth room for the pad buffer.
+		 * so have enough room for the pad buffer.
 		 */
 		if ((mtod(m_head, uintptr_t) & 3) != 0 ||
 		    m_head->m_pkthdr.len < ETHER_PAD_LEN ||
