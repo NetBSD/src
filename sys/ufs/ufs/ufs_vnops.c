@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.169 2008/08/14 16:19:25 matt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.169.4.1 2010/03/28 17:31:55 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169 2008/08/14 16:19:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169.4.1 2010/03/28 17:31:55 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1683,7 +1683,6 @@ ufs_rmdir(void *v)
 #endif
  out:
 	VN_KNOTE(vp, NOTE_DELETE);
-	fstrans_done(dvp->v_mount);
 	pace = DOINGSOFTDEP(dvp);
 	vput(dvp);
 	vput(vp);
@@ -1694,6 +1693,7 @@ ufs_rmdir(void *v)
 		 */
 		softdep_pace_dirrem();
 	}
+	fstrans_done(dvp->v_mount);
 	return (error);
 }
 
