@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.10 2008/06/24 10:09:24 gmcgarry Exp $ */
+/* $NetBSD: mfivar.h,v 1.10.6.1 2010/03/28 15:03:22 snj Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -19,7 +19,7 @@
 #include <dev/sysmon/sysmonvar.h>
 #include <sys/envsys.h>
 
-#define DEVNAME(_s)     (device_xname(&(_s)->sc_dev))
+#define DEVNAME(_s)     (device_xname((_s)->sc_dev))
 
 /* #define MFI_DEBUG */
 #ifdef MFI_DEBUG
@@ -98,7 +98,8 @@ TAILQ_HEAD(mfi_ccb_list, mfi_ccb);
 
 enum mfi_iop {
 	MFI_IOP_XSCALE,
-	MFI_IOP_PPC
+	MFI_IOP_PPC,
+	MFI_IOP_GEN2
 };
 
 struct mfi_iop_ops {
@@ -109,7 +110,7 @@ struct mfi_iop_ops {
 };
 
 struct mfi_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct scsipi_channel	sc_chan;
 	struct scsipi_adapter	sc_adapt;
 
