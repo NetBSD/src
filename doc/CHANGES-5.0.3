@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.6 2010/03/06 23:21:18 sborrill Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.7 2010/03/28 15:43:25 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -157,4 +157,17 @@ crypto/dist/openssl/crypto/evp/m_sha1.c		patch
 	Ensure that SHA384 always calls the SHA384 functions.
 	Should fix PR#42881.
 	[joerg, ticket #1320]
+
+crypto/dist/openssl/ssl/s3_pkt.c		patch
+
+	Apply patchset 19476 from openssl repository, fixing CVE-2010-0740.
+	From http://www.openssl.org/news/secadv_20100324.txt:
+	"In TLS connections, certain incorrectly formatted records can cause
+	an OpenSSL client or server to crash due to a read attempt at NULL".
+	[bouyer, ticket #1355]
+
+sys/kern/uipc_syscalls.c			patch
+
+	In do_sys_recvmsg(), call free(9) with the same type malloc(9) used.
+	[jakllsch, ticket #1352]
 
