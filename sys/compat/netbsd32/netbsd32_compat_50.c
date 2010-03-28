@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.10 2010/03/02 16:09:11 pooka Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.11 2010/03/28 22:03:51 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.10 2010/03/02 16:09:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.11 2010/03/28 22:03:51 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -441,50 +441,22 @@ compat_50_netbsd32_nanosleep(struct lwp *l,
 		syscallarg(const netbsd32_timespec50p_t) rqtp;
 		syscallarg(netbsd32_timespecp_t) rmtp;
 	} */
-	static int nanowait;
 	struct netbsd32_timespec50 ts32;
-	struct timespec rqt, ctime, rmt;
-	int error, timo;
+	struct timespec rqt, rmt;
+	int error, error1;
 
 	error = copyin(SCARG_P32(uap, rqtp), &ts32, sizeof(ts32));
 	if (error)
 		return (error);
-
 	netbsd32_to_timespec50(&ts32, &rqt);
-	if (itimespecfix(&rqt))
-		return (EINVAL);
 
-	getnanotime(&ctime);
-	timespecadd(&rqt, &ctime, &rqt);
-	timo = tshzto(&rqt);
-	/*
-	 * Avoid inadvertantly sleeping forever
-	 */
-	if (timo == 0)
-		timo = 1;
+	error = nanosleep1(l, &rqt, SCARG_P32(uap, rmtp) ? &rmt : NULL);
+	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
 
-	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
-	if (error == ERESTART)
-		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
-
-	if (SCARG_P32(uap, rmtp)) {
-		int error1;
-
-		getnanotime(&rmt);
-
-		timespecsub(&rqt, &rmt, &rmt);
-		if (rmt.tv_sec < 0)
-			timespecclear(&rmt);
-
-		netbsd32_from_timespec50(&rmt, &ts32);
-		error1 = copyout(&ts32, SCARG_P32(uap,rmtp), sizeof(ts32));
-		if (error1)
-			return (error1);
-	}
-
-	return error;
+	netbsd32_from_timespec50(&rmt, &ts32);
+	error1 = copyout(&ts32, SCARG_P32(uap,rmtp), sizeof(ts32));
+	return error1 ? error1 : error;
 }
 
 static int
