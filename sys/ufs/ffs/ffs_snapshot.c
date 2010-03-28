@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.82.4.1 2008/12/10 21:49:31 snj Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.82.4.2 2010/03/28 17:27:29 snj Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.82.4.1 2008/12/10 21:49:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.82.4.2 2010/03/28 17:27:29 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1314,7 +1314,6 @@ ffs_snapremove(struct vnode *vp)
 	int error, loc, last;
 
 	si = VFSTOUFS(mp)->um_snapinfo;
-	mutex_enter(&si->si_snaplock);
 	/*
 	 * If active, delete from incore list (this snapshot may
 	 * already have been in the process of being deleted, so
@@ -1330,21 +1329,19 @@ ffs_snapremove(struct vnode *vp)
 			/* Roll back the list of preallocated blocks. */
 			xp = TAILQ_LAST(&si->si_snapshots, inodelst);
 			si->si_snapblklist = xp->i_snapblklist;
+			si->si_gen++;
+			mutex_exit(&si->si_lock);
 		} else {
 			si->si_snapblklist = 0;
 			si->si_gen++;
 			mutex_exit(&si->si_lock);
 			fscow_disestablish(mp, ffs_copyonwrite, devvp);
-			mutex_enter(&si->si_lock);
 		}
-		si->si_gen++;
-		mutex_exit(&si->si_lock);
 		if (ip->i_snapblklist != NULL) {
 			free(ip->i_snapblklist, M_UFSMNT);
 			ip->i_snapblklist = NULL;
 		}
 	}
-	mutex_exit(&si->si_snaplock);
 	/*
 	 * Clear all BLK_NOCOPY fields. Pass any block claims to other
 	 * snapshots that want them (see ffs_snapblkfree below).
@@ -1738,10 +1735,10 @@ ffs_snapshot_unmount(struct mount *mp)
 			mutex_enter(&si->si_lock);
 		}
 	}
-	if (vp)
-		fscow_disestablish(mp, ffs_copyonwrite, devvp);
 	si->si_gen++;
 	mutex_exit(&si->si_lock);
+	if (vp)
+		fscow_disestablish(mp, ffs_copyonwrite, devvp);
 }
 
 /*
