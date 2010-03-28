@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale32.c,v 1.2 2003/03/11 17:23:07 tshiozak Exp $	*/
+/*	$NetBSD: setlocale32.c,v 1.3 2010/03/28 14:05:09 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale32.c,v 1.2 2003/03/11 17:23:07 tshiozak Exp $");
+__RCSID("$NetBSD: setlocale32.c,v 1.3 2010/03/28 14:05:09 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,6 +44,6 @@ __setlocale_mb_len_max_32(category, locale)
 
 	/* locale may be NULL */
 
-	__mb_len_max_runtime = 32;
+	__mb_len_max_runtime = MB_LEN_MAX;
 	return __setlocale(category, locale);
 }
