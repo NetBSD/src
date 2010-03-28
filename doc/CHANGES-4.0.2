@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.70 2010/02/01 21:47:34 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.71 2010/03/28 18:49:06 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1020,14 +1020,22 @@ dist/bind/version				patch
 	security issues.
 	[christos, ticket #1376]
 
-xsrc/xfree/xc/extras/expat/lib/xmlparse.c		1.2
+xsrc/xfree/xc/extras/expat/lib/xmlparse.c	1.2
 
 	Add patch from upstream CVS to fix CVE-2009-3560 (possible DOS due to
 	crash on bad input).
 	[tron, ticket #1383]
 
-crypto/dist/openssl/crypto/comp/c_zlib.c		patch
+crypto/dist/openssl/crypto/comp/c_zlib.c	patch
 
 	Fix to deal with CVE-2009-4355 from OpenSSL's repositroy.
 	[taca, ticket #1378]
+
+crypto/dist/openssl/ssl/s3_pkt.c		patch
+
+	Apply patchset 19476 from openssl repository, fixing CVE-2010-0740.
+	From http://www.openssl.org/news/secadv_20100324.txt:
+	"In TLS connections, certain incorrectly formatted records can cause
+	an OpenSSL client or server to crash due to a read attempt at NULL".
+	[bouyer, ticket #1392]
 
