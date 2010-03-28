@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.271 2010/03/07 09:39:42 plunky Exp $
+# $NetBSD: GENERIC,v 1.272 2010/03/28 00:00:07 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.271 $"
+#ident 		"GENERIC-$Revision: 1.272 $"
 
 maxusers	64		# estimated number of users
 
@@ -144,8 +144,8 @@ file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
-file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	PROCFS		# /proc
+file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	SMBFS		# experimental - SMB/CIFS file-system
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
@@ -641,8 +641,8 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # PCI network interfaces
 age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
-an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
+an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
