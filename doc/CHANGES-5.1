@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.219 2010/03/21 03:46:42 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.220 2010/03/28 17:50:07 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17023,4 +17023,102 @@ sys/sys/null.h					1.8
 	Enclose (void *)0 in an extra set of parenthese to make the result
 	usable in arbitrary expressions.  Fixes PR/41890.
 	[joerg, ticket #1344]
+
+sys/dev/ic/mfi.c				1.20, 1.23, 1.26, 1.30, 1.33 via patch
+sys/dev/ic/mfireg.h				1.4
+sys/dev/ic/mfivar.h				1.12, 1.14
+sys/dev/pci/mfi_pci.c				1.6-1.8, 1.10, 1.12
+sys/dev/pci/pcidevs				1.1020
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+share/man/man4/mfi.4				1.9-1.10
+
+	Add support for MFI gen2 devices.  Mention newer devices, RAID 6 and
+	RAID60 in mfi.4.
+	[msaitoh, ticket #1326]
+
+crypto/dist/openssl/ssl/s3_pkt.c		patch
+
+	Apply patchset 19476 from openssl repository, fixing CVE-2010-0740.
+	From http://www.openssl.org/news/secadv_20100324.txt:
+	"In TLS connections, certain incorrectly formatted records can cause
+	an OpenSSL client or server to crash due to a read attempt at NULL".
+	[bouyer, ticket #1355]
+
+sys/kern/uipc_syscalls.c			patch
+
+	In do_sys_recvmsg(), call free(9) with the same type malloc(9) used.
+	[jakllsch, ticket #1352]                            
+ 
+sys/dev/ic/ahcisata_core.c			1.23, 1.24
+
+	- Clear port interrupt register before ahci_channel_start() which
+	  enables interrupts
+	- Wait 500ms after sata_reset_interface() before touching SERROR
+	  register.  This is what seems to fix the issue I'm seeming on ESB2
+	  controller.
+	- The 31s delay didn't cause the probe to fail because of a mismatch
+	  in loop index comparison; use a #define for delay after reset
+	  instead of numeric values, to avoid this kind of bugs in the
+	  future.
+	[bouyer, ticket #1317]
+
+crypto/dist/ipsec-tools/src/racoon/handler.c	1.31, 1.32 via patch
+
+	Fix a bug where racoon used a wrong IPsec-SA handle that was for
+	another peer if it received an ISAKMP message for IPsec-SA that has
+	the same message-id as the message-id that was received before.
+	[hubertf, ticket #1341]
+
+sys/external/bsd/drm/dist/bsd-core/drm_pci.c	1.8, 1.9
+
+	Fix some confusion between highest DMA address and the boundary not
+	to be crossed in a transfer.  Back out previous fixes which only
+	added to the confusion.
+	--
+	Don't pass "maxaddr" as a boundary in bus_dmamap_create() like rev
+	1.8 did for _alloc().
+	[mrg, ticket #1346]
+
+sys/arch/sparc64/dev/lom.c			1.6
+
+	Fix off-by-one in LOMlite hostname code.
+	[nakayama, ticket #1349]
+
+bin/pax/tar.1					1.28, 1.29
+
+	Document that the -X option of tar names a file containing exception
+	globs, not exception filenames, same as in gtar. Fixes PR bin/41168.
+	[dholland, ticket #1354]
+
+sys/arch/xen/xen/if_xennet.c			patch
+
+	Make it possible to use netbsd-5 domUs running on a Xen2 hypervisor.
+	This changes two panics to printfs.
+	[bad, ticket #1347]
+
+sys/dev/fss.c					1.64, 1.65
+sys/ufs/ffs/ffs_snapshot.c			1.96, 1.97
+sys/ufs/ufs/ufs_inode.c				1.80
+sys/ufs/ufs/ufs_vnops.c				1.180 via patch
+
+	sys/dev/fss.c:
+	- Fix a race where the backing store thread runs (and exits
+	  immediately) before kthread_create() returns.
+	- Remove unneeded vinvalbuf() on backing store as we don't use
+	  VOP_BMAP()/VOP_STRATEGY() here.
+
+	sys/ufs/ffs/ffs_snapshot.c:
+	- Fix a deadlock where fscow_disestablish() blocks because outstanding
+	  copy-on-write operations wait for si_snaplock.
+	- No longer abuse TAILQ internal data.
+
+	sys/ufs/ufs/ufs_inode.c:
+	- Allow ufs_inactive() while a file system is suspending.  Removes a
+	  possible deadlock between vrele() and ffs_sync() during suspension.
+
+	sys/ufs/ufs/ufs_vnops.c:
+	- ufs_rmdir(): move fstrans_done() after vput().  No more unlinked
+	  and zero-sized directory inodes in snapshots.
+	[hannken, ticket #1345]
 
