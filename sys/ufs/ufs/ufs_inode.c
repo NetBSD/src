@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.76.4.2 2010/02/22 04:43:47 snj Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.76.4.3 2010/03/28 17:29:41 snj Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.76.4.2 2010/02/22 04:43:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.76.4.3 2010/03/28 17:29:41 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -92,7 +92,7 @@ ufs_inactive(void *v)
 	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	transmp = vp->v_mount;
-	fstrans_start(transmp, FSTRANS_SHARED);
+	fstrans_start(transmp, FSTRANS_LAZY);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
