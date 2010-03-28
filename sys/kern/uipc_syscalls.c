@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.134.4.2 2009/04/04 23:36:28 snj Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.134.4.2.2.1 2010/03/28 15:32:39 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.134.4.2 2009/04/04 23:36:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.134.4.2.2.1 2010/03/28 15:32:39 snj Exp $");
 
 #include "opt_pipe.h"
 
@@ -858,7 +858,7 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 	}
  out:
 	if (iov != aiov)
-		free(iov, M_TEMP);
+		free(iov, M_IOV);
 	fd_putfile(s);
 	return (error);
 }
