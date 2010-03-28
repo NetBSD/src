@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.35 2010/03/08 08:59:06 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.36 2010/03/28 05:24:00 mrg Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.35 2010/03/08 08:59:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.36 2010/03/28 05:24:00 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -412,10 +412,10 @@ smp_tlb_flush_pte(vaddr_t va, struct pmap * pm)
 }
 
 /*
- * Make sure this page is flushed from all CPUs.
+ * Make sure this page is flushed from all/some CPUs.
  */
 void
-smp_dcache_flush_page_all(paddr_t pa)
+smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t activecpus)
 {
 	ipifunc_t func;
 
@@ -424,7 +424,7 @@ smp_dcache_flush_page_all(paddr_t pa)
 	else
 		func = sparc64_ipi_dcache_flush_page_us;
 
-	sparc64_broadcast_ipi(func, pa, dcache_line_size);
+	sparc64_multicast_ipi(activecpus, func, pa, dcache_line_size);
 	dcache_flush_page(pa);
 }
 

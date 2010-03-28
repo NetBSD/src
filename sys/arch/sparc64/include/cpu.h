@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.89 2010/03/06 08:08:29 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.90 2010/03/28 05:24:00 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,7 +151,10 @@ struct cpu_info {
  * the right pointer and you get to the pmap segment tables.  These are
  * physical addresses, of course.
  *
+ * ci_ctx_lock protects this CPUs context allocation/free.
+ * These are all allocated almost with in the same cacheline.
  */
+	kmutex_t		ci_ctx_lock;
 	int			ci_pmap_next_ctx;
 	int			ci_numctx;
 	paddr_t 		*ci_ctxbusy;
