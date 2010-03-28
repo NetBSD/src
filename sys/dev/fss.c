@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.60.4.2 2010/03/28 17:25:12 snj Exp $	*/
+/*	$NetBSD: fss.c,v 1.60.4.3 2010/03/28 17:26:26 snj Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.60.4.2 2010/03/28 17:25:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.60.4.3 2010/03/28 17:26:26 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,14 +695,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		sc->sc_bs_bshift = DEV_BSHIFT;
 		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
 	}
-
-	/*
-	 * As all IO to from/to the backing store goes through
-	 * VOP_STRATEGY() clean the buffer cache to prevent
-	 * cache incoherencies.
-	 */
-	if ((error = vinvalbuf(sc->sc_bs_vp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
-		return error;
 
 	return 0;
 }
