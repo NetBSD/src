@@ -110,9 +110,10 @@ drm_pci_alloc(struct drm_device *dev, size_t size,
 		return NULL;
 	}
 #elif   defined(__NetBSD__)
-	dmah->tag = dev->pa.pa_dmat;
+	KASSERT(maxaddr >= 0xffffffffUL); /* no way to tell bus_dma_alloc */
+	dmah->tag = dev->pa.pa_dmat; /* use 32-bit DMA tag */
 
-	if ((ret = bus_dmamem_alloc(dmah->tag, size, align, maxaddr,
+	if ((ret = bus_dmamem_alloc(dmah->tag, size, align, 0,
 	    dmah->segs, 1, &nsegs, BUS_DMA_WAITOK)) != 0) {
 		printf("drm: Unable to allocate %zu bytes of DMA, error %d\n",
 		    size, ret);
