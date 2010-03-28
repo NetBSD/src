@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.54 2010/03/22 05:39:00 mrg Exp $
+#	$NetBSD: Makefile.rump,v 1.55 2010/03/28 04:29:34 mrg Exp $
 #
 
 WARNS?=		3	# XXX: src/sys won't compile with -Wsign-compare yet
@@ -70,7 +70,22 @@ _SYMQUIRK='|_gp_disp'
 .elif ${MACHINE_CPU} == "hppa"
 _SYMQUIRK='|\$$\$$'
 .elif ${MACHINE_ARCH} == "powerpc64"
-_SYMQUIRK='|\.(rump|RUMP)'
+_SYMQUIRK="|PF_funcs"
+.endif
+
+#
+# Prefix quirks.  At least one toolchain generates global
+# symbols with prefixes which really need to remain as prefixes
+# (i.e. the '.' on the front of some ppc64 globals).  The
+# way to know if you have the problem is if you get later
+# complaints about symbols like 'rumpns_XrumpBLAH' or 'XrumpBLAH';
+# the 'X' part was added by the toolchain and will need to
+# be mentioned here.
+# 
+.if ${MACHINE_ARCH} == "powerpc64"
+_PQ="\.?"
+.else
+_PQ=
 .endif
 
 rump_symren: __archivebuild
@@ -94,8 +109,8 @@ __archivebuild: .USE
 	${AR} ${_ARFL} ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
 	${NM} -go ${RUMP_SYMREN:U${.TARGET}} | ${TOOL_AWK} '	\
-	    $$NF!~/^(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
-	      {printf "%s rumpns_%s\n", $$NF, $$NF}' \
+	    $$NF!~/^'${_PQ}'(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}')/ \
+	      {s = $$NF; sub(/^'${_PQ}'/, "&rumpns_", s); print $$NF, s}' \
 	    | sort | uniq  > renametab.${.TARGET}
 	${OBJCOPY} --preserve-dates --redefine-syms \
 	    renametab.${.TARGET} ${RUMP_SYMREN:U${.TARGET}}
