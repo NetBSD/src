@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.60 2008/10/27 10:58:22 cegger Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.60.2.1 2010/03/28 17:07:26 snj Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.60 2008/10/27 10:58:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.60.2.1 2010/03/28 17:07:26 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -657,8 +657,10 @@ xennet_rx_push_buffer(struct xennet_softc *sc, int id)
 	(void)HYPERVISOR_multicall(rx_mcl, nr_pfns+1);
 
 	/* Check return status of HYPERVISOR_dom_mem_op(). */
-	if ( rx_mcl[nr_pfns].args[5] != nr_pfns )
-		panic("Unable to reduce memory reservation\n");
+	if ( rx_mcl[nr_pfns].args[5] != nr_pfns ) {
+		printf("xennet_rx_push_buffer: unable to reduce memory "
+		    "reservation (%lu != %d)\n", rx_mcl[nr_pfns].args[5], nr_pfns);
+	}
 
 	/* Above is a suitable barrier to ensure backend will see requests. */
 	sc->sc_rx->req_prod = ringidx;
@@ -994,8 +996,10 @@ network_alloc_rx_buffers(struct xennet_softc *sc)
 	(void)HYPERVISOR_multicall(rx_mcl, nr_pfns+1);
 
 	/* Check return status of HYPERVISOR_dom_mem_op(). */
-	if (rx_mcl[nr_pfns].args[5] != nr_pfns)
-		panic("Unable to reduce memory reservation\n");
+	if (rx_mcl[nr_pfns].args[5] != nr_pfns) {
+		printf("xennet_alloc_rx_buffers: unable to reduce memory "
+		    "reservation (%lu != %d)\n", rx_mcl[nr_pfns].args[5], nr_pfns);
+	}
 
 	/* Above is a suitable barrier to ensure backend will see requests. */
 	sc->sc_rx->req_prod = ringidx;
