@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.215 2009/10/02 02:45:29 tsarna Exp $
+#	$NetBSD: shlib_version,v 1.216 2010/03/28 14:08:22 tnozaki Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -34,5 +34,7 @@
 # - change _ctype_ table in ctype.h and gen/ctype_.c 8bit -> 16 or 32bit.
 #   it's insufficient bitwidth to implement all ctype class.
 #   see isblank's comment in ctype.h.
+# - increase MB_LEN_MAX 6 -> 32 sys/arch/hppa/include/limits.h
+#   and make it's definition MD -> MI.
 major=12
 minor=171
