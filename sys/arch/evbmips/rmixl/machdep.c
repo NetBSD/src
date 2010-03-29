@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.25 2010/03/21 21:22:28 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.26 2010/03/29 23:32:02 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.25 2010/03/21 21:22:28 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.26 2010/03/29 23:32:02 cliff Exp $");
 
 #define __INTR_PRIVATE
 
@@ -166,7 +166,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.25 2010/03/21 21:22:28 cliff Exp $
 #include <mips/rmi/rmixl_intr.h>
 #include <mips/rmi/rmixl_firmware.h>
 #include <mips/rmi/rmixl_comvar.h>
+#include <mips/rmi/rmixl_pcievar.h>
 
+#define MACHDEP_DEBUG 1	/* XXX TMP FIXME */
 #ifdef MACHDEP_DEBUG
 int machdep_debug=MACHDEP_DEBUG;
 # define DPRINTF(x)	do { if (machdep_debug) printf x ; } while(0)
@@ -206,8 +208,9 @@ typedef struct rmiclfw_psb_id {
 } rmiclfw_psb_id_t;
 static rmiclfw_psb_id_t rmiclfw_psb_id[] = {
 	{	0x4958d4fb00000056ULL, PSB_TYPE_RMI  },
-	{	0x49a5a8fa00000056ULL, PSB_TYPE_DELL },
 	{	0x4aacdb6a00000056ULL, PSB_TYPE_RMI  },
+	{	0x49a5a8fa00000056ULL, PSB_TYPE_DELL },
+	{	0x4b8ead3100000056ULL, PSB_TYPE_DELL },
 };
 #define RMICLFW_PSB_VERSIONS_LEN \
 	(sizeof(rmiclfw_psb_id)/sizeof(rmiclfw_psb_id[0]))
@@ -608,53 +611,18 @@ rmixl_physaddr_init(void)
 	}
 
 	/*
-	 * grab regions per PCIe CFG, ECFG, IO, MEM BARs
+	 * get chip-dependent physaddr regions
 	 */
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_CFG_BAR);
-	if ((r & RMIXL_PCIE_CFG_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIE_CFG_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)RMIXL_PCIE_CFG_SIZE / (1024 * 1024);
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "CFG", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
-	}
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_ECFG_BAR);
-	if ((r & RMIXL_PCIE_ECFG_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIE_ECFG_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)RMIXL_PCIE_ECFG_SIZE / (1024 * 1024);
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "ECFG", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
-	}
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_MEM_BAR);
-	if ((r & RMIXL_PCIE_MEM_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIE_MEM_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)(RMIXL_PCIE_MEM_BAR_TO_SIZE((uint64_t)r)
-			/ (1024 * 1024));
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "MEM", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
-	}
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_IO_BAR);
-	if ((r & RMIXL_PCIE_IO_BAR_ENB) != 0) {
-		base = (u_long)(RMIXL_PCIE_IO_BAR_TO_BA((uint64_t)r)
-			/ (1024 * 1024));
-		size = (u_long)(RMIXL_PCIE_IO_BAR_TO_SIZE((uint64_t)r)
-			/ (1024 * 1024));
-		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
-			__LINE__, "IO", r, base * 1024 * 1024, size));
-		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
-			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
-				"failed", __func__, ext, base, size, EX_NOWAIT);
+	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
+	case CIDFL_RMI_TYPE_XLR:
+		/* XXX TBD */
+		break;
+	case CIDFL_RMI_TYPE_XLS:
+		rmixl_physaddr_init_pcie(ext);
+		break;
+	case CIDFL_RMI_TYPE_XLP:
+		/* XXX TBD */
+		panic("%s: RMI XLP not yet supported", __func__);
 	}
 
 	/*
