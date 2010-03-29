@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.121 2010/03/29 03:05:27 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.122 2010/03/29 03:42:15 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.121 2010/03/29 03:05:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.122 2010/03/29 03:42:15 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -2998,25 +2998,7 @@ out:
 	}
 	fwdma_sync_multiseg(dbch->am, db_tr->idx, db_tr->idx,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-#if 0
-{
-uint32_t _status;
-
-fwdma_sync_multiseg(dbch->am, db_tr->idx, db_tr->idx, BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-_status = FWOHCI_DMA_READ(db_tr->db[0].db.desc.res) >> OHCI_STATUS_SHIFT;
-if (status != _status)
-printf("Ooops status ? 0x%x : 0x%x, %p\n", status, _status, db_tr->db);
-fwdma_sync_multiseg(dbch->am, db_tr->idx, db_tr->idx, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-_status = FWOHCI_DMA_READ(((struct fwohcidb *)MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(db_tr->db)))[0].db.desc.res) >> OHCI_STATUS_SHIFT;
-if (status != _status)
-printf("Ooooops status ? 0x%x : 0x%x\n", status, _status);
-}
-#endif
 	mutex_exit(&dbch->xferq.q_mtx);
-#if 0
-prev_resCounts[i] = resCount;
-i = (i + 1) & 0xf;
-#endif
 	return;
 
 err:
