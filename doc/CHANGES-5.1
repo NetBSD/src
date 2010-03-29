@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.220 2010/03/28 17:50:07 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.221 2010/03/29 00:33:09 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17121,4 +17121,20 @@ sys/ufs/ufs/ufs_vnops.c				1.180 via patch
 	- ufs_rmdir(): move fstrans_done() after vput().  No more unlinked
 	  and zero-sized directory inodes in snapshots.
 	[hannken, ticket #1345]
+
+sys/arch/xen/x86/xen_bus_dma.c			1.20
+
+	Although Xen's documentation states that the address_bits field is
+	not used by XENMEM_decrease_reservation, it is checked by the
+	hypervisor. In certain circumstances (stack leak), the field could
+	have an improper value, leading to a fail of the hypercall.
+	Set it to 0 ("no addressing restriction") to avoid that.  This
+	should fix the rare "failed allocating DMA memory" encountered
+	under NetBSD dom0.
+	[jym, ticket #1334]
+
+sys/netinet/in.c				1.137 via patch
+
+	Fixed a number of race conditions when receiving ipv4 packets.
+	[bouyer, ticket #1357]
 
