@@ -1,4 +1,4 @@
-	$NetBSD: README.txt,v 1.1 2010/03/29 02:01:47 pooka Exp $
+	$NetBSD: README.txt,v 1.2 2010/03/29 02:11:14 pooka Exp $
 
 Using rump it is possible to build a router test setup consisting
 of thousands of NetBSD IP stacks within a single host OS, one
@@ -92,8 +92,7 @@ example code is different!):
 ./a.out 10.0.253.1 10.0.253.255 /tmp/rumpshm_253 10.0.253.2 10.0.255.1 10.0.255.
 255 /tmp/rumpshm_255 0
 
-Unfortunately I lost script used to produce that, but the algorithm
-is quickly obvious.
+(see startrouters.sh for a script to produce that output)
 
 Easy but slightly more interesting setups, such as a M^N matrix
 (hyper-matrix?) are also possible, but left as an exercise to the
