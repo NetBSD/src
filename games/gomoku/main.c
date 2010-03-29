@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2010/03/29 02:46:05 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2010/03/29 02:48:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2010/03/29 02:46:05 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2010/03/29 02:48:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,10 +120,10 @@ main(int argc, char **argv)
 			if ((debugfp = fopen(optarg, "w")) == NULL)
 				err(1, "%s", optarg);
 			break;
-		case 'u':	/* testing: user verses user */
+		case 'u':	/* testing: user versus user */
 			test = 1;
 			break;
-		case 'c':	/* testing: computer verses computer */
+		case 'c':	/* testing: computer versus computer */
 			test = 2;
 			break;
 		}
@@ -191,17 +191,17 @@ again:
 		input[WHITE] = INPUTF;
 	} else {
 		switch (test) {
-		case 0: /* user verses program */
+		case 0: /* user versus program */
 			input[color] = USER;
 			input[!color] = PROGRAM;
 			break;
 
-		case 1: /* user verses user */
+		case 1: /* user versus user */
 			input[BLACK] = USER;
 			input[WHITE] = USER;
 			break;
 
-		case 2: /* program verses program */
+		case 2: /* program versus program */
 			input[BLACK] = PROGRAM;
 			input[WHITE] = PROGRAM;
 			break;
@@ -221,17 +221,17 @@ again:
 			if (curmove != ILLEGAL)
 				break;
 			switch (test) {
-			case 0: /* user verses program */
+			case 0: /* user versus program */
 				input[color] = USER;
 				input[!color] = PROGRAM;
 				break;
 
-			case 1: /* user verses user */
+			case 1: /* user versus user */
 				input[BLACK] = USER;
 				input[WHITE] = USER;
 				break;
 
-			case 2: /* program verses program */
+			case 2: /* program versus program */
 				input[BLACK] = PROGRAM;
 				input[WHITE] = PROGRAM;
 				break;
