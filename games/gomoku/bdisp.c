@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.14 2010/03/29 03:51:55 dholland Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.15 2010/03/29 04:28:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.14 2010/03/29 03:51:55 dholland Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.15 2010/03/29 04:28:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,6 +261,24 @@ ask(const char *str)
 }
 
 int
+get_key(const char *allowed)
+{
+	int ch;
+
+	while (1) {
+		ch = getch();
+		if (allowed != NULL &&
+		    ch != '\0' && strchr(allowed, ch) == NULL) {
+			beep();
+			refresh();
+			continue;
+		}
+		break;
+	}
+	return ch;
+}
+
+int
 get_line(char *buf, int size)
 {
 	char *cp, *end;
@@ -321,7 +339,7 @@ get_coord(void)
 	nx = curx;
 	ny = cury;
 	for (;;) {
-		mvprintw(BSZ3, (BSZ -6)/2, "(%c %d)", 
+		mvprintw(BSZ3, (BSZ -6)/2, "(%c %d) ", 
 				'A'+ ((curx > 7) ? (curx+1) : curx), cury + 1);
 		BGOTO(cury, curx);
 
@@ -431,9 +449,11 @@ get_coord(void)
 		break;
 #endif /* 0 */
 		case 'Q':
+		case 'q':
 			return RESIGN;
 			break;
 		case 'S':
+		case 's':
 			return SAVE;
 			break;
 		case ' ':
