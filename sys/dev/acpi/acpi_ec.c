@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.63 2010/03/24 01:13:30 dyoung Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.64 2010/03/29 16:35:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.63 2010/03/24 01:13:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.64 2010/03/29 16:35:59 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -226,7 +226,7 @@ acpiecdt_match(device_t parent, cfdata_t match, void *aux)
 static void
 acpiecdt_attach(device_t parent, device_t self, void *aux)
 {
-	struct acpi_attach_args *aa = aux;
+	struct acpibus_attach_args *aa = aux;
 	ACPI_HANDLE ec_handle;
 	bus_addr_t cmd_reg, data_reg;
 	uint8_t gpebit;
