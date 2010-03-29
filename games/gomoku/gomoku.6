@@ -1,4 +1,4 @@
-.\"	$NetBSD: gomoku.6,v 1.13 2010/03/29 02:34:50 dholland Exp $
+.\"	$NetBSD: gomoku.6,v 1.14 2010/03/29 03:51:55 dholland Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)gomoku.6	8.2 (Berkeley) 8/4/94
 .\"
-.Dd August 4, 1994
+.Dd March 28, 2010
 .Dt GOMOKU 6
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@
 .Nm
 .Op Fl bcdu
 .Op Fl D Ar debugfile
-.Op Ar inputfile
+.Op Ar savefile
 .Sh DESCRIPTION
 .Nm
 is a two player game where the object is to get 5 in a row horizontally,
@@ -51,19 +51,26 @@ By convention, black always moves first.
 With no arguments,
 .Nm
 will display a playing board and prompt for moves from the user.
-Valid moves are a letter for the column and a number for the row of an empty
-board location.
-Entering
-.Dq quit
-or
-.Dq resign
-will end the game.
-You can save the current state of the game by entering
-.Dq save
-and supplying a file name when prompted.
-The optional file
-.Ar inputfile
-can be used to restore a saved game.
+Moves may be entered by selecting the desired board location and
+pressing the space or enter key.
+The cursor may be moved using the arrow keys or
+.Xr vi 1
+motion keys
+.Em hjklyubn .
+These also may be familiar from
+.Xr rogue 6
+and
+.Xr hack 6 .
+.\" Valid moves are a letter for the column and a number for the row
+.\" of an empty board location.
+To quit, type
+.Sq Q ,
+and to save the game, type
+.Sq S
+and supply a file name when prompted.
+To restore a saved game, pass the file name on the
+.Nm
+command line.
 .Pp
 The options are:
 .Bl -tag -width Ds
@@ -102,3 +109,7 @@ This is mostly used for testing.
 The board display routines were based on the
 .Nm goref
 program written by Peter Langston.
+The user interface was based on Eric S. Raymond's interface for
+.\" change this when/if we import openbsd's bs(6)
+.\" .Xr bs 6 .
+.Nm bs .

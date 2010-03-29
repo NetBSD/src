@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.13 2010/03/29 02:21:04 dholland Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.14 2010/03/29 03:51:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.13 2010/03/29 02:21:04 dholland Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.14 2010/03/29 03:51:55 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,9 +66,19 @@ cursinit(void)
 	if (!initscr()) {
 		errx(EXIT_FAILURE, "Couldn't initialize screen");
 	}
+	if ((LINES < SCRNH) || (COLS < SCRNW)) {
+		errx(EXIT_FAILURE, "Screen too small (need %d%xd)",
+		    SCRNW, SCRNH);
+	}
+	keypad(stdscr, TRUE);
+	nonl();
 	noecho();
 	cbreak();
-	leaveok(stdscr, TRUE);
+	leaveok(stdscr, FALSE);
+
+#if 0 /* no mouse support in netbsd curses yet */
+	mousemask(BUTTON1_CLICKED, NULL);
+#endif
 }
 
 /*
@@ -78,10 +88,10 @@ void
 cursfini(void)
 {
 
-	leaveok(stdscr, FALSE);
-	move(23, 0);
+	move(BSZ4, 0);
 	clrtoeol();
 	refresh();
+	echo();
 	endwin();
 }
 
@@ -123,18 +133,28 @@ bdisp_init(void)
 void
 bdwho(int update)
 {
-	int i;
+	int i, j;
 
 	move(21, 0);
-	clrtoeol();
-	i = 6 - strlen(plyr[BLACK]) / 2;
-	move(21, i > 0 ? i : 0);
-	printw("BLACK/%s", plyr[BLACK]);
-	i = 30 - strlen(plyr[WHITE]) / 2;
-	move(21, i);
-	printw("WHITE/%s", plyr[WHITE]);
-	move(21, 19);
-	addstr(" vs. ");
+        printw("                                              ");
+	i = strlen(plyr[BLACK]);
+	j = strlen(plyr[WHITE]);
+	if (i + j <= 20) {
+		move(21, 10 - (i+j)/2);
+		printw("BLACK/%s (*) vs. WHITE/%s (O)",
+		    plyr[BLACK], plyr[WHITE]);
+	} else {
+		move(21, 0);
+		if (i <= 10) {
+			j = 20 - i;
+		} else if (j <= 10) {
+			i = 20 - j;
+		} else {
+			i = j = 10;
+		}
+		printw("BLACK/%.*s (*) vs. WHITE/%.*s (O)",
+		    i, plyr[BLACK], j, plyr[WHITE]);
+	}
 	if (update)
 		refresh();
 }
@@ -217,10 +237,10 @@ dislog(const char *str)
 		/* move 'em up */
 		lastline = 1;
 	}
-	move(lastline, 46);
-	addnstr(str, SCRNW - 46 - 1);
+	move(lastline, TRANSCRIPT_COL);
+	addnstr(str, SCRNW - TRANSCRIPT_COL - 1);
 	clrtoeol();
-	move(lastline + 1, 46);
+	move(lastline + 1, TRANSCRIPT_COL);
 	clrtoeol();
 }
 
@@ -233,10 +253,10 @@ ask(const char *str)
 {
 	int len = strlen(str);
 
-	move(23, 0);
+	move(BSZ4, 0);
 	addstr(str);
 	clrtoeol();
-	move(23, len);
+	move(BSZ4, len);
 	refresh();
 }
 
@@ -283,4 +303,147 @@ get_line(char *buf, int size)
 	}
 	*cp = '\0';
 	return(c != EOF);
+}
+
+/*
+ * Decent (n)curses interface for the game, based on Eric S. Raymond's
+ * modifications to the battleship (bs) user interface.
+ */
+int
+get_coord(void)
+{
+	static int curx = BSZ / 2;
+	static int cury = BSZ / 2;
+	int ny, nx, ch;
+
+	BGOTO(cury, curx);
+	refresh();
+	nx = curx;
+	ny = cury;
+	for (;;) {
+		mvprintw(BSZ3, (BSZ -6)/2, "(%c %d)", 
+				'A'+ ((curx > 7) ? (curx+1) : curx), cury + 1);
+		BGOTO(cury, curx);
+
+		ch = getch();
+		switch (ch) {
+		case 'k':
+		case '8':
+		case KEY_UP:
+			nx = curx;
+			ny = cury + 1;
+			break;
+		case 'j':
+		case '2':
+		case KEY_DOWN:
+			nx = curx;
+			ny = BSZ + cury - 1;
+			break;
+		case 'h':
+		case '4':
+		case KEY_LEFT:
+			nx = BSZ + curx - 1;
+			ny = cury;
+			break;
+		case 'l':
+		case '6':
+		case KEY_RIGHT:
+			nx = curx + 1;
+			ny = cury;
+			break;
+		case 'y':
+		case '7':
+		case KEY_A1:
+			nx = BSZ + curx - 1;
+			ny = cury + 1;
+			break;
+		case 'b':
+		case '1':
+		case KEY_C1:
+			nx = BSZ + curx - 1;
+			ny = BSZ + cury - 1;
+			break;
+		case 'u':
+		case '9':
+		case KEY_A3:
+			nx = curx + 1;
+			ny = cury + 1;
+			break;
+		case 'n':
+		case '3':
+		case KEY_C3:
+			nx = curx + 1;
+			ny = BSZ + cury - 1;
+			break;
+		case 'K':
+			nx = curx;
+			ny = cury + 5;
+			break;
+		case 'J':
+			nx = curx;
+			ny = BSZ + cury - 5;
+			break;
+		case 'H':
+			nx = BSZ + curx - 5;
+			ny = cury;
+			break;
+		case 'L':
+			nx = curx + 5;
+			ny = cury;
+			break;
+		case 'Y':
+		        nx = BSZ + curx - 5;
+			ny = cury + 5;
+			break;
+		case 'B':
+			nx = BSZ + curx - 5;
+			ny = BSZ + cury - 5;
+			break;
+		case 'U':
+			nx = curx + 5;
+			ny = cury + 5;
+			break;
+		case 'N':
+			nx = curx + 5;
+			ny = BSZ + cury - 5;
+			break;
+		case '\f':
+			nx = curx;
+			ny = cury;
+			(void)clearok(stdscr, TRUE);
+			(void)refresh();
+			break;
+#if 0 /* notyet */
+		case KEY_MOUSE:
+		{
+			MEVENT	myevent;
+
+			getmouse(&myevent);
+			if (myevent.y >= 1 && myevent.y <= BSZ1 &&
+			    myevent.x >= 3 && myevent.x <= (2 * BSZ + 1)) {
+				curx = (myevent.x - 3) / 2;
+				cury = BSZ - myevent.y;
+				return PT(curx,cury);
+			} else {
+				beep();
+			}
+		}
+		break;
+#endif /* 0 */
+		case 'Q':
+			return RESIGN;
+			break;
+		case 'S':
+			return SAVE;
+			break;
+		case ' ':
+		case '\r':
+			(void) mvaddstr(BSZ3, (BSZ -6)/2, "      ");
+			return PT(curx+1,cury+1);
+			break;
+	}
+
+	curx = nx % BSZ;
+	cury = ny % BSZ;
+    }
 }
