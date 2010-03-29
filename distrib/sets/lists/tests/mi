@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.65 2010/03/29 18:21:12 pooka Exp $
+# $NetBSD: mi,v 1.66 2010/03/29 18:49:02 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -598,6 +598,7 @@
 ./usr/tests/fs/tmpfs/t_vnd			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/t_vnode_leak		tests-fs-tests		atf
 ./usr/tests/fs/union				tests-fs-tests
+./usr/tests/fs/union/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/union/t_basic			tests-fs-tests		atf
 ./usr/tests/games				tests-games-tests
 ./usr/tests/games/Atffile			tests-games-tests
