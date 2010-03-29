@@ -1,4 +1,4 @@
-/*	$Id: rmixl_fmnvar.h,v 1.1.2.1 2010/03/21 20:41:43 cliff Exp $	*/
+/*	$Id: rmixl_fmnvar.h,v 1.1.2.2 2010/03/29 23:34:09 cliff Exp $	*/
 
 #ifndef _ARCH_MIPS_RMIXL_RMIXL_FMNVAR_H_
 #define _ARCH_MIPS_RMIXL_RMIXL_FMNVAR_H_
@@ -199,21 +199,54 @@ rmixl_cp2_restore(uint32_t ocu)
 }
 
 /*
- * logical station IDs
- * see Table 12.1 in the XLS PRM
+ * logical station IDs for RMI XLR
+ * see Table 13.2 "Addressable Buckets" in the XLR PRM
  */
-#define RMIXL_FMN_STID_CORE0		0
-#define RMIXL_FMN_STID_CORE1		1
-#define RMIXL_FMN_STID_CORE2		2
-#define RMIXL_FMN_STID_CORE3		3
-#define RMIXL_FMN_STID_GMAC_Q0		4
-#define RMIXL_FMN_STID_GMAC_Q1		5
-#define RMIXL_FMN_STID_DMA		6
-#define RMIXL_FMN_STID_CDE		7
-#define RMIXL_FMN_STID_PCIE		8
-#define RMIXL_FMN_STID_SAE		9
-#define RMIXL_FMN_NSTID		(RMIXL_FMN_STID_SAE+1)
-#define RMIXL_FMN_STID_RESERVED	-1
+#define RMIXLR_FMN_STID_CORE0			0
+#define RMIXLR_FMN_STID_CORE1			1
+#define RMIXLR_FMN_STID_CORE2			2
+#define RMIXLR_FMN_STID_CORE3			3
+#define RMIXLR_FMN_STID_CORE4			4
+#define RMIXLR_FMN_STID_CORE5			5
+#define RMIXLR_FMN_STID_CORE6			6
+#define RMIXLR_FMN_STID_CORE7			7
+#define RMIXLR_FMN_STID_TXRX_0			8
+#define RMIXLR_FMN_STID_TXRX_1			9
+#define RMIXLR_FMN_STID_RGMII			10
+#define RMIXLR_FMN_STID_DMA			11
+#define RMIXLR_FMN_STID_FREE_0			12
+#define RMIXLR_FMN_STID_FREE_1			13
+#define RMIXLR_FMN_STID_SAE			14
+#define RMIXLR_FMN_NSTID			(RMIXLR_FMN_STID_SAE+1)
+#define RMIXLR_FMN_STID_RESERVED		-1
+
+/*
+ * logical station IDs for RMI XLS
+ * see Table 12.1 "Stations and Addressable Buckets ..." in the XLS PRM
+ */
+#define RMIXLS_FMN_STID_CORE0			0
+#define RMIXLS_FMN_STID_CORE1			1
+#define RMIXLS_FMN_STID_CORE2			2
+#define RMIXLS_FMN_STID_CORE3			3
+#define RMIXLS_FMN_STID_GMAC_Q0			4
+#define RMIXLS_FMN_STID_GMAC_Q1			5
+#define RMIXLS_FMN_STID_DMA			6
+#define RMIXLS_FMN_STID_CDE			7
+#define RMIXLS_FMN_STID_PCIE			8
+#define RMIXLS_FMN_STID_SAE			9
+#define RMIXLS_FMN_NSTID			(RMIXLS_FMN_STID_SAE+1)
+#define RMIXLS_FMN_STID_RESERVED		-1
+
+/*
+ * logical station IDs for RMI XLP
+ * TBD!
+ */
+#define RMIXLP_FMN_NSTID			0	/* XXX */
+
+
+#define RMIXL_FMN_NSTID		\
+		MAX(MAX(RMIXLR_FMN_NSTID, RMIXLS_FMN_NSTID), RMIXLP_FMN_NSTID)
+
 
 #define RMIXL_FMN_INTR_IPL	IPL_HIGH
 
