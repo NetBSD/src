@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.11.8.1 2010/01/30 19:14:20 snj Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.11.8.2 2010/03/29 00:23:12 snj Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.11.8.1 2010/01/30 19:14:20 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.11.8.2 2010/03/29 00:23:12 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		res.extent_start = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
+		res.address_bits = 0;
 		res.domid = DOMID_SELF;
 		if (HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res)
 		    < 0) {
