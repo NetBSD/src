@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.122 2010/03/29 03:42:15 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.123 2010/03/29 07:34:02 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.122 2010/03/29 03:42:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.123 2010/03/29 07:34:02 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -2723,9 +2723,6 @@ fwohci_arcv(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 	uint8_t *ld;
 	int nvec, resCount, len, plen, hlen, offset;
 	const int psize = dbch->xferq.psize;
-#if 0
-static int prev_resCounts[16], i;
-#endif
 
 #if DIAGNOSTIC
 	if (dbch->off != OHCI_ARQOFF &&
@@ -2741,10 +2738,6 @@ static int prev_resCounts[16], i;
 	status = FWOHCI_DMA_READ(db_tr->db[0].db.desc.res) >> OHCI_STATUS_SHIFT;
 	resCount = FWOHCI_DMA_READ(db_tr->db[0].db.desc.res) & OHCI_COUNT_MASK;
 	while (status & OHCI_CNTL_DMA_ACTIVE) {
-#if 0
-prev_resCounts[i] = resCount;
-i = (i + 1) & 0xf;
-#endif
 #if 0
 		if (dbch->off == OHCI_ARQOFF)
 			aprint_normal_dev(sc->fc.dev,
@@ -2918,32 +2911,6 @@ i = (i + 1) & 0xf;
 #endif
 				break;
 			}
-#if 0
-{
-extern int dbgflg;
-if (dbgflg) {
-	if (dbgflg == 8) {
-		int j;
-
-		printf("%s: i=%d, resCount=%d", __func__, i, prev_resCounts[0]);
-		for (j = 1; j < 16; j++)
-			printf(", %d", prev_resCounts[j]);
-		printf("\n");
-	}
-	printf("%s:", __func__);
-	if (dbch->off == OHCI_ARQOFF)
-		printf(" ARQ:");
-	else
-		printf(" ARS:");
-	printf(" plen=%d, offset=%d, buf_offset=%d,", plen, offset, dbch->buf_offset);
-	printf(" idx=%d, resCount=%d,", db_tr->idx, resCount);
-	if (dbch->pdb_tr != NULL)
-		printf(" pdb=%p", &dbch->pdb_tr->db[0].db);
-	printf(" db=%p\n", &db_tr->db[0].db);
-	dbgflg--;
-}
-}
-#endif
 			if (dbch->pdb_tr != NULL) {
 				if (dbch->buf_offset < 0)
 					bus_dmamap_sync(sc->fc.dmat,
