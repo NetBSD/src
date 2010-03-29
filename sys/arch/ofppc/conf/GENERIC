@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.125 2010/03/14 10:14:14 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.126 2010/03/29 03:44:37 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.125 $"
+#ident 		"GENERIC-$Revision: 1.126 $"
 
 maxusers	32
 
@@ -231,6 +231,7 @@ esiop*		at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 scsibus* 	at siop?
 scsibus* 	at esiop?
 scsibus* 	at umass?
+scsibus* 	at sbp?
 
 # SCSI devices
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
