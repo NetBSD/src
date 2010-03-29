@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.rumpfs,v 1.18 2010/03/08 12:30:04 pooka Exp $
+#	$NetBSD: Makefile.rumpfs,v 1.19 2010/03/29 13:20:31 pooka Exp $
 #
 
-RUMPFSLIST=	cd9660 efs ext2fs fdesc ffs hfs lfs mfs msdos nfs nilfs ntfs
-RUMPFSLIST+=	smbfs syspuffs sysvbfs tmpfs udf
+RUMPFSLIST=	cd9660 efs ext2fs fdesc ffs fifovfs hfs lfs mfs msdos
+RUMPFSLIST+=	nfs nilfs ntfs smbfs syspuffs sysvbfs tmpfs udf
 
 .for var in ${RUMPFSLIST}
 RUMPFSLIBS+=lib${var}
