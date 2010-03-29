@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.1.2.1 2010/03/21 20:41:43 cliff Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.1.2.2 2010/03/29 23:34:32 cliff Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -31,68 +31,89 @@
  */
 /* use this table for XLS6xx, XLS4xx */
 static const int station_xls_4xx[] = {
-	[0 ... 7]	= RMIXL_FMN_STID_CORE0,
-	[8 ... 15]	= RMIXL_FMN_STID_CORE1,
-	[16 ... 23]	= RMIXL_FMN_STID_CORE2,
-	[24 ... 31]	= RMIXL_FMN_STID_CORE3,
-	[32 ... 63]	= RMIXL_FMN_STID_RESERVED,
-	[64 ... 71]	= RMIXL_FMN_STID_PCIE,
-	[72 ... 79]	= RMIXL_FMN_STID_RESERVED,
-	[80 ... 87]	= RMIXL_FMN_STID_GMAC_Q1,
-	[88 ... 95]	= RMIXL_FMN_STID_RESERVED,
-	[96 ... 103]	= RMIXL_FMN_STID_GMAC_Q0,
-	[104 ... 107]	= RMIXL_FMN_STID_DMA,
-	[108 ... 109]	= RMIXL_FMN_STID_CDE,
-	[110 ... 119]	= RMIXL_FMN_STID_RESERVED,
-	[120 ... 127]	= RMIXL_FMN_STID_SAE,
+	[0 ... 7]	= RMIXLS_FMN_STID_CORE0,
+	[8 ... 15]	= RMIXLS_FMN_STID_CORE1,
+	[16 ... 23]	= RMIXLS_FMN_STID_CORE2,
+	[24 ... 31]	= RMIXLS_FMN_STID_CORE3,
+	[32 ... 63]	= RMIXLS_FMN_STID_RESERVED,
+	[64 ... 71]	= RMIXLS_FMN_STID_PCIE,
+	[72 ... 79]	= RMIXLS_FMN_STID_RESERVED,
+	[80 ... 87]	= RMIXLS_FMN_STID_GMAC_Q1,
+	[88 ... 95]	= RMIXLS_FMN_STID_RESERVED,
+	[96 ... 103]	= RMIXLS_FMN_STID_GMAC_Q0,
+	[104 ... 107]	= RMIXLS_FMN_STID_DMA,
+	[108 ... 109]	= RMIXLS_FMN_STID_CDE,
+	[110 ... 119]	= RMIXLS_FMN_STID_RESERVED,
+	[120 ... 127]	= RMIXLS_FMN_STID_SAE,
 };
 
 /* use this table for XLS408Lite, XLS404Lite */
 static const int station_xls_4xx_lite[] = {
-	[0 ... 7]	= RMIXL_FMN_STID_CORE0,
-	[8 ... 15]	= RMIXL_FMN_STID_CORE1,
-	[16 ... 23]	= RMIXL_FMN_STID_CORE2,
-	[24 ... 31]	= RMIXL_FMN_STID_CORE3,
-	[32 ... 79]	= RMIXL_FMN_STID_RESERVED,
-	[80 ... 87]	= RMIXL_FMN_STID_GMAC_Q1,
-	[88 ... 95]	= RMIXL_FMN_STID_RESERVED,
-	[96 ... 103]	= RMIXL_FMN_STID_GMAC_Q0,
-	[104 ... 107]	= RMIXL_FMN_STID_DMA,
-	[108 ... 109]	= RMIXL_FMN_STID_CDE,
-	[110 ... 115]	= RMIXL_FMN_STID_RESERVED,
-	[116 ... 119]	= RMIXL_FMN_STID_PCIE,
-	[120 ... 127]	= RMIXL_FMN_STID_SAE,
+	[0 ... 7]	= RMIXLS_FMN_STID_CORE0,
+	[8 ... 15]	= RMIXLS_FMN_STID_CORE1,
+	[16 ... 23]	= RMIXLS_FMN_STID_CORE2,
+	[24 ... 31]	= RMIXLS_FMN_STID_CORE3,
+	[32 ... 79]	= RMIXLS_FMN_STID_RESERVED,
+	[80 ... 87]	= RMIXLS_FMN_STID_GMAC_Q1,
+	[88 ... 95]	= RMIXLS_FMN_STID_RESERVED,
+	[96 ... 103]	= RMIXLS_FMN_STID_GMAC_Q0,
+	[104 ... 107]	= RMIXLS_FMN_STID_DMA,
+	[108 ... 109]	= RMIXLS_FMN_STID_CDE,
+	[110 ... 115]	= RMIXLS_FMN_STID_RESERVED,
+	[116 ... 119]	= RMIXLS_FMN_STID_PCIE,
+	[120 ... 127]	= RMIXLS_FMN_STID_SAE,
 };
 
 /* use this table for XLS2xx */
 static const int station_xls_2xx[] = {
-	[0 ... 7]	= RMIXL_FMN_STID_CORE0,
-	[8 ... 15]	= RMIXL_FMN_STID_CORE1,
-	[16 ... 23]	= RMIXL_FMN_STID_CORE2,
-	[24 ... 31]	= RMIXL_FMN_STID_CORE3,
-	[32 ... 63]	= RMIXL_FMN_STID_RESERVED,
-	[64 ... 71]	= RMIXL_FMN_STID_PCIE,
-	[72 ... 95]	= RMIXL_FMN_STID_RESERVED,
-	[96 ... 103]	= RMIXL_FMN_STID_GMAC_Q0,
-	[104 ... 107]	= RMIXL_FMN_STID_DMA,
-	[108 ... 119]	= RMIXL_FMN_STID_RESERVED,
-	[120 ... 127]	= RMIXL_FMN_STID_SAE,
+	[0 ... 7]	= RMIXLS_FMN_STID_CORE0,
+	[8 ... 15]	= RMIXLS_FMN_STID_CORE1,
+	[16 ... 23]	= RMIXLS_FMN_STID_CORE2,
+	[24 ... 31]	= RMIXLS_FMN_STID_CORE3,
+	[32 ... 63]	= RMIXLS_FMN_STID_RESERVED,
+	[64 ... 71]	= RMIXLS_FMN_STID_PCIE,
+	[72 ... 95]	= RMIXLS_FMN_STID_RESERVED,
+	[96 ... 103]	= RMIXLS_FMN_STID_GMAC_Q0,
+	[104 ... 107]	= RMIXLS_FMN_STID_DMA,
+	[108 ... 119]	= RMIXLS_FMN_STID_RESERVED,
+	[120 ... 127]	= RMIXLS_FMN_STID_SAE,
 };
 
 /* use this table for XLS1xx */
 static const int station_xls_1xx[] = {
-	[0 ... 7]	= RMIXL_FMN_STID_CORE0,
-	[8 ... 15]	= RMIXL_FMN_STID_CORE1,
-	[16 ... 23]	= RMIXL_FMN_STID_CORE2,
-	[24 ... 31]	= RMIXL_FMN_STID_CORE3,
-	[32 ... 63]	= RMIXL_FMN_STID_RESERVED,
-	[64 ... 71]	= RMIXL_FMN_STID_PCIE,
-	[72 ... 95]	= RMIXL_FMN_STID_RESERVED,
-	[96 ... 101]	= RMIXL_FMN_STID_GMAC_Q0,
-	[102 ... 103]	= RMIXL_FMN_STID_RESERVED,
-	[104 ... 107]	= RMIXL_FMN_STID_DMA,
-	[108 ... 119]	= RMIXL_FMN_STID_RESERVED,
-	[120 ... 127]	= RMIXL_FMN_STID_SAE,
+	[0 ... 7]	= RMIXLS_FMN_STID_CORE0,
+	[8 ... 15]	= RMIXLS_FMN_STID_CORE1,
+	[16 ... 23]	= RMIXLS_FMN_STID_CORE2,
+	[24 ... 31]	= RMIXLS_FMN_STID_CORE3,
+	[32 ... 63]	= RMIXLS_FMN_STID_RESERVED,
+	[64 ... 71]	= RMIXLS_FMN_STID_PCIE,
+	[72 ... 95]	= RMIXLS_FMN_STID_RESERVED,
+	[96 ... 101]	= RMIXLS_FMN_STID_GMAC_Q0,
+	[102 ... 103]	= RMIXLS_FMN_STID_RESERVED,
+	[104 ... 107]	= RMIXLS_FMN_STID_DMA,
+	[108 ... 119]	= RMIXLS_FMN_STID_RESERVED,
+	[120 ... 127]	= RMIXLS_FMN_STID_SAE,
+};
+
+/* use this table for XLRxxx */
+static const int station_xlr_xxx[] = {
+	[0 ... 7]	= RMIXLR_FMN_STID_CORE0,
+	[8 ... 15]	= RMIXLR_FMN_STID_CORE1,
+	[16 ... 23]	= RMIXLR_FMN_STID_CORE2,
+	[24 ... 31]	= RMIXLR_FMN_STID_CORE3,
+	[32 ... 39]	= RMIXLR_FMN_STID_CORE4,
+	[40 ... 47]	= RMIXLR_FMN_STID_CORE5,
+	[48 ... 55]	= RMIXLR_FMN_STID_CORE6,
+	[56 ... 63]	= RMIXLR_FMN_STID_CORE7,
+	[64 ... 79]	= RMIXLR_FMN_STID_TXRX_0,
+	[80 ... 95]	= RMIXLR_FMN_STID_TXRX_1,
+	[96 ... 103]	= RMIXLR_FMN_STID_RGMII,
+	[104 ... 107]	= RMIXLR_FMN_STID_DMA,
+	[108 ... 111]	= RMIXLR_FMN_STID_RESERVED,
+	[112 ... 113]	= RMIXLR_FMN_STID_FREE_0,
+	[114 ... 115]	= RMIXLR_FMN_STID_FREE_0,
+	[116 ... 119]	= RMIXLR_FMN_STID_RESERVED,
+	[120 ... 127]	= RMIXLR_FMN_STID_SAE,
 };
 
 typedef struct fmn_station_info {
@@ -106,62 +127,79 @@ typedef struct fmn_station_info {
 } fmn_station_info_t;
 
 /* use this table for XLS6xx, XLS4xx */
-static const fmn_station_info_t station_info_xls_4xx[RMIXL_FMN_NSTID] = {
-#if 1
-	[RMIXL_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
-#else
-	[RMIXL_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 8, 0 },
-	[RMIXL_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 8, 0 },
-	[RMIXL_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 8, 0 },
-	[RMIXL_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 8, 0 },
-#endif
-	[RMIXL_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  80,  87,  32, 0, RMIXL_IO_DEV_GMAC_0 },
-	[RMIXL_FMN_STID_GMAC_Q1] = { "gmac_q1",	3,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_4 },
-	[RMIXL_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
-	[RMIXL_FMN_STID_CDE]     = { "cde",	4, 108, 109, 128, 0, RMIXL_IO_DEV_CDE },
-	[RMIXL_FMN_STID_PCIE]    = { "pcie",	8,  64,  71,  32, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXL_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
+static const fmn_station_info_t station_info_xls_4xx[RMIXLS_FMN_NSTID] = {
+	[RMIXLS_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
+	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  80,  87,  32, 0, RMIXL_IO_DEV_GMAC_0 },
+	[RMIXLS_FMN_STID_GMAC_Q1] = { "gmac_q1",	3,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_4 },
+	[RMIXLS_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
+	[RMIXLS_FMN_STID_CDE]     = { "cde",	4, 108, 109, 128, 0, RMIXL_IO_DEV_CDE },
+	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	8,  64,  71,  32, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
 };
 
 /* use this table for XLS4xxLite */
-static const fmn_station_info_t station_info_xls_4xx_lite[RMIXL_FMN_NSTID] = {
-	[RMIXL_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
-	[RMIXL_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  80,  87,  32, 0, RMIXL_IO_DEV_GMAC_0 },
-	[RMIXL_FMN_STID_GMAC_Q1] = { "gmac_q1",	3,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_4 },
-	[RMIXL_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
-	[RMIXL_FMN_STID_CDE]     = { "cde",	4, 108, 109, 128, 0, RMIXL_IO_DEV_CDE },
-	[RMIXL_FMN_STID_PCIE]    = { "pcie",	4, 116, 119,  64, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXL_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
+static const fmn_station_info_t station_info_xls_4xx_lite[RMIXLS_FMN_NSTID] = {
+	[RMIXLS_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
+	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  80,  87,  32, 0, RMIXL_IO_DEV_GMAC_0 },
+	[RMIXLS_FMN_STID_GMAC_Q1] = { "gmac_q1",	3,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_4 },
+	[RMIXLS_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
+	[RMIXLS_FMN_STID_CDE]     = { "cde",	4, 108, 109, 128, 0, RMIXL_IO_DEV_CDE },
+	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	4, 116, 119,  64, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
 };
 
 /* use this table for XLS2xx */
-static const fmn_station_info_t station_info_xls_2xx[RMIXL_FMN_NSTID] = {
-	[RMIXL_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
-	[RMIXL_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_0 },
-	[RMIXL_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
-	[RMIXL_FMN_STID_PCIE]    = { "pcie",	8,  64,  71,  32, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXL_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
+static const fmn_station_info_t station_info_xls_2xx[RMIXLS_FMN_NSTID] = {
+	[RMIXLS_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
+	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_0 },
+	[RMIXLS_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
+	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	8,  64,  71,  32, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
 };
 
 /* use this table for XLS1xx */
-static const fmn_station_info_t station_info_xls_1xx[RMIXL_FMN_NSTID] = {
-	[RMIXL_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
-	[RMIXL_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
-	[RMIXL_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  96, 101,  32, 0, RMIXL_IO_DEV_GMAC_0 },
-	[RMIXL_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXL_FMN_STID_PCIE]    = { "pcie",	4,  64,  67,  32, 0, RMIXL_IO_DEV_PCIE_BE },
-	[RMIXL_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
+static const fmn_station_info_t station_info_xls_1xx[RMIXLS_FMN_NSTID] = {
+	[RMIXLS_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
+	[RMIXLS_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
+	[RMIXLS_FMN_STID_GMAC_Q0] = { "gmac_q0",	3,  96, 101,  32, 0, RMIXL_IO_DEV_GMAC_0 },
+	[RMIXLS_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_PCIE]    = { "pcie",	4,  64,  67,  32, 0, RMIXL_IO_DEV_PCIE_BE },
+	[RMIXLS_FMN_STID_SAE]     = { "sae",	2, 120, 121, 128, 0, RMIXL_IO_DEV_SAE },
+};
+
+/*
+ * use this table for XLRxxx
+ * caution:
+ * - the XGMII/SPI4 stations si_regbase are 'special'
+ * - the RGMII station si_regbase is 'special'
+ */ 
+static const fmn_station_info_t station_info_xlr_xxx[RMIXLR_FMN_NSTID] = {
+	[RMIXLR_FMN_STID_CORE0]   = { "core0",	8,   0,   7,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE1]   = { "core1",	8,   8,  15,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE2]   = { "core2",	8,  16,  23,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE3]   = { "core3",	8,  24,  31,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE4]   = { "core4",	8,  32,  39,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE5]   = { "core5",	8,  40,  47,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE6]   = { "core6",	8,  48,  55,  32, 4, 0 },
+	[RMIXLR_FMN_STID_CORE7]   = { "core7",	8,  56,  63,  32, 4, 0 },
+	[RMIXLR_FMN_STID_TXRX_0]  = { "txrx0",	1,  64,  79,  16, 0, RMIXL_IO_DEV_XGMAC_A },
+	[RMIXLR_FMN_STID_TXRX_1]  = { "txrx1",	1,  80,  95,  16, 0, RMIXL_IO_DEV_XGMAC_B },
+	[RMIXLR_FMN_STID_RGMII]   = { "rgmii",	8,  96, 103,  32, 0, RMIXL_IO_DEV_GMAC_A },
+	[RMIXLR_FMN_STID_DMA]     = { "dma",	4, 104, 107,  64, 0, RMIXL_IO_DEV_DMA },
+	[RMIXLR_FMN_STID_FREE_0]  = { "free0",	2, 112, 113, 128, 0, RMIXL_IO_DEV_XGMAC_A },
+	[RMIXLR_FMN_STID_FREE_1]  = { "free1",	2, 114, 115, 128, 0, RMIXL_IO_DEV_XGMAC_B },
+	[RMIXLR_FMN_STID_SAE]     = { "sae",	5, 120, 124,  32, 0, RMIXL_IO_DEV_SAE },
 };
 
 
@@ -178,6 +216,7 @@ typedef struct fmn {
 	kmutex_t		       *fmn_lock; 
 	u_int				fmn_core;
 	u_int				fmn_thread;
+	u_int				fmn_nstid;
 	const int		       *fmn_stidtab;
 	const fmn_station_info_t       *fmn_stinfo;
 	void			       *fmn_ih;
@@ -194,6 +233,8 @@ fmn_lookup(cpuid_t cpuid)
 	return &fmn[cpuid];
 }
 
+static void rmixl_fmn_init_core_xlr(fmn_t *);
+static void rmixl_fmn_init_core_xls(fmn_t *);
 static void	rmixl_fmn_config_noncore(fmn_t *);
 static void	rmixl_fmn_config_core(fmn_t *);
 #ifdef NOTYET
@@ -351,28 +392,26 @@ rmixl_fmn_init(void)
 	rmixl_fmn_config_noncore(fmnp);	/* boot cpu initializes noncore */
 }
 
-void
-rmixl_fmn_init_core(void)
+/*
+ * link to TX station ID table for RMI XLR type chip
+ */
+static void
+rmixl_fmn_init_core_xlr(fmn_t *fmnp)
 {
-	fmn_t *fmnp;
+	fmnp->fmn_nstid = RMIXLR_FMN_NSTID;
+	fmnp->fmn_stidtab = station_xlr_xxx;
+	fmnp->fmn_stinfo = station_info_xlr_xxx;
+}
+
+/*
+ * link to TX station ID table for RMI XLS type chip
+ */
+static void
+rmixl_fmn_init_core_xls(fmn_t *fmnp)
+{
 	const fmn_station_info_t *info = NULL;
 	const int *tab = NULL;
-	kmutex_t *lk;
 
-	fmnp = fmn_lookup(cpu_number());
-	KASSERT(fmnp->fmn_core == RMIXL_CPU_CORE(cpu_number()));
-	KASSERT(fmnp->fmn_thread == RMIXL_CPU_THREAD(cpu_number()));
-
-	lk = mutex_obj_alloc(MUTEX_DEFAULT, RMIXL_FMN_INTR_IPL);
-	if (lk == NULL)
-		panic("%s: mutex_obj_alloc failed", __func__);
-	fmnp->fmn_lock = lk;
-
-	mutex_enter(fmnp->fmn_lock);
-
-	/*
-	 * link to TX station ID table for this cpu type
-	 */
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS104:
 	case MIPS_XLS108:
@@ -402,8 +441,41 @@ rmixl_fmn_init_core(void)
 			MIPS_PRID_IMPL(mips_options.mips_cpu_id));
 	}
 
+	fmnp->fmn_nstid = RMIXLS_FMN_NSTID;
 	fmnp->fmn_stidtab = tab;
 	fmnp->fmn_stinfo = info;
+}
+
+void
+rmixl_fmn_init_core(void)
+{
+	fmn_t *fmnp;
+	kmutex_t *lk;
+
+	fmnp = fmn_lookup(cpu_number());
+	KASSERT(fmnp->fmn_core == RMIXL_CPU_CORE(cpu_number()));
+	KASSERT(fmnp->fmn_thread == RMIXL_CPU_THREAD(cpu_number()));
+
+	lk = mutex_obj_alloc(MUTEX_DEFAULT, RMIXL_FMN_INTR_IPL);
+	if (lk == NULL)
+		panic("%s: mutex_obj_alloc failed", __func__);
+	fmnp->fmn_lock = lk;
+
+	mutex_enter(fmnp->fmn_lock);
+
+	/*
+	 * do chip-dependent per-core FMN initialization
+	 */
+	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
+	case CIDFL_RMI_TYPE_XLR:
+		rmixl_fmn_init_core_xlr(fmn);
+		break;
+	case CIDFL_RMI_TYPE_XLS:
+		rmixl_fmn_init_core_xls(fmn);
+		break;
+	case CIDFL_RMI_TYPE_XLP:
+		panic("%s: RMI XLP not yet supported", __func__);
+	}
 
 	/*
 	 * thread #0 for each core owns 'global' CP2 regs
@@ -423,7 +495,7 @@ rmixl_fmn_init_core(void)
 static void
 rmixl_fmn_config_noncore(fmn_t *fmnp)
 {
-	for (u_int sid=0; sid < RMIXL_FMN_NSTID; sid++) {
+	for (u_int sid=0; sid < fmn->fmn_nstid; sid++) {
 		u_int regoff = fmnp->fmn_stinfo[sid].si_regbase;
 		if (regoff != 0) {
 			u_int buckets_max = fmnp->fmn_stinfo[sid].si_buckets_max;
@@ -532,7 +604,7 @@ rmixl_fmn_init_cpu_intr(void)
 	fmnp = fmn_lookup(cpu_number());
 	mutex_enter(fmnp->fmn_lock);
 
-	for (int i=0; i < RMIXL_FMN_NSTID; i++)
+	for (int i=0; i < fmn->fmn_nstid; i++)
 		evcnt_attach_dynamic(&fmnp->fmn_intrhand[i].ih_count,
 			EVCNT_TYPE_INTR, NULL, "rmixl_fmn", fmn->fmn_stinfo[i].si_name);
 
