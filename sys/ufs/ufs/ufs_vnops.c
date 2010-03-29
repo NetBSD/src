@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.180 2009/10/14 09:40:27 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.181 2010/03/29 13:11:34 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.180 2009/10/14 09:40:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.181 2010/03/29 13:11:34 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1908,7 +1908,7 @@ ufs_print(void *v)
 	    ip->i_mode, ip->i_uid, ip->i_gid,
 	    (long long)ip->i_size);
 	if (vp->v_type == VFIFO)
-		fifo_printinfo(vp);
+		VOCALL(fifo_vnodeop_p, VOFFSET(vop_print), v);
 	printf("\n");
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.214 2010/02/11 23:16:35 haad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.215 2010/03/29 13:11:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -643,6 +643,7 @@ int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 	    const void *, struct lwp *);
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
 void	vn_ra_allocctx(struct vnode *);
+int	vn_fifo_bypass(void *);
 
 /* initialise global vnode management */
 void	vntblinit(void);

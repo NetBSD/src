@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.169 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.170 2010/03/29 13:11:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.170 2010/03/29 13:11:32 pooka Exp $");
 
 #include "veriexec.h"
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169 2010/01/08 11:35:10 pooka Exp $"
 #include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/fifofs/fifo.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_readahead.h>
@@ -923,4 +924,12 @@ vn_ra_allocctx(struct vnode *vp)
 	if (ra != NULL) {
 		uvm_ra_freectx(ra);
 	}
+}
+
+int
+vn_fifo_bypass(void *v)
+{
+	struct vop_generic_args *ap = v;
+
+	return VOCALL(fifo_vnodeop_p, ap->a_desc->vdesc_offset, v);
 }
