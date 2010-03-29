@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.26 2010/03/29 23:32:02 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.27 2010/03/29 23:40:58 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.26 2010/03/29 23:32:02 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.27 2010/03/29 23:40:58 cliff Exp $");
 
 #define __INTR_PRIVATE
 
@@ -168,7 +168,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.26 2010/03/29 23:32:02 cliff Exp $
 #include <mips/rmi/rmixl_comvar.h>
 #include <mips/rmi/rmixl_pcievar.h>
 
-#define MACHDEP_DEBUG 1	/* XXX TMP FIXME */
 #ifdef MACHDEP_DEBUG
 int machdep_debug=MACHDEP_DEBUG;
 # define DPRINTF(x)	do { if (machdep_debug) printf x ; } while(0)
