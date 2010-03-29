@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2010/03/29 04:28:47 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2010/03/29 05:16:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 2010/03/29 04:28:47 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2010/03/29 05:16:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,11 +145,7 @@ main(int argc, char **argv)
 	}
 
 	if (!debug)
-#ifdef SVR4
-		srand(time(0));
-#else
 		srandom(time(0));
-#endif
 	if (interactive)
 		cursinit();		/* initialize curses */
 again:
