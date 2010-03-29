@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.h,v 1.3 2006/02/25 02:28:58 wiz Exp $	*/
+/*	$NetBSD: sbp.h,v 1.4 2010/03/29 03:05:28 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -31,10 +31,12 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/sbp.h,v 1.5 2005/01/06 01:42:41 imp Exp $
+ *
+ * $FreeBSD: src/sys/dev/firewire/sbp.h,v 1.6 2009/04/07 02:33:46 sbruno Exp $
  *
  */
+#ifndef _SBP_H_
+#define _SBP_H_
 
 #define ORB_NOTIFY	(1 << 31)
 #define	ORB_FMT_STD	(0 << 29)
@@ -117,7 +119,7 @@ struct sbp_status{
 /*   3: Page size not supported */
 /*   4: Access denied */
 #define STATUS_ACCESS_DENY	4
-/*   5: Logical unit not supported */
+#define STATUS_LUR		5
 /*   6: Maximum payload too small */
 /*   7: Reserved for future standardization */
 /*   8: Resource unavailabe */
@@ -229,3 +231,5 @@ struct scsi3_sense_data {
 	uint8_t asb[14];	/* Additional sense bytes */
 };
 typedef struct scsi3_sense_data *scsi3_sense_data_t;
+
+#endif	/* _SBP_H_ */

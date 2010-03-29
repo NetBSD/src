@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.42 2010/01/19 22:08:01 pooka Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.43 2010/03/29 03:05:27 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,17 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.42 2010/01/19 22:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.43 2010/03/29 03:05:27 kiyohara Exp $");
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/socket.h>
-#include <sys/sockio.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/device.h>
+#include <sys/socket.h>
+#include <sys/sockio.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -64,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.42 2010/01/19 22:08:01 pooka E
 #include <netinet6/nd6.h>
 #endif /* INET6 */
 
-#include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
 
 #include <dev/ieee1394/firewirereg.h>
@@ -152,9 +152,9 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	unicast = !(m0->m_flags & (M_BCAST | M_MCAST));
 	if (unicast) {
 		mtag =
-		    m_tag_locate(m0, MTAG_FIREWIRE, MTAG_FIREWIRE_HWADDR, NULL);
+		    m_tag_find(m0, MTAG_FIREWIRE_HWADDR, NULL);
 		if (!mtag) {
-			mtag = m_tag_alloc(MTAG_FIREWIRE, MTAG_FIREWIRE_HWADDR,
+			mtag = m_tag_get(MTAG_FIREWIRE_HWADDR,
 			    sizeof (struct ieee1394_hwaddr), M_NOWAIT);
 			if (!mtag) {
 				error = ENOMEM;
@@ -385,8 +385,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 		struct m_tag *mtag;
 		const struct ieee1394_hwaddr *myaddr;
 
-		mtag = m_tag_locate(m,
-		    MTAG_FIREWIRE, MTAG_FIREWIRE_SENDER_EUID, 0);
+		mtag = m_tag_find(m, MTAG_FIREWIRE_SENDER_EUID, 0);
 		if (mtag)
 			memcpy(h.ibh_shost, mtag + 1, 8);
 		else
