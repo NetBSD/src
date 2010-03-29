@@ -1,4 +1,4 @@
-/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.4 2010/03/21 21:27:27 cliff Exp $	*/
+/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.5 2010/03/29 23:32:42 cliff Exp $	*/
 
 #ifndef _MIPS_RMI_PCIE_VAR_H_
 #define _MIPS_RMI_PCIE_VAR_H_
@@ -59,6 +59,9 @@ typedef struct rmixl_pcie_softc {
 	void 			       *sc_fatal_ih;
 	rmixl_pcie_link_intr_t		sc_link_intr[RMIXL_PCIE_NLINKS_MAX];
 } rmixl_pcie_softc_t;
+
+
+extern void rmixl_physaddr_init_pcie(struct extent *);
 
 #endif  /* _MIPS_RMI_PCIE_VAR_H_ */
 
