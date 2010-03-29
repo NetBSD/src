@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.28 2010/03/29 03:42:15 kiyohara Exp $	*/
+/*	$NetBSD: firewire.c,v 1.29 2010/03/29 07:34:02 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.28 2010/03/29 03:42:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.29 2010/03/29 07:34:02 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1047,9 +1047,6 @@ fw_sidrcv(struct firewire_comm* fc, uint32_t *sid, u_int len)
 /*
  * Generic packet receiving process.
  */
-#if 0
-int dbgflg = 0;
-#endif
 void
 fw_rcv(struct fw_rcv_buf *rb)
 {
@@ -1087,9 +1084,6 @@ fw_rcv(struct fw_rcv_buf *rb)
 			    fp->mode.hdr.tlrt >> 2,
 			    fp->mode.hdr.tlrt & 3,
 			    fp->mode.rresq.data);
-#if 0
-dbgflg=8;
-#endif
 #if 0
 			printf("try ad-hoc work around!!\n");
 			rb->xfer = fw_tl2xfer(rb->fc, fp->mode.hdr.src,
