@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.19 2009/08/12 06:19:17 dholland Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.20 2010/03/29 05:16:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.19 2009/08/12 06:19:17 dholland Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.20 2010/03/29 05:16:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,11 +217,7 @@ better(const struct spotstr *sp, const struct spotstr *sp1, int us)
 	if (sp->s_wval != sp1->s_wval)
 		return (0);
 
-#ifdef SVR4
-	return (rand() & 1);
-#else
 	return (random() & 1);
-#endif
 }
 
 static int curcolor;	/* implicit parameter to makecombo() */
