@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.29 2009/07/21 18:42:56 njoly Exp $ */
+/*	$NetBSD: linux_time.c,v 1.30 2010/03/29 15:34:07 njoly Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.29 2009/07/21 18:42:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.30 2010/03/29 15:34:07 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -222,14 +222,12 @@ linux_sys_clock_settime(struct lwp *l, const struct linux_sys_clock_settime_args
 	} */
 	struct timespec ts;
 	struct linux_timespec lts;
+	clockid_t id;
 	int error;
 
-	switch (SCARG(uap, which)) {
-	case LINUX_CLOCK_REALTIME:
-		break;
-	default:
-		return EINVAL;
-	}
+	error = linux_to_native_clockid(&id, SCARG(uap, which));
+	if (error != 0)
+		return error;
 
 	error = copyin(SCARG(uap, tp), &lts, sizeof lts);
 	if (error != 0)
@@ -237,7 +235,7 @@ linux_sys_clock_settime(struct lwp *l, const struct linux_sys_clock_settime_args
 
 	linux_to_native_timespec(&ts, &lts);
 
-	return settime(l->l_proc, &ts);
+	return clock_settime1(l->l_proc, id, &ts, true);
 }
 
 int

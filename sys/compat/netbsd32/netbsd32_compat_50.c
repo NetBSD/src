@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.12 2010/03/29 11:39:45 njoly Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.13 2010/03/29 15:34:07 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.12 2010/03/29 11:39:45 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.13 2010/03/29 15:34:07 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -335,19 +335,14 @@ compat_50_netbsd32_clock_settime(struct lwp *l,
 		syscallarg(const netbsd32_timespec50p_t) tp;
 	} */
 	struct netbsd32_timespec50 ts32;
-	clockid_t clock_id;
 	struct timespec ats;
 	int error;
-
-	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
 
 	if ((error = copyin(SCARG_P32(uap, tp), &ts32, sizeof(ts32))) != 0)
 		return (error);
 
 	netbsd32_to_timespec50(&ts32, &ats);
-	return settime(l->l_proc, &ats);
+	return clock_settime1(l->l_proc, SCARG(uap, clock_id), &ats, true);
 }
 
 int
