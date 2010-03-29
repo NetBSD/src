@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.27 2010/03/29 03:05:27 kiyohara Exp $	*/
+/*	$NetBSD: firewire.c,v 1.28 2010/03/29 03:42:15 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.27 2010/03/29 03:05:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.28 2010/03/29 03:42:15 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1727,21 +1727,10 @@ fw_explore_node(struct fw_device *dfwdev)
 	node = dfwdev->dst;
 
 	/* First quad */
-#if 0
-printf("%s: speed=0x%x(0x%x)\n", __func__, dfwdev->speed, fc->speed_map->speed[fc->nodeid][node]);
-if (dfwdev->speed == 0)
-  dfwdev->speed = fc->speed_map->speed[fc->nodeid][node];
-else if (dfwdev->speed == 2)
-  dfwdev->speed = 1;
-else
-  dfwdev->speed = 0;
-printf("%s: Re: speed=0x%x\n", __func__, dfwdev->speed);
-#endif
 	err = fw_explore_read_quads(dfwdev, CSRROMOFF, csr, 1);
 	if (err) {
 		aprint_error_dev(fc->bdev,
 		    "node%d: explore_read_quads failure\n", node);
-printf("err=%d\n", err);
 		dfwdev->status = FWDEVINVAL;
 		return -1;
 	}
