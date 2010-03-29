@@ -1,4 +1,4 @@
-/*	$NetBSD: gomoku.h,v 1.17 2009/08/12 06:19:17 dholland Exp $	*/
+/*	$NetBSD: gomoku.h,v 1.18 2010/03/29 03:51:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,9 +42,16 @@
 #define BSZ	19
 #define BSZ1	(BSZ+1)
 #define BSZ2	(BSZ+2)
+#define BSZ3	(BSZ+3)
+#define BSZ4	(BSZ+4)
 #define BAREA	(BSZ2*BSZ1+1)
 
-/* frame dimentions (based on 5 in a row) */
+#define TRANSCRIPT_COL	46	/* necessarily == 2*BSZ4 */
+
+/* interactive curses stuff */
+#define BGOTO(y,x)	move(BSZ - (y), 2 * (x) + 3)
+
+/* frame dimensions (based on 5 in a row) */
 #define FSZ1	BSZ
 #define FSZ2	(BSZ-4)
 #define FAREA	(FSZ1*FSZ2 + FSZ2*FSZ2 + FSZ1*FSZ2 + FSZ2*FSZ2)
@@ -261,6 +268,7 @@ extern	int	debug;
 #define ASSERT(x)
 
 void	bdinit(struct spotstr *);
+int	get_coord(void);
 int	get_line(char *, int);
 void	ask(const char *);
 void	dislog(const char *);
