@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2010/03/29 03:51:55 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2010/03/29 04:28:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2010/03/29 03:51:55 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2010/03/29 04:28:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,9 +165,11 @@ again:
 #endif
 
 		if (inputfp == NULL && test == 0) {
-			ask("black or white? ");
+			move(BSZ3, 0);
+			printw("Black moves first. ");
+			ask("(B)lack or (W)hite? ");
 			for (;;) {
-				ch = getchar();
+				ch = get_key(NULL);
 				if (ch == 'b' || ch == 'B') {
 					color = BLACK;
 					break;
@@ -176,8 +178,11 @@ again:
 					color = WHITE;
 					break;
 				}
-				move(BSZ3, 0);
-				printw("Black moves first. Please enter `black' or `white'\n");
+				if (ch == 'q' || ch == 'Q') {
+					quit();
+				}
+				beep();
+				ask("Please choose (B)lack or (W)hite: ");
 			}
 			move(BSZ3, 0);
 			clrtoeol();
@@ -253,12 +258,12 @@ again:
 		case USER: /* input comes from standard input */
 		getinput:
 			if (interactive) {
-				ask("move? ");
+				ask("Select move, (S)ave or (Q)uit.");
 				curmove = get_coord();
 				if (curmove == SAVE) {
 					FILE *fp;
 
-					ask("save file name? ");
+					ask("Save file name? ");
 					(void)get_line(fname, sizeof(fname));
 					if ((fp = fopen(fname, "w")) == NULL) {
 						misclog("cannot create save file");
@@ -313,7 +318,7 @@ again:
 				addstr("Rats! you won");
 			break;
 		case TIE:
-			addstr("Wow! its a tie");
+			addstr("Wow! It's a tie");
 			break;
 		case ILLEGAL:
 			addstr("Illegal move");
@@ -323,14 +328,14 @@ again:
 		bdisp();
 		if (i != RESIGN) {
 		replay:
-			ask("replay? ");
-			if (get_line(buf, sizeof(buf)) &&
-			    (buf[0] == 'y' || buf[0] == 'Y'))
+			ask("Play again? ");
+			ch = get_key("YyNnQqSs"); 
+			if (ch == 'Y' || ch == 'y')
 				goto again;
-			if (strcmp(buf, "save") == 0) {
+			if (ch == 'S') {
 				FILE *fp;
 
-				ask("save file name? ");
+				ask("Save file name? ");
 				(void)get_line(fname, sizeof(fname));
 				if ((fp = fopen(fname, "w")) == NULL) {
 					misclog("cannot create save file");
@@ -382,7 +387,7 @@ whatsup(int signum)
 	if (!interactive)
 		quit();
 top:
-	ask("cmd? ");
+	ask("debug command: ");
 	if (!get_line(input, sizeof(input)))
 		quit();
 	switch (*input) {
