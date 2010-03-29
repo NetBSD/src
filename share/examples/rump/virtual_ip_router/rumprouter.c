@@ -1,9 +1,9 @@
-/*	$NetBSD: rumprouter.c,v 1.1 2010/03/29 02:01:47 pooka Exp $	*/
+/*	$NetBSD: rumprouter.c,v 1.2 2010/03/29 11:01:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by then
+ * Development of this software was supported by the
  * Finnish Cultural Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
