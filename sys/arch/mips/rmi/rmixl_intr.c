@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.15 2010/03/21 21:25:30 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.16 2010/03/29 23:35:24 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.15 2010/03/21 21:25:30 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.16 2010/03/29 23:35:24 cliff Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -118,6 +118,45 @@ int iointr_debug = IOINTR_DEBUG;
  * (XLS1xx vs. XLS2xx vs. XLS3xx vs. XLS6xx)
  * use the right irq (and display string table) for the CPU that's running.
  */
+
+/*
+ * rmixl_irtnames_xlrxxx
+ * - use for XLRxxx
+ */
+static const char * const rmixl_irtnames_xlrxxx[NIRTS] = {
+	"int 0 (watchdog)",	/*  0 */
+	"int 1 (timer0)",	/*  1 */
+	"int 2 (timer1)",	/*  2 */
+	"int 3 (timer2)",	/*  3 */
+	"int 4 (timer3)",	/*  4 */
+	"int 5 (timer4)",	/*  5 */
+	"int 6 (timer5)",	/*  6 */
+	"int 7 (timer6)",	/*  7 */
+	"int 8 (timer7)",	/*  8 */
+	"int 9 (uart0)",	/*  9 */
+	"int 10 (uart1)",	/* 10 */
+	"int 11 (i2c0)",	/* 11 */
+	"int 12 (i2c1)",	/* 12 */
+	"int 13 (pcmcia)",	/* 13 */
+	"int 14 (gpio)",	/* 14 */
+	"int 15 (hyper)",	/* 15 */
+	"int 16 (pcix)",	/* 16 */
+	"int 17 (gmac0)",	/* 17 */
+	"int 18 (gmac1)",	/* 18 */
+	"int 19 (gmac2)",	/* 19 */
+	"int 20 (gmac3)",	/* 20 */
+	"int 21 (xgs0)",	/* 21 */
+	"int 22 (xgs1)",	/* 22 */
+	"int 23 (irq23)",	/* 23 */
+	"int 24 (hyper_fatal)",	/* 24 */
+	"int 25 (bridge_aerr)",	/* 25 */
+	"int 26 (bridge_berr)",	/* 26 */
+	"int 27 (bridge_tb)",	/* 27 */
+	"int 28 (bridge_nmi)",	/* 28 */
+	"int 29 (bridge_sram_derr)",	/* 29 */
+	"int 30 (gpio_fatal)",	/* 30 */
+	"int 31 (reserved)",	/* 31 */
+};
 
 /*
  * rmixl_irtnames_xls1xx
@@ -282,6 +321,9 @@ static int rmixl_pic_init_done;
 #endif
 
 
+static const char *rmixl_intr_string_xlr(int);
+static const char *rmixl_intr_string_xls(int);
+static uint32_t rmixl_irt_thread_mask(int);
 static void rmixl_irt_init(int);
 static void rmixl_irt_disestablish(int);
 static void rmixl_irt_establish(int, int,
@@ -329,7 +371,8 @@ evbmips_intr_init(void)
 {
 	uint32_t r;
 
-	KASSERT(cpu_rmixls(mips_options.mips_cpu));
+	KASSERT(cpu_rmixlr(mips_options.mips_cpu)
+	     || cpu_rmixls(mips_options.mips_cpu));
 
 #ifdef IOINTR_DEBUG
 	printf("IPL_NONE=%d, mask %#"PRIx64"\n",
@@ -440,14 +483,35 @@ rmixl_intr_init_cpu(struct cpu_info *ci)
 const char *
 rmixl_intr_string(int irq)
 {
-	const char *name;
-
 	if (irq < 0 || irq >= NINTRVECS)
 		panic("%s: irq index %d out of range, max %d",
 			__func__, irq, NIRTS - 1);
 
 	if (irq >= NIRTS)
 		return rmixl_vecnames_common[irq];
+
+	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
+	case CIDFL_RMI_TYPE_XLR:
+		return rmixl_intr_string_xlr(irq);
+	case CIDFL_RMI_TYPE_XLS:
+		return rmixl_intr_string_xls(irq);
+	case CIDFL_RMI_TYPE_XLP:
+		panic("%s: RMI XLP not yet supported", __func__);
+	}
+
+	return "undefined";	/* appease gcc */
+}
+
+static const char *
+rmixl_intr_string_xlr(int irq)
+{
+	return rmixl_irtnames_xlrxxx[irq];
+}
+
+static const char *
+rmixl_intr_string_xls(int irq)
+{
+	const char *name;
 
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS104:
