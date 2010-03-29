@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.71 2010/03/19 14:26:37 tsutsui Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.72 2010/03/29 15:51:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.71 2010/03/19 14:26:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.72 2010/03/29 15:51:03 tsutsui Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -484,7 +484,7 @@ ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich,
 	 * then we don't know what this board is.
 	 */
 	ne2000_writemem(nict, nich, asict, asich, test_pattern, 16384,
-	    sizeof(test_pattern), useword, 0);
+	    sizeof(test_pattern), useword, 1);
 	ne2000_readmem(nict, nich, asict, asich, 16384, test_buffer,
 	    sizeof(test_buffer), useword);
 
