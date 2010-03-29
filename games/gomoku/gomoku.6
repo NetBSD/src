@@ -1,4 +1,4 @@
-.\"	$NetBSD: gomoku.6,v 1.14 2010/03/29 03:51:55 dholland Exp $
+.\"	$NetBSD: gomoku.6,v 1.15 2010/03/29 04:00:03 dholland Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,9 +48,37 @@
 is a two player game where the object is to get 5 in a row horizontally,
 vertically or diagonally on a 19 by 19 grid.
 By convention, black always moves first.
+.Pp
+The options are:
+.Bl -tag -width Ds
+.It Fl b
+Run in batch mode.
+.Pq See below.
+.It Fl c
+Computer versus computer.
+.Nm
+will play a game against itself.
+This is mostly used for testing.
+.It Fl d
+Print debugging information.
+Repeating this option more than once yields more detailed information.
+.It Fl D Ar debugfile
+Print the debug information to
+.Ar debugfile
+instead of to the standard output.
+.It Fl u
+User versus user.
+.Pq Play against yourself.
+This is mostly used for testing.
+.It Ar savefile
+Load a previously saved game from
+.Pa savefile .
+.El
+.Pp
 With no arguments,
 .Nm
-will display a playing board and prompt for moves from the user.
+starts a fresh user vs. computer game.
+.Pp
 Moves may be entered by selecting the desired board location and
 pressing the space or enter key.
 The cursor may be moved using the arrow keys or
@@ -68,41 +96,20 @@ To quit, type
 and to save the game, type
 .Sq S
 and supply a file name when prompted.
-To restore a saved game, pass the file name on the
+.Ss Batch mode
+Batch mode was intended for game tournaments where a referee program
+handles the board display and pits one program against another.
+In this mode,
 .Nm
-command line.
-.Pp
-The options are:
-.Bl -tag -width Ds
-.It Fl b
-This option sets background mode.
-Input moves are read from standard input,
-the computer picks a move, and prints it to standard output.
-The first input line should be either
+reads moves from standard input and writes its responses to standard
+output.
+The first line of input should be either
 .Dq black
 or
 .Dq white
 to specify whether
 .Nm
 has the first move or not respectively.
-This option was intended for game tournaments where a referee program handles
-the board display and pits one program against another.
-.It Fl c
-Computer versus computer.
-.Nm
-will play a game against itself.
-This is mostly used for testing.
-.It Fl d
-Print debugging information.
-Repeating this option more than once yields more detailed information.
-.It Fl D Ar debugfile
-Print the debug information to
-.Ar debugfile
-instead of to the standard output.
-.It Fl u
-User versus user.
-This is mostly used for testing.
-.El
 .Sh AUTHORS
 .An Ralph Campbell
 .Sh ACKNOWLEDGEMENTS
