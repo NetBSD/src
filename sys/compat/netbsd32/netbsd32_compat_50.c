@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.11 2010/03/28 22:03:51 njoly Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.12 2010/03/29 11:39:45 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.11 2010/03/28 22:03:51 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.12 2010/03/29 11:39:45 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -372,7 +372,7 @@ compat_50_netbsd32_clock_getres(struct lwp *l,
 		ts.tv_nsec = 1000000000 / hz;
 
 		netbsd32_from_timespec50(&ts, &ts32);
-		error = copyout(&ts, SCARG_P32(uap, tp), sizeof(ts));
+		error = copyout(&ts32, SCARG_P32(uap, tp), sizeof(ts32));
 	}
 
 	return error;
