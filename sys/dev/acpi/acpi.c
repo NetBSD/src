@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.162 2010/03/22 11:13:23 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.163 2010/03/29 16:35:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.162 2010/03/22 11:13:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.163 2010/03/29 16:35:59 dyoung Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -508,7 +508,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Early EC handler initialization if ECDT table is available. */
-	config_found_ia(self, "acpiecdtbus", NULL, NULL);
+	config_found_ia(self, "acpiecdtbus", aa, NULL);
 
 	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
 	if (ACPI_FAILURE(rv)) {
@@ -611,7 +611,7 @@ acpi_detach(device_t self, int flags)
 	}
 
 	/* Early EC handler initialization if ECDT table is available. */
-	config_found_ia(self, "acpiecdtbus", NULL, NULL);
+	config_found_ia(self, "acpiecdtbus", aa, NULL);
 
 	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
 	if (ACPI_FAILURE(rv)) {
