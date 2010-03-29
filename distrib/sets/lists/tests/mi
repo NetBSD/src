@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.63 2010/03/16 22:01:18 dogcow Exp $
+# $NetBSD: mi,v 1.64 2010/03/29 13:27:52 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -111,6 +111,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_x509v3test.debug	tests-crypto-debug	debug
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug,atf
@@ -554,6 +555,7 @@
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf
 ./usr/tests/fs/ffs				tests-fs-tests
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_fifos			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_renamerace			tests-fs-tests		atf
 ./usr/tests/fs/puffs				tests-fs-tests
 ./usr/tests/fs/puffs/Atffile			tests-fs-tests		atf
