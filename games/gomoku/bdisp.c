@@ -1,4 +1,4 @@
-/*	$NetBSD: bdisp.c,v 1.12 2009/07/13 19:05:40 roy Exp $	*/
+/*	$NetBSD: bdisp.c,v 1.13 2010/03/29 02:21:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: bdisp.c,v 1.12 2009/07/13 19:05:40 roy Exp $");
+__RCSID("$NetBSD: bdisp.c,v 1.13 2010/03/29 02:21:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <curses.h>
 #include <string.h>
 #include <stdlib.h>
+#include <err.h>
 #include "gomoku.h"
 
 #define	SCRNH		24		/* assume 24 lines for the moment */
@@ -63,8 +64,7 @@ cursinit(void)
 {
 
 	if (!initscr()) {
-		fprintf(stderr, "couldn't initialize screen\n");
-		exit (0);
+		errx(EXIT_FAILURE, "Couldn't initialize screen");
 	}
 	noecho();
 	cbreak();
