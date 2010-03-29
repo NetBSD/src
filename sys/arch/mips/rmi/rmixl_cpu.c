@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.8 2010/03/22 07:45:48 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.9 2010/03/29 23:34:57 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.8 2010/03/22 07:45:48 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.9 2010/03/29 23:34:57 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -326,7 +326,6 @@ printf("%s: llk %p: %#x\n", __func__, llk, *llk);
 }
 #endif	/* NOTYET */
 
-static uint64_t argv[4] = { 0x1234,  0x2345, 0x3456, 0x4567 };	/* XXX TMP */
 
 static void
 cpu_setup_trampoline_callback(struct device *self, struct cpu_info *ci)
@@ -398,9 +397,11 @@ cpu_setup_trampoline_callback(struct device *self, struct cpu_info *ci)
 static void
 cpu_setup_trampoline_fmn(struct device *self, struct cpu_info *ci)
 {
+#ifdef NOTYET
 	rmixl_fmn_msg_t msg;
 	intptr_t sp;
 	extern void rmixl_cpu_trampoline(void *);
+	static const uint64_t argv[4] = { 0x1234,  0x2345, 0x3456, 0x4567 };	/* XXX TMP */
 
 	sp = (intptr_t)malloc(4096, M_DEVBUF, M_NOWAIT);
 	if (sp == 0)
@@ -418,6 +419,7 @@ cpu_setup_trampoline_fmn(struct device *self, struct cpu_info *ci)
 
 	rmixl_fmn_msg_send(4, RMIXL_FMN_CODE_PSB_WAKEUP,
 		RMIXL_FMN_CORE_DESTID(ci->ci_cpuid, 0), &msg);	/* XXX FIXME */
+#endif
 }
 
 #ifdef DEBUG
