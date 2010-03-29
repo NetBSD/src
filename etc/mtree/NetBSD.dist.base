@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.12 2010/03/21 13:26:10 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.13 2010/03/29 18:21:29 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -200,6 +200,7 @@
 ./usr/libdata/debug/usr/tests/fs/ffs
 ./usr/libdata/debug/usr/tests/fs/puffs
 ./usr/libdata/debug/usr/tests/fs/tmpfs
+./usr/libdata/debug/usr/tests/fs/union
 ./usr/libdata/debug/usr/tests/ipf
 ./usr/libdata/debug/usr/tests/kernel
 ./usr/libdata/debug/usr/tests/kernel/kqueue
@@ -1085,6 +1086,7 @@
 ./usr/tests/fs/ffs
 ./usr/tests/fs/puffs
 ./usr/tests/fs/tmpfs
+./usr/tests/fs/union
 ./usr/tests/games
 ./usr/tests/ipf
 ./usr/tests/ipf/expected
