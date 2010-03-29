@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2009/08/12 06:19:17 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2010/03/29 02:46:05 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,12 +42,13 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 2009/08/12 06:19:17 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2010/03/29 02:46:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <curses.h>
 #include <err.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -88,6 +89,7 @@ int
 main(int argc, char **argv)
 {
 	char buf[128];
+	char fname[PATH_MAX];
 	int color, curmove, i, ch;
 	int input[2];
 	static const char *const fmt[2] = {
@@ -255,8 +257,8 @@ again:
 					FILE *fp;
 
 					ask("save file name? ");
-					(void)get_line(buf, sizeof(buf));
-					if ((fp = fopen(buf, "w")) == NULL) {
+					(void)get_line(fname, sizeof(fname));
+					if ((fp = fopen(fname, "w")) == NULL) {
 						misclog("cannot create save file");
 						goto getinput;
 					}
@@ -314,8 +316,8 @@ again:
 				FILE *fp;
 
 				ask("save file name? ");
-				(void)get_line(buf, sizeof(buf));
-				if ((fp = fopen(buf, "w")) == NULL) {
+				(void)get_line(fname, sizeof(fname));
+				if ((fp = fopen(fname, "w")) == NULL) {
 					misclog("cannot create save file");
 					goto replay;
 				}
