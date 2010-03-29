@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.108 2010/03/22 12:27:46 pooka Exp $
+# $NetBSD: shl.mi,v 1.109 2010/03/29 13:23:44 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -125,6 +125,7 @@
 ./usr/lib/librumpfs_tmpfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_udf_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ufs_pic.a			comp-obsolete		obsolete
+./usr/lib/librumpvfs_fifofs_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_pic.a			comp-c-piclib
 ./usr/lib/librumpnet_local_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_net_pic.a			comp-c-piclib
