@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.9 2010/03/21 21:27:48 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.10 2010/03/29 23:32:21 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.9 2010/03/21 21:27:48 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.10 2010/03/29 23:32:21 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -1419,4 +1419,67 @@ rmixl_pcie_error_intr(void *v)
 	/* XXX reset and recover? */
 
 	panic("%s\n", __func__);
+}
+
+/*
+ * rmixl_physaddr_init_pcie:
+ *	called from rmixl_physaddr_init to get region addrs & sizes
+ *	from PCIE CFG, ECFG, IO, MEM BARs
+ */
+void
+rmixl_physaddr_init_pcie(struct extent *ext)
+{
+	u_long base;
+	u_long size;
+	uint32_t r;
+
+	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_CFG_BAR);
+	if ((r & RMIXL_PCIE_CFG_BAR_ENB) != 0) {
+		base = (u_long)(RMIXL_PCIE_CFG_BAR_TO_BA((uint64_t)r)
+			/ (1024 * 1024));
+		size = (u_long)RMIXL_PCIE_CFG_SIZE / (1024 * 1024);
+		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
+			__LINE__, "CFG", r, base * 1024 * 1024, size));
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+
+	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_ECFG_BAR);
+	if ((r & RMIXL_PCIE_ECFG_BAR_ENB) != 0) {
+		base = (u_long)(RMIXL_PCIE_ECFG_BAR_TO_BA((uint64_t)r)
+			/ (1024 * 1024));
+		size = (u_long)RMIXL_PCIE_ECFG_SIZE / (1024 * 1024);
+		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
+			__LINE__, "ECFG", r, base * 1024 * 1024, size));
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+
+	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_MEM_BAR);
+	if ((r & RMIXL_PCIE_MEM_BAR_ENB) != 0) {
+		base = (u_long)(RMIXL_PCIE_MEM_BAR_TO_BA((uint64_t)r)
+			/ (1024 * 1024));
+		size = (u_long)(RMIXL_PCIE_MEM_BAR_TO_SIZE((uint64_t)r)
+			/ (1024 * 1024));
+		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
+			__LINE__, "MEM", r, base * 1024 * 1024, size));
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
+
+	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_IO_BAR);
+	if ((r & RMIXL_PCIE_IO_BAR_ENB) != 0) {
+		base = (u_long)(RMIXL_PCIE_IO_BAR_TO_BA((uint64_t)r)
+			/ (1024 * 1024));
+		size = (u_long)(RMIXL_PCIE_IO_BAR_TO_SIZE((uint64_t)r)
+			/ (1024 * 1024));
+		DPRINTF(("%s: %d: %s: 0x%08x -- 0x%010lx:%ld MB\n", __func__,
+			__LINE__, "IO", r, base * 1024 * 1024, size));
+		if (extent_alloc_region(ext, base, size, EX_NOWAIT) != 0)
+			panic("%s: extent_alloc_region(%p, %#lx, %#lx, %#x) "
+				"failed", __func__, ext, base, size, EX_NOWAIT);
+	}
 }
