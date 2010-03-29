@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.16 2010/03/21 18:18:51 cliff Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.17 2010/03/29 23:33:00 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -872,13 +872,23 @@
 
 /*
  * CPU processor revision IDs for company ID == 12 (RMI)
+ * note: the XLR Pid value meaning depends on
+ * the Rev value (Stepping B2 or C4)
  */
-#define	MIPS_XLR732	0x00	/* RMI XLR732-C	 		ISA 64  */
-#define	MIPS_XLR716	0x02	/* RMI XLR716-C	 		ISA 64  */
-#define	MIPS_XLR532	0x08	/* RMI XLR532-C	 		ISA 64  */
-#define	MIPS_XLR516	0x0a	/* RMI XLR516-C	 		ISA 64  */
-#define	MIPS_XLR508	0x0b	/* RMI XLR508-C	 		ISA 64  */
-#define	MIPS_XLR308	0x0f	/* RMI XLR308-C	 		ISA 64  */
+#define	MIPS_XLR_B2	0x04	/* RMI XLR Rev B2 			*/
+#define	MIPS_XLR_C4	0x91	/* RMI XLR Rev C4 			*/
+#define	MIPS_XLR308B	0x06	/* RMI XLR308-B	 		ISA 64  */
+#define	MIPS_XLR508B	0x07	/* RMI XLR508-B	 		ISA 64  */
+#define	MIPS_XLR516B	0x08	/* RMI XLR516-B	 		ISA 64  */
+#define	MIPS_XLR532B	0x09	/* RMI XLR532-B	 		ISA 64  */
+#define	MIPS_XLR716B	0x0a	/* RMI XLR716-B	 		ISA 64  */
+#define	MIPS_XLR732B	0x0b	/* RMI XLR732-B	 		ISA 64  */
+#define	MIPS_XLR732C	0x00	/* RMI XLR732-C	 		ISA 64  */
+#define	MIPS_XLR716C	0x02	/* RMI XLR716-C	 		ISA 64  */
+#define	MIPS_XLR532C	0x08	/* RMI XLR532-C	 		ISA 64  */
+#define	MIPS_XLR516C	0x0a	/* RMI XLR516-C	 		ISA 64  */
+#define	MIPS_XLR508C	0x0b	/* RMI XLR508-C	 		ISA 64  */
+#define	MIPS_XLR308C	0x0f	/* RMI XLR308-C	 		ISA 64  */
 #define	MIPS_XLS616	0x40	/* RMI XLS616	 		ISA 64  */
 #define	MIPS_XLS416	0x44	/* RMI XLS416	 		ISA 64  */
 #define	MIPS_XLS608	0x4A	/* RMI XLS608	 		ISA 64  */
