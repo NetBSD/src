@@ -1,4 +1,4 @@
-.\"	$NetBSD: gomoku.6,v 1.12 2010/03/29 02:32:45 dholland Exp $
+.\"	$NetBSD: gomoku.6,v 1.13 2010/03/29 02:34:50 dholland Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,9 +53,14 @@ With no arguments,
 will display a playing board and prompt for moves from the user.
 Valid moves are a letter for the column and a number for the row of an empty
 board location.
-Entering ``quit" or ``resign" will end the game.
-You can save the current state of the game by entering ``save" and
-supplying a file name when prompted.
+Entering
+.Dq quit
+or
+.Dq resign
+will end the game.
+You can save the current state of the game by entering
+.Dq save
+and supplying a file name when prompted.
 The optional file
 .Ar inputfile
 can be used to restore a saved game.
@@ -66,7 +71,11 @@ The options are:
 This option sets background mode.
 Input moves are read from standard input,
 the computer picks a move, and prints it to standard output.
-The first input line should be either ``black" or ``white" to specify whether
+The first input line should be either
+.Dq black
+or
+.Dq white
+to specify whether
 .Nm
 has the first move or not respectively.
 This option was intended for game tournaments where a referee program handles
