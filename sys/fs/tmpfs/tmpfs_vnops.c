@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.67 2010/03/27 02:37:34 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.68 2010/03/29 13:11:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.67 2010/03/27 02:37:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.68 2010/03/29 13:11:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1340,7 +1340,7 @@ tmpfs_print(void *v)
 	    node->tn_mode, node->tn_uid, node->tn_gid,
 	    (uintmax_t)node->tn_size, node->tn_status);
 	if (vp->v_type == VFIFO)
-		fifo_printinfo(vp);
+		VOCALL(fifo_vnodeop_p, VOFFSET(vop_print), v);
 	printf("\n");
 
 	return 0;
