@@ -1,6 +1,6 @@
 Content-Type: application/X-atf-atffile; version="1"
-X-NetBSD-Id: "$NetBSD: Atffile,v 1.1 2009/04/08 12:08:17 pooka Exp $"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.2 2010/03/29 13:26:32 pooka Exp $"
 
 prop: test-suite = "NetBSD"
 
-tp: t_renamerace
+tp: t_*
