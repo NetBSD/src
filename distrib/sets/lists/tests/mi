@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.64 2010/03/29 13:27:52 pooka Exp $
+# $NetBSD: mi,v 1.65 2010/03/29 18:21:12 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -118,6 +118,8 @@
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/tmpfs/t_renamerace.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/union					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/union/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests
@@ -595,6 +597,8 @@
 ./usr/tests/fs/tmpfs/t_truncate			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/t_vnd			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/t_vnode_leak		tests-fs-tests		atf
+./usr/tests/fs/union				tests-fs-tests
+./usr/tests/fs/union/t_basic			tests-fs-tests		atf
 ./usr/tests/games				tests-games-tests
 ./usr/tests/games/Atffile			tests-games-tests
 ./usr/tests/games/t_factor			tests-games-tests
