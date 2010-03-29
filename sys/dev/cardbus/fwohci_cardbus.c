@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.31 2010/03/05 00:36:06 dyoung Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.32 2010/03/29 03:05:27 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.31 2010/03/05 00:36:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.32 2010/03/29 03:05:27 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.31 2010/03/05 00:36:06 dyoung E
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/firewirereg.h>
 #include <dev/ieee1394/fwdma.h>
@@ -116,7 +115,7 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ct = ct;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
-	OHCI_CSR_WRITE(&sc->sc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
+	OWRITE(&sc->sc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
 
 	/* Enable the device. */
 	csr = Cardbus_conf_read(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG);
@@ -124,14 +123,14 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
 
 	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline,
-					   IPL_BIO, fwohci_filt, sc);
+					   IPL_BIO, fwohci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
 
 	/* XXX NULL should be replaced by some call to Cardbus coed */
-	if (fwohci_init(&sc->sc_sc, sc->sc_sc.fc.dev) != 0) {
+	if (fwohci_init(&sc->sc_sc) != 0) {
 		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}

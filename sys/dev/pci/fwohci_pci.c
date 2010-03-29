@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.36 2010/02/24 22:38:00 dyoung Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.37 2010/03/29 03:05:27 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,21 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.36 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.37 2010/03/29 03:05:27 kiyohara Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/socket.h>
-#include <sys/device.h>
-#include <sys/select.h>
-
 #include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/intr.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/systm.h>
 
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/firewirereg.h>
 #include <dev/ieee1394/fwdma.h>
@@ -122,7 +120,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Disable interrupts, so we don't get any spurious ones. */
-	OHCI_CSR_WRITE(&psc->psc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
+	OWRITE(&psc->psc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -135,7 +133,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_filt,
+	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_intr,
 	    &psc->psc_sc);
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
@@ -149,7 +147,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, fwohci_pci_suspend, fwohci_pci_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	if (fwohci_init(&(psc->psc_sc), psc->psc_sc.fc.dev) != 0) {
+	if (fwohci_init(&psc->psc_sc) != 0) {
 		pci_intr_disestablish(pa->pa_pc, psc->psc_ih);
 		bus_space_unmap(psc->psc_sc.bst, psc->psc_sc.bsh,
 		    psc->psc_sc.bssize);
@@ -172,7 +170,7 @@ fwohci_pci_suspend(device_t dv, const pmf_qual_t *qual)
 	int s;
 
 	s = splbio();
-	fwohci_stop(&psc->psc_sc, psc->psc_sc.fc.dev);
+	fwohci_stop(&psc->psc_sc);
 	splx(s);
 
 	return true;
@@ -185,7 +183,7 @@ fwohci_pci_resume(device_t dv, const pmf_qual_t *qual)
 	int s;
 
 	s = splbio();
-	fwohci_resume(&psc->psc_sc, psc->psc_sc.fc.dev);
+	fwohci_resume(&psc->psc_sc);
 	splx(s);
 
 	return true;
