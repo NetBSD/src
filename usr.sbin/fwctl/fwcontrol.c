@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcontrol.c,v 1.7 2008/05/02 19:59:19 xtraeme Exp $	*/
+/*	$NetBSD: fwcontrol.c,v 1.8 2010/03/29 10:49:34 cegger Exp $	*/
 /*
  * Copyright (C) 2002
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -503,13 +503,12 @@ show_topology_map(int fd)
 			printf("%02d sequel packet\n", sid.p0.phy_id);
 			continue;
 		}
-		printf("%02d   %2d      %2d  %4s     %d    %d   %3s"
+		printf("%02d   %2d      %2d  %4s     %d    %3s"
 				"     %s     %s     %s   %d    %d\n",
 			sid.p0.phy_id,
 			sid.p0.link_active,
 			sid.p0.gap_count,
 			speed[sid.p0.phy_speed],
-			sid.p0.phy_delay,
 			sid.p0.contender,
 			pwr_class[sid.p0.power_class],
 			port_status[sid.p0.port0],
