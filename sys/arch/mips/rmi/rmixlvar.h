@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.15 2010/03/21 21:56:50 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.16 2010/03/29 23:31:38 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -79,6 +79,12 @@ cpu_rmixlp(const struct pridtab *ct)
 	if (cpu_rmixl(ct) && type == CIDFL_RMI_TYPE_XLP)
 		return true;
 	return false;
+}
+
+static inline int
+cpu_rmixl_chip_type(const struct pridtab *ct)
+{
+	return ct->cpu_cidflags & MIPS_CIDFL_RMI_TYPE;
 }
 
 typedef enum {
