@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2008/02/26 10:55:50 drochner Exp $
+#	$NetBSD: Makefile,v 1.4 2010/03/30 07:27:08 mrg Exp $
 
 .include "../Makefile.inc"
 
-.if ${MACHINE_ARCH} == "powerpc"
+.if ${MACHINE_CPU} == "powerpc"
 INCS=	altivec.h
 .elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 INCS=	emmintrin.h mmintrin.h pmmintrin.h xmmintrin.h mm_malloc.h
