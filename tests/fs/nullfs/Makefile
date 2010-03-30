@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2010/03/30 01:02:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/03/30 01:40:29 pooka Exp $
 #
 
-TESTSDIR=	${TESTSBASE}/fs/union
+TESTSDIR=	${TESTSBASE}/fs/nullfs
 WARNS=		4
 
 TESTS_C=	t_basic
