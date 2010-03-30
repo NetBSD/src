@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.37 2009/12/16 16:03:26 ahoka Exp $	*/
+/*	$NetBSD: menus.mi,v 1.38 2010/03/30 20:09:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -320,7 +320,7 @@ menu floppysource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
 			clean_xfer_dir = yesno; };
 
 menu cdromsource, y=-4, x=0, w=70, no box, no clear, exitstring MSG_Continue;
-	display action { msg_display(MSG_cdromsource); };
+	display action { msg_display_add(MSG_cdromsource); };
 	option {src_legend(menu, MSG_Device, cdrom_dev);},
 		action { src_prompt(MSG_dev, cdrom_dev, sizeof cdrom_dev); };
 	option {src_legend(menu, MSG_Set_dir, set_dir);},

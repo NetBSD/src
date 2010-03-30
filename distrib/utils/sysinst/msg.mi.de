@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.51 2009/09/07 02:31:53 jnemeth Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.52 2010/03/30 20:09:25 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -485,6 +485,16 @@ die Distribution zu finden ist.
 (Das Verzeichnis muss .tgz Dateien enthalten.)
 
 }
+
+message Available_cds
+{Verfügbare CDs}
+
+message ask_cd
+{Es wurden mehrere CDs gefunden. Bitte wählen Sie die Installations CD aus.}
+
+message cd_path_not_found
+{Die Installationsdateien wurden auf der ausgewählten CD nicht gefunden. Bitte
+prüfen Sie den Gerätenamen und Pfad der Installationsdateien.}
 
 message localfssource
 {Geben Sie das noch nicht gemountete lokale Gerät und dessen entsprechendes
