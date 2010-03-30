@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.232 2010/03/26 18:02:14 christos Exp $
+#	$NetBSD: build.sh,v 1.233 2010/03/30 13:17:47 cegger Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -258,6 +258,15 @@ initdefaults()
 	# Set source directories
 	#
 	setmakeenv NETBSDSRCDIR "${TOP}"
+
+	# Make sure KERNOBJDIR is an absolute path if defined
+	#
+	case "${KERNOBJDIR}" in
+	''|/*)	;;
+	*)	KERNOBJDIR="${TOP}/${KERNOBJDIR}"
+		setmakeenv KERNOBJDIR "${KERNOBJDIR}"
+		;;
+	esac
 
 	# Find the version of NetBSD
 	#
@@ -1352,7 +1361,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.232 2010/03/26 18:02:14 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.233 2010/03/30 13:17:47 cegger Exp $
 # with these arguments: ${_args}
 #
 
@@ -1421,13 +1430,6 @@ getkernelconf()
 	fi
 	KERNCONFDIR="$(getmakevar KERNCONFDIR)"
 	KERNOBJDIR="$(getmakevar KERNOBJDIR)"
-	case "${KERNOBJDIR}" in
-	''|/*)	;;
-	*)	KERNOBJDIR="${TOP}/${KERNOBJDIR}"
-		setmakeenv KERNOBJDIR "${KERNOBJDIR}"
-		;;
-	esac
-
 	case "${kernelconf}" in
 	*/*)
 		kernelconfpath="${kernelconf}"
