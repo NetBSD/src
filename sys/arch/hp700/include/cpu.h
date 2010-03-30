@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.39 2010/03/07 08:44:28 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 2010/03/30 19:54:28 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -250,7 +250,7 @@ extern struct cpu_info cpu_info_store;
 #define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = curcpu(), cii < 1; cii++
 
 void	cpu_boot_secondary_processors(void);
-#endif
+#endif /* MULTIPROCESSOR */
 
 static __inline struct lwp *
 hppa_curlwp(void)
@@ -289,7 +289,7 @@ void	lwp_trampoline(void);
 void	setfunc_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
-#endif
+#endif	/* _KERNEL */
 
 /*
  * Boot arguments stuff
@@ -305,6 +305,6 @@ int	cpu_dump(void);
 #define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
 #define	CPU_MAXID		3	/* number of valid machdep ids */
 
-#endif
+#endif	/* !_LOCORE */
 
 #endif /* _MACHINE_CPU_H_ */
