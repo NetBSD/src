@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ntfs.8,v 1.17 2005/01/31 05:19:19 erh Exp $
+.\" $NetBSD: mount_ntfs.8,v 1.18 2010/03/30 14:05:32 joerg Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" Copyright (c) 1999 Semen Ustimenko
@@ -108,12 +108,12 @@ Default is none.
 .Pp
 To get volume name (in Unicode):
 .Bd -literal -offset indent
-# cat /mnt/\\$Volume:\\$VOLUME_NAME
+# cat /mnt/\e$Volume:\e$VOLUME_NAME
 .Ed
 .Pp
 To read directory raw data:
 .Bd -literal -offset indent
-# cat /mnt/foodir:\\$INDEX_ROOT:\\$I30
+# cat /mnt/foodir:\e$INDEX_ROOT:\e$I30
 .Ed
 .Ss Limited support for writing
 There is limited writing ability for files.
