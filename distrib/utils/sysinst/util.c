@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.163 2010/01/27 11:02:03 jmmv Exp $	*/
+/*	$NetBSD: util.c,v 1.164 2010/03/30 20:09:25 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,12 +40,17 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <unistd.h>
+#include <sys/disklabel.h>
+#include <sys/dkio.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <isofs/cd9660/iso.h>
 #include <curses.h>
 #include <err.h>
 #include <errno.h>
@@ -65,6 +70,9 @@
 #ifndef MD_SETS_VALID
 #define MD_SETS_VALID SET_KERNEL, SET_SYSTEM, SET_X11, SET_MD
 #endif
+
+#define MAX_CD_DEVS	256	/* how many cd drives do we expect to attach */
+#define ISO_BLKSIZE	ISO_DEFAULT_BLOCK_SIZE
 
 static const char *msg_yes, *msg_no, *msg_all, *msg_some, *msg_none;
 static const char *msg_cur_distsets_row;
@@ -145,11 +153,20 @@ distinfo dist_list[] = {
 	{NULL,			SET_LAST,		NULL, NULL},
 };
 
+#define MAX_CD_INFOS	16	/* how many media can be found? */
+struct cd_info {
+	char device_name[16];
+	char menu[100];
+};
+static struct cd_info cds[MAX_CD_INFOS];
+
 /*
  * local prototypes 
  */
 
 static int check_for(unsigned int mode, const char *pathname);
+static int get_iso9660_volname(int dev, int sess, char *volname);
+static int get_available_cds(void);
 
 void
 init_set_status(int minimal)
@@ -342,12 +359,138 @@ get_via_floppy(void)
 }
 
 /*
+ * Get the volume name of a ISO9660 file system
+ */
+static int
+get_iso9660_volname(int dev, int sess, char *volname)
+{
+	int blkno, error, last;
+	char buf[ISO_BLKSIZE];
+	struct iso_volume_descriptor *vd = NULL;
+	struct iso_primary_descriptor *pd = NULL;
+
+	for (blkno = sess+16; blkno < sess+16+100; blkno++) {
+		error = pread(dev, buf, ISO_BLKSIZE, blkno*ISO_BLKSIZE);
+		if (error == -1)
+			return -1;
+		vd = (struct iso_volume_descriptor *)&buf;
+		if (memcmp(vd->id, ISO_STANDARD_ID, sizeof(vd->id)) != 0)
+			return -1;
+		if (isonum_711((const unsigned char *)&vd->type)
+		     == ISO_VD_PRIMARY) {
+			pd = (struct iso_primary_descriptor*)buf;
+			strncpy(volname, pd->volume_id, sizeof pd->volume_id);
+			last = sizeof pd->volume_id-1;
+			while (last >= 0 
+			    && (volname[last] == ' ' || volname[last] == 0))
+				last--;
+			volname[last+1] = 0;
+			return 0;
+		}
+	}
+	return -1;
+}
+
+/*
+ * Get a list of all available CD media (not drives!), return
+ * the number of entries collected.
+ */
+static int
+get_available_cds()
+{
+	char dname[16], volname[80];
+	struct cd_info *info = cds;
+	struct disklabel label;
+	int i, part, dev, error, sess, ready, count = 0;
+
+	for (i = 0; i < MAX_CD_DEVS; i++) {
+		sprintf(dname, "/dev/rcd%d%c", i, 'a'+RAW_PART);
+		dev = open(dname, O_RDONLY, 0);
+		if (dev == -1)
+			break;
+		ready = 0;
+		error = ioctl(dev, DIOCTUR, &ready);
+		if (error != 0 || ready == 0) {
+			close(dev);
+			continue;
+		}
+		error = ioctl(dev, DIOCGDINFO, &label);
+		close(dev);
+		if (error == 0) {
+			for (part = 0; part < label.d_npartitions; part++) {
+				if (label.d_partitions[part].p_fstype
+				    != FS_ISO9660)
+					continue;
+				if (label.d_partitions[part].p_fstype
+				    == FS_ISO9660) {
+					sess = label.d_partitions[part]
+					    .p_cdsession;
+					sprintf(dname, "/dev/rcd%d%c", i,
+					    'a'+part);
+					dev = open(dname, O_RDONLY, 0);
+					if (dev == -1)
+						continue;
+					error = get_iso9660_volname(dev, sess,
+					    volname);
+					close(dev);
+					if (error) continue;
+					sprintf(info->device_name, "cd%d%c",
+						i, 'a'+part);
+					sprintf(info->menu, "%s (%s)",
+						info->device_name,
+						volname);
+				} else {
+					/*
+					 * All install CDs use partition
+					 * a for the sets.
+					 */
+					if (part > 0)
+						continue;
+					sprintf(info->device_name, "cd%d%c",
+						i, 'a'+part);
+					strcpy(info->menu, info->device_name);
+				}
+				info++;
+				if (++count >= MAX_CD_INFOS)
+					break;
+			}
+		}
+	}
+	return count;
+}
+
+static int
+cd_has_sets(void)
+{
+	/* Mount it */
+	if (run_program(RUN_SILENT, "/sbin/mount -rt cd9660 /dev/%s /mnt2",
+	    cdrom_dev) != 0)
+		return 0;
+
+	mnt2_mounted = 1;
+
+	snprintf(ext_dir, sizeof ext_dir, "%s/%s", "/mnt2", set_dir);
+	return dir_exists_p(ext_dir);
+}
+
+
+static int
+set_cd_select(menudesc *m, void *arg)
+{
+	*(int *)arg = m->cursel;
+	return 1;
+}
+
+/*
  * Get from a CDROM distribution.
  */
 int
 get_via_cdrom(void)
 {
+	menu_ent cd_menu[MAX_CD_INFOS];
 	struct statvfs sb;
+	int num_cds, menu_cd, i, selected_cd = 0;
+	bool silent = false;
 
 	/* If root is a CD-ROM and we have sets, skip this step. */
 	if (statvfs(set_dir, &sb) == 0 &&
@@ -356,19 +499,51 @@ get_via_cdrom(void)
 		return SET_OK;
 	}
 
-	/* Get CD-rom device name and path within CD-rom */
+	num_cds = get_available_cds();
+	if (num_cds <= 0) {
+		silent = true;
+	} else if (num_cds == 1) {
+		/* single CD found, check for sets on it */
+		strcpy(cdrom_dev, cds[0].device_name);
+		if (cd_has_sets())
+			return SET_OK;
+	} else {
+		for (i = 0; i< num_cds; i++) {
+			cd_menu[i].opt_name = cds[i].menu;
+			cd_menu[i].opt_menu = OPT_NOMENU;
+			cd_menu[i].opt_flags = OPT_EXIT;
+			cd_menu[i].opt_action = set_cd_select;
+		}
+		/* create a menu offering available choices */
+		menu_cd = new_menu(MSG_Available_cds,
+			cd_menu, num_cds, -1, 4, 0, 0,
+			MC_SCROLL | MC_NOEXITOPT,
+			NULL, NULL, NULL, NULL, NULL);
+		if (menu_cd == -1)
+			return SET_RETRY;
+		msg_display(MSG_ask_cd);
+		process_menu(menu_cd, &selected_cd);
+		free_menu(menu_cd);
+		strcpy(cdrom_dev, cds[selected_cd].device_name);
+		if (cd_has_sets())
+			return SET_OK;
+	}
+
+	if (silent)
+		msg_display("");
+	else {
+		umount_mnt2();
+		msg_display(MSG_cd_path_not_found);
+		msg_display_add("\r\n\r\n");
+	}
+
+	/* ask for paths on the CD */
 	process_menu(MENU_cdromsource, NULL);
 
-	/* Mount it */
-	if (run_program(0, "/sbin/mount -rt cd9660 /dev/%s /mnt2",
-	    cdrom_dev) != 0)
-		return SET_RETRY;
+	if (cd_has_sets())
+		return SET_OK;
 
-	mnt2_mounted = 1;
-
-	snprintf(ext_dir, sizeof ext_dir, "%s/%s", "/mnt2", set_dir);
-
-	return SET_OK;
+	return SET_RETRY;
 }
 
 
