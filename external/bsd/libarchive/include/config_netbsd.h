@@ -2,10 +2,10 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Version number of bsdcpio */
-#define BSDCPIO_VERSION_STRING "2.8.0"
+#define BSDCPIO_VERSION_STRING "2.8.2"
 
 /* Version number of bsdtar */
-#define BSDTAR_VERSION_STRING "2.8.0"
+#define BSDTAR_VERSION_STRING "2.8.2"
 
 /* Define to 1 if you have the `acl_create_entry' function. */
 /* #undef HAVE_ACL_CREATE_ENTRY */
@@ -320,7 +320,7 @@
 /* #undef HAVE_OPENSSL_SHA512_INIT */
 
 /* Define to 1 if you have the <openssl/sha.h> header file. */
-/* #undef HAVE_OPENSSL_SHA_H */
+#define HAVE_OPENSSL_SHA_H 1
 
 /* Define to 1 if you have the <paths.h> header file. */
 #define HAVE_PATHS_H 1
@@ -440,31 +440,31 @@
 /* Define to 1 if you have the `strrchr' function. */
 #define HAVE_STRRCHR 1
 
-/* Define to 1 if `st_birthtime' is member of `struct stat'. */
+/* Define to 1 if `struct stat' is a member of `st_birthtime'. */
 #define HAVE_STRUCT_STAT_ST_BIRTHTIME 1
 
-/* Define to 1 if `st_birthtimespec.tv_nsec' is member of `struct stat'. */
+/* Define to 1 if `struct stat' is a member of `st_birthtimespec.tv_nsec'. */
 #define HAVE_STRUCT_STAT_ST_BIRTHTIMESPEC_TV_NSEC 1
 
-/* Define to 1 if `st_blksize' is member of `struct stat'. */
+/* Define to 1 if `struct stat' is a member of `st_blksize'. */
 #define HAVE_STRUCT_STAT_ST_BLKSIZE 1
 
-/* Define to 1 if `st_flags' is member of `struct stat'. */
+/* Define to 1 if `struct stat' is a member of `st_flags'. */
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 
-/* Define to 1 if `st_mtimespec.tv_nsec' is member of `struct stat'. */
+/* Define to 1 if `struct stat' is a member of `st_mtimespec.tv_nsec'. */
 #define HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC 1
 
-/* Define to 1 if `st_mtime_n' is member of `struct stat'. */
+/* Define to 1 if `struct stat' is a member of `st_mtime_n'. */
 /* #undef HAVE_STRUCT_STAT_ST_MTIME_N */
 
-/* Define to 1 if `st_mtime_usec' is member of `struct stat'. */
+/* Define to 1 if `struct stat' is a member of `st_mtime_usec'. */
 /* #undef HAVE_STRUCT_STAT_ST_MTIME_USEC */
 
-/* Define to 1 if `st_mtim.tv_nsec' is member of `struct stat'. */
+/* Define to 1 if `struct stat' is a member of `st_mtim.tv_nsec'. */
 /* #undef HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC */
 
-/* Define to 1 if `st_umtime' is member of `struct stat'. */
+/* Define to 1 if `struct stat' is a member of `st_umtime'. */
 /* #undef HAVE_STRUCT_STAT_ST_UMTIME */
 
 /* Define to 1 if you have the `symlink' function. */
@@ -596,10 +596,10 @@
 #define HAVE_ZLIB_H 1
 
 /* Version number of libarchive as a single integer */
-#define LIBARCHIVE_VERSION_NUMBER "2008000"
+#define LIBARCHIVE_VERSION_NUMBER "2008002"
 
 /* Version number of libarchive */
-#define LIBARCHIVE_VERSION_STRING "2.8.0"
+#define LIBARCHIVE_VERSION_STRING "2.8.2"
 
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
@@ -630,13 +630,16 @@
 #define PACKAGE_NAME "libarchive"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libarchive 2.8.0"
+#define PACKAGE_STRING "libarchive 2.8.2"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libarchive"
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.8.0"
+#define PACKAGE_VERSION "2.8.2"
 
 /* The size of `wchar_t', as computed by sizeof. */
 #define SIZEOF_WCHAR_T 4
@@ -650,8 +653,30 @@
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #define TIME_WITH_SYS_TIME 1
 
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# define _ALL_SOURCE 1
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE 1
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# define _POSIX_PTHREAD_SEMANTICS 1
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# define _TANDEM_SOURCE 1
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# define __EXTENSIONS__ 1
+#endif
+
+
 /* Version number of package */
-#define VERSION "2.8.0"
+#define VERSION "2.8.2"
 
 /* Define to '0x0500' for Windows 2000 APIs. */
 /* #undef WINVER */
@@ -682,28 +707,6 @@
 
 /* Define to '0x0500' for Windows 2000 APIs. */
 /* #undef _WIN32_WINNT */
-
-/* Enable extensions on AIX 3, Interix.  */
-#ifndef _ALL_SOURCE
-# define _ALL_SOURCE 1
-#endif
-/* Enable GNU extensions on systems that have them.  */
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE 1
-#endif
-/* Enable threading extensions on Solaris.  */
-#ifndef _POSIX_PTHREAD_SEMANTICS
-# define _POSIX_PTHREAD_SEMANTICS 1
-#endif
-/* Enable extensions on HP NonStop.  */
-#ifndef _TANDEM_SOURCE
-# define _TANDEM_SOURCE 1
-#endif
-/* Enable general extensions on Solaris.  */
-#ifndef __EXTENSIONS__
-# define __EXTENSIONS__ 1
-#endif
-
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
