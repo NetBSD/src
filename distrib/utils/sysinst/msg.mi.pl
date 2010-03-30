@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.67 2009/09/07 02:31:53 jnemeth Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.68 2010/03/30 20:09:25 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -464,6 +464,16 @@ dystrybucja.
 Pamietaj, ze katalog musi zawierac pliki .tgz.
 
 }
+
+message Available_cds
+{Available CDs}
+
+message ask_cd
+{Multiple CDs found, please select the one containing the install CD.}
+
+message cd_path_not_found
+{The installation sets have not been found at the default location on this
+CD. Please check device and path name.}
 
 message localfssource
 {Podaj niezamountowane lokalne urzadzenie oraz katalog na nim, gdzie

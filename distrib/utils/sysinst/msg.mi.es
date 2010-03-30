@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.28 2009/09/07 02:31:53 jnemeth Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.29 2010/03/30 20:09:25 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -483,6 +483,16 @@ donde se encuentre la distribución.
 Recuerde, el directorio debe contener los archivos .tgz.
 
 }
+
+message Available_cds
+{Available CDs}
+
+message ask_cd
+{Multiple CDs found, please select the one containing the install CD.}
+
+message cd_path_not_found
+{The installation sets have not been found at the default location on this
+CD. Please check device and path name.}
 
 message localfssource
 {Introduzca el dispositivo local desmontado y el directorio de ese
