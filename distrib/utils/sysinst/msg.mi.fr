@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.109 2009/10/18 19:31:53 stacktic Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.110 2010/03/30 20:09:25 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -483,6 +483,16 @@ tgz.
 
 }
 
+
+message Available_cds
+{Available CDs}
+
+message ask_cd
+{Multiple CDs found, please select the one containing the install CD.}
+
+message cd_path_not_found
+{The installation sets have not been found at the default location on this
+CD. Please check device and path name.}
 
 message localfssource
 {Veuillez spécifier le nom du périphérique local (qui ne doit pas
