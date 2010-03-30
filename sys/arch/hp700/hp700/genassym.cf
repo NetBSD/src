@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21 2010/03/16 16:20:19 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.22 2010/03/30 19:38:52 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -80,8 +80,8 @@ export	HPPA_BREAK_SET_PSW
 
 # hp700_int_reg fields
 struct	hp700_int_reg
-member	INT_REG_REQ	int_reg_req
-member	INT_REG_BITS_MAP int_reg_bits_map
+member	INT_REG_REQ		int_reg_req
+member	INT_REG_BITS_MAP	int_reg_bits_map
 export	INT_REG_BIT_REG
 
 # struct cpu_info fields
