@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.10 2010/03/16 16:20:19 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.11 2010/03/30 19:27:54 skrll Exp $	*/
 
 /*	$OpenBSD: frame.h,v 1.11 1999/11/25 18:28:06 mickey Exp $	*/
 
@@ -93,8 +93,8 @@ struct trapframe {
 	/* here starts the `virtual' part */
 	u_int	tf_sar;		/* cr11 */
 	u_int	tf_r1;
-	u_int	tf_rp;          /* r2 */
-	u_int	tf_r3;          /* frame pointer when -g */
+	u_int	tf_rp;		/* r2 */
+	u_int	tf_r3;		/* frame pointer when -g */
 	u_int	tf_r4;
 	u_int	tf_r5;
 	u_int	tf_r6;
