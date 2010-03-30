@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.262 2010/03/28 05:24:00 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.263 2010/03/30 01:50:03 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.262 2010/03/28 05:24:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.263 2010/03/30 01:50:03 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -484,12 +484,11 @@ static int pmap_calculate_colors(void)
 
 static void pmap_alloc_bootargs(void)
 {
-/*	extern struct cpu_bootargs *cpu_args; */
 	char *v;
 
 	v = OF_claim(NULL, 2*PAGE_SIZE, PAGE_SIZE);
 	if ((v == NULL) || (v == (void*)-1))
-		panic("Can't claim a page of memory.");
+		panic("Can't claim two pages of memory.");
 
 	memset(v, 0, 2*PAGE_SIZE);
 
@@ -3145,7 +3144,7 @@ ctx_free(struct pmap *pm, struct cpu_info *ci)
 	int oldctx;
 	int cpunum;
 
-	KASSERT(mutex_owned(&curcpu()->ci_ctx_lock));
+	KASSERT(mutex_owned(&ci->ci_ctx_lock));
 
 #ifdef MULTIPROCESSOR
 	cpunum = ci->ci_index;
@@ -3381,7 +3380,9 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 	}
 }
 
-
+/*
+ * Some routines to allocate and free PTPs.
+ */
 static int
 pmap_get_page(paddr_t *p)
 {
