@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.29 2009/10/19 14:35:04 wiz Exp $
+.\" $NetBSD: cgdconfig.8,v 1.30 2010/03/30 14:26:55 joerg Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -367,7 +367,7 @@ An example parameters file which uses PKCS#5 PBKDF2:
 	verify_method none;
 	keygen pkcs5_pbkdf2/sha1 {
 		iterations 39361;
-		salt AAAAgMoHiYonye6Kog \\
+		salt AAAAgMoHiYonye6Kog \e
 		     dYJAobCHE=;
 	};
 .Ed
@@ -378,7 +378,7 @@ An example parameters file which stores its key locally:
 	iv-method       encblkno1;
 	keylength       256;
 	verify_method   none;
-	keygen storedkey key AAABAK3QO6d7xzLfrXTdsgg4 \\
+	keygen storedkey key AAABAK3QO6d7xzLfrXTdsgg4 \e
 			     ly2TdxkFqOkYYcbyUKu/f60L;
 .Ed
 .Pp
