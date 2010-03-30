@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1420 2010/03/29 18:15:32 pooka Exp $
+#	$NetBSD: mi,v 1.1421 2010/03/30 01:01:09 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2661,6 +2661,9 @@
 ./usr/lib/librumpfs_ntfs.a			comp-c-lib
 ./usr/lib/librumpfs_ntfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_nullfs.a			comp-c-lib
+./usr/lib/librumpfs_nullfs_g.a			-unknown-		debuglib
+./usr/lib/librumpfs_nullfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_smbfs.a			comp-c-lib
 ./usr/lib/librumpfs_smbfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_smbfs_p.a			comp-c-proflib		profile
@@ -2679,6 +2682,9 @@
 ./usr/lib/librumpfs_ufs.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_ufs_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_ufs_p.a			comp-obsolete		obsolete
+./usr/lib/librumpfs_umapfs.a			comp-c-lib
+./usr/lib/librumpfs_umapfs_g.a			-unknown-		debuglib
+./usr/lib/librumpfs_umapfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_union.a			comp-c-lib
 ./usr/lib/librumpfs_union_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_union_p.a			comp-c-proflib		profile

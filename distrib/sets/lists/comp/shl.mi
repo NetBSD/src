@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.110 2010/03/29 18:15:32 pooka Exp $
+# $NetBSD: shl.mi,v 1.111 2010/03/30 01:01:10 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -119,12 +119,14 @@
 ./usr/lib/librumpfs_nfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_nilfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ntfs_pic.a			comp-c-piclib
+./usr/lib/librumpfs_nullfs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_smbfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_syspuffs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_sysvbfs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_tmpfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_udf_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ufs_pic.a			comp-obsolete		obsolete
+./usr/lib/librumpfs_umapfs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_union_pic.a			comp-c-piclib
 ./usr/lib/librumpvfs_fifofs_pic.a		comp-c-piclib
 ./usr/lib/librumpvfs_layerfs_pic.a		comp-c-piclib
