@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.33 2010/02/24 22:38:00 dyoung Exp $ */
+/* $NetBSD: if_msk.c,v 1.34 2010/03/30 14:38:27 tnn Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.33 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.34 2010/03/30 14:38:27 tnn Exp $");
 
 #include "rnd.h"
 
@@ -2193,7 +2193,7 @@ msk_init(struct ifnet *ifp)
 		sk_win_write_4(sc, SK_IMTIMERINIT,
 		    SK_IM_USECS(sc->sk_int_mod));
 		aprint_verbose_dev(sc->sk_dev,
-		    "yinterrupt moderation is %d us\n", sc->sk_int_mod);
+		    "interrupt moderation is %d us\n", sc->sk_int_mod);
 	}
 
 	/* Initialize prefetch engine. */
