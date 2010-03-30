@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.66 2010/03/29 18:49:02 pooka Exp $
+# $NetBSD: mi,v 1.67 2010/03/30 01:11:18 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -113,11 +113,15 @@
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/nullfs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/tmpfs/t_renamerace.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/umapfs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/umapfs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/union					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/union/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
@@ -559,6 +563,9 @@
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_fifos			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_renamerace			tests-fs-tests		atf
+./usr/tests/fs/nullfs				tests-fs-tests
+./usr/tests/fs/nullfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/nullfs/t_basic			tests-fs-tests		atf
 ./usr/tests/fs/puffs				tests-fs-tests
 ./usr/tests/fs/puffs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/puffs/h_have_puffs		tests-fs-tests		atf
@@ -597,6 +604,9 @@
 ./usr/tests/fs/tmpfs/t_truncate			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/t_vnd			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/t_vnode_leak		tests-fs-tests		atf
+./usr/tests/fs/umapfs				tests-fs-tests
+./usr/tests/fs/umapfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/umapfs/t_basic			tests-fs-tests		atf
 ./usr/tests/fs/union				tests-fs-tests
 ./usr/tests/fs/union/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/union/t_basic			tests-fs-tests		atf
