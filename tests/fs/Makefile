@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.5 2010/03/29 18:19:19 pooka Exp $
+# $NetBSD: Makefile,v 1.6 2010/03/30 01:02:47 pooka Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/fs
 
-SUBDIR+=	ffs puffs tmpfs union
+SUBDIR+=	ffs nullfs puffs tmpfs union
 
 FILES= h_funcs.subr
 FILESDIR= ${TESTSDIR}
