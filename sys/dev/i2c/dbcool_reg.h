@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_reg.h,v 1.3 2008/12/18 20:41:35 pgoyette Exp $ */
+/*	$NetBSD: dbcool_reg.h,v 1.4 2010/03/31 18:07:13 macallan Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define DBCOOLREG_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.3 2008/12/18 20:41:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.4 2010/03/31 18:07:13 macallan Exp $");
 
 #define DBCOOL_ADDRMASK		0x7c
 #define	DBCOOL_ADDR		0x2c	/* Some chips have multiple addrs */
@@ -374,6 +374,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.3 2008/12/18 20:41:35 pgoyette Exp 
 
 #define	ADM1027_DEVICEID	0x27
 #define	ADM1030_DEVICEID	0x30
+#define	ADM1031_DEVICEID	0x31
 #define	ADT7463_DEVICEID	0x27
 #define	ADT7466_DEVICEID	0x66
 #define	ADT7467_DEVICEID	0x68	/* The ADT7467/7468 cannot be */

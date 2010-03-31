@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.20 2010/03/20 19:04:51 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.21 2010/03/31 18:07:13 macallan Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.20 2010/03/20 19:04:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.21 2010/03/31 18:07:13 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -592,6 +592,10 @@ struct chip_id chip_table[] = {
 		ADM1030_sensor_table, ADM1030_power_table,
 		DBCFLAG_ADM1030 | DBCFLAG_NO_READBYTE,
 		11250 * 60, "ADM1030" },
+	{ DBCOOL_COMPANYID, ADM1031_DEVICEID, 0xff,
+		ADM1030_sensor_table, ADM1030_power_table,
+		DBCFLAG_ADM1030 | DBCFLAG_NO_READBYTE,
+		11250 * 60, "ADM1031" },
 	{ 0, 0, 0, NULL, NULL, 0, 0, NULL }
 };
 
