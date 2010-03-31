@@ -38,6 +38,7 @@ const char copyright[] = "Copyright (c) 2006-2010 Roy Marples";
 #include <net/route.h>
 
 #ifdef __linux__
+#  include <asm/types.h> /* for systems with broken headers */
 #  include <linux/rtnetlink.h>
 #endif
 
@@ -764,6 +765,9 @@ configure_interface1(struct interface *iface)
 	struct if_options *ifo = ifs->options;
 	uint8_t *duid;
 	size_t len = 0, ifl;
+
+	/* Do any platform specific configuration */
+	if_conf(iface);
 
 	if (iface->flags & IFF_POINTOPOINT && !(ifo->options & DHCPCD_INFORM))
 		ifo->options |= DHCPCD_STATIC;
