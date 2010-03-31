@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_nqmfs.c,v 1.2 2010/03/31 14:49:02 pooka Exp $	*/
+/*	$NetBSD: rump_nqmfs.c,v 1.3 2010/03/31 14:54:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 	membase = mmap(NULL, sb.st_size, PROT_READ | (rdonly ? 0 : PROT_WRITE),
 	    MAP_FILE | (shared ? MAP_SHARED : MAP_PRIVATE), fd, 0);
 	if (membase == MAP_FAILED)
-		err(1, "cannot mmap fpsec");
+		err(1, "cannot mmap fspec");
 
 	args.fspec = mntfile;
 	args.base = membase;
