@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.155 2010/03/05 18:41:46 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.156 2010/03/31 11:35:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.155 2010/03/05 18:41:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.156 2010/03/31 11:35:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -113,6 +113,8 @@ int rump_threads = 0;
 int rump_threads = 1;
 #endif
 
+static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
+
 static void
 rump_aiodone_worker(struct work *wk, void *dummy)
 {
@@ -182,10 +184,8 @@ rump__init(int rump_version)
 			boothowto = AB_VERBOSE;
 	}
 
-	/* Print some silly banners for spammy bootstrap. */
-	if (boothowto & AB_VERBOSE) {
-		printf("%s%s", copyright, version);
-	}
+	initmsgbuf(rump_msgbuf, sizeof(rump_msgbuf));
+	aprint_verbose("%s%s", copyright, version);
 
 	/*
 	 * Seed arc4random() with a "reasonable" amount of randomness.
