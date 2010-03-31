@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.20 2010/03/31 15:01:02 joerg Exp $	*/
+/*	$NetBSD: head.c,v 1.21 2010/03/31 15:01:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.20 2010/03/31 15:01:02 joerg Exp $");
+__RCSID("$NetBSD: head.c,v 1.21 2010/03/31 15:01:51 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,6 @@ static void head(FILE *, long, long);
 static void obsolete(char *[]);
 __dead static void usage(void);
 
-int eval = 0;
 
 int
 main(int argc, char *argv[])
@@ -76,6 +75,7 @@ main(int argc, char *argv[])
 	long linecnt;
 	long bytecnt;
 	char *ep;
+	int eval = 0;
 	int qflag = 0;
 	int vflag = 0;
 
