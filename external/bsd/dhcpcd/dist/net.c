@@ -668,14 +668,10 @@ make_udp_packet(uint8_t **packet, const uint8_t *data, size_t length,
 	udp->uh_sum = checksum(udpp, sizeof(*udpp));
 
 	ip->ip_v = IPVERSION;
-	ip->ip_hl = 5;
-	ip->ip_id = 0;
-	ip->ip_tos = IPTOS_LOWDELAY;
-	ip->ip_len = htons (sizeof(*ip) + sizeof(*udp) + length);
-	ip->ip_id = 0;
-	ip->ip_off = htons(IP_DF); /* Don't fragment */
+	ip->ip_hl = sizeof(*ip) >> 2;
+	ip->ip_id = arc4random() & UINT16_MAX;
 	ip->ip_ttl = IPDEFTTL;
-
+	ip->ip_len = htons(sizeof(*ip) + sizeof(*udp) + length);
 	ip->ip_sum = checksum(ip, sizeof(*ip));
 
 	*packet = (uint8_t *)udpp;
