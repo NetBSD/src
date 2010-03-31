@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.123 2010/03/01 11:35:58 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.124 2010/03/31 14:08:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.123 2010/03/01 11:35:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.124 2010/03/31 14:08:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -67,7 +67,7 @@ time_t time_second = 1;
 kmutex_t *proc_lock;
 struct lwp lwp0;
 struct vnode *rootvp;
-dev_t rootdev;
+dev_t rootdev = NODEV;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 const int schedppq = 1;
