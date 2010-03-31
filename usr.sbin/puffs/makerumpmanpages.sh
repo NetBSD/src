@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.8 2009/02/15 18:00:16 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.9 2010/03/31 14:45:59 pooka Exp $
 #
 
 IFS=' '
@@ -32,7 +32,7 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 15, 2009
+.Dd March 31, 2010
 .Dt RUMP_XXXFSXXX 8
 .Os
 .Sh NAME
@@ -47,6 +47,14 @@ MANTMPL=".\\\"	\$NetBSD\$"'
 .Ar special
 .Ar node
 .Sh DESCRIPTION
+.Em NOTE!
+This manual page has been generated from a common source shared between all
+.Xr rump 3
+file servers.
+Some parts of this manual page may not apply to this particular server.
+After reading this manual page, you may want to verify the details from
+.Xr mount_xxxfsxxx 8 .
+.Pp
 The
 .Nm
 utility can be used to mount xxxfsxxx file systems.
