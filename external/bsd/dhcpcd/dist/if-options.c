@@ -798,7 +798,7 @@ read_config(const char *file,
 		    VENDORCLASSID_MAX_LEN,
 	            "%s-%s:%s-%s:%s%s%s", PACKAGE, VERSION,
 		    utn.sysname, utn.release, utn.machine,
-		    platform ? ":" : "", platform);
+		    platform ? ":" : "", platform ? platform : "");
 	else
 		ifo->vendorclassid[0] = snprintf((char *)ifo->vendorclassid + 1,
 		    VENDORCLASSID_MAX_LEN, "%s-%s", PACKAGE, VERSION);

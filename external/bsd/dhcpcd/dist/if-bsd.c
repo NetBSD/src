@@ -80,6 +80,13 @@ if_init(_unused struct interface *iface)
 }
 
 int
+if_conf(_unused struct interface *iface)
+{
+	/* No extra checks needed on BSD */
+	return 0;
+}
+
+int
 init_sockets(void)
 {
 	if ((socket_afnet = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
