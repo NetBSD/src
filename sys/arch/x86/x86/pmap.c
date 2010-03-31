@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2010/02/26 19:25:07 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.106 2010/03/31 19:07:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2010/02/26 19:25:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2010/03/31 19:07:32 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -750,7 +750,8 @@ pmap_apte_flush(struct pmap *pmap)
  * Unmap the content of APDP PDEs
  */
 static void
-pmap_unmap_apdp(void) {
+pmap_unmap_apdp(void)
+{
 	int i;
 
 	for (i = 0; i < PDP_SIZE; i++) {
@@ -782,7 +783,7 @@ pmap_reference(struct pmap *pmap)
 
 static void
 pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
-    pd_entry_t **ptepp, pd_entry_t * const **pdeppp)
+	      pd_entry_t **ptepp, pd_entry_t * const **pdeppp)
 {
 	pd_entry_t opde, npde;
 	struct pmap *ourpmap;
@@ -791,7 +792,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	bool iscurrent;
 	uint64_t ncsw;
 #ifdef XEN
-	int s;
+	int s, i;
 #endif
 
 	/* the kernel's pmap is always accessible */
@@ -853,7 +854,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	if (!pmap_valid_entry(opde) ||
 	    pmap_pte2pa(opde) != pmap_pdirpa(pmap, 0)) {
 #ifdef XEN
-		int i;
 		s = splvm();
 		/* Make recursive entry usable in user PGD */
 		for (i = 0; i < PDP_SIZE; i++) {
