@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.22 2010/03/31 21:52:11 joerg Exp $	*/
+/*	$NetBSD: head.c,v 1.23 2010/03/31 21:55:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.22 2010/03/31 21:52:11 joerg Exp $");
+__RCSID("$NetBSD: head.c,v 1.23 2010/03/31 21:55:23 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 			bytecnt = strtoimax(optarg, &ep, 10);
 			if ((bytecnt == INTMAX_MAX && errno == ERANGE) ||
 			    *ep || bytecnt <= 0)
-				err(1, "illegal byte count -- %s", optarg);
+				errx(1, "illegal byte count -- %s", optarg);
 			break;
 
 		case 'n':
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 			linecnt = strtoimax(optarg, &ep, 10);
 			if ((linecnt == INTMAX_MAX && errno == ERANGE) ||
 			    *ep || linecnt <= 0)
-				err(1, "illegal line count -- %s", optarg);
+				errx(1, "illegal line count -- %s", optarg);
 			break;
 
 		case 'q':
