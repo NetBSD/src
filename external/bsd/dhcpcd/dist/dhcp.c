@@ -925,6 +925,11 @@ make_message(struct dhcp_message **message,
 		if (sz < MTU_MIN) {
 			if (set_mtu(iface->name, MTU_MIN) == 0)
 				sz = MTU_MIN;
+		} else if (sz > MTU_MAX) {
+			/* Even though our MTU could be greater than
+			 * MTU_MAX (1500) dhcpcd does not presently
+			 * handle DHCP packets any bigger. */
+			sz = MTU_MAX;
 		}
 		sz = htons(sz);
 		memcpy(p, &sz, 2);

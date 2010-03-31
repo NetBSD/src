@@ -105,6 +105,7 @@ int inet_ntocidr(struct in_addr);
 int inet_cidrtoaddr(int, struct in_addr *);
 
 int up_interface(struct interface *);
+int if_conf(struct interface *);
 int if_init(struct interface *);
 
 int do_address(const char *,
