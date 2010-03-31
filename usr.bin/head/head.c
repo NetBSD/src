@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.19 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: head.c,v 1.20 2010/03/31 15:01:02 joerg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.19 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: head.c,v 1.20 2010/03/31 15:01:02 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,17 +61,14 @@ __RCSID("$NetBSD: head.c,v 1.19 2008/07/21 14:19:23 lukem Exp $");
  * Bill Joy UCB August 24, 1977
  */
 
-void head __P((FILE *, long, long));
-void obsolete __P((char *[]));
-void usage __P((void));
-int main __P((int, char *[]));
+static void head(FILE *, long, long);
+static void obsolete(char *[]);
+__dead static void usage(void);
 
 int eval = 0;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	FILE *fp;
@@ -145,11 +142,8 @@ main(argc, argv)
 	exit(eval);
 }
 
-void
-head(fp, cnt, bytecnt)
-	FILE *fp;
-	long cnt;
-	long bytecnt;
+static void
+head(FILE *fp, long cnt, long bytecnt)
 {
 	int ch;
 
@@ -164,9 +158,8 @@ head(fp, cnt, bytecnt)
 		}
 }
 
-void
-obsolete(argv)
-	char *argv[];
+static void
+obsolete(char *argv[])
 {
 	char *ap;
 
@@ -184,8 +177,8 @@ obsolete(argv)
 	}
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: %s [-n lines] [file ...]\n",
