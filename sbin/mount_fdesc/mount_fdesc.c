@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fdesc.c,v 1.24 2009/07/31 14:58:21 pooka Exp $	*/
+/*	$NetBSD: mount_fdesc.c,v 1.25 2010/03/31 13:10:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.3 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_fdesc.c,v 1.24 2009/07/31 14:58:21 pooka Exp $");
+__RCSID("$NetBSD: mount_fdesc.c,v 1.25 2010/03/31 13:10:10 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,6 +141,7 @@ mount_fdesc_parseargs(int argc, char *argv[], void *dummy, int *mntflags,
 	if (*mntflags & MNT_GETARGS)
 		exit(0);
 
+	strlcpy(canon_dev, argv[0], MAXPATHLEN);
 	if (realpath(argv[1], canon_dir) == NULL)    /* Check mounton path */
 		err(1, "realpath %s", argv[1]);
 	if (strncmp(argv[1], canon_dir, MAXPATHLEN)) {
