@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.7 2010/03/31 05:09:41 macallan Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.8 2010/03/31 21:01:03 macallan Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -270,8 +270,6 @@ pcfiic_write(struct pcfiic_softc *sc, bus_size_t r, u_int8_t v)
 	volatile uint8_t junk;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], v);
 	junk = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCF_S1);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], 1,
-	    BUS_SPACE_BARRIER_WRITE);
 }
 
 void
