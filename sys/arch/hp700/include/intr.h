@@ -1,4 +1,5 @@
-/*	$NetBSD: intr.h,v 1.15 2009/05/08 09:33:58 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2010/03/31 12:56:14 skrll Exp $	*/
+/*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -56,30 +57,11 @@
 /* The priority level masks. */
 extern int imask[NIPL];
 
-/* The current priority level. */
-extern volatile int cpl;
-
 /* The asynchronous system trap flag. */
 extern volatile int astpending;
 
-/* The softnet mask. */
-extern int softnetmask;
-
-/*
- * Add a mask to cpl, and return the old value of cpl.
- */
-static __inline int
-splraise(register int ncpl)
-{
-	register int ocpl = cpl;
-
-	cpl = ocpl | ncpl;
-	__insn_barrier();
-
-	return (ocpl);
-}
-
-/* spllower() is in locore.S */
+/* splraise()/spllower() are in locore.S */
+int splraise(int);
 void spllower(int);
 
 /*

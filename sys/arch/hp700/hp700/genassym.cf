@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2010/03/30 19:38:52 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.23 2010/03/31 12:56:14 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -85,7 +85,8 @@ member	INT_REG_BITS_MAP	int_reg_bits_map
 export	INT_REG_BIT_REG
 
 # struct cpu_info fields
-#define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_IPENDING		offsetof(struct cpu_info, ci_ipending)
 #define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 #define	CI_SOFTLWPS		offsetof(struct cpu_info, ci_softlwps)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
