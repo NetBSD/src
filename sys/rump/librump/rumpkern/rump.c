@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.157 2010/03/31 12:16:15 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.158 2010/03/31 18:56:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.157 2010/03/31 12:16:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.158 2010/03/31 18:56:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -160,6 +160,26 @@ messthestack(void)
 		rumpuser_gettime(&d1, &d2, &error);
 		mess[i] = d2;
 	}
+}
+
+/*
+ * Create kern.hostname.  why only this you ask.  well, init_sysctl
+ * is a kitchen sink in need of some gardening.  but i want to use
+ * kern.hostname today.
+ */
+static void
+mksysctls(void)
+{
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "kern", NULL,
+	    NULL, 0, NULL, 0, CTL_KERN, CTL_EOL);
+
+	/* XXX: setting hostnamelen is missing */
+	sysctl_createv(NULL, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_STRING, "hostname",
+	    SYSCTL_DESCR("System hostname"), NULL, 0,
+	    &hostname, MAXHOSTNAMELEN, CTL_KERN, KERN_HOSTNAME, CTL_EOL);
 }
 
 int
@@ -306,6 +326,7 @@ rump__init(int rump_version)
 			panic("aiodoned");
 	}
 
+	mksysctls();
 	sysctl_finalize();
 
 	module_init_class(MODULE_CLASS_ANY);
