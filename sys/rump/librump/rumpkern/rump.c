@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.156 2010/03/31 11:35:33 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.157 2010/03/31 12:16:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.156 2010/03/31 11:35:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.157 2010/03/31 12:16:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -166,6 +166,7 @@ int
 rump__init(int rump_version)
 {
 	char buf[256];
+	uint64_t sec, nsec;
 	struct proc *p;
 	struct lwp *l;
 	int i;
@@ -183,6 +184,10 @@ rump__init(int rump_version)
 		if (*buf != '0')
 			boothowto = AB_VERBOSE;
 	}
+
+	rumpuser_gettime(&sec, &nsec, &error);
+	boottime.tv_sec = sec;
+	boottime.tv_nsec = nsec;
 
 	initmsgbuf(rump_msgbuf, sizeof(rump_msgbuf));
 	aprint_verbose("%s%s", copyright, version);
