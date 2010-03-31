@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.43 2010/03/29 03:05:27 kiyohara Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.44 2010/03/31 12:17:01 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.43 2010/03/29 03:05:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.44 2010/03/31 12:17:01 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.43 2010/03/29 03:05:27 kiyohar
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
+#include <sys/select.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
