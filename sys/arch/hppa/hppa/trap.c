@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 2010/03/24 12:56:30 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.85 2010/03/31 12:56:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2010/03/24 12:56:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2010/03/31 12:56:14 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -493,7 +493,8 @@ trap(int type, struct trapframe *frame)
 	int trapnum;
 #ifdef DIAGNOSTIC
 	extern int emergency_stack_start, emergency_stack_end;
-	int oldcpl = cpl;
+	struct cpu_info *ci = curcpu();
+	int oldcpl = ci->ci_cpl;
 #endif
 
 	trapnum = type & ~T_USER;
@@ -867,7 +868,7 @@ do_onfault:
 		}
 
 		/* Never call uvm_fault in interrupt context. */
-		KASSERT(hppa_intr_depth == 0);
+		KASSERT(curcpu()->ci_cpl == 0);
 
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = 0;
@@ -957,9 +958,9 @@ do_onfault:
 	}
 
 #ifdef DIAGNOSTIC
-	if (cpl != oldcpl)
+	if (ci->ci_cpl != oldcpl)
 		printf("WARNING: SPL (%d) NOT LOWERED ON TRAP (%d) EXIT\n",
-		    cpl, trapnum);
+		    ci->ci_cpl, trapnum);
 #endif
 
 	if (type & T_USER)
@@ -1105,7 +1106,8 @@ syscall(struct trapframe *frame, int *args)
 	int tmp;
 	int rval[2];
 #ifdef DIAGNOSTIC
-	int oldcpl = cpl;
+	struct cpu_info *ci = curcpu();
+	int oldcpl = ci->ci_cpl;
 #endif
 
 	uvmexp.syscalls++;
@@ -1274,11 +1276,11 @@ out:
 	userret(l, frame->tf_iioq_head, 0);
 
 #ifdef DIAGNOSTIC
-	if (cpl != oldcpl) {
+	if (ci->ci_cpl != oldcpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
 		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
-		    cpl, code, args[0], args[1], args[2], p->p_pid);
-		cpl = oldcpl;
+		    ci->ci_cpl, code, args[0], args[1], args[2], p->p_pid);
+		ci->ci_cpl = oldcpl;
 	}
 #endif
 
