@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.40 2010/03/30 19:54:28 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41 2010/03/31 06:35:12 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -242,7 +242,7 @@ extern struct cpu_info cpu_info_store;
 #define	curcpu()			(&cpu_info_store)
 #define	cpu_number()			0
 
-#define cpu_proc_fork(p1, p2)
+#define	cpu_proc_fork(p1, p2)
 
 #ifdef MULTIPROCESSOR
 #define	CPU_IS_PRIMARY(ci)		1
@@ -264,7 +264,7 @@ hppa_curlwp(void)
 
 #define	curlwp				hppa_curlwp()
 
-#define DELAY(x) delay(x)
+#define	DELAY(x) delay(x)
 
 static __inline paddr_t
 kvtop(const void *va)
