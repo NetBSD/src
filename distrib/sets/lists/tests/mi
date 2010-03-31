@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.67 2010/03/30 01:11:18 pooka Exp $
+# $NetBSD: mi,v 1.68 2010/03/31 19:18:39 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -113,6 +113,8 @@
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/kernfs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/nullfs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
@@ -563,6 +565,9 @@
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_fifos			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_renamerace			tests-fs-tests		atf
+./usr/tests/fs/kernfs				tests-fs-tests
+./usr/tests/fs/kernfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/kernfs/t_basic			tests-fs-tests		atf
 ./usr/tests/fs/nullfs				tests-fs-tests
 ./usr/tests/fs/nullfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/nullfs/t_basic			tests-fs-tests		atf
