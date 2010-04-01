@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.180 2010/02/03 15:36:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.181 2010/04/01 01:11:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180 2010/02/03 15:36:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.181 2010/04/01 01:11:53 msaitoh Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -3224,8 +3224,15 @@ bge_reset(struct bge_softc *sc)
 
 
 	/* Step 21: 5822 B0 errata */
-	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX)
-		BGE_SETBIT(sc, 0x66, 1 << 13 | 1 << 12 | 1 << 10);
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
+		pcireg_t msidata;
+		
+		msidata = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+		    BGE_PCI_MSI_DATA);
+		msidata |= ((1 << 13 | 1 << 12 | 1 << 10) << 16);
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MSI_DATA,
+		    msidata);
+	}
 
 	/* Step 23: restore cache line size */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ, cachesize);
