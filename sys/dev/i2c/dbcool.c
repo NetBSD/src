@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.21 2010/03/31 18:07:13 macallan Exp $ */
+/*	$NetBSD: dbcool.c,v 1.22 2010/04/01 04:29:35 macallan Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.21 2010/03/31 18:07:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.22 2010/04/01 04:29:35 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -529,7 +529,7 @@ struct dbcool_sensor ADM1030_sensor_table[] = {
 	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TMIN,
 			DBCOOL_NO_REG,
 			DBCOOL_NO_REG },		1,  8, 0 },
-	{ DBC_CTL,  {	DBCOOL_ADM1030_L_TTHRESH,
+	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TTHRESH,
 			DBCOOL_NO_REG,
 			DBCOOL_NO_REG },		1,  9, 0 },
 	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TTHRESH,
@@ -545,6 +545,61 @@ struct dbcool_power_control ADM1030_power_table[] = {
 	{ { 0, 0, 0, 0 }, NULL }
 };
 
+struct dbcool_sensor ADM1031_sensor_table[] = {
+	{ DBC_TEMP, {	DBCOOL_ADM1030_L_TEMP,
+			DBCOOL_ADM1030_L_HI_LIM,
+			DBCOOL_ADM1030_L_LO_LIM },	0,  0, 0 },
+	{ DBC_TEMP, {	DBCOOL_ADM1030_R_TEMP,
+			DBCOOL_ADM1030_R_HI_LIM,
+			DBCOOL_ADM1030_R_LO_LIM },	1,  0, 0 },
+	{ DBC_TEMP, {	DBCOOL_ADM1031_R2_TEMP,
+			DBCOOL_ADM1031_R2_HI_LIM,
+			DBCOOL_ADM1031_R2_LO_LIM },	2,  0, 0 },
+	{ DBC_FAN,  {	DBCOOL_ADM1030_FAN_TACH,
+			DBCOOL_NO_REG,
+			DBCOOL_ADM1030_FAN_LO_LIM },	5,  0, 0 },
+	{ DBC_FAN,  {	DBCOOL_ADM1031_FAN2_TACH,
+			DBCOOL_NO_REG,
+			DBCOOL_ADM1031_FAN2_LO_LIM },	6,  0, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_L_TMIN,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		0,  8, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_L_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		0,  9, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_L_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		0,  6, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TMIN,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		1,  8, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		1,  9, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1030_R_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		1,  6, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1031_R2_TMIN,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		2,  8, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1031_R2_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		2,  9, 0 },
+	{ DBC_CTL,  {	DBCOOL_ADM1031_R2_TTHRESH,
+			DBCOOL_NO_REG,
+			DBCOOL_NO_REG },		2,  6, 0 },
+	{ DBC_EOF,  {0, 0, 0 }, 0, 0, 0 }
+};
+
+struct dbcool_power_control ADM1031_power_table[] = {   
+	{ { DBCOOL_ADM1030_CFG1,  DBCOOL_NO_REG, DBCOOL_NO_REG,
+	    DBCOOL_ADM1030_FAN_SPEED_CFG },
+	  "fan_control_1" },
+	{ { DBCOOL_ADM1030_CFG1,  DBCOOL_NO_REG, DBCOOL_NO_REG,
+	    DBCOOL_ADM1030_FAN_SPEED_CFG },
+	  "fan_control_2" },
+	{ { 0, 0, 0, 0 }, NULL }
+};
 struct chip_id chip_table[] = {
 	{ DBCOOL_COMPANYID, ADT7490_DEVICEID, ADT7490_REV_ID,
 		ADT7490_sensor_table, ADT7475_power_table,
@@ -593,7 +648,7 @@ struct chip_id chip_table[] = {
 		DBCFLAG_ADM1030 | DBCFLAG_NO_READBYTE,
 		11250 * 60, "ADM1030" },
 	{ DBCOOL_COMPANYID, ADM1031_DEVICEID, 0xff,
-		ADM1030_sensor_table, ADM1030_power_table,
+		ADM1031_sensor_table, ADM1030_power_table,
 		DBCFLAG_ADM1030 | DBCFLAG_NO_READBYTE,
 		11250 * 60, "ADM1031" },
 	{ 0, 0, 0, NULL, NULL, 0, 0, NULL }
@@ -794,6 +849,8 @@ dbcool_read_temp(struct dbcool_softc *sc, uint8_t reg, bool extres)
 			ext = sc->sc_dc.dc_readreg(&sc->sc_dc, DBCOOL_ADM1030_TEMP_EXTRES);
 			if (reg == DBCOOL_ADM1030_L_TEMP)
 				ext >>= 6;
+			else if (reg == DBCOOL_ADM1031_R2_TEMP)
+				ext >>= 4;
 			else
 				ext >>= 1;
 			ext &= 0x03;
