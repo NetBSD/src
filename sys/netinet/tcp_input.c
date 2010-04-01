@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.301 2010/04/01 00:24:41 tls Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.302 2010/04/01 14:31:51 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.301 2010/04/01 00:24:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.302 2010/04/01 14:31:51 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1786,10 +1786,11 @@ after_listen:
 					    tp->t_rxtcur);
 
 				sowwakeup(so);
-				if (so->so_snd.sb_cc)
+				if (so->so_snd.sb_cc) {
 					KERNEL_LOCK(1, NULL);
 					(void) tcp_output(tp);
 					KERNEL_UNLOCK_ONE(NULL);
+				}
 				if (tcp_saveti)
 					m_freem(tcp_saveti);
 				return;
@@ -1884,10 +1885,11 @@ after_listen:
 			}
 			sorwakeup(so);
 			tcp_setup_ack(tp, th);
-			if (tp->t_flags & TF_ACKNOW)
+			if (tp->t_flags & TF_ACKNOW) {
 				KERNEL_LOCK(1, NULL);
 				(void) tcp_output(tp);
 				KERNEL_UNLOCK_ONE(NULL);
+			}
 			if (tcp_saveti)
 				m_freem(tcp_saveti);
 			return;
