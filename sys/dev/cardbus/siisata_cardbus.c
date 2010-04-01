@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_cardbus.c,v 1.12 2010/03/18 20:54:56 dyoung Exp $ */
+/* $NetBSD: siisata_cardbus.c,v 1.13 2010/04/01 05:58:52 dyoung Exp $ */
 /* Id: siisata_pci.c,v 1.11 2008/05/21 16:20:11 jakllsch Exp  */
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.12 2010/03/18 20:54:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_cardbus.c,v 1.13 2010/04/01 05:58:52 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -175,9 +175,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 	{
 #define SIISATA_BAR0_SIZE	128
 		grsize = SIISATA_BAR0_SIZE;
-		csr =
-		    Cardbus_conf_read(ct, ca->ca_tag, SIISATA_CARDBUS_BAR0);
-		base = PCI_MAPREG_MEM_ADDR(csr);
+		base = PCI_MAPREG_MEM_ADDR(Cardbus_conf_read(ct, ca->ca_tag, SIISATA_CARDBUS_BAR0));
 		memt = csc->sc_memt;
 		if ((*cf->cardbus_space_alloc)(cc, csc->sc_rbus_memt, base,
 		    grsize, grsize - 1, grsize, 0, &base, &memh)) {
@@ -186,8 +184,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 			    SIISATANAME(sc));
 			return;
 		}
-		Cardbus_conf_write(ct, ca->ca_tag, SIISATA_CARDBUS_BAR0,
-		    base);
+		Cardbus_conf_write(ct, ca->ca_tag, SIISATA_CARDBUS_BAR0, base);
 	}
 	sc->sc_grt = memt;
 	sc->sc_grh = memh;
@@ -211,8 +208,7 @@ siisata_cardbus_attach(device_t parent, device_t self, void *aux)
 			    SIISATANAME(sc));
 			return;
 		}
-		Cardbus_conf_write(ct, ca->ca_tag, SIISATA_CARDBUS_BAR1,
-		    base);
+		Cardbus_conf_write(ct, ca->ca_tag, SIISATA_CARDBUS_BAR1, base);
 	}
 	sc->sc_prt = memt;
 	sc->sc_prh = memh;
