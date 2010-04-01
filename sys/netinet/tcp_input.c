@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.300 2010/01/26 18:09:07 pooka Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.301 2010/04/01 00:24:41 tls Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.300 2010/01/26 18:09:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.301 2010/04/01 00:24:41 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1787,7 +1787,9 @@ after_listen:
 
 				sowwakeup(so);
 				if (so->so_snd.sb_cc)
+					KERNEL_LOCK(1, NULL);
 					(void) tcp_output(tp);
+					KERNEL_UNLOCK_ONE(NULL);
 				if (tcp_saveti)
 					m_freem(tcp_saveti);
 				return;
@@ -1883,7 +1885,9 @@ after_listen:
 			sorwakeup(so);
 			tcp_setup_ack(tp, th);
 			if (tp->t_flags & TF_ACKNOW)
+				KERNEL_LOCK(1, NULL);
 				(void) tcp_output(tp);
+				KERNEL_UNLOCK_ONE(NULL);
 			if (tcp_saveti)
 				m_freem(tcp_saveti);
 			return;
@@ -2369,7 +2373,9 @@ after_listen:
 						goto drop;
 				} else if (tp->t_dupacks > tcprexmtthresh) {
 					tp->snd_cwnd += tp->t_segsz;
+					KERNEL_LOCK(1, NULL);
 					(void) tcp_output(tp);
+					KERNEL_UNLOCK_ONE(NULL);
 					goto drop;
 				}
 			} else {
@@ -2730,7 +2736,9 @@ dodata:							/* XXX */
 	 * Return any desired output.
 	 */
 	if (needoutput || (tp->t_flags & TF_ACKNOW)) {
+		KERNEL_LOCK(1, NULL);
 		(void) tcp_output(tp);
+		KERNEL_UNLOCK_ONE(NULL);
 	}
 	if (tcp_saveti)
 		m_freem(tcp_saveti);
@@ -2767,7 +2775,9 @@ dropafterack_ratelim:
 dropafterack2:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
+	KERNEL_LOCK(1, NULL);
 	(void) tcp_output(tp);
+	KERNEL_UNLOCK_ONE(NULL);
 	if (tcp_saveti)
 		m_freem(tcp_saveti);
 	return;
