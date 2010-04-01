@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1373 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1374 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -572,3 +572,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	cgtwelve: A driver for Sun CG12 / Matrox SG3 graphics boards
 		[macallan 20100323]
 	dhcpcd(8): Import dhcpcd-5.2.2. [roy 20100331]
+	dbcool(4): Added support for ADM1031 therman sensor / fan controller
+		[macallan 20100401]
