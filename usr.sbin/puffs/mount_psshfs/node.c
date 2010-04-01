@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.60 2010/01/07 21:05:50 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.61 2010/04/01 02:34:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.60 2010/01/07 21:05:50 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.61 2010/04/01 02:34:09 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -90,7 +90,17 @@ psshfs_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 		if (pd->entry)
 			pn = pd->entry;
 		else
-			pn = makenode(pu, pn_dir, pd, &pd->va);
+			pd->entry = pn = makenode(pu, pn_dir, pd, &pd->va);
+
+		/*
+		 * sure sure we have fresh attributes.  most likely we will
+		 * have them cached.  we might not if we go through:
+		 * create - reclaim - lookup (this).
+		 */
+		rv = getnodeattr(pu, pn, PCNPATH(pcn));
+		if (rv)
+			return rv;
+
 		psn = pn->pn_data;
 	}
 
@@ -110,7 +120,7 @@ psshfs_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_node *pn = opc;
 	int rv;
 
-	rv = getnodeattr(pu, pn);
+	rv = getnodeattr(pu, pn, NULL);
 	if (rv)
 		return rv;
 

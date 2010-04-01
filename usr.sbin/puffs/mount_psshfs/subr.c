@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.49 2010/02/17 15:47:36 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.50 2010/04/01 02:34:09 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.49 2010/02/17 15:47:36 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.50 2010/04/01 02:34:09 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -237,7 +237,7 @@ getpathattr(struct puffs_usermount *pu, const char *path, struct vattr *vap)
 }
 
 int
-getnodeattr(struct puffs_usermount *pu, struct puffs_node *pn)
+getnodeattr(struct puffs_usermount *pu, struct puffs_node *pn, const char *path)
 {
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct psshfs_node *psn = pn->pn_data;
@@ -245,7 +245,7 @@ getnodeattr(struct puffs_usermount *pu, struct puffs_node *pn)
 	int rv;
 
 	if (!psn->attrread || REFRESHTIMEOUT(pctx, time(NULL)-psn->attrread)) {
-		rv = getpathattr(pu, PNPATH(pn), &va);
+		rv = getpathattr(pu, path ? path : PNPATH(pn), &va);
 		if (rv)
 			return rv;
 
@@ -420,7 +420,7 @@ sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 
 struct puffs_node *
 makenode(struct puffs_usermount *pu, struct puffs_node *parent,
-	struct psshfs_dir *pd, const struct vattr *vap)
+	const struct psshfs_dir *pd, const struct vattr *vap)
 {
 	struct psshfs_node *psn_parent = parent->pn_data;
 	struct psshfs_node *psn;
@@ -438,7 +438,6 @@ makenode(struct puffs_usermount *pu, struct puffs_node *parent,
 	setpnva(pu, pn, vap);
 	psn->attrread = pd->attrread;
 
-	pd->entry = pn;
 	psn->parent = parent;
 	psn_parent->childcount++;
 
@@ -466,8 +465,10 @@ allocnode(struct puffs_usermount *pu, struct puffs_node *parent,
 	}
 
 	pn = makenode(pu, parent, pd, vap);
-	if (pn)
+	if (pn) {
 		pd->va.va_fileid = pn->pn_va.va_fileid;
+		pd->entry = pn;
+	}
 
 	return pn;
 }

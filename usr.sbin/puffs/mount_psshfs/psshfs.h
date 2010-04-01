@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.39 2010/01/07 21:05:50 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.40 2010/04/01 02:34:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -230,14 +230,14 @@ int	sftp_readdir(struct puffs_usermount *, struct psshfs_ctx *,
 
 struct psshfs_dir *lookup(struct psshfs_dir *, size_t, const char *);
 struct puffs_node *makenode(struct puffs_usermount *, struct puffs_node *,
-			    struct psshfs_dir *, const struct vattr *);
+			    const struct psshfs_dir *, const struct vattr *);
 struct puffs_node *allocnode(struct puffs_usermount *, struct puffs_node *,
 			    const char *, const struct vattr *);
 struct psshfs_dir *direnter(struct puffs_node *, const char *);
 void nukenode(struct puffs_node *, const char *, int);
 void doreclaim(struct puffs_node *);
 int getpathattr(struct puffs_usermount *, const char *, struct vattr *);
-int getnodeattr(struct puffs_usermount *, struct puffs_node *);
+int getnodeattr(struct puffs_usermount *, struct puffs_node *, const char *);
 
 void closehandles(struct puffs_usermount *, struct psshfs_node *, int);
 void lazyopen_rresp(struct puffs_usermount *, struct puffs_framebuf *,

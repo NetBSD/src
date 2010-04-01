@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.21 2010/02/03 17:02:52 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.22 2010/04/01 02:34:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.21 2010/02/03 17:02:52 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.22 2010/04/01 02:34:09 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -269,7 +269,7 @@ psshfs_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 		return EINVAL;
 
 	/* update node attributes */
-	rv = getnodeattr(pu, pn);
+	rv = getnodeattr(pu, pn, NULL);
 	if (rv)
 		return EINVAL;
 
