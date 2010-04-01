@@ -1,11 +1,11 @@
 #
-# $NetBSD: SMALL030,v 1.5 2010/03/13 16:31:38 tsutsui Exp $
+# $NetBSD: SMALL030,v 1.6 2010/04/01 17:10:06 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.84 2010/03/13 16:30:02 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.85 2010/04/01 17:07:51 tsutsui Exp $
 include "arch/atari/conf/std.atari"
 makeoptions COPTS="-Os"
 maxusers 16
