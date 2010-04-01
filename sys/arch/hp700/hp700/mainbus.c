@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.62 2010/02/16 16:56:29 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.63 2010/04/01 12:21:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.62 2010/02/16 16:56:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.63 2010/04/01 12:21:41 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1353,7 +1353,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	pmap = vm_map_pmap(&vm->vm_map);
 
 	lastaddr = *lastaddrp;
-	bmask  = ~(map->_dm_boundary - 1);
+	bmask = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0; ) {
 		bool ok;
