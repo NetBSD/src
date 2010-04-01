@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2009/03/08 05:25:30 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57 2010/04/01 17:07:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2009/03/08 05:25:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2010/04/01 17:07:51 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,6 +280,7 @@ mbattach(struct device *pdp, struct device *dp, void *auxp)
 	config_found(dp, __UNCONST("nvr")     , simple_devprint);
 	config_found(dp, __UNCONST("lpt")     , simple_devprint);
 	config_found(dp, __UNCONST("wdc")     , simple_devprint);
+	config_found(dp, __UNCONST("ne")      , simple_devprint);
 	config_found(dp, __UNCONST("isab")    , simple_devprint);
 	config_found(dp, __UNCONST("pcib")    , simple_devprint);
 	config_found(dp, __UNCONST("avmebus") , simple_devprint);
