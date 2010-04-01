@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.90 2010/03/24 19:15:00 njoly Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.91 2010/04/01 12:16:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.90 2010/03/24 19:15:00 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.91 2010/04/01 12:16:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -125,10 +125,10 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	     !(edata->flags & ENVSYS_FPERCENT) ||
 	     (props & PROP_VAL_LIMITS) ||
 	     (edata->upropset & PROP_VAL_LIMITS)))
-		return ENOTSUP;
+		props = 0;
 
 	if ((props & PROP_VAL_LIMITS) && (edata->upropset & PROP_CAP_LIMITS))
-		return ENOTSUP;
+		props = 0;
 
 	/* 
 	 * check if the event is already on the list and return
@@ -452,18 +452,10 @@ do {									\
 							  sed_t->sed_edata,
 							  &lims, &props);
 	/*
-	 * If no values returned, don't create the event monitor at
-	 * this time.  We'll get another chance later when the user
-	 * provides us with limits.
-	 */
-	if (props == 0)
-		sed_t->sed_edata->flags &= ~ENVSYS_FMONLIMITS;
-
-	/*
 	 * If driver doesn't provide a way to "absorb" user-specified
 	 * limit values, we must monitor all limits ourselves
 	 */
-	else if (sed_t->sed_sme->sme_set_limits == NULL)
+	if (sed_t->sed_sme->sme_set_limits == NULL)
 		props &= ~PROP_DRIVER_LIMITS;
 
 	/* Register the events that were specified */
@@ -542,6 +534,64 @@ sme_events_destroy(struct sysmon_envsys *sme)
 }
 
 /*
+ * sysmon_envsys_update_limits
+ *
+ *	+ If a driver needs to update the limits that it is providing,
+ *	  we need to update the dictionary data as well as the limits.
+ *	  This only makes sense if the driver is capable of providing
+ *	  its limits, and if there is a limits event-monitor.
+ */
+int
+sysmon_envsys_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	prop_dictionary_t sdict = NULL;
+	prop_array_t array = NULL;
+	sysmon_envsys_lim_t lims;
+	sme_event_t *see;
+	uint32_t props = 0;
+
+	if (sme->sme_get_limits == NULL ||
+	    (edata->flags & ENVSYS_FMONLIMITS) == 0)
+		return EINVAL;
+
+	/* Find the dictionary for this sensor */
+	sysmon_envsys_acquire(sme, false);
+	array = prop_dictionary_get(sme_propd, sme->sme_name);
+	if (array == NULL ||
+	    prop_object_type(array) != PROP_TYPE_ARRAY) {
+		DPRINTF(("%s: array device failed\n", __func__));
+		sysmon_envsys_release(sme, false);
+		return EINVAL;
+	}
+	
+	sdict = prop_array_get(array, edata->sensor);
+	if (sdict == NULL) {
+		sysmon_envsys_release(sme, false);
+		return EINVAL;
+	}
+
+	/* Find the event definition to get its powertype */
+	LIST_FOREACH(see, &sme->sme_events_list, see_list) {
+		if (edata == see->see_edata &&
+		    see->see_type == PENVSYS_EVENT_LIMITS)
+			break;
+	}
+	if (see == NULL) {
+		sysmon_envsys_release(sme, false);
+		return EINVAL;
+	}
+	/* Get new limit values */
+	(*sme->sme_get_limits)(sme, edata, &lims, &props);
+
+	/* Update event and dictionary */
+	sme_event_register(sdict, edata, sme, &lims, props,
+			   PENVSYS_EVENT_LIMITS, see->see_pes.pes_type);
+
+	sysmon_envsys_release(sme, false);
+	return 0;
+}
+
+/*
  * sme_events_check:
  *
  * 	+ Passes the events to the workqueue thread and stops
@@ -615,11 +665,17 @@ sme_events_worker(struct work *wk, void *arg)
 	 * Else calculate our own status.  Note that driver must
 	 * relinquish responsibility for ALL limits if there is even
 	 * one limit that it cannot handle!
+	 *
+	 * If this is a CAPACITY monitor, but the sensor's max_value
+	 * is not set, treat it as though the monitor does not exist.
 	 */
 	if ((see->see_type == PENVSYS_EVENT_LIMITS ||
 	     see->see_type == PENVSYS_EVENT_CAPACITY) &&
 	    (edata->upropset & PROP_DRIVER_LIMITS) == 0) {
-		if ((edata->upropset & (PROP_CRITMIN | PROP_BATTCAP)) &&
+		if ((see->see_type == PENVSYS_EVENT_CAPACITY) &&
+		    (edata->value_max == 0))
+			edata->state = ENVSYS_SVALID;
+		else if ((edata->upropset & (PROP_CRITMIN | PROP_BATTCAP)) &&
 		    (edata->value_cur < edata->limits.sel_critmin))
 			edata->state = ENVSYS_SCRITUNDER;
 		else if ((edata->upropset & (PROP_WARNMIN | PROP_BATTWARN)) &&

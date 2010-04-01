@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.103 2010/03/27 13:34:16 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.104 2010/04/01 12:16:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.103 2010/03/27 13:34:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.104 2010/04/01 12:16:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -84,7 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.103 2010/03/27 13:34:16 pgoyette
 
 kmutex_t sme_global_mtx;
 
-static prop_dictionary_t sme_propd;
+prop_dictionary_t sme_propd;
+
 static uint32_t sysmon_envsys_next_sensor_index;
 static struct sysmon_envsys *sysmon_envsys_find_40(u_int);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.34 2010/03/19 02:19:13 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.35 2010/04/01 12:16:14 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -100,6 +100,7 @@ struct sme_description_table {
  * common stuff.
  */
 extern	kmutex_t sme_global_mtx; 	/* for the sme linked list and dict */
+extern	prop_dictionary_t sme_propd;	/* the global sensor dictionary */
 
 /* 
  * linked list for the sysmon envsys devices.
