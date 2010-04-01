@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 2010/03/16 16:20:19 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.43 2010/04/01 12:09:39 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 2010/03/16 16:20:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 2010/04/01 12:09:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ cpu_activate_pcb(struct lwp *l)
 	struct pcb *pcb = lwp_getpcb(l);
 #ifdef DIAGNOSTIC
 	vaddr_t uarea = (vaddr_t)pcb;
-	vaddr_t maxsp = (vaddr_t)pcb + USPACE;
+	vaddr_t maxsp = uarea + USPACE;
 #endif
 	KASSERT(tf == (void *)(uarea + PAGE_SIZE));
 
