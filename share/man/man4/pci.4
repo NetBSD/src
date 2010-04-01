@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.91 2009/01/04 16:38:58 christos Exp $
+.\"	$NetBSD: pci.4,v 1.92 2010/04/01 04:04:11 jakllsch Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 3, 2009
+.Dd April 1, 2010
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -173,6 +173,10 @@ interfaces.
 LSI Logic \*[Am] Dell MegaRAID SAS RAID controllers.
 .It mly
 Mylex AcceleRAID and eXtremeRAID controllers with v6 firmware.
+.It nca
+Domex 536
+.Tn SCSI
+interfaces.
 .It pcscp
 Advanced Micro Devices Am53c974 PCscsi-PCI
 .Tn SCSI
@@ -473,6 +477,7 @@ VGA graphics boards.
 .Xr mly 4 ,
 .Xr mpt 4 ,
 .Xr msk 4 ,
+.Xr nca 4 ,
 .Xr ne 4 ,
 .Xr neo 4 ,
 .Xr nfe 4 ,
