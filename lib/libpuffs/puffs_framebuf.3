@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.28 2010/01/04 22:04:50 pooka Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.29 2010/04/01 09:57:00 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -546,12 +546,12 @@ combination of
 and
 .Dv PUFFS_FBIO_WRITE .
 If not specified, the descriptor will be in a disabled state.
-.It Fn puffs_framev_enablefd pu fd error
+.It Fn puffs_framev_enablefd pu fd what
 Enable events of type
 .Ar what
 for file descriptor
 .Ar fd .
-.It Fn puffs_framev_disablefd pu fd error
+.It Fn puffs_framev_disablefd pu fd what
 Disable events of type
 .Ar what
 for file descriptor
