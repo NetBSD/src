@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.327 2010/03/21 21:11:13 jklos Exp $
+#	$NetBSD: files.pci,v 1.328 2010/04/01 04:04:11 jakllsch Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1005,3 +1005,7 @@ device		wcfb: wsemuldisplaydev, rasops8, vcons
 attach		wcfb at pci
 file		dev/pci/wcfb.c	wcfb
 defflag		opt_wcfb.h	WCFB_DEBUG
+
+# Domex 536, 5380-compatible SCSI HBA
+attach	nca at pci with nca_pci
+file	dev/pci/nca_pci.c	nca_pci
