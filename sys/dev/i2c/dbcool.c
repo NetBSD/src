@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.22 2010/04/01 04:29:35 macallan Exp $ */
+/*	$NetBSD: dbcool.c,v 1.23 2010/04/01 05:26:48 macallan Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.22 2010/04/01 04:29:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.23 2010/04/01 05:26:48 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -922,7 +922,8 @@ dbcool_read_rpm(struct dbcool_softc *sc, uint8_t reg)
 	if (rpm == 0xffff)
 		return 0;	/* 0xffff indicates stalled/failed fan */
 
-	return (sc->sc_dc.dc_chip->rpm_dividend / rpm);
+	/* don't divide by zero */
+	return (rpm == 0)? 0 : (sc->sc_dc.dc_chip->rpm_dividend / rpm);
 }
 
 /* Provide chip's supply voltage, in microvolts */
