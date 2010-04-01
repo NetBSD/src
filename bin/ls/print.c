@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.45 2009/02/14 08:02:04 lukem Exp $	*/
+/*	$NetBSD: print.c,v 1.46 2010/04/01 22:23:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.45 2009/02/14 08:02:04 lukem Exp $");
+__RCSID("$NetBSD: print.c,v 1.46 2010/04/01 22:23:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,9 +353,13 @@ static void
 printtime(time_t ftime)
 {
 	int i;
-	char *longstring;
+	const char *longstring;
 
 	longstring = ctime(&ftime);
+	if (longstring == NULL) {
+			   /* 012345678901234567890123 */
+		longstring = "????????????????????????";
+	}
 	for (i = 4; i < 11; ++i)
 		(void)putchar(longstring[i]);
 
