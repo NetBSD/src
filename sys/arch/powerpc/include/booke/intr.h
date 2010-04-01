@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_intr.h,v 1.1 2010/03/09 22:39:32 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1 2010/04/01 18:59:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -45,33 +45,112 @@
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
+#define	IST_EDGE	1	/* edge-triggered */
+#define	IST_LEVEL	2	/* level-triggered active-low */
+#define	IST_LEVEL_LOW	IST_LEVEL
+#define	IST_LEVEL_HIGH	3	/* level-triggered active-high */
+#define	IST_MSI		4	/* message signaling interrupt (PCI) */
+#define	IST_ONCHIP	5	/* on-chip device */
+#ifdef __INTR_PRIVATE
+#define	IST_MSIGROUP	6	/* openpic msi groups */
+#define	IST_TIMER	7	/* openpic timers */
+#define	IST_IPI		8	/* openpic ipi */
+#define	IST_MI		9	/* openpic message */
+#endif
 
 #ifndef _LOCORE
 
-#define	CLKF_BASEPRI(frame)	((frame)->cf_ipl == IPL_NONE)
-
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
 void 	intr_disestablish(void *);
-void 	intr_init(void);
-void 	ext_intr(void); 			/* for machdep */
+int	spl0(void);
 int 	splraise(int);
-int 	spllower(int);
 void 	splx(int);
-void 	softintr(int);
-
-extern volatile u_int 		imask[NIPL];
-extern const int 		mask_clock; 		/* for clock.c */
-extern const int 		mask_statclock; 	/* for clock.c */
-
-#define	spllowersoftclock() 	spllower(imask[IPL_SOFTCLOCK])
 
 typedef int ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
+
+#ifdef __INTR_PRIVATE
+#include <sys/lwp.h>
+
+struct intrsw {
+	void *(*intrsw_establish)(int, int, int, int (*)(void *), void *);
+	void (*intrsw_disestablish)(void *);
+	void (*intrsw_cpu_init)(struct cpu_info *);
+	void (*intrsw_init)(void);
+	void (*intrsw_critintr)(struct trapframe *);
+	void (*intrsw_decrintr)(struct trapframe *);
+	void (*intrsw_extintr)(struct trapframe *);
+	void (*intrsw_fitintr)(struct trapframe *);
+	void (*intrsw_wdogintr)(struct trapframe *);
+	int (*intrsw_splraise)(int);
+	int (*intrsw_spl0)(void);
+	void (*intrsw_splx)(int);
+#ifdef __HAVE_FAST_SOFTINTS
+	void (*intrsw_softint_init_md)(lwp_t *, u_int, uintptr_t *);
+	void (*intrsw_softint_trigger)(uintptr_t);
+#endif
+};
+
+extern struct intrsw powerpc_intrsw;
+#endif /* __INTR_PRIVATE */
+
+static inline int 
+splhigh(void)
+{
+
+	return splraise(IPL_HIGH);
+}
+
+static inline int 
+splsched(void)
+{
+
+	return splraise(IPL_SCHED);
+}
+
+static inline int 
+splvm(void)
+{
+
+	return splraise(IPL_VM);
+}
+
+static inline int 
+splsoftserial(void)
+{
+
+	return splraise(IPL_SOFTSERIAL);
+}
+
+static inline int 
+splsoftnet(void)
+{
+
+	return splraise(IPL_SOFTNET);
+}
+
+static inline int 
+splsoftbio(void)
+{
+
+	return splraise(IPL_SOFTBIO);
+}
+
+static inline int 
+splsoftclock(void)
+{
+
+	return splraise(IPL_SOFTCLOCK);
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(icookie._ipl);
+}
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
@@ -79,17 +158,6 @@ makeiplcookie(ipl_t ipl)
 
 	return (ipl_cookie_t){._ipl = ipl};
 }
-
-static inline int
-splraiseipl(ipl_cookie_t icookie)
-{
-
-	return splraise(imask[icookie._ipl]);
-}
-
-#include <sys/spl.h>
-
-#define	spl0()			spllower(0)
 
 #endif /* !_LOCORE */
 #endif /* !_BOOKE_INTR_H_ */
