@@ -35,7 +35,7 @@
 #include <getarg.h>
 
 __RCSID("$Heimdal: otp.c 12753 2003-09-03 09:37:03Z lha $"
-        "$NetBSD: otp.c,v 1.5 2008/03/22 08:36:55 mlelstv Exp $");
+        "$NetBSD: otp.c,v 1.6 2010/04/02 15:19:02 christos Exp $");
 
 static int listp;
 static int deletep;
@@ -234,9 +234,7 @@ print_otp_entry_for_name (void *db, char *user)
 		"%s\totp-%s %d %s",
 		ctx.user, ctx.alg->name, ctx.n, ctx.seed);
 	if (ctx.lock_time)
-	    fprintf(stdout,
-		    "\tlocked since %s",
-		    ctime(&ctx.lock_time));
+	    fprintf(stdout, "\tlocked since %s", ctime(&ctx.lock_time));
 	else
 	    fprintf(stdout, "\n");
     }
