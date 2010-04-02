@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.18 2009/08/12 08:04:05 dholland Exp $	*/
+/*	$NetBSD: scores.c,v 1.19 2010/04/02 21:40:00 christos Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -26,7 +26,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.18 2009/08/12 08:04:05 dholland Exp $");
+__RCSID("$NetBSD: scores.c,v 1.19 2010/04/02 21:40:00 christos Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -772,6 +772,7 @@ diedlog()
 {
 	int    n;
 	char  *p;
+	static char  q[] = "?";
 	struct stat     stbuf;
 	lcreat((char *) 0);
 	if (lopen(logfile) < 0) {
@@ -784,9 +785,12 @@ diedlog()
 	}
 	for (n = stbuf.st_size / sizeof(struct log_fmt); n > 0; --n) {
 		lrfill((char *) &logg, sizeof(struct log_fmt));
-		p = ctime(&logg.diedtime);
-		p[16] = '\n';
-		p[17] = 0;
+		if ((p = ctime(&logg.diedtime)) == NULL)
+			p = q;
+		else {
+			p[16] = '\n';
+			p[17] = 0;
+		}
 		lprintf("Score: %ld, Diff: %ld,  %s %s on %ld at %s", (long) (logg.score), (long) (logg.diff), logg.who, logg.what, (long) (logg.cavelev), p + 4);
 #ifdef EXTRA
 		if (logg.moves <= 0)
