@@ -35,24 +35,32 @@
 #include "rtbl.h"
 
 __RCSID("$Heimdal: klist.c 20516 2007-04-22 10:40:41Z lha $"
-        "$NetBSD: klist.c,v 1.9 2008/03/22 08:37:03 mlelstv Exp $");
+        "$NetBSD: klist.c,v 1.10 2010/04/02 15:23:17 christos Exp $");
+
+static char*
+printable_time_internal(time_t t, int x)
+{
+    static char s[128];
+    char *p = ctime(&t);
+    if (p == NULL)
+	strlcpy(s, "?", sizeof(s));
+    else {
+	strlcpy(s, p + 4, sizeof(s));
+	s[x] = 0;
+    }
+    return s;
+}
 
 static char*
 printable_time(time_t t)
 {
-    static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof(s));
-    s[15] = 0;
-    return s;
+    return printable_time_internal(t, 15);
 }
 
 static char*
 printable_time_long(time_t t)
 {
-    static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof(s));
-    s[20] = 0;
-    return s;
+    return printable_time_internal(t, 20);
 }
 
 #define COL_ISSUED		"  Issued"
