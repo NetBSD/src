@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2010/03/19 07:35:29 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 2010/04/02 15:25:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2010/03/19 07:35:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2010/04/02 15:25:51 skrll Exp $");
 
 #include "opt_cputype.h"
 
@@ -1279,15 +1279,13 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 	PMAP_LOCK(pmap);
 
-	for (batch = 0, pdemask = 1; sva < eva; sva += PAGE_SIZE) {
-		if (pdemask != (sva & PDE_MASK)) {
-			pdemask = sva & PDE_MASK;
-			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
-				sva = pdemask + PDE_SIZE - PAGE_SIZE;
-				continue;
-			}
-			batch = pdemask == sva && sva + PDE_SIZE <= eva;
+	for (batch = 0; sva < eva; sva += PAGE_SIZE) {
+		pdemask = sva & PDE_MASK;
+		if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
+			sva = pdemask + PDE_SIZE - PAGE_SIZE;
+			continue;
 		}
+		batch = pdemask == sva && sva + PDE_SIZE <= eva;
 
 		if ((pte = pmap_pte_get(pde, sva))) {
 
