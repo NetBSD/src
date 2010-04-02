@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.23 2009/11/24 16:00:42 seanb Exp $	*/
+/*	$NetBSD: edit.c,v 1.24 2010/04/02 20:19:40 plunky Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.23 2009/11/24 16:00:42 seanb Exp $");
+__RCSID("$NetBSD: edit.c,v 1.24 2010/04/02 20:19:40 plunky Exp $");
 #endif
 
 
@@ -1065,7 +1065,7 @@ int
 x_escape(s, len, putbuf_func)
 	const char *s;
 	size_t len;
-	int putbuf_func ARGS((const char *s, size_t len));
+	int (*putbuf_func) ARGS((const char *, size_t));
 {
 	size_t add, wlen;
 	const char *ifs = str_val(local("IFS", 0));
