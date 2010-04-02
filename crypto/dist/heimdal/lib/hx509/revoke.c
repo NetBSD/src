@@ -51,7 +51,7 @@
 
 #include "hx_locl.h"
 __RCSID("$Heimdal: revoke.c 22275 2007-12-11 11:02:11Z lha $"
-        "$NetBSD: revoke.c,v 1.1 2008/03/22 09:42:41 mlelstv Exp $");
+        "$NetBSD: revoke.c,v 1.2 2010/04/02 15:26:17 christos Exp $");
 
 struct revoke_crl {
     char *path;
@@ -1049,8 +1049,13 @@ static char *
 printable_time(time_t t)
 {
     static char s[128];
-    strlcpy(s, ctime(&t)+ 4, sizeof(s));
-    s[20] = 0;
+    char *p;
+    if ((p = ctime(&t)) == NULL)
+	strlcpy(s, "?", sizeof(s));
+    else {
+	strlcpy(s, p + 4, sizeof(s));
+	s[20] = 0;
+    }
     return s;
 }
 
