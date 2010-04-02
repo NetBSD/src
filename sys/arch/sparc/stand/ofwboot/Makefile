@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2009/11/27 11:14:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.23 2010/04/02 18:39:44 martin Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -59,7 +59,7 @@ CPPFLAGS+=	-DSPARC_BOOT_AOUT
 CPPFLAGS+=	-DSPARC_BOOT_ELF
 CPPFLAGS+=	-DSPARC_BOOT_UFS
 CPPFLAGS+=	-DSPARC_BOOT_NFS
-#CPPFLAGS+=	-DSPARC_BOOT_CD9660
+CPPFLAGS+=	-DSPARC_BOOT_CD9660
 
 ### find out what to use for libkern
 KERN_AS=	library
