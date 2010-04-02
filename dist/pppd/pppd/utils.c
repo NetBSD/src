@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.3 2006/11/05 09:16:20 martin Exp $	*/
+/*	$NetBSD: utils.c,v 1.4 2010/04/02 15:40:14 christos Exp $	*/
 
 /*
  * utils.c - various utility functions used in pppd.
@@ -35,7 +35,7 @@
 #if 0
 #define RCSID	"Id: utils.c,v 1.24 2004/11/04 10:02:26 paulus Exp"
 #else
-__RCSID("$NetBSD: utils.c,v 1.3 2006/11/05 09:16:20 martin Exp $");
+__RCSID("$NetBSD: utils.c,v 1.4 2010/04/02 15:40:14 christos Exp $");
 #endif
 #endif
 
@@ -271,9 +271,12 @@ vslprintf(buf, buflen, fmt, args)
 #endif
 	case 't':
 	    time(&t);
-	    str = ctime(&t);
-	    str += 4;		/* chop off the day name */
-	    str[15] = 0;	/* chop off year and newline */
+	    if ((str = ctime(&t)) == NULL)
+		    strlcpy(str = num, "?", sizeof(num);
+	    else {
+		    str += 4;		/* chop off the day name */
+		    str[15] = 0;	/* chop off year and newline */
+	    }
 	    break;
 	case 'v':		/* "visible" string */
 	case 'q':		/* quoted string */
