@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey_dump.c,v 1.16 2007/07/18 12:07:50 vanhu Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.17 2010/04/02 15:13:26 christos Exp $	*/
 
 /*	$KAME: pfkey_dump.c,v 1.45 2003/09/08 10:14:56 itojun Exp $	*/
 
@@ -774,8 +774,10 @@ str_time(t)
 		for (;i < 20;) buf[i++] = ' ';
 	} else {
 		char *t0;
-		t0 = ctime(&t);
-		memcpy(buf, t0 + 4, 20);
+		if ((t0 = ctime(&t)) == NULL)
+			memset(buf, '?', 20);
+		else
+			memcpy(buf, t0 + 4, 20);
 	}
 
 	buf[20] = '\0';
