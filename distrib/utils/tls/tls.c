@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.3 2009/10/21 23:12:09 snj Exp $	*/
+/*	$NetBSD: tls.c,v 1.4 2010/04/02 15:34:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -126,10 +126,13 @@ show_long(fname)
 	}
 
 	/* date */
-	date = ctime(&st.st_mtime);
-	date += 4;	/* skip day-of-week */
-	date[12] = '\0';	/* to the minute */
-	printf("%s ", date);
+	if ((date = ctime(&st.st_mtime)) == NULL)
+		printf("? ");
+	else {
+		date += 4;	/* skip day-of-week */
+		date[12] = '\0';	/* to the minute */
+		printf("%s ", date);
+	}
 
 	/* name */
 	printf("%s", fname);
