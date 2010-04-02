@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1021 2010/03/14 03:54:59 mrg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1022 2010/04/02 20:34:10 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1025 2010/03/14 03:13:04 mrg Exp
+ *	NetBSD: pcidevs,v 1.1026 2010/04/02 20:32:15 jakllsch Exp
  */
 
 /*
@@ -4275,6 +4275,8 @@ static const uint16_t pci_products[] = {
 	    17225, 2560, 6534, 7787, 6170, 6023, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MCH, 
 	    17233, 16582, 6067, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_AGP, 
+	    17233, 16547, 6170, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_IGD, 
 	    17233, 17241, 692, 1716, 2443, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MC, 
@@ -8124,7 +8126,7 @@ static const char pci_words[] = { "."
 	    "ACCM\0" /* 1 refs @ 6153 */
 	    "2188\0" /* 1 refs @ 6158 */
 	    "VL-PCI\0" /* 3 refs @ 6163 */
-	    "Bridge\0" /* 494 refs @ 6170 */
+	    "Bridge\0" /* 495 refs @ 6170 */
 	    "2051\0" /* 2 refs @ 6177 */
 	    "Single\0" /* 5 refs @ 6182 */
 	    "Solution\0" /* 2 refs @ 6189 */
@@ -9573,7 +9575,7 @@ static const char pci_words[] = { "."
 	    "E7501\0" /* 1 refs @ 16531 */
 	    "E7505\0" /* 5 refs @ 16537 */
 	    "RAS\0" /* 1 refs @ 16543 */
-	    "Host-AGP\0" /* 4 refs @ 16547 */
+	    "Host-AGP\0" /* 5 refs @ 16547 */
 	    "Error\0" /* 2 refs @ 16556 */
 	    "Reporting\0" /* 2 refs @ 16562 */
 	    "82845G/GL\0" /* 3 refs @ 16572 */
@@ -9664,7 +9666,7 @@ static const char pci_words[] = { "."
 	    "Upstream\0" /* 1 refs @ 17205 */
 	    "Downstream\0" /* 3 refs @ 17214 */
 	    "82830MP\0" /* 4 refs @ 17225 */
-	    "82855GM\0" /* 4 refs @ 17233 */
+	    "82855GM\0" /* 5 refs @ 17233 */
 	    "GMCH\0" /* 3 refs @ 17241 */
 	    "Process\0" /* 1 refs @ 17246 */
 	    "E7525\0" /* 5 refs @ 17254 */
