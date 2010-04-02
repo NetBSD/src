@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2010/03/31 12:56:14 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 2010/04/02 19:33:16 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -232,7 +232,10 @@ struct cpu_info {
 	volatile int	ci_cpl;
 	volatile int	ci_ipending;	/* The pending interrupts. */
 	u_int		ci_intr_depth;	/* Nonzero iff running an interrupt. */
+
+	register_t	ci_trapsave[16];/* the "phys" part of frame */
 };
+
 
 extern struct cpu_info cpu_info_store;
 
