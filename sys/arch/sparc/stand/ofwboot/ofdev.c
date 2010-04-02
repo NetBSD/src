@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.26 2010/02/17 15:50:06 eeh Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.27 2010/04/02 18:39:44 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,6 +58,7 @@
 #include "boot.h"
 
 extern char bootdev[];
+extern bool root_fs_quickseekable;
 
 /*
  * This is ugly.  A path on a sparc machine is something like this:
@@ -545,6 +546,7 @@ open_again:
 				net_close(&ofdev);
 				goto bad;
 			}
+			root_fs_quickseekable = false;
 		} else {
 			memcpy(&file_system[0], &file_system_nfs, sizeof file_system[0]);
 			if (error = net_mountroot()) {
