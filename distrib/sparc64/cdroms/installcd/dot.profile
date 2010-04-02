@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1 2010/04/02 21:29:30 martin Exp $
+# $NetBSD: dot.profile,v 1.2 2010/04/02 21:58:46 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -91,9 +91,6 @@ EOM
 
 	# hack to get around bugs in kernfs's rootdev/rrootdev lookup.
 	ls -l /dev/* > /dev/null 2>&1
-
-	# mount the ramdisk read write
-	mount -t -r cd9660 -u /kern/rootdev /
 
 	# mount a few tempfs to allow modifications over the CD contents
 	mount -t tmpfs tmpfs /tmp
