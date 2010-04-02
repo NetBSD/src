@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.27 2010/03/05 16:01:09 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.28 2010/04/02 15:28:16 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1248,12 +1248,10 @@ netpgp_log(const char *fmt, ...)
 	va_list	 vp;
 	time_t	 t;
 	char	 buf[BUFSIZ * 2];
-	char	*cp;
 	int	 cc;
 
 	(void) time(&t);
-	cp = ctime(&t);
-	cc = snprintf(buf, sizeof(buf), "%.24s: netpgp: ", cp);
+	cc = snprintf(buf, sizeof(buf), "%.24s: netpgp: ", ctime(&t));
 	va_start(vp, fmt);
 	(void) vsnprintf(&buf[cc], sizeof(buf) - (size_t)cc, fmt, vp);
 	va_end(vp);
