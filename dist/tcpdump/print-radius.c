@@ -1,4 +1,4 @@
-/*	$NetBSD: print-radius.c,v 1.7 2007/07/24 11:53:46 drochner Exp $	*/
+/*	$NetBSD: print-radius.c,v 1.8 2010/04/02 21:37:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2000 Alfredo Andres Omella.  All rights reserved.
@@ -50,7 +50,7 @@
 static const char rcsid[] _U_ =
     "Id: print-radius.c,v 1.27.2.1 2005/09/26 01:02:40 guy Exp";
 #else
-__RCSID("$NetBSD: print-radius.c,v 1.7 2007/07/24 11:53:46 drochner Exp $");
+__RCSID("$NetBSD: print-radius.c,v 1.8 2010/04/02 21:37:22 christos Exp $");
 #endif
 #endif
 
@@ -737,6 +737,7 @@ static void print_attr_time(register u_char *data, u_int length, u_short attr_co
 {
    time_t attr_time;
    char string[26];
+   const char *p;
 
    if (length != 4)
    {
@@ -747,7 +748,9 @@ static void print_attr_time(register u_char *data, u_int length, u_short attr_co
    TCHECK2(data[0],4);
 
    attr_time = EXTRACT_32BITS(data);
-   strlcpy(string, ctime(&attr_time), sizeof(string));
+   if ((p = ctime(&attr_time)) == NULL)
+	p = "?";
+   strlcpy(string, p, sizeof(string));
    /* Get rid of the newline */
    string[24] = '\0';
    printf("%.24s", string);
