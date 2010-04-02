@@ -1,4 +1,4 @@
-/*	$NetBSD: command6.c,v 1.5 2009/08/12 05:20:38 dholland Exp $	*/
+/*	$NetBSD: command6.c,v 1.6 2010/04/02 15:35:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: command6.c,v 1.5 2009/08/12 05:20:38 dholland Exp $");
+__RCSID("$NetBSD: command6.c,v 1.6 2010/04/02 15:35:32 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -120,17 +120,14 @@ static void
 post(int ch)
 {
 	time_t tv;
-	char   *date;
 	sigset_t isigset, osigset;
 
 	sigemptyset(&isigset);
 	sigaddset(&isigset, SIGINT);
 	sigprocmask(SIG_BLOCK, &isigset, &osigset);
 	tv = time(NULL);
-	date = ctime(&tv);
-	date[24] = '\0';
 	if (score_fp != NULL) {
-		fprintf(score_fp, "%s  %8s  %c%20s", date, username, 
+		fprintf(score_fp, "%24.24s  %8s  %c%20s", ctime(&t), username, 
 		    ch, rate());
 		if (wiz)
 			fprintf(score_fp, "   wizard\n");
