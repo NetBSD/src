@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptime.c,v 1.4 2006/03/18 08:09:03 kardel Exp $	*/
+/*	$NetBSD: ntptime.c,v 1.5 2010/04/02 15:38:05 christos Exp $	*/
 
 /*
  * NTP test program
@@ -301,7 +301,7 @@ main(
 		    printf("  ntptime=%x.%x unixtime=%x.%0*d %s",
 		    (unsigned int) ts.l_ui, (unsigned int) ts.l_uf,
 		    (int) ntv.time.tv_sec, fdigits, (int) time_frac,
-		    ctime((const time_t *) &ntv.time.tv_sec));
+		    ctime(&ntv.time.tv_sec));
 #if NTP_API > 3
 		printf(", TAI offset %ld\n", (long)ntv.tai);
 #else
