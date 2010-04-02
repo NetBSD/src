@@ -35,14 +35,14 @@
 #include "rtbl.h"
 
 __RCSID("$Heimdal: klist.c 20516 2007-04-22 10:40:41Z lha $"
-        "$NetBSD: klist.c,v 1.10 2010/04/02 15:23:17 christos Exp $");
+        "$NetBSD: klist.c,v 1.11 2010/04/02 15:25:04 christos Exp $");
 
 static char*
 printable_time_internal(time_t t, int x)
 {
     static char s[128];
-    char *p = ctime(&t);
-    if (p == NULL)
+    char *p;
+    if ((p = ctime(&t)) == NULL)
 	strlcpy(s, "?", sizeof(s));
     else {
 	strlcpy(s, p + 4, sizeof(s));
