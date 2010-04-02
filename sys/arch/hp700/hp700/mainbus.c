@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.63 2010/04/01 12:21:41 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.64 2010/04/02 15:24:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.63 2010/04/01 12:21:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.64 2010/04/02 15:24:18 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -954,10 +954,7 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
-#ifdef DIAGNOSTIC
-	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf: no packet header");
-#endif	/* DIAGNOSTIC */
+	KASSERT(m0->m_flags & M_PKTHDR);
 
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
@@ -1318,15 +1315,10 @@ mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs,
 	int i;
 
 	for (i = 0; i < nsegs; i++) {
-#ifdef DIAGNOSTIC
-		if (off & PGOFSET)
-			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
-			panic("_bus_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
-			panic("_bus_dmamem_mmap: segment size not multiple"
-			    " of page size");
-#endif	/* DIAGNOSTIC */
+		KASSERT((off & PGOFSET) == 0);
+		KASSERT((segs[i].ds_addr & PGOFSET) == 0);
+		KASSERT((segs[i].ds_len & PGOFSET) == 0);
+
 		if (off >= segs[i].ds_len) {
 			off -= segs[i].ds_len;
 			continue;
