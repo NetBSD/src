@@ -34,7 +34,7 @@
 #include "ftpd_locl.h"
 
 __RCSID("$Heimdal: kauth.c 15666 2005-07-19 17:08:11Z lha $"
-        "$NetBSD: kauth.c,v 1.2 2008/03/22 08:36:50 mlelstv Exp $");
+        "$NetBSD: kauth.c,v 1.3 2010/04/02 15:17:52 christos Exp $");
 
 #if defined(KRB4) || defined(KRB5)
 
@@ -238,8 +238,9 @@ short_date(int32_t dp)
     char *cp;
     time_t t = (time_t)dp;
 
-    if (t == (time_t)(-1L)) return "***  Never  *** ";
-    cp = ctime(&t) + 4;
+    if (t == (time_t)(-1L) || (cp = ctime(&t)) == NULL)
+	return "***  Never  *** ";
+    cp += 4;
     cp[15] = '\0';
     return (cp);
 }
