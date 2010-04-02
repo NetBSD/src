@@ -1,4 +1,4 @@
-/*	$NetBSD: ntptimeset.c,v 1.5 2006/06/11 19:34:21 kardel Exp $	*/
+/*	$NetBSD: ntptimeset.c,v 1.6 2010/04/02 21:33:14 christos Exp $	*/
 
 /*
  * ntptimeset - get/set the time via ntp
@@ -1505,6 +1505,7 @@ set_local_clock(void)
 	register struct server *server;
 	time_t tmp;
 	double dtemp;
+	const char *p;
 
 	/*
 	 * if setting time then print final analysis
@@ -1566,6 +1567,8 @@ set_local_clock(void)
 	LFPTOD(&server->offset, dtemp);
 	step_systime(dtemp);
 	time(&tmp);
+	if ((p = ctime(&tmp)) == NULL)
+		p = "?";
 	fprintf(stdout,"Time set to %.20s [%s %s %ld/%ld]\n",
 		ctime(&tmp)+4,
 		ntoa(&server->srcadr),
