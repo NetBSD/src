@@ -1,4 +1,4 @@
-.\"	$NetBSD: ne.4,v 1.13 2010/03/01 15:28:42 wiz Exp $
+.\"	$NetBSD: ne.4,v 1.14 2010/04/03 11:00:11 tsutsui Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 1, 2010
+.Dd April 3, 2010
 .Dt NE 4
 .Os
 .Sh NAME
@@ -48,22 +48,28 @@
 .Ss acorn32
 .Cd "ne* at podulebus?"
 .Ss amiga
-.Cd "ne* at zbus0"
+.Cd "ne* at zbus0" # AriadneII, X-surf
 .Ss amigappc
-.Cd "ne* at zbus0"
+.Cd "ne* at zbus0" # AriadneII, X-surf
+.Ss atari
+.Cd "ne0 at mainbus0" # EtherNEC on Atari ROM cartridge slot
 .Ss evbarm
-.Cd "ne0 at obio? addr 0x0e000200 intr 5"
+.Cd "ne0 at obio? addr 0x0e000200 intr 5" # on-board Asix AX88796
 .Ss x68k
-.Cd "ne* at intio0 addr 0xece300 intr 249"
-.Cd "ne* at intio0 addr 0xeceb00 intr 248"
-.Cd "neptune0 at intio0 addr 0xece000 intr 249"
-.Cd "neptune1 at intio0 addr 0xece400 intr 249"
+.Cd "ne* at intio0 addr 0xece300 intr 249" # Nereid Ethernet
+.Cd "ne* at intio0 addr 0xeceb00 intr 248" # Nereid Ethernet
+.Cd "neptune0 at intio0 addr 0xece000 intr 249" # Neptune-X
+.Cd "neptune1 at intio0 addr 0xece400 intr 249" # Neptune-X at alt. addr.
 .Cd "ne* at neptune? addr 0x300"
 .Sh DESCRIPTION
 The
 .Nm
 device driver supports NE2000 and compatible (including NE1000) Ethernet
 cards.
+While the original NE2000 is designed for ISA bus, the compatible
+Realtek 8019 chip is widely used on various local busses and
+.Nm
+driver also supports such devices on various machines.
 .Sh MEDIA SELECTION
 The Realtek 8019 (ISA, ISAPnP, some PCMCIA) and Realtek 8029 (PCI)
 NE2000-compatible Ethernet chips include support for software media
