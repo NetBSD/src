@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.39 2010/03/29 15:34:07 njoly Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.40 2010/04/03 17:20:05 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.39 2010/03/29 15:34:07 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.40 2010/04/03 17:20:05 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.39 2010/03/29 15:34:07 njoly Exp
 #include <sys/time.h>
 #include <sys/timex.h>
 #include <sys/timevar.h>
-#include <sys/timetc.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/resourcevar.h>
@@ -394,18 +393,14 @@ netbsd32___clock_getres50(struct lwp *l, const struct netbsd32___clock_getres50_
 		syscallarg(netbsd32_timespecp_t) tp;
 	} */
 	struct netbsd32_timespec ts32;
-	clockid_t clock_id;
 	struct timespec ts;
 	int error = 0;
 
-	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
+	error = clock_getres1(SCARG(uap, clock_id), &ts);
+	if (error != 0)
+		return error;
 
 	if (SCARG_P32(uap, tp)) {
-		ts.tv_sec = 0;
-		ts.tv_nsec = 1000000000 / hz;
-
 		netbsd32_from_timespec(&ts, &ts32);
 		error = copyout(&ts32, SCARG_P32(uap, tp), sizeof(ts32));
 	}

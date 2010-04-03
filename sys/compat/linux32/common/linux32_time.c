@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.30 2010/03/29 15:34:07 njoly Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.31 2010/04/03 17:20:05 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.30 2010/03/29 15:34:07 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.31 2010/04/03 17:20:05 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.30 2010/03/29 15:34:07 njoly Exp 
 #include <sys/ucred.h>
 #include <sys/swap.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/timetc.h>
 
 #include <machine/types.h>
 
@@ -343,8 +342,10 @@ linux32_sys_clock_getres(struct lwp *l,
 	if (error != 0 || SCARG_P32(uap, tp) == NULL)
 		return error;
 
-	ts.tv_sec = 0;
-	ts.tv_nsec = 1000000000 / tc_getfrequency();
+	error = clock_getres1(id, &ts);
+	if (error != 0)
+		return error;
+
 	native_to_linux32_timespec(&lts, &ts);
 	return copyout(&lts, SCARG_P32(uap, tp), sizeof lts);
 }

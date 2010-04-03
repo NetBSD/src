@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.30 2010/03/29 15:34:07 njoly Exp $ */
+/*	$NetBSD: linux_time.c,v 1.31 2010/04/03 17:20:05 njoly Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.30 2010/03/29 15:34:07 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.31 2010/04/03 17:20:05 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.30 2010/03/29 15:34:07 njoly Exp $"
 #include <sys/signal.h>
 #include <sys/stdint.h>
 #include <sys/time.h>
-#include <sys/timetc.h>
 #include <sys/systm.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
@@ -254,8 +253,10 @@ linux_sys_clock_getres(struct lwp *l, const struct linux_sys_clock_getres_args *
 	if (error != 0 || SCARG(uap, tp) == NULL)
 		return error;
 
-	ts.tv_sec = 0;
-	ts.tv_nsec = 1000000000 / tc_getfrequency();
+	error = clock_getres1(nwhich, &ts);
+	if (error != 0)
+		return error;
+
 	native_to_linux_timespec(&lts, &ts);
 	return copyout(&lts, SCARG(uap, tp), sizeof lts);
 }
