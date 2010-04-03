@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/21 01:46:35 darran Exp $
+#	$NetBSD: Makefile,v 1.3 2010/04/03 18:35:49 christos Exp $
 
 # $FreeBSD: src/cddl/lib/libctf/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -18,9 +18,8 @@ SRCS=		ctf_create.c \
 		ctf_types.c \
 		ctf_util.c
 
-.PATH:		${OPENSOLARIS_USR_DISTDIR}/common/ctf
-.PATH:		${OPENSOLARIS_USR_DISTDIR}/lib/libctf/common
-.PATH:		${OPENSOLARIS_SYS_DISTDIR}/common/ctf
+.PATH:		${.CURDIR}/../../dist/common/ctf
+.PATH:		${.CURDIR}/../../dist/lib/libctf/common
 
 CFLAGS+=	-DCTF_OLD_VERSIONS
 
