@@ -231,10 +231,12 @@ printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
 /* XXX */
 printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
 #elif defined(__i386) || defined(__amd64)
+#ifndef __amd64 /* XXX: FIXME */
 			rel->r_offset = s->dofs_offset +
 			    dofr[j].dofr_offset;
 			rel->r_info = ELF32_R_INFO(count + dep->de_global,
 			    R_386_32);
+#endif
 #elif defined(__mips__)
 /* XXX */
 printf("%s:%s(%d): DOODAD\n",__FUNCTION__,__FILE__,__LINE__);
@@ -989,9 +991,11 @@ dt_modtext(dtrace_hdl_t *dtp, char *p, int isenabled, GElf_Rela *rela,
 	 * these types have the same values on both 32-bit and 64-bit
 	 * x86 architectures.
 	 */
+#ifndef __amd64 /* XXX: FIXME */
 	if (GELF_R_TYPE(rela->r_info) != R_386_PC32 &&
 	    GELF_R_TYPE(rela->r_info) != R_386_PLT32)
 		return (-1);
+#endif
 
 	/*
 	 * We may have already processed this object file in an earlier linker
