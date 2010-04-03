@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2010/03/31 12:56:14 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.17 2010/04/03 07:46:01 skrll Exp $	*/
 /*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*-
@@ -57,9 +57,6 @@
 /* The priority level masks. */
 extern int imask[NIPL];
 
-/* The asynchronous system trap flag. */
-extern volatile int astpending;
-
 /* splraise()/spllower() are in locore.S */
 int splraise(int);
 void spllower(int);
@@ -91,7 +88,7 @@ splraiseipl(ipl_cookie_t icookie)
 
 #include <sys/spl.h>
 
-#define	setsoftast()	(astpending = 1)
+#define	setsoftast(l)	((l)->l_md.md_astpending = 1)
 #define	setsoftnet()	hp700_intr_schedule(softnetmask)
 
 void	hp700_intr_schedule(int);

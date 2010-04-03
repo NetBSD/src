@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85 2010/03/31 12:56:14 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.86 2010/04/03 07:46:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2010/03/31 12:56:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2010/04/03 07:46:02 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -174,8 +174,6 @@ uint8_t fpopmap[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-volatile int astpending;
-
 void pmap_hptdump(void);
 void syscall(struct trapframe *, int *);
 
@@ -205,11 +203,12 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
-	if (astpending) {
-		astpending = 0;
-		if (curcpu()->ci_want_resched) {
+	if (l->l_md.md_astpending) {
+		l->l_md.md_astpending = 0;
+		uvmexp.softs++;
+
+		if (curcpu()->ci_want_resched)
 			preempt();
-		}
 	}
 
 	mi_userret(l);
