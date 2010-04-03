@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.38 2010/01/13 12:54:49 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.39 2010/04/03 23:17:05 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -87,7 +87,7 @@
  * CPUID "features" bits in %edx
  */
 
-/* Fn80000001 %edx feature */
+/* Fn00000001 %edx feature */
 #define	CPUID_FPU	0x00000001	/* processor has an FPU? */
 #define	CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
 #define	CPUID_DE	0x00000004	/* has debugging extension */
@@ -127,26 +127,20 @@
 			    "\30MMX\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM" \
 			    "\37IA64\40SBF"
 
-/*
- * CPUID Intel extended features - %EDX
- */
+/* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
 #define CPUID_XD	0x00100000	/* Execute Disable */
 #define CPUID_EM64T	0x20000000	/* Intel EM64T */
 
 #define CPUID_INTEL_EXT_FLAGS	"\20\14SYSCALL/SYSRET\25XD\36EM64T"
 
-/*
- * CPUID Intel extended features - %ECX
- */
+/* Intel Fn80000001 extended features - %ecx */
 #define	CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
 
 #define	CPUID_INTEL_FLAGS4	"\20\1LAHF"
 
-/*
- * AMD/VIA processor specific flags.
- */
 
+/* AMD/VIA Fn80000001 extended features - %edx */
 /*	CPUID_SYSCALL			   SYSCALL/SYSRET */
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
@@ -161,8 +155,7 @@
 #define CPUID_EXT_FLAGS	"\20\14SYSCALL/SYSRET\24MPC\25NOX\27MXX\32FFXSR" \
 			    "\33P1GB\34RDTSCP\36LONG\0373DNOW2\0403DNOW"
 
-
-/* AMD Fn80000001 %ecx features */
+/* AMD Fn80000001 extended features - %ecx */
 #define CPUID_LAHF	0x00000001	/* LAHF/SAHF instruction */
 #define CPUID_CMPLEGACY	0x00000002	/* Compare Legacy */
 #define CPUID_SVM	0x00000004	/* Secure Virtual Machine */
