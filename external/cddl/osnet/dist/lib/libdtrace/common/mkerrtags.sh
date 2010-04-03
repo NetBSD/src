@@ -26,7 +26,7 @@
 #
 #ident	"%Z%%M%	%I%	%E% SMI"
 
-if [[ $(uname) = "Darwin" ]]; then
+if [ $(uname) = "Darwin" ]; then
     BSDECHO=
 else
     BSDECHO=-e
