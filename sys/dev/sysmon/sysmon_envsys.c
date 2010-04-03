@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.104 2010/04/01 12:16:14 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.105 2010/04/03 13:55:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.104 2010/04/01 12:16:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.105 2010/04/03 13:55:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -860,6 +860,7 @@ void
 sysmon_envsys_unregister(struct sysmon_envsys *sme)
 {
 	prop_array_t array;
+	struct sysmon_envsys *osme;
 
 	KASSERT(sme != NULL);
 
@@ -868,11 +869,16 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	 */
 	sme_event_unregister_all(sme);
 	/*
-	 * Decrement global sensors counter (only used for compatibility
-	 * with previous API) and remove the device from the list.
+	 * Decrement global sensors counter and the first_sensor index
+	 * for remaining devices in the list (only used for compatibility
+	 * with previous API), and remove the device from the list.
 	 */
 	mutex_enter(&sme_global_mtx);
 	sysmon_envsys_next_sensor_index -= sme->sme_nsensors;
+	LIST_FOREACH(osme, &sysmon_envsys_list, sme_list) {
+		if (osme->sme_fsensor >= sme->sme_fsensor)
+			osme->sme_fsensor -= sme->sme_nsensors;
+	}
 	LIST_REMOVE(sme, sme_list);
 	mutex_exit(&sme_global_mtx);
 
