@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.23 2010/03/14 18:07:01 pgoyette Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.24 2010/04/03 14:19:17 pgoyette Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.23 2010/03/14 18:07:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.24 2010/04/03 14:19:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -238,6 +238,7 @@ arc_detach(device_t self, int flags)
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
 		aprint_error_dev(self, "timeout waiting to flush cache\n");
 
+	sysmon_envsys_unregister(sc->sc_sme);
 	return 0;
 }
 
