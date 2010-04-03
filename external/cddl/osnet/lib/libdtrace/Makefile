@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/24 15:40:54 tron Exp $
+#	$NetBSD: Makefile,v 1.5 2010/04/03 18:34:19 christos Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -52,10 +52,10 @@ DSRCS=		errno.d			\
 		signal.d		\
 		unistd.d
 
-.PATH:		${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common
-.PATH:		${OPENSOLARIS_USR_DISTDIR}/lib/libgen/common
+.PATH:		${.CURDIR}/../../dist/lib/libgen/common
+.PATH:		${.CURDIR}/../../dist/lib/libdtrace/common
 
-CFLAGS+=	-I${.OBJDIR} \
+CPPFLAGS+=	-I${.OBJDIR} \
 		-I${OSNETDIR}/sys \
 		-I${OSNETDIR}/include \
 		-I${OPENSOLARIS_USR_DISTDIR}/head \
@@ -83,12 +83,12 @@ COPTS.dt_provider.c	+= -Wno-stack-protector
 COPTS.dt_subr.c		+= -Wno-stack-protector
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "amd64"
-CFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
+CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
 .elif ${MACHINE_ARCH} == "sparc64"
-CFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/sparc
+CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/sparc
 .else
 # temporary hack
-CFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
+CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
 .endif
 
 LFLAGS+=-l
@@ -104,6 +104,9 @@ dt_names.c:
 	sh ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/mknames.sh < ${OPENSOLARIS_SYS_DISTDIR}/uts/common/sys/dtrace.h > dt_names.c
 
 beforedepend:	dt_errtags.c dt_names.c
+
+foo:
+	echo ${OPENSOLARIS_USR_DISTDIR}
 
 #beforeinstall:
 #.if exists(${DESTDIR}/usr/lib/dtrace)
