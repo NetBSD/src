@@ -1,6 +1,6 @@
-/*	$NetBSD: proc.h,v 1.9 2010/03/31 06:40:30 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.10 2010/04/03 07:46:02 skrll Exp $	*/
 
-/*	$OpenBSD: proc.h,v 1.1 1998/07/07 21:32:44 mickey Exp $	*/
+/*	$OpenBSD: proc.h,v 1.4 2009/12/29 13:11:40 jsing Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
  */
 struct mdlwp {
 	struct		trapframe *md_regs;	/* registers on current frame */
+	volatile int	md_astpending;		/* AST pending for this LWP */
 	int		md_flags;		/* machine-dependent flags */
 
 	vaddr_t		md_bpva;

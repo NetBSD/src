@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.20 2010/03/16 16:20:19 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.21 2010/04/03 07:46:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.20 2010/03/16 16:20:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.21 2010/04/03 07:46:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,6 +351,10 @@ hppa_ras(struct lwp *l)
 	}
 }
 
+/*
+ * Preempt the current LWP if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
@@ -359,8 +363,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	if (ci->ci_want_resched && !immed)
 		return;
 	ci->ci_want_resched = 1;
-	/* setsoftast(ci->ci_data.cpu_onproc); */
-	setsoftast();
+	setsoftast(ci->ci_data.cpu_onproc);
 
 #ifdef MULTIPROCESSOR
 	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
