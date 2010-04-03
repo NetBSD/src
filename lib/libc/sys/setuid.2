@@ -1,4 +1,4 @@
-.\"	$NetBSD: setuid.2,v 1.20 2006/10/13 20:56:54 wiz Exp $
+.\"	$NetBSD: setuid.2,v 1.21 2010/04/03 15:13:43 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)setuid.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd October 7, 2006
+.Dd Arpil 3, 2010
 .Dt SETUID 2
 .Os
 .Sh NAME
@@ -123,3 +123,13 @@ and
 .Fn setegid
 functions are compliant with
 .St -p1003.1-2001 .
+.Sh HISTORY
+The
+.Fn setuid
+and
+.Fn setgid
+functions appeared in
+.At v2
+and
+.At v4 ,
+respectively.
