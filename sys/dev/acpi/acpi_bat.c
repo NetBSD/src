@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.97 2010/03/26 15:51:55 pooka Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.98 2010/04/03 16:29:22 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.97 2010/03/26 15:51:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.98 2010/04/03 16:29:22 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -590,9 +590,17 @@ acpibat_update_info(void *arg)
 
 	rv = acpibat_get_sta(dv);
 
-	if (rv > 0)
+	if (rv > 0) {
 		acpibat_get_info(dv);
-	else {
+
+		/*
+		 * If the status changed, update the limits.
+		 */
+		if (sc->sc_present == 0 &&
+		    sc->sc_sensor[ACPIBAT_CAPACITY].value_max > 0)
+			sysmon_envsys_update_limits(sc->sc_sme,
+			    &sc->sc_sensor[ACPIBAT_CAPACITY]);
+	} else {
 		i = (rv < 0) ? 0 : ACPIBAT_DVOLTAGE;
 
 		while (i < ACPIBAT_COUNT) {
