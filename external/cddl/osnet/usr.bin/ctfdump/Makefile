@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/21 01:46:36 darran Exp $
+#	$NetBSD: Makefile,v 1.3 2010/04/03 18:50:43 christos Exp $
 
 # $FreeBSD: src/cddl/usr.bin/ctfdump/Makefile,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -25,8 +25,8 @@ LDFLAGS+=	-pthread
 LDADD+=		-L${NETBSDSRCDIR}/external/bsd/libelf/lib
 LDADD+=		-lelf -lz
 
-.PATH:		${OPENSOLARIS_USR_DISTDIR}/tools/ctf/common
-.PATH:		${OPENSOLARIS_USR_DISTDIR}/tools/ctf/dump
+.PATH:		${.CURDIR}/../../dist/tools/ctf/common
+.PATH:		${.CURDIR}/../../dist/tools/ctf/dump
 
 MKMAN=		no
 
