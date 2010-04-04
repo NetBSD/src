@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.2 2010/04/02 21:58:46 martin Exp $
+# $NetBSD: dot.profile,v 1.3 2010/04/04 22:56:44 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -99,7 +99,6 @@ EOM
 
 	# prepare important directories in the tmpfses, so dhcpcd will work
 	mkdir -p /var/run /var/db
-	echo > /tmp/dhcpcd-lease
 
 	# run the installation or upgrade script.
 	sysinst || {

@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.4 2009/09/30 00:32:08 ahoka Exp $
+#	$NetBSD: dot.profile,v 1.5 2010/04/04 22:56:44 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -61,7 +61,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -t tmpfs -o union tmpfs /etc
 
 	mkdir -p /var/run /var/db
-	echo > /tmp/dhcpcd-lease
 
 	grep() sed -n "/$1/p"
 
