@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.27 2010/04/02 18:39:44 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.28 2010/04/04 21:49:15 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -477,7 +477,10 @@ open_again:
 			     LABELSECTOR, DEV_BSIZE, b.buf, &read) != 0
 		    || read != DEV_BSIZE
 		    || (errmsg = getdisklabel(b.buf, &label))) {
-			if (errmsg) printf("devopen: getdisklabel returned %s\n", errmsg);
+			if (errmsg) {
+				DPRINTF(("devopen: getdisklabel returned %s\n",
+					errmsg));
+			}
 			/* Else try MBR partitions */
 			errmsg = search_label(&ofdev, 0, b.buf, &label, 0);
 			if (errmsg) {
