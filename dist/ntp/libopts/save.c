@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.5 2008/08/23 09:10:31 kardel Exp $	*/
+/*	$NetBSD: save.c,v 1.6 2010/04/04 01:37:35 christos Exp $	*/
 
 
 /*
@@ -388,9 +388,10 @@ optionSaveFile( tOptions* pOpts )
 
     {
         time_t  timeVal = time( NULL );
-        char*   pzTime  = ctime( &timeVal );
+        char*   pzTime;
 
-        fprintf( fp, zPresetFile, pzTime );
+	if ((pzTime = ctime( &timeVal )) != NULL)
+		fprintf( fp, zPresetFile, pzTime );
 #ifdef HAVE_ALLOCATED_CTIME
         /*
          *  The return values for ctime(), localtime(), and gmtime()
