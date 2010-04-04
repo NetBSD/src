@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.301 2010/03/23 18:56:18 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.302 2010/04/04 21:36:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.301 2010/03/23 18:56:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.302 2010/04/04 21:36:22 martin Exp $");
 
 #include "rnd.h"
 
@@ -1871,14 +1871,9 @@ cd_size(struct cd_softc *cd, int flags)
 	u_long size;
 	int error;
 
-	/* set up fake values */
-	blksize = 2048;
-	size    = 400000;
-
-	/* if this function bounces with an error return fake value */
 	error = read_cd_capacity(cd->sc_periph, &blksize, &size);
 	if (error)
-		return size;
+		goto error;
 
 	if (blksize != 2048) {
 		if (cd_setblksize(cd) == 0) {
@@ -1886,7 +1881,7 @@ cd_size(struct cd_softc *cd, int flags)
 			error = read_cd_capacity(cd->sc_periph,
 			    &blksize, &size);
 			if (error)
-				return size;
+				goto error;
 		}
 	}
 	cd->params.blksize     = blksize;
@@ -1895,6 +1890,22 @@ cd_size(struct cd_softc *cd, int flags)
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
 	    ("cd_size: %u %lu\n", blksize, size));
+
+	return size;
+
+error:
+	/*
+	 * Something went wrong - return fake values
+	 *
+	 * XXX - what is this good for? Should return 0 and let the caller deal
+	 */
+	cd->params.blksize     = 2048;
+	cd->params.disksize    = 400000;
+	cd->params.disksize512 = ((u_int64_t)cd->params.disksize
+				  * cd->params.blksize) / DEV_BSIZE;
+
+	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
+	    ("cd_size: failed, fake values %u %lu\n", blksize, size));
 
 	return size;
 }
