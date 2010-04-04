@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/04/02 21:29:30 martin Exp $
+#	$NetBSD: Makefile,v 1.3 2010/04/04 23:02:23 martin Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -16,7 +16,10 @@ CDRUNTIME+=	./bin
 CDRUNTIME+=	./dev/MAKEDEV
 CDRUNTIME+=	./etc
 CDRUNTIME+=	./lib
-CDRUNTIME+=	./libexec
+CDRUNTIME+=	./libexec/ld.elf_so
+CDRUNTIME+=	./libexec/lfs_cleanerd
+CDRUNTIME+=	./libexec/dhcpcd-run-hooks
+CDRUNTIME+=	./libexec/resolvconf/
 CDRUNTIME+=	./mnt
 CDRUNTIME+=	./sbin
 # CDRUNTIME+=	./stand
@@ -54,11 +57,11 @@ CDRUNTIME+=	./usr/share/misc/terminfo.db
 CDRUNTIME+=	./usr/share/locale
 
 image_md_pre:
+	${MKDIR} cdrom/libexec/dhcpcd-hooks
+	${CP} ${.CURDIR}/../../../common/10-resolv.conf cdrom/libexec/dhcpcd-hooks
+	${CP} ${.CURDIR}/../../../common/99-print-sysinst cdrom/libexec/dhcpcd-hooks
 	${MKDIR} cdrom/etc
 	${CP} ${.CURDIR}/dot.profile cdrom/etc/rc
-	${ECHO} "" >> cdrom/etc/rc
-	${ECHO} "# exit to single user mode" >> cdrom/etc/rc
-	${ECHO} "exit 1" >> cdrom/etc/rc
 	${MKDIR} cdrom/mnt2 cdrom/targetroot
 	${CP} ${SYSINSTDIR}/sysinst cdrom
 	${CHMOD} ugo+rx cdrom/sysinst

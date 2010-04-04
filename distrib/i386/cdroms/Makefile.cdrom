@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.16 2010/03/16 10:16:39 martin Exp $
+# $NetBSD: Makefile.cdrom,v 1.17 2010/04/04 23:02:23 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,10 @@ CDRUNTIME+=	./bin
 CDRUNTIME+=	./dev/MAKEDEV
 CDRUNTIME+=	./etc
 CDRUNTIME+=	./lib
-CDRUNTIME+=	./libexec
+CDRUNTIME+=	./libexec/ld.elf_so
+CDRUNTIME+=	./libexec/lfs_cleanerd
+CDRUNTIME+=	./libexec/dhcpcd-run-hooks
+CDRUNTIME+=	./libexec/resolvconf/
 CDRUNTIME+=	./mnt
 CDRUNTIME+=	./sbin
 CDRUNTIME+=	./stand
@@ -47,6 +50,9 @@ CDRUNTIME+=	./usr/share/misc/terminfo.db
 CDRUNTIME+=	./usr/share/locale
 
 image_md_pre:
+	${MKDIR} cdrom/libexec/dhcpcd-hooks
+	${CP} ${.CURDIR}/../../../common/10-resolv.conf cdrom/libexec/dhcpcd-hooks
+	${CP} ${.CURDIR}/../../../common/99-print-sysinst cdrom/libexec/dhcpcd-hooks
 	${MKDIR} cdrom/etc
 	${CP} ${.CURDIR}/../../ramdisks/common/dot.profile cdrom/etc/rc
 	${ECHO} "" >> cdrom/etc/rc
