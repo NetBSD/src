@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.187 2010/03/30 05:54:52 lukem Exp $
+$NetBSD: acronyms,v 1.188 2010/04/04 17:55:52 jruoho Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -78,6 +78,7 @@ FOAD	{fuck off,fall over} and die
 FOS	full of shit
 FSDO	for some definition of
 FSVO	for some value of
+FTBFS	fails to build from source
 FTFM	fuck the fuckin' manual!
 FTHOI	for the {heck,hell} of it
 FTL	for the loss
@@ -196,6 +197,7 @@ POC	proof of concept
 POLA	principle of least astonishment
 POLS	principle of least surprise
 POS	piece of shit
+POV	point of view
 PPL	pretty please
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
@@ -262,6 +264,7 @@ TMA	too many abbreviations
 TMI	too much information
 TMTOWTDI	there's more than one way to do it
 TNF	The NetBSD Foundation
+TOCTOU	time of check to time of use
 TOEFL	test of english as a foreign language
 TPTB	the powers that be
 TRT	the right thing
@@ -291,6 +294,7 @@ WTF	{what,when,where,who,why} the fuck
 WTFRUD	what the fuck are you doing
 WTH	{what,when,where,who,why} the hell
 WYSIWYG	what you see is what you get
+YAGNI	you ain't gonna need it
 YALIMO	you are lame, in my opinion
 YHBT	you have been trolled
 YHL	you have lost
