@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.174 2010/04/02 18:34:16 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.175 2010/04/04 23:38:55 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.174 2010/04/02 18:34:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.175 2010/04/04 23:38:55 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -356,8 +356,8 @@ get_bootpath_from_prom(void)
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return;
 
-	LOOKUP_BOOTINFO(bdev, BTINFO_BOOTDEV);
-	if (bdev) {
+	bdev = lookup_bootinfo(BTINFO_BOOTDEV);
+	if (bdev != NULL) {
 		strcpy(ofbootpath, bdev->name);
 	} else {
 		if (OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf)) < 0)
