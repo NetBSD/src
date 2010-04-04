@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.3 2010/02/16 05:47:52 dholland Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.4 2010/04/04 17:18:04 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.3 2010/02/16 05:47:52 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.4 2010/04/04 17:18:04 jnemeth Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -147,23 +147,18 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	NDINIT(&nd, LOOKUP, FOLLOW | (nochroot ? NOCHROOT : 0),
 	    UIO_SYSSPACE, proppath);
 
-	error = namei(&nd);
-	if (error != 0) {
-		goto out1;
+	error = vn_open(&nd, FREAD, 0);
+ 	if (error != 0) {
+	 	goto out1;
 	}
 
 	error = vn_stat(nd.ni_vp, &sb);
 	if (error != 0) {
-		goto out1;
+		goto out;
 	}
 	if (sb.st_size >= (plistsize - 1)) {	/* leave space for term \0 */
 		error = EFBIG;
-		goto out1;
-	}
-
-	error = vn_open(&nd, FREAD, 0);
- 	if (error != 0) {
-	 	goto out1;
+		goto out;
 	}
 
 	base = kmem_alloc(plistsize, KM_SLEEP);
