@@ -1,4 +1,4 @@
-.\"	$NetBSD: lam.1,v 1.6 2008/01/18 01:50:11 jschauma Exp $
+.\"	$NetBSD: lam.1,v 1.7 2010/04/05 21:18:56 joerg Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -107,7 +107,7 @@ lam file1 file2 file3 file4
 joins 4 files together along each line.
 To merge the lines from four different files use
 .Bd -literal -offset indent
-lam file1 \-S "\\
+lam file1 \-S "\e
 " file2 file3 file4
 .Ed
 .Pp
