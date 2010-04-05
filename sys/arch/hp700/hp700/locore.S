@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45 2010/03/31 12:56:14 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.46 2010/04/05 12:56:51 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -619,9 +619,9 @@ ENTRY(hp700_intr_schedule,0)
 	ldw	L_CPU(%t1),%t2
 	mfctl	%eiem, %arg1
 	mtctl	%r0, %eiem			; disable interrupts
-	ldw	CI_IPENDING(%t1), %r1		; load ipending
+	ldw	CI_IPENDING(%t2), %r1		; load ipending
 	or	%r1, %arg0, %r1			; or in mask
-	stw	%r1, CI_IPENDING(%t1)		; store ipending
+	stw	%r1, CI_IPENDING(%t2)		; store ipending
 	ldw	CI_CPL(%t2), %arg0		; load cpl
 	andcm,= %r1, %arg0, %r1			; and ipending with ~cpl
 	b,n	spllower_dispatch		; dispatch if we can
