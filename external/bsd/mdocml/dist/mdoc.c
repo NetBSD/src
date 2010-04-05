@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc.c,v 1.116 2010/01/07 10:24:43 kristaps Exp $ */
+/*	$Vendor-Id: mdoc.c,v 1.118 2010/03/31 07:42:04 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -143,7 +143,7 @@ const	char * const *mdoc_argnames = __mdoc_argnames;
 static	void		  mdoc_free1(struct mdoc *);
 static	void		  mdoc_alloc1(struct mdoc *);
 static	struct mdoc_node *node_alloc(struct mdoc *, int, int, 
-				int, enum mdoc_type);
+				enum mdoct, enum mdoc_type);
 static	int		  node_append(struct mdoc *, 
 				struct mdoc_node *);
 static	int		  parsetext(struct mdoc *, int, char *);
@@ -341,9 +341,11 @@ mdoc_err(struct mdoc *m, int line, int pos, int iserr, enum merr type)
 
 
 int
-mdoc_macro(struct mdoc *m, int tok, 
+mdoc_macro(struct mdoc *m, enum mdoct tok, 
 		int ln, int pp, int *pos, char *buf)
 {
+
+	assert(tok < MDOC_MAX);
 	/*
 	 * If we're in the prologue, deny "body" macros.  Similarly, if
 	 * we're in the body, deny prologue calls.
@@ -424,8 +426,8 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 
 
 static struct mdoc_node *
-node_alloc(struct mdoc *m, int line, 
-		int pos, int tok, enum mdoc_type type)
+node_alloc(struct mdoc *m, int line, int pos, 
+		enum mdoct tok, enum mdoc_type type)
 {
 	struct mdoc_node *p;
 
@@ -434,15 +436,14 @@ node_alloc(struct mdoc *m, int line,
 	p->line = line;
 	p->pos = pos;
 	p->tok = tok;
-	if (MDOC_TEXT != (p->type = type))
-		assert(p->tok >= 0);
+	p->type = type;
 
 	return(p);
 }
 
 
 int
-mdoc_tail_alloc(struct mdoc *m, int line, int pos, int tok)
+mdoc_tail_alloc(struct mdoc *m, int line, int pos, enum mdoct tok)
 {
 	struct mdoc_node *p;
 
@@ -455,7 +456,7 @@ mdoc_tail_alloc(struct mdoc *m, int line, int pos, int tok)
 
 
 int
-mdoc_head_alloc(struct mdoc *m, int line, int pos, int tok)
+mdoc_head_alloc(struct mdoc *m, int line, int pos, enum mdoct tok)
 {
 	struct mdoc_node *p;
 
@@ -471,7 +472,7 @@ mdoc_head_alloc(struct mdoc *m, int line, int pos, int tok)
 
 
 int
-mdoc_body_alloc(struct mdoc *m, int line, int pos, int tok)
+mdoc_body_alloc(struct mdoc *m, int line, int pos, enum mdoct tok)
 {
 	struct mdoc_node *p;
 
@@ -485,7 +486,7 @@ mdoc_body_alloc(struct mdoc *m, int line, int pos, int tok)
 
 int
 mdoc_block_alloc(struct mdoc *m, int line, int pos, 
-		int tok, struct mdoc_arg *args)
+		enum mdoct tok, struct mdoc_arg *args)
 {
 	struct mdoc_node *p;
 
@@ -502,7 +503,7 @@ mdoc_block_alloc(struct mdoc *m, int line, int pos,
 
 int
 mdoc_elem_alloc(struct mdoc *m, int line, int pos, 
-		int tok, struct mdoc_arg *args)
+		enum mdoct tok, struct mdoc_arg *args)
 {
 	struct mdoc_node *p;
 
