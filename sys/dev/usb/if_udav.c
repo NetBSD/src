@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.28 2010/01/19 22:07:44 pooka Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.29 2010/04/05 07:21:48 joerg Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.28 2010/01/19 22:07:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.29 2010/04/05 07:21:48 joerg Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -991,8 +991,7 @@ udav_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+	bpf_mtap(ifp, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -1175,8 +1174,7 @@ udav_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	DPRINTF(("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),
 		 __func__, m->m_len));
