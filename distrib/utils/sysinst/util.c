@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.164 2010/03/30 20:09:25 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.165 2010/04/05 22:53:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1479,7 +1479,11 @@ int
 check_lfs_progs(void)
 {
 
+#ifndef NO_LFS
 	return (access("/sbin/fsck_lfs", X_OK) == 0 &&
 		access("/sbin/mount_lfs", X_OK) == 0 &&
 		access("/sbin/newfs_lfs", X_OK) == 0);
+#else
+	return 0;
+#endif
 }
