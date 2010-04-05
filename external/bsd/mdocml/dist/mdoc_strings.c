@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_strings.c,v 1.14 2010/01/01 17:14:30 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_strings.c,v 1.15 2010/03/29 19:28:04 kristaps Exp $ */
 /*
  * Copyright (c) 2008 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -68,6 +68,12 @@ mdoc_iscdelim(char p)
 	switch (p) {
 	case('|'):
 		/* FALLTHROUGH */
+	case('('):
+		/* FALLTHROUGH */
+	case('['):
+		/* FALLTHROUGH */
+	case('{'):
+		return(1);
 	case('.'):
 		/* FALLTHROUGH */
 	case(','):
@@ -80,18 +86,12 @@ mdoc_iscdelim(char p)
 		/* FALLTHROUGH */
 	case('!'):
 		/* FALLTHROUGH */
-	case('('):
-		/* FALLTHROUGH */
 	case(')'):
-		/* FALLTHROUGH */
-	case('['):
 		/* FALLTHROUGH */
 	case(']'):
 		/* FALLTHROUGH */
-	case('{'):
-		/* FALLTHROUGH */
 	case('}'):
-		return(1);
+		return(2);
 	default:
 		break;
 	}
