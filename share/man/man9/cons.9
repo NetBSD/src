@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.9,v 1.16 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: cons.9,v 1.17 2010/04/05 19:26:27 joerg Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,8 +143,8 @@ int c;
 cnpollc(1);
 for(;;) {
 	c = cngetc();
-	if ((c == '\\r' || (c == '\\n')) {
-		printf("\\n");
+	if ((c == '\er' || (c == '\en')) {
+		printf("\en");
 		break;
 	}
 }
