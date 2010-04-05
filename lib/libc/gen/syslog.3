@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.26 2008/11/01 13:54:01 wiz Exp $
+.\"	$NetBSD: syslog.3,v 1.27 2010/04/05 21:29:47 joerg Exp $
 .\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -444,7 +444,7 @@ syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
 
 syslogp(LOG_INFO|LOG_LOCAL2, NULL, NULL, "foobar error: %m");
 
-syslogp(LOG_INFO, "ID%d", "[meta language=\\"en-US\\"]",
+syslogp(LOG_INFO, "ID%d", "[meta language=\e"en-US\e"]",
         "event: %s", 42, EventDescription);
 .Ed
 .Pp
