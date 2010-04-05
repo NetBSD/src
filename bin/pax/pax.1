@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.56 2009/09/06 13:38:50 christos Exp $
+.\"    $NetBSD: pax.1,v 1.57 2010/04/05 21:22:37 joerg Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -642,7 +642,7 @@ As in
 .Cm old
 is a basic regular expression and
 .Cm new
-can contain an ampersand (\*[Am]), \\n (where n is a digit) back-references,
+can contain an ampersand (\*[Am]), \en (where n is a digit) back-references,
 or subexpression matching.
 The
 .Cm old
@@ -877,7 +877,7 @@ Select a file based on its
 name, or when starting with a
 .Cm # ,
 a numeric gid.
-A '\\' can be used to escape the
+A '\e' can be used to escape the
 .Cm # .
 Multiple
 .Fl G
@@ -1059,7 +1059,7 @@ Select a file based on its
 name, or when starting with a
 .Cm # ,
 a numeric uid.
-A '\\' can be used to escape the
+A '\e' can be used to escape the
 .Cm # .
 Multiple
 .Fl U
