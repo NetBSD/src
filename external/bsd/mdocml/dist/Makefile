@@ -10,13 +10,21 @@ INSTALL_DATA	= install -m 0444
 INSTALL_LIB	= install -m 0644
 INSTALL_MAN	= $(INSTALL_DATA)
 
-VERSION	   = 1.9.15
-VDATE	   = 18 February 2010
+VERSION	   = 1.9.22
+VDATE	   = 31 March 2010
 
-VFLAGS     = -DVERSION="\"$(VERSION)\"" -DHAVE_CONFIG_H
+VFLAGS	   = -DVERSION="\"$(VERSION)\""
 WFLAGS     = -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings
-CFLAGS    += -g $(VFLAGS) $(WFLAGS)
-#CFLAGS	  += -DOSNAME="\"OpenBSD 4.5\""
+CFLAGS    += -g $(WFLAGS) $(VFLAGS) -DHAVE_CONFIG_H
+
+# Specify this if you want to hard-code the operating system to appear
+# in the lower-left hand corner of -mdoc manuals.
+# CFLAGS += -DOSNAME="\"OpenBSD 4.5\""
+
+# Specify this if you want to accept Xo/Xc macros extending the head of
+# block full-implicit macros.
+# CFLAGS += -DUGLY
+
 LINTFLAGS += $(VFLAGS)
 
 MANDOCFLAGS = -Wall -fstrict
@@ -129,89 +137,61 @@ $(OBJS): config.h
 
 $(LNS): config.h
 
-man_macro.ln: man_macro.c libman.h
-man_macro.o: man_macro.c libman.h
+man_macro.ln man_macro.o: man_macro.c libman.h
 
-lib.ln: lib.c lib.in libmdoc.h
-lib.o: lib.c lib.in libmdoc.h
+lib.ln lib.o: lib.c lib.in libmdoc.h
 
-att.ln: att.c att.in libmdoc.h
-att.o: att.c att.in libmdoc.h
+att.ln att.o: att.c att.in libmdoc.h
 
-arch.ln: arch.c arch.in libmdoc.h
-arch.o: arch.c arch.in libmdoc.h
+arch.ln arch.o: arch.c arch.in libmdoc.h
 
-vol.ln: vol.c vol.in libmdoc.h
-vol.o: vol.c vol.in libmdoc.h
+vol.ln vol.o: vol.c vol.in libmdoc.h
 
-chars.ln: chars.c chars.in chars.h
-chars.o: chars.c chars.in chars.h
+chars.ln chars.o: chars.c chars.in chars.h
 
-msec.ln: msec.c msec.in libmdoc.h
-msec.o: msec.c msec.in libmdoc.h
+msec.ln msec.o: msec.c msec.in libmdoc.h
 
-st.ln: st.c st.in libmdoc.h
-st.o: st.c st.in libmdoc.h
+st.ln st.o: st.c st.in libmdoc.h
 
-mdoc_macro.ln: mdoc_macro.c libmdoc.h
-mdoc_macro.o: mdoc_macro.c libmdoc.h
+mdoc_macro.ln mdoc_macro.o: mdoc_macro.c libmdoc.h
 
-mdoc_term.ln: mdoc_term.c term.h mdoc.h
-mdoc_term.o: mdoc_term.c term.h mdoc.h
+mdoc_term.ln mdoc_term.o: mdoc_term.c term.h mdoc.h
 
-mdoc_strings.ln: mdoc_strings.c libmdoc.h
-mdoc_strings.o: mdoc_strings.c libmdoc.h
+mdoc_strings.ln mdoc_strings.o: mdoc_strings.c libmdoc.h
 
-man_hash.ln: man_hash.c libman.h
-man_hash.o: man_hash.c libman.h
+man_hash.ln man_hash.o: man_hash.c libman.h
 
-mdoc_hash.ln: mdoc_hash.c libmdoc.h
-mdoc_hash.o: mdoc_hash.c libmdoc.h
+mdoc_hash.ln mdoc_hash.o: mdoc_hash.c libmdoc.h
 
-mdoc.ln: mdoc.c libmdoc.h
-mdoc.o: mdoc.c libmdoc.h
+mdoc.ln mdoc.o: mdoc.c libmdoc.h
 
-man.ln: man.c libman.h
-man.o: man.c libman.h
+man.ln man.o: man.c libman.h
 
-main.ln: main.c mdoc.h
-main.o: main.c mdoc.h
+main.ln main.o: main.c mdoc.h
 
-compat.ln: compat.c 
-compat.o: compat.c
+compat.ln compat.o: compat.c 
 
-term.ln: term.c term.h man.h mdoc.h chars.h
-term.o: term.c term.h man.h mdoc.h chars.h
+term.ln term.o: term.c term.h man.h mdoc.h chars.h
 
-html.ln: html.c html.h chars.h
-html.o: html.c html.h chars.h
+html.ln html.o: html.c html.h chars.h
 
-mdoc_html.ln: mdoc_html.c html.h mdoc.h
-mdoc_html.o: mdoc_html.c html.h mdoc.h
+mdoc_html.ln mdoc_html.o: mdoc_html.c html.h mdoc.h
 
-man_html.ln: man_html.c html.h man.h out.h
-man_html.o: man_html.c html.h man.h out.h
+man_html.ln man_html.o: man_html.c html.h man.h out.h
 
-out.ln: out.c out.h
-out.o: out.c out.h
+out.ln out.o: out.c out.h
 
-tree.ln: tree.c man.h mdoc.h
-tree.o: tree.c man.h mdoc.h
+tree.ln tree.o: tree.c man.h mdoc.h
 
-mdoc_argv.ln: mdoc_argv.c libmdoc.h
-mdoc_argv.o: mdoc_argv.c libmdoc.h
+mdoc_argv.ln mdoc_argv.o: mdoc_argv.c libmdoc.h
 
-man_argv.ln: man_argv.c libman.h
-man_argv.o: man_argv.c libman.h
+man_argv.ln man_argv.o: man_argv.c libman.h
 
-man_validate.ln: man_validate.c libman.h
-man_validate.o: man_validate.c libman.h
+man_validate.ln man_validate.o: man_validate.c libman.h
 
-mdoc_validate.ln: mdoc_validate.c libmdoc.h
-mdoc_validate.o: mdoc_validate.c libmdoc.h
+mdoc_validate.ln mdoc_validate.o: mdoc_validate.c libmdoc.h
 
-mdoc_action.ln: mdoc_action.c libmdoc.h
-mdoc_action.o: mdoc_action.c libmdoc.h
+mdoc_action.ln mdoc_action.o: mdoc_action.c libmdoc.h
 
 libmdoc.h: mdoc.h
 

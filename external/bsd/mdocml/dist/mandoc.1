@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: mandoc.1,v 1.50 2010/01/29 14:39:38 kristaps Exp $
+.\"	$Vendor-Id: mandoc.1,v 1.56 2010/03/29 10:10:35 kristaps Exp $
 .\"
 .\" Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 29 2010 $
+.Dd $Mdocdate: March 29 2010 $
 .Dt MANDOC 1
 .Os
 .
@@ -176,6 +176,10 @@ Produce an indented parse tree.
 .
 .It Fl T Ns Ar lint
 Parse only: produce no output.
+Implies
+.Fl W Ns Ar all
+and
+.Fl f Ns Ar strict .
 .El
 .
 .Pp
@@ -216,7 +220,8 @@ and
 .Fl f Ns Ar no-ign-chars .
 .
 .It Fl f Ns Ar ign-errors
-Don't halt when encountering parse errors.  Useful with
+When parsing multiple files, don't halt when one errors out.  Useful
+with
 .Fl T Ns Ar lint
 over a large set of manuals passed on the command line.
 .El
@@ -225,6 +230,8 @@ over a large set of manuals passed on the command line.
 .Ss Output Options
 For the time being, only
 .Fl T Ns Ar html
+and
+.Fl T Ns Ar xhtml
 accepts output options:
 .Bl -tag -width Ds
 .It Fl O Ns Ar style=style.css
@@ -502,8 +509,9 @@ and
 .Fl T Ns Ar xhtml
 CSS2 styling used for
 .Fl m Ns Ar doc
-input lists does not render properly in brain-dead browsers, such as
-Internet Explorer 6 and earlier.
+input lists does not render properly in older browsers, such as Internet
+Explorer 6 and earlier.
+.
 .Pp
 In
 .Fl T Ns Ar html
@@ -514,6 +522,7 @@ the maximum size of an element attribute is determined by
 which is usually 1024 bytes.  Be aware of this when setting long link
 formats, e.g.,
 .Fl O Ns Ar style=really/long/link .
+.
 .Pp
 The
 .Fl T Ns Ar html
@@ -525,3 +534,29 @@ font size escape documented in
 .Xr mdoc 7
 and
 .Xr man 7 .
+.
+.Pp
+Nesting elements within next-line element scopes of
+.Fl m Ns Ar an ,
+such as
+.Sq br
+within an empty
+.Sq B ,
+will confuse
+.Fl T Ns Ar html
+and
+.Fl T Ns Ar xhtml
+and cause them to forget the formatting of the prior next-line scope.
+.
+.Pp
+The
+.Sq i
+macro in
+.Fl m Ns Ar an
+should italicise all subsequent text if a line argument is not provided.
+This behaviour is not implemented.
+.
+The
+.Sq \(aq
+control character is an alias for the standard macro control character
+and does not emit a line-break as stipulated in GNU troff.
