@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_macro.c,v 1.41 2010/01/30 08:42:20 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_macro.c,v 1.49 2010/03/31 08:04:57 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -42,13 +42,13 @@ static	int	  blk_exp_close(MACRO_PROT_ARGS);
 static	int	  blk_part_imp(MACRO_PROT_ARGS);
 
 static	int	  phrase(struct mdoc *, int, int, char *);
-static	int	  rew_dohalt(int, enum mdoc_type, 
+static	int	  rew_dohalt(enum mdoct, enum mdoc_type, 
 			const struct mdoc_node *);
-static	int	  rew_alt(int);
-static	int	  rew_dobreak(int, const struct mdoc_node *);
-static	int	  rew_elem(struct mdoc *, int);
+static	enum mdoct rew_alt(enum mdoct);
+static	int	  rew_dobreak(enum mdoct, const struct mdoc_node *);
+static	int	  rew_elem(struct mdoc *, enum mdoct);
 static	int	  rew_sub(enum mdoc_type, struct mdoc *, 
-			int, int, int);
+			enum mdoct, int, int);
 static	int	  rew_last(struct mdoc *, 
 			const struct mdoc_node *);
 static	int	  append_delims(struct mdoc *, int, int *, char *);
@@ -100,7 +100,7 @@ const	struct mdoc_macro __mdoc_macros[MDOC_MAX] = {
 	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* St */ 
 	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Va */
 	{ ctx_synopsis, MDOC_CALLABLE | MDOC_PARSED }, /* Vt */ 
-	{ in_line, MDOC_CALLABLE | MDOC_PARSED }, /* Xr */
+	{ in_line_argn, MDOC_CALLABLE | MDOC_PARSED }, /* Xr */
 	{ in_line_eoln, 0 }, /* %A */
 	{ in_line_eoln, 0 }, /* %B */
 	{ in_line_eoln, 0 }, /* %D */
@@ -318,8 +318,8 @@ rew_last(struct mdoc *mdoc, const struct mdoc_node *to)
  * Return the opening macro of a closing one, e.g., `Ec' has `Eo' as its
  * matching pair.
  */
-static int
-rew_alt(int tok)
+static enum mdoct
+rew_alt(enum mdoct tok)
 {
 	switch (tok) {
 	case (MDOC_Ac):
@@ -369,7 +369,8 @@ rew_alt(int tok)
  * The scope-closing and so on occurs in the various rew_* routines.
  */
 static int 
-rew_dohalt(int tok, enum mdoc_type type, const struct mdoc_node *p)
+rew_dohalt(enum mdoct tok, enum mdoc_type type, 
+		const struct mdoc_node *p)
 {
 
 	if (MDOC_ROOT == p->type)
@@ -508,7 +509,7 @@ rew_dohalt(int tok, enum mdoc_type type, const struct mdoc_node *p)
  * REWIND_NOHALT). 
  */
 static int
-rew_dobreak(int tok, const struct mdoc_node *p)
+rew_dobreak(enum mdoct tok, const struct mdoc_node *p)
 {
 
 	assert(MDOC_ROOT != p->type);
@@ -537,7 +538,6 @@ rew_dobreak(int tok, const struct mdoc_node *p)
 			return(1);
 		break;
 	case (MDOC_Oc):
-		/* XXX - experimental! */
 		if (MDOC_Op == p->tok)
 			return(1);
 		break;
@@ -555,7 +555,7 @@ rew_dobreak(int tok, const struct mdoc_node *p)
 
 
 static int
-rew_elem(struct mdoc *mdoc, int tok)
+rew_elem(struct mdoc *mdoc, enum mdoct tok)
 {
 	struct mdoc_node *n;
 
@@ -571,7 +571,7 @@ rew_elem(struct mdoc *mdoc, int tok)
 
 static int
 rew_sub(enum mdoc_type t, struct mdoc *m, 
-		int tok, int line, int ppos)
+		enum mdoct tok, int line, int ppos)
 {
 	struct mdoc_node *n;
 	int		  c;
@@ -595,7 +595,25 @@ rew_sub(enum mdoc_type t, struct mdoc *m,
 	}
 
 	assert(n);
-	return(rew_last(m, n));
+	if ( ! rew_last(m, n))
+		return(0);
+
+#ifdef	UGLY
+	/*
+	 * The current block extends an enclosing block beyond a line
+	 * break.  Now that the current block ends, close the enclosing
+	 * block, too.
+	 */
+	if (NULL != (n = n->pending)) {
+		assert(MDOC_HEAD == n->type);
+		if ( ! rew_last(m, n))
+			return(0);
+		if ( ! mdoc_body_alloc(m, n->line, n->pos, n->tok))
+			return(0);
+	}
+#endif
+
+	return(1);
 }
 
 
@@ -714,6 +732,7 @@ in_line(MACRO_PROT_ARGS)
 	 * Whether we allow ignored elements (those without content,
 	 * usually because of reserved words) to squeak by.
 	 */
+
 	switch (tok) {
 	case (MDOC_An):
 		/* FALLTHROUGH */
@@ -835,8 +854,8 @@ in_line(MACRO_PROT_ARGS)
 	 * If no elements have been collected and we're allowed to have
 	 * empties (nc), open a scope and close it out.  Otherwise,
 	 * raise a warning.
-	 *
 	 */
+
 	if (nc && 0 == cnt) {
 		if ( ! mdoc_elem_alloc(m, line, ppos, tok, arg))
 			return(0);
@@ -857,25 +876,16 @@ in_line(MACRO_PROT_ARGS)
 static int
 blk_full(MACRO_PROT_ARGS)
 {
-	int		  c, lastarg, reopen, dohead;
+	int		  c, la;
 	struct mdoc_arg	 *arg;
+	struct mdoc_node *head; /* save of head macro */
+	struct mdoc_node *body; /* save of body macro */
+#ifdef	UGLY
+	struct mdoc_node *n;
+#endif
 	char		 *p;
 
-	/* 
-	 * Whether to process a block-head section.  If this is
-	 * non-zero, then a head will be opened for all line arguments.
-	 * If not, then the head will always be empty and only a body
-	 * will be opened, which will stay open at the eoln.
-	 */
-
-	switch (tok) {
-	case (MDOC_Nd):
-		dohead = 0;
-		break;
-	default:
-		dohead = 1;
-		break;
-	}
+	/* Close out prior implicit scope. */
 
 	if ( ! (MDOC_EXPLICIT & mdoc_macros[tok].flags)) {
 		if ( ! rew_sub(MDOC_BODY, m, tok, line, ppos))
@@ -884,12 +894,21 @@ blk_full(MACRO_PROT_ARGS)
 			return(0);
 	}
 
+	/*
+	 * This routine accomodates implicitly- and explicitly-scoped
+	 * macro openings.  Implicit ones first close out prior scope
+	 * (seen above).  Delay opening the head until necessary to
+	 * allow leading punctuation to print.  Special consideration
+	 * for `It -column', which has phrase-part syntax instead of
+	 * regular child nodes.
+	 */
+
 	for (arg = NULL;; ) {
-		lastarg = *pos;
+		la = *pos;
 		c = mdoc_argv(m, line, tok, &arg, pos, buf);
 
 		if (ARGV_WORD == c) {
-			*pos = lastarg;
+			*pos = la;
 			break;
 		} 
 
@@ -905,71 +924,102 @@ blk_full(MACRO_PROT_ARGS)
 	if ( ! mdoc_block_alloc(m, line, ppos, tok, arg))
 		return(0);
 
-	if (0 == buf[*pos]) {
+	head = body = NULL;
+
+	/*
+	 * The `Nd' macro has all arguments in its body: it's a hybrid
+	 * of block partial-explicit and full-implicit.  Stupid.
+	 */
+
+	if (MDOC_Nd == tok) {
 		if ( ! mdoc_head_alloc(m, line, ppos, tok))
 			return(0);
+		head = m->last;
 		if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 			return(0);
 		if ( ! mdoc_body_alloc(m, line, ppos, tok))
 			return(0);
-		return(1);
-	}
-
-	if ( ! mdoc_head_alloc(m, line, ppos, tok))
-		return(0);
-
-	/* Immediately close out head and enter body, if applicable. */
-
-	if (0 == dohead) {
-		if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
-			return(0);
-		if ( ! mdoc_body_alloc(m, line, ppos, tok))
-			return(0);
+		body = m->last;
 	} 
 
-	for (reopen = 0;; ) {
-		lastarg = *pos;
+	for (;;) {
+		la = *pos;
 		c = mdoc_args(m, line, pos, buf, tok, &p);
 
 		if (ARGS_ERROR == c)
 			return(0);
 		if (ARGS_EOLN == c)
 			break;
-		if (ARGS_PHRASE == c) {
-			assert(dohead);
-			if (reopen && ! mdoc_head_alloc(m, line, ppos, tok))
-				return(0);
-			/*
-			 * Phrases are self-contained macro phrases used
-			 * in the columnar output of a macro. They need
-			 * special handling.
-			 */
-			if ( ! phrase(m, line, lastarg, buf))
-				return(0);
-			if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
-				return(0);
 
-			reopen = 1;
+		/* Don't emit leading punct. for phrases. */
+
+		if (NULL == head && ARGS_PHRASE != c &&
+				1 == mdoc_isdelim(p)) {
+			if ( ! mdoc_word_alloc(m, line, la, p))
+				return(0);
 			continue;
 		}
 
-		if (MDOC_MAX == (c = lookup(tok, p))) {
-			if ( ! mdoc_word_alloc(m, line, lastarg, p))
+		/* Always re-open head for phrases. */
+
+		if (NULL == head || ARGS_PHRASE == c) {
+			if ( ! mdoc_head_alloc(m, line, ppos, tok))
+				return(0);
+			head = m->last;
+		}
+
+		if (ARGS_PHRASE == c) {
+			if ( ! phrase(m, line, la, buf))
+				return(0);
+			if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 				return(0);
 			continue;
-		} 
+		}
 
-		if ( ! mdoc_macro(m, c, line, lastarg, pos, buf))
+		c = lookup(tok, p);
+		if (MDOC_MAX != c) {
+			if ( ! mdoc_macro(m, c, line, la, pos, buf))
+				return(0);
+			break;
+		}
+		if ( ! mdoc_word_alloc(m, line, la, p))
 			return(0);
-		break;
+
+	}
+
+	if (NULL == head) {
+		if ( ! mdoc_head_alloc(m, line, ppos, tok))
+			return(0);
+		head = m->last;
 	}
 	
 	if (1 == ppos && ! append_delims(m, line, pos, buf))
 		return(0);
 
-	/* If the body's already open, then just return. */
-	if (0 == dohead) 
+	/* If we've already opened our body, exit now. */
+
+	if (NULL != body)
 		return(1);
+
+#ifdef	UGLY
+	/*
+	 * If there is an open (i.e., unvalidated) sub-block requiring
+	 * explicit close-out, postpone switching the current block from
+	 * head to body until the rew_sub() call closing out that
+	 * sub-block.
+	 */
+	for (n = m->last; n && n != head; n = n->parent) {
+		if (MDOC_BLOCK == n->type && 
+				MDOC_EXPLICIT & mdoc_macros[n->tok].flags &&
+				! (MDOC_VALID & n->flags)) {
+			assert( ! (MDOC_ACTED & n->flags));
+			n->pending = head;
+			return(1);
+		}
+	}
+#endif
+
+	/* Close out scopes to remain in a consistent state. */
 
 	if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 		return(0);
@@ -985,59 +1035,91 @@ blk_part_imp(MACRO_PROT_ARGS)
 {
 	int		  la, c;
 	char		 *p;
-	struct mdoc_node *blk, *body, *n;
+	struct mdoc_node *blk; /* saved block context */
+	struct mdoc_node *body; /* saved body context */
+	struct mdoc_node *n;
 
-	/* If applicable, close out prior scopes. */
+	/*
+	 * A macro that spans to the end of the line.  This is generally
+	 * (but not necessarily) called as the first macro.  The block
+	 * has a head as the immediate child, which is always empty,
+	 * followed by zero or more opening punctuation nodes, then the
+	 * body (which may be empty, depending on the macro), then zero
+	 * or more closing punctuation nodes.
+	 */
 
 	if ( ! mdoc_block_alloc(m, line, ppos, tok, NULL))
 		return(0);
-	/* Saved for later close-out. */
+
 	blk = m->last;
+
 	if ( ! mdoc_head_alloc(m, line, ppos, tok))
 		return(0);
 	if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 		return(0);
-	if ( ! mdoc_body_alloc(m, line, ppos, tok))
-		return(0);
-	/* Saved for later close-out. */
-	body = m->last;
 
-	/* Body argument processing. */
+	/*
+	 * Open the body scope "on-demand", that is, after we've
+	 * processed all our the leading delimiters (open parenthesis,
+	 * etc.).
+	 */
 
-	for (;;) {
+	for (body = NULL; ; ) {
 		la = *pos;
 		c = mdoc_args(m, line, pos, buf, tok, &p);
+
 		assert(ARGS_PHRASE != c);
 
 		if (ARGS_ERROR == c)
 			return(0);
-		if (ARGS_PUNCT == c)
-			break;
 		if (ARGS_EOLN == c)
 			break;
+		if (ARGS_PUNCT == c)
+			break;
 
-		if (MDOC_MAX == (c = lookup(tok, p))) {
+		if (NULL == body && 1 == mdoc_isdelim(p)) {
 			if ( ! mdoc_word_alloc(m, line, la, p))
 				return(0);
 			continue;
 		} 
 
-		if ( ! mdoc_macro(m, c, line, la, pos, buf))
+		if (NULL == body) {
+		       if ( ! mdoc_body_alloc(m, line, ppos, tok))
+			       return(0);
+			body = m->last;
+		}
+
+		if (MDOC_MAX != (c = lookup(tok, p))) {
+			if ( ! mdoc_macro(m, c, line, la, pos, buf))
+				return(0);
+			break;
+		} 
+
+		if ( ! mdoc_word_alloc(m, line, la, p))
 			return(0);
-		break;
+	}
+
+	/* Clean-ups to leave in a consistent state. */
+
+	if (NULL == body) {
+		if ( ! mdoc_body_alloc(m, line, ppos, tok))
+			return(0);
+		body = m->last;
 	}
 
 	/* 
 	 * If we can't rewind to our body, then our scope has already
 	 * been closed by another macro (like `Oc' closing `Op').  This
 	 * is ugly behaviour nodding its head to OpenBSD's overwhelming
-	 * crufty use of `Op' breakage--XXX, deprecate in time.
+	 * crufty use of `Op' breakage.
 	 */
 	for (n = m->last; n; n = n->parent)
 		if (body == n)
 			break;
+
 	if (NULL == n && ! mdoc_nwarn(m, body, EIMPBRK))
 		return(0);
+
 	if (n && ! rew_last(m, body))
 		return(0);
 
@@ -1058,59 +1140,23 @@ blk_part_imp(MACRO_PROT_ARGS)
 static int
 blk_part_exp(MACRO_PROT_ARGS)
 {
-	int		  la, flushed, j, c, maxargs;
+	int		  la, c;
+	struct mdoc_node *head; /* keep track of head */
+	struct mdoc_node *body; /* keep track of body */
 	char		 *p;
 
-	/* Number of head arguments.  Only `Eo' has these, */
-
-	switch (tok) {
-	case (MDOC_Eo):
-		maxargs = 1;
-		break;
-	default:
-		maxargs = 0;
-		break;
-	}
-
-	/* Begin the block scope. */
+	/*
+	 * The opening of an explicit macro having zero or more leading
+	 * punctuation nodes; a head with optional single element (the
+	 * case of `Eo'); and a body that may be empty.
+	 */
 
 	if ( ! mdoc_block_alloc(m, line, ppos, tok, NULL))
 		return(0); 
 
-	/* 
-	 * If no head arguments, open and then close out a head, noting
-	 * that we've flushed our terms.  `flushed' means that we've
-	 * flushed out the head and the body is open.
-	 */
-
-	if (0 == maxargs) {
-		if ( ! mdoc_head_alloc(m, line, ppos, tok))
-			return(0);
-		if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
-			return(0);
-		if ( ! mdoc_body_alloc(m, line, ppos, tok))
-			return(0);
-		flushed = 1;
-	} else {
-		if ( ! mdoc_head_alloc(m, line, ppos, tok))
-			return(0);
-		flushed = 0;
-	}
-
-	/* Process the head/head+body line arguments. */
-
-	for (j = 0; ; j++) {
+	for (head = body = NULL; ; ) {
 		la = *pos;
-		if (j == maxargs && ! flushed) {
-			if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
-				return(0);
-			flushed = 1;
-			if ( ! mdoc_body_alloc(m, line, ppos, tok))
-				return(0);
-		}
-
 		c = mdoc_args(m, line, pos, buf, tok, &p);
-		assert(ARGS_PHRASE != c);
 
 		if (ARGS_ERROR == c)
 			return(0);
@@ -1119,44 +1165,79 @@ blk_part_exp(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == c)
 			break;
 
+		assert(ARGS_PHRASE != c);
+
+		/* Flush out leading punctuation. */
+
+		if (NULL == head && 1 == mdoc_isdelim(p)) {
+			assert(NULL == body);
+			if ( ! mdoc_word_alloc(m, line, la, p))
+				return(0);
+			continue;
+		} 
+
+		if (NULL == head) {
+			assert(NULL == body);
+			if ( ! mdoc_head_alloc(m, line, ppos, tok))
+				return(0);
+			head = m->last;
+		}
+
+		/*
+		 * `Eo' gobbles any data into the head, but most other
+		 * macros just immediately close out and begin the body.
+		 */
+
+		if (NULL == body) {
+			assert(head);
+			/* No check whether it's a macro! */
+			if (MDOC_Eo == tok)
+				if ( ! mdoc_word_alloc(m, line, la, p))
+					return(0);
+
+			if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
+				return(0);
+			if ( ! mdoc_body_alloc(m, line, ppos, tok))
+				return(0);
+			body = m->last;
+
+			if (MDOC_Eo == tok)
+				continue;
+		}
+
+		assert(NULL != head && NULL != body);
+
 		if (MDOC_MAX != (c = lookup(tok, p))) {
-			if ( ! flushed) {
-				if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
-					return(0);
-				flushed = 1;
-				if ( ! mdoc_body_alloc(m, line, ppos, tok))
-					return(0);
-			}
 			if ( ! mdoc_macro(m, c, line, la, pos, buf))
 				return(0);
 			break;
 		}
 
-		if ( ! flushed && mdoc_isdelim(p)) {
-			if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
-				return(0);
-			flushed = 1;
-			if ( ! mdoc_body_alloc(m, line, ppos, tok))
-				return(0);
-		}
-	
 		if ( ! mdoc_word_alloc(m, line, la, p))
 			return(0);
 	}
 
-	/* Close the head and open the body, if applicable. */
+	/* Clean-up to leave in a consistent state. */
 
-	if ( ! flushed) {
+	if (NULL == head) {
+		if ( ! mdoc_head_alloc(m, line, ppos, tok))
+			return(0);
+		head = m->last;
+	}
+
+	if (NULL == body) {
 		if ( ! rew_sub(MDOC_HEAD, m, tok, line, ppos))
 			return(0);
 		if ( ! mdoc_body_alloc(m, line, ppos, tok))
 			return(0);
+		body = m->last;
 	}
 
 	/* Standard appending of delimiters. */
 
 	if (ppos > 1)
 		return(1);
+
 	return(append_delims(m, line, pos, buf));
 }
 
@@ -1168,7 +1249,13 @@ in_line_argn(MACRO_PROT_ARGS)
 	struct mdoc_arg	 *arg;
 	char		 *p;
 
-	/* Fixed maximum arguments per macro, if applicable. */
+	/*
+	 * A line macro that has a fixed number of arguments (maxargs).
+	 * Only open the scope once the first non-leading-punctuation is
+	 * found (unless MDOC_IGNDELIM is noted, like in `Pf'), then
+	 * keep it open until the maximum number of arguments are
+	 * exhausted.
+	 */
 
 	switch (tok) {
 	case (MDOC_Ap):
@@ -1180,14 +1267,15 @@ in_line_argn(MACRO_PROT_ARGS)
 	case (MDOC_Ux):
 		maxargs = 0;
 		break;
+	case (MDOC_Xr):
+		maxargs = 2;
+		break;
 	default:
 		maxargs = 1;
 		break;
 	}
 
-	/* Macro argument processing. */
-
-	for (arg = NULL;; ) {
+	for (arg = NULL; ; ) {
 		la = *pos;
 		c = mdoc_argv(m, line, tok, &arg, pos, buf);
 
@@ -1205,22 +1293,8 @@ in_line_argn(MACRO_PROT_ARGS)
 		return(0);
 	}
 
-	/* Open the element scope. */
-
-	if ( ! mdoc_elem_alloc(m, line, ppos, tok, arg))
-		return(0);
-
-	/* Process element arguments. */
-
-	for (flushed = j = 0; ; j++) {
+	for (flushed = j = 0; ; ) {
 		la = *pos;
-
-		if (j == maxargs && ! flushed) {
-			if ( ! rew_elem(m, tok))
-				return(0);
-			flushed = 1;
-		}
-
 		c = mdoc_args(m, line, pos, buf, tok, &p);
 
 		if (ARGS_ERROR == c)
@@ -1230,12 +1304,28 @@ in_line_argn(MACRO_PROT_ARGS)
 		if (ARGS_EOLN == c)
 			break;
 
+		if ( ! (MDOC_IGNDELIM & mdoc_macros[tok].flags) && 
+				0 == j && 1 == mdoc_isdelim(p)) {
+			if ( ! mdoc_word_alloc(m, line, la, p))
+				return(0);
+			continue;
+		} else if (0 == j)
+		       if ( ! mdoc_elem_alloc(m, line, la, tok, arg))
+			       return(0);
+
+		if (j == maxargs && ! flushed) {
+			if ( ! rew_elem(m, tok))
+				return(0);
+			flushed = 1;
+		}
+
 		if (MDOC_MAX != (c = lookup(tok, p))) {
 			if ( ! flushed && ! rew_elem(m, tok))
 				return(0);
 			flushed = 1;
 			if ( ! mdoc_macro(m, c, line, la, pos, buf))
 				return(0);
+			j++;
 			break;
 		}
 
@@ -1245,12 +1335,32 @@ in_line_argn(MACRO_PROT_ARGS)
 				return(0);
 			flushed = 1;
 		}
-	
+
+		/* 
+		 * XXX: this is a hack to work around groff's ugliness
+		 * as regards `Xr' and extraneous arguments.  It should
+		 * ideally be deprecated behaviour, but because this is
+		 * code is no here, it's unlikely to be removed.
+		 */
+
+#ifdef __OpenBSD__
+		if (MDOC_Xr == tok && j == maxargs) {
+			if ( ! mdoc_elem_alloc(m, line, la, MDOC_Ns, NULL))
+				return(0);
+			if ( ! rew_elem(m, MDOC_Ns))
+				return(0);
+		}
+#endif
+
 		if ( ! mdoc_word_alloc(m, line, la, p))
 			return(0);
+		j++;
 	}
 
-	/* Close out and append delimiters. */
+	if (0 == j && ! mdoc_elem_alloc(m, line, la, tok, arg))
+	       return(0);
+
+	/* Close out in a consistent state. */
 
 	if ( ! flushed && ! rew_elem(m, tok))
 		return(0);
