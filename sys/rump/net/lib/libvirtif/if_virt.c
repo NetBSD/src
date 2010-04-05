@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.17 2010/04/05 07:22:50 joerg Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.18 2010/04/05 16:35:30 joerg Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.17 2010/04/05 07:22:50 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.18 2010/04/05 16:35:30 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -232,7 +232,7 @@ virtif_worker(void *arg)
 		}
 		m->m_len = m->m_pkthdr.len = n;
 		m->m_pkthdr.rcvif = ifp;
-		bpf_mtap(ifp, m0);
+		bpf_mtap(ifp, m);
 		ether_input(ifp, m);
 	}
 
