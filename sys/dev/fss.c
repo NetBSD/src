@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.65 2009/10/17 10:29:29 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.66 2010/04/05 09:30:46 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.65 2009/10/17 10:29:29 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.66 2010/04/05 09:30:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,7 +579,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	int error, bits, fsbsize;
 	struct timespec ts;
 	struct partinfo dpart;
-	struct vattr va;
 	/* nd -> nd2 to reduce mistakes while updating only some namei calls */
 	struct nameidata nd2;
 	struct vnode *vp;
@@ -686,10 +685,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 
 	if (sc->sc_bs_vp->v_type == VREG) {
-		error = VOP_GETATTR(sc->sc_bs_vp, &va, l->l_cred);
-		if (error != 0)
-			return error;
-		sc->sc_bs_size = va.va_size;
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
 		if (fsbsize & (fsbsize-1))	/* No power of two */
 			return EINVAL;
