@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.47 2010/01/19 22:06:22 pooka Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.48 2010/04/05 07:19:31 joerg Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.47 2010/01/19 22:06:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.48 2010/04/05 07:19:31 joerg Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -332,15 +332,12 @@ mb8795_rint(struct mb8795_softc *sc)
 			/*
 			 * Pass packet to bpf if there is a listener.
 			 */
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 
-			{
-				ifp->if_ipackets++;
+			ifp->if_ipackets++;
 
-				/* Pass the packet up. */
-				(*ifp->if_input)(ifp, m);
-			}
+			/* Pass the packet up. */
+			(*ifp->if_input)(ifp, m);
 
 			s = spldma();
 
@@ -723,8 +720,7 @@ mb8795_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		s = spldma();
 		IF_ENQUEUE(&sc->sc_tx_snd, m);

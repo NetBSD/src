@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.34 2010/01/19 22:06:59 pooka Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.35 2010/04/05 07:20:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.34 2010/01/19 22:06:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.35 2010/04/05 07:20:24 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -348,8 +348,7 @@ gfe_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-	bpf_ops->bpf_attach(ifp, DLT_EN10MB,
-	    sizeof(struct ether_header), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(self), RND_TYPE_NET, 0);
 #endif
@@ -759,8 +758,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		m->m_pkthdr.len = buflen;
 
 		ifp->if_ipackets++;
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		eh = (const struct ether_header *) m->m_data;
 		if ((ifp->if_flags & IFF_PROMISC) ||
@@ -1155,8 +1153,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 * Move mbuf from the pending queue to the snd queue.
 	 */
 	IF_DEQUEUE(&txq->txq_pendq, m);
-	if (ifp->if_bpf != NULL)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 	m_freem(m);
 	ifp->if_flags &= ~IFF_OACTIVE;
 

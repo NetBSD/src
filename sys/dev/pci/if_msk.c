@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.34 2010/03/30 14:38:27 tnn Exp $ */
+/* $NetBSD: if_msk.c,v 1.35 2010/04/05 07:20:26 joerg Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.34 2010/03/30 14:38:27 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.35 2010/04/05 07:20:26 joerg Exp $");
 
 #include "rnd.h"
 
@@ -1601,8 +1601,7 @@ msk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 	if (pkts == 0)
 		return;
@@ -1747,8 +1746,7 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 
 	ifp->if_ipackets++;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	/* pass it on. */
 	(*ifp->if_input)(ifp, m);

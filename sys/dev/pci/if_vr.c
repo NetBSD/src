@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.103 2010/02/24 22:38:01 dyoung Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.104 2010/04/05 07:20:28 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.103 2010/02/24 22:38:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.104 2010/04/05 07:20:28 joerg Exp $");
 
 #include "rnd.h"
 
@@ -764,8 +764,7 @@ vr_rxeof(struct vr_softc *sc)
 		 * a broadcast packet, multicast packet, matches our ethernet
 		 * address or the interface is in promiscuous mode.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -1083,8 +1082,7 @@ vr_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		/*
 		 * Fill in the transmit descriptor.

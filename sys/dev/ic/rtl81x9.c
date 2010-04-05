@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.89 2010/03/28 20:46:18 snj Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.90 2010/04/05 07:19:36 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.89 2010/03/28 20:46:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.90 2010/04/05 07:19:36 joerg Exp $");
 
 #include "rnd.h"
 
@@ -1081,8 +1081,7 @@ rtk_rxeof(struct rtk_softc *sc)
 
 		ifp->if_ipackets++;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -1294,8 +1293,7 @@ rtk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 		if (m_new != NULL) {
 			m_freem(m_head);
 			m_head = m_new;

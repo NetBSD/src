@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.115 2010/03/15 23:21:08 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.116 2010/04/05 07:19:36 joerg Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.115 2010/03/15 23:21:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.116 2010/04/05 07:19:36 joerg Exp $");
 
 
 #include <sys/param.h>
@@ -1645,7 +1645,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 				    htole16(UINT8_MAX - sq);
 			}
 
-			bpf_ops->bpf_mtap2(sc->sc_radiobpf,
+			bpf_mtap2(sc->sc_radiobpf,
 			    rr, sizeof(sc->sc_rxtapu), m);
 		}
 
@@ -3120,8 +3120,7 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	}
 	DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: dequeue data frame\n", __func__));
 	ifp->if_opackets++;
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 	eh = mtod(m0, struct ether_header *);
 	*nip = ieee80211_find_txnode(&sc->sc_ic, eh->ether_dhost);
 	if (*nip == NULL) {
@@ -3386,16 +3385,15 @@ rtw_start(struct ifnet *ifp)
 
 		KASSERT(ts->ts_first < tdb->tdb_ndesc);
 
-		if (ic->ic_rawbpf != NULL)
-			bpf_ops->bpf_mtap((void *)ic->ic_rawbpf, m0);
+		bpf_mtap3(ic->ic_rawbpf, m0);
 
 		if (sc->sc_radiobpf != NULL) {
 			struct rtw_tx_radiotap_header *rt = &sc->sc_txtap;
 
 			rt->rt_rate = rate;
 
-			bpf_ops->bpf_mtap2(sc->sc_radiobpf,
-			    (void *)rt, sizeof(sc->sc_txtapu), m0);
+			bpf_mtap2(sc->sc_radiobpf, rt, sizeof(sc->sc_txtapu),
+			    m0);
 		}
 
 		for (i = 0, lastdesc = desc = ts->ts_first;
@@ -4172,7 +4170,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	rtw_init_radiotap(sc);
 
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_radiobpf);
 
 	NEXT_ATTACH_STATE(sc, FINISHED);

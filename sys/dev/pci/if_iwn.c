@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.37 2010/02/24 22:38:00 dyoung Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.38 2010/04/05 07:20:26 joerg Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.49 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  * 802.11 network adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.37 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.38 2010/04/05 07:20:26 joerg Exp $");
 
 
 #include <sys/param.h>
@@ -612,7 +612,7 @@ iwn_detach(device_t self, int flags __unused)
 
 	iwn_stop(ifp, 1);
 	if (ifp != NULL)
-		bpf_ops->bpf_detach(ifp);
+		bpf_detach(ifp);
 	ieee80211_ifdetach(&sc->sc_ic);
 	if (ifp != NULL)
 		if_detach(ifp);
@@ -736,7 +736,7 @@ iwn_radiotap_attach(struct iwn_softc *sc)
 {
 	struct ifnet *ifp = sc->sc_ic.ic_ifp;
 
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
 	    &sc->sc_drvbpf);
 
@@ -2058,7 +2058,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		default:  tap->wr_rate =   0;
 		}
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
 
 	/* Send the frame to the 802.11 layer. */
@@ -2806,7 +2806,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
 	}
 
 	totlen = m->m_pkthdr.len;
@@ -3126,16 +3126,14 @@ iwn_start(struct ifnet *ifp)
 		/* no QoS encapsulation for EAPOL frames */
 		ac = (eh->ether_type != htons(ETHERTYPE_PAE)) ?
 		    M_WME_GETAC(m) : WME_AC_BE;
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;
 			continue;
 		}
 sendit:
-		if (ic->ic_rawbpf != NULL)
-			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m);
 		if (iwn_tx(sc, m, ni, ac) != 0) {
 			ieee80211_free_node(ni);
 			ifp->if_oerrors++;

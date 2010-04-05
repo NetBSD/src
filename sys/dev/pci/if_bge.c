@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.181 2010/04/01 01:11:53 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.182 2010/04/05 07:20:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.181 2010/04/01 01:11:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.182 2010/04/05 07:20:25 joerg Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -3427,8 +3427,7 @@ bge_rxeof(struct bge_softc *sc)
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		m->m_pkthdr.csum_flags = M_CSUM_IPv4;
 
@@ -4244,8 +4243,7 @@ bge_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 	if (pkts == 0)
 		return;
