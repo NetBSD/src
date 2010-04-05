@@ -27,9 +27,9 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: mbrlabel.8,v 1.16 2006/01/12 20:37:23 wiz Exp $
+.\"	$NetBSD: mbrlabel.8,v 1.17 2010/04/05 18:08:41 wiz Exp $
 .\"
-.Dd December 27, 2005
+.Dd April 5, 2010
 .Dt MBRLABEL 8
 .Os
 .Sh NAME
@@ -86,8 +86,6 @@ Available options:
 Force an update, even if there has been no change.
 .It Fl q
 Performs operations in a quiet fashion.
-.It Fl w
-Update the in-core label if it has been changed.
 .It Fl r
 In conjunction with
 .Fl w ,
@@ -98,6 +96,10 @@ in order to find the MBR.
 Useful if the disk has remapping drivers on it and the MBR is located
 in a non-standard place.
 Defaults to 0.
+.It Fl w
+Update the in-core label if it has been changed.
+See also
+.Fl r .
 .El
 .Sh SEE ALSO
 .Xr disklabel 8 ,
