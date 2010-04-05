@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.90 2010/03/18 22:17:55 roy Exp $	 */
+/*	$NetBSD: rtld.h,v 1.91 2010/04/05 14:01:26 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -162,7 +162,10 @@ typedef struct Struct_Obj_Entry {
 #endif
 
 	const Elf_Word *buckets;	/* Hash table buckets array */
-	unsigned long   nbuckets;	/* Number of buckets */
+	uint32_t        nbuckets;	/* Number of buckets */
+	uint32_t        nbuckets_m;	/* Precomputed for fast remainder */
+	uint8_t         nbuckets_s1;
+	uint8_t         nbuckets_s2;
 	const Elf_Word *chains;		/* Hash table chain array */
 	unsigned long   nchains;	/* Number of chains */
 
