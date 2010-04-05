@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.167 2010/04/05 07:16:13 he Exp $ */
+/* $NetBSD: vmstat.c,v 1.168 2010/04/05 08:03:42 he Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.167 2010/04/05 07:16:13 he Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.168 2010/04/05 08:03:42 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -1183,7 +1183,7 @@ domem(void)
 			else
 				(void)printf(",%d", j);
 			first = 0;
-			(void)printf(":%u", ks.ks_active[i]);
+			(void)printf(":%u", ks.ks_active[i - MINBUCKET]);
 		}
 		(void)printf("\n");
 		totuse += ks.ks_memuse;
