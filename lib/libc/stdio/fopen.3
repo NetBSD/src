@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.23 2005/05/25 16:01:24 kleink Exp $
+.\"	$NetBSD: fopen.3,v 1.24 2010/04/05 21:34:47 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,7 +100,7 @@ This is a non
 extension.
 .Pp
 Any created files will have mode
-.Pf \\*q Dv S_IRUSR
+.Pf \*q Dv S_IRUSR
 \&|
 .Dv S_IWUSR
 \&|
@@ -110,7 +110,7 @@ Any created files will have mode
 \&|
 .Dv S_IROTH
 \&|
-.Dv S_IWOTH Ns \\*q
+.Dv S_IWOTH Ns \*q
 .Pq Li 0666 ,
 as modified by the process'
 umask value (see
