@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2010/03/13 08:36:06 mrg Exp $	*/
+/*	$NetBSD: md.h,v 1.18 2010/04/05 22:53:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,6 +65,9 @@
 
 /* allow using tmpfs for /tmp instead of mfs */
 #define HAVE_TMPFS
+
+/* disable LFS support, despite providing the lfs utilities */
+#define	NO_LFS
 
 /*
  * Default filesets to fetch and install during installation
