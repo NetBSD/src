@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.37 2010/03/22 19:30:55 joerg Exp $
+.\"	$NetBSD: select.2,v 1.38 2010/04/05 21:25:56 joerg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -207,11 +207,11 @@ main(int argc, char **argv)
 		break;
 
 	case 0:
-		printf("Timeout, no data received.\\n");
+		printf("Timeout, no data received.\en");
 		break;
 
 	default:
-		printf("Data received on %d file desciptor(s)\\n", ret);
+		printf("Data received on %d file desciptor(s)\en", ret);
 
 		/*
 		 * select(2) hands back a file descriptor set where
@@ -220,7 +220,7 @@ main(int argc, char **argv)
 		 */
 		for (i = 0; i \*[Lt]= fd; i++) {
 			if (FD_ISSET(i, \*[Am]read_set)) {
-				printf("Data on file descriptor %d\\n", i);
+				printf("Data on file descriptor %d\en", i);
 				/* Remove the file descriptor from the set */
 				FD_CLR(fd, \*[Am]read_set);
 			}

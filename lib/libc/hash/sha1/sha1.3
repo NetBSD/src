@@ -1,4 +1,4 @@
-.\"	$NetBSD: sha1.3,v 1.5 2009/11/06 20:31:18 joerg Exp $
+.\"	$NetBSD: sha1.3,v 1.6 2010/04/05 21:27:01 joerg Exp $
 .\"	$OpenBSD: sha1.3,v 1.9 1998/03/07 22:18:12 millert Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -159,7 +159,7 @@ SHA1Final(results, \*[Am]sha);
 printf("0x");
 for (n = 0; n \*[Lt] 20; n++)
 	printf("%02x", results[n]);
-putchar('\\n');
+putchar('\en');
 .Ed
 .Pp
 Alternately, the helper functions could be used in the following way:
