@@ -1,4 +1,4 @@
-/*	$Vendor-Id: libman.h,v 1.23 2009/10/30 05:58:36 kristaps Exp $ */
+/*	$Vendor-Id: libman.h,v 1.30 2010/03/29 10:10:35 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,13 +27,17 @@ enum	man_next {
 struct	man {
 	void		*data;
 	struct man_cb	 cb;
-	int		 pflags;
-	int		 flags;
-#define	MAN_HALT	(1 << 0)
-#define	MAN_ELINE	(1 << 1) 	/* Next-line element scope. */
-#define	MAN_BLINE	(1 << 2) 	/* Next-line block scope. */
-#define	MAN_LITERAL	(1 << 3)	/* Literal input. */
+	int		 pflags; /* parse flags (see man.h) */
+	int		 svflags; /* flags saved during roff blocks */
+	int		 flags; /* parse flags */
+#define	MAN_HALT	(1 << 0) /* badness happened: die */
+#define	MAN_ELINE	(1 << 1) /* Next-line element scope. */
+#define	MAN_BLINE	(1 << 2) /* Next-line block scope. */
+#define	MAN_ILINE	(1 << 3) /* Ignored in next-line scope. */
+#define	MAN_LITERAL	(1 << 4) /* Literal input. */
+#define	MAN_BPLINE	(1 << 5)
 	enum man_next	 next;
+	enum man_next	 svnext;
 	struct man_node	*last;
 	struct man_node	*first;
 	struct man_meta	 meta;
@@ -44,6 +48,7 @@ enum	merr {
 	WMSEC,
 	WDATE,
 	WLNSCOPE,
+	WLNSCOPE2,
 	WTSPACE,
 	WTQUOTE,
 	WNODATA,
@@ -58,10 +63,13 @@ enum	merr {
 	WNOSCOPE,
 	WOLITERAL,
 	WNLITERAL,
+	WROFFNEST,
+	WROFFSCOPE,
+	WTITLECASE,
 	WERRMAX
 };
 
-#define	MACRO_PROT_ARGS	  struct man *m, int tok, int line, \
+#define	MACRO_PROT_ARGS	  struct man *m, enum mant tok, int line, \
 			  int ppos, int *pos, char *buf
 
 struct	man_macro {
@@ -70,6 +78,8 @@ struct	man_macro {
 #define	MAN_SCOPED	 (1 << 0)
 #define	MAN_EXPLICIT	 (1 << 1)	/* See blk_imp(). */
 #define	MAN_FSCOPED	 (1 << 2)	/* See blk_imp(). */
+#define	MAN_NSCOPED	 (1 << 3)	/* See in_line_eoln(). */
+#define	MAN_NOCLOSE	 (1 << 4)	/* See blk_exp(). */
 };
 
 extern	const struct man_macro *const man_macros;
@@ -86,14 +96,13 @@ __BEGIN_DECLS
 		  man_err((m), (n)->line, (n)->pos, 0, (t))
 
 int		  man_word_alloc(struct man *, int, int, const char *);
-int		  man_block_alloc(struct man *, int, int, int);
-int		  man_head_alloc(struct man *, int, int, int);
-int		  man_body_alloc(struct man *, int, int, int);
-int		  man_elem_alloc(struct man *, int, int, int);
-void		  man_node_free(struct man_node *);
-void		  man_node_freelist(struct man_node *);
+int		  man_block_alloc(struct man *, int, int, enum mant);
+int		  man_head_alloc(struct man *, int, int, enum mant);
+int		  man_body_alloc(struct man *, int, int, enum mant);
+int		  man_elem_alloc(struct man *, int, int, enum mant);
+void		  man_node_delete(struct man *, struct man_node *);
 void		  man_hash_init(void);
-int		  man_hash_find(const char *);
+enum	mant	  man_hash_find(const char *);
 int		  man_macroend(struct man *);
 int		  man_args(struct man *, int, int *, char *, char **);
 #define	ARGS_ERROR	(-1)
@@ -107,7 +116,8 @@ int		  man_valid_post(struct man *);
 int		  man_valid_pre(struct man *, const struct man_node *);
 int		  man_action_post(struct man *);
 int		  man_action_pre(struct man *, struct man_node *);
-int		  man_unscope(struct man *, const struct man_node *);
+int		  man_unscope(struct man *, 
+			const struct man_node *, enum merr);
 
 __END_DECLS
 

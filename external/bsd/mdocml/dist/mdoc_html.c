@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_html.c,v 1.54 2010/01/30 08:42:20 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_html.c,v 1.55 2010/03/29 19:28:04 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -200,7 +200,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Dc */
 	{mdoc_dq_pre, mdoc_dq_post}, /* Do */
 	{mdoc_dq_pre, mdoc_dq_post}, /* Dq */
-	{NULL, NULL}, /* Ec */
+	{NULL, NULL}, /* Ec */ /* FIXME: no space */
 	{NULL, NULL}, /* Ef */
 	{mdoc_em_pre, NULL}, /* Em */ 
 	{NULL, NULL}, /* Eo */

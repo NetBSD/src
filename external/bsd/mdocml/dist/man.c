@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.c,v 1.49 2010/01/07 10:24:43 kristaps Exp $ */
+/*	$Vendor-Id: man.c,v 1.59 2010/03/29 10:10:35 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -35,6 +35,7 @@ const	char *const __man_merrnames[WERRMAX] = {
 	"invalid manual section", /* WMSEC */
 	"invalid date format", /* WDATE */
 	"scope of prior line violated", /* WLNSCOPE */
+	"over-zealous prior line scope violation", /* WLNSCOPE2 */
 	"trailing whitespace", /* WTSPACE */
 	"unterminated quoted parameter", /* WTQUOTE */
 	"document has no body", /* WNODATA */
@@ -48,7 +49,10 @@ const	char *const __man_merrnames[WERRMAX] = {
 	"scope open on exit", /* WEXITSCOPE */
 	"no scope context", /* WNOSCOPE */
 	"literal context already open", /* WOLITERAL */
-	"no literal context open" /* WNLITERAL */
+	"no literal context open", /* WNLITERAL */
+	"invalid nesting of roff declarations", /* WROFFNEST */
+	"scope in roff instructions broken", /* WROFFSCOPE */
+	"document title should be uppercase", /* WTITLECASE */
 };
 
 const	char *const __man_macronames[MAN_MAX] = {		 
@@ -59,14 +63,20 @@ const	char *const __man_macronames[MAN_MAX] = {
 	"R",		"B",		"I",		"IR",
 	"RI",		"na",		"i",		"sp",
 	"nf",		"fi",		"r",		"RE",
-	"RS",		"DT",		"UC",		"PD"
+	"RS",		"DT",		"UC",		"PD",
+	"Sp",		"Vb",		"Ve",		"de",
+	"dei",		"am",		"ami",		"ig",
+	".",
 	};
 
 const	char * const *man_macronames = __man_macronames;
 
 static	struct man_node	*man_node_alloc(int, int, 
-				enum man_type, int);
+				enum man_type, enum mant);
 static	int		 man_node_append(struct man *, 
+				struct man_node *);
+static	void		 man_node_free(struct man_node *);
+static	void		 man_node_unlink(struct man *, 
 				struct man_node *);
 static	int		 man_ptext(struct man *, int, char *);
 static	int		 man_pmacro(struct man *, int, char *);
@@ -147,7 +157,7 @@ int
 man_parseln(struct man *m, int ln, char *buf)
 {
 
-	return('.' == *buf ? 
+	return('.' == *buf || '\'' == *buf ? 
 			man_pmacro(m, ln, buf) : 
 			man_ptext(m, ln, buf));
 }
@@ -158,7 +168,7 @@ man_free1(struct man *man)
 {
 
 	if (man->first)
-		man_node_freelist(man->first);
+		man_node_delete(man, man->first);
 	if (man->meta.title)
 		free(man->meta.title);
 	if (man->meta.source)
@@ -177,6 +187,7 @@ man_alloc1(struct man *m)
 	m->last = mandoc_calloc(1, sizeof(struct man_node));
 	m->first = m->last;
 	m->last->type = MAN_ROOT;
+	m->last->tok = MAN_MAX;
 	m->next = MAN_NEXT_CHILD;
 }
 
@@ -204,6 +215,7 @@ man_node_append(struct man *man, struct man_node *p)
 		/* NOTREACHED */
 	}
 	
+	assert(p->parent);
 	p->parent->nchild++;
 
 	if ( ! man_valid_pre(man, p))
@@ -240,7 +252,7 @@ man_node_append(struct man *man, struct man_node *p)
 
 
 static struct man_node *
-man_node_alloc(int line, int pos, enum man_type type, int tok)
+man_node_alloc(int line, int pos, enum man_type type, enum mant tok)
 {
 	struct man_node *p;
 
@@ -254,7 +266,7 @@ man_node_alloc(int line, int pos, enum man_type type, int tok)
 
 
 int
-man_elem_alloc(struct man *m, int line, int pos, int tok)
+man_elem_alloc(struct man *m, int line, int pos, enum mant tok)
 {
 	struct man_node *p;
 
@@ -267,7 +279,7 @@ man_elem_alloc(struct man *m, int line, int pos, int tok)
 
 
 int
-man_head_alloc(struct man *m, int line, int pos, int tok)
+man_head_alloc(struct man *m, int line, int pos, enum mant tok)
 {
 	struct man_node *p;
 
@@ -280,7 +292,7 @@ man_head_alloc(struct man *m, int line, int pos, int tok)
 
 
 int
-man_body_alloc(struct man *m, int line, int pos, int tok)
+man_body_alloc(struct man *m, int line, int pos, enum mant tok)
 {
 	struct man_node *p;
 
@@ -293,7 +305,7 @@ man_body_alloc(struct man *m, int line, int pos, int tok)
 
 
 int
-man_block_alloc(struct man *m, int line, int pos, int tok)
+man_block_alloc(struct man *m, int line, int pos, enum mant tok)
 {
 	struct man_node *p;
 
@@ -312,7 +324,7 @@ pstring(struct man *m, int line, int pos,
 	struct man_node	*n;
 	size_t		 sv;
 
-	n = man_node_alloc(line, pos, MAN_TEXT, -1);
+	n = man_node_alloc(line, pos, MAN_TEXT, MAN_MAX);
 	n->string = mandoc_malloc(len + 1);
 	sv = strlcpy(n->string, p, len + 1);
 
@@ -334,30 +346,29 @@ man_word_alloc(struct man *m, int line, int pos, const char *word)
 }
 
 
-void
+/*
+ * Free all of the resources held by a node.  This does NOT unlink a
+ * node from its context; for that, see man_node_unlink().
+ */
+static void
 man_node_free(struct man_node *p)
 {
 
 	if (p->string)
 		free(p->string);
-	if (p->parent)
-		p->parent->nchild--;
 	free(p);
 }
 
 
 void
-man_node_freelist(struct man_node *p)
+man_node_delete(struct man *m, struct man_node *p)
 {
-	struct man_node	*n;
 
-	if (p->child)
-		man_node_freelist(p->child);
-	assert(0 == p->nchild);
-	n = p->next;
+	while (p->child)
+		man_node_delete(m, p->child);
+
+	man_node_unlink(m, p);
 	man_node_free(p);
-	if (n)
-		man_node_freelist(n);
 }
 
 
@@ -438,7 +449,7 @@ descope:
 
 	if (MAN_ELINE & m->flags) {
 		m->flags &= ~MAN_ELINE;
-		if ( ! man_unscope(m, m->last->parent))
+		if ( ! man_unscope(m, m->last->parent, WERRMAX))
 			return(0);
 	}
 
@@ -446,7 +457,7 @@ descope:
 		return(1);
 	m->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(m, m->last->parent))
+	if ( ! man_unscope(m, m->last->parent, WERRMAX))
 		return(0);
 	return(man_body_alloc(m, line, 0, m->last->tok));
 }
@@ -467,22 +478,25 @@ macrowarn(struct man *m, int ln, const char *buf)
 int
 man_pmacro(struct man *m, int ln, char *buf)
 {
-	int		 i, j, c, ppos, fl;
+	int		 i, j, ppos;
+	enum mant	 tok;
 	char		 mac[5];
 	struct man_node	*n;
 
 	/* Comments and empties are quickly ignored. */
-
-	fl = m->flags;
 
 	if ('\0' == buf[1])
 		return(1);
 
 	i = 1;
 
-	if (' ' == buf[i]) {
+	/*
+	 * Skip whitespace between the control character and initial
+	 * text.  "Whitespace" is both spaces and tabs.
+	 */
+	if (' ' == buf[i] || '\t' == buf[i]) {
 		i++;
-		while (buf[i] && ' ' == buf[i])
+		while (buf[i] && (' ' == buf[i] || '\t' == buf[i]))
 			i++;
 		if ('\0' == buf[i])
 			goto out;
@@ -517,7 +531,7 @@ man_pmacro(struct man *m, int ln, char *buf)
 		return(1);
 	}
 	
-	if (MAN_MAX == (c = man_hash_find(mac))) {
+	if (MAN_MAX == (tok = man_hash_find(mac))) {
 		if ( ! macrowarn(m, ln, mac))
 			goto err;
 		return(1);
@@ -534,42 +548,80 @@ man_pmacro(struct man *m, int ln, char *buf)
 		if ( ! man_pwarn(m, ln, i - 1, WTSPACE))
 			goto err;
 
-	/* Remove prior ELINE macro, if applicable. */
+	/* 
+	 * Remove prior ELINE macro, as it's being clobbering by a new
+	 * macro.  Note that NSCOPED macros do not close out ELINE
+	 * macros---they don't print text---so we let those slip by.
+	 * NOTE: we don't allow roff blocks (NOCLOSE) to be embedded
+	 * here because that would stipulate blocks as children of
+	 * elements!
+	 */
 
-	if (m->flags & MAN_ELINE) {
+	if ( ! (MAN_NSCOPED & man_macros[tok].flags) &&
+			m->flags & MAN_ELINE) {
+		assert(MAN_TEXT != m->last->type);
+
+		/*
+		 * This occurs in the following construction:
+		 *   .B
+		 *   .br
+		 *   .B
+		 *   .br
+		 *   I hate man macros.
+		 * Flat-out disallow this madness.
+		 */
+		if (MAN_NSCOPED & man_macros[m->last->tok].flags)
+			return(man_perr(m, ln, ppos, WLNSCOPE));
+
 		n = m->last;
+
+		assert(n);
 		assert(NULL == n->child);
 		assert(0 == n->nchild);
+
 		if ( ! man_nwarn(m, n, WLNSCOPE))
 			return(0);
 
-		if (n->prev) {
-			assert(n != n->parent->child);
-			assert(n == n->prev->next);
-			n->prev->next = NULL;
-			m->last = n->prev;
-			m->next = MAN_NEXT_SIBLING;
-		} else {
-			assert(n == n->parent->child);
-			n->parent->child = NULL;
-			m->last = n->parent;
-			m->next = MAN_NEXT_CHILD;
-		}
-
-		man_node_free(n);
+		man_node_delete(m, n);
 		m->flags &= ~MAN_ELINE;
 	}
 
-	/* Begin recursive parse sequence. */
+	/*
+	 * Save the fact that we're in the next-line for a block.  In
+	 * this way, embedded roff instructions can "remember" state
+	 * when they exit.
+	 */
 
-	assert(man_macros[c].fp);
+	if (MAN_BLINE & m->flags)
+		m->flags |= MAN_BPLINE;
 
-	if ( ! (*man_macros[c].fp)(m, c, ln, ppos, &i, buf))
+	/* Call to handler... */
+
+	assert(man_macros[tok].fp);
+	if ( ! (*man_macros[tok].fp)(m, tok, ln, ppos, &i, buf))
 		goto err;
 
 out:
-	if ( ! (MAN_BLINE & fl))
+	/* 
+	 * We weren't in a block-line scope when entering the
+	 * above-parsed macro, so return.
+	 */
+
+	if ( ! (MAN_BPLINE & m->flags)) {
+		m->flags &= ~MAN_ILINE; 
 		return(1);
+	}
+	m->flags &= ~MAN_BPLINE;
+
+	/*
+	 * If we're in a block scope, then allow this macro to slip by
+	 * without closing scope around it.
+	 */
+
+	if (MAN_ILINE & m->flags) {
+		m->flags &= ~MAN_ILINE;
+		return(1);
+	}
 
 	/* 
 	 * If we've opened a new next-line element scope, then return
@@ -584,7 +636,7 @@ out:
 	assert(MAN_BLINE & m->flags);
 	m->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(m, m->last->parent))
+	if ( ! man_unscope(m, m->last->parent, WERRMAX))
 		return(0);
 	return(man_body_alloc(m, ln, 0, m->last->tok));
 
@@ -639,4 +691,46 @@ man_err(struct man *m, int line, int pos, int iserr, enum merr type)
 		return(man_verr(m, line, pos, p));
 
 	return(man_vwarn(m, line, pos, p));
+}
+
+
+/*
+ * Unlink a node from its context.  If "m" is provided, the last parse
+ * point will also be adjusted accordingly.
+ */
+static void
+man_node_unlink(struct man *m, struct man_node *n)
+{
+
+	/* Adjust siblings. */
+
+	if (n->prev)
+		n->prev->next = n->next;
+	if (n->next)
+		n->next->prev = n->prev;
+
+	/* Adjust parent. */
+
+	if (n->parent) {
+		n->parent->nchild--;
+		if (n->parent->child == n)
+			n->parent->child = n->prev ? n->prev : n->next;
+	}
+
+	/* Adjust parse point, if applicable. */
+
+	if (m && m->last == n) {
+		/*XXX: this can occur when bailing from validation. */
+		/*assert(NULL == n->next);*/
+		if (n->prev) {
+			m->last = n->prev;
+			m->next = MAN_NEXT_SIBLING;
+		} else {
+			m->last = n->parent;
+			m->next = MAN_NEXT_CHILD;
+		}
+	}
+
+	if (m && m->first == n)
+		m->first = NULL;
 }

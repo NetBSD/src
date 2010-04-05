@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_term.c,v 1.110 2010/01/30 08:42:21 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_term.c,v 1.112 2010/03/29 19:28:04 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -203,7 +203,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ NULL, NULL }, /* Dc */
 	{ termp_dq_pre, termp_dq_post }, /* Do */
 	{ termp_dq_pre, termp_dq_post }, /* Dq */
-	{ NULL, NULL }, /* Ec */
+	{ NULL, NULL }, /* Ec */ /* FIXME: no space */
 	{ NULL, NULL }, /* Ef */
 	{ termp_under_pre, NULL }, /* Em */ 
 	{ NULL, NULL }, /* Eo */
@@ -269,6 +269,9 @@ terminal_mdoc(void *arg, const struct mdoc *mdoc)
 	struct termp		*p;
 
 	p = (struct termp *)arg;
+
+	p->overstep = 0;
+	p->maxrmargin = 78;
 
 	if (NULL == p->symtab)
 		switch (p->enc) {

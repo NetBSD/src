@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_validate.c,v 1.57 2010/01/30 08:42:21 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_validate.c,v 1.59 2010/03/31 07:13:53 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -44,7 +44,7 @@ struct	valids {
 	v_post	*post;
 };
 
-static	int	 check_parent(PRE_ARGS, int, enum mdoc_type);
+static	int	 check_parent(PRE_ARGS, enum mdoct, enum mdoc_type);
 static	int	 check_msec(PRE_ARGS, ...);
 static	int	 check_sec(PRE_ARGS, ...);
 static	int	 check_stdarg(PRE_ARGS);
@@ -72,7 +72,6 @@ static	int	 ebool(POST_ARGS);
 static	int	 eerr_eq0(POST_ARGS);
 static	int	 eerr_eq1(POST_ARGS);
 static	int	 eerr_ge1(POST_ARGS);
-static	int	 eerr_le2(POST_ARGS);
 static	int	 eerr_le1(POST_ARGS);
 static	int	 ewarn_ge1(POST_ARGS);
 static	int	 herr_eq0(POST_ARGS);
@@ -134,7 +133,7 @@ static	v_post	 posts_text1[] = { eerr_eq1, NULL };
 static	v_post	 posts_vt[] = { post_vt, NULL };
 static	v_post	 posts_wline[] = { bwarn_ge1, herr_eq0, NULL };
 static	v_post	 posts_wtext[] = { ewarn_ge1, NULL };
-static	v_post	 posts_xr[] = { eerr_ge1, eerr_le2, NULL };
+static	v_post	 posts_xr[] = { eerr_ge1, NULL };
 static	v_pre	 pres_an[] = { pre_an, NULL };
 static	v_pre	 pres_bd[] = { pre_display, pre_bd, NULL };
 static	v_pre	 pres_bl[] = { pre_bl, NULL };
@@ -408,7 +407,6 @@ CHECK_BODY_DEFN(ge1, warn, warn_child_gt, 0)	/* bwarn_ge1() */
 CHECK_BODY_DEFN(ge1, err, err_child_gt, 0)	/* berr_ge1() */
 CHECK_ELEM_DEFN(ge1, warn, warn_child_gt, 0)	/* ewarn_gt1() */
 CHECK_ELEM_DEFN(eq1, err, err_child_eq, 1)	/* eerr_eq1() */
-CHECK_ELEM_DEFN(le2, err, err_child_lt, 3)	/* eerr_le2() */
 CHECK_ELEM_DEFN(le1, err, err_child_lt, 2)	/* eerr_le1() */
 CHECK_ELEM_DEFN(eq0, err, err_child_eq, 0)	/* eerr_eq0() */
 CHECK_ELEM_DEFN(ge1, err, err_child_gt, 0)	/* eerr_ge1() */
@@ -549,7 +547,7 @@ check_text(struct mdoc *mdoc, int line, int pos, const char *p)
 
 
 static int
-check_parent(PRE_ARGS, int tok, enum mdoc_type t)
+check_parent(PRE_ARGS, enum mdoct tok, enum mdoc_type t)
 {
 
 	assert(n->parent);
