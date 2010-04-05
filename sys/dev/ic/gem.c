@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.93 2010/02/24 22:37:58 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.94 2010/04/05 07:19:34 joerg Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.93 2010/02/24 22:37:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.94 2010/04/05 07:19:34 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -1588,8 +1588,7 @@ gem_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {
@@ -1845,8 +1844,7 @@ gem_rint(struct gem_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 #ifdef INET
 		/* hardware checksum */

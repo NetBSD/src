@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.134 2010/03/22 17:12:09 dyoung Exp $	*/
+/*	$NetBSD: i82557.c,v 1.135 2010/04/05 07:19:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.134 2010/03/22 17:12:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.135 2010/04/05 07:19:34 joerg Exp $");
 
 #include "rnd.h"
 
@@ -1007,8 +1007,7 @@ fxp_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txpending == FXP_NTXCB - 1) {
@@ -1467,8 +1466,7 @@ fxp_rxintr(struct fxp_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

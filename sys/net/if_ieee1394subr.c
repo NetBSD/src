@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.44 2010/03/31 12:17:01 pgoyette Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.45 2010/04/05 07:22:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.44 2010/03/31 12:17:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.45 2010/04/05 07:22:23 joerg Exp $");
 
 #include "opt_inet.h"
 
@@ -218,7 +218,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			    ifp->if_broadcastaddr)->iha_uid, 8);
 		memcpy(h.ibh_shost, myaddr->iha_uid, 8);
 		h.ibh_type = etype;
-		bpf_ops->bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m0);
+		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m0);
 	}
 	if ((ifp->if_flags & IFF_SIMPLEX) &&
 	    unicast &&
@@ -401,7 +401,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 			memcpy(h.ibh_dhost, myaddr->iha_uid, 8);
 		}
 		h.ibh_type = htons(etype);
-		bpf_ops->bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m);
+		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m);
 	}
 
 	switch (etype) {
@@ -687,15 +687,15 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	memset(baddr->iha_offset, 0, sizeof(baddr->iha_offset));
 	ifp->if_broadcastaddr = (uint8_t *)baddr;
 	LIST_INIT(&ic->ic_reassq);
-	bpf_ops->bpf_attach(ifp, DLT_APPLE_IP_OVER_IEEE1394,
-	    sizeof(struct ieee1394_hwaddr), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_APPLE_IP_OVER_IEEE1394,
+	    sizeof(struct ieee1394_hwaddr));
 }
 
 void
 ieee1394_ifdetach(struct ifnet *ifp)
 {
 	ieee1394_drain(ifp);
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	free(__UNCONST(ifp->if_broadcastaddr), M_DEVBUF);
 	ifp->if_broadcastaddr = NULL;
 #if 0	/* done in if_detach() */
