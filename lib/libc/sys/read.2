@@ -1,4 +1,4 @@
-.\"	$NetBSD: read.2,v 1.32 2010/04/03 15:43:46 jruoho Exp $
+.\"	$NetBSD: read.2,v 1.33 2010/04/05 07:53:47 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,14 +135,15 @@ and
 .Fn preadv
 will succeed unless:
 .Bl -tag -width Er
+.It Bq Er EAGAIN
+The file was marked for non-blocking I/O,
+and no data were ready to be read.
 .It Bq Er EBADF
 .Fa d
 is not a valid file or socket descriptor open for reading.
 .It Bq Er EFAULT
 .Fa buf
 points outside the allocated address space.
-.It Bq Er EIO
-An I/O error occurred while reading from the file system.
 .It Bq Er EINTR
 A read from a slow device
 (i.e. one that might block for an arbitrary amount of time)
@@ -155,13 +156,11 @@ calls.
 .It Bq Er EINVAL
 The file pointer associated with
 .Fa d
-was negative.
-.It Bq Er EINVAL
-The total length of the I/O is more than can be expressed by the ssize_t
+was negative; or
+the total length of the I/O is more than can be expressed by the ssize_t
 return value.
-.It Bq Er EAGAIN
-The file was marked for non-blocking I/O,
-and no data were ready to be read.
+.It Bq Er EIO
+An I/O error occurred while reading from the file system.
 .El
 .Pp
 In addition,
@@ -170,26 +169,24 @@ and
 .Fn preadv
 may return one of the following errors:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-.Fa iovcnt
-was less than or equal to 0, or greater than
-.Dv {IOV_MAX} .
-.It Bq Er EINVAL
-One of the
-.Fa iov_len
-values in the
-.Fa iov
-array was negative.
-.It Bq Er EINVAL
-The sum of the
-.Fa iov_len
-values in the
-.Fa iov
-array overflowed a 32-bit integer.
 .It Bq Er EFAULT
 Part of the
 .Fa iov
 points outside the process's allocated address space.
+.It Bq Er EINVAL
+.Fa iovcnt
+was less than or equal to 0, or greater than
+.Dv {IOV_MAX} ;
+or one of the
+.Fa iov_len
+values in the
+.Fa iov
+array was negative; or
+the sum of the
+.Fa iov_len
+values in the
+.Fa iov
+array overflowed a 32-bit integer.
 .El
 .Pp
 The
