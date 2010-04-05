@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.28 2009/04/12 13:29:29 lukem Exp $	 */
+/*	$NetBSD: headers.c,v 1.29 2010/04/05 14:01:26 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.28 2009/04/12 13:29:29 lukem Exp $");
+__RCSID("$NetBSD: headers.c,v 1.29 2010/04/05 14:01:26 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: headers.c,v 1.28 2009/04/12 13:29:29 lukem Exp $");
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/bitops.h>
 #include <dirent.h>
 
 #include "debug.h"
@@ -138,10 +139,23 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 				const Elf_Word *hashtab = (const Elf_Word *)
 				(obj->relocbase + dynp->d_un.d_ptr);
 
-				obj->nbuckets = hashtab[0];
+				if (hashtab[0] > UINT32_MAX)
+					obj->nbuckets = UINT32_MAX;
+				else
+					obj->nbuckets = hashtab[0];
 				obj->nchains = hashtab[1];
 				obj->buckets = hashtab + 2;
 				obj->chains = obj->buckets + obj->nbuckets;
+				/*
+				 * Should really be in _rtld_relocate_objects,
+				 * but _rtld_symlook_obj might be used before.
+				 */
+				if (obj->nbuckets) {
+					fast_divide32_prepare(obj->nbuckets,
+					    &obj->nbuckets_m,
+					    &obj->nbuckets_s1,
+					    &obj->nbuckets_s2);
+				}
 			}
 			break;
 
