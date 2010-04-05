@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.44 2010/03/22 23:00:47 dyoung Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.45 2010/04/05 07:19:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -249,11 +249,11 @@ extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *, struct mbuf *);
 #endif
 
 #if !defined(PDQ_BPF_MTAP)
-#define	PDQ_BPF_MTAP(sc, m)	bpf_ops->bpf_mtap((sc)->sc_bpf, m)
+#define	PDQ_BPF_MTAP(sc, m)	bpf_mtap3((sc)->sc_bpf, m)
 #endif
 
 #if !defined(PDQ_BPFATTACH)
-#define	PDQ_BPFATTACH(sc, t, s)	bpf_ops->bpf_attach(&(sc)->sc_bpf, &(sc)->sc_if, t, s)
+#define	PDQ_BPFATTACH(sc, t, s)	bpf_attach(&(sc)->sc_bpf, &(sc)->sc_if, t, s)
 #endif
 
 #if !defined(PDQ_OS_SPL_RAISE)

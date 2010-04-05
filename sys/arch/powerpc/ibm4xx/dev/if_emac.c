@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.36 2010/03/18 13:47:04 kiyohara Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.37 2010/04/05 07:19:31 joerg Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.36 2010/03/18 13:47:04 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.37 2010/04/05 07:19:31 joerg Exp $");
 
 #include "opt_emac.h"
 
@@ -811,8 +811,7 @@ emac_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txfree == 0)
@@ -1666,8 +1665,7 @@ emac_rxeob_intr(void *arg)
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.111 2010/03/22 17:11:19 dyoung Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.112 2010/04/05 07:19:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.111 2010/03/22 17:11:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.112 2010/04/05 07:19:34 joerg Exp $");
 
 #include "rnd.h"
 
@@ -1203,8 +1203,7 @@ ex_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, mb_head);
+		bpf_mtap(ifp, mb_head);
 	}
  out:
 	if (sc->tx_head) {
@@ -1381,9 +1380,7 @@ ex_intr(void *arg)
 					}
 					m->m_pkthdr.rcvif = ifp;
 					m->m_pkthdr.len = m->m_len = total_len;
-					if (ifp->if_bpf)
-						bpf_ops->bpf_mtap(
-						    ifp->if_bpf, m);
+					bpf_mtap(ifp, m);
 		/*
 		 * Set the incoming checksum information for the packet.
 		 */
