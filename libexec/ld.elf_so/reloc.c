@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.101 2010/01/16 10:37:51 skrll Exp $	 */
+/*	$NetBSD: reloc.c,v 1.102 2010/04/05 14:01:26 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.101 2010/01/16 10:37:51 skrll Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.102 2010/04/05 14:01:26 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: reloc.c,v 1.101 2010/01/16 10:37:51 skrll Exp $");
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/bitops.h>
 #include <dirent.h>
 
 #include "debug.h"
@@ -152,6 +153,10 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		    obj->strtab == NULL) {
 			_rtld_error("%s: Shared object has no run-time"
 			    " symbol table", obj->path);
+			return -1;
+		}
+		if (obj->nbuckets == UINT32_MAX) {
+			_rtld_error("%s: Symbol table too large", obj->path);
 			return -1;
 		}
 		rdbg((" relocating %s (%ld/%ld rel/rela, %ld/%ld plt rel/rela)",

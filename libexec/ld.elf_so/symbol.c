@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.52 2010/03/18 22:17:55 roy Exp $	 */
+/*	$NetBSD: symbol.c,v 1.53 2010/04/05 14:01:26 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.52 2010/03/18 22:17:55 roy Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.53 2010/04/05 14:01:26 joerg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: symbol.c,v 1.52 2010/03/18 22:17:55 roy Exp $");
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/mman.h>
+#include <sys/bitops.h>
 #include <dirent.h>
 
 #include "debug.h"
@@ -229,7 +230,8 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 {
 	unsigned long symnum;
 
-	for (symnum = obj->buckets[hash % obj->nbuckets];
+	for (symnum = obj->buckets[fast_remainder32(hash, obj->nbuckets,
+	     obj->nbuckets_m, obj->nbuckets_s1, obj->nbuckets_s2)];
 	     symnum != ELF_SYM_UNDEFINED;
 	     symnum = obj->chains[symnum]) {
 		const Elf_Sym  *symp;
