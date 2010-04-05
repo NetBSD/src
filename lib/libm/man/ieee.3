@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
-.\"	$NetBSD: ieee.3,v 1.19 2003/08/07 16:44:48 agc Exp $
+.\"	$NetBSD: ieee.3,v 1.20 2010/04/05 21:33:25 joerg Exp $
 .\"
 .Dd February 25, 1994
 .Dt IEEE 3
@@ -91,7 +91,7 @@ returns the value 1 just when
 otherwise a
 zero is returned
 (when
-.Pf \\*(Ba Ns Fa x Ns \\*(Ba
+.Pf \*(Ba Ns Fa x Ns \*(Ba
 = \*(If or
 .Fa x
 is \*(Na).
@@ -129,10 +129,10 @@ is the integer nearest the exact value of
 .Fa x Ns / Ns Fa y ;
 .Ek
 moreover if
-.Pf \\*(Ba Fa n
+.Pf \*(Ba Fa n
 \-
 .Sm off
-.Fa x No / Fa y No \\*(Ba
+.Fa x No / Fa y No \*(Ba
 .Sm on
 =
 1/2
@@ -141,11 +141,11 @@ then
 is even.
 Consequently the remainder is computed exactly and
 .Sm off
-.Pf \\*(Ba Fa r No \\*(Ba
+.Pf \*(Ba Fa r No \*(Ba
 .Sm on
 \*(Le
 .Sm off
-.Pf \\*(Ba Fa y No \\*(Ba/2 .
+.Pf \*(Ba Fa y No \*(Ba/2 .
 .Sm on
 But
 .Fn remainder x 0
