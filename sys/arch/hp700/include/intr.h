@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2010/04/03 07:46:01 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.18 2010/04/06 07:47:48 skrll Exp $	*/
 /*	$OpenBSD: intr.h,v 1.26 2009/12/29 13:11:40 jsing Exp $	*/
 
 /*-
@@ -89,9 +89,6 @@ splraiseipl(ipl_cookie_t icookie)
 #include <sys/spl.h>
 
 #define	setsoftast(l)	((l)->l_md.md_astpending = 1)
-#define	setsoftnet()	hp700_intr_schedule(softnetmask)
-
-void	hp700_intr_schedule(int);
 
 #endif /* !_LOCORE */
 
