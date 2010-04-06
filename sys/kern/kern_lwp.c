@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.141 2010/03/01 21:10:17 darran Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.142 2010/04/06 13:50:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141 2010/03/01 21:10:17 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.142 2010/04/06 13:50:22 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -372,6 +372,44 @@ lwp_continue(struct lwp *l)
 
 	/* setrunnable() will release the lock. */
 	setrunnable(l);
+}
+
+/*
+ * Restart a stopped LWP.
+ *
+ * Must be called with p_lock held, and the LWP NOT locked.  Will unlock the
+ * LWP before return.
+ */
+void
+lwp_unstop(struct lwp *l)
+{
+	struct proc *p = l->l_proc;
+    
+	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(p->p_lock));
+
+	lwp_lock(l);
+
+	/* If not stopped, then just bail out. */
+	if (l->l_stat != LSSTOP) {
+		lwp_unlock(l);
+		return;
+	}
+
+	p->p_stat = SACTIVE;
+	p->p_sflag &= ~PS_STOPPING;
+
+	if (!p->p_waited)
+		p->p_pptr->p_nstopchild--;
+
+	if (l->l_wchan == NULL) {
+		/* setrunnable() will release the lock. */
+		setrunnable(l);
+	} else {
+		l->l_stat = LSSLEEP;
+		p->p_nrlwps++;
+		lwp_unlock(l);
+	}
 }
 
 /*
@@ -1396,11 +1434,25 @@ lwp_delref(struct lwp *l)
 	struct proc *p = l->l_proc;
 
 	mutex_enter(p->p_lock);
+	lwp_delref2(l);
+	mutex_exit(p->p_lock);
+}
+
+/*
+ * Remove one reference to an LWP.  If this is the last reference,
+ * then we must finalize the LWP's death.  The proc mutex is held
+ * on entry.
+ */
+void
+lwp_delref2(struct lwp *l)
+{
+	struct proc *p = l->l_proc;
+
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat != LSZOMB);
 	KASSERT(l->l_refcnt > 0);
 	if (--l->l_refcnt == 0)
 		cv_broadcast(&p->p_lwpcv);
-	mutex_exit(p->p_lock);
 }
 
 /*
