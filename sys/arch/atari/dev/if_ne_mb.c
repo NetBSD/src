@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mb.c,v 1.1 2010/04/01 17:07:52 tsutsui Exp $	*/
+/*	$NetBSD: if_ne_mb.c,v 1.2 2010/04/06 15:32:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2010 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_mb.c,v 1.1 2010/04/01 17:07:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mb.c,v 1.2 2010/04/06 15:32:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ ne_mb_poll(void *arg)
 	(void)dp8390_intr(dsc);
 	splx(s);
 
-	callout_reset(&sc->sc_poll, ETHERNEC_TICK, ne_mb_poll, sc);
+	callout_schedule(&sc->sc_poll, ETHERNEC_TICK);
 }
 
 /*
