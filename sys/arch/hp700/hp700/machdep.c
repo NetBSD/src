@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2010/03/20 23:31:27 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 2010/04/06 08:09:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2010/03/20 23:31:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2010/04/06 08:09:46 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -787,7 +787,7 @@ cpuid(void)
 	cpu_revision = (*cpu_desidhash)();
 
 	/* force strong ordering for now */
-	if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
+	if (hppa_cpu_ispa20_p())
 		kpsw |= PSW_O;
 
 	snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
@@ -1694,7 +1694,7 @@ hppa_machine_check(int check_type)
 	if (pimerror < 0) {
 		printf(" - WARNING: could not transfer PIM info (%d)", pimerror);
 	} else {
-		if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
+		if (hppa_cpu_ispa20_p())
 			hppa_pim64_dump(check_type);
 		else
 			hppa_pim_dump(check_type);
@@ -1969,4 +1969,3 @@ module_init_md(void)
 {
 }
 #endif /* MODULAR */
-
