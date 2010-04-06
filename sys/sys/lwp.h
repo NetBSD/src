@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.128 2010/02/21 02:11:39 darran Exp $	*/
+/*	$NetBSD: lwp.h,v 1.129 2010/04/06 13:50:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -298,6 +298,7 @@ void	lwp_relock(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
 void	lwp_delref(lwp_t *);
+void	lwp_delref2(lwp_t *);
 void	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
@@ -307,6 +308,7 @@ lwp_t	*lwp_find_first(proc_t *);
 void	lwpinit(void);
 int 	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
 void	lwp_continue(lwp_t *);
+void	lwp_unstop(lwp_t *);
 void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
