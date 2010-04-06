@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.32 2010/04/06 13:50:22 christos Exp $
+.\"	$NetBSD: ptrace.2,v 1.33 2010/04/06 14:26:59 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd April 6, 2010
@@ -149,9 +149,9 @@ new value for the program counter), or
 to indicate that execution is to pick up where it left off.
 .Fa data
 provides a signal number to be delivered to the traced process as it
-resumes execution, or 0 if no signal is to be sent.  If a negative
-value is supplied, that is the negative of the LWP ID of the thread to
-be resumed, and only that thread executes.
+resumes execution, or 0 if no signal is to be sent.
+If a negative value is supplied, that is the negative of the LWP
+ID of the thread to be resumed, and only that thread executes.
 .It Dv PT_KILL
 The traced process terminates, as if
 .Dv PT_CONTINUE
@@ -276,9 +276,10 @@ struct ptrace_lwpinfo {
 .Pp
 where
 .Fa pl_lwpid
-contains a thread LWP ID.  Information is returned for the thread
-following the one with the specified ID in the process thread list,
-or for the first thread if
+contains a thread LWP ID.
+Information is returned for the thread following the one with the
+specified ID in the process thread list, or for the first thread
+if
 .Fa pl_lwpid
 is 0.
 Upon return
@@ -315,11 +316,11 @@ instruction, execution stops again.
 If the
 .Fa data
 argument is greater than 0, it contains the LWP ID of the thread to be
-stepped, and any other threads are continued.  If the 
+stepped, and any other threads are continued.
+If the
 .Fa data
 argument is less than zero, it contains the negative of the LWP ID of
-the
-thread to be stepped, and only that thread executes.
+the thread to be stepped, and only that thread executes.
 .It Dv PT_GETREGS
 This request reads the traced process' machine registers into the
 .Dq Li "struct reg"
@@ -327,10 +328,11 @@ This request reads the traced process' machine registers into the
 .In machine/reg.h )
 pointed to by
 .Fa addr .
-The 
+The
 .Fa data
 argument contains the LWP ID of the thread whose registers are to
-be read.  If zero is supplied, the first thread of the process is read.
+be read.
+If zero is supplied, the first thread of the process is read.
 .It Dv PT_SETREGS
 This request is the converse of
 .Dv PT_GETREGS ;
@@ -340,10 +342,11 @@ it loads the traced process' machine registers from the
 .In machine/reg.h )
 pointed to by
 .Fa addr .
-The 
+The
 .Fa data
 argument contains the LWP ID of the thread whose registers are to
-be written.  If zero is supplied, the first thread of the process is written.
+be written.
+If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETFPREGS
 This request reads the traced process' floating-point registers into
 the
@@ -352,11 +355,11 @@ the
 .In machine/reg.h )
 pointed to by
 .Fa addr .
-The 
+The
 .Fa data
 argument contains the LWP ID of the thread whose registers are to
-be read.  If zero is supplied, the first thread of the process is 
-read.
+be read.
+If zero is supplied, the first thread of the process is read.
 .It Dv PT_SETFPREGS
 This request is the converse of
 .Dv PT_GETFPREGS ;
@@ -366,26 +369,29 @@ it loads the traced process' floating-point registers from the
 .In machine/reg.h )
 pointed to by
 .Fa addr .
-The 
+The
 .Fa data
 argument contains the LWP ID of the thread whose registers are to
-be written.  If zero is supplied, the first thread of the process is 
-written.
+be written.
+If zero is supplied, the first thread of the process is written.
 .\" .It Dv PT_SYSCALL
 .\" This request is like
 .\" .Dv PT_CONTINUE
 .\" except that the process will stop next time it executes any system
-.\" call.  Information about the system call can be examined with
+.\" call.
+.\" Information about the system call can be examined with
 .\" .Dv PT_READ_U
 .\" and potentially modified with
 .\" .Dv PT_WRITE_U
 .\" through the
 .\" .Li u_kproc.kp_proc.p_md
-.\" element of the user structure (see below).  If the process is continued
+.\" element of the user structure (see below).
+.\" If the process is continued
 .\" with another
 .\" .Dv PT_SYSCALL
 .\" request, it will stop again on exit from the syscall, at which point
-.\" the return values can be examined and potentially changed.  The
+.\" the return values can be examined and potentially changed.
+.\" The
 .\" .Li u_kproc.kp_proc.p_md
 .\" element is of type
 .\" .Dq Li "struct mdproc" ,
@@ -501,8 +507,19 @@ The possible errors are:
 .Bl -tag -width 4n
 .It Bq Er EAGAIN
 Process is currently exec'ing and cannot be traced.
-.It Bq Er ESRCH
-No process having the specified process ID exists.
+.It Bq Er EBUSY
+.Bl -bullet -compact
+.It
+.Dv PT_ATTACH
+was attempted on a process that was already being traced.
+.It
+A request attempted to manipulate a process that was being traced by
+some process other than the one making the request.
+.It
+A request (other than
+.Dv PT_ATTACH )
+specified a process that wasn't stopped.
+.El
 .It Bq Er EINVAL
 .Bl -bullet -compact
 .It
@@ -539,19 +556,6 @@ or
 was attempted on a process with no valid register set.
 (This is normally true only of system processes.)
 .El
-.It Bq Er EBUSY
-.Bl -bullet -compact
-.It
-.Dv PT_ATTACH
-was attempted on a process that was already being traced.
-.It
-A request attempted to manipulate a process that was being traced by
-some process other than the one making the request.
-.It
-A request (other than
-.Dv PT_ATTACH )
-specified a process that wasn't stopped.
-.El
 .It Bq Er EPERM
 .Bl -bullet -compact
 .It
@@ -565,6 +569,8 @@ on a process in violation of the requirements listed under
 .Dv PT_ATTACH
 above.
 .El
+.It Bq Er ESRCH
+No process having the specified process ID exists.
 .El
 .Sh SEE ALSO
 .Xr sigaction 2 ,
