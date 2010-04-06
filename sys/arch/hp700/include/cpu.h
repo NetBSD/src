@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44 2010/04/03 07:46:01 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45 2010/04/06 07:58:31 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -281,6 +281,13 @@ kvtop(const void *va)
 }
 
 extern int (*cpu_desidhash)(void);
+
+static __inline bool
+hppa_cpu_ispa20_p(void)
+{
+
+	return (hppa_cpu_info->hci_features & HPPA_FTRS_W32B) != 0;
+}
 
 void	delay(u_int);
 void	hppa_init(paddr_t, void *);
