@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 2010/04/03 07:46:02 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.87 2010/04/06 07:44:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2010/04/03 07:46:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2010/04/06 07:44:09 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -109,10 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2010/04/03 07:46:02 skrll Exp $");
 void ss_clear_breakpoints(struct lwp *l);
 int ss_put_value(struct lwp *, vaddr_t, u_int);
 int ss_get_value(struct lwp *, vaddr_t, u_int *);
-#endif
 
 /* single-step breakpoint */
 #define SSBREAKPOINT   (HPPA_BREAK_KERNEL | (HPPA_BREAK_SS << 13))
+
+#endif
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 /*
