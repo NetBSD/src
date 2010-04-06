@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.5 2009/11/02 20:52:39 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.6 2010/04/06 17:39:47 christos Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -509,10 +509,10 @@ void gen_find_action ()
 		indent_puts ("YY_G(yy_lp) = yy_accept[yy_current_state];");
 
 		if (!variable_trailing_context_rules)
-			outn ("#ifdef YY_USES_REJECT");
+			outn ("m4_ifdef( [[M4_YY_USES_REJECT]],\n[[");
 		outn ("find_rule: /* we branch to this label when backing up */");
 		if (!variable_trailing_context_rules)
-			outn ("#endif");
+			outn ("]])\n");
 
 		indent_puts
 			("for ( ; ; ) /* until we find what rule we matched */");
