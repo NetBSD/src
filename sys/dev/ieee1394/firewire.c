@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.29 2010/03/29 07:34:02 kiyohara Exp $	*/
+/*	$NetBSD: firewire.c,v 1.30 2010/04/06 10:45:15 reinoud Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.29 2010/03/29 07:34:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.30 2010/04/06 10:45:15 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1489,7 +1489,7 @@ fw_tl_free(struct firewire_comm *fc, struct fw_xfer *xfer)
 		    xfer->tl, xfer->flag);
 		fw_dump_hdr(&xfer->send.hdr, "send");
 		fw_dump_hdr(&xfer->recv.hdr, "recv");
-		cpu_Debugger();
+		KASSERT(FALSE);
 		return;
 	}
 #endif
