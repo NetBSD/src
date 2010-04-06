@@ -1,0 +1,6 @@
+#	$NetBSD: files.kzsh401,v 1.1 2010/04/06 15:54:30 nonaka Exp $
+#
+#	KZSH401 configuration info
+
+file	arch/evbsh3/kzsh401/kzsh401.c
+file	arch/evbsh3/kzsh401/clock_machdep.c
