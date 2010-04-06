@@ -1,0 +1,6 @@
+#	$NetBSD: files.computexevb,v 1.1 2010/04/06 15:54:30 nonaka Exp $
+#
+#	COMPUTEXEVB configuration info
+
+file	arch/evbsh3/computexevb/computexevb.c
+file	arch/evbsh3/computexevb/clock_machdep.c
