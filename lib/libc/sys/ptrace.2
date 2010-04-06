@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.31 2010/03/22 19:30:55 joerg Exp $
+.\"	$NetBSD: ptrace.2,v 1.32 2010/04/06 13:50:22 christos Exp $
 .\"
 .\" This file is in the public domain.
-.Dd March 12, 2007
+.Dd April 6, 2010
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -149,7 +149,9 @@ new value for the program counter), or
 to indicate that execution is to pick up where it left off.
 .Fa data
 provides a signal number to be delivered to the traced process as it
-resumes execution, or 0 if no signal is to be sent.
+resumes execution, or 0 if no signal is to be sent.  If a negative
+value is supplied, that is the negative of the LWP ID of the thread to
+be resumed, and only that thread executes.
 .It Dv PT_KILL
 The traced process terminates, as if
 .Dv PT_CONTINUE
@@ -256,8 +258,8 @@ This
 call currently does not stop the child process so it can generate
 inconsistent data.
 .It Dv PT_LWPINFO
-Returns information about the specific thread from the process specified
-in the
+Returns information about a thread from the list of threads for the
+process specified in the
 .Fa pid
 argument.
 The
@@ -274,8 +276,15 @@ struct ptrace_lwpinfo {
 .Pp
 where
 .Fa pl_lwpid
-contains the thread for which to get info.
+contains a thread LWP ID.  Information is returned for the thread
+following the one with the specified ID in the process thread list,
+or for the first thread if
+.Fa pl_lwpid
+is 0.
 Upon return
+.Fa pl_lwpid
+contains the LWP ID of the thread that was found, or 0 if there is
+no thread after the one whose LWP ID was supplied in the call.
 .Fa pl_event
 contains the event that stopped the thread.
 Possible
@@ -303,6 +312,14 @@ lists which requests exist on a given machine.
 Execution continues as in request PT_CONTINUE; however
 as soon as possible after execution of at least one
 instruction, execution stops again.
+If the
+.Fa data
+argument is greater than 0, it contains the LWP ID of the thread to be
+stepped, and any other threads are continued.  If the 
+.Fa data
+argument is less than zero, it contains the negative of the LWP ID of
+the
+thread to be stepped, and only that thread executes.
 .It Dv PT_GETREGS
 This request reads the traced process' machine registers into the
 .Dq Li "struct reg"
@@ -310,6 +327,10 @@ This request reads the traced process' machine registers into the
 .In machine/reg.h )
 pointed to by
 .Fa addr .
+The 
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be read.  If zero is supplied, the first thread of the process is read.
 .It Dv PT_SETREGS
 This request is the converse of
 .Dv PT_GETREGS ;
@@ -319,6 +340,10 @@ it loads the traced process' machine registers from the
 .In machine/reg.h )
 pointed to by
 .Fa addr .
+The 
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be written.  If zero is supplied, the first thread of the process is written.
 .It Dv PT_GETFPREGS
 This request reads the traced process' floating-point registers into
 the
@@ -327,6 +352,11 @@ the
 .In machine/reg.h )
 pointed to by
 .Fa addr .
+The 
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be read.  If zero is supplied, the first thread of the process is 
+read.
 .It Dv PT_SETFPREGS
 This request is the converse of
 .Dv PT_GETFPREGS ;
@@ -336,6 +366,11 @@ it loads the traced process' floating-point registers from the
 .In machine/reg.h )
 pointed to by
 .Fa addr .
+The 
+.Fa data
+argument contains the LWP ID of the thread whose registers are to
+be written.  If zero is supplied, the first thread of the process is 
+written.
 .\" .It Dv PT_SYSCALL
 .\" This request is like
 .\" .Dv PT_CONTINUE
