@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.154 2009/09/19 13:11:02 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.155 2010/04/07 22:59:15 oki Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.154 2009/09/19 13:11:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.155 2010/04/07 22:59:15 oki Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1873,6 +1873,7 @@ ip6_sprintf(const struct in6_addr *addr)
 {
 	static char ip6buf[8][48];
 	int i;
+	char *bp;
 	char *cp;
 	const u_int16_t *a = (const u_int16_t *)addr;
 	const u_int8_t *d;
@@ -1905,9 +1906,16 @@ ip6_sprintf(const struct in6_addr *addr)
 			continue;
 		}
 		d = (const u_char *)a;
-		*cp++ = hexdigits[*d >> 4];
-		*cp++ = hexdigits[*d++ & 0xf];
-		*cp++ = hexdigits[*d >> 4];
+		bp = cp;
+		*cp = hexdigits[*d >> 4];
+		if (*cp != '0')
+			cp++;
+		*cp = hexdigits[*d++ & 0xf];
+		if (cp != bp || *cp != '0')
+			cp++;
+		*cp = hexdigits[*d >> 4];
+		if (cp != bp || *cp != '0')
+			cp++;
 		*cp++ = hexdigits[*d & 0xf];
 		*cp++ = ':';
 		a++;
