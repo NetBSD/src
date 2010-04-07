@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.72 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: fd.c,v 1.73 2010/04/07 12:39:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72 2009/10/20 19:10:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73 2010/04/07 12:39:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,23 +216,24 @@ static int	fdgetdisklabel(struct fd_softc *, dev_t);
 static int	fdselect(int, int, int);
 static void	fddeselect(void);
 static void	fdmoff(struct fd_softc *);
-       u_char	read_fdreg(u_short);
-       void	write_fdreg(u_short, u_short);
-       u_char	read_dmastat(void);
 
-extern inline u_char read_fdreg(u_short regno)
+static inline u_char	read_fdreg(u_short);
+static inline void	write_fdreg(u_short, u_short);
+static inline u_char	read_dmastat(void);
+
+static inline u_char read_fdreg(u_short regno)
 {
 	DMA->dma_mode = regno;
 	return(DMA->dma_data);
 }
 
-extern inline void write_fdreg(u_short regno, u_short val)
+static inline void write_fdreg(u_short regno, u_short val)
 {
 	DMA->dma_mode = regno;
 	DMA->dma_data = val;
 }
 
-extern inline u_char read_dmastat(void)
+static inline u_char read_dmastat(void)
 {
 	DMA->dma_mode = FDC_CS | DMA_SCREG;
 	return(DMA->dma_stat);
