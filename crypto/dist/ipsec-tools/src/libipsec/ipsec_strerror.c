@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_strerror.c,v 1.5 2007/07/18 12:07:50 vanhu Exp $	*/
+/*	$NetBSD: ipsec_strerror.c,v 1.6 2010/04/07 14:53:52 vanhu Exp $	*/
 
 /*	$KAME: ipsec_strerror.c,v 1.7 2000/07/30 00:45:12 itojun Exp $	*/
 
@@ -63,7 +63,7 @@ static const char *ipsec_errlist[] = {
 "Invalid key length",				/*EIPSEC_INVAL_KEYLEN*/
 "Invalid address family",			/*EIPSEC_INVAL_FAMILY*/
 "Invalid prefix length",			/*EIPSEC_INVAL_PREFIXLEN*/
-"Invalid direciton",				/*EIPSEC_INVAL_DIR*/
+"Invalid direction",				/*EIPSEC_INVAL_DIR*/
 "SPI range violation",				/*EIPSEC_INVAL_SPI*/
 "No protocol specified",			/*EIPSEC_NO_PROTO*/
 "No algorithm specified",			/*EIPSEC_NO_ALGS*/
