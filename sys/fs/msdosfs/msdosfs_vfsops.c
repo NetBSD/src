@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.79 2010/01/31 10:30:40 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.80 2010/04/07 15:19:09 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.79 2010/01/31 10:30:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.80 2010/04/07 15:19:09 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -811,7 +811,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 
 	return (0);
 
-error_exit:;
+error_exit:
 	if (bp)
 		brelse(bp, BC_AGE);
 	if (pmp) {
@@ -871,14 +871,14 @@ msdosfs_unmount(struct mount *mp, int mntflags)
 	}
 #endif
 	vn_lock(pmp->pm_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(pmp->pm_devvp,
+	(void) VOP_CLOSE(pmp->pm_devvp,
 	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED);
 	vput(pmp->pm_devvp);
 	free(pmp->pm_inusemap, M_MSDOSFSFAT);
 	free(pmp, M_MSDOSFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
-	return (error);
+	return (0);
 }
 
 int
