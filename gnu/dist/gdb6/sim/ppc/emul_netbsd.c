@@ -1390,7 +1390,7 @@ static emul_syscall_descriptor netbsd_descriptors[] = {
   /* 355 */ { 0, "uuidgen" },
   /* 356 */ { 0, "getvfsstat" },
   /* 357 */ { 0, "statvfs1" },
-  /* 358 */ { do_fstatvfs, "fstatvfs1" },
+  /* 358 */ { 0, "fstatvfs1" },
   { 0, }, /* 359 is old fhstatvfs1 */
   /* 360 */ { 0, "extattrctl" },
   /* 361 */ { 0, "extattr_set_file" },
