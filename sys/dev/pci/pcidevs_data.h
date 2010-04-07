@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.1 2009/11/09 10:13:14 cliff Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.2 2010/04/07 18:32:21 cliff Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.1 2009/03/20 13:01:35 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.962.4.1.4.1 2009/11/09 10:13:14 cliff Exp
  */
 
 /*
@@ -4998,6 +4998,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
 	    "Primary Rate T1 ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_RMI, PCI_PRODUCT_RMI_XLR_PCIX,
+	    "XLR PCI-X bridge",
 	},
 	{
 	    PCI_VENDOR_RMI, PCI_PRODUCT_RMI_XLS_PCIE,
@@ -14520,4 +14524,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3028;
+const int pci_nproducts = 3029;
