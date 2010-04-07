@@ -1,4 +1,4 @@
-.\"	$NetBSD: ne.4,v 1.14 2010/04/03 11:00:11 tsutsui Exp $
+.\"	$NetBSD: ne.4,v 1.15 2010/04/07 11:07:29 tsutsui Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,14 +52,14 @@
 .Ss amigappc
 .Cd "ne* at zbus0" # AriadneII, X-surf
 .Ss atari
-.Cd "ne0 at mainbus0" # EtherNEC on Atari ROM cartridge slot
+.Cd "ne0 at mainbus0 # EtherNEC on Atari ROM cartridge slot"
 .Ss evbarm
-.Cd "ne0 at obio? addr 0x0e000200 intr 5" # on-board Asix AX88796
+.Cd "ne0 at obio? addr 0x0e000200 intr 5 # on-board Asix AX88796"
 .Ss x68k
-.Cd "ne* at intio0 addr 0xece300 intr 249" # Nereid Ethernet
-.Cd "ne* at intio0 addr 0xeceb00 intr 248" # Nereid Ethernet
-.Cd "neptune0 at intio0 addr 0xece000 intr 249" # Neptune-X
-.Cd "neptune1 at intio0 addr 0xece400 intr 249" # Neptune-X at alt. addr.
+.Cd "ne* at intio0 addr 0xece300 intr 249 # Nereid Ethernet"
+.Cd "ne* at intio0 addr 0xeceb00 intr 248 # Nereid Ethernet"
+.Cd "neptune0 at intio0 addr 0xece000 intr 249 # Neptune-X"
+.Cd "neptune1 at intio0 addr 0xece400 intr 249 # Neptune-X at alt. addr."
 .Cd "ne* at neptune? addr 0x300"
 .Sh DESCRIPTION
 The
