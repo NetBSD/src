@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.154 2010/04/06 13:50:22 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.155 2010/04/07 13:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.154 2010/04/06 13:50:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.155 2010/04/07 13:10:46 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -227,7 +227,10 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		syscallarg(int) data;
 	} */
 	struct proc *p = l->l_proc;
-	struct lwp *lt, *lt2;
+	struct lwp *lt;
+#ifdef PT_STEP
+	struct lwp *lt2;
+#endif
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
