@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.69 2009/12/23 20:56:18 dsl Exp $
+.\"	$NetBSD: fdisk.8,v 1.70 2010/04/07 09:40:58 wiz Exp $
 .\"
-.Dd December 23, 2009
+.Dd April 6, 2010
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -8,15 +8,15 @@
 .Nd MS-DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm
-.Op Fl afiuvBFS
+.Op Fl aBFfiSuv
 .Bk -words
-.Op Fl 0 | 1 | 2 | 3 | E Ar number
+.Oo
+.Fl 0 | 1 | 2 | 3 | E Ar number
+.Op Fl s Ar id/start/size Ns Bq Ar /bootmenu
+.Oc
 .Ek
 .Bk -words
-.Op Fl t Ar disktab
-.Ek
-.Bk -words
-.Op Fl T Ar disktype
+.Op Fl r Ar file | Fl w Ar file
 .Ek
 .Bk -words
 .Op Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
@@ -25,13 +25,13 @@
 .Op Fl b Ar cylinders/heads/sectors
 .Ek
 .Bk -words
-.Op Fl s Ar id/start/size Ns Bq Ar /bootmenu
-.Ek
-.Bk -words
 .Op Fl c Ar bootcode
 .Ek
 .Bk -words
-.Op Fl r|w Ar file
+.Op Fl T Ar disktype
+.Ek
+.Bk -words
+.Op Fl t Ar disktab
 .Ek
 .Bk -words
 .Op Ar device
@@ -89,7 +89,7 @@ disklabel.
 The standard MBR boot code will only boot the
 .Sq active
 partition.
-However
+However,
 .Nx
 contains additional boot programs which allow the user to
 interactively select which of the partitions to boot.
@@ -162,10 +162,6 @@ Specify partition slot 1 to be printed or updated.
 Specify partition slot 2 to be printed or updated.
 .It Fl 3
 Specify partition slot 3 to be printed or updated.
-.It Fl a
-Change the active partition.
-In interactive mode this question will be asked after the partitions
-have been processed.
 .It Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
 Specify the alignment for all partitions and optionally the offset for the
 first partition of the disk and of extended partitions.
@@ -185,6 +181,16 @@ larger than 128GB is set to 2048 (1MB).
 In all other cases the alignment default to a cylinder
 and the offset to a track (both using the BIOS geometry).
 The 1MB alignment is the same as that used by recent windows versions.
+.It Fl a
+Change the active partition.
+In interactive mode this question will be asked after the partitions
+have been processed.
+.It Fl B
+On an i386 or amd64 system, interactively update the boot selector settings.
+(The boot selector permits the user to interactively select the boot
+partition, and thus which operating system is run, at system boot time; see
+.Xr mbr 8
+for more information.)
 .It Fl b Ar cylinders/heads/sectors
 Specify the BIOS geometry parameters for
 .Ar cylinders ,
@@ -199,13 +205,6 @@ amd64) or by solving the simultaenous equations from the existing partition
 information.
 If that fails then either the geometry from the disklabel or 63 sectors and
 16 heads is used.
-.It Fl B
-On an i386 or amd64 system, interactively update the boot selector settings.
-(The boot selector permits the user to interactively select the boot
-partition, and thus which operating system is run, at system boot time.
-See
-.Xr mbr 8
-for more information.)
 .It Fl c Ar bootcode
 Specify the filename that
 .Nm
@@ -229,6 +228,25 @@ Specify extended partition
 to be printed or updated.
 If the specified extended partition doesn't exist on updating partition data
 an additional extended partition will be created.
+.It Fl F
+Indicate that
+.Ar device
+is a regular file.
+Unless the geometry of
+.Ar device
+is told to
+.Nm
+by
+.Fl T Ar disktype ,
+.Nm
+will count the 512-byte sectors in
+.Ar device
+and produce a fake geometry.
+If
+.Ar device
+is a regular file,
+.Fl F
+will be used implicitly.
 .It Fl f
 Run
 .Nm
@@ -252,25 +270,6 @@ and
 fields
 .Pq only Ar start No and Ar size No can be specified by Fl s No option .
 They will be automatically computed using the BIOS geometry.
-.It Fl F
-Indicate that
-.Ar device
-is a regular file.
-Unless the geometry of
-.Ar device
-is told to
-.Nm
-by
-.Fl T Ar disktype ,
-.Nm
-will count the 512-byte sectors in
-.Ar device
-and produce a fake geometry.
-If
-.Ar device
-is a regular file,
-.Fl F
-will be used implicitly.
 .It Fl i
 Explicitly request initialisation of the master boot code
 (similar to what
@@ -289,6 +288,11 @@ Read the boot record from file
 instead of the specified disk.
 The geometry information used is still that of the disk volume.
 Any changes are written back to the file.
+.It Fl S
+When used with no other flags print a series of
+.Pa /bin/sh
+commands for setting variables to the partition information.
+This could be used by installation scripts.
 .It Fl s Ar id/start/size Ns Bq Ar /bootmenu
 Specify the partition
 .Ar id ,
@@ -298,11 +302,11 @@ and optionally
 .Ar bootmenu .
 This flag requires the use of a partition selection flag
 .Pq Fl 0 , 1 , 2 , 3 , No or Fl E Ar number .
-.It Fl S
-When used with no other flags print a series of
-.Pa /bin/sh
-commands for setting variables to the partition information.
-This could be used by installation scripts.
+.It Fl T Ar disktype
+Use the disklabel
+.Ar disktype
+instead of the disklabel on
+.Ar device .
 .It Fl t Ar disktab
 Read
 .Ar disktype
@@ -310,11 +314,6 @@ from the named
 .Xr disktab 5
 file instead of from
 .Pa /etc/disktab .
-.It Fl T Ar disktype
-Use the disklabel
-.Ar disktype
-instead of the disklabel on
-.Ar device .
 .It Fl u
 Update partition data, including
 .Em id , start , No and Em size .
@@ -427,7 +426,7 @@ An example follows:
     First active partition: 0
 .Ed
 .Pp
-This example disk is divided into four partitions the last of which is
+This example disk is divided into four partitions, the last of which is
 an extended partition.
 The sub-partitions of the extended partition are also shown.
 In this case there is no free space in either the disk or in the extended
@@ -522,7 +521,7 @@ by a previous run of
 attempts to check whether each partition is bootable,
 by checking the magic number and some other characteristics
 of the first sector of each partition (the PBR).
-If the partition does not apear to be bootable,
+If the partition does not appear to be bootable,
 .Nm
 will print a line containing
 .Dq "PBR is not bootable"
@@ -567,7 +566,7 @@ a set of figures that represent what the BIOS thinks is the
 geometry of the drive.
 The default values should be correct for the system on which
 .Nm
-is run, however if you move the disk to a different system the
+is run; however, if you move the disk to a different system, the
 BIOS of that system might use a different geometry translation.
 .Pp
 If you run the equivalent of
