@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.10 2010/03/29 23:32:21 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.11 2010/04/07 19:26:14 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.10 2010/03/29 23:32:21 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.11 2010/04/07 19:26:14 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -230,9 +230,9 @@ static int	rmixl_pcie_error_intr(void *);
 		"enabling %s at phys %#" PRIxBUSADDR ", size %lu MB\n",	\
 		__STRING(reg), __STRING(reg), ba, size));		\
 	RMIXL_IOREG_WRITE(RMIXL_IO_DEV_BRIDGE + 			\
-		RMIXL_PCIE_CONCAT3(RMIXL_SBC_PCIE_,reg,_BAR), bar);	\
+		RMIXL_PCIE_CONCAT3(RMIXLS_SBC_PCIE_,reg,_BAR), bar);	\
 	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE +			\
-		RMIXL_PCIE_CONCAT3(RMIXL_SBC_PCIE_,reg,_BAR));		\
+		RMIXL_PCIE_CONCAT3(RMIXLS_SBC_PCIE_,reg,_BAR));		\
 	DPRINTF(("%s: %s BAR %#x\n", __func__, __STRING(reg), bar));	\
 }
 
@@ -250,6 +250,12 @@ static int
 rmixl_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {        
 	uint32_t r;
+
+	/*
+	 * PCIe interface exists on XLS chips only
+	 */
+	if (! cpu_rmixls(mips_options.mips_cpu))
+		return 0;
 
 	/* XXX
 	 * for now there is only one PCIe Interface on chip
@@ -298,33 +304,33 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 	 * get PCI config space base addr from SBC PCIe CFG BAR
 	 * initialize it if necessary
  	 */
-	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXL_SBC_PCIE_CFG_BAR);
+	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXLS_SBC_PCIE_CFG_BAR);
 	DPRINTF(("%s: PCIE_CFG_BAR %#x\n", __func__, bar));
 	if ((bar & RMIXL_PCIE_CFG_BAR_ENB) == 0) {
 		u_long n = RMIXL_PCIE_CFG_SIZE / (1024 * 1024);
 		RMIXL_PCIE_BAR_INIT(CFG, bar, n, n);
 	}
-	rcp->rc_pcie_cfg_pbase = (bus_addr_t)RMIXL_PCIE_CFG_BAR_TO_BA(bar);
-	rcp->rc_pcie_cfg_size  = (bus_size_t)RMIXL_PCIE_CFG_SIZE;
+	rcp->rc_pci_cfg_pbase = (bus_addr_t)RMIXL_PCIE_CFG_BAR_TO_BA(bar);
+	rcp->rc_pci_cfg_size  = (bus_size_t)RMIXL_PCIE_CFG_SIZE;
 
 	/*
 	 * get PCIE Extended config space base addr from SBC PCIe ECFG BAR
 	 * initialize it if necessary
  	 */
-	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXL_SBC_PCIE_ECFG_BAR);
+	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXLS_SBC_PCIE_ECFG_BAR);
 	DPRINTF(("%s: PCIE_ECFG_BAR %#x\n", __func__, bar));
 	if ((bar & RMIXL_PCIE_ECFG_BAR_ENB) == 0) {
 		u_long n = RMIXL_PCIE_ECFG_SIZE / (1024 * 1024);
 		RMIXL_PCIE_BAR_INIT(ECFG, bar, n, n);
 	}
-	rcp->rc_pcie_ecfg_pbase = (bus_addr_t)RMIXL_PCIE_ECFG_BAR_TO_BA(bar);
-	rcp->rc_pcie_ecfg_size  = (bus_size_t)RMIXL_PCIE_ECFG_SIZE;
+	rcp->rc_pci_ecfg_pbase = (bus_addr_t)RMIXL_PCIE_ECFG_BAR_TO_BA(bar);
+	rcp->rc_pci_ecfg_size  = (bus_size_t)RMIXL_PCIE_ECFG_SIZE;
 
 	/*
 	 * get PCI MEM space base [addr, size] from SBC PCIe MEM BAR
 	 * initialize it if necessary
  	 */
-	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXL_SBC_PCIE_MEM_BAR);
+	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXLS_SBC_PCIE_MEM_BAR);
 	DPRINTF(("%s: PCIE_MEM_BAR %#x\n", __func__, bar));
 	if ((bar & RMIXL_PCIE_MEM_BAR_ENB) == 0) {
 		u_long n = 256;				/* 256 MB */
@@ -337,7 +343,7 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 	 * get PCI IO space base [addr, size] from SBC PCIe IO BAR
 	 * initialize it if necessary
  	 */
-	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXL_SBC_PCIE_IO_BAR);
+	bar = RMIXL_IOREG_READ(RMIXL_IO_DEV_BRIDGE + RMIXLS_SBC_PCIE_IO_BAR);
 	DPRINTF(("%s: PCIE_IO_BAR %#x\n", __func__, bar));
 	if ((bar & RMIXL_PCIE_IO_BAR_ENB) == 0) {
 		u_long n = 32;				/* 32 MB */
@@ -349,17 +355,17 @@ rmixl_pcie_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * initialize the PCI CFG, ECFG bus space tags
 	 */
-	rmixl_pcie_cfg_bus_mem_init(&rcp->rc_pcie_cfg_memt, rcp);
-	sc->sc_pcie_cfg_memt = &rcp->rc_pcie_cfg_memt;
+	rmixl_pci_cfg_bus_mem_init(&rcp->rc_pci_cfg_memt, rcp);
+	sc->sc_pci_cfg_memt = &rcp->rc_pci_cfg_memt;
 
-	rmixl_pcie_ecfg_bus_mem_init(&rcp->rc_pcie_ecfg_memt, rcp);
-	sc->sc_pcie_ecfg_memt = &rcp->rc_pcie_ecfg_memt;
+	rmixl_pci_ecfg_bus_mem_init(&rcp->rc_pci_ecfg_memt, rcp);
+	sc->sc_pci_ecfg_memt = &rcp->rc_pci_ecfg_memt;
 
 	/*
 	 * initialize the PCI MEM and IO bus space tags
 	 */
-	rmixl_pcie_bus_mem_init(&rcp->rc_pci_memt, rcp);
-	rmixl_pcie_bus_io_init(&rcp->rc_pci_iot, rcp);
+	rmixl_pci_bus_mem_init(&rcp->rc_pci_memt, rcp);
+	rmixl_pci_bus_io_init(&rcp->rc_pci_iot, rcp);
 
 	/*
 	 * initialize the extended configuration regs
@@ -888,8 +894,8 @@ rmixl_pcie_conf_setup(struct rmixl_pcie_softc *sc,
 	 */
 	if ((*offp >= 0) && (*offp < 0x100)) {
 		mask = __BITS(15,0);
-		bst = sc->sc_pcie_cfg_memt;
-		ba = rcp->rc_pcie_cfg_pbase;
+		bst = sc->sc_pci_cfg_memt;
+		ba = rcp->rc_pci_cfg_pbase;
 		ba += (tag & ~mask);
 		*offp += (tag & mask);
 		if (ba != cfg_oba) {
@@ -910,8 +916,8 @@ rmixl_pcie_conf_setup(struct rmixl_pcie_softc *sc,
 	} else if ((*offp >= 0x100) && (*offp <= 0x700)) {
 		mask = __BITS(14,0);
 		tag = rmixl_tag_to_ecfg(tag);	/* convert to ECFG format */
-		bst = sc->sc_pcie_ecfg_memt;
-		ba = rcp->rc_pcie_ecfg_pbase;
+		bst = sc->sc_pci_ecfg_memt;
+		ba = rcp->rc_pci_ecfg_pbase;
 		ba += (tag & ~mask);
 		*offp += (tag & mask);
 		if (ba != ecfg_oba) {
@@ -1084,7 +1090,9 @@ const char *
 rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 {
 	const char *name = "(illegal)";
-	int irq = (int)pih;
+	u_int link, bitno, irq;
+
+	rmixl_pcie_decompose_pih(pih, &link, &bitno, &irq);
 
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS104:
@@ -1133,9 +1141,9 @@ rmixl_pcie_make_pih(u_int link, u_int bitno, u_int irq)
 {
 	pci_intr_handle_t pih;
 
-	KASSERT((link >= 0) && (link < RMIXL_PCIE_NLINKS_MAX));
-	KASSERT((bitno >= 0) && (bitno < 64));
-	KASSERT((irq >= 0) && (irq < 31));
+	KASSERT(link < RMIXL_PCIE_NLINKS_MAX);
+	KASSERT(bitno < 64);
+	KASSERT(irq < 32);
 
 	pih  = (irq << 10);
 	pih |= (bitno << 4);
@@ -1148,12 +1156,12 @@ static void
 rmixl_pcie_decompose_pih(pci_intr_handle_t pih, u_int *link, u_int *bitno, u_int *irq)
 {
 	*link = (u_int)(pih & 0xf);
-	*bitno  = (u_int)((pih >> 4) & 0x3f);
+	*bitno = (u_int)((pih >> 4) & 0x3f);
 	*irq  = (u_int)(pih >> 10);
 
-	KASSERT((*link >= 0) && (*link < RMIXL_PCIE_NLINKS_MAX));
-	KASSERT((*bitno >= 0) && (*bitno < 64));
-	KASSERT((*irq >= 0) && (*irq < 31));
+	KASSERT(*link < RMIXL_PCIE_NLINKS_MAX);
+	KASSERT(*bitno < 64);
+	KASSERT(*irq < 32);
 }
 
 static void
@@ -1180,7 +1188,7 @@ rmixl_pcie_intr_disestablish(void *v, void *ih)
 	} else {
 		bit = 1 << (dip->bitno - 32);
 		offset = int_enb_offset[dip->link].r1;
-		other  = int_enb_offset[dip->link].r1;
+		other  = int_enb_offset[dip->link].r0;
 	}
 
 	/* disable this interrupt in the PCIe bridge */
@@ -1245,12 +1253,12 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 	 * first intr established sets the standard
 	 */
 	if (lip->enabled == true) {
-		KASSERT(sc = lip->sc);
+		KASSERT(sc == lip->sc);
 		if (sc != lip->sc) {
 			printf("%s: sc %p mismatch\n", __func__, sc); 
 			goto out;
 		}
-		KASSERT(ipl = lip->ipl);
+		KASSERT(ipl == lip->ipl);
 		if (ipl != lip->ipl) {
 			printf("%s: ipl %d mismatch\n", __func__, ipl); 
 			goto out;
@@ -1294,7 +1302,7 @@ rmixl_pcie_intr_establish(void *v, pci_intr_handle_t pih, int ipl,
 			ipl, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
 			rmixl_pcie_intr, lip);
 		if (lip->ih == NULL)
-			panic("%s: cannot establish irq %d", __func__, link);
+			panic("%s: cannot establish irq %d", __func__, irq);
 
 		lip->sc = sc;
 		lip->ipl = ipl;
@@ -1433,7 +1441,7 @@ rmixl_physaddr_init_pcie(struct extent *ext)
 	u_long size;
 	uint32_t r;
 
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_CFG_BAR);
+	r = RMIXL_IOREG_READ(RMIXLS_SBC_PCIE_CFG_BAR);
 	if ((r & RMIXL_PCIE_CFG_BAR_ENB) != 0) {
 		base = (u_long)(RMIXL_PCIE_CFG_BAR_TO_BA((uint64_t)r)
 			/ (1024 * 1024));
@@ -1445,7 +1453,7 @@ rmixl_physaddr_init_pcie(struct extent *ext)
 				"failed", __func__, ext, base, size, EX_NOWAIT);
 	}
 
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_ECFG_BAR);
+	r = RMIXL_IOREG_READ(RMIXLS_SBC_PCIE_ECFG_BAR);
 	if ((r & RMIXL_PCIE_ECFG_BAR_ENB) != 0) {
 		base = (u_long)(RMIXL_PCIE_ECFG_BAR_TO_BA((uint64_t)r)
 			/ (1024 * 1024));
@@ -1457,7 +1465,7 @@ rmixl_physaddr_init_pcie(struct extent *ext)
 				"failed", __func__, ext, base, size, EX_NOWAIT);
 	}
 
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_MEM_BAR);
+	r = RMIXL_IOREG_READ(RMIXLS_SBC_PCIE_MEM_BAR);
 	if ((r & RMIXL_PCIE_MEM_BAR_ENB) != 0) {
 		base = (u_long)(RMIXL_PCIE_MEM_BAR_TO_BA((uint64_t)r)
 			/ (1024 * 1024));
@@ -1470,7 +1478,7 @@ rmixl_physaddr_init_pcie(struct extent *ext)
 				"failed", __func__, ext, base, size, EX_NOWAIT);
 	}
 
-	r = RMIXL_IOREG_READ(RMIXL_SBC_PCIE_IO_BAR);
+	r = RMIXL_IOREG_READ(RMIXLS_SBC_PCIE_IO_BAR);
 	if ((r & RMIXL_PCIE_IO_BAR_ENB) != 0) {
 		base = (u_long)(RMIXL_PCIE_IO_BAR_TO_BA((uint64_t)r)
 			/ (1024 * 1024));
