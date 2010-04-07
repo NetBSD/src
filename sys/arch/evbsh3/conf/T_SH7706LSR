@@ -1,4 +1,4 @@
-#	$NetBSD: T_SH7706LSR,v 1.1 2010/04/06 15:54:30 nonaka Exp $
+#	$NetBSD: T_SH7706LSR,v 1.2 2010/04/07 11:54:46 nonaka Exp $
 #
 #	TAC T-SH7706LSR Rev.1 config file
 #
@@ -86,7 +86,7 @@ options 	SCIFCONSOLE,SCIFCN_SPEED=115200
 scif0 at shb?
 
 # Network interface
-ne0 at mainbus?				# Realtek RTL8019AS
+ne0 at mainbus?				# AX88796BLF
 
 # MMC SPI
 ssumci0 at mainbus?
