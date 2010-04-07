@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.l,v 1.2 2009/10/26 04:27:15 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.3 2010/04/07 16:14:07 christos Exp $	*/
 
 /* scan.l - scanner for flex input -*-C-*- */
 
@@ -83,9 +83,9 @@ extern const char *escaped_qstart, *escaped_qend;
 	for ( i = strlen( str ) - 1; i >= start; --i ) \
 		unput((str)[i])
 
-#define CHECK_REJECT(str) \
+#define CHECK_RE_JECT(str) \
 	if ( all_upper( str ) ) \
-		reject = true;
+		reject = true
 
 #define CHECK_YYMORE(str) \
 	if ( all_lower( str ) ) \
@@ -877,7 +877,7 @@ nmstr[yyleng - 2 - end_is_ws] = '\0';  /* chop trailing brace */
 	<CODEBLOCK,ACTION>{
 		"reject"	{
 			ACTION_ECHO;
-			CHECK_REJECT(yytext);
+			CHECK_RE_JECT(yytext);
 			}
 		"yymore"	{
 			ACTION_ECHO;
