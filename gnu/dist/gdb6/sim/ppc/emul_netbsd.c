@@ -738,7 +738,7 @@ do_gettimeofday(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("0x%lx, 0x%lx", (long)t_addr, (long)tz_addr);
 
-  SYS(gettimeofday);
+  SYS(__gettimeofday50);
   emul_write_status(processor, status, err);
   if (status == 0) {
     if (t_addr != 0)
@@ -768,7 +768,7 @@ do_getrusage(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, 0x%lx", who, (long)rusage_addr);
 
-  SYS(getrusage);
+  SYS(__getrusage50);
   emul_write_status(processor, status, err);
   if (status == 0) {
     if (rusage_addr != 0)
@@ -1053,7 +1053,7 @@ static emul_syscall_descriptor netbsd_descriptors[] = {
   { 0, }, /* 18 is old getfsstat */
   { 0, }, /* 19 is old lseek */
   /* 20 */ { do_getpid, "getpid" },
-  { 0, } /* 21 is old mount */
+  { 0, }, /* 21 is old mount */
   /* 22 */ { 0, "unmount" },
   /* 23 */ { 0, "setuid" },
   /* 24 */ { do_getuid, "getuid" },
