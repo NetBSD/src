@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.160 2009/11/19 00:30:25 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.161 2010/04/07 00:11:27 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.160 2009/11/19 00:30:25 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.161 2010/04/07 00:11:27 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.160 2009/11/19 00:30:25 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.161 2010/04/07 00:11:27 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -495,6 +495,50 @@ Parse_Error(int type, const char *fmt, ...)
 		ParseVErrorInternal(debug_file, fname, lineno, type, fmt, ap);
 		va_end(ap);
 	}
+}
+
+
+/*
+ * ParseMessage
+ *	Parse a .info .warning or .error directive
+ *
+ *	The input is the line minus the ".".  We substitute
+ *	variables, print the message and exit(1) (for .error) or just print
+ *	a warning if the directive is malformed.
+ */
+static void
+ParseMessage(char *line)
+{
+    int mtype;
+    
+    switch(*line) {
+    case 'i':
+	mtype = 0;
+	break;
+    case 'w':
+	mtype = PARSE_WARNING;
+	break;
+    case 'e':
+	mtype = PARSE_FATAL;
+	break;
+    default:
+	Parse_Error(PARSE_WARNING, "invalid syntax: \".%s\"", line);
+	return;
+    }
+
+    while (!isspace((u_char)*line))
+	line++;
+    while (isspace((u_char)*line))
+	line++;
+
+    line = Var_Subst(NULL, line, VAR_CMD, 0);
+    Parse_Error(mtype, "%s", line);
+    free(line);
+
+    if (mtype == PARSE_FATAL) {
+	/* Terminate immediately. */
+	exit(1);
+    }
 }
 
 /*-
@@ -2513,7 +2557,12 @@ Parse_File(const char *name, int fd)
 		} else if (strncmp(cp, "unexport", 8) == 0) {
 		    Var_UnExport(cp);
 		    continue;
-		}
+		} else if (strncmp(cp, "info", 4) == 0 ||
+			   strncmp(cp, "error", 5) == 0 ||
+			   strncmp(cp, "warning", 7) == 0) {
+		    ParseMessage(cp);
+		    continue;
+		}		    
 	    }
 
 	    if (*line == '\t') {
@@ -2661,7 +2710,7 @@ Parse_File(const char *name, int fd)
 	(void)fprintf(stderr,
 	    "%s: Fatal errors encountered -- cannot continue\n",
 	    progname);
-	PrintOnError(NULL);
+	PrintOnError(NULL, NULL);
 	exit(1);
     }
 }
