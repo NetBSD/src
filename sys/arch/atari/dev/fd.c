@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.73 2010/04/07 12:39:59 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.74 2010/04/07 13:14:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73 2010/04/07 12:39:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.74 2010/04/07 13:14:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ static const char *fd_error= NULL;	/* error from fd_xfer_ok()	*/
  * Private per device data
  */
 struct fd_softc {
-	struct device	sc_dv;		/* generic device info		*/
+	device_t	sc_dev;		/* generic device info		*/
 	struct disk	dkdev;		/* generic disk info		*/
 	struct bufq_state *bufq;	/* queue of buf's		*/
 	struct callout	sc_motor_ch;
@@ -263,11 +263,11 @@ static u_short rd_cfg_switch(void)
  */
 extern struct cfdriver fd_cd;
 
-static int	fdcmatch(struct device *, struct cfdata *, void *);
+static int	fdcmatch(device_t, cfdata_t, void *);
 static int	fdcprint(void *, const char *);
-static void	fdcattach(struct device *, struct device *, void *);
+static void	fdcattach(device_t, device_t, void *);
 
-CFATTACH_DECL(fdc, sizeof(struct device),
+CFATTACH_DECL_NEW(fdc, 0,
     fdcmatch, fdcattach, NULL, NULL);
 
 const struct bdevsw fd_bdevsw = {
@@ -280,19 +280,19 @@ const struct cdevsw fd_cdevsw = {
 };
 
 static int
-fdcmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+fdcmatch(device_t parent, cfdata_t match, void *aux)
 {
 	static int	fdc_matched = 0;
 
 	/* Match only once */
-	if(strcmp("fdc", auxp) || fdc_matched)
+	if(strcmp("fdc", aux) || fdc_matched)
 		return(0);
 	fdc_matched = 1;
 	return(1);
 }
 
 static void
-fdcattach(struct device *pdp, struct device *dp, void *auxp)
+fdcattach(device_t parent, device_t self, void *aux)
 {
 	struct fd_softc	fdsoftc;
 	int		i, nfound, first_found;
@@ -315,12 +315,13 @@ fdcattach(struct device *pdp, struct device *dp, void *auxp)
 			if(!nfound)
 				first_found = i;
 			nfound++;
-			config_found(dp, (void*)i, fdcprint);
+			config_found(self, (void*)i, fdcprint);
 		}
 	}
 
 	if(nfound) {
-		struct fd_softc *fdsc = getsoftc(fd_cd, first_found);
+		struct fd_softc *fdsc =
+		    device_lookup_private(&fd_cd, first_found);
 
 		/*
 		 * Make sure motor will be turned of when a floppy is
@@ -340,38 +341,39 @@ fdcattach(struct device *pdp, struct device *dp, void *auxp)
 }
 
 static int
-fdcprint(void *auxp, const char *pnp)
+fdcprint(void *aux, const char *pnp)
 {
 	if (pnp != NULL)
-		aprint_normal("fd%d at %s:", (int)auxp, pnp);
+		aprint_normal("fd%d at %s:", (int)aux, pnp);
 	
 	return(UNCONF);
 }
 
-static int	fdmatch(struct device *, struct cfdata *, void *);
-static void	fdattach(struct device *, struct device *, void *);
+static int	fdmatch(device_t, cfdata_t, void *);
+static void	fdattach(device_t, device_t, void *);
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-CFATTACH_DECL(fd, sizeof(struct fd_softc),
+CFATTACH_DECL_NEW(fd, sizeof(struct fd_softc),
     fdmatch, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 
 static int
-fdmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+fdmatch(device_t parent, cfdata_t match, void *aux)
 {
 	return(1);
 }
 
 static void
-fdattach(struct device *pdp, struct device *dp, void *auxp)
+fdattach(device_t parent, device_t self, void *aux)
 {
 	struct fd_softc	*sc;
 	struct fd_types *type;
 	u_short		swtch;
 
-	sc = device_private(dp);
+	sc = device_private(self);
+	sc->sc_dev = self;
 
 	callout_init(&sc->sc_motor_ch, 0);
 
@@ -383,14 +385,14 @@ fdattach(struct device *pdp, struct device *dp, void *auxp)
 	def_type = (swtch & CFG_SWITCH_NOHD) ? FLP_TYPE_720 : FLP_TYPE_144;
 	type     = &fdtypes[def_type];
 
-	printf(": %s %d cyl, %d head, %d sec\n", type->descr,
+	aprint_normal(": %s %d cyl, %d head, %d sec\n", type->descr,
 		type->nblocks / (type->nsectors * type->nheads), type->nheads,
 		type->nsectors);
 
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&sc->dkdev, sc->sc_dv.dv_xname, &fddkdriver);
+	disk_init(&sc->dkdev, device_xname(sc->sc_dev), &fddkdriver);
 	disk_attach(&sc->dkdev);
 }
 
@@ -399,7 +401,7 @@ fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 {
 	struct fd_softc *sc;
 
-	sc = getsoftc(fd_cd, DISKUNIT(dev));
+	sc = device_lookup_private(&fd_cd, DISKUNIT(dev));
 
 	if((sc->flags & FLPF_HAVELAB) == 0)
 		return(EBADF);
@@ -453,7 +455,7 @@ fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	if(FLP_TYPE(dev) >= NR_TYPES)
 		return(ENXIO);
 
-	if((sc = getsoftc(fd_cd, DISKUNIT(dev))) == NULL)
+	if((sc = device_lookup_private(&fd_cd, DISKUNIT(dev))) == NULL)
 		return(ENXIO);
 
 	/*
@@ -544,7 +546,7 @@ fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
 	struct fd_softc	*sc;
 
-	sc = getsoftc(fd_cd, DISKUNIT(dev));
+	sc = device_lookup_private(&fd_cd, DISKUNIT(dev));
 	free_stmem(sc->bounceb);
 	sc->flags = 0;
 	nopens--;
@@ -562,7 +564,7 @@ fdstrategy(struct buf *bp)
 	struct disklabel *lp;
 	int		 sps, sz;
 
-	sc = getsoftc(fd_cd, DISKUNIT(bp->b_dev));
+	sc = device_lookup_private(&fd_cd, DISKUNIT(bp->b_dev));
 
 #ifdef FLP_DEBUG
 	printf("fdstrategy: %p, b_bcount: %ld\n", bp, bp->b_bcount);
@@ -1171,7 +1173,7 @@ fdminphys(struct buf *bp)
 	struct fd_softc	*sc;
 	int		sec, toff, tsz;
 
-	if((sc = getsoftc(fd_cd, DISKUNIT(bp->b_dev))) == NULL)
+	if((sc = device_lookup_private(&fd_cd, DISKUNIT(bp->b_dev))) == NULL)
 		panic("fdminphys: couldn't get softc");
 
 	sec  = bp->b_blkno % (sc->nsectors * sc->nheads);
