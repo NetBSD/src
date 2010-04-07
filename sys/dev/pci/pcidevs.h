@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.963.4.1.4.1 2009/11/09 10:13:14 cliff Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963.4.1.4.2 2010/04/07 18:32:21 cliff Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.1 2009/03/20 13:01:35 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.962.4.1.4.1 2009/11/09 10:13:14 cliff Exp
  */
 
 /*
@@ -1382,6 +1382,7 @@
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
 
 /* RMI products */
+#define	PCI_PRODUCT_RMI_XLR_PCIX	0x000b		/* XLR PCI-X bridge */
 #define	PCI_PRODUCT_RMI_XLS_PCIE	0xabcd		/* XLS PCIe-PCIe bridge */
 
 /* B & B Electronics Products */

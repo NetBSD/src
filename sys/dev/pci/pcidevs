@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.962.4.1.4.1 2009/11/09 10:13:14 cliff Exp $
+$NetBSD: pcidevs,v 1.962.4.1.4.2 2010/04/07 18:32:20 cliff Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1375,6 +1375,7 @@ product AVM B1			0x0700	Basic Rate B1 ISDN Interface
 product AVM T1			0x1200	Primary Rate T1 ISDN Interface
 
 /* RMI products */
+product RMI XLR_PCIX		0x000b	XLR PCI-X bridge
 product RMI XLS_PCIE		0xabcd	XLS PCIe-PCIe bridge
 
 /* B & B Electronics Products */
