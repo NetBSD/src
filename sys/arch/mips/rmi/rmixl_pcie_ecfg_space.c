@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie_ecfg_space.c,v 1.1.2.2 2009/11/18 01:16:07 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie_ecfg_space.c,v 1.1.2.3 2010/04/07 19:30:11 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie_ecfg_space.c,v 1.1.2.2 2009/11/18 01:16:07 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie_ecfg_space.c,v 1.1.2.3 2010/04/07 19:30:11 cliff Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,20 +45,20 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_pcie_ecfg_space.c,v 1.1.2.2 2009/11/18 01:16:0
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
 
-#define	CHIP			rmixl_pcie_ecfg
+#define	CHIP			rmixl_pci_ecfg
 #define	CHIP_MEM		/* defined */
 #define	CHIP_ACCESS_SIZE	1
 #define CHIP_LITTLE_ENDIAN
 
 #define CHIP_EX_MALLOC_SAFE(v)	(((struct rmixl_config *)(v))->rc_mallocsafe)
-#define CHIP_EXTENT(v)		(((struct rmixl_config *)(v))->rc_pcie_ecfg_ex)
+#define CHIP_EXTENT(v)		(((struct rmixl_config *)(v))->rc_pci_ecfg_ex)
 
 /* MEM region 1 */
 #define	CHIP_W1_BUS_START(v)	\
-	(((struct rmixl_config *)(v))->rc_pcie_ecfg_pbase)
+	(((struct rmixl_config *)(v))->rc_pci_ecfg_pbase)
 #define	CHIP_W1_BUS_END(v)	\
 	(CHIP_W1_SYS_START(v) +	\
-		(((struct rmixl_config *)(v))->rc_pcie_ecfg_size) - 1)
+		(((struct rmixl_config *)(v))->rc_pci_ecfg_size) - 1)
 #define CHIP_W1_SYS_START(v)	CHIP_W1_BUS_START(v)
 #define CHIP_W1_SYS_END(v)	CHIP_W1_BUS_END(v)
 
