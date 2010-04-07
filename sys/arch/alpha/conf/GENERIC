@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.332 2010/04/07 17:51:16 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.333 2010/04/07 18:51:34 jakllsch Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.332 $"
+ident		"GENERIC-$Revision: 1.333 $"
 
 maxusers 32
 
@@ -767,5 +767,3 @@ pseudo-device	putter			# for puffs and pud
 options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 #options PAX_SEGVGUARD=0			# PaX Segmentation fault guard
 options PAX_ASLR=0			# PaX Address Space Layout Randomization
-
-ath* at pci? dev ? function?
