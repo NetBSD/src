@@ -1,4 +1,4 @@
-/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.5 2010/03/29 23:32:42 cliff Exp $	*/
+/*      $NetBSD: rmixl_pcievar.h,v 1.1.2.6 2010/04/07 19:26:32 cliff Exp $	*/
 
 #ifndef _MIPS_RMI_PCIE_VAR_H_
 #define _MIPS_RMI_PCIE_VAR_H_
@@ -49,8 +49,8 @@ typedef struct rmixl_pcie_link_intr {
 typedef struct rmixl_pcie_softc {
 	device_t                	sc_dev;
 	struct mips_pci_chipset 	sc_pci_chipset;
-	bus_space_tag_t              	sc_pcie_cfg_memt;
-	bus_space_tag_t              	sc_pcie_ecfg_memt;
+	bus_space_tag_t              	sc_pci_cfg_memt;
+	bus_space_tag_t              	sc_pci_ecfg_memt;
 	bus_dma_tag_t			sc_29bit_dmat;
 	bus_dma_tag_t			sc_32bit_dmat;
 	bus_dma_tag_t			sc_64bit_dmat;
