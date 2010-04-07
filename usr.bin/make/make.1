@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.168 2010/04/07 00:11:27 sjg Exp $
+.\"	$NetBSD: make.1,v 1.169 2010/04/07 06:45:21 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -653,49 +653,11 @@ because it is more compatible with other versions of
 .Nm
 and cannot be confused with the special target with the same name.
 .It Va .MAKE.DEPENDFILE
-Names the makefile (default 
+Names the makefile (default
 .Ql Pa .depend )
 from which generated dependencies are read.
 .It Va .MAKE.EXPORTED
 The list of variables exported by
-.Nm .
-.It Va .MAKE.MAKEFILE_PREFERENCE
-The ordered list of makefile names 
-(default
-.Ql Pa makefile ,
-.Ql Pa Makefile )
-that
-.Nm
-will look for.
-.It Va .MAKE.MAKEFILES
-The list of makefiles read by
-.Nm ,
-which is useful for tracking dependencies.
-Each makefile is recorded only once, regardless of the number of times read.
-.It Va .MAKE.MODE
-Processed after reading all makefiles.
-Can affect the mode that
-.Nm
-runs in.
-Currently just
-.Ql Pa compat
-mode.
-.It Va .MAKE.LEVEL
-The recursion depth of
-.Nm .
-The initial instance of
-.Nm
-will be 0, and an incremented value is put into the environment
-to be seen by the next generation.
-This allows tests like:
-.Li .if ${.MAKE.LEVEL} == 0
-to protect things which should only be evaluated in the initial instance of
-.Nm .
-.It Va .MAKE.PID
-The process-id of
-.Nm .
-.It Va .MAKE.PPID
-The parent process-id of
 .Nm .
 .It Va .MAKE.JOB.PREFIX
 If
@@ -727,6 +689,38 @@ variable which is then
 entered into the environment for all programs which
 .Nm
 executes.
+.It Va .MAKE.LEVEL
+The recursion depth of
+.Nm .
+The initial instance of
+.Nm
+will be 0, and an incremented value is put into the environment
+to be seen by the next generation.
+This allows tests like:
+.Li .if ${.MAKE.LEVEL} == 0
+to protect things which should only be evaluated in the initial instance of
+.Nm .
+.It Va .MAKE.MAKEFILE_PREFERENCE
+The ordered list of makefile names
+(default
+.Ql Pa makefile ,
+.Ql Pa Makefile )
+that
+.Nm
+will look for.
+.It Va .MAKE.MAKEFILES
+The list of makefiles read by
+.Nm ,
+which is useful for tracking dependencies.
+Each makefile is recorded only once, regardless of the number of times read.
+.It Va .MAKE.MODE
+Processed after reading all makefiles.
+Can affect the mode that
+.Nm
+runs in.
+Currently just
+.Ql Pa compat
+mode.
 .It Va .MAKEOVERRIDES
 This variable is used to record the names of variables assigned to
 on the command line, so that they may be exported as part of
@@ -741,6 +735,12 @@ by appending their names to
 is re-exported whenever
 .Ql Va .MAKEOVERRIDES
 is modified.
+.It Va .MAKE.PID
+The process-id of
+.Nm .
+.It Va .MAKE.PPID
+The parent process-id of
+.Nm .
 .It Va MAKE_PRINT_VAR_ON_ERROR
 When
 .Nm
@@ -1313,6 +1313,9 @@ Appending a variable name to
 is equivalent to exporting a variable.
 .It Ic .info Ar message
 The message is printed along with the name of the makefile and line number.
+.It Ic .undef Ar variable
+Un-define the specified global variable.
+Only global variables may be un-defined.
 .It Ic .unexport Ar variable ...
 The opposite of
 .Ql .export .
@@ -1349,9 +1352,6 @@ which is the minimal useful environment.
 Actually
 .Ql Ev .MAKE.LEVEL
 will also be pushed into the new environment.
-.It Ic .undef Ar variable
-Un-define the specified global variable.
-Only global variables may be un-defined.
 .It Ic .warning Ar message
 The message prefixed by
 .Ql Pa warning:
@@ -1663,7 +1663,7 @@ Any command lines attached to this target are executed when another target fails
 The
 .Ic .ERROR_TARGET
 variable is set to the target that failed.
-See also 
+See also
 .Ic MAKE_PRINT_VAR_ON_ERROR .
 .It Ic .IGNORE
 Mark each of the sources with the
