@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.10 2010/03/24 19:14:09 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.11 2010/04/07 19:23:50 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -232,6 +232,10 @@
 #define RMIXL_IO_DEV_PIC	0x08000	/* Programmable Interrupt Controller */
 #if defined(MIPS64_XLR)
 #define RMIXL_IO_DEV_PCIX	0x09000	/* PCI-X */
+#define RMIXL_IO_DEV_PCIX_EL	\
+	RMIXL_IO_DEV_PCIX		/* PXI-X little endian */
+#define RMIXL_IO_DEV_PCIX_EB	\
+	(RMIXL_IO_DEV_PCIX | __BIT(11))	/* PXI-X big endian */
 #define RMIXL_IO_DEV_HT		0x0a000	/* HyperTransport */
 #endif	/* MIPS64_XLR */
 #define RMIXL_IO_DEV_SAE	0x0b000	/* Security Acceleration Engine */
@@ -299,12 +303,29 @@
 #define RMIXL_SBC_DRAM_CHNBD_DTR(n)	_RMIXL_OFFSET(0x010 + (n))
 					/* DRAM Region Channels B,D Address Translation Regs[0-7] */
 #define RMIXL_SBC_DRAM_BRIDGE_CFG	_RMIXL_OFFSET(0x18)	/* SBC DRAM config reg */
-#define RMIXL_SBC_XLS_IO_BAR		_RMIXL_OFFSET(0x19)	/* I/O Config Base Addr reg */
-#define RMIXL_SBC_XLS_FLASH_BAR		_RMIXL_OFFSET(0x20)	/* Flash Memory Base Addr reg */
-#define RMIXL_SBC_PCIE_CFG_BAR		_RMIXL_OFFSET(0x40)	/* PCI Configuration BAR */
-#define RMIXL_SBC_PCIE_ECFG_BAR		_RMIXL_OFFSET(0x41)	/* PCI Extended Configuration BAR */
-#define RMIXL_SBC_PCIE_MEM_BAR		_RMIXL_OFFSET(0x42)	/* PCI Memory region BAR */
-#define RMIXL_SBC_PCIE_IO_BAR		_RMIXL_OFFSET(0x43)	/* PCI IO region BAR */
+#if defined(MIPS64_XLR)
+#define RMIXLR_SBC_IO_BAR		_RMIXL_OFFSET(0x19)	/* I/O Config Base Addr reg */
+#define RMIXLR_SBC_FLASH_BAR		_RMIXL_OFFSET(0x1a)	/* Flash Memory Base Addr reg */
+#define RMIXLR_SBC_SRAM_BAR		_RMIXL_OFFSET(0x1b)	/* SRAM Base Addr reg */
+#define RMIXLR_SBC_HTMEM_BAR		_RMIXL_OFFSET(0x1c)	/* HyperTransport Mem Base Addr reg */
+#define RMIXLR_SBC_HTINT_BAR		_RMIXL_OFFSET(0x1d)	/* HyperTransport Interrupt Base Addr reg */
+#define RMIXLR_SBC_HTPIC_BAR		_RMIXL_OFFSET(0x1e)	/* HyperTransport Legacy PIC Base Addr reg */
+#define RMIXLR_SBC_HTSM_BAR		_RMIXL_OFFSET(0x1f)	/* HyperTransport System Management Base Addr reg */
+#define RMIXLR_SBC_HTIO_BAR		_RMIXL_OFFSET(0x20)	/* HyperTransport IO Base Addr reg */
+#define RMIXLR_SBC_HTCFG_BAR		_RMIXL_OFFSET(0x21)	/* HyperTransport Configuration Base Addr reg */
+#define RMIXLR_SBC_PCIX_CFG_BAR		_RMIXL_OFFSET(0x22)	/* PCI-X Configuration Base Addr reg */
+#define RMIXLR_SBC_PCIX_MEM_BAR		_RMIXL_OFFSET(0x23)	/* PCI-X Mem Base Addr reg */
+#define RMIXLR_SBC_PCIX_IO_BAR		_RMIXL_OFFSET(0x24)	/* PCI-X IO Base Addr reg */
+#define RMIXLR_SBC_SYS2IO_CREDITS	_RMIXL_OFFSET(0x35)	/* System Bridge I/O Transaction Credits register */
+#endif	/* MIPS64_XLR */
+#if defined(MIPS64_XLS)
+#define RMIXLS_SBC_IO_BAR		_RMIXL_OFFSET(0x19)	/* I/O Config Base Addr reg */
+#define RMIXLS_SBC_FLASH_BAR		_RMIXL_OFFSET(0x20)	/* Flash Memory Base Addr reg */
+#define RMIXLS_SBC_PCIE_CFG_BAR		_RMIXL_OFFSET(0x40)	/* PCI Configuration BAR */
+#define RMIXLS_SBC_PCIE_ECFG_BAR	_RMIXL_OFFSET(0x41)	/* PCI Extended Configuration BAR */
+#define RMIXLS_SBC_PCIE_MEM_BAR		_RMIXL_OFFSET(0x42)	/* PCI Memory region BAR */
+#define RMIXLS_SBC_PCIE_IO_BAR		_RMIXL_OFFSET(0x43)	/* PCI IO region BAR */
+#endif	/* MIPS64_XLS */
 
 /*
  * Address Error registers
@@ -369,9 +390,50 @@
 #define RMIXL_DRAM_CFG_DRAM_MODE	__BITS(1,0)	/* 1=DDR2 */
 
 /*
- * RMIXL_SBC_PCIE_CFG_BAR bit defines
+ * RMIXL_SBC_XLR_PCIX_CFG_BAR bit defines
  */
-#define RMIXL_PCIE_CFG_BAR_BASE		__BITS(31,17)	/* phys address bits 39:25 */
+#define RMIXL_PCIX_CFG_BAR_BASE		__BITS(31,17)	/* phys address bits 39:25 */
+#define RMIXL_PCIX_CFG_BAR_BA_SHIFT	(25 - 17)
+#define RMIXL_PCIX_CFG_BAR_TO_BA(r)	\
+		(((r) & RMIXL_PCIX_CFG_BAR_BASE) << RMIXL_PCIX_CFG_BAR_BA_SHIFT)
+#define RMIXL_PCIX_CFG_BAR_RESV		__BITS(16,1)	/* (reserved) */
+#define RMIXL_PCIX_CFG_BAR_ENB		__BIT(0)	/* 1=Enable */
+#define RMIXL_PCIX_CFG_SIZE		__BIT(25)
+#define RMIXL_PCIX_CFG_BAR(ba, en)	\
+		((uint32_t)(((ba) >> (25 - 17)) | ((en) ? RMIXL_PCIX_CFG_BAR_ENB : 0)))
+
+/*
+ * RMIXLR_SBC_PCIX_MEM_BAR bit defines
+ */
+#define RMIXL_PCIX_MEM_BAR_BASE		__BITS(31,16)	/* phys address bits 39:24 */
+#define RMIXL_PCIX_MEM_BAR_TO_BA(r)	\
+		(((r) & RMIXL_PCIX_MEM_BAR_BASE) << (24 - 16))
+#define RMIXL_PCIX_MEM_BAR_MASK		__BITS(15,1)	/* phys address mask bits 38:24 */
+#define RMIXL_PCIX_MEM_BAR_TO_SIZE(r)	\
+		((((r) & RMIXL_PCIX_MEM_BAR_MASK) + 2) << (24 - 1))
+#define RMIXL_PCIX_MEM_BAR_ENB		__BIT(0)	/* 1=Enable */
+#define RMIXL_PCIX_MEM_BAR(ba, en)	\
+		((uint32_t)(((ba) >> (24 - 16)) | ((en) ? RMIXL_PCIX_MEM_BAR_ENB : 0)))
+
+/*
+ * RMIXLR_SBC_PCIX_IO_BAR bit defines
+ */
+#define RMIXL_PCIX_IO_BAR_BASE		__BITS(31,18)	/* phys address bits 39:26 */
+#define RMIXL_PCIX_IO_BAR_TO_BA(r)	\
+		(((r) & RMIXL_PCIX_IO_BAR_BASE) << (26 - 18))
+#define RMIXL_PCIX_IO_BAR_RESV		__BITS(17,7)	/* (reserve) */
+#define RMIXL_PCIX_IO_BAR_MASK		__BITS(6,1)	/* phys address mask bits 31:26 */
+#define RMIXL_PCIX_IO_BAR_TO_SIZE(r)	\
+		((((r) & RMIXL_PCIX_IO_BAR_MASK) + 2) << (26 - 1))
+#define RMIXL_PCIX_IO_BAR_ENB		__BIT(0)	/* 1=Enable */
+#define RMIXL_PCIX_IO_BAR(ba, en)	\
+		((uint32_t)(((ba) >> (26 - 18)) | ((en) ? RMIXL_PCIX_IO_BAR_ENB : 0)))
+
+
+/*
+ * RMIXLS_SBC_PCIE_CFG_BAR bit defines
+ */
+#define RMIXL_PCIE_CFG_BAR_BASE	__BITS(31,17)	/* phys address bits 39:25 */
 #define RMIXL_PCIE_CFG_BAR_BA_SHIFT	(25 - 17)
 #define RMIXL_PCIE_CFG_BAR_TO_BA(r)	\
 		(((r) & RMIXL_PCIE_CFG_BAR_BASE) << RMIXL_PCIE_CFG_BAR_BA_SHIFT)
@@ -382,7 +444,7 @@
 		((uint32_t)(((ba) >> (25 - 17)) | ((en) ? RMIXL_PCIE_CFG_BAR_ENB : 0)))
 
 /*
- * RMIXL_SBC_PCIE_ECFG_BAR bit defines
+ * RMIXLS_SBC_PCIE_ECFG_BAR bit defines
  * (PCIe extended config space)
  */
 #define RMIXL_PCIE_ECFG_BAR_BASE	__BITS(31,21)	/* phys address bits 39:29 */
@@ -396,7 +458,7 @@
 		((uint32_t)(((ba) >> (29 - 21)) | ((en) ? RMIXL_PCIE_ECFG_BAR_ENB : 0)))
 
 /*
- * RMIXL_SBC_PCIE_MEM_BAR bit defines
+ * RMIXLS_SBC_PCIE_MEM_BAR bit defines
  */
 #define RMIXL_PCIE_MEM_BAR_BASE		__BITS(31,16)	/* phys address bits 39:24 */
 #define RMIXL_PCIE_MEM_BAR_TO_BA(r)	\
@@ -409,7 +471,7 @@
 		((uint32_t)(((ba) >> (24 - 16)) | ((en) ? RMIXL_PCIE_MEM_BAR_ENB : 0)))
 
 /*
- * RMIXL_SBC_PCIE_IO_BAR bit defines
+ * RMIXLS_SBC_PCIE_IO_BAR bit defines
  */
 #define RMIXL_PCIE_IO_BAR_BASE		__BITS(31,18)	/* phys address bits 39:26 */
 #define RMIXL_PCIE_IO_BAR_TO_BA(r)	\
