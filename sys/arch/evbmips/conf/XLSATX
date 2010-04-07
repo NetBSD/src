@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.1.2.6 2010/01/29 00:36:04 cliff Exp $
+#	$NetBSD: XLSATX,v 1.1.2.7 2010/04/07 19:31:37 cliff Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.1.2.6 $"
+#ident 		"XLSATX-$Revision: 1.1.2.7 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -75,6 +75,7 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system	PORTAL		# portal filesystem (still experimental)
 #file-system	PROCFS		# /proc
 #file-system	CD9660		# ISO 9660 + Rock Ridge file system
+file-system	TMPFS		# Efficient memory file system
 #file-system	UNION		# union file system
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
@@ -142,6 +143,8 @@ cpu*		at cpucore? thread ?
 obio0		at cpunode?
 com0		at obio0	addr 0x14000 mult 4 intr 9
 options		COM_REGMAP
+rmixl_pcix0	at obio0
+pci*		at rmixl_pcix0
 rmixl_pcie0	at obio0
 pci0		at rmixl_pcie0
 ppb*		at pci?
