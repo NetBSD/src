@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.167 2010/02/22 19:20:33 joerg Exp $
+.\"	$NetBSD: make.1,v 1.168 2010/04/07 00:11:27 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd November 15, 2009
+.Dd April 6, 2010
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -652,14 +652,34 @@ The preferred variable to use is the environment variable
 because it is more compatible with other versions of
 .Nm
 and cannot be confused with the special target with the same name.
+.It Va .MAKE.DEPENDFILE
+Names the makefile (default 
+.Ql Pa .depend )
+from which generated dependencies are read.
 .It Va .MAKE.EXPORTED
 The list of variables exported by
 .Nm .
+.It Va .MAKE.MAKEFILE_PREFERENCE
+The ordered list of makefile names 
+(default
+.Ql Pa makefile ,
+.Ql Pa Makefile )
+that
+.Nm
+will look for.
 .It Va .MAKE.MAKEFILES
 The list of makefiles read by
 .Nm ,
 which is useful for tracking dependencies.
 Each makefile is recorded only once, regardless of the number of times read.
+.It Va .MAKE.MODE
+Processed after reading all makefiles.
+Can affect the mode that
+.Nm
+runs in.
+Currently just
+.Ql Pa compat
+mode.
 .It Va .MAKE.LEVEL
 The recursion depth of
 .Nm .
@@ -1274,6 +1294,11 @@ Conditional expressions are also preceded by a single dot as the first
 character of a line.
 The possible conditionals are as follows:
 .Bl -tag -width Ds
+.It Ic .error Ar message
+The message is printed along with the name of the makefile and line number,
+then
+.Nm
+will exit.
 .It Ic .export Ar variable ...
 Export the specified global variable.
 If no variable list is provided, all globals are exported
@@ -1286,6 +1311,8 @@ flag, so should be used with caution.
 Appending a variable name to
 .Va .MAKE.EXPORTED
 is equivalent to exporting a variable.
+.It Ic .info Ar message
+The message is printed along with the name of the makefile and line number.
 .It Ic .unexport Ar variable ...
 The opposite of
 .Ql .export .
@@ -1325,6 +1352,10 @@ will also be pushed into the new environment.
 .It Ic .undef Ar variable
 Un-define the specified global variable.
 Only global variables may be un-defined.
+.It Ic .warning Ar message
+The message prefixed by
+.Ql Pa warning:
+is printed along with the name of the makefile and line number.
 .It Ic \&.if Oo \&! Oc Ns Ar expression Op Ar operator expression ...
 Test the value of an expression.
 .It Ic .ifdef Oo \&! Oc Ns Ar variable Op Ar operator variable ...
@@ -1627,6 +1658,13 @@ to the target's own name.
 .It Ic .END
 Any command lines attached to this target are executed after everything
 else is done.
+.It Ic .ERROR
+Any command lines attached to this target are executed when another target fails.
+The
+.Ic .ERROR_TARGET
+variable is set to the target that failed.
+See also 
+.Ic MAKE_PRINT_VAR_ON_ERROR .
 .It Ic .IGNORE
 Mark each of the sources with the
 .Ic .IGNORE
