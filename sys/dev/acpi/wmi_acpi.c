@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.16 2010/03/08 10:53:03 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.17 2010/04/08 10:33:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.16 2010/03/08 10:53:03 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.17 2010/04/08 10:33:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -544,9 +544,6 @@ acpi_wmi_event_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	(*sc->sc_handler)(NULL, evt, sc->sc_child);
 }
 
-/*
- * Adds or removes (NULL) the external event handler.
- */
 ACPI_STATUS
 acpi_wmi_event_register(device_t self, ACPI_NOTIFY_HANDLER handler)
 {
@@ -561,6 +558,12 @@ acpi_wmi_event_register(device_t self, ACPI_NOTIFY_HANDLER handler)
 	sc->sc_handler = handler;
 
 	return AE_OK;
+}
+
+ACPI_STATUS
+acpi_wmi_event_deregister(device_t self)
+{
+	return acpi_wmi_event_register(self, NULL);
 }
 
 /*
