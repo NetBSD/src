@@ -1,4 +1,4 @@
-#	$NetBSD: files.wmi,v 1.2 2010/04/08 12:14:19 jruoho Exp $
+#	$NetBSD: files.wmi,v 1.3 2010/04/08 17:32:30 jruoho Exp $
 
 define	acpiwmibus { }
 
@@ -11,3 +11,8 @@ file	dev/acpi/wmi/wmi_acpi.c		acpiwmi
 device	wmidell: sysmon_power
 attach	wmidell at acpiwmibus
 file	dev/acpi/wmi/wmi_dell.c		wmidell
+
+# HP WMI mappings
+device	wmihp: sysmon_envsys
+attach	wmihp at acpiwmibus
+file	dev/acpi/wmi/wmi_hp.c		wmihp
