@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.61 2009/07/03 21:17:40 elad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.62 2010/04/08 15:03:33 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.61 2009/07/03 21:17:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.62 2010/04/08 15:03:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,20 +183,6 @@ msdosfs_mknod(void *v)
 	PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return (EINVAL);
-}
-
-int
-msdosfs_open(void *v)
-{
-#if 0
-	struct vop_open_args /* {
-		struct vnode *a_vp;
-		int a_mode;
-		kauth_cred_t a_cred;
-	} */ *ap;
-#endif
-
-	return (0);
 }
 
 int
@@ -1685,23 +1671,6 @@ out:
 }
 
 /*
- * DOS filesystems don't know what symlinks are.
- */
-int
-msdosfs_readlink(void *v)
-{
-#if 0
-	struct vop_readlink_args /* {
-		struct vnode *a_vp;
-		struct uio *a_uio;
-		kauth_cred_t a_cred;
-	} */ *ap;
-#endif
-
-	return (EINVAL);
-}
-
-/*
  * vp  - address of vnode file the file
  * bn  - which cluster we are interested in mapping to a filesystem block number.
  * vpp - returns the vnode for the block special file holding the filesystem
@@ -1946,7 +1915,7 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_lookup_desc, msdosfs_lookup },		/* lookup */
 	{ &vop_create_desc, msdosfs_create },		/* create */
 	{ &vop_mknod_desc, msdosfs_mknod },		/* mknod */
-	{ &vop_open_desc, msdosfs_open },		/* open */
+	{ &vop_open_desc, genfs_nullop },		/* open */
 	{ &vop_close_desc, msdosfs_close },		/* close */
 	{ &vop_access_desc, msdosfs_access },		/* access */
 	{ &vop_getattr_desc, msdosfs_getattr },		/* getattr */
@@ -1968,7 +1937,7 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_rmdir_desc, msdosfs_rmdir },		/* rmdir */
 	{ &vop_symlink_desc, msdosfs_symlink },		/* symlink */
 	{ &vop_readdir_desc, msdosfs_readdir },		/* readdir */
-	{ &vop_readlink_desc, msdosfs_readlink },	/* readlink */
+	{ &vop_readlink_desc, genfs_einval },		/* readlink */
 	{ &vop_abortop_desc, msdosfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, msdosfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, msdosfs_reclaim },		/* reclaim */
