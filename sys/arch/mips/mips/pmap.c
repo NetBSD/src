@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.22 2010/03/11 08:19:01 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.23 2010/04/08 16:05:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.22 2010/03/11 08:19:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.23 2010/04/08 16:05:31 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1886,7 +1886,8 @@ pmap_is_referenced(struct vm_page *pg)
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	struct pv_entry *pv = &pg->mdpage.pvh_first;
+	pv_entry_t pv = &pg->mdpage.pvh_first;
+	pv_entry_t pv_next;
 	uint16_t gen;
 
 	PMAP_COUNT(clear_modify);
@@ -1916,11 +1917,12 @@ pmap_clear_modify(struct vm_page *pg)
 	 */
 	kpreempt_disable();
 	gen = VM_PAGE_PVLIST_LOCK(pg, false);
-	while (pv != NULL) {
+	for (; pv != NULL; pv = pv_next) {
 		pmap_t pmap = pv->pv_pmap;
 		vaddr_t va = pv->pv_va;
 		pt_entry_t *pte;
 		uint32_t pt_entry;
+		pv_next = pv->pv_next;
 		if (pmap == pmap_kernel()) {
 			pte = kvtopte(va);
 		} else {
@@ -1946,13 +1948,11 @@ pmap_clear_modify(struct vm_page *pg)
 		VM_PAGE_PVLIST_UNLOCK(pg);
 		pmap_tlb_invalidate_addr(pmap, va);
 		pmap_update(pmap);
-		if (gen != VM_PAGE_PVLIST_LOCK(pg, false)) {
+		if (__predict_false(gen != VM_PAGE_PVLIST_LOCK(pg, false))) {
 			/*
 			 * The list changed!  So restart from the beginning.
 			 */
-			pv = &pg->mdpage.pvh_first;
-		} else {
-			pv = pv->pv_next;
+			pv_next = &pg->mdpage.pvh_first;
 		}
 	}
 	VM_PAGE_PVLIST_UNLOCK(pg);
