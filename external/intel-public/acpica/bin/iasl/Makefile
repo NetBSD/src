@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/08/18 23:42:40 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.2 2010/04/08 04:37:14 jruoho Exp $
 
 PROG=	iasl
 BINDIR=	/usr/bin
@@ -82,6 +82,7 @@ SRCS+=	pstree.c
 SRCS+=	psutils.c
 SRCS+=	pswalk.c
 .PATH: ${TOPDIR}/../dispatcher
+SRCS+=	dmextern.c
 SRCS+=	dswscope.c
 SRCS+=	dswstate.c
 SRCS+=	dsfield.c
