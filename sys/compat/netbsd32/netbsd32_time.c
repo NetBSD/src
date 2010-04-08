@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.40 2010/04/03 17:20:05 njoly Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.41 2010/04/08 11:51:14 njoly Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.40 2010/04/03 17:20:05 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.41 2010/04/08 11:51:14 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -353,17 +353,15 @@ netbsd32___clock_gettime50(struct lwp *l, const struct netbsd32___clock_gettime5
 		syscallarg(netbsd32_clockid_t) clock_id;
 		syscallarg(netbsd32_timespecp_t) tp;
 	} */
-	clockid_t clock_id;
+	int error;
 	struct timespec ats;
 	struct netbsd32_timespec ts32;
 
-	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
+	error = clock_gettime1(SCARG(uap, clock_id), &ats);
+	if (error != 0)
+		return error;
 
-	nanotime(&ats);
 	netbsd32_from_timespec(&ats, &ts32);
-
 	return copyout(&ts32, SCARG_P32(uap, tp), sizeof(ts32));
 }
 

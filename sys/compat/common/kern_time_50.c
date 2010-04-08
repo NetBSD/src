@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.14 2010/04/03 17:20:05 njoly Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.15 2010/04/08 11:51:13 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.14 2010/04/03 17:20:05 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.15 2010/04/08 11:51:13 njoly Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -113,21 +113,14 @@ compat_50_sys_clock_gettime(struct lwp *l,
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec50 *) tp;
 	} */
-	clockid_t clock_id;
+	int error;
 	struct timespec ats;
 	struct timespec50 ats50;
 
-	clock_id = SCARG(uap, clock_id);
-	switch (clock_id) {
-	case CLOCK_REALTIME:
-		nanotime(&ats);
-		break;
-	case CLOCK_MONOTONIC:
-		nanouptime(&ats);
-		break;
-	default:
-		return (EINVAL);
-	}
+	error = clock_gettime1(SCARG(uap, clock_id), &ats);
+	if (error != 0)
+		return error;
+
 	timespec_to_timespec50(&ats, &ats50);
 
 	return copyout(&ats50, SCARG(uap, tp), sizeof(ats50));
