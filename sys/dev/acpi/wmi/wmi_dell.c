@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.2 2010/04/08 10:33:13 jruoho Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.3 2010/04/08 12:14:19 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.2 2010/04/08 10:33:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.3 2010/04/08 12:14:19 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/wmi_acpivar.h>
+#include <dev/acpi/wmi/wmi_acpivar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 

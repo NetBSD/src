@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.17 2010/04/08 10:33:13 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.1 2010/04/08 12:14:19 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.17 2010/04/08 10:33:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.1 2010/04/08 12:14:19 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.17 2010/04/08 10:33:13 jruoho Exp $")
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/wmi_acpivar.h>
+#include <dev/acpi/wmi/wmi_acpivar.h>
 
 #define _COMPONENT          ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME            ("wmi_acpi")
@@ -322,7 +322,7 @@ acpi_wmi_dump(struct acpi_wmi_softc *sc)
 {
 	struct wmi_t *wmi;
 
-	KASSERT(!(SIMPLEQ_EMPTY(&sc->wmi_head)));
+	KASSERT(SIMPLEQ_EMPTY(&sc->wmi_head) == 0);
 
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
@@ -378,7 +378,7 @@ acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
 
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
-		if (GUIDCMP(guid, &wmi->guid)) {
+		if (GUIDCMP(guid, &wmi->guid) != 0) {
 
 			if (out != NULL)
 				*out = wmi;
@@ -398,8 +398,11 @@ int
 acpi_wmi_guid_match(device_t self, const char *guid)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
+	ACPI_STATUS rv;
 
-	if (ACPI_SUCCESS(acpi_wmi_guid_get(sc, guid, NULL)))
+	rv = acpi_wmi_guid_get(sc, guid, NULL);
+
+	if (ACPI_SUCCESS(rv))
 		return 1;
 
 	return 0;
@@ -426,8 +429,8 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 	/* Enable possible expensive events. */
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
-		if ((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) &&
-		    (wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE)) {
+		if ((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) != 0 &&
+		    (wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE) != 0) {
 
 			rv = acpi_wmi_enable(sc->sc_node->ad_handle,
 			    wmi->guid.oid, false, true);
@@ -468,8 +471,8 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 		if (wmi->eevent != true)
 			continue;
 
-		KASSERT(wmi->guid.flags & ACPI_WMI_FLAG_EVENT);
-		KASSERT(wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE);
+		KASSERT((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) != 0);
+		KASSERT((wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE) != 0);
 
 		rv = acpi_wmi_enable(sc->sc_node->ad_handle,
 		    wmi->guid.oid, false, false);
@@ -514,7 +517,7 @@ acpi_wmi_event_get(device_t self, uint32_t event, ACPI_BUFFER *obuf)
 
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
-		if (!(wmi->guid.flags & ACPI_WMI_FLAG_EVENT))
+		if ((wmi->guid.flags & ACPI_WMI_FLAG_EVENT) == 0)
 			continue;
 
 		if (wmi->guid.nid != event)
@@ -667,7 +670,7 @@ acpi_wmi_data_query(device_t self, const char *guid,
 	 * If the expensive flag is set, we should enable
 	 * data collection before evaluating the WQxx buffer.
 	 */
-	if (wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE) {
+	if ((wmi->guid.flags & ACPI_WMI_FLAG_EXPENSIVE) != 0) {
 
 		rvxx = acpi_wmi_enable(sc->sc_node->ad_handle,
 		    wmi->guid.oid, true, true);
@@ -730,7 +733,7 @@ acpi_wmi_data_write(device_t self, const char *guid,
 	obj[1].Buffer.Length = ibuf->Length;
 	obj[1].Buffer.Pointer = ibuf->Pointer;
 
-	obj[1].Type = (wmi->guid.flags & ACPI_WMI_FLAG_STRING) ?
+	obj[1].Type = ((wmi->guid.flags & ACPI_WMI_FLAG_STRING) != 0) ?
 	    ACPI_TYPE_STRING : ACPI_TYPE_BUFFER;
 
 	arg.Count = 0x02;
@@ -773,7 +776,7 @@ acpi_wmi_method(device_t self, const char *guid, uint8_t idx,
 	obj[2].Buffer.Length = ibuf->Length;
 	obj[2].Buffer.Pointer = ibuf->Pointer;
 
-	obj[2].Type = (wmi->guid.flags & ACPI_WMI_FLAG_STRING) ?
+	obj[2].Type = ((wmi->guid.flags & ACPI_WMI_FLAG_STRING) != 0) ?
 	    ACPI_TYPE_STRING : ACPI_TYPE_BUFFER;
 
 	arg.Count = 0x03;
