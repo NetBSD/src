@@ -1,0 +1,6 @@
+# $Id: error,v 1.1 2010/04/08 17:41:29 sjg Exp $
+
+.info just FYI
+.warning this could be serious
+.error this is fatal
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.161 2010/04/07 00:11:27 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.162 2010/04/08 17:41:29 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.161 2010/04/07 00:11:27 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.162 2010/04/08 17:41:29 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.161 2010/04/07 00:11:27 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.162 2010/04/08 17:41:29 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -191,6 +191,7 @@ typedef enum {
     Begin,  	    /* .BEGIN */
     Default,	    /* .DEFAULT */
     End,    	    /* .END */
+    dotError,	    /* .ERROR */
     Ignore,	    /* .IGNORE */
     Includes,	    /* .INCLUDES */
     Interrupt,	    /* .INTERRUPT */
@@ -245,6 +246,7 @@ static struct {
 { ".BEGIN", 	  Begin,    	0 },
 { ".DEFAULT",	  Default,  	0 },
 { ".END",   	  End,	    	0 },
+{ ".ERROR",   	  dotError,    	0 },
 { ".EXEC",	  Attribute,   	OP_EXEC },
 { ".IGNORE",	  Ignore,   	OP_IGNORE },
 { ".INCLUDES",	  Includes, 	0 },
@@ -1017,6 +1019,7 @@ ParseDoDependency(char *line)
 		 *	.NOPATH		Don't search for file in the path
 		 *	.BEGIN
 		 *	.END
+		 *	.ERROR
 		 *	.INTERRUPT  	Are not to be considered the
 		 *			main target.
 		 *  	.NOTPARALLEL	Make only one target at a time.
@@ -1037,6 +1040,7 @@ ParseDoDependency(char *line)
 			break;
 		    case Begin:
 		    case End:
+		    case dotError:
 		    case Interrupt:
 			gn = Targ_FindNode(line, TARG_CREATE);
 			gn->type |= OP_NOTMAIN|OP_SPECIAL;
@@ -1166,6 +1170,7 @@ ParseDoDependency(char *line)
 	    case Default:
 	    case Begin:
 	    case End:
+	    case dotError:
 	    case Interrupt:
 		/*
 		 * These four create nodes on which to hang commands, so
