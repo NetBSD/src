@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.176 2010/04/07 00:11:27 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.177 2010/04/08 17:41:29 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.176 2010/04/07 00:11:27 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.177 2010/04/08 17:41:29 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.176 2010/04/07 00:11:27 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.177 2010/04/08 17:41:29 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1876,7 +1876,7 @@ PrintAddr(void *a, void *b)
 void
 PrintOnError(GNode *gn, const char *s)
 {
-    GNode *en;
+    static GNode *en = NULL;
     char tmp[64];
     char *cp;
 
@@ -1885,6 +1885,8 @@ PrintOnError(GNode *gn, const char *s)
 	
     printf("\n%s: stopped in %s\n", progname, curdir);
 
+    if (en)
+	return;				/* we've been here! */
     if (gn) {
 	/*
 	 * We can print this even if there is no .ERROR target.
