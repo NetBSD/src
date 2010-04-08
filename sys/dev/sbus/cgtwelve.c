@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelve.c,v 1.1 2010/03/24 00:33:06 macallan Exp $ */
+/*	$NetBSD: cgtwelve.c,v 1.2 2010/04/08 16:49:34 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the Sun CG12 / Matrox SG3 graphics board */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.1 2010/03/24 00:33:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.2 2010/04/08 16:49:34 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.1 2010/03/24 00:33:06 macallan Exp $"
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
+#include <sys/kmem.h>
 
 #include <sys/bus.h>
 #include <machine/autoconf.h>
@@ -62,6 +63,7 @@ struct cgtwelve_softc {
 	device_t	sc_dev;
 	bus_space_tag_t sc_tag;
 	void		*sc_fbaddr;
+	void		*sc_shadow;
 	int		sc_width;
 	int		sc_height;
 	int		sc_stride;
@@ -162,6 +164,7 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 		
 	aprint_normal_dev(self, "%d x %d\n", sc->sc_width, sc->sc_height);
 
+	sc->sc_shadow = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
 	isconsole = fb_is_console(node);
 
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
@@ -193,7 +196,74 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
+#if 0
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot,
+			 sa->sa_offset + CG12_OFF_REGISTERS,
+			 0xc0000, 0, &bh) == 0) {
+		int i, j;
 
+		bus_space_write_4(sa->sa_bustag, bh, CG12_EIC_RESET, 0);
+
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_PLN_RDMSK_HOST, CG12_PLN_RD_ENABLE);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_PLN_WRMSK_HOST, CG12_PLN_WR_ENABLE);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_PLN_SL_HOST, CG12_PLN_SL_ENABLE);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_HPAGE, CG12_HPAGE_ENABLE);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_HACCESS, CG12_HACCESS_ENABLE);
+		memset(sc->sc_fbaddr, 0, 0x10000);
+
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_PLN_RDMSK_LOC, 0xffffffff);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_PLN_WRMSK_LOC, 0xffffffff);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_LACCESS, CG12_HACCESS_24BIT);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_LPAGE, CG12_HPAGE_24BIT);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_PLN_SL_LOCAL0, CG12_PLN_SL_24BIT);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_DWG_CTL, DWGCTL_BITBLT | 0x00f30000);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_F_XLEFT, 10);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_F_XRIGHT, 1010);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_Y_DST, 10);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_COLOUR0, 0xffffffff);
+#if 1
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_LENGTH | 0x1000, 800);
+#endif
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_PLN_RDMSK_HOST, CG12_PLN_RD_OVERLAY);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_PLN_WRMSK_HOST, CG12_PLN_WR_OVERLAY);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12DPU_PLN_SL_HOST, CG12_PLN_SL_OVERLAY);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_HPAGE, CG12_HPAGE_OVERLAY);
+		bus_space_write_4(sa->sa_bustag, bh,
+		    CG12APU_HACCESS, CG12_HACCESS_OVERLAY);
+
+		for (i = 0x100; i < 0x300; i += 32) {
+			printf("%04x:", i);
+			for (j = 0; j < 32; j += 4) {
+				printf(" %08x", bus_space_read_4(sa->sa_bustag,
+				    bh, i + j));
+			}
+			printf("\n");
+		}
+		bus_space_unmap(sa->sa_bustag, bh, 0xc0000);
+	}
+	panic("poof");
+#endif
 }
 
 
@@ -210,7 +280,12 @@ cgtwelve_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_stride = sc->sc_stride;
 	ri->ri_flg = RI_CENTER;
 
-	ri->ri_bits = sc->sc_fbaddr;
+	if (sc->sc_shadow == NULL) {
+		ri->ri_bits = sc->sc_fbaddr;
+	} else {
+		ri->ri_hwbits = sc->sc_fbaddr;
+		ri->ri_bits = sc->sc_shadow;
+	}
 
 	rasops_init(ri, ri->ri_height/8, ri->ri_width/8);
 	ri->ri_caps = WSSCREEN_REVERSE;
