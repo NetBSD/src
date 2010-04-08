@@ -1,4 +1,4 @@
-.\" $NetBSD: acpidalb.4,v 1.5 2010/01/25 10:12:41 jruoho Exp $
+.\" $NetBSD: acpidalb.4,v 1.6 2010/04/08 08:42:40 jruoho Exp $
 .\"
 .\" Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
 .\" All rights reserved.
@@ -41,10 +41,12 @@ hotkeys a.k.a.
 .Pp
 These are recognized on startup from system-wake or at runtime.
 Behaviour may differ from the standard specification in relation
-to the ACPI implementation.
+to the
+.Tn ACPI
+implementation.
 .Pp
 The hotkeys are reported to the power management daemon as
-.Dv hotkey_button .
+.Em hotkey_button .
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr powerd 8
