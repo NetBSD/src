@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.17 2010/04/08 15:03:33 pooka Exp $	*/
+/*	$NetBSD: denode.h,v 1.18 2010/04/08 16:04:35 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -259,7 +259,6 @@ struct defid {
  */
 int	msdosfs_lookup		(void *);
 int	msdosfs_create		(void *);
-int	msdosfs_mknod		(void *);
 int	msdosfs_close		(void *);
 int	msdosfs_access		(void *);
 int	msdosfs_getattr		(void *);
@@ -274,11 +273,9 @@ int	msdosfs_write		(void *);
 int	msdosfs_fsync		(void *);
 #define	msdosfs_seek		genfs_seek
 int	msdosfs_remove		(void *);
-int	msdosfs_link		(void *);
 int	msdosfs_rename		(void *);
 int	msdosfs_mkdir		(void *);
 int	msdosfs_rmdir		(void *);
-int	msdosfs_symlink		(void *);
 int	msdosfs_readdir		(void *);
 #define	msdosfs_abortop		genfs_abortop
 int	msdosfs_inactive	(void *);
