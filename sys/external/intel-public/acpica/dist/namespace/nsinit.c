@@ -270,7 +270,7 @@ AcpiNsInitializeDevices (
      * part of the ACPI specification.
      */
     Info.EvaluateInfo->PrefixNode = AcpiGbl_RootNode;
-    Info.EvaluateInfo->Pathname = METHOD_NAME__INI;
+    Info.EvaluateInfo->Pathname = __UNCONST(METHOD_NAME__INI);
     Info.EvaluateInfo->Parameters = NULL;
     Info.EvaluateInfo->Flags = ACPI_IGNORE_RETURN_VALUE;
 
