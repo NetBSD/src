@@ -24,6 +24,9 @@ make: warning: String comparison operator should be either == or !=
 make: Bad conditional expression `"0" > 0' in "0" > 0?OK:No
 
 OK
+make: "error" line 3: just FYI
+make: "error" line 4: warning: this could be serious
+make: "error" line 5: this is fatal
 UT_DOLLAR=This is $UT_FU
 UT_FOO=foobar is fubar
 UT_FU=fubar
@@ -38,6 +41,14 @@ UT_NO=all
 UT_OK=good
 UT_TEST=export-all
 UT_ZOO=hoopie
+At first, I am
+happy
+and now: sad
+.ERROR: Looks like 'sad' is upset.
+*** Error code 1
+
+Stop.
+make: stopped in unit-tests
 simple.1
 simple.1
 simple.2
@@ -314,3 +325,5 @@ five FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
 five v=is x k=is x
 six v=is y k=is y
 show-v v=override k=override
+*** Error code 1 (ignored)
+*** Error code 1 (ignored)
