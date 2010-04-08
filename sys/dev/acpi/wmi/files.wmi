@@ -1,4 +1,11 @@
-#	$NetBSD: files.wmi,v 1.1 2010/04/08 09:35:15 jruoho Exp $
+#	$NetBSD: files.wmi,v 1.2 2010/04/08 12:14:19 jruoho Exp $
+
+define	acpiwmibus { }
+
+# ACPI WMI mapper
+device	acpiwmi: acpiwmibus
+attach	acpiwmi at acpinodebus
+file	dev/acpi/wmi/wmi_acpi.c		acpiwmi
 
 # Dell WMI mappings
 device	wmidell: sysmon_power
