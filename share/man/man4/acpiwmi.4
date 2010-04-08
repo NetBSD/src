@@ -1,4 +1,4 @@
-.\" $NetBSD: acpiwmi.4,v 1.2 2010/04/08 17:44:22 jruoho Exp $
+.\" $NetBSD: acpiwmi.4,v 1.3 2010/04/08 17:53:42 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -97,3 +97,8 @@ While
 should provide a certain degree of portability across laptop
 models from a particular vendor, there is no guarantee that the mappings
 are functional in all models.
+.Pp
+The
+.Sy wmihp
+driver conflicts with
+.Xr hpqlb 4 .
