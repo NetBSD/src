@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.15 2010/03/05 14:00:17 jruoho Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.16 2010/04/08 04:40:51 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.15 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.16 2010/04/08 04:40:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -248,7 +248,7 @@ sony_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	rv = AcpiWalkNamespace(ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT, 100,
-	    sony_acpi_find_pic, sc, NULL);
+	    sony_acpi_find_pic, NULL, sc, NULL);
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(self, "couldn't walk namespace: %s\n",
 		    AcpiFormatException(rv));
@@ -289,7 +289,7 @@ sony_acpi_attach(device_t parent, device_t self, void *aux)
 
 	/* Install sysctl handler */
 	rv = AcpiWalkNamespace(ACPI_TYPE_METHOD,
-	    sc->sc_node->ad_handle, 1, sony_walk_cb, sc, NULL);
+	    sc->sc_node->ad_handle, 1, sony_walk_cb, NULL, sc, NULL);
 #ifdef DIAGNOSTIC
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(self, "Cannot walk ACPI namespace (%u)\n",
