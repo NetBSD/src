@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.32 2010/04/08 11:51:13 njoly Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.33 2010/04/08 15:59:37 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.32 2010/04/08 11:51:13 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.33 2010/04/08 15:59:37 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -373,7 +373,7 @@ linux32_sys_clock_nanosleep(struct lwp *l,
 		return error;
 	linux32_to_native_timespec(&rqts, &lrqts);
 
-	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : 0);
+	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : NULL);
 	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
 
