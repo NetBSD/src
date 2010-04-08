@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1198 2010/03/11 10:38:36 enami Exp $
+# $NetBSD: mi,v 1.1199 2010/04/08 10:06:25 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -627,6 +627,7 @@
 ./usr/share/man/cat4/acpilid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/acpismbus.0		man-sys-catman		.cat
 ./usr/share/man/cat4/acpitz.0			man-sys-catman		.cat
+./usr/share/man/cat4/acpiwmi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adbbt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adbkbd.0			man-sys-catman		.cat
@@ -1697,6 +1698,7 @@
 ./usr/share/man/cat4/we.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wm.0			man-sys-catman		.cat
+./usr/share/man/cat4/wmidell.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wpi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wscons.0			man-sys-catman		.cat
 ./usr/share/man/cat4/wsdisplay.0		man-sys-catman		.cat
@@ -3317,6 +3319,7 @@
 ./usr/share/man/html4/acpilid.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpismbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/acpitz.html		man-sys-htmlman		html
+./usr/share/man/html4/acpiwmi.html		man-sys-htmlman		html
 ./usr/share/man/html4/adb.html			man-sys-htmlman		html
 ./usr/share/man/html4/adbbt.html		man-sys-htmlman		html
 ./usr/share/man/html4/adbkbd.html		man-sys-htmlman		html
@@ -4268,6 +4271,7 @@
 ./usr/share/man/html4/we.html			man-sys-htmlman		html
 ./usr/share/man/html4/wi.html			man-sys-htmlman		html
 ./usr/share/man/html4/wm.html			man-sys-htmlman		html
+./usr/share/man/html4/wmidell.html		man-sys-htmlman		html
 ./usr/share/man/html4/wpi.html			man-sys-htmlman		html
 ./usr/share/man/html4/wscons.html		man-sys-htmlman		html
 ./usr/share/man/html4/wsdisplay.html		man-sys-htmlman		html
@@ -5707,6 +5711,7 @@
 ./usr/share/man/man4/acpilid.4			man-sys-man		.man
 ./usr/share/man/man4/acpismbus.4		man-sys-man		.man
 ./usr/share/man/man4/acpitz.4			man-sys-man		.man
+./usr/share/man/man4/acpiwmi.4			man-sys-man		.man
 ./usr/share/man/man4/adb.4			man-sys-man		.man
 ./usr/share/man/man4/adbbt.4			man-sys-man		.man
 ./usr/share/man/man4/adbkbd.4			man-sys-man		.man
@@ -6777,6 +6782,7 @@
 ./usr/share/man/man4/we.4			man-sys-man		.man
 ./usr/share/man/man4/wi.4			man-sys-man		.man
 ./usr/share/man/man4/wm.4			man-sys-man		.man
+./usr/share/man/man4/wmidell.4			man-sys-man		.man
 ./usr/share/man/man4/wpi.4			man-sys-man		.man
 ./usr/share/man/man4/wscons.4			man-sys-man		.man
 ./usr/share/man/man4/wsdisplay.4		man-sys-man		.man
