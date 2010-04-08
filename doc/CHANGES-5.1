@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.222 2010/04/04 23:23:51 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.223 2010/04/08 23:17:24 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17145,4 +17145,12 @@ xsrc/external/mit/xorg-server/dist/render/glyph.c 1.2
 	all glyphsets.
 	<http://bugs.freedesktop.org/show_bug.cgi?id=20718>
 	[mrg, ticket #1361]
+
+external/mit/xorg/lib/dri/i915/Makefile		1.7
+external/mit/xorg/lib/dri/i965/Makefile		1.9
+external/mit/xorg/lib/dri/libmesa/Makefile	1.5
+
+	Fix a problem where GL applications would dump core when run under
+	the intel driver.  PR xsrc/42754.
+	[yhardy, ticket #1364]
 
