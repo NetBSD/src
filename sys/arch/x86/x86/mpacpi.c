@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.84 2010/01/09 20:56:17 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.85 2010/04/08 04:40:51 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.84 2010/01/09 20:56:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.85 2010/04/08 04:40:51 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -505,7 +505,7 @@ mpacpi_find_pcibusses(struct acpi_softc *acpi)
 		return ENOENT;
 	TAILQ_INIT(&mpacpi_pcibusses);
 	AcpiWalkNamespace(ACPI_TYPE_DEVICE, sbhandle, 100,
-		    mpacpi_pcibus_cb, acpi, NULL);
+	    mpacpi_pcibus_cb, NULL, acpi, NULL);
 	return 0;
 }
 
