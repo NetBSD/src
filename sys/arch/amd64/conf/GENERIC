@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.272 2010/03/28 00:00:07 dholland Exp $
+# $NetBSD: GENERIC,v 1.273 2010/04/08 09:45:17 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.272 $"
+#ident 		"GENERIC-$Revision: 1.273 $"
 
 maxusers	64		# estimated number of users
 
@@ -304,6 +304,7 @@ thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
+wmidell*	at acpiwmibus?		# Dell WMI mappings
 
 #apm0	at mainbus0			# Advanced power management
 
