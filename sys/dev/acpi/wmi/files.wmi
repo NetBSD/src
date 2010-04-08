@@ -1,0 +1,6 @@
+#	$NetBSD: files.wmi,v 1.1 2010/04/08 09:35:15 jruoho Exp $
+
+# Dell WMI mappings
+device	wmidell: sysmon_power
+attach	wmidell at acpiwmibus
+file	dev/acpi/wmi/wmi_dell.c		wmidell
