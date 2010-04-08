@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3.6.4 2010/01/16 17:36:44 bouyer Exp $
+# $NetBSD: Makefile,v 1.3.6.5 2010/04/08 23:13:32 snj Exp $
 
 MODULE=	i965
 
@@ -90,6 +90,5 @@ SRCS=	\
 COPTS.brw_draw_upload.c=	-Wno-error
 
 LIBDPLIBS+=	drm_intel	${.CURDIR}/../../libdrm_intel
-LIBDPLIBS+=	OSMesa		${.CURDIR}/../../libOSMesa
 
 .include "${.CURDIR}/../dri.mk"
