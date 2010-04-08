@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_dell.c,v 1.1 2010/04/08 09:35:15 jruoho Exp $ */
+/*	$NetBSD: wmi_dell.c,v 1.2 2010/04/08 10:33:13 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.1 2010/04/08 09:35:15 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_dell.c,v 1.2 2010/04/08 10:33:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,7 +124,7 @@ wmi_dell_detach(device_t self, int flags)
 	int i;
 
 	(void)pmf_device_deregister(self);
-	(void)acpi_wmi_event_register(parent, NULL);
+	(void)acpi_wmi_event_deregister(parent);
 
 	if (sc->sc_smpsw_valid != true)
 		return 0;
@@ -141,7 +141,7 @@ wmi_dell_suspend(device_t self, const pmf_qual_t *qual)
 	struct wmi_dell_softc *sc = device_private(self);
 	device_t parent = sc->sc_parent;
 
-	(void)acpi_wmi_event_register(parent, NULL);
+	(void)acpi_wmi_event_deregister(parent);
 
 	return true;
 }
