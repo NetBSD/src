@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.62 2010/04/08 15:03:33 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.63 2010/04/08 16:04:35 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.62 2010/04/08 15:03:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.63 2010/04/08 16:04:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,21 +168,6 @@ bad:
 	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(ap->a_dvp);
 	return (error);
-}
-
-int
-msdosfs_mknod(void *v)
-{
-	struct vop_mknod_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-	} */ *ap = v;
-
-	PNBUF_PUT(ap->a_cnp->cn_pnbuf);
-	vput(ap->a_dvp);
-	return (EINVAL);
 }
 
 int
@@ -748,25 +733,6 @@ msdosfs_remove(void *v)
 				 * via vrele() */
 	vput(ap->a_dvp);
 	return (error);
-}
-
-/*
- * DOS filesystems don't know what links are. But since we already called
- * msdosfs_lookup() with create and lockparent, the parent is locked so we
- * have to free it before we return the error.
- */
-int
-msdosfs_link(void *v)
-{
-	struct vop_link_args /* {
-		struct vnode *a_dvp;
-		struct vnode *a_vp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
-	return (EOPNOTSUPP);
 }
 
 /*
@@ -1384,25 +1350,6 @@ out:
 	return (error);
 }
 
-/*
- * DOS filesystems don't know what symlinks are.
- */
-int
-msdosfs_symlink(void *v)
-{
-	struct vop_symlink_args /* {
-		struct vnode *a_dvp;
-		struct vnode **a_vpp;
-		struct componentname *a_cnp;
-		struct vattr *a_vap;
-		char *a_target;
-	} */ *ap = v;
-
-	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
-	vput(ap->a_dvp);
-	return (EOPNOTSUPP);
-}
-
 int
 msdosfs_readdir(void *v)
 {
@@ -1914,7 +1861,7 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, msdosfs_lookup },		/* lookup */
 	{ &vop_create_desc, msdosfs_create },		/* create */
-	{ &vop_mknod_desc, msdosfs_mknod },		/* mknod */
+	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */
 	{ &vop_open_desc, genfs_nullop },		/* open */
 	{ &vop_close_desc, msdosfs_close },		/* close */
 	{ &vop_access_desc, msdosfs_access },		/* access */
@@ -1931,11 +1878,11 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */
 	{ &vop_seek_desc, msdosfs_seek },		/* seek */
 	{ &vop_remove_desc, msdosfs_remove },		/* remove */
-	{ &vop_link_desc, msdosfs_link },		/* link */
+	{ &vop_link_desc, genfs_eopnotsupp },		/* link */
 	{ &vop_rename_desc, msdosfs_rename },		/* rename */
 	{ &vop_mkdir_desc, msdosfs_mkdir },		/* mkdir */
 	{ &vop_rmdir_desc, msdosfs_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, msdosfs_symlink },		/* symlink */
+	{ &vop_symlink_desc, genfs_eopnotsupp },	/* symlink */
 	{ &vop_readdir_desc, msdosfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, genfs_einval },		/* readlink */
 	{ &vop_abortop_desc, msdosfs_abortop },		/* abortop */
