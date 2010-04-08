@@ -1,4 +1,4 @@
-.\" $NetBSD: acpiwmi.4,v 1.1 2010/04/08 10:06:25 jruoho Exp $
+.\" $NetBSD: acpiwmi.4,v 1.2 2010/04/08 17:44:22 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -55,8 +55,8 @@ mappings are supported:
 .Bl -tag -width "wmidell " -offset indent
 .It Sy wmidell
 Dell laptops
-.\" .It Sy wmihp
-.\" Hewlett-Packard laptops
+.It Sy wmihp
+Hewlett-Packard laptops
 .El
 .Pp
 The functionality varies from vendor to vendor.
@@ -81,15 +81,16 @@ device driver appeared in
 wrote the actual
 .Nm
 as well as
-.Sy wmidell .
-.\" and .Sy wmihp .
-.\" The
-.\" .Sy wmihp
-.\" was based on the earlier work done by
-.\" Michael Gmelin
-.\" .Aq freebsd@grem.de
-.\" for
-.\" .Fx .
+.Sy wmidell
+and
+.Sy wmihp .
+The
+.Sy wmihp
+was based on the earlier work done by
+.An Michael Gmelin
+.Aq freebsd@grem.de
+for
+.Fx .
 .Sh CAVEATS
 While
 .Tn WMI
