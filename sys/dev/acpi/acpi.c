@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.163 2010/03/29 16:35:59 dyoung Exp $	*/
+/*	$NetBSD: acpi.c,v 1.164 2010/04/08 04:40:51 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.163 2010/03/29 16:35:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.164 2010/04/08 04:40:51 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -695,7 +695,7 @@ acpi_build_tree(struct acpi_softc *sc)
 
 		if (ACPI_SUCCESS(rv))
 			(void)AcpiWalkNamespace(ACPI_TYPE_ANY, parent, 100,
-			    acpi_make_devnode, sc, NULL);
+			    acpi_make_devnode, NULL, sc, NULL);
 	}
 
 	acpi_rescan1(sc, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.32 2010/03/04 21:54:35 jruoho Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.33 2010/04/08 04:40:51 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.32 2010/03/04 21:54:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.33 2010/04/08 04:40:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,7 +501,7 @@ vald_acpi_libright_get(struct vald_acpi_softc *sc)
 		return;
 
 	AcpiWalkNamespace(ACPI_TYPE_DEVICE, parent, 100,
-	    vald_acpi_libright_get_bus, sc, NULL);
+	    vald_acpi_libright_get_bus, NULL, sc, NULL);
 }
 
 /*
