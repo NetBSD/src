@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.1 2010/04/08 12:14:19 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.2 2010/04/08 12:36:21 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.1 2010/04/08 12:14:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.2 2010/04/08 12:36:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -302,7 +302,7 @@ acpi_wmi_del(struct acpi_wmi_softc *sc)
 {
 	struct wmi_t *wmi;
 
-	if (SIMPLEQ_EMPTY(&sc->wmi_head))
+	if (SIMPLEQ_EMPTY(&sc->wmi_head) != 0)
 		return;
 
 	while (SIMPLEQ_FIRST(&sc->wmi_head) != NULL) {
@@ -362,7 +362,7 @@ acpi_wmi_guid_get(struct acpi_wmi_softc *sc,
 
 		(void)memcpy(hex, ptr, 2);
 
-		if (!HEXCHAR(hex[0]) || !HEXCHAR(hex[1]))
+		if (HEXCHAR(hex[0]) == 0 || HEXCHAR(hex[1]) == 0)
 			return AE_BAD_HEX_CONSTANT;
 
 		bin[i] = strtoul(hex, NULL, 16) & 0xFF;
@@ -499,6 +499,9 @@ acpi_wmi_event_get(device_t self, uint32_t event, ACPI_BUFFER *obuf)
 	struct wmi_t *wmi;
 	ACPI_OBJECT_LIST arg;
 	ACPI_OBJECT obj;
+	ACPI_HANDLE hdl;
+
+	hdl = sc->sc_node->ad_handle;
 
 	if (sc == NULL || obuf == NULL)
 		return AE_BAD_PARAMETER;
@@ -523,8 +526,7 @@ acpi_wmi_event_get(device_t self, uint32_t event, ACPI_BUFFER *obuf)
 		if (wmi->guid.nid != event)
 			continue;
 
-		return AcpiEvaluateObject(sc->sc_node->ad_handle, "_WED",
-		    &arg, obuf);
+		return AcpiEvaluateObject(hdl, "_WED", &arg, obuf);
 	}
 
 	return AE_NOT_FOUND;
@@ -615,7 +617,7 @@ static bool
 acpi_wmi_input(struct wmi_t *wmi, uint8_t flag, uint8_t idx)
 {
 
-	if (!(wmi->guid.flags & flag))
+	if ((wmi->guid.flags & flag) == 0)
 		return false;
 
 	if (wmi->guid.count == 0x00)
