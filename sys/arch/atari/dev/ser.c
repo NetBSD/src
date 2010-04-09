@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.49 2010/04/09 11:09:03 tsutsui Exp $	*/
+/*	$NetBSD: ser.c,v 1.50 2010/04/09 11:27:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.49 2010/04/09 11:09:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.50 2010/04/09 11:27:21 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -1058,7 +1058,7 @@ serrxint(struct ser_softc *sc, struct tty *tp)
 	int code;
 	uint8_t rsr;
 	int s;
-	static int lsrmap[8] = {
+	static const int lsrmap[8] = {
 		0,      TTY_PE,
 		TTY_FE, TTY_PE|TTY_FE,
 		TTY_FE, TTY_PE|TTY_FE,
