@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.10 2010/03/08 11:39:42 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.11 2010/04/09 15:45:59 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.10 2010/03/08 11:39:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.11 2010/04/09 15:45:59 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -74,12 +74,6 @@ static const char * const acpi_dalb_ids[] = {
         "PNP0C32", /* Direct Application Launch Button */
         NULL
 };
-
-#ifdef DEBUG
-#define DPRINTF(x)	printf x
-#else
-#define DPRINTF(x)
-#endif
 
 #define DALB_SYSTEM_WAKEUP	0x02
 #define DALB_SYSTEM_RUNTIME	0x80
@@ -238,8 +232,11 @@ acpi_dalb_get_wakeup_hotkeys(void *opaque)
 
 	if (!sc->sc_smpsw_valid)
 		return;
-	DPRINTF(("%s: %s: invoking sysmon_pswitch_event\n",
+
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
+		"%s: %s: invoking sysmon_pswitch_event\n",
 		sc->sc_smpsw.smpsw_name, __func__));
+
 	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }
 
@@ -251,8 +248,11 @@ acpi_dalb_get_runtime_hotkeys(void *opaque)
 
 	if (!sc->sc_smpsw_valid)
 		return;
-	DPRINTF(("%s: %s: invoking sysmon_pswitch_event\n",
+
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
+		"%s: %s: invoking sysmon_pswitch_event\n",
 		sc->sc_smpsw.smpsw_name, __func__));
+
 	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }
 
