@@ -537,20 +537,22 @@ int ssl3_accept(SSL *s)
 				if (s->s3->handshake_buffer)
 					if (!ssl3_digest_cached_records(s))
 						return -1;
-				for (dgst_num=0; dgst_num<SSL_MAX_DIGEST;dgst_num++)	
-					if (s->s3->handshake_dgst[dgst_num]) 
-						{
-						int dgst_size;
-
-						s->method->ssl3_enc->cert_verify_mac(s,EVP_MD_CTX_type(s->s3->handshake_dgst[dgst_num]),&(s->s3->tmp.cert_verify_md[offset]));
-						dgst_size=EVP_MD_CTX_size(s->s3->handshake_dgst[dgst_num]);
-						if (dgst_size < 0)
+				if (s->s3->handshake_dgst != NULL) {
+					for (dgst_num=0; dgst_num<SSL_MAX_DIGEST;dgst_num++)	
+						if (s->s3->handshake_dgst[dgst_num]) 
 							{
-							ret = -1;
-							goto end;
-							}
-						offset+=dgst_size;
-						}		
+							int dgst_size;
+
+							s->method->ssl3_enc->cert_verify_mac(s,EVP_MD_CTX_type(s->s3->handshake_dgst[dgst_num]),&(s->s3->tmp.cert_verify_md[offset]));
+							dgst_size=EVP_MD_CTX_size(s->s3->handshake_dgst[dgst_num]);
+							if (dgst_size < 0)
+								{
+								ret = -1;
+								goto end;
+								}
+							offset+=dgst_size;
+							}		
+					}
 				}
 			break;
 
