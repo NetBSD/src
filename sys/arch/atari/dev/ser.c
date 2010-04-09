@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.46 2010/04/09 10:04:35 tsutsui Exp $	*/
+/*	$NetBSD: ser.c,v 1.47 2010/04/09 10:07:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.46 2010/04/09 10:04:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.47 2010/04/09 10:07:14 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -120,6 +120,8 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.46 2010/04/09 10:04:35 tsutsui Exp $");
 #include <machine/mfp.h>
 #include <machine/intr.h>
 #include <atari/dev/serreg.h>
+
+#include "ioconf.h"
 
 #if !defined(_MILANHW_)
 #include <atari/dev/ym2149reg.h>
@@ -246,8 +248,6 @@ static int  sermatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(ser, sizeof(struct ser_softc),
     sermatch, serattach, NULL, NULL);
-
-extern struct cfdriver ser_cd;
 
 dev_type_open(seropen);
 dev_type_close(serclose);
