@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.69 2010/04/09 12:50:34 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.70 2010/04/09 16:30:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.69 2010/04/09 12:50:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.70 2010/04/09 16:30:15 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,7 +384,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 	}
 
 	tp = cs->cs_ttyp;
-	if(tp == NULL) {
+	if (tp == NULL) {
 		cs->cs_ttyp = tp = ttymalloc();
 		tty_attach(tp);
 		tp->t_dev   = dev;
@@ -401,7 +401,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 	 * Do the following iff this is a first open.
 	 */
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
-		if(tp->t_ispeed == 0) {
+		if (tp->t_ispeed == 0) {
 			tp->t_iflag = TTYDEF_IFLAG;
 			tp->t_oflag = TTYDEF_OFLAG;
 			tp->t_cflag = TTYDEF_CFLAG;
@@ -424,7 +424,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 		/* May never get a status intr. if DCD already on. -gwr */
 		if (((cs->cs_rr0 = cs->cs_zc->zc_csr) & ZSRR0_DCD) != 0)
 			tp->t_state |= TS_CARR_ON;
-		if(cs->cs_softcar)
+		if (cs->cs_softcar)
 			tp->t_state |= TS_CARR_ON;
 	}
 
@@ -694,7 +694,7 @@ zsoverrun(int unit, long *ptime, const char *what)
 {
 	time_t cur_sec = time_second;
 
-	if(*ptime != cur_sec) {
+	if (*ptime != cur_sec) {
 		*ptime = cur_sec;
 		log(LOG_WARNING, "zs%d%c: %s overrun\n", unit >> 1,
 		    (unit & 1) + 'a', what);
