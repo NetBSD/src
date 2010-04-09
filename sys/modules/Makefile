@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2010/02/21 11:14:47 darran Exp $
+#	$NetBSD: Makefile,v 1.40 2010/04/09 13:49:12 ahoka Exp $
 
 .include <bsd.own.mk>
 
@@ -85,6 +85,7 @@ SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	drm
 SUBDIR+=	i915drm
+SUBDIR+=	pad
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
@@ -98,6 +99,7 @@ SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
+SUBDIR+=	pad
 .endif
 
 .include <bsd.own.mk>
