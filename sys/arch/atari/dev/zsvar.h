@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.13 2009/01/28 19:57:37 tjam Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.14 2010/04/09 12:09:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,10 +74,10 @@
  */
 
 struct zschan {
-	u_char		zc_xxx0;
-	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
-	u_char		zc_xxx1;
-	volatile u_char	zc_data;	/* data */
+	uint8_t zc_xxx0;
+	volatile uint8_t zc_csr;	/* ctrl,status, and indirect access */
+	uint8_t zc_xxx1;
+	volatile uint8_t zc_data;	/* data */
 };
 
 struct zsdevice {
@@ -118,7 +118,7 @@ struct zsdevice {
 #define	ZRING_MAKE(t, v)	((t) | (v) << 8)
 
 struct zs_chanstate {
-	struct	zs_chanstate	*cs_next;	/* linked list for zshard() */
+	struct zs_chanstate	*cs_next;	/* linked list for zshard() */
 	volatile struct zschan	*cs_zc;		/* points to hardware regs */
 	int			cs_unit;	/* unit number */
 	struct	tty		*cs_ttyp;	/* ### */
@@ -136,10 +136,10 @@ struct zs_chanstate {
 	 * rather than (or in addition to) the pending value; for these
 	 * cs_creg[] contains the current value.
 	 */
-	u_char	cs_creg[16];		/* current values */
-	u_char	cs_preg[16];		/* pending values */
-	u_char	cs_heldchange;		/* change pending (creg != preg) */
-	u_char	cs_rr0;			/* last rr0 processed */
+	uint8_t	cs_creg[16];		/* current values */
+	uint8_t	cs_preg[16];		/* pending values */
+	uint8_t	cs_heldchange;		/* change pending (creg != preg) */
+	uint8_t	cs_rr0;			/* last rr0 processed */
 
 	/* pure software data, per channel */
 	char	cs_softcar;		/* software carrier */
