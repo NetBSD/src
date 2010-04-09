@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.64 2009/07/19 05:46:15 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.65 2010/04/09 11:30:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.64 2009/07/19 05:46:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.65 2010/04/09 11:30:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,9 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.64 2009/07/19 05:46:15 tsutsui Exp $");
 
 #include <dev/ic/z8530reg.h>
 #include <atari/dev/zsvar.h>
+
+#include "ioconf.h"
+
 #include "zs.h"
 #if NZS > 1
 #error "This driver supports only 1 85C30!"
@@ -222,8 +225,6 @@ static void	zsattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(zs, sizeof(struct zs_softc),
     zsmatch, zsattach, NULL, NULL);
-
-extern struct cfdriver zs_cd;
 
 /* {b,c}devsw[] function prototypes */
 dev_type_open(zsopen);
