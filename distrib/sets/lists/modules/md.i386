@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.2 2009/09/27 12:46:39 jmcneill Exp $
+# $NetBSD: md.i386,v 1.3 2010/04/09 13:49:12 ahoka Exp $
 ./@MODULEDIR@/azalia				base-kernel-modules	kmod
 ./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_freebsd			base-kernel-modules	kmod
@@ -19,6 +19,8 @@
 ./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/radeondrm				base-kernel-modules	kmod
 ./@MODULEDIR@/radeondrm/radeondrm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/pad				base-kernel-modules	kmod
+./@MODULEDIR@/pad/pad.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_pmi				base-kernel-modules	kmod
 ./@MODULEDIR@/tprof_pmi/tprof_pmi.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/viadrm				base-kernel-modules	kmod
