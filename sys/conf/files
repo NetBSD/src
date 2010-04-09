@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.984 2010/03/24 00:31:41 pgoyette Exp $
+#	$NetBSD: files,v 1.985 2010/04/09 10:09:49 nonaka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1042,6 +1042,10 @@ file	dev/ic/lm700x.c			lm700x
 # Philips PCF8584 i2c controller
 define	pcf8584
 file	dev/ic/pcf8584.c		pcf8584
+
+# PCA9564 i2c controller
+define	pca9564
+file	dev/ic/pca9564.c		pca9564
 
 # ACPI power management timer (hardware access, independent of ACPI)
 #
