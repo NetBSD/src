@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.66 2010/04/09 12:09:29 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.67 2010/04/09 12:34:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.66 2010/04/09 12:09:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.67 2010/04/09 12:34:25 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,9 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.66 2010/04/09 12:09:29 tsutsui Exp $");
  * Software state per found chip.
  */
 struct zs_softc {
-	struct	device		zi_dev;    /* base device		  */
-	volatile struct zsdevice *zi_zs;   /* chip registers		  */
-	struct	zs_chanstate	zi_cs[2];  /* chan A and B software state */
+	struct device zi_dev;		/* base device */
+	struct zsdevice *zi_zs;		/* chip registers */
+	struct zs_chanstate zi_cs[2];	/* chan A and B software state */
 };
 
 static void	*zs_softint_cookie;	/* for callback */
@@ -244,9 +244,9 @@ const struct cdevsw zs_cdevsw = {
 /* Interrupt handlers. */
 int		zshard(long);
 static int	zssoft(long);
-static int	zsrint(struct zs_chanstate *, volatile struct zschan *);
-static int	zsxint(struct zs_chanstate *, volatile struct zschan *);
-static int	zssint(struct zs_chanstate *, volatile struct zschan *);
+static int	zsrint(struct zs_chanstate *, struct zschan *);
+static int	zsxint(struct zs_chanstate *, struct zschan *);
+static int	zssint(struct zs_chanstate *, struct zschan *);
 
 static struct zs_chanstate *zslist;
 
@@ -258,7 +258,7 @@ static void	zsoverrun(int, long *, const char *);
 static int	zsparam(struct tty *, struct termios *);
 static int	zsbaudrate(int, int, int *, int *, int *, int *);
 static int	zs_modem(struct zs_chanstate *, int, int);
-static void	zs_loadchannelregs(volatile struct zschan *, uint8_t *);
+static void	zs_loadchannelregs(struct zschan *, uint8_t *);
 static void	zs_shutdown(struct zs_chanstate *);
 
 static int
@@ -280,7 +280,7 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 {
 	struct zs_softc *zi;
 	struct zs_chanstate *cs;
-	volatile struct zsdevice *addr;
+	struct zsdevice *addr;
 	uint8_t tmp;
 
 	addr      = (struct zsdevice *)AD_SCC;
@@ -559,7 +559,7 @@ zshard(long sr)
 {
 	struct zs_chanstate *a;
 #define	b (a + 1)
-	volatile struct zschan *zc;
+	struct zschan *zc;
 	int rr3, intflags = 0, v, i;
 
 	do {
@@ -621,7 +621,7 @@ zshard(long sr)
 }
 
 static int
-zsrint(struct zs_chanstate *cs, volatile struct zschan *zc)
+zsrint(struct zs_chanstate *cs, struct zschan *zc)
 {
 	int c;
 
@@ -640,7 +640,7 @@ zsrint(struct zs_chanstate *cs, volatile struct zschan *zc)
 }
 
 static int
-zsxint(struct zs_chanstate *cs, volatile struct zschan *zc)
+zsxint(struct zs_chanstate *cs, struct zschan *zc)
 {
 	int i = cs->cs_tbc;
 
@@ -656,7 +656,7 @@ zsxint(struct zs_chanstate *cs, volatile struct zschan *zc)
 }
 
 static int
-zssint(struct zs_chanstate *cs, volatile struct zschan *zc)
+zssint(struct zs_chanstate *cs, struct zschan *zc)
 {
 	int rr0;
 
@@ -707,7 +707,7 @@ int
 zssoft(long sr)
 {
 	struct zs_chanstate *cs;
-	volatile struct zschan *zc;
+	struct zschan *zc;
 	struct linesw *line;
 	struct tty *tp;
 	int get, n, c, cc, unit, s;
@@ -1280,7 +1280,7 @@ zs_modem(struct zs_chanstate *cs, int bits, int how)
  * be disabled for the time it takes to write all the registers.
  */
 static void
-zs_loadchannelregs(volatile struct zschan *zc, uint8_t *reg)
+zs_loadchannelregs(struct zschan *zc, uint8_t *reg)
 {
 	int i;
 
