@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.2 2010/04/08 12:36:21 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.3 2010/04/09 04:48:23 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.2 2010/04/08 12:36:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.3 2010/04/09 04:48:23 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -501,13 +501,13 @@ acpi_wmi_event_get(device_t self, uint32_t event, ACPI_BUFFER *obuf)
 	ACPI_OBJECT obj;
 	ACPI_HANDLE hdl;
 
-	hdl = sc->sc_node->ad_handle;
-
 	if (sc == NULL || obuf == NULL)
 		return AE_BAD_PARAMETER;
 
 	if (sc->sc_handler == NULL)
 		return AE_ABORT_METHOD;
+
+	hdl = sc->sc_node->ad_handle;
 
 	obj.Type = ACPI_TYPE_INTEGER;
 	obj.Integer.Value = event;
