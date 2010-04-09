@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.14 2010/04/09 12:09:29 tsutsui Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.15 2010/04/09 12:34:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ struct zsdevice {
 
 struct zs_chanstate {
 	struct zs_chanstate	*cs_next;	/* linked list for zshard() */
-	volatile struct zschan	*cs_zc;		/* points to hardware regs */
+	struct zschan		*cs_zc;		/* points to hardware regs */
 	int			cs_unit;	/* unit number */
 	struct	tty		*cs_ttyp;	/* ### */
 
