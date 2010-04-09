@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.15 2010/04/09 12:34:25 tsutsui Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.16 2010/04/09 17:38:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,7 +81,8 @@ struct zschan {
 };
 
 struct zsdevice {
-	struct	zschan zs_chan[2];
+	struct	zschan zs_chan_a;
+	struct	zschan zs_chan_b;
 };
 
 /*
@@ -118,7 +119,6 @@ struct zsdevice {
 #define	ZRING_MAKE(t, v)	((t) | (v) << 8)
 
 struct zs_chanstate {
-	struct zs_chanstate	*cs_next;	/* linked list for zshard() */
 	struct zschan		*cs_zc;		/* points to hardware regs */
 	int			cs_unit;	/* unit number */
 	struct	tty		*cs_ttyp;	/* ### */
@@ -169,9 +169,6 @@ struct zs_chanstate {
 	volatile u_int	cs_rbput;	/* ring buffer `put' index	*/
 	int		*cs_rbuf;	/* type, value pairs	*/
 };
-
-#define	ZS_CHAN_A	0
-#define	ZS_CHAN_B	1
 
 /*
  * Macros to read and write individual registers (except 0) in a channel.

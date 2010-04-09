@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.71 2010/04/09 17:06:31 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.72 2010/04/09 17:38:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.71 2010/04/09 17:06:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.72 2010/04/09 17:38:43 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,11 +123,12 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.71 2010/04/09 17:06:31 tsutsui Exp $");
  */
 struct zs_softc {
 	device_t sc_dev;		/* base device */
-	struct zsdevice *sc_zs;		/* chip registers */
-	struct zs_chanstate sc_cs[2];	/* chan A and B software state */
+	struct zs_chanstate *sc_cs[2];	/* chan A and B software state */
+
+	struct zs_chanstate sc_cs_store[2];
+	void *sc_sicookie;		/* for callback */
 };
 
-static void	*zs_softint_cookie;	/* for callback */
 /*
  * Define the registers for a closed port
  */
@@ -242,13 +243,11 @@ const struct cdevsw zs_cdevsw = {
 };
 
 /* Interrupt handlers. */
-int		zshard(long);
-static int	zssoft(long);
+static int	zshard(void *);
+static int	zssoft(void *);
 static int	zsrint(struct zs_chanstate *, struct zschan *);
 static int	zsxint(struct zs_chanstate *, struct zschan *);
 static int	zssint(struct zs_chanstate *, struct zschan *);
-
-static struct zs_chanstate *zslist;
 
 /* Routines called from other code. */
 static void	zsstart(struct tty *);
@@ -279,36 +278,45 @@ static void
 zsattach(device_t parent, device_t self, void *aux)
 {
 	struct zs_softc *sc;
+	struct zsdevice *zs;
+	struct zschan *zc;
 	struct zs_chanstate *cs;
-	struct zsdevice *addr;
-	uint8_t tmp;
+	int channel;
 
-	addr      = (struct zsdevice *)AD_SCC;
-	sc        = device_private(self);
+	sc = device_private(self);
 	sc->sc_dev = self;
-	sc->sc_zs = addr;
-	cs        = sc->sc_cs;
 
-	/*
-	 * Get the command register into a known state.
-	 */
-	tmp = addr->zs_chan[ZS_CHAN_A].zc_csr;
-	tmp = addr->zs_chan[ZS_CHAN_A].zc_csr;
-	tmp = addr->zs_chan[ZS_CHAN_B].zc_csr;
-	tmp = addr->zs_chan[ZS_CHAN_B].zc_csr;
+	printf(": serial2 on channel a and modem2 on channel b\n");
 
-	/*
-	 * Do a hardware reset.
-	 */
-	ZS_WRITE(&addr->zs_chan[ZS_CHAN_A], 9, ZSWR9_HARD_RESET);
-	delay(50000);	/*enough ? */
-	ZS_WRITE(&addr->zs_chan[ZS_CHAN_A], 9, 0);
+	zs = (struct zsdevice *)AD_SCC;
 
-	/*
-	 * Initialize both channels
-	 */
-	zs_loadchannelregs(&addr->zs_chan[ZS_CHAN_A], zs_init_regs);
-	zs_loadchannelregs(&addr->zs_chan[ZS_CHAN_B], zs_init_regs);
+	for (channel = 0; channel < 2; channel++) {
+		cs = &sc->sc_cs_store[channel];
+		sc->sc_cs[channel] = cs;
+
+		cs->cs_unit = channel;
+		cs->cs_zc = zc =
+		    (channel == 0) ?  &zs->zs_chan_a : &zs->zs_chan_b;
+		/*
+		 * Get the command register into a known state.
+		 */
+		(void)zc->zc_csr;
+		(void)zc->zc_csr;
+
+		/*
+		 * Do a hardware reset.
+		 */
+		if (channel == 0) {
+			ZS_WRITE(zc, 9, ZSWR9_HARD_RESET);
+			delay(50000);	/* enough ? */
+			ZS_WRITE(zc, 9, 0);
+		}
+
+		/*
+		 * Initialize channel
+		 */
+		zs_loadchannelregs(zc, zs_init_regs);
+	}
 
 	if (machineid & ATARI_TT) {
 		/*
@@ -336,21 +344,33 @@ zsattach(device_t parent, device_t self, void *aux)
 		zs_frequencies = zs_freqs_generic;
 	}
 
-	/* link into interrupt list with order (A,B) (B=A+1) */
-	cs[0].cs_next = &cs[1];
-	cs[1].cs_next = zslist;
-	zslist        = cs;
+	if (intr_establish(36, USER_VEC, 0, (hw_ifun_t)zshard, sc) == NULL)
+		aprint_error_dev(self,
+		    "Can't establish interrupt (Rx chan B)\n");
+	if (intr_establish(32, USER_VEC, 0, (hw_ifun_t)zshard, sc) == NULL)
+		aprint_error_dev(self,
+		    "Can't establish interrupt (Tx empty chan B)\n");
+	if (intr_establish(34, USER_VEC, 0, (hw_ifun_t)zshard, sc) == NULL)
+		aprint_error_dev(self,
+		    "Can't establish interrupt (Ext./Status chan B)\n");
+	if (intr_establish(38, USER_VEC, 0, (hw_ifun_t)zshard, sc) == NULL)
+		aprint_error_dev(self,
+		    "Can't establish interrupt (Special Rx cond. chan B)\n");
+	if (intr_establish(44, USER_VEC, 0, (hw_ifun_t)zshard, sc) == NULL)
+		aprint_error_dev(self,
+		    "Can't establish interrupt (Rx chan A)\n");
+	if (intr_establish(40, USER_VEC, 0, (hw_ifun_t)zshard, sc) == NULL)
+		aprint_error_dev(self,
+		    "Can't establish interrupt (Tx empty chan A)\n");
+	if (intr_establish(42, USER_VEC, 0, (hw_ifun_t)zshard, sc) == NULL)
+		aprint_error_dev(self,
+		    "Can't establish interrupt (Ext./Status chan A)\n");
+	if (intr_establish(46, USER_VEC, 0, (hw_ifun_t)zshard, sc) == NULL)
+		aprint_error_dev(self,
+		    "Can't establish interrupt (Special Rx cond. chan A)\n");
 
-	cs->cs_unit  = 0;
-	cs->cs_zc    = &addr->zs_chan[ZS_CHAN_A];
-	cs++;
-	cs->cs_unit  = 1;
-	cs->cs_zc    = &addr->zs_chan[ZS_CHAN_B];
-
-	zs_softint_cookie = softint_establish(SOFTINT_SERIAL,
-	    (void (*)(void *))zssoft, 0);
-
-	printf(": serial2 on channel a and modem2 on channel b\n");
+	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL,
+	    (void (*)(void *))zssoft, sc);
 }
 
 /*
@@ -369,7 +389,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 	sc = device_lookup_private(&zs_cd, zs);
 	if (sc == NULL)
 		return ENXIO;
-	cs = &sc->sc_cs[unit & 1];
+	cs = sc->sc_cs[unit & 1];
 
 	/*
 	 * When port A (ser02) is selected on the TT, make sure
@@ -462,7 +482,7 @@ zsclose(dev_t dev, int flags, int mode, struct lwp *l)
 	int unit = ZS_UNIT(dev);
 
 	sc = device_lookup_private(&zs_cd, unit >> 1);
-	cs = &sc->sc_cs[unit & 1];
+	cs = sc->sc_cs[unit & 1];
 	tp = cs->cs_ttyp;
 
 	tp->t_linesw->l_close(tp, flags);
@@ -492,7 +512,7 @@ zsread(dev_t dev, struct uio *uio, int flags)
 
 	unit = ZS_UNIT(dev);
 	sc   = device_lookup_private(&zs_cd, unit >> 1);
-	cs   = &sc->sc_cs[unit & 1];
+	cs   = sc->sc_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flags);
@@ -508,7 +528,7 @@ zswrite(dev_t dev, struct uio *uio, int flags)
 
 	unit = ZS_UNIT(dev);
 	sc   = device_lookup_private(&zs_cd, unit >> 1);
-	cs   = &sc->sc_cs[unit & 1];
+	cs   = sc->sc_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
 	return (*tp->t_linesw->l_write)(tp, uio, flags);
@@ -524,7 +544,7 @@ zspoll(dev_t dev, int events, struct lwp *l)
 
 	unit = ZS_UNIT(dev);
 	sc   = device_lookup_private(&zs_cd, unit >> 1);
-	cs   = &sc->sc_cs[unit & 1];
+	cs   = sc->sc_cs[unit & 1];
 	tp   = cs->cs_ttyp;
  
 	return (*tp->t_linesw->l_poll)(tp, events, l);
@@ -539,7 +559,7 @@ zstty(dev_t dev)
 
 	unit = ZS_UNIT(dev);
 	sc   = device_lookup_private(&zs_cd, unit >> 1);
-	cs   = &sc->sc_cs[unit & 1];
+	cs   = sc->sc_cs[unit & 1];
 	return cs->cs_ttyp;
 }
 
@@ -556,67 +576,68 @@ zstty(dev_t dev)
  */
 
 int
-zshard(long sr)
+zshard(void *arg)
 {
-	struct zs_chanstate *a;
-#define	b (a + 1)
+	struct zs_softc *sc;
+	struct zs_chanstate *cs0, *cs1;
 	struct zschan *zc;
-	int rr3, intflags = 0, v, i;
+	int intflags, v, i;
+	uint8_t rr3;
+
+	sc = arg;
+	intflags = 0;
+	cs0 = sc->sc_cs[0];
+	cs1 = sc->sc_cs[1];
 
 	do {
 		intflags &= ~4;
-		for (a = zslist; a != NULL; a = b->cs_next) {
-			rr3 = ZS_READ(a->cs_zc, 3);
-			if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX |
-			    ZSRR3_IP_A_STAT)) {
-				intflags |= 4 | 2;
-				zc = a->cs_zc;
-				i  = a->cs_rbput;
-				if ((rr3 & ZSRR3_IP_A_RX) != 0 &&
-				    (v = zsrint(a, zc)) != 0) {
-					a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-					intflags |= 1;
-				}
-				if ((rr3 & ZSRR3_IP_A_TX) != 0 &&
-				    (v = zsxint(a, zc)) != 0) {
-					a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-					intflags |= 1;
-				}
-				if ((rr3 & ZSRR3_IP_A_STAT) != 0 &&
-				    (v = zssint(a, zc)) != 0) {
-					a->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-					intflags |= 1;
-				}
-				a->cs_rbput = i;
+		rr3 = ZS_READ(cs0->cs_zc, 3);
+		if (rr3 & (ZSRR3_IP_A_RX | ZSRR3_IP_A_TX | ZSRR3_IP_A_STAT)) {
+			intflags |= 4 | 2;
+			zc = cs0->cs_zc;
+			i  = cs0->cs_rbput;
+			if ((rr3 & ZSRR3_IP_A_RX) != 0 &&
+			    (v = zsrint(cs0, zc)) != 0) {
+				cs0->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				intflags |= 1;
 			}
-			if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX |
-			    ZSRR3_IP_B_STAT)) {
-				intflags |= 4 | 2;
-				zc = b->cs_zc;
-				i  = b->cs_rbput;
-				if ((rr3 & ZSRR3_IP_B_RX) != 0 &&
-				    (v = zsrint(b, zc)) != 0) {
-					b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-					intflags |= 1;
-				}
-				if ((rr3 & ZSRR3_IP_B_TX) != 0 &&
-				    (v = zsxint(b, zc)) != 0) {
-					b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-					intflags |= 1;
-				}
-				if ((rr3 & ZSRR3_IP_B_STAT) != 0 &&
-				    (v = zssint(b, zc)) != 0) {
-					b->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
-					intflags |= 1;
-				}
-				b->cs_rbput = i;
+			if ((rr3 & ZSRR3_IP_A_TX) != 0 &&
+			    (v = zsxint(cs0, zc)) != 0) {
+				cs0->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				intflags |= 1;
 			}
+			if ((rr3 & ZSRR3_IP_A_STAT) != 0 &&
+			    (v = zssint(cs0, zc)) != 0) {
+				cs0->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				intflags |= 1;
+			}
+			cs0->cs_rbput = i;
+		}
+		if (rr3 & (ZSRR3_IP_B_RX | ZSRR3_IP_B_TX | ZSRR3_IP_B_STAT)) {
+			intflags |= 4 | 2;
+			zc = cs1->cs_zc;
+			i  = cs1->cs_rbput;
+			if ((rr3 & ZSRR3_IP_B_RX) != 0 &&
+			    (v = zsrint(cs1, zc)) != 0) {
+				cs1->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				intflags |= 1;
+			}
+			if ((rr3 & ZSRR3_IP_B_TX) != 0 &&
+			    (v = zsxint(cs1, zc)) != 0) {
+				cs1->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				intflags |= 1;
+			}
+			if ((rr3 & ZSRR3_IP_B_STAT) != 0 &&
+			    (v = zssint(cs1, zc)) != 0) {
+				cs1->cs_rbuf[i++ & ZLRB_RING_MASK] = v;
+				intflags |= 1;
+			}
+			cs1->cs_rbput = i;
 		}
 	} while (intflags & 4);
-#undef b
 
 	if (intflags & 1)
-		softint_schedule(zs_softint_cookie);
+		softint_schedule(sc->sc_sicookie);
 
 	return intflags & 2;
 }
@@ -705,24 +726,26 @@ zsoverrun(int unit, long *ptime, const char *what)
  * ZS software interrupt.  Scan all channels for deferred interrupts.
  */
 int
-zssoft(long sr)
+zssoft(void *arg)
 {
+	struct zs_softc *sc;
 	struct zs_chanstate *cs;
 	struct zschan *zc;
 	struct linesw *line;
 	struct tty *tp;
-	int get, n, c, cc, unit, s;
+	int chan, get, n, c, cc, s;
 	int retval = 0;
 
+	sc = arg;
 	s = spltty();
-	for (cs = zslist; cs != NULL; cs = cs->cs_next) {
+	for (chan = 0; chan < 2; chan++) {
+		cs = sc->sc_cs[chan];
 		get = cs->cs_rbget;
 again:
 		n = cs->cs_rbput;	/* atomic			*/
 		if (get == n)		/* nothing more on this line	*/
 			continue;
 		retval = 1;
-		unit   = cs->cs_unit;	/* set up to handle interrupts	*/
 		zc     = cs->cs_zc;
 		tp     = cs->cs_ttyp;
 		line   = tp->t_linesw;
@@ -737,7 +760,7 @@ again:
 		 */
 		n -= get;
 		if (n > ZLRB_RING_SIZE) {
-			zsoverrun(unit, &cs->cs_rotime, "ring");
+			zsoverrun(chan, &cs->cs_rotime, "ring");
 			get += n - ZLRB_RING_SIZE;
 			n    = ZLRB_RING_SIZE;
 		}
@@ -749,7 +772,7 @@ again:
 			case ZRING_RINT:
 				c = ZRING_VALUE(c);
 				if ((c & ZSRR1_DO) != 0)
-					zsoverrun(unit, &cs->cs_fotime, "fifo");
+					zsoverrun(chan, &cs->cs_fotime, "fifo");
 				cc = c >> 8;
 				if ((c & ZSRR1_FE) != 0)
 					cc |= TTY_FE;
@@ -810,7 +833,7 @@ again:
 
 			default:
 				log(LOG_ERR, "zs%d%c: bad ZRING_TYPE (%x)\n",
-				    unit >> 1, (unit & 1) + 'a', c);
+				    chan >> 1, (chan & 1) + 'a', c);
 				break;
 			}
 		}
@@ -826,9 +849,9 @@ zsioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 {
 	int unit = ZS_UNIT(dev);
 	struct zs_softc *sc = device_lookup_private(&zs_cd, unit >> 1);
-	struct tty *tp = sc->sc_cs[unit & 1].cs_ttyp;
+	struct zs_chanstate *cs = sc->sc_cs[unit & 1];
+	struct tty *tp = cs->cs_ttyp;
 	int error, s;
-	struct zs_chanstate *cs = &sc->sc_cs[unit & 1];
 
 	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -949,7 +972,7 @@ zsstart(struct tty *tp)
 	int unit = ZS_UNIT(tp->t_dev);
 	struct zs_softc *sc = device_lookup_private(&zs_cd, unit >> 1);
 
-	cs = &sc->sc_cs[unit & 1];
+	cs = sc->sc_cs[unit & 1];
 	s  = spltty();
 
 	/*
@@ -1001,7 +1024,7 @@ zsstop(struct tty *tp, int flag)
 	int s, unit = ZS_UNIT(tp->t_dev);
 	struct zs_softc *sc = device_lookup_private(&zs_cd, unit >> 1);
 
-	cs = &sc->sc_cs[unit & 1];
+	cs = sc->sc_cs[unit & 1];
 	s  = splzs();
 	if ((tp->t_state & TS_BUSY) != 0) {
 		/*
@@ -1056,7 +1079,7 @@ zsparam(struct tty *tp, struct termios *t)
 {
 	int unit = ZS_UNIT(tp->t_dev);
 	struct zs_softc *sc = device_lookup_private(&zs_cd, unit >> 1);
-	struct zs_chanstate *cs = &sc->sc_cs[unit & 1];
+	struct zs_chanstate *cs = sc->sc_cs[unit & 1];
 	int cdiv = 0;	/* XXX gcc4 -Wuninitialized */
 	int clkm = 0;	/* XXX gcc4 -Wuninitialized */
 	int brgm = 0;	/* XXX gcc4 -Wuninitialized */
