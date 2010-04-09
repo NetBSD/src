@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.67 2010/04/09 12:34:25 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.68 2010/04/09 12:38:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.67 2010/04/09 12:34:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.68 2010/04/09 12:38:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,9 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.67 2010/04/09 12:34:25 tsutsui Exp $");
  * Software state per found chip.
  */
 struct zs_softc {
-	struct device zi_dev;		/* base device */
-	struct zsdevice *zi_zs;		/* chip registers */
-	struct zs_chanstate zi_cs[2];	/* chan A and B software state */
+	struct device sc_dev;		/* base device */
+	struct zsdevice *sc_zs;		/* chip registers */
+	struct zs_chanstate sc_cs[2];	/* chan A and B software state */
 };
 
 static void	*zs_softint_cookie;	/* for callback */
@@ -278,15 +278,15 @@ zsmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 static void
 zsattach(struct device *parent, struct device *dev, void *aux)
 {
-	struct zs_softc *zi;
+	struct zs_softc *sc;
 	struct zs_chanstate *cs;
 	struct zsdevice *addr;
 	uint8_t tmp;
 
 	addr      = (struct zsdevice *)AD_SCC;
-	zi        = (struct zs_softc *)dev;
-	zi->zi_zs = addr;
-	cs        = zi->zi_cs;
+	sc        = (struct zs_softc *)dev;
+	sc->sc_zs = addr;
+	cs        = sc->sc_cs;
 
 	/*
 	 * Get the command register into a known state.
@@ -360,15 +360,15 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct tty *tp;
 	struct zs_chanstate *cs;
-	struct zs_softc *zi;
+	struct zs_softc *sc;
 	int unit = ZS_UNIT(dev);
 	int zs = unit >> 1;
 	int error, s;
 
-	zi = device_lookup_private(&zs_cd, zs);
-	if (zi == NULL)
+	sc = device_lookup_private(&zs_cd, zs);
+	if (sc == NULL)
 		return ENXIO;
-	cs = &zi->zi_cs[unit & 1];
+	cs = &sc->sc_cs[unit & 1];
 
 	/*
 	 * When port A (ser02) is selected on the TT, make sure
@@ -457,11 +457,11 @@ zsclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct zs_chanstate *cs;
 	struct tty *tp;
-	struct zs_softc *zi;
+	struct zs_softc *sc;
 	int unit = ZS_UNIT(dev);
 
-	zi = device_lookup_private(&zs_cd, unit >> 1);
-	cs = &zi->zi_cs[unit & 1];
+	sc = device_lookup_private(&zs_cd, unit >> 1);
+	cs = &sc->sc_cs[unit & 1];
 	tp = cs->cs_ttyp;
 
 	tp->t_linesw->l_close(tp, flags);
@@ -485,13 +485,13 @@ int
 zsread(dev_t dev, struct uio *uio, int flags)
 {
 	struct zs_chanstate *cs;
-	struct zs_softc *zi;
+	struct zs_softc *sc;
 	struct tty *tp;
 	int unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = device_lookup_private(&zs_cd, unit >> 1);
-	cs   = &zi->zi_cs[unit & 1];
+	sc   = device_lookup_private(&zs_cd, unit >> 1);
+	cs   = &sc->sc_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
 	return (*tp->t_linesw->l_read)(tp, uio, flags);
@@ -501,13 +501,13 @@ int
 zswrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct zs_chanstate *cs;
-	struct zs_softc *zi;
+	struct zs_softc *sc;
 	struct tty *tp;
 	int unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = device_lookup_private(&zs_cd, unit >> 1);
-	cs   = &zi->zi_cs[unit & 1];
+	sc   = device_lookup_private(&zs_cd, unit >> 1);
+	cs   = &sc->sc_cs[unit & 1];
 	tp   = cs->cs_ttyp;
 
 	return (*tp->t_linesw->l_write)(tp, uio, flags);
@@ -517,13 +517,13 @@ int
 zspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct zs_chanstate *cs;
-	struct zs_softc *zi;
+	struct zs_softc *sc;
 	struct tty *tp;
 	int unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = device_lookup_private(&zs_cd, unit >> 1);
-	cs   = &zi->zi_cs[unit & 1];
+	sc   = device_lookup_private(&zs_cd, unit >> 1);
+	cs   = &sc->sc_cs[unit & 1];
 	tp   = cs->cs_ttyp;
  
 	return (*tp->t_linesw->l_poll)(tp, events, l);
@@ -533,12 +533,12 @@ struct tty *
 zstty(dev_t dev)
 {
 	struct zs_chanstate *cs;
-	struct zs_softc *zi;
+	struct zs_softc *sc;
 	int unit;
 
 	unit = ZS_UNIT(dev);
-	zi   = device_lookup_private(&zs_cd, unit >> 1);
-	cs   = &zi->zi_cs[unit & 1];
+	sc   = device_lookup_private(&zs_cd, unit >> 1);
+	cs   = &sc->sc_cs[unit & 1];
 	return cs->cs_ttyp;
 }
 
@@ -824,10 +824,10 @@ int
 zsioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 {
 	int unit = ZS_UNIT(dev);
-	struct zs_softc *zi = device_lookup_private(&zs_cd, unit >> 1);
-	struct tty *tp = zi->zi_cs[unit & 1].cs_ttyp;
+	struct zs_softc *sc = device_lookup_private(&zs_cd, unit >> 1);
+	struct tty *tp = sc->sc_cs[unit & 1].cs_ttyp;
 	int error, s;
-	struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
+	struct zs_chanstate *cs = &sc->sc_cs[unit & 1];
 
 	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -946,9 +946,9 @@ zsstart(struct tty *tp)
 	struct zs_chanstate *cs;
 	int s, nch;
 	int unit = ZS_UNIT(tp->t_dev);
-	struct zs_softc *zi = device_lookup_private(&zs_cd, unit >> 1);
+	struct zs_softc *sc = device_lookup_private(&zs_cd, unit >> 1);
 
-	cs = &zi->zi_cs[unit & 1];
+	cs = &sc->sc_cs[unit & 1];
 	s  = spltty();
 
 	/*
@@ -998,9 +998,9 @@ zsstop(struct tty *tp, int flag)
 {
 	struct zs_chanstate *cs;
 	int s, unit = ZS_UNIT(tp->t_dev);
-	struct zs_softc *zi = device_lookup_private(&zs_cd, unit >> 1);
+	struct zs_softc *sc = device_lookup_private(&zs_cd, unit >> 1);
 
-	cs = &zi->zi_cs[unit & 1];
+	cs = &sc->sc_cs[unit & 1];
 	s  = splzs();
 	if ((tp->t_state & TS_BUSY) != 0) {
 		/*
@@ -1054,8 +1054,8 @@ static int
 zsparam(struct tty *tp, struct termios *t)
 {
 	int unit = ZS_UNIT(tp->t_dev);
-	struct zs_softc *zi = device_lookup_private(&zs_cd, unit >> 1);
-	struct zs_chanstate *cs = &zi->zi_cs[unit & 1];
+	struct zs_softc *sc = device_lookup_private(&zs_cd, unit >> 1);
+	struct zs_chanstate *cs = &sc->sc_cs[unit & 1];
 	int cdiv = 0;	/* XXX gcc4 -Wuninitialized */
 	int clkm = 0;	/* XXX gcc4 -Wuninitialized */
 	int brgm = 0;	/* XXX gcc4 -Wuninitialized */
