@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.68 2010/04/09 12:38:48 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.69 2010/04/09 12:50:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.68 2010/04/09 12:38:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.69 2010/04/09 12:50:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.68 2010/04/09 12:38:48 tsutsui Exp $");
  * Software state per found chip.
  */
 struct zs_softc {
-	struct device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	struct zsdevice *sc_zs;		/* chip registers */
 	struct zs_chanstate sc_cs[2];	/* chan A and B software state */
 };
@@ -220,10 +220,10 @@ static u_long zs_freqs_generic[] = {
 static u_long *zs_frequencies;
 
 /* Definition of the driver for autoconfig. */
-static int	zsmatch(struct device *, struct cfdata *, void *);
-static void	zsattach(struct device *, struct device *, void *);
+static int	zsmatch(device_t, cfdata_t, void *);
+static void	zsattach(device_t, device_t, void *);
 
-CFATTACH_DECL(zs, sizeof(struct zs_softc),
+CFATTACH_DECL_NEW(zs, sizeof(struct zs_softc),
     zsmatch, zsattach, NULL, NULL);
 
 /* {b,c}devsw[] function prototypes */
@@ -262,11 +262,11 @@ static void	zs_loadchannelregs(struct zschan *, uint8_t *);
 static void	zs_shutdown(struct zs_chanstate *);
 
 static int
-zsmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+zsmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int zs_matched = 0;
 
-	if (strcmp("zs", auxp) || zs_matched)
+	if (strcmp("zs", aux) || zs_matched)
 		return 0;
 	zs_matched = 1;
 	return 1;
@@ -276,7 +276,7 @@ zsmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
  * Attach a found zs.
  */
 static void
-zsattach(struct device *parent, struct device *dev, void *aux)
+zsattach(device_t parent, device_t self, void *aux)
 {
 	struct zs_softc *sc;
 	struct zs_chanstate *cs;
@@ -284,7 +284,8 @@ zsattach(struct device *parent, struct device *dev, void *aux)
 	uint8_t tmp;
 
 	addr      = (struct zsdevice *)AD_SCC;
-	sc        = (struct zs_softc *)dev;
+	sc        = device_private(self);
+	sc->sc_dev = self;
 	sc->sc_zs = addr;
 	cs        = sc->sc_cs;
 
