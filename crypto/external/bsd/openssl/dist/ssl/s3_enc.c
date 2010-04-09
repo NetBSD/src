@@ -578,7 +578,7 @@ void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 		{
 		BIO_write (s->s3->handshake_buffer,(void *)buf,len);
 		} 
-	else 
+	else if (s->s3->handshake_dgst != NULL)
 		{
 		int i;
 		for (i=0;i< SSL_MAX_DIGEST;i++) 
