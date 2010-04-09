@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1378 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1379 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -580,3 +580,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		connected to Atari ROM cartridge slot. [tsutsui 20100401]
 	agp(4): Add support for the Intel 82855GM AGP port. [jakllsch 20100404]
 	acpi(4): Updated ACPICA to 20100121. [jruoho 20100408]
+	fss(4): Add snapshot support for MSDOS file systems. [hannken 20100409]
