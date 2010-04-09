@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.47 2010/04/09 10:07:14 tsutsui Exp $	*/
+/*	$NetBSD: ser.c,v 1.48 2010/04/09 10:49:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.47 2010/04/09 10:07:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.48 2010/04/09 10:49:37 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -158,7 +158,7 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.47 2010/04/09 10:07:14 tsutsui Exp $");
 #define RXHIWAT   (RXBUFSIZE >> 2)
 
 struct ser_softc {
-	struct device	 sc_dev;
+	device_t	 sc_dev;
 	struct tty	*sc_tty;
 
 	struct callout sc_diag_ch;
@@ -243,10 +243,10 @@ static void sertxint(struct ser_softc *, struct tty*);
 /*
  * Autoconfig stuff
  */
-static void serattach(struct device *, struct device *, void *);
-static int  sermatch(struct device *, struct cfdata *, void *);
+static int  sermatch(device_t, cfdata_t, void *);
+static void serattach(device_t, device_t, void *);
 
-CFATTACH_DECL(ser, sizeof(struct ser_softc),
+CFATTACH_DECL_NEW(ser, sizeof(struct ser_softc),
     sermatch, serattach, NULL, NULL);
 
 dev_type_open(seropen);
@@ -265,12 +265,12 @@ const struct cdevsw ser_cdevsw = {
 
 /*ARGSUSED*/
 static	int
-sermatch(struct device *pdp, struct cfdata *cfp, void *auxp)
+sermatch(device_t parent, cfdata_t cf, void *aux)
 {
 	static int ser_matched = 0;
 
 	/* Match at most one ser unit */
-	if (strcmp((char *)auxp, "ser") || ser_matched)
+	if (strcmp((char *)aux, "ser") || ser_matched)
 		return 0;
 
 	ser_matched = 1;
@@ -279,24 +279,26 @@ sermatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 
 /*ARGSUSED*/
 static void
-serattach(struct device *pdp, struct device *dp, void *auxp)
+serattach(device_t parent, device_t self, void *aux)
 {
-	struct ser_softc *sc = device_private(dp);
+	struct ser_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
 
 	if (intr_establish(1, USER_VEC, 0, (hw_ifun_t)sermintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (1)\n");
+		aprint_error(": Can't establish interrupt (1)\n");
 	if (intr_establish(2, USER_VEC, 0, (hw_ifun_t)sermintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (2)\n");
+		aprint_error(": Can't establish interrupt (2)\n");
 	if (intr_establish(14, USER_VEC, 0, (hw_ifun_t)sermintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (14)\n");
+		aprint_error(": Can't establish interrupt (14)\n");
 	if (intr_establish(9, USER_VEC, 0, (hw_ifun_t)sertrintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (9)\n");
+		aprint_error(": Can't establish interrupt (9)\n");
 	if (intr_establish(10, USER_VEC, 0, (hw_ifun_t)sertrintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (10)\n");
+		aprint_error(": Can't establish interrupt (10)\n");
 	if (intr_establish(11, USER_VEC, 0, (hw_ifun_t)sertrintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (11)\n");
+		aprint_error(": Can't establish interrupt (11)\n");
 	if (intr_establish(12, USER_VEC, 0, (hw_ifun_t)sertrintr, sc) == NULL)
-		printf("serattach: Can't establish interrupt (12)\n");
+		aprint_error(": Can't establish interrupt (12)\n");
 
 	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, sersoft, sc);
 
@@ -322,10 +324,10 @@ serattach(struct device *pdp, struct device *dp, void *auxp)
 		SET(sc->sc_hwflags, SER_HW_CONSOLE);
 #endif /* SERCONSOLE > 0 */
 
-	printf("\n");
+	aprint_normal(": modem1 on 68901 MFP1 USART\n");
 	if (ISSET(sc->sc_hwflags, SER_HW_CONSOLE)) {
 		serinit(CONSBAUD);
-		printf("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(self, "console\n");
 	}
 }
 
@@ -337,7 +339,7 @@ serstatus(struct ser_softc *sc, char *str)
 	struct tty *tp = sc->sc_tty;
 
 	printf("%s: %s %sclocal  %sdcd %sts_carr_on %sdtr %stx_stopped\n",
-	    sc->sc_dev.dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CLOCAL) ? "+" : "-",
 	    ISSET(sc->sc_msr, MCR_DCD) ? "+" : "-",
 	    ISSET(tp->t_state, TS_CARR_ON) ? "+" : "-",
@@ -345,7 +347,7 @@ serstatus(struct ser_softc *sc, char *str)
 	    sc->sc_tx_stopped ? "+" : "-");
 
 	printf("%s: %s %scrtscts %scts %sts_ttstop  %srts %srx_blocked\n",
-	    sc->sc_dev.dv_xname, str,
+	    device_xname(sc->sc_dev), str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? "+" : "-",
 	    ISSET(sc->sc_msr, MCR_CTS) ? "+" : "-",
 	    ISSET(tp->t_state, TS_TTSTOP) ? "+" : "-",
@@ -1006,7 +1008,7 @@ serdiag(void *arg)
 
 	log(LOG_WARNING,
 	    "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    sc->sc_dev.dv_xname,
+	    device_xname(sc->sc_dev),
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
