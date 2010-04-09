@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.142 2010/04/06 13:50:22 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.143 2010/04/09 11:47:17 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.142 2010/04/06 13:50:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.143 2010/04/09 11:47:17 njoly Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1617,7 +1617,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	if (l->l_lcpage != NULL) {
 		lcp = l->l_lcpage;
 		*uaddr = lcp->lcp_uaddr + (vaddr_t)l->l_lwpctl - lcp->lcp_kaddr;
-		return (EINVAL);
+		return 0;
 	}
 
 	/* First time around, allocate header structure for the process. */
