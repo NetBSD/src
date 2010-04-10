@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.53 2009/10/15 00:29:40 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.54 2010/04/10 19:41:54 pooka Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -306,7 +306,6 @@ echo '	0,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
 	VDESC_NO_OFFSET,
-	NULL,
 };
 '
 
@@ -370,8 +369,7 @@ function doit() {
 	do_offset("kauth_cred_t");
 	# componentname
 	do_offset("struct componentname *");
-	# transport layer information
-	printf ("\tNULL,\n};\n");
+	printf ("};\n");
 
 	# Define function.
 	printf("int\n%s(", toupper(name));
