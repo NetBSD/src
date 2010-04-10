@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.44 2010/04/10 04:49:17 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.45 2010/04/10 04:56:26 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,37 +31,7 @@
 .Nm acpi
 .Nd Advanced Configuration and Power Interface
 .Sh SYNOPSIS
-.Cd "acpi0     at mainbus0"
-.Cd "acpiacad* at acpi?"
-.Cd "acpibat*  at acpi?"
-.Cd "acpibut*  at acpi?"
-.Cd "acpidalb* at acpi?"
-.Cd "acpiec*   at acpi?"
-.Cd "acpiecdt* at acpi?"
-.Cd "acpilid*  at acpi?"
-.Cd "acpismbus* at acpi?"
-.Cd "acpitz*   at acpi?"
-.Cd "aibs*     at acpi?"
-.Cd "asus*     at acpi?"
-.Cd "attimer*  at acpi?"
-.Cd "com*      at acpi?"
-.Cd "fdc*      at acpi?"
-.Cd "hpet*     at acpi?"
-.Cd "hpqlb*    at acpi?"
-.Cd "joy*      at acpi?"
-.Cd "lpt*      at acpi?"
-.Cd "mpu*      at acpi?"
-.Cd "npx*      at acpi?"
-.Cd "pckbc*    at acpi?"
-.Cd "pcppi*    at acpi?"
-.Cd "sony*     at acpi?"
-.Cd "spic*     at acpi?"
-.Cd "thinkpad* at acpi?"
-.Cd "ug*       at acpi?"
-.Cd "vald*     at acpi?"
-.Cd "wb*       at acpi?"
-.Cd "wss*      at acpi?"
-.Cd "ym*       at acpi?"
+.Cd "acpi0	at mainbus0"
 .Pp
 .Cd "options   ACPI_DEBUG"
 .Cd "options   ACPIVERBOSE"
@@ -213,6 +183,9 @@ SMBus via Control Method Interface.
 .It acpitz
 .Tn ACPI
 thermal zones.
+.It acpiwmi
+.Tn ACPI
+support for Windows Management Instrumentation.
 .It aibs
 ASUSTeK AI Booster ACPI ATK0110 voltage, temperature and fan sensor.
 .It asus
