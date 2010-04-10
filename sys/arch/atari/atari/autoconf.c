@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 2010/04/10 16:14:07 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.59 2010/04/10 17:40:36 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2010/04/10 16:14:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2010/04/10 17:40:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2010/04/10 16:14:07 tsutsui Exp $"
 #include <atari/atari/device.h>
 
 static void findroot(void);
-void mbattach(struct device *, struct device *, void *);
-int mbprint(void *, const char *);
 int mbmatch(struct device *, struct cfdata *, void *);
+void mbattach(struct device *, struct device *, void *);
+#if 0
+int mbprint(void *, const char *);
+#endif
 
 int atari_realconfig;
 #include <sys/kernel.h>
@@ -284,6 +286,7 @@ mbattach(struct device *pdp, struct device *dp, void *auxp)
 	config_found(dp, __UNCONST("avmebus") , simple_devprint);
 }
 
+#if 0
 int
 mbprint(void *auxp, const char *pnp)
 {
@@ -292,3 +295,4 @@ mbprint(void *auxp, const char *pnp)
 		aprint_normal("%s at %s", (char *)auxp, pnp);
 	return UNCONF;
 }
+#endif
