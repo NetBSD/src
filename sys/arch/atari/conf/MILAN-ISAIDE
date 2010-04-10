@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.65 2010/04/10 02:01:30 tsutsui Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.66 2010/04/10 02:29:25 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.25 2010/04/10 01:59:40 tsutsui Exp $
-#		NetBSD: GENERIC.in,v 1.85 2010/04/01 17:07:51 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.86 2010/04/10 02:27:52 tsutsui Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -72,7 +72,6 @@ options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-options SERCONSOLE # modem1 console support, breaks Falcon
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
 options TRY_SCSI_LINKED_COMMANDS=0x7f
