@@ -1,11 +1,11 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.68 2010/04/01 17:10:06 tsutsui Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.69 2010/04/10 02:01:30 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: MILAN.in,v 1.24 2010/04/01 17:07:51 tsutsui Exp $
+#		NetBSD: MILAN.in,v 1.25 2010/04/10 01:59:40 tsutsui Exp $
 #		NetBSD: GENERIC.in,v 1.85 2010/04/01 17:07:51 tsutsui Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
@@ -115,7 +115,6 @@ pcib0 at mainbus0 # PCI-bus
 pci0 at pcib0
 nvr0 at mainbus0 # nvram driver
 ser0 at mainbus0
-ne0 at mainbus0 # EtherNEC
 fdcisa0 at isa? port 0x3f0 irq 6 drq 2 # standard PC floppy contr.
 fdisa0 at fdcisa0 drive 0
 pciide* at pci? dev ? function ? flags 0x0000 # GENERIC pciide driver
