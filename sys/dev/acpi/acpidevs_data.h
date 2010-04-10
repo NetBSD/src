@@ -1,4 +1,4 @@
-/*	$NetBSD: acpidevs_data.h,v 1.15 2010/04/10 06:10:13 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.16 2010/04/10 16:45:51 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1301,6 +1301,14 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Compaq 2400/9600 Modem (TBD)",
 	},
 	{
+	    "IFX0102",
+	    "Infineon Trusted Platform Module",
+	},
+	{
+	    "NSC1100",
+	    "NSC Trusted Platform Module",
+	},
+	{
 	    "ACPI0001",
 	    "SMBus 1.0 Host Controller",
 	},
@@ -1355,10 +1363,6 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "ACPI000E",
 	    "Wake Alarm Device",
-	},
-	{
-	    "IFX0102",
-	    "Infineon Trusted Platform Module",
 	},
 	{
 	    "INT0800",
