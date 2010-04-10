@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.38 2010/04/10 19:03:56 pgoyette Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.39 2010/04/10 21:10:10 wiz Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -223,7 +223,9 @@ state based on hardware status.
 The
 .Fa sme_set_limits
 callback can be invoked with the third argument (a pointer to the new
-limits) set to a NULL pointer.
+limits) set to a
+.Dv NULL
+pointer.
 Device drivers must recognize this as a request to restore the sensor
 limits to their original, boot-time values.
 .Pp
