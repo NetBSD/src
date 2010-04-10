@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.105 2010/04/03 13:55:09 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.106 2010/04/10 19:01:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.105 2010/04/03 13:55:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.106 2010/04/10 19:01:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1053,6 +1053,7 @@ sme_remove_userprops(void)
 	prop_dictionary_t sdict;
 	envsys_data_t *edata = NULL;
 	char tmp[ENVSYS_DESCLEN];
+	sysmon_envsys_lim_t lims;
 	int ptype;
 
 	mutex_enter(&sme_global_mtx);
@@ -1090,10 +1091,6 @@ sme_remove_userprops(void)
 				    "maximum-capacity");
 				ptype = PENVSYS_EVENT_CAPACITY;
 			}
-			if (ptype != 0)
-				sme_event_unregister(sme, edata->desc, ptype);
-
-			ptype = 0;
 			if (edata->upropset & PROP_WARNMAX) {
 				prop_dictionary_remove(sdict, "warning-max");
 				ptype = PENVSYS_EVENT_LIMITS;
@@ -1113,9 +1110,6 @@ sme_remove_userprops(void)
 				prop_dictionary_remove(sdict, "critical-min");
 				ptype = PENVSYS_EVENT_LIMITS;
 			}
-			if (ptype != 0)
-				sme_event_unregister(sme, edata->desc, ptype);
-
 			if (edata->upropset & PROP_RFACT) {
 				(void)sme_sensor_upint32(sdict, "rfact", 0);
 				edata->rfact = 0;
@@ -1125,8 +1119,36 @@ sme_remove_userprops(void)
 				(void)sme_sensor_upstring(sdict,
 			  	    "description", edata->desc);
 
-			if (edata->upropset)
-				edata->upropset = 0;
+			if (ptype == 0)
+				continue;
+
+			/*
+			 * If there were any limit values removed, we
+			 * need to revert to initial limits.
+			 *
+			 * First, tell the driver that we need it to 
+			 * restore any h/w limits which may have been 
+			 * changed to stored, boot-time values.  Then
+			 * we need to retrieve those limits and update
+			 * the event data in the dictionary.
+			 */
+			if (sme->sme_set_limits) {
+				DPRINTF(("%s: reset limits for %s %s\n",
+					__func__, sme->sme_name, edata->desc));
+				(*sme->sme_set_limits)(sme, edata, NULL, NULL);
+			}
+			if (sme->sme_get_limits) {
+				DPRINTF(("%s: retrieve limits for %s %s\n",
+					__func__, sme->sme_name, edata->desc));
+				lims = edata->limits;
+				(*sme->sme_get_limits)(sme, edata, &lims,
+						       &edata->upropset);
+			}
+			if (edata->upropset) {
+				DPRINTF(("%s: install limits for %s %s\n",
+					__func__, sme->sme_name, edata->desc));
+				sme_update_limits(sme, edata);
+			}
 		}
 
 		/*
