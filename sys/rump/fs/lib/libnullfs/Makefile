@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2010/03/30 00:59:07 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/04/10 21:32:59 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../miscfs/nullfs
 
-LIB=	rumpfs_nullfs
+LIB=	rumpfs_null
 
 SRCS=	null_vfsops.c null_vnops.c
 
