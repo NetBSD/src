@@ -1,5 +1,5 @@
 #
-#	$NetBSD: HADES.in,v 1.10 2010/04/01 17:07:51 tsutsui Exp $
+#	$NetBSD: HADES.in,v 1.11 2010/04/10 01:59:40 tsutsui Exp $
 #
 # Medusa-Hades
 #
@@ -21,7 +21,6 @@ zs0		at mainbus0	# Serial support through 8530
 nvr0		at mainbus0	# nvram driver
 lp0		at mainbus0	# centronics printer
 ser0		at mainbus0	# UART on first 68901 (ttyB0)
-ne0		at mainbus0	# EtherNEC on Atari ROM cartridge slot
 grfbus0		at mainbus0	# bitmapped display's
 grfet0		at grfbus0	# et4000/et6000/et6100 consoles
 ite0		at grfet0
