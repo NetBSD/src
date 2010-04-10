@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump-stdinc.h,v 1.2 2007/07/24 11:53:50 drochner Exp $	*/
+/*	$NetBSD: tcpdump-stdinc.h,v 1.3 2010/04/10 08:33:35 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 - 2003
@@ -151,15 +151,15 @@ typedef char* caddr_t;
   #undef htonl
   #undef htons
 
-  extern __inline__ unsigned long __ntohl (unsigned long x);
-  extern __inline__ unsigned short __ntohs (unsigned short x);
+  static __inline__ unsigned long __ntohl (unsigned long x);
+  static __inline__ unsigned short __ntohs (unsigned short x);
 
   #define ntohl(x)  __ntohl(x)
   #define ntohs(x)  __ntohs(x)
   #define htonl(x)  __ntohl(x)
   #define htons(x)  __ntohs(x)
 
-  extern __inline__ unsigned long __ntohl (unsigned long x)
+  static __inline__ unsigned long __ntohl (unsigned long x)
   {
     __asm__ ("xchgb %b0, %h0\n\t"   /* swap lower bytes  */
              "rorl  $16, %0\n\t"    /* swap words        */
@@ -168,7 +168,7 @@ typedef char* caddr_t;
     return (x);
   }
 
-  extern __inline__ unsigned short __ntohs (unsigned short x)
+  static __inline__ unsigned short __ntohs (unsigned short x)
   {
     __asm__ ("xchgb %b0, %h0"       /* swap bytes */
             : "=q" (x) : "0" (x));
