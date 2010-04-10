@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailwrapper.8,v 1.11 2002/02/08 01:38:50 ross Exp $
+.\"	$NetBSD: mailwrapper.8,v 1.12 2010/04/10 08:29:54 jruoho Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,84 +30,106 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" The following requests are required for all man pages.
-.Dd December 16, 1998
+.Dd April 10, 2010
 .Dt MAILWRAPPER 8
 .Os
 .Sh NAME
 .Nm mailwrapper
-.Nd invoke appropriate MTA software based on configuration file
+.Nd invoke appropriate
+.Tn MTA
+software based on configuration file
 .Sh SYNOPSIS
 Special. See below.
 .Sh DESCRIPTION
-At one time, the only Mail Transfer Agent (MTA) software easily available
-was
-.Xr sendmail 8 .
-As a result of this, most Mail User Agents (MUAs) such as
-.Xr mail 1
-had the path and calling conventions expected by
-.Xr sendmail 8
-compiled in.
+Once upon time, the only Mail Transfer Agent
+.Pq Tn MTA
+software easily available was
+.Dq sendmail .
+This famous
+.Tn MTA
+was written by
+.An Eric Allman
+and first appeared in
+.Bx 4.1 .
+The legacy of this
+.Tn MTA
+affected most Mail User Agents
+.Pq Tn MUAs
+such as
+.Xr mail 1 ;
+the path and calling conventions expected by
+.Dq sendmail
+were compiled in.
 .Pp
-Times have changed, however.
+But times changed.
 On a modern
 .Nx
-system, the administrator may wish to use one of several
-available MTAs.
+system, the administrator may wish to use one of several available
+.Tn MTAs .
 .Pp
-It would be difficult to modify all MUA software typically available
-on a system, so most of the authors of alternative MTAs have written
-their front end message submission programs so that they use the same
-calling conventions as
-.Xr sendmail 8
-and may be put into place instead of
-.Xr sendmail 8
-in
-.Pa /usr/sbin/sendmail .
+It would be difficult to modify all
+.Tn MUA
+software typically available on a system,
+so most of the authors of alternative
+.Tn MTAs
+have written their front end message submission programs
+that may appear in the place of
+.Pa /usr/sbin/sendmail ,
+but still follow the same calling conventions as
+.Dq sendmail .
 .Pp
-.Xr sendmail 8
+The
+.Dq sendmail
+.Tn MTA
 also typically has aliases named
 .Xr mailq 1
 and
 .Xr newaliases 1
-linked to it. The program knows to behave differently when its
+linked to it.
+The program knows to behave differently when its
 .Va argv[0]
 is
 .Dq mailq
 or
 .Dq newaliases
-and behaves appropriately. Typically, replacement MTAs provide similar
-functionality, either through a program that also switches behavior
-based on calling name, or through a set of programs that provide
-similar functionality.
+and behaves appropriately.
+Typically, replacement
+.Tn MTAs
+provide similar functionality, either through a program that also
+switches behavior based on calling name, or through a set of programs
+that provide similar functionality.
 .Pp
 Although having replacement programs that plug replace
-.Xr sendmail 8
-helps in installing alternative MTAs, it essentially makes the
-configuration of the system depend on hand installing new programs in
+.Dq sendmail
+helps in installing alternative
+.Tn MTAs ,
+it essentially makes the configuration of the system depend
+on hand installing new programs in
 .Pa /usr .
 This leads to configuration problems for many administrators, since
-they may wish to install a new MTA without altering the system
-provided
+they may wish to install a new
+.Tn MTA
+without altering the system provided
 .Pa /usr .
 (This may be, for example, to avoid having upgrade problems when a new
 version of the system is installed over the old.)
 They may also have a shared
 .Pa /usr
-among several
-machines, and may wish to avoid placing implicit configuration
-information in a read-only
+among several machines, and may wish to avoid placing
+implicit configuration information in a read-only
 .Pa /usr .
 .Pp
 The
 .Nm
 program is designed to replace
 .Pa /usr/sbin/sendmail
-and to invoke an appropriate MTA instead of
-.Xr sendmail 8
+and to invoke an appropriate
+.Tn MTA
 based on configuration information placed in
 .Pa /etc/mailer.conf .
-This permits the administrator to configure which MTA is to be invoked on
-the system at run time.
+This permits the administrator to configure which
+.Tn MTA
+is to be invoked on the system at run time.
 .Sh EXIT STATUS
 .Nm
 exits 0 on success, and \*[Gt]0 if an error occurs.
@@ -128,17 +150,20 @@ or does not contain a mapping for the name under which it was invoked.
 .Xr mail 1 ,
 .Xr mailq 1 ,
 .Xr newaliases 1 ,
-.Xr mailer.conf 5 ,
-.Xr sendmail 8
+.Xr postfix 1 ,
+.Xr mailer.conf 5
 .Sh HISTORY
+The
 .Nm
-appeared in
+program appeared in
 .Nx 1.4 .
 .Sh AUTHORS
 .An Perry E. Metzger Aq perry@piermont.com
 .Sh BUGS
-The entire reason this program exists is a crock. Instead, a command
-for how to submit mail should be standardized, and all the "behave
-differently if invoked with a different name" behavior of things like
+The entire reason this program exists is a crock.
+Instead, a command
+for how to submit mail should be standardized, and all the
+.Dq behave differently if invoked with a different name
+behavior of things like
 .Xr mailq 1
 should go away.
