@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.24 2010/04/01 17:07:51 tsutsui Exp $
+#	$NetBSD: MILAN.in,v 1.25 2010/04/10 01:59:40 tsutsui Exp $
 #
 # Milan
 #
@@ -45,7 +45,6 @@ pcib0 		at mainbus0			# PCI-bus
 pci0 		at pcib0
 nvr0 		at mainbus0			# nvram driver
 ser0 		at mainbus0
-ne0		at mainbus0			# EtherNEC
 fdcisa0 	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy contr.
 fdisa0 		at fdcisa0 drive 0
 
