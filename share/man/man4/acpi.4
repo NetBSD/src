@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.43 2010/03/19 04:04:27 cnst Exp $
+.\" $NetBSD: acpi.4,v 1.44 2010/04/10 04:49:17 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 9, 2010
+.Dd April 10, 2010
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -127,7 +127,7 @@ in the build directory.
 Few
 .Xr sysctl 8
 variables are directly relevant for
-.Nm :
+.Tn ACPI .
 .Bl -inset -width hw.acpi.supported_state -offset 3n
 .It Ic hw.acpi.root
 is the
@@ -136,8 +136,22 @@ root pointer.
 .It Ic hw.acpi.supported_states
 is a list of the supported
 .Tn ACPI
-states (see
-.Xr sysctl 7 ) .
+sleep states.
+The list can contain the following values:
+.Bl -tag -width XS1X -offset indent
+.It S0
+fully running
+.It S1
+power on suspend (CPU and hard disks are off)
+.It S2
+similar to S3, usually not implemented
+.It S3
+suspend-to-RAM
+.It S4
+suspend-to-disk (not supported)
+.It S5
+power off
+.El
 .It Ic machdep.acpi_vbios_reset
 defines the handling of the graphics card.
 The supported values are:
