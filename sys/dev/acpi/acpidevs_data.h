@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.14 2010/04/09 16:33:06 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.15 2010/04/10 06:10:13 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.16 2010/04/09 16:32:17 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.17 2010/04/10 06:09:24 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1143,6 +1143,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP8390",
 	    "Generic network adapter",
+	},
+	{
+	    "ITE8708",
+	    "ITE Tech IrDA Infrared device",
 	},
 	{
 	    "NSC6001",
