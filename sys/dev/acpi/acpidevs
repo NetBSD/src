@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.17 2010/04/10 06:09:24 jruoho Exp $
+# $NetBSD: acpidevs,v 1.18 2010/04/10 16:45:51 jruoho Exp $
 #
 # Extracted from:
 # http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/devids.txt
@@ -350,6 +350,9 @@ PNPB02F	Joystick/Game port
 # ***** Modems - PNPCxxx-Dxxx****************************
 PNPC000	Compaq 14400 Modem (TBD)
 PNPC001	Compaq 2400/9600 Modem (TBD)
+# **** TPM chips ****
+IFX0102	Infineon Trusted Platform Module
+NSC1100	NSC Trusted Platform Module
 # ***** ACPI specific devices *****
 ACPI0001	SMBus 1.0 Host Controller
 ACPI0002	Smart Battery Subsystem
@@ -366,5 +369,4 @@ ACPI000C	Processor Aggregator
 ACPI000D	Power Meter
 ACPI000E	Wake Alarm Device
 # **** Others ****
-IFX0102	Infineon Trusted Platform Module
 INT0800	Intel Firmware Hub Device
