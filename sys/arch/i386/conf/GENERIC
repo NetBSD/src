@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.978 2010/04/09 14:02:05 ahoka Exp $
+# $NetBSD: GENERIC,v 1.979 2010/04/10 17:55:25 jruoho Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.978 $"
+#ident 		"GENERIC-$Revision: 1.979 $"
 
 maxusers	64		# estimated number of users
 
@@ -376,8 +376,10 @@ mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+sony*		at acpi?		# Sony Miscellaneous Controller
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug*		at acpi?		# Abit uGuru Hardware monitor
+vald*		at acpi?		# Toshiba Libretto hotkeys
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
 wmidell*	at acpiwmibus?		# Dell WMI mappings
@@ -388,12 +390,6 @@ ym*		at acpi?		# Yamaha OPL3-SA[23] audio
 # Sony Vaio jog dial
 spic*		at acpi?		# Sony Programmable I/O Controller
 wsmouse*	at spic?
-
-# Sony LCD brightness etc.
-sony* 		at acpi?		# Sony Miscellaneous Controller
-
-# Toshiba Libretto devices
-vald*		at acpi?
 
 # Plug-and-Play BIOS and attached devices
 
