@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.215 2010/03/29 13:11:32 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.216 2010/04/10 19:41:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -475,12 +475,6 @@ struct vnodeop_desc {
 	int		vdesc_vpp_offset;	/* return vpp location */
 	int		vdesc_cred_offset;	/* cred location, if any */
 	int		vdesc_componentname_offset; /* if any */
-	/*
-	 * Finally, we've got a list of private data (about each operation)
-	 * for each transport layer.  (Support to manage this list is not
-	 * yet part of BSD.)
-	 */
-	void *		*vdesc_transports;
 };
 
 #ifdef _KERNEL
