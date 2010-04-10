@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.23 2010/04/01 05:26:48 macallan Exp $ */
+/*	$NetBSD: dbcool.c,v 1.24 2010/04/10 19:02:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.23 2010/04/01 05:26:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.24 2010/04/10 19:02:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1812,6 +1812,15 @@ dbcool_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	    (*props & PROP_CRITMAX) &&
 	    (limits->sel_critmin >= limits->sel_critmax)) 
 		*props &= ~(PROP_CRITMIN | PROP_CRITMAX);
+
+	/*
+	 * If this is the first time through, save these values
+	 * in case user overrides them and then requests a reset.
+	 */
+	if (sc->sc_defprops[index] == 0) {
+		sc->sc_defprops[index] = *props | PROP_DRIVER_LIMITS;
+		sc->sc_deflims[index]  = *limits;
+	}
 }
 
 static void
@@ -1905,6 +1914,10 @@ dbcool_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	int index = edata->sensor;
 	struct dbcool_softc *sc = sme->sme_cookie;
 
+	if (limits == NULL) {
+		limits = &sc->sc_deflims[index];
+		props  = &sc->sc_defprops[index];
+	}
 	switch (edata->units) {
 	    case ENVSYS_STEMP:
 		dbcool_set_temp_limits(sc, index, limits, props);
@@ -1944,12 +1957,16 @@ dbcool_set_temp_limits(struct dbcool_softc *sc, int idx,
 			else if (limit > 127)
 				limit = 127;
 		}
-	} else
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg,
+				      (uint8_t)limit);
+	} else if (*props & PROP_DRIVER_LIMITS) {
 		if (sc->sc_temp_offset)
 			limit = 0x00;
 		else
 			limit = 0x80;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, (uint8_t)limit);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg,
+				      (uint8_t)limit);
+	}
 
 	if (*props & PROP_CRITMAX) {
 		limit = lims->sel_critmax - 273150000;
@@ -1966,12 +1983,16 @@ dbcool_set_temp_limits(struct dbcool_softc *sc, int idx,
 			else if (limit > 127)
 				limit = 127;
 		}
-	} else
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg,
+				      (uint8_t)limit);
+	} else if (*props & PROP_DRIVER_LIMITS) {
 		if (sc->sc_temp_offset)
 			limit = 0xff;
 		else
 			limit = 0x7f;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, (uint8_t)limit);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg,
+				      (uint8_t)limit);
+	}
 }
 
 static void
@@ -1995,9 +2016,9 @@ dbcool_set_volt_limits(struct dbcool_softc *sc, int idx,
 			limit = 0xff;
 		else if (limit < 0)
 			limit = 0;
-	} else
-		limit = 0;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, limit);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, limit);
+	} else if (*props & PROP_DRIVER_LIMITS)
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, 0);
 
 	if (*props & PROP_CRITMAX) {
 		limit = lims->sel_critmax;
@@ -2007,9 +2028,9 @@ dbcool_set_volt_limits(struct dbcool_softc *sc, int idx,
 			limit = 0xff;
 		else if (limit < 0)
 			limit = 0;
-	} else
-		limit = 0xff;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, limit);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, limit);
+	} else if (*props & PROP_DRIVER_LIMITS)
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->hi_lim_reg, 0xff);
 }
 
 static void
@@ -2032,9 +2053,13 @@ dbcool_set_fan_limits(struct dbcool_softc *sc, int idx,
 			if (limit > 0xffff)
 				limit = 0xffff;
 		}
-	} else
-		limit = 0xffff;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, limit & 0xff);
-	limit >>= 8;
-	sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg + 1, limit & 0xff);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg,
+				      limit & 0xff);
+		limit >>= 8;
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg + 1,
+				      limit & 0xff);
+	} else if (*props & PROP_DRIVER_LIMITS) {
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg, 0xff);
+		sc->sc_dc.dc_writereg(&sc->sc_dc, reg->lo_lim_reg + 1, 0xff);
+	}
 }
