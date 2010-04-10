@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_powerres.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: acpi_powerres.c,v 1.12 2010/04/10 18:32:13 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001 Michael Smith
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_powerres.c,v 1.12 2010/04/10 18:32:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -367,7 +367,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 		status = acpi_eval_struct(pr0_handle, NULL, &reslist_buffer);
 		if (ACPI_FAILURE(status))
 			goto bad;
-		reslist_object = (ACPI_OBJECT *)reslist_buffer.Pointer;
+		reslist_object = reslist_buffer.Pointer;
 		if ((reslist_object->Type != ACPI_TYPE_PACKAGE) ||
 		    (reslist_object->Package.Count == 0)) {
 			goto bad;
@@ -388,7 +388,7 @@ acpi_pwr_switch_consumer(ACPI_HANDLE consumer, int state)
 					     acpi_name(reslist_handle)));
 			goto out;
 		}
-		reslist_object = (ACPI_OBJECT *)reslist_buffer.Pointer;
+		reslist_object = reslist_buffer.Pointer;
 		if (reslist_object->Type != ACPI_TYPE_PACKAGE) {
 			ACPI_DEBUG_PRINT((ACPI_DB_OBJECTS, "resource list is not ACPI_TYPE_PACKAGE (%u)\n",
 					     reslist_object->Type));
