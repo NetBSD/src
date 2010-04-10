@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.24 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: dma.c,v 1.25 2010/04/10 18:02:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.24 2009/10/20 19:10:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.25 2010/04/10 18:02:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,14 +218,7 @@ cdmaint(void *unused, int sr)
 		 */
 		int_func = dma_active.tqh_first->int_func;
 		softc    = dma_active.tqh_first->softc;
-
-		if(!BASEPRI(sr))
-			add_sicallback((si_farg)int_func, softc, 0);
-		else {
-			spl1();
-			(*int_func)(softc);
-			spl0();
-		}
+		add_sicallback((si_farg)int_func, softc, 0);
 		return 1;
 	}
 	return 0;

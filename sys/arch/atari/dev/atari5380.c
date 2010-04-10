@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.53 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.54 2010/04/10 18:02:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.53 2009/10/20 19:10:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.54 2010/04/10 18:02:05 tsutsui Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -1104,14 +1104,7 @@ scsi_ctrl(int sr)
 {
 	if (GET_5380_REG(NCR5380_DMSTAT) & SC_IRQ_SET) {
 		scsi_idisable();
-		if (!BASEPRI(sr))
-			add_sicallback((si_farg)ncr_ctrl_intr,
-						(void *)cur_softc, 0);
-		else {
-			spl1();
-			ncr_ctrl_intr(cur_softc);
-			spl0();
-		}
+		add_sicallback((si_farg)ncr_ctrl_intr, (void *)cur_softc, 0);
 	}
 }
 
@@ -1125,14 +1118,7 @@ scsi_dma(int sr)
 
 	if ((reqp = connected) && (reqp->dr_flag & DRIVER_IN_DMA)) {
 		scsi_idisable();
-		if (!BASEPRI(sr))
-			add_sicallback((si_farg)ncr_dma_intr,
-					(void *)cur_softc, 0);
-		else {
-			spl1();
-			ncr_dma_intr(cur_softc);
-			spl0();
-		}
+		add_sicallback((si_farg)ncr_dma_intr, (void *)cur_softc, 0);
 	}
 }
 
