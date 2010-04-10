@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.57 2010/04/01 17:07:51 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.58 2010/04/10 16:14:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.57 2010/04/01 17:07:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2010/04/10 16:14:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,7 @@ int atari_realconfig;
 void
 cpu_configure(void)
 {
-	extern int atari_realconfig;
-	
+
 	atari_realconfig = 1;
 
 	init_sicallback();
@@ -98,7 +97,6 @@ atari_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
 	struct device temp;
 	struct cfdata *cf;
 	const struct cfattach *ca;
-	extern int	atari_realconfig;
 
 	if (atari_realconfig)
 		return config_found(pdp, auxp, pfn) != NULL;
