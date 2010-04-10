@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.45 2010/04/10 04:56:26 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.46 2010/04/10 05:21:41 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -122,6 +122,10 @@ suspend-to-disk (not supported)
 .It S5
 power off
 .El
+.It Ic machdep.acpi_beep_on_reset
+is a boolean variable that controls whether the
+.Tn PC
+speaker is beeped upon resume.
 .It Ic machdep.acpi_vbios_reset
 defines the handling of the graphics card.
 The supported values are:
