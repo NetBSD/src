@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.91 2010/04/01 12:16:14 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.92 2010/04/10 19:01:01 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.91 2010/04/01 12:16:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.92 2010/04/10 19:01:01 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -544,29 +544,45 @@ sme_events_destroy(struct sysmon_envsys *sme)
 int
 sysmon_envsys_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
+	int err;
+
+	if (sme->sme_get_limits == NULL ||
+	    (edata->flags & ENVSYS_FMONLIMITS) == 0)
+		return EINVAL;
+
+	sysmon_envsys_acquire(sme, false);
+	err = sme_update_limits(sme, edata);
+	sysmon_envsys_release(sme, false);
+
+	return err;
+}
+
+/*
+ * sme_update_limits
+ *
+ *	+ Internal version of sysmon_envsys_update_limits() to be used
+ *	  when the device has already been sysmon_envsys_acquire()d.
+ */
+
+int
+sme_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
 	prop_dictionary_t sdict = NULL;
 	prop_array_t array = NULL;
 	sysmon_envsys_lim_t lims;
 	sme_event_t *see;
 	uint32_t props = 0;
 
-	if (sme->sme_get_limits == NULL ||
-	    (edata->flags & ENVSYS_FMONLIMITS) == 0)
-		return EINVAL;
-
 	/* Find the dictionary for this sensor */
-	sysmon_envsys_acquire(sme, false);
 	array = prop_dictionary_get(sme_propd, sme->sme_name);
 	if (array == NULL ||
 	    prop_object_type(array) != PROP_TYPE_ARRAY) {
 		DPRINTF(("%s: array device failed\n", __func__));
-		sysmon_envsys_release(sme, false);
 		return EINVAL;
 	}
 	
 	sdict = prop_array_get(array, edata->sensor);
 	if (sdict == NULL) {
-		sysmon_envsys_release(sme, false);
 		return EINVAL;
 	}
 
@@ -576,10 +592,9 @@ sysmon_envsys_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
 		    see->see_type == PENVSYS_EVENT_LIMITS)
 			break;
 	}
-	if (see == NULL) {
-		sysmon_envsys_release(sme, false);
+	if (see == NULL)
 		return EINVAL;
-	}
+
 	/* Get new limit values */
 	(*sme->sme_get_limits)(sme, edata, &lims, &props);
 
@@ -587,7 +602,6 @@ sysmon_envsys_update_limits(struct sysmon_envsys *sme, envsys_data_t *edata)
 	sme_event_register(sdict, edata, sme, &lims, props,
 			   PENVSYS_EVENT_LIMITS, see->see_pes.pes_type);
 
-	sysmon_envsys_release(sme, false);
 	return 0;
 }
 
