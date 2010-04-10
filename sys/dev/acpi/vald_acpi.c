@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.1 2010/04/10 17:55:24 jruoho Exp $ */
+/*	$NetBSD: vald_acpi.c,v 1.2 2010/04/10 18:32:13 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.1 2010/04/10 17:55:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.2 2010/04/10 18:32:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
 
 	*result = GHCI_NOT_SUPPORT;
 	*value = 0;
-	param = (ACPI_OBJECT *)buf.Pointer;
+	param = buf.Pointer;
 	if (param->Type == ACPI_TYPE_PACKAGE) {
 		PrtElement = param->Package.Elements;
 		if (PrtElement->Type == ACPI_TYPE_INTEGER)
@@ -405,7 +405,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
 	}
 
 	*result = GHCI_NOT_SUPPORT;
-	param = (ACPI_OBJECT *)buf.Pointer;
+	param = buf.Pointer;
 	if (param->Type == ACPI_TYPE_PACKAGE) {
 		PrtElement = param->Package.Elements;
 	    	if (PrtElement->Type == ACPI_TYPE_INTEGER)
@@ -438,7 +438,7 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level,
 		return (AE_OK);
 
 	sc->lcd_handle = handle;
-	param = (ACPI_OBJECT *)buf.Pointer;
+	param = buf.Pointer;
 	if (param->Type == ACPI_TYPE_PACKAGE) {
 		printf("_BCL retrun: %d packages\n", param->Package.Count);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.38 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.39 2010/04/10 18:32:13 jruoho Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.38 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.39 2010/04/10 18:32:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -236,7 +236,7 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 #endif
 		return drives;
 	}
-	fde = (ACPI_OBJECT *)abuf.Pointer;
+	fde = abuf.Pointer;
 	if (fde->Type != ACPI_TYPE_BUFFER) {
 		aprint_error_dev(sc->sc_dev, "expected BUFFER, got %u\n",
 		    fde->Type);
@@ -302,7 +302,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			sc->sc_knownfds[i] = &fdc_acpi_fdtypes[0];
 			continue;
 		}
-		fdi = (ACPI_OBJECT *)abuf.Pointer;
+		fdi = abuf.Pointer;
 		if (fdi->Type != ACPI_TYPE_PACKAGE) {
 			aprint_error_dev(sc->sc_dev,
 			    "expected PACKAGE, got %u\n", fdi->Type);
