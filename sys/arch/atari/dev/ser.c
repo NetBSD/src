@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.50 2010/04/09 11:27:21 tsutsui Exp $	*/
+/*	$NetBSD: ser.c,v 1.51 2010/04/10 16:07:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.50 2010/04/09 11:27:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.51 2010/04/10 16:07:04 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -212,19 +212,19 @@ struct ser_softc {
  */
 #define	SER_HW_CONSOLE	0x01
 
-void	ser_break(struct ser_softc *, int);
-void	ser_hwiflow(struct ser_softc *, int);
-void	ser_iflush(struct ser_softc *);
-void	ser_loadchannelregs(struct ser_softc *);
-void	ser_modem(struct ser_softc *, int);
-void	serdiag(void *);
-int	serhwiflow(struct tty *, int);
-void	serinit(int);
-void	serinitcons(int);
-int	sermintr(void *);
-int	sertrintr(void *);
-int	serparam(struct tty *, struct termios *);
-void	serstart(struct tty *);
+static void	ser_break(struct ser_softc *, int);
+static void	ser_hwiflow(struct ser_softc *, int);
+static void	ser_iflush(struct ser_softc *);
+static void	ser_loadchannelregs(struct ser_softc *);
+static void	ser_modem(struct ser_softc *, int);
+static void	serdiag(void *);
+static int	serhwiflow(struct tty *, int);
+static void	serinit(int);
+static void	serinitcons(int);
+static int	sermintr(void *);
+static int	sertrintr(void *);
+static int	serparam(struct tty *, struct termios *);
+static void	serstart(struct tty *);
 
 struct consdev;
 void	sercnprobe(struct consdev *);
