@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysmon_envsys.9,v 1.37 2010/03/19 08:37:16 wiz Exp $
+.\"	$NetBSD: sysmon_envsys.9,v 1.38 2010/04/10 19:03:56 pgoyette Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 18, 2010
+.Dd April 10, 2010
 .Dt SYSMON_ENVSYS 9
 .Os
 .Sh NAME
@@ -49,6 +49,12 @@
 .Fn sysmon_envsys_sensor_detach "struct sysmon_envsys *" "envsys_data_t *"
 .Ft void
 .Fn sysmon_envsys_sensor_event "struct sysmon_envsys *" "envsys_data_t *" "int"
+.Ft void
+.Fn sysmon_envsys_foreach_sensor \
+"bool (*)(const struct sysmon_envsys *" "const envsys_data_t *" "void *)" \
+"void *" "bool"
+.Ft int
+.Fn sysmon_envsys_update_limits "struct sysmon_envsys *" "envsys_data_t *"
 .Sh DESCRIPTION
 .Pp
 .Nm
@@ -108,6 +114,21 @@ framework on a polled basis.
 Alternatively, the sensor's device driver can call the
 .Fn sysmon_envsys_sensor_event
 function to deliver the event without waiting for the device to be polled.
+.Pp
+The
+.Fn sysmon_envsys_foreach_sensor
+function can be used by other parts of the kernel to iterate over all
+registered sensors.
+This capability is used by the
+.X3 i386/apm 4
+driver to summarize the state of all battery sensors.
+.Pp
+Drivers can also call the
+.Fn sysmon_envsys_update_limits
+function when it is necessary to reinitialize a sensor's threshhold values.
+This is used by the
+.Xr acpibat 4
+driver when a new battery is inserted.
 .Pp
 The
 .Em sysmon_envsys
@@ -195,9 +216,21 @@ appropriate limits are enabled from userland via
 Pointer to a function that alerts the device driver whenever monitoring
 limits (or thresholds) are updated by the user.
 Setting this function allows the device driver to reprogram hardware
-limits (if provided by the device), and gives the driver direct control
-over setting the sensor's state based on hardware status.
-If this member is not specified, the
+limits (if provided by the device) when the user-specificied limits are
+updated, and gives the driver direct control over setting the sensor's
+state based on hardware status.
+.Pp
+The
+.Fa sme_set_limits
+callback can be invoked with the third argument (a pointer to the new
+limits) set to a NULL pointer.
+Device drivers must recognize this as a request to restore the sensor
+limits to their original, boot-time values.
+.Pp
+If the
+.Fa sme_set_limits
+member is not specified, the device driver is not informed of changes to
+the sensor's limit values, and the
 .Nm
 framework performs all limit checks in software.
 .El
