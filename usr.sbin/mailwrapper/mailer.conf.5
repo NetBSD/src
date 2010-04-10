@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailer.conf.5,v 1.13 2004/07/22 03:44:12 atatat Exp $
+.\"	$NetBSD: mailer.conf.5,v 1.14 2010/04/10 08:29:53 jruoho Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 17, 2004
+.Dd April 10, 2010
 .Dt MAILER.CONF 5
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ The file may also contain comment lines, denoted by a
 mark in the first column of any line.
 .Pp
 The default mailer is
-.Xr sendmail 8 ,
+.Xr postfix 1 ,
 which will also start by default (unless specifically disabled via an
 .Xr rc.conf 5
 setting) so that locally generated mail can be delivered, if the
@@ -90,55 +90,40 @@ setting) so that locally generated mail can be delivered, if the
 setting in
 .Pa /etc/mailer.conf
 is set to
-.Dq /usr/libexec/sendmail/sendmail .
+.Dq /usr/libexec/postfix/sendmail .
 .Sh FILES
 /etc/mailer.conf
 .Sh EXAMPLES
 This example shows how to set up
 .Nm
-to invoke the traditional
-.Xr sendmail 8
+to invoke the
+.Xr postfix 1
 program:
 .Bd -literal -offset indent
-# Execute the "real" sendmail program located in
-# /usr/libexec/sendmail/sendmail
-sendmail	/usr/libexec/sendmail/sendmail
-send-mail	/usr/libexec/sendmail/sendmail
-mailq		/usr/libexec/sendmail/sendmail
-newaliases	/usr/libexec/sendmail/sendmail
-hoststat	/usr/libexec/sendmail/sendmail
-purgestat	/usr/libexec/sendmail/sendmail
+sendmail        /usr/libexec/postfix/sendmail
+mailq           /usr/libexec/postfix/sendmail
+newaliases      /usr/libexec/postfix/sendmail
 .Ed
 .Pp
-This example shows how to invoke the
-.Xr postfix 1
-MTA suite in place of
-.Xr sendmail 8 :
-.Bd -literal -offset indent
-# Emulate sendmail using postfix
-sendmail	/usr/libexec/postfix/sendmail
-send-mail	/usr/libexec/postfix/sendmail
-mailq		/usr/libexec/postfix/sendmail
-newaliases	/usr/libexec/postfix/sendmail
-.Ed
-.Pp
-This example shows the use of the mini-sendmail package from pkgsrc
+This example shows the use of the mini-sendmail package from
+.Em pkgsrc
 in place of
-.Xr sendmail 8 :
-Note the use of additional arguments.
+.Xr postfix 1 :
 .Bd -literal -offset indent
 # Send outgoing mail to a smart relay using mini-sendmail
 sendmail	/usr/pkg/sbin/mini-sendmail -srelayhost
 send-mail	/usr/pkg/sbin/mini-sendmail -srelayhost
 .Ed
+.Pp
+Note the use of additional arguments.
 .Sh SEE ALSO
 .Xr mail 1 ,
 .Xr mailq 1 ,
 .Xr newaliases 1 ,
 .Xr postfix 1 ,
-.Xr mailwrapper 8 ,
-.Xr sendmail 8
+.Xr mailwrapper 8
 .Pp
+.Pa pkgsrc/mail/sendmail ,
 .Pa pkgsrc/mail/mini_sendmail
 .Sh HISTORY
 .Nm
@@ -149,7 +134,8 @@ appeared in
 .Sh BUGS
 The entire reason this program exists is a crock.
 Instead, a command
-for how to submit mail should be standardized, and all the "behave
-differently if invoked with a different name" behavior of things like
+for how to submit mail should be standardized, and all the
+.Dq behave differently if invoked with a different name
+behavior of things like
 .Xr mailq 1
 should go away.
