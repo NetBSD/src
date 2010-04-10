@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2010/04/08 04:37:14 jruoho Exp $
+#	$NetBSD: Makefile,v 1.3 2010/04/10 04:29:39 jruoho Exp $
 
 PROG=	iasl
 BINDIR=	/usr/bin
-NOMAN=	1
+MAN=	iasl.8
 WARNS=	0
 TOPDIR=	${NETBSDSRCDIR}/sys/external/intel-public/acpica/dist/compiler
 
