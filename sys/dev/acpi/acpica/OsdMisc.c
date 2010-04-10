@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.7 2009/08/18 16:41:02 jmcneill Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.8 2010/04/10 06:56:30 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.7 2009/08/18 16:41:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.8 2010/04/10 06:56:30 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -60,22 +60,26 @@ __KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.7 2009/08/18 16:41:02 jmcneill Exp $")
 
 #include <external/intel-public/acpica/dist/include/accommon.h>
 #include <external/intel-public/acpica/dist/include/acdebug.h>
+
 /*
- * for debugging DSDT (try this at your own risk!):
+ * For debugging or fixing a DSDT (try this at your own risk!):
  *
- * 1. dump your raw DSDT (with acpidump(*1) etc.)
- * 2. disassemble with iasl -d (*2)
- * 3. modify the ASL file
- * 4. compile it with iasl -tc
- * 5. copy *.hex to src/sys/dev/acpi/acpica/Osd/dsdt.hex
- *    -or-
- *    options ACPI_DSDT_FILE="\"yourdsdt.hex\"" in
- *    your config file and yourdsdt.hex in the build directory
- * 6. options ACPI_DSDT_OVERRIDE in your kernel config file
- *    and rebuild the kernel
+ *	1. Dump the raw DSDT with acpidump(8).
  *
- * (*1) /usr/pkgsrc/sysutils/acpidump
- * (*2) /usr/pkgsrc/sysutils/acpi-iasl
+ *	2. Disassemble with iasl(8) using the option -d.
+ *
+ *	3. Modify the ASL file.
+ *
+ *	4. Compile it with iasl(8), -tc
+ *
+ *	5. Copy the *.hex to src/sys/dev/acpi/acpica/Osd/dsdt.hex
+ *
+ *		- or -
+ *
+ *	   Use the option ACPI_DSDT_FILE="\"/dir/yourdsdt.hex\"" in
+ *	   the kernel config file.
+ *
+ *	6. Define ACPI_DSDT_OVERRIDE in the kernel config file and rebuild.
  */
 
 #ifdef ACPI_DSDT_OVERRIDE
