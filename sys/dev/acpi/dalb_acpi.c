@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.11 2010/04/09 15:45:59 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.12 2010/04/10 18:32:13 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.11 2010/04/09 15:45:59 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.12 2010/04/10 18:32:13 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -112,6 +112,7 @@ acpi_dalb_init(device_t dev)
 	ACPI_BUFFER ret;
 
 	rv = acpi_eval_struct(sc->sc_node->ad_handle, "GHID", &ret);
+
 	if (ACPI_FAILURE(rv) || ret.Pointer == NULL) {
 		aprint_error_dev(dev,
 			"couldn't enable notify handler: (%s)\n",
@@ -119,7 +120,8 @@ acpi_dalb_init(device_t dev)
 		return;
 	}
 
-	obj = (ACPI_OBJECT *)ret.Pointer;
+	obj = ret.Pointer;
+
 	if (obj->Type != ACPI_TYPE_BUFFER) {
 		sc->sc_usageid = DALB_ID_INVALID;
 		aprint_debug_dev(dev, "invalid ACPI type: %u\n", obj->Type);
