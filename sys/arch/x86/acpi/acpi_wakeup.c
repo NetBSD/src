@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.21 2010/02/28 13:56:49 jruoho Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.22 2010/04/11 09:52:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.21 2010/02/28 13:56:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.22 2010/04/11 09:52:09 jruoho Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -444,7 +444,7 @@ SYSCTL_SETUP(sysctl_md_acpi_setup, "acpi x86 sysctl setup")
 	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
 		return;
 	if (sysctl_createv(NULL, 0, &node, &ssnode, CTLFLAG_READWRITE,
-	    CTLTYPE_INT, "acpi_beep_on_reset", NULL, sysctl_md_acpi_beep_on_reset,
+	    CTLTYPE_BOOL, "acpi_beep_on_reset", NULL, sysctl_md_acpi_beep_on_reset,
 	    0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
 		return;
 
