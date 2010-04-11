@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.71 2010/04/10 17:55:24 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.72 2010/04/11 22:42:30 jakllsch Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -131,6 +131,11 @@ file	dev/acpi/sony_acpi.c		sony_acpi
 device	vald
 attach	vald at acpinodebus with vald_acpi
 file	dev/acpi/vald_acpi.c		vald_acpi
+
+# Toshiba backlight hotkeys
+device	valz
+attach	valz at acpinodebus
+file	dev/acpi/valz_acpi.c valz
 
 # Sony SPIC (jog dial etc.)
 attach	spic at acpinodebus with spic_acpi

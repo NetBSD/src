@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.253 2010/04/08 17:50:34 jruoho Exp $
+# $NetBSD: ALL,v 1.254 2010/04/11 22:42:30 jakllsch Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.253 $"
+#ident 		"ALL-$Revision: 1.254 $"
 
 maxusers	64		# estimated number of users
 
@@ -405,6 +405,9 @@ sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
 vald* at acpi?
+
+# Toshiba LCD brightness
+valz* at acpi?
 
 # Plug-and-Play BIOS and attached devices
 
