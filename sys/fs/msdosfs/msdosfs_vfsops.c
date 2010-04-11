@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.81 2010/04/09 08:09:18 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.82 2010/04/11 06:36:25 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.81 2010/04/09 08:09:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.82 2010/04/11 06:36:25 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.81 2010/04/09 08:09:18 hannken 
 #include <fs/msdosfs/msdosfsmount.h>
 #include <fs/msdosfs/fat.h>
 
-MODULE(MODULE_CLASS_VFS, msdosfs, NULL);
+MODULE(MODULE_CLASS_VFS, msdos, NULL);
 
 #ifdef MSDOSFS_DEBUG
 #define DPRINTF(a) uprintf a
