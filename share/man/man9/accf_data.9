@@ -1,3 +1,4 @@
+.\" $NetBSD: accf_data.9,v 1.5 2010/04/11 21:32:10 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Alfred Perlstein
 .\"
@@ -52,9 +53,9 @@ on the socket
 .Bd -literal -offset 0i
 	struct accept_filter_arg afa;
 
-	bzero(&afa, sizeof(afa));
+	bzero(\*[Am]afa, sizeof(afa));
 	strcpy(afa.af_name, "dataready");
-	setsockopt(sok, SOL_SOCKET, SO_ACCEPTFILTER, &afa, sizeof(afa));
+	setsockopt(sok, SOL_SOCKET, SO_ACCEPTFILTER, \*[Am]afa, sizeof(afa));
 .Ed
 .Sh SEE ALSO
 .Xr setsockopt 2 ,
