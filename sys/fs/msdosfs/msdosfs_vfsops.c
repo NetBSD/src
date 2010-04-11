@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.82 2010/04/11 06:36:25 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.83 2010/04/11 10:26:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.82 2010/04/11 06:36:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.83 2010/04/11 10:26:25 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -147,7 +147,7 @@ struct vfsops msdosfs_vfsops = {
 };
 
 static int
-msdosfs_modcmd(modcmd_t cmd, void *arg)
+msdos_modcmd(modcmd_t cmd, void *arg)
 {
 	int error;
 
