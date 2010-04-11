@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_msdos.8,v 1.16 2010/04/11 08:23:52 hannken Exp $
+.\"	$NetBSD: fsck_msdos.8,v 1.17 2010/04/11 21:29:37 wiz Exp $
 .\"
 .\" Copyright (C) 1995 Wolfgang Solfrank
 .\" Copyright (c) 1995 Martin Husemann
@@ -72,7 +72,7 @@ detected inconsistencies, requesting confirmation before
 making any changes.
 .Pp
 The options are as follows:
-.Bl -hang -offset indent
+.Bl -tag -width XxXsnapXbackupXX
 .It Fl f
 This option is ignored by
 .Nm ,
@@ -90,7 +90,8 @@ Preen the specified filesystems.
 .It Fl x Ar snap-backup
 Use a snapshot with
 .Ar snap-backup
-as backup to check a read-write mounted filesystem. Must be used with
+as backup to check a read-write mounted filesystem.
+Must be used with
 .Fl n .
 See
 .Xr fss 4
@@ -104,9 +105,9 @@ Causes
 to assume yes as the answer to all operator questions.
 .El
 .Sh SEE ALSO
+.Xr fss 4 ,
 .Xr fsck 8 ,
 .Xr fsck_ffs 8 ,
-.Xr fss 4 ,
 .Xr mount_msdos 8
 .Sh BUGS
 .Nm
