@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.12 2009/11/05 13:28:20 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.13 2010/04/11 08:30:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.12 2009/11/05 13:28:20 pooka Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.13 2010/04/11 08:30:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ static uid_t fileuid;
 static gid_t filegid;
 
 #define ISADIR(a) ((SYSCTL_TYPE(a->sysctl_flags) == CTLTYPE_NODE))
-#define SFS_MAXFILE 8192
+#define SFS_MAXFILE 32768
 #define SFS_NODEPERDIR 128
 
 static int sysctlfs_domount(struct puffs_usermount *);
@@ -395,10 +395,19 @@ doprint(struct sfsnode *sfs, struct puffs_pathobj *po,
 		snprintf(buf, bufsize, "%" PRId64, q);
 		break;
 	}
-	case CTLTYPE_STRUCT:
-		snprintf(buf, bufsize, "CTLTYPE_STRUCT: implement me and "
-		    "score a cookie");
+	case CTLTYPE_STRUCT: {
+		uint8_t snode[SFS_MAXFILE/2-1];
+		unsigned i;
+
+		sz = sizeof(snode);
+		if (sysctl(po->po_path, po->po_len, snode, &sz, NULL, 0) == -1)
+			break;
+		for (i = 0; i < sz && 2*i < bufsize; i++) {
+			sprintf(&buf[2*i], "%02x", snode[i]);
+		}
+		buf[2*i] = '\0';
 		break;
+	}
 	case CTLTYPE_STRING: {
 		sz = bufsize;
 		if (sysctl(po->po_path, po->po_len, buf, &sz, NULL, 0) == -1)
