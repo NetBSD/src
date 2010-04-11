@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.38 2010/01/14 13:47:42 wiz Exp $
+# $NetBSD: mi,v 1.39 2010/04/11 02:41:38 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6141,6 +6141,12 @@
 ./usr/X11R7/lib/X11/fonts/100dpi/ncenR24-ISO8859-4.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/100dpi/ncenR24-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/100dpi/ncenR24.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/100dpi/symb08.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/100dpi/symb10.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/100dpi/symb12.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/100dpi/symb14.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/100dpi/symb18.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/100dpi/symb24.bdf		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/100dpi/tech14.bdf		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/100dpi/techB14.bdf		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/100dpi/term14.bdf		xfont	share,xorg,x11fonts
@@ -8033,6 +8039,12 @@
 ./usr/X11R7/lib/X11/fonts/75dpi/ncenR24-ISO8859-4.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/75dpi/ncenR24-ISO8859-9.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/75dpi/ncenR24.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/75dpi/symb08.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/75dpi/symb10.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/75dpi/symb12.bdf		xfont 	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/75dpi/symb14.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/75dpi/symb18.bdf		xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/75dpi/symb24.bdf		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/75dpi/tech14.bdf		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/75dpi/techB14.bdf		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/75dpi/term14.bdf		xfont	share,xorg,x11fonts
