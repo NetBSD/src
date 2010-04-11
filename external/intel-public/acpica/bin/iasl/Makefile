@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2010/04/10 04:29:39 jruoho Exp $
+#	$NetBSD: Makefile,v 1.4 2010/04/11 17:23:10 jakllsch Exp $
 
+.if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
+.endif
 BINDIR=	/usr/bin
 MAN=	iasl.8
 WARNS=	0
