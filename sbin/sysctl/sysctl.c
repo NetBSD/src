@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.130 2009/09/30 04:30:50 elad Exp $ */
+/*	$NetBSD: sysctl.c,v 1.131 2010/04/11 01:52:10 mrg Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.130 2009/09/30 04:30:50 elad Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.131 2010/04/11 01:52:10 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,6 +502,8 @@ st(u_int t)
                 return "QUAD";
 	case CTLTYPE_STRUCT:
 		return "STRUCT";
+	case CTLTYPE_BOOL:
+		return "BOOL";
 	}
 
 	return "???";
@@ -712,6 +714,16 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 		display_number(pnode, gsname, &i, sizeof(i), DISPLAY_VALUE);
 		break;
 	}
+	case CTLTYPE_BOOL: {
+		bool b;
+		rc = sysctl(name, namelen, &b, &sz, NULL, 0);
+		if (rc == -1) {
+			sysctlerror(1);
+			break;
+		}
+		display_number(pnode, gsname, &b, sizeof(b), DISPLAY_VALUE);
+		break;
+	}
 	case CTLTYPE_STRING: {
 		unsigned char buf[1024], *tbuf;
 		tbuf = buf;
@@ -884,13 +896,12 @@ parse(char *l)
 		print_tree(&name[0], namelen, node, CTLTYPE_NODE, 1);
 		break;
 	case CTLTYPE_INT:
+	case CTLTYPE_BOOL:
+	case CTLTYPE_QUAD:
 		write_number(&name[0], namelen, node, value);
 		break;
 	case CTLTYPE_STRING:
 		write_string(&name[0], namelen, node, value);
-		break;
-	case CTLTYPE_QUAD:
-		write_number(&name[0], namelen, node, value);
 		break;
 	case CTLTYPE_STRUCT:
 		/*
@@ -932,6 +943,7 @@ parse_create(char *l)
 	u_int namelen, type;
 	u_quad_t uq;
 	quad_t q;
+	bool b;
 
 	if (!wflag) {
 		sysctlperror("Must specify -w to create nodes\n");
@@ -957,6 +969,7 @@ parse_create(char *l)
 	 * misc stuff used when constructing
 	 */
 	i = 0;
+	b = false;
 	uq = 0;
 	key = NULL;
 	value = NULL;
@@ -1052,6 +1065,10 @@ parse_create(char *l)
 			else if (strcmp(value, "int") == 0) {
 				sz = sizeof(int);
 				type = CTLTYPE_INT;
+			}
+			else if (strcmp(value, "bool") == 0) {
+				sz = sizeof(bool);
+				type = CTLTYPE_BOOL;
 			}
 			else if (strcmp(value, "string") == 0)
 				type = CTLTYPE_STRING;
@@ -1192,6 +1209,26 @@ parse_create(char *l)
 			if (sz == 0)
 				sz = sizeof(int);
 			break;
+		case CTLTYPE_BOOL:
+			errno = 0;
+			q = strtoll(data, &t, 0);
+			if (t == data || *t != '\0' || errno != 0 ||
+				(q != 0 && q != 1)) {
+				sysctlperror(
+				    "%s: '%s' is not a valid bool\n",
+				    nname, value);
+				EXIT(1);
+			}
+			b = q == 1;
+			if (!(flags & CTLFLAG_OWNDATA)) {
+				flags |= CTLFLAG_IMMEDIATE;
+				node.sysctl_idata = b;
+			}
+			else
+				node.sysctl_data = &b;
+			if (sz == 0)
+				sz = sizeof(bool);
+			break;
 		case CTLTYPE_STRING:
 			flags |= CTLFLAG_OWNDATA;
 			node.sysctl_data = data;
@@ -1277,6 +1314,7 @@ parse_create(char *l)
 	 */
 	if (sz != 0) {
 		if ((type == CTLTYPE_INT && sz != sizeof(int)) ||
+		    (type == CTLTYPE_BOOL && sz != sizeof(bool)) ||
 		    (type == CTLTYPE_QUAD && sz != sizeof(u_quad_t)) ||
 		    (type == CTLTYPE_NODE && sz != 0)) {
 			sysctlperror("%s: wrong size for type\n", nname);
@@ -1664,6 +1702,7 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 	u_int ii, io;
 	u_quad_t qi, qo;
 	size_t si, so;
+	bool bi, bo;
 	int rc;
 	void *i, *o;
 	char *t;
@@ -1673,6 +1712,7 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 
 	si = so = 0;
 	i = o = NULL;
+	bi = bo = false;
 	errno = 0;
 	qi = strtouq(value, &t, 0);
 	if (qi == UQUAD_MAX && errno == ERANGE) {
@@ -1697,6 +1737,13 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 		i = &ii;
 		si = sizeof(ii);
 		break;
+	case CTLTYPE_BOOL:
+		bi = (bool)qi;
+		o = &bo;
+		so = sizeof(bo);
+		i = &bi;
+		si = sizeof(bi);
+		break;
 	case CTLTYPE_QUAD:
 		o = &qo;
 		so = sizeof(qo);
@@ -1715,6 +1762,10 @@ write_number(int *name, u_int namelen, struct sysctlnode *node, char *value)
 	case CTLTYPE_INT:
 		display_number(node, gsname, &io, sizeof(io), DISPLAY_OLD);
 		display_number(node, gsname, &ii, sizeof(ii), DISPLAY_NEW);
+		break;
+	case CTLTYPE_BOOL:
+		display_number(node, gsname, &bo, sizeof(bo), DISPLAY_OLD);
+		display_number(node, gsname, &bi, sizeof(bi), DISPLAY_NEW);
 		break;
 	case CTLTYPE_QUAD:
 		display_number(node, gsname, &qo, sizeof(qo), DISPLAY_OLD);
@@ -1764,6 +1815,7 @@ display_number(const struct sysctlnode *node, const char *name,
 	       const void *data, size_t sz, int n)
 {
 	u_quad_t q;
+	bool b;
 	int i;
 
 	if (qflag)
@@ -1799,6 +1851,15 @@ display_number(const struct sysctlnode *node, const char *name,
 			printf("%#x", i);
 		else
 			printf("%d", i);
+		break;
+	case CTLTYPE_BOOL:
+		memcpy(&b, data, sz);
+		if (xflag)
+			printf("0x%0*x", (int)sz * 2, b);
+		else if (node->sysctl_flags & CTLFLAG_HEX)
+			printf("%#x", b);
+		else
+			printf("%d", b);
 		break;
 	case CTLTYPE_QUAD:
 		memcpy(&q, data, sz);
