@@ -1,6 +1,6 @@
-.\" $NetBSD: acpi.4,v 1.46 2010/04/10 05:21:41 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.47 2010/04/11 08:58:43 jruoho Exp $
 .\"
-.\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 10, 2010
+.Dd April 11, 2010
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -81,7 +81,8 @@ The default is off.
 .It Dv ACPI_DSDT_OVERRIDE
 Force a given Differentiated System Description Table
 .Pq Tn DSDT
-instead of the BIOS-supplied version.
+instead of the version supplied by the
+.Tn BIOS .
 Use
 .Dv ACPI_DSDT_FILE
 to specify a
@@ -237,19 +238,87 @@ Sony programmable I/O controller.
 Toshiba Libretto device.
 .El
 .Sh DEBUGGING
-The
+Although the situation has become better over the years,
+.Tn ACPI
+is typically prone to various errors,
+ranging from blatant flaws in the firmware to bugs in the implementation.
+Before anything else, it is a good practice to upgrade the
+.Tn BIOS
+to the latest version available from the vendor.
+.Pp
+To ease the task of diagnosing and fixing different problems, the
 .Tn ACPICA
 reference implementation provides a rich
 facility of different debugging methods.
-To ease the use of these,
+In
+.Nx
+these are generally only available if the kernel has been compiled with the
+.Tn ACPI_DEBUG
+option.
+.Ss CUSTOM DSDT
+.Tn ACPI
+interprets bytecode known as
+.Tn ACPI
+Machine Language
+.Pq Tn AML ,
+provided by the
+.Tn BIOS
+as a memory image during the system bootstrap.
+Most of the
+.Tn AML
+relevant to
+.Nm
+is implemented in the so-called
+Differentiated System Descriptor Table
+.Pq Tn DSDT .
+.Nx
+provides support for overriding the default
+.Tn DSDT
+supplied by the
+.Tn BIOS .
+.Pp
+The following steps can be used to override the
+.Tn DSDT :
+.Bl -enum -offset indent
+.It
+Dump the raw
+.Tn DSDT
+with
+.Xr acpidump 8 .
+.It
+Disassemble the table with
+.Xr iasl 8 .
+.It
+Modify the disassembled table.
+.It
+Compile the table with
+.Xr iasl 8
+using the option
+.Ar \-tc .
+.It
+Either copy the
+.Pq Pa *.hex
+file to
+.Bd -literal -offset indent
+src/sys/dev/acpi/acpica/Osd/custom_dsdt.hex
+.Ed
+.Pp
+or use the option
+.Bd -literal -offset indent
+ACPI_DSDT_FILE="/some/directory/custom_dsdt.hex"
+.Ed
+.Pp
+in the kernel configuration file.
+.It
+Define
+.Tn ACPI_DSDT_OVERRIDE
+in the kernel configuration file and rebuild.
+.El
+.Ss DEBUG OUTPUT
 .Nx
 provides two
 .Xr sysctl 8
 variables that control the debug output at runtime.
-These are only available if the running kernel has been compiled with the
-.Tn ACPI_DEBUG
-option.
-.Pp
 The
 .Ic hw.acpi.debug_layer
 limits the output to a specific
@@ -260,6 +329,7 @@ controls the debug level.
 Both
 .Xr sysctl 8
 variables are string literals.
+.Pp
 The possible values are:
 .Bl -column -offset indent \
 "ACPI_RESOURCE_COMPONENT     " "ACPI_RESOURCE_COMPONENT     "
@@ -382,6 +452,7 @@ variable is always specified with the prefix
 .Xr acpilid 4 ,
 .Xr acpismbus 4 ,
 .Xr acpitz 4 ,
+.Xr acpiwmi 4 ,
 .Xr aibs 4 ,
 .Xr apm 4 ,
 .Xr attimer 4 ,
@@ -404,7 +475,8 @@ variable is always specified with the prefix
 .Xr wss 4 ,
 .Xr ym 4 ,
 .Xr acpidump 8 ,
-.Xr amldb 8
+.Xr amldb 8 ,
+.Xr iasl 8
 .Rs
 .%A Hewlett-Packard Corporation
 .%A Intel Corporation
