@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.38 2010/04/05 07:20:26 joerg Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.39 2010/04/11 02:02:14 mrg Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.49 2009/03/29 21:53:52 sthen Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  * 802.11 network adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.38 2010/04/05 07:20:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.39 2010/04/11 02:02:14 mrg Exp $");
 
 
 #include <sys/param.h>
@@ -1930,8 +1930,8 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	}
 
 	/*
-	 * See comment in if_wpi.c:wpi_rx_intr() about locking
-	 * nb_free_entries here.  In short:  it's not required.
+	 * Try to grab a local 4KB buffer.  If it fails, try to
+	 * MEXTMALLOC() next, and if that fails, give up.
 	 */
 	MGETHDR(m1, M_DONTWAIT, MT_DATA);
 	if (m1 == NULL) {
@@ -1939,17 +1939,21 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		ifp->if_ierrors++;
 		return;
 	}
-	if (sc->rxq.nb_free_entries <= 0) {
-		ic->ic_stats.is_rx_nobuf++;
-		ifp->if_ierrors++;
-		m_freem(m1);
-		return;
+	if ((rbuf = iwn_alloc_rbuf(sc)) == NULL) {
+		MEXTMALLOC(m1, IWN_RBUF_SIZE, M_DONTWAIT);
+		if (!(m1->m_flags & M_EXT)) {
+			ic->ic_stats.is_rx_nobuf++;
+			ifp->if_ierrors++;
+			m_freem(m1);
+			return;
+		}
+	} else {
+		/* Attach RX buffer to mbuf header. */
+		MEXTADD(m1, rbuf->vaddr, IWN_RBUF_SIZE, 0, iwn_free_rbuf,
+		    rbuf);
+		m1->m_flags |= M_EXT_RW;
 	}
-	rbuf = iwn_alloc_rbuf(sc);
-	/* Attach RX buffer to mbuf header. */
-	MEXTADD(m1, rbuf->vaddr, IWN_RBUF_SIZE, 0, iwn_free_rbuf,
-	    rbuf);
-	m1->m_flags |= M_EXT_RW;
+
 	bus_dmamap_unload(sc->sc_dmat, data->map);
 
 	error = bus_dmamap_load(sc->sc_dmat, data->map, m1->m_ext.ext_buf,
