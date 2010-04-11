@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.532 2010/04/10 21:33:00 pooka Exp $
+# $NetBSD: shl.mi,v 1.533 2010/04/11 05:45:57 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -166,7 +166,8 @@
 ./usr/lib/librumpfs_tmpfs.so.0.0		base-rump-shlib
 ./usr/lib/librumpfs_udf.so.0.0			base-rump-shlib
 ./usr/lib/librumpfs_ufs.so.0.0			base-obsolete		obsolete
-./usr/lib/librumpfs_umapfs.so.0.0		base-rump-shlib
+./usr/lib/librumpfs_umap.so.0.0			base-rump-shlib
+./usr/lib/librumpfs_umapfs.so.0.0		base-obsolete		obsolete
 ./usr/lib/librumpfs_union.so.0.0		base-rump-shlib
 ./usr/lib/librumpvfs_fifofs.so.0.0		base-rump-shlib
 ./usr/lib/librumpvfs_layerfs.so.0.0		base-rump-shlib
