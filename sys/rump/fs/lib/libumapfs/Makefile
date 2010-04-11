@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2010/03/30 00:59:07 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/04/11 05:45:57 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../miscfs/umapfs
 
-LIB=	rumpfs_umapfs
+LIB=	rumpfs_umap
 
 SRCS=	umap_subr.c umap_vfsops.c umap_vnops.c
 
