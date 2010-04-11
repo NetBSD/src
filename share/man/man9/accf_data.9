@@ -43,7 +43,9 @@ It prevents the application from receiving the connected descriptor via
 .Fn accept
 until data arrives on the connection.
 .Sh EXAMPLES
-If the accf_data accept filter is present in the kernel configuration,
+If the
+.Nm
+accept filter is present in the kernel configuration,
 this will enable the data accept filter
 on the socket
 .Fa sok .
@@ -60,7 +62,8 @@ on the socket
 .Xr accf_http 9
 .Sh HISTORY
 The accept filter mechanism and the
-accf_data filter were introduced in
+.Nm
+filter were introduced in
 .Fx 4.0 .
 They were ported to
 .Nx
