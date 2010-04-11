@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.50 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.51 2010/04/11 01:53:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.50 2009/10/21 21:12:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.51 2010/04/11 01:53:03 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -337,7 +337,7 @@ SYSCTL_SETUP(sysctl_vm_setup, "sysctl vm subtree setup")
 		       CTL_VM, VM_USPACE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "idlezero",
+		       CTLTYPE_BOOL, "idlezero",
 		       SYSCTL_DESCR("Whether try to zero pages in idle loop"),
 		       NULL, 0, &vm_page_zero_enable, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
