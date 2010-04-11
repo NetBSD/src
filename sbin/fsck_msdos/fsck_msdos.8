@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_msdos.8,v 1.15 2008/06/13 20:46:09 martin Exp $
+.\"	$NetBSD: fsck_msdos.8,v 1.16 2010/04/11 08:23:52 hannken Exp $
 .\"
 .\" Copyright (C) 1995 Wolfgang Solfrank
 .\" Copyright (c) 1995 Martin Husemann
@@ -24,7 +24,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 13, 1995
+.Dd April 11, 2010
 .Dt FSCK_MSDOS 8
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Ar filesystem ...
 .Nm
 .Op Fl fny
+.Op Fl x Ar snap-backup
 .Ar filesystem ...
 .Sh DESCRIPTION
 The
@@ -86,6 +87,17 @@ questions, except
 .Dq CONTINUE? .
 .It Fl p
 Preen the specified filesystems.
+.It Fl x Ar snap-backup
+Use a snapshot with
+.Ar snap-backup
+as backup to check a read-write mounted filesystem. Must be used with
+.Fl n .
+See
+.Xr fss 4
+for more details.
+The point is to check an internally-consistent version of the
+filesystem to find out if it is damaged; on failure one should unmount
+the filesystem and repair it.
 .It Fl y
 Causes
 .Nm
@@ -94,6 +106,7 @@ to assume yes as the answer to all operator questions.
 .Sh SEE ALSO
 .Xr fsck 8 ,
 .Xr fsck_ffs 8 ,
+.Xr fss 4 ,
 .Xr mount_msdos 8
 .Sh BUGS
 .Nm
