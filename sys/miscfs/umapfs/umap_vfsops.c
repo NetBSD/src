@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.83 2010/04/11 06:36:25 pooka Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.84 2010/04/11 10:26:25 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.83 2010/04/11 06:36:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.84 2010/04/11 10:26:25 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ struct vfsops umapfs_vfsops = {
 };
 
 static int
-umapfs_modcmd(modcmd_t cmd, void *arg)
+umap_modcmd(modcmd_t cmd, void *arg)
 {
 	int error;
 

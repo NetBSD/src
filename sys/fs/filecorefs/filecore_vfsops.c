@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.62 2010/04/11 06:36:25 pooka Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.63 2010/04/11 10:26:26 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.62 2010/04/11 06:36:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.63 2010/04/11 10:26:26 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -145,7 +145,7 @@ static const struct genfs_ops filecore_genfsops = {
 };
 
 static int
-filecorefs_modcmd(modcmd_t cmd, void *arg)
+filecore_modcmd(modcmd_t cmd, void *arg)
 {
 	int error;
 
