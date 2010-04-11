@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.75 2010/01/07 01:39:56 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.76 2010/04/11 08:23:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.75 2010/01/07 01:39:56 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.76 2010/04/11 08:23:51 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,6 @@ volatile sig_atomic_t	returntosingle = 0;
 static int	argtoi(int, const char *, const char *, int);
 static int	checkfilesys(const char *, const char *, int);
 static void	usage(void);
-static char 	*get_snap_device(char *);
 
 int
 main(int argc, char *argv[])
@@ -223,23 +222,17 @@ main(int argc, char *argv[])
 			pfatal("Can't check %s\n", *argv);
 		
 		if (snap_backup || snap_internal) {
-			char *mpt;
 			char *snap_dev;
 			int snapfd;
 
-			mpt = get_snap_device(*argv);
-			if (mpt == NULL)
-				goto next;
-			snapfd = snap_open(mpt, snap_backup, NULL, &snap_dev);
+			snapfd = snap_open(*argv, snap_backup, NULL, &snap_dev);
 			if (snapfd < 0) {
-				warn("can't take snapshot of %s", mpt);
-				free(mpt);
+				warn("can't take snapshot of %s", *argv);
 				goto next;
 			}
 			nret = checkfilesys(blockcheck(snap_dev), path, 0);
 			if (ret < nret)
 				ret = nret;
-			free(mpt);
 			close(snapfd);
 		} else {
 			nret = checkfilesys(path, path, 0);
@@ -511,58 +504,4 @@ usage(void)
 	    "\t[-x snap-backup] [-y | -n] filesystem ...\n",
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);
-}
-
-static 
-char *get_snap_device(char *file)
-{
-	char *mountpoint = NULL;
-	struct statvfs *mntbuf, *fs, fsbuf;
-	struct stat sb;
-
-	/* find the mount point */
-	if (lstat(file, &sb) == -1) {
-		warn("can't stat %s", file);
-		return NULL;
-	}
-	if (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)) {
-		int mntbufc, i;
-		if ((mntbufc = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
-			pfatal("can't get mount list: %s\n", strerror(errno));
-		for (fs = mntbuf, i = 0;
-		     i < mntbufc; i++, fs++) {
-			if (strcmp(fs->f_fstypename, "ufs") != 0 &&
-			    strcmp(fs->f_fstypename, "ffs") != 0)
-				continue;
-			if (fs->f_flag & ST_RDONLY) {
-				warnx("Cannot use -x or -X "
-				     "on read-only filesystem");
-				free(mntbuf);
-				return NULL;
-			}
-			if (strcmp(fs->f_mntfromname, unrawname(file)) == 0) {
-				mountpoint = strdup(fs->f_mntonname);
-				free(mntbuf);
-				return mountpoint;
-			}
-		}
-		warnx("Cannot use -x or -X on unmounted device");
-		free(mntbuf);
-		return NULL;
-	}
-	if (S_ISDIR(sb.st_mode)) {
-		if (statvfs(file, &fsbuf) == -1)
-			pfatal("can't statvfs %s: %s\n", file, strerror(errno));
-		if (strcmp(fsbuf.f_mntonname, file))
-			pfatal("%s is not a mount point\n", file);
-		if (fsbuf.f_flag & ST_RDONLY) {
-			warnx("Cannot use -x or -X "
-			     "on read-only filesystem");
-			return NULL;
-		}
-		mountpoint = strdup(file);
-		return mountpoint;
-	}
-	pfatal("%s is not a mount point\n", file);
-	return NULL;
 }

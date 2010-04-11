@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1379 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1380 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -581,3 +581,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	agp(4): Add support for the Intel 82855GM AGP port. [jakllsch 20100404]
 	acpi(4): Updated ACPICA to 20100121. [jruoho 20100408]
 	fss(4): Add snapshot support for MSDOS file systems. [hannken 20100409]
+	fsck_msdos(8): add -x option which allows to run fsck_msdos -n on
+		a snapshot of a live file system. [hannken 20100411]
