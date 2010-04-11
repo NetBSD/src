@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.dpi,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile.dpi,v 1.2 2010/04/11 02:41:38 jakllsch Exp $
 
 # Files installed by both 75dpi and 100dpi packages.
 
@@ -41,6 +41,10 @@ ADOBE_UTOPIA_UCSFILES+=	${_s} ${_i}
 .endfor
 .endfor
 
+ADOBE_SYMBOL_SRCS=	symb08 symb10 symb12 symb14 symb18 symb24
+.for _s in ${ADOBE_SYMBOL_SRCS}
+ADOBE_SYMBOL_FILES+=	${_s}.bdf
+.endfor
 
 BH_SRCS=	luBIS08 luBIS10 luBIS12 luBIS14 luBIS18 luBIS19 luBIS24 \
 		luBS08 luBS10 luBS12 luBS14 luBS18 luBS19 luBS24 \
