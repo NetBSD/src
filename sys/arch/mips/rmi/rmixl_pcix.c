@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.1 2010/04/07 19:25:48 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.2 2010/04/12 22:03:33 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.1 2010/04/07 19:25:48 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.2 2010/04/12 22:03:33 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -161,6 +161,18 @@ int rmixl_pcix_debug = PCI_DEBUG;
 #define PCIX_INTR_ERR_STATUS_RESV	\
 		(PCIX_INTR_ERR_STATUS_RESa|PCIX_INTR_ERR_STATUS_RESb)
 
+/*
+ * RMIXL_PCIX_ECFG_HOST_MODE_CTL bit defines
+ */
+#define PCIX_HOST_MODE_CTL_HDMSTAT	__BIT(1)	/* Host/Dev Mode status
+							 *  read-only
+							 *  1 = host
+							 *  0 = device
+							 */
+#define PCIX_HOST_MODE_CTL_HOSTSWRST	__BIT(0)	/* Host soft reset
+							 *  set to 1 to reset
+							 *  set to 0 to un-reset
+							 */
 
 
 #if BYTE_ORDER == BIG_ENDIAN
@@ -278,7 +290,7 @@ rmixl_pcix_match(device_t parent, cfdata_t cf, void *aux)
 
 	/* read Host Mode Control register */
 	r = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_HOST_MODE_CTL);
-	r &= __BIT(1);		/* XXX HDMStat */
+	r &= PCIX_HOST_MODE_CTL_HDMSTAT;
 	if (r == 0)
 		return 0;	/* strapped for Device Mode */
 
@@ -313,22 +325,39 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * check XLR Control Register
 	 */
-	uint32_t xlr_control;
-	xlr_control = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_XLR_CONTROL);
-	printf("%s: XLR_CONTROL=%#x\n", __func__, xlr_control);
+	DPRINTF(("%s: XLR_CONTROL=%#x\n", __func__, 
+		RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_XLR_CONTROL)));
 
 	/*
-	 * check HBAR[0..7]
+	 * HBAR[0]   if a 32 bit BAR, or
+	 * HBAR[0,1] if a 64 bit BAR pair 
+	 * must cover all RAM
 	 */
-	uint32_t hbar_addr, hbar_size;
-	u_int addr_off = RMIXL_PCIX_ECFG_HOST_BAR0_ADDR;
-	u_int size_off = RMIXL_PCIX_ECFG_HOST_BAR0_SIZE;
-	for (int i=0; i < 7; i++) {
-		hbar_addr = RMIXL_PCIXREG_READ(addr_off);
-		hbar_size = RMIXL_PCIXREG_READ(size_off);
-		addr_off += 4;
-		size_off += 4;
-		printf("%s: HBAR[%d]=%#x @ %#x\n", __func__, i, hbar_size, hbar_addr);
+	extern u_quad_t mem_cluster_maxaddr;
+	uint64_t hbar_addr;
+	uint64_t hbar_size;
+	uint32_t hbar_size_lo, hbar_size_hi;
+	uint32_t hbar_addr_lo, hbar_addr_hi;
+
+	hbar_addr_lo = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_HOST_BAR0_ADDR);
+	hbar_addr_hi = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_HOST_BAR1_ADDR);
+	hbar_size_lo = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_HOST_BAR0_SIZE);
+	hbar_size_hi = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_HOST_BAR1_SIZE);
+
+	hbar_addr = (u_quad_t)(hbar_addr_lo & PCI_MAPREG_MEM_ADDR_MASK);
+	hbar_size = hbar_size_lo;
+	if ((hbar_size_lo & PCI_MAPREG_MEM_TYPE_64BIT) != 0) {
+		hbar_addr |= (uint64_t)hbar_addr_hi << 32;
+		hbar_size |= (uint64_t)hbar_size_hi << 32;
+	}
+	if ((hbar_addr != 0) || (hbar_size < mem_cluster_maxaddr)) {
+		printf("%s: HostBAR0 addr %#x, size %#x\n",
+			device_xname(self), hbar_addr_lo, hbar_size_lo);
+		if ((hbar_size_lo & PCI_MAPREG_MEM_TYPE_64BIT) != 0)
+			printf("%s: HostBAR1 addr %#x, size %#x\n",
+				device_xname(self), hbar_addr_hi, hbar_size_hi);
+		panic("PCI-X Host BAR does not cover RAM range 0..%#"PRIx64,
+			mem_cluster_maxaddr);
 	}
 
 	/*
@@ -339,7 +368,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	mble = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_XLR_MBLE);
 	mba  = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_MATCH_BIT_ADDR);
 	mbs  = RMIXL_PCIXREG_READ(RMIXL_PCIX_ECFG_MATCH_BIT_SIZE);
-	printf("%s: MBLE=%#x, MBA=%#x, MBS=%#x\n", __func__, mble, mba, mbs);
+	DPRINTF(("%s: MBLE=%#x, MBA=%#x, MBS=%#x\n", __func__, mble, mba, mbs));
 	if ((mble & __BIT(40)) != 0)
 		RMIXL_PCIXREG_WRITE(RMIXL_PCIX_ECFG_XLR_MBLE, 0);
 
@@ -368,8 +397,6 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	}
 	rcp->rc_pci_mem_pbase = (bus_addr_t)RMIXL_PCIX_MEM_BAR_TO_BA(bar);
 	rcp->rc_pci_mem_size  = (bus_size_t)RMIXL_PCIX_MEM_BAR_TO_SIZE(bar);
-printf("%s: rc_pci_mem_pbase %#"PRIxBUSADDR", rc_pci_mem_size %#"PRIxBUSSIZE"\n",
-__func__, rcp->rc_pci_mem_pbase, rcp->rc_pci_mem_size);
 
 	/*
 	 * get PCI IO space base [addr, size] from SBC PCIe IO BAR
