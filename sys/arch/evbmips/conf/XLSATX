@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.1.2.7 2010/04/07 19:31:37 cliff Exp $
+#	$NetBSD: XLSATX,v 1.1.2.8 2010/04/12 22:01:14 cliff Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.1.2.7 $"
+#ident 		"XLSATX-$Revision: 1.1.2.8 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -146,7 +146,7 @@ options		COM_REGMAP
 rmixl_pcix0	at obio0
 pci*		at rmixl_pcix0
 rmixl_pcie0	at obio0
-pci0		at rmixl_pcie0
+pci*		at rmixl_pcie0
 ppb*		at pci?
 pci*		at ppb?
 wm*		at pci? dev ? function ?	# Intel i82546EB Gig-E
