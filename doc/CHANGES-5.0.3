@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.8 2010/04/12 00:49:14 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.9 2010/04/12 02:36:38 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -179,4 +179,12 @@ crypto/dist/openssl/ssl/t1_enc.c		1.2 via patch
 	allocated, causing NULL pointer dereference.
 	Fix by checking that handshake_dgst is not NULL before use.
 	[bouyer, ticket #1365]
+
+libexec/ftpd/popen.c				1.37
+libexec/ftpd/version.h				1.74
+
+	PR/43023: FTPD bug remote crash.  Since we specify NOCHECK, in the
+	NOMATCH case gl_pathv can be NULL.
+	Update version to 20100320.
+	[lukem, ticket #1372]
 
