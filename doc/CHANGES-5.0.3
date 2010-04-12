@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.7 2010/03/28 15:43:25 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.8 2010/04/12 00:49:14 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -170,4 +170,13 @@ sys/kern/uipc_syscalls.c			patch
 
 	In do_sys_recvmsg(), call free(9) with the same type malloc(9) used.
 	[jakllsch, ticket #1352]
+
+crypto/dist/openssl/ssl/s3_enc.c		1.2 via patch
+crypto/dist/openssl/ssl/s3_srvr.c		1.5 via patch
+crypto/dist/openssl/ssl/t1_enc.c		1.2 via patch
+
+	Fix crash in openssl: handshake_dgst[] may be used without being
+	allocated, causing NULL pointer dereference.
+	Fix by checking that handshake_dgst is not NULL before use.
+	[bouyer, ticket #1365]
 
