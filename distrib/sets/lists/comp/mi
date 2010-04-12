@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1425 2010/04/12 22:34:17 pooka Exp $
+#	$NetBSD: mi,v 1.1426 2010/04/12 22:38:36 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2578,6 +2578,8 @@
 ./usr/lib/librumpcrypto_g.a			-unknown-		debuglib
 ./usr/lib/librumpcrypto_p.a			comp-c-proflib		profile
 ./usr/lib/librumpdev.a				comp-c-lib
+./usr/lib/librumpdev_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_p.a			comp-c-proflib		profile
 ./usr/lib/librumpdev_bpf.a			comp-c-lib
 ./usr/lib/librumpdev_bpf_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_bpf_p.a			comp-c-proflib		profile
@@ -2593,11 +2595,9 @@
 ./usr/lib/librumpdev_fss.a			comp-c-lib
 ./usr/lib/librumpdev_fss_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_fss_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_netsmb.a			comp-c-lib
 ./usr/lib/librumpdev_netsmb_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		profile
-./usr/lib/librumpdev_p.a			comp-c-proflib		profile
 ./usr/lib/librumpdev_raidframe.a		comp-c-lib
 ./usr/lib/librumpdev_raidframe_g.a		-unknown-		debuglib
 ./usr/lib/librumpdev_raidframe_p.a		comp-c-proflib		profile
@@ -2708,6 +2708,7 @@
 ./usr/lib/librumpvfs_layerfs_p.a		comp-c-proflib		profile
 ./usr/lib/librumpnet.a				comp-c-lib
 ./usr/lib/librumpnet_g.a			-unknown-		debuglib
+./usr/lib/librumpnet_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_local.a			comp-c-lib
 ./usr/lib/librumpnet_local_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_local_p.a			comp-c-proflib		profile
@@ -2715,15 +2716,14 @@
 ./usr/lib/librumpnet_netbt_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_netbt_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_net.a			comp-c-lib
+./usr/lib/librumpnet_net_g.a			-unknown-		debuglib
+./usr/lib/librumpnet_net_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_net80211.a			comp-c-lib
 ./usr/lib/librumpnet_net80211_g.a		-unknown-		debuglib
 ./usr/lib/librumpnet_net80211_p.a		comp-c-proflib		profile
-./usr/lib/librumpnet_net_g.a			-unknown-		debuglib
-./usr/lib/librumpnet_net_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_netinet.a			comp-c-lib
 ./usr/lib/librumpnet_netinet_g.a		-unknown-		debuglib
 ./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		profile
-./usr/lib/librumpnet_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet_shmif.a			comp-c-lib
 ./usr/lib/librumpnet_shmif_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_shmif_p.a			comp-c-proflib		profile
