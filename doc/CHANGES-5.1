@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.223 2010/04/08 23:17:24 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.224 2010/04/12 00:46:07 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17153,4 +17153,13 @@ external/mit/xorg/lib/dri/libmesa/Makefile	1.5
 	Fix a problem where GL applications would dump core when run under
 	the intel driver.  PR xsrc/42754.
 	[yhardy, ticket #1364]
+
+crypto/dist/openssl/ssl/s3_enc.c		1.2 via patch
+crypto/dist/openssl/ssl/s3_srvr.c		1.5 via patch
+crypto/dist/openssl/ssl/t1_enc.c		1.2 via patch
+
+	Fix crash in openssl: handshake_dgst[] may be used without being
+	allocated, causing NULL pointer dereference.
+	Fix by checking that handshake_dgst is not NULL before use.
+	[bouyer, ticket #1365]
 
