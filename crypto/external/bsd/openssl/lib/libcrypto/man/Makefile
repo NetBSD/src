@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2010/01/24 19:16:05 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/04/12 18:02:46 joerg Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 # try to use latest pod2man, which comes with the latest perl.
-
-# XXX: remove .UC lines
 
 .include <bsd.own.mk>
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
@@ -11,7 +9,7 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto
 
 VERSION!=	head -2 ${OPENSSLSRC}/README | tail -1 | awk '{ print $$2; }'
 
-manpages:
+make-manpages:
 	for i in ${OPENSSLSRC}/doc/apps/*.pod; do \
 		fn=`basename $$i .pod`; \
 		if [ "$$fn" = "config" ]; then \
@@ -27,6 +25,7 @@ manpages:
 		(cd `dirname $$i`; \
 		 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
 			`basename $$i`) | \
+		sed -e 's/[[:space:]]*$$//' | \
 		perl libcrypto.pl >$$dst; \
 	done
 	for i in ${OPENSSLSRC}/doc/crypto/*.pod \
@@ -36,12 +35,15 @@ manpages:
 			sec=7; \
 			(cd `dirname $$i`; \
 			 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
-				`basename $$i`) | sed -e '/$$RCSfile/d' -e '/$$Log/d' > `basename $$i .pod`.$$sec; \
+				`basename $$i`) | \
+			sed -e '/$$RCSfile/d' -e '/$$Log/d' -e 's/[[:space:]]*$$//' \
+			> `basename $$i .pod`.$$sec; \
 		else \
 			sec=3; \
 			(cd `dirname $$i`; \
 			 pod2man --section=$$sec --center=OpenSSL --release=${VERSION} \
 				`basename $$i`) | \
+			sed -e 's/[[:space:]]*$$//' | \
 			perl libcrypto.pl >`basename $$i .pod`.$$sec; \
 		fi \
 	done
