@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.12 2010/04/12 18:55:27 jruoho Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.12 2010/04/12 18:55:27 jruoho Exp $");
 
 #include "opt_acpi.h"
 
@@ -46,6 +46,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.11 2010/03/05 14:00:17 jruoho Exp 
 #include <sys/kernel.h>
 
 #include <dev/acpi/acpivar.h>
+
+#define AQ_GT		0	/* > */
+#define AQ_LT		1	/* < */
+#define AQ_GTE		2	/* >= */
+#define AQ_LTE		3	/* <= */
+#define AQ_EQ		4	/* == */
 
 static int acpi_rev_cmp(uint32_t, uint32_t, int);
 
