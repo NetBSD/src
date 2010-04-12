@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.158 2010/03/31 18:56:07 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.159 2010/04/12 22:17:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.158 2010/03/31 18:56:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.159 2010/04/12 22:17:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -277,6 +277,7 @@ rump__init(int rump_version)
 	LIST_INIT(&allproc);
 	LIST_INSERT_HEAD(&allproc, &proc0, p_list);
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	lwpinit_specificdata();
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
@@ -488,6 +489,7 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
 	l->l_cpu = NULL;
+	lwp_initspecific(l);
 
 	return l;
 }
@@ -534,6 +536,7 @@ rump_lwp_free(struct lwp *l)
 	KASSERT(l->l_mutex == NULL);
 	if (l->l_name)
 		kmem_free(l->l_name, MAXCOMLEN);
+	lwp_finispecific(l);
 	kmem_free(l, sizeof(*l));
 }
 
