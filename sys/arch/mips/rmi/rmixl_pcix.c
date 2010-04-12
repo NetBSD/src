@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.2 2010/04/12 22:03:33 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.3 2010/04/12 22:42:07 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.2 2010/04/12 22:03:33 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.3 2010/04/12 22:42:07 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -482,13 +482,13 @@ rmixl_pcix_intcfg(rmixl_pcix_softc_t *sc)
 
 	sc->sc_ih = rmixl_intr_establish(16, sc->sc_tmsk,
 		IPL_VM, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-		rmixl_pcix_intr, sc);
+		rmixl_pcix_intr, sc, false);
 	if (sc->sc_ih == NULL)
 		panic("%s: cannot establish irq %d", __func__, 16);
 
 	sc->sc_fatal_ih = rmixl_intr_establish(24, sc->sc_tmsk,
 		IPL_VM, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-		rmixl_pcix_error_intr, sc);
+		rmixl_pcix_error_intr, sc, false);
 	if (sc->sc_fatal_ih == NULL)
 		panic("%s: cannot establish irq %d", __func__, 24);
 

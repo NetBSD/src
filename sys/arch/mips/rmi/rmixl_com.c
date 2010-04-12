@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.11 2010/03/21 21:23:32 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.12 2010/04/12 22:42:07 cliff Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.11 2010/03/21 21:23:32 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.12 2010/04/12 22:42:07 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,8 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(sc);
 
 	rmixl_intr_establish(obio->obio_intr, obio->obio_tmsk,
-		IPL_SERIAL, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH, comintr, sc);
+		IPL_SERIAL, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+		comintr, sc, true);
 
 }
 
