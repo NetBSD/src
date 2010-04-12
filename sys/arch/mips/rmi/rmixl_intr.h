@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.1 2010/03/21 19:28:01 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.2 2010/04/12 22:40:55 cliff Exp $	*/
 
 #ifndef _MIPS_RMI_RMIXL_INTR_H_
 #define _MIPS_RMI_RMIXL_INTR_H_
@@ -40,6 +40,7 @@ typedef enum {
 typedef struct rmixl_intrhand {
         int (*ih_func)(void *);
         void *ih_arg; 
+        int ih_mpsafe; 			/* true if does not need kernel lock */
         int ih_irq;			/* >=32 if not-PIC-based */
         int ih_ipl; 			/* interrupt priority */
         int ih_cpumask; 		/* CPUs which may handle this irpt */
@@ -53,10 +54,10 @@ extern uint64_t ipl_eimr_map[];
 
 extern void *rmixl_intr_establish(int, int, int,
 	rmixl_intr_trigger_t, rmixl_intr_polarity_t,
-	int (*)(void *), void *);
+	int (*)(void *), void *, bool);
 extern void  rmixl_intr_disestablish(void *);
 extern void *rmixl_vec_establish(int, int, int,
-	int (*)(void *), void *);
+	int (*)(void *), void *, bool);
 extern void  rmixl_vec_disestablish(void *);
 extern const char *rmixl_intr_string(int);
 extern void rmixl_intr_init_cpu(struct cpu_info *);

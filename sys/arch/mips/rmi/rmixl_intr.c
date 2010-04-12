@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.16 2010/03/29 23:35:24 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.17 2010/04/12 22:40:55 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.16 2010/03/29 23:35:24 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.17 2010/04/12 22:40:55 cliff Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -422,12 +422,13 @@ evbmips_intr_init(void)
  * establish vector for mips3 count/compare clock interrupt
  * this ensures we enable in EIRR,
  * even though cpu_intr() handles the interrupt
+ * note the 'mpsafe' arg here is a placeholder only
  */
 void *
 rmixl_intr_init_clk(void)
 {
 	int vec = ffs(MIPS_INT_MASK_5 >> 8) - 1;
-	void *ih = rmixl_vec_establish(vec, 0, IPL_SCHED, NULL, NULL);
+	void *ih = rmixl_vec_establish(vec, 0, IPL_SCHED, NULL, NULL, false);
 	if (ih == NULL)
 		panic("%s: establish vec %d failed", __func__, vec);
 	
@@ -442,7 +443,7 @@ void *
 rmixl_intr_init_ipi(void)
 {
 	void *ih = rmixl_vec_establish(RMIXL_INTRVEC_IPI, -1, IPL_SCHED,
-		rmixl_ipi_intr, NULL);
+		rmixl_ipi_intr, NULL, false);
 	if (ih == NULL)
 		panic("%s: establish vec %d failed",
 			__func__, RMIXL_INTRVEC_IPI);
@@ -671,7 +672,7 @@ rmixl_irt_establish(int irq, int cpumask, rmixl_intr_trigger_t trigger,
 
 void *
 rmixl_vec_establish(int vec, int cpumask, int ipl,
-	int (*func)(void *), void *arg)
+	int (*func)(void *), void *arg, bool mpsafe)
 {
 	rmixl_intrhand_t *ih;
 	int s;
@@ -700,6 +701,7 @@ rmixl_vec_establish(int vec, int cpumask, int ipl,
 
 	ih->ih_func = func;
 	ih->ih_arg = arg;
+	ih->ih_mpsafe = mpsafe;
 	ih->ih_irq = vec;
 	ih->ih_ipl = ipl;
 	ih->ih_cpumask = cpumask;
@@ -710,8 +712,9 @@ rmixl_vec_establish(int vec, int cpumask, int ipl,
 }
 
 void *
-rmixl_intr_establish(int irq, int cpumask, int ipl, rmixl_intr_trigger_t trigger,
-	rmixl_intr_polarity_t polarity, int (*func)(void *), void *arg)
+rmixl_intr_establish(int irq, int cpumask, int ipl,
+	rmixl_intr_trigger_t trigger, rmixl_intr_polarity_t polarity,
+	int (*func)(void *), void *arg, bool mpsafe)
 {
 	rmixl_intrhand_t *ih;
 	int s;
@@ -738,7 +741,7 @@ rmixl_intr_establish(int irq, int cpumask, int ipl, rmixl_intr_trigger_t trigger
 	/*
 	 * establish vector
 	 */
-	ih = rmixl_vec_establish(irq, cpumask, ipl, func, arg);
+	ih = rmixl_vec_establish(irq, cpumask, ipl, func, arg, mpsafe);
 
 	/*
 	 * establish IRT Entry
@@ -843,8 +846,19 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 			RMIXL_PICREG_WRITE(RMIXL_PIC_INTRACK,
 				(uint32_t)vecbit);
 
-		if (ih->ih_func != NULL)
+		if (ih->ih_func != NULL) {
+#ifdef MULTIPROCESSOR
+			if (ih->ih_mpsafe) {
+				(void)(*ih->ih_func)(ih->ih_arg);
+			} else {
+				KERNEL_LOCK(1, NULL);
+				(void)(*ih->ih_func)(ih->ih_arg);
+				KERNEL_UNLOCK_ONE(NULL);
+			}
+#else
 			(void)(*ih->ih_func)(ih->ih_arg);
+#endif /* MULTIPROCESSOR */
+		}
 
 		sc->sc_vec_evcnts[vec].ev_count++;
 	}
