@@ -421,10 +421,10 @@ extern      UINT32                      AcpiGbl_NestingLevel;
 
 /* Event counters */
 
-ACPI_EXTERN UINT32                      AcpiMethodCount;
-ACPI_EXTERN UINT32                      AcpiGpeCount;
-ACPI_EXTERN UINT32                      AcpiSciCount;
-ACPI_EXTERN UINT32                      AcpiFixedEventCount[ACPI_NUM_FIXED_EVENTS];
+ACPI_EXTERN UINT64                      AcpiMethodCount;
+ACPI_EXTERN UINT64                      AcpiGpeCount;
+ACPI_EXTERN UINT64                      AcpiSciCount;
+ACPI_EXTERN UINT64                      AcpiFixedEventCount[ACPI_NUM_FIXED_EVENTS];
 
 /* Support for dynamic control method tracing mechanism */
 
