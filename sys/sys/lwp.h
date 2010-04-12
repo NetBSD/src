@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.129 2010/04/06 13:50:22 christos Exp $	*/
+/*	$NetBSD: lwp.h,v 1.130 2010/04/12 22:15:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -327,6 +327,7 @@ void	lwp_sys_init(void);
 void	lwp_unsleep(lwp_t *, bool);
 uint64_t lwp_pctr(void);
 
+void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
 void 	lwp_initspecific(lwp_t *);
