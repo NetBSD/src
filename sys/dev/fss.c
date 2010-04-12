@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.66 2010/04/05 09:30:46 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.67 2010/04/12 22:29:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.66 2010/04/05 09:30:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.67 2010/04/12 22:29:11 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1248,6 +1248,8 @@ fss_modcmd(modcmd_t cmd, void *arg)
 		}
 		error = devsw_attach(fss_cd.cd_name,
 		    &fss_bdevsw, &bmajor, &fss_cdevsw, &cmajor);
+		if (error == EEXIST)
+			error = 0;
 		if (error) {
 			config_cfattach_detach(fss_cd.cd_name, &fss_ca);
 			config_cfdriver_detach(&fss_cd);
