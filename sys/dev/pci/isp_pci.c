@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.111 2010/03/26 20:52:01 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.112 2010/04/12 14:26:21 mjacob Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.111 2010/03/26 20:52:01 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.112 2010/04/12 14:26:21 mjacob Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -665,6 +665,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 			dstring = ": QLogic FC-AL and 4Gbps Fabric PCI-E HBA\n";
 		}
 		isp->isp_type = ISP_HA_FC_2400;
+		isp->isp_port = pa->pa_function;
 		mamt = sizeof (fcparam);
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2400_OFF;
@@ -674,6 +675,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 		isp->isp_mdvec = &mdvec_2500;
 		dstring = ": QLogic FC-AL and 8Gbps Fabric PCI-E HBA\n";
 		isp->isp_type = ISP_HA_FC_2500;
+		isp->isp_port = pa->pa_function;
 		mamt = sizeof (fcparam);
 		pcs->pci_poff[MBOX_BLOCK >> _BLK_REG_SHFT] =
 		    PCI_MBOX_REGS2400_OFF;
