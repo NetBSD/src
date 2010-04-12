@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.42 2010/03/29 23:33:37 cliff Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.43 2010/04/12 22:01:41 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.42 2010/03/29 23:33:37 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.43 2010/04/12 22:01:41 cliff Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -1671,7 +1671,7 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 		paddr_t segstart = round_page(segs->start);
 		const paddr_t segfinish = trunc_page(segs->start + segs->size);
 
-		printf("phys segment: %#"PRIxPADDR"@%#"PRIxPADDR"\n",
+		printf("phys segment: %#"PRIxPADDR" @ %#"PRIxPADDR"\n",
 		    segfinish - segstart, segstart);
 
 		/*
@@ -1760,7 +1760,7 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 					 * Just skip the segment entirely since
 					 * it's completely inside the kernel.
 					 */
-					printf("skipping %#"PRIxPADDR"@%#"PRIxPADDR" (kernel)\n",
+					printf("skipping %#"PRIxPADDR" @ %#"PRIxPADDR" (kernel)\n",
 					    segend - segstart, segstart);
 					break;
 				}
@@ -1769,7 +1769,7 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 			/*
 			 * Now we give this segment to uvm.
 			 */
-			printf("adding %#"PRIxPADDR"@%#"PRIxPADDR" to freelist %d\n",
+			printf("adding %#"PRIxPADDR" @ %#"PRIxPADDR" to freelist %d\n",
 			
 			    segend - segstart, segstart, freelist);
 			paddr_t first = atop(segstart);
