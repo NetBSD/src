@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.17 2010/03/28 13:11:23 pgoyette Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.18 2010/04/12 06:56:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.17 2010/03/28 13:11:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.18 2010/04/12 06:56:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -332,7 +332,7 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 				      APM_BATT_FLAG_HIGH)
 	struct apm_sensor_info info;
 
-	/* Denote most variables as unitialized. */
+	/* Denote most variables as uninitialized. */
 	info.lowcap = info.warncap = info.descap = -1;
 
 	/*

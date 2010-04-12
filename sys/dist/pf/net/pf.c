@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.61 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: pf.c,v 1.62 2010/04/12 06:56:19 skrll Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.61 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.62 2010/04/12 06:56:19 skrll Exp $");
 
 #include "pflog.h"
 
@@ -2926,7 +2926,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
 
-	hlen = 0;	/* XXXGCC -Wunitialized m68k */
+	hlen = 0;	/* XXXGCC -Wuninitialized m68k */
 
 	memset(&ro, 0, sizeof(ro));
 	switch (af) {
@@ -4312,8 +4312,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 	int		 state_icmp = 0;
 	struct pf_state_key_cmp key;
 
-	icmpsum = NULL;	/* XXXGCC -Wunitialized m68k */
-	icmptype = 0;	/* XXXGCC -Wunitialized m68k */
+	icmpsum = NULL;	/* XXXGCC -Wuninitialized m68k */
+	icmptype = 0;	/* XXXGCC -Wuninitialized m68k */
 
 	switch (pd->proto) {
 #ifdef INET
