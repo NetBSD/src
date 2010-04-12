@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.14 2010/03/21 21:26:13 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.15 2010/04/12 22:42:06 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.14 2010/03/21 21:26:13 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.15 2010/04/12 22:42:06 cliff Exp $");
 
 #include "locators.h"
 #include "pci.h"
@@ -283,8 +283,9 @@ rmixl_addr_error_init(void)
 	 * XXX is true for XLS family only
 	 */
 	if (cpu_rmixls(mips_options.mips_cpu))
-		rmixl_intr_establish(16, 1, IPL_HIGH, RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
-			rmixl_addr_error_intr, NULL);
+		rmixl_intr_establish(16, 1, IPL_HIGH,
+			RMIXL_TRIG_LEVEL, RMIXL_POLR_HIGH,
+			rmixl_addr_error_intr, NULL, false);
 }
 
 int
