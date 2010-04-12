@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2010/04/09 13:49:12 ahoka Exp $
+#	$NetBSD: Makefile,v 1.41 2010/04/12 14:08:58 ahoka Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,7 @@ SUBDIR+=	nilfs
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	overlay
+SUBDIR+=	pf
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
