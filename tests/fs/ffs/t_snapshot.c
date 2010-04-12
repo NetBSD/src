@@ -1,4 +1,4 @@
-/*	$NetBSD: t_snapshot.c,v 1.1 2010/04/12 22:58:53 pooka Exp $	*/
+/*	$NetBSD: t_snapshot.c,v 1.2 2010/04/12 23:15:24 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -106,6 +106,7 @@ ATF_TC_BODY(snapshot, tc)
 	memset(buf, 0, sizeof(buf));
 	if (rump_sys_read(fd2, buf, sizeof(buf)) == -1)
 		atf_tc_fail_errno("read snap");
+	ATF_CHECK(strcmp(buf, TESTSTR1) == 0);
 
 	/* check that new files are invisible in the snapshot */
 	makefile("/mnt/newfile");
@@ -116,11 +117,10 @@ ATF_TC_BODY(snapshot, tc)
 
 	/* check that removed files are still visible in the snapshot */
 	rump_sys_unlink("/mnt/myfile");
-
 	if (rump_sys_open("/snap/myfile", O_RDONLY) == -1)
 		atf_tc_fail_errno("unlinked file no longer in snapshot");
 
-	ATF_CHECK(strcmp(buf, TESTSTR1) == 0);
+	/* done for now */
 }
 
 ATF_TC_CLEANUP(snapshot, tc)
