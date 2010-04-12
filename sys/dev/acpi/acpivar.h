@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.44 2010/03/16 05:48:43 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.45 2010/04/12 12:14:26 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,16 +80,6 @@ struct acpibus_attach_args {
 #define ACPI_DEVICE_WAKEUP		__BIT(1)
 
 /*
- * acpi_wake:
- *
- *	ACPI device wake.
- */
-struct acpi_wake {
-	struct sysctllog	  *wake_sysctllog;
-	int			   wake_enabled;
-};
-
-/*
  * acpi_devnode:
  *
  *	An ACPI device node.
@@ -97,12 +87,12 @@ struct acpi_wake {
 struct acpi_devnode {
 	device_t		 ad_device;	/* Device */
 	device_t		 ad_parent;	/* Backpointer to the parent */
-	struct acpi_wake	 ad_wake;	/* Device wakeup */
 	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
 	ACPI_HANDLE		 ad_handle;	/* Device handle */
 	char			 ad_name[5];	/* Device name */
 	uint32_t		 ad_flags;	/* Device flags */
 	uint32_t		 ad_type;	/* Device type */
+	int			 ad_wake;	/* Device wakeup */
 
 	SIMPLEQ_ENTRY(acpi_devnode) ad_list;
 };

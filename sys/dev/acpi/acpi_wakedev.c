@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.8 2010/03/16 07:18:55 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.9 2010/04/12 12:14:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.8 2010/03/16 07:18:55 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.9 2010/04/12 12:14:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.8 2010/03/16 07:18:55 jruoho Exp 
 #define _COMPONENT		   ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME		   ("acpi_wakedev")
 
-static int acpi_wakedev_node = -1;
-
 static const char * const acpi_wakedev_default[] = {
 	"PNP0C0C",	/* power button */
 	"PNP0C0E",	/* sleep button */
@@ -51,27 +49,43 @@ static const char * const acpi_wakedev_default[] = {
 	NULL,
 };
 
+static const struct sysctlnode *rnode = NULL;
+
 static void	acpi_wakedev_prepare(struct acpi_devnode *, int, int);
 
-SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.wake subtree setup")
+SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 {
-	const struct sysctlnode *rnode;
 	int err;
 
-	err = sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
-	if (err)
-		return;
 	err = sysctl_createv(NULL, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "wake", NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_HW, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(NULL, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi",
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(NULL, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
+	    "wake", SYSCTL_DESCR("ACPI device wake-up"),
 	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_CREATE, CTL_EOL);
-	if (err)
-		return;
-	acpi_wakedev_node = rnode->sysctl_num;
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	return;
+
+fail:
+	rnode = NULL;
 }
 
 void
@@ -82,23 +96,22 @@ acpi_wakedev_add(struct acpi_devnode *ad)
 	KASSERT(ad != NULL && ad->ad_parent != NULL);
 	KASSERT((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0);
 
-	ad->ad_wake.wake_enabled = 0;
-	ad->ad_wake.wake_sysctllog = NULL;
+	ad->ad_wake = 0;
 
 	if (acpi_match_hid(ad->ad_devinfo, acpi_wakedev_default))
-		ad->ad_wake.wake_enabled = 1;
+		ad->ad_wake = 1;
 
-	if (acpi_wakedev_node == -1)
+	if (rnode == NULL)
 		return;
 
-	err = sysctl_createv(&ad->ad_wake.wake_sysctllog, 0, NULL, NULL,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, ad->ad_name,
-	    NULL, NULL, 0, &ad->ad_wake.wake_enabled, 0,
-	    CTL_HW, acpi_wakedev_node, CTL_CREATE, CTL_EOL);
+	err = sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, ad->ad_name,
+	    NULL, NULL, 0, &ad->ad_wake, 0,
+	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
-		aprint_error_dev(ad->ad_parent, "sysctl_createv(hw.wake.%s) "
-		    "failed (err %d)\n", ad->ad_name, err);
+		aprint_error_dev(ad->ad_parent, "sysctl_createv"
+		    "(hw.acpi.wake.%s) failed (err %d)\n", ad->ad_name, err);
 }
 
 void
@@ -121,7 +134,7 @@ acpi_wakedev_commit(struct acpi_softc *sc, int state)
 		if ((ad->ad_flags & ACPI_DEVICE_WAKEUP) == 0)
 			continue;
 
-		if (ad->ad_wake.wake_enabled == 0)
+		if (ad->ad_wake == 0)
 			acpi_clear_wake_gpe(ad->ad_handle);
 		else {
 			aprint_debug_dev(ad->ad_parent,
@@ -129,7 +142,7 @@ acpi_wakedev_commit(struct acpi_softc *sc, int state)
 			acpi_set_wake_gpe(ad->ad_handle);
 		}
 
-		acpi_wakedev_prepare(ad, ad->ad_wake.wake_enabled, state);
+		acpi_wakedev_prepare(ad, ad->ad_wake, state);
 	}
 }
 
