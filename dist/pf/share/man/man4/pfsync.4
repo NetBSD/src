@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfsync.4,v 1.4 2009/10/04 18:07:26 joerg Exp $
+.\"	$NetBSD: pfsync.4,v 1.5 2010/04/12 14:26:11 ahoka Exp $
 .\"	$OpenBSD: pfsync.4,v 1.25 2007/05/31 19:19:51 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
@@ -246,3 +246,8 @@ The
 .Nm
 device first appeared in
 .Ox 3.3 .
+.Sh CAVEATS
+.Nm
+is not available when using
+.Xr pf 4
+as a kernel module.
