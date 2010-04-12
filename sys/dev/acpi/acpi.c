@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.164 2010/04/08 04:40:51 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.165 2010/04/12 12:14:26 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.164 2010/04/08 04:40:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.165 2010/04/12 12:14:26 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -133,6 +133,7 @@ static void	acpi_rescan_capabilities(struct acpi_softc *);
 
 static int	acpi_print(void *aux, const char *);
 
+static int	sysctl_hw_acpi_fixedstats(SYSCTLFN_ARGS);
 static int	sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS);
 
 extern struct cfdriver acpi_cd;
@@ -1736,62 +1737,130 @@ out:
 
 SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
 {
-	const struct sysctlnode *node;
-	const struct sysctlnode *ssnode;
+	const struct sysctlnode *mnode, *rnode;
+	int err;
 
-	if (sysctl_createv(clog, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_EOL) != 0)
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_HW, CTL_EOL);
+
+	if (err != 0)
 		return;
 
-	if (sysctl_createv(clog, 0, NULL, &node,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "acpi", NULL,
+	err = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
+	    "acpi", SYSCTL_DESCR("ACPI subsystem parameters"),
 	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_CREATE, CTL_EOL) != 0)
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
 		return;
 
-	sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READONLY,
-	    CTLTYPE_QUAD, "root",
-	    SYSCTL_DESCR("ACPI root pointer"),
+	(void)sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY, CTLTYPE_QUAD,
+	    "root", SYSCTL_DESCR("ACPI root pointer"),
 	    NULL, 0, &acpi_root_pointer, sizeof(acpi_root_pointer),
-	    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
-	sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READONLY,
-	    CTLTYPE_STRING, "supported_states",
-	    SYSCTL_DESCR("Supported ACPI system states"),
-	    NULL, 0, acpi_supported_states, 0,
-	    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
+	    CTL_CREATE, CTL_EOL);
 
-	/* ACPI sleepstate sysctl */
-	if (sysctl_createv(NULL, 0, NULL, &node,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "machdep", NULL,
-	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL) != 0)
+	(void)sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY, CTLTYPE_STRING,
+	    "supported_states", SYSCTL_DESCR("Supported system states"),
+	    NULL, 0, acpi_supported_states, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	err = sysctl_createv(NULL, 0, NULL, &mnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep",
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+
+	if (err == 0) {
+
+		(void)sysctl_createv(NULL, 0, &mnode, NULL,
+		    CTLFLAG_PERMANENT | CTLFLAG_READWRITE, CTLTYPE_INT,
+		    "sleep_state", SYSCTL_DESCR("System sleep state"),
+		    sysctl_hw_acpi_sleepstate, 0, NULL, 0,
+		    CTL_CREATE, CTL_EOL);
+	}
+
+	err = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
+	    "stat", SYSCTL_DESCR("ACPI statistics"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
 		return;
-	if (sysctl_createv(NULL, 0, &node, &ssnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "sleep_state",
-	    NULL, sysctl_hw_acpi_sleepstate, 0, NULL, 0, CTL_CREATE,
-	    CTL_EOL) != 0)
-		return;
+
+	(void)sysctl_createv(clog, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY, CTLTYPE_QUAD,
+	    "gpe", SYSCTL_DESCR("Number of dispatched GPEs"),
+	    NULL, 0, &AcpiGpeCount, sizeof(AcpiGpeCount),
+	    CTL_CREATE, CTL_EOL);
+
+	(void)sysctl_createv(clog, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY, CTLTYPE_QUAD,
+	    "sci", SYSCTL_DESCR("Number of SCI interrupts"),
+	    NULL, 0, &AcpiSciCount, sizeof(AcpiSciCount),
+	    CTL_CREATE, CTL_EOL);
+
+	(void)sysctl_createv(clog, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY, CTLTYPE_QUAD,
+	    "fixed", SYSCTL_DESCR("Number of fixed events"),
+	    sysctl_hw_acpi_fixedstats, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	(void)sysctl_createv(clog, 0, &rnode, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY, CTLTYPE_QUAD,
+	    "method", SYSCTL_DESCR("Number of methods executed"),
+	    NULL, 0, &AcpiMethodCount, sizeof(AcpiMethodCount),
+	    CTL_CREATE, CTL_EOL);
+
+	CTASSERT(sizeof(AcpiGpeCount) == sizeof(uint64_t));
+	CTASSERT(sizeof(AcpiSciCount) == sizeof(uint64_t));
+}
+
+static int
+sysctl_hw_acpi_fixedstats(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	uint64_t t;
+	int err, i;
+
+	for (i = t = 0; i < __arraycount(AcpiFixedEventCount); i++)
+		t += AcpiFixedEventCount[i];
+
+	node = *rnode;
+	node.sysctl_data = &t;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (err || newp == NULL)
+		return err;
+
+	return 0;
 }
 
 static int
 sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS)
 {
-	int error, t;
 	struct sysctlnode node;
+	int err, t;
 
 	node = *rnode;
 	t = acpi_sleepstate;
 	node.sysctl_data = &t;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return error;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (err || newp == NULL)
+		return err;
 
 	if (acpi_softc == NULL)
 		return ENOSYS;
+
+	if (t < ACPI_STATE_S0 || t > ACPI_STATE_S5)
+		return EINVAL;
 
 	acpi_enter_sleep_state(acpi_softc, t);
 
