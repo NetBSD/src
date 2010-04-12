@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.166 2010/04/12 18:55:27 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.167 2010/04/12 18:59:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.166 2010/04/12 18:55:27 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.167 2010/04/12 18:59:08 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -653,31 +653,14 @@ acpi_disable(struct acpi_softc *sc)
 /*
  * acpi_build_tree:
  *
- *	Scan relevant portions of the ACPI namespace and attach
- *	child devices.
+ *	Scan the ACPI namespace and attach child devices.
  */
 static void
 acpi_build_tree(struct acpi_softc *sc)
 {
-	static const char *scopes[] = {
-		"\\_PR_", "\\_SB_", "\\_SI_", "\\_TZ_", NULL
-	};
 
-	ACPI_HANDLE parent;
-	ACPI_STATUS rv;
-	int i;
-
-	/*
-	 * Scan the namespace and build our device tree.
-	 */
-	for (i = 0; scopes[i] != NULL; i++) {
-
-		rv = AcpiGetHandle(ACPI_ROOT_OBJECT, scopes[i], &parent);
-
-		if (ACPI_SUCCESS(rv))
-			(void)AcpiWalkNamespace(ACPI_TYPE_ANY, parent, 100,
-			    acpi_make_devnode, NULL, sc, NULL);
-	}
+	(void)AcpiWalkNamespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
+	    UINT32_MAX, acpi_make_devnode, NULL, sc, NULL);
 
 	acpi_rescan1(sc, NULL, NULL);
 	acpi_rescan_capabilities(sc);
