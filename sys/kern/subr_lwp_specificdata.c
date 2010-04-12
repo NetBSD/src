@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lwp_specificdata.c,v 1.1 2010/04/12 22:15:31 pooka Exp $	*/
+/*	$NetBSD: subr_lwp_specificdata.c,v 1.2 2010/04/12 23:09:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #define _LWP_API_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lwp_specificdata.c,v 1.1 2010/04/12 22:15:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lwp_specificdata.c,v 1.2 2010/04/12 23:09:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lwp_specificdata.c,v 1.1 2010/04/12 22:15:31 po
 static specificdata_domain_t lwp_specificdata_domain;
 
 void
-lwpinit_specificdata()
+lwpinit_specificdata(void)
 {
 
 	lwp_specificdata_domain = specificdata_domain_create();
