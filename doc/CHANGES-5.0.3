@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.9 2010/04/12 02:36:38 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.10 2010/04/12 21:55:48 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -187,4 +187,9 @@ libexec/ftpd/version.h				1.74
 	NOMATCH case gl_pathv can be NULL.
 	Update version to 20100320.
 	[lukem, ticket #1372]
+
+external/bsd/openldap/dist/libraries/libldap/tls.c patch
+
+	Fix CVE-2009-3767.
+	[lukem, ticket #1374]
 
