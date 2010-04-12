@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.14 2009/06/24 22:39:40 zafer Exp $
+.\"     $NetBSD: fstrans.9,v 1.15 2010/04/12 21:28:55 jruoho Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 2, 2007
+.Dd April 13, 2010
 .Dt FSTRANS 9
 .Os
 .Sh NAME
@@ -77,68 +77,76 @@ in
 .Dv "mnt_iflag" .
 .Pp
 File systems are always in one of these states:
+.Pp
 .Bl -tag -offset indent -width FSTRANS_SUSPENDING -compact
 .It Dv FSTRANS_NORMAL
-normal operations.
+Normal operations.
 .It Dv FSTRANS_SUSPENDING
-preparing a suspension.
+Preparing a suspension.
 .It Dv FSTRANS_SUSPENDED
-suspended.
+Suspended.
 .El
+.Pp
 This state is represented by
 .Vt "enum fstrans_state" .
-.Bl -tag -width compact
-.It Fn fstrans_getstate "mp"
-returns the current state of the file system
-.Fa mp .
-.Pp
-.It Fn fstrans_setstate "mp" "new_state"
-changes the state of the file system
-.Fa mp
-to
-.Fa new_state .
-.El
 .Pp
 All file system operations use a
 .Em "fstrans lock" .
 This lock is recursive.
 A thread already owning a lock will always get another lock.
 The lock has two variants:
-.Bl -tag -offset indent -width FSTRANS_SHARED -compact
+.Bl -tag -offset indent -width FSTRANS_SHARED
 .It Dv FSTRANS_SHARED
-this lock will be granted if the file system is in state
+A lock that will be granted if the file system is in state
 .Dv FSTRANS_NORMAL .
 .It Dv FSTRANS_LAZY
-this lock will be granted if the file system is in state
+A lock that will be granted if the file system is in state
 .Dv FSTRANS_NORMAL
 or
 .Dv FSTRANS_SUSPENDING .
 It needs special care because operations using this variant will not block
 while the file system prepares suspension.
 .El
+.Pp
 The lock variant is represented by
 .Vt "enum fstrans_lock_type" .
+.Sh FUNCTIONS
+The following functions comprise the
+.Tn API
+provided by
+.Nm .
 .Bl -tag -width compact
+.It Fn fstrans_getstate "mp"
+Returns the current state of the file system
+.Fa mp .
+.It Fn fstrans_setstate "mp" "new_state"
+Changes the state of the file system
+.Fa mp
+to
+.Fa new_state .
 .It Fn fstrans_start "mp" "lock_type"
-sets a lock of type
+Sets a lock of type
 .Fa lock_type
 on the file system
 .Fa mp .
 .It Fn fstrans_start_nowait "mp" "lock_type"
-will not wait for a state change of the file system when attempting to
+Like
+.Fn fstrans_start ,
+but will not wait for a state change of the file system when attempting to
 acquire the lock.
 The thread may still sleep while attempting to acquire the lock.
 .It Fn fstrans_done "mp"
-releases a lock on the file system
+Releases a lock on the file system
 .Fa mp .
 .It Fn fstrans_is_owner "mp"
-returns
+Returns
 .Dv true
 if this thread is currently suspending the file system
 .Fa mp .
 .It Fn fscow_establish "mp" "func" "cookie"
 Establish a copy-on-write callback for the file system
 .Fa mp .
+The function
 .Fa func
 will be called for every buffer written through this file system.
 .It Fn fscow_disestablish "mp" "func" "cookie"
