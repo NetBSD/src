@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.45 2010/04/12 12:14:26 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.46 2010/04/12 18:55:27 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,14 +66,6 @@ struct acpibus_attach_args {
 };
 
 /*
- * Types of switches that ACPI understands.
- */
-#define	ACPI_SWITCH_POWERBUTTON		0
-#define	ACPI_SWITCH_SLEEPBUTTON		1
-#define	ACPI_SWITCH_LID			2
-#define	ACPI_NSWITCHES			3
-
-/*
  * ACPI driver capabilities.
  */
 #define ACPI_DEVICE_POWER		__BIT(0)
@@ -119,13 +111,8 @@ struct acpi_softc {
 	struct sysmon_pswitch sc_smpsw_power;
 	struct sysmon_pswitch sc_smpsw_sleep;
 
-	/*
-	 * Sleep state to transition to when a given
-	 * switch is activated.
-	 */
-	int sc_switch_sleep[ACPI_NSWITCHES];
-
 	int sc_sleepstate;		/* current sleep state */
+	int sc_sleepstates;		/* supported sleep states */
 
 	int sc_quirks;
 
@@ -312,12 +299,6 @@ struct acpi_quirk {
 	const char *aq_tabid;	/* compared against the table TableId */
 	int aq_quirks;		/* the actual quirks */
 };
-
-#define AQ_GT		0	/* > */
-#define AQ_LT		1	/* < */
-#define AQ_GTE		2	/* >= */
-#define AQ_LTE		3	/* <= */
-#define AQ_EQ		4	/* == */
 
 #define ACPI_QUIRK_BROKEN	0x00000001	/* totally broken */
 #define ACPI_QUIRK_BADPCI	0x00000002	/* bad PCI hierarchy */
