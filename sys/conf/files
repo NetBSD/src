@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.985 2010/04/09 10:09:49 nonaka Exp $
+#	$NetBSD: files,v 1.986 2010/04/12 22:15:32 pooka Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -1510,6 +1510,7 @@ file	kern/subr_kobj.c
 file	kern/subr_kobj_vfs.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
+file	kern/subr_lwp_specificdata.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_percpu.c
