@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.26 2010/04/12 12:28:59 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.27 2010/04/12 12:43:39 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.26 2010/04/12 12:28:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.27 2010/04/12 12:43:39 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ st_dma_init(void)
 	TAILQ_INIT(&dma_free);
 	TAILQ_INIT(&dma_active);
 
-	for(i = 0; i < NDMA_DEV; i++)
+	for (i = 0; i < NDMA_DEV; i++)
 		TAILQ_INSERT_HEAD(&dma_free, &dmatable[i], entries);
 
 	if (intr_establish(7, USER_VEC, 0, cdmaint, NULL) == NULL)
@@ -119,17 +119,16 @@ st_dmagrab(dma_farg int_func, dma_farg call_func, void *softc, int *lock_stat,
 	/*
 	 * Create a request...
 	 */
-	if (dma_free.tqh_first == NULL)
+	if ((req = TAILQ_FIRST(&dma_free)) == NULL)
 		panic("st_dmagrab: Too many outstanding requests");
-	req = dma_free.tqh_first;
-	TAILQ_REMOVE(&dma_free, dma_free.tqh_first, entries);
+	TAILQ_REMOVE(&dma_free, req, entries);
 	req->call_func = call_func;
 	req->int_func  = int_func;
 	req->softc     = softc;
 	req->lock_stat = lock_stat;
 	TAILQ_INSERT_TAIL(&dma_active, req, entries);
 
-	if (dma_active.tqh_first != req) {
+	if (TAILQ_FIRST(&dma_active) != req) {
 		if (call_func == NULL) {
 			do {
 				tsleep(&dma_active, PRIBIO, "dmalck", 0);
@@ -170,7 +169,7 @@ st_dmafree(void *softc, int *lock_stat)
 	/*
 	 * Some validity checks first.
 	 */
-	if ((req = dma_active.tqh_first) == NULL)
+	if ((req = TAILQ_FIRST(&dma_active)) == NULL)
 		panic("st_dmafree: empty active queue");
 	if (req->softc != softc)
 		printf("Caller of st_dmafree is not lock-owner!\n");
@@ -182,7 +181,7 @@ st_dmafree(void *softc, int *lock_stat)
 	TAILQ_REMOVE(&dma_active, req, entries);
 	TAILQ_INSERT_HEAD(&dma_free, req, entries);
 
-	if ((req = dma_active.tqh_first) != NULL) {
+	if ((req = TAILQ_FIRST(&dma_active)) != NULL) {
 		*req->lock_stat = DMA_LOCK_GRANT;
 
 		if (req->call_func == NULL)
@@ -202,7 +201,7 @@ int
 st_dmawanted(void)
 {
 
-	return dma_active.tqh_first->entries.tqe_next != NULL;
+	return TAILQ_NEXT(TAILQ_FIRST(&dma_active), entries) != NULL;
 }
 
 int
@@ -212,13 +211,13 @@ cdmaint(void *unused, int sr)
 	dma_farg int_func;
 	void *softc;
 
-	if (dma_active.tqh_first != NULL) {
+	if (TAILQ_FIRST(&dma_active) != NULL) {
 		/*
 		 * Due to the logic of the ST-DMA chip, it is not possible to
 		 * check for stray interrupts here...
 		 */
-		int_func = dma_active.tqh_first->int_func;
-		softc    = dma_active.tqh_first->softc;
+		int_func = TAILQ_FIRST(&dma_active)->int_func;
+		softc    = TAILQ_FIRST(&dma_active)->softc;
 		add_sicallback((si_farg)int_func, softc, 0);
 		return 1;
 	}
