@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/19 23:30:57 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2010/04/12 17:58:40 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -20,8 +20,12 @@ CPPFLAGS+=-DOPENSSL_cleanse=bzero -DOPENSSL_malloc=malloc
 INCS=	des.h
 INCSDIR=/usr/include
 
-# pod2man --section=3 --center=libdes --release=0.9.6j des.pod > des.3
-# pod2man --section=7 --center=libdes --release=0.9.6j des_modes.pod > des_modes.7
+make-manpages:
+	pod2man --section=3 --center=libdes --release=0.9.6j des.pod | \
+	sed -e 's/[[:space:]]*$$//' > ${.CURDIR}/des.3
+	pod2man --section=7 --center=libdes --release=0.9.6j des_modes.pod | \
+	sed -e 's/[[:space:]]*$$//' > ${.CURDIR}/des_modes.7
+
 MAN=	des.3 des_modes.7
 
 MLINKS+=des.3 des_cbc_cksum.3 \
