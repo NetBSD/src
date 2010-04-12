@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.47 2010/04/11 08:58:43 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.48 2010/04/12 12:21:17 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 11, 2010
+.Dd April 12, 2010
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -99,17 +99,18 @@ Few
 .Xr sysctl 8
 variables are directly relevant for
 .Tn ACPI .
-.Bl -inset -width hw.acpi.supported_state -offset 3n
+.Bl -tag -width "123456" -offset indent
 .It Ic hw.acpi.root
-is the
+The
 .Tn ACPI
 root pointer.
 .It Ic hw.acpi.supported_states
-is a list of the supported
+A list of the
 .Tn ACPI
-sleep states.
-The list can contain the following values:
-.Bl -tag -width XS1X -offset indent
+sleep states that the machine supports.
+The possible values are:
+.Pp
+.Bl -tag -width XS1X -offset indent -compact
 .It S0
 fully running
 .It S1
@@ -119,16 +120,36 @@ similar to S3, usually not implemented
 .It S3
 suspend-to-RAM
 .It S4
-suspend-to-disk (not supported)
+suspend-to-disk (not supported on
+.Nx )
 .It S5
 power off
 .El
+.It Ic hw.acpi.stat.gpe
+The number of dispatched General Purpose Events
+.Pq Tn GPEs .
+.It Ic hw.acpi.stat.sci
+The number of System Control Interrupts
+.Pq Tn SCIs .
+See
+.Xr acpiec 4
+for a brief description of both
+.Tn GPEs
+and
+.Tn SCIs .
+.It Ic hw.acpi.stat.fixed
+The number of
+.Dq fixed events .
+.It Ic hw.acpi.stat.method
+The number of
+.Tn ACPI
+methods executed by the interpreter.
 .It Ic machdep.acpi_beep_on_reset
-is a boolean variable that controls whether the
+A boolean variable that controls whether the
 .Tn PC
-speaker is beeped upon resume.
+speaker is beeps upon resume.
 .It Ic machdep.acpi_vbios_reset
-defines the handling of the graphics card.
+Defines the handling of the graphics card.
 The supported values are:
 .Bl -tag -width '2' -offset indent
 .It 0
@@ -320,11 +341,11 @@ provides two
 .Xr sysctl 8
 variables that control the debug output at runtime.
 The
-.Ic hw.acpi.debug_layer
+.Ic hw.acpi.debug.layer
 limits the output to a specific
 .Tn ACPI
 layer and the
-.Ic hw.acpi.debug_level
+.Ic hw.acpi.debug.level
 controls the debug level.
 Both
 .Xr sysctl 8
@@ -408,7 +429,7 @@ specific parts are typically limited to
 and
 .Dv ACPI_LV_DEBUG_INFO .
 The debug output can be stopped by setting
-.Ic hw.acpi.debug_level
+.Ic hw.acpi.debug.level
 to
 .Dv ACPI_DEBUG_NONE .
 .Ss EXAMPLE
@@ -427,11 +448,11 @@ ACPI_DEBUG_PRINT((ACPI_DB_INFO, "Failed to evaluate _STA\\n"));
 With these options the debug message from the
 .Dv ACPI_DEBUG_PRINT
 macro is only visible when
-.Ic hw.acpi.debug_layer
+.Ic hw.acpi.debug.layer
 is either
 .Dv ACPI_BUS_COMPONENT
 or a compound constant including it, and
-.Ic hw.acpi.debug_level
+.Ic hw.acpi.debug.level
 is
 .Dv ACPI_LV_INFO
 or some constant that includes it.
