@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.165 2010/04/12 12:14:26 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.166 2010/04/12 18:55:27 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.165 2010/04/12 12:14:26 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.166 2010/04/12 18:55:27 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.165 2010/04/12 12:14:26 jruoho Exp $");
 #include <dev/acpi/acpidevs_data.h>
 #endif
 
-#define _COMPONENT          ACPI_TOOLS 
+#define _COMPONENT          ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME            ("acpi")
 
 #if defined(ACPI_PCI_FIXUP)
@@ -135,6 +135,7 @@ static int	acpi_print(void *aux, const char *);
 
 static int	sysctl_hw_acpi_fixedstats(SYSCTLFN_ARGS);
 static int	sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS);
+static int	sysctl_hw_acpi_sleepstates(SYSCTLFN_ARGS);
 
 extern struct cfdriver acpi_cd;
 
@@ -150,15 +151,8 @@ int	acpi_active;
 int	acpi_force_load;
 int	acpi_suspended = 0;
 
-/*
- * Pointer to the ACPI subsystem's state.  There can be only
- * one ACPI instance.
- */
 struct acpi_softc *acpi_softc;
-
-/*
- * Locking stuff.
- */
+static uint64_t acpi_root_pointer;
 extern kmutex_t acpi_interrupt_list_mtx;
 
 /*
@@ -184,14 +178,6 @@ static const char * const acpi_ignored_ids[] = {
 };
 
 /*
- * sysctl-related information
- */
-
-static uint64_t acpi_root_pointer;	/* found as hw.acpi.root */
-static int acpi_sleepstate = ACPI_STATE_S0;
-static char acpi_supported_states[3 * 6 + 1] = "";
-
-/*
  * Prototypes.
  */
 static void		acpi_build_tree(struct acpi_softc *);
@@ -199,10 +185,10 @@ static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
 					  void *, void **);
 
 static void		acpi_enable_fixed_events(struct acpi_softc *);
+static void		acpi_sleep_init(struct acpi_softc *);
 
 static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
 static void		acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
-static int		is_available_state(struct acpi_softc *, int);
 
 static bool		acpi_suspend(device_t, const pmf_qual_t *);
 static bool		acpi_resume(device_t, const pmf_qual_t *);
@@ -435,8 +421,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpi_softc *sc = device_private(self);
 	struct acpibus_attach_args *aa = aux;
-	ACPI_STATUS rv;
 	ACPI_TABLE_HEADER *rsdt;
+	ACPI_STATUS rv;
 
 	aprint_naive("\n");
 	aprint_normal(": Intel ACPICA %08x\n", ACPI_CA_VERSION);
@@ -461,6 +447,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_quirks = acpi_find_quirks();
+	sc->sc_sleepstate = ACPI_STATE_S0;
 
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_memt = aa->aa_memt;
@@ -540,16 +527,9 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	if (acpi_dbgr & ACPI_DBGR_PROBE)
 		acpi_osd_debugger();
 #endif
-	acpi_build_tree(sc);
 
-	snprintf(acpi_supported_states, sizeof(acpi_supported_states),
-	    "%s%s%s%s%s%s",
-	    is_available_state(sc, ACPI_STATE_S0) ? "S0 " : "",
-	    is_available_state(sc, ACPI_STATE_S1) ? "S1 " : "",
-	    is_available_state(sc, ACPI_STATE_S2) ? "S2 " : "",
-	    is_available_state(sc, ACPI_STATE_S3) ? "S3 " : "",
-	    is_available_state(sc, ACPI_STATE_S4) ? "S4 " : "",
-	    is_available_state(sc, ACPI_STATE_S5) ? "S5 " : "");
+	acpi_build_tree(sc);
+	acpi_sleep_init(sc);
 
 #ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_RUNNING)
@@ -1480,13 +1460,28 @@ acpi_set_wake_gpe(ACPI_HANDLE handle)
  * ACPI sleep support.
  *****************************************************************************/
 
-static int
-is_available_state(struct acpi_softc *sc, int state)
+/*
+ * acpi_sleep_init:
+ *
+ *	Evaluate supported sleep states.
+ */
+static void
+acpi_sleep_init(struct acpi_softc *sc)
 {
-	UINT8 type_a, type_b;
+	uint8_t a, b, i;
+	ACPI_STATUS rv;
 
-	return ACPI_SUCCESS(AcpiGetSleepTypeData((UINT8)state,
-				&type_a, &type_b));
+	CTASSERT(ACPI_STATE_S0 == 0 && ACPI_STATE_S1 == 1);
+	CTASSERT(ACPI_STATE_S2 == 2 && ACPI_STATE_S3 == 3);
+	CTASSERT(ACPI_STATE_S4 == 4 && ACPI_STATE_S5 == 5);
+
+	for (i = ACPI_STATE_S0; i <= ACPI_STATE_S5; i++) {
+
+		rv = AcpiGetSleepTypeData(i, &a, &b);
+
+		if (ACPI_SUCCESS(rv))
+			sc->sc_sleepstates |= __BIT(i);
+	}
 }
 
 /*
@@ -1494,84 +1489,100 @@ is_available_state(struct acpi_softc *sc, int state)
  *
  *	Enter to the specified sleep state.
  */
-
 ACPI_STATUS
 acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 {
+	ACPI_STATUS rv = AE_OK;
 	int err;
-	ACPI_STATUS ret = AE_OK;
 
-	if (state == acpi_sleepstate)
+	if (state == sc->sc_sleepstate)
 		return AE_OK;
 
-	aprint_normal_dev(sc->sc_dev, "entering state %d\n", state);
+	aprint_normal_dev(sc->sc_dev, "entering state S%d\n", state);
 
 	switch (state) {
+
 	case ACPI_STATE_S0:
 		break;
+
 	case ACPI_STATE_S1:
 	case ACPI_STATE_S2:
 	case ACPI_STATE_S3:
 	case ACPI_STATE_S4:
-		if (!is_available_state(sc, state)) {
-			aprint_error_dev(sc->sc_dev,
-			    "ACPI S%d not available on this platform\n", state);
+
+		if ((sc->sc_sleepstates & __BIT(state)) == 0) {
+			aprint_error_dev(sc->sc_dev, "sleep state "
+			    "S%d is not available\n", state);
 			break;
 		}
 
 		acpi_wakedev_commit(sc, state);
 
-		if (state != ACPI_STATE_S1 && !pmf_system_suspend(PMF_Q_NONE)) {
+		if (state != ACPI_STATE_S1 &&
+		    pmf_system_suspend(PMF_Q_NONE) != true) {
 			aprint_error_dev(sc->sc_dev, "aborting suspend\n");
 			break;
 		}
 
-		ret = AcpiEnterSleepStatePrep(state);
-		if (ACPI_FAILURE(ret)) {
-			aprint_error_dev(sc->sc_dev,
-			    "failed preparing to sleep (%s)\n",
-			    AcpiFormatException(ret));
+		rv = AcpiEnterSleepStatePrep(state);
+
+		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(sc->sc_dev, "failed to prepare "
+			    "S%d: %s\n", state, AcpiFormatException(rv));
 			break;
 		}
 
-		acpi_sleepstate = state;
+		sc->sc_sleepstate = state;
+
 		if (state == ACPI_STATE_S1) {
-			/* just enter the state */
+
+			/* Just enter the state. */
 			acpi_md_OsDisableInterrupt();
-			ret = AcpiEnterSleepState((UINT8)state);
-			if (ACPI_FAILURE(ret))
-				aprint_error_dev(sc->sc_dev,
-				    "failed to enter sleep state S1: %s\n",
-				    AcpiFormatException(ret));
-			AcpiLeaveSleepState((UINT8)state);
+			rv = AcpiEnterSleepState(state);
+
+			if (ACPI_FAILURE(rv))
+				aprint_error_dev(sc->sc_dev, "failed to "
+				    "enter S1: %s\n", AcpiFormatException(rv));
+
+			(void)AcpiLeaveSleepState(state);
+
 		} else {
+
 			err = acpi_md_sleep(state);
+
 			if (state == ACPI_STATE_S4)
 				AcpiEnable();
+
 			pmf_system_bus_resume(PMF_Q_NONE);
-			AcpiLeaveSleepState((UINT8)state);
+			(void)AcpiLeaveSleepState(state);
 			pmf_system_resume(PMF_Q_NONE);
 		}
 
 		break;
 	case ACPI_STATE_S5:
-		ret = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
-		if (ACPI_FAILURE(ret)) {
-			aprint_error_dev(sc->sc_dev,
-			    "failed preparing to sleep (%s)\n",
-			    AcpiFormatException(ret));
+
+		rv = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
+
+		if (ACPI_FAILURE(rv)) {
+			aprint_error_dev(sc->sc_dev, "failed to prepare "
+			    "S%d: %s\n", state, AcpiFormatException(rv));
 			break;
 		}
+
 		DELAY(1000000);
-		acpi_sleepstate = state;
+
+		sc->sc_sleepstate = state;
 		acpi_md_OsDisableInterrupt();
-		AcpiEnterSleepState(ACPI_STATE_S5);
-		aprint_error_dev(sc->sc_dev, "WARNING powerdown failed!\n");
+
+		(void)AcpiEnterSleepState(ACPI_STATE_S5);
+
+		aprint_error_dev(sc->sc_dev, "WARNING: powerdown failed!\n");
 		break;
 	}
 
-	acpi_sleepstate = ACPI_STATE_S0;
-	return ret;
+	sc->sc_sleepstate = ACPI_STATE_S0;
+
+	return rv;
 }
 
 #ifdef ACPI_ACTIVATE_DEV
@@ -1766,7 +1777,7 @@ SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
 	(void)sysctl_createv(NULL, 0, &rnode, NULL,
 	    CTLFLAG_PERMANENT | CTLFLAG_READONLY, CTLTYPE_STRING,
 	    "supported_states", SYSCTL_DESCR("Supported system states"),
-	    NULL, 0, acpi_supported_states, 0,
+	    sysctl_hw_acpi_sleepstates, 0, NULL, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	err = sysctl_createv(NULL, 0, NULL, &mnode,
@@ -1844,11 +1855,15 @@ sysctl_hw_acpi_fixedstats(SYSCTLFN_ARGS)
 static int
 sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS)
 {
+	struct acpi_softc *sc = acpi_softc;
 	struct sysctlnode node;
 	int err, t;
 
+	if (acpi_softc == NULL)
+		return ENOSYS;
+
 	node = *rnode;
-	t = acpi_sleepstate;
+	t = sc->sc_sleepstate;
 	node.sysctl_data = &t;
 
 	err = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -1856,13 +1871,42 @@ sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS)
 	if (err || newp == NULL)
 		return err;
 
-	if (acpi_softc == NULL)
-		return ENOSYS;
-
 	if (t < ACPI_STATE_S0 || t > ACPI_STATE_S5)
 		return EINVAL;
 
-	acpi_enter_sleep_state(acpi_softc, t);
+	acpi_enter_sleep_state(sc, t);
+
+	return 0;
+}
+
+static int
+sysctl_hw_acpi_sleepstates(SYSCTLFN_ARGS)
+{
+	struct acpi_softc *sc = acpi_softc;
+	struct sysctlnode node;
+	char t[3 * 6 + 1];
+	int err;
+
+	if (acpi_softc == NULL)
+		return ENOSYS;
+
+	(void)memset(t, '\0', sizeof(t));
+
+	(void)snprintf(t, sizeof(t), "%s%s%s%s%s%s",
+	    ((sc->sc_sleepstates & __BIT(0)) != 0) ? "S0 " : "",
+	    ((sc->sc_sleepstates & __BIT(1)) != 0) ? "S1 " : "",
+	    ((sc->sc_sleepstates & __BIT(2)) != 0) ? "S2 " : "",
+	    ((sc->sc_sleepstates & __BIT(3)) != 0) ? "S3 " : "",
+	    ((sc->sc_sleepstates & __BIT(4)) != 0) ? "S4 " : "",
+	    ((sc->sc_sleepstates & __BIT(5)) != 0) ? "S5 " : "");
+
+	node = *rnode;
+	node.sysctl_data = &t;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (err || newp == NULL)
+		return err;
 
 	return 0;
 }
