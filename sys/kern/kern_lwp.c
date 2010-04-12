@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.144 2010/04/12 22:15:31 pooka Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.145 2010/04/12 23:20:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.144 2010/04/12 22:15:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.145 2010/04/12 23:20:18 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -827,7 +827,7 @@ lwp_exit(struct lwp *l)
 	fd_free();
 
 	/* Delete the specificdata while it's still safe to sleep. */
-	lwp_finispecific(l)
+	lwp_finispecific(l);
 
 	/*
 	 * Release our cached credentials.
