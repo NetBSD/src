@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.67 2010/04/12 22:29:11 pooka Exp $	*/
+/*	$NetBSD: fss.c,v 1.68 2010/04/13 07:58:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.67 2010/04/12 22:29:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.68 2010/04/13 07:58:54 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,9 +473,9 @@ fss_softc_free(struct fss_softc *sc)
 		while (sc->sc_bs_lwp != NULL)
 			kpause("fssdetach", false, 1, &sc->sc_slock);
 		mutex_exit(&sc->sc_slock);
-	}
 
-	disk_detach(sc->sc_dkdev);
+		disk_detach(sc->sc_dkdev);
+	}
 
 	if (sc->sc_copied != NULL)
 		kmem_free(sc->sc_copied, howmany(sc->sc_clcount, NBBY));
