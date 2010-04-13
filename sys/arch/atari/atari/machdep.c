@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.166 2010/03/31 14:12:55 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.167 2010/04/13 11:22:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2010/03/31 14:12:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2010/04/13 11:22:22 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -795,7 +795,7 @@ call_sicallbacks(void)
 	void (*function)(void *, void *);
 
 	do {
-		s = splhigh ();
+		s = splhigh();
 		if ((si = si_callbacks) != NULL)
 			si_callbacks = si->next;
 		splx(s);
@@ -804,7 +804,7 @@ call_sicallbacks(void)
 			function = si->function;
 			rock1    = si->rock1;
 			rock2    = si->rock2;
-			s = splhigh ();
+			s = splhigh();
 			if (si_callbacks)
 				softint_schedule(si_callback_cookie);
 			si->next = si_free;
