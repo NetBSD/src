@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops1.c,v 1.21 2010/04/08 16:45:53 macallan Exp $	*/
+/* 	$NetBSD: rasops1.c,v 1.22 2010/04/13 20:10:38 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.21 2010/04/08 16:45:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops1.c,v 1.22 2010/04/13 20:10:38 macallan Exp $");
 
 #include "opt_rasops.h"
 
@@ -297,7 +297,7 @@ rasops1_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	if (ri->ri_hwbits)
-		hrp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
+		hrp = ri->ri_hwbits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
 	rs = ri->ri_stride;
 
@@ -346,10 +346,12 @@ rasops1_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 	}
 
 	/* Do underline */
-	if ((attr & 1) != 0)
+	if ((attr & 1) != 0) {
 		rp[-(ri->ri_stride << 1)] = fg;
-		if (ri->ri_hwbits)
-			hrp[-(ri->ri_stride << 1)] = fg;		
+		if (ri->ri_hwbits) {
+			hrp[-(ri->ri_stride << 1)] = fg;
+		}
+	}
 }
 
 /*
