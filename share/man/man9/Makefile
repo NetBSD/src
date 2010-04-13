@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.326 2010/04/13 08:40:19 jruoho Exp $
+#       $NetBSD: Makefile,v 1.327 2010/04/13 17:34:18 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -12,7 +12,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	cpu_lwp_fork.9 \
 	cpu_idle.9 cpu_initclocks.9 cpu_need_resched.9 \
 	cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
-	cpu_startup.9 cpu_swapout.9 cpu_switchto.9 \
+	cpu_startup.9 cpu_switchto.9 \
 	csf.9 ctod.9 \
 	curproc.9 \
 	delay.9 disk.9 ddc.9 disklabel.9 dofileread.9 \
@@ -223,7 +223,6 @@ MLINKS+=cpu_dumpconf.9 cpu_dump.9 cpu_dumpconf.9 cpu_dumpsize.9 \
 	cpu_dumpconf.9 dumpsys.9
 MLINKS+=cpu_lwp_fork.9 child_return.9 cpu_lwp_fork.9 proc_trampoline.9
 MLINKS+=cpu_rootconf.9 setroot.9
-MLINKS+=cpu_swapout.9 cpu_swapin.9
 MLINKS+=ctod.9 dtoc.9 \
 	ctod.9 ctob.9 \
 	ctod.9 btoc.9 \

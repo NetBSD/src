@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1431 2010/04/13 17:08:45 jruoho Exp $
+#	$NetBSD: mi,v 1.1432 2010/04/13 17:34:18 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8839,8 +8839,8 @@
 ./usr/share/man/cat9/cpu_reboot.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_rootconf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_startup.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cpu_swapin.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cpu_swapout.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cpu_swapin.0		comp-obsolete		obsolete
+./usr/share/man/cat9/cpu_swapout.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/cpu_switch.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/cpu_switchto.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cpu_sysctl.0		comp-obsolete		obsolete
@@ -14535,8 +14535,8 @@
 ./usr/share/man/html9/cpu_reboot.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cpu_rootconf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cpu_startup.html		comp-sys-htmlman	html
-./usr/share/man/html9/cpu_swapin.html		comp-sys-htmlman	html
-./usr/share/man/html9/cpu_swapout.html		comp-sys-htmlman	html
+./usr/share/man/html9/cpu_swapin.html		comp-obsolete		obsolete
+./usr/share/man/html9/cpu_swapout.html		comp-obsolete		obsolete
 ./usr/share/man/html9/cpu_switchto.html		comp-sys-htmlman	html
 ./usr/share/man/html9/crypto_dispatch.html	comp-sys-htmlman	html
 ./usr/share/man/html9/crypto_done.html		comp-sys-htmlman	html
@@ -20356,8 +20356,8 @@
 ./usr/share/man/man9/cpu_reboot.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_rootconf.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_startup.9		comp-sys-man		.man
-./usr/share/man/man9/cpu_swapin.9		comp-sys-man		.man
-./usr/share/man/man9/cpu_swapout.9		comp-sys-man		.man
+./usr/share/man/man9/cpu_swapin.9		comp-obsolete		obsolete
+./usr/share/man/man9/cpu_swapout.9		comp-obsolete		obsolete
 ./usr/share/man/man9/cpu_switch.9		comp-obsolete		obsolete
 ./usr/share/man/man9/cpu_switchto.9		comp-sys-man		.man
 ./usr/share/man/man9/cpu_sysctl.9		comp-obsolete		obsolete
