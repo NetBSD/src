@@ -1,4 +1,4 @@
-.\" $NetBSD: ctod.9,v 1.1 2010/04/13 08:40:19 jruoho Exp $
+.\" $NetBSD: ctod.9,v 1.2 2010/04/13 09:57:05 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,13 +57,21 @@ and disk blocks.
 The following table lists the possible conversions:
 .Bl -column -offset indent "disk blocks " "disk blocks " "disk blocks "
 .It Sy Macro Ta Sy From Ta Sy To
-.It Li Fn ctod Ta pages Ta disk blocks
-.It Li Fn dtoc Ta disk blocks Ta pages
-.It Li Fn ctob Ta pages Ta bytes
-.It Li Fn btoc Ta bytes Ta pages
-.It Li Fn dbtob Ta disk blocks Ta bytes
-.It Li Fn btodb Ta bytes Ta disk blocks
+.It Fn ctod Ta pages Ta disk blocks
+.It Fn dtoc Ta disk blocks Ta pages
+.It Fn ctob Ta pages Ta bytes
+.It Fn btoc Ta bytes Ta pages
+.It Fn dbtob Ta disk blocks Ta bytes
+.It Fn btodb Ta bytes Ta disk blocks
 .El
+.Pp
+These are typical macros that may appear
+with different names in other operating systems.
+Examples include
+.Fn btop
+and
+.Fn btopr
+in Solaris.
 .Sh CAVEATS
 The described macros make no assumptions
 about the type of the input parameter.
