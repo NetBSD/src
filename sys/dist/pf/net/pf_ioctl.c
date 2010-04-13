@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.39 2010/04/13 01:02:43 ahoka Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.40 2010/04/13 11:53:18 ahoka Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.39 2010/04/13 01:02:43 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.40 2010/04/13 11:53:18 ahoka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3343,7 +3343,7 @@ pf_pfil_detach(void)
 #endif /* __NetBSD__ */
 
 #if defined(__NetBSD__)
-MODULE(MODULE_CLASS_MISC, pf, "bpf");
+MODULE(MODULE_CLASS_DRIVER, pf, "bpf");
 
 static int
 pf_modcmd(modcmd_t cmd, void *opaque)
