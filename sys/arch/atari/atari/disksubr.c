@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.42 2010/03/31 14:12:55 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.43 2010/04/13 11:22:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.42 2010/03/31 14:12:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.43 2010/04/13 11:22:22 tsutsui Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -509,7 +509,7 @@ ahdi_to_bsd(struct disklabel *dl, struct ahdi_ptbl *apt)
 				break;
 		}
 		if (pno < 0) {
-			if((pno = user_part + 1) >= MAXPARTITIONS)
+			if ((pno = user_part + 1) >= MAXPARTITIONS)
 				continue;
 			user_part = pno;
 		}
