@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.20 2009/07/19 05:43:23 tsutsui Exp $	*/
+/*	$NetBSD: et4000.c,v 1.21 2010/04/13 09:51:07 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.20 2009/07/19 05:43:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.21 2010/04/13 09:51:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.20 2009/07/19 05:43:23 tsutsui Exp $");
 #include <atari/atari/device.h>
 #include <atari/dev/grfioctl.h>
 #include <atari/dev/grf_etreg.h>
+
+#include "ioconf.h"
 
 /*
  * Allow a 8Kb io-region and a 1MB frame buffer to be mapped. This
@@ -127,8 +129,6 @@ struct et_softc {
 
 CFATTACH_DECL(et, sizeof(struct et_softc),
     et_vme_match, et_vme_attach, NULL, NULL);
-
-extern struct cfdriver et_cd;
 
 dev_type_open(etopen);
 dev_type_close(etclose);

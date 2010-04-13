@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.41 2009/07/19 05:43:22 tsutsui Exp $	*/
+/*	$NetBSD: grf.c,v 1.42 2010/04/13 09:51:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41 2009/07/19 05:43:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.42 2010/04/13 09:51:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -109,6 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41 2009/07/19 05:43:22 tsutsui Exp $");
 #include <atari/dev/itevar.h>
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
+
+#include "ioconf.h"
 
 #include "grfcc.h"
 #include "grfet.h"
@@ -138,8 +140,6 @@ struct grf_softc *grfsp[NGRF]; /* XXX */
 
 CFATTACH_DECL(grfbus, sizeof(struct device),
     grfbusmatch, grfbusattach, NULL, NULL);
-
-extern struct cfdriver grfbus_cd;
 
 dev_type_open(grfopen);
 dev_type_close(grfclose);

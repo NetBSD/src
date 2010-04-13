@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.66 2009/07/19 05:43:22 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.67 2010/04/13 09:51:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.66 2009/07/19 05:43:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.67 2010/04/13 09:51:07 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.66 2009/07/19 05:43:22 tsutsui Exp $");
 #include <atari/dev/grfvar.h>
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
+
+#include "ioconf.h"
 
 #define ITEUNIT(dev)	(minor(dev))
 
@@ -185,8 +187,6 @@ dev_type_cnputc(itecnputc);
 
 CFATTACH_DECL(ite, sizeof(struct ite_softc),
     itematch, iteattach, NULL, NULL);
-
-extern struct cfdriver	ite_cd;
 
 dev_type_open(iteopen);
 dev_type_close(iteclose);
