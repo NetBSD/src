@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_number.9,v 1.3 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: cpu_number.9,v 1.4 2010/04/13 06:21:40 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,20 +27,27 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 23, 2002
+.Dd April 13, 2010
 .Dt CPU_NUMBER 9
 .Os
 .Sh NAME
 .Nm cpu_number
-.Nd unique CPU identification number
+.Nd unique
+.Tn CPU
+identification number
 .Sh SYNOPSIS
 .In sys/types.h
 .In machine/cpu.h
 .Ft cpuid_t
 .Fn cpu_number "void"
 .Sh DESCRIPTION
+The
 .Fn cpu_number
-returns the unique CPU identification number for the CPU that this
-thread is running on.
+function returns an unique
+.Tn CPU
+identification number for the
+.Tn CPU
+that this thread is running on.
+It may also be implemented as a macro.
 .Sh SEE ALSO
 .Xr curcpu 9
