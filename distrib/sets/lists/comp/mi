@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1429 2010/04/13 08:40:19 jruoho Exp $
+#	$NetBSD: mi,v 1.1430 2010/04/13 10:46:10 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7633,6 +7633,13 @@
 ./usr/share/man/cat3/randomid_delete.0		comp-c-catman		.cat
 ./usr/share/man/cat3/randomid_new.0		comp-c-catman		.cat
 ./usr/share/man/cat3/raw.0			comp-c-catman		.cat
+./usr/share/man/cat3/rb.0			comp-c-catman		.cat
+./usr/share/man/cat3/rb_tree_find_node.0	comp-c-catman		.cat
+./usr/share/man/cat3/rb_tree_find_node_geq.0	comp-c-catman		.cat
+./usr/share/man/cat3/rb_tree_find_node_leq.0	comp-c-catman		.cat
+./usr/share/man/cat3/rb_tree_init.0		comp-c-catman		.cat
+./usr/share/man/cat3/rb_tree_insert_node.0	comp-c-catman		.cat
+./usr/share/man/cat3/rb_tree_iterate.0		comp-c-catman		.cat
 ./usr/share/man/cat3/rc4.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/rcmd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rcmd_af.0			comp-c-catman		.cat
@@ -13387,6 +13394,13 @@
 ./usr/share/man/html3/randomid_delete.html	comp-c-htmlman		html
 ./usr/share/man/html3/randomid_new.html		comp-c-htmlman		html
 ./usr/share/man/html3/raw.html			comp-c-htmlman		html
+./usr/share/man/html3/rb.html			comp-c-htmlman		html
+./usr/share/man/html3/rb_tree_find_node.html	comp-c-htmlman		html
+./usr/share/man/html3/rb_tree_find_node_geq.html	comp-c-htmlman		html
+./usr/share/man/html3/rb_tree_find_node_leq.html	comp-c-htmlman		html
+./usr/share/man/html3/rb_tree_init.html		comp-c-htmlman		html
+./usr/share/man/html3/rb_tree_insert_node.html	comp-c-htmlman		html
+./usr/share/man/html3/rb_tree_iterate.html	comp-c-htmlman		html
 ./usr/share/man/html3/rcmd.html			comp-c-htmlman		html
 ./usr/share/man/html3/rcmd_af.html		comp-c-htmlman		html
 ./usr/share/man/html3/re_comp.html		comp-c-htmlman		html
@@ -19141,6 +19155,13 @@
 ./usr/share/man/man3/randomid_delete.3		comp-c-man		.man
 ./usr/share/man/man3/randomid_new.3		comp-c-man		.man
 ./usr/share/man/man3/raw.3			comp-c-man		.man
+./usr/share/man/man3/rb.3			comp-c-man		.man
+./usr/share/man/man3/rb_tree_find_node.3	comp-c-man		.man
+./usr/share/man/man3/rb_tree_find_node_geq.3	comp-c-man		.man
+./usr/share/man/man3/rb_tree_find_node_leq.3	comp-c-man		.man
+./usr/share/man/man3/rb_tree_init.3		comp-c-man		.man
+./usr/share/man/man3/rb_tree_insert_node.3	comp-c-man		.man
+./usr/share/man/man3/rb_tree_iterate.3		comp-c-man		.man
 ./usr/share/man/man3/rc4.3			comp-obsolete		obsolete
 ./usr/share/man/man3/rcmd.3			comp-c-man		.man
 ./usr/share/man/man3/rcmd_af.3			comp-c-man		.man
