@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.71 2009/07/08 12:23:09 tsutsui Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.72 2010/04/13 09:51:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.71 2009/07/08 12:23:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.72 2010/04/13 09:51:07 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.71 2009/07/08 12:23:09 tsutsui Exp $");
 #include <atari/dev/hdfdreg.h>
 #include <atari/atari/device.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 /*
@@ -283,8 +284,6 @@ void	fdattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(hdfd, sizeof(struct fd_softc),
     fdprobe, fdattach, NULL, NULL);
-
-extern struct cfdriver hdfd_cd;
 
 const struct bdevsw fd_bdevsw = {
 	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
