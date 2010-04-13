@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.33 2010/04/12 13:05:25 tsutsui Exp $ */
+/*	$NetBSD: lpt.c,v 1.34 2010/04/13 09:51:07 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.33 2010/04/12 13:05:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.34 2010/04/13 09:51:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.33 2010/04/12 13:05:25 tsutsui Exp $");
 #include <machine/intr.h>
 
 #include <atari/dev/ym2149reg.h>
+
+#include "ioconf.h"
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
@@ -132,8 +134,6 @@ static int  lpmatch (device_t, cfdata_t , void *);
 
 CFATTACH_DECL_NEW(lp, sizeof(struct lpt_softc),
     lpmatch, lpattach, NULL, NULL);
-
-extern struct cfdriver lp_cd;
 
 const struct cdevsw lp_cdevsw = {
 	lpopen, lpclose, noread, lpwrite, lpioctl,
