@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.38 2010/04/12 13:57:38 ahoka Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.39 2010/04/13 01:02:43 ahoka Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.38 2010/04/12 13:57:38 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.39 2010/04/13 01:02:43 ahoka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3367,6 +3367,13 @@ pf_modcmd(modcmd_t cmd, void *opaque)
 		pfdetach();
 		pflogdetach();
 		return devsw_detach(NULL, &pf_cdevsw);
+	case MODULE_CMD_AUTOUNLOAD:
+		/* Do not auto unload pf if it's enabled. */
+		if (pf_status.running) {
+			return EBUSY;
+		} else {
+			return ENOTTY;
+		}
 	default:
 		return ENOTTY;
 	}
