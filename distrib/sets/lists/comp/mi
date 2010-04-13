@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1428 2010/04/13 07:32:31 jruoho Exp $
+#	$NetBSD: mi,v 1.1429 2010/04/13 08:40:19 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8660,6 +8660,8 @@
 ./usr/share/man/cat9/bswap16.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bswap32.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bswap64.0			comp-sys-catman		.cat
+./usr/share/man/cat9/btoc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/btodb.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/buffercache.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bufq.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_dma.0			comp-sys-catman		.cat
@@ -8856,6 +8858,8 @@
 ./usr/share/man/cat9/crypto_register.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/crypto_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/csf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ctob.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ctod.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ctxsw.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/curcpu.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/curproc.0			comp-sys-catman		.cat
@@ -8871,6 +8875,7 @@
 ./usr/share/man/cat9/cv_wait.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_wait_sig.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_wakeup.0		comp-obsolete		obsolete
+./usr/share/man/cat9/dbtob.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ddc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/delay.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/deviter.0			comp-sys-catman		.cat
@@ -8907,6 +8912,7 @@
 ./usr/share/man/cat9/dofilewritev.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/dopowerhooks.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/doshutdownhooks.0		comp-sys-catman		.cat
+./usr/share/man/cat9/dtoc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/driver.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/dumpsys.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/dupfdopen.0		comp-sys-catman		.cat
@@ -14350,6 +14356,8 @@
 ./usr/share/man/html9/bswap16.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bswap32.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bswap64.html		comp-sys-htmlman	html
+./usr/share/man/html9/btoc.html			comp-sys-htmlman	html
+./usr/share/man/html9/btodb.html		comp-sys-htmlman	html
 ./usr/share/man/html9/buffercache.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bufq.html			comp-sys-htmlman	html
 ./usr/share/man/html9/bus_dma.html		comp-sys-htmlman	html
@@ -14529,6 +14537,8 @@
 ./usr/share/man/html9/crypto_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/crypto_unregister.html	comp-sys-htmlman	html
 ./usr/share/man/html9/csf.html			comp-sys-htmlman	html
+./usr/share/man/html9/ctob.html			comp-sys-htmlman	html
+./usr/share/man/html9/ctod.html			comp-sys-htmlman	html
 ./usr/share/man/html9/curcpu.html		comp-sys-htmlman	html
 ./usr/share/man/html9/curproc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/curlwp.html		comp-sys-htmlman	html
@@ -14543,6 +14553,7 @@
 ./usr/share/man/html9/cv_wait.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cv_wait_sig.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cv_wakeup.html		comp-obsolete		obsolete
+./usr/share/man/html9/dbtob.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ddc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/delay.html		comp-sys-htmlman	html
 ./usr/share/man/html9/deviter.html		comp-sys-htmlman	html
@@ -14577,6 +14588,7 @@
 ./usr/share/man/html9/dofilewritev.html		comp-sys-htmlman	html
 ./usr/share/man/html9/dopowerhooks.html		comp-sys-htmlman	html
 ./usr/share/man/html9/doshutdownhooks.html	comp-sys-htmlman	html
+./usr/share/man/html9/dtoc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/driver.html		comp-sys-htmlman	html
 ./usr/share/man/html9/dumpsys.html		comp-sys-htmlman	html
 ./usr/share/man/html9/dupfdopen.html		comp-sys-htmlman	html
@@ -20151,6 +20163,8 @@
 ./usr/share/man/man9/bswap16.9			comp-sys-man		.man
 ./usr/share/man/man9/bswap32.9			comp-sys-man		.man
 ./usr/share/man/man9/bswap64.9			comp-sys-man		.man
+./usr/share/man/man9/btoc.9			comp-sys-man		.man
+./usr/share/man/man9/btodb.9			comp-sys-man		.man
 ./usr/share/man/man9/buffercache.9		comp-sys-man		.man
 ./usr/share/man/man9/bufq.9			comp-sys-man		.man
 ./usr/share/man/man9/bus_dma.9			comp-sys-man		.man
@@ -20347,6 +20361,8 @@
 ./usr/share/man/man9/crypto_register.9		comp-sys-man		.man
 ./usr/share/man/man9/crypto_unregister.9	comp-sys-man		.man
 ./usr/share/man/man9/csf.9			comp-sys-man		.man
+./usr/share/man/man9/ctob.9			comp-sys-man		.man
+./usr/share/man/man9/ctod.9			comp-sys-man		.man
 ./usr/share/man/man9/ctxsw.9			comp-obsolete		obsolete
 ./usr/share/man/man9/curcpu.9			comp-sys-man		.man
 ./usr/share/man/man9/curproc.9			comp-sys-man		.man
@@ -20362,6 +20378,7 @@
 ./usr/share/man/man9/cv_wait.9			comp-sys-man		.man
 ./usr/share/man/man9/cv_wait_sig.9		comp-sys-man		.man
 ./usr/share/man/man9/cv_wakeup.9		comp-obsolete		obsolete
+./usr/share/man/man9/dbtob.9			comp-sys-man		.man
 ./usr/share/man/man9/ddc.9			comp-sys-man		.man
 ./usr/share/man/man9/delay.9			comp-sys-man		.man
 ./usr/share/man/man9/deviter.9			comp-sys-man		.man
@@ -20398,6 +20415,7 @@
 ./usr/share/man/man9/dofilewritev.9		comp-sys-man		.man
 ./usr/share/man/man9/dopowerhooks.9		comp-sys-man		.man
 ./usr/share/man/man9/doshutdownhooks.9		comp-sys-man		.man
+./usr/share/man/man9/dtoc.9			comp-sys-man		.man
 ./usr/share/man/man9/driver.9			comp-sys-man		.man
 ./usr/share/man/man9/dumpsys.9			comp-sys-man		.man
 ./usr/share/man/man9/dupfdopen.9		comp-sys-man		.man
