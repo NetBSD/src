@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.84 2010/04/13 10:11:08 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.85 2010/04/13 10:12:43 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.84 2010/04/13 10:11:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.85 2010/04/13 10:12:43 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -492,8 +492,11 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	if (error) {
 		if (argp->flags & MSDOSFSMNT_GEMDOSFS)
 			goto error_exit;
+
+		/* ok, so it failed.  we most likely don't need the info */
 		secsize = DEV_BSIZE;
 		psize = 0;
+		error = 0;
 	}
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
