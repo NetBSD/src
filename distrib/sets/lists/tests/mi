@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.69 2010/04/12 22:59:49 pooka Exp $
+# $NetBSD: mi,v 1.70 2010/04/13 10:27:52 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -116,6 +116,8 @@
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/kernfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/msdosfs				tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/msdosfs/t_snapshot.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/nullfs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
@@ -570,6 +572,9 @@
 ./usr/tests/fs/kernfs				tests-fs-tests
 ./usr/tests/fs/kernfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/kernfs/t_basic			tests-fs-tests		atf
+./usr/tests/fs/msdosfs				tests-fs-tests
+./usr/tests/fs/msdosfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/msdosfs/t_snapshot		tests-fs-tests		atf
 ./usr/tests/fs/nullfs				tests-fs-tests
 ./usr/tests/fs/nullfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/nullfs/t_basic			tests-fs-tests		atf
