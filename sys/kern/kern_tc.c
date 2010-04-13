@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.41 2010/02/06 12:10:59 uebayasi Exp $ */
+/* $NetBSD: kern_tc.c,v 1.42 2010/04/13 22:46:10 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,9 +40,11 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.41 2010/02/06 12:10:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.42 2010/04/13 22:46:10 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ntp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
