@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.27 2010/03/22 19:30:55 joerg Exp $
+.\"	$NetBSD: kqueue.2,v 1.28 2010/04/13 09:24:09 jruoho Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd October 24, 2009
+.Dd April 13, 2010
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -600,6 +600,14 @@ The specified process to attach to does not exist.
 .Xr signal 3 ,
 .Xr kfilter_register 9 ,
 .Xr knote 9
+.Rs
+.%A Jonathan Lemon
+.%T "Kqueue: A Generic and Scalable Event Notification Facility"
+.%I USENIX Association
+.%B Proceedings of the FREENIX Track: 2001 USENIX Annual Technical Conference
+.%D June 25-30, 2001
+.\".http://www.usenix.org/event/usenix01/freenix01/full_papers/lemon/lemon.pdf
+.Re
 .Sh HISTORY
 The
 .Fn kqueue
