@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1427 2010/04/13 05:40:12 jruoho Exp $
+#	$NetBSD: mi,v 1.1428 2010/04/13 07:32:31 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9475,6 +9475,7 @@
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/setbit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/setjmp.0			comp-sys-catman		.cat
+./usr/share/man/cat9/setroot.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/setrunqueue.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/shutdownhook_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/shutdownhook_establish.0	comp-sys-catman		.cat
@@ -15120,6 +15121,7 @@
 ./usr/share/man/html9/setdisklabel.html		comp-sys-htmlman	html
 ./usr/share/man/html9/setbit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/setjmp.html		comp-sys-htmlman	html
+./usr/share/man/html9/setroot.html		comp-sys-htmlman	html
 ./usr/share/man/html9/shutdownhook_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/shutdownhook_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/sigaction1.html		comp-sys-htmlman	html
@@ -20964,6 +20966,7 @@
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man		.man
 ./usr/share/man/man9/setbit.9			comp-sys-man		.man
 ./usr/share/man/man9/setjmp.9			comp-sys-man		.man
+./usr/share/man/man9/setroot.9			comp-sys-man		.man
 ./usr/share/man/man9/setrunqueue.9		comp-obsolete		obsolete
 ./usr/share/man/man9/shutdownhook_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/shutdownhook_establish.9	comp-sys-man		.man
