@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.128 2010/04/13 01:15:56 ahoka Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.129 2010/04/13 11:54:43 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.128 2010/04/13 01:15:56 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.129 2010/04/13 11:54:43 ahoka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -460,7 +460,7 @@ spec_open(void *v)
 			
 			/* Try to autoload device module */
 			mutex_enter(&module_lock);
-			(void) module_autoload(name, MODULE_CLASS_ANY);
+			(void) module_autoload(name, MODULE_CLASS_DRIVER);
 			mutex_exit(&module_lock);
 		} while (gen != module_gen);
 
