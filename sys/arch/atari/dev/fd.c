@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.75 2010/04/07 13:53:05 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.76 2010/04/13 11:31:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.75 2010/04/07 13:53:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.76 2010/04/13 11:31:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 		tsleep((void *)sc, PRIBIO, "fdopen", 0);
 	splx(s);
 
-	if((sc->flags & FLPF_ISOPEN) == 0) {
+	if ((sc->flags & FLPF_ISOPEN) == 0) {
 		/*
 		 * Initialise some driver values.
 		 */

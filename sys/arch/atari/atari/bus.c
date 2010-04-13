@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.52 2010/03/31 13:15:52 tsutsui Exp $	*/
+/*	$NetBSD: bus.c,v 1.53 2010/04/13 11:22:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.52 2010/03/31 13:15:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.53 2010/04/13 11:22:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ bootm_alloc(paddr_t pa, u_long size, int flags)
 	pg_proto = pa | PG_RW | PG_V;
 	if (!(flags & BUS_SPACE_MAP_CACHEABLE))
 		pg_proto |= PG_CI;
-	while(pg < epg) {
+	while (pg < epg) {
 		*pg++     = pg_proto;
 		pg_proto += PAGE_SIZE;
 #if defined(M68040) || defined(M68060)
@@ -245,7 +245,7 @@ bus_mem_add_mapping(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 
 	*bshp = va + (bpa & PGOFSET);
 
-	for(; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		u_int	*ptep, npte;
 
 		pmap_enter(pmap_kernel(), (vaddr_t)va, pa,

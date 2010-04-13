@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21 2010/03/31 14:12:55 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.22 2010/04/13 11:22:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2010/03/31 14:12:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2010/04/13 11:22:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ intr_disestablish(struct intrhand *ih)
 	struct intrhand	*cur_vec;
 
 	vector = ih->ih_vector;
-	switch(ih->ih_type & (AUTO_VEC|USER_VEC)) {
+	switch (ih->ih_type & (AUTO_VEC|USER_VEC)) {
 	case AUTO_VEC:
 		if (vector < AVEC_MIN || vector > AVEC_MAX)
 			return 0;
