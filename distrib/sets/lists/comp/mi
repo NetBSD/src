@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1426 2010/04/12 22:38:36 pooka Exp $
+#	$NetBSD: mi,v 1.1427 2010/04/13 05:40:12 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8859,6 +8859,7 @@
 ./usr/share/man/cat9/ctxsw.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/curcpu.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/curproc.0			comp-sys-catman		.cat
+./usr/share/man/cat9/curlwp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_broadcast.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_destroy.0		comp-sys-catman		.cat
@@ -14529,6 +14530,7 @@
 ./usr/share/man/html9/csf.html			comp-sys-htmlman	html
 ./usr/share/man/html9/curcpu.html		comp-sys-htmlman	html
 ./usr/share/man/html9/curproc.html		comp-sys-htmlman	html
+./usr/share/man/html9/curlwp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cv.html			comp-sys-htmlman	html
 ./usr/share/man/html9/cv_broadcast.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cv_destroy.html		comp-sys-htmlman	html
@@ -20346,6 +20348,7 @@
 ./usr/share/man/man9/ctxsw.9			comp-obsolete		obsolete
 ./usr/share/man/man9/curcpu.9			comp-sys-man		.man
 ./usr/share/man/man9/curproc.9			comp-sys-man		.man
+./usr/share/man/man9/curlwp.9			comp-sys-man		.man
 ./usr/share/man/man9/cv.9			comp-sys-man		.man
 ./usr/share/man/man9/cv_broadcast.9		comp-sys-man		.man
 ./usr/share/man/man9/cv_destroy.9		comp-sys-man		.man
