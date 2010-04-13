@@ -1,4 +1,4 @@
-.\"     $NetBSD: curproc.9,v 1.3 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: curproc.9,v 1.4 2010/04/13 05:40:12 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,24 +27,54 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 23, 2002
+.Dd April 13, 2010
 .Dt CURPROC 9
 .Os
 .Sh NAME
 .Nm curproc ,
-.Nm curcpu
-.Nd current process and processor
+.Nm curcpu ,
+.Nm curlwp
+.Nd current process, processor, and
+.Tn LWP
 .Sh SYNOPSIS
 .In sys/proc.h
 .Ft struct cpu_info *
 .Fn curcpu "void"
 .Ft struct proc *
 .Fn curproc "void"
+.Ft struct lwp *
+.Fn curlwp "void"
 .Sh DESCRIPTION
+The following macros can be used to retrieve
+the current processor, process, and light-weight process
+.Pq Tn LWP ,
+respectively:
+.Bl -enum -offset indent
+.It
+The machine-dependent
 .Fn curcpu
-returns a pointer to a
+macro returns a pointer to a
 .Em cpu_info
-structure containing information of the CPU that this thread is
-running on.
+structure containing information of the
+.Tn CPU
+that this thread is running on.
+.It
+The machine-independent
 .Fn curproc
-returns a pointer to the process currently running on this CPU.
+macro refers to a pointer to the process currently running on this
+.Tn CPU .
+.It
+The
+.Fn curlwp
+macro expands to a pointer to
+.Em lwp
+structure, containing information about the current
+.Tn LWP .
+This macro is machine-independent,
+but machine-dependent
+.In machine/cpu.h
+may redefine it.
+.El
+.Sh SEE ALSO
+.Xr cpu_number 9 ,
+.Xr pfind 9
