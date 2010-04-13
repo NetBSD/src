@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_fmn.c,v 1.1.2.2 2010/03/29 23:34:32 cliff Exp $	*/
+/*	$NetBSD: rmixl_fmn.c,v 1.1.2.3 2010/04/13 18:04:03 cliff Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -223,14 +223,14 @@ typedef struct fmn {
 	fmn_intrhand_t			fmn_intrhand[RMIXL_FMN_NSTID];
 } fmn_t;
 
-static fmn_t fmn[1 << 10];	/* index by cpuid) *//* XXX assumes 1 node */
-#define NFMN	(sizeof(fmn) / sizeof(fmn[0]))
+static fmn_t fmn_store[1 << 10];	/* index by cpuid) *//* XXX assumes 1 node */
+#define NFMN	(sizeof(fmn_store) / sizeof(fmn_store[0]))
 
 static fmn_t *
 fmn_lookup(cpuid_t cpuid)
 {
 	KASSERT(cpuid < (cpuid_t)NFMN);
-	return &fmn[cpuid];
+	return &fmn_store[cpuid];
 }
 
 static void rmixl_fmn_init_core_xlr(fmn_t *);
@@ -453,6 +453,7 @@ rmixl_fmn_init_core(void)
 	kmutex_t *lk;
 
 	fmnp = fmn_lookup(cpu_number());
+	KASSERT(fmnp != NULL);
 	KASSERT(fmnp->fmn_core == RMIXL_CPU_CORE(cpu_number()));
 	KASSERT(fmnp->fmn_thread == RMIXL_CPU_THREAD(cpu_number()));
 
@@ -468,13 +469,16 @@ rmixl_fmn_init_core(void)
 	 */
 	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
 	case CIDFL_RMI_TYPE_XLR:
-		rmixl_fmn_init_core_xlr(fmn);
+		rmixl_fmn_init_core_xlr(fmnp);
 		break;
 	case CIDFL_RMI_TYPE_XLS:
-		rmixl_fmn_init_core_xls(fmn);
+		rmixl_fmn_init_core_xls(fmnp);
 		break;
 	case CIDFL_RMI_TYPE_XLP:
 		panic("%s: RMI XLP not yet supported", __func__);
+	default:
+		panic("%s: RMI chip type %#x unknown", __func__,
+			cpu_rmixl_chip_type(mips_options.mips_cpu));
 	}
 
 	/*
@@ -495,7 +499,7 @@ rmixl_fmn_init_core(void)
 static void
 rmixl_fmn_config_noncore(fmn_t *fmnp)
 {
-	for (u_int sid=0; sid < fmn->fmn_nstid; sid++) {
+	for (u_int sid=0; sid < fmnp->fmn_nstid; sid++) {
 		u_int regoff = fmnp->fmn_stinfo[sid].si_regbase;
 		if (regoff != 0) {
 			u_int buckets_max = fmnp->fmn_stinfo[sid].si_buckets_max;
@@ -604,9 +608,9 @@ rmixl_fmn_init_cpu_intr(void)
 	fmnp = fmn_lookup(cpu_number());
 	mutex_enter(fmnp->fmn_lock);
 
-	for (int i=0; i < fmn->fmn_nstid; i++)
+	for (int i=0; i < fmnp->fmn_nstid; i++)
 		evcnt_attach_dynamic(&fmnp->fmn_intrhand[i].ih_count,
-			EVCNT_TYPE_INTR, NULL, "rmixl_fmn", fmn->fmn_stinfo[i].si_name);
+			EVCNT_TYPE_INTR, NULL, "rmixl_fmn", fmnp->fmn_stinfo[i].si_name);
 
 #ifdef NOTYET
 	/*
