@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.37 2010/01/31 13:15:08 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.38 2010/04/14 16:05:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.37 2010/01/31 13:15:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.38 2010/04/14 16:05:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -297,7 +297,7 @@ int
 rumpblk_init(void)
 {
 	char buf[64];
-	int rumpblk = RUMPBLK;
+	devmajor_t rumpblkmaj = RUMPBLK_DEVMAJOR;
 	unsigned tmp;
 	int error, i;
 
@@ -374,11 +374,13 @@ rumpblk_init(void)
 	    "rumpblk", "memblk all windows busy");
 
 	if (blkfail) {
-		return devsw_attach("rumpblk", &rumpblk_bdevsw_fail, &rumpblk,
-		    &rumpblk_cdevsw, &rumpblk);
+		return devsw_attach("rumpblk",
+		    &rumpblk_bdevsw_fail, &rumpblkmaj,
+		    &rumpblk_cdevsw, &rumpblkmaj);
 	} else {
-		return devsw_attach("rumpblk", &rumpblk_bdevsw, &rumpblk,
-		    &rumpblk_cdevsw, &rumpblk);
+		return devsw_attach("rumpblk",
+		    &rumpblk_bdevsw, &rumpblkmaj,
+		    &rumpblk_cdevsw, &rumpblkmaj);
 	}
 }
 
