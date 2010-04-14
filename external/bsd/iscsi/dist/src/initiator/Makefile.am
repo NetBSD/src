@@ -1,10 +1,10 @@
-## $NetBSD: Makefile.am,v 1.2 2009/06/30 02:44:52 agc Exp $
+## $NetBSD: Makefile.am,v 1.3 2010/04/14 19:52:20 sborrill Exp $
 
 AM_CFLAGS		= $(WARNCFLAGS)
 
 bin_PROGRAMS		= iscsi-initiator
 
-iscsi_initiator_SOURCES	= iscsi-initiator.c initiator.c libkmod.c virtdir.c
+iscsi_initiator_SOURCES	= iscsi-initiator.c libkmod.c virtdir.c
 
 iscsi_initiator_CPPFLAGS= -I$(top_srcdir)/include
 
