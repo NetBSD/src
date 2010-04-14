@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdents.2,v 1.19 2010/04/14 09:06:00 jruoho Exp $
+.\"	$NetBSD: getdents.2,v 1.20 2010/04/14 09:10:30 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -156,13 +156,13 @@ is not a valid file descriptor open for reading.
 Either
 .Fa buf
 points outside the allocated address space.
+.It Bq Er EINVAL
+A directory was being read on NFS, but it was modified on the server while
+it was being read.
 .It Bq Er EIO
 An
 .Tn I/O
 error occurred while reading from or writing to the file system.
-.It Bq Er EINVAL
-A directory was being read on NFS, but it was modified on the server while
-it was being read.
 .El
 .Sh SEE ALSO
 .Xr lseek 2 ,
