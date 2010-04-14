@@ -1,4 +1,4 @@
-.\" $NetBSD: tgmath.3,v 1.2 2010/03/01 21:37:18 wiz Exp $
+.\" $NetBSD: tgmath.3,v 1.3 2010/04/14 08:28:58 jruoho Exp $
 .\"
 .\" Copyright (c) 2004 Stefan Farfeleder
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man3/tgmath.3,v 1.3 2007/12/15 02:40:10 das Exp $
 .\"
-.Dd March 1, 2010
+.Dd April 14, 2010
 .Os
 .Dt TGMATH 3
 .Sh NAME
@@ -144,7 +144,8 @@ The header
 .In tgmath.h
 cannot be implemented with strictly conforming C code and needs
 special compiler support.
-The current implementation only works for GCC.
+The current implementation only works for
+.Xr gcc 1 .
 .Pp
 Many of the functions mentioned here are not prototyped in
 .In math.h
