@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.2 2010/04/14 15:12:44 pooka Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.3 2010/04/14 15:15:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,9 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.2 2010/04/14 15:12:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.3 2010/04/14 15:15:37 pooka Exp $");
 
 #include "opt_modular.h"
+
+/* XXX To get syscall prototypes. */
+#define SYSVSHM
+#define SYSVSEM
+#define SYSVMSG
 
 #include <sys/param.h>
 #include <sys/module.h>
