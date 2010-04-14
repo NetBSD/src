@@ -1,4 +1,4 @@
-.\"	$NetBSD: fast_divide32.3,v 1.4 2010/03/20 14:45:18 jruoho Exp $
+.\"	$NetBSD: fast_divide32.3,v 1.5 2010/04/14 08:26:42 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 19, 2010
+.Dd April 14, 2010
 .Dt FAST_DIVIDE32 3
 .Os
 .Sh NAME
@@ -55,7 +55,9 @@ functions compute the equivalent of
 .Fa v / Fa div
 and
 .Fa v % Fa div
-using optimised CPU instructions.
+using optimised
+.Tn CPU
+instructions.
 The constants
 .Fa m ,
 .Fa s1 ,
@@ -73,10 +75,14 @@ The functions expand to code that is typically slightly larger than
 a plain division instruction, but requires less time to execute.
 The code for constant
 .Fa div
-arguments should be equivalent to the assembly created by GCC.
-.Sh EXAMPLE
-The following example computes q=a/b and r=a%b:
-.Bd -literal
+arguments should be equivalent to the assembly created by
+.Xr gcc 1 .
+.Sh EXAMPLES
+The following example computes
+.Va q = a / b
+and
+.Va r = a % b :
+.Bd -literal -offset indent
 uint32_t a, b, q, r, m;
 uint8_t s1, s2;
 
