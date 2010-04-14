@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.49 2010/03/08 12:38:14 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.50 2010/04/14 14:15:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -770,7 +770,7 @@ getmydents(struct vnode *vp, off_t *off, uint8_t *buf, size_t bufsize)
 	struct uio *uio;
 	size_t resid;
 	int rv, eofflag;
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	
 	uio = rump_pub_uio_setup(buf, bufsize, *off, RUMPUIO_READ);
 	cred = rump_pub_cred_suserget();
