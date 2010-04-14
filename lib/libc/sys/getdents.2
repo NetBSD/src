@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdents.2,v 1.18 2005/12/26 19:40:15 perry Exp $
+.\"	$NetBSD: getdents.2,v 1.19 2010/04/14 09:06:00 jruoho Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)getdirentries.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd September 6, 2005
+.Dd April 14, 2010
 .Dt GETDENTS 2
 .Os
 .Sh NAME
@@ -68,10 +68,13 @@ structures each containing the following entries:
 ino_t		d_fileno;
 uint16_t	d_reclen;
 uint16_t	d_namlen;
-uint8_t	d_type;
-char    	d_name[MAXNAMLEN + 1]; /* see below */
+uint8_t		d_type;
+char    	d_name[MAXNAMLEN + 1];
 .Ed
 .Pp
+These are:
+.Bl -enum -offset indent
+.It
 The
 .Fa d_fileno
 entry is a number which is unique for each
@@ -83,11 +86,20 @@ have the same
 If
 .Fa d_fileno
 is zero, the entry refers to a deleted file.
-.Pp
+.It
 The
 .Fa d_reclen
 entry is the length, in bytes, of the directory record.
-.Pp
+.It
+The
+.Fa d_namlen
+entry specifies the length of the file name excluding the NUL.
+Thus the actual size of
+.Fa d_name
+may vary from 1 to
+.Dv MAXNAMLEN
+\&+ 1.
+.It
 The
 .Fa d_type
 is the type of file, where the following are possible types:
@@ -101,19 +113,11 @@ is the type of file, where the following are possible types:
 .Dv DT_SOCK ,
 and
 .Dv DT_WHT .
-.Pp
-The
-.Fa d_namlen
-entry specifies the length of the file name excluding the null byte.
-Thus the actual size of
-.Fa d_name
-may vary from 1 to
-.Dv MAXNAMLEN
-\&+ 1.
-.Pp
+.It
 The
 .Fa d_name
-entry contains a null terminated file name.
+entry contains a NUL-terminated file name.
+.El
 .Pp
 Entries may be separated by extra space.
 The
@@ -144,7 +148,7 @@ is set to indicate the error.
 .Sh ERRORS
 .Fn getdents
 will fail if:
-.Bl -tag -width Er
+.Bl -tag -width "[EINVAL]"
 .It Bq Er EBADF
 .Fa fd
 is not a valid file descriptor open for reading.
