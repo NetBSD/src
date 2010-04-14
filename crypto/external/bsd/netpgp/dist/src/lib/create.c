@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.24 2010/03/13 23:30:41 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.25 2010/04/14 00:25:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -311,11 +311,6 @@ write_seckey_body(const __ops_seckey_t *key,
 		return 0;
 	}
 	if (!__ops_write_scalar(output, (unsigned)key->s2k_specifier, 1)) {
-		return 0;
-	}
-
-	if (key->hash_alg != OPS_HASH_SHA1) {
-		(void) fprintf(stderr, "write_seckey_body: hash alg\n");
 		return 0;
 	}
 	if (!__ops_write_scalar(output, (unsigned)key->hash_alg, 1)) {
@@ -1087,7 +1082,6 @@ __ops_write_pk_sesskey(__ops_output_t *output, __ops_pk_sesskey_t *pksk)
 			"__ops_write_pk_sesskey: bad algorithm\n");
 		return 0;
 	}
-
 	return __ops_write_ptag(output, OPS_PTAG_CT_PK_SESSION_KEY) &&
 		__ops_write_length(output, (unsigned)(1 + 8 + 1 +
 			BN_num_bytes(pksk->params.rsa.encrypted_m) + 2)) &&
@@ -1161,19 +1155,15 @@ __ops_fileread_litdata(const char *filename,
 {
 	__ops_memory_t	*mem;
 	unsigned   	 ret;
-	size_t		 len;
+	int		 len;
 
 	mem = __ops_memory_new();
 	if (!__ops_mem_readfile(mem, filename)) {
+		(void) fprintf(stderr, "__ops_mem_readfile of '%s' failed\n", filename);
 		return 0;
 	}
-	len = __ops_mem_len(mem);
-	ret = __ops_write_ptag(output, OPS_PTAG_CT_LITDATA) &&
-		__ops_write_length(output, 1 + 1 + 4 + len) &&
-		__ops_write_scalar(output, (unsigned)type, 1) &&
-		__ops_write_scalar(output, 0, 1) /* filename */ &&
-		__ops_write_scalar(output, 0, 4) /* date */ &&
-		__ops_write(output, __ops_mem_data(mem), len);
+	len = (size_t)__ops_mem_len(mem);
+	ret = __ops_write_litdata(output, __ops_mem_data(mem), len, type);
 	__ops_memory_free(mem);
 	return ret;
 }
