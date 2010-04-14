@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2009/12/05 22:44:08 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.24 2010/04/14 10:27:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2009/12/05 22:44:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2010/04/14 10:27:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/intr.h>
+#include <sys/timetc.h>
 
 #include <rump/rumpuser.h>
 
@@ -41,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2009/12/05 22:44:08 pooka Exp $");
 /*
  * Interrupt simulator.  It executes hardclock() and softintrs.
  */
-
-time_t time_uptime = 0;
 
 #define SI_MPSAFE 0x01
 #define SI_ONLIST 0x02
@@ -67,33 +67,27 @@ struct softint_lev {
 static struct rumpuser_cv *clockcv;
 static struct rumpuser_mtx *clockmtx;
 static struct timespec clockbase, clockup;
-static unsigned clkgen;
 
 kcondvar_t lbolt; /* Oh Kath Ra */
 
-void
-rump_getuptime(struct timespec *ts)
-{
-	int startgen, i = 0;
+static u_int ticks;
 
-	do {
-		startgen = clkgen;
-		if (__predict_false(i++ > 10)) {
-			yield();
-			i = 0;
-		}
-		*ts = clockup;
-	} while (startgen != clkgen || clkgen % 2 != 0);
+static u_int
+rumptc_get(struct timecounter *tc)
+{
+
+	KASSERT(rump_threads);
+	return ticks;
 }
 
-void
-rump_gettime(struct timespec *ts)
-{
-	struct timespec ts_up;
-
-	rump_getuptime(&ts_up);
-	timespecadd(&clockbase, &ts_up, ts);
-}
+static struct timecounter rumptc = {
+	.tc_get_timecount	= rumptc_get,
+	.tc_poll_pps 		= NULL,
+	.tc_counter_mask	= ~0,
+	.tc_frequency		= 0,
+	.tc_name		= "rumpclk",
+	.tc_quality		= 0,
+};
 
 /*
  * clock "interrupt"
@@ -101,17 +95,17 @@ rump_gettime(struct timespec *ts)
 static void
 doclock(void *noarg)
 {
-	struct timespec tick, curtime;
+	struct timespec thetick, curtime;
 	uint64_t sec, nsec;
-	int ticks = 0, error;
+	int error;
 	extern int hz;
 
 	rumpuser_gettime(&sec, &nsec, &error);
 	clockbase.tv_sec = sec;
 	clockbase.tv_nsec = nsec;
 	curtime = clockbase;
-	tick.tv_sec = 0;
-	tick.tv_nsec = 1000000000/hz;
+	thetick.tv_sec = 0;
+	thetick.tv_nsec = 1000000000/hz;
 
 	rumpuser_mutex_enter(clockmtx);
 	rumpuser_cv_signal(clockcv);
@@ -126,15 +120,12 @@ doclock(void *noarg)
 		
 		/* if !maincpu: continue */
 
-		if (++ticks == hz) {
-			time_uptime++;
-			ticks = 0;
+		if ((++ticks % hz) == 0) {
 			cv_broadcast(&lbolt);
 		}
+		tc_ticktock();
 
-		clkgen++;
-		timespecadd(&clockup, &tick, &clockup);
-		clkgen++;
+		timespecadd(&clockup, &thetick, &clockup);
 		timespecadd(&clockup, &clockbase, &curtime);
 	}
 }
@@ -245,6 +236,9 @@ softint_init(struct cpu_info *ci)
 		if (rv)
 			panic("clock thread creation failed: %d", rv);
 	}
+
+	rumptc.tc_frequency = hz;
+	tc_init(&rumptc);
 
 	/*
 	 * Make sure we have a clocktime before returning.
