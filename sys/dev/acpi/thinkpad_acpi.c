@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.28 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.29 2010/04/14 19:27:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.28 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.29 2010/04/14 19:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,7 +113,7 @@ static void	thinkpad_attach(device_t, device_t, void *);
 static int	thinkpad_detach(device_t, int);
 
 static ACPI_STATUS thinkpad_mask_init(thinkpad_softc_t *, uint32_t);
-static void	thinkpad_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	thinkpad_notify_handler(ACPI_HANDLE, uint32_t, void *);
 static void	thinkpad_get_hotkeys(void *);
 
 static void	thinkpad_sensors_init(thinkpad_softc_t *);
@@ -302,7 +302,7 @@ thinkpad_detach(device_t self, int flags)
 }
 
 static void
-thinkpad_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+thinkpad_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
 	thinkpad_softc_t *sc = (thinkpad_softc_t *)opaque;
 	device_t self = sc->sc_dev;

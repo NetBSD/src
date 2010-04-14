@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.64 2010/03/29 16:35:59 dyoung Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.65 2010/04/14 19:27:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.64 2010/03/29 16:35:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.65 2010/04/14 19:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -122,7 +122,7 @@ struct acpiec_softc {
 	ACPI_HANDLE sc_ech;
 
 	ACPI_HANDLE sc_gpeh;
-	UINT8 sc_gpebit;
+	uint8_t sc_gpebit;
 
 	bus_space_tag_t sc_data_st;
 	bus_space_handle_t sc_data_sh;
@@ -131,7 +131,7 @@ struct acpiec_softc {
 	bus_space_handle_t sc_csr_sh;
 
 	bool sc_need_global_lock;
-	UINT32 sc_global_lock;
+	uint32_t sc_global_lock;
 
 	kmutex_t sc_mtx, sc_access_mtx;
 	kcondvar_t sc_cv, sc_cv_sci;
@@ -161,10 +161,10 @@ static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
 
 static void acpiec_callout(void *);
 static void acpiec_gpe_query(void *);
-static UINT32 acpiec_gpe_handler(void *);
-static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, UINT32, void *, void **);
-static ACPI_STATUS acpiec_space_handler(UINT32, ACPI_PHYSICAL_ADDRESS,
-    UINT32, ACPI_INTEGER *, void *, void *);
+static uint32_t acpiec_gpe_handler(void *);
+static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, uint32_t, void *, void **);
+static ACPI_STATUS acpiec_space_handler(uint32_t, ACPI_PHYSICAL_ADDRESS,
+    uint32_t, ACPI_INTEGER *, void *, void *);
 
 static void acpiec_gpe_state_machine(device_t);
 
@@ -511,7 +511,7 @@ acpiec_write_command(struct acpiec_softc *sc, uint8_t cmd)
 }
 
 static ACPI_STATUS
-acpiec_space_setup(ACPI_HANDLE region, UINT32 func, void *arg,
+acpiec_space_setup(ACPI_HANDLE region, uint32_t func, void *arg,
     void **region_arg)
 {
 	if (func == ACPI_REGION_DEACTIVATE)
@@ -652,8 +652,8 @@ done:
 }
 
 static ACPI_STATUS
-acpiec_space_handler(UINT32 func, ACPI_PHYSICAL_ADDRESS paddr,
-    UINT32 width, ACPI_INTEGER *value, void *arg, void *region_arg)
+acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
+    uint32_t width, ACPI_INTEGER *value, void *arg, void *region_arg)
 {
 	device_t dv;
 	struct acpiec_softc *sc;
@@ -856,7 +856,7 @@ acpiec_callout(void *arg)
 	mutex_exit(&sc->sc_mtx);
 }
 
-static UINT32
+static uint32_t
 acpiec_gpe_handler(void *arg)
 {
 	device_t dv = arg;

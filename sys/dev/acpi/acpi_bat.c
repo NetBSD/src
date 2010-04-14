@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.98 2010/04/03 16:29:22 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.99 2010/04/14 19:27:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.98 2010/04/03 16:29:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.99 2010/04/14 19:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -182,7 +182,7 @@ static void         acpibat_get_status(device_t);
 static void         acpibat_update_info(void *);
 static void         acpibat_update_status(void *);
 static void         acpibat_init_envsys(device_t);
-static void         acpibat_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void         acpibat_notify_handler(ACPI_HANDLE, uint32_t, void *);
 static void         acpibat_refresh(struct sysmon_envsys *, envsys_data_t *);
 static bool	    acpibat_resume(device_t, const pmf_qual_t *);
 static void	    acpibat_get_limits(struct sysmon_envsys *, envsys_data_t *,
@@ -652,7 +652,7 @@ acpibat_update_status(void *arg)
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
 static void
-acpibat_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
+acpibat_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 {
 	static const int handler = OSL_NOTIFY_HANDLER;
 	device_t dv = context;

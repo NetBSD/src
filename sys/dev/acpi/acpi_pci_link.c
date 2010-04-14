@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.16 2010/03/05 14:00:17 jruoho Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.17 2010/04/14 19:27:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.16 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.17 2010/04/14 19:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -258,8 +258,8 @@ link_add_prs(ACPI_RESOURCE *res, void *context)
 {
 	struct link_res_request *req;
 	struct link *link;
-	UINT8 *irqs = NULL;
-	UINT32 *ext_irqs = NULL;
+	uint8_t *irqs = NULL;
+	uint32_t *ext_irqs = NULL;
 	int i, is_ext_irq = 1;
 
 	req = (struct link_res_request *)context;

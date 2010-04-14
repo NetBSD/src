@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.63 2010/03/17 20:29:32 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.64 2010/04/14 19:27:28 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.63 2010/03/17 20:29:32 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.64 2010/04/14 19:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,33 +78,33 @@ static void	acpitz_attach(device_t, device_t, void *);
 
 struct acpitz_zone {
 	/* Active cooling temperature threshold */
-	UINT32 ac[ATZ_NLEVELS];
+	uint32_t ac[ATZ_NLEVELS];
 	/* Package of references to all active cooling devices for a level */
 	ACPI_BUFFER al[ATZ_NLEVELS];
 	/* Critical temperature threshold for system shutdown */
-	UINT32 crt;
+	uint32_t crt;
 	/* Critical temperature threshold for S4 sleep */
-	UINT32 hot;
+	uint32_t hot;
 	/* Package of references to processor objects for passive cooling */
 	ACPI_BUFFER psl;
 	/* Conveys if temperatures are absolute or relative values. */
-	UINT32 rtv;
+	uint32_t rtv;
 	/* Passive cooling temperature threshold */
-	UINT32 psv;
+	uint32_t psv;
 	/* Thermal constants for use in passive cooling formulas */
-	UINT32 tc1, tc2;
+	uint32_t tc1, tc2;
 	/* Current temperature of the thermal zone */
-	UINT32 prevtmp, tmp;
+	uint32_t prevtmp, tmp;
 	/* Thermal sampling period for passive cooling, in tenths of seconds */
-	UINT32 tsp;
+	uint32_t tsp;
 	/* Package of references to devices in this TZ (optional) */
 	ACPI_BUFFER tzd;
 	/* Recommended TZ polling frequency, in tenths of seconds */
-	UINT32 tzp;
+	uint32_t tzp;
 	/* Thermal zone name */
 	char *name;
 	/* FAN min, max, current rpms */
-	UINT32 fanmin, fanmax, fancurrent;
+	uint32_t fanmin, fanmax, fancurrent;
 };
 
 struct acpitz_softc {
@@ -130,19 +130,20 @@ static char	*acpitz_celcius_string(int);
 static void	acpitz_print_status(device_t);
 static void	acpitz_power_off(struct acpitz_softc *);
 static void	acpitz_power_zone(struct acpitz_softc *, int, int);
-static void	acpitz_sane_temp(UINT32 *tmp);
+static void	acpitz_sane_temp(uint32_t *tmp);
 static ACPI_STATUS
 		acpitz_switch_cooler(ACPI_OBJECT *, void *);
-static void	acpitz_notify_handler(ACPI_HANDLE, UINT32, void *);
-static int	acpitz_get_integer(device_t, const char *, UINT32 *);
+static void	acpitz_notify_handler(ACPI_HANDLE, uint32_t, void *);
+static int	acpitz_get_integer(device_t, const char *, uint32_t *);
 static void	acpitz_tick(void *);
 static void	acpitz_init_envsys(device_t);
 static void	acpitz_get_limits(struct sysmon_envsys *, envsys_data_t *,
 				  sysmon_envsys_lim_t *, uint32_t *);
-static int	acpitz_get_fanspeed(device_t, UINT32 *, UINT32 *, UINT32 *);
+static int	acpitz_get_fanspeed(device_t, uint32_t *,
+				    uint32_t *, uint32_t *);
 #ifdef notyet
 static ACPI_STATUS
-		acpitz_set_fanspeed(device_t, UINT32);
+		acpitz_set_fanspeed(device_t, uint32_t);
 #endif
 
 CFATTACH_DECL_NEW(acpitz, sizeof(struct acpitz_softc), acpitz_match,
@@ -238,9 +239,8 @@ acpitz_get_status(void *opaque)
 {
 	device_t dv = opaque;
 	struct acpitz_softc *sc = device_private(dv);
-	UINT32 tmp, active;
+	uint32_t tmp, active, fmin, fmax, fcurrent;
 	int i, flags;
-	UINT32 fmin, fmax, fcurrent;
 
 	sc->sc_zone_expire--;
 	if (sc->sc_zone_expire <= 0) {
@@ -546,7 +546,7 @@ acpitz_get_zone(void *opaque, int verbose)
 }
 
 static void
-acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+acpitz_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
 	device_t dv = opaque;
 	ACPI_OSD_EXEC_CALLBACK func = NULL;
@@ -577,7 +577,7 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 }
 
 static void
-acpitz_sane_temp(UINT32 *tmp)
+acpitz_sane_temp(uint32_t *tmp)
 {
 	/* Sane temperatures are beteen 0 and 150 C */
 	if (*tmp < ATZ_ZEROC || *tmp > ATZ_ZEROC + 1500)
@@ -585,7 +585,7 @@ acpitz_sane_temp(UINT32 *tmp)
 }
 
 static int
-acpitz_get_integer(device_t dv, const char *cm, UINT32 *val)
+acpitz_get_integer(device_t dv, const char *cm, uint32_t *val)
 {
 	struct acpitz_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
@@ -610,7 +610,7 @@ acpitz_get_integer(device_t dv, const char *cm, UINT32 *val)
 
 static int
 acpitz_get_fanspeed(device_t dv,
-    UINT32 *fanmin, UINT32 *fanmax, UINT32 *fancurrent)
+    uint32_t *fanmin, uint32_t *fanmax, uint32_t *fancurrent)
 {
 	struct acpitz_softc *sc = device_private(dv);
 	ACPI_STATUS rv;
@@ -646,7 +646,7 @@ acpitz_get_fanspeed(device_t dv,
 
 #ifdef notyet
 static ACPI_STATUS
-acpitz_set_fanspeed(device_t dv, UINT32 fanspeed)
+acpitz_set_fanspeed(device_t dv, uint32_t fanspeed)
 {
 	struct acpitz_softc *sc = device_private(dv);
 	ACPI_STATUS rv;

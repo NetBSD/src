@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.2 2010/04/10 18:32:13 jruoho Exp $ */
+/*	$NetBSD: vald_acpi.c,v 1.3 2010/04/14 19:27:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.2 2010/04/10 18:32:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.3 2010/04/14 19:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,26 +133,26 @@ static int	vald_acpi_match(device_t, cfdata_t, void *);
 static void	vald_acpi_attach(device_t, device_t, void *);
 
 static void	vald_acpi_event(void *);
-static void	vald_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	vald_acpi_notify_handler(ACPI_HANDLE, uint32_t, void *);
 
 #define ACPI_NOTIFY_ValdStatusChanged	0x80
 
 
-static ACPI_STATUS	vald_acpi_ghci_get(struct vald_acpi_softc *, UINT32,
-    UINT32 *, UINT32 *);
-static ACPI_STATUS	vald_acpi_ghci_set(struct vald_acpi_softc *, UINT32,
-    UINT32, UINT32 *);
+static ACPI_STATUS	vald_acpi_ghci_get(struct vald_acpi_softc *, uint32_t,
+					uint32_t *, uint32_t *);
+static ACPI_STATUS	vald_acpi_ghci_set(struct vald_acpi_softc *, uint32_t,
+					uint32_t, uint32_t *);
 
-static ACPI_STATUS	vald_acpi_libright_get_bus(ACPI_HANDLE, UINT32, void *,
-    void **);
+static ACPI_STATUS	vald_acpi_libright_get_bus(ACPI_HANDLE, uint32_t,
+					void *, void **);
 static void		vald_acpi_libright_get(struct vald_acpi_softc *);
 static void		vald_acpi_libright_set(struct vald_acpi_softc *, int);
 
 static void		vald_acpi_video_switch(struct vald_acpi_softc *);
 static void		vald_acpi_fan_switch(struct vald_acpi_softc *);
 
-static ACPI_STATUS	vald_acpi_bcm_set(ACPI_HANDLE, UINT32);
-static ACPI_STATUS	vald_acpi_dssx_set(UINT32);
+static ACPI_STATUS	vald_acpi_bcm_set(ACPI_HANDLE, uint32_t);
+static ACPI_STATUS	vald_acpi_dssx_set(uint32_t);
 
 CFATTACH_DECL_NEW(vald_acpi, sizeof(struct vald_acpi_softc),
     vald_acpi_match, vald_acpi_attach, NULL, NULL);
@@ -184,7 +184,7 @@ vald_acpi_attach(device_t parent, device_t self, void *aux)
 	struct vald_acpi_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	ACPI_STATUS rv;
-	UINT32 value, result;
+	uint32_t value, result;
 
 	aprint_naive(": Toshiba VALD\n");
 	aprint_normal(": Toshiba VALD\n");
@@ -249,7 +249,7 @@ vald_acpi_attach(device_t parent, device_t self, void *aux)
  *	Notify handler.
  */
 static void
-vald_acpi_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
+vald_acpi_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 {
 	struct vald_acpi_softc *sc = context;
 
@@ -276,7 +276,7 @@ vald_acpi_event(void *arg)
 {
 	struct vald_acpi_softc *sc = arg;
 	ACPI_STATUS rv;
-	UINT32 value, result;
+	uint32_t value, result;
 
 	while(1) {
 		rv = vald_acpi_ghci_get(sc, GHCI_SYSTEM_EVENT_FIFO, &value,
@@ -314,7 +314,7 @@ vald_acpi_event(void *arg)
  */
 static ACPI_STATUS
 vald_acpi_ghci_get(struct vald_acpi_softc *sc,
-    UINT32 reg, UINT32 *value, UINT32 *result)
+    uint32_t reg, uint32_t *value, uint32_t *result)
 {
 	ACPI_STATUS rv;
 	ACPI_OBJECT Arg[GHCI_WORDS];
@@ -371,7 +371,7 @@ vald_acpi_ghci_get(struct vald_acpi_softc *sc,
  */
 static ACPI_STATUS
 vald_acpi_ghci_set(struct vald_acpi_softc *sc,
-    UINT32 reg, UINT32 value, UINT32 *result)
+    uint32_t reg, uint32_t value, uint32_t *result)
 {
 	ACPI_STATUS rv;
 	ACPI_OBJECT Arg[GHCI_WORDS];
@@ -424,7 +424,7 @@ vald_acpi_ghci_set(struct vald_acpi_softc *sc,
  *	and save this handle.
  */
 static ACPI_STATUS
-vald_acpi_libright_get_bus(ACPI_HANDLE handle, UINT32 level,
+vald_acpi_libright_get_bus(ACPI_HANDLE handle, uint32_t level,
     void *context, void **status)
 {
 	struct vald_acpi_softc *sc = context;
@@ -512,9 +512,9 @@ vald_acpi_libright_get(struct vald_acpi_softc *sc)
 static void
 vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 {
+	uint32_t backlight, backlight_new, result, bright;
 	ACPI_STATUS rv;
 	int *pi;
-	UINT32 backlight, backlight_new, result, bright;
 
 	/* Skip,if it does not support _BCL. */
 	if (sc->lcd_handle == NULL)
@@ -589,7 +589,7 @@ static void
 vald_acpi_video_switch(struct vald_acpi_softc *sc)
 {
 	ACPI_STATUS	rv;
-	UINT32		value, result;
+	uint32_t	value, result;
 
 	/* Get video status. */
 	rv = vald_acpi_ghci_get(sc, GHCI_DISPLAY_DEVICE, &value, &result);
@@ -630,7 +630,7 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
  *	Set LCD brightness via "_BCM" Method.
  */
 static ACPI_STATUS
-vald_acpi_bcm_set(ACPI_HANDLE handle, UINT32 bright)
+vald_acpi_bcm_set(ACPI_HANDLE handle, uint32_t bright)
 {
 	ACPI_STATUS rv;
 	ACPI_OBJECT Arg;
@@ -652,7 +652,7 @@ vald_acpi_bcm_set(ACPI_HANDLE handle, UINT32 bright)
  *	Set value via "\\_SB_.VALX.DSSX" Method.
  */
 static ACPI_STATUS
-vald_acpi_dssx_set(UINT32 value)
+vald_acpi_dssx_set(uint32_t value)
 {
 	return acpi_eval_set_integer(NULL, "\\_SB_.VALX.DSSX", value);
 }
@@ -666,7 +666,7 @@ static void
 vald_acpi_fan_switch(struct vald_acpi_softc *sc)
 {
 	ACPI_STATUS rv;
-	UINT32	value, result;
+	uint32_t value, result;
 
 	/* Get FAN status */
 	rv = vald_acpi_ghci_get(sc, GHCI_FAN, &value, &result);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.16 2010/04/08 04:40:51 jruoho Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.17 2010/04/14 19:27:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.16 2010/04/08 04:40:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.17 2010/04/14 19:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -84,12 +84,12 @@ static void	sony_acpi_attach(device_t, device_t, void *);
 static ACPI_STATUS sony_acpi_eval_set_integer(ACPI_HANDLE, const char *,
     ACPI_INTEGER, ACPI_INTEGER *);
 static void	sony_acpi_quirk_setup(struct sony_acpi_softc *);
-static void	sony_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	sony_acpi_notify_handler(ACPI_HANDLE, uint32_t, void *);
 static bool	sony_acpi_suspend(device_t, const pmf_qual_t *);
 static bool	sony_acpi_resume(device_t, const pmf_qual_t *);
 static void	sony_acpi_brightness_down(device_t);
 static void	sony_acpi_brightness_up(device_t);
-static ACPI_STATUS sony_acpi_find_pic(ACPI_HANDLE, UINT32, void *, void **);
+static ACPI_STATUS sony_acpi_find_pic(ACPI_HANDLE, uint32_t, void *, void **);
 
 CFATTACH_DECL_NEW(sony_acpi, sizeof(struct sony_acpi_softc),
     sony_acpi_match, sony_acpi_attach, NULL, NULL);
@@ -150,7 +150,7 @@ sony_sysctl_helper(SYSCTLFN_ARGS)
 }
 
 static ACPI_STATUS
-sony_walk_cb(ACPI_HANDLE hnd, UINT32 v, void *context, void **status)
+sony_walk_cb(ACPI_HANDLE hnd, uint32_t v, void *context, void **status)
 {
 	struct sony_acpi_softc *sc = (void *)context;
 	const struct sysctlnode *node, *snode;
@@ -325,7 +325,7 @@ sony_acpi_quirk_setup(struct sony_acpi_softc *sc)
 }
 
 static void
-sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+sony_acpi_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
 	device_t dv = opaque;
 	struct sony_acpi_softc *sc = device_private(dv);
@@ -441,7 +441,8 @@ sony_acpi_brightness_down(device_t dv)
 }
 
 static ACPI_STATUS
-sony_acpi_find_pic(ACPI_HANDLE hdl, UINT32 level, void *opaque, void **status)
+sony_acpi_find_pic(ACPI_HANDLE hdl, uint32_t level,
+    void *opaque, void **status)
 {
 	struct sony_acpi_softc *sc = opaque;
 	ACPI_STATUS rv;
