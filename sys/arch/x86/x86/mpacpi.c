@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.85 2010/04/08 04:40:51 jruoho Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.86 2010/04/14 19:32:35 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.85 2010/04/08 04:40:51 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.86 2010/04/14 19:32:35 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -112,7 +112,7 @@ static ACPI_STATUS mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *, void *);
 
 #if NPCI > 0
 /* Callbacks for the ACPI namespace walk */
-static ACPI_STATUS mpacpi_pcibus_cb(ACPI_HANDLE, UINT32, void *, void **);
+static ACPI_STATUS mpacpi_pcibus_cb(ACPI_HANDLE, uint32_t, void *, void **);
 static int mpacpi_derive_bus(ACPI_HANDLE, struct acpi_softc *);
 
 static int mpacpi_pcircount(struct mpacpi_pcibus *);
@@ -689,7 +689,7 @@ out:
  * PCI root and subordinate busses.
  */
 static ACPI_STATUS
-mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
+mpacpi_pcibus_cb(ACPI_HANDLE handle, uint32_t level, void *p,
     void **status)
 {
 	ACPI_STATUS rv;
@@ -901,7 +901,7 @@ mpacpi_pcircount(struct mpacpi_pcibus *mpr)
 {
 	int count = 0;
 	ACPI_PCI_ROUTING_TABLE *PrtElement;
-	UINT8 *Buffer;
+	uint8_t *Buffer;
 
 	for (Buffer = mpr->mpr_buf.Pointer;; Buffer += PrtElement->Length) {
 		PrtElement = (ACPI_PCI_ROUTING_TABLE *)Buffer;
