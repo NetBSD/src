@@ -101,7 +101,7 @@ static struct option options[] = {
 	{"find-key",	no_argument,		NULL,	FIND_KEY},
 	{"export-key",	no_argument,		NULL,	EXPORT_KEY},
 	{"import-key",	no_argument,		NULL,	IMPORT_KEY},
-	{"generate-key", no_argument,		NULL,	GENERATE_KEY},
+	{"generate-key", optional_argument,	NULL,	GENERATE_KEY},
 	{"get-key", 	no_argument,		NULL,	GET_KEY},
 	/* debugging commands */
 	{"help",	no_argument,		NULL,	HELP_CMD},
@@ -157,8 +157,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	case FIND_KEY:
 		return netpgp_find_key(netpgp, netpgp_getvar(netpgp, "userid"));
 	case EXPORT_KEY:
-		key = netpgp_export_key(netpgp,
-				netpgp_getvar(netpgp, "userid"));
+		key = netpgp_export_key(netpgp, netpgp_getvar(netpgp, "userid"));
 		if (key) {
 			printf("%s", key);
 			return 1;
@@ -168,8 +167,7 @@ netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 	case IMPORT_KEY:
 		return netpgp_import_key(netpgp, f);
 	case GENERATE_KEY:
-		return netpgp_generate_key(netpgp,
-				netpgp_getvar(netpgp, "userid"), p->numbits);
+		return netpgp_generate_key(netpgp, f, p->numbits);
 	case GET_KEY:
 		key = netpgp_get_key(netpgp, f, "human");
 		if (key) {
