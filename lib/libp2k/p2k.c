@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.33 2009/12/23 01:15:11 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.34 2010/04/14 14:15:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -97,7 +97,7 @@ struct p2k_node {
 static int haswizard;
 static uid_t wizarduid;
 
-static kauth_cred_t
+static struct kauth_cred *
 cred_create(const struct puffs_cred *pcr)
 {
 	gid_t groups[NGROUPS];
@@ -120,7 +120,7 @@ cred_create(const struct puffs_cred *pcr)
 }
 
 static __inline void
-cred_destroy(kauth_cred_t cred)
+cred_destroy(struct kauth_cred *cred)
 {
 
 	rump_pub_cred_put(cred);
@@ -129,7 +129,7 @@ cred_destroy(kauth_cred_t cred)
 static struct componentname *
 makecn(const struct puffs_cn *pcn, int myflags)
 {
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 
 	cred = cred_create(pcn->pcn_cred);
 	/* LINTED: prehistoric types in first two args */
@@ -544,11 +544,11 @@ p2k_fs_sync(struct puffs_usermount *pu, int waitfor,
 	const struct puffs_cred *pcr)
 {
 	struct mount *mp = ukfs_getmp(puffs_getspecific(pu));
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	int rv;
 
 	cred = cred_create(pcr);
-	rv = rump_pub_vfs_sync(mp, waitfor, (kauth_cred_t)cred);
+	rv = rump_pub_vfs_sync(mp, waitfor, cred);
 	cred_destroy(cred);
 
 	return rv;
@@ -792,7 +792,7 @@ p2k_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	const struct puffs_cred *pcr)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -810,7 +810,7 @@ p2k_node_close(struct puffs_usermount *pu, puffs_cookie_t opc, int flags,
 	const struct puffs_cred *pcr)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
@@ -827,7 +827,7 @@ p2k_node_access(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	const struct puffs_cred *pcr)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -845,7 +845,7 @@ p2k_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct vattr *vap, const struct puffs_cred *pcr)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	struct vattr *va_x;
 	int rv;
 
@@ -879,7 +879,7 @@ p2k_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct vattr *vap, const struct puffs_cred *pcr)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	struct vattr *va_x;
 	int rv;
 
@@ -906,7 +906,7 @@ p2k_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct puffs_cred *pcr, int flags, off_t offlo, off_t offhi)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	int rv;
 
 	/* "deadfs" */
@@ -927,7 +927,7 @@ int
 p2k_node_mmap(struct puffs_usermount *pu, puffs_cookie_t opc, vm_prot_t flags,
 	const struct puffs_cred *pcr)
 {
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -943,7 +943,7 @@ p2k_node_seek(struct puffs_usermount *pu, puffs_cookie_t opc,
 	off_t oldoff, off_t newoff, const struct puffs_cred *pcr)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	int rv;
 
 	cred = cred_create(pcr);
@@ -1133,7 +1133,7 @@ p2k_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	off_t *cookies, size_t *ncookies)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	struct uio *uio;
 	off_t *vop_cookies;
 	int vop_ncookies;
@@ -1168,7 +1168,7 @@ p2k_node_readlink(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct puffs_cred *pcr, char *linkname, size_t *linklen)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	struct uio *uio;
 	int rv;
 
@@ -1190,7 +1190,7 @@ p2k_node_read(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct puffs_cred *pcr, int ioflag)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	struct uio *uio;
 	int rv;
 
@@ -1212,7 +1212,7 @@ p2k_node_write(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct puffs_cred *pcr, int ioflag)
 {
 	struct vnode *vp = OPC2VP(opc);
-	kauth_cred_t cred;
+	struct kauth_cred *cred;
 	struct uio *uio;
 	int rv;
 
