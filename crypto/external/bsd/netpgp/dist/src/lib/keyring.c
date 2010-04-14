@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.33 2010/03/13 23:30:41 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.34 2010/04/14 00:23:09 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -486,7 +486,7 @@ __ops_add_subpacket(__ops_key_t *keydata, const __ops_subpacket_t *packet)
 \return 1 if OK; else 0
 */
 unsigned 
-__ops_add_selfsigned_userid(__ops_key_t *keydata, __ops_userid_t *userid)
+__ops_add_selfsigned_userid(__ops_key_t *key, __ops_userid_t *userid)
 {
 	__ops_create_sig_t	*sig;
 	__ops_subpacket_t	 sigpacket;
@@ -505,24 +505,22 @@ __ops_add_selfsigned_userid(__ops_key_t *keydata, __ops_userid_t *userid)
 
 	/* create sig for this pkt */
 	sig = __ops_create_sig_new();
-	__ops_sig_start_key_sig(sig, &keydata->key.seckey.pubkey, userid,
-					OPS_CERT_POSITIVE);
+	__ops_sig_start_key_sig(sig, &key->key.seckey.pubkey, userid, OPS_CERT_POSITIVE);
 	__ops_add_birthtime(sig, time(NULL));
-	__ops_add_issuer_keyid(sig, keydata->key_id);
+	__ops_add_issuer_keyid(sig, key->key_id);
 	__ops_add_primary_userid(sig, 1);
 	__ops_end_hashed_subpkts(sig);
 
 	__ops_setup_memory_write(&sigoutput, &mem_sig, 128);
-	__ops_write_sig(sigoutput, sig, &keydata->key.seckey.pubkey,
-				&keydata->key.seckey);
+	__ops_write_sig(sigoutput, sig, &key->key.seckey.pubkey, &key->key.seckey);
 
-	/* add this packet to keydata */
+	/* add this packet to key */
 	sigpacket.length = __ops_mem_len(mem_sig);
 	sigpacket.raw = __ops_mem_data(mem_sig);
 
-	/* add userid to keydata */
-	(void) __ops_add_userid(keydata, userid);
-	(void) __ops_add_subpacket(keydata, &sigpacket);
+	/* add userid to key */
+	(void) __ops_add_userid(key, userid);
+	(void) __ops_add_subpacket(key, &sigpacket);
 
 	/* cleanup */
 	__ops_create_sig_delete(sig);
