@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.24 2010/04/14 15:12:44 pooka Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.25 2010/04/14 15:15:37 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,16 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.24 2010/04/14 15:12:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.25 2010/04/14 15:15:37 pooka Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #include "opt_sa.h"
-
-/* XXX To get syscall prototypes. */
-#define SYSVSHM
-#define SYSVSEM
-#define SYSVMSG
 
 #include <sys/param.h>
 #include <sys/kernel.h>
