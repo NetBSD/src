@@ -1,4 +1,4 @@
-/*	$NetBSD: valz_acpi.c,v 1.1 2010/04/11 22:42:30 jakllsch Exp $	*/
+/*	$NetBSD: valz_acpi.c,v 1.2 2010/04/14 19:27:28 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valz_acpi.c,v 1.1 2010/04/11 22:42:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valz_acpi.c,v 1.2 2010/04/14 19:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,9 @@ static const char * const valz_hids[] = {
 
 static int	valz_match(device_t, cfdata_t, void *);
 static void	valz_attach(device_t, device_t, void *);
-static ACPI_STATUS valz_check_bcl(ACPI_HANDLE, UINT32, void*, void **);
+static ACPI_STATUS valz_check_bcl(ACPI_HANDLE, uint32_t, void*, void **);
 static void	valz_locate_lcd(struct valz_softc *);
-static void	valz_lcd_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	valz_lcd_notify_handler(ACPI_HANDLE, uint32_t, void *);
 static void	valz_adjust_backlight(struct valz_softc *, enum valz_action);
 static void	valz_pmf_brightness_decrease(device_t);
 static void	valz_pmf_brightness_increase(device_t);
@@ -111,7 +111,7 @@ valz_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-valz_lcd_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
+valz_lcd_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 {
 	struct valz_softc *sc = context;
 
@@ -145,7 +145,8 @@ valz_locate_lcd(struct valz_softc *sc)
 }
 
 static ACPI_STATUS
-valz_check_bcl(ACPI_HANDLE handle, UINT32 level, void *context, void **status)
+valz_check_bcl(ACPI_HANDLE handle, uint32_t level,
+    void *context, void **status)
 {
 	struct valz_softc *sc = context;
 	ACPI_STATUS rv;

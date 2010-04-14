@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.172 2010/04/14 18:39:56 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.173 2010/04/14 19:27:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.172 2010/04/14 18:39:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.173 2010/04/14 19:27:28 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -784,13 +784,14 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 		resc = ACPI_NEXT_RESOURCE(resc);
 		resn = ACPI_NEXT_RESOURCE(resn);
 		resp = ACPI_NEXT_RESOURCE(resp);
-		delta = (UINT8 *)resn - (UINT8 *)bufn.Pointer;
+		delta = (uint8_t *)resn - (uint8_t *)bufn.Pointer;
 		if (delta >=
 		    bufn.Length-ACPI_RS_SIZE(ACPI_RESOURCE_DATA)) {
 			bufn.Length *= 2;
 			bufn.Pointer = realloc(bufn.Pointer, bufn.Length,
 					       M_ACPI, M_WAITOK);
-			resn = (ACPI_RESOURCE *)((UINT8 *)bufn.Pointer + delta);
+			resn = (ACPI_RESOURCE *)((uint8_t *)bufn.Pointer +
+			    delta);
 		}
 	}
 
