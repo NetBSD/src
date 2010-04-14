@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.18 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.19 2010/04/14 19:27:28 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.18 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.19 2010/04/14 19:27:28 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -90,7 +90,7 @@ static int	asus_match(device_t, cfdata_t, void *);
 static void	asus_attach(device_t, device_t, void *);
 static int	asus_detach(device_t, int);
 
-static void	asus_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	asus_notify_handler(ACPI_HANDLE, uint32_t, void *);
 
 static void	asus_init(device_t);
 static bool	asus_suspend(device_t, const pmf_qual_t *);
@@ -205,7 +205,7 @@ asus_detach(device_t self, int flags)
 }
 
 static void
-asus_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+asus_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
 	struct asus_softc *sc = opaque;
 

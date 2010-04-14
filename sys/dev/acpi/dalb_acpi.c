@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.12 2010/04/10 18:32:13 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.13 2010/04/14 19:27:28 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.12 2010/04/10 18:32:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.13 2010/04/14 19:27:28 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -61,7 +61,7 @@ struct acpi_dalb_softc {
 static int	acpi_dalb_match(device_t, cfdata_t, void *);
 static void	acpi_dalb_attach(device_t, device_t, void *);
 static int	acpi_dalb_detach(device_t, int);
-static void	acpi_dalb_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	acpi_dalb_notify_handler(ACPI_HANDLE, uint32_t, void *);
 static bool	acpi_dalb_resume(device_t, const pmf_qual_t *);
 
 static void	acpi_dalb_get_wakeup_hotkeys(void *opaque);
@@ -198,7 +198,7 @@ acpi_dalb_detach(device_t self, int flags)
 }
 
 static void
-acpi_dalb_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+acpi_dalb_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
 	device_t dev = opaque;
 	struct acpi_dalb_softc *sc = device_private(dev);
