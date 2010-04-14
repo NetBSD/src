@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_spl.S,v 1.1.2.1 2010/03/21 21:17:01 cliff Exp $	*/
+/*	$NetBSD: rmixl_spl.S,v 1.1.2.2 2010/04/14 01:23:15 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.1 2010/03/21 21:17:01 cliff Exp $");
+RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.2 2010/04/14 01:23:15 cliff Exp $");
 
 #include "assym.h"
 
@@ -263,6 +263,7 @@ STATIC_LEAF(_splsw_splvm)
 	REG_L	a0, _C_LABEL(ipl_eimr_map) + 8*IPL_VM
 	li	a1, IPL_VM
 	b	_splraise
+	 nop
 END(_splsw_splvm)
 
 STATIC_LEAF(_splsw_splsoftserial)
@@ -318,6 +319,7 @@ STATIC_LEAF(_splsw_splintr)
 	addiu	v0, 1				#  increase ipl by 1
 	move	v1, ta2				# reduce down pending intrs
 	b	1b				# and check them
+	 nop
 
 2:
 	/*
