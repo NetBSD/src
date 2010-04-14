@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.9 2010/04/12 12:14:26 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.10 2010/04/14 17:12:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.9 2010/04/12 12:14:26 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.10 2010/04/14 17:12:14 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,6 +52,8 @@ static const char * const acpi_wakedev_default[] = {
 static const struct sysctlnode *rnode = NULL;
 
 static void	acpi_wakedev_prepare(struct acpi_devnode *, int, int);
+static void	acpi_wakedev_gpe(ACPI_HANDLE, bool);
+
 
 SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 {
@@ -135,11 +137,11 @@ acpi_wakedev_commit(struct acpi_softc *sc, int state)
 			continue;
 
 		if (ad->ad_wake == 0)
-			acpi_clear_wake_gpe(ad->ad_handle);
+			acpi_wakedev_gpe(ad->ad_handle, false);
 		else {
 			aprint_debug_dev(ad->ad_parent,
 			    "set wake GPE for %s\n", ad->ad_name);
-			acpi_set_wake_gpe(ad->ad_handle);
+			acpi_wakedev_gpe(ad->ad_handle, true);
 		}
 
 		acpi_wakedev_prepare(ad, ad->ad_wake, state);
@@ -197,4 +199,69 @@ acpi_wakedev_prepare(struct acpi_devnode *ad, int enable, int state)
 fail:
 	aprint_error_dev(ad->ad_parent, "failed to evaluate wake "
 	    "control method: %s\n", AcpiFormatException(rv));
+}
+
+static void
+acpi_wakedev_gpe(ACPI_HANDLE handle, bool enable)
+{
+	ACPI_OBJECT *elm, *obj;
+	ACPI_INTEGER val;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+
+	rv = acpi_eval_struct(handle, METHOD_NAME__PRW, &buf);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	obj = buf.Pointer;
+
+	if (obj->Type != ACPI_TYPE_PACKAGE || obj->Package.Count < 2)
+		goto out;
+
+	/*
+	 * As noted in ACPI 3.0 (section 7.2.10), the _PRW object is
+	 * a package in which the first element is either an integer
+	 * or again a package. In the latter case the package inside
+	 * the package element has two elements, a reference handle
+	 * and the GPE number.
+	 */
+	elm = &obj->Package.Elements[0];
+
+	switch (elm->Type) {
+
+	case ACPI_TYPE_INTEGER:
+		val = elm->Integer.Value;
+		break;
+
+	case ACPI_TYPE_PACKAGE:
+
+		if (elm->Package.Count < 2)
+			goto out;
+
+		if (elm->Package.Elements[0].Type != ACPI_TYPE_LOCAL_REFERENCE)
+			goto out;
+
+		if (elm->Package.Elements[1].Type != ACPI_TYPE_INTEGER)
+			goto out;
+
+		val = elm->Package.Elements[1].Integer.Value;
+		break;
+
+	default:
+		goto out;
+	}
+
+	/*
+	 * Set or unset a GPE as both runtime and wake.
+	 */
+	if (enable != true)
+		(void)AcpiDisableGpe(NULL, val, ACPI_NOT_ISR);
+	else {
+		(void)AcpiSetGpeType(NULL, val, ACPI_GPE_TYPE_WAKE_RUN);
+		(void)AcpiEnableGpe(NULL, val, ACPI_NOT_ISR);
+	}
+
+out:
+	ACPI_FREE(buf.Pointer);
 }
