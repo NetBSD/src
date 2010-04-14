@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.31 2010/03/05 16:01:10 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.32 2010/04/14 00:19:22 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -347,7 +347,6 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				__ops_get_pubkey(signer),
 				key->reader->key->packets[
 					key->reader->packet].raw);
-			/* XXX - agc - put subkey logic here */
 			break;
 
 		case OPS_SIG_DIRECT:
