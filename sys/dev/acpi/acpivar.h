@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.46 2010/04/12 18:55:27 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.47 2010/04/14 17:12:14 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -49,6 +49,7 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/acpi/acpica.h>
+#include <dev/acpi/acpi_util.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -241,25 +242,10 @@ extern int acpi_active;
 
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
-int		acpi_check(device_t, const char *);
 int		acpi_probe(void);
+int		acpi_check(device_t, const char *);
+
 ACPI_PHYSICAL_ADDRESS	acpi_OsGetRootPointer(void);
-int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
-void		acpi_set_wake_gpe(ACPI_HANDLE);
-void		acpi_clear_wake_gpe(ACPI_HANDLE);
-
-ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
-ACPI_STATUS	acpi_eval_set_integer(ACPI_HANDLE handle, const char *path,
-		    ACPI_INTEGER arg);
-ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, const char *, char **);
-ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, const char *, ACPI_BUFFER *);
-ACPI_STATUS	acpi_eval_reference_handle(ACPI_OBJECT *, ACPI_HANDLE *);
-
-ACPI_STATUS	acpi_foreach_package_object(ACPI_OBJECT *,
-		    ACPI_STATUS (*)(ACPI_OBJECT *, void *), void *);
-ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
-		    ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));
-const char*	acpi_name(ACPI_HANDLE);
 
 ACPI_STATUS	acpi_resource_parse(device_t, ACPI_HANDLE, const char *,
 		    void *, const struct acpi_resource_parse_ops *);
@@ -284,12 +270,12 @@ struct acpi_irq		*acpi_res_irq(struct acpi_resources *, int);
 struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);
 
 /*
- * power state transition
+ * Sleep state transition.
  */
-ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int);
+ACPI_STATUS		acpi_enter_sleep_state(struct acpi_softc *, int);
 
 /*
- * quirk handling
+ * Quirk handling.
  */
 struct acpi_quirk {
 	const char *aq_tabletype; /* what type of table (FADT, DSDT, etc) */
