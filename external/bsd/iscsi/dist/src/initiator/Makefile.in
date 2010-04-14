@@ -49,7 +49,6 @@ binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
 am_iscsi_initiator_OBJECTS =  \
 	iscsi_initiator-iscsi-initiator.$(OBJEXT) \
-	iscsi_initiator-initiator.$(OBJEXT) \
 	iscsi_initiator-libkmod.$(OBJEXT) \
 	iscsi_initiator-virtdir.$(OBJEXT)
 iscsi_initiator_OBJECTS = $(am_iscsi_initiator_OBJECTS)
@@ -185,7 +184,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = $(WARNCFLAGS)
-iscsi_initiator_SOURCES = iscsi-initiator.c initiator.c libkmod.c virtdir.c
+iscsi_initiator_SOURCES = iscsi-initiator.c libkmod.c virtdir.c
 iscsi_initiator_CPPFLAGS = -I$(top_srcdir)/include
 iscsi_initiator_LDADD = ../lib/libiscsi.la -lrefuse
 man1_MANS = iscsi-initiator.8
@@ -261,7 +260,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iscsi_initiator-initiator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iscsi_initiator-iscsi-initiator.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iscsi_initiator-libkmod.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iscsi_initiator-virtdir.Po@am__quote@
@@ -300,20 +298,6 @@ iscsi_initiator-iscsi-initiator.obj: iscsi-initiator.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iscsi-initiator.c' object='iscsi_initiator-iscsi-initiator.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(iscsi_initiator_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o iscsi_initiator-iscsi-initiator.obj `if test -f 'iscsi-initiator.c'; then $(CYGPATH_W) 'iscsi-initiator.c'; else $(CYGPATH_W) '$(srcdir)/iscsi-initiator.c'; fi`
-
-iscsi_initiator-initiator.o: initiator.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(iscsi_initiator_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT iscsi_initiator-initiator.o -MD -MP -MF $(DEPDIR)/iscsi_initiator-initiator.Tpo -c -o iscsi_initiator-initiator.o `test -f 'initiator.c' || echo '$(srcdir)/'`initiator.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/iscsi_initiator-initiator.Tpo $(DEPDIR)/iscsi_initiator-initiator.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='initiator.c' object='iscsi_initiator-initiator.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(iscsi_initiator_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o iscsi_initiator-initiator.o `test -f 'initiator.c' || echo '$(srcdir)/'`initiator.c
-
-iscsi_initiator-initiator.obj: initiator.c
-@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(iscsi_initiator_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT iscsi_initiator-initiator.obj -MD -MP -MF $(DEPDIR)/iscsi_initiator-initiator.Tpo -c -o iscsi_initiator-initiator.obj `if test -f 'initiator.c'; then $(CYGPATH_W) 'initiator.c'; else $(CYGPATH_W) '$(srcdir)/initiator.c'; fi`
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/iscsi_initiator-initiator.Tpo $(DEPDIR)/iscsi_initiator-initiator.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='initiator.c' object='iscsi_initiator-initiator.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(iscsi_initiator_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o iscsi_initiator-initiator.obj `if test -f 'initiator.c'; then $(CYGPATH_W) 'initiator.c'; else $(CYGPATH_W) '$(srcdir)/initiator.c'; fi`
 
 iscsi_initiator-libkmod.o: libkmod.c
 @am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(iscsi_initiator_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT iscsi_initiator-libkmod.o -MD -MP -MF $(DEPDIR)/iscsi_initiator-libkmod.Tpo -c -o iscsi_initiator-libkmod.o `test -f 'libkmod.c' || echo '$(srcdir)/'`libkmod.c

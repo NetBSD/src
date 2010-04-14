@@ -53,12 +53,12 @@ libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libiscsi_la_LIBADD =
 am_libiscsi_la_OBJECTS = libiscsi_la-conffile.lo libiscsi_la-disk.lo \
-	libiscsi_la-target.lo libiscsi_la-iscsi.lo libiscsi_la-util.lo \
-	libiscsi_la-parameters.lo libiscsi_la-storage.lo \
-	libiscsi_la-netmask.lo libiscsi_la-md5c.lo \
-	libiscsi_la-md5hl.lo libiscsi_la-snprintf.lo \
+	libiscsi_la-initiator.lo libiscsi_la-md5c.lo libiscsi_la-md5hl.lo \
+	libiscsi_la-netmask.lo libiscsi_la-parameters.lo \
+	libiscsi_la-protocol.lo libiscsi_la-storage.lo \
+	libiscsi_la-snprintf.lo \
 	libiscsi_la-strlcpy.lo libiscsi_la-strtoll.lo \
-	libiscsi_la-uuid.lo
+	libiscsi_la-target.lo libiscsi_la-uuid.lo libiscsi_la-util.lo
 libiscsi_la_OBJECTS = $(am_libiscsi_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)/include
 depcomp = $(SHELL) $(top_srcdir)/buildaux/depcomp
@@ -195,17 +195,18 @@ libiscsi_la_CPPFLAGS = -I$(top_srcdir)/include
 libiscsi_la_SOURCES = \
 	conffile.c \
 	disk.c \
-	target.c \
-	iscsi.c \
-	util.c \
-	parameters.c \
-	storage.c \
-	netmask.c \
+	initiator.c \
 	md5c.c \
 	md5hl.c \
+	netmask.c \
+	parameters.c \
+	protocol.c \
+	storage.c \
 	snprintf.c \
 	strlcpy.c \
 	strtoll.c \
+	target.c \
+	util.c \
 	uuid.c
 
 man3_MANS = libiscsi.3
@@ -281,11 +282,12 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-conffile.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-disk.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-iscsi.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-initiator.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-md5c.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-md5hl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-netmask.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-parameters.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-protocol.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-snprintf.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-storage.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libiscsi_la-strlcpy.Plo@am__quote@
@@ -329,47 +331,12 @@ libiscsi_la-disk.lo: disk.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-disk.lo `test -f 'disk.c' || echo '$(srcdir)/'`disk.c
 
-libiscsi_la-target.lo: target.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-target.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-target.Tpo -c -o libiscsi_la-target.lo `test -f 'target.c' || echo '$(srcdir)/'`target.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-target.Tpo $(DEPDIR)/libiscsi_la-target.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='target.c' object='libiscsi_la-target.lo' libtool=yes @AMDEPBACKSLASH@
+libiscsi_la-initiator.lo: initiator.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-initiator.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-initiator.Tpo -c -o libiscsi_la-initiator.lo `test -f 'initiator.c' || echo '$(srcdir)/'`initiator.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-initiator.Tpo $(DEPDIR)/libiscsi_la-initiator.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='initiator.c' object='libiscsi_la-initiator.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-target.lo `test -f 'target.c' || echo '$(srcdir)/'`target.c
-
-libiscsi_la-iscsi.lo: iscsi.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-iscsi.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-iscsi.Tpo -c -o libiscsi_la-iscsi.lo `test -f 'iscsi.c' || echo '$(srcdir)/'`iscsi.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-iscsi.Tpo $(DEPDIR)/libiscsi_la-iscsi.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='iscsi.c' object='libiscsi_la-iscsi.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-iscsi.lo `test -f 'iscsi.c' || echo '$(srcdir)/'`iscsi.c
-
-libiscsi_la-util.lo: util.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-util.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-util.Tpo -c -o libiscsi_la-util.lo `test -f 'util.c' || echo '$(srcdir)/'`util.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-util.Tpo $(DEPDIR)/libiscsi_la-util.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='util.c' object='libiscsi_la-util.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-util.lo `test -f 'util.c' || echo '$(srcdir)/'`util.c
-
-libiscsi_la-parameters.lo: parameters.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-parameters.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-parameters.Tpo -c -o libiscsi_la-parameters.lo `test -f 'parameters.c' || echo '$(srcdir)/'`parameters.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-parameters.Tpo $(DEPDIR)/libiscsi_la-parameters.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='parameters.c' object='libiscsi_la-parameters.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-parameters.lo `test -f 'parameters.c' || echo '$(srcdir)/'`parameters.c
-
-libiscsi_la-storage.lo: storage.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-storage.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-storage.Tpo -c -o libiscsi_la-storage.lo `test -f 'storage.c' || echo '$(srcdir)/'`storage.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-storage.Tpo $(DEPDIR)/libiscsi_la-storage.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='storage.c' object='libiscsi_la-storage.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-storage.lo `test -f 'storage.c' || echo '$(srcdir)/'`storage.c
-
-libiscsi_la-netmask.lo: netmask.c
-@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-netmask.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-netmask.Tpo -c -o libiscsi_la-netmask.lo `test -f 'netmask.c' || echo '$(srcdir)/'`netmask.c
-@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-netmask.Tpo $(DEPDIR)/libiscsi_la-netmask.Plo
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netmask.c' object='libiscsi_la-netmask.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-netmask.lo `test -f 'netmask.c' || echo '$(srcdir)/'`netmask.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-initiator.lo `test -f 'initiator.c' || echo '$(srcdir)/'`initiator.c
 
 libiscsi_la-md5c.lo: md5c.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-md5c.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-md5c.Tpo -c -o libiscsi_la-md5c.lo `test -f 'md5c.c' || echo '$(srcdir)/'`md5c.c
@@ -384,6 +351,34 @@ libiscsi_la-md5hl.lo: md5hl.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='md5hl.c' object='libiscsi_la-md5hl.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-md5hl.lo `test -f 'md5hl.c' || echo '$(srcdir)/'`md5hl.c
+
+libiscsi_la-netmask.lo: netmask.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-netmask.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-netmask.Tpo -c -o libiscsi_la-netmask.lo `test -f 'netmask.c' || echo '$(srcdir)/'`netmask.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-netmask.Tpo $(DEPDIR)/libiscsi_la-netmask.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='netmask.c' object='libiscsi_la-netmask.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-netmask.lo `test -f 'netmask.c' || echo '$(srcdir)/'`netmask.c
+
+libiscsi_la-parameters.lo: parameters.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-parameters.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-parameters.Tpo -c -o libiscsi_la-parameters.lo `test -f 'parameters.c' || echo '$(srcdir)/'`parameters.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-parameters.Tpo $(DEPDIR)/libiscsi_la-parameters.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='parameters.c' object='libiscsi_la-parameters.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-parameters.lo `test -f 'parameters.c' || echo '$(srcdir)/'`parameters.c
+
+libiscsi_la-protocol.lo: protocol.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-protocol.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-protocol.Tpo -c -o libiscsi_la-protocol.lo `test -f 'protocol.c' || echo '$(srcdir)/'`protocol.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-protocol.Tpo $(DEPDIR)/libiscsi_la-protocol.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='protocol.c' object='libiscsi_la-protocol.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-protocol.lo `test -f 'protocol.c' || echo '$(srcdir)/'`protocol.c
+
+libiscsi_la-storage.lo: storage.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-storage.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-storage.Tpo -c -o libiscsi_la-storage.lo `test -f 'storage.c' || echo '$(srcdir)/'`storage.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-storage.Tpo $(DEPDIR)/libiscsi_la-storage.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='storage.c' object='libiscsi_la-storage.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-storage.lo `test -f 'storage.c' || echo '$(srcdir)/'`storage.c
 
 libiscsi_la-snprintf.lo: snprintf.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-snprintf.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-snprintf.Tpo -c -o libiscsi_la-snprintf.lo `test -f 'snprintf.c' || echo '$(srcdir)/'`snprintf.c
@@ -405,6 +400,20 @@ libiscsi_la-strtoll.lo: strtoll.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='strtoll.c' object='libiscsi_la-strtoll.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-strtoll.lo `test -f 'strtoll.c' || echo '$(srcdir)/'`strtoll.c
+
+libiscsi_la-target.lo: target.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-target.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-target.Tpo -c -o libiscsi_la-target.lo `test -f 'target.c' || echo '$(srcdir)/'`target.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-target.Tpo $(DEPDIR)/libiscsi_la-target.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='target.c' object='libiscsi_la-target.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-target.lo `test -f 'target.c' || echo '$(srcdir)/'`target.c
+
+libiscsi_la-util.lo: util.c
+@am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-util.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-util.Tpo -c -o libiscsi_la-util.lo `test -f 'util.c' || echo '$(srcdir)/'`util.c
+@am__fastdepCC_TRUE@	mv -f $(DEPDIR)/libiscsi_la-util.Tpo $(DEPDIR)/libiscsi_la-util.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='util.c' object='libiscsi_la-util.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libiscsi_la-util.lo `test -f 'util.c' || echo '$(srcdir)/'`util.c
 
 libiscsi_la-uuid.lo: uuid.c
 @am__fastdepCC_TRUE@	$(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libiscsi_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libiscsi_la-uuid.lo -MD -MP -MF $(DEPDIR)/libiscsi_la-uuid.Tpo -c -o libiscsi_la-uuid.lo `test -f 'uuid.c' || echo '$(srcdir)/'`uuid.c
