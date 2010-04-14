@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.20 2010/03/05 16:01:09 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.21 2010/04/14 00:21:40 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -621,13 +621,13 @@ __ops_rsa_private_encrypt(uint8_t *out,
 	int             n;
 
 	orsa = RSA_new();
-	orsa->n = pubkey->n;	/* XXX: do we need n? */
+	orsa->n = BN_dup(pubkey->n);	/* XXX: do we need n? */
 	orsa->d = seckey->d;
 	orsa->p = seckey->q;
 	orsa->q = seckey->p;
 
 	/* debug */
-	orsa->e = pubkey->e;
+	orsa->e = BN_dup(pubkey->e);
 	/* If this isn't set, it's very likely that the programmer hasn't */
 	/* decrypted the secret key. RSA_check_key segfaults in that case. */
 	/* Use __ops_decrypt_seckey() to do that. */
@@ -799,7 +799,8 @@ __ops_text_from_hash(__ops_hash_t *hash)
 static unsigned 
 rsa_generate_keypair(__ops_key_t *keydata,
 			const int numbits,
-			const unsigned long e)
+			const unsigned long e,
+			const char *hashalg)
 {
 	__ops_seckey_t *seckey;
 	RSA            *rsa;
@@ -829,7 +830,9 @@ rsa_generate_keypair(__ops_key_t *keydata,
 	seckey->s2k_specifier = OPS_S2KS_SALTED;
 	/* seckey->s2k_specifier=OPS_S2KS_SIMPLE; */
 	seckey->alg = OPS_SA_CAST5;	/* \todo make param */
-	seckey->hash_alg = OPS_HASH_SHA1;	/* \todo make param */
+	if ((seckey->hash_alg = __ops_str_to_hash_alg(hashalg)) == OPS_HASH_UNKNOWN) {
+		seckey->hash_alg = OPS_HASH_SHA1;
+	}
 	seckey->octetc = 0;
 	seckey->checksum = 0;
 
@@ -845,8 +848,7 @@ rsa_generate_keypair(__ops_key_t *keydata,
 
 	RSA_free(rsa);
 
-	__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, 
-			&keydata->key.seckey.pubkey);
+	__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, &keydata->key.seckey.pubkey);
 	__ops_fingerprint(&keydata->fingerprint, &keydata->key.seckey.pubkey);
 
 	/* Generate checksum */
@@ -910,12 +912,13 @@ rsa_generate_keypair(__ops_key_t *keydata,
 __ops_key_t  *
 __ops_rsa_new_selfsign_key(const int numbits,
 				const unsigned long e,
-				__ops_userid_t *userid)
+				__ops_userid_t *userid,
+				const char *hashalg)
 {
 	__ops_key_t  *keydata;
 
 	keydata = __ops_keydata_new();
-	if (!rsa_generate_keypair(keydata, numbits, e) ||
+	if (!rsa_generate_keypair(keydata, numbits, e, hashalg) ||
 	    !__ops_add_selfsigned_userid(keydata, userid)) {
 		__ops_keydata_free(keydata);
 		return NULL;
