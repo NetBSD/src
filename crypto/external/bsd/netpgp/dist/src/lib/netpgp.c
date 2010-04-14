@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.44 2010/03/16 04:14:29 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.45 2010/04/14 00:22:21 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -706,8 +706,7 @@ netpgp_import_key(netpgp_t *netpgp, char *f)
 		done = __ops_keyring_fileread(netpgp->pubring, armor, f);
 	}
 	if (!done) {
-		(void) fprintf(io->errs, "Cannot import key from file %s\n",
-				f);
+		(void) fprintf(io->errs, "Cannot import key from file %s\n", f);
 		return 0;
 	}
 	return __ops_keyring_list(io, netpgp->pubring, 0);
@@ -717,27 +716,48 @@ netpgp_import_key(netpgp_t *netpgp, char *f)
 int
 netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 {
-	__ops_key_t		*keypair;
 	__ops_userid_t		 uid;
 	__ops_output_t		*create;
 	const unsigned		 noarmor = 0;
+	__ops_key_t		*key;
 	__ops_io_t		*io;
+	char			 newid[1024];
+	char			 filename[MAXPATHLEN];
+	char			 dir[MAXPATHLEN];
+	char			*cp;
 	char			*ringfile;
 	int             	 fd;
 
 	(void) memset(&uid, 0x0, sizeof(uid));
 	io = netpgp->io;
-	/* generate a new key for 'id' */
-	uid.userid = (uint8_t *) id;
-	keypair = __ops_rsa_new_selfsign_key(numbits, 65537UL, &uid);
-	if (keypair == NULL) {
+	/* generate a new key */
+	if (id) {
+		(void) snprintf(newid, sizeof(newid), "%s", id);
+	} else {
+		(void) snprintf(newid, sizeof(newid), "RSA %d-bit key <%s@localhost>", numbits, getenv("LOGNAME"));
+	}
+	uid.userid = (uint8_t *)newid;
+	key = __ops_rsa_new_selfsign_key(numbits, 65537UL, &uid, netpgp_getvar(netpgp, "hash"));
+	if (key == NULL) {
 		(void) fprintf(io->errs, "Cannot generate key\n");
 		return 0;
 	}
+	cp = NULL;
+	__ops_sprint_keydata(netpgp->io, NULL, key, &cp, "pub", &key->key.seckey.pubkey, 0);
+	(void) fprintf(stdout, "%s", cp);
 	/* write public key, and try to re-read it */
-	ringfile = netpgp_getvar(netpgp, "pubring"); 
-	fd = __ops_setup_file_append(&create, ringfile);
-	if (!__ops_write_xfer_pubkey(create, keypair, noarmor)) {
+	(void) snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[31]);
+	(void) mkdir(dir, 0700);
+	(void) fprintf(io->errs, "netpgp: generated keys in directory %s\n", dir);
+	(void) snprintf(ringfile = filename, sizeof(filename), "%s/pubring.gpg", dir);
+	if ((fd = __ops_setup_file_append(&create, ringfile)) < 0) {
+		fd = __ops_setup_file_write(&create, ringfile, 0);
+	}
+	if (fd < 0) {
+		(void) fprintf(io->errs, "can't open pubring '%s'\n", ringfile);
+		return 0;
+	}
+	if (!__ops_write_xfer_pubkey(create, key, noarmor)) {
 		(void) fprintf(io->errs, "Cannot write pubkey\n");
 		return 0;
 	}
@@ -748,9 +768,15 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 		return 0;
 	}
 	/* write secret key, and try to re-read it */
-	ringfile = netpgp_getvar(netpgp, "sec ring file"); 
-	fd = __ops_setup_file_append(&create, ringfile);
-	if (!__ops_write_xfer_seckey(create, keypair, NULL, 0, noarmor)) {
+	(void) snprintf(ringfile = filename, sizeof(filename), "%s/secring.gpg", dir);
+	if ((fd = __ops_setup_file_append(&create, ringfile)) < 0) {
+		fd = __ops_setup_file_write(&create, ringfile, 0);
+	}
+	if (fd < 0) {
+		(void) fprintf(io->errs, "can't append secring '%s'\n", ringfile);
+		return 0;
+	}
+	if (!__ops_write_xfer_seckey(create, key, NULL, 0, noarmor)) {
 		(void) fprintf(io->errs, "Cannot write seckey\n");
 		return 0;
 	}
@@ -760,7 +786,8 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 		(void) fprintf(io->errs, "Can't read secring %s\n", ringfile);
 		return 0;
 	}
-	__ops_keydata_free(keypair);
+	__ops_keydata_free(key);
+	free(cp);
 	return 1;
 }
 
