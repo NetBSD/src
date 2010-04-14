@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.19 2010/03/05 16:01:10 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.20 2010/04/14 00:18:46 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1351,10 +1351,10 @@ skey_checksum_finaliser(__ops_error_t **errors, __ops_writer_t *writer)
 	skey_checksum_t *sum;
 
 	sum = __ops_writer_get_arg(writer);
-	if (errors) {
+	if (errors && *errors) {
 		printf("errors in skey_checksum_finaliser\n");
 	}
-	sum->hash.finish(&sum->hash, sum->hashed);
+	(*sum->hash.finish)(&sum->hash, sum->hashed);
 	return 1;
 }
 
@@ -1384,7 +1384,9 @@ __ops_push_checksum_writer(__ops_output_t *output, __ops_seckey_t *seckey)
 	} else {
 		/* configure the arg */
 		sum->hash_alg = seckey->hash_alg;
-		sum->hashed = seckey->checkhash;
+		if ((sum->hashed = seckey->checkhash) == NULL) {
+			sum->hashed = seckey->checkhash = calloc(1, OPS_CHECKHASH_SIZE);
+		}
 		/* init the hash */
 		__ops_hash_any(&sum->hash, sum->hash_alg);
 		if (!sum->hash.init(&sum->hash)) {
