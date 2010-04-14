@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.159 2010/04/12 22:17:23 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.160 2010/04/14 10:27:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.159 2010/04/12 22:17:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.160 2010/04/14 10:27:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.159 2010/04/12 22:17:23 pooka Exp $");
 #include <sys/select.h>
 #include <sys/sysctl.h>
 #include <sys/syscall.h>
+#include <sys/timetc.h>
 #include <sys/tty.h>
 #include <sys/uidinfo.h>
 #include <sys/vmem.h>
@@ -186,6 +187,7 @@ int
 rump__init(int rump_version)
 {
 	char buf[256];
+	struct timespec ts;
 	uint64_t sec, nsec;
 	struct proc *p;
 	struct lwp *l;
@@ -290,6 +292,13 @@ rump__init(int rump_version)
 	rump_schedule();
 
 	percpu_init();
+	inittimecounter();
+	ntp_init();
+
+	rumpuser_gettime(&sec, &nsec, &error);
+	ts.tv_sec = sec;
+	ts.tv_nsec = nsec;
+	tc_setclock(&ts);
 
 	/* we are mostly go.  do per-cpu subsystem init */
 	for (i = 0; i < ncpu; i++) {
@@ -490,6 +499,7 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 	l->l_fd = p->p_fd;
 	l->l_cpu = NULL;
 	lwp_initspecific(l);
+	LIST_INSERT_HEAD(&alllwp, l, l_list);
 
 	return l;
 }
@@ -537,6 +547,7 @@ rump_lwp_free(struct lwp *l)
 	if (l->l_name)
 		kmem_free(l->l_name, MAXCOMLEN);
 	lwp_finispecific(l);
+	LIST_REMOVE(l, l_list);
 	kmem_free(l, sizeof(*l));
 }
 
