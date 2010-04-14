@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_wakedev.c,v 1.10 2010/04/14 17:12:14 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.11 2010/04/14 20:08:56 jruoho Exp $ */
 
 /*-
- * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.10 2010/04/14 17:12:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.11 2010/04/14 20:08:56 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,8 +52,7 @@ static const char * const acpi_wakedev_default[] = {
 static const struct sysctlnode *rnode = NULL;
 
 static void	acpi_wakedev_prepare(struct acpi_devnode *, int, int);
-static void	acpi_wakedev_gpe(ACPI_HANDLE, bool);
-
+static void	acpi_wakedev_gpe(struct acpi_devnode *, int);
 
 SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 {
@@ -136,14 +135,7 @@ acpi_wakedev_commit(struct acpi_softc *sc, int state)
 		if ((ad->ad_flags & ACPI_DEVICE_WAKEUP) == 0)
 			continue;
 
-		if (ad->ad_wake == 0)
-			acpi_wakedev_gpe(ad->ad_handle, false);
-		else {
-			aprint_debug_dev(ad->ad_parent,
-			    "set wake GPE for %s\n", ad->ad_name);
-			acpi_wakedev_gpe(ad->ad_handle, true);
-		}
-
+		acpi_wakedev_gpe(ad, ad->ad_wake);
 		acpi_wakedev_prepare(ad, ad->ad_wake, state);
 	}
 }
@@ -202,14 +194,14 @@ fail:
 }
 
 static void
-acpi_wakedev_gpe(ACPI_HANDLE handle, bool enable)
+acpi_wakedev_gpe(struct acpi_devnode *ad, int enable)
 {
 	ACPI_OBJECT *elm, *obj;
 	ACPI_INTEGER val;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
 
-	rv = acpi_eval_struct(handle, METHOD_NAME__PRW, &buf);
+	rv = acpi_eval_struct(ad->ad_handle, METHOD_NAME__PRW, &buf);
 
 	if (ACPI_FAILURE(rv))
 		return;
@@ -255,12 +247,15 @@ acpi_wakedev_gpe(ACPI_HANDLE handle, bool enable)
 	/*
 	 * Set or unset a GPE as both runtime and wake.
 	 */
-	if (enable != true)
+	if (enable == 0)
 		(void)AcpiDisableGpe(NULL, val, ACPI_NOT_ISR);
 	else {
 		(void)AcpiSetGpeType(NULL, val, ACPI_GPE_TYPE_WAKE_RUN);
 		(void)AcpiEnableGpe(NULL, val, ACPI_NOT_ISR);
 	}
+
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "wake GPE %s for %s\n",
+		(enable != 0) ? "enabled" : "disabled", ad->ad_name));
 
 out:
 	ACPI_FREE(buf.Pointer);
