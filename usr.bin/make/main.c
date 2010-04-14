@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.177 2010/04/08 17:41:29 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.178 2010/04/14 16:16:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.177 2010/04/08 17:41:29 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.178 2010/04/14 16:16:17 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.177 2010/04/08 17:41:29 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.178 2010/04/14 16:16:17 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -895,8 +895,16 @@ main(int argc, char **argv)
 	 *	MFLAGS also gets initialized empty, for compatibility.
 	 */
 	Parse_Init();
-	Var_Set("MAKE", argv[0], VAR_GLOBAL, 0);
-	Var_Set(".MAKE", argv[0], VAR_GLOBAL, 0);
+	if (argv[0][0] == '/') {
+	    p1 = argv[0];
+	} else {
+	    p1 = realpath(argv[0], mdpath);
+	    if (!p1 || *p1 != '/') {
+		p1 = argv[0];		/* realpath failed */
+	    }
+	}
+	Var_Set("MAKE", p1, VAR_GLOBAL, 0);
+	Var_Set(".MAKE", p1, VAR_GLOBAL, 0);
 	Var_Set(MAKEFLAGS, "", VAR_GLOBAL, 0);
 	Var_Set(MAKEOVERRIDES, "", VAR_GLOBAL, 0);
 	Var_Set("MFLAGS", "", VAR_GLOBAL, 0);
