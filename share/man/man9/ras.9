@@ -1,4 +1,4 @@
-.\"     $NetBSD: ras.9,v 1.10 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: ras.9,v 1.11 2010/04/14 09:34:35 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 12, 2002
+.Dd April 14, 2010
 .Dt RAS 9
 .Os
 .Sh NAME
@@ -50,19 +50,22 @@ Restartable atomic sequences are user code sequences which are
 guaranteed to execute without preemption.
 This property is assured by checking the set of restartable atomic
 sequences registered for a process during
-.Xr cpu_switch 9 .
+.Xr cpu_switchto 9 .
 If a process is found to have been preempted during a restartable
 sequence, then its execution is rolled-back to the start of the
-sequence by resetting its program counter saved in its process control
-block (PCB).
+sequence by resetting its program counter saved in its process control block
+.Pq Tn PCB .
 .Pp
-The RAS functionality is provided by a combination of the
+The
+.Tn RAS
+functionality is provided by a combination of the
 machine-independent routines discussed in this page and
 a machine-dependent component in
-.Xr cpu_switch 9 .
+.Xr cpu_switchto 9 .
 A port which supports restartable atomic sequences will define
-__HAVE_RAS in
-.Pa machine/types.h
+.Dv __HAVE_RAS
+in
+.In machine/types.h
 for machine-independent code to conditionally provide RAS support.
 .Pp
 A complicated side-effect of restartable atomic sequences is their
@@ -85,8 +88,11 @@ which contain the user address
 .Fa addr .
 If the address
 .Fa addr
-is found within a RAS, then the restart address of the RAS is
-returned, otherwise \-1 is returned.
+is found within a
+.Tn RAS ,
+then the restart address of the
+.Tn RAS
+is returned, otherwise \-1 is returned.
 .It Fn ras_fork "p1" "p2"
 This function is used to copy all registered restartable atomic
 sequences for process
@@ -118,14 +124,14 @@ The RAS framework itself is implemented within the file
 .Pa sys/kern/kern_ras.c .
 Data structures and function prototypes for the framework are located
 in
-.Pa sys/sys/ras.h .
+.In sys/sys/ras.h .
 Machine-dependent portions are implemented within
-.Xr cpu_switch 9
+.Xr cpu_switchto 9
 in the machine-dependent file
 .Pa sys/arch/\*[Lt]arch\*[Gt]/\*[Lt]arch\*[Gt]/locore.S .
 .Sh SEE ALSO
 .Xr rasctl 2 ,
-.Xr cpu_switch 9 ,
+.Xr cpu_switchto 9 ,
 .Xr fork1 9
 .Sh HISTORY
 The RAS functionality first appeared in
