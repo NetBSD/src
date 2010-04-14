@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.167 2010/04/12 18:59:08 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.168 2010/04/14 06:10:32 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.167 2010/04/12 18:59:08 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.168 2010/04/14 06:10:32 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -184,7 +184,11 @@ static void		acpi_build_tree(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
 					  void *, void **);
 
-static void		acpi_enable_fixed_events(struct acpi_softc *);
+static void		acpi_register_fixed_button(struct acpi_softc *, int);
+static void		acpi_deregister_fixed_button(struct acpi_softc *, int);
+static uint32_t		acpi_fixed_button_handler(void *);
+static void		acpi_fixed_button_pressed(void *);
+
 static void		acpi_sleep_init(struct acpi_softc *);
 
 static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
@@ -515,19 +519,21 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	    AcpiGbl_FADT.SciInterrupt);
 
 	/*
-	 * Check for fixed-hardware features.
+	 * Install fixed-event handlers.
 	 */
-	acpi_enable_fixed_events(sc);
+	acpi_register_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
+	acpi_register_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
+
 	acpitimer_init();
 
-	/*
-	 * Scan the namespace and build our device tree.
-	 */
 #ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_PROBE)
 		acpi_osd_debugger();
 #endif
 
+	/*
+	 * Scan the namespace and build our device tree.
+	 */
 	acpi_build_tree(sc);
 	acpi_sleep_init(sc);
 
@@ -544,6 +550,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 static int
 acpi_detach(device_t self, int flags)
 {
+	struct acpi_softc *sc = device_private(self);
 	int rc;
 
 #ifdef ACPI_DEBUGGER
@@ -601,10 +608,12 @@ acpi_detach(device_t self, int flags)
 		    AcpiFormatException(rv));
 		return;
 	}
-	acpi_active = 1;
 
-	acpi_enable_fixed_events(sc);
+	acpi_active = 1;
 #endif
+
+	acpi_deregister_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
+	acpi_deregister_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
 
 	pmf_device_deregister(self);
 
@@ -997,98 +1006,123 @@ acpi_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-/*****************************************************************************
- * ACPI fixed-hardware feature handlers
- *****************************************************************************/
-
-static UINT32	acpi_fixed_button_handler(void *);
-static void	acpi_fixed_button_pressed(void *);
-
 /*
- * acpi_enable_fixed_events:
- *
- *	Enable any fixed-hardware feature handlers.
+ * Fixed buttons.
  */
 static void
-acpi_enable_fixed_events(struct acpi_softc *sc)
+acpi_register_fixed_button(struct acpi_softc *sc, int event)
 {
-	static int beenhere;
+	struct sysmon_pswitch *smpsw;
 	ACPI_STATUS rv;
+	int type;
 
-	KASSERT(beenhere == 0);
-	beenhere = 1;
+	switch (event) {
 
-	/*
-	 * Check for fixed-hardware buttons.
-	 */
-	if ((AcpiGbl_FADT.Flags & ACPI_FADT_POWER_BUTTON) == 0) {
-		aprint_verbose_dev(sc->sc_dev,
-		    "fixed-feature power button present\n");
-		sc->sc_smpsw_power.smpsw_name = device_xname(sc->sc_dev);
-		sc->sc_smpsw_power.smpsw_type = PSWITCH_TYPE_POWER;
-		if (sysmon_pswitch_register(&sc->sc_smpsw_power) != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to register fixed power "
-			    "button with sysmon\n");
-		} else {
-			rv = AcpiInstallFixedEventHandler(
-			    ACPI_EVENT_POWER_BUTTON,
-			    acpi_fixed_button_handler, &sc->sc_smpsw_power);
-			if (ACPI_FAILURE(rv)) {
-				aprint_error_dev(sc->sc_dev,
-				    "unable to install handler "
-				    "for fixed power button: %s\n",
-				    AcpiFormatException(rv));
-			}
-		}
+	case ACPI_EVENT_POWER_BUTTON:
+
+		if ((AcpiGbl_FADT.Flags & ACPI_FADT_POWER_BUTTON) != 0)
+			return;
+
+		type = PSWITCH_TYPE_POWER;
+		smpsw = &sc->sc_smpsw_power;
+		break;
+
+	case ACPI_EVENT_SLEEP_BUTTON:
+
+		if ((AcpiGbl_FADT.Flags & ACPI_FADT_SLEEP_BUTTON) != 0)
+			return;
+
+		type = PSWITCH_TYPE_SLEEP;
+		smpsw = &sc->sc_smpsw_sleep;
+		break;
+
+	default:
+		rv = AE_TYPE;
+		goto fail;
 	}
 
-	if ((AcpiGbl_FADT.Flags & ACPI_FADT_SLEEP_BUTTON) == 0) {
-		aprint_verbose_dev(sc->sc_dev,
-		    "fixed-feature sleep button present\n");
-		sc->sc_smpsw_sleep.smpsw_name = device_xname(sc->sc_dev);
-		sc->sc_smpsw_sleep.smpsw_type = PSWITCH_TYPE_SLEEP;
-		if (sysmon_pswitch_register(&sc->sc_smpsw_power) != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to register fixed sleep "
-			    "button with sysmon\n");
-		} else {
-			rv = AcpiInstallFixedEventHandler(
-			    ACPI_EVENT_SLEEP_BUTTON,
-			    acpi_fixed_button_handler, &sc->sc_smpsw_sleep);
-			if (ACPI_FAILURE(rv)) {
-				aprint_error_dev(sc->sc_dev,
-				    "unable to install handler "
-				    "for fixed sleep button: %s\n",
-				    AcpiFormatException(rv));
-			}
-		}
+	smpsw->smpsw_type = type;
+	smpsw->smpsw_name = device_xname(sc->sc_dev);
+
+	if (sysmon_pswitch_register(smpsw) != 0) {
+		rv = AE_ERROR;
+		goto fail;
 	}
+
+	rv = AcpiInstallFixedEventHandler(event,
+	    acpi_fixed_button_handler, smpsw);
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
+	aprint_debug_dev(sc->sc_dev, "fixed %s button present\n",
+	    (type != ACPI_EVENT_SLEEP_BUTTON) ? "power" : "sleep");
+
+	return;
+
+fail:
+	aprint_error_dev(sc->sc_dev, "failed to register "
+	    "fixed event: %s\n", AcpiFormatException(rv));
 }
 
-/*
- * acpi_fixed_button_handler:
- *
- *	Event handler for the fixed buttons.
- */
-static UINT32
+static void
+acpi_deregister_fixed_button(struct acpi_softc *sc, int event)
+{
+	struct sysmon_pswitch *smpsw;
+	ACPI_STATUS rv;
+
+	switch (event) {
+
+	case ACPI_EVENT_POWER_BUTTON:
+		smpsw = &sc->sc_smpsw_power;
+
+		if ((AcpiGbl_FADT.Flags & ACPI_FADT_POWER_BUTTON) != 0) {
+			KASSERT(smpsw->smpsw_type != PSWITCH_TYPE_POWER);
+			return;
+		}
+
+		break;
+
+	case ACPI_EVENT_SLEEP_BUTTON:
+		smpsw = &sc->sc_smpsw_sleep;
+
+		if ((AcpiGbl_FADT.Flags & ACPI_FADT_SLEEP_BUTTON) != 0) {
+			KASSERT(smpsw->smpsw_type != PSWITCH_TYPE_SLEEP);
+			return;
+		}
+
+		break;
+
+	default:
+		rv = AE_TYPE;
+		goto fail;
+	}
+
+	rv = AcpiRemoveFixedEventHandler(event, acpi_fixed_button_handler);
+
+	if (ACPI_SUCCESS(rv)) {
+		sysmon_pswitch_unregister(smpsw);
+		return;
+	}
+
+fail:
+	aprint_error_dev(sc->sc_dev, "failed to deregister "
+	    "fixed event: %s\n", AcpiFormatException(rv));
+}
+
+static uint32_t
 acpi_fixed_button_handler(void *context)
 {
 	static const int handler = OSL_NOTIFY_HANDLER;
 	struct sysmon_pswitch *smpsw = context;
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s\n", __func__));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: fixed event\n", __func__));
 
 	(void)AcpiOsExecute(handler, acpi_fixed_button_pressed, smpsw);
 
 	return ACPI_INTERRUPT_HANDLED;
 }
 
-/*
- * acpi_fixed_button_pressed:
- *
- *	Deal with a fixed button being pressed.
- */
 static void
 acpi_fixed_button_pressed(void *context)
 {
