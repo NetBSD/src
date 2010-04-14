@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.54 2010/04/10 19:41:54 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.55 2010/04/14 12:19:50 pooka Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -244,8 +244,8 @@ BEGIN	{
 	arg0special="";
 	vop_offset = 1; # start at 1, to count the 'default' op
 
-	printf("\n/* Special cases: */\nstruct buf;\n");
-	printf("#ifndef _KERNEL\n#include <stdbool.h>\n#endif\n\n");
+	printf("/* Special cases: */\n\nstruct buf;\n");
+	printf("#ifndef _KERNEL\n#include <stdbool.h>\n#endif\n");
 
 	argc=1;
 	argtype[0]="struct buf *";
@@ -254,7 +254,7 @@ BEGIN	{
 	arg0special="->b_vp";
 	name=rump "vop_bwrite";
 	doit();
-	printf("/* End of special cases */\n");
+	printf("\n/* End of special cases */\n");
 }
 END	{
 	printf("\n#define VNODE_OPS_COUNT\t%d\n", vop_offset);
@@ -262,8 +262,6 @@ END	{
 '"$awk_parser" | sed -e "$anal_retentive"
 
 # End stuff
-echo '
-/* End of special cases. */'
 echo ''
 echo "#endif /* !_${SYS}VNODE_IF_H_ */"
 }
@@ -439,8 +437,6 @@ BEGIN	{
 '"$awk_parser" | sed -e "$anal_retentive"
 
 # End stuff
-echo '
-/* End of special cases. */'
 
 # Add the vfs_op_descs array to the C file.
 # Begin stuff
@@ -459,8 +455,7 @@ function doit() {
 
 # End stuff
 echo '	NULL
-};
-'
+};'
 }
 do_cfile $out_c ''
 do_cfile $out_rumpc 'rump_'
