@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.157 2010/04/05 07:22:22 joerg Exp $	*/
+/*	$NetBSD: bpf.c,v 1.158 2010/04/14 13:31:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.157 2010/04/05 07:22:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.158 2010/04/14 13:31:33 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1976,8 +1976,24 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 		/*
-		 * bpf_ops is not (yet) referenced in the callers before
-		 * attach.  maybe other issues too.  "safety first".
+		 * While there is no reference counting for bpf callers,
+		 * unload could at least in theory be done similarly to 
+		 * system call disestablishment.  This should even be
+		 * a little simpler:
+		 * 
+		 * 1) replace op vector with stubs
+		 * 2) post update to all cpus with xc
+		 * 3) check that nobody is in bpf anymore
+		 *    (it's doubtful we'd want something like l_sysent,
+		 *     but we could do something like *signed* percpu
+		 *     counters.  if the sum is 0, we're good).
+		 * 4) if fail, unroll changes
+		 *
+		 * NOTE: change won't be atomic to the outside.  some
+		 * packets may be not captured even if unload is
+		 * not succesful.  I think packet capture not working
+		 * is a perfectly logical consequence of trying to
+		 * disable packet capture.
 		 */
 		error = EOPNOTSUPP;
 		break;
