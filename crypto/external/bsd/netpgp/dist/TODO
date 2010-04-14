@@ -2,7 +2,6 @@ To Do
 =====
 agent
 agentctl
-make netpgpkeys work - add, import, commit, update, sign, passphrase
 convert to and from ascii armored sigs
 gpgme compat lib
 return userids from successful verify, and then print id out if required
@@ -94,3 +93,4 @@ trust subpackets
 add revocation information to public key display
 --list-sigs - these come out in __ops_check_subkey_sig()
 hkp to include sigs too
+make netpgpkeys work - add, import, commit, update, sign, passphrase
