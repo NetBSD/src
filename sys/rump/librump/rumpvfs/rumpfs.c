@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.38 2010/04/12 21:37:44 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.39 2010/04/14 16:05:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.38 2010/04/12 21:37:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.39 2010/04/14 16:05:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -234,7 +234,7 @@ doregister(const char *key, const char *hostpath,
 		if (error != 0) {
 			return error;
 		}
-		rdev = makedev(RUMPBLK, dmin);
+		rdev = makedev(RUMPBLK_DEVMAJOR, dmin);
 	}
 
 	et = kmem_alloc(sizeof(*et), KM_SLEEP);
