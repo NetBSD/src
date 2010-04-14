@@ -211,7 +211,7 @@ __ops_decrypt_buf(__ops_io_t *,
 
 /* Keys */
 __ops_key_t  *__ops_rsa_new_selfsign_key(const int,
-			const unsigned long, __ops_userid_t *);
+			const unsigned long, __ops_userid_t *, const char *);
 
 int __ops_dsa_size(const __ops_dsa_pubkey_t *);
 DSA_SIG *__ops_dsa_sign(uint8_t *, unsigned,
