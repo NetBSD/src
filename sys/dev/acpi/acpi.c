@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.169 2010/04/14 17:12:14 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.170 2010/04/14 17:14:45 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.169 2010/04/14 17:12:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.170 2010/04/14 17:14:45 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -595,26 +595,6 @@ acpi_resume(device_t dv, const pmf_qual_t *qual)
 
 	return true;
 }
-
-#if 0
-/*
- * acpi_disable:
- *
- *	Disable ACPI.
- */
-static ACPI_STATUS
-acpi_disable(struct acpi_softc *sc)
-{
-	ACPI_STATUS rv = AE_OK;
-
-	if (acpi_active) {
-		rv = AcpiDisable();
-		if (ACPI_SUCCESS(rv))
-			acpi_active = 0;
-	}
-	return rv;
-}
-#endif
 
 /*
  * Namespace scan.
