@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.125 2010/04/14 10:27:53 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.126 2010/04/14 14:49:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.125 2010/04/14 10:27:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.126 2010/04/14 14:49:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -72,7 +72,6 @@ const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
 struct timeval boottime;
-struct emul emul_netbsd;
 int cold = 1;
 int boothowto = AB_SILENT;
 struct tty *constty;
@@ -122,6 +121,11 @@ struct loadavg averunnable = {
 	  1 * FSCALE,
 	  11 * FSCALE, },
 	FSCALE,
+};
+
+struct emul emul_netbsd = {
+	.e_name = "netbsd-rump",
+	.e_sysent = rump_sysent,
 };
 
 struct proc *
@@ -385,27 +389,6 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* this function is __dead, we must exit */
 	rumpuser_exit(0);
-}
-
-int
-syscall_establish(const struct emul *em, const struct syscall_package *sp)
-{
-	extern struct sysent rump_sysent[];
-	int i;
-
-	KASSERT(em == NULL || em == &emul_netbsd);
-
-	for (i = 0; sp[i].sp_call; i++)
-		rump_sysent[sp[i].sp_code].sy_call = sp[i].sp_call;
-
-	return 0;
-}
-
-int
-syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
-{
-
-	return 0;
 }
 
 void
