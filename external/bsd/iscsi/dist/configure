@@ -754,7 +754,7 @@ PACKAGE_VERSION='20090622'
 PACKAGE_STRING='netbsd-iscsi 20090622'
 PACKAGE_BUGREPORT='Alistair Crooks <agc@NetBSD.org>'
 
-ac_unique_file="src/lib/iscsi.c"
+ac_unique_file="src/lib/protocol.c"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
