@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelve.c,v 1.2 2010/04/08 16:49:34 macallan Exp $ */
+/*	$NetBSD: cgtwelve.c,v 1.3 2010/04/14 04:37:11 macallan Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the Sun CG12 / Matrox SG3 graphics board */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.2 2010/04/08 16:49:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.3 2010/04/14 04:37:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.2 2010/04/08 16:49:34 macallan Exp $"
 struct cgtwelve_softc {
 	device_t	sc_dev;
 	bus_space_tag_t sc_tag;
+	bus_space_handle_t sc_regh;
+	bus_addr_t	sc_paddr;
 	void		*sc_fbaddr;
 	void		*sc_shadow;
+	uint8_t		*sc_wids;
+	void		*sc_int;
 	int		sc_width;
 	int		sc_height;
 	int		sc_stride;
@@ -79,6 +83,15 @@ static int	cgtwelve_ioctl(void *, void *, u_long, void *, int,
 static paddr_t	cgtwelve_mmap(void *, void *, off_t, int);
 static void	cgtwelve_init_screen(void *, struct vcons_screen *, int,
 				 long *);
+static void	cgtwelve_write_wid(struct cgtwelve_softc *, int, uint8_t);
+static void	cgtwelve_select_ovl(struct cgtwelve_softc *, int);
+#define CG12_SEL_OVL	0
+#define CG12_SEL_ENABLE	1
+#define CG12_SEL_8BIT	2
+#define CG12_SEL_24BIT	3
+#define CG12_SEL_WID	4
+static void	cgtwelve_write_dac(struct cgtwelve_softc *, int, int, int, int);
+static void	cgtwelve_setup(struct cgtwelve_softc *, int);
 
 CFATTACH_DECL_NEW(cgtwelve, sizeof(struct cgtwelve_softc),
     cgtwelve_match, cgtwelve_attach, NULL, NULL);
@@ -143,6 +156,8 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 	sc->sc_dev = self;
 	sc->sc_tag = sa->sa_bustag;
 
+	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
+
 	/* read geometry information from the device tree */
 	sc->sc_width = prom_getpropint(sa->sa_node, "width", 1152);
 	sc->sc_height = prom_getpropint(sa->sa_node, "height", 900);
@@ -164,6 +179,40 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 		
 	aprint_normal_dev(self, "%d x %d\n", sc->sc_width, sc->sc_height);
 
+
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot,
+			 sa->sa_offset + CG12_OFF_REGISTERS,
+			 0xc0000, 0, &sc->sc_regh) != 0) {
+		aprint_error("%s: couldn't map registers\n", 
+		    device_xname(sc->sc_dev));
+		return;
+	}
+
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot,
+			 sa->sa_offset + CG12_OFF_WID, 0x100000, 
+			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+			 &bh) != 0) {
+		aprint_error("%s: couldn't map WID\n", 
+		    device_xname(sc->sc_dev));
+		return;
+	}
+	sc->sc_wids = bus_space_vaddr(sa->sa_bustag, bh);
+
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot,
+			 sa->sa_offset + CG12_OFF_INTEN, 0x400000, 
+			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
+			 &bh) != 0) {
+		aprint_error("%s: couldn't map colour fb\n", 
+		    device_xname(sc->sc_dev));
+		return;
+	}
+	sc->sc_int = bus_space_vaddr(sa->sa_bustag, bh);
+
+	cgtwelve_setup(sc, 1);
+
 	sc->sc_shadow = kmem_alloc(sc->sc_fbsize, KM_SLEEP);
 	isconsole = fb_is_console(node);
 
@@ -175,8 +224,6 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 
 	vcons_init_screen(&sc->vd, &cgtwelve_console_screen, 1, &defattr);
 	cgtwelve_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
-
-	memset(sc->sc_fbaddr, 0, sc->sc_fbsize);
 
 	ri = &cgtwelve_console_screen.scr_ri;
 
@@ -196,11 +243,9 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
-#if 0
-	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot,
-			 sa->sa_offset + CG12_OFF_REGISTERS,
-			 0xc0000, 0, &bh) == 0) {
+#if 0	
+	{
+		bus_space_handle_r bh = sc->sc_regh;
 		int i, j;
 
 		bus_space_write_4(sa->sa_bustag, bh, CG12_EIC_RESET, 0);
@@ -260,12 +305,157 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 			}
 			printf("\n");
 		}
-		bus_space_unmap(sa->sa_bustag, bh, 0xc0000);
 	}
 	panic("poof");
 #endif
 }
 
+/* 0 - overlay plane, 1 - enable plane, 2 - 8bit fb, 3 - 24bit fb, 4 - WIDs */
+static void
+cgtwelve_select_ovl(struct cgtwelve_softc *sc, int which)
+{
+	switch(which) {
+		case 0:
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_RDMSK_HOST, CG12_PLN_RD_OVERLAY);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_WRMSK_HOST, CG12_PLN_WR_OVERLAY);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_SL_HOST, CG12_PLN_SL_OVERLAY);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HPAGE, CG12_HPAGE_OVERLAY);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HACCESS, CG12_HACCESS_OVERLAY);
+			break;
+		case 1:
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_RDMSK_HOST, CG12_PLN_RD_ENABLE);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_WRMSK_HOST, CG12_PLN_WR_ENABLE);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_SL_HOST, CG12_PLN_SL_ENABLE);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HPAGE, CG12_HPAGE_ENABLE);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HACCESS, CG12_HACCESS_ENABLE);
+			break;
+		case 2:
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_RDMSK_HOST, CG12_PLN_RD_8BIT);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_WRMSK_HOST, CG12_PLN_WR_8BIT);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_SL_HOST, CG12_PLN_SL_8BIT);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HPAGE, CG12_HPAGE_8BIT);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HACCESS, CG12_HACCESS_8BIT);
+			break;
+		case 3:
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_RDMSK_HOST, CG12_PLN_RD_24BIT);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_WRMSK_HOST, CG12_PLN_WR_24BIT);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_SL_HOST, CG12_PLN_SL_24BIT);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HPAGE, CG12_HPAGE_24BIT);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HACCESS, CG12_HACCESS_24BIT);
+			break;
+		case 4:
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_RDMSK_HOST, CG12_PLN_RD_WID);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_WRMSK_HOST, CG12_PLN_WR_WID);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12DPU_PLN_SL_HOST, CG12_PLN_SL_WID);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HPAGE, CG12_HPAGE_WID);
+			bus_space_write_4(sc->sc_tag, sc->sc_regh,
+			    CG12APU_HACCESS, CG12_HACCESS_WID);
+			break;
+	}
+}
+
+static void
+cgtwelve_write_wid(struct cgtwelve_softc *sc, int idx, uint8_t wid)
+{
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12_WSC_ADDR, idx << 16);
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12_WSC_DATA, 
+	    ((uint32_t)wid) << 16);
+}
+
+static void
+cgtwelve_write_dac(struct cgtwelve_softc *sc, int idx, int r, int g, int b)
+{
+	uint32_t lo = (idx & 0xff);
+	uint32_t hi = (idx >> 8) & 0xff;
+
+	lo |= lo << 8 | lo << 16;
+	hi |= hi << 8 | hi << 16;
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12DAC_ADDR0, lo);
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12DAC_ADDR1, hi);
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12DAC_DATA,
+	    b << 16 | g << 8 | r);
+}
+
+static void
+cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
+{
+	int i;
+
+	/* first let's put some stuff into the WID table */
+	cgtwelve_write_wid(sc, 0, CG12_WID_8_BIT);
+	cgtwelve_write_wid(sc, 1, CG12_WID_24_BIT);
+	
+	/* a linear ramp for the gamma table */
+	for (i = 0; i < 256; i++)
+		cgtwelve_write_dac(sc, i + 0x100, i, i, i);	
+
+	switch(depth) {
+	case 1:
+		/* setup the console */
+
+		/* first, make the overlay all opaque */
+		cgtwelve_select_ovl(sc, CG12_SEL_ENABLE);
+		memset(sc->sc_fbaddr, 0xff, 0x20000);
+
+		/* now write the right thing into the WID plane */
+		cgtwelve_select_ovl(sc, CG12_SEL_WID);
+		memset(sc->sc_wids, 0, 0x100000);
+
+		/* now clean the plane */
+		cgtwelve_select_ovl(sc, CG12_SEL_OVL);
+		memset(sc->sc_fbaddr, 0, 0x20000);
+		break;
+	case 24:
+	case 32:
+		/* setup the 24bit fb for X */
+		/*
+		 * first clean the 24bit fb - for aesthetic reasons do it while
+		 * it's still not visible ( we hope... )
+		 */
+		cgtwelve_select_ovl(sc, CG12_SEL_24BIT);
+		memset(sc->sc_int, 0x80, 0x400000);
+
+		/* now write the right thing into the WID plane */
+		cgtwelve_select_ovl(sc, CG12_SEL_WID);
+		memset(sc->sc_wids, 1, 0x100000);
+
+		/* hide the overlay */
+		cgtwelve_select_ovl(sc, CG12_SEL_ENABLE);
+		memset(sc->sc_fbaddr, 0, 0x20000);
+
+		/* now clean the plane */
+		cgtwelve_select_ovl(sc, CG12_SEL_OVL);
+		memset(sc->sc_fbaddr, 0, 0x20000);
+
+		/* and make sure we can write the 24bit fb */
+		cgtwelve_select_ovl(sc, CG12_SEL_24BIT);
+		break;
+	}
+}
 
 static void
 cgtwelve_init_screen(void *cookie, struct vcons_screen *scr,
@@ -297,11 +487,57 @@ static int
 cgtwelve_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
+	struct vcons_data *vd = v;
+	struct cgtwelve_softc *sc = vd->cookie;
+	struct wsdisplay_fbinfo *wdf;
+	struct vcons_screen *ms = vd->active;
 
 	switch (cmd) {
 		case WSDISPLAYIO_GTYPE:
 			*(u_int *)data = WSDISPLAY_TYPE_SUNCG12;
 			return 0;
+
+		case WSDISPLAYIO_GINFO:
+			wdf = (void *)data;
+			wdf->height = sc->sc_height;
+			wdf->width = sc->sc_width;
+			wdf->depth = 32;
+			wdf->cmsize = 256;
+			return 0;
+
+		case FBIOGVIDEO:
+		case WSDISPLAYIO_GVIDEO:
+			*(int *)data = 1;
+			return 0;
+
+		case WSDISPLAYIO_SVIDEO:
+		case FBIOSVIDEO:
+			/* when we figure out how to do this... */
+			/*cgtwelve_set_video(sc, *(int *)data);*/
+			return 0;
+
+		case WSDISPLAYIO_LINEBYTES:
+			{
+				int *ret = (int *)data;
+				*ret = sc->sc_width << 2;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SMODE:
+			{
+				int new_mode = *(int*)data;
+				if (new_mode != sc->sc_mode)
+				{
+					sc->sc_mode = new_mode;
+					if (new_mode == WSDISPLAYIO_MODE_EMUL)
+					{
+						cgtwelve_setup(sc, 1);
+						vcons_redraw_screen(ms);
+					} else {
+						cgtwelve_setup(sc, 32);
+					}
+				}
+			}
 	}
 
 	return EPASSTHROUGH;
@@ -310,15 +546,13 @@ cgtwelve_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 static paddr_t
 cgtwelve_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	struct cgtwelve_softc *sc = v;
+	struct vcons_data *vd = v;
+	struct cgtwelve_softc *sc = vd->cookie;
 
 	/* regular fb mapping at 0 */
-	if ((offset >= 0) && (offset < sc->sc_fbsize)) {
-#if 0
-		return bus_space_mmap(sc->sc_tag, sc->sc_paddr,
-		    CG12_FB_MONO + offset, prot,
-		    BUS_SPACE_MAP_LINEAR);
-#endif
+	if ((offset >= 0) && (offset < 0x400000)) {
+		return bus_space_mmap(sc->sc_tag, sc->sc_paddr + CG12_OFF_INTEN,
+		    offset, prot, BUS_SPACE_MAP_LINEAR);
 	}
 
 	return -1;
