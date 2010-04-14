@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.32 2010/03/13 23:30:41 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.33 2010/04/14 00:19:52 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2032,24 +2032,20 @@ __ops_teardown_file_write(__ops_output_t *output, int fd)
 int 
 __ops_setup_file_append(__ops_output_t **output, const char *filename)
 {
-	int             fd;
+	int	fd;
+
 	/*
          * initialise needed structures for writing to file
          */
-
 #ifdef O_BINARY
 	fd = open(filename, O_WRONLY | O_APPEND | O_BINARY, 0600);
 #else
 	fd = open(filename, O_WRONLY | O_APPEND, 0600);
 #endif
-	if (fd < 0) {
-		perror(filename);
-		return fd;
+	if (fd >= 0) {
+		*output = __ops_output_new();
+		__ops_writer_set_fd(*output, fd);
 	}
-	*output = __ops_output_new();
-
-	__ops_writer_set_fd(*output, fd);
-
 	return fd;
 }
 
