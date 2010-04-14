@@ -354,6 +354,7 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 	uint8_t		sesskey[CAST_KEY_LENGTH];
 	uint8_t		hashed[OPS_SHA1_HASH_SIZE];
 
+	__OPS_USED(io);
 	/* XXX - check for rsa/dsa */
 	if (!openssl_read_pem_seckey(f, key, "ssh-rsa", 0)) {
 		return 0;
