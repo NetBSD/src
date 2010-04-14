@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.171 2010/04/14 17:20:19 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.172 2010/04/14 18:39:56 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.171 2010/04/14 17:20:19 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.172 2010/04/14 18:39:56 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -204,13 +204,17 @@ int
 acpi_probe(void)
 {
 	ACPI_TABLE_HEADER *rsdt;
-	ACPI_STATUS rv;
+	const char *func;
 	static int once;
+	bool initialized;
+	ACPI_STATUS rv;
 
 	if (once != 0)
 		panic("%s: already probed", __func__);
 
 	once = 1;
+	func = NULL;
+	initialized = false;
 
 	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DEFAULT, IPL_NONE);
 
@@ -222,32 +226,30 @@ acpi_probe(void)
 		acpi_osd_debugger();
 #endif
 
-	AcpiGbl_AllMethodsSerialized = FALSE;
-	AcpiGbl_EnableInterpreterSlack = TRUE;
+	AcpiGbl_AllMethodsSerialized = false;
+	AcpiGbl_EnableInterpreterSlack = true;
 
 	rv = AcpiInitializeSubsystem();
-	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unable to initialize ACPICA: %s\n",
-		    AcpiFormatException(rv));
-		return 0;
+
+	if (ACPI_SUCCESS(rv))
+		initialized = true;
+	else {
+		func = "AcpiInitializeSubsystem()";
+		goto fail;
 	}
 
 	rv = AcpiInitializeTables(acpi_initial_tables, 128, 0);
+
 	if (ACPI_FAILURE(rv)) {
-#ifdef ACPI_DEBUG
-		printf("ACPI: unable to initialize ACPI tables: %s\n",
-		    AcpiFormatException(rv));
-#endif
-		AcpiTerminate();
-		return 0;
+		func = "AcpiInitializeTables()";
+		goto fail;
 	}
 
 	rv = AcpiReallocateRootTable();
+
 	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unable to reallocate root table: %s\n",
-		    AcpiFormatException(rv));
-		AcpiTerminate();
-		return 0;
+		func = "AcpiReallocateRootTable()";
+		goto fail;
 	}
 
 #ifdef ACPI_DEBUGGER
@@ -256,29 +258,29 @@ acpi_probe(void)
 #endif
 
 	rv = AcpiLoadTables();
+
 	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unable to load tables: %s\n",
-		    AcpiFormatException(rv));
-		AcpiTerminate();
-		return 0;
+		func = "AcpiLoadTables()";
+		goto fail;
 	}
 
 	rsdt = acpi_map_rsdt();
+
 	if (rsdt == NULL) {
-		printf("ACPI: unable to map RSDT\n");
-		AcpiTerminate();
-		return 0;
+		func = "acpi_map_rsdt()";
+		rv = AE_ERROR;
+		goto fail;
 	}
 
-	if (!acpi_force_load && (acpi_find_quirks() & ACPI_QUIRK_BROKEN)) {
-		printf("ACPI: BIOS implementation in listed as broken:\n");
-		printf("ACPI: X/RSDT: OemId <%6.6s,%8.8s,%08x>, "
+	if (acpi_force_load == 0 && (acpi_find_quirks() & ACPI_QUIRK_BROKEN)) {
+		aprint_normal("ACPI: BIOS is listed as broken:\n");
+		aprint_normal("ACPI: X/RSDT: OemId <%6.6s,%8.8s,%08x>, "
 		       "AslId <%4.4s,%08x>\n",
 			rsdt->OemId, rsdt->OemTableId,
 		        rsdt->OemRevision,
 			rsdt->AslCompilerId,
 		        rsdt->AslCompilerRevision);
-		printf("ACPI: not used. set acpi_force_load to use anyway.\n");
+		aprint_normal("ACPI: Not used. Set acpi_force_load to use.\n");
 		acpi_unmap_rsdt(rsdt);
 		AcpiTerminate();
 		return 0;
@@ -290,43 +292,51 @@ acpi_probe(void)
 	/*
 	 * Install the default address space handlers.
 	 */
+	func = "AcpiInstallAddressSpaceHandler()";
+
 	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
 	    ACPI_ADR_SPACE_SYSTEM_MEMORY, ACPI_DEFAULT_HANDLER, NULL, NULL);
-	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unable to initialize SystemMemory handler: %s\n",
-		    AcpiFormatException(rv));
-		AcpiTerminate();
-		return 0;
-	}
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
 	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
 	    ACPI_ADR_SPACE_SYSTEM_IO, ACPI_DEFAULT_HANDLER, NULL, NULL);
-	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unable to initialize SystemIO handler: %s\n",
-		     AcpiFormatException(rv));
-		AcpiTerminate();
-		return 0;
-	}
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
 	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
 	    ACPI_ADR_SPACE_PCI_CONFIG, ACPI_DEFAULT_HANDLER, NULL, NULL);
-	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unable to initialize PciConfig handler: %s\n",
-		    AcpiFormatException(rv));
-		AcpiTerminate();
-		return 0;
-	}
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
 #endif
 
 	rv = AcpiEnableSubsystem(~(ACPI_NO_HARDWARE_INIT|ACPI_NO_ACPI_ENABLE));
+
 	if (ACPI_FAILURE(rv)) {
-		printf("ACPI: unable to enable: %s\n", AcpiFormatException(rv));
-		AcpiTerminate();
-		return 0;
+		func = "AcpiEnableSubsystem()";
+		goto fail;
 	}
 
 	/*
 	 * Looks like we have ACPI!
 	 */
 	return 1;
+
+
+fail:
+	KASSERT(rv != AE_OK);
+	KASSERT(func != NULL);
+
+	aprint_error("%s: failed to probe ACPI: %s\n",
+	    func, AcpiFormatException(rv));
+
+	if (initialized != false)
+		(void)AcpiTerminate();
+
+	return 0;
 }
 
 int
@@ -366,26 +376,27 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Intel ACPICA %08x\n", ACPI_CA_VERSION);
 
 	if (acpi_softc != NULL)
-		panic("acpi_attach: ACPI has already been attached");
-
-	sysmon_power_settype("acpi");
+		panic("%s: already attached", __func__);
 
 	rsdt = acpi_map_rsdt();
-	if (rsdt) {
-		aprint_verbose_dev(
-		    self,
+
+	if (rsdt == NULL)
+		aprint_error_dev(self, "X/RSDT: Not found\n");
+	else {
+		aprint_verbose_dev(self,
 		    "X/RSDT: OemId <%6.6s,%8.8s,%08x>, AslId <%4.4s,%08x>\n",
 		    rsdt->OemId, rsdt->OemTableId,
 		    rsdt->OemRevision,
 		    rsdt->AslCompilerId, rsdt->AslCompilerRevision);
-	} else
-		aprint_error_dev(self, "X/RSDT: Not found\n");
+	}
 
 	acpi_unmap_rsdt(rsdt);
 
 	sc->sc_dev = self;
 	sc->sc_quirks = acpi_find_quirks();
 	sc->sc_sleepstate = ACPI_STATE_S0;
+
+	sysmon_power_settype("acpi");
 
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_memt = aa->aa_memt;
@@ -400,7 +411,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Register null power management handler.
 	 */
-	if (!pmf_device_register(self, acpi_suspend, acpi_resume))
+	if (pmf_device_register(self, acpi_suspend, acpi_resume) != true)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
@@ -418,31 +429,25 @@ acpi_attach(device_t parent, device_t self, void *aux)
      ACPI_NO_ADDRESS_SPACE_INIT)
 
 	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE1);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "unable to enable ACPI: %s\n",
-		    AcpiFormatException(rv));
-		return;
-	}
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
 
 	acpi_md_callback();
 
 	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE2);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "unable to enable ACPI: %s\n",
-		    AcpiFormatException(rv));
-		return;
-	}
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
 
 	/* Early EC handler initialization if ECDT table is available. */
 	config_found_ia(self, "acpiecdtbus", aa, NULL);
 
 	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self,
-		    "unable to initialize ACPI objects: %s\n",
-		    AcpiFormatException(rv));
-		return;
-	}
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
 	acpi_active = 1;
 
 	/* Our current state is "awake". */
@@ -479,6 +484,14 @@ acpi_attach(device_t parent, device_t self, void *aux)
 #ifdef ACPI_DEBUG
 	acpi_debug_init();
 #endif
+
+	return;
+
+fail:
+	KASSERT(rv != AE_OK);
+
+	aprint_error("%s: failed to initialize ACPI: %s\n",
+	    __func__, AcpiFormatException(rv));
 }
 
 /*
@@ -1464,12 +1477,11 @@ acpi_OsGetRootPointer(void)
 	ACPI_PHYSICAL_ADDRESS PhysicalAddress;
 
 	/*
-	 * IA-32: Use AcpiFindRootPointer() to locate the RSDP.
+	 * We let MD code handle this since there are multiple ways to do it:
 	 *
-	 * IA-64: Use the EFI.
+	 *	IA-32: Use AcpiFindRootPointer() to locate the RSDP.
 	 *
-	 * We let MD code handle this since there are multiple
-	 * ways to do it.
+	 *	IA-64: Use the EFI.
 	 */
 	PhysicalAddress = acpi_md_OsGetRootPointer();
 
@@ -1486,19 +1498,20 @@ acpi_map_rsdt(void)
 	ACPI_TABLE_RSDP *rsdp;
 
 	paddr = AcpiOsGetRootPointer();
-	if (paddr == 0) {
-		printf("ACPI: couldn't get root pointer\n");
+
+	if (paddr == 0)
 		return NULL;
-	}
+
 	rsdp = AcpiOsMapMemory(paddr, sizeof(ACPI_TABLE_RSDP));
-	if (rsdp == NULL) {
-		printf("ACPI: couldn't map RSDP\n");
+
+	if (rsdp == NULL)
 		return NULL;
-	}
+
 	if (rsdp->Revision > 1 && rsdp->XsdtPhysicalAddress)
-		paddr = (ACPI_PHYSICAL_ADDRESS)rsdp->XsdtPhysicalAddress;
+		paddr = rsdp->XsdtPhysicalAddress;
 	else
-		paddr = (ACPI_PHYSICAL_ADDRESS)rsdp->RsdtPhysicalAddress;
+		paddr = rsdp->RsdtPhysicalAddress;
+
 	AcpiOsUnmapMemory(rsdp, sizeof(ACPI_TABLE_RSDP));
 
 	return AcpiOsMapMemory(paddr, sizeof(ACPI_TABLE_HEADER));
@@ -1507,6 +1520,7 @@ acpi_map_rsdt(void)
 static void
 acpi_unmap_rsdt(ACPI_TABLE_HEADER *rsdt)
 {
+
 	if (rsdt == NULL)
 		return;
 
