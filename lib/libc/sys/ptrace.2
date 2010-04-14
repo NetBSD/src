@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.33 2010/04/06 14:26:59 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.34 2010/04/14 08:57:21 jruoho Exp $
 .\"
 .\" This file is in the public domain.
-.Dd April 6, 2010
+.Dd April 14, 2010
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -217,9 +217,9 @@ is the length of the I/O request.
 The
 .Fa piod_op
 field specifies which type of I/O operation to perform.
-Possible
-values are:
-.Bl -tag -width 18n
+Possible values are:
+.Pp
+.Bl -tag -width 18n -offset indent -compact
 .It Dv PIOD_READ_D
 .It Dv PIOD_WRITE_D
 .It Dv PIOD_READ_I
@@ -288,9 +288,9 @@ contains the LWP ID of the thread that was found, or 0 if there is
 no thread after the one whose LWP ID was supplied in the call.
 .Fa pl_event
 contains the event that stopped the thread.
-Possible
-values are:
-.Bl -tag -width 30n
+Possible values are:
+.Pp
+.Bl -tag -width 30n -offset indent -compact
 .It Dv PL_EVENT_NONE
 .It Dv PL_EVENT_SIGNAL
 .El
@@ -504,7 +504,7 @@ as a non-error value; to disambiguate,
 .Va errno
 can be set to 0 before the call and checked afterwards.
 The possible errors are:
-.Bl -tag -width 4n
+.Bl -tag -width "[EINVAL]"
 .It Bq Er EAGAIN
 Process is currently exec'ing and cannot be traced.
 .It Bq Er EBUSY
