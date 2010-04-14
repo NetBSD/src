@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.25 2009/08/18 16:41:03 jmcneill Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.26 2010/04/14 19:32:35 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.25 2009/08/18 16:41:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.26 2010/04/14 19:32:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ acpi_md_OsGetRootPointer(void)
 }
 
 ACPI_STATUS
-acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
+acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
     ACPI_OSD_HANDLER ServiceRoutine, void *Context, void **cookiep)
 {
 	void *ih;
@@ -190,7 +190,7 @@ acpi_md_OsRemoveInterruptHandler(void *cookie)
 
 ACPI_STATUS
 acpi_md_OsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress,
-    UINT32 Length, void **LogicalAddress)
+    uint32_t Length, void **LogicalAddress)
 {
 
 	if (_x86_memio_map(X86_BUS_SPACE_MEM, PhysicalAddress, Length,
@@ -201,7 +201,7 @@ acpi_md_OsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress,
 }
 
 void
-acpi_md_OsUnmapMemory(void *LogicalAddress, UINT32 Length)
+acpi_md_OsUnmapMemory(void *LogicalAddress, uint32_t Length)
 {
 
 	(void) _x86_memio_unmap(X86_BUS_SPACE_MEM,
@@ -223,7 +223,7 @@ acpi_md_OsGetPhysicalAddress(void *LogicalAddress,
 }
 
 BOOLEAN
-acpi_md_OsReadable(void *Pointer, UINT32 Length)
+acpi_md_OsReadable(void *Pointer, uint32_t Length)
 {
 	BOOLEAN rv = TRUE;
 	vaddr_t sva, eva;
@@ -247,7 +247,7 @@ acpi_md_OsReadable(void *Pointer, UINT32 Length)
 }
 
 BOOLEAN
-acpi_md_OsWritable(void *Pointer, UINT32 Length)
+acpi_md_OsWritable(void *Pointer, uint32_t Length)
 {
 	BOOLEAN rv = FALSE;
 	vaddr_t sva, eva;
