@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.124 2010/03/31 14:08:33 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.125 2010/04/14 10:27:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.124 2010/03/31 14:08:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.125 2010/04/14 10:27:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.124 2010/03/31 14:08:33 pooka Exp $");
 #include <uvm/uvm_map.h>
 
 #include "rump_private.h"
-
-time_t time_second = 1;
 
 kmutex_t *proc_lock;
 struct lwp lwp0;
@@ -112,6 +110,8 @@ int booted_partition;
 kmutex_t tty_lock;
 krwlock_t exec_lock;
 
+struct lwplist alllwp = LIST_HEAD_INITIALIZER(alllwp);
+
 /* sparc doesn't sport constant page size */
 #ifdef __sparc__
 int nbpg = 4096;
@@ -123,73 +123,6 @@ struct loadavg averunnable = {
 	  11 * FSCALE, },
 	FSCALE,
 };
-
-void
-getnanouptime(struct timespec *ts)
-{
-
-	rump_getuptime(ts);
-}
-
-void
-getmicrouptime(struct timeval *tv)
-{
-	struct timespec ts;
-
-	getnanouptime(&ts);
-	TIMESPEC_TO_TIMEVAL(tv, &ts);
-}
-
-static void
-gettime(struct timespec *ts)
-{
-	uint64_t sec, nsec;
-	int error;
-
-	rumpuser_gettime(&sec, &nsec, &error);
-	ts->tv_sec = sec;
-	ts->tv_nsec = nsec;
-}
-
-void
-nanotime(struct timespec *ts)
-{
-
-	if (rump_threads) {
-		rump_gettime(ts);
-	} else {
-		gettime(ts);
-	}
-}
-
-/* hooray for mick, so what if I do */
-void
-getnanotime(struct timespec *ts)
-{
-
-	nanotime(ts);
-}
-
-void
-microtime(struct timeval *tv)
-{
-	struct timespec ts;
-
-	if (rump_threads) {
-		rump_gettime(&ts);
-		TIMESPEC_TO_TIMEVAL(tv, &ts);
-	} else {
-		gettime(&ts);
-		TIMESPEC_TO_TIMEVAL(tv, &ts);
-	}
-}
-
-void
-getmicrotime(struct timeval *tv)
-{
-
-	microtime(tv);
-}
 
 struct proc *
 p_find(pid_t pid, uint flags)
@@ -315,13 +248,6 @@ assert_sleepable(void)
 {
 
 	/* always sleepable, although we should improve this */
-}
-
-void
-tc_setclock(const struct timespec *ts)
-{
-
-	panic("%s: not implemented", __func__);
 }
 
 int
