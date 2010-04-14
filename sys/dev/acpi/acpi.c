@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.170 2010/04/14 17:14:45 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.171 2010/04/14 17:20:19 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.170 2010/04/14 17:14:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.171 2010/04/14 17:20:19 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -481,79 +481,26 @@ acpi_attach(device_t parent, device_t self, void *aux)
 #endif
 }
 
+/*
+ * XXX: This is incomplete.
+ */
 static int
 acpi_detach(device_t self, int flags)
 {
 	struct acpi_softc *sc = device_private(self);
 	int rc;
 
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_RUNNING)
-		acpi_osd_debugger();
-#endif
-
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
 
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_PROBE)
-		acpi_osd_debugger();
-#endif
-
 	if ((rc = acpitimer_detach()) != 0)
 		return rc;
-
-#if 0
-	/*
-	 * Bring ACPI on-line.
-	 */
-#ifdef ACPI_DEBUGGER
-	if (acpi_dbgr & ACPI_DBGR_ENABLE)
-		acpi_osd_debugger();
-#endif
-
-#define ACPI_ENABLE_PHASE1 \
-    (ACPI_NO_HANDLER_INIT | ACPI_NO_EVENT_INIT)
-#define ACPI_ENABLE_PHASE2 \
-    (ACPI_NO_HARDWARE_INIT | ACPI_NO_ACPI_ENABLE | \
-     ACPI_NO_ADDRESS_SPACE_INIT)
-
-	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE1);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "unable to enable ACPI: %s\n",
-		    AcpiFormatException(rv));
-		return;
-	}
-
-	rv = AcpiEnableSubsystem(ACPI_ENABLE_PHASE2);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "unable to enable ACPI: %s\n",
-		    AcpiFormatException(rv));
-		return;
-	}
-
-	/* Early EC handler initialization if ECDT table is available. */
-	config_found_ia(self, "acpiecdtbus", aa, NULL);
-
-	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self,
-		    "unable to initialize ACPI objects: %s\n",
-		    AcpiFormatException(rv));
-		return;
-	}
-
-	acpi_active = 1;
-#endif
 
 	acpi_deregister_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
 	acpi_deregister_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
 
 	pmf_device_deregister(self);
 
-#if 0
-	sysmon_power_settype("acpi");
-#endif
 	acpi_softc = NULL;
 
 	return 0;
