@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.37 2010/02/24 14:56:04 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.38 2010/04/14 14:12:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,12 +43,11 @@ struct vfsops;
 struct fid;
 struct statvfs;
 struct stat;
+struct kauth_cred;
+struct lwp;
+struct modinfo;
 
 /* yetch */
-#if !defined(_RUMPKERNEL) && !defined(__NetBSD__)
-struct kauth_cred;
-typedef struct kauth_cred *kauth_cred_t;
-#endif
 #if defined(__NetBSD__)
 #include <prop/proplib.h>
 #else
@@ -58,9 +57,6 @@ struct prop_dictionary;
 typedef struct prop_dictionary *prop_dictionary_t;
 #endif
 #endif /* __NetBSD__ */
-
-struct lwp;
-struct modinfo;
 
 #include <rump/rumpvnode_if.h>
 #include <rump/rumpdefs.h>
