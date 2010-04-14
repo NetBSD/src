@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.6 2010/03/13 23:30:41 agc Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.7 2010/04/14 04:01:55 agc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 13, 2010
+.Dd April 13, 2010
 .Dt NETPGPKEYS 1
 .Os
 .Sh NAME
@@ -160,8 +160,16 @@ Find the appropriate public key from the current keyring.
 If no keyring is provided, the user's public keyring is used.
 .It Fl Fl generate-key
 This command is used to generate a new public and private key pair.
-The user id is taken from the command line, and the user will be
-prompted to provide a suitable pass phrase.
+If provided on the command line, the argument will be given to the
+key generation routine to be used as the identity of the key.
+This is usually the email address and full name, but can be
+any identification token.
+The newly-generated keys are placed in a sub-directory of the
+.Dq home directory
+which is created at key generation time.
+At present, only RSA keys can be generated.
+The hash algorithm and keysize can be specified on the command
+line.
 .It Fl Fl import-key
 Import a public key as retrieved from one of the public key servers.
 This is in the form of a file which has previously been
@@ -291,6 +299,30 @@ or 2 if any other error occurs.
 pub 1024/RSA (Encrypt or Sign) 040180871e00404a 2008-08-11
 Key fingerprint: c4aa b385 4796 e6ce 606c f0c2 0401 8087 1e00 404a 
 uid              netbsd-vm1.crowthorne.alistaircrooks.co.uk (/etc/ssh/ssh_host_rsa_key.pub) \*[Lt]root@netbsd-vm1.crowthorne.alistaircrooks.co.uk\*[Gt]
+%
+.Ed
+.Pp
+The following is an example of RSA key generation:
+.Bd -literal
+% netpgpkeys --generate-key
+netpgp: default key set to "C0596823"
+pub 2048/RSA (Encrypt or Sign) 5bc707d1b495aaf2 2010-04-14 
+Key fingerprint: 08cb 4867 eeed 454c ce30 610d 5bc7 07d1 b495 aaf2 
+uid              RSA 2048-bit key \*[Lt]agc@localhost\*[Gt]
+netpgp: generated keys in directory /home/agc/.gnupg/5bc707d1b495aaf2
+% ls -al /home/agc/.gnupg/5bc707d1b495aaf2
+total 8
+drwx------  2 agc  agc   512 Apr 13 18:25 .
+drwx------  6 agc  agc   512 Apr 13 18:25 ..
+-rw-------  1 agc  agc   596 Apr 13 18:25 pubring.gpg
+-rw-------  1 agc  agc  1284 Apr 13 18:25 secring.gpg
+%
+% netpgpkeys --list-keys --home ~/.gnupg/5bc707d1b495aaf2
+1 key
+pub 2048/RSA (Encrypt or Sign) 5bc707d1b495aaf2 2010-04-14 
+Key fingerprint: 08cb 4867 eeed 454c ce30 610d 5bc7 07d1 b495 aaf2 
+uid              RSA 2048-bit key \*[Lt]agc@localhost\*[Gt]
+
 %
 .Ed
 .Sh SEE ALSO
