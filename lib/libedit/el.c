@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.58 2009/12/31 15:58:26 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.59 2010/04/15 00:56:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.58 2009/12/31 15:58:26 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.59 2010/04/15 00:56:40 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: el.c,v 1.58 2009/12/31 15:58:26 christos Exp $");
 #include <stdarg.h>
 #include <ctype.h>
 #include <locale.h>
+#include <langinfo.h>
 #include "el.h"
 
 /* el_init():
@@ -59,9 +60,6 @@ __RCSID("$NetBSD: el.c,v 1.58 2009/12/31 15:58:26 christos Exp $");
 public EditLine *
 el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
 {
-#ifdef WIDECHAR
-	char *locale;
-#endif
 	EditLine *el = (EditLine *) el_malloc(sizeof(EditLine));
 
 	if (el == NULL)
@@ -86,8 +84,8 @@ el_init(const char *prog, FILE *fin, FILE *fout, FILE *ferr)
          */
 	el->el_flags = 0;
 #ifdef WIDECHAR
-	if ((locale = setlocale(LC_CTYPE, NULL)) != NULL){
-		if (strcasestr(locale, ".UTF-8") != NULL)
+	if (setlocale(LC_CTYPE, NULL) != NULL){
+		if (strcmp(nl_langinfo(CODESET), "UTF-8") == 0)
 			el->el_flags |= CHARSET_IS_UTF8;
 	}
 #endif
@@ -266,7 +264,8 @@ FUN(el,set)(EditLine *el, int op, ...)
 		ptr_t ptr = va_arg(ap, ptr_t);
 
 		rv = hist_set(el, func, ptr);
-		el->el_flags &= ~NARROW_HISTORY;
+		if (!(el->el_flags & CHARSET_IS_UTF8))
+			el->el_flags &= ~NARROW_HISTORY;
 		break;
 	}
 
