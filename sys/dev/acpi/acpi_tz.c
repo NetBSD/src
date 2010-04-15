@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.64 2010/04/14 19:27:28 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.65 2010/04/15 07:02:24 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.64 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.65 2010/04/15 07:02:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -211,11 +211,7 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	acpitz_get_zone(self, 1);
 	acpitz_get_status(self);
 
-	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpitz_notify_handler, self);
-
-	if (ACPI_FAILURE(rv))
-		return;
+	(void)acpi_register_notify(sc->sc_devnode, acpitz_notify_handler);
 
 	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_callout, acpitz_tick, self);

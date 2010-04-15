@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.19 2010/04/14 19:27:28 jruoho Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.20 2010/04/15 07:02:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.19 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.20 2010/04/15 07:02:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,10 +125,9 @@ asus_attach(device_t parent, device_t self, void *opaque)
 {
 	struct asus_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = opaque;
-	ACPI_STATUS rv;
 
-	sc->sc_node = aa->aa_node;
 	sc->sc_dev = self;
+	sc->sc_node = aa->aa_node;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -147,7 +146,7 @@ asus_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	if (asus_get_fan_speed(sc, NULL) == false)
-		goto nosensors;
+		goto out;
 
 	sc->sc_sme = sysmon_envsys_create();
 
@@ -166,39 +165,32 @@ asus_attach(device_t parent, device_t self, void *opaque)
 		sysmon_envsys_destroy(sc->sc_sme);
 		sc->sc_sme = NULL;
 	}
-nosensors:
 
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle, ACPI_ALL_NOTIFY,
-	    asus_notify_handler, sc);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self, "couldn't install notify handler: %s\n",
-		    AcpiFormatException(rv));
-
-	if (!pmf_device_register(self, asus_suspend, asus_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+out:
+	(void)pmf_device_register(self, asus_suspend, asus_resume);
+	(void)acpi_register_notify(sc->sc_node, asus_notify_handler);
 }
 
 static int
 asus_detach(device_t self, int flags)
 {
 	struct asus_softc *sc = device_private(self);
-	ACPI_STATUS rv;
 	int i;
 
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, asus_notify_handler);
+	acpi_deregister_notify(sc->sc_node);
 
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
+	if (sc->sc_smpsw_valid != false) {
 
-	if (sc->sc_smpsw_valid)
 		for (i = 0; i < ASUS_PSW_LAST; i++)
 			sysmon_pswitch_unregister(&sc->sc_smpsw[i]);
+	}
 
-	if (sc->sc_sme)
+	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
-	if (sc->sc_log)
+
+	if (sc->sc_log != NULL)
 		sysctl_teardown(&sc->sc_log);
+
 	pmf_device_deregister(self);
 
 	return 0;
@@ -207,7 +199,10 @@ asus_detach(device_t self, int flags)
 static void
 asus_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
-	struct asus_softc *sc = opaque;
+	struct asus_softc *sc;
+	device_t self = opaque;
+
+	sc = device_private(self);
 
 	if (notify >= ASUS_NOTIFY_BrightnessLow &&
 	    notify <= ASUS_NOTIFY_BrightnessHigh) {
