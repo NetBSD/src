@@ -190,6 +190,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = $(WARNCFLAGS)
+AM_LDFLAGS = -version-info 0:2:0
 lib_LTLIBRARIES = libiscsi.la
 libiscsi_la_CPPFLAGS = -I$(top_srcdir)/include
 libiscsi_la_SOURCES = \
@@ -208,6 +209,8 @@ libiscsi_la_SOURCES = \
 	target.c \
 	util.c \
 	uuid.c
+
+libiscsi_la_LDFLAGS = -no-undefined -version-info 0:2:0
 
 man3_MANS = libiscsi.3
 dist_man_MANS = libiscsi.3
