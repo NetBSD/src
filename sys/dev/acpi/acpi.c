@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.173 2010/04/14 19:27:28 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.174 2010/04/15 04:03:38 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.173 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.174 2010/04/15 04:03:38 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -325,7 +325,6 @@ acpi_probe(void)
 	 */
 	return 1;
 
-
 fail:
 	KASSERT(rv != AE_OK);
 	KASSERT(func != NULL);
@@ -345,6 +344,9 @@ acpi_check(device_t parent, const char *ifattr)
 	return (config_search_ia(acpi_submatch, parent, ifattr, NULL) != NULL);
 }
 
+/*
+ * Autoconfiguration.
+ */
 static int
 acpi_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -408,9 +410,6 @@ acpi_attach(device_t parent, device_t self, void *aux)
 
 	acpi_softc = sc;
 
-	/*
-	 * Register null power management handler.
-	 */
 	if (pmf_device_register(self, acpi_suspend, acpi_resume) != true)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -440,7 +439,9 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	if (ACPI_FAILURE(rv))
 		goto fail;
 
-	/* Early EC handler initialization if ECDT table is available. */
+	/*
+	 * Early EC handler initialization if ECDT table is available.
+	 */
 	config_found_ia(self, "acpiecdtbus", aa, NULL);
 
 	rv = AcpiInitializeObjects(ACPI_FULL_INITIALIZATION);
@@ -760,8 +761,8 @@ acpi_allocate_resources(ACPI_HANDLE handle)
 			xirq = (ACPI_RESOURCE_EXTENDED_IRQ *)&resn->Data;
 #if 0
 			/*
-			 * XXX not duplicating the interrupt logic above
-			 * because its not clear what it accomplishes.
+			 * XXX:	Not duplicating the interrupt logic above
+			 *	because its not clear what it accomplishes.
 			 */
 			xirq->Interrupts[0] =
 			    ((ACPI_RESOURCE_EXT_IRQ *)&resp->Data)->
@@ -867,18 +868,14 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		aa.aa_pciflags = sc->sc_pciflags;
 		aa.aa_ic = sc->sc_ic;
 
+		/*
+		 * XXX:	We only attach devices which are present, enabled, and
+		 *	functioning properly. However, if a device is enabled,
+		 *	it is decoding resources and we should claim these,
+		 *	if possible. This requires changes to bus_space(9).
+		 */
 		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE) {
-			/*
-			 * XXX We only attach devices which are:
-			 *
-			 *	- present
-			 *	- enabled
-			 *	- functioning properly
-			 *
-			 * However, if enabled, it's decoding resources,
-			 * so we should claim them, if possible.
-			 * Requires changes to bus_space(9).
-			 */
+
 			if ((ad->ad_devinfo->Valid & ACPI_VALID_STA) ==
 			    ACPI_VALID_STA &&
 			    (ad->ad_devinfo->CurrentStatus &
@@ -890,10 +887,9 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		}
 
 		/*
-		 * XXX Same problem as above...
-		 *
-		 * Do this check only for devices, as e.g.
-		 * a Thermal Zone doesn't have a HID.
+		 * XXX:	The same problem as above. As for example
+		 *	thermal zones and power resources do not
+		 *	have a valid HID, only evaluate devices.
 		 */
 		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE &&
 		    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
