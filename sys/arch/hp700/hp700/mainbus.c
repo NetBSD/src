@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.65 2010/04/15 14:33:22 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.66 2010/04/15 14:34:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.65 2010/04/15 14:33:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.66 2010/04/15 14:34:25 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1592,11 +1592,11 @@ mbprint(void *aux, const char *pnp)
 		    pnp, ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
 		aprint_normal(" hpa 0x%lx path ", ca->ca_hpa);
-		for (n = 0 ; n < 6 ; n++) {
-			if ( ca->ca_dp.dp_bc[n] >= 0)
-				aprint_normal( "%d/", ca->ca_dp.dp_bc[n]);
+		for (n = 0; n < 6; n++) {
+			if (ca->ca_dp.dp_bc[n] >= 0)
+				aprint_normal("%d/", ca->ca_dp.dp_bc[n]);
 		}
-		aprint_normal( "%d", ca->ca_dp.dp_mod);
+		aprint_normal("%d", ca->ca_dp.dp_mod);
 		if (!pnp && ca->ca_irq >= 0) {
 			aprint_normal(" irq %d", ca->ca_irq);
 			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)
