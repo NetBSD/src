@@ -1,4 +1,4 @@
-/*	$NetBSD: tc1.c,v 1.3 2009/07/17 12:25:52 christos Exp $	*/
+/*	$NetBSD: tc1.c,v 1.4 2010/04/15 00:50:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tc1.c,v 1.3 2009/07/17 12:25:52 christos Exp $");
+__RCSID("$NetBSD: tc1.c,v 1.4 2010/04/15 00:50:46 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: tc1.c,v 1.3 2009/07/17 12:25:52 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <locale.h>
 
 #include "histedit.h"
 
@@ -130,6 +131,7 @@ main(int argc, char *argv[])
 	History *hist;
 	HistEvent ev;
 
+	(void) setlocale(LC_CTYPE, "");
 	(void) signal(SIGINT, sig);
 	(void) signal(SIGQUIT, sig);
 	(void) signal(SIGHUP, sig);
