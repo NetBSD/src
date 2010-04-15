@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.1 2010/04/14 17:12:14 jruoho Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.2 2010/04/15 04:03:39 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.1 2010/04/14 17:12:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.2 2010/04/15 04:03:39 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -76,9 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.1 2010/04/14 17:12:14 jruoho Exp $")
 ACPI_MODULE_NAME		("acpi_util")
 
 /*
- * acpi_eval_integer:
- *
- *	Evaluate an integer object.
+ * Evaluate an integer object.
  */
 ACPI_STATUS
 acpi_eval_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER *valp)
@@ -108,9 +106,7 @@ acpi_eval_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER *valp)
 }
 
 /*
- * acpi_eval_set_integer:
- *
- *	Evaluate an integer object with a single integer input parameter.
+ * Evaluate an integer object with a single integer input parameter.
  */
 ACPI_STATUS
 acpi_eval_set_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER val)
@@ -131,9 +127,7 @@ acpi_eval_set_integer(ACPI_HANDLE handle, const char *path, ACPI_INTEGER val)
 }
 
 /*
- * acpi_eval_string:
- *
- *	Evaluate a (Unicode) string object.
+ * Evaluate a (Unicode) string object.
  */
 ACPI_STATUS
 acpi_eval_string(ACPI_HANDLE handle, const char *path, char **stringp)
@@ -177,10 +171,7 @@ out:
 }
 
 /*
- * acpi_eval_struct:
- *
- *	Evaluate a more complex structure.
- *	Caller must free buf.Pointer by ACPI_FREE().
+ * Evaluate a structure. Caller must free buf.Pointer by ACPI_FREE().
  */
 ACPI_STATUS
 acpi_eval_struct(ACPI_HANDLE handle, const char *path, ACPI_BUFFER *buf)
@@ -196,9 +187,7 @@ acpi_eval_struct(ACPI_HANDLE handle, const char *path, ACPI_BUFFER *buf)
 }
 
 /*
- * acpi_eval_reference_handle:
- *
- *	Evaluate a reference handle from an element in a package.
+ * Evaluate a reference handle from an element in a package.
  */
 ACPI_STATUS
 acpi_eval_reference_handle(ACPI_OBJECT *elm, ACPI_HANDLE *handle)
@@ -228,11 +217,9 @@ acpi_eval_reference_handle(ACPI_OBJECT *elm, ACPI_HANDLE *handle)
 }
 
 /*
- * acpi_foreach_package_object:
- *
- *	Iterate over all objects in a package, and pass them all
- *	to a function. If the called function returns non-AE_OK,
- *	the iteration is stopped and that value is returned.
+ * Iterate over all objects in a package, and pass them all
+ * to a function. If the called function returns non-AE_OK,
+ * the iteration is stopped and that value is returned.
  */
 ACPI_STATUS
 acpi_foreach_package_object(ACPI_OBJECT *pkg,
@@ -256,10 +243,8 @@ acpi_foreach_package_object(ACPI_OBJECT *pkg,
 }
 
 /*
- * acpi_get:
- *
- *	Fetch data info the specified (empty) ACPI buffer.
- *	Caller must free buf.Pointer by ACPI_FREE().
+ * Fetch data info the specified (empty) ACPI buffer.
+ * Caller must free buf.Pointer by ACPI_FREE().
  */
 ACPI_STATUS
 acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
@@ -273,13 +258,11 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 }
 
 /*
- * acpi_name:
+ * Return a complete pathname from a handle.
  *
- *	Return a complete pathname from a handle.
- *
- *	Note that the function uses static data storage;
- *	if the data is needed for future use, it should be
- *	copied before any subsequent calls overwrite it.
+ * Note that the function uses static data storage;
+ * if the data is needed for future use, it should be
+ * copied before any subsequent calls overwrite it.
  */
 const char *
 acpi_name(ACPI_HANDLE handle)
@@ -300,9 +283,7 @@ acpi_name(ACPI_HANDLE handle)
 }
 
 /*
- * acpi_match_hid:
- *
- *	Match given ids against _HID and _CIDs.
+ * Match given IDs against _HID and _CIDs.
  */
 int
 acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
