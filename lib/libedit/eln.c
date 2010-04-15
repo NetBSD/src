@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.6 2010/01/20 01:15:52 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.7 2010/04/15 00:52:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.6 2010/01/20 01:15:52 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.7 2010/04/15 00:52:48 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include "histedit.h"
@@ -50,9 +50,11 @@ el_getc(EditLine *el, char *cp)
 	int num_read;
 	wchar_t wc = 0;
 
-	el->el_flags |= IGNORE_EXTCHARS;
+	if (!(el->el_flags & CHARSET_IS_UTF8))
+		el->el_flags |= IGNORE_EXTCHARS;
 	num_read = el_wgetc (el, &wc);
-	el->el_flags &= ~IGNORE_EXTCHARS;
+	if (!(el->el_flags & CHARSET_IS_UTF8))
+		el->el_flags &= ~IGNORE_EXTCHARS;
 
 	if (num_read > 0)
 		*cp = (unsigned char)wc;
@@ -208,7 +210,8 @@ el_set(EditLine *el, int op, ...)
 		hist_fun_t fun = va_arg(ap, hist_fun_t);
 		ptr_t ptr = va_arg(ap, ptr_t);
 		ret = hist_set(el, fun, ptr);
-		el->el_flags |= NARROW_HISTORY;
+		if (!(el->el_flags & CHARSET_IS_UTF8))
+			el->el_flags |= NARROW_HISTORY;
 		break;
 	}
 	/* XXX: do we need to change el_rfunc_t? */
@@ -336,10 +339,21 @@ el_line(EditLine *el)
 {
 	const LineInfoW *winfo = el_wline(el);
 	LineInfo *info = &el->el_lgcylinfo;
+	size_t offset;
+	const Char *p;
 
 	info->buffer   = ct_encode_string(winfo->buffer, &el->el_lgcyconv);
-	info->cursor   = info->buffer + (winfo->cursor   - winfo->buffer);
-	info->lastchar = info->buffer + (winfo->lastchar - winfo->buffer);
+
+	offset = 0;
+	for (p = winfo->buffer; p < winfo->cursor; p++)
+		offset += ct_enc_width(*p);
+	info->cursor = info->buffer + offset;
+
+	offset = 0;
+	for (p = winfo->buffer; p < winfo->lastchar; p++)
+		offset += ct_enc_width(*p);
+	info->lastchar = info->buffer + offset;
+
 	return info;
 }
 
