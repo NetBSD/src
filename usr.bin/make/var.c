@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.155 2009/11/19 00:30:25 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.156 2010/04/15 03:48:39 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.155 2009/11/19 00:30:25 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.156 2010/04/15 03:48:39 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.155 2009/11/19 00:30:25 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.156 2010/04/15 03:48:39 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1859,6 +1859,32 @@ VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
     return Buf_Destroy(&buf, FALSE);
 }
 
+
+/*-
+ * VarRealpath --
+ *	Replace each word with the result of realpath()
+ *	if successful.
+ */
+static Boolean
+VarRealpath(GNode *ctx __unused, Var_Parse_State *vpstate,
+	    char *word, Boolean addSpace, Buffer *buf,
+	    void *patternp __unused)
+{
+	char rbuf[MAXPATHLEN];
+	char *rp;
+			    
+	if (addSpace && vpstate->varSpace) {
+	    Buf_AddByte(buf, vpstate->varSpace);
+	}
+	addSpace = TRUE;
+	rp = realpath(word, rbuf);
+	if (rp && *rp == '/')
+		word = rp;
+	
+	Buf_AddBytes(buf, strlen(word), word);
+	return(addSpace);
+}
+
 /*-
  *-----------------------------------------------------------------------
  * VarModify --
@@ -2849,7 +2875,12 @@ ApplyModifiers(char *nstr, const char *tstr,
 			 * Check for two-character options:
 			 * ":tu", ":tl"
 			 */
-			if (tstr[1] == 'u' || tstr[1] == 'l') {
+			if (tstr[1] == 'A') { /* absolute path */
+			    newStr = VarModify(ctxt, &parsestate, nstr,
+					       VarRealpath, NULL);
+			    cp = tstr + 2;
+			    termc = *cp;
+			} else if (tstr[1] == 'u' || tstr[1] == 'l') {
 			    newStr = VarChangeCase(nstr, (tstr[1] == 'u'));
 			    cp = tstr + 2;
 			    termc = *cp;
