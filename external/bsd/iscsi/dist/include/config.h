@@ -1,5 +1,5 @@
-/* ../include/config.h.  Generated from config.h.in by configure.  */
-/* ../include/config.h.in.  Generated from configure.ac by autoheader.  */
+/* include/config.h.  Generated from config.h.in by configure.  */
+/* include/config.h.in.  Generated from configure.ac by autoheader.  */
 
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #define HAVE_ARPA_INET_H 1
@@ -28,6 +28,9 @@
 /* Define to 1 if you have the `daemon' function. */
 #define HAVE_DAEMON 1
 
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#define HAVE_DLFCN_H 1
+
 /* Define to 1 if you have the <errno.h> header file. */
 #define HAVE_ERRNO_H 1
 
@@ -52,17 +55,11 @@
 /* Define to 1 if you have the <libkern/OSByteOrder.h> header file. */
 /* #undef HAVE_LIBKERN_OSBYTEORDER_H */
 
-/* Define to 1 if you have the `nsl' library (-lnsl). */
-/* #undef HAVE_LIBNSL */
-
-/* Define to 1 if you have the `resolv' library (-lresolv). */
-#define HAVE_LIBRESOLV 1
-
-/* Define to 1 if you have the `socket' library (-lsocket). */
-/* #undef HAVE_LIBSOCKET */
-
 /* Define to 1 if the system has the type `long long'. */
 #define HAVE_LONG_LONG yes
+
+/* Define to 1 if the system has the type `long long int'. */
+#define HAVE_LONG_LONG_INT 1
 
 /* Define to 1 if you have the <machine/endian.h> header file. */
 #define HAVE_MACHINE_ENDIAN_H 1
@@ -169,6 +166,9 @@
 /* Define to 1 if the system has the type `unsigned long long'. */
 #define HAVE_UNSIGNED_LONG_LONG yes
 
+/* Define to 1 if the system has the type `unsigned long long int'. */
+#define HAVE_UNSIGNED_LONG_LONG_INT 1
+
 /* Define to 1 if you have the <utime.h> header file. */
 #define HAVE_UTIME_H 1
 
@@ -193,6 +193,9 @@
 /* Define to 1 if you have the `__bswap64' function. */
 /* #undef HAVE___BSWAP64 */
 
+/* Name of package */
+#define PACKAGE "netbsd-iscsi"
+
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "Alistair Crooks <agc@NetBSD.org>"
 
@@ -200,19 +203,53 @@
 #define PACKAGE_NAME "netbsd-iscsi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "netbsd-iscsi 20071221"
+#define PACKAGE_STRING "netbsd-iscsi 20100415"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "netbsd-iscsi"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20071221"
+#define PACKAGE_VERSION "20100415"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
+
+/* Version number of package */
+#define VERSION "20100415"
+
+/* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+/* #undef _UINT32_T */
+
+/* Define for Solaris 2.5.1 so the uint64_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+/* #undef _UINT64_T */
+
+/* Define for Solaris 2.5.1 so the uint8_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+/* #undef _UINT8_T */
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
 /* #undef size_t */
+
+/* Define to the type of an unsigned integer type of width exactly 16 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef uint16_t */
+
+/* Define to the type of an unsigned integer type of width exactly 32 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef uint32_t */
+
+/* Define to the type of an unsigned integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef uint64_t */
+
+/* Define to the type of an unsigned integer type of width exactly 8 bits if
+   such a type exists and the standard includes do not define it. */
+/* #undef uint8_t */
