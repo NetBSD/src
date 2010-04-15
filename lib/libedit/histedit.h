@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.h,v 1.45 2010/01/03 18:27:10 christos Exp $	*/
+/*	$NetBSD: histedit.h,v 1.46 2010/04/15 00:50:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -248,7 +248,9 @@ int		 tok_str(Tokenizer *, const char *,
  */
 #ifdef __linux__
 /* Apparently we need _GNU_SOURCE defined to get access to wcsdup on Linux */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #endif
 
 #include <wchar.h>
