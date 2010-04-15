@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.19 2009/12/30 22:37:40 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.20 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -139,17 +139,17 @@ typedef struct el_chared_t {
 #include "fcns.h"
 
 
-protected int	 cv__isword(wint_t);
-protected int	 cv__isWord(wint_t);
+protected int	 cv__isword(Int);
+protected int	 cv__isWord(Int);
 protected void	 cv_delfini(EditLine *);
-protected Char	*cv__endword(Char *, Char *, int, int (*)(wint_t));
-protected int	 ce__isword(wint_t);
+protected Char	*cv__endword(Char *, Char *, int, int (*)(Int));
+protected int	 ce__isword(Int);
 protected void	 cv_undo(EditLine *);
 protected void	 cv_yank(EditLine *, const Char *, int);
-protected Char	*cv_next_word(EditLine*, Char *, Char *, int, int (*)(wint_t));
-protected Char	*cv_prev_word(Char *, Char *, int, int (*)(wint_t));
-protected Char	*c__next_word(Char *, Char *, int, int (*)(wint_t));
-protected Char	*c__prev_word(Char *, Char *, int, int (*)(wint_t));
+protected Char	*cv_next_word(EditLine*, Char *, Char *, int, int (*)(Int));
+protected Char	*cv_prev_word(Char *, Char *, int, int (*)(Int));
+protected Char	*c__next_word(Char *, Char *, int, int (*)(Int));
+protected Char	*c__prev_word(Char *, Char *, int, int (*)(Int));
 protected void	 c_insert(EditLine *, int);
 protected void	 c_delbefore(EditLine *, int);
 protected void	 c_delbefore1(EditLine *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.88 2010/01/03 18:27:10 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.89 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.88 2010/01/03 18:27:10 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.89 2010/04/15 00:57:33 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1364,11 +1364,14 @@ int
 add_history(const char *line)
 {
 	TYPE(HistEvent) ev;
+	const Char *wline;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
-	(void)FUNW(history)(h, &ev, H_ENTER, line);
+	wline = ct_decode_string(line, &conv);
+
+	(void)FUNW(history)(h, &ev, H_ENTER, wline);
 	if (FUNW(history)(h, &ev, H_GETSIZE) == 0)
 		history_length = ev.num;
 

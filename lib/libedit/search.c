@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.23 2009/12/30 23:54:52 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.24 2010/04/15 00:57:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.23 2009/12/30 23:54:52 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.24 2010/04/15 00:57:33 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -564,7 +564,7 @@ ce_search_line(EditLine *el, int dir)
  *	Vi repeat search
  */
 protected el_action_t
-cv_repeat_srch(EditLine *el, wint_t c)
+cv_repeat_srch(EditLine *el, Int c)
 {
 
 #ifdef SDEBUG
@@ -590,7 +590,7 @@ cv_repeat_srch(EditLine *el, wint_t c)
  *	Vi character search
  */
 protected el_action_t
-cv_csearch(EditLine *el, int direction, wint_t ch, int count, int tflag)
+cv_csearch(EditLine *el, int direction, Int ch, int count, int tflag)
 {
 	Char *cp;
 
