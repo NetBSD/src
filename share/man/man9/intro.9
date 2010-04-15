@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.9,v 1.12 2010/02/11 18:23:32 dyoung Exp $
+.\"     $NetBSD: intro.9,v 1.13 2010/04/15 08:40:46 jruoho Exp $
 .\"
 .\" Copyright (c) 1997, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 11, 2010
+.Dd April 15, 2010
 .Dt INTRO 9
 .Os
 .Sh NAME
@@ -112,9 +112,9 @@ Context switch notification.
 See
 .Xr cpu_need_resched 9 .
 .Pp
-Process scheduling subsystem.
+Common scheduler framework.
 See
-.Xr scheduler 9 .
+.Xr csf 9 .
 .Pp
 Software signal facilities.
 See
@@ -593,9 +593,9 @@ Bring down system on fatal error.
 See
 .Xr panic 9 .
 .Sh MISC
-Run all power hooks.
+Power management and inter-driver messaging.
 See
-.Xr dopowerhooks 9 .
+.Xr pmf 9 .
 .Pp
 Run all shutdown hooks.
 See
@@ -629,10 +629,6 @@ See
 Hardware Performance Monitoring Interface.
 See
 .Xr pmc 9 .
-.Pp
-Add or remove a power change hook.
-See
-.Xr powerhook_establish 9 .
 .Pp
 Add or remove a shutdown hook.
 See

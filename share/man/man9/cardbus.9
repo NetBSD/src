@@ -1,4 +1,4 @@
-.\"     $NetBSD: cardbus.9,v 1.14 2010/02/25 00:50:52 dyoung Exp $
+.\"     $NetBSD: cardbus.9,v 1.15 2010/04/15 08:40:46 jruoho Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 24, 2010
+.Dd April 15, 2010
 .Dt CARDBUS 9
 .Os
 .Sh NAME
@@ -294,7 +294,8 @@ or
 .Pp
 Since CardBus devices support dynamic configuration, drivers should
 make use of
-.Fn powerhook_establish 9 .
+.Fn pmf 9
+framework.
 Power can be applied and the interrupt handler should be established
 through this interface.
 .Sh DMA SUPPORT
