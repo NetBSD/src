@@ -1,6 +1,8 @@
-## $NetBSD: Makefile.am,v 1.2 2009/06/30 02:44:52 agc Exp $
+## $NetBSD: Makefile.am,v 1.3 2010/04/15 20:56:32 sborrill Exp $
 
 AM_CFLAGS		= $(WARNCFLAGS)
+
+AM_LDFLAGS		= -version-info 0:2:0
 
 lib_LTLIBRARIES		= libiscsi.la
 
