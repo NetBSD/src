@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.17 2010/04/14 19:27:28 jruoho Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.18 2010/04/15 07:02:24 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.17 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.18 2010/04/15 07:02:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -280,16 +280,12 @@ sony_acpi_attach(device_t parent, device_t self, void *aux)
 			sc->sc_smpsw_valid = 0;
 		}
 
-	/* Install notify handler */
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, sony_acpi_notify_handler, self);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self,
-		    "couldn't install notify handler (%u)\n", rv);
+	(void)acpi_register_notify(sc->sc_node, sony_acpi_notify_handler);
 
 	/* Install sysctl handler */
 	rv = AcpiWalkNamespace(ACPI_TYPE_METHOD,
 	    sc->sc_node->ad_handle, 1, sony_walk_cb, NULL, sc, NULL);
+
 #ifdef DIAGNOSTIC
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(self, "Cannot walk ACPI namespace (%u)\n",
