@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.174 2010/04/15 04:03:38 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.175 2010/04/15 07:02:24 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.174 2010/04/15 04:03:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.175 2010/04/15 07:02:24 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -174,6 +174,8 @@ static void		acpi_rescan1(struct acpi_softc *,
 static void		acpi_rescan_nodes(struct acpi_softc *);
 static void		acpi_rescan_capabilities(struct acpi_softc *);
 static int		acpi_print(void *aux, const char *);
+
+static void		acpi_notify_handler(ACPI_HANDLE, uint32_t, void *);
 
 static void		acpi_register_fixed_button(struct acpi_softc *, int);
 static void		acpi_deregister_fixed_button(struct acpi_softc *, int);
@@ -449,6 +451,21 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	if (ACPI_FAILURE(rv))
 		goto fail;
 
+	/*
+	 * Install global notify handlers.
+	 */
+	rv = AcpiInstallNotifyHandler(ACPI_ROOT_OBJECT,
+	    ACPI_SYSTEM_NOTIFY, acpi_notify_handler, NULL);
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
+	rv = AcpiInstallNotifyHandler(ACPI_ROOT_OBJECT,
+	    ACPI_DEVICE_NOTIFY, acpi_notify_handler, NULL);
+
+	if (ACPI_FAILURE(rv))
+		goto fail;
+
 	acpi_active = 1;
 
 	/* Our current state is "awake". */
@@ -502,7 +519,20 @@ static int
 acpi_detach(device_t self, int flags)
 {
 	struct acpi_softc *sc = device_private(self);
+	ACPI_STATUS rv;
 	int rc;
+
+	rv = AcpiRemoveNotifyHandler(ACPI_ROOT_OBJECT,
+	    ACPI_SYSTEM_NOTIFY, acpi_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
+
+	rv = AcpiRemoveNotifyHandler(ACPI_ROOT_OBJECT,
+	    ACPI_DEVICE_NOTIFY, acpi_notify_handler);
+
+	if (ACPI_FAILURE(rv))
+		return EBUSY;
 
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
@@ -609,10 +639,12 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		if (ad == NULL)
 			return AE_NO_MEMORY;
 
+		ad->ad_device = NULL;
 		ad->ad_parent = sc->sc_dev;
-		ad->ad_devinfo = devinfo;
-		ad->ad_handle = handle;
+
 		ad->ad_type = type;
+		ad->ad_handle = handle;
+		ad->ad_devinfo = devinfo;
 
 		anu = (ACPI_NAME_UNION *)&devinfo->Name;
 		ad->ad_name[4] = '\0';
@@ -1046,6 +1078,104 @@ acpi_print(void *aux, const char *pnp)
 	}
 
 	return UNCONF;
+}
+
+/*
+ * Notify.
+ */
+static void
+acpi_notify_handler(ACPI_HANDLE handle, uint32_t event, void *aux)
+{
+	struct acpi_softc *sc = acpi_softc;
+	struct acpi_devnode *ad;
+
+	KASSERT(sc != NULL);
+	KASSERT(aux == NULL);
+	KASSERT(acpi_active != 0);
+
+	if (acpi_suspended != 0)
+		return;
+
+	/*
+	 *  System: 0x00 - 0x7F.
+	 *  Device: 0x80 - 0xFF.
+	 */
+	switch (event) {
+
+	case ACPI_NOTIFY_BUS_CHECK:
+	case ACPI_NOTIFY_DEVICE_CHECK:
+	case ACPI_NOTIFY_DEVICE_WAKE:
+	case ACPI_NOTIFY_EJECT_REQUEST:
+	case ACPI_NOTIFY_DEVICE_CHECK_LIGHT:
+	case ACPI_NOTIFY_FREQUENCY_MISMATCH:
+	case ACPI_NOTIFY_BUS_MODE_MISMATCH:
+	case ACPI_NOTIFY_POWER_FAULT:
+	case ACPI_NOTIFY_CAPABILITIES_CHECK:
+	case ACPI_NOTIFY_DEVICE_PLD_CHECK:
+	case ACPI_NOTIFY_RESERVED:
+	case ACPI_NOTIFY_LOCALITY_UPDATE:
+		break;
+	}
+
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "notification 0x%02X for "
+		"%s (%p)\n", event, acpi_name(handle), handle));
+
+	/*
+	 * We deliver notifications only to drivers
+	 * that have been succesfully attached and
+	 * that have registered a handler with us.
+	 * The opaque pointer is always the device_t.
+	 */
+	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+
+		if (ad->ad_device == NULL)
+			continue;
+
+		if (ad->ad_notify == NULL)
+			continue;
+
+		if (ad->ad_handle != handle)
+			continue;
+
+		(*ad->ad_notify)(ad->ad_handle, event, ad->ad_device);
+
+		return;
+	}
+
+	aprint_debug_dev(sc->sc_dev, "unhandled notify 0x%02X "
+	    "for %s (%p)\n", event, acpi_name(handle), handle);
+}
+
+bool
+acpi_register_notify(struct acpi_devnode *ad, ACPI_NOTIFY_HANDLER notify)
+{
+	struct acpi_softc *sc = acpi_softc;
+
+	KASSERT(sc != NULL);
+	KASSERT(acpi_active != 0);
+
+	if (acpi_suspended != 0)
+		goto fail;
+
+	if (ad == NULL || notify == NULL)
+		goto fail;
+
+	ad->ad_notify = notify;
+
+	return true;
+
+fail:
+	aprint_error_dev(sc->sc_dev, "failed to register notify "
+	    "handler for %s (%p)\n", ad->ad_name, ad->ad_handle);
+
+	return false;
+}
+
+void
+acpi_deregister_notify(struct acpi_devnode *ad)
+{
+
+	ad->ad_notify = NULL;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.3 2010/04/14 19:27:28 jruoho Exp $ */
+/*	$NetBSD: vald_acpi.c,v 1.4 2010/04/15 07:02:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.3 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.4 2010/04/15 07:02:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,12 +235,11 @@ vald_acpi_attach(device_t parent, device_t self, void *aux)
 	vald_acpi_libright_set(sc, LIBRIGHT_HOLD);
 
 	/* enable vald notify */
-	AcpiEvaluateObject(sc->sc_node->ad_handle, "ENAB", NULL, NULL);
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, vald_acpi_notify_handler, sc);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self, "can't install DEVICE NOTIFY handler: %s\n",
-		    AcpiFormatException(rv));
+	rv = AcpiEvaluateObject(sc->sc_node->ad_handle, "ENAB", NULL, NULL);
+
+	if (ACPI_SUCCESS(rv))
+		(void)acpi_register_notify(sc->sc_node,
+		    vald_acpi_notify_handler);
 }
 
 /*
@@ -251,7 +250,10 @@ vald_acpi_attach(device_t parent, device_t self, void *aux)
 static void
 vald_acpi_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 {
-	struct vald_acpi_softc *sc = context;
+	struct vald_acpi_softc *sc;
+	device_t self = context;
+
+	sc = device_private(self);
 
 	switch (notify) {
 
