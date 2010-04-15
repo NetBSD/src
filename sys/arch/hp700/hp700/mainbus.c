@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.64 2010/04/02 15:24:18 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.65 2010/04/15 14:33:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.64 2010/04/02 15:24:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.65 2010/04/15 14:33:22 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1594,7 +1594,7 @@ mbprint(void *aux, const char *pnp)
 		aprint_normal(" hpa 0x%lx path ", ca->ca_hpa);
 		for (n = 0 ; n < 6 ; n++) {
 			if ( ca->ca_dp.dp_bc[n] >= 0)
-				printf( "%d/", ca->ca_dp.dp_bc[n]);
+				aprint_normal( "%d/", ca->ca_dp.dp_bc[n]);
 		}
 		aprint_normal( "%d", ca->ca_dp.dp_mod);
 		if (!pnp && ca->ca_irq >= 0) {
