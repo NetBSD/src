@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.47 2010/04/14 17:12:14 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.48 2010/04/15 07:02:24 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -54,9 +54,7 @@
 #include <dev/sysmon/sysmonvar.h>
 
 /*
- * acpibus_attach_args:
- *
- *	This structure is used to attach the ACPI "bus".
+ * This structure is used to attach the ACPI "bus".
  */
 struct acpibus_attach_args {
 	bus_space_tag_t aa_iot;		/* PCI I/O space tag */
@@ -73,13 +71,15 @@ struct acpibus_attach_args {
 #define ACPI_DEVICE_WAKEUP		__BIT(1)
 
 /*
- * acpi_devnode:
+ * An ACPI device node.
  *
- *	An ACPI device node.
+ * Note that this is available for all nodes, meaning that e.g.
+ * the device_t (ad_device) may be NULL for unattached devices.
  */
 struct acpi_devnode {
 	device_t		 ad_device;	/* Device */
 	device_t		 ad_parent;	/* Backpointer to the parent */
+	ACPI_NOTIFY_HANDLER	 ad_notify;	/* Device notify */
 	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
 	ACPI_HANDLE		 ad_handle;	/* Device handle */
 	char			 ad_name[5];	/* Device name */
@@ -91,9 +91,7 @@ struct acpi_devnode {
 };
 
 /*
- * acpi_softc:
- *
- *	Software state of the ACPI subsystem.
+ * Software state of the ACPI subsystem.
  */
 struct acpi_softc {
 	device_t sc_dev;		/* base device info */
@@ -246,6 +244,10 @@ int		acpi_probe(void);
 int		acpi_check(device_t, const char *);
 
 ACPI_PHYSICAL_ADDRESS	acpi_OsGetRootPointer(void);
+
+bool		acpi_register_notify(struct acpi_devnode *,
+				     ACPI_NOTIFY_HANDLER);
+void		acpi_deregister_notify(struct acpi_devnode *);
 
 ACPI_STATUS	acpi_resource_parse(device_t, ACPI_HANDLE, const char *,
 		    void *, const struct acpi_resource_parse_ops *);

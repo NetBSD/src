@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.13 2010/04/14 19:27:28 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.14 2010/04/15 07:02:24 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.13 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.14 2010/04/15 07:02:24 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -154,44 +154,29 @@ acpi_dalb_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpi_dalb_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	ACPI_STATUS rv;
 
 	aprint_naive("\n");
 	aprint_normal(": Direct Application Launch Button\n");
 
-	sc->sc_node = aa->aa_node;
 	sc->sc_dev = self;
+	sc->sc_node = aa->aa_node;
 
 	config_interrupts(self, acpi_dalb_init);
 
-	/* Install notify handler */
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-		ACPI_ALL_NOTIFY, acpi_dalb_notify_handler, self);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self,
-			"couldn't install notify handler: (%s)\n",
-			AcpiFormatException(rv));
+	(void)pmf_device_register(self, NULL, acpi_dalb_resume);
+	(void)acpi_register_notify(sc->sc_node, acpi_dalb_notify_handler);
 
 	sc->sc_smpsw_valid = false;
 	acpi_dalb_sysmon_init(sc);
-
-	if (!pmf_device_register(self, NULL, acpi_dalb_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
 acpi_dalb_detach(device_t self, int flags)
 {
 	struct acpi_dalb_softc *sc = device_private(self);
-	ACPI_STATUS rv;
-
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, acpi_dalb_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
 
 	pmf_device_deregister(self);
+	acpi_deregister_notify(sc->sc_node);
 	sysmon_pswitch_unregister(&sc->sc_smpsw);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.3 2010/04/09 04:48:23 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.4 2010/04/15 07:02:24 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.3 2010/04/09 04:48:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.4 2010/04/15 07:02:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -129,8 +129,8 @@ static void        acpi_wmi_dump(struct acpi_wmi_softc *);
 
 static ACPI_STATUS acpi_wmi_guid_get(struct acpi_wmi_softc *,
                                      const char *, struct wmi_t **);
-static ACPI_STATUS acpi_wmi_event_add(struct acpi_wmi_softc *);
-static ACPI_STATUS acpi_wmi_event_del(struct acpi_wmi_softc *);
+static void	   acpi_wmi_event_add(struct acpi_wmi_softc *);
+static void	   acpi_wmi_event_del(struct acpi_wmi_softc *);
 static void        acpi_wmi_event_handler(ACPI_HANDLE, uint32_t, void *);
 static bool        acpi_wmi_suspend(device_t, const pmf_qual_t *);
 static bool        acpi_wmi_resume(device_t, const pmf_qual_t *);
@@ -178,23 +178,20 @@ acpi_wmi_attach(device_t parent, device_t self, void *aux)
 	acpi_wmi_dump(sc);
 #endif
 
-	(void)acpi_wmi_event_add(sc);
-	(void)pmf_device_register(self, acpi_wmi_suspend, acpi_wmi_resume);
+	acpi_wmi_event_add(sc);
 
 	sc->sc_child = config_found_ia(self, "acpiwmibus",
 	    NULL, acpi_wmi_print);
+
+	(void)pmf_device_register(self, acpi_wmi_suspend, acpi_wmi_resume);
 }
 
 static int
 acpi_wmi_detach(device_t self, int flags)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
-	ACPI_STATUS rv;
 
-	rv = acpi_wmi_event_del(sc);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
+	acpi_wmi_event_del(sc);
 
 	if (sc->sc_child != NULL)
 		(void)config_detach(sc->sc_child, flags);
@@ -411,20 +408,14 @@ acpi_wmi_guid_match(device_t self, const char *guid)
 /*
  * Adds internal event handler.
  */
-static ACPI_STATUS
+static void
 acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 {
 	struct wmi_t *wmi;
 	ACPI_STATUS rv;
 
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, acpi_wmi_event_handler, sc);
-
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(sc->sc_dev, "failed to install notify "
-		    "handler: %s\n", AcpiFormatException(rv));
-		return rv;
-	}
+	if (acpi_register_notify(sc->sc_node, acpi_wmi_event_handler) != true)
+		return;
 
 	/* Enable possible expensive events. */
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
@@ -444,27 +435,18 @@ acpi_wmi_event_add(struct acpi_wmi_softc *sc)
 			    "expensive WExx: %s\n", AcpiFormatException(rv));
 		}
 	}
-
-	return AE_OK;
 }
 
 /*
  * Removes the internal event handler.
  */
-static ACPI_STATUS
+static void
 acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 {
 	struct wmi_t *wmi;
 	ACPI_STATUS rv;
 
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, acpi_wmi_event_handler);
-
-	if (ACPI_FAILURE(rv)) {
-		aprint_debug_dev(sc->sc_dev, "failed to remove notify "
-		    "handler: %s\n", AcpiFormatException(rv));
-		return rv;
-	}
+	acpi_deregister_notify(sc->sc_node);
 
 	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
 
@@ -485,8 +467,6 @@ acpi_wmi_event_del(struct acpi_wmi_softc *sc)
 		aprint_error_dev(sc->sc_dev, "failed to disable "
 		    "expensive WExx: %s\n", AcpiFormatException(rv));
 	}
-
-	return AE_OK;
 }
 
 /*
@@ -538,7 +518,10 @@ acpi_wmi_event_get(device_t self, uint32_t event, ACPI_BUFFER *obuf)
 static void
 acpi_wmi_event_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 {
-	struct acpi_wmi_softc *sc = aux;
+	struct acpi_wmi_softc *sc;
+	device_t self = aux;
+
+	sc = device_private(self);
 
 	if (sc->sc_child == NULL)
 		return;

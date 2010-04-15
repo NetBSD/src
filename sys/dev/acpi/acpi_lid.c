@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.38 2010/04/14 19:27:28 jruoho Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.39 2010/04/15 07:02:24 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.38 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.39 2010/04/15 07:02:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -99,7 +99,6 @@ acpilid_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpilid_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	ACPI_STATUS rv;
 
 	aprint_naive(": ACPI Lid Switch\n");
 	aprint_normal(": ACPI Lid Switch\n");
@@ -111,27 +110,16 @@ acpilid_attach(device_t parent, device_t self, void *aux)
 
 	(void)pmf_device_register(self, NULL, NULL);
 	(void)sysmon_pswitch_register(&sc->sc_smpsw);
-
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpilid_notify_handler, self);
-
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self, "failed to register notify handler\n");
+	(void)acpi_register_notify(sc->sc_node, acpilid_notify_handler);
 }
 
 static int
 acpilid_detach(device_t self, int flags)
 {
 	struct acpilid_softc *sc = device_private(self);
-	ACPI_STATUS rv;
-
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpilid_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
 
 	pmf_device_deregister(self);
+	acpi_deregister_notify(sc->sc_node);
 	sysmon_pswitch_unregister(&sc->sc_smpsw);
 
 	return 0;

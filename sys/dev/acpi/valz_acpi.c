@@ -1,4 +1,4 @@
-/*	$NetBSD: valz_acpi.c,v 1.2 2010/04/14 19:27:28 jruoho Exp $	*/
+/*	$NetBSD: valz_acpi.c,v 1.3 2010/04/15 07:02:24 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valz_acpi.c,v 1.2 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valz_acpi.c,v 1.3 2010/04/15 07:02:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,15 @@ valz_attach(device_t parent, device_t self, void *aux)
 	if(!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_UP,
 	    valz_pmf_brightness_increase, false))
 		aprint_error_dev(self, "failed to register event handler\n");
-		
+
+	/*
+	 * XXX: This is broken.
+	 *
+	 *	It claims resources that do not belong to it.
+	 *
+	 *	It either prevents an ACPI video driver for
+	 *	receiving events or duplicates the notifications.
+	 */
 	rv = AcpiInstallNotifyHandler(sc->sc_lcd, ACPI_DEVICE_NOTIFY,
 		valz_lcd_notify_handler, sc);
 	if (ACPI_FAILURE(rv))

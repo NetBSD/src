@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.99 2010/04/14 19:27:28 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.100 2010/04/15 07:02:24 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.99 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.100 2010/04/15 07:02:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -217,7 +217,6 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpibat_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	ACPI_STATUS rv;
 
 	aprint_naive(": ACPI Battery\n");
 	aprint_normal(": ACPI Battery\n");
@@ -234,16 +233,8 @@ acpibat_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_condvar, device_xname(self));
 
-	if (pmf_device_register(self, NULL, acpibat_resume) != true)
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, acpibat_notify_handler, self);
-
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self, "couldn't install notify handler\n");
-		return;
-	}
+	(void)pmf_device_register(self, NULL, acpibat_resume);
+	(void)acpi_register_notify(sc->sc_node, acpibat_notify_handler);
 
 	sc->sc_sensor = kmem_zalloc(ACPIBAT_COUNT *
 	    sizeof(*sc->sc_sensor), KM_SLEEP);
@@ -263,13 +254,8 @@ static int
 acpibat_detach(device_t self, int flags)
 {
 	struct acpibat_softc *sc = device_private(self);
-	ACPI_STATUS rv;
 
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, acpibat_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
+	acpi_deregister_notify(sc->sc_node);
 
 	cv_destroy(&sc->sc_condvar);
 	mutex_destroy(&sc->sc_mutex);

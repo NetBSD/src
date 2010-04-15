@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.42 2010/03/05 14:00:16 jruoho Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.43 2010/04/15 07:02:24 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.42 2010/03/05 14:00:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.43 2010/04/15 07:02:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,7 +105,6 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpiacad_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
-	ACPI_STATUS rv;
 
 	aprint_naive(": ACPI AC Adapter\n");
 	aprint_normal(": ACPI AC Adapter\n");
@@ -114,6 +113,7 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 	sc->sc_status = -1;
 	sc->sc_node = aa->aa_node;
 
+	acpiacad_init_envsys(self);
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_smpsw.smpsw_name = device_xname(self);
@@ -121,12 +121,7 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 
 	(void)sysmon_pswitch_register(&sc->sc_smpsw);
 	(void)pmf_device_register(self, NULL, acpiacad_resume);
-
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, acpiacad_notify_handler, self);
-
-	if (ACPI_SUCCESS(rv))
-		acpiacad_init_envsys(self);
+	(void)acpi_register_notify(sc->sc_node, acpiacad_notify_handler);
 }
 
 /*
@@ -138,13 +133,8 @@ static int
 acpiacad_detach(device_t self, int flags)
 {
 	struct acpiacad_softc *sc = device_private(self);
-	ACPI_STATUS rv;
 
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, acpiacad_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
+	acpi_deregister_notify(sc->sc_node);
 
 	mutex_destroy(&sc->sc_mutex);
 
