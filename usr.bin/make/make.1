@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.169 2010/04/07 06:45:21 wiz Exp $
+.\"	$NetBSD: make.1,v 1.170 2010/04/15 03:48:39 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd April 6, 2010
+.Dd April 14, 2010
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -945,6 +945,10 @@ safely through recursive invocations of
 .Nm .
 .It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
+.It Cm \&:tA
+Attempt to convert variable to an absolute path using
+.Xr realpath 3 ,
+if that fails, the value is unchanged.
 .It Cm \&:tl
 Converts variable to lower-case letters.
 .It Cm \&:ts Ns Ar c
@@ -954,6 +958,7 @@ This modifier sets the separator to the character
 If
 .Ar c
 is omitted, then no separator is used.
+The common escapes (including octal numeric codes), work as expected.
 .It Cm \&:tu
 Converts variable to upper-case letters.
 .It Cm \&:tW
