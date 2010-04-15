@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.3 2010/01/12 19:37:18 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.4 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,13 +38,12 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.3 2010/01/12 19:37:18 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.4 2010/04/15 00:55:57 christos Exp $");
 #endif /* not lint && not SCCSID */
 #include "el.h"
 #include <stdlib.h>
 
 #define CT_BUFSIZ 1024
-
 
 #ifdef WIDECHAR
 protected void
@@ -177,8 +176,8 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 }
 
 
-private size_t
-enc_width(Char c)
+protected size_t
+ct_enc_width(Char c)
 {
 	/* UTF-8 encoding specific values */
 	if (c < 0x80)
@@ -197,7 +196,7 @@ protected ssize_t
 ct_encode_char(char *dst, size_t len, Char c)
 {
 	ssize_t l = 0;
-	if (len < enc_width(c))
+	if (len < ct_enc_width(c))
 		return -1;
 	l = ct_wctomb(dst, c);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.4 2010/01/03 18:27:10 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.5 2010/04/15 00:55:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -186,6 +186,7 @@ protected Char **ct_decode_argv(int, const char *[],  ct_buffer_t *);
 /* Resizes the conversion buffer(s) if needed. */
 protected void ct_conv_buff_resize(ct_buffer_t *, size_t, size_t);
 protected ssize_t ct_encode_char(char *, size_t, Char);
+protected size_t ct_enc_width(Char);
 
 #define ct_free_argv(s)	el_free(s)
 
