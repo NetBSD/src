@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.7 2009/01/20 18:20:48 drochner Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.8 2010/04/15 12:35:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,9 +83,7 @@ emitheader(FILE *fp)
 	autogen_comment(fp, "devsw.c");
 
 	fputs("#include <sys/param.h>\n"
-		  "#include <sys/conf.h>\n"
-		  "\n#define\tDEVSW_ARRAY_SIZE(x)\t"
-		  "(sizeof((x))/sizeof((x)[0]))\n", fp);
+		  "#include <sys/conf.h>\n", fp);
 }
 
 /*
@@ -122,8 +120,8 @@ emitdevm(FILE *fp)
 
 	fputs("};\n\nconst struct bdevsw **bdevsw = bdevsw0;\n", fp);
 
-	fputs("const int sys_bdevsws = DEVSW_ARRAY_SIZE(bdevsw0);\n"
-		  "int max_bdevsws = DEVSW_ARRAY_SIZE(bdevsw0);\n", fp);
+	fputs("const int sys_bdevsws = __arraycount(bdevsw0);\n"
+		  "int max_bdevsws = __arraycount(bdevsw0);\n", fp);
 
 	fputs("\n/* device switch table for character device */\n", fp);
 
@@ -149,8 +147,8 @@ emitdevm(FILE *fp)
 
 	fputs("};\n\nconst struct cdevsw **cdevsw = cdevsw0;\n", fp);
 
-	fputs("const int sys_cdevsws = DEVSW_ARRAY_SIZE(cdevsw0);\n"
-		  "int max_cdevsws = DEVSW_ARRAY_SIZE(cdevsw0);\n", fp);
+	fputs("const int sys_cdevsws = __arraycount(cdevsw0);\n"
+		  "int max_cdevsws = __arraycount(cdevsw0);\n", fp);
 }
 
 /*
@@ -169,7 +167,7 @@ emitconv(FILE *fp)
 	}
 	fputs("};\n\n"
 		  "struct devsw_conv *devsw_conv = devsw_conv0;\n"
-		  "int max_devsw_convs = DEVSW_ARRAY_SIZE(devsw_conv0);\n",
+		  "int max_devsw_convs = __arraycount(devsw_conv0);\n",
 		  fp);
 }
 
