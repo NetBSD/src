@@ -1,4 +1,4 @@
-.\" $NetBSD: cgd.4,v 1.15 2010/04/15 08:28:41 jruoho Exp $
+.\" $NetBSD: cgd.4,v 1.16 2010/04/15 09:56:56 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ pseudo-device   cgd     4       # cryptographic disk driver
 .Ed
 .Pp
 The count argument defines how many
-.Nm Ns
+.Nm
 devices may be configured at a time.
 .Ss Encryption Algorithms
 Currently the following cryptographic algorithms are supported:
@@ -106,7 +106,7 @@ is reasonably unpredictable.
 This is the default method used by
 .Xr cgdconfig 8
 when configuring a new
-.Nm Ns .
+.Nm .
 .It Ic encblkno8
 This is the original
 .Tn IV
