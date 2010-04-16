@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.302 2010/04/01 14:31:51 tls Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.303 2010/04/16 03:13:03 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.302 2010/04/01 14:31:51 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.303 2010/04/16 03:13:03 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1657,6 +1657,9 @@ after_listen:
 	}
 
 	if (TCP_ECN_ALLOWED(tp)) {
+		if (tiflags & TH_CWR) {
+			tp->t_flags &= ~TF_ECN_SND_ECE;
+		}
 		switch (iptos & IPTOS_ECN_MASK) {
 		case IPTOS_ECN_CE:
 			tp->t_flags |= TF_ECN_SND_ECE;
@@ -1669,10 +1672,6 @@ after_listen:
 			/* XXX: ignore for now -- rpaulo */
 			break;
 		}
-
-		if (tiflags & TH_CWR)
-			tp->t_flags &= ~TF_ECN_SND_ECE;
-
 		/*
 		 * Congestion experienced.
 		 * Ignore if we are already trying to recover.
