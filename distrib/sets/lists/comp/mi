@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1432 2010/04/13 17:34:18 jruoho Exp $
+#	$NetBSD: mi,v 1.1433 2010/04/16 20:08:51 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8695,6 +8695,7 @@
 ./usr/share/man/cat9/bus_space_copy_region_4.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_space_copy_region_8.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_space_free.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bus_space_is_equal.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_space_map.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_space_mmap.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bus_space_read_1.0		comp-sys-catman		.cat
@@ -14398,6 +14399,7 @@
 ./usr/share/man/html9/bus_space_copy_region_4.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bus_space_copy_region_8.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bus_space_free.html	comp-sys-htmlman	html
+./usr/share/man/html9/bus_space_is_equal.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bus_space_map.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bus_space_mmap.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bus_space_read_1.html	comp-sys-htmlman	html
@@ -20212,6 +20214,7 @@
 ./usr/share/man/man9/bus_space_copy_region_4.9	comp-sys-man		.man
 ./usr/share/man/man9/bus_space_copy_region_8.9	comp-sys-man		.man
 ./usr/share/man/man9/bus_space_free.9		comp-sys-man		.man
+./usr/share/man/man9/bus_space_is_equal.9	comp-sys-man		.man
 ./usr/share/man/man9/bus_space_map.9		comp-sys-man		.man
 ./usr/share/man/man9/bus_space_mmap.9		comp-sys-man		.man
 ./usr/share/man/man9/bus_space_read_1.9		comp-sys-man		.man
