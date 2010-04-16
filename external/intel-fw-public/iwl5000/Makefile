@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2009/03/29 14:22:24 christos Exp $
+# $NetBSD: Makefile,v 1.3 2010/04/16 01:43:08 christos Exp $
 
 NOMAN=	# define
 
 FILES=	dist/LICENSE.iwlwifi-5000-ucode dist/README.iwlwifi-5000-ucode \
-	dist/iwlwifi-5000-1.ucode
+	dist/iwlwifi-5000-2.ucode
 
 FILESDIR=	/libdata/firmware/if_iwn
 
