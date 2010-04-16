@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.2 2009/03/28 16:16:02 christos Exp $
+# $NetBSD: Makefile,v 1.3 2010/04/16 01:43:07 christos Exp $
 
-SUBDIR+=	ipw3945 iwl4965 iwl5000
+SUBDIR+=	ipw3945 iwl4965 iwl5000 iwl5150
 
 .include <bsd.subdir.mk>
