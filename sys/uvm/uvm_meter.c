@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.51 2010/04/11 01:53:03 mrg Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.52 2010/04/16 03:21:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.51 2010/04/11 01:53:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.52 2010/04/16 03:21:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -59,71 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.51 2010/04/11 01:53:03 mrg Exp $");
 int maxslp = MAXSLP;	/* patchable ... */
 struct loadavg averunnable;
 
-/*
- * constants for averages over 1, 5, and 15 minutes when sampling at
- * 5 second intervals.
- */
-
-static const fixpt_t cexp[3] = {
-	0.9200444146293232 * FSCALE,	/* exp(-1/12) */
-	0.9834714538216174 * FSCALE,	/* exp(-1/60) */
-	0.9944598480048967 * FSCALE,	/* exp(-1/180) */
-};
-
-/*
- * prototypes
- */
-
-static void uvm_loadav(struct loadavg *);
 static void uvm_total(struct vmtotal *);
-
-/*
- * uvm_meter: calculate load average.
- */
-void
-uvm_meter(void)
-{
-	static int count;
-
-	if (++count >= 5) {
-		count = 0;
-		uvm_loadav(&averunnable);
-	}
-}
-
-/*
- * uvm_loadav: compute a tenex style load average of a quantity on
- * 1, 5, and 15 minute intervals.
- */
-static void
-uvm_loadav(struct loadavg *avg)
-{
-	int i, nrun;
-	struct lwp *l;
-
-	nrun = 0;
-
-	mutex_enter(proc_lock);
-	LIST_FOREACH(l, &alllwp, l_list) {
-		if ((l->l_flag & (LW_SINTR | LW_SYSTEM)) != 0)
-			continue;
-		switch (l->l_stat) {
-		case LSSLEEP:
-			if (l->l_slptime > 1)
-				continue;
-		/* fall through */
-		case LSRUN:
-		case LSONPROC:
-		case LSIDL:
-			nrun++;
-		}
-	}
-	mutex_exit(proc_lock);
-
-	for (i = 0; i < 3; i++)
-		avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
-		    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
-}
 
 /*
  * sysctl helper routine for the vm.vmmeter node.
