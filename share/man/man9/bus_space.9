@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.39 2010/04/05 18:24:24 dyoung Exp $
+.\" $NetBSD: bus_space.9,v 1.40 2010/04/16 20:05:37 dyoung Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 5, 2010
+.Dd April 16, 2010
 .Dt BUS_SPACE 9
 .Os
 .Sh NAME
@@ -38,7 +38,9 @@
 .Nm bus_space_copy_region_4 ,
 .Nm bus_space_copy_region_8 ,
 .Nm bus_space_free ,
+.Nm bus_space_is_equal ,
 .Nm bus_space_map ,
+.Nm bus_space_mmap ,
 .Nm bus_space_peek_1 ,
 .Nm bus_space_peek_2 ,
 .Nm bus_space_peek_4 ,
@@ -78,7 +80,6 @@
 .Nm bus_space_subregion ,
 .Nm bus_space_unmap ,
 .Nm bus_space_vaddr ,
-.Nm bus_space_mmap ,
 .Nm bus_space_write_1 ,
 .Nm bus_space_write_2 ,
 .Nm bus_space_write_4 ,
@@ -106,6 +107,8 @@
 .Nd bus space manipulation functions
 .Sh SYNOPSIS
 .In sys/bus.h
+.Ft bool
+.Fn bus_space_is_equal "bus_space_tag_t space1" "bus_space_tag_t space2"
 .Ft int
 .Fn bus_space_map "bus_space_tag_t space" "bus_addr_t address" \
 "bus_size_t size" "int flags" "bus_space_handle_t *handlep"
@@ -540,6 +543,20 @@ Its contents are machine-dependent and should be considered opaque by
 machine-independent code.
 This type is used when performing bus space access operations.
 .El
+.Sh COMPARING BUS SPACE TAGS
+To check whether or not one
+.Fa bus_space_tag_t
+refers to the same space as another in machine-independent code,
+do not use either
+.Xr memcmp 9
+or the C equals
+.Po
+==
+.Pc
+operator.
+Use
+.Fn bus_space_is_equal ,
+instead.
 .Sh MAPPING AND UNMAPPING BUS SPACE
 Bus space must be mapped before it can be used, and should be
 unmapped when it is no longer needed.
