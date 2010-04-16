@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.74 2010/03/24 00:39:07 macallan Exp $
+#	$NetBSD: INSTALL,v 1.75 2010/04/16 13:48:35 pooka Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -594,7 +594,7 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont
