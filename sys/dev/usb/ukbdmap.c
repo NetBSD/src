@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.27 2010/04/16 11:05:37 ahoka Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.28 2010/04/16 11:29:06 ahoka Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.27 2010/04/16 11:05:37 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.28 2010/04/16 11:29:06 ahoka Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -625,7 +625,7 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	ukbd_keydesc_sg_nodead),
 	KBD_MAP(KB_SF,			KB_SG,	ukbd_keydesc_sf),
 	KBD_MAP(KB_SF | KB_NODEAD,	KB_SF,	ukbd_keydesc_sg_nodead),
-	KBD_MAP(KB_HU,			KB_HU,	ukbd_keydesc_hu),
+	KBD_MAP(KB_HU,			KB_US,	ukbd_keydesc_hu),
 	{0, 0, 0, 0}
 };
 
