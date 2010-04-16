@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2010/03/07 09:39:43 plunky Exp $
+# $NetBSD: GENERIC,v 1.24 2010/04/16 13:48:32 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.23 $"
+#ident          "GENERIC-$Revision: 1.24 $"
 
 maxusers	16		# estimated number of users
 
@@ -431,7 +431,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files

@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.13 2010/03/07 09:39:42 plunky Exp $
+#	$NetBSD: PMPPC,v 1.14 2010/04/16 13:48:31 pooka Exp $
 #
 #	PMPPC
 #
@@ -431,7 +431,7 @@ radio*	at radiodev?
 audio*	at audiobus?
 
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback

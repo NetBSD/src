@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.41 2010/03/07 09:39:42 plunky Exp $
+#	$NetBSD: TS7200,v 1.42 2010/04/16 13:48:30 pooka Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -444,7 +444,7 @@ ugen*	at uhub? port ?
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
