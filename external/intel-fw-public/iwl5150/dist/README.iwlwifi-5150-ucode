@@ -1,7 +1,7 @@
-Intel Wireless WiFi Link 5100AGN, 5300AGN, and 5350AGN Adapter
+Intel Wireless WiFi Link 5150AGN Adapter
 Copyright (C) 2006-2009 Intel Corporation.  All rights reserved.
 
-Microcode Package README.iwlwifi-5000-ucode
+Microcode Package README.iwlwifi-5150-ucode
 
 INDEX
 
@@ -12,7 +12,7 @@ INDEX
 
 1. OVERVIEW
 
-The file iwlwifi-5000-2.ucode provided in this package must be 
+The file iwlwifi-5150-2.ucode provided in this package must be 
 present on your system in order for the Intel Wireless WiFi Link
 AGN driver for Linux (iwlagn) to operate on your system.
 
@@ -30,7 +30,7 @@ interest given the current operating mode of the device.
 
 2. INSTALLATION
 
-The iwlagn driver will look for the file iwlwifi-5000-2.ucode using the 
+The iwlagn driver will look for the file iwlwifi-5150-2.ucode using the 
 kernel's firmware_loader infrastructure.  In order to function 
 correctly, you need to have this support enabled in your kernel.  When 
 you configure the kernel, you can find this option in the following 
@@ -68,16 +68,16 @@ If it lists more than one directory, you only need to put the
 microcode in one of them.  In the above example, installation is 
 simply:
 
-	% cp iwlwifi-5000-2.ucode /lib/firmware
+	% cp iwlwifi-5150-2.ucode /lib/firmware
 
 You can now load the driver (see the INSTALL and README.iwlwifi provided with
 the iwlwifi package for information on building and using that driver.)
 
 3. LICENSE
 
-The microcode in this package (iwlwifi-5000-2.ucode) is provided under the 
+The microcode in this package (iwlwifi-5150-2.ucode) is provided under the 
 terms of the following license (available in the file 
-LICENSE.iwlwifi-5000-ucode):
+LICENSE.iwlwifi-5150-ucode):
 
 Copyright (c) 2006-2009, Intel Corporation.
 All rights reserved.
