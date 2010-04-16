@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.979 2010/04/10 17:55:25 jruoho Exp $
+# $NetBSD: GENERIC,v 1.980 2010/04/16 13:48:32 pooka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.979 $"
+#ident 		"GENERIC-$Revision: 1.980 $"
 
 maxusers	64		# estimated number of users
 
@@ -1503,7 +1503,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk
