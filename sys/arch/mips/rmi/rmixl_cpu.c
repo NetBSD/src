@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.9 2010/03/29 23:34:57 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.10 2010/04/16 23:50:30 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.9 2010/03/29 23:34:57 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.10 2010/04/16 23:50:30 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -74,8 +74,8 @@ void		cpu_rmixl_hatch(struct cpu_info *);
 #if 0
 static void	cpu_setup_trampoline_ipi(struct device *, struct cpu_info *);
 #endif
-static void	cpu_setup_trampoline_callback(struct device *, struct cpu_info *);
-static void	cpu_setup_trampoline_fmn(struct device *, struct cpu_info *);
+static int	cpu_setup_trampoline_common(struct cpu_info *, struct rmixl_cpu_trampoline_args *);
+static void	cpu_setup_trampoline_callback(struct cpu_info *);
 #ifdef DEBUG
 void		rmixl_cpu_data_print(struct cpu_data *);
 struct cpu_info *
@@ -145,10 +145,8 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 
 		switch (psb_type) {
 		case PSB_TYPE_RMI:
-			cpu_setup_trampoline_callback(self, ci);
-			break;
 		case PSB_TYPE_DELL:
-			cpu_setup_trampoline_fmn(self, ci);
+			cpu_setup_trampoline_callback(ci);
 			break;
 		default:
 			aprint_error(": psb type=%s cpu_wakeup unsupported\n",
@@ -248,93 +246,10 @@ cpu_rmixl_hatch(struct cpu_info *ci)
 		rmixl_fmn_init_core();
 }
 
-#ifdef NOTYET
-static void
-cpu_setup_trampoline_ipi(struct device *self, struct cpu_info *ci)
+static int
+cpu_setup_trampoline_common(struct cpu_info *ci, struct rmixl_cpu_trampoline_args *ta)
 {
-	volatile struct rmixlfw_cpu_wakeup_info *wip;
-	u_int cpu, core, thread;
-	uint32_t ipi;
-	int32_t addr;
-	uint64_t gp;
-	uint64_t sp;
-	uint32_t mask;
-	volatile uint32_t *maskp;
-	__cpu_simple_lock_t *llk;
-	volatile uint32_t *xflag;			/* ??? */
-	extern void rmixl_cpu_trampoline(void *);
-
-	cpu = ci->ci_cpuid;
-	core = cpu >> 2;
-	thread = cpu & __BITS(1,0);
-printf("\n%s: cpu %d, core %d, thread %d\n", __func__, cpu, core, thread);
-
-	wip = &rmixl_configuration.rc_cpu_wakeup_info[cpu];
-printf("%s: wip %p\n", __func__, wip);
-
-	llk = (__cpu_simple_lock_t *)(intptr_t)wip->loader_lock;
-printf("%s: llk %p: %#x\n", __func__, llk, *llk);
-
-	/* XXX WTF */
-	xflag = (volatile uint32_t *)(intptr_t)(wip->loader_lock + 0x2c);
-printf("%s: xflag %p, %#x\n", __func__, xflag, *xflag);
-
-	ipi = (thread << RMIXL_PIC_IPIBASE_ID_THREAD_SHIFT)
-	    | (core << RMIXL_PIC_IPIBASE_ID_CORE_SHIFT)
-	    | RMIXLFW_IPI_WAKEUP;
-printf("%s: ipi %#x\n", __func__, ipi);
-
-	/* entry addr must be uncached, use KSEG1 */
-	addr = (int32_t)MIPS_PHYS_TO_KSEG1(
-			MIPS_KSEG0_TO_PHYS(rmixl_cpu_trampoline));
-printf("%s: addr %#x\n", __func__, addr);
-
-	__asm__ volatile("move	%0, $gp\n" : "=r"(gp));
-printf("%s: gp %#"PRIx64"\n", __func__, gp);
-
-	sp = (256 * 1024) - 32;			/* XXX TMP FIXME */
-	sp = MIPS_PHYS_TO_KSEG1(sp);
-printf("%s: sp %#"PRIx64"\n", __func__, sp);
-
-	maskp = (uint32_t *)(intptr_t)wip->global_wakeup_mask;
-printf("%s: maskp %p\n", __func__, maskp);
-
-	__cpu_simple_lock(llk);
-printf("%s: llk %p: %#x\n", __func__, llk, *llk);
-
-	wip->entry.addr = addr;
-	wip->entry.args = 0;
-if (0) {
-	wip->entry.sp = sp;
-	wip->entry.gp = gp;
-}
-
-	mask = *maskp;
-	mask |= 1 << cpu;
-	*maskp = mask;
-
-#if 0
-	*xflag = mask;	/* XXX */
-#endif
-
-	RMIXL_IOREG_WRITE(RMIXL_PIC_IPIBASE, ipi);
-
-	__cpu_simple_unlock(llk);
-printf("%s: llk %p: %#x\n", __func__, llk, *llk);
-
-	Debugger();
-}
-#endif	/* NOTYET */
-
-
-static void
-cpu_setup_trampoline_callback(struct device *self, struct cpu_info *ci)
-{
-	void (*wakeup_cpu)(void *, void *, unsigned int);
-	extern void rmixl_cpu_trampoline(void *);
-	extern void rmixlfw_wakeup_cpu(void *, void *, u_int64_t, void *);
 	struct lwp *l = ci->ci_data.cpu_idlelwp;
-	struct rmixl_cpu_trampoline_args *ta = &rmixl_cpu_trampoline_args;
 	uintptr_t stacktop;
  
 #ifdef DIAGNOSTIC
@@ -364,7 +279,7 @@ cpu_setup_trampoline_callback(struct device *self, struct cpu_info *ci)
 	 * to avoid TLB fault in trampoline when loading args.
 	 *
 	 * Note:
-	 *   RMI firmware only passes the lower half of 'ta'
+	 *   RMI firmware only passes the lower 32-bit half of 'ta'
 	 *   to rmixl_cpu_trampoline (the upper half is clear)
 	 *   so rmixl_cpu_trampoline must reconstruct the missing upper half
 	 *   rmixl_cpu_trampoline "knows" to use MIPS_KSEG0_START
@@ -373,7 +288,7 @@ cpu_setup_trampoline_callback(struct device *self, struct cpu_info *ci)
 	KASSERT(MIPS_KSEG0_P(ta));
 
 	/*
-	 * marshall args for rmixl_cpu_trampoline,
+	 * marshal args for rmixl_cpu_trampoline;
 	 * note for non-LP64 kernel, use of intptr_t
 	 * forces sign extension of 32 bit pointers
 	 */
@@ -383,6 +298,24 @@ cpu_setup_trampoline_callback(struct device *self, struct cpu_info *ci)
 	ta->ta_lwp = (uint64_t)(intptr_t)l;
 	ta->ta_cpuinfo = (uint64_t)(intptr_t)ci;
 
+#ifdef DEBUG
+	printf("%s: sp %#"PRIx64", lwp %#"PRIx64", ci %#"PRIx64"\n",
+		__func__, ta->ta_sp, ta->ta_lwp, ta->ta_cpuinfo);
+#endif
+
+	return 0;
+}
+
+static void
+cpu_setup_trampoline_callback(struct cpu_info *ci)
+{
+	void (*wakeup_cpu)(void *, void *, unsigned int);
+	struct rmixl_cpu_trampoline_args *ta = &rmixl_cpu_trampoline_args;
+	extern void rmixl_cpu_trampoline(void *);
+	extern void rmixlfw_wakeup_cpu(void *, void *, u_int64_t, void *);
+ 
+	cpu_setup_trampoline_common(ci, ta);
+
 #if _LP64
 	wakeup_cpu = (void *)rmixl_configuration.rc_psb_info.wakeup;
 #else
@@ -390,37 +323,15 @@ cpu_setup_trampoline_callback(struct device *self, struct cpu_info *ci)
 		(rmixl_configuration.rc_psb_info.wakeup & 0xffffffff);
 #endif
 
-	rmixlfw_wakeup_cpu(rmixl_cpu_trampoline, (void *)ta,
-		1 << ci->ci_cpuid, wakeup_cpu);
-}
-
-static void
-cpu_setup_trampoline_fmn(struct device *self, struct cpu_info *ci)
-{
-#ifdef NOTYET
-	rmixl_fmn_msg_t msg;
-	intptr_t sp;
-	extern void rmixl_cpu_trampoline(void *);
-	static const uint64_t argv[4] = { 0x1234,  0x2345, 0x3456, 0x4567 };	/* XXX TMP */
-
-	sp = (intptr_t)malloc(4096, M_DEVBUF, M_NOWAIT);
-	if (sp == 0)
-		panic("%s: cannot malloc size 4096", __func__);
-
-	msg.data[0] = (uint64_t)sp + 4096 - 32;
-	msg.data[1] = (uint64_t)sp;
-	msg.data[2] = (uint64_t)rmixl_cpu_trampoline;
-	msg.data[3] = (uint64_t)argv;		/* XXX TMP DEBUG */
-
-	msg.data[0] |= 0xffffffff00000000ULL;
-	msg.data[1] |= 0xffffffff00000000ULL;
-	msg.data[2] |= 0xffffffff00000000ULL;
-	msg.data[3] |= 0xffffffff00000000ULL;
-
-	rmixl_fmn_msg_send(4, RMIXL_FMN_CODE_PSB_WAKEUP,
-		RMIXL_FMN_CORE_DESTID(ci->ci_cpuid, 0), &msg);	/* XXX FIXME */
+#ifdef DEBUG
+	printf("%s:%d: %p, %#"PRIx64"\n", __func__, __LINE__,
+		ta, (uint64_t)1 << ci->ci_cpuid);
 #endif
+
+	rmixlfw_wakeup_cpu(rmixl_cpu_trampoline, (void *)ta,
+		(uint64_t)1 << ci->ci_cpuid, wakeup_cpu);
 }
+
 
 #ifdef DEBUG
 void
