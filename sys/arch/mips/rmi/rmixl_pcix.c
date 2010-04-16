@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.3 2010/04/12 22:42:07 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.4 2010/04/16 23:44:17 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.3 2010/04/12 22:42:07 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.4 2010/04/16 23:44:17 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -316,7 +316,7 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 	sc->sc_64bit_dmat = obio->obio_64bit_dmat;
 	sc->sc_tmsk = obio->obio_tmsk;
 
-	aprint_normal(" RMI XLR PCI-X Interface\n");
+	aprint_normal(": RMI XLR PCI-X Interface\n");
 
 	rmixl_pcix_intcfg(sc);
 
@@ -351,13 +351,23 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 		hbar_size |= (uint64_t)hbar_size_hi << 32;
 	}
 	if ((hbar_addr != 0) || (hbar_size < mem_cluster_maxaddr)) {
-		printf("%s: HostBAR0 addr %#x, size %#x\n",
-			device_xname(self), hbar_addr_lo, hbar_size_lo);
+		aprint_error_dev(self, "HostBAR0 addr %#x, size %#x\n",
+			hbar_addr_lo, hbar_size_lo);
 		if ((hbar_size_lo & PCI_MAPREG_MEM_TYPE_64BIT) != 0)
-			printf("%s: HostBAR1 addr %#x, size %#x\n",
-				device_xname(self), hbar_addr_hi, hbar_size_hi);
-		panic("PCI-X Host BAR does not cover RAM range 0..%#"PRIx64,
-			mem_cluster_maxaddr);
+			aprint_error_dev(self, "HostBAR1 addr %#x, size %#x\n",
+				hbar_addr_hi, hbar_size_hi);
+		aprint_error_dev(self, "WARNING: firmware PCI-X setup error: "
+			"RAM %#"PRIx64"..%#"PRIx64" not accessible by Host BAR, "
+			"enabling DMA bounce buffers\n",
+			hbar_size, mem_cluster_maxaddr-1);
+
+		/* force use of bouce buffers for uncovered RAM */
+		if (hbar_size < ((uint64_t)1 << 32)) {
+			sc->sc_64bit_dmat = NULL;
+			sc->sc_32bit_dmat->_bounce_alloc_hi = hbar_size;
+		} else {
+			sc->sc_64bit_dmat->_bounce_alloc_hi = hbar_size;
+		}
 	}
 
 	/*
@@ -531,8 +541,7 @@ rmixl_pcix_init(rmixl_pcix_softc_t *sc)
 	 */
 	struct rmixl_config *rcp = &rmixl_configuration;
 
-	aprint_normal("%s: configuring PCI bus\n",
-		device_xname(sc->sc_dev));
+	aprint_normal_dev(sc->sc_dev, "%s: configuring PCI bus\n");
 
 	ioext  = extent_create("pciio",
 		rcp->rc_pci_io_pbase,
