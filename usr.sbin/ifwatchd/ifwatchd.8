@@ -1,4 +1,4 @@
-.\" $NetBSD: ifwatchd.8,v 1.26 2010/04/16 13:47:50 jmcneill Exp $
+.\" $NetBSD: ifwatchd.8,v 1.27 2010/04/16 13:56:45 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -172,13 +172,13 @@ The next example is for dhclient users.
 .Ed
 .Pp
 With the above command, the carrier-detect script will be invoked when
-a carrier is detected on the interface 
+a carrier is detected on the interface
 .Ar tlp0 .
 Note that the
-.Ar -i 
+.Fl i
 flag prevents any action based on the initial state.
 A script like the following should work for most users, although it
-will not work for machines with multiple interfaces running 
+will not work for machines with multiple interfaces running
 .Cm dhclient .
 .Bd -literal -offset indent
 #! /bin/sh
