@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.65 2010/04/15 07:02:24 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.66 2010/04/16 01:52:54 christos Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.65 2010/04/15 07:02:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.66 2010/04/16 01:52:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -509,30 +509,38 @@ acpitz_get_zone(void *opaque, int verbose)
 	acpitz_sane_temp(&sc->sc_zone.psv);
 
 	if (verbose != 0) {
+		int comma = 0;
+
 		aprint_verbose_dev(dv, "");
 
-		if (sc->sc_zone.crt != ATZ_TMP_INVALID)
+		if (sc->sc_zone.crt != ATZ_TMP_INVALID) {
 			aprint_verbose("critical %s C",
 			    acpitz_celcius_string(sc->sc_zone.crt));
+			comma = 1;
+		}
 
-		if (sc->sc_zone.hot != ATZ_TMP_INVALID)
-			aprint_verbose(" hot %s C",
+		if (sc->sc_zone.hot != ATZ_TMP_INVALID) {
+			aprint_verbose("%shot %s C", comma ? ", " : "",
 			    acpitz_celcius_string(sc->sc_zone.hot));
+			comma = 1;
+		}
 
-		if (sc->sc_zone.psv != ATZ_TMP_INVALID)
-			aprint_normal(" passive %s C",
+		if (sc->sc_zone.psv != ATZ_TMP_INVALID) {
+			aprint_normal("%spassive %s C", comma ? ", " : "",
 			    acpitz_celcius_string(sc->sc_zone.psv));
-	}
+			comma = 1;
+		}
 
-	if (valid_levels == 0) {
-		sc->sc_flags |= ATZ_F_PASSIVEONLY;
+		if (valid_levels == 0) {
+			sc->sc_flags |= ATZ_F_PASSIVEONLY;
 
-		if (sc->sc_first)
-			aprint_verbose(", passive cooling");
-	}
+			if (sc->sc_first)
+				aprint_verbose("%spassive cooling", comma ?
+				    ", " : "");
+		}
 
-	if (verbose != 0)
 		aprint_verbose("\n");
+	}
 
 	for (i = 0; i < ATZ_NLEVELS; i++)
 		acpitz_sane_temp(&sc->sc_zone.ac[i]);

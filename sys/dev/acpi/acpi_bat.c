@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.100 2010/04/15 07:02:24 jruoho Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.101 2010/04/16 01:52:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.100 2010/04/15 07:02:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.101 2010/04/16 01:52:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -424,7 +424,7 @@ out:
 static void
 acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 {
-	const char *tech, *unit = "Wh";
+	const char *tech, *unit;
 	int i;
 
 	for (i = ACPIBAT_BIF_OEM; i > ACPIBAT_BIF_GRANULARITY2; i--) {
@@ -437,18 +437,30 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 	}
 
 	tech = (elm[ACPIBAT_BIF_TECHNOLOGY].Integer.Value != 0) ?
-	    "secondary (rechargeable)" : "primary (non-rechargeable)";
+	    "rechargeable" : "non-rechargeable";
 
-	if ((elm[ACPIBAT_BIF_UNIT].Integer.Value & ACPIBAT_PWRUNIT_MA) != 0)
-		unit = "Ah";
-
-	aprint_normal_dev(dv, "%s %s %s battery\n", tech,
+	aprint_normal_dev(dv, "%s %s %s battery\n",
 	    elm[ACPIBAT_BIF_OEM].String.Pointer,
-	    elm[ACPIBAT_BIF_TYPE].String.Pointer);
+	    elm[ACPIBAT_BIF_TYPE].String.Pointer, tech);
 
-	aprint_verbose_dev(dv, "serial number %s, model number %s\n",
-	    elm[ACPIBAT_BIF_SERIAL].String.Pointer,
-	    elm[ACPIBAT_BIF_MODEL].String.Pointer);
+	if (elm[ACPIBAT_BIF_SERIAL].String.Pointer[0] ||
+	    elm[ACPIBAT_BIF_MODEL].String.Pointer[0]) {
+		int comma;
+		aprint_verbose_dev(dv, "");
+
+		if (elm[ACPIBAT_BIF_SERIAL].String.Pointer[0]) {
+			aprint_verbose("serial number %s",
+			    elm[ACPIBAT_BIF_SERIAL].String.Pointer);
+			comma = 1;
+		} else
+			comma = 0;
+
+		if (elm[ACPIBAT_BIF_MODEL].String.Pointer[0])
+			aprint_verbose("%smodel number %s",
+			    comma ? ", " : "",
+			    elm[ACPIBAT_BIF_MODEL].String.Pointer);
+		aprint_verbose("\n");
+	}
 
 #define SCALE(x) (((int)x) / 1000000), ((((int)x) % 1000000) / 1000)
 
@@ -463,8 +475,12 @@ acpibat_print_info(device_t dv, ACPI_OBJECT *elm)
 	 * Granularity 2.	"Battery capacity granularity between warning
 	 *			 and full in [mAh] or [mWh]. [...]"
 	 */
-	aprint_verbose_dev(dv,
-	    "granularity 1. %d.%03d %s, granularity 2. %d.%03d %s\n",
+	if ((elm[ACPIBAT_BIF_UNIT].Integer.Value & ACPIBAT_PWRUNIT_MA) != 0)
+		unit = "Ah";
+	else
+		unit = "Wh";
+	aprint_verbose_dev(dv, "low->warn granularity: %d.%03d%s, "
+	    "warn->full granularity: %d.%03d%s\n",
 	    SCALE(elm[ACPIBAT_BIF_GRANULARITY1].Integer.Value * 1000), unit,
 	    SCALE(elm[ACPIBAT_BIF_GRANULARITY2].Integer.Value * 1000), unit);
 }
