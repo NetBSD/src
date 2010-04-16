@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.15 2010/04/05 07:19:33 joerg Exp $	*/
+/*	$NetBSD: bwi.c,v 1.16 2010/04/16 18:59:51 dyoung Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.15 2010/04/05 07:19:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.16 2010/04/16 18:59:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.15 2010/04/05 07:19:33 joerg Exp $");
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/endian.h>
 
 #include <dev/firmload.h>
