@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.99 2010/04/10 02:29:25 tsutsui Exp $
+# $NetBSD: ATARITT,v 1.100 2010/04/16 13:48:29 pooka Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -87,7 +87,7 @@ pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device ccd 4 # concatenating disk driver
-pseudo-device fss 4 # file system snapshot device
+pseudo-device fss  # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
