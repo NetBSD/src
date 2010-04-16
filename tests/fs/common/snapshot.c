@@ -1,4 +1,4 @@
-/*	$NetBSD: snapshot.c,v 1.1 2010/04/13 10:19:25 pooka Exp $	*/
+/*	$NetBSD: snapshot.c,v 1.2 2010/04/16 14:05:32 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -13,12 +13,15 @@
 #include <string.h>
 #include <unistd.h>
 
+#define USE_ATF
+#ifdef USE_ATF
 ATF_TC_WITH_CLEANUP(snapshot);
 ATF_TC_HEAD(snapshot, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "basic snapshot features");
 }
+#endif
 
 static void
 makefile(const char *path)
@@ -31,7 +34,11 @@ makefile(const char *path)
 	rump_sys_close(fd);
 }
 
+#ifdef USE_ATF
 ATF_TC_BODY(snapshot, tc)
+#else
+int main(int argc, char *argv[])
+#endif
 {
 	char buf[1024];
 	struct fss_set fss;
@@ -108,6 +115,7 @@ ATF_TC_BODY(snapshot, tc)
 	/* done for now */
 }
 
+#ifdef USE_ATF
 ATF_TC_CLEANUP(snapshot, tc)
 {
 
@@ -119,3 +127,4 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, snapshot);
 	return 0;
 }
+#endif
