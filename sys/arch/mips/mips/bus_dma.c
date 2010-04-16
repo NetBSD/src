@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.14 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.15 2010/04/16 23:42:25 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.14 2010/01/20 06:58:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.15 2010/04/16 23:42:25 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,10 +784,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		minlen = ulmin(len, seg->ds_len - offset);
 
 #ifdef BUS_DMA_DEBUG
-		printf("bus_dmamap_sync: flushing segment %d "
-		    "(0x%"PRIxVADDR"+%"PRIxBUSADDR
-		    ", 0x%"PRIxVADDR"+0x%"PRIxBUSADDR
-		    ") (olen = %"PRIxBUSADDR")...", i,
+		printf("bus_dmamap_sync: flushing segment %p "
+		    "(0x%"PRIxBUSADDR"+%"PRIxBUSADDR
+		    ", 0x%"PRIxBUSADDR"+0x%"PRIxBUSADDR
+		    ") (olen = %"PRIxBUSADDR")...", seg,
 		    vaddr - offset, offset,
 		    vaddr - offset, offset + minlen - 1, len);
 #endif
@@ -1018,8 +1018,8 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * If we're only mapping 1 segment, use K0SEG, to avoid
 	 * TLB thrashing.
 	 */
-	if (nsegs == 1) {
 #ifdef _LP64
+	if (nsegs == 1) {
 		if (((mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) == 0)
 		&&  (flags & BUS_DMA_COHERENT))
 			*kvap = (void *)MIPS_PHYS_TO_XKPHYS_UNCACHED(
@@ -1027,15 +1027,18 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		else
 			*kvap = (void *)MIPS_PHYS_TO_XKPHYS_CACHED(
 			    segs[0].ds_addr);
+		return 0;
+	}
 #else
+	if ((nsegs == 1) && (segs[0].ds_addr < MIPS_PHYS_MASK)) {
 		if (((mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) == 0)
 		&&  (flags & BUS_DMA_COHERENT))
 			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
 		else
 			*kvap = (void *)MIPS_PHYS_TO_KSEG0(segs[0].ds_addr);
-#endif
 		return (0);
 	}
+#endif	/* _LP64 */
 
 	size = round_page(size);
 
