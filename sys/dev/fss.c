@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.68 2010/04/13 07:58:54 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.69 2010/04/16 11:22:43 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.68 2010/04/13 07:58:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.69 2010/04/16 11:22:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,8 +196,10 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 		cf->cf_unit = minor(dev);
 		cf->cf_fstate = FSTATE_STAR;
 		sc = device_private(config_attach_pseudo(cf));
-		if (sc == NULL)
+		if (sc == NULL) {
+			mutex_exit(&fss_device_lock);
 			return ENOMEM;
+		}
 	}
 
 	mutex_enter(&sc->sc_slock);
