@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.62 2010/03/18 18:25:45 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.63 2010/04/16 11:51:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.62 2010/03/18 18:25:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.63 2010/04/16 11:51:23 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -395,6 +395,7 @@ SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
 void
 module_init_class(modclass_t class)
 {
+	TAILQ_HEAD(, module) bi_fail = TAILQ_HEAD_INITIALIZER(bi_fail);
 	module_t *mod;
 	modinfo_t *mi;
 
@@ -408,7 +409,16 @@ module_init_class(modclass_t class)
 			mi = mod->mod_info;
 			if (class != MODULE_CLASS_ANY && class != mi->mi_class)
 				continue;
-			(void)module_do_builtin(mi->mi_name, NULL);
+			/*
+			 * If initializing a builtin module fails, don't try
+			 * to load it again.  But keep it around and queue it
+			 * on the disabled list after we're done with module
+			 * init.
+			 */
+			if (module_do_builtin(mi->mi_name, NULL) != 0) {
+				TAILQ_REMOVE(&module_builtins, mod, mod_chain);
+				TAILQ_INSERT_TAIL(&bi_fail, mod, mod_chain);
+			}
 			break;
 		}
 	} while (mod != NULL);
@@ -427,6 +437,13 @@ module_init_class(modclass_t class)
 			break;
 		}
 	} while (mod != NULL);
+
+	/* failed builtin modules remain disabled */
+	while ((mod = TAILQ_FIRST(&bi_fail)) != NULL) {
+		TAILQ_REMOVE(&bi_fail, mod, mod_chain);
+		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
+	}
+
 	mutex_exit(&module_lock);
 }
 
