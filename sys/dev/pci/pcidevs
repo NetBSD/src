@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1026 2010/04/02 20:32:15 jakllsch Exp $
+$NetBSD: pcidevs,v 1.1027 2010/04/17 15:57:23 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2788,6 +2788,7 @@ product INTEL PRO_WL_5100AGN_1	0x4232	Pro/Wireless LAN 5100AGN Mini-PCI Adapter
 product INTEL PRO_WL_5300AGN_1	0x4235	Pro/Wireless LAN 5300AGN Mini-PCI Adapter
 product INTEL PRO_WL_5300AGN_2	0x4236	Pro/Wireless LAN 5300AGN Mini-PCI Adapter
 product INTEL PRO_WL_5100AGN_2	0x4237	Pro/Wireless LAN 5100AGN Mini-PCI Adapter
+product INTEL WIFI_LINK_6000_3X3_2	0x4238	Pro/Wireless LAN 6300AGN Mini-PCI Adapter
 product INTEL PRO_WL_5350AGN_1	0x423a	Pro/Wireless LAN 5350AGN Mini-PCI Adapter
 product INTEL PRO_WL_5350AGN_2	0x423b	Pro/Wireless LAN 5350AGN Mini-PCI Adapter
 product INTEL 80312_ATU		0x530d	80310 ATU
