@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat.c,v 1.1.1.7 2009/08/19 08:29:55 darrenr Exp $	*/
+/*	$NetBSD: ipnat.c,v 1.1.1.8 2010/04/17 20:44:56 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -67,7 +67,7 @@ extern	char	*sys_errlist[];
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24.2.12 2008/11/06 21:18:20 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipnat.c,v 1.24.2.13 2009/12/27 06:58:06 darrenr Exp";
 #endif
 
 
@@ -189,7 +189,6 @@ char *argv[];
 	if ((opts & OPT_DONOTHING) == 0) {
 		if (checkrev(IPL_NAME) == -1) {
 			fprintf(stderr, "User/kernel version check failed\n");
-			exit(1);
 		}
 	}
 
@@ -577,6 +576,6 @@ int fd;
 	obj.ipfo_type = IPFOBJ_STATETQTAB;
 
 	if (ioctl(fd, SIOCGTQTAB, &obj) == 0) {
-		printtqtable(table);      
+		printtqtable(table);
 	}
 }
