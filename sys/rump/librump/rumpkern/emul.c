@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.126 2010/04/14 14:49:05 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.127 2010/04/17 13:13:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.126 2010/04/14 14:49:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.127 2010/04/17 13:13:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -202,7 +202,7 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 	extern int hz;
 	int rv, error;
 	uint64_t sec, nsec;
-	
+
 	if (mtx)
 		mutex_exit(mtx);
 
@@ -217,13 +217,6 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 		return error;
 
 	return 0;
-}
-
-void
-suspendsched(void)
-{
-
-	/* we don't control scheduling currently, can't do anything now */
 }
 
 void
@@ -301,32 +294,6 @@ rump_delay(unsigned int us)
 	rumpuser_nanosleep(&sec, &nsec, &error);
 }
 void (*delay_func)(unsigned int) = rump_delay;
-
-bool
-kpreempt(uintptr_t where)
-{
-
-	return false;
-}
-
-/*
- * There is no kernel thread preemption in rump currently.  But call
- * the implementing macros anyway in case they grow some side-effects
- * down the road.
- */
-void
-kpreempt_disable(void)
-{
-
-	KPREEMPT_DISABLE(curlwp);
-}
-
-void
-kpreempt_enable(void)
-{
-
-	KPREEMPT_ENABLE(curlwp);
-}
 
 void
 proc_sesshold(struct session *ss)
