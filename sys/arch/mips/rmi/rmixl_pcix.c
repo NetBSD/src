@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.1.2.4 2010/04/16 23:44:17 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.1.2.5 2010/04/17 07:34:08 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.4 2010/04/16 23:44:17 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.1.2.5 2010/04/17 07:34:08 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -351,6 +351,8 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 		hbar_size |= (uint64_t)hbar_size_hi << 32;
 	}
 	if ((hbar_addr != 0) || (hbar_size < mem_cluster_maxaddr)) {
+		int error;
+
 		aprint_error_dev(self, "HostBAR0 addr %#x, size %#x\n",
 			hbar_addr_lo, hbar_size_lo);
 		if ((hbar_size_lo & PCI_MAPREG_MEM_TYPE_64BIT) != 0)
@@ -361,12 +363,24 @@ rmixl_pcix_attach(device_t parent, device_t self, void *aux)
 			"enabling DMA bounce buffers\n",
 			hbar_size, mem_cluster_maxaddr-1);
 
-		/* force use of bouce buffers for uncovered RAM */
+		/*
+		 * force use of bouce buffers for inaccessible RAM addrs
+		 */
 		if (hbar_size < ((uint64_t)1 << 32)) {
+			error = bus_dmatag_subregion(sc->sc_32bit_dmat,
+				0, (bus_addr_t)hbar_size, &sc->sc_32bit_dmat,
+				BUS_DMA_NOWAIT);
+			if (error)
+				panic("%s: failed to subregion 32-bit dma tag:"
+					 " error %d", __func__, error);
 			sc->sc_64bit_dmat = NULL;
-			sc->sc_32bit_dmat->_bounce_alloc_hi = hbar_size;
 		} else {
-			sc->sc_64bit_dmat->_bounce_alloc_hi = hbar_size;
+			error = bus_dmatag_subregion(sc->sc_64bit_dmat,
+				0, (bus_addr_t)hbar_size, &sc->sc_64bit_dmat,
+				BUS_DMA_NOWAIT);
+			if (error)
+				panic("%s: failed to subregion 64-bit dma tag:"
+					" error %d", __func__, error);
 		}
 	}
 
