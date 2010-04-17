@@ -287,9 +287,11 @@ How many times to query the verify(8) service for the completion
 of an address verification request in progress.
 </p>
 
-<p>
-The default poll count is 3.
-</p>
+<p> By default, the Postfix SMTP server polls the verify(8) service
+up to three times under non-overload conditions, and only once when
+under overload.  With Postfix version 2.5 and earlier, the SMTP
+server always polls the verify(8) service up to three times by
+default.  </p>
 
 <p>
 Specify 1 to implement a crude form of greylisting, that is, always
