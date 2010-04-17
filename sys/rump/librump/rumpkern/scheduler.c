@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.9 2010/01/25 18:37:51 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.10 2010/04/17 13:13:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.9 2010/01/25 18:37:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.10 2010/04/17 13:13:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.9 2010/01/25 18:37:51 pooka Exp $");
 #include <sys/namei.h>
 #include <sys/queue.h>
 #include <sys/select.h>
+#include <sys/systm.h>
 
 #include <rump/rumpuser.h>
 
@@ -268,4 +269,40 @@ preempt()
 {
 
 	yield();
+}
+
+bool
+kpreempt(uintptr_t where)
+{
+
+	return false;
+}
+
+/*
+ * There is no kernel thread preemption in rump currently.  But call
+ * the implementing macros anyway in case they grow some side-effects
+ * down the road.
+ */
+void
+kpreempt_disable(void)
+{
+
+	KPREEMPT_DISABLE(curlwp);
+}
+
+void
+kpreempt_enable(void)
+{
+
+	KPREEMPT_ENABLE(curlwp);
+}
+
+void
+suspendsched(void)
+{
+
+	/*
+	 * Could wait until everyone is out and block further entries,
+	 * but skip that for now.
+	 */
 }
