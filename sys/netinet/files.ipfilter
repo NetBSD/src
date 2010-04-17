@@ -1,4 +1,4 @@
-#	$NetBSD: files.ipfilter,v 1.10 2010/04/17 21:44:05 darrenr Exp $
+#	$NetBSD: files.ipfilter,v 1.11 2010/04/17 22:00:33 darrenr Exp $
 
 defflag	opt_ipfilter.h	IPFILTER_LOG		# logging of ip packets
 defflag	opt_ipfilter.h	IPFILTER_DEFAULT_BLOCK
@@ -20,6 +20,6 @@ file	dist/ipf/netinet/ip_proxy.c		ipfilter
 file	dist/ipf/netinet/ip_scan.c		ipfilter
 file	dist/ipf/netinet/ip_state.c		ipfilter
 file	dist/ipf/netinet/ip_sync.c		ipfilter
-file	dist/ipf/netient/ip_fil_compat.c	ipfilter & ipfilter_compat
+file	dist/ipf/netinet/ip_fil_compat.c	ipfilter & ipfilter_compat
 
 makeoptions	ipfilter	CPPFLAGS+="-I$S/dist/ipf"
