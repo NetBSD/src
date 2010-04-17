@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)swab.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: swab.3,v 1.10 2010/04/17 17:50:13 christos Exp $
+.\"	$NetBSD: swab.3,v 1.11 2010/04/17 17:57:39 christos Exp $
 .\"
 .Dd April 17, 2010
 .Dt SWAB 3
@@ -51,9 +51,17 @@ to the location referenced by
 .Fa dst ,
 swapping adjacent bytes.
 .Pp
-The argument
+If 
 .Fa len
-must be even number.
+is negative or zero
+.Nm
+does nothing.
+If
+.Fa len
+is odd,
+.Nm copies
+.Fa len - 1
+bytes and the disposition of the last byte is unspecified.
 .Sh SEE ALSO
 .Xr bzero 3 ,
 .Xr memset 3

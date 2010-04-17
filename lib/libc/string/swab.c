@@ -1,4 +1,4 @@
-/*	$NetBSD: swab.c,v 1.12 2003/08/07 16:43:53 agc Exp $	*/
+/*	$NetBSD: swab.c,v 1.13 2010/04/17 17:57:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)swab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: swab.c,v 1.12 2003/08/07 16:43:53 agc Exp $");
+__RCSID("$NetBSD: swab.c,v 1.13 2010/04/17 17:57:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -45,11 +45,16 @@ __RCSID("$NetBSD: swab.c,v 1.12 2003/08/07 16:43:53 agc Exp $");
 #include <unistd.h>
 
 void
-swab(const void *from, void *to, size_t len)
+swab(const void * __restrict from, void * __restrict to, ssize_t len)
 {
 	char temp;
 	const char *fp;
 	char *tp;
+
+	if (len & 1)
+		len--;
+	if (len <= 0)
+		return;
 
 	_DIAGASSERT(from != NULL);
 	_DIAGASSERT(to != NULL);
