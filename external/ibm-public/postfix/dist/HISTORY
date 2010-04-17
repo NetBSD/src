@@ -15274,3 +15274,67 @@ Apologies for any names omitted.
 
 	Bugfix: don't panic when an unexpected smtpd access map is
 	specified. File: smtpd/smtpd_check.c.
+
+20090918
+
+	Bugfix (introduced Postfix 2.3): with Milter RCPT TO replies
+	turned off, there was no automatic flush-before-read on the
+	smtpd-to-milter stream, because the read was done on the
+	cleanup-to-milter stream. Problem reported by Stephen Warren.
+	File: milter/milter8.c.
+
+20091005
+
+	Bugfix: core dump while printing error message for malformed
+	%<letter> sequence in LDAP, MySQL or PostgreSQL configuration.
+	File: global/db_common.c. Fix by Victor Duchovni.
+
+20091012
+
+	Bugfix: postmulti did not skip commands with -p.  Luca
+	Berra. File: postmulti/postmulti.c.
+
+20091026
+
+	Cleanup: changed parameter evaluation order so that the
+	multi_instance_wrapper parameter value is evaluated after
+	the command and daemon directory parameters. File:
+	global/mail_params.h.
+
+20091209
+
+	Bugfix: sender_dependent_relayhost_maps did not reject an
+	empty lookup result, and did not recognize lookup errors,
+	thus treating errors as "not found". Problem found during
+	code maintenance. File: trivial-rewrite/resolve.c.
+
+20091229
+
+	Cleanup: the address_verify_poll_count default parameter
+	value is now stress-dependent, so that the Postfix SMTP
+	server will not wait (up to 6 seconds) for the address
+	verification result. File: global/mail_params.h.
+
+20100107
+
+	Documentation: the access(5) manual page did not document
+	the "send 521 and disconnect" behavior in the Postfix SMTP
+	server. File: proto/access.
+
+	Bugfix: the pickup daemon did not discard messages that
+	were requeued after all recipients were delivered (or
+	bounced), and the cleanup server tried to bounce such
+	messages. Files: pickup/pickup.c, global/cleanup_user.h.
+
+20100115
+
+	Bugfix: the valid_hostname() fuction did not set the
+	"non-numeric" flag after encountering the '-' character.
+	Reported by Jan Schampera.  File: util/valid_hostname.c.
+
+20100116
+
+	Workaround: as of Postfix 2.3 the VRFY command did not allow
+	a mailbox address inside <>, which broke expectations.  RFC
+	2821 (and 5321) is vague about the VRFY request format, but
+	spends lots of text on the reply format.  File: smtpd/smtpd.c.

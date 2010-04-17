@@ -1,4 +1,4 @@
-/*	$NetBSD: valid_hostname.c,v 1.1.1.1 2009/06/23 10:09:01 tron Exp $	*/
+/*	$NetBSD: valid_hostname.c,v 1.1.1.2 2010/04/17 10:25:00 tron Exp $	*/
 
 /*++
 /* NAME
@@ -118,6 +118,7 @@ int     valid_hostname(const char *name, int gripe)
 	    }
 	    label_length = 0;
 	} else if (ch == '-') {
+	    non_numeric = 1;
 	    label_length++;
 	    if (label_length == 1 || cp[1] == 0 || cp[1] == '.') {
 		if (gripe)

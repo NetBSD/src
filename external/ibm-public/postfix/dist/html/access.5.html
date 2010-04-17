@@ -193,8 +193,23 @@ ACCESS(5)                                                            ACCESS(5)
               text.  <b>4</b><i>NN</i> means "try again later", while <b>5</b><i>NN</i> means
               "do not try again".
 
-              The reply code "421" causes Postfix  to  disconnect
-              immediately (Postfix version 2.3 and later).
+              The following responses have  special  meaning  for
+              the Postfix SMTP server:
+
+              <b>421</b> <i>text</i> (Postfix 2.3 and later)
+
+              <b>521</b> <i>text</i> (Postfix 2.6 and later)
+                     After  responding  with the numerical three-
+                     digit code and text, disconnect  immediately
+                     from  the  SMTP  client.  This frees up SMTP
+                     server resources so that they  can  be  made
+                     available to another SMTP client.
+
+                     Note: The "521" response should be used only
+                     with botnets and other malware where  inter-
+                     operability is of no concern.  The "send 521
+                     and disconnect" behavior is NOT  defined  in
+                     the SMTP standard.
 
        <b>REJECT</b> <i>optional text...</i>
               Reject  the  address etc. that matches the pattern.
