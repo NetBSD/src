@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.c,v 1.3 2004/03/28 09:00:55 martti Exp $	*/
+/*	$NetBSD: hpux.c,v 1.4 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * (C)opyright 1997-1998 Darren Reed. (from tcplog)
@@ -36,7 +36,7 @@ int	sport, tout;
 int	sendip(fd, pkt, len)
 int	fd, len;
 char	*pkt;
-{			
+{
 	if (send(fd, pkt, len, 0) == -1)
 	    {
 		perror("send");
@@ -92,7 +92,7 @@ int	sport, tout;
 int	sendip(fd, pkt, len)
 int	fd, len;
 char	*pkt;
-{			
+{
 	if (send(fd, pkt, len, 0) == -1)
 	    {
 		perror("send");
