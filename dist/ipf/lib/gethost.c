@@ -1,12 +1,12 @@
-/*	$NetBSD: gethost.c,v 1.1.1.3 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: gethost.c,v 1.1.1.4 2010/04/17 20:45:59 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 by Darren Reed.
- * 
- * See the IPFILTER.LICENCE file for details on licencing.  
- *   
- * Id: gethost.c,v 1.3.2.2 2006/06/16 17:20:59 darrenr Exp 
- */     
+ *
+ * See the IPFILTER.LICENCE file for details on licencing.
+ *
+ * Id: gethost.c,v 1.3.2.3 2009/12/27 06:58:06 darrenr Exp
+ */
 
 #include "ipf.h"
 
