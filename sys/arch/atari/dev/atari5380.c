@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.55 2010/04/13 13:30:37 tsutsui Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.56 2010/04/17 12:54:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.55 2010/04/13 13:30:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.56 2010/04/17 12:54:29 tsutsui Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -306,7 +306,7 @@ set_tt_5380_reg(u_short rnum, u_short val)
 	SCSI_5380->scsi_5380[(rnum << 1) | 1] = val;
 }
 
-extern inline void
+static inline void
 scsi_tt_ienable(void)
 {
 
@@ -315,7 +315,7 @@ scsi_tt_ienable(void)
 	single_inst_bset_b(MFP2->mf_imra, IA_SCSI);
 }
 
-extern inline void
+static inline void
 scsi_tt_idisable(void)
 {
 
@@ -324,7 +324,7 @@ scsi_tt_idisable(void)
 	single_inst_bclr_b(MFP2->mf_imra, IA_SCSI);
 }
 
-extern inline void
+static inline void
 scsi_tt_clr_ipend(void)
 {
 	int tmp;
@@ -718,21 +718,21 @@ set_falcon_5380_reg(u_short rnum, u_short val)
 	DMA->dma_data = val;
 }
 
-extern inline void
+static inline void
 scsi_falcon_ienable(void)
 {
 
 	single_inst_bset_b(MFP->mf_imrb, IB_DINT);
 }
 
-extern inline void
+static inline void
 scsi_falcon_idisable(void)
 {
 
 	single_inst_bclr_b(MFP->mf_imrb, IB_DINT);
 }
 
-extern inline void
+static inline void
 scsi_falcon_clr_ipend(void)
 {
 	int tmp;
@@ -741,7 +741,7 @@ scsi_falcon_clr_ipend(void)
 	rem_sicallback((si_farg)ncr_ctrl_intr);
 }
 
-extern inline int
+static inline int
 scsi_falcon_ipending(void)
 {
 
@@ -787,7 +787,7 @@ falcon_wrong_dma_range(SC_REQ *reqp, struct dma_chain *dm)
 
 static	int falcon_lock = 0;
 
-extern inline int
+static inline int
 falcon_claimed_dma(void)
 {
 
@@ -805,7 +805,7 @@ falcon_claimed_dma(void)
 	return 1;
 }
 
-extern inline void
+static inline void
 falcon_reconsider_dma(void)
 {
 
@@ -990,7 +990,7 @@ scsi_mach_init(struct ncr_softc *sc)
 	}
 }
 
-extern inline void
+static inline void
 scsi_ienable(void)
 {
 
@@ -1000,7 +1000,7 @@ scsi_ienable(void)
 		scsi_tt_ienable();
 }
 
-extern inline void
+static inline void
 scsi_idisable(void)
 {
 
@@ -1010,7 +1010,7 @@ scsi_idisable(void)
 		scsi_tt_idisable();
 }
 
-extern inline void
+static inline void
 scsi_clr_ipend(void)
 {
 
@@ -1020,7 +1020,7 @@ scsi_clr_ipend(void)
 		scsi_tt_clr_ipend();
 }
 
-extern inline int
+static inline int
 scsi_ipending(void)
 {
 
@@ -1030,7 +1030,7 @@ scsi_ipending(void)
 		return GET_TT_REG(NCR5380_DMSTAT) & SC_IRQ_SET;
 }
 
-extern inline void
+static inline void
 scsi_dma_setup(SC_REQ *reqp, u_int phase, uint8_t mbase)
 {
 
@@ -1040,7 +1040,7 @@ scsi_dma_setup(SC_REQ *reqp, u_int phase, uint8_t mbase)
 		scsi_tt_dmasetup(reqp, phase, mbase);
 }
 
-extern inline int
+static inline int
 wrong_dma_range(SC_REQ *reqp, struct dma_chain *dm)
 {
 
@@ -1050,7 +1050,7 @@ wrong_dma_range(SC_REQ *reqp, struct dma_chain *dm)
 		return tt_wrong_dma_range(reqp, dm);
 }
 
-extern inline int
+static inline int
 poll_edma(SC_REQ *reqp)
 {
 
@@ -1060,7 +1060,7 @@ poll_edma(SC_REQ *reqp)
 		return tt_poll_edma(reqp);
 }
 
-extern inline int
+static inline int
 get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 {
 
@@ -1070,7 +1070,7 @@ get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 		return tt_get_dma_result(reqp, bytes_left);
 }
 
-extern inline int
+static inline int
 can_access_5380(void)
 {
 
