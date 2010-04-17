@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.3 2010/04/17 10:29:18 tron Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -2554,7 +2554,7 @@ extern bool var_verify_neg_cache;
 extern char *var_verify_sender;
 
 #define VAR_VERIFY_POLL_COUNT		"address_verify_poll_count"
-#define DEF_VERIFY_POLL_COUNT		3
+#define DEF_VERIFY_POLL_COUNT		"${stress?1}${stress:3}"
 extern int var_verify_poll_count;
 
 #define VAR_VERIFY_POLL_DELAY		"address_verify_poll_delay"
