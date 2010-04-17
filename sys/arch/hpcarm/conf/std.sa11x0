@@ -1,0 +1,10 @@
+#	$NetBSD: std.sa11x0,v 1.1 2010/04/17 13:36:21 nonaka Exp $
+#
+# standard NetBSD/hpcarm options for SA-11x0 model
+
+include		"arch/hpcarm/conf/std.hpcarm"   # arch standard options
+
+# Pull in iPaq config definitions.
+include		"arch/hpcarm/conf/files.sa11x0"
+
+options 	__OLD_INTERRUPT_CODE
