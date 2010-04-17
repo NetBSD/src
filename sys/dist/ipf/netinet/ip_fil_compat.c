@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_compat.c,v 1.1.1.1 2010/04/17 21:36:56 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_compat.c,v 1.2 2010/04/17 22:04:00 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2010 by Darren Reed.
@@ -107,7 +107,7 @@ typedef	struct	frentry_4_1_16 {
 	int		fr_curpps;
 	union	{
 		void		*fru_data;
-		caddr_t		fru_caddr;
+		char		*fru_caddr;
 		fripf_t		*fru_ipf;
 		frentfunc_t	fru_func;
 	} fr_dun;
@@ -157,7 +157,7 @@ typedef	struct	frentry_4_1_0 {
 
 	union	{
 		void		*fru_data;
-		caddr_t		fru_caddr;
+		char		*fru_caddr;
 		fripf_t		*fru_ipf;
 		frentfunc_t	fru_func;
 	} fr_dun;
@@ -924,9 +924,6 @@ void *ptr;
 				break;
 			}
 			error = COPYIN(obj->ipfo_ptr, old, sizeof(*old));
-			if (error == 0)
-				/* ipstate_save_16_to_current(&old, ptr); */
-				;
 			KFREE(old);
 		} else {
 			ipstate_save_4_1_0_t *old;
@@ -937,9 +934,6 @@ void *ptr;
 				break;
 			}
 			error = COPYIN(obj->ipfo_ptr, old, sizeof(*old));
-			if (error == 0)
-				/* ipstate_save_0_to_current(&old, ptr); */
-				;
 			KFREE(old);
 		}
 		break;
