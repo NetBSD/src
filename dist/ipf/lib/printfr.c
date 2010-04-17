@@ -1,11 +1,11 @@
-/*	$NetBSD: printfr.c,v 1.1.1.8 2008/05/20 06:45:03 darrenr Exp $	*/
+/*	$NetBSD: printfr.c,v 1.1.1.9 2010/04/17 20:45:57 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printfr.c,v 1.43.2.20 2008/03/07 21:40:12 darrenr Exp
+ * Id: printfr.c,v 1.43.2.21 2009/12/27 06:58:06 darrenr Exp
  */
 
 #include "ipf.h"
@@ -443,7 +443,6 @@ ioctlfunc_t	iocfunc;
 			if (fp->fr_flags & FR_FRSTRICT)
 				printf("strict");
 			printf(")");
-				
 		}
 	}
 	if (fp->fr_isc != (struct ipscan *)-1) {
