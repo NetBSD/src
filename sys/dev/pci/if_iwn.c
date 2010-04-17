@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.40 2010/04/16 01:40:41 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.41 2010/04/17 15:57:22 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.88 2010/04/10 08:37:36 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.40 2010/04/16 01:40:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.41 2010/04/17 15:57:22 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -85,6 +85,7 @@ static const pci_product_id_t iwn_devices[] = {
 	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_2,
 	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_1,
 	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_2,
+	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2,
 #if 0
 /* XXX From new OpenBSD iwn driver (not in pcidevs) */
 	PCI_PRODUCT_INTEL_WIFI_LINK_4965_1,
@@ -100,7 +101,6 @@ static const pci_product_id_t iwn_devices[] = {
 	PCI_PRODUCT_INTEL_WIFI_LINK_1000_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_1000_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_1,
-	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1,
