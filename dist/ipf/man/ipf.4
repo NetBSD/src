@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.11 2004/03/28 09:00:56 martti Exp $
+.\"	$NetBSD: ipf.4,v 1.12 2010/04/17 21:00:09 darrenr Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -84,10 +84,10 @@ typedef struct  frentry {
         u_short fr_icmp;
 
         u_char  fr_scmp;        /* data for port comparisons */
-        u_char  fr_dcmp; 
+        u_char  fr_dcmp;
         u_short fr_dport;
         u_short fr_sport;
-        u_short fr_stop;        /* top port for <> and >< */ 
+        u_short fr_stop;        /* top port for <> and >< */
         u_short fr_dtop;        /* top port for <> and >< */
         u_32_t  fr_flags;       /* per-rule flags && options (see below) */
         u_short fr_skip;        /* # of rules to skip */
@@ -97,7 +97,7 @@ typedef struct  frentry {
         char    fr_ifname[IFNAMSIZ];
 #if BSD > 199306
         char    fr_oifname[IFNAMSIZ];
-#endif  
+#endif
         struct  frdest  fr_tif; /* "to" interface */
         struct  frdest  fr_dif; /* duplicate packet interfaces */
 } frentry_t;
@@ -138,7 +138,7 @@ Flags which are recognised in fr_flags:
      FR_NOTDSTIP     0x100000   /* not the dst IP# */
      FR_AUTH         0x200000   /* use authentication */
      FR_PREAUTH      0x400000   /* require preauthentication */
-	
+
 .fi
 .PP
 Values for fr_scomp and fr_dcomp (source and destination port value

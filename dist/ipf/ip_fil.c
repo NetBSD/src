@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.17 2009/08/19 08:35:30 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.18 2010/04/17 21:00:08 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.20 2008/07/27 08:27:04 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.133.2.21 2009/12/27 06:55:08 darrenr Exp";
 #endif
 
 #ifndef	SOLARIS
@@ -818,12 +818,12 @@ int ipfsync()
 }
 
 
-/*    
+/*
  * This function is not meant to be random, rather just produce a
  * sequence of numbers that isn't linear to show "randomness".
  */
 u_32_t
-ipf_random() 
+ipf_random()
 {
 	static int last = 0xa5a5a5a5;
 	static int calls = 0;

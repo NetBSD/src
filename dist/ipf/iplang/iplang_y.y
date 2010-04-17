@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_y.y,v 1.10 2007/04/14 20:34:19 martin Exp $	*/
+/*	$NetBSD: iplang_y.y,v 1.11 2010/04/17 21:00:08 darrenr Exp $	*/
 
 %{
 /*
@@ -6,7 +6,7 @@
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: iplang_y.y,v 2.9.2.5 2007/02/17 12:41:48 darrenr Exp
+ * Id: iplang_y.y,v 2.9.2.6 2009/12/27 06:53:15 darrenr Exp
  */
 
 #include <stdio.h>
@@ -604,7 +604,7 @@ struct	statetoopt	tosecopts[] = {
 #ifdef	bsdi
 struct ether_addr *
 ether_aton(s)
-	char *s;   
+	char *s;
 {
 	static struct ether_addr n;
 	u_int i[6];
@@ -1839,7 +1839,7 @@ u_long	init;
 {
 	u_long	sum = init;
 	int	nwords = len >> 1;
- 
+
 	for(; nwords > 0; nwords--)
 		sum += *buf++;
 	sum = (sum>>16) + (sum & 0xffff);
@@ -1854,7 +1854,7 @@ u_int	len;
 {
 	u_long	sum = 0;
 	int	nwords = len >> 1;
- 
+
 	for(; nwords > 0; nwords--)
 		sum += *buf++;
 	return sum;

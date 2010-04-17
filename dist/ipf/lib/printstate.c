@@ -1,4 +1,4 @@
-/*	$NetBSD: printstate.c,v 1.5 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: printstate.c,v 1.6 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.
@@ -138,7 +138,7 @@ u_long now;
 	/* a given; no? */
 	if (sp->is_pass & FR_KEEPSTATE) {
 		PRINTF(" keep state");
-		if (sp->is_pass & FR_STATESYNC)	
+		if (sp->is_pass & FR_STATESYNC)
 			PRINTF(" ( sync )");
 	}
 	PRINTF("\tIPv%d", sp->is_v);
@@ -175,7 +175,6 @@ u_long now;
 	if (sp->is_sync != NULL) {
 
 		if (kmemcpy((char *)&ipsync, (u_long)sp->is_sync, sizeof(ipsync))) {
-	
 			PRINTF("\tSync status: status could not be retrieved\n");
 			return NULL;
 		}
@@ -183,7 +182,6 @@ u_long now;
 		PRINTF("\tSync status: idx %d num %d v %d pr %d rev %d\n",
 			ipsync.sl_idx, ipsync.sl_num, ipsync.sl_v,
 			ipsync.sl_p, ipsync.sl_rev);
-		
 	} else {
 		PRINTF("\tSync status: not synchronized\n");
 	}

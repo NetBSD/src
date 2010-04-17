@@ -1,11 +1,11 @@
-/*	$NetBSD: ipft_td.c,v 1.3 2007/04/14 20:34:27 martin Exp $	*/
+/*	$NetBSD: ipft_td.c,v 1.4 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ipft_td.c,v 1.15.2.2 2006/06/16 17:21:03 darrenr Exp
+ * Id: ipft_td.c,v 1.15.2.3 2009/12/27 06:58:06 darrenr Exp
  */
 
 /*
@@ -42,7 +42,7 @@ tcpdump -nqte
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_td.c,v 1.15.2.2 2006/06/16 17:21:03 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipft_td.c,v 1.15.2.3 2009/12/27 06:58:06 darrenr Exp";
 #endif
 
 static	int	tcpd_open __P((char *));
@@ -130,12 +130,12 @@ int	cnt, *dir;
 		pkt.ti_sport = htons(atoi(s));
 		*--s = '.';
 		s = strrchr(dst, '.');
-	
+
 		*s++ = '\0';
 		(void) inet_aton(src, &ip->ip_dst);
 		pkt.ti_dport = htons(atoi(s));
 		*--s = '.';
-	
+
 	} else {
 		(void) inet_aton(src, &ip->ip_src);
 		(void) inet_aton(src, &ip->ip_dst);

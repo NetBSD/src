@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.19 2006/04/04 16:17:18 martti Exp $
+.\"	$NetBSD: ipnat.5,v 1.20 2010/04/17 21:00:09 darrenr Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -133,14 +133,14 @@ errors are generated as a response of another IP packet. IP Filter will take
 care that ICMP errors that are the response of a NAT-ed IP packet are
 handled properly.
 .PP
-For 4 types of ICMP queries (echo request, timestamp request, information 
+For 4 types of ICMP queries (echo request, timestamp request, information
 request and address mask request) IP Filter supports an additional mapping
 called "ICMP id mapping". All these 4 types of ICMP queries use a unique
 identifier called the ICMP id. This id is set by the process sending the
 ICMP query and it is usually equal to the process id. The receiver of the
 ICMP query will use the same id in its response, thus enabling the
 sender to recognize that the incoming ICMP reply is intended for him and is
-an answer to a query that he made. The "ICMP id mapping" feature modifies 
+an answer to a query that he made. The "ICMP id mapping" feature modifies
 these ICMP id in a way identical to \fBportmap\fP for TCP or UDP.
 .PP
 The reason that you might want this, is that using this feature you don't
@@ -153,7 +153,7 @@ not use the \fBicmpidmap\fP range that you specified in the \fBmap\fP rule.
 Since the ICMP id is usually the process id, it is wise to restrict the
 largest permittable process id (PID) on your operating system to e.g. 63999 and
 use the range 64000:65535 for ICMP id mapping. Changing the maximal PID is
-system dependent. For most BSD derived systems can be done by changing 
+system dependent. For most BSD derived systems can be done by changing
 PID_MAX in /usr/include/sys/proc.h and then rebuild the system.
 .SH KERNEL PROXIES
 .PP
