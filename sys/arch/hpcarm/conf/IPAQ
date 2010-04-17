@@ -1,9 +1,9 @@
-#	$NetBSD: IPAQ,v 1.59 2010/04/16 13:48:31 pooka Exp $
+#	$NetBSD: IPAQ,v 1.60 2010/04/17 13:36:21 nonaka Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
 
-include	"arch/hpcarm/conf/std.hpcarm"
+include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
