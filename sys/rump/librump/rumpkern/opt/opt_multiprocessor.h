@@ -1,1 +1,3 @@
-/*	$NetBSD: opt_multiprocessor.h,v 1.1 2007/08/08 09:06:13 pooka Exp $	*/
+/*	$NetBSD: opt_multiprocessor.h,v 1.2 2010/04/17 13:02:34 pooka Exp $	*/
+
+#define MULTIPROCESSOR 1
