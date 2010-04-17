@@ -1,4 +1,4 @@
-/*	$NetBSD: sirix.c,v 1.4 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: sirix.c,v 1.5 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed.
@@ -60,7 +60,7 @@ int	initdevice(char *device, int tout)
  * output an IP packet
  */
 int	sendip(int fd, char *pkt, int len)
-{			
+{
 	struct sockaddr_raw sr;
 	int srlen = sizeof(sr);
 	struct ifreq ifr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.23 2009/08/19 08:35:32 darrenr Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.24 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -348,7 +348,7 @@ toslist:
 	| YY_HEX	{ DOREM(fr->fr_tos = $1; fr->fr_mtos = 0xff;) }
 	| toslist lmore YY_NUMBER
 			{ DOREM(fr->fr_tos = $3; fr->fr_mtos = 0xff;) }
-	| toslist lmore YY_HEX	
+	| toslist lmore YY_HEX
 			{ DOREM(fr->fr_tos = $3; fr->fr_mtos = 0xff;) }
 	;
 
@@ -683,7 +683,7 @@ andwith:
 	| IPFY_AND			{ nowith = 0; setipftype(); }
 	;
 
-flags:	| startflags flagset	
+flags:	| startflags flagset
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = FR_TCPFMAX;) }
 	| startflags flagset '/' flagset
 		{ DOALL(fr->fr_tcpf = $2; fr->fr_tcpfm = $4;) }
@@ -775,10 +775,10 @@ fromport:
 
 srcportlist:
 	portnum		{ DOREM(fr->fr_scmp = FR_EQUAL; fr->fr_sport = $1;) }
-	| portnum ':' portnum	
+	| portnum ':' portnum
 			{ DOREM(fr->fr_scmp = FR_INCRANGE; fr->fr_sport = $1; \
 				fr->fr_stop = $3;) }
-	| portnum YY_RANGE_IN portnum	
+	| portnum YY_RANGE_IN portnum
 			{ DOREM(fr->fr_scmp = FR_INRANGE; fr->fr_sport = $1; \
 				fr->fr_stop = $3;) }
 	| srcportlist lmore portnum
@@ -853,10 +853,10 @@ toport:
 
 dstportlist:
 	portnum		{ DOREM(fr->fr_dcmp = FR_EQUAL; fr->fr_dport = $1;) }
-	| portnum ':' portnum	
+	| portnum ':' portnum
 			{ DOREM(fr->fr_dcmp = FR_INCRANGE; fr->fr_dport = $1; \
 				fr->fr_dtop = $3;) }
-	| portnum YY_RANGE_IN portnum	
+	| portnum YY_RANGE_IN portnum
 			{ DOREM(fr->fr_dcmp = FR_INRANGE; fr->fr_dport = $1; \
 				fr->fr_dtop = $3;) }
 	| dstportlist lmore portnum
@@ -922,6 +922,10 @@ ipaddr:	IPFY_ANY			{ bzero(&($$), sizeof($$));
 					  bcopy(&$1, &$$.a, sizeof($$.a)); }
 		maskspace		{ yysetdict(maskwords); }
 		ipv6mask		{ bcopy(&$5, &$$.m, sizeof($$.m));
+					  $$.a.i6[0] &= $$.m.i6[0];
+					  $$.a.i6[1] &= $$.m.i6[1];
+					  $$.a.i6[2] &= $$.m.i6[2];
+					  $$.a.i6[3] &= $$.m.i6[3];
 					  yyresetdict();
 					  yyexpectaddr = 0; }
 	;
@@ -1935,7 +1939,14 @@ char *phrase;
 
 #ifdef IPFILTER_BPF
 		bzero((char *)&bpf, sizeof(bpf));
+# ifdef DLT_IPv4
+		if (v == 4)
+			p = pcap_open_dead(DLT_IPv4, 1);
+		else if (v == 6)
+			p = pcap_open_dead(DLT_IPv6, 1);
+# else
 		p = pcap_open_dead(DLT_RAW, 1);
+# endif
 		if (!p) {
 			fprintf(stderr, "pcap_open_dead failed\n");
 			return;
@@ -2004,7 +2015,7 @@ alist_t *list;
 	top = calloc(1, sizeof(*top));
 	if (top == NULL)
 		return 0;
-	
+
 	for (n = top, a = list; (n != NULL) && (a != NULL); a = a->al_next) {
 		n->ipn_addr.adf_addr.in4.s_addr = a->al_1;
 		n->ipn_mask.adf_addr.in4.s_addr = a->al_2;
@@ -2041,7 +2052,7 @@ alist_t *list;
 	top = calloc(1, sizeof(*top));
 	if (top == NULL)
 		return 0;
-	
+
 	for (n = top, a = list; (n != NULL) && (a != NULL); a = a->al_next) {
 		n->ipe_addr.in4_addr = a->al_1;
 		n->ipe_mask.in4_addr = a->al_2;

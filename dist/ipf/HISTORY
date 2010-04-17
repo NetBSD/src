@@ -10,6 +10,30 @@
 # and especially those who have found the time to port IP Filter to new
 # platforms.
 #
+4.1.34 - Release 11 MArch 2010
+
+2964907 uninitialised use compile error
+
+2959506 ipfstat does not display rules with compat
+
+2949139 FR_T_BUILTIN masked out incorrectly
+
+2937422 packets filtered with pools should not be cached'
+
+2935529 use of rules with tags leads to deadlock
+
+2917501 whitespace cleanup required
+
+2898915 Does not build on newer FreeBSD
+
+2898337 Does not build on newer FreeBSD
+
+2881514 in/out  object functions not wired for compatibility
+
+2841771 ipf/ippool rule maintenace bugs: memory leak, ref-counter bug
+
+2839698 H.323 proxy does not clear fin_state/fin_nat
+
 4.1.33 - Release 16 August 2009
 
 2838417 tru64 compile is not error free

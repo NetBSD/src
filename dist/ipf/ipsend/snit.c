@@ -1,4 +1,4 @@
-/*	$NetBSD: snit.c,v 1.3 2004/03/28 09:00:56 martti Exp $	*/
+/*	$NetBSD: snit.c,v 1.4 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * (C)opyright 1992-1998 Darren Reed. (from tcplog)
@@ -41,7 +41,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)snit.c	1.5 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: snit.c,v 2.3 2001/06/09 17:09:26 darrenr Exp";
+static const char rcsid[] = "@(#)Id: snit.c,v 2.3.4.1 2009/12/27 06:53:15 darrenr Exp";
 #endif
 
 #define	CHUNKSIZE	8192
@@ -117,7 +117,7 @@ int	tout;
 int	sendip(fd, pkt, len)
 int	fd, len;
 char	*pkt;
-{			
+{
 	struct	sockaddr sk, *sa = &sk;
 	struct	strbuf	cbuf, *cp = &cbuf, dbuf, *dp = &dbuf;
 
