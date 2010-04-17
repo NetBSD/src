@@ -1,12 +1,12 @@
-/*	$NetBSD: var.c,v 1.5 2007/04/14 20:34:33 martin Exp $	*/
+/*	$NetBSD: var.c,v 1.6 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 by Darren Reed.
- * 
- * See the IPFILTER.LICENCE file for details on licencing.  
- *   
- * Id: var.c,v 1.4.2.3 2006/06/16 17:21:18 darrenr Exp 
- */     
+ *
+ * See the IPFILTER.LICENCE file for details on licencing.
+ *
+ * Id: var.c,v 1.4.2.4 2009/12/27 06:58:07 darrenr Exp
+ */
 
 #include <ctype.h>
 

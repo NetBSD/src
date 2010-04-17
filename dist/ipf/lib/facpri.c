@@ -1,11 +1,11 @@
-/*	$NetBSD: facpri.c,v 1.4 2007/04/14 20:34:23 martin Exp $	*/
+/*	$NetBSD: facpri.c,v 1.5 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2000-2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: facpri.c,v 1.6.2.5 2006/06/16 17:20:58 darrenr Exp
+ * Id: facpri.c,v 1.6.2.6 2009/12/27 06:58:06 darrenr Exp
  */
 
 #include <stdio.h>
@@ -22,7 +22,7 @@
 #include "facpri.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: facpri.c,v 1.6.2.5 2006/06/16 17:20:58 darrenr Exp";
+static const char rcsid[] = "@(#)Id: facpri.c,v 1.6.2.6 2009/12/27 06:58:06 darrenr Exp";
 #endif
 
 
@@ -96,7 +96,7 @@ fac_toname(facpri)
 /*
  * map a facility name to its number
  */
-int     
+int
 fac_findname(name)
 	char *name;
 {

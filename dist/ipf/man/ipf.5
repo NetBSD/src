@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.5,v 1.11 2006/04/04 16:17:18 martti Exp $
+.\"	$NetBSD: ipf.5,v 1.12 2010/04/17 21:00:09 darrenr Exp $
 .\"
 .TH IPF 5
 .SH NAME
@@ -93,7 +93,7 @@ facility = "kern" | "user" | "mail" | "daemon" | "auth" | "syslog" |
 	   "audit" | "logalert" | "local0" | "local1" | "local2" |
 	   "local3" | "local4" | "local5" | "local6" | "local7" .
 priority = "emerg" | "alert" | "crit" | "err" | "warn" | "notice" |
-	   "info" | "debug" . 
+	   "info" | "debug" .
 
 hexnumber = "0" "x" hexstring .
 hexstring = hexdigit [ hexstring ] .
@@ -157,7 +157,7 @@ it in parenthesis directly following \fBreturn-icmp\fP or
 Would return a Type-Of-Service (TOS) ICMP unreachable error.
 .TP
 .B pass
-will flag the packet to be let through the filter.  
+will flag the packet to be let through the filter.
 .TP
 .B log
 causes the packet to be logged (as described in the LOGGING section
@@ -265,7 +265,7 @@ construct a firewall that behaves transparently, like a filtering hub
 or switch, rather than a router. The \fBfastroute\fP keyword is a
 synonym for this option.
 .SH MATCHING PARAMETERS
-.PP 
+.PP
 The keywords described in this section are used to describe attributes
 of the packet to be used when determining whether rules match or don't
 match. The following general-purpose attributes are provided for
@@ -297,7 +297,7 @@ duplication of otherwise-identical rules.
 The \fBfrom\fP and \fBto\fP keywords are used to match against IP
 addresses (and optionally port numbers). Rules must specify BOTH
 source and destination parameters.
-.PP 
+.PP
 IP addresses may be specified in one of two ways: as a numerical
 address\fB/\fPmask, or as a hostname \fBmask\fP netmask.  The hostname
 may either be a valid hostname, from either the hosts file or DNS
@@ -450,7 +450,7 @@ following qualifiers may be used (in order):
 .TP
 .B body
 indicates that the first 128 bytes of the packet contents will be
-logged after the headers. 
+logged after the headers.
 .TP
 .B first
 If log is being used in conjunction with a "keep" option, it is recommended
@@ -464,7 +464,7 @@ interpreted as if the action was \fBblock\fP for this packet.
 .TP
 .B "level <loglevel>"
 indicates what logging facility and priority, or just priority with
-the default facility being used, will be used to log information about 
+the default facility being used, will be used to log information about
 this packet using ipmon's -s option.
 .PP
 See ipl(4) for the format of records written

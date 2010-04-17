@@ -1,12 +1,12 @@
-/*	$NetBSD: getproto.c,v 1.5 2008/05/20 07:08:07 darrenr Exp $	*/
+/*	$NetBSD: getproto.c,v 1.6 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.
- * 
- * See the IPFILTER.LICENCE file for details on licencing.  
- *   
- * Id: getproto.c,v 1.2.2.4 2007/10/27 16:03:38 darrenr Exp 
- */     
+ *
+ * See the IPFILTER.LICENCE file for details on licencing.
+ *
+ * Id: getproto.c,v 1.2.2.5 2009/12/27 06:58:06 darrenr Exp
+ */
 
 #include "ipf.h"
 

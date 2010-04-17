@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpf.c,v 1.7 2006/04/04 16:17:18 martti Exp $	*/
+/*	$NetBSD: sbpf.c,v 1.8 2010/04/17 21:00:09 darrenr Exp $	*/
 
 /*
  * (C)opyright 1995-1998 Darren Reed. (from tcplog)
@@ -49,7 +49,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)sbpf.c	1.3 8/25/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sbpf.c,v 2.5.4.1 2006/03/21 16:32:58 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sbpf.c,v 2.5.4.2 2009/12/27 06:53:15 darrenr Exp";
 #endif
 
 /*
@@ -146,7 +146,7 @@ int	tout;
 int	sendip(fd, pkt, len)
 int	fd, len;
 char	*pkt;
-{			
+{
 	if (write(fd, pkt, len) == -1)
 	    {
 		perror("send");
