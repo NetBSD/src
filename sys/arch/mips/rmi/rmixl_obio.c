@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio.c,v 1.1.2.15 2010/04/12 22:42:06 cliff Exp $	*/
+/*	$NetBSD: rmixl_obio.c,v 1.1.2.16 2010/04/17 07:33:33 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.15 2010/04/12 22:42:06 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio.c,v 1.1.2.16 2010/04/17 07:33:33 cliff Exp $");
 
 #include "locators.h"
 #include "pci.h"
@@ -186,12 +186,13 @@ obio_bus_init(struct obio_softc *sc)
 		rmixl_obio_el_bus_mem_init(&rcp->rc_obio_el_memt, rcp);
 
 	/* dma space for all memory, including >= 4GB */
-	if (rcp->rc_64bit_dmat._cookie == 0)
-		obio_dma_init_64(&rcp->rc_64bit_dmat);
+	if (rcp->rc_dma_tag._cookie == 0)
+		obio_dma_init_64(&rcp->rc_dma_tag);
+	rcp->rc_64bit_dmat = &rcp->rc_dma_tag;
 
 	/* dma space for addr < 4GB */
 	if (rcp->rc_32bit_dmat == NULL) {
-		error = bus_dmatag_subregion(&rcp->rc_64bit_dmat,
+		error = bus_dmatag_subregion(rcp->rc_64bit_dmat,
 		    0, (bus_addr_t)1 << 32, &rcp->rc_32bit_dmat, 0);
 		if (error)
 			panic("%s: failed to create 32bit dma tag: %d",
@@ -213,7 +214,7 @@ obio_bus_init(struct obio_softc *sc)
 	sc->sc_el_bst = (bus_space_tag_t)&rcp->rc_obio_el_memt;
 	sc->sc_29bit_dmat = rcp->rc_29bit_dmat;
 	sc->sc_32bit_dmat = rcp->rc_32bit_dmat;
-	sc->sc_64bit_dmat = &rcp->rc_64bit_dmat;
+	sc->sc_64bit_dmat = rcp->rc_64bit_dmat;
 }
 
 static void

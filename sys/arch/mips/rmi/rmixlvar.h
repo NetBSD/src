@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlvar.h,v 1.1.2.17 2010/04/07 19:24:13 cliff Exp $	*/
+/*	$NetBSD: rmixlvar.h,v 1.1.2.18 2010/04/17 07:33:33 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -124,7 +124,8 @@ struct rmixl_config {
 	struct mips_bus_space	 rc_pci_ecfg_memt; 	/* PCI ECFG */
 	struct mips_bus_space	 rc_pci_memt; 		/* PCI MEM */
 	struct mips_bus_space	 rc_pci_iot; 		/* PCI IO  */
-	struct mips_bus_dma_tag	 rc_64bit_dmat;
+	struct mips_bus_dma_tag	 rc_dma_tag;
+	bus_dma_tag_t		 rc_64bit_dmat;
 	bus_dma_tag_t		 rc_32bit_dmat;
 	bus_dma_tag_t		 rc_29bit_dmat;
 	struct extent		*rc_phys_ex;	/* Note: MB units */
