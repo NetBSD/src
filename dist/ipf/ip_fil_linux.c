@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_linux.c,v 1.1.1.8 2009/08/19 08:29:20 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_linux.c,v 1.1.1.9 2010/04/17 20:44:17 darrenr Exp $	*/
 
 #include <linux/version.h>
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,0)
@@ -384,6 +384,14 @@ struct sk_buff *sk, **skp;
 	fnew.fin_dp = (char *)ip + hlen;
 	(void) fr_makefrip(hlen, ip, &fnew);
 
+	if (fin->fin_fr != NULL && fin->fin_fr->fr_type == FR_T_IPF) {
+		frdest_t *fdp = &fin->fin_fr->fr_rif;
+
+		if ((fdp->fd_ifp != NULL) &&
+		    (fdp->fd_ifp != (struct ifnet *)-1))
+			return fr_fastroute(m, mpp, &fnew, fdp);
+	}
+
 	return fr_fastroute(sk, skp, &fnew, NULL);
 }
 
@@ -586,10 +594,10 @@ fr_info_t *fin;
 }
 
 
-/*  
- * xmin - pointer to mbuf where the IP packet starts  
- * mpp - pointer to the mbuf pointer that is the start of the mbuf chain  
- */  
+/*
+ * xmin - pointer to mbuf where the IP packet starts
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain
+ */
 /*ARGSUSED*/
 int fr_fastroute(xmin, mp, fin, fdp)
 mb_t *xmin, **mp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipnat_y.y,v 1.1.1.9 2009/08/19 08:29:54 darrenr Exp $	*/
+/*	$NetBSD: ipnat_y.y,v 1.1.1.10 2010/04/17 20:44:55 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2006 by Darren Reed.
@@ -86,7 +86,7 @@ static	void	setnatproto __P((int));
 
 %token  <num>   YY_NUMBER YY_HEX
 %token  <str>   YY_STR
-%token	  YY_COMMENT 
+%token	  YY_COMMENT
 %token	  YY_CMP_EQ YY_CMP_NE YY_CMP_LE YY_CMP_GE YY_CMP_LT YY_CMP_GT
 %token	  YY_RANGE_OUT YY_RANGE_IN
 %token  <ip6>   YY_IPV6

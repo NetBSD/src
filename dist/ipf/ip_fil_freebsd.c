@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_freebsd.c,v 1.1.1.9 2009/08/19 08:28:39 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_freebsd.c,v 1.1.1.10 2010/04/17 20:43:51 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_freebsd.c,v 2.53.2.58 2009/03/29 00:02:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_freebsd.c,v 2.53.2.60 2009/12/19 05:41:08 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -143,7 +143,9 @@ struct	selinfo	ipfselwait[IPL_LOGSIZE];
 # include <sys/conf.h>
 # if defined(NETBSD_PF)
 #  include <net/pfil.h>
-#  include <netinet/ipprotosw.h>
+#  if (__FreeBSD_version < 800000)
+#   include <netinet/ipprotosw.h>
+#  endif
 /*
  * We provide the fr_checkp name just to minimize changes later.
  */
@@ -325,7 +327,11 @@ int mode;
 	SPL_INT(s);
 
 #if (BSD >= 199306) && defined(_KERNEL)
+# if (__FreeBSD_version >= 500034)
+	if (securelevel_ge(p->p_cred, 3) && (mode & FWRITE))
+# else
 	if ((securelevel >= 3) && (mode & FWRITE))
+# endif
 		return EPERM;
 #endif
 
@@ -707,6 +713,14 @@ mb_t *m, **mpp;
 	fnew.fin_dp = (char *)ip + hlen;
 	(void) fr_makefrip(hlen, ip, &fnew);
 
+	if (fin->fin_fr != NULL && fin->fin_fr->fr_type == FR_T_IPF) {
+		frdest_t *fdp = &fin->fin_fr->fr_rif;
+
+		if ((fdp->fd_ifp != NULL) &&
+		    (fdp->fd_ifp != (struct ifnet *)-1))
+			return fr_fastroute(m, mpp, &fnew, fdp);
+	}
+
 	return fr_fastroute(m, mpp, &fnew, NULL);
 }
 
@@ -1051,7 +1065,12 @@ frdest_t *fdp;
 		if (!ip->ip_sum)
 			ip->ip_sum = in_cksum(m, hlen);
 		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
-					  ro->ro_rt);
+#if (__FreeBSD_version < 800000)
+			    ro->ro_rt
+#else
+			    ro
+#endif
+			);
 		goto done;
 	}
 	/*
@@ -1132,7 +1151,13 @@ sendorfree:
 		m->m_act = 0;
 		if (error == 0)
 			error = (*ifp->if_output)(ifp, m,
-			    (struct sockaddr *)dst, ro->ro_rt);
+			    (struct sockaddr *)dst,
+#if (__FreeBSD_version < 800000)
+			    ro->ro_rt
+#else
+			    ro
+#endif
+			    );
 		else
 			FREE_MB_T(m);
 	}

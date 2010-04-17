@@ -1,4 +1,4 @@
-/*	$NetBSD: linux.c,v 1.1.1.6 2009/08/19 08:28:39 darrenr Exp $	*/
+/*	$NetBSD: linux.c,v 1.1.1.7 2010/04/17 20:43:53 darrenr Exp $	*/
 
 
 #include "ipf-linux.h"
@@ -123,7 +123,7 @@ static int ipf_open(struct inode *in, struct file *fp)
 #ifdef IPFILTER_LOOKUP
 		case IPL_LOGLOOKUP :
 #endif
-#ifdef IPFILTER_SYNC  
+#ifdef IPFILTER_SYNC
 		case IPL_LOGSYNC :
 #endif
 #ifdef IPFILTER_SCAN
@@ -131,7 +131,7 @@ static int ipf_open(struct inode *in, struct file *fp)
 #endif
 			err = 0;
 			break;
-		default :  
+		default :
 			err = -ENXIO;
 			break;
 		}

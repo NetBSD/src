@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.1.1.7 2009/08/19 08:28:41 darrenr Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.1.1.8 2010/04/17 20:44:16 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -101,7 +101,7 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.16 2009/01/27 08:33:23 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.17 2009/12/27 06:55:22 darrenr Exp";
 #endif
 
 #define	SYNC_STATETABSZ	256
@@ -110,7 +110,7 @@ static const char rcsid[] = "@(#)Id: ip_sync.c,v 2.40.2.16 2009/01/27 08:33:23 d
 #ifdef	IPFILTER_SYNC
 # if SOLARIS && defined(_KERNEL)
 extern	struct pollhead	iplpollhead[IPL_LOGSIZE];
-# endif 
+# endif
 
 ipfmutex_t	ipf_syncadd, ipsl_mutex;
 ipfrwlock_t	ipf_syncstate, ipf_syncnat;

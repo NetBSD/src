@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.1.1.9 2009/08/19 08:29:46 darrenr Exp $	*/
+/*	$NetBSD: iptests.c,v 1.1.1.10 2010/04/17 20:45:12 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.11 2009/01/27 08:33:23 darrenr Exp";
+static const char rcsid[] = "@(#)Id: iptests.c,v 2.8.2.12 2009/12/27 06:53:15 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -22,7 +22,7 @@ typedef	int	boolean_t;
 #endif
 #include <sys/time.h>
 #if !defined(__osf__)
-# ifdef __NetBSD__ 
+# ifdef __NetBSD__
 #  include <machine/lock.h>
 #  include <machine/mutex.h>
 # endif

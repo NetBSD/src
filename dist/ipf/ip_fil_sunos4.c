@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_sunos4.c,v 1.1.1.8 2009/08/19 08:28:51 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_sunos4.c,v 1.1.1.9 2010/04/17 20:43:55 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -58,7 +58,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_sunos4.c,v 2.46.2.34 2008/11/06 21:18:33 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_sunos4.c,v 2.46.2.36 2009/12/27 06:55:06 darrenr Exp";
 #endif
 
 extern	struct	protosw	inetsw[];
@@ -393,6 +393,14 @@ mb_t *m, **mpp;
 	fnew.fin_dp = (char *)ip + hlen;
 	(void) fr_makefrip(hlen, ip, &fnew);
 
+	if (fin->fin_fr != NULL && fin->fin_fr->fr_type == FR_T_IPF) {
+		frdest_t *fdp = &fin->fin_fr->fr_rif;
+
+		if ((fdp->fd_ifp != NULL) &&
+		    (fdp->fd_ifp != (struct ifnet *)-1))
+			return fr_fastroute(m, mpp, &fnew, fdp);
+	}
+
 	return fr_fastroute(m, mpp, &fnew, NULL);
 }
 
@@ -524,10 +532,10 @@ register struct mbuf *m0;
 }
 
 
-/*  
- * m0 - pointer to mbuf where the IP packet starts  
- * mpp - pointer to the mbuf pointer that is the start of the mbuf chain  
- */  
+/*
+ * m0 - pointer to mbuf where the IP packet starts
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain
+ */
 int fr_fastroute(m0, mpp, fin, fdp)
 struct mbuf *m0, **mpp;
 fr_info_t *fin;

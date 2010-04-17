@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.8 2009/08/19 08:28:58 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_hpux.c,v 1.1.1.9 2010/04/17 20:43:53 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.26 2009/07/22 01:46:43 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_hpux.c,v 2.45.2.27 2009/12/27 06:55:43 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -220,7 +220,7 @@ int mode;
 #ifdef IPFILTER_LOOKUP
 		case IPL_LOGLOOKUP :
 #endif
-#ifdef IPFILTER_SYNC  
+#ifdef IPFILTER_SYNC
 		case IPL_LOGSYNC :
 #endif
 #ifdef IPFILTER_SCAN
@@ -228,7 +228,7 @@ int mode;
 #endif
 			error = 0;
 			break;
-		default :  
+		default :
 			error = ENXIO;
 			break;
 		}
@@ -820,10 +820,10 @@ int len;
 }
 
 
-/*  
- * m0 - pointer to mbuf where the IP packet starts  
- * mpp - pointer to the mbuf pointer that is the start of the mbuf chain  
- */  
+/*
+ * m0 - pointer to mbuf where the IP packet starts
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain
+ */
 int fr_fastroute(mb, mpp, fin, fdp)
 mblk_t *mb, **mpp;
 fr_info_t *fin;

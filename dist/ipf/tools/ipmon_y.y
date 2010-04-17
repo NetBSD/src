@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon_y.y,v 1.1.1.3 2007/04/14 20:17:34 martin Exp $	*/
+/*	$NetBSD: ipmon_y.y,v 1.1.1.4 2010/04/17 20:45:06 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 by Darren Reed.
@@ -49,7 +49,7 @@ static	ipmon_action_t	*alist = NULL;
 %token	<num>	YY_NUMBER YY_HEX
 %token	<str>	YY_STR
 %token	<ip6>	YY_IPV6
-%token	YY_COMMENT 
+%token	YY_COMMENT
 %token	YY_CMP_EQ YY_CMP_NE YY_CMP_LE YY_CMP_GE YY_CMP_LT YY_CMP_GT
 %token	YY_RANGE_OUT YY_RANGE_IN
 
@@ -83,7 +83,7 @@ assign:	YY_STR assigning YY_STR ';'		{ set_variable($1, $3);
 						  free($1);
 						  free($3);
 						  yyvarnext = 0;
-						} 
+						}
 	;
 
 assigning:
@@ -375,7 +375,7 @@ opt_t *olist;
 			a->ac_iface = o->o_str;
 			o->o_str = NULL;
 			break;
-		case IPM_GROUP : 
+		case IPM_GROUP :
 			if (o->o_str != NULL)
 				strncpy(a->ac_group, o->o_str, FR_GROUPLEN);
 			else

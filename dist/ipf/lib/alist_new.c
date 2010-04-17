@@ -1,22 +1,22 @@
-/*	$NetBSD: alist_new.c,v 1.1.1.2 2008/05/20 06:45:00 darrenr Exp $	*/
+/*	$NetBSD: alist_new.c,v 1.1.1.3 2010/04/17 20:45:59 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: alist_new.c,v 1.1.2.3 2007/06/06 08:05:33 darrenr Exp
+ * Id: alist_new.c,v 1.1.2.4 2009/12/27 06:58:06 darrenr Exp
  */
 
 #include "ipf.h"
 
-alist_t *     
+alist_t *
 alist_new(int v, char *host)
 {
 	int a, b, c, d, bits;
-	char *slash;    
-	alist_t *al;  
-	u_int mask;     
+	char *slash;
+	alist_t *al;
+	u_int mask;
 
 	al = calloc(1, sizeof(*al));
 	if (al == NULL) {
@@ -24,7 +24,7 @@ alist_new(int v, char *host)
 		return NULL;
 	}
 
-	bits = -1;      
+	bits = -1;
 	slash = strchr(host, '/');
 	if (slash != NULL) {
 		*slash = '\0';
@@ -38,7 +38,7 @@ alist_new(int v, char *host)
 		mask = 0xffffffff << (32 - bits);
 	} else if (b == -1) {
 		mask = 0xff000000;
-		b = c = d = 0;  
+		b = c = d = 0;
 	} else if (c == -1) {
 		mask = 0xffff0000;
 		c = d = 0;

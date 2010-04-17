@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.10 2009/08/19 08:28:41 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_solaris.c,v 1.1.1.11 2010/04/17 20:43:44 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.51 2009/06/03 12:39:14 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_solaris.c,v 2.62.2.53 2009/12/27 06:53:59 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -314,7 +314,7 @@ cred_t *cred;
 		case IPL_LOGAUTH :
 #ifdef IPFILTER_LOOKUP
 		case IPL_LOGLOOKUP :
-#endif 
+#endif
 #ifdef IPFILTER_SYNC
 		case IPL_LOGSYNC :
 #endif
@@ -562,6 +562,14 @@ mblk_t *m, **mpp;
 	fnew.fin_hlen = hlen;
 	fnew.fin_dp = (char *)ip + hlen;
 	(void) fr_makefrip(hlen, ip, &fnew);
+
+	if (fin->fin_fr != NULL && fin->fin_fr->fr_type == FR_T_IPF) {
+		frdest_t *fdp = &fin->fin_fr->fr_rif;
+
+		if ((fdp->fd_ifp != NULL) &&
+		    (fdp->fd_ifp != (struct ifnet *)-1))
+			return fr_fastroute(m, mpp, &fnew, fdp);
+	}
 
 	i = fr_fastroute(m, mpp, &fnew, NULL);
 	return i;

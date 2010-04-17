@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.1.1.9 2009/08/19 08:29:45 darrenr Exp $	*/
+/*	$NetBSD: sock.c,v 1.1.1.10 2010/04/17 20:45:06 darrenr Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -8,7 +8,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)sock.c	1.2 1/11/96 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.8 2008/07/24 09:30:34 darrenr Exp";
+static const char rcsid[] = "@(#)Id: sock.c,v 2.8.4.9 2009/12/27 06:53:15 darrenr Exp";
 #endif
 #include <sys/param.h>
 #include <sys/types.h>
@@ -31,7 +31,7 @@ typedef int     boolean_t;
 # include <sys/dir.h>
 #endif
 #if !defined(__osf__)
-# ifdef __NetBSD__ 
+# ifdef __NetBSD__
 #  include <machine/lock.h>
 #  include <machine/mutex.h>
 # endif

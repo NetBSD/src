@@ -1,11 +1,11 @@
-/*	$NetBSD: load_file.c,v 1.1.1.1 2007/04/14 20:17:31 martin Exp $	*/
+/*	$NetBSD: load_file.c,v 1.1.1.2 2010/04/17 20:45:58 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2006 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: load_file.c,v 1.1.2.1 2006/08/25 21:13:04 darrenr Exp
+ * Id: load_file.c,v 1.1.2.2 2009/12/27 06:58:06 darrenr Exp
  */
 
 #include "ipf.h"
@@ -22,13 +22,13 @@ load_file(char *filename)
 	if (fp == NULL) {
 		fprintf(stderr, "load_file cannot open '%s'\n", filename);
 		return NULL;
-	}       
+	}
 
 	a = NULL;
 	rtop = NULL;
 	rbot = NULL;
-	linenum = 0;    
-		
+	linenum = 0;
+
 	while (fgets(line, sizeof(line) - 1, fp)) {
 		line[sizeof(line) - 1] = '\0';
 		linenum++;

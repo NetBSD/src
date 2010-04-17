@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_aix.c,v 1.1.1.5 2009/08/19 08:29:19 darrenr Exp $	*/
+/*	$NetBSD: ip_fil_aix.c,v 1.1.1.6 2010/04/17 20:43:47 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #define	__FULL_PROTO
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_aix.c,v 2.1.2.16 2009/03/29 00:02:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_aix.c,v 2.1.2.18 2009/12/27 06:53:59 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -689,6 +689,14 @@ mb_t *m, **mpp;
 	fnew.fin_dp = (char *)ip + hlen;
 	(void) fr_makefrip(hlen, ip, &fnew);
 
+	if (fin->fin_fr != NULL && fin->fin_fr->fr_type == FR_T_IPF) {
+		frdest_t *fdp = &fin->fin_fr->fr_rif;
+
+		if ((fdp->fd_ifp != NULL) &&
+		    (fdp->fd_ifp != (struct ifnet *)-1))
+			return fr_fastroute(m, mpp, &fnew, fdp);
+	}
+
 	return fr_fastroute(m, mpp, &fnew, NULL);
 }
 
@@ -871,10 +879,10 @@ int dst;
 }
 
 
-/*  
- * m0 - pointer to mbuf where the IP packet starts  
- * mpp - pointer to the mbuf pointer that is the start of the mbuf chain  
- */  
+/*
+ * m0 - pointer to mbuf where the IP packet starts
+ * mpp - pointer to the mbuf pointer that is the start of the mbuf chain
+ */
 int fr_fastroute(m0, mpp, fin, fdp)
 mb_t *m0, **mpp;
 fr_info_t *fin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tru64.c,v 1.1.1.7 2009/08/19 08:29:11 darrenr Exp $	*/
+/*	$NetBSD: tru64.c,v 1.1.1.8 2010/04/17 20:44:33 darrenr Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.8 2009/08/16 07:03:05 darrenr Exp";
+static const char rcsid[] = "@(#)Id: tru64.c,v 2.11.2.9 2009/12/27 06:55:38 darrenr Exp";
 #endif
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -1059,7 +1059,7 @@ int ipfilteropen(dev_t dev, int flag, int format)
 #ifdef IPFILTER_LOOKUP
 		case IPL_LOGLOOKUP :
 #endif
-#ifdef IPFILTER_SYNC  
+#ifdef IPFILTER_SYNC
 		case IPL_LOGSYNC :
 #endif
 #ifdef IPFILTER_SCAN
@@ -1067,7 +1067,7 @@ int ipfilteropen(dev_t dev, int flag, int format)
 #endif
 			error = ESUCCESS;
 			break;
-		default :  
+		default :
 			error = ENXIO;
 			break;
 		}

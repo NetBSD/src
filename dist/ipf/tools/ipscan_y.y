@@ -1,4 +1,4 @@
-/*	$NetBSD: ipscan_y.y,v 1.1.1.3 2007/04/14 20:17:34 martin Exp $	*/
+/*	$NetBSD: ipscan_y.y,v 1.1.1.4 2010/04/17 20:44:56 darrenr Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 by Darren Reed.
@@ -60,7 +60,7 @@ int		fd = -1;
 
 %token  <num>   YY_NUMBER YY_HEX
 %token  <str>   YY_STR
-%token          YY_COMMENT 
+%token          YY_COMMENT
 %token          YY_CMP_EQ YY_CMP_NE YY_CMP_LE YY_CMP_GE YY_CMP_LT YY_CMP_GT
 %token          YY_RANGE_OUT YY_RANGE_IN
 %token  <ip6>   YY_IPV6

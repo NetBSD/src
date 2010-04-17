@@ -5,7 +5,7 @@
 # provided that this notice is preserved and due credit is given
 # to the original author and the contributors.
 #
-# Id: Makefile,v 2.76.2.29 2009/07/18 19:05:35 darrenr Exp
+# Id: Makefile,v 2.76.2.31 2010/01/31 16:22:53 darrenr Exp
 #
 SHELL=/bin/sh
 BINDEST=/usr/local/bin
@@ -34,6 +34,10 @@ IPFLOG=-DIPFILTER_LOG
 # To enable loading filter rules compiled to C code...
 #
 #COMPIPF=-DIPFILTER_COMPILED
+#
+# To enable IPFilter compatibility with older CLI utilities
+#
+COMPATIPF=-DIPFILTER_COMPAT
 #
 # To enable synchronisation between IPFilter hosts
 #
@@ -114,6 +118,7 @@ MFLAGS1='CFLAGS=$(CFLAGS) $(ARCHINC) $(SOLARIS2) $(SGIREV) $(INET6)' \
         'STATETOP_CFLAGS=$(STATETOP_CFLAGS)' "BPFILTER=$(BPFILTER)" \
         'STATETOP_INC=$(STATETOP_INC)' 'STATETOP_LIB=$(STATETOP_LIB)' \
 	"BITS=$(BITS)" "OBJ=$(OBJ)" "LOOKUP=$(LOOKUP)" "COMPIPF=$(COMPIPF)" \
+	"COMPATIPF=$(COMPATIPF)" \
 	'SYNC=$(SYNC)' 'ALLOPTS=$(ALLOPTS)' 'LIBBPF=$(LIBBPF)'
 MFLAGS=$(MFLAGS1) "IPFLKM=$(IPFLKM)"
 MACHASSERT=`/bin/ls -1 /usr/sys/*/mach_assert.h | head -1`
@@ -216,7 +221,7 @@ freebsd5 freebsd6 freebsd7 freebsd8: include
 
 	make setup "TARGOS=BSD" "CPUDIR=$(CPUDIR)"
 	(cd BSD/$(CPUDIR); make build TOP=../.. $(MFLAGS) "ML=mlfk_ipl.c" "MLD=mlfk_ipl.c" "LKM=ipf.ko.5" "LKMR=ipfrule.ko.5" "DLKM=-DKLD_MODULE" "MLR=mlfk_rule.o"; cd ..)
-	(cd BSD/$(CPUDIR); make -f Makefile.ipsend build TOP=../.. $(MFLAGS1); cd ..)
+#	(cd BSD/$(CPUDIR); make -f Makefile.ipsend build TOP=../.. $(MFLAGS1); cd ..)
 
 freebsd4 : include
 	if [ x$(INET6) = x ] ; then \
