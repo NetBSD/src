@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1023 2010/04/02 20:34:10 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1024 2010/04/17 15:57:48 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1026 2010/04/02 20:32:15 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.1027 2010/04/17 15:57:23 christos Exp
  */
 
 /*
@@ -2795,6 +2795,7 @@
 #define	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_1	0x4235		/* Pro/Wireless LAN 5300AGN Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_2	0x4236		/* Pro/Wireless LAN 5300AGN Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_5100AGN_2	0x4237		/* Pro/Wireless LAN 5100AGN Mini-PCI Adapter */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2	0x4238		/* Pro/Wireless LAN 6300AGN Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_1	0x423a		/* Pro/Wireless LAN 5350AGN Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_2	0x423b		/* Pro/Wireless LAN 5350AGN Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_80312_ATU	0x530d		/* 80310 ATU */
