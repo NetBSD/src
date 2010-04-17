@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.15 2010/04/16 23:42:25 cliff Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.16 2010/04/17 07:34:45 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.15 2010/04/16 23:42:25 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.16 2010/04/17 07:34:45 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -843,33 +843,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		    (char *)cookie->id_bouncebuf + offset, len);
 		break;
 
-	case _BUS_DMA_BUFTYPE_MBUF: {
-		struct mbuf *m = cookie->id_origmbuf;
-		char *dp = cookie->id_bouncebuf;
-		char * const ep = dp + offset + len;
-
-		for (; offset >= m->m_len; m = m->m_next) {
-			offset -= m->m_len;
-			dp += m->m_len;
-		}
-		/*
-		 * Copy the bounce buffer to the caller's buffer.
-		 */
-		for (; dp < ep; m = m->m_next) {
-			/*
-			 * Now at the first mbuf to sync; nail
-			 * each one until we have exhausted the
-			 * length.
-			 */
-			minlen = ulmin(len, m->m_len - offset);
-			memcpy(mtod(m, char *) + offset, dp + offset, minlen);
-
-			offset = 0;
-			len -= minlen;
-			dp += minlen;
-		}
+	case _BUS_DMA_BUFTYPE_MBUF:
+		m_copyback(cookie->id_origmbuf, offset, len,
+			(char *)cookie->id_bouncebuf + offset);
 		break;
-	}
 	case _BUS_DMA_BUFTYPE_UIO:
 		_bus_dma_uiomove((char *)cookie->id_bouncebuf + offset,
 		    cookie->id_origuio, len, UIO_READ);
