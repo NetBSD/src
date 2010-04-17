@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/04/27 02:39:04 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2010/04/17 13:36:22 nonaka Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,7 +8,8 @@
 MINIROOTOBJ!=	cd ${DISTRIBDIR}/miniroot && ${PRINTOBJDIR}
 MINIROOT=	${MINIROOTOBJ}/miniroot.fs
 
-MDSETTARGETS=		INSTALL_IPAQ	${MINIROOT}	netbsd-IPAQ
+MDSETTARGETS=		INSTALL_IPAQ	${MINIROOT}	netbsd-IPAQ \
+			INSTALL_WZERO3	${MINIROOT}	netbsd-WZERO3
 MDSET_RELEASEDIR=	installation
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
