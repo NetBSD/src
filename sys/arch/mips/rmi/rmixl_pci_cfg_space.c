@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie_cfg_space.c,v 1.1.2.3 2010/04/07 19:30:11 cliff Exp $	*/
+/*	$NetBSD: rmixl_pci_cfg_space.c,v 1.1.2.1 2010/04/17 07:49:23 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie_cfg_space.c,v 1.1.2.3 2010/04/07 19:30:11 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pci_cfg_space.c,v 1.1.2.1 2010/04/17 07:49:23 cliff Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
