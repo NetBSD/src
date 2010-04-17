@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.127 2010/04/17 13:13:45 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.128 2010/04/17 16:34:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.127 2010/04/17 13:13:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.128 2010/04/17 16:34:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -126,6 +126,7 @@ struct loadavg averunnable = {
 struct emul emul_netbsd = {
 	.e_name = "netbsd-rump",
 	.e_sysent = rump_sysent,
+	.e_vm_default_addr = uvm_default_mapaddr,
 };
 
 struct proc *
