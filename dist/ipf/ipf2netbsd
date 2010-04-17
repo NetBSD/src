@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipf2netbsd,v 1.22 2009/08/19 18:51:24 darrenr Exp $
+#	$NetBSD: ipf2netbsd,v 1.23 2010/04/17 22:05:53 darrenr Exp $
 #
 # Copyright (c) 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -69,6 +69,7 @@ pax -rvw \
 	ip_auth.h \
 	ip_compat.h \
 	ip_fil.h \
+	ip_fil_compat.c \
 	ip_fil_netbsd.c \
 	ip_frag.c \
 	ip_frag.h \
