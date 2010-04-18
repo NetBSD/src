@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.18 2010/01/18 16:40:18 rmind Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.19 2010/04/18 15:25:53 jym Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.18 2010/01/18 16:40:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19 2010/04/18 15:25:53 jym Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -660,7 +660,7 @@ cpu_probe(struct cpu_info *ci)
 		wrmsr(MSR_MISC_ENABLE, rdmsr(MSR_MISC_ENABLE) | (1<<3));
 	}
 
-	if ((cpu_feature | cpu_feature2) == 0) {
+	if (ci == &cpu_info_primary) {
 		/* If first. */
 		cpu_feature = ci->ci_feature_flags;
 		cpu_feature2 = ci->ci_feature2_flags;
