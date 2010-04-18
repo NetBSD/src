@@ -1,4 +1,4 @@
-/*	$NetBSD: tc1.c,v 1.4 2010/04/15 00:50:46 christos Exp $	*/
+/*	$NetBSD: tc1.c,v 1.5 2010/04/18 21:17:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tc1.c,v 1.4 2010/04/15 00:50:46 christos Exp $");
+__RCSID("$NetBSD: tc1.c,v 1.5 2010/04/18 21:17:47 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -72,7 +72,7 @@ static	void	sig(int);
 static char *
 prompt(EditLine *el)
 {
-	static char a[] = "\1\e[7m\1Edit$\1\e[0m\1 ";
+	static char a[] = "\1\033[7m\1Edit$\1\033[0m\1 ";
 	static char b[] = "Edit> ";
 
 	return (continuation ? b : a);
@@ -92,6 +92,7 @@ complete(EditLine *el, int ch)
 	const char* ptr;
 	const LineInfo *lf = el_line(el);
 	int len;
+	int res = CC_ERROR;
 
 	/*
 	 * Find the last word
@@ -105,16 +106,16 @@ complete(EditLine *el, int ch)
 		if (len > strlen(dp->d_name))
 			continue;
 		if (strncmp(dp->d_name, ptr, len) == 0) {
-			closedir(dd);
 			if (el_insertstr(el, &dp->d_name[len]) == -1)
-				return (CC_ERROR);
+				res = CC_ERROR;
 			else
-				return (CC_REFRESH);
+				res = CC_REFRESH;
+			break;
 		}
 	}
 
 	closedir(dd);
-	return (CC_ERROR);
+	return res;
 }
 
 int
