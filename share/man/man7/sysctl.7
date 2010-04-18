@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.37 2010/04/10 04:49:17 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.38 2010/04/18 19:42:51 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd April 10, 2010
+.Dd April 18, 2010
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -251,6 +251,7 @@ information.
 .It kern.cp_id	struct	no
 .It kern.cp_time	uint64_t[\|]	no
 .It kern.defcorename	string	yes
+.It kern.detachall	integer	yes
 .It kern.domainname	string	yes
 .It kern.drivers	struct kinfo_drivers	no
 .It kern.file	struct file	no
@@ -371,6 +372,9 @@ and can be changed with the kernel configuration option
 (see
 .Xr options 4
 ).
+.It Li kern.detachall
+Detach all devices at shutdown.
+.\" XXX: Lacks CTL_KERN identifier.
 .It Li kern.domainname ( KERN_DOMAINNAME )
 Get or set the YP domain name.
 .It Li kern.dump_on_panic ( KERN_DUMP_ON_PANIC )
