@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.684 2010/03/01 01:35:11 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.685 2010/04/18 23:47:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684 2010/03/01 01:35:11 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.685 2010/04/18 23:47:51 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -243,10 +243,6 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 int	physmem;
-
-unsigned int cpu_feature;
-unsigned int cpu_feature2;
-unsigned int cpu_feature_padlock;
 
 int	cpu_class;
 int	i386_fpu_present;
@@ -1298,16 +1294,16 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
 	cpu_probe(&cpu_info_primary);
-	cpu_feature = cpu_info_primary.ci_feature_flags;
-	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
-	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	pcb = lwp_getpcb(&lwp0);
 
+	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
+	cpu_feature[2] &= ~CPUID_EXT_FEAT_BLACKLIST;
+
+	cpu_init_msrs(&cpu_info_primary, true);
+
 #ifdef XEN
-	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 	pcb->pcb_cr3 = PDPpaddr - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));

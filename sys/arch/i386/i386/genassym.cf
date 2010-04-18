@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.85 2010/02/22 23:52:17 jym Exp $
+#	$NetBSD: genassym.cf,v 1.86 2010/04/18 23:47:50 jym Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -313,7 +313,6 @@ define	CPU_INFO_CC_SKEW	offsetof(struct cpu_info, ci_data.cpu_cc_skew)
 
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
-define	CPU_INFO_FEATURES	offsetof(struct cpu_info, ci_feature_flags)
 
 define	CPU_TLOG_OFFSET		offsetof(struct cpu_info, ci_tlog_offset)
 define	CPU_TLOG_BASE		offsetof(struct cpu_info, ci_tlog_base)

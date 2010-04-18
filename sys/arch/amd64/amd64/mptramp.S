@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.10 2009/11/27 03:23:04 rmind Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.11 2010/04/18 23:47:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -223,15 +223,7 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	testq	%rdi, %rdi
 	jz	1b
 
-	movl	_C_LABEL(cpu_feature),%eax
-	andl	$CPUID_NOX,%eax
-	jz	1f
-	movl	$MSR_EFER,%ecx
-	rdmsr
-	orl	$EFER_NXE,%eax
-	wrmsr
 1:
-
 	movq	CPU_INFO_IDLELWP(%rdi),%rsi
 	movq	L_PCB(%rsi),%rsi
 	

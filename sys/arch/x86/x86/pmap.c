@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.106 2010/03/31 19:07:32 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.107 2010/04/18 23:47:51 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2010/03/31 19:07:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2010/04/18 23:47:51 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1147,7 +1147,7 @@ pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
 		npte |= PG_N;
 
 #ifndef XEN
-	if ((cpu_feature & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
+	if ((cpu_feature[2] & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
 		npte |= PG_NX;
 #endif
 	opte = pmap_pte_testset (pte, npte); /* zap! */
@@ -1273,7 +1273,7 @@ pmap_bootstrap(vaddr_t kva_start)
 #else
 	unsigned long p1i;
 	vaddr_t kva_end;
-	pt_entry_t pg_nx = (cpu_feature & CPUID_NOX ? PG_NX : 0);
+	pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 #endif
 
 	/*
@@ -1341,7 +1341,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * (and happens later)
 	 */
 
-	if (cpu_feature & CPUID_PGE) {
+	if (cpu_feature[0] & CPUID_PGE) {
 		pmap_pg_g = PG_G;		/* enable software */
 
 		/* add PG_G attribute to already mapped kernel pages */
@@ -1367,7 +1367,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * enable large pages if they are supported.
 	 */
 
-	if (cpu_feature & CPUID_PSE) {
+	if (cpu_feature[0] & CPUID_PSE) {
 		paddr_t pa;
 		pd_entry_t *pde;
 		extern char __data_start;
@@ -3115,7 +3115,7 @@ pmap_pageidlezero(paddr_t pa)
 	zpte = PTESLEW(zero_pte, id);
 	zerova = VASLEW(zerop, id);
 
-	KASSERT(cpu_feature & CPUID_SSE2);
+	KASSERT(cpu_feature[0] & CPUID_SSE2);
 	KASSERT(*zpte == 0);
 
 	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
@@ -4558,7 +4558,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 		 * If the CPUs have no notion of global pages then
 		 * reload of %cr3 is sufficient.
 		 */
-		if (pte != 0 && (cpu_feature & CPUID_PGE) == 0)
+		if (pte != 0 && (cpu_feature[0] & CPUID_PGE) == 0)
 			pte = 0;
 
 		if (pm == pmap_kernel()) {
