@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3 2010/04/04 22:56:44 martin Exp $
+# $NetBSD: etc.rc,v 1.1 2010/04/18 12:58:57 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -36,71 +36,22 @@
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 
-# Check if we are on a framebuffer or on serial console and default
-# the terminal type accordingly.
-# There is no /var/db/dev.db, so sysctl might not map the devicename properly;
-# ttyE0 is 90,0 -> 0x5a00
-case $(sysctl -nx kern.consdev) in
- 0000000000005a0*)
-   TERM=wsvt25
-   ;;
- *)
-   TERM=vt220
-   ;;
-esac
+# hack to get around bugs in kernfs's rootdev/rrootdev lookup.
+ls -l /dev/* > /dev/null 2>&1
 
-export TERM
-HOME=/
-export HOME
-BLOCKSIZE=1k
-export BLOCKSIZE
-EDITOR=ed
-export EDITOR
+# mount a few tempfs to allow modifications over the CD contents
+mount -t tmpfs tmpfs /tmp
+mount -t tmpfs tmpfs /var
+mount -t tmpfs -o union tmpfs /etc
 
-umask 022
+# prepare important directories in the tmpfses, so dhcpcd will work
+mkdir -p /var/run /var/db
 
-if [ "X${DONEPROFILE}" = "X" ]; then
-	DONEPROFILE=YES
-	export DONEPROFILE
+# create a gettytab to autologin and run sysinst (etc/gettytab is a symlink
+# to /tmp/gettytab)
+echo "# Autostart sysinst" > /tmp/gettytab
+echo -n "sysinst:al=root:lo=/install.sh:im=:sp#" >> /tmp/gettytab
+stty speed >> /tmp/gettytab
 
-	# set up some sane defaults
-	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
-	echo ''
-
-	if [ $TERM != "wsvt25" ]; then
-		cat << "EOM"
-You are using a serial console, we do not know your terminal emulation.
-Please select one, typical values are:
-
-	vt100
-	ansi
-	xterm
-
-EOM
-		echo -n "Terminal type (just hit ENTER for '$TERM'): "
-		read ans
-		if [ -n "$ans" ];then
-		    TERM=$ans
-		fi
-	fi
-
-	# mount the kern_fs so that we can find the root device, and also
-	# examine the dmesg state
-	mount -t kernfs /kern /kern
-
-	# hack to get around bugs in kernfs's rootdev/rrootdev lookup.
-	ls -l /dev/* > /dev/null 2>&1
-
-	# mount a few tempfs to allow modifications over the CD contents
-	mount -t tmpfs tmpfs /tmp
-	mount -t tmpfs tmpfs /var
-	mount -t tmpfs -o union tmpfs /etc
-
-	# prepare important directories in the tmpfses, so dhcpcd will work
-	mkdir -p /var/run /var/db
-
-	# run the installation or upgrade script.
-	sysinst || {
-	    echo "Oops, something went wrong - we will try again"; exit; }
-fi
+# done, move on to multiuser mode
+exit 0
