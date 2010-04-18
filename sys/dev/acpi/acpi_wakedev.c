@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.11 2010/04/14 20:08:56 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.12 2010/04/18 14:05:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.11 2010/04/14 20:08:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.12 2010/04/18 14:05:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,7 +94,7 @@ acpi_wakedev_add(struct acpi_devnode *ad)
 {
 	int err;
 
-	KASSERT(ad != NULL && ad->ad_parent != NULL);
+	KASSERT(ad != NULL && ad->ad_root != NULL);
 	KASSERT((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0);
 
 	ad->ad_wake = 0;
@@ -111,7 +111,7 @@ acpi_wakedev_add(struct acpi_devnode *ad)
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
-		aprint_error_dev(ad->ad_parent, "sysctl_createv"
+		aprint_error_dev(ad->ad_root, "sysctl_createv"
 		    "(hw.acpi.wake.%s) failed (err %d)\n", ad->ad_name, err);
 }
 
@@ -130,7 +130,7 @@ acpi_wakedev_commit(struct acpi_softc *sc, int state)
 	 *
 	 * XXX: The first one is yet to be implemented.
 	 */
-	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		if ((ad->ad_flags & ACPI_DEVICE_WAKEUP) == 0)
 			continue;
@@ -189,7 +189,7 @@ acpi_wakedev_prepare(struct acpi_devnode *ad, int enable, int state)
 	return;
 
 fail:
-	aprint_error_dev(ad->ad_parent, "failed to evaluate wake "
+	aprint_error_dev(ad->ad_root, "failed to evaluate wake "
 	    "control method: %s\n", AcpiFormatException(rv));
 }
 

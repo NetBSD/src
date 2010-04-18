@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.4 2010/03/09 18:15:22 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.5 2010/04/18 14:05:26 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.4 2010/03/09 18:15:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.5 2010/04/18 14:05:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,7 +147,7 @@ acpi_pcidev_scan(struct acpi_softc *sc)
 #define ACPI_STA_DEV_VALID      \
 	(ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
 
-	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		di = ad->ad_devinfo;
 
