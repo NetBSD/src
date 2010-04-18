@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.39 2010/04/03 23:17:05 jym Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.40 2010/04/18 23:47:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -84,10 +84,10 @@
 #define CR4_OSXMMEXCPT	0x00000400	/* enable unmasked SSE exceptions */
 
 /*
- * CPUID "features" bits in %edx
+ * CPUID "features" bits
  */
 
-/* Fn00000001 %edx feature */
+/* Fn00000001 %edx features */
 #define	CPUID_FPU	0x00000001	/* processor has an FPU? */
 #define	CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
 #define	CPUID_DE	0x00000004	/* has debugging extension */
@@ -129,7 +129,7 @@
 
 /* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
-#define CPUID_XD	0x00100000	/* Execute Disable */
+#define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
 #define CPUID_EM64T	0x20000000	/* Intel EM64T */
 
 #define CPUID_INTEL_EXT_FLAGS	"\20\14SYSCALL/SYSRET\25XD\36EM64T"
@@ -257,6 +257,16 @@
 /* Extended family and model are defined on amd64 processors */
 #define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
 #define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
+
+/* Blacklists of CPUID flags - used to mask certain features */
+#ifdef XEN
+/* Not on Xen */
+#define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR)
+#define CPUID_EXT_FEAT_BLACKLIST (CPUID_NOX)
+#else
+#define CPUID_FEAT_BLACKLIST	 0
+#define CPUID_EXT_FEAT_BLACKLIST 0
+#endif /* XEN */
 
 /*
  * Model-specific registers for the i386 family

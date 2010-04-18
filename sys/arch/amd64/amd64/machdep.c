@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143 2010/03/01 01:35:11 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144 2010/04/18 23:47:50 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2010/03/01 01:35:11 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2010/04/18 23:47:50 jym Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1241,21 +1241,24 @@ init_x86_64(paddr_t first_avail)
 #if !defined(REALEXTMEM) && !defined(REALBASEMEM)
 	struct btinfo_memmap *bim;
 #endif
+#endif /* !XEN */
+
 	cpu_probe(&cpu_info_primary);
-#else /* XEN */
-	cpu_probe(&cpu_info_primary);
+
+#ifdef XEN
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
-	cpu_feature = cpu_info_primary.ci_feature_flags;
-	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 #endif /* XEN */
+
+	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
+	cpu_feature[2] &= ~CPUID_EXT_FEAT_BLACKLIST;
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	pcb = lwp_getpcb(&lwp0);
+
 #ifdef XEN
 	pcb->pcb_cr3 = xen_start_info.pt_base - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
@@ -1348,6 +1351,7 @@ init_x86_64(paddr_t first_avail)
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
+
 #ifndef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
