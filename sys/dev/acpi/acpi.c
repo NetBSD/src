@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.176 2010/04/18 14:05:26 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.177 2010/04/18 14:07:16 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.176 2010/04/18 14:05:26 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.177 2010/04/18 14:07:16 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -485,9 +485,6 @@ acpi_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 
 	acpi_active = 1;
-
-	/* Our current state is "awake". */
-	sc->sc_sleepstate = ACPI_STATE_S0;
 
 	/* Show SCI interrupt. */
 	aprint_verbose_dev(self, "SCI interrupting at int %u\n",
