@@ -1,4 +1,4 @@
-/*	$NetBSD: swab.c,v 1.15 2010/04/18 04:54:33 christos Exp $	*/
+/*	$NetBSD: swab.c,v 1.16 2010/04/18 10:51:33 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)swab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: swab.c,v 1.15 2010/04/18 04:54:33 christos Exp $");
+__RCSID("$NetBSD: swab.c,v 1.16 2010/04/18 10:51:33 apb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,9 +62,9 @@ swab(const void * __restrict from, void * __restrict to, ssize_t len)
 	tp = (char *)to;
 #define	STEP	temp = *fp++,*tp++ = *fp++,*tp++ = temp
 	/* round to multiple of 8 */
-	while ((--len & 07) != 0)
+	while ((--len % 8) != 0)
 		STEP;
-	len >>= 3;
+	len /= 8;
 	if (len == 0)
 		return;
 	while (len-- != 0) {
