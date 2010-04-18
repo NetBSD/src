@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/04/04 23:02:23 martin Exp $
+#	$NetBSD: Makefile,v 1.4 2010/04/18 12:58:57 martin Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -16,10 +16,7 @@ CDRUNTIME+=	./bin
 CDRUNTIME+=	./dev/MAKEDEV
 CDRUNTIME+=	./etc
 CDRUNTIME+=	./lib
-CDRUNTIME+=	./libexec/ld.elf_so
-CDRUNTIME+=	./libexec/lfs_cleanerd
-CDRUNTIME+=	./libexec/dhcpcd-run-hooks
-CDRUNTIME+=	./libexec/resolvconf/
+CDRUNTIME+=	./libexec
 CDRUNTIME+=	./mnt
 CDRUNTIME+=	./sbin
 # CDRUNTIME+=	./stand
@@ -46,6 +43,7 @@ CDRUNTIME+=	./usr/lib/libterminfo.so*
 CDRUNTIME+=	./usr/lib/libutil.so*
 CDRUNTIME+=	./usr/lib/libz.so*
 CDRUNTIME+=	./usr/libexec/ld.elf_so
+CDRUNTIME+=	./usr/libexec/getty
 CDRUNTIME+=	./usr/mdec
 CDRUNTIME+=	./usr/sbin/chat
 CDRUNTIME+=	./usr/sbin/chown
@@ -57,11 +55,15 @@ CDRUNTIME+=	./usr/share/misc/terminfo.db
 CDRUNTIME+=	./usr/share/locale
 
 image_md_pre:
-	${MKDIR} cdrom/libexec/dhcpcd-hooks
+	${RM} -rf cdrom/libexec/dhcpcd-hooks/*
 	${CP} ${.CURDIR}/../../../common/10-resolv.conf cdrom/libexec/dhcpcd-hooks
 	${CP} ${.CURDIR}/../../../common/99-print-sysinst cdrom/libexec/dhcpcd-hooks
+	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
 	${MKDIR} cdrom/etc
-	${CP} ${.CURDIR}/dot.profile cdrom/etc/rc
+	${CP} ${.CURDIR}/etc.ttys cdrom/etc/ttys
+	${CP} ${.CURDIR}/etc.rc cdrom/etc/rc
+	${CP} ${.CURDIR}/install.sh cdrom/install.sh
+	${CHMOD} 0555 cdrom/install.sh
 	${MKDIR} cdrom/mnt2 cdrom/targetroot
 	${CP} ${SYSINSTDIR}/sysinst cdrom
 	${CHMOD} ugo+rx cdrom/sysinst
