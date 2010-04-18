@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.9,v 1.16 2009/10/19 18:41:10 bouyer Exp $
+.\"	$NetBSD: wdc.9,v 1.17 2010/04/18 15:19:17 jruoho Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -23,7 +23,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 18, 1998
+.Dd April 18, 2010
 .Dt WDC 9
 .Os
 .Sh NAME
@@ -162,9 +162,9 @@ The following elements are optional:
 .El
 .Pp
 The
-.Va WDC_CAPABILITY_DATA16
+.Dv WDC_CAPABILITY_DATA16
 and
-.Va WDC_CAPABILITY_DATA32
+.Dv WDC_CAPABILITY_DATA32
 flags informs
 .Nm
 whether the controller supports 16- or 32-bit I/O accesses on the data port.
@@ -172,9 +172,9 @@ If both are set, a test will be done for each drive using the ATA or
 ATAPI IDENTIFY command, to automatically select the working mode.
 .Pp
 The
-.Va WDC_CAPABILITY_DMA
+.Dv WDC_CAPABILITY_DMA
 and
-.Va WDC_CAPABILITY_UDMA
+.Dv WDC_CAPABILITY_UDMA
 flags are set for controllers supporting the DMA and Ultra-DMA modes.
 The bus front-end needs to provide the
 .Fn dma_init ,
@@ -188,29 +188,29 @@ The arguments are, respectively:
 .Va dma_arg ,
 the channel number, the drive number on this channel,
 the virtual address of the DMA buffer, the size of the transfer, and the
-.Va WDC_DMA
+.Dv WDC_DMA
 flags.
 .Fn dma_start
 is called just after issuing a DMA command to the IDE device.
 The arguments are, respectively:
 .Va dma_arg ,
 the channel number, the drive number on this channel, and the
-.Va WDC_DMA
+.Dv WDC_DMA
 flags.
 .Fn dma_finish
 is called once the transfer is complete.
 The arguments are, respectively:
 .Va dma_arg ,
 the channel number, the drive number on this channel, and the
-.Va WDC_DMA
+.Dv WDC_DMA
 flags.
-.Va WDC_DMA_READ
+.Dv WDC_DMA_READ
 indicates the direction of the data transfer, and
-.Va WDC_DMA_POLL
+.Dv WDC_DMA_POLL
 indicates if the transfer will use (or used) interrupts.
 .Pp
 The
-.Va WDC_CAPABILITY_MODE
+.Dv WDC_CAPABILITY_MODE
 flag means that the bus front-end can program the PIO and DMA modes, so
 .Nm
 needs to provide back the supported modes for each drive, and set the drives
@@ -221,19 +221,19 @@ and
 .Va dma_mode
 needs to be set to the highest PIO and DMA mode supported.
 If
-.Va WDC_CAPABILITY_UDMA
+.Dv WDC_CAPABILITY_UDMA
 is set, then
 .Va dma_mode
 must be set to the highest Ultra-DMA mode supported.
 If
-.Va WDC_CAPABILITY_MODE
+.Dv WDC_CAPABILITY_MODE
 is not set,
 .Nm
 will not attempt to change the current drive's settings, assuming the host's
 firmware has done it right.
 .Pp
 The
-.Va WDC_CAPABILITY_HWLOCK
+.Dv WDC_CAPABILITY_HWLOCK
 flag is set for controllers needing hardware looking before accessing the
 I/O ports.
 If this flag is set, the bus front-end needs to provide the
@@ -259,9 +259,9 @@ be released.
 .Pp
 Accesses to the data port are done by using the bus_space stream functions,
 unless the
-.Va WDC_CAPABILITY_ATA_NOSTREAM
+.Dv WDC_CAPABILITY_ATA_NOSTREAM
 or
-.Va WDC_CAPABILITY_ATAPI_NOSTREAM
+.Dv WDC_CAPABILITY_ATAPI_NOSTREAM
 flags are set.
 This should not be used, unless the data bus is not wired properly (which
 seems common on big-endian systems), and byte-order needs to be preserved
@@ -271,12 +271,12 @@ functions used for the bus_space tag passed in the
 .Va channel_softc
 have to do the appropriate byte-swapping for big-endian systems.
 .Pp
-.Va WDC_CAPABILITY_NO_EXTRA_RESETS
+.Dv WDC_CAPABILITY_NO_EXTRA_RESETS
 avoid the controller reset at the end of the disks probe.
 This reset is needed for some controllers, but causes problems with some
 others.
 .Pp
-.Va WDC_CAPABILITY_NOIRQ
+.Dv WDC_CAPABILITY_NOIRQ
 tells the driver that this controller doesn't have its interrupt lines
 wired up usefully, so it should always use polled transfers.
 .Pp
@@ -303,7 +303,7 @@ The following elements are optional:
 .It data32iot, data32ioh
 Bus-space tag and handle for 32-bit data accesses.
 Only needed if
-.Va WDC_CAPABILITY_DATA32
+.Dv WDC_CAPABILITY_DATA32
 is set in the controller's
 .Va wdc_softc .
 .El
@@ -382,9 +382,9 @@ This drive properly reported its PIO and DMA mode.
 .El
 .Pp
 Once the controller has been initialised, it has to reset the
-.Va DRIVE_DMA
+.Dv DRIVE_DMA
 and
-.Va DRIVE_UDMA ,
+.Dv DRIVE_UDMA ,
 as well as the values of
 .Va PIO_mode ,
 .Va DMA_mode
