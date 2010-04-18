@@ -18,7 +18,7 @@ volatile sig_atomic_t gotsig;
 static wchar_t *
 prompt(EditLine *el)
 {
-	static wchar_t a[] = L"\1\e[7m\1Edit$\1\e[0m\1 ";
+	static wchar_t a[] = L"\1\033[7m\1Edit$\1\033[0m\1 ";
 	static wchar_t b[] = L"Edit> ";
 
 	return continuation ? b : a;
