@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.55 2009/11/27 03:23:04 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.56 2010/04/18 15:24:54 jym Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -269,12 +269,24 @@ _C_LABEL(biosextmem):	.long	REALEXTMEM
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
 #ifndef XEN
-	.globl	gdt64
+	.globl	gdt64_lo
+	.globl	gdt64_hi
 
-gdt64:
-	.word	gdt64_end-gdt64_start
+#define GDT64_LIMIT gdt64_end-gdt64_start-1
+
+/* Temporary gdt64, with base address in low memory */
+gdt64_lo:
+	.word	GDT64_LIMIT
 	.quad	_RELOC(gdt64_start)
 .align 64
+
+/* Temporary gdt64, with base address in high memory */
+gdt64_hi:
+	.word	GDT64_LIMIT
+	.quad	gdt64_start
+.align 64
+
+#undef GDT64_LIMIT
 
 gdt64_start:
 	.quad 0x0000000000000000	/* always empty */
@@ -638,7 +650,7 @@ compat:
 	 * in it to do that.
 	 */
 
-	movl	$RELOC(gdt64),%eax
+	movl	$RELOC(gdt64_lo),%eax
 	lgdt	(%eax)
 	movl	$RELOC(farjmp64),%eax
 	ljmp	*(%eax)
@@ -654,9 +666,17 @@ longmode:
 	 */
 	movabsq	$longmode_hi,%rax
 	jmp	*%rax
+
 longmode_hi:
+
 	/*
-	 * We have arrived.
+	 * We left the identity mapped area. Base address of
+	 * the temporary gdt64 should now be in high memory.
+	 */
+	movq	$RELOC(gdt64_hi),%rax
+	lgdt	(%rax)
+
+	/*
 	 * There's no need anymore for the identity mapping in low
 	 * memory, remove it.
 	 */
