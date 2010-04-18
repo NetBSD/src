@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.48 2010/04/15 07:02:24 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.49 2010/04/18 14:05:26 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -72,13 +72,11 @@ struct acpibus_attach_args {
 
 /*
  * An ACPI device node.
- *
- * Note that this is available for all nodes, meaning that e.g.
- * the device_t (ad_device) may be NULL for unattached devices.
  */
 struct acpi_devnode {
 	device_t		 ad_device;	/* Device */
-	device_t		 ad_parent;	/* Backpointer to the parent */
+	device_t		 ad_root;	/* Backpointer to acpi_softc */
+	struct acpi_devnode	*ad_parent;	/* Backpointer to parent */
 	ACPI_NOTIFY_HANDLER	 ad_notify;	/* Device notify */
 	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
 	ACPI_HANDLE		 ad_handle;	/* Device handle */
@@ -87,37 +85,38 @@ struct acpi_devnode {
 	uint32_t		 ad_type;	/* Device type */
 	int			 ad_wake;	/* Device wakeup */
 
-	SIMPLEQ_ENTRY(acpi_devnode) ad_list;
+
+	SIMPLEQ_ENTRY(acpi_devnode)	ad_list;
+	SIMPLEQ_ENTRY(acpi_devnode)	ad_child_list;
+	SIMPLEQ_HEAD(, acpi_devnode)	ad_child_head;
 };
 
 /*
  * Software state of the ACPI subsystem.
  */
 struct acpi_softc {
-	device_t sc_dev;		/* base device info */
-	bus_space_tag_t sc_iot;		/* PCI I/O space tag */
-	bus_space_tag_t sc_memt;	/* PCI MEM space tag */
-	pci_chipset_tag_t sc_pc;	/* PCI chipset tag */
-	int sc_pciflags;		/* PCI bus flags */
-	int sc_pci_bus;			/* internal PCI fixup */
-	isa_chipset_tag_t sc_ic;	/* ISA chipset tag */
+	device_t		 sc_dev;	/* base device info */
+	device_t		 sc_apmbus;	/* APM pseudo-bus */
 
-	void *sc_sdhook;		/* shutdown hook */
+	struct acpi_devnode	*sc_root;	/* root of the device tree */
 
-	/*
-	 * Power switch handlers for fixed-feature buttons.
-	 */
-	struct sysmon_pswitch sc_smpsw_power;
-	struct sysmon_pswitch sc_smpsw_sleep;
+	bus_space_tag_t		 sc_iot;	/* PCI I/O space tag */
+	bus_space_tag_t		 sc_memt;	/* PCI MEM space tag */
+	pci_chipset_tag_t	 sc_pc;		/* PCI chipset tag */
+	int			 sc_pciflags;	/* PCI bus flags */
+	int			 sc_pci_bus;	/* internal PCI fixup */
+	isa_chipset_tag_t	 sc_ic;		/* ISA chipset tag */
 
-	int sc_sleepstate;		/* current sleep state */
-	int sc_sleepstates;		/* supported sleep states */
+	void			*sc_sdhook;	/* shutdown hook */
 
-	int sc_quirks;
+	int			 sc_quirks;
+	int			 sc_sleepstate;
+	int			 sc_sleepstates;
 
-	device_t	sc_apmbus;
+	struct sysmon_pswitch	 sc_smpsw_power;
+	struct sysmon_pswitch	 sc_smpsw_sleep;
 
-	SIMPLEQ_HEAD(, acpi_devnode) sc_devnodes; /* devices */
+	SIMPLEQ_HEAD(, acpi_devnode)	ad_head;
 };
 
 /*

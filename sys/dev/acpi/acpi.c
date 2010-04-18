@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.175 2010/04/15 07:02:24 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.176 2010/04/18 14:05:26 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.175 2010/04/15 07:02:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.176 2010/04/18 14:05:26 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -130,6 +130,15 @@ static uint64_t acpi_root_pointer;
 extern kmutex_t acpi_interrupt_list_mtx;
 
 /*
+ * This structure provides a context for the ACPI
+ * namespace walk performed in acpi_build_tree().
+ */
+struct acpi_walkcontext {
+	struct acpi_softc	*aw_sc;
+	struct acpi_devnode	*aw_parent;
+};
+
+/*
  * Ignored HIDs.
  */
 static const char * const acpi_ignored_ids[] = {
@@ -160,8 +169,15 @@ static bool		acpi_suspend(device_t, const pmf_qual_t *);
 static bool		acpi_resume(device_t, const pmf_qual_t *);
 
 static void		acpi_build_tree(struct acpi_softc *);
+
+#ifdef ACPI_DEBUG
+static void		acpi_print_tree(struct acpi_devnode *, uint32_t);
+#endif
+
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
 					  void *, void **);
+static ACPI_STATUS	acpi_make_devnode_post(ACPI_HANDLE, uint32_t,
+					       void *, void **);
 
 #ifdef ACPI_ACTIVATE_DEV
 static void		acpi_activate_device(ACPI_HANDLE, ACPI_DEVICE_INFO **);
@@ -397,8 +413,10 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	acpi_unmap_rsdt(rsdt);
 
 	sc->sc_dev = self;
-	sc->sc_quirks = acpi_find_quirks();
+	sc->sc_root = NULL;
+
 	sc->sc_sleepstate = ACPI_STATE_S0;
+	sc->sc_quirks = acpi_find_quirks();
 
 	sysmon_power_settype("acpi");
 
@@ -408,7 +426,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pciflags = aa->aa_pciflags;
 	sc->sc_ic = aa->aa_ic;
 
-	SIMPLEQ_INIT(&sc->sc_devnodes);
+	SIMPLEQ_INIT(&sc->ad_head);
 
 	acpi_softc = sc;
 
@@ -562,7 +580,7 @@ acpi_childdet(device_t self, device_t child)
 	if (sc->sc_apmbus == child)
 		sc->sc_apmbus = NULL;
 
-	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		if (ad->ad_device == child)
 			ad->ad_device = NULL;
@@ -593,9 +611,24 @@ acpi_resume(device_t dv, const pmf_qual_t *qual)
 static void
 acpi_build_tree(struct acpi_softc *sc)
 {
+	struct acpi_walkcontext awc;
 
-	(void)AcpiWalkNamespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
-	    UINT32_MAX, acpi_make_devnode, NULL, sc, NULL);
+	awc.aw_sc = sc;
+	awc.aw_parent = NULL;
+
+	(void)acpi_make_devnode(ACPI_ROOT_OBJECT, 0, &awc, NULL);
+
+	KASSERT(sc->sc_root == NULL);
+	KASSERT(awc.aw_parent != NULL);
+
+	sc->sc_root = awc.aw_parent;
+
+	(void)AcpiWalkNamespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT, UINT32_MAX,
+	    acpi_make_devnode, acpi_make_devnode_post, &awc, NULL);
+
+#ifdef ACPI_DEBUG
+	acpi_print_tree(sc->sc_root, 0);
+#endif
 
 	acpi_rescan1(sc, NULL, NULL);
 	acpi_rescan_capabilities(sc);
@@ -603,11 +636,29 @@ acpi_build_tree(struct acpi_softc *sc)
 	acpi_pcidev_scan(sc);
 }
 
+#ifdef ACPI_DEBUG
+static void
+acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
+{
+	struct acpi_devnode *child;
+	uint32_t i;
+
+	for (i = 0; i < level; i++)
+		aprint_normal("           ");
+
+	aprint_normal("[%02u] %-5s\n", ad->ad_type, ad->ad_name);
+
+	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
+	    acpi_print_tree(child, level + 1);
+}
+#endif
+
 static ACPI_STATUS
 acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
     void *context, void **status)
 {
-	struct acpi_softc *sc = context;
+	struct acpi_walkcontext *awc = context;
+	struct acpi_softc *sc = awc->aw_sc;
 	struct acpi_devnode *ad;
 	ACPI_DEVICE_INFO *devinfo;
 	ACPI_OBJECT_TYPE type;
@@ -640,11 +691,14 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 			return AE_NO_MEMORY;
 
 		ad->ad_device = NULL;
-		ad->ad_parent = sc->sc_dev;
+		ad->ad_notify = NULL;
 
 		ad->ad_type = type;
 		ad->ad_handle = handle;
 		ad->ad_devinfo = devinfo;
+
+		ad->ad_root = sc->sc_dev;
+		ad->ad_parent = awc->aw_parent;
 
 		anu = (ACPI_NAME_UNION *)&devinfo->Name;
 		ad->ad_name[4] = '\0';
@@ -662,7 +716,16 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		if (ad->ad_name[0] == '\0')
 			ad->ad_name[0] = '_';
 
-		SIMPLEQ_INSERT_TAIL(&sc->sc_devnodes, ad, ad_list);
+		SIMPLEQ_INIT(&ad->ad_child_head);
+		SIMPLEQ_INSERT_TAIL(&sc->ad_head, ad, ad_list);
+
+		if (ad->ad_parent != NULL) {
+
+			SIMPLEQ_INSERT_TAIL(&ad->ad_parent->ad_child_head,
+			    ad, ad_child_list);
+		}
+
+		awc->aw_parent = ad;
 
 #ifdef ACPIVERBOSE
 
@@ -691,6 +754,21 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		aprint_normal("\n");
 #endif
 	}
+
+	return AE_OK;
+}
+
+static ACPI_STATUS
+acpi_make_devnode_post(ACPI_HANDLE handle, uint32_t level,
+    void *context, void **status)
+{
+	struct acpi_walkcontext *awc = context;
+
+	KASSERT(awc != NULL);
+	KASSERT(awc->aw_parent != NULL);
+
+	if (handle == awc->aw_parent->ad_handle)
+		awc->aw_parent = awc->aw_parent->ad_parent;
 
 	return AE_OK;
 }
@@ -888,7 +966,7 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 	struct acpi_attach_args aa;
 	struct acpi_devnode *ad;
 
-	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		if (ad->ad_device != NULL)
 			continue;
@@ -956,7 +1034,7 @@ acpi_rescan_capabilities(struct acpi_softc *sc)
 	ACPI_HANDLE tmp;
 	ACPI_STATUS rv;
 
-	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		di = ad->ad_devinfo;
 
@@ -1126,7 +1204,7 @@ acpi_notify_handler(ACPI_HANDLE handle, uint32_t event, void *aux)
 	 * that have registered a handler with us.
 	 * The opaque pointer is always the device_t.
 	 */
-	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		if (ad->ad_device == NULL)
 			continue;
