@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.16 2010/04/10 16:45:51 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.17 2010/04/18 10:22:33 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.17 2010/04/10 06:09:24 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.19 2010/04/18 10:22:01 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -1299,6 +1299,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNPC001",
 	    "Compaq 2400/9600 Modem (TBD)",
+	},
+	{
+	    "ATM1200",
+	    "Atmel Trusted Platform Module",
 	},
 	{
 	    "IFX0102",
