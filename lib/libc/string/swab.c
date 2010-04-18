@@ -1,4 +1,4 @@
-/*	$NetBSD: swab.c,v 1.14 2010/04/17 21:42:43 christos Exp $	*/
+/*	$NetBSD: swab.c,v 1.15 2010/04/18 04:54:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)swab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: swab.c,v 1.14 2010/04/17 21:42:43 christos Exp $");
+__RCSID("$NetBSD: swab.c,v 1.15 2010/04/18 04:54:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,10 +51,7 @@ swab(const void * __restrict from, void * __restrict to, ssize_t len)
 	const char *fp;
 	char *tp;
 
-	/*LINTED: unportable &*/
-	if (len & 1)
-		len--;
-	if (len <= 0)
+	if (len <= 1)
 		return;
 
 	_DIAGASSERT(from != NULL);
