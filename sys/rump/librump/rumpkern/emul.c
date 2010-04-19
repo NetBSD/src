@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.128 2010/04/17 16:34:29 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.129 2010/04/19 11:26:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.128 2010/04/17 16:34:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.129 2010/04/19 11:26:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -151,7 +151,7 @@ psignal(struct proc *p, int signo)
 	case SIGSYS:
 		break;
 	default:
-		panic("unhandled signal %d\n", signo);
+		panic("unhandled signal %d", signo);
 	}
 }
 
