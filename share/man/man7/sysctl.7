@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.39 2010/04/19 12:28:29 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.40 2010/04/19 12:44:33 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -367,8 +367,15 @@ behavior.
 .Pp
 The third level name is
 .Dv kern.coredump.setid
-and the variables are:
-.Pp
+and fourth level variables are described below.
+.Bl -column "kern.coredump.setid.group" "integer" "Changeable" -offset indent
+.It Sy Fourth level name	Type	Changeable
+.It kern.coredump.setid.dump	integer	yes
+.It kern.coredump.setid.group	integer	yes
+.It kern.coredump.setid.mode	integer	yes
+.It kern.coredump.setid.owner	integer	yes
+.It kern.coredump.setid.path	string	yes
+.El
 .Bl -tag -width "123456"
 .It Li kern.coredump.setid.dump
 If non-zero, set-id processes will dump core.
@@ -892,7 +899,15 @@ The number of raw input characters.
 .It Li kern.urandom ( KERN_URND )
 Random integer value.
 .It Li kern.veriexec
-Tunings for Verixec.
+Runtime information for
+.Xr veriexec 8 .
+.Bl -column "kern.veriexec.algorithms" "integer" "Changeable" -offset indent
+.It Sy Third level name	Type	Changeable
+.It kern.veriexec.algorithms	string	no
+.It kern.veriexec.count	node	not applicable
+.It kern.veriexec.strict	integer	yes
+.It kern.veriexec.verbose	integer	yes
+.El
 .Bl -tag -width "123456"
 .It Li kern.veriexec.algorithms
 Returns a string with the supported algorithms in Veriexec.
