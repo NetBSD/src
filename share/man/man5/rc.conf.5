@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.141 2010/03/20 11:23:37 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.142 2010/04/19 12:59:36 jruoho Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 19, 2010
+.Dd April 19, 2010
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -296,7 +296,7 @@ The default is
 .Dq "OPTIONAL:/usr" ,
 where the
 .Dq OPTIONAL:
-prefix means that it's not an error if the file system is not
+prefix means that it is not an error if the file system is not
 present in
 .Xr fstab 5 .
 .It Sy fsck_flags
@@ -406,6 +406,9 @@ can be used to override the default location of the
 .Dq real
 temporary directories,
 .Dq Pa /private/tmp .
+See
+.Xr security 8
+for additional details.
 .It Sy quota
 Boolean value.
 Checks and enables quotas by running

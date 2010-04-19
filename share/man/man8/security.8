@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.19 2009/05/18 14:58:14 wiz Exp $
+.\" $NetBSD: security.8,v 1.20 2010/04/19 12:59:36 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 26, 2009
+.Dd April 19, 2010
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -311,6 +311,11 @@ Following that, run:
 .Bd -literal -offset indent
 # /etc/rc.d/perusertmp start
 .Ed
+.Pp
+The per-user temporary storage is implemented by using
+.Dq magic symlinks .
+These are further described in
+.Xr symlink 7 .
 .Sh INFORMATION FILTERING
 .Nx
 provides administrators the ability to restrict information passed from
