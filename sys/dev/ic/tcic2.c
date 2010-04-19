@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.34 2010/03/22 23:08:34 dyoung Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.35 2010/04/19 18:24:26 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.34 2010/03/22 23:08:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.35 2010/04/19 18:24:26 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -883,10 +883,8 @@ tcic_chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr, b
 
 	/* XXX this is pretty gross */
 
-#if 0	/* XXX Comparing bus_space_tag_t is a no-no! */
-	if (h->sc->memt != pcmhp->memt)
+	if (!bus_space_is_equal(h->sc->memt, pcmhp->memt))
 		panic("tcic_chip_mem_map memt is bogus");
-#endif
 
 	busaddr = pcmhp->addr;
 
@@ -1104,10 +1102,8 @@ tcic_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset, bus_
 
 	/* XXX this is pretty gross */
 
-#if 0	/* XXX Comparing bus_space_tag_t is a no-no! */
-	if (h->sc->iot != pcihp->iot)
+	if (!bus_space_is_equal(h->sc->iot, pcihp->iot))
 		panic("tcic_chip_io_map iot is bogus");
-#endif
 
 	DPRINTF(("tcic_chip_io_map window %d %s port %lx+%lx\n",
 		 win, width_names[width], (u_long) ioaddr, (u_long) size));

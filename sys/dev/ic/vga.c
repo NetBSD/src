@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.103 2010/03/22 23:08:34 dyoung Exp $ */
+/* $NetBSD: vga.c,v 1.104 2010/04/19 18:24:26 dyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.103 2010/03/22 23:08:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.104 2010/04/19 18:24:26 dyoung Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -736,9 +736,7 @@ vga_is_console(bus_space_tag_t iot, int type)
 {
 	if (vgaconsole &&
 	    !vga_console_attached &&
-#if 0	/* XXX Comparing bus_space_tag_t is a no-no! */
-	    iot == vga_console_vc.hdl.vh_iot &&
-#endif
+	    bus_space_is_equal(iot, vga_console_vc.hdl.vh_iot) &&
 	    (vga_console_type == -1 || (type == vga_console_type)))
 		return (1);
 	return (0);
