@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.125 2010/04/19 20:35:23 martin Exp $ */
+/*	$NetBSD: md.c,v 1.126 2010/04/19 21:12:52 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -510,8 +510,13 @@ nogeom:
 		}
 	}
 	if (biosdisk == NULL) {
-		if (nip != NULL)
+		if (nip != NULL) {
 			set_bios_geom(cyl, head, sec);
+		} else {
+			bcyl = cyl;
+			bhead = head;
+			bsec = sec;
+		}
 	} else {
 		bcyl = biosdisk->bi_cyl;
 		bhead = biosdisk->bi_head;
