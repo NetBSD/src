@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.124 2010/01/02 18:06:58 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.125 2010/04/19 20:35:23 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -471,8 +471,10 @@ get_bios_info(char *dev)
 	}
 	if (nip == NULL || nip->ni_nmatches == 0) {
 nogeom:
-		msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
-		if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0)
+		if (nip != NULL)
+			msg_display(MSG_nobiosgeom, dlcyl, dlhead, dlsec);
+		if (guess_biosgeom_from_mbr(&mbr, &cyl, &head, &sec) >= 0
+		    && nip != NULL)
 			msg_display_add(MSG_biosguess, cyl, head, sec);
 		biosdisk = NULL;
 	} else {
@@ -507,9 +509,10 @@ nogeom:
 							nip->ni_biosmatches[i]];
 		}
 	}
-	if (biosdisk == NULL)
-		set_bios_geom(cyl, head, sec);
-	else {
+	if (biosdisk == NULL) {
+		if (nip != NULL)
+			set_bios_geom(cyl, head, sec);
+	} else {
 		bcyl = biosdisk->bi_cyl;
 		bhead = biosdisk->bi_head;
 		bsec = biosdisk->bi_sec;
