@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.123 2010/03/29 07:34:02 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.124 2010/04/19 07:00:58 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.123 2010/03/29 07:34:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.124 2010/04/19 07:00:58 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1689,12 +1689,12 @@ out:
 static void
 fwohci_db_free(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 {
-	struct fwohcidb_tr *db_tr;
+	struct fwohcidb_tr *db_tr, *last;
 
 	if ((dbch->flags & FWOHCI_DBCH_INIT) == 0)
 		return;
 
-	for (db_tr = STAILQ_FIRST(&dbch->db_trq); db_tr != NULL;
+	for (last = db_tr = STAILQ_FIRST(&dbch->db_trq); db_tr != last;
 	    db_tr = STAILQ_NEXT(db_tr, link)) {
 		bus_dmamap_destroy(sc->fc.dmat, db_tr->dma_map);
 		if ((dbch->xferq.flag & FWXFERQ_EXTBUF) == 0 &&
