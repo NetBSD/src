@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.29 2010/04/05 07:21:48 joerg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.30 2010/04/19 21:56:35 jmcneill Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.29 2010/04/05 07:21:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.30 2010/04/19 21:56:35 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -150,6 +150,8 @@ static const struct udav_type {
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ST268_USB_NIC }, 0},
 	/* ShanTou ADM8515 */
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ADM8515 }, 0},
+	/* SUNRISING SR9600 */
+	{{ USB_VENDOR_SUNRISING, USB_PRODUCT_SUNRISING_SR9600 }, 0 },
 #if 0
 	/* DAVICOM DM9601 Generic? */
 	/*  XXX: The following ids was obtained from the data sheet. */
