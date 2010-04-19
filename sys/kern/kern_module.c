@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.63 2010/04/16 11:51:23 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.64 2010/04/19 11:20:56 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.63 2010/04/16 11:51:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.64 2010/04/19 11:20:56 jruoho Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -374,13 +374,13 @@ SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
 
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "autoload",
+		CTLTYPE_BOOL, "autoload",
 		SYSCTL_DESCR("Enable automatic load of modules"),
 		NULL, 0, &module_autoload_on, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "verbose",
+		CTLTYPE_BOOL, "verbose",
 		SYSCTL_DESCR("Enable verbose output"),
 		NULL, 0, &module_verbose_on, 0,
 		CTL_CREATE, CTL_EOL);
