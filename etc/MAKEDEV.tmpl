@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.133 2010/03/23 19:22:41 jakllsch Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.134 2010/04/19 04:34:42 pooka Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -802,7 +802,7 @@ usbs)
 	makedev urio0
 	makedev uscanner0 uscanner1
 	makedev utoppy0 utoppy1
-	makedev ugen0
+	makedev ugen0 ugen1 ugen2 ugen3
 	;;
 
 isdns)
