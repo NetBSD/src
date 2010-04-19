@@ -1,4 +1,4 @@
-## $NetBSD: Makefile.am,v 1.3 2010/04/14 19:52:20 sborrill Exp $
+## $NetBSD: Makefile.am,v 1.4 2010/04/19 08:05:36 sborrill Exp $
 
 AM_CFLAGS		= $(WARNCFLAGS)
 
@@ -10,6 +10,6 @@ iscsi_initiator_CPPFLAGS= -I$(top_srcdir)/include
 
 iscsi_initiator_LDADD	= ../lib/libiscsi.la -lrefuse
 
-man1_MANS		= iscsi-initiator.8
+man8_MANS		= iscsi-initiator.8
 
 dist_man_MANS		= iscsi-initiator.8
