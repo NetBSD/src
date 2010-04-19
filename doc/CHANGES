@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1381 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1382 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -587,3 +587,11 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	fsck_msdos(8): add -x option which allows to run fsck_msdos -n on
 		a snapshot of a live file system. [hannken 20100411]
 	hpcarm: Add support for Sharp W-ZERO3 series. [nonaka 20100417]
+	acpi(4): Statistical event counters were added to hw.acpi.stat
+		sysctl(8) tree. Dynamic debug output messages provided by the
+		interpreter were added for ACPI_DEBUG kernels. These are
+		controllable from the hw.acpi.debug sysctl(8) namespace.
+		Furthermore, the ACPI device wake-up sysctl(8) tree was moved
+		from hw.wake to hw.acpi.wake. [jruoho 20100419]
+	acpiwmi(4): Added two mappings (child devices) for the ACPI WMI.
+		[jruoho 20100419]
