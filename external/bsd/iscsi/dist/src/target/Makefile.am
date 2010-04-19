@@ -1,4 +1,4 @@
-## $NetBSD: Makefile.am,v 1.2 2009/06/30 02:44:53 agc Exp $
+## $NetBSD: Makefile.am,v 1.3 2010/04/19 08:05:36 sborrill Exp $
 
 AM_CFLAGS		= $(WARNCFLAGS) -pthread
 
@@ -10,6 +10,7 @@ iscsi_target_CPPFLAGS	= -I$(top_srcdir)/include
 
 iscsi_target_LDADD	= ../lib/libiscsi.la -lpthread
 
-man1_MANS		= iscsi-target.8
+man8_MANS		= iscsi-target.8
+man5_MANS		= targets.5
 
-dist_man_MANS		= iscsi-target.8
+dist_man_MANS		= iscsi-target.8 targets.5
