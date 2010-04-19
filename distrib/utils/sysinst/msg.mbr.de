@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.de,v 1.8 2007/02/15 12:00:15 rillig Exp $	*/
+/*	$NetBSD: msg.mbr.de,v 1.9 2010/04/19 19:16:11 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -148,11 +148,11 @@ message Only_one_extended_ptn {Hier ist nur eine erweiterte Partition möglich}
 
 message editparttable
 {Die aktuelle MBR-Partition wird unten angezeigt. 
-Flgs: a => Aktive Startpartition,
+Flag: a => (A)ktive Startpartition,
 .if BOOTSEL
-d => 'Bootselect' (Bootauswahl) Vorgabe, 
+d => Stan(D)ardauswahl, 
 .endif
-I => hier installieren. 
+I => hier (I)nstallieren. 
 Wählen Sie die Partition, die Sie verändern möchten:
 
 }
