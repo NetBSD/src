@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.38 2010/04/18 19:42:51 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.39 2010/04/19 12:28:29 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd April 18, 2010
+.Dd April 19, 2010
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -243,17 +243,20 @@ information.
 .It kern.argmax	integer	no
 .It kern.autonicetime	integer	yes
 .It kern.autoniceval	integer	yes
+.It kern.boothowto	integer	no
 .It kern.boottime	struct timeval	no
-.It kern.bufq	node	not applicable
+.\".It kern.bufq	node	not applicable
 .It kern.ccpu	integer	no
 .It kern.clockrate	struct clockinfo	no
 .It kern.consdev	integer	no
+.It kern.coredump	node	not applicable
 .It kern.cp_id	struct	no
 .It kern.cp_time	uint64_t[\|]	no
 .It kern.defcorename	string	yes
 .It kern.detachall	integer	yes
 .It kern.domainname	string	yes
 .It kern.drivers	struct kinfo_drivers	no
+.It kern.dump_on_panic	integer	yes
 .It kern.file	struct file	no
 .It kern.forkfsleep	integer	yes
 .It kern.fscale	integer	no
@@ -262,6 +265,7 @@ information.
 .It kern.hostid	integer	yes
 .It kern.hostname	string	yes
 .It kern.iov_max	integer	no
+.It kern.ipc	node	not applicable
 .It kern.job_control	integer	no
 .It kern.labeloffset	integer	no
 .It kern.labelsector	integer	no
@@ -284,12 +288,14 @@ information.
 .It kern.ngroups	integer	no
 .It kern.ntptime	struct ntptimeval	no
 .It kern.osrelease	string	no
-.It kern.osrev	integer	no
+.It kern.osrevision	integer	no
 .It kern.ostype	string	no
 .It kern.pipe	node	not applicable
-.It kern.posix1	integer	no
+.\" .It kern.posix	node	not applicable
+.It kern.posix1version	integer	no
 .It kern.posix_barriers	integer	no
 .It kern.posix_reader_writer_locks	integer	no
+.\".It kern.posix_sched	integer	yes
 .It kern.posix_semaphores	integer	no
 .It kern.posix_spin_locks	integer	no
 .It kern.posix_threads	integer	no
@@ -297,19 +303,21 @@ information.
 .It kern.proc	struct kinfo_proc	no
 .It kern.proc2	struct kinfo_proc2	no
 .It kern.proc_args	string	no
-.It kern.prof	node	not applicable
+.It kern.profiling	node	not applicable
 .It kern.rawpartition	integer	no
 .It kern.root_device	string	no
 .It kern.root_partition	integer	no
 .It kern.rtc_offset	integer	yes
 .It kern.saved_ids	integer	no
+.It kern.sbmax	integer	yes
 .It kern.securelevel	integer	raise only
+.It kern.somaxkva	integer	yes
 .It kern.synchronized_io	integer	no
-.It kern.ipc	node	not applicable
 .It kern.timecounter	node	not applicable
 .It kern.timex	struct	no
 .It kern.tkstat	node	not applicable
 .It kern.urandom	integer	no
+.It kern.veriexec	node	not applicable
 .It kern.version	string	no
 .It kern.vnode	struct vnode	no
 .El
@@ -317,11 +325,13 @@ information.
 .It Li kern.argmax ( KERN_ARGMAX )
 The maximum bytes of argument to
 .Xr execve 2 .
+.\" XXX: Is kern.autonicetime still available?
 .It Li kern.autonicetime ( KERN_AUTONICETIME )
 The number of seconds of CPU-time a non-root process may accumulate before
 having its priority lowered from the default to the value of KERN_AUTONICEVAL.
 If set to 0, automatic lowering of priority is not performed, and if set to \-1
 all non-root processes are immediately lowered.
+.\" XXX: Is kern.autoniceval still available?
 .It Li kern.autoniceval ( KERN_AUTONICEVAL )
 The priority assigned for automatically niced processes.
 .It Li kern.boothowto
@@ -333,6 +343,7 @@ A
 .Va struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
+.\" XXX: Undocumented: .It Li kern.bufq
 .It Li kern.ccpu ( KERN_CCPU )
 The scheduler exponential decay value.
 .It Li kern.clockrate ( KERN_CLOCKRATE )
@@ -347,6 +358,33 @@ Refer to
 for additional details.
 .It Li kern.consdev ( KERN_CONSDEV )
 Console device.
+.It Li kern.coredump
+Settings related to set-id processes coredumps.
+By default, set-id processes do not dump core in situations where
+other processes would.
+The settings in this node allows an administrator to change this
+behavior.
+.Pp
+The third level name is
+.Dv kern.coredump.setid
+and the variables are:
+.Pp
+.Bl -tag -width "123456"
+.It Li kern.coredump.setid.dump
+If non-zero, set-id processes will dump core.
+.It Li kern.coredump.setid.group
+The group-id for the set-id processes' coredump.
+.It Li kern.coredump.setid.mode
+The mode for the set-id processes' coredump.
+See
+.Xr chmod 1 .
+.It Li kern.coredump.setid.owner
+The user-id that will be used as the owner of the set-id processes'
+coredump.
+.It Li kern.coredump.setid.path
+The path to which set-id processes' coredumps will be saved to.
+Same syntax as kern.defcorename.
+.El
 .It Li kern.cp_id ( KERN_CP_ID )
 Mapping of CPU number to CPU id.
 .It Li kern.cp_time ( KERN_CP_TIME )
@@ -377,8 +415,6 @@ Detach all devices at shutdown.
 .\" XXX: Lacks CTL_KERN identifier.
 .It Li kern.domainname ( KERN_DOMAINNAME )
 Get or set the YP domain name.
-.It Li kern.dump_on_panic ( KERN_DUMP_ON_PANIC )
-Perform a crash dump on system panic.
 .It Li kern.drivers ( KERN_DRIVERS )
 Return an array of
 .Va struct kinfo_drivers
@@ -390,6 +426,8 @@ field is always a NUL terminated string.
 The
 .Va d_bmajor
 field will be set to \-1 if the driver doesn't have a block device.
+.It Li kern.dump_on_panic ( KERN_DUMP_ON_PANIC )
+Perform a crash dump on system panic.
 .It Li kern.file ( KERN_FILE )
 Return the entire file table.
 The returned data consists of a single
@@ -419,9 +457,15 @@ Returns the number of
 .Xr hardclock 9
 ticks.
 .It Li kern.hostid ( KERN_HOSTID )
-Get or set the host id.
+Get or set the host identifier.
+This is aimed to replace the legacy
+.Xr gethostid 3
+and
+.Xr sethostid 3
+system calls.
 .It Li kern.hostname ( KERN_HOSTNAME )
-Get or set the hostname.
+Get or set the
+.Xr hostname 1 .
 .It Li kern.iov_max ( KERN_IOV_MAX )
 Return the maximum number of
 .Va iovec
@@ -433,6 +477,92 @@ structures that a process has available for use with
 .Xr sendmsg 2
 and
 .Xr writev 2 .
+.It Li kern.ipc ( KERN_SYSVIPC )
+Return information about the SysV IPC parameters.
+The third level names for the ipc variables are detailed below.
+.Bl -column "kern.ipc.shm_use_phys" "integer" "Changeable" -offset indent
+.It Sy Third level name	Type	Changeable
+.It kern.ipc.sysvmsg	integer	no
+.It kern.ipc.sysvsem	integer	no
+.It kern.ipc.sysvshm	integer	no
+.It kern.ipc.sysvipc_info	struct	no
+.It kern.ipc.shmmax	integer	yes
+.It kern.ipc.shmmni	integer	yes
+.It kern.ipc.shmseg	integer	yes
+.It kern.ipc.shmmaxpgs	integer	yes
+.It kern.ipc.shm_use_phys	integer	yes
+.It kern.ipc.msgmni	integer	yes
+.It kern.ipc.msgseg	integer	yes
+.It kern.ipc.semmni	integer	yes
+.It kern.ipc.semmns	integer	yes
+.It kern.ipc.semmnu	integer	yes
+.El
+.Bl -tag -width "123456"
+.It Li kern.ipc.sysvmsg ( KERN_SYSVIPC_MSG )
+Returns 1 if System V style message queue functionality is available
+on this system,
+otherwise 0.
+.It Li kern.ipc.sysvsem ( KERN_SYSVIPC_SEM )
+Returns 1 if System V style semaphore functionality is available
+on this system,
+otherwise 0.
+.It Li kern.ipc.sysvshm ( KERN_SYSVIPC_SHM )
+Returns 1 if System V style share memory functionality is available
+on this system,
+otherwise 0.
+.It Li kern.ipc.sysvipc_info ( KERN_SYSVIPC_INFO )
+Return System V style IPC configuration and run-time information.
+The fourth level name selects the System V style IPC facility.
+.Bl -column "KERN_SYSVIPC_MSG_INFO" "struct shm_sysctl_info" -offset indent
+.It Sy Fourth level name	Type
+.It KERN_SYSVIPC_MSG_INFO	struct msg_sysctl_info
+.It KERN_SYSVIPC_SEM_INFO	struct sem_sysctl_info
+.It KERN_SYSVIPC_SHM_INFO	struct shm_sysctl_info
+.El
+.Pp
+.Bl -tag -width "123456"
+.It Li KERN_SYSVIPC_MSG_INFO
+Return information on the System V style message facility.
+The
+.Sy msg_sysctl_info
+structure is defined in
+.In sys/msg.h .
+.It Li KERN_SYSVIPC_SEM_INFO
+Return information on the System V style semaphore facility.
+The
+.Sy sem_sysctl_info
+structure is defined in
+.In sys/sem.h .
+.It Li KERN_SYSVIPC_SHM_INFO
+Return information on the System V style shared memory facility.
+The
+.Sy shm_sysctl_info
+structure is defined in
+.In sys/shm.h .
+.El
+.It Li kern.ipc.shmmax ( KERN_SYSVIPC_SHMMAX )
+Max shared memory segment size in bytes.
+.It Li kern.ipc.shmmni ( KERN_SYSVIPC_SHMMNI )
+Max number of shared memory identifiers.
+.It Li kern.ipc.shmseg ( KERN_SYSVIPC_SHMSEG )
+Max shared memory segments per process.
+.It Li kern.ipc.shmmaxpgs ( KERN_SYSVIPC_SHMMAXPGS )
+Max amount of shared memory in pages.
+.It Li kern.ipc.shm_use_phys ( KERN_SYSVIPC_SHMUSEPHYS )
+Locking of shared memory in physical memory.
+If 0, memory can be swapped
+out, otherwise it will be locked in physical memory.
+.It Li kern.ipc.msgmni
+Max number of message queue identifiers.
+.It Li kern.ipc.msgseg
+Max number of number of message segments.
+.It Li kern.ipc.semmni
+Max number of number of semaphore identifiers.
+.It Li kern.ipc.semmns
+Max number of number of semaphores in system.
+.It Li kern.ipc.semmnu
+Max number of undo structures in system.
+.El
 .It Li kern.job_control ( KERN_JOB_CONTROL )
 Return 1 if job control is available on this system, otherwise 0.
 .It Li kern.labeloffset ( KERN_LABELOFFSET )
@@ -568,6 +698,8 @@ Limit for direct transfers via page loan.
 .It Li kern.pipe.nbigpipes ( KERN_PIPE_NBIGPIPES )
 Number of "big" pipes.
 .El
+.\" XXX: Undocumented .It Li kern.posix ( ? )
+.\"	 This is a node in which the only variable is semmax.
 .It Li kern.posix1version ( KERN_POSIX1 )
 The version of ISO/IEC 9945 (POSIX 1003.1) with which the system
 attempts to comply.
@@ -585,6 +717,7 @@ and its
 Read-Write Locks
 option to which the system attempts to conform,
 otherwise 0.
+.\" XXX: Undocumented .It Li kern.posix_sched ( ? )
 .It Li kern.posix_semaphores ( KERN_POSIX_SEMAPHORES )
 The version of
 .St -p1003.1
@@ -711,92 +844,6 @@ Maximum amount of kernel memory to be used for socket buffers.
 Returns 1 if the POSIX 1003.1b Synchronized I/O Option is available
 on this system,
 otherwise 0.
-.It Li kern.ipc ( KERN_SYSVIPC )
-Return information about the SysV IPC parameters.
-The third level names for the ipc variables are detailed below.
-.Bl -column "kern.ipc.shm_use_phys" "integer" "Changeable" -offset indent
-.It Sy Third level name	Type	Changeable
-.It kern.ipc.sysvmsg	integer	no
-.It kern.ipc.sysvsem	integer	no
-.It kern.ipc.sysvshm	integer	no
-.It kern.ipc.sysvipc_info	struct	no
-.It kern.ipc.shmmax	integer	yes
-.It kern.ipc.shmmni	integer	yes
-.It kern.ipc.shmseg	integer	yes
-.It kern.ipc.shmmaxpgs	integer	yes
-.It kern.ipc.shm_use_phys	integer	yes
-.It kern.ipc.msgmni	integer	yes
-.It kern.ipc.msgseg	integer	yes
-.It kern.ipc.semmni	integer	yes
-.It kern.ipc.semmns	integer	yes
-.It kern.ipc.semmnu	integer	yes
-.El
-.Bl -tag -width "123456"
-.It Li kern.ipc.sysvmsg ( KERN_SYSVIPC_MSG )
-Returns 1 if System V style message queue functionality is available
-on this system,
-otherwise 0.
-.It Li kern.ipc.sysvsem ( KERN_SYSVIPC_SEM )
-Returns 1 if System V style semaphore functionality is available
-on this system,
-otherwise 0.
-.It Li kern.ipc.sysvshm ( KERN_SYSVIPC_SHM )
-Returns 1 if System V style share memory functionality is available
-on this system,
-otherwise 0.
-.It Li kern.ipc.sysvipc_info ( KERN_SYSVIPC_INFO )
-Return System V style IPC configuration and run-time information.
-The fourth level name selects the System V style IPC facility.
-.Bl -column "KERN_SYSVIPC_MSG_INFO" "struct shm_sysctl_info" -offset indent
-.It Sy Fourth level name	Type
-.It KERN_SYSVIPC_MSG_INFO	struct msg_sysctl_info
-.It KERN_SYSVIPC_SEM_INFO	struct sem_sysctl_info
-.It KERN_SYSVIPC_SHM_INFO	struct shm_sysctl_info
-.El
-.Pp
-.Bl -tag -width "123456"
-.It Li KERN_SYSVIPC_MSG_INFO
-Return information on the System V style message facility.
-The
-.Sy msg_sysctl_info
-structure is defined in
-.In sys/msg.h .
-.It Li KERN_SYSVIPC_SEM_INFO
-Return information on the System V style semaphore facility.
-The
-.Sy sem_sysctl_info
-structure is defined in
-.In sys/sem.h .
-.It Li KERN_SYSVIPC_SHM_INFO
-Return information on the System V style shared memory facility.
-The
-.Sy shm_sysctl_info
-structure is defined in
-.In sys/shm.h .
-.El
-.It Li kern.ipc.shmmax ( KERN_SYSVIPC_SHMMAX )
-Max shared memory segment size in bytes.
-.It Li kern.ipc.shmmni ( KERN_SYSVIPC_SHMMNI )
-Max number of shared memory identifiers.
-.It Li kern.ipc.shmseg ( KERN_SYSVIPC_SHMSEG )
-Max shared memory segments per process.
-.It Li kern.ipc.shmmaxpgs ( KERN_SYSVIPC_SHMMAXPGS )
-Max amount of shared memory in pages.
-.It Li kern.ipc.shm_use_phys ( KERN_SYSVIPC_SHMUSEPHYS )
-Locking of shared memory in physical memory.
-If 0, memory can be swapped
-out, otherwise it will be locked in physical memory.
-.It Li kern.ipc.msgmni
-Max number of message queue identifiers.
-.It Li kern.ipc.msgseg
-Max number of number of message segments.
-.It Li kern.ipc.semmni
-Max number of number of semaphore identifiers.
-.It Li kern.ipc.semmns
-Max number of number of semaphores in system.
-.It Li kern.ipc.semmnu
-Max number of undo structures in system.
-.El
 .It Li kern.timecounter ( dynamic )
 Display and control the timecounter source of the system.
 .Bl -column "kern.timecounter.timestepwarnings" "integer" "Changeable" -offset indent
@@ -883,29 +930,6 @@ Each element of the array contains the kernel address of a vnode
 .Va struct vnode *
 followed by the vnode itself
 .Va struct vnode .
-.It Li kern.coredump.setid
-Settings related to set-id processes coredumps.
-By default, set-id processes do not dump core in situations where
-other processes would.
-The settings in this node allows an administrator to change this
-behavior.
-.Pp
-.Bl -tag -width "123456"
-.It Li kern.coredump.setid.dump
-If non-zero, set-id processes will dump core.
-.It Li kern.coredump.setid.group
-The group-id for the set-id processes' coredump.
-.It Li kern.coredump.setid.mode
-The mode for the set-id processes' coredump.
-See
-.Xr chmod 1 .
-.It Li kern.coredump.setid.owner
-The user-id that will be used as the owner of the set-id processes'
-coredump.
-.It Li kern.coredump.setid.path
-The path to which set-id processes' coredumps will be saved to.
-Same syntax as kern.defcorename.
-.El
 .\" XXX kern.lwp
 .El
 .Sh The machdep.* subtree
