@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.197 2010/03/15 20:02:55 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.198 2010/04/19 18:24:27 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.197 2010/03/15 20:02:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.198 2010/04/19 18:24:27 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -2085,7 +2085,7 @@ pccbb_pcmcia_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 
 	/* Sanity check I/O handle. */
 
-	if (sc->sc_iot != pcihp->iot) {
+	if (!bus_space_is_equal(sc->sc_iot, pcihp->iot)) {
 		panic("pccbb_pcmcia_io_map iot is bogus");
 	}
 
@@ -2703,7 +2703,7 @@ pccbb_pcmcia_mem_map(pcmcia_chipset_handle_t pch, int kind,
 
 	/* XXX this is pretty gross */
 
-	if (sc->sc_memt != pcmhp->memt) {
+	if (!bus_space_is_equal(sc->sc_memt, pcmhp->memt)) {
 		panic("pccbb_pcmcia_mem_map memt is bogus");
 	}
 
@@ -2838,7 +2838,7 @@ pccbb_rbus_cb_space_alloc(cardbus_chipset_tag_t ct, rbus_tag_t rb,
 		align = size;
 	}
 
-	if (rb->rb_bt == sc->sc_memt) {
+	if (bus_space_is_equal(rb->rb_bt, sc->sc_memt)) {
 		if (align < 16) {
 			return 1;
 		}
@@ -2856,7 +2856,7 @@ pccbb_rbus_cb_space_alloc(cardbus_chipset_tag_t ct, rbus_tag_t rb,
 		if (align < 0x1000) {
 			align = 0x1000;
 		}
-	} else if (rb->rb_bt == sc->sc_iot) {
+	} else if (bus_space_is_equal(rb->rb_bt, sc->sc_iot)) {
 		if (align < 4) {
 			return 1;
 		}
@@ -2901,8 +2901,8 @@ pccbb_rbus_cb_space_free(cardbus_chipset_tag_t ct, rbus_tag_t rb,
 
 	pccbb_close_win(sc, bt, bsh, size);
 
-	if (bt == sc->sc_memt) {
-	} else if (bt == sc->sc_iot) {
+	if (bus_space_is_equal(bt, sc->sc_memt)) {
+	} else if (bus_space_is_equal(bt, sc->sc_iot)) {
 	} else {
 		return 1;
 		/* XXX: panic here? */
@@ -2923,7 +2923,7 @@ pccbb_open_win(struct pccbb_softc *sc, bus_space_tag_t bst, bus_addr_t addr,
 
 	head = &sc->sc_iowindow;
 	align = 0x04;
-	if (sc->sc_memt == bst) {
+	if (bus_space_is_equal(sc->sc_memt, bst)) {
 		head = &sc->sc_memwindow;
 		align = 0x1000;
 		DPRINTF(("using memory window, 0x%lx 0x%lx 0x%lx\n\n",
@@ -2950,7 +2950,7 @@ pccbb_close_win(struct pccbb_softc *sc, bus_space_tag_t bst,
 
 	head = &sc->sc_iowindow;
 	align = 0x04;
-	if (sc->sc_memt == bst) {
+	if (bus_space_is_equal(sc->sc_memt, bst)) {
 		head = &sc->sc_memwindow;
 		align = 0x1000;
 	}
@@ -3039,7 +3039,7 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 
 	chainp = TAILQ_FIRST(&sc->sc_iowindow);
 	offs = PCI_CB_IOBASE0;
-	if (sc->sc_memt == bst) {
+	if (bus_space_is_equal(sc->sc_memt, bst)) {
 		chainp = TAILQ_FIRST(&sc->sc_memwindow);
 		offs = PCI_CB_MEMBASE0;
 	}
@@ -3128,7 +3128,7 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 	    (unsigned long)pci_conf_read(pc, tag, offs + 8),
 	    (unsigned long)pci_conf_read(pc, tag, offs + 12) + align));
 
-	if (bst == sc->sc_memt) {
+	if (bus_space_is_equal(bst, sc->sc_memt)) {
 		pcireg_t bcr = pci_conf_read(pc, tag, PCI_BRIDGE_CONTROL_REG);
 
 		bcr &= ~(CB_BCR_PREFETCH_MEMWIN0 | CB_BCR_PREFETCH_MEMWIN1);

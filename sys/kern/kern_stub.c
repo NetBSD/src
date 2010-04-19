@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.25 2010/04/14 15:15:37 pooka Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.26 2010/04/19 18:24:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.25 2010/04/14 15:15:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.26 2010/04/19 18:24:27 dyoung Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -78,6 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.25 2010/04/14 15:15:37 pooka Exp $")
 #include <sys/intr.h>
 #include <sys/cpu.h>
 #include <sys/module.h>
+#include <sys/bus.h>
+
+bool default_bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
 
 /*
  * Nonexistent system call-- signal process (may want to handle it).  Flag
@@ -122,6 +125,9 @@ __weak_alias(ktr_point,nullop);
 __weak_alias(spldebug_start, voidop);
 __weak_alias(spldebug_stop, voidop);
 __weak_alias(machdep_init,nullop);
+__weak_alias(bus_space_tag_create, eopnotsupp);
+__weak_alias(bus_space_tag_destroy, voidop);
+__weak_alias(bus_space_is_equal, default_bus_space_is_equal);
 
 #if !defined(KERN_SA)
 /*
@@ -252,4 +258,10 @@ nullop(void *v)
 {
 
 	return (0);
+}
+
+bool
+default_bus_space_is_equal(bus_space_tag_t t1, bus_space_tag_t t2)
+{
+	return memcmp(&t1, &t2, sizeof(t1)) == 0;
 }
