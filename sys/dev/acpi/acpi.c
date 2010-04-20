@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.178 2010/04/20 04:53:22 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.179 2010/04/20 04:57:04 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.178 2010/04/20 04:53:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.179 2010/04/20 04:57:04 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -303,31 +303,6 @@ acpi_probe(void)
 	}
 
 	acpi_unmap_rsdt(rsdt);
-
-#if notyet
-	/*
-	 * Install the default address space handlers.
-	 */
-	func = "AcpiInstallAddressSpaceHandler()";
-
-	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
-	    ACPI_ADR_SPACE_SYSTEM_MEMORY, ACPI_DEFAULT_HANDLER, NULL, NULL);
-
-	if (ACPI_FAILURE(rv))
-		goto fail;
-
-	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
-	    ACPI_ADR_SPACE_SYSTEM_IO, ACPI_DEFAULT_HANDLER, NULL, NULL);
-
-	if (ACPI_FAILURE(rv))
-		goto fail;
-
-	rv = AcpiInstallAddressSpaceHandler(ACPI_ROOT_OBJECT,
-	    ACPI_ADR_SPACE_PCI_CONFIG, ACPI_DEFAULT_HANDLER, NULL, NULL);
-
-	if (ACPI_FAILURE(rv))
-		goto fail;
-#endif
 
 	rv = AcpiEnableSubsystem(~(ACPI_NO_HARDWARE_INIT|ACPI_NO_ACPI_ENABLE));
 
