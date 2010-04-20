@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.198 2010/04/19 18:24:27 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.199 2010/04/20 23:39:10 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.198 2010/04/19 18:24:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.199 2010/04/20 23:39:10 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -639,7 +639,7 @@ pccbb_pci_callback(device_t self)
 	/* bus bridge initialization */
 	pccbb_chipinit(sc);
 
-	sc->sc_pil_intr_enable = 1;
+	sc->sc_pil_intr_enable = true;
 
 	{
 		u_int32_t sockstat;
@@ -3152,7 +3152,7 @@ pccbb_suspend(device_t dv, const pmf_qual_t *qual)
 
 	if (sc->sc_pil_intr_enable)
 		(void)pccbbintr_function(sc);
-	sc->sc_pil_intr_enable = 0;
+	sc->sc_pil_intr_enable = false;
 
 	reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
 	/* Disable interrupts. */
@@ -3207,7 +3207,7 @@ pccbb_resume(device_t dv, const pmf_qual_t *qual)
 	 */
 	(void)pccbbintr(sc);
 
-	sc->sc_pil_intr_enable = 1;
+	sc->sc_pil_intr_enable = true;
 
 	return true;
 }
