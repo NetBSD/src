@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.44 2010/04/20 07:58:16 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.45 2010/04/20 08:27:24 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -321,8 +321,8 @@ privilege may change the value.
 .It kern.timex	struct	no
 .It kern.tkstat	node	not applicable
 .It kern.urandom	integer	no
-.\".It kern.usercrypto	integer	yes
-.\" It kern.userasymcrypto	integer	yes
+.It kern.usercrypto	integer	yes
+.It kern.userasymcrypto	integer	yes
 .It kern.veriexec	node	not applicable
 .It kern.version	string	no
 .It kern.vnode	struct vnode	no
@@ -933,10 +933,18 @@ The number of raw input characters.
 .El
 .It Li kern.urandom ( KERN_URND )
 Random integer value.
-.\".It Li kern.usercrypto
-.\" XXX: Undocumented.
-.\".It Li kern.userasymcrypto
-.\" XXX: Undocumented.
+.It Li kern.usercrypto
+When enabled, allows userland to
+.Xr open 2
+the
+.Pa /dev/crypto
+special device, used by the
+.Xr crypto 4
+system.
+.It Li kern.userasymcrypto
+Enables or disables the use of software asymmetric crypto support in the
+.Xr crypto 4
+system.
 .It Li kern.veriexec
 Runtime information for
 .Xr veriexec 8 .
