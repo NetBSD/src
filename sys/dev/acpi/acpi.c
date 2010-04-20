@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.177 2010/04/18 14:07:16 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.178 2010/04/20 04:53:22 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.177 2010/04/18 14:07:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.178 2010/04/20 04:53:22 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -113,8 +113,6 @@ MALLOC_DECLARE(M_ACPI);
 
 static int acpi_dbgr = 0x00;
 #endif
-
-static ACPI_TABLE_DESC	acpi_initial_tables[128];
 
 /*
  * This is a flag we set when the ACPI subsystem is active.  Machine
@@ -244,6 +242,9 @@ acpi_probe(void)
 		acpi_osd_debugger();
 #endif
 
+	CTASSERT(TRUE == true);
+	CTASSERT(FALSE == false);
+
 	AcpiGbl_AllMethodsSerialized = false;
 	AcpiGbl_EnableInterpreterSlack = true;
 
@@ -256,17 +257,14 @@ acpi_probe(void)
 		goto fail;
 	}
 
-	rv = AcpiInitializeTables(acpi_initial_tables, 128, 0);
+	/*
+	 * Allocate space for RSDT/XSDT and DSDT,
+	 * but allow resizing if more tables exist.
+	 */
+	rv = AcpiInitializeTables(NULL, 2, true);
 
 	if (ACPI_FAILURE(rv)) {
 		func = "AcpiInitializeTables()";
-		goto fail;
-	}
-
-	rv = AcpiReallocateRootTable();
-
-	if (ACPI_FAILURE(rv)) {
-		func = "AcpiReallocateRootTable()";
 		goto fail;
 	}
 
