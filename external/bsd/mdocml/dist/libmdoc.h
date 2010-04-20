@@ -1,4 +1,4 @@
-/*	$Vendor-Id: libmdoc.h,v 1.31 2010/03/31 07:13:53 kristaps Exp $ */
+/*	$Vendor-Id: libmdoc.h,v 1.33 2010/04/06 11:33:00 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -137,8 +137,7 @@ int		  mdoc_block_alloc(struct mdoc *, int, int,
 int		  mdoc_head_alloc(struct mdoc *, int, int, enum mdoct);
 int		  mdoc_tail_alloc(struct mdoc *, int, int, enum mdoct);
 int		  mdoc_body_alloc(struct mdoc *, int, int, enum mdoct);
-void		  mdoc_node_free(struct mdoc_node *);
-void		  mdoc_node_freelist(struct mdoc_node *);
+void		  mdoc_node_delete(struct mdoc *, struct mdoc_node *);
 void		  mdoc_hash_init(void);
 enum mdoct	  mdoc_hash_find(const char *);
 int		  mdoc_iscdelim(char);
@@ -167,6 +166,7 @@ int		  mdoc_argv(struct mdoc *, int, enum mdoct,
 #define	ARGV_ARG	(1)
 #define	ARGV_WORD	(2)
 void		  mdoc_argv_free(struct mdoc_arg *);
+void		  mdoc_argn_free(struct mdoc_arg *, int);
 int		  mdoc_args(struct mdoc *, int,
 			int *, char *, enum mdoct, char **);
 int		  mdoc_zargs(struct mdoc *, int, 

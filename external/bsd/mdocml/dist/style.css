@@ -4,10 +4,12 @@ div.body	{ color: #333333;
 		  font-size: smaller; 
 		  font-family: Verdana, Tahoma, Arial, sans-serif; }
 
-div.sec-head	{ font-weight: bold; color: blue; } /* Sections (Sh). */
+div.sec-head	{ color: #000000; 
+		  font-weight: bold; } 
 div.sec-body	{ }
-div.sec-block	{ }
-div.ssec-head	{ font-weight: bold; color: blue; } /* Sub-sections (Ss). */
+div.sec-block	{ padding-bottom: 1em; }
+div.ssec-head	{ color: #000000;
+		  font-weight: bold; }
 div.ssec-body	{ }
 div.ssec-block	{ }
 
@@ -31,7 +33,7 @@ span.includes	{ font-weight: bold; } /* Header includes (In). */
 span.lib	{ } /* Library (Lb). */
 span.lit	{ font-family: monospace; } /* Literals (Bf -literal). */
 span.macro	{ font-weight: bold; } /* Macro-ish thing (Fd). */
-span.name	{ font-weight: bold; } /* Name of utility (Nm). */
+span.name	{ color: #003333; font-weight: bold; } /* Name of utility (Nm). */
 span.opt	{ } /* Options (Op, Oo/Oc). */
 span.ref	{ } /* Citations (Rs). */
 span.ref-auth	{ } /* Reference author (%A). */
@@ -57,12 +59,19 @@ a.link-ext	{ background: transparent url(external.png) center right no-repeat; p
 a.link-includes	{ } /* Include-file link (In). */
 a.link-mail 	{ background: transparent url(external.png) center right no-repeat; padding-right: 12px; }/* Mailto links (Mt). */
 a.link-man	{ } /* Manual links (Xr). */
-a.link-sec	{ } /* Section links (Sx). */
+a.link-sec	{ text-decoration: none; border-bottom: 1px dotted #339999; } /* Section links (Sx). */
 
 div.emph	{ font-style: italic; } /* Emphasis (Bl -emphasis). */
-div.lit		{ font-family: monospace; } /* Literal (D1, Bd -literal, Dl, Bd -literal). */
+div.lit		{ margin: 3px; 
+		  padding: 3px;
+		  background-color: #EEEEEE; 
+		  border: 1px solid #339999; 
+		  color: #000000;
+		  font-family: monospace; }
 div.symb	{ font-weight: bold; } /* Symbols (Bl -symbolic). */
 
-table.header	{ border-bottom: 1px dotted #cccccc; }/* Document footer. */
-table.footer	{ border-top: 1px dotted #cccccc; }/* Document header. */
+table.header	{ border-bottom: 1px dotted #dddddd; 
+		  color: #999999; }
+table.footer	{ border-top: 1px dotted #dddddd; 
+		  color: #999999; }
 

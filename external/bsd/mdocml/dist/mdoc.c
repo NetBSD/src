@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc.c,v 1.118 2010/03/31 07:42:04 kristaps Exp $ */
+/*	$Vendor-Id: mdoc.c,v 1.121 2010/04/06 11:33:00 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "libmdoc.h"
 #include "libmandoc.h"
@@ -140,6 +141,9 @@ const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {
 const	char * const *mdoc_macronames = __mdoc_macronames;
 const	char * const *mdoc_argnames = __mdoc_argnames;
 
+static	void		  mdoc_node_free(struct mdoc_node *);
+static	void		  mdoc_node_unlink(struct mdoc *, 
+				struct mdoc_node *);
 static	void		  mdoc_free1(struct mdoc *);
 static	void		  mdoc_alloc1(struct mdoc *);
 static	struct mdoc_node *node_alloc(struct mdoc *, int, int, 
@@ -176,7 +180,7 @@ mdoc_free1(struct mdoc *mdoc)
 {
 
 	if (mdoc->first)
-		mdoc_node_freelist(mdoc->first);
+		mdoc_node_delete(mdoc, mdoc->first);
 	if (mdoc->meta.title)
 		free(mdoc->meta.title);
 	if (mdoc->meta.os)
@@ -351,8 +355,22 @@ mdoc_macro(struct mdoc *m, enum mdoct tok,
 	 * we're in the body, deny prologue calls.
 	 */
 	if (MDOC_PROLOGUE & mdoc_macros[tok].flags && 
-			MDOC_PBODY & m->flags)
-		return(mdoc_perr(m, ln, pp, EPROLBODY));
+			MDOC_PBODY & m->flags) {
+		if ( ! mdoc_pwarn(m, ln, pp, EBODYPROL))
+			return(0);
+		/*
+		 * FIXME: do this in mdoc_action.c.
+		 */
+		if (NULL == m->meta.title)
+			m->meta.title = mandoc_strdup("unknown");
+		if (NULL == m->meta.vol)
+			m->meta.vol = mandoc_strdup("local");
+		if (NULL == m->meta.os)
+			m->meta.os = mandoc_strdup("local");
+		if (0 == m->meta.date)
+			m->meta.date = time(NULL);
+		m->flags |= MDOC_PBODY;
+	}
 	if ( ! (MDOC_PROLOGUE & mdoc_macros[tok].flags) && 
 			! (MDOC_PBODY & m->flags))
 		return(mdoc_perr(m, ln, pp, EBODYPROL));
@@ -550,8 +568,6 @@ void
 mdoc_node_free(struct mdoc_node *p)
 {
 
-	if (p->parent)
-		p->parent->nchild--;
 	if (p->string)
 		free(p->string);
 	if (p->args)
@@ -560,16 +576,53 @@ mdoc_node_free(struct mdoc_node *p)
 }
 
 
-void
-mdoc_node_freelist(struct mdoc_node *p)
+static void
+mdoc_node_unlink(struct mdoc *m, struct mdoc_node *n)
 {
 
-	if (p->child)
-		mdoc_node_freelist(p->child);
-	if (p->next)
-		mdoc_node_freelist(p->next);
+	/* Adjust siblings. */
 
+	if (n->prev)
+		n->prev->next = n->next;
+	if (n->next)
+		n->next->prev = n->prev;
+
+	/* Adjust parent. */
+
+	if (n->parent) {
+		n->parent->nchild--;
+		if (n->parent->child == n)
+			n->parent->child = n->prev ? n->prev : n->next;
+	}
+
+	/* Adjust parse point, if applicable. */
+
+	if (m && m->last == n) {
+		if (n->prev) {
+			m->last = n->prev;
+			m->next = MDOC_NEXT_SIBLING;
+		} else {
+			m->last = n->parent;
+			m->next = MDOC_NEXT_CHILD;
+		}
+	}
+
+	if (m && m->first == n)
+		m->first = NULL;
+}
+
+
+void
+mdoc_node_delete(struct mdoc *m, struct mdoc_node *p)
+{
+
+	while (p->child) {
+		assert(p->nchild);
+		mdoc_node_delete(m, p->child);
+	}
 	assert(0 == p->nchild);
+
+	mdoc_node_unlink(m, p);
 	mdoc_node_free(p);
 }
 
@@ -600,8 +653,18 @@ parsetext(struct mdoc *m, int line, char *buf)
 	for (i = 0; ' ' == buf[i]; i++)
 		/* Skip leading whitespace. */ ;
 
-	if ('\0' == buf[i])
-		return(mdoc_perr(m, line, 0, ENOBLANK));
+	if ('\0' == buf[i]) {
+		if ( ! mdoc_pwarn(m, line, 0, ENOBLANK))
+			return(0);
+		/*
+		 * Assume that a `Pp' should be inserted in the case of
+		 * a blank line.  Technically, blank lines aren't
+		 * allowed, but enough manuals assume this behaviour
+		 * that we want to work around it.
+		 */
+		if ( ! mdoc_elem_alloc(m, line, 0, MDOC_Pp, NULL))
+			return(0);
+	}
 
 	/*
 	 * Break apart a free-form line into tokens.  Spaces are

@@ -1,4 +1,4 @@
-.SUFFIXES:	.html .xml .sgml .1 .3 .7 .md5 .tar.gz .1.txt .3.txt .7.txt .1.sgml .3.sgml .7.sgml
+.SUFFIXES:	.html .xml .sgml .1 .3 .7 .md5 .tar.gz .1.txt .3.txt .7.txt .1.sgml .3.sgml .7.sgml .h .h.html
 
 BINDIR		= $(PREFIX)/bin
 INCLUDEDIR	= $(PREFIX)/include
@@ -10,8 +10,8 @@ INSTALL_DATA	= install -m 0444
 INSTALL_LIB	= install -m 0644
 INSTALL_MAN	= $(INSTALL_DATA)
 
-VERSION	   = 1.9.22
-VDATE	   = 31 March 2010
+VERSION	   = 1.9.23
+VDATE	   = 07 April 2010
 
 VFLAGS	   = -DVERSION="\"$(VERSION)\""
 WFLAGS     = -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings
@@ -68,7 +68,7 @@ HEADS	   = mdoc.h libmdoc.h man.h libman.h term.h \
 GSGMLS	   = mandoc.1.sgml mdoc.3.sgml mdoc.7.sgml manuals.7.sgml \
 	     mandoc_char.7.sgml man.7.sgml man.3.sgml
 SGMLS	   = index.sgml
-HTMLS	   = ChangeLog.html index.html
+HTMLS	   = ChangeLog.html index.html man.h.html mdoc.h.html
 XSLS	   = ChangeLog.xsl
 GHTMLS	   = mandoc.1.html mdoc.3.html man.3.html mdoc.7.html \
 	     man.7.html mandoc_char.7.html manuals.7.html
@@ -123,7 +123,7 @@ install:
 	mkdir -p $(MANDIR)/man7
 	$(INSTALL_PROGRAM) mandoc $(BINDIR)
 	$(INSTALL_MAN) mandoc.1 $(MANDIR)/man1
-	$(INSTALL_MAN) man.7 mdoc.7 $(MANDIR)/man7
+	$(INSTALL_MAN) man.7 mdoc.7 mandoc_char.7 $(MANDIR)/man7
 	$(INSTALL_DATA) example.style.css $(EXAMPLEDIR)
 
 uninstall:
@@ -131,6 +131,7 @@ uninstall:
 	rm -f $(MANDIR)/man1/mandoc.1
 	rm -f $(MANDIR)/man7/mdoc.7
 	rm -f $(MANDIR)/man7/man.7
+	rm -f $(MANDIR)/man7/mandoc_char.7
 	rm -f $(EXAMPLEDIR)/example.style.css
 
 $(OBJS): config.h
@@ -240,6 +241,9 @@ mandoc: $(MAINOBJS) libmdoc.a libman.a
 
 .tar.gz.md5:
 	md5 $< > $@
+
+.h.h.html:
+	highlight -I $< >$@
 
 config.h: config.h.pre config.h.post
 	rm -f config.log
