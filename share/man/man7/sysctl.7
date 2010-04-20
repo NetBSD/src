@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.42 2010/04/20 06:22:52 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.43 2010/04/20 07:33:45 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -112,6 +112,7 @@ if a variable is initialized in more than one place.
 For example, to export the variable
 .Dv dospecialcheck
 as a debugging variable, the following declaration would be used:
+.Pp
 .Bd -literal -offset indent -compact
 int dospecialcheck = 1;
 struct ctldebug debug5 = { "dospecialcheck", \*[Am]dospecialcheck };
@@ -229,16 +230,14 @@ The bytes of non-kernel memory as a 32-bit integer.
 The bytes of non-kernel memory as a 64-bit integer.
 .El
 .Sh The kern.* subtree
+This subtree includes data generally related to the kernel.
 The string and integer information available for the
 .Li kern
 level is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
-The types of data currently available are process information,
-system vnodes, the open file entries, routing table entries,
-virtual memory statistics, load average history, and clock rate
-information.
-.Bl -column "kern.posix_reader_writer_locks" "struct kinfo_drivers" "not applicable"
+.Bl -column "kern.posix_reader_writer_locks" \
+"struct kinfo_drivers" "not applicable"
 .It Sy Second level name	Type	Changeable
 .\".It kern.arandom	integer	no
 .It kern.argmax	integer	no
@@ -433,7 +432,6 @@ and can be changed with the kernel configuration option
 ).
 .It Li kern.detachall
 Detach all devices at shutdown.
-.\" XXX: Lacks CTL_KERN identifier.
 .It Li kern.domainname ( KERN_DOMAINNAME )
 Get or set the YP domain name.
 .It Li kern.drivers ( KERN_DRIVERS )
@@ -993,15 +991,16 @@ Each element of the array contains the kernel address of a vnode
 .Va struct vnode *
 followed by the vnode itself
 .Va struct vnode .
-.\" XXX kern.lwp
+.\" XXX: Undocumented: kern.lwp: no children?
 .El
 .Sh The machdep.* subtree
 The set of variables defined is architecture dependent.
 Most architectures define at least the following variables.
-.Bl -column "Second level name" "Type" "Changeable" -offset indent
+.Bl -column "machdep.booted_kernel" "Type" "Changeable" -offset indent
 .It Sy Second level name	Type	Changeable
-.It Li CPU_CONSDEV	dev_t	no
+.It Li machdep.booted_kernel	string	no
 .El
+.\" XXX: Document the above.
 .Sh The net.* subtree
 The string and integer information available for the
 .Li net
@@ -2098,13 +2097,22 @@ The
 .Li security
 level contains various security-related settings for
 the system.
+The available second level names are:
+.Bl -column "Second level name" "integer" "Changeable" -offset indent
+.It Sy Second level name	Type	Changeable
+.It Li security.curtain	integer	yes
+.It Li security.models	node	not applicable
+.It Li security.pax	node	not applicable
+.El
+.Pp
 Available settings are detailed below.
 .Pp
 .Bl -tag -width "123456"
 .It Li security.curtain
-If non-zero, will filter return objects according to the user-id
+If non-zero, will filter return objects according to the user
+.Tn ID
 requesting information about them, preventing from users any
-access to objects they don't own.
+access to objects they do not own.
 .Pp
 At the moment, it affects
 .Xr ps 1 ,
@@ -2135,14 +2143,33 @@ For more information on any of the PaX features, please see
 .Xr paxctl 8
 and
 .Xr security 8 .
+The available third and fourth level names are:
+.Bl -column "security.pax.segvguard.suspend_timeout" "integer" "Changeable" \
+-offset 2n
+.It Sy Third and fourth level names Ta Sy Type Ta Sy Changeable
+.It Li security.pax.aslr.enabled	integer	yes
+.\".It Li security.pax.aslr.exec_len	integer	yes
+.It Li security.pax.aslr.global	integer	yes
+.\".It Li security.pax.aslr.mmap_len	integer	yes
+.\".It Li security.pax.aslr.stack_len	integer	yes
+.It Li security.pax.mprotect.enabled	integer	yes
+.It Li security.pax.mprotect.global	integer	yes
+.It Li security.pax.segvguard.enabled	integer	yes
+.It Li security.pax.segvguard.expiry_timeout	integer	yes
+.It Li security.pax.segvguard.global	integer	yes
+.It Li security.pax.segvguard.max_crashes	integer	yes
+.It Li security.pax.segvguard.suspend_timeout	integer	yes
+.El
 .Pp
 .Bl -tag -width "123456"
-.It Li security.pax.aslr.enable
+.It Li security.pax.aslr.enabled
 Enable PaX ASLR (Address Space Layout Randomization).
 .Pp
 The value of this
 knob must be non-zero for PaX ASLR to be enabled, even if a program is set to
 explicit enable.
+.\".It Li security.pax.aslr.exec_len
+.\" XXX: Undocumented.
 .It Li security.pax.aslr.global
 Specifies the default global policy for programs without an
 explicit enable/disable flag.
@@ -2152,7 +2179,11 @@ When non-zero, all programs will get PaX ASLR, except those exempted with
 Otherwise, all programs will not get PaX ASLR, except those specifically
 marked as such with
 .Xr paxctl 8 .
-.It Li security.pax.mprotect.enable
+.\".It Li security.pax.aslr.mmap_len
+.\" XXX: Undocumented.
+.\" .It Li security.pax.aslr.stack_len
+.\" XXX: Undocumented.
+.It Li security.pax.mprotect.enabled
 Enable PaX MPROTECT restrictions.
 .Pp
 These are
@@ -2171,7 +2202,7 @@ except those exempted with
 Otherwise, all programs will not get the PaX MPROTECT restrictions,
 except those specifically marked as such with
 .Xr paxctl 8 .
-.It Li security.pax.segvguard.enable
+.It Li security.pax.segvguard.enabled
 Enable PaX Segvguard.
 .Pp
 PaX Segvguard can detect and prevent certain exploitation attempts, where
@@ -2183,6 +2214,9 @@ The
 .Nx
 interface and implementation of the Segvguard is still experimental, and may
 change in future releases.
+.It Li security.pax.segvguard.expiry_timeout
+If the max number was not reached within this timeout (in seconds), the entry
+will expire.
 .It Li security.pax.segvguard.global
 Specifies the default global policy for programs without an
 explicit enable/disable flag.
@@ -2193,14 +2227,11 @@ except those exempted with
 Otherwise, no program will get the PaX Segvguard restrictions,
 except those specifically marked as such with
 .Xr paxctl 8 .
-.It Li security.pax.segvguard.expiry_timeout
-If the max number was not reached within this timeout (in seconds), the entry
-will expire.
+.It Li security.pax.segvguard.max_crashes
+The maximum number of segfaults a program can receive before suspension.
 .It Li security.pax.segvguard.suspend_timeout
 Number of seconds to suspend a user from running a faulting program when the
 limit was exceeded.
-.It Li security.pax.segvguard.max_crashes
-Max number of segfaults a program can receive before suspension.
 .El
 .El
 .Sh The vendor.* subtree ( CTL_VENDOR )
