@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.45 2010/04/20 08:27:24 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.46 2010/04/20 08:37:23 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -250,7 +250,7 @@ privilege may change the value.
 .It kern.coredump	node	not applicable
 .It kern.cp_id	struct	no
 .It kern.cp_time	uint64_t[\|]	no
-.\".It kern.cryptodevallowsoft	integer	yes
+.It kern.cryptodevallowsoft	integer	yes
 .It kern.defcorename	string	yes
 .It kern.detachall	integer	yes
 .It kern.domainname	string	yes
@@ -406,8 +406,21 @@ On multi-processor systems, the sum across all CPUs is returned unless
 appropriate space is given for one data set for each CPU.
 Data for a specific CPU can also be obtained by adding the number of the
 CPU at the end of the MIB, enlarging it by one.
-.\".It Li kern.cryptodevallowsoft
-.\" XXX: Undocumented.
+.It Li kern.cryptodevallowsoft
+This variable controls userland access to hardware versus software transforms
+in the
+.Xr crypto 4
+system.
+The available values are as follows:
+.Bl -tag -width "> 0" -offset indent
+.It Dv < 0
+Always force userlevel requests to use software transforms.
+.It Dv = 0
+If present, use hardware and grant userlevel requests for
+non-accelerated transforms (handling the latter in software).
+.It Dv > 0
+Allow user requests only for transforms which are hardware-accelerated.
+.El
 .It Li kern.defcorename ( KERN_DEFCORENAME )
 Default template for the name of core dump files (see also
 .Li proc.pid.corename

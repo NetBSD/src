@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.20 2010/04/20 08:27:24 jruoho Exp $
+.\"	$NetBSD: crypto.4,v 1.21 2010/04/20 08:37:22 jruoho Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,12 +96,13 @@ then issue
 calls on the descriptor.
 User-mode access to
 .Pa /dev/crypto
-is generally controlled by two
+is generally controlled by three
 .Xr sysctl 8
 variables,
-.Ic kern.usercrypto
+.Ic kern.usercrypto ,
+.Ic kern.userasymcrypto ,
 and
-.Ic kern.userasymcrypto .
+.Ic kern.cryptodevallowsoft .
 See
 .Xr sysctl 7
 for additional details.
