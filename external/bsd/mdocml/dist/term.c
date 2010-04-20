@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term.c,v 1.129 2010/03/23 12:42:22 kristaps Exp $ */
+/*	$Vendor-Id: term.c,v 1.130 2010/04/03 12:46:35 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -92,12 +92,10 @@ term_alloc(enum termenc enc)
  * Flush a line of text.  A "line" is loosely defined as being something
  * that should be followed by a newline, regardless of whether it's
  * broken apart by newlines getting there.  A line can also be a
- * fragment of a columnar list.
+ * fragment of a columnar list (`Bl -tag' or `Bl -column'), which does
+ * not have a trailing newline.
  *
- * Specifically, a line is whatever's in p->buf of length p->col, which
- * is zeroed after this function returns.
- *
- * The usage of termp:flags is as follows:
+ * The following flags may be specified:
  *
  *  - TERMP_NOLPAD: when beginning to write the line, don't left-pad the
  *    offset value.  This is useful when doing columnar lists where the
@@ -133,6 +131,7 @@ term_flushln(struct termp *p)
 	size_t		 vbl;   /* number of blanks to prepend to output */
 	size_t		 vsz;   /* visual characters to write to output */
 	size_t		 bp;    /* visual right border position */
+	size_t		 hyph;	/* visible position of hyphen */
 	int		 j;     /* temporary loop index */
 	size_t		 maxvis, mmax;
 
@@ -178,16 +177,23 @@ term_flushln(struct termp *p)
 		 * (starting with the CSI) aren't counted.  A space
 		 * generates a non-printing word, which is valid (the
 		 * space is printed according to regular spacing rules).
+		 * Collect the number of printable characters until the
+		 * first hyphen, if found.  Hyphens aren't included if
+		 * they're the first character (so `Fl' doesn't break)
+		 * or second consecutive character (`Fl -').
 		 */
 
 		/* LINTED */
-		for (j = i, vsz = 0; j < (int)p->col; j++) {
+		for (j = i, vsz = 0, hyph = 0; j < (int)p->col; j++) {
 			if (j && ' ' == p->buf[j]) 
 				break;
-			else if (8 == p->buf[j])
+			if (8 == p->buf[j])
 				vsz--;
 			else
 				vsz++;
+			if (j > i && '-' == p->buf[j] && 0 == hyph)
+			       if ('-' != p->buf[j - 1])
+					hyph = vsz;
 		}
 
 		/*
@@ -195,14 +201,43 @@ term_flushln(struct termp *p)
 		 * beginning of a line, one between words -- but do not
 		 * actually write them yet.
 		 */
+
 		vbl = (size_t)(0 == vis ? 0 : 1);
 
 		/*
 		 * Find out whether we would exceed the right margin.
-		 * If so, break to the next line.  (TODO: hyphenate)
-		 * Otherwise, write the chosen number of blanks now.
+		 * If so, break to the next line, possibly after
+		 * emittign character up to a hyphen.  Otherwise, write
+		 * the chosen number of blanks.
 		 */
+
 		if (vis && vis + vbl + vsz > bp) {
+			/*
+			 * Has a hyphen been found before the breakpoint
+			 * that we can use?
+			 */
+			if (hyph && vis + vbl + hyph <= bp) {
+				/* First prepend blanks. */
+				for (j = 0; j < (int)vbl; j++)
+					putchar(' ');
+				
+				/* Emit up to the character. */
+				do {
+					if (31 == p->buf[i])
+						putchar(' ');
+					else
+						putchar(p->buf[i]);
+					if (8 != p->buf[i])
+						vsz--;
+				} while ('-' != p->buf[i++]);
+
+				/* Emit trailing decoration. */
+				if (8 == p->buf[i]) {
+					putchar(p->buf[i]);
+					putchar(p->buf[i + 1]);
+				}
+			} 
+
 			putchar('\n');
 			if (TERMP_NOBREAK & p->flags) {
 				for (j = 0; j < (int)p->rmargin; j++)
@@ -213,7 +248,9 @@ term_flushln(struct termp *p)
 					putchar(' ');
 				vis = 0;
 			}
+
 			/* Remove the p->overstep width. */
+
 			bp += (int)/* LINTED */
 				p->overstep;
 			p->overstep = 0;
@@ -223,19 +260,15 @@ term_flushln(struct termp *p)
 			vis += vbl;
 		}
 
-		/*
-		 * Finally, write out the word.
-		 */
-		for ( ; i < (int)p->col; i++) {
+		/* Write out the [remaining] word. */
+		for ( ; i < (int)p->col; i++)
 			if (' ' == p->buf[i])
 				break;
-
-			/* The unit sep. is a non-breaking space. */
-			if (31 == p->buf[i])
+			else if (31 == p->buf[i])
 				putchar(' ');
 			else
 				putchar(p->buf[i]);
-		}
+
 		vis += vsz;
 	}
 
@@ -440,8 +473,6 @@ term_word(struct termp *p, const char *word)
 		case(')'):
 			/* FALLTHROUGH */
 		case(']'):
-			/* FALLTHROUGH */
-		case('}'):
 			if ( ! (TERMP_IGNDELIM & p->flags))
 				p->flags |= TERMP_NOSPACE;
 			break;
@@ -497,11 +528,11 @@ term_word(struct termp *p, const char *word)
 
 	if (sv[0] && 0 == sv[1])
 		switch (sv[0]) {
+		case('|'):
+			/* FALLTHROUGH */
 		case('('):
 			/* FALLTHROUGH */
 		case('['):
-			/* FALLTHROUGH */
-		case('{'):
 			p->flags |= TERMP_NOSPACE;
 			break;
 		default:
