@@ -12,3 +12,4 @@ GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 NO_SMALL_DATA=yes
 SEPARATE_GOTPLT=12
+OTHER_SECTIONS=".note.netbsd.ident 0 : { KEEP(*(.note.netbsd.ident)); }"
