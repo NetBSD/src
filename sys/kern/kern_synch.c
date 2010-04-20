@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.281 2010/04/16 03:21:49 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.282 2010/04/20 16:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.281 2010/04/16 03:21:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.282 2010/04/20 16:49:48 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1198,20 +1198,10 @@ sched_pstats(void)
 			runtm += l->l_rtime.sec;
 			l->l_swtime++;
 			sched_lwp_stats(l);
-			lwp_unlock(l);
-
-			l->l_pctcpu = (l->l_pctcpu * ccpu) >> FSHIFT;
-			if (l->l_slptime != 0)
-				continue;
-
-			lpctcpu = l->l_pctcpu;
-			lcpticks = atomic_swap_uint(&l->l_cpticks, 0);
-			lpctcpu += ((FSCALE - ccpu) *
-			    (lcpticks * FSCALE / clkhz)) >> FSHIFT;
-			l->l_pctcpu = lpctcpu;
 
 			/* For load average calculation. */
-			if (__predict_false(lavg_count == 0)) {
+			if (__predict_false(lavg_count == 0) &&
+			    (l->l_flag & (LW_SINTR | LW_SYSTEM)) == 0) {
 				switch (l->l_stat) {
 				case LSSLEEP:
 					if (l->l_slptime > 1) {
@@ -1223,6 +1213,17 @@ sched_pstats(void)
 					nrun++;
 				}
 			}
+			lwp_unlock(l);
+
+			l->l_pctcpu = (l->l_pctcpu * ccpu) >> FSHIFT;
+			if (l->l_slptime != 0)
+				continue;
+
+			lpctcpu = l->l_pctcpu;
+			lcpticks = atomic_swap_uint(&l->l_cpticks, 0);
+			lpctcpu += ((FSCALE - ccpu) *
+			    (lcpticks * FSCALE / clkhz)) >> FSHIFT;
+			l->l_pctcpu = lpctcpu;
 		}
 		/* Calculating p_pctcpu only for ps(1) */
 		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
