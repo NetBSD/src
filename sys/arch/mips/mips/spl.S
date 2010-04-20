@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.2.4 2010/03/21 18:50:45 cliff Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.5 2010/04/20 22:08:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.1.2.4 2010/03/21 18:50:45 cliff Exp $")
+RCSID("$NetBSD: spl.S,v 1.1.2.5 2010/04/20 22:08:13 matt Exp $")
 
 #include "assym.h"
 
@@ -217,7 +217,7 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	beq	v0, a1, 1f			# don't do anything if IPL_HIGH
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
 	and	a0, v1, MIPS_INT_MASK		# select all interrupts
-	xor	a0, v1				# clear akk interrupts
+	xor	a0, v1				# clear all interrupts
 	DYNAMIC_STATUS_MASK(a0,a2)		# machine dependent masking
 	mtc0	a0, MIPS_COP_0_STATUS		## store back
 	COP0_SYNC
