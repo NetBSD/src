@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.40 2010/04/19 12:44:33 jruoho Exp $
+.\"	$NetBSD: sysctl.7,v 1.41 2010/04/20 06:12:06 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd April 19, 2010
+.Dd April 20, 2010
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -240,6 +240,7 @@ virtual memory statistics, load average history, and clock rate
 information.
 .Bl -column "kern.posix_reader_writer_locks" "struct kinfo_drivers" "not applicable"
 .It Sy Second level name	Type	Changeable
+.\".It kern.arandom	integer	no
 .It kern.argmax	integer	no
 .It kern.autonicetime	integer	yes
 .It kern.autoniceval	integer	yes
@@ -252,6 +253,7 @@ information.
 .It kern.coredump	node	not applicable
 .It kern.cp_id	struct	no
 .It kern.cp_time	uint64_t[\|]	no
+.\".It kern.cryptodevallowsoft	integer	yes
 .It kern.defcorename	string	yes
 .It kern.detachall	integer	yes
 .It kern.domainname	string	yes
@@ -282,14 +284,17 @@ information.
 .It kern.memlock	integer	no
 .It kern.memlock_range	integer	no
 .It kern.memory_protection	integer	no
+.\".It kern.module	node	not applicable
 .It kern.monotonic_clock	integer	no
 .It kern.msgbuf	integer	no
 .It kern.msgbufsize	integer	no
 .It kern.ngroups	integer	no
+.\".It kern.no_sa_support	integer	yes
 .It kern.ntptime	struct ntptimeval	no
 .It kern.osrelease	string	no
 .It kern.osrevision	integer	no
 .It kern.ostype	string	no
+.\".It kern.panic_now	integer	yes
 .It kern.pipe	node	not applicable
 .\" .It kern.posix	node	not applicable
 .It kern.posix1version	integer	no
@@ -304,12 +309,14 @@ information.
 .It kern.proc2	struct kinfo_proc2	no
 .It kern.proc_args	string	no
 .It kern.profiling	node	not applicable
+.\".It kern.pset	node	not applicable
 .It kern.rawpartition	integer	no
 .It kern.root_device	string	no
 .It kern.root_partition	integer	no
 .It kern.rtc_offset	integer	yes
 .It kern.saved_ids	integer	no
 .It kern.sbmax	integer	yes
+.\".It kern.sched	node	not applicable
 .It kern.securelevel	integer	raise only
 .It kern.somaxkva	integer	yes
 .It kern.synchronized_io	integer	no
@@ -317,11 +324,15 @@ information.
 .It kern.timex	struct	no
 .It kern.tkstat	node	not applicable
 .It kern.urandom	integer	no
+.\".It kern.usercrypto	integer	yes
+.\" It kern.userasymcrypto	integer	yes
 .It kern.veriexec	node	not applicable
 .It kern.version	string	no
 .It kern.vnode	struct vnode	no
 .El
 .Bl -tag -width "123456"
+.\".It Li kern.arandom
+.\" XXX: Undocumented.
 .It Li kern.argmax ( KERN_ARGMAX )
 The maximum bytes of argument to
 .Xr execve 2 .
@@ -343,7 +354,8 @@ A
 .Va struct timeval
 structure is returned.
 This structure contains the time that the system was booted.
-.\" XXX: Undocumented: .It Li kern.bufq
+.\" .It Li kern.bufq
+.\" XXX: Undocumented.
 .It Li kern.ccpu ( KERN_CCPU )
 The scheduler exponential decay value.
 .It Li kern.clockrate ( KERN_CLOCKRATE )
@@ -402,6 +414,8 @@ On multi-processor systems, the sum across all CPUs is returned unless
 appropriate space is given for one data set for each CPU.
 Data for a specific CPU can also be obtained by adding the number of the
 CPU at the end of the MIB, enlarging it by one.
+.\".It Li kern.cryptodevallowsoft
+.\" XXX: Undocumented.
 .It Li kern.defcorename ( KERN_DEFCORENAME )
 Default template for the name of core dump files (see also
 .Li proc.pid.corename
@@ -434,7 +448,8 @@ The
 .Va d_bmajor
 field will be set to \-1 if the driver doesn't have a block device.
 .It Li kern.dump_on_panic ( KERN_DUMP_ON_PANIC )
-Perform a crash dump on system panic.
+Perform a crash dump on system
+.Xr panic 9 .
 .It Li kern.file ( KERN_FILE )
 Return the entire file table.
 The returned data consists of a single
@@ -653,6 +668,8 @@ otherwise 0.
 Returns 1 if the POSIX 1003.1b Memory Protection Option is available
 on this system,
 otherwise 0.
+.\" .It Li kern.module
+.\" XXX: Undocumented.
 .It Li kern.monotonic_clock ( KERN_MONOTONIC_CLOCK )
 Returns the standard version the implementation of the POSIX 1003.1b
 Monotonic Clock Option conforms to,
@@ -665,6 +682,8 @@ The returned data may contain NUL bytes.
 The maximum number of characters that the kernel message buffer can hold.
 .It Li kern.ngroups ( KERN_NGROUPS )
 The maximum number of supplemental groups.
+.\" .It Li kern.no_sa_support
+.\" XXX: Undocumented.
 .It Li kern.ntptime ( KERN_NTPTIME )
 A
 .Va struct ntptimeval
@@ -678,6 +697,8 @@ The system release string.
 The system revision string.
 .It Li kern.ostype ( KERN_OSTYPE )
 The system type string.
+.\".It Li kern.panic_now
+.\" XXX: Undocumented.
 .It Li kern.pipe ( KERN_PIPE )
 Pipe settings.
 The third level names for the  integer pipe settings is detailed below.
@@ -724,7 +745,8 @@ and its
 Read-Write Locks
 option to which the system attempts to conform,
 otherwise 0.
-.\" XXX: Undocumented .It Li kern.posix_sched ( ? )
+.\".It Li kern.posix_sched
+.\" XXX: Undocumented.
 .It Li kern.posix_semaphores ( KERN_POSIX_SEMAPHORES )
 The version of
 .St -p1003.1
@@ -827,6 +849,8 @@ Array of
 .Va struct tostruct
 describing destination of calls and their counts.
 .El
+.\" .It Li kern.pset
+.\" XXX: Undocumented.
 .It Li kern.rawpartition ( KERN_RAWPARTITION )
 The raw partition of a disk (a == 0).
 .It Li kern.root_device ( KERN_ROOT_DEVICE )
@@ -844,6 +868,8 @@ Maximum socket buffer size.
 .It Li kern.securelevel ( KERN_SECURELVL )
 See
 .Xr secmodel_securelevel 9 .
+.\" .It Li kern.sched
+.\" XXX: Undocumented.
 .It Li kern.somaxkva ( KERN_SOMAXKVA )
 Maximum amount of kernel memory to be used for socket buffers.
 .\" XXX units?
@@ -898,6 +924,10 @@ The number of raw input characters.
 .El
 .It Li kern.urandom ( KERN_URND )
 Random integer value.
+.\".It Li kern.usercrypto
+.\" XXX: Undocumented.
+.\".It Li kern.userasymcrypto
+.\" XXX: Undocumented.
 .It Li kern.veriexec
 Runtime information for
 .Xr veriexec 8 .
