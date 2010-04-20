@@ -1,4 +1,4 @@
-/*	$Vendor-Id: out.h,v 1.9 2009/11/12 08:21:05 kristaps Exp $ */
+/*	$Vendor-Id: out.h,v 1.10 2010/04/07 11:25:38 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -45,6 +45,8 @@ enum	roffdeco {
 	DECO_PREVIOUS,
 	DECO_SIZE,
 	DECO_NOSPACE,
+	DECO_FONT, /* font */
+	DECO_FFONT, /* font family */
 	DECO_MAX
 };
 

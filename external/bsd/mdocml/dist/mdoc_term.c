@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_term.c,v 1.112 2010/03/29 19:28:04 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_term.c,v 1.116 2010/04/06 16:27:53 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -99,6 +99,7 @@ static	int	  termp_ap_pre(DECL_ARGS);
 static	int	  termp_aq_pre(DECL_ARGS);
 static	int	  termp_bd_pre(DECL_ARGS);
 static	int	  termp_bf_pre(DECL_ARGS);
+static	int	  termp_bl_pre(DECL_ARGS);
 static	int	  termp_bold_pre(DECL_ARGS);
 static	int	  termp_bq_pre(DECL_ARGS);
 static	int	  termp_brq_pre(DECL_ARGS);
@@ -148,7 +149,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_d1_pre, termp_d1_post }, /* Dl */
 	{ termp_bd_pre, termp_bd_post }, /* Bd */
 	{ NULL, NULL }, /* Ed */
-	{ NULL, termp_bl_post }, /* Bl */
+	{ termp_bl_pre, termp_bl_post }, /* Bl */
 	{ NULL, NULL }, /* El */
 	{ termp_it_pre, termp_it_post }, /* It */
 	{ NULL, NULL }, /* Ad */ 
@@ -1070,9 +1071,9 @@ termp_fl_pre(DECL_ARGS)
 	term_fontpush(p, TERMFONT_BOLD);
 	term_word(p, "\\-");
 
-	/* A blank `Fl' should incur a subsequent space. */
-
 	if (n->child)
+		p->flags |= TERMP_NOSPACE;
+	else if (n->next && n->next->line == n->line)
 		p->flags |= TERMP_NOSPACE;
 
 	return(1);
@@ -1250,6 +1251,15 @@ termp_nd_pre(DECL_ARGS)
 
 
 /* ARGSUSED */
+static int
+termp_bl_pre(DECL_ARGS)
+{
+
+	return(MDOC_HEAD != n->type);
+}
+
+
+/* ARGSUSED */
 static void
 termp_bl_post(DECL_ARGS)
 {
@@ -1277,7 +1287,10 @@ termp_xr_pre(DECL_ARGS)
 {
 	const struct mdoc_node *nn;
 
-	assert(n->child && MDOC_TEXT == n->child->type);
+	if (NULL == n->child)
+		return(0);
+
+	assert(MDOC_TEXT == n->child->type);
 	nn = n->child;
 
 	term_word(p, nn->string);
@@ -1591,8 +1604,8 @@ termp_bd_pre(DECL_ARGS)
 	if (MDOC_BLOCK == n->type) {
 		print_bvspace(p, n, n);
 		return(1);
-	} else if (MDOC_BODY != n->type)
-		return(1);
+	} else if (MDOC_HEAD == n->type)
+		return(0);
 
 	nn = n->parent;
 

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_argv.c,v 1.36 2010/03/31 07:42:04 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_argv.c,v 1.37 2010/04/03 14:02:10 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -288,7 +288,7 @@ mdoc_argv(struct mdoc *m, int line, enum mdoct tok,
 void
 mdoc_argv_free(struct mdoc_arg *p)
 {
-	int		 i, j;
+	int		 i;
 
 	if (NULL == p)
 		return;
@@ -300,23 +300,28 @@ mdoc_argv_free(struct mdoc_arg *p)
 	}
 	assert(p->argc);
 
-	/* LINTED */
-	for (i = 0; i < (int)p->argc; i++) {
-		if (0 == p->argv[i].sz)
-			continue;
-		if (NULL == p->argv[i].value)
-			continue;
-
-		/* LINTED */
-		for (j = 0; j < (int)p->argv[i].sz; j++) 
-			if (p->argv[i].value[j])
-				free(p->argv[i].value[j]);
-
-		free(p->argv[i].value);
-	}
+	for (i = (int)p->argc - 1; i >= 0; i--)
+		mdoc_argn_free(p, i);
 
 	free(p->argv);
 	free(p);
+}
+
+
+void
+mdoc_argn_free(struct mdoc_arg *p, int iarg)
+{
+	struct mdoc_argv *arg = &p->argv[iarg];
+	int		  j;
+
+	if (arg->sz && arg->value) {
+		for (j = (int)arg->sz - 1; j >= 0; j--) 
+			free(arg->value[j]);
+		free(arg->value);
+	}
+
+	for (--p->argc; iarg < (int)p->argc; iarg++)
+		p->argv[iarg] = p->argv[iarg+1];
 }
 
 
