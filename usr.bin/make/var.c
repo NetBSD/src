@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.156 2010/04/15 03:48:39 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.157 2010/04/20 17:48:16 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.156 2010/04/15 03:48:39 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.157 2010/04/20 17:48:16 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.156 2010/04/15 03:48:39 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.157 2010/04/20 17:48:16 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -123,6 +123,7 @@ __RCSID("$NetBSD: var.c,v 1.156 2010/04/15 03:48:39 sjg Exp $");
  * XXX: There's a lot of duplication in these functions.
  */
 
+#include    <sys/stat.h>
 #ifndef NO_REGEX
 #include    <sys/types.h>
 #include    <regex.h>
@@ -1870,6 +1871,7 @@ VarRealpath(GNode *ctx __unused, Var_Parse_State *vpstate,
 	    char *word, Boolean addSpace, Buffer *buf,
 	    void *patternp __unused)
 {
+	struct stat st;
 	char rbuf[MAXPATHLEN];
 	char *rp;
 			    
@@ -1878,7 +1880,7 @@ VarRealpath(GNode *ctx __unused, Var_Parse_State *vpstate,
 	}
 	addSpace = TRUE;
 	rp = realpath(word, rbuf);
-	if (rp && *rp == '/')
+	if (rp && *rp == '/' && stat(rp, &st) == 0)
 		word = rp;
 	
 	Buf_AddBytes(buf, strlen(word), word);
