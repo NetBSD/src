@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22.16.16 2010/04/17 07:34:45 cliff Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.22.16.17 2010/04/20 22:08:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.16 2010/04/17 07:34:45 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22.16.17 2010/04/20 22:08:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,9 +844,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		break;
 
 	case _BUS_DMA_BUFTYPE_MBUF:
-		m_copyback(cookie->id_origmbuf, offset, len,
-			(char *)cookie->id_bouncebuf + offset);
+		m_copyback(cookie->id_origmbuf, offset, len, 
+		    (char *)cookie->id_bouncebuf + offset);
 		break;
+
 	case _BUS_DMA_BUFTYPE_UIO:
 		_bus_dma_uiomove((char *)cookie->id_bouncebuf + offset,
 		    cookie->id_origuio, len, UIO_READ);
