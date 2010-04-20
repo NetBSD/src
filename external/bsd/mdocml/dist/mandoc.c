@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.c,v 1.10 2010/01/05 19:51:10 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.c,v 1.11 2010/04/07 11:25:38 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -73,10 +73,6 @@ mandoc_special(const char *p)
 		return(2);
 	case ('e'):
 		return(2);
-	case ('f'):
-		if ('\0' == *++p || ! isgraph((u_char)*p))
-			return(0);
-		return(3);
 	case ('s'):
 		if ('\0' == *++p)
 			return(2);
@@ -152,6 +148,10 @@ mandoc_special(const char *p)
 		}
 
 		return(c);
+	case ('f'):
+		/* FALLTHROUGH */
+	case ('F'):
+		/* FALLTHROUGH */
 	case ('*'):
 		if (0 == *++p || ! isgraph((u_char)*p))
 			return(0);

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_validate.c,v 1.33 2010/03/29 10:10:35 kristaps Exp $ */
+/*	$Vendor-Id: man_validate.c,v 1.34 2010/04/03 14:12:48 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -167,8 +167,19 @@ check_root(CHKARGS)
 
 	if (NULL == m->first->child)
 		return(man_nerr(m, n, WNODATA));
-	if (NULL == m->meta.title)
-		return(man_nerr(m, n, WNOTITLE));
+	if (NULL == m->meta.title) {
+		if ( ! man_nwarn(m, n, WNOTITLE))
+			return(0);
+		/*
+		 * If a title hasn't been set, do so now (by
+		 * implication, date and section also aren't set).
+		 * 
+		 * FIXME: this should be in man_action.c.
+		 */
+	        m->meta.title = mandoc_strdup("unknown");
+		m->meta.date = time(NULL);
+		m->meta.msec = 1;
+	}
 
 	return(1);
 }
