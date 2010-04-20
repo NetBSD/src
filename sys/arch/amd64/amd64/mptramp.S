@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.11 2010/04/18 23:47:50 jym Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.12 2010/04/20 15:42:21 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -216,6 +216,18 @@ _TRMP_LABEL(mptramp_longmode)
 
 	
 _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
+	/*
+	 * If EFER_NXE is not enabled, fetching a page with a NX bit set
+	 * will raise a #GP. Avoid that by setting the NXE feature now.
+	 */
+	movl	_C_LABEL(cpu_feature)+2*4,%eax	/* cpu_feature[2] */
+	andl	$CPUID_NOX,%eax
+	jz	1f
+	movl	$MSR_EFER,%ecx
+	rdmsr
+	orl	$EFER_NXE,%eax	/* enable No-Execute feature */
+	wrmsr
+
 1:
 	/* Don't touch lapic until BP has done init sequence. */
 	movq	_C_LABEL(cpu_starting),%rdi
@@ -223,7 +235,6 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	testq	%rdi, %rdi
 	jz	1b
 
-1:
 	movq	CPU_INFO_IDLELWP(%rdi),%rsi
 	movq	L_PCB(%rsi),%rsi
 	
