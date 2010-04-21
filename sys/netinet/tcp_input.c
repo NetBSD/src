@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.303 2010/04/16 03:13:03 rmind Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.304 2010/04/21 20:40:16 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.303 2010/04/16 03:13:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.304 2010/04/21 20:40:16 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3364,12 +3364,9 @@ syn_cache_put(struct syn_cache *sc)
 	if (sc->sc_ipopts)
 		(void) m_free(sc->sc_ipopts);
 	rtcache_free(&sc->sc_route);
-	if (callout_invoking(&sc->sc_timer))
-		sc->sc_flags |= SCF_DEAD;
-	else {
-		callout_destroy(&sc->sc_timer);
-		pool_put(&syn_cache_pool, sc);
-	}
+	sc->sc_flags |= SCF_DEAD;
+	if (!callout_invoking(&sc->sc_timer))
+		callout_schedule(&(sc)->sc_timer, 1);
 }
 
 void
@@ -3533,7 +3530,11 @@ syn_cache_timer(void *arg)
  dropit:
 	TCP_STATINC(TCP_STAT_SC_TIMED_OUT);
 	syn_cache_rm(sc);
-	syn_cache_put(sc);	/* calls pool_put but see spl above */
+	if (sc->sc_ipopts)
+		(void) m_free(sc->sc_ipopts);
+	rtcache_free(&sc->sc_route);
+	callout_destroy(&sc->sc_timer);
+	pool_put(&syn_cache_pool, sc);
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
