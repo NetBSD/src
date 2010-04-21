@@ -26,58 +26,103 @@
  */
 
 #include <fcntl.h>
+#include <fnmatch.h>
+#include <sys/stat.h>
 #include "drmtest.h"
 
-/** Open the first DRM device we can find, searching up to 16 device nodes */
-int drm_open_any(void)
-{
-	char name[20];
-	int i, fd;
+#define LIBUDEV_I_KNOW_THE_API_IS_SUBJECT_TO_CHANGE
+#include <libudev.h>
 
-	for (i = 0; i < 16; i++) {
-		sprintf(name, "/dev/dri/card%d", i);
-		fd = open(name, O_RDWR);
-		if (fd != -1)
-			return fd;
-	}
-	abort();
+static int is_master(int fd)
+{
+	drm_client_t client;
+	int ret;
+
+	/* Check that we're the only opener and authed. */
+	client.idx = 0;
+	ret = ioctl(fd, DRM_IOCTL_GET_CLIENT, &client);
+	assert (ret == 0);
+	if (!client.auth)
+		return 0;
+	client.idx = 1;
+	ret = ioctl(fd, DRM_IOCTL_GET_CLIENT, &client);
+	if (ret != -1 || errno != EINVAL)
+		return 0;
+
+	return 1;
 }
 
+/** Open the first DRM device matching the criteria */
+int drm_open_matching(const char *pci_glob, int flags)
+{
+	struct udev *udev;
+	struct udev_enumerate *e;
+	struct udev_device *device, *parent;
+        struct udev_list_entry *entry;
+	const char *pci_id, *path;
+	int i, fd;
+
+	udev = udev_new();
+	if (udev == NULL) {
+		fprintf(stderr, "failed to initialize udev context\n");
+		abort();
+	}
+
+	fd = -1;
+	e = udev_enumerate_new(udev);
+	udev_enumerate_add_match_subsystem(e, "drm");
+        udev_enumerate_scan_devices(e);
+        udev_list_entry_foreach(entry, udev_enumerate_get_list_entry(e)) {
+		path = udev_list_entry_get_name(entry);
+		device = udev_device_new_from_syspath(udev, path);
+		parent = udev_device_get_parent(device);
+		/* Filter out KMS output devices. */
+		if (strcmp(udev_device_get_subsystem(parent), "pci") != 0)
+			continue;
+		pci_id = udev_device_get_property_value(parent, "PCI_ID");
+		if (fnmatch(pci_glob, pci_id, 0) != 0)
+			continue;
+		fd = open(udev_device_get_devnode(device), O_RDWR);
+		if (fd < 0)
+			continue;
+		if ((flags & DRM_TEST_MASTER) && !is_master(fd)) {
+			close(fd);
+			fd = -1;
+			continue;
+		}
+
+		break;
+	}
+        udev_enumerate_unref(e);
+	udev_unref(udev);
+
+	return fd;
+}
+
+int drm_open_any(void)
+{
+	int fd = drm_open_matching("*:*", 0);
+
+	if (fd < 0) {
+		fprintf(stderr, "failed to open any drm device\n");
+		abort();
+	}
+
+	return fd;
+}
 
 /**
  * Open the first DRM device we can find where we end up being the master.
  */
 int drm_open_any_master(void)
 {
-	char name[20];
-	int i, fd;
+	int fd = drm_open_matching("*:*", DRM_TEST_MASTER);
 
-	for (i = 0; i < 16; i++) {
-		drm_client_t client;
-		int ret;
-
-		sprintf(name, "/dev/dri/card%d", i);
-		fd = open(name, O_RDWR);
-		if (fd == -1)
-			continue;
-
-		/* Check that we're the only opener and authed. */
-		client.idx = 0;
-		ret = ioctl(fd, DRM_IOCTL_GET_CLIENT, &client);
-		assert (ret == 0);
-		if (!client.auth) {
-			close(fd);
-			continue;
-		}
-		client.idx = 1;
-		ret = ioctl(fd, DRM_IOCTL_GET_CLIENT, &client);
-		if (ret != -1 || errno != EINVAL) {
-			close(fd);
-			continue;
-		}
-		return fd;
+	if (fd < 0) {
+		fprintf(stderr, "failed to open any drm device\n");
+		abort();
 	}
-	fprintf(stderr, "Couldn't find an un-controlled DRM device\n");
-	abort();
-}
 
+	return fd;
+
+}

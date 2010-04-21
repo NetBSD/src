@@ -1,4 +1,4 @@
-/*	$NetBSD: athrate-amrr.c,v 1.10 2008/01/04 21:17:56 ad Exp $ */
+/*	$NetBSD: athrate-amrr.c,v 1.10.26.1 2010/04/21 00:27:35 matt Exp $ */
 
 /*-
  * Copyright (c) 2004 INRIA
@@ -43,7 +43,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/ath_rate/amrr/amrr.c,v 1.10 2005/08/09 10:19:43 rwatson Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.10 2008/01/04 21:17:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.10.26.1 2010/04/21 00:27:35 matt Exp $");
 #endif
 
 /*
@@ -77,7 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: athrate-amrr.c,v 1.10 2008/01/04 21:17:56 ad Exp $")
 
 #include <dev/ic/athvar.h>
 #include <dev/ic/athrate-amrr.h>
-#include <contrib/dev/ath/ah_desc.h>
+
+#include <external/isc/atheros_hal/dist/ah.h>
 
 #define	AMRR_DEBUG
 #ifdef AMRR_DEBUG

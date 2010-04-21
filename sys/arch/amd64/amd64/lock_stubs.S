@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.20.6.1.2.2 2009/05/13 00:29:02 snj Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.20.6.1.2.2.2.1 2010/04/21 00:33:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.

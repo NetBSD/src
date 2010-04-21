@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.11 2008/06/04 12:41:42 ad Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.11.12.1 2010/04/21 00:33:45 matt Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.11 2008/06/04 12:41:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.11.12.1 2010/04/21 00:33:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,8 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	KASSERT(npages >= npagesreq);
 
 	/* get npages from UWM, and give them back to the hypervisor */
-	error = uvm_pglistalloc(npages << PAGE_SHIFT, 0, avail_end, 0, 0,
-	    mlistp, npages, (flags & BUS_DMA_NOWAIT) == 0);
+	error = uvm_pglistalloc(((psize_t)npages) << PAGE_SHIFT,
+            0, avail_end, 0, 0, mlistp, npages, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
 
@@ -99,6 +99,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		res.extent_start = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
+		res.address_bits = 0;
 		res.domid = DOMID_SELF;
 		if (HYPERVISOR_memory_op(XENMEM_decrease_reservation, &res)
 		    < 0) {
@@ -161,7 +162,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 		pa = VM_PAGE_TO_PHYS(pg);
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn+i;
-		xpq_queue_machphys_update((mfn+i) << PAGE_SHIFT, pa);
+		xpq_queue_machphys_update(((paddr_t)(mfn+i)) << PAGE_SHIFT, pa);
 		/* while here, give extra pages back to UVM */
 		if (i >= npagesreq) {
 			TAILQ_REMOVE(mlistp, pg, pageq.queue);
@@ -217,7 +218,7 @@ failed:
 		pa = VM_PAGE_TO_PHYS(pg);
 		xpmap_phys_to_machine_mapping[
 		    (pa - XPMAP_OFFSET) >> PAGE_SHIFT] = mfn;
-		xpq_queue_machphys_update((mfn) << PAGE_SHIFT, pa);
+		xpq_queue_machphys_update(((paddr_t)mfn) << PAGE_SHIFT, pa);
 		TAILQ_REMOVE(mlistp, pg, pageq.queue);
 		uvm_pagefree(pg);
 	}

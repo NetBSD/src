@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102.4.10 2009/04/04 17:39:09 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.4.10.4.1 2010/04/21 00:33:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.10 2009/04/04 17:39:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.10.4.1 2010/04/21 00:33:53 matt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -131,6 +131,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.10 2009/04/04 17:39:09 snj Exp $
 #ifndef XEN
 #include "opt_physmem.h"
 #endif
+#include "isa.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +367,7 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 
-#if !defined(XEN) || defined(DOM0OPS)
+#if NISA > 0 || NPCI > 0
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
 #endif
@@ -391,12 +393,10 @@ x86_64_switch_context(struct pcb *new)
 	struct cpu_info *ci;
 	ci = curcpu();
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
-	if (xendomain_is_privileged()) {
-		struct physdev_op physop;
-		physop.cmd = PHYSDEVOP_SET_IOPL;
-		physop.u.set_iopl.iopl = new->pcb_iopl;
-		HYPERVISOR_physdev_op(&physop);
-	}
+	struct physdev_op physop;
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = new->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
 	if (new->pcb_fpcpu != ci) {
 		HYPERVISOR_fpu_taskswitch(1);
 	}
@@ -429,10 +429,16 @@ x86_64_proc0_tss_ldt_init(void)
 #if !defined(XEN)
 	lldt(pcb->pcb_ldt_sel);
 #else
+	{
+	struct physdev_op physop;
 	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
 	HYPERVISOR_fpu_taskswitch(1);
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
+	physop.cmd = PHYSDEVOP_SET_IOPL;
+	physop.u.set_iopl.iopl = pcb->pcb_iopl;
+	HYPERVISOR_physdev_op(&physop);
+	}
 #endif /* XEN */
 }
 
@@ -1369,7 +1375,7 @@ init_x86_64(paddr_t first_avail)
 	struct mem_segment_descriptor *ldt_segp;
 	int x;
 #ifndef XEN
-	int first16q, ist;
+	int first16q, first4gq, ist;
 	extern struct extent *iomem_ex;
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
@@ -1399,7 +1405,7 @@ init_x86_64(paddr_t first_avail)
 	__PRINTK(("pcb_cr3 0x%lx\n", xen_start_info.pt_base - KERNBASE));
 #endif
 
-#if !defined(XEN) || defined(DOM0OPS)
+#if NISA > 0 || NPCI > 0
 	x86_bus_space_init();
 #endif
 
@@ -1579,10 +1585,18 @@ init_x86_64(paddr_t first_avail)
 	 * all of the ISA DMA'able memory won't be eaten up
 	 * first-off).
 	 */
-	if (avail_end <= (16 * 1024 * 1024))
+#define ADDR_16M (16 * 1024 * 1024)
+#define ADDR_4G (4ULL * 1024 * 1024 * 1024)
+
+	if (avail_end <= ADDR_16M)
 		first16q = VM_FREELIST_DEFAULT;
 	else
 		first16q = VM_FREELIST_FIRST16;
+
+	if (avail_end <= ADDR_4G)
+		first4gq = VM_FREELIST_DEFAULT;
+	else
+		first4gq = VM_FREELIST_FIRST4G;
 
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
@@ -1630,19 +1644,19 @@ init_x86_64(paddr_t first_avail)
 
 		/* First hunk */
 		if (seg_start != seg_end) {
-			if (seg_start < (16 * 1024 * 1024) &&
+			if (seg_start < ADDR_16M &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				uint64_t tmp;
 
-				if (seg_end > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
+				if (seg_end > ADDR_16M)
+					tmp = ADDR_16M;
 				else
 					tmp = seg_end;
 
 				if (tmp != seg_start) {
 #ifdef DEBUG_MEMLOAD
-					printf("loading 0x%"PRIx64"-0x%"PRIx64
-					    " (0x%lx-0x%lx)\n",
+					printf("loading first16q 0x%"PRIx64
+					    "-0x%"PRIx64" (0x%lx-0x%lx)\n",
 					    seg_start, tmp,
 					    atop(seg_start), atop(tmp));
 #endif
@@ -1652,10 +1666,32 @@ init_x86_64(paddr_t first_avail)
 				}
 				seg_start = tmp;
 			}
+			if (seg_start < ADDR_4G &&
+			    first4gq != VM_FREELIST_DEFAULT) {
+				uint64_t tmp;
+
+				if (seg_end > ADDR_4G)
+					tmp = ADDR_4G;
+				else
+					tmp = seg_end;
+
+				if (tmp != seg_start) {
+#ifdef DEBUG_MEMLOAD
+					printf("loading first4gq 0x%"PRIx64
+					    "-0x%"PRIx64" (0x%lx-0x%lx)\n",
+					    seg_start, tmp,
+					    atop(seg_start), atop(tmp));
+#endif
+					uvm_page_physload(atop(seg_start),
+					    atop(tmp), atop(seg_start),
+					    atop(tmp), first4gq);
+				}
+				seg_start = tmp;
+			}
 
 			if (seg_start != seg_end) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				printf("loading default 0x%"PRIx64"-0x%"PRIx64
 				    " (0x%lx-0x%lx)\n",
 				    seg_start, seg_end,
 				    atop(seg_start), atop(seg_end));
@@ -1668,19 +1704,19 @@ init_x86_64(paddr_t first_avail)
 
 		/* Second hunk */
 		if (seg_start1 != seg_end1) {
-			if (seg_start1 < (16 * 1024 * 1024) &&
+			if (seg_start1 < ADDR_16M &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				uint64_t tmp;
 
-				if (seg_end1 > (16 * 1024 * 1024))
-					tmp = (16 * 1024 * 1024);
+				if (seg_end1 > ADDR_16M)
+					tmp = ADDR_16M;
 				else
 					tmp = seg_end1;
 
 				if (tmp != seg_start1) {
 #ifdef DEBUG_MEMLOAD
-					printf("loading 0x%"PRIx64"-0x%"PRIx64
-					    " (0x%lx-0x%lx)\n",
+					printf("loading first16q 0x%"PRIx64
+					    "-0x%"PRIx64" (0x%lx-0x%lx)\n",
 					    seg_start1, tmp,
 					    atop(seg_start1), atop(tmp));
 #endif
@@ -1690,10 +1726,32 @@ init_x86_64(paddr_t first_avail)
 				}
 				seg_start1 = tmp;
 			}
+			if (seg_start1 < ADDR_4G &&
+			    first4gq != VM_FREELIST_DEFAULT) {
+				uint64_t tmp;
+
+				if (seg_end1 > ADDR_4G)
+					tmp = ADDR_4G;
+				else
+					tmp = seg_end1;
+
+				if (tmp != seg_start1) {
+#ifdef DEBUG_MEMLOAD
+					printf("loading first4gq 0x%"PRIx64
+					    "-0x%"PRIx64" (0x%lx-0x%lx)\n",
+					    seg_start1, tmp,
+					    atop(seg_start1), atop(tmp));
+#endif
+					uvm_page_physload(atop(seg_start1),
+					    atop(tmp), atop(seg_start1),
+					    atop(tmp), first4gq);
+				}
+				seg_start1 = tmp;
+			}
 
 			if (seg_start1 != seg_end1) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				printf("loading default 0x%"PRIx64"-0x%"PRIx64
 				    " (0x%lx-0x%lx)\n",
 				    seg_start1, seg_end1,
 				    atop(seg_start1), atop(seg_end1));

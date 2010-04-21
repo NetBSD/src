@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.44.62.1 2009/05/18 19:55:34 bouyer Exp $ */
+/*	$NetBSD: psl.h,v 1.44.62.1.2.1 2010/04/21 00:33:47 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

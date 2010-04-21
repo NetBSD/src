@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.80 2008/10/25 22:27:36 apb Exp $
+#	$NetBSD: Makefile.alpha,v 1.80.10.1 2010/04/21 00:33:54 matt Exp $
 
 # Makefile for NetBSD
 #
@@ -61,7 +61,7 @@ lock_stubs.o: assym.h
 ## (5) link settings
 ##
 LINKFORMAT=	-N
-TEXTADDR?=	fffffc0000300000
+TEXTADDR?=	fffffc0000430000
 ENTRYPOINT=	__transfer
 EXTRA_LINKFLAGS=	-G 4
 STRIPFLAGS=	-g -X
@@ -92,9 +92,6 @@ MKDEP_AFLAGS=	-x assembler-with-cpp ${AFLAGS}
 %LOAD
 
 %RULES
-
-## Include rules for Atheros WLAN
-.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
 
 ##
 ## (9) port independent kernel machinery

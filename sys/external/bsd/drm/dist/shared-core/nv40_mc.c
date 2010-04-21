@@ -19,7 +19,7 @@ nv40_mc_init(struct drm_device *dev)
 	case 0x46: /* G72 */
 	case 0x4e:
 	case 0x4c: /* C51_G7X */
-		tmp = NV_READ(NV40_PFB_020C);
+		tmp = NV_READ(NV10_PFB_CSTATUS);
 		NV_WRITE(NV40_PMC_1700, tmp);
 		NV_WRITE(NV40_PMC_1704, 0);
 		NV_WRITE(NV40_PMC_1708, 0);

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.29.2.1 2009/03/08 03:12:50 snj Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.29.2.1.4.1 2010/04/21 00:33:45 matt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.29.2.1 2009/03/08 03:12:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.29.2.1.4.1 2010/04/21 00:33:45 matt Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -381,6 +381,12 @@ xennet_xenbus_detach(device_t self, int flags)
 		
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+#if NRND > 0
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sc->sc_rnd_source);
+#endif
+
 	while (xengnt_status(sc->sc_tx_ring_gntref)) {
 		tsleep(xennet_xenbus_detach, PRIBIO, "xnet_txref", hz/2);
 	}
@@ -458,6 +464,12 @@ again:
 	    "rx-ring-ref","%u", sc->sc_rx_ring_gntref);
 	if (error) {
 		errmsg = "writing rx ring-ref";
+		goto abort_transaction;
+	}
+	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
+	    "feature-rx-notify", "%u", 1);
+	if (error) {
+		errmsg = "writing feature-rx-notify";
 		goto abort_transaction;
 	}
 	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,

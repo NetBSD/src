@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.41.4.1 2009/03/31 23:23:15 snj Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.41.4.1.4.1 2010/04/21 00:28:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.41.4.1 2009/03/31 23:23:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.41.4.1.4.1 2010/04/21 00:28:16 matt Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -468,13 +468,15 @@ ksyms_init(int symsize, void *start, void *end)
 		break;
 	}
 
-	if (!ksyms_verify(symstart, strstart))
+	if (!ksyms_verify(symstart, strstart)) {
+		printf("[ Kernel symbol table failed verification! ]\n");
 		return;
+	}
 	addsymtab("netbsd", symstart, symsize, strstart, strsize,
 	    &kernel_symtab, start);
 
 #ifdef DEBUG
-	printf("Loaded initial symtab at %p, strtab at %p, # entries %ld\n",
+	aprint_normal("Loaded initial symtab at %p, strtab at %p, # entries %ld\n",
 	    kernel_symtab.sd_symstart, kernel_symtab.sd_strstart,
 	    (long)kernel_symtab.sd_symsize/sizeof(Elf_Sym));
 #endif

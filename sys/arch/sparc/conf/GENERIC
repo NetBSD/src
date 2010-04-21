@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.205 2008/08/10 15:31:22 tls Exp $
+# $NetBSD: GENERIC,v 1.205.8.1 2010/04/21 00:33:47 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.205 $"
+#ident 		"GENERIC-$Revision: 1.205.8.1 $"
 
 maxusers	32
 
@@ -98,8 +98,8 @@ options 	NFS_BOOT_DHCP
 ## The DDB in-kernel debugger runs at panic (unless DDB_ONPANIC=0), or at
 ## serial console break or keyboard reset, where the PROM would normally
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
-#options 	DDB			# kernel dynamic debugger
-#options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+options 	DDB			# kernel dynamic debugger
+options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
@@ -676,6 +676,10 @@ zx*		at sbus? slot ? offset ?
 
 # Tadpole microcontroller
 tctrl0 at obio0
+
+# Aurora Personality Chip (APC) on SPARCstation-4/5
+# Not enabled by default as it may hang some systems
+#apc*		at sbus? slot ? offset ?
 
 ## Pseudo ttys, required for network logins and programs like screen.
 

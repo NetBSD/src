@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.71 2008/08/16 13:07:30 dan Exp $	*/
+/*	$NetBSD: rnd.c,v 1.71.12.1 2010/04/21 00:27:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.71 2008/08/16 13:07:30 dan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.71.12.1 2010/04/21 00:27:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -639,9 +639,9 @@ rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
 		mutex_enter(&rndpool_mtx);
 		rndpool_add_data(&rnd_pool, rnddata->data, rnddata->len,
 		    rnddata->entropy);
+		mutex_exit(&rndpool_mtx);
 
 		rnd_wakeup_readers();
-		mutex_exit(&rndpool_mtx);
 
 		break;
 
@@ -775,7 +775,7 @@ rnd_sample_allocate_isr(rndsource_t *source)
 {
 	rnd_sample_t *c;
 
-	c = pool_get(&rnd_mempool, 0);
+	c = pool_get(&rnd_mempool, PR_NOWAIT);
 	if (c == NULL)
 		return (NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.244 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.244.16.1 2010/04/21 00:33:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5044,6 +5044,9 @@ ENTRY(snapshot)
  *
  * If were setting up a kernel thread, the function *(%l0) will not
  * return.
+ *
+ * For KERN_SA applications, we provide an alternate entry point for
+ * cpu_setfunc() to use.
  */
 ENTRY(lwp_trampoline)
 	/*
@@ -5056,6 +5059,7 @@ ENTRY(lwp_trampoline)
 	call	lwp_startup
 	 mov	%l2, %o1
 
+_ENTRY(lwp_setfunc_trampoline)
 	call	%l0
 	 mov	%l1, %o0
 

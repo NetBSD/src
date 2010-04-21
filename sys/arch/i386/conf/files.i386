@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.338.6.2 2009/02/16 03:03:36 snj Exp $
+#	$NetBSD: files.i386,v 1.338.6.2.4.1 2010/04/21 00:33:50 matt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -248,6 +248,7 @@ include	"dev/isa/files.isa"
 
 # PC clock
 file	arch/x86/isa/clock.c		isa
+file	arch/x86/isa/rtc.c		isa
 
 # TSC support
 file	arch/x86/x86/tsc.c
@@ -473,6 +474,8 @@ include	"dev/pcmcia/files.pcmcia"
 include	"dev/usb/files.usb"
 
 include	"dev/bluetooth/files.bluetooth"
+
+include	"dev/sdmmc/files.sdmmc"
 
 include	"dev/ieee1394/files.ieee1394"
 

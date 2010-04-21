@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.120.12.1 2009/06/17 20:48:57 bouyer Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.120.12.1.2.1 2010/04/21 00:28:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.120.12.1 2009/06/17 20:48:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.120.12.1.2.1 2010/04/21 00:28:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

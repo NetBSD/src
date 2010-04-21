@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.39 2008/06/27 17:28:24 degroote Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.39.14.1 2010/04/21 00:28:23 matt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.39 2008/06/27 17:28:24 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.39.14.1 2010/04/21 00:28:23 matt Exp $");
 
 /*
  * IPsec controller part.
@@ -2197,8 +2197,10 @@ ipsec6_check_policy(struct mbuf * m, const struct socket * so,
 	if (!ipsec_outdone(m)) {
 		s = splsoftnet();
 		if (in6p != NULL &&
-				IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
+		    IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND)) {
+			splx(s);
 			goto skippolicycheck;
+		}
 		sp = ipsec6_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error,in6p);
 
 		/*
@@ -2272,7 +2274,7 @@ ipsec_attach(void)
 
 	ipsecstat_percpu = percpu_alloc(sizeof(uint64_t) * IPSEC_NSTATS);
 
-	printf("initializing IPsec...");
+	aprint_verbose("initializing IPsec...");
 	ah_attach();
 	esp_attach();
 	ipcomp_attach();
@@ -2280,6 +2282,6 @@ ipsec_attach(void)
 #ifdef TCP_SIGNATURE
 	tcpsignature_attach();
 #endif
-	printf(" done\n");
+	aprint_verbose(" done\n");
 }
 #endif	/* __NetBSD__ */

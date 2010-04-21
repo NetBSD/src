@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.5.4.2 2009/03/18 05:08:38 snj Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.5.4.2.4.1 2010/04/21 00:28:14 matt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.5.4.2 2009/03/18 05:08:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.5.4.2.4.1 2010/04/21 00:28:14 matt Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -126,9 +125,7 @@ udf_wr_nodedscr_callback(struct buf *buf)
 	udf_node->outstanding_nodedscr--;
 	if (udf_node->outstanding_nodedscr == 0) {
 		/* first unlock the node */
-		KASSERT(udf_node->i_flags & IN_CALLBACK_ULK);
-		UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
-
+		UDF_UNLOCK_NODE(udf_node, 0);
 		wakeup(&udf_node->outstanding_nodedscr);
 	}
 
@@ -288,7 +285,7 @@ udf_queuebuf_seq(struct udf_strat_args *args)
 
 	/* use our own sheduler lists for more complex sheduling */
 	mutex_enter(&priv->discstrat_mutex);
-		BUFQ_PUT(priv->queues[queue], nestbuf);
+		bufq_put(priv->queues[queue], nestbuf);
 		vfs_timestamp(&priv->last_queued[queue]);
 	mutex_exit(&priv->discstrat_mutex);
 
@@ -474,7 +471,7 @@ udf_doshedule(struct udf_mount *ump)
 	int new_queue;
 	int error;
 
-	buf = BUFQ_GET(priv->queues[priv->cur_queue]);
+	buf = bufq_get(priv->queues[priv->cur_queue]);
 	if (buf) {
 		/* transfer from the current queue to the device queue */
 		mutex_exit(&priv->discstrat_mutex);
@@ -517,11 +514,11 @@ udf_doshedule(struct udf_mount *ump)
 	/* check if we can/should switch */
 	new_queue = priv->cur_queue;
 
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_READING]))
+	if (bufq_peek(priv->queues[UDF_SHED_READING]))
 		new_queue = UDF_SHED_READING;
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]))		/* only for unmount */
+	if (bufq_peek(priv->queues[UDF_SHED_WRITING]))		/* only for unmount */
 		new_queue = UDF_SHED_WRITING;
-	if (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]))
+	if (bufq_peek(priv->queues[UDF_SHED_SEQWRITING]))
 		new_queue = UDF_SHED_SEQWRITING;
 	if (priv->cur_queue == UDF_SHED_READING) {
 		if (new_queue == UDF_SHED_SEQWRITING) {
@@ -560,9 +557,9 @@ udf_discstrat_thread(void *arg)
 	while (priv->run_thread || !empty) {
 		/* process the current selected queue */
 		udf_doshedule(ump);
-		empty  = (BUFQ_PEEK(priv->queues[UDF_SHED_READING]) == NULL);
-		empty &= (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]) == NULL);
-		empty &= (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]) == NULL);
+		empty  = (bufq_peek(priv->queues[UDF_SHED_READING]) == NULL);
+		empty &= (bufq_peek(priv->queues[UDF_SHED_WRITING]) == NULL);
+		empty &= (bufq_peek(priv->queues[UDF_SHED_SEQWRITING]) == NULL);
 
 		/* wait for more if needed */
 		if (empty)

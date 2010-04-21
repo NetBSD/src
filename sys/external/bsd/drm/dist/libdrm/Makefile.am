@@ -18,14 +18,22 @@
 #  IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+if HAVE_NOUVEAU
+NOUVEAU_SUBDIR = nouveau
+endif
+
+SUBDIRS = . intel $(NOUVEAU_SUBDIR)
+
 libdrm_la_LTLIBRARIES = libdrm.la
 libdrm_ladir = $(libdir)
-libdrm_la_LDFLAGS = -version-number 2:3:0 -no-undefined
+libdrm_la_LDFLAGS = -version-number 2:4:0 -no-undefined
+libdrm_la_LIBADD = @CLOCK_LIB@
 
 AM_CFLAGS = -I$(top_srcdir)/shared-core
-libdrm_la_SOURCES = xf86drm.c xf86drmHash.c xf86drmRandom.c xf86drmSL.c
+libdrm_la_SOURCES = xf86drm.c xf86drmHash.c xf86drmRandom.c xf86drmSL.c \
+	xf86drmMode.c libdrm_lists.h
 
 libdrmincludedir = ${includedir}
-libdrminclude_HEADERS = xf86drm.h xf86mm.h
+libdrminclude_HEADERS = xf86drm.h xf86drmMode.h
 
 EXTRA_DIST = ChangeLog TODO

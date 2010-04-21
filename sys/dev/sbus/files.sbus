@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.31 2007/08/26 00:39:39 macallan Exp $
+#	$NetBSD: files.sbus,v 1.31.44.1 2010/04/21 00:27:51 matt Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.60.10.1 2009/02/02 18:24:17 snj Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.60.10.1.4.1 2010/04/21 00:28:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.60.10.1 2009/02/02 18:24:17 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.60.10.1.4.1 2010/04/21 00:28:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -473,9 +473,9 @@ again:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_mount != mp || vismarker(vp) ||
+		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
 		    vp->v_type == VNON || vp->v_writecount == 0 ||
-		    (vp->v_iflag & VI_CLEAN) != 0) {
+		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
@@ -543,8 +543,9 @@ again:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON ||
-		    (vp->v_iflag & VI_CLEAN) != 0) {
+		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
+		    vp->v_type == VNON ||
+		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
@@ -728,8 +729,9 @@ qsync(struct mount *mp)
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON ||
-		    (vp->v_iflag & VI_CLEAN) != 0) {
+		if (VTOI(vp) == NULL || vp->v_mount != mp || vismarker(vp) ||
+		    vp->v_type == VNON ||
+		    (vp->v_iflag & (VI_XLOCK | VI_CLEAN)) != 0) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
@@ -887,6 +889,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 		KASSERT(dq->dq_cnt > 0);
 		dqref(dq);
 		mutex_exit(&dqlock);
+		mutex_destroy(&ndq->dq_interlock);
 		pool_cache_put(dquot_cache, ndq);
 		*dqp = dq;
 		return 0;

@@ -694,13 +694,15 @@ int nv20_graph_init(struct drm_device *dev) {
 	NV_WRITE(NV03_PMC_ENABLE, NV_READ(NV03_PMC_ENABLE) |
 			 NV_PMC_ENABLE_PGRAPH);
 
-	/* Create Context Pointer Table */
-	dev_priv->ctx_table_size = 32 * 4;
-	if ((ret = nouveau_gpuobj_new_ref(dev, NULL, NULL, 0,
-					  dev_priv->ctx_table_size, 16,
-					  NVOBJ_FLAG_ZERO_ALLOC,
-					  &dev_priv->ctx_table)))
-		return ret;
+	if (!dev_priv->ctx_table) {
+		/* Create Context Pointer Table */
+		dev_priv->ctx_table_size = 32 * 4;
+		if ((ret = nouveau_gpuobj_new_ref(dev, NULL, NULL, 0,
+						  dev_priv->ctx_table_size, 16,
+						  NVOBJ_FLAG_ZERO_ALLOC,
+						  &dev_priv->ctx_table)))
+			return ret;
+	}
 
 	NV_WRITE(NV20_PGRAPH_CHANNEL_CTX_TABLE,
 		 dev_priv->ctx_table->instance >> 4);
@@ -812,13 +814,15 @@ int nv30_graph_init(struct drm_device *dev)
 	NV_WRITE(NV03_PMC_ENABLE, NV_READ(NV03_PMC_ENABLE) |
 			 NV_PMC_ENABLE_PGRAPH);
 
-	/* Create Context Pointer Table */
-	dev_priv->ctx_table_size = 32 * 4;
-	if ((ret = nouveau_gpuobj_new_ref(dev, NULL, NULL, 0,
-					  dev_priv->ctx_table_size, 16,
-					  NVOBJ_FLAG_ZERO_ALLOC,
-					  &dev_priv->ctx_table)))
-		return ret;
+	if (!dev_priv->ctx_table) {
+		/* Create Context Pointer Table */
+		dev_priv->ctx_table_size = 32 * 4;
+		if ((ret = nouveau_gpuobj_new_ref(dev, NULL, NULL, 0,
+						  dev_priv->ctx_table_size, 16,
+						  NVOBJ_FLAG_ZERO_ALLOC,
+						  &dev_priv->ctx_table)))
+			return ret;
+	}
 
 	NV_WRITE(NV20_PGRAPH_CHANNEL_CTX_TABLE,
 			dev_priv->ctx_table->instance >> 4);

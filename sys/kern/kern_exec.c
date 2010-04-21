@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.280.4.3 2009/04/01 21:03:04 snj Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.280.4.3.4.1 2010/04/21 00:28:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.3 2009/04/01 21:03:04 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.3.4.1 2010/04/21 00:28:16 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -109,8 +109,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.3 2009/04/01 21:03:04 snj Exp 
 
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
+#define DEBUG_EXEC
+
 #ifdef DEBUG_EXEC
-#define DPRINTF(a) uprintf a
+#define DPRINTF(a) printf a
 #else
 #define DPRINTF(a)
 #endif /* DEBUG_EXEC */
@@ -548,7 +550,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	pathbuf = PNBUF_GET();
 	error = copyinstr(path, pathbuf, MAXPATHLEN, &pathbuflen);
 	if (error) {
-		DPRINTF(("execve: copyinstr path %d", error));
+		DPRINTF(("execve: copyinstr path @%p %d\n", path, error));
 		goto clrflg;
 	}
 
@@ -786,7 +788,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 			struct exec_vmcmd *vp = &pack.ep_vmcmds.evs_cmds[0];
 			for (j = 0; j <= i; j++)
 				uprintf(
-			"vmcmd[%zu] = %#lx/%#lx fd@%#lx prot=0%o flags=%d\n",
+			"vmcmd[%zu] = %#"PRIxVADDR"/%#"PRIxVSIZE" fd@%#"PRIxVSIZE" prot=0%o flags=%d\n",
 				    j, vp[j].ev_addr, vp[j].ev_len,
 				    vp[j].ev_offset, vp[j].ev_prot,
 				    vp[j].ev_flags);

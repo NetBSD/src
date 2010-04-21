@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.96.32.1 2009/06/09 17:40:04 snj Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.96.32.1.2.1 2010/04/21 00:33:54 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96.32.1 2009/06/09 17:40:04 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96.32.1.2.1 2010/04/21 00:33:54 matt Exp $");
 #include "opt_coredump.h"
 
 #include <sys/param.h>

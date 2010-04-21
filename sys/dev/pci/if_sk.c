@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.54.6.1 2009/07/26 18:31:39 snj Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.54.6.1.2.1 2010/04/21 00:27:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.54.6.1 2009/07/26 18:31:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.54.6.1.2.1 2010/04/21 00:27:41 matt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

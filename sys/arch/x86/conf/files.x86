@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.44 2008/08/03 19:32:03 joerg Exp $
+#	$NetBSD: files.x86,v 1.44.12.1 2010/04/21 00:33:45 matt Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -23,6 +23,9 @@ defflag opt_intel_odcm.h 	INTEL_ONDEMAND_CLOCKMOD
 # AMD Powernow/Cool`n'Quiet Technology
 defflag opt_powernow_k8.h	POWERNOW_K8
 
+# VIA C7 Temperature sensor
+defflag	opt_via_c7temp.h	VIA_C7TEMP: sysmon_envsys
+
 # VIA PadLock support
 defflag	opt_viapadlock.h	VIA_PADLOCK:	opencrypto
 file	arch/x86/x86/via_padlock.c	via_padlock
@@ -45,6 +48,7 @@ file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
 file	arch/x86/x86/bus_space.c
 file	arch/x86/x86/consinit.c
+file	arch/x86/x86/cpu_topology.c
 file	arch/x86/x86/errata.c
 file	arch/x86/x86/identcpu.c
 file	arch/x86/x86/i8259.c
@@ -91,6 +95,9 @@ file	arch/x86/x86/intel_busclock.c	enhanced_speedstep
 
 # Intel On-Die Temperature sensor
 file	arch/x86/x86/coretemp.c 	intel_coretemp
+
+# VIA C7 Temperature sensor
+file	arch/x86/x86/viac7temp.c	via_c7temp
 
 # IPMI device
 device	ipmi: sysmon_envsys, sysmon_wdog

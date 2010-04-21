@@ -231,34 +231,69 @@ void nouveau_mem_close(struct drm_device *dev)
 		nouveau_mem_takedown(&dev_priv->pci_heap);
 }
 
-/*XXX won't work on BSD because of pci_read_config_dword */
+/*XXX BSD needs compat functions for pci access
+ * #define DRM_PCI_DEV		struct device
+ * #define drm_pci_get_bsf	pci_get_bsf
+ * and a small inline to do	*val = pci_read_config(pdev->device, where, 4);
+ * might work
+ */
+static int nforce_pci_fn_read_config_dword(int devfn, int where, uint32_t *val)
+{
+#ifdef __linux__
+	DRM_PCI_DEV *pdev;
+
+	if (!(pdev = drm_pci_get_bsf(0, 0, devfn))) {
+		DRM_ERROR("nForce PCI device function 0x%02x not found\n",
+			  devfn);
+		return -ENODEV;
+	}
+
+	return drm_pci_read_config_dword(pdev, where, val);
+#else
+	DRM_ERROR("BSD compat for checking IGP memory amount needed\n");
+	return 0;
+#endif
+}
+
+static void nouveau_mem_check_nforce_dimms(struct drm_device *dev)
+{
+	uint32_t mem_ctrlr_pciid;
+
+	nforce_pci_fn_read_config_dword(3, 0x00, &mem_ctrlr_pciid);
+	mem_ctrlr_pciid >>= 16;
+
+	if (mem_ctrlr_pciid == 0x01a9 || mem_ctrlr_pciid == 0x01ab ||
+	    mem_ctrlr_pciid == 0x01ed) {
+		uint32_t dimm[3];
+		int i;
+
+		for (i = 0; i < 3; i++) {
+			nforce_pci_fn_read_config_dword(2, 0x40 + i * 4, &dimm[i]);
+			dimm[i] = (dimm[i] >> 8) & 0x4f;
+		}
+
+		if (dimm[0] + dimm[1] != dimm[2])
+			DRM_INFO("Your nForce DIMMs are not arranged in "
+				 "optimal banks!\n");
+	}
+}
+
 static uint32_t
 nouveau_mem_fb_amount_igp(struct drm_device *dev)
 {
-#if defined(__linux__) && (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,19))
 	struct drm_nouveau_private *dev_priv = dev->dev_private;
-	struct pci_dev *bridge;
-	uint32_t mem;
+	uint32_t mem = 0;
 
-	bridge = pci_get_bus_and_slot(0, PCI_DEVFN(0,1));
-	if (!bridge) {
-		DRM_ERROR("no bridge device\n");
-		return 0;
-	}
-
-	if (dev_priv->flags&NV_NFORCE) {
-		pci_read_config_dword(bridge, 0x7C, &mem);
+	if (dev_priv->flags & NV_NFORCE) {
+		nforce_pci_fn_read_config_dword(1, 0x7C, &mem);
 		return (uint64_t)(((mem >> 6) & 31) + 1)*1024*1024;
-	} else
-	if(dev_priv->flags&NV_NFORCE2) {
-		pci_read_config_dword(bridge, 0x84, &mem);
+	}
+	if (dev_priv->flags & NV_NFORCE2) {
+		nforce_pci_fn_read_config_dword(1, 0x84, &mem);
 		return (uint64_t)(((mem >> 4) & 127) + 1)*1024*1024;
 	}
 
 	DRM_ERROR("impossible!\n");
-#else
-	DRM_ERROR("Linux kernel >= 2.6.19 required to check for igp memory amount\n");
-#endif
 
 	return 0;
 }
@@ -300,9 +335,9 @@ uint64_t nouveau_mem_fb_amount(struct drm_device *dev)
 			} else {
 				uint64_t mem;
 
-				mem = (NV_READ(NV04_FIFO_DATA) &
-				       NV10_FIFO_DATA_RAM_AMOUNT_MB_MASK) >>
-				      NV10_FIFO_DATA_RAM_AMOUNT_MB_SHIFT;
+				mem = (NV_READ(NV10_PFB_CSTATUS) &
+				       NV10_PFB_CSTATUS_RAM_AMOUNT_MB_MASK) >>
+				      NV10_PFB_CSTATUS_RAM_AMOUNT_MB_SHIFT;
 				return mem*1024*1024;
 			}
 			break;
@@ -472,6 +507,9 @@ int nouveau_mem_init(struct drm_device *dev)
 	dev_priv->fb_phys = 0;
 	dev_priv->gart_info.type = NOUVEAU_GART_NONE;
 
+	if (dev_priv->flags & (NV_NFORCE | NV_NFORCE2))
+		nouveau_mem_check_nforce_dimms(dev);
+
 	/* setup a mtrr over the FB */
 	dev_priv->fb_mtrr = drm_mtrr_add(drm_get_resource_start(dev, 1),
 					 nouveau_mem_fb_amount(dev),
@@ -485,10 +523,7 @@ int nouveau_mem_init(struct drm_device *dev)
 	 */
 	if (dev_priv->card_type >= NV_50 && fb_size > (512 * 1024 * 1024))
 		fb_size = (512 * 1024 * 1024);
-	/* On at least NV40, RAMIN is actually at the end of vram.
-	 * We don't want to allocate this... */
-	if (dev_priv->card_type >= NV_40)
-		fb_size -= dev_priv->ramin_rsvd_vram;
+	fb_size -= dev_priv->ramin_rsvd_vram;
 	dev_priv->fb_available_size = fb_size;
 	DRM_DEBUG("Available VRAM: %dKiB\n", fb_size>>10);
 
@@ -587,17 +622,20 @@ nouveau_mem_alloc(struct drm_device *dev, int alignment, uint64_t size,
 	 * Make things easier on ourselves: all allocations are page-aligned.
 	 * We need that to map allocated regions into the user space
 	 */
-	if (alignment < PAGE_SHIFT)
-		alignment = PAGE_SHIFT;
+	if (alignment < PAGE_SIZE)
+		alignment = PAGE_SIZE;
 
 	/* Align allocation sizes to 64KiB blocks on G8x.  We use a 64KiB
 	 * page size in the GPU VM.
 	 */
 	if (flags & NOUVEAU_MEM_FB && dev_priv->card_type >= NV_50) {
 		size = (size + 65535) & ~65535;
-		if (alignment < 16)
-			alignment = 16;
+		if (alignment < 65536)
+			alignment = 65536;
 	}
+
+	/* Further down wants alignment in pages, not bytes */
+	alignment >>= PAGE_SHIFT;
 
 	/*
 	 * Warn about 0 sized allocations, but let it go through. It'll return 1 page
@@ -806,11 +844,11 @@ nouveau_ioctl_mem_free(struct drm_device *dev, void *data,
 		memfree->offset -= 512*1024*1024;
 
 	block=NULL;
-	if (memfree->flags & NOUVEAU_MEM_FB)
+	if (dev_priv->fb_heap && memfree->flags & NOUVEAU_MEM_FB)
 		block = find_block(dev_priv->fb_heap, memfree->offset);
-	else if (memfree->flags & NOUVEAU_MEM_AGP)
+	else if (dev_priv->agp_heap && memfree->flags & NOUVEAU_MEM_AGP)
 		block = find_block(dev_priv->agp_heap, memfree->offset);
-	else if (memfree->flags & NOUVEAU_MEM_PCI)
+	else if (dev_priv->pci_heap && memfree->flags & NOUVEAU_MEM_PCI)
 		block = find_block(dev_priv->pci_heap, memfree->offset);
 	if (!block)
 		return -EFAULT;

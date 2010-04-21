@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.183.4.1 2008/11/18 01:56:58 snj Exp $
+# $NetBSD: ALL,v 1.183.4.1.4.1 2010/04/21 00:33:50 matt Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.183.4.1 $"
+#ident 		"ALL-$Revision: 1.183.4.1.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -366,6 +366,8 @@ pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
+wb*		at acpi?		# Winbond W83L518D SD/MMC reader
+sdmmc*		at wb?			# SD/MMC bus
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -519,6 +521,7 @@ pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga0		at isa?
 vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -627,6 +630,9 @@ iic*	at amdpm?			# sensors below are on this bus
 
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
+
+# VIA C7 Temperature sensor
+options 	VIA_C7TEMP
 
 # Intel ICH SMBus controller
 ichsmb*	at pci? dev ? function ?
@@ -1251,6 +1257,13 @@ ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
+# SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*  at pci?				# SD Host Controller
+sdmmc* at sdhc?				# SD/MMC bus
+
+ld*    at sdmmc?
 
 # Audio Devices
 
@@ -1270,6 +1283,7 @@ esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
+gcscaudio* at pci? dev ? function ?	# AMD Geode CS5536 Companion Audio
 neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
@@ -1302,6 +1316,10 @@ opl*	at sv?
 opl*	at wss?
 opl*	at yds?
 opl*	at ym?
+
+# High Definition Audio
+hdaudio*	at pci? dev ? function ?	# High Definition Audio
+hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?
@@ -1800,6 +1818,8 @@ options GTFDEBUG
 options HD64461PCMCIA_DEBUG
 options HD64461VIDEO_DEBUG
 options HD64465PCMCIA_DEBUG
+options HDAUDIO_DEBUG
+options HDAUDIO_AFG_DEBUG
 options HDLCDEBUG
 options HIFN_DEBUG
 options HMEDEBUG

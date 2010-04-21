@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.214.4.1.2.1 2009/07/01 22:30:44 snj Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.214.4.1.2.1.2.1 2010/04/21 00:28:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.214.4.1.2.1 2009/07/01 22:30:44 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.214.4.1.2.1.2.1 2010/04/21 00:28:16 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"

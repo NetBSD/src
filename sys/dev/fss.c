@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.60.4.1 2008/11/07 23:32:19 snj Exp $	*/
+/*	$NetBSD: fss.c,v 1.60.4.1.4.1 2010/04/21 00:27:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.60.4.1 2008/11/07 23:32:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.60.4.1.4.1 2010/04/21 00:27:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,11 +446,12 @@ fss_softc_alloc(struct fss_softc *sc)
 		sc->sc_indir_data = NULL;
 	}
 
-	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
-	    &sc->sc_bs_lwp, device_xname(sc->sc_dev))) != 0)
-		return error;
-
 	sc->sc_flags |= FSS_BS_THREAD;
+	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
+	    &sc->sc_bs_lwp, device_xname(sc->sc_dev))) != 0) {
+		sc->sc_flags &= ~FSS_BS_THREAD;
+		return error;
+	}
 
 	disk_attach(sc->sc_dkdev);
 
@@ -694,14 +695,6 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		sc->sc_bs_bshift = DEV_BSHIFT;
 		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
 	}
-
-	/*
-	 * As all IO to from/to the backing store goes through
-	 * VOP_STRATEGY() clean the buffer cache to prevent
-	 * cache incoherencies.
-	 */
-	if ((error = vinvalbuf(sc->sc_bs_vp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
-		return error;
 
 	return 0;
 }

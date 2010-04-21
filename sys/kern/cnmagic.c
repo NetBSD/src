@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.9 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.9.72.1 2010/04/21 00:28:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.9 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.9.72.1 2010/04/21 00:28:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ cn_set_magic(const char *magic)
 			/* Transition to the next state. */
 #ifdef DEBUG
 			if (!cold)
-				printf("mag %d %x:%x\n", i, c, n);
+				aprint_normal("mag %d %x:%x\n", i, c, n);
 #endif
 			m[i] = ENCODE_STATE(c, n);
 			break;

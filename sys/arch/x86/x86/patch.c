@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.14.4.3.2.1 2009/05/13 00:28:25 snj Exp $	*/
+/*	$NetBSD: patch.c,v 1.14.4.3.2.1.2.1 2010/04/21 00:33:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.14.4.3.2.1 2009/05/13 00:28:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.14.4.3.2.1.2.1 2010/04/21 00:33:46 matt Exp $");
 
 #include "opt_lockdebug.h"
 

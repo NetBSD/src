@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.34.2.1 2009/03/08 03:12:50 snj Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.34.2.1.4.1 2010/04/21 00:33:45 matt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.34.2.1 2009/03/08 03:12:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.34.2.1.4.1 2010/04/21 00:33:45 matt Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -85,11 +85,24 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.34.2.1 2009/03/08 03:12:50 snj Exp 
 struct xbd_req {
 	SLIST_ENTRY(xbd_req) req_next;
 	uint16_t req_id; /* ID passed to backend */
-	grant_ref_t req_gntref[BLKIF_MAX_SEGMENTS_PER_REQUEST];
-	int req_nr_segments; /* number of segments in this request */
-	struct buf *req_bp; /* buffer associated with this request */
-	void *req_data; /* pointer to the data buffer */
+	union {
+	    struct {
+		grant_ref_t req_gntref[BLKIF_MAX_SEGMENTS_PER_REQUEST];
+		int req_nr_segments; /* number of segments in this request */
+		struct buf *req_bp; /* buffer associated with this request */
+		void *req_data; /* pointer to the data buffer */
+	    } req_rw;
+	    struct {
+		    int s_error;
+		    volatile int s_done;
+	    } req_sync;
+	} u;
 };
+#define req_gntref	u.req_rw.req_gntref
+#define req_nr_segments	u.req_rw.req_nr_segments
+#define req_bp		u.req_rw.req_bp
+#define req_data	u.req_rw.req_data
+#define req_sync	u.req_sync
 
 struct xbd_xenbus_softc {
 	device_t sc_dev;
@@ -105,6 +118,7 @@ struct xbd_xenbus_softc {
 
 	struct xbd_req sc_reqs[XBD_RING_SIZE];
 	SLIST_HEAD(,xbd_req) sc_xbdreq_head; /* list of free requests */
+	bool sc_xbdreq_wait; /* special waiting on xbd_req */
 
 	int sc_backend_status; /* our status with backend */
 #define BLKIF_STATE_DISCONNECTED 0
@@ -117,6 +131,7 @@ struct xbd_xenbus_softc {
 	uint64_t sc_xbdsize; /* size of disk in DEV_BSIZE */
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
+	int sc_cache_flush; /* backend supports BLKIF_OP_FLUSH_DISKCACHE */
 #if NRND > 0
 	rndsource_element_t     sc_rnd_source;
 #endif
@@ -395,6 +410,8 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 {
 	struct xbd_xenbus_softc *sc = device_private((device_t)arg);
 	struct dk_geom *pdg;
+	prop_dictionary_t disk_info, odisk_info, geom;
+
 	char buf[9];
 	int s;
 	DPRINTF(("%s: new backend state %d\n", device_xname(sc->sc_dev), new_state));
@@ -454,6 +471,31 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
 
+		disk_info = prop_dictionary_create();
+		geom = prop_dictionary_create();
+		prop_dictionary_set_uint64(geom, "sectors-per-unit",
+		    sc->sc_dksc.sc_size);
+		prop_dictionary_set_uint32(geom, "sector-size",
+		    pdg->pdg_secsize);
+		prop_dictionary_set_uint16(geom, "sectors-per-track",
+		    pdg->pdg_nsectors);
+		prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+		    pdg->pdg_ntracks);
+		prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+		    pdg->pdg_ncylinders);
+		prop_dictionary_set(disk_info, "geometry", geom);
+		prop_object_release(geom);
+		prop_dictionary_set(device_properties(sc->sc_dev),
+		    "disk-info", disk_info);
+		/*
+		 * Don't release disk_info here; we keep a reference to it.
+		 * disk_detach() will release it when we go away.
+		 */
+		odisk_info = sc->sc_dksc.sc_dkdev.dk_info;
+		sc->sc_dksc.sc_dkdev.dk_info = disk_info;
+		if (odisk_info)
+			prop_object_release(odisk_info);
+
 		/* the disk should be working now */
 		config_pending_decr();
 		break;
@@ -467,6 +509,7 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 {
 	int err;
 	unsigned long long sectors;
+	u_long cache_flush;
 
 	err = xenbus_read_ul(NULL,
 	    sc->sc_xbusd->xbusd_path, "virtual-device", &sc->sc_handle, 10);
@@ -490,6 +533,14 @@ xbd_connect(struct xbd_xenbus_softc *sc)
 	if (err)
 		panic("%s: can't read number from %s/sector-size\n", 
 		    device_xname(sc->sc_dev), sc->sc_xbusd->xbusd_otherend);
+	err = xenbus_read_ul(NULL, sc->sc_xbusd->xbusd_otherend,
+	    "feature-flush-cache", &cache_flush, 10);
+	if (err)
+		cache_flush = 0;
+	if (cache_flush > 0)
+		sc->sc_cache_flush = 1;
+	else
+		sc->sc_cache_flush = 0;
 
 	xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateConnected);
 }
@@ -513,9 +564,16 @@ again:
 	for (i = sc->sc_ring.rsp_cons; i != resp_prod; i++) {
 		blkif_response_t *rep = RING_GET_RESPONSE(&sc->sc_ring, i);
 		struct xbd_req *xbdreq = &sc->sc_reqs[rep->id];
-		bp = xbdreq->req_bp;
 		DPRINTF(("xbd_handler(%p): b_bcount = %ld\n",
-		    bp, (long)bp->b_bcount));
+		    xbdreq->req_bp, (long)bp->b_bcount));
+		bp = xbdreq->req_bp;
+		if (rep->operation == BLKIF_OP_FLUSH_DISKCACHE) {
+			xbdreq->req_sync.s_error = rep->status;
+			xbdreq->req_sync.s_done = 1;
+			wakeup(xbdreq);
+			/* caller will free the req */
+			continue;
+		}
 		for (seg = xbdreq->req_nr_segments - 1; seg >= 0; seg--) {
 			if (__predict_false(
 			    xengnt_status(xbdreq->req_gntref[seg]))) {
@@ -557,13 +615,15 @@ next:
 		biodone(bp);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
+done:
 	x86_lfence();
 	sc->sc_ring.rsp_cons = i;
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_ring, more_to_do);
 	if (more_to_do)
 		goto again;
-done:
 	dk_iodone(sc->sc_di, &sc->sc_dksc);
+	if (sc->sc_xbdreq_wait)
+		wakeup(&sc->sc_xbdreq_wait);
 	return 1;
 }
 
@@ -663,15 +723,74 @@ xbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct	dk_softc *dksc;
 	int	error;
 	struct	disk *dk;
+	int s;
+	struct xbd_req *xbdreq;
+	blkif_request_t *req;
+	int notify;
 
 	DPRINTF(("xbdioctl(%d, %08lx, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
 	dksc = &sc->sc_dksc;
 	dk = &dksc->sc_dkdev;
 
+	error = disk_ioctl(&sc->sc_dksc.sc_dkdev, cmd, data, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
+
 	switch (cmd) {
 	case DIOCSSTRATEGY:
 		error = EOPNOTSUPP;
+		break;
+	case DIOCCACHESYNC:
+		if (sc->sc_cache_flush <= 0) {
+			if (sc->sc_cache_flush == 0) {
+				aprint_error_dev(sc->sc_dev,
+				    "WARNING: cache flush not supported "
+				    "by backend\n");
+				sc->sc_cache_flush = -1;
+			}
+			return EOPNOTSUPP;
+		}
+
+		s = splbio();
+
+		while (RING_FULL(&sc->sc_ring)) {
+			sc->sc_xbdreq_wait = 1;
+			tsleep(&sc->sc_xbdreq_wait, PRIBIO, "xbdreq", 0);
+		}
+		sc->sc_xbdreq_wait = 0;
+
+		xbdreq = SLIST_FIRST(&sc->sc_xbdreq_head);
+		if (__predict_false(xbdreq == NULL)) {
+			DPRINTF(("xbdioctl: no req\n"));
+			error = ENOMEM;
+		} else {
+			SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
+			req = RING_GET_REQUEST(&sc->sc_ring,
+			    sc->sc_ring.req_prod_pvt);
+			req->id = xbdreq->req_id;
+			req->operation = BLKIF_OP_FLUSH_DISKCACHE;
+			req->handle = sc->sc_handle;
+			xbdreq->req_sync.s_done = 0;
+			sc->sc_ring.req_prod_pvt++;
+			RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&sc->sc_ring,
+			    notify);
+			if (notify)
+				hypervisor_notify_via_evtchn(sc->sc_evtchn);
+			/* request sent, no wait for completion */
+			while (xbdreq->req_sync.s_done == 0) {
+				tsleep(xbdreq, PRIBIO, "xbdsync", 0);
+			}
+			if (xbdreq->req_sync.s_error == BLKIF_RSP_EOPNOTSUPP)
+				error = EOPNOTSUPP;
+			else if (xbdreq->req_sync.s_error == BLKIF_RSP_OKAY)
+				error = 0;
+			else
+				error = EIO;
+			SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq,
+			    req_next);
+		}
+		splx(s);
 		break;
 	default:
 		error = dk_ioctl(sc->sc_di, dksc, dev, cmd, data, flag, l);
@@ -730,7 +849,7 @@ xbdstart(struct dk_softc *dksc, struct buf *bp)
 	}
 		
 
-	if (RING_FULL(&sc->sc_ring)) {
+	if (RING_FULL(&sc->sc_ring) || sc->sc_xbdreq_wait) {
 		DPRINTF(("xbdstart: ring_full\n"));
 		ret = -1;
 		goto out;

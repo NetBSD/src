@@ -297,6 +297,13 @@ nv50_instmem_bind(struct drm_device *dev, struct nouveau_gpuobj *gpuobj)
 		vram += NV50_INSTMEM_PAGE_SIZE;
 	}
 
+	NV_WRITE(0x070000, 0x00000001);
+	while(NV_READ(0x070000) & 1);
+	NV_WRITE(0x100c80, 0x00040001);
+	while(NV_READ(0x100c80) & 1);
+	NV_WRITE(0x100c80, 0x00060001);
+	while(NV_READ(0x100c80) & 1);
+
 	gpuobj->im_bound = 1;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.42 2008/06/17 14:53:10 reinoud Exp $	*/
+/*	$NetBSD: dk.c,v 1.42.12.1 2010/04/21 00:27:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.42 2008/06/17 14:53:10 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.42.12.1 2010/04/21 00:27:35 matt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -93,6 +93,7 @@ struct dkwedge_softc {
 static void	dkstart(struct dkwedge_softc *);
 static void	dkiodone(struct buf *);
 static void	dkrestart(void *);
+static void	dkminphys(struct buf *);
 
 static dev_type_open(dkopen);
 static dev_type_close(dkclose);
@@ -1100,13 +1101,14 @@ dkstart(struct dkwedge_softc *sc)
  * dkiodone:
  *
  *	I/O to a wedge has completed; alert the top half.
- *	NOTE: Must be called at splbio()!
  */
 static void
 dkiodone(struct buf *bp)
 {
 	struct buf *obp = bp->b_private;
 	struct dkwedge_softc *sc = dkwedge_lookup(obp->b_dev);
+
+	int s = splbio();
 
 	if (bp->b_error != 0)
 		obp->b_error = bp->b_error;
@@ -1125,6 +1127,7 @@ dkiodone(struct buf *bp)
 
 	/* Kick the queue in case there is more work we can do. */
 	dkstart(sc);
+	splx(s);
 }
 
 /*
@@ -1145,6 +1148,23 @@ dkrestart(void *v)
 }
 
 /*
+ * dkminphys:
+ *
+ *	Call parent's minphys function.
+ */
+static void
+dkminphys(struct buf *bp)
+{
+	struct dkwedge_softc *sc = dkwedge_lookup(bp->b_dev);
+	dev_t dev;
+
+	dev = bp->b_dev;
+	bp->b_dev = sc->sc_pdev;
+	(*sc->sc_parent->dk_driver->d_minphys)(bp);
+	bp->b_dev = dev;
+}
+
+/*
  * dkread:		[devsw entry point]
  *
  *	Read from a wedge.
@@ -1157,8 +1177,7 @@ dkread(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
-	return (physio(dkstrategy, NULL, dev, B_READ,
-		       sc->sc_parent->dk_driver->d_minphys, uio));
+	return (physio(dkstrategy, NULL, dev, B_READ, dkminphys, uio));
 }
 
 /*
@@ -1174,8 +1193,7 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return (ENXIO);
 
-	return (physio(dkstrategy, NULL, dev, B_WRITE,
-		       sc->sc_parent->dk_driver->d_minphys, uio));
+	return (physio(dkstrategy, NULL, dev, B_WRITE, dkminphys, uio));
 }
 
 /*

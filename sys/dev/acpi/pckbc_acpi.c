@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.30 2008/09/16 11:24:55 pgoyette Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.30.12.1 2010/04/21 00:27:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.30 2008/09/16 11:24:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.30.12.1 2010/04/21 00:27:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,8 +155,7 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 		panic("pckbc_acpi_attach: impossible");
 	}
 
-	aprint_naive("\n");
-	aprint_normal(": %s port\n", pckbc_slot_names[psc->sc_slot]);
+	aprint_normal(" (%s port)", pckbc_slot_names[psc->sc_slot]);
 
 	/* parse resources */
 	rv = acpi_resource_parse(sc->sc_dv, aa->aa_node->ad_handle, "_CRS",
@@ -207,8 +206,11 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 			if (bus_space_map(aa->aa_iot, io0->ar_base,
 					  io0->ar_length, 0, &ioh_d) ||
 			    bus_space_map(aa->aa_iot, io1->ar_base,
-					  io1->ar_length, 0, &ioh_c))
-				panic("pckbc_acpi_attach: couldn't map");
+					  io1->ar_length, 0, &ioh_c)) {
+				aprint_error_dev(self,
+				    "unable to map registers\n");
+				goto out;
+			}
 
 			t = malloc(sizeof(struct pckbc_internal),
 			    M_DEVBUF, M_WAITOK|M_ZERO);
@@ -229,9 +231,11 @@ pckbc_acpi_attach(device_t parent, device_t self, void *aux)
 
 		first->sc_pckbc.intr_establish = pckbc_acpi_intr_establish;
 		config_defer(first->sc_pckbc.sc_dv, pckbc_acpi_finish_attach);
-	} else if (!pmf_device_register(self, NULL, NULL))
+	}
+
+out:
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
- out:
 	acpi_resource_cleanup(&res);
 }
 

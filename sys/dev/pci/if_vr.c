@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.95 2008/07/09 16:14:57 joerg Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.95.12.1 2010/04/21 00:27:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.95 2008/07/09 16:14:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.95.12.1 2010/04/21 00:27:41 matt Exp $");
 
 #include "rnd.h"
 
@@ -207,7 +207,6 @@ struct vr_descsoft {
 struct vr_softc {
 	device_t		vr_dev;
 	void			*vr_ih;		/* interrupt cookie */
-	void			*vr_ats;	/* shutdown hook */
 	bus_space_tag_t		vr_bst;		/* bus space tag */
 	bus_space_handle_t	vr_bsh;		/* bus space handle */
 	bus_dma_tag_t		vr_dmat;	/* bus DMA tag */
@@ -217,6 +216,7 @@ struct vr_softc {
 	uint8_t 		vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
 
+	pcireg_t		vr_id;		/* vendor/product ID */
 	uint8_t			vr_revid;	/* Rhine chip revision */
 
 	callout_t		vr_tick_ch;	/* tick callout */
@@ -325,6 +325,7 @@ static void	vr_setmulti(struct vr_softc *);
 static void	vr_reset(struct vr_softc *);
 static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, device_t,
     pcireg_t);
+static bool	vr_resume(device_t PMF_FN_PROTO);
 
 int	vr_copy_small = 0;
 
@@ -1398,7 +1399,7 @@ vr_stop(struct ifnet *ifp, int disable)
 
 static int	vr_probe(device_t, struct cfdata *, void *);
 static void	vr_attach(device_t, device_t, void *);
-static void	vr_shutdown(void *);
+static bool	vr_shutdown(device_t, int);
 
 CFATTACH_DECL_NEW(vr, sizeof (struct vr_softc),
     vr_probe, vr_attach, NULL, NULL);
@@ -1431,12 +1432,14 @@ vr_probe(device_t parent, struct cfdata *match, void *aux)
  * Stop all chip I/O so that the kernel's probe routines don't
  * get confused by errant DMAs when rebooting.
  */
-static void
-vr_shutdown(void *arg)
+static bool
+vr_shutdown(device_t self, int howto)
 {
-	struct vr_softc *sc = (struct vr_softc *)arg;
+	struct vr_softc *sc = device_private(self);
 
 	vr_stop(&sc->vr_ec.ec_if, 1);
+
+	return true;
 }
 
 /*
@@ -1461,6 +1464,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	sc->vr_dev = self;
 	sc->vr_pc = pa->pa_pc;
 	sc->vr_tag = pa->pa_tag;
+	sc->vr_id = pa->pa_id;
 	callout_init(&sc->vr_tick_ch, 0);
 
 	vrt = vr_lookup(pa);
@@ -1712,9 +1716,11 @@ vr_attach(device_t parent, device_t self, void *aux)
 	    RND_TYPE_NET, 0);
 #endif
 
-	sc->vr_ats = shutdownhook_establish(vr_shutdown, sc);
-	if (sc->vr_ats == NULL)
-		aprint_error_dev(self, "warning: couldn't establish shutdown hook\n");
+	if (pmf_device_register1(self, NULL, vr_resume, vr_shutdown))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
  fail_5:
@@ -1758,4 +1764,15 @@ vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, device_t self,
 	PCI_CONF_WRITE(VR_PCI_LOMEM, sc->vr_save_membase);
 	PCI_CONF_WRITE(PCI_INTERRUPT_REG, sc->vr_save_irq);
 	return 0;
+}
+
+static bool
+vr_resume(device_t self PMF_FN_ARGS)
+{
+	struct vr_softc *sc = device_private(self);
+
+	if (PCI_PRODUCT(sc->vr_id) != PCI_PRODUCT_VIATECH_VT3043)
+		VR_CLRBIT(sc, VR_STICKHW, (VR_STICKHW_DS0|VR_STICKHW_DS1));
+
+	return true;
 }

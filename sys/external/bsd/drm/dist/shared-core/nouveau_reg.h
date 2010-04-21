@@ -11,10 +11,6 @@
 #    define NV04_BOOT_0_RAM_AMOUNT_8MB                     0x00000002
 #    define NV04_BOOT_0_RAM_AMOUNT_16MB                    0x00000003
 
-#define NV04_FIFO_DATA                                     0x0010020c
-#    define NV10_FIFO_DATA_RAM_AMOUNT_MB_MASK              0xfff00000
-#    define NV10_FIFO_DATA_RAM_AMOUNT_MB_SHIFT             20
-
 #define NV_RAMIN                                           0x00700000
 
 #define NV_RAMHT_HANDLE_OFFSET                             0
@@ -99,6 +95,11 @@
  * the card will hang early on in the X init process.
  */
 #    define NV_PMC_ENABLE_UNK13                               (1<<13)
+
+#define NV_PBUS_DEBUG_DUALHEAD_CTL			   0x000010F0
+
+#define NV40_PMC_BACKLIGHT				   0x000015f0
+#	define NV40_PMC_BACKLIGHT_MASK			   0x001f0000
 #define NV40_PMC_1700                                      0x00001700
 #define NV40_PMC_1704                                      0x00001704
 #define NV40_PMC_1708                                      0x00001708
@@ -129,7 +130,9 @@
 
 #define NV04_PFB_CFG0                                      0x00100200
 #define NV04_PFB_CFG1                                      0x00100204
-#define NV40_PFB_020C                                      0x0010020C
+#define NV10_PFB_CSTATUS                                   0x0010020C
+#    define NV10_PFB_CSTATUS_RAM_AMOUNT_MB_MASK            0xfff00000
+#    define NV10_PFB_CSTATUS_RAM_AMOUNT_MB_SHIFT           20
 #define NV10_PFB_TILE(i)                                   (0x00100240 + (i*16))
 #define NV10_PFB_TILE__SIZE                                8
 #define NV10_PFB_TLIMIT(i)                                 (0x00100244 + (i*16))
@@ -404,6 +407,7 @@
 #define NV40_PGRAPH_TSIZE1(i)                              (0x00406908 + (i*16))
 #define NV40_PGRAPH_TSTATUS1(i)                            (0x0040690C + (i*16))
 
+#define NV_PCRTC_GPIO_EXT				   0x0060081C
 
 /* It's a guess that this works on NV03. Confirmed on NV04, though */
 #define NV04_PFIFO_DELAY_0                                 0x00002040
@@ -542,6 +546,9 @@
 /* This name is a partial guess. */
 #define NV50_DISPLAY_SUPERVISOR                     0x00610024
 
+#define NV50_PDISPLAY_BACKLIGHT				0x0061c084
+#	define NV50_PDISPLAY_BACKLIGHT_ENABLE		0x80000000
+
 /* Fifo commands. These are not regs, neither masks */
 #define NV03_FIFO_CMD_JUMP                                 0x20000000
 #define NV03_FIFO_CMD_JUMP_OFFSET_MASK                     0x1ffffffc
@@ -591,3 +598,4 @@
 #define NV40_RAMFC_UNK_48                                        0x48
 #define NV40_RAMFC_UNK_4C                                        0x4C
 #define NV40_RAMFC_UNK_50                                        0x50
+
