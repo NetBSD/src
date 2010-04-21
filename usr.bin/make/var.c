@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.157 2010/04/20 17:48:16 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.158 2010/04/21 04:25:27 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.157 2010/04/20 17:48:16 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.158 2010/04/21 04:25:27 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.157 2010/04/20 17:48:16 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.158 2010/04/21 04:25:27 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -590,6 +590,13 @@ Var_Export1(const char *name, int parent)
 	     */
 	    v->flags |= (VAR_EXPORTED|VAR_REEXPORT);
 	    return 1;
+	}
+	if (v->flags & VAR_IN_USE) {
+	    /*
+	     * We recursed while exporting in a child.
+	     * This isn't going to end well, just skip it.
+	     */
+	    return 0;
 	}
 	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
 	if (n < (int)sizeof(tmp)) {
