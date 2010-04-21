@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.39 2010/04/14 16:05:53 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.40 2010/04/21 07:35:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.39 2010/04/14 16:05:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.40 2010/04/21 07:35:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -895,6 +895,7 @@ rumpfs_mountroot()
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	mp->mnt_stat.f_iosize = 512;
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_iflag |= IMNT_MPSAFE;
 	vfs_getnewfsid(mp);
 
 	error = set_statvfs_info("/", UIO_SYSSPACE, "rumpfs", UIO_SYSSPACE,
