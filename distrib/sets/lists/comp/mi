@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1433 2010/04/16 20:08:51 dyoung Exp $
+#	$NetBSD: mi,v 1.1434 2010/04/21 18:04:38 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4764,9 +4764,11 @@
 ./usr/share/man/cat3/_DIAGASSERT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__BIT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__BITS.0			comp-c-catman		.cat
+./usr/share/man/cat3/__CONCAT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__SHIFTIN.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__SHIFTOUT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__SHIFTOUT_MASK.0		comp-c-catman		.cat
+./usr/share/man/cat3/__STRING.0			comp-c-catman		.cat
 ./usr/share/man/cat3/__UNCONST.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__UNVOLATILE.0		comp-c-catman		.cat
 ./usr/share/man/cat3/__arraycount.0		comp-c-catman		.cat
@@ -10626,9 +10628,11 @@
 ./usr/share/man/html3/_DIAGASSERT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__BIT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__BITS.html		comp-c-htmlman		html
+./usr/share/man/html3/__CONCAT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__SHIFTIN.html		comp-c-htmlman		html
 ./usr/share/man/html3/__SHIFTOUT.html		comp-c-htmlman		html
 ./usr/share/man/html3/__SHIFTOUT_MASK.html	comp-c-htmlman		html
+./usr/share/man/html3/__STRING.html		comp-c-htmlman		html
 ./usr/share/man/html3/__UNCONST.html		comp-c-htmlman		html
 ./usr/share/man/html3/__UNVOLATILE.html		comp-c-htmlman		html
 ./usr/share/man/html3/__arraycount.html		comp-c-htmlman		html
@@ -16288,9 +16292,11 @@
 ./usr/share/man/man3/_DIAGASSERT.3		comp-c-man		.man
 ./usr/share/man/man3/__BIT.3			comp-c-man		.man
 ./usr/share/man/man3/__BITS.3			comp-c-man		.man
+./usr/share/man/man3/__CONCAT.3			comp-c-man		.man
 ./usr/share/man/man3/__SHIFTIN.3		comp-c-man		.man
 ./usr/share/man/man3/__SHIFTOUT.3		comp-c-man		.man
 ./usr/share/man/man3/__SHIFTOUT_MASK.3		comp-c-man		.man
+./usr/share/man/man3/__STRING.3			comp-c-man		.man
 ./usr/share/man/man3/__UNCONST.3		comp-c-man		.man
 ./usr/share/man/man3/__UNVOLATILE.3		comp-c-man		.man
 ./usr/share/man/man3/__arraycount.3		comp-c-man		.man
