@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.161 2010/04/17 16:34:29 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.162 2010/04/21 16:16:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.161 2010/04/17 16:34:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.162 2010/04/21 16:16:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.161 2010/04/17 16:34:29 pooka Exp $");
 #include <sys/once.h>
 #include <sys/percpu.h>
 #include <sys/pipe.h>
+#include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>
 #include <sys/resourcevar.h>
@@ -127,10 +128,23 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 
 static int rump_inited;
 
+/*
+ * Make sure pnbuf_cache is available even without vfs
+ */
+struct pool_cache *pnbuf_cache;
+int rump_initpnbufpool(void);
+int rump_initpnbufpool(void)
+{
+
+        pnbuf_cache = pool_cache_init(MAXPATHLEN, 0, 0, 0, "pnbufpl",
+	    NULL, IPL_NONE, NULL, NULL, NULL);
+	return EOPNOTSUPP;
+}
+
 int rump__unavailable(void);
 int rump__unavailable() {return EOPNOTSUPP;}
 __weak_alias(rump_net_init,rump__unavailable);
-__weak_alias(rump_vfs_init,rump__unavailable);
+__weak_alias(rump_vfs_init,rump_initpnbufpool);
 __weak_alias(rump_dev_init,rump__unavailable);
 
 __weak_alias(rump_vfs_fini,rump__unavailable);
@@ -278,9 +292,11 @@ rump__init(int rump_version)
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	lwpinit_specificdata();
 
+	mutex_init(&rump_limits.pl_lock, MUTEX_DEFAULT, IPL_NONE);
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_SBSIZE].rlim_cur = RLIM_INFINITY;
+	rump_limits.pl_corename = defcorename;
 
 	rump_scheduler_init();
 	/* revert temporary context and schedule a real context */
@@ -317,6 +333,7 @@ rump__init(int rump_version)
 	module_init();
 	devsw_init();
 	pipe_init();
+	resource_init();
 
 	rumpuser_dl_bootstrap(add_linkedin_modules, rump_kernelfsym_load);
 
@@ -479,7 +496,7 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 		if (rump_proc_vfs_init)
 			rump_proc_vfs_init(p);
 		p->p_stats = &rump_stats;
-		p->p_limit = &rump_limits;
+		p->p_limit = lim_copy(&rump_limits);
 		p->p_pid = pid;
 		p->p_vmspace = &rump_vmspace;
 		p->p_emul = &emul_netbsd;
@@ -529,6 +546,7 @@ rump_lwp_release(struct lwp *l)
 		if (rump_proc_vfs_release)
 			rump_proc_vfs_release(p);
 		rump_cred_put(l->l_cred);
+		limfree(p->p_limit);
 		kmem_free(p, sizeof(*p));
 	}
 	KASSERT((l->l_flag & LW_WEXIT) == 0);
