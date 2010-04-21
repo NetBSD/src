@@ -738,7 +738,7 @@ do_gettimeofday(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("0x%lx, 0x%lx", (long)t_addr, (long)tz_addr);
 
-  SYS(__gettimeofday50);
+  SYS(gettimeofday);
   emul_write_status(processor, status, err);
   if (status == 0) {
     if (t_addr != 0)
@@ -768,7 +768,7 @@ do_getrusage(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, 0x%lx", who, (long)rusage_addr);
 
-  SYS(__getrusage50);
+  SYS(getrusage);
   emul_write_status(processor, status, err);
   if (status == 0) {
     if (rusage_addr != 0)
