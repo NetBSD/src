@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.21 2010/04/21 05:05:07 jruoho Exp $
+.\" $NetBSD: security.8,v 1.22 2010/04/21 05:39:13 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -296,6 +296,35 @@ As of
 .Nx 6.0 ,
 .Em SSP
 is used by default on i386 and amd64 architectures.
+.Ss FORTIFY_SOURCE
+The so-called
+.Em FORTIFY_SOURCE
+is a relatively simple technique to detect a subset of buffer overflows
+before these can do damage.
+It is integrated to
+.Xr gcc 1
+together with some common memory and string functions in the standard
+C library of
+.Nx .
+.Pp
+The underlying idea builds on the observation that there are cases where
+the compiler knows the size of a buffer (cf.
+.Xr __builtin_object_size 3 ) .
+If a buffer overflow is suspected in a function that does little or no
+bounds checking, either a compile time warning can be issued or a
+safer substitute function can be used at runtime.
+.Pp
+The
+.Em FORTIY_SOURCE
+is enabled by default in some parts of the
+.Nx
+source tree.
+It is also possible to explicitly enable it by defining
+the following in
+.Xr mk.conf 5 :
+.Bd -literal -offset indent
+USE_FORT=yes
+.Ed
 .Sh PER-USER TEMPORARY STORAGE
 It is possible to configure per-user temporary storage to avoid potential
 security issues (race conditions, etc.) in programs that do not make secure
