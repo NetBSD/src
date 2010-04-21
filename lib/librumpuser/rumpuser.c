@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.2 2010/04/21 11:13:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.3 2010/04/21 11:16:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.2 2010/04/21 11:13:29 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.3 2010/04/21 11:16:41 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -577,9 +577,15 @@ int
 rumpuser_kill(int64_t pid, int sig, int *error)
 {
 
+#ifdef __NetBSD__
 	if (pid == RUMPUSER_PID_SELF) {
 		DOCALL(int, raise(sig));
 	} else {
 		DOCALL(int, kill((pid_t)pid, sig));
 	}
+#else
+	/* XXXfixme: signal numbers may not match on non-NetBSD */
+	*error = EOPNOTSUPP;
+	return -1;
+#endif
 }
