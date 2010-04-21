@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.76 2010/01/09 06:37:57 kiyohara Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.77 2010/04/21 14:58:10 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.76 2010/01/09 06:37:57 kiyohara Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.77 2010/04/21 14:58:10 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -946,6 +946,7 @@ top_makefile_rules(FILE *outmk)
 	fprintf(outmk, " %s_make", p->ident);
     fprintf(outmk, "\n\n");
 
+    fprintf(outmk, "LDSTATIC=-static\n\n");
     fprintf(outmk, "PROG=%s\n\n", execfname);
     
     fprintf(outmk, "all: ${PROG}.crunched\n");
@@ -967,7 +968,6 @@ top_makefile_rules(FILE *outmk)
 void
 bottom_makefile_rules(FILE *outmk)
 {
-    fprintf(outmk, "LDSTATIC=-static\n");
 }
 
 
