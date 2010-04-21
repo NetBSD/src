@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.99.8.1 2009/03/24 20:59:29 snj Exp $	*/
+/*	$NetBSD: ugen.c,v 1.99.8.1.4.1 2010/04/21 00:27:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.99.8.1 2009/03/24 20:59:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.99.8.1.4.1 2010/04/21 00:27:53 matt Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -503,7 +503,7 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 	int dir;
 	int i;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
 		     flag, mode, UGENUNIT(dev), endpt));
@@ -786,7 +786,7 @@ ugenread(dev_t dev, struct uio *uio, int flag)
 	struct ugen_softc *sc;
 	int error;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = ugen_do_read(sc, endpt, uio, flag);
@@ -973,7 +973,7 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 	struct ugen_softc *sc;
 	int error;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = ugen_do_write(sc, endpt, uio, flag);
@@ -1734,6 +1734,8 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 		int error;
 
 		cdesc = ugen_get_cdesc(sc, fd->ufd_config_index, &len);
+		if (cdesc == NULL)
+			return (EINVAL);
 		if (len > fd->ufd_size)
 			len = fd->ufd_size;
 		iov.iov_base = (void *)fd->ufd_data;
@@ -1841,7 +1843,7 @@ ugenioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct ugen_softc *sc;
 	int error;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, l);
@@ -1858,7 +1860,7 @@ ugenpoll(dev_t dev, int events, struct lwp *l)
 	int revents = 0;
 	int s;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	if (sc->sc_dying)
 		return (POLLHUP);
@@ -2054,7 +2056,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	struct klist *klist;
 	int s;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	if (sc->sc_dying)
 		return (ENXIO);

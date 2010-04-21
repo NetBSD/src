@@ -41,56 +41,71 @@ static drm_pci_id_list_t via_pciidlist[] = {
 
 static void via_configure(struct drm_device *dev)
 {
-	dev->driver.buf_priv_size	= 1;
-	dev->driver.load		= via_driver_load;
-	dev->driver.unload		= via_driver_unload;
-	dev->driver.context_ctor	= via_init_context;
-	dev->driver.context_dtor	= via_final_context;
-	dev->driver.vblank_wait		= via_driver_vblank_wait;
-	dev->driver.irq_preinstall	= via_driver_irq_preinstall;
-	dev->driver.irq_postinstall	= via_driver_irq_postinstall;
-	dev->driver.irq_uninstall	= via_driver_irq_uninstall;
-	dev->driver.irq_handler		= via_driver_irq_handler;
-	dev->driver.dma_quiescent	= via_driver_dma_quiescent;
+	dev->driver->driver_features =
+	    DRIVER_USE_AGP | DRIVER_USE_MTRR | DRIVER_HAVE_IRQ;
 
-	dev->driver.ioctls		= via_ioctls;
-	dev->driver.max_ioctl		= via_max_ioctl;
+	dev->driver->buf_priv_size	= 1;
+	dev->driver->load		= via_driver_load;
+	dev->driver->unload		= via_driver_unload;
+	dev->driver->context_ctor	= via_init_context;
+	dev->driver->context_dtor	= via_final_context;
+	dev->driver->get_vblank_counter	= via_get_vblank_counter;
+	dev->driver->enable_vblank	= via_enable_vblank;
+	dev->driver->disable_vblank	= via_disable_vblank;
+	dev->driver->irq_preinstall	= via_driver_irq_preinstall;
+	dev->driver->irq_postinstall	= via_driver_irq_postinstall;
+	dev->driver->irq_uninstall	= via_driver_irq_uninstall;
+	dev->driver->irq_handler	= via_driver_irq_handler;
+	dev->driver->dma_quiescent	= via_driver_dma_quiescent;
 
-	dev->driver.name		= DRIVER_NAME;
-	dev->driver.desc		= DRIVER_DESC;
-	dev->driver.date		= DRIVER_DATE;
-	dev->driver.major		= DRIVER_MAJOR;
-	dev->driver.minor		= DRIVER_MINOR;
-	dev->driver.patchlevel		= DRIVER_PATCHLEVEL;
+	dev->driver->ioctls		= via_ioctls;
+	dev->driver->max_ioctl		= via_max_ioctl;
 
-	dev->driver.use_agp		= 1;
-	dev->driver.use_mtrr		= 1;
-	dev->driver.use_irq		= 1;
-	dev->driver.use_vbl_irq		= 1;
-}
-
-#ifdef __FreeBSD__
-static int
-via_probe(device_t dev)
-{
-	return drm_probe(dev, via_pciidlist);
+	dev->driver->name		= DRIVER_NAME;
+	dev->driver->desc		= DRIVER_DESC;
+	dev->driver->date		= DRIVER_DATE;
+	dev->driver->major		= DRIVER_MAJOR;
+	dev->driver->minor		= DRIVER_MINOR;
+	dev->driver->patchlevel		= DRIVER_PATCHLEVEL;
 }
 
 static int
-via_attach(device_t nbdev)
+via_probe(device_t kdev)
 {
-	struct drm_device *dev = device_get_softc(nbdev);
+	return drm_probe(kdev, via_pciidlist);
+}
 
-	bzero(dev, sizeof(struct drm_device));
+static int
+via_attach(device_t kdev)
+{
+	struct drm_device *dev = device_get_softc(kdev);
+
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
+
 	via_configure(dev);
-	return drm_attach(nbdev, via_pciidlist);
+
+	return drm_attach(kdev, via_pciidlist);
+}
+
+static int
+via_detach(device_t kdev)
+{
+	struct drm_device *dev = device_get_softc(kdev);
+	int ret;
+
+	ret = drm_detach(kdev);
+
+	free(dev->driver, DRM_MEM_DRIVER);
+
+	return ret;
 }
 
 static device_method_t via_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe,		via_probe),
 	DEVMETHOD(device_attach,	via_attach),
-	DEVMETHOD(device_detach,	drm_detach),
+	DEVMETHOD(device_detach,	via_detach),
 
 	{ 0, 0 }
 };
@@ -104,32 +119,3 @@ static driver_t via_driver = {
 extern devclass_t drm_devclass;
 DRIVER_MODULE(via, pci, via_driver, drm_devclass, 0, 0);
 MODULE_DEPEND(via, drm, 1, 1, 1);
-
-#elif defined(__OpenBSD__)
-#ifdef _LKM
-CFDRIVER_DECL(via, DV_TTY, NULL);
-#else
-CFATTACH_DECL(via, sizeof(struct drm_device), drm_probe, drm_attach, drm_detach,
-    drm_activate);
-#endif
-#elif defined(__NetBSD__)
-static int
-viadrm_probe(struct device *parent, struct cfdata *match, void *opaque)
-{
-	struct pci_attach_args *pa = opaque;
-	return drm_probe(pa, via_pciidlist);
-}
-
-static void
-viadrm_attach(struct device *parent, struct device *self, void *opaque)
-{
-	struct pci_attach_args *pa = opaque;
-	drm_device_t *dev = device_private(self);
-
-	viadrm_configure(dev);
-	drm_attach(self, pa, via_pciidlist);
-}
-
-CFATTACH_DECL_NEW(viadrm, sizeof(drm_device_t), viadrm_probe, viadrm_attach,
-    drm_detach, drm_activate);
-#endif

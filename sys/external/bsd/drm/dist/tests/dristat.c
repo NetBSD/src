@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 
     for (i = 0; i < 16; i++) if (!minor || i == minor) {
 	sprintf(buf, DRM_DEV_NAME, DRM_DIR_NAME, i);
-	fd = drmOpenMinor(i, 1);
+	fd = drmOpenMinor(i, 1, DRM_NODE_RENDER);
 	if (fd >= 0) {
 	    printf("%s\n", buf);
 	    if (mask & DRM_BUSID)   getbusid(fd);

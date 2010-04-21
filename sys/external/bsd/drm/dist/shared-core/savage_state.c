@@ -374,18 +374,18 @@ static int savage_dispatch_dma_prim(drm_savage_private_t *dev_priv,
 			/* Need to reorder indices for correct flat
 			 * shading while preserving the clock sense
 			 * for correct culling. Only on Savage3D. */
-			int ireorder[3] = { -1, -1, -1 };
-			ireorder[start % 3] = 2;
+			int reorderarr[3] = { -1, -1, -1 };
+			reorderarr[start % 3] = 2;
 
 			BEGIN_BCI((count + 1 + 1) / 2);
 			BCI_DRAW_INDICES_S3D(count, prim, start + 2);
 
 			for (i = start + 1; i + 1 < start + count; i += 2)
-				BCI_WRITE((i + ireorder[i % 3]) |
+				BCI_WRITE((i + reorderarr[i % 3]) |
 					  ((i + 1 +
-					    ireorder[(i + 1) % 3]) << 16));
+					    reorderarr[(i + 1) % 3]) << 16));
 			if (i < start + count)
-				BCI_WRITE(i + ireorder[i % 3]);
+				BCI_WRITE(i + reorderarr[i % 3]);
 		} else if (S3_SAVAGE3D_SERIES(dev_priv->chipset)) {
 			BEGIN_BCI((count + 1 + 1) / 2);
 			BCI_DRAW_INDICES_S3D(count, prim, start);
@@ -493,14 +493,14 @@ static int savage_dispatch_vb_prim(drm_savage_private_t *dev_priv,
 			/* Need to reorder vertices for correct flat
 			 * shading while preserving the clock sense
 			 * for correct culling. Only on Savage3D. */
-			int ireorder[3] = { -1, -1, -1 };
-			ireorder[start % 3] = 2;
+			int reorderarr[3] = { -1, -1, -1 };
+			reorderarr[start % 3] = 2;
 
 			BEGIN_DMA(count * vtx_size + 1);
 			DMA_DRAW_PRIMITIVE(count, prim, skip);
 
 			for (i = start; i < start + count; ++i) {
-				unsigned int j = i + ireorder[i % 3];
+				unsigned int j = i + reorderarr[i % 3];
 				DMA_COPY(&vtxbuf[vb_stride * j], vtx_size);
 			}
 
@@ -634,17 +634,17 @@ static int savage_dispatch_dma_idx(drm_savage_private_t *dev_priv,
 			/* Need to reorder indices for correct flat
 			 * shading while preserving the clock sense
 			 * for correct culling. Only on Savage3D. */
-			int ireorder[3] = { 2, -1, -1 };
+			int reorderarr[3] = { 2, -1, -1 };
 
 			BEGIN_BCI((count + 1 + 1) / 2);
 			BCI_DRAW_INDICES_S3D(count, prim, idx[2]);
 
 			for (i = 1; i + 1 < count; i += 2)
-				BCI_WRITE(idx[i + ireorder[i % 3]] |
+				BCI_WRITE(idx[i + reorderarr[i % 3]] |
 					  (idx[i + 1 +
-					   ireorder[(i + 1) % 3]] << 16));
+					   reorderarr[(i + 1) % 3]] << 16));
 			if (i < count)
-				BCI_WRITE(idx[i + ireorder[i % 3]]);
+				BCI_WRITE(idx[i + reorderarr[i % 3]]);
 		} else if (S3_SAVAGE3D_SERIES(dev_priv->chipset)) {
 			BEGIN_BCI((count + 1 + 1) / 2);
 			BCI_DRAW_INDICES_S3D(count, prim, idx[0]);
@@ -754,13 +754,13 @@ static int savage_dispatch_vb_idx(drm_savage_private_t *dev_priv,
 			/* Need to reorder vertices for correct flat
 			 * shading while preserving the clock sense
 			 * for correct culling. Only on Savage3D. */
-			int ireorder[3] = { 2, -1, -1 };
+			int reorderarr[3] = { 2, -1, -1 };
 
 			BEGIN_DMA(count * vtx_size + 1);
 			DMA_DRAW_PRIMITIVE(count, prim, skip);
 
 			for (i = 0; i < count; ++i) {
-				unsigned int j = idx[i + ireorder[i % 3]];
+				unsigned int j = idx[i + reorderarr[i % 3]];
 				DMA_COPY(&vtxbuf[vb_stride * j], vtx_size);
 			}
 

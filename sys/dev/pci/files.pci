@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.308 2008/10/30 12:02:14 darran Exp $
+#	$NetBSD: files.pci,v 1.308.8.1 2010/04/21 00:27:39 matt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -481,6 +481,11 @@ attach	azalia at pci
 file	dev/pci/azalia.c		azalia
 file	dev/pci/azalia_codec.c		azalia
 
+# AMD Geode CS5536 Companion Audio
+device	gcscaudio: audiobus, auconv, mulaw, ac97, aurateconv
+attach	gcscaudio at pci
+file	dev/pci/gcscaudio.c		gcscaudio
+
 # NeoMagic 256 AC'97 Audio
 device	neo: audiobus, auconv, mulaw, ac97
 attach	neo at pci
@@ -904,6 +909,10 @@ device	msk: ether, ifnet, arp, mii
 attach	msk at mskc
 file	dev/pci/if_msk.c		mskc | msk
 
+# SD Host Controller
+attach sdhc at pci with sdhc_pci
+file	dev/pci/sdhc_pci.c		sdhc_pci
+
 #
 # Direct Rendering Manager
 #
@@ -932,17 +941,24 @@ file	dev/pci/r128fb.c		r128fb
 defflag	opt_r128fb.h	R128FB_DEBUG
 defflag	opt_r128fb.h	R128FB_WAIT
 
+# Attansic/Atheros L1 Gigabit-Ethernet
+device	age: ether, ifnet, arp, mii, mii_phy
+attach	age at pci
+file	dev/pci/if_age.c		age
+
+# Attanisc/Atheros L1E Gigabit Ethernet
+device	ale: ether, ifnet, arp, mii, mii_phy
+attach	ale at pci
+file	dev/pci/if_ale.c		ale
+
 # Atheros/Attansic L2 Fast-Ethernet
 device	lii: ether, ifnet, arp, mii
 attach	lii at pci
 file	dev/pci/if_lii.c		lii
 
 # Silicon Image SteelVine SATA-II controllers
-define siisata
-file dev/ic/siisata.c atapibus & atabus & siisata
-device siisata: ata, ata_dma, ata_udma, sata, siisata
-attach siisata at pci with siisata_pci
-file dev/pci/siisata_pci.c siisata_pci
+attach	siisata at pci with siisata_pci
+file	dev/pci/siisata_pci.c		siisata_pci
 
 # Acer Labs M7101 power management controller
 device	alipm: i2cbus
@@ -954,3 +970,5 @@ file	dev/pci/alipm.c				alipm
 #
 include "dev/pci/n8/files.n8"
 
+# High Definition Audio
+include "dev/pci/hdaudio/files.hdaudio"

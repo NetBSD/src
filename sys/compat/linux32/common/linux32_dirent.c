@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.6 2008/09/04 17:45:00 njoly Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.6.8.1 2010/04/21 00:27:26 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.6 2008/09/04 17:45:00 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.6.8.1 2010/04/21 00:27:26 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -227,8 +227,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (void *)SCARG_P32(uap, dent))
+	if (outp == (void *)SCARG_P32(uap, dent)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 	if (oldcall)

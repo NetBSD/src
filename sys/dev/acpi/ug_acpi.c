@@ -1,4 +1,4 @@
-/* $NetBSD: ug_acpi.c,v 1.4 2008/03/26 16:09:37 xtraeme Exp $ */
+/* $NetBSD: ug_acpi.c,v 1.4.22.1 2010/04/21 00:27:34 matt Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug_acpi.c,v 1.4 2008/03/26 16:09:37 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug_acpi.c,v 1.4.22.1 2010/04/21 00:27:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,6 @@ ug_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_io *io;
 	bus_space_handle_t ioh;
 	ACPI_STATUS rv;
-
-	aprint_naive("\n");
-	aprint_normal("\n");
 
 	/* parse resources */
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS",

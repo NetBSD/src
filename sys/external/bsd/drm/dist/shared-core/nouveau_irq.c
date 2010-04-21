@@ -442,9 +442,10 @@ static void
 nv50_pgraph_irq_handler(struct drm_device *dev)
 {
 	struct drm_nouveau_private *dev_priv = dev->dev_private;
-	uint32_t status;
+	uint32_t status, nsource;
 
 	status = NV_READ(NV03_PGRAPH_INTR);
+	nsource = NV_READ(NV03_PGRAPH_NSOURCE);
 
 	if (status & 0x00000020) {
 		nouveau_pgraph_intr_error(dev,
@@ -463,10 +464,29 @@ nv50_pgraph_irq_handler(struct drm_device *dev)
 	}
 
 	if (status & 0x00200000) {
-		nouveau_pgraph_intr_error(dev,
+		int r;
+
+		nouveau_pgraph_intr_error(dev, nsource |
 					  NV03_PGRAPH_NSOURCE_PROTECTION_ERROR);
 
+		DRM_ERROR("magic set 1:\n");
+		for (r = 0x408900; r <= 0x408910; r += 4)
+			DRM_ERROR("\t0x%08x: 0x%08x\n", r, NV_READ(r));
+		NV_WRITE(0x408900, NV_READ(0x408904) | 0xc0000000);
+		for (r = 0x408e08; r <= 0x408e24; r += 4)
+			DRM_ERROR("\t0x%08x: 0x%08x\n", r, NV_READ(r));
+		NV_WRITE(0x408e08, NV_READ(0x408e08) | 0xc0000000);
+
+		DRM_ERROR("magic set 2:\n");
+		for (r = 0x409900; r <= 0x409910; r += 4)
+			DRM_ERROR("\t0x%08x: 0x%08x\n", r, NV_READ(r));
+		NV_WRITE(0x409900, NV_READ(0x409904) | 0xc0000000);
+		for (r = 0x409e08; r <= 0x409e24; r += 4)
+			DRM_ERROR("\t0x%08x: 0x%08x\n", r, NV_READ(r));
+		NV_WRITE(0x409e08, NV_READ(0x409e08) | 0xc0000000);
+
 		status &= ~0x00200000;
+		NV_WRITE(NV03_PGRAPH_NSOURCE, nsource);
 		NV_WRITE(NV03_PGRAPH_INTR, 0x00200000);
 	}
 

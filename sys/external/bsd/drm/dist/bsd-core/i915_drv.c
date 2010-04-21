@@ -40,10 +40,10 @@ static drm_pci_id_list_t i915_pciidlist[] = {
 	i915_PCI_IDS
 };
 
-#ifdef __FreeBSD__
-static int i915_suspend(device_t nbdev)
+#if defined(__FreeBSD__)
+static int i915_suspend(device_t kdev)
 {
-	struct drm_device *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(kdev);
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	if (!dev || !dev_priv) {
@@ -55,80 +55,89 @@ static int i915_suspend(device_t nbdev)
 
 	i915_save_state(dev);
 
-	return (bus_generic_suspend(nbdev));
+	return (bus_generic_suspend(kdev));
 }
 
-static int i915_resume(device_t nbdev)
+static int i915_resume(device_t kdev)
 {
-	struct drm_device *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(kdev);
 
 	i915_restore_state(dev);
 
-	return (bus_generic_resume(nbdev));
+	return (bus_generic_resume(kdev));
 }
 #endif
 
 static void i915_configure(struct drm_device *dev)
 {
-	dev->driver.buf_priv_size	= sizeof(drm_i915_private_t);
-	dev->driver.load		= i915_driver_load;
-	dev->driver.unload		= i915_driver_unload;
-	dev->driver.firstopen		= i915_driver_firstopen;
-	dev->driver.preclose		= i915_driver_preclose;
-	dev->driver.lastclose		= i915_driver_lastclose;
-	dev->driver.device_is_agp	= i915_driver_device_is_agp;
-	dev->driver.get_vblank_counter	= i915_get_vblank_counter;
-	dev->driver.enable_vblank	= i915_enable_vblank;
-	dev->driver.disable_vblank	= i915_disable_vblank;
-	dev->driver.irq_preinstall	= i915_driver_irq_preinstall;
-	dev->driver.irq_postinstall	= i915_driver_irq_postinstall;
-	dev->driver.irq_uninstall	= i915_driver_irq_uninstall;
-	dev->driver.irq_handler		= i915_driver_irq_handler;
+	dev->driver->driver_features =
+	   DRIVER_USE_AGP | DRIVER_REQUIRE_AGP | DRIVER_USE_MTRR |
+	   DRIVER_HAVE_IRQ;
 
-	dev->driver.ioctls		= i915_ioctls;
-	dev->driver.max_ioctl		= i915_max_ioctl;
+	dev->driver->buf_priv_size	= sizeof(drm_i915_private_t);
+	dev->driver->load		= i915_driver_load;
+	dev->driver->unload		= i915_driver_unload;
+	dev->driver->preclose		= i915_driver_preclose;
+	dev->driver->lastclose		= i915_driver_lastclose;
+	dev->driver->device_is_agp	= i915_driver_device_is_agp;
+	dev->driver->enable_vblank	= i915_enable_vblank;
+	dev->driver->disable_vblank	= i915_disable_vblank;
+	dev->driver->irq_preinstall	= i915_driver_irq_preinstall;
+	dev->driver->irq_postinstall	= i915_driver_irq_postinstall;
+	dev->driver->irq_uninstall	= i915_driver_irq_uninstall;
+	dev->driver->irq_handler	= i915_driver_irq_handler;
 
-	dev->driver.name		= DRIVER_NAME;
-	dev->driver.desc		= DRIVER_DESC;
-	dev->driver.date		= DRIVER_DATE;
-	dev->driver.major		= DRIVER_MAJOR;
-	dev->driver.minor		= DRIVER_MINOR;
-	dev->driver.patchlevel		= DRIVER_PATCHLEVEL;
+	dev->driver->ioctls		= i915_ioctls;
+	dev->driver->max_ioctl		= i915_max_ioctl;
 
-	dev->driver.use_agp		= 1;
-	dev->driver.require_agp		= 1;
-	dev->driver.use_mtrr		= 1;
-	dev->driver.use_irq		= 1;
-	dev->driver.use_vbl_irq		= 1;
-	dev->driver.use_vbl_irq2	= 1;
+	dev->driver->name		= DRIVER_NAME;
+	dev->driver->desc		= DRIVER_DESC;
+	dev->driver->date		= DRIVER_DATE;
+	dev->driver->major		= DRIVER_MAJOR;
+	dev->driver->minor		= DRIVER_MINOR;
+	dev->driver->patchlevel		= DRIVER_PATCHLEVEL;
 }
 
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__)
 static int
-i915_probe(device_t dev)
+i915_probe(device_t kdev)
 {
-	return drm_probe(dev, i915_pciidlist);
+	return drm_probe(kdev, i915_pciidlist);
 }
 
 static int
-i915_attach(device_t nbdev)
+i915_attach(device_t kdev)
 {
-	struct drm_device *dev = device_get_softc(nbdev);
+	struct drm_device *dev = device_get_softc(kdev);
 
-	bzero(dev, sizeof(struct drm_device));
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
+
 	i915_configure(dev);
-	return drm_attach(nbdev, i915_pciidlist);
+
+	return drm_attach(kdev, i915_pciidlist);
+}
+
+static int
+i915_detach(device_t kdev)
+{
+	struct drm_device *dev = device_get_softc(kdev);
+	int ret;
+
+	ret = drm_detach(kdev);
+
+	free(dev->driver, DRM_MEM_DRIVER);
+
+	return ret;
 }
 
 static device_method_t i915_methods[] = {
 	/* Device interface */
 	DEVMETHOD(device_probe,		i915_probe),
 	DEVMETHOD(device_attach,	i915_attach),
-#ifdef __FreeBSD__
 	DEVMETHOD(device_suspend,	i915_suspend),
 	DEVMETHOD(device_resume,	i915_resume),
-#endif
-	DEVMETHOD(device_detach,	drm_detach),
+	DEVMETHOD(device_detach,	i915_detach),
 
 	{ 0, 0 }
 };
@@ -151,31 +160,51 @@ DRIVER_MODULE(i915, agp, i915_driver, drm_devclass, 0, 0);
 #endif
 MODULE_DEPEND(i915, drm, 1, 1, 1);
 
-#elif defined(__OpenBSD__)
-CFDRIVER_DECL(i915, DV_TTY, NULL);
-#elif defined(__NetBSD__)
+#elif   defined(__NetBSD__)
+
+static bool
+i915drm_suspend(device_t self PMF_FN_ARGS)
+{
+	struct drm_device *dev = device_private(self);
+
+	i915_save_state(dev);
+	return true;	
+}
+
+static bool
+i915drm_resume(device_t self PMF_FN_ARGS)
+{
+	struct drm_device *dev = device_private(self);
+
+	i915_restore_state(dev);
+	return true;	
+}
+
 static int
-i915drm_probe(struct device *parent, struct cfdata *match, void *aux)
+i915drm_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	return drm_probe(pa, i915_pciidlist);
 }
 
 static void
-i915drm_attach(struct device *parent, struct device *self, void *aux)
+i915drm_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	struct drm_device *dev = device_private(self);
+
+	dev->driver = malloc(sizeof(struct drm_driver_info), DRM_MEM_DRIVER,
+	    M_WAITOK | M_ZERO);
 
 	i915_configure(dev);
 
-	pmf_device_register(self, NULL, NULL);
+	pmf_device_register(self, i915drm_suspend, i915drm_resume);
 
 	drm_attach(self, pa, i915_pciidlist);
 }
 
-CFATTACH_DECL(i915drm, sizeof(drm_device_t), i915drm_probe, i915drm_attach,
-	drm_detach, drm_activate);
+CFATTACH_DECL_NEW(i915drm, sizeof(struct drm_device), i915drm_probe,
+    i915drm_attach, drm_detach, drm_activate);
 
 #ifdef _MODULE
 
@@ -234,4 +263,5 @@ i915drm_modcmd(modcmd_t cmd, void *arg)
 	}
 }
 #endif /* _MODULE */
-#endif /* __FreeBSD__ */
+
+#endif

@@ -25,13 +25,26 @@
 #ifndef __NOUVEAU_DRM_H__
 #define __NOUVEAU_DRM_H__
 
-#define NOUVEAU_DRM_HEADER_PATCHLEVEL 11
+#define NOUVEAU_DRM_HEADER_PATCHLEVEL 12
 
 struct drm_nouveau_channel_alloc {
 	uint32_t     fb_ctxdma_handle;
 	uint32_t     tt_ctxdma_handle;
 
 	int          channel;
+
+	/* Notifier memory */
+	drm_handle_t notifier;
+	int          notifier_size;
+
+	/* DRM-enforced subchannel assignments */
+	struct {
+		uint32_t handle;
+		uint32_t grclass;
+	} subchan[8];
+	uint32_t nr_subchan;
+
+/* !MM_ENABLED ONLY */
 	uint32_t     put_base;
 	/* FIFO control regs */
 	drm_handle_t ctrl;
@@ -39,9 +52,6 @@ struct drm_nouveau_channel_alloc {
 	/* DMA command buffer */
 	drm_handle_t cmdbuf;
 	int          cmdbuf_size;
-	/* Notifier memory */
-	drm_handle_t notifier;
-	int          notifier_size;
 };
 
 struct drm_nouveau_channel_free {
@@ -126,6 +136,8 @@ struct drm_nouveau_mem_tile {
 #define NOUVEAU_GETPARAM_AGP_SIZE        9
 #define NOUVEAU_GETPARAM_PCI_PHYSICAL    10
 #define NOUVEAU_GETPARAM_CHIPSET_ID      11
+#define NOUVEAU_GETPARAM_MM_ENABLED      12
+#define NOUVEAU_GETPARAM_VM_VRAM_BASE    13
 struct drm_nouveau_getparam {
 	uint64_t param;
 	uint64_t value;
@@ -136,6 +148,100 @@ struct drm_nouveau_getparam {
 struct drm_nouveau_setparam {
 	uint64_t param;
 	uint64_t value;
+};
+
+#define NOUVEAU_GEM_DOMAIN_CPU       (1 << 0)
+#define NOUVEAU_GEM_DOMAIN_VRAM      (1 << 1)
+#define NOUVEAU_GEM_DOMAIN_GART      (1 << 2)
+#define NOUVEAU_GEM_DOMAIN_NOMAP     (1 << 3)
+#define NOUVEAU_GEM_DOMAIN_TILE      (1 << 30)
+#define NOUVEAU_GEM_DOMAIN_TILE_ZETA (1 << 31)
+
+struct drm_nouveau_gem_new {
+	uint64_t size;
+	uint32_t channel_hint;
+	uint32_t align;
+	uint32_t handle;
+	uint32_t domain;
+	uint32_t offset;
+};
+
+struct drm_nouveau_gem_pushbuf_bo {
+	uint64_t user_priv;
+	uint32_t handle;
+	uint32_t read_domains;
+	uint32_t write_domains;
+	uint32_t valid_domains;
+	uint32_t presumed_ok;
+	uint32_t presumed_domain;
+	uint64_t presumed_offset;
+};
+
+#define NOUVEAU_GEM_RELOC_LOW  (1 << 0)
+#define NOUVEAU_GEM_RELOC_HIGH (1 << 1)
+#define NOUVEAU_GEM_RELOC_OR   (1 << 2)
+struct drm_nouveau_gem_pushbuf_reloc {
+	uint32_t bo_index;
+	uint32_t reloc_index;
+	uint32_t flags;
+	uint32_t data;
+	uint32_t vor;
+	uint32_t tor;
+};
+
+#define NOUVEAU_GEM_MAX_BUFFERS 1024
+#define NOUVEAU_GEM_MAX_RELOCS 1024
+
+struct drm_nouveau_gem_pushbuf {
+	uint32_t channel;
+	uint32_t nr_dwords;
+	uint32_t nr_buffers;
+	uint32_t nr_relocs;
+	uint64_t dwords;
+	uint64_t buffers;
+	uint64_t relocs;
+};
+
+struct drm_nouveau_gem_pushbuf_call {
+	uint32_t channel;
+	uint32_t handle;
+	uint32_t offset;
+	uint32_t nr_buffers;
+	uint32_t nr_relocs;
+	uint32_t pad0;
+	uint64_t buffers;
+	uint64_t relocs;
+};
+
+struct drm_nouveau_gem_pin {
+	uint32_t handle;
+	uint32_t domain;
+	uint64_t offset;
+};
+
+struct drm_nouveau_gem_unpin {
+	uint32_t handle;
+};
+
+struct drm_nouveau_gem_mmap {
+	uint32_t handle;
+	uint32_t pad;
+	uint64_t vaddr;
+};
+
+struct drm_nouveau_gem_cpu_prep {
+	uint32_t handle;
+};
+
+struct drm_nouveau_gem_cpu_fini {
+	uint32_t handle;
+};
+
+struct drm_nouveau_gem_tile {
+	uint32_t handle;
+	uint32_t delta;
+	uint32_t size;
+	uint32_t flags;
 };
 
 enum nouveau_card_type {
@@ -178,5 +284,16 @@ struct drm_nouveau_sarea {
 #define DRM_NOUVEAU_MEM_ALLOC          0x08
 #define DRM_NOUVEAU_MEM_FREE           0x09
 #define DRM_NOUVEAU_MEM_TILE           0x0a
+#define DRM_NOUVEAU_SUSPEND            0x0b
+#define DRM_NOUVEAU_RESUME             0x0c
+#define DRM_NOUVEAU_GEM_NEW            0x40
+#define DRM_NOUVEAU_GEM_PUSHBUF        0x41
+#define DRM_NOUVEAU_GEM_PUSHBUF_CALL   0x42
+#define DRM_NOUVEAU_GEM_PIN            0x43
+#define DRM_NOUVEAU_GEM_UNPIN          0x44
+#define DRM_NOUVEAU_GEM_MMAP           0x45
+#define DRM_NOUVEAU_GEM_CPU_PREP       0x46
+#define DRM_NOUVEAU_GEM_CPU_FINI       0x47
+#define DRM_NOUVEAU_GEM_TILE           0x48
 
 #endif /* __NOUVEAU_DRM_H__ */

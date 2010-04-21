@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.17.20.1 2009/07/26 18:31:39 snj Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.17.20.1.2.1 2010/04/21 00:27:38 matt Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.17.20.1 2009/07/26 18:31:39 snj Exp $
+ * $Id: if_ntwoc_isa.c,v 1.17.20.1.2.1 2010/04/21 00:27:38 matt Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.20.1 2009/07/26 18:31:39 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.17.20.1.2.1 2010/04/21 00:27:38 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

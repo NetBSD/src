@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.137.6.1 2008/11/29 23:10:19 snj Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.137.6.1.4.1 2010/04/21 00:28:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.137.6.1 2008/11/29 23:10:19 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.137.6.1.4.1 2010/04/21 00:28:25 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -113,7 +113,6 @@ extern kmutex_t ufs_hashlock;
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_checksb(struct ext2fs *, int);
-static void ext2fs_set_inode_guid(struct inode *);
 
 static struct sysctllog *ext2fs_sysctl_log;
 
@@ -170,7 +169,7 @@ static const struct ufs_ops ext2fs_ufsops = {
 };
 
 /* Fill in the inode uid/gid from ext2 halves.  */
-static void
+void
 ext2fs_set_inode_guid(struct inode *ip)
 {
 
@@ -362,8 +361,15 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * used for our initial mount
 			 */
 			ump = VFSTOUFS(mp);
-			if (devvp != ump->um_devvp)
-				error = EINVAL;
+			if (devvp != ump->um_devvp) {
+				if (devvp->v_rdev != ump->um_devvp->v_rdev)
+					error = EINVAL;
+				else {
+					vrele(devvp);
+					devvp = ump->um_devvp;
+					vref(devvp);
+				}
+			}
 		}
 	} else {
 		if (!update) {
@@ -468,7 +474,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			fs->e2fs_fmod = 1;
 		}
 		if (args->fspec == NULL)
-			return EINVAL;
+			return 0;
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
@@ -573,6 +579,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred)
 	    howmany(fs->e2fs_ncg, fs->e2fs_bsize / sizeof(struct ext2_gd));
 	fs->e2fs_ipb = fs->e2fs_bsize / EXT2_DINODE_SIZE;
 	fs->e2fs_itpg = fs->e2fs.e2fs_ipg / fs->e2fs_ipb;
+	brelse(bp, 0);
 
 	/*
 	 * Step 3: re-read summary information from disk.

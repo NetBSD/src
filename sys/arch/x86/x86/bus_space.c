@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.20 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20.10.1 2010/04/21 00:33:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.10.1 2010/04/21 00:33:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	}
 
 #ifndef XEN
-	if (bpa >= IOM_BEGIN && (bpa + size) <= IOM_END) {
+	if (bpa >= IOM_BEGIN && (bpa + size) != 0 && (bpa + size) <= IOM_END) {
 		*bshp = (bus_space_handle_t)ISA_HOLE_VADDR(bpa);
 		return(0);
 	}
@@ -199,8 +199,8 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	if (error) {
 		if (extent_free(ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-			printf("x86_memio_map: pa 0x%lx, size 0x%lx\n",
-			    bpa, size);
+			printf("x86_memio_map: pa 0x%jx, size 0x%jx\n",
+			    (uintmax_t)bpa, (uintmax_t)size);
 			printf("x86_memio_map: can't free region\n");
 		}
 	}
@@ -286,8 +286,8 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	if (error) {
 		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
 		    (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-			printf("x86_memio_alloc: pa 0x%lx, size 0x%lx\n",
-			    bpa, size);
+			printf("x86_memio_alloc: pa 0x%jx, size 0x%jx\n",
+			    (uintmax_t)bpa, (uintmax_t)size);
 			printf("x86_memio_alloc: can't free region\n");
 		}
 	}
@@ -301,7 +301,7 @@ int
 x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 		int cacheable, bus_space_handle_t *bshp)
 {
-	u_long pa, endpa;
+	paddr_t pa, endpa;
 	vaddr_t va, sva;
 	pt_entry_t *pte, xpte;
 
@@ -309,12 +309,12 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 	endpa = x86_round_page(bpa + size);
 
 #ifdef DIAGNOSTIC
-	if (endpa <= pa)
+	if (endpa != 0 && endpa <= pa)
 		panic("x86_mem_add_mapping: overflow");
 #endif
 
 #ifdef XEN
-	if (bpa >= IOM_BEGIN && (bpa + size) <= IOM_END) {
+	if (bpa >= IOM_BEGIN && (bpa + size) != 0 && (bpa + size) <= IOM_END) {
 		sva = (vaddr_t)ISA_HOLE_VADDR(pa);
 	} else
 #endif	/* XEN */
@@ -329,7 +329,7 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 	va = sva;
 	xpte = 0;
 
-	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+	for (; pa != endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		/*
 		 * PG_N doesn't exist on 386's, so we assume that
 		 * the mainboard has wired up device space non-cacheable
@@ -382,7 +382,8 @@ _x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 	if (t == X86_BUS_SPACE_IO) {
 		bpa = bsh;
 	} else if (t == X86_BUS_SPACE_MEM) {
-		if (bsh >= atdevbase && (bsh + size) <= (atdevbase + IOM_SIZE)) {
+		if (bsh >= atdevbase && (bsh + size) != 0 &&
+		    (bsh + size) <= (atdevbase + IOM_SIZE)) {
 			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
 		} else {
 
@@ -433,7 +434,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	} else if (t == X86_BUS_SPACE_MEM) {
 		ex = iomem_ex;
 
-		if (bsh >= atdevbase &&
+		if (bsh >= atdevbase && (bsh + size) != 0 &&
 		    (bsh + size) <= (atdevbase + IOM_SIZE)) {
 			bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
 			goto ok;
@@ -463,8 +464,9 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 ok:
 	if (extent_free(ex, bpa, size,
 	    EX_NOWAIT | (ioport_malloc_safe ? EX_MALLOCOK : 0))) {
-		printf("x86_memio_unmap: %s 0x%lx, size 0x%lx\n",
-		    (t == X86_BUS_SPACE_IO) ? "port" : "pa", bpa, size);
+		printf("x86_memio_unmap: %s 0x%jx, size 0x%jx\n",
+		    (t == X86_BUS_SPACE_IO) ? "port" : "pa",
+		    (uintmax_t)bpa, (uintmax_t)size);
 		printf("x86_memio_unmap: can't free region\n");
 	}
 }
@@ -509,7 +511,7 @@ void
 bus_space_set_multi_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 		      uint8_t v, size_t c)
 {
-	bus_addr_t addr = h + o;
+	vaddr_t addr = h + o;
 
 	if (t == X86_BUS_SPACE_IO)
 		while (c--)
@@ -523,7 +525,7 @@ void
 bus_space_set_multi_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 		      uint16_t v, size_t c)
 {
-	bus_addr_t addr = h + o;
+	vaddr_t addr = h + o;
 
 	BUS_SPACE_ADDRESS_SANITY(addr, uint16_t, "bus addr");
 
@@ -539,7 +541,7 @@ void
 bus_space_set_multi_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 		      uint32_t v, size_t c)
 {
-	bus_addr_t addr = h + o;
+	vaddr_t addr = h + o;
 
 	BUS_SPACE_ADDRESS_SANITY(addr, uint32_t, "bus addr");
 
@@ -555,7 +557,7 @@ void
 bus_space_set_region_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 		      uint8_t v, size_t c)
 {
-	bus_addr_t addr = h + o;
+	vaddr_t addr = h + o;
 
 	if (t == X86_BUS_SPACE_IO)
 		for (; c != 0; c--, addr++)
@@ -569,7 +571,7 @@ void
 bus_space_set_region_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 		       uint16_t v, size_t c)
 {
-	bus_addr_t addr = h + o;
+	vaddr_t addr = h + o;
 
 	BUS_SPACE_ADDRESS_SANITY(addr, uint16_t, "bus addr");
 
@@ -585,7 +587,7 @@ void
 bus_space_set_region_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 		       uint32_t v, size_t c)
 {
-	bus_addr_t addr = h + o;
+	vaddr_t addr = h + o;
 
 	BUS_SPACE_ADDRESS_SANITY(addr, uint32_t, "bus addr");
 
@@ -602,8 +604,8 @@ bus_space_copy_region_1(bus_space_tag_t t, bus_space_handle_t h1,
 			bus_size_t o1, bus_space_handle_t h2,
 			bus_size_t o2, size_t c)
 {
-	bus_addr_t addr1 = h1 + o1;
-	bus_addr_t addr2 = h2 + o2;
+	vaddr_t addr1 = h1 + o1;
+	vaddr_t addr2 = h2 + o2;
 
 	if (t == X86_BUS_SPACE_IO) {
 		if (addr1 >= addr2) {
@@ -637,8 +639,8 @@ bus_space_copy_region_2(bus_space_tag_t t, bus_space_handle_t h1,
 			bus_size_t o1, bus_space_handle_t h2,
 			bus_size_t o2, size_t c)
 {
-	bus_addr_t addr1 = h1 + o1;
-	bus_addr_t addr2 = h2 + o2;
+	vaddr_t addr1 = h1 + o1;
+	vaddr_t addr2 = h2 + o2;
 
 	BUS_SPACE_ADDRESS_SANITY(addr1, uint16_t, "bus addr 1");
 	BUS_SPACE_ADDRESS_SANITY(addr2, uint16_t, "bus addr 2");
@@ -675,8 +677,8 @@ bus_space_copy_region_4(bus_space_tag_t t, bus_space_handle_t h1,
 			bus_size_t o1, bus_space_handle_t h2,
 			bus_size_t o2, size_t c)
 {
-	bus_addr_t addr1 = h1 + o1;
-	bus_addr_t addr2 = h2 + o2;
+	vaddr_t addr1 = h1 + o1;
+	vaddr_t addr2 = h2 + o2;
 
 	BUS_SPACE_ADDRESS_SANITY(addr1, uint32_t, "bus addr 1");
 	BUS_SPACE_ADDRESS_SANITY(addr2, uint32_t, "bus addr 2");

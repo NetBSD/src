@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100reg.h,v 1.4 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: p9100reg.h,v 1.4.18.1 2010/04/21 00:27:51 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
