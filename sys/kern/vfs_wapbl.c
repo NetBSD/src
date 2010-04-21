@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.35 2010/04/21 16:51:24 pooka Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.36 2010/04/21 19:50:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.35 2010/04/21 16:51:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.36 2010/04/21 19:50:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -2707,6 +2707,7 @@ wapbl_replay_read(struct wapbl_replay *wr, void *data, daddr_t blk, long len)
 	return 0;
 }
 
+#ifdef _KERNEL
 /*
  * This is not really a module now, but maybe on it's way to
  * being one some day.
@@ -2727,3 +2728,4 @@ wapbl_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
+#endif /* _KERNEL */
