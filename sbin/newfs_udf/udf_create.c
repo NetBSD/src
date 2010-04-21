@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.12.4.2 2009/02/18 00:37:00 snj Exp $ */
+/* $NetBSD: udf_create.c,v 1.12.4.2.4.1 2010/04/21 05:26:34 matt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.12.4.2 2009/02/18 00:37:00 snj Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.12.4.2.4.1 2010/04/21 05:26:34 matt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -309,7 +309,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 		printf("\tsparable size\t\t%d\n", layout.sparable_area_size);
 		printf("\tsparable\t\t%d\n", layout.sparable_area);
 	}
-	printf("\tpartion start lba\t%d\n", layout.part_start_lba);
+	printf("\tpartition start lba\t%d\n", layout.part_start_lba);
 	printf("\tpartition size\t\t%d KiB, %d MiB\n",
 		(layout.part_size_lba * sector_size) / 1024,
 		(layout.part_size_lba * sector_size) / (1024*1024));
@@ -782,7 +782,7 @@ udf_add_logvol_part_physical(uint16_t phys_part)
 	context.part_size[log_part] = layout.part_size_lba;
 	context.part_free[log_part] = layout.part_size_lba;
 
-	/* increment number of partions and length */
+	/* increment number of partitions and length */
 	logvol->n_pm = udf_rw32(log_part + 1);
 	logvol->mt_l = udf_rw32(udf_rw32(logvol->mt_l) + pmap1_size);
 
@@ -820,7 +820,7 @@ udf_add_logvol_part_virtual(uint16_t phys_part)
 	context.part_size[log_part] = 0xffffffff;
 	context.part_free[log_part] = 0xffffffff;
 
-	/* increment number of partions and length */
+	/* increment number of partitions and length */
 	logvol->n_pm = udf_rw32(log_part + 1);
 	logvol->mt_l = udf_rw32(udf_rw32(logvol->mt_l) + pmapv_size);
 
@@ -875,7 +875,7 @@ udf_add_logvol_part_sparable(uint16_t phys_part)
 	context.part_size[log_part] = layout.part_size_lba;
 	context.part_free[log_part] = layout.part_size_lba;
 
-	/* increment number of partions and length */
+	/* increment number of partitions and length */
 	logvol->n_pm = udf_rw32(log_part + 1);
 	logvol->mt_l = udf_rw32(udf_rw32(logvol->mt_l) + pmaps_size);
 
@@ -962,7 +962,7 @@ udf_add_logvol_part_meta(uint16_t phys_part)
 	context.part_size[log_part] = layout.meta_part_size_lba;
 	context.part_free[log_part] = layout.meta_part_size_lba;
 
-	/* increment number of partions and length */
+	/* increment number of partitions and length */
 	logvol->n_pm = udf_rw32(log_part + 1);
 	logvol->mt_l = udf_rw32(udf_rw32(logvol->mt_l) + pmapv_size);
 
@@ -1055,7 +1055,7 @@ udf_update_lvintd(int type)
 	assert(lvid);
 	assert(logvol);
 
-	lvid->integrity_type = udf_rw16(type);
+	lvid->integrity_type = udf_rw32(type);
 
 	num_partmappings = udf_rw32(logvol->n_pm);
 
@@ -1298,7 +1298,7 @@ udf_create_parentfid(struct fileid_desc *fid, struct long_ad *parent,
 	fid->file_char = UDF_FILE_CHAR_DIR | UDF_FILE_CHAR_PAR;
 	fid->icb = *parent;
 	fid->icb.longad_uniqueid = udf_rw32((uint32_t) unique_id);
-	fid->tag.desc_crc_len = fidsize - UDF_DESC_TAG_LENGTH;
+	fid->tag.desc_crc_len = udf_rw16(fidsize - UDF_DESC_TAG_LENGTH);
 
 	/* we have to do the fid here explicitly for simplicity */
 	udf_validate_tag_and_crc_sums((union dscrptr *) fid);
@@ -1792,7 +1792,7 @@ udf_create_new_VAT(union dscrptr **vat_dscr)
 
 		free(extattr);
 
-		/* writeout VAT locations (partion offsets) */
+		/* writeout VAT locations (partition offsets) */
 		vat_pos = (uint32_t *) (fe->data + udf_rw32(fe->l_ea));
 		vat_pos[layout.rootdir] = udf_rw32(layout.rootdir); 
 		vat_pos[layout.fsd    ] = udf_rw32(layout.fsd);

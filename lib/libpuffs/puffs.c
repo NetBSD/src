@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.92 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.92.8.1 2010/04/21 05:28:11 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.92 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.92.8.1 2010/04/21 05:28:11 matt Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -99,6 +99,7 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 	FILLOP(print,    PRINT);
 	FILLOP(read,     READ);
 	FILLOP(write,    WRITE);
+	FILLOP(abortop,  ABORTOP);
 }
 #undef FILLOP
 
@@ -266,6 +267,25 @@ puffs_getspecific(struct puffs_usermount *pu)
 {
 
 	return pu->pu_privdata;
+}
+
+void
+puffs_setspecific(struct puffs_usermount *pu, void *privdata)
+{
+
+	pu->pu_privdata = privdata;
+}
+
+void
+puffs_setmntinfo(struct puffs_usermount *pu,
+	const char *mntfromname, const char *puffsname)
+{
+	struct puffs_kargs *pargs = pu->pu_kargp;
+
+	(void)strlcpy(pargs->pa_mntfromname, mntfromname,
+	    sizeof(pargs->pa_mntfromname));
+	(void)strlcpy(pargs->pa_typename, puffsname,
+	    sizeof(pargs->pa_typename));
 }
 
 size_t
@@ -456,12 +476,23 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 	return -1;
 }
 
+static void
+shutdaemon(struct puffs_usermount *pu, int error)
+{
+	ssize_t n;
+
+	n = write(pu->pu_dpipe[1], &error, sizeof(int));
+	assert(n == 4);
+	close(pu->pu_dpipe[0]);
+	close(pu->pu_dpipe[1]);
+	pu->pu_state &= ~PU_PUFFSDAEMON;
+}
+
 int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	puffs_cookie_t cookie)
 {
 	char rp[MAXPATHLEN];
-	ssize_t n;
 	int rv, fd, sverrno;
 	char *comfd;
 
@@ -559,31 +590,28 @@ do {									\
 	free(pu->pu_kargp);
 	pu->pu_kargp = NULL;
 
-	if (pu->pu_state & PU_PUFFSDAEMON) {
-		n = write(pu->pu_dpipe[1], &sverrno, sizeof(int));
-		assert(n == 4);
-		close(pu->pu_dpipe[0]);
-		close(pu->pu_dpipe[1]);
-	}
+	if (pu->pu_state & PU_PUFFSDAEMON)
+		shutdaemon(pu, sverrno);
 
 	errno = sverrno;
 	return rv;
 }
 
+/*ARGSUSED*/
 struct puffs_usermount *
-_puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
+_puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 	const char *puffsname, void *priv, uint32_t pflags)
 {
 	struct puffs_usermount *pu;
 	struct puffs_kargs *pargs;
 	int sverrno;
 
-	if (develv != PUFFS_DEVEL_LIBVERSION) {
-		warnx("puffs_init: mounting with lib version %d, need %d",
-		    develv, PUFFS_DEVEL_LIBVERSION);
-		errno = EINVAL;
-		return NULL;
-	}
+	if (puffsname == PUFFS_DEFER)
+		puffsname = "n/a";
+	if (mntfromname == PUFFS_DEFER)
+		mntfromname = "n/a";
+	if (priv == PUFFS_DEFER)
+		priv = NULL;
 
 	pu = malloc(sizeof(struct puffs_usermount));
 	if (pu == NULL)
@@ -598,10 +626,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	pargs->pa_vers = PUFFSDEVELVERS | PUFFSVERSION;
 	pargs->pa_flags = PUFFS_FLAG_KERN(pflags);
 	fillvnopmask(pops, pargs->pa_vnopmask);
-	(void)strlcpy(pargs->pa_typename, puffsname,
-	    sizeof(pargs->pa_typename));
-	(void)strlcpy(pargs->pa_mntfromname, mntfromname,
-	    sizeof(pargs->pa_mntfromname));
+	puffs_setmntinfo(pu, mntfromname, puffsname);
 
 	puffs_zerostatvfs(&pargs->pa_svfsb);
 	pargs->pa_root_cookie = NULL;
@@ -651,6 +676,15 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	return NULL;
 }
 
+void
+puffs_cancel(struct puffs_usermount *pu, int error)
+{
+
+	assert(puffs_getstate(pu) < PUFFS_STATE_RUNNING);
+	shutdaemon(pu, error);
+	free(pu);
+}
+
 /*
  * XXX: there's currently no clean way to request unmount from
  * within the user server, so be very brutal about it.
@@ -662,6 +696,7 @@ puffs_exit(struct puffs_usermount *pu, int force)
 	struct puffs_node *pn;
 
 	force = 1; /* currently */
+	assert((pu->pu_state & PU_PUFFSDAEMON) == 0);
 
 	if (pu->pu_fd)
 		close(pu->pu_fd);

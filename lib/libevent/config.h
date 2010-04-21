@@ -227,7 +227,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#define VERSION "1.4.4-stable"
+#define VERSION "1.4.11-stable"
 
 /* Define to `int' if <sys/types.h> does not define. */
 /* #undef pid_t */

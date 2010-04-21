@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.133.6.1 2009/07/14 19:35:23 snj Exp $	*/
+/*	$NetBSD: namespace.h,v 1.133.6.1.2.1 2010/04/21 05:28:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
