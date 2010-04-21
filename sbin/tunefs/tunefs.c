@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.37 2008/07/31 15:55:41 simonb Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.37.8.1 2010/04/21 05:26:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.37 2008/07/31 15:55:41 simonb Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.37.8.1 2010/04/21 05:26:35 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -345,7 +345,7 @@ show_log_info(void)
 		printf("\n");
 		printf("\tjournal log flags:");
 		if (sblock.fs_journal_flags & UFS_WAPBL_FLAGS_CREATE_LOG)
-			printf(" clear-log");
+			printf(" create-log");
 		if (sblock.fs_journal_flags & UFS_WAPBL_FLAGS_CLEAR_LOG)
 			printf(" clear-log");
 		printf("\n");
@@ -389,15 +389,6 @@ change_log_info(long long logfilesize)
 		break;
 	}
 
-	if (!in_fs_log)
-		errx(1, "Can't change size of non-in-filesystem log");
-
-	if (old_size == logfilesize && logfilesize > 0) {
-		/* no action */
-		warnx("log file size remains unchanged at %lld", logfilesize);
-		return;
-	}
-
 	if (logfilesize == 0) {
 		/*
 		 * Don't clear out the locators - the kernel might need
@@ -407,6 +398,15 @@ change_log_info(long long logfilesize)
 		sblock.fs_journal_flags |= UFS_WAPBL_FLAGS_CLEAR_LOG;
 		sblock.fs_journal_flags &= ~UFS_WAPBL_FLAGS_CREATE_LOG;
 		warnx("log file size cleared from %" PRIu64 "", old_size);
+		return;
+	}
+
+	if (!in_fs_log && logfilesize > 0 && old_size > 0)
+		errx(1, "Can't change size of non-in-filesystem log");
+
+	if (old_size == logfilesize && logfilesize > 0) {
+		/* no action */
+		warnx("log file size remains unchanged at %lld", logfilesize);
 		return;
 	}
 

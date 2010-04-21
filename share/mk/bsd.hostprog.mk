@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.53.4.1 2009/06/06 22:10:49 bouyer Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.53.4.1.2.1 2010/04/21 05:26:47 matt Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>

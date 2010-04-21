@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.c,v 1.7 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: poll.c,v 1.7.10.1 2010/04/21 05:28:10 matt Exp $	*/
 /*	$OpenBSD: poll.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -30,9 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #include <sys/types.h>
 #ifdef HAVE_SYS_TIME_H

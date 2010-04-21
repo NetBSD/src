@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.29 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: dump.c,v 1.29.8.1 2010/04/21 05:27:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.29 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: dump.c,v 1.29.8.1 2010/04/21 05:27:11 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -216,11 +216,11 @@ void
 flushpendq(struct ktr_entry *us)
 {
 	struct ktr_entry *kte, *kte_next;
-	int pid = KTE_PID(us);
+	int pid = KTE_PID(us), lid = KTE_LID(us);
 
 	for (kte = TAILQ_FIRST(&ktependq); kte != NULL; kte = kte_next) {
 		kte_next = TAILQ_NEXT(kte, kte_list);
-		if (KTE_PID(kte) == pid) {
+		if (KTE_PID(kte) == pid || KTE_LID(kte) == lid) {
 			TAILQ_REMOVE(&ktependq, kte, kte_list);
 			free(kte);
 		}
@@ -650,9 +650,7 @@ ktrsysret(struct ktr_entry *kte)
 		free(genio);
 	}
 
-#if 0 /* Why? */
 	flushpendq(kte);
-#endif
 	free(kte);
 }
 

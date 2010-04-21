@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41.10.1 2009/08/24 04:05:56 matt Exp $ */
+/*	$NetBSD: pmap.c,v 1.41.10.2 2010/04/21 05:27:12 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,13 +31,20 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.41.10.1 2009/08/24 04:05:56 matt Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.41.10.2 2010/04/21 05:27:12 matt Exp $");
 #endif
 
 #include <string.h>
 
 #include "pmap.h"
 #include "main.h"
+
+#ifndef PRIxVADDR
+#define	PRIxVADDR	"lx"
+#endif
+#ifndef PRIdVSIZE
+#define	PRIdVSIZE	"lu"
+#endif
 
 static void dump_vm_anon(kvm_t *, struct vm_anon **, int);
 static char *findname(kvm_t *, struct kbit *, struct kbit *, struct kbit *,

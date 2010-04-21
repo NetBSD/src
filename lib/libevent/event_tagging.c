@@ -1,4 +1,4 @@
-/*	$NetBSD: event_tagging.c,v 1.1 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: event_tagging.c,v 1.1.14.1 2010/04/21 05:28:10 matt Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -26,9 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>

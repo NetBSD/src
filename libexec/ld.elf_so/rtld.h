@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.79 2008/10/04 09:37:12 skrll Exp $	 */
+/*	$NetBSD: rtld.h,v 1.79.10.1 2010/04/21 05:26:10 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -130,7 +130,6 @@ typedef struct Struct_Obj_Entry {
 	caddr_t         entry;		/* Entry point */
 	const Elf_Phdr *__junk001;
 	size_t		pathlen;	/* Pathname length */
-	void		*ehdr;
 
 	/* Items from the dynamic section. */
 	Elf_Addr       *pltgot;		/* PLTGOT table */
@@ -195,6 +194,8 @@ typedef struct Struct_Obj_Entry {
 	Objlist         dagmembers;	/* DAG has these members (%) */
 	dev_t           dev;		/* Object's filesystem's device */
 	ino_t           ino;		/* Object's inode number */
+
+	void		*ehdr;
 } Obj_Entry;
 
 #if defined(_RTLD_SOURCE)
@@ -222,6 +223,7 @@ void *dlopen(const char *, int);
 void *dlsym(void *, const char *);
 int dlclose(void *);
 int dladdr(const void *, Dl_info *);
+int dlinfo(void *, int, void *);
 
 void _rtld_error(const char *, ...)
      __attribute__((__format__(__printf__,1,2)));
@@ -276,6 +278,9 @@ const Elf_Sym *_rtld_symlook_default(const char *, unsigned long,
     const Obj_Entry *, const Obj_Entry **, bool);
 const Elf_Sym *_rtld_symlook_needed(const char *, unsigned long,
     const Needed_Entry *, const Obj_Entry **, bool);
+#ifdef COMBRELOC
+void _rtld_combreloc_reset(const Obj_Entry *);
+#endif
 
 /* map_object.c */
 Obj_Entry *_rtld_map_object(const char *, int, const struct stat *);
