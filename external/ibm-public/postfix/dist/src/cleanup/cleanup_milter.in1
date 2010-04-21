@@ -1,0 +1,42 @@
+#verbose on
+open test-queue-file.tmp
+
+# Add and remove some recipient records. We verify that all results
+# from virtual alias expansion are deleted. We don't yet attempt to
+# remove non-existent recipients.
+
+add_rcpt xxxx
+add_rcpt yyyy
+del_rcpt alias@hades.porcupine.org
+del_rcpt yyyy
+
+# Insert a short header X2 at the position of a short multi-line
+# header X, so that the first part of the multi-line header X needs
+# to be copied to the heap, right after the inserted header. Then
+# update the inserted header X2, so that a smaller portion of the
+# saved multi-line header X needs to be copied again. Thus we end
+# up with a multi-line header X that is broken up into three pieces.
+# Finally, delete the inserted header X2. All this tests if an insert
+# operation properly saves a portion of a multi-line header, to make
+# space for the forward pointer to the inserted content.
+
+ins_header 2 X2 v1
+upd_header 1 X2 v2
+del_header 1 X2
+
+# Insert a header at the position of a single-line short header Y,
+# so that both header Y, and the single-line Message-ID header that
+# follows Y, need to be copied to the heap. This tests if an insert
+# operation properly saves records to make space for the forward
+# pointer record to the inserted content.
+
+ins_header 3 X2 test header value 3
+
+# Update the multiply broken, multi-line, header X. This tests if
+# we correcly link the new header to the header that comes after the
+# modified header.
+
+upd_header 1 X X-replaced-header replacement header text
+#upd_header 1 X X-replaced-header replacement header text
+#upd_header 1 X X-replaced-header replacement header text
+close

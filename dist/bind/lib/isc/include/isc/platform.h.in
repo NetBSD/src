@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: platform.h.in,v 1.45.60.2 2008/01/24 23:46:26 tbox Exp */
+/* Id: platform.h.in,v 1.45.60.5 2009/02/16 23:46:44 tbox Exp */
 
 #ifndef ISC_PLATFORM_H
 #define ISC_PLATFORM_H 1
@@ -94,11 +94,6 @@
 @ISC_PLATFORM_NEEDPTON@
 
 /*! \brief
- * If this system needs inet_aton(), ISC_PLATFORM_NEEDATON will be defined.
- */
-@ISC_PLATFORM_NEEDATON@
-
-/*! \brief
  * If this system needs in_port_t, ISC_PLATFORM_NEEDPORTT will be defined.
  */
 @ISC_PLATFORM_NEEDPORTT@
@@ -135,6 +130,21 @@
  * IN6_IS_ADDR_* macros.
  */
 @ISC_PLATFORM_FIXIN6ISADDR@
+
+/*! \brief
+ * Define if the system supports kqueue multiplexing
+ */
+@ISC_PLATFORM_HAVEKQUEUE@
+
+/*! \brief
+ * Define if the system supports epoll multiplexing
+ */
+@ISC_PLATFORM_HAVEEPOLL@
+
+/*! \brief
+ * Define if the system supports /dev/poll multiplexing
+ */
+@ISC_PLATFORM_HAVEDEVPOLL@
 
 /*
  *** Printing.

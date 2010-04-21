@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.30.8.1 2009/06/29 23:01:24 snj Exp $	*/
+/*	$NetBSD: packet.c,v 1.30.8.1.2.1 2010/04/21 05:17:37 matt Exp $	*/
 /* $OpenBSD: packet.c,v 1.151 2008/02/22 20:44:02 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.30.8.1 2009/06/29 23:01:24 snj Exp $");
+__RCSID("$NetBSD: packet.c,v 1.30.8.1.2.1 2010/04/21 05:17:37 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>

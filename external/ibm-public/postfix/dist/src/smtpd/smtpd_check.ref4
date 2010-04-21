@@ -1,0 +1,38 @@
+>>> #
+>>> # Initialize.
+>>> #
+>>> #! ../bin/postmap smtpd_check_access
+>>> #msg_verbose 1
+>>> smtpd_delay_reject 0
+OK
+>>> #
+>>> # Test the new access map features
+>>> #
+>>> sender_restrictions hash:./smtpd_check_access
+OK
+>>> mail rejecttext@bad.domain
+./smtpd_check: <queue id>: reject: MAIL from localhost[127.0.0.1]: 554 5.7.1 <rejecttext@bad.domain>: Sender address rejected: text; from=<rejecttext@bad.domain> proto=SMTP
+554 5.7.1 <rejecttext@bad.domain>: Sender address rejected: text
+>>> mail filter@filter.domain
+./smtpd_check: warning: access table hash:./smtpd_check_access entry "filter@filter.domain" has FILTER entry without value
+OK
+>>> mail filtertext@filter.domain
+./smtpd_check: warning: access table hash:./smtpd_check_access entry "filtertext@filter.domain" requires transport:destination
+OK
+>>> mail filtertexttext@filter.domain
+./smtpd_check: <queue id>: filter: MAIL from localhost[127.0.0.1]: <filtertexttext@filter.domain>: Sender address triggers FILTER text:text; from=<filtertexttext@filter.domain> proto=SMTP
+OK
+>>> mail hold@hold.domain
+./smtpd_check: <queue id>: hold: MAIL from localhost[127.0.0.1]: <hold@hold.domain>: Sender address triggers HOLD action; from=<hold@hold.domain> proto=SMTP
+OK
+>>> mail holdtext@hold.domain
+./smtpd_check: <queue id>: hold: MAIL from localhost[127.0.0.1]: <holdtext@hold.domain>: Sender address text; from=<holdtext@hold.domain> proto=SMTP
+OK
+>>> mail discard@hold.domain
+./smtpd_check: <queue id>: discard: MAIL from localhost[127.0.0.1]: <discard@hold.domain>: Sender address triggers DISCARD action; from=<discard@hold.domain> proto=SMTP
+OK
+>>> mail discardtext@hold.domain
+./smtpd_check: <queue id>: discard: MAIL from localhost[127.0.0.1]: <discardtext@hold.domain>: Sender address text; from=<discardtext@hold.domain> proto=SMTP
+OK
+>>> mail dunnotext@dunno.domain
+OK

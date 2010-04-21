@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.450.2.1.2.1.2.1 2009/08/26 03:43:23 matt Exp $
+# $NetBSD: shl.mi,v 1.450.2.1.2.1.2.2 2010/04/21 05:20:40 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -17,10 +17,10 @@
 ./lib/libcrypt.so.0.2				base-sys-shlib		dynamicroot
 ./lib/libcrypto.so.4.2				base-crypto-shlib	crypto,dynamicroot
 ./lib/libedit.so.2.11				base-sys-shlib		dynamicroot
-./lib/libevent.so.2.0				base-sys-shlib		dynamicroot
+./lib/libevent.so.2.1				base-sys-shlib		dynamicroot
 ./lib/libipsec.so.2.2				base-net-shlib		dynamicroot
 ./lib/libkvm.so.5.3				base-sys-shlib		dynamicroot
-./lib/libm.so.0.6				base-sys-shlib		dynamicroot
+./lib/libm.so.0.7				base-sys-shlib		dynamicroot
 ./lib/libprop.so.0.7				base-sys-shlib		dynamicroot
 ./lib/libradius.so.2.0				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
@@ -64,9 +64,9 @@
 ./usr/lib/libcrypto.so.4.2			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.6.4			base-sys-shlib
 ./usr/lib/libdes.so.7.0				base-crypto-shlib	crypto
-./usr/lib/libdns.so.1.1				base-bind-shlib
+./usr/lib/libdns.so.1.2				base-bind-shlib
 ./usr/lib/libedit.so.2.11			base-sys-shlib
-./usr/lib/libevent.so.2.0			base-sys-shlib
+./usr/lib/libevent.so.2.1			base-sys-shlib
 ./usr/lib/libfetch.so.1.0			base-sys-shlib
 ./usr/lib/libform.so.5.0			base-sys-shlib
 ./usr/lib/libg2c.so.2.0				base-sys-shlib		gcc=3
@@ -78,7 +78,7 @@
 ./usr/lib/libhx509.so.2.0			base-krb5-shlib		kerberos
 ./usr/lib/libintl.so.0.0			base-sys-shlib
 ./usr/lib/libipsec.so.2.2			base-net-shlib
-./usr/lib/libisc.so.1.1				base-bind-shlib
+./usr/lib/libisc.so.1.2				base-bind-shlib
 ./usr/lib/libisccc.so.1.1			base-bind-shlib
 ./usr/lib/libisccfg.so.1.1			base-bind-shlib
 ./usr/lib/libiscsi.so.0.0			base-iscsi-shlib	iscsi
@@ -91,7 +91,7 @@
 ./usr/lib/libldap.so.2.5			base-ldap-shlib		ldap
 ./usr/lib/libldap_r.so.2.5			base-ldap-shlib		ldap
 ./usr/lib/liblwres.so.1.1			base-bind-shlib
-./usr/lib/libm.so.0.6				base-sys-shlib
+./usr/lib/libm.so.0.7				base-sys-shlib
 ./usr/lib/libmagic.so.1.0			base-sys-shlib
 ./usr/lib/libmenu.so.5.0			base-sys-shlib
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
@@ -105,7 +105,7 @@
 ./usr/lib/libprop.so.0.7			base-sys-shlib
 ./usr/lib/libpthread.so.0.10			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.1.0			base-sys-shlib
-./usr/lib/libpuffs.so.0.0			base-sys-shlib
+./usr/lib/libpuffs.so.0.1			base-sys-shlib
 ./usr/lib/libradius.so.2.0			base-net-shlib
 ./usr/lib/librefuse.so.0.0			base-sys-shlib	
 ./usr/lib/libresolv.so.1.1			base-net-shlib

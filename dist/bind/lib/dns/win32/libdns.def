@@ -156,11 +156,14 @@ dns_difftuple_copy
 dns_difftuple_create
 dns_difftuple_free
 dns_dispatch_addresponse
+dns_dispatch_addresponse2
 dns_dispatch_attach
 dns_dispatch_cancel
 dns_dispatch_changeattributes
 dns_dispatch_createtcp
 dns_dispatch_detach
+dns_dispatch_getattributes
+dns_dispatch_getentrysocket
 dns_dispatch_getlocaladdress
 dns_dispatch_getsocket
 dns_dispatch_getudp
@@ -170,6 +173,7 @@ dns_dispatch_starttcp
 dns_dispatchmgr_create
 dns_dispatchmgr_destroy
 dns_dispatchmgr_getblackhole
+dns_dispatchmgr_setavailports
 dns_dispatchmgr_setblackhole
 dns_dispatchmgr_setblackportlist
 dns_dispatchmgr_setstats
@@ -511,7 +515,6 @@ dns_resolver_algorithm_supported
 dns_resolver_attach
 dns_resolver_cancelfetch
 dns_resolver_create
-dns_resolver_createdispatchpool
 dns_resolver_createfetch
 dns_resolver_createfetch2
 dns_resolver_destroyfetch
@@ -525,6 +528,7 @@ dns_resolver_getlamettl
 dns_resolver_getoptions
 dns_resolver_getudpsize
 dns_resolver_getzeronosoattl
+dns_resolver_logfetch
 dns_resolver_nrunning
 dns_resolver_prime
 dns_resolver_reset_algorithms
@@ -705,6 +709,7 @@ dns_zone_iattach
 dns_zone_idetach
 dns_zone_isforced
 dns_zone_load
+dns_zone_loadandthaw
 dns_zone_log
 dns_zone_maintenance
 dns_zone_markdirty

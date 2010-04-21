@@ -1,0 +1,29 @@
+#!/bin/sh
+
+postconf -d | awk '
+
+BEGIN { 
+	# Skip lines with <hN>..</hN>.
+	print "\t/<\\/*[Hh][0-9]+>/{\n\t\tp\n\t\td\n\t\t}"
+
+	# Skip lines with <a name="...">.
+	print "\t/<[Aa] [Nm][Aa][Mm][Ee]=/{\n\t\tp\n\t\td\n\t\t}"
+
+	# Skip lines with <DT> or <DT>.
+	print "\t/<[Dd][Tt]>/{\n\t\tp\n\t\td\n\t\t}"
+
+	# Skip lines with <a href="...">.
+	print "\t/<[Aa] [Hh][Rr][Ee][Ff]=/{\n\t\tp\n\t\td\n\t\t}"
+
+	# XXX debugger_command is not listed in postconf output.
+	print "\ts;[[:<:]]debugger_command[[:>:]];<a href=\"postconf.5.html#debugger_command\">debugger_command</a>;g"
+
+    }
+
+    {
+	# Do not hyperlink word(digit).
+
+	printf "\ts;[[:<:]]%s[[:>:]];<a href=\"postconf.5.html#%s\">%s</a>;g\n",
+	    $1, $1, $1
+    }
+'

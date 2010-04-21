@@ -1,0 +1,20 @@
+> del bar
+bar: deleted
+> get bar
+bar: not found
+> get nonexist
+nonexist: not found
+> del nonexist
+nonexist: not found
+> get foo
+foo=fooval
+> del foo
+foo: deleted
+> put baz bazval
+baz=bazval
+> get baz
+baz=bazval
+> del baz
+baz: deleted
+> get baz
+baz: not found

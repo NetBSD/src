@@ -1,0 +1,8 @@
+mime_state: header_token: message / rfc822
+MAIN 0	|content-type: message/rfc822
+mime_state: header_token: base64  
+MAIN 34	|content-transfer-encoding: base64
+HEADER END
+mime_state: warning: invalid message/* or multipart/* encoding domain: base64
+BODY END
+mime_state: warning: improper message/* or multipart/* encoding domain

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/09 09:08:25 rtr Exp $
+#	$NetBSD: Makefile,v 1.2.14.1 2010/04/21 05:24:43 matt Exp $
 
 LIBISPRIVATE=	yes
 
@@ -6,5 +6,7 @@ LIBISPRIVATE=	yes
 
 LIB=	dbe
 SRCS=	${SRCS.dbe}
+
+COPTS.dbe.c=		-Wno-error
 
 .include "Makefile.dbe"

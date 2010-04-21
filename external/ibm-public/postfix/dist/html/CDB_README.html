@@ -1,0 +1,94 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix CDB Howto</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix CDB Howto</h1>
+
+<hr>
+
+<h2>Introduction</h2>
+
+<p> CDB (Constant DataBase) is an indexed file format designed by
+Daniel Bernstein. CDB is optimized exclusively for read access
+and guarantees that each record will be read in at most two disk
+accesses. This is achieved by forgoing support for incremental
+updates: no single-record inserts or deletes are supported.  CDB
+databases can be modified only by rebuilding them completely from
+scratch, hence the "constant" qualifier in the name.  </p>
+
+<p> Postfix CDB databases are specified as "<a href="CDB_README.html">cdb</a>:<i>name</i>", where
+<i>name</i> specifies the CDB file name without the ".cdb" suffix
+(another suffix, ".tmp", is used temporarily while a CDB file is
+under construction).  CDB databases are maintained with the <a href="postmap.1.html">postmap(1)</a>
+or <a href="postalias.1.html">postalias(1)</a> command. The <a href="DATABASE_README.html">DATABASE_README</a> document has general
+information about Postfix databases.  </p>
+
+<p> CDB support is available with Postfix 2.2 and later releases.
+This document describes how to build Postfix with CDB support. </p>
+
+<h2>Building Postfix with CDB support</h2>
+
+<p> These instructions assume that you build Postfix from source
+code as described in the <a href="INSTALL.html">INSTALL</a> document. Some modification may
+be required if you build Postfix from a vendor-specific source
+package.  </p>
+
+<p> Postfix is compatible with two CDB implementations: </p>
+
+<ul>
+
+<li> <p> The original cdb library from Daniel Bernstein, available
+from <a href="http://cr.yp.to/cdb.html">http://cr.yp.to/cdb.html</a>, and </p>
+
+<li> <p> tinycdb (version 0.5 and later) from Michael Tokarev,
+available from <a href="http://www.corpit.ru/mjt/tinycdb.html">http://www.corpit.ru/mjt/tinycdb.html</a>. </p>
+
+</ul>
+
+<p>  Tinycdb is preferred, since it is a bit faster, has additional
+useful functionality and is much simpler to use. </p>
+
+<p>To build Postfix after you have installed tinycdb, use something
+like: </p>
+
+<blockquote>
+<pre>
+% make tidy
+% CDB=../../../tinycdb-0.5
+% make -f Makefile.init makefiles "CCARGS=-DHAS_CDB -I$CDB" \
+    "AUXLIBS=$CDB/libcdb.a"
+% make
+</pre>
+</blockquote>
+
+<p> Alternatively, for the D.J.B. version of CDB:<p>
+
+<blockquote>
+<pre>
+% make tidy
+% CDB=../../../cdb-0.75
+% make -f Makefile.init makefiles "CCARGS=-DHAS_CDB -I$CDB" \
+    "AUXLIBS=$CDB/cdb.a $CDB/alloc.a $CDB/buffer.a $CDB/unix.a $CDB/byte.a"
+% make
+</pre>
+</blockquote>
+
+<p> After Postfix has been built with cdb support, you can use
+"cdb" tables wherever you can use read-only "hash", "btree" or
+"dbm" tables. However, the "<b>postmap -i</b>" (incremental record
+insertion) and "<b>postmap -d</b>" (incremental record deletion)
+command-line options are not available. For the same reason the
+"cdb" map type cannot be used to store the persistent address
+verification cache for the <a href="verify.8.html">verify(8)</a> service, or to store
+TLS session information for the <a href="tlsmgr.8.html">tlsmgr(8)</a> service. </p>

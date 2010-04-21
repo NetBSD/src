@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.100.2.2 2009/03/02 19:39:30 snj Exp $ */
+/*	$NetBSD: disks.c,v 1.100.2.2.4.1 2010/04/21 05:20:43 matt Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,6 +56,12 @@
 #include <sys/disklabel.h>
 #undef static
 
+#include <dev/scsipi/scsipi_all.h>
+#include <sys/scsiio.h>
+
+#include <dev/ata/atareg.h>
+#include <sys/ataio.h>
+
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -66,6 +72,7 @@
 #define MAX_DISKS 15
 struct disk_desc {
 	char	dd_name[SSTRSIZE];
+	char	dd_descr[70];
 	uint	dd_no_mbr;
 	uint	dd_cyl;
 	uint	dd_head;
@@ -87,6 +94,215 @@ static void fixsb(const char *, const char *, char);
 #endif
 
 static const char *disk_names[] = { DISK_NAMES, "vnd", NULL };
+
+/* from src/sbin/atactl/atactl.c
+ * extract_string: copy a block of bytes out of ataparams and make
+ * a proper string out of it, truncating trailing spaces and preserving
+ * strict typing. And also, not doing unaligned accesses.
+ */
+static void
+ata_extract_string(char *buf, size_t bufmax,
+		   uint8_t *bytes, unsigned numbytes,
+		   int needswap)
+{
+	unsigned i;
+	size_t j;
+	unsigned char ch1, ch2;
+
+	for (i = 0, j = 0; i < numbytes; i += 2) {
+		ch1 = bytes[i];
+		ch2 = bytes[i+1];
+		if (needswap && j < bufmax-1) {
+			buf[j++] = ch2;
+		}
+		if (j < bufmax-1) {
+			buf[j++] = ch1;
+		}
+		if (!needswap && j < bufmax-1) {
+			buf[j++] = ch2;
+		}
+	}
+	while (j > 0 && buf[j-1] == ' ') {
+		j--;
+	}
+	buf[j] = '\0';
+}
+
+/*
+ * from src/sbin/scsictl/scsi_subr.c
+ */
+#define STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
+
+static void
+scsi_strvis(char *sdst, size_t dlen, const char *ssrc, size_t slen)
+{
+	u_char *dst = (u_char *)sdst;
+	const u_char *src = (const u_char *)ssrc;
+
+	/* Trim leading and trailing blanks and NULs. */
+	while (slen > 0 && STRVIS_ISWHITE(src[0]))
+		++src, --slen;
+	while (slen > 0 && STRVIS_ISWHITE(src[slen - 1]))
+		--slen;
+
+	while (slen > 0) {
+		if (*src < 0x20 || *src >= 0x80) {
+			/* non-printable characters */
+			dlen -= 4;
+			if (dlen < 1)
+				break;
+			*dst++ = '\\';
+			*dst++ = ((*src & 0300) >> 6) + '0';
+			*dst++ = ((*src & 0070) >> 3) + '0';
+			*dst++ = ((*src & 0007) >> 0) + '0';
+		} else if (*src == '\\') {
+			/* quote characters */
+			dlen -= 2;
+			if (dlen < 1)
+				break;
+			*dst++ = '\\';
+			*dst++ = '\\';
+		} else {
+			/* normal characters */
+			if (--dlen < 1)
+				break;
+			*dst++ = *src;
+		}
+		++src, --slen;
+	}
+
+	*dst++ = 0;
+}
+
+
+static int
+get_descr_scsi(struct disk_desc *dd, int fd)
+{
+	struct scsipi_inquiry_data inqbuf;
+	struct scsipi_inquiry cmd;
+	scsireq_t req;
+        /* x4 in case every character is escaped, +1 for NUL. */
+	char vendor[(sizeof(inqbuf.vendor) * 4) + 1],
+	     product[(sizeof(inqbuf.product) * 4) + 1],
+	     revision[(sizeof(inqbuf.revision) * 4) + 1];
+	char size[5];
+	int error;
+
+	memset(&inqbuf, 0, sizeof(inqbuf));
+	memset(&cmd, 0, sizeof(cmd));
+	memset(&req, 0, sizeof(req));
+
+	cmd.opcode = INQUIRY;
+	cmd.length = sizeof(inqbuf);
+	memcpy(req.cmd, &cmd, sizeof(cmd));
+	req.cmdlen = sizeof(cmd);
+	req.databuf = &inqbuf;
+	req.datalen = sizeof(inqbuf);
+	req.timeout = 10000;
+	req.flags = SCCMD_READ;
+	req.senselen = SENSEBUFLEN;
+
+	error = ioctl(fd, SCIOCCOMMAND, &req);
+	if (error == -1 || req.retsts != SCCMD_OK)
+		return 0;
+
+	scsi_strvis(vendor, sizeof(vendor), inqbuf.vendor,
+	    sizeof(inqbuf.vendor));
+	scsi_strvis(product, sizeof(product), inqbuf.product,
+	    sizeof(inqbuf.product));
+	scsi_strvis(revision, sizeof(revision), inqbuf.revision,
+	    sizeof(inqbuf.revision));
+
+	humanize_number(size, sizeof(size),
+	    (uint64_t)dd->dd_secsize * (uint64_t)dd->dd_totsec,
+	    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
+	
+	snprintf(dd->dd_descr, sizeof(dd->dd_descr),
+	    "%s (%s, %s %s)",
+	    dd->dd_name, size, vendor, product);
+
+	return 1;
+}
+
+static int
+get_descr_ata(struct disk_desc *dd, int fd)
+{
+	struct atareq req;
+	static union {
+		unsigned char inbuf[DEV_BSIZE];
+		struct ataparams inqbuf;
+	} inbuf;
+	struct ataparams *inqbuf = &inbuf.inqbuf;
+	char model[sizeof(inqbuf->atap_model)+1];
+	char size[5];
+	int error, needswap = 0;
+
+	memset(&inbuf, 0, sizeof(inbuf));
+	memset(&req, 0, sizeof(req));
+
+	req.flags = ATACMD_READ;
+	req.command = WDCC_IDENTIFY;
+	req.databuf = (void *)&inbuf;
+	req.datalen = sizeof(inbuf);
+	req.timeout = 1000;
+
+	error = ioctl(fd, ATAIOCCOMMAND, &req);
+	if (error == -1 || req.retsts != ATACMD_OK)
+		return 0;
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+	/*
+	 * On little endian machines, we need to shuffle the string
+	 * byte order.  However, we don't have to do this for NEC or
+	 * Mitsumi ATAPI devices
+	 */
+
+	if (!((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) == WDC_CFG_ATAPI &&
+	      ((inqbuf->atap_model[0] == 'N' &&
+		  inqbuf->atap_model[1] == 'E') ||
+	       (inqbuf->atap_model[0] == 'F' &&
+		  inqbuf->atap_model[1] == 'X')))) {
+		needswap = 1;
+	}
+#endif
+
+	ata_extract_string(model, sizeof(model),
+	    inqbuf->atap_model, sizeof(inqbuf->atap_model), needswap);
+	humanize_number(size, sizeof(size),
+	    (uint64_t)dd->dd_secsize * (uint64_t)dd->dd_totsec,
+	    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
+	
+	snprintf(dd->dd_descr, sizeof(dd->dd_descr), "%s (%s, %s)",
+	    dd->dd_name, size, model);
+
+	return 1;
+}
+
+static void
+get_descr(struct disk_desc *dd)
+{
+	char diskpath[MAXPATHLEN];
+	int fd = -1;
+
+	fd = opendisk(dd->dd_name, O_RDONLY, diskpath, sizeof(diskpath), 0);
+	if (fd < 0)
+		goto done;
+
+	dd->dd_descr[0] = '\0';
+
+	/* try ATA */
+	if (get_descr_ata(dd, fd))
+		goto done;
+	/* try SCSI */
+	if (get_descr_scsi(dd, fd))
+		goto done;
+
+done:
+	if (fd >= 0)
+		close(fd);
+	if (strlen(dd->dd_descr) == 0)
+		strcpy(dd->dd_descr, dd->dd_name);
+}
 
 static int
 get_disks(struct disk_desc *dd)
@@ -122,6 +338,7 @@ get_disks(struct disk_desc *dd)
 			dd->dd_sec = l.d_nsectors;
 			dd->dd_secsize = l.d_secsize;
 			dd->dd_totsec = l.d_secperunit;
+			get_descr(dd);
 			dd++;
 			numdisks++;
 			if (numdisks >= MAX_DISKS)
@@ -168,12 +385,12 @@ find_disks(const char *doingwhat)
 
 	if (numdisks == 1) {
 		/* One disk found! */
-		msg_display(MSG_onedisk, disks[0].dd_name, doingwhat);
+		msg_display(MSG_onedisk, disks[0].dd_descr, doingwhat);
 		process_menu(MENU_ok, NULL);
 	} else {
 		/* Multiple disks found! */
 		for (i = 0; i < numdisks; i++) {
-			dsk_menu[i].opt_name = disks[i].dd_name;
+			dsk_menu[i].opt_name = disks[i].dd_descr;
 			dsk_menu[i].opt_menu = OPT_NOMENU;
 			dsk_menu[i].opt_flags = OPT_EXIT;
 			dsk_menu[i].opt_action = set_dsk_select;
@@ -203,6 +420,11 @@ find_disks(const char *doingwhat)
 	no_mbr = disk->dd_no_mbr;
 	if (dlsize == 0)
 		dlsize = disk->dd_cyl * disk->dd_head * disk->dd_sec;
+	if (dlsize > UINT32_MAX) {
+		msg_display(MSG_toobigdisklabel);	
+		process_menu(MENU_ok, NULL);
+		return -1;	
+	}
 	dlcylsize = dlhead * dlsec;
 
 	/* Get existing/default label */
@@ -218,7 +440,7 @@ find_disks(const char *doingwhat)
 void
 fmt_fspart(menudesc *m, int ptn, void *arg)
 {
-	int poffset, psize, pend;
+	unsigned int poffset, psize, pend;
 	const char *desc;
 	static const char *Yes, *No;
 	partinfo *p = bsdlabel + ptn;
@@ -430,6 +652,7 @@ make_fstab(void)
 {
 	FILE *f;
 	int i, swap_dev = -1;
+	const char *dump_dev;
 
 	/* Create the fstab. */
 	make_target_dir("/etc");
@@ -485,10 +708,14 @@ make_fstab(void)
 			fstype = "msdos";
 			break;
 		case FS_SWAP:
-			if (swap_dev == -1)
+			if (swap_dev == -1) {
 				swap_dev = i;
-			scripting_fprintf(f, "/dev/%s%c\t\tnone\tswap\tsw\t\t 0 0\n",
-				diskdev, 'a' + i);
+				dump_dev = ",dp";
+			} else {
+				dump_dev ="";
+			}
+			scripting_fprintf(f, "/dev/%s%c\t\tnone\tswap\tsw%s\t\t 0 0\n",
+				diskdev, 'a' + i, dump_dev);
 			continue;
 #ifdef USE_SYSVBFS
 		case FS_SYSVBFS:

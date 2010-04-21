@@ -1,0 +1,279 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix Address Classes </title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix Address Classes </h1>
+
+<hr>
+
+<h2>Introduction</h2>
+
+<p> Postfix version 2.0 introduces the concept of address classes.
+This is a way of grouping recipient addresses by their delivery
+method.  The idea comes from discussions with Victor Duchovni.
+Although address classes introduced a few incompatibilities they
+also made it possible to improve the handling of hosted domains
+and of unknown recipients. </p>
+
+<p> This document provides information on the following topics: </p>
+
+<ul>
+
+<li><a href="#wtf">What are address classes good for?</a>
+
+<li><a href="#classes">What address classes does Postfix implement?</a>
+
+<li><a href="#improvements">Improvements compared to Postfix 1.1</a>
+
+<li><a href="#incompatibility">Incompatibilities with Postfix 1.1</a>
+
+</ul>
+
+<h2><a name="wtf">What are address classes good for?</a></h2>
+
+<p> Why should you care about address classes? This is how Postfix
+decides what mail to accept, and how to deliver it.  In other words,
+address classes are very important for the operation of Postfix. </p>
+
+<p> An address class is defined by three items. </p>
+
+<ul>
+
+<li> <p> The list of domains that are a member of the class: for
+example, all local domains, or all relay domains. </p>
+
+<li> <p> The default delivery transport. For example, the local,
+virtual or relay delivery transport (delivery transports are defined
+in master.cf). This helps to keep Postfix configurations simple,
+by avoiding the need for explicit routing information in transport
+maps. </p>
+
+<li> <p> The list of valid recipient addresses for that address
+class. The Postfix SMTP server rejects invalid recipients with
+"User unknown in &lt;name of address class here&gt; table".  This
+helps to keep the Postfix queue free of undeliverable MAILER-DAEMON
+messages. </p>
+
+</ul>
+
+<h2><a name="classes">What address classes does Postfix implement?</a></h2>
+
+<p> Initially the list of address classes is hard coded, but this
+is meant to become extensible. The summary below describes the main
+purpose of each class, and what the relevant configuration parameters
+are. </p>
+
+<p> The <a name="local_domain_class">local </a> domain class. </p>
+
+<ul>
+
+<li> <p> Purpose: final delivery for traditional UNIX system accounts
+and traditional Sendmail-style aliases. This is typically used for
+the canonical domains of the machine.  For a discussion of the
+difference between canonical domains, hosted domains and other
+domains, see the VIRTUAL_README file. </p>
+
+<li> <p> Domain names are listed with the mydestination parameter.
+This domain class also includes mail for <i>user@[ipaddress]</i>
+when the IP address is listed with the inet_interfaces or
+proxy_interfaces parameters. </p>
+
+<li> <p> Valid recipient addresses are listed with the local_recipient_maps
+parameter, as described in LOCAL_RECIPIENT_README. The Postfix SMTP
+server rejects invalid recipients with "User unknown in local
+recipient table". If the local_recipient_maps parameter value is
+empty, then the Postfix SMTP server accepts any address in the
+local domain class. </p>
+
+<li> <p> The mail delivery transport is specified with the
+local_transport parameter. The default value is <b>local:$myhostname</b>
+for delivery with the local(8) delivery agent. </p>
+
+</ul>
+
+<p> The <a name="virtual_alias_class">virtual alias </a> domain
+class. </p>
+
+<ul>
+
+<li> <p> Purpose: hosted domains where each recipient address is
+aliased to a local UNIX system account or to a remote address.  A
+virtual alias example is given in the VIRTUAL_README file. </p>
+
+<li> <p> Domain names are listed in virtual_alias_domains. The
+default value is $virtual_alias_maps for Postfix 1.1 compatibility.
+</p>
+
+<li> <p> Valid recipient addresses are listed with the virtual_alias_maps
+parameter. The Postfix SMTP server rejects invalid recipients with
+"User unknown in virtual alias table".  The default value is
+$virtual_maps for Postfix 1.1 compatibility. </p>
+
+<li> <p> There is no mail delivery transport parameter. Every
+address must be aliased to some other address. </p>
+
+</ul>
+
+<p> The <a name="virtual_mailbox_class">virtual mailbox </a> domain
+class. </p>
+
+<ul>
+
+<li> <p> Purpose: final delivery for hosted domains where each
+recipient address can have its own mailbox, and where users do not
+need to have a UNIX system account.  A virtual mailbox example is
+given in the VIRTUAL_README file. </p>
+
+<li> <p> Domain names are listed with the virtual_mailbox_domains
+parameter. The default value is $virtual_mailbox_maps for Postfix
+1.1 compatibility. </p>
+
+<li> <p> Valid recipient addresses are listed with the virtual_mailbox_maps
+parameter. The Postfix SMTP server rejects invalid recipients with
+"User unknown in virtual mailbox table". If this parameter value
+is empty, the Postfix SMTP server accepts all recipients for domains
+listed in $virtual_mailbox_domains.  </p>
+
+<li> <p> The mail delivery transport is specified with the
+virtual_transport parameter. The default value is <b>virtual</b>
+for delivery with the virtual(8) delivery agent. </p>
+
+</ul>
+
+<p> The <a name="relay_domain_class">relay </a> domain class. </p>
+
+<ul>
+
+<li> <p> Purpose: mail forwarding to remote destinations that list
+your system as primary or backup MX host. For a discussion of the
+basic configuration details, see the BASIC_CONFIGURATION_README
+document.  For a discussion of the difference between canonical
+domains, hosted domains and other domains, see the VIRTUAL_README
+file. </p>
+
+<li> <p> Domain names are listed with the relay_domains parameter.
+</p>
+
+<li> <p> Valid recipient addresses are listed with the relay_recipient_maps
+parameter. The Postfix SMTP server rejects invalid recipients with
+"User unknown in relay recipient table". If this parameter value
+is empty, the Postfix SMTP server accepts all recipients for domains
+listed with the relay_domains parameter. </p>
+
+<li> <p> The mail delivery transport is specified with the
+relay_transport parameter. The default value is <b>relay</b> which
+is a clone of the smtp(8) delivery agent. </p>
+
+</ul>
+
+<p> The <a name="default_domain_class">default </a> domain class.
+</p>
+
+<ul>
+
+<li> <p> Purpose: mail forwarding to the Internet on behalf of
+authorized clients. For a discussion of the basic configuration
+details, see the BASIC_CONFIGURATION_README file. For a discussion
+of the difference between canonical domains, hosted domains and
+other domains, see the VIRTUAL_README file. </p>
+
+<li> <p> This class has no destination domain table. </p>
+
+<li> <p> This class has no valid recipient address table. </p>
+
+<li> <p> The mail delivery transport is specified with the
+default_transport parameter. The default value is <b>smtp</b> for
+delivery with the smtp(8) delivery agent. </p>
+
+</ul>
+
+<h2><a name="improvements">Improvements compared to Postfix
+1.1</a></h2>
+
+<p> Postfix 2.0 address classes made the following improvements
+possible over earlier Postfix versions: </p>
+
+<ul>
+
+<li> <p> You no longer need to specify all the virtual(8) mailbox
+domains in the Postfix transport map. The virtual(8) delivery agent
+has become a first-class citizen just like local(8) or smtp(8).
+</p>
+
+<li> <p> On mail gateway systems, address classes provide separation
+of inbound mail relay traffic ($relay_transport) from outbound
+traffic ($default_transport). This eliminates a problem where
+inbound mail deliveries could become resource starved in the presence
+of a high volume of outbound mail. </p>
+
+<li> <p> The SMTP server rejects unknown recipients in a more
+consistent manner than was possible with Postfix version 1. This
+is needed to keep undeliverable mail (and bounced undeliverable
+mail) out of the mail queue. This is controlled by the
+smtpd_reject_unlisted_recipient configuration parameter. </p>
+
+<li> <p> As of Postfix version 2.1, the SMTP server also rejects
+unknown sender addresses (i.e. addresses that it would reject as
+unknown recipient addresses).  Sender "egress filtering" can help
+to slow down an email worm explosion.  This is controlled by the
+smtpd_reject_unlisted_sender configuration parameter. </p>
+
+</ul>
+
+<h2><a name="incompatibility">Incompatibilities with Postfix 1.1</a></h2>
+
+<p> Postfix 2.0 address classes introduce a few incompatible changes
+in documented behavior. In order to ease the transitions, new
+parameters have default values that are backwards compatible. </p>
+
+<ul>
+
+<li> <p> The virtual_maps parameter is replaced by virtual_alias_maps
+(for address lookups) and by virtual_alias_domains (for the names
+of what were formerly called "Postfix-style virtual domains"). </p>
+
+<p> For backwards compatibility with Postfix version 1.1, the new
+virtual_alias_maps parameter defaults to $virtual_maps, and the
+new virtual_alias_domains parameter defaults to $virtual_alias_maps.
+</p>
+
+<li> <p> The virtual_mailbox_maps parameter now has a companion
+parameter called virtual_mailbox_domains (for the names of domains
+served by the virtual delivery agent). The virtual_mailbox_maps
+parameter is now used for address lookups only. </p>
+
+<p> For backwards compatibility with Postfix version 1.1, the new
+virtual_mailbox_domains parameter defaults to $virtual_mailbox_maps.
+</p>
+
+<li> <p> Introduction of the relay_recipient_maps parameter.  The
+Postfix SMTP server can use this to block mail for relay recipients
+that don't exist. This list is empty by default, which means accept
+any recipient. </p>
+
+<li> <p> The local_recipient_maps feature is now turned on by
+default.  The Postfix SMTP server uses this to reject mail for
+unknown local recipients. See the LOCAL_RECIPIENT_README file hints
+and tips. </p>
+
+<li> <p> Introduction of the relay delivery transport in master.cf.
+This helps to avoid mail delivery scheduling problems on inbound
+mail relays when there is a lot of outbound mail, but may require
+that you update your "defer_transports" setting. </p>
+
+</ul>
+
+</body>
+
+</html>

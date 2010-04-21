@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,11 @@
  * SUCH DAMAGE.
  */
 
+/* Needed define to get at getline for glibc and FreeBSD */
+#define _GNU_SOURCE
+
+#include <sys/cdefs.h>
+
 #ifdef __APPLE__
 #  include <mach/mach_time.h>
 #  include <mach/kern_return.h>
@@ -35,6 +40,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #ifdef BSD
 #  include <paths.h>
 #endif
@@ -42,119 +48,60 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
 
 #include "common.h"
-#include "logger.h"
 
 #ifndef _PATH_DEVNULL
 #  define _PATH_DEVNULL "/dev/null"
 #endif
 
-int clock_monotonic = 0;
+int clock_monotonic;
+static char *lbuf;
+static size_t lbuf_len;
+#ifdef DEBUG_MEMORY
+static char lbuf_set;
+#endif
+
+#ifdef DEBUG_MEMORY
+static void
+free_lbuf(void)
+{
+	free(lbuf);
+	lbuf = NULL;
+}
+#endif
 
 /* Handy routine to read very long lines in text files.
- * This means we read the whole line and avoid any nasty buffer overflows. */
-ssize_t
-get_line(char **line, size_t *len, FILE *fp)
+ * This means we read the whole line and avoid any nasty buffer overflows.
+ * We strip leading space and avoid comment lines, making the code that calls
+ * us smaller.
+ * As we don't use threads, this API is clean too. */
+char *
+get_line(FILE * __restrict fp)
 {
 	char *p;
-	size_t last = 0;
+	ssize_t bytes;
 
-	while(!feof(fp)) {
-		if (*line == NULL || last != 0) {
-			*len += BUFSIZ;
-			*line = xrealloc(*line, *len);
-		}
-		p = *line + last;
-		memset(p, 0, BUFSIZ);
-		if (fgets(p, BUFSIZ, fp) == NULL)
-			break;
-		last += strlen(p);
-		if (last && (*line)[last - 1] == '\n') {
-			(*line)[last - 1] = '\0';
-			break;
-		}
+#ifdef DEBUG_MEMORY
+	if (lbuf_set == 0) {
+		atexit(free_lbuf);
+		lbuf_set = 1;
 	}
-	return last;
-}
-
-/* Simple hack to return a random number without arc4random */
-#ifndef HAVE_ARC4RANDOM
-uint32_t arc4random(void)
-{
-	int fd;
-	static unsigned long seed = 0;
-
-	if (!seed) {
-		fd = open("/dev/urandom", 0);
-		if (fd == -1 || read(fd,  &seed, sizeof(seed)) == -1)
-			seed = time(0);
-		if (fd >= 0)
-			close(fd);
-		srandom(seed);
-	}
-
-	return (uint32_t)random();
-}
 #endif
 
-/* strlcpy is nice, shame glibc does not define it */
-#if HAVE_STRLCPY
-#else
-size_t
-strlcpy(char *dst, const char *src, size_t size)
-{
-	const char *s = src;
-	size_t n = size;
-
-	if (n && --n)
-		do {
-			if (!(*dst++ = *src++))
-				break;
-		} while (--n);
-
-	if (!n) {
-		if (size)
-			*dst = '\0';
-		while (*src++);
-	}
-
-	return src - s - 1;
-}
-#endif
-
-#if HAVE_CLOSEFROM
-#else
-int
-closefrom(int fd)
-{
-	int max = getdtablesize();
-	int i;
-	int r = 0;
-
-	for (i = fd; i < max; i++)
-		r += close(i);
-	return r;
-}
-#endif
-
-/* Close our fd's */
-int
-close_fds(void)
-{
-	int fd;
-
-	if ((fd = open(_PATH_DEVNULL, O_RDWR)) == -1)
-		return -1;
-
-	dup2(fd, fileno(stdin));
-	dup2(fd, fileno(stdout));
-	dup2(fd, fileno(stderr));
-	if (fd > 2)
-		close(fd);
-	return 0;
+	do {
+		bytes = getline(&lbuf, &lbuf_len, fp);
+		if (bytes == -1)
+			return NULL;
+		for (p = lbuf; *p == ' ' || *p == '\t'; p++)
+			;
+	} while (*p == '\0' || *p == '\n' || *p == '#' || *p == ';');
+	if (lbuf[--bytes] == '\n')
+		lbuf[bytes] = '\0';
+	return p;
 }
 
 int
@@ -162,10 +109,10 @@ set_cloexec(int fd)
 {
 	int flags;
 
-	if ((flags = fcntl(fd, F_GETFD, 0)) == -1
-	    || fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
+	if ((flags = fcntl(fd, F_GETFD, 0)) == -1 ||
+	    fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
 	{
-		logger(LOG_ERR, "fcntl: %s", strerror(errno));
+		syslog(LOG_ERR, "fcntl: %m");
 		return -1;
 	}
 	return 0;
@@ -176,10 +123,10 @@ set_nonblock(int fd)
 {
 	int flags;
 
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1
-	    || fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
+	if ((flags = fcntl(fd, F_GETFL, 0)) == -1 ||
+	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
 	{
-		logger(LOG_ERR, "fcntl: %s", strerror(errno));
+		syslog(LOG_ERR, "fcntl: %m");
 		return -1;
 	}
 	return 0;
@@ -199,7 +146,7 @@ get_monotonic(struct timeval *tp)
 	struct timespec ts;
 	static clockid_t posix_clock;
 
-	if (posix_clock_set == 0) {
+	if (!posix_clock_set) {
 		if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0) {
 			posix_clock = CLOCK_MONOTONIC;
 			clock_monotonic = posix_clock_set = 1;
@@ -222,7 +169,7 @@ get_monotonic(struct timeval *tp)
 	uint64_t nano;
 	long rem;
 
-	if (posix_clock_set == 0) {
+	if (!posix_clock_set) {
 		if (mach_timebase_info(&info) == KERN_SUCCESS) {
 			factor = (double)info.numer / (double)info.denom;
 			clock_monotonic = posix_clock_set = 1;
@@ -245,7 +192,7 @@ get_monotonic(struct timeval *tp)
 
 	/* Something above failed, so fall back to gettimeofday */
 	if (!posix_clock_set) {
-		logger(LOG_WARNING, NO_MONOTONIC);
+		syslog(LOG_WARNING, NO_MONOTONIC);
 		posix_clock_set = 1;
 	}
 	return gettimeofday(tp, NULL);
@@ -281,9 +228,9 @@ xmalloc(size_t s)
 {
 	void *value = malloc(s);
 
-	if (value)
+	if (value != NULL)
 		return value;
-	logger(LOG_ERR, "memory exhausted");
+	syslog(LOG_ERR, "memory exhausted (xalloc %zu bytes)", s);
 	exit (EXIT_FAILURE);
 	/* NOTREACHED */
 }
@@ -302,9 +249,9 @@ xrealloc(void *ptr, size_t s)
 {
 	void *value = realloc(ptr, s);
 
-	if (value)
-		return (value);
-	logger(LOG_ERR, "memory exhausted");
+	if (value != NULL)
+		return value;
+	syslog(LOG_ERR, "memory exhausted (xrealloc %zu bytes)", s);
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
@@ -314,13 +261,13 @@ xstrdup(const char *str)
 {
 	char *value;
 
-	if (!str)
+	if (str == NULL)
 		return NULL;
 
-	if ((value = strdup(str)))
+	if ((value = strdup(str)) != NULL)
 		return value;
 
-	logger(LOG_ERR, "memory exhausted");
+	syslog(LOG_ERR, "memory exhausted (xstrdup)");
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }

@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.3.12.2 2009/06/09 23:10:04 snj Exp $
+#	$NetBSD: Makefile,v 1.3.12.2.2.1 2010/04/21 05:24:41 matt Exp $
 
 DRIVER=		xf86-video-s3
 DRIVER_NAME=	s3_drv
+DRIVER_VERSION= 0.6.3
 
 SRCS=		s3_bios.c s3_cursor.c s3_dga.c s3_driver.c s3_IBMRGB.c \
 		s3_Ti.c s3_Trio64DAC.c s3_video.c s3_accel.c \
-		s3_accel_newmmio.c
+		s3_accel_newmmio.c s3_shadow.c
+MAN=		s3.4
 
 # PLEASE NOTE: s3_accel.c is compiled two times with different
 # cpp macros for PIO and NEWMMIO support. Check Makefile.am
@@ -14,6 +16,8 @@ SRCS=		s3_bios.c s3_cursor.c s3_dga.c s3_driver.c s3_IBMRGB.c \
 BUILDSYMLINKS=	s3_accel.c s3_accel_newmmio.c
 CPPFLAGS.s3_accel_newmmio.c+=	-DS3_NEWMMIO=1 \
 				-I${X11SRCDIR.xf86-video-s3}/src
+CPPFLAGS.s3_video.c+=		-DS3_NEWMMIO=1 \
 
-CPPFLAGS.s3_driver.c=	-Wno-error	# XXX fix me please
+CPPFLAGS+=	-DPACKAGE_VERSION=\"${PACKAGE_VERSION}\"
+
 .include "../Makefile.xf86-driver"
