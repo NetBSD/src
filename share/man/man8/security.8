@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.25 2010/04/21 05:53:32 wiz Exp $
+.\" $NetBSD: security.8,v 1.26 2010/04/21 06:00:06 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -40,6 +40,7 @@ Below is a brief description of them with some quick usage examples
 that will help you get started.
 .Pp
 Contents:
+.Pp
 .Bl -hyphen -compact -offset indent
 .It
 Veriexec
@@ -89,7 +90,11 @@ restrictions)
 .Tn PaX SegvGuard
 .It
 .Xr gcc 1
-stack-smashing protection (SSP)
+stack-smashing protection
+.Pq Tn SSP
+.It
+bounds checked libc functions
+.Pq Tn FORTIFY_SOURCE
 .El
 .Ss PaX ASLR
 .Em PaX ASLR
