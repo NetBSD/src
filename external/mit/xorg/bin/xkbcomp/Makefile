@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.14.1 2010/04/21 05:24:33 matt Exp $
 
 .include <bsd.own.mk>
+.include "Makefile.common"
 
 PROG=	xkbcomp
 SRCS=	xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
@@ -8,14 +9,16 @@ SRCS=	xkbcomp.c xkbscan.c expr.c vmod.c indicators.c misc.c \
 	symbols.c geometry.c xkbpath.c listing.c \
 	xkbparse.y parseutils.c utils.c
 
-CPPFLAGS+=		-I${X11SRCDIR.${PROG}}
-CPPFLAGS.xkbpath.c=	-DDFLT_XKB_CONFIG_ROOT=\"${X11LIBDIR}/xkb\"
+CPPFLAGS.xkbpath.c=	-DDFLT_XKB_CONFIG_ROOT=\"${XKBCOMPDIR}\"
+
+CPPFLAGS+=		-I${X11SRCDIR.${PROG}} -I${X11SRCDIR.${PROG}}/../include -DHAVE_CONFIG_H
 CPPFLAGS.geometry.c=	-Wno-error	# XXX
 
 FILESDIR=${X11LIBDIR}/xkb
 FILES=	README README.config README.enhancing
 
-SYMLINKS+=${BINDIR}/xkbcomp ${X11LIBDIR}/xkb/xkbcomp
+SYMLINKS+=	${BINDIR}/xkbcomp ${X11LIBDIR}/xkb/xkbcomp
+SYMLINKS+=	${XKBCOMPDIR} ${X11LIBDIR}/xkb/compiled
 
 LDADD+=	-lxkbfile -lXext -lX11
 DPADD+=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2010/04/21 05:24:46 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -18,12 +18,15 @@ LDADD=	-L${XORGOSOBJDIR} -lxorgos \
 
 DPADD=	${LIBXORGOS} ${LIBDUMMY} ${LIBM}
 
-.if ${MACHINE} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
 DPADD+=	${LIBI386}
 .elif ${MACHINE_ARCH} == "x86_64"
 LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
+.elif ${MACHINE_ARCH} == "alpha"
+LDADD+=	-lalpha
+DPADD+=	${LIBALPHA}
 .endif
 
 .PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/utils/${PROG}

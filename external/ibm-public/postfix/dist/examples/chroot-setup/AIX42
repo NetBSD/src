@@ -1,0 +1,12 @@
+umask 022
+mkdir /var/spool/postfix/etc
+chmod 755 /var/spool/postfix/etc
+for i in /etc/environment /etc/netsvc.conf /etc/localtime
+do
+	test -e $i && cp $i /var/spool/postfix/etc
+done
+cp /etc/services /etc/resolv.conf /var/spool/postfix/etc
+mkdir /var/spool/postfix/dev
+chmod 755 /var/spool/postfix/dev
+mknod /var/spool/postfix/dev/null c 2 2
+chmod 666 /var/spool/postfix/dev/null

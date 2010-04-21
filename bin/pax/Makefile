@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37.12.2 2009/12/18 06:12:25 matt Exp $
+#	$NetBSD: Makefile,v 1.37.12.3 2010/04/21 05:15:28 matt Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -28,6 +28,7 @@ MAN=	pax.1 tar.1 cpio.1
 .if defined(HOSTPROG)
 CPPFLAGS+=	-DHOSTPROG
 .else	# {	! HOSTPROG
+
 # XXX: Interix does not have it; we need a conditional for it.
 CPPFLAGS+=	-DHAVE_SYS_MTIO_H
 

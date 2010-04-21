@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.md_subdir,v 1.1.2.2 2010/01/27 06:52:47 matt Exp $
+#	$NetBSD: Makefile.md_subdir,v 1.1.2.3 2010/04/21 05:17:03 matt Exp $
 
 # list of subdirs
 
@@ -11,5 +11,9 @@ MD_SUBDIR=	amd64/i386
 .endif
 
 .if (${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el")
-MD_SUBDIR=	mips64/64 .WAIT mips64/o32
+MD_SUBDIR=	mips64/64
+.if target(obj)
+MD_SUBDIR+=	.WAIT
+.endif
+MD_SUBDIR+=	mips64/o32
 .endif

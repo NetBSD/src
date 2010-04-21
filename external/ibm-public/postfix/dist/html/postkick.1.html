@@ -1,0 +1,96 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - postkick(1) </title>
+</head> <body> <pre>
+POSTKICK(1)                                                        POSTKICK(1)
+
+<b>NAME</b>
+       postkick - kick a Postfix service
+
+<b>SYNOPSIS</b>
+       <b>postkick</b> [<b>-c</b> <i>config</i><b>_</b><i>dir</i>] [<b>-v</b>] <i>class service request</i>
+
+<b>DESCRIPTION</b>
+       The  <a href="postkick.1.html"><b>postkick</b>(1)</a>  command  sends  <i>request</i> to the specified
+       <i>service</i> over a  local  transport  channel.   This  command
+       makes Postfix private IPC accessible for use in, for exam-
+       ple, shell scripts.
+
+       Options:
+
+       <b>-c</b> <i>config</i><b>_</b><i>dir</i>
+              Read the <a href="postconf.5.html"><b>main.cf</b></a> configuration file  in  the  named
+              directory  instead  of  the  default  configuration
+              directory.
+
+       <b>-v</b>     Enable verbose logging for debugging purposes. Mul-
+              tiple  <b>-v</b>  options  make  the software increasingly
+              verbose.
+
+       Arguments:
+
+       <i>class</i>  Name of a class of  local  transport  channel  end-
+              points,  either  <b>public</b>  (accessible  by  any local
+              user) or <b>private</b> (administrative access only).
+
+       <i>service</i>
+              The name of a local transport endpoint  within  the
+              named class.
+
+       <i>request</i>
+              A  string.  The  list of valid requests is service-
+              specific.
+
+<b>DIAGNOSTICS</b>
+       Problems and transactions are logged to the standard error
+       stream.
+
+<b>ENVIRONMENT</b>
+       <b>MAIL_CONFIG</b>
+              Directory with Postfix configuration files.
+
+       <b>MAIL_VERBOSE</b>
+              Enable verbose logging for debugging purposes.
+
+<b>CONFIGURATION PARAMETERS</b>
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant
+       to this program.  The text below provides only a parameter
+       summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including exam-
+       ples.
+
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
+              <a href="master.5.html">master.cf</a> configuration files.
+
+       <b><a href="postconf.5.html#application_event_drain_time">application_event_drain_time</a> (100s)</b>
+              How  long  the  <a href="postkick.1.html"><b>postkick</b>(1)</a>  command  waits  for  a
+              request to enter the server's input  buffer  before
+              giving up.
+
+       <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
+              The  location of the Postfix top-level queue direc-
+              tory.
+
+<b>FILES</b>
+       /var/spool/postfix/private, private class endpoints
+       /var/spool/postfix/public, public class endpoints
+
+<b>SEE ALSO</b>
+       <a href="qmgr.8.html">qmgr(8)</a>, queue manager trigger protocol
+       <a href="pickup.8.html">pickup(8)</a>, local pickup daemon
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+
+<b>LICENSE</b>
+       The Secure Mailer license must be  distributed  with  this
+       software.
+
+<b>AUTHOR(S)</b>
+       Wietse Venema
+       IBM T.J. Watson Research
+       P.O. Box 704
+       Yorktown Heights, NY 10598, USA
+
+                                                                   POSTKICK(1)
+</pre> </body> </html>

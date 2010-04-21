@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.25.2.2.2.1.2.1 2010/01/28 17:10:20 matt Exp $
+# $NetBSD: md.amd64,v 1.25.2.2.2.1.2.2 2010/04/21 05:20:40 matt Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -141,11 +141,11 @@
 ./usr/lib/i386/libdes.so.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdes.so.7.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libdns.so.1			base-compat-shlib	compat,pic
-./usr/lib/i386/libdns.so.1.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libdns.so.1.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libedit.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libedit.so.2.11			base-compat-shlib	compat,pic
 ./usr/lib/i386/libevent.so.2			base-compat-shlib	compat,pic
-./usr/lib/i386/libevent.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libevent.so.2.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libform.so.5			base-compat-shlib	compat,pic
 ./usr/lib/i386/libform.so.5.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libgcc_s.so.1			base-compat-shlib	compat,pic
@@ -167,7 +167,7 @@
 ./usr/lib/i386/libipsec.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libipsec.so.2.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisc.so.1			base-compat-shlib	compat,pic
-./usr/lib/i386/libisc.so.1.1			base-compat-shlib	compat,pic
+./usr/lib/i386/libisc.so.1.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccc.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccc.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libisccfg.so.1			base-compat-shlib	compat,pic
@@ -193,7 +193,7 @@
 ./usr/lib/i386/liblwres.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/liblwres.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libm.so.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libm.so.0.6			base-compat-shlib	compat,pic
+./usr/lib/i386/libm.so.0.7			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmagic.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmagic.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libmenu.so.5			base-compat-shlib	compat,pic
@@ -219,7 +219,7 @@
 ./usr/lib/i386/libpthread_dbg.so.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/libpthread_dbg.so.1.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libpuffs.so.0			base-compat-shlib	compat,pic
-./usr/lib/i386/libpuffs.so.0.0			base-compat-shlib	compat,pic
+./usr/lib/i386/libpuffs.so.0.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libradius.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libradius.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libresolv.so.1			base-compat-shlib	compat,pic

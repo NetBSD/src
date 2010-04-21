@@ -1,0 +1,23 @@
+# Setup chroot jail for HP-UX (9 or 10). -- tiggr (Pieter Schoenmakers)
+
+if test -z "${POSTFIX_DIR}"; then
+  if test -d /usr/spool/postfix; then
+    POSTFIX_DIR=/usr/spool/postfix
+  elif test -d /var/spool/postfix; then
+    POSTFIX_DIR=/var/spool/postfix
+  else
+    echo Please indicate POSTFIX_DIR in the environment >&2
+    exit 2;
+  fi
+fi
+
+set -e
+
+umask 022
+
+cd ${POSTFIX_DIR}
+
+mkdir etc 
+cp /etc/services etc
+mkdir -p usr/lib
+cp /usr/lib/tztab usr/lib

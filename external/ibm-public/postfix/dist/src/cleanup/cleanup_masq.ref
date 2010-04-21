@@ -1,0 +1,40 @@
+----------
+exceptions: 
+masq_list:  a.b.c,b.c
+address:    xxx@aa.a.b.c
+result:     xxx@a.b.c
+----------
+exceptions: xxx
+masq_list:  a.b.c,b.c
+address:    xxx@aa.a.b.c
+result:     xxx@aa.a.b.c
+----------
+exceptions: yyy
+masq_list:  a.b.c,b.c
+address:    xxx@aa.a.b.c
+result:     xxx@a.b.c
+----------
+exceptions: 
+masq_list:  !a.b.c,b.c
+address:    xxx@aa.a.b.c
+result:     xxx@aa.a.b.c
+----------
+exceptions: 
+masq_list:  a.b.c,b.c
+address:    xxx@a.b.c
+result:     xxx@a.b.c
+----------
+exceptions: 
+masq_list:  !a.b.c,b.c
+address:    xxx@a.b.c
+result:     xxx@a.b.c
+----------
+exceptions: 
+masq_list:  a.b.c,b.c
+address:    xxx@aaa.b.c
+result:     xxx@b.c
+----------
+exceptions: 
+masq_list:  a.b.c,b.c
+address:    xxx@b.c
+result:     xxx@b.c

@@ -1,0 +1,676 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title> Postfix Basic Configuration </title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix Basic Configuration </h1>
+
+<hr>
+
+<h2> Introduction </h2>
+
+<p> Postfix has several hundred configuration parameters that are
+controlled via the <a href="postconf.5.html">main.cf</a> file.  Fortunately, all parameters have
+sensible default values.  In many cases, you need to configure only
+two or three parameters before you can start to play with the mail
+system. Here's a quick introduction to the syntax:  </p>
+
+<ul>
+
+<li> <p> <a href="#syntax">Postfix configuration files</a></p>
+
+</ul>
+
+<p> The text below assumes that you already have Postfix installed
+on the system, either by compiling the source code yourself (as
+described in the <a href="INSTALL.html">INSTALL</a> file) or by installing an already compiled
+version.  </p>
+
+<p> This document covers basic Postfix configuration. Information
+about how to configure Postfix for specific applications such as
+mailhub, firewall or dial-up client can be found in the
+<a href="STANDARD_CONFIGURATION_README.html">STANDARD_CONFIGURATION_README</a> file. But don't go there until you
+already have covered the material presented below.  </p>
+
+<p> The first parameters of interest specify the machine's identity
+and role in the network. </p>
+
+<ul>
+
+<li> <p> <a href="#myorigin"> What domain name to use in outbound mail </a> </p>
+
+<li> <p> <a href="#mydestination"> What domains to receive mail for </a> </p>
+
+<li> <p> <a href="#relay_from"> What clients to relay mail from </a> </p>
+
+<li> <p> <a href="#relay_to"> What destinations to relay mail to </a> </p>
+
+<li> <p> <a href="#relayhost"> What delivery method: direct or
+indirect </a> </p>
+
+</ul>
+
+<p> The default values for many other configuration parameters are
+derived from just these. </p>
+
+<p> The next parameter of interest controls the amount of mail sent
+to the local postmaster: </p>
+
+<ul>
+
+<li> <p> <a href="#notify"> What trouble to report to the postmaster
+</a> </p>
+
+</ul>
+
+<p> Be sure to set the following correctly if you're behind a proxy or
+network address translator, and you are running a backup MX host
+for some other domain: </p>
+
+<ul>
+
+<li> <p> <a href="#proxy_interfaces"> Proxy/NAT external network
+addresses </a> </p>
+
+</ul>
+
+<p>  Postfix daemon processes run in the background, and log problems
+and normal activity to the syslog daemon. Here are a few things
+that you need to be aware of: </p>
+
+<ul>
+
+<li> <p> <a href="#syslog_howto"> What you need to know about
+Postfix logging </a> </p>
+
+</ul>
+
+<p> If your machine has unusual security requirements you may
+want to run Postfix daemon processes inside a chroot environment. </p>
+
+<ul>
+
+<li> <p> <a href="#chroot_setup"> Running Postfix daemon processes
+chrooted </a> </p>
+
+</ul>
+<p> If you run Postfix on a virtual network interface, or if your
+machine runs other mailers on virtual interfaces, you'll have to
+look at the other parameters listed here as well: </p>
+
+<ul>
+
+<li> <p> <a href="#myhostname"> My own hostname </a> </p>
+
+<li> <p> <a href="#mydomain"> My own domain name </a> </p>
+
+<li> <p> <a href="#inet_interfaces"> My own network addresses </a> </p>
+
+</ul>
+
+<h2> <a name="syntax">Postfix configuration files</a></h2>
+
+<p> By default, Postfix configuration files are in /etc/postfix.
+The two most important files are <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a>; these files
+must be owned by root.  Giving someone else write permission to
+<a href="postconf.5.html">main.cf</a> or <a href="master.5.html">master.cf</a> (or to their parent directories) means giving
+root privileges to that person. </p>
+
+<p> In /etc/postfix/<a href="postconf.5.html">main.cf</a> you will have to set up a minimal number
+of configuration parameters.  Postfix configuration parameters
+resemble shell variables, with two important differences: the first
+one is that Postfix does not know about quotes like the UNIX shell
+does.</p>
+
+<p> You specify a configuration parameter as: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    parameter = value
+</pre>
+</blockquote>
+
+<p> and you use it by putting a "$" character in front of its name: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    other_parameter = $parameter
+</pre>
+</blockquote>
+
+<p> You can use $parameter before it is given a value (that is the
+second main difference with UNIX shell variables). The Postfix
+configuration language uses lazy evaluation, and does not look at
+a parameter value until it is needed at runtime.  </p>
+
+<p> Postfix uses database files for access control, address rewriting
+and other purposes. The <a href="DATABASE_README.html">DATABASE_README</a> file gives an introduction
+to how Postfix works with Berkeley DB, LDAP or SQL and other types.
+Here is a common example of how Postfix invokes a database: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+</pre>
+</blockquote>
+
+<p> Whenever you make a change to the <a href="postconf.5.html">main.cf</a> or <a href="master.5.html">master.cf</a> file,
+execute the following command as root in order to refresh a running
+mail system: </p>
+
+<blockquote>
+<pre>
+# postfix reload
+</pre>
+</blockquote>
+
+<h2> <a name="myorigin"> What domain name to use in outbound mail </a> </h2>
+
+<p> The <a href="postconf.5.html#myorigin">myorigin</a> parameter specifies the domain that appears in
+mail that is posted on this machine. The default is to use the
+local machine name, $<a href="postconf.5.html#myhostname">myhostname</a>, which defaults to the name of the
+machine. Unless you are running a really small site, you probably
+want to change that into $<a href="postconf.5.html#mydomain">mydomain</a>, which defaults to the parent
+domain of the machine name. </p>
+
+<p> For the sake of consistency between sender and recipient addresses,
+<a href="postconf.5.html#myorigin">myorigin</a> also specifies the domain name that is appended
+to an unqualified recipient address. </p>
+
+<p> Examples (specify only one of the following): </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#myorigin">myorigin</a> = $<a href="postconf.5.html#myhostname">myhostname</a> (default: send mail as "user@$<a href="postconf.5.html#myhostname">myhostname</a>")
+    <a href="postconf.5.html#myorigin">myorigin</a> = $<a href="postconf.5.html#mydomain">mydomain</a>   (probably desirable: "user@$<a href="postconf.5.html#mydomain">mydomain</a>")
+</pre>
+</blockquote>
+
+<h2><a name="mydestination"> What domains to receive mail for </a>
+</h2>
+
+<p> The <a href="postconf.5.html#mydestination">mydestination</a> parameter specifies what domains this
+machine will deliver locally, instead of forwarding to another
+machine. The default is to receive mail for the machine itself. 
+See the <a href="VIRTUAL_README.html">VIRTUAL_README</a> file for how to configure Postfix for
+<a href="VIRTUAL_README.html#canonical">hosted domains</a>. </p>
+
+<p> You can specify zero or more domain names, "/file/name" patterns
+and/or "<a href="DATABASE_README.html">type:table</a>" lookup tables (such as hash:, btree:, nis:, <a href="ldap_table.5.html">ldap</a>:,
+or <a href="mysql_table.5.html">mysql</a>:), separated by whitespace and/or commas.  A "/file/name"
+pattern is replaced by its contents; "<a href="DATABASE_README.html">type:table</a>" requests that a
+table lookup is done and merely tests for existence: the lookup
+result is ignored.  </p>
+
+<p> IMPORTANT: If your machine is a mail server for its entire
+domain, you must list $<a href="postconf.5.html#mydomain">mydomain</a> as well.  </p>
+
+<p> Example 1: default setting. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a> localhost.$<a href="postconf.5.html#mydomain">mydomain</a> localhost
+</pre>
+</blockquote>
+
+<p> Example 2: domain-wide mail server. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a> localhost.$<a href="postconf.5.html#mydomain">mydomain</a> localhost $<a href="postconf.5.html#mydomain">mydomain</a>
+</pre>
+</blockquote>
+
+<p> Example 3: host with multiple DNS A records. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#mydestination">mydestination</a> = $<a href="postconf.5.html#myhostname">myhostname</a> localhost.$<a href="postconf.5.html#mydomain">mydomain</a> localhost 
+        www.$<a href="postconf.5.html#mydomain">mydomain</a> ftp.$<a href="postconf.5.html#mydomain">mydomain</a>
+</pre>
+</blockquote>
+
+<p> Caution: in order to avoid mail delivery loops, you must list all
+hostnames of the machine, including $<a href="postconf.5.html#myhostname">myhostname</a>, and localhost.$<a href="postconf.5.html#mydomain">mydomain</a>. </p>
+
+<h2> <a name="relay_from"> What clients to relay mail from </a> </h2>
+
+<p> By default, Postfix will forward mail from clients in authorized
+network blocks to any destination.  Authorized networks are defined
+with the <a href="postconf.5.html#mynetworks">mynetworks</a> configuration parameter. The default is to
+authorize all clients in the IP subnetworks that the local machine
+is attached to. </p>
+
+<p> IMPORTANT: If your machine is connected to a wide area network
+then your default <a href="postconf.5.html#mynetworks">mynetworks</a> setting may be too friendly. </p>
+
+<p> Examples (specify only one of the following): </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = subnet  (default: authorize subnetworks)
+    <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = host    (safe: authorize local machine only)
+    <a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8   (safe: authorize local machine only)
+    <a href="postconf.5.html#mynetworks">mynetworks</a> = 127.0.0.0/8 168.100.189.2/32 (authorize local machine) 
+</pre>
+</blockquote>
+
+<p> You can specify the trusted networks in the <a href="postconf.5.html">main.cf</a> file, or
+you can let Postfix do the work for you. The default is to let
+Postfix do the work. The result depends on the <a href="postconf.5.html#mynetworks_style">mynetworks_style</a>
+parameter value.
+
+<ul>
+
+<li> <p> Specify "<a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = host" when Postfix should
+forward mail from only the local machine. </p>
+
+<li> <p> Specify "<a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = subnet" (the default) when
+Postfix should forward mail from SMTP clients in the same IP
+subnetworks as the local machine.  On Linux, this works correctly
+only with interfaces specified with the "ifconfig" command. </p>
+
+<li> <p> Specify "<a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = class" when Postfix should
+forward mail from SMTP clients in the same IP class A/B/C networks
+as the local machine. Don't do this with a dialup site - it would
+cause Postfix to "trust" your entire provider's network. Instead,
+specify an explicit <a href="postconf.5.html#mynetworks">mynetworks</a> list by hand, as described below.
+</p>
+
+</ul>
+
+<p> Alternatively, you can specify the <a href="postconf.5.html#mynetworks">mynetworks</a> list by hand,
+in which case Postfix ignores the <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> setting.
+To specify the list of trusted networks by hand, specify network
+blocks in CIDR (network/mask) notation, for example: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#mynetworks">mynetworks</a> = 168.100.189.0/28, 127.0.0.0/8
+</pre>
+</blockquote>
+
+<p> You can also specify the absolute pathname of a pattern file instead
+of listing the patterns in the <a href="postconf.5.html">main.cf</a> file. </p>
+
+<h2> <a name="relay_to"> What destinations to relay mail to </a> </h2>
+
+<p> By default, Postfix will forward mail from strangers (clients outside
+authorized networks) to authorized remote destinations only.
+Authorized remote
+destinations are defined with the <a href="postconf.5.html#relay_domains">relay_domains</a> configuration
+parameter.  The default is to authorize all domains (and subdomains)
+of the domains listed with the <a href="postconf.5.html#mydestination">mydestination</a> parameter.  </p>
+
+<p> Examples (specify only one of the following): </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#relay_domains">relay_domains</a> = $<a href="postconf.5.html#mydestination">mydestination</a> (default)
+    <a href="postconf.5.html#relay_domains">relay_domains</a> =           (safe: never forward mail from strangers)
+    <a href="postconf.5.html#relay_domains">relay_domains</a> = $<a href="postconf.5.html#mydomain">mydomain</a> (forward mail to my domain and subdomains)
+</pre>
+</blockquote>
+
+<h2> <a name="relayhost"> What delivery method: direct or
+indirect </a> </h2>
+
+<p> By default, Postfix tries to deliver mail directly to the
+Internet. Depending on your local conditions this may not be possible
+or desirable.  For example, your system may be turned off outside
+office hours, it may be behind a firewall, or it may be connected
+via a provider who does not allow direct mail to the Internet.  In
+those cases you need to configure Postfix to deliver mail indirectly
+via a <a href="postconf.5.html#relayhost">relay host</a>. </p>
+
+<p> Examples (specify only one of the following): </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#relayhost">relayhost</a> =                   (default: direct delivery to Internet)
+    <a href="postconf.5.html#relayhost">relayhost</a> = $<a href="postconf.5.html#mydomain">mydomain</a>         (deliver via local mailhub)
+    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.$<a href="postconf.5.html#mydomain">mydomain</a>]  (deliver via local mailhub)
+    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.tld]    (deliver via provider mailhub)
+</pre>
+</blockquote>
+
+<p> The form enclosed with <tt>[]</tt> eliminates DNS MX lookups.
+Don't worry if you don't know what that means. Just be sure to
+specify the <tt>[]</tt> around the mailhub hostname that your ISP
+gave to you, otherwise mail may be mis-delivered. </p>
+
+<p> The <a href="STANDARD_CONFIGURATION_README.html">STANDARD_CONFIGURATION_README</a> file has more hints and tips
+for firewalled and/or dial-up networks. </p>
+
+<h2> <a name="notify"> What trouble to report to the postmaster</a> </h2>
+
+<p> You should set up a postmaster alias in the <a href="aliases.5.html">aliases(5)</a> table
+that directs mail to a human person.  The postmaster address is
+required to exist, so that people can report mail delivery problems.
+While you're updating the <a href="aliases.5.html">aliases(5)</a> table, be sure to direct mail
+for the super-user to a human person too. </p>
+
+<blockquote>
+<pre>
+/etc/aliases:
+    postmaster: you
+    root: you
+</pre>
+</blockquote>
+
+<p> Execute the command "newaliases" after changing the aliases
+file.  Instead of /etc/aliases, your alias file may be located
+elsewhere.  Use the command "postconf <a href="postconf.5.html#alias_maps">alias_maps</a>" to find out.</p>
+
+<p> The Postfix system reports problems to the postmaster alias.
+You may not be interested in all types of trouble reports, so this
+reporting mechanism is configurable. The default is to report only
+serious problems (resource, software) to postmaster:  </p>
+
+<p> Default setting: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#notify_classes">notify_classes</a> = resource, software
+</pre>
+</blockquote>
+
+<p> The meaning of the classes is as follows: </p>
+
+<blockquote>
+
+<dl>
+
+<dt> bounce </dt> <dd>  Inform the postmaster of undeliverable
+mail.  Either send the postmaster a copy of undeliverable mail that
+is returned to the sender, or send a transcript of the SMTP session
+when Postfix rejected mail.  For privacy reasons, the postmaster
+copy of undeliverable mail is truncated after the original message
+headers.  This implies "2bounce" (see below).  See also the
+<a href="postconf.5.html#luser_relay">luser_relay</a> feature. The notification is sent to the address
+specified with the <a href="postconf.5.html#bounce_notice_recipient">bounce_notice_recipient</a> configuration parameter
+(default:  postmaster).  </dd>
+
+<dt> 2bounce </dt> <dd> When Postfix is unable to return undeliverable
+mail to the sender, send it to the postmaster instead (without
+truncating the message after the primary headers). The notification
+is sent to the address specified with the <a href="postconf.5.html#2bounce_notice_recipient">2bounce_notice_recipient</a>
+configuration parameter (default:  postmaster).  </dd>
+
+<dt> delay </dt> <dd> Inform the postmaster of delayed mail.  In
+this case, the postmaster receives message headers only.  The
+notification is sent to the address specified with the
+<a href="postconf.5.html#delay_notice_recipient">delay_notice_recipient</a> configuration parameter (default:  postmaster).
+</dd>
+
+<dt> policy </dt> <dd> Inform the postmaster of client requests
+that were rejected because of (UCE) policy restrictions.  The
+postmaster receives a transcript of the SMTP session. The notification
+is sent to the address specified with the <a href="postconf.5.html#error_notice_recipient">error_notice_recipient</a>
+configuration parameter (default:  postmaster).  </dd>
+
+<dt> protocol </dt> <dd> Inform the postmaster of protocol errors
+(client or server side) or attempts by a client to execute
+unimplemented commands. The postmaster receives a transcript of
+the SMTP session. The notification is sent to the address specified
+with the <a href="postconf.5.html#error_notice_recipient">error_notice_recipient</a> configuration parameter (default:
+postmaster). </dd>
+
+<dt> resource </dt> <dd> Inform the postmaster of mail not delivered
+due to resource problems (for example, queue file write errors).
+The notification is sent to the address specified with the
+<a href="postconf.5.html#error_notice_recipient">error_notice_recipient</a> configuration parameter (default:  postmaster).
+</dd>
+
+<dt> software </dt> <dd> Inform the postmaster of mail not delivered
+due to software problems. The notification is sent to the address
+specified with the <a href="postconf.5.html#error_notice_recipient">error_notice_recipient</a> configuration parameter
+(default:  postmaster). </dd>
+
+</dl>
+
+</blockquote>
+
+<h2><a name="proxy_interfaces"> Proxy/NAT external network
+addresses</a> </h2>
+
+<p> Some mail servers are connected to the Internet via a network
+address translator (NAT) or proxy. This means that systems on the
+Internet connect to the address of the NAT or proxy, instead of
+connecting to the network address of the mail server. The NAT or
+proxy forwards the connection to the network address of the mail
+server, but Postfix does not know this.  </p>
+
+<p> If you run a Postfix server behind a proxy or NAT, you need to
+configure the <a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> parameter and specify all the external
+proxy or NAT addresses that Postfix receives mail on. You may
+specify symbolic hostnames instead of network addresses.  </p>
+
+<p> IMPORTANT: You must specify your proxy/NAT external addresses
+when your system is a backup MX host for other domains, otherwise
+mail delivery loops will happen when the primary MX host is down.
+</p>
+
+<p> Example: host behind NAT box running a backup MX host. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> = 1.2.3.4 (the proxy/NAT external network address)
+</pre>
+</blockquote>
+
+<h2> <a name="syslog_howto"> What you need to know about
+Postfix logging </a> </h2>
+
+<p> Postfix daemon processes run in the background, and log problems
+and normal activity to the syslog daemon. The syslogd process sorts
+events by class and severity, and appends them to logfiles. The
+logging classes, levels and logfile names are usually specified in
+/etc/syslog.conf. At the very least you need something like:  </p>
+
+<blockquote>
+<pre>
+/etc/syslog.conf:
+    mail.err                                    /dev/console
+    mail.debug                                  /var/log/maillog
+</pre>
+</blockquote>
+
+<p> After changing the syslog.conf file, send a "HUP" signal to
+the syslogd process.  </p>
+
+<p> IMPORTANT: many syslogd implementations will not create files.
+You must create files before (re)starting syslogd. </p>
+
+<p> IMPORTANT: on Linux you need to put a "-" character before the
+pathname, e.g., -/var/log/maillog, otherwise the syslogd process
+will use more system resources than Postfix. </p>
+
+<p> Hopefully, the number of problems will be small, but it is a good
+idea to run every night before the syslog files are rotated: </p>
+
+<blockquote>
+<pre>
+# postfix check
+# egrep '(reject|warning|error|fatal|panic):' /some/log/file
+</pre>
+</blockquote>
+
+<ul>
+
+<li> <p> The first line (postfix check) causes Postfix to report
+file permission/ownership discrepancies. </p>
+
+<li> <p> The second line looks for problem reports from the mail
+software, and reports how effective the relay and junk mail access
+blocks are.  This may produce a lot of output.  You will want to
+apply some postprocessing to eliminate uninteresting information.
+</p>
+
+</ul>
+
+<p> The <a href="DEBUG_README.html#logging"> DEBUG_README </a>
+document describes the meaning of the "warning" etc. labels in
+Postfix logging. </p>
+
+<h2> <a name="chroot_setup"> Running Postfix daemon processes
+chrooted </a> </h2>
+
+<p> Postfix daemon processes can be configured (via the <a href="master.5.html">master.cf</a>
+file) to run in a chroot jail.  The processes run at a fixed low
+privilege and with file system access limited to the Postfix queue
+directories (/var/spool/postfix).  This provides a significant
+barrier against intrusion. The barrier is not impenetrable (chroot
+limits file system access only), but every little bit helps.</p>
+
+<p>With the exception of Postfix daemons that deliver mail locally
+and/or that execute non-Postfix commands, every Postfix daemon can
+run chrooted.</p>
+
+<p>Sites with high security requirements should consider to chroot
+all daemons that talk to the network: the <a href="smtp.8.html">smtp(8)</a> and <a href="smtpd.8.html">smtpd(8)</a>
+processes, and perhaps also the <a href="lmtp.8.html">lmtp(8)</a> client. The author's own
+porcupine.org mail server runs all daemons chrooted that can be
+chrooted.  </p>
+
+<p>The default /etc/postfix/<a href="master.5.html">master.cf</a> file specifies that no Postfix
+daemon runs chrooted. In order to enable chroot operation, edit
+the file /etc/postfix/<a href="master.5.html">master.cf</a>, and follow instructions in the
+file.  When you're finished, execute "postfix reload" to make the
+change effective. </p>
+
+<p>Note that a chrooted daemon resolves all filenames relative to
+the Postfix queue directory (/var/spool/postfix). For successful
+use of a chroot jail, most UNIX systems require you to bring in
+some files or device nodes. The examples/chroot-setup directory in
+the source code distribution has a collection of scripts that help
+you set up Postfix chroot environments on different operating
+systems.</p>
+
+<p> Additionally, you almost certainly need to configure syslogd
+so that it listens on a socket inside the Postfix queue directory.
+Examples of syslogd command line options that achieve this for
+specific systems: </p>
+
+<p> FreeBSD: <tt>syslogd -l /var/spool/postfix/var/run/log</tt> </p>
+
+<p> Linux, OpenBSD: <tt>syslogd -a /var/spool/postfix/dev/log</tt> </p>
+
+<h2><a name="myhostname"> My own hostname </a> </h2>
+
+<p> The <a href="postconf.5.html#myhostname">myhostname</a> parameter specifies the fully-qualified domain
+name of the machine running the Postfix system.   $<a href="postconf.5.html#myhostname">myhostname</a>
+appears as the default value in many other Postfix configuration
+parameters. </p>
+
+<p> By default, <a href="postconf.5.html#myhostname">myhostname</a> is set to the local machine name.  If
+your local machine name is not in fully-qualified domain name form,
+or if you run Postfix on a virtual interface, you will have to
+specify the fully-qualified domain name that the mail system should
+use. </p>
+
+<p> Alternatively, if you specify <a href="postconf.5.html#mydomain">mydomain</a> in <a href="postconf.5.html">main.cf</a>, then Postfix
+will use its value to generate a fully-qualified default value      
+for the <a href="postconf.5.html#myhostname">myhostname</a> parameter. </p>
+
+<p> Examples (specify only one of the following): </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#myhostname">myhostname</a> = host.local.domain (machine name is not FQDN)
+    <a href="postconf.5.html#myhostname">myhostname</a> = host.virtual.domain (virtual interface)
+    <a href="postconf.5.html#myhostname">myhostname</a> = virtual.domain (virtual interface)
+</pre>
+</blockquote>
+
+<h2><a name="mydomain"> My own domain name</a> </h2>
+
+<p> The <a href="postconf.5.html#mydomain">mydomain</a> parameter specifies the parent domain of
+$<a href="postconf.5.html#myhostname">myhostname</a>.  By default, it is derived from  $<a href="postconf.5.html#myhostname">myhostname</a>
+by stripping off the first part (unless the result would be a
+top-level domain). </p>
+
+<p> Conversely, if you specify <a href="postconf.5.html#mydomain">mydomain</a> in <a href="postconf.5.html">main.cf</a>, then Postfix
+will use its value to generate a fully-qualified default value
+for the <a href="postconf.5.html#myhostname">myhostname</a> parameter. </p>
+
+<p> Examples (specify only one of the following): </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#mydomain">mydomain</a> = local.domain
+    <a href="postconf.5.html#mydomain">mydomain</a> = virtual.domain (virtual interface)
+</pre> 
+</blockquote>
+
+<h2><a name="inet_interfaces">My own network addresses</a> </h2>
+
+<p>The <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> parameter specifies all network interface
+addresses that the Postfix system should listen on; mail addressed
+to "user@[network address]" will be delivered locally,
+as if it is addressed to a domain listed in  $<a href="postconf.5.html#mydestination">mydestination</a>.</p>
+
+<p> You can override the <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> setting in the Postfix
+<a href="master.5.html">master.cf</a> file by prepending an IP address to a server name. </p>
+
+<p> The default is to listen on all active interfaces.  If you run
+mailers on virtual interfaces, you will have to specify what
+interfaces to listen on.  </p>
+
+<p> IMPORTANT: If you run MTAs on virtual interfaces you must
+specify explicit <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> values for the MTA that receives
+mail for the machine itself:  this MTA should never listen on the
+virtual interfaces or you would have a mailer loop when a virtual
+MTA is down.  </p>
+
+<p> Example: default setting. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = all
+</pre>
+</blockquote>
+
+<p> Example: host running one or more virtual mailers. For
+each Postfix instance, specify only one of the following. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = virtual.host.tld         (virtual Postfix)
+    <a href="postconf.5.html#inet_interfaces">inet_interfaces</a> = $<a href="postconf.5.html#myhostname">myhostname</a> localhost... (non-virtual Postfix)
+</pre>
+</blockquote>
+
+<p> Note: you need to stop and start Postfix after changing this
+parameter.  </p>
+
+</body>
+
+</html>

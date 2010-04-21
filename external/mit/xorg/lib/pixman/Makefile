@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2008/11/07 23:23:36 snj Exp $
+#	$NetBSD: Makefile,v 1.6.2.1.4.1 2010/04/21 05:24:37 matt Exp $
 
 NOLINT=	1	# defined
 
@@ -9,22 +9,45 @@ LIB=		pixman-1
 DIST=	${X11SRCDIR.pixman}/pixman
 .PATH:	${DIST}
 
-SRCS=	pixman-access.c pixman-region16.c pixman-access-accessors.c \
-	pixman-region32.c pixman-image.c pixman-combine32.c \
-	pixman-combine64.c pixman-compose.c pixman-compose-accessors.c \
-	pixman-pict.c pixman-source.c pixman-transformed.c pixman-utils.c \
-	pixman-transformed-accessors.c pixman-edge.c \
-	pixman-edge-accessors.c pixman-trap.c pixman-compute-region.c \
-	pixman-timer.c
+SRCS=	\
+	pixman-access.c				\
+	pixman-access-accessors.c		\
+	pixman-cpu.c				\
+	pixman-gradient-walker.c		\
+	pixman-region16.c			\
+	pixman-region32.c			\
+	pixman-image.c				\
+	pixman-implementation.c			\
+	pixman-combine32.c			\
+	pixman-combine64.c			\
+	pixman-general.c			\
+	pixman.c				\
+	pixman-fast-path.c			\
+	pixman-solid-fill.c			\
+	pixman-conical-gradient.c		\
+	pixman-linear-gradient.c		\
+	pixman-radial-gradient.c		\
+	pixman-bits-image.c			\
+	pixman-utils.c				\
+	pixman-edge.c				\
+	pixman-edge-accessors.c			\
+	pixman-trap.c				\
+	pixman-timer.c				\
+	pixman-matrix.c
 
 # XXX
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386"
+# SSE2 requires a gcc >= 4.2
+SRCS+= pixman-mmx.c
+COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
+MKDEPFLAGS+=		-mmmx -fvisibility=hidden
+.elif ${MACHINE_ARCH} == "x86_64"
 SRCS+=	pixman-mmx.c
 SRCS+=	pixman-sse2.c
-MKDEPFLAGS+=		-msse -mmmx -fvisibility=hidden
-COPTS.pixman-mmx.c=	-msse -mmmx -fvisibility=hidden
-COPTS.pixman-sse2.c=	-msse -mmmx -fvisibility=hidden
+COPTS.pixman-mmx.c=	-mmmx -fvisibility=hidden
+COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
+MKDEPFLAGS+=		-mmmx -msse2 -fvisibility=hidden
 .endif
 
 # .if VMX

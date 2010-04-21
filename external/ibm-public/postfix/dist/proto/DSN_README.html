@@ -1,0 +1,156 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix DSN Support </title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix
+DSN Support </h1>
+
+<hr>
+
+<h2>Introduction</h2>
+
+<p> Postfix version 2.3 introduces support for Delivery Status
+Notifications as described in RFC 3464. This gives senders control
+over successful and failed delivery notifications.  </p>
+
+<p> Specifically, DSN support gives an email sender the ability to
+specify: </p>
+
+<ul>
+
+<li> <p> What notifications are sent: success, failure, delay, or
+none. Normally, Postfix informs the sender only when mail delivery
+is delayed or when delivery fails.  </p>
+
+<li> <p> What content is returned in case of failure: only the
+message headers, or the full message. </p>
+
+<li> <p> An envelope ID that is returned as part of delivery status
+notifications. This identifies the message <i>submission</i>
+transaction, and must not be confused with the message ID, which
+identifies the message <i>content</i>. </p>
+
+</ul>
+
+<p> The implementation of DSN support involves extra parameters to
+the SMTP MAIL FROM and RCPT TO commands, as well as two Postfix
+sendmail command line options that provide a sub-set of the functions
+of the extra SMTP command parameters. </p>
+
+<p> This document has information on the following topics: </p>
+
+<ul>
+
+<li> <a href="#scope">Restricting the scope of "success" notifications</a>
+
+<li> <a href="#cli">Postfix sendmail command-line interface</a>
+
+<li> <a href="#compat">Postfix VERP support compatibility</a>
+
+</ul>
+
+<h2> <a name="scope">Restricting the scope of "success" notifications</a> </h2>
+
+<p> Just like reports of undeliverable mail, DSN reports of
+<i>successful</i> delivery can give away more information about the
+internal infrastructure than desirable.  Unfortunately, disallowing
+"success" notification requests requires disallowing other DSN
+requests as well. The RFCs do not offer the option to negotiate
+feature subsets. </p>
+
+<p> This is not as bad as it sounds. When you turn off DSN for
+remote inbound mail, remote senders with DSN support will still be
+informed that their mail reached your Postfix gateway successfully;
+they just will not get successful delivery notices from your internal
+systems. Remote senders lose very little: they can no longer specify
+how Postfix should report delayed or failed delivery.  </p>
+
+<p> Use the smtpd_discard_ehlo_keyword_address_maps feature if you
+wish to allow DSN requests from trusted clients but not from random
+strangers (see below for how to turn this off for all clients):
+</p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    smtpd_discard_ehlo_keyword_address_maps = 
+        cidr:/etc/postfix/esmtp_access
+
+/etc/postfix/esmtp_access:
+    # Allow DSN requests from local subnet only
+    192.168.0.0/28      silent-discard
+    0.0.0.0/0           silent-discard, dsn
+    ::/0                silent-discard, dsn
+</pre>
+</blockquote>
+
+<p> If you want to disallow all use of DSN requests from the network,
+use the smtpd_discard_ehlo_keywords feature: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    smtpd_discard_ehlo_keywords = silent-discard, dsn
+</pre>
+</blockquote>
+
+<h2> <a name="cli">Postfix sendmail command-line interface</a> </h2>
+
+<p> Postfix has two Sendmail-compatible command-line options for
+DSN support. </p>
+
+<ul>
+
+<li> <p>  The first option specifies what notifications are sent
+for mail that is submitted via the Postfix sendmail(1) command line:
+</p>
+
+<blockquote>
+<pre>
+$ <b>sendmail -N success,delay,failure ...</b> (one or more of these)
+$ <b>sendmail -N never ...</b>                 (or just this by itself)
+</pre>
+</blockquote>
+
+<p> The built-in default corresponds with "delay,failure". </p>
+
+<li> <p> The second option specifies an envelope ID which is reported
+in delivery status notifications for mail that is submitted via the
+Postfix sendmail(1) command line: </p>
+
+<blockquote>
+<pre>
+$ <b>sendmail -V <i>envelope-id</i> ...</b>
+</pre>
+</blockquote>
+
+<p> Note: this conflicts with VERP support in older Postfix versions,
+as discussed in the next section. </p>
+
+</ul>
+
+<h2> <a name="compat">Postfix VERP support compatibility</a> </h2>
+
+<p> With Postfix versions before 2.3, the sendmail(1) command uses
+the -V command-line option to request VERP-style delivery.  In order
+to request VERP style delivery with Postfix 2.3 and later, you must
+specify -XV instead of -V. </p>
+
+<p> The Postfix 2.3 sendmail(1) command will recognize if you try
+to use -V for VERP-style delivery.  It will do the right thing and
+will remind you of the new syntax. </p>
+
+</body>
+
+</html>

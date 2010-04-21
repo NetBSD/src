@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.21.4.1 2009/02/08 18:42:16 snj Exp $	*/
+/*	$NetBSD: handler.c,v 1.21.4.1.4.1 2010/04/21 05:17:36 matt Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -478,7 +478,7 @@ getph2bymsgid(iph1, msgid)
 {
 	struct ph2handle *p;
 
-	LIST_FOREACH(p, &ph2tree, chain) {
+	LIST_FOREACH(p, &iph1->ph2tree, ph1bind) {
 		if (p->msgid == msgid)
 			return p;
 	}

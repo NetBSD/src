@@ -1,0 +1,38 @@
+Scripts and tools to format embedded manual pages, or to format C
+source code files. Each has an embedded man page in the source.
+
+ccformat 	c code formatter
+		usage: ccformat (copy stdin to stdout)
+		usage: ccformat files... (format files in place)
+
+enter		set project-specific environment
+		usage: enter project-name
+
+mansect		extract manual page section from source file
+		usage: mansect file.suffix
+		usage: mansect -type file
+
+srctoman	extract man page from source file
+		usage: srctoman file.suffix
+		usage: srctoman -type file
+
+man2html	quick script to htmlize nroff -man output
+
+postlink	quick script to hyperlink HTML text
+
+See the proto/README file for the following tools that generate
+HTML and ASCII forms of README documents and of some manual pages.
+
+fixman		quick hack to patch postconf.proto text into C sorce
+
+makereadme	create README_FILES table of contents (AAAREADME)
+
+html2readme	convert HTML to README file
+
+postconf2html	postconf.proto -> postconf.5.html
+
+postconf2man	postconf.proto -> postconf.5 (nroff input)
+
+xpostconf	extract selected sections from postconf.proto
+
+xpostdef	re-compute the defaults in postconf.proto

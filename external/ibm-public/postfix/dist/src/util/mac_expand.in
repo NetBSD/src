@@ -1,0 +1,18 @@
+name1 = name1-value
+name2 =
+
+${name1?name 1 defined, |$name1|$name2|}
+${name1:name 1 undefined, |$name1|$name2|}
+${name2?name 2 defined, |$name1|$name2|}
+${name2:name 2 undefined, |$name1|$name2|}
+|$name1|$name2|
+$(name1
+$(name )
+
+name2 = name2-value
+
+${name1?name 1 defined, |$name1|$name2|}
+${name1:name 1 undefined, |$name1|$name2|}
+${name2?name 2 defined, |$name1|$name2|}
+${name2:name 2 undefined, |$name1|$name2|}
+|$name1|$name2|

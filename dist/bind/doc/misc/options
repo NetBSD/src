@@ -69,8 +69,8 @@ options {
         alt-transfer-source-v6 ( <ipv6_address> | * ) [ port ( <integer> |
             * ) ];
         auth-nxdomain <boolean>; // default changed
-        avoid-v4-udp-ports { <port>; ... };
-        avoid-v6-udp-ports { <port>; ... };
+        avoid-v4-udp-ports { <portrange>; ... };
+        avoid-v6-udp-ports { <portrange>; ... };
         blackhole { <address_match_element>; ... };
         cache-file <quoted_string>;
         check-integrity <boolean>;
@@ -124,7 +124,7 @@ options {
         masterfile-format ( text | raw );
         match-mapped-addresses <boolean>;
         max-acache-size <size_no_default>;
-        max-cache-size <size>;
+        max-cache-size <size_no_default>;
         max-cache-ttl <integer>;
         max-clients-per-query <integer>;
         max-ixfr-log-size <size>; // obsolete
@@ -158,14 +158,15 @@ options {
         query-source <querysource4>;
         query-source-v6 <querysource6>;
         querylog <boolean>;
-        queryport-pool-ports <integer>;
-        queryport-pool-updateinterval <integer>;
+        queryport-pool-ports <integer>; // obsolete
+        queryport-pool-updateinterval <integer>; // obsolete
         random-device <quoted_string>;
         recursing-file <quoted_string>;
         recursion <boolean>;
         recursive-clients <integer>;
         request-ixfr <boolean>;
         request-nsid <boolean>;
+        reserved-sockets <integer>;
         rfc2308-type1 <boolean>; // not yet implemented
         root-delegation-only [ exclude { <quoted_string>; ... } ];
         rrset-order { [ class <string> ] [ type <string> ] [ name
@@ -197,7 +198,9 @@ options {
         use-alt-transfer-source <boolean>;
         use-id-pool <boolean>; // obsolete
         use-ixfr <boolean>;
-        use-queryport-pool <boolean>;
+        use-queryport-pool <boolean>; // obsolete
+        use-v4-udp-ports { <portrange>; ... };
+        use-v6-udp-ports { <portrange>; ... };
         version ( <quoted_string> | none );
         zero-no-soa-ttl <boolean>;
         zero-no-soa-ttl-cache <boolean>;
@@ -298,7 +301,7 @@ view <string> <optional_class> {
         match-destinations { <address_match_element>; ... };
         match-recursive-only <boolean>;
         max-acache-size <size_no_default>;
-        max-cache-size <size>;
+        max-cache-size <size_no_default>;
         max-cache-ttl <integer>;
         max-clients-per-query <integer>;
         max-ixfr-log-size <size>; // obsolete
@@ -325,8 +328,8 @@ view <string> <optional_class> {
         provide-ixfr <boolean>;
         query-source <querysource4>;
         query-source-v6 <querysource6>;
-        queryport-pool-ports <integer>;
-        queryport-pool-updateinterval <integer>;
+        queryport-pool-ports <integer>; // obsolete
+        queryport-pool-updateinterval <integer>; // obsolete
         recursion <boolean>;
         request-ixfr <boolean>;
         request-nsid <boolean>;
@@ -368,7 +371,7 @@ view <string> <optional_class> {
         try-tcp-refresh <boolean>;
         update-check-ksk <boolean>;
         use-alt-transfer-source <boolean>;
-        use-queryport-pool <boolean>;
+        use-queryport-pool <boolean>; // obsolete
         zero-no-soa-ttl <boolean>;
         zero-no-soa-ttl-cache <boolean>;
         zone <string> <optional_class> {

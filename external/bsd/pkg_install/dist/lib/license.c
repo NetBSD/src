@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.1.1.2.2.4 2009/07/27 00:37:08 snj Exp $	*/
+/*	$NetBSD: license.c,v 1.1.1.2.2.4.2.1 2010/04/21 05:23:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -50,15 +50,17 @@ const char *default_acceptable_licenses =
     "gnu-fdl-v1.1 gnu-fdl-v1.2 gnu-fdl-v1.3 "
     "gnu-gpl-v2 gnu-lgpl-v2 gnu-lgpl-v2.1 "
     "gnu-gpl-v3 gnu-lgpl-v3 "
-    "original-bsd modified-bsd "
+    "original-bsd modified-bsd 2-clause-bsd "
     "x11 mit miros "
     "apache-1.1 apache-2.0 "
     "artistic artistic-2.0 "
     "cddl-1.0 "
     "cpl-1.0 "
     "open-font-license "
-    "mpl-1.1 "
-    "zpl";
+    "mpl-1.0 mpl-1.1 "
+    "zpl "
+    "python-software-foundation "
+    "info-zip";
 
 #ifdef DEBUG
 static size_t hash_collisions;
@@ -265,8 +267,6 @@ acceptable_pkg_license_internal(const char **licensep, int toplevel, const char 
 		}
 		license += len;
 	}
-
-	return is_true;
 }
 
 int

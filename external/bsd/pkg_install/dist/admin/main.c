@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.8.1.2.1 2010/04/21 05:23:09 matt Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,10 +7,10 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.1.8.1.2.1 2010/04/21 05:23:09 matt Exp $");
 
 /*-
- * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,12 +74,19 @@ __RCSID("$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $");
 
 #ifndef BOOTSTRAP
 #include <archive.h>
+#include <fetch.h>
 #endif
 
 #include "admin.h"
 #include "lib.h"
 
 #define DEFAULT_SFX	".t[bg]z"	/* default suffix for ls{all,best} */
+
+struct pkgdb_count {
+	size_t files;
+	size_t directories;
+	size_t packages;
+};
 
 static const char Options[] = "C:K:SVbd:qs:v";
 
@@ -133,18 +140,16 @@ add_pkg(const char *pkgdir, void *vp)
 	plist_t	       *p;
 	package_t	Plist;
 	char 	       *contents;
-	const char     *PkgDBDir;
 	char *PkgName, *dirp;
 	char 		file[MaxPathSize];
-	char		dir[MaxPathSize];
-	int		tmp, *cnt;
+	struct pkgdb_count *count;
 
 	if (!pkgdb_open(ReadWrite))
 		err(EXIT_FAILURE, "cannot open pkgdb");
 
-	cnt = vp != NULL ? vp : &tmp;
+	count = vp;
+	++count->packages;
 
-	PkgDBDir = _pkgdb_getPKGDB_DIR();
 	contents = pkgdb_pkg_file(pkgdir, CONTENTS_FNAME);
 	if ((f = fopen(contents, "r")) == NULL)
 		errx(EXIT_FAILURE, "%s: can't open `%s'", pkgdir, CONTENTS_FNAME);
@@ -174,20 +179,18 @@ add_pkg(const char *pkgdir, void *vp)
 				}
 			} else {
 				pkgdb_store(file, PkgName);
-				(*cnt)++;
+				++count->files;
 			}
 			break;
 		case PLIST_PKGDIR:
 			add_pkgdir(PkgName, dirp, p->name);
-			(*cnt)++;
+			++count->directories;
 			break;
 		case PLIST_CWD:
-			if (strcmp(p->name, ".") != 0) {
+			if (strcmp(p->name, ".") != 0)
 				dirp = p->name;
-			} else {
-				(void) snprintf(dir, sizeof(dir), "%s/%s", PkgDBDir, pkgdir);
-				dirp = dir;
-			}
+			else
+				dirp = pkgdb_pkg_dir(pkgdir);
 			break;
 		case PLIST_IGNORE:
 			p = p->next;
@@ -229,24 +232,27 @@ delete1pkg(const char *pkgdir)
 static void 
 rebuild(void)
 {
-	char		cachename[MaxPathSize];
-	int		pkgcnt, filecnt;
+	char *cachename;
+	struct pkgdb_count count;
 
-	pkgcnt = 0;
-	filecnt = 0;
+	count.files = 0;
+	count.directories = 0;
+	count.packages = 0;
 
-	(void) _pkgdb_getPKGDB_FILE(cachename, sizeof(cachename));
+	cachename = pkgdb_get_database();
 	if (unlink(cachename) != 0 && errno != ENOENT)
 		err(EXIT_FAILURE, "unlink %s", cachename);
 
 	setbuf(stdout, NULL);
 
-	iterate_pkg_db(add_pkg, &filecnt);
+	iterate_pkg_db(add_pkg, &count);
 
 	printf("\n");
-	printf("Stored %d file%s from %d package%s in %s.\n",
-	    filecnt, filecnt == 1 ? "" : "s",
-	    pkgcnt, pkgcnt == 1 ? "" : "s",
+	printf("Stored %zu file%s and %zu explicit director%s"
+	    " from %zu package%s in %s.\n",
+	    count.files, count.files == 1 ? "" : "s",
+	    count.directories, count.directories == 1 ? "y" : "ies",
+	    count.packages, count.packages == 1 ? "" : "s",
 	    cachename);
 }
 
@@ -301,7 +307,7 @@ add_required_by(const char *pattern, const char *required_by)
 	free(path);
 	
 	len = strlen(required_by);
-	if (write(fd, required_by, len) != len ||
+	if (write(fd, required_by, len) != (ssize_t)len ||
 	    write(fd, "\n", 1) != 1 ||
 	    close(fd) == -1)
 		errx(EXIT_FAILURE, "Cannot write to %s", path);
@@ -365,7 +371,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'K':
-			_pkgdb_setPKGDB_DIR(optarg);
+			pkgdb_set_dir(optarg, 3);
 			break;
 
 		case 'S':
@@ -411,10 +417,15 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	pkg_install_config();
+	/*
+	 * config-var is reading the config file implicitly,
+	 * so skip it here.
+	 */
+	if (strcasecmp(argv[0], "config-var") != 0)
+		pkg_install_config();
 
 	if (use_default_sfx)
-		(void) snprintf(sfx, sizeof(sfx), "%s", DEFAULT_SFX);
+		(void) strlcpy(sfx, DEFAULT_SFX, sizeof(sfx));
 
 	if (strcasecmp(argv[0], "pmatch") == 0) {
 
@@ -469,7 +480,7 @@ main(int argc, char *argv[])
 			if (show_basename_only)
 				rc = match_local_files(dir, use_default_sfx, 1, basep, lsbasepattern, NULL);
 			else
-				rc = match_local_files(dir, use_default_sfx, 1, basep, lspattern, (void *)dir);
+				rc = match_local_files(dir, use_default_sfx, 1, basep, lspattern, __UNCONST(dir));
 			if (rc == -1)
 				errx(EXIT_FAILURE, "Error from match_local_files(\"%s\", \"%s\", ...)",
 				     dir, basep);
@@ -500,15 +511,20 @@ main(int argc, char *argv[])
 			
 			argv++;
 		}
-
 	} else if (strcasecmp(argv[0], "list") == 0 ||
 	    strcasecmp(argv[0], "dump") == 0) {
 
 		pkgdb_dump();
 
 	} else if (strcasecmp(argv[0], "add") == 0) {
+		struct pkgdb_count count;
+
+		count.files = 0;
+		count.directories = 0;
+		count.packages = 0;
+
 		for (++argv; *argv != NULL; ++argv)
-			add_pkg(*argv, NULL);
+			add_pkg(*argv, &count);
 	} else if (strcasecmp(argv[0], "delete") == 0) {
 		argv++;		/* "delete" */
 		while (*argv != NULL) {
@@ -559,7 +575,28 @@ main(int argc, char *argv[])
 		}
 	}
 #ifndef BOOTSTRAP
-	else if (strcasecmp(argv[0], "fetch-pkg-vulnerabilities") == 0) {
+	else if (strcasecmp(argv[0], "findbest") == 0) {
+		struct url *url;
+		char *output;
+		int rc;
+
+		process_pkg_path();
+
+		rc = 0;
+		for (++argv; *argv != NULL; ++argv) {
+			url = find_best_package(NULL, *argv, 1);
+			if (url == NULL) {
+				rc = 1;
+				continue;
+			}
+			output = fetchStringifyURL(url);
+			puts(output);
+			fetchFreeURL(url);
+			free(output);
+		}		
+
+		return rc;
+	} else if (strcasecmp(argv[0], "fetch-pkg-vulnerabilities") == 0) {
 		fetch_pkg_vulnerabilities(--argc, ++argv);
 	} else if (strcasecmp(argv[0], "check-pkg-vulnerabilities") == 0) {
 		check_pkg_vulnerabilities(--argc, ++argv);
@@ -711,9 +748,4 @@ set_unset_variable(char **argv, Boolean unset)
 	free(variable);
 
 	return;
-}
-
-void
-cleanup(int signo)
-{
 }

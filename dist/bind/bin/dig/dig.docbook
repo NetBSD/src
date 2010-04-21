@@ -2,7 +2,7 @@
                "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
 	       [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
  - Copyright (C) 2000-2003  Internet Software Consortium.
  -
  - Permission to use, copy, modify, and/or distribute this software for any
@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: dig.docbook,v 1.38.130.2 2008/05/14 23:46:33 tbox Exp -->
+<!-- Id: dig.docbook,v 1.38.130.7 2009/02/02 04:44:14 marka Exp -->
 <refentry id="man.dig">
 
   <refentryinfo>
@@ -43,6 +43,7 @@
       <year>2006</year>
       <year>2007</year>
       <year>2008</year>
+      <year>2009</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
     <copyright>
@@ -62,6 +63,7 @@
       <arg><option>-c <replaceable class="parameter">class</replaceable></option></arg>
       <arg><option>-f <replaceable class="parameter">filename</replaceable></option></arg>
       <arg><option>-k <replaceable class="parameter">filename</replaceable></option></arg>
+      <arg><option>-m</option></arg>
       <arg><option>-p <replaceable class="parameter">port#</replaceable></option></arg>
       <arg><option>-q <replaceable class="parameter">name</replaceable></option></arg>
       <arg><option>-t <replaceable class="parameter">type</replaceable></option></arg>
@@ -119,8 +121,8 @@
     </para>
 
     <para>
-      When no command line arguments or options are given, will perform an
-      NS query for "." (the root).
+      When no command line arguments or options are given,
+      <command>dig</command> will perform an NS query for "." (the root).
     </para>
 
     <para>
@@ -133,8 +135,8 @@
     <para>
       The IN and CH class names overlap with the IN and CH top level
       domains names.  Either use the <option>-t</option> and
-      <option>-c</option> options to specify the type and class or
-      use the <option>-q</option> the specify the domain name or
+      <option>-c</option> options to specify the type and class, 
+      use the <option>-q</option> the specify the domain name, or
       use "IN." and "CH." when looking up these top level domains.
     </para>
 
@@ -229,6 +231,12 @@
       queries, one per line.  Each entry in the file should be organized in
       the same way they would be presented as queries to
       <command>dig</command> using the command-line interface.
+    </para>
+
+    <para>
+      The <option>-m</option> option enables memory usage debugging.
+      <!-- It enables ISC_MEM_DEBUGTRACE and ISC_MEM_DEBUGRECORD
+           documented in include/isc/mem.h -->
     </para>
 
     <para>
@@ -442,17 +450,19 @@
 
         <varlistentry>
           <term><option>+[no]adflag</option></term>
-          <listitem>
-            <para>
-              Set [do not set] the AD (authentic data) bit in the query.  The
-              AD bit
-              currently has a standard meaning only in responses, not in
-              queries,
-              but the ability to set the bit in the query is provided for
-              completeness.
-            </para>
-          </listitem>
-        </varlistentry>
+	  <listitem>
+	    <para>
+	      Set [do not set] the AD (authentic data) bit in the
+	      query.  This requests the server to return whether
+	      all of the answer and authority sections have all
+	      been validated as secure according to the security
+	      policy of the server.  AD=1 indicates that all records
+	      have been validated as secure and the answer is not
+	      from a OPT-OUT range.  AD=0 indicate that some part
+	      of the answer was insecure or not validated.
+	    </para>
+	  </listitem>
+	</varlistentry>
 
         <varlistentry>
           <term><option>+[no]cdflag</option></term>
@@ -809,7 +819,7 @@
 	      on its own line.
             </para>
 	    <para>
-	      If not specified <command>dig</command> will look for
+	      If not specified, <command>dig</command> will look for
 	      <filename>/etc/trusted-key.key</filename> then
 	      <filename>trusted-key.key</filename> in the current directory.
 	    </para>

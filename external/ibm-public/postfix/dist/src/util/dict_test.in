@@ -1,0 +1,10 @@
+del bar
+get bar
+get nonexist
+del nonexist
+get foo
+del foo
+put baz bazval
+get baz
+del baz
+get baz

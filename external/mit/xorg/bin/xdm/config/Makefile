@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2.8.4 2009/03/15 20:31:59 snj Exp $
+#	$NetBSD: Makefile,v 1.2.8.4.4.1 2010/04/21 05:24:33 matt Exp $
 
 .include <bsd.own.mk>
 
 # native only gives DEFAULTVT for i386 and amd64.
-.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 DEFAULTVT=vt05
 .else
 DEFAULTVT=	# defined empty

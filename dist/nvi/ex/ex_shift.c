@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_shift.c,v 1.1.1.2.6.1 2009/01/20 02:56:07 snj Exp $ */
+/*	$NetBSD: ex_shift.c,v 1.1.1.2.6.1.4.1 2010/04/21 05:19:57 matt Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -135,7 +135,7 @@ shift(SCR *sp, EXCMD *cmdp, enum which rl)
 		 */
 		tbp = bp;
 		newidx = 0;
-		if (!O_ISSET(sp, O_EXPANDTABS)) {
+		if (!O_ISSET(sp, O_EXPANDTAB)) {
 			for (; newcol >= O_VAL(sp, O_TABSTOP); ++newidx) {
 				*tbp++ = '\t';
 				newcol -= O_VAL(sp, O_TABSTOP);

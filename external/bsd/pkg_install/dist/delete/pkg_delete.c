@@ -34,7 +34,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.4.4.2 2009/05/30 16:21:36 snj Exp $");
+__RCSID("$NetBSD: pkg_delete.c,v 1.1.1.4.4.2.2.1 2010/04/21 05:23:09 matt Exp $");
 
 #if HAVE_ERR_H
 #include <err.h>
@@ -44,14 +44,11 @@ __RCSID("$NetBSD: pkg_delete.c,v 1.1.1.4.4.2 2009/05/30 16:21:36 snj Exp $");
 
 #include "lib.h"
 
-#ifndef __UNCONST
-#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
-#endif
-
 static const char *pkgdb;
 static const char *destdir;
 static const char *prefix;
 
+static int keep_preserve;
 static int no_deinstall;
 static int find_by_filename;
 static int unregister_only;
@@ -63,7 +60,7 @@ static int delete_automatic_leaves;
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: pkg_delete [-DFfNnORrVv] [-K pkg_dbdir]"
+	fprintf(stderr, "usage: pkg_delete [-DFfkNnORrVv] [-K pkg_dbdir]"
 	    " [-P destdir] [-p prefix] pkg-name ...\n");
 	exit(1);
 }
@@ -369,18 +366,23 @@ find_new_leaves(lpkg_head_t *pkgs)
 static int
 find_preserve_pkgs(lpkg_head_t *pkgs)
 {
-	lpkg_t *lpp;
+	lpkg_t *lpp, *lpp_next;
 	char *fname;
 	int found_preserve;
 
 	found_preserve = 0;
-	TAILQ_FOREACH(lpp, pkgs, lp_link) {
+	TAILQ_FOREACH_SAFE(lpp, pkgs, lp_link, lpp_next) {
 		fname = pkgdb_pkg_file(lpp->lp_name, PRESERVE_FNAME);
 		if (!fexists(fname)) {
 			free(fname);
 			continue;
 		}
 		free(fname);
+		if (keep_preserve) {
+			TAILQ_REMOVE(pkgs, lpp, lp_link);
+			free_lpkg(lpp);
+			continue;
+		}
 		if (!found_preserve)
 			warnx("The following packages are marked as not "
 			    "for deletion:");
@@ -481,7 +483,7 @@ run_deinstall_script(const char *pkg, int do_postdeinstall)
 		return 0;
 	}
 
-	pkgdir = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	pkgdir = pkgdb_pkg_dir(pkg);
 	if (chmod(fname, 0555))
 		warn("chmod of `%s' failed", fname);
 	rv = fcexec(pkgdir, fname, pkg, target, NULL);
@@ -531,7 +533,8 @@ remove_line(const char *fname, const char *fname_tmp, const char *text)
 	if (rename(fname_tmp, fname) == -1) {
 		warn("Unable to rename `%s' to `%s'", fname_tmp, fname);
 		rv = 1;
-	}
+	} else
+		rv = 0;
 	remove(fname_tmp);
 
 	return rv;
@@ -676,10 +679,11 @@ remove_pkg(const char *pkg)
 		add_plist_top(&plist, PLIST_NAME, pkg);
 	}
 
-	setenv(PKG_PREFIX_VNAME, p->name, 1);
-	fname = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	setenv(PKG_REFCOUNT_DBDIR_VNAME, config_pkg_refcount_dbdir, 1);
+	fname = pkgdb_pkg_dir(pkg);
 	setenv(PKG_METADATA_DIR_VNAME, fname, 1);
 	free(fname);
+	setenv(PKG_PREFIX_VNAME, p->name, 1);
 
 	if (!no_deinstall && !unregister_only) {
 		if (run_deinstall_script(pkg, 0) && !Force)
@@ -735,6 +739,8 @@ remove_pkg(const char *pkg)
 	fname = pkgdb_pkg_file(pkg, VIEWS_FNAME);
 	if (fexists(fname))
 		is_depoted_pkg = TRUE;
+	else
+		is_depoted_pkg = FALSE;
 	free(fname);
 
 	if (Fake)
@@ -744,7 +750,7 @@ remove_pkg(const char *pkg)
 	 * Kill the pkgdb subdirectory. The files have been removed, so
 	 * this is way beyond the point of no return.
 	 */
-	pkgdir = xasprintf("%s/%s", _pkgdb_getPKGDB_DIR(), pkg);
+	pkgdir = pkgdb_pkg_dir(pkg);
 	(void) remove_files(pkgdir, "+*");
 	rv = 1;
 	if (isemptydir(pkgdir)&& rmdir(pkgdir) == 0)
@@ -773,7 +779,7 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&sorted_pkgs);
 
 	setprogname(argv[0]);
-	while ((ch = getopt(argc, argv, "ADFfNnORrVvK:P:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "ADFfK:kNnOP:p:RrVv")) != -1) {
 		switch (ch) {
 		case 'A':
 			delete_automatic_leaves = 1;
@@ -788,7 +794,10 @@ main(int argc, char *argv[])
 			++Force;
 			break;
 		case 'K':
-			pkgdb = optarg;
+			pkgdb_set_dir(optarg, 3);
+			break;
+		case 'k':
+			keep_preserve = 1;
 			break;
 		case 'N':
 			unregister_only = 1;
@@ -823,19 +832,16 @@ main(int argc, char *argv[])
 		}
 	}
 
+	pkg_install_config();
+
+	pkgdb = xstrdup(pkgdb_get_dir());
+
 	if (destdir != NULL) {
 		char *pkgdbdir;
 
-		if (pkgdb == NULL)
-			pkgdb = _pkgdb_getPKGDB_DIR();
-
 		pkgdbdir = xasprintf("%s/%s", destdir, pkgdb);
-		_pkgdb_setPKGDB_DIR(pkgdbdir);
+		pkgdb_set_dir(pkgdbdir, 4);
 		free(pkgdbdir);
-	} else if (pkgdb != NULL) {
-		_pkgdb_setPKGDB_DIR(pkgdb);
-	} else {
-		pkgdb = _pkgdb_getPKGDB_DIR();
 	}
 
 	argc -= optind;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.c,v 1.1.1.2.6.2 2009/01/20 03:01:03 snj Exp $ */
+/*	$NetBSD: ex.c,v 1.1.1.2.6.2.4.1 2010/04/21 05:19:57 matt Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -438,7 +438,7 @@ loop:	ecp = wp->ecq.lh_first;
 			break;
 		case 'E': case 'F': case 'N': case 'P': case 'T': case 'V':
 			newscreen = 1;
-			p[0] = tolower(p[0]);
+			p[0] = TOLOWER(p[0]);
 			break;
 		}
 
@@ -486,7 +486,7 @@ loop:	ecp = wp->ecq.lh_first;
 				/* FALLTHROUGH */
 			default:
 unknown:			if (newscreen)
-					p[0] = toupper(p[0]);
+					p[0] = TOUPPER(p[0]);
 				ex_unknown(sp, p, namelen);
 				goto err;
 			}
