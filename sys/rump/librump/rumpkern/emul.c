@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.131 2010/04/21 16:16:31 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.132 2010/04/21 20:07:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.131 2010/04/21 16:16:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.132 2010/04/21 20:07:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -67,7 +67,6 @@ struct lwp lwp0;
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
-int doing_shutdown;
 const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
@@ -75,13 +74,6 @@ struct timeval boottime;
 int cold = 1;
 int boothowto = AB_SILENT;
 struct tty *constty;
-
-char hostname[MAXHOSTNAMELEN];
-size_t hostnamelen;
-
-const char *panicstr;
-const char *domainname;
-int domainnamelen;
 
 #define DEVSW_SIZE 255
 const struct bdevsw *bdevsw0[DEVSW_SIZE]; /* XXX storage size */
