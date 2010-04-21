@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.20 2010/04/19 12:59:36 jruoho Exp $
+.\" $NetBSD: security.8,v 1.21 2010/04/21 05:05:07 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 19, 2010
+.Dd April 21, 2010
 .Dt SECURITY 8
 .Os
 .Sh NAME
@@ -40,9 +40,10 @@ Below is a brief description of them with some quick usage examples
 that will help you get started.
 .Pp
 Contents:
-.Bl -hyphen -compact
+.Bl -hyphen -compact -offset indent
 .It
-Veriexec (file integrity)
+Veriexec
+.Pq file integrity
 .It
 Exploit mitigation
 .It
@@ -68,30 +69,33 @@ can be started as follows:
 .Sh EXPLOIT MITIGATION
 .Nx
 incorporates some exploit mitigation features.
-The purpose of exploit mitigation features is to interfere with the way exploits
-work, in order to prevent them from succeeding.
-Due to that, some features may have other impact on the system, so be sure to
+The purpose of exploit mitigation features is to interfere
+with the way exploits work, in order to prevent them from succeeding.
+Due to that, some features may have other impacts on the system, so be sure to
 fully understand the implications of each feature.
 .Pp
 .Nx
 provides the following exploit mitigation features:
-.Bl -hyphen -compact
+.Pp
+.Bl -hyphen -compact -offset indent
 .It
-PaX ASLR (Address Space Layout Randomization)
+.Tn PaX ASLR
+.Pq Address Space Layout Randomization .
 .It
-PaX MPROTECT
+.Tn PaX MPROTECT
 .Xr ( mprotect 2
 restrictions)
 .It
-PaX SegvGuard
+.Tn PaX SegvGuard
 .It
 .Xr gcc 1
 stack-smashing protection (SSP)
 .El
 .Ss PaX ASLR
 .Em PaX ASLR
-implements Address Space Layout Randomization, meant to complement
-non-executable mappings.
+implements Address Space Layout Randomization
+.Pq Tn ASLR ,
+meant to complement non-executable mappings.
 Its purpose is to harden prediction of the address space layout, namely
 location of library and application functions that can be used by an attacker
 to circumvent non-executable mappings by using a technique called
@@ -108,20 +112,25 @@ of respawning services,
 .Em PaX Segvguard
 can be used (see below).
 .Pp
-For non-PIE (Position Independent Executable) executables,
+For non-PIE
+.Pq Position Independent Executable executables ,
 the
 .Nx
 .Em PaX ASLR
 implementation introduces randomization to the following memory regions:
-.Bl -enum -compact
+.Pp
+.Bl -enum -compact -offset indent
 .It
 The data segment
 .It
 The stack
 .El
 .Pp
-For PIE executables:
-.Bl -enum -compact
+For
+.Tn PIE
+executables:
+.Pp
+.Bl -enum -compact -offset indent
 .It
 The program itself (exec base)
 .It
@@ -153,9 +162,9 @@ globally:
 .Ed
 .Ss PaX MPROTECT
 .Em PaX MPROTECT
-implements memory protection restrictions, meant to complement non-executable
-mappings.
-Their purpose is to prevent situations where malicious code attempts to mark
+implements memory protection restrictions,
+meant to complement non-executable mappings.
+The purpose is to prevent situations where malicious code attempts to mark
 writable memory regions as executable, often by trashing arguments to an
 .Xr mprotect 2
 call.
@@ -198,7 +207,8 @@ memory.
 .Pp
 For this reason, it is highly recommended to have
 .Em PaX Segvguard
-enabled explicitly only for network services, etc.
+enabled explicitly only for network services or
+other processes deemed as critical to system security.
 Enabling
 .Em PaX Segvguard
 explicitly works like this:
@@ -207,8 +217,8 @@ explicitly works like this:
 .Ed
 .Pp
 However, a global knob is still provided, for use in strict environments
-with no local users (some network appliances, embedded devices, firewalls,
-etc.):
+with no local users (for example, some network appliances, embedded devices,
+and firewalls)
 .Bd -literal -offset indent
 # sysctl -w security.pax.segvguard.global=1
 .Ed
@@ -281,8 +291,11 @@ relies on it being a compile-time static.
 Use of
 .Em SSP
 is especially encouraged on platforms without per-page execute bit granularity
-such as
-.Em i386 .
+such as i386.
+As of
+.Nx 6.0 ,
+.Em SSP
+is used by default on i386 and amd64 architectures.
 .Sh PER-USER TEMPORARY STORAGE
 It is possible to configure per-user temporary storage to avoid potential
 security issues (race conditions, etc.) in programs that do not make secure
