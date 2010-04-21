@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.129 2010/04/19 11:26:33 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.130 2010/04/21 11:38:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.129 2010/04/19 11:26:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.130 2010/04/21 11:38:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -82,8 +82,6 @@ size_t hostnamelen;
 const char *panicstr;
 const char *domainname;
 int domainnamelen;
-
-const struct filterops sig_filtops;
 
 #define DEVSW_SIZE 255
 const struct bdevsw *bdevsw0[DEVSW_SIZE]; /* XXX storage size */
@@ -143,55 +141,8 @@ pg_find(pid_t pid, uint flags)
 	panic("%s: not implemented", __func__);
 }
 
-void
-psignal(struct proc *p, int signo)
-{
-
-	switch (signo) {
-	case SIGSYS:
-		break;
-	default:
-		panic("unhandled signal %d", signo);
-	}
-}
-
-void
-pgsignal(struct pgrp *pgrp, int sig, int checktty)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
 int
 pgid_in_session(struct proc *p, pid_t pg_id)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-int
-sigispending(struct lwp *l, int signo)
-{
-
-	return 0;
-}
-
-void
-sigpending1(struct lwp *l, sigset_t *ss)
 {
 
 	panic("%s: not implemented", __func__);
@@ -361,28 +312,7 @@ cpu_reboot(int howto, char *bootstr)
 
 void
 calcru(struct proc *p, struct timeval *up, struct timeval *sp,
-	struct timeval *ip, struct timeval *rp)
-{
-
-	panic("%s unimplemented", __func__);
-}
-
-int
-sigismasked(struct lwp *l, int sig)
-{
-
-	return 0;
-}
-
-void
-sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
-{
-
-	panic("%s unimplemented", __func__);
-}
-
-void
-ksiginfo_queue_drain0(ksiginfoq_t *kq)
+        struct timeval *ip, struct timeval *rp)
 {
 
 	panic("%s unimplemented", __func__);
