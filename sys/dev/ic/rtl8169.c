@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.105.4.2 2009/03/26 17:36:03 snj Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.105.4.2.4.1 2010/04/21 00:27:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.105.4.2 2009/03/26 17:36:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.105.4.2.4.1 2010/04/21 00:27:37 matt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -567,61 +567,67 @@ re_attach(struct rtk_softc *sc)
 
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
 		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
-		/* These rev numbers are taken from Realtek's driver */
 		switch (hwrev) {
 		case RTK_HWREV_8169:
-			/* XXX not in the Realtek driver */
-			sc->sc_rev = 1;
 			sc->sc_quirk |= RTKQ_8169NONS;
 			break;
 		case RTK_HWREV_8169S:
 		case RTK_HWREV_8110S:
-			sc->sc_rev = 3;
-			sc->sc_quirk |= RTKQ_MACLDPS;
-			break;
 		case RTK_HWREV_8169_8110SB:
-			sc->sc_rev = 4;
-			sc->sc_quirk |= RTKQ_MACLDPS;
-			break;
 		case RTK_HWREV_8169_8110SC:
-			sc->sc_rev = 5;
 			sc->sc_quirk |= RTKQ_MACLDPS;
-			break;
-		case RTK_HWREV_8101E:
-			sc->sc_rev = 11;
 			break;
 		case RTK_HWREV_8168_SPIN1:
-			sc->sc_rev = 21;
-			break;
 		case RTK_HWREV_8168_SPIN2:
-			sc->sc_rev = 22;
-			break;
 		case RTK_HWREV_8168_SPIN3:
-			sc->sc_rev = 23;
+			sc->sc_quirk |= RTKQ_MACSTAT;
 			break;
 		case RTK_HWREV_8168C:
 		case RTK_HWREV_8168C_SPIN2:
-			sc->sc_rev = 24;
-			break;
-		case RTK_HWREV_8102E:
-		case RTK_HWREV_8102EL:
-			sc->sc_rev = 25;
+		case RTK_HWREV_8168CP:
+		case RTK_HWREV_8168D:
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP;
+			/*
+			 * From FreeBSD driver:
+			 * 
+			 * These (8168/8111) controllers support jumbo frame
+			 * but it seems that enabling it requires touching
+			 * additional magic registers. Depending on MAC
+			 * revisions some controllers need to disable
+			 * checksum offload. So disable jumbo frame until
+			 * I have better idea what it really requires to
+			 * make it support.
+			 * RTL8168C/CP : supports up to 6KB jumbo frame.
+			 * RTL8111C/CP : supports up to 9KB jumbo frame.
+			 */
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8100E:
 		case RTK_HWREV_8100E_SPIN2:
-			/* XXX not in the Realtek driver */
-			sc->sc_rev = 0;
+		case RTK_HWREV_8101E:
+			sc->sc_quirk |= RTKQ_NOJUMBO;
+			break;
+		case RTK_HWREV_8102E:
+		case RTK_HWREV_8102EL:
+		case RTK_HWREV_8103E:
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
 			    "Unknown revision (0x%08x)\n", hwrev);
-			sc->sc_rev = 0;
+			/* assume the latest features */
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD;
+			sc->sc_quirk |= RTKQ_NOJUMBO;
 		}
 
 		/* Set RX length mask */
 		sc->re_rxlenmask = RE_RDESC_STAT_GFRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8169;
 	} else {
+		sc->sc_quirk |= RTKQ_NOJUMBO;
+
 		/* Set RX length mask */
 		sc->re_rxlenmask = RE_RDESC_STAT_FRAGLEN;
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8139;
@@ -630,7 +636,7 @@ re_attach(struct rtk_softc *sc)
 	/* Reset the adapter. */
 	re_reset(sc);
 
-	if (sc->sc_rev == 24 || sc->sc_rev == 25) {
+	if ((sc->sc_quirk & RTKQ_NOEECMD) != 0) {
 		/*
 		 * Get station address from ID registers.
 		 */
@@ -792,6 +798,15 @@ re_attach(struct rtk_softc *sc)
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
 	    IFCAP_TSOv4;
+
+	/*
+	 * XXX
+	 * Still have no idea how to make TSO work on 8168C, 8168CP,
+	 * 8102E, 8111C and 8111CP.
+	 */
+	if ((sc->sc_quirk & RTKQ_DESCV2) != 0)
+		ifp->if_capabilities &= ~IFCAP_TSOv4;
+
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
 	ifp->if_snd.ifq_maxlen = RE_IFQ_MAXLEN;
@@ -1236,23 +1251,49 @@ re_rxeof(struct rtk_softc *sc)
 		m->m_pkthdr.rcvif = ifp;
 
 		/* Do RX checksumming */
+		if ((sc->sc_quirk & RTKQ_DESCV2) == 0) {
+			/* Check IP header checksum */
+			if ((rxstat & RE_RDESC_STAT_PROTOID) != 0) {
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				if (rxstat & RE_RDESC_STAT_IPSUMBAD)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_IPv4_BAD;
 
-		/* Check IP header checksum */
-		if (rxstat & RE_RDESC_STAT_PROTOID) {
-			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-			if (rxstat & RE_RDESC_STAT_IPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-		}
+				/* Check TCP/UDP checksum */
+				if (RE_TCPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+					if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				} else if (RE_UDPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+					if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				}
+			}
+		} else {
+			/* Check IPv4 header checksum */
+			if ((rxvlan & RE_RDESC_VLANCTL_IPV4) != 0) {
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				if (rxstat & RE_RDESC_STAT_IPSUMBAD)
+					m->m_pkthdr.csum_flags |=
+					    M_CSUM_IPv4_BAD;
 
-		/* Check TCP/UDP checksum */
-		if (RE_TCPPKT(rxstat)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
-			if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
-		} else if (RE_UDPPKT(rxstat)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
-			if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
+				/* Check TCPv4/UDPv4 checksum */
+				if (RE_TCPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+					if (rxstat & RE_RDESC_STAT_TCPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				} else if (RE_UDPPKT(rxstat)) {
+					m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+					if (rxstat & RE_RDESC_STAT_UDPSUMBAD)
+						m->m_pkthdr.csum_flags |=
+						    M_CSUM_TCP_UDP_BAD;
+				}
+			}
+			/* XXX Check TCPv6/UDPv6 checksum? */
 		}
 
 		if (rxvlan & RE_RDESC_VLANCTL_TAG) {
@@ -1453,6 +1494,7 @@ re_start(struct ifnet *ifp)
 		 * chip. I'm not sure if this is a requirement or a bug.)
 		 */
 
+		vlanctl = 0;
 		if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
 			uint32_t segsz = m->m_pkthdr.segsz;
 
@@ -1468,12 +1510,28 @@ re_start(struct ifnet *ifp)
 			if ((m->m_pkthdr.csum_flags &
 			    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4))
 			    != 0) {
-				re_flags |= RE_TDESC_CMD_IPCSUM;
-				if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
-					re_flags |= RE_TDESC_CMD_TCPCSUM;
-				} else if (m->m_pkthdr.csum_flags &
-				    M_CSUM_UDPv4) {
-					re_flags |= RE_TDESC_CMD_UDPCSUM;
+				if ((sc->sc_quirk & RTKQ_DESCV2) == 0) {
+					re_flags |= RE_TDESC_CMD_IPCSUM;
+					if (m->m_pkthdr.csum_flags &
+					    M_CSUM_TCPv4) {
+						re_flags |=
+						    RE_TDESC_CMD_TCPCSUM;
+					} else if (m->m_pkthdr.csum_flags &
+					    M_CSUM_UDPv4) {
+						re_flags |=
+						    RE_TDESC_CMD_UDPCSUM;
+					}
+				} else {
+					vlanctl |= RE_TDESC_VLANCTL_IPCSUM;
+					if (m->m_pkthdr.csum_flags &
+					    M_CSUM_TCPv4) {
+						vlanctl |=
+						    RE_TDESC_VLANCTL_TCPCSUM;
+					} else if (m->m_pkthdr.csum_flags &
+					    M_CSUM_UDPv4) {
+						vlanctl |=
+						    RE_TDESC_VLANCTL_UDPCSUM;
+					}
 				}
 			}
 		}
@@ -1497,7 +1555,8 @@ re_start(struct ifnet *ifp)
 		nsegs = map->dm_nsegs;
 		pad = false;
 		if (__predict_false(m->m_pkthdr.len <= RE_IP4CSUMTX_PADLEN &&
-		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0)) {
+		    (re_flags & RE_TDESC_CMD_IPCSUM) != 0 &&
+		    (sc->sc_quirk & RTKQ_DESCV2) == 0)) {
 			pad = true;
 			nsegs++;
 		}
@@ -1525,9 +1584,8 @@ re_start(struct ifnet *ifp)
 		 * appear in all descriptors of a multi-descriptor
 		 * transmission attempt.
 		 */
-		vlanctl = 0;
 		if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL)
-			vlanctl = bswap16(VLAN_TAG_VALUE(mtag)) |
+			vlanctl |= bswap16(VLAN_TAG_VALUE(mtag)) |
 			    RE_TDESC_VLANCTL_TAG;
 
 		/*
@@ -1664,6 +1722,7 @@ re_init(struct ifnet *ifp)
 	const uint8_t *enaddr;
 	uint32_t rxcfg = 0;
 	uint32_t reg;
+	uint16_t cfg;
 	int error;
 
 	if ((error = re_enable(sc)) != 0)
@@ -1681,32 +1740,27 @@ re_init(struct ifnet *ifp)
 	 * RX checksum offload. We must configure the C+ register
 	 * before all others.
 	 */
-	reg = 0;
-
-	/*
-	 * XXX: Realtek docs say bits 0 and 1 are reserved, for 8169S/8110S.
-	 * FreeBSD  drivers set these bits anyway (for 8139C+?).
-	 * So far, it works.
-	 */
+	cfg = RE_CPLUSCMD_PCI_MRW;
 
 	/*
 	 * XXX: For old 8169 set bit 14.
 	 *      For 8169S/8110S and above, do not set bit 14.
 	 */
 	if ((sc->sc_quirk & RTKQ_8169NONS) != 0)
-		reg |= (0x1 << 14) | RTK_CPLUSCMD_PCI_MRW;;
+		cfg |= (0x1 << 14);
 
-	if (1)  {/* not for 8169S ? */
-		reg |=
-		    RTK_CPLUSCMD_VLANSTRIP |
-		    (ifp->if_capenable &
-		    (IFCAP_CSUM_IPv4_Rx | IFCAP_CSUM_TCPv4_Rx |
-		     IFCAP_CSUM_UDPv4_Rx) ?
-		    RTK_CPLUSCMD_RXCSUM_ENB : 0);
-	}
+	if ((ifp->if_capenable & ETHERCAP_VLAN_HWTAGGING) != 0)
+		cfg |= RE_CPLUSCMD_VLANSTRIP;
+	if ((ifp->if_capenable & (IFCAP_CSUM_IPv4_Rx |
+	     IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx)) != 0)
+		cfg |= RE_CPLUSCMD_RXCSUM_ENB;
+	if ((sc->sc_quirk & RTKQ_MACSTAT) != 0) {
+		cfg |= RE_CPLUSCMD_MACSTAT_DIS;
+		cfg |= RE_CPLUSCMD_TXENB;
+	} else
+		cfg |= RE_CPLUSCMD_RXENB | RE_CPLUSCMD_TXENB;
 
-	CSR_WRITE_2(sc, RTK_CPLUS_CMD,
-	    reg | RTK_CPLUSCMD_RXENB | RTK_CPLUSCMD_TXENB);
+	CSR_WRITE_2(sc, RTK_CPLUS_CMD, cfg);
 
 	/* XXX: from Realtek-supplied Linux driver. Wholly undocumented. */
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0)
@@ -1859,14 +1913,9 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 	switch (command) {
 	case SIOCSIFMTU:
 		/*
-		 * According to FreeBSD, 8102E/8102EL use a different DMA
-		 * descriptor format. 8168C/8111C requires touching additional
-		 * magic registers. Depending on MAC revisions some controllers
-		 * need to disable checksum offload.
-		 *
-		 * Disable jumbo frames for those parts.
+		 * Disable jumbo frames if it's not supported.
 		 */
-		if ((sc->sc_rev == 24 || sc->sc_rev == 25) &&
+		if ((sc->sc_quirk & RTKQ_NOJUMBO) != 0 &&
 		    ifr->ifr_mtu > ETHERMTU) {
 			error = EINVAL;
 			break;
@@ -1931,8 +1980,14 @@ re_stop(struct ifnet *ifp, int disable)
 
 	mii_down(&sc->mii);
 
-	CSR_WRITE_1(sc, RTK_COMMAND, 0x00);
+	if ((sc->sc_quirk & RTKQ_CMDSTOP) != 0)
+		CSR_WRITE_1(sc, RTK_COMMAND, RTK_CMD_STOPREQ | RTK_CMD_TX_ENB |
+		    RTK_CMD_RX_ENB);
+	else
+		CSR_WRITE_1(sc, RTK_COMMAND, 0x00);
+	DELAY(1000);
 	CSR_WRITE_2(sc, RTK_IMR, 0x0000);
+	CSR_WRITE_2(sc, RTK_ISR, 0xFFFF);
 
 	if (sc->re_head != NULL) {
 		m_freem(sc->re_head);

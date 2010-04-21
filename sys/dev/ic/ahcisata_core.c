@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.18.4.1 2009/02/19 20:30:15 snj Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.18.4.1.4.1 2010/04/21 00:27:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.18.4.1 2009/02/19 20:30:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.18.4.1.4.1 2010/04/21 00:27:35 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -102,6 +102,8 @@ static const struct scsipi_bustype ahci_atapi_bustype = {
 #endif /* NATAPIBUS */
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
+#define ATA_RESET_DELAY 31000 /* 31s for a drive reset */
+#define AHCI_RST_WAIT (ATA_RESET_DELAY / 10)
 
 const struct ata_bustype ahci_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
@@ -510,16 +512,20 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		chp->ch_queue->active_xfer->c_kill_xfer(chp,
 		    chp->ch_queue->active_xfer, KILL_RESET);
 	}
+	tsleep(&sc, PRIBIO, "ahcirst", mstohz(500));
+	/* clear port interrupt register */
+	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
+	/* clear SErrors and start operations */
 	ahci_channel_start(sc, chp);
 	/* wait 31s for BSY to clear */
-	for (i = 0; i <3100; i++) {
+	for (i = 0; i <AHCI_RST_WAIT; i++) {
 		tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
 		if ((((tfd & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
 		    & WDCS_BSY) == 0)
 			break;
 		tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
 	}
-	if (i == 1500)
+	if (i == AHCI_RST_WAIT)
 		aprint_error("%s: BSY never cleared, TD 0x%x\n",
 		    AHCINAME(sc), tfd);
 	AHCIDEBUG_PRINT(("%s: BSY took %d ms\n", AHCINAME(sc), i * 10),
@@ -570,19 +576,24 @@ ahci_probe_drive(struct ata_channel *chp)
 	switch (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
 	    achp->ahcic_sstatus)) {
 	case SStatus_DET_DEV:
+		tsleep(&sc, PRIBIO, "ahcidv", mstohz(500));
+		/* clear port interrupt register */
+		AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 		/* clear SErrors and start operations */
 		ahci_channel_start(sc, chp);
 		/* wait 31s for BSY to clear */
-		for (i = 0; i <3100; i++) {
+		for (i = 0; i <AHCI_RST_WAIT; i++) {
 			sig = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
 			if ((((sig & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
 			    & WDCS_BSY) == 0)
 				break;
 			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
 		}
-		if (i == 1500)
+		if (i == AHCI_RST_WAIT) {
 			aprint_error("%s: BSY never cleared, TD 0x%x\n",
 			    AHCINAME(sc), sig);
+			return;
+		}
 		AHCIDEBUG_PRINT(("%s: BSY took %d ms\n", AHCINAME(sc), i * 10),
 		    DEBUG_PROBE);
 		sig = AHCI_READ(sc, AHCI_P_SIG(chp->ch_channel));
@@ -599,7 +610,9 @@ ahci_probe_drive(struct ata_channel *chp)
 		} else
 			chp->ch_drive[0].drive_flags |= DRIVE_ATA;
 		splx(s);
-		/* enable interrupts */
+		/* clear port interrupt register */
+		AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
+		/* and enable interrupts */
 		AHCI_WRITE(sc, AHCI_P_IE(chp->ch_channel),
 		    AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_IFS |
 		    AHCI_P_IX_OFS | AHCI_P_IX_DPS | AHCI_P_IX_UFS |

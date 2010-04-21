@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.113.16.1 2009/06/09 17:40:04 snj Exp $ */
+/* $NetBSD: locore.s,v 1.113.16.1.2.1 2010/04/21 00:33:53 matt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.113.16.1 2009/06/09 17:40:04 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.113.16.1.2.1 2010/04/21 00:33:53 matt Exp $");
 
 #include "assym.h"
 

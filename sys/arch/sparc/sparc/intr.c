@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.100 2008/01/09 13:52:33 ad Exp $ */
+/*	$NetBSD: intr.c,v 1.100.26.1 2010/04/21 00:33:48 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100 2008/01/09 13:52:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.100.26.1 2010/04/21 00:33:48 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -291,7 +291,9 @@ nmi_soft(struct trapframe *tf)
 			/* In case there's an xcall in progress (unlikely) */
 			spl0();
 			cpuinfo.flags &= ~CPUFLG_READY;
+#ifdef MULTIPROCESSOR
 			cpu_ready_mask &= ~(1 << cpu_number());
+#endif
 			prom_cpustop(0);
 			break;
 		case OPENPROM_MBX_ABORT:

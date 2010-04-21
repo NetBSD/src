@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.66 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: hme.c,v 1.66.14.1 2010/04/21 00:27:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.66 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.66.14.1 2010/04/21 00:27:36 matt Exp $");
 
 /* #define HMEDEBUG */
 
@@ -91,7 +91,7 @@ int		hme_ioctl(struct ifnet *, u_long, void *);
 void		hme_tick(void *);
 void		hme_watchdog(struct ifnet *);
 void		hme_shutdown(void *);
-int		hme_init(struct hme_softc *);
+int		hme_init(struct ifnet *);
 void		hme_meminit(struct hme_softc *);
 void		hme_mifinit(struct hme_softc *);
 void		hme_reset(struct hme_softc *);
@@ -110,8 +110,6 @@ void		hme_read(struct hme_softc *, int, uint32_t);
 int		hme_eint(struct hme_softc *, u_int);
 int		hme_rint(struct hme_softc *);
 int		hme_tint(struct hme_softc *);
-
-static int	ether_cmp(u_char *, u_char *);
 
 /* Default buffer copy routines */
 void	hme_copytobuf_contig(struct hme_softc *, void *, int, int);
@@ -240,6 +238,7 @@ hme_config(sc)
 	ifp->if_softc = sc;
 	ifp->if_start = hme_start;
 	ifp->if_ioctl = hme_ioctl;
+	ifp->if_init = hme_init;
 	ifp->if_watchdog = hme_watchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
@@ -340,7 +339,7 @@ hme_reset(sc)
 	int s;
 
 	s = splnet();
-	(void)hme_init(sc);
+	(void)hme_init(&sc->sc_ethercom.ec_if);
 	splx(s);
 }
 
@@ -455,10 +454,10 @@ hme_meminit(sc)
  * and transmit/receive descriptor rings.
  */
 int
-hme_init(sc)
-	struct hme_softc *sc;
+hme_init(ifp)
+	struct ifnet *ifp;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct hme_softc *sc = (struct hme_softc *)ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t seb = sc->sc_seb;
 	bus_space_handle_t etx = sc->sc_etx;
@@ -642,22 +641,6 @@ hme_init(sc)
 }
 
 /*
- * Compare two Ether/802 addresses for equality, inlined and unrolled for
- * speed.
- */
-static inline int
-ether_cmp(a, b)
-	u_char *a, *b;
-{
-
-	if (a[5] != b[5] || a[4] != b[4] || a[3] != b[3] ||
-	    a[2] != b[2] || a[1] != b[1] || a[0] != b[0])
-		return (0);
-	return (1);
-}
-
-
-/*
  * Routine to copy from mbuf chain to transmit buffer in
  * network buffer memory.
  * Returns the amount of data copied.
@@ -825,9 +808,8 @@ hme_get(sc, ri, flags)
 			while (optsum >> 16)
 				optsum = (optsum >> 16) + (optsum & 0xffff);
 
-			/* Deduct the ip opts sum from the hwsum (rfc 1624). */
-			m0->m_pkthdr.csum_data = ~((~m0->m_pkthdr.csum_data) -
-						   ~optsum);
+			/* Deduct the ip opts sum from the hwsum. */
+			m0->m_pkthdr.csum_data += (uint16_t)~optsum;
 
 			while (m0->m_pkthdr.csum_data >> 16)
 				m0->m_pkthdr.csum_data =
@@ -836,7 +818,7 @@ hme_get(sc, ri, flags)
 		}
 
 		m0->m_pkthdr.csum_flags |= M_CSUM_DATA | M_CSUM_NO_PSEUDOHDR;
-	}
+	} else
 swcsum:
 		m0->m_pkthdr.csum_flags = 0;
 #endif
@@ -1421,14 +1403,14 @@ hme_ioctl(ifp, cmd, data)
 				hme_setladrf(sc);
 			else {
 				ifp->if_flags |= IFF_UP;
-				error = hme_init(sc);
+				error = hme_init(ifp);
 			}
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
 			ifp->if_flags |= IFF_UP;
-			error = hme_init(sc);
+			error = hme_init(ifp);
 			break;
 		}
 		break;
@@ -1452,7 +1434,7 @@ hme_ioctl(ifp, cmd, data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			error = hme_init(sc);
+			error = hme_init(ifp);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * If setting debug or promiscuous mode, do not reset
@@ -1465,13 +1447,13 @@ hme_ioctl(ifp, cmd, data)
 				    == (sc->sc_if_flags & (~RESETIGN)))
 					hme_setladrf(sc);
 				else
-					error = hme_init(sc);
+					error = hme_init(ifp);
 			}
 #undef RESETIGN
 		}
 
 		if (sc->sc_ec_capenable != sc->sc_ethercom.ec_capenable)
-			error = hme_init(sc);
+			error = hme_init(ifp);
 
 		break;
 
@@ -1553,7 +1535,7 @@ hme_setladrf(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (ether_cmp(enm->enm_addrlo, enm->enm_addrhi)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.5.4.3 2009/03/18 05:08:38 snj Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.5.4.3.4.1 2010/04/21 00:28:14 matt Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.5.4.3 2009/03/18 05:08:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.5.4.3.4.1 2010/04/21 00:28:14 matt Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -116,9 +115,7 @@ udf_wr_nodedscr_callback(struct buf *buf)
 	udf_node->outstanding_nodedscr--;
 	if (udf_node->outstanding_nodedscr == 0) {
 		/* unlock the node */
-		KASSERT(udf_node->i_flags & IN_CALLBACK_ULK);
-		UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
-
+		UDF_UNLOCK_NODE(udf_node, 0);
 		wakeup(&udf_node->outstanding_nodedscr);
 	}
 	/* unreference the vnode so it can be recycled */

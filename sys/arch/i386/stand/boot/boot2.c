@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.38 2008/10/11 11:06:19 joerg Exp $	*/
+/*	$NetBSD: boot2.c,v 1.38.8.1 2010/04/21 00:33:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -482,11 +482,15 @@ parsebootconf(const char *conf)
 
 static int getchoicefrominput(char *input, int def)
 {
-	int choice;
+	int choice, usedef;
+
 	choice = -1;
-	if (*input == '\0' || *input == '\r' || *input == '\n')
+	usedef = 0;
+
+	if (*input == '\0' || *input == '\r' || *input == '\n') {
 		choice = def;
-	else if (*input >= 'A' && *input < bootconf.nummenu + 'A')
+		usedef = 1;
+	} else if (*input >= 'A' && *input < bootconf.nummenu + 'A')
 		choice = (*input) - 'A';
 	else if (*input >= 'a' && *input < bootconf.nummenu + 'a')
 		choice = (*input) - 'a';
@@ -495,6 +499,11 @@ static int getchoicefrominput(char *input, int def)
 		if (choice < 0 || choice >= bootconf.nummenu)
 			choice = -1;
 	}
+
+	if (bootconf.menuformat != MENUFORMAT_LETTER &&
+	    !isnum(*input) && !usedef)
+		choice = -1;
+
 	return choice;
 }
 
@@ -655,11 +664,23 @@ boot2(int biosdev, u_int biossector)
 #else
 		c = awaitkey((bootconf.timeout < 0) ? 0 : bootconf.timeout, 1);
 #endif
-		if ((c != '\r') && (c != '\n') && (c != '\0') &&
-		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0
-		     || check_password(boot_params.bp_password))) {
-			printf("type \"?\" or \"help\" for help.\n");
+		if ((c != '\r') && (c != '\n') && (c != '\0')) {
+		    if ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0) {
+			/* do NOT ask for password */
 			bootmenu(); /* does not return */
+		    } else {
+			/* DO ask for password */
+			if (check_password(boot_params.bp_password)) {
+			    /* password ok */
+			    printf("type \"?\" or \"help\" for help.\n");
+			    bootmenu(); /* does not return */
+			} else {
+			    /* bad password */
+			    printf("Wrong password.\n");
+			    currname = 0;
+			    continue;
+			}
+		    }
 		}
 
 		/*

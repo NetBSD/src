@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libdrm_nouveau
+Description: Userspace interface to nouveau kernel DRM services
+Version: 0.5
+Libs: -L${libdir} -ldrm_nouveau
+Cflags: -I${includedir} -I${includedir}/drm -I${includedir}/nouveau

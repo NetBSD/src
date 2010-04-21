@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.5.10.1 2008/11/14 02:49:37 snj Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.5.10.1.4.1 2010/04/21 00:33:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5.10.1 2008/11/14 02:49:37 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5.10.1.4.1 2010/04/21 00:33:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,21 @@ via_get_bus_clock(struct cpu_info *ci)
 	}
 
 	return bus_clock;
+}
+
+int
+viac7_get_bus_clock(struct cpu_info *ci)
+{
+	uint64_t msr;
+	int mult;
+
+	msr = rdmsr(MSR_PERF_STATUS);
+	mult = (msr >> 8) & 0xff;
+	if (mult == 0)
+		return 0;
+
+	return ((ci->ci_data.cpu_cc_freq + 10000000) / 10000000 * 10000000) /
+		 mult / 10000;
 }
 
 int
@@ -111,6 +126,18 @@ p3_get_bus_clock(struct cpu_info *ci)
 		}
 		break;
 	case 0xe: /* Core Duo/Solo */
+		/*
+		 * XXX
+		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
+		 * In the long-term, use ACPI instead of all this.
+		 */
+		switch (CPUID2EXTMODEL(ci->ci_signature)) {
+		case 0x1:
+			aprint_debug("%s: unable to determine bus speed",
+			    device_xname(ci->ci_dev));
+			goto print_msr;
+		}
+		/* FALLTHROUGH */
 	case 0xf: /* Core Xeon */
 		msr = rdmsr(MSR_FSB_FREQ);
 		bus = (msr >> 0) & 0x7;

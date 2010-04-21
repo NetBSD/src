@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.12 2006/07/23 12:01:26 bouyer Exp $
+#	$NetBSD: Makefile,v 1.12.78.1 2010/04/21 00:27:39 matt Exp $
 
 # use 'make -f Makefile.pcidevs' to make pcidevs.h and pcidevs_data.h
+
+SUBDIR=	hdaudio
 
 INCSDIR= /usr/include/dev/pci
 

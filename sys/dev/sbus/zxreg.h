@@ -1,4 +1,4 @@
-/*	$NetBSD: zxreg.h,v 1.5.4.1 2009/04/03 17:45:31 snj Exp $	*/
+/*	$NetBSD: zxreg.h,v 1.5.4.1.4.1 2010/04/21 00:27:52 matt Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.

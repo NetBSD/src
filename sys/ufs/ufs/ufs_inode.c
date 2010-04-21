@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.76.4.1 2009/02/08 19:08:23 snj Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.76.4.1.4.1 2010/04/21 00:28:26 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.76.4.1 2009/02/08 19:08:23 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.76.4.1.4.1 2010/04/21 00:28:26 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -92,7 +92,7 @@ ufs_inactive(void *v)
 	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
 
 	transmp = vp->v_mount;
-	fstrans_start(transmp, FSTRANS_SHARED);
+	fstrans_start(transmp, FSTRANS_LAZY);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
@@ -328,11 +328,11 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	GOP_SIZE(vp, off + len, &eob, 0);
 	mutex_enter(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
-		if (error) {
-			pgs[i]->flags |= PG_RELEASED;
-		} else if (off <= pagestart + (i << PAGE_SHIFT) &&
+		if (off <= pagestart + (i << PAGE_SHIFT) &&
 		    pagestart + ((i + 1) << PAGE_SHIFT) <= eob) {
 			pgs[i]->flags &= ~PG_RDONLY;
+		} else if (error) {
+			pgs[i]->flags |= PG_RELEASED;
 		}
 	}
 	if (error) {

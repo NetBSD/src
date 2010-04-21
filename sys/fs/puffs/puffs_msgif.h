@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.65 2008/01/28 21:06:36 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.65.26.1 2010/04/21 00:28:13 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -561,6 +561,13 @@ struct puffs_vnmsg_mmap {
 
 	vm_prot_t		pvnr_prot;		/* OUT	*/
 	struct puffs_kcred	pvnr_cred;		/* OUT	*/
+};
+
+struct puffs_vnmsg_abortop {
+	struct puffs_req	pvn_pr;
+
+	struct puffs_kcn	pvnr_cn;		/* OUT	*/
+	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
 };
 
 

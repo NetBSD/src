@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.14.10.1 2009/07/26 18:31:38 snj Exp $	*/
+/*	$NetBSD: ciss.c,v 1.14.10.1.2.1 2010/04/21 00:27:36 matt Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.14.10.1 2009/07/26 18:31:38 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.14.10.1.2.1 2010/04/21 00:27:36 matt Exp $");
 
 #include "bio.h"
 

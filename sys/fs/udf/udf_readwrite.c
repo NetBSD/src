@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.8.4.1 2009/02/18 00:51:27 snj Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.8.4.1.4.1 2010/04/21 00:28:14 matt Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.8.4.1 2009/02/18 00:51:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.8.4.1.4.1 2010/04/21 00:28:14 matt Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 

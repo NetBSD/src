@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.23 2008/05/21 13:36:45 ad Exp $	 */
+/*	$NetBSD: pcio.c,v 1.23.14.1 2010/04/21 00:33:51 matt Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -70,6 +70,20 @@ static int getcomaddr(int);
 #endif /* SUPPORT_SERIAL */
 
 #define POLL_FREQ 10
+
+static void
+wait(int us)
+{
+	int prev = biosgetsystime();
+	int tgt = prev + (20 * us) / 1000000;
+	int new;
+
+	while ((new = biosgetsystime()) < tgt) {
+		if (new < prev) /* XXX timer wrapped */
+			break;
+		prev = new;
+	}
+}
 
 #ifdef SUPPORT_SERIAL
 static int
@@ -317,15 +331,19 @@ awaitkey(int timeout, int tell)
 
 	for (;;) {
 		if (tell && (i % POLL_FREQ) == 0) {
-			char numbuf[20];
-			int len, j;
+			char numbuf[32];
+			int len;
 
-			sprintf(numbuf, "%d ", i/POLL_FREQ);
-			len = strlen(numbuf);
-			for (j = 0; j < len; j++)
-				numbuf[len + j] = '\b';
-			numbuf[len + j] = '\0';
-			printf(numbuf);
+			len = snprintf(numbuf, sizeof(numbuf), "%d seconds. ",
+			    i/POLL_FREQ);
+			if (len > 0 && len < sizeof(numbuf)) {
+				char *p = numbuf;
+
+				printf("%s", numbuf);
+				while (*p)
+					*p++ = '\b';
+				printf("%s", numbuf);
+			}
 		}
 		if (iskey(1)) {
 			/* flush input buffer */
@@ -336,14 +354,14 @@ awaitkey(int timeout, int tell)
 			goto out;
 		}
 		if (i--)
-			delay(1000000 / POLL_FREQ);
+			wait(1000000 / POLL_FREQ);
 		else
 			break;
 	}
 
 out:
 	if (tell)
-		printf("0 \n");
+		printf("0 seconds.     \n");
 
 	return c;
 }

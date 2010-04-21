@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.60 2008/05/11 14:44:53 ad Exp $
+#	$NetBSD: files.amd64,v 1.60.12.1 2010/04/21 00:33:53 matt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -112,6 +112,7 @@ include	"dev/isa/files.isa"
 
 # PC clock
 file 	arch/x86/isa/clock.c 			isa
+file	arch/x86/isa/rtc.c			isa
 
 # TSC timecounter support
 file	arch/x86/x86/tsc.c
@@ -177,7 +178,9 @@ include	"dev/usb/files.usb"
 
 include "dev/bluetooth/files.bluetooth"
 
-include	"dev/ieee1394/files.ieee1394"
+include "dev/sdmmc/files.sdmmc"
+
+include "dev/ieee1394/files.ieee1394"
 include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
 file	arch/amd64/acpi/acpi_wakeup_low.S	acpi

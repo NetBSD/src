@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.38.6.5 2009/03/02 19:56:34 snj Exp $ */
+/*	$NetBSD: cgsix.c,v 1.38.6.5.4.1 2010/04/21 00:27:53 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38.6.5 2009/03/02 19:56:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.38.6.5.4.1 2010/04/21 00:27:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

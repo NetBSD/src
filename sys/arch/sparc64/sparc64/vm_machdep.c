@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.84.6.2 2009/06/05 18:29:46 snj Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.84.6.2.2.1 2010/04/21 00:33:49 matt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84.6.2 2009/06/05 18:29:46 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84.6.2.2.1 2010/04/21 00:33:49 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"

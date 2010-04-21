@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.12 2008/07/03 15:44:19 drochner Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.12.12.1 2010/04/21 00:33:45 matt Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.12 2008/07/03 15:44:19 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.12.12.1 2010/04/21 00:33:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,13 +153,13 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	void *ih_arg;
 {
 	int evtch;
-	char evname[8];
+	char evname[16];
 	struct xen_intr_handle ih;
 #if NIOAPIC > 0
 	struct ioapic_softc *pic = NULL;
 #endif
 
-	ih.pirq = irq;
+	ih.pirq = 0;
 
 #if NIOAPIC > 0
 	if (mp_busses != NULL) {
@@ -178,6 +178,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 			printf("isa_intr_establish: no MP mapping found\n");
 	}
 #endif
+	ih.pirq |= (irq & 0xff);
 
 	evtch = xen_intr_map(&ih.pirq, type);
 	if (evtch == -1)

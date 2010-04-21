@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.36.12.1 2009/08/24 04:05:56 matt Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.36.12.2 2010/04/21 00:28:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.36.12.1 2009/08/24 04:05:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.36.12.2 2010/04/21 00:28:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,9 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.36.12.1 2009/08/24 04:05:56 matt Ex
 
 #define BUFFERSIZE (64 * 1024)
 #define MAXBUFFERSIZE (256 * 1024)
+#ifndef PRIxVADDR
+#define	PRIxVADDR	"lx"
+#endif
 
 /*
  * The map entries can *almost* be read with programs like cat.  However,

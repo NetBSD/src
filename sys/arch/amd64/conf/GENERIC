@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.231.4.2 2009/02/19 20:23:46 snj Exp $
+# $NetBSD: GENERIC,v 1.231.4.2.4.1 2010/04/21 00:33:53 matt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.231.4.2 $"
+#ident 		"GENERIC-$Revision: 1.231.4.2.4.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -297,7 +297,8 @@ pcppi*  	at acpi?                # AT-style speaker sound
 sony*		at acpi?		# Sony Notebook Controller
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
-wss* 		at acpi?		# NeoMagic 256AV in wss mode
+wb*		at acpi?		# Winbond W83L518D SD/MMC reader
+sdmmc*		at wb?			# SD/MMC bus
 
 #apm0	at mainbus0			# Advanced power management
 
@@ -355,6 +356,7 @@ pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
+options 	PMS_ELANTECH_TOUCHPAD	# Enable support for Elantech Touchpads
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
@@ -607,7 +609,9 @@ fd*	at fdc? drive ?			# the drives themselves
 # Network Interfaces
 
 # PCI network interfaces
+age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 440x 10/100 Ethernet
@@ -693,6 +697,7 @@ tlp*	at cardbus? function ?	# DECchip 21143
 # MII/PHY support
 acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
 amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
+atphy*	at mii?	phy ?			# Attansic/Atheros PHYs
 bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
@@ -901,6 +906,14 @@ ieee1394if* at fwohci?
 fwip*	at ieee1394if?			# IP over IEEE1394
 sbp*	at ieee1394if? euihi ? euilo ?
 
+# SD/MMC/SDIO Controller and Device support
+
+# SD/MMC controller
+sdhc*  at pci?				# SD Host Controller
+sdmmc* at sdhc?				# SD/MMC bus
+
+ld*    at sdmmc?
+
 # Audio Devices
 
 # PCI audio devices
@@ -929,6 +942,10 @@ opl*	at cmpci? flags 1
 opl*	at eso?
 opl*	at fms?
 opl*	at sv?
+
+# High Definition Audio
+#hdaudio*	at pci? dev ? function ?	# High Definition Audio
+#hdafg*		at hdaudiobus?
 
 # Audio support
 audio*	at audiobus?

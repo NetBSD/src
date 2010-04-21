@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.376.4.2.2.1 2009/07/01 22:47:12 snj Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.376.4.2.2.1.2.1 2010/04/21 00:28:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.2.2.1 2009/07/01 22:47:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376.4.2.2.1.2.1 2010/04/21 00:28:19 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -288,7 +288,7 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 
 	/* If we can autoload a vfs module, try again */
 	mutex_enter(&module_lock);
-	(void)module_autoload(fstype, MODULE_CLASS_VFS);
+	(void)module_autoload(fstypename, MODULE_CLASS_VFS);
 	mutex_exit(&module_lock);
 
 	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
@@ -3317,7 +3317,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	uint32_t saveflag;
 	int error;
 
-	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART | TRYEMULROOT,
+	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART | TRYEMULROOT | INRENAME,
 	    seg, from);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
@@ -3382,7 +3382,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 
 	NDINIT(&tond, RENAME,
 	    LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART | TRYEMULROOT
-	      | (fvp->v_type == VDIR ? CREATEDIR : 0),
+	      | INRENAME | (fvp->v_type == VDIR ? CREATEDIR : 0),
 	    seg, to);
 	if ((error = namei(&tond)) != 0) {
 		VFS_RENAMELOCK_EXIT(fs);
