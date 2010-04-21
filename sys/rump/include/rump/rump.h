@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.38 2010/04/14 14:12:48 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.39 2010/04/21 11:38:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -65,6 +65,13 @@ typedef struct prop_dictionary *prop_dictionary_t;
 enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
 typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
 
+enum rump_sigmodel {
+	RUMP_SIGMODEL_PANIC,
+	RUMP_SIGMODEL_IGNORE,
+	RUMP_SIGMODEL_HOST,
+	RUMP_SIGMODEL_RAISE,
+};
+
 /* rumpvfs */
 #define RUMPCN_FREECRED  0x02
 #define RUMPCN_FORCEFREE 0x04
@@ -85,6 +92,7 @@ _BEGIN_DECLS
 
 int	rump_boot_gethowto(void);
 void	rump_boot_sethowto(int);
+void	rump_boot_setsigmodel(enum rump_sigmodel);
 
 void	rump_schedule(void);
 void	rump_unschedule(void);
