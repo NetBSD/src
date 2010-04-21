@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.23 2010/04/21 05:40:59 jruoho Exp $
+.\" $NetBSD: security.8,v 1.24 2010/04/21 05:49:36 jruoho Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -308,11 +308,13 @@ C library of
 .Nx .
 .Pp
 The underlying idea builds on the observation that there are cases where
-the compiler knows the size of a buffer (cf.
-.Xr __builtin_object_size 3 ) .
+the compiler knows the size of a buffer.
 If a buffer overflow is suspected in a function that does little or no
 bounds checking, either a compile time warning can be issued or a
 safer substitute function can be used at runtime.
+Refer to
+.Xr ssp 3
+for additional details.
 .Pp
 The
 .Em FORTIY_SOURCE
