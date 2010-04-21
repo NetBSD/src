@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.130 2010/04/21 11:38:05 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.131 2010/04/21 16:16:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.130 2010/04/21 11:38:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.131 2010/04/21 16:16:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -308,12 +308,4 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* this function is __dead, we must exit */
 	rumpuser_exit(0);
-}
-
-void
-calcru(struct proc *p, struct timeval *up, struct timeval *sp,
-        struct timeval *ip, struct timeval *rp)
-{
-
-	panic("%s unimplemented", __func__);
 }
