@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.unix.c,v 1.9.42.2 2009/06/29 23:25:09 snj Exp $	*/
+/*	$NetBSD: hack.unix.c,v 1.9.42.2.2.1 2010/04/21 05:25:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.unix.c,v 1.9.42.2 2009/06/29 23:25:09 snj Exp $");
+__RCSID("$NetBSD: hack.unix.c,v 1.9.42.2.2.1 2010/04/21 05:25:15 matt Exp $");
 #endif				/* not lint */
 
 /* This file collects some Unix dependencies; hack.pager.c contains some more */

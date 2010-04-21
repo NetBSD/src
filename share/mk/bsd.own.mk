@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.542.2.9.4.4 2009/12/14 06:35:01 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.542.2.9.4.5 2010/04/21 05:26:47 matt Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -834,14 +834,16 @@ X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
 	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
 	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xp Xpm XprintUtil \
 	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
-	fontenc xkbfile xkbui Xaw lbxutil Xfontcache XprintAppUtil
+	fontenc xkbfile xkbui Xaw lbxutil Xfontcache XprintAppUtil \
+	pciaccess
 X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 .endfor
 
 .for _proto in \
 	xcmisc xext xf86bigfont bigreqs input kb x fonts fixes scrnsaver \
 	xinerama print render resource record video xf86dga xf86misc \
-	xf86vidmode composite damage trap gl randr fontcache xf86dri
+	xf86vidmode composite damage trap gl randr fontcache xf86dri \
+	dri2
 X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
 
@@ -879,10 +881,10 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 .endfor
 
 .for _v in \
-	agten apm ark ast ati chips cirrus crime cyrix glint i128 i740 imstt \
+	ag10e apm ark ast ati chips cirrus crime cyrix glint i128 i740 imstt \
 	intel mach64 mga neomagic newport nsc nv nvxbox pnozz r128 radeonhd \
-	rendition s3 s3virge savage siliconmotion sis sunffb suncg6 tdfx tga \
-	trident tseng vesa vga via vmware wsfb
+	rendition s3 s3virge savage siliconmotion sis sunffb suncg6 sunleo \
+	suntcx tdfx tga trident tseng vesa vga via vmware wsfb
 	
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor

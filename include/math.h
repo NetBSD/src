@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.47 2008/04/25 21:20:57 christos Exp $	*/
+/*	$NetBSD: math.h,v 1.47.16.1 2010/04/21 05:26:00 matt Exp $	*/
 
 /*
  * ====================================================
@@ -59,8 +59,12 @@ union __long_double_u {
  * ANSI/POSIX
  */
 /* 7.12#3 HUGE_VAL, HUGELF, HUGE_VALL */
+#if __GNUC_PREREQ__(3, 3)
+#define HUGE_VAL	__builtin_huge_val()
+#else
 extern const union __double_u __infinity;
 #define HUGE_VAL	__infinity.__val
+#endif
 
 /*
  * ISO C99
@@ -72,14 +76,21 @@ extern const union __double_u __infinity;
     ((_XOPEN_SOURCE  - 0) >= 600) || \
     defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
 /* 7.12#3 HUGE_VAL, HUGELF, HUGE_VALL */
+#if __GNUC_PREREQ__(3, 3)
+#define	HUGE_VALF	__builtin_huge_valf()
+#define	HUGE_VALL	__builtin_huge_vall()
+#else
 extern const union __float_u __infinityf;
 #define	HUGE_VALF	__infinityf.__val
 
 extern const union __long_double_u __infinityl;
 #define	HUGE_VALL	__infinityl.__val
+#endif
 
 /* 7.12#4 INFINITY */
-#ifdef __INFINITY
+#if __GNUC_PREREQ__(3, 3)
+#define	INFINITY	__builtin_inff()
+#elif defined(__INFINITY)
 #define	INFINITY	__INFINITY	/* float constant which overflows */
 #else
 #define	INFINITY	HUGE_VALF	/* positive infinity */
@@ -348,6 +359,15 @@ float	nextafterf(float, float);
 #define islessequal(x, y)	(!isunordered((x), (y)) && (x) <= (y))
 #define islessgreater(x, y)	(!isunordered((x), (y)) && \
 				 ((x) > (y) || (y) > (x)))
+double	fdim(double, double);
+double	fmax(double, double);
+double	fmin(double, double);
+float	fdimf(float, float);
+float	fmaxf(float, float);
+float	fminf(float, float);
+long double fdiml(long double, long double);
+long double fmaxl(long double, long double);
+long double fminl(long double, long double);
 
 #endif /* !_ANSI_SOURCE && ... */
 

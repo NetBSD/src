@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sha224hl.c,v 1.1.2.2 2009/07/14 19:35:23 snj Exp $");
+__RCSID("$NetBSD: sha224hl.c,v 1.1.2.2.2.1 2010/04/21 05:28:08 matt Exp $");
 
 #define	HASH_ALGORITHM	SHA224
 #define	HASH_FNPREFIX	SHA224_

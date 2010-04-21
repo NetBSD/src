@@ -1,4 +1,4 @@
-/* $NetBSD: exec_elf32.c,v 1.9 2001/10/01 23:32:34 cgd Exp $ */
+/* $NetBSD: exec_elf32.c,v 1.9.46.1 2010/04/21 05:27:21 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: exec_elf32.c,v 1.9 2001/10/01 23:32:34 cgd Exp $");
+__RCSID("$NetBSD: exec_elf32.c,v 1.9.46.1 2010/04/21 05:27:21 matt Exp $");
 #endif /* not lint */
 
 #ifndef ELFSIZE
@@ -58,14 +58,14 @@ ELFNAMEEND(check)(mappedfile, mappedsize)
 	const char *mappedfile;
 	size_t mappedsize;
 {
-	Elf_Ehdr *ehdrp;
+	const Elf_Ehdr *ehdrp;
 	int rv;
 
 	rv = 0;
 
 	if (check(0, sizeof *ehdrp))
 		BAD;
-	ehdrp = (Elf_Ehdr *)&mappedfile[0];
+	ehdrp = (const Elf_Ehdr *)&mappedfile[0];
 
 	if (memcmp(ehdrp->e_ident, ELFMAG, SELFMAG) != 0 ||
 	    ehdrp->e_ident[EI_CLASS] != ELFCLASS)
@@ -88,38 +88,41 @@ ELFNAMEEND(findoff)(mappedfile, mappedsize, vmaddr, fileoffp)
 	size_t mappedsize, *fileoffp;
 	u_long vmaddr;
 {
-	Elf_Ehdr *ehdrp;
-	Elf_Shdr *shdrp;
-	Elf_Off shdr_off;
-	Elf_Word shdr_size;
+	const Elf_Ehdr *ehdrp;
+	const Elf_Phdr *phdrp;
+	Elf_Off phdr_off;
+	Elf_Word phdr_size;
 #if (ELFSIZE == 32)
-	Elf32_Half nshdr, i;
+	Elf32_Half nphdr, i;
 #elif (ELFSIZE == 64)
-	Elf64_Half nshdr, i;
+	Elf64_Half nphdr, i;
 #endif
 	int rv;
 
 	rv = 0;
 
-	ehdrp = (Elf_Ehdr *)&mappedfile[0];
-	nshdr = ehdrp->e_shnum;
-	shdr_off = ehdrp->e_shoff;
-	shdr_size = ehdrp->e_shentsize * nshdr;
+	ehdrp = (const Elf_Ehdr *)&mappedfile[0];
+	nphdr = ehdrp->e_phnum;
+	phdr_off = ehdrp->e_phoff;
+	phdr_size = sizeof(Elf_Phdr) * nphdr;
 
-	if (check(shdr_off, shdr_size) ||
-	    (sizeof *shdrp != ehdrp->e_shentsize))
+	if (check(0, phdr_off + phdr_size))
 		BAD;
-	shdrp = (Elf_Shdr *)&mappedfile[shdr_off];
+	phdrp = (const Elf_Phdr *)&mappedfile[phdr_off];
 
-	for (i = 0; i < nshdr; i++) {
-		if (shdrp[i].sh_addr <= vmaddr &&
-		    vmaddr < (shdrp[i].sh_addr + shdrp[i].sh_size)) {
+#define IS_TEXT(p)	(p.p_flags & PF_X)
+#define IS_DATA(p)	(p.p_flags & PF_W)
+
+	for (i = 0; i < nphdr; i++) {
+		if ((IS_TEXT(phdrp[i]) || IS_DATA(phdrp[i])) &&
+		    phdrp[i].p_vaddr <= vmaddr &&
+		    vmaddr < phdrp[i].p_vaddr + phdrp[i].p_filesz) {
 			*fileoffp = vmaddr -
-			    shdrp[i].sh_addr + shdrp[i].sh_offset;
+			    phdrp[i].p_vaddr + phdrp[i].p_offset;
 			break;
 		}
 	}
-	if (i == nshdr)
+	if (i == nphdr)
 		BAD;
 
 out:

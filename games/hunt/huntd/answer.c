@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.9.14.1 2009/06/28 19:53:30 snj Exp $	*/
+/*	$NetBSD: answer.c,v 1.9.14.1.2.1 2010/04/21 05:25:15 matt Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.9.14.1 2009/06/28 19:53:30 snj Exp $");
+__RCSID("$NetBSD: answer.c,v 1.9.14.1.2.1 2010/04/21 05:25:15 matt Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>

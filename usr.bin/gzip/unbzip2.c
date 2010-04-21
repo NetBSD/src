@@ -1,4 +1,4 @@
-/*	$NetBSD: unbzip2.c,v 1.11 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: unbzip2.c,v 1.11.12.1 2010/04/21 05:27:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 static off_t
 unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 {
-	int		ret, end_of_file;
+	int		ret, end_of_file, cold = 0;
 	off_t		bytes_out = 0;
 	bz_stream	bzs;
 	static char	*inbuf, *outbuf;
@@ -62,7 +62,7 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	if (bytes_in)
 		*bytes_in = prelen;
 
-	while (ret >= BZ_OK && ret != BZ_STREAM_END) {
+	while (ret == BZ_OK) {
 	        if (bzs.avail_in == 0 && !end_of_file) {
 			ssize_t	n;
 
@@ -84,9 +84,19 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	        switch (ret) {
 	        case BZ_STREAM_END:
 	        case BZ_OK:
-	                if (ret == BZ_OK && end_of_file)
-	                        maybe_err("read");
-	                if (!tflag) {
+	                if (ret == BZ_OK && end_of_file) {
+				/*
+				 * If we hit this after a stream end, consider
+				 * it as the end of the whole file and don't
+				 * bail out.
+				 */
+				if (cold == 1)
+					ret = BZ_STREAM_END;
+				else
+					maybe_errx("truncated file");
+			}
+			cold = 0;
+	                if (!tflag && bzs.avail_out != BUFLEN) {
 				ssize_t	n;
 
 	                        n = write(out, outbuf, BUFLEN - bzs.avail_out);
@@ -94,7 +104,14 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	                                maybe_err("write");
 	                	bytes_out += n;
 	                }
-	                break;
+			if (ret == BZ_STREAM_END && !end_of_file) {
+				if (BZ2_bzDecompressEnd(&bzs) != BZ_OK ||
+				    BZ2_bzDecompressInit(&bzs, 0, 0) != BZ_OK)
+					maybe_errx("bzip2 re-init");
+				cold = 1;
+				ret = BZ_OK;
+			}
+			break;
 
 	        case BZ_DATA_ERROR:
 	                maybe_warnx("bzip2 data integrity error");
@@ -107,7 +124,10 @@ unbzip2(int in, int out, char *pre, size_t prelen, off_t *bytes_in)
 	        case BZ_MEM_ERROR:
 	                maybe_warnx("bzip2 out of memory");
 			break;
-
+		
+		default:	
+			maybe_warnx("unknown bzip2 error: %d", ret);
+			break;
 	        }
 	}
 

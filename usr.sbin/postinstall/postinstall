@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.16.2.2 2009/05/14 00:26:09 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.16.2.2.2.1 2010/04/21 05:27:21 matt Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,7 @@
 # This script is executed as part of a cross build.  Allow the build
 # environment to override the locations of some tools.
 : ${AWK:=awk}
+: ${EGREP:=egrep}
 : ${FGREP:=fgrep}
 : ${GREP:=grep}
 : ${MAKE:=make}
@@ -620,7 +621,7 @@ get_makevar()
 detect_x11()
 {
 	if $SOURCEMODE; then
-		get_makevar MKX11 X11ROOTDIR
+		get_makevar MKX11 X11ROOTDIR X11SRCDIR
 	else
 		if [ -f "${SRC_DIR}/etc/mtree/set.xetc" ]; then
 			MKX11=yes
@@ -629,6 +630,7 @@ detect_x11()
 			MKX11=no
 			X11ROOTDIR=
 		fi
+		X11SRCDIR=/nonexisent/xsrc
 	fi
 }
 
@@ -756,6 +758,43 @@ do_envsys()
 }
 
 #
+#	X11 fontconfig
+#
+additem fontconfig "X11 font configuration is up to date"
+do_fontconfig()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_fontconfig fix|check"
+	op="$1"
+	failed=0
+
+	if [ -f "${DEST_DIR}/etc/fonts/conf.d/10-unhinted.conf" -a \
+	     -f "${DEST_DIR}/etc/fonts/conf.d/10-autohint.conf" ]; then
+		failed=1
+	fi
+
+	if [ "$failed" = 1 ]; then
+		msg \
+    "Broken fontconfig configuration found; please delete these files"
+		msg \
+    "in the ${DESTDIR}/etc/fonts/conf.d/ subdirectory:"
+		msg \
+    "   10-autohint.conf 10-no-sub-pixel.conf 10-sub-pixel-bgr.conf"
+		msg \
+    "   10-sub-pixel-rgb.conf 10-sub-pixel-vbgr.conf"
+		msg \
+    "   10-sub-pixel-vrgb.conf 10-unhinted.conf 25-unhint-nonlatin.conf"
+		msg \
+    "   65-khmer.conf 70-no-bitmaps.conf 70-yes-bitmaps.conf"
+		msg \
+    "(This warning only appears if both the 10-unhinted.conf and"
+		msg \
+    "10-autohint.conf files are present."
+	fi
+
+	return ${failed}
+}
+
+#
 #	gid
 #
 additem gid "required groups in /etc/group"
@@ -764,7 +803,7 @@ do_gid()
 	[ -n "$1" ] || err 3 "USAGE: do_gid  fix|check"
 
 	check_ids "$1" groups "${DEST_DIR}/etc/group" \
-	    named ntpd postfix sshd authpf _pflogd _rwhod _proxy _timedc \
+	    named ntpd sshd authpf _pflogd _rwhod _proxy _timedc \
 	    _sdpd _httpd
 }
 
@@ -808,6 +847,7 @@ additem makedev "/dev/MAKEDEV being up to date"
 do_makedev()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_makedev   fix|check"
+	failed=0
 
 	if [ -f "${SRC_DIR}/etc/MAKEDEV.tmpl" ]; then
 			# generate MAKEDEV from source if source is available
@@ -823,11 +863,16 @@ do_makedev()
 	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	compare_dir "$1" "${dir}" "${DEST_DIR}/dev" 555 MAKEDEV
+	failed=$(( ${failed} + $? ))
+
 	find_file_in_dirlist MAKEDEV.local "MAKEDEV.local" \
 	    "${SRC_DIR}/etc" "${SRC_DIR}/dev" \
 	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
 	compare_dir "$1" "${dir}" "${DEST_DIR}/dev" 555 MAKEDEV.local
+	failed=$(( ${failed} + $? ))
+
+	return ${failed}
 }
 
 #
@@ -987,31 +1032,6 @@ do_pf()
 }
 
 #
-#	postfix
-#
-additem postfix "/etc/postfix/ being up to date"
-do_postfix()
-{
-	[ -n "$1" ] || err 3 "USAGE: do_postfix  fix|check"
-	op="$1"
-	failed=0
-
-	find_file_in_dirlist postfix-script "postfix scripts" \
-	    "${SRC_DIR}/gnu/dist/postfix/conf" \
-	    "${DEST_DIR}/usr/share/examples/postfix" \
-	    || return 1
-			# ${dir} is set by find_file_in_dirlist()
-	compare_dir "${op}" "${dir}" "${DEST_DIR}/etc/postfix" 555 \
-	    post-install postfix-script
-	failed=$(( ${failed} + $? ))
-	compare_dir "${op}" "${dir}" "${DEST_DIR}/etc/postfix" 444 \
-	    postfix-files
-	failed=$(( ${failed} + $? ))
-
-	return ${failed}
-}
-
-#
 #	rc
 #
 additem rc "/etc/rc* and /etc/rc.d/ being up to date"
@@ -1040,7 +1060,7 @@ do_rc()
 		accounting altqd amd apmd \
 		bootconf.sh bootparams btattach btconfig btdevctl bthcid \
 		ccd cgd cleartmp cron \
-		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
+		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck ftp_proxy ftpd \
 		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
@@ -1334,6 +1354,71 @@ do_x11()
 	done
 
 	return ${failed}
+}
+
+#
+#	xkb
+#
+# /usr/X11R7/lib/X11/xkb/symbols/pc used to be a directory, but changed
+# to a file on 2009-06-12.  Fixing this requires removing the directory
+# (which we can do) and re-extracting the xbase set (which we can't do),
+# or at least adding that one file (which we may be able to do if X11SRCDIR
+# is available).
+#
+additem xkb "clean up for xkbdata to xkeyboard-config upgrade"
+do_xkb()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_xkb  fix|check"
+	op="$1"
+	failed=0
+
+	pcpath="/usr/X11R7/lib/X11/xkb/symbols/pc"
+	pcsrcdir="${X11SRCDIR}/external/mit/xkeyboard-config/dist/symbols"
+
+	filemsg="\
+${pcpath} was a directory, should be a file.
+    To fix, extract the xbase set again."
+
+	_notfixed=""
+	if [ "${op}" = "fix" ]; then
+		_notfixed="${NOT_FIXED}"
+	fi
+
+	if [ ! -d "${DESTDIR}${pcpath}" ]; then
+		return 0
+	fi
+
+	# Delete obsolete files in the directory, and the directory
+	# itself.  If the directory contains unexpected extra files
+	# then it will not be deleted.
+	( [ -f "${DEST_DIR}"/var/db/obsolete/xbase ] \
+	    &&  sort -ru "${DEST_DIR}"/var/db/obsolete/xbase \
+	    | ${EGREP} "^\\.?${pcpath}/" ;
+	    echo "${pcpath}" ) \
+	| obsolete_paths "${op}"
+	failed=$(( ${failed} + $? ))
+
+	# If the directory was removed above, then try to replace it with
+	# a file.
+	if [ -d "${DESTDIR}${pcpath}" ]; then
+		msg "${filemsg}${_notfixed}"
+		failed=$(( ${failed} + 1 ))
+	else
+		if ! find_file_in_dirlist pc "${pcpath}" \
+			"${pcsrcdir}" "${SRC_DIR}${pcpath%/*}"
+		then
+			msg "${filemsg}${_notfixed}"
+			failed=$(( ${failed} + 1 ))
+		else
+			# ${dir} is set by find_file_in_dirlist()
+			populate_dir "${op}" true \
+				"${dir}" "${DEST_DIR}${pcpath%/*}" 444 \
+				pc
+			failed=$(( ${failed} + $? ))
+		fi
+	fi
+
+	return $failed
 }
 
 #

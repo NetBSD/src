@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.93 2008/08/03 09:25:05 skrll Exp $	*/
+/*	$NetBSD: gzip.c,v 1.93.10.1 2010/04/21 05:27:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
  Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.93 2008/08/03 09:25:05 skrll Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.93.10.1 2010/04/21 05:27:10 matt Exp $");
 #endif /* not lint */
 
 /*
@@ -78,6 +78,9 @@ enum filetype {
 #ifndef NO_COMPRESS_SUPPORT
 	FT_Z,
 #endif
+#ifndef NO_PACK_SUPPORT
+	FT_PACK,
+#endif
 	FT_LAST,
 	FT_UNKNOWN
 };
@@ -92,6 +95,10 @@ enum filetype {
 #ifndef NO_COMPRESS_SUPPORT
 #define Z_SUFFIX	".Z"
 #define Z_MAGIC		"\037\235"
+#endif
+
+#ifndef NO_PACK_SUPPORT
+#define PACK_MAGIC	"\037\036"
 #endif
 
 #define GZ_SUFFIX	".gz"
@@ -139,8 +146,9 @@ static suffixes_t suffixes[] = {
 #undef SUFFIX
 };
 #define NUM_SUFFIXES (sizeof suffixes / sizeof suffixes[0])
+#define SUFFIX_MAXLEN	30
 
-static	const char	gzip_version[] = "NetBSD gzip 20060927";
+static	const char	gzip_version[] = "NetBSD gzip 20091011";
 
 static	int	cflag;			/* stdout mode */
 static	int	dflag;			/* decompress mode */
@@ -166,7 +174,7 @@ static	char	*infile;		/* name of file coming in */
 
 static	void	maybe_err(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
-#ifndef NO_BZIP2_SUPPORT
+#if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT)
 static	void	maybe_errx(const char *fmt, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 #endif
@@ -212,6 +220,10 @@ static	off_t	unbzip2(int, int, char *, size_t, off_t *);
 #ifndef NO_COMPRESS_SUPPORT
 static	FILE 	*zdopen(int);
 static	off_t	zuncompress(FILE *, FILE *, char *, size_t, off_t *);
+#endif
+
+#ifndef NO_PACK_SUPPORT
+static	off_t	unpack(int, int, char *, size_t, off_t *);
 #endif
 
 int main(int, char *p[]);
@@ -323,6 +335,8 @@ main(int argc, char **argv)
 		case 'S':
 			len = strlen(optarg);
 			if (len != 0) {
+				if (len > SUFFIX_MAXLEN)
+					errx(1, "incorrect suffix: '%s'", optarg);
 				suffixes[0].zipped = optarg;
 				suffixes[0].ziplen = len;
 			} else {
@@ -408,7 +422,7 @@ maybe_err(const char *fmt, ...)
 	exit(2);
 }
 
-#ifndef NO_BZIP2_SUPPORT
+#if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT)
 /* ... without an errno. */
 void
 maybe_errx(const char *fmt, ...)
@@ -1070,6 +1084,11 @@ file_gettype(u_char *buf)
 		return FT_Z;
 	else
 #endif
+#ifndef NO_PACK_SUPPORT
+	if (memcmp(buf, PACK_MAGIC, 2) == 0)
+		return FT_PACK;
+	else
+#endif
 		return FT_UNKNOWN;
 }
 
@@ -1184,7 +1203,7 @@ file_compress(char *file, char *outfile, size_t outsize)
 		/* Add (usually) .gz to filename */
 		if ((size_t)snprintf(outfile, outsize, "%s%s",
 					file, suffixes[0].zipped) >= outsize)
-			memcpy(outfile - suffixes[0].ziplen - 1,
+			memcpy(outfile + outsize - suffixes[0].ziplen - 1,
 				suffixes[0].zipped, suffixes[0].ziplen + 1);
 
 #ifndef SMALL
@@ -1422,6 +1441,17 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	} else
 #endif
 
+#ifndef NO_PACK_SUPPORT
+	if (method == FT_PACK) {
+		if (lflag) {
+			maybe_warnx("no -l with packed files");
+			goto lose;
+		}
+
+		size = unpack(fd, zfd, NULL, 0, NULL);
+	} else
+#endif
+
 #ifndef SMALL
 	if (method == FT_UNKNOWN) {
 		if (lflag) {
@@ -1613,6 +1643,12 @@ handle_stdin(void)
 
 		usize = zuncompress(in, stdout, header1, sizeof header1, &gsize);
 		fclose(in);
+		break;
+#endif
+#ifndef NO_PACK_SUPPORT
+	case FT_PACK:
+		usize = unpack(STDIN_FILENO, STDOUT_FILENO,
+			       (char *)header1, sizeof header1, &gsize);
 		break;
 #endif
 	}
@@ -1986,6 +2022,9 @@ display_version(void)
 #endif
 #ifndef NO_COMPRESS_SUPPORT
 #include "zuncompress.c"
+#endif
+#ifndef NO_PACK_SUPPORT
+#include "unpack.c"
 #endif
 
 static ssize_t

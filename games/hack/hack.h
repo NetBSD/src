@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.h,v 1.10.42.1 2009/06/29 23:25:09 snj Exp $	*/
+/*	$NetBSD: hack.h,v 1.10.42.1.2.1 2010/04/21 05:25:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,

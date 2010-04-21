@@ -1,4 +1,4 @@
-/*	$NetBSD: evutil.h,v 1.1 2008/05/16 20:24:58 peter Exp $	*/
+/*	$NetBSD: evutil.h,v 1.1.14.1 2010/04/21 05:28:10 matt Exp $	*/
 /*
  * Copyright (c) 2007 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -38,6 +38,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include <stdarg.h>
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -78,6 +79,13 @@ ev_int64_t evutil_strtoll(const char *s, char **endptr, int base);
 
 
 #define evutil_gettimeofday(tv, tz) gettimeofday((tv), (tz))
+
+int evutil_snprintf(char *buf, size_t buflen, const char *format, ...)
+#ifdef __GNUC__
+	__attribute__((format(printf, 3, 4)))
+#endif
+	;
+int evutil_vsnprintf(char *buf, size_t buflen, const char *format, va_list ap);
 
 #ifdef __cplusplus
 }

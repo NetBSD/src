@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.47 2008/10/04 09:37:12 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.47.10.1 2010/04/21 05:26:10 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.47 2008/10/04 09:37:12 skrll Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.47.10.1 2010/04/21 05:26:10 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -69,6 +69,7 @@ _rtld_is_exported(const Elf_Sym *def)
 		(fptr_t)dlsym,
 		(fptr_t)dlerror,
 		(fptr_t)dladdr,
+		(fptr_t)dlinfo,
 		NULL
 	};
 	int i;
@@ -235,6 +236,21 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 	return NULL;
 }
 
+#ifdef COMBRELOC
+static const Obj_Entry *_rtld_last_refobj;
+
+/*
+ * Called when an object is freed. Reset the cached symbol look up if
+ * our last referencing or definition object just got unloaded.
+ */
+void
+_rtld_combreloc_reset(const Obj_Entry *obj)
+{
+	if (_rtld_last_refobj == obj)
+		_rtld_last_refobj = NULL;
+}
+#endif
+
 /*
  * Given a symbol number in a referencing object, find the corresponding
  * definition of the symbol.  Returns a pointer to the symbol, or NULL if
@@ -260,11 +276,10 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	 * return the cached results.
 	 */
 	static unsigned long last_symnum;
-	static const Elf_Sym *last_def;
-	static const Obj_Entry *last_refobj;
 	static const Obj_Entry *last_defobj;
+	static const Elf_Sym *last_def;
 
-	if (symnum == last_symnum && refobj == last_refobj
+	if (symnum == last_symnum && refobj == _rtld_last_refobj
 	    && in_plt == false) {
 		*defobj_out = last_defobj;
 		return last_def;
@@ -318,7 +333,7 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 			 * non-PLT lookup.
 			 */
 			last_symnum = symnum;
-			last_refobj = refobj;
+			_rtld_last_refobj = refobj;
 			last_def = def;
 			last_defobj = defobj;
 		}

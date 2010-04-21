@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do_name.c,v 1.7.14.2 2009/06/29 23:25:09 snj Exp $	*/
+/*	$NetBSD: hack.do_name.c,v 1.7.14.2.2.1 2010/04/21 05:25:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do_name.c,v 1.7.14.2 2009/06/29 23:25:09 snj Exp $");
+__RCSID("$NetBSD: hack.do_name.c,v 1.7.14.2.2.1 2010/04/21 05:25:14 matt Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>

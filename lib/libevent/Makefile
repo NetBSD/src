@@ -1,17 +1,17 @@
-#	$NetBSD: Makefile,v 1.4 2008/05/16 20:24:57 peter Exp $
+#	$NetBSD: Makefile,v 1.4.10.1 2010/04/21 05:28:10 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 NOLINT=		# Until someone explains to me how to avoid lint stupidity
 USE_SHLIBDIR=	yes
 
-CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}
+CPPFLAGS+=-I${.CURDIR} -fno-strict-aliasing
 .include <bsd.own.mk>
 
 LIB=	event
 SRCS=	buffer.c evbuffer.c evdns.c event.c event_tagging.c evrpc.c evutil.c \
 	http.c kqueue.c log.c poll.c signal.c
 
-INCS=	evdns.h event.h evhttp.h evrpc.h evutil.h
+INCS=	evdns.h event.h evhttp.h evrpc.h evutil.h event-config.h
 INCSDIR=/usr/include
 
 MAN=	evdns.3 event.3
@@ -88,5 +88,10 @@ MLINKS+=evdns.3 evdns_search_clear.3
 MLINKS+=evdns.3 evdns_search_add.3
 MLINKS+=evdns.3 evdns_search_ndots_set.3
 MLINKS+=evdns.3 evdns_set_log_fn.3
+
+event-config.h:	config.h
+	sed -e 's/#define /#define _EVENT_/' ${.ALLSRC} > ${.OBJDIR}/${.TARGET}
+
+CLEANFILES+=3D	event-config.h
 
 .include <bsd.lib.mk>

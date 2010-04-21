@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.28 2007/11/04 23:12:50 christos Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.28.16.1 2010/04/21 05:27:22 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -62,11 +62,7 @@ typedef struct {
 static int
 fhcmp(const nfs_fhandle_t *fh1, const nfs_fhandle_t *fh2)
 {
-
-	if (fh1->fhsize != fh2->fhsize) {
-		return 1;
-	}
-	return memcmp(fh1->fhdata, fh2->fhdata, fh1->fhsize);
+	return memcmp(fh1->fhdata, fh2->fhdata, MIN(fh1->fhsize, fh2->fhsize));
 }
 
 static int

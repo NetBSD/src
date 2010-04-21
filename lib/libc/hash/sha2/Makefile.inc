@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3.34.1 2009/07/14 19:35:23 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.3.34.1.2.1 2010/04/21 05:28:08 matt Exp $
 
 # hash functions
 .PATH: ${.CURDIR}/hash/sha2
