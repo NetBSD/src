@@ -20,6 +20,12 @@ ATF_TC_HEAD(div_by_zero, tc)
 ATF_TC_BODY(div_by_zero, tc)
 {
 	struct bpf_program bp;
+	int fd;
+
+	/*
+	 * Source code for following program:
+	 * link[0:4]/0 = 2
+	 */
 	struct bpf_insn bins[] = {
 	    { 0x20, 0, 0, 0x00000000 },
 	    { 0x34, 0, 0, 0x00000000 },
@@ -27,7 +33,6 @@ ATF_TC_BODY(div_by_zero, tc)
 	    { 0x6, 0, 0, 0x00000060 },
 	    { 0x6, 0, 0, 0x00000000 },
 	};
-	int fd;
 
 	bp.bf_len = __arraycount(bins);
 	bp.bf_insns = bins;
