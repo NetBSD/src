@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.10 2010/04/17 13:13:45 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.11 2010/04/21 16:16:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.10 2010/04/17 13:13:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.11 2010/04/21 16:16:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -305,4 +305,11 @@ suspendsched(void)
 	 * Could wait until everyone is out and block further entries,
 	 * but skip that for now.
 	 */
+}
+
+void
+sched_nice(struct proc *p, int level)
+{
+
+	/* nothing to do for now */
 }
