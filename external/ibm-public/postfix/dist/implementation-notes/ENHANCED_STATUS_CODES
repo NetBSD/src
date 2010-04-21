@@ -1,0 +1,58 @@
+Postfix enhanced status code implementation notes
+=================================================
+
+RFC 3463 Enhanced status code support is implemented in stages. In
+the first stage, the goal is to minimize code changes (it's several
+hundred pages of context diffs already). For this reason, the
+pre-existing status variables (success, defer, etc.) are still
+updated separately from the diagnostic text and the RFC 3463 enhanced
+status code.  All this means that one has to be careful when updating
+the code, to keep things in sync.
+
+Specific issues that one should be aware of:
+
+- In the SMTP client, update the enhanced status code and text
+whenever smtp_errno or resp->code are updated, or place an explicit
+comment that says no update is needed.
+
+- In the SMTP client, don't worry about the initial enhanced status
+digit when reporting failure to look up or connect to a host. For
+convenience, the SMTP client top-level code automatically changes
+the initial digit into '4' or '5' as appropriate.
+
+- In the SMTP server, don't worry about the initial enhanced status
+code digit when an smtpd_mumble_restriction rejects access. For
+convenience, the smtpd_check_reject() routine automatically changes
+the initial digit into '4' or '5' as appropriate.
+
+- Some low-level support routines update the diagnostic text but
+not the enhanced status code. To identify these, search for functions
+that are called with why->vstring as output parameter, and make
+sure that the caller updates the enhanced status code in all
+appropriate cases.
+
+- By design, the pipe, local and virtual delivery agent code never
+update the diagnostic text separately from the enhanced status code.
+
+- Don't rely on the system errno value after calling a routine that
+performs or prepares for mail delivery. Instead, have that routine
+update the enhanced status code (and text) when the error happens.
+This was an issue with mailbox, maildir and file delivery.  Currently
+there remains one exception to this errno usage rule; the maildir
+delivery routines log a helpful warning when delivery fails with
+EACCES.  The latter happens to work because mbox_open() does not
+need to unlock the output file, so it won't clobber the errno value.
+
+- Avoid passing around strings that combine enhanced status code
+and diagnostic text. Instead, use separate variables for status
+code and text, so that the compiler can enforce that everything has
+a status code.  Currently there are two exceptions to this rule:
+the cleanup server status reply, and the delivery agent status
+reply.  Once these protocols are updated we can remove the dns_prepend()
+routine. The third exception, enhanced status codes in external
+command output, is a feature.
+
+- The bounce/defer/sent library modules will catch the cases where
+an enhanced status code does not match the reject/defer/success
+status.  They log a warning message, and replace the incorrect
+enhanced status code by a generic one.

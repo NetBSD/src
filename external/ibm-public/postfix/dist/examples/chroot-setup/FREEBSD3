@@ -1,0 +1,4 @@
+umask 022
+mkdir /var/spool/postfix/etc
+chmod 755 /var/spool/postfix/etc
+cd /etc ; cp host.conf localtime services resolv.conf /var/spool/postfix/etc

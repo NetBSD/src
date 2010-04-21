@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.21.8.1 2009/06/29 23:01:24 snj Exp $	*/
+/*	$NetBSD: cipher.c,v 1.21.8.1.2.1 2010/04/21 05:17:37 matt Exp $	*/
 /* $OpenBSD: cipher.c,v 1.81 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.21.8.1 2009/06/29 23:01:24 snj Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.21.8.1.2.1 2010/04/21 05:17:37 matt Exp $");
 #include <sys/types.h>
 
 #include <openssl/md5.h>

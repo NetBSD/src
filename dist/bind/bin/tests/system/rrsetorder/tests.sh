@@ -14,14 +14,14 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.5.128.2 2008/04/24 23:46:29 tbox Exp
+# Id: tests.sh,v 1.5.128.3 2008/10/09 21:28:37 each Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
 
-if grep -q "^#define DNS_RDATASET_FIXED" $TOP/config.h; then
+if grep "^#define DNS_RDATASET_FIXED" $TOP/config.h > /dev/null 2>&1 ; then
         test_fixed=true
 else
         echo "I: Order 'fixed' disabled at compile time"

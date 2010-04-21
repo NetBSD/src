@@ -1,0 +1,36 @@
+./attr_print: send attr number = 4711
+./attr_print: send attr string = whoopee
+./attr_print: send attr name foo-name value foo-value
+./attr_print: send attr name bar-name value bar-value
+./attr_print: send attr number = 4711
+./attr_print: send attr string = whoopee
+./attr_scan: unknown_stream: wanted attribute: number
+./attr_scan: input attribute name: number
+./attr_scan: input attribute value: 4711
+./attr_scan: unknown_stream: wanted attribute: string
+./attr_scan: input attribute name: string
+./attr_scan: input attribute value: whoopee
+./attr_scan: unknown_stream: wanted attribute: (any attribute name or list terminator)
+./attr_scan: input attribute name: foo-name
+./attr_scan: input attribute value: foo-value
+./attr_scan: unknown_stream: wanted attribute: (any attribute name or list terminator)
+./attr_scan: input attribute name: bar-name
+./attr_scan: input attribute value: bar-value
+./attr_scan: unknown_stream: wanted attribute: (any attribute name or list terminator)
+./attr_scan: input attribute name: (end)
+./attr_scan: unknown_stream: wanted attribute: number
+./attr_scan: input attribute name: number
+./attr_scan: input attribute value: 4711
+./attr_scan: unknown_stream: wanted attribute: string
+./attr_scan: input attribute name: string
+./attr_scan: input attribute value: whoopee
+./attr_scan: unknown_stream: wanted attribute: (list terminator)
+./attr_scan: input attribute name: (end)
+number 4711
+string whoopee
+(hash) foo-name foo-value
+(hash) bar-name bar-value
+number 4711
+string whoopee
+(hash) foo-name foo-value
+(hash) bar-name bar-value

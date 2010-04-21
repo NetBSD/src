@@ -532,12 +532,14 @@ int ssl3_accept(SSL *s)
 				 */
 				if (s->s3->handshake_buffer)
 					ssl3_digest_cached_records(s);
-				for (dgst_num=0; dgst_num<SSL_MAX_DIGEST;dgst_num++)	
-					if (s->s3->handshake_dgst[dgst_num]) 
-						{
-						s->method->ssl3_enc->cert_verify_mac(s,EVP_MD_CTX_type(s->s3->handshake_dgst[dgst_num]),&(s->s3->tmp.cert_verify_md[offset]));
-						offset+=EVP_MD_CTX_size(s->s3->handshake_dgst[dgst_num]);
-						}		
+				if (s->s3->handshake_dgst != NULL) {
+					for (dgst_num=0; dgst_num<SSL_MAX_DIGEST;dgst_num++)	
+						if (s->s3->handshake_dgst[dgst_num]) 
+							{
+							s->method->ssl3_enc->cert_verify_mac(s,EVP_MD_CTX_type(s->s3->handshake_dgst[dgst_num]),&(s->s3->tmp.cert_verify_md[offset]));
+							offset+=EVP_MD_CTX_size(s->s3->handshake_dgst[dgst_num]);
+							}		
+					}
 				}
 			break;
 
@@ -762,6 +764,14 @@ int ssl3_get_client_hello(SSL *s)
 	SSL_COMP *comp=NULL;
 #endif
 	STACK_OF(SSL_CIPHER) *ciphers=NULL;
+
+	if (s->new_session
+	    && !(s->s3->flags&SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+		{
+		al=SSL_AD_HANDSHAKE_FAILURE;
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, ERR_R_INTERNAL_ERROR);
+		goto f_err;
+		}
 
 	/* We do this so that we will respond with our native type.
 	 * If we are TLSv1 and we get SSLv3, we will respond with TLSv1,

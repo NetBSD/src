@@ -1,0 +1,300 @@
+The stable Postfix release is called postfix-2.6.x where 2=major
+release number, 6=minor release number, x=patchlevel.  The stable
+release never changes except for patches that address bugs or
+emergencies. Patches change the patchlevel and the release date.
+
+New features are developed in snapshot releases. These are called
+postfix-2.7-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day).  Patches are never issued for snapshot releases;
+instead, a new snapshot is released.
+
+The mail_release_date configuration parameter (format: yyyymmdd)
+specifies the release date of a stable release or snapshot release.
+
+If you upgrade from Postfix 2.4 or earlier, read RELEASE_NOTES-2.5
+before proceeding.
+
+Major changes - multi-instance support
+--------------------------------------
+
+[Feature 20090121] Support for managing multiple Postfix instances.
+This can automatically apply your "postfix start" etc.  command to
+multiple Postfix instances, including upgrades to new Postfix
+versions.  Multi-instance support allows you to do the following
+and more:
+
+- Simplify post-queue content filter configuration by using separate
+  Postfix instances before and after the filter. This simplifies
+  trouble shooting and performance tuning.
+
+- Implement per-user content filters (or no filter) via transport
+  map lookups instead of content_filter settings. Mail for some
+  users can be sent directly from the before-filter instance to the
+  after-filter instance.
+
+- Test new configuration settings (on a different server IP address
+  or TCP port) without disturbing production instances.
+
+- Each additional Postfix instance uses a few files and directories,
+  plus memory for an extra master daemon and queue manager. The
+  pickup daemon is needed only if you use local submission or
+  "postsuper -r".
+
+Best of all, nothing changes when you use only one Postfix instance.
+
+The MULTI_INSTANCE_README file presents an introduction to
+multi-instance management. Multi-instance support is based on an
+API that is described in the postfix-wrapper(5) manual page.
+
+Major changes - milter support
+------------------------------
+
+[Feature 20090428] The following improvements have been made to the
+Milter implementation:
+
+- Improved compatibility of the {mail_addr} and {rcpt_addr} macros.
+
+- Support for the {mail_host}, {mail_mailer}, {rcpt_host} and
+{rcpt_mailer} macros.
+
+- Milter applications can now request rejected recipients with the
+SMFIP_RCPT_REJ feature. Rejected recipients are reported with
+{rcpt_mailer} = "error", {rcpt_host} = enhanced status code, and
+{rcpt_addr} = descriptive text. This feature requires "milter_protocol
+= 6" or higher (default as of Postfix 2.6).
+
+- Milters can now replace the envelope sender address with the
+SMFIR_CHGFROM request, and can add recipients with SMFIR_ADDRCPT_PAR.
+These implementations ignore ESMTP command parameters and log a
+warning message as follows:
+
+    warning: 100B22B3293: cleanup_chg_from: ignoring ESMTP arguments "whatever"
+    warning: 100B22B3293: cleanup_add_rcpt: ignoring ESMTP arguments "whatever"
+
+[Incompat 20090428] The default milter_protocol setting is increased
+from 2 to 6; this enables all available features up to and including
+Sendmail 8.14.0.  The new milter_protocol setting may break
+compatibility with older Milter libraries or applications, and may
+cause Postfix to log warning messages such as:
+
+    warning: milter inet:host:port: can't read packet header: Unknown error : 0
+
+    warning: milter inet:host:port: can't read packet header: Success
+
+    warning: milter inet:host:port: can't read SMFIC_DATA reply
+    packet header: No such file or directory
+
+To restore compatibility, specify "milter_protocol = 2" in main.cf.
+
+Major changes - security
+------------------------
+
+[Incompat 20080726] When a mailbox file is not owned by its recipient,
+the local and virtual delivery agents now log a warning and defer
+delivery.  Specify "strict_mailbox_ownership = no" to ignore such
+ownership discrepancies.
+
+Major changes - smtp server
+---------------------------
+
+[Feature 20080212] check_reverse_client_hostname_access, to make
+access decisions based on the unverified client hostname.  For
+safety reasons an OK result is not allowed.
+
+[Feature 20090210] With "reject_tempfail_action = defer", the Postfix
+SMTP server immediately replies with a 4xx status after some temporary
+error, instead of executing an implicit "defer_if_permit" action.
+
+[Feature 20090215] The Postfix SMTP server automatically hangs up
+after replying with "521". This makes overload handling more
+effective.  See also RFC 1846 for prior art on this topic.
+
+[Feature 20090228] The Postfix SMTP server maintains a per-session
+"improper command pipelining detected" flag. This flag can be tested
+at any time with reject_unauth_pipelining, and is raised whenever
+a client command is followed by unexpected commands or message
+content. The Postfix SMTP server logs the first command pipelining
+transgression as "improper command pipelining after <command> from
+<hostname>[<hostaddress>]".
+
+[Feature 20090212] Stress-dependent behavior is enabled by default.
+Under conditions of overload, smtpd_timeout is reduced from 300s
+to 10s, smtpd_hard_error_limit is reduced from 20 to 1, and
+smtpd_junk_command_limit is reduced from 100 to 1. This will reduce
+the impact of overload for most legitimate mail.
+
+[Feature 20080629] The Postfix SMTP server's SASL authentication
+was re-structured.  With "smtpd_tls_auth_only = yes", SASL support
+is now activated only after a successful TLS handshake. Earlier
+Postfix SMTP server versions could complain about unavailable SASL
+mechanisms during the plaintext phase of the SMTP protocol.
+
+[Incompat 20080510] In the policy delegation protocol, certificate
+common name attributes are now xtext encoded UTF-8. The xtext decoded
+attributes may contain any UTF-8 value except non-printable ASCII
+characters.
+
+Major changes - performance
+---------------------------
+
+[Feature 20090215] The Postfix SMTP server automatically hangs up
+after replying with "521". This makes overload handling more
+effective.  See also RFC 1846 for prior art on this topic.
+
+[Feature 20090212] Stress-dependent behavior is enabled by default.
+Under conditions of overload, smtpd_timeout is reduced from 300s
+to 10s, smtpd_hard_error_limit is reduced from 20 to 1, and
+smtpd_junk_command_limit is reduced from 100 to 1. This will reduce
+the negative impact of server overload for most legitimate mail.
+
+[Feature 20090109] Specify "tcp_windowsize = 65535" (or less) to
+work around routers with broken TCP window scaling implementations.
+This is perhaps more convenient than collecting tcpdump output and
+tuning kernel parameters by hand.  With Postfix TCP servers (smtpd(8),
+qmqpd(8)), this feature is implemented by the Postfix master(8)
+daemon.
+
+To change this parameter without stopping Postfix, you need to first
+terminate all Postfix TCP servers:
+
+    # postconf -e master_service_disable=inet
+    # postfix reload
+
+This immediately terminates all processes that accept network
+connections.  Then you enable Postfix TCP servers with the updated
+tcp_windowsize setting:
+
+    # postconf -e tcp_windowsize=65535 master_service_disable=
+    # postfix reload
+
+If you skip these steps with a running Postfix system, then the
+tcp_windowsize change will work only for Postfix TCP clients (smtp(8),
+lmtp(8)).
+
+Of course you can also do "postfix stop" and "postfix start",
+but that is more disruptive.
+
+Major changes - tls
+-------------------
+
+[Incompat 20090428] The Postfix SMTP client(!) no longer tries to
+use the obsolete SSLv2 protocol by default, as this may prevent the
+use of modern SSL features.  Lack of SSLv2 support should never be
+a problem, since SSLv3 was defined in 1996, and TLSv1 in 1999. You
+can undo the change by specifying empty main.cf values for
+smtp_tls_protocols and lmtp_tls_protocols. The Postfix SMTP server
+maintains SSLv2 support for backwards compatibility with ancient
+clients.
+
+[Feature 20081010] Controls for the protocols and ciphers that
+Postfix will use with opportunistic TLS. The smtp_tls_protocols,
+smtp_tls_ciphers, and equivalent parameters for lmtp and smtpd
+provide global settings; the SMTP client TLS policy table provides
+ciphers and protocols settings for specific peers.  Code by Victor
+Duchovni. Details are given in the TLS_README and postconf(5)
+documents.
+
+[Feature 20081108] Elliptic curve support. This requires OpenSSL
+version 0.9.9 or later.
+
+Major changes - address verification
+------------------------------------
+
+[Incompat 20080428] Postfix SMTP server replies for address
+verification have changed.  unverified_recipient_reject_code and
+unverified_sender_reject_code now handle "5XX" rejects only. The
+"4XX" rejects are now controlled with unverified_sender_defer_code
+and unverified_recipient_defer_code.
+
+[Feature 20080428] Finer control over the way Postfix reports address
+verification failures to remote SMTP clients.
+
+- unverified_sender/recipient_defer_code: the numerical Postfix
+  SMTP server reply code when address verification failed due
+  to some temporary error.
+
+- unverified_sender/recipient_reject_reason: fixed text that Postfix
+  will send to the remote SMTP client, instead of sending actual
+  address verification details.
+
+Major changes - dsn
+-------------------
+
+[Feature 20090307] New "lmtp_assume_final = yes" flag to send correct
+DSN "success" notifications when LMTP delivery is "final" as opposed
+to delivery into a content filter.
+
+Major changes - file organization
+---------------------------------
+
+[Incompat 20080207] According to discussions on the mailing list,
+too many people are breaking newly installed Postfix by overwriting
+the new /etc/postfix files with versions from an older release, and
+end up with a broken configuration that cannot repair itself. For
+this reason, postfix-script, postfix-files and post-install are
+moved away from /etc/postfix to $daemon_directory.
+
+Major changes - header rewriting
+--------------------------------
+
+[Incompat 20090330] Postfix now adds (Resent-) From:, Date:,
+Message-ID: or To: headers only when clients match
+$local_header_rewrite_clients.  Specify "always_add_missing_headers
+= yes" for backwards compatibility.  Adding such headers can break
+DKIM signatures that cover headers that are not present.
+compatibility with existing logfile processing software, Postfix
+will log ``message-id=<>'' for messages without Message-Id header.
+
+Major changes - lmtp client
+---------------------------
+
+[Feature 20090307] New "lmtp_assume_final = yes" flag to send correct
+DSN "success" notifications when LMTP delivery is "final" as opposed
+to delivery into a content filter.
+
+Major changes - logging
+-----------------------
+
+[Incompat 20090330] Postfix now adds (Resent-) From:, Date:,
+Message-ID: or To: headers only when clients match
+$local_header_rewrite_clients.  Specify "always_add_missing_headers
+= yes" for backwards compatibility.  Adding such headers can break
+DKIM signatures that cover headers that are not present.
+
+This changes the appearance of Postfix logging: to preserve
+compatibility with existing logfile processing software, Postfix
+will log ``message-id=<>'' for messages without Message-Id header.
+
+Major changes - mime
+--------------------
+
+[Feature 20080324] When the "postmap -q -" command reads lookup
+keys from standard input, it now understands RFC822 and MIME message
+format.  Specify -h or -b to use headers or body lines as lookup
+keys, and specify -hm or -bm to simulate header_checks or body_checks.
+
+Major changes - miscellaneous
+-----------------------------
+
+[Feature 20090109] Support to selectively disable master(8) listener
+ports by service type or by service name + type. Specify a list of
+service types ("inet", "unix", "fifo", or "pass") or "name.type"
+tuples, where "name" is the first field of a master.cf entry and
+"type" is a service type. Examples: to turn off the main SMTP
+listener port, use "master_service_disable = smtp.inet"; to turn
+off all TCP/IP listeners, use "master_service_disable = inet".
+Changing this parameter requires "postfix reload".
+
+Major changes - sasl
+--------------------
+
+[Feature 20090418] The Postfix SMTP server passes more information
+to the Dovecot authentication server: the "TLS is active" flag, the
+server IP address, and the client IP address.
+
+[Feature 20080629] The Postfix SMTP server's SASL authentication
+was re-structured.  With "smtpd_tls_auth_only = yes", SASL support
+is now activated only after a successful TLS handshake. Earlier
+Postfix SMTP server versions could complain about unavailable SASL
+mechanisms during the plaintext phase of the SMTP protocol.
+

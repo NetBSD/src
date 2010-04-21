@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.1.8.1.2.1 2010/04/21 05:23:10 matt Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -65,6 +65,10 @@
 #endif
 
 /* Macros */
+#ifndef __UNCONST
+#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
+#endif
+
 #define SUCCESS	(0)
 #define	FAIL	(-1)
 
@@ -179,7 +183,9 @@ typedef enum bi_ent_t {
 	BI_MACHINE_ARCH,	/*  2 */
 	BI_IGNORE_RECOMMENDED,	/*  3 */
 	BI_USE_ABI_DEPENDS,	/*  4 */
-	BI_ENUM_COUNT		/*  5 */
+	BI_LICENSE,		/*  5 */
+	BI_PKGTOOLS_VERSION,	/*  6 */
+	BI_ENUM_COUNT		/*  7 */
 }	bi_ent_t;
 
 /* Types */
@@ -251,7 +257,6 @@ int	some_installed_package_conflicts_with(const char *, const char *, char **, c
 
 /* Prototypes */
 /* Misc */
-void    cleanup(int);
 void    show_version(void);
 int	fexec(const char *, ...);
 int	fexec_skipempty(const char *, ...);
@@ -320,12 +325,13 @@ struct archive_entry;
 struct archive *open_archive(const char *);
 struct archive *find_archive(const char *, int);
 void	process_pkg_path(void);
+struct url *find_best_package(const char *, const char *, int);
 
 /* Packing list */
 plist_t *new_plist_entry(void);
 plist_t *last_plist(package_t *);
 plist_t *find_plist(package_t *, pl_ent_t);
-char   *find_plist_option(package_t *, char *);
+char   *find_plist_option(package_t *, const char *);
 void    plist_delete(package_t *, Boolean, pl_ent_t, char *);
 void    free_plist(package_t *);
 void    mark_plist(package_t *);
@@ -349,10 +355,18 @@ int	pkgdb_dump(void);
 int     pkgdb_remove(const char *);
 int	pkgdb_remove_pkg(const char *);
 char   *pkgdb_refcount_dir(void);
-char   *_pkgdb_getPKGDB_FILE(char *, unsigned);
-const char *_pkgdb_getPKGDB_DIR(void);
-void	_pkgdb_setPKGDB_DIR(const char *);
-
+char   *pkgdb_get_database(void);
+const char   *pkgdb_get_dir(void);
+/*
+ * Priorities:
+ * 0 builtin default
+ * 1 config file
+ * 2 environment
+ * 3 command line
+ * 4 destdir/views reset
+ */
+void	pkgdb_set_dir(const char *, int);
+char   *pkgdb_pkg_dir(const char *);
 char   *pkgdb_pkg_file(const char *, const char *);
 
 /* List of packages functions */
@@ -421,7 +435,10 @@ extern const char *certs_packages;
 extern const char *certs_pkg_vulnerabilities;
 extern const char *check_vulnerabilities;
 extern const char *config_file;
+extern const char *config_pkg_dbdir;
 extern const char *config_pkg_path;
+extern const char *config_pkg_refcount_dbdir;
+extern const char *do_license_check;
 extern const char *verified_installation;
 extern const char *gpg_cmd;
 extern const char *gpg_keyring_pkgvuln;

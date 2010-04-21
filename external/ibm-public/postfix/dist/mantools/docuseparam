@@ -1,0 +1,5 @@
+#!/bin/sh
+
+mantools/docparam "$@" >/tmp/doc
+mantools/useparam "$@" >/tmp/use
+diff /tmp/doc /tmp/use

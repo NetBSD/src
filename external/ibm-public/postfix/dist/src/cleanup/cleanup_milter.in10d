@@ -1,0 +1,14 @@
+#
+# As test 10c, but then replace the longer body by the shorter one. The
+# result is three regions: the original region, the region with the
+# tail of the shorter replacement, and an unused region that contained
+# the tail of the larger region.
+#
+#verbose on
+open test-queue-file10.tmp
+
+replbody loremipsum
+replbody loremipsum2
+replbody loremipsum
+
+close

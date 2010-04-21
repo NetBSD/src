@@ -1,0 +1,751 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix Architecture Overview </title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1> <img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix
+Architecture Overview </h1>
+
+<hr>
+
+<h2> Introduction </h2>
+
+<p> This document presents an overview of the Postfix architecture,
+and provides pointers to descriptions of every Postfix command
+or server program.  The text gives the general context in which
+each command or server program is used, and provides pointers to
+documents with specific usage examples and background information.
+</p>
+
+<p> Topics covered by this document: </p>
+
+<ul>
+
+<li> <a href="#receiving"> How Postfix receives mail </a>
+
+<li> <a href="#delivering"> How Postfix delivers mail </a>
+
+<li> <a href="#behind"> Postfix behind the scenes </a>
+
+<li> <a href="#commands"> Postfix support commands </a>
+
+</ul>
+
+<h2><a name="receiving"> How Postfix receives mail </a> </h2>
+
+<p> When a message enters the Postfix mail system, the first stop
+on the inside is the incoming queue. The figure below shows the
+main processes that are involved with new mail.  Names followed by
+a number are Postfix commands or server programs, while unnumbered
+names inside shaded areas represent Postfix queues. </p>
+
+<blockquote>
+
+<table>
+
+<tr>
+
+<td colspan="4"> </td>
+
+<td bgcolor="#f0f0ff" align="center"> trivial-<br>rewrite(8) </td>
+
+</tr>
+
+<tr>
+
+<td> Network </td> <td> <tt> -&gt; </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center" valign="middle"> smtpd(8)
+</td>
+
+<td> </td>
+
+<td rowspan="2" align="center"> <table> <tr> <td align="center">
+^<br> <tt> | </tt> </td> <td align="center"> <tt> |<br> v </tt>
+</td> </tr> </table> </td>
+
+</tr>
+
+<tr>
+
+<td colspan="3"> </td> <td> <tt> \ </tt> </td>
+
+</tr>
+
+<tr>
+
+<td> Network </td> <td> <tt> -&gt; </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center" valign="middle"> qmqpd(8)
+</td>
+
+<td> <tt> -&gt; </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center" valign="middle"> cleanup(8)
+</td>
+
+<td> <tt> -&gt; </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center" valign="middle"> <a
+href="QSHAPE_README.html#incoming_queue"> incoming </a> </td>
+
+</tr>
+
+<tr>
+
+<td colspan="3"> </td> <td> <tt> / </tt> </td>
+
+</tr>
+
+<tr>
+
+<td colspan="2"> </td>
+
+<td bgcolor="#f0f0ff" align="center" valign="middle"> pickup(8)
+</td>
+
+<td> <tt> &lt;- </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center" valign="middle"> <a
+href="QSHAPE_README.html#maildrop_queue"> maildrop </a> </td>
+
+</tr>
+
+<tr>
+
+<td colspan="4" align="center"> </td>
+
+<td align="center"> ^<br> <tt> | </tt> </td>
+
+</tr>
+
+<tr>
+
+<td> Local </td> <td> <tt> -&gt; </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center" valign="middle"> sendmail(1)
+</td>
+
+<td> <tt> -&gt; </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center" valign="middle"> postdrop(1)
+</td>
+
+</tr>
+
+</table>
+
+</blockquote>
+
+<ul>
+
+<li> <p> Network mail enters Postfix via the smtpd(8) or qmqpd(8)
+servers.  These servers remove the SMTP or QMQP protocol encapsulation,
+enforce some sanity checks to protect Postfix, and give the sender,
+recipients and message content to the cleanup(8) server.  The
+smtpd(8) server can be configured to block unwanted mail, as
+described in the SMTPD_ACCESS_README document.  </p>
+
+<li> <p> Local submissions are received with the Postfix sendmail(1)
+compatibility command, and are queued in the maildrop queue by
+the privileged postdrop(1) command. This arrangement even works
+while the Postfix mail system is not running.  The local pickup(8)
+server picks up local submissions, enforces some sanity checks to
+protect Postfix, and gives the sender, recipients and message
+content to the cleanup(8) server.  </p>
+
+<li> <p> Mail from internal sources is given directly to the
+cleanup(8) server. These sources are not shown in the figure, and
+include: mail that is forwarded by the local(8) delivery agent (see
+next section), messages that are returned to the sender by the
+bounce(8) server (see second-next section), and postmaster
+notifications about problems with Postfix.  </p>
+
+<li> <p> The cleanup(8) server implements the final processing
+stage before mail is queued. It adds missing From: and other message
+headers, and transforms addresses as described in the
+ADDRESS_REWRITING_README
+document. Optionally, the cleanup(8) server can be configured to
+do light-weight content inspection with regular expressions as
+described in the BUILTIN_FILTER_README document.  The  cleanup(8)
+server places the result as a single file into the incoming queue,
+and notifies the queue manager (see next section) of the arrival
+of new mail.  </p>
+
+<li> <p> The trivial-rewrite(8) server rewrites addresses to the
+standard "user@fully.qualified.domain" form, as described in the
+ADDRESS_REWRITING_README document. Postfix currently does not
+implement a rewriting language, but a lot can be done via table
+lookups and, if need be, regular expressions. </p>
+
+</ul>
+
+<h2> <a name="delivering"> How Postfix delivers mail </a> </h2>
+
+<p> Once a message has reached the incoming queue the next step is
+to deliver it. The figure shows the main components of the Postfix
+mail delivery apparatus. Names followed by a number are Postfix
+commands or server programs, while unnumbered names inside shaded
+areas represent Postfix queues. </p>
+
+<blockquote>
+
+<table>
+
+<tr>
+
+<td rowspan="2" colspan="4"> </td>
+
+<td rowspan="2" bgcolor="#f0f0ff" align="center"> trivial-<br>rewrite(8)
+</td>
+
+<td> </td>
+
+<td bgcolor="#f0f0ff" align="center"> smtp(8) </td>
+
+<td> <tt> -&gt; </tt> </td> <td> Network </td>
+
+</tr>
+
+<tr>
+
+<td align="right"> <tt> / </tt> </td>
+
+</tr>
+
+<tr>
+
+<td rowspan="2" colspan="4"> </td>
+
+<td rowspan="2" align="center"> <table> <tr> <td align="center">
+^<br> <tt> | </tt> </td> <td align="center"> <tt> |<br> v </tt>
+</td> </tr> </table> </td>
+
+<td align="right"> <tt> - </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center"> lmtp(8) </td>
+
+<td> <tt> -&gt; </tt> </td> <td> Network </td>
+
+</tr>
+
+<tr>
+
+<td align="left"> <tt> / </tt> </td>
+
+</tr>
+
+<tr>
+
+<td bgcolor="#f0f0ff" align="center"> <a
+href="QSHAPE_README.html#incoming_queue"> incoming </a> </td>
+
+<td> <tt> -&gt; </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center"> <a
+href="QSHAPE_README.html#active_queue"> active </a> </td>
+
+<td> <tt> -&gt; </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center"> qmgr(8) </td>
+
+<td align="right"> <tt> --- </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center"> local(8) </td>
+
+<td> <tt> -&gt; </tt> </td> <td> File, command </td>
+
+</tr>
+
+<tr>
+
+<td rowspan="2" colspan="2"> </td>
+
+<td rowspan="2" align="center"> <table> <tr> <td align="center">
+^<br> <tt> | </tt> </td> <td align="center"> <tt> |<br> v </tt>
+</td> </tr> </table> </td>
+
+<td rowspan="2" colspan="2"> </td>
+
+<td align="left"> <tt> \ </tt> </td>
+
+</tr>
+
+<tr>
+
+<td align="right"> <tt> - </tt> </td>
+
+<td bgcolor="#f0f0ff" align="center"> virtual(8) </td>
+
+<td> <tt> -&gt; </tt> </td> <td> File </td>
+
+</tr>
+
+<tr>
+
+<td colspan="2"> </td>
+
+<td bgcolor="#f0f0ff" align="center"> <a
+href="QSHAPE_README.html#deferred_queue"> deferred </a> </td>
+
+<td colspan="2"> </td>
+
+<td align="right"> <tt> \ </tt> </td>
+
+</tr>
+
+<tr>
+
+<td colspan="6">
+
+<td bgcolor="#f0f0ff" align="center"> pipe(8) </td>
+
+<td> <tt> -&gt; </tt> </td> <td> Command </td>
+
+</tr>
+
+</table>
+
+</blockquote>
+
+<ul>
+
+<li> <p> The queue manager (the qmgr(8) server process in the
+figure) is the heart of Postfix mail delivery.  It contacts the
+smtp(8), lmtp(8), local(8), virtual(8), pipe(8), discard(8) or
+error(8) delivery agents, and sends a delivery request for one
+or more recipient addresses. The discard(8) and error(8) delivery
+agents are special: they discard or bounce all mail, and are not
+shown in the figure above.  </p>
+
+<p> The queue manager maintains a small active queue with the
+messages that it has opened for delivery. The active queue acts as
+a limited window on potentially large incoming or deferred queues.
+The limited active queue prevents the queue manager from running
+out of memory under heavy load. </p>
+
+<p> The queue manager maintains a separate deferred queue for mail
+that cannot be delivered, so that a large mail backlog will not
+slow down normal queue accesses. The queue manager's strategy for
+delayed mail delivery attempts is described in the QSHAPE_README
+and TUNING_README documents. </p>
+
+<li> <p> The trivial-rewrite(8) server resolves each recipient
+address according to its local or remote address class, as defined
+in the ADDRESS_CLASS_README document.  Additional routing information
+can be specified with the optional transport(5) table.  The
+trivial-rewrite(8) server optionally queries the relocated(5) table
+for recipients whose address has changed; mail for such recipients is
+returned to the sender with an explanation. </p>
+
+<li> <p> The smtp(8) client looks up a list of mail exchangers for
+the destination host, sorts the list by preference, and tries each
+server in turn until it finds a server that responds. It then
+encapsulates the sender, recipient and message content as required
+by the SMTP protocol; this includes conversion of 8-bit MIME to
+7-bit encoding. </p>
+
+<li> <p> The lmtp(8) client speaks a protocol similar to SMTP that
+is optimized for delivery to mailbox servers such as Cyrus.  The
+advantage of this setup is that one Postfix machine can feed multiple
+mailbox servers over LMTP. The opposite is true as well:  one
+mailbox server can be fed over LMTP by multiple Postfix machines.
+</p>
+
+<li> <p> The local(8) delivery agent understands UNIX-style mailboxes,
+qmail-compatible maildir files, Sendmail-style system-wide aliases(5)
+databases, and Sendmail-style per-user .forward files. Multiple
+local delivery agents can be run in parallel, but parallel delivery
+to the same user is usually limited. </p>
+
+<p> The local(8) delivery agent has hooks for alternative forms of
+local delivery: you can configure it to deliver to mailbox files
+in user home directories, you can configure it to delegate mailbox
+delivery to an external command such as procmail, or you can delegate
+delivery to a different Postfix delivery agent.  </p>
+
+<li> <p> The virtual(8) delivery agent is a bare-bones delivery
+agent that delivers to UNIX-style mailbox or qmail-style maildir
+files only.  This delivery agent can deliver mail for multiple
+domains, which makes it especially suitable for hosting lots of
+small domains on a single machine.  This is described in the
+VIRTUAL_README document. </p>
+
+<li> <p> The pipe(8) mailer is the outbound interface to other mail
+processing systems (the Postfix sendmail(1) command being the
+inbound interface).  The interface is UNIX compatible: it provides
+information on the command line and on the standard input stream,
+and expects a process exit status code as defined in &lt;sysexits.h&gt;.
+Examples of delivery via the pipe(8) mailer are in the MAILDROP_README
+and UUCP_README documents.
+
+</ul>
+
+<h2> <a name="behind"> Postfix behind the scenes </a> </h2>
+
+<p> The previous sections gave an overview of how Postfix server
+processes send and receive mail. These server processes rely on
+other server processes that do things behind the scenes.  The text
+below attempts to visualize each service in its own context.  As
+before, names followed by a number are Postfix commands or server
+programs, while unnumbered names inside shaded areas represent
+Postfix queues. </p>
+
+<ul>
+
+<li> <p> The resident master(8) server is the supervisor that keeps
+an eye on the well-being of the Postfix mail system. It is typically
+started at system boot time with the "postfix start" command, and
+keeps running until the system goes down.  The master(8) server is
+responsible for starting Postfix server processes to receive and
+deliver mail, and for restarting servers that terminate prematurely
+because of some problem. The master(8) server is also responsible
+for enforcing the server process count limits as specified in the
+<b>master.cf</b> configuration file. The picture below gives the
+program hierarchy when Postfix is started up. Only some of the mail
+handling daemon processes are shown. </p>
+
+<table>
+
+<tr> <td colspan="2"> </td> <td align="center" bgcolor="#f0f0ff">
+postfix(1) </td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center"> |<br> |</td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center" bgcolor="#f0f0ff">
+postfix-script(1) </td> </tr>
+
+<tr> <td> </td> <td> <table> <tr> <td> </td> <td> / </td> </tr>
+<tr> <td> / </td> <td> </td> </tr> </table> </td> <td align="center">
+|<br> |</td> <td> <table> <tr> <td> \ </td> <td> </td> </tr> <tr>
+<td> </td> <td> \ </td> </tr> </table> </td> </tr>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> postsuper(1) </td> <td>
+</td> <td align="center" bgcolor="#f0f0ff"> master(8) </td> <td>
+</td> <td align="center" bgcolor="#f0f0ff"> postlog(1) </td> </tr>
+
+<tr> <td> </td> <td> <table> <tr> <td> </td> <td> / </td> </tr>
+<tr> <td> / </td> <td> </td> </tr> </table> </td> <td align="center">
+|<br> |</td> <td> <table> <tr> <td> \ </td> <td> </td> </tr> <tr>
+<td> </td> <td> \ </td> </tr> </table> </td> </tr>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> smtpd(8) </td> <td>
+</td> <td align="center" bgcolor="#f0f0ff"> qmgr(8) </td> <td>
+</td> <td align="center" bgcolor="#f0f0ff"> local(8) </td> </tr>
+
+</table>
+
+<li> <p> The anvil(8) server implements client connection and
+request rate
+limiting for all smtpd(8) servers.  The TUNING_README document
+provides guidance for dealing with mis-behaving SMTP clients. The
+anvil(8) service is available in Postfix version 2.2 and later.
+</p>
+
+<table>
+
+<tr> <td> Network </td> <td> <tt> -&gt; </tt> </td> <td align="center"
+bgcolor="#f0f0ff"> <br> smtpd(8)<br><br> </td> <td> <tt> &lt;-&gt;
+</tt> </td> <td align="center" bgcolor="#f0f0ff"> <br> anvil(8)<br><br>
+</td> </tr>
+
+</table>
+
+<li> <p> The bounce(8), defer(8) and trace(8) services each maintain
+their own queue directory trees with per-message logfiles. Postfix
+uses this information when sending "failed", "delayed" or "success"
+delivery status notifications to the sender. </p>
+
+<p> The trace(8) service also implements support for the Postfix
+"sendmail
+-bv" and "sendmail -v" commands which produce reports about how
+Postfix delivers mail, and is available with Postfix version 2.1
+and later. See <a href="DEBUG_README.html#trace_mail"> DEBUG_README
+</a> for examples.  </p>
+
+<table>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> cleanup(8) </td> <td
+valign="middle"> <tt> -&gt; </tt> </td> <td align="center"
+bgcolor="#f0f0ff"> qmgr(8)<br> Postfix<br> queue </td> <td
+valign="middle"> <tt> -&gt; </tt> </td> <td align="center"
+bgcolor="#f0f0ff"> Delivery<br> agents</td> </tr>
+
+<tr> <td align="center"> ^<br> <tt> | </tt> </td> <td> </td> <td
+align="center"> <tt> |<br> v </tt> </td> <td> </td> <td align="center">
+<tt> |<br> v </tt> </td> </tr>
+
+<tr> <td align="center"> (Non-)<br> delivery<br> notice </td> <td
+valign="middle"> <tt> &lt;- </tt> </td> <td align="center"
+bgcolor="#f0f0ff"> bounce(8)<br> defer(8)<br> trace(8) </td> <td
+valign="middle"> <tt> &lt;- </tt> </td> <td align="center"> Queue
+id,<br> recipient,<br> status</td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center"> <table> <tr> <td
+align="center"> ^<br> <tt> | </tt> </td> <td align="center"> <tt>
+|<br> v </tt> </td> </tr> </table> </td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center" bgcolor="#f0f0ff">
+Per- <br> message<br> logfiles </td> </tr>
+
+</table>
+
+<li> <p> The flush(8) servers maintain per-destination logs and
+implement both ETRN and "sendmail -qRdestination", as described
+in the ETRN_README document. This moves selected queue files from
+the deferred queue back to the incoming queue and requests their
+delivery.  The flush(8) service is available with Postfix version
+1.0 and later.  </p>
+
+<table>
+
+<tr> <td colspan="4"> </td> <td align="center" bgcolor="#f0f0ff">
+<a href="QSHAPE_README.html#incoming_queue"> incoming </a><br>^
+<br><a href="QSHAPE_README.html#deferred_queue"> deferred </a>
+</td> </tr>
+
+<tr> <td colspan="4"> </td> <td align="center"> ^<br> |</td> </tr>
+
+<tr> <td align="center" bgcolor="#f0f0ff"> smtpd(8)<br> sendmail(1)<br>
+postqueue(1) </td> <td> <tt> - </tt> </td> <td align="center">
+Destination<br> to flush</td> <td> <tt> -&gt; </tt> </td> <td
+align="center" bgcolor="#f0f0ff"> flush(8) </td> <td> <tt> &lt;-
+</tt> </td> <td align="center"> Deferred<br> destination,<br> queue
+id </td> <td> <tt> - </tt> </td> <td align="center" bgcolor="#f0f0ff">
+Delivery<br> agents,<br> qmgr(8) </td> </tr>
+
+<tr> <td colspan="4"> </td> <td align="center"> <table> <tr> <td
+align="center"> ^<br> <tt> | </tt> </td> <td align="center"> <tt>
+|<br> v </tt>  </td> </tr> </table> </td> </tr>
+
+<tr> <td colspan="4"> </td> <td align="center"> Per-dest-<br>
+ination<br> logs </td> </tr>
+
+</table>
+
+<li> <p> The proxymap(8) servers provide read-only and read-write
+table lookup
+service to Postfix processes. This overcomes chroot restrictions,
+reduces the number of open lookup tables by sharing one open
+table among multiple processes, and implements single-updater
+tables. </p>
+
+<li> <p> The scache(8) server maintains the connection cache for
+the Postfix smtp(8) client. When connection caching is enabled for
+selected destinations, the smtp(8) client does not disconnect
+immediately after a mail transaction, but gives the connection to
+the connection cache server which keeps the connection open for a
+limited amount of time.  The smtp(8) client continues with some
+other mail delivery request. Meanwhile, any smtp(8) process can
+ask the scache(8) server for that cached connection and reuse it
+for mail delivery. As a safety measure, Postfix limits the number
+of times that a connection may be reused.  </p>
+
+<p> When delivering mail to a destination with multiple mail servers,
+connection caching can help to skip over a non-responding server,
+and thus dramatically speed up delivery. SMTP connection caching
+is available in Postfix version 2.2 and later.  More information
+about this feature is in the CONNECTION_CACHE_README document. </p>
+
+<table>
+
+<tr> <td> </td> <td> <tt> /-- </tt> </td> <td align="center"
+colspan="3" bgcolor="#f0f0ff"> smtp(8) </td> <td colspan="2"> <tt>
+--&gt; </tt> Internet </td> </tr>
+ 
+<tr> <td align="center" bgcolor="#f0f0ff"> qmgr(8) </td> <td> </td>
+<td align="center" rowspan="3"> &nbsp; </td> <td align="center"
+rowspan="3"><tt>|<br>|<br>|<br>|<br>v</tt></td> <td> &nbsp; </td>
+</tr>
+ 
+<tr> <td> </td> <td> <tt> \-- </tt> </td> <td align="center"
+colspan="2" bgcolor="#f0f0ff"> smtp(8) </td> <td align="left"> <tt>
+--&gt; </tt> Internet </td> </tr>
+ 
+<tr> <td colspan="3"> </td> <td align="center"><tt>^<br>|</tt></td>
+<td> &nbsp; </td> </tr>
+ 
+<tr> <td colspan="3"> </td> <td align="center" colspan="3"
+bgcolor="#f0f0ff"> scache(8) </td> </tr>
+
+</table>
+
+<li> <p> The showq(8) servers list the Postfix queue status. This
+is the queue listing service that does the work for the mailq(1)
+and postqueue(1) commands.  </p>
+
+<table>
+
+<tr> <td> Output </td> <td> <tt> &lt;- </tt> </td> <td align="center"
+bgcolor="#f0f0ff"> mailq(1)<br>
+
+<a href="postqueue.1.html"> post-<br>queue(1) </a> <br> </td> <td>
+<tt> &lt;- </tt> </td> <td align="center" valign="middle"
+bgcolor="#f0f0ff"> showq(8) </td> <td> <tt> &lt;- </tt></td> <td
+align="center" valign="middle" bgcolor="#f0f0ff"> Postfix<br> queue
+</td> </tr>
+
+</table>
+
+<li> <p> The spawn(8) servers run non-Postfix commands on request,
+with the client connected via socket or FIFO to the command's
+standard input, output and error streams. You can find examples of
+its use in the SMTPD_POLICY_README document.  </p>
+
+<li> <p> The tlsmgr(8) server runs when TLS (Transport Layer
+Security, formerly known as SSL) is turned on in the Postfix smtp(8)
+client or smtpd(8) server. This process has two duties: </p>
+
+<ul>
+
+<li> <p> Maintain the pseudo-random number generator (PRNG) that
+is used to seed the TLS engines in Postfix smtp(8) client or smtpd(8)
+server processes.  The state of this PRNG is periodically saved to
+a file, and is read when tlsmgr(8) starts up. </p>
+
+<li> <p> Maintain the optional Postfix smtp(8) client or smtpd(8)
+server caches with TLS session keys. Saved keys can improve
+performance by reducing the amount of computation at the start of
+a TLS session. </p>
+
+</ul>
+
+<p> TLS support is available in Postfix version 2.2 and later.
+Information about the Postfix TLS implementation is in the TLS_README
+document. </p>
+
+<table>
+
+<tr> <td>Network<tt>-&gt; </tt> </td> <td align="center"
+bgcolor="#f0f0ff"> <br> smtpd(8) <br> &nbsp; </td> <td colspan="2">
+<tt> &lt;---seed---<br><br>&lt;-session-&gt; </tt> </td> <td
+align="center" bgcolor="#f0f0ff"> <br> tlsmgr(8) <br> &nbsp; </td>
+<td colspan="3"> <tt> ---seed---&gt;<br> <br>&lt;-session-&gt;
+</tt> </td> <td align="center" bgcolor="#f0f0ff"> <br> smtp(8) <br>
+&nbsp; </td> <td> <tt> -&gt;</tt>Network </td> </tr>
+
+<tr> <td colspan="3"> </td> <td align="right"> <table> <tr> <td>
+</td> <td> / </td> </tr> <tr> <td> / </td> <td> </td> </tr> </table>
+</td> <td align="center"> |<br> |</td> <td align="left"> <table>
+<tr> <td> \ </td> <td> </td> </tr> <tr> <td> </td> <td> \ </td>
+</tr> </table> </td> <td colspan="3"> </td> </tr>
+
+<tr> <td colspan="2"> </td> <td align="center" bgcolor="#f0f0ff">
+smtpd<br> session<br> cache </td> <td> </td> <td align="center"
+bgcolor="#f0f0ff"> PRNG<br> state <br>file </td> <td> </td> <td
+align="center" bgcolor="#f0f0ff"> smtp<br> session<br> cache </td>
+<td colspan="2"> </td> </tr>
+
+</table>
+
+
+<li> <p> The verify(8) server verifies that a sender or recipient
+address is deliverable before the smtpd(8) server accepts it.  The
+verify(8) server injects probe messages into the Postfix queue and
+processes status updates from delivery agents and/or queue manager.
+This process is described in the ADDRESS_VERIFICATION_README
+document.  The verify(8) service is available with Postfix version
+2.1 and later. </p>
+
+<table>
+
+<tr> <td> Network </td> <td> <tt> -&gt; </tt> </td> <td align="center"
+bgcolor="#f0f0ff"> smtpd(8) </td> <td> <tt> &lt;-&gt; </tt> </td>
+<td align="center" bgcolor="#f0f0ff"> verify(8) </td> <td> <tt>
+-&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff"> cleanup(8)
+</td> <td> <tt> -&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff">
+qmgr(8)<br> Postfix <br>queue </td> <td> <tt> -&gt; </tt> </td>
+<td align="center" bgcolor="#f0f0ff"> Delivery<br> agents</td>
+</tr>
+
+<tr> <td colspan="5"> </td> <td align="right"> <table> <tr> <td>
+\ </td> <td> </td> </tr> <tr> <td> </td> <td> \ </td> </tr> </table>
+</td> <td align="center" valign="bottom"> <tt> &lt;- </tt> </td>
+<td valign="bottom"> <tt> &lt;- </tt> </td> <td align="center">
+<tt> |<br> v </tt> </td> <td align="center"> <table> <tr> <td>
+</td> <td> / </td> </tr> <tr> <td> / </td> <td> </td> </tr> </table>
+</td> </tr>
+
+</table>
+
+</ul>
+
+<h2> <a name="commands"> Postfix support commands </a> </h2>
+
+<p> The Postfix architecture overview ends with a summary of
+command-line utilities for day-to-day use of the Postfix mail
+system. Besides the Sendmail-compatible sendmail(1), mailq(1), and
+newaliases(1) commands, the Postfix system comes with it own
+collection of command-line utilities.  For consistency, these are
+all named post<i>something</i>. </p>
+
+<ul>
+
+<li> <p> The postfix(1) command controls the operation of the mail
+system. It is the interface for starting, stopping, and restarting
+the mail system, as well as for some other administrative operations.
+This command is reserved to the super-user. </p>
+
+<li> <p> The postalias(1) command maintains Postfix aliases(5) type
+databases.  This is the program that does the work for the
+newaliases(1) command.  </p>
+
+<li> <p> The postcat(1) command displays the contents of Postfix
+queue files. This is a limited, preliminary utility. This program
+is likely to be superseded by something more powerful that can also
+edit Postfix queue files. </p>
+
+<li> <p> The postconf(1) command displays or updates Postfix main.cf
+parameters and displays system dependent information about the
+supported file locking methods, and the supported types of lookup
+tables.  </p>
+
+<li> <p> The postdrop(1) command is the mail posting utility that
+is run by the Postfix sendmail(1) command in order to deposit mail
+into the maildrop queue directory. </p>
+
+<li> <p> The postkick(1) command makes some Postfix internal
+communication channels available for use in, for example, shell
+scripts. </p>
+
+<li> <p> The postlock(1) command provides Postfix-compatible mailbox
+locking for use in, for example, shell scripts. </p>
+
+<li> <p> The postlog(1) command provides Postfix-compatible logging
+for shell scripts. </p>
+
+<li> <p> The postmap(1) command maintains Postfix lookup tables
+such as canonical(5), virtual(5) and others. It is a cousin of the
+UNIX makemap command. </p>
+
+<li> <p> The postmulti(1) command repeats the "postfix start" etc.
+command for each Postfix instance, and supports creation, deletion
+etc. of Postfix instances. For a tutorial, see MULTI_INSTANCE_README.
+</p>
+
+<li> <p> The postqueue(1) command is the privileged command that
+is run by Postfix sendmail(1) and mailq(1) in order to flush or
+list the
+mail queue. </p>
+
+<li> <p> The postsuper(1) command maintains the Postfix queue. It
+removes old temporary files, and moves queue files into the right
+directory after a change in the hashing depth of queue directories.
+This command is run at mail system startup time and when Postfix
+is restarted. </p>
+
+</ul>
+
+</body>
+
+</html>

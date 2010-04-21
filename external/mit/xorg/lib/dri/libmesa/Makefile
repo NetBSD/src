@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2009/02/25 03:02:19 snj Exp $
+#	$NetBSD: Makefile,v 1.1.2.3.4.1 2010/04/21 05:24:34 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ LIBISMODULE=	yes
 
 SHLIB_MAJOR=	0
 
-MESA_SRC_MODULES=	main math vbo tnl shader swrast slang
+MESA_SRC_MODULES=	glapi main math vbo tnl shader swrast slang ss
 
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/main \
 		-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
@@ -15,7 +15,7 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/main \
 		-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/common \
 		-I${X11SRCDIR.MesaLib}/src/mesa \
 		-I${X11SRCDIR.MesaLib}/include \
-		-I${DESTDIR}${X11INCDIR}/X11/drm \
+		-I${DESTDIR}${X11INCDIR}/drm \
 		-I${DESTDIR}${X11INCDIR}/X11
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB} \

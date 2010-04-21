@@ -1,2 +1,8 @@
-# $NetBSD: ad.mips,v 1.8 2004/01/11 10:24:58 lukem Exp $
+# $NetBSD: ad.mips,v 1.8.48.1 2010/04/21 05:20:40 matt Exp $
 ./usr/lkm/ldscript				base-sys-usr
+./usr/lib/64					base-sys-usr
+./usr/lib/64/i18n				base-sys-usr
+./usr/lib/64/security				base-sys-usr
+./usr/lib/o32					base-sys-usr
+./usr/lib/o32/i18n				base-sys-usr
+./usr/lib/o32/security				base-sys-usr

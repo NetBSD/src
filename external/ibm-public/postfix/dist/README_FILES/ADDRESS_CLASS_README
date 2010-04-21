@@ -1,0 +1,201 @@
+PPoossttffiixx AAddddrreessss CCllaasssseess
+
+-------------------------------------------------------------------------------
+
+IInnttrroodduuccttiioonn
+
+Postfix version 2.0 introduces the concept of address classes. This is a way of
+grouping recipient addresses by their delivery method. The idea comes from
+discussions with Victor Duchovni. Although address classes introduced a few
+incompatibilities they also made it possible to improve the handling of hosted
+domains and of unknown recipients.
+
+This document provides information on the following topics:
+
+  * What are address classes good for?
+  * What address classes does Postfix implement?
+  * Improvements compared to Postfix 1.1
+  * Incompatibilities with Postfix 1.1
+
+WWhhaatt aarree aaddddrreessss ccllaasssseess ggoooodd ffoorr??
+
+Why should you care about address classes? This is how Postfix decides what
+mail to accept, and how to deliver it. In other words, address classes are very
+important for the operation of Postfix.
+
+An address class is defined by three items.
+
+  * The list of domains that are a member of the class: for example, all local
+    domains, or all relay domains.
+
+  * The default delivery transport. For example, the local, virtual or relay
+    delivery transport (delivery transports are defined in master.cf). This
+    helps to keep Postfix configurations simple, by avoiding the need for
+    explicit routing information in transport maps.
+
+  * The list of valid recipient addresses for that address class. The Postfix
+    SMTP server rejects invalid recipients with "User unknown in <name of
+    address class here> table". This helps to keep the Postfix queue free of
+    undeliverable MAILER-DAEMON messages.
+
+WWhhaatt aaddddrreessss ccllaasssseess ddooeess PPoossttffiixx iimmpplleemmeenntt??
+
+Initially the list of address classes is hard coded, but this is meant to
+become extensible. The summary below describes the main purpose of each class,
+and what the relevant configuration parameters are.
+
+The local domain class.
+
+  * Purpose: final delivery for traditional UNIX system accounts and
+    traditional Sendmail-style aliases. This is typically used for the
+    canonical domains of the machine. For a discussion of the difference
+    between canonical domains, hosted domains and other domains, see the
+    VIRTUAL_README file.
+
+  * Domain names are listed with the mydestination parameter. This domain class
+    also includes mail for user@[ipaddress] when the IP address is listed with
+    the inet_interfaces or proxy_interfaces parameters.
+
+  * Valid recipient addresses are listed with the local_recipient_maps
+    parameter, as described in LOCAL_RECIPIENT_README. The Postfix SMTP server
+    rejects invalid recipients with "User unknown in local recipient table". If
+    the local_recipient_maps parameter value is empty, then the Postfix SMTP
+    server accepts any address in the local domain class.
+
+  * The mail delivery transport is specified with the local_transport
+    parameter. The default value is llooccaall::$$mmyyhhoossttnnaammee for delivery with the
+    local(8) delivery agent.
+
+The virtual alias domain class.
+
+  * Purpose: hosted domains where each recipient address is aliased to a local
+    UNIX system account or to a remote address. A virtual alias example is
+    given in the VIRTUAL_README file.
+
+  * Domain names are listed in virtual_alias_domains. The default value is
+    $virtual_alias_maps for Postfix 1.1 compatibility.
+
+  * Valid recipient addresses are listed with the virtual_alias_maps parameter.
+    The Postfix SMTP server rejects invalid recipients with "User unknown in
+    virtual alias table". The default value is $virtual_maps for Postfix 1.1
+    compatibility.
+
+  * There is no mail delivery transport parameter. Every address must be
+    aliased to some other address.
+
+The virtual mailbox domain class.
+
+  * Purpose: final delivery for hosted domains where each recipient address can
+    have its own mailbox, and where users do not need to have a UNIX system
+    account. A virtual mailbox example is given in the VIRTUAL_README file.
+
+  * Domain names are listed with the virtual_mailbox_domains parameter. The
+    default value is $virtual_mailbox_maps for Postfix 1.1 compatibility.
+
+  * Valid recipient addresses are listed with the virtual_mailbox_maps
+    parameter. The Postfix SMTP server rejects invalid recipients with "User
+    unknown in virtual mailbox table". If this parameter value is empty, the
+    Postfix SMTP server accepts all recipients for domains listed in
+    $virtual_mailbox_domains.
+
+  * The mail delivery transport is specified with the virtual_transport
+    parameter. The default value is vviirrttuuaall for delivery with the virtual(8)
+    delivery agent.
+
+The relay domain class.
+
+  * Purpose: mail forwarding to remote destinations that list your system as
+    primary or backup MX host. For a discussion of the basic configuration
+    details, see the BASIC_CONFIGURATION_README document. For a discussion of
+    the difference between canonical domains, hosted domains and other domains,
+    see the VIRTUAL_README file.
+
+  * Domain names are listed with the relay_domains parameter.
+
+  * Valid recipient addresses are listed with the relay_recipient_maps
+    parameter. The Postfix SMTP server rejects invalid recipients with "User
+    unknown in relay recipient table". If this parameter value is empty, the
+    Postfix SMTP server accepts all recipients for domains listed with the
+    relay_domains parameter.
+
+  * The mail delivery transport is specified with the relay_transport
+    parameter. The default value is rreellaayy which is a clone of the smtp(8)
+    delivery agent.
+
+The default domain class.
+
+  * Purpose: mail forwarding to the Internet on behalf of authorized clients.
+    For a discussion of the basic configuration details, see the
+    BASIC_CONFIGURATION_README file. For a discussion of the difference between
+    canonical domains, hosted domains and other domains, see the VIRTUAL_README
+    file.
+
+  * This class has no destination domain table.
+
+  * This class has no valid recipient address table.
+
+  * The mail delivery transport is specified with the default_transport
+    parameter. The default value is ssmmttpp for delivery with the smtp(8) delivery
+    agent.
+
+IImmpprroovveemmeennttss ccoommppaarreedd ttoo PPoossttffiixx 11..11
+
+Postfix 2.0 address classes made the following improvements possible over
+earlier Postfix versions:
+
+  * You no longer need to specify all the virtual(8) mailbox domains in the
+    Postfix transport map. The virtual(8) delivery agent has become a first-
+    class citizen just like local(8) or smtp(8).
+
+  * On mail gateway systems, address classes provide separation of inbound mail
+    relay traffic ($relay_transport) from outbound traffic
+    ($default_transport). This eliminates a problem where inbound mail
+    deliveries could become resource starved in the presence of a high volume
+    of outbound mail.
+
+  * The SMTP server rejects unknown recipients in a more consistent manner than
+    was possible with Postfix version 1. This is needed to keep undeliverable
+    mail (and bounced undeliverable mail) out of the mail queue. This is
+    controlled by the smtpd_reject_unlisted_recipient configuration parameter.
+
+  * As of Postfix version 2.1, the SMTP server also rejects unknown sender
+    addresses (i.e. addresses that it would reject as unknown recipient
+    addresses). Sender "egress filtering" can help to slow down an email worm
+    explosion. This is controlled by the smtpd_reject_unlisted_sender
+    configuration parameter.
+
+IInnccoommppaattiibbiilliittiieess wwiitthh PPoossttffiixx 11..11
+
+Postfix 2.0 address classes introduce a few incompatible changes in documented
+behavior. In order to ease the transitions, new parameters have default values
+that are backwards compatible.
+
+  * The virtual_maps parameter is replaced by virtual_alias_maps (for address
+    lookups) and by virtual_alias_domains (for the names of what were formerly
+    called "Postfix-style virtual domains").
+
+    For backwards compatibility with Postfix version 1.1, the new
+    virtual_alias_maps parameter defaults to $virtual_maps, and the new
+    virtual_alias_domains parameter defaults to $virtual_alias_maps.
+
+  * The virtual_mailbox_maps parameter now has a companion parameter called
+    virtual_mailbox_domains (for the names of domains served by the virtual
+    delivery agent). The virtual_mailbox_maps parameter is now used for address
+    lookups only.
+
+    For backwards compatibility with Postfix version 1.1, the new
+    virtual_mailbox_domains parameter defaults to $virtual_mailbox_maps.
+
+  * Introduction of the relay_recipient_maps parameter. The Postfix SMTP server
+    can use this to block mail for relay recipients that don't exist. This list
+    is empty by default, which means accept any recipient.
+
+  * The local_recipient_maps feature is now turned on by default. The Postfix
+    SMTP server uses this to reject mail for unknown local recipients. See the
+    LOCAL_RECIPIENT_README file hints and tips.
+
+  * Introduction of the relay delivery transport in master.cf. This helps to
+    avoid mail delivery scheduling problems on inbound mail relays when there
+    is a lot of outbound mail, but may require that you update your
+    "defer_transports" setting.
+

@@ -1,6 +1,6 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.90.60.8 2008/05/06 01:32:51 each Exp */
+/* Id: config.h.in,v 1.90.60.21 2009/08/13 02:02:45 marka Exp */
 
 /*! \file */
 
@@ -24,9 +24,6 @@
  *** This file is not to be included by any public header files, because
  *** it does not get installed.
  ***/
-
-/** define to `int' if <sys/types.h> doesn't define.  */
-#undef ssize_t
 
 /** define on DEC OSF to enable 4.4BSD style sa_len support */
 #undef _SOCKADDR_LEN
@@ -60,9 +57,6 @@
 
 /** define if you have the NET_RT_IFLIST sysctl variable and sys/sysctl.h */
 #undef HAVE_IFLIST_SYSCTL
-
-/** define if chroot() is available */
-#undef HAVE_CHROOT
 
 /** define if tzset() is available */
 #undef HAVE_TZSET
@@ -115,7 +109,7 @@ int sigwait(const unsigned int *set, int *sig);
  * The silly continuation line is to keep configure from
  * commenting out the #undef.
  */
- 
+
 #undef \
 	va_start
 #define	va_start(ap, last) \
@@ -159,6 +153,12 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to enable "rrset-order fixed" syntax. */
 #undef DNS_RDATASET_FIXED
+
+/* Solaris hack to get select_large_fdset. */
+#undef FD_SETSIZE
+
+/* Define to 1 if you have the `chroot' function. */
+#undef HAVE_CHROOT
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
@@ -211,6 +211,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the `nanosleep' function. */
+#undef HAVE_NANOSLEEP
+
 /* Define to 1 if you have the <net/if6.h> header file. */
 #undef HAVE_NET_IF6_H
 
@@ -231,6 +234,12 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to 1 if you have the <sys/capability.h> header file. */
 #undef HAVE_SYS_CAPABILITY_H
+
+/* Define to 1 if you have the <sys/devpoll.h> header file. */
+#undef HAVE_SYS_DEVPOLL_H
+
+/* Define to 1 if you have the <sys/dyntune.h> header file. */
+#undef HAVE_SYS_DYNTUNE_H
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H

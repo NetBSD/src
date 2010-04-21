@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright 2006-2008 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2008 Roy Marples <roy@marples.name>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,12 +39,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "config.h"
 #include "common.h"
 #include "dhcp.h"
-#include "logger.h"
 #include "net.h"
 #include "bpf-filter.h"
 
@@ -81,7 +81,7 @@ open_socket(struct interface *iface, int protocol)
 		goto eexit;
 	if (pv.bv_major != BPF_MAJOR_VERSION ||
 	    pv.bv_minor < BPF_MINOR_VERSION) {
-		logger(LOG_ERR, "BPF version mismatch - recompile " PACKAGE);
+		syslog(LOG_ERR, "BPF version mismatch - recompile");
 		goto eexit;
 	}
 
@@ -136,7 +136,7 @@ eexit:
 
 ssize_t
 send_raw_packet(const struct interface *iface, int protocol,
-		const void *data, ssize_t len)
+    const void *data, ssize_t len)
 {
 	struct iovec iov[2];
 	struct ether_header hw;
@@ -160,7 +160,7 @@ send_raw_packet(const struct interface *iface, int protocol,
  * So we pass the buffer in the API so we can loop on >1 packet. */
 ssize_t
 get_raw_packet(struct interface *iface, int protocol,
-	       void *data, ssize_t len)
+    void *data, ssize_t len)
 {
 	int fd = -1;
 	struct bpf_hdr packet;
@@ -184,7 +184,7 @@ get_raw_packet(struct interface *iface, int protocol,
 		}
 		bytes = -1;
 		memcpy(&packet, iface->buffer + iface->buffer_pos,
-		       sizeof(packet));
+		    sizeof(packet));
 		if (packet.bh_caplen != packet.bh_datalen)
 			goto next; /* Incomplete packet, drop. */
 		if (iface->buffer_pos + packet.bh_caplen + packet.bh_hdrlen >
@@ -197,7 +197,7 @@ get_raw_packet(struct interface *iface, int protocol,
 		memcpy(data, payload, bytes);
 next:
 		iface->buffer_pos += BPF_WORDALIGN(packet.bh_hdrlen +
-						   packet.bh_caplen);
+		    packet.bh_caplen);
 		if (iface->buffer_pos >= iface->buffer_len)
 			iface->buffer_len = iface->buffer_pos = 0;
 		if (bytes != -1)

@@ -750,14 +750,16 @@ int tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
 
 	if (s->s3->handshake_buffer) 
 		ssl3_digest_cached_records(s);
-	for (i=0;i<SSL_MAX_DIGEST;i++) 
-		{
-		  if (s->s3->handshake_dgst[i]&&EVP_MD_CTX_type(s->s3->handshake_dgst[i])==md_nid) 
-		  	{
-		  	d=s->s3->handshake_dgst[i];
-			break;
+	if (s->s3->handshake_dgst) {
+		for (i=0;i<SSL_MAX_DIGEST;i++) 
+			{
+			  if (s->s3->handshake_dgst[i]&&EVP_MD_CTX_type(s->s3->handshake_dgst[i])==md_nid) 
+				{
+				d=s->s3->handshake_dgst[i];
+				break;
+				}
 			}
-		}
+	}
 	if (!d) {
 		SSLerr(SSL_F_TLS1_CERT_VERIFY_MAC,SSL_R_NO_REQUIRED_DIGEST);
 		return 0;
@@ -794,7 +796,8 @@ int tls1_final_finish_mac(SSL *s,
 		if (mask & s->s3->tmp.new_cipher->algorithm2)
 			{
 			unsigned int hashsize = EVP_MD_size(md);
-			if (hashsize > (sizeof buf - (size_t)(q-buf)))
+			if (hashsize > (sizeof buf - (size_t)(q-buf)) ||
+			    s->s3->handshake_dgst == NULL)
 				{
 				/* internal error: 'buf' is too small for this cipersuite! */
 				err = 1;

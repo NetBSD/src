@@ -1,0 +1,42 @@
+0 MAIN 0	|subject: primary subject
+1 MAIN 71	|content-type: multipart/(co\m\)ment)mumble mumble; boundary = "ab\cd 
+ ef" mumble
+HEADER END
+2 BODY N 0	|
+3 BODY N 1	|abcdef prolog
+4 BODY N 15	|
+5 BODY N 16	|--abcd ef
+6 MULT 0	|content-type: message/rfc822; mumble
+7 BODY N 0	|
+8 NEST 0	|subject: nested subject
+9 NEST 57	|content-type: multipart/mumble; boundary(comment)="pqrs"
+10 NEST 91	|content-transfer-encoding: base64
+header_body_checks: warning: invalid message/* or multipart/* encoding domain: base64
+11 BODY N 0	|
+12 BODY N 1	|pqrs prolog
+13 BODY N 13	|
+14 BODY N 14	|--pqrs
+15 MULT 0	|header: pqrs part 01
+16 BODY N 0	|
+17 BODY N 1	|body pqrs part 01
+18 BODY N 19	|
+19 BODY N 20	|--pqrs
+20 MULT 0	|header: pqrs part 02
+21 BODY N 0	|
+22 BODY N 1	|body pqrs part 02
+23 BODY N 19	|
+24 BODY N 20	|--bogus-boundary
+25 BODY N 37	|header: wietse
+26 BODY N 52	|
+27 BODY N 53	|body asdasads
+28 BODY N 67	|
+29 BODY N 68	|--abcd ef
+30 MULT 0	|header: abcdef part 02
+31 BODY N 0	|
+32 BODY N 1	|body abcdef part 02
+33 BODY N 21	|
+34 BODY N 0	|--abcd ef--
+35 BODY N 12	|
+36 BODY N 13	|epilog
+BODY END
+header_body_checks: warning: improper message/* or multipart/* encoding domain

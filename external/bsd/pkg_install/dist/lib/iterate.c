@@ -1,4 +1,4 @@
-/*	$NetBSD: iterate.c,v 1.1.1.1.8.1 2009/05/30 16:21:37 snj Exp $	*/
+/*	$NetBSD: iterate.c,v 1.1.1.1.8.1.2.1 2010/04/21 05:23:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -43,10 +43,6 @@
 #endif
 
 #include "lib.h"
-
-#ifndef __UNCONST
-#define __UNCONST(a)	((void *)(unsigned long)(const void *)(a))
-#endif
 
 /*
  * Generic iteration function:
@@ -158,7 +154,7 @@ iterate_pkg_db(int (*matchiter)(const char *, void *), void *cookie)
 	DIR *dirp;
 	int retval;
 
-	if ((dirp = opendir(_pkgdb_getPKGDB_DIR())) == NULL) {
+	if ((dirp = opendir(pkgdb_get_dir())) == NULL) {
 		if (errno == ENOENT)
 			return 0; /* No pkgdb directory == empty pkgdb */
 		return -1;
@@ -182,7 +178,7 @@ match_by_basename(const char *pkg, void *cookie)
 		return 0;
 	}
 	if (strncmp(pkg, target, pkg_version - pkg) == 0 &&
-	    strlen(target) == pkg_version - pkg)
+	    pkg + strlen(target) == pkg_version)
 		return 1;
 	else
 		return 0;
@@ -198,7 +194,7 @@ match_by_pattern(const char *pkg, void *cookie)
 
 struct add_matching_arg {
 	lpkg_head_t *pkghead;
-	size_t got_match;
+	int got_match;
 	int (*match_fn)(const char *pkg, void *cookie);
 	void *cookie;
 };
@@ -398,6 +394,7 @@ match_best_file(const char *filename, void *cookie)
 		return 0;
 	default:
 		errx(EXIT_FAILURE, "Invalid error from pkg_order");
+		/* NOTREACHED */
 	}
 }
 

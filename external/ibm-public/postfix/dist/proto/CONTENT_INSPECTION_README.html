@@ -1,0 +1,92 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix Content Inspection </title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix
+Content Inspection </h1>
+
+<hr>
+
+<p> Postfix supports three content inspection methods, ranging from
+light-weight one-line-at-a-time scanning before mail is queued, to
+heavy duty machinery that does sophisticated content analysis after
+mail is queued. Each approach serves a different purpose.  </p>
+
+<dl>
+
+<dt> <b> before queue, built-in, light-weight</b> </dt>
+
+<dd> <p> This method inspects mail BEFORE it is stored in the queue,
+and uses Postfix's built-in message header and message body
+inspection. Although the main purpose is to stop a specific flood
+of mail from worms or viruses, it is also useful to block a flood
+of bounced junk email and email notifications from virus detection
+systems.  The built-in regular expressions are not meant to implement
+general SPAM and virus detection. For that, you should use one of
+the content inspection methods described below. Details are described
+in the BUILTIN_FILTER_README and BACKSCATTER_README documents.
+</p>
+
+<dt> <b> after queue, external, heavy-weight</b> </dt>
+
+<dd> <p> This method inspects mail AFTER it is stored in the queue,
+and uses standard protocols such as SMTP or "pipe to command and
+wait for exit status".  After-queue inspection allows you to use
+content filters of arbitrary complexity without causing timeouts
+while receiving mail, and without running out of memory resources
+under a peak load. Details of this approach are in the FILTER_README
+document. </p>
+
+<dt> <b> before queue, external, medium-weight</b> </dt>
+
+<dd> <p> The following two methods inspect mail BEFORE it is stored in the
+queue.  </p>
+
+<ul>
+
+<li> <p> The first method uses the SMTP protocol, and is described
+in the SMTPD_PROXY_README document.  This approach is available
+with Postfix version 2.1 and later.  </p>
+
+<li> <p> The second method uses the Sendmail 8 Milter protocol, and
+is described in the MILTER_README document.  This approach is
+available with Postfix version 2.3 and later.  </p>
+
+</ul>
+
+<p> Although these approaches appear to be attractive, they have
+some serious limitations that you need to be aware of.  First,
+content inspection software must finish in a limited amount of time;
+if content inspection needs too much time then incoming mail
+deliveries will time out.  Second, content inspection software must
+run in a limited amount of memory; if content inspection needs too
+much memory then software will crash under a peak load.  Before-queue
+inspection limits the peak load that your system can handle, and
+limits the sophistication of the content filter that you can use.
+</p>
+
+</dl>
+
+<p> The more sophisticated content filtering software is not built
+into Postfix for good reasons: writing an MTA requires different
+skills than writing a SPAM or virus killer. Postfix encourages the
+use of external filters and standard protocols because this allows
+you to choose the best MTA and the best content inspection software
+for your purpose.  Information about external content inspection
+software can be found on the Postfix website at http://www.postfix.org/,
+and on the postfix-users@postfix.org mailing list. </p>
+
+</body>
+
+</html>

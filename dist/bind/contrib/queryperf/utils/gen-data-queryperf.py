@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 #
-# Id: gen-data-queryperf.py,v 1.1 2003/04/10 02:33:40 marka Exp
+# Id: gen-data-queryperf.py,v 1.1.1236.1 2008/06/13 18:18:04 jinmei Exp
 #
 # Contributed by Stephane Bortzmeyer <bortzmeyer@nic.fr>
 #
@@ -32,8 +32,14 @@ percent_random = 0.3
 gen = None
 zone_file = None
 domains = {}
-domain_ns = "^([a-z0-9-]+)(\.([a-z0-9-\.]+|)|)( +IN|) +NS"
+domain_ns = r'^([a-z0-9-\.]+)((\s+\d+)?(\s+IN)?|(\s+IN)(\s+\d+)?)\s+NS'
 domain_ns_re = re.compile(domain_ns, re.IGNORECASE)
+
+def remove_tld(label, tld):
+    if label.endswith('.' + tld + '.'):
+        return label[0:-(1+ len(tld) + 1)]
+    else:
+        return label
 
 def gen_random_label():
     label = ""
@@ -52,7 +58,7 @@ def usage():
 try:
     optlist, args = getopt.getopt(sys.argv[1:], "hp:f:n:t:m:",
                                   ["help", "percentrandom=", "zonefile=",
-                                   "num=", "tld=",
+                                   "number=", "tld=",
                                    "maxsize="])
     for option, value in optlist:
         if option == "--help" or option == "-h":
@@ -86,15 +92,22 @@ if zone_file:
     while line:
         domain_line = domain_ns_re.match(line)
         if domain_line:
-            domain = domain_line.group(1)
+            print domain_line.group(1)
+            domain = remove_tld(domain_line.group(1), tld)
             domains[domain] = 1
         line = file.readline()
     file.close()
+if zone_file:
+    domains = domains.keys()
+    if len(domains) == 0:
+        sys.stderr.write("No domains found in '%s'\n" % zone_file)
+        sys.exit(1)
 for i in range(num):
     if zone_file:
         if gen.random() < percent_random:
-            print make_domain(gen_random_label())
+            sys.stdout.write(make_domain(gen_random_label()))
         else:
-            print make_domain(gen.choice(domains.keys()))
+            sys.stdout.write(make_domain(gen.choice(domains)))
     else:
-        print make_domain(gen_random_label())
+        sys.stdout.write(make_domain(gen_random_label()))
+    sys.stdout.write("\n")

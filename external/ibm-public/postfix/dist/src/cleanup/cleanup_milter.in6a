@@ -1,0 +1,5 @@
+open test-queue-file6.tmp
+
+ins_header 1 X-Virus-Scanned hya
+
+close

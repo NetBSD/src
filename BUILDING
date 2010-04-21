@@ -281,6 +281,12 @@ CONFIGURATION
 
                  Default: ``no''
 
+     MKSUBPIXEL  Can be set to ``yes'' or ``no''.  For X builds, decides if
+                 subpixel rendering code in FreeType is turned on.  Turned off
+                 by default because of patent issues.
+
+                 Default: ``no''
+
      MKTTINTERP  Can be set to ``yes'' or ``no''.  For X builds, decides if
                  the TrueType bytecode interpreter is turned on.  See
                  http://www.freetype.org/patents.html for details.
@@ -886,4 +892,4 @@ HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
      USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
 
-NetBSD                        September 10, 2008                        NetBSD
+NetBSD                            May 1, 2009                           NetBSD

@@ -1,0 +1,840 @@
+PPoossttffiixx AAddddrreessss RReewwrriittiinngg
+
+-------------------------------------------------------------------------------
+
+PPoossttffiixx aaddddrreessss rreewwrriittiinngg ppuurrppoossee
+
+Address rewriting is at the heart of the Postfix mail system. Postfix rewrites
+addresses for many different purposes. Some are merely cosmetic, and some are
+necessary to deliver correctly formatted mail to the correct destination.
+Examples of address rewriting in Postfix are:
+
+  * Transform an incomplete address into a complete address. For example,
+    transform "username" into "username@example.com", or transform
+    "username@hostname" into "username@hostname.example.com".
+
+  * Replace an address by an equivalent address. For example, replace
+    "username@example.com" by "firstname.lastname@example.com" when sending
+    mail, and do the reverse transformation when receiving mail.
+
+  * Replace an internal address by an external address. For example, replace
+    "username@localdomain.local" by "isp-account@isp.example" when sending mail
+    from a home computer to the Internet.
+
+  * Replace an address by multiple addresses. For example, replace the address
+    of an alias by the addresses listed under that alias.
+
+  * Determine how and where to deliver mail for a specific address. For
+    example, deliver mail for "username@example.com" with the smtp(8) delivery
+    agent, to the hosts that are listed in the DNS as the mail servers for the
+    domain "example.com".
+
+Although Postfix currently has no address rewriting language, it can do
+surprisingly powerful address manipulation via table lookup. Postfix typically
+uses lookup tables with fixed strings to map one address to one or multiple
+addresses, and typically uses regular expressions to map multiple addresses to
+one or multiple addresses. Fixed-string lookup tables may be in the form of
+local files, or in the form of NIS, LDAP or SQL databases. The DATABASE_README
+document gives an introduction to Postfix lookup tables.
+
+Topics covered in this document:
+
+  * To rewrite message headers or not, or to label as invalid
+  * Postfix address rewriting overview
+  * Address rewriting when mail is received
+
+      o Rewrite addresses to standard form
+      o Canonical address mapping
+      o Address masquerading
+      o Automatic BCC recipients
+      o Virtual aliasing
+
+  * Address rewriting when mail is delivered
+
+      o Resolve address to destination
+      o Mail transport switch
+      o Relocated users table
+
+  * Address rewriting with remote delivery
+
+      o Generic mapping for outgoing SMTP mail
+
+  * Address rewriting with local delivery
+
+      o Local alias database
+      o Local per-user .forward files
+      o Local catch-all address
+
+  * Debugging your address manipulations
+
+TToo rreewwrriittee mmeessssaaggee hheeaaddeerrss oorr nnoott,, oorr ttoo llaabbeell aass iinnvvaalliidd
+
+Postfix versions 2.1 and earlier always rewrite message header addresses, and
+append Postfix's own domain information to addresses that Postfix considers
+incomplete. While rewriting message header addresses is OK for mail with a
+local origin, it is undesirable for remote mail:
+
+  * Message header address rewriting is frowned upon by mail standards,
+  * Appending Postfix's own domain produces incorrect results with some
+    incomplete addresses,
+  * Appending Postfix's own domain sometimes creates the appearance that spam
+    is sent by local users.
+
+Postfix versions 2.2 give you the option to either not rewrite message headers
+from remote SMTP clients at all, or to label incomplete addresses in such
+message headers as invalid. Here is how it works:
+
+  * Postfix always rewrites message headers from local SMTP clients and from
+    the Postfix sendmail command, and appends its own domain to incomplete
+    addresses. The local_header_rewrite_clients parameter controls what SMTP
+    clients Postfix considers local (by default, only local network interface
+    addresses).
+  * Postfix never rewrites message header addresses from remote SMTP clients
+    when the remote_header_rewrite_domain parameter value is empty (the default
+    setting).
+  * Otherwise, Postfix rewrites message headers from remote SMTP clients, and
+    appends the remote_header_rewrite_domain value to incomplete addresses.
+    This feature can be used to append a reserved domain such as
+    "domain.invalid", so that incomplete addresses cannot be mistaken for local
+    addresses.
+
+PPoossttffiixx aaddddrreessss rreewwrriittiinngg oovveerrvviieeww
+
+The figure below zooms in on those parts of Postfix that are most involved with
+address rewriting activity. See the OVERVIEW document for an overview of the
+complete Postfix architecture. Names followed by a number are Postfix daemon
+programs, while unnumbered names represent Postfix queues or internal sources
+of mail messages.
+
+                  trivial-                              trivial-
+                 rewrite(8)                            rewrite(8)
+                 (std form)                            (resolve)
+
+                      ^ |                                   ^ |
+                      | v                                   | v
+
+    smtpd(8)                                                         smtp(8)
+
+    qmqpd(8)  >- cleanup(8) -> incoming ->  active  ->   qmgr(8)  -< lmtp(8)
+
+    pickup(8)                                                        local(8)
+
+                       ^                      ^ |
+                       |                      | v
+
+                  bounces
+                 forwarding                deferred
+                  notices
+
+The table below summarizes all Postfix address manipulations. If you're reading
+this document for the first time, skip forward to "Address rewriting when mail
+is received". Once you've finished reading the remainder of this document, the
+table will help you to quickly find what you need.
+
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |AAddddrreessss     |SSccooppee   |DDaaeemmoonn  |GGlloobbaall ttuurrnn--oonn      |SSeelleeccttiivvee ttuurrnn--ooffff ccoonnttrrooll   |
+    |mmaanniippuullaattiioonn|        |        |ccoonnttrrooll             |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Rewrite     |        |trivial-|append_at_myorigin, |                             |
+    |addresses to|all mail|rewrite |append_dot_mydomain,|local_header_rewrite_clients,|
+    |standard    |        |(8)     |swap_bangpath,      |remote_header_rewrite_domain |
+    |form        |        |        |allow_percent_hack  |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Canonical   |        |cleanup |                    |receive_override_options,    |
+    |address     |all mail|(8)     |canonical_maps      |local_header_rewrite_clients,|
+    |mapping     |        |        |                    |remote_header_rewrite_domain |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Address     |        |cleanup |                    |receive_override_options,    |
+    |masquerading|all mail|(8)     |masquerade_domains  |local_header_rewrite_clients,|
+    |            |        |        |                    |remote_header_rewrite_domain |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Automatic   |        |cleanup |always_bcc,         |                             |
+    |BCC         |new mail|(8)     |sender_bcc_maps,    |receive_override_options     |
+    |recipients  |        |        |recipient_bcc_maps  |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Virtual     |all mail|cleanup |virtual_alias_maps  |receive_override_options     |
+    |aliasing    |        |(8)     |                    |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Resolve     |        |trivial-|                    |                             |
+    |address to  |all mail|rewrite |none                |none                         |
+    |destination |        |(8)     |                    |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Mail        |        |trivial-|                    |                             |
+    |transport   |all mail|rewrite |transport_maps      |none                         |
+    |switch      |        |(8)     |                    |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Relocated   |        |trivial-|                    |                             |
+    |users table |all mail|rewrite |relocated_maps      |none                         |
+    |            |        |(8)     |                    |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Generic     |outgoing|        |                    |                             |
+    |mapping     |SMTP    |smtp(8) |smtp_generic_maps   |none                         |
+    |table       |mail    |        |                    |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Local alias |local   |        |                    |                             |
+    |database    |mail    |local(8)|alias_maps          |none                         |
+    |            |only    |        |                    |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Local per-  |local   |        |                    |                             |
+    |user        |mail    |local(8)|forward_path        |none                         |
+    |.forward    |only    |        |                    |                             |
+    |files       |        |        |                    |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Local catch-|local   |        |                    |                             |
+    |all address |mail    |local(8)|luser_relay         |none                         |
+    |            |only    |        |                    |                             |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+AAddddrreessss rreewwrriittiinngg wwhheenn mmaaiill iiss rreecceeiivveedd
+
+The cleanup(8) server receives mail from outside of Postfix as well as mail
+from internal sources such as forwarded mail, undeliverable mail that is
+bounced to the sender, and postmaster notifications about problems with the
+mail system.
+
+The cleanup(8) server transforms the sender, recipients and message content
+into a standard form before writing it to an incoming queue file. The server
+cleans up sender and recipient addresses in message headers and in the
+envelope, adds missing message headers such as From: or Date: that are required
+by mail standards, and removes message headers such as Bcc: that should not be
+present. The cleanup(8) server delegates the more complex address manipulations
+to the trivial-rewrite(8) server as described later in this document.
+
+Address manipulations at this stage are:
+
+  * Rewrite addresses to standard form
+  * Canonical address mapping
+  * Address masquerading
+  * Automatic BCC recipients
+  * Virtual aliasing
+
+RReewwrriittee aaddddrreesssseess ttoo ssttaannddaarrdd ffoorrmm
+
+Before the cleanup(8) daemon runs an address through any address mapping lookup
+table, it first rewrites the address to the standard
+"user@fully.qualified.domain" form, by sending the address to the trivial-
+rewrite(8) daemon. The purpose of rewriting to standard form is to reduce the
+number of entries needed in lookup tables.
+
+The Postfix trivial-rewrite(8) daemon implements the following hard-coded
+address manipulations:
+
+    Rewrite "@hosta,@hostb:user@site" to "user@site"
+        In case you wonder what this is, the address form above is called a
+        route address, and specifies that mail for "user@site" be delivered via
+        "hosta" and "hostb". Usage of this form has been deprecated for a long
+        time. Postfix has no ability to handle route addresses, other than to
+        strip off the route part.
+
+        NOTE: Postfix versions 2.2 and later rewrite message headers from
+        remote SMTP clients only if the client matches the
+        local_header_rewrite_clients parameter, or if the
+        remote_header_rewrite_domain configuration parameter specifies a non-
+        empty value. To get the behavior before Postfix 2.2, specify
+        "local_header_rewrite_clients = static:all".
+
+    Rewrite "site!user" to "user@site"
+        This feature is controlled by the boolean swap_bangpath parameter
+        (default: yes). The purpose is to rewrite UUCP-style addresses to
+        domain style. This is useful only when you receive mail via UUCP, but
+        it probably does not hurt otherwise.
+
+        NOTE: Postfix versions 2.2 and later rewrite message headers from
+        remote SMTP clients only if the client matches the
+        local_header_rewrite_clients parameter, or if the
+        remote_header_rewrite_domain configuration parameter specifies a non-
+        empty value. To get the behavior before Postfix 2.2, specify
+        "local_header_rewrite_clients = static:all".
+
+    Rewrite "user%domain" to "user@domain"
+        This feature is controlled by the boolean allow_percent_hack parameter
+        (default: yes). Typically, this is used in order to deal with
+        monstrosities such as "user%domain@otherdomain".
+
+        NOTE: Postfix versions 2.2 and later rewrite message headers from
+        remote SMTP clients only if the client matches the
+        local_header_rewrite_clients parameter, or if the
+        remote_header_rewrite_domain configuration parameter specifies a non-
+        empty value. To get the behavior before Postfix 2.2, specify
+        "local_header_rewrite_clients = static:all".
+
+    Rewrite "user" to "user@$myorigin"
+        This feature is controlled by the boolean append_at_myorigin parameter
+        (default: yes). You should never turn off this feature, because a lot
+        of Postfix components expect that all addresses have the form
+        "user@domain".
+
+        NOTE: Postfix versions 2.2 and later rewrite message headers from
+        remote SMTP clients only if the client matches the
+        local_header_rewrite_clients parameter; otherwise they append the
+        domain name specified with the remote_header_rewrite_domain
+        configuration parameter, if one is specified. To get the behavior
+        before Postfix 2.2, specify "local_header_rewrite_clients = static:
+        all".
+
+        If your machine is not the main machine for $myorigin and you wish to
+        have some users delivered locally without going via that main machine,
+        make an entry in the virtual alias table that redirects
+        "user@$myorigin" to "user@$myhostname". See also the "delivering some
+        users locally" section in the STANDARD_CONFIGURATION_README document.
+
+    Rewrite "user@host" to "user@host.$mydomain"
+        This feature is controlled by the boolean append_dot_mydomain parameter
+        (default: yes). The purpose is to get consistent treatment of different
+        forms of the same hostname.
+
+        NOTE: Postfix versions 2.2 and later rewrite message headers from
+        remote SMTP clients only if the client matches the
+        local_header_rewrite_clients parameter; otherwise they append the
+        domain name specified with the remote_header_rewrite_domain
+        configuration parameter, if one is specified. To get the behavior
+        before Postfix 2.2, specify "local_header_rewrite_clients = static:
+        all".
+
+        Some will argue that rewriting "host" to "host.domain" is bad. That is
+        why it can be turned off. Others like the convenience of having
+        Postfix's own domain appended automatically.
+
+    Rewrite "user@site." to "user@site" (without the trailing dot).
+        A single trailing dot is silently removed. However, an address that
+        ends in multiple dots will be rejected as an invalid address.
+
+        NOTE: Postfix versions 2.2 and later rewrite message headers from
+        remote SMTP clients only if the client matches the
+        local_header_rewrite_clients parameter, or if the
+        remote_header_rewrite_domain configuration parameter specifies a non-
+        empty value. To get the behavior before Postfix 2.2, specify
+        "local_header_rewrite_clients = static:all".
+
+CCaannoonniiccaall aaddddrreessss mmaappppiinngg
+
+The cleanup(8) daemon uses the canonical(5) tables to rewrite addresses in
+message envelopes and in message headers. By default all header and envelope
+addresses are rewritten; this is controlled with the canonical_classes
+configuration parameter.
+
+NOTE: Postfix versions 2.2 and later rewrite message headers from remote SMTP
+clients only if the client matches the local_header_rewrite_clients parameter,
+or if the remote_header_rewrite_domain configuration parameter specifies a non-
+empty value. To get the behavior before Postfix 2.2, specify
+"local_header_rewrite_clients = static:all".
+
+Address rewriting is done for local and remote addresses. The mapping is useful
+to replace login names by "Firstname.Lastname" style addresses, or to clean up
+invalid domains in mail addresses produced by legacy mail systems.
+
+Canonical mapping is disabled by default. To enable, edit the canonical_maps
+parameter in the main.cf file and specify one or more lookup tables, separated
+by whitespace or commas.
+
+Example:
+
+    /etc/postfix/main.cf:
+        canonical_maps = hash:/etc/postfix/canonical
+
+    /etc/postfix/canonical:
+        wietse        Wietse.Venema
+
+For static mappings as shown above, lookup tables such as hash:, ldap:, mysql:
+or pgsql: are sufficient. For dynamic mappings you can use regular expression
+tables. This requires that you become intimately familiar with the ideas
+expressed in regexp_table(5), pcre_table(5) and canonical(5).
+
+In addition to the canonical maps which are applied to both sender and
+recipient addresses, you can specify canonical maps that are applied only to
+sender addresses or to recipient addresses.
+
+Example:
+
+    /etc/postfix/main.cf:
+        sender_canonical_maps = hash:/etc/postfix/sender_canonical
+        recipient_canonical_maps = hash:/etc/postfix/recipient_canonical
+
+The sender and recipient canonical maps are applied before the common canonical
+maps. The sender_canonical_classes and recipient_canonical_classes parameters
+control what addresses are subject to sender_canonical_maps and
+recipient_canonical_maps mappings, respectively.
+
+Sender-specific rewriting is useful when you want to rewrite ugly sender
+addresses to pretty ones, and still want to be able to send mail to the those
+ugly address without creating a mailer loop.
+
+Canonical mapping can be turned off selectively for mail received by smtpd(8),
+qmqpd(8), or pickup(8), by overriding main.cf settings in the master.cf file.
+This feature is available in Postfix version 2.1 and later.
+
+Example:
+
+    /etc/postfix/master.cf:
+        :10026      inet  n       -       n       -       -       smtpd
+            -o receive_override_options=no_address_mappings
+
+Note: do not specify whitespace around the "=" here.
+
+AAddddrreessss mmaassqquueerraaddiinngg
+
+Address masquerading is a method to hide hosts inside a domain behind their
+mail gateway, and to make it appear as if the mail comes from the gateway
+itself, instead of from individual machines.
+
+NOTE: Postfix versions 2.2 and later rewrite message headers from remote SMTP
+clients only if the client matches the local_header_rewrite_clients parameter,
+or if the remote_header_rewrite_domain configuration parameter specifies a non-
+empty value. To get the behavior before Postfix 2.2, specify
+"local_header_rewrite_clients = static:all".
+
+Address masquerading is disabled by default, and is implemented by the cleanup
+(8) server. To enable, edit the masquerade_domains parameter in the main.cf
+file and specify one or more domain names separated by whitespace or commas.
+When Postfix tries to masquerade a domain, it processes the list from left to
+right, and processing stops at the first match.
+
+Example:
+
+    /etc/postfix/main.cf:
+        masquerade_domains = foo.example.com example.com
+
+strips "any.thing.foo.example.com" to "foo.example.com", but strips
+"any.thing.else.example.com" to "example.com".
+
+A domain name prefixed with "!" means do not masquerade this domain or its
+subdomains:
+
+    /etc/postfix/main.cf:
+        masquerade_domains = !foo.example.com example.com
+
+does not change "any.thing.foo.example.com" and "foo.example.com", but strips
+"any.thing.else.example.com" to "example.com".
+
+The masquerade_exceptions configuration parameter specifies what user names
+should not be subjected to address masquerading. Specify one or more user names
+separated by whitespace or commas.
+
+Example:
+
+    /etc/postfix/main.cf:
+        masquerade_exceptions = root
+
+By default, Postfix makes no exceptions.
+
+Subtle point: by default, address masquerading is applied only to message
+headers and to envelope sender addresses, but not to envelope recipients. This
+allows you to use address masquerading on a mail gateway machine, while still
+being able to forward mail from outside to users on individual machines.
+
+In order to subject envelope recipient addresses to masquerading, too, specify
+(Postfix version 1.1 and later):
+
+    /etc/postfix/main.cf:
+        masquerade_classes = envelope_sender, envelope_recipient,
+            header_sender, header_recipient
+
+If you rewrite the envelope recipient like this, Postfix will no longer be able
+to send mail to individual machines.
+
+Address masquerading can be turned off selectively for mail received by smtpd
+(8), qmqpd(8), or pickup(8), by overriding main.cf settings in the master.cf
+file. This feature is available in Postfix version 2.1 and later.
+
+Example:
+
+    /etc/postfix/master.cf:
+        :10026      inet  n       -       n       -       -       smtpd
+            -o receive_override_options=no_address_mappings
+
+Note: do not specify whitespace around the "=" here.
+
+AAuuttoommaattiicc BBCCCC rreecciippiieennttss
+
+After applying the canonical and masquerade mappings, the cleanup(8) daemon can
+generate optional BCC (blind carbon-copy) recipients. Postfix provides three
+mechanisms:
+
+    always_bcc = address
+        Deliver a copy of all mail to the specified address. In Postfix
+        versions before 2.1, this feature is implemented by smtpd(8), qmqpd(8),
+        or pickup(8).
+    sender_bcc_maps = type:table
+        Search the specified "type:table" lookup table with the envelope sender
+        address for an automatic BCC address. This feature is available in
+        Postfix 2.1 and later.
+    recipient_bcc_maps = type:table
+        Search the specified "type:table" lookup table with the envelope
+        recipient address for an automatic BCC address. This feature is
+        available in Postfix 2.1 and later.
+
+Note: automatic BCC recipients are produced only for new mail. To avoid mailer
+loops, automatic BCC recipients are not generated for mail that Postfix
+forwards internally, nor for mail that Postfix generates itself.
+
+Automatic BCC recipients (including always_bcc) can be turned off selectively
+for mail received by smtpd(8), qmqpd(8), or pickup(8), by overriding main.cf
+settings in the master.cf file. This feature is available in Postfix version
+2.1 and later.
+
+Example:
+
+    /etc/postfix/master.cf:
+        :10026      inet  n       -       n       -       -       smtpd
+            -o receive_override_options=no_address_mappings
+
+Note: do not specify whitespace around the "=" here.
+
+VViirrttuuaall aalliiaassiinngg
+
+Before writing the recipients to the queue file, the cleanup(8) daemon uses the
+optional virtual(5) alias tables to redirect mail for recipients. The mapping
+affects only envelope recipient addresses; it has no effect on message headers
+or envelope sender addresses. Virtual alias lookups are useful to redirect mail
+for virtual alias domains to real user mailboxes, and to redirect mail for
+domains that no longer exist. Virtual alias lookups can also be used to
+transform " Firstname.Lastname " back into UNIX login names, although it seems
+that local aliases may be a more appropriate vehicle. See the VIRTUAL_README
+document for an overview of methods to host virtual domains with Postfix.
+
+Virtual aliasing is disabled by default. To enable, edit the virtual_alias_maps
+parameter in the main.cf file and specify one or more lookup tables, separated
+by whitespace or commas.
+
+Example:
+
+    /etc/postfix/main.cf:
+        virtual_alias_maps = hash:/etc/postfix/virtual
+
+    /etc/postfix/virtual:
+        Wietse.Venema        wietse
+
+Addresses found in virtual alias maps are subjected to another iteration of
+virtual aliasing, but are not subjected to canonical mapping, in order to avoid
+loops.
+
+For static mappings as shown above, lookup tables such as hash:, ldap:, mysql:
+or pgsql: are sufficient. For dynamic mappings you can use regular expression
+tables. This requires that you become intimately familiar with the ideas
+expressed in regexp_table(5), pcre_table(5) and virtual(5).
+
+Virtual aliasing can be turned off selectively for mail received by smtpd(8),
+qmqpd(8), or pickup(8), by overriding main.cf settings in the master.cf file.
+This feature is available in Postfix version 2.1 and later.
+
+Example:
+
+    /etc/postfix/master.cf:
+        :10026      inet  n       -       n       -       -       smtpd
+            -o receive_override_options=no_address_mappings
+
+Note: do not specify whitespace around the "=" here.
+
+At this point the message is ready to be stored into the Postfix incoming
+queue.
+
+AAddddrreessss rreewwrriittiinngg wwhheenn mmaaiill iiss ddeelliivveerreedd
+
+The Postfix queue manager sorts mail according to its destination and gives it
+to Postfix delivery agents such as local(8), smtp(8), or lmtp(8). Just like the
+cleanup(8) server, the Postfix queue manager delegates the more complex address
+manipulations to the trivial-rewrite(8) server.
+
+Address manipulations at this stage are:
+
+  * Resolve address to destination
+  * Mail transport switch
+  * Relocated users table
+
+Each Postfix delivery agent tries to deliver the mail to its destination, while
+encapsulating the sender, recipients, and message content according to the
+rules of the SMTP, LMTP, etc. protocol. When mail cannot be delivered, it is
+either returned to the sender or moved to the deferred queue and tried again
+later.
+
+Address manipulations when mail is delivered via the smtp(8) delivery agent:
+
+  * Generic mapping for outgoing SMTP mail
+
+Address manipulations when mail is delivered via the local(8) delivery agent:
+
+  * Local alias database
+  * Local per-user .forward files
+  * Local catch-all address
+
+The remainder of this document presents each address manipulation step in more
+detail, with specific examples or with pointers to documentation with examples.
+
+RReessoollvvee aaddddrreessss ttoo ddeessttiinnaattiioonn
+
+The Postfix qmgr(8) queue manager selects new mail from the incoming queue or
+old mail from the deferred queue, and asks the trivial-rewrite(8) address
+rewriting and resolving daemon where it should be delivered.
+
+As of version 2.0, Postfix distinguishes four major address classes. Each class
+has its own list of domain names, and each class has its own default delivery
+method, as shown in the table below. See the ADDRESS_CLASS_README document for
+the fine details. Postfix versions before 2.0 only distinguish between local
+delivery and everything else.
+
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |DDeessttiinnaattiioonn ddoommaaiinn lliisstt          |DDeeffaauulltt ddeelliivveerryy mmeetthhoodd|AAvvaaiillaabbiilliittyy|
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |$mydestination, $inet_interfaces,|$local_transport       |Postfix 1.0 |
+    |$proxy_interfaces                |                       |            |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |$virtual_mailbox_domains         |$virtual_transport     |Postfix 2.0 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |$relay_domains                   |$relay_transport       |Postfix 2.0 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+    |none                             |$default_transport     |Postfix 1.0 |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ |
+
+MMaaiill ttrraannssppoorrtt sswwiittcchh
+
+Once the trivial-rewrite(8) daemon has determined a default delivery method it
+searches the optional transport(5) table for information that overrides the
+message destination and/or delivery method. Typical use of the transport(5)
+table is to send mail to a system that is not connected to the Internet, or to
+use a special SMTP client configuration for destinations that have special
+requirements. See, for example, the STANDARD_CONFIGURATION_README and
+UUCP_README documents, and the examples in the transport(5) manual page.
+
+Transport table lookups are disabled by default. To enable, edit the
+transport_maps parameter in the main.cf file and specify one or more lookup
+tables, separated by whitespace or commas.
+
+Example:
+
+    /etc/postfix/main.cf:
+        transport_maps = hash:/etc/postfix/transport
+
+RReellooccaatteedd uusseerrss ttaabbllee
+
+Next, the trivial-rewrite(8) address rewriting and resolving daemon runs each
+recipient through the relocated(5) database. This table provides information on
+how to reach users that no longer have an account, or what to do with mail for
+entire domains that no longer exist. When mail is sent to an address that is
+listed in this table, the message is returned to the sender with an informative
+message.
+
+The relocated(5) database is searched after transport(5) table lookups, in
+anticipation of transport(5) tables that can replace one recipient address by a
+different one.
+
+Lookups of relocated users are disabled by default. To enable, edit the
+relocated_maps parameter in the main.cf file and specify one or more lookup
+tables, separated by whitespace or commas.
+
+Example:
+
+    /etc/postfix/main.cf:
+        relocated_maps = hash:/etc/postfix/relocated
+
+    /etc/postfix/relocated:
+        username@example.com      otheruser@elsewhere.tld
+
+As of Postfix version 2, mail for a relocated user will be rejected by the SMTP
+server with the reason "user has moved to otheruser@elsewhere.tld". Older
+Postfix versions will receive the mail first, and then return it to the sender
+as undeliverable, with the same reason.
+
+GGeenneerriicc mmaappppiinngg ffoorr oouuttggooiinngg SSMMTTPP mmaaiill
+
+Some hosts have no valid Internet domain name, and instead use a name such as
+localdomain.local. This can be a problem when you want to send mail over the
+Internet, because many mail servers reject mail addresses with invalid domain
+names.
+
+With the smtp_generic_maps parameter you can specify generic(5) lookup tables
+that replace local mail addresses by valid Internet addresses when mail leaves
+the machine via SMTP. The generic(5) mapping replaces envelope and header
+addresses, and is non-recursive. It does not happen when you send mail between
+addresses on the local machine.
+
+This feature is available in Postfix version 2.2 and later.
+
+Example:
+
+    /etc/postfix/main.cf:
+        smtp_generic_maps = hash:/etc/postfix/generic
+
+    /etc/postfix/generic:
+        his@localdomain.local		hisaccount@hisisp.example
+        her@localdomain.local		heraccount@herisp.example
+        @localdomain.local			hisaccount+local@hisisp.example
+
+When mail is sent to a remote host via SMTP, this replaces
+his@localdomain.local by his ISP mail address, replaces her@localdomain.local
+by her ISP mail address, and replaces other local addresses by his ISP account,
+with an address extension of +local (this example assumes that the ISP supports
+"+" style address extensions).
+
+LLooccaall aalliiaass ddaattaabbaassee
+
+When mail is to be delivered locally, the local(8) delivery agent runs each
+local recipient name through the aliases(5) database. The mapping does not
+affect addresses in message headers. Local aliases are typically used to
+implement distribution lists, or to direct mail for standard aliases such as
+postmaster to real people. The table can also be used to map
+"Firstname.Lastname" addresses to login names.
+
+Alias lookups are enabled by default. The default configuration depends on the
+operating system environment, but it is typically one of the following:
+
+    /etc/postfix/main.cf:
+        alias_maps = hash:/etc/aliases
+        alias_maps = dbm:/etc/aliases, nis:mail.aliases
+
+The pathname of the alias database file is controlled with the alias_database
+configuration parameter. The value is system dependent. Usually it is one of
+the following:
+
+    /etc/postfix/main.cf:
+        alias_database = hash:/etc/aliases (4.4BSD, LINUX)
+        alias_database = dbm:/etc/aliases (4.3BSD, SYSV<4)
+        alias_database = dbm:/etc/mail/aliases (SYSV4)
+
+An aliases(5) file can specify that mail should be delivered to a local file,
+or to a command that receives the message in the standard input stream. For
+security reasons, deliveries to command and file destinations are performed
+with the rights of the alias database owner. A default userid, default_privs,
+is used for deliveries to commands or files in "root"-owned aliases.
+
+LLooccaall ppeerr--uusseerr ..ffoorrwwaarrdd ffiilleess
+
+With delivery via the local(8) deliver agent, users can control their own mail
+delivery by specifying destinations in a file called .forward in their home
+directories. The syntax of these files is the same as with the local aliases(5)
+file, except that the left-hand side of the alias (lookup key and colon) are
+not present.
+
+LLooccaall ccaattcchh--aallll aaddddrreessss
+
+When the local(8) delivery agent finds that a message recipient does not exist,
+the message is normally returned to the sender ("user unknown"). Sometimes it
+is desirable to forward mail for non-existing recipients to another machine.
+For this purpose you can specify an alternative destination with the
+luser_relay configuration parameter.
+
+Alternatively, mail for non-existent recipients can be delegated to an entirely
+different message transport, as specified with the fallback_transport
+configuration parameter. For details, see the local(8) delivery agent
+documentation.
+
+Note: if you use the luser_relay feature in order to receive mail for non-UNIX
+accounts, then you must specify:
+
+    /etc/postfix/main.cf:
+        local_recipient_maps =
+
+(i.e. empty) in the main.cf file, otherwise the Postfix SMTP server will reject
+mail for non-UNIX accounts with "User unknown in local recipient table". See
+the LOCAL_RECIPIENT_README file for more information on this.
+
+luser_relay can specify one address. It is subjected to "$name" expansions.
+Examples:
+
+    $user@other.host
+        The bare username, without address extension, is prepended to
+        "@other.host". For example, mail for "username+foo" is sent to
+        "username@other.host".
+
+    $local@other.host
+        The entire original recipient localpart, including address extension,
+        is prepended to "@other.host". For example, mail for "username+foo" is
+        sent to "username+foo@other.host".
+
+    sysadmin+$user
+        The bare username, without address extension, is appended to
+        "sysadmin". For example, mail for "username+foo" is sent to
+        "sysadmin+username".
+
+    sysadmin+$local
+        The entire original recipient localpart, including address extension,
+        is appended to "sysadmin". For example, mail for "username+foo" is sent
+        to "sysadmin+username+foo".
+
+DDeebbuuggggiinngg yyoouurr aaddddrreessss mmaanniippuullaattiioonnss
+
+Postfix version 2.1 and later can produce mail delivery reports for debugging
+purposes. These reports not only show sender/recipient addresses after address
+rewriting and alias expansion or forwarding, they also show information about
+delivery to mailbox, delivery to non-Postfix command, responses from remote
+SMTP servers, and so on.
+
+Postfix can produce two types of mail delivery reports for debugging:
+
+  * What-if: report what would happen, but do not actually deliver mail. This
+    mode of operation is requested with:
+
+    $ //uussrr//ssbbiinn//sseennddmmaaiill --bbvv aaddddrreessss......
+    Mail Delivery Status Report will be mailed to <your login name>.
+
+  * What happened: deliver mail and report successes and/or failures, including
+    replies from remote SMTP servers. This mode of operation is requested with:
+
+    $ //uussrr//ssbbiinn//sseennddmmaaiill --vv aaddddrreessss......
+    Mail Delivery Status Report will be mailed to <your login name>.
+
+These reports contain information that is generated by Postfix delivery agents.
+Since these run as daemon processes and do not interact with users directly,
+the result is sent as mail to the sender of the test message. The format of
+these reports is practically identical to that of ordinary non-delivery
+notifications.
+
+As an example, below is the delivery report that is produced with the command
+"sendmail -bv postfix-users@postfix.org". The first part of the report contains
+human-readable text. In this case, mail would be delivered via mail.cloud9.net,
+and the SMTP server replies with "250 Ok". Other reports may show delivery to
+mailbox, or delivery to non-Postfix command.
+
+    Content-Description: Notification
+    Content-Type: text/plain
+
+    This is the mail system at host spike.porcupine.org.
+
+    Enclosed is the mail delivery report that you requested.
+
+                            The mail system
+
+    <postfix-users@postfix.org>: delivery via mail.cloud9.net[168.100.1.4]: 250
+    2.1.5 Ok
+
+The second part of the report is in machine-readable form, and includes the
+following information:
+
+  * The envelope sender address (wietse@porcupine.org).
+  * The envelope recipient address (postfix-users@postfix.org). If the
+    recipient address was changed by Postfix then Postfix also includes the
+    original recipient address.
+  * The delivery status.
+
+Some details depend on Postfix version. The example below is for Postfix
+version 2.3 and later.
+
+    Content-Description: Delivery report
+    Content-Type: message/delivery-status
+
+    Reporting-MTA: dns; spike.porcupine.org
+    X-Postfix-Queue-ID: 84863BC0E5
+    X-Postfix-Sender: rfc822; wietse@porcupine.org
+    Arrival-Date: Sun, 26 Nov 2006 17:01:01 -0500 (EST)
+
+    Final-Recipient: rfc822; postfix-users@postfix.org
+    Action: deliverable
+    Status: 2.1.5
+    Remote-MTA: dns; mail.cloud9.net
+    Diagnostic-Code: smtp; 250 2.1.5 Ok
+
+The third part of the report contains the message that Postfix would have
+delivered, including From: and To: message headers, so that you can see any
+effects of address rewriting on those. Mail submitted with "sendmail -bv" has
+no body content so none is shown in the example below.
+
+    Content-Description: Message
+    Content-Type: message/rfc822
+
+    Received: by spike.porcupine.org (Postfix, from userid 1001)
+            id 84863BC0E5; Sun, 26 Nov 2006 17:01:01 -0500 (EST)
+    Subject: probe
+    To: postfix-users@postfix.org
+    Message-Id: <20061126220101.84863BC0E5@spike.porcupine.org>
+    Date: Sun, 26 Nov 2006 17:01:01 -0500 (EST)
+    From: wietse@porcupine.org (Wietse Venema)
+

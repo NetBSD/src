@@ -1,0 +1,385 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix Small/Home Office Hints and Tips</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix Small/Home Office Hints and Tips</h1>
+
+<hr>
+
+<h2>Overview</h2>
+
+<p> This document combines hints and tips for "small office/home
+office" applications into one document so that they are easier to
+find. The text describes the mail sending side only. If your machine
+does not receive mail directly (i.e. it does not have its own
+Internet domain name and its own fixed IP address), then you will
+need a solution such as "fetchmail", which is outside the scope of
+the Postfix documentation.  </p>
+
+<ul>
+
+<li> <p> Selected topics from the <a href="STANDARD_CONFIGURATION_README.html">STANDARD_CONFIGURATION_README</a> document: </p>
+
+<ul>
+
+<li><a href="#stand_alone">Postfix on a stand-alone Internet host</a>
+
+<li><a href="#fantasy">Postfix on hosts without a real
+Internet hostname</a>
+
+</ul>
+
+<p> Selected topics from the <a href="SASL_README.html">SASL_README</a> document: </p>
+
+<ul>
+
+<li><a href="#client_sasl">Enabling SASL authentication in the
+Postfix SMTP client</a></li>
+
+<li><a href="#client_sasl_sender">Supporting multiple ISP accounts
+in the Postfix SMTP client</a></li>
+
+</ul>
+
+</ul>
+
+<p> See the <a href="SASL_README.html">SASL_README</a> and <a href="STANDARD_CONFIGURATION_README.html">STANDARD_CONFIGURATION_README</a> documents for
+further information on these topics. </p>
+
+<h2><a name="stand_alone">Postfix on a stand-alone Internet host</a></h2>
+
+<p> Postfix should work out of the box without change on a stand-alone
+machine that has direct Internet access.  At least, that is how
+Postfix installs when you download the Postfix source code via
+<a href="http://www.postfix.org/">http://www.postfix.org/</a>. </p>
+
+<p> You can use the command "<b>postconf -n</b>" to find out what
+settings are overruled by your <a href="postconf.5.html">main.cf</a>. Besides a few pathname
+settings, few parameters should be set on a stand-alone box, beyond
+what is covered in the <a href="BASIC_CONFIGURATION_README.html">BASIC_CONFIGURATION_README</a> document: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    # Optional: send mail as user@domainname instead of user@hostname.
+    #<a href="postconf.5.html#myorigin">myorigin</a> = $<a href="postconf.5.html#mydomain">mydomain</a>
+
+    # Optional: specify NAT/proxy external address.
+    #<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> = 1.2.3.4
+
+    # Alternative 1: don't relay mail from other hosts.
+    <a href="postconf.5.html#mynetworks_style">mynetworks_style</a> = host
+    <a href="postconf.5.html#relay_domains">relay_domains</a> =
+
+    # Alternative 2: relay mail from local clients only.
+    # <a href="postconf.5.html#mynetworks">mynetworks</a> = 192.168.1.0/28
+    # <a href="postconf.5.html#relay_domains">relay_domains</a> =
+</pre>
+</blockquote>
+
+<p> See also the section "<a href="#fantasy">Postfix on hosts without
+a real Internet hostname</a>" if this is applicable to your configuration.
+</p>
+
+<h2><a name="fantasy">Postfix on hosts without a real Internet
+hostname</a></h2>
+
+<p> This section is for hosts that don't have their own Internet
+hostname.  Typically these are systems that get a dynamic IP address
+via DHCP or via dialup. Postfix will let you send and receive mail
+just fine between accounts on a machine with a fantasy name. However,
+you cannot use a fantasy hostname in your email address when sending
+mail into the Internet, because no-one would be able to reply to
+your mail. In fact, more and more sites refuse mail addresses with
+non-existent domain names. </p>
+
+<p> Note: the following information is Postfix version dependent.
+To find out what Postfix version you have, execute the command
+"<b>postconf <a href="postconf.5.html#mail_version">mail_version</a></b>". </p>
+
+<h3>Solution 1: Postfix version 2.2 and later </h3>
+
+<p> Postfix 2.2 uses the <a href="generic.5.html">generic(5)</a> address mapping to replace
+local fantasy email addresses by valid Internet addresses.  This
+mapping happens ONLY when mail leaves the machine; not when you
+send mail between users on the same machine. </p>
+
+<p> The following example presents additional configuration. You
+need to combine this with basic configuration information as
+discussed the first half of this document. </p>
+
+<blockquote>
+<pre>
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = hash:/etc/postfix/generic
+3 
+4 /etc/postfix/generic:
+5     his@localdomain.local             hisaccount@hisisp.example
+6     her@localdomain.local             heraccount@herisp.example
+7     @localdomain.local                hisaccount+local@hisisp.example
+</pre>
+</blockquote>
+
+<p> When mail is sent to a remote host via SMTP: </p>
+
+<ul>
+
+<li> <p> Line 5 replaces <i>his@localdomain.local</i> by his ISP
+mail address, </p>
+
+<li> <p> Line 6 replaces <i>her@localdomain.local</i> by her ISP
+mail address, and </p>
+
+<li> <p> Line 7 replaces other local addresses by his ISP account,
+with an address extension of +<i>local</i> (this example assumes
+that the ISP supports "+" style address extensions). </p>
+
+</ul>
+
+<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
+<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
+tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
+
+<p> Execute the command "<b>postmap /etc/postfix/generic</b>"
+whenever you change the generic table. </p>
+
+<h3>Solution 2: Postfix version 2.1 and earlier </h3>
+
+<p> The solution with older Postfix systems is to use valid
+Internet addresses where possible, and to let Postfix map valid
+Internet addresses to local fantasy addresses. With this, you can
+send mail to the Internet and to local fantasy addresses, including
+mail to local fantasy addresses that don't have a valid Internet
+address of their own.</p>
+
+<p> The following example presents additional configuration. You
+need to combine this with basic configuration information as
+discussed the first half of this document. </p>
+
+<blockquote>
+<pre>
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+ 2     <a href="postconf.5.html#myhostname">myhostname</a> = hostname.localdomain
+ 3     <a href="postconf.5.html#mydomain">mydomain</a> = localdomain
+ 4 
+ 5     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = hash:/etc/postfix/canonical
+ 6 
+ 7     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
+ 8 
+ 9 /etc/postfix/canonical:
+10     your-login-name    your-account@your-isp.com
+11 
+12 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+13     your-account@your-isp.com       your-login-name
+</pre>
+</blockquote>
+
+<p> Translation: </p>
+
+<ul>
+
+<li> <p> Lines 2-3: Substitute your fantasy hostname here. Do not
+use a domain name that is already in use by real organizations
+on the Internet. See <a href="http://tools.ietf.org/html/rfc2606">RFC 2606</a> for examples of domain
+names that are guaranteed not to be owned by anyone. </p>
+
+<li> <p> Lines 5, 9, 10: This provides the mapping from
+"your-login-name@hostname.localdomain" to "your-account@your-isp.com".
+This part is required. </p>
+
+<li> <p> Lines 7, 12, 13: Deliver mail for "your-account@your-isp.com"
+locally, instead of sending it to the ISP. This part is not required
+but is convenient.
+
+</ul>
+
+<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
+<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
+tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
+
+<p> Execute the command "<b>postmap /etc/postfix/canonical</b>"
+whenever you change the canonical table. </p>
+
+<p> Execute the command "<b>postmap /etc/postfix/virtual</b>"
+whenever you change the virtual table. </p>
+
+<h2><a name="client_sasl">Enabling SASL authentication in the
+Postfix SMTP client</a></h2>
+
+<p> Turn on client-side SASL authentication, and specify a table
+with per-host or per-destination username and password information.
+The Postfix SMTP client first searches the table for an entry with
+the remote SMTP server hostname; if no entry is found, then the
+Postfix SMTP client searches the table for
+an entry with the next-hop destination.  Usually, that is the
+right-hand part of an email address, but it can also be the information
+that is specified with the <a href="postconf.5.html#relayhost">relayhost</a> parameter or with a <a href="transport.5.html">transport(5)</a>
+table. </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#smtp_sasl_type">smtp_sasl_type</a> = cyrus
+    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.myisp.net]
+    # Alternative form:
+    # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.myisp.net]:submission
+
+/etc/postfix/sasl_passwd:
+    [mail.myisp.net]            username:password
+    [mail.myisp.net]:submission username:password
+</pre>
+</blockquote>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> The "submission" destination port tells Postfix to send
+mail via TCP network port 587, which is normally reserved for email
+clients. The default is to send mail to the "smtp" destination port
+(TCP port 25), which is used for receiving mail across the internet.
+If you use an explicit destination port in <a href="postconf.5.html">main.cf</a>, then you must
+use the same form also in the <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> file.  </p>
+
+<li> <p> Postfix does not deliver mail via TCP port 465 (the obsolete
+"wrappermode" protocol). See <a href="TLS_README.html">TLS_README</a> for a solution that uses the
+"stunnel" command. </p>
+
+<li> <p> The "[" and "]" prevent Postfix from looking up the MX
+(mail exchanger) records for the enclosed name.  If you use this
+form in <a href="postconf.5.html">main.cf</a>, then you must use the same form also in the
+<a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> file. </p>
+
+<li> <p> The Postfix SMTP client opens the SASL client password
+file before entering the optional chroot jail, so you can keep the
+file in /etc/postfix and set permissions read / write only for root
+to keep the username:password combinations away from other system
+users. </p>
+
+<li> <p> Specify <b>dbm</b> instead of <b>hash</b> if your system
+uses <b>dbm</b> files instead of <b>db</b> files. To find out what
+lookup tables Postfix supports, use the command "<b>postconf -m</b>".
+</p>
+
+<li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
+whenever you change the sasl_passwd table. </p>
+
+</ul>
+
+<p> Workarounds: </p>
+
+<ul>
+
+<li> <p> Some remote SMTP servers support PLAIN or LOGIN authentication only.
+By default, the Postfix SMTP client does not use authentication
+methods that send plaintext passwords, and defers delivery with
+the following error message:  "Authentication failed: cannot SASL
+authenticate to server". To enable plaintext authentication specify,
+for example: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_sasl_security_options">smtp_sasl_security_options</a> = noanonymous
+</pre>
+</blockquote>
+
+<li> <p> Some remote SMTP servers announce authentication mechanisms
+that don't actually work. It is possible via the <a href="postconf.5.html#smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a>
+parameter to restrict the list of server mechanisms that the Postfix
+SMTP client will take into consideration:  </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_sasl_mechanism_filter">smtp_sasl_mechanism_filter</a> = !gssapi, !external, static:all
+</pre>
+</blockquote>
+
+<p> In the above example, the Postfix SMTP client will decline to
+use mechanisms
+that require special infrastructure such as Kerberos or TLS. </p>
+
+<li> <p> The Postfix SMTP client is backwards compatible with SMTP
+servers that use the non-standard "AUTH=method..." syntax in response
+to the EHLO command; there is no Postfix client configuration needed
+to work around it. </p>
+
+</ul>
+
+<h2><a name="client_sasl_sender">Supporting multiple ISP accounts
+in the Postfix SMTP client</a></h2>
+
+<p> Postfix version 2.3 supports multiple ISP accounts. This can
+be useful when one person uses the same machine for work and for
+personal use, or when people with different ISP accounts share the
+same Postfix server.  To make this possible, Postfix 2.3 supports
+per-sender SASL passwords and per-sender relay hosts. In the example
+below, Postfix will search the SASL password file by sender before
+it searches that same file by destination. Likewise, Postfix will
+search the per-sender <a href="postconf.5.html#relayhost">relayhost</a> file, and use the default <a href="postconf.5.html#relayhost">relayhost</a>
+only as a final resort.  </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#smtp_sender_dependent_authentication">smtp_sender_dependent_authentication</a> = yes
+    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = hash:/etc/postfix/sender_relay
+    <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#relayhost">relayhost</a> = [mail.myisp.net]
+    # Alternative form:
+    # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.myisp.net]:submission
+
+/etc/postfix/sasl_passwd:
+    # Per-sender authentication; see also /etc/postfix/sender_relay.
+    user1@example.com           username2:password2
+    user2@example.net           username2:password2
+    # Login information for the default <a href="postconf.5.html#relayhost">relayhost</a>.
+    [mail.myisp.net]            username:password
+    [mail.myisp.net]:submission username:password
+
+/etc/postfix/sender_relay:
+    # Per-sender provider; see also /etc/postfix/sasl_passwd.
+    user1@example.com           [mail.example.com]:submission
+    user2@example.net           [mail.example.net]
+</pre>
+</blockquote>
+
+<p> Notes: </p>
+
+<ul>
+
+<li> <p> If you are creative, then you can try to combine the two
+tables into one single MySQL database, and configure different
+Postfix queries to extract the appropriate information. </p>
+
+<li> <p> Specify <b>dbm</b> instead of <b>hash</b> if your system
+uses <b>dbm</b> files instead of <b>db</b> files. To find out what
+lookup tables Postfix supports, use the command "<b>postconf -m</b>".
+</p>
+
+<li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
+whenever you change the sasl_passwd table. </p>
+
+<li> <p> Execute the command "<b>postmap /etc/postfix/sender_relay</b>"
+whenever you change the sender_relay table. </p>
+
+</ul>
+
+</body>
+
+</html>

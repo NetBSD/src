@@ -1,0 +1,109 @@
+Purpose of this document
+========================
+
+This document describes how to add your own SASL implementation to
+Postfix.  You don't have to provide both the server and client side.
+You can provide just one and omit the other. The examples below
+assume you do both.
+
+The plug-in API is described in cyrus_server.c and cyrus_client.c.
+It was unavoidably contaminated^h^h^h^h^h^h^h^h^h^h^h^hinfluenced
+by Cyrus SASL and may need revision as other implementations are
+added.
+
+For an example of how the plug-in interface is implemented, have a
+look at the xsasl/xsasl_cyrus_client.c and xsasl/xsasl_cyrus_server.c.
+
+Configuration features
+======================
+
+There are two configuration parameters that allow you to pass
+information from main.cf into the plug_in:
+
+    smtpd_sasl_path, smtpd_sasl_security_options
+    smtp_sasl_path, smtp_sasl_security_options
+    lmtp_sasl_path, lmtp_sasl_security_options
+
+As usual, newline characters are removed from multi-line parameter
+values, and $name is expanded recursively.  The parameter values
+are passed to the plug-in without any further processing. The
+following restrictions are imposed by the main.cf file parser:
+
+- parameter values never contain newlines,
+
+- parameter values never start or end with whitespace characters.
+
+The _path parameter value is passed only once during process
+initialization (i.e. it is a class variable). The path typically
+specifies the location of a configuration file or rendez-vous point.
+The _security_options parameter value is passed each time SASL is
+turned on for a connection (i.e. it is an instance variable).  The
+options may depend on whether or not TLS encryption is turned on.
+Remember that one Postfix process may perform up to 100 mail
+transactions during its life time. Things that happen in one
+transaction must not affect later transactions.
+
+Adding Postfix support for your own SASL implementation
+=======================================================
+
+To add your own SASL implementation, say, FOOBAR:
+
+- Copy xsasl/xsasl_cyrus.h to xsasl/xsasl_foobar.h and replace
+  CYRUS by FOOBAR:
+
+ #if defined(USE_SASL_AUTH) && defined(USE_FOOBAR_SASL)
+  /*
+   * SASL protocol interface
+   */
+ #define XSASL_TYPE_FOOBAR "foobar"
+ extern XSASL_SERVER_IMPL *xsasl_foobar_server_init(const char *, const char *);
+ extern XSASL_CLIENT_IMPL *xsasl_foobar_client_init(const char *, const char *);
+ #endif
+
+- Edit xsasl/xsasl_server.c, add your #include <xsasl_foobar.h> line
+  under #include <xsasl_cyrus.h> at the top, and add your initialization
+  function in the table at the bottom as shown below:
+
+  static XSASL_SERVER_IMPL_INFO server_impl_info[] = {
+  #ifdef XSASL_TYPE_CYRUS
+      XSASL_TYPE_CYRUS, xsasl_cyrus_server_init,
+  #endif
+  #ifdef XSASL_TYPE_FOOBAR
+      XSASL_TYPE_FOOBAR, xsasl_foobar_server_init,
+  #endif
+      0,
+  };
+
+- Repeat the (almost) same procedure for xsasl/xsasl_client.c.
+
+- Create your own xsasl/xsasl_foobar_{client,server}.c and support
+  files. Perhaps it's convenient to copy the cyrus files, rip out
+  the function bodies, and replace CYRUS by FOOBAR.
+
+- List your source files in Makefile.in. Don't forget to do "make
+  depend" after you do "make makefiles" in the step that follows
+  after this one.
+
+  SRCS    = xsasl_server.c xsasl_cyrus_server.c xsasl_cyrus_log.c \
+          xsasl_cyrus_security.c xsasl_client.c xsasl_cyrus_client.c \
+          xsasl_foobar_client.c xsasl_foobar_server.c
+  OBJS    = xsasl_server.o xsasl_cyrus_server.o xsasl_cyrus_log.o \
+          xsasl_cyrus_security.o xsasl_client.o xsasl_cyrus_client.o \
+          xsasl_foobar_client.o xsasl_foobar_server.o
+
+- Create the Postfix makefiles from the top-level directory:
+
+  % make makefiles CCARGS='-DUSE_SASL_AUTH -DUSE_FOOBAR_SASL \
+      -DDEF_CLIENT_SASL_TYPE=\"foobar\" -DDEF_SERVER_SASL_TYPE=\"foobar\" \
+      -I/some/where/include' AUXLIBS='-L/some/where/lib -lfoobar'
+
+  Yes, you can have different default SASL implementation types for
+  the client and server plug-ins.
+
+  Of course you don't have to override the default SASL implementation
+  type; it is shown here as an example.
+  
+
+- Don't forget to do "make depend" in the xsasl directory.
+
+- Document your build and configuration with a README document.

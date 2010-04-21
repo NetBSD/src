@@ -1,0 +1,20 @@
+MX needs 24 seconds to deliver 100 SMTP messages to one local user.
+smtpd/local-delivery process limit = 100
+
+/usr/bin/time ./smtp-source -s 5 -m 100 -t wietse@fist.porcupine.org fist
+       10.47 real         0.12 user         0.16 sys
+Jun  8 14:45:25 fist mx:smtpd[19432]: connect from spike.porcupine.org(168.100.1
+Jun  8 14:45:49 fist mx:local[19444]: 085788: to=<wietse@porcupine.org>, relay=l
+Total time: 24 seconds
+
+/usr/bin/time ./smtp-source -s 10 -m 100 -t wietse@fist.porcupine.org fist
+        9.10 real         0.06 user         0.26 sys
+Jun  8 14:46:42 fist mx:smtpd[19443]: connect from spike.porcupine.org(168.100.1
+Jun  8 14:47:06 fist mx:local[19446]: 085792: to=<wietse@porcupine.org>, relay=l
+Total time: 24 seconds
+
+/usr/bin/time ./smtp-source -s 20 -m 100 -t wietse@fist.porcupine.org fist
+        9.84 real         0.09 user         0.28 sys
+Jun  8 14:48:03 fist mx:smtpd[19458]: connect from spike.porcupine.org(168.100.1
+Jun  8 14:48:28 fist mx:local[19479]: 085795: to=<wietse@porcupine.org>, relay=l
+Total time: 25 seconds

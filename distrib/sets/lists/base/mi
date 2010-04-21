@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.780.2.6.2.1.2.1 2009/08/26 03:43:22 matt Exp $
+# $NetBSD: mi,v 1.780.2.6.2.1.2.2 2010/04/21 05:20:40 matt Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -89,6 +89,7 @@
 ./etc/disklabels				base-obsolete		obsolete
 ./etc/fonts					base-x11-root
 ./etc/fonts/conf.d				base-x11-root
+./etc/fonts/conf.avail				base-x11-root
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
@@ -150,7 +151,8 @@
 ./libdata/firmware/rum/rum-license		base-sys-root
 ./libdata/firmware/rum/rum-rt2573		base-sys-root
 ./libdata/firmware/zyd				base-sys-root
-./libdata/firmware/zyd/zd1211-licence		base-sys-root
+./libdata/firmware/zyd/zd1211-licence		base-sys-root obsolete
+./libdata/firmware/zyd/zd1211-license		base-sys-root
 ./libdata/firmware/zyd/zyd-zd1211		base-sys-root
 ./libdata/firmware/zyd/zyd-zd1211b		base-sys-root
 ./libexec					base-sys-root
@@ -478,7 +480,7 @@
 ./usr/X11R7/include/GL/internal			base-x11-root
 ./usr/X11R7/include/X11				base-x11-root
 ./usr/X11R7/include/X11/dri			base-x11-root
-./usr/X11R7/include/X11/drm			base-x11-root
+./usr/X11R7/include/X11/drm			base-x11-root		obsolete
 ./usr/X11R7/include/X11/ICE			base-x11-root
 ./usr/X11R7/include/X11/PM			base-x11-root
 ./usr/X11R7/include/X11/SM			base-x11-root
@@ -493,6 +495,7 @@
 ./usr/X11R7/include/X11/extensions		base-x11-root
 ./usr/X11R7/include/X11/fonts			base-x11-root
 ./usr/X11R7/include/X11/pixmaps			base-x11-root
+./usr/X11R7/include/drm				base-x11-root
 ./usr/X11R7/include/fontconfig			base-x11-root
 ./usr/X11R7/include/freetype2			base-x11-root
 ./usr/X11R7/include/freetype2/freetype		base-x11-root
@@ -588,32 +591,46 @@
 ./usr/X11R7/lib/X11/xedit/lisp/progmodes	base-x11-root
 ./usr/X11R7/lib/X11/xkb				base-x11-root
 ./usr/X11R7/lib/X11/xkb/compat			base-x11-root
-./usr/X11R7/lib/X11/xkb/compiled		base-x11-root
 ./usr/X11R7/lib/X11/xkb/geometry		base-x11-root
-./usr/X11R7/lib/X11/xkb/geometry/digital	base-x11-root
-./usr/X11R7/lib/X11/xkb/geometry/ibm		base-x11-root
-./usr/X11R7/lib/X11/xkb/geometry/sgi		base-x11-root
+./usr/X11R7/lib/X11/xkb/geometry/digital	-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/geometry/digital_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/geometry/ibm		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/geometry/sgi		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/geometry/sgi_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/keycodes		base-x11-root
-./usr/X11R7/lib/X11/xkb/keycodes/digital	base-x11-root
-./usr/X11R7/lib/X11/xkb/keycodes/sgi		base-x11-root
+./usr/X11R7/lib/X11/xkb/keycodes/digital	-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keycodes/digital_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/keycodes/sgi		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keycodes/sgi_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/keymap			base-x11-root
-./usr/X11R7/lib/X11/xkb/keymap/digital		base-x11-root
-./usr/X11R7/lib/X11/xkb/keymap/sgi		base-x11-root
-./usr/X11R7/lib/X11/xkb/keymap/sun		base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap/digital		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keymap/digital_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap/sgi		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keymap/sgi_vndr		base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap/sun		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/keymap/sun_vndr		base-x11-root
 ./usr/X11R7/lib/X11/xkb/rules			base-x11-root
 ./usr/X11R7/lib/X11/xkb/semantics		base-x11-root
 ./usr/X11R7/lib/X11/xkb/symbols			base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/digital		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/fujitsu		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/hp		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/macintosh	base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/nec		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/pc		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/sgi		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/sharp		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/sony		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/sun		base-x11-root
-./usr/X11R7/lib/X11/xkb/symbols/xfree68		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/digital		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/digital_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/fujitsu		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/fujitsu_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/hp		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/hp_vndr		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/macintosh	-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/nec		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/nec_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sgi		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sgi_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sharp		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sony		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sony_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sun		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/xfree68		-obsolete-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/xfree68_vndr	base-x11-root
 ./usr/X11R7/lib/X11/xkb/torture			base-x11-root
 ./usr/X11R7/lib/X11/xkb/types			base-x11-root
 ./usr/X11R7/lib/modules				base-x11-root
@@ -623,6 +640,7 @@
 ./usr/X11R7/lib/modules/fonts			base-x11-root
 ./usr/X11R7/lib/modules/input			base-x11-root
 ./usr/X11R7/lib/pkgconfig			base-x11-root
+./usr/X11R7/lib/xorg				base-x11-root
 ./usr/X11R7/libexec				base-x11-root
 ./usr/X11R7/man					base-x11-root
 ./usr/X11R7/man/cat1				base-x11-root
@@ -643,6 +661,7 @@
 ./usr/X11R7/share				base-x11-root
 ./usr/X11R7/share/examples			base-x11-root
 ./usr/X11R7/share/examples/ssh-askpass		base-x11-root
+./usr/X11R7/share/pciids			base-x11-root
 ./usr/bin					base-sys-usr
 ./usr/bin/Mail					base-mail-bin
 ./usr/bin/apply					base-util-bin
@@ -1063,6 +1082,7 @@
 ./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/gssapi				base-c-usr
 ./usr/include/gssapi/rpc			base-obsolete		obsolete
+./usr/include/dev/pci/hdaudio			base-c-usr
 ./usr/include/isofs				base-c-usr
 ./usr/include/isofs/cd9660			base-c-usr
 ./usr/include/kadm5				base-c-usr
@@ -1232,10 +1252,15 @@
 ./usr/libexec/postfix/lmtp			base-postfix-bin	postfix
 ./usr/libexec/postfix/local			base-postfix-bin	postfix
 ./usr/libexec/postfix/master			base-postfix-bin	postfix
-./usr/libexec/postfix/nqmgr			base-obsolete	obsolete
+./usr/libexec/postfix/nqmgr			base-obsolete		obsolete
 ./usr/libexec/postfix/oqmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/pickup			base-postfix-bin	postfix
 ./usr/libexec/postfix/pipe			base-postfix-bin	postfix
+./usr/libexec/postfix/post-install		base-postfix-bin	postfix
+./usr/libexec/postfix/postfix-files		base-postfix-bin	postfix
+./usr/libexec/postfix/postfix-script		base-postfix-bin	postfix
+./usr/libexec/postfix/postfix-wrapper		base-postfix-bin	postfix
+./usr/libexec/postfix/postmulti-script		base-postfix-bin	postfix
 ./usr/libexec/postfix/proxymap			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmgr			base-postfix-bin	postfix
 ./usr/libexec/postfix/qmqpd			base-obsolete		obsolete
@@ -1358,6 +1383,7 @@
 ./usr/sbin/groupdel				base-sysutil-bin
 ./usr/sbin/groupinfo				base-sysutil-bin
 ./usr/sbin/groupmod				base-sysutil-bin
+./usr/sbin/hdaudioctl				base-sysutil-bin
 ./usr/sbin/hlfsd				base-amd-bin
 ./usr/sbin/host					base-obsolete		obsolete
 ./usr/sbin/hostapd				base-sysutil-bin
@@ -1487,6 +1513,7 @@
 ./usr/sbin/postlock				base-postfix-bin	postfix
 ./usr/sbin/postlog				base-postfix-bin	postfix
 ./usr/sbin/postmap				base-postfix-bin	postfix
+./usr/sbin/postmulti				base-postfix-bin	postfix
 ./usr/sbin/postqueue				base-postfix-bin	postfix
 ./usr/sbin/postsuper				base-postfix-bin	postfix
 ./usr/sbin/powerd				base-sysutil-bin
@@ -2864,6 +2891,13 @@
 ./usr/share/locale/fr_BE.ISO8859-15/LC_MONETARY	base-locale-fr		nls
 ./usr/share/locale/fr_BE.ISO8859-15/LC_NUMERIC	base-locale-fr		nls
 ./usr/share/locale/fr_BE.ISO8859-15/LC_TIME	base-locale-fr		nls
+./usr/share/locale/fr_BE.UTF-8			base-locale-fr
+./usr/share/locale/fr_BE.UTF-8/LC_CTYPE		base-locale-fr		nls
+./usr/share/locale/fr_BE.UTF-8/LC_MESSAGES	base-locale-fr
+./usr/share/locale/fr_BE.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-fr	nls
+./usr/share/locale/fr_BE.UTF-8/LC_MONETARY	base-locale-fr		nls
+./usr/share/locale/fr_BE.UTF-8/LC_NUMERIC	base-locale-fr		nls
+./usr/share/locale/fr_BE.UTF-8/LC_TIME		base-locale-fr		nls
 ./usr/share/locale/fr_CA.ISO8859-1		base-locale-fr
 ./usr/share/locale/fr_CA.ISO8859-1/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_CA.ISO8859-1/LC_MESSAGES	base-locale-fr
@@ -2878,6 +2912,13 @@
 ./usr/share/locale/fr_CA.ISO8859-15/LC_MONETARY	base-locale-fr		nls
 ./usr/share/locale/fr_CA.ISO8859-15/LC_NUMERIC	base-locale-fr		nls
 ./usr/share/locale/fr_CA.ISO8859-15/LC_TIME	base-locale-fr		nls
+./usr/share/locale/fr_CA.UTF-8			base-locale-fr
+./usr/share/locale/fr_CA.UTF-8/LC_CTYPE		base-locale-fr		nls
+./usr/share/locale/fr_CA.UTF-8/LC_MESSAGES	base-locale-fr
+./usr/share/locale/fr_CA.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-fr	nls
+./usr/share/locale/fr_CA.UTF-8/LC_MONETARY	base-locale-fr		nls
+./usr/share/locale/fr_CA.UTF-8/LC_NUMERIC	base-locale-fr		nls
+./usr/share/locale/fr_CA.UTF-8/LC_TIME		base-locale-fr		nls
 ./usr/share/locale/fr_CH.ISO8859-1		base-locale-fr
 ./usr/share/locale/fr_CH.ISO8859-1/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_CH.ISO8859-1/LC_MESSAGES	base-locale-fr
@@ -2892,6 +2933,13 @@
 ./usr/share/locale/fr_CH.ISO8859-15/LC_MONETARY	base-locale-fr		nls
 ./usr/share/locale/fr_CH.ISO8859-15/LC_NUMERIC	base-locale-fr		nls
 ./usr/share/locale/fr_CH.ISO8859-15/LC_TIME	base-locale-fr		nls
+./usr/share/locale/fr_CH.UTF-8			base-locale-fr
+./usr/share/locale/fr_CH.UTF-8/LC_CTYPE		base-locale-fr		nls
+./usr/share/locale/fr_CH.UTF-8/LC_MESSAGES	base-locale-fr
+./usr/share/locale/fr_CH.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-fr	nls
+./usr/share/locale/fr_CH.UTF-8/LC_MONETARY	base-locale-fr		nls
+./usr/share/locale/fr_CH.UTF-8/LC_NUMERIC	base-locale-fr		nls
+./usr/share/locale/fr_CH.UTF-8/LC_TIME		base-locale-fr		nls
 ./usr/share/locale/fr_FR.ISO8859-1		base-locale-fr
 ./usr/share/locale/fr_FR.ISO8859-1/LC_CTYPE	base-locale-fr		nls
 ./usr/share/locale/fr_FR.ISO8859-1/LC_MESSAGES	base-locale-fr
@@ -2906,6 +2954,13 @@
 ./usr/share/locale/fr_FR.ISO8859-15/LC_MONETARY	base-locale-fr		nls
 ./usr/share/locale/fr_FR.ISO8859-15/LC_NUMERIC	base-locale-fr		nls
 ./usr/share/locale/fr_FR.ISO8859-15/LC_TIME	base-locale-fr		nls
+./usr/share/locale/fr_FR.UTF-8			base-locale-fr
+./usr/share/locale/fr_FR.UTF-8/LC_CTYPE		base-locale-fr		nls
+./usr/share/locale/fr_FR.UTF-8/LC_MESSAGES	base-locale-fr
+./usr/share/locale/fr_FR.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-fr	nls
+./usr/share/locale/fr_FR.UTF-8/LC_MONETARY	base-locale-fr		nls
+./usr/share/locale/fr_FR.UTF-8/LC_NUMERIC	base-locale-fr		nls
+./usr/share/locale/fr_FR.UTF-8/LC_TIME		base-locale-fr		nls
 ./usr/share/locale/gl				base-locale-gl
 ./usr/share/locale/gl/LC_MESSAGES		base-locale-gl
 ./usr/share/locale/gl/LC_MESSAGES/grep.mo	base-util_locale-gl	nls

@@ -1,0 +1,32 @@
+mime_state: warning: message header length exceeds safety limit: Header: ??garbage garbage garbage garbage garbage garbage garbage garbage garbage ??garbage garbage 
+MAIN 0	|Header: 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+	garbage garbage garbage garbage garbage garbage garbage garbage garbage 
+HEADER END
+BODY END
+mime_state: warning: message header length exceeds safety limit

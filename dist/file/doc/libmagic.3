@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .Dd November 15, 2006
-.Dt MAGIC 3
+.Dt LIBMAGIC 3
 .Os
 .Sh NAME
 .Nm magic_open ,
@@ -68,7 +68,7 @@ These functions
 operate on the magic database file
 which is described
 in
-.Xr magic 4 .
+.Xr magic 5 .
 .Pp
 The function
 .Fn magic_open
@@ -132,7 +132,7 @@ Don't look for troff sequences inside ascii files.
 The
 .Fn magic_close
 function closes the
-.Xr magic 4
+.Xr magic 5
 database and deallocates any resources used.
 .Pp
 The
@@ -249,7 +249,7 @@ The compiled default magic database.
 .El
 .Sh SEE ALSO
 .Xr file 1 ,
-.Xr magic 4 
+.Xr magic 5
 .Sh AUTHORS
 Måns Rullgård Initial libmagic implementation,
 and configuration.

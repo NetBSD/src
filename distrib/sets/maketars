@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.64.6.2.2.1 2009/06/06 22:10:49 bouyer Exp $
+# $NetBSD: maketars,v 1.64.6.2.2.1.2.1 2010/04/21 05:20:40 matt Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]

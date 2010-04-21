@@ -1,0 +1,60 @@
+#verbose on
+open test-queue-file3.tmp
+
+# Another torture test for mail with a short last message header.
+# This complements test #2 with the same message where we update the
+# short Subject header, but none of the other headers. Like test #1,
+# this also tests possible interactions with envelope recipient
+# updates, which share the same heap with message header updates.
+
+# Add a recipient and update all headers in reverse order. 
+
+add_rcpt me@porcupine.org
+upd_header 1 Subject hey!
+upd_header 1 Date Tue, 25 Jul 2006 15:27:19 -0400 (EDT)
+upd_header 1 Message-Id <20060725192735.5EC2D29013F@hades.porcupine.org>
+upd_header 1 To you@porcupine.org
+upd_header 1 From me@porcupine.org
+
+# Delete the recipient added above, and update headers in reverse
+# order, twice. This tests repeated updates of short headers, but
+# doesn't test much for the longer ones.
+
+del_rcpt me@porcupine.org
+upd_header 1 Subject hey!
+upd_header 1 Subject hey!
+upd_header 1 Date Tue, 25 Jul 2006 15:27:19 -0400 (EDT)
+upd_header 1 Date Tue, 25 Jul 2006 15:27:19 -0400 (EDT)
+upd_header 1 Message-Id <20060725192735.5EC2D29013F@hades.porcupine.org>
+upd_header 1 Message-Id <20060725192735.5EC2D29013F@hades.porcupine.org>
+upd_header 1 To you@porcupine.org
+upd_header 1 To you@porcupine.org
+upd_header 1 From me@porcupine.org
+upd_header 1 From me@porcupine.org
+
+# Add a new recipient, using a different address than above, so that
+# the duplicate filter won't suppress it. Update the headers in the
+# normal order, in case it makes a difference.
+
+add_rcpt em@porcupine.org
+upd_header 1 From me@porcupine.org
+upd_header 1 To you@porcupine.org
+upd_header 1 Message-Id <20060725192735.5EC2D29013F@hades.porcupine.org>
+upd_header 1 Date Tue, 25 Jul 2006 15:27:19 -0400 (EDT)
+upd_header 1 Subject hey!
+
+# Delete the recipient and update the headers again.
+
+del_rcpt em@porcupine.org
+upd_header 1 From me@porcupine.org
+upd_header 1 From me@porcupine.org
+upd_header 1 To you@porcupine.org
+upd_header 1 To you@porcupine.org
+upd_header 1 Message-Id <20060725192735.5EC2D29013F@hades.porcupine.org>
+upd_header 1 Message-Id <20060725192735.5EC2D29013F@hades.porcupine.org>
+upd_header 1 Date Tue, 25 Jul 2006 15:27:19 -0400 (EDT)
+upd_header 1 Date Tue, 25 Jul 2006 15:27:19 -0400 (EDT)
+upd_header 1 Subject hey!
+upd_header 1 Subject hey!
+
+close

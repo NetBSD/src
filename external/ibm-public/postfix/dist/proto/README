@@ -1,0 +1,34 @@
+This directory contains source for manual pages that aren't generated
+from C source code comments, and for README files.
+
+Tools for these conversions are found in the ../mantools subdirectory.
+The most important tool is postlink, which adds all the hyperlinks
+between manual pages, configuration parameters and README files.
+
+Manual pages are in the form of "shell" style comments.  They are
+converted into nroff(1) input with the srctoman utility, converted
+to HTML with man2html, and hyperlinked with postlink.
+
+The README files are in the form of HTML. The are converted into
+hyperlinked HTML with postlink, and are converted into ASCII files
+with html2readme.
+
+The format of the README source files is a little tricky, because
+of the way postlink works.
+
+- postlink hyperlinks all the references to Postfix manual pages,
+configuration parameters, README file names, RFC documents, Postfix
+address class names, and URLs.  Therefore you should not hyperlink
+those elements yourself.
+
+- URLs (such as "http://www.example.com") cannot contain quote, comma,
+or space characters. 
+
+- An URL that appears at the end of a line must be followed by one
+other character.
+
+- Text must go between <p> and </p>, especially within lists, for
+consistency of vertical space.
+
+- Code fragments must go between <pre> and </pre>, again for
+consistency of vertical space.

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.1.8.1.2.1 2010/04/21 05:23:09 matt Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.1.8.1 2009/05/30 16:21:36 snj Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.1.8.1.2.1 2010/04/21 05:23:09 matt Exp $");
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -43,11 +43,10 @@ char   *BuildInfo = NULL;
 char   *SizePkg = NULL;
 char   *SizeAll = NULL;
 char   *Preserve = NULL;
-char   *SrcDir = NULL;
 char   *DefaultOwner = NULL;
 char   *DefaultGroup = NULL;
 char   *realprefix = NULL;
-char   *CompressionType = NULL;
+const char *CompressionType = NULL;
 int	update_pkgdb = 1;
 int	create_views = 0;
 int     PlistOnly = 0;
@@ -61,18 +60,13 @@ usage(void)
 	    "usage: pkg_create [-ElOUVv] [-B build-info-file] [-b build-version-file]\n"
             "                  [-C cpkgs] [-D displayfile] [-F compression] \n"
 	    "                  [-I realprefix] [-i iscript]\n"
-            "                  [-K pkg_dbdir] [-k dscript] [-L SrcDir]\n"
+            "                  [-K pkg_dbdir] [-k dscript]\n"
             "                  [-n preserve-file] [-P dpkgs] [-p prefix] [-r rscript]\n"
             "                  [-S size-all-file] [-s size-pkg-file]\n"
 	    "                  [-T buildpkgs] [-u owner] [-g group]\n"
             "                  -c comment -d description -f packlist\n"
             "                  pkg-name\n");
 	exit(1);
-}
-
-void
-cleanup(int in_signal)
-{
 }
 
 int
@@ -140,7 +134,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'K':
-			_pkgdb_setPKGDB_DIR(optarg);
+			pkgdb_set_dir(optarg, 3);
 			break;
 
 		case 'k':
@@ -152,7 +146,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'L':
-			SrcDir = optarg;
+			warnx("Obsolete -L option ignored");
 			break;
 
 		case 'u':
@@ -199,6 +193,8 @@ main(int argc, char **argv)
 
 	argc -= optind;
 	argv += optind;
+
+	pkg_install_config();
 
 	if (argc == 0) {
 		warnx("missing package name");

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/01 04:21:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.14.1 2010/04/21 05:24:41 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -17,16 +17,19 @@ SRCS+=		mga_dri.c
 
 #if USE_EXA
 SRCS+=		mga_exa.c
+CPPFLAGS+=	-DUSE_EXA
 #endif
 
 #if USE_XAA
 SRCS+=		mga_storm.c
+CPPFLAGS+=	-DUSE_XAA
 #endif
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/drm
 
 CPPFLAGS.mga_driver.c=	-Wno-error	# XXX fix me please
+CPPFLAGS.mga_dacG.c=	-Wno-error	# XXX fix me please
 
 .include "../Makefile.xf86-driver"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.22 2006/04/05 16:55:05 garbled Exp $	*/
+/*	$NetBSD: mbr.h,v 1.22.36.1 2010/04/21 05:20:43 matt Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -113,7 +113,7 @@ int 	partsoverlap(struct mbr_partition *, int, int);
 int     read_mbr(const char *, mbr_info_t *);
 int     write_mbr(const char *, mbr_info_t *, int);
 int     valid_mbr(struct mbr_sector *);
-int	guess_biosgeom_from_mbr(mbr_info_t *, int *, int *, int *);
+int	guess_biosgeom_from_mbr(mbr_info_t *, int *, int *, daddr_t *);
 int	md_bios_info(char *);
 void	set_bios_geom(int, int, int);
 int	otherpart(int);
