@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.1 2010/02/26 18:54:20 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.2 2010/04/21 11:13:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.1 2010/02/26 18:54:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.2 2010/04/21 11:13:29 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: rumpuser.c,v 1.1 2010/02/26 18:54:20 pooka Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -570,4 +571,15 @@ rumpuser_dprintf(const char *format, ...)
 	va_end(ap);
 
 	return rv;
+}
+
+int
+rumpuser_kill(int64_t pid, int sig, int *error)
+{
+
+	if (pid == RUMPUSER_PID_SELF) {
+		DOCALL(int, raise(sig));
+	} else {
+		DOCALL(int, kill((pid_t)pid, sig));
+	}
 }
