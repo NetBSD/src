@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.45 2010/04/12 22:19:17 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.46 2010/04/21 16:51:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.45 2010/04/12 22:19:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.46 2010/04/21 16:51:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -99,7 +99,6 @@ rump_vfs_init(void)
 	}
 	vfsinit();
 	bufinit();
-	wapbl_init();
 	cwd_sys_init();
 	lf_init();
 	spec_init();
