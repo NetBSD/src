@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.49 2010/04/18 14:05:26 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.50 2010/04/22 14:50:31 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -71,12 +71,33 @@ struct acpibus_attach_args {
 #define ACPI_DEVICE_WAKEUP		__BIT(1)
 
 /*
+ * PCI information for ACPI device nodes that correspond to PCI devices.
+ */
+struct acpi_pci_info {
+	uint16_t		 ap_segment;	/* PCI segment group */
+	uint16_t		 ap_bus;	/* PCI bus */
+	uint16_t		 ap_device;	/* PCI device */
+	uint16_t		 ap_function;	/* PCI function */
+	bool			 ap_bridge;	/* PCI bridge (PHB or PPB) */
+	uint16_t		 ap_downbus;	/* PCI bridge downstream bus */
+};
+
+/*
  * An ACPI device node.
+ *
+ * Remarks:
+ *
+ *	ad_root		never NULL
+ *	ad_parent	only NULL if the root of the tree ("\").
+ *	ad_device	NULL if no device has attached to the node
+ *	ad_pciinfo	NULL if not a PCI device
+ *	ad_notify	NULL if there is no notify handler
  */
 struct acpi_devnode {
 	device_t		 ad_device;	/* Device */
 	device_t		 ad_root;	/* Backpointer to acpi_softc */
 	struct acpi_devnode	*ad_parent;	/* Backpointer to parent */
+	struct acpi_pci_info	*ad_pciinfo;	/* PCI info */
 	ACPI_NOTIFY_HANDLER	 ad_notify;	/* Device notify */
 	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
 	ACPI_HANDLE		 ad_handle;	/* Device handle */
@@ -84,7 +105,6 @@ struct acpi_devnode {
 	uint32_t		 ad_flags;	/* Device flags */
 	uint32_t		 ad_type;	/* Device type */
 	int			 ad_wake;	/* Device wakeup */
-
 
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_list;
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_child_list;
