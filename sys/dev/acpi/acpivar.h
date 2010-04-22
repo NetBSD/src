@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.50 2010/04/22 14:50:31 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.51 2010/04/22 18:40:09 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -87,11 +87,13 @@ struct acpi_pci_info {
  *
  * Remarks:
  *
- *	ad_root		never NULL
- *	ad_parent	only NULL if the root of the tree ("\").
  *	ad_device	NULL if no device has attached to the node
+ *	ad_root		never NULL
+ *	ad_parent	only NULL if root of the tree ("\")
  *	ad_pciinfo	NULL if not a PCI device
  *	ad_notify	NULL if there is no notify handler
+ *	ad_devinfo	never NULL
+ *	ad_handle	never NULL
  */
 struct acpi_devnode {
 	device_t		 ad_device;	/* Device */
@@ -104,6 +106,7 @@ struct acpi_devnode {
 	char			 ad_name[5];	/* Device name */
 	uint32_t		 ad_flags;	/* Device flags */
 	uint32_t		 ad_type;	/* Device type */
+	int			 ad_state;	/* Device power state */
 	int			 ad_wake;	/* Device wakeup */
 
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_list;

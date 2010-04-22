@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.66 2010/04/16 01:52:54 christos Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.67 2010/04/22 18:40:09 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.66 2010/04/16 01:52:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.67 2010/04/22 18:40:09 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.66 2010/04/16 01:52:54 christos Exp $"
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_power.h>
 
 #define _COMPONENT          ACPI_TZ_COMPONENT
 ACPI_MODULE_NAME            ("acpi_tz")
@@ -211,6 +212,7 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	acpitz_get_zone(self, 1);
 	acpitz_get_status(self);
 
+	(void)acpi_power_register(sc->sc_devnode);
 	(void)acpi_register_notify(sc->sc_devnode, acpitz_notify_handler);
 
 	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
@@ -373,8 +375,8 @@ static ACPI_STATUS
 acpitz_switch_cooler(ACPI_OBJECT *obj, void *arg)
 {
 	ACPI_HANDLE cooler;
-	ACPI_STATUS rv;
 	int pwr_state, flag;
+	ACPI_STATUS rv;
 
 	flag = *(int *)arg;
 
@@ -384,15 +386,13 @@ acpitz_switch_cooler(ACPI_OBJECT *obj, void *arg)
 		pwr_state = ACPI_STATE_D3;
 
 	rv = acpi_eval_reference_handle(obj, &cooler);
+
 	if (ACPI_FAILURE(rv)) {
 		aprint_error("%s: failed to get handle\n", __func__);
 		return rv;
 	}
 
-	rv = acpi_pwr_switch_consumer(cooler, pwr_state);
-	if (rv != AE_BAD_PARAMETER && ACPI_FAILURE(rv))
-		aprint_error("%s: failed to change state for %s: %s\n",
-		    __func__, acpi_name(cooler), AcpiFormatException(rv));
+	(void)acpi_power_set_from_handle(cooler, pwr_state);
 
 	return AE_OK;
 }
