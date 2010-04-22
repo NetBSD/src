@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74.4.2 2010/02/14 13:35:44 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.4.3 2010/04/22 20:02:48 snj Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.4.2 2010/02/14 13:35:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.4.3 2010/04/22 20:02:48 snj Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1074,7 +1074,7 @@ pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot)
 	npte = ma | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
 	     PG_V | PG_k;
 #ifndef XEN
-	if ((cpu_feature & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
+	if ((cpu_feature3 & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
 		npte |= PG_NX;
 #endif
 	opte = pmap_pte_testset (pte, npte); /* zap! */
@@ -1199,7 +1199,7 @@ pmap_bootstrap(vaddr_t kva_start)
 #else
 	unsigned long p1i;
 	vaddr_t kva_end;
-	pt_entry_t pg_nx = (cpu_feature & CPUID_NOX ? PG_NX : 0);
+	pt_entry_t pg_nx = (cpu_feature3 & CPUID_NOX ? PG_NX : 0);
 #endif
 
 	/*

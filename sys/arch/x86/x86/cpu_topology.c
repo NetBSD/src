@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.2.2.3 2009/06/16 02:23:31 snj Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.2.2.4 2010/04/22 20:02:48 snj Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.2.2.3 2009/06/16 02:23:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.2.2.4 2010/04/22 20:02:48 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -82,7 +82,8 @@ x86_cpu_toplogy(struct cpu_info *ci)
 	lextmode = descs[0];
 	if (lextmode >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature3_flags |= descs[3]; /* edx */
+		ci->ci_feature4_flags = descs[2]; /* ecx */
+		ci->ci_feature3_flags = descs[3]; /* edx */
 	}
 
 	/* Check for HTT support.  See notes below regarding AMD. */
