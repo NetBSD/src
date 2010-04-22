@@ -213,7 +213,20 @@ int
 tre_regexec(const regex_t *preg, const char *str,
 	size_t nmatch, regmatch_t pmatch[], int eflags)
 {
-  return tre_regnexec(preg, str, (unsigned)-1, nmatch, pmatch, eflags);
+	const char	*newstr;
+	unsigned	 newflags;
+	size_t		 newlen;
+
+	if (eflags & REG_STARTEND) {
+		newstr = &str[pmatch[0].rm_so];
+		newlen = pmatch[0].rm_eo;
+		newflags = (unsigned)(eflags & ~REG_STARTEND);
+	} else {
+		newstr = str;
+		newlen = (size_t)-1;
+		newflags = (unsigned)eflags;
+	}
+	return tre_regnexec(preg, newstr, newlen, nmatch, pmatch, (int)newflags);
 }
 
 
