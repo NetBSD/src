@@ -1,4 +1,4 @@
-.\"	$NetBSD: types.3,v 1.3 2010/04/22 06:55:07 wiz Exp $
+.\"	$NetBSD: types.3,v 1.4 2010/04/22 08:42:34 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,10 +77,10 @@ includes
 .In sys/types.h
 and provides additional types as well as other facilities.
 .Ss Standard Types
-The following standards-compliant data types are defined:
+The following standards-compliant system data types are defined:
 .Pp
 .Bl -column -offset indent \
-"suseconds_t " "file system block counts " "clock_settime(3) "
+"suseconds_t " "process and process group IDs " "clock_settime(3) "
 .It Sy Type Ta Sy Typical use Ta Sy Example
 .It Va blkcnt_t Ta file block counts Ta Xr stat 2
 .It Va blksize_t Ta block sizes Ta Xr stat 2
@@ -96,9 +96,9 @@ The following standards-compliant data types are defined:
 .It Va mode_t Ta file attributes Ta Xr stat 2
 .It Va nlink_t Ta link counts Ta Xr stat 2
 .It Va off_t Ta file sizes Ta Xr fseek 3
-.It Va pid_t Ta process and group IDs Ta Xr getpid 2
+.It Va pid_t Ta process and process group IDs Ta Xr getpid 2
 .It Va size_t Ta size of objects Ta Xr stddef 3
-.It Va ssize_t Ta a count of bytes Ta Xr write 2
+.It Va ssize_t Ta count of bytes Ta Xr write 2
 .It Va suseconds_t Ta microseconds Ta Xr gettimeofday 2
 .It Va time_t Ta time in seconds Ta Xr time 3
 .It Va timer_t Ta timer IDs Ta Xr timer_create 2
@@ -173,7 +173,7 @@ and
 .Em size_t .
 .El
 .Ss NetBSD-specific Types
-In addition to the standard types, the
+In addition to the standard types,
 .In sys/types.h
 defines some data types specific to
 .Nx .
@@ -182,9 +182,9 @@ A portable implementation should not rely
 on these types to be available in other systems.
 Examples include:
 .Bl -column -offset indent \
-"suseconds_t " "file system block counts " "clock_settime(3) "
+"suseconds_t " "synonym for uint64_t   " "getdevmajor(3) "
 .It Sy Type Ta Sy Typical use Ta Sy Example
-.It Va cpuid_t Ta CPU ID Ta Xr cpuset 3
+.It Va cpuid_t Ta CPU IDs Ta Xr cpuset 3
 .It Va daddr_t Ta disk address Ta Xr buffercache 9
 .It Va devmajor_t Ta major device number Ta Xr getdevmajor 3
 .It Va lwp_t Ta typedef of Va struct lwp Ta Xr kthread 9
