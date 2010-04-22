@@ -1,4 +1,4 @@
-.\"	$NetBSD: confstr.3,v 1.19 2009/03/10 23:14:40 joerg Exp $
+.\"	$NetBSD: confstr.3,v 1.20 2010/04/22 08:00:34 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)confstr.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 2, 2006
+.Dd April 22, 2010
 .Dt CONFSTR 3
 .Os
 .Sh NAME
@@ -55,8 +55,9 @@ defined string values.
 The
 .Fa name
 argument specifies the system variable to be queried.
-Symbolic constants for each name value are found in the include file
-.Li \*[Lt]unistd.h\*[Gt] .
+Symbolic constants for each name value are found in the
+.In unistd.h
+header.
 The
 .Fa len
 argument specifies the size of the buffer referenced by the
