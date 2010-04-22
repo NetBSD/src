@@ -1,4 +1,4 @@
-.\"	$NetBSD: types.3,v 1.2 2010/04/22 06:49:56 jruoho Exp $
+.\"	$NetBSD: types.3,v 1.3 2010/04/22 06:55:07 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -130,19 +130,18 @@ standard:
 .It
 The type
 .Em ssize_t
-is capable of storing integer values at least in the range [ -1,
-.Dv SSIZE_MAX
-].
+is capable of storing integer values at least in the range [\-1,
+.Dv SSIZE_MAX ] .
 .It
 The type
 .Em useconds_t
 is an unsigned integer capable of storing
-values at least in the range [ 0, 1000000 ].
+values at least in the range [0, 1000000].
 .It
 The type
 .Em suseconds_t
 is a signed integer capable of storing
-values at least in the range [ -1, 1000000 ].
+values at least in the range [\-1, 1000000].
 .It
 The
 .Em time_t
