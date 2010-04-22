@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.73 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: route.c,v 1.74 2010/04/22 14:32:30 plunky Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.73 2009/04/12 16:08:37 lukem Exp $");
+__RCSID("$NetBSD: route.c,v 1.74 2010/04/22 14:32:30 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,9 +48,7 @@ __RCSID("$NetBSD: route.c,v 1.73 2009/04/12 16:08:37 lukem Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#define _KERNEL
 #include <net/route.h>
-#undef _KERNEL
 #include <netinet/in.h>
 #include <netatalk/at.h>
 #include <netiso/iso.h>
