@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.181 2010/04/22 18:40:09 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.182 2010/04/22 21:58:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.181 2010/04/22 18:40:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.182 2010/04/22 21:58:08 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -169,7 +169,7 @@ static bool		acpi_resume(device_t, const pmf_qual_t *);
 
 static void		acpi_build_tree(struct acpi_softc *);
 
-#ifdef ACPI_DEBUG
+#ifdef ACPIVERBOSE
 static void		acpi_print_tree(struct acpi_devnode *, uint32_t);
 #endif
 
@@ -597,17 +597,18 @@ acpi_build_tree(struct acpi_softc *sc)
 	(void)AcpiWalkNamespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT, UINT32_MAX,
 	    acpi_make_devnode, acpi_make_devnode_post, &awc, NULL);
 
-#ifdef ACPI_DEBUG
-	acpi_print_tree(sc->sc_root, 0);
-#endif
-
 	acpi_rescan1(sc, NULL, NULL);
 	acpi_rescan_capabilities(sc);
 
-	acpi_pcidev_scan(sc);
+	(void)acpi_pcidev_scan(sc->sc_root);
+
+#ifdef ACPIVERBOSE
+	aprint_normal("\n");
+	acpi_print_tree(sc->sc_root, 0);
+#endif
 }
 
-#ifdef ACPI_DEBUG
+#ifdef ACPIVERBOSE
 static void
 acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 {
@@ -615,9 +616,28 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 	uint32_t i;
 
 	for (i = 0; i < level; i++)
-		aprint_normal("           ");
+		aprint_normal("    ");
 
-	aprint_normal("[%02u] %-5s\n", ad->ad_type, ad->ad_name);
+	aprint_normal("%-5s [%02u] [%c%c] ", ad->ad_name, ad->ad_type,
+	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : 'x',
+	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : 'x');
+
+	if (ad->ad_pciinfo == NULL)
+		aprint_normal("@ xx:xx:xx:xx ");
+	else {
+		aprint_normal("@ 0x%02x:0x%02x:0x%02x:0x%02x ",
+		    ad->ad_pciinfo->ap_segment, ad->ad_pciinfo->ap_bus,
+		    ad->ad_pciinfo->ap_device, ad->ad_pciinfo->ap_function);
+
+		if ((ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) != 0)
+			aprint_normal("[R] ");
+
+		if (ad->ad_pciinfo->ap_bridge != false)
+			aprint_normal("[B] -> 0x%02X",
+			    ad->ad_pciinfo->ap_downbus);
+	}
+
+	aprint_normal("\n\n");
 
 	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
 	    acpi_print_tree(child, level + 1);
@@ -1046,18 +1066,6 @@ acpi_rescan_capabilities(struct acpi_softc *sc)
 		if (ACPI_SUCCESS(rv)) {
 			ad->ad_flags |= ACPI_DEVICE_WAKEUP;
 			acpi_wakedev_add(ad);
-		}
-
-		if (ad->ad_flags != 0) {
-			aprint_debug_dev(sc->sc_dev, "%-5s ", ad->ad_name);
-
-			if ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0)
-				aprint_debug("wake-up ");
-
-			if ((ad->ad_flags & ACPI_DEVICE_POWER) != 0)
-				aprint_debug("power (D%d) ", ad->ad_state);
-
-			aprint_debug("\n");
 		}
 	}
 }

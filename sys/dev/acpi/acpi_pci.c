@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.8 2010/04/22 15:25:46 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.9 2010/04/22 21:58:08 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.8 2010/04/22 15:25:46 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.9 2010/04/22 21:58:08 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,8 +57,6 @@ ACPI_MODULE_NAME	  ("acpi_pci")
 static ACPI_STATUS	  acpi_pcidev_pciroot_bus(ACPI_HANDLE, uint16_t *);
 static ACPI_STATUS	  acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *,
 							   void *);
-static ACPI_STATUS	  acpi_pcidev_scan_rec(struct acpi_devnode *);
-
 
 /*
  * Regarding PCI Segment Groups, the ACPI spec says (cf. ACPI 4.0, p. 277):
@@ -154,15 +152,15 @@ acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *res, void *context)
 }
 
 /*
- * acpi_pcidev_scan_rec:
+ * acpi_pcidev_scan:
  *
  *	Scan the ACPI device tree for PCI devices.  A node is detected as a
  *	PCI device if it has an ancestor that is a PCI root bridge and such
  *	that all intermediate nodes are PCI-to-PCI bridges.  Depth-first
  *	recursive implementation.
  */
-static ACPI_STATUS
-acpi_pcidev_scan_rec(struct acpi_devnode *ad)
+ACPI_STATUS
+acpi_pcidev_scan(struct acpi_devnode *ad)
 {
 	struct acpi_devnode *child;
 	struct acpi_pci_info *ap;
@@ -239,9 +237,10 @@ acpi_pcidev_scan_rec(struct acpi_devnode *ad)
 
 		goto rec;
 	}
+
 rec:
 	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list) {
-		rv = acpi_pcidev_scan_rec(child);
+		rv = acpi_pcidev_scan(child);
 
 		if (ACPI_FAILURE(rv))
 			return rv;
@@ -296,39 +295,6 @@ acpi_pcidev_ppb_downbus(uint16_t segment, uint16_t bus, uint16_t device,
 	*downbus = PPB_BUSINFO_SECONDARY(val);
 
 	return AE_OK;
-}
-
-static void
-acpi_pcidev_print(struct acpi_devnode *ad)
-{
-	aprint_debug(" ");
-	if (ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE)
-		aprint_debug("*");
-	aprint_debug("%s@%"PRIx16":%"PRIx16":%"PRIx16":%"PRIx16,
-	    ad->ad_name,
-	    ad->ad_pciinfo->ap_segment,
-	    ad->ad_pciinfo->ap_bus,
-	    ad->ad_pciinfo->ap_device,
-	    ad->ad_pciinfo->ap_function);
-	if (ad->ad_pciinfo->ap_bridge)
-		aprint_debug(">%"PRIx16, ad->ad_pciinfo->ap_downbus);
-}
-
-void
-acpi_pcidev_scan(struct acpi_softc *sc)
-{
-	struct acpi_devnode *ad;
-
-	acpi_pcidev_scan_rec(sc->sc_root);
-	aprint_debug_dev(sc->sc_dev, "pci devices:");
-
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
-
-		if (ad->ad_pciinfo != NULL)
-			acpi_pcidev_print(ad);
-	}
-
-	aprint_debug("\n");
 }
 
 /*
