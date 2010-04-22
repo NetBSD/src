@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.162 2010/04/21 16:16:31 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.163 2010/04/22 07:10:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.162 2010/04/21 16:16:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.163 2010/04/22 07:10:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -102,8 +102,6 @@ static kauth_cred_t rump_susercred;
 struct proc *initproc = &proc0;
 
 struct rumpuser_mtx *rump_giantlock;
-
-sigset_t sigcantmask;
 
 struct device rump_rootdev = {
 	.dv_class = DV_VIRTUAL
