@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1203 2010/04/10 20:52:14 pooka Exp $
+# $NetBSD: mi,v 1.1204 2010/04/22 06:48:28 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1896,7 +1896,7 @@
 ./usr/share/man/cat5/transport.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/ttyaction.0		man-sys-catman		.cat
 ./usr/share/man/cat5/ttys.0			man-sys-catman		.cat
-./usr/share/man/cat5/types.0			man-c-catman		.cat
+./usr/share/man/cat5/types.0			man-obsolete		obsolete
 ./usr/share/man/cat5/tzfile.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ucontext.0			man-obsolete		obsolete
 ./usr/share/man/cat5/usermgmt.conf.0		man-sys-catman		.cat
@@ -4456,7 +4456,7 @@
 ./usr/share/man/html5/transport.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/ttyaction.html		man-sys-htmlman		html
 ./usr/share/man/html5/ttys.html			man-sys-htmlman		html
-./usr/share/man/html5/types.html		man-c-htmlman		html
+./usr/share/man/html5/types.html		man-obsolete		obsolete
 ./usr/share/man/html5/tzfile.html		man-sys-htmlman		html
 ./usr/share/man/html5/usermgmt.conf.html	man-sys-htmlman		html
 ./usr/share/man/html5/utmp.html			man-sys-htmlman		html
@@ -6986,7 +6986,7 @@
 ./usr/share/man/man5/transport.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/ttyaction.5		man-sys-man		.man
 ./usr/share/man/man5/ttys.5			man-sys-man		.man
-./usr/share/man/man5/types.5			man-c-man		.man
+./usr/share/man/man5/types.5			man-obsolete		obsolete
 ./usr/share/man/man5/tzfile.5			man-sys-man		.man
 ./usr/share/man/man5/ucontext.5			man-obsolete		obsolete
 ./usr/share/man/man5/usermgmt.conf.5		man-sys-man		.man
