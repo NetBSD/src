@@ -1,4 +1,4 @@
-.\"	$NetBSD: pathconf.2,v 1.22 2009/03/11 13:39:14 joerg Exp $
+.\"	$NetBSD: pathconf.2,v 1.23 2010/04/22 08:00:34 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)pathconf.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd August 14, 2008
+.Dd April 22, 2010
 .Dt PATHCONF 2
 .Os
 .Sh NAME
@@ -66,8 +66,9 @@ argument is an open file descriptor.
 The
 .Fa name
 argument specifies the system variable to be queried.
-Symbolic constants for each name value are found in the include file
-.Li \*[Lt]unistd.h\*[Gt] .
+Symbolic constants for each name value are found in the
+.In unistd.h
+header.
 .Pp
 The available values are as follows:
 .Pp
