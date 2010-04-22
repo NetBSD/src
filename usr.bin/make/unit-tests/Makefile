@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2010/04/22 19:15:24 sjg Exp $
+# $NetBSD: Makefile,v 1.28 2010/04/22 21:41:11 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -57,6 +57,10 @@ clean:
 
 TEST_MAKE?= ${.MAKE}
 TOOL_SED?= sed
+
+# ensure consistent results from sort(1)
+LANG= C
+.export LANG
 
 # The driver.
 # We always pretend .MAKE was called 'make' 
