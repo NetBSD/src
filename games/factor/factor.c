@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.19 2009/08/12 05:54:31 dholland Exp $	*/
+/*	$NetBSD: factor.c,v 1.20 2010/04/22 14:28:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.19 2009/08/12 05:54:31 dholland Exp $");
+__RCSID("$NetBSD: factor.c,v 1.20 2010/04/22 14:28:48 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,10 +214,11 @@ pr_fact(BIGNUM *val)
 	putchar(':');
 	for (fact = &prime[0]; !BN_is_one(val); ++fact) {
 		/* Look for the smallest factor. */
-		do {
+		while (fact <= pr_limit) {
 			if (BN_mod_word(val, (BN_ULONG)*fact) == 0)
 				break;
-		} while (++fact <= pr_limit);
+			fact++;
+		}
 
 		/* Watch for primes larger than the table. */
 		if (fact > pr_limit) {
