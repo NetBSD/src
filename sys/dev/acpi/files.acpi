@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.73 2010/04/14 17:12:14 jruoho Exp $
+#	$NetBSD: files.acpi,v 1.74 2010/04/22 18:40:09 jruoho Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -17,7 +17,7 @@ file	dev/acpi/acpi_debug.c		acpi
 file	dev/acpi/acpi_madt.c		acpi
 file	dev/acpi/acpi_pci.c		acpi
 file	dev/acpi/acpi_pci_link.c	acpi
-file	dev/acpi/acpi_powerres.c	acpi
+file	dev/acpi/acpi_power.c		acpi
 file	dev/acpi/acpi_quirks.c		acpi
 file	dev/acpi/acpi_resource.c	acpi
 file	dev/acpi/acpi_srat.c		acpi
