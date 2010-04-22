@@ -1,4 +1,4 @@
-.\"	$NetBSD: __builtin_object_size.3,v 1.4 2008/06/06 05:51:46 yamt Exp $
+.\"	$NetBSD: __builtin_object_size.3,v 1.5 2010/04/22 13:41:40 jruoho Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 23, 2007
+.Dd April 22, 2010
 .Dt __BUILTIN_OBJECT_SIZE 3
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ effects.
 If the size of the object is not known or it has side effects the
 .Fn __builtin_object_size
 function returns:
-.Bl -tag -width (size_t)-1
+.Bl -tag -width (size_t)-1 -offset indent
 .It Dv (size_t)-1
 for
 .Fa type
@@ -82,4 +82,5 @@ and the minimum size when
 .Sh HISTORY
 The
 .Fn __builtin_object_size
-appeared in gcc 4.1.
+appeared in
+.Tn GCC 4.1 .
