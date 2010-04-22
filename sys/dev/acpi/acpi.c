@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.179 2010/04/20 04:57:04 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.180 2010/04/22 14:50:30 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.179 2010/04/20 04:57:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.180 2010/04/22 14:50:30 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -662,6 +662,7 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 
 		ad->ad_device = NULL;
 		ad->ad_notify = NULL;
+		ad->ad_pciinfo = NULL;
 
 		ad->ad_type = type;
 		ad->ad_handle = handle;
