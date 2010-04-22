@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.6 2010/04/22 14:50:31 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.7 2010/04/22 15:14:24 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.6 2010/04/22 14:50:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.7 2010/04/22 15:14:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,13 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.6 2010/04/22 14:50:31 jruoho Exp $");
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_pci.h>
 
-#define _COMPONENT	ACPI_BUS_COMPONENT
-ACPI_MODULE_NAME	("acpi_pci")
+#define _COMPONENT	  ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME	  ("acpi_pci")
 
-static ACPI_STATUS	acpi_pcidev_pciroot_bus(ACPI_HANDLE, uint16_t *);
-static ACPI_STATUS	acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *,
-			    void *);
-static ACPI_STATUS	acpi_pcidev_scan_rec(struct acpi_devnode *);
+#define ACPI_HILODWORD(x) ACPI_HIWORD(ACPI_LODWORD((x)))
+#define ACPI_LOLODWORD(x) ACPI_LOWORD(ACPI_LODWORD((x)))
+
+static ACPI_STATUS	  acpi_pcidev_pciroot_bus(ACPI_HANDLE, uint16_t *);
+static ACPI_STATUS	  acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *,
+							   void *);
+static ACPI_STATUS	  acpi_pcidev_scan_rec(struct acpi_devnode *);
 
 
 /*
@@ -190,8 +193,8 @@ acpi_pcidev_scan_rec(struct acpi_devnode *ad)
 				ap->ap_bus = 0;
 		}
 
-		ap->ap_device = ACPI_HIWORD(ACPI_LODWORD(ad->ad_devinfo->Address));
-		ap->ap_function = ACPI_LOWORD(ACPI_LODWORD(ad->ad_devinfo->Address));
+		ap->ap_device = ACPI_HILODWORD(ad->ad_devinfo->Address);
+		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
 
 		ap->ap_bridge = true;
 		ap->ap_downbus = ap->ap_bus;
@@ -214,8 +217,9 @@ acpi_pcidev_scan_rec(struct acpi_devnode *ad)
 
 		ap->ap_segment = ad->ad_parent->ad_pciinfo->ap_segment;
 		ap->ap_bus = ad->ad_parent->ad_pciinfo->ap_downbus;
-		ap->ap_device = ACPI_HIWORD(ACPI_LODWORD(ad->ad_devinfo->Address));
-		ap->ap_function = ACPI_LOWORD(ACPI_LODWORD(ad->ad_devinfo->Address));
+
+		ap->ap_device = ACPI_HILODWORD(ad->ad_devinfo->Address);
+		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
 
 		/*
 		 * Check whether this device is a PCI-to-PCI bridge and get its
