@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1434 2010/04/21 18:04:38 jruoho Exp $
+#	$NetBSD: mi,v 1.1435 2010/04/22 06:48:28 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8219,6 +8219,7 @@
 ./usr/share/man/cat3/ttyslot.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ttyunlock.0		comp-c-catman		.cat
 ./usr/share/man/cat3/twalk.0			comp-c-catman		.cat
+./usr/share/man/cat3/types.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tzset.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tzsetwall.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ualarm.0			comp-c-catman		.cat
@@ -13946,6 +13947,7 @@
 ./usr/share/man/html3/ttyslot.html		comp-c-htmlman		html
 ./usr/share/man/html3/ttyunlock.html		comp-c-htmlman		html
 ./usr/share/man/html3/twalk.html		comp-c-htmlman		html
+./usr/share/man/html3/types.html		comp-c-htmlman		html
 ./usr/share/man/html3/tzset.html		comp-c-htmlman		html
 ./usr/share/man/html3/tzsetwall.html		comp-c-htmlman		html
 ./usr/share/man/html3/ualarm.html		comp-c-htmlman		html
@@ -19743,6 +19745,7 @@
 ./usr/share/man/man3/ttyslot.3			comp-c-man		.man
 ./usr/share/man/man3/ttyunlock.3		comp-c-man		.man
 ./usr/share/man/man3/twalk.3			comp-c-man		.man
+./usr/share/man/man3/types.3			comp-c-man		.man
 ./usr/share/man/man3/tzset.3			comp-c-man		.man
 ./usr/share/man/man3/tzsetwall.3		comp-c-man		.man
 ./usr/share/man/man3/ualarm.3			comp-c-man		.man
