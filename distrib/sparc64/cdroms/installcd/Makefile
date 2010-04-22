@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/04/18 16:10:03 martin Exp $
+#	$NetBSD: Makefile,v 1.6 2010/04/22 11:58:59 he Exp $
 CDBASE=		sparc64cd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 
@@ -60,14 +60,14 @@ image_md_pre:
 	${CP} ${.CURDIR}/../../../common/99-print-sysinst cdrom/libexec/dhcpcd-hooks
 	${MKDIR} cdrom/etc
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
-	${CP} ${.CURDIR}/etc.ttys cdrom/etc/ttys
-	${CP} ${.CURDIR}/etc.rc cdrom/etc/rc
-	${CP} ${.CURDIR}/install.sh cdrom/install.sh
-	${CHMOD} 0555 cdrom/install.sh
+	${INSTALL_FILE} ${.CURDIR}/etc.ttys cdrom/etc/ttys
+	${INSTALL_FILE} ${.CURDIR}/etc.rc cdrom/etc/rc
+	${INSTALL_FILE} -m 0555 ${.CURDIR}/install.sh cdrom/install.sh
 	${MKDIR} cdrom/mnt2 cdrom/targetroot
-	${CP} ${SYSINSTDIR}/sysinst cdrom
-	${CHMOD} ugo+rx cdrom/sysinst
-	${CP} ${SYSINSTDIR}/sysinstmsgs.?? cdrom
+	${INSTALL_FILE} -m 0555 ${SYSINSTDIR}/sysinst cdrom
+	for f in ${SYSINSTDIR}/sysinstmsgs.??; do \
+		${INSTALL_FILE} $$f cdrom; \
+	done
 	${MKDIR} cdrom/var
 	${MKDIR} cdrom/kern
 	${CP} ${RELEASEDIR}/sparc64/binary/kernel/netbsd-GENERIC.gz cdrom/netbsd
