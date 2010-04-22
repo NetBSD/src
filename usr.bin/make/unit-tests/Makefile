@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2010/04/08 17:41:29 sjg Exp $
+# $NetBSD: Makefile,v 1.27 2010/04/22 19:15:24 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -53,9 +53,10 @@ ${SUBFILES}:
 clean:
 	rm -f *.out *.fail *.core
 
-.include <bsd.obj.mk>
+.-include <bsd.obj.mk>
 
 TEST_MAKE?= ${.MAKE}
+TOOL_SED?= sed
 
 # The driver.
 # We always pretend .MAKE was called 'make' 
