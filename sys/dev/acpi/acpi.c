@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.180 2010/04/22 14:50:30 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.181 2010/04/22 18:40:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.180 2010/04/22 14:50:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.181 2010/04/22 18:40:09 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.180 2010/04/22 14:50:30 jruoho Exp $");
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_osd.h>
 #include <dev/acpi/acpi_pci.h>
+#include <dev/acpi/acpi_power.h>
 #include <dev/acpi/acpi_timer.h>
 #include <dev/acpi/acpi_wakedev.h>
 
@@ -979,9 +980,16 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		/*
 		 * Handled internally.
 		 */
-		if (ad->ad_devinfo->Type == ACPI_TYPE_PROCESSOR ||
-		    ad->ad_devinfo->Type == ACPI_TYPE_POWER)
+		if (ad->ad_devinfo->Type == ACPI_TYPE_PROCESSOR)
 			continue;
+
+		/*
+		 * Ditto, but bind power resources.
+		 */
+		if (ad->ad_devinfo->Type == ACPI_TYPE_POWER) {
+			acpi_power_res_add(ad);
+			continue;
+		}
 
 		/*
 		 * Skip ignored HIDs.
@@ -1019,14 +1027,16 @@ acpi_rescan_capabilities(struct acpi_softc *sc)
 
 		/*
 		 * Scan power resource capabilities.
+		 *
+		 * If any power states are supported,
+		 * at least _PR0 and _PR3 must be present.
 		 */
 		rv = AcpiGetHandle(ad->ad_handle, "_PR0", &tmp);
 
-		if (ACPI_FAILURE(rv))
-			rv = AcpiGetHandle(ad->ad_handle, "_PSC", &tmp);
-
-		if (ACPI_SUCCESS(rv))
+		if (ACPI_SUCCESS(rv)) {
 			ad->ad_flags |= ACPI_DEVICE_POWER;
+			(void)acpi_power_get(ad, NULL);
+		}
 
 		/*
 		 * Scan wake-up capabilities.
@@ -1041,11 +1051,11 @@ acpi_rescan_capabilities(struct acpi_softc *sc)
 		if (ad->ad_flags != 0) {
 			aprint_debug_dev(sc->sc_dev, "%-5s ", ad->ad_name);
 
-			if ((ad->ad_flags & ACPI_DEVICE_POWER) != 0)
-				aprint_debug("power ");
-
 			if ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0)
 				aprint_debug("wake-up ");
+
+			if ((ad->ad_flags & ACPI_DEVICE_POWER) != 0)
+				aprint_debug("power (D%d) ", ad->ad_state);
 
 			aprint_debug("\n");
 		}
