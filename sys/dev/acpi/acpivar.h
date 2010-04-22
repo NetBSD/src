@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.51 2010/04/22 18:40:09 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.52 2010/04/22 18:53:23 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -275,8 +275,6 @@ ACPI_STATUS	acpi_resource_parse(device_t, ACPI_HANDLE, const char *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(device_t, struct acpi_resources *);
 void		acpi_resource_cleanup(struct acpi_resources *);
-
-ACPI_STATUS	acpi_pwr_switch_consumer(ACPI_HANDLE, int);
 
 void *		acpi_pci_link_devbyhandle(ACPI_HANDLE);
 void		acpi_pci_link_add_reference(void *, int, int, int, int);
