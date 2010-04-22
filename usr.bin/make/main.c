@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.181 2010/04/22 20:25:16 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.182 2010/04/22 22:39:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.181 2010/04/22 20:25:16 dholland Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.182 2010/04/22 22:39:13 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.181 2010/04/22 20:25:16 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.182 2010/04/22 22:39:13 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1967,7 +1967,7 @@ mkTempFile(const char *pattern, char **fnamep)
 	 * Honor $TMPDIR but only if it is valid.
 	 * Ensure it ends with /.
 	 */
-	tmpdir = Var_Subst(NULL, "${TMPDIR:tA:U/tmp}/", VAR_GLOBAL, 0);
+	tmpdir = Var_Subst(NULL, "${TMPDIR:tA:U" _PATH_TMP "}/", VAR_GLOBAL, 0);
 	if (stat(tmpdir, &st) < 0 || !S_ISDIR(st.st_mode)) {
 	    free(tmpdir);
 	    tmpdir = bmake_strdup(_PATH_TMP);
