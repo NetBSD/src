@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.18 2010/04/19 04:41:36 martin Exp $
+# $NetBSD: Makefile.cdrom,v 1.19 2010/04/22 11:58:59 he Exp $
 
 .include <bsd.own.mk>
 
@@ -58,10 +58,9 @@ image_md_pre:
 	${CP} ${.CURDIR}/../../../common/99-print-sysinst cdrom/libexec/dhcpcd-hooks
 	${MKDIR} cdrom/etc
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
-	${CP} ${.CURDIR}/../etc.ttys cdrom/etc/ttys
-	${CP} ${.CURDIR}/../etc.rc cdrom/etc/rc
-	${CP} ${.CURDIR}/../install.sh cdrom/install.sh
-	${CHMOD} 0555 cdrom/install.sh
+	${INSTALL_FILE} ${.CURDIR}/../etc.ttys cdrom/etc/ttys
+	${INSTALL_FILE} ${.CURDIR}/../etc.rc cdrom/etc/rc
+	${INSTALL_FILE} -m 0555 ${.CURDIR}/../install.sh cdrom/install.sh
 	${MKDIR} cdrom/mnt2 cdrom/targetroot
 	${CP} ${SYSINSTDIR}/sysinst cdrom
 	${CHMOD} ugo+rx cdrom/sysinst
