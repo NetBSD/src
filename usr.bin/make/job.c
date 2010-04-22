@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.147 2010/04/07 00:11:27 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.148 2010/04/22 19:11:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.147 2010/04/07 00:11:27 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.148 2010/04/22 19:11:17 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.147 2010/04/07 00:11:27 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.148 2010/04/22 19:11:17 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -341,8 +341,6 @@ static sigset_t caught_signals;	/* Set of signals we handle */
 #else
 #define KILLPG(pid, sig)	killpg((pid), (sig))
 #endif
-
-static char *tmpdir;		/* directory name, always ending with "/" */
 
 static void JobChildSig(int);
 static void JobContinueSig(int);
@@ -1555,11 +1553,7 @@ JobStart(GNode *gn, int flags)
 	}
 
 	JobSigLock(&mask);
-	tfile = bmake_malloc(strlen(tmpdir) + sizeof(TMPPAT));
-	strcpy(tfile, tmpdir);
-	strcat(tfile, TMPPAT);
-	if ((tfd = mkstemp(tfile)) == -1)
-	    Punt("Could not create temporary file %s", strerror(errno));
+	tfd = mkTempFile(TMPPAT, &tfile);
 	if (!DEBUG(SCRIPT))
 		(void)eunlink(tfile);
 	JobSigUnlock(&mask);
@@ -2122,8 +2116,6 @@ void
 Job_Init(void)
 {
     GNode         *begin;     /* node for commands to do at the very start */
-    const char    *p;
-    size_t        len;
 
     /* Allocate space for all the job info */
     job_table = bmake_malloc(maxJobs * sizeof *job_table);
@@ -2135,18 +2127,6 @@ Job_Init(void)
     errors = 	  0;
 
     lastNode =	  NULL;
-
-    /* set tmpdir, and ensure that it ends with "/" */
-    p = getenv("TMPDIR");
-    if (p == NULL || *p == '\0') {
-	p = _PATH_TMP;
-    }
-    len = strlen(p);
-    tmpdir = bmake_malloc(len + 2);
-    strcpy(tmpdir, p);
-    if (tmpdir[len - 1] != '/') {
-	strcat(tmpdir, "/");
-    }
 
     if (maxJobs == 1) {
 	/*
