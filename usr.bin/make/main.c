@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.180 2010/04/22 19:11:17 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.181 2010/04/22 20:25:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.180 2010/04/22 19:11:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.181 2010/04/22 20:25:16 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.180 2010/04/22 19:11:17 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.181 2010/04/22 20:25:16 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1974,7 +1974,7 @@ mkTempFile(const char *pattern, char **fnamep)
 	}
     }
     if (pattern[0] == '/') {
-	strlcpy(tfile, pattern, sizeof(tfile));
+	snprintf(tfile, sizeof(tfile), "%s", pattern);
     } else {
 	snprintf(tfile, sizeof(tfile), "%s%s", tmpdir, pattern);
     }
