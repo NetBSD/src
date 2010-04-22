@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.7 2010/04/22 15:14:24 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.8 2010/04/22 15:25:46 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.7 2010/04/22 15:14:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.8 2010/04/22 15:25:46 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -123,31 +123,34 @@ acpi_pcidev_pciroot_bus(ACPI_HANDLE handle, uint16_t *busp)
 		return AE_NOT_EXIST;
 
 	*busp = (uint16_t)bus;
+
 	return rv;
 }
 
 static ACPI_STATUS
 acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *res, void *context)
 {
-	int32_t *bus = context;
 	ACPI_RESOURCE_ADDRESS64 addr64;
+	int32_t *bus = context;
 
+	/* Always continue the walk by returning AE_OK. */
 	if ((res->Type != ACPI_RESOURCE_TYPE_ADDRESS16) &&
 	    (res->Type != ACPI_RESOURCE_TYPE_ADDRESS32) &&
 	    (res->Type != ACPI_RESOURCE_TYPE_ADDRESS64))
-		return AE_OK;	/* continue the walk */
+		return AE_OK;
 
 	if (ACPI_FAILURE(AcpiResourceToAddress64(res, &addr64)))
-		return AE_OK;	/* continue the walk */
+		return AE_OK;
 
 	if (addr64.ResourceType != ACPI_BUS_NUMBER_RANGE)
-		return AE_OK;	/* continue the walk */
+		return AE_OK;
 
 	if (*bus != -1)
 		return AE_ALREADY_EXISTS;
 
 	*bus = addr64.Minimum;
-	return AE_OK;		/* continue the walk */
+
+	return AE_OK;
 }
 
 /*
@@ -173,24 +176,25 @@ acpi_pcidev_scan_rec(struct acpi_devnode *ad)
 	}
 
 	if (ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) {
+
 		ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
+
 		if (ap == NULL)
 			return AE_NO_MEMORY;
 
-		rv = acpi_eval_integer(ad->ad_handle, METHOD_NAME__SEG, &val);
+		rv = acpi_eval_integer(ad->ad_handle, "_SEG", &val);
+
 		if (ACPI_SUCCESS(rv))
 			ap->ap_segment = ACPI_LOWORD(val);
-		else
-			ap->ap_segment = 0;
 
-		/* try to get bus number using _CRS first */
+		/* Try to get bus number using _CRS first. */
 		rv = acpi_pcidev_pciroot_bus(ad->ad_handle, &ap->ap_bus);
+
 		if (ACPI_FAILURE(rv)) {
-			rv = acpi_eval_integer(ad->ad_handle, METHOD_NAME__BBN, &val);
+			rv = acpi_eval_integer(ad->ad_handle, "_BBN", &val);
+
 			if (ACPI_SUCCESS(rv))
 				ap->ap_bus = ACPI_LOWORD(val);
-			else
-				ap->ap_bus = 0;
 		}
 
 		ap->ap_device = ACPI_HILODWORD(ad->ad_devinfo->Address);
@@ -200,6 +204,7 @@ acpi_pcidev_scan_rec(struct acpi_devnode *ad)
 		ap->ap_downbus = ap->ap_bus;
 
 		ad->ad_pciinfo = ap;
+
 		goto rec;
 	}
 
@@ -212,6 +217,7 @@ acpi_pcidev_scan_rec(struct acpi_devnode *ad)
 		 * bus number.
 		 */
 		ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
+
 		if (ap == NULL)
 			return AE_NO_MEMORY;
 
@@ -227,17 +233,16 @@ acpi_pcidev_scan_rec(struct acpi_devnode *ad)
 		 */
 		rv = acpi_pcidev_ppb_downbus(ap->ap_segment, ap->ap_bus,
 		    ap->ap_device, ap->ap_function, &ap->ap_downbus);
-		if (ACPI_SUCCESS(rv))
-			ap->ap_bridge = true;
-		else
-			ap->ap_bridge = false;
 
+		ap->ap_bridge = (rv != AE_OK) ? false : true;
 		ad->ad_pciinfo = ap;
+
 		goto rec;
 	}
- rec:
+rec:
 	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list) {
 		rv = acpi_pcidev_scan_rec(child);
+
 		if (ACPI_FAILURE(rv))
 			return rv;
 	}
@@ -275,18 +280,21 @@ acpi_pcidev_ppb_downbus(uint16_t segment, uint16_t bus, uint16_t device,
 
 	/* Check that this device exists. */
 	val = pci_conf_read(pc, tag, PCI_ID_REG);
+
 	if (PCI_VENDOR(val) == PCI_VENDOR_INVALID ||
 	    PCI_VENDOR(val) == 0)
 		return AE_NOT_EXIST;
 
 	/* Check that this device is a PCI-to-PCI bridge. */
 	val = pci_conf_read(pc, tag, PCI_BHLC_REG);
+
 	if (PCI_HDRTYPE_TYPE(val) != PCI_HDRTYPE_PPB)
 		return AE_TYPE;
 
 	/* This is a PCI-to-PCI bridge.  Get its secondary bus#. */
 	val = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
 	*downbus = PPB_BUSINFO_SECONDARY(val);
+
 	return AE_OK;
 }
 
@@ -313,10 +321,13 @@ acpi_pcidev_scan(struct acpi_softc *sc)
 
 	acpi_pcidev_scan_rec(sc->sc_root);
 	aprint_debug_dev(sc->sc_dev, "pci devices:");
+
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
 		if (ad->ad_pciinfo != NULL)
 			acpi_pcidev_print(ad);
 	}
+
 	aprint_debug("\n");
 }
 
@@ -339,6 +350,7 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus, uint16_t device,
 		return AE_NOT_FOUND;
 
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
 		if ((ad->ad_pciinfo != NULL) &&
 		    (ad->ad_pciinfo->ap_segment == segment) &&
 		    (ad->ad_pciinfo->ap_bus == bus) &&
@@ -348,5 +360,6 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus, uint16_t device,
 			return AE_OK;
 		}
 	}
+
 	return AE_NOT_FOUND;
 }
