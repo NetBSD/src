@@ -1,4 +1,4 @@
-.\"	$NetBSD: factor.6,v 1.10 2010/04/22 04:42:21 dholland Exp $
+.\"	$NetBSD: factor.6,v 1.11 2010/04/22 06:57:13 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,12 +68,12 @@ is invoked with no arguments,
 .Nm
 reads numbers, one per line, from standard input, until end of file or error.
 Leading white-space and empty lines are ignored.
-Numbers may be preceded by a single - or +, although negative numbers
+Numbers may be preceded by a single \- or +, although negative numbers
 are rejected.
 Numbers are terminated by a non-digit character (such as a newline).
 After a number is read, it is factored.
 Input lines must not be longer than
-.Dv LINE_MAX - 1
+.Dv LINE_MAX \- 1
 (currently 2047) characters.
 .Pp
 By default,
