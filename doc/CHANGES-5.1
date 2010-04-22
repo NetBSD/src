@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.226 2010/04/12 21:46:03 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.227 2010/04/22 20:08:56 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17175,4 +17175,39 @@ external/bsd/openldap/dist/libraries/libldap/tls.c patch
 
 	Fix CVE-2009-3767.
 	[lukem, ticket #1374]
+
+sys/arch/amd64/amd64/locore.S			1.56
+
+	When kernel remaps to high memory in amd64 locore, the GDT used
+	before becomes invalid. As such, split it in two parts, one for
+	use when system boots in low memory, and one for use when it jumps
+	to high memory.
+	[jym, ticket #1376]
+
+sys/arch/x86/x86/identcpu.c			1.19
+
+	Fix a test semantic in cpu_probe(): check that the CPU currently
+	probed is the first one booting by comparing its struct cpu_info
+	address with cpu_info_primary, rather than supposing that
+	cpu_feature variables are set to 0.
+	[jym, ticket #1377]
+
+sys/arch/amd64/amd64/locore.S			patch
+sys/arch/amd64/amd64/machdep.c			patch
+sys/arch/amd64/amd64/mptramp.S			patch
+sys/arch/i386/i386/machdep.c			patch
+sys/arch/i386/isa/npx.c				patch
+sys/arch/x86/include/cpu.h			patch
+sys/arch/x86/include/cpuvar.h			patch
+sys/arch/x86/x86/cpu.c				patch
+sys/arch/x86/x86/cpu_topology.c			patch
+sys/arch/x86/x86/identcpu.c			patch
+sys/arch/x86/x86/pmap.c				patch
+sys/arch/xen/x86/cpu.c				patch
+
+	Fix the NX regression issue observed on amd64 kernels, where
+	per-page execution right was disabled (therefore leading to the
+	inability of the kernel to detect fraudulent use of memory mappings
+	marked as not being executable).
+	[jym, ticket #1380]
 
