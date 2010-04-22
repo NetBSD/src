@@ -9,7 +9,58 @@
 #ifndef TRE_H
 #define TRE_H 1
 
-#include "tre-config.h"
+/* #include "tre-config.h" */
+
+/* included tre-config.h inline below - agc */
+/* >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> */
+/* lib/tre-config.h.  Generated from tre-config.h.in by configure.  */
+/* tre-config.h.in.  This file has all definitions that are needed in
+   `tre.h'.  Note that this file must contain only the bare minimum
+   of definitions without the TRE_ prefix to avoid conflicts between
+   definitions here and definitions included from somewhere else. */
+
+/* Define to 1 if you have the <libutf8.h> header file. */
+/* #undef HAVE_LIBUTF8_H */
+
+/* Define to 1 if the system has the type `reg_errcode_t'. */
+/* #undef HAVE_REG_ERRCODE_T */
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+/* #undef HAVE_SYS_TYPES_H */
+#define HAVE_SYS_TYPES_H 1
+
+/* Define to 1 if you have the <wchar.h> header file. */
+#define HAVE_WCHAR_H 1
+
+/* Define if you want to enable approximate matching functionality. */
+#define TRE_APPROX 1
+
+/* Define to enable multibyte character set support. */
+#define TRE_MULTIBYTE 1
+
+/* Define to the absolute path to the system tre.h */
+/* #undef TRE_SYSTEM_REGEX_H_PATH */
+
+/* Define to include the system regex.h from tre.h */
+/* #undef TRE_USE_SYSTEM_REGEX_H */
+
+/* Define to enable wide character (wchar_t) support. */
+#define TRE_WCHAR 1
+
+/* TRE version string. */
+#define TRE_VERSION "0.8.0"
+
+/* TRE version level 1. */
+#define TRE_VERSION_1 0
+
+/* TRE version level 2. */
+#define TRE_VERSION_2 8
+
+/* TRE version level 3. */
+#define TRE_VERSION_3 0
+
+/* <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< */
+/* end of tre-config.h */
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -114,6 +165,9 @@ typedef enum {
 #define REG_APPROX_MATCHER	 (REG_NOTEOL << 1)
 #define REG_BACKTRACKING_MATCHER (REG_APPROX_MATCHER << 1)
 
+/* emulate Spencer regexp behavior with tre_regnexec */
+#define REG_STARTEND		(REG_BACKTRACKING_MATCHER << 1)
+
 #endif /* !TRE_USE_SYSTEM_REGEX_H */
 
 /* REG_NOSPEC and REG_LITERAL mean the same thing. */
@@ -129,18 +183,16 @@ typedef enum {
 
 /* The POSIX.2 regexp functions */
 extern int
-tre_regcomp(regex_t *preg, const char *regex, int cflags);
+tre_regcomp(regex_t *, const char *, int);
 
 extern int
-tre_regexec(const regex_t *preg, const char *string, size_t nmatch,
-	regmatch_t pmatch[], int eflags);
+tre_regexec(const regex_t *, const char *, size_t, regmatch_t *, int);
 
 extern size_t
-tre_regerror(int errcode, const regex_t *preg, char *errbuf,
-	 size_t errbuf_size);
+tre_regerror(int, const regex_t *, char *, size_t);
 
 extern void
-tre_regfree(regex_t *preg);
+tre_regfree(regex_t *);
 
 #ifdef TRE_WCHAR
 #ifdef HAVE_WCHAR_H
@@ -149,29 +201,29 @@ tre_regfree(regex_t *preg);
 
 /* Wide character versions (not in POSIX.2). */
 extern int
-tre_regwcomp(regex_t *preg, const wchar_t *regex, int cflags);
+tre_regwcomp(regex_t *, const wchar_t *, int);
 
 extern int
-tre_regwexec(const regex_t *preg, const wchar_t *string,
-	 size_t nmatch, regmatch_t pmatch[], int eflags);
+tre_regwexec(const regex_t *, const wchar_t *,
+	 size_t, regmatch_t [], int);
 #endif /* TRE_WCHAR */
 
 /* Versions with a maximum length argument and therefore the capability to
    handle null characters in the middle of the strings (not in POSIX.2). */
 extern int
-tre_regncomp(regex_t *preg, const char *regex, size_t len, int cflags);
+tre_regncomp(regex_t *, const char *, size_t, int);
 
 extern int
-tre_regnexec(const regex_t *preg, const char *string, size_t len,
-	 size_t nmatch, regmatch_t pmatch[], int eflags);
+tre_regnexec(const regex_t *, const char *, size_t,
+	 size_t, regmatch_t [], int);
 
 #ifdef TRE_WCHAR
 extern int
-tre_regwncomp(regex_t *preg, const wchar_t *regex, size_t len, int cflags);
+tre_regwncomp(regex_t *, const wchar_t *, size_t, int);
 
 extern int
-tre_regwnexec(const regex_t *preg, const wchar_t *string, size_t len,
-	  size_t nmatch, regmatch_t pmatch[], int eflags);
+tre_regwnexec(const regex_t *, const wchar_t *, size_t,
+	  size_t, regmatch_t [], int);
 #endif /* TRE_WCHAR */
 
 #ifdef TRE_APPROX
@@ -202,26 +254,26 @@ typedef struct {
 
 /* Approximate matching functions. */
 extern int
-tre_regaexec(const regex_t *preg, const char *string,
-	 regamatch_t *match, regaparams_t params, int eflags);
+tre_regaexec(const regex_t *, const char *,
+	 regamatch_t *, regaparams_t, int );
 
 extern int
-tre_reganexec(const regex_t *preg, const char *string, size_t len,
-	  regamatch_t *match, regaparams_t params, int eflags);
+tre_reganexec(const regex_t *, const char *, size_t,
+	  regamatch_t *, regaparams_t, int);
 #ifdef TRE_WCHAR
 /* Wide character approximate matching. */
 extern int
-tre_regawexec(const regex_t *preg, const wchar_t *string,
-	  regamatch_t *match, regaparams_t params, int eflags);
+tre_regawexec(const regex_t *, const wchar_t *,
+	  regamatch_t *, regaparams_t, int);
 
 extern int
-tre_regawnexec(const regex_t *preg, const wchar_t *string, size_t len,
-	   regamatch_t *match, regaparams_t params, int eflags);
+tre_regawnexec(const regex_t *, const wchar_t *, size_t,
+	   regamatch_t *, regaparams_t, int );
 #endif /* TRE_WCHAR */
 
 /* Sets the parameters to default values. */
 extern void
-tre_regaparams_default(regaparams_t *params);
+tre_regaparams_default(regaparams_t *);
 #endif /* TRE_APPROX */
 
 #ifdef TRE_WCHAR
@@ -238,8 +290,8 @@ typedef struct {
 } tre_str_source;
 
 extern int
-tre_reguexec(const regex_t *preg, const tre_str_source *string,
-	 size_t nmatch, regmatch_t pmatch[], int eflags);
+tre_reguexec(const regex_t *, const tre_str_source *,
+	 size_t, regmatch_t [], int);
 
 /* Returns the version string.	The returned string is static. */
 extern char *
@@ -249,7 +301,7 @@ tre_version(void);
    must point to depends of the value of `query', see documentation for
    more details. */
 extern int
-tre_config(int query, void *result);
+tre_config(int, void *);
 
 enum {
   TRE_CONFIG_APPROX,
@@ -261,12 +313,12 @@ enum {
 
 /* Returns 1 if the compiled pattern has back references, 0 if not. */
 extern int
-tre_have_backrefs(const regex_t *preg);
+tre_have_backrefs(const regex_t *);
 
 /* Returns 1 if the compiled pattern uses approximate matching features,
    0 if not. */
 extern int
-tre_have_approx(const regex_t *preg);
+tre_have_approx(const regex_t *);
 
 #ifdef __cplusplus
 }
