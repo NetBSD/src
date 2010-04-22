@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.29 2009/04/12 16:08:37 lukem Exp $	*/
+/*	$NetBSD: unix.c,v 1.30 2010/04/22 14:37:06 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.29 2009/04/12 16:08:37 lukem Exp $");
+__RCSID("$NetBSD: unix.c,v 1.30 2010/04/22 14:37:06 plunky Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,9 +53,8 @@ __RCSID("$NetBSD: unix.c,v 1.29 2009/04/12 16:08:37 lukem Exp $");
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #define _KERNEL
-struct uio;
-struct proc;
 #include <sys/file.h>
+#undef _KERNEL
 
 #include <netinet/in.h>
 
