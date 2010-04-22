@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1.40.2 2010/04/21 05:17:12 matt Exp $	*/
+/*	$NetBSD: ffs.S,v 1.1.40.3 2010/04/22 17:50:30 matt Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <mips/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.1.40.2 2010/04/21 05:17:12 matt Exp $")
+RCSID("$NetBSD: ffs.S,v 1.1.40.3 2010/04/22 17:50:30 matt Exp $")
 
 /* bit = ffs(value) */
 
@@ -45,9 +45,11 @@ XLEAF(ffsl)
 	.set	mips32
 	li	v1, 32
 #if __mips == 64
-	sll	v0, a0, 0
+	sll	a0, a0, 0
 #endif
-	clz	v0, v0
+	negu	a1, a0
+	and	a0, a1
+	clz	v0, a0
 	j	ra
 	 subu	v0, v1, v0
 	.set	pop
@@ -55,6 +57,8 @@ END(ffs)
 #if defined(_LP64) && __mips == 64
 LEAF(ffsl)
 	li	v1, 64
+	negu	a1, a0
+	and	a0, a1
 	dclz	v0, a0
 	j	ra
 	 subu	v0, v1, v0
