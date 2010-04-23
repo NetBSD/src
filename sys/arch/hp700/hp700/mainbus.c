@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.66 2010/04/15 14:34:25 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.67 2010/04/23 15:04:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*	$OpenBSD: mainbus.c,v 1.13 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.74 2009/04/20 00:42:06 oga Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.66 2010/04/15 14:34:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.67 2010/04/23 15:04:09 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -152,7 +152,6 @@ void mbus_cp_4(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_s
 void mbus_cp_8(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
 int mbus_add_mapping(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-int mbus_remove_mapping(bus_space_handle_t, bus_size_t, bus_addr_t *);
 int mbus_map(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 void mbus_unmap(void *, bus_space_handle_t, bus_size_t);
 int mbus_alloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
@@ -179,133 +178,55 @@ int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct vmspace *vm, int flags, paddr_t *lastaddrp,
     int *segp, int first);
 
+extern struct pdc_btlb pdc_btlb;
+static uint32_t bmm[HPPA_FLEX_COUNT/32];
+
 int
 mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	u_int frames;
-#ifdef USE_BTLB
-	vsize_t btlb_size;
-	int error;
-#endif /* USE_BTLB */
+	vaddr_t pa, spa, epa;
+	int flex;
 
 	DPRINTF(("\n%s(%lx,%lx,%scachable,%p)\n", __func__,
 	    bpa, size, flags? "" : "non", bshp));
 
-	/*
-	 * We must be called with a page-aligned address in
-	 * I/O space, and with a multiple of the page size.
-	 */
-	KASSERT((bpa & PGOFSET) == 0);
 	KASSERT(bpa >= HPPA_IOSPACE);
-	KASSERT((size & PGOFSET) == 0);
+	KASSERT(!(flags & BUS_SPACE_MAP_CACHEABLE));
 
 	/*
-	 * Assume that this will succeed.
+	 * Mappings are established in HPPA_FLEX_SIZE units,
+	 * either with BTLB, or regular mappings of the whole area.
 	 */
+	for (pa = bpa ; size != 0; pa = epa) {
+		flex = HPPA_FLEX(pa);
+		spa = pa & HPPA_FLEX_MASK;
+		epa = spa + HPPA_FLEX_SIZE; /* may wrap to 0... */
+
+		size -= min(size, HPPA_FLEX_SIZE - (pa - spa));
+
+		/* do need a new mapping? */
+		if (bmm[flex / 32] & (1 << (flex % 32))) {
+			DPRINTF(("%s: already mapped flex=%x, mask=%x\n",
+			    __func__, flex, bmm[flex / 32]));
+			continue;
+		}
+
+		DPRINTF(("%s: adding flex=%x %lx-%lx, ", __func__, flex, spa,
+		    epa - 1));
+
+		bmm[flex / 32] |= (1 << (flex % 32));
+
+		while (spa != epa) {
+			DPRINTF(("%s: kenter 0x%lx-0x%lx", __func__, spa,
+			    epa));
+			for (; spa != epa; spa += PAGE_SIZE)
+				pmap_kenter_pa(spa, spa,
+				    VM_PROT_READ | VM_PROT_WRITE, 0);
+		}
+	}
+
 	*bshp = bpa;
-
-	/*
-	 * Loop while there is space left to map.
-	 */
-	frames = size >> PGSHIFT;
-	while (frames > 0) {
-
-		/*
-		 * If this mapping is more than eight pages long,
-		 * try to add a BTLB entry.
-		 */
-#ifdef USE_BTLB
-		if (frames > 8 &&
-		    frames >= hppa_btlb_size_min) {
-			btlb_size = frames;
-			if (btlb_size > hppa_btlb_size_max)
-				btlb_size = hppa_btlb_size_max;
-			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_insert(pmap_kernel()->pmap_space,
-			    bpa, bpa, &btlb_size,
-			    pmap_kernel()->pmap_pid |
-			    pmap_prot(pmap_kernel(), VM_PROT_READ | VM_PROT_WRITE));
-			if (error == 0) {
-				bpa += btlb_size;
-				frames -= (btlb_size >> PGSHIFT);
-				continue;
-			}
-			else if (error != ENOMEM)
-				return error;
-		}
-#endif /* USE_BTLB */
-
-		/*
-		 * Enter another single-page mapping.
-		 */
-		pmap_kenter_pa(bpa, bpa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		bpa += PAGE_SIZE;
-		frames--;
-	}
-
-	/* Success. */
-	return 0;
-}
-
-/*
- * This removes a mapping added by mbus_add_mapping.
- */
-int
-mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
-{
-	bus_addr_t bpa;
-	u_int frames;
-#ifdef USE_BTLB
-	vsize_t btlb_size;
-	int error;
-#endif /* USE_BTLB */
-
-	/*
-	 * We must be called with a page-aligned address in
-	 * I/O space, and with a multiple of the page size.
-	 */
-	bpa = *bpap = bsh;
-	KASSERT((bpa & PGOFSET) == 0);
-	KASSERT(bpa >= HPPA_IOSPACE);
-	KASSERT((size & PGOFSET) == 0);
-
-	/*
-	 * Loop while there is space left to unmap.
-	 */
-	frames = size >> PGSHIFT;
-	while (frames > 0) {
-
-		/*
-		 * If this mapping is more than eight pages long,
-		 * try to remove a BTLB entry.
-		 */
-#ifdef USE_BTLB
-		if (frames > 8 &&
-		    frames >= hppa_btlb_size_min) {
-			btlb_size = frames;
-			if (btlb_size > hppa_btlb_size_max)
-				btlb_size = hppa_btlb_size_max;
-			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_purge(pmap_kernel()->pmap_space,
-						bpa, &btlb_size);
-			if (error == 0) {
-				bpa += btlb_size;
-				frames -= (btlb_size >> PGSHIFT);
-				continue;
-			}
-			else if (error != ENOENT)
-				return error;
-		}
-#endif /* USE_BTLB */
-
-		/*
-		 * Remove another single-page mapping.
-		 */
-		pmap_kremove(bpa, PAGE_SIZE);
-		bpa += PAGE_SIZE;
-		frames--;
-	}
 
 	/* Success. */
 	return 0;
@@ -316,20 +237,11 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 	int error;
-	bus_size_t offset;
 
 	/*
 	 * We must only be called with addresses in I/O space.
 	 */
 	KASSERT(bpa >= HPPA_IOSPACE);
-
-	/*
-	 * Page-align the I/O address and size.
-	 */
-	offset = (bpa & PGOFSET);
-	bpa -= offset;
-	size += offset;
-	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.
@@ -342,7 +254,6 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 	 * Map the region of I/O space.
 	 */
 	error = mbus_add_mapping(bpa, size, flags, bshp);
-	*bshp |= offset;
 	if (error) {
 		DPRINTF(("bus_space_map: pa 0x%lx, size 0x%lx failed\n",
 		    bpa, size));
@@ -357,24 +268,8 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 void
 mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
-	bus_size_t offset;
-	bus_addr_t bpa;
+	bus_addr_t bpa = bsh;
 	int error;
-
-	/*
-	 * Page-align the bus_space handle and size.
-	 */
-	offset = bsh & PGOFSET;
-	bsh -= offset;
-	size += offset;
-	size = round_page(size);
-
-	/*
-	 * Unmap the region of I/O space.
-	 */
-	error = mbus_remove_mapping(bsh, size, &bpa);
-	if (error)
-		panic("mbus_unmap: can't unmap region (%d)", error);
 
 	/*
 	 * Free the region of I/O space.
@@ -398,13 +293,6 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	if (rstart < hp700_io_extent->ex_start ||
 	    rend > hp700_io_extent->ex_end)
 		panic("bus_space_alloc: bad region start/end");
-
-	/*
-	 * Force the allocated region to be page-aligned.
-	 */
-	if (align < PAGE_SIZE)
-		align = PAGE_SIZE;
-	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.
