@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.13 2010/02/20 04:41:57 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.14 2010/04/23 20:54:10 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -374,13 +374,10 @@ lpkg_t *alloc_lpkg(const char *);
 lpkg_t *find_on_queue(lpkg_head_t *, const char *);
 void    free_lpkg(lpkg_t *);
 
-/* Extract input if compressed to NUL terminated buffer (not counted) */
-int decompress_buffer(const char *, size_t, char **, size_t *);
-
-/* Parse NUL terminated inputed, argument is strlen of the input */
-struct pkg_vulnerabilities *parse_pkg_vulnerabilities(const char *, size_t, int);
 /* Read pkg_vulnerabilities from file */
-struct pkg_vulnerabilities *read_pkg_vulnerabilities(const char *, int, int);
+struct pkg_vulnerabilities *read_pkg_vulnerabilities_file(const char *, int, int);
+/* Read pkg_vulnerabilities from memory */
+struct pkg_vulnerabilities *read_pkg_vulnerabilities_memory(void *, size_t, int);
 void free_pkg_vulnerabilities(struct pkg_vulnerabilities *);
 int audit_package(struct pkg_vulnerabilities *, const char *, const char *,
     int, int);
