@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.2 2010/04/23 15:20:35 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.3 2010/04/23 15:37:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.2 2010/04/23 15:20:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.3 2010/04/23 15:37:01 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -327,7 +327,7 @@ acpi_power_get_indirect(struct acpi_devnode *ad)
 		 */
 		rv = acpi_foreach_package_object(pkg, acpi_power_res_sta, ad);
 
-		if (ACPI_FAILURE(rv) && rv != AE_ABORT_METHOD)
+		if (ACPI_FAILURE(rv) && rv != AE_CTRL_TERMINATE)
 			goto out;
 
 		if (ACPI_SUCCESS(rv)) {
@@ -641,12 +641,12 @@ acpi_power_res_sta(ACPI_OBJECT *elm, void *arg)
 		return AE_BAD_VALUE;
 
 	if ((int)val != ACPI_STA_POW_ON)
-		return AE_ABORT_METHOD; /* XXX: Not an error. */
+		return AE_CTRL_TERMINATE; /* XXX: Not an error. */
 
 	return AE_OK;
 
 fail:
-	if (rv == AE_ABORT_METHOD)
+	if (rv == AE_CTRL_TERMINATE)
 		rv = AE_ERROR;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_DEBUG_OBJECT, "%s: failed to "
