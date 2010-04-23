@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.38 2010/03/03 08:20:38 he Exp $ */
+/* $NetBSD: osf1_file.c,v 1.39 2010/04/23 15:19:20 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.38 2010/03/03 08:20:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.39 2010/04/23 15:19:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -162,7 +162,7 @@ osf1_sys_getdirentries(struct lwp *l, const struct osf1_sys_getdirentries_args *
 	}
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	buf = kmem_alloc(buflen, KM_SLEEP);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = off1 = fp->f_offset;
 again:
@@ -175,7 +175,7 @@ again:
 	auio.uio_offset = off;
 	UIO_SETUP_SYSSPACE(&auio);
 	/*
-	 * First we read into the malloc'ed buffer, then
+	 * First we read into the allocated buffer, then
 	 * we massage it into user space, one record at a time.
 	 */
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &cookiebuf,
@@ -246,7 +246,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	kmem_free(buf, buflen);
 	if (SCARG(uap, basep) != NULL)
 		error = copyout(&off1, SCARG(uap, basep), sizeof(long));
 out1:

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.51 2009/01/30 13:01:36 njoly Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.52 2010/04/23 15:19:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.51 2009/01/30 13:01:36 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.52 2010/04/23 15:19:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.51 2009/01/30 13:01:36 njol
 #include <sys/systm.h>
 #include <sys/fcntl.h>
 #include <sys/filedesc.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -456,7 +455,7 @@ compat_43_netbsd32_orecvmsg(struct lwp *l, const struct compat_43_netbsd32_orecv
 	    NETBSD32PTR64(omsg.msg_accrights) != NULL ? &control : NULL,
 	    retval);
 	if (error != 0)
-		return error;
+		goto out;
 
 	/*
 	 * If there is any control information and it's SCM_RIGHTS,
@@ -493,7 +492,10 @@ compat_43_netbsd32_orecvmsg(struct lwp *l, const struct compat_43_netbsd32_orecv
 
 	if (error != 0)
 		 error = copyout(&omsg, SCARG_P32(uap, msg), sizeof(omsg));
-
+out:
+	if (iov != aiov) {
+		kmem_free(iov, omsg.msg_iovlen * sizeof(struct iov));
+	}
 	return error;
 }
 
@@ -508,10 +510,10 @@ compat_43_netbsd32_osendmsg(struct lwp *l, const struct compat_43_netbsd32_osend
 	struct iovec *iov, aiov[UIO_SMALLIOV];
 	struct netbsd32_omsghdr omsg;
 	struct msghdr msg;
-	int error;
 	struct mbuf *nam;
 	struct osockaddr *osa;
 	struct sockaddr *sa;
+	int error;
 
 	error = copyin(SCARG_P32(uap, msg), &omsg, sizeof (struct omsghdr));
 	if (error != 0)
@@ -549,7 +551,7 @@ compat_43_netbsd32_osendmsg(struct lwp *l, const struct compat_43_netbsd32_osend
 
     out:
 	if (iov != aiov)
-		free(iov, M_TEMP);
+		kmem_free(iov, omsg.msg_iovlen * sizeof(struct iov));
 	return (error);
 }
 

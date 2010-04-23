@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.15 2010/04/08 11:51:14 njoly Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.16 2010/04/23 15:19:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.15 2010/04/08 11:51:14 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.16 2010/04/23 15:19:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.15 2010/04/08 11:51:14 njol
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -630,17 +629,16 @@ compat_50_netbsd32_kevent(struct lwp *l,
 	nevents = SCARG(uap, nevents);
 	maxalloc = MIN(KQ_NEVENTS, MAX(nchanges, nevents));
 	netbsd32_kevent_ops.keo_private =
-	    malloc(maxalloc * sizeof(struct netbsd32_kevent), M_TEMP,
-	    M_WAITOK);
+	    kmem_alloc(maxalloc * sizeof(struct netbsd32_kevent), KM_SLEEP);
 
 	error = kevent1(retval, SCARG(uap, fd),
 	    NETBSD32PTR64(SCARG(uap, changelist)), nchanges,
 	    NETBSD32PTR64(SCARG(uap, eventlist)), nevents,
 	    NETBSD32PTR64(SCARG(uap, timeout)), &netbsd32_kevent_ops);
 
-	free(netbsd32_kevent_ops.keo_private, M_TEMP);
+	kmem_free(netbsd32_kevent_ops.keo_private,
+	    maxalloc * sizeof(struct netbsd32_kevent));
 	return error;
-	return 0;
 }
 
 int

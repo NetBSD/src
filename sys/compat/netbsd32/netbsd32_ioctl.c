@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.46 2009/12/11 11:14:34 njoly Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.47 2010/04/23 15:19:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.46 2009/12/11 11:14:34 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.47 2010/04/23 15:19:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.46 2009/12/11 11:14:34 njoly Ex
 #include <sys/audioio.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
-#include <sys/malloc.h>
 #include <sys/sockio.h>
 #include <sys/socket.h>
 #include <sys/ttycom.h>
@@ -575,7 +574,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		    size32, error);
 	}
 
-	/* if we malloced data, free it here */
+	/* If we allocated data, free it here. */
 	if (memp32)
 		kmem_free(memp32, (size_t)size32);
 	if (memp)
