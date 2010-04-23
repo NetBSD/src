@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.95 2010/04/23 11:00:27 wiz Exp $
+$NetBSD: acronyms.comp,v 1.96 2010/04/23 17:34:48 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -9,22 +9,22 @@ ADC	analog [to] digital converter
 ADT	abstract data type
 ADPCM	adaptive differential pulse code modulation
 ADSL	asymmetric digital subscriber line
-AES	advanced encryption standard
-AFS	Andrew file system
+AES	Advanced Encryption Standard
+AFS	Andrew File System
 AGP	accelerated graphics port
 ALU	arithmetic and logical unit
 AM	amplitude modulation
 AMI	alternate mark inversion
-ANSI	american national standards institute
+ANSI	American National Standards Institute
 AP	access point
 API	application programming interface
 APIC	advanced programmable interrupt controller
-ARM	advanced RISC machines
+ARM	Advanced RISC Machines
 ARP	address resolution protocol
-ARPA	advanced research projects agency
+ARPA	Advanced Research Projects Agency
 ARQ	automatic repeat request
 AS	autonomous system
-ASCII	american standard code for information interchange
+ASCII	American standard code for information interchange
 ASLR	address space layout randomization
 ASN	autonomous system number
 AST	abstract syntax tree
@@ -43,7 +43,7 @@ BER	bit error rate
 BFD	binary formats descriptor
 BFKL	big fscking kernel lock
 BGP	border gateway protocol
-BIND	Berkeley Internet name daemon
+BIND	Berkeley Internet Name Daemon
 BIOS	basic input/output system
 BLOB	binary large object
 BPF	Berkeley packet filter
@@ -99,10 +99,10 @@ DDC	display data channel
 DDR	double data rate
 DDWG	digital display working group
 DER	distinguished encoding rules
-DES	data encryption standard
+DES	Data Encryption Standard
 DFS	depth first search
 DFS	distributed file system
-DFT	discrete fourier transform
+DFT	discrete Fourier transform
 DHCP	dynamic host configuration protocol
 DIFS	distributed inter-frame space
 DIMM	dual inline memory module
@@ -116,7 +116,7 @@ DOS	denial of service
 DPCM	differential pulse code modulation
 DPD	dead peer detection
 DPI	dots per inch
-DPI	deep packaget inspection
+DPI	deep packet inspection
 DRAM	dynamic random access memory
 DRI	direct rendering infrastructure
 DSL	digital subscriber line
@@ -143,7 +143,8 @@ EIDE	enchanced IDE
 EISA	extended industry standard architecture
 ELF	executable and linking format
 EOF	end of file
-EOL	end of {line, life}
+EOL	end of line
+EOL	end of life
 EOT	end of transmission
 EPP	enhanced parallel port
 EPRML	extended partial response, maximum likelihood
@@ -169,7 +170,6 @@ FQDN	fully qualified domain name
 FRU	field replaceable unit
 FTP	file transfer protocol
 FTPS	file transfer protocol, secure
-FUD	fear uncertainty doubt
 GC	garbage collector
 GCR	group-coded recording
 GID	group identifier
@@ -188,7 +188,7 @@ HCI	human-computer interaction
 HDD	hard disk drive
 HDCP	high-bandwidth digital content protection
 HID	human interface device
-HT	hyper threading
+HT	hyper-threading
 HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
 HTTPS	hyper-text transfer protocol, secure
@@ -204,7 +204,7 @@ IDE	integrated drive electronics
 IDE	integrated development environment
 IDRP	inter-domain routing protocol
 IDS	intrusion detection system
-IE	Internet explorer
+IE	Internet Explorer
 IEC	international electrotechnical commission
 IEEE	Institute [of] Electrical [and] Electronics Engineers
 IESG	Internet Engineering Steering Group
@@ -216,7 +216,7 @@ IMAP	Internet mail access protocol
 INCITS	international committee on information technology standards
 IO	input/output
 IOCTL	input/output control
-IP	Internet protocol
+IP	Internet Protocol
 IP	intellectual property
 IPC	interprocess communication
 IPNG	Internet protocol, next generation
@@ -236,14 +236,14 @@ ISOC	Internet society
 ISP	Internet service provider
 JIT	just in time
 JPEG	joint photographic experts group
-JRE	java runtime environment
+JRE	Java runtime environment
 JTAG	joint test action group
 KLOC	thousand lines of code
 KPI	kernel programming interface
 KVA	kernel virtual address
 KVM	kernel virtual memory
 KVM	keyboard, video, mouse switch
-LAMP	Linux apache mysql {perl,php,python}
+LAMP	Linux Apache MySQL {Perl,PHP,Python}
 LAN	local area network
 LBA	logical block addressing
 LCD	liquid crystal display
@@ -296,18 +296,18 @@ NFS	network file system
 NIC	network interface card
 NIS	network information service
 NLS	native language support
-NMI	non maskable interrupt
+NMI	non-maskable interrupt
 NOP	no operation
 NRZ	non-return to zero
-NSA	national security agency
-NUMA	non uniform memory access
-NVRAM	non volatile random access memory
+NSA	National Security Agency
+NUMA	non-uniform memory access
+NVRAM	non-volatile random access memory
 OCL	object constraint language
 OCR	optical character recognition
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
 OO	object oriented
-OO	open office
+OO	OpenOffice
 OOB	out of band
 OOM	out of memory
 OOP	object oriented programming
@@ -331,7 +331,7 @@ PAT	port address translation
 PATA	parallel ATA
 PAX	portable archive exchange
 PC	personal computer
-PCC	portable c compiler
+PCC	Portable C Compiler
 PCI	peripheral component interconnect
 PCM	pulse code modulation
 PCMCIA	personal computer memory card international association
@@ -359,7 +359,7 @@ POP	post office protocol
 POSIX	portable operating system interface [for] Unix
 POST	power on self test
 POTS	plain old telephone system
-PPC	power PC
+PPC	PowerPC
 PPB	PCI [to] PCI bridge
 PPP	point-to-point protocol
 PPPOA	point-to-point protocol over ATM
@@ -443,10 +443,10 @@ SSL	secure sockets layer
 SSP	stack smashing protection
 STP	shielded twisted pair
 STP	spanning-tree protocol
-SUS	single Unix specification
+SUS	Single Unix Specification
 SVG	scalable vector graphics
 SVGA	super video graphics {array,adapter}
-SWF	shock wave flash
+SWF	Shockwave Flash
 TCB	trusted computing base
 TCL	tool command language
 TCP	transmission control protocol
@@ -476,7 +476,8 @@ UDO	ultra density optical (storage)
 UDP	user datagram protocol
 UFS	Unix file system
 UI	user interface
-UID	{unique,user} identifier
+UID	user identifier
+UID	unique identifier
 UML	unified modeling language
 UPS	uninterruptible power supply
 URI	uniform resource identifier
@@ -502,7 +503,7 @@ VM	virtual {machine,memory}
 VPN	virtual private network
 VRAM	video random access memory
 VRRP	virtual router redundancy protocol
-W3C	world wide web consortium
+W3C	World Wide Web Consortium
 WAN	wide area network
 WAP	wireless application protocol
 WEP	wired equivalent privacy
@@ -510,7 +511,7 @@ WFI	wait for interrupt
 WLAN	wireless local area network
 WPA	wi-fi protected access
 WRAM	window random access memory
-WWAN	wireless widea area network
+WWAN	wireless wide area network
 WWW	world wide web
 WYSIWYG	what you see is what you get
 XER	XML encoding rules
@@ -521,6 +522,6 @@ XSL	extensible stylesheet language
 XSS	cross site scripting
 XT	extended technology
 XUL	XML user interface language
-YACC	yet another compiler
+YACC	yet another compiler compiler
 ZFOD	zero-filled on demand
 ZIFS	zero insertion force socket
