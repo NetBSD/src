@@ -1,4 +1,4 @@
-/* $NetBSD: compat_modf_ieee754.c,v 1.3 2010/01/27 14:10:41 drochner Exp $ */
+/* $NetBSD: compat_modf_ieee754.c,v 1.4 2010/04/23 19:04:54 drochner Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -27,13 +27,11 @@
  * rights to redistribute these changes.
  */
 
-#ifdef USE_LIBM
-#include "s_modf.c"
-#else
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <errno.h>
-#include <math.h>
+
+double modf(double, double *);
 
 /*
  * double modf(double val, double *iptr)
@@ -103,4 +101,3 @@ modf(double val, double *iptr)
 	u.dblu_dbl.dbl_sign = v.dblu_dbl.dbl_sign;
 	return (u.dblu_d);
 }
-#endif
