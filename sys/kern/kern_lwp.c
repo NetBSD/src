@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.145 2010/04/12 23:20:18 pooka Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.146 2010/04/23 19:18:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.145 2010/04/12 23:20:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.146 2010/04/23 19:18:09 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -242,11 +242,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.145 2010/04/12 23:20:18 pooka Exp $")
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
-struct lwplist	alllwp = LIST_HEAD_INITIALIZER(alllwp);
-
-struct pool lwp_uc_pool;
-
-static pool_cache_t lwp_cache;
+struct lwplist		alllwp = LIST_HEAD_INITIALIZER(alllwp);
+static pool_cache_t	lwp_cache;
 
 /* DTrace proc provider probes */
 SDT_PROBE_DEFINE(proc,,,lwp_create,
@@ -266,8 +263,6 @@ void
 lwpinit(void)
 {
 
-	pool_init(&lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
-	    &pool_allocator_nointr, IPL_NONE);
 	lwpinit_specificdata();
 	lwp_sys_init();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,

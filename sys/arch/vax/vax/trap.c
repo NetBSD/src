@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 2010/03/20 23:31:30 chs Exp $     */
+/*	$NetBSD: trap.c,v 1.124 2010/04/23 19:18:10 rmind Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2010/03/20 23:31:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2010/04/23 19:18:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2010/03/20 23:31:30 chs Exp $");
 #include <sys/exec.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
@@ -375,19 +375,15 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	struct pcb *pcb;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	/* XXX - profiling spoiled here */
 	pcb = lwp_getpcb(l);
 	userret(l, pcb->framep, l->l_proc->p_sticks);

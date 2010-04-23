@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.61 2009/12/10 14:13:49 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.62 2010/04/23 19:18:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.61 2009/12/10 14:13:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.62 2010/04/23 19:18:09 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -937,13 +937,15 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 void
 startlwp32(void *arg)
 {
-	int err;
 	ucontext32_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	/* Note: we are freeing ucontext_t, not ucontext32_t. */
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.122 2010/03/20 23:31:27 chs Exp $ */
+/* $NetBSD: trap.c,v 1.123 2010/04/23 19:18:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2010/03/20 23:31:27 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2010/04/23 19:18:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.122 2010/03/20 23:31:27 chs Exp $");
 #include <sys/syscall.h>
 #include <sys/buf.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 
@@ -1218,18 +1219,14 @@ alpha_ucode_to_ksiginfo(u_long ucode)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.255 2010/02/22 06:42:14 darran Exp $	*/
+/*	$NetBSD: trap.c,v 1.256 2010/04/23 19:18:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.255 2010/02/22 06:42:14 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.256 2010/04/23 19:18:09 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.255 2010/02/22 06:42:14 darran Exp $");
 #include <sys/acct.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -860,7 +860,8 @@ startlwp(void *arg)
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
-	pool_put(&lwp_uc_pool, uc);
+
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
 
