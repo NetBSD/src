@@ -11854,19 +11854,19 @@ dtrace_dof_property(const char *name)
 	freeenv(p_env);
 
 	if (len < sizeof (dof_hdr_t)) {
-		kmem_free(buf, 0);
+		kmem_free(buf, len);
 		dtrace_dof_error(NULL, "truncated header");
 		return (NULL);
 	}
 
 	if (len < (loadsz = dof->dofh_loadsz)) {
-		kmem_free(buf, 0);
+		kmem_free(buf, len);
 		dtrace_dof_error(NULL, "truncated DOF");
 		return (NULL);
 	}
 
 	if (loadsz >= dtrace_dof_maxsize) {
-		kmem_free(buf, 0);
+		kmem_free(buf, len);
 		dtrace_dof_error(NULL, "oversized DOF");
 		return (NULL);
 	}
