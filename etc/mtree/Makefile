@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2010/01/18 10:25:29 plunky Exp $
+#	$NetBSD: Makefile,v 1.16 2010/04/23 19:21:08 dyoung Exp $
 
 .include <bsd.own.mk>
 
@@ -38,6 +38,9 @@ TOOL_MTREE.unpriv=
 .else
 TOOL_MTREE.unpriv=	-W
 .endif
+
+emit_dist_file:
+	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${EXTRA_DIST_FILES}
 
 distrib-dirs: .PHONY check_DESTDIR NetBSD.dist
 .if !defined(DISTRIBUTION_DONE)						# {
