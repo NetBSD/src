@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.81 2010/04/22 19:11:17 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.82 2010/04/23 00:18:50 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -394,6 +394,13 @@ extern Lst	defIncPath;	/* The default include path. */
 
 extern char	*progname;	/* The program name */
 extern char	*makeDependfile; /* .depend */
+
+/*
+ * We cannot vfork() in a child of vfork().
+ * Most systems do not enforce this but some do.
+ */
+#define vFork() ((getpid() == myPid) ? vfork() : fork())
+extern pid_t	myPid;
 
 #define	MAKEFLAGS	".MAKEFLAGS"
 #define	MAKEOVERRIDES	".MAKEOVERRIDES"
