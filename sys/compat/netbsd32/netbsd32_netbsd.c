@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.166 2010/03/02 21:09:21 pooka Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.167 2010/04/23 15:19:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.166 2010/03/02 21:09:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.167 2010/04/23 15:19:20 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.166 2010/03/02 21:09:21 pooka 
 #include <sys/systm.h>
 #include <sys/kernel.h>
 //#define msg __msg /* Don't ask me! */
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
@@ -1234,24 +1233,28 @@ netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, reg
 	vp = nd.ni_vp;
 	error = copyin(SCARG_P32(uap, fh_size), &sz32,
 	    sizeof(netbsd32_size_t));
-	if (!error) {
-		fh = malloc(sz32, M_TEMP, M_WAITOK);
-		if (fh == NULL) 
-			return EINVAL;
-		sz = sz32;
-		error = vfs_composefh(vp, fh, &sz);
-		sz32 = sz;
+	if (error) {
+		vput(vp);
+		return error;
 	}
+	fh = kmem_alloc(sz32, KM_SLEEP);
+	if (fh == NULL) 
+		return EINVAL;
+	sz = sz32;
+	error = vfs_composefh(vp, fh, &sz);
 	vput(vp);
-	if (error == E2BIG)
-		copyout(&sz, SCARG_P32(uap, fh_size), sizeof(size_t));
+
 	if (error == 0) {
-		error = copyout(&sz32, SCARG_P32(uap, fh_size),
+		const netbsd32_size_t nsz32 = sz;
+		error = copyout(&nsz32, SCARG_P32(uap, fh_size),
 		    sizeof(netbsd32_size_t));
-		if (!error)
+		if (!error) {
 			error = copyout(fh, SCARG_P32(uap, fhp), sz);
+		}
+	} else if (error == E2BIG) {
+		error = copyout(&sz, SCARG_P32(uap, fh_size), sizeof(size_t));
 	}
-	free(fh, M_TEMP);
+	kmem_free(fh, sz32);
 	return (error);
 }
 
