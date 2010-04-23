@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47.8.2.2.1 2010/04/22 19:39:44 snj Exp $	*/
+/*	$NetBSD: locore.S,v 1.47.8.2.2.2 2010/04/23 04:17:29 snj Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -235,7 +235,7 @@ _C_LABEL(lapic_isr):
 #endif
 
 	.globl	_C_LABEL(cpu_id),_C_LABEL(cpu_vendorname), _C_LABEL(cpu_brand_id)
-	.globl	_C_LABEL(cpuid_level),_C_LABEL(cpu_feature),_C_LABEL(cpu_feature2)
+	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym),_C_LABEL(eblob),_C_LABEL(boothowto)
 	.globl	_C_LABEL(bootinfo),_C_LABEL(atdevbase)
 	.globl	_C_LABEL(proc0paddr),_C_LABEL(PDPpaddr)
@@ -245,10 +245,6 @@ _C_LABEL(lapic_isr):
 _C_LABEL(cpu):		.long	0	# are we 386, 386sx, or 486,
 					#   or Pentium, or..
 _C_LABEL(cpu_id):	.long	0	# saved from `cpuid' instruction
-_C_LABEL(cpu_feature):	.long	0	# feature flags from 'cpuid'
-					#   instruction
-_C_LABEL(cpu_feature2):	.long	0	# feature flags from 'cpuid'
-					#   instruction
 _C_LABEL(cpuid_level):	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
 _C_LABEL(cpu_vendorname):	.space	16	# vendor string returned by `cpuid'
@@ -300,7 +296,7 @@ gdt64_start:
 gdt64_end:
 
 farjmp64:
-	.long	longmode-KERNBASE
+	.long	_RELOC(longmode)
 	.word	GSEL(GCODE_SEL, SEL_KPL)
 	
 #endif	/* !XEN */
@@ -423,17 +419,10 @@ start:	movw	$0x1234,0x472			# warm boot
 	movl	$1,%eax
 	cpuid
 	movl	%eax,RELOC(cpu_id)
-	movl	%edx,RELOC(cpu_feature)
-	movl	%ecx,RELOC(cpu_feature2)
 
 	/* Brand ID is bits 0-7 of %ebx */
 	andl	$255,%ebx
 	movl	%ebx,RELOC(cpu_brand_id)
-
-	/* add AMD specific feature flags */
-	movl	$0x80000001,%eax
-	cpuid
-	orl	%edx,RELOC(cpu_feature)
 
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
