@@ -105,6 +105,9 @@
 /* Define to 1 if you have the <vis.h> header file. */
 #undef HAVE_VIS_H
 
+/* Define to 1 if the `z' modifider for printf is missing. */
+#undef MISSING_SIZE_T_SUPPORT
+
 /* Defined when PRIu64 is missing or broken */
 #undef NEED_PRI_MACRO
 
@@ -137,6 +140,9 @@
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
+
+/* The size of `size_t', as computed by sizeof. */
+#undef SIZEOF_SIZE_T
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
@@ -174,5 +180,17 @@
 
 #if !HAVE_VFORK
 # define vfork fork
+#endif
+
+#ifndef MISSING_SIZE_T_SUPPORT
+#  define PRIzu "zu"
+#elif SIZEOF_SIZE_T == SIZEOF_INT
+#  define PRIzu "u"
+#elif SIZEOF_SIZE_T == SIZEOF_LONG
+#  define PRIzu "lu"
+#elif SIZEOF_SIZE_T == SIZEOF_LONG_LONG
+#  define PRIzu "llu"
+#else
+#  errror "Unknown size_t size"
 #endif
 

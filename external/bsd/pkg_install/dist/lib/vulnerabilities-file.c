@@ -1,7 +1,7 @@
-/*	$NetBSD: vulnerabilities-file.c,v 1.1.1.3 2009/03/02 22:31:18 joerg Exp $	*/
+/*	$NetBSD: vulnerabilities-file.c,v 1.1.1.4 2010/04/23 20:54:12 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
+ * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,13 +38,16 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.3 2009/03/02 22:31:18 joerg Exp $");
+__RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.4 2010/04/23 20:54:12 joerg Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
+#ifndef BOOTSTRAP
+#include <archive.h>
 #endif
 #include <ctype.h>
 #if HAVE_ERR_H
@@ -65,6 +68,9 @@ __RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.3 2009/03/02 22:31:18 joerg Exp
 #include <unistd.h>
 
 #include "lib.h"
+
+static struct pkg_vulnerabilities *read_pkg_vulnerabilities_archive(struct archive *, int);
+static struct pkg_vulnerabilities *parse_pkg_vuln(const char *, size_t, int);
 
 static const char pgp_msg_start[] = "-----BEGIN PGP SIGNED MESSAGE-----\n";
 static const char pgp_msg_end[] = "-----BEGIN PGP SIGNATURE-----\n";
@@ -336,14 +342,38 @@ add_vulnerability(struct pkg_vulnerabilities *pv, size_t *allocated, const char 
 }
 
 struct pkg_vulnerabilities *
-read_pkg_vulnerabilities(const char *path, int ignore_missing, int check_sum)
+read_pkg_vulnerabilities_memory(void *buf, size_t len, int check_sum)
 {
+#ifdef BOOTSTRAP
+	errx(EXIT_FAILURE, "Audit functions are unsupported during bootstrap");
+#else
+	struct archive *a;
 	struct pkg_vulnerabilities *pv;
-	struct stat st;
+
+	if ((a = archive_read_new()) == NULL)
+		errx(EXIT_FAILURE, "memory allocation failed");
+	
+	if (archive_read_support_compression_all(a) != ARCHIVE_OK ||
+	    archive_read_support_format_raw(a) != ARCHIVE_OK ||
+	    archive_read_open_memory(a, buf, len) != ARCHIVE_OK)
+		errx(EXIT_FAILURE, "Cannot open pkg_vulnerabilies buffer: %s",
+		    archive_error_string(a));
+
+	pv = read_pkg_vulnerabilities_archive(a, check_sum);
+
+	return pv;
+#endif
+}
+
+struct pkg_vulnerabilities *
+read_pkg_vulnerabilities_file(const char *path, int ignore_missing, int check_sum)
+{
+#ifdef BOOTSTRAP
+	errx(EXIT_FAILURE, "Audit functions are unsupported during bootstrap");
+#else
+	struct archive *a;
+	struct pkg_vulnerabilities *pv;
 	int fd;
-	char *input, *decompressed_input;
-	size_t input_len, decompressed_len;
-	ssize_t bytes_read;
 
 	if ((fd = open(path, O_RDONLY)) == -1) {
 		if (errno == ENOENT && ignore_missing)
@@ -351,39 +381,67 @@ read_pkg_vulnerabilities(const char *path, int ignore_missing, int check_sum)
 		err(EXIT_FAILURE, "Cannot open %s", path);
 	}
 
-	if (fstat(fd, &st) == -1)
-		err(EXIT_FAILURE, "Cannot stat %s", path);
+	if ((a = archive_read_new()) == NULL)
+		errx(EXIT_FAILURE, "memory allocation failed");
+	
+	if (archive_read_support_compression_all(a) != ARCHIVE_OK ||
+	    archive_read_support_format_raw(a) != ARCHIVE_OK ||
+	    archive_read_open_fd(a, fd, 65536) != ARCHIVE_OK)
+		errx(EXIT_FAILURE, "Cannot open ``%s'': %s", path,
+		    archive_error_string(a));
 
-	if ((st.st_mode & S_IFMT) != S_IFREG)
-		errx(EXIT_FAILURE, "Input is not regular file");
-	if (st.st_size > SSIZE_MAX - 1)
-		errx(EXIT_FAILURE, "Input too large");
-
-	input_len = (size_t)st.st_size;
-	if (input_len < 4)
-		err(EXIT_FAILURE, "Input too short for a pkg_vulnerability file");
-	input = xmalloc(input_len + 1);
-	if ((bytes_read = read(fd, input, input_len)) == -1)
-		err(1, "Failed to read input");
-	if (bytes_read != st.st_size)
-		errx(1, "Unexpected short read");
-
+	pv = read_pkg_vulnerabilities_archive(a, check_sum);
 	close(fd);
 
-	if (decompress_buffer(input, input_len, &decompressed_input,
-	    &decompressed_len)) {
-		free(input);
-		input = decompressed_input;
-		input_len = decompressed_len;
-	}
-	pv = parse_pkg_vulnerabilities(input, input_len, check_sum);
-	free(input);
+	return pv;
+#endif
+}
 
+#ifndef BOOTSTRAP
+static struct pkg_vulnerabilities *
+read_pkg_vulnerabilities_archive(struct archive *a, int check_sum)
+{
+	struct archive_entry *ae;
+	struct pkg_vulnerabilities *pv;
+	char *buf;
+	size_t buf_len, off;
+	ssize_t r;
+
+	if (archive_read_next_header(a, &ae) != ARCHIVE_OK)
+		errx(EXIT_FAILURE, "Cannot read pkg_vulnerabilities: %s",
+		    archive_error_string(a));
+
+	off = 0;
+	buf_len = 65536;
+	buf = xmalloc(buf_len + 1);
+
+	for (;;) {
+		r = archive_read_data(a, buf + off, buf_len - off);
+		if (r <= 0)
+			break;
+		off += r;
+		if (off == buf_len) {
+			buf_len *= 2;
+			if (buf_len < off)
+				errx(EXIT_FAILURE, "pkg_vulnerabilties too large");
+			buf = xrealloc(buf, buf_len + 1);
+		}
+	}
+
+	if (r != ARCHIVE_OK)
+		errx(EXIT_FAILURE, "Cannot read pkg_vulnerabilities: %s",
+		    archive_error_string(a));
+
+	archive_read_close(a);
+
+	buf[off] = '\0';
+	pv = parse_pkg_vuln(buf, off, check_sum);
+	free(buf);
 	return pv;
 }
 
-struct pkg_vulnerabilities *
-parse_pkg_vulnerabilities(const char *input, size_t input_len, int check_sum)
+static struct pkg_vulnerabilities *
+parse_pkg_vuln(const char *input, size_t input_len, int check_sum)
 {
 	struct pkg_vulnerabilities *pv;
 	long version;
@@ -502,6 +560,7 @@ parse_pkg_vulnerabilities(const char *input, size_t input_len, int check_sum)
 
 	return pv;
 }
+#endif
 
 void
 free_pkg_vulnerabilities(struct pkg_vulnerabilities *pv)

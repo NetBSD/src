@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.14 2010/02/20 04:41:53 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.15 2010/04/23 20:54:07 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.1.1.14 2010/02/20 04:41:53 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.1.1.15 2010/04/23 20:54:07 joerg Exp $");
 
 /*-
  * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
@@ -248,8 +248,8 @@ rebuild(void)
 	iterate_pkg_db(add_pkg, &count);
 
 	printf("\n");
-	printf("Stored %zu file%s and %zu explicit director%s"
-	    " from %zu package%s in %s.\n",
+	printf("Stored %" PRIzu " file%s and %zu explicit director%s"
+	    " from %"PRIzu " package%s in %s.\n",
 	    count.files, count.files == 1 ? "" : "s",
 	    count.directories, count.directories == 1 ? "y" : "ies",
 	    count.packages, count.packages == 1 ? "" : "s",

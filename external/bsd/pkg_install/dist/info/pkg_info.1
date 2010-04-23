@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.1.1.4 2010/01/30 21:33:41 joerg Exp $
+.\" $NetBSD: pkg_info.1,v 1.1.1.5 2010/04/23 20:54:09 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd January 22, 2010
+.Dd February 27, 2010
 .Dt PKG_INFO 1
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl BbcDdFfhIikLmNnpqrRSsVvX
+.Op Fl BbcDdFfhIikLmNnpqRrSsVvX
 .Op Fl e Ar package
 .Op Fl E Ar package
 .Op Fl K Ar pkg_dbdir
@@ -117,7 +117,7 @@ can contain wildcards (see the
 section below).
 .It Fl F
 Interpret any pkg-name given as filename, and translate it to a
-package name using the Package Database.
+package name using the package database.
 This can be used to query information on a per-file basis, e.g. in
 conjunction with the
 .Fl e
@@ -207,7 +207,7 @@ in
 .Pp
 A filename can be given instead of a (installed) package name to query
 information on the package this file belongs to.
-This filename is then resolved to a package name using the Package Database.
+This filename is then resolved to a package name using the package database.
 For this translation to take place, the
 .Fl F
 flag must be given.
@@ -289,7 +289,9 @@ The magic string
 .Dq pl
 equates to a
 .Pa patch level
-and has the same value as a dot in the dewey-decimal ordering schemes.
+and has the same value as a dot in the dewey-decimal ordering schemes,
+as does the underscore
+.Sq _ .
 .Sh ENVIRONMENT
 See
 .Xr pkg_install.conf 5
