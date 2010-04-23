@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.17 2010/04/14 19:27:28 jruoho Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.18 2010/04/23 15:52:26 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.17 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.18 2010/04/23 15:52:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.17 2010/04/14 19:27:28 jruoho Ex
 #define _COMPONENT          ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME            ("acpi_pci_link")
 
+MALLOC_DECLARE(M_ACPI);
 
 #define NUM_ISA_INTERRUPTS	16
 #define NUM_ACPI_INTERRUPTS	256
@@ -131,8 +132,6 @@ struct link_res_request {
 	int	res_index;
 	int	link_index;
 };
-
-MALLOC_DEFINE(M_PCI_LINK, "pci_link", "ACPI PCI Link structures");
 
 static int pci_link_interrupt_weights[NUM_ACPI_INTERRUPTS];
 static int pci_link_bios_isa_irqs;
@@ -343,7 +342,7 @@ link_add_prs(ACPI_RESOURCE *res, void *context)
 		 */
 		link->l_isa_irq = TRUE;
 		link->l_irqs = malloc(sizeof(int) * link->l_num_irqs,
-		    M_PCI_LINK, M_WAITOK | M_ZERO);
+		    M_ACPI, M_WAITOK | M_ZERO);
 		for (i = 0; i < link->l_num_irqs; i++) {
 			if (is_ext_irq) {
 				link->l_irqs[i] = ext_irqs[i];
@@ -463,7 +462,7 @@ acpi_pci_link_attach(struct acpi_pci_link_softc *sc)
 		return (0);
 	}
 	sc->pl_links = malloc(sizeof(struct link) * sc->pl_num_links,
-	    M_PCI_LINK, M_WAITOK | M_ZERO);
+	    M_ACPI, M_WAITOK | M_ZERO);
 
 	/* Initialize the child links. */
 	for (i = 0; i < sc->pl_num_links; i++) {
@@ -554,11 +553,11 @@ fail:
 	ACPI_SERIAL_END(pci_link);
 	for (i = 0; i < sc->pl_num_links; i++) {
 		if (sc->pl_links[i].l_irqs != NULL)
-			free(sc->pl_links[i].l_irqs, M_PCI_LINK);
+			free(sc->pl_links[i].l_irqs, M_ACPI);
 		if (sc->pl_links[i].l_devices != NULL)
-			free(sc->pl_links[i].l_devices, M_PCI_LINK);
+			free(sc->pl_links[i].l_devices, M_ACPI);
 	}
-	free(sc->pl_links, M_PCI_LINK);
+	free(sc->pl_links, M_ACPI);
 	return (ENXIO);
 }
 
@@ -599,7 +598,7 @@ acpi_pci_link_add_functions(struct acpi_pci_link_softc *sc, struct link *link,
 
 		link->l_devices = realloc(link->l_devices,
 		    sizeof(pcitag_t) * (link->l_dev_count + 1),
-		    M_PCI_LINK, M_WAITOK);
+		    M_ACPI, M_WAITOK);
 		link->l_devices[link->l_dev_count] = tag;
 		++link->l_dev_count;
 	}
@@ -1144,10 +1143,10 @@ acpi_pci_link_devbyhandle(ACPI_HANDLE handle)
 
 	TAILQ_FOREACH(sc, &acpi_pci_linkdevs, pl_list) {
 		if (sc->pl_handle == handle)
-			return sc;  
+			return sc;
 	}
 
-	sc = malloc(sizeof (*sc), M_PCI_LINK, M_NOWAIT|M_ZERO);
+	sc = malloc(sizeof (*sc), M_ACPI, M_NOWAIT | M_ZERO);
 	if (sc == NULL)
 		return NULL;
 
