@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.62 2009/04/19 08:16:59 lukem Exp $	*/
+/*	$NetBSD: route6d.c,v 1.63 2010/04/23 15:30:30 plunky Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.62 2009/04/19 08:16:59 lukem Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.63 2010/04/23 15:30:30 plunky Exp $");
 #endif
 
 #include <stdbool.h>
@@ -62,11 +62,7 @@ __RCSID("$NetBSD: route6d.c,v 1.62 2009/04/19 08:16:59 lukem Exp $");
 #if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <net/if_var.h>
 #endif /* __FreeBSD__ >= 3 */
-#define	KERNEL	1
-#define	_KERNEL	1
 #include <net/route.h>
-#undef KERNEL
-#undef _KERNEL
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/ip6.h>
