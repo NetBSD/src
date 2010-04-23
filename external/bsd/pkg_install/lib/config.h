@@ -4,23 +4,8 @@
 /* Define to 1 if you have the <assert.h> header file. */
 #define HAVE_ASSERT_H 1
 
-/* Define to 1 if you have the `chflags' function. */
-#define HAVE_CHFLAGS 1
-
 /* Define to 1 if you have the <ctype.h> header file. */
 #define HAVE_CTYPE_H 1
-
-/* Define to 1 if you have the <db1/db.h> header file. */
-/* #undef HAVE_DB1_DB_H */
-
-/* Define to 1 if you have the `dbopen' function. */
-#define HAVE_DBOPEN 1
-
-/* Define to 1 if you have the <db_185.h> header file. */
-/* #undef HAVE_DB_185_H */
-
-/* Define to 1 if you have the <db.h> header file. */
-#define HAVE_DB_H 1
 
 /* Define to 1 if you have the <dirent.h> header file. */
 #define HAVE_DIRENT_H 1
@@ -36,9 +21,6 @@
 
 /* Define to 1 if you have the <fnmatch.h> header file. */
 #define HAVE_FNMATCH_H 1
-
-/* Define to 1 if you have the `getrlimit' function. */
-#define HAVE_GETRLIMIT 1
 
 /* Define to 1 if you have the <glob.h> header file. */
 #define HAVE_GLOB_H 1
@@ -58,17 +40,8 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
-/* Define to 1 if you have the <netdb.h> header file. */
-#define HAVE_NETDB_H 1
-
 /* Define to 1 if you have the <pwd.h> header file. */
 #define HAVE_PWD_H 1
-
-/* Define to 1 if you have the <regex.h> header file. */
-#define HAVE_REGEX_H 1
-
-/* Define to 1 if you have the `setrlimit' function. */
-#define HAVE_SETRLIMIT 1
 
 /* Define to 1 if you have the <signal.h> header file. */
 #define HAVE_SIGNAL_H 1
@@ -103,20 +76,8 @@
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
 
-/* Define to 1 if you have the <sys/poll.h> header file. */
-#define HAVE_SYS_POLL_H 1
-
 /* Define to 1 if you have the <sys/queue.h> header file. */
 #define HAVE_SYS_QUEUE_H 1
-
-/* Define to 1 if you have the <sys/resource.h> header file. */
-#define HAVE_SYS_RESOURCE_H 1
-
-/* Define to 1 if you have the <sys/signal.h> header file. */
-#define HAVE_SYS_SIGNAL_H 1
-
-/* Define to 1 if you have the <sys/statvfs.h> header file. */
-#define HAVE_SYS_STATVFS_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -130,20 +91,8 @@
 /* Define to 1 if you have the <sys/utsname.h> header file. */
 #define HAVE_SYS_UTSNAME_H 1
 
-/* Define to 1 if you have the <sys/vfs.h> header file. */
-/* #undef HAVE_SYS_VFS_H */
-
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #define HAVE_SYS_WAIT_H 1
-
-/* Define to 1 if you have the <termcap.h> header file. */
-#define HAVE_TERMCAP_H 1
-
-/* Define to 1 if you have the <termios.h> header file. */
-#define HAVE_TERMIOS_H 1
-
-/* Define to 1 if you have the `tgetent' function. */
-#define HAVE_TGETENT 1
 
 /* Define to 1 if you have the <time.h> header file. */
 #define HAVE_TIME_H 1
@@ -157,8 +106,8 @@
 /* Define to 1 if you have the <vis.h> header file. */
 #define HAVE_VIS_H 1
 
-/* Define to 1 if you have the `__db185_open' function. */
-/* #undef HAVE___DB185_OPEN */
+/* Define to 1 if the `z' modifider for printf is missing. */
+/* #undef MISSING_SIZE_T_SUPPORT */
 
 /* Defined when PRIu64 is missing or broken */
 /* #undef NEED_PRI_MACRO */
@@ -173,13 +122,16 @@
 #define PACKAGE_NAME "pkg_install"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "pkg_install 20070804"
+#define PACKAGE_STRING "pkg_install 20090911"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "pkg_install"
 
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "20070804"
+#define PACKAGE_VERSION "20090911"
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4
@@ -189,6 +141,9 @@
 
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8
+
+/* The size of `size_t', as computed by sizeof. */
+#define SIZEOF_SIZE_T 8
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -226,5 +181,17 @@
 
 #if !HAVE_VFORK
 # define vfork fork
+#endif
+
+#ifndef MISSING_SIZE_T_SUPPORT
+#  define PRIzu "zu"
+#elif SIZEOF_SIZE_T == SIZEOF_INT
+#  define PRIzu "u"
+#elif SIZEOF_SIZE_T == SIZEOF_LONG
+#  define PRIzu "lu"
+#elif SIZEOF_SIZE_T == SIZEOF_LONG_LONG
+#  define PRIzu "llu"
+#else
+#  errror "Unknown size_t size"
 #endif
 

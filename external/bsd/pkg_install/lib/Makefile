@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.8 2009/08/06 16:57:20 joerg Exp $
+# $NetBSD: Makefile,v 1.9 2010/04/23 20:56:01 joerg Exp $
 # Original from FreeBSD, no rcs id.
 
 LIBISPRIVATE=	yes
 
 LIB=		install
-SRCS=		automatic.c conflicts.c decompress.c dewey.c \
+SRCS=		automatic.c conflicts.c dewey.c \
 		fexec.c file.c global.c gpgsig.c iterate.c license.c lpkg.c \
 		opattern.c parse-config.c pkcs7.c pkg_signature.c \
 		pkgdb.c pkg_io.c plist.c remove.c \
