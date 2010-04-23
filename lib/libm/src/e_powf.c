@@ -15,9 +15,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_powf.c,v 1.14 2009/01/19 05:59:06 lukem Exp $");
+__RCSID("$NetBSD: e_powf.c,v 1.15 2010/04/23 19:17:07 drochner Exp $");
 #endif
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 
