@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.117 2009/10/05 23:47:04 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.117.4.1 2010/04/23 21:18:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.117 2009/10/05 23:47:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.117.4.1 2010/04/23 21:18:00 rmind Exp $");
 
 #define SYSVSHM
 
@@ -268,13 +268,15 @@ shm_memlock(struct lwp *l, struct shmid_ds *shmseg, int shmid, int cmd)
 		if (cmd == SHM_LOCK &&
 		    (shmseg->shm_perm.mode & SHMSEG_WIRED) == 0) {
 			/* Wire the object and map, then tag it */
-			error = uobj_wirepages(shmseg->_shm_internal, 0, size);
+			error = uvm_obj_wirepages(shmseg->_shm_internal,
+			    0, size);
 			if (error)
 				return EIO;
 			error = uvm_map_pageable(&p->p_vmspace->vm_map,
 			    shmmap_se->va, shmmap_se->va + size, false, 0);
 			if (error) {
-				uobj_unwirepages(shmseg->_shm_internal, 0, size);
+				uvm_obj_unwirepages(shmseg->_shm_internal,
+				    0, size);
 				if (error == EFAULT)
 					error = ENOMEM;
 				return error;
@@ -284,7 +286,7 @@ shm_memlock(struct lwp *l, struct shmid_ds *shmseg, int shmid, int cmd)
 		} else if (cmd == SHM_UNLOCK &&
 		    (shmseg->shm_perm.mode & SHMSEG_WIRED) != 0) {
 			/* Unwire the object and map, then untag it */
-			uobj_unwirepages(shmseg->_shm_internal, 0, size);
+			uvm_obj_unwirepages(shmseg->_shm_internal, 0, size);
 			error = uvm_map_pageable(&p->p_vmspace->vm_map,
 			    shmmap_se->va, shmmap_se->va + size, true, 0);
 			if (error)
@@ -730,7 +732,7 @@ sys_shmget(struct lwp *l, const struct sys_shmget_args *uap, register_t *retval)
 	shmseg->_shm_internal = uao_create(size, 0);
 	if (lockmem) {
 		/* Wire the pages and tag it */
-		error = uobj_wirepages(shmseg->_shm_internal, 0, size);
+		error = uvm_obj_wirepages(shmseg->_shm_internal, 0, size);
 		if (error) {
 			uao_detach(shmseg->_shm_internal);
 			mutex_enter(&shm_lock);

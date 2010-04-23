@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.7.4.1 2010/03/16 15:38:18 rmind Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.7.4.2 2010/04/23 21:18:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.1 2010/03/16 15:38:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.2 2010/04/23 21:18:00 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -100,7 +100,7 @@ uvm_obj_destroy(struct uvm_object *uo, kmutex_t *lockptr)
  */
 
 int
-uobj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
+uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
 {
 	int i, npages, error;
 	struct vm_page *pgs[FETCH_PAGECOUNT], *pg = NULL;
@@ -183,7 +183,7 @@ error:
  */
 
 void
-uobj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
+uvm_obj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 {
 	struct vm_page *pg;
 	off_t offset;
