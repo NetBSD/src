@@ -1,4 +1,4 @@
-.\"	$NetBSD: window.1,v 1.19 2009/08/19 15:17:05 joerg Exp $
+.\"	$NetBSD: window.1,v 1.20 2010/04/23 22:04:37 joerg Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -401,7 +401,7 @@ is a new line,
 .Dq \er
 a carriage return).
 For example, these are legal strings:
-abcde01234, "\*[Am]#$^*\*[Am]#", ab"$#"cd, ab\\$\\#cd, "/usr/ucb/window".
+abcde01234, "\*[Am]#$^*\*[Am]#", ab"$#"cd, ab\e$\e#cd, "/usr/ucb/window".
 .Pp
 A number is an integer value in one of three forms:
 a decimal number, an octal number preceded by
@@ -480,7 +480,7 @@ is assigned the result of
 .Aq Va expr2 .
 Returns the value of
 .Aq Va expr2 .
-.It Ao Va expr1 Ac Ic \&? Ao Va expr2 Ac Ic : Ao Va expr3 Ac
+.It Ao Va expr1 Ac Ic \&? Ao Va expr2 Ac : Ao Va expr3 Ac
 Returns the value of
 .Aq Va expr2
 if
@@ -628,7 +628,7 @@ Aliases return no value.
 .Ss  Builtin Functions
 The arguments are listed by name in their natural order.
 Optional arguments are in square brackets
-.Sq Op .
+.Sq Op ""
 Arguments
 that have no names are in angle brackets
 .Sq \*[Lt]\*[Gt] .
@@ -778,7 +778,7 @@ window, default for
 .Ar label
 is no change.
 To turn off a label, set it to an empty string ("").
-.It Ic list Ns Pq
+.It Ic list Ns Pq ""
 No arguments.
 List the identifiers and labels of all windows.
 No value is returned.
@@ -819,7 +819,7 @@ Returns -1 if
 .Ar variable
 does not exist,
 0 otherwise.
-.It Ic variables Ns Pq
+.It Ic variables Ns Pq ""
 No arguments.
 List all variables.
 No value is returned.
@@ -958,7 +958,7 @@ and run tcpdump, the lower one will take
 the remaining two thirds of the screen and run
 the default shell:
 .Bd -literal
-window r=1, nr=$nrow/3-1, l=tcpdump\\ pcn0, sh=tcpdump \\-ni pcn0
+window r=1, nr=$nrow/3-1, l=tcpdump\e pcn0, sh=tcpdump \e-ni pcn0
 window r=$nrow/3, nr=2*$nrow/3+1
 .Ed
 .Sh DIAGNOSTICS
