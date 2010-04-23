@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 2010/04/06 07:44:09 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.88 2010/04/23 19:18:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2010/04/06 07:44:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2010/04/23 19:18:09 rmind Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2010/04/06 07:44:09 skrll Exp $");
 #include <sys/acct.h>
 #include <sys/signal.h>
 #include <sys/device.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/userret.h>
 
 #include <net/netisr.h>
@@ -1295,18 +1295,14 @@ out:
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 }
 

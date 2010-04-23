@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.48 2009/11/01 21:46:09 rmind Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.49 2010/04/23 19:18:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.48 2009/11/01 21:46:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.49 2010/04/23 19:18:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,11 +95,10 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 	mutex_exit(p->p_lock);
 #endif
 
-	newuc = pool_get(&lwp_uc_pool, PR_WAITOK);
-
+	newuc = kmem_alloc(sizeof(ucontext_t), KM_SLEEP);
 	error = copyin(SCARG(uap, ucp), newuc, p->p_emul->e_ucsize);
 	if (error) {
-		pool_put(&lwp_uc_pool, newuc);
+		kmem_free(newuc, sizeof(ucontext_t));
 		return error;
 	}
 
@@ -107,7 +106,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 
 	uaddr = uvm_uarea_alloc();
 	if (__predict_false(uaddr == 0)) {
-		pool_put(&lwp_uc_pool, newuc);
+		kmem_free(newuc, sizeof(ucontext_t));
 		return ENOMEM;
 	}
 
@@ -115,7 +114,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 	    NULL, 0, p->p_emul->e_startlwp, newuc, &l2, l->l_class);
 	if (__predict_false(error)) {
 		uvm_uarea_free(uaddr);
-		pool_put(&lwp_uc_pool, newuc);
+		kmem_free(newuc, sizeof(ucontext_t));
 		return error;
 	}
 
@@ -123,7 +122,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 	error = copyout(&lid, SCARG(uap, new_lwp), sizeof(lid));
 	if (error) {
 		lwp_exit(l2);
-		pool_put(&lwp_uc_pool, newuc);
+		kmem_free(newuc, sizeof(ucontext_t));
 		return error;
 	}
 
