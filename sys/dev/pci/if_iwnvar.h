@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnvar.h,v 1.9 2010/04/16 01:40:41 christos Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.10 2010/04/23 20:56:20 christos Exp $	*/
 /*	$OpenBSD: if_iwnvar.h,v 1.17 2010/02/17 18:23:00 damien Exp $	*/
 
 /*-
@@ -168,6 +168,7 @@ struct iwn_fw_part {
 
 struct iwn_fw_info {
 	u_char			*data;
+	uint32_t		datasz;
 	struct iwn_fw_part	init;
 	struct iwn_fw_part	main;
 	struct iwn_fw_part	boot;
