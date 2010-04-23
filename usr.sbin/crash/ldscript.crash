@@ -1,0 +1,9 @@
+
+SECTIONS
+{
+  .note.netbsd.ident :
+  { 
+    KEEP(*(.note.netbsd.ident));
+  }
+}
+INSERT AFTER .gnu.version_r;
