@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.7 2010/02/13 07:44:11 wiz Exp $
+.\"	$NetBSD: kmem.9,v 1.8 2010/04/23 16:24:04 rmind Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd February 11, 2010
+.Dd April 23, 2010
 .Dt KMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -144,6 +144,9 @@ caller can sleep for an unbounded amount of time in order to satisfy the
 allocation.
 This can in turn block other threads that wish to acquire locks held by the
 caller.
+It should be noted that
+.Fn kmem_free
+may also block.
 .Pp
 For some locks this is permissible or even unavoidable.
 For others, particularly locks that may be taken from soft interrupt context,
@@ -263,8 +266,11 @@ subsystem is implemented within the file
 .Xr pool_cache 9
 .\" ------------------------------------------------------------
 .Sh CAVEATS
+Neither
 .Fn kmem_alloc
-cannot be used from interrupt context, from a soft interrupt, or from
+nor
+.Fn kmem_free
+can be used from interrupt context, from a soft interrupt, or from
 a callout.
 Use
 .Xr pool_cache 9
