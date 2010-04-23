@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.162.2.2 2010/03/18 04:36:54 rmind Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.162.2.3 2010/04/23 21:18:00 rmind Exp $	*/
 
 /*
  *
@@ -624,7 +624,7 @@ int			uvm_coredump_walkmap(struct proc *,
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
 void			uvm_init_limits(struct proc *);
-bool			uvm_kernacc(void *, vm_prot_t);
+bool			uvm_kernacc(void *, size_t, vm_prot_t);
 __dead void		uvm_scheduler(void);
 vaddr_t			uvm_uarea_alloc(void);
 void			uvm_uarea_free(vaddr_t);
@@ -707,10 +707,8 @@ int			uvm_mremap(struct vm_map *, vaddr_t, vsize_t,
 void			uvm_obj_init(struct uvm_object *,
 			    const struct uvm_pagerops *, kmutex_t *, u_int);
 void			uvm_obj_destroy(struct uvm_object *, kmutex_t *);
-int			uobj_wirepages(struct uvm_object *uobj, off_t start,
-			    off_t end);
-void			uobj_unwirepages(struct uvm_object *uobj, off_t start,
-			    off_t end);
+int			uvm_obj_wirepages(struct uvm_object *, off_t, off_t);
+void			uvm_obj_unwirepages(struct uvm_object *, off_t, off_t);
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat(struct uvm_object *,
