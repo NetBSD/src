@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.113 2009/01/11 21:02:36 sketch Exp $
+# $NetBSD: HACKS,v 1.114 2010/04/23 02:12:58 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -319,6 +319,17 @@ descr
 	doesn't have IPv6 support. (see the above PRs for details)
 	For workaround, specify -fno-loop-optimize on m68000,
 	which uses -O1 by default.
+kcah
+
+hack	MKPIE ldscript for /usr.sbin/crash
+cdate	22 April 2010
+who	christos
+file	src/usr.sbin/crash/Makefile	: 1.5
+file	src/usr.sbin/crash/ldscript.crash	: 1.1
+pr	N/A
+descr
+	fixed in binutils-2.20.1. Linking with MKPIE=yes causes overlapping
+	sections
 kcah
 
 port	vax
