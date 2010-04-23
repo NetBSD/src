@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.4 2010/04/23 18:51:31 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.5 2010/04/23 19:00:58 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.4 2010/04/23 18:51:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.5 2010/04/23 19:00:58 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -758,7 +758,7 @@ acpi_power_add(struct acpi_devnode *ad)
 	 */
 	err = sysctl_createv(NULL, 0, &anode, NULL,
 	    CTLFLAG_READONLY, CTLTYPE_STRING, ad->ad_name,
-	    NULL, acpi_power_sysctl, 0, &ad->ad_state, 0,
+	    NULL, acpi_power_sysctl, 0, ad, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	if (err != 0)
@@ -769,12 +769,16 @@ acpi_power_add(struct acpi_devnode *ad)
 static int
 acpi_power_sysctl(SYSCTLFN_ARGS)
 {
+	struct acpi_devnode *ad;
 	struct sysctlnode node;
 	int err, state;
 	char t[3];
 
 	node = *rnode;
-	state = *(int *)rnode->sysctl_data;
+	ad = rnode->sysctl_data;
+
+	if (acpi_power_get(ad, &state) != true)
+		state = 0;
 
 	(void)memset(t, '\0', sizeof(t));
 	(void)snprintf(t, sizeof(t), "D%d", state);
