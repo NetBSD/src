@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.9 2010/04/22 21:58:08 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.10 2010/04/23 15:46:59 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.9 2010/04/22 21:58:08 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.10 2010/04/23 15:46:59 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -301,31 +301,28 @@ acpi_pcidev_ppb_downbus(uint16_t segment, uint16_t bus, uint16_t device,
  * acpi_pcidev_find:
  *
  *      Finds a PCI device in the ACPI name space.
- *      The return status is either:
- *      - AE_NOT_FOUND if no such device was found.
- *      - AE_OK if one and only one such device was found.
+ *
+ *      Returns an ACPI device node on success and NULL on failure.
  */
-ACPI_STATUS
-acpi_pcidev_find(uint16_t segment, uint16_t bus, uint16_t device,
-    uint16_t function, struct acpi_devnode **devnodep)
+struct acpi_devnode *
+acpi_pcidev_find(uint16_t segment, uint16_t bus,
+    uint16_t device, uint16_t function)
 {
 	struct acpi_softc *sc = acpi_softc;
 	struct acpi_devnode *ad;
 
 	if (sc == NULL)
-		return AE_NOT_FOUND;
+		return NULL;
 
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
-		if ((ad->ad_pciinfo != NULL) &&
-		    (ad->ad_pciinfo->ap_segment == segment) &&
-		    (ad->ad_pciinfo->ap_bus == bus) &&
-		    (ad->ad_pciinfo->ap_device == device) &&
-		    (ad->ad_pciinfo->ap_function == function)) {
-			*devnodep = ad;
-			return AE_OK;
-		}
+		if (ad->ad_pciinfo != NULL &&
+		    ad->ad_pciinfo->ap_segment == segment &&
+		    ad->ad_pciinfo->ap_bus == bus &&
+		    ad->ad_pciinfo->ap_device == device &&
+		    ad->ad_pciinfo->ap_function == function)
+			return ad;
 	}
 
-	return AE_NOT_FOUND;
+	return NULL;
 }
