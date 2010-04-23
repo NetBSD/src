@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 2009/11/29 04:15:43 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9 2010/04/23 16:07:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8 2009/11/29 04:15:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.9 2010/04/23 16:07:33 joerg Exp $");
 
 #include "opt_mtrr.h"
 
@@ -194,8 +194,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_esp0 = (uv + KSTACK_SIZE - 16);
 	tf = (struct trapframe *)pcb2->pcb_esp0 - 1;
 
-	memcpy(&pcb2->pcb_fsd, pcb1->pcb_fsd, sizeof(pcb2->pcb_fsd));
-	memcpy(&pcb2->pcb_gsd, pcb1->pcb_gsd, sizeof(pcb2->pcb_gsd));
+	memcpy(&pcb2->pcb_fsd, &pcb1->pcb_fsd, sizeof(pcb2->pcb_fsd));
+	memcpy(&pcb2->pcb_gsd, &pcb1->pcb_gsd, sizeof(pcb2->pcb_gsd));
 	pcb2->pcb_iomap = NULL;
 #endif
 	l2->l_md.md_regs = tf;
