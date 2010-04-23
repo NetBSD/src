@@ -1,4 +1,4 @@
-/* $NetBSD: compat_frexp_ieee754.c,v 1.4 2008/09/28 15:19:09 christos Exp $ */
+/* $NetBSD: compat_frexp_ieee754.c,v 1.5 2010/04/23 19:04:54 drochner Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,21 +35,19 @@
  * from: Header: frexp.c,v 1.1 91/07/07 04:45:01 torek Exp
  */
 
-#ifdef USE_LIBM
-#include "s_frexp.c"
-#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.4 2008/09/28 15:19:09 christos Exp $");
+__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.5 2010/04/23 19:04:54 drochner Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
-#include <math.h>
+
+double frexp(double, int *);
 
 /*
  * Split the given value into a fraction in the range [0.5, 1.0) and
@@ -83,4 +81,3 @@ frexp(double value, int *eptr)
 		return (value);
 	}
 }
-#endif
