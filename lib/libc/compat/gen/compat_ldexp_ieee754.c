@@ -1,4 +1,4 @@
-/* $NetBSD: compat_ldexp_ieee754.c,v 1.4 2008/09/28 18:54:30 christos Exp $ */
+/* $NetBSD: compat_ldexp_ieee754.c,v 1.5 2010/04/23 19:04:54 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,20 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef USE_LIBM
-#include "s_finite.c"
-#include "s_scalbn.c"
-#include "s_ldexp.c"
-#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.4 2008/09/28 18:54:30 christos Exp $");
+__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.5 2010/04/23 19:04:54 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <errno.h>
-#include <math.h>
+
+double ldexp(double, int);
 
 /*
  * Multiply the given value by 2^expon.
@@ -145,4 +141,3 @@ ldexp(double val, int expon)
 		return (u.dblu_d);
 	}
 }
-#endif
