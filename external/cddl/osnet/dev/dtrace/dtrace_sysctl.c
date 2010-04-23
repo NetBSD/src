@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_sysctl.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_sysctl.c,v 1.3 2010/04/23 11:39:52 ahoka Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -76,7 +76,7 @@ sysctl_dtrace_providers(SYSCTL_HANDLER_ARGS)
 	if (p_name != NULL) {
 		error = sysctl_handle_string(oidp, p_name, len, req);
 
-		kmem_free(p_name, 0);
+		kmem_free(p_name, len);
 	}
 
 	return (error);

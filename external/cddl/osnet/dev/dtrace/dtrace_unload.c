@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_unload.c,v 1.2 2010/02/21 01:46:33 darran Exp $	*/
+/*	$NetBSD: dtrace_unload.c,v 1.3 2010/04/23 11:39:52 ahoka Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -92,7 +92,7 @@ dtrace_unload()
 	vmem_destroy(dtrace_arena);
 
 	if (dtrace_toxrange != NULL) {
-		kmem_free(dtrace_toxrange, 0);
+		kmem_free(dtrace_toxrange, sizeof (dtrace_toxrange_t *);
 		dtrace_toxrange = NULL;
 		dtrace_toxranges = 0;
 		dtrace_toxranges_max = 0;
