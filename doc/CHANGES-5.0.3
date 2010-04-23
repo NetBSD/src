@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.11 2010/04/22 20:12:37 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.12 2010/04/23 04:21:59 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -208,4 +208,22 @@ sys/arch/x86/x86/identcpu.c			1.19
 	address with cpu_info_primary, rather than supposing that
 	cpu_feature variables are set to 0.
 	[jym, ticket #1377]
+
+sys/arch/amd64/amd64/locore.S			patch
+sys/arch/amd64/amd64/machdep.c			patch
+sys/arch/amd64/amd64/mptramp.S			patch
+sys/arch/i386/i386/machdep.c			patch
+sys/arch/i386/isa/npx.c				patch
+sys/arch/x86/include/cpu.h			patch
+sys/arch/x86/include/cpuvar.h			patch
+sys/arch/x86/x86/cpu.c				patch
+sys/arch/x86/x86/identcpu.c			patch
+sys/arch/x86/x86/pmap.c				patch
+sys/arch/xen/x86/cpu.c				patch
+
+	Fix the NX regression issue observed on amd64 kernels, where
+	per-page execution right was disabled (therefore leading to the
+	inability of the kernel to detect fraudulent use of memory mappings
+	marked as not being executable).
+	[jym, ticket #1380]
 
