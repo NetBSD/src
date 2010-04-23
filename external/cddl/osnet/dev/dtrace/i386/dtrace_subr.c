@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.4 2010/03/18 13:45:54 tron Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.5 2010/04/23 11:39:53 ahoka Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -113,7 +113,7 @@ dtrace_invop_remove(int (*func)(uintptr_t, uintptr_t *, uintptr_t))
 		prev->dtih_next = hdlr->dtih_next;
 	}
 
-	kmem_free(hdlr, 0);
+	kmem_free(hdlr, sizeof (dtrace_invop_hdlr_t));
 }
 
 void
