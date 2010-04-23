@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.183 2010/04/23 07:04:18 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.184 2010/04/23 18:51:31 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.183 2010/04/23 07:04:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.184 2010/04/23 18:51:31 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1056,7 +1056,7 @@ acpi_rescan_capabilities(struct acpi_softc *sc)
 
 		if (ACPI_SUCCESS(rv)) {
 			ad->ad_flags |= ACPI_DEVICE_POWER;
-			(void)acpi_power_get(ad, NULL);
+			acpi_power_add(ad);
 		}
 
 		/*

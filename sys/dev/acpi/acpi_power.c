@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.3 2010/04/23 15:37:01 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.4 2010/04/23 18:51:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,11 +56,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.3 2010/04/23 15:37:01 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.4 2010/04/23 18:51:31 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
+#include <sys/sysctl.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -95,6 +96,8 @@ struct acpi_power_res {
 static TAILQ_HEAD(, acpi_power_res) res_head =
 	TAILQ_HEAD_INITIALIZER(res_head);
 
+static const struct sysctlnode	*anode = NULL;
+
 static struct acpi_power_res	*acpi_power_res_init(ACPI_HANDLE);
 static struct acpi_power_res	*acpi_power_res_get(ACPI_HANDLE);
 
@@ -114,6 +117,7 @@ static ACPI_STATUS	 acpi_power_res_deref(struct acpi_power_res *,
 static ACPI_STATUS	 acpi_power_res_sta(ACPI_OBJECT *, void *);
 
 static ACPI_OBJECT	*acpi_power_pkg_get(ACPI_HANDLE, int);
+static int		 acpi_power_sysctl(SYSCTLFN_ARGS);
 static const char	*acpi_xname(ACPI_HANDLE);
 
 void
@@ -699,6 +703,90 @@ fail:
 		acpi_xname(hdl), AcpiFormatException(rv)));
 
 	return NULL;
+}
+
+SYSCTL_SETUP(sysctl_acpi_power_setup, "sysctl hw.acpi.power subtree setup")
+{
+	int err;
+
+	err = sysctl_createv(NULL, 0, NULL, &anode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_HW, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(NULL, 0, &anode, &anode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi",
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(NULL, 0, &anode, &anode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
+	    "power", SYSCTL_DESCR("ACPI device power states"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	return;
+
+fail:
+	anode = NULL;
+}
+
+void
+acpi_power_add(struct acpi_devnode *ad)
+{
+	int err;
+
+	KASSERT(ad != NULL && ad->ad_root != NULL);
+	KASSERT((ad->ad_flags & ACPI_DEVICE_POWER) != 0);
+
+	if (anode == NULL)
+		return;
+
+	/*
+	 * Make this read-only: because a single power resource
+	 * may power multiple devices, it is unclear whether
+	 * power resources should be controllable by an user.
+	 */
+	err = sysctl_createv(NULL, 0, &anode, NULL,
+	    CTLFLAG_READONLY, CTLTYPE_STRING, ad->ad_name,
+	    NULL, acpi_power_sysctl, 0, &ad->ad_state, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		aprint_error_dev(ad->ad_root, "sysctl_createv"
+		    "(hw.acpi.power.%s) failed (err %d)\n", ad->ad_name, err);
+}
+
+static int
+acpi_power_sysctl(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int err, state;
+	char t[3];
+
+	node = *rnode;
+	state = *(int *)rnode->sysctl_data;
+
+	(void)memset(t, '\0', sizeof(t));
+	(void)snprintf(t, sizeof(t), "D%d", state);
+
+	node.sysctl_data = &t;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (err || newp == NULL)
+		return err;
+
+	return 0;
 }
 
 /*
