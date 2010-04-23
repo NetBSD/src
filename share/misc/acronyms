@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.188 2010/04/04 17:55:52 jruoho Exp $
+$NetBSD: acronyms,v 1.189 2010/04/23 17:48:06 dholland Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -15,11 +15,13 @@ AKA	also known as
 ASAIC	as soon as I can
 ASAP	as soon as possible
 ATM	at the moment
+ATM	automatic teller machine
 AWOL	absent without official leave
 AYBABTU	all your base are belong to us
 AYT	are you there
 B/C	because
 B/S	bullshit
+B/W	bandwidth
 B/W	between
 BBIAB	be back in a bit
 BBL	[I'll] be back later
@@ -188,6 +190,7 @@ PEBKAC	problem exists between keyboard and chair
 PFO	please fuck off
 PFY	pimply faced youth
 PHB	pointy haired boss
+PIN	personal identification number
 PITA	pain in the ass
 PKSP	pound keys and spew profanity
 PNG	persona non grata
@@ -248,6 +251,7 @@ SWAHBI	silly, wild-assed hare-brained idea
 SWFG	search with fucking google
 SWMBO	she who must be obeyed
 TANSTAAFL	there ain't no such thing as a free lunch
+TBA	to be announced
 TBC	to be continued
 TBD	to be {decided,determined,done}
 TBH	to be honest
