@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.96 2010/04/23 17:34:48 dholland Exp $
+$NetBSD: acronyms.comp,v 1.97 2010/04/23 17:43:45 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -234,6 +234,7 @@ ISN	initial serial number
 ISO	international standards organization
 ISOC	Internet society
 ISP	Internet service provider
+JBOD	just a bunch of disks
 JIT	just in time
 JPEG	joint photographic experts group
 JRE	Java runtime environment
@@ -288,6 +289,7 @@ MTA	mail transfer agent
 MTU	maximum transmission unit
 MUA	mail user agent
 MWE	module width encoding
+NAS	network attached storage
 NAT	network address translation
 NAV	network allocation vector
 NCP	network control protocol
@@ -311,6 +313,7 @@ OO	OpenOffice
 OOB	out of band
 OOM	out of memory
 OOP	object oriented programming
+OQL	object query language
 OS	operating system
 OSD	open source definition
 OSF	open software foundation
@@ -321,6 +324,7 @@ OSS	open source software
 OSS	open sound system
 OTP	one time password
 OUI	organizationally unique identifier
+OWL	Web ontology language
 P2P	peer to peer
 P2P	PCI to PCI
 PA	physical address
@@ -382,6 +386,7 @@ RAS	restartable atomic sequence
 RAS	remote access service
 RCS	revision control system
 RCU	read-copy-update
+RDF	resource description format
 RGB	red green blue
 RHL	Red Hat Linux
 RIFF	Resource Interchange File Format
@@ -429,6 +434,7 @@ SOA	service oriented architecture
 SOAP	simple object access protocol
 SOHO	small office / home office
 SPARC	scalable processor architecture
+SPARQL	SPARQL protocol and RDF query language
 SPD	security policy database
 SPD	serial presence detect
 SPI	serial peripheral interface
@@ -464,6 +470,7 @@ TLS	transport layer security
 TLS	thread local storage
 TMDS	transition minimized differential signaling
 TOS	terms of service
+TOS	type of service
 TR	token ring
 TRNG	true random number generator
 TTL	time to live
@@ -488,6 +495,7 @@ USWC	uncacheable speculative write combining
 UTC	coordinated universal time
 UTP	unshielded twisted pair
 UUCP	Unix-to-Unix copy protocol
+UUID	universally unique identifier
 UUOC	useless use of cat
 VA	virtual address
 VAX	virtual address extension
