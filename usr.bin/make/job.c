@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.148 2010/04/22 19:11:17 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.149 2010/04/23 00:18:50 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.148 2010/04/22 19:11:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.149 2010/04/23 00:18:50 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.148 2010/04/22 19:11:17 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.149 2010/04/23 00:18:50 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1299,7 +1299,7 @@ JobExec(Job *job, char **argv)
     /* Pre-emptively mark job running, pid still zero though */
     job->job_state = JOB_ST_RUNNING;
 
-    cpid = vfork();
+    cpid = vFork();
     if (cpid == -1)
 	Punt("Cannot vfork: %s", strerror(errno));
 
