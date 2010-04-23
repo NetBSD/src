@@ -1,4 +1,4 @@
-/*	$NetBSD: pkgdb.c,v 1.1.1.7 2010/01/30 21:33:52 joerg Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.1.1.8 2010/04/23 20:54:11 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,10 +7,10 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: pkgdb.c,v 1.1.1.7 2010/01/30 21:33:52 joerg Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.1.1.8 2010/04/23 20:54:11 joerg Exp $");
 
 /*-
- * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -168,6 +168,8 @@ pkgdb_retrieve(const char *key)
 {
 	DBT     keyd, vald;
 	int     status;
+	char	*eos;
+	static int corruption_warning;
 
 	if (pkgdbp == NULL)
 		return NULL;
@@ -179,9 +181,15 @@ pkgdb_retrieve(const char *key)
 	vald.data = (void *)NULL;
 	vald.size = 0;
 	status = (*pkgdbp->get) (pkgdbp, &keyd, &vald, 0);
-	if (status) {
-		vald.data = NULL;
-		vald.size = 0;
+	if (status)
+		return NULL;
+	eos = memchr(vald.data, 0, vald.size);
+	if (eos == NULL || eos + 1 != (char *)vald.data + vald.size) {
+		if (!corruption_warning) {
+			warnx("pkgdb corrupted, please run ``pkg_admin rebuild''");
+			corruption_warning = 1;
+		}
+		return NULL;
 	}
 
 	return vald.data;

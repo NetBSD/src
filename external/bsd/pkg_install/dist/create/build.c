@@ -1,4 +1,4 @@
-/*	$NetBSD: build.c,v 1.1.1.7 2009/11/05 18:39:02 joerg Exp $	*/
+/*	$NetBSD: build.c,v 1.1.1.8 2010/04/23 20:54:07 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: build.c,v 1.1.1.7 2009/11/05 18:39:02 joerg Exp $");
+__RCSID("$NetBSD: build.c,v 1.1.1.8 2010/04/23 20:54:07 joerg Exp $");
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -254,6 +254,8 @@ make_dist(const char *pkg, const char *suffix, const package_t *plist)
 		archive_write_set_compression_bzip2(archive);
 	else if (strcmp(CompressionType, "gzip") == 0)
 		archive_write_set_compression_gzip(archive);
+	else if (strcmp(CompressionType, "xz") == 0)
+		archive_write_set_compression_xz(archive);
 	else if (strcmp(CompressionType, "none") == 0)
 		archive_write_set_compression_none(archive);
 	else
