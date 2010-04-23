@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.265 2010/02/22 12:33:22 njoly Exp $
+#	$NetBSD: bsd.README,v 1.266 2010/04/23 19:41:03 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -119,8 +119,13 @@ MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
 
 MKBFD		Obsolete, use MKBINUTILS
 
-MKBINUTILS	If "no", don't build binutils (gas, ld, etc and libbfd, libopcodes)
+MKBINUTILS	If "no", don't build binutils (gas, ld, etc and libbfd,
+		libopcodes)
 		Default: yes
+
+MKBSDTAR	If "yes", use the libarchive based cpio and tar instead of
+		the pax frontends.
+		Default: no
 
 MKCATPAGES	If "no", don't build or install the catman pages.
 		Default: yes
