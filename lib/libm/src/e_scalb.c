@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_scalb.c,v 1.9 2002/05/26 22:01:52 wiz Exp $");
+__RCSID("$NetBSD: e_scalb.c,v 1.10 2010/04/23 19:17:07 drochner Exp $");
 #endif
 
 /*
@@ -21,6 +21,7 @@ __RCSID("$NetBSD: e_scalb.c,v 1.9 2002/05/26 22:01:52 wiz Exp $");
  * should use scalbn() instead.
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 

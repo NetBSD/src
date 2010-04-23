@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_pow.c,v 1.15 2009/01/19 06:41:13 lukem Exp $");
+__RCSID("$NetBSD: e_pow.c,v 1.16 2010/04/23 19:17:07 drochner Exp $");
 #endif
 
 /* __ieee754_pow(x,y) return x**y
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: e_pow.c,v 1.15 2009/01/19 06:41:13 lukem Exp $");
  * to produce the hexadecimal values shown.
  */
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 

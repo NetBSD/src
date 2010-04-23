@@ -5,9 +5,13 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_scalbnf.S,v 1.7 2006/03/21 11:35:21 drochner Exp $")
+RCSID("$NetBSD: s_scalbnf.S,v 1.8 2010/04/23 19:17:07 drochner Exp $")
 
-ENTRY(scalbnf)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(scalbnf,_scalbnf)
+#endif
+
+ENTRY(_scalbnf)
 #ifdef __x86_64__
 	movl %edi,-8(%rsp)
 	fildl -8(%rsp)

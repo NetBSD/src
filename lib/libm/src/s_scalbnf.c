@@ -15,11 +15,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_scalbnf.c,v 1.8 2002/05/26 22:01:58 wiz Exp $");
+__RCSID("$NetBSD: s_scalbnf.c,v 1.9 2010/04/23 19:17:07 drochner Exp $");
 #endif
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
+
+#ifdef __weak_alias
+__weak_alias(scalbnf, _scalbnf)
+#endif
 
 static const float
 two25   =  3.355443200e+07,	/* 0x4c000000 */

@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.93 2010/03/29 06:59:42 mrg Exp $
+#  $NetBSD: Makefile,v 1.94 2010/04/23 19:17:07 drochner Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -137,16 +137,8 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	w_pow.c w_powf.c w_remainder.c w_remainderf.c w_scalb.c w_scalbf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
-	llroundf.c \
+	llroundf.c s_frexp.c s_ldexp.c s_modf.c \
 	s_fmax.c s_fmaxf.c s_fmaxl.c s_fmin.c s_fminf.c s_fminl.c s_fdim.c
-
-#
-# Add these for machines which don't have compatibility functions in libc,
-# since they appeared later than they became libc compatibility.
-#
-.if (${MACHINE_ARCH} == "powerpc64")
-COMMON_SRCS += s_frexp.c s_ldexp.c s_modf.c
-.endif
 
 .PATH:	${.CURDIR}/compat
 COMMON_SRCS+= compat_cabs.c compat_cabsf.c

@@ -15,9 +15,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_scalbf.c,v 1.6 2002/05/26 22:01:52 wiz Exp $");
+__RCSID("$NetBSD: e_scalbf.c,v 1.7 2010/04/23 19:17:07 drochner Exp $");
 #endif
 
+#include "namespace.h"
 #include "math.h"
 #include "math_private.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: namespace.h,v 1.2 2007/08/20 16:01:39 drochner Exp $ */
+/* $NetBSD: namespace.h,v 1.3 2010/04/23 19:17:07 drochner Exp $ */
 
 #define atan2 _atan2
 #define atan2f _atan2f
@@ -15,6 +15,8 @@
 #define sinf _sinf
 #define cos _cos
 #define cosf _cosf
+#define finite _finite
+#define finitef _finitef
 #endif /* notyet */
 #define sinh _sinh
 #define sinhf _sinhf
@@ -27,3 +29,6 @@
 #define casinf _casinf
 #define catan _catan
 #define catanf _catanf
+
+#define scalbn _scalbn
+#define scalbnf _scalbnf
