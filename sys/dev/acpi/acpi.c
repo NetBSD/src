@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.182 2010/04/22 21:58:08 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.183 2010/04/23 07:04:18 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.182 2010/04/22 21:58:08 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.183 2010/04/23 07:04:18 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -619,13 +619,12 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 		aprint_normal("    ");
 
 	aprint_normal("%-5s [%02u] [%c%c] ", ad->ad_name, ad->ad_type,
-	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : 'x',
-	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : 'x');
+	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : ' ',
+	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : ' ');
 
-	if (ad->ad_pciinfo == NULL)
-		aprint_normal("@ xx:xx:xx:xx ");
-	else {
-		aprint_normal("@ 0x%02x:0x%02x:0x%02x:0x%02x ",
+	if (ad->ad_pciinfo != NULL) {
+
+		aprint_normal("(PCI) @ 0x%02X:0x%02X:0x%02X:0x%02X ",
 		    ad->ad_pciinfo->ap_segment, ad->ad_pciinfo->ap_bus,
 		    ad->ad_pciinfo->ap_device, ad->ad_pciinfo->ap_function);
 
@@ -742,6 +741,8 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		if ((devinfo->Valid & ACPI_VALID_ADR) != 0)
 			aprint_normal("ADR 0x%016" PRIX64"",
 			    devinfo->Address);
+		else
+			aprint_normal("ADR -");
 
 		aprint_normal("\n");
 #endif
