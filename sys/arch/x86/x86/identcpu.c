@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.10.4.2.2.1 2010/04/22 19:41:49 snj Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.10.4.2.2.2 2010/04/23 04:17:30 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.10.4.2.2.1 2010/04/22 19:41:49 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.10.4.2.2.2 2010/04/23 04:17:30 snj Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -363,8 +363,8 @@ cpu_probe_k678(struct cpu_info *ci)
 	x86_cpuid(0x80000000, descs);
 	if (descs[0] >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature3_flags |= descs[3]; /* %edx */
-		ci->ci_feature4_flags = descs[2];  /* %ecx */
+		ci->ci_feature4_flags = descs[2]; /* %ecx */
+		ci->ci_feature3_flags = descs[3]; /* %edx */
 	}
 
 	cpu_probe_amd_cache(ci);
@@ -702,6 +702,8 @@ cpu_probe(struct cpu_info *ci)
 		/* If first. */
 		cpu_feature = ci->ci_feature_flags;
 		cpu_feature2 = ci->ci_feature2_flags;
+		cpu_feature3 = ci->ci_feature3_flags;
+		cpu_feature4 = ci->ci_feature4_flags;
 		/* Early patch of text segment. */
 #ifndef XEN
 		x86_patch(true);
@@ -710,6 +712,8 @@ cpu_probe(struct cpu_info *ci)
 		/* If not first. */
 		cpu_feature &= ci->ci_feature_flags;
 		cpu_feature2 &= ci->ci_feature2_flags;
+		cpu_feature3 &= ci->ci_feature3_flags;
+		cpu_feature4 &= ci->ci_feature4_flags;
 	}
 }
 

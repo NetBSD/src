@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28.4.1 2008/11/13 00:04:07 snj Exp $	*/
+/*	$NetBSD: cpu.c,v 1.28.4.1.2.1 2010/04/23 04:17:30 snj Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28.4.1 2008/11/13 00:04:07 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28.4.1.2.1 2010/04/23 04:17:30 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -172,6 +172,13 @@ static void	cpu_set_tss_gates(struct cpu_info *ci);
 
 uint32_t cpus_attached = 0;
 uint32_t cpus_running = 0;
+
+/* CPUID feature flags */
+uint32_t cpu_feature;  /* %edx */
+uint32_t cpu_feature2; /* %ecx */
+uint32_t cpu_feature3; /* extended features - %edx */
+uint32_t cpu_feature4; /* extended features - %ecx */
+uint32_t cpu_feature_padlock; /* VIA PadLock feature flags */
 
 bool x86_mp_online;
 paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
@@ -679,7 +686,6 @@ cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
 	int s, i;
-	uint32_t blacklist_features;
 
 #ifdef __x86_64__
         cpu_init_msrs(ci, true);
@@ -688,9 +694,8 @@ cpu_hatch(void *v)
 	cpu_probe(ci);
 
 	/* not on Xen... */
-	blacklist_features = ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX); /* XXX add CPUID_SVM */
-
-	cpu_feature &= blacklist_features;
+	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR); /* XXX add CPUID_SVM */
+	cpu_feature3 &= ~CPUID_NOX;
 
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);

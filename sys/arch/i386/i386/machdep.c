@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.644.4.10 2009/04/04 17:39:09 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644.4.10.2.1 2010/04/23 04:17:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.10 2009/04/04 17:39:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.10.2.1 2010/04/23 04:17:29 snj Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -248,9 +248,6 @@ static int exec_nomid(struct lwp *, struct exec_package *);
 
 int	physmem;
 
-unsigned int cpu_feature;
-unsigned int cpu_feature2;
-unsigned int cpu_feature_padlock;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -1433,8 +1430,6 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
 	cpu_probe(&cpu_info_primary);
-	cpu_feature = cpu_info_primary.ci_feature_flags;
-	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
 	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
 
 	proc0paddr = UAREA_TO_USER(proc0uarea);
@@ -1442,7 +1437,8 @@ init386(paddr_t first_avail)
 
 #ifdef XEN
 	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
+	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR);
+	cpu_feature3 &= ~(CPUID_NOX);
 	lwp0.l_addr->u_pcb.pcb_cr3 = PDPpaddr - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
