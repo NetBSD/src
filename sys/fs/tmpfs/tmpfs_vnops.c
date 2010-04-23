@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.68 2010/03/29 13:11:33 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.69 2010/04/23 15:38:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.68 2010/03/29 13:11:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.69 2010/04/23 15:38:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -594,7 +594,6 @@ tmpfs_write(void *v)
 	bool extended;
 	int error;
 	off_t oldsize;
-	struct proc *p = curproc;
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
 
@@ -610,15 +609,6 @@ tmpfs_write(void *v)
 
 	if (uio->uio_resid == 0) {
 		error = 0;
-		goto out;
-	}
-
-	if (((uio->uio_offset + uio->uio_resid) >
-	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
-		mutex_enter(proc_lock);
-		psignal(p, SIGXFSZ);
-		mutex_exit(proc_lock);
-		error = EFBIG;
 		goto out;
 	}
 
