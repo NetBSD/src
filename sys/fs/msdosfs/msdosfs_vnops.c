@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.64 2010/04/09 08:09:18 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.65 2010/04/23 15:38:46 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.64 2010/04/09 08:09:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.65 2010/04/23 15:38:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -564,7 +564,6 @@ msdosfs_write(void *v)
 	vsize_t bytelen;
 	off_t oldoff;
 	struct uio *uio = ap->a_uio;
-	struct proc *p = curproc;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
@@ -598,17 +597,6 @@ msdosfs_write(void *v)
 	/* Don't bother to try to write files larger than the fs limit */
 	if (uio->uio_offset + uio->uio_resid > MSDOSFS_FILESIZE_MAX)
 		return (EFBIG);
-
-	/*
-	 * If they've exceeded their filesize limit, tell them about it.
-	 */
-	if (((uio->uio_offset + uio->uio_resid) >
-	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
-		mutex_enter(proc_lock);
-		psignal(p, SIGXFSZ);
-		mutex_exit(proc_lock);
-		return (EFBIG);
-	}
 
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	/*
