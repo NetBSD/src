@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.1 2010/04/22 18:40:09 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.2 2010/04/23 15:20:35 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.1 2010/04/22 18:40:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.2 2010/04/23 15:20:35 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -423,21 +423,12 @@ acpi_power_set(struct acpi_devnode *ad, int state)
 	return true;
 
 fail:
-	/*
-	 * It is never an error to go to D0.
-	 */
-	if (state != ACPI_STATE_D0) {
+	ad->ad_state = ACPI_STATE_ERROR;
 
-		aprint_error_dev(ad->ad_root,
-		    "failed to set power state to D%d for %s: %s\n",
-		    state, ad->ad_name, AcpiFormatException(rv));
+	aprint_error_dev(ad->ad_root, "failed to set power state to D%d "
+	    "for %s: %s\n", state, ad->ad_name, AcpiFormatException(rv));
 
-		ad->ad_state = ACPI_STATE_ERROR;
-
-		return false;
-	}
-
-	return true;
+	return false;
 }
 
 /*
@@ -459,7 +450,7 @@ acpi_power_set_from_handle(ACPI_HANDLE hdl, int state)
 	}
 
 	aprint_error_dev(sc->sc_dev, "%s: failed to "
-	    "find node %s\n", __func__, ad->ad_name);
+	    "find node %s\n", __func__, acpi_xname(hdl));
 
 	return false;
 }
