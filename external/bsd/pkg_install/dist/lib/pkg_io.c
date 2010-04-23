@@ -1,4 +1,4 @@
-/*	$NetBSD: pkg_io.c,v 1.1.1.8 2010/02/20 04:41:57 joerg Exp $	*/
+/*	$NetBSD: pkg_io.c,v 1.1.1.9 2010/04/23 20:54:11 joerg Exp $	*/
 /*-
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 #endif
 
-__RCSID("$NetBSD: pkg_io.c,v 1.1.1.8 2010/02/20 04:41:57 joerg Exp $");
+__RCSID("$NetBSD: pkg_io.c,v 1.1.1.9 2010/04/23 20:54:11 joerg Exp $");
 
 #include <archive.h>
 #include <archive_entry.h>
@@ -63,16 +63,22 @@ struct fetch_archive {
 	struct url *url;
 	fetchIO *fetch;
 	char buffer[32768];
+	off_t size;
+	int restart;
 };
 
 static int
 fetch_archive_open(struct archive *a, void *client_data)
 {
 	struct fetch_archive *f = client_data;
+	struct url_stat us;
 
-	f->fetch = fetchGet(f->url, fetch_flags);
+	f->fetch = fetchXGet(f->url, &us, fetch_flags);
 	if (f->fetch == NULL)
 		return ENOENT;
+	f->size = us.size;
+	f->restart = 1;
+	f->url->offset = 0;
 	return 0;
 }
 
@@ -81,9 +87,39 @@ fetch_archive_read(struct archive *a, void *client_data,
     const void **buffer)
 {
 	struct fetch_archive *f = client_data;
-	
+	struct url_stat us;
+	ssize_t rv;	
+
 	*buffer = f->buffer;
-	return fetchIO_read(f->fetch, f->buffer, sizeof(f->buffer));	
+	rv = fetchIO_read(f->fetch, f->buffer, sizeof(f->buffer));
+	if (rv > 0) {
+		f->url->offset += rv;
+		return rv;
+	}
+	if (f->restart == 0)
+		return rv;
+	if (rv == 0) {
+		if (f->size == -1)
+			return 0;
+		if (f->url->offset == f->size)
+			return 0;
+	}
+	f->restart = 0;
+	if (1) {
+		char *url = fetchStringifyURL(f->url);
+		fprintf(stderr, "Trying to reconnect %s\n", url);
+		free(url);
+	}
+	fetchIO_close(f->fetch);
+	f->fetch = fetchXGet(f->url, &us, fetch_flags);
+	if (f->fetch == NULL)
+		return -1;
+	if (us.size != f->size)
+		return -1;
+	rv = fetchIO_read(f->fetch, f->buffer, sizeof(f->buffer));
+	if (rv > 0)
+		f->url->offset += rv;
+	return rv;
 }
 
 static int
@@ -93,6 +129,7 @@ fetch_archive_close(struct archive *a, void *client_data)
 
 	if (f->fetch != NULL)
 		fetchIO_close(f->fetch);
+	fetchFreeURL(f->url);
 	free(f);
 	return 0;
 }
@@ -104,7 +141,7 @@ open_archive_by_url(struct url *url, char **archive_name)
 	struct archive *a;
 
 	f = xmalloc(sizeof(*f));
-	f->url = url;
+	f->url = fetchCopyURL(url);
 
 	*archive_name = fetchStringifyURL(url);
 
