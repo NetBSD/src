@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.14 2009/11/23 00:46:06 rmind Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.15 2010/04/23 16:07:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.14 2009/11/23 00:46:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.15 2010/04/23 16:07:33 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -296,7 +296,7 @@ linux_sys_get_thread_area(struct lwp *l,
 	idx = GUGS_SEL;
 
 	(void)memset(&info, 0, sizeof(info));
-	(void)memcpy(&sd, pcb->pcb_gsd, sizeof(sd));
+	(void)memcpy(&sd, &pcb->pcb_gsd, sizeof(sd));
 	(void)memcpy(&desc, &sd, sizeof(desc));
 
 	info.entry_number = idx;
