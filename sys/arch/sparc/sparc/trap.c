@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.182 2010/03/20 23:31:30 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.183 2010/04/23 19:18:10 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182 2010/03/20 23:31:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.183 2010/04/23 19:18:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182 2010/03/20 23:31:30 chs Exp $");
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182 2010/03/20 23:31:30 chs Exp $");
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
-#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1303,18 +1302,14 @@ upcallret(struct lwp *l)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 }
 
