@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 2010/03/20 23:31:29 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.56 2010/04/23 19:18:09 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2010/03/20 23:31:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.56 2010/04/23 19:18:09 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -78,11 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55 2010/03/20 23:31:29 chs Exp $");
 #include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/systm.h>
-#include <sys/pool.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
@@ -714,18 +714,14 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	upcallret(l);
 }
 

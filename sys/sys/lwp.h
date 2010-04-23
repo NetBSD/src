@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.130 2010/04/12 22:15:31 pooka Exp $	*/
+/*	$NetBSD: lwp.h,v 1.131 2010/04/23 19:18:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -210,9 +210,6 @@ LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
 extern struct lwplist alllwp;		/* List of all LWPs. */
-
-extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
-
 extern lwp_t lwp0;			/* LWP for proc0 */
 #endif
 
