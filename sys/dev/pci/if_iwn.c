@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.41 2010/04/17 15:57:22 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.42 2010/04/23 20:56:20 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.88 2010/04/10 08:37:36 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.41 2010/04/17 15:57:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.42 2010/04/23 20:56:20 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -1764,7 +1764,7 @@ iwn_read_eeprom_enhinfo(struct iwn_softc *sc)
 static struct ieee80211_node *
 iwn_node_alloc(struct ieee80211_node_table *ic __unused)
 {
-	return malloc(sizeof (struct iwn_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	return malloc(sizeof (struct iwn_node), M_80211_NODE, M_NOWAIT | M_ZERO);
 }
 
 static void
@@ -5577,6 +5577,10 @@ iwn_read_firmware(struct iwn_softc *sc)
 	size_t size;
 	int error;
 
+	/* Initialize for error returns */
+	fw->data = NULL;
+	fw->datasz = 0;
+
 	/* Open firmware image. */
 	if ((error = firmware_open("if_iwn", sc->fwname, &fwh)) != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -5587,7 +5591,6 @@ iwn_read_firmware(struct iwn_softc *sc)
 	if (size < 28) {
 		aprint_error_dev(sc->sc_dev,
 		    "truncated firmware header: %zu bytes\n", size);
-		free(fw->data, M_DEVBUF);
 		firmware_close(fwh);
 		return EINVAL;
 	}
@@ -5600,12 +5603,13 @@ iwn_read_firmware(struct iwn_softc *sc)
 		firmware_close(fwh);
 		return ENOMEM;
 	}
-	if ((error = firmware_read(fwh, 0, fw->data, size)) != 0) {
+	error = firmware_read(fwh, 0, fw->data, size);
+	firmware_close(fwh);
+	fw->datasz = size;
+	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not read firmware %s\n", sc->fwname);
-		firmware_free(fw->data, size);
-		firmware_close(fwh);
-		return error;
+		goto out;
 	}
 
 	/* Process firmware header. */
@@ -5615,9 +5619,8 @@ iwn_read_firmware(struct iwn_softc *sc)
 	if (IWN_FW_API(rev) <= 1) {
 		aprint_error_dev(sc->sc_dev,
 		    "bad firmware, need API version >=2\n");
-		firmware_free(fw->data, size);
-		firmware_close(fwh);
-		return EINVAL;
+		firmware_free(fw->data, fw->datasz);
+		goto out;
 	}
 	if (IWN_FW_API(rev) >= 3) {
 		/* Skip build number (version 2 header). */
@@ -5640,9 +5643,7 @@ iwn_read_firmware(struct iwn_softc *sc)
 	    (fw->boot.textsz & 3) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "invalid firmware header\n");
-		firmware_free(fw->data, size);
-		firmware_close(fwh);
-		return EINVAL;
+		goto out;
 	}
 
 	/* Check that all firmware sections fit. */
@@ -5650,9 +5651,7 @@ iwn_read_firmware(struct iwn_softc *sc)
 	    fw->init.datasz + fw->boot.textsz > size) {
 		aprint_error_dev(sc->sc_dev,
 		    "firmware file too short: %zu bytes\n", size);
-		firmware_free(fw->data, size);
-		firmware_close(fwh);
-		return EINVAL;
+		goto out;
 	}
 
 	/* Get pointers to firmware sections. */
@@ -5663,6 +5662,11 @@ iwn_read_firmware(struct iwn_softc *sc)
 	fw->boot.text = fw->init.data + fw->init.datasz;
 
 	return 0;
+out:
+	firmware_free(fw->data, fw->datasz);
+	fw->data = NULL;
+	fw->datasz = 0;
+	return error ? error : EINVAL;
 }
 
 static int
@@ -6054,8 +6058,11 @@ iwn_init(struct ifnet *ifp)
 	sc->sc_flags &= ~IWN_FLAG_USE_ICT;
 
 	/* Initialize hardware and upload firmware. */
+	KASSERT(sc->fw.data != NULL && sc->fw.datasz > 0);
 	error = iwn_hw_init(sc);
-	free(sc->fw.data, M_DEVBUF);
+	firmware_free(sc->fw.data, sc->fw.datasz);
+	sc->fw.data = NULL;
+	sc->fw.datasz = 0;
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not initialize hardware\n");
