@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.45 2009/02/15 07:01:41 dholland Exp $ */
+/* $NetBSD: style,v 1.46 2010/04/24 00:54:07 christos Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.45 2009/02/15 07:01:41 dholland Exp $");
+__RCSID("$NetBSD: style,v 1.46 2010/04/24 00:54:07 christos Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -361,9 +361,12 @@ function(int a1, int a2, float fl, int a4)
 	 * Routines returning ``void *'' should not have their return
 	 * values cast to more specific pointer types.
 	 *
+	 * Prefer sizeof(*var) over sizeof(type) because if type changes,
+	 * the change needs to be done in one place.
+	 *
 	 * Use err/warn(3), don't roll your own!
 	 */
-	if ((four = malloc(sizeof(struct foo))) == NULL)
+	if ((four = malloc(sizeof(*four))) == NULL)
 		err(1, NULL);
 	if ((six = (int *)overflow()) == NULL)
 		errx(1, "Number overflowed.");
