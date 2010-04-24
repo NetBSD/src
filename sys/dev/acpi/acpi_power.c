@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.6 2010/04/24 06:31:44 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.7 2010/04/24 06:57:10 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.6 2010/04/24 06:31:44 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.7 2010/04/24 06:57:10 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -243,20 +243,12 @@ acpi_power_deregister(struct acpi_devnode *ad)
 void
 acpi_power_deregister_from_handle(ACPI_HANDLE hdl)
 {
-	struct acpi_softc *sc = acpi_softc; /* XXX. */
-	struct acpi_devnode *ad;
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 
-	if (sc == NULL)
+	if (ad == NULL)
 		return;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
-
-		if (ad->ad_handle == hdl)
-			return acpi_power_deregister(ad);
-	}
-
-	aprint_error_dev(sc->sc_dev, "%s: failed to "
-	    "find node %s\n", __func__, acpi_xname(hdl));
+	acpi_power_deregister(ad);
 }
 
 /*
@@ -460,22 +452,12 @@ fail:
 bool
 acpi_power_set_from_handle(ACPI_HANDLE hdl, int state)
 {
-	struct acpi_softc *sc = acpi_softc; /* XXX. */
-	struct acpi_devnode *ad;
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 
-	if (sc == NULL)
+	if (ad == NULL)
 		return false;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
-
-		if (ad->ad_handle == hdl)
-			return acpi_power_set(ad, state);
-	}
-
-	aprint_error_dev(sc->sc_dev, "%s: failed to "
-	    "find node %s\n", __func__, acpi_xname(hdl));
-
-	return false;
+	return acpi_power_set(ad, state);
 }
 
 static ACPI_STATUS

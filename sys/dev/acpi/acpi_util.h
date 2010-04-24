@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.h,v 1.1 2010/04/14 17:12:14 jruoho Exp $ */
+/*	$NetBSD: acpi_util.h,v 1.2 2010/04/24 06:57:10 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ ACPI_STATUS	acpi_foreach_package_object(ACPI_OBJECT *,
 			ACPI_STATUS (*)(ACPI_OBJECT *, void *), void *);
 ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
 			ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));
+struct acpi_devnode *acpi_get_node(ACPI_HANDLE handle);
 
 const char*	acpi_name(ACPI_HANDLE);
 
