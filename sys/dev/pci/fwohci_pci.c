@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.37 2010/03/29 03:05:27 kiyohara Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.38 2010/04/24 11:26:15 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.37 2010/03/29 03:05:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.38 2010/04/24 11:26:15 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,12 +60,13 @@ struct fwohci_pci_softc {
 
 static int fwohci_pci_match(device_t, cfdata_t, void *);
 static void fwohci_pci_attach(device_t, device_t, void *);
+static int fwohci_pci_detach(device_t, int);
 
 static bool fwohci_pci_suspend(device_t, const pmf_qual_t *);
 static bool fwohci_pci_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(fwohci_pci, sizeof(struct fwohci_pci_softc),
-    fwohci_pci_match, fwohci_pci_attach, NULL, NULL);
+    fwohci_pci_match, fwohci_pci_attach, fwohci_pci_detach, NULL);
 
 static int
 fwohci_pci_match(device_t parent, cfdata_t match,
@@ -161,6 +162,29 @@ fail:
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
+}
+
+static int
+fwohci_pci_detach(device_t self, int flags)
+{
+	struct fwohci_pci_softc *psc = device_private(self);
+	int rv;
+
+	pmf_device_deregister(self);
+	rv = fwohci_detach(&psc->psc_sc, flags);
+	if (rv)
+		return rv;
+
+	if (psc->psc_ih != NULL) {
+		pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
+		psc->psc_ih = NULL;
+	}
+	if (psc->psc_sc.bssize) {
+		bus_space_unmap(psc->psc_sc.bst, psc->psc_sc.bsh,
+		    psc->psc_sc.bssize);
+		psc->psc_sc.bssize = 0;
+	}
+	return 0;
 }
 
 static bool
