@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.69 2010/04/24 19:11:48 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.70 2010/04/24 19:16:10 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.69 2010/04/24 19:11:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.70 2010/04/24 19:16:10 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -75,7 +75,6 @@ ACPI_MODULE_NAME		("acpi_tz")
 #define	ATZ2UKELVIN(t) ((t) * 100000 - 50000)
 
 struct acpitz_zone {
-	char			*name;
 	ACPI_BUFFER		 al[ATZ_NLEVELS];
 	uint32_t		 ac[ATZ_NLEVELS];
 	uint32_t		 crt;
@@ -189,12 +188,6 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 	if (acpitz_get_fanspeed(self, &sc->sc_zone.fanmin,
 		&sc->sc_zone.fanmax, &sc->sc_zone.fancurrent) == 0)
 		sc->sc_have_fan = true;
-
-	rv = acpi_eval_string(sc->sc_node->ad_handle,
-	    "REGN", &sc->sc_zone.name);
-
-	if (ACPI_FAILURE(rv))
-		sc->sc_zone.name = __UNCONST("temperature");
 
 	acpitz_get_zone(self, 1);
 	acpitz_get_status(self);
@@ -728,8 +721,8 @@ acpitz_init_envsys(device_t dv)
 	sc->sc_temp_sensor.flags = flags;
 	sc->sc_temp_sensor.units = ENVSYS_STEMP;
 
-	(void)strlcpy(sc->sc_temp_sensor.desc,
-	    sc->sc_zone.name, sizeof(sc->sc_temp_sensor.desc));
+	(void)strlcpy(sc->sc_temp_sensor.desc, "temperature",
+	    sizeof(sc->sc_temp_sensor.desc));
 
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_temp_sensor))
 		goto out;
