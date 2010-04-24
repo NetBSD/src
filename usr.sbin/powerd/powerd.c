@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.13 2007/12/15 19:44:56 perry Exp $	*/
+/*	$NetBSD: powerd.c,v 1.14 2010/04/24 20:44:33 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,6 +46,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sysexits.h>
@@ -58,7 +59,6 @@ int	debug;
 
 static int kq;
 
-#define	_PATH_DEV_POWER		"/dev/power"
 #define	_PATH_POWERD_SCRIPTS	"/etc/powerd/scripts"
 
 static void usage(void) __dead;
@@ -110,8 +110,8 @@ main(int argc, char *argv[])
 		exit(EX_OSERR);
 	}
 
-	if ((fd = open(_PATH_DEV_POWER, O_RDONLY|O_NONBLOCK, 0600)) == -1) {
-		syslog(LOG_ERR, "open %s: %m", _PATH_DEV_POWER);
+	if ((fd = open(_PATH_POWER, O_RDONLY|O_NONBLOCK, 0600)) == -1) {
+		syslog(LOG_ERR, "open %s: %m", _PATH_POWER);
 		exit(EX_OSERR);
 	}
 
@@ -266,7 +266,7 @@ dispatch_dev_power(struct kevent *ev)
 	if (read(fd, &pev, sizeof(pev)) != sizeof(pev)) {
 		if (errno == EWOULDBLOCK)
 			return;
-		syslog(LOG_ERR, "read of %s: %m", _PATH_DEV_POWER);
+		syslog(LOG_ERR, "read of %s: %m", _PATH_POWER);
 		exit(EX_OSERR);
 	}
 
@@ -281,7 +281,7 @@ dispatch_dev_power(struct kevent *ev)
 		break;
 	default:
 		syslog(LOG_INFO, "unknown %s event type: %d",
-		    _PATH_DEV_POWER, pev.pev_type);
+		    _PATH_POWER, pev.pev_type);
 	}
 
 	goto again;
