@@ -1,4 +1,4 @@
-/*	$NetBSD: dalb_acpi.c,v 1.14 2010/04/15 07:02:24 jruoho Exp $	*/
+/*	$NetBSD: dalb_acpi.c,v 1.15 2010/04/24 19:36:14 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christoph Egger <cegger@netbsd.org>
@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.14 2010/04/15 07:02:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dalb_acpi.c,v 1.15 2010/04/24 19:36:14 jruoho Exp $");
 
 /*
  * Direct Application Launch Button:
@@ -221,8 +221,7 @@ acpi_dalb_get_wakeup_hotkeys(void *opaque)
 		return;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
-		"%s: %s: invoking sysmon_pswitch_event\n",
-		sc->sc_smpsw.smpsw_name, __func__));
+		"invoking %s (wakeup)\n", sc->sc_smpsw.smpsw_name));
 
 	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }
@@ -237,8 +236,7 @@ acpi_dalb_get_runtime_hotkeys(void *opaque)
 		return;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
-		"%s: %s: invoking sysmon_pswitch_event\n",
-		sc->sc_smpsw.smpsw_name, __func__));
+		"invoking %s (runtime)\n", sc->sc_smpsw.smpsw_name));
 
 	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.185 2010/04/24 13:42:18 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.186 2010/04/24 19:36:14 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.185 2010/04/24 13:42:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.186 2010/04/24 19:36:14 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1384,7 +1384,7 @@ acpi_fixed_button_handler(void *context)
 	static const int handler = OSL_NOTIFY_HANDLER;
 	struct sysmon_pswitch *smpsw = context;
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: fixed event\n", __func__));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "fixed event\n"));
 
 	(void)AcpiOsExecute(handler, acpi_fixed_button_pressed, smpsw);
 
@@ -1396,8 +1396,8 @@ acpi_fixed_button_pressed(void *context)
 {
 	struct sysmon_pswitch *smpsw = context;
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: %s fixed button pressed\n",
-		__func__, smpsw->smpsw_name));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
+		"%s fixed button pressed\n", smpsw->smpsw_name));
 
 	sysmon_pswitch_event(smpsw, PSWITCH_EVENT_PRESSED);
 }
