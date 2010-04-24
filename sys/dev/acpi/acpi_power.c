@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.7 2010/04/24 06:57:10 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.8 2010/04/24 19:36:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.7 2010/04/24 06:57:10 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.8 2010/04/24 19:36:14 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -566,8 +566,8 @@ acpi_power_res_ref(struct acpi_power_res *res, ACPI_HANDLE hdl)
 	SIMPLEQ_INSERT_TAIL(&res->ref_head, ref, ref_list);
 	mutex_exit(&res->res_mutex);
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: %s referenced "
-		"by %s?\n", __func__, res->res_name, acpi_xname(hdl)));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s referenced "
+		"by %s?\n", res->res_name, acpi_xname(hdl)));
 
 	return AE_OK;
 
@@ -575,8 +575,8 @@ out:
 	mutex_exit(&res->res_mutex);
 	kmem_free(ref, sizeof(*ref));
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: %s already referenced "
-		"by %s?\n", __func__, res->res_name, acpi_xname(hdl)));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s already referenced "
+		"by %s?\n", res->res_name, acpi_xname(hdl)));
 
 	return AE_OK;
 }
@@ -617,8 +617,8 @@ acpi_power_res_deref(struct acpi_power_res *res, ACPI_HANDLE hdl)
 
 	mutex_exit(&res->res_mutex);
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s: %s dereferenced "
-		"by %s?\n", __func__, res->res_name, acpi_xname(hdl)));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s dereferenced "
+		"by %s?\n", res->res_name, acpi_xname(hdl)));
 
 	return AE_OK;
 }
@@ -654,9 +654,8 @@ fail:
 	if (rv == AE_CTRL_TERMINATE)
 		rv = AE_ERROR;
 
-	ACPI_DEBUG_PRINT((ACPI_DB_DEBUG_OBJECT, "%s: failed to "
-		"evaluate _STA for %s: %s\n", __func__,
-		acpi_xname(hdl), AcpiFormatException(rv)));
+	ACPI_DEBUG_PRINT((ACPI_DB_DEBUG_OBJECT, "failed to evaluate _STA "
+		"for %s: %s\n", acpi_xname(hdl), AcpiFormatException(rv)));
 
 	return rv;
 }
@@ -699,9 +698,8 @@ fail:
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 
-	ACPI_DEBUG_PRINT((ACPI_DB_DEBUG_OBJECT, "%s: failed to "
-		"evaluate %s for %s: %s\n", __func__, path,
-		acpi_xname(hdl), AcpiFormatException(rv)));
+	ACPI_DEBUG_PRINT((ACPI_DB_DEBUG_OBJECT, "failed to evaluate %s for "
+		"%s: %s\n", path, acpi_xname(hdl), AcpiFormatException(rv)));
 
 	return NULL;
 }
