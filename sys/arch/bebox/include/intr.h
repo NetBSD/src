@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.29 2010/04/24 09:39:56 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 void enable_intr(void);
 void disable_intr(void);
 
-extern int imask[];
 extern paddr_t bebox_mb_reg;
 
 #define ICU_LEN		32
