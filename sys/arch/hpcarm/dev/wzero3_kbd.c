@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_kbd.c,v 1.2 2010/04/24 21:21:28 nonaka Exp $	*/
+/*	$NetBSD: wzero3_kbd.c,v 1.3 2010/04/24 21:51:56 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.2 2010/04/24 21:21:28 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.3 2010/04/24 21:51:56 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,7 @@ wzero3kbd_poll1(void *arg)
 		CSR_WRITE1(KBDCHARGE, 0);
 
 		/* select scan column# */
-		keycol = 1 >> col;
+		keycol = 1 << col;
 		CSR_WRITE1(KBDCOL_L, keycol & 0xff);
 		CSR_WRITE1(KBDCOL_U, keycol >> 8);
 		delay(KEYWAIT);
