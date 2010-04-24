@@ -1,4 +1,4 @@
-.\"	$NetBSD: larn.6,v 1.13 2009/03/11 16:37:06 joerg Exp $
+.\"	$NetBSD: larn.6,v 1.14 2010/04/24 01:13:37 dholland Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)larn.6	5.5 (Berkeley) 12/30/93
 .\"
-.Dd December 30, 1993
+.Dd April 23, 2010
 .Dt LARN 6
 .Os
 .Sh NAME
@@ -37,11 +37,11 @@
 .Nd exploring the caverns of Larn
 .Sh SYNOPSIS
 .Nm larn
-.Op Fl r
-.Op Fl H Ar number
-.Op Fl n
-.Op Fl h
+.Op Fl chilns
+.\".Op Fl H Ar number
 .Op Fl o Ar optsfile
+.Op Fl ##
+.Op ++
 .Sh DESCRIPTION
 .Nm
 is a fantasy games in which your child has contracted
@@ -52,28 +52,28 @@ amount of time, and to collect gold along the way of course!
 The options are:
 .Pp
 .Bl -tag -width flag
-.It Fl r
-The
-.Fl r
-option restores a checkpointed game after it has died.
-.It Fl H
-The
-.Fl H
-option sets the hardness of the game.
-.It Fl n
-The
-.Fl n
-option suppresses the welcome message at start up, putting you directly
-into the game.
+.It Fl c
+Clear the high scores file.
+.\" .It Fl H
+.\" Set the difficulty (hardness) level.
 .It Fl h
-The
-.Fl h
-option prints the command line options.
+Show the command line options.
+.It Fl i
+Show the high scores, including inventory data.
+.It Fl l
+Show the log of all games.
+.It Fl n
+Suppress the welcome message and start the game immediately.
 .It Fl o
-The
-.Fl o
-option specifies a different options file than
+.\" Ar optsfile
+Read the specified options file instead of
 .Pa ~/.larnopts .
+.It Fl s
+Show the high scores.
+.It Fl ##
+Set the difficulty (hardness) level.
+.It ++
+Restore game from the checkpoint (auto-save) file.
 .El
 .Sh COMMANDS
 These are the movement commands:
