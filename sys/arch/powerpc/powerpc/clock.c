@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2010/02/25 23:31:48 matt Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2010/04/24 09:39:57 kiyohara Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2010/02/25 23:31:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8 2010/04/24 09:39:57 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -171,7 +171,7 @@ decr_intr(struct clockframe *frame)
 		 * Do standard timer interrupt stuff.
 		 * Do softclock stuff only on the last iteration.
 		 */
-		frame->pri = pri | (1 << SIR_CLOCK);
+		frame->pri = pri | (1ULL << SIR_CLOCK);
 		while (--nticks > 0)
 			hardclock(frame);
 		frame->pri = pri;

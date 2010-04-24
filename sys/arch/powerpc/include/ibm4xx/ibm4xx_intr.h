@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.17 2010/03/18 13:47:04 kiyohara Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.18 2010/04/24 09:46:22 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,8 @@ int 	spllower(int);
 void 	splx(int);
 void 	softintr(int);
 
-extern volatile u_int 		imask[NIPL];
+typedef u_int imask_t;
+extern volatile imask_t 	imask[NIPL];
 extern const int 		mask_clock; 		/* for clock.c */
 extern const int 		mask_statclock; 	/* for clock.c */
 
