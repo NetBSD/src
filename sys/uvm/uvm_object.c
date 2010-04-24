@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.7.4.2 2010/04/23 21:18:00 rmind Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.7.4.3 2010/04/24 21:24:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.2 2010/04/23 21:18:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.3 2010/04/24 21:24:03 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -169,7 +169,7 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end)
 
 error:
 	/* Unwire the pages which has been wired */
-	uobj_unwirepages(uobj, start, offset);
+	uvm_obj_unwirepages(uobj, start, offset);
 
 	return error;
 }
