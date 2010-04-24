@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.2 2010/04/15 04:03:39 jruoho Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.3 2010/04/24 06:57:10 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.2 2010/04/15 04:03:39 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.3 2010/04/24 06:57:10 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -255,6 +255,30 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 	buf->Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	return (*getit)(handle, buf);
+}
+
+/*
+ * Get a device node from a handle.
+ */
+struct acpi_devnode *
+acpi_get_node(ACPI_HANDLE handle)
+{
+	struct acpi_softc *sc = acpi_softc; /* XXX. */
+	struct acpi_devnode *ad;
+
+	if (sc == NULL || handle == NULL)
+		return NULL;
+
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
+		if (ad->ad_handle == handle)
+			return ad;
+	}
+
+	aprint_debug_dev(sc->sc_dev, "%s: failed to "
+	    "find node %s\n", __func__, acpi_name(handle));
+
+	return NULL;
 }
 
 /*
