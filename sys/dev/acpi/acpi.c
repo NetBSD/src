@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.184 2010/04/23 18:51:31 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.185 2010/04/24 13:42:18 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.184 2010/04/23 18:51:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.185 2010/04/24 13:42:18 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -127,6 +127,7 @@ int	acpi_suspended = 0;
 struct acpi_softc *acpi_softc;
 static uint64_t acpi_root_pointer;
 extern kmutex_t acpi_interrupt_list_mtx;
+static ACPI_HANDLE acpi_scopes[4];
 
 /*
  * This structure provides a context for the ACPI
@@ -203,8 +204,9 @@ static int		sysctl_hw_acpi_fixedstats(SYSCTLFN_ARGS);
 static int		sysctl_hw_acpi_sleepstate(SYSCTLFN_ARGS);
 static int		sysctl_hw_acpi_sleepstates(SYSCTLFN_ARGS);
 
+static bool		  acpi_is_scope(struct acpi_devnode *);
 static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
-static void		acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
+static void		  acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 
 extern struct cfdriver acpi_cd;
 
@@ -584,6 +586,19 @@ acpi_build_tree(struct acpi_softc *sc)
 {
 	struct acpi_walkcontext awc;
 
+	/*
+	 * Get the root scope handles.
+	 */
+	KASSERT(__arraycount(acpi_scopes) == 4);
+
+	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_PR_", &acpi_scopes[0]);
+	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_PB_", &acpi_scopes[1]);
+	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_PI_", &acpi_scopes[2]);
+	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_TZ_", &acpi_scopes[3]);
+
+	/*
+	 * Make the root node.
+	 */
 	awc.aw_sc = sc;
 	awc.aw_parent = NULL;
 
@@ -594,9 +609,15 @@ acpi_build_tree(struct acpi_softc *sc)
 
 	sc->sc_root = awc.aw_parent;
 
+	/*
+	 * Build the internal namespace.
+	 */
 	(void)AcpiWalkNamespace(ACPI_TYPE_ANY, ACPI_ROOT_OBJECT, UINT32_MAX,
 	    acpi_make_devnode, acpi_make_devnode_post, &awc, NULL);
 
+	/*
+	 * Scan the internal namespace.
+	 */
 	acpi_rescan1(sc, NULL, NULL);
 	acpi_rescan_capabilities(sc);
 
@@ -964,18 +985,18 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		if (ad->ad_device != NULL)
 			continue;
 
-		aa.aa_node = ad;
-		aa.aa_iot = sc->sc_iot;
-		aa.aa_memt = sc->sc_memt;
-		aa.aa_pc = sc->sc_pc;
-		aa.aa_pciflags = sc->sc_pciflags;
-		aa.aa_ic = sc->sc_ic;
+		/*
+		 * There is a bug in ACPICA: it defines the type
+		 * of the scopes incorrectly for its own reasons.
+		 */
+		if (acpi_is_scope(ad) != false)
+			continue;
 
 		/*
-		 * XXX:	We only attach devices which are present, enabled, and
-		 *	functioning properly. However, if a device is enabled,
-		 *	it is decoding resources and we should claim these,
-		 *	if possible. This requires changes to bus_space(9).
+		 * We only attach devices which are present, enabled, and
+		 * functioning properly. However, if a device is enabled,
+		 * it is decoding resources and we should claim these,
+		 * if possible. This requires changes to bus_space(9).
 		 */
 		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE) {
 
@@ -990,9 +1011,9 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		}
 
 		/*
-		 * XXX:	The same problem as above. As for example
-		 *	thermal zones and power resources do not
-		 *	have a valid HID, only evaluate devices.
+		 * The same problem as above. As for example
+		 * thermal zones and power resources do not
+		 * have a valid HID, only evaluate devices.
 		 */
 		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE &&
 		    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
@@ -1017,6 +1038,13 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		 */
 		if (acpi_match_hid(ad->ad_devinfo, acpi_ignored_ids))
 			continue;
+
+		aa.aa_node = ad;
+		aa.aa_iot = sc->sc_iot;
+		aa.aa_memt = sc->sc_memt;
+		aa.aa_pc = sc->sc_pc;
+		aa.aa_pciflags = sc->sc_pciflags;
+		aa.aa_ic = sc->sc_ic;
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
@@ -1666,6 +1694,32 @@ sysctl_hw_acpi_sleepstates(SYSCTLFN_ARGS)
 /*
  * Miscellaneous.
  */
+static bool
+acpi_is_scope(struct acpi_devnode *ad)
+{
+	int i;
+
+	/*
+	 * Return true if the node is a root scope.
+	 */
+	if (ad->ad_parent == NULL)
+		return false;
+
+	if (ad->ad_parent->ad_handle != ACPI_ROOT_OBJECT)
+		return false;
+
+	for (i = 0; i < __arraycount(acpi_scopes); i++) {
+
+		if (acpi_scopes[i] == NULL)
+			continue;
+
+		if (ad->ad_handle == acpi_scopes[i])
+			return true;
+	}
+
+	return false;
+}
+
 ACPI_PHYSICAL_ADDRESS
 acpi_OsGetRootPointer(void)
 {
