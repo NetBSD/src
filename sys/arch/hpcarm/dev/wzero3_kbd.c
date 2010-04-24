@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_kbd.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $	*/
+/*	$NetBSD: wzero3_kbd.c,v 1.2 2010/04/24 21:21:28 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.2 2010/04/24 21:21:28 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,9 +107,7 @@ struct wzero3kbd_softc {
 	/* polling stuff */
 	struct callout sc_keyscan_ch;
 	int sc_interval;
-	int sc_stable_count;
 #define	KEY_INTERVAL	50	/* ms */
-#define	STABLE_COUNT	2
 
 #if defined(KEYTEST) || defined(KEYTEST2) || defined(KEYTEST3) || defined(KEYTEST4) || defined(KEYTEST5)
 	void *sc_test_ih;
@@ -302,7 +300,6 @@ wzero3kbd_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Install interrupt handler. */
 	if (sc->sc_key_pin >= 0) {
-		sc->sc_stable_count = 1;
 		pxa2x0_gpio_set_function(sc->sc_key_pin, GPIO_IN);
 		sc->sc_key_ih = pxa2x0_gpio_intr_establish(sc->sc_key_pin,
 		    IST_EDGE_BOTH, IPL_TTY, wzero3kbd_intr, sc);
@@ -311,7 +308,6 @@ wzero3kbd_attach(struct device *parent, struct device *self, void *aux)
 			    "couldn't establish key interrupt\n");
 		}
 	} else {
-		sc->sc_stable_count = STABLE_COUNT;
 		sc->sc_interval = KEY_INTERVAL / (1000 / hz);
 		if (sc->sc_interval < 1)
 			sc->sc_interval = 1;
@@ -668,6 +664,7 @@ wzero3kbd_poll1(void *arg)
 {
 	struct wzero3kbd_softc *sc = (struct wzero3kbd_softc *)arg;
 	int row, col, data;
+	int keycol;
 	int keydown;
 	int i;
 	int s;
@@ -688,13 +685,9 @@ wzero3kbd_poll1(void *arg)
 		CSR_WRITE1(KBDCHARGE, 0);
 
 		/* select scan column# */
-		if (col < 8) {
-			CSR_WRITE1(KBDCOL_L, 1U << col);
-			CSR_WRITE1(KBDCOL_U, 0);
-		} else {
-			CSR_WRITE1(KBDCOL_L, 0);
-			CSR_WRITE1(KBDCOL_U, 1U << (col - 8));
-		}
+		keycol = 1 >> col;
+		CSR_WRITE1(KBDCOL_L, keycol & 0xff);
+		CSR_WRITE1(KBDCOL_U, keycol >> 8);
 		delay(KEYWAIT);
 		CSR_WRITE1(KBDCHARGE, 0);
 
@@ -724,21 +717,12 @@ wzero3kbd_poll1(void *arg)
 	/* send key scan code */
 	keydown = 0;
 	for (i = 0; i < sc->sc_nrow * sc->sc_ncolumn; i++) {
-		uint8_t keystat = sc->sc_keystat[i];
-		keydown |= keystat;
-		if (keystat == 0) {
-			if (sc->sc_okeystat[i] != 0) {
-				/* key release */
-				hpckbd_input(sc->sc_hpckbd, 0, i);
-				sc->sc_okeystat[i] = 0;
-			}
-		} else {
-			if (++sc->sc_okeystat[i] >= sc->sc_stable_count) {
-				/* key press */
-				hpckbd_input(sc->sc_hpckbd, 1, i);
-				sc->sc_okeystat[i] = sc->sc_stable_count;
-			}
-		}
+		if (sc->sc_keystat[i] == sc->sc_okeystat[i])
+			continue;
+
+		keydown |= sc->sc_keystat[i];
+		hpckbd_input(sc->sc_hpckbd, sc->sc_keystat[i], i);
+		sc->sc_okeystat[i] = sc->sc_keystat[i];
 	}
 
 	splx(s);
