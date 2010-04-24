@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.67 2010/04/22 18:40:09 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.68 2010/04/24 06:31:44 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.67 2010/04/22 18:40:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.68 2010/04/24 06:31:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,9 +64,6 @@ ACPI_MODULE_NAME            ("acpi_tz")
 
 /* sensor indexes */
 #define ATZ_SENSOR_TEMP	0	/* thermal zone temperature */
-
-static int	acpitz_match(device_t, cfdata_t, void *);
-static void	acpitz_attach(device_t, device_t, void *);
 
 /*
  * ACPI Temperature Zone information. Note all temperatures are reported
@@ -124,6 +121,10 @@ struct acpitz_softc {
 	int sc_have_fan;	/* FAN sensor is optional */
 };
 
+static int	acpitz_match(device_t, cfdata_t, void *);
+static void	acpitz_attach(device_t, device_t, void *);
+static int	acpitz_detach(device_t, int);
+
 static void	acpitz_get_status(void *);
 static void	acpitz_get_zone(void *, int);
 static void	acpitz_get_zone_quiet(void *);
@@ -147,8 +148,8 @@ static ACPI_STATUS
 		acpitz_set_fanspeed(device_t, uint32_t);
 #endif
 
-CFATTACH_DECL_NEW(acpitz, sizeof(struct acpitz_softc), acpitz_match,
-    acpitz_attach, NULL, NULL);
+CFATTACH_DECL_NEW(acpitz, sizeof(struct acpitz_softc),
+    acpitz_match, acpitz_attach, acpitz_detach, NULL);
 
 /*
  * acpitz_match: autoconf(9) match routine
@@ -206,13 +207,14 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 
 	rv = acpi_eval_string(sc->sc_devnode->ad_handle,
 	    "REGN", &sc->sc_zone.name);
+
 	if (ACPI_FAILURE(rv))
 		sc->sc_zone.name = __UNCONST("temperature");
 
 	acpitz_get_zone(self, 1);
 	acpitz_get_status(self);
 
-	(void)acpi_power_register(sc->sc_devnode);
+	(void)pmf_device_register(self, NULL, NULL);
 	(void)acpi_register_notify(sc->sc_devnode, acpitz_notify_handler);
 
 	callout_init(&sc->sc_callout, CALLOUT_MPSAFE);
@@ -220,10 +222,51 @@ acpitz_attach(device_t parent, device_t self, void *aux)
 
 	acpitz_init_envsys(self);
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error(": couldn't establish power handler\n");
-
 	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
+}
+
+static int
+acpitz_detach(device_t self, int flags)
+{
+	struct acpitz_softc *sc = device_private(self);
+	ACPI_HANDLE hdl;
+	ACPI_BUFFER al;
+	ACPI_STATUS rv;
+	int i;
+
+	callout_halt(&sc->sc_callout, NULL);
+	callout_destroy(&sc->sc_callout);
+
+	pmf_device_deregister(self);
+	acpi_deregister_notify(sc->sc_devnode);
+
+	/*
+	 * Although the device itself should not contain any power
+	 * resources, we have possibly used the resources of active
+	 * cooling devices. To unregister these, first fetch a fresh
+	 * active cooling zone, and then detach the resources from
+	 * the reference handles contained in the cooling zone.
+	 */
+	acpitz_get_zone(self, 0);
+
+	for (i = 0; i < ATZ_NLEVELS; i++) {
+
+		if (sc->sc_zone.al[i].Pointer == NULL)
+			continue;
+
+		al = sc->sc_zone.al[i];
+		rv = acpi_eval_reference_handle(al.Pointer, &hdl);
+
+		if (ACPI_SUCCESS(rv))
+			acpi_power_deregister_from_handle(hdl);
+
+		ACPI_FREE(sc->sc_zone.al[i].Pointer);
+	}
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
+
+	return 0;
 }
 
 static void
@@ -374,21 +417,24 @@ acpitz_print_status(device_t dv)
 static ACPI_STATUS
 acpitz_switch_cooler(ACPI_OBJECT *obj, void *arg)
 {
+	int flag, pwr_state;
 	ACPI_HANDLE cooler;
-	int pwr_state, flag;
 	ACPI_STATUS rv;
 
+	/*
+	 * The _ALx object is a package in which the elements
+	 * are reference handles to an active cooling device
+	 * (typically PNP0C0B, ACPI fan device). Try to turn
+	 * on (or off) the power resources behind these handles
+	 * to start (or terminate) the active cooling.
+	 */
 	flag = *(int *)arg;
-
-	if (flag)
-		pwr_state = ACPI_STATE_D0;
-	else
-		pwr_state = ACPI_STATE_D3;
+	pwr_state = (flag != 0) ? ACPI_STATE_D0 : ACPI_STATE_D3;
 
 	rv = acpi_eval_reference_handle(obj, &cooler);
 
 	if (ACPI_FAILURE(rv)) {
-		aprint_error("%s: failed to get handle\n", __func__);
+		aprint_error("%s: failed to get reference handle\n", __func__);
 		return rv;
 	}
 
@@ -679,39 +725,46 @@ acpitz_tick(void *opaque)
 static void
 acpitz_init_envsys(device_t dv)
 {
+	const int flags = ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
 	struct acpitz_softc *sc = device_private(dv);
 
 	sc->sc_sme = sysmon_envsys_create();
-	sc->sc_sme->sme_get_limits = acpitz_get_limits;
+
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_name = device_xname(dv);
 	sc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
+	sc->sc_sme->sme_get_limits = acpitz_get_limits;
 
-	sc->sc_temp_sensor.flags = ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
+	sc->sc_temp_sensor.flags = flags;
 	sc->sc_temp_sensor.units = ENVSYS_STEMP;
-	strlcpy(sc->sc_temp_sensor.desc,
+
+	(void)strlcpy(sc->sc_temp_sensor.desc,
 	    sc->sc_zone.name, sizeof(sc->sc_temp_sensor.desc));
+
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_temp_sensor))
 		goto out;
 
-	if (sc->sc_have_fan) {
-		sc->sc_fan_sensor.flags =
-		    ENVSYS_FMONLIMITS | ENVSYS_FMONNOTSUPP;
+	if (sc->sc_have_fan != 0) {
+
+		sc->sc_fan_sensor.flags = flags;
 		sc->sc_fan_sensor.units = ENVSYS_SFANRPM;
-		strlcpy(sc->sc_fan_sensor.desc,
+
+		(void)strlcpy(sc->sc_fan_sensor.desc,
 		    "FAN", sizeof(sc->sc_fan_sensor.desc));
-		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_fan_sensor))
-			/* ignore error because fan sensor is optional */
-			aprint_error_dev(dv, "unable to attach fan sensor\n");
+
+		/* Ignore error because fan sensor is optional. */
+		(void)sysmon_envsys_sensor_attach(sc->sc_sme,
+		    &sc->sc_fan_sensor);
 	}
 
-	/* hook into sysmon */
 	if (sysmon_envsys_register(sc->sc_sme) == 0)
 		return;
 
 out:
 	aprint_error_dev(dv, "unable to register with sysmon\n");
+
 	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 }
 
 static void

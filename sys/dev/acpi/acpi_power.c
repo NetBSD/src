@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.5 2010/04/23 19:00:58 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.6 2010/04/24 06:31:44 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.5 2010/04/23 19:00:58 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.6 2010/04/24 06:31:44 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -238,6 +238,25 @@ acpi_power_deregister(struct acpi_devnode *ad)
 	 */
 	TAILQ_FOREACH(res, &res_head, res_list)
 	    (void)acpi_power_res_deref(res, ad->ad_handle);
+}
+
+void
+acpi_power_deregister_from_handle(ACPI_HANDLE hdl)
+{
+	struct acpi_softc *sc = acpi_softc; /* XXX. */
+	struct acpi_devnode *ad;
+
+	if (sc == NULL)
+		return;
+
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
+		if (ad->ad_handle == hdl)
+			return acpi_power_deregister(ad);
+	}
+
+	aprint_error_dev(sc->sc_dev, "%s: failed to "
+	    "find node %s\n", __func__, acpi_xname(hdl));
 }
 
 /*
