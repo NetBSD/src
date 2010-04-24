@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.77 2010/04/21 14:58:10 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.78 2010/04/24 17:58:40 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.77 2010/04/21 14:58:10 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.78 2010/04/24 17:58:40 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1001,7 +1001,9 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
-	fprintf(outmk, "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" depend");
+#define MAKECMD \
+    "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" LDSTATIC=\"${LDSTATIC}\" "
+	fprintf(outmk, MAKECMD "depend");
 	fprintf(outmk, " )\n");
 	fprintf(outmk, "\t( cd %s; printf '.PATH: ${%s_SRCDIR}\\n"
 	    ".CURDIR:= ${%s_SRCDIR}\\n"
@@ -1010,7 +1012,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
-	fprintf(outmk, "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=\"${DBG}\" ");
+	fprintf(outmk, MAKECMD);
 	if (p->objs)
 	    fprintf(outmk, "${%s_OBJS} ) \n\n", p->ident);
 	else
