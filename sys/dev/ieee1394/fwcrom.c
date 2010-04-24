@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.11 2010/03/29 03:05:27 kiyohara Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.12 2010/04/24 21:34:29 cegger Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.11 2010/03/29 03:05:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.12 2010/04/24 21:34:29 cegger Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -524,7 +524,8 @@ crom_load(struct crom_src *src, uint32_t *buf, int maxlen)
 
 #ifdef TEST
 int
-main () {
+main(void)
+{
 	struct crom_src src;
 	struct crom_chunk root, unit1, unit2, unit3;
 	struct crom_chunk text1, text2, text3, text4, text5, text6, text7;
