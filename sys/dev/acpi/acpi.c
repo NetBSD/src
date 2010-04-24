@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.186 2010/04/24 19:36:14 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.187 2010/04/24 19:51:15 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.186 2010/04/24 19:36:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.187 2010/04/24 19:51:15 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -592,8 +592,8 @@ acpi_build_tree(struct acpi_softc *sc)
 	KASSERT(__arraycount(acpi_scopes) == 4);
 
 	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_PR_", &acpi_scopes[0]);
-	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_PB_", &acpi_scopes[1]);
-	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_PI_", &acpi_scopes[2]);
+	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_SB_", &acpi_scopes[1]);
+	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_SI_", &acpi_scopes[2]);
 	(void)AcpiGetHandle(ACPI_ROOT_OBJECT, "\\_TZ_", &acpi_scopes[3]);
 
 	/*
