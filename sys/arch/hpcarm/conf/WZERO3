@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.1 2010/04/17 13:36:21 nonaka Exp $
+#	$NetBSD: WZERO3,v 1.2 2010/04/24 21:52:34 nonaka Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,11 +7,7 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1 $"
-
-# memory size
-options 	DRAM_PAGES="16384"	# 4Ki * 16384page = 64MiB
-#options 	DRAM_PAGES="32768"	# 4Ki * 32768page = 128MiB (WS011SH)
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 # estimated number of users
 maxusers	32

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.2 2010/04/24 21:52:34 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.2 2010/04/24 21:52:34 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -436,6 +436,16 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	bootconfig.dram[0].address = 0xa0000000;
 	bootconfig.dram[0].pages = DRAM_PAGES;
 	bootconfig.dramblocks = 1;
+
+	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS003SH)
+	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS004SH)
+	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS007SH)) {
+		bootconfig.dram[0].pages = 16384; /* 64MiB */
+	} else
+	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)
+	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS020SH)) {
+		bootconfig.dram[0].pages = 32768; /* 128MiB */
+	}
 
 	kerneldatasize = (uint32_t)&end - (uint32_t)KERNEL_TEXT_BASE;
 	symbolsize = 0;
