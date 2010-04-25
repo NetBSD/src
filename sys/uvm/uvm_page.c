@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.16 2010/02/28 06:29:19 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.17 2010/04/25 10:15:41 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.16 2010/02/28 06:29:19 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.17 2010/04/25 10:15:41 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -747,36 +747,40 @@ uvm_page_physget(paddr_t *paddrp)
  * => we are limited to VM_PHYSSEG_MAX physical memory segments
  */
 
-static void
+static struct vm_physseg *
 uvm_page_physload_common(struct vm_physseg * const, const int,
     const paddr_t, const paddr_t, const paddr_t, const paddr_t, const int);
 
-void
+void *
 uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int free_list)
 {
+	struct vm_physseg *seg;
 
-	uvm_page_physload_common(vm_physmem, vm_nphysmem, start, end,
+	seg = uvm_page_physload_common(vm_physmem, vm_nphysmem, start, end,
 	    avail_start, avail_end, free_list);
 	vm_nphysmem++;
+	return seg;
 }
 
 #ifdef DEVICE_PAGE
-void
+void *
 uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int free_list)
 {
+	struct vm_physseg *seg;
 
-	uvm_page_physload_common(vm_physdev, vm_nphysdev, start, end,
+	seg = uvm_page_physload_common(vm_physdev, vm_nphysdev, start, end,
 	    avail_start, avail_end, free_list);
 	vm_nphysdev++;
 
 	for (paddr_t pf = start; pf < end; pf++)
 		vm_page_device_mdpage_insert(pf);
+	return seg;
 }
 #endif
 
-static void
+static struct vm_physseg *
 uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
     const paddr_t start, const paddr_t end,
     const paddr_t avail_start, const paddr_t avail_end, const int free_list)
@@ -803,7 +807,7 @@ uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
 		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
 		printf("\tincrease VM_PHYSSEG_MAX\n");
-		return;
+		return NULL;
 	}
 
 #ifdef DEVICE_PAGE
@@ -842,7 +846,7 @@ uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
 			printf("uvm_page_physload: can not malloc vm_page "
 			    "structs for segment\n");
 			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
-			return;
+			return NULL;
 		}
 		/* zero data, init phys_addr, free_list, and free pages */
 		memset(pgs, 0, sizeof(struct vm_page) * npages);
@@ -910,7 +914,7 @@ uvm_page_physload_common_insert:
 
 #ifdef DEVICE_PAGE
 	if (segs == vm_physdev)
-		return;
+		return ps;
 #endif
 
 	/* XXXUEBS ugly */
@@ -923,6 +927,7 @@ uvm_page_physload_common_insert:
 	if (!preload) {
 		uvmpdpol_reinit();
 	}
+	return ps;
 }
 
 /*
