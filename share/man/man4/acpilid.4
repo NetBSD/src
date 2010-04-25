@@ -1,4 +1,4 @@
-.\" $NetBSD: acpilid.4,v 1.4 2010/04/25 06:24:38 jruoho Exp $
+.\" $NetBSD: acpilid.4,v 1.5 2010/04/25 07:00:50 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,9 @@ pressed)
 
         # Suspend.
         #
-        /sbin/sysctl -w machdep.sleep_state=3
+        if /sbin/sysctl machdep.sleep_state >/dev/null 2>&1; then
+                /sbin/sysctl -w machdep.sleep_state=3
+	fi
 
         # Waking up.
         #
