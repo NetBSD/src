@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyname_r.c,v 1.6 2007/03/21 02:35:39 christos Exp $	*/
+/*	$NetBSD: getservbyname_r.c,v 1.7 2010/04/25 00:54:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,16 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)getservbyname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyname_r.c,v 1.6 2007/03/21 02:35:39 christos Exp $");
+__RCSID("$NetBSD: getservbyname_r.c,v 1.7 2010/04/25 00:54:46 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <assert.h>
+#include <cdbr.h>
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
-#include <db.h>
 
 #include "servent.h"
 
@@ -55,33 +55,62 @@ static struct servent *
 _servent_getbyname(struct servent_data *sd, struct servent *sp,
     const char *name, const char *proto)
 {
-	if (sd->db == NULL)
+
+	if ((sd->flags & (_SV_CDB | _SV_PLAINFILE)) == 0)
 		return NULL;
 
-	if (sd->flags & _SV_DB) {
-		char buf[BUFSIZ];
-		DBT key, data;
-		DB *db = sd->db;
-		key.data = buf;
+	if (sd->flags & _SV_CDB) {
+		uint8_t buf[255 * 2 + 2];
+		size_t namelen, protolen;
+		const uint8_t *data, *data_end;
+		const void *data_ptr;
+		size_t datalen;
 
-		if (proto == NULL)
-			key.size = snprintf(buf, sizeof(buf), "\376%s", name);
+		namelen = strlen(name);
+		if (namelen == 0 || namelen > 255)
+			return NULL;
+		if (proto != NULL && *proto == '\0')
+			return NULL;
+		if (proto != NULL)
+			protolen = strlen(proto);
 		else
-			key.size = snprintf(buf, sizeof(buf), "\376%s/%s",
-			    name, proto);
-		key.size++;
-			
-		if ((*db->get)(db, &key, &data, 0) != 0)
+			protolen = 0;
+
+		buf[0] = namelen;
+		buf[1] = protolen;
+		memcpy(buf + 2, name, namelen);
+		memcpy(buf + 2 + namelen, proto, protolen);
+
+		if (cdbr_find(sd->cdb, buf, 2 + namelen + protolen,
+		    &data_ptr, &datalen))
 			return NULL;
 
-		if ((*db->get)(db, &data, &key, 0) != 0)
+		if (datalen < namelen + protolen + 6)
 			return NULL;
 
-		if (sd->line)
-			free(sd->line);
-
-		sd->line = strdup(key.data);
-		return _servent_parseline(sd, sp);
+		data = data_ptr;
+		data_end = data + datalen;
+		if (protolen) {
+			if (data[2] != protolen)
+				return NULL;
+			if (memcmp(data + 3, proto, protolen + 1))
+				return NULL;
+		}
+		data += 3 + data[2] + 1;
+		if (data > data_end)
+			return NULL;
+		while (data != data_end) {
+			if (*data == '\0')
+				return NULL;
+			if (data + data[0] + 2 > data_end)
+				return NULL;
+			if (data[0] == namelen &&
+			    memcmp(data + 1, name, namelen + 1) == 0)
+				return _servent_parsedb(sd, sp, data_ptr,
+				    datalen);
+			data += data[0] + 2;
+		}
+		return NULL;
 	} else {
 		while (_servent_getline(sd) != -1) {
 			char **cp;

@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.216 2010/03/28 14:08:22 tnozaki Exp $
+#	$NetBSD: shlib_version,v 1.217 2010/04/25 00:54:46 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -37,4 +37,4 @@
 # - increase MB_LEN_MAX 6 -> 32 sys/arch/hppa/include/limits.h
 #   and make it's definition MD -> MI.
 major=12
-minor=171
+minor=172
