@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.302.2.2 2010/04/25 15:27:37 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.302.2.3 2010/04/25 19:39:00 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302.2.2 2010/04/25 15:27:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302.2.3 2010/04/25 19:39:00 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -2204,7 +2204,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
 	extern vaddr_t prom_vstart;
 	extern vaddr_t prom_vend;
-	const vaddr_t v = ptr;
+	const vaddr_t v = (vaddr_t)ptr;
 
 	*handled = (v >= MSGBUF_VA && v < MSGBUF_VA + PAGE_SIZE) ||
 	    (v >= prom_vstart && v < prom_vend && (prot & VM_PROT_WRITE) == 0);

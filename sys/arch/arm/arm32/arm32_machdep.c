@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.73.2.1 2010/03/18 04:36:47 rmind Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.73.2.2 2010/04/25 19:38:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.73.2.1 2010/03/18 04:36:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.73.2.2 2010/04/25 19:38:59 rmind Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -489,9 +489,5 @@ int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	if (pa < ctob(physmem))
-		return 0;
-
-	return kauth_authorize_machdep(kauth_cred_get(),
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+	return (pa < ctob(physmem)) ? 0 : EFAULT;
 }

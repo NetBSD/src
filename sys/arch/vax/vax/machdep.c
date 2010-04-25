@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.179.2.2 2010/04/25 15:27:37 rmind Exp $	 */
+/* $NetBSD: machdep.c,v 1.179.2.3 2010/04/25 19:39:00 rmind Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179.2.2 2010/04/25 15:27:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179.2.3 2010/04/25 19:39:00 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -144,6 +144,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179.2.2 2010/04/25 15:27:37 rmind Exp 
 #define DEV_LEDS	13	/* minor device 13 is leds */
 
 extern vaddr_t virtual_avail, virtual_end;
+extern paddr_t avail_end;
+
 /*
  * We do these external declarations here, maybe they should be done
  * somewhere else...
@@ -180,7 +182,6 @@ cpu_startup(void)
 #if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	vaddr_t		minaddr, maxaddr;
 #endif
-	extern paddr_t avail_end;
 	char pbuf[9];
 
 	/*

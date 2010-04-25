@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79.2.2 2010/04/25 15:27:36 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79.2.3 2010/04/25 19:39:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.2 2010/04/25 15:27:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.3 2010/04/25 19:39:00 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1982,7 +1982,7 @@ int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	return (atop(v) > physmem) ? EFAULT : 0;
+	return (atop(pa) > physmem) ? EFAULT : 0;
 }
 
 int
@@ -1990,5 +1990,5 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
 
 	*handled = false;
-	return mm_md_physacc(ptr, prot);
+	return mm_md_physacc((paddr_t)ptr, prot);
 }

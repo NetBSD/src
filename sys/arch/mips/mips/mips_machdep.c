@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.225.4.2 2010/04/25 15:27:36 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.225.4.3 2010/04/25 19:39:00 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.2 2010/04/25 15:27:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.3 2010/04/25 19:39:00 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -2205,7 +2205,7 @@ int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
 	extern paddr_t avail_end;
-	const vaddr_t v = ptr;
+	const vaddr_t v = (vaddr_t)ptr;
 
 	if (v < MIPS_KSEG0_START) {
 		return EFAULT;
