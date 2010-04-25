@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.252.2.1 2010/03/18 04:36:52 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.252.2.2 2010/04/25 15:27:37 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.1 2010/03/18 04:36:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.2 2010/04/25 15:27:37 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2066,23 +2066,13 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
-	/* Don't know where PROMs are on Ultras.  Think it's at f000000 */
-	vaddr_t prom_vstart = 0xf000000;
-	vaddr_t prom_vend = 0xf0100000;
-
-	size_t msgbufsz = msgbufp->msg_bufs +
+	/* XXX: Don't know where PROMs are on Ultras.  Think it's at f000000 */
+	const vaddr_t prom_vstart = 0xf000000, prom_vend = 0xf0100000;
+	const vaddr_t msgbufpv = (vaddr_t)msgbufp, v = ptr;
+	const size_t msgbufsz = msgbufp->msg_bufs +
 	    offsetof(struct kern_msgbuf, msg_bufc);
-	if ((char *)ptr >= (char *)msgbufp &&
-	    (char *)ptr < (char *)msgbufp + msgbufsz) {
-		*handled = true;
-		return 0;
-	}
 
-	if ((vaddr_t)ptr >= prom_vstart && (vaddr_t)ptr < prom_vend) {
-		*handled = true;
-		return (prot & VM_PROT_WRITE) == 0 ? 0 : EFAULT;
-	}
-
-	*handled = false;
+	*handled = (v >= msgbufpv && v < msgbufpv + msgbufsz) ||
+	    (v >= prom_vstart && v < prom_vend && (prot & VM_PROT_WRITE) == 0);
 	return 0;
 }

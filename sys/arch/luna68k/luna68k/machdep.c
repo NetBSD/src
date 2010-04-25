@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.74.2.1 2010/03/18 04:36:49 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.74.2.2 2010/04/25 15:27:36 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.2.1 2010/03/18 04:36:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.2.2 2010/04/25 15:27:36 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,6 +106,8 @@ int	physmem;		/* set by locore */
  * during autoconfiguration or after a panic.
  */
 int	safepri = PSL_LOWIPL;
+
+extern	u_int lowram;
 
 void luna68k_init(void);
 void identifycpu(void);
@@ -864,11 +866,6 @@ romcngetc(dev_t dev)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
-	extern u_int lowram;
 
-	if (pa >= lowram && pa < 0xfffffffc)
-		return 0;
-
-	return kauth_authorize_machdep(kauth_cred_get(),
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }

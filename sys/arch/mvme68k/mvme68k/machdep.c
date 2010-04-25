@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142.2.1 2010/03/18 04:36:50 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.142.2.2 2010/04/25 15:27:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142.2.1 2010/03/18 04:36:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142.2.2 2010/04/25 15:27:37 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -1186,7 +1186,5 @@ int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	if (pa >= lowram && pa < 0xfffffffc)
-		return 0;
-	return EFAULT;
+	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }

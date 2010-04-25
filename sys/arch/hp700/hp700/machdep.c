@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79.2.1 2010/03/18 04:36:49 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79.2.2 2010/04/25 15:27:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.1 2010/03/18 04:36:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.2 2010/04/25 15:27:36 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1970,9 +1970,25 @@ module_init_md(void)
 }
 #endif /* MODULAR */
 
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+
+	*vaddr = ptoa(physmem) - paddr;
+	return true;
+}
+
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	return (btoc(pa) > totalphysmem) ? EFAULT : 0;
+	return (atop(v) > physmem) ? EFAULT : 0;
+}
+
+int
+mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
+{
+
+	*handled = false;
+	return mm_md_physacc(ptr, prot);
 }
