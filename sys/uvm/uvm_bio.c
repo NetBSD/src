@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.4.2 2010/03/17 06:03:17 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.4.3 2010/04/25 22:48:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.2 2010/03/17 06:03:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.3 2010/04/25 22:48:26 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -448,13 +448,15 @@ ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 	*lenp = MIN(*lenp, ubc_winsize - slot_offset);
 
 	/*
-	 * the object is always locked here, so we don't need to add a ref.
+	 * The object is already referenced, so we do not need to add a ref.
 	 */
 
 	mutex_enter(ubc_object.uobj.vmobjlock);
 again:
 	umap = ubc_find_mapping(uobj, umap_offset);
 	if (umap == NULL) {
+		struct uvm_object *oobj;
+
 		UBC_EVCNT_INCR(wincachemiss);
 		umap = TAILQ_FIRST(UBC_QUEUE(offset));
 		if (umap == NULL) {
@@ -463,23 +465,30 @@ again:
 			goto again;
 		}
 
+		va = UBC_UMAP_ADDR(umap);
+		oobj = umap->uobj;
+
 		/*
 		 * remove from old hash (if any), add to new hash.
 		 */
 
-		if (umap->uobj != NULL) {
+		if (oobj != NULL) {
 			LIST_REMOVE(umap, hash);
+			if (umap->flags & UMAP_MAPPING_CACHED) {
+				umap->flags &= ~UMAP_MAPPING_CACHED;
+				mutex_enter(oobj->vmobjlock);
+				pmap_remove(pmap_kernel(), va,
+				    va + ubc_winsize);
+				mutex_exit(oobj->vmobjlock);
+				pmap_update(pmap_kernel());
+			}
+		} else {
+			KASSERT((umap->flags & UMAP_MAPPING_CACHED) == 0);
 		}
 		umap->uobj = uobj;
 		umap->offset = umap_offset;
 		LIST_INSERT_HEAD(&ubc_object.hash[UBC_HASH(uobj, umap_offset)],
 		    umap, hash);
-		va = UBC_UMAP_ADDR(umap);
-		if (umap->flags & UMAP_MAPPING_CACHED) {
-			umap->flags &= ~UMAP_MAPPING_CACHED;
-			pmap_remove(pmap_kernel(), va, va + ubc_winsize);
-			pmap_update(pmap_kernel());
-		}
 	} else {
 		UBC_EVCNT_INCR(wincachehit);
 		va = UBC_UMAP_ADDR(umap);
