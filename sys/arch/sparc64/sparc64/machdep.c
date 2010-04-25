@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.252.2.2 2010/04/25 15:27:37 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.252.2.3 2010/04/25 19:39:00 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.2 2010/04/25 15:27:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.3 2010/04/25 19:39:00 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2068,11 +2068,18 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
 	/* XXX: Don't know where PROMs are on Ultras.  Think it's at f000000 */
 	const vaddr_t prom_vstart = 0xf000000, prom_vend = 0xf0100000;
-	const vaddr_t msgbufpv = (vaddr_t)msgbufp, v = ptr;
+	const vaddr_t msgbufpv = (vaddr_t)msgbufp, v = (vaddr_t)ptr;
 	const size_t msgbufsz = msgbufp->msg_bufs +
 	    offsetof(struct kern_msgbuf, msg_bufc);
 
 	*handled = (v >= msgbufpv && v < msgbufpv + msgbufsz) ||
 	    (v >= prom_vstart && v < prom_vend && (prot & VM_PROT_WRITE) == 0);
 	return 0;
+}
+
+int
+mm_md_readwrite(dev_t dev, struct uio *uio)
+{
+
+	return ENXIO;
 }

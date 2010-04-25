@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.66.4.2 2010/04/25 15:27:37 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.66.4.3 2010/04/25 19:39:00 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66.4.2 2010/04/25 15:27:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66.4.3 2010/04/25 19:39:00 rmind Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -417,7 +417,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		*handled = true;
 		return 0;
 	}
-	if (va < SH3_P3SEG_BASE)) {
+	if (va < SH3_P3SEG_BASE) {
 		return EFAULT;
 	}
 	*handled = false;
