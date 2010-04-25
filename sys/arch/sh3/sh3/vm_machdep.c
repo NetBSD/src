@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.66.4.1 2010/03/18 04:36:51 rmind Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.66.4.2 2010/04/25 15:27:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66.4.1 2010/03/18 04:36:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.66.4.2 2010/04/25 15:27:37 rmind Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -399,31 +399,27 @@ int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	if (atop(pa) < vm_physmem[0].start || PHYS_TO_VM_PAGE(pa) != NULL)
+	if (atop(pa) < vm_physmem[0].start || PHYS_TO_VM_PAGE(pa) != NULL) {
 		return 0;
-
-	return kauth_authorize_machdep(kauth_cred_get(),
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+	}
+	return EFAULT;
 }
 
 int
 mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 {
-	vaddr_t va = (vaddr_t)ptr;
+	const vaddr_t va = (vaddr_t)ptr;
 
-	if (va >= SH3_P1SEG_BASE && va < SH3_P2SEG_BASE) {
+	if (va < SH3_P1SEG_BASE) {
+		return EFAULT;
+	}
+	if (va < SH3_P2SEG_BASE) {
 		*handled = true;
 		return 0;
 	}
-
-	if (va < SH3_P1SEG_BASE ||
-	    (va >= SH3_P2SEG_BASE && va < SH3_P3SEG_BASE)) {
-		*handled = true;
+	if (va < SH3_P3SEG_BASE)) {
 		return EFAULT;
 	}
-
-	/* XXX: v < SH3_P3SEG_BASE is physmem, anything special needed? */
-
 	*handled = false;
 	return 0;
 }

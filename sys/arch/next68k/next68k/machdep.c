@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.2.1 2010/03/18 04:36:51 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.2.2 2010/04/25 15:27:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.2.1 2010/03/18 04:36:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.2.2 2010/04/25 15:27:37 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -943,7 +943,5 @@ int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	if (pa >= lowram && pa < 0xfffffffc)
-		return 0;
-	return EFAULT;
+	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }

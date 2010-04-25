@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.326.2.1 2010/03/18 04:36:46 rmind Exp $ */
+/* $NetBSD: machdep.c,v 1.326.2.2 2010/04/25 15:27:36 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326.2.1 2010/03/18 04:36:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.326.2.2 2010/04/25 15:27:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1822,10 +1822,8 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 			continue;
 		if ((prot & mem_clusters[i].size & PAGE_MASK) == prot)
 			return 0;
-		return EFAULT;
 	}
-	return kauth_authorize_machdep(kauth_cred_get(),
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+	return EFAULT;
 }
 
 bool
@@ -1833,7 +1831,7 @@ mm_md_direct_mapped_io(void *addr, paddr_t *paddr)
 {
 	vaddr_t va = (vaddr_t)addr;
 
-	if (va >= ALPHA_K0SEG_BASE && va < ALPHA_K0SEG_END) {
+	if (va >= ALPHA_K0SEG_BASE && va <= ALPHA_K0SEG_END) {
 		*paddr = ALPHA_K0SEG_TO_PHYS(va);
 		return true;
 	}

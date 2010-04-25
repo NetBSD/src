@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.42.4.1 2010/03/18 04:36:51 rmind Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.42.4.2 2010/04/25 15:27:37 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42.4.1 2010/03/18 04:36:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.42.4.2 2010/04/25 15:27:37 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_modular.h"
@@ -319,9 +319,5 @@ int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	if (atop(pa) < physmem)
-		return 0;
-
-	return kauth_authorize_machdep(kauth_cred_get(),
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+	return (atop(pa) < physmem) ? 0 : EFAULT;
 }

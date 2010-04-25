@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143.2.1 2010/03/18 04:36:47 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.143.2.2 2010/04/25 15:27:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143.2.1 2010/03/18 04:36:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143.2.2 2010/04/25 15:27:36 rmind Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1809,10 +1809,13 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		*handled = true;
 		if (v < (vaddr_t)&__data_start && (prot & VM_PROT_WRITE))
 			return EFAULT;
+
 	} else if (v >= module_start && v < module_end) {
 		*handled = true;
 		if (!uvm_map_checkprot(module_map, v, v + 1, prot))
 			return EFAULT;
+	} else {
+		*handled = false;
 	}
 	return 0;
 }

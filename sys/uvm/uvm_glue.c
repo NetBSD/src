@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.144.2.1 2010/03/18 04:36:54 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.144.2.2 2010/04/25 15:27:38 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.144.2.1 2010/03/18 04:36:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.144.2.2 2010/04/25 15:27:38 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -90,24 +90,19 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.144.2.1 2010/03/18 04:36:54 rmind Exp
 #include <uvm/uvm.h>
 
 /*
- * XXXCDC: do these really belong here?
- */
-
-/*
- * uvm_kernacc: can the kernel access a region of memory
+ * uvm_kernacc: test if kernel can access a memory region.
  *
- * - used only by /dev/kmem driver (dev/mm.c)
+ * => Currently used only by /dev/kmem driver (dev/mm.c).
  */
-
 bool
-uvm_kernacc(void *addr, vm_prot_t prot)
+uvm_kernacc(void *addr, size_t len, vm_prot_t prot)
 {
-	vaddr_t saddr;
+	vaddr_t saddr = trunc_page((vaddr_t)addr);
+	vaddr_t eaddr = round_page(saddr + len);
 	bool rv;
 
-	saddr = trunc_page((vaddr_t)addr);
 	vm_map_lock_read(kernel_map);
-	rv = uvm_map_checkprot(kernel_map, saddr, saddr + 1, prot);
+	rv = uvm_map_checkprot(kernel_map, saddr, eaddr, prot);
 	vm_map_unlock_read(kernel_map);
 
 	return rv;
