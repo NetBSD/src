@@ -1,7 +1,8 @@
-/*	$NetBSD: subr_pool.c,v 1.182 2010/01/20 23:40:42 rmind Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.183 2010/04/25 11:49:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.182 2010/01/20 23:40:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.183 2010/04/25 11:49:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -1904,7 +1905,7 @@ pool_print1(struct pool *pp, const char *modif, void (*pr)(const char *, ...))
 	if (pc != NULL) {
 		cpuhit = 0;
 		cpumiss = 0;
-		for (i = 0; i < MAXCPUS; i++) {
+		for (i = 0; i < __arraycount(pc->pc_cpus); i++) {
 			if ((cc = pc->pc_cpus[i]) == NULL)
 				continue;
 			cpuhit += cc->cc_hits;
@@ -2158,7 +2159,7 @@ pool_cache_destroy(pool_cache_t pc)
 	mutex_exit(&pp->pr_lock);
 
 	/* Destroy per-CPU data */
-	for (i = 0; i < MAXCPUS; i++)
+	for (i = 0; i < __arraycount(pc->pc_cpus); i++)
 		pool_cache_invalidate_cpu(pc, i);
 
 	/* Finally, destroy it. */
@@ -2180,7 +2181,7 @@ pool_cache_cpu_init1(struct cpu_info *ci, pool_cache_t pc)
 
 	index = ci->ci_index;
 
-	KASSERT(index < MAXCPUS);
+	KASSERT(index < __arraycount(pc->pc_cpus));
 
 	if ((cc = pc->pc_cpus[index]) != NULL) {
 		KASSERT(cc->cc_cpuindex == index);
@@ -3039,7 +3040,7 @@ found:
 					goto print;
 				}
 			}
-			for (i = 0; i < MAXCPUS; i++) {
+			for (i = 0; i < __arraycount(pc->pc_cpus); i++) {
 				pool_cache_cpu_t *cc;
 
 				if ((cc = pc->pc_cpus[i]) == NULL) {
