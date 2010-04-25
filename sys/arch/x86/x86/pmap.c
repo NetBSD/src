@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.1 2010/03/16 15:38:04 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.2 2010/04/25 15:47:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.1 2010/03/16 15:38:04 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.2 2010/04/25 15:47:52 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -417,10 +417,6 @@ paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
 
 #define	VM_PAGE_TO_PP(pg)	(&(pg)->mdpage.mp_pp)
 
-#define	pp_lock(pp)	mutex_spin_enter(&(pp)->pp_lock)
-#define	pp_unlock(pp)	mutex_spin_exit(&(pp)->pp_lock)
-#define	pp_locked(pp)	mutex_owned(&(pp)->pp_lock)
-
 #define	PV_HASH_SIZE		32768
 #define	PV_HASH_LOCK_CNT	32
 
@@ -674,7 +670,6 @@ static struct pv_pte *
 pv_pte_first(struct pmap_page *pp)
 {
 
-	KASSERT(pp_locked(pp));
 	if ((pp->pp_flags & PP_EMBEDDED) != 0) {
 		return &pp->pp_pte;
 	}
@@ -686,7 +681,6 @@ pv_pte_next(struct pmap_page *pp, struct pv_pte *pvpte)
 {
 
 	KASSERT(pvpte != NULL);
-	KASSERT(pp_locked(pp));
 	if (pvpte == &pp->pp_pte) {
 		KASSERT((pp->pp_flags & PP_EMBEDDED) != 0);
 		return NULL;
@@ -1739,8 +1733,6 @@ insert_pv(struct pmap_page *pp, struct pv_entry *pve)
 	kmutex_t *lock;
 	u_int hash;
 
-	KASSERT(pp_locked(pp));
-
 	hash = pvhash_hash(pve->pve_pte.pte_ptp, pve->pve_pte.pte_va);
 	lock = pvhash_lock(hash);
 	hh = pvhash_head(hash);
@@ -1754,7 +1746,6 @@ insert_pv(struct pmap_page *pp, struct pv_entry *pve)
 /*
  * pmap_enter_pv: enter a mapping onto a pv_head lst
  *
- * => caller should have the pp_lock locked
  * => caller should adjust ptp's wire_count before calling
  */
 
@@ -1769,7 +1760,6 @@ pmap_enter_pv(struct pmap_page *pp,
 	KASSERT(ptp == NULL || ptp->wire_count >= 2);
 	KASSERT(ptp == NULL || ptp->uobject != NULL);
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
-	KASSERT(pp_locked(pp));
 
 	if ((pp->pp_flags & PP_EMBEDDED) == 0) {
 		if (LIST_EMPTY(&pp->pp_head.pvh_list)) {
@@ -1801,7 +1791,6 @@ pmap_enter_pv(struct pmap_page *pp,
 /*
  * pmap_remove_pv: try to remove a mapping from a pv_list
  *
- * => caller should hold pp_lock [so that attrs can be adjusted]
  * => caller should adjust ptp's wire_count and free PTP if needed
  * => we return the removed pve
  */
@@ -1816,7 +1805,6 @@ pmap_remove_pv(struct pmap_page *pp, struct vm_page *ptp, vaddr_t va)
 
 	KASSERT(ptp == NULL || ptp->uobject != NULL);
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
-	KASSERT(pp_locked(pp));
 
 	if ((pp->pp_flags & PP_EMBEDDED) != 0) {
 		KASSERT(pp->pp_pte.pte_ptp == ptp);
@@ -3242,7 +3230,6 @@ pmap_unmap_pte(void)
 /*
  * pmap_remove_ptes: remove PTEs from a PTP
  *
- * => must have proper locking on pmap_master_lock
  * => caller must hold pmap's lock
  * => PTP must be mapped into KVA
  * => PTP should be null if pmap == pmap_kernel()
@@ -3309,20 +3296,17 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		}
 
 		pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
-#ifdef DIAGNOSTIC
-		if (pg == NULL)
-			panic("pmap_remove_ptes: unmanaged page marked "
-			      "PG_PVLIST, va = %#" PRIxVADDR ", "
-			      "pa = %#" PRIxPADDR,
-			      startva, (paddr_t)pmap_pte2pa(opte));
-#endif
+
+		KASSERTMSG(pg != NULL, ("pmap_remove_ptes: unmanaged page "
+		    "marked PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
+		    startva, (paddr_t)pmap_pte2pa(opte)));
+
+		KASSERT(uvm_page_locked_p(pg));
 
 		/* sync R/M bits */
 		pp = VM_PAGE_TO_PP(pg);
-		pp_lock(pp);
 		pp->pp_attrs |= opte;
 		pve = pmap_remove_pv(pp, ptp, startva);
-		pp_unlock(pp);
 
 		if (pve != NULL) {
 			pve->pve_next = *pv_tofree;
@@ -3339,7 +3323,6 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 /*
  * pmap_remove_pte: remove a single PTE from a PTP
  *
- * => must have proper locking on pmap_master_lock
  * => caller must hold pmap's lock
  * => PTP must be mapped into KVA
  * => PTP should be null if pmap == pmap_kernel()
@@ -3395,19 +3378,17 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
-#ifdef DIAGNOSTIC
-	if (pg == NULL)
-		panic("pmap_remove_pte: unmanaged page marked "
-		    "PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
-		    va, (paddr_t)pmap_pte2pa(opte));
-#endif
+
+	KASSERTMSG(pg != NULL, ("pmap_remove_pte: unmanaged page marked "
+	    "PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
+	    va, (paddr_t)pmap_pte2pa(opte)));
+
+	KASSERT(uvm_page_locked_p(pg));
 
 	/* sync R/M bits */
 	pp = VM_PAGE_TO_PP(pg);
-	pp_lock(pp);
 	pp->pp_attrs |= opte;
 	pve = pmap_remove_pv(pp, ptp, va);
-	pp_unlock(pp);
 
 	if (pve) { 
 		pve->pve_next = *pv_tofree;
@@ -3545,7 +3526,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 /*
  * pmap_sync_pv: clear pte bits and return the old value of the pte.
  *
- * => called with pp_lock held. (thus preemption disabled)
+ * => Caller should disable kernel preemption.
  * => issues tlb shootdowns if necessary.
  */
 
@@ -3656,13 +3637,14 @@ pmap_page_remove(struct vm_page *pg)
 	lwp_t *l;
 	int count;
 
+	KASSERT(uvm_page_locked_p(pg));
+
 	l = curlwp;
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
 	kpreempt_disable();
 startover:
-	pp_lock(pp);
 	while ((pvpte = pv_pte_first(pp)) != NULL) {
 		struct pmap *pmap;
 		struct pv_entry *pve;
@@ -3684,7 +3666,6 @@ startover:
 		error = pmap_sync_pv(pvpte, expect, ~0, &opte);
 		if (error == EAGAIN) {
 			int hold_count;
-			pp_unlock(pp);
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			if (ptp != NULL) {
 				pmap_destroy(pmap);
@@ -3697,7 +3678,6 @@ startover:
 		pp->pp_attrs |= opte;
 		va = pvpte->pte_va;
 		pve = pmap_remove_pv(pp, ptp, va);
-		pp_unlock(pp);
 
 		/* update the PTP reference count.  free if last reference. */
 		if (ptp != NULL) {
@@ -3725,9 +3705,7 @@ startover:
 			pve->pve_next = killlist;	/* mark it for death */
 			killlist = pve;
 		}
-		pp_lock(pp);
 	}
-	pp_unlock(pp);
 	kpreempt_enable();
 
 	/* Now free unused pvs. */
@@ -3753,12 +3731,14 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	pt_entry_t expect;
 	u_int result;
 
+	KASSERT(uvm_page_locked_p(pg));
+
 	pp = VM_PAGE_TO_PP(pg);
 	if ((pp->pp_attrs & testbits) != 0) {
 		return true;
 	}
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
-	pp_lock(pp);
+	kpreempt_disable();
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
 		pt_entry_t opte;
 		int error;
@@ -3772,7 +3752,7 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 		}
 	}
 	result = pp->pp_attrs & testbits;
-	pp_unlock(pp);
+	kpreempt_enable();
 
 	/*
 	 * note that we will exit the for loop with a non-null pve if
@@ -3797,12 +3777,13 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	pt_entry_t expect;
 	int count;
 
+	KASSERT(uvm_page_locked_p(pg));
+
 	pp = VM_PAGE_TO_PP(pg);
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
 	kpreempt_disable();
 startover:
-	pp_lock(pp);
 	for (pvpte = pv_pte_first(pp); pvpte; pvpte = pv_pte_next(pp, pvpte)) {
 		pt_entry_t opte;
 		int error;
@@ -3810,7 +3791,6 @@ startover:
 		error = pmap_sync_pv(pvpte, expect, clearbits, &opte);
 		if (error == EAGAIN) {
 			int hold_count;
-			pp_unlock(pp);
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			SPINLOCK_BACKOFF(count);
 			KERNEL_LOCK(hold_count, curlwp);
@@ -3820,7 +3800,6 @@ startover:
 	}
 	result = pp->pp_attrs & clearbits;
 	pp->pp_attrs &= ~clearbits;
-	pp_unlock(pp);
 	kpreempt_enable();
 
 	return result != 0;
@@ -4163,19 +4142,16 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	if ((~opte & (PG_V | PG_PVLIST)) == 0) {
 		pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
-#ifdef DIAGNOSTIC
-		if (pg == NULL)
-			panic("pmap_enter: PG_PVLIST mapping with "
-			      "unmanaged page "
-			      "pa = 0x%" PRIx64 " (0x%" PRIx64 ")",
-			      (int64_t)pa, (int64_t)atop(pa));
-#endif
-		old_pp = VM_PAGE_TO_PP(pg);
 
-		pp_lock(old_pp);
+		KASSERTMSG(pg != NULL, ("pmap_enter: PG_PVLIST mapping with "
+		    "unmanaged page pa = 0x%" PRIx64 " (0x%" PRIx64 ")",
+		    (int64_t)pa, (int64_t)atop(pa)));
+
+		KASSERT(uvm_page_locked_p(pg));
+
+		old_pp = VM_PAGE_TO_PP(pg);
 		old_pve = pmap_remove_pv(old_pp, ptp, va);
 		old_pp->pp_attrs |= opte;
-		pp_unlock(old_pp);
 	}
 
 	/*
@@ -4183,9 +4159,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 */
 
 	if (new_pp) {
-		pp_lock(new_pp);
 		new_pve = pmap_enter_pv(new_pp, new_pve, &new_pve2, ptp, va);
-		pp_unlock(new_pp);
 	}
 
 same_pa:
