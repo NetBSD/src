@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdbw.3,v 1.1 2010/04/25 00:54:46 joerg Exp $
+.\"	$NetBSD: cdbw.3,v 1.2 2010/04/25 10:32:44 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,8 +76,8 @@
 .Sh DESCRIPTION
 The
 .Nm cdbw
-funcations are used to create a constant databases for use with
-.Xr cdbr 5 .
+functions are used to create a constant databases for use with
+.Xr cdbr 3 .
 Details about the file format, including overhead and limitations,
 can be found in
 .Xr cdb 5 .
@@ -92,7 +92,7 @@ The function returns a handle to pass to the other functions.
 frees all resources associated with the handle.
 .Pp
 .Fn cdbw_put
-adds the given key,value pair after checking for a duplicate key.
+adds the given (key,value) pair after checking for a duplicate key.
 .Fn cdbw_put_data
 adds the given value to the writer without adding a key reference.
 The returned index can be used in subsequent calls to
@@ -104,7 +104,7 @@ On success it adds the given key.
 .Pp
 .Fn cdbw_output
 computes the database file and writes it to the given descriptor.
-The function returns an error, if the file cannot be written correctly.
+The function returns an error if the file cannot be written correctly.
 The
 .Fn descr
 parameter provides a human readable description of the database content.
@@ -112,7 +112,7 @@ The
 .Fn seedgen
 parameter can be used to override the default PRNG.
 The function should return a different value for each invokation.
-The bitwise layout of the output depends on the choosen seed.
+The bitwise layout of the output depends on the chosen seed.
 .Sh SEE ALSO
 .Xr cdbr 3 ,
 .Xr cdb 5
