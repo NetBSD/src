@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.187 2010/04/24 19:51:15 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.188 2010/04/25 09:12:38 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.187 2010/04/24 19:51:15 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.188 2010/04/25 09:12:38 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1462,6 +1462,13 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			break;
 		}
 
+		/*
+		 * This will evaluate the  _PTS and _SST methods,
+		 * but unlike the documentation claims, not _GTS,
+		 * which is evaluated in AcpiEnterSleepState().
+		 *
+		 * This must be called with interrupts enabled.
+		 */
 		rv = AcpiEnterSleepStatePrep(state);
 
 		if (ACPI_FAILURE(rv)) {
