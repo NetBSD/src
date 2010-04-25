@@ -1,4 +1,4 @@
-.\" $NetBSD: coretemp.4,v 1.4 2009/05/18 09:39:14 wiz Exp $
+.\" $NetBSD: coretemp.4,v 1.5 2010/04/25 18:01:08 jruoho Exp $
 .\"-
 .\" Copyright (c) 2007 Juan Romero Pardines.
 .\" Copyright (c) 2007 Dag-Erling Coïdan Smørgrav
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/coretemp.4,v 1.4 2007/10/15 20:00:19 netchild Exp $
 .\"
-.Dd December 21, 2007
+.Dd April 25, 2010
 .Dt CORETEMP 4
 .Os
 .Sh NAME
@@ -41,25 +41,24 @@ The
 driver provides support for the on-die digital thermal sensor present
 on Intel Core and newer CPUs.
 .Pp
-The
-.Nm
-driver reports each core's temperature through the
+The temperatures can be observed by using the
 .Xr envsys 4
-API.
-The driver has only 1 temperature sensor:
-.Bl -column "Sensor" "Units" "Typical" -offset indent
-.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
-.It Li "sensor0" Ta "uK" Ta "cpuN temperature"
-.El
+.Tn API
+or the
+.Xr envstat 8
+command.
+Temperatures are reported for each core separately.
 .Sh EVENTS
 The
 .Nm
 driver is able to send a
 .Em critical
 event to the
-.Fa /etc/powerd/scripts/sensor_temperature
 .Xr powerd 8
-script (if running) when the temperature has reached a critical state.
+daemon.
+The script
+.Fa /etc/powerd/scripts/sensor_temperature
+will be executed by the daemon (if running) when the limit has been reached.
 .Sh SEE ALSO
 .Xr envsys 4 ,
 .Xr envstat 8 ,
@@ -69,7 +68,7 @@ The
 .Nm
 driver first appeared in
 .Fx 7.0 .
-And then was ported to
+It was later ported to
 .Nx 5.0 .
 .Sh AUTHORS
 .An -nosplit
