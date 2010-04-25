@@ -1,4 +1,4 @@
-.\"	$NetBSD: cdbr.3,v 1.1 2010/04/25 00:54:46 joerg Exp $
+.\"	$NetBSD: cdbr.3,v 1.2 2010/04/25 10:32:44 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-library provides a space efficient key,value database based
+library provides a space efficient (key,value) database based
 on perfect hashing.
 .Pp
 A cdb database is opened for reading by calling
@@ -81,7 +81,7 @@ is invalidated.
 .Pp
 The number of records in the database can be obtained by calling
 .Fn cdbr_entries .
-Records can be obtained by record number by using
+Records can be obtained by record number using
 .Fn cdbr_get
 or by key using
 .Fn cdbr_find .
@@ -97,13 +97,13 @@ remains valid until
 is called.
 It is the responsibility of the caller of
 .Fn cdbr_find
-to ensure, that the key matches the returned data.
+to ensure that the key matches the returned data.
 The function returns the only possible match, but the database doesn't store
 the keys to minimize overhead.
 .Sh SEE ALSO
 .Xr nbperf 1 ,
-.Xr db 3 ,
 .Xr cdbw 3 ,
+.Xr db 3 ,
 .Xr cdb 5
 .Sh HISTORY
 Support for the
