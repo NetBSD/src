@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.179.2.1 2010/03/18 04:36:53 rmind Exp $	 */
+/* $NetBSD: machdep.c,v 1.179.2.2 2010/04/25 15:27:37 rmind Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179.2.1 2010/03/18 04:36:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179.2.2 2010/04/25 15:27:37 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -782,15 +782,19 @@ generic_reboot(int arg)
 	__asm("halt");
 }
 
+bool
+mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
+{
+
+	*vaddr = paddr + KERNBASE;
+	return true;
+}
+
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
 
-	if (pa < ctob(physmem))
-		return 0;
-
-	return kauth_authorize_machdep(kauth_cred_get(),
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
+	return (pa < avail_end) ? 0 : EFAULT;
 }
 
 int

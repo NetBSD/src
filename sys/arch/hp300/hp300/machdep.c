@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.2.1 2010/03/18 04:36:48 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.2.2 2010/04/25 15:27:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.1 2010/03/18 04:36:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.2 2010/04/25 15:27:36 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1294,10 +1294,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	 * Do not allow reading intio or dio device space.  This could lead
 	 * to corruption of device registers.
 	 */
-	if (ISIIOVA(ptr) || ((uint8_t *)ptr >= extiobase &&
-	    (uint8_t *)ptr < extiobase + (EIOMAPSIZE * PAGE_SIZE))) {
-		*handled = true;
-		return EFAULT;
-	}
-	return 0;
+	*handled = false;
+	return (ISIIOVA(ptr) || (ptr >= extiobase &&
+	    ptr < (extiobase + (EIOMAPSIZE * PAGE_SIZE)))) ? EFAULT : 0;
 }

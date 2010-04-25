@@ -1,11 +1,11 @@
-/*	$NetBSD: mm.c,v 1.13.16.1 2010/03/18 04:36:54 rmind Exp $	*/
+/*	$NetBSD: mm.c,v 1.13.16.2 2010/04/25 15:27:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas and Joerg Sonnenberger.
+ * by Christos Zoulas, Joerg Sonnenberger and Mindaugas Rasiukevicius.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,8 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Special /dev/{mem,kmem,zero,null} memory devices.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.13.16.1 2010/03/18 04:36:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.13.16.2 2010/04/25 15:27:35 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -65,6 +69,16 @@ const struct cdevsw mem_cdevsw = {
 	D_MPSAFE
 };
 
+#ifdef pmax	/* XXX */
+const struct cdevsw mem_ultrix_cdevsw = {
+	nullopen, nullclose, mm_readwrite, mm_readwrite, mm_ioctl,
+	nostop, notty, nopoll, mm_mmap, nokqfilter, D_MPSAFE
+};
+#endif
+
+/*
+ * mm_init: initialize memory device driver.
+ */
 void
 mm_init(void)
 {
@@ -72,60 +86,86 @@ mm_init(void)
 
 	mutex_init(&dev_mem_lock, MUTEX_DEFAULT, IPL_NONE);
 
+	/* Read-only zero-page. */
 	pg = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	KASSERT(pg != 0);
 	pmap_protect(pmap_kernel(), pg, pg + PAGE_SIZE, VM_PROT_READ);
 	dev_zero_page = (void *)pg;
 
+#ifndef __HAVE_MM_MD_PREFER_VA
+	/* KVA for mappings during I/O. */
 	dev_mem_addr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
 	KASSERT(dev_mem_addr != 0);
+#endif
 }
 
+/*
+ * dev_kmem_readwrite: helper for DEV_MEM (/dev/mem) case of R/W.
+ */
 static int
 dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 {
-	bool have_direct;
 	paddr_t paddr;
 	vaddr_t vaddr;
 	vm_prot_t prot;
 	size_t len, offset;
+	bool have_direct;
 	int error;
 
+	/* Check for wrap around. */
 	if ((intptr_t)uio->uio_offset != uio->uio_offset) {
 		return EFAULT;
 	}
 	paddr = uio->uio_offset & ~PAGE_MASK;
-	offset = uio->uio_offset & PAGE_MASK;
-	len = min(uio->uio_resid, PAGE_SIZE - offset);
-	prot = uio->uio_rw == UIO_WRITE ? VM_PROT_WRITE : VM_PROT_READ;
-
+	prot = (uio->uio_rw == UIO_WRITE) ? VM_PROT_WRITE : VM_PROT_READ;
 	error = mm_md_physacc(paddr, prot);
 	if (error) {
 		return error;
 	}
+	offset = uio->uio_offset & PAGE_MASK;
+	len = min(uio->uio_resid, PAGE_SIZE - offset);
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
+	/* Is physical address directly mapped?  Return VA. */
 	have_direct = mm_md_direct_mapped_phys(paddr, &vaddr);
 #else
 	have_direct = false;
 #endif
 	if (!have_direct) {
+#ifndef __HAVE_MM_MD_PREFER_VA
+		const vaddr_t va = dev_mem_addr;
+#else
+		/* Get a special virtual address. */
+		const vaddr_t va = mm_md_getva(paddr);
+#endif
+		/* Map selected KVA to physical address. */
 		mutex_enter(&dev_mem_lock);
-		pmap_enter(pmap_kernel(), dev_mem_addr, paddr, prot,
-		    prot | PMAP_WIRED);
+		pmap_kenter_pa(va, paddr, prot, 0);
 		pmap_update(pmap_kernel());
 
-		vaddr = dev_mem_addr + offset;
+		/* Perform I/O. */
+		vaddr = va + offset;
 		error = uiomove((void *)vaddr, len, uio);
 
-		pmap_remove(pmap_kernel(), dev_mem_addr, PAGE_SIZE);
+		/* Unmap.  Note: no need for pmap_update(). */
+		pmap_kremove(va, PAGE_SIZE);
 		mutex_exit(&dev_mem_lock);
+
+#ifdef __HAVE_MM_MD_PREFER_VA
+		/* "Release" the virtual address. */
+		mm_md_relva(va);
+#endif
 	} else {
+		/* Direct map, just perform I/O. */
+		vaddr += offset;
 		error = uiomove((void *)vaddr, len, uio);
 	}
 	return error;
 }
 
+/*
+ * dev_kmem_readwrite: helper for DEV_KMEM (/dev/kmem) case of R/W.
+ */
 static int
 dev_kmem_readwrite(struct uio *uio, struct iovec *iov)
 {
@@ -135,51 +175,76 @@ dev_kmem_readwrite(struct uio *uio, struct iovec *iov)
 	int error;
 	bool md_kva;
 
+	/* Check for wrap around. */
 	addr = (void *)(intptr_t)uio->uio_offset;
 	if ((uintptr_t)addr != uio->uio_offset) {
 		return EFAULT;
 	}
+	/*
+	 * Handle non-page aligned offset.
+	 * Otherwise, we operate in page-by-page basis.
+	 */
 	offset = uio->uio_offset & PAGE_MASK;
 	len = min(uio->uio_resid, PAGE_SIZE - offset);
-	prot = uio->uio_rw == UIO_WRITE ? VM_PROT_WRITE : VM_PROT_READ;
+	prot = (uio->uio_rw == UIO_WRITE) ? VM_PROT_WRITE : VM_PROT_READ;
 
 	md_kva = false;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_IO
 	paddr_t paddr;
+	/* MD case: is this is a directly mapped address? */
 	if (mm_md_direct_mapped_io(addr, &paddr)) {
+		/* If so, validate physical address. */
 		error = mm_md_physacc(paddr, prot);
-		if (error)
+		if (error) {
 			return error;
+		}
 		md_kva = true;
 	}
 #endif
+	if (!md_kva) {
+		bool checked = false;
 
 #ifdef __HAVE_MM_MD_KERNACC
-	if (!md_kva && (error = mm_md_kernacc(addr, prot, &md_kva)) != 0) {
-		return error;
-	}
+		/* MD check for the address. */
+		error = mm_md_kernacc(addr, prot, &checked);
+		if (error) {
+			return error;
+		}
 #endif
-	if (!md_kva && !uvm_kernacc(addr, prot)) {
-		return EFAULT;
+		/* UVM check for the address (unless MD indicated to not). */
+		if (!checked && !uvm_kernacc(addr, len, prot)) {
+			return EFAULT;
+		}
 	}
 	error = uiomove(addr, len, uio);
 	return error;
 }
 
-static int
+/*
+ * dev_zero_readwrite: helper for DEV_ZERO (/dev/null) case of R/W.
+ */
+static inline int
 dev_zero_readwrite(struct uio *uio, struct iovec *iov)
 {
 	size_t len;
 
+	/* Nothing to do for the write case. */
 	if (uio->uio_rw == UIO_WRITE) {
 		uio->uio_resid = 0;
 		return 0;
 	}
+	/*
+	 * Read in page-by-page basis, caller will continue.
+	 * Cut appropriately for a single/last-iteration cases.
+	 */
 	len = min(iov->iov_len, PAGE_SIZE);
 	return uiomove(dev_zero_page, len, uio);
 }
 
+/*
+ * mm_readwrite: general memory R/W function.
+ */
 static int
 mm_readwrite(dev_t dev, struct uio *uio, int flags)
 {
@@ -187,6 +252,7 @@ mm_readwrite(dev_t dev, struct uio *uio, int flags)
 	int error;
 
 #ifdef __HAVE_MM_MD_READWRITE
+	/* If defined - there are extra MD cases. */
 	switch (minor(dev)) {
 	case DEV_MEM:
 	case DEV_KMEM:
@@ -204,11 +270,13 @@ mm_readwrite(dev_t dev, struct uio *uio, int flags)
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
-			++uio->uio_iov;
-			--uio->uio_iovcnt;
+			/* Processed; next I/O vector. */
+			uio->uio_iov++;
+			uio->uio_iovcnt--;
 			KASSERT(uio->uio_iovcnt >= 0);
 			continue;
 		}
+		/* Helper functions will process in page-by-page basis. */
 		switch (minor(dev)) {
 		case DEV_MEM:
 			error = dev_mem_readwrite(uio, iov);
@@ -236,12 +304,16 @@ mm_readwrite(dev_t dev, struct uio *uio, int flags)
 	return error;
 }
 
+/*
+ * mm_mmap: general mmap() handler.
+ */
 static paddr_t
 mm_mmap(dev_t dev, off_t off, int acc)
 {
 	vm_prot_t prot;
 
 #ifdef __HAVE_MM_MD_MMAP
+	/* If defined - there are extra mmap() MD cases. */
 	switch (minor(dev)) {
 	case DEV_MEM:
 	case DEV_KMEM:
@@ -271,6 +343,7 @@ mm_mmap(dev_t dev, off_t off, int acc)
 	if (acc & PROT_WRITE)
 		prot |= VM_PROT_WRITE;
 
+	/* Validate the physical address. */
 	if (mm_md_physacc(off, prot) != 0) {
 		return -1;
 	}
