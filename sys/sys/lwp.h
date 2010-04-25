@@ -1,7 +1,8 @@
-/*	$NetBSD: lwp.h,v 1.131 2010/04/23 19:18:09 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.132 2010/04/25 15:55:24 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
+ *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +58,7 @@
  * l:	*l_mutex
  * p:	l_proc->p_lock
  * s:	spc_mutex, which may or may not be referenced by l_mutex
- * S:	l_selcpu->sc_lock
+ * S:	l_selcluster->sc_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be reliably accessed by the LWP itself
  * ?:	undecided
@@ -134,7 +135,7 @@ struct lwp {
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
 	int		l_selflag;	/* S: select() flags */
 	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
-	struct selcpu	*l_selcpu;	/* !: associated per-CPU select data */
+	struct selcluster *l_selcluster;/* !: associated select data */
 	char		*l_name;	/* (: name, optional */
 
 	/* Signals */
