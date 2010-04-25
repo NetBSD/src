@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pv.h,v 1.2 2008/01/28 11:06:42 yamt Exp $	*/
+/*	$NetBSD: pmap_pv.h,v 1.2.36.1 2010/04/25 15:47:52 rmind Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -65,7 +65,6 @@ struct pv_entry {
  */
 
 struct pmap_page {
-	kmutex_t pp_lock;
 	union {
 		/* PP_EMBEDDED */
 		struct pv_pte u_pte;
@@ -88,7 +87,6 @@ struct pmap_page {
 /* pp_flags */
 #define	PP_EMBEDDED	1
 
-#define	PMAP_PAGE_INIT(pp) \
-	mutex_init(&(pp)->pp_lock, MUTEX_NODEBUG, IPL_VM)
+#define	PMAP_PAGE_INIT(pp)	/* none */
 
 #endif /* !_X86_PMAP_PV_H_ */
