@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.189 2010/04/25 10:05:22 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.190 2010/04/25 17:03:08 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.189 2010/04/25 10:05:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.190 2010/04/25 17:03:08 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1454,19 +1454,13 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			break;
 		}
 
-		acpi_wakedev_commit(sc, state);
-
-		if (state != ACPI_STATE_S1 &&
-		    pmf_system_suspend(PMF_Q_NONE) != true) {
-			aprint_error_dev(sc->sc_dev, "aborting suspend\n");
-			break;
-		}
-
 		/*
-		 * Evaluate the _TTS method, which should be called
-		 * before _PTS. We should also re-evaluate this once
-		 * we return to S0 (see ACPI 3.0, section 7.3.6).
-		 * In reality, _TTS is seldom seen in the field.
+		 * Evaluate the _TTS method. This should be done before
+		 * pmf_system_suspend(9) and the evaluation of _PTS.
+		 * We should also re-evaluate this once we return to
+		 * S0 or if we abort the sleep state transition in the
+		 * middle (see ACPI 3.0, section 7.3.6). In reality,
+		 * however, the _TTS method is seldom seen in the field.
 		 */
 		rv = acpi_eval_set_integer(NULL, "\\_TTS", state);
 
@@ -1474,6 +1468,14 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			aprint_debug_dev(sc->sc_dev, "evaluated _TTS\n");
 
 		rv = AE_OK;
+
+		acpi_wakedev_commit(sc, state);
+
+		if (state != ACPI_STATE_S1 &&
+		    pmf_system_suspend(PMF_Q_NONE) != true) {
+			aprint_error_dev(sc->sc_dev, "aborting suspend\n");
+			break;
+		}
 
 		/*
 		 * This will evaluate the  _PTS and _SST methods,
@@ -1520,7 +1522,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 
 	case ACPI_STATE_S5:
 
-		(void)acpi_eval_set_integer(NULL, "\\_TTS", state);
+		(void)acpi_eval_set_integer(NULL, "\\_TTS", ACPI_STATE_S5);
 
 		rv = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
 
