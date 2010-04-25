@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.190 2010/04/25 17:03:08 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.191 2010/04/25 17:06:23 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.190 2010/04/25 17:03:08 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.191 2010/04/25 17:06:23 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1451,7 +1451,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		if ((sc->sc_sleepstates & __BIT(state)) == 0) {
 			aprint_error_dev(sc->sc_dev, "sleep state "
 			    "S%d is not available\n", state);
-			break;
+			return AE_OK;
 		}
 
 		/*
