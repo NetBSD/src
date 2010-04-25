@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.188 2010/04/25 09:12:38 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.189 2010/04/25 10:05:22 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.188 2010/04/25 09:12:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.189 2010/04/25 10:05:22 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1463,6 +1463,19 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		}
 
 		/*
+		 * Evaluate the _TTS method, which should be called
+		 * before _PTS. We should also re-evaluate this once
+		 * we return to S0 (see ACPI 3.0, section 7.3.6).
+		 * In reality, _TTS is seldom seen in the field.
+		 */
+		rv = acpi_eval_set_integer(NULL, "\\_TTS", state);
+
+		if (ACPI_SUCCESS(rv))
+			aprint_debug_dev(sc->sc_dev, "evaluated _TTS\n");
+
+		rv = AE_OK;
+
+		/*
 		 * This will evaluate the  _PTS and _SST methods,
 		 * but unlike the documentation claims, not _GTS,
 		 * which is evaluated in AcpiEnterSleepState().
@@ -1504,7 +1517,10 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		}
 
 		break;
+
 	case ACPI_STATE_S5:
+
+		(void)acpi_eval_set_integer(NULL, "\\_TTS", state);
 
 		rv = AcpiEnterSleepStatePrep(ACPI_STATE_S5);
 
@@ -1522,10 +1538,13 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		(void)AcpiEnterSleepState(ACPI_STATE_S5);
 
 		aprint_error_dev(sc->sc_dev, "WARNING: powerdown failed!\n");
+
 		break;
 	}
 
 	sc->sc_sleepstate = ACPI_STATE_S0;
+
+	(void)acpi_eval_set_integer(NULL, "\\_TTS", ACPI_STATE_S0);
 
 	return rv;
 }
