@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.40 2009/12/14 18:39:19 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.41 2010/04/25 15:39:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.40 2009/12/14 18:39:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.41 2010/04/25 15:39:41 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
@@ -174,7 +174,9 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t opc)
 	int code, error;
 #if defined(__mips_o32)
 	const int abi = _MIPS_BSD_API_O32;
-	KASSERTMSG(p->p_md.md_abi != abi, ("pid %d(%p): md_abi(%d) != abi(%d)", p->p_pid, p, p->p_md.md_abi, abi));
+	KASSERTMSG(p->p_md.md_abi == abi,
+	    ("pid %d(%p): md_abi(%d) != abi(%d)",
+	    p->p_pid, p, p->p_md.md_abi, abi));
 	size_t nregs = 4;
 #else
 	const int abi = p->p_md.md_abi;
