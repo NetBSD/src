@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79.2.3 2010/04/25 19:39:00 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79.2.4 2010/04/25 21:08:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.3 2010/04/25 19:39:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.4 2010/04/25 21:08:41 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -244,9 +244,6 @@ u_int hppa_btlb_size_min, hppa_btlb_size_max;
  */
 struct extent *hp700_io_extent;
 static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
-
-/* Virtual page frame for /dev/mem (see mem.c) */
-vaddr_t vmmap;
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store = {
@@ -875,14 +872,6 @@ cpu_startup(void)
 #endif
 	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(uvmexp.free));
 	printf("avail mem = %s\n", pbuf[0]);
-
-	/*
-	 * Allocate a virtual page (for use by /dev/mem)
-	 * This page is handed to pmap_enter() therefore
-	 * it has to be in the normal kernel VA range.
-	 */
-	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 }
 
 /*

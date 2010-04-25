@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.13.16.2 2010/04/25 15:27:35 rmind Exp $	*/
+/*	$NetBSD: mm.c,v 1.13.16.3 2010/04/25 21:08:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.13.16.2 2010/04/25 15:27:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.13.16.3 2010/04/25 21:08:45 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -94,7 +94,8 @@ mm_init(void)
 
 #ifndef __HAVE_MM_MD_PREFER_VA
 	/* KVA for mappings during I/O. */
-	dev_mem_addr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
+	dev_mem_addr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY|UVM_KMF_WAITVA);
 	KASSERT(dev_mem_addr != 0);
 #endif
 }
