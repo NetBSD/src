@@ -1,4 +1,4 @@
-/*	$NetBSD: getservent_r.c,v 1.9 2008/01/06 16:34:18 christos Exp $	*/
+/*	$NetBSD: getservent_r.c,v 1.10 2010/04/25 00:54:46 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,18 +34,18 @@
 #if 0
 static char sccsid[] = "@(#)getservent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservent_r.c,v 1.9 2008/01/06 16:34:18 christos Exp $");
+__RCSID("$NetBSD: getservent_r.c,v 1.10 2010/04/25 00:54:46 joerg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <netdb.h>
+#include <cdbr.h>
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <fcntl.h>
-#include <db.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "servent.h"
 
@@ -58,27 +58,48 @@ __weak_alias(setservent_r,_setservent_r)
 int
 _servent_open(struct servent_data *sd)
 {
-	sd->flags |= _SV_FIRST;
-	if (sd->db == NULL) {
-		if ((sd->db = dbopen(_PATH_SERVICES_DB, O_RDONLY, 0,
-		    DB_HASH, NULL)) != NULL)
-			sd->flags |= _SV_DB;
-		else 
-			sd->db = fopen(_PATH_SERVICES, "r");
+	if (sd->flags & (_SV_CDB | _SV_PLAINFILE)) {
+		sd->flags |= _SV_FIRST;
+		return 0;
 	}
-	return sd->db ? 0 : -1;
+
+	free(sd->line);
+	sd->line = NULL;
+	free(sd->cdb_buf);
+	sd->cdb_buf = NULL;
+	sd->cdb_buf_len = 0;
+	free(sd->aliases);
+	sd->aliases = NULL;
+	sd->maxaliases = 0;
+	sd->flags |= _SV_FIRST;
+
+	sd->cdb = cdbr_open(_PATH_SERVICES_CDB, CDBR_DEFAULT);
+	if (sd->cdb != NULL) {
+		sd->flags |= _SV_CDB;
+		return 0;
+	}
+		
+	sd->plainfile = fopen(_PATH_SERVICES, "r");
+	if (sd->plainfile != NULL) {
+		sd->flags |= _SV_PLAINFILE;
+		return 0;
+	}
+	return -1;
 }
 
 void
 _servent_close(struct servent_data *sd)
 {
-	if (sd->db) {
-		if (sd->flags & _SV_DB) {
-			DB *db = sd->db;
-			(*db->close)(db);
-		} else
-			(void)fclose((FILE *)sd->db);
-		sd->db = NULL;
+	if (sd->flags & _SV_CDB) {
+		cdbr_close(sd->cdb);
+		sd->cdb = NULL;
+		sd->flags &= ~_SV_CDB;
+	}
+
+	if (sd->flags & _SV_PLAINFILE) {
+		(void)fclose(sd->plainfile);
+		sd->plainfile = NULL;
+		sd->flags &= ~_SV_PLAINFILE;
 	}
 	sd->flags &= ~_SV_STAYOPEN;
 }
@@ -87,41 +108,24 @@ _servent_close(struct servent_data *sd)
 int
 _servent_getline(struct servent_data *sd)
 {
-	if (sd->line) {
-		free(sd->line);
-		sd->line = NULL;
-	}
 
-	if (sd->db == NULL)
+	if (sd->flags & _SV_CDB)
 		return -1;
 
-	if (sd->flags & _SV_DB) {
-		DB *db = sd->db;
-		DBT key, data;
-		u_int flags  = (sd->flags & _SV_FIRST) ? R_FIRST : R_NEXT;
+	if ((sd->flags & _SV_PLAINFILE) == 0)
+		return -1;
 
-		while ((*db->seq)(db, &key, &data, flags) == 0) {
-			flags = R_NEXT;
-			switch (((u_char *)key.data)[0]) {
-			case (u_char)'\377':
-			case (u_char)'\376':
-				continue;
-			default:
-				break;
-			}
-			sd->line = strdup(data.data);
-			break;
-		}
-	} else {
-		if (sd->flags & _SV_FIRST)
-			(void)rewind((FILE *)sd->db);
-		sd->line = fparseln((FILE *)sd->db, NULL, NULL, NULL,
-		    FPARSELN_UNESCALL);
+	free(sd->line);
+	sd->line = NULL;
+
+	if (sd->flags & _SV_FIRST) {
+		(void)rewind((FILE *)sd->plainfile);
+		sd->flags &= ~_SV_FIRST;
 	}
-	sd->flags &= ~_SV_FIRST;
+	sd->line = fparseln(sd->plainfile, NULL, NULL, NULL,
+	    FPARSELN_UNESCALL);
 	return sd->line == NULL ? -1 : 0;
 }
-
 
 struct servent *
 _servent_parseline(struct servent_data *sd, struct servent *sp)
@@ -148,7 +152,7 @@ _servent_parseline(struct servent_data *sd, struct servent *sp)
 	sp->s_proto = cp;
 	if (sd->aliases == NULL) {
 		sd->maxaliases = 10;
-		sd->aliases = malloc(sd->maxaliases * sizeof(char *));
+		sd->aliases = calloc(sd->maxaliases, sizeof(*sd->aliases));
 		if (sd->aliases == NULL) {
 			oerrno = errno;
 			endservent_r(sd);
@@ -156,7 +160,7 @@ _servent_parseline(struct servent_data *sd, struct servent *sp)
 			return NULL;
 		}
 	}
-	q = sp->s_aliases = sd->aliases;
+	sp->s_aliases = sd->aliases;
 	cp = strpbrk(cp, " \t");
 	if (cp != NULL)
 		*cp++ = '\0';
@@ -167,8 +171,7 @@ _servent_parseline(struct servent_data *sd, struct servent *sp)
 		}
 		if (i == sd->maxaliases - 2) {
 			sd->maxaliases *= 2;
-			q = realloc(q,
-			    sd->maxaliases * sizeof(char *));
+			q = realloc(sd->aliases, sd->maxaliases * sizeof(*q));
 			if (q == NULL) {
 				oerrno = errno;
 				endservent_r(sd);
@@ -177,12 +180,12 @@ _servent_parseline(struct servent_data *sd, struct servent *sp)
 			}
 			sp->s_aliases = sd->aliases = q;
 		}
-		q[i++] = cp;
+		sp->s_aliases[i++] = cp;
 		cp = strpbrk(cp, " \t");
 		if (cp != NULL)
 			*cp++ = '\0';
 	}
-	q[i] = NULL;
+	sp->s_aliases[i] = NULL;
 	return sp;
 }
 
@@ -197,28 +200,124 @@ void
 endservent_r(struct servent_data *sd)
 {
 	_servent_close(sd);
-	if (sd->aliases) {
-		free(sd->aliases);
-		sd->aliases = NULL;
-		sd->maxaliases = 0;
-	}
-	if (sd->line) {
-		free(sd->line);
-		sd->line = NULL;
-	}
+	free(sd->aliases);
+	sd->aliases = NULL;
+	sd->maxaliases = 0;
+	free(sd->line);
+	sd->line = NULL;
+	free(sd->cdb_buf);
+	sd->cdb_buf = NULL;
+	sd->cdb_buf_len = 0;
 }
 
 struct servent *
 getservent_r(struct servent *sp, struct servent_data *sd)
 {
-	if (sd->db == NULL && _servent_open(sd) == -1)
+
+	if ((sd->flags & (_SV_CDB | _SV_PLAINFILE)) == 0 &&
+	    _servent_open(sd) == -1)
 		return NULL;
 
-	for (;;) {
-		if (_servent_getline(sd) == -1)
+	if (sd->flags & _SV_CDB) {
+		const void *data;
+		size_t len;
+
+		if (sd->flags & _SV_FIRST) {
+			sd->cdb_index = 0;
+			sd->flags &= ~_SV_FIRST;
+		}
+
+		if (cdbr_get(sd->cdb, sd->cdb_index, &data, &len))
 			return NULL;
-		if (_servent_parseline(sd, sp) == NULL)
-			continue;
-		return sp;
+		++sd->cdb_index;
+		return _servent_parsedb(sd, sp, data, len);
 	}
+	if (sd->flags & _SV_PLAINFILE) {
+		for (;;) {
+			if (_servent_getline(sd) == -1)
+				return NULL;
+			if (_servent_parseline(sd, sp) == NULL)
+				continue;
+			return sp;
+		}
+	}
+	return NULL;
 }
+
+struct servent *
+_servent_parsedb(struct servent_data *sd, struct servent *sp,
+    const uint8_t *data, size_t len)
+{
+	char **q;
+	size_t i;
+	int oerrno;
+
+	if ((sd->flags & _SV_STAYOPEN) == 0) {
+		if (len > sd->cdb_buf_len) {
+			void *tmp = realloc(sd->cdb_buf, len);
+			if (tmp == NULL)
+				goto fail;
+			sd->cdb_buf = tmp;
+			sd->cdb_buf_len = len;
+		}
+		memcpy(sd->cdb_buf, data, len);
+		data = sd->cdb_buf;
+	}
+
+	if (len < 2)
+		goto fail;
+	sp->s_port = htobe16(be16dec(data));
+	data += 2;
+	len -= 2;
+
+	if (len == 0 || len < (size_t)data[0] + 2)
+		goto fail;
+	sp->s_proto = __UNCONST(data + 1);
+
+	if (sp->s_proto[data[0]] != '\0')
+		goto fail;
+
+	len -= 2 + data[0];
+	data += 2 + data[0];
+
+	if (len == 0)
+		goto fail;
+	if (len < (size_t)data[0] + 2)
+		goto fail;
+
+	sp->s_name = __UNCONST(data + 1);
+	len -= 2 + data[0];
+	data += 2 + data[0];
+
+	if (sd->aliases == NULL) {
+		sd->maxaliases = 10;
+		sd->aliases = malloc(sd->maxaliases * sizeof(char *));
+		if (sd->aliases == NULL)
+			goto fail;
+	}
+	sp->s_aliases = sd->aliases;
+	i = 0;
+	while (len) {
+		if (len < (size_t)data[0] + 2)
+			goto fail;
+		if (i == sd->maxaliases - 2) {
+			sd->maxaliases *= 2;
+			q = realloc(sd->aliases, sd->maxaliases * sizeof(*q));
+			if (q == NULL)
+				goto fail;
+			sp->s_aliases = sd->aliases = q;
+		}
+		sp->s_aliases[i++] = __UNCONST(data + 1);
+		len -= 2 + data[0];
+		data += 2 + data[0];
+	}
+	sp->s_aliases[i] = NULL;
+	return sp;
+
+fail:
+	oerrno = errno;
+	endservent_r(sd);
+	errno = oerrno;
+	return NULL;
+}
+

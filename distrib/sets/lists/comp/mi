@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1435 2010/04/22 06:48:28 jruoho Exp $
+#	$NetBSD: mi,v 1.1436 2010/04/25 00:54:44 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -191,6 +191,8 @@
 ./usr/include/bluetooth.h			comp-c-include
 ./usr/include/bm.h				comp-c-include
 ./usr/include/bzlib.h				comp-c-include
+./usr/include/cdbr.h				comp-c-include
+./usr/include/cdbw.h				comp-c-include
 ./usr/include/cdk/alphalist.h			comp-obsolete		obsolete
 ./usr/include/cdk/binding.h			comp-obsolete		obsolete
 ./usr/include/cdk/buttonbox.h			comp-obsolete		obsolete
@@ -5243,6 +5245,19 @@
 ./usr/share/man/cat3/ccosf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ccosh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ccoshf.0			comp-c-catman		.cat
+./usr/share/man/cat3/cdbr.0			comp-c-catman		.cat
+./usr/share/man/cat3/cdbr_close.0		comp-c-catman		.cat
+./usr/share/man/cat3/cdbr_entries.0		comp-c-catman		.cat
+./usr/share/man/cat3/cdbr_find.0		comp-c-catman		.cat
+./usr/share/man/cat3/cdbr_get.0			comp-c-catman		.cat
+./usr/share/man/cat3/cdbr_open.0		comp-c-catman		.cat
+./usr/share/man/cat3/cdbw.0			comp-c-catman		.cat
+./usr/share/man/cat3/cdbw_close.0		comp-c-catman		.cat
+./usr/share/man/cat3/cdbw_output.0		comp-c-catman		.cat
+./usr/share/man/cat3/cdbw_put.0			comp-c-catman		.cat
+./usr/share/man/cat3/cdbw_put_data.0		comp-c-catman		.cat
+./usr/share/man/cat3/cdbw_put_key.0		comp-c-catman		.cat
+./usr/share/man/cat3/cdbw_open.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cdk.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/cdk_alphalist.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/cdk_binding.0		comp-obsolete		obsolete
@@ -11097,6 +11112,19 @@
 ./usr/share/man/html3/ccosf.html		comp-c-htmlman		html
 ./usr/share/man/html3/ccosh.html		comp-c-htmlman		html
 ./usr/share/man/html3/ccoshf.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbr.html			comp-c-htmlman		html
+./usr/share/man/html3/cdbr_close.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbr_entries.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbr_find.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbr_get.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbr_open.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbw.html			comp-c-htmlman		html
+./usr/share/man/html3/cdbw_close.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbw_output.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbw_put.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbw_put_data.html	comp-c-htmlman		html
+./usr/share/man/html3/cdbw_put_key.html		comp-c-htmlman		html
+./usr/share/man/html3/cdbw_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/ceil.html			comp-c-htmlman		html
 ./usr/share/man/html3/ceilf.html		comp-c-htmlman		html
 ./usr/share/man/html3/cexp.html			comp-c-htmlman		html
@@ -16773,6 +16801,19 @@
 ./usr/share/man/man3/ccosf.3			comp-c-man		.man
 ./usr/share/man/man3/ccosh.3			comp-c-man		.man
 ./usr/share/man/man3/ccoshf.3			comp-c-man		.man
+./usr/share/man/man3/cdbr.3			comp-c-man		.man
+./usr/share/man/man3/cdbr_close.3		comp-c-man		.man
+./usr/share/man/man3/cdbr_entries.3		comp-c-man		.man
+./usr/share/man/man3/cdbr_find.3		comp-c-man		.man
+./usr/share/man/man3/cdbr_get.3			comp-c-man		.man
+./usr/share/man/man3/cdbr_open.3		comp-c-man		.man
+./usr/share/man/man3/cdbw.3			comp-c-man		.man
+./usr/share/man/man3/cdbw_close.3		comp-c-man		.man
+./usr/share/man/man3/cdbw_output.3		comp-c-man		.man
+./usr/share/man/man3/cdbw_put.3			comp-c-man		.man
+./usr/share/man/man3/cdbw_put_data.3		comp-c-man		.man
+./usr/share/man/man3/cdbw_put_key.3		comp-c-man		.man
+./usr/share/man/man3/cdbw_open.3		comp-c-man		.man
 ./usr/share/man/man3/cdk.3			comp-obsolete		obsolete
 ./usr/share/man/man3/cdk_alphalist.3		comp-obsolete		obsolete
 ./usr/share/man/man3/cdk_binding.3		comp-obsolete		obsolete
