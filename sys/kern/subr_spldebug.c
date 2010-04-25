@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_spldebug.c,v 1.2 2009/11/24 17:28:32 dyoung Exp $	*/
+/*	$NetBSD: subr_spldebug.c,v 1.3 2010/04/25 11:49:22 ad Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_spldebug.c,v 1.2 2009/11/24 17:28:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_spldebug.c,v 1.3 2010/04/25 11:49:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/spldebug.h>
@@ -79,7 +79,7 @@ spldebug_lower(int ipl)
 
 	cidx = cpu_index(curcpu());
 
-	KASSERT(cidx < MAXCPUS);
+	KASSERT(cidx < maxcpus);
 
 	splraise_depth[cidx] = 0;
 	spllowered_to[cidx] = ipl;
@@ -104,7 +104,7 @@ spldebug_raise(int ipl)
 
 	cidx = cpu_index(curcpu());
 
-	KASSERT(cidx < MAXCPUS);
+	KASSERT(cidx < maxcpus);
 
 	if (splraise_depth[cidx] >= SPLRAISE_STACKLEN)
 		return;
