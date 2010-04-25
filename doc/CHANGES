@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1382 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1383 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -595,3 +595,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		from hw.wake to hw.acpi.wake. [jruoho 20100419]
 	acpiwmi(4): Added two mappings (child devices) for the ACPI WMI.
 		[jruoho 20100419]
+	libc: Added a space-efficient write-once database (cdbr(3), cdbw(3)).
+		The database cache for services(5) has been updated to use
+		this. services_mkdb(8) can still be used to create the old
+		format. [joerg 20100425]
