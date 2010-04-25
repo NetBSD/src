@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.2.2 2010/04/25 15:27:36 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.2.3 2010/04/25 20:20:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.2 2010/04/25 15:27:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.3 2010/04/25 20:20:57 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1295,6 +1295,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	 * to corruption of device registers.
 	 */
 	*handled = false;
-	return (ISIIOVA(ptr) || (ptr >= extiobase &&
-	    ptr < (extiobase + (EIOMAPSIZE * PAGE_SIZE)))) ? EFAULT : 0;
+	return (ISIIOVA(ptr) || ((uint8_t *)ptr >= extiobase &&
+	    (uint8_t *)ptr < extiobase + (EIOMAPSIZE * PAGE_SIZE)))
+	    ? EFAULT : 0;
 }
