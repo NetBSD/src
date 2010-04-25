@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.17 2010/04/25 10:15:41 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.18 2010/04/25 15:23:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.17 2010/04/25 10:15:41 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.18 2010/04/25 15:23:27 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.17 2010/04/25 10:15:41 uebayasi
  * physical memory config is stored in vm_physmem.
  */
 /* XXXUEBS make these array of pointers */
+/* XXXUEBS merge these two */
 
 struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physmem */
 int vm_nphysmem = 0;				/* XXXCDC: uvm.nphysmem */
@@ -748,8 +749,19 @@ uvm_page_physget(paddr_t *paddrp)
  */
 
 static struct vm_physseg *
-uvm_page_physload_common(struct vm_physseg * const, const int,
+uvm_page_physload_common(struct vm_physseg * const, int *,
     const paddr_t, const paddr_t, const paddr_t, const paddr_t, const int);
+#if 0
+static void
+uvm_page_physunload_common(struct vm_physseg * const);
+#endif
+void
+uvm_page_physload_common_alloc_pgs(struct vm_physseg *,
+    const paddr_t, const paddr_t,
+    const paddr_t, const paddr_t, const int);
+static struct vm_physseg *
+uvm_physseg_insert(struct vm_physseg *, int,
+    const paddr_t, const paddr_t);
 
 void *
 uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
@@ -757,9 +769,8 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 {
 	struct vm_physseg *seg;
 
-	seg = uvm_page_physload_common(vm_physmem, vm_nphysmem, start, end,
+	seg = uvm_page_physload_common(vm_physmem, &vm_nphysmem, start, end,
 	    avail_start, avail_end, free_list);
-	vm_nphysmem++;
 	return seg;
 }
 
@@ -770,9 +781,8 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 {
 	struct vm_physseg *seg;
 
-	seg = uvm_page_physload_common(vm_physdev, vm_nphysdev, start, end,
+	seg = uvm_page_physload_common(vm_physdev, &vm_nphysdev, start, end,
 	    avail_start, avail_end, free_list);
-	vm_nphysdev++;
 
 	for (paddr_t pf = start; pf < end; pf++)
 		vm_page_device_mdpage_insert(pf);
@@ -781,13 +791,11 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 #endif
 
 static struct vm_physseg *
-uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
+uvm_page_physload_common(struct vm_physseg * const segs, int *rnsegs,
     const paddr_t start, const paddr_t end,
     const paddr_t avail_start, const paddr_t avail_end, const int free_list)
 {
-	int preload, lcv;
-	psize_t npages;
-	struct vm_page *pgs;
+	int lcv;
 	struct vm_physseg *ps;
 
 	if (uvmexp.pagesize == 0)
@@ -796,84 +804,101 @@ uvm_page_physload_common(struct vm_physseg * const segs, const int nsegs,
 		panic("uvm_page_physload: bad free list %d", free_list);
 	if (start >= end)
 		panic("uvm_page_physload: start >= end");
-
-	/*
-	 * do we have room?
-	 */
-
-	if (nsegs == VM_PHYSSEG_MAX) {
-		printf("uvm_page_physload: unable to load physical memory "
-		    "segment\n");
-		printf("\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n",
+	if (*rnsegs == VM_PHYSSEG_MAX)
+		panic("uvm_page_physload: unable to load physical memory "
+		    "segment\n"
+		    "\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n"
+		    "\tincrease VM_PHYSSEG_MAX\n",
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
-		printf("\tincrease VM_PHYSSEG_MAX\n");
-		return NULL;
-	}
 
-#ifdef DEVICE_PAGE
-	if (segs == vm_physdev) {
-		preload = false;
-		goto uvm_page_physload_common_insert;
-	}
-#endif
+	ps = uvm_physseg_insert(segs, *rnsegs, start, end);
+	ps->start = start;
+	ps->end = end;
 
-	/*
-	 * check to see if this is a "preload" (i.e. uvm_mem_init hasn't been
-	 * called yet, so malloc is not available).
-	 */
-
-	for (lcv = 0 ; lcv < nsegs ; lcv++) {
-		if (segs[lcv].pgs)
-			break;
-	}
-	preload = (lcv == nsegs);
-
-	/*
-	 * if VM is already running, attempt to malloc() vm_page structures
-	 */
-	/* XXXUEBS this is super ugly */
-
-	if (!preload) {
-#if defined(VM_PHYSSEG_NOADD)
-		panic("uvm_page_physload: tried to add RAM after vm_mem_init");
-#else
-		/* XXXCDC: need some sort of lockout for this case */
-		paddr_t paddr;
-		npages = end - start;  /* # of pages */
-		pgs = malloc(sizeof(struct vm_page) * npages,
-		    M_VMPAGE, M_NOWAIT);
-		if (pgs == NULL) {
-			printf("uvm_page_physload: can not malloc vm_page "
-			    "structs for segment\n");
-			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
-			return NULL;
+	if (segs == vm_physmem) {
+		ps->avail_start = avail_start;
+		ps->avail_end = avail_end;
+		/*
+		 * check to see if this is a "preload" (i.e. uvm_mem_init hasn't been
+		 * called yet, so malloc is not available).
+		 */
+		for (lcv = 0; lcv < *rnsegs; lcv++) {
+			if (segs[lcv].pgs)
+				break;
 		}
-		/* zero data, init phys_addr, free_list, and free pages */
-		memset(pgs, 0, sizeof(struct vm_page) * npages);
-		for (lcv = 0, paddr = ptoa(start) ;
-				 lcv < npages ; lcv++, paddr += PAGE_SIZE) {
-#if 1
-			pgs[lcv].phys_addr = paddr;
-#endif
-			pgs[lcv].free_list = free_list;
-			if (atop(paddr) >= avail_start &&
-			    atop(paddr) <= avail_end)
-				uvm_pagefree(&pgs[lcv]);
+		if (lcv == *rnsegs) {
+			/* "preload" - can't use malloc */
+			ps->pgs = NULL;
+			ps->endpg = NULL;
+			ps->free_list = free_list;	/* XXX */
+		} else {
+			uvm_page_physload_common_alloc_pgs(ps, start, end,
+			    avail_start, avail_end, free_list);
 		}
-		/* XXXCDC: incomplete: need to update uvmexp.free, what else? */
-		/* XXXCDC: need hook to tell pmap to rebuild pv_list, etc... */
-#endif
 	} else {
-		pgs = NULL;
-		npages = 0;
+		/* XXX */
 	}
 
-#ifdef DEVICE_PAGE
-uvm_page_physload_common_insert:
+	(*rnsegs)++;
+	return ps;
+}
+
+/*
+ * if VM is already running, attempt to malloc() vm_page structures
+ */
+/* XXXUEBS this is super ugly */
+/* XXXUEBS struct vm_page [] should be allocated in the added segment itself
+   for NUMA's sake. */
+void
+uvm_page_physload_common_alloc_pgs(struct vm_physseg *ps,
+    const paddr_t start, const paddr_t end,
+    const paddr_t avail_start, const paddr_t avail_end, const int free_list)
+{
+	struct vm_page *pgs;
+	psize_t npages;
+
+#if defined(VM_PHYSSEG_NOADD)
+	panic("uvm_page_physload: tried to add RAM after vm_mem_init");
+#else
+	/* XXXCDC: need some sort of lockout for this case */
+	paddr_t paddr;
+	npages = end - start;  /* # of pages */
+	pgs = malloc(sizeof(struct vm_page) * npages,
+	    M_VMPAGE, M_NOWAIT);
+	if (pgs == NULL) {
+		panic("uvm_page_physload: can not malloc vm_page "
+		    "structs for segment\n"
+		    "0x%lx -> 0x%lx\n, start, end);
+	}
+	/* zero data, init phys_addr, free_list, and free pages */
+	memset(pgs, 0, sizeof(struct vm_page) * npages);
+	for (lcv = 0, paddr = ptoa(start); lcv < npages;
+	    lcv++, paddr += PAGE_SIZE) {
+#if 1
+		pgs[lcv].phys_addr = paddr;
 #endif
-	/*
-	 * now insert us in the proper place in segs[]
-	 */
+		pgs[lcv].free_list = free_list;
+		if (atop(paddr) >= avail_start &&
+		    atop(paddr) <= avail_end)
+			uvm_pagefree(&pgs[lcv]);
+	}
+	/* XXXCDC: incomplete: need to update uvmexp.free, what else? */
+	/* XXXCDC: need hook to tell pmap to rebuild pv_list, etc... */
+#endif
+
+	ps->pgs = pgs;
+	ps->endpg = pgs + npages;
+	ps->free_list = free_list;
+
+	uvmpdpol_reinit();
+}
+
+static struct vm_physseg *
+uvm_physseg_insert(struct vm_physseg *segs, int nsegs,
+    const paddr_t start, const paddr_t end)
+{
+	struct vm_physseg *ps;
+	int lcv;
 
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_RANDOM)
 	/* random: put it at the end (easy!) */
@@ -908,25 +933,6 @@ uvm_page_physload_common_insert:
 #else
 	panic("uvm_page_physload: unknown physseg strategy selected!");
 #endif
-
-	ps->start = start;
-	ps->end = end;
-
-#ifdef DEVICE_PAGE
-	if (segs == vm_physdev)
-		return ps;
-#endif
-
-	/* XXXUEBS ugly */
-	ps->avail_start = avail_start;
-	ps->avail_end = avail_end;
-	ps->pgs = pgs;
-	ps->endpg = pgs + npages;
-	ps->free_list = free_list;
-
-	if (!preload) {
-		uvmpdpol_reinit();
-	}
 	return ps;
 }
 
