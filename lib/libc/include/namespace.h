@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.141 2010/03/19 18:11:30 joerg Exp $	*/
+/*	$NetBSD: namespace.h,v 1.142 2010/04/25 00:54:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -167,6 +167,16 @@
 #define bm_exec			_bm_exec
 #define bm_free			_bm_free
 #define callrpc			_callrpc
+#define cdbr_close		_cdbr_close
+#define cdbr_find		_cdbr_find
+#define cdbr_get		_cdbr_get
+#define cdbr_open		_cdbr_open
+#define cdbw_close		_cdbw_close
+#define cdbw_open		_cdbw_open
+#define cdbw_put		_cdbw_put
+#define cdbw_put_data		_cdbw_put_data
+#define cdbw_put_key		_cdbw_put_key
+#define cdbw_output		_cdbw_output
 #define cfgetispeed		_cfgetispeed
 #define cfgetospeed		_cfgetospeed
 #define cfmakeraw		_cfmakeraw
