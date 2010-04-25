@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.339 2009/12/20 03:48:30 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.339.4.1 2010/04/25 21:08:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339 2009/12/20 03:48:30 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339.4.1 2010/04/25 21:08:42 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -349,7 +349,6 @@ int	ncontext;			/* sizeof ctx_freelist */
 void	ctx_alloc(struct pmap *);
 void	ctx_free(struct pmap *);
 
-void *	vmmap;			/* one reserved MI vpage for /dev/mem */
 /*void *	vdumppages;	-* 32KB worth of reserved dump pages */
 
 smeg_t		tregion;	/* [4/3mmu] Region for temporary mappings */
@@ -3214,7 +3213,6 @@ pmap_bootstrap4_4c(void *top, int nctx, int nregion, int nsegment)
 	i = p;
 	cpuinfo.vpage[0] = (void *)p, p += NBPG;
 	cpuinfo.vpage[1] = (void *)p, p += NBPG;
-	vmmap = (void *)p, p += NBPG;
 	p = (vaddr_t)reserve_dumppages((void *)p);
 
 	virtual_avail = p;
@@ -3726,7 +3724,6 @@ pmap_bootstrap4m(void *top)
 	q = p;
 	cpuinfo.vpage[0] = (void *)p, p += NBPG;
 	cpuinfo.vpage[1] = (void *)p, p += NBPG;
-	vmmap = (void *)p, p += NBPG;
 	p = (vaddr_t)reserve_dumppages((void *)p);
 
 	/* Find PTE locations of vpage[] to optimize zero_fill() et.al. */

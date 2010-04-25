@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.20 2009/03/14 21:04:16 dsl Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.20.4.1 2010/04/25 21:08:41 rmind Exp $	*/
 
 /*
  * Copyright 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.20 2009/03/14 21:04:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrom.c,v 1.20.4.1 2010/04/25 21:08:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,9 +138,7 @@ ofromrw(dev_t dev, struct uio *uio, int flags)
 	if (!sc || !sc->enabled)
 		return (ENXIO);			/* XXX PANIC */
 
-	/* lock against other uses of shared vmmap */
 	mutex_enter(&memlock);
-
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -159,6 +157,7 @@ ofromrw(dev_t dev, struct uio *uio, int flags)
 		if (uio->uio_offset >= sc->size)
 			break;
 
+		/* XXX: Use unamanged mapping. */
 		v = sc->base + uio->uio_offset;
 		pmap_enter(pmap_kernel(), (vaddr_t)memhook,
 		    trunc_page(v), uio->uio_rw == UIO_READ ?
@@ -171,7 +170,6 @@ ofromrw(dev_t dev, struct uio *uio, int flags)
 		    (vaddr_t)memhook + PAGE_SIZE);
 		pmap_update(pmap_kernel());
 	}
-
 	mutex_exit(&memlock);
 
 	return (error);

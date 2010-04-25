@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.2 2010/04/25 15:47:52 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.3 2010/04/25 21:08:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.2 2010/04/25 15:47:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.3 2010/04/25 21:08:43 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -544,8 +544,6 @@ static struct pool_allocator pmap_pdp_allocator = {
 	.pa_pagesz = PAGE_SIZE * PDP_SIZE,
 };
 #endif /* PAE */
-
-void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
@@ -1464,11 +1462,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * Nothing after this point actually needs pte;
 	 */
 	pte = (void *)0xdeadbeef;
-
-	/* XXX: vmmap used by mem.c... should be uvm_map_reserve */
-	/* XXXfvdl PTEs not needed here */
-	vmmap = (char *)virtual_avail;			/* don't need pte */
-	virtual_avail += PAGE_SIZE; pte++;
 
 #ifdef XEN
 #ifdef __x86_64__
