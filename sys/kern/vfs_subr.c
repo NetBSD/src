@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.398 2010/02/11 23:16:35 haad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.399 2010/04/25 15:56:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398 2010/02/11 23:16:35 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.399 2010/04/25 15:56:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2315,6 +2315,7 @@ vfs_mountedon(vnode_t *vp)
 bool
 vfs_unmountall(struct lwp *l)
 {
+
 	printf("unmounting file systems...");
 	return vfs_unmountall1(l, true, true);
 }
@@ -2322,7 +2323,8 @@ vfs_unmountall(struct lwp *l)
 static void
 vfs_unmount_print(struct mount *mp, const char *pfx)
 {
-	printf("%sunmounted %s on %s type %s\n", pfx,
+
+	aprint_verbose("%sunmounted %s on %s type %s\n", pfx,
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname,
 	    mp->mnt_stat.f_fstypename);
 }
@@ -2330,16 +2332,19 @@ vfs_unmount_print(struct mount *mp, const char *pfx)
 bool
 vfs_unmount_forceone(struct lwp *l)
 {
-	struct mount *mp, *nmp = NULL;
+	struct mount *mp, *nmp;
 	int error;
 
-	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
-		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen)
-			nmp = mp;
-	}
+	nmp = NULL;
 
-	if (nmp == NULL)
+	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
+		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen) {
+			nmp = mp;
+		}
+	}
+	if (nmp == NULL) {
 		return false;
+	}
 
 #ifdef DEBUG
 	printf("\nforcefully unmounting %s (%s)...",
@@ -2349,8 +2354,9 @@ vfs_unmount_forceone(struct lwp *l)
 	if ((error = dounmount(nmp, MNT_FORCE, l)) == 0) {
 		vfs_unmount_print(nmp, "forcefully ");
 		return true;
-	} else
-		atomic_dec_uint(&nmp->mnt_refcnt);
+	} else {
+		vfs_destroy(nmp);
+	}
 
 #ifdef DEBUG
 	printf("forceful unmount of %s failed with error %d\n",
@@ -2381,7 +2387,7 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			vfs_unmount_print(mp, "");
 			progress = true;
 		} else {
-			atomic_dec_uint(&mp->mnt_refcnt);
+			vfs_destroy(mp);
 			if (verbose) {
 				printf("unmount of %s failed with error %d\n",
 				    mp->mnt_stat.f_mntonname, error);
@@ -2389,10 +2395,12 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			any_error = true;
 		}
 	}
-	if (verbose)
+	if (verbose) {
 		printf(" done\n");
-	if (any_error && verbose)
+	}
+	if (any_error && verbose) {
 		printf("WARNING: some file systems would not unmount\n");
+	}
 	return progress;
 }
 
