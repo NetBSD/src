@@ -1,4 +1,4 @@
-.\" $NetBSD: acpilid.4,v 1.5 2010/04/25 07:00:50 jruoho Exp $
+.\" $NetBSD: acpilid.4,v 1.6 2010/04/25 10:35:07 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ The
 .Xr powerd 8
 daemon can be used to control actions against
 the events of opening or closing the lid.
-The used script is
+The script used is
 .Pa /etc/powerd/scripts/lid_switch ,
 and the events are either
 .Em pressed
@@ -50,10 +50,6 @@ and the events are either
 or
 .Em released
 (the lid was opened).
-.Sh SEE ALSO
-.Xr acpi 4 ,
-.Xr powerd 8 ,
-.Xr sysmon_pswitch 9
 .Sh EXAMPLES
 The following example modifies the mentioned script in order to put the
 system into
@@ -74,7 +70,7 @@ pressed)
 
         # Suspend.
         #
-        if /sbin/sysctl machdep.sleep_state >/dev/null 2>&1; then
+        if /sbin/sysctl machdep.sleep_state \*[Gt]/dev/null 2\*[Gt]\*[Am]1; then
                 /sbin/sysctl -w machdep.sleep_state=3
 	fi
 
@@ -86,6 +82,10 @@ pressed)
 
 \&...
 .Ed
+.Sh SEE ALSO
+.Xr acpi 4 ,
+.Xr powerd 8 ,
+.Xr sysmon_pswitch 9
 .Sh HISTORY
 The
 .Nm
