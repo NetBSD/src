@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.49 2010/04/12 12:41:36 wiz Exp $
+.\" $NetBSD: acpi.4,v 1.50 2010/04/25 17:50:13 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 12, 2010
+.Dd April 25, 2010
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -238,6 +238,8 @@ AT-style speaker sound.
 IBM/Lenovo ThinkPad laptop device driver.
 .It ug
 Abit uGuru Hardware monitor.
+.It vald
+Toshiba Libretto device.
 .It wb
 Winbond W83L518D Integrated Media Reader.
 .It wss
@@ -255,8 +257,6 @@ PC keyboard controllers.
 Sony Miscellaneous Controller
 .It spic
 Sony programmable I/O controller.
-.It vald
-Toshiba Libretto device.
 .El
 .Sh DEBUGGING
 Although the situation has become better over the years,
@@ -335,6 +335,25 @@ Define
 .Tn ACPI_DSDT_OVERRIDE
 in the kernel configuration file and rebuild.
 .El
+.Ss DEBUGGER
+The
+.Tn ACPICA
+interpreter provides its own debugger for low-level debugging.
+It can be used to display internal data structures and namespace objects,
+and to debug the execution of control methods.
+Single step and breakpoint functionality are available.
+In
+.Nx
+this is integrated to the in-kernel
+.Xr ddb 4 .
+In order to enter the
+.Tn ACPICA
+debugger from
+.Xr ddb 4 ,
+use the command
+.Ic call
+with the argument
+.Ic acpi_osd_debugger .
 .Ss DEBUG OUTPUT
 .Nx
 provides two
