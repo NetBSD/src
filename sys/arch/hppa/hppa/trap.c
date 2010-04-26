@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.88 2010/04/23 19:18:09 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.89 2010/04/26 12:16:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2010/04/23 19:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2010/04/26 12:16:21 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -239,7 +239,7 @@ trap_kdebug(int type, int code, struct trapframe *frame)
 	u_int tf_iioq_head_old;
 	u_int tf_iioq_tail_old;
 
-	for(;;) {
+	for (;;) {
 
 		/* This trap has not been handled. */
 		handled = 0;
@@ -332,7 +332,7 @@ user_backtrace_raw(u_int pc, u_int fp)
 
 		printf("%3d: pc=%08x%s fp=0x%08x", frame_number, 
 		    pc & ~HPPA_PC_PRIV_MASK, USERMODE(pc) ? "  " : "**", fp);
-		for(arg_number = 0; arg_number < 4; arg_number++)
+		for (arg_number = 0; arg_number < 4; arg_number++)
 			printf(" arg%d=0x%08x", arg_number,
 			    (int) fuword(HPPA_FRAME_CARG(arg_number, fp)));
 		printf("\n");
@@ -600,7 +600,7 @@ trap(int type, struct trapframe *frame)
 #endif
 	case T_RECOVERY|T_USER:
 #ifdef USERTRACE
-		for(;;) {
+		for (;;) {
 			if (frame->tf_iioq_head != rctr_next_iioq)
 				printf("-%08x\nr %08x",
 					rctr_next_iioq - 4,
