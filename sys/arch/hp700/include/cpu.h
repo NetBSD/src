@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2010/04/06 07:58:31 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46 2010/04/26 15:25:24 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -287,6 +287,13 @@ hppa_cpu_ispa20_p(void)
 {
 
 	return (hppa_cpu_info->hci_features & HPPA_FTRS_W32B) != 0;
+}
+
+static __inline bool
+hppa_cpu_hastlbu_p(void)
+{
+
+	return (hppa_cpu_info->hci_features & HPPA_FTRS_TLBU) != 0;
 }
 
 void	delay(u_int);
