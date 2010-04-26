@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.4.3 2010/04/25 22:48:26 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.4.4 2010/04/26 02:20:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.3 2010/04/25 22:48:26 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.4.4 2010/04/26 02:20:59 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -79,8 +79,7 @@ static struct ubc_map *ubc_find_mapping(struct uvm_object *, voff_t);
 #define UMAP_PAGES_LOCKED	0x0001
 #define UMAP_MAPPING_CACHED	0x0002
 
-struct ubc_map
-{
+struct ubc_map {
 	struct uvm_object *	uobj;		/* mapped object */
 	voff_t			offset;		/* offset into uobj */
 	voff_t			writeoff;	/* write offset */
@@ -91,10 +90,10 @@ struct ubc_map
 
 	LIST_ENTRY(ubc_map)	hash;		/* hash table */
 	TAILQ_ENTRY(ubc_map)	inactive;	/* inactive queue */
+	LIST_ENTRY(ubc_map)	list;		/* per-object list */
 };
 
-static struct ubc_object
-{
+static struct ubc_object {
 	struct uvm_object uobj;		/* glue for uvm_map() */
 	char *kva;			/* where ubc_object is mapped */
 	struct ubc_map *umap;		/* array of ubc_map's */
@@ -104,7 +103,6 @@ static struct ubc_object
 
 	TAILQ_HEAD(ubc_inactive_head, ubc_map) *inactive;
 					/* inactive queues for ubc_map's */
-
 } ubc_object;
 
 const struct uvm_pagerops ubc_pager = {
@@ -449,8 +447,8 @@ ubc_alloc(struct uvm_object *uobj, voff_t offset, vsize_t *lenp, int advice,
 
 	/*
 	 * The object is already referenced, so we do not need to add a ref.
+	 * Lock order: UBC object -> ubc_map::uobj.
 	 */
-
 	mutex_enter(ubc_object.uobj.vmobjlock);
 again:
 	umap = ubc_find_mapping(uobj, umap_offset);
@@ -474,6 +472,7 @@ again:
 
 		if (oobj != NULL) {
 			LIST_REMOVE(umap, hash);
+			LIST_REMOVE(umap, list);
 			if (umap->flags & UMAP_MAPPING_CACHED) {
 				umap->flags &= ~UMAP_MAPPING_CACHED;
 				mutex_enter(oobj->vmobjlock);
@@ -489,6 +488,7 @@ again:
 		umap->offset = umap_offset;
 		LIST_INSERT_HEAD(&ubc_object.hash[UBC_HASH(uobj, umap_offset)],
 		    umap, hash);
+		LIST_INSERT_HEAD(&uobj->uo_ubc, umap, list);
 	} else {
 		UBC_EVCNT_INCR(wincachehit);
 		va = UBC_UMAP_ADDR(umap);
@@ -709,7 +709,6 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 	return error;
 }
 
-
 /*
  * uvm_vnp_zerorange:  set a range of bytes in a file to zero.
  */
@@ -736,4 +735,31 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		off += bytelen;
 		len -= bytelen;
 	}
+}
+
+/*
+ * ubc_purge: disassociate ubc_map structures from an empty uvm_object.
+ */
+
+void
+ubc_purge(struct uvm_object *uobj)
+{
+	struct ubc_map *umap;
+	vaddr_t va;
+
+	KASSERT(uobj->uo_npages == 0);
+
+	mutex_enter(ubc_object.uobj.vmobjlock);
+	while ((umap = LIST_FIRST(&uobj->uo_ubc)) != NULL) {
+		KASSERT(umap->refcount == 0);
+		for (va = 0; va < ubc_winsize; va += PAGE_SIZE) {
+			KASSERT(!pmap_extract(pmap_kernel(),
+			    va + UBC_UMAP_ADDR(umap), NULL));
+		}
+		LIST_REMOVE(umap, list);
+		LIST_REMOVE(umap, hash);
+		umap->flags &= ~UMAP_MAPPING_CACHED;
+		umap->uobj = NULL;
+	}
+	mutex_exit(ubc_object.uobj.vmobjlock);
 }

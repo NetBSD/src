@@ -1,7 +1,7 @@
-/*	$NetBSD: uvm_object.c,v 1.7.4.3 2010/04/24 21:24:03 rmind Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.7.4.4 2010/04/26 02:20:59 rmind Exp $	*/
 
 /*
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.3 2010/04/24 21:24:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.4 2010/04/26 02:20:59 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.7.4.3 2010/04/24 21:24:03 rmind Exp
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
 
-/* We will fetch this page count per step */
-#define	FETCH_PAGECOUNT	16
+/* Page count to fetch per single step. */
+#define	FETCH_PAGECOUNT			16
 
 /*
  * uvm_obj_init: initialize UVM memory object.
@@ -68,6 +68,7 @@ uvm_obj_init(struct uvm_object *uo, const struct uvm_pagerops *ops,
 	}
 	uo->pgops = ops;
 	TAILQ_INIT(&uo->memq);
+	LIST_INIT(&uo->uo_ubc);
 	uo->uo_npages = 0;
 	uo->uo_refs = refs;
 	rb_tree_init(&uo->rb_tree, &uvm_page_tree_ops);
@@ -83,6 +84,11 @@ uvm_obj_destroy(struct uvm_object *uo, kmutex_t *lockptr)
 	void *tmp = NULL;
 	KASSERT(rb_tree_find_node_geq(&uo->rb_tree, &tmp) == NULL);
 #endif
+	/* Purge any UBC entries with this object. */
+	if (__predict_false(!LIST_EMPTY(&uo->uo_ubc))) {
+		ubc_purge(uo);
+	}
+	/* Finally, safe to destory the lock. */
 	if (lockptr) {
 		KASSERT(uo->vmobjlock == lockptr);
 		mutex_destroy(uo->vmobjlock);

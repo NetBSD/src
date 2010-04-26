@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.162.2.3 2010/04/23 21:18:00 rmind Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.162.2.4 2010/04/26 02:20:59 rmind Exp $	*/
 
 /*
  *
@@ -579,6 +579,7 @@ void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 void			ubc_release(void *, int);
 int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
 			    int, int);
+void			ubc_purge(struct uvm_object *);
 
 /* uvm_emap.c */
 void			uvm_emap_sysinit(void);
