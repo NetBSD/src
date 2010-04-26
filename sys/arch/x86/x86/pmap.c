@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.4 2010/04/26 02:43:35 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.5 2010/04/26 04:48:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.4 2010/04/26 02:43:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.5 2010/04/26 04:48:49 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1779,14 +1779,14 @@ pmap_init(void)
 	evcnt_attach_dynamic(&tlbstat_single_issue, EVCNT_TYPE_MISC,
 	    NULL, "tlbshoot single page", "issues");
 #endif
-
+#if 0	/* XXXrmind */
 	evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 	    NULL, "TLB", "shootdown");
 	evcnt_attach_dynamic(&pmap_iobmp_evcnt, EVCNT_TYPE_MISC,
 	    NULL, "x86", "io bitmap copy");
 	evcnt_attach_dynamic(&pmap_ldt_evcnt, EVCNT_TYPE_MISC,
 	    NULL, "x86", "ldt sync");
-
+#endif
 	/*
 	 * done: pmap module is up (and ready for business)
 	 */
@@ -4785,13 +4785,13 @@ pmap_tlb_shootnow(void)
 	 */
 	if ((tp->tp_cpumask & ci->ci_cpumask) != 0) {
 		if (tp->tp_count == (uint16_t)-1) {
-			u_int gen = uvm_emap_gen_return();
+			u_int egen = uvm_emap_gen_return();
 			if ((tp->tp_pte & PG_G) != 0) {
 				tlbflushg();
 			} else {
 				tlbflush();
 			}
-			uvm_emap_update(gen);
+			uvm_emap_update(egen);
 		} else {
 			for (i = tp->tp_count - 1; i >= 0; i--) {
 				pmap_update_pg(tp->tp_va[i]);

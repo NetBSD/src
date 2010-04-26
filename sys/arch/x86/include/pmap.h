@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29.2.2 2010/04/26 02:43:34 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.3 2010/04/26 04:48:49 rmind Exp $	*/
 
 /*
  *
@@ -454,10 +454,10 @@ struct pmap_tlb_packet {
 #define	TP_MAXVA	6		/* no more than N seperate invlpg */
 
 struct pmap_tlb_mailbox {
-	uintptr_t	tm_pending;
-	uintptr_t	tm_gen;
-	uintptr_t	tm_usergen;
-	uintptr_t	tm_globalgen;
+	uint32_t	tm_pending;
+	uint32_t	tm_gen;
+	uint32_t	tm_usergen;
+	uint32_t	tm_globalgen;
 	char		tm_pad[64 - sizeof(uintptr_t) * 4];
 };
 
