@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.69 2010/02/24 22:37:55 dyoung Exp $	*/
+/*	$NetBSD: cpu.c,v 1.69.2.1 2010/04/26 02:43:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2010/02/24 22:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69.2.1 2010/04/26 02:43:35 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -152,6 +152,7 @@ struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 	.ci_curldt = -1,
+	.ci_cpumask = 1,
 #ifdef TRAPLOG
 	.ci_tlog_base = &tlog_primary,
 #endif /* !TRAPLOG */
@@ -168,7 +169,7 @@ static void	tss_init(struct i386tss *, void *, void *);
 static void	cpu_init_idle_lwp(struct cpu_info *);
 
 uint32_t cpus_attached = 0;
-uint32_t cpus_running = 0;
+uint32_t cpus_running = 1;
 
 extern char x86_64_doubleflt_stack[];
 
@@ -342,6 +343,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_init_tss(ci);
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
+		cpus_running = (1 << cpu_index(ci));
 	}
 
 	ci->ci_cpumask = (1 << cpu_index(ci));
@@ -360,7 +362,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_get_tsc_freq(ci);
 		cpu_init(ci);
 		cpu_set_tss_gates(ci);
-		pmap_cpu_init_late(ci);
 		if (caa->cpu_role != CPU_ROLE_SP) {
 			/* Enable lapic. */
 			lapic_enable();
@@ -396,8 +397,6 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_intr_init(ci);
 		gdt_alloc_cpu(ci);
 		cpu_set_tss_gates(ci);
-		pmap_cpu_init_early(ci);
-		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
 			struct cpu_info *tmp;
@@ -708,6 +707,7 @@ cpu_hatch(void *v)
 	/* Because the text may have been patched in x86_patch(). */
 	wbinvd();
 	x86_flush();
+	tlbflushg();
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
