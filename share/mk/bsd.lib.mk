@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.305 2010/03/02 20:49:18 darran Exp $
+#	$NetBSD: bsd.lib.mk,v 1.306 2010/04/26 03:46:00 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -414,7 +414,7 @@ LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if ${LIBISPRIVATE} != "no"
 # No installation is required
 libinstall::
-.endif	# ${LIBISPRIVATE} == "no"					# {
+.endif
 
 .if ${MKDEBUGLIB} != "no"
 _LIBS+=lib${LIB}_g.a
