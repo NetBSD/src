@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.6 2010/04/23 19:29:23 rmind Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.7 2010/04/26 16:26:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.6 2010/04/23 19:29:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.7 2010/04/26 16:26:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -208,12 +208,12 @@ abstimeout2timo(struct timespec *ts, int *timo)
 
 	getnanotime(&tsd);
 	timespecsub(ts, &tsd, &tsd);
+	if (tsd.tv_sec < 0 || (tsd.tv_sec == 0 && tsd.tv_nsec <= 0)) {
+		return ETIMEDOUT;
+	}
 	error = itimespecfix(&tsd);
 	if (error) {
 		return error;
-	}
-	if (tsd.tv_sec < 0 || (tsd.tv_sec == 0 && tsd.tv_nsec <= 0)) {
-		return ETIMEDOUT;
 	}
 	*timo = tstohz(&tsd);
 	KASSERT(*timo != 0);
