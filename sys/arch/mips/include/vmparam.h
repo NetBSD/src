@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.44.2.1 2010/02/23 15:27:56 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.44.2.2 2010/04/26 06:19:04 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,7 +200,6 @@
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
 #define	__HAVE_VM_PAGE_MD
 

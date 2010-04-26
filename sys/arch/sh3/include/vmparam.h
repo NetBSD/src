@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19.2.2 2010/02/25 05:13:01 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19.2.3 2010/04/26 06:19:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@
 
 /* Physical memory segments */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define	VM_PHYSSEG_NOADD
 
 #define	sh3_round_page(x)	((((uint32_t)(x)) + PGOFSET) & ~PGOFSET)
 #define	sh3_trunc_page(x)	((uint32_t)(x) & ~PGOFSET)

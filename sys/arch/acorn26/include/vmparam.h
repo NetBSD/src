@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 2009/03/06 20:31:46 joerg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9.2.1 2010/04/26 06:19:03 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -99,8 +99,6 @@
 #define VM_PHYSSEG_MAX		3
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
-
-#define VM_PHYSSEG_NOADD	/* We won't turn up extra memory during autoconfig */
 
 #define VM_NFREELIST		2
 #define VM_FREELIST_LOW		1 /* DMA-able memory (bottom 512k phys) */

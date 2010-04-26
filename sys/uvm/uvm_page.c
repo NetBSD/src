@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.18 2010/04/25 15:23:27 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.19 2010/04/26 06:19:06 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.18 2010/04/25 15:23:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.19 2010/04/26 06:19:06 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -819,7 +819,7 @@ uvm_page_physload_common(struct vm_physseg * const segs, int *rnsegs,
 		ps->avail_start = avail_start;
 		ps->avail_end = avail_end;
 		/*
-		 * check to see if this is a "preload" (i.e. uvm_mem_init hasn't been
+		 * check to see if this is a "preload" (i.e. uvm_page_init hasn't been
 		 * called yet, so malloc is not available).
 		 */
 		for (lcv = 0; lcv < *rnsegs; lcv++) {
@@ -832,8 +832,7 @@ uvm_page_physload_common(struct vm_physseg * const segs, int *rnsegs,
 			ps->endpg = NULL;
 			ps->free_list = free_list;	/* XXX */
 		} else {
-			uvm_page_physload_common_alloc_pgs(ps, start, end,
-			    avail_start, avail_end, free_list);
+			panic("uvm_page_physload: tried to add RAM after uvm_page_init");
 		}
 	} else {
 		/* XXX */
@@ -841,56 +840,6 @@ uvm_page_physload_common(struct vm_physseg * const segs, int *rnsegs,
 
 	(*rnsegs)++;
 	return ps;
-}
-
-/*
- * if VM is already running, attempt to malloc() vm_page structures
- */
-/* XXXUEBS this is super ugly */
-/* XXXUEBS struct vm_page [] should be allocated in the added segment itself
-   for NUMA's sake. */
-void
-uvm_page_physload_common_alloc_pgs(struct vm_physseg *ps,
-    const paddr_t start, const paddr_t end,
-    const paddr_t avail_start, const paddr_t avail_end, const int free_list)
-{
-	struct vm_page *pgs;
-	psize_t npages;
-
-#if defined(VM_PHYSSEG_NOADD)
-	panic("uvm_page_physload: tried to add RAM after vm_mem_init");
-#else
-	/* XXXCDC: need some sort of lockout for this case */
-	paddr_t paddr;
-	npages = end - start;  /* # of pages */
-	pgs = malloc(sizeof(struct vm_page) * npages,
-	    M_VMPAGE, M_NOWAIT);
-	if (pgs == NULL) {
-		panic("uvm_page_physload: can not malloc vm_page "
-		    "structs for segment\n"
-		    "0x%lx -> 0x%lx\n, start, end);
-	}
-	/* zero data, init phys_addr, free_list, and free pages */
-	memset(pgs, 0, sizeof(struct vm_page) * npages);
-	for (lcv = 0, paddr = ptoa(start); lcv < npages;
-	    lcv++, paddr += PAGE_SIZE) {
-#if 1
-		pgs[lcv].phys_addr = paddr;
-#endif
-		pgs[lcv].free_list = free_list;
-		if (atop(paddr) >= avail_start &&
-		    atop(paddr) <= avail_end)
-			uvm_pagefree(&pgs[lcv]);
-	}
-	/* XXXCDC: incomplete: need to update uvmexp.free, what else? */
-	/* XXXCDC: need hook to tell pmap to rebuild pv_list, etc... */
-#endif
-
-	ps->pgs = pgs;
-	ps->endpg = pgs + npages;
-	ps->free_list = free_list;
-
-	uvmpdpol_reinit();
 }
 
 static struct vm_physseg *
