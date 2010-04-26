@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.53.2.1 2010/04/26 02:43:34 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.53.2.2 2010/04/26 17:06:21 rmind Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.53.2.1 2010/04/26 02:43:34 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.53.2.2 2010/04/26 17:06:21 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -244,40 +244,32 @@ IDTVEC(intr_lapic_tlb)
 	popl	%eax
 	iret
 4:
-	/* Invalidate whole address space: */
-	testw	$PG_G, TP_PTE(%ebx)
-	jnz	5f
 	/*
-	 * a) Invalidating user TLB entries only.
-	 *
-	 * - Get the emap generation number.
-	 * - Invalidate TLB entries.
-	 * - Perform emap update, pass the generation number.
-	 *
 	 * Note that caller-save registers might be modified (all saved in the
 	 * beginning).  Only %ebx value must be preserved for the 2b context.
 	 */
-	call	_C_LABEL(uvm_emap_gen_return)
-	movl	%eax, %edx
-	movl	%cr3, %eax
-	movl	%eax, %cr3
-	pushl	%edx
-	call	_C_LABEL(uvm_emap_update)
-	addl	$4, %esp
-	jmp	2b
-5:
-	/*
-	 * b) Invalidating user and kernel TLB entries.
-	 *
-	 * See notes above.
-	 */
+
+	/* Get the emap generation number. */
 	call	_C_LABEL(uvm_emap_gen_return)
 	movl	%eax, %ecx
+
+	/* Which entries we are invalidating? */
+	testw	$PG_G, TP_PTE(%ebx)
+	jnz	5f
+
+	/* a) Invalidating user TLB entries only. */
+	movl	%cr3, %eax
+	movl	%eax, %cr3
+	jmp	6f
+5:
+	/* b) Invalidating user and kernel TLB entries. */
 	movl	%cr4, %eax
 	movl	%eax, %edx
 	andl	$~CR4_PGE, %edx
 	movl	%edx, %cr4
 	movl	%eax, %cr4
+6:
+	/* Perform emap update, pass the generation number. */
 	pushl	%ecx
 	call	_C_LABEL(uvm_emap_update)
 	addl	$4, %esp

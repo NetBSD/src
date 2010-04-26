@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.33.2.1 2010/04/26 04:48:49 rmind Exp $	*/
+/*	$NetBSD: vector.S,v 1.33.2.2 2010/04/26 17:06:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -546,38 +546,32 @@ IDTVEC(intr_lapic_tlb)
 4:
 	iretq
 5:
-	/* Invalidate whole address space: */
+	/*
+	 * Note that caller-save registers might be modified (all saved in the
+	 * beginning).  Only %rbx value must be preserved for the 2f context.
+	 */
+
+	/* Get the emap generation number. */
+	callq	_C_LABEL(uvm_emap_gen_return)
+	movq	%rax, %rdi
+
+	/* Which entries we are invalidating? */
 	testw	$PG_G, TP_PTE(%rbx)
 	jnz	6f
-	/*
-	 * a) Invalidating user TLB entries only.
-	 *
-	 * - Get the emap generation number.
-	 * - Invalidate TLB entries.
-	 * - Perform emap update, pass the generation number.
-	 *
-	 * Note that caller-save registers might be modified (all saved in the
-	 * beginning).  Only %rbx value must be preserved for the 2b context.
-	 */
-	callq	_C_LABEL(uvm_emap_gen_return)
-	movq	%rax, %rdi
+
+	/* a) Invalidating user TLB entries only. */
 	movq	%cr3, %rax
 	movq	%rax, %cr3
-	callq	_C_LABEL(uvm_emap_update)
-	jmp	2b
+	jmp	7f
 6:
-	/*
-	 * b) Invalidating user and kernel TLB entries.
-	 *
-	 * See notes above.
-	 */
-	callq	_C_LABEL(uvm_emap_gen_return)
-	movq	%rax, %rdi
+	/* b) Invalidating user and kernel TLB entries. */
 	movq	%cr4, %rax
 	movq	%rax, %rdx
 	andq	$~CR4_PGE, %rdx
 	movq	%rdx, %cr4
 	movq	%rax, %cr4
+7:
+	/* Perform emap update, pass the generation number. */
 	callq	_C_LABEL(uvm_emap_update)
 	jmp	2b
 
