@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.21 2010/03/12 21:53:16 darran Exp $	*/
+/*	$NetBSD: module.h,v 1.22 2010/04/26 23:18:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -146,10 +146,10 @@ void	module_error(const char *, ...)
 			     __attribute__((__format__(__printf__,1,2)));
 void	module_print(const char *, ...)
 			     __attribute__((__format__(__printf__,1,2)));
+#endif /* _MODULE_INTERNAL */
 
 #define MODULE_BASE_SIZE 64
 extern char	module_base[MODULE_BASE_SIZE];
-#endif /* _MODULE_INTERNAL */
 
 #else	/* _KERNEL */
 
