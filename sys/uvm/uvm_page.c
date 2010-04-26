@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.20 2010/04/26 06:37:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.21 2010/04/26 06:42:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.20 2010/04/26 06:37:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.21 2010/04/26 06:42:56 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -755,10 +755,6 @@ uvm_page_physload_common(struct vm_physseg * const, int,
 static void
 uvm_page_physunload_common(struct vm_physseg * const);
 #endif
-void
-uvm_page_physload_common_alloc_pgs(struct vm_physseg *,
-    const paddr_t, const paddr_t,
-    const paddr_t, const paddr_t, const int);
 static struct vm_physseg *
 uvm_physseg_insert(struct vm_physseg *, int,
     const paddr_t, const paddr_t);
