@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.26.20.1 2010/03/16 15:38:18 rmind Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.26.20.2 2010/04/26 02:20:59 rmind Exp $	*/
 
 /*
  *
@@ -41,6 +41,7 @@
  * uvm_object.h
  */
 
+#include <sys/queue.h>
 #include <sys/rb.h>
 
 /*
@@ -54,6 +55,7 @@ struct uvm_object {
 	int			uo_npages;	/* # of pages in memq */
 	unsigned		uo_refs;	/* reference count */
 	struct rb_tree		rb_tree;	/* tree of pages */
+	LIST_HEAD(,ubc_map)	uo_ubc;		/* ubc mappings */
 };
 
 /*
