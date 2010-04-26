@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.48 2010/04/02 19:33:16 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.49 2010/04/26 12:10:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -114,7 +114,6 @@ emergency_stack_start:
 	.block	32768
 	.export emergency_stack_end, data
 emergency_stack_end:
-	.block	4
 
 	.text
 
