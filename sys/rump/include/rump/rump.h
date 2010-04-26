@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.40 2010/04/24 01:47:34 dholland Exp $	*/
+/*	$NetBSD: rump.h,v 1.41 2010/04/26 23:40:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -76,7 +76,13 @@ enum rump_sigmodel {
 #define RUMPCN_FREECRED  0x02
 #define RUMPCN_FORCEFREE 0x04
 #define RUMP_ETFS_SIZE_ENDOFF ((uint64_t)-1)
-enum rump_etfs_type { RUMP_ETFS_REG, RUMP_ETFS_BLK, RUMP_ETFS_CHR };
+enum rump_etfs_type {
+	RUMP_ETFS_REG,
+	RUMP_ETFS_BLK,
+	RUMP_ETFS_CHR,
+	RUMP_ETFS_DIR,		/* only the registered directory */
+	RUMP_ETFS_DIR_SUBDIRS	/* dir + subdirectories (recursive) */
+};
 
 /*
  * Something like rump capabilities would be nicer, but let's
