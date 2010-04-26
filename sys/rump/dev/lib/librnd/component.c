@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.3 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.4 2010/04/26 09:47:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.3 2010/03/01 13:12:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.4 2010/04/26 09:47:46 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -53,12 +53,11 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	    &rnd_cdevsw, &cmaj)) != 0)
 		panic("cannot attach rnd: %d", error);
 
-	/* XXX: truly hideous interface abuse */
-	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/random", 0,
-	    cmaj, RND_DEV_RANDOM, 1)) != 0)
+	if ((error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/random",
+	    cmaj, RND_DEV_RANDOM)) != 0)
 		panic("cannot create /dev/random: %d", error);
-	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/urandom", 0,
-	    cmaj, RND_DEV_URANDOM, 1)) != 0)
+	if ((error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/urandom",
+	    cmaj, RND_DEV_URANDOM)) != 0)
 		panic("cannot create /dev/urandom: %d", error);
 
 	rump_pdev_add(rndattach, 4);
