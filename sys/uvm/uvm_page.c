@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.19 2010/04/26 06:19:06 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.20 2010/04/26 06:37:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.19 2010/04/26 06:19:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.20 2010/04/26 06:37:38 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -749,7 +749,7 @@ uvm_page_physget(paddr_t *paddrp)
  */
 
 static struct vm_physseg *
-uvm_page_physload_common(struct vm_physseg * const, int *,
+uvm_page_physload_common(struct vm_physseg * const, int,
     const paddr_t, const paddr_t, const paddr_t, const paddr_t, const int);
 #if 0
 static void
@@ -768,9 +768,30 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int free_list)
 {
 	struct vm_physseg *seg;
+	int lcv;
 
-	seg = uvm_page_physload_common(vm_physmem, &vm_nphysmem, start, end,
+	seg = uvm_page_physload_common(vm_physmem, vm_nphysmem, start, end,
 	    avail_start, avail_end, free_list);
+	KASSERT(seg != NULL);
+
+	seg->avail_start = avail_start;
+	seg->avail_end = avail_end;
+	/*
+	 * check to see if this is a "preload" (i.e. uvm_page_init hasn't been
+	 * called yet, so malloc is not available).
+	 */
+	for (lcv = 0; lcv < vm_nphysmem; lcv++) {
+		if (vm_physmem[lcv].pgs)
+			break;
+	}
+	if (lcv == vm_nphysmem) {
+		seg->pgs = NULL;
+		seg->endpg = NULL;
+		seg->free_list = free_list;	/* XXX */
+	} else {
+		panic("uvm_page_physload: tried to add RAM after uvm_page_init");
+	}
+	vm_nphysmem++;
 	return seg;
 }
 
@@ -781,21 +802,22 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 {
 	struct vm_physseg *seg;
 
-	seg = uvm_page_physload_common(vm_physdev, &vm_nphysdev, start, end,
+	seg = uvm_page_physload_common(vm_physdev, vm_nphysdev, start, end,
 	    avail_start, avail_end, free_list);
+	KASSERT(seg != NULL);
 
 	for (paddr_t pf = start; pf < end; pf++)
 		vm_page_device_mdpage_insert(pf);
+	vm_nphysdev++;
 	return seg;
 }
 #endif
 
 static struct vm_physseg *
-uvm_page_physload_common(struct vm_physseg * const segs, int *rnsegs,
+uvm_page_physload_common(struct vm_physseg * const segs, int nsegs,
     const paddr_t start, const paddr_t end,
     const paddr_t avail_start, const paddr_t avail_end, const int free_list)
 {
-	int lcv;
 	struct vm_physseg *ps;
 
 	if (uvmexp.pagesize == 0)
@@ -804,41 +826,18 @@ uvm_page_physload_common(struct vm_physseg * const segs, int *rnsegs,
 		panic("uvm_page_physload: bad free list %d", free_list);
 	if (start >= end)
 		panic("uvm_page_physload: start >= end");
-	if (*rnsegs == VM_PHYSSEG_MAX)
+	if (nsegs == VM_PHYSSEG_MAX)
 		panic("uvm_page_physload: unable to load physical memory "
 		    "segment\n"
 		    "\t%d segments allocated, ignoring 0x%llx -> 0x%llx\n"
 		    "\tincrease VM_PHYSSEG_MAX\n",
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
 
-	ps = uvm_physseg_insert(segs, *rnsegs, start, end);
+	ps = uvm_physseg_insert(segs, nsegs, start, end);
+	KASSERT(ps != NULL);
 	ps->start = start;
 	ps->end = end;
 
-	if (segs == vm_physmem) {
-		ps->avail_start = avail_start;
-		ps->avail_end = avail_end;
-		/*
-		 * check to see if this is a "preload" (i.e. uvm_page_init hasn't been
-		 * called yet, so malloc is not available).
-		 */
-		for (lcv = 0; lcv < *rnsegs; lcv++) {
-			if (segs[lcv].pgs)
-				break;
-		}
-		if (lcv == *rnsegs) {
-			/* "preload" - can't use malloc */
-			ps->pgs = NULL;
-			ps->endpg = NULL;
-			ps->free_list = free_list;	/* XXX */
-		} else {
-			panic("uvm_page_physload: tried to add RAM after uvm_page_init");
-		}
-	} else {
-		/* XXX */
-	}
-
-	(*rnsegs)++;
 	return ps;
 }
 
@@ -1150,7 +1149,7 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
  * XXX Consider to allocate slots on-demand.
  */
 
-struct vm_page_md *vm_page_device_mdpage_lookup(struct vm_page *);
+static struct vm_page_md *vm_page_device_mdpage_lookup(struct vm_page *);
 
 struct vm_page_md *
 uvm_vm_page_to_md(struct vm_page *pg)
@@ -1199,7 +1198,7 @@ vm_page_device_mdpage_lock(u_int hash)
 	return &vm_page_device_mdpage.locks[hash % MDPG_HASH_LOCK_CNT];
 }
 
-void
+static void
 vm_page_device_mdpage_insert(paddr_t pf)
 {
 	u_int hash = (u_int)pf;
@@ -1217,7 +1216,7 @@ vm_page_device_mdpage_insert(paddr_t pf)
 }
 
 #if 0
-void
+static void
 vm_page_device_mdpage_remove(paddr_t pf)
 {
 	u_int hash = (u_int)pf;
@@ -1245,7 +1244,7 @@ vm_page_device_mdpage_remove(paddr_t pf)
 }
 #endif
 
-struct vm_page_md *
+static struct vm_page_md *
 vm_page_device_mdpage_lookup(struct vm_page *pg)
 {
 	paddr_t pf = VM_PAGE_DEVICE_TO_PHYS(pg) >> PAGE_SHIFT;
