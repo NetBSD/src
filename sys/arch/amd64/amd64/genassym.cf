@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43 2009/11/27 03:23:04 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.43.4.1 2010/04/26 04:48:49 rmind Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -136,6 +136,8 @@ define	KERNBASE		KERNBASE
 define	KERNTEXTOFF_LO		KERNTEXTOFF_LO
 define	KERNTEXTOFF		KERNTEXTOFF
 
+define	PG_G			PG_G
+
 define	NBPG			NBPG
 
 define	L4_SLOT_KERNBASE	L4_SLOT_KERNBASE
@@ -225,7 +227,6 @@ define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
-define	CPU_INFO_PMAP_CPU	offsetof(struct cpu_info, ci_pmap_cpu)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
 define	TLBSTATE_VALID		TLBSTATE_VALID
 define	TLBSTATE_LAZY		TLBSTATE_LAZY
@@ -349,12 +350,11 @@ define	RW_THREAD		RW_THREAD
 define	RW_READER		RW_READER
 define	RW_WRITER		RW_WRITER
 
-define	MB_POINTER		offsetof(struct pmap_mbox, mb_pointer)
-define	MB_GLOBAL		offsetof(struct pmap_mbox, mb_global)
-define	MB_ADDR1		offsetof(struct pmap_mbox, mb_addr1)
-define	MB_ADDR2		offsetof(struct pmap_mbox, mb_addr2)
-define	MB_HEAD			offsetof(struct pmap_mbox, mb_head)
-define	MB_TAIL			offsetof(struct pmap_mbox, mb_tail)
+define	TM_PENDING		offsetof(struct pmap_tlb_mailbox, tm_pending)
+define	TP_COUNT		offsetof(struct pmap_tlb_packet, tp_count)
+define	TP_VA			offsetof(struct pmap_tlb_packet, tp_va)
+define	TP_USERMASK		offsetof(struct pmap_tlb_packet, tp_usermask)
+define	TP_PTE			offsetof(struct pmap_tlb_packet, tp_pte)
 
 define	PM_CPUS			offsetof(struct pmap, pm_cpus)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.33 2010/02/23 06:27:40 cegger Exp $	*/
+/*	$NetBSD: vector.S,v 1.33.2.1 2010/04/26 04:48:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -480,13 +480,10 @@ IDTVEC(resume_lapic_ltimer)
 
 #ifndef XEN
 /*
- * Multicast TLB shootdown handler for !kernel_pmap.
+ * TLB shootdown handler.
  */
-IDTVEC(intr_lapic_tlb_mcast)
-	/*
-	 * Save state, ack interrupt and count it.  Count locally
-	 * so other CPUs don't have to touch the counter's line.
-	 */
+IDTVEC(intr_lapic_tlb)
+	/* Save state and ack the interrupt. */
 	testq	$SEL_UPL,8(%rsp)
 	jz	0f
 	swapgs
@@ -499,41 +496,42 @@ IDTVEC(intr_lapic_tlb_mcast)
 	pushq	%rcx
 	pushq	%r8
 	pushq	%r9
-	incq	CPUVAR(TLB_EVCNT)+EV_COUNT
-	/* Find out what needs to be invalidated and unlock the mailbox. */
-	movq	CPUVAR(PMAP_CPU),%rcx
-	movq	MB_ADDR1(%rcx), %rax
-	movq	MB_ADDR2(%rcx), %rdx
-	xorq	%rbx, %rbx
-	xchgq	MB_POINTER(%rcx), %rbx
 	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
-	cmpq	$-1, %rax
+
+	/* Find out what we need to invalidate. */
+	leaq	_C_LABEL(pmap_tlb_packet)(%rip), %rbx
+	movswq	TP_COUNT(%rbx), %rcx
+	cmpq	$-1, %rcx
 	je	5f
+	leaq	TP_VA(%rbx), %rdx
 1:
 	/* Invalidate a single page or a range of pages. */
+	movq	(%rdx), %rax
 	invlpg	(%rax)
-	addq	$PAGE_SIZE, %rax
-	cmpq	%rdx, %rax
-	jb	1b
+	addq	$8, %rdx
+	decq	%rcx
+	jg	1b
 2:
-	/* Ack the request. */
-	lock
-	incq	(%rbx)
 	/*
-	 * Check the current TLB state.  If we don't want further
+	 * Check the current TLB state.  If we do not want further
 	 * invalidations for this pmap, then take the CPU out of
 	 * the pmap's bitmask.
 	 */
+	movl	CPUVAR(CPUMASK), %eax
 	cmpl	$TLBSTATE_LAZY, CPUVAR(TLBSTATE)
 	jne	3f
-	movq	CPUVAR(PMAP), %rdx
-	movl	CPUVAR(CPUMASK), %ecx
+	testl	%eax, TP_USERMASK(%rbx)
+	jz	3f
+	movl	CPUVAR(PMAP), %edx
+	movl	%eax, %ecx
 	notl	%ecx
 	lock
-	andl	%ecx, PM_CPUS(%rdx)
+	andl	%ecx, PM_CPUS(%edx)
 	movl	$TLBSTATE_STALE, CPUVAR(TLBSTATE)
 3:
-	/* Restore state and return. */
+	/* Ack the request, restore state & return. */
+	lock
+	xorl	%eax, _C_LABEL(pmap_tlb_mailbox)+TM_PENDING
 	popq	%r9
 	popq	%r8
 	popq	%rcx
@@ -548,11 +546,18 @@ IDTVEC(intr_lapic_tlb_mcast)
 4:
 	iretq
 5:
+	/* Invalidate whole address space: */
+	testw	$PG_G, TP_PTE(%rbx)
+	jnz	6f
 	/*
-	 * Get the emap generation number.  Invalidate user TLB entries.
-	 * Perform emap update, pass the generation number.  Note that
-	 * caller-save registers might be modified (all saved in the
-	 * beginning).  Only %rbx value is used by 2b context.
+	 * a) Invalidating user TLB entries only.
+	 *
+	 * - Get the emap generation number.
+	 * - Invalidate TLB entries.
+	 * - Perform emap update, pass the generation number.
+	 *
+	 * Note that caller-save registers might be modified (all saved in the
+	 * beginning).  Only %rbx value must be preserved for the 2b context.
 	 */
 	callq	_C_LABEL(uvm_emap_gen_return)
 	movq	%rax, %rdi
@@ -560,60 +565,11 @@ IDTVEC(intr_lapic_tlb_mcast)
 	movq	%rax, %cr3
 	callq	_C_LABEL(uvm_emap_update)
 	jmp	2b
-
-/*
- * Broadcast TLB shootdown handler for kernel_pmap.
- */
-IDTVEC(intr_lapic_tlb_bcast)
-	testq	$SEL_UPL,8(%rsp)
-	jz	0f
-	swapgs
-0:
-	/* Save state. */
-	pushq	%rax
-	pushq	%rdi
-	pushq	%rsi
-	pushq	%rdx
-	pushq	%rcx
-	pushq	%r8
-	pushq	%r9
-	/* Find out what needs to be invalidated. */
-	movq	_C_LABEL(pmap_mbox)+MB_ADDR1, %rax
-	movq	_C_LABEL(pmap_mbox)+MB_ADDR2, %rdx
-	movq	_C_LABEL(pmap_mbox)+MB_GLOBAL, %rdi
-	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
-	cmpq	$-1, %rax
-	je,pn	3f
-1:
-	/* Invalidate a single page or a range of pages. */
-	invlpg	(%rax)
-	addq	$PAGE_SIZE, %rax
-	cmpq	%rdx, %rax
-	jb	1b
-2:
-	/* Notify waiter of completion, restore state & return */
-	lock
-	incq	_C_LABEL(pmap_mbox)+MB_TAIL
-	popq	%r9
-	popq	%r8
-	popq	%rcx
-	popq	%rdx
-	popq	%rsi
-	popq	%rdi
-	popq	%rax
-	testq	$SEL_UPL, 8(%rsp)
-	jz	5f
-	swapgs
-5:
-	iretq
-3:
-	testq	%rdi, %rdi
-	jz	4f
+6:
 	/*
-	 * If we have been asked to invalidate the entire TLB we arrive here.
-	 * Get the emap generation before flush, and use it after for update.
-	 * Note that caller-save registers might be modified, though no
-	 * registers need to be preserved for 2b context.
+	 * b) Invalidating user and kernel TLB entries.
+	 *
+	 * See notes above.
 	 */
 	callq	_C_LABEL(uvm_emap_gen_return)
 	movq	%rax, %rdi
@@ -622,19 +578,6 @@ IDTVEC(intr_lapic_tlb_bcast)
 	andq	$~CR4_PGE, %rdx
 	movq	%rdx, %cr4
 	movq	%rax, %cr4
-	callq	_C_LABEL(uvm_emap_update)
-	jmp	2b
-4:
-	/*
-	 * Get the emap generation number.  Invalidate user TLB entries.
-	 * Perform emap update, pass the generation number.  Note that
-	 * caller-save registers might be modified, though no registers
-	 * need to be preserved for 2b context.
-	 */
-	callq	_C_LABEL(uvm_emap_gen_return)
-	movq	%rax, %rdi
-	movq	%cr3, %rax
-	movq	%rax, %cr3
 	callq	_C_LABEL(uvm_emap_update)
 	jmp	2b
 
