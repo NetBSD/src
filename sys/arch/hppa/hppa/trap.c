@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.89 2010/04/26 12:16:21 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.90 2010/04/26 15:22:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2010/04/26 12:16:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2010/04/26 15:22:38 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -465,9 +465,10 @@ do {							\
 #undef SANITY
 out:
 	if (sanity_frame == tf) {
-		printf("insanity: '%s' in func %s at line %d type 0x%x tf %p "
-		    "lwp %p sp 0x%x pc 0x%x\n", sanity_string, func, line, type,
-		    sanity_frame, sanity_lwp, tf->tf_sp, tf->tf_iioq_head);
+		printf("insanity: '%s' at %s:%d type 0x%x tf %p lwp %p "
+		    "sp 0x%x pc 0x%x\n",
+		    sanity_string, func, line, type, sanity_frame, sanity_lwp,
+		    tf->tf_sp, tf->tf_iioq_head);
 		(void) trap_kdebug(T_IBREAK, 0, tf);
 		sanity_frame = NULL;
 		sanity_lwp = NULL;
