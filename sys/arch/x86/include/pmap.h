@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29.2.1 2010/03/16 15:38:04 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.2 2010/04/26 02:43:34 rmind Exp $	*/
 
 /*
  *
@@ -165,6 +165,8 @@ struct pmap {
 	uint32_t pm_cpus;		/* mask of CPUs using pmap */
 	uint32_t pm_kernel_cpus;	/* mask of CPUs using kernel part
 					 of pmap */
+	uint64_t pm_ncsw;		/* for assertions */
+	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
 };
 
 /* macro to access pm_pdirpa */
@@ -231,8 +233,26 @@ void		pmap_emap_sync(bool);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
-void	pmap_tlb_shootwait(void);
+typedef enum tlbwhy {
+	TLBSHOOT_APTE,
+	TLBSHOOT_KENTER,
+	TLBSHOOT_KREMOVE,
+	TLBSHOOT_FREE_PTP1,
+	TLBSHOOT_FREE_PTP2,
+	TLBSHOOT_REMOVE_PTE,
+	TLBSHOOT_REMOVE_PTES,
+	TLBSHOOT_SYNC_PV1,
+	TLBSHOOT_SYNC_PV2,
+	TLBSHOOT_WRITE_PROTECT,
+	TLBSHOOT_ENTER,
+	TLBSHOOT_UPDATE,
+	TLBSHOOT_BUS_DMA,
+	TLBSHOOT_BUS_SPACE,
+	TLBSHOOT__MAX,
+} tlbwhy_t;
+
+void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, tlbwhy_t);
+void	pmap_tlb_shootnow(void);
 
 #define	__HAVE_PMAP_EMAP
 
@@ -348,8 +368,6 @@ kvtopte(vaddr_t va)
 
 paddr_t vtophys(vaddr_t);
 vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, vm_prot_t);
-void	pmap_cpu_init_early(struct cpu_info *);
-void	pmap_cpu_init_late(struct cpu_info *);
 bool	sse2_idlezero_page(void *);
 
 
@@ -419,16 +437,28 @@ paddr_t	vtomach(vaddr_t);
 #define	POOL_VTOPHYS(va)	vtophys((vaddr_t) (va))
 
 /*
- * TLB shootdown mailbox.
+ * TLB shootdown structures.
  */
 
-struct pmap_mbox {
-	volatile void		*mb_pointer;
-	volatile uintptr_t	mb_addr1;
-	volatile uintptr_t	mb_addr2;
-	volatile uintptr_t	mb_head;
-	volatile uintptr_t	mb_tail;
-	volatile uintptr_t	mb_global;
+struct pmap_tlb_packet {
+#ifdef _LP64
+	uintptr_t	tp_va[14];	/* whole struct: 128 bytes */
+#else
+	uintptr_t	tp_va[13];	/* whole struct: 64 bytes */
+#endif
+	uint16_t	tp_count;
+	uint16_t	tp_pte;
+	uint32_t	tp_cpumask;
+	uint32_t	tp_usermask;
+};
+#define	TP_MAXVA	6		/* no more than N seperate invlpg */
+
+struct pmap_tlb_mailbox {
+	uintptr_t	tm_pending;
+	uintptr_t	tm_gen;
+	uintptr_t	tm_usergen;
+	uintptr_t	tm_globalgen;
+	char		tm_pad[64 - sizeof(uintptr_t) * 4];
 };
 
 #endif /* _KERNEL */
