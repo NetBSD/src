@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.163 2010/04/22 07:10:47 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.164 2010/04/26 20:10:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.163 2010/04/22 07:10:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.164 2010/04/26 20:10:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -95,7 +95,7 @@ struct pstats rump_stats;
 struct plimit rump_limits;
 struct filedesc rump_filedesc0;
 struct proclist allproc;
-char machine[] = "rump";
+char machine[] = MACHINE;
 static kauth_cred_t rump_susercred;
 
 /* pretend the master rump proc is init */
