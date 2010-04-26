@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.10 2010/04/23 15:46:59 jruoho Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.11 2010/04/26 13:30:31 jruoho Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -28,12 +28,8 @@
  * SUCH DAMAGE.
  */
 
-/*
- * ACPI PCI Bus
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.10 2010/04/23 15:46:59 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.11 2010/04/26 13:30:31 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,40 +55,38 @@ static ACPI_STATUS	  acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *,
 							   void *);
 
 /*
- * Regarding PCI Segment Groups, the ACPI spec says (cf. ACPI 4.0, p. 277):
+ * Regarding PCI Segment Groups (ACPI 4.0, p. 277):
  *
  * "The optional _SEG object is located under a PCI host bridge and
- * evaluates to an integer that describes the PCI Segment Group (see PCI
- * Firmware Specification v3.0)."
+ *  evaluates to an integer that describes the PCI Segment Group (see PCI
+ *  Firmware Specification v3.0)."
+ *
+ * "PCI Segment Group is purely a software concept managed by system
+ *  firmware and used by OSPM. It is a logical collection of PCI buses
+ *  (or bus segments). It is a way to logically group the PCI bus segments
+ *  and PCI Express Hierarchies. _SEG is a level higher than _BBN."
  *
  * "PCI Segment Group supports more than 256 buses in a system by allowing
- * the reuse of the PCI bus numbers.  Within each PCI Segment Group, the bus
- * numbers for the PCI buses must be unique. PCI buses in different PCI
- * Segment Group are permitted to have the same bus number."
- *
- * "If _SEG does not exist, OSPM assumes that all PCI bus segments are in
- * PCI Segment Group 0."
- *
- * "The lower 16 bits of _SEG returned integer is the PCI Segment Group
- * number.  Other bits are reserved."
+ *  the reuse of the PCI bus numbers.  Within each PCI Segment Group, the bus
+ *  numbers for the PCI buses must be unique. PCI buses in different PCI
+ *  Segment Group are permitted to have the same bus number."
  */
 
 /*
- * Regarding PCI Base Bus Numbers, the ACPI spec says (cf. ACPI 4.0, p. 277):
+ * Regarding PCI Base Bus Numbers (ACPI 4.0, p. 277):
  *
  * "For multi-root PCI platforms, the _BBN object evaluates to the PCI bus
- * number that the BIOS assigns.  This is needed to access a PCI_Config
- * operation region for the specified bus.  The _BBN object is located under
- * a PCI host bridge and must be unique for every host bridge within a
- * segment since it is the PCI bus number."
+ *  number that the BIOS assigns.  This is needed to access a PCI_Config
+ *  operation region for the specified bus.  The _BBN object is located under
+ *  a PCI host bridge and must be unique for every host bridge within a
+ *  segment since it is the PCI bus number."
  *
  * Moreover, the ACPI FAQ (http://www.acpi.info/acpi_faq.htm) says:
  *
  * "For a multiple root bus machine, _BBN is required for each bus.  _BBN
- * should provide the bus number assigned to this bus by the BIOS at boot
- * time."
+ *  should provide the bus number assigned to this bus by the BIOS at boot
+ *  time."
  */
-
 
 /*
  * acpi_pcidev_pciroot_bus:
@@ -100,9 +94,6 @@ static ACPI_STATUS	  acpi_pcidev_pciroot_bus_callback(ACPI_RESOURCE *,
  *	Derive the PCI bus number of a PCI root bridge from its resources.
  *	If successful, return AE_OK and fill *busp.  Otherwise, return an
  *	exception code and leave *busp unchanged.
- *
- * XXX	Use ACPI resource parsing functions (acpi_resource.c) once bus number
- *	ranges are implemented there.
  */
 static ACPI_STATUS
 acpi_pcidev_pciroot_bus(ACPI_HANDLE handle, uint16_t *busp)
@@ -111,7 +102,12 @@ acpi_pcidev_pciroot_bus(ACPI_HANDLE handle, uint16_t *busp)
 	int32_t bus;
 
 	bus = -1;
-	rv = AcpiWalkResources(handle, METHOD_NAME__CRS,
+
+	/*
+	 * XXX:	Use the ACPI resource parsing functions (acpi_resource.c)
+	 *	once bus number ranges have been implemented there.
+	 */
+	rv = AcpiWalkResources(handle, "_CRS",
 	    acpi_pcidev_pciroot_bus_callback, &bus);
 
 	if (ACPI_FAILURE(rv))
@@ -180,6 +176,12 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		if (ap == NULL)
 			return AE_NO_MEMORY;
 
+		/*
+		 * If no _SEG exist, all PCI bus segments are assumed
+		 * to be in the PCI segment group 0 (ACPI 4.0, p. 277).
+		 * The segment group number is conveyed in the lower
+		 * 16 bits of _SEG (the other bits are all reserved).
+		 */
 		rv = acpi_eval_integer(ad->ad_handle, "_SEG", &val);
 
 		if (ACPI_SUCCESS(rv))
@@ -209,10 +211,11 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 	if ((ad->ad_parent != NULL) &&
 	    (ad->ad_parent->ad_pciinfo != NULL) &&
 	    (ad->ad_parent->ad_pciinfo->ap_bridge)) {
+
 		/*
-		 * Our parent is a PCI root bridge or a PCI-to-PCI bridge.  We
-		 * have the same PCI segment#, and our bus# is its downstream
-		 * bus number.
+		 * Our parent is a PCI root bridge or a PCI-to-PCI
+		 * bridge. We have the same PCI segment number, and
+		 * our bus number is its downstream bus number.
 		 */
 		ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
 
@@ -226,8 +229,8 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		ap->ap_function = ACPI_LOLODWORD(ad->ad_devinfo->Address);
 
 		/*
-		 * Check whether this device is a PCI-to-PCI bridge and get its
-		 * secondary bus#.
+		 * Check whether this device is a PCI-to-PCI
+		 * bridge and get its secondary bus number.
 		 */
 		rv = acpi_pcidev_ppb_downbus(ap->ap_segment, ap->ap_bus,
 		    ap->ap_device, ap->ap_function, &ap->ap_downbus);
