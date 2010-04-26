@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.46 2010/04/21 16:51:24 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.47 2010/04/26 23:43:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.46 2010/04/21 16:51:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.47 2010/04/26 23:43:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -134,6 +134,15 @@ rump_vfs_init(void)
 	} else {
 		syncdelay = 0;
 	}
+
+	/*
+	 * On archs where the native kernel ABI is supported, map
+	 * host module directory to rump.  This means that kernel
+	 * modules from the host will be autoloaded to rump kernels.
+	 */
+#ifdef _RUMP_NATIVE_ABI
+	rump_etfs_register(module_base, module_base, RUMP_ETFS_DIR_SUBDIRS);
+#endif
 
 	module_init_class(MODULE_CLASS_VFS);
 }
