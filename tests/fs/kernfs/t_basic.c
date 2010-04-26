@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.1 2010/03/31 19:14:30 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.2 2010/04/26 23:47:25 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -34,65 +34,11 @@ ATF_TC_HEAD(getdents, tc)
 #define atf_tc_fail(...) errx(1, __VA_ARGS__)
 #endif
 
-#ifdef MODDIR
-/*
- * Try to load kernfs module (only on archs where ABIs match).
- * This is slightly ... inconvenient currently.  Let's try to improve
- * it in the future.
- *
- * steps:
- *   1) copy it into our working directory
- *   2) rename symbols
- *   3) lock & load
- */
-static int
-loadmodule(void)
-{
-	modctl_load_t ml;
-	int error;
-
-	if (system("cp " MODDIR MODBASE " .") == -1) {
-		warn("failed to copy %s into pwd", MODDIR MODBASE);
-		return errno;
-	}
-	if (chmod(MODBASE, 0666) == -1) {
-		warn("chmod %s", MODBASE);
-		return errno;
-	}
-	if (system("make -f /usr/src/sys/rump/Makefile.rump RUMP_SYMREN="
-	    MODBASE) == -1) {
-		warn("objcopy failed");
-		return errno;
-	}
-
-	if ((error = rump_pub_etfs_register(MODBASE, MODBASE, RUMP_ETFS_REG))) {
-		warn("rump etfs");
-		return error;
-	}
-
-	memset(&ml, 0, sizeof(ml));
-	ml.ml_filename = MODBASE;
-	if (rump_sys_modctl(MODCTL_LOAD, &ml) == -1) {
-		warn("module load");
-		return errno;
-	}
-
-	return 0;
-}
-#endif
-
 static void
 mountkernfs(void)
 {
 
 	rump_init();
-
-#ifdef MODDIR
-	if (loadmodule() != 0) {
-		/* failed?  fallback to dlopen() .... some day */
-		atf_tc_fail("could not load kernfs");
-	}
-#endif
 
 	if (rump_sys_mkdir("/kern", 0777) == -1)
 		atf_tc_fail_errno("mkdir /kern");
