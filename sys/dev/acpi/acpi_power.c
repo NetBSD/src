@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.9 2010/04/26 12:46:48 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.10 2010/04/26 13:38:42 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.9 2010/04/26 12:46:48 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.10 2010/04/26 13:38:42 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -651,7 +651,7 @@ acpi_power_res_sta(ACPI_OBJECT *elm, void *arg)
 	return AE_OK;
 
 fail:
-	if (rv == AE_CTRL_CTRL_FALSE)
+	if (rv == AE_CTRL_FALSE)
 		rv = AE_ERROR;
 
 	ACPI_DEBUG_PRINT((ACPI_DB_DEBUG_OBJECT, "failed to evaluate _STA "
