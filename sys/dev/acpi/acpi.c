@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.191 2010/04/25 17:06:23 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.192 2010/04/26 04:31:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.191 2010/04/25 17:06:23 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.192 2010/04/26 04:31:09 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -169,11 +169,6 @@ static bool		acpi_suspend(device_t, const pmf_qual_t *);
 static bool		acpi_resume(device_t, const pmf_qual_t *);
 
 static void		acpi_build_tree(struct acpi_softc *);
-
-#ifdef ACPIVERBOSE
-static void		acpi_print_tree(struct acpi_devnode *, uint32_t);
-#endif
-
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
 					  void *, void **);
 static ACPI_STATUS	acpi_make_devnode_post(ACPI_HANDLE, uint32_t,
@@ -190,6 +185,11 @@ static void		acpi_rescan1(struct acpi_softc *,
 static void		acpi_rescan_nodes(struct acpi_softc *);
 static void		acpi_rescan_capabilities(struct acpi_softc *);
 static int		acpi_print(void *aux, const char *);
+
+#ifdef ACPIVERBOSE
+static void		acpi_print_devnodes(struct acpi_softc *);
+static void		acpi_print_tree(struct acpi_devnode *, uint32_t);
+#endif
 
 static void		acpi_notify_handler(ACPI_HANDLE, uint32_t, void *);
 
@@ -624,45 +624,11 @@ acpi_build_tree(struct acpi_softc *sc)
 	(void)acpi_pcidev_scan(sc->sc_root);
 
 #ifdef ACPIVERBOSE
+	acpi_print_devnodes(sc);
 	aprint_normal("\n");
 	acpi_print_tree(sc->sc_root, 0);
 #endif
 }
-
-#ifdef ACPIVERBOSE
-static void
-acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
-{
-	struct acpi_devnode *child;
-	uint32_t i;
-
-	for (i = 0; i < level; i++)
-		aprint_normal("    ");
-
-	aprint_normal("%-5s [%02u] [%c%c] ", ad->ad_name, ad->ad_type,
-	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : ' ',
-	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : ' ');
-
-	if (ad->ad_pciinfo != NULL) {
-
-		aprint_normal("(PCI) @ 0x%02X:0x%02X:0x%02X:0x%02X ",
-		    ad->ad_pciinfo->ap_segment, ad->ad_pciinfo->ap_bus,
-		    ad->ad_pciinfo->ap_device, ad->ad_pciinfo->ap_function);
-
-		if ((ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) != 0)
-			aprint_normal("[R] ");
-
-		if (ad->ad_pciinfo->ap_bridge != false)
-			aprint_normal("[B] -> 0x%02X",
-			    ad->ad_pciinfo->ap_downbus);
-	}
-
-	aprint_normal("\n\n");
-
-	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
-	    acpi_print_tree(child, level + 1);
-}
-#endif
 
 static ACPI_STATUS
 acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
@@ -738,35 +704,6 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 		}
 
 		awc->aw_parent = ad;
-
-#ifdef ACPIVERBOSE
-
-		if (type != ACPI_TYPE_DEVICE)
-			return AE_OK;
-
-		aprint_normal_dev(sc->sc_dev, "%-5s ", ad->ad_name);
-
-		aprint_normal("HID %-10s ",
-		    ((devinfo->Valid & ACPI_VALID_HID) != 0) ?
-		    devinfo->HardwareId.String: "-");
-
-		aprint_normal("UID %-4s ",
-		    ((devinfo->Valid & ACPI_VALID_UID) != 0) ?
-		    devinfo->UniqueId.String : "-");
-
-		if ((devinfo->Valid & ACPI_VALID_STA) != 0)
-			aprint_normal("STA 0x%08X ", devinfo->CurrentStatus);
-		else
-			aprint_normal("STA %10s ", "-");
-
-		if ((devinfo->Valid & ACPI_VALID_ADR) != 0)
-			aprint_normal("ADR 0x%016" PRIX64"",
-			    devinfo->Address);
-		else
-			aprint_normal("ADR -");
-
-		aprint_normal("\n");
-#endif
 	}
 
 	return AE_OK;
@@ -1175,6 +1112,74 @@ acpi_print(void *aux, const char *pnp)
 
 	return UNCONF;
 }
+
+#ifdef ACPIVERBOSE
+static void
+acpi_print_devnodes(struct acpi_softc *sc)
+{
+	struct acpi_devnode *ad;
+	ACPI_DEVICE_INFO *di;
+
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
+		di = ad->ad_devinfo;
+		aprint_normal_dev(sc->sc_dev, "%-5s ", ad->ad_name);
+
+		aprint_normal("HID %-10s ",
+		    ((di->Valid & ACPI_VALID_HID) != 0) ?
+		    di->HardwareId.String: "-");
+
+		aprint_normal("UID %-4s ",
+		    ((di->Valid & ACPI_VALID_UID) != 0) ?
+		    di->UniqueId.String : "-");
+
+		if ((di->Valid & ACPI_VALID_STA) != 0)
+			aprint_normal("STA 0x%08X ", di->CurrentStatus);
+		else
+			aprint_normal("STA %10s ", "-");
+
+		if ((di->Valid & ACPI_VALID_ADR) != 0)
+			aprint_normal("ADR 0x%016" PRIX64"", di->Address);
+		else
+			aprint_normal("ADR -");
+
+		aprint_normal("\n");
+	}
+}
+
+static void
+acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
+{
+	struct acpi_devnode *child;
+	uint32_t i;
+
+	for (i = 0; i < level; i++)
+		aprint_normal("    ");
+
+	aprint_normal("%-5s [%02u] [%c%c] ", ad->ad_name, ad->ad_type,
+	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : ' ',
+	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : ' ');
+
+	if (ad->ad_pciinfo != NULL) {
+
+		aprint_normal("(PCI) @ 0x%02X:0x%02X:0x%02X:0x%02X ",
+		    ad->ad_pciinfo->ap_segment, ad->ad_pciinfo->ap_bus,
+		    ad->ad_pciinfo->ap_device, ad->ad_pciinfo->ap_function);
+
+		if ((ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) != 0)
+			aprint_normal("[R] ");
+
+		if (ad->ad_pciinfo->ap_bridge != false)
+			aprint_normal("[B] -> 0x%02X",
+			    ad->ad_pciinfo->ap_downbus);
+	}
+
+	aprint_normal("\n\n");
+
+	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
+	    acpi_print_tree(child, level + 1);
+}
+#endif
 
 /*
  * Notify.
