@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14.2.1 2010/02/23 15:27:55 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14.2.2 2010/04/26 06:19:04 uebayasi Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.33 2006/06/04 17:21:24 miod Exp $	*/
 
@@ -94,8 +94,6 @@
 
 #define	VM_PHYSSEG_MAX	8	/* this many physmem segments */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
-
-#define	VM_PHYSSEG_NOADD	/* XXX until uvm code is fixed */
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0

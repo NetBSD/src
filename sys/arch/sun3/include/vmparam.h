@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.33 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.33.20.1 2010/04/26 06:19:06 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@ extern	char KERNBASE[];
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#define VM_PHYSSEG_NOADD	/* can't add RAM after vm_mem_init */
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
