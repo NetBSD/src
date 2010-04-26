@@ -1,4 +1,4 @@
-.\"	$NetBSD: uiomove.9,v 1.16 2010/04/26 07:36:33 jruoho Exp $
+.\"	$NetBSD: uiomove.9,v 1.17 2010/04/26 07:51:36 jruoho Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,12 +76,25 @@ vectors to be processed.
 The
 .Va struct iovec
 is defined to be:
-.Bd -literal
+.Bd -literal -offset indent
 struct iovec {
-	void	*iov_base;	/* Base address. */
-	size_t	 iov_len;	/* Length. */
+	void	*iov_base;
+	size_t	 iov_len;
 };
 .Ed
+.Pp
+The members in the
+.Va struct iovec
+should only be initialized.
+These are:
+.Bl -tag -width "*iov_base " -offset indent
+.It Va iov_base
+The address for a range of memory to or from which data is transferred.
+.It Va iov_len
+The number of bytes of data to be transferred to
+or from the range of memory starting at
+.Va iov_base .
+.El
 .It Va uio_iovcnt
 The number of
 .Tn I/O
