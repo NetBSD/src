@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.26 2010/04/19 18:24:27 dyoung Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.27 2010/04/26 22:58:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.26 2010/04/19 18:24:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.27 2010/04/26 22:58:53 pooka Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -128,6 +128,8 @@ __weak_alias(machdep_init,nullop);
 __weak_alias(bus_space_tag_create, eopnotsupp);
 __weak_alias(bus_space_tag_destroy, voidop);
 __weak_alias(bus_space_is_equal, default_bus_space_is_equal);
+
+__weak_alias(kobj_renamespace, nullop);
 
 #if !defined(KERN_SA)
 /*
