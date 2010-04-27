@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.862 2010/04/17 15:55:52 christos Exp $
+# $NetBSD: mi,v 1.863 2010/04/27 02:51:04 lukem Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -863,6 +863,8 @@
 ./usr/libdata/debug/usr				base-sys-usr
 ./usr/libdata/debug/usr/bin			base-sys-usr
 ./usr/libdata/debug/usr/games			base-sys-usr
+./usr/libdata/debug/usr/lib			base-sys-usr
+./usr/libdata/debug/usr/lib/i18n		base-i18n-root
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
 ./usr/libdata/debug/usr/libexec/lpr		base-sys-usr
