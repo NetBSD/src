@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.18 2010/04/12 06:56:19 skrll Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.19 2010/04/27 08:37:07 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.18 2010/04/12 06:56:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.19 2010/04/27 08:37:07 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,7 +97,7 @@ static int capabilities = ACPI_APM_DEFAULT_CAP;
 static int acpiapm_node = CTL_EOL, standby_node = CTL_EOL;
 
 struct acpi_softc;
-extern ACPI_STATUS acpi_enter_sleep_state(struct acpi_softc *, int);
+extern void acpi_enter_sleep_state(struct acpi_softc *, int);
 static int acpiapm_match(device_t, cfdata_t , void *);
 static void acpiapm_attach(device_t, device_t, void *);
 static int sysctl_state(SYSCTLFN_PROTO);
