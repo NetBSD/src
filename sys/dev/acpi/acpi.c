@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.193 2010/04/27 05:34:14 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.194 2010/04/27 08:36:06 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.193 2010/04/27 05:34:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.194 2010/04/27 08:36:06 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1418,21 +1418,22 @@ acpi_sleep_init(struct acpi_softc *sc)
 	}
 }
 
-ACPI_STATUS
+void
 acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 {
-	ACPI_STATUS rv = AE_OK;
+	ACPI_STATUS rv;
 	int err;
 
 	if (state == sc->sc_sleepstate)
-		return AE_OK;
+		return;
 
 	aprint_normal_dev(sc->sc_dev, "entering state S%d\n", state);
 
 	switch (state) {
 
 	case ACPI_STATE_S0:
-		break;
+		sc->sc_sleepstate = ACPI_STATE_S0;
+		return;
 
 	case ACPI_STATE_S1:
 	case ACPI_STATE_S2:
@@ -1442,7 +1443,7 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		if ((sc->sc_sleepstates & __BIT(state)) == 0) {
 			aprint_error_dev(sc->sc_dev, "sleep state "
 			    "S%d is not available\n", state);
-			return AE_OK;
+			return;
 		}
 
 		/*
@@ -1457,8 +1458,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 
 		if (ACPI_SUCCESS(rv))
 			aprint_debug_dev(sc->sc_dev, "evaluated _TTS\n");
-
-		rv = AE_OK;
 
 		acpi_wakedev_commit(sc, state);
 
@@ -1538,8 +1537,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 	sc->sc_sleepstate = ACPI_STATE_S0;
 
 	(void)acpi_eval_set_integer(NULL, "\\_TTS", ACPI_STATE_S0);
-
-	return rv;
 }
 
 /*
