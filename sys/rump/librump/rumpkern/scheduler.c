@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.11 2010/04/21 16:16:31 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.12 2010/04/27 23:30:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.11 2010/04/21 16:16:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.12 2010/04/27 23:30:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -53,7 +53,7 @@ static struct rumpcpu {
 	LIST_ENTRY(rumpcpu) rcpu_entries;
 } rcpu_storage[MAXCPUS];
 struct cpu_info *rump_cpu = &rump_cpus[0];
-int ncpu = 1;
+int ncpu;
 
 #define RCPU_WANTED	0x01	/* someone wants this specific CPU */
 #define RCPU_BUSY	0x02	/* CPU is busy */
@@ -72,6 +72,23 @@ cpu_lookup(u_int index)
 	return &rump_cpus[index];
 }
 
+/* this could/should be mi_attach_cpu? */
+void
+rump_cpus_bootstrap(int num)
+{
+	struct rumpcpu *rcpu;
+	struct cpu_info *ci;
+	int i;
+
+	for (i = 0; i < num; i++) {
+		rcpu = &rcpu_storage[i];
+		ci = &rump_cpus[i];
+		ci->ci_index = i;
+		rump_cpu_attach(ci);
+		ncpu++;
+	}
+}
+
 void
 rump_scheduler_init()
 {
@@ -85,11 +102,10 @@ rump_scheduler_init()
 	for (i = 0; i < ncpu; i++) {
 		rcpu = &rcpu_storage[i];
 		ci = &rump_cpus[i];
-		rump_cpu_bootstrap(ci);
+		rcpu->rcpu_ci = ci;
 		ci->ci_schedstate.spc_mutex =
 		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 		ci->ci_schedstate.spc_flags = SPCF_RUNNING;
-		rcpu->rcpu_ci = ci;
 		LIST_INSERT_HEAD(&cpu_freelist, rcpu, rcpu_entries);
 		rcpu->rcpu_flags = RCPU_FREELIST;
 		rumpuser_cv_init(&rcpu->rcpu_cv);
