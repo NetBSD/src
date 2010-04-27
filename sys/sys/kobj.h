@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.h,v 1.14 2010/04/26 22:58:53 pooka Exp $	*/
+/*	$NetBSD: kobj.h,v 1.15 2010/04/27 00:38:42 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 #define	_SYS_KOBJ_H_
 
 #define ELFSIZE ARCH_ELFSIZE
+#include <sys/exec.h>
 #include <sys/exec_elf.h>
 
 typedef struct kobj *kobj_t;
