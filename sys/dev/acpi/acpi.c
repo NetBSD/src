@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.192 2010/04/26 04:31:09 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.193 2010/04/27 05:34:14 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.192 2010/04/26 04:31:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.193 2010/04/27 05:34:14 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -725,13 +725,10 @@ acpi_make_devnode_post(ACPI_HANDLE handle, uint32_t level,
 }
 
 #ifdef ACPI_ACTIVATE_DEV
-
-#define ACPI_DEV_VALID	(ACPI_VALID_STA | ACPI_VALID_HID)
-#define ACPI_DEV_STATUS	(ACPI_STA_DEV_PRESENT | ACPI_STA_DEV_ENABLED)
-
 static void
 acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 {
+	static const int valid = ACPI_VALID_STA | ACPI_VALID_HID;
 	ACPI_DEVICE_INFO *newdi;
 	ACPI_STATUS rv;
 	uint32_t old;
@@ -740,12 +737,13 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 	 * If the device is valid and present,
 	 * but not enabled, try to activate it.
 	 */
-	if (((*di)->Valid & ACPI_DEV_VALID) != ACPI_DEV_VALID)
+	if (((*di)->Valid & valid) != valid)
 		return;
 
 	old = (*di)->CurrentStatus;
 
-	if ((old & ACPI_DEV_STATUS) != ACPI_STA_DEV_PRESENT)
+	if ((old & (ACPI_STA_DEVICE_PRESENT | ACPI_STA_DEVICE_ENABLED)) !=
+	    ACPI_STA_DEVICE_PRESENT)
 		return;
 
 	rv = acpi_allocate_resources(handle);
@@ -880,10 +878,6 @@ out1:
 out:
 	return rv;
 }
-
-#undef ACPI_DEV_VALID
-#undef ACPI_DEV_STATUS
-
 #endif /* ACPI_ACTIVATE_DEV */
 
 /*
@@ -916,6 +910,7 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 {
 	struct acpi_attach_args aa;
 	struct acpi_devnode *ad;
+	ACPI_DEVICE_INFO *di;
 
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
@@ -929,21 +924,18 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		if (acpi_is_scope(ad) != false)
 			continue;
 
+		di = ad->ad_devinfo;
+
 		/*
 		 * We only attach devices which are present, enabled, and
 		 * functioning properly. However, if a device is enabled,
 		 * it is decoding resources and we should claim these,
 		 * if possible. This requires changes to bus_space(9).
 		 */
-		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE) {
+		if (di->Type == ACPI_TYPE_DEVICE) {
 
-			if ((ad->ad_devinfo->Valid & ACPI_VALID_STA) ==
-			    ACPI_VALID_STA &&
-			    (ad->ad_devinfo->CurrentStatus &
-			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			      ACPI_STA_DEV_OK)) !=
-			    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			     ACPI_STA_DEV_OK))
+			if ((di->Valid & ACPI_VALID_STA) != 0 &&
+			    (di->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
 				continue;
 		}
 
@@ -952,20 +944,20 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		 * thermal zones and power resources do not
 		 * have a valid HID, only evaluate devices.
 		 */
-		if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE &&
-		    (ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
+		if (di->Type == ACPI_TYPE_DEVICE &&
+		   (di->Valid & ACPI_VALID_HID) == 0)
 			continue;
 
 		/*
 		 * Handled internally.
 		 */
-		if (ad->ad_devinfo->Type == ACPI_TYPE_PROCESSOR)
+		if (di->Type == ACPI_TYPE_PROCESSOR)
 			continue;
 
 		/*
 		 * Ditto, but bind power resources.
 		 */
-		if (ad->ad_devinfo->Type == ACPI_TYPE_POWER) {
+		if (di->Type == ACPI_TYPE_POWER) {
 			acpi_power_res_add(ad);
 			continue;
 		}
@@ -973,7 +965,7 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		/*
 		 * Skip ignored HIDs.
 		 */
-		if (acpi_match_hid(ad->ad_devinfo, acpi_ignored_ids))
+		if (acpi_match_hid(di, acpi_ignored_ids))
 			continue;
 
 		aa.aa_node = ad;
@@ -987,9 +979,6 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		    "acpinodebus", &aa, acpi_print);
 	}
 }
-
-#define ACPI_STA_DEV_VALID      \
-	(ACPI_STA_DEV_PRESENT | ACPI_STA_DEV_ENABLED | ACPI_STA_DEV_OK)
 
 static void
 acpi_rescan_capabilities(struct acpi_softc *sc)
@@ -1007,8 +996,7 @@ acpi_rescan_capabilities(struct acpi_softc *sc)
 			continue;
 
 		if ((di->Valid & ACPI_VALID_STA) != 0 &&
-		    (di->CurrentStatus & ACPI_STA_DEV_VALID) !=
-		     ACPI_STA_DEV_VALID)
+		    (di->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
 			continue;
 
 		/*
@@ -1035,8 +1023,6 @@ acpi_rescan_capabilities(struct acpi_softc *sc)
 		}
 	}
 }
-
-#undef ACPI_STA_DEV_VALID
 
 static int
 acpi_print(void *aux, const char *pnp)
