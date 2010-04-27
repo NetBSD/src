@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.53 2010/03/13 12:57:23 kiyohara Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.54 2010/04/27 18:52:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.53 2010/03/13 12:57:23 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.54 2010/04/27 18:52:45 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,8 @@ static void	brgphyattach(device_t, device_t, void *);
 
 struct brgphy_softc {
 	struct mii_softc sc_mii;
-	int sc_isbge;
-	int sc_isbnx;
+	bool sc_isbge;
+	bool sc_isbnx;
 	int sc_bge_flags;
 	int sc_bnx_flags;
 };
@@ -255,13 +255,13 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	if (device_is_a(parent, "bge")) {
-		bsc->sc_isbge = 1;
+		bsc->sc_isbge = true;
 		dict = device_properties(parent);
 		if (!prop_dictionary_get_uint32(dict, "phyflags",
 			&bsc->sc_bge_flags))
 			aprint_error("failed to get phyflags");
 	} else if (device_is_a(parent, "bnx")) {
-		bsc->sc_isbnx = 1;
+		bsc->sc_isbnx = true;
 		dict = device_properties(parent);
 		prop_dictionary_get_uint32(dict, "phyflags",
 		    &bsc->sc_bnx_flags);
@@ -540,7 +540,7 @@ brgphy_reset(struct mii_softc *sc)
 	}
 
 	/* Handle any bge (NetXtreme/NetLink) workarounds. */
-	if (bsc->sc_isbge != 0) {
+	if (bsc->sc_isbge) {
 		if (!(sc->mii_flags & MIIF_HAVEFIBER)) {
 
 			if (bsc->sc_bge_flags & BGE_PHY_ADC_BUG)
@@ -592,7 +592,7 @@ brgphy_reset(struct mii_softc *sc)
 		}
 #if 0 /* not yet */
 	/* Handle any bnx (NetXtreme II) workarounds. */
-	} else if (sc->sc_isbnx != 0) {
+	} else if (sc->sc_isbnx) {
 		bnx_sc = sc->mii_pdata->mii_ifp->if_softc;
 
 		if (sc->mii_mpd_model == MII_MODEL_xxBROADCOM2_BCM5708S) {
