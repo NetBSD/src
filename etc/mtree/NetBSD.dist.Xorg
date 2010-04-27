@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.4 2009/12/13 04:57:16 nonaka Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.5 2010/04/27 05:34:15 lukem Exp $
 
 ./usr/X11R7
 ./usr/X11R7/bin
@@ -172,4 +172,13 @@
 ./usr/X11R7/share/pciids
 ./usr/libdata/debug/usr/X11R7
 ./usr/libdata/debug/usr/X11R7/bin
+./usr/libdata/debug/usr/X11R7/lib
+./usr/libdata/debug/usr/X11R7/lib/X11
+./usr/libdata/debug/usr/X11R7/lib/X11/locale
+./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib
+./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common
+./usr/libdata/debug/usr/X11R7/lib/modules
+./usr/libdata/debug/usr/X11R7/lib/modules/dri
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions
 ./usr/libdata/debug/usr/X11R7/libexec
