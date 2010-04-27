@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.85 2010/01/14 12:07:23 wiz Exp $
+# $NetBSD: mi,v 1.86 2010/04/27 05:34:15 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2813,6 +2813,15 @@
 ./usr/libdata/debug/usr/X11R6/libexec			base-sys-usr	x11
 ./usr/libdata/debug/usr/X11R7				base-sys-usr	xorg
 ./usr/libdata/debug/usr/X11R7/bin			base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib			base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib/X11			base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib/X11/locale		base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib	base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib/X11/locale/lib/common	base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib/modules		base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/dri		base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers	base-sys-usr	xorg
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions	base-sys-usr	xorg
 ./usr/libdata/debug/usr/X11R7/libexec			base-sys-usr	xorg
 ./var/db/obsolete/xbase					xbase-sys-root	x11
 ./var/db/obsolete/xbase					xbase-sys-root	xorg
