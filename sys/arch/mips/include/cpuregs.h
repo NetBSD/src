@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.74.28.17 2010/03/29 23:33:00 cliff Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.74.28.18 2010/04/27 05:44:30 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -871,12 +871,15 @@
 #define	MIPS_SR7100	0x04	/* SandCraft SR7100 		ISA 64  */
 
 /*
- * CPU processor revision IDs for company ID == 12 (RMI)
- * note: the XLR Pid value meaning depends on
- * the Rev value (Stepping B2 or C4)
+ * CPU revision IDs for company ID == 12 (RMI)
+ * note: unlisted Rev values may indicate pre-production silicon
  */
-#define	MIPS_XLR_B2	0x04	/* RMI XLR Rev B2 			*/
-#define	MIPS_XLR_C4	0x91	/* RMI XLR Rev C4 			*/
+#define	MIPS_XLR_B2	0x04	/* RMI XLR Production Rev B2		*/
+#define	MIPS_XLR_C4	0x91	/* RMI XLR Production Rev C4		*/
+
+/*
+ * CPU processor IDs for company ID == 12 (RMI)
+ */
 #define	MIPS_XLR308B	0x06	/* RMI XLR308-B	 		ISA 64  */
 #define	MIPS_XLR508B	0x07	/* RMI XLR508-B	 		ISA 64  */
 #define	MIPS_XLR516B	0x08	/* RMI XLR516-B	 		ISA 64  */
