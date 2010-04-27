@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 2010/04/14 10:27:53 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.25 2010/04/27 23:30:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2010/04/14 10:27:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2010/04/27 23:30:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -108,8 +108,6 @@ doclock(void *noarg)
 	thetick.tv_nsec = 1000000000/hz;
 
 	rumpuser_mutex_enter(clockmtx);
-	rumpuser_cv_signal(clockcv);
-
 	for (;;) {
 		callout_hardclock();
 
@@ -117,16 +115,17 @@ doclock(void *noarg)
 		while (rumpuser_cv_timedwait(clockcv, clockmtx,
 		    curtime.tv_sec, curtime.tv_nsec) == 0)
 			continue;
+		timespecadd(&clockup, &thetick, &clockup);
+		timespecadd(&clockup, &clockbase, &curtime);
 		
 		/* if !maincpu: continue */
+		if (curcpu()->ci_index != 0)
+			continue;
 
 		if ((++ticks % hz) == 0) {
 			cv_broadcast(&lbolt);
 		}
 		tc_ticktock();
-
-		timespecadd(&clockup, &thetick, &clockup);
-		timespecadd(&clockup, &clockbase, &curtime);
 	}
 }
 
@@ -213,6 +212,12 @@ softint_init(struct cpu_info *ci)
 	if (!rump_threads)
 		return;
 
+	/* XXX */
+	if (ci->ci_index == 0) {
+		rumptc.tc_frequency = hz;
+		tc_init(&rumptc);
+	}
+
 	slev = kmem_alloc(sizeof(struct softint_lev) * SOFTINT_COUNT, KM_SLEEP);
 	for (i = 0; i < SOFTINT_COUNT; i++) {
 		rumpuser_cv_init(&slev[i].si_cv);
@@ -222,30 +227,15 @@ softint_init(struct cpu_info *ci)
 
 	for (i = 0; i < SOFTINT_COUNT; i++) {
 		rv = kthread_create(PRI_NONE,
-		    KTHREAD_MPSAFE | KTHREAD_INTR, NULL,
+		    KTHREAD_MPSAFE | KTHREAD_INTR, ci,
 		    sithread, (void *)(uintptr_t)i,
 		    NULL, "rumpsi%d", i);
 	}
 
-	rumpuser_mutex_enter(clockmtx);
-	for (i = 0; i < ncpu; i++) {
-		rv = kthread_create(PRI_NONE,
-		    KTHREAD_MPSAFE | KTHREAD_INTR,
-		    cpu_lookup(i), doclock, NULL, NULL,
-		    "rumpclk%d", i);
-		if (rv)
-			panic("clock thread creation failed: %d", rv);
-	}
-
-	rumptc.tc_frequency = hz;
-	tc_init(&rumptc);
-
-	/*
-	 * Make sure we have a clocktime before returning.
-	 * XXX: mp
-	 */
-	rumpuser_cv_wait(clockcv, clockmtx);
-	rumpuser_mutex_exit(clockmtx);
+	rv = kthread_create(PRI_NONE, KTHREAD_MPSAFE | KTHREAD_INTR,
+	    ci, doclock, NULL, NULL, "rumpclk%d", i);
+	if (rv)
+		panic("clock thread creation failed: %d", rv);
 }
 
 /*

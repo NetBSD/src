@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.43 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.44 2010/04/27 23:30:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -104,6 +104,7 @@ extern void *rump_sysproxy_arg;
 int		rump_sysproxy_copyout(const void *, void *, size_t);
 int		rump_sysproxy_copyin(const void *, void *, size_t);
 
+void	rump_cpus_bootstrap(int);
 void	rump_scheduler_init(void);
 void	rump_schedule(void);
 void	rump_unschedule(void);
@@ -114,7 +115,7 @@ void	rump_unschedule_cpu1(struct lwp *);
 void	rump_user_schedule(int);
 void	rump_user_unschedule(int, int *);
 
-void	rump_cpu_bootstrap(struct cpu_info *);
+void	rump_cpu_attach(struct cpu_info *);
 
 bool	kernel_biglocked(void);
 void	kernel_unlock_allbutone(int *);
