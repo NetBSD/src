@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.21 2010/04/26 06:42:56 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.22 2010/04/27 04:32:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.21 2010/04/26 06:42:56 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.22 2010/04/27 04:32:44 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -103,11 +103,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.21 2010/04/26 06:42:56 uebayasi
 /* XXXUEBS make these array of pointers */
 /* XXXUEBS merge these two */
 
-struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physmem */
-int vm_nphysmem = 0;				/* XXXCDC: uvm.nphysmem */
+struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
+int vm_nphysmem = 0;
 #ifdef DEVICE_PAGE
-struct vm_physseg vm_physdev[VM_PHYSSEG_MAX];	/* XXXCDC: uvm.physdev */
-int vm_nphysdev = 0;				/* XXXCDC: uvm.nphysdev */
+struct vm_physseg vm_physdev[VM_PHYSSEG_MAX];
+int vm_nphysdev = 0;
 #endif
 
 /*
