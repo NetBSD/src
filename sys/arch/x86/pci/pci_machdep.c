@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.41 2010/03/14 20:19:06 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.42 2010/04/27 23:33:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2010/03/14 20:19:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.42 2010/04/27 23:33:14 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2010/03/14 20:19:06 dyoung Exp 
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -129,25 +130,23 @@ static int pci_mode = PCI_CONF_MODE;
 static int pci_mode = -1;
 #endif
 
+struct pci_conf_lock {
+	uint32_t cl_cpuno;	/* 0: unlocked
+				 * 1 + n: locked by CPU n (0 <= n)
+				 */
+	uint32_t cl_sel;	/* the address that's being read. */
+};
+
+static void pci_conf_unlock(struct pci_conf_lock *);
+static uint32_t pci_conf_selector(pcitag_t, int);
+static unsigned int pci_conf_port(pcitag_t, int);
+static void pci_conf_select(uint32_t);
+static void pci_conf_lock(struct pci_conf_lock *, uint32_t);
 static void pci_bridge_hook(pci_chipset_tag_t, pcitag_t, void *);
 struct pci_bridge_hook_arg {
 	void (*func)(pci_chipset_tag_t, pcitag_t, void *); 
 	void *arg; 
 }; 
-
-__cpu_simple_lock_t pci_conf_lock = __SIMPLELOCK_UNLOCKED;
-
-#define	PCI_CONF_LOCK(s)						\
-do {									\
-	(s) = splhigh();						\
-	__cpu_simple_lock(&pci_conf_lock);				\
-} while (0)
-
-#define	PCI_CONF_UNLOCK(s)						\
-do {									\
-	__cpu_simple_unlock(&pci_conf_lock);				\
-	splx((s));							\
-} while (0)
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 #define	PCI_MODE1_ADDRESS_REG	0x0cf8
@@ -243,6 +242,63 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 };
 #endif
 
+static struct pci_conf_lock cl0 = {
+	  .cl_cpuno = 0UL
+	, .cl_sel = 0UL
+};
+
+static struct pci_conf_lock * const cl = &cl0;
+
+static void
+pci_conf_lock(struct pci_conf_lock *ocl, uint32_t sel)
+{
+	uint32_t cpuno;
+
+	KASSERT(sel != 0);
+
+	kpreempt_disable();
+	cpuno = cpu_number() + 1;
+	/* If the kernel enters pci_conf_lock() through an interrupt
+	 * handler, then the CPU may already hold the lock.
+	 *
+	 * If the CPU does not already hold the lock, spin until
+	 * we can acquire it.
+	 */
+	if (cpuno == cl->cl_cpuno) {
+		ocl->cl_cpuno = cpuno;
+	} else {
+		ocl->cl_cpuno = 0;
+		while (atomic_cas_32(&cl->cl_cpuno, 0, cpuno) != 0)
+			;
+	}
+
+	/* Only one CPU can be here, so an interlocked atomic_swap(3)
+	 * is not necessary.
+	 *
+	 * Evaluating atomic_cas_32_ni()'s argument, cl->cl_sel,
+	 * and applying atomic_cas_32_ni() is not an atomic operation,
+	 * however, any interrupt that, in the middle of the
+	 * operation, modifies cl->cl_sel, will also restore
+	 * cl->cl_sel.  So cl->cl_sel will have the same value when
+	 * we apply atomic_cas_32_ni() as when we evaluated it,
+	 * before.
+	 */
+	ocl->cl_sel = atomic_cas_32_ni(&cl->cl_sel, cl->cl_sel, sel);
+	pci_conf_select(sel);
+}
+
+static void
+pci_conf_unlock(struct pci_conf_lock *ocl)
+{
+	uint32_t sel;
+
+	sel = atomic_cas_32_ni(&cl->cl_sel, cl->cl_sel, ocl->cl_sel);
+	pci_conf_select(ocl->cl_sel);
+	if (ocl->cl_cpuno != cl->cl_cpuno)
+		atomic_cas_32(&cl->cl_cpuno, cl->cl_cpuno, ocl->cl_cpuno);
+	kpreempt_enable();
+}
+
 static uint32_t
 pci_conf_selector(pcitag_t tag, int reg)
 {
@@ -277,16 +333,16 @@ pci_conf_port(pcitag_t tag, int reg)
 }
 
 static void
-pci_conf_select(uint32_t addr)
+pci_conf_select(uint32_t sel)
 {
 	pcitag_t tag;
 
 	switch (pci_mode) {
 	case 1:
-		outl(PCI_MODE1_ADDRESS_REG, addr);
+		outl(PCI_MODE1_ADDRESS_REG, sel);
 		return;
 	case 2:
-		tag.mode1 = addr;
+		tag.mode1 = sel;
 		outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
 		if (tag.mode2.enable != 0)
 			outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
@@ -417,7 +473,7 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
     int reg)
 {
 	pcireg_t data;
-	int s;
+	struct pci_conf_lock ocl;
 
 	KASSERT((reg & 0x3) == 0);
 
@@ -437,11 +493,9 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 	}
 #endif
 
-	PCI_CONF_LOCK(s);
-	pci_conf_select(pci_conf_selector(tag, reg));
+	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
 	data = inl(pci_conf_port(tag, reg));
-	pci_conf_select(0);
-	PCI_CONF_UNLOCK(s);
+	pci_conf_unlock(&ocl);
 	return data;
 }
 
@@ -449,7 +503,7 @@ void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
     pcireg_t data)
 {
-	int s;
+	struct pci_conf_lock ocl;
 
 	KASSERT((reg & 0x3) == 0);
 
@@ -473,11 +527,9 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 	}
 #endif
 
-	PCI_CONF_LOCK(s);
-	pci_conf_select(pci_conf_selector(tag, reg));
+	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
 	outl(pci_conf_port(tag, reg), data);
-	pci_conf_select(0);
-	PCI_CONF_UNLOCK(s);
+	pci_conf_unlock(&ocl);
 }
 
 void
