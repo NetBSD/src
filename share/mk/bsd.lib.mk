@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.306 2010/04/26 03:46:00 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.307 2010/04/27 14:32:14 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -445,6 +445,10 @@ _LIBS+=${SOLIB}
 SOBJS+=${OBJS:.o=.pico}
 .endif
 .if defined(SHLIB_FULLVERSION)
+_LIB.so:=lib${LIB}.so.${SHLIB_FULLVERSION}
+.if ${MKDEBUG} != "no" && ${OBJECT_FMT} == "ELF"
+_LIB.debug:=${_LIB.so}.debug
+.endif
 _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 .endif									# }
@@ -471,7 +475,7 @@ _YLSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
 .NOPATH: ${ALLOBJS} ${_LIBS} ${_YLSRCS}
 
-realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
+realall: ${SRCS} ${ALLOBJS:O} ${_LIBS} ${_LIB.debug}
 
 MKARZERO?=no
 
@@ -588,6 +592,15 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
+.if defined(_LIB.debug)
+${_LIB.debug}: ${_LIB.so}
+	${_MKTARGET_CREATE}
+	${OBJCOPY} --only-keep-debug ${_LIB.so} ${_LIB.debug}
+	${OBJCOPY} --strip-debug \
+	    -R .gnu_debuglink --add-gnu-debuglink=${_LIB.debug} ${_LIB.so} \
+	    || rm -f ${_LIB.debug}
+.endif
+
 .if !empty(LOBJS)							# {
 LLIBS?=		-lc
 llib-l${LIB}.ln: ${LOBJS}
@@ -610,7 +623,7 @@ cleanlib: .PHONY
 	rm -f lib${LIB}.a ${STOBJS}
 	rm -f lib${LIB}_p.a ${POBJS}
 	rm -f lib${LIB}_g.a ${GOBJS}
-	rm -f lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${SOBJS}
+	rm -f lib${LIB}_pic.a lib${LIB}.so.* lib${LIB}.so ${_LIB.debug} ${SOBJS}
 	rm -f ${STOBJS:=.tmp} ${POBJS:=.tmp} ${SOBJS:=.tmp} ${GOBJS:=.tmp}
 	rm -f llib-l${LIB}.ln ${LOBJS}
 
@@ -747,6 +760,16 @@ ${_LIB_SO_TGT}.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 .endif
 .endif
+.endif
+
+.if defined(_LIB.debug)
+libinstall:: ${DESTDIR}${DEBUGDIR}${LIBDIR}/${_LIB.debug}
+.PRECIOUS: ${DESTDIR}${DEBUGDIR}${LIBDIR}/${_LIB.debug}
+
+${DESTDIR}${DEBUGDIR}${LIBDIR}/${_LIB.debug}: ${_LIB.debug}
+	${_MKTARGET_INSTALL}
+	${INSTALL_FILE} -o ${DEBUGOWN} -g ${DEBUGGRP} -m ${DEBUGMODE} \
+		${.ALLSRC} ${.TARGET}
 .endif
 
 .if ${MKLINT} != "no" && !empty(LOBJS)
