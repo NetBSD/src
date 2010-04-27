@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.101 2010/04/16 01:52:54 christos Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.102 2010/04/27 05:57:43 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.101 2010/04/16 01:52:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.102 2010/04/27 05:57:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -91,6 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.101 2010/04/16 01:52:54 christos Exp 
 
 #define _COMPONENT		 ACPI_BAT_COMPONENT
 ACPI_MODULE_NAME		 ("acpi_bat")
+
+#define	ACPI_NOTIFY_BAT_STATUS	 0x80
+#define	ACPI_NOTIFY_BAT_INFO	 0x81
 
 /*
  * Sensor indexes.
@@ -661,15 +664,15 @@ acpibat_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 
 	switch (notify) {
 
-	case ACPI_NOTIFY_BusCheck:
+	case ACPI_NOTIFY_BUS_CHECK:
 		break;
 
-	case ACPI_NOTIFY_DeviceCheck:
-	case ACPI_NOTIFY_BatteryInformationChanged:
+	case ACPI_NOTIFY_BAT_INFO:
+	case ACPI_NOTIFY_DEVICE_CHECK:
 		(void)AcpiOsExecute(handler, acpibat_update_info, dv);
 		break;
 
-	case ACPI_NOTIFY_BatteryStatusChanged:
+	case ACPI_NOTIFY_BAT_STATUS:
 		(void)AcpiOsExecute(handler, acpibat_update_status, dv);
 		break;
 

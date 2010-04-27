@@ -1,4 +1,4 @@
-/*	$NetBSD: acpireg.h,v 1.8 2010/04/27 05:34:14 jruoho Exp $	*/
+/*	$NetBSD: acpireg.h,v 1.9 2010/04/27 05:57:43 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -39,53 +39,11 @@
 #define _SYS_DEV_ACPI_ACPIREG_H
 
 /*
- * XXX: Use the native types from <actypes.h>.
- *
- *	Move the device-specific constants to
- *	the device-specific files.
- */
-#define	ACPI_NOTIFY_BusCheck		0x00
-#define	ACPI_NOTIFY_DeviceCheck		0x01
-#define	ACPI_NOTIFY_DeviceWake		0x02
-#define	ACPI_NOTIFY_EjectRequest	0x03
-#define	ACPI_NOTIFY_DeviceCheckLight	0x04
-#define	ACPI_NOTIFY_FrquencyMismatch	0x05
-#define	ACPI_NOTIFY_BusModeMismatch	0x06
-#define	ACPI_NOTIFY_PowerFault		0x07
-				/*	0x08 - 0x7f	reserved */
-
-/* Control Method Battery Device Notification Types */
-#define	ACPI_NOTIFY_BatteryStatusChanged	0x80
-#define	ACPI_NOTIFY_BatteryInformationChanged	0x81
-
-/* Power Source Object Notification Types */
-#define	ACPI_NOTIFY_PowerSourceStatusChanged	0x80
-
-/* Thermal Zone Object Notication Types */
-#define	ACPI_NOTIFY_ThermalZoneStatusChanged	0x80
-#define	ACPI_NOTIFY_ThermalZoneTripPointsChanged 0x81
-#define	ACPI_NOTIFY_DeviceListsChanged		0x82
-
-/* Control Method Power Button Notification Types */
-#define	ACPI_NOTIFY_S0PowerButtonPressed	0x80
-
-/* Control Method Sleep Button Notification Types */
-#define	ACPI_NOTIFY_S0SleepButtonPressed	0x80
-
-/* Control Method Lid Notification Types */
-#define	ACPI_NOTIFY_LidStatusChanged		0x80
-
-/* Processor Device Notification Values */
-#define	ACPI_NOTIFY_PerformancePresentCapabilitiesChanged 0x80
-#define	ACPI_NOTIFY_CStatesChanged		0x81
-
-/*
  * A common device status mask.
  */
 #define ACPI_STA_OK		(ACPI_STA_DEVICE_PRESENT	|	\
 				 ACPI_STA_DEVICE_ENABLED	|	\
 				 ACPI_STA_DEVICE_FUNCTIONING)
-
 /*
  * PCI functions.
  */

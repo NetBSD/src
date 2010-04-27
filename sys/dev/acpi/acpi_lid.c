@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.39 2010/04/15 07:02:24 jruoho Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.40 2010/04/27 05:57:43 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.39 2010/04/15 07:02:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.40 2010/04/27 05:57:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.39 2010/04/15 07:02:24 jruoho Exp $")
 
 #define _COMPONENT		 ACPI_LID_COMPONENT
 ACPI_MODULE_NAME		 ("acpi_lid")
+
+#define ACPI_NOTIFY_LID		 0x80
 
 struct acpilid_softc {
 	struct acpi_devnode	*sc_node;
@@ -159,7 +161,7 @@ acpilid_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 
 	switch (notify) {
 
-	case ACPI_NOTIFY_LidStatusChanged:
+	case ACPI_NOTIFY_LID:
 		(void)AcpiOsExecute(handler, acpilid_status_changed, dv);
 		break;
 

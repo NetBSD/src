@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.35 2010/04/15 07:02:24 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.36 2010/04/27 05:57:43 jruoho Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.35 2010/04/15 07:02:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.36 2010/04/27 05:57:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.35 2010/04/15 07:02:24 jruoho Exp 
 
 #define _COMPONENT		 ACPI_BUTTON_COMPONENT
 ACPI_MODULE_NAME		 ("acpi_button")
+
+#define ACPI_NOTIFY_BUTTON	 0x80
 
 struct acpibut_softc {
 	struct acpi_devnode	*sc_node;
@@ -177,8 +179,7 @@ acpibut_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 
 	switch (notify) {
 
-     /* case ACPI_NOTIFY_S0SleepButtonPressed: */
-	case ACPI_NOTIFY_S0PowerButtonPressed:
+	case ACPI_NOTIFY_BUTTON:
 		(void)AcpiOsExecute(handler, acpibut_pressed_event, dv);
 		break;
 
