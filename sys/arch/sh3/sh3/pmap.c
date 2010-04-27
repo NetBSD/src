@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74.2.1 2010/02/25 05:05:23 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74.2.2 2010/04/27 07:19:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.1 2010/02/25 05:05:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74.2.2 2010/04/27 07:19:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/* "flags" never exceed "prot" */
 	KDASSERT(prot != 0 && ((flags & VM_PROT_ALL) & ~prot) == 0);
 
-	pg = PHYS_TO_VM_PAGE(pa);
+	if ((flags & PMAP_UNMANAGED) != 0)
+		pg = NULL;
+	else
+		pg = PHYS_TO_VM_PAGE(pa);
 	entry = (pa & PG_PPN) | PG_4K;
 	if (flags & PMAP_WIRED)
 		entry |= _PG_WIRED;
