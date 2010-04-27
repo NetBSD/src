@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2010/04/23 19:21:08 dyoung Exp $
+#	$NetBSD: Makefile,v 1.17 2010/04/27 03:01:25 dyoung Exp $
 
 .include <bsd.own.mk>
 
@@ -39,8 +39,12 @@ TOOL_MTREE.unpriv=
 TOOL_MTREE.unpriv=	-W
 .endif
 
+# postinstall(8) invokes this target to produce the right
+# /etc/mtree/NetBSD.dist content without duplicating logic from
+# the Makefile.
+#
 emit_dist_file:
-	${TOOL_CAT} ${.CURDIR}/NetBSD.dist.base ${EXTRA_DIST_FILES}
+	cat ${.CURDIR}/NetBSD.dist.base ${EXTRA_DIST_FILES}
 
 distrib-dirs: .PHONY check_DESTDIR NetBSD.dist
 .if !defined(DISTRIBUTION_DONE)						# {
