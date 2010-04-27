@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.9 2010/02/25 03:30:22 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.10 2010/04/27 07:19:28 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -213,7 +213,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.9 2010/02/25 03:30:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.10 2010/04/27 07:19:28 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2781,7 +2781,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * Get a pointer to the page.  Later on in this function, we
 	 * test for a managed page by checking pg != NULL.
 	 */
-	pg = pmap_initialized ? PHYS_TO_VM_PAGE(pa) : NULL;
+	pg = (pmap_initialized && ((flags & PMAP_UNMANAGED) == 0)) ?
+	    PHYS_TO_VM_PAGE(pa) : NULL;
 
 	nflags = 0;
 	if (prot & VM_PROT_WRITE)

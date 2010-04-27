@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60.2.1 2010/04/27 07:19:29 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.1 2010/04/27 07:19:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -808,7 +808,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (flags & PMAP_WIRED)
 		flags |= prot;
 
-	managed = uvm_pageismanaged(pa);
+	managed = ((flags & PMAP_UNMANAGED) == 0) && uvm_pageismanaged(pa);
 
 	/*
 	 * Generate TTE.

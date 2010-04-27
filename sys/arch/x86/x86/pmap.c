@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100.2.1 2010/02/25 02:57:17 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100.2.2 2010/04/27 07:19:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100.2.1 2010/02/25 02:57:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100.2.2 2010/04/27 07:19:28 uebayasi Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4063,7 +4063,12 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		pg = NULL;
 	else
 #endif
-		pg = PHYS_TO_VM_PAGE(pa);
+	{
+		if ((flags & PMAP_UNMANAGED) != 0)
+			pg = NULL;
+		else
+			pg = PHYS_TO_VM_PAGE(pa);
+	}
 	if (pg != NULL) {
 		/* This is a managed page */
 		npte |= PG_PVLIST;
