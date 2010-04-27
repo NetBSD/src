@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.16 2010/04/27 08:23:48 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.17 2010/04/27 08:32:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -257,9 +257,11 @@ extern bool vm_page_zero_enable;
  * physical memory config is stored in vm_physmem.
  */
 
+extern struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
 extern struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
 extern int vm_nphysmem;
-#ifdef XIP
+#ifdef DEVICE_PAGE
+extern struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
 extern struct vm_physseg vm_physdev[VM_PHYSSEG_MAX];
 extern int vm_nphysdev;
 #endif

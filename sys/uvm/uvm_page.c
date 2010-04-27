@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.22 2010/04/27 04:32:44 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.23 2010/04/27 08:32:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.22 2010/04/27 04:32:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.23 2010/04/27 08:32:47 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -103,9 +103,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.22 2010/04/27 04:32:44 uebayasi
 /* XXXUEBS make these array of pointers */
 /* XXXUEBS merge these two */
 
+struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
 struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
 int vm_nphysmem = 0;
 #ifdef DEVICE_PAGE
+struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
 struct vm_physseg vm_physdev[VM_PHYSSEG_MAX];
 int vm_nphysdev = 0;
 #endif
@@ -755,6 +757,8 @@ uvm_page_physload_common(struct vm_physseg * const, int,
 static void
 uvm_page_physunload_common(struct vm_physseg * const);
 #endif
+static void
+uvm_page_physseg_init(void);
 static struct vm_physseg *
 uvm_physseg_insert(struct vm_physseg *, int,
     const paddr_t, const paddr_t);
@@ -815,6 +819,7 @@ uvm_page_physload_common(struct vm_physseg * const segs, int nsegs,
     const paddr_t avail_start, const paddr_t avail_end, const int free_list)
 {
 	struct vm_physseg *ps;
+	static int uvm_page_physseg_inited;
 
 	if (uvmexp.pagesize == 0)
 		panic("uvm_page_physload: page size not set!");
@@ -829,12 +834,33 @@ uvm_page_physload_common(struct vm_physseg * const segs, int nsegs,
 		    "\tincrease VM_PHYSSEG_MAX\n",
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
 
+	/* XXXUEBS too early to use RUN_ONCE(9)? */
+	if (uvm_page_physseg_inited == 0) {
+		uvm_page_physseg_inited = 1;
+		uvm_page_physseg_init();
+	}
+
 	ps = uvm_physseg_insert(segs, nsegs, start, end);
 	KASSERT(ps != NULL);
 	ps->start = start;
 	ps->end = end;
 
 	return ps;
+}
+
+static void
+uvm_page_physseg_init(void)
+{
+	int lcv;
+	
+	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
+		vm_physmem_ptrs[lcv] = &vm_physmem[lcv];
+	}
+#ifdef DEVICE_PAGE
+	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
+		vm_physdev_ptrs[lcv] = &vm_physdev[lcv];
+	}
+#endif
 }
 
 static struct vm_physseg *
