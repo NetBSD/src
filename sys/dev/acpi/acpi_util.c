@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.3 2010/04/24 06:57:10 jruoho Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.4 2010/04/27 08:15:07 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.3 2010/04/24 06:57:10 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.4 2010/04/27 08:15:07 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -228,8 +228,11 @@ acpi_foreach_package_object(ACPI_OBJECT *pkg,
 	ACPI_STATUS rv = AE_OK;
 	uint32_t i;
 
-	if (pkg == NULL || pkg->Type != ACPI_TYPE_PACKAGE)
+	if (pkg == NULL)
 		return AE_BAD_PARAMETER;
+
+	if (pkg->Type != ACPI_TYPE_PACKAGE)
+		return AE_TYPE;
 
 	for (i = 0; i < pkg->Package.Count; i++) {
 
@@ -294,6 +297,9 @@ acpi_name(ACPI_HANDLE handle)
 	static char name[80];
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
+
+	if (handle == NULL)
+		handle = ACPI_ROOT_OBJECT;
 
 	buf.Pointer = name;
 	buf.Length = sizeof(name);
