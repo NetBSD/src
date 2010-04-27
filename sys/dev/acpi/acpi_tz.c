@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.70 2010/04/24 19:16:10 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.71 2010/04/27 05:57:43 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.70 2010/04/24 19:16:10 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.71 2010/04/27 05:57:43 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,6 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.70 2010/04/24 19:16:10 jruoho Exp $");
 
 #define _COMPONENT		ACPI_TZ_COMPONENT
 ACPI_MODULE_NAME		("acpi_tz")
+
+#define ACPI_NOTIFY_TZ_ZONE	0x80
+#define ACPI_NOTIFY_TZ_TRIP	0x81
+#define ACPI_NOTIFY_TZ_DEVLIST	0x82
 
 #define ATZ_F_CRITICAL		0x01	/* zone critical */
 #define ATZ_F_HOT		0x02	/* zone hot */
@@ -581,12 +585,12 @@ acpitz_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 
 	switch (notify) {
 
-	case ACPI_NOTIFY_ThermalZoneStatusChanged:
+	case ACPI_NOTIFY_TZ_ZONE:
 		func = acpitz_get_status;
 		break;
 
-	case ACPI_NOTIFY_ThermalZoneTripPointsChanged:
-	case ACPI_NOTIFY_DeviceListsChanged:
+	case ACPI_NOTIFY_TZ_TRIP:
+	case ACPI_NOTIFY_TZ_DEVLIST:
 		func = acpitz_get_zone_quiet;
 		break;
 
