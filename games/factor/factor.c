@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.20 2010/04/22 14:28:48 drochner Exp $	*/
+/*	$NetBSD: factor.c,v 1.21 2010/04/27 18:11:19 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.20 2010/04/22 14:28:48 drochner Exp $");
+__RCSID("$NetBSD: factor.c,v 1.21 2010/04/27 18:11:19 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,9 @@ static int BN_dec2bn(BIGNUM **a, const char *str);
  */
 extern const ubig prime[];
 extern const ubig *pr_limit;		/* largest prime in the prime array */
+#if 0 /* debugging: limit table use to stress the "pollard" code */
+#define pr_limit &prime[0]
+#endif
 
 #define	PRIME_CHECKS	5
 
@@ -226,7 +229,7 @@ pr_fact(BIGNUM *val)
 			BIGNUM *bnfact;
 
 			bnfact = BN_new();
-			BN_set_word(bnfact, *(fact - 1));
+			BN_set_word(bnfact, (BN_ULONG)*(fact - 1));
 			BN_sqr(bnfact, bnfact, ctx);
 			if (BN_cmp(bnfact, val) > 0
 			    || BN_is_prime(val, PRIME_CHECKS, NULL, NULL,
@@ -284,39 +287,54 @@ usage(void)
 static void
 pollard_pminus1(BIGNUM *val)
 {
-	BIGNUM *base, *rbase, *num, *i, *x;
+	BIGNUM *x, *y, *tmp, *num;
+	BN_ULONG a;
+	unsigned int steps_taken, steps_limit;
 
-	base = BN_new();
-	rbase = BN_new();
-	num = BN_new();
-	i = BN_new();
 	x = BN_new();
-
-	BN_set_word(rbase, 1);
- newbase:
-	BN_add_word(rbase, 1);
-	BN_set_word(i, 2);
-	BN_copy(base, rbase);
+	y = BN_new();
+	tmp = BN_new();
+	num = BN_new();
+	a = 1;
+restart:
+	steps_taken = 0;
+	steps_limit = 2;
+	BN_set_word(x, 1);
+	BN_copy(y, x);
 
 	for (;;) {
-		BN_mod_exp(base, base, i, val, ctx);
-		if (BN_is_one(base))
-			goto newbase;
+		BN_sqr(tmp, x, ctx);
+		BN_add_word(tmp, a);
+		BN_mod(x, tmp, val, ctx);
+		BN_sub(tmp, x, y);
+		if (BN_is_zero(tmp)) {
+#ifdef DEBUG
+			printf(" (loop)");
+#endif
+			a++;
+			goto restart;
+		}
+		BN_gcd(tmp, tmp, val, ctx);
 
-		BN_copy(x, base);
-		BN_sub_word(x, 1);
-		BN_gcd(x, x, val, ctx);
-
-		if (!BN_is_one(x)) {
-			if (BN_is_prime(x, PRIME_CHECKS, NULL, NULL,
+		if (!BN_is_one(tmp)) {
+			if (BN_is_prime(tmp, PRIME_CHECKS, NULL, NULL,
 			    NULL) == 1) {
 				putchar(' ');
-				BN_print_dec_fp(stdout, x);
-			} else
-				pollard_pminus1(x);
+				BN_print_dec_fp(stdout, tmp);
+			} else {
+#ifdef DEBUG
+				printf(" (recurse for ");
+				BN_print_dec_fp(stdout, tmp);
+				putchar(')');
+#endif
+				pollard_pminus1(BN_dup(tmp));
+#ifdef DEBUG
+				printf(" (back)");
+#endif
+			}
 			fflush(stdout);
 
-			BN_div(num, NULL, val, x, ctx);
+			BN_div(num, NULL, val, tmp, ctx);
 			if (BN_is_one(num))
 				return;
 			if (BN_is_prime(num, PRIME_CHECKS, NULL, NULL,
@@ -327,8 +345,21 @@ pollard_pminus1(BIGNUM *val)
 				return;
 			}
 			BN_copy(val, num);
+			goto restart;
 		}
-		BN_add_word(i, 1);
+		steps_taken++;
+		if (steps_taken == steps_limit) {
+			BN_copy(y, x); /* teleport the turtle */
+			steps_taken = 0;
+			steps_limit *= 2;
+			if (steps_limit == 0) {
+#ifdef DEBUG
+				printf(" (overflow)");
+#endif
+				a++;
+				goto restart;
+			}
+		}
 	}
 }
 #else
