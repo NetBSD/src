@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.161.2.1 2010/02/23 07:44:25 uebayasi Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.161.2.2 2010/04/27 08:40:22 uebayasi Exp $	*/
 
 /*
  *
@@ -721,9 +721,9 @@ void			uvm_pagereplace(struct vm_page *,
 void			uvm_pagerealloc(struct vm_page *,
 			    struct uvm_object *, voff_t);
 /* Actually, uvm_page_physload takes PF#s which need their own type */
-void			uvm_page_physload(paddr_t, paddr_t,
+void			*uvm_page_physload(paddr_t, paddr_t,
 			    paddr_t, paddr_t, int);
-void			uvm_page_physload_device(paddr_t, paddr_t,
+void			*uvm_page_physload_device(paddr_t, paddr_t,
 			    paddr_t, paddr_t, int);
 void			uvm_setpagesize(void);
 
