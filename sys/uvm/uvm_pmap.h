@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.32 2009/11/07 07:27:50 cegger Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.32.2.1 2010/04/27 06:33:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -108,6 +108,7 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #else
 #define	PMAP_KMPAGE	0x00000000
 #endif /* PMAP_ENABLE_PMAP_KMPAGE */
+#define	PMAP_UNCACHEABLE 0x00000080	/* disable cache for managed pages */
 
 #define	PMAP_MD_MASK	0xff000000	/* Machine-dependent bits */
 
