@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.21 2010/04/21 16:18:35 pooka Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.22 2010/04/27 10:58:55 pooka Exp $ */
 
 /*
  * System call protos in rump namespace.
