@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.115.2.4 2009/04/03 17:59:03 snj Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.115.2.4.4.1 2010/04/27 23:09:07 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.115.2.4 2009/04/03 17:59:03 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.115.2.4.4.1 2010/04/27 23:09:07 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -702,6 +702,7 @@ again:
 			}
 		}
 	}
+	len = ALIGN(len);
 	if (cp) {
 		struct rt_msghdr *rtm = (struct rt_msghdr *)cp0;
 
