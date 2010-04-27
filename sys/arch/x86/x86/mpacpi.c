@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.86 2010/04/14 19:32:35 jruoho Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.87 2010/04/27 05:34:14 jruoho Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.86 2010/04/14 19:32:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.87 2010/04/27 05:34:14 jruoho Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -83,8 +83,6 @@ ACPI_MODULE_NAME       ("mpacpi")
 #include "lapic.h"
 
 #include "locators.h"
-
-#define ACPI_STA_OK (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
 
 /* XXX room for PCI-to-PCI bus */
 #define BUS_BUFFER (16)

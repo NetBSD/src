@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.10 2010/04/26 13:38:42 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.11 2010/04/27 05:34:14 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.10 2010/04/26 13:38:42 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.11 2010/04/27 05:34:14 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -69,6 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.10 2010/04/26 13:38:42 jruoho Exp $
 
 #define _COMPONENT			ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME			("acpi_power")
+
+#define	ACPI_STA_POW_OFF		0x00
+#define	ACPI_STA_POW_ON			0x01
 
 /*
  * References.
