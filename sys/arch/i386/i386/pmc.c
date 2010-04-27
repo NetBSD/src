@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.18 2010/04/22 21:02:25 jym Exp $	*/
+/*	$NetBSD: pmc.c,v 1.19 2010/04/27 18:41:52 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -38,13 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.18 2010/04/22 21:02:25 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmc.c,v 1.19 2010/04/27 18:41:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 #include <machine/specialreg.h>
 #include <machine/sysarch.h>
 #include <machine/pmc.h>
