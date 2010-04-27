@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.6 2008/05/08 01:27:43 macallan Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.7 2010/04/27 05:27:59 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.6 2008/05/08 01:27:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.7 2010/04/27 05:27:59 kiyohara Exp $");
 
 #include "opt_interrupt.h"
 
@@ -51,15 +51,15 @@ static int  ohare_get_irq(struct pic_ops *, int);
 static void ohare_ack_irq(struct pic_ops *, int);
 static void ohare_establish_irq(struct pic_ops *, int, int, int);
 
-#define NIRQ 32
+#define OHARE_NIRQ 32
 
 struct ohare_ops {
 	struct pic_ops pic;
 	uint32_t pending_events;
 	uint32_t enable_mask;
 	uint32_t level_mask;
-	uint32_t irqs[NIPL];		/* per priority level */
-	uint32_t priority_masks[NIRQ];	/* per IRQ */
+	uint32_t irqs[NIPL];			/* per priority level */
+	uint32_t priority_masks[OHARE_NIRQ];	/* per IRQ */
 };
 
 static struct ohare_ops *setup_ohare(uint32_t, int);
@@ -124,7 +124,7 @@ setup_ohare(uint32_t addr, int is_gc)
 	KASSERT(ohare != NULL);
 	pic = &ohare->pic;
 
-	pic->pic_numintrs = NIRQ;
+	pic->pic_numintrs = OHARE_NIRQ;
 	pic->pic_cookie = (void *)addr;
 	pic->pic_enable_irq = ohare_enable_irq;
 	pic->pic_reenable_irq = ohare_reenable_irq;
@@ -143,7 +143,7 @@ setup_ohare(uint32_t addr, int is_gc)
 		strcpy(pic->pic_name, "ohare");
 		ohare->level_mask = 0;
 	}
-	for (i = 0; i < NIRQ; i++)
+	for (i = 0; i < OHARE_NIRQ; i++)
 		ohare->priority_masks[i] = 0;
 	for (i = 0; i < NIPL; i++)
 		ohare->irqs[i] = 0;
@@ -291,7 +291,7 @@ ohare_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 	int realpri = min(NIPL, max(0, pri)), i;
 	uint32_t level = 1 << realpri;
 
-	KASSERT((irq >= 0) && (irq < NIRQ));
+	KASSERT((irq >= 0) && (irq < OHARE_NIRQ));
 
 	if (type == IST_LEVEL) {
 
@@ -305,7 +305,7 @@ ohare_establish_irq(struct pic_ops *pic, int irq, int type, int pri)
 	for (i = 0; i < NIPL; i++)
 		ohare->irqs[i] = 0;
 		
-	for (i = 0; i < NIRQ; i++) {
+	for (i = 0; i < OHARE_NIRQ; i++) {
 		if (ohare->priority_masks[i] == 0)
 			continue;
 		level = 31 - cntlzw(ohare->priority_masks[i]);
