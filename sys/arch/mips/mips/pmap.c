@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.188.2.1 2010/02/25 04:46:28 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.188.2.2 2010/04/27 07:19:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.2.1 2010/02/25 04:46:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188.2.2 2010/04/27 07:19:28 uebayasi Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1190,7 +1190,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (!(prot & VM_PROT_READ))
 		panic("pmap_enter: prot");
 #endif
-	pg = PHYS_TO_VM_PAGE(pa);
+	if ((flags & PMAP_UNMANAGED) != 0)
+		pg = NULL;
+	else
+		pg = PHYS_TO_VM_PAGE(pa);
 
 	if (pg) {
 		struct vm_page_md * const md = VM_PAGE_TO_MD(pg);

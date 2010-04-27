@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.55 2009/12/11 18:28:35 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.55.2.1 2010/04/27 07:19:28 uebayasi Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.55 2009/12/11 18:28:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.55.2.1 2010/04/27 07:19:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1270,7 +1270,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * Note that we raise IPL while manipulating pv_table
 	 * since pmap_enter can be called at interrupt time.
 	 */
-	if (PAGE_IS_MANAGED(pa)) {
+	if (PAGE_IS_MANAGED(pa) && ((flags & PMAP_UNMANAGED) == 0)) {
 		struct pv_header *pvh;
 		struct pv_entry *pv, *npv;
 		int s;
