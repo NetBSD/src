@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.23 2010/04/27 08:32:47 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.24 2010/04/27 15:01:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.23 2010/04/27 08:32:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.24 2010/04/27 15:01:11 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -852,7 +852,7 @@ static void
 uvm_page_physseg_init(void)
 {
 	int lcv;
-	
+
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
 		vm_physmem_ptrs[lcv] = &vm_physmem[lcv];
 	}
