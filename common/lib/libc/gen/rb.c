@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.4 2009/05/19 22:48:19 yamt Exp $ */
+/* $NetBSD: rb.c,v 1.5 2010/04/28 17:23:33 joerg Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -472,7 +472,9 @@ rb_tree_prune_node(struct rb_tree *rbt, struct rb_node *self, bool rebalance)
 {
 	const unsigned int which = RB_POSITION(self);
 	struct rb_node *father = RB_FATHER(self);
+#ifndef RBSMALL
 	const bool was_root = RB_ROOT_P(rbt, self);
+#endif
 
 	KASSERT(rebalance || (RB_ROOT_P(rbt, self) || RB_RED_P(self)));
 	KASSERT(!rebalance || RB_BLACK_P(self));
@@ -676,7 +678,9 @@ rb_tree_prune_blackred_branch(struct rb_tree *rbt, struct rb_node *self,
 {
 	struct rb_node *father = RB_FATHER(self);
 	struct rb_node *son = self->rb_nodes[which];
+#ifndef RBSMALL
 	const bool was_root = RB_ROOT_P(rbt, self);
+#endif
 
 	KASSERT(which == RB_DIR_LEFT || which == RB_DIR_RIGHT);
 	KASSERT(RB_BLACK_P(self) && RB_RED_P(son));
