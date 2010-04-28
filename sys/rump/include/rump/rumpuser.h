@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.39 2010/04/21 11:13:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.40 2010/04/28 00:33:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -108,6 +108,8 @@ int rumpuser_writewatchfile_setup(int, int, intptr_t, int *);
 int rumpuser_writewatchfile_wait(int, intptr_t *, int *);
 
 int rumpuser_dprintf(const char *, ...);
+
+int rumpuser_getnhostcpu(void);
 
 /* rumpuser_pth */
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);
