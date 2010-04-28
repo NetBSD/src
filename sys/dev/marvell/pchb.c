@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcivar.h,v 1.9 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1 2010/04/28 13:51:56 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,34 +25,55 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_GTPCIVAR_H_
-#define	_GTPCIVAR_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.1 2010/04/28 13:51:56 kiyohara Exp $");
 
-struct gtpci_softc {
-	device_t sc_dev;
-	int sc_model;
-	int sc_rev;
-	int sc_unit;
+#include "opt_pci.h"
+#include "pci.h"
 
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	pci_chipset_tag_t sc_pc;
-};
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/errno.h>
 
-#if NPCI > 0
-void gtpci_attach_hook(device_t, device_t, struct pcibus_attach_args *);
-int gtpci_bus_maxdevs(void *, int);
-pcitag_t gtpci_make_tag(void *, int, int, int);
-void gtpci_decompose_tag(void *, pcitag_t, int *, int *, int *);
-pcireg_t gtpci_conf_read(void *, pcitag_t, int);
-void gtpci_conf_write(void *, pcitag_t, int, pcireg_t);
-int gtpci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-int gtpci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char *gtpci_intr_string(void *, pci_intr_handle_t);
-const struct evcnt *gtpci_intr_evcnt(void *, pci_intr_handle_t);
-void *gtpci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
-			   void *);
-void gtpci_intr_disestablish(void *, void *);
-#endif
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 
-#endif	/* _GTPCIVAR_H_ */
+#include <dev/marvell/marvellreg.h>
+#include <dev/marvell/marvellvar.h>
+
+
+static int pchb_match(device_t, struct cfdata *, void *);
+static void pchb_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(pchb, sizeof(struct device),
+    pchb_match, pchb_attach, NULL, NULL);
+
+
+/* ARGSUSED */
+static int
+pchb_match(device_t parent, struct cfdata *match, void *aux)
+{
+	struct pci_attach_args *pa = aux;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_MARVELL)
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case MARVELL_ORION_1_88F1181:
+		case MARVELL_ORION_1_88F5082:
+		case MARVELL_ORION_1_88F5181:
+		case MARVELL_ORION_1_88F5182:
+		case MARVELL_ORION_2_88F5281:
+		case MARVELL_ORION_1_88W8660:
+			return 1;
+		}
+
+	return 0;
+}
+
+/* ARGSUSED */
+static void
+pchb_attach(device_t parent, device_t self, void *aux)
+{
+
+	aprint_normal("\n");
+	aprint_naive("\n");
+}

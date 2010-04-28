@@ -1,6 +1,6 @@
-/*	$NetBSD: gtpcivar.h,v 1.9 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: marvellvar.h,v 1.1 2010/04/28 13:51:56 kiyohara Exp $	*/
 /*
- * Copyright (c) 2008 KIYOHARA Takashi
+ * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,34 +25,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_GTPCIVAR_H_
-#define	_GTPCIVAR_H_
+#ifndef _DEV_MARVELL_MARVELLVAR_H_
+#define _DEV_MARVELL_MARVELLVAR_H_
 
-struct gtpci_softc {
-	device_t sc_dev;
-	int sc_model;
-	int sc_rev;
-	int sc_unit;
+enum marvell_tags {
+	MARVELL_TAG_SDRAM_CS0,
+	MARVELL_TAG_SDRAM_CS1,
+	MARVELL_TAG_SDRAM_CS2,
+	MARVELL_TAG_SDRAM_CS3,
 
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	pci_chipset_tag_t sc_pc;
+	MARVELL_TAG_UNDEFINED = -1,
 };
 
-#if NPCI > 0
-void gtpci_attach_hook(device_t, device_t, struct pcibus_attach_args *);
-int gtpci_bus_maxdevs(void *, int);
-pcitag_t gtpci_make_tag(void *, int, int, int);
-void gtpci_decompose_tag(void *, pcitag_t, int *, int *, int *);
-pcireg_t gtpci_conf_read(void *, pcitag_t, int);
-void gtpci_conf_write(void *, pcitag_t, int, pcireg_t);
-int gtpci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-int gtpci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char *gtpci_intr_string(void *, pci_intr_handle_t);
-const struct evcnt *gtpci_intr_evcnt(void *, pci_intr_handle_t);
-void *gtpci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
-			   void *);
-void gtpci_intr_disestablish(void *, void *);
-#endif
 
-#endif	/* _GTPCIVAR_H_ */
+#include <sys/bus.h>
+
+struct marvell_attach_args {
+	const char *mva_name;
+	int mva_model;
+	int mva_revision;
+	bus_space_tag_t mva_iot;
+	bus_space_handle_t mva_ioh;
+	int mva_unit;
+	bus_size_t mva_addr;
+	bus_size_t mva_offset;
+	bus_size_t mva_size;
+	bus_dma_tag_t mva_dmat;
+	int mva_irq;
+};
+
+void *marvell_intr_establish(int, int, int (*)(void *), void *);
+int marvell_winparams_by_tag(device_t, int, int *, int *, uint64_t *,
+			     uint32_t *);
+
+#endif	/* _DEV_MARVELL_MARVELLVAR_H_ */

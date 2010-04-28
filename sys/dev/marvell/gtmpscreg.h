@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscreg.h,v 1.3 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtmpscreg.h,v 1.4 2010/04/28 13:51:56 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -47,36 +47,32 @@
 #define _GTMPSCREG_H
 
 #ifndef BIT
-#define BIT(bitno)          (1U << (bitno))
+#define BIT(bitno)	(1U << (bitno))
 #endif
 #ifndef BITS
-#define BITS(hi, lo)        ((~((~0) << ((hi) + 1))) & ((~0) << (lo)))
+#define BITS(hi, lo)	((~((~0) << ((hi) + 1))) & ((~0) << (lo)))
 #endif
 
-#define GTMPSC_NCHAN      2               /* Number of MPSC channels */
+#define GTMPSC_BASE(u)	(MPSC0_BASE + ((u) << 12))
+#define GTMPSC_SIZE	0x1000
+
+#define GTMPSC_NCHAN	2		/* Number of MPSC channels */
 
 /*******************************************************************************
  *
  * MPSC register address offsets relative to the base mapping
  */
+#define GTMPSC_MMCR_LO	0x000		/* MPSC Main Config Register Low */
+#define GTMPSC_MMCR_HI	0x004		/* MPSC Main Config Register High */
+#define GTMPSC_MPCR	0x008		/* MPSC Protocol Config Register */
+#define GTMPSC_CHR_BASE	0x008		/* MPSC Channel Register Base */
+#define GTMPSC_CHRN(n)	(GTMPSC_CHR_BASE + ((n) << 2))
+#define GTMPSC_NCHR	11		/* CHR 1-11? */
+
 #define GTMPSC_MRR	0xb400		/* MPSC Routing Register */
 #define GTMPSC_RCRR	0xb404		/* MPSC RX Clock Routing Register */
 #define GTMPSC_TCRR	0xb408		/* MPSC TX Clock Routing Register */
-#define GTMPSC_MMCR0_LO	0x8000		/* MPSC0 Main Config Register Lo */
-#define GTMPSC_MMCR0_HI	0x8004		/* MPSC0 Main Config Register Hi */
-#define GTMPSC_MPCR0	0x8008		/* MPSC0 Protocol Config Register */
-#define GTMPSC_CH0_BASE	0x8008		/* MPSC0 Channel Register base */
-#define GTMPSC_CHR0(n)	(MPSC_CH0_BASE + ((n) << 2))
-#define GTMPSC_MMCR1_LO	0x9000		/* MPSC1 Main Config Register Lo */
-#define GTMPSC_MMCR1_HI	0x9004		/* MPSC1 Main Config Register Hi */
-#define GTMPSC_MPCR1	0x9008		/* MPSC1 Protocol Config Register */
-#define GTMPSC_CH1R_BASE 0x9008		/* MPSC1 Channel Register base */
-#define GTMPSC_CHR1(n)	(GTMPSC_CH1_BASE + ((n) << 2))
 
-#define GTMPSC_U_MMCR_LO(u)	(GTMPSC_MMCR0_LO + (((u) & 1) << 12))
-#define GTMPSC_U_MMCR_HI(u)	(GTMPSC_MMCR0_HI + (((u) & 1) << 12))
-#define GTMPSC_U_MPCR(u)	(GTMPSC_MPCR0 + (((u) & 1) << 12))
-#define GTMPSC_U_CHRN(u, n)	(GTMPSC_CH0_BASE + (((u) & 1) << 12) + ((n) << 2))
 
 /*******************************************************************************
  *
@@ -107,11 +103,10 @@
 #define GTMPSC_CRR_SCLK0	0x8		/* SCLK0 */
 #define GTMPSC_TCRR_TSCLK0	0x9		/* TSCLK0 (for TCRR only) */
 						/* all other values resvd. */
-#define GTMPSC_CRR0_SHIFT	0
-#define GTMPSC_CRR0_MASK	BITS(3,0)	/* MPSC0 Clock Routing */
+#define GTMPSC_CRR(u, v)	((v) << GTMPSC_CRR_SHIFT(u))
+#define GTMPSC_CRR_SHIFT(u)	((u) * 8)
+#define GTMPSC_CRR_MASK		0xf
 #define GTMPSC_CRR_RESa		BITS(7,4)
-#define GTMPSC_CRR1_SHIFT	8
-#define GTMPSC_CRR1_MASK	BITS(11,8)	/* MPSC1 Clock Routing */
 #define GTMPSC_CRR_RESb		BITS(31,12)
 #define GTMPSC_CRR_RES (GTMPSC_CRR_RESa|GTMPSC_CRR_RESb)
 /*
@@ -184,11 +179,11 @@
 #define GTMPSC_MMCR_HI_RSYL_4BIT  (1 << 23)	/* 4-bit sync */
 #define GTMPSC_MMCR_HI_RSYL_8BIT  (2 << 23)	/* 8-bit sync */
 #define GTMPSC_MMCR_HI_RSYL_16BIT (3 << 23)	/* 16-bit sync */
-#define GTMPSC_MMCR_HI_RCDV_MASK BITS(26,25)     /* Receive Clock Divider */
-#define GTMPSC_MMCR_HI_RCDV_1X   (0 << 25)       /* 1x clock mode (default) */
-#define GTMPSC_MMCR_HI_RCDV_8X   (1 << 25)       /* 8x clock mode (default) */
-#define GTMPSC_MMCR_HI_RCDV_16X  (2 << 25)       /* 16x clock mode (default) */
-#define GTMPSC_MMCR_HI_RCDV_32X  (3 << 25)       /* 16x clock mode (default) */
+#define GTMPSC_MMCR_HI_RCDV_MASK BITS(26,25)	/* Receive Clock Divider */
+#define GTMPSC_MMCR_HI_RCDV_1X   (0 << 25)	/* 1x clock mode (default) */
+#define GTMPSC_MMCR_HI_RCDV_8X   (1 << 25)	/* 8x clock mode (default) */
+#define GTMPSC_MMCR_HI_RCDV_16X  (2 << 25)	/* 16x clock mode (default) */
+#define GTMPSC_MMCR_HI_RCDV_32X  (3 << 25)	/* 16x clock mode (default) */
 #define GTMPSC_MMCR_HI_RENC_MASK BITS(29,27)	/* Receive Encoder */
 #define GTMPSC_MMCR_HI_RENC_NRZ	(0 << 27)	/* NRZ (default) */
 #define GTMPSC_MMCR_HI_RENC_NRZI (1 << 27)	/* NRZI */
@@ -265,8 +260,8 @@
 #define GTMPSC_MPCR_CL_6	(1 << 12)	/* 6 data bits */
 #define GTMPSC_MPCR_CL_7	(2 << 12)	/* 7 data bits */
 #define GTMPSC_MPCR_CL_8	(3 << 12)	/* 8 data bits */
-#define GTMPSC_MPCR_SBL_1	0x0		/* 1 stop bit */
-#define GTMPSC_MPCR_SBL_2	BIT(14)		/* 2 stop bits */
+#define GTMPSC_MPCR_SBL_1	(0 << 14)	/* 1 stop bit */
+#define GTMPSC_MPCR_SBL_2	(1 << 14)	/* 2 stop bits */
 #define GTMPSC_MPCR_FLC_NORM	0x0		/* Normal Flow Ctl mode */
 #define GTMPSC_MPCR_FLC_ASYNC	BIT(15)		/* Asynchronous Flow Ctl mode */
 #define GTMPSC_MPCR_RESb	BITS(31,16)
