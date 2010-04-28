@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.12 2010/04/27 23:30:30 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.13 2010/04/28 00:42:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.12 2010/04/27 23:30:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.13 2010/04/28 00:42:16 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -79,6 +79,12 @@ rump_cpus_bootstrap(int num)
 	struct rumpcpu *rcpu;
 	struct cpu_info *ci;
 	int i;
+
+	if (num > MAXCPUS) {
+		aprint_verbose("CPU limit: %d wanted, %d (MAXCPUS) available\n",
+		    num, MAXCPUS);
+		num = MAXCPUS;
+	}
 
 	for (i = 0; i < num; i++) {
 		rcpu = &rcpu_storage[i];
