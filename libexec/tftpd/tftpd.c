@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.36 2010/01/09 10:46:31 mbalmer Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.37 2010/04/28 22:21:51 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.36 2010/01/09 10:46:31 mbalmer Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.37 2010/04/28 22:21:51 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,7 @@ static int	logging;
 static int	secure;
 static char	pathsep = '\0';
 static char	*securedir;
+static int	unrestricted_writes;    /* uploaded files don't have to exist */
 
 struct formats;
 
@@ -171,7 +172,7 @@ main(int argc, char *argv[])
 	curuid = getuid();
 	curgid = getgid();
 
-	while ((ch = getopt(argc, argv, "dg:lnp:s:u:w:")) != -1)
+	while ((ch = getopt(argc, argv, "dg:lnp:s:u:w")) != -1)
 		switch (ch) {
 		case 'd':
 			debug++;
@@ -202,6 +203,10 @@ main(int argc, char *argv[])
 
 		case 'u':
 			tgtuser = optarg;
+			break;
+
+		case 'w':
+			unrestricted_writes = 1;
 			break;
 
 		default:
@@ -739,6 +744,8 @@ validate_access(char **filep, int mode)
 	static char	 pathname[MAXPATHLEN];
 	char		*filename;
 	int		 fd;
+	int		 create = 0;
+	int		 trunc = 0;
 
 	filename = *filep;
 
@@ -804,21 +811,45 @@ validate_access(char **filep, int mode)
 				return (EACCESS);
 			*filep = filename = pathname;
 		} else {
+			int stat_rc;
+
 			/*
 			 * If there's no directory list, take our cue from the
 			 * absolute file request check above (*filename == '/'),
 			 * and allow access to anything.
 			 */
-			if (stat(filename, &stbuf) < 0)
-				return (errno == ENOENT ? ENOTFOUND : EACCESS);
-			if (!S_ISREG(stbuf.st_mode))
-				return (ENOTFOUND);
+			stat_rc = stat(filename, &stbuf);
 			if (mode == RRQ) {
+				/* Read request */
+				if (stat_rc < 0)
+				       return (errno == ENOENT ? ENOTFOUND : EACCESS);
+				if (!S_ISREG(stbuf.st_mode))
+				       return (ENOTFOUND);
 				if ((stbuf.st_mode & S_IROTH) == 0)
 					return (EACCESS);
 			} else {
-				if ((stbuf.st_mode & S_IWOTH) == 0)
-					return (EACCESS);
+				if (stat_rc < 0) {
+				       /* Can't stat */
+				       if (errno == EACCES) {
+					       /* Permission denied */
+					       return EACCESS;
+				       } else {
+					       /* Not there */
+					       if (unrestricted_writes) {
+						       /* need to creat new file! */
+						       create = O_CREAT;
+					       } else {
+						       /* Permission denied */
+						       return EACCESS;
+					       }
+				       }
+				} else {
+				       /* Can stat */
+				       if ((stbuf.st_mode & S_IWOTH) == 0) {
+					       return (EACCESS);
+				       }
+				       trunc = O_TRUNC;
+				}
 			}
 			*filep = filename;
 		}
@@ -827,7 +858,8 @@ validate_access(char **filep, int mode)
 	if (tftp_opt_tsize && mode == RRQ)
 		tftp_tsize = (unsigned long) stbuf.st_size;
 
-	fd = open(filename, mode == RRQ ? O_RDONLY : O_WRONLY | O_TRUNC);
+	fd = open(filename, mode == RRQ ? O_RDONLY : O_WRONLY | trunc | create,
+			0644); /* debatable */
 	if (fd < 0)
 		return (errno + 100);
 	file = fdopen(fd, (mode == RRQ)? "r":"w");
