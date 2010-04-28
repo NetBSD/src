@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2009/12/10 14:13:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.2.1 2010/04/28 08:31:06 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -261,14 +261,14 @@ cpu_startup(void)
 
 		printf("Physical memory chunk(s):\n");
 		for (lcv = 0;
-		    lcv < vm_nphysseg || vm_physmem[lcv].avail_end != 0;
+		    lcv < vm_nphysseg || VM_PHYSMEM_PTR(lcv)->avail_end != 0;
 		    lcv++) {
-			sizetmp = vm_physmem[lcv].avail_end -
-			    vm_physmem[lcv].avail_start;
+			sizetmp = VM_PHYSMEM_PTR(lcv)->avail_end -
+			    VM_PHYSMEM_PTR(lcv)->avail_start;
 
 			printf("0x%016lx - 0x%016lx, %ld bytes (%d pages)\n",
-			    ptoa(vm_physmem[lcv].avail_start),
-				ptoa(vm_physmem[lcv].avail_end) - 1,
+			    ptoa(VM_PHYSMEM_PTR(lcv)->avail_start),
+				ptoa(VM_PHYSMEM_PTR(lcv)->avail_end) - 1,
 				    ptoa(sizetmp), sizetmp);
 		}
 		printf("Total number of segments: vm_nphysseg = %d \n",

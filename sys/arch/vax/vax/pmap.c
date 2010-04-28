@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.175 2009/11/27 03:23:14 rmind Exp $	   */
+/*	$NetBSD: pmap.c,v 1.175.2.1 2010/04/28 08:31:07 uebayasi Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175 2009/11/27 03:23:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.2.1 2010/04/28 08:31:07 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -467,9 +467,9 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	 * A vax only have one segment of memory.
 	 */
 
-	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
-	vm_physmem[0].avail_start += npgs;
-	vm_physmem[0].start += npgs;
+	v = (VM_PHYSMEM_PTR(0)->avail_start << PGSHIFT) | KERNBASE;
+	VM_PHYSMEM_PTR(0)->avail_start += npgs;
+	VM_PHYSMEM_PTR(0)->start += npgs;
 	memset((void *)v, 0, size);
 	return v;
 }
