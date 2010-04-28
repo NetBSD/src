@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.104 2010/04/05 07:20:28 joerg Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.105 2010/04/28 22:08:58 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.104 2010/04/05 07:20:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.105 2010/04/28 22:08:58 hubertf Exp $");
 
 #include "rnd.h"
 
@@ -1587,7 +1587,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * A Rhine chip was detected. Inform the world.
 	 */
-	printf("%s: Ethernet address: %s\n",
+	aprint_normal("%s: Ethernet address: %s\n",
 		device_xname(self), ether_sprintf(eaddr));
 
 	memcpy(sc->vr_enaddr, eaddr, ETHER_ADDR_LEN);
