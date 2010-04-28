@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23 2010/04/28 06:02:20 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.24 2010/04/28 06:06:11 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 2010/04/28 06:02:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 2010/04/28 06:06:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,13 +368,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case DEV_NULL:				/*  /dev/null  */
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
-			return (0);
+			return 0;
 
 		case DEV_ZERO:			/*  /dev/zero  */
 			/* Write to /dev/zero is ignored. */
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
-				return (0);
+				return 0;
 			}
 			/*
 			 * On the first call, allocate and zero a page
@@ -390,10 +390,10 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			break;
 
 		default:
-			return (ENXIO);
+			return ENXIO;
 		}
 	}
-	return (error);
+	return error;
 }
 
 paddr_t
@@ -401,7 +401,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 {
 
 	if (minor(dev) != DEV_MEM)
-		return (-1);
+		return -1;
 
 	/*
 	 * Allow access only in RAM.
@@ -409,7 +409,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 #if 0
 	if (off < ptoa(firstusablepage) ||
 	    off >= ptoa(lastusablepage + 1))
-		return (-1);
+		return -1;
 #endif
-	return (btop(off));
+	return btop(off);
 }
