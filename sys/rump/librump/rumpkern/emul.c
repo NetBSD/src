@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.132 2010/04/21 20:07:02 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.133 2010/04/28 07:42:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.132 2010/04/21 20:07:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.133 2010/04/28 07:42:55 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -75,16 +75,15 @@ int cold = 1;
 int boothowto = AB_SILENT;
 struct tty *constty;
 
-#define DEVSW_SIZE 255
-const struct bdevsw *bdevsw0[DEVSW_SIZE]; /* XXX storage size */
+const struct bdevsw *bdevsw0[1];
 const struct bdevsw **bdevsw = bdevsw0;
-const int sys_cdevsws = DEVSW_SIZE;
-int max_cdevsws = DEVSW_SIZE;
+const int sys_cdevsws = 0;
+int max_cdevsws = 1;
 
-const struct cdevsw *cdevsw0[DEVSW_SIZE]; /* XXX storage size */
+const struct cdevsw *cdevsw0[1];
 const struct cdevsw **cdevsw = cdevsw0;
-const int sys_bdevsws = DEVSW_SIZE;
-int max_bdevsws = DEVSW_SIZE;
+const int sys_bdevsws = 0;
+int max_bdevsws = 1;
 
 struct devsw_conv devsw_conv0;
 struct devsw_conv *devsw_conv = &devsw_conv0;
