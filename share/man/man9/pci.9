@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.30 2010/02/11 18:11:37 dyoung Exp $
+.\"     $NetBSD: pci.9,v 1.31 2010/04/28 21:15:47 dyoung Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 11, 2010
+.Dd April 28, 2010
 .Dt PCI 9
 .Os
 .Sh NAME
 .Nm PCI ,
 .Nm pci_activate ,
+.Nm pci_chipset_tag_create ,
+.Nm pci_chipset_tag_destroy ,
 .Nm pci_conf_read ,
 .Nm pci_conf_write ,
 .Nm pci_conf_print ,
@@ -69,6 +71,11 @@
 .Fn pci_activate "pci_chipset_tag_t pc" "pcitag_t tag" "device_t dev" \
 "int (*wakeup)(pci_chipset_tag_t pc, pcitag_t tag" \
 "\t\tdevice_t dev, pcireg_t reg)"
+.Ft int
+.Fn pci_chipset_tag_create "pci_chipset_tag_t opc" "uint64_t present" \
+"const struct pci_overrides *ov" "void *ctx" "pci_chipset_tag_t *pcp"
+.Ft void
+.Fn pci_chipset_tag_destroy "pci_chipset_tag_t pc"
 .Ft pcireg_t
 .Fn pci_conf_read "pci_chipset_tag_t pc" "pcitag_t tag" "int reg"
 .Ft void
@@ -213,6 +220,35 @@ It contains the following member:
 .Bd -literal
 	pcireg_t reg[16];			/* pci conf register */
 .Ed
+.It Fa struct pci_overrides
+Stores pointers to functions that override the architecture's
+default
+.Xr pci 9
+and
+.Xr pci_intr 9
+implementation.
+It contains the following members:
+.Bd -literal
+	pcireg_t (*ov_conf_read)(void *,
+	    pci_chipset_tag_t, pcitag_t, int);
+	void (*ov_conf_write)(void *,
+	    pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+	int (*ov_intr_map)(void *,
+	   struct pci_attach_args *, pci_intr_handle_t *);
+	const char *(*ov_intr_string)(void *,
+	    pci_chipset_tag_t, pci_intr_handle_t);
+	const struct evcnt *(*ov_intr_evcnt)(void *,
+	    pci_chipset_tag_t, pci_intr_handle_t);
+	void *(*ov_intr_establish)(void *,
+	    pci_chipset_tag_t, pci_intr_handle_t,
+	    int, int (*)(void *), void *);
+	void (*ov_intr_disestablish)(void *,
+	    pci_chipset_tag_t, void *);
+	pcitag_t (*ov_make_tag)(void *,
+	    pci_chipset_tag_t, int, int, int);
+	void (*ov_decompose_tag)(void *,
+	    pci_chipset_tag_t, pcitag_t, int *, int *, int *);
+.Ed
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
@@ -226,6 +262,98 @@ If
 is
 .Dv NULL
 then restoring from state D3 is going to fail.
+.It Fn pci_chipset_tag_create "opc" "present" "ov" "ctx" "pcp"
+Create a copy of the tag
+.Fa opc
+at
+.Fa *pcp .
+Except for the behavior
+overridden by
+.Fa ov ,
+.Fa *pcp
+inherits the behavior of
+.Fa opc
+under
+.Nm
+calls.
+.Pp
+.Fa ov
+contains function pointers corresponding to
+.Nm
+routines.
+Each function pointer has a corresponding bit in
+.Fa present ,
+and if that bit is 1, the function pointer overrides the corresponding
+.Nm
+call for the new tag.
+Any combination of these bits may be set in
+.Fa present :
+.Pp
+.Bl -tag -width PCI_OVERRIDE_INTR_DISESTABLISH -compact
+.It Dv PCI_OVERRIDE_CONF_READ
+.It Dv PCI_OVERRIDE_CONF_WRITE
+.It Dv PCI_OVERRIDE_INTR_MAP
+.It Dv PCI_OVERRIDE_INTR_STRING
+.It Dv PCI_OVERRIDE_INTR_EVCNT
+.It Dv PCI_OVERRIDE_INTR_ESTABLISH
+.It Dv PCI_OVERRIDE_INTR_DISESTABLISH
+.It Dv PCI_OVERRIDE_MAKE_TAG
+.It Dv PCI_OVERRIDE_DECOMPOSE_TAG
+.El
+.Pp
+.Fn pci_chipset_tag_create
+does not copy
+.Fa ov .
+After a new tag is created
+by
+.Fn pci_chipset_tag_create ,
+.Fa ov
+must not be destroyed until after the
+tag is destroyed by
+.Fn pci_chipset_tag_destroy .
+.Pp
+The first argument of every override-function is a
+.Vt "void *" ,
+and
+.Fa ctx
+is passed in that argument.
+.Pp
+Return 0 if the call succeeds.
+Return
+.Dv EOPNOTSUPP
+if the architecture does not support overrides.
+Return
+.Dv EINVAL
+if
+.Fa present
+is 0, if
+.Fa ov
+is
+.Dv NULL ,
+or if
+.Fa present
+indicates that an override is present, but the corresponding override
+in
+.Fa ov
+is
+.Dv NULL .
+.Pp
+If the call does not succeed,
+.Fa *pcp
+is undefined.
+.It Fn pci_chipset_tag_destroy "pc"
+Destroy a tag,
+.Fa pc ,
+created by a prior call to
+.Fn pci_chipset_tag_create .
+If
+.Fa pc
+was not created by
+.Fn pci_chipset_tag_create ,
+results are undefined.
+If
+.Fa pc
+was already destroyed, results are undefined.
 .It Fn pci_conf_read "pc" "tag" "reg"
 Read from register
 .Fa reg
