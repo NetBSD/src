@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.21 2010/04/27 18:11:19 drochner Exp $	*/
+/*	$NetBSD: factor.c,v 1.22 2010/04/28 18:04:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.21 2010/04/27 18:11:19 drochner Exp $");
+__RCSID("$NetBSD: factor.c,v 1.22 2010/04/28 18:04:31 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ static void pr_fact(BIGNUM *);		/* print factors of a value */
 static void BN_print_dec_fp(FILE *, const BIGNUM *);
 static void usage(void) __dead;
 #ifdef HAVE_OPENSSL
-static void pollard_pminus1(BIGNUM *);	/* print factors for big numbers */
+static void pollard_rho(BIGNUM *);	/* print factors for big numbers */
 #else
 static char *BN_bn2dec(const BIGNUM *);
 static BN_ULONG BN_div_word(BIGNUM *, BN_ULONG);
@@ -237,7 +237,7 @@ pr_fact(BIGNUM *val)
 				putchar(' ');
 				BN_print_dec_fp(stdout, val);
 			} else
-				pollard_pminus1(val);
+				pollard_rho(val);
 #else
 			printf(" %s", BN_bn2dec(val));
 #endif
@@ -282,10 +282,8 @@ usage(void)
 
 
 #ifdef HAVE_OPENSSL
-/* pollard p-1, algorithm from Jim Gillogly, May 2000 */
-
 static void
-pollard_pminus1(BIGNUM *val)
+pollard_rho(BIGNUM *val)
 {
 	BIGNUM *x, *y, *tmp, *num;
 	BN_ULONG a;
@@ -327,7 +325,7 @@ restart:
 				BN_print_dec_fp(stdout, tmp);
 				putchar(')');
 #endif
-				pollard_pminus1(BN_dup(tmp));
+				pollard_rho(BN_dup(tmp));
 #ifdef DEBUG
 				printf(" (back)");
 #endif
