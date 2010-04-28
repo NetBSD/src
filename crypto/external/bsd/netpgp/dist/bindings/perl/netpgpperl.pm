@@ -57,8 +57,10 @@ package netpgpperl;
 *netpgp_list_packets = *netpgpperlc::netpgp_list_packets;
 *netpgp_setvar = *netpgpperlc::netpgp_setvar;
 *netpgp_getvar = *netpgpperlc::netpgp_getvar;
+*netpgp_incvar = *netpgpperlc::netpgp_incvar;
+*netpgp_unsetvar = *netpgpperlc::netpgp_unsetvar;
+*netpgp_set_homedir = *netpgpperlc::netpgp_set_homedir;
 *netpgp_list_keys = *netpgpperlc::netpgp_list_keys;
-*netpgp_list_sigs = *netpgpperlc::netpgp_list_sigs;
 *netpgp_find_key = *netpgpperlc::netpgp_find_key;
 *netpgp_get_key = *netpgpperlc::netpgp_get_key;
 *netpgp_export_key = *netpgpperlc::netpgp_export_key;
@@ -70,6 +72,11 @@ package netpgpperl;
 *netpgp_verify_file = *netpgpperlc::netpgp_verify_file;
 *netpgp_sign_memory = *netpgpperlc::netpgp_sign_memory;
 *netpgp_verify_memory = *netpgpperlc::netpgp_verify_memory;
+*netpgp_encrypt_memory = *netpgpperlc::netpgp_encrypt_memory;
+*netpgp_decrypt_memory = *netpgpperlc::netpgp_decrypt_memory;
+*netpgp_match_keys = *netpgpperlc::netpgp_match_keys;
+*netpgp_match_pubkeys = *netpgpperlc::netpgp_match_pubkeys;
+*netpgp_validate_sigs = *netpgpperlc::netpgp_validate_sigs;
 
 ############# Class : netpgpperl::netpgp_t ##############
 
