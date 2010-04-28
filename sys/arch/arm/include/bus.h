@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 2009/03/14 14:45:55 dsl Exp $	*/
+/*	$NetBSD: bus.h,v 1.20.2.1 2010/04/28 14:56:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -271,6 +271,15 @@ struct bus_space {
 	void		(*bs_wr_8_s)(void *, bus_space_handle_t,
 			    bus_size_t, const u_int64_t *, bus_size_t);
 #endif	/* __BUS_SPACE_HAS_STREAM_METHODS */
+
+#ifdef __BUS_SPACE_HAS_PHYSLOAD_METHODS
+	void *		(*bs_physload)(void *, bus_addr_t, bus_size_t,
+			    int, int);
+	void		(*bs_physunload)(void *, void *);
+	void *		(*bs_physload_device)(void *, bus_addr_t, bus_size_t,
+			    int, int);
+	void		(*bs_physunload_device)(void *, void *);
+#endif
 };
 
 
@@ -690,6 +699,19 @@ void	__bs_c(f,_bs_c_8)(void *t, bus_space_handle_t bsh1,	\
 	    bus_size_t offset1, bus_space_handle_t bsh2,		\
 	    bus_size_t offset2, bus_size_t count);
 
+#ifdef __BUS_SPACE_HAS_PHYSLOAD_METHODS
+#define bs_physload_proto(f)						\
+void *	__bs_c(f,_bs_physload)(void *t,					\
+	    bus_addr_t addr, bus_size_t size, int prot, int flags);
+#define bs_physunload_proto(f)						\
+void	__bs_c(f,_bs_physunload)(void *t, void *phys)
+#define bs_physload_device_proto(f)					\
+void *	__bs_c(f,_bs_physload_device)(void *t,				\
+	    bus_addr_t addr, bus_size_t size, int prot, int flags);
+#define bs_physunload_device_proto(f)					\
+void	__bs_c(f,_bs_physunload_device)(void *t, void *phys)
+#endif
+
 #define bs_protos(f)		\
 bs_map_proto(f);		\
 bs_unmap_proto(f);		\
@@ -734,9 +756,25 @@ bs_sr_8_proto(f);		\
 bs_c_1_proto(f);		\
 bs_c_2_proto(f);		\
 bs_c_4_proto(f);		\
-bs_c_8_proto(f);
+bs_c_8_proto(f);		\
+bs_physload_proto(f);		\
+bs_physunload_proto(f);		\
+bs_physload_device_proto(f);	\
+bs_physunload_device_proto(f);
 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
+
+/*
+ * Load bus space as a physical segment for managed access.
+ */
+#define bus_space_physload(t, a, s, p, f)				\
+	(*(t)->bs_physload)((t)->bs_cookie, (a), (s), (p), (f))
+#define bus_space_physunload(t, p)					\
+	(*(t)->bs_physunload)((t)->bs_cookie, (p))
+#define bus_space_physload_device(t, a, s, p, f)			\
+	(*(t)->bs_physload_device)((t)->bs_cookie, (a), (s), (p), (f))
+#define bus_space_physunload_device(t, p)				\
+	(*(t)->bs_physunload_device)((t)->bs_cookie, (p))
 
 /* Bus Space DMA macros */
 

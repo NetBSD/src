@@ -1,7 +1,7 @@
-/* $Id: imx31_space.c,v 1.3 2009/11/07 07:27:41 cegger Exp $ */
+/* $Id: imx31_space.c,v 1.3.2.1 2010/04/28 14:56:14 uebayasi Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx31_space.c,v 1.3 2009/11/07 07:27:41 cegger Exp $ */
+/*	$NetBSD: imx31_space.c,v 1.3.2.1 2010/04/28 14:56:14 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -104,7 +104,7 @@ struct bus_space imx31_bs_tag = {
 	imx31_bs_vaddr,
 
 	/* mmap */
-	bs_notimpl_bs_mmap,
+	imx31_bs_mmap,
 
 	/* barrier */
 	imx31_bs_barrier,
@@ -162,6 +162,12 @@ struct bus_space imx31_bs_tag = {
 	generic_armv4_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
+
+	/* physload */
+	imx31_bs_physload,
+	imx31_bs_physunload,
+	imx31_bs_physload_device,
+	imx31_bs_physunload_device,
 };
 
 int
@@ -268,4 +274,44 @@ imx31_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 	panic("imx31_io_bs_free(): not implemented\n");
 }
 
+paddr_t
+imx31_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
+{
 
+	/* XXX */
+	return arm_btop(addr + off);
+}
+
+/* XXX generic */
+
+void *
+imx31_bs_physload(void *t, bus_addr_t addr, bus_size_t size, int prot, int flags)
+{
+	const paddr_t start = imx31_bs_mmap(t, addr, 0, prot, flags);
+	const paddr_t end = imx31_bs_mmap(t, addr + size, 0, prot, flags);
+
+	return uvm_page_physload(start, end, start, end, 0/* XXX freelist */);
+}
+
+void
+imx31_bs_physunload(void *t, void *phys)
+{
+
+	uvm_page_physunload(phys);
+}
+
+void *
+imx31_bs_physload_device(void *t, bus_addr_t addr, bus_size_t size, int prot, int flags)
+{
+	const paddr_t start = imx31_bs_mmap(t, addr, 0, prot, flags);
+	const paddr_t end = imx31_bs_mmap(t, addr + size, 0, prot, flags);
+
+	return uvm_page_physload_device(start, end, start, end, 0/* XXX freelist */);
+}
+
+void
+imx31_bs_physunload_device(void *t, void *phys)
+{
+
+	uvm_page_physunload_device(phys);
+}
