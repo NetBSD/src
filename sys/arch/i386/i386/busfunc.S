@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.5 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.6 2010/04/28 19:17:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: busfunc.S,v 1.5 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: busfunc.S,v 1.6 2010/04/28 19:17:03 dyoung Exp $");
 
 #include "assym.h"
 
@@ -45,7 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: busfunc.S,v 1.5 2008/04/28 20:23:24 martin Exp $");
 ENTRY(bus_space_read_1)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
+	movl	4(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	je	1f
 	movzbl	(%edx), %eax
 	ret
@@ -61,7 +62,8 @@ ENTRY(bus_space_read_1)
 ENTRY(bus_space_read_2)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
+	movl	4(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	je	1f
 	movzwl	(%edx), %eax
 	ret
@@ -77,7 +79,8 @@ ENTRY(bus_space_read_2)
 ENTRY(bus_space_read_4)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
+	movl	4(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	je	1f
 	movl	(%edx), %eax
 	ret
@@ -96,7 +99,8 @@ STRONG_ALIAS(bus_space_read_stream_4,bus_space_read_4)
 ENTRY(bus_space_write_1)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
+	movl	4(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	16(%esp), %eax
 	je	1f
 	movb	%al, (%edx)
@@ -112,7 +116,8 @@ ENTRY(bus_space_write_1)
 ENTRY(bus_space_write_2)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
+	movl	4(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	16(%esp), %eax
 	je	1f
 	movw	%ax, (%edx)
@@ -128,7 +133,8 @@ ENTRY(bus_space_write_2)
 ENTRY(bus_space_write_4)
 	movl	8(%esp), %edx
 	addl	12(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 4(%esp)
+	movl	4(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	16(%esp), %eax
 	je	1f
 	movl	%eax, (%edx)
@@ -149,7 +155,8 @@ ENTRY(bus_space_read_multi_1)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	jne	1f
@@ -175,7 +182,8 @@ ENTRY(bus_space_read_multi_2)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	jne	1f
@@ -201,7 +209,8 @@ ENTRY(bus_space_read_multi_4)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	jne	1f
@@ -231,7 +240,8 @@ ENTRY(bus_space_write_multi_1)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	jne	1f
@@ -257,7 +267,8 @@ ENTRY(bus_space_write_multi_2)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	jne	1f
@@ -283,7 +294,8 @@ ENTRY(bus_space_write_multi_4)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	jne	1f
@@ -313,7 +325,8 @@ ENTRY(bus_space_read_region_1)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	je	2f
@@ -342,7 +355,8 @@ ENTRY(bus_space_read_region_2)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	je	2f
@@ -371,7 +385,8 @@ ENTRY(bus_space_read_region_4)
 	pushl	%edi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	je	2f
@@ -404,7 +419,8 @@ ENTRY(bus_space_write_region_1)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	je	2f
@@ -433,7 +449,8 @@ ENTRY(bus_space_write_region_2)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	je	2f
@@ -462,7 +479,8 @@ ENTRY(bus_space_write_region_4)
 	pushl	%esi
 	movl	12(%esp), %edx
 	addl	16(%esp), %edx
-	cmpl	$X86_BUS_SPACE_IO, 8(%esp)
+	movl	8(%esp), %eax
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%eax)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	je	2f

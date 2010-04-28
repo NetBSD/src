@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.86 2010/04/18 23:47:50 jym Exp $
+#	$NetBSD: genassym.cf,v 1.87 2010/04/28 19:17:03 dyoung Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ endif
 include <machine/tlog.h>
 
 
-include <x86/busdefs.h>
+include <x86/bus.h>
 
 define	PAGE_SIZE		PAGE_SIZE
 
@@ -439,6 +439,8 @@ define	EV_COUNT		offsetof(struct evcnt, ev_count)
 define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
+
+define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
 
 define	L1_SHIFT		L1_SHIFT
 define	L2_SHIFT		L2_SHIFT
