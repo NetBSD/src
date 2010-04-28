@@ -95,8 +95,10 @@ netpgp_get_info = _netpgppython.netpgp_get_info
 netpgp_list_packets = _netpgppython.netpgp_list_packets
 netpgp_setvar = _netpgppython.netpgp_setvar
 netpgp_getvar = _netpgppython.netpgp_getvar
+netpgp_incvar = _netpgppython.netpgp_incvar
+netpgp_unsetvar = _netpgppython.netpgp_unsetvar
+netpgp_set_homedir = _netpgppython.netpgp_set_homedir
 netpgp_list_keys = _netpgppython.netpgp_list_keys
-netpgp_list_sigs = _netpgppython.netpgp_list_sigs
 netpgp_find_key = _netpgppython.netpgp_find_key
 netpgp_get_key = _netpgppython.netpgp_get_key
 netpgp_export_key = _netpgppython.netpgp_export_key
@@ -108,5 +110,10 @@ netpgp_sign_file = _netpgppython.netpgp_sign_file
 netpgp_verify_file = _netpgppython.netpgp_verify_file
 netpgp_sign_memory = _netpgppython.netpgp_sign_memory
 netpgp_verify_memory = _netpgppython.netpgp_verify_memory
+netpgp_encrypt_memory = _netpgppython.netpgp_encrypt_memory
+netpgp_decrypt_memory = _netpgppython.netpgp_decrypt_memory
+netpgp_match_keys = _netpgppython.netpgp_match_keys
+netpgp_match_pubkeys = _netpgppython.netpgp_match_pubkeys
+netpgp_validate_sigs = _netpgppython.netpgp_validate_sigs
 
 
