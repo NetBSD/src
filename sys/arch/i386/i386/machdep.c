@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.681 2009/12/10 14:13:50 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.681.2.1 2010/04/28 08:31:06 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681 2009/12/10 14:13:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681.2.1 2010/04/28 08:31:06 uebayasi Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1194,7 +1194,7 @@ init386_msgbuf(void)
  search_again:
 	vps = NULL;
 	for (x = 0; x < vm_nphysseg; ++x) {
-		vps = &vm_physmem[x];
+		vps = VM_PHYSMEM_PTR(x);
 		if (ptoa(vps->avail_end) == avail_end) {
 			break;
 		}
@@ -1214,13 +1214,13 @@ init386_msgbuf(void)
 	/* Remove the last segment if it now has no pages. */
 	if (vps->start == vps->end) {
 		for (--vm_nphysseg; x < vm_nphysseg; x++)
-			vm_physmem[x] = vm_physmem[x + 1];
+			vm_physmem_ptrs[x] = vm_physmem_ptrs[x + 1];
 	}
 
 	/* Now find where the new avail_end is. */
 	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
-		if (vm_physmem[x].avail_end > avail_end)
-			avail_end = vm_physmem[x].avail_end;
+		if (VM_PHYSMEM_PTR(x)->avail_end > avail_end)
+			avail_end = VM_PHYSMEM_PTR(x)->avail_end;
 	avail_end = ptoa(avail_end);
 
 	if (sz == reqsz)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.26 2010/04/28 05:12:30 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.27 2010/04/28 08:31:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.26 2010/04/28 05:12:30 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.27 2010/04/28 08:31:05 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -104,11 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.26 2010/04/28 05:12:30 uebayasi
 /* XXXUEBS merge these two */
 
 struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
-struct vm_physseg vm_physmem[VM_PHYSSEG_MAX];
+struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
 int vm_nphysmem = 0;
 #ifdef DEVICE_PAGE
 struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
-struct vm_physseg vm_physdev[VM_PHYSSEG_MAX];
+struct vm_physseg vm_physdev_store[VM_PHYSSEG_MAX];
 int vm_nphysdev = 0;
 #endif
 
@@ -772,7 +772,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	struct vm_physseg *seg;
 	int lcv;
 
-	seg = uvm_page_physload_common(vm_physmem, vm_nphysmem, start, end,
+	seg = uvm_page_physload_common(vm_physmem_store, vm_nphysmem, start, end,
 	    avail_start, avail_end, free_list);
 	KASSERT(seg != NULL);
 
@@ -856,11 +856,11 @@ uvm_page_physseg_init(void)
 	int lcv;
 
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
-		vm_physmem_ptrs[lcv] = &vm_physmem[lcv];
+		vm_physmem_ptrs[lcv] = &vm_physmem_store[lcv];
 	}
 #ifdef DEVICE_PAGE
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
-		vm_physdev_ptrs[lcv] = &vm_physdev[lcv];
+		vm_physdev_ptrs[lcv] = &vm_physdev_store[lcv];
 	}
 #endif
 }
