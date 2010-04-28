@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.39.2.1 2010/03/23 01:58:13 uebayasi Exp $	*/
+/*	$NetBSD: specdev.h,v 1.39.2.2 2010/04/28 16:33:47 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ typedef struct specdev {
 	u_int		sd_opencnt;
 	u_int		sd_refcnt;
 	dev_t		sd_rdev;
-	paddr_t		sd_phys_addr;	/* XIP */
+	void		*sd_physseg;	/* XIP */
 } specdev_t;
 
 /*
