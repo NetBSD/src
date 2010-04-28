@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.43 2010/04/16 13:48:31 pooka Exp $
+#	$NetBSD: EV64260,v 1.44 2010/04/28 13:51:56 kiyohara Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -13,22 +13,25 @@ maxusers	32
 #options 	UVMHIST
 #options 	UVMHIST_PRINT
 
+#options 	MULTIPROCESSOR		# Discovery II/III support
+
 # PowerPC options
 options		ALTIVEC
 #options 	CLOCKBASE=100000000	# EVB64260
 options 	CLOCKBASE=133000000	# EVB64260A
 
 # Marvell options
-options 	GT_MPP_INTERRUPTS=0x2c600000
-options 	GT_MPP_WATCHDOG=0x03000000
 options 	MPSC_CONSOLE=0
 options 	GT_MPSC_DEFAULT_BAUD_RATE=9600
-#options 	GT_BASE=0x14000000	# PMON low
-options 	GT_BASE=0xF8000000	# PPCBoot
 options 	GT_MPSC_FREQUENCY="(cpu_timebase*4)"
 options 	GT_MPSC_CLOCK_SOURCE="BRG_BCR_CLKS_TCLK"
-options 	PCI0_GPPINTS=0xffffff1b,PCI1_GPPINTS=0xffffff1d
-options 	PCI0_SKIPMASK="(~0x180)",PCI1_SKIPMASK="(~0x180)"
+options 	GT_MPP_WATCHDOG=0x03000000
+options 	GT_DEVBUS
+#options 	GT_ECC
+options 	GT_COMM
+options 	GT_WATCHDOG
+
+# EV64260 options
 options 	OBIO0_STRIDE=0,OBIO1_STRIDE=2,OBIO2_STRIDE=2,OBIO3_STRIDE=2
 
 # Options for necessary to use MD
@@ -153,40 +156,42 @@ mainbus0	at root
 
 cpu*		at mainbus0
 
-gt0		at mainbus0		# Discovery system controller
+# Discovery system controller
+#gt0	at mainbus0 addr 0x14000000	# PMON low
+gt0	at mainbus0 addr 0xf8000000	# PPCBoot
 
 # PCI busses
-gtpci0		at gt0 unit 0		# 64-bit, 66MHz
-gtpci1		at gt0 unit 1		# 64-bit, 66MHz
-
-pci*		at gtpci?
+gtpci*	at gt? unit ?			# 64-bit, 66MHz
+pci*	at gtpci?
 
 # 16550s off CS2
-obio0		at gt0 unit 0		# Chip Select 0
-obio1		at gt0 unit 1		# Chip Select 1
-obio2		at gt0 unit 2		# Chip Select 2
-com0		at obio2 offset 0x0020 size 8 irq 85
-com1		at obio2 offset 0x0000 size 8 irq 86
-obio3		at gt0 unit 3		# Chip Select 3
-obio4		at gt0 unit 4		# Boot Chip Select
+obio0	at gt0 unit 0			# Chip Select 0
+obio1	at gt0 unit 1			# Chip Select 1
+obio2	at gt0 unit 2			# Chip Select 2
+com0	at obio2 offset 0x0020 size 8 irq 85
+com1	at obio2 offset 0x0000 size 8 irq 86
+obio3	at gt0 unit 3			# Chip Select 3
+obio4	at gt0 unit 4			# Boot Chip Select
 
 # UARTs
-gtmpsc0 	at gt0 unit 0		# Serial #0
-gtmpsc1 	at gt0 unit 1		# Serial #1
+gtmpsc*	at gt? offset ?			# Multi-Protocol Serial Controller
+					#   with Serial Direct Memory Access
 
 # Ethernet and PHY
-gfe0		at gt0 unit 0 flags 1	# Ethernet #0 (RMMI)
-gfe1		at gt0 unit 1 flags 1	# Ethernet #1 (RMMI)
-gfe2		at gt0 unit 2 flags 1	# Ethernet #2 (RMMI)
+gfec*	at gt? offset ?			# Ethernet (RMMI)
+gfe*	at gfec? port ? irq ?		# Ethernet port #0/#1/#2
 
 # I2C
-gtiic0		at gt0 unit 0		# I2C controller
-iic*		at gtiic?
+gttwsi*	at gt? offset ? irq ?		# Two-Wire Serial Interface
+iic*	at gttwsi?
+
+# DMA
+gtidmac* at gt? offset ? irq ?		# IDMA Controller
 
 # PCI devices
-ppb*		at pci? dev ? function ?	# PCI-PCI bridges
-pci*		at ppb? bus ?
-#pcib*		at pci? dev ? function ?	# VIA 82C686B
+pchb*	at pci? dev ? function ?	# PCI Host Bridge
+ppb*	at pci? dev ? function ?	# PCI-PCI Bridges
+pci*	at ppb? bus ?
 
 #ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 #ohci*	at pci?	dev ? function ?	# Open Host Controller
@@ -273,3 +278,5 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	wsmux			# ick
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	swdmover		# softare dmover(9) back-end
+pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
