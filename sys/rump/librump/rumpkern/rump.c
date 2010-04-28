@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.167 2010/04/28 11:34:18 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.168 2010/04/28 14:23:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.167 2010/04/28 11:34:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.168 2010/04/28 14:23:57 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -531,6 +531,7 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
 	l->l_cpu = NULL;
+	l->l_sysent = rump_sysent;
 	lwp_initspecific(l);
 	LIST_INSERT_HEAD(&alllwp, l, l_list);
 
