@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.3 2010/04/21 11:16:41 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.4 2010/04/28 00:33:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.3 2010/04/21 11:16:41 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.4 2010/04/28 00:33:45 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: rumpuser.c,v 1.3 2010/04/21 11:16:41 pooka Exp $");
 
 #ifdef __NetBSD__
 #include <sys/disklabel.h>
+#include <sys/sysctl.h>
 #endif
 
 #include <assert.h>
@@ -587,5 +588,20 @@ rumpuser_kill(int64_t pid, int sig, int *error)
 	/* XXXfixme: signal numbers may not match on non-NetBSD */
 	*error = EOPNOTSUPP;
 	return -1;
+#endif
+}
+
+int
+rumpuser_getnhostcpu(void)
+{
+	int ncpu;
+	size_t sz = sizeof(ncpu);
+
+#ifdef __NetBSD__
+	if (sysctlbyname("hw.ncpu", &ncpu, &sz, NULL, 0) == -1)
+		return 1;
+	return ncpu;
+#else
+	return 1;
 #endif
 }
