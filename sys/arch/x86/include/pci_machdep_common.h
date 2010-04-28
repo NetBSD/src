@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.2 2010/03/20 00:02:59 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.3 2010/04/28 21:27:14 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -74,31 +74,9 @@ typedef union x86_pci_tag_u pcitag_t;
 
 struct pci_chipset_tag {
 	pci_chipset_tag_t pc_super;
-	pcireg_t (*pc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
-
-	void (*pc_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-
-#if 0
-	int (*pc_find_rom)(struct pci_attach_args *, bus_space_tag_t,
-	    bus_space_handle_t, int, bus_space_handle_t *, bus_space_size_t *);
-#endif
-
-	int (*pc_intr_map)(struct pci_attach_args *, pci_intr_handle_t *);
-
-	const char *(*pc_intr_string)(pci_chipset_tag_t, pci_intr_handle_t);
-
-	const struct evcnt *(*pc_intr_evcnt)(pci_chipset_tag_t,
-	    pci_intr_handle_t);
-
-	void *(*pc_intr_establish)(pci_chipset_tag_t, pci_intr_handle_t, int,
-	    int (*)(void *), void *);
-
-	void (*pc_intr_disestablish)(pci_chipset_tag_t, void *);
-
-	pcitag_t (*pc_make_tag)(pci_chipset_tag_t, int, int, int);
-
-	void (*pc_decompose_tag)(pci_chipset_tag_t, pcitag_t,
-	    int *, int *, int *);
+	uint64_t pc_present;
+	const struct pci_overrides *pc_ov;
+	void *pc_ctx;
 };
 
 /*
