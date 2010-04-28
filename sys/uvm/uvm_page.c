@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.24 2010/04/27 15:01:11 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.25 2010/04/28 05:05:16 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.24 2010/04/27 15:01:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.25 2010/04/28 05:05:16 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -357,6 +357,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 {
 	vsize_t freepages, pagecount, bucketcount, n;
 	struct pgflbucket *bucketarray, *cpuarray;
+	struct vm_physseg *seg;
 	struct vm_page *pagearray;
 	int lcv;
 	u_int i;
@@ -400,8 +401,10 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	freepages = 0;
-	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
-		freepages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
+	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
+		seg = vm_physmem_ptrs[lcv];
+		freepages += (seg->end - seg->start);
+	}
 
 	/*
 	 * Let MD code initialize the number of colors, or default
@@ -446,28 +449,29 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++) {
-		n = vm_physmem[lcv].end - vm_physmem[lcv].start;
+		seg = vm_physmem_ptrs[lcv];
+		n = seg->end - seg->start;
 
 		/* set up page array pointers */
-		vm_physmem[lcv].pgs = pagearray;
+		seg->pgs = pagearray;
 		pagearray += n;
 		pagecount -= n;
-		vm_physmem[lcv].endpg = vm_physmem[lcv].pgs + n;
+		seg->endpg = seg->pgs + n;
 
 		/* init and free vm_pages (we've already zeroed them) */
-		paddr = ptoa(vm_physmem[lcv].start);
+		paddr = ptoa(seg->start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
 #if 1
-			vm_physmem[lcv].pgs[i].phys_addr = paddr;
+			seg->pgs[i].phys_addr = paddr;
 #endif
 #ifdef __HAVE_VM_PAGE_MD
-			VM_MDPAGE_INIT(&vm_physmem[lcv].pgs[i].mdpage, paddr);
+			VM_MDPAGE_INIT(&seg->pgs[i].mdpage, paddr);
 #endif
-			if (atop(paddr) >= vm_physmem[lcv].avail_start &&
-			    atop(paddr) <= vm_physmem[lcv].avail_end) {
+			if (atop(paddr) >= seg->avail_start &&
+			    atop(paddr) <= seg->avail_end) {
 				uvmexp.npages++;
 				/* add page to free pool */
-				uvm_pagefree(&vm_physmem[lcv].pgs[i]);
+				uvm_pagefree(&seg->pgs[i]);
 			}
 		}
 	}
@@ -641,6 +645,7 @@ static bool uvm_page_physget_freelist(paddr_t *, int);
 static bool
 uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 {
+	struct vm_physseg *seg;
 	int lcv, x;
 
 	/* pass 1: try allocating from a matching end */
@@ -650,47 +655,44 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 #endif
 	{
+		seg = vm_physmem_ptrs[lcv];
 
 		if (uvm.page_init_done == true)
 			panic("uvm_page_physget: called _after_ bootstrap");
 
-		if (vm_physmem[lcv].free_list != freelist)
+		if (seg->free_list != freelist)
 			continue;
 
 		/* try from front */
-		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].start &&
-		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ptoa(vm_physmem[lcv].avail_start);
-			vm_physmem[lcv].avail_start++;
-			vm_physmem[lcv].start++;
+		if (seg->avail_start == seg->start &&
+		    seg->avail_start < seg->avail_end) {
+			*paddrp = ptoa(seg->avail_start);
+			seg->avail_start++;
+			seg->start++;
 			/* nothing left?   nuke it */
-			if (vm_physmem[lcv].avail_start ==
-			    vm_physmem[lcv].end) {
+			if (seg->avail_start == seg->end) {
 				if (vm_nphysmem == 1)
 				    panic("uvm_page_physget: out of memory!");
 				vm_nphysmem--;
 				for (x = lcv ; x < vm_nphysmem ; x++)
-					/* structure copy */
-					vm_physmem[x] = vm_physmem[x+1];
+					vm_physmem_ptrs[x] = vm_physmem_ptrs[x+1];
 			}
 			return (true);
 		}
 
 		/* try from rear */
-		if (vm_physmem[lcv].avail_end == vm_physmem[lcv].end &&
-		    vm_physmem[lcv].avail_start < vm_physmem[lcv].avail_end) {
-			*paddrp = ptoa(vm_physmem[lcv].avail_end - 1);
-			vm_physmem[lcv].avail_end--;
-			vm_physmem[lcv].end--;
+		if (seg->avail_end == seg->end &&
+		    seg->avail_start < seg->avail_end) {
+			*paddrp = ptoa(seg->avail_end - 1);
+			seg->avail_end--;
+			seg->end--;
 			/* nothing left?   nuke it */
-			if (vm_physmem[lcv].avail_end ==
-			    vm_physmem[lcv].start) {
+			if (seg->avail_end == seg->start) {
 				if (vm_nphysmem == 1)
 				    panic("uvm_page_physget: out of memory!");
 				vm_nphysmem--;
 				for (x = lcv ; x < vm_nphysmem ; x++)
-					/* structure copy */
-					vm_physmem[x] = vm_physmem[x+1];
+					vm_physmem_ptrs[x] = vm_physmem_ptrs[x+1];
 			}
 			return (true);
 		}
@@ -703,24 +705,24 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 	for (lcv = 0 ; lcv < vm_nphysmem ; lcv++)
 #endif
 	{
+		seg = vm_physmem_ptrs[lcv];
 
 		/* any room in this bank? */
-		if (vm_physmem[lcv].avail_start >= vm_physmem[lcv].avail_end)
+		if (seg->avail_start >= seg->avail_end)
 			continue;  /* nope */
 
-		*paddrp = ptoa(vm_physmem[lcv].avail_start);
-		vm_physmem[lcv].avail_start++;
+		*paddrp = ptoa(seg->avail_start);
+		seg->avail_start++;
 		/* truncate! */
-		vm_physmem[lcv].start = vm_physmem[lcv].avail_start;
+		seg->start = seg->avail_start;
 
 		/* nothing left?   nuke it */
-		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].end) {
+		if (seg->avail_start == seg->end) {
 			if (vm_nphysmem == 1)
 				panic("uvm_page_physget: out of memory!");
 			vm_nphysmem--;
 			for (x = lcv ; x < vm_nphysmem ; x++)
-				/* structure copy */
-				vm_physmem[x] = vm_physmem[x+1];
+				vm_physmem_ptrs[x] = vm_physmem_ptrs[x+1];
 		}
 		return (true);
 	}
@@ -781,7 +783,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	 * called yet, so malloc is not available).
 	 */
 	for (lcv = 0; lcv < vm_nphysmem; lcv++) {
-		if (vm_physmem[lcv].pgs)
+		if (vm_physmem_ptrs[lcv]->pgs)
 			break;
 	}
 	if (lcv == vm_nphysmem) {
@@ -1132,7 +1134,7 @@ uvm_phys_to_vm_page(paddr_t pa)
 #endif
 	psi = vm_physseg_find(pf, &off);
 	if (psi != -1)
-		return(&vm_physmem[psi].pgs[off]);
+		return(&vm_physmem_ptrs[psi]->pgs[off]);
 	return(NULL);
 }
 
@@ -1153,7 +1155,7 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
 
 	psi = VM_PHYSSEG_FIND(vm_physmem, vm_nphysmem, VM_PHYSSEG_OP_PG, 0, pg, NULL);
 	KASSERT(psi != -1);
-	seg = &vm_physmem[psi];
+	seg = vm_physmem_ptrs[psi];
 	return (seg->start + pg - seg->pgs) * PAGE_SIZE;
 #endif
 }
@@ -2300,7 +2302,7 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 
 	lcv = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), NULL);
 	KASSERT(lcv != -1);
-	return (vm_physmem[lcv].free_list);
+	return (vm_physmem_ptrs[lcv]->free_list);
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)
@@ -2407,7 +2409,7 @@ uvm_page_printall(void (*pr)(const char *, ...))
 #endif
 	    "\n", "PAGE", "FLAG", "PQ", "UOBJECT", "UANON");
 	for (i = 0; i < vm_nphysmem; i++) {
-		for (pg = vm_physmem[i].pgs; pg < vm_physmem[i].endpg; pg++) {
+		for (pg = vm_physmem_ptrs[i]->pgs; pg < vm_physmem_ptrs[i]->endpg; pg++) {
 			(*pr)("%18p %04x %04x %18p %18p",
 			    pg, pg->flags, pg->pqflags, pg->uobject,
 			    pg->uanon);
