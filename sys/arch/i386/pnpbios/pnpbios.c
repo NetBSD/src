@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.68 2009/11/07 07:27:44 cegger Exp $ */
+/* $NetBSD: pnpbios.c,v 1.69 2010/04/28 19:17:04 dyoung Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.68 2009/11/07 07:27:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.69 2010/04/28 19:17:04 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1278,8 +1278,8 @@ pnpbios_io_map(pnpbios_tag_t pbt, struct pnpresources *resc,
 	while (idx--)
 		io = SIMPLEQ_NEXT(io, next);
 
-	*tagp = X86_BUS_SPACE_IO;
-	return (bus_space_map(X86_BUS_SPACE_IO, io->minbase, io->len,
+	*tagp = x86_bus_space_io;
+	return (bus_space_map(x86_bus_space_io, io->minbase, io->len,
 			       0, hdlp));
 }
 
@@ -1313,7 +1313,7 @@ pnpbios_getiobase(pnpbios_tag_t pbt, struct pnpresources *resc,
 		io = SIMPLEQ_NEXT(io, next);
 
 	if (tagp)
-		*tagp = X86_BUS_SPACE_IO;
+		*tagp = x86_bus_space_io;
 	if (basep)
 		*basep = io->minbase;
 	return (0);
