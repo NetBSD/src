@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.42 2010/04/23 20:56:20 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.43 2010/04/28 15:56:24 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.88 2010/04/10 08:37:36 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.42 2010/04/23 20:56:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.43 2010/04/28 15:56:24 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -5619,7 +5619,6 @@ iwn_read_firmware(struct iwn_softc *sc)
 	if (IWN_FW_API(rev) <= 1) {
 		aprint_error_dev(sc->sc_dev,
 		    "bad firmware, need API version >=2\n");
-		firmware_free(fw->data, fw->datasz);
 		goto out;
 	}
 	if (IWN_FW_API(rev) >= 3) {
