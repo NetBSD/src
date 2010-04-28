@@ -1,5 +1,7 @@
-#	$NetBSD: NetBSD.dist.x86_64,v 1.1 2009/12/13 01:02:25 mrg Exp $
+#	$NetBSD: NetBSD.dist.x86_64,v 1.2 2010/04/28 09:55:25 lukem Exp $
 
 ./usr/lib/i386
 ./usr/lib/i386/i18n
 ./usr/lib/i386/security
+./usr/libdata/debug/usr/lib/i386
+./usr/libdata/debug/usr/lib/i386/i18n
