@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.7 2009/05/12 18:39:20 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.8 2010/04/28 06:18:07 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.7 2009/05/12 18:39:20 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.8 2010/04/28 06:18:07 plunky Exp $");
 
 #include <sys/types.h>
 
@@ -84,9 +84,14 @@ static int32_t parse_pdl_param(sdp_data_t *, uint16_t);
 static int32_t parse_pdl(sdp_data_t *, uint16_t);
 static int32_t parse_apdl(sdp_data_t *, uint16_t);
 
+static int config_pnp(prop_dictionary_t, sdp_data_t *);
 static int config_hid(prop_dictionary_t, sdp_data_t *);
 static int config_hset(prop_dictionary_t, sdp_data_t *);
 static int config_hf(prop_dictionary_t, sdp_data_t *);
+
+uint16_t pnp_services[] = {
+	SDP_SERVICE_CLASS_PNP_INFORMATION,
+};
 
 uint16_t hid_services[] = {
 	SDP_SERVICE_CLASS_HUMAN_INTERFACE_DEVICE,
@@ -123,14 +128,58 @@ static struct {
 
 #define MAX_SSP		(2 + 1 * 3)	/* largest nservices is 1 */
 
+static bool
+cfg_ssa(sdp_session_t ss, uint16_t *services, size_t nservices, sdp_data_t *rsp)
+{
+	uint8_t buf[MAX_SSP];
+	sdp_data_t ssp;
+	size_t i;
+
+	ssp.next = buf;
+	ssp.end = buf + sizeof(buf);
+
+	for (i = 0; i < nservices; i++)
+		sdp_put_uuid16(&ssp, services[i]);
+
+	ssp.end = ssp.next;
+	ssp.next = buf;
+
+	return sdp_service_search_attribute(ss, &ssp, NULL, rsp);
+}
+
+static bool
+cfg_search(sdp_session_t ss, int i, prop_dictionary_t dict)
+{
+	sdp_data_t rsp, rec;
+
+	/* check PnP Information first */
+	if (!cfg_ssa(ss, pnp_services, __arraycount(pnp_services), &rsp))
+		return false;
+
+	while (sdp_get_seq(&rsp, &rec)) {
+		if (config_pnp(dict, &rec) == 0)
+			break;
+	}
+
+	/* then requested service */
+	if (!cfg_ssa(ss, cfgtype[i].services, cfgtype[i].nservices, &rsp))
+		return false;
+
+	while (sdp_get_seq(&rsp, &rec)) {
+		errno = (*cfgtype[i].handler)(dict, &rec);
+		if (errno == 0)
+			return true;
+	}
+
+	return false;
+}
+
 prop_dictionary_t
 cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 {
 	prop_dictionary_t dict;
 	sdp_session_t ss;
-	uint8_t buf[MAX_SSP];
-	sdp_data_t ssp, rsp, rec;
-	size_t i, n;
+	size_t i;
 	bool rv;
 
 	dict = prop_dictionary_create();
@@ -140,35 +189,15 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 	for (i = 0; i < __arraycount(cfgtype); i++) {
 		if (strcasecmp(service, cfgtype[i].name) == 0) {
 			ss = sdp_open(laddr, raddr);
-			if (ss == NULL)
-				return NULL;
+			if (ss != NULL) {
+				rv = cfg_search(ss, i, dict);
 
-			/* build ServiceSearchPattern */
-			ssp.next = buf;
-			ssp.end = buf + sizeof(buf);
-
-			for (n = 0; n < cfgtype[i].nservices; n++)
-				sdp_put_uuid16(&ssp, cfgtype[i].services[n]);
-
-			ssp.end = ssp.next;
-			ssp.next = buf;
-
-			rv = sdp_service_search_attribute(ss, &ssp, NULL, &rsp);
-			if (!rv) {
-				prop_object_release(dict);
 				sdp_close(ss);
-				return NULL;
-			}
 
-			while (sdp_get_seq(&rsp, &rec)) {
-				errno = (*cfgtype[i].handler)(dict, &rec);
-				if (errno == 0) {
-					sdp_close(ss);
+				if (rv == true)
 					return dict;
-				}
 			}
 
-			sdp_close(ss);
 			prop_object_release(dict);
 			return NULL;
 		}
@@ -179,6 +208,64 @@ cfg_query(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 		printf("\t%s\t%s\n", cfgtype[i].name, cfgtype[i].description);
 
 	exit(EXIT_FAILURE);
+}
+
+/*
+ * Configure PnP Information results
+ */
+static int
+config_pnp(prop_dictionary_t dict, sdp_data_t *rec)
+{
+	sdp_data_t value;
+	uintmax_t v;
+	uint16_t attr;
+	int vendor, product, source;
+
+	vendor = -1;
+	product = -1;
+	source = -1;
+
+	while (sdp_get_attr(rec, &attr, &value)) {
+		switch (attr) {
+		case 0x0201:	/* Vendor ID */
+			if (sdp_get_uint(&value, &v)
+			    && v <= UINT16_MAX)
+				vendor = (int)v;
+
+			break;
+
+		case 0x0202:	/* Product ID */
+			if (sdp_get_uint(&value, &v)
+			    && v <= UINT16_MAX)
+				product = (int)v;
+
+			break;
+
+		case 0x0205:	/* Vendor ID Source */
+			if (sdp_get_uint(&value, &v)
+			    && v <= UINT16_MAX)
+				source = (int)v;
+
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	if (vendor == -1 || product == -1)
+		return ENOATTR;
+
+	if (source != 0x0002)	/* "USB Implementers Forum" */
+		return ENOATTR;
+
+	if (!prop_dictionary_set_uint16(dict, BTDEVvendor, (uint16_t)vendor))
+		return errno;
+
+	if (!prop_dictionary_set_uint16(dict, BTDEVproduct, (uint16_t)product))
+		return errno;
+
+	return 0;
 }
 
 /*
