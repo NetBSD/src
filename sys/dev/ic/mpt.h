@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.h,v 1.6 2007/07/27 13:06:51 tron Exp $	*/
+/*	$NetBSD: mpt.h,v 1.7 2010/04/28 22:45:27 chs Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -185,6 +185,53 @@ const char *mpt_req_state(enum mpt_req_state);
 void mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *);
 void mpt_print_config_request(void *);
 void mpt_print_request(void *);
+
+/********************************** Endianess *********************************/
+#define	MPT_2_HOST64(ptr, tag)	ptr->tag = le64toh(ptr->tag)
+#define	MPT_2_HOST32(ptr, tag)	ptr->tag = le32toh(ptr->tag)
+#define	MPT_2_HOST16(ptr, tag)	ptr->tag = le16toh(ptr->tag)
+
+#define	HOST_2_MPT64(ptr, tag)	ptr->tag = htole64(ptr->tag)
+#define	HOST_2_MPT32(ptr, tag)	ptr->tag = htole32(ptr->tag)
+#define	HOST_2_MPT16(ptr, tag)	ptr->tag = htole16(ptr->tag)
+
+#if	_BYTE_ORDER == _BIG_ENDIAN
+void mpt2host_sge_simple_union(SGE_SIMPLE_UNION *);
+void mpt2host_iocfacts_reply(MSG_IOC_FACTS_REPLY *);
+void mpt2host_portfacts_reply(MSG_PORT_FACTS_REPLY *);
+void mpt2host_config_page_scsi_port_0(fCONFIG_PAGE_SCSI_PORT_0 *);
+void mpt2host_config_page_scsi_port_1(fCONFIG_PAGE_SCSI_PORT_1 *);
+void host2mpt_config_page_scsi_port_1(fCONFIG_PAGE_SCSI_PORT_1 *);
+void mpt2host_config_page_scsi_port_2(fCONFIG_PAGE_SCSI_PORT_2 *);
+void mpt2host_config_page_scsi_device_0(fCONFIG_PAGE_SCSI_DEVICE_0 *);
+void host2mpt_config_page_scsi_device_0(fCONFIG_PAGE_SCSI_DEVICE_0 *);
+void mpt2host_config_page_scsi_device_1(fCONFIG_PAGE_SCSI_DEVICE_1 *);
+void host2mpt_config_page_scsi_device_1(fCONFIG_PAGE_SCSI_DEVICE_1 *);
+void mpt2host_config_page_fc_port_0(fCONFIG_PAGE_FC_PORT_0 *);
+void mpt2host_config_page_fc_port_1(fCONFIG_PAGE_FC_PORT_1 *);
+void host2mpt_config_page_fc_port_1(fCONFIG_PAGE_FC_PORT_1 *);
+void mpt2host_config_page_raid_vol_0(fCONFIG_PAGE_RAID_VOL_0 *);
+void mpt2host_config_page_raid_phys_disk_0(fCONFIG_PAGE_RAID_PHYS_DISK_0 *);
+#else
+#define	mpt2host_sge_simple_union(x)		do { ; } while (0)
+#define	mpt2host_iocfacts_reply(x)		do { ; } while (0)
+#define	mpt2host_portfacts_reply(x)		do { ; } while (0)
+#define	mpt2host_config_page_scsi_port_0(x)	do { ; } while (0)
+#define	host2mpt_config_page_scsi_device_0(x)	do { ; } while (0)
+#define	mpt2host_config_page_scsi_port_1(x)	do { ; } while (0)
+#define	host2mpt_config_page_scsi_port_1(x)	do { ; } while (0)
+#define	mpt2host_config_page_scsi_port_2(x)	do { ; } while (0)
+#define	mpt2host_config_page_scsi_device_0(x)	do { ; } while (0)
+#define	mpt2host_config_page_scsi_device_1(x)	do { ; } while (0)
+#define	host2mpt_config_page_scsi_device_1(x)	do { ; } while (0)
+#define	mpt2host_config_page_fc_port_0(x)	do { ; } while (0)
+#define	mpt2host_config_page_fc_port_1(x)	do { ; } while (0)
+#define	host2mpt_config_page_fc_port_1(x)	do { ; } while (0)
+#define	mpt2host_config_page_raid_vol_0(x)	do { ; } while (0)
+#define	mpt2host_config_page_raid_phys_disk_0(x)			\
+	do { ; } while (0)
+#endif
+
 #endif /* _KERNEL */
 
 #endif /* _DEV_IC_MPT_H_ */
