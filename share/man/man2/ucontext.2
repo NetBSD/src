@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucontext.2,v 1.4 2010/04/28 13:23:02 jruoho Exp $
+.\"	$NetBSD: ucontext.2,v 1.5 2010/04/28 14:07:03 jruoho Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,13 +96,11 @@ portable applications should not access this structure member.
 .Xr swapcontext 3
 .Sh STANDARDS
 The
-.Nm ucontext_t
+.Vt ucontext_t
 type conforms to
-.St -xsh5 .
-.Sh HISTORY
-The
-.Fn makecontext
+.St -xsh5
 and
-.Fn swapcontext
-functions first appeared in
-.At V.4 .
+.St -p1003.1-2001 .
+The
+.St -p1003.1-2008
+revision marked the accompanying functions as obsolescent.
