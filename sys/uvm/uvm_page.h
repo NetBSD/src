@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.18 2010/04/28 08:31:05 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.19 2010/04/28 09:27:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -243,6 +243,7 @@ struct vm_physseg {
 #ifdef __HAVE_PMAP_PHYSSEG
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
 #endif
+	SIMPLEQ_ENTRY(vm_physseg) list;
 };
 
 #ifdef _KERNEL
