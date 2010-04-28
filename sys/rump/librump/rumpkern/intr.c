@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 2010/04/27 23:30:29 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.26 2010/04/28 00:32:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2010/04/27 23:30:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26 2010/04/28 00:32:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -63,11 +63,6 @@ struct softint_lev {
 	LIST_HEAD(, softint) si_pending;
 };
 
-/* rumpuser structures since we call rumpuser interfaces directly */
-static struct rumpuser_cv *clockcv;
-static struct rumpuser_mtx *clockmtx;
-static struct timespec clockbase, clockup;
-
 kcondvar_t lbolt; /* Oh Kath Ra */
 
 static u_int ticks;
@@ -95,17 +90,25 @@ static struct timecounter rumptc = {
 static void
 doclock(void *noarg)
 {
+	struct timespec clockbase, clockup;
 	struct timespec thetick, curtime;
+	struct rumpuser_cv *clockcv;
+	struct rumpuser_mtx *clockmtx;
 	uint64_t sec, nsec;
 	int error;
 	extern int hz;
 
+	memset(&clockup, 0, sizeof(clockup));
 	rumpuser_gettime(&sec, &nsec, &error);
 	clockbase.tv_sec = sec;
 	clockbase.tv_nsec = nsec;
 	curtime = clockbase;
 	thetick.tv_sec = 0;
 	thetick.tv_nsec = 1000000000/hz;
+
+	/* XXX: dummies */
+	rumpuser_cv_init(&clockcv);
+	rumpuser_mutex_init(&clockmtx);
 
 	rumpuser_mutex_enter(clockmtx);
 	for (;;) {
@@ -115,12 +118,19 @@ doclock(void *noarg)
 		while (rumpuser_cv_timedwait(clockcv, clockmtx,
 		    curtime.tv_sec, curtime.tv_nsec) == 0)
 			continue;
-		timespecadd(&clockup, &thetick, &clockup);
+
+		/* XXX: sync with a) virtual clock b) host clock */
 		timespecadd(&clockup, &clockbase, &curtime);
-		
-		/* if !maincpu: continue */
-		if (curcpu()->ci_index != 0)
+		timespecadd(&clockup, &thetick, &clockup);
+
+#if 0
+		/* CPU_IS_PRIMARY is MD and hence unreliably correct here */
+		if (!CPU_IS_PRIMARY(curcpu()))
 			continue;
+#else
+		if (curcpu()->ci_index == 0)
+			continue;
+#endif
 
 		if ((++ticks % hz) == 0) {
 			cv_broadcast(&lbolt);
@@ -197,8 +207,6 @@ rump_intr_init()
 {
 
 	rumpuser_mutex_init(&si_mtx);
-	rumpuser_cv_init(&clockcv);
-	rumpuser_mutex_init(&clockmtx);
 	cv_init(&lbolt, "oh kath ra");
 }
 
