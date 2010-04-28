@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 2010/02/10 20:32:02 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.23 2010/04/28 06:02:20 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22 2010/02/10 20:32:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 2010/04/28 06:02:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,7 +400,7 @@ paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
 
-	if (minor(dev) != 0)
+	if (minor(dev) != DEV_MEM)
 		return (-1);
 
 	/*
