@@ -1,6 +1,6 @@
-/*	$NetBSD: gtpcivar.h,v 1.9 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtbrgvar.h,v 1.1 2010/04/28 13:51:56 kiyohara Exp $	*/
 /*
- * Copyright (c) 2008 KIYOHARA Takashi
+ * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,35 +24,16 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _GTBRGVAR_H_
+#define _GTBRGVAR_H_
 
-#ifndef	_GTPCIVAR_H_
-#define	_GTPCIVAR_H_
+static __inline void
+gt_brg_bcr(device_t gt, uint32_t brg, uint32_t bc)
+{
+	struct gt_softc *sc = device_private(gt);
 
-struct gtpci_softc {
-	device_t sc_dev;
-	int sc_model;
-	int sc_rev;
-	int sc_unit;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BRG_BCR(brg),
+	    bc | (((bc & BRG_BCR_CDV) != 0) ? BRG_BCR_EN : 0));
+}
 
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	pci_chipset_tag_t sc_pc;
-};
-
-#if NPCI > 0
-void gtpci_attach_hook(device_t, device_t, struct pcibus_attach_args *);
-int gtpci_bus_maxdevs(void *, int);
-pcitag_t gtpci_make_tag(void *, int, int, int);
-void gtpci_decompose_tag(void *, pcitag_t, int *, int *, int *);
-pcireg_t gtpci_conf_read(void *, pcitag_t, int);
-void gtpci_conf_write(void *, pcitag_t, int, pcireg_t);
-int gtpci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-int gtpci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char *gtpci_intr_string(void *, pci_intr_handle_t);
-const struct evcnt *gtpci_intr_evcnt(void *, pci_intr_handle_t);
-void *gtpci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
-			   void *);
-void gtpci_intr_disestablish(void *, void *);
-#endif
-
-#endif	/* _GTPCIVAR_H_ */
+#endif	/* _GTBRGVAR_H_ */

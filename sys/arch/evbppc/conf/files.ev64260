@@ -1,33 +1,32 @@
-#	$NetBSD: files.ev64260,v 1.12 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.ev64260,v 1.13 2010/04/28 13:51:56 kiyohara Exp $
 #
 # Marvell (Galileo) "EV64260" evaluation board's specific configuration info
 #
 defparam opt_ev64260.h	OBIO0_STRIDE OBIO1_STRIDE OBIO2_STRIDE OBIO3_STRIDE
-defparam opt_ev64260.h  PCI0_GPPINTS PCI1_GPPINTS PCI0_SKIPMASK PCI1_SKIPMASK
-
-#include "arch/powerpc/pic/files.pic"
 
 file	arch/evbppc/ev64260/autoconf.c
 file	arch/evbppc/ev64260/machdep.c
-#file	arch/evbppc/ev64260/pci_machdep.c
 
 file	arch/powerpc/powerpc/clock.c
-file	arch/powerpc/marvell/extintr.c
 
-#options	PIC_DISCOVERY
+include "arch/powerpc/pic/files.pic"
+file	arch/powerpc/marvell/pic_discovery.c
 
+
+#
+# MI devices
+#
+include "dev/ata/files.ata"
+include "dev/i2o/files.i2o"
+include "dev/pci/files.pci"
+include "dev/scsipi/files.scsipi"
+include	"dev/usb/files.usb"
+
+#
+# Marvell GT (Discovery) devices
+#
 include "dev/marvell/files.discovery"
 
-#
-# Machine-independent SCSI drivers
-#
-include "dev/scsipi/files.scsipi"
-
-#
-# Machine-independent ATA drivers
-#
-
-include "dev/ata/files.ata"
 
 #
 # Memory Disk for install floppy
@@ -41,57 +40,23 @@ file	dev/md_root.c				memory_disk_hooks
 #
 # System bus types
 #
-device	mainbus {}
+device	mainbus { [addr = -1] }
 attach	mainbus at root
-file	arch/evbppc/ev64260/mainbus.c		mainbus|cpu needs-flag
-
-attach	gt at mainbus
-file	arch/evbppc/ev64260/gt_mainbus.c	gt
+file	arch/evbppc/ev64260/mainbus.c		mainbus | cpu needs-flag
 
 device	cpu
 attach	cpu at mainbus
 
+attach	gt at mainbus
+file	arch/evbppc/ev64260/gt_mainbus.c	gt
+
+file	arch/powerpc/marvell/pci_machdep.c	pci
+file	arch/powerpc/pci/pci_machdep_common.c	pci
+
+device	pchb: pcibus
+attach	pchb at pci
+file	dev/marvell/pchb.c			pchb
+
 # com port
 attach	com at obio with com_obio
 file	arch/evbppc/ev64260/com_obio.c		com_obio
-
-# wdc port
-attach	wdc at obio with wdc_obio
-file	arch/evbppc/ev64260/wdc_obio.c		wdc_obio
-
-#
-# PCI-only drivers
-#
-include "dev/i2o/files.i2o"
-include "dev/pci/files.pci"
-
-# PCI-ISA bridges
-device	pcib: isabus
-attach	pcib at pci
-file	arch/evbppc/pci/pcib.c			pcib
-
-#
-# ISA drivers
-#
-
-include "dev/isa/files.isa"
-
-file	arch/evbppc/isa/isa_machdep.c		isa
-file	arch/evbppc/isa/isadma_machdep.c	isa
-
-# PC clock
-file	arch/evbppc/isa/isaclock.c		isa
-
-include "dev/pckbport/files.pckbport"
-
-include	"dev/usb/files.usb"
-
-# Floppy disk controller
-device	fdc {drive = -1}: isadma
-file	dev/isa/fd.c				fdc needs-flag
-
-attach	fdc at isa with fdc_isa
-file	dev/isa/fdc_isa.c			fdc_isa
-
-device	fd: disk
-attach	fd at fdc
