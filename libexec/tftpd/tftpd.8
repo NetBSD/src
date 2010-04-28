@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftpd.8,v 1.24 2010/01/08 23:27:08 wiz Exp $
+.\"	$NetBSD: tftpd.8,v 1.25 2010/04/28 22:21:51 hubertf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)tftpd.8	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 8, 2010
+.Dd April 22, 2010
 .Dt TFTPD 8
 .Os
 .Sh NAME
@@ -44,6 +44,7 @@ Internet Trivial File Transfer Protocol server
 .Op Fl p Ar pathsep
 .Op Fl s Ar directory
 .Op Fl u Ar user
+.Op Fl w
 .Op Ar directory ...
 .Sh DESCRIPTION
 .Nm
@@ -70,7 +71,10 @@ Filenames beginning in
 or containing
 .Dq Pa /../
 are not allowed.
-Files may be written to only if they already exist and are publicly writable.
+Unless option
+.Fl w
+is used,
+files may be written to only if they already exist and are publicly writable.
 .Pp
 Note that this extends the concept of
 .Qq public
@@ -148,6 +152,9 @@ If
 isn't also given, change the gid to that of
 .Ar user
 as well.
+.It Fl w
+Allow unrestricted writing of new files, with no need for
+a prior existance.
 .El
 .Sh SEE ALSO
 .Xr tftp 1 ,
@@ -232,3 +239,9 @@ protocol, the remote site will probably have some
 sort of file-access restrictions in place.
 The exact methods are specific to each site and therefore
 difficult to document here.
+.Pp
+If unrestricted file upload is enabled via the
+.Fl w
+option, care should be taken that this can be used
+to fill up disk space in an uncontrolled manner
+if this is used in an insecure environment.
