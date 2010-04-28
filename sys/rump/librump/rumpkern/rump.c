@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.165 2010/04/27 23:30:30 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.166 2010/04/28 00:43:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.165 2010/04/27 23:30:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.166 2010/04/28 00:43:16 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -203,7 +203,7 @@ rump__init(int rump_version)
 	uint64_t sec, nsec;
 	struct proc *p;
 	struct lwp *l;
-	int i;
+	int i, numcpu;
 	int error;
 
 	/* not reentrant */
@@ -219,8 +219,13 @@ rump__init(int rump_version)
 			boothowto = AB_VERBOSE;
 	}
 
-	/* get our CPUs initialized */
-	rump_cpus_bootstrap(1);
+	/* non-x86 is missing CPU_INFO_FOREACH() support */
+#if defined(__i386__) || defined(__x86_64__)
+	numcpu = rumpuser_getnhostcpu();
+#else
+	numcpu = 1;
+#endif
+	rump_cpus_bootstrap(numcpu);
 
 	rumpuser_gettime(&sec, &nsec, &error);
 	boottime.tv_sec = sec;
