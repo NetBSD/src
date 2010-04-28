@@ -1,4 +1,4 @@
-#	$NetBSD: std.imx31,v 1.3 2009/12/27 05:14:56 uebayasi Exp $
+#	$NetBSD: std.imx31,v 1.3.2.1 2010/04/28 14:56:14 uebayasi Exp $
 #
 # standard NetBSD/evbarm options for FreeScale I.MX31 
 
@@ -25,4 +25,5 @@ makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.imx31"
 makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options 	ARM_INTR_IMPL="<arch/arm/imx/imx31_intr.h>"
+options 	__BUS_SPACE_HAS_PHYSLOAD_METHODS
 options		ARM_GENERIC_TODR
