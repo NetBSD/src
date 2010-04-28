@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1436 2010/04/25 00:54:44 joerg Exp $
+#	$NetBSD: mi,v 1.1437 2010/04/28 07:35:30 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5746,6 +5746,8 @@
 ./usr/share/man/cat3/fetch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fflush.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ffs.0			comp-c-catman		.cat
+./usr/share/man/cat3/ffs32.0			comp-c-catman		.cat
+./usr/share/man/cat3/ffs64.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetln.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetpos.0			comp-c-catman		.cat
@@ -5779,6 +5781,8 @@
 ./usr/share/man/cat3/flockfile.0		comp-c-catman		.cat
 ./usr/share/man/cat3/floor.0			comp-c-catman		.cat
 ./usr/share/man/cat3/floorf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fls32.0			comp-c-catman		.cat
+./usr/share/man/cat3/fls64.0			comp-c-catman		.cat
 ./usr/share/man/cat3/flushinp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/flushok.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmax.0			comp-c-catman		.cat
@@ -11569,6 +11573,8 @@
 ./usr/share/man/html3/fetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/fflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/ffs.html			comp-c-htmlman		html
+./usr/share/man/html3/ffs32.html		comp-c-htmlman		html
+./usr/share/man/html3/ffs64.html		comp-c-htmlman		html
 ./usr/share/man/html3/fgetc.html		comp-c-htmlman		html
 ./usr/share/man/html3/fgetln.html		comp-c-htmlman		html
 ./usr/share/man/html3/fgetpos.html		comp-c-htmlman		html
@@ -11601,6 +11607,8 @@
 ./usr/share/man/html3/flockfile.html		comp-c-htmlman		html
 ./usr/share/man/html3/floor.html		comp-c-htmlman		html
 ./usr/share/man/html3/floorf.html		comp-c-htmlman		html
+./usr/share/man/html3/fls32.html		comp-c-htmlman		html
+./usr/share/man/html3/fls64.html		comp-c-htmlman		html
 ./usr/share/man/html3/flushinp.html		comp-c-htmlman		html
 ./usr/share/man/html3/flushok.html		comp-c-htmlman		html
 ./usr/share/man/html3/fmax.html			comp-c-htmlman		html
@@ -17302,6 +17310,8 @@
 ./usr/share/man/man3/fetch.3			comp-c-man		.man
 ./usr/share/man/man3/fflush.3			comp-c-man		.man
 ./usr/share/man/man3/ffs.3			comp-c-man		.man
+./usr/share/man/man3/ffs32.3			comp-c-man		.man
+./usr/share/man/man3/ffs64.3			comp-c-man		.man
 ./usr/share/man/man3/fgetc.3			comp-c-man		.man
 ./usr/share/man/man3/fgetln.3			comp-c-man		.man
 ./usr/share/man/man3/fgetpos.3			comp-c-man		.man
@@ -17335,6 +17345,8 @@
 ./usr/share/man/man3/flockfile.3		comp-c-man		.man
 ./usr/share/man/man3/floor.3			comp-c-man		.man
 ./usr/share/man/man3/floorf.3			comp-c-man		.man
+./usr/share/man/man3/fls32.3			comp-c-man		.man
+./usr/share/man/man3/fls64.3			comp-c-man		.man
 ./usr/share/man/man3/flushinp.3			comp-c-man		.man
 ./usr/share/man/man3/flushok.3			comp-c-man		.man
 ./usr/share/man/man3/fmax.3			comp-c-man		.man
