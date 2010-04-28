@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164 2009/12/10 14:13:53 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.164.2.1 2010/04/28 08:31:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164 2009/12/10 14:13:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164.2.1 2010/04/28 08:31:07 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -589,9 +589,9 @@ cpu_init_kcore_hdr(void)
 	m->ram_segs[0].start = lowram;
 	m->ram_segs[0].size = mem_size - lowram;
 	for (i = 1; i < vm_nphysseg; i++) {
-		m->ram_segs[i].start = ctob(vm_physmem[i].start);
-		m->ram_segs[i].size  = ctob(vm_physmem[i].end
-					    - vm_physmem[i].start);
+		m->ram_segs[i].start = ctob(VM_PHYSMEM_PTR(i)->start);
+		m->ram_segs[i].size  = ctob(VM_PHYSMEM_PTR(i)->end
+					    - VM_PHYSMEM_PTR(i)->start);
 	}
 }
 
