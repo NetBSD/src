@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.h,v 1.8 2008/03/28 21:17:37 plunky Exp $	*/
+/*	$NetBSD: btdev.h,v 1.9 2010/04/28 06:13:51 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -39,6 +39,8 @@
 #define BTDEV_DETACH		_IOW('b', 15, struct plistref)
 
 /* btdev properties */
+#define BTDEVvendor		"vendor-id"
+#define BTDEVproduct		"product-id"
 #define BTDEVtype		"device-type"
 #define BTDEVladdr		"local-bdaddr"
 #define BTDEVraddr		"remote-bdaddr"
