@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.71 2010/04/21 16:16:31 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.72 2010/04/28 16:34:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.71 2010/04/21 16:16:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.72 2010/04/28 16:34:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -508,7 +508,7 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 	struct vm_page **opp)
 {
 
-	panic("%s: unimplemented", __func__);
+	return EBUSY;
 }
 
 void
