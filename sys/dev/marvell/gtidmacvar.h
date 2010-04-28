@@ -1,6 +1,6 @@
-/*	$NetBSD: gtpcivar.h,v 1.9 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtidmacvar.h,v 1.1 2010/04/28 13:51:56 kiyohara Exp $	*/
 /*
- * Copyright (c) 2008 KIYOHARA Takashi
+ * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,34 +25,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_GTPCIVAR_H_
-#define	_GTPCIVAR_H_
+#ifndef _GTIDMACVAR_H_
+#define _GTIDMACVAR_H_
 
-struct gtpci_softc {
-	device_t sc_dev;
-	int sc_model;
-	int sc_rev;
-	int sc_unit;
+void *gtidmac_tag_get(void);
 
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	pci_chipset_tag_t sc_pc;
-};
+int gtidmac_chan_alloc(void *, bus_dmamap_t **, bus_dmamap_t **, void *);
+void gtidmac_chan_free(void *, int);
+int gtidmac_setup(void *, int, int, bus_dmamap_t *, bus_dmamap_t *, bus_size_t);
+void gtidmac_start(void *, int,
+	 	   void (*)(void *, int, bus_dmamap_t *, bus_dmamap_t *, int));
 
-#if NPCI > 0
-void gtpci_attach_hook(device_t, device_t, struct pcibus_attach_args *);
-int gtpci_bus_maxdevs(void *, int);
-pcitag_t gtpci_make_tag(void *, int, int, int);
-void gtpci_decompose_tag(void *, pcitag_t, int *, int *, int *);
-pcireg_t gtpci_conf_read(void *, pcitag_t, int);
-void gtpci_conf_write(void *, pcitag_t, int, pcireg_t);
-int gtpci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-int gtpci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char *gtpci_intr_string(void *, pci_intr_handle_t);
-const struct evcnt *gtpci_intr_evcnt(void *, pci_intr_handle_t);
-void *gtpci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
-			   void *);
-void gtpci_intr_disestablish(void *, void *);
-#endif
+int mvxore_chan_alloc(void *, bus_dmamap_t **, bus_dmamap_t **, void *);
+void mvxore_chan_free(void *, int);
+int mvxore_setup(void *, int, int, bus_dmamap_t *, bus_dmamap_t *, bus_size_t);
+void mvxore_start(void *, int,
+		  void (*)(void *, int, bus_dmamap_t *, bus_dmamap_t *, int));
 
-#endif	/* _GTPCIVAR_H_ */
+#endif	/* _GTIDMACVAR_H_ */

@@ -1,6 +1,6 @@
-/*	$NetBSD: gtpcivar.h,v 1.9 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtdevbusvar.h,v 1.1 2010/04/28 13:51:56 kiyohara Exp $	*/
 /*
- * Copyright (c) 2008 KIYOHARA Takashi
+ * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,35 +24,32 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _GTDEVBUSVAR_H_
+#define _GTDEVBUSVAR_H_
 
-#ifndef	_GTPCIVAR_H_
-#define	_GTPCIVAR_H_
+static __inline int
+gt_devbus_addr(device_t gt, int unit, uint32_t *ldp, uint32_t *hdp)
+{
+	static const struct {
+		bus_addr_t low_decode;
+		bus_addr_t high_decode;
+	} obio_info[5] = {
+		{ GT_CS0_Low_Decode, GT_CS0_High_Decode, },
+		{ GT_CS1_Low_Decode, GT_CS1_High_Decode, },
+		{ GT_CS2_Low_Decode, GT_CS2_High_Decode, },
+		{ GT_CS3_Low_Decode, GT_CS3_High_Decode, },
+		{ GT_BootCS_Low_Decode, GT_BootCS_High_Decode, },
+	};
+	struct gt_softc *sc = device_private(gt);
 
-struct gtpci_softc {
-	device_t sc_dev;
-	int sc_model;
-	int sc_rev;
-	int sc_unit;
+	if (unit >= __arraycount(obio_info))
+		return -1;
 
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	pci_chipset_tag_t sc_pc;
-};
+	*ldp = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    obio_info[unit].low_decode);
+	*hdp = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+	    obio_info[unit].high_decode);
+	return 0;
+}
 
-#if NPCI > 0
-void gtpci_attach_hook(device_t, device_t, struct pcibus_attach_args *);
-int gtpci_bus_maxdevs(void *, int);
-pcitag_t gtpci_make_tag(void *, int, int, int);
-void gtpci_decompose_tag(void *, pcitag_t, int *, int *, int *);
-pcireg_t gtpci_conf_read(void *, pcitag_t, int);
-void gtpci_conf_write(void *, pcitag_t, int, pcireg_t);
-int gtpci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
-int gtpci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
-const char *gtpci_intr_string(void *, pci_intr_handle_t);
-const struct evcnt *gtpci_intr_evcnt(void *, pci_intr_handle_t);
-void *gtpci_intr_establish(void *, pci_intr_handle_t, int, int (*)(void *),
-			   void *);
-void gtpci_intr_disestablish(void *, void *);
-#endif
-
-#endif	/* _GTPCIVAR_H_ */
+#endif	/* _GTDEVBUSVAR_H_ */

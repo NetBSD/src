@@ -1,4 +1,4 @@
-/*	$NetBSD: gtreg.h,v 1.3 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtreg.h,v 1.4 2010/04/28 13:51:56 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -46,6 +46,7 @@
 #define	GT__CLR(data, bit, len)		((data) &= ~(GT__MASK(len) << (bit)))
 #define	GT__INS(new, bit)		((new) << (bit))
 
+#define GT_SIZE			0x10000
 
 /*
  * Table 30: CPU Address Decode Register Map
@@ -175,13 +176,6 @@
 #define GT_CPU_Error_Cause		0x0140
 #define GT_CPU_Error_Mask		0x0148
 
-#define	GT_DecodeAddr_SET(g, r, v)					\
-	do { 								\
-		gt_read((g), GT_Internal_Decode);			\
-		gt_write((g), (r), ((v) & 0xfff00000) >> 20);		\
-		while ((gt_read((g), (r)) & 0xfff) != ((v) >> 20));	\
-	} while (0)
-
 #define	GT_LowAddr_GET(v)		 (GT__EXT((v), 0, 12) << 20)
 #define	GT_HighAddr_GET(v)		((GT__EXT((v), 0, 12) << 20) | 0xfffff)
 
@@ -191,10 +185,13 @@
 #define GT_MPP_Control3			0xf00c
 
 #define	GT_GPP_IO_Control		0xf100
-#define	GT_GPP_Level_Control		0xf110
 #define GT_GPP_Value			0xf104
 #define	GT_GPP_Interrupt_Cause		0xf108
 #define GT_GPP_Interrupt_Mask		0xf10c
+#define	GT_GPP_Level_Control		0xf110
+#define	GT_GPP_Interrupt_Mask1		0xf114
+#define	GT_GPP_Value_Set		0xf118
+#define	GT_GPP_Value_Clear		0xf11c
 /*
  * Table 36: SCS[0]* Low Decode Address, Offset: 0x008
  * Table 38: SCS[1]* Low Decode Address, Offset: 0x208
@@ -775,5 +772,11 @@
 #define GT_DEVBUS_Sel		GT__BIT(27)
 #define GT_DEVBUS_RES	~(GT_DEVBUS_DBurstErr|GT_DEVBUS_DRdyErr|GT_DEVBUS_Sel)
 
+
+#define ETH0_BASE		0x2400
+#define ETH1_BASE		0x2800
+#define ETH2_BASE		0x2c00
+#define MPSC0_BASE		0x8000
+#define MPSC1_BASE		0x9000
 
 #endif /* !_DISCOVERY_DEV_GTREG_H */
