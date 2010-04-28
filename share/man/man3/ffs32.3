@@ -1,4 +1,4 @@
-.\"	$NetBSD: ffs32.3,v 1.2 2010/04/28 07:56:54 jruoho Exp $
+.\"	$NetBSD: ffs32.3,v 1.3 2010/04/28 19:47:34 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ The
 .Fn ffs32
 and
 .Fn ffs64
-functions find the first bit set from
+functions find the first bit set in
 .Fa n
 and return the index of that bit.
 Conversely,
@@ -59,7 +59,7 @@ the
 .Fn fls32
 and
 .Fn fls64
-functions return the last bit set in
+functions find the last bit set in
 .Fa n ,
 returning the index of the bit.
 .Pp
