@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.1.2.4 2010/02/28 05:03:58 uebayasi Exp $	*/
+/*	$Id: flash.c,v 1.1.2.5 2010/04/28 13:41:41 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -235,6 +235,15 @@ found:
 	sc->sc_size = sc->sc_product->size;
 	printf(": %s (%dKB, %d bit/word)\n", sc->sc_product->name,
 	    sc->sc_size / 1024, sc->sc_wordsize * 8);
+#endif
+
+#ifdef XIP
+#ifndef __HAVE_BUS_SPACE_PHYSLOAD
+#error bus_space_physload_device(9) must be supported to use XIP!
+#else
+	sc->sc_phys = bus_space_physload_device(sc->sc_iot, sc->sc_addr, sc->sc_size,
+	    PROT_READ | PROT_WRITE, BUS_SPACE_MAP_LINEAR);
+#endif
 #endif
 
 	disk_init(&sc->sc_dkdev, device_xname(&sc->sc_dev), NULL);
