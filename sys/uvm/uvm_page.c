@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.27 2010/04/28 08:31:05 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.28 2010/04/28 09:27:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.27 2010/04/28 08:31:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.28 2010/04/28 09:27:47 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -103,13 +103,19 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.27 2010/04/28 08:31:05 uebayasi
 /* XXXUEBS make these array of pointers */
 /* XXXUEBS merge these two */
 
+SIMPLEQ_HEAD(vm_physseg_freelist, vm_physseg);
+
 struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
-struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
 int vm_nphysmem = 0;
+static struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
+static struct vm_physseg_freelist vm_physmem_freelist =
+    SIMPLEQ_HEAD_INITIALIZER(vm_physmem_freelist);
 #ifdef DEVICE_PAGE
 struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
-struct vm_physseg vm_physdev_store[VM_PHYSSEG_MAX];
 int vm_nphysdev = 0;
+static struct vm_physseg vm_physdev_store[VM_PHYSSEG_MAX];
+static struct vm_physseg_freelist vm_physdev_freelist =
+    SIMPLEQ_HEAD_INITIALIZER(vm_physdev_freelist);
 #endif
 
 /*
@@ -753,7 +759,7 @@ uvm_page_physget(paddr_t *paddrp)
  */
 
 static struct vm_physseg *
-uvm_page_physload_common(struct vm_physseg * const, int,
+uvm_page_physload_common(struct vm_physseg_freelist * const, struct vm_physseg **, int,
     const paddr_t, const paddr_t, const paddr_t, const paddr_t, const int);
 #if 0
 static void
@@ -762,7 +768,7 @@ uvm_page_physunload_common(struct vm_physseg * const);
 static void
 uvm_page_physseg_init(void);
 static struct vm_physseg *
-uvm_physseg_insert(struct vm_physseg *, int,
+uvm_physseg_insert(struct vm_physseg_freelist *, struct vm_physseg **, int,
     const paddr_t, const paddr_t);
 
 void *
@@ -772,8 +778,8 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	struct vm_physseg *seg;
 	int lcv;
 
-	seg = uvm_page_physload_common(vm_physmem_store, vm_nphysmem, start, end,
-	    avail_start, avail_end, free_list);
+	seg = uvm_page_physload_common(&vm_physmem_freelist, vm_physmem_ptrs,
+	    vm_nphysmem, start, end, avail_start, avail_end, free_list);
 	KASSERT(seg != NULL);
 
 	seg->avail_start = avail_start;
@@ -804,8 +810,8 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 {
 	struct vm_physseg *seg;
 
-	seg = uvm_page_physload_common(vm_physdev, vm_nphysdev, start, end,
-	    avail_start, avail_end, free_list);
+	seg = uvm_page_physload_common(&vm_physdev_freelist, vm_physdev_ptrs,
+	    vm_nphysdev, start, end, avail_start, avail_end, free_list);
 	KASSERT(seg != NULL);
 
 	for (paddr_t pf = start; pf < end; pf++)
@@ -816,7 +822,8 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 #endif
 
 static struct vm_physseg *
-uvm_page_physload_common(struct vm_physseg * const segs, int nsegs,
+uvm_page_physload_common(struct vm_physseg_freelist *freelist,
+    struct vm_physseg **segs, int nsegs,
     const paddr_t start, const paddr_t end,
     const paddr_t avail_start, const paddr_t avail_end, const int free_list)
 {
@@ -842,7 +849,7 @@ uvm_page_physload_common(struct vm_physseg * const segs, int nsegs,
 		uvm_page_physseg_init();
 	}
 
-	ps = uvm_physseg_insert(segs, nsegs, start, end);
+	ps = uvm_physseg_insert(freelist, segs, nsegs, start, end);
 	KASSERT(ps != NULL);
 	ps->start = start;
 	ps->end = end;
@@ -856,37 +863,40 @@ uvm_page_physseg_init(void)
 	int lcv;
 
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
-		vm_physmem_ptrs[lcv] = &vm_physmem_store[lcv];
+		SIMPLEQ_INSERT_TAIL(&vm_physmem_freelist, &vm_physmem_store[lcv], list);
 	}
 #ifdef DEVICE_PAGE
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
-		vm_physdev_ptrs[lcv] = &vm_physdev_store[lcv];
+		SIMPLEQ_INSERT_TAIL(&vm_physdev_freelist, &vm_physdev_store[lcv], list);
 	}
 #endif
 }
 
 static struct vm_physseg *
-uvm_physseg_insert(struct vm_physseg *segs, int nsegs,
-    const paddr_t start, const paddr_t end)
+uvm_physseg_insert(struct vm_physseg_freelist *freelist,
+    struct vm_physseg **segs, int nsegs, const paddr_t start, const paddr_t end)
 {
 	struct vm_physseg *ps;
 	int lcv;
 
+	ps = SIMPLEQ_FIRST(freelist);
+	KASSERT(ps != NULL);
+	SIMPLEQ_REMOVE_HEAD(freelist, list);
+
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_RANDOM)
 	/* random: put it at the end (easy!) */
-	ps = &segs[nsegs];
+	segs[nsegs] = ps;
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	{
 		int x;
 		/* sort by address for binary search */
 		for (lcv = 0 ; lcv < nsegs ; lcv++)
-			if (start < segs[lcv].start)
+			if (start < segs[lcv]->start)
 				break;
-		ps = &segs[lcv];
 		/* move back other entries, if necessary ... */
 		for (x = nsegs ; x > lcv ; x--)
-			/* structure copy */
 			segs[x] = segs[x - 1];
+		segs[lcv] = ps;
 	}
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
 	{
@@ -894,13 +904,12 @@ uvm_physseg_insert(struct vm_physseg *segs, int nsegs,
 		/* sort by largest segment first */
 		for (lcv = 0 ; lcv < nsegs ; lcv++)
 			if ((end - start) >
-			    (segs[lcv].end - segs[lcv].start))
+			    (segs[lcv]->end - segs[lcv]->start))
 				break;
-		ps = &segs[lcv];
 		/* move back other entries, if necessary ... */
 		for (x = nsegs ; x > lcv ; x--)
-			/* structure copy */
 			segs[x] = segs[x - 1];
+		segs[lcv] = ps;
 	}
 #else
 	panic("uvm_page_physload: unknown physseg strategy selected!");
