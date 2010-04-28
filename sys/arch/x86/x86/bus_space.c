@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.27 2010/04/28 19:17:04 dyoung Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.28 2010/04/28 20:27:36 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.27 2010/04/28 19:17:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28 2010/04/28 20:27:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.27 2010/04/28 19:17:04 dyoung Exp $"
 
 #include <dev/isa/isareg.h>
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
 
