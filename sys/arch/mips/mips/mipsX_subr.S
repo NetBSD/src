@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.30 2010/03/01 19:29:41 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.31 2010/04/28 03:14:45 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -617,7 +617,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	REG_S	ta2, TF_BASE+TF_REG_TA2(sp)
 	REG_S	ta3, TF_BASE+TF_REG_TA3(sp)
 	_MFC0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
-	REG_S	t8, TF_BASE+TF_REG_T8(sp)
+	REG_S	t8, TF_BASE+TF_REG_T8(sp)	# will be MIPS_CURLWP
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
 	REG_S	ra, TF_BASE+TF_REG_RA(sp)
 	REG_S	a0, TF_BASE+TF_REG_SR(sp)
@@ -752,7 +752,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	REG_L	ta1, TF_BASE+TF_REG_TA1(sp)
 	REG_L	ta2, TF_BASE+TF_REG_TA2(sp)
 	REG_L	ta3, TF_BASE+TF_REG_TA3(sp)
-	REG_L	t8, TF_BASE+TF_REG_T8(sp)
+	REG_L	t8, TF_BASE+TF_REG_T8(sp)	# was MIPS_CURLWP
 	REG_L	t9, TF_BASE+TF_REG_T9(sp)
 	REG_L	ra, TF_BASE+TF_REG_RA(sp)
 #ifdef DDBnotyet
@@ -818,7 +818,7 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 	REG_S	s6, CALLFRAME_SIZ+TF_REG_S6(k0)
 	REG_S	s7, CALLFRAME_SIZ+TF_REG_S7(k0)
 	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
-	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)
+	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)	# will be MIPS_CURLWP
 	REG_S	t9, CALLFRAME_SIZ+TF_REG_T9(k0)
 	REG_S	gp, CALLFRAME_SIZ+TF_REG_GP(k0)
 	REG_S	sp, CALLFRAME_SIZ+TF_REG_SP(k0)
@@ -920,7 +920,7 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	REG_S	ta2, CALLFRAME_SIZ+TF_REG_TA2(k0)
 	REG_S	ta3, CALLFRAME_SIZ+TF_REG_TA3(k0)
 #endif
-	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)
+	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)	# was MIPS_CURLWP
 	REG_S	t9, CALLFRAME_SIZ+TF_REG_T9(k0)
 	REG_S	gp, CALLFRAME_SIZ+TF_REG_GP(k0)
 	REG_S	sp, CALLFRAME_SIZ+TF_REG_SP(k0)
@@ -1081,15 +1081,12 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	REG_S	s1, TF_BASE+TF_REG_S1(sp)	# s1 is used for initial status
 	mfc0	s1, MIPS_COP_0_STATUS
 	REG_S	s2, TF_BASE+TF_REG_S2(sp)	# s2 is used for cpu_info
-	REG_S	t8, TF_BASE+TF_REG_T8(sp)
+	REG_S	t8, TF_BASE+TF_REG_T8(sp)	# MIPS_CURLWP
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
 	REG_S	ra, TF_BASE+TF_REG_RA(sp)
 	REG_S	a0, TF_BASE+TF_REG_SR(sp)
 	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
-#if TF_MIPS_CURLWP != TF_REG_T8
-        REG_S   MIPS_CURLWP, TF_BASE+TF_PAD(sp) # XXX Atheros HAL
-#endif
 /*
  * Call the interrupt handler.
  */
@@ -1099,7 +1096,6 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
 	REG_S	ra, KERNFRAME_RA(sp)		# for debugging
 #endif
-	move	MIPS_CURLWP, k1			# XXX Atheros HAL
 
 	PTR_L	s2, L_CPU(MIPS_CURLWP)
 #ifdef PARANOIA
@@ -1252,9 +1248,6 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	nop
 	nop
 
-#if TF_MIPS_CURLWP != TF_REG_T8
-	REG_L	MIPS_CURLWP, TF_BASE+TF_PAD(sp)	# XXX Atheros HAL
-#endif
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
 	REG_L	t1, TF_BASE+TF_REG_MULHI(sp)
 	REG_L	v0, TF_BASE+TF_REG_EPC(sp)
@@ -1376,9 +1369,6 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
 	REG_S	ra, CALLFRAME_SIZ+TF_REG_EPC(k0)
 	REG_S	t0, CALLFRAME_SIZ+TF_REG_CAUSE(k0)
-#if TF_MIPS_CURLWP != TF_REG_T8
-	PTR_S	MIPS_CURLWP, CALLFRAME_SIZ+TF_MIPS_CURLWP(k0)# save curlwp reg (t8)
-#endif
 	move	sp, k0
 	move	MIPS_CURLWP, k1			# set curlwp reg (t8)
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
@@ -2118,7 +2108,7 @@ MIPSX(user_intr_return):
 	REG_L	ta1, CALLFRAME_SIZ+TF_REG_TA1(k1)	#  $9 / $13
 	REG_L	ta2, CALLFRAME_SIZ+TF_REG_TA2(k1)	# $10 / $14
 	REG_L	ta3, CALLFRAME_SIZ+TF_REG_TA3(k1)	# $11 / $15
-	REG_L	t8, CALLFRAME_SIZ+TF_REG_T8(k1)		# $24
+	REG_L	t8, CALLFRAME_SIZ+TF_REG_T8(k1)		# $24 MIPS_CURLWP
 	REG_L	t9, CALLFRAME_SIZ+TF_REG_T9(k1)		# $25
 	REG_L	k0, CALLFRAME_SIZ+TF_REG_SR(k1)		# status register
 	DYNAMIC_STATUS_MASK(k0, sp)		# machine dependent masking
