@@ -2635,35 +2635,56 @@ XS(_wrap_netpgp_getvar) {
 }
 
 
-XS(_wrap_netpgp_list_keys) {
+XS(_wrap_netpgp_incvar) {
   {
     netpgp_t *arg1 = (netpgp_t *) 0 ;
+    char *arg2 = (char *) 0 ;
+    int arg3 ;
     int result;
     void *argp1 = 0 ;
     int res1 = 0 ;
+    int res2 ;
+    char *buf2 = 0 ;
+    int alloc2 = 0 ;
+    int val3 ;
+    int ecode3 = 0 ;
     int argvi = 0;
     dXSARGS;
     
-    if ((items < 1) || (items > 1)) {
-      SWIG_croak("Usage: netpgp_list_keys(netpgp_t *);");
+    if ((items < 3) || (items > 3)) {
+      SWIG_croak("Usage: netpgp_incvar(netpgp_t *,char const *,int const);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_list_keys" "', argument " "1"" of type '" "netpgp_t *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_incvar" "', argument " "1"" of type '" "netpgp_t *""'"); 
     }
     arg1 = (netpgp_t *)(argp1);
-    result = (int)netpgp_list_keys(arg1);
+    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_incvar" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = (char *)(buf2);
+    ecode3 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "netpgp_incvar" "', argument " "3"" of type '" "int""'");
+    } 
+    arg3 = (int)(val3);
+    result = (int)netpgp_incvar(arg1,(char const *)arg2,arg3);
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
     
     XSRETURN(argvi);
   fail:
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
     
     SWIG_croak_null();
   }
 }
 
 
-XS(_wrap_netpgp_list_sigs) {
+XS(_wrap_netpgp_unsetvar) {
   {
     netpgp_t *arg1 = (netpgp_t *) 0 ;
     char *arg2 = (char *) 0 ;
@@ -2677,19 +2698,19 @@ XS(_wrap_netpgp_list_sigs) {
     dXSARGS;
     
     if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: netpgp_list_sigs(netpgp_t *,char const *);");
+      SWIG_croak("Usage: netpgp_unsetvar(netpgp_t *,char const *);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_list_sigs" "', argument " "1"" of type '" "netpgp_t *""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_unsetvar" "', argument " "1"" of type '" "netpgp_t *""'"); 
     }
     arg1 = (netpgp_t *)(argp1);
     res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
     if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_list_sigs" "', argument " "2"" of type '" "char const *""'");
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_unsetvar" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = (char *)(buf2);
-    result = (int)netpgp_list_sigs(arg1,(char const *)arg2);
+    result = (int)netpgp_unsetvar(arg1,(char const *)arg2);
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
     
     if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
@@ -2697,6 +2718,104 @@ XS(_wrap_netpgp_list_sigs) {
   fail:
     
     if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_netpgp_set_homedir) {
+  {
+    netpgp_t *arg1 = (netpgp_t *) 0 ;
+    char *arg2 = (char *) 0 ;
+    char *arg3 = (char *) 0 ;
+    int arg4 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int res2 ;
+    char *buf2 = 0 ;
+    int alloc2 = 0 ;
+    int res3 ;
+    char *buf3 = 0 ;
+    int alloc3 = 0 ;
+    int val4 ;
+    int ecode4 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 4) || (items > 4)) {
+      SWIG_croak("Usage: netpgp_set_homedir(netpgp_t *,char *,char const *,int const);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_set_homedir" "', argument " "1"" of type '" "netpgp_t *""'"); 
+    }
+    arg1 = (netpgp_t *)(argp1);
+    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_set_homedir" "', argument " "2"" of type '" "char *""'");
+    }
+    arg2 = (char *)(buf2);
+    res3 = SWIG_AsCharPtrAndSize(ST(2), &buf3, NULL, &alloc3);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_set_homedir" "', argument " "3"" of type '" "char const *""'");
+    }
+    arg3 = (char *)(buf3);
+    ecode4 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "netpgp_set_homedir" "', argument " "4"" of type '" "int""'");
+    } 
+    arg4 = (int)(val4);
+    result = (int)netpgp_set_homedir(arg1,arg2,(char const *)arg3,arg4);
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+    
+    XSRETURN(argvi);
+  fail:
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_netpgp_list_keys) {
+  {
+    netpgp_t *arg1 = (netpgp_t *) 0 ;
+    int arg2 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int val2 ;
+    int ecode2 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 2) || (items > 2)) {
+      SWIG_croak("Usage: netpgp_list_keys(netpgp_t *,int const);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_list_keys" "', argument " "1"" of type '" "netpgp_t *""'"); 
+    }
+    arg1 = (netpgp_t *)(argp1);
+    ecode2 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(1), &val2);
+    if (!SWIG_IsOK(ecode2)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "netpgp_list_keys" "', argument " "2"" of type '" "int""'");
+    } 
+    arg2 = (int)(val2);
+    result = (int)netpgp_list_keys(arg1,arg2);
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
     SWIG_croak_null();
   }
 }
@@ -2745,17 +2864,21 @@ XS(_wrap_netpgp_get_key) {
   {
     netpgp_t *arg1 = (netpgp_t *) 0 ;
     char *arg2 = (char *) 0 ;
+    char *arg3 = (char *) 0 ;
     char *result = 0 ;
     void *argp1 = 0 ;
     int res1 = 0 ;
     int res2 ;
     char *buf2 = 0 ;
     int alloc2 = 0 ;
+    int res3 ;
+    char *buf3 = 0 ;
+    int alloc3 = 0 ;
     int argvi = 0;
     dXSARGS;
     
-    if ((items < 2) || (items > 2)) {
-      SWIG_croak("Usage: netpgp_get_key(netpgp_t *,char const *);");
+    if ((items < 3) || (items > 3)) {
+      SWIG_croak("Usage: netpgp_get_key(netpgp_t *,char const *,char const *);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
@@ -2767,14 +2890,21 @@ XS(_wrap_netpgp_get_key) {
       SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_get_key" "', argument " "2"" of type '" "char const *""'");
     }
     arg2 = (char *)(buf2);
-    result = (char *)netpgp_get_key(arg1,(char const *)arg2);
+    res3 = SWIG_AsCharPtrAndSize(ST(2), &buf3, NULL, &alloc3);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_get_key" "', argument " "3"" of type '" "char const *""'");
+    }
+    arg3 = (char *)(buf3);
+    result = (char *)netpgp_get_key(arg1,(char const *)arg2,(char const *)arg3);
     ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
     
     if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
     XSRETURN(argvi);
   fail:
     
     if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
     SWIG_croak_null();
   }
 }
@@ -2784,7 +2914,7 @@ XS(_wrap_netpgp_export_key) {
   {
     netpgp_t *arg1 = (netpgp_t *) 0 ;
     char *arg2 = (char *) 0 ;
-    int result;
+    char *result = 0 ;
     void *argp1 = 0 ;
     int res1 = 0 ;
     int res2 ;
@@ -2806,8 +2936,8 @@ XS(_wrap_netpgp_export_key) {
       SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_export_key" "', argument " "2"" of type '" "char *""'");
     }
     arg2 = (char *)(buf2);
-    result = (int)netpgp_export_key(arg1,arg2);
-    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    result = (char *)netpgp_export_key(arg1,arg2);
+    ST(argvi) = SWIG_FromCharPtr((const char *)result); argvi++ ;
     
     if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
     XSRETURN(argvi);
@@ -3295,20 +3425,25 @@ XS(_wrap_netpgp_verify_memory) {
     netpgp_t *arg1 = (netpgp_t *) 0 ;
     void *arg2 = (void *) 0 ;
     size_t arg3 ;
-    int arg4 ;
+    void *arg4 = (void *) 0 ;
+    size_t arg5 ;
+    int arg6 ;
     int result;
     void *argp1 = 0 ;
     int res1 = 0 ;
     int res2 ;
     size_t val3 ;
     int ecode3 = 0 ;
-    int val4 ;
-    int ecode4 = 0 ;
+    int res4 ;
+    size_t val5 ;
+    int ecode5 = 0 ;
+    int val6 ;
+    int ecode6 = 0 ;
     int argvi = 0;
     dXSARGS;
     
-    if ((items < 4) || (items > 4)) {
-      SWIG_croak("Usage: netpgp_verify_memory(netpgp_t *,void const *,size_t const,int const);");
+    if ((items < 6) || (items > 6)) {
+      SWIG_croak("Usage: netpgp_verify_memory(netpgp_t *,void const *,size_t const,void *,size_t,int const);");
     }
     res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
     if (!SWIG_IsOK(res1)) {
@@ -3324,13 +3459,24 @@ XS(_wrap_netpgp_verify_memory) {
       SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "netpgp_verify_memory" "', argument " "3"" of type '" "size_t""'");
     } 
     arg3 = (size_t)(val3);
-    ecode4 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
-    if (!SWIG_IsOK(ecode4)) {
-      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "netpgp_verify_memory" "', argument " "4"" of type '" "int""'");
+    res4 = SWIG_ConvertPtr(ST(3),SWIG_as_voidptrptr(&arg4), 0, 0);
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "netpgp_verify_memory" "', argument " "4"" of type '" "void *""'"); 
+    }
+    ecode5 = SWIG_AsVal_size_t SWIG_PERL_CALL_ARGS_2(ST(4), &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "netpgp_verify_memory" "', argument " "5"" of type '" "size_t""'");
     } 
-    arg4 = (int)(val4);
-    result = (int)netpgp_verify_memory(arg1,(void const *)arg2,arg3,arg4);
+    arg5 = (size_t)(val5);
+    ecode6 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(5), &val6);
+    if (!SWIG_IsOK(ecode6)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "netpgp_verify_memory" "', argument " "6"" of type '" "int""'");
+    } 
+    arg6 = (int)(val6);
+    result = (int)netpgp_verify_memory(arg1,(void const *)arg2,arg3,arg4,arg5,arg6);
     ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    
+    
     
     
     
@@ -3340,6 +3486,316 @@ XS(_wrap_netpgp_verify_memory) {
     
     
     
+    
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_netpgp_encrypt_memory) {
+  {
+    netpgp_t *arg1 = (netpgp_t *) 0 ;
+    char *arg2 = (char *) 0 ;
+    void *arg3 = (void *) 0 ;
+    size_t arg4 ;
+    char *arg5 = (char *) 0 ;
+    size_t arg6 ;
+    int arg7 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int res2 ;
+    char *buf2 = 0 ;
+    int alloc2 = 0 ;
+    int res3 ;
+    size_t val4 ;
+    int ecode4 = 0 ;
+    int res5 ;
+    char *buf5 = 0 ;
+    int alloc5 = 0 ;
+    size_t val6 ;
+    int ecode6 = 0 ;
+    int val7 ;
+    int ecode7 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 7) || (items > 7)) {
+      SWIG_croak("Usage: netpgp_encrypt_memory(netpgp_t *,char const *,void *,size_t const,char *,size_t,int);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_encrypt_memory" "', argument " "1"" of type '" "netpgp_t *""'"); 
+    }
+    arg1 = (netpgp_t *)(argp1);
+    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_encrypt_memory" "', argument " "2"" of type '" "char const *""'");
+    }
+    arg2 = (char *)(buf2);
+    res3 = SWIG_ConvertPtr(ST(2),SWIG_as_voidptrptr(&arg3), 0, 0);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_encrypt_memory" "', argument " "3"" of type '" "void *""'"); 
+    }
+    ecode4 = SWIG_AsVal_size_t SWIG_PERL_CALL_ARGS_2(ST(3), &val4);
+    if (!SWIG_IsOK(ecode4)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "netpgp_encrypt_memory" "', argument " "4"" of type '" "size_t""'");
+    } 
+    arg4 = (size_t)(val4);
+    res5 = SWIG_AsCharPtrAndSize(ST(4), &buf5, NULL, &alloc5);
+    if (!SWIG_IsOK(res5)) {
+      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "netpgp_encrypt_memory" "', argument " "5"" of type '" "char *""'");
+    }
+    arg5 = (char *)(buf5);
+    ecode6 = SWIG_AsVal_size_t SWIG_PERL_CALL_ARGS_2(ST(5), &val6);
+    if (!SWIG_IsOK(ecode6)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "netpgp_encrypt_memory" "', argument " "6"" of type '" "size_t""'");
+    } 
+    arg6 = (size_t)(val6);
+    ecode7 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(6), &val7);
+    if (!SWIG_IsOK(ecode7)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "netpgp_encrypt_memory" "', argument " "7"" of type '" "int""'");
+    } 
+    arg7 = (int)(val7);
+    result = (int)netpgp_encrypt_memory(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7);
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    
+    
+    if (alloc5 == SWIG_NEWOBJ) free((char*)buf5);
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    
+    
+    if (alloc5 == SWIG_NEWOBJ) free((char*)buf5);
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_netpgp_decrypt_memory) {
+  {
+    netpgp_t *arg1 = (netpgp_t *) 0 ;
+    void *arg2 = (void *) 0 ;
+    size_t arg3 ;
+    char *arg4 = (char *) 0 ;
+    size_t arg5 ;
+    int arg6 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int res2 ;
+    size_t val3 ;
+    int ecode3 = 0 ;
+    int res4 ;
+    char *buf4 = 0 ;
+    int alloc4 = 0 ;
+    size_t val5 ;
+    int ecode5 = 0 ;
+    int val6 ;
+    int ecode6 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 6) || (items > 6)) {
+      SWIG_croak("Usage: netpgp_decrypt_memory(netpgp_t *,void const *,size_t const,char *,size_t,int const);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_decrypt_memory" "', argument " "1"" of type '" "netpgp_t *""'"); 
+    }
+    arg1 = (netpgp_t *)(argp1);
+    res2 = SWIG_ConvertPtr(ST(1),SWIG_as_voidptrptr(&arg2), 0, 0);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_decrypt_memory" "', argument " "2"" of type '" "void const *""'"); 
+    }
+    ecode3 = SWIG_AsVal_size_t SWIG_PERL_CALL_ARGS_2(ST(2), &val3);
+    if (!SWIG_IsOK(ecode3)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "netpgp_decrypt_memory" "', argument " "3"" of type '" "size_t""'");
+    } 
+    arg3 = (size_t)(val3);
+    res4 = SWIG_AsCharPtrAndSize(ST(3), &buf4, NULL, &alloc4);
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "netpgp_decrypt_memory" "', argument " "4"" of type '" "char *""'");
+    }
+    arg4 = (char *)(buf4);
+    ecode5 = SWIG_AsVal_size_t SWIG_PERL_CALL_ARGS_2(ST(4), &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "netpgp_decrypt_memory" "', argument " "5"" of type '" "size_t""'");
+    } 
+    arg5 = (size_t)(val5);
+    ecode6 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(5), &val6);
+    if (!SWIG_IsOK(ecode6)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "netpgp_decrypt_memory" "', argument " "6"" of type '" "int""'");
+    } 
+    arg6 = (int)(val6);
+    result = (int)netpgp_decrypt_memory(arg1,(void const *)arg2,arg3,arg4,arg5,arg6);
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    
+    
+    
+    if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    
+    
+    if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_netpgp_match_keys) {
+  {
+    netpgp_t *arg1 = (netpgp_t *) 0 ;
+    char *arg2 = (char *) 0 ;
+    char *arg3 = (char *) 0 ;
+    void *arg4 = (void *) 0 ;
+    int arg5 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int res2 ;
+    char *buf2 = 0 ;
+    int alloc2 = 0 ;
+    int res3 ;
+    char *buf3 = 0 ;
+    int alloc3 = 0 ;
+    int res4 ;
+    int val5 ;
+    int ecode5 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 5) || (items > 5)) {
+      SWIG_croak("Usage: netpgp_match_keys(netpgp_t *,char *,char const *,void *,int const);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_match_keys" "', argument " "1"" of type '" "netpgp_t *""'"); 
+    }
+    arg1 = (netpgp_t *)(argp1);
+    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_match_keys" "', argument " "2"" of type '" "char *""'");
+    }
+    arg2 = (char *)(buf2);
+    res3 = SWIG_AsCharPtrAndSize(ST(2), &buf3, NULL, &alloc3);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_match_keys" "', argument " "3"" of type '" "char const *""'");
+    }
+    arg3 = (char *)(buf3);
+    res4 = SWIG_ConvertPtr(ST(3),SWIG_as_voidptrptr(&arg4), 0, 0);
+    if (!SWIG_IsOK(res4)) {
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "netpgp_match_keys" "', argument " "4"" of type '" "void *""'"); 
+    }
+    ecode5 = SWIG_AsVal_int SWIG_PERL_CALL_ARGS_2(ST(4), &val5);
+    if (!SWIG_IsOK(ecode5)) {
+      SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "netpgp_match_keys" "', argument " "5"" of type '" "int""'");
+    } 
+    arg5 = (int)(val5);
+    result = (int)netpgp_match_keys(arg1,arg2,(char const *)arg3,arg4,arg5);
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+    
+    
+    XSRETURN(argvi);
+  fail:
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+    
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_netpgp_match_pubkeys) {
+  {
+    netpgp_t *arg1 = (netpgp_t *) 0 ;
+    char *arg2 = (char *) 0 ;
+    void *arg3 = (void *) 0 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int res2 ;
+    char *buf2 = 0 ;
+    int alloc2 = 0 ;
+    int res3 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 3) || (items > 3)) {
+      SWIG_croak("Usage: netpgp_match_pubkeys(netpgp_t *,char *,void *);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_match_pubkeys" "', argument " "1"" of type '" "netpgp_t *""'"); 
+    }
+    arg1 = (netpgp_t *)(argp1);
+    res2 = SWIG_AsCharPtrAndSize(ST(1), &buf2, NULL, &alloc2);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_match_pubkeys" "', argument " "2"" of type '" "char *""'");
+    }
+    arg2 = (char *)(buf2);
+    res3 = SWIG_ConvertPtr(ST(2),SWIG_as_voidptrptr(&arg3), 0, 0);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_match_pubkeys" "', argument " "3"" of type '" "void *""'"); 
+    }
+    result = (int)netpgp_match_pubkeys(arg1,arg2,arg3);
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    
+    XSRETURN(argvi);
+  fail:
+    
+    if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+    
+    SWIG_croak_null();
+  }
+}
+
+
+XS(_wrap_netpgp_validate_sigs) {
+  {
+    netpgp_t *arg1 = (netpgp_t *) 0 ;
+    int result;
+    void *argp1 = 0 ;
+    int res1 = 0 ;
+    int argvi = 0;
+    dXSARGS;
+    
+    if ((items < 1) || (items > 1)) {
+      SWIG_croak("Usage: netpgp_validate_sigs(netpgp_t *);");
+    }
+    res1 = SWIG_ConvertPtr(ST(0), &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_validate_sigs" "', argument " "1"" of type '" "netpgp_t *""'"); 
+    }
+    arg1 = (netpgp_t *)(argp1);
+    result = (int)netpgp_validate_sigs(arg1);
+    ST(argvi) = SWIG_From_int  SWIG_PERL_CALL_ARGS_1((int)(result)); argvi++ ;
+    
+    XSRETURN(argvi);
+  fail:
     
     SWIG_croak_null();
   }
@@ -3412,8 +3868,10 @@ static swig_command_info swig_commands[] = {
 {"netpgpperlc::netpgp_list_packets", _wrap_netpgp_list_packets},
 {"netpgpperlc::netpgp_setvar", _wrap_netpgp_setvar},
 {"netpgpperlc::netpgp_getvar", _wrap_netpgp_getvar},
+{"netpgpperlc::netpgp_incvar", _wrap_netpgp_incvar},
+{"netpgpperlc::netpgp_unsetvar", _wrap_netpgp_unsetvar},
+{"netpgpperlc::netpgp_set_homedir", _wrap_netpgp_set_homedir},
 {"netpgpperlc::netpgp_list_keys", _wrap_netpgp_list_keys},
-{"netpgpperlc::netpgp_list_sigs", _wrap_netpgp_list_sigs},
 {"netpgpperlc::netpgp_find_key", _wrap_netpgp_find_key},
 {"netpgpperlc::netpgp_get_key", _wrap_netpgp_get_key},
 {"netpgpperlc::netpgp_export_key", _wrap_netpgp_export_key},
@@ -3425,6 +3883,11 @@ static swig_command_info swig_commands[] = {
 {"netpgpperlc::netpgp_verify_file", _wrap_netpgp_verify_file},
 {"netpgpperlc::netpgp_sign_memory", _wrap_netpgp_sign_memory},
 {"netpgpperlc::netpgp_verify_memory", _wrap_netpgp_verify_memory},
+{"netpgpperlc::netpgp_encrypt_memory", _wrap_netpgp_encrypt_memory},
+{"netpgpperlc::netpgp_decrypt_memory", _wrap_netpgp_decrypt_memory},
+{"netpgpperlc::netpgp_match_keys", _wrap_netpgp_match_keys},
+{"netpgpperlc::netpgp_match_pubkeys", _wrap_netpgp_match_pubkeys},
+{"netpgpperlc::netpgp_validate_sigs", _wrap_netpgp_validate_sigs},
 {0,0}
 };
 /* -----------------------------------------------------------------------------
