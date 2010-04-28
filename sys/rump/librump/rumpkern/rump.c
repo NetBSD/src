@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.168 2010/04/28 14:23:57 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.169 2010/04/28 14:51:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.168 2010/04/28 14:23:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.169 2010/04/28 14:51:07 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.168 2010/04/28 14:23:57 pooka Exp $");
 #include <sys/select.h>
 #include <sys/sysctl.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/timetc.h>
 #include <sys/tty.h>
 #include <sys/uidinfo.h>
@@ -531,7 +532,6 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
 	l->l_cpu = NULL;
-	l->l_sysent = rump_sysent;
 	lwp_initspecific(l);
 	LIST_INSERT_HEAD(&alllwp, l, l_list);
 
@@ -759,7 +759,7 @@ rump_sysproxy_local(int num, void *arg, uint8_t *data, size_t dlen,
 	callp = rump_sysent + num;
 	rump_schedule();
 	l = curlwp;
-	rv = callp->sy_call(l, (void *)data, retval);
+	rv = sy_call(callp, l, (void *)data, retval);
 	rump_unschedule();
 
 	return rv;
