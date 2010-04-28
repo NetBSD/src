@@ -3533,29 +3533,50 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_netpgp_list_keys(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_netpgp_incvar(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   netpgp_t *arg1 = (netpgp_t *) 0 ;
+  char *arg2 = (char *) 0 ;
+  int arg3 ;
   int result;
   void *argp1 = 0 ;
   int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int val3 ;
+  int ecode3 = 0 ;
   PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"O:netpgp_list_keys",&obj0)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO:netpgp_incvar",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_list_keys" "', argument " "1"" of type '" "netpgp_t *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_incvar" "', argument " "1"" of type '" "netpgp_t *""'"); 
   }
   arg1 = (netpgp_t *)(argp1);
-  result = (int)netpgp_list_keys(arg1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_incvar" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = (char *)(buf2);
+  ecode3 = SWIG_AsVal_int(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "netpgp_incvar" "', argument " "3"" of type '" "int""'");
+  } 
+  arg3 = (int)(val3);
+  result = (int)netpgp_incvar(arg1,(char const *)arg2,arg3);
   resultobj = SWIG_From_int((int)(result));
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return resultobj;
 fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return NULL;
 }
 
 
-SWIGINTERN PyObject *_wrap_netpgp_list_sigs(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_netpgp_unsetvar(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   netpgp_t *arg1 = (netpgp_t *) 0 ;
   char *arg2 = (char *) 0 ;
@@ -3568,23 +3589,109 @@ SWIGINTERN PyObject *_wrap_netpgp_list_sigs(PyObject *SWIGUNUSEDPARM(self), PyOb
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO:netpgp_list_sigs",&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OO:netpgp_unsetvar",&obj0,&obj1)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_list_sigs" "', argument " "1"" of type '" "netpgp_t *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_unsetvar" "', argument " "1"" of type '" "netpgp_t *""'"); 
   }
   arg1 = (netpgp_t *)(argp1);
   res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
   if (!SWIG_IsOK(res2)) {
-    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_list_sigs" "', argument " "2"" of type '" "char const *""'");
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_unsetvar" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = (char *)(buf2);
-  result = (int)netpgp_list_sigs(arg1,(char const *)arg2);
+  result = (int)netpgp_unsetvar(arg1,(char const *)arg2);
   resultobj = SWIG_From_int((int)(result));
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_netpgp_set_homedir(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  netpgp_t *arg1 = (netpgp_t *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  int arg4 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOO:netpgp_set_homedir",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_set_homedir" "', argument " "1"" of type '" "netpgp_t *""'"); 
+  }
+  arg1 = (netpgp_t *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_set_homedir" "', argument " "2"" of type '" "char *""'");
+  }
+  arg2 = (char *)(buf2);
+  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_set_homedir" "', argument " "3"" of type '" "char const *""'");
+  }
+  arg3 = (char *)(buf3);
+  ecode4 = SWIG_AsVal_int(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "netpgp_set_homedir" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = (int)(val4);
+  result = (int)netpgp_set_homedir(arg1,arg2,(char const *)arg3,arg4);
+  resultobj = SWIG_From_int((int)(result));
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_netpgp_list_keys(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  netpgp_t *arg1 = (netpgp_t *) 0 ;
+  int arg2 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OO:netpgp_list_keys",&obj0,&obj1)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_list_keys" "', argument " "1"" of type '" "netpgp_t *""'"); 
+  }
+  arg1 = (netpgp_t *)(argp1);
+  ecode2 = SWIG_AsVal_int(obj1, &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "netpgp_list_keys" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = (int)(val2);
+  result = (int)netpgp_list_keys(arg1,arg2);
+  resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
   return NULL;
 }
 
@@ -3627,16 +3734,21 @@ SWIGINTERN PyObject *_wrap_netpgp_get_key(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject *resultobj = 0;
   netpgp_t *arg1 = (netpgp_t *) 0 ;
   char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
   char *result = 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
   char *buf2 = 0 ;
   int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OO:netpgp_get_key",&obj0,&obj1)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOO:netpgp_get_key",&obj0,&obj1,&obj2)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_get_key" "', argument " "1"" of type '" "netpgp_t *""'"); 
@@ -3647,12 +3759,19 @@ SWIGINTERN PyObject *_wrap_netpgp_get_key(PyObject *SWIGUNUSEDPARM(self), PyObje
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_get_key" "', argument " "2"" of type '" "char const *""'");
   }
   arg2 = (char *)(buf2);
-  result = (char *)netpgp_get_key(arg1,(char const *)arg2);
+  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_get_key" "', argument " "3"" of type '" "char const *""'");
+  }
+  arg3 = (char *)(buf3);
+  result = (char *)netpgp_get_key(arg1,(char const *)arg2,(char const *)arg3);
   resultobj = SWIG_FromCharPtr((const char *)result);
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return resultobj;
 fail:
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
   return NULL;
 }
 
@@ -3661,7 +3780,7 @@ SWIGINTERN PyObject *_wrap_netpgp_export_key(PyObject *SWIGUNUSEDPARM(self), PyO
   PyObject *resultobj = 0;
   netpgp_t *arg1 = (netpgp_t *) 0 ;
   char *arg2 = (char *) 0 ;
-  int result;
+  char *result = 0 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
@@ -3681,8 +3800,8 @@ SWIGINTERN PyObject *_wrap_netpgp_export_key(PyObject *SWIGUNUSEDPARM(self), PyO
     SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_export_key" "', argument " "2"" of type '" "char *""'");
   }
   arg2 = (char *)(buf2);
-  result = (int)netpgp_export_key(arg1,arg2);
-  resultobj = SWIG_From_int((int)(result));
+  result = (char *)netpgp_export_key(arg1,arg2);
+  resultobj = SWIG_FromCharPtr((const char *)result);
   if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
   return resultobj;
 fail:
@@ -4129,21 +4248,28 @@ SWIGINTERN PyObject *_wrap_netpgp_verify_memory(PyObject *SWIGUNUSEDPARM(self), 
   netpgp_t *arg1 = (netpgp_t *) 0 ;
   void *arg2 = (void *) 0 ;
   size_t arg3 ;
-  int arg4 ;
+  void *arg4 = (void *) 0 ;
+  size_t arg5 ;
+  int arg6 ;
   int result;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 ;
   size_t val3 ;
   int ecode3 = 0 ;
-  int val4 ;
-  int ecode4 = 0 ;
+  int res4 ;
+  size_t val5 ;
+  int ecode5 = 0 ;
+  int val6 ;
+  int ecode6 = 0 ;
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
   PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
   
-  if (!PyArg_ParseTuple(args,(char *)"OOOO:netpgp_verify_memory",&obj0,&obj1,&obj2,&obj3)) SWIG_fail;
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:netpgp_verify_memory",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
   res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_verify_memory" "', argument " "1"" of type '" "netpgp_t *""'"); 
@@ -4158,12 +4284,294 @@ SWIGINTERN PyObject *_wrap_netpgp_verify_memory(PyObject *SWIGUNUSEDPARM(self), 
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "netpgp_verify_memory" "', argument " "3"" of type '" "size_t""'");
   } 
   arg3 = (size_t)(val3);
-  ecode4 = SWIG_AsVal_int(obj3, &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "netpgp_verify_memory" "', argument " "4"" of type '" "int""'");
+  res4 = SWIG_ConvertPtr(obj3,SWIG_as_voidptrptr(&arg4), 0, 0);
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "netpgp_verify_memory" "', argument " "4"" of type '" "void *""'"); 
+  }
+  ecode5 = SWIG_AsVal_size_t(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "netpgp_verify_memory" "', argument " "5"" of type '" "size_t""'");
   } 
-  arg4 = (int)(val4);
-  result = (int)netpgp_verify_memory(arg1,(void const *)arg2,arg3,arg4);
+  arg5 = (size_t)(val5);
+  ecode6 = SWIG_AsVal_int(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "netpgp_verify_memory" "', argument " "6"" of type '" "int""'");
+  } 
+  arg6 = (int)(val6);
+  result = (int)netpgp_verify_memory(arg1,(void const *)arg2,arg3,arg4,arg5,arg6);
+  resultobj = SWIG_From_int((int)(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_netpgp_encrypt_memory(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  netpgp_t *arg1 = (netpgp_t *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *arg3 = (void *) 0 ;
+  size_t arg4 ;
+  char *arg5 = (char *) 0 ;
+  size_t arg6 ;
+  int arg7 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  size_t val4 ;
+  int ecode4 = 0 ;
+  int res5 ;
+  char *buf5 = 0 ;
+  int alloc5 = 0 ;
+  size_t val6 ;
+  int ecode6 = 0 ;
+  int val7 ;
+  int ecode7 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  PyObject * obj6 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOOO:netpgp_encrypt_memory",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5,&obj6)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_encrypt_memory" "', argument " "1"" of type '" "netpgp_t *""'"); 
+  }
+  arg1 = (netpgp_t *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_encrypt_memory" "', argument " "2"" of type '" "char const *""'");
+  }
+  arg2 = (char *)(buf2);
+  res3 = SWIG_ConvertPtr(obj2,SWIG_as_voidptrptr(&arg3), 0, 0);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_encrypt_memory" "', argument " "3"" of type '" "void *""'"); 
+  }
+  ecode4 = SWIG_AsVal_size_t(obj3, &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "netpgp_encrypt_memory" "', argument " "4"" of type '" "size_t""'");
+  } 
+  arg4 = (size_t)(val4);
+  res5 = SWIG_AsCharPtrAndSize(obj4, &buf5, NULL, &alloc5);
+  if (!SWIG_IsOK(res5)) {
+    SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "netpgp_encrypt_memory" "', argument " "5"" of type '" "char *""'");
+  }
+  arg5 = (char *)(buf5);
+  ecode6 = SWIG_AsVal_size_t(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "netpgp_encrypt_memory" "', argument " "6"" of type '" "size_t""'");
+  } 
+  arg6 = (size_t)(val6);
+  ecode7 = SWIG_AsVal_int(obj6, &val7);
+  if (!SWIG_IsOK(ecode7)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode7), "in method '" "netpgp_encrypt_memory" "', argument " "7"" of type '" "int""'");
+  } 
+  arg7 = (int)(val7);
+  result = (int)netpgp_encrypt_memory(arg1,(char const *)arg2,arg3,arg4,arg5,arg6,arg7);
+  resultobj = SWIG_From_int((int)(result));
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  if (alloc5 == SWIG_NEWOBJ) free((char*)buf5);
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  if (alloc5 == SWIG_NEWOBJ) free((char*)buf5);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_netpgp_decrypt_memory(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  netpgp_t *arg1 = (netpgp_t *) 0 ;
+  void *arg2 = (void *) 0 ;
+  size_t arg3 ;
+  char *arg4 = (char *) 0 ;
+  size_t arg5 ;
+  int arg6 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  size_t val3 ;
+  int ecode3 = 0 ;
+  int res4 ;
+  char *buf4 = 0 ;
+  int alloc4 = 0 ;
+  size_t val5 ;
+  int ecode5 = 0 ;
+  int val6 ;
+  int ecode6 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  PyObject * obj5 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOOO:netpgp_decrypt_memory",&obj0,&obj1,&obj2,&obj3,&obj4,&obj5)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_decrypt_memory" "', argument " "1"" of type '" "netpgp_t *""'"); 
+  }
+  arg1 = (netpgp_t *)(argp1);
+  res2 = SWIG_ConvertPtr(obj1,SWIG_as_voidptrptr(&arg2), 0, 0);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_decrypt_memory" "', argument " "2"" of type '" "void const *""'"); 
+  }
+  ecode3 = SWIG_AsVal_size_t(obj2, &val3);
+  if (!SWIG_IsOK(ecode3)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "netpgp_decrypt_memory" "', argument " "3"" of type '" "size_t""'");
+  } 
+  arg3 = (size_t)(val3);
+  res4 = SWIG_AsCharPtrAndSize(obj3, &buf4, NULL, &alloc4);
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "netpgp_decrypt_memory" "', argument " "4"" of type '" "char *""'");
+  }
+  arg4 = (char *)(buf4);
+  ecode5 = SWIG_AsVal_size_t(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "netpgp_decrypt_memory" "', argument " "5"" of type '" "size_t""'");
+  } 
+  arg5 = (size_t)(val5);
+  ecode6 = SWIG_AsVal_int(obj5, &val6);
+  if (!SWIG_IsOK(ecode6)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "netpgp_decrypt_memory" "', argument " "6"" of type '" "int""'");
+  } 
+  arg6 = (int)(val6);
+  result = (int)netpgp_decrypt_memory(arg1,(void const *)arg2,arg3,arg4,arg5,arg6);
+  resultobj = SWIG_From_int((int)(result));
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return resultobj;
+fail:
+  if (alloc4 == SWIG_NEWOBJ) free((char*)buf4);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_netpgp_match_keys(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  netpgp_t *arg1 = (netpgp_t *) 0 ;
+  char *arg2 = (char *) 0 ;
+  char *arg3 = (char *) 0 ;
+  void *arg4 = (void *) 0 ;
+  int arg5 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  char *buf3 = 0 ;
+  int alloc3 = 0 ;
+  int res4 ;
+  int val5 ;
+  int ecode5 = 0 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  PyObject * obj3 = 0 ;
+  PyObject * obj4 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOOOO:netpgp_match_keys",&obj0,&obj1,&obj2,&obj3,&obj4)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_match_keys" "', argument " "1"" of type '" "netpgp_t *""'"); 
+  }
+  arg1 = (netpgp_t *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_match_keys" "', argument " "2"" of type '" "char *""'");
+  }
+  arg2 = (char *)(buf2);
+  res3 = SWIG_AsCharPtrAndSize(obj2, &buf3, NULL, &alloc3);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_match_keys" "', argument " "3"" of type '" "char const *""'");
+  }
+  arg3 = (char *)(buf3);
+  res4 = SWIG_ConvertPtr(obj3,SWIG_as_voidptrptr(&arg4), 0, 0);
+  if (!SWIG_IsOK(res4)) {
+    SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "netpgp_match_keys" "', argument " "4"" of type '" "void *""'"); 
+  }
+  ecode5 = SWIG_AsVal_int(obj4, &val5);
+  if (!SWIG_IsOK(ecode5)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "netpgp_match_keys" "', argument " "5"" of type '" "int""'");
+  } 
+  arg5 = (int)(val5);
+  result = (int)netpgp_match_keys(arg1,arg2,(char const *)arg3,arg4,arg5);
+  resultobj = SWIG_From_int((int)(result));
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  if (alloc3 == SWIG_NEWOBJ) free((char*)buf3);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_netpgp_match_pubkeys(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  netpgp_t *arg1 = (netpgp_t *) 0 ;
+  char *arg2 = (char *) 0 ;
+  void *arg3 = (void *) 0 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  int res2 ;
+  char *buf2 = 0 ;
+  int alloc2 = 0 ;
+  int res3 ;
+  PyObject * obj0 = 0 ;
+  PyObject * obj1 = 0 ;
+  PyObject * obj2 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"OOO:netpgp_match_pubkeys",&obj0,&obj1,&obj2)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_match_pubkeys" "', argument " "1"" of type '" "netpgp_t *""'"); 
+  }
+  arg1 = (netpgp_t *)(argp1);
+  res2 = SWIG_AsCharPtrAndSize(obj1, &buf2, NULL, &alloc2);
+  if (!SWIG_IsOK(res2)) {
+    SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "netpgp_match_pubkeys" "', argument " "2"" of type '" "char *""'");
+  }
+  arg2 = (char *)(buf2);
+  res3 = SWIG_ConvertPtr(obj2,SWIG_as_voidptrptr(&arg3), 0, 0);
+  if (!SWIG_IsOK(res3)) {
+    SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "netpgp_match_pubkeys" "', argument " "3"" of type '" "void *""'"); 
+  }
+  result = (int)netpgp_match_pubkeys(arg1,arg2,arg3);
+  resultobj = SWIG_From_int((int)(result));
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return resultobj;
+fail:
+  if (alloc2 == SWIG_NEWOBJ) free((char*)buf2);
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_netpgp_validate_sigs(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  netpgp_t *arg1 = (netpgp_t *) 0 ;
+  int result;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject * obj0 = 0 ;
+  
+  if (!PyArg_ParseTuple(args,(char *)"O:netpgp_validate_sigs",&obj0)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(obj0, &argp1,SWIGTYPE_p_netpgp_t, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "netpgp_validate_sigs" "', argument " "1"" of type '" "netpgp_t *""'"); 
+  }
+  arg1 = (netpgp_t *)(argp1);
+  result = (int)netpgp_validate_sigs(arg1);
   resultobj = SWIG_From_int((int)(result));
   return resultobj;
 fail:
@@ -4199,8 +4607,10 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"netpgp_list_packets", _wrap_netpgp_list_packets, METH_VARARGS, NULL},
 	 { (char *)"netpgp_setvar", _wrap_netpgp_setvar, METH_VARARGS, NULL},
 	 { (char *)"netpgp_getvar", _wrap_netpgp_getvar, METH_VARARGS, NULL},
+	 { (char *)"netpgp_incvar", _wrap_netpgp_incvar, METH_VARARGS, NULL},
+	 { (char *)"netpgp_unsetvar", _wrap_netpgp_unsetvar, METH_VARARGS, NULL},
+	 { (char *)"netpgp_set_homedir", _wrap_netpgp_set_homedir, METH_VARARGS, NULL},
 	 { (char *)"netpgp_list_keys", _wrap_netpgp_list_keys, METH_VARARGS, NULL},
-	 { (char *)"netpgp_list_sigs", _wrap_netpgp_list_sigs, METH_VARARGS, NULL},
 	 { (char *)"netpgp_find_key", _wrap_netpgp_find_key, METH_VARARGS, NULL},
 	 { (char *)"netpgp_get_key", _wrap_netpgp_get_key, METH_VARARGS, NULL},
 	 { (char *)"netpgp_export_key", _wrap_netpgp_export_key, METH_VARARGS, NULL},
@@ -4212,6 +4622,11 @@ static PyMethodDef SwigMethods[] = {
 	 { (char *)"netpgp_verify_file", _wrap_netpgp_verify_file, METH_VARARGS, NULL},
 	 { (char *)"netpgp_sign_memory", _wrap_netpgp_sign_memory, METH_VARARGS, NULL},
 	 { (char *)"netpgp_verify_memory", _wrap_netpgp_verify_memory, METH_VARARGS, NULL},
+	 { (char *)"netpgp_encrypt_memory", _wrap_netpgp_encrypt_memory, METH_VARARGS, NULL},
+	 { (char *)"netpgp_decrypt_memory", _wrap_netpgp_decrypt_memory, METH_VARARGS, NULL},
+	 { (char *)"netpgp_match_keys", _wrap_netpgp_match_keys, METH_VARARGS, NULL},
+	 { (char *)"netpgp_match_pubkeys", _wrap_netpgp_match_pubkeys, METH_VARARGS, NULL},
+	 { (char *)"netpgp_validate_sigs", _wrap_netpgp_validate_sigs, METH_VARARGS, NULL},
 	 { NULL, NULL, 0, NULL }
 };
 
