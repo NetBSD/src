@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.28 2010/04/28 09:27:47 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.29 2010/04/28 13:28:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.28 2010/04/28 09:27:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.29 2010/04/28 13:28:43 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -176,9 +176,7 @@ static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
 static void uvm_pageremove(struct uvm_object *, struct vm_page *);
 #ifdef DEVICE_PAGE
 static void vm_page_device_mdpage_insert(paddr_t);
-#if 0
 static void vm_page_device_mdpage_remove(paddr_t);
-#endif
 #endif
 
 /*
@@ -761,15 +759,17 @@ uvm_page_physget(paddr_t *paddrp)
 static struct vm_physseg *
 uvm_page_physload_common(struct vm_physseg_freelist * const, struct vm_physseg **, int,
     const paddr_t, const paddr_t, const paddr_t, const paddr_t, const int);
-#if 0
 static void
-uvm_page_physunload_common(struct vm_physseg * const);
-#endif
+uvm_page_physunload_common(struct vm_physseg_freelist *,
+    struct vm_physseg **, struct vm_physseg *);
 static void
 uvm_page_physseg_init(void);
 static struct vm_physseg *
 uvm_physseg_insert(struct vm_physseg_freelist *, struct vm_physseg **, int,
     const paddr_t, const paddr_t);
+static void
+uvm_physseg_remove(struct vm_physseg_freelist *, struct vm_physseg **,
+    struct vm_physseg *);
 
 void *
 uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
@@ -803,6 +803,19 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	return seg;
 }
 
+void
+uvm_page_physunload(void *cookie)
+{
+	struct vm_physseg *seg = cookie;
+
+	panic("memory unload is not supported yet");
+
+	/* XXX */
+
+	uvm_page_physunload_common(&vm_physmem_freelist, vm_physmem_ptrs, seg);
+	vm_nphysmem--;
+}
+
 #ifdef DEVICE_PAGE
 void *
 uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
@@ -818,6 +831,17 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 		vm_page_device_mdpage_insert(pf);
 	vm_nphysdev++;
 	return seg;
+}
+
+void
+uvm_page_physunload_device(void *cookie)
+{
+	struct vm_physseg *seg = cookie;
+
+	for (paddr_t pf = seg->start; pf < seg->end; pf++)
+		vm_page_device_mdpage_remove(pf);
+	uvm_page_physunload_common(&vm_physdev_freelist, vm_physdev_ptrs, seg);
+	vm_nphysdev--;
 }
 #endif
 
@@ -855,6 +879,14 @@ uvm_page_physload_common(struct vm_physseg_freelist *freelist,
 	ps->end = end;
 
 	return ps;
+}
+
+void
+uvm_page_physunload_common(struct vm_physseg_freelist *freelist,
+    struct vm_physseg **segs, struct vm_physseg *seg)
+{
+
+	uvm_physseg_remove(freelist, segs, seg);
 }
 
 static void
@@ -915,6 +947,24 @@ uvm_physseg_insert(struct vm_physseg_freelist *freelist,
 	panic("uvm_page_physload: unknown physseg strategy selected!");
 #endif
 	return ps;
+}
+
+static void
+uvm_physseg_remove(struct vm_physseg_freelist *freelist, struct vm_physseg **segs,
+    struct vm_physseg *seg)
+{
+	struct vm_physseg **segp;
+
+	for (segp = segs; segp < segs + VM_PHYSSEG_MAX; segp++)
+		if (*segp == seg)
+			break;
+	if (segp == segs + VM_PHYSSEG_MAX)
+		panic("unknown segment: %p", seg);
+	SIMPLEQ_INSERT_TAIL(freelist, seg, list);
+	while (segp < segs + VM_PHYSSEG_MAX) {
+		*segp = *(segp + 1);
+		segp++;
+	}
 }
 
 /*
@@ -1248,7 +1298,6 @@ vm_page_device_mdpage_insert(paddr_t pf)
 	mutex_spin_exit(lock);
 }
 
-#if 0
 static void
 vm_page_device_mdpage_remove(paddr_t pf)
 {
@@ -1275,7 +1324,6 @@ vm_page_device_mdpage_remove(paddr_t pf)
 	KASSERT(mde != NULL);
 	kmem_free(mde, sizeof(*mde));
 }
-#endif
 
 static struct vm_page_md *
 vm_page_device_mdpage_lookup(struct vm_page *pg)
