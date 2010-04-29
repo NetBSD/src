@@ -1,7 +1,7 @@
-/* $NetBSD: unzip.c,v 1.12 2010/02/18 15:51:57 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.13 2010/04/29 06:32:19 joerg Exp $ */
 
 /*-
- * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>
+ * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
  * Copyright (c) 2007-2008 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.12 2010/02/18 15:51:57 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.13 2010/04/29 06:32:19 joerg Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -459,6 +459,34 @@ handle_existing_file(char **path)
 }
 
 /*
+ * Detect binary files by a combination of character white list and
+ * black list. NUL bytes and other control codes without use in text files
+ * result directly in switching the file to binary mode. Otherwise, at least
+ * one white-listed byte has to be found.
+ *
+ * Black-listed: 0..6, 14..25, 28..31
+ * White-listed: 9..10, 13, >= 32
+ *
+ * See the proginfo/txtvsbin.txt in the zip sources for a detailed discussion.
+ */
+#define BYTE_IS_BINARY(x)	((x) < 32 && (0xf3ffc07fU & (1U << (x))))
+#define	BYTE_IS_TEXT(x)		((x) >= 32 || (0x00002600U & (1U << (x))))
+
+static int
+check_binary(const unsigned char *buf, size_t len)
+{
+	int rv;
+	for (rv = 1; len--; ++buf) {
+		if (BYTE_IS_BINARY(*buf))
+			return 1;
+		if (BYTE_IS_TEXT(*buf))
+			rv = 0;
+	}
+
+	return rv;
+}
+
+/*
  * Extract a regular file.
  */
 static void
@@ -544,11 +572,9 @@ recheck:
 		 * guess wrong, we print a warning message later.
 		 */
 		if (a_opt && n == 0) {
-			for (p = buffer; p < end; ++p) {
-				if (!isascii((unsigned char)*p)) {
-					text = 0;
-					break;
-				}
+			if (check_binary(buffer, len)) {
+				text = 0;
+				break;
 			}
 		}
 
@@ -562,7 +588,7 @@ recheck:
 		/* hard case: convert \r\n to \n (sigh...) */
 		for (p = buffer; p < end; p = q + 1) {
 			for (q = p; q < end; q++) {
-				if (!warn && !isascii(*q)) {
+				if (!warn && BYTE_IS_BINARY(*q)) {
 					warningx("%s may be corrupted due"
 					    " to weak text file detection"
 					    " heuristic", *path);
