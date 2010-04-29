@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.19 2010/04/28 09:27:47 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.20 2010/04/29 03:15:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -235,15 +235,22 @@ struct vm_page {
 struct vm_physseg {
 	paddr_t	start;			/* PF# of first page in segment */
 	paddr_t	end;			/* (PF# of last page in segment) + 1 */
+
+	/* memory properties */
 	paddr_t	avail_start;		/* PF# of first free page in segment */
 	paddr_t	avail_end;		/* (PF# of last free page in segment) +1  */
 	int	free_list;		/* which free list they belong on */
 	struct	vm_page *pgs;		/* vm_page structures (from start) */
 	struct	vm_page *endpg;		/* vm_page structure for end */
+
 #ifdef __HAVE_PMAP_PHYSSEG
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
 #endif
 	SIMPLEQ_ENTRY(vm_physseg) list;
+
+	/* device properties */
+	int	prot;			/* protection of device region */
+	int	flags;			/* XXXUEBS BUS_SPACE_MAP_* */
 };
 
 #ifdef _KERNEL
