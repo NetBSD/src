@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1437 2010/04/28 07:35:30 jruoho Exp $
+#	$NetBSD: mi,v 1.1438 2010/04/29 14:36:35 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9492,7 +9492,7 @@
 ./usr/share/man/cat9/sched_4bsd.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_m2.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sched_lock_idle.0		comp-obsolete		obsolete
-./usr/share/man/cat9/sched_psignal.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sched_psignal.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/sched_unlock_idle.0	comp-obsolete		obsolete
 ./usr/share/man/cat9/scheduler.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/scsipi.0			comp-sys-catman		.cat
@@ -9523,7 +9523,7 @@
 ./usr/share/man/cat9/sigcode.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sigexit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/siginit.0			comp-sys-catman		.cat
-./usr/share/man/cat9/sigmasked.0		comp-sys-catman		.cat
+./usr/share/man/cat9/sigmasked.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/signal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/sigpending1.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/sigprocmask1.0		comp-sys-catman		.cat
@@ -15175,7 +15175,7 @@
 ./usr/share/man/html9/rwlock.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sched_4bsd.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sched_m2.html		comp-sys-htmlman	html
-./usr/share/man/html9/sched_psignal.html	comp-sys-htmlman	html
+./usr/share/man/html9/sched_psignal.html	comp-obsolete		obsolete
 ./usr/share/man/html9/scsipi.html		comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel.html		comp-sys-htmlman	html
 ./usr/share/man/html9/secmodel_bsd44.html	comp-sys-htmlman	html
@@ -15202,7 +15202,7 @@
 ./usr/share/man/html9/sigcode.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sigexit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/siginit.html		comp-sys-htmlman	html
-./usr/share/man/html9/sigmasked.html		comp-sys-htmlman	html
+./usr/share/man/html9/sigmasked.html		comp-obsolete		obsolete
 ./usr/share/man/html9/signal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sigpending1.html		comp-sys-htmlman	html
 ./usr/share/man/html9/sigprocmask1.html		comp-sys-htmlman	html
@@ -21051,7 +21051,7 @@
 ./usr/share/man/man9/sched_4bsd.9		comp-sys-man		.man
 ./usr/share/man/man9/sched_m2.9			comp-sys-man		.man
 ./usr/share/man/man9/sched_lock_idle.9		comp-obsolete		obsolete
-./usr/share/man/man9/sched_psignal.9		comp-sys-man		.man
+./usr/share/man/man9/sched_psignal.9		comp-obsolete		obsolete
 ./usr/share/man/man9/sched_unlock_idle.9	comp-obsolete		obsolete
 ./usr/share/man/man9/scheduler.9		comp-obsolete		obsolete
 ./usr/share/man/man9/scsipi.9			comp-sys-man		.man
@@ -21082,7 +21082,7 @@
 ./usr/share/man/man9/sigcode.9			comp-sys-man		.man
 ./usr/share/man/man9/sigexit.9			comp-sys-man		.man
 ./usr/share/man/man9/siginit.9			comp-sys-man		.man
-./usr/share/man/man9/sigmasked.9		comp-sys-man		.man
+./usr/share/man/man9/sigmasked.9		comp-obsolete		obsolete
 ./usr/share/man/man9/signal.9			comp-sys-man		.man
 ./usr/share/man/man9/sigpending1.9		comp-sys-man		.man
 ./usr/share/man/man9/sigprocmask1.9		comp-sys-man		.man
