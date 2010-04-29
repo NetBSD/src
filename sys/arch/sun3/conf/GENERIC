@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2010/04/16 13:48:36 pooka Exp $
+# $NetBSD: GENERIC,v 1.150 2010/04/29 22:40:54 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.149 $"
+#ident		"GENERIC-$Revision: 1.150 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -101,7 +101,7 @@ file-system	PROCFS		# /proc
 #file-system	UNION		# union file system
 file-system	MFS		# memory-based filesystem
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 options 	NFSSERVER	# nfs server support

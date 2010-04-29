@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.222 2010/04/16 13:48:35 pooka Exp $
+# $NetBSD: GENERIC,v 1.223 2010/04/29 22:40:54 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.222 $"
+#ident 		"GENERIC-$Revision: 1.223 $"
 
 maxusers	32
 
@@ -201,7 +201,7 @@ file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 ## File system options.

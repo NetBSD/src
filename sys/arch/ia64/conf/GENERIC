@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.2 2010/04/15 13:13:57 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.3 2010/04/29 22:40:51 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -52,6 +52,7 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 # File systems
 file-system	FFS		# UFS
 file-system 	MFS		# memory file system
+file-system	TMPFS		# Efficient memory file-system
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
