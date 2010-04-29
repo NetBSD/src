@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)swab.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: swab.3,v 1.12 2010/04/17 20:29:20 wiz Exp $
+.\"	$NetBSD: swab.3,v 1.13 2010/04/29 05:42:04 jruoho Exp $
 .\"
-.Dd April 17, 2010
+.Dd April 29, 2010
 .Dt SWAB 3
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .In unistd.h
 .Ft void
-.Fn swab "const void * restrict src" "void * restrict dst" "size_t len"
+.Fn swab "const void * restrict src" "void * restrict dst" "ssize_t len"
 .Sh DESCRIPTION
 The function
 .Fn swab
@@ -65,8 +65,27 @@ bytes and the disposition of the last byte is unspecified.
 .Sh SEE ALSO
 .Xr bzero 3 ,
 .Xr memset 3
+.Sh STANDARDS
+The
+.Fn swab
+function conforms to
+.St -p1003.1-2001 .
 .Sh HISTORY
 A
 .Fn swab
 function appeared in
 .At v7 .
+It was originally documented to be
+.Dq useful for carrying binary data between PDP11's and other machines .
+.Pp
+In
+.Nx 6.0
+the type of
+.Fa len
+was changed from
+.Vt size_t
+to
+.Vt ssize_t
+for
+.Tn POSIX
+compliance.
