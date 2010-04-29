@@ -1,4 +1,4 @@
-.\"	$NetBSD: frexp.3,v 1.1 2006/07/03 16:03:56 drochner Exp $
+.\"	$NetBSD: frexp.3,v 1.2 2010/04/29 08:35:03 joerg Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,9 +65,7 @@ such that
 .Em x
 is a
 .Em double
-with magnitude in the interval
-.Bo 1/2 , 1 Pc
-or zero, and
+with magnitude in the interval [1/2, 1) or zero, and
 .Fa value
 equals
 .Em x
