@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.183 2010/04/23 00:18:50 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.184 2010/04/29 23:12:21 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.183 2010/04/23 00:18:50 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.184 2010/04/29 23:12:21 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.183 2010/04/23 00:18:50 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.184 2010/04/29 23:12:21 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1695,6 +1695,7 @@ Error(const char *fmt, ...)
 	err_file = debug_file;
 	if (err_file == stdout)
 		err_file = stderr;
+	(void)fflush(stdout);
 	for (;;) {
 		va_start(ap, fmt);
 		fprintf(err_file, "%s: ", progname);
@@ -1729,6 +1730,7 @@ Fatal(const char *fmt, ...)
 	if (jobsRunning)
 		Job_Wait();
 
+	(void)fflush(stdout);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
@@ -1760,6 +1762,7 @@ Punt(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
+	(void)fflush(stdout);
 	(void)fprintf(stderr, "%s: ", progname);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
