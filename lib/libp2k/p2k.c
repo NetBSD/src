@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.34 2010/04/14 14:15:48 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.35 2010/04/29 22:34:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -62,6 +62,11 @@
 #include <rump/p2k.h>
 #include <rump/ukfs.h>
 
+/* NetBSD-5 compat */
+#ifndef MOUNT_RUMPFS
+#define MOUNT_RUMPFS    "rumpfs"
+#endif
+
 PUFFSOP_PROTOS(p2k)
 
 LIST_HEAD(p2k_vp_hash, p2k_node);
@@ -71,6 +76,7 @@ struct p2k_mount {
 	struct puffs_usermount *p2m_pu;
 	struct ukfs *p2m_ukfs;
 	struct p2k_vp_hash p2m_vphash[NHASHBUCK];
+	struct mount *p2m_mp;
 	int p2m_nvnodes;
 	int p2m_imtmpfsman;
 };
@@ -393,16 +399,40 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 
 	if (ukfs_init() == -1)
 		goto out;
-	if (part != ukfs_part_na)
-		ukfs = ukfs_mount_disk(vfsname, devpath, part,
-		    mountpath, mntflags, arg, alen);
-	else
-		ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags,
-		    arg, alen);
-	if (ukfs == NULL)
-		goto out;
-	ukfs_setspecific(ukfs, p2m);
-	p2m->p2m_ukfs = ukfs;
+
+	/* 
+	 * If we're mounting rumpfs, actually do no mount and redirect
+	 * requests to rump fs namespace root.  Strictly speaking, this
+	 * is not correct, but considering rumpfs doesn't currently
+	 * support VFS_MOUNT(), I don't think anyone will notice.
+	 */
+	if (strcmp(vfsname, MOUNT_RUMPFS) == 0) {
+		if ((rv = rump_pub_vfs_getmp("/", &p2m->p2m_mp)) != 0) {
+			errno = rv;
+			rv = -1;
+			goto out;
+		}
+		if ((rv = rump_pub_vfs_root(p2m->p2m_mp,
+		    &p2m->p2m_rvp, 0)) != 0) {
+			errno = rv;
+			rv = -1;
+			goto out;
+		}
+	} else {
+		if (part != ukfs_part_na)
+			ukfs = ukfs_mount_disk(vfsname, devpath, part,
+			    mountpath, mntflags, arg, alen);
+		else
+			ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags,
+			    arg, alen);
+		if (ukfs == NULL)
+			goto out;
+		ukfs_setspecific(ukfs, p2m);
+		p2m->p2m_ukfs = ukfs;
+		p2m->p2m_mp = ukfs_getmp(ukfs);
+		p2m->p2m_rvp = ukfs_getrvp(ukfs);
+	}
+
 	p2m->p2m_pu = pu;
 
 	/*
@@ -415,7 +445,6 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 	 */
 	p2m->p2m_imtmpfsman = strcmp(vfsname, MOUNT_TMPFS) == 0;
 
-	p2m->p2m_rvp = ukfs_getrvp(ukfs);
 	p2n_root = getp2n(p2m, p2m->p2m_rvp, true, NULL);
 	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
 	puffs_setstacksize(pu, PUFFS_STACKSIZE_MIN);
@@ -423,7 +452,7 @@ setupfs(struct p2k_mount *p2m, const char *vfsname, const char *devpath,
 	puffs_set_prepost(pu, makelwp, clearlwp);
 	puffs_set_errnotify(pu, p2k_errcatcher);
 
-	puffs_setspecific(pu, ukfs);
+	puffs_setspecific(pu, p2m);
 	rv = puffs_mount(pu, mountpath, mntflags, p2n_root);
 
  out:
@@ -513,7 +542,8 @@ p2k_setup_diskfs(struct p2k_mount *p2m, const char *vfsname,
 int
 p2k_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 {
-	struct mount *mp = ukfs_getmp(puffs_getspecific(pu));
+	struct p2k_mount *p2m = puffs_getspecific(pu);
+	struct mount *mp = p2m->p2m_mp;
 
 	return rump_pub_vfs_statvfs(mp, sbp);
 }
@@ -522,16 +552,18 @@ p2k_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 int
 p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 {
-	struct ukfs *fs = puffs_getspecific(pu);
-	struct p2k_mount *p2m = ukfs_getspecific(fs);
+	struct p2k_mount *p2m = puffs_getspecific(pu);
+	struct ukfs *fs = p2m->p2m_ukfs;
 	int error = 0;
 
 	rump_pub_lwp_release(rump_pub_lwp_curlwp()); /* ukfs & curlwp tricks */
 
 	rump_pub_vp_rele(p2m->p2m_rvp);
-	if (ukfs_release(fs, 0) != 0) {
-		ukfs_release(fs, UKFS_RELFLAG_FORCE);
-		error = 0;
+	if (fs) {
+		if (ukfs_release(fs, 0) != 0) {
+			ukfs_release(fs, UKFS_RELFLAG_FORCE);
+			error = 0;
+		}
 	}
 	p2m->p2m_ukfs = NULL;
 
@@ -543,7 +575,8 @@ int
 p2k_fs_sync(struct puffs_usermount *pu, int waitfor,
 	const struct puffs_cred *pcr)
 {
-	struct mount *mp = ukfs_getmp(puffs_getspecific(pu));
+	struct p2k_mount *p2m = puffs_getspecific(pu);
+	struct mount *mp = p2m->p2m_mp;
 	struct kauth_cred *cred;
 	int rv;
 
@@ -559,8 +592,8 @@ int
 p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	struct puffs_newinfo *pni)
 {
-	struct mount *mp = ukfs_getmp(puffs_getspecific(pu));
-	struct p2k_mount *p2m = ukfs_getspecific(puffs_getspecific(pu));
+	struct p2k_mount *p2m = puffs_getspecific(pu);
+	struct mount *mp = p2m->p2m_mp;
 	struct p2k_node *p2n;
 	struct vnode *vp;
 	enum vtype vtype;
@@ -602,7 +635,7 @@ int
 p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
-	struct p2k_mount *p2m = ukfs_getspecific(puffs_getspecific(pu));
+	struct p2k_mount *p2m = puffs_getspecific(pu);
 	struct p2k_node *p2n_dir = opc, *p2n;
 	struct componentname *cn;
 	struct vnode *dvp = p2n_dir->p2n_vp, *vp;
@@ -722,7 +755,7 @@ do_makenode(struct puffs_usermount *pu, struct p2k_node *p2n_dir,
 	int (*symfn)(struct vnode *, struct vnode **, struct componentname *,
 		      struct vattr *, char *))
 {
-	struct p2k_mount *p2m = ukfs_getspecific(puffs_getspecific(pu));
+	struct p2k_mount *p2m = puffs_getspecific(pu);
 	struct vnode *dvp = p2n_dir->p2n_vp;
 	struct p2k_node *p2n;
 	struct componentname *cn;
@@ -1235,8 +1268,7 @@ p2k_node_write(struct puffs_usermount *pu, puffs_cookie_t opc,
 int
 p2k_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
-	struct ukfs *fs = puffs_getspecific(pu);
-	struct p2k_mount *p2m = ukfs_getspecific(fs);
+	struct p2k_mount *p2m = puffs_getspecific(pu);
 	struct p2k_node *p2n = opc;
 	struct vnode *vp = OPC2VP(opc);
 	bool recycle = false;
