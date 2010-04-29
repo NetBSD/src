@@ -1,4 +1,4 @@
-.\"	$NetBSD: scandir.3,v 1.12 2010/04/05 21:29:09 joerg Exp $
+.\"	$NetBSD: scandir.3,v 1.13 2010/04/29 08:06:21 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)scandir.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 29, 2010
 .Dt SCANDIR 3
 .Os
 .Sh NAME
@@ -97,6 +97,13 @@ cannot allocate enough memory to hold all the data structures.
 .Xr malloc 3 ,
 .Xr qsort 3 ,
 .Xr dir 5
+.Sh STANDARDS
+The
+.Fn scandir
+and
+.Fn alphasort
+functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn scandir
