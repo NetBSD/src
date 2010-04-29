@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.19 2009/05/04 19:42:40 wiz Exp $
+.\"	$NetBSD: signal.9,v 1.20 2010/04/29 14:36:35 jruoho Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 20, 2005
+.Dd April 29, 2010
 .Dt SIGNAL 9
 .Os
 .Sh NAME
@@ -45,12 +45,10 @@
 .Nm gsignal ,
 .Nm pgsignal ,
 .Nm psignal ,
-.Nm sched_psignal ,
 .Nm issignal ,
 .Nm postsig ,
 .Nm killproc ,
 .Nm sigexit ,
-.Nm sigmasked ,
 .Nm trapsignal ,
 .Nm sendsig ,
 .Nm sigcode ,
@@ -94,8 +92,6 @@
 .Fn psignal "struct proc *p" "int signum"
 .Ft void
 .Fn kpsignal "struct proc *p" "ksiginfo_t *ks" "void *data"
-.Ft void
-.Fn sched_psignal "struct proc *p" "int signum"
 .Ft int
 .Fn issignal "struct lwp *l"
 .Ft void
@@ -104,8 +100,6 @@
 .Fn killproc "struct proc *p" "const char *why"
 .Ft void
 .Fn sigexit "struct proc *p" "int signum"
-.Ft int
-.Fn sigmasked "struct proc *p" "int signum"
 .Ft void
 .Fn trapsignal "struct proc *p" "const ksiginfo_t *ks"
 .Ft void
@@ -341,11 +335,6 @@ If the target process is being traced,
 behaves as if the target process were taking the default action for
 .Fa signum .
 This allows the tracing process to be notified of the signal.
-.It void Fn sched_psignal "struct proc *p" "int signum"
-.Pp
-An alternate version of
-.Fn kpsignal
-which is intended for use by code which holds the scheduler lock.
 .It int Fn issignal "struct lwp *l"
 .Pp
 This function determines which signal, if any, is to be posted to
@@ -400,12 +389,6 @@ to exit with the signal
 .Fa signum ,
 generating a core file if appropriate.
 No checks are made for masked or caught signals; the process always exits.
-.It int Fn sigmasked "struct proc *p" "int signum"
-.Pp
-This function returns non-zero if the signal specified by
-.Fa signum
-is ignored or masked for process
-.Fa p .
 .It void Fn sendsig "const ksiginfo_t *ks" "const sigset_t *mask"
 .Pp
 This function is provided by machine-dependent code, and is used to
