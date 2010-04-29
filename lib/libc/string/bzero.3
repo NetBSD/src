@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bzero.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: bzero.3,v 1.12 2003/08/07 16:43:47 agc Exp $
+.\"	$NetBSD: bzero.3,v 1.13 2010/04/29 06:54:26 jruoho Exp $
 .\"
-.Dd June 4, 1993
+.Dd April 29, 2010
 .Dt BZERO 3
 .Os
 .Sh NAME
@@ -59,6 +59,21 @@ does nothing.
 .Sh SEE ALSO
 .Xr memset 3 ,
 .Xr swab 3
+.Sh STANDARDS
+The
+.Fn bzero
+function conforms to
+.St -p1003.1-2001 .
+The
+.St -p1003.1-2004
+revision marked it as legacy and recommended the use of
+.Xr memset 3
+instead.
+The
+.St -p1003.1-2008
+revision removed
+.Fn bzero
+from the specification.
 .Sh HISTORY
 A
 .Fn bzero
