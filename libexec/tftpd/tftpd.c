@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.37 2010/04/28 22:21:51 hubertf Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.38 2010/04/29 20:13:46 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.37 2010/04/28 22:21:51 hubertf Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.38 2010/04/29 20:13:46 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,8 +172,12 @@ main(int argc, char *argv[])
 	curuid = getuid();
 	curgid = getgid();
 
-	while ((ch = getopt(argc, argv, "dg:lnp:s:u:w")) != -1)
+	while ((ch = getopt(argc, argv, "cdg:lnp:s:u:")) != -1)
 		switch (ch) {
+		case 'w':
+			unrestricted_writes = 1;
+			break;
+
 		case 'd':
 			debug++;
 			break;
@@ -203,10 +207,6 @@ main(int argc, char *argv[])
 
 		case 'u':
 			tgtuser = optarg;
-			break;
-
-		case 'w':
-			unrestricted_writes = 1;
 			break;
 
 		default:
