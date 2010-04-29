@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.38 2010/04/24 11:26:15 kiyohara Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.39 2010/04/29 06:41:27 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.38 2010/04/24 11:26:15 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.39 2010/04/29 06:41:27 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,7 +99,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 	char devinfo[256];
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	u_int32_t csr;
+	uint32_t csr;
 
 	aprint_naive(": IEEE 1394 Controller\n");
 
@@ -125,8 +125,17 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
+	csr |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, csr);
+
+	/*
+	 * Some Sun FireWire controllers have their intpin register
+	 * bogusly set to 0, although it should be 3. Correct that.
+	 */
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN) &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_FIREWIRE))
+		if (pa->pa_intrpin == 0)
+			pa->pa_intrpin = 3;
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
