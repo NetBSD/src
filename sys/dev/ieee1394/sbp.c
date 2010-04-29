@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.29 2010/03/29 03:05:28 kiyohara Exp $	*/
+/*	$NetBSD: sbp.c,v 1.30 2010/04/29 06:51:26 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.29 2010/03/29 03:05:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.30 2010/04/29 06:51:26 kiyohara Exp $");
 
 
 #include <sys/param.h>
@@ -92,10 +92,10 @@ __KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.29 2010/03/29 03:05:28 kiyohara Exp $");
  * 48-64(16): bus_id, node_id
  */
 #define SBP_BIND_HI 0x1
-#define SBP_DEV2ADDR(u, l) \
-	(((u_int64_t)SBP_BIND_HI << 32) \
-	| (((u) & 0x3fff) << 10) \
-	| (((l) & 0xff) << 2))
+#define SBP_DEV2ADDR(u, l)		 \
+	(((uint64_t)SBP_BIND_HI << 32)	|\
+	 (((u) & 0x3fff) << 10)		|\
+	 (((l) & 0xff) << 2))
 #define SBP_ADDR2UNIT(a)	(((a) >> 10) & 0x3fff)
 #define SBP_ADDR2LUN(a)		(((a) >> 2) & 0xff)
 #define SBP_INITIATOR 7
@@ -937,7 +937,7 @@ sbp_probe_target(void *arg)
 	int i;
 
 SBP_DEBUG(1)
-	printf("sbp_probe_target %d\n", target->target_id);
+	printf("%s %d\n", __func__, target->target_id);
 END_DEBUG
 
 	sbp_alloc_lun(target);
@@ -1484,7 +1484,7 @@ sbp_mgm_orb(struct sbp_dev *sdev, int func, struct sbp_ocb *aocb)
 	ocb->flags = OCB_ACT_MGM;
 	ocb->sdev = sdev;
 
-	memset((void *)ocb->orb, 0, sizeof(ocb->orb));
+	memset(ocb->orb, 0, sizeof(ocb->orb));
 	ocb->orb[6] = htonl((nid << 16) | SBP_BIND_HI);
 	ocb->orb[7] = htonl(SBP_DEV2ADDR(dv_unit, sdev->lun_id));
 
@@ -1579,8 +1579,7 @@ static void
 sbp_scsi_status(struct sbp_status *sbp_status, struct sbp_ocb *ocb)
 {
 	struct sbp_cmd_status *sbp_cmd_status;
-	scsi3_sense_data_t sense =
-	    (scsi3_sense_data_t)&ocb->xs->sense.scsi_sense;
+	struct scsi_sense_data *sense = &ocb->xs->sense.scsi_sense;
 
 	sbp_cmd_status = (struct sbp_cmd_status *)sbp_status->data;
 
@@ -1608,7 +1607,7 @@ END_DEBUG
 		else
 			sense->response_code = SSD_RCODE_DEFERRED;
 		if (sbp_cmd_status->valid)
-			sense->response_code |= SSD_RESPONSE_CODE_VALID;
+			sense->response_code |= SSD_RCODE_VALID;
 		sense->flags = sbp_cmd_status->s_key;
 		if (sbp_cmd_status->mark)
 			sense->flags |= SSD_FILEMARK;
@@ -1617,25 +1616,25 @@ END_DEBUG
 		if (sbp_cmd_status->ill_len)
 			sense->flags |= SSD_ILI;
 
-		memcpy(sense->information, &sbp_cmd_status->info, 4);
+		memcpy(sense->info, &sbp_cmd_status->info, 4);
 
 		if (sbp_status->len <= 1)
 			/* XXX not scsi status. shouldn't be happened */
-			sense->asl = 0;
+			sense->extra_len = 0;
 		else if (sbp_status->len <= 4)
 			/* add_sense_code(_qual), info, cmd_spec_info */
-			sense->asl = 6;
+			sense->extra_len = 6;
 		else
 			/* fru, sense_key_spec */
-			sense->asl = 10;
+			sense->extra_len = 10;
 
 		memcpy(sense->csi, &sbp_cmd_status->cdb, 4);
 
 		sense->asc = sbp_cmd_status->s_code;
 		sense->ascq = sbp_cmd_status->s_qlfr;
-		sense->fruc = sbp_cmd_status->fru;
+		sense->fru = sbp_cmd_status->fru;
 
-		memcpy(sense->sks, sbp_cmd_status->s_keydep, 3);
+		memcpy(sense->sks.sks_bytes, sbp_cmd_status->s_keydep, 3);
 		ocb->xs->error = XS_SENSE;
 		ocb->xs->xs_status = sbp_cmd_status->status;
 /*
@@ -1663,7 +1662,8 @@ sbp_fix_inq_data(struct sbp_ocb *ocb)
 {
 	struct scsipi_xfer *xs = ocb->xs;
 	struct sbp_dev *sdev;
-	scsi3_inquiry_data_t inq = (scsi3_inquiry_data_t)xs->data;
+	struct scsipi_inquiry_data *inq =
+	    (struct scsipi_inquiry_data *)xs->data;
 
 	sdev = ocb->sdev;
 
@@ -1709,9 +1709,9 @@ END_DEBUG
 	 * XXX CAM also checks SCP_QUEUE_DQUE flag in the control mode page.
 	 */
 	if (sbp_tags > 0)
-		inq->flags[1] |= SID_CmdQue;
+		inq->flags3 |= SID_CmdQue;
 	else if (sbp_tags < 0)
-		inq->flags[1] &= ~SID_CmdQue;
+		inq->flags3 &= ~SID_CmdQue;
 
 }
 
@@ -1818,7 +1818,7 @@ SBP_DEBUG(0)
 END_DEBUG
 		printf("%s:%s\n", device_xname(sc->sc_fd.dev), sdev->bustgtlun);
 		status = sbp_status->status;
-		switch(sbp_status->resp) {
+		switch (sbp_status->resp) {
 		case SBP_REQ_CMP:
 			if (status > MAX_ORB_STATUS0)
 				printf("%s\n", orb_status0[MAX_ORB_STATUS0]);
@@ -1853,17 +1853,17 @@ END_DEBUG
 	if (ocb == NULL)
 		goto done;
 
-	switch(ntohl(ocb->orb[4]) & ORB_FMT_MSK) {
+	switch (ntohl(ocb->orb[4]) & ORB_FMT_MSK) {
 	case ORB_FMT_NOP:
 		break;
 	case ORB_FMT_VED:
 		break;
 	case ORB_FMT_STD:
-		switch(ocb->flags) {
+		switch (ocb->flags) {
 		case OCB_ACT_MGM:
 			orb_fun = ntohl(ocb->orb[4]) & ORB_FUN_MSK;
 			reset_agent = 0;
-			switch(orb_fun) {
+			switch (orb_fun) {
 			case ORB_FUN_LGI:
 			{
 				const struct fwdma_alloc *dma = &sdev->dma;
@@ -2152,7 +2152,7 @@ sbp_target_reset(struct sbp_dev *sdev, int method)
 		if (method == 2)
 			tsdev->status = SBP_DEV_LOGIN;
 	}
-	switch(method) {
+	switch (method) {
 	case 1:
 		aprint_error("target reset\n");
 		sbp_mgm_orb(sdev, ORB_FUN_RST, NULL);
@@ -2197,7 +2197,7 @@ sbp_timeout(void *arg)
 	    __func__, sdev->bustgtlun, (uint32_t)ocb->bus_addr);
 
 	sdev->timeout++;
-	switch(sdev->timeout) {
+	switch (sdev->timeout) {
 	case 1:
 		aprint_error("agent reset\n");
 		if (sdev->periph != NULL) {
