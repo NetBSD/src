@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.29 2010/04/28 13:28:43 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.30 2010/04/29 02:35:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.29 2010/04/28 13:28:43 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.30 2010/04/29 02:35:14 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -961,10 +961,11 @@ uvm_physseg_remove(struct vm_physseg_freelist *freelist, struct vm_physseg **seg
 	if (segp == segs + VM_PHYSSEG_MAX)
 		panic("unknown segment: %p", seg);
 	SIMPLEQ_INSERT_TAIL(freelist, seg, list);
-	while (segp < segs + VM_PHYSSEG_MAX) {
+	while (segp + 1 < segs + VM_PHYSSEG_MAX) {
 		*segp = *(segp + 1);
 		segp++;
 	}
+	*(segp + VM_PHYSSEG_MAX - 1) = NULL;
 }
 
 /*
