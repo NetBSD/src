@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.2 2010/04/24 21:52:34 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.3 2010/04/29 01:54:26 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.2 2010/04/24 21:52:34 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.3 2010/04/29 01:54:26 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -185,6 +185,8 @@ u_int initarm(int, char **, struct bootinfo *);
 extern void (*__sleep_func)(void *);
 extern void *__sleep_ctx;
 
+extern void (*__cpu_reset)(void);
+
 #ifdef DEBUG_BEFOREMMU
 static void	fakecninit(void);
 #endif
@@ -259,6 +261,15 @@ const struct pmap_devmap pxa2x0_devmap[] = {
 };
 #undef	_A
 #undef	_S
+
+static void
+ws003sh_cpu_reset(void)
+{
+
+		pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
+		for (;;)
+				continue;
+}
 
 static struct pxa2x0_gpioconf ws003sh_boarddep_gpioconf[] = {
 	{  41, GPIO_ALT_FN_1_IN },	/* FFRXD */
@@ -392,8 +403,10 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 			 || (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS007SH)
 			 || (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS011SH)
 			 || (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS020SH)) {
-				if (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS003SH) {
+				if (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS003SH
+				 || bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS004SH) {
 					pxa2x0_gpio_config(ws003sh_gpioconf);
+					__cpu_reset = ws003sh_cpu_reset;
 				} else if (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS007SH) {
 					pxa2x0_gpio_config(ws007sh_gpioconf);
 				} else if (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS011SH) {

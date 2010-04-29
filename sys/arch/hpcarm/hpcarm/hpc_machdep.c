@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.97 2010/04/17 13:36:21 nonaka Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.98 2010/04/29 01:54:26 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.97 2010/04/17 13:36:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.98 2010/04/29 01:54:26 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,6 +89,8 @@ void dumpsys(void);
 void (*__sleep_func)(void *);
 void *__sleep_ctx;
 
+void (*__cpu_reset)(void) = cpu_reset;
+
 #ifdef BOOT_DUMP
 void	dumppages(char *, int);
 #endif
@@ -114,7 +116,7 @@ cpu_reboot(int howto, char *bootstr)
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 		printf("rebooting...\n");
-		cpu_reset();
+		__cpu_reset();
 		/* NOTREACHED */
 	}
 
@@ -157,7 +159,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	printf("rebooting...\n");
-	cpu_reset();
+	__cpu_reset();
 	/* NOTREACHED */
 }
 
