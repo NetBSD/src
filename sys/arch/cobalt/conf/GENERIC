@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.124 2010/04/16 13:48:30 pooka Exp $
+# $NetBSD: GENERIC,v 1.125 2010/04/29 22:40:50 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+#ident 		"GENERIC-$Revision: 1.125 $"
 
 maxusers	32
 
@@ -88,7 +88,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options

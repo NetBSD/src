@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.334 2010/04/16 13:48:28 pooka Exp $
+# $NetBSD: GENERIC,v 1.335 2010/04/29 22:40:49 chs Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.334 $"
+ident		"GENERIC-$Revision: 1.335 $"
 
 maxusers 32
 
@@ -87,7 +87,7 @@ file-system	UNION		# union file system
 file-system	CODA		# CODA distributed file system
 file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
