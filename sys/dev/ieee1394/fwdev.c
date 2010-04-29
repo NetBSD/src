@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.18 2010/03/29 03:05:27 kiyohara Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.19 2010/04/29 06:53:48 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.18 2010/03/29 03:05:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.19 2010/04/29 06:53:48 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -511,10 +511,10 @@ fw_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *td)
 			break;
 		}
 
-		memcpy((void *)&xfer->send.hdr, fp, tinfo->hdr_len);
+		memcpy(&xfer->send.hdr, fp, tinfo->hdr_len);
 		if (pay_len > 0)
-			memcpy((void *)xfer->send.payload,
-			    (char *)fp + tinfo->hdr_len, pay_len);
+			memcpy(xfer->send.payload, (char *)fp + tinfo->hdr_len,
+			    pay_len);
 		xfer->send.spd = asyreq->req.sped;
 		xfer->hand = fw_xferwake;
 
