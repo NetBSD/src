@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.25 2006/08/04 20:55:45 jld Exp $
+.\"	$NetBSD: mktemp.3,v 1.26 2010/04/29 06:54:26 jruoho Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mktemp.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 28, 1998
+.Dd April 29, 2010
 .Dt MKTEMP 3
 .Os
 .Sh NAME
@@ -249,6 +249,23 @@ function.
 .Xr open 2 ,
 .Xr stat 2 ,
 .Xr umask 2
+.Sh STANDARDS
+The
+.Fn mktemp
+conforms to
+.St -p1003.1-2001 .
+It was however removed from the specification in the
+.St -p1003.1-2008
+revision.
+The
+.Fn mkstemp
+and
+.Fn mkdtemp
+conform to
+.St -p1003.1-2004
+and
+.St -p1003.1-2008 ,
+respectively.
 .Sh HISTORY
 A
 .Fn mktemp
@@ -310,5 +327,3 @@ A link-time warning will be issued advising the use of
 or
 .Fn mkdtemp
 instead.
-.\" .SH STANDARDS
-.\" .St -p1003.1-2003

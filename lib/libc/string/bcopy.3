@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bcopy.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: bcopy.3,v 1.11 2003/08/07 16:43:47 agc Exp $
+.\"	$NetBSD: bcopy.3,v 1.12 2010/04/29 06:54:26 jruoho Exp $
 .\"
-.Dd June 4, 1993
+.Dd April 29, 2010
 .Dt BCOPY 3
 .Os
 .Sh NAME
@@ -63,6 +63,16 @@ is zero, no bytes are copied.
 .Xr memmove 3 ,
 .Xr strcpy 3 ,
 .Xr strncpy 3
+.Sh STANDARDS
+The
+.Fn bcmp
+function conforms to
+.St -p1003.1-2001 .
+The
+.St -p1003.1-2004
+revision marked it as legacy the
+.St -p1003.1-2008
+revision removed it from the specification.
 .Sh HISTORY
 A
 .Fn bcopy
