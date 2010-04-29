@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.42 2010/04/27 13:26:12 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.43 2010/04/29 22:32:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.42 2010/04/27 13:26:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.43 2010/04/29 22:32:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -63,6 +63,7 @@ static int rump_vop_create(void *);
 static int rump_vop_inactive(void *);
 static int rump_vop_reclaim(void *);
 static int rump_vop_success(void *);
+static int rump_vop_readdir(void *);
 static int rump_vop_spec(void *);
 static int rump_vop_read(void *);
 static int rump_vop_write(void *);
@@ -85,6 +86,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_mknod_desc, rump_vop_mknod },
 	{ &vop_create_desc, rump_vop_create },
 	{ &vop_access_desc, rump_vop_success },
+	{ &vop_readdir_desc, rump_vop_readdir },
 	{ &vop_read_desc, rump_vop_read },
 	{ &vop_write_desc, rump_vop_write },
 	{ &vop_open_desc, rump_vop_open },
@@ -760,6 +762,82 @@ rump_vop_open(void *v)
 	}
 
 	return error;
+}
+
+/* copypaste from libpuffs.  XXX: do this properly */
+static int vdmap[] = {
+        DT_UNKNOWN,     /* VNON */
+        DT_REG,         /* VREG */
+        DT_DIR,         /* VDIR */
+        DT_BLK,         /* VBLK */
+        DT_CHR,         /* VCHR */
+        DT_LNK,         /* VLNK */
+        DT_SOCK,        /* VSUCK*/
+        DT_FIFO,        /* VFIFO*/
+        DT_UNKNOWN      /* VBAD */
+};
+/* simple readdir.  event omits dotstuff and periods */
+static int
+rump_vop_readdir(void *v)
+{
+	struct vop_readdir_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		kauth_cred_t a_cred;
+		int *a_eofflag;
+		off_t **a_cookies;
+		int *a_ncookies;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct uio *uio = ap->a_uio;
+	struct rumpfs_node *rnd = vp->v_data;
+	struct rumpfs_dent *rdent;
+	unsigned i;
+	int rv = 0;
+
+	/* seek to current entry */
+	for (i = 0, rdent = LIST_FIRST(&rnd->rn_dir);
+	    (i < uio->uio_offset) && rdent;
+	    i++, rdent = LIST_NEXT(rdent, rd_entries))
+		continue;
+	if (!rdent)
+		goto out;
+
+	/* copy entries */
+	for (; rdent && uio->uio_resid > 0;
+	    rdent = LIST_NEXT(rdent, rd_entries), i++) {
+		struct dirent dent;
+
+		dent.d_fileno = rdent->rd_node->rn_va.va_fileid;
+		dent.d_namlen = strlen(dent.d_name);
+		strcpy(dent.d_name, rdent->rd_name);
+		dent.d_type = vdmap[rdent->rd_node->rn_va.va_type];
+		dent.d_reclen = _DIRENT_RECLEN(&dent, dent.d_namlen);
+
+		if (uio->uio_resid < dent.d_reclen) {
+			i--;
+			break;
+		}
+
+		rv = uiomove(&dent, dent.d_reclen, uio); 
+		if (rv) {
+			i--;
+			break;
+		}
+	}
+
+ out:
+	if (ap->a_cookies) {
+		*ap->a_ncookies = 0;
+		*ap->a_cookies = NULL;
+	}
+	if (rdent)
+		*ap->a_eofflag = 0;
+	else
+		*ap->a_eofflag = 1;
+	uio->uio_offset = i;
+
+	return rv;
 }
 
 static int
