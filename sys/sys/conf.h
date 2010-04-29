@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.135 2009/06/20 19:24:27 mrg Exp $	*/
+/*	$NetBSD: conf.h,v 1.136 2010/04/29 12:32:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -228,15 +228,12 @@ int	seltrue_kqfilter(dev_t, struct knote *);
 #endif
 #define	DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
 
-#endif /* _KERNEL */
-
 struct devsw_conv {
 	const char *d_name;
 	devmajor_t d_bmajor;
 	devmajor_t d_cmajor;
 };
 
-#ifdef _KERNEL
 void devsw_init(void);
 const char *devsw_blk2name(devmajor_t);
 const char *cdevsw_getname(devmajor_t);
