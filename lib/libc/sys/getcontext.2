@@ -1,4 +1,4 @@
-.\"	$NetBSD: getcontext.2,v 1.6 2010/04/28 14:07:03 jruoho Exp $
+.\"	$NetBSD: getcontext.2,v 1.7 2010/04/29 06:07:35 jruoho Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,7 +132,7 @@ The
 indications are an extension to the standard.
 .Pp
 The
-.St -p1003.1-2008
+.St -p1003.1-2004
 revision marked the functions
 .Fn getcontext
 and
@@ -140,6 +140,9 @@ and
 as obsolete, citing portability issues and recommending the use of
 .Tn POSIX
 threads instead.
+The
+.St -p1003.1-2008
+revision removed the functions from the specification.
 .Sh HISTORY
 The
 .Fn getcontext
