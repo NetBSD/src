@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.22 2010/04/29 15:57:19 jruoho Exp $
+.\"	$NetBSD: signal.9,v 1.23 2010/04/29 16:31:11 jruoho Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .Ft void
 .Fn siginit "struct proc *p"
 .Ft void
-.Fn sigactsinit "struct proc *np" "struct proc *pp" "int share"
+.Fn sigactsinit "struct proc *pp" "int share"
 .Ft void
 .Fn sigactsunshare "struct proc *p"
 .Ft void
@@ -69,17 +69,17 @@
 .Ft void
 .Fn execsigs "struct proc *p"
 .Ft int
-.Fn sigaction1 "struct proc *p" "int signum" "const struct sigaction *nsa" \
+.Fn sigaction1 "struct lwp *l" "int signum" "const struct sigaction *nsa" \
     "struct sigaction *osa" "void *tramp" "int vers"
 .Ft int
-.Fn sigprocmask1 "struct proc *p" "int how" "const sigset_t *nss" \
+.Fn sigprocmask1 "struct lwp *l" "int how" "const sigset_t *nss" \
     "sigset_t *oss"
 .Ft void
-.Fn sigpending1 "struct proc *p" "sigset_t *ss"
+.Fn sigpending1 "struct lwp *l" "sigset_t *ss"
 .Ft int
-.Fn sigsuspend1 "struct proc *p" "const sigset_t *ss"
+.Fn sigsuspend1 "struct lwp *l" "const sigset_t *ss"
 .Ft int
-.Fn sigaltstack1 "struct proc *p" "const struct sigaltstack *nss" \
+.Fn sigaltstack1 "struct lwp *l" "const struct sigaltstack *nss" \
     "struct sigaltstack *oss"
 .Ft void
 .Fn pgsignal "struct pgrp *pgrp" "int signum" "int checkctty"
@@ -96,9 +96,9 @@
 .Ft void
 .Fn killproc "struct proc *p" "const char *why"
 .Ft void
-.Fn sigexit "struct proc *p" "int signum"
+.Fn sigexit "struct lwp *l" "int signum"
 .Ft void
-.Fn trapsignal "struct proc *p" "const ksiginfo_t *ks"
+.Fn trapsignal "struct lwp *l" "const ksiginfo_t *ks"
 .Ft void
 .Fn sendsig "const ksiginfo_t *ks" "const sigset_t *mask"
 .Sh DESCRIPTION
@@ -137,28 +137,24 @@ to the system default.
 This signal state is then inherited by
 .Xr init 8
 when it is started by the kernel.
-.It Fn sigactsinit "np" "pp" "share"
+.It Fn sigactsinit "pp" "share"
 .Pp
 This function creates an initial
 .Fa struct sigacts
 for the process
-.Fa np .
+.Fa pp .
 If the
 .Fa share
 argument is non-zero, then
-.Fa np
+.Fa pp
 shares the
 .Fa struct sigacts
-with the process
-.Fa pp .
+by holding a reference.
 Otherwise,
-.Fa np
+.Fa pp
 receives a new
 .Fa struct sigacts
-which is copied from
-.Fa pp
-if
-.No non- Ns Dv NULL .
+which is copied from the parent.
 .It Fn sigactsunshare "p"
 .Pp
 This function causes the process
@@ -180,7 +176,7 @@ is freed.
 This function is used to reset the signal state of the process
 .Fa p
 to the system defaults when the process execs a new program image.
-.It Fn sigaction1 "p" "signum" "nsa" "osa" "tramp" "vers"
+.It Fn sigaction1 "l" "signum" "nsa" "osa" "tramp" "vers"
 .Pp
 This function implements the
 .Xr sigaction 2
@@ -204,22 +200,22 @@ The signal trampoline ABI is machine-dependent, and must be coordinated
 with the
 .Fn sendsig
 function.
-.It Fn sigprocmask1 "p" "how" "nss" "oss"
+.It Fn sigprocmask1 "l" "how" "nss" "oss"
 .Pp
 This function implements the
 .Xr sigprocmask 2
 system call.
-.It Fn sigpending1 "p" "ss"
+.It Fn sigpending1 "l" "ss"
 .Pp
 This function implements the
 .Xr sigpending 2
 system call.
-.It Fn sigsuspend1 "p" "ss"
+.It Fn sigsuspend1 "l" "ss"
 .Pp
 This function implements the
 .Xr sigsuspend 2
 system call.
-.It Fn sigaltstack1 "p" "nss" "oss"
+.It Fn sigaltstack1 "l" "nss" "oss"
 .Pp
 This function implements the
 .Xr sigaltstack 2
@@ -244,18 +240,20 @@ The
 argument and the complete signal scheduling semantics are described in the
 .Fn kpsignal
 function below.
-.It Fn trapsignal "p" "ks"
+.It Fn trapsignal "l" "ks"
 .Pp
 Sends the signal
 .Fa ks-\*[Gt]ksi_signo
-caused by a hardware trap to the process
-.Fa p .
-This function is meant to be called by machine-dependent trap handling
-code, through the
-.Dv p-\*[Gt]p_emul-\*[Gt]e_trapsignal
-function pointer because some emulations define their own trapsignal
-functions that remap the signal information to what the emulation
-expects.
+caused by a hardware trap to the current process.
+.\"
+.\" XXX: Check for reality in 2010.
+.\"
+.\" This function is meant to be called by machine-dependent trap handling
+.\" code, through the
+.\" .Dv p-\*[Gt]p_emul-\*[Gt]e_trapsignal
+.\" function pointer because some emulations define their own trapsignal
+.\" functions that remap the signal information to what the emulation
+.\" expects.
 .It Fn psignal "p" "signum"
 .Pp
 This is a wrapper function for
@@ -313,9 +311,8 @@ behaves as if the target process were taking the default action for
 This allows the tracing process to be notified of the signal.
 .It Fn issignal "l"
 .Pp
-This function determines which signal, if any, is to be posted to
-the process
-.Fa p .
+This function determines which signal, if any,
+is to be posted to the current process.
 A signal is to be posted if:
 .Bl -bullet -offset indent
 .It
@@ -357,11 +354,9 @@ The message provided by
 .Fa why
 is sent to the system log and is also displayed on the process's
 controlling terminal.
-.It Fn sigexit "p" "signum"
+.It Fn sigexit "l" "signum"
 .Pp
-This function forces the process
-.Fa p
-to exit with the signal
+This function forces the current process to exit with the signal
 .Fa signum ,
 generating a core file if appropriate.
 No checks are made for masked or caught signals; the process always exits.
