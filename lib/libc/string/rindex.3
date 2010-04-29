@@ -28,9 +28,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rindex.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: rindex.3,v 1.11 2006/10/16 08:48:45 wiz Exp $
+.\"	$NetBSD: rindex.3,v 1.12 2010/04/29 06:54:26 jruoho Exp $
 .\"
-.Dd June 4, 1993
+.Dd April 29, 2010
 .Dt RINDEX 3
 .Os
 .Sh NAME
@@ -75,6 +75,21 @@ locates the terminating
 .Xr strspn 3 ,
 .Xr strstr 3 ,
 .Xr strtok 3
+.Sh STANDARDS
+The
+.Fn rindex
+function conforms to
+.St -p1003.1-2001 .
+The
+.St -p1003.1-2004
+revision marked it as legacy and recommended the use of
+.Xr strrchr 3
+instead.
+The
+.St -p1003.1-2008
+revision removed
+.Fn rindex
+from the specification.
 .Sh HISTORY
 A
 .Fn rindex
