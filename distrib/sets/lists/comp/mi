@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1438 2010/04/29 14:36:35 jruoho Exp $
+#	$NetBSD: mi,v 1.1439 2010/04/29 15:57:18 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9030,7 +9030,7 @@
 ./usr/share/man/cat9/getnanotime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
-./usr/share/man/cat9/gsignal.0			comp-sys-catman		.cat
+./usr/share/man/cat9/gsignal.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/hardclock.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/hash.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/hash32_buf.0		comp-sys-catman		.cat
@@ -9161,11 +9161,13 @@
 ./usr/share/man/cat9/kmem_zalloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/knote.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kpause.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kpgsignal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kpreempt.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kpreempt_disable.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kpreempt_disabled.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/kpreempt_enable.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kprintf.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kpsignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_create1.0		comp-obsolete		obsolete
@@ -14732,7 +14734,7 @@
 ./usr/share/man/html9/getnanotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getnanouptime.html	comp-sys-htmlman	html
 ./usr/share/man/html9/getnewvnode.html		comp-sys-htmlman	html
-./usr/share/man/html9/gsignal.html		comp-sys-htmlman	html
+./usr/share/man/html9/gsignal.html		comp-obsolete		obsolete
 ./usr/share/man/html9/hardclock.html		comp-sys-htmlman	html
 ./usr/share/man/html9/hash.html			comp-sys-htmlman	html
 ./usr/share/man/html9/hash32_buf.html		comp-sys-htmlman	html
@@ -14861,11 +14863,13 @@
 ./usr/share/man/html9/kmem_zalloc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/knote.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kpause.html		comp-sys-htmlman	html
+./usr/share/man/html9/kpgsignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kpreempt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kpreempt_disable.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kpreempt_disabled.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kpreempt_enable.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kprintf.html		comp-sys-htmlman	html
+./usr/share/man/html9/kpsignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kthread.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_destroy.html	comp-sys-htmlman	html
@@ -20589,7 +20593,7 @@
 ./usr/share/man/man9/getnanotime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnanouptime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnewvnode.9		comp-sys-man		.man
-./usr/share/man/man9/gsignal.9			comp-sys-man		.man
+./usr/share/man/man9/gsignal.9			comp-obsolete		obsolete
 ./usr/share/man/man9/hardclock.9		comp-sys-man		.man
 ./usr/share/man/man9/hash.9			comp-sys-man		.man
 ./usr/share/man/man9/hash32_buf.9		comp-sys-man		.man
@@ -20720,11 +20724,13 @@
 ./usr/share/man/man9/kmem_zalloc.9		comp-sys-man		.man
 ./usr/share/man/man9/knote.9			comp-sys-man		.man
 ./usr/share/man/man9/kpause.9			comp-sys-man		.man
+./usr/share/man/man9/kpgsignal.9		comp-sys-man		.man
 ./usr/share/man/man9/kpreempt.9			comp-sys-man		.man
 ./usr/share/man/man9/kpreempt_disable.9		comp-sys-man		.man
 ./usr/share/man/man9/kpreempt_disabled.9	comp-sys-man		.man
 ./usr/share/man/man9/kpreempt_enable.9		comp-sys-man		.man
 ./usr/share/man/man9/kprintf.9			comp-sys-man		.man
+./usr/share/man/man9/kpsignal.9			comp-sys-man		.man
 ./usr/share/man/man9/kthread.9			comp-sys-man		.man
 ./usr/share/man/man9/kthread_create.9		comp-sys-man		.man
 ./usr/share/man/man9/kthread_create1.9		comp-obsolete		obsolete
