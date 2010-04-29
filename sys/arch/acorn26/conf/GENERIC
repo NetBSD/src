@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.61 2010/04/16 13:48:27 pooka Exp $
+# $NetBSD: GENERIC,v 1.62 2010/04/29 22:40:48 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -61,7 +61,7 @@ file-system	PROCFS		# /proc
 file-system	KERNFS		# /kern
 file-system	FDESC		# /dev/fd
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
