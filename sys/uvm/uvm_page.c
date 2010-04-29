@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.33 2010/04/29 03:07:53 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.34 2010/04/29 03:10:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.33 2010/04/29 03:07:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.34 2010/04/29 03:10:13 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -968,7 +968,7 @@ uvm_physseg_remove(struct vm_physseg_freelist *freelist, struct vm_physseg **seg
 		*segp = *(segp + 1);
 		segp++;
 	}
-	*(segp + VM_PHYSSEG_MAX - 1) = NULL;
+	*segp = NULL;
 }
 
 /*
