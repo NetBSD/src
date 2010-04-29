@@ -1,4 +1,4 @@
-.\"	$NetBSD: tftpd.8,v 1.27 2010/04/29 20:13:46 hubertf Exp $
+.\"	$NetBSD: tftpd.8,v 1.28 2010/04/29 21:34:04 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ Filenames beginning in
 or containing
 .Dq Pa /../
 are not allowed.
-Unless option
+Unless
 .Fl c
 is used,
 files may be written to only if they already exist and are publicly writable.
@@ -96,8 +96,8 @@ relative filename requests.
 The options are:
 .Bl -tag -width "XsXdirectoryX"
 .It Fl c
-Allow unrestricted creation of new files, with no need for
-a prior existance.
+Allow unrestricted creation of new files.
+Without this flag, only existing publicly writable files can be overwritten.
 .It Fl d
 Enable verbose debugging messages to
 .Xr syslogd 8 .
