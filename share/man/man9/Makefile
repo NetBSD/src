@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.329 2010/04/29 14:36:35 jruoho Exp $
+#       $NetBSD: Makefile,v 1.330 2010/04/29 15:57:19 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -630,10 +630,11 @@ MLINKS+=signal.9 siginit.9 \
 	signal.9 sigpending1.9 \
 	signal.9 sigsuspend1.9 \
 	signal.9 sigaltstack1.9 \
-	signal.9 gsignal.9 \
 	signal.9 pgsignal.9 \
+	signal.9 kpgsignal.9 \
 	signal.9 trapsignal.9 \
 	signal.9 psignal.9 \
+	signal.9 kpsignal.9 \
 	signal.9 issignal.9 \
 	signal.9 postsig.9 \
 	signal.9 killproc.9 \

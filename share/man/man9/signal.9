@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.21 2010/04/29 14:57:55 jruoho Exp $
+.\"	$NetBSD: signal.9,v 1.22 2010/04/29 15:57:19 jruoho Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,9 +42,10 @@
 .Nm sigpending1 ,
 .Nm sigsuspend1 ,
 .Nm sigaltstack1 ,
-.Nm gsignal ,
 .Nm pgsignal ,
+.Nm kpgsignal ,
 .Nm psignal ,
+.Nm kpsignal ,
 .Nm issignal ,
 .Nm postsig ,
 .Nm killproc ,
@@ -80,10 +81,6 @@
 .Ft int
 .Fn sigaltstack1 "struct proc *p" "const struct sigaltstack *nss" \
     "struct sigaltstack *oss"
-.Ft void
-.Fn gsignal "int pgid" "int signum"
-.Ft void
-.Fn kgsignal "int pgid" "ksiginfo_t *ks" "void *data"
 .Ft void
 .Fn pgsignal "struct pgrp *pgrp" "int signum" "int checkctty"
 .Ft void
@@ -227,23 +224,6 @@ system call.
 This function implements the
 .Xr sigaltstack 2
 system call.
-.It Fn gsignal "pgid" "signum"
-.Pp
-This is a wrapper function for
-.Fn kgsignal
-which is described below.
-.It Fn kgsignal "pgid" "ks" "data"
-.Pp
-Schedule the signal
-.Fa ks-\*[Gt]ksi_signo
-to be delivered to all members of the process group specified by
-.Fa pgid .
-The
-.Fa data
-argument and the complete signal scheduling semantics are described in the
-.Fn kpsignal
-function below.
-below for a complete description of the signal scheduling semantics.
 .It Fn pgsignal "pgrp" "signum" "checkctty"
 .Pp
 This is a wrapper function for
