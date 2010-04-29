@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2010/03/31 14:22:27 pooka Exp $
+#	$NetBSD: Makefile,v 1.14 2010/04/29 22:42:48 pooka Exp $
 
 SUBDIR=	mount_9p mount_psshfs mount_sysctlfs
 
@@ -19,5 +19,9 @@ SUBDIR+=rump_tmpfs rump_udf
 
 # rump_mqmfs is just another ffs, useful mainly for debugging
 #SUBDIR+=rump_nqmfs
+
+# rump_au-naturel presents lets you access '/' for a rump kernel.
+# mostly for debugging.
+#SUBDIR+=rump_au-naturel
 
 .include <bsd.subdir.mk>
