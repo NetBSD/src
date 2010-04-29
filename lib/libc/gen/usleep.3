@@ -1,4 +1,4 @@
-.\"	$NetBSD: usleep.3,v 1.18 2003/08/07 16:42:59 agc Exp $
+.\"	$NetBSD: usleep.3,v 1.19 2010/04/29 17:29:56 jruoho Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)usleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 29, 2010
 .Dt USLEEP 3
 .Os
 .Sh NAME
@@ -85,6 +85,18 @@ The
 .Fn usleep
 function conforms to
 .St -xpg4.2 .
+It later appeared in the
+.Tn POSIX
+standard, but in
+.St -p1003.1-2004
+it was marked as legacy and the use of
+.Xr nanosleep 2
+was recommended instead.
+The
+.St -p1003.1-2008
+revision removed
+.Fn usleep
+from the specification.
 .Sh HISTORY
 The
 .Fn usleep
