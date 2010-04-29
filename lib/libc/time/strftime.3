@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.24 2009/04/11 16:15:27 joerg Exp $
+.\"	$NetBSD: strftime.3,v 1.25 2010/04/29 10:03:12 jruoho Exp $
 .\"
-.Dd April 14, 2004
+.Dd April 29, 2010
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -240,3 +240,10 @@ For example, the first week of the year 1997 lasts from
 1996-12-30 to 1997-01-05.
 .Sh BUGS
 There is no conversion specification for the phase of the moon.
+.Pp
+A return value of zero does not necessarily indicate an error.
+If the resulting string is an empty string, the result value is
+zero and it is not possible to distinguish between success and error.
+For example, in many locales
+.Cm \&%p
+yields an empty string.
