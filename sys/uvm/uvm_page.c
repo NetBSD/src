@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.34 2010/04/29 03:10:13 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.35 2010/04/29 03:15:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.34 2010/04/29 03:10:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.35 2010/04/29 03:15:11 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -757,8 +757,9 @@ uvm_page_physget(paddr_t *paddrp)
  */
 
 static struct vm_physseg *
-uvm_page_physload_common(struct vm_physseg_freelist * const, struct vm_physseg **, int,
-    const paddr_t, const paddr_t, const paddr_t, const paddr_t, const int);
+uvm_page_physload_common(struct vm_physseg_freelist * const,
+    struct vm_physseg **, int,
+    const paddr_t, const paddr_t, const paddr_t, const paddr_t);
 static void
 uvm_page_physunload_common(struct vm_physseg_freelist *,
     struct vm_physseg **, struct vm_physseg *);
@@ -778,8 +779,11 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	struct vm_physseg *seg;
 	int lcv;
 
+	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
+		panic("uvm_page_physload: bad free list %d", free_list);
+
 	seg = uvm_page_physload_common(&vm_physmem_freelist, vm_physmem_ptrs,
-	    vm_nphysmem, start, end, avail_start, avail_end, free_list);
+	    vm_nphysmem, start, end, avail_start, avail_end);
 	KASSERT(seg != NULL);
 
 	seg->avail_start = avail_start;
@@ -820,14 +824,16 @@ uvm_page_physunload(void *cookie)
 #ifdef DEVICE_PAGE
 void *
 uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
-    paddr_t avail_end, int free_list)
+    paddr_t avail_end, int prot, int flags)
 {
 	struct vm_physseg *seg;
 
 	seg = uvm_page_physload_common(&vm_physdev_freelist, vm_physdev_ptrs,
-	    vm_nphysdev, start, end, avail_start, avail_end, free_list);
+	    vm_nphysdev, start, end, avail_start, avail_end);
 	KASSERT(seg != NULL);
 
+	seg->prot = prot;
+	seg->flags = flags;	/* XXXUEBS BUS_SPACE_MAP_* */
 	for (paddr_t pf = start; pf < end; pf++)
 		vm_page_device_mdpage_insert(pf);
 	vm_nphysdev++;
@@ -850,15 +856,13 @@ static struct vm_physseg *
 uvm_page_physload_common(struct vm_physseg_freelist *freelist,
     struct vm_physseg **segs, int nsegs,
     const paddr_t start, const paddr_t end,
-    const paddr_t avail_start, const paddr_t avail_end, const int free_list)
+    const paddr_t avail_start, const paddr_t avail_end)
 {
 	struct vm_physseg *ps;
 	static int uvm_page_physseg_inited;
 
 	if (uvmexp.pagesize == 0)
 		panic("uvm_page_physload: page size not set!");
-	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
-		panic("uvm_page_physload: bad free list %d", free_list);
 	if (start >= end)
 		panic("uvm_page_physload: start >= end");
 	if (nsegs == VM_PHYSSEG_MAX)
