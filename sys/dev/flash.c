@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.1.2.7 2010/04/28 16:33:47 uebayasi Exp $	*/
+/*	$Id: flash.c,v 1.1.2.8 2010/04/29 06:29:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -241,7 +241,7 @@ found:
 #error bus_space_physload_device(9) must be supported to use XIP!
 #else
 	sc->sc_phys = bus_space_physload_device(sc->sc_iot, sc->sc_addr, sc->sc_size,
-	    PROT_READ | PROT_WRITE, BUS_SPACE_MAP_LINEAR);
+	    PROT_READ | PROT_WRITE, 0);
 #endif
 #endif
 
