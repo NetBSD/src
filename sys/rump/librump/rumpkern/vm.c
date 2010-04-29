@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.70 2009/12/04 17:57:16 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.70.2.1 2010/04/29 06:31:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70 2009/12/04 17:57:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.2.1 2010/04/29 06:31:13 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -693,4 +693,11 @@ uvm_pageenqueue(struct vm_page *pg)
 {
 
 	/* nada */
+}
+
+paddr_t
+uvm_vm_page_to_phys(const struct vm_page *pg)
+{
+
+	return 0;
 }
