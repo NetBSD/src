@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.124 2010/04/19 07:00:58 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.125 2010/04/29 06:53:13 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.124 2010/04/19 07:00:58 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.125 2010/04/29 06:53:13 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -2010,7 +2010,7 @@ fwohci_intr_core(struct fwohci_softc *sc, uint32_t stat)
 			/* allow from all nodes */
 			OWRITE(sc, OHCI_PREQHI, 0x7fffffff);
 			OWRITE(sc, OHCI_PREQLO, 0xffffffff);
-			/* 0 to 4GB regison */
+			/* 0 to 4GB region */
 			OWRITE(sc, OHCI_PREQUPPER, 0x10000);
 		}
 		/* Set ATRetries register */
@@ -2027,7 +2027,7 @@ fwohci_intr_core(struct fwohci_softc *sc, uint32_t stat)
 		aprint_normal_dev(fc->dev, "node_id=0x%08x, gen=%d, ",
 		    node_id, (plen >> 16) & 0xff);
 		if (!(node_id & OHCI_NODE_VALID)) {
-			aprint_error("Bus reset failure\n");
+			aprint_error_dev(fc->dev, "Bus reset failure\n");
 			goto sidout;
 		}
 
