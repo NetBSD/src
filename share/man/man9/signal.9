@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.20 2010/04/29 14:36:35 jruoho Exp $
+.\"	$NetBSD: signal.9,v 1.21 2010/04/29 14:57:55 jruoho Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,7 +132,7 @@ This structure may be shared by multiple processes.
 The kernel's signal facilities are implemented by the following
 functions:
 .Bl -tag -width XXXXX
-.It void Fn siginit "struct proc *p"
+.It Fn siginit "p"
 .Pp
 This function initializes the signal state of
 .Va proc0
@@ -140,7 +140,7 @@ to the system default.
 This signal state is then inherited by
 .Xr init 8
 when it is started by the kernel.
-.It void Fn sigactsinit "struct proc *np" "struct proc *pp" "int share"
+.It Fn sigactsinit "np" "pp" "share"
 .Pp
 This function creates an initial
 .Fa struct sigacts
@@ -162,14 +162,14 @@ which is copied from
 .Fa pp
 if
 .No non- Ns Dv NULL .
-.It void Fn sigactsunshare "struct proc *p"
+.It Fn sigactsunshare "p"
 .Pp
 This function causes the process
 .Fa p
 to no longer share its
 .Fa struct sigacts
 The current state of the signal actions is maintained in the new copy.
-.It void Fn sigactsfree "struct proc *p"
+.It Fn sigactsfree "p"
 .Pp
 This function decrements the reference count on the
 .Fa struct sigacts
@@ -178,14 +178,12 @@ of process
 If the reference count reaches zero, the
 .Fa struct sigacts
 is freed.
-.It void Fn execsigs "struct proc *p"
+.It Fn execsigs "p"
 .Pp
 This function is used to reset the signal state of the process
 .Fa p
 to the system defaults when the process execs a new program image.
-.It int Fn sigaction1 "struct proc *p" "int signum" \
-    "const struct sigaction *nsa" "struct sigaction *osa" \
-    "void *tramp" "int vers"
+.It Fn sigaction1 "p" "signum" "nsa" "osa" "tramp" "vers"
 .Pp
 This function implements the
 .Xr sigaction 2
@@ -209,34 +207,32 @@ The signal trampoline ABI is machine-dependent, and must be coordinated
 with the
 .Fn sendsig
 function.
-.It int Fn sigprocmask1 "struct proc *p" "int how" "const sigset_t *nss" \
-    "sigset_t *oss"
+.It Fn sigprocmask1 "p" "how" "nss" "oss"
 .Pp
 This function implements the
 .Xr sigprocmask 2
 system call.
-.It void Fn sigpending1 "struct proc *p" "sigset_t *ss"
+.It Fn sigpending1 "p" "ss"
 .Pp
 This function implements the
 .Xr sigpending 2
 system call.
-.It int Fn sigsuspend1 "struct proc *p" "const sigset_t *ss"
+.It Fn sigsuspend1 "p" "ss"
 .Pp
 This function implements the
 .Xr sigsuspend 2
 system call.
-.It int Fn sigaltstack1 "struct proc *p" "const struct sigaltstack *nss" \
-    "struct sigaltstack *oss"
+.It Fn sigaltstack1 "p" "nss" "oss"
 .Pp
 This function implements the
 .Xr sigaltstack 2
 system call.
-.It void Fn gsignal "int pgid" "int signum"
+.It Fn gsignal "pgid" "signum"
 .Pp
 This is a wrapper function for
 .Fn kgsignal
 which is described below.
-.It void Fn kgsignal "int pgid" "ksiginfo_t *ks" "void *data"
+.It Fn kgsignal "pgid" "ks" "data"
 .Pp
 Schedule the signal
 .Fa ks-\*[Gt]ksi_signo
@@ -248,12 +244,12 @@ argument and the complete signal scheduling semantics are described in the
 .Fn kpsignal
 function below.
 below for a complete description of the signal scheduling semantics.
-.It void Fn pgsignal "struct pgrp *pgrp" "int signum" "int checkctty"
+.It Fn pgsignal "pgrp" "signum" "checkctty"
 .Pp
 This is a wrapper function for
 .Fn kpgsignal
 which is described below.
-.It void Fn kpgsignal "struct pgrp *pgrp" "ksiginfo_t *ks" "void *data" "int checkctty"
+.It Fn kpgsignal "pgrp" "ks" "data" "checkctty"
 .Pp
 Schedule the signal
 .Fa ks-\*[Gt]ksi_signo
@@ -268,7 +264,7 @@ The
 argument and the complete signal scheduling semantics are described in the
 .Fn kpsignal
 function below.
-.It void Fn trapsignal "struct proc *p" "const ksiginfo_t *ks"
+.It Fn trapsignal "p" "ks"
 .Pp
 Sends the signal
 .Fa ks-\*[Gt]ksi_signo
@@ -280,12 +276,12 @@ code, through the
 function pointer because some emulations define their own trapsignal
 functions that remap the signal information to what the emulation
 expects.
-.It void Fn psignal "struct proc *p" "int signum"
+.It Fn psignal "p" "signum"
 .Pp
 This is a wrapper function for
 .Fn kpsignal
 which is described below.
-.It void Fn kpsignal "struct proc *p" "ksiginfo_t *ks" "void *data"
+.It Fn kpsignal "p" "ks" "data"
 .Pp
 Schedule the signal
 .Fa ks-\*[Gt]ksi_signo
@@ -335,7 +331,7 @@ If the target process is being traced,
 behaves as if the target process were taking the default action for
 .Fa signum .
 This allows the tracing process to be notified of the signal.
-.It int Fn issignal "struct lwp *l"
+.It Fn issignal "l"
 .Pp
 This function determines which signal, if any, is to be posted to
 the process
@@ -363,7 +359,7 @@ while (signum = CURSIG(curproc))
 	postsig(signum);
 .Ed
 .Pp
-.It void Fn postsig "int signum"
+.It Fn postsig "signum"
 .Pp
 The
 .Fn postsig
@@ -374,14 +370,14 @@ If the default action of a signal is to terminate the process, and the
 signal does not have a registered handler, the process exits using
 .Fn sigexit ,
 dumping a core image if necessary.
-.It void Fn killproc "struct proc *p" "const char *why"
+.It Fn killproc "p" "why"
 .Pp
 This function sends a SIGKILL signal to the specified process.
 The message provided by
 .Fa why
 is sent to the system log and is also displayed on the process's
 controlling terminal.
-.It void Fn sigexit "struct proc *p" "int signum"
+.It Fn sigexit "p" "signum"
 .Pp
 This function forces the process
 .Fa p
@@ -389,7 +385,7 @@ to exit with the signal
 .Fa signum ,
 generating a core file if appropriate.
 No checks are made for masked or caught signals; the process always exits.
-.It void Fn sendsig "const ksiginfo_t *ks" "const sigset_t *mask"
+.It Fn sendsig "ks" "mask"
 .Pp
 This function is provided by machine-dependent code, and is used to
 invoke a signal handler for the current process.
