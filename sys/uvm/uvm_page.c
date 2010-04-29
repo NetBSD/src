@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.30 2010/04/29 02:35:14 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.31 2010/04/29 02:37:09 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.30 2010/04/29 02:35:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.31 2010/04/29 02:37:09 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -797,7 +797,8 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		seg->endpg = NULL;
 		seg->free_list = free_list;	/* XXX */
 	} else {
-		panic("uvm_page_physload: tried to add RAM after uvm_page_init");
+		panic("uvm_page_physload: "
+		    "tried to add RAM after uvm_page_init");
 	}
 	vm_nphysmem++;
 	return seg;
@@ -895,11 +896,13 @@ uvm_page_physseg_init(void)
 	int lcv;
 
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
-		SIMPLEQ_INSERT_TAIL(&vm_physmem_freelist, &vm_physmem_store[lcv], list);
+		SIMPLEQ_INSERT_TAIL(&vm_physmem_freelist,
+		    &vm_physmem_store[lcv], list);
 	}
 #ifdef DEVICE_PAGE
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
-		SIMPLEQ_INSERT_TAIL(&vm_physdev_freelist, &vm_physdev_store[lcv], list);
+		SIMPLEQ_INSERT_TAIL(&vm_physdev_freelist,
+		    &vm_physdev_store[lcv], list);
 	}
 #endif
 }
