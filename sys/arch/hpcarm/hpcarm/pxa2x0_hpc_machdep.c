@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.3 2010/04/29 01:54:26 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.4 2010/04/29 01:58:51 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.3 2010/04/29 01:54:26 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.4 2010/04/29 01:58:51 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -396,40 +396,36 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	pxa2x0_clkman_bootstrap(PXA2X0_CLKMAN_VBASE);
 	pxa2x0_gpio_bootstrap(PXA2X0_GPIO_VBASE);
 
-	if (bi->magic == BOOTINFO_MAGIC) {
-		if (bi->platid_cpu == PLATID_CPU_ARM_XSCALE_PXA270) {
-			if ((bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS003SH)
-			 || (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS004SH)
-			 || (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS007SH)
-			 || (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS011SH)
-			 || (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS020SH)) {
-				if (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS003SH
-				 || bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS004SH) {
-					pxa2x0_gpio_config(ws003sh_gpioconf);
-					__cpu_reset = ws003sh_cpu_reset;
-				} else if (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS007SH) {
-					pxa2x0_gpio_config(ws007sh_gpioconf);
-				} else if (bi->platid_machine == PLATID_MACH_SHARP_WZERO3_WS011SH) {
-					pxa2x0_gpio_config(ws011sh_gpioconf);
-				}
-				pxa2x0_clkman_config(CKEN_FFUART, 1);
-				pxa2x0_clkman_config(CKEN_NSSP, 1); /* XXXOST */
-				pxa2x0_clkman_config(CKEN_USBHC, 0);
-				pxa2x0_clkman_config(CKEN_USBDC, 0);
-				pxa2x0_clkman_config(CKEN_AC97, 0);
-				pxa2x0_clkman_config(CKEN_SSP, 0);
-				pxa2x0_clkman_config(CKEN_HWUART, 0);
-				pxa2x0_clkman_config(CKEN_STUART, 0);
-				pxa2x0_clkman_config(CKEN_BTUART, 0);
-				pxa2x0_clkman_config(CKEN_I2S, 0);
-				pxa2x0_clkman_config(CKEN_MMC, 0);
-				pxa2x0_clkman_config(CKEN_FICP, 0);
-				pxa2x0_clkman_config(CKEN_I2C, 0);
-				pxa2x0_clkman_config(CKEN_PWM1, 0);
-				if (bi->platid_machine != PLATID_MACH_SHARP_WZERO3_WS011SH) {
-					pxa2x0_clkman_config(CKEN_PWM0, 0); /* WS011SH: DON'T DISABLE */
-				}
-			}
+	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS003SH)
+	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS004SH)
+	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS007SH)
+	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)
+	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS020SH)) {
+		if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS003SH)
+		 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS004SH)) {
+			pxa2x0_gpio_config(ws003sh_gpioconf);
+			__cpu_reset = ws003sh_cpu_reset;
+		} else if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS007SH)) {
+			pxa2x0_gpio_config(ws007sh_gpioconf);
+		} else if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)) {
+			pxa2x0_gpio_config(ws011sh_gpioconf);
+		}
+		pxa2x0_clkman_config(CKEN_FFUART, 1);
+		pxa2x0_clkman_config(CKEN_NSSP, 1); /* XXXOST */
+		pxa2x0_clkman_config(CKEN_USBHC, 0);
+		pxa2x0_clkman_config(CKEN_USBDC, 0);
+		pxa2x0_clkman_config(CKEN_AC97, 0);
+		pxa2x0_clkman_config(CKEN_SSP, 0);
+		pxa2x0_clkman_config(CKEN_HWUART, 0);
+		pxa2x0_clkman_config(CKEN_STUART, 0);
+		pxa2x0_clkman_config(CKEN_BTUART, 0);
+		pxa2x0_clkman_config(CKEN_I2S, 0);
+		pxa2x0_clkman_config(CKEN_MMC, 0);
+		pxa2x0_clkman_config(CKEN_FICP, 0);
+		pxa2x0_clkman_config(CKEN_I2C, 0);
+		pxa2x0_clkman_config(CKEN_PWM1, 0);
+		if (!platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)) {
+			pxa2x0_clkman_config(CKEN_PWM0, 0); /* WS011SH: DON'T DISABLE */
 		}
 	}
 
