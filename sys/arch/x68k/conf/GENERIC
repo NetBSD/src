@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.149 2010/04/16 13:48:36 pooka Exp $
+# $NetBSD: GENERIC,v 1.150 2010/04/29 22:40:54 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.149 $"
+#ident 		"GENERIC-$Revision: 1.150 $"
 
 maxusers	8
 
@@ -184,7 +184,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	ADOSFS		# AmigaDOS filesystem
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 ## File system options.

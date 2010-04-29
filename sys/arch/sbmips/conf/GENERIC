@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.76 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC,v 1.77 2010/04/29 22:40:53 chs Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.76 $"
+#ident 		"GENERIC-$Revision: 1.77 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -69,7 +69,7 @@ file-system	PROCFS		# /proc
 #file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
