@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.4 2010/04/29 01:58:51 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.5 2010/04/29 04:12:48 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.4 2010/04/29 01:58:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.5 2010/04/29 04:12:48 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -266,9 +266,9 @@ static void
 ws003sh_cpu_reset(void)
 {
 
-		pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
-		for (;;)
-				continue;
+	pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
+	for (;;)
+		continue;
 }
 
 static struct pxa2x0_gpioconf ws003sh_boarddep_gpioconf[] = {
