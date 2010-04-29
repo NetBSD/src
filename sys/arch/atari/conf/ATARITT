@@ -1,11 +1,11 @@
 #
-# $NetBSD: ATARITT,v 1.101 2010/04/16 13:49:57 pooka Exp $
+# $NetBSD: ATARITT,v 1.102 2010/04/29 22:42:27 chs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.87 2010/04/16 13:48:29 pooka Exp $
+#		NetBSD: GENERIC.in,v 1.88 2010/04/29 22:40:50 chs Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -24,6 +24,8 @@ file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
+file-system PTYFS # experimental - /dev/ptm support
+file-system TMPFS # Efficient memory file-system
 file-system KERNFS # Kernel parameter filesystem
 file-system NFS # Network File System client side code
 file-system PROCFS # Process filesystem
