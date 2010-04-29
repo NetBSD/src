@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.124 2010/04/16 13:48:35 pooka Exp $
+# $NetBSD: GENERIC,v 1.125 2010/04/29 23:39:47 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+#ident 		"GENERIC-$Revision: 1.125 $"
 
 maxusers	64
 
@@ -339,6 +339,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI UT
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID UT
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030
 njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
