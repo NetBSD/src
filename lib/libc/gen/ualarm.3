@@ -1,4 +1,4 @@
-.\"	$NetBSD: ualarm.3,v 1.17 2003/08/07 16:42:58 agc Exp $
+.\"	$NetBSD: ualarm.3,v 1.18 2010/04/29 06:07:35 jruoho Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ualarm.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd April 29, 2010
 .Dt UALARM 3
 .Os
 .Sh NAME
@@ -92,7 +92,15 @@ returns ((useconds_t) -1).
 The
 .Fn ualarm
 functions conforms to
-.St -xpg4.2 .
+.St -xpg4.2
+and
+.St -p1003.1-2001 .
+The latter standard marked
+.Fn ualarm
+as obsolescent and a later revision,
+.St -p1003.1-2008 ,
+removed the specification of
+.Fn ualarm .
 .Sh HISTORY
 The
 .Fn ualarm
