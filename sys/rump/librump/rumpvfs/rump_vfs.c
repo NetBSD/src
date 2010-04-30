@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.47 2010/04/26 23:43:36 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.48 2010/04/30 21:02:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.47 2010/04/26 23:43:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.48 2010/04/30 21:02:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.47 2010/04/26 23:43:36 pooka Exp $");
 #include <sys/module.h>
 #include <sys/namei.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/vnode.h>
 #include <sys/wapbl.h>
@@ -77,6 +78,8 @@ pvfs_rele(struct proc *p)
 void
 rump_vfs_init(void)
 {
+	extern struct devsw_conv devsw_conv0[];
+	extern int max_devsw_convs;
 	extern struct vfsops rumpfs_vfsops;
 	char buf[64];
 	int error;
@@ -145,6 +148,8 @@ rump_vfs_init(void)
 #endif
 
 	module_init_class(MODULE_CLASS_VFS);
+
+	rump_vfs_builddevs(devsw_conv0, max_devsw_convs);
 }
 
 void
