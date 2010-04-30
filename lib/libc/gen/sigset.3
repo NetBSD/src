@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigset.3,v 1.7 2010/04/30 04:39:16 jruoho Exp $
+.\"	$NetBSD: sigset.3,v 1.8 2010/04/30 06:48:20 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -105,9 +105,8 @@ function will fail if:
 .It Bq Er EINVAL
 The argument
 .Fa sig
-is not a valid signal number.
-.It Bq Er EINVAL
-An attempt is made to ignore a signal that cannot be ignored,
+is not a valid signal number;
+or an attempt is made to ignore a signal that cannot be ignored,
 such as
 .Dv SIGKILL
 or
