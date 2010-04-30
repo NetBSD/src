@@ -1,4 +1,4 @@
-.\" $NetBSD: tsearch.3,v 1.10 2009/04/11 16:17:26 joerg Exp $
+.\" $NetBSD: tsearch.3,v 1.11 2010/04/30 10:06:52 jruoho Exp $
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\"
 .\"	OpenBSD: tsearch.3,v 1.2 1998/06/21 22:13:49 millert Exp
 .\"
-.Dd November 26, 2006
+.Dd April 30, 2010
 .Dt TSEARCH 3
 .Os
 .Sh NAME
@@ -117,3 +117,25 @@ function returns no value.
 .Xr bsearch 3 ,
 .Xr hsearch 3 ,
 .Xr lsearch 3
+.Sh STANDARDS
+These functions conform to
+.St -p1003.1-2001 .
+.Sh CAVEATS
+The
+.St -p1003.1-2001
+standard does not specify what value should be returned when deleting
+the root node.
+Since implementations vary, user of
+.Fn tdelete
+should not rely on any specific behaviour.
+The
+.St -p1003.1-2008
+revision tried to clarify the issue with the following wording:
+.Do
+the
+.Fn tdelete
+function shall return a pointer to the parent of the deleted node,
+or an unspecified non-NULL pointer if the deleted node was the root node, or a
+.Dv NULL
+pointer if the node is not found.
+.Dc
