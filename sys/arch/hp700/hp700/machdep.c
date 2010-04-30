@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 2010/04/30 14:32:31 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 2010/04/30 15:36:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2010/04/30 14:32:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2010/04/30 15:36:45 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -332,7 +332,7 @@ const struct hppa_cpu_info cpu_types[] = {
 #ifdef HP7100LC_CPU
 	{ "PA7100LC", "Hummingbird", "PCXL",
 	  hpcxl, HPPA_CPU_PCXL,
-	  HPPA_FTRS_BTLBU|HPPA_FTRS_HVT, "1.1c",
+	  HPPA_FTRS_TLBU | HPPA_FTRS_BTLBU | HPPA_FTRS_HVT, "1.1c",
 	  desidhash_l, itlb_l, dtlb_l, itlbna_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g },
 #endif
@@ -346,7 +346,7 @@ const struct hppa_cpu_info cpu_types[] = {
 #ifdef HP7300LC_CPU
 	{ "PA7300LC", "Velociraptor", "PCXL2",
 	  hpcxl2, HPPA_CPU_PCXL2,
-	  HPPA_FTRS_BTLBU|HPPA_FTRS_HVT, "1.1e",
+	  HPPA_FTRS_TLBU | HPPA_FTRS_BTLBU | HPPA_FTRS_HVT, "1.1e",
 	  desidhash_l, itlb_l, dtlb_l, itlbna_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g },
 #endif
