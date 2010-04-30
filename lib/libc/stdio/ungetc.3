@@ -1,4 +1,4 @@
-.\"	$NetBSD: ungetc.3,v 1.9 2003/08/07 16:43:33 agc Exp $
+.\"	$NetBSD: ungetc.3,v 1.10 2010/04/30 05:56:14 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)ungetc.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 30, 2010
 .Dt UNGETC 3
 .Os
 .Sh NAME
@@ -92,4 +92,11 @@ the operation will fail and the stream will remain unchanged.
 The
 .Fn ungetc
 function conforms to
-.St -ansiC .
+.St -ansiC
+and
+.St -p1003.1-2001 .
+.Sh HISTORY
+An
+.Fn ungetc
+function appeared in
+.At v7 .
