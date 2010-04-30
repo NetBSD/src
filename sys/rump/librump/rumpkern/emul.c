@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.133 2010/04/28 07:42:55 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.134 2010/04/30 20:54:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.133 2010/04/28 07:42:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.134 2010/04/30 20:54:17 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -85,9 +85,6 @@ const struct cdevsw **cdevsw = cdevsw0;
 const int sys_bdevsws = 0;
 int max_bdevsws = 1;
 
-struct devsw_conv devsw_conv0;
-struct devsw_conv *devsw_conv = &devsw_conv0;
-int max_devsw_convs = 0;
 int mem_no = 2;
 
 struct device *booted_device;
