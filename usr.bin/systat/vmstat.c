@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.76 2010/04/30 13:49:22 njoly Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.77 2010/04/30 16:21:05 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.76 2010/04/30 13:49:22 njoly Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.77 2010/04/30 16:21:05 njoly Exp $");
 #endif /* not lint */
 
 /*
@@ -530,7 +530,8 @@ showvmstat(void)
 	Z(s, s1, ncs_goodhits); Z(s, s1, ncs_badhits); Z(s, s1, ncs_miss);
 	Z(s, s1, ncs_long); Z(s, s1, ncs_pass2); Z(s, s1, ncs_2passes);
 	s.nchcount = s.nchstats.ncs_goodhits + s.nchstats.ncs_badhits +
-	    s.nchstats.ncs_miss + s.nchstats.ncs_long;
+	    s.nchstats.ncs_miss + s.nchstats.ncs_long +
+	    s.nchstats.ncs_pass2 + s.nchstats.ncs_2passes;
 	if (display_mode == TIME)
 		s1.nchcount = s.nchcount;
 
