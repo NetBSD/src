@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.136 2010/04/29 12:32:48 pooka Exp $	*/
+/*	$NetBSD: conf.h,v 1.137 2010/04/30 20:47:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -228,10 +228,22 @@ int	seltrue_kqfilter(dev_t, struct knote *);
 #endif
 #define	DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
 
+enum devnode_class {
+	DEVNODE_DONTBOTHER,
+	DEVNODE_SINGLE,
+	DEVNODE_VECTOR
+};
+#define DEVNODE_FLAG_LINKZERO	0x01	/* create name -> name0 link */
+
 struct devsw_conv {
 	const char *d_name;
 	devmajor_t d_bmajor;
 	devmajor_t d_cmajor;
+
+	/* information about /dev nodes related to the device */
+	enum devnode_class d_class;
+	int d_flags;
+	int d_vectdim[2];
 };
 
 void devsw_init(void);

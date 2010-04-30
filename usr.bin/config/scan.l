@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.15 2010/03/08 10:19:14 pooka Exp $	*/
+/*	$NetBSD: scan.l,v 1.16 2010/04/30 20:47:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,6 +146,7 @@ file-system	return FILE_SYSTEM;
 flags		return FLAGS;
 ident		return IDENT;
 ioconf		return IOCONF;
+linkzero	return LINKZERO;
 machine		return XMACHINE;
 major		return MAJOR;
 makeoptions	return MAKEOPTIONS;
@@ -163,8 +164,10 @@ prefix		return PREFIX;
 pseudo-device	return PSEUDO_DEVICE;
 pseudo-root	return PSEUDO_ROOT;
 root		return ROOT;
+single		return SINGLE;
 source		return SOURCE;
 type		return TYPE;
+vector 		return VECTOR;
 version 	return VERSION;
 with		return WITH;
 
