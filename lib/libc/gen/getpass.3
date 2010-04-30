@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpass.3,v 1.11 2003/08/07 16:42:50 agc Exp $
+.\"	$NetBSD: getpass.3,v 1.12 2010/04/30 05:50:46 jruoho Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getpass.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd April 30, 2010
 .Dt GETPASS 3
 .Os
 .Sh NAME
@@ -68,6 +68,15 @@ returns a pointer to the null terminated password.
 .El
 .Sh SEE ALSO
 .Xr crypt 3
+.Sh STANDARDS
+The
+.Fn getpass
+function appeared in
+.St -susv2 ,
+but it was already marked as legacy.
+The function was removed in the
+.St -p1003.1-2001
+standard.
 .Sh HISTORY
 A
 .Nm
