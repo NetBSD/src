@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.46 2010/04/30 10:03:13 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.47 2010/04/30 20:05:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.46 2010/04/30 10:03:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.47 2010/04/30 20:05:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -85,6 +85,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_mkdir_desc, rump_vop_mkdir },
 	{ &vop_mknod_desc, rump_vop_mknod },
 	{ &vop_create_desc, rump_vop_create },
+	{ &vop_symlink_desc, genfs_eopnotsupp },
 	{ &vop_access_desc, rump_vop_success },
 	{ &vop_readdir_desc, rump_vop_readdir },
 	{ &vop_read_desc, rump_vop_read },
