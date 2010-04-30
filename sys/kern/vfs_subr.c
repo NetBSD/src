@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.399 2010/04/25 15:56:00 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.400 2010/04/30 10:03:13 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.399 2010/04/25 15:56:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.400 2010/04/30 10:03:13 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.399 2010/04/25 15:56:00 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -2971,6 +2972,26 @@ vlockstatus(struct vnlock *vl)
 		return LK_SHARED;
 	}
 	return 0;
+}
+
+static const uint8_t vttodt_tab[9] = {
+	DT_UNKNOWN,	/* VNON  */
+	DT_REG,		/* VREG  */
+	DT_DIR,		/* VDIR  */
+	DT_BLK,		/* VBLK  */
+	DT_CHR,		/* VCHR  */
+	DT_LNK,		/* VLNK  */
+	DT_SOCK,	/* VSUCK */
+	DT_FIFO,	/* VFIFO */
+	DT_UNKNOWN	/* VBAD  */
+};
+
+uint8_t
+vtype2dt(enum vtype vt)
+{
+
+	CTASSERT(VBAD == __arraycount(vttodt_tab) - 1);
+	return vttodt_tab[vt];
 }
 
 /*

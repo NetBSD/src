@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.45 2010/04/30 09:44:38 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.46 2010/04/30 10:03:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.45 2010/04/30 09:44:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.46 2010/04/30 10:03:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -765,18 +765,6 @@ rump_vop_open(void *v)
 	return error;
 }
 
-/* copypaste from libpuffs.  XXX: do this properly */
-static int vdmap[] = {
-        DT_UNKNOWN,     /* VNON */
-        DT_REG,         /* VREG */
-        DT_DIR,         /* VDIR */
-        DT_BLK,         /* VBLK */
-        DT_CHR,         /* VCHR */
-        DT_LNK,         /* VLNK */
-        DT_SOCK,        /* VSUCK*/
-        DT_FIFO,        /* VFIFO*/
-        DT_UNKNOWN      /* VBAD */
-};
 /* simple readdir.  event omits dotstuff and periods */
 static int
 rump_vop_readdir(void *v)
@@ -812,7 +800,7 @@ rump_vop_readdir(void *v)
 		dent.d_fileno = rdent->rd_node->rn_va.va_fileid;
 		strlcpy(dent.d_name, rdent->rd_name, sizeof(dent.d_name));
 		dent.d_namlen = strlen(dent.d_name);
-		dent.d_type = vdmap[rdent->rd_node->rn_va.va_type];
+		dent.d_type = vtype2dt(rdent->rd_node->rn_va.va_type);
 		dent.d_reclen = _DIRENT_RECLEN(&dent, dent.d_namlen);
 
 		if (uio->uio_resid < dent.d_reclen) {
