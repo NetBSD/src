@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.7 2010/03/24 19:23:24 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.1.2.8 2010/04/30 16:10:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -384,6 +384,16 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	if (flags & _UC_CPU) {
 		/* Save register context. */
 		/* XXX:  Do we validate the addresses?? */
+#ifdef __mips_n32
+		CTASSERT(_R_AST == _REG_AT);
+		if (__predict_false(p->p_md.md_abi == _MIPS_BSD_API_O32)) {
+			const mcontext_o32_t *mcp32 = (const mcontext_o32_t *)mcp;
+			const __greg32_t *gr32 = mcp32->__gregs;
+			for (size_t i = _R_AST; i < 32; i++) {
+				tf->tf_regs[i] = gr32[i];
+			}
+		} else
+#endif
 		memcpy(&tf->tf_regs[_R_AST], &gr[_REG_AT],
 		       sizeof(mips_reg_t) * 31);
 
