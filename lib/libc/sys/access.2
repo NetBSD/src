@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.2,v 1.22 2006/02/02 05:13:57 enami Exp $
+.\"	$NetBSD: access.2,v 1.23 2010/04/30 06:34:23 jruoho Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)access.2	8.2 (Berkeley) 4/1/94
 .\"
-.Dd April 1, 1994
+.Dd April 30, 2010
 .Dt ACCESS 2
 .Os
 .Sh NAME
@@ -132,7 +132,23 @@ The
 .Fn access
 function conforms to
 .St -p1003.1-90 .
-.Sh BUGS
+.Sh SECURITY CONSIDERATIONS
+The
 .Fn access
-is a potential security hole and
-should never be used.
+system call is a potential security hole due to race conditions.
+It should never be used.
+Set-user-ID and set-group-ID applications should restore the
+effective user or group ID, and perform actions directly rather than use
+.Fn access
+to simulate access checks for the real user or group ID.
+The
+.Fn eaccess
+system call
+likewise may be subject to races if used inappropriately.
+.Pp
+The
+.Fn access
+system call may however have some value in providing clues to users as to
+whether certain operations make sense for a particular filesystem object.
+Arguably it also allows a cheaper file existence test than
+.Xr stat 2 .
