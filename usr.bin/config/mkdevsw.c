@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.8 2010/04/15 12:35:57 pooka Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.9 2010/04/30 20:47:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -162,8 +162,34 @@ emitconv(FILE *fp)
 	fputs("\n/* device conversion table */\n"
 		  "struct devsw_conv devsw_conv0[] = {\n", fp);
 	TAILQ_FOREACH(dm, &alldevms, dm_next) {
-		fprintf(fp, "\t{ \"%s\", %d, %d },\n", dm->dm_name,
-			    dm->dm_bmajor, dm->dm_cmajor);
+		struct nvlist *nv;
+		const char *d_class, *d_flags = "0";
+		int d_vec[2] = { 0, 0 };
+		int i = 0;
+
+		/*
+		 * "parse" info.  currently the rules are simple:
+		 *  1) first entry defines class
+		 *  2) next ones without n_str are d_vectdim
+		 *  3) next one with n_str is d_flags
+		 *  4) EOL
+		 */
+		nv = dm->dm_devnodes;
+		d_class = nv->nv_str;
+		while ((nv = nv->nv_next) != NULL) {
+			if (i > 2)
+				panic("invalid devnode definition");
+			if (nv->nv_str) {
+				d_flags = nv->nv_str;
+				break;
+			}
+			d_vec[i++] = nv->nv_num;
+		}
+
+		fprintf(fp, "\t{ \"%s\", %d, %d, %s, %s, { %d, %d }},\n",
+			    dm->dm_name, dm->dm_bmajor, dm->dm_cmajor,
+			    d_class, d_flags, d_vec[0], d_vec[1]);
+
 	}
 	fputs("};\n\n"
 		  "struct devsw_conv *devsw_conv = devsw_conv0;\n"
