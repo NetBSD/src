@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.67 2010/04/23 15:04:09 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.68 2010/04/30 15:39:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.67 2010/04/23 15:04:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.68 2010/04/30 15:39:02 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1061,6 +1061,9 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	int seg;
 	int error;
 
+	DPRINTF(("%s: size 0x%lx align 0x%lx bdry %0lx segs %p nsegs %d\n",
+	    __func__, size, alignment, boundary, segs, nsegs));
+
 	/* Always round the size. */
 	size = round_page(size);
 
@@ -1081,6 +1084,9 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 
 	/* If we don't have the pages. */
 	if (error) {
+		DPRINTF(("%s: uvm_pglistalloc(%lx, %lx, %lx, 0, 0, %p, %d, %0x)"
+		    " failed", __func__, size, low, high, mlist, nsegs,
+		    (flags & BUS_DMA_NOWAIT) == 0));
 		free(mlist, M_DEVBUF);
 		return (error);
 	}
