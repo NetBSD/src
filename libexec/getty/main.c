@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.56.10.1 2010/04/30 16:24:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.56 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.56.10.1 2010/04/30 16:24:25 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -278,7 +278,9 @@ main(int argc, char *argv[], char *envp[])
 			}
 			if (uugetty)
 				(void)chown(lockfile, ttyowner, 0);
-			(void)login_tty(i);
+			if (login_tty(i) < 0)
+				syslog(LOG_ERR, "%s: login_tty failed: %m",
+					ttyn);
 		}
 	}
 
