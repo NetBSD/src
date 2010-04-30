@@ -1,4 +1,4 @@
-.\"	$NetBSD: getitimer.2,v 1.23 2010/04/30 04:15:49 jruoho Exp $
+.\"	$NetBSD: getitimer.2,v 1.24 2010/04/30 04:17:45 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -129,8 +129,9 @@ Because this signal may interrupt in-progress
 system calls, programs using this timer must be prepared to
 restart interrupted system calls.
 .Sh NOTES
-Macros for manipulating time values are defined in
-.Ao Pa sys/time.h Ac .
+Macros for manipulating time values are defined in the
+.In sys/time.h
+header;
 .Fn timerclear
 sets a time value to zero,
 .Fn timerisset
@@ -141,6 +142,8 @@ compares two time values,
 adds a time value to another time value,
 .Fn timersub
 computes the time difference between two time values.
+For additional details, see
+.Xr timeradd 3 .
 .Sh RETURN VALUES
 If the calls succeed, a value of 0 is returned.
 If an error occurs, the value \-1 is returned, and a more precise error
