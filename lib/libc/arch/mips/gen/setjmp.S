@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.17.34.6 2010/02/03 23:51:40 matt Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.17.34.7 2010/04/30 16:12:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	8.1 (Berkeley) 6/4/93")
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.17.34.6 2010/02/03 23:51:40 matt Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.17.34.7 2010/04/30 16:12:41 matt Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -140,8 +140,8 @@ NON_LEAF(__setjmp14, SETJMP_FRAME_SIZE, ra)
 #endif
 #endif	/* SOFTFLOAT_FOR_GCC */
 	REG_EPILOGUE
-	j	ra
 	move	v0, zero
+	j	ra
 
 botch:
 	jal	_C_LABEL(abort)
