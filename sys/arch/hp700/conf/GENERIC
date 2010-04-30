@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.95 2010/04/29 22:40:51 chs Exp $
+# $NetBSD: GENERIC,v 1.96 2010/04/30 15:51:27 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.95 $"
+#ident 		"GENERIC-$Revision: 1.96 $"
 
 maxusers	32		# estimated number of users
 
@@ -33,10 +33,10 @@ options 	HP7100_CPU,HP7150_CPU	# PCX-T
 options 	HP7100LC_CPU		# PCX-L
 options 	HP7200_CPU,HP7250_CPU	# PCX-T'
 options 	HP7300LC_CPU		# PCX-L2
-#options 	HP8000_CPU		# PCX-U  (in 32bit mode)
-#options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
-#options 	HP8500_CPU		# PCX-W  (in 32bit mode)
-#options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
+options 	HP8000_CPU		# PCX-U  (in 32bit mode)
+options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
+options 	HP8500_CPU		# PCX-W  (in 32bit mode)
+options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
 
 # CPU-related options.
 options 	FPEMUL		# floating point emulation XXX DO NOT REMOVE
@@ -264,17 +264,17 @@ gsc*	at wax?			# {725,715}/{64,80,100}, C*, B*, J*
 #wax*	at gecko?		# Wax GSC to GSC Bus Adapter
 
 # Astro memory & I/O controller 
-#astro*	at mainbus0		# Astro memory & I/O controller
-#elroy*	at astro?
+astro*	at mainbus0		# Astro memory & I/O controller
+elroy*	at astro?
 
 # PCI bus support
-#pci*	at elroy?
+pci*	at elroy?
 pci*	at dino?
 com*	at dino?
 ppb*	at pci? dev ? function ?
 pci*	at ppb?
 
-#ssio*	at pci?
+ssio*	at pci?
 
 # EISA bus support
 eisa*	at mongoose?
@@ -308,8 +308,8 @@ wsdisplay*	at sti?
 # Serial Devices
 
 # SSIO serial interfaces
-#com0	at ssio? irq 4
-#com1	at ssio? irq 3
+com0	at ssio? irq 4
+com1	at ssio? irq 3
 
 # GSC serial interfaces
 com*	at gsc?				# RS/232 serial port
@@ -323,7 +323,7 @@ cz*	at pci? dev ? function ?	# Cyclades-Z multi-port serial boards
 # Parallel Printer Interfaces
 
 # SSIO parallel printer interface
-#lpt0	at ssio?
+lpt0	at ssio?
 
 # GSC parallel printer interface
 lpt*	at gsc?
@@ -339,6 +339,7 @@ osiop*	at gsc? flags 0x00000		# NCR 53c710
 siop*	at gsc? irq 3			# NCR 53c720 (Fast/Wide)
 siop*	at mainbus0 irq 3		# NCR 53c720 (Fast/Wide)
 siop*	at phantomas? irq 3		# NCR 53c720 (Fast/Wide)
+#siop*	at uturn? irq 3			# NCR 53c720 (Fast/Wide)
 
 # PCI SCSI controllers
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
