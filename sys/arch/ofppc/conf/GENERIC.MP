@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.6 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC.MP,v 1.6.2.1 2010/04/30 14:39:40 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.6.2.1 $"
 
 maxusers	32
 
@@ -138,7 +138,6 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
-options 	NMBCLUSTERS=1024
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -341,6 +340,7 @@ ucycom*	at uhidev? reportid ?				# USB serial adapter
 uhid*	at uhidev? reportid ?				# USB Generic HID
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 umodem*	at uhub? port ? configuration ?			# USB Modem
+uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
 ucom*	at umodem?
 #uaudio*	at uhub? port ? configuration ?			# USB audio
 
@@ -398,7 +398,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter

@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.h,v 1.2 2007/02/21 22:59:45 thorpej Exp $	*/
+/*	$NetBSD: decode.h,v 1.2.66.1 2010/04/30 14:39:31 uebayasi Exp $	*/
 
 /* Contributed to the NetBSD Foundation by Cherry G. Mathew <cherry@mahiti.org>
  * This file contains prototypes to decode unwind descriptors.
@@ -195,7 +195,7 @@ enum record_type {
 	
 
 /* A record chain is a decoded unwind descriptor.
- * It is usefull for post processing unwind descriptors.
+ * It is useful for post processing unwind descriptors.
  */
 
 struct recordchain {

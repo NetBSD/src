@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.39 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: satalink.c,v 1.39.2.1 2010/04/30 14:43:43 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.39 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.39.2.1 2010/04/30 14:43:43 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,7 +469,9 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 * apparently hard to tickle, but we'll go ahead and play it
 	 * safe.
 	 */
-	if (PCI_REVISION(pa->pa_class) <= 0x01) {
+	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMDTECH_3112 ||
+	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CMDTECH_AAR_1210SA) &&
+	    PCI_REVISION(pa->pa_class) <= 0x01) {
 		sc->sc_dma_maxsegsz = 8192;
 		sc->sc_dma_boundary = 8192;
 	}

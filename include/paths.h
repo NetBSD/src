@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.36 2010/02/03 18:11:18 roy Exp $	*/
+/*	$NetBSD: paths.h,v 1.36.2.1 2010/04/30 14:36:17 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -82,6 +82,7 @@
 #define	_PATH_MIXER0	"/dev/mixer0"
 #define	_PATH_NOLOGIN	"/etc/nologin"
 #define	_PATH_PRINTCAP	"/etc/printcap"
+#define _PATH_POWER	"/dev/power"
 #define	_PATH_PUD	"/dev/pud"
 #define	_PATH_PUFFS	"/dev/puffs"
 #define	_PATH_RANDOM	"/dev/random"

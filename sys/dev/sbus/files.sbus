@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.34 2010/01/27 21:01:33 macallan Exp $
+#	$NetBSD: files.sbus,v 1.34.2.1 2010/04/30 14:43:48 uebayasi Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -126,6 +126,7 @@ file	dev/sbus/zx.c			zx
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
 defflag	opt_pnozz.h	PNOZZ_DEBUG
 defflag opt_pnozz.h	PNOZZ_EMUL_CG3
+defflag opt_pnozz.h	PNOZZ_USE_LATCH
 device	pnozz: fb, rasops8, bt_dac, wsemuldisplaydev, vcons
 attach	pnozz at sbus
 file	dev/sbus/p9100.c		pnozz needs-flag
@@ -147,3 +148,9 @@ device	agten: fb, rasops8, bt_dac, wsemuldisplaydev, vcons
 attach	agten at sbus
 file	dev/sbus/agten.c		agten needs-flag
 file	dev/ic/i128.c			agten
+
+# Sun CG12 / Matrox SG3
+defflag opt_cgtwelve.h	CG12_DEBUG
+device	cgtwelve: fb, rasops1, rasops8, wsemuldisplaydev, vcons
+attach	cgtwelve at sbus
+file	dev/sbus/cgtwelve.c		cgtwelve

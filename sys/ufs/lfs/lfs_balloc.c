@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.68 2009/03/18 16:00:24 cegger Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.68.2.1 2010/04/30 14:44:35 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.68 2009/03/18 16:00:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.68.2.1 2010/04/30 14:44:35 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -118,7 +118,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	struct lfs *fs;
 	struct indir indirs[NIADDR+2], *idp;
 	daddr_t	lbn, lastblock;
-	int bb, bcount;
+	int bcount;
 	int error, frags, i, nsize, osize, num;
 
 	ip = VTOI(vp);
@@ -181,8 +181,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 		if (lblktosize(fs, lbn) >= ip->i_size) {
 			/* Brand new block or fragment */
 			frags = numfrags(fs, nsize);
-			bb = fragstofsb(fs, frags);
-			if (!ISSPACE(fs, bb, cred))
+			if (!ISSPACE(fs, frags, cred))
 				return ENOSPC;
 			if (bpp) {
 				*bpp = bp = getblk(vp, lbn, nsize, 0, 0);
@@ -190,9 +189,9 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 				if (flags & B_CLRBUF)
 					clrbuf(bp);
 			}
-			ip->i_lfs_effnblks += bb;
+			ip->i_lfs_effnblks += frags;
 			mutex_enter(&lfs_lock);
-			fs->lfs_bfree -= bb;
+			fs->lfs_bfree -= frags;
 			mutex_exit(&lfs_lock);
 			ip->i_ffs1_db[lbn] = UNWRITTEN;
 		} else {
@@ -225,14 +224,14 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	 * Do byte accounting all at once, so we can gracefully fail *before*
 	 * we start assigning blocks.
 	 */
-	bb = VFSTOUFS(vp->v_mount)->um_seqinc;
+	frags = VFSTOUFS(vp->v_mount)->um_seqinc;
 	bcount = 0;
 	if (daddr == UNASSIGNED) {
-		bcount = bb;
+		bcount = frags;
 	}
 	for (i = 1; i < num; ++i) {
 		if (!indirs[i].in_exists) {
-			bcount += bb;
+			bcount += frags;
 		}
 	}
 	if (ISSPACE(fs, bcount, cred)) {
@@ -294,7 +293,6 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 	/*
 	 * Get the existing block from the cache, if requested.
 	 */
-	frags = fsbtofrags(fs, bb);
 	if (bpp)
 		*bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
 
@@ -375,14 +373,14 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 {
 	struct inode *ip;
 	struct lfs *fs;
-	long bb;
+	long frags;
 	int error;
 	extern long locked_queue_bytes;
 	size_t obufsize;
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	bb = (long)fragstofsb(fs, numfrags(fs, nsize - osize));
+	frags = (long)numfrags(fs, nsize - osize);
 	error = 0;
 
 	ASSERT_NO_SEGLOCK(fs);
@@ -399,7 +397,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		LFS_DEBUG_COUNTLOCKED("frag");
 	}
 
-	if (!ISSPACE(fs, bb, cred)) {
+	if (!ISSPACE(fs, frags, cred)) {
 		error = ENOSPC;
 		goto out;
 	}
@@ -415,7 +413,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 		goto out;
 	}
 #ifdef QUOTA
-	if ((error = chkdq(ip, bb, cred, 0))) {
+	if ((error = chkdq(ip, frags, cred, 0))) {
 		if (bpp)
 			brelse(*bpp, 0);
 		goto out;
@@ -429,23 +427,23 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	 */
 
 	if (bpp && ((*bpp)->b_oflags & BO_DELWRI)) {
-		if (!lfs_fits(fs, bb)) {
+		if (!lfs_fits(fs, frags)) {
 			if (bpp)
 				brelse(*bpp, 0);
 #ifdef QUOTA
-			chkdq(ip, -bb, cred, 0);
+			chkdq(ip, -frags, cred, 0);
 #endif
 			rw_exit(&fs->lfs_fraglock);
-			lfs_availwait(fs, bb);
+			lfs_availwait(fs, frags);
 			goto top;
 		}
-		fs->lfs_avail -= bb;
+		fs->lfs_avail -= frags;
 	}
 
 	mutex_enter(&lfs_lock);
-	fs->lfs_bfree -= bb;
+	fs->lfs_bfree -= frags;
 	mutex_exit(&lfs_lock);
-	ip->i_lfs_effnblks += bb;
+	ip->i_lfs_effnblks += frags;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 
 	if (bpp) {

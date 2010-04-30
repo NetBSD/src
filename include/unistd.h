@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.121 2009/07/22 19:48:27 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.121.2.1 2010/04/30 14:36:18 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -259,7 +259,7 @@ void	*sbrk(intptr_t);
 int	 setpgrp(pid_t, pid_t);			/* obsoleted by setpgid() */
 int	 setregid(gid_t, gid_t);
 int	 setreuid(uid_t, uid_t);
-void	 swab(const void *, void *, size_t);
+void	 swab(const void * __restrict, void * __restrict, ssize_t);
 int	 symlink(const char *, const char *);
 void	 sync(void);
 useconds_t ualarm(useconds_t, useconds_t);

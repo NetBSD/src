@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.73 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.73.20.1 2010/04/30 14:44:36 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.73 2008/04/28 20:24:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.73.20.1 2010/04/30 14:44:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,9 +293,9 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	if (fs->lfs_seglock) {
 		if (fs->lfs_lockpid == curproc->p_pid &&
 		    fs->lfs_locklwp == curlwp->l_lid) {
-			mutex_exit(&lfs_lock);
 			++fs->lfs_seglock;
 			fs->lfs_sp->seg_flags |= flags;
+			mutex_exit(&lfs_lock);
 			return 0;
 		} else if (flags & SEGM_PAGEDAEMON) {
 			mutex_exit(&lfs_lock);
@@ -503,9 +503,11 @@ lfs_segunlock(struct lfs *fs)
 		 * by a superblock completed.
 		 */
 		mutex_enter(&lfs_lock);
-		while (ckp && sync && fs->lfs_iocount)
+		while (ckp && sync && fs->lfs_iocount) {
 			(void)mtsleep(&fs->lfs_iocount, PRIBIO + 1,
 				      "lfs_iocount", 0, &lfs_lock);
+			DLOG((DLOG_SEG, "sleeping on iocount %x == %d\n", fs, fs->lfs_iocount));
+		}
 		while (sync && sp->seg_iocount) {
 			(void)mtsleep(&sp->seg_iocount, PRIBIO + 1,
 				     "seg_iocount", 0, &lfs_lock);

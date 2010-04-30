@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111_kbc.c,v 1.11 2009/05/29 14:15:44 rjs Exp $ */
+/*      $NetBSD: sa1111_kbc.c,v 1.11.2.1 2010/04/30 14:39:08 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2004  Ben Harris.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.11 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111_kbc.c,v 1.11.2.1 2010/04/30 14:39:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,8 @@ sackbc_intr_establish(void *cookie, pckbport_slot_t slot)
 
 	if (!(sc->polling) && sc->ih_rx == NULL) {
 		sc->ih_rx = sacc_intr_establish(
-			(sacc_chipset_tag_t *) device_parent(sc->dev), 
+			(sacc_chipset_tag_t *) 
+			  device_private(device_parent(sc->dev)), 
 			sc->intr+1, IST_EDGE_RAISE, IPL_TTY, sackbc_rxint, sc);
 		if (sc->ih_rx == NULL) {
 			aprint_normal_dev(sc->dev, "can't establish interrupt\n");
@@ -206,7 +207,8 @@ sackbc_disable_intrhandler(struct sackbc_softc *sc)
 {
 	if (sc->polling && sc->ih_rx) {
 		sacc_intr_disestablish(
-			(sacc_chipset_tag_t *) device_parent(sc->dev),
+			(sacc_chipset_tag_t *)
+			  device_private(device_parent(sc->dev)),
 			sc->ih_rx);
 		sc->ih_rx = NULL;
 	}

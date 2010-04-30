@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.38 2009/10/19 18:41:14 bouyer Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.38.2.1 2010/04/30 14:43:28 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.38 2009/10/19 18:41:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.38.2.1 2010/04/30 14:43:28 uebayasi Exp $");
 
 #include "opt_mii.h"
 
@@ -89,8 +89,9 @@ struct mii_knowndev {
 static int	ukphymatch(device_t, cfdata_t, void *);
 static void	ukphyattach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(ukphy, sizeof(struct mii_softc),
-    ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate);
+CFATTACH_DECL3_NEW(ukphy, sizeof(struct mii_softc),
+    ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 static int	ukphy_service(struct mii_softc *, struct mii_data *, int);
 
@@ -134,6 +135,7 @@ ukphyattach(device_t parent, device_t self, void *aux)
 #endif
 		aprint_normal(": OUI 0x%06x, model 0x%04x, rev. %d\n",
 		       oui, model, rev);
+	aprint_naive(": Media interface\n");
 
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;

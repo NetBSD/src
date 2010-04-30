@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.28 2009/11/15 22:21:03 christos Exp $	*/
+/*	$NetBSD: wchar.h,v 1.28.2.1 2010/04/30 14:36:18 uebayasi Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -60,8 +60,8 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
-#include <machine/ansi.h>
 #include <machine/wchar_limits.h>
+#include <sys/ansi.h>
 #include <sys/null.h>
 
 #include <stdio.h> /* for FILE* */

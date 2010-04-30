@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.51 2010/01/17 22:21:18 dsl Exp $	*/
+/*	$NetBSD: vector.S,v 1.51.2.1 2010/04/30 14:39:29 uebayasi Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,13 +65,14 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.51 2010/01/17 22:21:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.51.2.1 2010/04/30 14:39:29 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 #include "opt_ipkdb.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
+#include "opt_dtrace.h"
 
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
@@ -128,6 +129,23 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.51 2010/01/17 22:21:18 dsl Exp $");
 	movzbl	7(%eax),%eax				;\
 	shl	$24,%eax				;\
 	orl	%edx,%eax
+
+#ifdef KDTRACE_HOOKS
+	.bss
+	.globl	dtrace_invop_jump_addr
+	.align	4
+	.type	dtrace_invop_jump_addr, @object
+        .size	dtrace_invop_jump_addr, 4
+dtrace_invop_jump_addr:
+	.zero	4
+	.globl	dtrace_invop_calltrap_addr
+	.align	4
+	.type	dtrace_invop_calltrap_addr, @object
+        .size	dtrace_invop_calltrap_addr, 4
+dtrace_invop_calltrap_addr:
+	.zero	8
+	.text
+#endif
 
 #ifndef XEN
 #if NLAPIC > 0
@@ -885,8 +903,47 @@ IDTVEC(trap04)
 	ZTRAP(T_OFLOW)
 IDTVEC(trap05)
 	ZTRAP(T_BOUND)
+/*
+ * Privileged instruction fault.
+ */
+#ifdef KDTRACE_HOOKS
+	SUPERALIGN_TEXT
+IDTVEC(trap06)
+	/* Check if there is no DTrace hook registered. */
+	cmpl	$0,dtrace_invop_jump_addr
+	je	norm_ill
+
+	/* Check if this is a user fault. */
+	/* XXX this was 0x0020 in FreeBSD */
+	cmpl	$GSEL(GCODE_SEL, SEL_KPL), 4(%esp)   /* Check code segment. */
+
+	/* If so, just handle it as a normal trap. */
+	jne	norm_ill
+              
+	/*
+	 * This is a kernel instruction fault that might have been caused
+	 * by a DTrace provider.
+	 */
+	pushal				/* Push all registers onto the stack. */
+
+	/*
+	 * Set our jump address for the jump back in the event that
+	 * the exception wasn't caused by DTrace at all.
+	 */
+	movl	$norm_ill, dtrace_invop_calltrap_addr
+
+	/* Jump to the code hooked in by DTrace. */
+	jmpl	*dtrace_invop_jump_addr
+
+	/*
+	 * Process the instruction fault in the normal way.
+	 */
+norm_ill:
+	ZTRAP(T_PRIVINFLT)
+#else
 IDTVEC(trap06)
 	ZTRAP(T_PRIVINFLT)
+#endif
 IDTVEC(trap07)
 #if NNPX > 0
 	pushl	$0			# dummy error code

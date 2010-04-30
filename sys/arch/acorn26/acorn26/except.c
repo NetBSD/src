@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.23 2009/11/21 20:32:17 rmind Exp $ */
+/* $NetBSD: except.c,v 1.23.2.1 2010/04/30 14:39:01 uebayasi Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.23 2009/11/21 20:32:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.23.2.1 2010/04/30 14:39:01 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -200,25 +200,31 @@ do_fault(struct trapframe *tf, struct lwp *l,
     struct vm_map *map, vaddr_t va, vm_prot_t atype)
 {
 	int error;
-	struct pcb *cur_pcb;
+	struct pcb *pcb;
+	void *onfault;
 
 	if (pmap_fault(map->pmap, va, atype))
 		return;
 
+	pcb = lwp_getpcb(l);
+	onfault = pcb->pcb_onfault;
+
 	if (cpu_intr_p()) {
 		KASSERT((tf->tf_r15 & R15_MODE) != R15_MODE_USR);
 		error = EFAULT;
-	} else
+	} else {
+		pcb->pcb_onfault = NULL;
 		error = uvm_fault(map, va, atype);
+		pcb->pcb_onfault = onfault;
+	}
 
 	if (error != 0) {
 		ksiginfo_t ksi;
 
-		cur_pcb = lwp_getpcb(l);
-		if (cur_pcb->pcb_onfault != NULL) {
+		if (onfault != NULL) {
 			tf->tf_r0 = error;
 			tf->tf_r15 = (tf->tf_r15 & ~R15_PC) |
-			    (register_t)cur_pcb->pcb_onfault;
+			    (register_t)onfault;
 			return;
 		}
 #ifdef DDB

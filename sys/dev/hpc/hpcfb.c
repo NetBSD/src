@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.52 2010/01/08 20:05:16 dyoung Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.52.2.1 2010/04/30 14:43:11 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.52 2010/01/08 20:05:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.52.2.1 2010/04/30 14:43:11 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -198,8 +198,8 @@ static void	hpcfb_cmap_reorder(struct hpcfb_fbconf *,
 		    struct hpcfb_devconfig *);
 
 static void	hpcfb_power(int, void *);
-static bool	hpcfb_suspend(device_t, pmf_qual_t);
-static bool	hpcfb_resume(device_t, pmf_qual_t);
+static bool	hpcfb_suspend(device_t, const pmf_qual_t *);
+static bool	hpcfb_resume(device_t, const pmf_qual_t *);
 
 
 void    hpcfb_cursor(void *, int, int, int);
@@ -671,7 +671,7 @@ hpcfb_power(int why, void *arg)
 }
 
 static bool
-hpcfb_suspend(device_t self, pmf_qual_t qual)
+hpcfb_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct hpcfb_softc *sc = device_private(self);
 
@@ -680,7 +680,7 @@ hpcfb_suspend(device_t self, pmf_qual_t qual)
 }
 
 static bool
-hpcfb_resume(device_t self, pmf_qual_t qual)
+hpcfb_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct hpcfb_softc *sc = device_private(self);
 

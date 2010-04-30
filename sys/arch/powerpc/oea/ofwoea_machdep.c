@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.18 2010/01/17 16:47:17 phx Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.18.2.1 2010/04/30 14:39:44 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.18 2010/01/17 16:47:17 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.18.2.1 2010/04/30 14:39:44 uebayasi Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
-#include "opt_ddb.h" 
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"
 #include "opt_modular.h"
@@ -167,6 +167,8 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 			    sizeof(model_name));
 		model_init();
 	}
+	/* Initialize bus_space */
+	ofwoea_bus_space_init();
 
 	ofwoea_consinit();
 
@@ -344,7 +346,7 @@ restore_ofmap(struct ofw_translations *map, int len)
 		}
 	}
 	pmap_update(&ofw_pmap);
-}	
+}
 
 
 
@@ -403,7 +405,7 @@ ofwoea_batinit(void)
 	node = OF_finddevice("/");
 	bitmap = ranges_bitmap(node, 0);
 	oea_batinit(0);
-	
+
 #ifdef macppc
 	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;
@@ -583,6 +585,10 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		 */
 		if (range == -1) {
 			/* we found a rangeless isa bus */
+			if (iomem == RANGE_IO)
+				size = 0x10000;
+			else
+				size = 0x1000000;
 		}
 		DPRINTF("found isa stuff\n");
 		for (i=0; i < range; i++)
@@ -595,7 +601,10 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 					DPRINTF("found IO\n");
 					tag->pbs_offset = list[i].addr;
 					tag->pbs_limit = size;
-					error = bus_space_init(tag, name, NULL, 0);
+					error = bus_space_init(tag, name,
+					    ex_storage[exmap],
+					    sizeof(ex_storage[exmap]));
+					exmap++;
 					return error;
 				}
 		} else {
@@ -605,7 +614,10 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 					DPRINTF("found mem\n");
 					tag->pbs_offset = list[i].addr;
 					tag->pbs_limit = size;
-					error = bus_space_init(tag, name, NULL, 0);
+					error = bus_space_init(tag, name,
+					    ex_storage[exmap],
+					    sizeof(ex_storage[exmap]));
+					exmap++;
 					return error;
 				}
 		}
@@ -671,7 +683,7 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 			tag->pbs_offset = 0;
 			tag->pbs_base = region.addr;
 			tag->pbs_limit = region.size + region.addr;
-		}	                                
+		}
 
 		error = bus_space_init(tag, name, ex_storage[exmap],
 		    sizeof(ex_storage[exmap]));

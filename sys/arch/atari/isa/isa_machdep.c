@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.36 2009/08/23 01:27:13 mrg Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.36.2.1 2010/04/30 14:39:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.36 2009/08/23 01:27:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.36.2.1 2010/04/30 14:39:11 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,21 +91,21 @@ isabusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	static int	nmatched = 0;
 
 	if (strcmp((char *)auxp, "isab"))
-		return (0); /* Wrong number... */
+		return 0; /* Wrong number... */
 
-	if(atari_realconfig == 0)
-		return (1);
+	if (atari_realconfig == 0)
+		return 1;
 
 	if (machineid & (ATARI_HADES|ATARI_MILAN)) {
 		/*
 		 * The Hades and Milan have only one pci bus
 		 */
 		if (nmatched)
-			return (0);
+			return 0;
 		nmatched++;
-		return (1);
+		return 1;
 	}
-	return(0);
+	return 0;
 }
 
 void
@@ -144,9 +144,10 @@ isabusattach(struct device *pdp, struct device *dp, void *auxp)
 int
 atariisabusprint(void *auxp, const char *name)
 {
-	if(name == NULL)
-		return(UNCONF);
-	return(QUIET);
+
+	if (name == NULL)
+		return UNCONF;
+	return QUIET;
 }
 
 void

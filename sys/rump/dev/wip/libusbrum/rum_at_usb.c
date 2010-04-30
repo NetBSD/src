@@ -1,4 +1,4 @@
-/*	$NetBSD: rum_at_usb.c,v 1.2 2010/02/03 21:18:38 pooka Exp $	*/
+/*	$NetBSD: rum_at_usb.c,v 1.2.2.1 2010/04/30 14:44:27 uebayasi Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -45,14 +45,14 @@ CFDRIVER_DECL(uhub, DV_DULL, uhub_attrs);
 
 CFDRIVER_DECL(rum, DV_IFNET, NULL);
 
-struct cfparent rumpusbhc_pspec = {
+struct cfparent ugenhc_pspec = {
 	"usbus",
-	"rumpusbhc",
+	"ugenhc",
 	DVUNIT_ANY
 };
 
 struct cfdata usb_cfdata[] = {
-	{ "usb", "usb", 0, FSTATE_STAR, NULL, 0, &rumpusbhc_pspec },
+	{ "usb", "usb", 0, FSTATE_STAR, NULL, 0, &ugenhc_pspec },
 };
 
 struct cfparent usb_pspec = {
@@ -81,6 +81,7 @@ struct cfdata rum_cfdata[] = {
 	{ "rum", "rum", 0, FSTATE_STAR, NULL, 0, &usbdevif_pspec },
 };
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 
 #define FLAWLESSCALL(call)						\
@@ -90,8 +91,7 @@ do {									\
 		panic("\"%s\" failed", #call);				\
 } while (/*CONSTCOND*/0)
 
-void
-rump_device_configuration(void)
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern struct cfattach usb_ca, uhub_ca, uroothub_ca, rum_ca;
 

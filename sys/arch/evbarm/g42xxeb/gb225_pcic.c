@@ -286,7 +286,7 @@ opcic_write(struct sapcic_socket *__so, int which, int arg)
 	struct opio_softc *psc = 
 	     device_private(device_parent(sc->sc_pc.sc_dev));
 	struct obio_softc *bsc = 
-	     device_private(device_parent(&psc->sc_dev));
+	     device_private(device_parent(psc->sc_dev));
 
 	switch (which) {
 	case SAPCIC_CONTROL_RESET:
@@ -354,7 +354,7 @@ opcic_intr_establish(struct sapcic_socket *so, int level,
 	struct opio_softc *psc = 
 	    device_private(device_parent(sc->sc_pc.sc_dev));
 	struct obio_softc *bsc = 
-	    device_private(device_parent(&psc->sc_dev));
+	    device_private(device_parent(psc->sc_dev));
 	int irq;
 
 	DPRINTF(("opcic_intr_establish %d\n", so->socket));
@@ -371,7 +371,7 @@ opcic_intr_disestablish(struct sapcic_socket *so, void *ih)
 	struct opio_softc *psc = 
 	    device_private(device_parent(sc->sc_pc.sc_dev));
 	struct obio_softc *bsc = 
-	    (struct obio_softc *) device_parent(&psc->sc_dev);
+	    (struct obio_softc *) device_parent(psc->sc_dev);
 	int (* func)(void *) = ((struct obio_handler *)ih)->func;
 
 	int irq = so->socket ? PCMCIA_INT : CF_INT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.16 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.16.20.1 2010/04/30 14:39:47 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 
 void enable_intr(void);
 void disable_intr(void);
-
-extern int imask[];
 
 #define	ICU_LEN			64
 #define IRQ_SLAVE		2

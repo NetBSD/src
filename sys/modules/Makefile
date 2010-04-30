@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2010/01/25 22:21:28 pooka Exp $
+#	$NetBSD: Makefile,v 1.38.2.1 2010/04/30 14:44:16 uebayasi Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,7 @@ SUBDIR+=	nilfs
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	overlay
+SUBDIR+=	pf
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
@@ -85,6 +86,7 @@ SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	drm
 SUBDIR+=	i915drm
+SUBDIR+=	pad
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
@@ -98,6 +100,7 @@ SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
+SUBDIR+=	pad
 .endif
 
 .include <bsd.own.mk>
@@ -107,9 +110,16 @@ SUBDIR+=	viadrm
 SUBDIR+= 	dm
 .endif
 
-# we need solaris and zfs modules for ZFS
-.if (${MKZFS} != "no")
+.if (${MKDTRACE} != "no")
+SUBDIR+=	dtrace
+.endif
+
+# we need solaris for the dtrace and zfs modules
+.if (${MKDTRACE} != "no" || ${MKZFS} != "no")
 SUBDIR+=        solaris
+.endif
+
+.if (${MKZFS} != "no")
 SUBDIR+=	zfs
 .endif
 

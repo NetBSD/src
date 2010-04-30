@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.21 2010/01/26 17:41:20 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.21.2.1 2010/04/30 14:44:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.21 2010/01/26 17:41:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.21.2.1 2010/04/30 14:44:31 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -213,8 +213,7 @@ sockin_process(struct socket *so)
 	}
 	m->m_len = m->m_pkthdr.len = n;
 
-	if (sockin_if.if_bpf)
-		bpf_ops->bpf_mtap_af(sockin_if.if_bpf, AF_UNSPEC, m);
+	bpf_mtap_af(&sockin_if, AF_UNSPEC, m);
 
 	mutex_enter(softnet_lock);
 	if (so->so_proto->pr_type == SOCK_DGRAM) {
@@ -350,7 +349,7 @@ sockin_init(void)
 	}
 	mutex_init(&su_mtx, MUTEX_DEFAULT, IPL_NONE);
 	strlcpy(sockin_if.if_xname, "sockin0", sizeof(sockin_if.if_xname));
-	bpf_ops->bpf_attach(&sockin_if, DLT_NULL, 0, &sockin_if.if_bpf);
+	bpf_attach(&sockin_if, DLT_NULL, 0);
 }
 
 static int
@@ -424,8 +423,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		size_t tot;
 		int s;
 
-		if (sockin_if.if_bpf)
-			bpf_ops->bpf_mtap_af(sockin_if.if_bpf, AF_UNSPEC, m);
+		bpf_mtap_af(&sockin_if, AF_UNSPEC, m);
 
 		memset(&mhdr, 0, sizeof(mhdr));
 

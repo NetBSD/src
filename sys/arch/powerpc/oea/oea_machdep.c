@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.51 2009/11/27 03:23:12 rmind Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.51.2.1 2010/04/30 14:39:44 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.51 2009/11/27 03:23:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.51.2.1 2010/04/30 14:39:44 uebayasi Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -75,9 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.51 2009/11/27 03:23:12 rmind Exp $
 #include <ipkdb/ipkdb.h>
 #endif
 
-#include <powerpc/oea/bat.h>
-#include <powerpc/oea/sr_601.h>
-#include <powerpc/oea/cpufeat.h>
 #include <powerpc/trap.h>
 #include <powerpc/stdarg.h>
 #include <powerpc/spr.h>
@@ -85,10 +82,14 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.51 2009/11/27 03:23:12 rmind Exp $
 #include <powerpc/altivec.h>
 #include <machine/powerpc.h>
 
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/bat.h>
+#include <powerpc/oea/sr_601.h>
+#include <powerpc/oea/cpufeat.h>
+
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 /*
@@ -785,16 +786,6 @@ oea_startup(const char *model)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, 0, false, NULL);
-
-#ifndef PMAP_MAP_POOLPAGE
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use direct-mapped
-	 * pool pages.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, false, NULL);
-#endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

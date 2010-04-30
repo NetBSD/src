@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800reg.h,v 1.6 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: s3c2800reg.h,v 1.6.100.1 2010/04/30 14:39:08 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -239,9 +239,7 @@
 
 /* UART (Small diffs to S3C2400's UART) */
 #define	 UMCON_AFC	(1<<1)	/* auto flow control */
-#define	 UMSTAT_DCTS	(1<<4)	/* CTS change */
-#define	 ULCON_IR  	(1<<7)
-#define	 ULCON_PARITY_SHIFT  4
+#define	 UMSTAT_DCTS	(1<<1)	/* CTS change */
 
 /* Interrupt controller */
 #define	INTCTL_IRQPND	0x0c	/* IRQ pending */

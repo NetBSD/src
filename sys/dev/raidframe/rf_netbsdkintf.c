@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.271 2009/12/01 01:03:54 dyoung Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.271.2.1 2010/04/30 14:43:47 uebayasi Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.271 2009/12/01 01:03:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.271.2.1 2010/04/30 14:43:47 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1506,11 +1506,15 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return (0);
 
 	case RAIDFRAME_PARITYMAP_STATUS:
+		if (rf_paritymap_ineligible(raidPtr))
+			return EINVAL;
 		rf_paritymap_status(raidPtr->parity_map,
 		    (struct rf_pmstat *)data);
 		return 0;
 
 	case RAIDFRAME_PARITYMAP_SET_PARAMS:
+		if (rf_paritymap_ineligible(raidPtr))
+			return EINVAL;
 		if (raidPtr->parity_map == NULL)
 			return ENOENT; /* ??? */
 		if (0 != rf_paritymap_set_params(raidPtr->parity_map, 
@@ -1519,10 +1523,14 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return 0;
 
 	case RAIDFRAME_PARITYMAP_GET_DISABLE:
+		if (rf_paritymap_ineligible(raidPtr))
+			return EINVAL;
 		*(int *) data = rf_paritymap_get_disable(raidPtr);
 		return 0;
 
 	case RAIDFRAME_PARITYMAP_SET_DISABLE:
+		if (rf_paritymap_ineligible(raidPtr))
+			return EINVAL;
 		rf_paritymap_set_disable(raidPtr, *(int *)data);
 		/* XXX should errors be passed up? */
 		return 0;
@@ -2610,8 +2618,9 @@ void
 rf_paritymap_kern_read(RF_Raid_t *raidPtr, struct rf_paritymap_ondisk *map)
 {
 	struct rf_paritymap_ondisk tmp;
-	int c;
+	int c,first;
 
+	first=1;
 	for (c = 0; c < raidPtr->numCol; c++) {
 		/* Skip dead disks. */
 		if (RF_DEAD_DISK(raidPtr->Disks[c].status))
@@ -2620,8 +2629,9 @@ rf_paritymap_kern_read(RF_Raid_t *raidPtr, struct rf_paritymap_ondisk *map)
 		    raidPtr->raid_cinfo[c].ci_vp, &tmp,
 		    RF_PARITYMAP_NBYTE,
 		    RF_PARITY_MAP_OFFSET, RF_PARITY_MAP_SIZE);
-		if (c == 0) {
+		if (first) {
 			memcpy(map, &tmp, sizeof(*map));
+			first = 0;
 		} else {
 			rf_paritymap_merge(map, &tmp);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.71 2009/10/03 22:32:56 elad Exp $	*/
+/*	$NetBSD: sched.h,v 1.71.2.1 2010/04/30 14:44:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ void		sched_cpuattach(struct cpu_info *);
 void		sched_tick(struct cpu_info *);
 void		schedclock(struct lwp *);
 void		sched_schedclock(struct lwp *);
-void		sched_pstats(void *);
+void		sched_pstats(void);
 void		sched_lwp_stats(struct lwp *);
 void		sched_pstats_hook(struct lwp *, int);
 

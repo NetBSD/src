@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ecvar.h,v 1.1 2007/12/21 21:22:54 jmcneill Exp $	*/
+/*	$NetBSD: acpi_ecvar.h,v 1.1.40.1 2010/04/30 14:43:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -29,11 +29,11 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _HAVE_DEV_ACPI_ACPI_ECVAR_H
-#define _HAVE_DEV_ACPI_ACPI_ECVAR_H
+#ifndef _SYS_DEV_ACPI_ACPI_ECVAR_H
+#define _SYS_DEV_ACPI_ACPI_ECVAR_H
 
 ACPI_STATUS	acpiec_bus_read(device_t, u_int, ACPI_INTEGER *, int);
 ACPI_STATUS	acpiec_bus_write(device_t, u_int, ACPI_INTEGER, int);
 ACPI_HANDLE	acpiec_get_handle(device_t);
 
-#endif /* !_HAVE_DEV_ACPI_ACPI_ECVAR_H */
+#endif	/* !_SYS_DEV_ACPI_ACPI_ECVAR_H */

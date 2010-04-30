@@ -1,4 +1,4 @@
-#	$NetBSD: genfth.cf,v 1.6 2008/05/02 18:11:05 martin Exp $
+#	$NetBSD: genfth.cf,v 1.6.20.1 2010/04/30 14:39:50 uebayasi Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -132,10 +132,20 @@ member	fs_maxsymlinklen
 # ufs1 dinode
 #
 struct	ufs1_dinode
-member	di_size
-member	di_mode
-member	di_db
-member	di_ib
+member	di1_size	di_size
+member	di1_mode	di_mode
+member	di1_db		di_db
+member	di1_ib		di_ib
+member	di_inumber	di_inumber
+
+#
+# ufs2 dinode
+#
+struct	ufs2_dinode
+member	di2_size	di_size
+member	di2_mode	di_mode
+member	di2_db		di_db
+member	di2_ib		di_ib
 
 #
 # ufs direct
@@ -147,7 +157,8 @@ member	d_reclen
 member	d_namlen
 member	d_name
 
-define	fs_magic_value	FS_UFS1_MAGIC
+define	fs1_magic_value	FS_UFS1_MAGIC
+define	fs2_magic_value	FS_UFS2_MAGIC
 define	fs_42postblfmt	FS_42POSTBLFMT
 define	fs_44inodefmt	FS_44INODEFMT
 define	ndaddr		NDADDR

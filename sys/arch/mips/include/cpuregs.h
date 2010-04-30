@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.77 2009/12/14 00:46:04 matt Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.77.2.1 2010/04/30 14:39:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -147,7 +147,7 @@
  *	MIPS_CR_EXC_CODE	The exception type (see exception codes below).
  *
  * Differences:
- *  r3k has 4 bits of execption type, r4k has 5 bits.
+ *  r3k has 4 bits of exception type, r4k has 5 bits.
  */
 #define	MIPS_CR_BR_DELAY	0x80000000
 #define	MIPS_CR_COP_ERR		0x30000000

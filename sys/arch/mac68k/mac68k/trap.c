@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.139 2009/11/23 00:11:44 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.139.2.1 2010/04/30 14:39:34 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139 2009/11/23 00:11:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.139.2.1 2010/04/30 14:39:34 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -283,19 +283,19 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	struct lwp *l;
 	struct proc *p;
 	struct pcb *pcb;
+	void *onfault;
 	ksiginfo_t ksi;
 	int s;
+	int rv;
 	u_quad_t sticks;
 
 	uvmexp.traps++;
 	l = curlwp;
+	p = l->l_proc;
+	pcb = lwp_getpcb(l);
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_trap = type & ~T_USER;
-
-	p = l->l_proc;
-	pcb = lwp_getpcb(l);
-	KASSERT(pcb != NULL);
 
 	if (USERMODE(fp->f_sr)) {
 		type |= T_USER;
@@ -343,8 +343,10 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		panic("trap");
 
 	case T_BUSERR:		/* Kernel bus error */
-		if (!pcb->pcb_onfault)
+		onfault = pcb->pcb_onfault;
+		if (onfault == NULL)
 			goto dopanic;
+		rv = EFAULT;
 		/*
 		 * If we have arranged to catch this fault in any of the
 		 * copy to/from user space routines, set PC to return to
@@ -354,7 +356,8 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 copyfault:
 		fp->f_stackadj = exframesize[fp->f_format];
 		fp->f_format = fp->f_vector = 0;
-		fp->f_pc = (int)pcb->pcb_onfault;
+		fp->f_pc = (int)onfault;
+		fp->f_regs[D0] = rv;
 		return;
 
 	case T_BUSERR|T_USER:	/* Bus error */
@@ -543,8 +546,11 @@ copyfault:
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if (pcb->pcb_onfault == fubail || pcb->pcb_onfault == subail)
+		onfault = pcb->pcb_onfault;
+		if (onfault == fubail || onfault == subail) {
+			rv = EFAULT;
 			goto copyfault;
+		}
 		/* fall into... */
 
 	case T_MMUFLT|T_USER:	/* page fault */
@@ -552,9 +558,10 @@ copyfault:
 		vaddr_t va;
 		struct vmspace *vm = p->p_vmspace;
 		struct vm_map *map;
-		int rv;
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
+
+		onfault = pcb->pcb_onfault;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
@@ -569,8 +576,7 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (type == T_MMUFLT &&
-		    (!pcb->pcb_onfault || KDFAULT(code)))
+		if (type == T_MMUFLT && (onfault == NULL || KDFAULT(code)))
 			map = kernel_map;
 		else {
 			map = vm ? &vm->vm_map : kernel_map;
@@ -591,7 +597,9 @@ copyfault:
 			goto dopanic;
 		}
 #endif
+		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, va, ftype);
+		pcb->pcb_onfault = onfault;
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
 			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
@@ -624,7 +632,7 @@ copyfault:
 		} else
 			ksi.ksi_code = SEGV_MAPERR;
 		if (type == T_MMUFLT) {
-			if (pcb->pcb_onfault)
+			if (onfault)
 				goto copyfault;
 			printf("uvm_fault(%p, 0x%lx, 0x%x) -> 0x%x\n",
 			    map, va, ftype, rv);

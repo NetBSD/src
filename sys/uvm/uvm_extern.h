@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.161.2.5 2010/04/29 03:15:10 uebayasi Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.161.2.6 2010/04/30 14:44:37 uebayasi Exp $	*/
 
 /*
  *
@@ -550,7 +550,6 @@ void	uvm_reclaim_hook_del(struct uvm_reclaim_hook *);
  */
 extern struct vm_map *kernel_map;
 extern struct vm_map *kmem_map;
-extern struct vm_map *mb_map;
 extern struct vm_map *phys_map;
 
 /*
@@ -681,7 +680,6 @@ void			uvmspace_unshare(struct lwp *);
 void			uvm_whatis(uintptr_t, void (*)(const char *, ...));
 
 /* uvm_meter.c */
-void			uvm_meter(void);
 int			uvm_sysctl(int *, u_int, void *, size_t *,
 			    void *, size_t, struct proc *);
 int			uvm_pctparam_check(struct uvm_pctparam *, int);

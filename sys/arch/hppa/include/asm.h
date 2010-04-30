@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.10 2008/08/11 21:52:10 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.10.14.1 2010/04/30 14:39:27 uebayasi Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -143,7 +143,7 @@
 	.stabs __STRING(sym),1,0,0,0
 #endif
 
-#define	BSS(n,s)	! .data ! .label n ! .comm s
+#define	BSS(n,s)	.comm n, s
 #define	SZREG	4
 
 #endif /* _HPPA_ASM_H_ */

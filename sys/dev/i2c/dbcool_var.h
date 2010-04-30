@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.7 2010/01/08 20:04:31 dyoung Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.7.2.1 2010/04/30 14:43:11 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,12 +36,12 @@
 #ifndef DBCOOLVAR_H
 #define DBCOOLVAR_H
 
-#define DBCOOL_DEBUG
 /*
+#define DBCOOL_DEBUG
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.7 2010/01/08 20:04:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.7.2.1 2010/04/30 14:43:11 uebayasi Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -62,6 +62,7 @@ enum dbc_sensor_type {
 	DBC_TEMP,
 	DBC_VOLT,
 	DBC_FAN,
+	DBC_VID,
 	DBC_EOF
 };
 
@@ -70,15 +71,15 @@ enum dbc_sensor_type {
 #define	DBCFLAG_HAS_SHDN	0x0004
 #define	DBCFLAG_MULTI_VCC	0x0008
 #define	DBCFLAG_4BIT_VER	0x0010
-#define	DBCFLAG_HAS_VID		0x0020
+#define	DBCFLAG_OBSOLETE	0x0020	/* was DBCFLAG_HAS_VID */
 #define	DBCFLAG_HAS_VID_SEL	0x0040
 #define	DBCFLAG_HAS_PECI	0x0080
-#define	DBCFLAG_ADM1027		0x1000
+#define	DBCFLAG_NO_READBYTE	0x1000
 #define	DBCFLAG_ADM1030		0x2000
 #define	DBCFLAG_ADT7466		0x4000
 
 /* Maximum sensors for any dbCool device */
-#define DBCOOL_MAXSENSORS       15
+#define DBCOOL_MAXSENSORS       16
 
 struct reg_list {
 	uint8_t val_reg;
@@ -118,6 +119,9 @@ struct dbcool_softc {
 	struct sysmon_envsys *sc_sme;
 	struct dbcool_chipset sc_dc;
 	envsys_data_t sc_sensor[DBCOOL_MAXSENSORS];
+	sysmon_envsys_lim_t sc_deflims[DBCOOL_MAXSENSORS];
+	uint32_t sc_defprops[DBCOOL_MAXSENSORS];
+	int sc_root_sysctl_num;
 	int sc_sysctl_num[DBCOOL_MAXSENSORS];
 	struct reg_list *sc_regs[DBCOOL_MAXSENSORS];
 	int sc_nom_volt[DBCOOL_MAXSENSORS];
@@ -147,7 +151,7 @@ uint8_t dbcool_readreg(struct dbcool_chipset *, uint8_t);
 void dbcool_writereg(struct dbcool_chipset *, uint8_t, uint8_t);
 void dbcool_setup(device_t); 
 int dbcool_chip_ident(struct dbcool_chipset *);
-bool dbcool_pmf_suspend(device_t, pmf_qual_t);
-bool dbcool_pmf_resume(device_t, pmf_qual_t);
+bool dbcool_pmf_suspend(device_t, const pmf_qual_t *);
+bool dbcool_pmf_resume(device_t, const pmf_qual_t *);
 
 #endif	/* def DBCOOLVAR_H */

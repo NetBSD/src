@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.353 2010/01/03 04:06:31 dholland Exp $
+#	$NetBSD: files.i386,v 1.353.2.1 2010/04/30 14:39:28 uebayasi Exp $
 #
 # new style config file for i386 architecture
 #
@@ -480,11 +480,6 @@ include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
 file	arch/i386/acpi/acpi_wakeup_low.S	acpi
-
-# Toshiba VALD 
-device	vald
-attach	vald at acpinodebus with vald_acpi
-file	arch/i386/acpi/vald_acpi.c		vald_acpi
 
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpinodebus with npx_acpi

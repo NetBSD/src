@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.3 2010/01/18 16:40:17 rmind Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.3.2.1 2010/04/30 14:39:58 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.3 2010/01/18 16:40:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.3.2.1 2010/04/30 14:39:58 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -82,11 +82,12 @@ x86_cpu_topology(struct cpu_info *ci)
 	lextmode = descs[0];
 	if (lextmode >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature3_flags |= descs[3]; /* edx */
+		ci->ci_feat_val[2] = descs[3]; /* edx */
+		ci->ci_feat_val[3] = descs[2]; /* ecx */
 	}
 
 	/* Check for HTT support.  See notes below regarding AMD. */
-	if ((ci->ci_feature_flags & CPUID_HTT) != 0) {
+	if ((ci->ci_feat_val[0] & CPUID_HTT) != 0) {
 		/* Maximum number of LPs sharing a cache (ebx[23:16]). */
 		x86_cpuid(1, descs);
 		lp_max = (descs[1] >> 16) & 0xff;
@@ -108,7 +109,7 @@ x86_cpu_topology(struct cpu_info *ci)
 		break;
 	case CPUVENDOR_AMD:
 		/* In a case of AMD, HTT flag means CMP support. */
-		if ((ci->ci_feature_flags & CPUID_HTT) == 0) {
+		if ((ci->ci_feat_val[0] & CPUID_HTT) == 0) {
 			core_max = 1;
 			break;
 		}

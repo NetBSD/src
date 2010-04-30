@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.122 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC,v 1.122.2.1 2010/04/30 14:39:40 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.122 $"
+#ident 		"GENERIC-$Revision: 1.122.2.1 $"
 
 maxusers	32
 
@@ -133,7 +133,6 @@ options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
-options 	NMBCLUSTERS=1024
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -220,6 +219,10 @@ com1	at isa? port 0x2f8 irq 3
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x3bc irq 7	# standard PC parallel ports
 
+# ISA floppy
+fdc0		at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fd*		at fdc? drive ?			# the drives themselves
+
 # SCSI Controllers and Devices
 siop*		at pci? dev ? function ?	# Symbios 53c8xx SCSI
 esiop*		at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
@@ -228,6 +231,7 @@ esiop*		at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 scsibus* 	at siop?
 scsibus* 	at esiop?
 scsibus* 	at umass?
+scsibus* 	at sbp?
 
 # SCSI devices
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
@@ -337,6 +341,7 @@ uhid*	at uhidev? reportid ?				# USB Generic HID
 ulpt*	at uhub? port ? configuration ? interface ?	# USB Printer
 umodem*	at uhub? port ? configuration ?			# USB Modem
 ucom*	at umodem?
+uhso*	at uhub? port ? configuration ?			# Option N.V. Wireless WAN modems
 #uaudio*	at uhub? port ? configuration ?			# USB audio
 
 # D-Link DSB-R100 USB FM radio tuner
@@ -398,7 +403,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter

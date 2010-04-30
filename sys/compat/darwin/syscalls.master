@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2009/01/13 22:27:43 pooka Exp $
+	$NetBSD: syscalls.master,v 1.38.4.1 2010/04/30 14:42:57 uebayasi Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -40,9 +40,6 @@
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-
-#include "fs_lfs.h"
-#include "fs_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,11 +315,7 @@
 152	UNIMPL		setprivexec
 153	UNIMPL		pread
 154	UNIMPL		pwrite
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
-155	NOARGS		{ int|sys||nfssvc(int flag, void *argp); }
-#else
 155	EXCL		nfssvc
-#endif
 156	NOARGS    	{ int|compat_43_sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
 157	STD		{ int|darwin_sys||statfs(const char *path, \

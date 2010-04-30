@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.9 2009/10/23 02:32:34 snj Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.9.2.1 2010/04/30 14:40:00 uebayasi Exp $	*/
 
 /*
  *
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.9 2009/10/23 02:32:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.9.2.1 2010/04/30 14:40:00 uebayasi Exp $");
 
 #include <sys/param.h>
 
@@ -55,7 +55,6 @@ invlpg(vaddr_t addr)
 {
 	int s = splvm();
 	xpq_queue_invlpg(addr);
-	xpq_flush_queue();
 	splx(s);
 }  
 
@@ -104,7 +103,6 @@ lcr3(vaddr_t val)
 {
 	int s = splvm();
 	xpq_queue_pt_switch(xpmap_ptom_masked(val));
-	xpq_flush_queue();
 	splx(s);
 }
 #endif
@@ -114,7 +112,6 @@ tlbflush(void)
 {
 	int s = splvm();
 	xpq_queue_tlb_flush();
-	xpq_flush_queue();
 	splx(s);
 }
 

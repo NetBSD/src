@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.20 2009/12/16 14:37:26 msaitoh Exp $	*/
+/*	$NetBSD: igphy.c,v 1.20.2.1 2010/04/30 14:43:28 uebayasi Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.20 2009/12/16 14:37:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.20.2.1 2010/04/30 14:43:28 uebayasi Exp $");
 
 #include "opt_mii.h"
 
@@ -88,14 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.20 2009/12/16 14:37:26 msaitoh Exp $");
 #include <dev/mii/miivar.h>
 #include <dev/mii/miidevs.h>
 #include <dev/mii/igphyreg.h>
+#include <dev/mii/igphyvar.h>
 #include <dev/pci/if_wmvar.h>
-
-struct igphy_softc {
-	struct mii_softc sc_mii;
-	int sc_smartspeed;
-	uint32_t sc_mactype;
-	uint32_t sc_macflags;
-};
 
 static void igphy_reset(struct mii_softc *);
 static void igphy_load_dspcode(struct mii_softc *);

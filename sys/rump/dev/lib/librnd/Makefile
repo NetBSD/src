@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/09/08 20:12:52 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2010/04/30 14:44:24 uebayasi Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
@@ -9,7 +9,6 @@ SRCS=   rnd.c rndpool.c
 
 SRCS+=	component.c
 
-CPPFLAGS+=	-Wno-pointer-sign
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>

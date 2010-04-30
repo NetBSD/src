@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.30 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: athvar.h,v 1.30.2.1 2010/04/30 14:43:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -44,6 +44,12 @@
 #ifndef _DEV_ATH_ATHVAR_H
 #define _DEV_ATH_ATHVAR_H
 
+#include <net/if.h>
+#include <net/if_media.h>
+#include <net/if_ether.h>
+
+#include <net80211/ieee80211_netbsd.h>
+#include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
 
 #include <external/isc/atheros_hal/dist/ah.h>
@@ -175,8 +181,8 @@ struct ath_tx99;
 
 struct ath_softc {
 	device_t 		sc_dev;
-	struct device_suspensor	sc_suspensor;
-	struct pmf_qual		sc_qual;
+	device_suspensor_t	sc_suspensor;
+	pmf_qual_t		sc_qual;
 	struct ethercom		sc_ec;		/* interface common */
 	struct ath_stats	sc_stats;	/* interface statistics */
 	struct ieee80211com	sc_ic;		/* IEEE 802.11 common */

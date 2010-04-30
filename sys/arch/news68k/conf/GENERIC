@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.98 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC,v 1.98.2.1 2010/04/30 14:39:38 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.98 $"
+#ident 		"GENERIC-$Revision: 1.98.2.1 $"
 
 maxusers	8
 
@@ -239,7 +239,7 @@ pseudo-device	raid		8	# RAIDframe disk driver
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 pseudo-device	sl			# SLIP interfaces
 pseudo-device	ppp			# PPP interfaces
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)

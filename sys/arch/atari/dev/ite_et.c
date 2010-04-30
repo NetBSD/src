@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.27 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.27.2.1 2010/04/30 14:39:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.27 2009/10/20 19:10:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.27.2.1 2010/04/30 14:39:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ grfetmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 		/*
 		 * Check if the layers we depend on exist
 		 */
-		if(!(machineid & ATARI_HADES))
+		if (!(machineid & ATARI_HADES))
 			return 0;
 		if (!et_probe_card())
 			return 0;
@@ -156,9 +156,9 @@ grfetmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	/*
 	 * Final constraint: each grf needs a view....
 	 */
-	if((cfdata_grf == NULL) || (did_consinit > 1)) {
-	    if((*view_cdevsw.d_open)(cfp->cf_unit, 0, 0, NULL))
-		return 0;
+	if ((cfdata_grf == NULL) || (did_consinit > 1)) {
+		if ((*view_cdevsw.d_open)(cfp->cf_unit, 0, 0, NULL))
+			return 0;
 	}
 	did_consinit = 2;
 	return 1;
@@ -185,9 +185,9 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 	maj = cdevsw_lookup_major(&grf_cdevsw);
 
 	/*
-	 * Handle exeption case: early console init
+	 * Handle exception case: early console init
 	 */
-	if(dp == NULL) {
+	if (dp == NULL) {
 		congrf.g_unit    = cfdata_grf->cf_unit;
 		congrf.g_grfdev  = makedev(maj, congrf.g_unit);
 		congrf.g_itedev  = (dev_t)-1;
@@ -207,15 +207,14 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 	gp->g_unit = device_unit(&gp->g_device);
 	grfsp[gp->g_unit] = gp;
 
-	if((cfdata_grf != NULL) && (gp->g_unit == congrf.g_unit)) {
+	if ((cfdata_grf != NULL) && (gp->g_unit == congrf.g_unit)) {
 		/*
 		 * We inited earlier just copy the info, take care
 		 * not to copy the device struct though.
 		 */
 		memcpy(&gp->g_display, &congrf.g_display,
 			(char *)&gp[1] - (char *)&gp->g_display);
-	}
-	else {
+	} else {
 		gp->g_grfdev  = makedev(maj, gp->g_unit);
 		gp->g_itedev  = (dev_t)-1;
 		gp->g_flags   = GF_ALIVE;
@@ -227,9 +226,10 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 	}
 
 	printf(": %dx%d", gp->g_display.gd_dwidth, gp->g_display.gd_dheight);
-	if(gp->g_display.gd_colors == 2)
+	if (gp->g_display.gd_colors == 2)
 		printf(" monochrome\n");
-	else printf(" colors %d\n", gp->g_display.gd_colors);
+	else
+		printf(" colors %d\n", gp->g_display.gd_colors);
 	
 	/*
 	 * try and attach an ite
@@ -251,9 +251,10 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 int
 grfetprint(void *auxp, const char *pnp)
 {
-	if(pnp) /* XXX */
+
+	if (pnp) /* XXX */
 		aprint_normal("ite at %s", pnp);
-	return(UNCONF);
+	return UNCONF;
 }
 
 /*
@@ -285,7 +286,7 @@ view_init(register struct ite_softc *ip)
 	view_t			*view;
 	save_area_t		*et_save;
 
-	if((cci = ip->priv) != NULL)
+	if ((cci = ip->priv) != NULL)
 		return;
 
 	ip->itexx_ioctl = iteet_ioctl;
@@ -297,13 +298,14 @@ view_init(register struct ite_softc *ip)
 #endif
 
 	/* Find the correct set of rendering routines for this font.  */
-	if(ip->font.width != 8)
+	if (ip->font.width != 8)
 		panic("kernel font size not supported");
 
-	if(!atari_realconfig)
+	if (!atari_realconfig)
 		ip->priv = cci = &con_ipriv;
-	else ip->priv = cci = (ipriv_t*)malloc(sizeof(*cci), M_DEVBUF,M_WAITOK);
-	if(cci == NULL)
+	else
+		ip->priv = cci = malloc(sizeof(*cci), M_DEVBUF, M_WAITOK);
+	if (cci == NULL)
 		panic("No memory for ite-view");
 	memset(cci, 0, sizeof(*cci));
 
@@ -321,7 +323,7 @@ view_init(register struct ite_softc *ip)
 	/*
 	 * Only console will be turned on by default..
 	 */
-	if(ip->flags & ITE_ISCONS)
+	if (ip->flags & ITE_ISCONS)
 		ip->grf->g_mode(ip->grf, GM_GRFON, NULL, 0, 0);
 
 	/*
@@ -373,18 +375,20 @@ ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 
 	et_save = (save_area_t *)view->save_area;
 	if (et_save == NULL)
-	    et_inittextmode(ip, NULL, view->flags & VF_DISPLAY);
+		et_inittextmode(ip, NULL, view->flags & VF_DISPLAY);
 	else {
-	    et_inittextmode(ip, &et_save->sv_regs, view->flags & VF_DISPLAY);
-	    et_save->fb_size = ip->cols * ip->rows;
+		et_inittextmode(ip, &et_save->sv_regs,
+		    view->flags & VF_DISPLAY);
+		et_save->fb_size = ip->cols * ip->rows;
 	}
 	et_clear(ip, 0, 0, ip->rows, ip->cols);
 
-	return(error);
+	return error;
 }
 
 int
-iteet_ioctl(struct ite_softc *ip, u_long cmd, void * addr, int flag, struct lwp *l)
+iteet_ioctl(struct ite_softc *ip, u_long cmd, void * addr, int flag,
+    struct lwp *l)
 {
 	struct winsize		ws;
 	struct itewinsize	*is;
@@ -397,7 +401,7 @@ iteet_ioctl(struct ite_softc *ip, u_long cmd, void * addr, int flag, struct lwp 
 	case ITEIOCSWINSZ:
 		is = (struct itewinsize *)addr;
 
-		if(ite_newsize(ip, is))
+		if (ite_newsize(ip, is))
 			error = ENOMEM;
 		else {
 			view         = viewview(ip->grf->g_viewdev);
@@ -428,7 +432,7 @@ iteet_ioctl(struct ite_softc *ip, u_long cmd, void * addr, int flag, struct lwp 
 		error = EPASSTHROUGH;
 		break;
 	}
-	return (error);
+	return error;
 }
 
 void
@@ -498,7 +502,7 @@ et_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 	int		len;
 
 	dest = (u_short *)v->bitmap->plane + (sy * ip->cols) + sx;
-	for(len = w * h; len-- ;)
+	for (len = w * h; len-- ;)
 		*dest++ = 0x2007;
 }
 
@@ -538,8 +542,7 @@ et_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 	if (src > dst) {
 		while (len--)
 			*dst++ = *src++;
-	}
-	else {
+	} else {
 		src = &src[len];
 		dst = &dst[len];
 		while (len--)

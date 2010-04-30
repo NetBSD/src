@@ -1,6 +1,6 @@
-#	$NetBSD: files.kernfs,v 1.3 2005/12/11 12:24:51 christos Exp $
+#	$NetBSD: files.kernfs,v 1.3.96.1 2010/04/30 14:44:15 uebayasi Exp $
 
-deffs	fs_kernfs.h			KERNFS		# XXX
+deffs					KERNFS
 
 file	miscfs/kernfs/kernfs_subr.c	kernfs
 file	miscfs/kernfs/kernfs_vfsops.c	kernfs

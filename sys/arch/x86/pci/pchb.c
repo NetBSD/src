@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.20 2010/01/08 19:43:26 dyoung Exp $ */
+/*	$NetBSD: pchb.c,v 1.20.2.1 2010/04/30 14:39:58 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.20 2010/01/08 19:43:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.20.2.1 2010/04/30 14:39:58 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,8 +75,8 @@ int	pchbmatch(device_t, cfdata_t, void *);
 void	pchbattach(device_t, device_t, void *);
 int	pchbdetach(device_t, int);
 
-static bool	pchb_resume(device_t, pmf_qual_t);
-static bool	pchb_suspend(device_t, pmf_qual_t);
+static bool	pchb_resume(device_t, const pmf_qual_t *);
+static bool	pchb_suspend(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL3_NEW(pchb, sizeof(struct pchb_softc),
     pchbmatch, pchbattach, pchbdetach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -461,7 +461,7 @@ pchbdetach(device_t self, int flags)
 }
 
 static bool
-pchb_suspend(device_t dv, pmf_qual_t qual)
+pchb_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct pchb_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc;
@@ -478,7 +478,7 @@ pchb_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-pchb_resume(device_t dv, pmf_qual_t qual)
+pchb_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct pchb_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc;

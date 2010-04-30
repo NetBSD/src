@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.18 2009/11/18 17:40:45 pooka Exp $	*/
+/*	$NetBSD: module.h,v 1.18.2.1 2010/04/30 14:44:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@ typedef struct module {
 	u_int			mod_nrequired;
 	modsrc_t		mod_source;
 	time_t			mod_autotime;
+	void 			*mod_ctf;
+	u_int			mod_fbtentries;	/* DTrace FBT entrie count */
 } module_t;
 
 /*
@@ -112,7 +114,9 @@ TAILQ_HEAD(modlist, module);
 extern struct vm_map	*module_map;
 extern kmutex_t		module_lock;
 extern u_int		module_count;
+extern u_int		module_builtinlist;
 extern struct modlist	module_list;
+extern struct modlist	module_builtins;
 extern u_int		module_gen;
 
 void	module_init(void);
@@ -123,15 +127,14 @@ int	module_prime(void *, size_t);
 
 bool	module_compatible(int, int);
 int	module_load(const char *, int, prop_dictionary_t, modclass_t);
+int	module_builtin_add(modinfo_t * const *, size_t, bool);
+int	module_builtin_remove(modinfo_t *, bool);
 int	module_autoload(const char *, modclass_t);
 int	module_unload(const char *);
 int	module_hold(const char *);
 void	module_rele(const char *);
 int	module_find_section(const char *, void **, size_t *);
 void	module_thread_kick(void);
-
-void		module_enqueue(module_t *);
-module_t *	module_lookup(const char *);
 
 void	module_whatis(uintptr_t, void (*)(const char *, ...));
 void	module_print_list(void (*)(const char *, ...));
@@ -143,10 +146,10 @@ void	module_error(const char *, ...)
 			     __attribute__((__format__(__printf__,1,2)));
 void	module_print(const char *, ...)
 			     __attribute__((__format__(__printf__,1,2)));
+#endif /* _MODULE_INTERNAL */
 
 #define MODULE_BASE_SIZE 64
 extern char	module_base[MODULE_BASE_SIZE];
-#endif /* _MODULE_INTERNAL */
 
 #else	/* _KERNEL */
 

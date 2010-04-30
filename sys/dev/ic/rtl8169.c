@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.129 2010/01/19 22:06:25 pooka Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.129.2.1 2010/04/30 14:43:21 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.129 2010/01/19 22:06:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.129.2.1 2010/04/30 14:43:21 uebayasi Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -570,6 +570,7 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8169S:
 		case RTK_HWREV_8110S:
 		case RTK_HWREV_8169_8110SB:
+		case RTK_HWREV_8169_8110SBL:
 		case RTK_HWREV_8169_8110SC:
 			sc->sc_quirk |= RTKQ_MACLDPS;
 			break;
@@ -1299,8 +1300,7 @@ re_rxeof(struct rtk_softc *sc)
 			     bswap16(rxvlan & RE_RDESC_VLANCTL_DATA),
 			     continue);
 		}
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
 	}
 
@@ -1668,8 +1668,7 @@ re_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 	}
 
 	if (sc->re_ldata.re_txq_free < ofree) {

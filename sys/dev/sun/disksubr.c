@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 2009/03/16 23:11:16 dsl Exp $ */
+/*	$NetBSD: disksubr.c,v 1.12.2.1 2010/04/30 14:43:50 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12 2009/03/16 23:11:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.12.2.1 2010/04/30 14:43:50 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,6 +281,7 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	struct partition *npp;
 	struct sun_dkpart *spp;
 	int i, secpercyl;
+	unsigned int secpblck;
 	u_short cksum, *sp1, *sp2;
 
 	sl = (struct sun_disklabel *)cp;
@@ -299,6 +300,8 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	lp->d_magic2 = DISKMAGIC;
 	memcpy(lp->d_packname, sl->sl_text, sizeof(lp->d_packname));
 
+	secpblck = lp->d_secsize / 512;
+	if (secpblck == 0) secpblck = 1; /* can't happen */
 	lp->d_secsize = 512;
 	lp->d_nsectors   = sl->sl_nsectors;
 	lp->d_ntracks    = sl->sl_ntracks;
@@ -321,6 +324,23 @@ disklabel_sun_to_bsd(char *cp, struct disklabel *lp)
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
+
+		if (npp->p_fstype == FS_ISO9660
+		    && spp->sdkp_cyloffset * secpercyl == npp->p_offset*secpblck
+		    && spp->sdkp_nsectors <= npp->p_size*secpblck
+		    && npp->p_size > 0 && spp->sdkp_nsectors > 0) {
+			/*
+			 * This happens for example on sunlabel'd hybrid
+			 * (ffs + ISO9660) CDs, like our install CDs.
+			 * The cd driver has initialized a valid ISO9660
+			 * partition (including session parameters), so
+			 * we better not overwrite it.
+			 */
+			npp->p_offset *= secpblck;
+			npp->p_size = spp->sdkp_nsectors;
+			npp->p_cdsession *= secpblck;
+			continue;
+		}
 		npp->p_offset = spp->sdkp_cyloffset * secpercyl;
 		npp->p_size = spp->sdkp_nsectors;
 		if (npp->p_size == 0) {

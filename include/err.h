@@ -1,4 +1,4 @@
-/*	$NetBSD: err.h,v 1.14 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: err.h,v 1.14.44.1 2010/04/30 14:36:17 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,21 +46,21 @@
 
 __BEGIN_DECLS
 __dead void	err(int, const char *, ...)
-		    __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
+		     __printflike(2, 3) __dead;
 __dead void	verr(int, const char *, _BSD_VA_LIST_)
-		    __attribute__((__noreturn__, __format__(__printf__, 2, 0)));
+		    __printflike(2, 0) __dead;
 __dead void	errx(int, const char *, ...)
-		    __attribute__((__noreturn__, __format__(__printf__, 2, 3)));
+		     __printflike(2, 3) __dead;
 __dead void	verrx(int, const char *, _BSD_VA_LIST_)
-		    __attribute__((__noreturn__, __format__(__printf__, 2, 0)));
+		    __printflike(2, 0) __dead;
 void		warn(const char *, ...)
-		    __attribute__((__format__(__printf__, 1, 2)));
+		    __printflike(1, 2);
 void		vwarn(const char *, _BSD_VA_LIST_)
-		    __attribute__((__format__(__printf__, 1, 0)));
+		    __printflike(1, 0);
 void		warnx(const char *, ...)
-		    __attribute__((__format__(__printf__, 1, 2)));
+		    __printflike(1, 2);
 void		vwarnx(const char *, _BSD_VA_LIST_)
-		    __attribute__((__format__(__printf__, 1, 0)));
+		    __printflike(1, 0);
 __END_DECLS
 
 #endif /* !_ERR_H_ */

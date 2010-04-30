@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.38 2010/01/18 18:52:35 pooka Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.38.2.1 2010/04/30 14:43:09 uebayasi Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.38 2010/01/18 18:52:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.38.2.1 2010/04/30 14:43:09 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -89,7 +89,7 @@ struct ath_cardbus_softc {
 	/* CardBus-specific goo. */
 	void	*sc_ih;			/* interrupt handle */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
-	cardbustag_t sc_tag;		/* our CardBus tag */
+	pcitag_t sc_tag;		/* our CardBus tag */
 	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
 
 	pcireg_t sc_bar_val;		/* value of the BAR */
@@ -109,26 +109,25 @@ CFATTACH_DECL_NEW(ath_cardbus, sizeof(struct ath_cardbus_softc),
 void	ath_cardbus_setup(struct ath_cardbus_softc *);
 
 static bool
-ath_cardbus_suspend(device_t self, pmf_qual_t qual)
+ath_cardbus_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 
 	ath_suspend(&csc->sc_ath);
 	if (csc->sc_ih != NULL) {
-		cardbus_intr_disestablish(csc->sc_ct->ct_cc, csc->sc_ct->ct_cf,
-		    csc->sc_ih);
+		Cardbus_intr_disestablish(csc->sc_ct, csc->sc_ih);
 		csc->sc_ih = NULL;
 	}
 	return true;
 }
 
 static bool
-ath_cardbus_resume(device_t self, pmf_qual_t qual)
+ath_cardbus_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct ath_cardbus_softc *csc = device_private(self);
 
-	csc->sc_ih = cardbus_intr_establish(csc->sc_ct->ct_cc,
-	    csc->sc_ct->ct_cf, csc->sc_intrline, IPL_NET, ath_intr,
+	csc->sc_ih = Cardbus_intr_establish(csc->sc_ct,
+	    csc->sc_intrline, IPL_NET, ath_intr,
 	    &csc->sc_ath);
 
 	if (csc->sc_ih == NULL) {
@@ -175,10 +174,6 @@ ath_cardbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (Cardbus_mapreg_map(ct, ATH_PCI_MMBA, PCI_MAPREG_TYPE_MEM, 0,
 	    &csc->sc_iot, &csc->sc_ioh, &adr, &csc->sc_mapsize) == 0) {
-#if rbus
-#else
-		(*ct->ct_cf->cardbus_mem_open)(cc, 0, adr, adr+csc->sc_mapsize);
-#endif
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
 	} else {
 		aprint_error_dev(self, "unable to map device registers\n");
@@ -235,7 +230,7 @@ ath_cardbus_detach(device_t self, int flags)
 	 * Unhook the interrupt handler.
 	 */
 	if (csc->sc_ih != NULL) {
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+		Cardbus_intr_disestablish(ct, csc->sc_ih);
 		csc->sc_ih = NULL;
 	}
 
@@ -254,8 +249,6 @@ void
 ath_cardbus_setup(struct ath_cardbus_softc *csc)
 {
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	int rc;
 	pcireg_t reg;
 
@@ -263,11 +256,11 @@ ath_cardbus_setup(struct ath_cardbus_softc *csc)
 		aprint_debug("%s: cardbus_set_powerstate %d\n", __func__, rc);
 
 	/* Program the BAR. */
-	cardbus_conf_write(cc, cf, csc->sc_tag, ATH_PCI_MMBA, csc->sc_bar_val);
+	Cardbus_conf_write(ct, csc->sc_tag, ATH_PCI_MMBA, csc->sc_bar_val);
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, csc->sc_tag,
+	reg = Cardbus_conf_read(ct, csc->sc_tag,
 	    PCI_COMMAND_STATUS_REG);
 	reg |= PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE;
-	cardbus_conf_write(cc, cf, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
+	Cardbus_conf_write(ct, csc->sc_tag, PCI_COMMAND_STATUS_REG, reg);
 }

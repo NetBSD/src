@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.31 2010/01/19 20:54:32 bouyer Exp $ */
+/* $NetBSD: mfi.c,v 1.31.2.1 2010/04/30 14:43:19 uebayasi Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.31 2010/01/19 20:54:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.31.2.1 2010/04/30 14:43:19 uebayasi Exp $");
 
 #include "bio.h"
 
@@ -135,6 +135,20 @@ static const struct mfi_iop_ops mfi_iop_ppc = {
 	mfi_ppc_intr_ena,
 	mfi_ppc_intr,
 	mfi_ppc_post
+};
+
+uint32_t	mfi_gen2_fw_state(struct mfi_softc *sc);
+void		mfi_gen2_intr_ena(struct mfi_softc *sc);
+void		mfi_gen2_intr_dis(struct mfi_softc *sc);
+int		mfi_gen2_intr(struct mfi_softc *sc);
+void		mfi_gen2_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
+
+static const struct mfi_iop_ops mfi_iop_gen2 = {
+	mfi_gen2_fw_state,
+	mfi_gen2_intr_dis,
+	mfi_gen2_intr_ena,
+	mfi_gen2_intr,
+	mfi_gen2_post
 };
 
 #define mfi_fw_state(_s) 	((_s)->sc_iop->mio_fw_state(_s))
@@ -708,6 +722,9 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 		break;
 	case MFI_IOP_PPC:
 		sc->sc_iop = &mfi_iop_ppc;
+		break;
+	case MFI_IOP_GEN2:
+		sc->sc_iop = &mfi_iop_gen2;
 		break;
 	default:
 		 panic("%s: unknown iop %d", DEVNAME(sc), iop);
@@ -1299,7 +1316,8 @@ mfi_create_sgl(struct mfi_ccb *ccb, int flags)
 
 static int
 mfi_mgmt_internal(struct mfi_softc *sc, uint32_t opc, uint32_t dir,
-    uint32_t len, void *buf, uint8_t *mbox) {
+    uint32_t len, void *buf, uint8_t *mbox)
+{
 	struct mfi_ccb		*ccb;
 	int			rv = 1;
 
@@ -1990,6 +2008,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 {
 	int i;
 	int nsensors = sc->sc_ld_cnt;
+	int rv;
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor = malloc(sizeof(envsys_data_t) * nsensors,
@@ -2002,7 +2021,6 @@ mfi_create_sensors(struct mfi_softc *sc)
 
 	for (i = 0; i < nsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_DRIVE;
-		sc->sc_sensor[i].monitor = true;
 		/* Enable monitoring for drive state changes */
 		sc->sc_sensor[i].flags |= ENVSYS_FMONSTCHANGED;
 		/* logical drives */
@@ -2017,9 +2035,10 @@ mfi_create_sensors(struct mfi_softc *sc)
 	sc->sc_sme->sme_name = DEVNAME(sc);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = mfi_sensor_refresh;
-	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    DEVNAME(sc));
+	rv = sysmon_envsys_register(sc->sc_sme);
+	if (rv != 0) {
+		aprint_error("%s: unable to register with sysmon (rv = %d)\n",
+		    DEVNAME(sc), rv);
 		goto out;
 	}
 	return 0;
@@ -2027,6 +2046,7 @@ mfi_create_sensors(struct mfi_softc *sc)
 out:
 	free(sc->sc_sensor, M_DEVBUF);
 	sysmon_envsys_destroy(sc->sc_sme);
+	sc->sc_sme = NULL;
 	return EINVAL;
 }
 
@@ -2161,6 +2181,48 @@ mfi_ppc_intr(struct mfi_softc *sc)
 
 static void
 mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	mfi_write(sc, MFI_IQP, 0x1 | ccb->ccb_pframe |
+	    (ccb->ccb_extra_frames << 1));
+}
+
+u_int32_t
+mfi_gen2_fw_state(struct mfi_softc *sc)
+{
+	return (mfi_read(sc, MFI_OSP));
+}
+
+void
+mfi_gen2_intr_dis(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_OMSK, 0xffffffff);
+	mfi_write(sc, MFI_ODC, 0xffffffff);
+}
+
+void
+mfi_gen2_intr_ena(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_ODC, 0xffffffff);
+	mfi_write(sc, MFI_OMSK, ~MFI_OSTS_GEN2_INTR_VALID);
+}
+
+int
+mfi_gen2_intr(struct mfi_softc *sc)
+{
+	u_int32_t status;
+
+	status = mfi_read(sc, MFI_OSTS);
+	if (!ISSET(status, MFI_OSTS_GEN2_INTR_VALID))
+		return (0);
+
+	/* write status back to acknowledge interrupt */
+	mfi_write(sc, MFI_ODC, status);
+
+	return (1);
+}
+
+void
+mfi_gen2_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
 {
 	mfi_write(sc, MFI_IQP, 0x1 | ccb->ccb_pframe |
 	    (ccb->ccb_extra_frames << 1));

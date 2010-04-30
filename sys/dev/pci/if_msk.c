@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.32 2010/01/19 22:07:01 pooka Exp $ */
+/* $NetBSD: if_msk.c,v 1.32.2.1 2010/04/30 14:43:36 uebayasi Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.32 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.32.2.1 2010/04/30 14:43:36 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -98,8 +98,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.32 2010/01/19 22:07:01 pooka Exp $");
 
 int mskc_probe(device_t, cfdata_t, void *);
 void mskc_attach(device_t, device_t, void *);
-static bool mskc_suspend(device_t, pmf_qual_t);
-static bool mskc_resume(device_t, pmf_qual_t);
+static bool mskc_suspend(device_t, const pmf_qual_t *);
+static bool mskc_resume(device_t, const pmf_qual_t *);
 int msk_probe(device_t, cfdata_t, void *);
 void msk_attach(device_t, device_t, void *);
 int mskcprint(void *, const char *);
@@ -960,7 +960,7 @@ msk_probe(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-msk_resume(device_t dv, pmf_qual_t qual)
+msk_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_if_softc *sc_if = device_private(dv);
 	
@@ -1601,8 +1601,7 @@ msk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 	if (pkts == 0)
 		return;
@@ -1649,7 +1648,7 @@ msk_watchdog(struct ifnet *ifp)
 }
 
 static bool
-mskc_suspend(device_t dv, pmf_qual_t qual)
+mskc_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_softc *sc = device_private(dv);
 
@@ -1662,7 +1661,7 @@ mskc_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-mskc_resume(device_t dv, pmf_qual_t qual)
+mskc_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_softc *sc = device_private(dv);
 
@@ -1747,8 +1746,7 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 
 	ifp->if_ipackets++;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	/* pass it on. */
 	(*ifp->if_input)(ifp, m);
@@ -2193,7 +2191,7 @@ msk_init(struct ifnet *ifp)
 		sk_win_write_4(sc, SK_IMTIMERINIT,
 		    SK_IM_USECS(sc->sk_int_mod));
 		aprint_verbose_dev(sc->sk_dev,
-		    "yinterrupt moderation is %d us\n", sc->sk_int_mod);
+		    "interrupt moderation is %d us\n", sc->sk_int_mod);
 	}
 
 	/* Initialize prefetch engine. */

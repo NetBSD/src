@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.22 2008/06/04 12:26:20 ad Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.22.18.1 2010/04/30 14:44:10 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.22 2008/06/04 12:26:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.22.18.1 2010/04/30 14:44:10 uebayasi Exp $");
 
 #include "opt_pax.h"
 
@@ -321,7 +321,7 @@ pax_aslr(struct lwp *l, vaddr_t *addr, vaddr_t orig_addr, int f)
 		return;
 
 	if (!(f & MAP_FIXED) && ((orig_addr == 0) || !(f & MAP_ANON))) {
-#ifdef DEBUG_ASLR
+#ifdef PAX_ASLR_DEBUG
 		uprintf("applying to 0x%lx orig_addr=0x%lx f=%x\n",
 		    (unsigned long)*addr, (unsigned long)orig_addr, f);
 #endif
@@ -329,11 +329,11 @@ pax_aslr(struct lwp *l, vaddr_t *addr, vaddr_t orig_addr, int f)
 			*addr += l->l_proc->p_vmspace->vm_aslr_delta_mmap;
 		else
 			*addr -= l->l_proc->p_vmspace->vm_aslr_delta_mmap;
-#ifdef DEBUG_ASLR
+#ifdef PAX_ASLR_DEBUG
 		uprintf("result 0x%lx\n", *addr);
 #endif
 	}
-#ifdef DEBUG_ASLR
+#ifdef PAX_ASLR_DEBUG
 	else
 	    uprintf("not applying to 0x%lx orig_addr=0x%lx f=%x\n",
 		(unsigned long)*addr, (unsigned long)orig_addr, f);
@@ -347,7 +347,7 @@ pax_aslr_stack(struct lwp *l, struct exec_package *epp, u_long *max_stack_size)
 		u_long d =  PAX_ASLR_DELTA(arc4random(),
 		    PAX_ASLR_DELTA_STACK_LSB,
 		    PAX_ASLR_DELTA_STACK_LEN);
-#ifdef DEBUG_ASLR
+#ifdef PAX_ASLR_DEBUG
 		uprintf("stack 0x%lx d=0x%lx 0x%lx\n",
 		    epp->ep_minsaddr, d, epp->ep_minsaddr - d);
 #endif

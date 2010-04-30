@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.72 2009/12/05 20:11:17 pooka Exp $
+#	$NetBSD: INSTALL,v 1.72.2.1 2010/04/30 14:39:49 uebayasi Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -556,11 +556,20 @@ cgsix*		at sbus? slot ? offset ?
 # there can be only one
 tcx0		at sbus? slot ? offset ?
 
+## Sun CG12 / Matrox SG3 accelerated 24bit framebuffer
+## runs monochrome only for now
+## since it occupies 3 SBus slots there's no way to use more than one
+cgtwelve0	at sbus? slot ? offset ?
+
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m
 
 # P9100-based display on Tadpole SPARCbook 3.
 pnozz0		at sbus? slot ? offset ?
+# the SPARCbook 3 hardware docs say that accesses to P9100 registers need to be
+# 'latched in' but at least my 3GX works happily without
+# Enable it by default since we don't know which hardware really needs it.
+options PNOZZ_USE_LATCH
 
 # Sun ZX/Leo 24-bit framebuffer
 zx*		at sbus? slot ? offset ?
@@ -585,7 +594,7 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont

@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.11 2009/12/24 09:26:43 kiyohara Exp $
+#	$NetBSD: PMPPC,v 1.11.2.1 2010/04/30 14:39:17 uebayasi Exp $
 #
 #	PMPPC
 #
@@ -107,7 +107,6 @@ options 	PIM		# Protocol Independent Multicast
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
-#options 	NMBCLUSTERS=1024
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -336,6 +335,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
+
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 #wd* at umass?
@@ -429,7 +431,7 @@ radio*	at radiodev?
 audio*	at audiobus?
 
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback

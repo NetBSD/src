@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.35 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.35.6.1 2010/04/30 14:44:22 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.35 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.35.6.1 2010/04/30 14:44:22 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.35 2008/11/19 18:36:09 ad Exp $"
 #include <sys/reboot.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/vnode.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -177,6 +178,7 @@ nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 		printf("nfs_boot: bootparam whoami, error=%d\n", error);
 		goto delout;
 	}
+	*flags |= NFS_BOOT_HAS_SERVADDR | NFS_BOOT_HAS_SERVER;
 	printf("nfs_boot: server_addr=%s\n", inet_ntoa(sin->sin_addr));
 	printf("nfs_boot: hostname=%s\n", hostname);
 
@@ -189,6 +191,7 @@ nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 		printf("nfs_boot: bootparam get root: %d\n", error);
 		goto delout;
 	}
+	*flags |= NFS_BOOT_HAS_ROOTPATH;
 
 #ifndef NFS_BOOTPARAM_NOGATEWAY
 	gw_ndm = kmem_alloc(sizeof(*gw_ndm), KM_SLEEP);
@@ -207,6 +210,7 @@ nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	printf("nfs_boot: gateway=%s\n", inet_ntoa(sin->sin_addr));
 	/* Just save it.  Caller adds the route. */
 	nd->nd_gwip = sin->sin_addr;
+	*flags |= NFS_BOOT_HAS_GWIP;
 
 	/* Look for a mask string after the colon. */
 	p = strchr(gw_ndm->ndm_host, ':');
@@ -220,6 +224,7 @@ nfs_bootparam(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 
 	/* Have a netmask too!  Save it; update the I/F. */
 	nd->nd_mask.s_addr = mask;
+	*flags |= NFS_BOOT_HAS_MASK;
 	printf("nfs_boot: my_mask=%s\n", inet_ntoa(nd->nd_mask));
 	(void)  nfs_boot_deladdress(ifp, lwp, my_ip.s_addr);
 	error = nfs_boot_setaddress(ifp, lwp, my_ip.s_addr,
@@ -247,6 +252,7 @@ nogwrepl:
 	if (gw_ip.s_addr) {
 		/* Our caller will add the route. */
 		nd->nd_gwip = gw_ip;
+		*flags |= NFS_BOOT_HAS_GWIP;
 	}
 #endif
 

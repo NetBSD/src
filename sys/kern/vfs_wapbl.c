@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.30 2010/02/06 12:10:59 uebayasi Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.30.2.1 2010/04/30 14:44:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.30 2010/02/06 12:10:59 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.30.2.1 2010/04/30 14:44:14 uebayasi Exp $");
 
 #include <sys/param.h>
+#include <sys/bitops.h>
 
 #ifdef _KERNEL
 #include <sys/param.h>
@@ -48,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.30 2010/02/06 12:10:59 uebayasi Exp 
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 #include <sys/mount.h>
@@ -256,13 +258,6 @@ struct wapbl_ops wapbl_ops = {
 	.wo_wapbl_biodone	= wapbl_biodone,
 };
 
-void
-wapbl_init(void)
-{
-
-	malloc_type_attach(M_WAPBL);
-}
-
 static int
 wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
 {
@@ -317,8 +312,8 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	struct vnode *devvp;
 	daddr_t logpbn;
 	int error;
-	int log_dev_bshift = DEV_BSHIFT;
-	int fs_dev_bshift = DEV_BSHIFT;
+	int log_dev_bshift = ilog2(blksize);
+	int fs_dev_bshift = log_dev_bshift;
 	int run;
 
 	WAPBL_PRINTF(WAPBL_PRINT_OPEN, ("wapbl_start: vp=%p off=%" PRId64
@@ -735,6 +730,7 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 	size_t slen;
 	off_t off = *offp;
 	int error;
+	daddr_t pbn;
 
 	KDASSERT(((len >> wl->wl_log_dev_bshift) <<
 	    wl->wl_log_dev_bshift) == len);
@@ -743,16 +739,22 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 		off = wl->wl_circ_off;
 	slen = wl->wl_circ_off + wl->wl_circ_size - off;
 	if (slen < len) {
-		error = wapbl_write(data, slen, wl->wl_devvp,
-		    wl->wl_logpbn + (off >> wl->wl_log_dev_bshift));
+		pbn = wl->wl_logpbn + (off >> wl->wl_log_dev_bshift);
+#ifdef _KERNEL
+		pbn = btodb(pbn << wl->wl_log_dev_bshift);
+#endif
+		error = wapbl_write(data, slen, wl->wl_devvp, pbn);
 		if (error)
 			return error;
 		data = (uint8_t *)data + slen;
 		len -= slen;
 		off = wl->wl_circ_off;
 	}
-	error = wapbl_write(data, len, wl->wl_devvp,
-			    wl->wl_logpbn + (off >> wl->wl_log_dev_bshift));
+	pbn = wl->wl_logpbn + (off >> wl->wl_log_dev_bshift);
+#ifdef _KERNEL
+	pbn = btodb(pbn << wl->wl_log_dev_bshift);
+#endif
+	error = wapbl_write(data, len, wl->wl_devvp, pbn);
 	if (error)
 		return error;
 	off += len;
@@ -1827,6 +1829,7 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	struct timespec ts;
 	int error;
 	int force = 1;
+	daddr_t pbn;
 
 	/* XXX Calc checksum here, instead we do this for now */
 	error = VOP_IOCTL(wl->wl_devvp, DIOCCACHESYNC, &force, FWRITE, FSCRED);
@@ -1853,8 +1856,11 @@ wapbl_write_commit(struct wapbl *wl, off_t head, off_t tail)
 	 * over second commit header before trying to write both headers.
 	 */
 
-	error = wapbl_write(wc, wc->wc_len, wl->wl_devvp,
-	    wl->wl_logpbn + wc->wc_generation % 2);
+	pbn = wl->wl_logpbn + (wc->wc_generation % 2);
+#ifdef _KERNEL
+	pbn = btodb(pbn << wc->wc_log_dev_bshift);
+#endif
+	error = wapbl_write(wc, wc->wc_len, wl->wl_devvp, pbn);
 	if (error)
 		return error;
 
@@ -2177,23 +2183,31 @@ wapbl_circ_read(struct wapbl_replay *wr, void *data, size_t len, off_t *offp)
 	size_t slen;
 	off_t off = *offp;
 	int error;
+	daddr_t pbn;
 
 	KASSERT(((len >> wr->wr_log_dev_bshift) <<
 	    wr->wr_log_dev_bshift) == len);
+
 	if (off < wr->wr_circ_off)
 		off = wr->wr_circ_off;
 	slen = wr->wr_circ_off + wr->wr_circ_size - off;
 	if (slen < len) {
-		error = wapbl_read(data, slen, wr->wr_devvp,
-		    wr->wr_logpbn + (off >> wr->wr_log_dev_bshift));
+		pbn = wr->wr_logpbn + (off >> wr->wr_log_dev_bshift);
+#ifdef _KERNEL
+		pbn = btodb(pbn << wr->wr_log_dev_bshift);
+#endif
+		error = wapbl_read(data, slen, wr->wr_devvp, pbn);
 		if (error)
 			return error;
 		data = (uint8_t *)data + slen;
 		len -= slen;
 		off = wr->wr_circ_off;
 	}
-	error = wapbl_read(data, len, wr->wr_devvp,
-	    wr->wr_logpbn + (off >> wr->wr_log_dev_bshift));
+	pbn = wr->wr_logpbn + (off >> wr->wr_log_dev_bshift);
+#ifdef _KERNEL
+	pbn = btodb(pbn << wr->wr_log_dev_bshift);
+#endif
+	error = wapbl_read(data, len, wr->wr_devvp, pbn);
 	if (error)
 		return error;
 	off += len;
@@ -2239,8 +2253,9 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 	struct wapbl_wc_header *wch;
 	struct wapbl_wc_header *wch2;
 	/* Use this until we read the actual log header */
-	int log_dev_bshift = DEV_BSHIFT;
+	int log_dev_bshift = ilog2(blksize);
 	size_t used;
+	daddr_t pbn;
 
 	WAPBL_PRINTF(WAPBL_PRINT_REPLAY,
 	    ("wapbl_replay_start: vp=%p off=%"PRId64 " count=%zu blksize=%zu\n",
@@ -2262,7 +2277,6 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 	if ((off + count) * blksize > vp->v_size)
 		return EINVAL;
 #endif
-
 	if ((error = VOP_BMAP(vp, off, &devvp, &logpbn, 0)) != 0) {
 		return error;
 	}
@@ -2273,7 +2287,11 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 
 	scratch = wapbl_malloc(MAXBSIZE);
 
-	error = wapbl_read(scratch, 2<<log_dev_bshift, devvp, logpbn);
+	pbn = logpbn;
+#ifdef _KERNEL
+	pbn = btodb(pbn << log_dev_bshift);
+#endif
+	error = wapbl_read(scratch, 2<<log_dev_bshift, devvp, pbn);
 	if (error)
 		goto errout;
 
@@ -2382,7 +2400,7 @@ wapbl_replay_process_blocks(struct wapbl_replay *wr, off_t *offp)
 		 */
 		n = wc->wc_blocks[i].wc_dlen >> wr->wr_fs_dev_bshift;
 		for (j = 0; j < n; j++) {
-			wapbl_blkhash_ins(wr, wc->wc_blocks[i].wc_daddr + j,
+			wapbl_blkhash_ins(wr, wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen),
 			    *offp);
 			wapbl_circ_advance(wr, fsblklen, offp);
 		}
@@ -2394,6 +2412,7 @@ wapbl_replay_process_revocations(struct wapbl_replay *wr)
 {
 	struct wapbl_wc_blocklist *wc =
 	    (struct wapbl_wc_blocklist *)wr->wr_scratch;
+	int fsblklen = 1 << wr->wr_fs_dev_bshift;
 	int i, j, n;
 
 	for (i = 0; i < wc->wc_blkcount; i++) {
@@ -2402,7 +2421,7 @@ wapbl_replay_process_revocations(struct wapbl_replay *wr)
 		 */
 		n = wc->wc_blocks[i].wc_dlen >> wr->wr_fs_dev_bshift;
 		for (j = 0; j < n; j++)
-			wapbl_blkhash_rem(wr, wc->wc_blocks[i].wc_daddr + j);
+			wapbl_blkhash_rem(wr, wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen));
 	}
 }
 
@@ -2538,7 +2557,7 @@ wapbl_replay_verify(struct wapbl_replay *wr, struct vnode *fsdevvp)
 					for (j = 0; j < n; j++) {
 						struct wapbl_blk *wb =
 						   wapbl_blkhash_get(wr,
-						   wc->wc_blocks[i].wc_daddr + j);
+						   wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen));
 						if (wb && (wb->wb_off == off)) {
 							foundcnt++;
 							error =
@@ -2582,7 +2601,7 @@ wapbl_replay_verify(struct wapbl_replay *wr, struct vnode *fsdevvp)
 						for (j = 0; j < n; j++) {
 							struct wapbl_blk *wb =
 							   wapbl_blkhash_get(wr,
-							   wc->wc_blocks[i].wc_daddr + j);
+							   wc->wc_blocks[i].wc_daddr + btodb(j * fsblklen));
 							if (wb &&
 							  (wb->wb_off == off)) {
 								wapbl_blkhash_rem(wr, wb->wb_blk);
@@ -2687,3 +2706,26 @@ wapbl_replay_read(struct wapbl_replay *wr, void *data, daddr_t blk, long len)
 	}
 	return 0;
 }
+
+#ifdef _KERNEL
+/*
+ * This is not really a module now, but maybe on it's way to
+ * being one some day.
+ */
+MODULE(MODULE_CLASS_VFS, wapbl, NULL);
+
+static int
+wapbl_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		malloc_type_attach(M_WAPBL);
+		return 0;
+	case MODULE_CMD_FINI:
+		return EOPNOTSUPP;
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* _KERNEL */

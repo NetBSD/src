@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.42 2010/01/19 22:08:01 pooka Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.42.2.1 2010/04/30 14:44:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,17 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.42 2010/01/19 22:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.42.2.1 2010/04/30 14:44:19 uebayasi Exp $");
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/socket.h>
-#include <sys/sockio.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/device.h>
+#include <sys/socket.h>
+#include <sys/sockio.h>
+#include <sys/select.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -64,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.42 2010/01/19 22:08:01 pooka E
 #include <netinet6/nd6.h>
 #endif /* INET6 */
 
-#include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
 
 #include <dev/ieee1394/firewirereg.h>
@@ -152,9 +153,9 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	unicast = !(m0->m_flags & (M_BCAST | M_MCAST));
 	if (unicast) {
 		mtag =
-		    m_tag_locate(m0, MTAG_FIREWIRE, MTAG_FIREWIRE_HWADDR, NULL);
+		    m_tag_find(m0, MTAG_FIREWIRE_HWADDR, NULL);
 		if (!mtag) {
-			mtag = m_tag_alloc(MTAG_FIREWIRE, MTAG_FIREWIRE_HWADDR,
+			mtag = m_tag_get(MTAG_FIREWIRE_HWADDR,
 			    sizeof (struct ieee1394_hwaddr), M_NOWAIT);
 			if (!mtag) {
 				error = ENOMEM;
@@ -217,7 +218,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			    ifp->if_broadcastaddr)->iha_uid, 8);
 		memcpy(h.ibh_shost, myaddr->iha_uid, 8);
 		h.ibh_type = etype;
-		bpf_ops->bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m0);
+		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m0);
 	}
 	if ((ifp->if_flags & IFF_SIMPLEX) &&
 	    unicast &&
@@ -385,8 +386,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 		struct m_tag *mtag;
 		const struct ieee1394_hwaddr *myaddr;
 
-		mtag = m_tag_locate(m,
-		    MTAG_FIREWIRE, MTAG_FIREWIRE_SENDER_EUID, 0);
+		mtag = m_tag_find(m, MTAG_FIREWIRE_SENDER_EUID, 0);
 		if (mtag)
 			memcpy(h.ibh_shost, mtag + 1, 8);
 		else
@@ -401,7 +401,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 			memcpy(h.ibh_dhost, myaddr->iha_uid, 8);
 		}
 		h.ibh_type = htons(etype);
-		bpf_ops->bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m);
+		bpf_mtap2(ifp->if_bpf, &h, sizeof(h), m);
 	}
 
 	switch (etype) {
@@ -687,15 +687,15 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	memset(baddr->iha_offset, 0, sizeof(baddr->iha_offset));
 	ifp->if_broadcastaddr = (uint8_t *)baddr;
 	LIST_INIT(&ic->ic_reassq);
-	bpf_ops->bpf_attach(ifp, DLT_APPLE_IP_OVER_IEEE1394,
-	    sizeof(struct ieee1394_hwaddr), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_APPLE_IP_OVER_IEEE1394,
+	    sizeof(struct ieee1394_hwaddr));
 }
 
 void
 ieee1394_ifdetach(struct ifnet *ifp)
 {
 	ieee1394_drain(ifp);
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	free(__UNCONST(ifp->if_broadcastaddr), M_DEVBUF);
 	ifp->if_broadcastaddr = NULL;
 #if 0	/* done in if_detach() */

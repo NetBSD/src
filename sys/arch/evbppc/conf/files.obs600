@@ -1,0 +1,10 @@
+#	$NetBSD: files.obs600,v 1.1.2.2 2010/04/30 14:39:17 uebayasi Exp $
+#
+# obs600-specific configuration info
+
+file	arch/evbppc/obs405/obs600_autoconf.c
+file	arch/evbppc/obs405/obs600_machdep.c
+
+include "dev/usb/files.usb"
+
+include "dev/bluetooth/files.bluetooth"

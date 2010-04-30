@@ -1,0 +1,90 @@
+#	$NetBSD: files.sa11x0,v 1.1.2.2 2010/04/30 14:39:25 uebayasi Exp $
+#
+# SA-11x0 model specific configuration info
+#
+
+# SA-11x0 specific files.
+#file	arch/hpcarm/hpcarm/intr.c
+file	arch/hpcarm/hpcarm/sa11x0_hpc_machdep.c
+file	arch/hpcarm/hpcarm/spl.S
+file	arch/arm/arm32/intr.c
+file	arch/arm/arm32/spl.S
+
+# Include hpcarm/StrongARM config definitions.
+include "arch/arm/conf/files.sa11x0"
+
+# SA-11[01]1 companion chips
+file	arch/hpcarm/dev/sacc_hpcarm.c		sacc
+
+#
+# iPaq specific configuration info
+#
+
+# XXX iPAQ Virtual bus
+device	ipaqbus {}
+attach	ipaqbus at saip
+file	arch/hpcarm/dev/ipaq_saip.c		ipaqbus
+
+# iPAQ PCMCIA
+device	ipaqpcic: pcmciabus
+attach	ipaqpcic at ipaqbus
+file	arch/hpcarm/dev/ipaq_pcic.c		ipaqpcic needs-flag
+
+# iPAQ LCD
+device	ipaqlcd: hpcfbif
+attach	ipaqlcd at ipaqbus
+file	arch/hpcarm/dev/ipaq_lcd.c		ipaqlcd
+
+# Atmel microcontroller
+device	atmelgpioif {}
+device	atmelgpio: atmelgpioif
+attach	atmelgpio at ipaqbus
+file	arch/hpcarm/dev/ipaq_atmelgpio.c	atmelgpio
+
+# uda1341 Codec
+device	udaif {}
+device	uda: udaif
+attach	uda at ipaqbus
+file	arch/hpcarm/dev/uda1341.c		uda
+
+#
+# JORNADA specific configuration info
+#
+
+# Jornada 720 dependent part of PCMCIA support.
+file	arch/hpcarm/dev/j720pcic.c		sacpcic
+
+# Epson SED1356 framebuffer
+device	sed: hpcfbif
+attach	sed at saip
+file	arch/hpcarm/dev/sed_saip.c		sed
+
+# Jornada 720 SSP port
+device	j720ssp {}
+attach	j720ssp at saip
+file	arch/hpcarm/dev/j720ssp.c		j720ssp
+
+# Jornada 720 keyboard
+device j720kbd: hpckbdif
+attach j720kbd at j720ssp
+file	arch/hpcarm/dev/j720kbd.c		j720kbd
+
+# Jornada 720 touch-panel
+device	j720tp: hpctpanel, wsmousedev, wskbddev
+attach	j720tp at j720ssp
+file	arch/hpcarm/dev/j720tp.c		j720tp
+defflag	opt_j720tp.h		J720TP_DEBUG
+defparam opt_j720tp.h		J720TP_SETTINGS_ICON_KEYSYM
+				J720TP_BACKUP_ICON_KEYSYM
+				J720TP_DIALUP_ICON_KEYSYM
+				J720TP_MEDIA_ICON_KEYSYM
+
+# Jornada 720 LCD screen
+device	j720lcd
+attach	j720lcd at j720ssp
+file	arch/hpcarm/dev/j720lcd.c		j720lcd
+
+# Jornada 720 power management
+device	j720pwr: hpcapmif
+attach	j720pwr at j720ssp
+file	arch/hpcarm/dev/j720pwr.c		j720pwr

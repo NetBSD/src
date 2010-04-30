@@ -1,11 +1,11 @@
 #
-# $NetBSD: ATARITT,v 1.95 2009/12/05 20:11:03 pooka Exp $
+# $NetBSD: ATARITT,v 1.95.2.1 2010/04/30 14:39:09 uebayasi Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.81 2009/11/23 00:18:37 abs Exp $
+#		NetBSD: GENERIC.in,v 1.87 2010/04/16 13:48:29 pooka Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -69,7 +69,6 @@ options TT_VIDEO # Graphics support for TT
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-options SERCONSOLE # modem1 console support, breaks Falcon
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
 options TRY_SCSI_LINKED_COMMANDS=0x7f
@@ -88,10 +87,11 @@ pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device ccd 4 # concatenating disk driver
-pseudo-device fss 4 # file system snapshot device
+pseudo-device fss # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
+pseudo-device ksyms # /dev/ksyms
 pseudo-device view 4 # View (graphics mapping)
 pseudo-device mouse 1 # mouse
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
@@ -106,10 +106,12 @@ grfcc2 at grfbus0 # 3rd graphics driver
 ite2 at grfcc2 # 3rd tty
 lp0 at mainbus0 # centronics printer
 ser0 at mainbus0 # UART on first 68901 (ttyB0)
+ne0 at mainbus0 # EtherNEC on Atari ROM cartridge slot
 avmebus0 at mainbus0 # VME bus
 vme0 at avmebus0
 le0 at vme0 irq 5 # Lance ethernet (Riebl/PAM).
 le0 at vme0 irq 4 # Lance ethernet (BVME410).
+we0 at vme0 irq 4 # SMC Elite Ultra with SMC_TT VME-ISA bridge
 et0 at vme0 # Crazy Dots II
 scsibus* at scsi? # SCSI bus
 sd* at scsibus? target ? lun ? # SCSI disk drives

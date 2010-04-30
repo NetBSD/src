@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.39 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: SLAB,v 1.39.2.1 2010/04/30 14:39:39 uebayasi Exp $
 #
 # deberg's development machine
 #
@@ -203,6 +203,6 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# paging to files
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	ccd		4	# concatenated disks
 pseudo-device	clockctl		# user control of clock subsystem

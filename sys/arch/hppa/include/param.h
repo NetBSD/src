@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.14 2010/01/17 08:24:06 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.14.2.1 2010/04/30 14:39:27 uebayasi Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -87,9 +87,6 @@
 #define	MCLSHIFT	11
 #define	MCLBYTES	(1 << MCLSHIFT)	/* large enough for ether MTU */
 #define	MCLOFSET	(MCLBYTES - 1)
-#ifndef NMBCLUSTERS
-#define	NMBCLUSTERS	(2048)		/* cl map size: 1MB */
-#endif
 
 /*
  * Size of kernel malloc arena in logical pages

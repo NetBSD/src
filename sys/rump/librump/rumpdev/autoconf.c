@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2010/02/03 21:35:22 pooka Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.2.1 2010/04/30 14:44:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2010/02/03 21:35:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.1 2010/04/30 14:44:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,6 +54,17 @@ struct cfdata cfdata[] = {
 struct cfdriver * const cfdriver_list_initial[] = {
 	NULL
 };
+
+static const struct cfiattrdata mainbuscf_iattrdata = {
+	"mainbus", 0, {
+		{ NULL, NULL, 0 },
+	}
+};
+static const struct cfiattrdata * const mainbus_attrs[] = {
+	&mainbuscf_iattrdata,
+	NULL
+};
+CFDRIVER_DECL(mainbus, DV_DULL, mainbus_attrs);
 
 CFATTACH_DECL_NEW(mainbus, sizeof(struct mainbus_softc),
 	mainbus_match, mainbus_attach, NULL, NULL);

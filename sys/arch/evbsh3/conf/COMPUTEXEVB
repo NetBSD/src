@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.29 2009/02/06 18:50:27 jym Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.29.4.1 2010/04/30 14:39:19 uebayasi Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,6 +7,7 @@
 include "arch/evbsh3/conf/std.evbsh3.eb"
 # for little endian
 #include "arch/evbsh3/conf/std.evbsh3.el"
+include "arch/evbsh3/conf/std.computexevb"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 

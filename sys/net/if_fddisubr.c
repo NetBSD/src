@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.80 2010/02/04 21:48:11 joerg Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.80.2.1 2010/04/30 14:44:19 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.80 2010/02/04 21:48:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.80.2.1 2010/04/30 14:44:19 uebayasi Exp $");
 
 #include "opt_gateway.h"
 #include "opt_inet.h"
@@ -783,8 +783,7 @@ fddi_ifattach(struct ifnet *ifp, void *lla)
 	if_set_sadl(ifp, lla, 6, true);
 
 	ifp->if_broadcastaddr = fddibroadcastaddr;
-	bpf_ops->bpf_attach(ifp, DLT_FDDI,
-	    sizeof(struct fddi_header), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_FDDI, sizeof(struct fddi_header));
 #ifdef MBUFTRACE
 	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
 	    sizeof(ec->ec_tx_mowner.mo_name));

@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.20 2009/01/09 17:20:31 briggs Exp $	*/
+/*	$NetBSD: lm75.c,v 1.20.4.1 2010/04/30 14:43:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.20 2009/01/09 17:20:31 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.20.4.1 2010/04/30 14:43:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,16 @@ static uint32_t lmtemp_decode_lm75(const uint8_t *);
 static uint32_t lmtemp_decode_ds75(const uint8_t *);
 static uint32_t lmtemp_decode_lm77(const uint8_t *);
 
+
+static const char * lmtemp_compats[] = {
+	"i2c-lm75",
+	/*
+	 * see XXX in _attach() below: add code once non-lm75 matches are
+	 * added here!
+	 */
+	NULL
+};
+
 enum {
 	lmtemp_lm75 = 0,
 	lmtemp_ds75,
@@ -100,15 +110,28 @@ lmtemp_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int i;
 
-	for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
-		if (lmtemptbl[i].lmtemp_type == cf->cf_flags)
-			break;
-	if (lmtemptbl[i].lmtemp_type == -1)
-		return 0;
+	if (ia->ia_name == NULL) {
+		/*
+		 * Indirect config - not much we can do!
+		 */
+		for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
+			if (lmtemptbl[i].lmtemp_type == cf->cf_flags)
+				break;
+		if (lmtemptbl[i].lmtemp_type == -1)
+			return 0;
 
-	if ((ia->ia_addr & lmtemptbl[i].lmtemp_addrmask) ==
-	    lmtemptbl[i].lmtemp_addr)
-		return 1;
+		if ((ia->ia_addr & lmtemptbl[i].lmtemp_addrmask) ==
+		    lmtemptbl[i].lmtemp_addr)
+			return 1;
+	} else {
+		/*
+		 * Direct config - match via the list of compatible
+		 * hardware.
+		 */
+		if (iic_compat_match(ia, lmtemp_compats))
+			return 1;
+	}
+
 
 	return 0;
 }
@@ -120,16 +143,27 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	int i;
 
-	for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
-		if (lmtemptbl[i].lmtemp_type ==
-		    device_cfdata(self)->cf_flags)
-			break;
+	if (ia->ia_name == NULL) {
+		for (i = 0; lmtemptbl[i].lmtemp_type != -1 ; i++)
+			if (lmtemptbl[i].lmtemp_type ==
+			    device_cfdata(self)->cf_flags)
+				break;
+	} else {
+		/* XXX - add code when adding other direct matches! */
+		i = 0;
+	}
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
 
 	aprint_naive(": Temperature Sensor\n");
-	aprint_normal(": %s Temperature Sensor\n", lmtemptbl[i].lmtemp_name);
+	if (ia->ia_name) {
+		aprint_normal(": %s %s Temperature Sensor\n", ia->ia_name,
+			lmtemptbl[i].lmtemp_name);
+	} else {
+		aprint_normal(": %s Temperature Sensor\n",
+			lmtemptbl[i].lmtemp_name);
+	}
 
 	/* Set the configuration of the LM75 to defaults. */
 	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
@@ -143,7 +177,8 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme = sysmon_envsys_create();
 	/* Initialize sensor data. */
 	sc->sc_sensor.units =  ENVSYS_STEMP;
-	(void)strlcpy(sc->sc_sensor.desc, device_xname(self),
+	(void)strlcpy(sc->sc_sensor.desc,
+	    ia->ia_name? ia->ia_name : device_xname(self),
 	    sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);

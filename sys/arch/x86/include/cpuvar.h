@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.31 2009/10/02 18:50:03 jmcneill Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.31.2.1 2010/04/30 14:39:57 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -143,6 +143,8 @@ void	cpu_get_tsc_freq(struct cpu_info *);
 
 extern int cpu_vendor;
 extern bool x86_mp_online;
+
+extern uint32_t cpu_feature[5];
 
 #endif
 

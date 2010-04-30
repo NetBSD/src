@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.23 2009/01/29 21:20:42 nonaka Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.23.4.1 2010/04/30 14:39:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -227,9 +227,10 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_CASIO_CASSIOPEIAA_A55V,
 	 TEXT("CASIO Cassiopeia A-55V") },
 #endif /* hpcsh */
-#ifdef hpcmips
+#if defined(hpcmips) || defined(hpcarm)
 	{ &platid_mask_MACH_SHARP,
 	 TEXT("Sharp") },
+#if defined(hpcmips)
 	{ &platid_mask_MACH_SHARP_TRIPAD,
 	 TEXT("Sharp Tripad") },
 	{ &platid_mask_MACH_SHARP_TRIPAD_PV,
@@ -261,6 +262,21 @@ struct platid_name platid_name_table[] = {
 	{ &platid_mask_MACH_SHARP_MOBILON_HC1200,
 	 TEXT("Sharp Mobilon HC1200") },
 #endif /* hpcmips */
+#if defined(hpcarm)
+	{ &platid_mask_MACH_SHARP_WZERO3,
+	 TEXT("Sharp WZERO3") },
+	{ &platid_mask_MACH_SHARP_WZERO3_WS003SH,
+	 TEXT("Sharp W-ZERO3 (WS003SH)") },
+	{ &platid_mask_MACH_SHARP_WZERO3_WS004SH,
+	 TEXT("Sharp W-ZERO3 (WS004SH)") },
+	{ &platid_mask_MACH_SHARP_WZERO3_WS007SH,
+	 TEXT("Sharp W-ZERO3[es] (WS007SH)") },
+	{ &platid_mask_MACH_SHARP_WZERO3_WS011SH,
+	 TEXT("Sharp Advanced/W-ZERO3[es] (WS011SH)") },
+	{ &platid_mask_MACH_SHARP_WZERO3_WS020SH,
+	 TEXT("Sharp WILLCOM 03 (WS020SH)") },
+#endif /* hpcarm */
+#endif /* hpcmips || hpcarm */
 #ifdef hpcmips
 	{ &platid_mask_MACH_FUJITSU,
 	 TEXT("Fujitsu") },

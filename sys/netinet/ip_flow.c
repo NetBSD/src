@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.58 2009/03/15 22:16:09 cegger Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.58.2.1 2010/04/30 14:44:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.58 2009/03/15 22:16:09 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.58.2.1 2010/04/30 14:44:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,12 +301,14 @@ ipflow_fastforward(struct mbuf *m)
 	else
 		dst = rtcache_getdst(&ipf->ipf_ro);
 
+	KERNEL_LOCK(1, NULL);
 	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m, dst, rt)) != 0) {
 		if (error == ENOBUFS)
 			ipf->ipf_dropped++;
 		else
 			ipf->ipf_errors++;
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 	return 1;
 }
 

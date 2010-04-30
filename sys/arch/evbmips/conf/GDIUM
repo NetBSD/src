@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.7 2009/12/05 20:11:11 pooka Exp $
+# $NetBSD: GDIUM,v 1.7.2.1 2010/04/30 14:39:16 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.7 $"
+#ident 		"GDIUM-$Revision: 1.7.2.1 $"
 
 maxusers	16
 
@@ -193,6 +193,9 @@ ulpt*		at uhub? port ? configuration ? interface ?
 umodem*		at uhub? port ? configuration ?
 ucom*		at umodem?
 
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
+
 # USB Mass Storage
 umass*		at uhub? port ? configuration ? interface ?
 scsibus*	 at umass? channel ?
@@ -228,7 +231,7 @@ pseudo-device	ipfilter		# IP filter, NAT
 pseudo-device	vnd			# virtual disk ick
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	ccd		4	# concatenated disks
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disks
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem

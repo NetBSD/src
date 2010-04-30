@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.27 2010/01/19 22:06:25 pooka Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.27.2.1 2010/04/30 14:43:20 uebayasi Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.27 2010/01/19 22:06:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.27.2.1 2010/04/30 14:43:20 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -347,7 +347,7 @@ rt2661_attach(void *xsc, int id)
 	ic->ic_newstate = rt2661_newstate;
 	ieee80211_media_init(ic, rt2661_media_change, ieee80211_media_status);
 
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + sizeof(sc->sc_txtap),
 	    &sc->sc_drvbpf);
 
@@ -1128,8 +1128,7 @@ rt2661_rx_intr(struct rt2661_softc *sc)
 			tap->wr_chan_flags = htole16(sc->sc_curchan->ic_flags);
 			tap->wr_antsignal = desc->rssi;
 
-			bpf_ops->bpf_mtap2(sc->sc_drvbpf,
-			    tap, sc->sc_rxtap_len, m);
+			bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 		}
 
 		wh = mtod(m, struct ieee80211_frame *);
@@ -1509,7 +1508,7 @@ rt2661_tx_mgt(struct rt2661_softc *sc, struct mbuf *m0,
 		tap->wt_chan_freq = htole16(sc->sc_curchan->ic_freq);
 		tap->wt_chan_flags = htole16(sc->sc_curchan->ic_flags);
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
 
 	data->m = m0;
@@ -1747,7 +1746,7 @@ rt2661_tx_data(struct rt2661_softc *sc, struct mbuf *m0,
 		tap->wt_chan_freq = htole16(sc->sc_curchan->ic_freq);
 		tap->wt_chan_flags = htole16(sc->sc_curchan->ic_flags);
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
 
 	data->m = m0;
@@ -1809,8 +1808,7 @@ rt2661_start(struct ifnet *ifp)
 
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
-			if (ic->ic_rawbpf != NULL)
-				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (rt2661_tx_mgt(sc, m0, ni) != 0)
 				break;
 
@@ -1839,16 +1837,14 @@ rt2661_start(struct ifnet *ifp)
 				continue;
 			}
 
-			if (ifp->if_bpf != NULL)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap3(ifp->if_bpf, m0);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;
 				continue;
 			}
-			if (ic->ic_rawbpf != NULL)
-				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (rt2661_tx_data(sc, m0, ni, 0) != 0) {
 				if (ni != NULL)
 					ieee80211_free_node(ni);

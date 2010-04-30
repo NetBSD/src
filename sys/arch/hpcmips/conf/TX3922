@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.86 2009/12/05 20:11:14 pooka Exp $
+#	$NetBSD: TX3922,v 1.86.2.1 2010/04/30 14:39:26 uebayasi Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -213,6 +213,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
+
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 scsibus* at umass? channel ?
@@ -341,7 +344,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk
 pseudo-device	vnd			# disk-like interface to files
 

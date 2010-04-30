@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.108 2009/12/24 01:32:22 jakllsch Exp $	*/
+/*	$NetBSD: ugen.c,v 1.108.2.1 2010/04/30 14:43:52 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.108 2009/12/24 01:32:22 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.108.2.1 2010/04/30 14:43:52 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -507,7 +507,7 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 	int dir;
 	int i;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
 		     flag, mode, UGENUNIT(dev), endpt));
@@ -786,7 +786,7 @@ ugenread(dev_t dev, struct uio *uio, int flag)
 	struct ugen_softc *sc;
 	int error;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = ugen_do_read(sc, endpt, uio, flag);
@@ -969,7 +969,7 @@ ugenwrite(dev_t dev, struct uio *uio, int flag)
 	struct ugen_softc *sc;
 	int error;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = ugen_do_write(sc, endpt, uio, flag);
@@ -1823,7 +1823,7 @@ ugenioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct ugen_softc *sc;
 	int error;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, l);
@@ -1840,7 +1840,7 @@ ugenpoll(dev_t dev, int events, struct lwp *l)
 	int revents = 0;
 	int s;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	if (sc->sc_dying)
 		return (POLLHUP);
@@ -2025,7 +2025,7 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	struct klist *klist;
 	int s;
 
-	USB_GET_SC(ugen, UGENUNIT(dev), sc);
+	USB_GET_SC_OPEN(ugen, UGENUNIT(dev), sc);
 
 	if (sc->sc_dying)
 		return (ENXIO);

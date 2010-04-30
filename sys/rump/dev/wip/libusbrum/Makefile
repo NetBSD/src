@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/10/04 10:43:03 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2010/04/30 14:44:27 uebayasi Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -9,7 +9,6 @@ SRCS=   if_rum.c
 
 SRCS+=	rum_at_usb.c
 
-CFLAGS+=	-Wno-pointer-sign
 CPPFLAGS+=	-I${.CURDIR}/opt -I${RUMPTOP}/librump/rumpnet/opt
 
 .include <bsd.lib.mk>

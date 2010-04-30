@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC,v 1.109.2.1 2010/04/30 14:39:39 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.109.2.1 $"
 
 maxusers	16
 
@@ -229,7 +229,7 @@ pseudo-device	ccd		4	# concatenated and striped disks
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 #pseudo-device	strip			# radio clock
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	rnd			# /dev/random and in-kernel generator

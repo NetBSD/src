@@ -1,4 +1,4 @@
-/* $NetBSD: asus_acpi.c,v 1.16 2010/01/31 18:51:33 jruoho Exp $ */
+/* $NetBSD: asus_acpi.c,v 1.16.2.1 2010/04/30 14:43:06 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008, 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,19 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.16 2010/01/31 18:51:33 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asus_acpi.c,v 1.16.2.1 2010/04/30 14:43:06 uebayasi Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/callout.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
 
 #define _COMPONENT          ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME            ("asus_acpi")
@@ -94,11 +90,11 @@ static int	asus_match(device_t, cfdata_t, void *);
 static void	asus_attach(device_t, device_t, void *);
 static int	asus_detach(device_t, int);
 
-static void	asus_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	asus_notify_handler(ACPI_HANDLE, uint32_t, void *);
 
 static void	asus_init(device_t);
-static bool	asus_suspend(device_t, pmf_qual_t);
-static bool	asus_resume(device_t, pmf_qual_t);
+static bool	asus_suspend(device_t, const pmf_qual_t *);
+static bool	asus_resume(device_t, const pmf_qual_t *);
 
 static void	asus_sysctl_setup(struct asus_softc *);
 
@@ -129,10 +125,9 @@ asus_attach(device_t parent, device_t self, void *opaque)
 {
 	struct asus_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = opaque;
-	ACPI_STATUS rv;
 
-	sc->sc_node = aa->aa_node;
 	sc->sc_dev = self;
+	sc->sc_node = aa->aa_node;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -151,7 +146,7 @@ asus_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	if (asus_get_fan_speed(sc, NULL) == false)
-		goto nosensors;
+		goto out;
 
 	sc->sc_sme = sysmon_envsys_create();
 
@@ -170,48 +165,44 @@ asus_attach(device_t parent, device_t self, void *opaque)
 		sysmon_envsys_destroy(sc->sc_sme);
 		sc->sc_sme = NULL;
 	}
-nosensors:
 
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle, ACPI_ALL_NOTIFY,
-	    asus_notify_handler, sc);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self, "couldn't install notify handler: %s\n",
-		    AcpiFormatException(rv));
-
-	if (!pmf_device_register(self, asus_suspend, asus_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+out:
+	(void)pmf_device_register(self, asus_suspend, asus_resume);
+	(void)acpi_register_notify(sc->sc_node, asus_notify_handler);
 }
 
 static int
 asus_detach(device_t self, int flags)
 {
 	struct asus_softc *sc = device_private(self);
-	ACPI_STATUS rv;
 	int i;
 
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_ALL_NOTIFY, asus_notify_handler);
+	acpi_deregister_notify(sc->sc_node);
 
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
+	if (sc->sc_smpsw_valid != false) {
 
-	if (sc->sc_smpsw_valid)
 		for (i = 0; i < ASUS_PSW_LAST; i++)
 			sysmon_pswitch_unregister(&sc->sc_smpsw[i]);
+	}
 
-	if (sc->sc_sme)
+	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
-	if (sc->sc_log)
+
+	if (sc->sc_log != NULL)
 		sysctl_teardown(&sc->sc_log);
+
 	pmf_device_deregister(self);
 
 	return 0;
 }
 
 static void
-asus_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+asus_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
-	struct asus_softc *sc = opaque;
+	struct asus_softc *sc;
+	device_t self = opaque;
+
+	sc = device_private(self);
 
 	if (notify >= ASUS_NOTIFY_BrightnessLow &&
 	    notify <= ASUS_NOTIFY_BrightnessHigh) {
@@ -268,7 +259,7 @@ asus_init(device_t self)
 }
 
 static bool
-asus_suspend(device_t self, pmf_qual_t qual)
+asus_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct asus_softc *sc = device_private(self);
 	ACPI_INTEGER val = 0;
@@ -286,7 +277,7 @@ asus_suspend(device_t self, pmf_qual_t qual)
 }
 
 static bool
-asus_resume(device_t self, pmf_qual_t qual)
+asus_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct asus_softc *sc = device_private(self);
 	ACPI_STATUS rv;

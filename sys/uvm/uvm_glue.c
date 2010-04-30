@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.143 2009/12/17 01:25:11 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.143.2.1 2010/04/30 14:44:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.143 2009/12/17 01:25:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.143.2.1 2010/04/30 14:44:37 uebayasi Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.143 2009/12/17 01:25:11 rmind Exp $")
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
+
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
@@ -407,12 +409,16 @@ uvm_init_limits(struct proc *p)
 	p->p_rlimit[RLIMIT_DATA].rlim_max = maxdmap;
 	p->p_rlimit[RLIMIT_AS].rlim_cur = RLIM_INFINITY;
 	p->p_rlimit[RLIMIT_AS].rlim_max = RLIM_INFINITY;
-	p->p_rlimit[RLIMIT_RSS].rlim_cur = ptoa(uvmexp.free);
+	p->p_rlimit[RLIMIT_RSS].rlim_cur = MIN(
+	    VM_MAXUSER_ADDRESS, ctob((rlim_t)uvmexp.free));
 }
 
 /*
  * uvm_scheduler: process zero main loop.
  */
+
+extern struct loadavg averunnable;
+
 void
 uvm_scheduler(void)
 {
@@ -424,7 +430,7 @@ uvm_scheduler(void)
 	lwp_unlock(l);
 
 	for (;;) {
-		/* XXX/TODO: move some workload to this LWP? */
-		(void)kpause("uvm", false, 0, NULL);
+		sched_pstats();
+		(void)kpause("uvm", false, hz, NULL);
 	}
 }

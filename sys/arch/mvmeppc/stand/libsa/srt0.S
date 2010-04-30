@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.2 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: srt0.S,v 1.2.20.1 2010/04/30 14:39:38 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <machine/asm.h>
 #include <machine/psl.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #define	STACK_SIZE	8192
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.27 2009/05/12 12:11:17 cegger Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.27.2.1 2010/04/30 14:43:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.27 2009/05/12 12:11:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.27.2.1 2010/04/30 14:43:09 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.27 2009/05/12 12:11:17 cegger E
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/firewirereg.h>
 #include <dev/ieee1394/fwdma.h>
@@ -67,22 +66,17 @@ static void fwohci_cardbus_attach(device_t, device_t, void *);
 static int fwohci_cardbus_detach(device_t, int);
 
 CFATTACH_DECL_NEW(fwohci_cardbus, sizeof(struct fwohci_cardbus_softc),
-    fwohci_cardbus_match, fwohci_cardbus_attach,
-    fwohci_cardbus_detach, NULL);
-
-#define CARDBUS_INTERFACE_OHCI PCI_INTERFACE_OHCI
-#define CARDBUS_OHCI_MAP_REGISTER PCI_OHCI_MAP_REGISTER
-#define cardbus_devinfo pci_devinfo
+    fwohci_cardbus_match, fwohci_cardbus_attach, fwohci_cardbus_detach, NULL);
 
 static int
 fwohci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
 
-	if (CARDBUS_CLASS(ca->ca_class) == CARDBUS_CLASS_SERIALBUS &&
-	    CARDBUS_SUBCLASS(ca->ca_class) ==
-	        CARDBUS_SUBCLASS_SERIALBUS_FIREWIRE &&
-	    CARDBUS_INTERFACE(ca->ca_class) == CARDBUS_INTERFACE_OHCI)
+	if (PCI_CLASS(ca->ca_class) == PCI_CLASS_SERIALBUS &&
+	    PCI_SUBCLASS(ca->ca_class) ==
+	        PCI_SUBCLASS_SERIALBUS_FIREWIRE &&
+	    PCI_INTERFACE(ca->ca_class) == PCI_INTERFACE_OHCI)
 		return 1;
 
 	return 0;
@@ -96,17 +90,17 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t csr;
+	pcireg_t csr;
 	char devinfo[256];
 
-	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
+	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	       CARDBUS_REVISION(ca->ca_class));
+	       PCI_REVISION(ca->ca_class));
 	aprint_naive("\n");
 
 	/* Map I/O registers */
-	if (Cardbus_mapreg_map(ct, CARDBUS_OHCI_MAP_REGISTER,
-	      CARDBUS_MAPREG_TYPE_MEM, 0,
+	if (Cardbus_mapreg_map(ct, PCI_OHCI_MAP_REGISTER,
+	      PCI_MAPREG_TYPE_MEM, 0,
 	      &sc->sc_sc.bst, &sc->sc_sc.bsh,
 	      NULL, &sc->sc_sc.bssize)) {
 		aprint_error_dev(self, "can't map OHCI register space\n");
@@ -119,32 +113,24 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
 
-#if rbus
-#else
-XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
-#endif
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
-	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Disable interrupts, so we don't get any spurious ones. */
-	OHCI_CSR_WRITE(&sc->sc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
+	OWRITE(&sc->sc_sc, FWOHCI_INTMASKCLR, OHCI_INT_EN);
 
 	/* Enable the device. */
-	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
-	    CARDBUS_COMMAND_STATUS_REG);
-	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG,
-	    csr | CARDBUS_COMMAND_MASTER_ENABLE | CARDBUS_COMMAND_MEM_ENABLE);
+	csr = Cardbus_conf_read(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG);
+	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG,
+	    csr | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE);
 
-	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
-					   IPL_BIO, fwohci_filt, sc);
+	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline,
+					   IPL_BIO, fwohci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
 
 	/* XXX NULL should be replaced by some call to Cardbus coed */
-	if (fwohci_init(&sc->sc_sc, sc->sc_sc.fc.dev) != 0) {
-		cardbus_intr_disestablish(cc, cf, sc->sc_ih);
+	if (fwohci_init(&sc->sc_sc) != 0) {
+		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 }
@@ -161,11 +147,11 @@ fwohci_cardbus_detach(device_t self, int flags)
 	if (rv)
 		return (rv);
 	if (sc->sc_ih != NULL) {
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
+		Cardbus_intr_disestablish(ct, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 	if (sc->sc_sc.bssize) {
-		Cardbus_mapreg_unmap(ct, CARDBUS_OHCI_MAP_REGISTER,
+		Cardbus_mapreg_unmap(ct, PCI_OHCI_MAP_REGISTER,
 			sc->sc_sc.bst, sc->sc_sc.bsh,
 			sc->sc_sc.bssize);
 		sc->sc_sc.bssize = 0;

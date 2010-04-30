@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.64 2010/01/19 22:08:01 pooka Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.64.2.1 2010/04/30 14:44:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.64 2010/01/19 22:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.64.2.1 2010/04/30 14:44:20 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -318,7 +318,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		 */
 		if (ec->ec_capabilities & ETHERCAP_VLAN_HWTAGGING)
 			ifp->if_capabilities = p->if_capabilities &
-			    (IFCAP_TSOv4 |
+			    (IFCAP_TSOv4 | IFCAP_TSOv6 |
 			     IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_IPv4_Rx|
 			     IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_TCPv4_Rx|
 			     IFCAP_CSUM_UDPv4_Tx|IFCAP_CSUM_UDPv4_Rx|
@@ -731,8 +731,7 @@ vlan_start(struct ifnet *ifp)
 		}
 #endif /* ALTQ */
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/*
 		 * If the parent can insert the tag itself, just mark
 		 * the tag in the mbuf header.
@@ -913,8 +912,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	m->m_pkthdr.rcvif = &ifv->ifv_if;
 	ifv->ifv_if.if_ipackets++;
 
-	if (ifv->ifv_if.if_bpf)
-		bpf_ops->bpf_mtap(ifv->ifv_if.if_bpf, m);
+	bpf_mtap(&ifv->ifv_if, m);
 
 	/* Pass it back through the parent's input routine. */
 	(*ifp->if_input)(&ifv->ifv_if, m);

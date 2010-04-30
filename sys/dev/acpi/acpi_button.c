@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.30 2010/01/31 06:10:53 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.30.2.1 2010/04/30 14:43:05 uebayasi Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,25 +40,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.30 2010/01/31 06:10:53 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.30.2.1 2010/04/30 14:43:05 uebayasi Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/module.h>
+#include <sys/systm.h>
 
-#include <dev/acpi/acpica.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
-#include <dev/sysmon/sysmonvar.h>
+#define _COMPONENT		 ACPI_BUTTON_COMPONENT
+ACPI_MODULE_NAME		 ("acpi_button")
 
-#define _COMPONENT		ACPI_BUTTON_COMPONENT
-ACPI_MODULE_NAME		("acpi_button")
+#define ACPI_NOTIFY_BUTTON	 0x80
 
 struct acpibut_softc {
-	struct acpi_devnode *sc_node;	/* our ACPI devnode */
-	struct sysmon_pswitch sc_smpsw;	/* our sysmon glue */
-	int sc_flags;			/* see below */
+	struct acpi_devnode	*sc_node;
+	struct sysmon_pswitch	 sc_smpsw;
 };
 
 static const char * const power_button_hid[] = {
@@ -71,13 +70,11 @@ static const char * const sleep_button_hid[] = {
 	NULL
 };
 
-#define	ACPIBUT_F_VERBOSE		0x01	/* verbose events */
-
 static int	acpibut_match(device_t, cfdata_t, void *);
 static void	acpibut_attach(device_t, device_t, void *);
 static int	acpibut_detach(device_t, int);
 static void	acpibut_pressed_event(void *);
-static void	acpibut_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	acpibut_notify_handler(ACPI_HANDLE, uint32_t, void *);
 
 CFATTACH_DECL_NEW(acpibut, sizeof(struct acpibut_softc),
     acpibut_match, acpibut_attach, acpibut_detach, NULL);
@@ -115,7 +112,6 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 	struct acpibut_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	const char *desc;
-	ACPI_STATUS rv;
 
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 
@@ -125,36 +121,17 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 	} else if (acpi_match_hid(aa->aa_node->ad_devinfo, sleep_button_hid)) {
 		sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_SLEEP;
 		desc = "Sleep";
-	} else {
-		panic("acpibut_attach: impossible");
-	}
+	} else
+		panic("%s: impossible", __func__);
 
 	aprint_naive(": ACPI %s Button\n", desc);
 	aprint_normal(": ACPI %s Button\n", desc);
 
 	sc->sc_node = aa->aa_node;
 
-	if (sysmon_pswitch_register(&sc->sc_smpsw) != 0) {
-		aprint_error_dev(self, "unable to register with sysmon\n");
-		return;
-	}
-
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler, self);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(self,
-		    "unable to register DEVICE NOTIFY handler: %s\n",
-		    AcpiFormatException(rv));
-		return;
-	}
-
-#ifdef ACPI_BUT_DEBUG
-	/* Display the current state when it changes. */
-	sc->sc_flags = ACPIBUT_F_VERBOSE;
-#endif
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	(void)pmf_device_register(self, NULL, NULL);
+	(void)sysmon_pswitch_register(&sc->sc_smpsw);
+	(void)acpi_register_notify(sc->sc_node, acpibut_notify_handler);
 }
 
 /*
@@ -166,15 +143,9 @@ static int
 acpibut_detach(device_t self, int flags)
 {
 	struct acpibut_softc *sc = device_private(self);
-	ACPI_STATUS rv;
-
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
 
 	pmf_device_deregister(self);
+	acpi_deregister_notify(sc->sc_node);
 	sysmon_pswitch_unregister(&sc->sc_smpsw);
 
 	return 0;
@@ -191,9 +162,7 @@ acpibut_pressed_event(void *arg)
 	device_t dv = arg;
 	struct acpibut_softc *sc = device_private(dv);
 
-	if (sc->sc_flags & ACPIBUT_F_VERBOSE)
-		aprint_verbose_dev(dv, "button pressed\n");
-
+	aprint_debug_dev(dv, "button pressed\n");
 	sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
 }
 
@@ -203,31 +172,94 @@ acpibut_pressed_event(void *arg)
  *	Callback from ACPI interrupt handler to notify us of an event.
  */
 static void
-acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
+acpibut_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 {
+	static const int handler = OSL_NOTIFY_HANDLER;
 	device_t dv = context;
-	ACPI_STATUS rv;
 
 	switch (notify) {
-	case ACPI_NOTIFY_S0PowerButtonPressed:
-#if 0
-	case ACPI_NOTIFY_S0SleepButtonPressed: /* same as above */
-#endif
-#ifdef ACPI_BUT_DEBUG
-		aprint_debug_dev(dv, "received ButtonPressed message\n");
-#endif
-		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
-		    acpibut_pressed_event, dv);
-		if (ACPI_FAILURE(rv))
-			aprint_error_dev(dv,
-			    "WARNING: unable to queue button pressed callback: %s\n",
-			    AcpiFormatException(rv));
+
+	case ACPI_NOTIFY_BUTTON:
+		(void)AcpiOsExecute(handler, acpibut_pressed_event, dv);
 		break;
 
-	/* XXX ACPI_NOTIFY_DeviceWake?? */
-
 	default:
-		aprint_error_dev(dv, "received unknown notify message: 0x%x\n",
-		    notify);
+		aprint_error_dev(dv, "unknown notify 0x%02X\n", notify);
 	}
 }
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, acpibut, NULL);
+CFDRIVER_DECL(acpibut, DV_DULL, NULL);
+
+static int acpibutloc[] = { -1 };
+extern struct cfattach acpibut_ca;
+
+static struct cfparent acpiparent = {
+	"acpinodebus", NULL, DVUNIT_ANY
+};
+
+static struct cfdata acpibut_cfdata[] = {
+	{
+		.cf_name = "acpibut",
+		.cf_atname = "acpibut",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = acpibutloc,
+		.cf_flags = 0,
+		.cf_pspec = &acpiparent,
+	},
+
+	{ NULL }
+};
+
+static int
+acpibut_modcmd(modcmd_t cmd, void *context)
+{
+	int err;
+
+	switch (cmd) {
+
+	case MODULE_CMD_INIT:
+
+		err = config_cfdriver_attach(&acpibut_cd);
+
+		if (err != 0)
+			return err;
+
+		err = config_cfattach_attach("acpibut", &acpibut_ca);
+
+		if (err != 0) {
+			config_cfdriver_detach(&acpibut_cd);
+			return err;
+		}
+
+		err = config_cfdata_attach(acpibut_cfdata, 1);
+
+		if (err != 0) {
+			config_cfattach_detach("acpibut", &acpibut_ca);
+			config_cfdriver_detach(&acpibut_cd);
+			return err;
+		}
+
+		return 0;
+
+	case MODULE_CMD_FINI:
+
+		err = config_cfdata_detach(acpibut_cfdata);
+
+		if (err != 0)
+			return err;
+
+		config_cfattach_detach("acpibut", &acpibut_ca);
+		config_cfdriver_detach(&acpibut_cd);
+
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */

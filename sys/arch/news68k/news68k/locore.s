@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52 2009/12/13 11:24:03 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.52.2.1 2010/04/30 14:39:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -489,7 +489,7 @@ Lenab3:
 	jbsr	_C_LABEL(news68k_init)	| additional pre-main initialization
 
 /*
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.163 2009/12/14 00:47:11 matt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.163.2.1 2010/04/30 14:43:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.163 2009/12/14 00:47:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.163.2.1 2010/04/30 14:43:00 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -37,8 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.163 2009/12/14 00:47:11 matt E
 #include "opt_sysv.h"
 #include "opt_syscall_debug.h"
 #include "opt_sa.h"
-
-#include "fs_lfs.h"
 #endif
 
 /*
@@ -52,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.163 2009/12/14 00:47:11 matt E
 #include <sys/systm.h>
 #include <sys/kernel.h>
 //#define msg __msg /* Don't ask me! */
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
@@ -1206,25 +1203,6 @@ netbsd32_quotactl(struct lwp *l, const struct netbsd32_quotactl_args *uap, regis
 }
 
 int
-netbsd32_nfssvc(struct lwp *l, const struct netbsd32_nfssvc_args *uap, register_t *retval)
-{
-#if 0
-	/* {
-		syscallarg(int) flag;
-		syscallarg(netbsd32_voidp) argp;
-	} */
-	struct sys_nfssvc_args ua;
-
-	NETBSD32TO64_UAP(flag);
-	NETBSD32TOP_UAP(argp, void);
-	return (sys_nfssvc(l, &ua, retval));
-#else
-	/* Why would we want to support a 32-bit nfsd? */
-	return (ENOSYS);
-#endif
-}
-
-int
 netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, register_t *retval)
 {
 	/* {
@@ -1255,24 +1233,28 @@ netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, reg
 	vp = nd.ni_vp;
 	error = copyin(SCARG_P32(uap, fh_size), &sz32,
 	    sizeof(netbsd32_size_t));
-	if (!error) {
-		fh = malloc(sz32, M_TEMP, M_WAITOK);
-		if (fh == NULL) 
-			return EINVAL;
-		sz = sz32;
-		error = vfs_composefh(vp, fh, &sz);
-		sz32 = sz;
+	if (error) {
+		vput(vp);
+		return error;
 	}
+	fh = kmem_alloc(sz32, KM_SLEEP);
+	if (fh == NULL) 
+		return EINVAL;
+	sz = sz32;
+	error = vfs_composefh(vp, fh, &sz);
 	vput(vp);
-	if (error == E2BIG)
-		copyout(&sz, SCARG_P32(uap, fh_size), sizeof(size_t));
+
 	if (error == 0) {
-		error = copyout(&sz32, SCARG_P32(uap, fh_size),
+		const netbsd32_size_t nsz32 = sz;
+		error = copyout(&nsz32, SCARG_P32(uap, fh_size),
 		    sizeof(netbsd32_size_t));
-		if (!error)
+		if (!error) {
 			error = copyout(fh, SCARG_P32(uap, fhp), sz);
+		}
+	} else if (error == E2BIG) {
+		error = copyout(&sz, SCARG_P32(uap, fh_size), sizeof(size_t));
 	}
-	free(fh, M_TEMP);
+	kmem_free(fh, sz32);
 	return (error);
 }
 
@@ -1351,36 +1333,6 @@ netbsd32_seteuid(struct lwp *l, const struct netbsd32_seteuid_args *uap, registe
 	NETBSD32TO64_UAP(euid);
 	return (sys_seteuid(l, &ua, retval));
 }
-
-#ifdef LFS
-int
-netbsd32_lfs_bmapv(struct lwp *l, const struct netbsd32_lfs_bmapv_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-
-int
-netbsd32_lfs_markv(struct lwp *l, const struct netbsd32_lfs_markv_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-
-int
-netbsd32_lfs_segclean(struct lwp *l, const struct netbsd32_lfs_segclean_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-
-int
-netbsd32___lfs_segwait50(struct lwp *l, const struct netbsd32___lfs_segwait50_args *v, register_t *retval)
-{
-
-	return (ENOSYS);	/* XXX */
-}
-#endif
 
 int
 netbsd32_pathconf(struct lwp *l, const struct netbsd32_pathconf_args *uap, register_t *retval)

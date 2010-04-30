@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.28 2009/12/10 05:10:03 rmind Exp $	*/
+/*	$NetBSD: asm.h,v 1.28.2.1 2010/04/30 14:39:42 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -123,7 +123,7 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 
 #define	ASMSTR		.asciz
 
-#define RCSID(x)	.text; .asciz x
+#define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 
 #ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\

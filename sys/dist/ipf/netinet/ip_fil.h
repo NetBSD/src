@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.18 2009/08/19 08:36:10 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.18.2.1 2010/04/30 14:43:55 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.170.2.62 2009/07/22 01:46:42 darrenr Exp
+ * Id: ip_fil.h,v 2.170.2.63 2010/01/31 16:22:55 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -523,8 +523,13 @@ typedef	struct	frentry {
 
 	/*
 	 * For PPS rate limiting
+	 * fr_lpu is used to always have the same size for this field,
+	 * allocating 64bits for seconds and 32bits for milliseconds.
 	 */
-	struct timeval	fr_lastpkt;
+	union {
+		struct timeval	frp_lastpkt;
+		char	frp_bytes[12];
+	} fr_lpu;
 	int		fr_curpps;
 
 	union	{
@@ -563,6 +568,7 @@ typedef	struct	frentry {
 	u_int	fr_cksum;	/* checksum on filter rules for performance */
 } frentry_t;
 
+#define	fr_lastpkt	fr_lpu.frp_lastpkt
 #define	fr_caddr	fr_dun.fru_caddr
 #define	fr_data		fr_dun.fru_data
 #define	fr_dfunc	fr_dun.fru_func
@@ -1432,12 +1438,13 @@ extern	u_short	ipf_cksum __P((u_short *, int));
 extern	int	copyinptr __P((void *, void *, size_t));
 extern	int	copyoutptr __P((void *, void *, size_t));
 extern	int	fr_fastroute __P((mb_t *, mb_t **, fr_info_t *, frdest_t *));
-extern	int	fr_inobj __P((void *, void *, int));
+extern	int	fr_inobj __P((void *, ipfobj_t *, void *, int));
 extern	int	fr_inobjsz __P((void *, void *, int, int));
 extern	int	fr_ioctlswitch __P((int, void *, ioctlcmd_t, int, int, void *));
 extern	int	fr_ipf_ioctl __P((void *, ioctlcmd_t, int, int, void *));
 extern	int	fr_ipftune __P((ioctlcmd_t, void *));
 extern	int	fr_outobj __P((void *, void *, int));
+extern	int	fr_outobjk __P((ipfobj_t *, void *));
 extern	int	fr_outobjsz __P((void *, void *, int, int));
 extern	void	*fr_pullup __P((mb_t *, fr_info_t *, int));
 extern	void	fr_resolvedest __P((struct frdest *, int));
@@ -1497,7 +1504,6 @@ extern	frentry_t 	*fr_dstgrpmap __P((fr_info_t *, u_32_t *));
 extern	void		fr_fixskip __P((frentry_t **, frentry_t *, int));
 extern	void		fr_forgetifp __P((void *));
 extern	frentry_t 	*fr_getrulen __P((int, char *, u_32_t));
-extern	void		fr_getstat __P((struct friostat *));
 extern	int		fr_ifpaddr __P((int, int, void *,
 				struct in_addr *, struct in_addr *));
 extern	int		fr_initialise __P((void));
@@ -1556,6 +1562,10 @@ extern	struct frentry *ipfilter6[2][2], *ipacct6[2][2];
 extern	int	icmptoicmp6types[ICMP_MAXTYPE+1];
 extern	int	icmptoicmp6unreach[ICMP_MAX_UNREACH];
 extern	int	icmpreplytype6[ICMP6_MAXTYPE + 1];
+#endif
+#ifdef	IPFILTER_COMPAT
+extern	int	fr_in_compat __P((ipfobj_t *, void *));
+extern	int	fr_out_compat __P((ipfobj_t *, void *));
 #endif
 extern	int	icmpreplytype4[ICMP_MAXTYPE + 1];
 extern	struct frgroup *ipfgroups[IPL_LOGSIZE][2];

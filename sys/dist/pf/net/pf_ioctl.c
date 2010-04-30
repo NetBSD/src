@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.37 2009/10/03 00:37:02 elad Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.37.2.1 2010/04/30 14:43:56 uebayasi Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.37 2009/10/03 00:37:02 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.37.2.1 2010/04/30 14:43:56 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.37 2009/10/03 00:37:02 elad Exp $");
 #include <sys/conf.h>
 #include <sys/lwp.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 #endif /* __NetBSD__ */
 
 #include <net/if.h>
@@ -104,6 +105,9 @@ __KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.37 2009/10/03 00:37:02 elad Exp $");
 #endif
 
 void			 pfattach(int);
+#ifdef _MODULE
+void			 pfdetach(void);
+#endif /* _MODULE */
 #ifndef __NetBSD__
 void			 pf_thread_create(void *);
 #endif /* !__NetBSD__ */
@@ -308,6 +312,98 @@ pfattach(int num)
 	    pf_listener_cb, NULL);
 #endif /* __NetBSD__ */
 }
+
+#ifdef _MODULE
+void
+pfdetach(void)
+{
+	extern int		 pf_purge_thread_running;
+	extern int		 pf_purge_thread_stop;
+	struct pf_anchor	*anchor;
+	struct pf_state		*state;
+	struct pf_src_node	*node;
+	struct pfioc_table	 pt;
+	u_int32_t		 ticket;
+	int			 i;
+	char			 r = '\0';
+
+	pf_purge_thread_stop = 1;
+	wakeup(pf_purge_thread);
+
+	/* wait until the kthread exits */
+	while (pf_purge_thread_running)
+		tsleep(&pf_purge_thread_running, PWAIT, "pfdown", 0);
+
+	(void)pf_pfil_detach();
+
+	pf_status.running = 0;
+
+	/* clear the rulesets */
+	for (i = 0; i < PF_RULESET_MAX; i++)
+		if (pf_begin_rules(&ticket, i, &r) == 0)
+			pf_commit_rules(ticket, i, &r);
+#ifdef ALTQ
+	if (pf_begin_altq(&ticket) == 0)
+		pf_commit_altq(ticket);
+#endif /* ALTQ */
+
+	/* clear states */
+	RB_FOREACH(state, pf_state_tree_id, &tree_id) {
+		state->timeout = PFTM_PURGE;
+#if NPFSYNC > 0
+		state->sync_flags = PFSTATE_NOSYNC;
+#endif /* NPFSYNC > 0 */
+	}
+	pf_purge_expired_states(pf_status.states);
+#if NPFSYNC > 0
+	pfsync_clear_states(pf_status.hostid, NULL);
+#endif /* NPFSYNC > 0 */
+
+	/* clear source nodes */
+	RB_FOREACH(state, pf_state_tree_id, &tree_id) {
+		state->src_node = NULL;
+		state->nat_src_node = NULL;
+	}
+	RB_FOREACH(node, pf_src_tree, &tree_src_tracking) {
+		node->expire = 1;
+		node->states = 0;
+	}
+	pf_purge_expired_src_nodes(0);
+
+	/* clear tables */
+	memset(&pt, '\0', sizeof(pt));
+	pfr_clr_tables(&pt.pfrio_table, &pt.pfrio_ndel, pt.pfrio_flags);
+
+	/* destroy anchors */
+	while ((anchor = RB_MIN(pf_anchor_global, &pf_anchors)) != NULL) {
+		for (i = 0; i < PF_RULESET_MAX; i++)
+			if (pf_begin_rules(&ticket, i, anchor->name) == 0)
+				pf_commit_rules(ticket, i, anchor->name);
+	}
+
+	/* destroy main ruleset */
+	pf_remove_if_empty_ruleset(&pf_main_ruleset);
+
+	/* destroy the pools */
+	pool_destroy(&pf_pooladdr_pl);
+	pool_destroy(&pf_altq_pl);
+	pool_destroy(&pf_state_key_pl);
+	pool_destroy(&pf_state_pl);
+	pool_destroy(&pf_rule_pl);
+	pool_destroy(&pf_src_tree_pl);
+
+	rw_destroy(&pf_consistency_lock);
+
+	/* destroy subsystems */
+	pf_normalize_destroy();
+	pf_osfp_destroy();
+	pfr_destroy();
+	pfi_destroy();
+
+	/* cleanup kauth listener */
+	kauth_unlisten_scope(pf_listener);
+}
+#endif /* _MODULE */
 
 #ifndef __NetBSD__
 void
@@ -3245,3 +3341,43 @@ pf_pfil_detach(void)
 	return (0);
 }
 #endif /* __NetBSD__ */
+
+#if defined(__NetBSD__)
+MODULE(MODULE_CLASS_DRIVER, pf, "bpf");
+
+static int
+pf_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	extern void pflogattach(int);
+	extern void pflogdetach(void);
+
+	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
+	int err;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		err = devsw_attach("pf", NULL, &bmajor, &pf_cdevsw, &cmajor);
+		if (err)
+			return err;
+		pfattach(1);
+		pflogattach(1);
+		return 0;
+	case MODULE_CMD_FINI:
+		if (pf_status.running) {
+			return EBUSY;
+		} else {
+			pfdetach();
+			pflogdetach();
+			return devsw_detach(NULL, &pf_cdevsw);
+		}
+	default:
+		return ENOTTY;
+	}
+#else
+	if (cmd == MODULE_CMD_INIT)
+		return 0;
+	return ENOTTY;
+#endif
+}
+#endif

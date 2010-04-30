@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.542 2010/02/06 10:11:55 tonio Exp $
+$NetBSD: usbdevs,v 1.542.2.1 2010/04/30 14:43:54 uebayasi Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -398,6 +398,7 @@ vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
 vendor CHICONY2		0x0c45	Chicony Electronics
+vendor MICRODIA		0x0c45	Microdia / Sonix Technology Co., Ltd.
 vendor SEALEVEL		0x0c52	Sealevel System
 vendor LUWEN		0x0c76	EasyDisk
 vendor QUALCOMM_K	0x0c88	Qualcomm Kyocera
@@ -422,6 +423,7 @@ vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
 vendor RIM		0x0fca	Research In Motion
 vendor DYNASTREAM	0x0fcf	Dynastream Innovations
+vendor SUNRISING	0x0fe6	SUNRISING
 vendor QUALCOMM		0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
@@ -698,6 +700,7 @@ product APPLE SPEAKERS		0x1101	Speakers
 product APPLE IPHONE		0x1290	iPhone
 product APPLE IPOD_TOUCH	0x1291	iPod Touch
 product APPLE IPHONE_3G		0x1292	iPhone 3G
+product	APPLE IPHONE_3GS	0x1294	iPhone 3GS
 product APPLE ETHERNET		0x1402	Apple USB to Ethernet
 
 /* ArkMicroChips products */
@@ -961,6 +964,7 @@ product DIGITALSTREAM PS2	0x0001	PS/2 Active Adapter
 
 /* DisplayLink products */
 product DISPLAYLINK LD220	0x0100	Samsung LD220
+product DISPLAYLINK LD190	0x0102	Samsung LD190
 product DISPLAYLINK U70		0x0103	Samsung U70
 product DISPLAYLINK VCUD60	0x0136	Rextron DVI
 product DISPLAYLINK DLDVI	0x0141	DisplayLink DVI
@@ -1262,6 +1266,8 @@ product HP2 C500		0x6002	PhotoSmart C500
 /* Huawei Technologies products */
 product HUAWEI MOBILE		0x1001	Huawei Mobile
 product HUAWEI E220  		0x1003	Huawei E220
+product HUAWEI K3765  		0x1465	Huawei K3765
+product HUAWEI K3765INIT 	0x1520	Huawei K3765 USB CD
 
 /* Huawei-3Com products */
 product HUAWEI3COM RT2573	0x0009	RT2573
@@ -1584,6 +1590,9 @@ product MSI RT2573_4		0xa874	RT2573
 product MICROCHIP PICKIT1	0x0032	PICkit(TM) 1 FLASH Starter Kit
 product MICROCHIP PICKIT2	0x0033	PICkit 2 Microcontroller Programmer
 
+/* Microdia / Sonix Techonology Co., Ltd. products */
+product MICRODIA YUREX		0x1010	YUREX
+
 /* Micronet Communications products */
 product MICRONET SP128AR	0x0003	SP128AR EtherFast
 
@@ -1791,7 +1800,24 @@ product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
 product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
 product OPTIONNV QUADPLUSUMTS	0x6600	GlobeTrotter 3G Quad Plus
 product OPTIONNV HSDPA   	0x6701	GlobeTrotter HSDPA Modem
+product OPTIONNV MAXHSDPA   	0x6701	GlobeTrotter Max HSDPA Modem
+product OPTIONNV GSICON72	0x6911	GlobeSurfer iCON 7.2
+product OPTIONNV ICON225	0x6971	iCON 225
 product OPTIONNV GTMAXHSUPA	0x7001	GlobeTrotter HSUPA
+product OPTIONNV GEHSUPA	0x7011	GlobeTrotter Express HSUPA
+product OPTIONNV GTHSUPA	0x7031	GlobeTrotter HSUPA
+product OPTIONNV GSHSUPA	0x7251	GlobeSurfer HSUPA
+product OPTIONNV GE40X1		0x7301	GE40x
+product OPTIONNV GE40X2		0x7361	GE40x
+product OPTIONNV GE40X3		0x7381	GE40x
+product OPTIONNV ICON401	0x7401	iCON 401
+product OPTIONNV GTM382		0x7501	GTM 382
+product OPTIONNV GE40X4		0x7601	GE40x
+product OPTIONNV ICONEDGE	0xc031	iCON EDGE
+product OPTIONNV MODHSXPA	0xd013	Module HSxPA
+product OPTIONNV ICON321	0xd031	iCON 321
+product OPTIONNV ICON322	0xd033	iCON 322
+product OPTIONNV ICON505	0xd055	iCON 505
 
 /* OQO */
 product OQO WIFI01		0x0002	model 01 WiFi interface
@@ -1948,6 +1974,7 @@ product QUALCOMM MSM_HSDPA	0x6613	HSDPA MSM
 product QUALCOMM2 RWT_FCT       0x3100  RWT FCT-CDMA 2000 1xRTT modem
 product QUALCOMM2 CDMA_MSM	0x3196	CDMA Technologies MSM modem
 product QUALCOMMINC CDMA_MSM	0x0001	CDMA Technologies MSM modem
+product QUALCOMMINC ZTE_MF626	0x0031	CDMA Technologies MSM modem
 product QUALCOMMINC ZTE_STOR	0x2000  USB ZTE Storage
 product QUALCOMMINC AC8700	0xfffe	CDMA 1xEVDO USB modem
 
@@ -2263,6 +2290,9 @@ product SUN KEYBOARD_TYPE_6	0x0005	Type 6 USB keyboard
 product SUN KEYBOARD_TYPE_7	0x00a2	Type 7 USB keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product SUN MOUSE		0x0100	Type 6 USB mouse
+
+/* SUNRISING products */
+product SUNRISING SR9600	0x8101	SR9600 Ethernet
 
 /* SuperTop products */
 product SUPERTOP IDEBRIDGE      0x6600  SuperTop IDE Bridge

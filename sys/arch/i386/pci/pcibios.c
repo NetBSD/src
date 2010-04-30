@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.36 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.36.20.1 2010/04/30 14:39:30 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.36 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.36.20.1 2010/04/30 14:39:30 uebayasi Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -180,7 +180,7 @@ pcibios_init(void)
 	 * The PCI BIOS tells us the config mechanism; fill it in now
 	 * so that pci_mode_detect() doesn't have to look for it.
 	 */
-	pci_mode = mech1 ? 1 : 2;
+	pci_mode_set(mech1 ? 1 : 2);
 
 	pcibios_present = 1;
 
@@ -197,7 +197,7 @@ pcibios_init(void)
 		/*
 		 * Fixup interrupt routing.
 		 */
-		rv = pci_intr_fixup(NULL, X86_BUS_SPACE_IO, &pciirq);
+		rv = pci_intr_fixup(NULL, x86_bus_space_io, &pciirq);
 		switch (rv) {
 		case -1:
 			/* Non-fatal error. */

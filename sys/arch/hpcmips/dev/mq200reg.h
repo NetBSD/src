@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200reg.h,v 1.10 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: mq200reg.h,v 1.10.98.1 2010/04/30 14:39:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 TAKEMURA Shin
@@ -286,7 +286,7 @@
 #	define MQ200_GCAWSA_MASK	0x000fffff
 	/* bits 24-21 are reserved */
 #	define MQ200_GCAWPI_MASK	0xfe000000
-#	define MQ200_GCAWPI_SHIFT	24	/* XXX, 24 could be usefull
+#	define MQ200_GCAWPI_SHIFT	24	/* XXX, 24 could be useful
 						   than 23 */
 
 /* GC Window Stride (GC0ER and GC2ER)	*/

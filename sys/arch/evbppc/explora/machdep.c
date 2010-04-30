@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2009/11/27 03:23:08 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29.2.1 2010/04/30 14:39:18 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2009/11/27 03:23:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.2.1 2010/04/30 14:39:18 uebayasi Exp $");
 
 #include "opt_explora.h"
 #include "opt_modular.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2009/11/27 03:23:08 rmind Exp $");
 #include <machine/trap.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
@@ -76,7 +77,6 @@ static const unsigned int cpuspeed = 66000000;
 
 prop_dictionary_t board_properties;
 struct vm_map *phys_map = NULL;
-struct vm_map *mb_map = NULL;
 char msgbuf[MSGBUFSIZE];
 paddr_t msgbuf_paddr;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.3 2009/12/05 13:56:43 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.3.2.1 2010/04/30 14:39:09 uebayasi Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 /*-
- * Copyright (c) 2007-2009 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (c) 2007-2010 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.3 2009/12/05 13:56:43 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.3.2.1 2010/04/30 14:39:09 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,18 +79,18 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.3 2009/12/05 13:56:43 nonaka Exp $"
 #include <arm/xscale/pxa2x0_mci.h>
 
 #ifdef PXAMCI_DEBUG
-int pxamci_debug = 1;
+int pxamci_debug = 9;
 #define DPRINTF(n,s)	do { if ((n) <= pxamci_debug) printf s; } while (0)
 #else
 #define DPRINTF(n,s)	do {} while (0)
 #endif
 
-#ifndef DEBUG
-#define	STOPCLK_TIMO	2	/* ms */
-#define	EXECCMD_TIMO	2	/* ms */
+#ifndef PXAMCI_DEBUG
+#define	STOPCLK_TIMO	2	/* sec */
+#define	EXECCMD_TIMO	2	/* sec */
 #else
-#define	STOPCLK_TIMO	2	/* ms */
-#define	EXECCMD_TIMO	5	/* ms */
+#define	STOPCLK_TIMO	2	/* sec */
+#define	EXECCMD_TIMO	5	/* sec */
 #endif
 
 static int	pxamci_host_reset(sdmmc_chipset_handle_t);
@@ -154,6 +154,14 @@ static void	pxamci_stop_clock(struct pxamci_softc *);
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | (val))
 #define CSR_CLR_4(sc, reg, val) \
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) & ~(val))
+
+#if 0	/* XXX */
+#define	DMA_ALIGNED(addr) \
+	(((u_long)(addr) & 0x7) == 0 || !CPU_IS_PXA250)
+#else
+#define	DMA_ALIGNED(addr) \
+	(((u_long)(addr) & 0x1f) == 0)
+#endif
 
 static void
 pxamci_enable_intr(struct pxamci_softc *sc, uint32_t mask)
@@ -238,9 +246,6 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 	sc->sc_buswidth = 1;
 
 	/* setting DMA */
-#if 1	/* XXX */
-	SET(sc->sc_caps, PMC_CAPS_NO_DMA);	/* disable DMA */
-#endif
 	if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)) {
 		aprint_normal_dev(sc->sc_dev, "using DMA transfer\n");
 
@@ -301,10 +306,8 @@ pxamci_attach_sub(device_t self, struct pxaip_attach_args *pxa)
 	saa.saa_caps = 0;
 	if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA))
 		SET(saa.saa_caps, SMC_CAPS_DMA);
-#if notyet
 	if (CPU_IS_PXA270 && ISSET(sc->sc_caps, PMC_CAPS_4BIT))
 		SET(saa.saa_caps, SMC_CAPS_4BIT_MODE);
-#endif
 
 	sc->sc_sdmmc = config_found(sc->sc_dev, &saa, NULL);
 	if (sc->sc_sdmmc == NULL) {
@@ -554,9 +557,9 @@ pxamci_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	int timo;
 	int s;
 
-	DPRINTF(1,("%s: start cmd %d arg=%#x data=%p dlen=%d flags=%#x\n"
-	    "proc=%p \"%s\"\n", device_xname(sc->sc_dev), cmd->c_opcode,
-	    cmd->c_arg, cmd->c_data, cmd->c_datalen, cmd->c_flags));
+	DPRINTF(1,("%s: start cmd %d arg=%#x data=%p dlen=%d flags=%#x\n",
+	    device_xname(sc->sc_dev), cmd->c_opcode, cmd->c_arg, cmd->c_data,
+	    cmd->c_datalen, cmd->c_flags));
 
 	s = splsdmmc();
 
@@ -612,8 +615,11 @@ pxamci_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		cmdat |= CMDAT_DATA_EN;
 
 		/* setting DMA */
-		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)) {
+		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)
+		 && DMA_ALIGNED(cmd->c_data)) {
 			struct dmac_xfer_desc *dx_desc;
+
+			DPRINTF(1,("%s: using DMA\n",device_xname(sc->sc_dev)));
 
 			cmdat |= CMDAT_MMC_DMA_EN;
 
@@ -641,6 +647,8 @@ pxamci_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 				goto err;
 			}
 		} else {
+			DPRINTF(1,("%s: using PIO\n",device_xname(sc->sc_dev)));
+
 			cmd->c_resid = cmd->c_datalen;
 			cmd->c_buf = cmd->c_data;
 
@@ -739,7 +747,7 @@ pxamci_intr(void *arg)
 	ostatus =
 #endif
 	status = CSR_READ_4(sc, MMC_I_REG) & ~CSR_READ_4(sc, MMC_I_MASK);
-	DPRINTF(9,("%s: intr status = %08x\n", device_xname(sc->sc_dev),
+	DPRINTF(10,("%s: intr status = %08x\n", device_xname(sc->sc_dev),
 	    status));
 
 	/*
@@ -762,7 +770,8 @@ pxamci_intr(void *arg)
 		pxamci_disable_intr(sc, MMC_I_RES_ERR);
 		CLR(status, MMC_I_RES_ERR|MMC_I_END_CMD_RES);
 		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)
-		 && (sc->sc_cmd->c_datalen > 0)) {
+		 && (sc->sc_cmd->c_datalen > 0)
+		 && DMA_ALIGNED(sc->sc_cmd->c_data)) {
 			if (ISSET(sc->sc_cmd->c_flags, SCF_CMD_READ)) {
 				pxa2x0_dmac_abort_xfer(sc->sc_rxdx);
 			} else {
@@ -796,7 +805,8 @@ pxamci_intr(void *arg)
 		pxamci_intr_done(sc);
 		pxamci_disable_intr(sc, MMC_I_DAT_ERR);
 		CLR(status, MMC_I_DAT_ERR);
-		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)) {
+		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)
+		 && DMA_ALIGNED(sc->sc_cmd->c_data)) {
 			if (ISSET(sc->sc_cmd->c_flags, SCF_CMD_READ)) {
 				pxa2x0_dmac_abort_xfer(sc->sc_rxdx);
 			} else {
@@ -820,7 +830,7 @@ pxamci_intr(void *arg)
 	}
 
 	if (ISSET(status, MMC_I_TXFIFO_WR_REQ|MMC_I_RXFIFO_RD_REQ)) {
-		DPRINTF(9,("%s: handling MMC_I_xxFIFO_xx_REQ\n",
+		DPRINTF(10,("%s: handling MMC_I_xxFIFO_xx_REQ\n",
 		    device_xname(sc->sc_dev)));
 		pxamci_intr_data(sc);
 		CLR(status, MMC_I_TXFIFO_WR_REQ|MMC_I_RXFIFO_RD_REQ);
@@ -920,18 +930,20 @@ pxamci_intr_cmd(struct pxamci_softc *sc)
 		cmd->c_error = EIO;
 
 	if (cmd->c_error == 0 && cmd->c_datalen > 0) {
-		/* workaround for erratum #91 */
 		if (!ISSET(sc->sc_caps, PMC_CAPS_NO_DMA)
-		 && CPU_IS_PXA270
-		 && !ISSET(cmd->c_flags, SCF_CMD_READ)) {
-			error = pxa2x0_dmac_start_xfer(sc->sc_txdx);
-			if (error) {
-				aprint_error_dev(sc->sc_dev,
-				    "couldn't start dma xfer. (error=%d)\n",
-				    error);
-				cmd->c_error = EIO;
-				pxamci_intr_done(sc);
-				return;
+		 && DMA_ALIGNED(cmd->c_data)) {
+			/* workaround for erratum #91 */
+			if (CPU_IS_PXA270
+			 && !ISSET(cmd->c_flags, SCF_CMD_READ)) {
+				error = pxa2x0_dmac_start_xfer(sc->sc_txdx);
+				if (error) {
+					aprint_error_dev(sc->sc_dev,
+					    "couldn't start dma xfer."
+					    " (error=%d)\n", error);
+					cmd->c_error = EIO;
+					pxamci_intr_done(sc);
+					return;
+				}
 			}
 			pxamci_enable_intr(sc,
 			    MMC_I_DATA_TRAN_DONE|MMC_I_DAT_ERR);
@@ -948,7 +960,7 @@ pxamci_intr_data(struct pxamci_softc *sc)
 	int intr;
 	int n;
 
-	DPRINTF(1,("%s: pxamci_intr_data: cmd = %p, resid = %d\n",
+	DPRINTF(10,("%s: pxamci_intr_data: cmd = %p, resid = %d\n",
 	    device_xname(sc->sc_dev), cmd, cmd->c_resid));
 
 	n = MIN(32, cmd->c_resid);
@@ -998,6 +1010,9 @@ pxamci_dmac_iintr(struct dmac_xfer *dx, int status)
 {
 	struct pxamci_softc *sc = dx->dx_cookie;
 
+	DPRINTF(1,("%s: pxamci_dmac_iintr: status = %#x\n",
+	    device_xname(sc->sc_dev), status));
+
 	if (status) {
 		aprint_error_dev(sc->sc_dev, "pxamci_dmac_iintr: "
 		    "non-zero completion status %d\n", status);
@@ -1009,7 +1024,14 @@ pxamci_dmac_ointr(struct dmac_xfer *dx, int status)
 {
 	struct pxamci_softc *sc = dx->dx_cookie;
 
-	if (status) {
+	DPRINTF(1,("%s: pxamci_dmac_ointr: status = %#x\n",
+	    device_xname(sc->sc_dev), status));
+
+	if (status == 0) {
+		if (sc->sc_cmd != NULL && (sc->sc_cmd->c_datalen & 31) != 0) {
+			CSR_WRITE_4(sc, MMC_PRTBUF, 1);
+		}
+	} else {
 		aprint_error_dev(sc->sc_dev, "pxamci_dmac_ointr: "
 		    "non-zero completion status %d\n", status);
 	}

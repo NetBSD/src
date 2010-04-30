@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21 2009/05/09 11:39:30 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.21.2.1 2010/04/30 14:39:23 uebayasi Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21 2009/05/09 11:39:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21.2.1 2010/04/30 14:39:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,8 +236,10 @@ memattach(device_t parent, device_t self, void *aux)
 			((struct vi_ctrl *)&vic)->eisa_den = 1;
 			((struct vi_ctrl *)&vic)->core_prf = 1;
 
-			if (settimeout && ((struct vi_ctrl *)&vic)->vsc_tout == 0)
-				((struct vi_ctrl *)&vic)->vsc_tout = 850;	/* clks */
+			if (settimeout &&
+			    ((struct vi_ctrl *)&vic)->vsc_tout == 0)
+				/* clks */
+				((struct vi_ctrl *)&vic)->vsc_tout = 850;
 
 			sc->sc_vp->vi_control = vic;
 
@@ -366,13 +368,13 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case DEV_NULL:				/*  /dev/null  */
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
-			return (0);
+			return 0;
 
 		case DEV_ZERO:			/*  /dev/zero  */
 			/* Write to /dev/zero is ignored. */
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
-				return (0);
+				return 0;
 			}
 			/*
 			 * On the first call, allocate and zero a page
@@ -388,18 +390,18 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			break;
 
 		default:
-			return (ENXIO);
+			return ENXIO;
 		}
 	}
-	return (error);
+	return error;
 }
 
 paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
 
-	if (minor(dev) != 0)
-		return (-1);
+	if (minor(dev) != DEV_MEM)
+		return -1;
 
 	/*
 	 * Allow access only in RAM.
@@ -407,7 +409,7 @@ mmmmap(dev_t dev, off_t off, int prot)
 #if 0
 	if (off < ptoa(firstusablepage) ||
 	    off >= ptoa(lastusablepage + 1))
-		return (-1);
+		return -1;
 #endif
-	return (btop(off));
+	return btop(off);
 }

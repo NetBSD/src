@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.58 2009/12/02 13:49:32 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.58.2.1 2010/04/30 14:39:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*	$OpenBSD: mainbus.c,v 1.13 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.74 2009/04/20 00:42:06 oga Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.58 2009/12/02 13:49:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.58.2.1 2010/04/30 14:39:23 uebayasi Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -113,7 +113,6 @@ static int mb_attached;
 
 /* from machdep.c */
 extern struct extent *hp700_io_extent;
-extern struct extent *dma24_ex;
 
 u_int8_t mbus_r1(void *, bus_space_handle_t, bus_size_t);
 u_int16_t mbus_r2(void *, bus_space_handle_t, bus_size_t);
@@ -153,7 +152,6 @@ void mbus_cp_4(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_s
 void mbus_cp_8(void *, bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t);
 
 int mbus_add_mapping(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
-int mbus_remove_mapping(bus_space_handle_t, bus_size_t, bus_addr_t *);
 int mbus_map(void *, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 void mbus_unmap(void *, bus_space_handle_t, bus_size_t);
 int mbus_alloc(void *, bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *, bus_space_handle_t *);
@@ -180,133 +178,55 @@ int _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
     bus_size_t buflen, struct vmspace *vm, int flags, paddr_t *lastaddrp,
     int *segp, int first);
 
+extern struct pdc_btlb pdc_btlb;
+static uint32_t bmm[HPPA_FLEX_COUNT/32];
+
 int
 mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	u_int frames;
-#ifdef USE_BTLB
-	vsize_t btlb_size;
-	int error;
-#endif /* USE_BTLB */
+	vaddr_t pa, spa, epa;
+	int flex;
 
 	DPRINTF(("\n%s(%lx,%lx,%scachable,%p)\n", __func__,
 	    bpa, size, flags? "" : "non", bshp));
 
-	/*
-	 * We must be called with a page-aligned address in
-	 * I/O space, and with a multiple of the page size.
-	 */
-	KASSERT((bpa & PGOFSET) == 0);
 	KASSERT(bpa >= HPPA_IOSPACE);
-	KASSERT((size & PGOFSET) == 0);
+	KASSERT(!(flags & BUS_SPACE_MAP_CACHEABLE));
 
 	/*
-	 * Assume that this will succeed.
+	 * Mappings are established in HPPA_FLEX_SIZE units,
+	 * either with BTLB, or regular mappings of the whole area.
 	 */
+	for (pa = bpa ; size != 0; pa = epa) {
+		flex = HPPA_FLEX(pa);
+		spa = pa & HPPA_FLEX_MASK;
+		epa = spa + HPPA_FLEX_SIZE; /* may wrap to 0... */
+
+		size -= min(size, HPPA_FLEX_SIZE - (pa - spa));
+
+		/* do need a new mapping? */
+		if (bmm[flex / 32] & (1 << (flex % 32))) {
+			DPRINTF(("%s: already mapped flex=%x, mask=%x\n",
+			    __func__, flex, bmm[flex / 32]));
+			continue;
+		}
+
+		DPRINTF(("%s: adding flex=%x %lx-%lx, ", __func__, flex, spa,
+		    epa - 1));
+
+		bmm[flex / 32] |= (1 << (flex % 32));
+
+		while (spa != epa) {
+			DPRINTF(("%s: kenter 0x%lx-0x%lx", __func__, spa,
+			    epa));
+			for (; spa != epa; spa += PAGE_SIZE)
+				pmap_kenter_pa(spa, spa,
+				    VM_PROT_READ | VM_PROT_WRITE, 0);
+		}
+	}
+
 	*bshp = bpa;
-
-	/*
-	 * Loop while there is space left to map.
-	 */
-	frames = size >> PGSHIFT;
-	while (frames > 0) {
-
-		/*
-		 * If this mapping is more than eight pages long,
-		 * try to add a BTLB entry.
-		 */
-#ifdef USE_BTLB
-		if (frames > 8 &&
-		    frames >= hppa_btlb_size_min) {
-			btlb_size = frames;
-			if (btlb_size > hppa_btlb_size_max)
-				btlb_size = hppa_btlb_size_max;
-			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_insert(pmap_kernel()->pmap_space,
-			    bpa, bpa, &btlb_size,
-			    pmap_kernel()->pmap_pid |
-			    pmap_prot(pmap_kernel(), VM_PROT_READ | VM_PROT_WRITE));
-			if (error == 0) {
-				bpa += btlb_size;
-				frames -= (btlb_size >> PGSHIFT);
-				continue;
-			}
-			else if (error != ENOMEM)
-				return error;
-		}
-#endif /* USE_BTLB */
-
-		/*
-		 * Enter another single-page mapping.
-		 */
-		pmap_kenter_pa(bpa, bpa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		bpa += PAGE_SIZE;
-		frames--;
-	}
-
-	/* Success. */
-	return 0;
-}
-
-/*
- * This removes a mapping added by mbus_add_mapping.
- */
-int
-mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
-{
-	bus_addr_t bpa;
-	u_int frames;
-#ifdef USE_BTLB
-	vsize_t btlb_size;
-	int error;
-#endif /* USE_BTLB */
-
-	/*
-	 * We must be called with a page-aligned address in
-	 * I/O space, and with a multiple of the page size.
-	 */
-	bpa = *bpap = bsh;
-	KASSERT((bpa & PGOFSET) == 0);
-	KASSERT(bpa >= HPPA_IOSPACE);
-	KASSERT((size & PGOFSET) == 0);
-
-	/*
-	 * Loop while there is space left to unmap.
-	 */
-	frames = size >> PGSHIFT;
-	while (frames > 0) {
-
-		/*
-		 * If this mapping is more than eight pages long,
-		 * try to remove a BTLB entry.
-		 */
-#ifdef USE_BTLB
-		if (frames > 8 &&
-		    frames >= hppa_btlb_size_min) {
-			btlb_size = frames;
-			if (btlb_size > hppa_btlb_size_max)
-				btlb_size = hppa_btlb_size_max;
-			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_purge(pmap_kernel()->pmap_space,
-						bpa, &btlb_size);
-			if (error == 0) {
-				bpa += btlb_size;
-				frames -= (btlb_size >> PGSHIFT);
-				continue;
-			}
-			else if (error != ENOENT)
-				return error;
-		}
-#endif /* USE_BTLB */
-
-		/*
-		 * Remove another single-page mapping.
-		 */
-		pmap_kremove(bpa, PAGE_SIZE);
-		bpa += PAGE_SIZE;
-		frames--;
-	}
 
 	/* Success. */
 	return 0;
@@ -317,20 +237,11 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 	int error;
-	bus_size_t offset;
 
 	/*
 	 * We must only be called with addresses in I/O space.
 	 */
 	KASSERT(bpa >= HPPA_IOSPACE);
-
-	/*
-	 * Page-align the I/O address and size.
-	 */
-	offset = (bpa & PGOFSET);
-	bpa -= offset;
-	size += offset;
-	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.
@@ -343,7 +254,6 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 	 * Map the region of I/O space.
 	 */
 	error = mbus_add_mapping(bpa, size, flags, bshp);
-	*bshp |= offset;
 	if (error) {
 		DPRINTF(("bus_space_map: pa 0x%lx, size 0x%lx failed\n",
 		    bpa, size));
@@ -358,24 +268,8 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 void
 mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
-	bus_size_t offset;
-	bus_addr_t bpa;
+	bus_addr_t bpa = bsh;
 	int error;
-
-	/*
-	 * Page-align the bus_space handle and size.
-	 */
-	offset = bsh & PGOFSET;
-	bsh -= offset;
-	size += offset;
-	size = round_page(size);
-
-	/*
-	 * Unmap the region of I/O space.
-	 */
-	error = mbus_remove_mapping(bsh, size, &bpa);
-	if (error)
-		panic("mbus_unmap: can't unmap region (%d)", error);
 
 	/*
 	 * Free the region of I/O space.
@@ -399,13 +293,6 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	if (rstart < hp700_io_extent->ex_start ||
 	    rend > hp700_io_extent->ex_end)
 		panic("bus_space_alloc: bad region start/end");
-
-	/*
-	 * Force the allocated region to be page-aligned.
-	 */
-	if (align < PAGE_SIZE)
-		align = PAGE_SIZE;
-	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.
@@ -843,8 +730,8 @@ const struct hppa_bus_space_tag hppa_bustag = {
 };
 
 /*
- * Common function for DMA map creation.  May be called by bus-specific
- * DMA map creation functions.
+ * Common function for DMA map creation.  May be called by bus-specific DMA map
+ * creation functions.
  */
 int
 mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
@@ -854,16 +741,16 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
 	size_t mapsize;
 
 	/*
-	 * Allocate and initialize the DMA map.  The end of the map
-	 * is a variable-sized array of segments, so we allocate enough
-	 * room for them in one shot.
+	 * Allocate and initialize the DMA map.  The end of the map is a
+	 * variable-sized array of segments, so we allocate enough room for
+	 * them in one shot.
 	 *
-	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
-	 * of ALLOCNOW notifies others that we've reserved these resources,
-	 * and they are not to be freed.
+	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation of
+	 * ALLOCNOW notifies others that we've reserved these resources, and
+	 * they are not to be freed.
 	 *
-	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
-	 * the (nsegments - 1).
+	 * The bus_dmamap_t includes one bus_dma_segment_t, hence the
+	 * (nsegments - 1).
 	 */
 	mapsize = sizeof(struct hppa_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
@@ -886,8 +773,8 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments, bus_size_t maxsegsz,
 }
 
 /*
- * Common function for DMA map destruction.  May be called by bus-specific
- * DMA map destruction functions.
+ * Common function for DMA map destruction.  May be called by bus-specific DMA
+ * map destruction functions.
  */
 void
 mbus_dmamap_destroy(void *v, bus_dmamap_t map)
@@ -939,7 +826,7 @@ mbus_dmamap_load(void *v, bus_dmamap_t map, void *buf, bus_size_t buflen,
 }
 
 /*
- * Like _bus_dmamap_load(), but for mbufs.
+ * Like bus_dmamap_load(), but for mbufs.
  */
 int
 mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
@@ -955,10 +842,7 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 
-#ifdef DIAGNOSTIC
-	if ((m0->m_flags & M_PKTHDR) == 0)
-		panic("_bus_dmamap_load_mbuf: no packet header");
-#endif	/* DIAGNOSTIC */
+	KASSERT(m0->m_flags & M_PKTHDR);
 
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
@@ -981,7 +865,7 @@ mbus_dmamap_load_mbuf(void *v, bus_dmamap_t map, struct mbuf *m0,
 }
 
 /*
- * Like _bus_dmamap_load(), but for uios.
+ * Like bus_dmamap_load(), but for uios.
  */
 int
 mbus_dmamap_load_uio(void *v, bus_dmamap_t map, struct uio *uio,
@@ -1085,10 +969,9 @@ void
 mbus_dmamap_unload(void *v, bus_dmamap_t map)
 {
 	/*
-	 * If this map was loaded with mbus_dmamap_load,
-	 * we don't need to do anything.  If this map was
-	 * loaded with mbus_dmamap_load_raw, we also don't
-	 * need to do anything.
+	 * If this map was loaded with mbus_dmamap_load, we don't need to do
+	 * anything.  If this map was loaded with mbus_dmamap_load_raw, we also
+	 * don't need to do anything.
 	 */
 
 	/* Mark the mappings as invalid. */
@@ -1101,6 +984,7 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
     int ops)
 {
 	int i;
+
 	/*
 	 * Mixing of PRE and POST operations is not allowed.
 	 */
@@ -1112,20 +996,24 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 	if (offset >= map->dm_mapsize)
 		panic("mbus_dmamap_sync: bad offset %lu (map size is %lu)",
 		    offset, map->dm_mapsize);
-	if (len == 0 || (offset + len) > map->dm_mapsize)
+	if ((offset + len) > map->dm_mapsize)
 		panic("mbus_dmamap_sync: bad length");
 #endif
+	
+	/* If the whole DMA map is marked as BUS_DMA_COHERENT, do nothing. */
+	if ((map->_dm_flags & BUS_DMA_COHERENT) != 0)
+		return;
 
 	/*
-	 * For a virtually-indexed write-back cache, we need
-	 * to do the following things:
+	 * For a virtually-indexed write-back cache, we need to do the
+	 * following things:
 	 *
-	 *	PREREAD -- Invalidate the D-cache.  We do this
-	 *	here in case a write-back is required by the back-end.
+	 *	PREREAD -- Invalidate the D-cache.  We do this here in case a
+	 *	write-back is required by the back-end.
 	 *
-	 *	PREWRITE -- Write-back the D-cache.  Note that if
-	 *	we are doing a PREREAD|PREWRITE, we can collapse
-	 *	the whole thing into a single Wb-Inv.
+	 *	PREWRITE -- Write-back the D-cache.  Note that if we are doing
+	 *	a PREREAD|PREWRITE, we can collapse the whole thing into a
+	 *	single Wb-Inv.
 	 *
 	 *	POSTREAD -- Nothing.
 	 *
@@ -1133,7 +1021,7 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 	 */
 
 	ops &= (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	if (ops == 0)
+	if (len == 0 || ops == 0)
 		return;
 
 	for (i = 0; len != 0 && i < map->dm_nsegs; i++) {
@@ -1158,8 +1046,8 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 }
 
 /*
- * Common function for DMA-safe memory allocation.  May be called
- * by bus-specific DMA memory allocation functions.
+ * Common function for DMA-safe memory allocation.  May be called by bus-
+ * specific DMA memory allocation functions.
  */
 int
 mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
@@ -1188,33 +1076,8 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	 * Allocate physical pages from the VM system.
 	 */
 	TAILQ_INIT(mlist);
-	error = uvm_pglistalloc(size, low, high, 0, 0,
-				mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
-
-	/*
-	 * If the allocation failed, and this is a 24-bit
-	 * device, see if we have space left in the 24-bit
-	 * region.
-	 */
-	if (error == ENOMEM && (flags & BUS_DMA_24BIT) && dma24_ex != NULL) {
-		error = extent_alloc(dma24_ex, size, alignment, 0, 0, &pa);
-		if (!error) {
-			free(mlist, M_DEVBUF);
-			/*
-			 * A _ds_mlist value of NULL is the
-			 * signal to mbus_dmamem_map that no
-			 * real mapping needs to be done, and
-			 * it is the signal to mbus_dmamem_free
-			 * that an extent_free is needed.
-			 */
-			*rsegs = 1;
-			segs[0].ds_addr = 0;
-			segs[0].ds_len = size;
-			segs[0]._ds_va = (vaddr_t)pa;
-			segs[0]._ds_mlist = NULL;
-			return (0);
-		}
-	}
+	error = uvm_pglistalloc(size, low, high, 0, 0, mlist, nsegs,
+	    (flags & BUS_DMA_NOWAIT) == 0);
 
 	/* If we don't have the pages. */
 	if (error) {
@@ -1222,15 +1085,10 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 		return (error);
 	}
 
-	/*
-	 * Since, at least as of revision 1.17 of uvm_pglist.c,
-	 * uvm_pglistalloc ignores its nsegs argument, we need
-	 * to check that the pages returned conform to the
-	 * caller's segment requirements.
-	 */
 	pa_next = 0;
 	seg = -1;
-	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq.queue)) {
+
+	TAILQ_FOREACH(m, mlist, pageq.queue) {
 		pa = VM_PAGE_TO_PHYS(m);
 		if (pa != pa_next) {
 			if (++seg >= nsegs) {
@@ -1250,16 +1108,14 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 	 * Simply keep a pointer around to the linked list, so
 	 * bus_dmamap_free() can return it.
 	 *
-	 * NOBODY SHOULD TOUCH THE pageq.queue FIELDS WHILE THESE PAGES
-	 * ARE IN OUR CUSTODY.
+	 * Nobody should touch the pageq.queue fields while these pages are in
+	 * our custody.
 	 */
 	segs[0]._ds_mlist = mlist;
 
 	/*
-	 * We now have physical pages, but no kernel virtual addresses
-	 * yet. These may be allocated in bus_dmamap_map.  Hence we
-	 * save any alignment and boundary requirements in this DMA
-	 * segment.
+	 * We now have physical pages, but no kernel virtual addresses yet.
+	 * These may be allocated in bus_dmamap_map.
 	 */
 	return (0);
 }
@@ -1267,22 +1123,21 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 void
 mbus_dmamem_free(void *v, bus_dma_segment_t *segs, int nsegs)
 {
-
+	struct pglist *mlist;
 	/*
 	 * Return the list of physical pages back to the VM system.
 	 */
-	if (segs[0]._ds_mlist != NULL) {
-		uvm_pglistfree(segs[0]._ds_mlist);
-		free(segs[0]._ds_mlist, M_DEVBUF);
-	} else {
-		extent_free(dma24_ex, segs[0]._ds_va, segs[0].ds_len,
-				EX_NOWAIT);
-	}
+	mlist = segs[0]._ds_mlist;
+	if (mlist == NULL)
+		return;
+	
+	uvm_pglistfree(mlist);
+	free(mlist, M_DEVBUF);
 }
 
 /*
- * Common function for mapping DMA-safe memory.  May be called by
- * bus-specific DMA memory map functions.
+ * Common function for mapping DMA-safe memory.  May be called by bus-specific
+ * DMA memory map functions.
  */
 int
 mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
@@ -1297,17 +1152,9 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 
 	size = round_page(size);
 
-	/* 24-bit memory needs no mapping. */
-	if (segs[0]._ds_mlist == NULL) {
-		if (size > segs[0].ds_len)
-			panic("mbus_dmamem_map: size botch");
-		*kvap = (void *)segs[0]._ds_va;
-		return (0);
-	}
-
 	/* Get a chunk of kernel virtual space. */
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY | kmflags);
-	if (va == 0)
+	if (__predict_false(va == 0))
 		return (ENOMEM);
 
 	/* Stash that in the first segment. */
@@ -1319,7 +1166,9 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 		KASSERT(size != 0);
 		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, PMAP_NOCACHE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_NOCACHE);
+
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
@@ -1328,24 +1177,14 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 }
 
 /*
- * Common function for unmapping DMA-safe memory.  May be called by
- * bus-specific DMA memory unmapping functions.
+ * Common function for unmapping DMA-safe memory.  May be called by bus-
+ * specific DMA memory unmapping functions.
  */
 void
 mbus_dmamem_unmap(void *v, void *kva, size_t size)
 {
 
-#ifdef DIAGNOSTIC
-	if ((u_long)kva & PAGE_MASK)
-		panic("mbus_dmamem_unmap");
-#endif
-
-	/*
-	 * XXX fredette - this is gross, but it is needed
-	 * to support the 24-bit DMA address stuff.
-	 */
-	if (dma24_ex != NULL && kva < (void *) (1 << 24))
-		return;
+	KASSERT(((vaddr_t)kva & PAGE_MASK) == 0);
 
 	size = round_page(size);
 	pmap_kremove((vaddr_t)kva, size);
@@ -1354,8 +1193,8 @@ mbus_dmamem_unmap(void *v, void *kva, size_t size)
 }
 
 /*
- * Common functin for mmap(2)'ing DMA-safe memory.  May be called by
- * bus-specific DMA mmap(2)'ing functions.
+ * Common functin for mmap(2)'ing DMA-safe memory.  May be called by bus-
+ * specific DMA mmap(2)'ing functions.
  */
 paddr_t
 mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs,
@@ -1364,15 +1203,10 @@ mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs,
 	int i;
 
 	for (i = 0; i < nsegs; i++) {
-#ifdef DIAGNOSTIC
-		if (off & PGOFSET)
-			panic("_bus_dmamem_mmap: offset unaligned");
-		if (segs[i].ds_addr & PGOFSET)
-			panic("_bus_dmamem_mmap: segment unaligned");
-		if (segs[i].ds_len & PGOFSET)
-			panic("_bus_dmamem_mmap: segment size not multiple"
-			    " of page size");
-#endif	/* DIAGNOSTIC */
+		KASSERT((off & PGOFSET) == 0);
+		KASSERT((segs[i].ds_addr & PGOFSET) == 0);
+		KASSERT((segs[i].ds_len & PGOFSET) == 0);
+
 		if (off >= segs[i].ds_len) {
 			off -= segs[i].ds_len;
 			continue;
@@ -1399,7 +1233,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	pmap = vm_map_pmap(&vm->vm_map);
 
 	lastaddr = *lastaddrp;
-	bmask  = ~(map->_dm_boundary - 1);
+	bmask = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0; ) {
 		bool ok;
@@ -1426,8 +1260,8 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		}
 
 		/*
-		 * Insert chunk into a segment, coalescing with
-		 * previous segment if possible.
+		 * Insert chunk into a segment, coalescing with previous
+		 * segment if possible.
 		 */
 		if (first) {
 			map->dm_segs[seg].ds_addr = curaddr;
@@ -1524,10 +1358,9 @@ mbattach(device_t parent, device_t self, void *aux)
 		panic("mbattach: PDC_HPA failed");
 
 	/*
-	 * Map all of Fixed Physical, Local Broadcast, and
-	 * Global Broadcast space.  These spaces are adjacent
-	 * and in that order and run to the end of the address
-	 * space.
+	 * Map all of Fixed Physical, Local Broadcast, and Global Broadcast
+	 * space.  These spaces are adjacent and in that order and run to the
+	 * end of the address space.
 	 */
 	/*
 	 * XXX fredette - this may be a copout, or it may
@@ -1647,11 +1480,11 @@ mbprint(void *aux, const char *pnp)
 		    pnp, ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
 		aprint_normal(" hpa 0x%lx path ", ca->ca_hpa);
-		for (n = 0 ; n < 6 ; n++) {
-			if ( ca->ca_dp.dp_bc[n] >= 0)
-				printf( "%d/", ca->ca_dp.dp_bc[n]);
+		for (n = 0; n < 6; n++) {
+			if (ca->ca_dp.dp_bc[n] >= 0)
+				aprint_normal("%d/", ca->ca_dp.dp_bc[n]);
 		}
-		aprint_normal( "%d", ca->ca_dp.dp_mod);
+		aprint_normal("%d", ca->ca_dp.dp_mod);
 		if (!pnp && ca->ca_irq >= 0) {
 			aprint_normal(" irq %d", ca->ca_irq);
 			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.175 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.175.2.1 2010/04/30 14:44:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.175 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.175.2.1 2010/04/30 14:44:09 uebayasi Exp $");
 
 #include "opt_ktrace.h"
 
@@ -91,8 +91,18 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.175 2010/01/08 11:35:10 pooka Exp $"
 #include <sys/atomic.h>
 #include <sys/syscallargs.h>
 #include <sys/uidinfo.h>
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
+
+/*
+ * DTrace SDT provider definitions
+ */
+SDT_PROBE_DEFINE(proc,,,create, 
+	    "struct proc *", NULL,	/* new process */
+	    "struct proc *", NULL,	/* parent process */
+	    "int", NULL,		/* flags */
+	    NULL, NULL, NULL, NULL);
 
 u_int	nprocs = 1;		/* process 0 */
 
@@ -415,6 +425,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	doforkhooks(p2, p1);
 
 	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? true : false);
+
+	SDT_PROBE(proc,,,create, p2, p1, flags, 0, 0);
 
 	/*
 	 * Finish creating the child process.

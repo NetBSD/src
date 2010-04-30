@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.22 2009/11/21 03:11:02 rmind Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.22.2.1 2010/04/30 14:39:59 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.22 2009/11/21 03:11:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.22.2.1 2010/04/30 14:39:59 uebayasi Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -641,10 +641,10 @@ x86_get_sdbase(void *arg, char which)
 
 	switch (which) {
 	case 'f':
-		sd = (struct segment_descriptor *)&curpcb->pcb_fsd;
+		sd = &curpcb->pcb_fsd;
 		break;
 	case 'g':
-		sd = (struct segment_descriptor *)&curpcb->pcb_gsd;
+		sd = &curpcb->pcb_gsd;
 		break;
 	default:
 		panic("x86_get_sdbase");

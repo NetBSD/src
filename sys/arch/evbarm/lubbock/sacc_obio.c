@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.10 2009/05/29 14:15:44 rjs Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.10.2.1 2010/04/30 14:39:16 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.10 2009/05/29 14:15:44 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.10.2.1 2010/04/30 14:39:16 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,10 +65,11 @@ __KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.10 2009/05/29 14:15:44 rjs Exp $");
 #include <evbarm/lubbock/lubbock_var.h>
 
 
+static	int    	sacc_obio_probe(device_t parent, cfdata_t match, void *aux);
 static	void	sacc_obio_attach(device_t, device_t, void *);
 static	int  sacc_obio_intr(void *arg);
 
-CFATTACH_DECL_NEW(sacc_obio, sizeof(struct sacc_softc), sacc_probe, 
+CFATTACH_DECL_NEW(sacc_obio, sizeof(struct sacc_softc), sacc_obio_probe, 
     sacc_obio_attach, NULL, NULL);
 
 #if 0
@@ -78,6 +79,22 @@ CFATTACH_DECL_NEW(sacc_obio, sizeof(struct sacc_softc), sacc_probe,
 #endif
 
 uint16_t cs2_memctl_init = 0x7ff0;
+
+static int
+sacc_obio_probe(device_t parent, cfdata_t match, void *aux)
+{
+	struct obio_attach_args *oa = aux;
+	struct sa11x0_attach_args sa;
+
+	printf("%s: addr=%lx\n", __func__, oa->oba_addr);
+
+	sa.sa_sc = oa->oba_sc;
+	sa.sa_iot = oa->oba_iot;
+	sa.sa_addr = oa->oba_addr;
+	sa.sa_size = 0x2000;
+
+	return sacc_probe(parent, match, &sa);
+}
 
 static void
 sacc_obio_attach(device_t parent, device_t self, void *aux)

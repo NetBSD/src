@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.82 2009/12/05 20:11:03 pooka Exp $
+#	$NetBSD: GENERIC.in,v 1.82.2.1 2010/04/30 14:39:10 uebayasi Exp $
 #
 # Generic atari
 #
@@ -233,7 +233,7 @@ options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #if !defined(SMALL030_KERNEL)
 #if !defined(FALCON_KERNEL)
-options 	SERCONSOLE		# modem1 console support, breaks Falcon
+#options 	SERCONSOLE		# modem1 console support, breaks Falcon
 #endif /* !FALCON_KERNEL */
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
 options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
@@ -290,10 +290,11 @@ pseudo-device	ccd		4	# concatenating disk driver
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #endif /* !SMALL030_KERNEL */
@@ -348,12 +349,14 @@ grfcc2		at grfbus0	# 3rd graphics driver
 ite2		at grfcc2	# 3rd tty
 lp0		at mainbus0	# centronics printer
 ser0		at mainbus0	# UART on first 68901 (ttyB0)
+ne0		at mainbus0	# EtherNEC on Atari ROM cartridge slot
 
 #if defined(TT030_KERNEL)
 avmebus0	at mainbus0	# VME bus
 vme0		at avmebus0
 le0		at vme0	irq 5	# Lance ethernet (Riebl/PAM).
 le0		at vme0 irq 4	# Lance ethernet (BVME410).
+we0		at vme0 irq 4	# SMC Elite Ultra with SMC_TT VME-ISA bridge
 et0		at vme0		# Crazy Dots II
 #endif /* TT030_KERNEL */
 #endif /* SMALL030_KERNEL */

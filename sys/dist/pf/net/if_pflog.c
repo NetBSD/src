@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.16 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.16.2.1 2010/04/30 14:43:56 uebayasi Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.24 2007/05/26 17:13:30 jason Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.16 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.16.2.1 2010/04/30 14:43:56 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -82,6 +82,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.16 2010/01/19 22:08:00 pooka Exp $");
 #endif
 
 void	pflogattach(int);
+#ifdef _MODULE
+void	pflogdetach(void);
+#endif /* _MODULE */
 int	pflogoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	    	       struct rtentry *);
 int	pflogioctl(struct ifnet *, u_long, void *);
@@ -105,6 +108,20 @@ pflogattach(int npflog)
 		pflogifs[i] = NULL;
 	if_clone_attach(&pflog_cloner);
 }
+
+#ifdef _MODULE
+void
+pflogdetach(void)
+{
+	int i;
+
+	for (i = 0; i < PFLOGIFS_MAX; i++) {
+		if (pflogifs[i] != NULL)
+			pflog_clone_destroy(pflogifs[i]);
+	}
+	if_clone_detach(&pflog_cloner);
+}
+#endif /* _MODULE */
 
 int
 pflog_clone_create(struct if_clone *ifc, int unit)
@@ -136,7 +153,7 @@ pflog_clone_create(struct if_clone *ifc, int unit)
 	if_alloc_sadl(ifp);
 
 #ifdef __NetBSD__
-	bpf_ops->bpf_attach(ifp, DLT_PFLOG, PFLOG_HDRLEN, &ifp->if_bpf);
+	bpf_attach(ifp, DLT_PFLOG, PFLOG_HDRLEN);
 #else
 	bpfattach(&pflogif->sc_if.if_bpf, ifp, DLT_PFLOG, PFLOG_HDRLEN);
 #endif /* !__NetBSD__ */
@@ -160,7 +177,7 @@ pflog_clone_destroy(struct ifnet *ifp)
 	LIST_REMOVE(pflogif, sc_list);
 	splx(s);
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	if_detach(ifp);
 	free(pflogif, M_DEVBUF);
 	return (0);
@@ -280,7 +297,7 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 	ifn->if_obytes += m->m_pkthdr.len;
 
 #ifdef __NetBSD__
-	bpf_ops->bpf_mtap2(ifn->if_bpf, &hdr, PFLOG_HDRLEN, m);
+	bpf_mtap2(ifn->if_bpf, &hdr, PFLOG_HDRLEN, m);
 #else
 	bpf_mtap_hdr(ifn->if_bpf, (char *)&hdr, PFLOG_HDRLEN, m,
 	    BPF_DIRECTION_OUT);

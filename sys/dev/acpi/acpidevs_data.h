@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.12 2010/01/18 16:50:08 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.12.2.1 2010/04/30 14:43:06 uebayasi Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.14 2010/01/18 16:34:47 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.19 2010/04/18 10:22:01 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -469,6 +469,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "WMI mapper device",
 	},
 	{
+	    "PNP0C15",
+	    "ACPI docking station",
+	},
+	{
 	    "PNP0C80",
 	    "Memory Device",
 	},
@@ -638,6 +642,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "SYN1003",
+	    "Synaptics PS/2-style Touchpad",
+	},
+	{
+	    "SYN013B",
 	    "Synaptics PS/2-style Touchpad",
 	},
 	{
@@ -1137,6 +1145,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Generic network adapter",
 	},
 	{
+	    "ITE8708",
+	    "ITE Tech IrDA Infrared device",
+	},
+	{
 	    "NSC6001",
 	    "NSC IrDA Fast Infrared Port",
 	},
@@ -1289,6 +1301,18 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Compaq 2400/9600 Modem (TBD)",
 	},
 	{
+	    "ATM1200",
+	    "Atmel Trusted Platform Module",
+	},
+	{
+	    "IFX0102",
+	    "Infineon Trusted Platform Module",
+	},
+	{
+	    "NSC1100",
+	    "NSC Trusted Platform Module",
+	},
+	{
 	    "ACPI0001",
 	    "SMBus 1.0 Host Controller",
 	},
@@ -1346,6 +1370,6 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "INT0800",
-	    "Intel FWH Random Number Generator",
+	    "Intel Firmware Hub Device",
 	},
 };

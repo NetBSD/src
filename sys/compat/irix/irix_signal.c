@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.53 2009/12/14 00:47:10 matt Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.53.2.1 2010/04/30 14:42:58 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.53 2009/12/14 00:47:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.53.2.1 2010/04/30 14:42:58 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -397,7 +397,7 @@ irix_set_sigcontext (struct irix_sigcontext *scp, const sigset_t *mask,
 	scp->isc_cause = f->f_regs[_R_CAUSE];
 
 	/*
-	 * Save the floating-pointstate, if necessary, then copy it.
+	 * Save the floating-point state, if necessary, then copy it.
 	 */
 	pcb = lwp_getpcb(l);
 #ifndef SOFTFLOAT
@@ -449,7 +449,7 @@ irix_set_ucontext(struct irix_ucontext *ucp, const sigset_t *mask,
 	ucp->iuc_mcontext.svr4___gregs[IRIX_CTX_CAUSE] = f->f_regs[_R_CAUSE];
 
 	/*
-	 * Save the floating-pointstate, if necessary, then copy it.
+	 * Save the floating-point state, if necessary, then copy it.
 	 */
 	pcb = lwp_getpcb(l);
 #ifndef SOFTFLOAT

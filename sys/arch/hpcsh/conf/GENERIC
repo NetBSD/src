@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87 2009/12/05 20:11:14 pooka Exp $
+# $NetBSD: GENERIC,v 1.87.2.1 2010/04/30 14:39:26 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -341,7 +341,7 @@ bthub*	at btuart?
 # disk/mass storage pseudo-devices
 #pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback

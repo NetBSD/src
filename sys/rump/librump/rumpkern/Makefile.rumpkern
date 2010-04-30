@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.73 2010/01/31 15:12:42 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.73.2.1 2010/04/30 14:44:29 uebayasi Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -15,9 +15,9 @@ LIB=		rump
 #
 # Source modules, first the ones specifically implemented for librump.
 # 
-SRCS=	rump.c rumpcopy.c emul.c intr.c locks.c ltsleep.c	\
-	memalloc.c scheduler.c sleepq.c	sysproxy_socket.c	\
-	threads.c vm.c
+SRCS=	rump.c rumpcopy.c emul.c intr.c kobj_rename.c locks.c	\
+	ltsleep.c memalloc.c scheduler.c signals.c sleepq.c	\
+	sysproxy_socket.c threads.c vm.c
 
 vers.c: ${RUMPTOP}/../conf/newvers.sh ${RUMPTOP}/../conf/osrelease.sh
 	${_MKMSG_CREATE} vers.c
@@ -39,15 +39,17 @@ SRCS+=	rump_syscalls.c rumpkern_if_wrappers.c
 # sys/kern
 SRCS+=	init_sysctl_base.c kern_auth.c kern_descrip.c kern_event.c	\
 	kern_hook.c kern_ksyms.c kern_malloc_stdtype.c kern_module.c	\
-	kern_mutex_obj.c kern_rate.c kern_stub.c kern_sysctl.c		\
-	kern_timeout.c kern_uidinfo.c param.c				\
-	sys_descrip.c sys_generic.c sys_pipe.c sys_select.c syscalls.c
+	kern_mutex_obj.c kern_ntptime.c kern_rate.c kern_resource.c	\
+	kern_stub.c kern_syscall.c kern_sysctl.c kern_tc.c		\
+	kern_timeout.c kern_uidinfo.c param.c sys_descrip.c		\
+	sys_generic.c sys_module.c sys_pipe.c sys_select.c syscalls.c
 
 # sys/kern subr (misc)
 SRCS+=	subr_devsw.c subr_callback.c subr_copy.c subr_device.c		\
 	subr_evcnt.c subr_extent.c subr_hash.c subr_humanize.c		\
-	subr_iostat.c subr_kobj.c subr_log.c subr_once.c subr_prf.c	\
-	subr_specificdata.c subr_time.c subr_workqueue.c subr_xcall.c
+	subr_iostat.c subr_kobj.c subr_log.c subr_lwp_specificdata.c	\
+	subr_once.c subr_prf.c subr_specificdata.c subr_time.c		\
+	subr_workqueue.c subr_xcall.c
 
 # sys/uvm
 SRCS+=	uvm_readahead.c
@@ -77,7 +79,6 @@ SHLIB_MINOR=    0
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpvfs
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpnet -I${RUMPTOP}/librump/rumpdev
-CFLAGS+=	-Wno-pointer-sign
 AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
 
 #

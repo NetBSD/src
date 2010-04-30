@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.233 2010/02/06 21:27:51 pgoyette Exp $
+# $NetBSD: ALL,v 1.233.2.1 2010/04/30 14:39:27 uebayasi Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.233 $"
+#ident 		"ALL-$Revision: 1.233.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -374,7 +374,7 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
-aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
+aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 com* 		at acpi?		# Serial communications interface
@@ -391,6 +391,8 @@ thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
+wmidell*	at acpiwmibus?		# Dell WMI mappings
+wmihp*		at acpiwmibus?		# HP WMI mappings
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -403,6 +405,9 @@ sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
 vald* at acpi?
+
+# Toshiba LCD brightness
+valz* at acpi?
 
 # Plug-and-Play BIOS and attached devices
 
@@ -682,7 +687,12 @@ dbcool* at iic? addr 0x2D		# Tyan S2881
 dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # LM7[89] and compatible hardware monitors
-lm0	at iic?	addr 0x2e
+# Use flags to select temp sensor type (see lm(4) man page for details)
+lm0	at iic?	addr 0x2e flags 0x0
+
+# SMSC LPC47M192 hardware monitor
+smscmon*	at iic? addr 0x2c
+#smscmon*	at iic? addr 0x2d	# (alternate address)
 
 pic16lc*	at iic? addr 0x10	# XBOX PIC16LC
 xbseeprom*	at iic? addr 0x54	# XBOX serial EEPROM
@@ -696,8 +706,13 @@ finsio0 	at isa? port 0x4e
 # iTE IT87xxF Super I/O with watchdog and sensors support
 itesio0 	at isa? port 0x2e
 
+# Winbond LPC Super I/O
+wbsio*	at isa? port 0x2e
+wbsio*	at isa? port 0x4e
+
 # LM7[89] and compatible hardware monitors
-lm0	at isa?	port 0x290		# other common: 0x280, 0x310
+lm0	at isa?	port 0x290 flags 0x0	# other common: 0x280, 0x310
+lm*	at wbsio?
 
 # SMSC LPC47B397 hardware monitor functions
 smsc0	at isa? port 0x02e
@@ -754,6 +769,7 @@ isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
+nca*	at pci? dev ? function ?	# Domex DMX-3191D
 njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
@@ -1169,6 +1185,9 @@ wsmouse* at uep? mux 0
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ? mux 1
 
+# USB TEMPer and TEMPerHUM
+uthum*	at uhidev? reportid ?
+
 # USB serial adapter
 ucycom* at uhidev? reportid ?
 
@@ -1185,6 +1204,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
@@ -1317,10 +1339,13 @@ sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 # SD/MMC/SDIO Controller and Device support
 
-# SD/MMC controller
-sdhc*  at pci?				# SD Host Controller
-sdmmc* at sdhc? 			# SD/MMC bus
+# PCI SD/MMC controller
+sdhc*	at pci?				# SD Host Controller
 
+# CardBus SD/MMC controller
+sdhc*	at cardbus? function ?		# SD Host Controller
+
+sdmmc* at sdhc? 			# SD/MMC bus
 ld*	at sdmmc?
 
 
@@ -1544,7 +1569,7 @@ options 	RF_INCLUDE_CHAINDECLUSTER=1
 options 	RF_INCLUDE_INTERDECLUSTER=1
 options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk
@@ -1562,6 +1587,7 @@ pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+options 	PPPOE_SERVER            # Enable PPPoE server via link0
 pseudo-device	sl			# Serial Line IP
 pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
@@ -1743,13 +1769,16 @@ options AAU_DEBUG
 options AC97_DEBUG
 options AC97_IO_DEBUG
 options ACPI_APM_DEBUG
-options ACPI_BUT_DEBUG
-#options ACPI_DEBUG
-options ACPI_EXTRA_DEBUG
+#
+# ACPI_DEBUG_ALLOC can not be used with ACPI
+# kernel modules. It requires also ACPI_DEBUG.
+# ACPI_DEBUG_MUTEX is only for ACPICA debugging.
+#
+options ACPI_DEBUG
+options ACPI_DEBUG_ALLOC
+options ACPI_MUTEX_DEBUG
 options ACPI_FDC_DEBUG
-options ACPI_LID_DEBUG
 options ACPI_MADT_DEBUG
-#options ACPI_MUTEX_DEBUG
 options ADB_DEBUG
 options ADM1030_DEBUG
 options ADT7467_DEBUG
@@ -2298,7 +2327,6 @@ options UTOPPY_DEBUG
 options UVIDEO_DEBUG
 options UVISOR_DEBUG
 options UVSCOM_DEBUG
-options VALD_ACPI_DEBUG
 options VCONS_DEBUG
 options VERYLOWDEBUG
 options VGAFONTDEBUG

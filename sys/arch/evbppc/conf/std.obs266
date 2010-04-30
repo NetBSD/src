@@ -1,0 +1,11 @@
+#	$NetBSD: std.obs266,v 1.1.2.2 2010/04/30 14:39:17 uebayasi Exp $
+#
+# Standard/required options for obs266.
+
+include		"arch/evbppc/conf/std.obs405"
+
+makeoptions	PRDCTTYPE="obs266"
+makeoptions	TEXTADDR=0x25000
+options 	KERNBASE=0x25000
+
+include		"arch/evbppc/conf/files.obs266"

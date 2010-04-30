@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.41 2010/01/19 22:06:21 pooka Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.41.2.1 2010/04/30 14:39:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.41 2010/01/19 22:06:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.41.2.1 2010/04/30 14:39:34 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.41 2010/01/19 22:06:21 pooka Exp $");
 #include <dev/mii/mii_bitbang.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #include <machine/autoconf.h>
 #include <machine/pio.h>
@@ -499,8 +500,7 @@ bmac_rint(void *v)
 		 * Check if there's a BPF listener on this interface.
 		 * If so, hand off the raw packet to BPF.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
 		ifp->if_ipackets++;
 
@@ -577,8 +577,7 @@ bmac_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		ifp->if_flags |= IFF_OACTIVE;
 		tlen = bmac_put(sc, sc->sc_txbuf, m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.257.2.4 2010/04/28 16:33:47 uebayasi Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.257.2.5 2010/04/30 14:44:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.4 2010/04/28 16:33:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.257.2.5 2010/04/30 14:44:34 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -823,8 +823,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	daddr_t sblockloc, fsblockloc;
 	int blks, fstype;
 	int error, i, bsize, ronly, bset = 0;
-	uint64_t numsecs;
-	unsigned secsize;
 #ifdef FFS_EI
 	int needswap = 0;		/* keep gcc happy */
 #endif
@@ -843,9 +841,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = getdisksize(devvp, &numsecs, &secsize);
-	if (error)
-		return (error);
 
 	bp = NULL;
 	ump = NULL;

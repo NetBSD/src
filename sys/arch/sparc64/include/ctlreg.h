@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.49 2010/02/01 06:26:15 mrg Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.49.2.1 2010/04/30 14:39:51 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -79,12 +79,12 @@
 #define	ASI_AFSR			0x4c	/* [4u] asynchronous fault status register */
 #define	ASI_AFAR			0x4d	/* [4u] asynchronous fault address register */
 
-#define	ASI_ICACHE_DATA			0x66	/* [4u] diagnostic access to D-cache data RAM */
-#define	ASI_ICACHE_TAG			0x67	/* [4u] diagnostic access to D-cache tag RAM */
-#define	ASI_FLUSH_I_PAGE_PRIMARY	0x68	/* [4u] flush D-cache page using primary context */
-#define	ASI_FLUSH_I_PAGE_SECONDARY	0x69	/* [4u] flush D-cache page using secondary context */
-#define	ASI_FLUSH_I_CTX_PRIMARY		0x6a	/* [4u] flush D-cache context using primary context */
-#define	ASI_FLUSH_I_CTX_SECONDARY	0x6b	/* [4u] flush D-cache context using secondary context */
+#define	ASI_ICACHE_DATA			0x66	/* [4u] diagnostic access to I-cache data RAM */
+#define	ASI_ICACHE_TAG			0x67	/* [4u] diagnostic access to I-cache tag RAM */
+#define	ASI_FLUSH_I_PAGE_PRIMARY	0x68	/* [4u] flush I-cache page using primary context */
+#define	ASI_FLUSH_I_PAGE_SECONDARY	0x69	/* [4u] flush I-cache page using secondary context */
+#define	ASI_FLUSH_I_CTX_PRIMARY		0x6a	/* [4u] flush I-cache context using primary context */
+#define	ASI_FLUSH_I_CTX_SECONDARY	0x6b	/* [4u] flush I-cache context using secondary context */
 
 #define	ASI_BLOCK_AS_IF_USER_PRIMARY	0x70	/* [4u] primary user address space, block loads/stores */
 #define	ASI_BLOCK_AS_IF_USER_SECONDARY	0x71	/* [4u] secondary user address space, block loads/stores */
@@ -363,6 +363,22 @@
 #define	DEMAP_CTX_PRIMARY		((0x04)<<4)	/* Demap all of primary CTXT */
 #define	DEMAP_CTX_SECONDARY		((0x05)<<4)	/* Demap all of secondary CTXT */
 #define	DEMAP_ALL			((0x08)<<4)	/* Demap all non-locked TLB entries [USIII] */
+
+/*
+ * These define the sizes of the TLB in various CPUs.
+ * They're mostly not necessary except for diagnostic code.
+ */
+#define TLB_SIZE_SPITFIRE		64
+#define TLB_SIZE_CHEETAH_I16		16
+#define TLB_SIZE_CHEETAH_I128		128
+#define TLB_SIZE_CHEETAH_D16		16
+#define TLB_SIZE_CHEETAH_D512_0		512
+#define TLB_SIZE_CHEETAH_D512_1		512
+#define TLB_CHEETAH_I16			(0 << 16)
+#define TLB_CHEETAH_I128		(2 << 16)
+#define TLB_CHEETAH_D16			(0 << 16)
+#define TLB_CHEETAH_D512_0		(2 << 16)
+#define TLB_CHEETAH_D512_1		(3 << 16)
 
 /*
  * Interrupt registers.  This really gets hairy.

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.37 2009/08/09 22:49:01 haad Exp $ */
+/* $NetBSD: osf1_file.c,v 1.37.2.1 2010/04/30 14:43:01 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.37 2009/08/09 22:49:01 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.37.2.1 2010/04/30 14:43:01 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -162,7 +162,7 @@ osf1_sys_getdirentries(struct lwp *l, const struct osf1_sys_getdirentries_args *
 	}
 
 	buflen = min(MAXBSIZE, SCARG(uap, nbytes));
-	buf = malloc(buflen, M_TEMP, M_WAITOK);
+	buf = kmem_alloc(buflen, KM_SLEEP);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	off = off1 = fp->f_offset;
 again:
@@ -175,7 +175,7 @@ again:
 	auio.uio_offset = off;
 	UIO_SETUP_SYSSPACE(&auio);
 	/*
-	 * First we read into the malloc'ed buffer, then
+	 * First we read into the allocated buffer, then
 	 * we massage it into user space, one record at a time.
 	 */
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, &cookiebuf,
@@ -232,8 +232,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (char *)SCARG(uap, buf))
+	if (outp == (char *)SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;     /* update the vnode offset */
 
 eof:
@@ -242,7 +246,7 @@ out:
 	VOP_UNLOCK(vp, 0);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
-	free(buf, M_TEMP);
+	kmem_free(buf, buflen);
 	if (SCARG(uap, basep) != NULL)
 		error = copyout(&off1, SCARG(uap, basep), sizeof(long));
 out1:

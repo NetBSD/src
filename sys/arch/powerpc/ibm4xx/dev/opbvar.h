@@ -1,4 +1,4 @@
-/* $NetBSD: opbvar.h,v 1.4 2006/02/21 04:25:29 thorpej Exp $ */
+/* $NetBSD: opbvar.h,v 1.4.92.1 2010/04/30 14:39:42 uebayasi Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,6 +37,13 @@
 
 #include <machine/bus.h>
 
+struct opb_softc {
+	device_t sc_dev;
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_zmiih;
+	bus_space_handle_t sc_rgmiih;
+};
+
 struct opb_attach_args {
 	const char *opb_name;
 	int opb_instance;
@@ -44,7 +51,15 @@ struct opb_attach_args {
 	int opb_irq;
 	bus_space_tag_t opb_bt;		/* Bus space tag */
 	bus_dma_tag_t opb_dmat;		/* DMA tag */
+
+	int opb_flags;
+#define	OPB_FLAGS_EMAC_GBE		(1 << 0)  /* emac Giga bit Ethernet */
+#define	OPB_FLAGS_EMAC_STACV2		(1 << 1)  /* emac Other version STAC */
+#define	OPB_FLAGS_EMAC_HT256		(1 << 2)  /* emac 256bit Hash Table */
+#define	OPB_FLAGS_EMAC_RMII_ZMII	(1 << 3)  /* emac RMII uses ZMII */
+#define	OPB_FLAGS_EMAC_RMII_RGMII	(1 << 4)  /* emac RMII uses RGMII */
 };
 
 /* For use before opb_attach() is called */
 extern bus_space_tag_t opb_get_bus_space_tag(void);
+extern int (*opb_get_frequency)(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.63 2010/02/01 05:38:36 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.63.2.1 2010/04/30 14:43:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -358,6 +358,15 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_PPB_END		0x18
 #define	PCI_MAPREG_PCB_END		0x14
 
+#define PCI_BAR0		0x10
+#define PCI_BAR1		0x14
+#define PCI_BAR2		0x18
+#define PCI_BAR3		0x1C
+#define PCI_BAR4		0x20
+#define PCI_BAR5		0x24
+
+#define	PCI_BAR(__n)		(0x10 + 4 * (__n))
+
 #define	PCI_MAPREG_TYPE(mr)						\
 	    ((mr) & PCI_MAPREG_TYPE_MASK)
 #define	PCI_MAPREG_TYPE_MASK			0x00000001
@@ -584,7 +593,14 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_SLCSR_MS	0x00200000
 #define PCI_PCIE_SLCSR_PDS	0x00400000
 #define PCI_PCIE_SLCSR_LACS	0x01000000
-#define PCI_PCIE_RCSR		0x1c
+#define PCI_PCIE_RCR		0x1c
+#define PCI_PCIE_RSR		0x20
+#define PCI_PCIE_DCAP2		0x24
+#define PCI_PCIE_DCSR2		0x28
+#define PCI_PCIE_LCAP2		0x2c
+#define PCI_PCIE_LCSR2		0x30
+#define PCI_PCIE_SLCAP2		0x34
+#define PCI_PCIE_SLCSR2		0x38
 
 /*
  * Interrupt Configuration Register; contains interrupt pin and line.
@@ -798,12 +814,6 @@ struct pci_rom {
  * Threshold below which 32bit PCI DMA needs bouncing.
  */
 #define PCI32_DMA_BOUNCE_THRESHOLD	0x100000000ULL
-
-/*
- * Common PCI register for PCI transmit handling.
- */
-#define	PCI_RETRY_TIMEOUT_REG		0x40
-#define		PCI_RETRY_TIMEOUT_REG_MASK	0x0000ff00
 
 /*
  * PCI-X 2.0 Extended Capability List

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.75 2010/02/03 13:51:00 wiz Exp $	*/
+/*	$NetBSD: fault.c,v 1.75.2.1 2010/04/30 14:39:07 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_sa.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.75 2010/02/03 13:51:00 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.75.2.1 2010/04/30 14:39:07 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -868,6 +868,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 #endif
 
+	KASSERT(pcb->pcb_onfault == NULL);
 	error = uvm_fault(map, va, VM_PROT_READ);
 
 #ifdef KERN_SA

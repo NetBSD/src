@@ -1,13 +1,13 @@
-#	$NetBSD: OPENBLOCKS266,v 1.46 2009/12/24 09:29:36 kiyohara Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.46.2.1 2010/04/30 14:39:17 uebayasi Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
-include		"arch/evbppc/conf/std.obs405"
+include		"arch/evbppc/conf/std.obs266"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.46 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.46.2.1 $"
 
 maxusers	32
 
@@ -114,7 +114,7 @@ options 	NFS_BOOT_DHCP		# Support DHCP NFS root
 
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
-options 	INET6		# IPV6
+options 	INET6		# IPv6
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
@@ -193,7 +193,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 #pseudo-device	md		1	# memory disk device
 #pseudo-device	vnd			# disk-like interface to files
 
@@ -209,8 +209,8 @@ pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual ethernet
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	gre			# generic L3 over IP tunnel
-pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC 1933)
+#pseudo-device	faith			# IPv[46] TCP relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging

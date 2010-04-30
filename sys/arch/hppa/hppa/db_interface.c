@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.20 2009/11/21 15:36:33 rmind Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.20.2.1 2010/04/30 14:39:27 uebayasi Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.20 2009/11/21 15:36:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.20.2.1 2010/04/30 14:39:27 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_
 int db_active = 0;
 
 void
-Debugger(void)
+cpu_Debugger(void)
 {
 	__asm volatile ("break	%0, %1"
 			  :: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_KGDB));

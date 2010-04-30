@@ -1,7 +1,8 @@
-/*	$NetBSD: lwp.h,v 1.127 2009/11/29 16:23:49 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.127.2.1 2010/04/30 14:44:32 uebayasi Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
+ *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +58,7 @@
  * l:	*l_mutex
  * p:	l_proc->p_lock
  * s:	spc_mutex, which may or may not be referenced by l_mutex
- * S:	l_selcpu->sc_lock
+ * S:	l_selcluster->sc_lock
  * (:	unlocked, stable
  * !:	unlocked, may only be reliably accessed by the LWP itself
  * ?:	undecided
@@ -134,7 +135,7 @@ struct lwp {
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
 	int		l_selflag;	/* S: select() flags */
 	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
-	struct selcpu	*l_selcpu;	/* !: associated per-CPU select data */
+	struct selcluster *l_selcluster;/* !: associated select data */
 	char		*l_name;	/* (: name, optional */
 
 	/* Signals */
@@ -179,6 +180,8 @@ struct lwp {
 	/* These are only used by 'options SYSCALL_TIMES' */
 	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
 	uint64_t        *l_syscall_counter; /* !: counter for current process */
+
+	struct kdtrace_thread *l_dtrace; /* ?: DTrace-specific data. */
 };
 
 /*
@@ -208,9 +211,6 @@ LIST_HEAD(lwplist, lwp);		/* a list of LWPs */
 
 #ifdef _KERNEL
 extern struct lwplist alllwp;		/* List of all LWPs. */
-
-extern struct pool lwp_uc_pool;		/* memory pool for LWP startup args */
-
 extern lwp_t lwp0;			/* LWP for proc0 */
 #endif
 
@@ -296,6 +296,7 @@ void	lwp_relock(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
 void	lwp_delref(lwp_t *);
+void	lwp_delref2(lwp_t *);
 void	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
@@ -305,6 +306,7 @@ lwp_t	*lwp_find_first(proc_t *);
 void	lwpinit(void);
 int 	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
 void	lwp_continue(lwp_t *);
+void	lwp_unstop(lwp_t *);
 void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
@@ -323,6 +325,7 @@ void	lwp_sys_init(void);
 void	lwp_unsleep(lwp_t *, bool);
 uint64_t lwp_pctr(void);
 
+void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
 void	lwp_specific_key_delete(specificdata_key_t);
 void 	lwp_initspecific(lwp_t *);

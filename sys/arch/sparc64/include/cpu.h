@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88 2010/02/02 04:28:55 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.88.2.1 2010/04/30 14:39:51 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -131,9 +131,9 @@ struct cpu_info {
 
 	/* Event counters */
 	struct evcnt		ci_tick_evcnt;
-#ifdef MULTIPROCESSOR
+
+	/* This could be under MULTIPROCESSOR, but there's no good reason */
 	struct evcnt		ci_ipi_evcnt[IPI_EVCNT_NUM];
-#endif
 
 	int			ci_flags;
 	int			ci_want_ast;
@@ -151,7 +151,10 @@ struct cpu_info {
  * the right pointer and you get to the pmap segment tables.  These are
  * physical addresses, of course.
  *
+ * ci_ctx_lock protects this CPUs context allocation/free.
+ * These are all allocated almost with in the same cacheline.
  */
+	kmutex_t		ci_ctx_lock;
 	int			ci_pmap_next_ctx;
 	int			ci_numctx;
 	paddr_t 		*ci_ctxbusy;
@@ -191,7 +194,12 @@ struct cpu_bootargs {
 
 extern struct cpu_bootargs *cpu_args;
 
+#if defined(MULTIPROCESSOR)
 extern int sparc_ncpus;
+#else
+#define sparc_ncpus 1
+#endif
+
 extern struct cpu_info *cpus;
 extern struct pool_cache *fpstate_cache;
 

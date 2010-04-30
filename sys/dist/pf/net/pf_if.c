@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.20 2009/12/06 16:46:11 dsl Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.20.2.1 2010/04/30 14:43:56 uebayasi Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.20 2009/12/06 16:46:11 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.20.2.1 2010/04/30 14:43:56 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -137,6 +137,37 @@ pfi_initialize(void)
 	pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
 #endif /* __NetBSD__ */
 }
+
+#ifdef _MODULE
+void
+pfi_destroy(void)
+{
+	struct pfi_kif *p;
+	int i;
+
+	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, &if_pfil);
+	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, &if_pfil);
+
+	for (i = 0; i < if_indexlim; i++) {
+		struct ifnet *ifp = ifindex2ifnet[i];
+
+		if (ifp != NULL) {
+			pfi_detach_ifnet(ifp);
+
+			pfi_destroy_groups(ifp);
+		}
+	}
+
+	while ((p = RB_MIN(pfi_ifhead, &pfi_ifs))) {
+		RB_REMOVE(pfi_ifhead, &pfi_ifs, p);
+		free(p, PFI_MTYPE);
+	}
+
+	pool_destroy(&pfi_addr_pl);
+
+	free(pfi_buffer, PFI_MTYPE);
+}
+#endif /* _MODULE */
 
 struct pfi_kif *
 pfi_kif_get(const char *kif_name)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.221 2009/12/14 00:46:07 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.221.2.1 2010/04/30 14:39:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221 2009/12/14 00:46:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.221.2.1 2010/04/30 14:39:36 uebayasi Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -196,11 +196,13 @@ void
 trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
     struct trapframe *frame)
 {
-	int type;
+	int type, rv;
 	struct lwp *l = curlwp;
 	struct proc *p = curproc;
 	struct pcb *pcb;
+	void *onfault;
 	vm_prot_t ftype;
+	vaddr_t va;
 	ksiginfo_t ksi;
 	struct frame *fp;
 	extern void fswintrberr(void);
@@ -369,11 +371,11 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		ftype = VM_PROT_WRITE;
 	pagefault: ;
 	    {
-		vaddr_t va;
 		struct vmspace *vm;
 		struct vm_map *map;
-		int rv;
 
+		pcb = lwp_getpcb(l);
+		onfault = pcb->pcb_onfault;
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
@@ -383,10 +385,13 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 
+		pcb->pcb_onfault = NULL;
 		if (p->p_emul->e_fault)
 			rv = (*p->p_emul->e_fault)(p, va, ftype);
 		else
 			rv = uvm_fault(map, va, ftype);
+		pcb->pcb_onfault = onfault;
+
 #ifdef VMFAULT_TRACE
 		printf(
 		    "uvm_fault(%p (pmap %p), %#"PRIxVADDR
@@ -436,28 +441,28 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		break; /* SIGNAL */
 	    }
 	kernelfault: ;
-	    {
-		vaddr_t va;
-		int rv;
+		pcb = lwp_getpcb(l);
+		onfault = pcb->pcb_onfault;
 
 		va = trunc_page(vaddr);
+		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(kernel_map, va, ftype);
+		pcb->pcb_onfault = onfault;
 		if (rv == 0)
 			return; /* KERN */
-		/*FALLTHROUGH*/
-	    }
+		goto copyfault;
 	case T_ADDR_ERR_LD:	/* misaligned access */
 	case T_ADDR_ERR_ST:	/* misaligned access */
 	case T_BUS_ERR_LD_ST:	/* BERR asserted to CPU */
-	copyfault:
-		if (l == NULL) {
-			goto dopanic;
-		}
 		pcb = lwp_getpcb(l);
-		if (pcb->pcb_onfault == NULL) {
+		onfault = pcb->pcb_onfault;
+		rv = EFAULT;
+	copyfault:
+		if (onfault == NULL) {
 			goto dopanic;
 		}
-		frame->tf_regs[TF_EPC] = (intptr_t)pcb->pcb_onfault;
+		frame->tf_regs[TF_EPC] = (intptr_t)onfault;
+		frame->tf_regs[TF_V0] = rv;
 		return; /* KERN */
 
 	case T_ADDR_ERR_LD+T_USER:	/* misaligned or kseg access */
@@ -502,9 +507,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 #endif
 	case T_BREAK+T_USER:
 	    {
-		vaddr_t va;
 		uint32_t instr;
-		int rv;
 
 		/* compute address of break instruction */
 		va = (cause & MIPS_CR_BR_DELAY) ? opc + sizeof(int) : opc;

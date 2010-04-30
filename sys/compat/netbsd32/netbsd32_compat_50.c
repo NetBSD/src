@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.9 2010/01/19 23:15:50 pooka Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.9.2.1 2010/04/30 14:43:00 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,17 +36,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.9 2010/01/19 23:15:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.9.2.1 2010/04/30 14:43:00 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
-
-#include "fs_lfs.h"
 #endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -280,15 +277,6 @@ compat_50_netbsd32_adjtime(struct lwp *l,
 	return 0;
 }
 
-#if defined(LFS) || !defined(_KERNEL)
-int
-compat_50_netbsd32_lfs_segwait(struct lwp *l,
-    const struct compat_50_netbsd32_lfs_segwait_args *uap, register_t *retval)
-{
-	return 0;
-}
-#endif
-
 int
 compat_50_netbsd32_futimes(struct lwp *l,
     const struct compat_50_netbsd32_futimes_args *uap, register_t *retval)
@@ -323,17 +311,15 @@ compat_50_netbsd32_clock_gettime(struct lwp *l,
 		syscallarg(netbsd32_clockid_t) clock_id;
 		syscallarg(netbsd32_timespec50p_t) tp;
 	} */
-	clockid_t clock_id;
+	int error;
 	struct timespec ats;
 	struct netbsd32_timespec50 ts32;
 
-	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
+	error = clock_gettime1(SCARG(uap, clock_id), &ats);
+	if (error != 0)
+		return error;
 
-	nanotime(&ats);
 	netbsd32_from_timespec50(&ats, &ts32);
-
 	return copyout(&ts32, SCARG_P32(uap, tp), sizeof(ts32));
 }
 
@@ -346,19 +332,14 @@ compat_50_netbsd32_clock_settime(struct lwp *l,
 		syscallarg(const netbsd32_timespec50p_t) tp;
 	} */
 	struct netbsd32_timespec50 ts32;
-	clockid_t clock_id;
 	struct timespec ats;
 	int error;
-
-	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
 
 	if ((error = copyin(SCARG_P32(uap, tp), &ts32, sizeof(ts32))) != 0)
 		return (error);
 
 	netbsd32_to_timespec50(&ts32, &ats);
-	return settime(l->l_proc, &ats);
+	return clock_settime1(l->l_proc, SCARG(uap, clock_id), &ats, true);
 }
 
 int
@@ -370,20 +351,16 @@ compat_50_netbsd32_clock_getres(struct lwp *l,
 		syscallarg(netbsd32_timespec50p_t) tp;
 	} */
 	struct netbsd32_timespec50 ts32;
-	clockid_t clock_id;
 	struct timespec ts;
 	int error = 0;
 
-	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
+	error = clock_getres1(SCARG(uap, clock_id), &ts);
+	if (error != 0)
+		return error;
 
 	if (SCARG_P32(uap, tp)) {
-		ts.tv_sec = 0;
-		ts.tv_nsec = 1000000000 / hz;
-
 		netbsd32_from_timespec50(&ts, &ts32);
-		error = copyout(&ts, SCARG_P32(uap, tp), sizeof(ts));
+		error = copyout(&ts32, SCARG_P32(uap, tp), sizeof(ts32));
 	}
 
 	return error;
@@ -452,50 +429,22 @@ compat_50_netbsd32_nanosleep(struct lwp *l,
 		syscallarg(const netbsd32_timespec50p_t) rqtp;
 		syscallarg(netbsd32_timespecp_t) rmtp;
 	} */
-	static int nanowait;
 	struct netbsd32_timespec50 ts32;
-	struct timespec rqt, ctime, rmt;
-	int error, timo;
+	struct timespec rqt, rmt;
+	int error, error1;
 
 	error = copyin(SCARG_P32(uap, rqtp), &ts32, sizeof(ts32));
 	if (error)
 		return (error);
-
 	netbsd32_to_timespec50(&ts32, &rqt);
-	if (itimespecfix(&rqt))
-		return (EINVAL);
 
-	getnanotime(&ctime);
-	timespecadd(&rqt, &ctime, &rqt);
-	timo = tshzto(&rqt);
-	/*
-	 * Avoid inadvertantly sleeping forever
-	 */
-	if (timo == 0)
-		timo = 1;
+	error = nanosleep1(l, &rqt, SCARG_P32(uap, rmtp) ? &rmt : NULL);
+	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
 
-	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
-	if (error == ERESTART)
-		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
-
-	if (SCARG_P32(uap, rmtp)) {
-		int error1;
-
-		getnanotime(&rmt);
-
-		timespecsub(&rqt, &rmt, &rmt);
-		if (rmt.tv_sec < 0)
-			timespecclear(&rmt);
-
-		netbsd32_from_timespec50(&rmt, &ts32);
-		error1 = copyout(&ts32, SCARG_P32(uap,rmtp), sizeof(ts32));
-		if (error1)
-			return (error1);
-	}
-
-	return error;
+	netbsd32_from_timespec50(&rmt, &ts32);
+	error1 = copyout(&ts32, SCARG_P32(uap,rmtp), sizeof(ts32));
+	return error1 ? error1 : error;
 }
 
 static int
@@ -680,17 +629,16 @@ compat_50_netbsd32_kevent(struct lwp *l,
 	nevents = SCARG(uap, nevents);
 	maxalloc = MIN(KQ_NEVENTS, MAX(nchanges, nevents));
 	netbsd32_kevent_ops.keo_private =
-	    malloc(maxalloc * sizeof(struct netbsd32_kevent), M_TEMP,
-	    M_WAITOK);
+	    kmem_alloc(maxalloc * sizeof(struct netbsd32_kevent), KM_SLEEP);
 
 	error = kevent1(retval, SCARG(uap, fd),
 	    NETBSD32PTR64(SCARG(uap, changelist)), nchanges,
 	    NETBSD32PTR64(SCARG(uap, eventlist)), nevents,
 	    NETBSD32PTR64(SCARG(uap, timeout)), &netbsd32_kevent_ops);
 
-	free(netbsd32_kevent_ops.keo_private, M_TEMP);
+	kmem_free(netbsd32_kevent_ops.keo_private,
+	    maxalloc * sizeof(struct netbsd32_kevent));
 	return error;
-	return 0;
 }
 
 int

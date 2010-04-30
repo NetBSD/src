@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21 2010/01/27 22:18:37 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.21.2.1 2010/04/30 14:39:50 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -89,6 +89,8 @@ const char *kernelnames[] = {
 };
 
 char bootdev[PROM_MAX_PATH];
+bool root_fs_quickseekable = true;	/* unset for tftp boots */
+static bool bootinfo_pass_bootdev = false;
 
 int debug  = 0;
 int compatmode = 0;
@@ -272,6 +274,17 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw)
 	bi_add(&bi_sym, BTINFO_SYMTAB, sizeof(bi_sym));
 	bi_kend.addr= bootinfo + BOOTINFO_SIZE;
 	bi_add(&bi_kend, BTINFO_KERNEND, sizeof(bi_kend));
+	if (bootinfo_pass_bootdev) {
+		struct {
+			struct btinfo_common common;
+			char name[256];
+		} info;
+		
+		strcpy(info.name, bootdev);
+		bi_add(&info, BTINFO_BOOTDEV, strlen(bootdev)
+			+sizeof(struct btinfo_bootdev));
+	}
+
 	sparc64_finalize_tlb(marks[MARK_DATA]);
 	sparc64_bi_add();
 
@@ -383,6 +396,95 @@ help(void)
 		"  disk:a netbsd -s\n");
 }
 
+static void
+do_config_command(const char *cmd, const char *arg)
+{
+	DPRINTF(("do_config_command: %s\n", cmd));
+	if (strcmp(cmd, "bootpartition") == 0) {
+		char *c;
+
+		DPRINTF(("switching boot partition to %s from %s\n",
+		    arg, bootdev));
+		c = strrchr(bootdev, ':');
+		if (!c) return;
+		if (c[1] == 0) return;
+		if (strlen(arg) > strlen(c)) return;
+		strcpy(c, arg);
+		DPRINTF(("new boot device: %s\n", bootdev));
+		bootinfo_pass_bootdev = true;
+	}
+}
+
+static void
+parse_boot_config(char *cfg, size_t len)
+{
+	const char *cmd = NULL, *arg = NULL;
+
+	while (len) {
+		if (isspace(*cfg)) {
+			cfg++; len--; continue;
+		}
+		if (*cfg == ';' || *cfg == '#') {
+			while (len && *cfg != '\r' && *cfg != '\n') {
+				cfg++; len--;
+			}
+			continue;
+		}
+		cmd = cfg;
+		while (len && !isspace(*cfg)) {
+			cfg++; len--;
+		}
+		*cfg = 0;
+		if (len > 0) {
+			cfg++; len--;
+			while (isspace(*cfg) && len) {
+				cfg++; len--;
+			}
+			if (len > 0 ) {
+				arg = cfg;
+				while (len && !isspace(*cfg)) {
+					cfg++; len--;
+				}
+				*cfg = 0;
+			}
+		}
+		do_config_command(cmd, arg);
+		if (len > 0) {
+			cfg++; len--;
+		}
+	}
+}
+
+static void
+check_boot_config(void)
+{
+	int fd, err, off, len;
+	struct stat st;
+	char *bc;
+
+	if (!root_fs_quickseekable) return;
+	DPRINTF(("checking for /boot.cfg...\n"));
+	fd = open("/boot.cfg", 0);
+	if (fd < 0) return;
+	DPRINTF(("found /boot.cfg\n"));
+	if (fstat(fd, &st) == -1 || st.st_size > 32*1024) {
+		close(fd);
+		return;
+	}
+	bc = alloc(st.st_size+1);
+	off = 0;
+	do {
+		len = read(fd, bc+off, 1024);
+		if (len <= 0)
+			break;
+		off += len;
+	} while (len > 0);
+	bc[off] = 0;
+	close(fd);
+
+	parse_boot_config(bc, off);
+}
+
 void
 main(void *ofw)
 {
@@ -438,6 +540,7 @@ main(void *ofw)
 			boothowto |= RB_ASKNAME;
 		}
 
+		check_boot_config();
 		start_kernel(kernel, bootline, ofw);
 
 		/*

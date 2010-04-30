@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.11 2010/01/08 19:42:11 dyoung Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.11.2.1 2010/04/30 14:40:01 uebayasi Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.11 2010/01/08 19:42:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.11.2.1 2010/04/30 14:40:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: zaudio.c,v 1.11 2010/01/08 19:42:11 dyoung Exp $");
 
 static int	zaudio_match(device_t, cfdata_t, void *);
 static void	zaudio_attach(device_t, device_t, void *);
-static bool	zaudio_suspend(device_t dv, pmf_qual_t);
-static bool	zaudio_resume(device_t dv, pmf_qual_t);
+static bool	zaudio_suspend(device_t dv, const pmf_qual_t *);
+static bool	zaudio_resume(device_t dv, const pmf_qual_t *);
 
 #define ZAUDIO_OP_SPKR	0
 #define ZAUDIO_OP_HP	1
@@ -369,7 +369,7 @@ fail_i2s:
 }
 
 static bool
-zaudio_suspend(device_t dv, pmf_qual_t qual)
+zaudio_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct zaudio_softc *sc = device_private(dv);
 
@@ -380,7 +380,7 @@ zaudio_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-zaudio_resume(device_t dv, pmf_qual_t qual)
+zaudio_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct zaudio_softc *sc = device_private(dv);
 

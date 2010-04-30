@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: arm_arch.h,v 1.6 2008/04/28 20:23:20 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_arch.h,v 1.6.20.1 2010/04/30 14:39:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,9 +40,12 @@ class Console;
 class ARMArchitecture : public Architecture {
 protected:
 	int _kmode;
-	// test routine for SA-1100 peripherals.
+	// test routine for peripherals.
 	virtual void testFramebuffer(void) = 0;
 	virtual void testUART(void) = 0;
+
+	// dump peripheral regs.
+	virtual void dumpPeripheralRegs(void) = 0;
 
 public:
 	ARMArchitecture(Console *&, MemoryManager *&);
@@ -75,6 +78,7 @@ void InvalidateICache(void);
 void WritebackDCache(void);
 void InvalidateDCache(void);
 void WritebackInvalidateDCache(void);
+void WritebufferFlush(void);
 
 // MMU TLB access
 void FlushIDTLB(void);
@@ -86,6 +90,8 @@ uint32_t GetCPSR(void);
 void SetCPSR(uint32_t);
 void SetSVCMode(void);
 void SetSystemMode(void);
+
+extern uint32_t dcachesize;
 
 __END_DECLS
 

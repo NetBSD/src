@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.15.2.2 2010/02/28 05:03:58 uebayasi Exp $	*/
+/*	$NetBSD: dkio.h,v 1.15.2.3 2010/04/30 14:44:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -105,7 +105,9 @@
 		/* get disk-info dictionary */
 #define	DIOCGDISKINFO	_IOR('d', 127, struct plistref)
 
+#define	DIOCTUR		_IOR('d', 128, int)	/* test unit ready */
+
 		/* get physical address cookie if directly memory-mappable (XIP) */
-#define	DIOCGPHYSADDR	_IOR('d', 128, paddr_t)
+#define	DIOCGPHYSADDR	_IOR('d', 129, paddr_t)
 
 #endif /* _SYS_DKIO_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2008/06/13 13:24:10 rafal Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.16.1 2010/04/30 14:39:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2008/06/13 13:24:10 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.16.1 2010/04/30 14:39:25 uebayasi Exp $");
 
 #include "opt_md.h"
 
@@ -54,7 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2008/06/13 13:24:10 rafal Exp $");
 #include <machine/intr.h>
 #include <arm/arm32/machdep.h>
 
+#include "opt_cputypes.h"
+#if defined(CPU_SA1100) || defined(CPU_SA1110)
 #include "sacom.h"
+#endif
 
 extern dev_t dumpdev;
 
@@ -163,9 +166,11 @@ cpu_configure(void)
 		panic("configure: mainbus not configured");
 
 	/* Debugging information */
-#ifdef 	DIAGNOSTIC
+#if defined(DIAGNOSTIC)
+#if defined(CPU_SA1100) || defined(CPU_SA1110)
 	dump_spl_masks();
 #endif
+#endif	/* DIAGNOSTIC */
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
 	(void)spl0();

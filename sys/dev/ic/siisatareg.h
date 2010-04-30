@@ -1,7 +1,7 @@
-/* $NetBSD: siisatareg.h,v 1.5 2009/07/19 06:28:08 kiyohara Exp $ */
+/* $NetBSD: siisatareg.h,v 1.5.2.1 2010/04/30 14:43:22 uebayasi Exp $ */
 
-/*-
- * Copyright (c) 2007, 2008, 2009 Jonathan A. Kollasch.
+/*
+ * Copyright (c) 2007, 2008, 2009, 2010 Jonathan A. Kollasch.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#ifndef _IC_SIISATAREG_H_
+#define _IC_SIISATAREG_H_
 
 /* Silicon Image SATA 2 controller register defines */
 
@@ -250,3 +253,5 @@ struct siisata_prb {
 #define PR_PSS_ATTENTION	__BIT(31)
 #define PR_PSS_SLOT_MASK	__BITS(30, 0)
 #define PR_PXSS(n)		__SHIFTIN(__BIT(n), PR_PSS_SLOT_MASK)
+
+#endif /* !_IC_SIISATAREG_H_ */

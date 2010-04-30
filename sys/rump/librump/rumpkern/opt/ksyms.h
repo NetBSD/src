@@ -1,3 +1,3 @@
-/*	$NetBSD: ksyms.h,v 1.1 2008/08/01 19:34:51 pooka Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.1.22.1 2010/04/30 14:44:30 uebayasi Exp $	*/
 
-/* public domain */
+#define NKSYMS 1

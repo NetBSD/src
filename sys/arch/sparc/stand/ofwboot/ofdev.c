@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.25 2010/01/27 22:18:37 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.25.2.1 2010/04/30 14:39:50 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,6 +41,7 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/ufs.h>
+#include <lib/libsa/lfs.h>
 #include <lib/libsa/cd9660.h>
 #ifdef NETBOOT
 #include <lib/libsa/nfs.h>
@@ -57,6 +58,7 @@
 #include "boot.h"
 
 extern char bootdev[];
+extern bool root_fs_quickseekable;
 
 /*
  * This is ugly.  A path on a sparc machine is something like this:
@@ -188,8 +190,10 @@ static struct devsw ofdevsw[1] = {
 };
 int ndevs = sizeof ofdevsw / sizeof ofdevsw[0];
 
+
 #ifdef SPARC_BOOT_UFS
-static struct fs_ops file_system_ufs = FS_OPS(ufs);
+static struct fs_ops file_system_ufs[] = 
+{ FS_OPS(ufs), FS_OPS(ffsv2), FS_OPS(lfsv1), FS_OPS(lfsv2) };
 #endif
 #ifdef SPARC_BOOT_CD9660
 static struct fs_ops file_system_cd9660 = FS_OPS(cd9660);
@@ -199,7 +203,7 @@ static struct fs_ops file_system_nfs = FS_OPS(nfs);
 static struct fs_ops file_system_tftp = FS_OPS(tftp);
 #endif
 
-struct fs_ops file_system[3];
+struct fs_ops file_system[7];
 int nfsys;
 
 static struct of_dev ofdev = {
@@ -473,7 +477,10 @@ open_again:
 			     LABELSECTOR, DEV_BSIZE, b.buf, &read) != 0
 		    || read != DEV_BSIZE
 		    || (errmsg = getdisklabel(b.buf, &label))) {
-			if (errmsg) printf("devopen: getdisklabel returned %s\n", errmsg);
+			if (errmsg) {
+				DPRINTF(("devopen: getdisklabel returned %s\n",
+					errmsg));
+			}
 			/* Else try MBR partitions */
 			errmsg = search_label(&ofdev, 0, b.buf, &label, 0);
 			if (errmsg) {
@@ -515,11 +522,13 @@ open_again:
 		of->f_dev = ofdevsw;
 		of->f_devdata = &ofdev;
 #ifdef SPARC_BOOT_UFS
-		memcpy(&file_system[nfsys++], &file_system_ufs, sizeof file_system[0]);
+		memcpy(&file_system[nfsys++], &file_system_ufs[0], sizeof file_system[0]);
+		memcpy(&file_system[nfsys++], &file_system_ufs[1], sizeof file_system[0]);
+		memcpy(&file_system[nfsys++], &file_system_ufs[2], sizeof file_system[0]);
+		memcpy(&file_system[nfsys++], &file_system_ufs[3], sizeof file_system[0]);
 #endif
 #ifdef SPARC_BOOT_CD9660
-		memcpy(&file_system[nfsys++], &file_system_cd9660,
-		    sizeof file_system[0]);
+		memcpy(&file_system[nfsys++], &file_system_cd9660, sizeof file_system[0]);
 #endif
 		DPRINTF(("devopen: return 0\n"));
 		return 0;
@@ -540,6 +549,7 @@ open_again:
 				net_close(&ofdev);
 				goto bad;
 			}
+			root_fs_quickseekable = false;
 		} else {
 			memcpy(&file_system[0], &file_system_nfs, sizeof file_system[0]);
 			if (error = net_mountroot()) {

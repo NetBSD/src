@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.20 2009/11/17 22:35:43 dyoung Exp $	*/
+/*	$NetBSD: pte.h,v 1.20.2.1 2010/04/30 14:39:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -164,10 +164,10 @@
  *
  * The PAE extension extends the size of the PTE to 64 bits (52bits physical
  * address) and is compatible with the amd64 PTE format. The first level
- * maps 2M, the second 1G, so a third level page table is intruduced to
+ * maps 2M, the second 1G, so a third level page table is introduced to
  * map the 4GB virtual address space. This PD has only 4 entries.
- * We can't use recursive mapping at level 3 to map the PD pages, as
- * this would eat one GB of address space. In addition, Xen impose restrictions
+ * We can't use recursive mapping at level 3 to map the PD pages, as this
+ * would eat one GB of address space. In addition, Xen imposes restrictions
  * on the entries we put in the L3 page (for example, the page pointed to by
  * the last slot can't be shared among different L3 pages), which makes 
  * handling this L3 page in the same way we do for L2 on i386 (or L4 on amd64)
@@ -221,8 +221,8 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #else /* PAE */
 #define	L1_SHIFT	12
 #define	L2_SHIFT	22
-#define	NBPD_L1		(1ULL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
-#define	NBPD_L2		(1ULL << L2_SHIFT) /* # bytes mapped by L2 ent (4MB) */
+#define	NBPD_L1		(1UL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
+#define	NBPD_L2		(1UL << L2_SHIFT) /* # bytes mapped by L2 ent (4MB) */
 
 #define L2_MASK		0xffc00000
 #define L1_MASK		0x003ff000

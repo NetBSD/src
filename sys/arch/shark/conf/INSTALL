@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.42 2009/12/05 20:11:17 pooka Exp $
+#	$NetBSD: INSTALL,v 1.42.2.1 2010/04/30 14:39:48 uebayasi Exp $
 #
 #	Shark installation kernel
 #
@@ -16,7 +16,6 @@ maxusers	32
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	HZ=64
 #options 	NTP		# NTP phase/frequency locked loop
-options 	NMBCLUSTERS=1024 # XXX, temporarily required
 #options 	BOOT_QUIETLY	# twiddle instead of normal boot msg output
 
 # CPU options
@@ -255,7 +254,7 @@ pseudo-device	bpfilter		# packet filter
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
-#pseudo-device	fss	4		# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
 pseudo-device	md	1		# Ramdisk driver

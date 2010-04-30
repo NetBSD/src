@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.23 2009/02/03 16:41:31 pgoyette Exp $	*/
+/*	$NetBSD: i2c.c,v 1.23.4.1 2010/04/30 14:43:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.23 2009/02/03 16:41:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.23.4.1 2010/04/30 14:43:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,8 @@ struct iic_softc {
 };
 
 static void	iic_smbus_intr_thread(void *);
+static void	iic_fill_compat(struct i2c_attach_args*, const char*,
+			size_t, char **);
 
 int
 iicbus_print(void *aux, const char *pnp)
@@ -68,6 +70,20 @@ iicbus_print(void *aux, const char *pnp)
 		aprint_normal("iic at %s", pnp);
 
 	return (UNCONF);
+}
+
+static int
+iic_print_direct(void *aux, const char *pnp)
+{
+	struct i2c_attach_args *ia = aux;
+
+	if (pnp != NULL)
+		aprint_normal("%s at %s addr 0x%02x", ia->ia_name, pnp,
+			ia->ia_addr);
+	else
+		aprint_normal(" addr 0x%02x", ia->ia_addr);
+
+	return UNCONF;
 }
 
 static int
@@ -92,6 +108,10 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	ia.ia_size = cf->cf_loc[IICCF_SIZE];
 	ia.ia_type = sc->sc_type;
 
+	ia.ia_name = NULL;
+	ia.ia_ncompat = 0;
+	ia.ia_compat = NULL;
+
 	if (config_match(parent, cf, &ia) > 0)
 		config_attach(parent, cf, &ia, iic_print);
 
@@ -110,6 +130,8 @@ iic_attach(device_t parent, device_t self, void *aux)
 {
 	struct iic_softc *sc = device_private(self);
 	struct i2cbus_attach_args *iba = aux;
+	prop_array_t child_devices;
+	char *buf;
 	i2c_tag_t ic;
 	int rv;
 
@@ -196,11 +218,65 @@ iic_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	/*
-	 * Attach all i2c devices described in the kernel
-	 * configuration file.
-	 */
-	config_search_ia(iic_search, self, "iic", NULL);
+	child_devices = prop_dictionary_get(device_properties(parent),
+		"i2c-child-devices");
+	if (child_devices) {
+		unsigned int i, count;
+		prop_dictionary_t dev;
+		prop_data_t cdata;
+		uint32_t addr, size;
+		uint64_t cookie;
+		const char *name;
+		struct i2c_attach_args ia;
+		int loc[2];
+
+		memset(loc, 0, sizeof loc);
+		count = prop_array_count(child_devices);
+		for (i = 0; i < count; i++) {
+			dev = prop_array_get(child_devices, i);
+			if (!dev) continue;
+ 			if (!prop_dictionary_get_cstring_nocopy(
+			    dev, "name", &name))
+				continue;
+			if (!prop_dictionary_get_uint32(dev, "addr", &addr))
+				continue;
+			if (!prop_dictionary_get_uint64(dev, "cookie", &cookie))
+				cookie = 0;
+			loc[0] = addr;
+			if (prop_dictionary_get_uint32(dev, "size", &size))
+				loc[1] = size;
+			else
+				loc[1] = -1;
+
+			memset(&ia, 0, sizeof ia);
+			ia.ia_addr = addr;
+			ia.ia_type = sc->sc_type;
+			ia.ia_tag = ic;
+			ia.ia_name = name;
+			ia.ia_cookie = cookie;
+
+			buf = NULL;
+			cdata = prop_dictionary_get(dev, "compatible");
+			if (cdata)
+				iic_fill_compat(&ia,
+				    prop_data_data_nocopy(cdata),
+				    prop_data_size(cdata), &buf);
+
+			config_found_sm_loc(self, "iic", loc, &ia,
+			    iic_print_direct, NULL);
+
+			if (ia.ia_compat)
+				free(ia.ia_compat, M_TEMP);
+			if (buf)
+				free(buf, M_TEMP);
+		}
+	} else {
+		/*
+		 * Attach all i2c devices described in the kernel
+		 * configuration file.
+		 */
+		config_search_ia(iic_search, self, "iic", NULL);
+	}
 }
 
 static void
@@ -302,6 +378,56 @@ iic_smbus_intr(i2c_tag_t ic)
 
 	return 1;
 }
+
+static void
+iic_fill_compat(struct i2c_attach_args *ia, const char *compat, size_t len,
+	char **buffer)
+{
+	int count, i;
+	const char *c, *start, **ptr;
+
+	*buffer = NULL;
+	for (i = count = 0, c = compat; i < len; i++, c++)
+		if (*c == 0)
+			count++;
+	count += 2;
+	ptr = malloc(sizeof(char*)*count, M_TEMP, M_WAITOK);
+	if (!ptr) return;
+
+	for (i = count = 0, start = c = compat; i < len; i++, c++) {
+		if (*c == 0) {
+			ptr[count++] = start;
+			start = c+1;
+		}
+	}
+	if (start < compat+len) {
+		/* last string not 0 terminated */
+		size_t l = c-start;
+		*buffer = malloc(l+1, M_TEMP, M_WAITOK);
+		memcpy(*buffer, start, l);
+		(*buffer)[l] = 0;
+		ptr[count++] = *buffer;
+	}
+	ptr[count] = NULL;
+
+	ia->ia_compat = ptr;
+	ia->ia_ncompat = count;
+}
+
+int
+iic_compat_match(struct i2c_attach_args *ia, const char ** compats)
+{
+	int i;
+
+	for (; compats && *compats; compats++) {
+		for (i = 0; i < ia->ia_ncompat; i++) {
+			if (strcmp(*compats, ia->ia_compat[i]) == 0)
+				return 1;
+		}
+	}
+	return 0;
+}
+
 
 CFATTACH_DECL_NEW(iic, sizeof(struct iic_softc),
     iic_match, iic_attach, NULL, NULL);

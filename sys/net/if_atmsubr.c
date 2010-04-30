@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.47 2010/01/19 22:08:00 pooka Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.47.2.1 2010/04/30 14:44:18 uebayasi Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.47 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.47.2.1 2010/04/30 14:44:18 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -337,8 +337,7 @@ atm_ifattach(struct ifnet *ifp)
 	if_alloc_sadl(ifp);
 	/* XXX Store LLADDR for ATMARP. */
 
-	bpf_ops->bpf_attach(ifp, DLT_ATM_RFC1483,
-	    sizeof(struct atmllc), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
 }
 
 #ifdef ATM_PVCEXT

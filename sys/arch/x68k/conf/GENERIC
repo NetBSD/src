@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.147 2009/12/05 20:11:17 pooka Exp $
+# $NetBSD: GENERIC,v 1.147.2.1 2010/04/30 14:39:56 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.147 $"
+#ident 		"GENERIC-$Revision: 1.147.2.1 $"
 
 maxusers	8
 
@@ -346,6 +346,9 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
 
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
+
 # USB Mass Storage; wd not supported
 #umass*	at uhub? port ? configuration ? interface ?
 #atapibus* at umass? channel ?
@@ -519,7 +522,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 # Veriexec
 #

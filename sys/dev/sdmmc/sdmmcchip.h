@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcchip.h,v 1.1 2009/04/21 03:00:30 nonaka Exp $	*/
+/*	$NetBSD: sdmmcchip.h,v 1.1.10.1 2010/04/30 14:43:49 uebayasi Exp $	*/
 /*	$OpenBSD: sdmmcchip.h,v 1.3 2007/05/31 10:09:01 uwe Exp $	*/
 
 /*
@@ -27,6 +27,7 @@
 struct sdmmc_command;
 
 typedef struct sdmmc_chip_functions *sdmmc_chipset_tag_t;
+typedef struct sdmmc_spi_chip_functions *sdmmc_spi_chipset_tag_t;
 typedef void *sdmmc_chipset_handle_t;
 
 struct sdmmc_chip_functions {
@@ -91,9 +92,18 @@ struct sdmmc_chip_functions {
 #define SDMMC_SDCLK_OFF		0
 #define SDMMC_SDCLK_400K	400
 
+/* SPI mode */
+struct sdmmc_spi_chip_functions {
+	/* card initialize */
+	void		(*initialize)(sdmmc_chipset_handle_t);
+};
+#define sdmmc_spi_chip_initialize(tag, handle)				\
+	((tag)->initialize((handle)))
+
 struct sdmmcbus_attach_args {
 	const char		*saa_busname;
 	sdmmc_chipset_tag_t	saa_sct;
+	sdmmc_spi_chipset_tag_t	saa_spi_sct;
 	sdmmc_chipset_handle_t	saa_sch;
 	bus_dma_tag_t		saa_dmat;
 	u_int			saa_clkmin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.35 2009/12/23 17:17:59 stacktic Exp $	*/
+/*	$NetBSD: rump.h,v 1.35.2.1 2010/04/30 14:44:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,12 +43,11 @@ struct vfsops;
 struct fid;
 struct statvfs;
 struct stat;
+struct kauth_cred;
+struct lwp;
+struct modinfo;
 
 /* yetch */
-#if !defined(_RUMPKERNEL) && !defined(__NetBSD__)
-struct kauth_cred;
-typedef struct kauth_cred *kauth_cred_t;
-#endif
 #if defined(__NetBSD__)
 #include <prop/proplib.h>
 #else
@@ -59,9 +58,6 @@ typedef struct prop_dictionary *prop_dictionary_t;
 #endif
 #endif /* __NetBSD__ */
 
-struct lwp;
-struct modinfo;
-
 #include <rump/rumpvnode_if.h>
 #include <rump/rumpdefs.h>
 
@@ -69,11 +65,24 @@ struct modinfo;
 enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
 typedef int (*rump_sysproxy_t)(int, void *, uint8_t *, size_t, register_t *);
 
+enum rump_sigmodel {
+	RUMP_SIGMODEL_PANIC,
+	RUMP_SIGMODEL_IGNORE,
+	RUMP_SIGMODEL_HOST,
+	RUMP_SIGMODEL_RAISE
+};
+
 /* rumpvfs */
 #define RUMPCN_FREECRED  0x02
 #define RUMPCN_FORCEFREE 0x04
 #define RUMP_ETFS_SIZE_ENDOFF ((uint64_t)-1)
-enum rump_etfs_type { RUMP_ETFS_REG, RUMP_ETFS_BLK, RUMP_ETFS_CHR };
+enum rump_etfs_type {
+	RUMP_ETFS_REG,
+	RUMP_ETFS_BLK,
+	RUMP_ETFS_CHR,
+	RUMP_ETFS_DIR,		/* only the registered directory */
+	RUMP_ETFS_DIR_SUBDIRS	/* dir + subdirectories (recursive) */
+};
 
 /*
  * Something like rump capabilities would be nicer, but let's
@@ -89,6 +98,10 @@ _BEGIN_DECLS
 
 int	rump_boot_gethowto(void);
 void	rump_boot_sethowto(int);
+void	rump_boot_setsigmodel(enum rump_sigmodel);
+
+void	rump_schedule(void);
+void	rump_unschedule(void);
 
 int	rump__init(int);
 
@@ -145,5 +158,14 @@ _END_DECLS
 #define pwrite(a,b,c,d) rump_sys_pwrite(a,b,c,d)
 #define pwritev(a,b,c,d) rump_sys_pwritev(a,b,c,d)
 #endif /* RUMP_SYS_READWRITE */
+
+#ifdef RUMP_SYS_FILEOPS
+#define mkdir(a,b) rump_sys_mkdir(a,b)
+#define rmdir(a) rump_sys_rmdir(a)
+#define link(a,b) rump_sys_link(a,b)
+#define symlink(a,b) rump_sys_symlink(a,b)
+#define unlink(a) rump_sys_unlink(a)
+#define readlink(a,b,c) rump_sys_readlink(a,b,c)
+#endif /* RUMP_SYS_FILEOPS */
 
 #endif /* _RUMP_RUMP_H_ */

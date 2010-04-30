@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.71 2009/07/08 12:23:09 tsutsui Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.71.2.1 2010/04/30 14:39:11 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.71 2009/07/08 12:23:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.71.2.1 2010/04/30 14:39:11 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.71 2009/07/08 12:23:09 tsutsui Exp $");
 #include <atari/dev/hdfdreg.h>
 #include <atari/atari/device.h>
 
+#include "ioconf.h"
 #include "locators.h"
 
 /*
@@ -284,8 +285,6 @@ void	fdattach(struct device *, struct device *, void *);
 CFATTACH_DECL(hdfd, sizeof(struct fd_softc),
     fdprobe, fdattach, NULL, NULL);
 
-extern struct cfdriver hdfd_cd;
-
 const struct bdevsw fd_bdevsw = {
 	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
 };
@@ -328,8 +327,8 @@ fdcprobe(struct device *parent, struct cfdata *cfp, void *aux)
 	bus_space_handle_t handle;
 
 	/* Match only once */
-	if(strcmp("fdc", aux) || fdc_matched)
-		return(0);
+	if (strcmp("fdc", aux) || fdc_matched)
+		return 0;
 
 	if (!atari_realconfig)
 		return 0;
@@ -340,7 +339,7 @@ fdcprobe(struct device *parent, struct cfdata *cfp, void *aux)
 	if (bus_space_map(mb_tag, FD_IOBASE, FD_IOSIZE, 0, &handle)) {
 		printf("fdcprobe: cannot map io-area\n");
 		mb_free_bus_space_tag(mb_tag);
-		return (0);
+		return 0;
 	}
 	fdio_addr = bus_space_vaddr(mb_tag, handle);	/* XXX */
 
@@ -416,8 +415,7 @@ fdcattach(struct device *parent, struct device *self, void *aux)
 		out_fdc(NE7CMD_LOCK);
 		(void)fdcresult(fdc);
 		has_fifo = 1;
-	}
-	else {
+	} else {
 		(void)rd_fdc_reg(fddata);
 		printf(": no fifo");
 	}
@@ -567,8 +565,7 @@ fdc_ctrl_intr(struct clockframe frame)
 		 * We don't want to stay on ipl6.....
 		 */
 		add_sicallback((si_farg)fdcpseudointr, intr_arg, 0);
-	}
-	else {
+	} else {
 		s = splbio();
 		(void) fdcintr(intr_arg);
 		splx(s);
@@ -701,13 +698,15 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 int
 fdread(dev_t dev, struct uio *uio, int flags)
 {
-	return (physio(fdstrategy, NULL, dev, B_READ, minphys, uio));
+
+	return physio(fdstrategy, NULL, dev, B_READ, minphys, uio);
 }
 
 int
 fdwrite(dev_t dev, struct uio *uio, int flags)
 {
-	return (physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio));
+
+	return physio(fdstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
 void
@@ -773,7 +772,8 @@ fdcresult(struct fdc_softc *fdc)
 			}
 			fdc->sc_status[n++] = rd_fdc_reg(fddata);
 		}
-		else delay(10);
+		else
+			delay(10);
 	}
 	log(LOG_ERR, "fdcresult: timeout\n");
 	return -1;
@@ -1292,7 +1292,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		((struct partinfo *)addr)->disklab = fd->sc_dk.dk_label;
 		((struct partinfo *)addr)->part =
 			      &fd->sc_dk.dk_label->d_partitions[RAW_PART];
-		return(0);
+		return 0;
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
@@ -1344,7 +1344,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return 0;
 
 	case FDIOCSETFORMAT:
-		if((flag & FWRITE) == 0)
+		if ((flag & FWRITE) == 0)
 			return EBADF;	/* must be opened for writing */
 		form_parms = (struct fdformat_parms *)addr;
 		if (form_parms->fdformat_version != FDFORMAT_VERSION)
@@ -1393,7 +1393,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return 0;
 
 	case FDIOCFORMAT_TRACK:
-		if((flag & FWRITE) == 0)
+		if ((flag & FWRITE) == 0)
 			return EBADF;	/* must be opened for writing */
 		form_cmd = (struct fdformat_cmd *)addr;
 		if (form_cmd->formatcmd_version != FDFORMAT_VERSION)
@@ -1463,7 +1463,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 
 	/* set up a buffer header for fdstrategy() */
 	bp = getiobuf(NULL, false);
-	if(bp == 0)
+	if (bp == NULL)
 		return ENOBUFS;
 	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_PHYS | B_FORMAT;
@@ -1490,7 +1490,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 
 	/* ...and wait for it to complete */
 	mutex_enter(bp->b_objlock);
-	while(!(bp->b_oflags & BO_DONE)) {
+	while ((bp->b_oflags & BO_DONE) == 0) {
 		rv = cv_timedwait(&bp->b_done, bp->b_objlock, 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;

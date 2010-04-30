@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.16 2010/01/21 15:56:08 martin Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.16.2.1 2010/04/30 14:43:29 uebayasi Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.16 2010/01/21 15:56:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.16.2.1 2010/04/30 14:43:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,4 +324,57 @@ of_get_mode_string(char *buffer, int len)
 		return NULL;
 	strncpy(buffer, pos + 2, len);
 	return buffer;
+}
+
+/*
+ * Iterate over the subtree of a i2c controller node.
+ * Add all sub-devices into an array as part of the controller's
+ * device properties.
+ * This is used by the i2c bus attach code to do direct configuration.
+ */
+void
+of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
+{
+	int node, len;
+	char name[32];
+	uint64_t reg64;
+	uint32_t reg32;
+	uint64_t addr;
+	prop_array_t array;
+	prop_dictionary_t dev;
+
+	array = prop_array_create();
+
+	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
+			continue;
+		len = OF_getproplen(node, "reg");
+		addr = 0;
+		if (cell_size == 8 && len >= sizeof(reg64)) {
+			if (OF_getprop(node, "reg", &reg64, sizeof(reg64))
+			    < sizeof(reg64))
+				continue;
+			addr = reg64;
+		} else if (cell_size == 4 && len >= sizeof(reg32)) {
+			if (OF_getprop(node, "reg", &reg32, sizeof(reg32))
+			    < sizeof(reg32))
+				continue;
+			addr = reg32;
+		} else {
+			continue;
+		}
+		addr >>= 1;
+		if (addr == 0) continue;
+
+		dev = prop_dictionary_create();
+		prop_dictionary_set_cstring(dev, "name", name);
+		prop_dictionary_set_uint32(dev, "addr", addr);
+		prop_dictionary_set_uint64(dev, "cookie", node);
+		of_to_dataprop(dev, node, "compatible", "compatible");
+		prop_array_add(array, dev);
+		prop_object_release(dev);
+	}
+
+	prop_dictionary_set(props, "i2c-child-devices", array);
+	prop_object_release(array);
 }

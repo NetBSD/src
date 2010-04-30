@@ -1,8 +1,8 @@
-/*	$NetBSD: fwphyreg.h,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fwphyreg.h,v 1.2.98.1 2010/04/30 14:43:25 uebayasi Exp $	*/
 /*-
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  * 4. Neither the name of the author nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,10 +31,17 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
- * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwphyreg.h,v 1.3 2005/01/06 01:42:41 imp Exp $
+ *
+ * $FreeBSD: src/sys/dev/firewire/fwphyreg.h,v 1.4 2009/02/12 03:05:42 sbruno Exp $
  */
 
+#ifndef _FWPHYREG_H_
+#define _FWPHYREG_H_
+
+/*
+ * IEEE 1394a
+ * Figure 5B - 1
+ */
 struct phyreg_base {
 #if BYTE_ORDER == BIG_ENDIAN
 	uint8_t	phy_id:6,
@@ -101,6 +108,10 @@ struct phyreg_base {
 #endif
 };
 
+/*
+ * IEEE 1394a
+ * Figure 5B - 2
+ */
 struct phyreg_page0 {
 #if BYTE_ORDER == BIG_ENDIAN
 	uint8_t	astat:2,
@@ -161,9 +172,15 @@ struct phyreg_page0 {
 #endif
 };
 
+/*
+ * IEEE 1394a
+ * Figure 5B - 3
+ */
 struct phyreg_page1 {
 	uint8_t	compliance;
 	uint8_t	:8;
 	uint8_t	vendor_id[3];
 	uint8_t	product_id[3];
 };
+
+#endif	/* _FWPHYREG_H_ */

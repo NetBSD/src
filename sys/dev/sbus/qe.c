@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.57 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: qe.c,v 1.57.2.1 2010/04/30 14:43:48 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.57 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.57.2.1 2010/04/30 14:43:48 uebayasi Exp $");
 
 #define QEDEBUG
 
@@ -429,8 +429,7 @@ qe_read(struct qe_softc *sc, int idx, int len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);
 }
@@ -467,8 +466,7 @@ qestart(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/*
 		 * Copy the mbuf chain into the transmit buffer.

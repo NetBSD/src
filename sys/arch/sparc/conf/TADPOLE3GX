@@ -1,4 +1,4 @@
-# 	$NetBSD: TADPOLE3GX,v 1.48 2009/12/05 20:11:17 pooka Exp $
+# 	$NetBSD: TADPOLE3GX,v 1.48.2.1 2010/04/30 14:39:49 uebayasi Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -368,7 +368,7 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 pseudo-device	rnd
 
 pseudo-device	clockctl		# user control of clock subsystem
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont

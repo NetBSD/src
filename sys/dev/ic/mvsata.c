@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.3 2010/01/05 13:30:10 mbalmer Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.3.2.1 2010/04/30 14:43:19 uebayasi Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.3 2010/01/05 13:30:10 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.3.2.1 2010/04/30 14:43:19 uebayasi Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1460,7 +1460,7 @@ mvsata_bio_ready(struct mvsata_port *mvport, struct ata_bio *ata_bio, int drive,
 
 	/*
 	 * disable interrupts, all commands here should be quick
-	 * enouth to be able to poll, and we don't go here that often
+	 * enough to be able to poll, and we don't go here that often
 	 */
 	MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT | WDCTL_IDS);
 	MVSATA_WDC_WRITE_1(mvport, SRB_H, WDSD_IBM);
@@ -1822,7 +1822,7 @@ mvsata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		}
 		/*
 		 * disable interrupts, all commands here should be quick
-		 * enouth to be able to poll, and we don't go here that often
+		 * enough to be able to poll, and we don't go here that often
 		 */
 		MVSATA_WDC_WRITE_1(mvport, SRB_CAS, WDCTL_4BIT | WDCTL_IDS);
 

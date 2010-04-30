@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.71 2010/01/19 13:29:40 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.71.2.1 2010/04/30 14:44:22 uebayasi Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -67,6 +67,9 @@
 #define	NFS_TRYLATERDEL	1		/* Initial try later delay (sec) */
 #define	NFS_TRYLATERDELMAX (1*60)	/* Maximum try later delay (sec) */
 #define	NFS_TRYLATERDELMUL 2		/* Exponential backoff multiplier */
+
+#define NFS_CWNDSCALE   256             
+#define NFS_MAXCWND     (NFS_CWNDSCALE * 32)    
 
 /*
  * These can be overridden through <machine/param.h>, included via

@@ -1,4 +1,4 @@
-/* $NetBSD: hpet.c,v 1.9 2010/01/08 20:02:39 dyoung Exp $ */
+/* $NetBSD: hpet.c,v 1.9.2.1 2010/04/30 14:43:16 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.9 2010/01/08 20:02:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.9.2.1 2010/04/30 14:43:16 uebayasi Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpet.c,v 1.9 2010/01/08 20:02:39 dyoung Exp $");
 #include <dev/ic/hpetvar.h>
 
 static u_int	hpet_get_timecount(struct timecounter *);
-static bool	hpet_resume(device_t, pmf_qual_t);
+static bool	hpet_resume(device_t, const pmf_qual_t *);
 
 int
 hpet_detach(device_t dv, int flags)
@@ -113,7 +113,7 @@ hpet_get_timecount(struct timecounter *tc)
 }
 
 static bool
-hpet_resume(device_t dv, pmf_qual_t qual)
+hpet_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct hpet_softc *sc = device_private(dv);
 	uint32_t val;

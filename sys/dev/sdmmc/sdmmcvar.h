@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.2 2009/11/28 10:00:24 nonaka Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.2.2.1 2010/04/30 14:43:49 uebayasi Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -22,6 +22,7 @@
 
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#include <sys/callout.h>
 
 #include <machine/bus.h>
 
@@ -49,6 +50,11 @@ struct sdmmc_cid {
 	int	rev;		/* product revision */
 	int	psn;		/* product serial number */
 	int	mdt;		/* manufacturing date */
+};
+
+struct sdmmc_scr {
+	int	sd_spec;
+	int	bus_width;
 };
 
 typedef uint32_t sdmmc_response[4];
@@ -83,17 +89,24 @@ struct sdmmc_command {
 	int		 c_datalen;	/* length of data buffer */
 	int		 c_blklen;	/* block length */
 	int		 c_flags;	/* see below */
-#define SCF_ITSDONE	0x0001		/* command is complete */
-#define SCF_CMD_AC	0x0000
-#define SCF_CMD_ADTC	0x0010
-#define SCF_CMD_BC	0x0020
-#define SCF_CMD_BCR	0x0030
-#define SCF_CMD_READ	0x0040		/* read command (data expected) */
-#define SCF_RSP_BSY	0x0100
-#define SCF_RSP_136	0x0200
-#define SCF_RSP_CRC	0x0400
-#define SCF_RSP_IDX	0x0800
-#define SCF_RSP_PRESENT	0x1000
+#define SCF_ITSDONE	(1U << 0)		/* command is complete */
+#define SCF_RSP_PRESENT	(1U << 1)
+#define SCF_RSP_BSY	(1U << 2)
+#define SCF_RSP_136	(1U << 3)
+#define SCF_RSP_CRC	(1U << 4)
+#define SCF_RSP_IDX	(1U << 5)
+#define SCF_CMD_READ	(1U << 6)	/* read command (data expected) */
+/* non SPI */
+#define SCF_CMD_AC	(0U << 8)
+#define SCF_CMD_ADTC	(1U << 8)
+#define SCF_CMD_BC	(2U << 8)
+#define SCF_CMD_BCR	(3U << 8)
+#define SCF_CMD_MASK	(3U << 8)
+/* SPI */
+#define SCF_RSP_SPI_S1	(1U << 10)
+#define SCF_RSP_SPI_S2	(1U << 11)
+#define SCF_RSP_SPI_B4	(1U << 12)
+#define SCF_RSP_SPI_BSY	(1U << 13)
 /* response types */
 #define SCF_RSP_R0	0	/* none */
 #define SCF_RSP_R1	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
@@ -105,6 +118,14 @@ struct sdmmc_command {
 #define SCF_RSP_R5B	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX|SCF_RSP_BSY)
 #define SCF_RSP_R6	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
 #define SCF_RSP_R7	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
+/* SPI */
+#define SCF_RSP_SPI_R1	(SCF_RSP_SPI_S1)
+#define SCF_RSP_SPI_R1B	(SCF_RSP_SPI_S1|SCF_RSP_SPI_BSY)
+#define SCF_RSP_SPI_R2	(SCF_RSP_SPI_S1|SCF_RSP_SPI_S2)
+#define SCF_RSP_SPI_R3	(SCF_RSP_SPI_S1|SCF_RSP_SPI_B4)
+#define SCF_RSP_SPI_R4	(SCF_RSP_SPI_S1|SCF_RSP_SPI_B4)
+#define SCF_RSP_SPI_R5	(SCF_RSP_SPI_S1|SCF_RSP_SPI_S2)
+#define SCF_RSP_SPI_R7	(SCF_RSP_SPI_S1|SCF_RSP_SPI_B4)
 	int		 c_error;	/* errno value on completion */
 
 	/* Host controller owned fields for data xfer in progress */
@@ -152,6 +173,8 @@ struct sdmmc_function {
 	struct sdmmc_csd csd;		/* decoded CSD value */
 	struct sdmmc_cid cid;		/* decoded CID value */
 	sdmmc_response raw_cid;		/* temp. storage for decoding */
+	uint32_t raw_scr[2];
+	struct sdmmc_scr scr;		/* decoded CSR value */
 };
 
 /*
@@ -162,10 +185,11 @@ struct sdmmc_softc {
 #define SDMMCDEVNAME(sc)	(device_xname(sc->sc_dev))
 
 	sdmmc_chipset_tag_t sc_sct;	/* host controller chipset tag */
+	sdmmc_spi_chipset_tag_t sc_spi_sct;
 	sdmmc_chipset_handle_t sc_sch;	/* host controller chipset handle */
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmap;
-#define	SDMMC_MAXNSEGS		16	/* (MAXPHYS / PAGE_SIZE) */
+#define	SDMMC_MAXNSEGS		17	/* (MAXPHYS / PAGE_SIZE) + 1 */
 
 	struct kmutex sc_mtx;		/* lock around host controller */
 	int sc_dying;			/* bus driver is shutting down */
@@ -182,6 +206,9 @@ struct sdmmc_softc {
 #define SMC_CAPS_AUTO_STOP	0x0001	/* send CMD12 automagically by host */
 #define SMC_CAPS_4BIT_MODE	0x0002	/* 4-bits data bus width */
 #define SMC_CAPS_DMA		0x0004	/* DMA transfer */
+#define SMC_CAPS_SPI_MODE	0x0008	/* SPI mode */
+#define SMC_CAPS_POLL_CARD_DET	0x0010	/* Polling card detect */
+#define SMC_CAPS_SINGLE_ONLY	0x0020	/* only single read/write */
 
 	/* function */
 	int sc_function_count;		/* number of I/O functions (SDIO) */
@@ -208,6 +235,8 @@ struct sdmmc_softc {
 	u_int sc_clkmax;		/* host max bus clock */
 	u_int sc_busclk;		/* host bus clock */
 	int sc_buswidth;		/* host bus width */
+
+	callout_t sc_card_detect_ch;	/* polling card insert/remove */
 };
 
 /*
@@ -247,11 +276,11 @@ struct	sdmmc_function *sdmmc_function_alloc(struct sdmmc_softc *);
 void	sdmmc_function_free(struct sdmmc_function *);
 int	sdmmc_set_bus_power(struct sdmmc_softc *, uint32_t, uint32_t);
 int	sdmmc_mmc_command(struct sdmmc_softc *, struct sdmmc_command *);
-int	sdmmc_app_command(struct sdmmc_softc *, struct sdmmc_command *);
+int	sdmmc_app_command(struct sdmmc_softc *, struct sdmmc_function *,
+	    struct sdmmc_command *);
 void	sdmmc_go_idle_state(struct sdmmc_softc *);
 int	sdmmc_select_card(struct sdmmc_softc *, struct sdmmc_function *);
-int	sdmmc_set_relative_addr(struct sdmmc_softc *,
-	    struct sdmmc_function *);
+int	sdmmc_set_relative_addr(struct sdmmc_softc *, struct sdmmc_function *);
 
 void	sdmmc_intr_enable(struct sdmmc_function *);
 void	sdmmc_intr_disable(struct sdmmc_function *);
@@ -264,6 +293,10 @@ int	sdmmc_decode_csd(struct sdmmc_softc *, sdmmc_response,
 int	sdmmc_decode_cid(struct sdmmc_softc *, sdmmc_response,
 	    struct sdmmc_function *);
 void	sdmmc_print_cid(struct sdmmc_cid *);
+#ifdef SDMMC_DUMP_CSD
+void	sdmmc_print_csd(sdmmc_response, struct sdmmc_csd *);
+#endif
+void	sdmmc_dump_data(const char *, void *, size_t);
 
 int	sdmmc_io_enable(struct sdmmc_softc *);
 void	sdmmc_io_scan(struct sdmmc_softc *);
@@ -286,6 +319,10 @@ void	sdmmc_check_cis_quirks(struct sdmmc_function *);
 int	sdmmc_mem_enable(struct sdmmc_softc *);
 void	sdmmc_mem_scan(struct sdmmc_softc *);
 int	sdmmc_mem_init(struct sdmmc_softc *, struct sdmmc_function *);
+int	sdmmc_mem_send_op_cond(struct sdmmc_softc *, uint32_t, uint32_t *);
+int	sdmmc_mem_send_if_cond(struct sdmmc_softc *, uint32_t, uint32_t *);
+int	sdmmc_mem_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *);
+int	sdmmc_mem_send_extcsd(struct sdmmc_softc *sc);
 int	sdmmc_mem_read_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
 int	sdmmc_mem_write_block(struct sdmmc_function *, uint32_t, u_char *,

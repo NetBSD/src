@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.11 2010/02/01 03:43:27 mrg Exp $ */
+/*	$NetBSD: cache.h,v 1.11.2.1 2010/04/30 14:39:52 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -72,13 +72,88 @@
  * set-associative -- each bank is 8K.  No conflict there.)
  */
 
+/* Various cache size/line sizes */
+extern	int	ecache_min_line_size;
+extern	int	dcache_line_size;
+extern	int	dcache_size;
+extern	int	icache_line_size;
+extern	int	icache_size;
+
 /* The following are for I$ and D$ flushes and are in locore.s */
-void 	dcache_flush_page(paddr_t);	/* flush page from D$ */
-void 	blast_dcache(void);		/* Clear entire D$ */
-void 	blast_icache(void);		/* Clear entire I$ */
+void 	dcache_flush_page_us(paddr_t);	/* flush page from D$ */
+void 	dcache_flush_page_usiii(paddr_t); /* flush page from D$ */
+void 	sp_blast_dcache(int, int);	/* Clear entire D$ */
+void 	blast_icache_us(void);		/* Clear entire I$ */
+void 	blast_icache_usiii(void);	/* Clear entire I$ */
 
 /* The following flush a range from the D$ and I$ but not E$. */
-void	cache_flush_phys(paddr_t, psize_t, int);
+void	cache_flush_phys_us(paddr_t, psize_t, int);
+void	cache_flush_phys_usiii(paddr_t, psize_t, int);
 
-/* Smallest E$ line size. */
-extern	int	ecache_min_line_size;
+static __inline__ void
+dcache_flush_page(paddr_t pa)
+{
+	if (CPU_IS_USIII_UP())
+		dcache_flush_page_usiii(pa);
+	else
+		dcache_flush_page_us(pa);
+}
+
+static __inline__ void
+cache_flush_phys(paddr_t pa, psize_t size, int ecache)
+{
+	if (CPU_IS_USIII_UP())
+		cache_flush_phys_usiii(pa, size, ecache);
+	else
+		cache_flush_phys_us(pa, size, ecache);
+}
+
+static __inline__ void
+blast_icache(void)
+{
+	if (CPU_IS_USIII_UP())
+		blast_icache_usiii();
+	else
+		blast_icache_us();
+}
+
+/* SPARC64 specific */
+/* Assembly routines to flush TLB mappings */
+void sp_tlb_flush_pte_us(vaddr_t, int);
+void sp_tlb_flush_pte_usiii(vaddr_t, int);
+void sp_tlb_flush_all_us(void);
+void sp_tlb_flush_all_usiii(void);
+
+static __inline__ void
+sp_tlb_flush_pte(vaddr_t va, int ctx)
+{
+	if (CPU_IS_USIII_UP())
+		sp_tlb_flush_pte_usiii(va, ctx);
+	else
+		sp_tlb_flush_pte_us(va, ctx);
+}
+
+static __inline__ void
+sp_tlb_flush_all(void)
+{
+	if (CPU_IS_USIII_UP())
+		sp_tlb_flush_all_usiii();
+	else
+		sp_tlb_flush_all_us();
+}
+
+#ifdef MULTIPROCESSOR
+void smp_tlb_flush_pte(vaddr_t, struct pmap *);
+void smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t);
+void smp_blast_dcache(sparc64_cpuset_t);
+#define	tlb_flush_pte(va,pm	)	smp_tlb_flush_pte(va, pm)
+#define	dcache_flush_page_all(pa)	smp_dcache_flush_page_cpuset(pa, cpus_active)
+#define	dcache_flush_page_cpuset(pa,cs)	smp_dcache_flush_page_cpuset(pa, cs)
+#define	blast_dcache()			smp_blast_dcache(cpus_active)
+#else
+#define	tlb_flush_pte(va,pm)		sp_tlb_flush_pte(va, (pm)->pm_ctx[0])
+#define	dcache_flush_page_all(pa)	dcache_flush_page(pa)
+#define	dcache_flush_page_cpuset(pa,cs)	dcache_flush_page(pa)
+#define	blast_dcache()			sp_blast_dcache(dcache_size, \
+							dcache_line_size)
+#endif

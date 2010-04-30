@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.43 2009/08/16 15:35:52 manu Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.43.2.1 2010/04/30 14:42:57 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.43 2009/08/16 15:35:52 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.43.2.1 2010/04/30 14:42:57 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -811,7 +811,7 @@ darwin_findscreen(dev_t *dev, int unit, int screen)
 
 	/* Find a wsdisplay */
 	if ((dv = device_find_by_driver_unit("wsdisplay", unit)) == NULL)
-		return ENODEV;
+		return ENODEV;	/* XXX not ENXIO? */
 
 	sc = device_private(dv);
 
@@ -825,6 +825,6 @@ darwin_findscreen(dev_t *dev, int unit, int screen)
 #endif /* DEBUG_DARWIN */
 	return 0;
 #else /* defined(NWSDISPLAY) && NWSDISPLAY > 0 */
-	return ENODEV;
+	return ENODEV;	/* XXX not ENXIO? */
 #endif /* defined(NWSDISPLAY) && NWSDISPLAY > 0 */
 }

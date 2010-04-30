@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.34 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: uio.h,v 1.34.90.1 2010/04/30 14:44:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -96,11 +96,9 @@ struct uio {
 #endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
 
-MALLOC_DECLARE(M_IOV);
-
-#define UIO_SMALLIOV	8		/* 8 on stack, else malloc */
+/* 8 on stack, more will be dynamically allocated. */
+#define UIO_SMALLIOV	8
 
 void uio_setup_sysspace(struct uio *);
 #endif

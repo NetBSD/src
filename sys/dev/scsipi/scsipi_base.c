@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.150 2009/10/21 21:12:05 rmind Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.150.2.1 2010/04/30 14:43:49 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.150 2009/10/21 21:12:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.150.2.1 2010/04/30 14:43:49 uebayasi Exp $");
 
 #include "opt_scsi.h"
 
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.150 2009/10/21 21:12:05 rmind Exp 
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_message.h>
+
+#include <machine/param.h>
 
 static int	scsipi_complete(struct scsipi_xfer *);
 static void	scsipi_request_sense(struct scsipi_xfer *);

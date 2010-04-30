@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.159 2009/12/17 01:25:10 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.159.2.1 2010/04/30 14:44:10 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.159 2009/12/17 01:25:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.159.2.1 2010/04/30 14:44:10 uebayasi Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.159 2009/12/17 01:25:10 rmind Exp $"
 #include <sys/sleepq.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
+#include <sys/dtrace_bsd.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -416,7 +418,7 @@ proc0_init(void)
 	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
 	    maxproc < maxuprc ? maxproc : maxuprc;
 
-	lim = ptoa(uvmexp.free);
+	lim = MIN(VM_MAXUSER_ADDRESS, ctob((rlim_t)uvmexp.free));
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
@@ -441,6 +443,8 @@ proc0_init(void)
 	/* Initialize signal state for proc0. XXX IPL_SCHED */
 	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	siginit(p);
+
+	kdtrace_proc_ctor(NULL, p);
 
 	proc_initspecific(p);
 	lwp_initspecific(l);
@@ -710,6 +714,8 @@ proc_alloc(void)
 	pt->pt_proc = p;
 	pid_alloc_cnt++;
 
+	kdtrace_proc_ctor(NULL, p);
+
 	mutex_exit(proc_lock);
 
 	return p;
@@ -753,6 +759,7 @@ void
 proc_free_mem(struct proc *p)
 {
 
+	kdtrace_proc_dtor(NULL, p);
 	pool_cache_put(proc_cache, p);
 }
 

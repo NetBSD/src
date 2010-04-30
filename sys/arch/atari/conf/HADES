@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.84 2009/12/05 20:11:03 pooka Exp $
+# $NetBSD: HADES,v 1.84.2.1 2010/04/30 14:39:10 uebayasi Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: HADES.in,v 1.9 2009/01/24 00:19:47 abs Exp $
-#		NetBSD: GENERIC.in,v 1.81 2009/11/23 00:18:37 abs Exp $
+#		NetBSD: HADES.in,v 1.11 2010/04/10 01:59:40 tsutsui Exp $
+#		NetBSD: GENERIC.in,v 1.87 2010/04/16 13:48:29 pooka Exp $
 include "arch/atari/conf/std.hades"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -74,7 +74,6 @@ options TT_VIDEO # Graphics support for TT
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-options SERCONSOLE # modem1 console support, breaks Falcon
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
 options TRY_SCSI_LINKED_COMMANDS=0x7f
@@ -93,10 +92,11 @@ pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device ccd 4 # concatenating disk driver
-pseudo-device fss 4 # file system snapshot device
+pseudo-device fss # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
+pseudo-device ksyms # /dev/ksyms
 exphy* at mii? phy ? # 3Com internal PHYs
 inphy* at mii? phy ? # Intel 82555 PHYs
 iophy* at mii? phy ? # Intel 82553 PHYs

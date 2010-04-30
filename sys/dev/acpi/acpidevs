@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.14 2010/01/18 16:34:47 jruoho Exp $
+# $NetBSD: acpidevs,v 1.14.2.1 2010/04/30 14:43:06 uebayasi Exp $
 #
 # Extracted from:
 # http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/devids.txt
@@ -136,6 +136,7 @@ PNP0C11	ACPI thermal zone
 PNP0C12	Device Bay Controller
 PNP0C13	Plug and Play BIOS (used when ACPI mode cannot be used)
 PNP0C14	WMI mapper device
+PNP0C15	ACPI docking station
 PNP0C80	Memory Device
 #--PCMCIA Controller Chipsets--
 PNP0E00	Intel 82365-Compatible PCMCIA Controller
@@ -181,6 +182,7 @@ PNP0F22	Reserved by Microsoft Input Device Group
 PNP0F23	Reserved by Microsoft Input Device Group
 PNP0FFF	Reserved by Microsoft Systems
 SYN1003	Synaptics PS/2-style Touchpad
+SYN013B	Synaptics PS/2-style Touchpad
 # ***** Network Adapters - PNP8xxx ***********************
 PNP8001	Novell/Anthem NE3200
 PNP8004	Compaq NE3200
@@ -306,6 +308,7 @@ PNP8387	RNA Point-to-point Protocol Driver
 PNP8388	Reserved for Microsoft Networking components
 PNP8389	Peer IrLAN infrared driver (Microsoft-supplied)
 PNP8390	Generic network adapter
+ITE8708	ITE Tech IrDA Infrared device
 NSC6001	NSC IrDA Fast Infrared Port
 # ***** SCSI, Proprietary CD Adapters - PNPAxxx **********
 PNPA002	Future Domain 16-700 compatible controller
@@ -347,6 +350,10 @@ PNPB02F	Joystick/Game port
 # ***** Modems - PNPCxxx-Dxxx****************************
 PNPC000	Compaq 14400 Modem (TBD)
 PNPC001	Compaq 2400/9600 Modem (TBD)
+# **** TPM chips ****
+ATM1200	Atmel Trusted Platform Module
+IFX0102	Infineon Trusted Platform Module
+NSC1100	NSC Trusted Platform Module
 # ***** ACPI specific devices *****
 ACPI0001	SMBus 1.0 Host Controller
 ACPI0002	Smart Battery Subsystem
@@ -363,4 +370,4 @@ ACPI000C	Processor Aggregator
 ACPI000D	Power Meter
 ACPI000E	Wake Alarm Device
 # **** Others ****
-INT0800	Intel FWH Random Number Generator
+INT0800	Intel Firmware Hub Device

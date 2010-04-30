@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.142 2010/01/19 22:08:01 pooka Exp $ */
+/*	$NetBSD: if_gre.c,v 1.142.2.1 2010/04/30 14:44:19 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.142 2010/01/19 22:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.142.2.1 2010/04/30 14:44:19 uebayasi Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
@@ -355,8 +355,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_flags |= IFF_LINK0;
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
-	bpf_ops->bpf_attach(&sc->sc_if, DLT_NULL,
-	    sizeof(uint32_t), &sc->sc_if.if_bpf);
+	bpf_attach(&sc->sc_if, DLT_NULL, sizeof(uint32_t));
 	sc->sc_state = GRE_S_IDLE;
 	return 0;
 }
@@ -369,7 +368,7 @@ gre_clone_destroy(struct ifnet *ifp)
 
 	GRE_DPRINTF(sc, "\n");
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	s = splnet();
 	if_detach(ifp);
 
@@ -914,8 +913,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
 	}
 	m_adj(m, hlen);
 
-	if (sc->sc_if.if_bpf != NULL)
-		bpf_ops->bpf_mtap_af(sc->sc_if.if_bpf, af, m);
+	bpf_mtap_af(&sc->sc_if, af, m);
 
 	m->m_pkthdr.rcvif = &sc->sc_if;
 
@@ -952,8 +950,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		goto end;
 	}
 
-	if (ifp->if_bpf != NULL)
-		bpf_ops->bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
+	bpf_mtap_af(ifp, dst->sa_family, m);
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.30 2010/02/02 04:28:56 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.30.2.1 2010/04/30 14:39:52 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.30 2010/02/02 04:28:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.30.2.1 2010/04/30 14:39:52 uebayasi Exp $");
 
 #include "opt_ddb.h"
 
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.30 2010/02/02 04:28:56 mrg Exp $");
 #include <machine/pmap.h>
 #include <machine/sparc64.h>
 
+#include <sparc64/sparc64/cache.h>
+
 #if defined(DDB) || defined(KGDB)
 #ifdef DDB
 #include <ddb/db_command.h>
@@ -53,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.30 2010/02/02 04:28:56 mrg Exp $");
 
 /* CPU sets containing halted, paused and resumed cpus */
 static volatile sparc64_cpuset_t cpus_halted;
+static volatile sparc64_cpuset_t cpus_spinning;
 static volatile sparc64_cpuset_t cpus_paused;
 static volatile sparc64_cpuset_t cpus_resumed;
 
@@ -68,6 +71,9 @@ void	sparc64_ipi_halt(void *);
 void	sparc64_ipi_pause(void *);
 void	sparc64_ipi_flush_pte_us(void *);
 void	sparc64_ipi_flush_pte_usiii(void *);
+void	sparc64_ipi_dcache_flush_page_us(void *);
+void	sparc64_ipi_dcache_flush_page_usiii(void *);
+void	sparc64_ipi_blast_dcache(void *);
 
 /*
  * Process cpu stop-self event.
@@ -78,16 +84,19 @@ sparc64_ipi_halt_thiscpu(void *arg)
 	extern void prom_printf(const char *fmt, ...);
 
 	printf("cpu%d: shutting down\n", cpu_number());
-	CPUSET_ADD(cpus_halted, cpu_number());
-	if (CPU_IS_USIII_UP()) {
+	if (prom_has_stop_other() || !prom_has_stopself()) {
 		/*
-		 * prom_selfstop() doesn't seem to work on newer machines.
+		 * just loop here, the final cpu will stop us later
 		 */
+		CPUSET_ADD(cpus_spinning, cpu_number());
+		CPUSET_ADD(cpus_halted, cpu_number());
 		spl0();
 		while (1)
 			/* nothing */;
-	} else
+	} else {
+		CPUSET_ADD(cpus_halted, cpu_number());
 		prom_stopself();
+	}
 }
 
 void
@@ -151,6 +160,7 @@ sparc64_ipi_init()
 
 	/* Clear all cpu sets. */
 	CPUSET_CLEAR(cpus_halted);
+	CPUSET_CLEAR(cpus_spinning);
 	CPUSET_CLEAR(cpus_paused);
 	CPUSET_CLEAR(cpus_resumed);
 }
@@ -272,6 +282,7 @@ void
 mp_halt_cpus(void)
 {
 	sparc64_cpuset_t cpumask, cpuset;
+	struct cpu_info *ci;
 
 	CPUSET_ASSIGN(cpuset, cpus_active);
 	CPUSET_DEL(cpuset, cpu_number());
@@ -281,9 +292,28 @@ mp_halt_cpus(void)
 	if (CPUSET_EMPTY(cpuset))
 		return;
 
+	CPUSET_CLEAR(cpus_spinning);
 	sparc64_multicast_ipi(cpuset, sparc64_ipi_halt, 0, 0);
 	if (sparc64_ipi_wait(&cpus_halted, cpumask))
 		sparc64_ipi_error("halt", cpumask, cpus_halted);
+
+	/*
+	 * Depending on available firmware methods, other cpus will
+	 * either shut down themselfs, or spin and wait for us to
+	 * stop them.
+	 */
+	if (CPUSET_EMPTY(cpus_spinning)) {
+		/* give other cpus a few cycles to actually power down */
+		delay(10000);
+		return;
+	}
+	/* there are cpus spinning - shut them down if we can */
+	if (prom_has_stop_other()) {
+		for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+			if (!CPUSET_HAS(cpus_spinning, ci->ci_index)) continue;
+			prom_stop_other(ci->ci_cpuid);
+		}
+	}
 }
 
 /*
@@ -344,7 +374,7 @@ mp_cpu_is_paused(sparc64_cpuset_t cpunum)
  * Flush pte on all active processors.
  */
 void
-smp_tlb_flush_pte(vaddr_t va, pmap_t pm)
+smp_tlb_flush_pte(vaddr_t va, struct pmap * pm)
 {
 	sparc64_cpuset_t cpuset;
 	struct cpu_info *ci;
@@ -360,12 +390,8 @@ smp_tlb_flush_pte(vaddr_t va, pmap_t pm)
 	/* Flush our own TLB */
 	ctx = pm->pm_ctx[cpu_number()];
 	KASSERT(ctx >= 0);
-	if (kpm || ctx > 0) {
-		if (CPU_IS_USIII_UP())
-			sp_tlb_flush_pte_usiii(va, ctx);
-		else
-			sp_tlb_flush_pte_us(va, ctx);
-	}
+	if (kpm || ctx > 0)
+		sp_tlb_flush_pte(va, ctx);
 
 	CPUSET_ASSIGN(cpuset, cpus_active);
 	CPUSET_DEL(cpuset, cpu_number());
@@ -383,6 +409,35 @@ smp_tlb_flush_pte(vaddr_t va, pmap_t pm)
 			sparc64_send_ipi(ci->ci_cpuid, func, va, ctx);
 		}
 	}
+}
+
+/*
+ * Make sure this page is flushed from all/some CPUs.
+ */
+void
+smp_dcache_flush_page_cpuset(paddr_t pa, sparc64_cpuset_t activecpus)
+{
+	ipifunc_t func;
+
+	if (CPU_IS_USIII_UP())
+		func = sparc64_ipi_dcache_flush_page_usiii;
+	else
+		func = sparc64_ipi_dcache_flush_page_us;
+
+	sparc64_multicast_ipi(activecpus, func, pa, dcache_line_size);
+	dcache_flush_page(pa);
+}
+
+/*
+ * Flush the D$ on this set of CPUs.
+ */
+void
+smp_blast_dcache(sparc64_cpuset_t activecpus)
+{
+
+	sparc64_multicast_ipi(activecpus, sparc64_ipi_blast_dcache,
+			      dcache_size, dcache_line_size);
+	sp_blast_dcache(dcache_size, dcache_line_size);
 }
 
 /*

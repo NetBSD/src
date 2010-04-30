@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.2.20.1 2010/04/30 14:44:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,5 +30,74 @@
 #define	_SYS_BUS_H_
 
 #include <machine/bus.h>
+
+struct bus_space_reservation;
+
+typedef struct bus_space_reservation /* {
+	bus_addr_t	sr_addr;
+	bus_size_t	sr_size;
+} */ bus_space_reservation_t;
+
+enum bus_space_override_idx {
+	  BUS_SPACE_OVERRIDE_SPACE_MAP		= __BIT(0)
+	, BUS_SPACE_OVERRIDE_SPACE_UNMAP	= __BIT(1)
+	, BUS_SPACE_OVERRIDE_SPACE_ALLOC	= __BIT(2)
+	, BUS_SPACE_OVERRIDE_SPACE_FREE		= __BIT(3)
+	, BUS_SPACE_OVERRIDE_SPACE_EXTEND	= __BIT(4)
+	, BUS_SPACE_OVERRIDE_SPACE_TRIM		= __BIT(5)
+};
+
+/* Only add new members at the end of this struct! */
+struct bus_space_overrides {
+	int (*bs_space_map)(void *, bus_space_tag_t, bus_addr_t, bus_size_t,
+	    int, bus_space_handle_t *);
+
+	void (*bs_space_unmap)(void *, bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t);
+
+	int (*bs_space_alloc)(void *, bus_space_tag_t, bus_addr_t, bus_addr_t,
+	    bus_size_t, bus_size_t, bus_size_t, int, bus_addr_t *,
+	    bus_space_handle_t *);
+
+	void (*bs_space_free)(void *, bus_space_tag_t, bus_space_handle_t,
+	    bus_size_t);
+
+	int (*bs_space_reserve)(void *, bus_space_tag_t, bus_addr_t, bus_size_t,
+	    bus_space_reservation_t *);
+
+	void (*bus_space_release)(void *, bus_space_tag_t,
+	    bus_space_reservation_t);
+
+	int (*bs_space_extend)(void *, bus_space_tag_t, bus_space_reservation_t,
+	    bus_size_t, bus_size_t);
+
+	void (*bs_space_trim)(void *, bus_space_tag_t, bus_space_reservation_t,
+	    bus_size_t, bus_size_t);
+};
+
+bool	bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
+int	bus_space_tag_create(bus_space_tag_t, uint64_t,
+	                     const struct bus_space_overrides *, void *,
+	                     bus_space_tag_t *);
+void	bus_space_tag_destroy(bus_space_tag_t);
+
+/* Reserve a region of bus space.  Reserved bus space cannot be allocated
+ * with bus_space_alloc().  Reserved space has not been bus_space_map()'d.
+ */
+int	bus_space_reserve(bus_space_tag_t, bus_addr_t, bus_size_t,
+	                  bus_space_reservation_t *);
+
+/* Cancel a reservation. */
+void	bus_space_release(bus_space_tag_t, bus_space_reservation_t);
+
+/* Extend a reservation to the left and/or to the right.  The extension
+ * has not been bus_space_map()'d.
+ */
+int	bus_space_extend(bus_space_tag_t, bus_space_reservation_t, bus_size_t,
+	                 bus_size_t);
+
+/* Trim bus space from a reservation on the left and/or on the right. */
+void	bus_space_trim(bus_space_tag_t, bus_space_reservation_t, bus_size_t,
+	               bus_size_t);
 
 #endif	/* _SYS_BUS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.121 2010/02/02 04:28:56 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.121.2.1 2010/04/30 14:39:52 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.121 2010/02/02 04:28:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.121.2.1 2010/04/30 14:39:52 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -87,7 +87,7 @@ static uint64_t nil;
 #ifdef MULTIPROCESSOR
 #define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
 #else
-#define pmap_ctx(PM)	((PM)->pm_ctx)
+#define pmap_ctx(PM)	((PM)->pm_ctx[0])
 #endif
 
 void fill_ddb_regs_from_tf(struct trapframe64 *tf);
@@ -571,20 +571,49 @@ db_prom_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	prom_abort();
 }
 
+/*
+ * Dump the [ID]TLB's.
+ *
+ * Spitfire has 64 entry TLBs for instruction and data.
+ *
+ * Cheetah has 5 TLBs in total:
+ *	instruction tlbs - it16, it128 -- 16 and 128 entry TLBs
+ *	data tlbs - dt16, dt512_0, dt512_1 -- 16, and 2*512 entry TLBs
+ *
+ * The TLB chosen is chosen depending on the values in bits 16/17,
+ * and the address is the index shifted 3 bits left.
+ *
+ * These are in db_tlb_access.S:
+ *	void print_dtlb(size_t tlbsize, int tlbmask)
+ *	void print_itlb(size_t tlbsize, int tlbmask)
+ */
+
 void
 db_dump_dtlb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	extern void print_dtlb(void);
+	extern void print_dtlb(size_t, int);
 
-	print_dtlb();
+	if (CPU_IS_USIII_UP()) {
+		print_dtlb(TLB_SIZE_CHEETAH_D16, TLB_CHEETAH_D16);
+		db_printf("DT512_0:\n");
+		print_dtlb(TLB_SIZE_CHEETAH_D512_0, TLB_CHEETAH_D512_0);
+		db_printf("DT512_1:\n");
+		print_dtlb(TLB_SIZE_CHEETAH_D512_1, TLB_CHEETAH_D512_1);
+	} else
+		print_dtlb(TLB_SIZE_SPITFIRE, 0);
 }
 
 void
 db_dump_itlb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	extern void print_itlb(void);
+	extern void print_itlb(size_t, int);
 
-	print_itlb();
+	if (CPU_IS_USIII_UP()) {
+		print_itlb(TLB_SIZE_CHEETAH_I16, TLB_CHEETAH_I16);
+		db_printf("IT128:\n");
+		print_itlb(TLB_SIZE_CHEETAH_I128, TLB_CHEETAH_I128);
+	} else
+		print_itlb(TLB_SIZE_SPITFIRE, 0);
 }
 
 void
@@ -621,7 +650,8 @@ db_pload_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	}
 }
 
-int64_t pseg_get(struct pmap *, vaddr_t);
+/* XXX no locking; shouldn't matter */
+int64_t pseg_get_real(struct pmap *, vaddr_t);
 
 void
 db_dump_pmap(struct pmap *pm)
@@ -677,9 +707,9 @@ db_pmap_kernel(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 	if (have_addr) {
 		/* lookup an entry for this VA */
 		
-		if ((data = pseg_get(pmap_kernel(), (vaddr_t)addr))) {
+		if ((data = pseg_get_real(pmap_kernel(), (vaddr_t)addr))) {
 			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%qx\n",
-				  (void *)(uintptr_t)addr, (u_long)va_to_seg(addr), 
+				  (void *)(uintptr_t)addr, (u_long)va_to_seg(addr),
 				  (u_long)va_to_dir(addr), (u_long)va_to_pte(addr),
 				  (unsigned long long)data);
 		} else {
@@ -815,7 +845,7 @@ db_lwp_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	struct lwp *l;
 
 	l = curlwp;
-	if (have_addr) 
+	if (have_addr)
 		l = (struct lwp*)(uintptr_t)addr;
 	if (l == NULL) {
 		db_printf("no current lwp\n");
@@ -836,7 +866,7 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 
 	if (curlwp)
 		p = curlwp->l_proc;
-	if (have_addr) 
+	if (have_addr)
 		p = (struct proc*)(uintptr_t)addr;
 	if (p == NULL) {
 		db_printf("no current process\n");
@@ -847,7 +877,7 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		  p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap,
 		  pmap_ctx(p->p_vmspace->vm_map.pmap));
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
-		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
+		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize,
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
 	db_printf("profile timer: %" PRId64 " sec %ld nsec\n",
 		  p->p_stats->p_timer[ITIMER_PROF].it_value.tv_sec,
@@ -889,7 +919,7 @@ db_dump_pcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	int i;
 
 	pcb = curpcb;
-	if (have_addr) 
+	if (have_addr)
 		pcb = (struct pcb*)(uintptr_t)addr;
 
 	db_printf("pcb@%p sp:%p pc:%p cwp:%d pil:%d nsaved:%x onfault:%p\nlastcall:%s\nfull windows:\n",
@@ -898,7 +928,7 @@ db_dump_pcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		  (pcb->lastcall)?pcb->lastcall:"Null");
 	
 	for (i=0; i<pcb->pcb_nsaved; i++) {
-		db_printf("win %d: at %llx local, in\n", i, 
+		db_printf("win %d: at %llx local, in\n", i,
 			  (unsigned long long)pcb->pcb_rw[i+1].rw_in[6]);
 		db_printf("%16llx %16llx %16llx %16llx\n",
 			  (unsigned long long)pcb->pcb_rw[i].rw_local[0],
@@ -934,7 +964,7 @@ db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		db_printf("What PID do you want to map in?\n");
 		return;
 	}
-    
+
 	LIST_FOREACH(p, &allproc, p_list) {
 		pp = p->p_pptr;
 		if (p->p_stat && p->p_pid == addr) {
@@ -976,9 +1006,9 @@ db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 static void
 db_print_trace_entry(struct traptrace *te, int i)
 {
-	db_printf("%d:%d p:%d tt:%x:%llx:%llx %llx:%llx ", i, 
-		  (int)te->tl, (int)te->pid, 
-		  (int)te->tt, (unsigned long long)te->tstate, 
+	db_printf("%d:%d p:%d tt:%x:%llx:%llx %llx:%llx ", i,
+		  (int)te->tl, (int)te->pid,
+		  (int)te->tt, (unsigned long long)te->tstate,
 		  (unsigned long long)te->tfault, (unsigned long long)te->tsp,
 		  (unsigned long long)te->tpc);
 	db_printsym((u_long)te->tpc, DB_STGY_PROC, db_printf);
@@ -1041,12 +1071,12 @@ db_traptrace(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	}
 }
 
-/* 
+/*
  * Use physical or virtul watchpoint registers -- ugh
  *
  * UltraSPARC I and II have both a virtual and physical
- * watchpoint register.  They are controlled by the LSU 
- * control register.  
+ * watchpoint register.  They are controlled by the LSU
+ * control register.
  */
 void
 db_watch(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)

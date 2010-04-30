@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.18 2008/04/28 20:23:20 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.18.20.1 2010/04/30 14:39:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -264,6 +264,18 @@ __END_MACRO
 	case 3:	// nfs
 		argv[argc++] = ptokv(locp);
 		strncpy(loc, "b=nfs", 6);
+		loc += 6;
+		locp += 6;
+		break;
+	case 4:	// dk0
+		argv[argc++] = ptokv(locp);
+		strncpy(loc, "b=dk0", 6);
+		loc += 6;
+		locp += 6;
+		break;
+	case 5:	// ld0
+		argv[argc++] = ptokv(locp);
+		strncpy(loc, "b=ld0", 6);
 		loc += 6;
 		locp += 6;
 		break;

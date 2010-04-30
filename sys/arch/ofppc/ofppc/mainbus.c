@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.24 2010/01/15 20:57:25 phx Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24.2.1 2010/04/30 14:39:41 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2010/01/15 20:57:25 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24.2.1 2010/04/30 14:39:41 uebayasi Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -152,7 +152,7 @@ init_openpic(int node)
 	if (len < sizeof(int)*2)
 		return FALSE;
 
-	if (len == sizeof(int)*2) {	
+	if (len == sizeof(int)*2) {
 		baseaddr = (unsigned char *)mapiodev(reg[0], reg[1]);
 		aprint_verbose("Found openpic at %08x\n", reg[0]);
 #ifdef PIC_OPENPIC
@@ -179,7 +179,7 @@ init_openpic(int node)
 		return FALSE;
 	if (i > OPENPIC_MAX_ISUS)
 		aprint_error("Increase OPENPIC_MAX_ISUS to %d\n", i);
-	
+
 	baseaddr = (unsigned char *)mapiodev(reg[0], 0x40000);
 	aprint_verbose("Found openpic at %08x\n", reg[0]);
 

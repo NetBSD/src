@@ -1,4 +1,4 @@
--/* $NetBSD: isp_target.c,v 1.33 2009/06/25 23:44:02 mjacob Exp $ */
+-/* $NetBSD: isp_target.c,v 1.33.2.1 2010/04/30 14:43:18 uebayasi Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -65,7 +65,7 @@
 
 #ifdef	__NetBSD__
 #include <sys/cdefs.h> 
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.33 2009/06/25 23:44:02 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.33.2.1 2010/04/30 14:43:18 uebayasi Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -855,7 +855,9 @@ isp_target_async(ispsoftc_t *isp, int bus, int event)
 			ct_entry_t *ct = (ct_entry_t *) storage;
 			ct->ct_header.rqs_entry_type = RQSTYPE_CTIO;
 			ct->ct_status = CT_OK;
-			ct->ct_fwhandle = bus;
+			ct->ct_syshandle = bus;
+			/* we skip fwhandle here */
+			ct->ct_fwhandle = 0;
 			ct->ct_flags = CT_SENDSTATUS;
 		}
 		isp_async(isp, ISPASYNC_TARGET_ACTION, storage);

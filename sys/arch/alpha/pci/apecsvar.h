@@ -1,4 +1,4 @@
-/* $NetBSD: apecsvar.h,v 1.9 2009/03/14 14:45:53 dsl Exp $ */
+/* $NetBSD: apecsvar.h,v 1.9.2.1 2010/04/30 14:39:03 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,12 +56,6 @@ struct apecs_config {
 
 	struct extent *ac_io_ex, *ac_d_mem_ex, *ac_s_mem_ex;
 	int	ac_mallocsafe;
-};
-
-struct apecs_softc {
-	struct	device sc_dev;
-
-	struct	apecs_config *sc_acp;
 };
 
 void	apecs_init(struct apecs_config *, int);

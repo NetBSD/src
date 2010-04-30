@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $	*/
+/*	$NetBSD: trap.c,v 1.253.2.1 2010/04/30 14:39:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.253.2.1 2010/04/30 14:39:29 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $");
 #include "opt_kvm86.h"
 #include "opt_kstack_dr0.h"
 #include "opt_xen.h"
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $");
 #include <sys/acct.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/ras.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -119,6 +120,20 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.253 2010/01/17 22:21:18 dsl Exp $");
 #endif
 
 #include "npx.h"
+
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+
+/*
+ * This is a hook which is initialised by the dtrace module
+ * to handle traps which might occur during DTrace probe
+ * execution.
+ */
+dtrace_trap_func_t	dtrace_trap_func = NULL;
+
+dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
+#endif
+
 
 static inline int xmm_si_code(struct lwp *);
 void trap(struct trapframe *);
@@ -337,6 +352,27 @@ trap(struct trapframe *frame)
 		pcb->pcb_cr2 = 0;
 		LWP_CACHE_CREDS(l, p);
 	}
+
+#ifdef KDTRACE_HOOKS
+	/*
+	 * A trap can occur while DTrace executes a probe. Before
+	 * executing the probe, DTrace blocks re-scheduling and sets
+	 * a flag in it's per-cpu flags to indicate that it doesn't
+	 * want to fault. On returning from the the probe, the no-fault
+	 * flag is cleared and finally re-scheduling is enabled.
+	 *
+	 * If the DTrace kernel module has registered a trap handler,
+	 * call it and if it returns non-zero, assume that it has
+	 * handled the trap and modified the trap frame so that this
+	 * function can return normally.
+	 */
+	if ((type == T_PROTFLT || type == T_PAGEFLT) &&
+	    dtrace_trap_func != NULL) {
+		if ((*dtrace_trap_func)(frame, type)) {
+			return;
+		}
+	}
+#endif
 
 	switch (type) {
 
@@ -824,7 +860,8 @@ startlwp(void *arg)
 
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
-	pool_put(&lwp_uc_pool, uc);
+
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l);
 }
 

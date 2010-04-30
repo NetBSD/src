@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.20 2008/04/28 20:23:32 martin Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20.20.1 2010/04/30 14:39:45 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20.20.1 2010/04/30 14:39:45 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,12 +46,13 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20 2008/04/28 20:23:32 martin Exp $"
 #define _POWERPC_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
 
-#if !defined (PPC_IBM4XX)
-#include <powerpc/oea/bat.h>
-#include <powerpc/oea/pte.h>
-#include <powerpc/oea/sr_601.h>
-#include <powerpc/oea/cpufeat.h>
+#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/spr.h>
+#include <powerpc/oea/bat.h>
+#include <powerpc/oea/cpufeat.h>
+#include <powerpc/oea/pte.h>
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/sr_601.h>
 
 extern unsigned long oeacpufeat;
 #endif
@@ -659,12 +660,22 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 #endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
 	bpa = pa - t->pbs_offset;
 
+#ifdef PPC_IBM4XX
+	/*
+	 * XXX: Temporary kludge.
+	 * Don't bother checking the extent during very early bootstrap.
+	 */
+	if (extent_flags) {
+#endif
 	if (extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags)) {
 		printf("memio_unmap: %s 0x%lx, size 0x%lx\n",
 		    (t->pbs_flags & _BUS_SPACE_IO_TYPE) ? "port" : "mem",
 		    (unsigned long)bpa, (unsigned long)size);
 		printf("memio_unmap: can't free region\n");
 	}
+#ifdef PPC_IBM4XX
+	}
+#endif
 
 	unmapiodev(va, size);
 }

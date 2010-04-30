@@ -1,4 +1,4 @@
-$NetBSD: ixp425-fw.README,v 1.1 2006/12/10 10:01:49 scw Exp $
+$NetBSD: ixp425-fw.README,v 1.1.76.1 2010/04/30 14:39:09 uebayasi Exp $
 
 IXP425 NPE Microcode
 ~~~~~~~~~~~~~~~~~~~~
@@ -19,7 +19,7 @@ through license.
 
 You must grab the NPE microcode from here:
 
- http://www.intel.com/design/network/products/npfamily/ixp400_current.htm
+ http://www.intel.com/design/network/products/npfamily/download_ixp400.htm
 
 Select the "Download (without Crypto)" link in the "NPE Microcode"
 section. Note that there is no benefit in selecting the "with Cypto"
@@ -28,6 +28,10 @@ microcode at this time since NetBSD does not support it.
 Note: At the time of writing (December 2006), the NPE Microcode is at
 version 2.3. Newer versions may not work with NetBSD's native Ethernet
 driver. If this is the case, let us know via send-pr(1).
+
+Update: As of March 2010, NPE Microcode is at version 3.0 and has been
+confirmed to work. See:
+ http://mail-index.netbsd.org/port-arm/2010/03/24/msg000912.html
 
 After clicking the link, you will be directed to a click-through license
 page. Assuming you agree to the terms of the license (and you are

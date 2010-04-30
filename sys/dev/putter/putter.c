@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.27 2010/01/28 18:12:55 pooka Exp $	*/
+/*	$NetBSD: putter.c,v 1.27.2.1 2010/04/30 14:43:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.27 2010/01/28 18:12:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.27.2.1 2010/04/30 14:43:46 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -653,10 +653,11 @@ putter_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		putterattach();
 		return devsw_attach("putter", NULL, &bmajor,
 		    &putter_cdevsw, &cmajor);
 	case MODULE_CMD_FINI:
-		return devsw_detach(NULL, &putter_cdevsw);
+		return ENOTTY; /* XXX: putterdetach */
 	default:
 		return ENOTTY;
 	}

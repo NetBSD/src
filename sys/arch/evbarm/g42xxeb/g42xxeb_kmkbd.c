@@ -1,4 +1,4 @@
-/* $NetBSD: g42xxeb_kmkbd.c,v 1.10 2009/03/14 15:36:05 dsl Exp $ */
+/* $NetBSD: g42xxeb_kmkbd.c,v 1.10.2.1 2010/04/30 14:39:15 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003, 2005 Genetec corp.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.10 2009/03/14 15:36:05 dsl Exp $" );
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.10.2.1 2010/04/30 14:39:15 uebayasi Exp $" );
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: g42xxeb_kmkbd.c,v 1.10 2009/03/14 15:36:05 dsl Exp $
 #define RELEASE_WATCH_TICKS  (hz/10)	/* 100ms */
 
 struct kmkbd_softc {
-        struct  device dev;
+	device_t dev;
 
 	struct device *wskbddev;
 	void *ih;			/* interrupt handler */
@@ -86,10 +86,10 @@ struct kmkbd_softc {
 };
 
 
-int kmkbd_match(struct device *, struct cfdata *, void *);
-void kmkbd_attach(struct device *, struct device *, void *);
+int kmkbd_match(device_t, cfdata_t, void *);
+void kmkbd_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(kmkbd, sizeof(struct kmkbd_softc),
+CFATTACH_DECL_NEW(kmkbd, sizeof(struct kmkbd_softc),
     kmkbd_match, kmkbd_attach, NULL, NULL);
 
 static  int	kmkbd_enable(void *, int);
@@ -189,17 +189,18 @@ kmkbd_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-kmkbd_attach(struct device *parent, struct device *self, void *aux)
+kmkbd_attach(device_t parent, device_t self, void *aux)
 {
-	struct kmkbd_softc *sc = (void *)self;
+	struct kmkbd_softc *sc = device_private(self);
 	/*struct obio_attach_args *oa = aux;*/
 	int state0;
 	struct wskbddev_attach_args a;
-	struct obio_softc *osc = (struct obio_softc *)parent;
+	struct obio_softc *osc = device_private(parent);
 	int s;
 
 	printf("\n");
 
+	sc->dev = self;
 	sc->state = ST_INIT;
 
 	if (kmkbd_is_console()){
@@ -367,7 +368,7 @@ kmkbd_read_matrix(struct kmkbd_softc *sc)
 {
 	int i;
 	u_int ret, data;
-	struct obio_softc *osc = (struct obio_softc *)device_parent(&sc->dev);
+	struct obio_softc *osc = device_private(device_parent(sc->dev));
 	bus_space_tag_t iot = osc->sc_iot;
 	bus_space_handle_t ioh = osc->sc_obioreg_ioh;
 
@@ -438,7 +439,7 @@ static int
 kmkbd_intr(void *arg)
 {
 	struct kmkbd_softc *sc = arg;
-	struct obio_softc *osc = (struct obio_softc *)device_parent(&sc->dev);
+	struct obio_softc *osc = device_private(device_parent(sc->dev));
 
 	if ( sc->state != ST_ALL_UP ){
 		printf("Spurious interrupt from key matrix\n");
@@ -499,7 +500,7 @@ kmkbd_watch(void *arg)
 static void
 kmkbd_new_state(struct kmkbd_softc *sc, enum kmkbd_state new_state)
 {
-	struct obio_softc *osc = (struct obio_softc *)device_parent(&sc->dev);
+	struct obio_softc *osc = device_private(device_parent(sc->dev));
 
 	switch(new_state){
 	case ST_DISABLED:

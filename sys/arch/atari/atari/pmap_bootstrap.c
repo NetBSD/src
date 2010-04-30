@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.6 2009/12/06 06:41:29 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.6.2.1 2010/04/30 14:39:09 uebayasi Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -83,9 +83,6 @@ struct memseg	usable_segs[NMEM_SEGS];
 
 extern paddr_t	avail_start;
 extern paddr_t	avail_end;
-#if defined(M68040) || defined(M68060)
-extern u_int	protostfree;
-#endif
 
 extern paddr_t	msgbufpa;
 

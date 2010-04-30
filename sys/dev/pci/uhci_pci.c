@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.49 2010/01/08 19:56:52 dyoung Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.49.2.1 2010/04/30 14:43:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.49 2010/01/08 19:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.49.2.1 2010/04/30 14:43:43 uebayasi Exp $");
 
 #include "ehci.h"
 
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.49 2010/01/08 19:56:52 dyoung Exp $")
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
 
-static bool	uhci_pci_resume(device_t, pmf_qual_t);
+static bool	uhci_pci_resume(device_t, const pmf_qual_t *);
 
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
@@ -229,7 +229,7 @@ uhci_pci_detach(device_t self, int flags)
 }
 
 static bool
-uhci_pci_resume(device_t dv, pmf_qual_t qual)
+uhci_pci_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct uhci_pci_softc *sc = device_private(dv);
 

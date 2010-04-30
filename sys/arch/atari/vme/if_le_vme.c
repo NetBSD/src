@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.28 2010/01/19 22:06:19 pooka Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.28.2.1 2010/04/30 14:39:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.28 2010/01/19 22:06:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.28.2.1 2010/04/30 14:39:13 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -124,7 +124,7 @@ struct le_addresses {
 } lestd[] = {
 	{ 0xfe00fff0, 0xfe010000, IRQUNK, 16, 64*1024,
 				LE_OLD_RIEBL|LE_NEW_RIEBL }, /* Riebl	*/
-	{ 0xffcffff0, 0xffcf0000,      5, 16, 64*1024,
+	{ 0xfecffff0, 0xfecf0000,      5, 16, 64*1024,
 				LE_PAM },		     /* PAM	*/
 	{ 0xfecffff0, 0xfecf0000,      5, 16, 64*1024,
 				LE_ROTHRON },		     /* Rhotron	*/
@@ -197,7 +197,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 	val = bus_space_read_2(lesc->sc_iot, lesc->sc_ioh, LER_RDP); 
 	splx(s);
 
-	return (val);
+	return val;
 }
 
 static int
@@ -228,14 +228,17 @@ le_vme_match(device_t parent, cfdata_t cfp, void *aux)
 		if ((le_ap->irq != IRQUNK) && (va->va_irq != le_ap->irq))
 			continue;
 
-		if (bus_space_map(iot, le_ap->reg_addr, le_ap->reg_size, 0, &ioh)) {
+		if (bus_space_map(iot, le_ap->reg_addr, le_ap->reg_size, 0,
+		    &ioh)) {
 			aprint_error("leprobe: cannot map io-area\n");
-			return (0);
+			return 0;
 		}
 		if (le_ap->mem_size == VMECF_MEMSIZ_DEFAULT) {
 			if (bvme410_probe(iot, ioh)) {
-				bus_space_write_2(iot, ioh, BVME410_BAR, 0x1); /* XXX */
-				le_ap->mem_size = bvme410_mem_size(memt, le_ap->mem_addr);
+				bus_space_write_2(iot, ioh,
+				    BVME410_BAR, 0x1); /* XXX */
+				le_ap->mem_size =
+				    bvme410_mem_size(memt, le_ap->mem_addr);
 			}
 		}
 		if (le_ap->mem_size == VMECF_MEMSIZ_DEFAULT) {
@@ -243,10 +246,11 @@ le_vme_match(device_t parent, cfdata_t cfp, void *aux)
 			continue;
 		}
 
-		if (bus_space_map(memt, le_ap->mem_addr, le_ap->mem_size, 0, &memh)) {
+		if (bus_space_map(memt, le_ap->mem_addr, le_ap->mem_size, 0,
+		    &memh)) {
 			bus_space_unmap(iot, ioh, le_ap->reg_size);
 			aprint_error("leprobe: cannot map memory-area\n");
-			return (0);
+			return 0;
 		}
 		found = probe_addresses(&iot, &memt, &ioh, &memh);
 		bus_space_unmap(iot, ioh, le_ap->reg_size);
@@ -262,8 +266,8 @@ le_vme_match(device_t parent, cfdata_t cfp, void *aux)
 				va->va_irq = le_ap->irq;
 			return 1;
 		}
-    }
-    return (0);
+	}
+	return 0;
 }
 
 static int
@@ -373,39 +377,36 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Go on to find board type
 	 */
-	if ((le_ap->type_hint & LE_PAM)
-		&& bus_space_peek_1(va->va_iot, ioh, LER_EEPROM)) {
+	if ((le_ap->type_hint & LE_PAM) &&
+	    bus_space_peek_1(va->va_iot, ioh, LER_EEPROM)) {
 		aprint_normal("PAM card");
 		lesc->sc_type = LE_PAM;
 		bus_space_read_1(va->va_iot, ioh, LER_MEME);
-	}
-	else if((le_ap->type_hint & LE_BVME410)
-		&& bvme410_probe(va->va_iot, ioh)) {
+	} else if ((le_ap->type_hint & LE_BVME410) &&
+	    bvme410_probe(va->va_iot, ioh)) {
 		aprint_normal("BVME410");
 		lesc->sc_type = LE_BVME410;
-	}
-	else if (le_ap->type_hint & (LE_NEW_RIEBL|LE_OLD_RIEBL)) {
+	} else if (le_ap->type_hint & (LE_NEW_RIEBL|LE_OLD_RIEBL)) {
 		aprint_normal("Riebl card");
-		if(bus_space_read_4(va->va_memt, memh, RIEBL_MAGIC_ADDR)
-								== RIEBL_MAGIC)
+		if (bus_space_read_4(va->va_memt, memh, RIEBL_MAGIC_ADDR) ==
+		    RIEBL_MAGIC)
 			lesc->sc_type = LE_NEW_RIEBL;
 		else {
 			aprint_normal("(without battery) ");
 			lesc->sc_type = LE_OLD_RIEBL;
 		}
-	}
-	else
+	} else
 		aprint_error("le_vme_attach: Unsupported card!");
 
 	switch (lesc->sc_type) {
-	    case LE_BVME410:
+	case LE_BVME410:
 		sc->sc_copytodesc   = bvme410_copytobuf;
 		sc->sc_copyfromdesc = lance_copyfrombuf_contig;
 		sc->sc_copytobuf    = bvme410_copytobuf;
 		sc->sc_copyfrombuf  = lance_copyfrombuf_contig;
 		sc->sc_zerobuf      = bvme410_zerobuf;
 		break;
-	    default:
+	default:
 		sc->sc_copytodesc   = lance_copytobuf_contig;
 		sc->sc_copyfromdesc = lance_copyfrombuf_contig;
 		sc->sc_copytobuf    = lance_copytobuf_contig;
@@ -426,16 +427,16 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 	 * Get MAC address
 	 */
 	switch (lesc->sc_type) {
-	    case LE_OLD_RIEBL:
+	case LE_OLD_RIEBL:
 		memcpy(sc->sc_enaddr, riebl_def_mac,
 					sizeof(sc->sc_enaddr));
 		break;
-	    case LE_NEW_RIEBL:
+	case LE_NEW_RIEBL:
 		for (i = 0; i < sizeof(sc->sc_enaddr); i++)
 		    sc->sc_enaddr[i] =
 			bus_space_read_1(va->va_memt, memh, i + RIEBL_MAC_ADDR);
 			break;
-	    case LE_PAM:
+	case LE_PAM:
 		i = bus_space_read_1(va->va_iot, ioh, LER_EEPROM);
 		for (i = 0; i < sizeof(sc->sc_enaddr); i++) {
 		    sc->sc_enaddr[i] =
@@ -444,7 +445,7 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 		}
 		i = bus_space_read_1(va->va_iot, ioh, LER_MEME);
 		break;
-	    case LE_BVME410:
+	case LE_BVME410:
 		for (i = 0; i < (sizeof(sc->sc_enaddr) >> 1); i++) {
 		    uint16_t tmp;
 
@@ -464,7 +465,7 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 	 * XXX: We always use uservector 64....
 	 */
 	if ((lesc->sc_intr = intr_establish(64, USER_VEC, 0, 
-				(hw_ifun_t)le_intr, lesc)) == NULL) {
+	    (hw_ifun_t)le_intr, lesc)) == NULL) {
 		aprint_error("le_vme_attach: Can't establish interrupt\n");
 		return;
 	}
@@ -475,14 +476,16 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 	switch (lesc->sc_type) {
 		case LE_OLD_RIEBL:
 		case LE_NEW_RIEBL:
-			bus_space_write_2(va->va_memt, memh, RIEBL_IVEC_ADDR,
-								64 + 64);
+			bus_space_write_2(va->va_memt, memh,
+			    RIEBL_IVEC_ADDR, 64 + 64);
 			break;
 		case LE_PAM:
-			bus_space_write_1(va->va_iot, ioh, LER_IVEC, 64 + 64);
+			bus_space_write_1(va->va_iot, ioh,
+			    LER_IVEC, 64 + 64);
 			break;
 		case LE_BVME410:
-			bus_space_write_2(va->va_iot, ioh, BVME410_IVEC, 64 + 64);
+			bus_space_write_2(va->va_iot, ioh,
+			    BVME410_IVEC, 64 + 64);
 			break;
 	}
 
@@ -504,17 +507,17 @@ riebl_skip_reserved_area(struct lance_softc *sc)
 	int	offset = 0;
 	int	i;
 
-	for(i = 0; i < sc->sc_nrbuf; i++) {
-		if (WITHIN(sc->sc_rbufaddr[i], LEBLEN, RIEBL_RES_START)
-		    || WITHIN(sc->sc_rbufaddr[i], LEBLEN, RIEBL_RES_END)) {
+	for (i = 0; i < sc->sc_nrbuf; i++) {
+		if (WITHIN(sc->sc_rbufaddr[i], LEBLEN, RIEBL_RES_START) ||
+		    WITHIN(sc->sc_rbufaddr[i], LEBLEN, RIEBL_RES_END)) {
 			offset = RIEBL_RES_END - sc->sc_rbufaddr[i];
 		}
 		sc->sc_rbufaddr[i] += offset;
 	}
 
-	for(i = 0; i < sc->sc_ntbuf; i++) {
-		if (WITHIN(sc->sc_tbufaddr[i], LEBLEN, RIEBL_RES_START)
-		    || WITHIN(sc->sc_tbufaddr[i], LEBLEN, RIEBL_RES_END)) {
+	for (i = 0; i < sc->sc_ntbuf; i++) {
+		if (WITHIN(sc->sc_tbufaddr[i], LEBLEN, RIEBL_RES_START) ||
+		    WITHIN(sc->sc_tbufaddr[i], LEBLEN, RIEBL_RES_END)) {
 			offset = RIEBL_RES_END - sc->sc_tbufaddr[i];
 		}
 		sc->sc_tbufaddr[i] += offset;

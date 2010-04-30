@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.12 2009/11/26 00:19:16 matt Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.12.2.1 2010/04/30 14:39:17 uebayasi Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -33,7 +33,6 @@
  */
 
 #include "opt_ddb.h"
-#include "fs_kernfs.h"
 #include "opt_ppcparam.h"
 #include "opt_ipkdb.h"
 #include "opt_modular.h"
@@ -52,6 +51,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/hid.h>
 
@@ -213,7 +213,7 @@ __start:
 /* compute end of kernel memory */
 	lis	8,_C_LABEL(end)@ha
 	addi	8,8,_C_LABEL(end)@l
-#if NKSYMS || defined(DDB) || defined(MODULAR) || defined(KERNFS)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
 	stw	3,0(7)
@@ -288,7 +288,7 @@ _C_LABEL(return_to_dink):
 #include <powerpc/powerpc/locore_subr.S>
 
 /*
- * Include common trap / execption code
+ * Include common trap / exception code
  */
 #include <powerpc/powerpc/trap_subr.S>
 

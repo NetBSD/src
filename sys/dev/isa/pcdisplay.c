@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.38 2009/05/12 09:10:15 cegger Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.38.2.1 2010/04/30 14:43:26 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.38 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.38.2.1 2010/04/30 14:43:26 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,7 +361,7 @@ pcdisplay_is_console(bus_space_tag_t iot)
 {
 	if (pcdisplayconsole &&
 	    !pcdisplay_console_attached &&
-	    iot == pcdisplay_console_dc.dc_ph.ph_iot)
+	    bus_space_is_equal(iot, pcdisplay_console_dc.dc_ph.ph_iot))
 		return (1);
 	return (0);
 }

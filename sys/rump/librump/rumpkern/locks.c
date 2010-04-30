@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.38 2010/01/31 00:54:22 snj Exp $	*/
+/*	$NetBSD: locks.c,v 1.38.2.1 2010/04/30 14:44:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.38 2010/01/31 00:54:22 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.38.2.1 2010/04/30 14:44:30 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -225,6 +225,10 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 	struct timespec ts, tick;
 	extern int hz;
 
+	/*
+	 * XXX: this fetches rump kernel time, but rumpuser_cv_timedwait
+	 * uses host time.
+	 */
 	nanotime(&ts);
 	tick.tv_sec = ticks / hz;
 	tick.tv_nsec = (ticks % hz) * (1000000000/hz);

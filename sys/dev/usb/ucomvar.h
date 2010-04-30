@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.17 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.17.18.1 2010/04/30 14:43:52 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,6 +47,14 @@ struct ucom_methods {
 			  void *data, int flag, usb_proc_ptr p);
 	int (*ucom_open)(void *sc, int portno);
 	void (*ucom_close)(void *sc, int portno);
+	/*
+	 * Note: The 'ptr' and 'count' pointers can be adjusted as follows:
+	 *  ptr: If consuming characters from the start of the buffer,
+	 *       advance '*ptr' to skip the data consumed.
+	 *  count: If consuming characters at the end of the buffer,
+	 *         decrement '*count' by the number of characters consumed.
+	 * If consuming all characters, set '*count' to zero.
+	 */
 	void (*ucom_read)(void *sc, int portno, u_char **ptr, u_int32_t *count);
 	void (*ucom_write)(void *sc, int portno, u_char *to, u_char *from,
 			   u_int32_t *count);

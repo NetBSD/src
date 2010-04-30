@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2009/12/10 14:13:49 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77.2.1 2010/04/30 14:39:23 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2009/12/10 14:13:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77.2.1 2010/04/30 14:39:23 uebayasi Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2009/12/10 14:13:49 matt Exp $");
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/kcore.h>
+#include <machine/pcb.h>
 
 #ifdef	KGDB
 #include "com.h"
@@ -244,15 +245,11 @@ u_int hppa_btlb_size_min, hppa_btlb_size_max;
 struct extent *hp700_io_extent;
 static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 
+struct pool hppa_fppl;
+struct fpreg lwp0_fpregs;
+
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
-
-/*
- * Certain devices need DMA'able memory below the 16MB boundary.
- */
-#define	DMA24_SIZE	(128 * 1024)
-struct extent *dma24_ex;
-long dma24_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store = {
@@ -261,7 +258,6 @@ struct cpu_info cpu_info_store = {
 #endif
 };
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 void delay_init(void);
@@ -405,6 +401,7 @@ hppa_init(paddr_t start, void *bi)
 	struct btlb_slot *btlb_slot;
 	int btlb_slot_i;
 	struct btinfo_symtab *bi_sym;
+	struct pcb *pcb0;
 
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
@@ -496,14 +493,6 @@ hppa_init(paddr_t start, void *bi)
 	vstart += MSGBUFSIZE;
 	vstart = round_page(vstart);
 
-	/* Allocate the 24-bit DMA region. */
-	dma24_ex = extent_create("dma24", vstart, vstart + DMA24_SIZE, M_DEVBUF,
-	    (void *)dma24_ex_storage, sizeof(dma24_ex_storage),
-	    EX_NOCOALESCE|EX_NOWAIT);
-	vstart += DMA24_SIZE;
-	vstart = round_page(vstart);
-
-
 	if (usebtlb) {
 		/* Allocate and initialize the BTLB slots array. */
 		btlb_slots = (struct btlb_slot *) ALIGN(vstart);
@@ -591,6 +580,13 @@ do {									\
 	/* We will shortly go virtual. */
 	pagezero_mapped = 0;
 	fcacheall();
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_fpregs = &lwp0_fpregs;
+	memset(&lwp0_fpregs, 0, sizeof(struct fpreg));
+
+	pool_init(&hppa_fppl, sizeof(struct fpreg), 16, 0, 0, "fppl", NULL,
+	    IPL_NONE);
 }
 
 void
@@ -791,7 +787,7 @@ cpuid(void)
 	cpu_revision = (*cpu_desidhash)();
 
 	/* force strong ordering for now */
-	if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
+	if (hppa_cpu_ispa20_p())
 		kpsw |= PSW_O;
 
 	snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
@@ -886,9 +882,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, false, NULL);
-
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
@@ -1701,7 +1694,7 @@ hppa_machine_check(int check_type)
 	if (pimerror < 0) {
 		printf(" - WARNING: could not transfer PIM info (%d)", pimerror);
 	} else {
-		if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
+		if (hppa_cpu_ispa20_p())
 			hppa_pim64_dump(check_type);
 		else
 			hppa_pim_dump(check_type);
@@ -1829,20 +1822,6 @@ dumpsys(void)
 	}
 }
 
-/* bcopy(), error on fault */
-int
-kcopy(const void *from, void *to, size_t size)
-{
-	struct pcb *pcb = lwp_getpcb(curlwp);
-	u_int oldh = pcb->pcb_onfault;
-
-	pcb->pcb_onfault = (u_int)&copy_on_fault;
-	memcpy(to, from, size);
-	pcb->pcb_onfault = oldh;
-
-	return 0;
-}
-
 /*
  * Set registers on exec.
  */
@@ -1875,11 +1854,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	/* reset any of the pending FPU exceptions */
 	hppa_fpu_flush(l);
-	pcb->pcb_fpregs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
-	pcb->pcb_fpregs[1] = 0;
-	pcb->pcb_fpregs[2] = 0;
-	pcb->pcb_fpregs[3] = 0;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
+	pcb->pcb_fpregs->fpr_regs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
+	pcb->pcb_fpregs->fpr_regs[1] = 0;
+	pcb->pcb_fpregs->fpr_regs[2] = 0;
+	pcb->pcb_fpregs->fpr_regs[3] = 0;
 
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
@@ -1991,4 +1969,3 @@ module_init_md(void)
 {
 }
 #endif /* MODULAR */
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.207 2010/01/31 15:40:08 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.207.2.1 2010/04/30 14:43:04 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,10 +130,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.207 2010/01/31 15:40:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.207.2.1 2010/04/30 14:43:04 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "fs_nfs.h"
 #include "opt_vnd.h"
 #endif
 
@@ -1560,13 +1559,10 @@ vndsetcred(struct vnd_softc *vnd, kauth_cred_t cred)
 static void
 vndthrottle(struct vnd_softc *vnd, struct vnode *vp)
 {
-#ifdef NFS
-	extern int (**nfsv2_vnodeop_p)(void *);
 
-	if (vp->v_op == nfsv2_vnodeop_p)
+	if (vp->v_tag == VT_NFS)
 		vnd->sc_maxactive = 2;
 	else
-#endif
 		vnd->sc_maxactive = 8;
 
 	if (vnd->sc_maxactive < 1)

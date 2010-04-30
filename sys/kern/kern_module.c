@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.57 2010/01/19 15:23:14 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.57.2.1 2010/04/30 14:44:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.57 2010/01/19 15:23:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.57.2.1 2010/04/30 14:44:09 uebayasi Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -63,12 +63,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.57 2010/01/19 15:23:14 pooka Exp $
 struct vm_map *module_map;
 char	module_base[MODULE_BASE_SIZE];
 
-struct modlist	module_list = TAILQ_HEAD_INITIALIZER(module_list);
-struct modlist	module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
+struct modlist        module_list = TAILQ_HEAD_INITIALIZER(module_list);
+struct modlist        module_builtins = TAILQ_HEAD_INITIALIZER(module_builtins);
+static struct modlist module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
+
 static module_t	*module_active;
 static int	module_verbose_on;
 static int	module_autoload_on = 1;
 u_int		module_count;
+u_int		module_builtinlist;
 kmutex_t	module_lock;
 u_int		module_autotime = 10;
 u_int		module_gen = 1;
@@ -88,6 +91,9 @@ static int	module_do_unload(const char *);
 static int	module_do_builtin(const char *, module_t **);
 static int	module_fetch_info(module_t *);
 static void	module_thread(void *);
+
+static module_t	*module_lookup(const char *);
+static void	module_enqueue(module_t *);
 
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
@@ -155,6 +161,141 @@ module_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 }
 
 /*
+ * Add modules to the builtin list.  This can done at boottime or
+ * at runtime if the module is linked into the kernel with an
+ * external linker.  All or none of the input will be handled.
+ * Optionally, the modules can be initialized.  If they are not
+ * initialized, module_init_class() or module_load() can be used
+ * later, but these are not guaranteed to give atomic results.
+ */
+int
+module_builtin_add(modinfo_t *const *mip, size_t nmodinfo, bool init)
+{
+	struct module **modp = NULL, *mod_iter;
+	int rv = 0, i, mipskip;
+
+	if (init) {
+		rv = kauth_authorize_system(kauth_cred_get(),
+		    KAUTH_SYSTEM_MODULE, 0, (void *)(uintptr_t)MODCTL_LOAD,
+		    (void *)(uintptr_t)1, NULL);
+		if (rv) {
+			return rv;
+		}
+	}
+
+	for (i = 0, mipskip = 0; i < nmodinfo; i++) {
+		if (mip[i] == &module_dummy) {
+			KASSERT(nmodinfo > 0);
+			nmodinfo--;
+		}
+	}
+	if (nmodinfo == 0)
+		return 0;
+
+	modp = kmem_zalloc(sizeof(*modp) * nmodinfo, KM_SLEEP);
+	for (i = 0, mipskip = 0; i < nmodinfo; i++) {
+		if (mip[i+mipskip] == &module_dummy) {
+			mipskip++;
+			continue;
+		}
+		modp[i] = kmem_zalloc(sizeof(*modp[i]), KM_SLEEP);
+		modp[i]->mod_info = mip[i+mipskip];
+		modp[i]->mod_source = MODULE_SOURCE_KERNEL;
+	}
+	mutex_enter(&module_lock);
+
+	/* do this in three stages for error recovery and atomicity */
+
+	/* first check for presence */
+	for (i = 0; i < nmodinfo; i++) {
+		TAILQ_FOREACH(mod_iter, &module_builtins, mod_chain) {
+			if (strcmp(mod_iter->mod_info->mi_name,
+			    modp[i]->mod_info->mi_name) == 0)
+				break;
+		}
+		if (mod_iter) {
+			rv = EEXIST;
+			goto out;
+		}
+
+		if (module_lookup(modp[i]->mod_info->mi_name) != NULL) {
+			rv = EEXIST;
+			goto out;
+		}
+	}
+
+	/* then add to list */
+	for (i = 0; i < nmodinfo; i++) {
+		TAILQ_INSERT_TAIL(&module_builtins, modp[i], mod_chain);
+		module_builtinlist++;
+	}
+
+	/* finally, init (if required) */
+	if (init) {
+		for (i = 0; i < nmodinfo; i++) {
+			rv = module_do_builtin(modp[i]->mod_info->mi_name,NULL);
+			/* throw in the towel, recovery hard & not worth it */
+			if (rv)
+				panic("builtin module \"%s\" init failed: %d",
+				    modp[i]->mod_info->mi_name, rv);
+		}
+	}
+
+ out:
+	mutex_exit(&module_lock);
+	if (rv != 0) {
+		for (i = 0; i < nmodinfo; i++) {
+			if (modp[i])
+				kmem_free(modp[i], sizeof(*modp[i]));
+		}
+	}
+	kmem_free(modp, sizeof(*modp) * nmodinfo);
+	return rv;
+}
+
+/*
+ * Optionally fini and remove builtin module from the kernel.
+ * Note: the module will now be unreachable except via mi && builtin_add.
+ */
+int
+module_builtin_remove(modinfo_t *mi, bool fini)
+{
+	struct module *mod;
+	int rv = 0;
+
+	if (fini) {
+		rv = kauth_authorize_system(kauth_cred_get(),
+		    KAUTH_SYSTEM_MODULE, 0, (void *)(uintptr_t)MODCTL_UNLOAD,
+		    NULL, NULL);
+		if (rv)
+			return rv;
+
+		mutex_enter(&module_lock);
+		rv = module_do_unload(mi->mi_name);
+		if (rv) {
+			goto out;
+		}
+	} else {
+		mutex_enter(&module_lock);
+	}
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		if (strcmp(mod->mod_info->mi_name, mi->mi_name) == 0)
+			break;
+	}
+	if (mod) {
+		TAILQ_REMOVE(&module_builtins, mod, mod_chain);
+		module_builtinlist--;
+	} else {
+		KASSERT(fini == false);
+		rv = ENOENT;
+	}
+
+ out:
+	mutex_exit(&module_lock);
+	return rv;
+}
+
+/*
  * module_init:
  *
  *	Initialize the module subsystem.
@@ -162,7 +303,10 @@ module_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 void
 module_init(void)
 {
+	__link_set_decl(modules, modinfo_t);
 	extern struct vm_map *module_map;
+	modinfo_t *const *mip;
+	int rv;
 
 	if (module_map == NULL) {
 		module_map = kernel_map;
@@ -185,6 +329,12 @@ module_init(void)
 
 	module_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
 	    module_listener_cb, NULL);
+
+	__link_set_foreach(mip, modules) {
+		if ((rv = module_builtin_add(mip, 1, false) != 0))
+			module_error("builtin %s failed: %d\n",
+			    (*mip)->mi_name, rv);
+	}
 }
 
 /*
@@ -224,13 +374,13 @@ SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
 
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "autoload",
+		CTLTYPE_BOOL, "autoload",
 		SYSCTL_DESCR("Enable automatic load of modules"),
 		NULL, 0, &module_autoload_on, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "verbose",
+		CTLTYPE_BOOL, "verbose",
 		SYSCTL_DESCR("Enable verbose output"),
 		NULL, 0, &module_verbose_on, 0,
 		CTL_CREATE, CTL_EOL);
@@ -245,24 +395,34 @@ SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
 void
 module_init_class(modclass_t class)
 {
-	__link_set_decl(modules, modinfo_t);
-	modinfo_t *const *mip, *mi;
+	TAILQ_HEAD(, module) bi_fail = TAILQ_HEAD_INITIALIZER(bi_fail);
 	module_t *mod;
+	modinfo_t *mi;
 
 	mutex_enter(&module_lock);
 	/*
-	 * Builtins first.  These can't depend on pre-loaded modules.
+	 * Builtins first.  These will not depend on pre-loaded modules
+	 * (because the kernel would not link).
 	 */
-	__link_set_foreach(mip, modules) {
-		mi = *mip;
-		if (mi == &module_dummy) {
-			continue;
+	do {
+		TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+			mi = mod->mod_info;
+			if (class != MODULE_CLASS_ANY && class != mi->mi_class)
+				continue;
+			/*
+			 * If initializing a builtin module fails, don't try
+			 * to load it again.  But keep it around and queue it
+			 * on the disabled list after we're done with module
+			 * init.
+			 */
+			if (module_do_builtin(mi->mi_name, NULL) != 0) {
+				TAILQ_REMOVE(&module_builtins, mod, mod_chain);
+				TAILQ_INSERT_TAIL(&bi_fail, mod, mod_chain);
+			}
+			break;
 		}
-		if (class != MODULE_CLASS_ANY && class != mi->mi_class) {
-			continue;
-		}
-		(void)module_do_builtin(mi->mi_name, NULL);
-	}
+	} while (mod != NULL);
+
 	/*
 	 * Now preloaded modules.  These will be pulled off the
 	 * list as we call module_do_load();
@@ -270,14 +430,20 @@ module_init_class(modclass_t class)
 	do {
 		TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
 			mi = mod->mod_info;
-			if (class != MODULE_CLASS_ANY &&
-			    class != mi->mi_class)
+			if (class != MODULE_CLASS_ANY && class != mi->mi_class)
 				continue;
 			module_do_load(mi->mi_name, false, 0, NULL, NULL,
 			    class, false);
 			break;
 		}
 	} while (mod != NULL);
+
+	/* failed builtin modules remain disabled */
+	while ((mod = TAILQ_FIRST(&bi_fail)) != NULL) {
+		TAILQ_REMOVE(&bi_fail, mod, mod_chain);
+		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
+	}
+
 	mutex_exit(&module_lock);
 }
 
@@ -484,63 +650,49 @@ module_enqueue(module_t *mod)
 /*
  * module_do_builtin:
  *
- *	Initialize a single module from the list of modules that are
- *	built into the kernel (linked into the kernel image).
+ *	Initialize a module from the list of modules that are
+ *	already linked into the kernel.
  */
 static int
 module_do_builtin(const char *name, module_t **modp)
 {
-	__link_set_decl(modules, modinfo_t);
-	modinfo_t *const *mip;
 	const char *p, *s;
 	char buf[MAXMODNAME];
-	modinfo_t *mi;
-	module_t *mod, *mod2;
+	modinfo_t *mi = NULL;
+	module_t *mod, *mod2, *mod_loaded;
 	size_t len;
 	int error;
 
 	KASSERT(mutex_owned(&module_lock));
 
 	/*
-	 * Check to see if already loaded.
-	 */
-	if ((mod = module_lookup(name)) != NULL) {
-		if (modp != NULL) {
-			*modp = mod;
-		}
-		return 0;
-	}
-
-	/*
 	 * Search the list to see if we have a module by this name.
 	 */
-	error = ENOENT;
-	__link_set_foreach(mip, modules) {
-		mi = *mip;
-		if (mi == &module_dummy) {
-			continue;
-		}
-		if (strcmp(mi->mi_name, name) == 0) {
-			error = 0;
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		if (strcmp(mod->mod_info->mi_name, name) == 0) {
+			mi = mod->mod_info;
 			break;
 		}
 	}
-	if (error != 0) {
-		module_error("can't find `%s'", name);
-		return error;
+
+	/*
+	 * Check to see if already loaded.  This might happen if we
+	 * were already loaded as a dependency.
+	 */
+	if ((mod_loaded = module_lookup(name)) != NULL) {
+		KASSERT(mod == NULL);
+		if (modp)
+			*modp = mod_loaded;
+		return 0;
 	}
+
+	/* Note! This is from TAILQ, not immediate above */
+	if (mi == NULL)
+		panic("can't find `%s'", name);
 
 	/*
 	 * Initialize pre-requisites.
 	 */
-	mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
-	if (mod == NULL) {
-		module_error("out of memory for `%s'", name);
-		return ENOMEM;
-	}
-	if (modp != NULL) {
-		*modp = mod;
-	}
 	if (mi->mi_required != NULL) {
 		for (s = mi->mi_required; *s != '\0'; s = p) {
 			if (*s == ',')
@@ -554,12 +706,10 @@ module_do_builtin(const char *name, module_t **modp)
 				break;
 			if (mod->mod_nrequired == MAXMODDEPS - 1) {
 				module_error("too many required modules");
-				kmem_free(mod, sizeof(*mod));
 				return EINVAL;
 			}
 			error = module_do_builtin(buf, &mod2);
 			if (error != 0) {
-				kmem_free(mod, sizeof(*mod));
 				return error;
 			}
 			mod->mod_required[mod->mod_nrequired++] = mod2;
@@ -576,13 +726,18 @@ module_do_builtin(const char *name, module_t **modp)
 	if (error != 0) {
 		module_error("builtin module `%s' "
 		    "failed to init", mi->mi_name);
-		kmem_free(mod, sizeof(*mod));
 		return error;
+	}
+
+	/* load always succeeds after this point */
+
+	TAILQ_REMOVE(&module_builtins, mod, mod_chain);
+	module_builtinlist--;
+	if (modp != NULL) {
+		*modp = mod;
 	}
 	if (mi->mi_class == MODULE_CLASS_SECMODEL)
 		secmodel_register();
-	mod->mod_info = mi;
-	mod->mod_source = MODULE_SOURCE_KERNEL;
 	module_enqueue(mod);
 	return 0;
 }
@@ -621,6 +776,29 @@ module_do_load(const char *name, bool isdep, int flags,
 		module_error("too many required modules");
 		depth--;
 		return EMLINK;
+	}
+
+	/*
+	 * Search the list of disabled builtins first.
+	 */
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		if (strcmp(mod->mod_info->mi_name, name) == 0) {
+			break;
+		}
+	}
+	if (mod) {
+		if ((flags & MODCTL_LOAD_FORCE) == 0) {
+			if (!autoload) {
+				module_error("use -f to reinstate "
+				    "builtin module \"%s\"", name);
+			}
+			depth--;
+			return EPERM;
+		} else {
+			error = module_do_builtin(name, NULL);
+			depth--;
+			return error;
+		}
 	}
 
 	/*
@@ -875,7 +1053,7 @@ module_do_unload(const char *name)
 		module_error("module `%s' not found", name);
 		return ENOENT;
 	}
-	if (mod->mod_refcnt != 0 || mod->mod_source == MODULE_SOURCE_KERNEL) {
+	if (mod->mod_refcnt != 0) {
 		module_print("module `%s' busy", name);
 		return EBUSY;
 	}
@@ -898,7 +1076,13 @@ module_do_unload(const char *name)
 	if (mod->mod_kobj != NULL) {
 		kobj_unload(mod->mod_kobj);
 	}
-	kmem_free(mod, sizeof(*mod));
+	if (mod->mod_source == MODULE_SOURCE_KERNEL) {
+		mod->mod_nrequired = 0; /* will be re-parsed */
+		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
+		module_builtinlist++;
+	} else {
+		kmem_free(mod, sizeof(*mod));
+	}
 	module_gen++;
 
 	return 0;
@@ -1005,6 +1189,8 @@ module_thread(void *cookie)
 		mutex_enter(&module_lock);
 		for (mod = TAILQ_FIRST(&module_list); mod != NULL; mod = next) {
 			next = TAILQ_NEXT(mod, mod_chain);
+			if (mod->mod_source == MODULE_SOURCE_KERNEL)
+				continue;
 			if (uvmexp.free < uvmexp.freemin) {
 				module_thread_ticks = hz;
 			} else if (mod->mod_autotime == 0) {

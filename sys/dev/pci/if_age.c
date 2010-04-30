@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.36 2010/01/19 22:07:00 pooka Exp $ */
+/*	$NetBSD: if_age.c,v 1.36.2.1 2010/04/30 14:43:33 uebayasi Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.36 2010/01/19 22:07:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.36.2.1 2010/04/30 14:43:33 uebayasi Exp $");
 
 #include "vlan.h"
 
@@ -80,7 +80,7 @@ static int	age_match(device_t, cfdata_t, void *);
 static void	age_attach(device_t, device_t, void *);
 static int	age_detach(device_t, int);
 
-static bool	age_resume(device_t, pmf_qual_t);
+static bool	age_resume(device_t, const pmf_qual_t *);
 
 static int	age_miibus_readreg(device_t, int, int);
 static void	age_miibus_writereg(device_t, int, int, int);
@@ -1059,8 +1059,7 @@ age_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 
 	if (enq) {
@@ -1154,7 +1153,7 @@ age_mac_config(struct age_softc *sc)
 }
 
 static bool
-age_resume(device_t dv, pmf_qual_t qual)
+age_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct age_softc *sc = device_private(dv);
 	uint16_t cmd;
@@ -1480,8 +1479,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			}
 #endif
 
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			/* Pass it on. */
 			ether_input(ifp, m);
 

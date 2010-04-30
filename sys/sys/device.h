@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.133 2010/01/30 11:57:18 mlelstv Exp $ */
+/* $NetBSD: device.h,v 1.133.2.1 2010/04/30 14:44:32 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -132,7 +132,7 @@ struct device_lock {
 };
 
 struct device_suspensor {
-	const struct device_suspensor	*ds_delegator;
+	const device_suspensor_t	*ds_delegator;
 	char				ds_name[32];
 };
 
@@ -158,29 +158,30 @@ struct device {
 	size_t		dv_activity_count;
 	void		(**dv_activity_handlers)(device_t, devactive_t);
 
-	bool		(*dv_driver_suspend)(device_t, pmf_qual_t);
-	bool		(*dv_driver_resume)(device_t, pmf_qual_t);
+	bool		(*dv_driver_suspend)(device_t, const pmf_qual_t *);
+	bool		(*dv_driver_resume)(device_t, const pmf_qual_t *);
 	bool		(*dv_driver_shutdown)(device_t, int);
 	bool		(*dv_driver_child_register)(device_t);
 
 	void		*dv_bus_private;
-	bool		(*dv_bus_suspend)(device_t, pmf_qual_t);
-	bool		(*dv_bus_resume)(device_t, pmf_qual_t);
+	bool		(*dv_bus_suspend)(device_t, const pmf_qual_t *);
+	bool		(*dv_bus_resume)(device_t, const pmf_qual_t *);
 	bool		(*dv_bus_shutdown)(device_t, int);
 	void		(*dv_bus_deregister)(device_t);
 
 	void		*dv_class_private;
-	bool		(*dv_class_suspend)(device_t, pmf_qual_t);
-	bool		(*dv_class_resume)(device_t, pmf_qual_t);
+	bool		(*dv_class_suspend)(device_t, const pmf_qual_t *);
+	bool		(*dv_class_resume)(device_t, const pmf_qual_t *);
 	void		(*dv_class_deregister)(device_t);
 
 	devgen_t		dv_add_gen,
 				dv_del_gen;
 
 	struct device_lock	dv_lock;
-	device_suspensor_t	dv_bus_suspensors[DEVICE_SUSPENSORS_MAX];
-	device_suspensor_t	dv_driver_suspensors[DEVICE_SUSPENSORS_MAX];
-	device_suspensor_t	dv_class_suspensors[DEVICE_SUSPENSORS_MAX];
+	const device_suspensor_t
+	    *dv_bus_suspensors[DEVICE_SUSPENSORS_MAX],
+	    *dv_driver_suspensors[DEVICE_SUSPENSORS_MAX],
+	    *dv_class_suspensors[DEVICE_SUSPENSORS_MAX];
 	struct device_garbage {
 		device_t	*dg_devs;
 		int		dg_ndevs;
@@ -430,6 +431,10 @@ int getdisksize(struct vnode *, uint64_t *, unsigned *);
 int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
+int	config_init_component(struct cfdriver *const*,
+			      const struct cfattachinit *, struct cfdata *);
+int	config_fini_component(struct cfdriver *const*,
+			      const struct cfattachinit *, struct cfdata *);
 void	config_init_mi(void);
 void	drvctl_init(void);
 
@@ -445,6 +450,8 @@ int	config_cfdata_detach(cfdata_t);
 struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
 const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
+
+const char *cfdata_ifattr(const struct cfdata *);
 
 int	config_stdsubmatch(device_t, cfdata_t, const int *, void *);
 cfdata_t config_search_loc(cfsubmatch_t, device_t,
@@ -526,13 +533,13 @@ device_t	device_find_by_driver_unit(const char *, int);
 
 bool		device_pmf_is_registered(device_t);
 
-bool		device_pmf_driver_suspend(device_t, pmf_qual_t);
-bool		device_pmf_driver_resume(device_t, pmf_qual_t);
+bool		device_pmf_driver_suspend(device_t, const pmf_qual_t *);
+bool		device_pmf_driver_resume(device_t, const pmf_qual_t *);
 bool		device_pmf_driver_shutdown(device_t, int);
 
 bool		device_pmf_driver_register(device_t,
-		    bool (*)(device_t, pmf_qual_t),
-		    bool (*)(device_t, pmf_qual_t),
+		    bool (*)(device_t, const pmf_qual_t *),
+		    bool (*)(device_t, const pmf_qual_t *),
 		    bool (*)(device_t, int));
 void		device_pmf_driver_deregister(device_t);
 
@@ -541,8 +548,8 @@ void		device_pmf_driver_set_child_register(device_t,
 		    bool (*)(device_t));
 
 void		*device_pmf_bus_private(device_t);
-bool		device_pmf_bus_suspend(device_t, pmf_qual_t);
-bool		device_pmf_bus_resume(device_t, pmf_qual_t);
+bool		device_pmf_bus_suspend(device_t, const pmf_qual_t *);
+bool		device_pmf_bus_resume(device_t, const pmf_qual_t *);
 bool		device_pmf_bus_shutdown(device_t, int);
 
 device_lock_t	device_getlock(device_t);
@@ -550,24 +557,24 @@ void		device_pmf_unlock(device_t);
 bool		device_pmf_lock(device_t);
 
 bool		device_is_self_suspended(device_t);
-void		device_pmf_self_suspend(device_t, pmf_qual_t);
-void		device_pmf_self_resume(device_t, pmf_qual_t);
-bool		device_pmf_self_wait(device_t, pmf_qual_t);
+void		device_pmf_self_suspend(device_t, const pmf_qual_t *);
+void		device_pmf_self_resume(device_t, const pmf_qual_t *);
+bool		device_pmf_self_wait(device_t, const pmf_qual_t *);
 
 void		device_pmf_bus_register(device_t, void *,
-		    bool (*)(device_t, pmf_qual_t),
-		    bool (*)(device_t, pmf_qual_t),
+		    bool (*)(device_t, const pmf_qual_t *),
+		    bool (*)(device_t, const pmf_qual_t *),
 		    bool (*)(device_t, int),
 		    void (*)(device_t));
 void		device_pmf_bus_deregister(device_t);
 
 void		*device_pmf_class_private(device_t);
-bool		device_pmf_class_suspend(device_t, pmf_qual_t);
-bool		device_pmf_class_resume(device_t, pmf_qual_t);
+bool		device_pmf_class_suspend(device_t, const pmf_qual_t *);
+bool		device_pmf_class_resume(device_t, const pmf_qual_t *);
 
 void		device_pmf_class_register(device_t, void *,
-		    bool (*)(device_t, pmf_qual_t),
-		    bool (*)(device_t, pmf_qual_t),
+		    bool (*)(device_t, const pmf_qual_t *),
+		    bool (*)(device_t, const pmf_qual_t *),
 		    void (*)(device_t));
 void		device_pmf_class_deregister(device_t);
 

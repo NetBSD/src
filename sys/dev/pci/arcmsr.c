@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.22 2008/09/23 22:22:41 christos Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.22.14.1 2010/04/30 14:43:29 uebayasi Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.22 2008/09/23 22:22:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.22.14.1 2010/04/30 14:43:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -237,6 +237,9 @@ arc_detach(device_t self, int flags)
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
 		aprint_error_dev(self, "timeout waiting to flush cache\n");
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
 
 	return 0;
 }
@@ -1745,7 +1748,6 @@ arc_create_sensors(void *arg)
 			goto bad;
 
 		sc->sc_sensors[count].units = ENVSYS_DRIVE;
-		sc->sc_sensors[count].monitor = true;
 		sc->sc_sensors[count].flags = ENVSYS_FMONSTCHANGED;
 
 		/* Skip passthrough volumes */		
@@ -1773,7 +1775,6 @@ arc_create_sensors(void *arg)
 		/* Attach disk sensors for this volume */
 		for (j = 0; j < bv.bv_nodisk; j++) {
 			sc->sc_sensors[count].units = ENVSYS_DRIVE;
-			sc->sc_sensors[count].monitor = true;
 			sc->sc_sensors[count].flags = ENVSYS_FMONSTCHANGED;
 
 			snprintf(sc->sc_sensors[count].desc,
@@ -1806,8 +1807,12 @@ arc_create_sensors(void *arg)
 	kthread_exit(0);
 
 bad:
-	kmem_free(sc->sc_sensors, slen);
 	sysmon_envsys_destroy(sc->sc_sme);
+	kmem_free(sc->sc_sensors, slen);
+
+	sc->sc_sme = NULL;
+	sc->sc_sensors = NULL;
+
 	kthread_exit(0);
 }
 

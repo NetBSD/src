@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.33 2009/03/14 21:04:20 dsl Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.33.2.1 2010/04/30 14:43:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.33 2009/03/14 21:04:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.33.2.1 2010/04/30 14:43:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -883,7 +883,7 @@ tcic_chip_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t card_addr, b
 
 	/* XXX this is pretty gross */
 
-	if (h->sc->memt != pcmhp->memt)
+	if (!bus_space_is_equal(h->sc->memt, pcmhp->memt))
 		panic("tcic_chip_mem_map memt is bogus");
 
 	busaddr = pcmhp->addr;
@@ -1102,7 +1102,7 @@ tcic_chip_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset, bus_
 
 	/* XXX this is pretty gross */
 
-	if (h->sc->iot != pcihp->iot)
+	if (!bus_space_is_equal(h->sc->iot, pcihp->iot))
 		panic("tcic_chip_io_map iot is bogus");
 
 	DPRINTF(("tcic_chip_io_map window %d %s port %lx+%lx\n",

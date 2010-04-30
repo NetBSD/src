@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.89 2009/09/03 21:06:21 tls Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.89.2.1 2010/04/30 14:44:22 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -198,10 +198,41 @@ void nfsdreq_fini(void);
 struct nfsrv_descript *nfsdreq_alloc(void);
 void nfsdreq_free(struct nfsrv_descript *);
 bool nfsrv_timer(void);
+int nfs_rcvlock(struct nfsmount *, struct nfsreq *);
+void nfs_rcvunlock(struct nfsmount *);
 
 void nfsdsock_setbits(struct nfssvc_sock *, int);
 void nfsdsock_clearbits(struct nfssvc_sock *, int);
 bool nfsdsock_testbits(struct nfssvc_sock *, int);
+
+/*
+ * Estimate rto for an nfs rpc sent via. an unreliable datagram.
+ * Use the mean and mean deviation of rtt for the appropriate type of rpc
+ * for the frequent rpcs and a default for the others.
+ * The justification for doing "other" this way is that these rpcs
+ * happen so infrequently that timer est. would probably be stale.
+ * Also, since many of these rpcs are
+ * non-idempotent, a conservative timeout is desired.
+ * getattr, lookup - A+2D
+ * read, write     - A+4D
+ * other           - nm_timeo
+ */
+#define	NFS_RTO(n, t) \
+	((t) == 0 ? (n)->nm_timeo : \
+	 ((t) < 3 ? \
+	  (((((n)->nm_srtt[t-1] + 3) >> 2) + (n)->nm_sdrtt[t-1] + 1) >> 1) : \
+	  ((((n)->nm_srtt[t-1] + 7) >> 3) + (n)->nm_sdrtt[t-1] + 1)))
+#define	NFS_SRTT(r)	(r)->r_nmp->nm_srtt[nfs_proct[(r)->r_procnum] - 1]
+#define	NFS_SDRTT(r)	(r)->r_nmp->nm_sdrtt[nfs_proct[(r)->r_procnum] - 1]
+
+extern int nfsrtton;
+extern struct nfsrtt nfsrtt;
+extern const int nfs_proct[];
+
+extern const struct timeval nfs_err_interval;
+extern struct timeval nfs_reply_last_err_time;
+extern struct timeval nfs_timer_last_err_time;
+
 
 /* nfs_srvcache.c */
 void nfsrv_initcache(void);
@@ -276,6 +307,16 @@ void nfs_renewxid(struct nfsreq *);
 int nfsrv_composefh(struct vnode *, nfsrvfh_t *, bool);
 int nfsrv_comparefh(const nfsrvfh_t *, const nfsrvfh_t *);
 void nfsrv_copyfh(nfsrvfh_t *, const nfsrvfh_t *);
+
+extern const enum vtype nv2tov_type[8];
+extern const enum vtype nv3tov_type[8];
+
+extern u_int32_t rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers,
+        rpc_auth_unix, rpc_msgaccepted, rpc_call, rpc_autherr,
+	rpc_auth_kerb;
+extern u_int32_t nfs_prog;
+extern const int nfsv3_procid[NFS_NPROCS];
+extern int nfs_ticks;
 
 /* nfs_syscalls.c */
 struct sys_getfh_args;

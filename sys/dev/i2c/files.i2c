@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.25 2009/05/14 13:22:26 pgoyette Exp $
+#	$NetBSD: files.i2c,v 1.25.2.1 2010/04/30 14:43:11 uebayasi Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -102,9 +102,8 @@ attach	xbseeprom at iic
 file	dev/i2c/xbseeprom.c		xbseeprom
 
 # Memory Serial Presence Detect
-device	spdmem
-attach	spdmem at iic
-file	dev/i2c/spdmem.c		spdmem
+attach	spdmem at iic with spdmem_iic
+file	dev/i2c/spdmem_i2c.c		spdmem_iic
 
 # Memory Temp Sensor
 device	sdtemp: sysmon_envsys
@@ -115,3 +114,8 @@ file	dev/i2c/sdtemp.c		sdtemp
 device	admtemp: sysmon_envsys
 attach	admtemp at iic
 file	dev/i2c/adm1021.c		admtemp
+
+# SMSC LPC47M192 hardware monitor
+device	smscmon: sysmon_envsys
+attach	smscmon at iic
+file	dev/i2c/smscmon.c		smscmon

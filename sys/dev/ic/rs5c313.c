@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313.c,v 1.8 2008/05/04 19:43:06 martin Exp $	*/
+/*	$NetBSD: rs5c313.c,v 1.8.20.1 2010/04/30 14:43:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.8 2008/05/04 19:43:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313.c,v 1.8.20.1 2010/04/30 14:43:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,28 @@ void
 rs5c313_attach(struct rs5c313_softc *sc)
 {
 	device_t self = sc->sc_dev;
+	const char *model;
+
+	switch (sc->sc_model) {
+	case MODEL_5C313:
+		model = "5C313";
+		sc->sc_ctrl[0] = CTRL_24H;
+		sc->sc_ctrl[1] = CTRL2_NTEST;
+		break;
+
+	case MODEL_5C316:
+		model = "5C316";
+		sc->sc_ctrl[0] = 0;
+		sc->sc_ctrl[1] = CTRL2_24H|CTRL2_NTEST;
+		break;
+	
+	default:
+		aprint_error("unknown model (%d)\n", sc->sc_model);
+		return;
+	}
 
 	aprint_naive("\n");
-	aprint_normal(": real time clock\n");
+	aprint_normal(": RICOH %s real time clock\n", model);
 
 	sc->sc_todr.cookie = sc;
 	sc->sc_todr.todr_gettime_ymdhms = rs5c313_todr_gettime_ymdhms;
@@ -99,7 +118,7 @@ rs5c313_init(struct rs5c313_softc *sc)
 	aprint_error_dev(self, "time not valid\n");
 
 	rs5c313_write_reg(sc, RS5C313_TINT, 0);
-	rs5c313_write_reg(sc, RS5C313_CTRL, (CTRL_BASE | CTRL_ADJ));
+	rs5c313_write_reg(sc, RS5C313_CTRL, (sc->sc_ctrl[0] | CTRL_ADJ));
 
 	for (retry = 1000; retry > 0; --retry) {
 		if (rs5c313_read_reg(sc, RS5C313_CTRL) & CTRL_BSY)
@@ -107,13 +126,13 @@ rs5c313_init(struct rs5c313_softc *sc)
 		else
 			break;
 	}
-
 	if (retry == 0) {
 		status = EIO;
 		goto done;
 	}
 
-	rs5c313_write_reg(sc, RS5C313_CTRL, CTRL_BASE);
+	rs5c313_write_reg(sc, RS5C313_CTRL, sc->sc_ctrl[0]);
+	rs5c313_write_reg(sc, RS5C313_CTRL2, sc->sc_ctrl[1]);
 
   done:
 	rtc_ce(sc, 0);
@@ -141,14 +160,13 @@ rs5c313_todr_gettime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 	for (retry = 10; retry > 0; --retry) {
 		rtc_ce(sc, 1);
 
-		rs5c313_write_reg(sc, RS5C313_CTRL, CTRL_BASE);
+		rs5c313_write_reg(sc, RS5C313_CTRL, sc->sc_ctrl[0]);
 		if ((rs5c313_read_reg(sc, RS5C313_CTRL) & CTRL_BSY) == 0)
 			break;
 
 		rtc_ce(sc, 0);
 		delay(1);
 	}
-
 	if (retry == 0) {
 		splx(s);
 		return EIO;
@@ -173,7 +191,6 @@ rs5c313_todr_gettime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 	rtc_ce(sc, 0);
 	splx(s);
 
-
 	dt->dt_year = (dt->dt_year % 100) + 1900;
 	if (dt->dt_year < POSIX_BASE_YEAR) {
 		dt->dt_year += 100;
@@ -197,7 +214,7 @@ rs5c313_todr_settime_ymdhms(todr_chip_handle_t todr, struct clock_ymdhms *dt)
 	for (retry = 10; retry > 0; --retry) {
 		rtc_ce(sc, 1);
 
-		rs5c313_write_reg(sc, RS5C313_CTRL, CTRL_BASE);
+		rs5c313_write_reg(sc, RS5C313_CTRL, sc->sc_ctrl[0]);
 		if ((rs5c313_read_reg(sc, RS5C313_CTRL) & CTRL_BSY) == 0)
 			break;
 
