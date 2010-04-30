@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)swab.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: swab.3,v 1.14 2010/04/29 17:17:18 jruoho Exp $
+.\"	$NetBSD: swab.3,v 1.15 2010/04/30 03:52:13 jruoho Exp $
 .\"
-.Dd April 29, 2010
+.Dd April 30, 2010
 .Dt SWAB 3
 .Os
 .Sh NAME
@@ -53,13 +53,13 @@ swapping adjacent bytes.
 .Pp
 If
 .Fa len
-is negative or zero
-.Nm
+is negative or zero,
+.Fn swab
 does nothing.
 If
 .Fa len
 is odd,
-.Nm
+.Fn swab
 copies
 .Fa len - 1
 bytes and the disposition of the last byte is unspecified.
