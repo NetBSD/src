@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.205 2010/04/19 11:20:56 jruoho Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.206 2010/04/30 21:17:22 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.205 2010/04/19 11:20:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.206 2010/04/30 21:17:22 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1118,7 +1118,9 @@ config_makeroom(int n, struct cfdriver *cd)
 		 * not hold alldevs_mtx, try again.
 		 */
 		if (cd->cd_devs != osp) {
+			mutex_exit(&alldevs_mtx);
 			kmem_free(nsp, sizeof(device_t[new]));
+			mutex_enter(&alldevs_mtx);
 			continue;
 		}
 
@@ -1128,8 +1130,11 @@ config_makeroom(int n, struct cfdriver *cd)
 
 		cd->cd_ndevs = new;
 		cd->cd_devs = nsp;
-		if (old != 0)
+		if (old != 0) {
+			mutex_exit(&alldevs_mtx);
 			kmem_free(osp, sizeof(device_t[old]));
+			mutex_enter(&alldevs_mtx);
+		}
 	}
 	alldevs_nwrite--;
 }
@@ -2005,11 +2010,8 @@ config_twiddle_fn(void *cookie)
 static int
 config_alldevs_lock(void)
 {
-	int s;
-
-	s = splhigh();
 	mutex_enter(&alldevs_mtx);
-	return s;
+	return 0;
 }
 
 static void
@@ -2027,11 +2029,11 @@ config_alldevs_exit(struct alldevs_foray *af)
 	config_dump_garbage(&af->af_garbage);
 }
 
+/*ARGSUSED*/
 static void
 config_alldevs_unlock(int s)
 {
 	mutex_exit(&alldevs_mtx);
-	splx(s);
 }
 
 /*
