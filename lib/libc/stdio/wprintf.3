@@ -1,4 +1,4 @@
-.\" $NetBSD: wprintf.3,v 1.5 2010/04/05 21:35:36 joerg Exp $
+.\" $NetBSD: wprintf.3,v 1.6 2010/04/30 06:22:28 jruoho Exp $
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -38,7 +38,7 @@
 .\" FreeBSD: src/lib/libc/stdio/printf.3,v 1.47 2002/09/06 11:23:55 tjr Exp
 .\" $FreeBSD: src/lib/libc/stdio/wprintf.3,v 1.5 2003/07/05 07:55:34 tjr Exp $
 .\"
-.Dd July 5, 2003
+.Dd April 30, 2010
 .Dt WPRINTF 3
 .Os
 .Sh NAME
@@ -601,16 +601,11 @@ used to end output to strings).
 .Xr setlocale 3 ,
 .Xr wcsrtombs 3 ,
 .Xr wscanf 3
-.Sh STANDARDS
-Subject to the caveats noted in the
 .Sh SECURITY CONSIDERATIONS
-Refer to
+Subject to the caveats noted in the
 .Xr printf 3 .
-.Sx BUGS
-section
-of
-.Xr printf 3 ,
-the
+.Sh STANDARDS
+The
 .Fn wprintf ,
 .Fn fwprintf ,
 .Fn swprintf ,
