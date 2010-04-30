@@ -1,4 +1,4 @@
-.\"	$NetBSD: ulimit.3,v 1.8 2008/04/30 13:10:50 martin Exp $
+.\"	$NetBSD: ulimit.3,v 1.9 2010/04/30 05:09:23 jruoho Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 13, 1999
+.Dd April 30, 2010
 .Dt ULIMIT 3
 .Os
 .Sh NAME
@@ -68,14 +68,6 @@ If successful, the
 .Fn ulimit
 function will not change the setting of
 .Va errno .
-.Pp
-The
-.Fn ulimit
-function is an obsolete interface; applications are encouraged to use
-.Xr getrlimit 2
-and
-.Xr setrlimit 2
-instead.
 .Sh RETURN VALUES
 If successful, the
 .Fn ulimit
@@ -109,4 +101,19 @@ It was attempted to increase a limit, and the caller is not the super-user.
 The
 .Fn ulimit
 function conforms to
-.St -xsh5 .
+.St -xsh5
+and
+.St -p1003.1-2001 .
+It was marked as obsolete in the
+.St -p1003.1-2008
+revision, which recommended the use of
+.Xr getrlimit 2
+and
+.Xr setrlimit 2
+instead, noting that because
+.Fn ulimit
+uses the type
+.Vt long
+rather than
+.Vt rlim_t ,
+it may not be sufficient for file sizes on many current systems.
