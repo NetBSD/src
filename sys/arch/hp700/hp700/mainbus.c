@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.68 2010/04/30 15:39:02 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.69 2010/04/30 15:49:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.68 2010/04/30 15:39:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.69 2010/04/30 15:49:40 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1102,10 +1102,12 @@ mbus_dmamem_alloc(void *v, bus_size_t size, bus_size_t alignment,
 				free(mlist, M_DEVBUF);
 				return (ENOMEM);
 			}
-			segs[seg].ds_addr = 0;
-			segs[seg].ds_len = 0;
+			segs[seg].ds_addr = pa;
+			segs[seg].ds_len = PAGE_SIZE;
+			segs[seg]._ds_mlist = NULL;
 			segs[seg]._ds_va = 0;
-		}
+		} else
+			segs[seg].ds_len += PAGE_SIZE;
 		pa_next = pa + PAGE_SIZE;
 	}
 	*rsegs = seg + 1;
@@ -1149,10 +1151,11 @@ int
 mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
     void **kvap, int flags)
 {
-	struct vm_page *pg;
-	struct pglist *pglist;
+	bus_addr_t addr;
 	vaddr_t va;
-	paddr_t pa;
+	int curseg;
+	u_int pmflags =
+	    hppa_cpu_hastlbu_p() ? PMAP_NOCACHE : 0;
 	const uvm_flag_t kmflags =
 	    (flags & BUS_DMA_NOWAIT) != 0 ? UVM_KMF_NOWAIT : 0;
 
@@ -1163,20 +1166,21 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	if (__predict_false(va == 0))
 		return (ENOMEM);
 
-	/* Stash that in the first segment. */
-	segs[0]._ds_va = va;
 	*kvap = (void *)va;
 
-	/* Map the allocated pages into the chunk. */
-	pglist = segs[0]._ds_mlist;
-	TAILQ_FOREACH(pg, pglist, pageq.queue) {
-		KASSERT(size != 0);
-		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
-		    PMAP_NOCACHE);
+	for (curseg = 0; curseg < nsegs; curseg++) {
+		segs[curseg]._ds_va = va;
+		for (addr = segs[curseg].ds_addr;
+		     addr < (segs[curseg].ds_addr + segs[curseg].ds_len); ) {
+			KASSERT(size != 0);
 
-		va += PAGE_SIZE;
-		size -= PAGE_SIZE;
+			pmap_kenter_pa(va, addr, VM_PROT_READ | VM_PROT_WRITE,
+			   pmflags);
+
+			addr += PAGE_SIZE;
+			va += PAGE_SIZE;
+			size -= PAGE_SIZE;
+		}
 	}
 	pmap_update();
 	return (0);
