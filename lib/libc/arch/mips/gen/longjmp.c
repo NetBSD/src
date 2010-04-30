@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.2.14.1 2010/04/30 14:27:46 matt Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.2.14.2 2010/04/30 16:23:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_link = 0;
 
 	/* Save return value in context */
-	uc.uc_mcontext.__gregs[_R_V0] = val;
+	uc.uc_mcontext.__gregs[_REG_V0] = val;
 
 	/* Copy saved registers */
 	uc.uc_mcontext.__gregs[_REG_S0] = sc->sc_regs[_R_S0];
