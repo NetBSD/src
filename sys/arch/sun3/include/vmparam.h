@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.33 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.34 2010/04/30 13:48:55 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,20 +37,24 @@
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
+#define	USRSTACK	KERNBASE
+
 #ifdef	_SUN3_
 #include <machine/vmparam3.h>
 #endif	/* SUN3 */
 #ifdef	_SUN3X_
 #include <machine/vmparam3x.h>
 #endif	/* SUN3X */
-#ifdef	_LKM
-#define	USRSTACK KERNBASE
-/* Be conservative. If an LKM is gonna be built for sun3x, define this first */
-#ifndef MAXDSIZ
-#define MAXDSIZ         (32*1024*1024)          /* max data size */
+
+/* default for modules etc. */
+#if !defined(_SUN3_) && !defined(_SUN3X_)
+#include <machine/vmparam3.h>
 #endif
-extern	char KERNBASE[];
-#endif	/* _LKM */
+
+/* XXX: this makes modules *compile* */
+#ifdef _MODULE
+extern char KERNBASE[];
+#endif
 
 /* This is needed by some LKMs. */
 #define VM_PHYSSEG_MAX		4
