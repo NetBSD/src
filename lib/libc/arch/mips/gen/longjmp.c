@@ -1,4 +1,4 @@
-/*	$NetBSD: longjmp.c,v 1.2 2008/04/28 20:22:56 martin Exp $	*/
+/*	$NetBSD: longjmp.c,v 1.2.14.1 2010/04/30 14:27:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@ __longjmp14(jmp_buf env, int val)
 	uc.uc_mcontext.__gregs[_REG_S6] = sc->sc_regs[_R_S6];
 	uc.uc_mcontext.__gregs[_REG_S7] = sc->sc_regs[_R_S7];
 	uc.uc_mcontext.__gregs[_REG_S8] = sc->sc_regs[_R_S8];
+#if defined(__mips_n32) || defined(__mips_n64)
+	uc.uc_mcontext.__gregs[_REG_GP] = sc->sc_regs[_R_GP];
+#endif
 	uc.uc_mcontext.__gregs[_REG_SP] = sc->sc_regs[_R_SP];
 	uc.uc_mcontext.__gregs[_REG_RA] = sc->sc_regs[_R_RA];
 	uc.uc_mcontext.__gregs[_REG_EPC] = sc->sc_pc;
