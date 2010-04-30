@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgsnd.2,v 1.17 2009/01/28 08:57:02 wiz Exp $
+.\"	$NetBSD: msgsnd.2,v 1.18 2010/04/30 04:06:20 jruoho Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 26, 2009
+.Dd April 30, 2010
 .Dt MSGSND 2
 .Os
 .Sh NAME
@@ -46,26 +46,30 @@ The
 .Fn msgsnd
 function sends a message from the message queue specified in
 .Fa msqid .
+The
 .Fa msgp
-points to a user-defined structure containing the message.
+argument is a pointer to a user-defined structure containing the message.
 This structure must contain a first field of type
-.Sy long
+.Vt long
 that will indicate the user-defined type of the message.
 The remaining fields will contain the contents of the message.
 The following is an example of what this user-defined
 structure might look like:
-.Bd -literal
+.Bd -literal -offset indent
 struct mymsg {
     long mtype;    /* message type */
     char mtext[1]; /* body of message */
 };
 .Ed
 .Pp
+The
 .Va mtype
-is an integer greater than 0 that can be used for selecting messages (see
+field is an integer greater than 0 that can
+be used for selecting messages (see
 .Xr msgrcv 2 ) .
+The
 .Va mtext
-is an array of bytes, with size up to the system limit
+field is an array of bytes, with size up to the system limit
 .Dv MSGMAX .
 .Pp
 If the number of bytes already on the message queue plus
@@ -89,7 +93,7 @@ If
 does not have
 .Dv IPC_NOWAIT
 set in it, the call will block until:
-.Bl -bullet
+.Bl -bullet -offset indent
 .It
 The condition which caused the call to block no longer exists.
 The message was sent.
@@ -108,7 +112,7 @@ set to
 .Pp
 After a successful call, the data structure associated with the message
 queue is updated in the following way:
-.Bl -bullet
+.Bl -bullet -offset indent
 .It
 .Va msg_qnum
 is incremented by 1.
@@ -142,8 +146,9 @@ points to an invalid address.
 .It Bq Er EINTR
 The system call was interrupted by the delivery of a signal.
 .It Bq Er EINVAL
+The
 .Fa msqid
-is not a valid message queue identifier,
+argument is not a valid message queue identifier,
 or the value of
 .Fa mtype
 is less than 1.
@@ -153,8 +158,9 @@ The message queue was removed while
 was waiting for a resource to become available in order to deliver the
 message.
 .Pp
+The
 .Fa msgsz
-is greater than
+argument is greater than
 .Va msg_qbytes
 or
 .Dv SSIZE_MAX .
@@ -167,7 +173,9 @@ or
 The
 .Nm
 system call conforms to
-.St -xsh5 .
+.St -xsh5
+and
+.St -p1003.1-2001 .
 .Sh HISTORY
 Message queues appeared in the first release of
 .At V .
