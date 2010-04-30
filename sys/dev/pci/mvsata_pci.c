@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata_pci.c,v 1.2 2010/01/08 19:56:52 dyoung Exp $	*/
+/*	$NetBSD: mvsata_pci.c,v 1.2.2.1 2010/04/30 14:43:39 uebayasi Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.2 2010/01/08 19:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata_pci.c,v 1.2.2.1 2010/04/30 14:43:39 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,7 +98,7 @@ static void mvsata_pci_attach(device_t, device_t, void *);
 static int mvsata_pci_detach(device_t, int);
 
 static int mvsata_pci_intr(void *);
-static bool mvsata_pci_resume(device_t, pmf_qual_t qual);
+static bool mvsata_pci_resume(device_t, const pmf_qual_t *qual);
 
 static int mvsata_pci_sreset(struct mvsata_softc *);
 static int mvsata_pci_misc_reset(struct mvsata_softc *);
@@ -298,7 +298,7 @@ mvsata_pci_intr(void *arg)
 }
 
 static bool
-mvsata_pci_resume(device_t dev, pmf_qual_t qual)
+mvsata_pci_resume(device_t dev, const pmf_qual_t *qual)
 {
 
 	/* not yet... */

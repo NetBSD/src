@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.48 2010/01/08 19:56:52 dyoung Exp $	*/
+/*	$NetBSD: yds.c,v 1.48.2.1 2010/04/30 14:43:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.48 2010/01/08 19:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.48.2.1 2010/04/30 14:43:44 uebayasi Exp $");
 
 #include "mpu.h"
 
@@ -677,7 +677,7 @@ yds_init(struct yds_softc *sc)
 }
 
 static bool
-yds_suspend(device_t dv, pmf_qual_t qual)
+yds_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct yds_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -692,7 +692,7 @@ yds_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-yds_resume(device_t dv, pmf_qual_t qual)
+yds_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct yds_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc = sc->sc_pc;

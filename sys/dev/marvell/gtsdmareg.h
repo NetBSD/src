@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsdmareg.h,v 1.4 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtsdmareg.h,v 1.4.96.1 2010/04/30 14:43:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -53,28 +53,22 @@
 #define BITS(hi, lo)        ((~((~0) << ((hi) + 1))) & ((~0) << (lo)))
 #endif
 
+#define GTSDMA_BASE(u)	((u) == 0 ? 0x4000 : 0x6000)
+#define GTSDMA_SIZE	0x1000
+
 /*******************************************************************************
  *
  * SDMA register address offsets relative to the base mapping
  */
-#define SDMA_SDC0	0x4000		/* SDMA #0 Configuration Register */
-#define SDMA_SDCM0	0x4008		/* SDMA #0 Command Register */
-#define SDMA_SCRDP0	0x4810		/* SDMA #0 Current RX Desc. Pointer */
-#define SDMA_SCTDP0	0x4c10		/* SDMA #0 Current TX Desc. Pointer */
-#define SDMA_SFTDP0	0x4c14		/* SDMA #0 First   TX Desc. Pointer */
-#define SDMA_SDC1	0x6000		/* SDMA #1 Configuration Register */
-#define SDMA_SDCM1	0x6008		/* SDMA #1 Command Register */
-#define SDMA_SCRDP1	0x6810		/* SDMA #1 Current RX Desc. Pointer */
-#define SDMA_SCTDP1	0x6c10		/* SDMA #1 Current TX Desc. Pointer */
-#define SDMA_SFTDP1	0x6c14		/* SDMA #1 First   TX Desc. Pointer */
+#define SDMA_SDC	0x000		/* SDMA Configuration Register */
+#define SDMA_SDCM	0x008		/* SDMA Command Register */
+#define SDMA_SCRDP	0x810		/* SDMA Current RX Desc. Pointer */
+#define SDMA_SCTDP	0xc10		/* SDMA Current TX Desc. Pointer */
+#define SDMA_SFTDP	0xc14		/* SDMA First   TX Desc. Pointer */
+
 #define SDMA_ICAUSE	0xb800		/* Interrupt Cause Register */
 #define SDMA_IMASK	0xb880		/* Interrupt Mask Register */
 
-#define SDMA_U_SDC(u)	(SDMA_SDC0 + (((u) & 1) << 13))
-#define SDMA_U_SDCM(u)	(SDMA_SDCM0 + (((u) & 1) << 13))
-#define SDMA_U_SCRDP(u)	(SDMA_SCRDP0 + (((u) & 1) << 13))
-#define SDMA_U_SCTDP(u)	(SDMA_SCTDP0 + (((u) & 1) << 13))
-#define SDMA_U_SFTDP(u)	(SDMA_SFTDP0 + (((u) & 1) << 13))
 
 /*******************************************************************************
  *
@@ -139,10 +133,10 @@
  * for MPSC UART mode.  Note that pointer fields are physical addrs.
  */
 typedef struct sdma_desc {
-	u_int32_t sdma_cnt;		/* size (rx) or shadow (tx) and count */
-	u_int32_t sdma_csr;		/* command/status */
-	u_int32_t sdma_next;		/* next descriptor link */
-	u_int32_t sdma_bufp;		/* buffer pointer */
+	uint32_t sdma_cnt;		/* size (rx) or shadow (tx) and count */
+	uint32_t sdma_csr;		/* command/status */
+	uint32_t sdma_next;		/* next descriptor link */
+	uint32_t sdma_bufp;		/* buffer pointer */
 } sdma_desc_t;
 
 #define SDMA_RX_CNT_BCNT_SHIFT		0		/* byte count */

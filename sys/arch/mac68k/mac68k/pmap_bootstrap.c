@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.87 2009/12/11 22:23:09 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.87.2.1 2010/04/30 14:39:34 uebayasi Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.87 2009/12/11 22:23:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.87.2.1 2010/04/30 14:39:34 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -423,8 +423,10 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 */
 	Sysseg = PA2VA(kstpa, st_entry_t *);
 	Sysseg_pa = PA2VA(kstpa, paddr_t);
+#if defined(M68040)
 	if (mmutype == MMU_68040)
 		protostfree = stfree;
+#endif
 	/*
 	 * Sysptmap: base of kernel page table map
 	 */

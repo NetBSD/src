@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.23 2009/01/29 21:26:14 nonaka Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.23.4.1 2010/04/30 14:39:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -400,11 +400,12 @@ platid_t platid_mask_MACH_CASIO_CASSIOPEIAA_A55V = {{
 	PLATID_MACH_CASIO_CASSIOPEIAA_A55V
 }};
 #endif /* hpcsh */
-#ifdef hpcmips
+#if defined(hpcmips) || defined(hpcarm)
 platid_t platid_mask_MACH_SHARP = {{
 	PLATID_WILD,
 	PLATID_MACH_SHARP
 }};
+#if defined(hpcmips)
 platid_t platid_mask_MACH_SHARP_TRIPAD = {{
 	PLATID_WILD,
 	PLATID_MACH_SHARP_TRIPAD
@@ -466,6 +467,33 @@ platid_t platid_mask_MACH_SHARP_MOBILON_HC1200 = {{
 	PLATID_MACH_SHARP_MOBILON_HC1200
 }};
 #endif /* hpcmips */
+#if defined(hpcarm)
+platid_t platid_mask_MACH_SHARP_WZERO3 = {{
+	PLATID_WILD,
+	PLATID_MACH_SHARP_WZERO3
+}};
+platid_t platid_mask_MACH_SHARP_WZERO3_WS003SH = {{
+	PLATID_CPU_ARM_XSCALE_PXA270,
+	PLATID_MACH_SHARP_WZERO3_WS003SH
+}};
+platid_t platid_mask_MACH_SHARP_WZERO3_WS004SH = {{
+	PLATID_CPU_ARM_XSCALE_PXA270,
+	PLATID_MACH_SHARP_WZERO3_WS004SH
+}};
+platid_t platid_mask_MACH_SHARP_WZERO3_WS007SH = {{
+	PLATID_CPU_ARM_XSCALE_PXA270,
+	PLATID_MACH_SHARP_WZERO3_WS007SH
+}};
+platid_t platid_mask_MACH_SHARP_WZERO3_WS011SH = {{
+	PLATID_CPU_ARM_XSCALE_PXA270,
+	PLATID_MACH_SHARP_WZERO3_WS011SH
+}};
+platid_t platid_mask_MACH_SHARP_WZERO3_WS020SH = {{
+	PLATID_CPU_ARM_XSCALE_PXA270,
+	PLATID_MACH_SHARP_WZERO3_WS020SH
+}};
+#endif /* hpcarm */
+#endif /* hpcmips || hpcarm */
 #ifdef hpcmips
 platid_t platid_mask_MACH_FUJITSU = {{
 	PLATID_WILD,

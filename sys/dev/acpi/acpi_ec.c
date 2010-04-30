@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.59 2010/01/18 18:36:49 jruoho Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.59.2.1 2010/04/30 14:43:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,17 +59,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.59 2010/01/18 18:36:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.59.2.1 2010/04/30 14:43:05 uebayasi Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/condvar.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/mutex.h>
-
-#include <sys/bus.h>
+#include <sys/systm.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -123,7 +122,7 @@ struct acpiec_softc {
 	ACPI_HANDLE sc_ech;
 
 	ACPI_HANDLE sc_gpeh;
-	UINT8 sc_gpebit;
+	uint8_t sc_gpebit;
 
 	bus_space_tag_t sc_data_st;
 	bus_space_handle_t sc_data_sh;
@@ -132,7 +131,7 @@ struct acpiec_softc {
 	bus_space_handle_t sc_csr_sh;
 
 	bool sc_need_global_lock;
-	UINT32 sc_global_lock;
+	uint32_t sc_global_lock;
 
 	kmutex_t sc_mtx, sc_access_mtx;
 	kcondvar_t sc_cv, sc_cv_sci;
@@ -150,10 +149,11 @@ static int acpiec_match(device_t, cfdata_t, void *);
 static void acpiec_attach(device_t, device_t, void *);
 
 static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
-    bus_addr_t, bus_addr_t, ACPI_HANDLE, uint8_t);
+    bus_space_tag_t, bus_addr_t, bus_space_tag_t, bus_addr_t,
+    ACPI_HANDLE, uint8_t);
 
-static bool acpiec_suspend(device_t, pmf_qual_t);
-static bool acpiec_resume(device_t, pmf_qual_t);
+static bool acpiec_suspend(device_t, const pmf_qual_t *);
+static bool acpiec_resume(device_t, const pmf_qual_t *);
 static bool acpiec_shutdown(device_t, int);
 
 static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
@@ -161,10 +161,10 @@ static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
 
 static void acpiec_callout(void *);
 static void acpiec_gpe_query(void *);
-static UINT32 acpiec_gpe_handler(void *);
-static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, UINT32, void *, void **);
-static ACPI_STATUS acpiec_space_handler(UINT32, ACPI_PHYSICAL_ADDRESS,
-    UINT32, ACPI_INTEGER *, void *, void *);
+static uint32_t acpiec_gpe_handler(void *);
+static ACPI_STATUS acpiec_space_setup(ACPI_HANDLE, uint32_t, void *, void **);
+static ACPI_STATUS acpiec_space_handler(uint32_t, ACPI_PHYSICAL_ADDRESS,
+    uint32_t, ACPI_INTEGER *, void *, void *);
 
 static void acpiec_gpe_state_machine(device_t);
 
@@ -190,7 +190,7 @@ acpiecdt_find(device_t parent, ACPI_HANDLE *ec_handle,
 
 	if (ecdt->Control.BitWidth != 8 || ecdt->Data.BitWidth != 8) {
 		aprint_error_dev(parent,
-		    "ECDT register width invalid (%d/%d)\n",
+		    "ECDT register width invalid (%u/%u)\n",
 		    ecdt->Control.BitWidth, ecdt->Data.BitWidth);
 		return false;
 	}
@@ -226,6 +226,7 @@ acpiecdt_match(device_t parent, cfdata_t match, void *aux)
 static void
 acpiecdt_attach(device_t parent, device_t self, void *aux)
 {
+	struct acpibus_attach_args *aa = aux;
 	ACPI_HANDLE ec_handle;
 	bus_addr_t cmd_reg, data_reg;
 	uint8_t gpebit;
@@ -236,8 +237,8 @@ acpiecdt_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": ACPI Embedded Controller via ECDT\n");
 
-	acpiec_common_attach(parent, self, ec_handle, cmd_reg, data_reg,
-	    NULL, gpebit);
+	acpiec_common_attach(parent, self, ec_handle, aa->aa_iot, cmd_reg,
+	    aa->aa_iot, data_reg, NULL, gpebit);
 }
 
 static int
@@ -291,7 +292,8 @@ acpiec_attach(device_t parent, device_t self, void *aux)
 	}
 
 	acpiec_common_attach(parent, self, aa->aa_node->ad_handle,
-	    io1->ar_base, io0->ar_base, gpe_handle, gpebit);
+	    aa->aa_iot, io1->ar_base, aa->aa_iot, io0->ar_base,
+	    gpe_handle, gpebit);
 
 free_res:
 	acpi_resource_cleanup(&ec_res);
@@ -299,12 +301,16 @@ free_res:
 
 static void
 acpiec_common_attach(device_t parent, device_t self,
-    ACPI_HANDLE ec_handle, bus_addr_t cmd_reg, bus_addr_t data_reg,
+    ACPI_HANDLE ec_handle, bus_space_tag_t cmdt, bus_addr_t cmd_reg,
+    bus_space_tag_t datat, bus_addr_t data_reg,
     ACPI_HANDLE gpe_handle, uint8_t gpebit)
 {
 	struct acpiec_softc *sc = device_private(self);
 	ACPI_STATUS rv;
 	ACPI_INTEGER val;
+
+	sc->sc_csr_st = cmdt;
+	sc->sc_data_st = datat;
 
 	sc->sc_ech = ec_handle;
 	sc->sc_gpeh = gpe_handle;
@@ -399,7 +405,7 @@ post_data_map:
 }
 
 static bool
-acpiec_suspend(device_t dv, pmf_qual_t qual)
+acpiec_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	acpiec_cold = true;
 
@@ -407,7 +413,7 @@ acpiec_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-acpiec_resume(device_t dv, pmf_qual_t qual)
+acpiec_resume(device_t dv, const pmf_qual_t *qual)
 {
 	acpiec_cold = false;
 
@@ -505,7 +511,7 @@ acpiec_write_command(struct acpiec_softc *sc, uint8_t cmd)
 }
 
 static ACPI_STATUS
-acpiec_space_setup(ACPI_HANDLE region, UINT32 func, void *arg,
+acpiec_space_setup(ACPI_HANDLE region, uint32_t func, void *arg,
     void **region_arg)
 {
 	if (func == ACPI_REGION_DEACTIVATE)
@@ -646,8 +652,8 @@ done:
 }
 
 static ACPI_STATUS
-acpiec_space_handler(UINT32 func, ACPI_PHYSICAL_ADDRESS paddr,
-    UINT32 width, ACPI_INTEGER *value, void *arg, void *region_arg)
+acpiec_space_handler(uint32_t func, ACPI_PHYSICAL_ADDRESS paddr,
+    uint32_t width, ACPI_INTEGER *value, void *arg, void *region_arg)
 {
 	device_t dv;
 	struct acpiec_softc *sc;
@@ -850,7 +856,7 @@ acpiec_callout(void *arg)
 	mutex_exit(&sc->sc_mtx);
 }
 
-static UINT32
+static uint32_t
 acpiec_gpe_handler(void *arg)
 {
 	device_t dv = arg;

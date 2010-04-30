@@ -1,5 +1,5 @@
-/*	$NetBSD: lom.c,v 1.5 2009/12/28 18:25:44 nakayama Exp $	*/
-/*	$OpenBSD: lom.c,v 1.20 2009/12/12 13:01:00 kettenis Exp $	*/
+/*	$NetBSD: lom.c,v 1.5.2.1 2010/04/30 14:39:51 uebayasi Exp $	*/
+/*	$OpenBSD: lom.c,v 1.21 2010/02/28 20:44:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.5 2009/12/28 18:25:44 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lom.c,v 1.5.2.1 2010/04/30 14:39:51 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1035,7 +1035,7 @@ lom_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static void
 lom1_write_hostname(struct lom_softc *sc)
 {
-	char name[LOM1_IDX_HOSTNAME12 - LOM1_IDX_HOSTNAME1 + 1];
+	char name[(LOM1_IDX_HOSTNAME12 - LOM1_IDX_HOSTNAME1 + 1) + 1];
 	char *p;
 	int i;
 
@@ -1045,7 +1045,7 @@ lom1_write_hostname(struct lom_softc *sc)
 	 * strip off the domain name.
 	 */
 	strlcpy(name, hostname, sizeof(name));
-	if (hostnamelen > sizeof(name)) {
+	if (hostnamelen >= sizeof(name)) {
 		p = strchr(name, '.');
 		if (p)
 			*p = '\0';

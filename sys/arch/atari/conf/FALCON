@@ -1,11 +1,11 @@
 #
-# $NetBSD: FALCON,v 1.92 2009/12/05 20:11:03 pooka Exp $
+# $NetBSD: FALCON,v 1.92.2.1 2010/04/30 14:39:10 uebayasi Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.81 2009/11/23 00:18:37 abs Exp $
+#		NetBSD: GENERIC.in,v 1.87 2010/04/16 13:48:29 pooka Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -91,10 +91,11 @@ pseudo-device tap # virtual Ethernet
 pseudo-device gif # IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device stf # 6to4 IPv6 over IPv4 encapsulation
 pseudo-device ccd 4 # concatenating disk driver
-pseudo-device fss 4 # file system snapshot device
+pseudo-device fss # file system snapshot device
 pseudo-device ipfilter # IP filtering device
 pseudo-device rnd # /dev/random and in-kernel generator
 pseudo-device clockctl # user control of clock subsystem
+pseudo-device ksyms # /dev/ksyms
 pseudo-device view 4 # View (graphics mapping)
 pseudo-device mouse 1 # mouse
 ncrscsi0 at mainbus0 # NCR5380 SCSI driver
@@ -109,6 +110,7 @@ grfcc2 at grfbus0 # 3rd graphics driver
 ite2 at grfcc2 # 3rd tty
 lp0 at mainbus0 # centronics printer
 ser0 at mainbus0 # UART on first 68901 (ttyB0)
+ne0 at mainbus0 # EtherNEC on Atari ROM cartridge slot
 wdc0 at mainbus0 # IDE-bus
 atabus* at wdc? channel ?
 wd* at atabus? drive ?

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.102 2010/01/19 22:07:02 pooka Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.102.2.1 2010/04/30 14:43:38 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.102 2010/01/19 22:07:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.102.2.1 2010/04/30 14:43:38 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -315,7 +315,7 @@ static void	vr_setmulti(struct vr_softc *);
 static void	vr_reset(struct vr_softc *);
 static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, device_t,
     pcireg_t);
-static bool	vr_resume(device_t, pmf_qual_t);
+static bool	vr_resume(device_t, const pmf_qual_t *);
 
 int	vr_copy_small = 0;
 
@@ -764,8 +764,7 @@ vr_rxeof(struct vr_softc *sc)
 		 * a broadcast packet, multicast packet, matches our ethernet
 		 * address or the interface is in promiscuous mode.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -1083,8 +1082,7 @@ vr_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		/*
 		 * Fill in the transmit descriptor.
@@ -1589,7 +1587,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * A Rhine chip was detected. Inform the world.
 	 */
-	printf("%s: Ethernet address: %s\n",
+	aprint_normal("%s: Ethernet address: %s\n",
 		device_xname(self), ether_sprintf(eaddr));
 
 	memcpy(sc->vr_enaddr, eaddr, ETHER_ADDR_LEN);
@@ -1751,7 +1749,7 @@ vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, device_t self,
 }
 
 static bool
-vr_resume(device_t self, pmf_qual_t qual)
+vr_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct vr_softc *sc = device_private(self);
 

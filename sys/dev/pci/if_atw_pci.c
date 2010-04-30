@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.23 2010/01/08 19:56:51 dyoung Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.23.2.1 2010/04/30 14:43:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.23 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.23.2.1 2010/04/30 14:43:33 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,8 @@ struct atw_pci_softc {
 
 static int	atw_pci_match(device_t, cfdata_t, void *);
 static void	atw_pci_attach(device_t, device_t, void *);
-static bool	atw_pci_suspend(device_t, pmf_qual_t);
-static bool	atw_pci_resume(device_t, pmf_qual_t);
+static bool	atw_pci_suspend(device_t, const pmf_qual_t *);
+static bool	atw_pci_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(atw_pci, sizeof(struct atw_pci_softc),
     atw_pci_match, atw_pci_attach, NULL, NULL);
@@ -134,7 +134,7 @@ atw_pci_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static bool
-atw_pci_resume(device_t self, pmf_qual_t qual)
+atw_pci_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct atw_pci_softc *psc = device_private(self);
 	struct atw_softc *sc = &psc->psc_atw;
@@ -151,7 +151,7 @@ atw_pci_resume(device_t self, pmf_qual_t qual)
 }
 
 static bool
-atw_pci_suspend(device_t self, pmf_qual_t qual)
+atw_pci_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct atw_pci_softc *psc = device_private(self);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_autoconf.c,v 1.4 2006/10/07 14:59:53 tsutsui Exp $	*/
+/*	$NetBSD: obs266_autoconf.c,v 1.4.76.1 2010/04/30 14:39:18 uebayasi Exp $	*/
 
 /*
  * Copyright 2004 Shigeyuki Fukushima.
@@ -33,14 +33,17 @@
  * DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.4 2006/10/07 14:59:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_autoconf.c,v 1.4.76.1 2010/04/30 14:39:18 uebayasi Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/obs266.h>
 
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/cpu.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
+
+#include <dev/ic/comreg.h>
 
 
 /*

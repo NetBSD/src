@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.31 2008/04/20 20:42:32 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.31.22.1 2010/04/30 14:43:47 uebayasi Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.31 2008/04/20 20:42:32 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid1.c,v 1.31.22.1 2010/04/30 14:43:47 uebayasi Exp $");
 
 #include "rf_raid.h"
 #include "rf_raid1.h"
@@ -485,7 +485,7 @@ rf_VerifyParityRAID1(RF_Raid_t *raidPtr, RF_RaidAddr_t raidAddr,
 			wrBlock->succedents[i]->params[0].p = pda;
 			wrBlock->succedents[i]->params[1].p = pda->bufPtr;
 			wrBlock->succedents[i]->params[2].v = psID;
-			wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
+			wrBlock->succedents[i]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, which_ru);
 		}
 #if RF_ACC_TRACE > 0
 		memset((char *) &tracerec, 0, sizeof(tracerec));

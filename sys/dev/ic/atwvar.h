@@ -1,4 +1,4 @@
-/*	$NetBSD: atwvar.h,v 1.35 2010/01/17 19:45:06 pooka Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.35.2.1 2010/04/30 14:43:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -168,8 +168,8 @@ enum atw_revision {
 
 struct atw_softc {
 	device_t		sc_dev;
-	struct device_suspensor		sc_suspensor;
-	struct pmf_qual			sc_qual;
+	device_suspensor_t	sc_suspensor;
+	pmf_qual_t		sc_qual;
 
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
@@ -448,6 +448,6 @@ int	atw_detach(struct atw_softc *);
 int	atw_activate(device_t, enum devact);
 int	atw_intr(void *arg);
 bool	atw_shutdown(device_t, int);
-bool	atw_suspend(device_t, pmf_qual_t);
+bool	atw_suspend(device_t, const pmf_qual_t *);
 
 #endif /* _DEV_IC_ATWVAR_H_ */

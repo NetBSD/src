@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100.2.2 2010/04/27 07:19:28 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100.2.3 2010/04/30 14:39:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100.2.2 2010/04/27 07:19:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100.2.3 2010/04/30 14:39:59 uebayasi Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -406,7 +406,7 @@ paddr_t avail_end;	/* PA of last available physical page */
 
 #ifdef XEN
 #ifdef __x86_64__
-/* Dummy PGD for user cr3, used between pmap_deacivate() and pmap_activate() */
+/* Dummy PGD for user cr3, used between pmap_deactivate() and pmap_activate() */
 static paddr_t xen_dummy_user_pgd;
 /* Currently active user PGD (can't use rcr3()) */
 static paddr_t xen_current_user_pgd = 0;
@@ -590,6 +590,7 @@ static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  struct pv_entry **);
 
 static void		 pmap_unmap_ptes(struct pmap *, struct pmap *);
+static void		 pmap_unmap_apdp(void);
 static bool		 pmap_get_physpage(vaddr_t, int, paddr_t *);
 static int		 pmap_pdes_invalid(vaddr_t, pd_entry_t * const *,
 					   pd_entry_t *);
@@ -746,6 +747,23 @@ pmap_apte_flush(struct pmap *pmap)
 }
 
 /*
+ * Unmap the content of APDP PDEs
+ */
+static void
+pmap_unmap_apdp(void)
+{
+	int i;
+
+	for (i = 0; i < PDP_SIZE; i++) {
+		pmap_pte_set(APDP_PDE+i, 0);
+#if defined (XEN) && defined (PAE)
+		/* clear shadow entries too */
+		pmap_pte_set(APDP_PDE_SHADOW+i, 0);
+#endif
+	}
+}
+
+/*
  *	Add a reference to the specified pmap.
  */
 
@@ -765,7 +783,7 @@ pmap_reference(struct pmap *pmap)
 
 static void
 pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
-    pd_entry_t **ptepp, pd_entry_t * const **pdeppp)
+	      pd_entry_t **ptepp, pd_entry_t * const **pdeppp)
 {
 	pd_entry_t opde, npde;
 	struct pmap *ourpmap;
@@ -774,7 +792,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	bool iscurrent;
 	uint64_t ncsw;
 #ifdef XEN
-	int s;
+	int s, i;
 #endif
 
 	/* the kernel's pmap is always accessible */
@@ -833,10 +851,9 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	/* need to load a new alternate pt space into curpmap? */
 	COUNT(apdp_pde_map);
 	opde = *APDP_PDE;
-#ifdef XEN
 	if (!pmap_valid_entry(opde) ||
 	    pmap_pte2pa(opde) != pmap_pdirpa(pmap, 0)) {
-		int i;
+#ifdef XEN
 		s = splvm();
 		/* Make recursive entry usable in user PGD */
 		for (i = 0; i < PDP_SIZE; i++) {
@@ -855,21 +872,21 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 			xpq_queue_invlpg(
 			    (vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE + i]);
 		}
-		xpq_flush_queue();
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(ourpmap);
 		splx(s);
-	}
 #else /* XEN */
-	npde = pmap_pa2pte(pmap_pdirpa(pmap, 0)) | PG_RW | PG_V;
-	if (!pmap_valid_entry(opde) ||
-	    pmap_pte2pa(opde) != pmap_pdirpa(pmap, 0)) {
-		pmap_pte_set(APDP_PDE, npde);
+		int i;
+		for (i = 0; i < PDP_SIZE; i++) {
+			npde = pmap_pa2pte(
+			    pmap_pdirpa(pmap, i * NPDPG)) | PG_RW | PG_V;
+			pmap_pte_set(APDP_PDE+i, npde);
+		}
 		pmap_pte_flush();
 		if (pmap_valid_entry(opde))
 			pmap_apte_flush(ourpmap);
-	}
 #endif /* XEN */
+	}
 	*pmap2 = ourpmap;
 	*ptepp = APTE_BASE;
 	*pdeppp = alternate_pdes;
@@ -914,7 +931,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		KASSERT(curcpu()->ci_pmap == pmap2);
 #endif
 #if defined(MULTIPROCESSOR)
-		pmap_pte_set(APDP_PDE, 0);
+		pmap_unmap_apdp();
 		pmap_pte_flush();
 		pmap_apte_flush(pmap2);
 #endif
@@ -1130,7 +1147,7 @@ pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
 		npte |= PG_N;
 
 #ifndef XEN
-	if ((cpu_feature & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
+	if ((cpu_feature[2] & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
 		npte |= PG_NX;
 #endif
 	opte = pmap_pte_testset (pte, npte); /* zap! */
@@ -1256,7 +1273,7 @@ pmap_bootstrap(vaddr_t kva_start)
 #else
 	unsigned long p1i;
 	vaddr_t kva_end;
-	pt_entry_t pg_nx = (cpu_feature & CPUID_NOX ? PG_NX : 0);
+	pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 #endif
 
 	/*
@@ -1324,7 +1341,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * (and happens later)
 	 */
 
-	if (cpu_feature & CPUID_PGE) {
+	if (cpu_feature[0] & CPUID_PGE) {
 		pmap_pg_g = PG_G;		/* enable software */
 
 		/* add PG_G attribute to already mapped kernel pages */
@@ -1350,7 +1367,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * enable large pages if they are supported.
 	 */
 
-	if (cpu_feature & CPUID_PSE) {
+	if (cpu_feature[0] & CPUID_PSE) {
 		paddr_t pa;
 		pd_entry_t *pde;
 		extern char __data_start;
@@ -1380,11 +1397,10 @@ pmap_bootstrap(vaddr_t kva_start)
 			tlbflush();
 		}
 #if defined(DEBUG)
-		aprint_normal("kernel text is mapped with "
-		    "%lu large pages and %lu normal pages\n",
-		    (unsigned long)howmany(kva - KERNBASE, NBPD_L2),
-		    (unsigned long)howmany((vaddr_t)&__data_start - kva,
-		    NBPD_L1));
+		aprint_normal("kernel text is mapped with %" PRIuPSIZE " large "
+		    "pages and %" PRIuPSIZE " normal pages\n",
+		    howmany(kva - KERNBASE, NBPD_L2),
+		    howmany((vaddr_t)&__data_start - kva, NBPD_L1));
 #endif /* defined(DEBUG) */
 	}
 #endif /* !XEN */
@@ -1399,7 +1415,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		 */
 
 		early_zerop = (void *)(KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
-		early_zero_pte = PTE_BASE + pl1_i((unsigned long)early_zerop);
+		early_zero_pte = PTE_BASE + pl1_i((vaddr_t)early_zerop);
 	}
 
 	/*
@@ -2021,8 +2037,8 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		ptp = pmap_find_ptp(pmap, va, ppa, 1);
 #ifdef DIAGNOSTIC
 		if (ptp == NULL) {
-			printf("va %lx ppa %lx\n", (unsigned long)va,
-			    (unsigned long)ppa);
+			printf("va %" PRIxVADDR " ppa %" PRIxPADDR "\n",
+			    va, ppa);
 			panic("pmap_get_ptp: unmanaged user PTP");
 		}
 #endif
@@ -2077,8 +2093,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	 * PG_V) value at the right place.
 	 */
 	pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] =
-	     (unsigned long)-1 & PG_FRAME;
-#else /* XEN  && __x86_64__*/
+	     (pd_entry_t)-1 & PG_FRAME;
+#else /* XEN && __x86_64__*/
 	/* zero init area */
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
 
@@ -2132,7 +2148,6 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
 	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
 #endif
-	xpq_flush_queue();
 	splx(s);
 #endif /* XEN */
 
@@ -2166,7 +2181,6 @@ pmap_pdp_dtor(void *arg, void *v)
 		xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
 		xpq_queue_invlpg((vaddr_t)object);
 	}
-	xpq_flush_queue();
 	splx(s);
 #endif  /* XEN */
 }
@@ -2217,7 +2231,8 @@ pmap_create(void)
 		pmap->pm_ptphint[i] = NULL;
 	}
 	pmap->pm_stats.wired_count = 0;
-	pmap->pm_stats.resident_count = 1;	/* count the PDP allocd below */
+	/* count the PDP allocd below */
+	pmap->pm_stats.resident_count = PDP_SIZE;
 #if !defined(__x86_64__)
 	pmap->pm_hiexec = 0;
 #endif /* !defined(__x86_64__) */
@@ -2303,13 +2318,7 @@ pmap_destroy(struct pmap *pmap)
 	 */
 	if (xpmap_ptom_masked(pmap_pdirpa(pmap, 0)) == (*APDP_PDE & PG_FRAME)) {
 		kpreempt_disable();
-		for (i = 0; i < PDP_SIZE; i++) {
-	        	pmap_pte_set(&APDP_PDE[i], 0);
-#ifdef PAE
-			/* clear shadow entry too */
-	    		pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
-#endif
-		}
+		pmap_unmap_apdp();
 		pmap_pte_flush();
 	        pmap_apte_flush(pmap_kernel());
 	        kpreempt_enable();
@@ -2742,7 +2751,6 @@ pmap_load(void)
 			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
 				xpq_queue_pte_update(addr, new_pgd[i]);
 		}
-		xpq_flush_queue(); /* XXXtlb */
 		tlbflush();
 		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
 		xen_current_user_pgd = pmap_pdirpa(pmap, 0);
@@ -2755,14 +2763,7 @@ pmap_load(void)
 	 * been freed
 	 */
 	if (*APDP_PDE) {
-		int i;
-		for (i = 0; i < PDP_SIZE; i++) {
-			pmap_pte_set(&APDP_PDE[i], 0);
-#ifdef PAE
-			/* clear shadow entry too */
-			pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
-#endif
-		}
+		pmap_unmap_apdp();
 	}
 	/* lldt() does pmap_pte_flush() */
 #else /* XEN */
@@ -2778,12 +2779,11 @@ pmap_load(void)
 	int i;
 	int s = splvm();
 	/* don't update the kernel L3 slot */
-	for (i = 0 ; i < PDP_SIZE - 1  ; i++, l3_pd += sizeof(pd_entry_t)) {
+	for (i = 0 ; i < PDP_SIZE - 1; i++, l3_pd += sizeof(pd_entry_t)) {
 		xpq_queue_pte_update(l3_pd,
 		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
 	}
 	tlbflush();
-	xpq_flush_queue();
 	splx(s);
 	}
 #else /* PAE */
@@ -2915,7 +2915,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
 	struct cpu_info *ci;
-	vaddr_t pa;
+	paddr_t pa;
 	lwp_t *l;
 	bool hard, rv;
 
@@ -3115,7 +3115,7 @@ pmap_pageidlezero(paddr_t pa)
 	zpte = PTESLEW(zero_pte, id);
 	zerova = VASLEW(zerop, id);
 
-	KASSERT(cpu_feature & CPUID_SSE2);
+	KASSERT(cpu_feature[0] & CPUID_SSE2);
 	KASSERT(*zpte == 0);
 
 	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
@@ -3302,7 +3302,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 #if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 			if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL)
 				panic("pmap_remove_ptes: managed page without "
-				      "PG_PVLIST for 0x%lx", startva);
+				      "PG_PVLIST for %#" PRIxVADDR, startva);
 #endif
 			continue;
 		}
@@ -3311,8 +3311,9 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 #ifdef DIAGNOSTIC
 		if (pg == NULL)
 			panic("pmap_remove_ptes: unmanaged page marked "
-			      "PG_PVLIST, va = 0x%lx, pa = 0x%lx",
-			      startva, (u_long)pmap_pte2pa(opte));
+			      "PG_PVLIST, va = %#" PRIxVADDR ", "
+			      "pa = %#" PRIxPADDR,
+			      startva, (paddr_t)pmap_pte2pa(opte));
 #endif
 
 		/* sync R/M bits */
@@ -3387,7 +3388,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 #if defined(DIAGNOSTIC) && !defined(DOM0OPS)
 		if (PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) != NULL)
 			panic("pmap_remove_pte: managed page without "
-			      "PG_PVLIST for 0x%lx", va);
+			      "PG_PVLIST for %#" PRIxVADDR, va);
 #endif
 		return(true);
 	}
@@ -3396,8 +3397,8 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 #ifdef DIAGNOSTIC
 	if (pg == NULL)
 		panic("pmap_remove_pte: unmanaged page marked "
-		    "PG_PVLIST, va = 0x%lx, pa = 0x%lx", va,
-		    (u_long)(pmap_pte2pa(opte)));
+		    "PG_PVLIST, va = %#" PRIxVADDR ", pa = %#" PRIxPADDR,
+		    va, (paddr_t)pmap_pte2pa(opte));
 #endif
 
 	/* sync R/M bits */
@@ -4487,9 +4488,9 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		for (/* null */; sva < blkendva ; sva += PAGE_SIZE, pte++) {
 			if (!pmap_valid_entry(*pte))
 				continue;
-			printf("va %#lx -> pa %#lx (pte=%#lx)\n",
-			       sva, (unsigned long)*pte,
-			       (unsigned long)pmap_pte2pa(*pte));
+			printf("va %#" PRIxVADDR " -> pa %#" PRIxPADDR
+			    " (pte=%#" PRIxPADDR ")\n",
+			    sva, (paddr_t)pmap_pte2pa(*pte), (paddr_t)*pte);
 		}
 	}
 	pmap_unmap_ptes(pmap, pmap2);
@@ -4562,7 +4563,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t sva, vaddr_t eva, pt_entry_t pte)
 		 * If the CPUs have no notion of global pages then
 		 * reload of %cr3 is sufficient.
 		 */
-		if (pte != 0 && (cpu_feature & CPUID_PGE) == 0)
+		if (pte != 0 && (cpu_feature[0] & CPUID_PGE) == 0)
 			pte = 0;
 
 		if (pm == pmap_kernel()) {

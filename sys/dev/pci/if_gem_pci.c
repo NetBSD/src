@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.41 2010/01/21 17:40:09 macallan Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.41.2.1 2010/04/30 14:43:34 uebayasi Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.41 2010/01/21 17:40:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.41.2.1 2010/04/30 14:43:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ struct gem_pci_softc {
 };
 
 static bool	gem_pci_estintr(struct gem_pci_softc *);
-static bool	gem_pci_suspend(device_t, pmf_qual_t);
-static bool	gem_pci_resume(device_t, pmf_qual_t);
+static bool	gem_pci_suspend(device_t, const pmf_qual_t *);
+static bool	gem_pci_resume(device_t, const pmf_qual_t *);
 static int	gem_pci_detach(device_t, int);
 
 int	gem_pci_match(device_t, cfdata_t, void *);
@@ -374,7 +374,7 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 }
 
 static bool
-gem_pci_suspend(device_t self, pmf_qual_t qual)
+gem_pci_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct gem_pci_softc *gsc = device_private(self);
 
@@ -407,7 +407,7 @@ gem_pci_estintr(struct gem_pci_softc *gsc)
 }
 
 static bool
-gem_pci_resume(device_t self, pmf_qual_t qual)
+gem_pci_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct gem_pci_softc *gsc = device_private(self);
 

@@ -1,0 +1,42 @@
+#	$NetBSD: files.booke,v 1.1.6.2 2010/04/30 14:39:41 uebayasi Exp $
+#
+# PPC BookE specific configuration info
+
+#include "arch/powerpc/fpu/files.fpu"
+
+# Board Properties
+file	arch/powerpc/booke/board_prop.c
+
+# Processor Local Bus
+#device	cpuchip {[device = -1], [core = -1]}: gpiobus
+device	cpuchip {}: gpiobus
+attach	cpuchip at root
+file	arch/powerpc/booke/dev/cpuchip.c	cpuchip
+file	arch/powerpc/booke/dev/gpio.c		gpio
+
+# On-chip Peripheral Bus
+device	obio {[addr = -1], [irq = -1]}
+attach	obio at cpuchip
+file	arch/powerpc/booke/dev/obio.c		obio
+
+device	cpu {}
+attach	cpu at cpuchip
+file	arch/powerpc/booke/cpu.c
+
+device	ecc
+attach	ecc at cpuchip with ecc_cpuchip
+file	arch/powerpc/booke/dev/ecc_cpuchip.c	ecc_cpuchip
+
+# On-chip com device(s)
+attach	com at cpuchip with com_cpuchip
+file	arch/powerpc/booke/dev/com_cpuchip.c	com_cpuchip
+
+# On-chip ethernet device(s)
+device	estec: ether, ifnet, arp, mii
+attach	estec at cpuchip
+file	arch/powerpc/booke/dev/if_etsec.c	etsec
+
+# Watchdog timer
+device	wdog: sysmon_wdog
+attach	wdog at cpuchip
+file	arch/powerpc/booke/dev/wdog.c		wdog

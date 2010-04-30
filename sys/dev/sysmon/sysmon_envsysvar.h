@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.30 2009/06/13 16:08:25 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.30.2.1 2010/04/30 14:43:50 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -100,6 +100,7 @@ struct sme_description_table {
  * common stuff.
  */
 extern	kmutex_t sme_global_mtx; 	/* for the sme linked list and dict */
+extern	prop_dictionary_t sme_propd;	/* the global sensor dictionary */
 
 /* 
  * linked list for the sysmon envsys devices.
@@ -109,10 +110,6 @@ LIST_HEAD(, sysmon_envsys) sysmon_envsys_list;
 /* 
  * functions to handle sysmon envsys devices.
  */
-sme_event_drv_t *sme_add_sensor_dictionary(struct sysmon_envsys *,
-					   prop_array_t,
-			    	  	   prop_dictionary_t,
-					   envsys_data_t *);
 int	sme_update_dictionary(struct sysmon_envsys *);
 int	sme_userset_dictionary(struct sysmon_envsys *,
 			       prop_dictionary_t, prop_array_t);
@@ -126,14 +123,16 @@ void	sysmon_envsys_release(struct sysmon_envsys *, bool);
  */
 int	sme_event_register(prop_dictionary_t, envsys_data_t *,
 			   struct sysmon_envsys *, sysmon_envsys_lim_t *,
-			   int, int);
+			   uint32_t, int, int);
 int	sme_event_unregister(struct sysmon_envsys *, const char *, int);
 void	sme_event_unregister_all(struct sysmon_envsys *);
 void	sme_event_drvadd(void *);
 int	sme_events_init(struct sysmon_envsys *);
 void	sme_events_destroy(struct sysmon_envsys *);
 void	sme_events_check(void *);
-void 	sme_events_worker(struct work *, void *);
+void	sme_events_worker(struct work *, void *);
+void	sme_deliver_event(sme_event_t *);
+int	sme_update_limits(struct sysmon_envsys *, envsys_data_t *);
 
 /* 
  * common functions to create/update objects in a dictionary.

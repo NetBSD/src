@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.16 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: tsc.c,v 1.16.2.1 2010/04/30 14:39:03 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.16 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.16.2.1 2010/04/30 14:39:03 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,11 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.16 2009/03/14 21:04:02 dsl Exp $");
 
 #define tsc() { Generate ctags(1) key. }
 
-int	tscmatch(struct device *, struct cfdata *, void *);
-void	tscattach(struct device *, struct device *, void *);
+static int tscmatch(device_t, cfdata_t, void *);
+static void tscattach(device_t, device_t, void *);
 
-CFATTACH_DECL(tsc, sizeof(struct tsc_softc),
-    tscmatch, tscattach, NULL, NULL);
+CFATTACH_DECL_NEW(tsc, 0, tscmatch, tscattach, NULL, NULL);
 
 extern struct cfdriver tsc_cd;
 
@@ -71,11 +70,10 @@ struct tsp_config tsp_configuration[2];
 
 static int tscprint(void *, const char *pnp);
 
-int	tspmatch(struct device *, struct cfdata *, void *);
-void	tspattach(struct device *, struct device *, void *);
+static int tspmatch(device_t, cfdata_t, void *);
+static void tspattach(device_t, device_t, void *);
 
-CFATTACH_DECL(tsp, sizeof(struct tsp_softc),
-    tspmatch, tspattach, NULL, NULL);
+CFATTACH_DECL_NEW(tsp, 0, tspmatch, tspattach, NULL, NULL);
 
 extern struct cfdriver tsp_cd;
 
@@ -88,8 +86,8 @@ static int tscfound;
 /* Which hose is the display console connected to? */
 int tsp_console_hose;
 
-int
-tscmatch(struct device *parent, struct cfdata *match, void *aux)
+static int
+tscmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -98,13 +96,12 @@ tscmatch(struct device *parent, struct cfdata *match, void *aux)
 	    && !tscfound;
 }
 
-void tscattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+tscattach(device_t parent, device_t self, void * aux)
 {
 	int i;
 	int nbus;
-	u_int64_t csc, aar;
+	uint64_t csc, aar;
 	struct tsp_attach_args tsp;
 	struct mainbus_attach_args *ma = aux;
 
@@ -148,8 +145,8 @@ tscprint(void *aux, const char *p)
 
 #define tsp() { Generate ctags(1) key. }
 
-int
-tspmatch(struct device *parent, struct cfdata *match, void *aux)
+static int
+tspmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct tsp_attach_args *t = aux;
 
@@ -157,8 +154,8 @@ tspmatch(struct device *parent, struct cfdata *match, void *aux)
 	    && strcmp(t->tsp_name, tsp_cd.cd_name) == 0;
 }
 
-void
-tspattach(struct device *parent, struct device *self, void *aux)
+static void
+tspattach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args pba;
 	struct tsp_attach_args *t = aux;
@@ -218,7 +215,8 @@ tsp_init(int mallocsafe, int n)
 }
 
 static int
-tsp_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
+tsp_bus_get_window(int type, int window,
+    struct alpha_bus_space_translation *abst)
 {
 	struct tsp_config *tsp = &tsp_configuration[tsp_console_hose];
 	bus_space_tag_t st;

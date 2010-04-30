@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.210 2009/03/15 17:20:10 cegger Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.210.2.1 2010/04/30 14:44:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.210 2009/03/15 17:20:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.210.2.1 2010/04/30 14:44:22 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -85,6 +85,8 @@ extern int nfs_ticks;
  * for the per drive stats.
  */
 unsigned int nfs_mount_count = 0;
+
+int nfs_commitsize;
 
 /*
  * nfs vfs operations.
@@ -1135,4 +1137,32 @@ nfs_start(struct mount *mp, int flags)
 {
 
 	return (0);
+}
+
+/*
+ * Called once at VFS init to initialize client-specific data structures.
+ */
+void
+nfs_vfs_init(void)
+{
+
+	/* Initialize NFS server / client shared data. */
+	nfs_init();
+	nfs_node_init();
+
+	/* Initialize the kqueue structures */
+	nfs_kqinit();
+	/* Initialize the iod structures */
+	nfs_iodinit();
+
+	nfs_commitsize = uvmexp.npages << (PAGE_SHIFT - 4);
+}
+
+void
+nfs_vfs_done(void)
+{
+
+	nfs_node_done();
+	nfs_kqfini();
+	nfs_iodfini();
 }

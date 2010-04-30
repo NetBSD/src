@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.34 2009/12/12 14:44:10 tsutsui Exp $	*/
+/*	$NetBSD: pdc.c,v 1.34.2.1 2010/04/30 14:39:23 uebayasi Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.34 2009/12/12 14:44:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.34.2.1 2010/04/30 14:39:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ int pdcret[32] PDC_ALIGNMENT;
 char pdc_consbuf[IODC_MINIOSIZ] PDC_ALIGNMENT;
 iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
-int CONADDR;
 
 int pdcmatch(device_t, cfdata_t, void *);
 void pdcattach(device_t, device_t, void *);
@@ -135,7 +134,6 @@ pdc_init(void)
 
 	/* XXX make pdc current console */
 	cn_tab = &constab[0];
-	/* TODO: detect that we are on cereal, and set CONADDR */
 
 	cn_init_magic(&pdc_cnm_state);
 	cn_set_magic("+++++");
@@ -430,8 +428,7 @@ pdccnputc(dev_t dev, int c)
 
 	if (err < 0) {
 #if defined(DDB) || defined(KGDB)
-		__asm volatile ("break        %0, %1"
-			:: "i" (HPPA_BREAK_KERNEL), "i" (HPPA_BREAK_KGDB));
+		Debugger();
 #endif /* DDB || KGDB */
 		delay(250000);
 #if 0

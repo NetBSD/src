@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.69 2010/01/23 18:31:04 bouyer Exp $ */
+/* $NetBSD: cgd.c,v 1.69.2.1 2010/04/30 14:43:04 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.69 2010/01/23 18:31:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.69.2.1 2010/04/30 14:43:04 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -187,6 +187,9 @@ cgd_attach(device_t parent, device_t self, void *aux)
 	simple_lock_init(&sc->sc_slock);
 	dk_sc_init(&sc->sc_dksc, sc, device_xname(sc->sc_dev));
 	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dksc.sc_xname, &cgddkdriver);
+
+	 if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "unable to register power management hooks\n");
 }
 
 

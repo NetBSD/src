@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116 2010/01/07 09:34:49 jdc Exp $
+# $NetBSD: GENERIC,v 1.116.2.1 2010/04/30 14:39:50 uebayasi Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.116.2.1 $"
 
 maxusers	64
 
@@ -228,15 +228,18 @@ options 	PPP_FILTER	# Add active filters for ppp (via bpf)
 #options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 
-#### Main bus and CPU .. all systems.
+#### Main bus and CPUs .. all systems.
 mainbus0 at root
-cpu0	at mainbus0
+options 	MULTIPROCESSOR		# include multiprocessor support
+cpu* 		at mainbus0		# declare additional CPUs
 
 #### Bus types found on SPARC systems.
 
 sbus*	at mainbus0				# SBus-based systems
 psycho*	at mainbus0				# PCI-based systems
+schizo*	at mainbus?
 pci*	at psycho?
+pci*	at schizo?
 pci*	at ppb?
 ppb*	at pci?					# `APB' support.
 ebus*	at pci?					# ebus devices
@@ -484,6 +487,7 @@ qe*		at qec?
 # 	UT marks untested.
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11) UT
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 UT
+bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
@@ -587,6 +591,9 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
+# Option N.V. Wireless WAN modems
+uhso*	at uhub? port ? configuration ?
+
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
@@ -665,6 +672,12 @@ radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+
+# Firewire support
+fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
+ieee1394if* at fwohci?
+fwip*	at ieee1394if?			# IP over IEEE1394
+sbp*	at ieee1394if? euihi ? euilo ?
 
 ## Loopback network interface; required
 pseudo-device	loop
@@ -856,6 +869,8 @@ cgsix*		at sbus? slot ? offset ?
 
 ## Sun FFB
 ffb*		at mainbus0
+upa*		at mainbus?
+ffb*		at upa?
 
 ## Sun XVR-1000
 gfb*		at mainbus0
@@ -868,6 +883,9 @@ radeonfb*	at pci?
 
 # Sun PGX32 / TechSource Raptor GFX 8P
 pm2fb*		at pci?
+
+# 3Dlabs Wildcat based boards like XVR-500, 1200 etc.
+wcfb*		at pci?
 
 # generic PCI framebuffers
 genfb*		at pci?
@@ -884,7 +902,8 @@ wskbd0 at kbd0
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-options 	WSEMUL_SUN		# sun terminal emulation
+#options	WSEMUL_SUN              # sun terminal emulation
+options 	WSEMUL_VT100		# allow us to be wsvt25
 options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WSDISPLAY_COMPAT_USL		# VT handling
@@ -895,17 +914,20 @@ options 	FONT_GALLANT12x22		# PROM font look-alike
 #### Other device configuration
 
 psm*		at ebus?		# Ultrabook IIi microcontroller
-envctrl*	at ebus?		# Ultra E450 environmental monitoring
+pcfiic*		at ebus?		# various environmental monitoring
+iic*		at pcfiic?
 lom*		at ebus?		# LOMlite lights out management
 
 # Netra X1 / T1 style environmental monitoring
 alipm*		at pci?
 iic*		at alipm?
-spdmem*		at iic? addr 0x54
-spdmem*		at iic? addr 0x55
-spdmem*		at iic? addr 0x56
-spdmem*		at iic? addr 0x57
-admtemp*	at iic? addr 0x18
+
+# I2C devices
+spdmem*		at iic? addr?
+admtemp*	at iic? addr?
+ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450
+lmtemp*		at iic? addr?
+tda*		at iic? addr?	# fan controll on SB1000/2000
 
 ### Other pseudo-devices
 
@@ -927,7 +949,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 #pseudo-device	bcsp			# BlueCore Serial Protocol
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
 pseudo-device	lockstat		# lock profiling

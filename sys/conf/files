@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.974.2.2 2010/02/10 02:10:28 uebayasi Exp $
+#	$NetBSD: files,v 1.974.2.3 2010/04/30 14:43:03 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -59,6 +59,8 @@ defflag	opt_callout.h		CALLWHEEL_STATS
 
 defflag				CPU_IN_CKSUM
 
+defflag opt_dtrace.h		KDTRACE_HOOKS
+
 defflag opt_posix.h		P1003_1B_SEMAPHORE
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
 defparam opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
@@ -107,6 +109,7 @@ defparam opt_pax.h		PAX_MPROTECT
  				PAX_ASLR_DELTA_STACK_LSB
  				PAX_ASLR_DELTA_STACK_LEN
  				PAX_ASLR_DELTA_PROG_LEN
+				PAX_ASLR_DEBUG
 
 defflag	opt_fileassoc.h		FILEASSOC
 
@@ -329,6 +332,13 @@ attach	video at videobus
 
 device	lm: sysmon_envsys
 file	dev/ic/nslm7x.c			lm			needs-flag
+
+# JEDEC standard SPD EPROM
+#
+# (included here so files.i2c can define an attachment)
+
+device	spdmem
+file	dev/ic/spdmem.c			spdmem
 
 # I2C device support
 include "dev/i2c/files.i2c"
@@ -904,7 +914,7 @@ file	dev/ic/cd18xx.c			cd18xx
 # Realtek 8019/8029 NE2000-compatible network interface subroutines
 #
 define	rtl80x9
-file	dev/ic/rtl80x9.c		rtl80x9
+file	dev/ic/rtl80x9.c		rtl80x9			needs-flag
 
 # Realtek 8129/8139 Ethernet controllers
 #
@@ -1037,6 +1047,10 @@ file	dev/ic/lm700x.c			lm700x
 # Philips PCF8584 i2c controller
 define	pcf8584
 file	dev/ic/pcf8584.c		pcf8584
+
+# PCA9564 i2c controller
+define	pca9564
+file	dev/ic/pca9564.c		pca9564
 
 # ACPI power management timer (hardware access, independent of ACPI)
 #
@@ -1385,7 +1399,7 @@ file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
 file	dev/firmload.c			firmload
-file	dev/fss.c			fss			needs-count
+file	dev/fss.c			fss
 file	dev/keylock.c			keylock
 file	dev/lockstat.c			lockstat		needs-flag
 file	dev/md.c			md			needs-count
@@ -1427,6 +1441,7 @@ file	kern/kern_clock.c
 file	kern/kern_condvar.c
 file	kern/kern_core.c		coredump
 file	kern/kern_cpu.c
+file	kern/kern_ctf.c			kdtrace_hooks
 file	kern/kern_descrip.c
 file	kern/kern_event.c
 file	kern/kern_exec.c
@@ -1459,6 +1474,7 @@ file	kern/kern_resource.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
 file	kern/kern_rwlock_obj.c
+file	kern/kern_sdt.c			kdtrace_hooks
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
 file	kern/kern_softint.c
@@ -1466,6 +1482,7 @@ file	kern/kern_ssp.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
 file	kern/kern_synch.c
+file	kern/kern_syscall.c
 file	kern/kern_sysctl.c
 file	kern/kern_tc.c
 file	kern/kern_time.c
@@ -1499,6 +1516,7 @@ file	kern/subr_kobj.c
 file	kern/subr_kobj_vfs.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
+file	kern/subr_lwp_specificdata.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_percpu.c
@@ -1576,6 +1594,7 @@ file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c
+
 file	net/bpf.c			bpfilter
 file	net/bpf_filter.c		bpf_filter
 file	net/bpf_stub.c
@@ -1634,39 +1653,7 @@ file	netinet/ip_etherip.c		etherip & inet
 file	netinet6/ip6_etherip.c		etherip & inet6
 file	netinet6/in6_gif.c		gif & inet6
 
-file	netisdn/i4b_ctl.c		isdnctl			needs-flag
-file	netisdn/i4b_isppp.c		ippp			needs-count
-file	netisdn/i4b_ipr.c		irip			needs-count
-file	netisdn/i4b_rbch.c		isdnbchan		needs-count
-file	netisdn/i4b_tel.c		isdntel			needs-count
-file	netisdn/i4b_trace.c		isdntrc			needs-count
-
-file	netisdn/i4b_mbuf.c		passive_isdn
-file	netisdn/i4b_l2.c		passive_isdn
-file	netisdn/i4b_l2fsm.c		passive_isdn
-file	netisdn/i4b_uframe.c		passive_isdn
-file	netisdn/i4b_tei.c		passive_isdn
-file	netisdn/i4b_sframe.c		passive_isdn
-file	netisdn/i4b_iframe.c		passive_isdn
-file	netisdn/i4b_l2timer.c		passive_isdn
-file	netisdn/i4b_util.c		passive_isdn
-file	netisdn/i4b_lme.c		passive_isdn
-# Q.931 handler
-file	netisdn/i4b_q931.c		passive_isdn
-file	netisdn/i4b_q932fac.c		passive_isdn
-file	netisdn/i4b_l3fsm.c		passive_isdn
-file	netisdn/i4b_l3timer.c		passive_isdn
-file	netisdn/i4b_l2if.c		passive_isdn
-file	netisdn/i4b_l4if.c		passive_isdn
-# isdn device driver, interface to isdnd
-file	netisdn/i4b_i4bdrv.c		isdn			needs-flag
-file	netisdn/i4b_l4.c		isdndev			needs-flag
-file	netisdn/i4b_l4mgmt.c		isdndev			needs-flag
-file	netisdn/i4b_l4timer.c		isdndev			needs-flag
-# capi
-file	netisdn/i4b_capi_l4if.c		isdncapi
-file	netisdn/i4b_capi_llif.c		isdncapi
-file	netisdn/i4b_capi_msgs.c		isdncapi
+include "netisdn/files.i4b"
 
 # Game adapter (joystick)
 device	joy

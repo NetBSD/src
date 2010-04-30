@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.36 2009/02/26 21:08:48 christos Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.36.2.1 2010/04/30 14:43:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.36 2009/02/26 21:08:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.36.2.1 2010/04/30 14:43:01 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.36 2009/02/26 21:08:48 christos 
 #include <sys/time.h>
 #include <sys/timex.h>
 #include <sys/timevar.h>
-#include <sys/timetc.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/resourcevar.h>
@@ -354,17 +353,15 @@ netbsd32___clock_gettime50(struct lwp *l, const struct netbsd32___clock_gettime5
 		syscallarg(netbsd32_clockid_t) clock_id;
 		syscallarg(netbsd32_timespecp_t) tp;
 	} */
-	clockid_t clock_id;
+	int error;
 	struct timespec ats;
 	struct netbsd32_timespec ts32;
 
-	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
+	error = clock_gettime1(SCARG(uap, clock_id), &ats);
+	if (error != 0)
+		return error;
 
-	nanotime(&ats);
 	netbsd32_from_timespec(&ats, &ts32);
-
 	return copyout(&ts32, SCARG_P32(uap, tp), sizeof(ts32));
 }
 
@@ -376,19 +373,14 @@ netbsd32___clock_settime50(struct lwp *l, const struct netbsd32___clock_settime5
 		syscallarg(const netbsd32_timespecp_t) tp;
 	} */
 	struct netbsd32_timespec ts32;
-	clockid_t clock_id;
 	struct timespec ats;
 	int error;
-
-	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
 
 	if ((error = copyin(SCARG_P32(uap, tp), &ts32, sizeof(ts32))) != 0)
 		return (error);
 
 	netbsd32_to_timespec(&ts32, &ats);
-	return settime(l->l_proc, &ats);
+	return clock_settime1(l->l_proc, SCARG(uap, clock_id), &ats, true);
 }
 
 int
@@ -399,20 +391,16 @@ netbsd32___clock_getres50(struct lwp *l, const struct netbsd32___clock_getres50_
 		syscallarg(netbsd32_timespecp_t) tp;
 	} */
 	struct netbsd32_timespec ts32;
-	clockid_t clock_id;
 	struct timespec ts;
 	int error = 0;
 
-	clock_id = SCARG(uap, clock_id);
-	if (clock_id != CLOCK_REALTIME)
-		return (EINVAL);
+	error = clock_getres1(SCARG(uap, clock_id), &ts);
+	if (error != 0)
+		return error;
 
 	if (SCARG_P32(uap, tp)) {
-		ts.tv_sec = 0;
-		ts.tv_nsec = 1000000000 / hz;
-
 		netbsd32_from_timespec(&ts, &ts32);
-		error = copyout(&ts, SCARG_P32(uap, tp), sizeof(ts));
+		error = copyout(&ts32, SCARG_P32(uap, tp), sizeof(ts32));
 	}
 
 	return error;
@@ -425,50 +413,22 @@ netbsd32___nanosleep50(struct lwp *l, const struct netbsd32___nanosleep50_args *
 		syscallarg(const netbsd32_timespecp_t) rqtp;
 		syscallarg(netbsd32_timespecp_t) rmtp;
 	} */
-	static int nanowait;
 	struct netbsd32_timespec ts32;
-	struct timespec rqt, ctime, rmt;
-	int error, timo;
+	struct timespec rqt, rmt;
+	int error, error1;
 
 	error = copyin(SCARG_P32(uap, rqtp), &ts32, sizeof(ts32));
 	if (error)
 		return (error);
-
 	netbsd32_to_timespec(&ts32, &rqt);
-	if (itimespecfix(&rqt))
-		return (EINVAL);
 
-	getnanotime(&ctime);
-	timespecadd(&rqt, &ctime, &rqt);
-	timo = tshzto(&rqt);
-	/*
-	 * Avoid inadvertantly sleeping forever
-	 */
-	if (timo == 0)
-		timo = 1;
+	error = nanosleep1(l, &rqt, SCARG_P32(uap, rmtp) ? &rmt : NULL);
+	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
 
-	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
-	if (error == ERESTART)
-		error = EINTR;
-	if (error == EWOULDBLOCK)
-		error = 0;
-
-	if (SCARG_P32(uap, rmtp)) {
-		int error1;
-
-		getnanotime(&rmt);
-
-		timespecsub(&rqt, &rmt, &rmt);
-		if (rmt.tv_sec < 0)
-			timespecclear(&rmt);
-
-		netbsd32_from_timespec(&rmt, &ts32);
-		error1 = copyout(&ts32, SCARG_P32(uap,rmtp), sizeof(ts32));
-		if (error1)
-			return (error1);
-	}
-
-	return error;
+	netbsd32_from_timespec(&rmt, &ts32);
+	error1 = copyout(&ts32, SCARG_P32(uap,rmtp), sizeof(ts32));
+	return error1 ? error1 : error;
 }
 
 static int

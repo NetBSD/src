@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.33 2010/01/23 22:32:42 cegger Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.33.2.1 2010/04/30 14:40:01 uebayasi Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -810,8 +810,7 @@ so always copy for now.
 		m->m_pkthdr.rcvif = ifp;
 		ifp->if_ipackets++;
 		
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
 	}
 	xen_rmb(); /* be sure to read the request before updating pointer */
@@ -1001,8 +1000,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 			resp_prod++;
 			i++; /* this packet has been queued */
 			ifp->if_opackets++;
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 		}
 		if (i != 0) {
 			/*
@@ -1272,8 +1270,7 @@ xennetback_ifsoftstart_copy(void *arg)
 			resp_prod++;
 			i++; /* this packet has been queued */
 			ifp->if_opackets++;
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 		}
 		if (i != 0) {
 			if (HYPERVISOR_grant_table_op(GNTTABOP_copy,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8 2009/11/07 07:27:45 cegger Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8.2.1 2010/04/30 14:39:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 NONAKA Kimihiro
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8 2009/11/07 07:27:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.1 2010/04/30 14:39:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	mapsize = sizeof(struct _bus_dmamap)
 		+ (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	mapstore = malloc(mapsize, M_DMAMAP, M_ZERO
-			  | (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
+			  | ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK));
 	if (mapstore == NULL)
 		return ENOMEM;
 
@@ -527,21 +527,28 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
-			sh_dcache_wbinv_range(naddr, minlen);
+			if (SH_HAS_WRITEBACK_CACHE)
+				sh_dcache_wbinv_range(naddr, minlen);
+			else
+				sh_dcache_inv_range(naddr, minlen);
 			break;
 
 		case BUS_DMASYNC_PREREAD:
-			if (((naddr | minlen) & (~(sh_cache_line_size - 1))) == 0) {
-				sh_dcache_inv_range(naddr, minlen);
-			} else {
+			if (SH_HAS_WRITEBACK_CACHE &&
+			    ((naddr | minlen) & (sh_cache_line_size - 1)) != 0)
 				sh_dcache_wbinv_range(naddr, minlen);
-			}
+			else
+				sh_dcache_inv_range(naddr, minlen);
 			break;
 
 		case BUS_DMASYNC_PREWRITE:
-			if (SH_HAS_WRITEBACK_CACHE) {
+			if (SH_HAS_WRITEBACK_CACHE)
 				sh_dcache_wb_range(naddr, minlen);
-			}
+			break;
+
+		case BUS_DMASYNC_POSTREAD:
+		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+			sh_dcache_inv_range(naddr, minlen);
 			break;
 		}
 		offset = 0;
@@ -657,7 +664,7 @@ int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
     size_t size, void **kvap, int flags)
 {
-	vaddr_t va;
+	vaddr_t va, topva;
 	bus_addr_t addr;
 	int curseg;
 
@@ -685,9 +692,10 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	size = round_page(size);
 
 	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY
-			  | (flags & BUS_DMA_NOWAIT) ? UVM_KMF_NOWAIT : 0);
+			  | ((flags & BUS_DMA_NOWAIT) ? UVM_KMF_NOWAIT : 0));
 	if (va == 0)
 		return (ENOMEM);
+	topva = va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		DPRINTF(("%s: segs[%d]: ds_addr = 0x%08lx, ds_len = %ld\n",
@@ -707,7 +715,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	}
 
 	pmap_update(pmap_kernel());
-	*kvap = (void *)va;
+	*kvap = (void *)topva;
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.50 2009/08/23 13:46:48 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.50.2.1 2010/04/30 14:39:10 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.50 2009/08/23 13:46:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.50.2.1 2010/04/30 14:39:10 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,6 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.50 2009/08/23 13:46:48 tsutsui Exp $");
 #if defined(GPROF) && defined(PROFTIMER)
 #include <machine/profile.h>
 #endif
+
+#include "ioconf.h"
 
 static int	atari_rtc_get(todr_chip_handle_t, struct clock_ymdhms *);
 static int	atari_rtc_set(todr_chip_handle_t, struct clock_ymdhms *);
@@ -155,8 +157,6 @@ static int	clockmatch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(clock, sizeof(struct clock_softc),
     clockmatch, clockattach, NULL, NULL);
-
-extern struct cfdriver clock_cd;
 
 const struct cdevsw rtc_cdevsw = {
 	rtcopen, rtcclose, rtcread, rtcwrite, noioctl,

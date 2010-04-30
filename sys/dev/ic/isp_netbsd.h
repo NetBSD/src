@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.71 2010/01/11 01:33:22 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.71.2.1 2010/04/30 14:43:18 uebayasi Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -231,7 +231,9 @@ default:							\
 #define	XS_STSP(xs)		(&(xs)->status)
 #define	XS_SNSP(xs)		(&(xs)->sense.scsi_sense)
 #define	XS_SNSLEN(xs)		(sizeof (xs)->sense)
-#define	XS_SNSKEY(xs)		((xs)->sense.scsi_sense.flags)
+#define	XS_SNSKEY(xs)		SSD_SENSE_KEY((xs)->sense.scsi_sense.flags)
+#define	XS_SNSASC(xs)		((xs)->sense.scsi_sense.asc)
+#define	XS_SNSASCQ(xs)		((xs)->sense.scsi_sense.ascq)
 /* PORTING NOTES: check to see if there's a better way of checking for tagged */
 #define	XS_TAG_P(ccb)		(((xs)->xs_control & XS_CTL_POLL) != 0)
 /* PORTING NOTES: We elimited OTAG option for performance */
@@ -259,6 +261,8 @@ default:							\
 		xs->error = XS_SENSE;				\
 	}							\
 	memcpy(&(xs)->sense, ptr, imin(XS_SNSLEN(xs), len))
+
+#define	XS_SENSE_VALID(xs)		(xs)->error == XS_SENSE
 
 #define	DEFAULT_FRAMESIZE(isp)		(isp)->isp_osinfo.framesize
 #define	DEFAULT_EXEC_THROTTLE(isp)	(isp)->isp_osinfo.exec_throttle
@@ -392,6 +396,7 @@ void isp_uninit(ispsoftc_t *);
  * Platform Library Functionw
  */
 void isp_prt(ispsoftc_t *, int level, const char *, ...);
+void isp_xs_prt(ispsoftc_t *, XS_T *, int level, const char *, ...);
 void isp_lock(ispsoftc_t *);
 void isp_unlock(ispsoftc_t *);
 uint64_t isp_microtime_sub(struct timeval *, struct timeval *);

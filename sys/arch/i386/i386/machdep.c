@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.681.2.1 2010/04/28 08:31:06 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.681.2.2 2010/04/30 14:39:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681.2.1 2010/04/28 08:31:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.681.2.2 2010/04/30 14:39:29 uebayasi Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -244,10 +244,6 @@ struct mtrr_funcs *mtrr_funcs;
 
 int	physmem;
 
-unsigned int cpu_feature;
-unsigned int cpu_feature2;
-unsigned int cpu_feature_padlock;
-
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -268,7 +264,6 @@ vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
 vaddr_t	pentium_idt_vaddr;
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
@@ -482,7 +477,7 @@ cpu_startup(void)
 
 #if NCARDBUS > 0
 	/* Tell RBUS how much RAM we have, so it can use heuristics. */
-	rbus_min_start_hint(ptoa(physmem));
+	rbus_min_start_hint(ctob((psize_t)physmem));
 #endif
 
 	minaddr = 0;
@@ -492,12 +487,6 @@ cpu_startup(void)
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Allocate mbuf cluster submap.
-	 */
-	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	/* Say hello. */
 	banner();
@@ -530,8 +519,8 @@ i386_proc0_tss_ldt_init(void)
 	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
-	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 #ifndef XEN
 	lldt(pmap_kernel()->pm_ldt_sel);
@@ -1018,8 +1007,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
 	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
-	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
 #ifndef XEN
@@ -1195,7 +1184,7 @@ init386_msgbuf(void)
 	vps = NULL;
 	for (x = 0; x < vm_nphysseg; ++x) {
 		vps = VM_PHYSMEM_PTR(x);
-		if (ptoa(vps->avail_end) == avail_end) {
+		if (ctob(vps->avail_end) == avail_end) {
 			break;
 		}
 	}
@@ -1204,12 +1193,12 @@ init386_msgbuf(void)
 
 	/* Shrink so it'll fit in the last segment. */
 	if (vps->avail_end - vps->avail_start < atop(sz))
-		sz = ptoa(vps->avail_end - vps->avail_start);
+		sz = ctob(vps->avail_end - vps->avail_start);
 
 	vps->avail_end -= atop(sz);
 	vps->end -= atop(sz);
 	msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
-	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
+	msgbuf_p_seg[msgbuf_p_cnt++].paddr = ctob(vps->avail_end);
 
 	/* Remove the last segment if it now has no pages. */
 	if (vps->start == vps->end) {
@@ -1221,7 +1210,7 @@ init386_msgbuf(void)
 	for (avail_end = 0, x = 0; x < vm_nphysseg; x++)
 		if (VM_PHYSMEM_PTR(x)->avail_end > avail_end)
 			avail_end = VM_PHYSMEM_PTR(x)->avail_end;
-	avail_end = ptoa(avail_end);
+	avail_end = ctob(avail_end);
 
 	if (sz == reqsz)
 		return;
@@ -1305,16 +1294,16 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
 	cpu_probe(&cpu_info_primary);
-	cpu_feature = cpu_info_primary.ci_feature_flags;
-	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
-	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	pcb = lwp_getpcb(&lwp0);
 
+	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
+	cpu_feature[2] &= ~CPUID_EXT_FEAT_BLACKLIST;
+
+	cpu_init_msrs(&cpu_info_primary, true);
+
 #ifdef XEN
-	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 	pcb->pcb_cr3 = PDPpaddr - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
@@ -1393,7 +1382,7 @@ init386(paddr_t first_avail)
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail;
-	avail_end = ptoa(xen_start_info.nr_pages) + XPMAP_OFFSET;
+	avail_end = ctob(xen_start_info.nr_pages) + XPMAP_OFFSET;
 	pmap_pa_start = (KERNTEXTOFF - KERNBASE);
 	pmap_pa_end = avail_end;
 	mem_clusters[0].start = avail_start;

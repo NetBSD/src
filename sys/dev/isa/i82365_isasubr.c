@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.45 2009/09/17 18:14:41 tsutsui Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.45.2.1 2010/04/30 14:43:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.45 2009/09/17 18:14:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.45.2.1 2010/04/30 14:43:26 uebayasi Exp $");
 
 #define	PCICISADEBUG
 
@@ -155,9 +155,6 @@ pcic_isa_count_intr(void *arg)
 	 * unhandled level interrupts
 	 */
 	if (++sc->intr_false > 40) {
-		isa_intr_disestablish(isc->sc_ic, sc->ih);
-		sc->ih = 0;
-
 		pcic_write(h, PCIC_CSC_INTR, 0);
 		delay(10);
 	}
@@ -251,9 +248,9 @@ pcic_isa_probe_interrupts(struct pcic_isa_softc *isc, struct pcic_handle *h)
 			mask |= (1 << i);
 		}
 
-		if (sc->ih) {
+		if (sc->ih != NULL) {
 			isa_intr_disestablish(ic, sc->ih);
-			sc->ih = 0;
+			sc->ih = NULL;
 
 			pcic_write(h, PCIC_CSC_INTR, 0);
 			delay(10);

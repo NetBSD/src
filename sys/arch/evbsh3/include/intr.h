@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.20.1 2010/04/30 14:39:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sh3/intr.h>
 
 /* Number of interrupt source */
-#define _INTR_N		11	/* TMU0, TMU1, TMU2, (SCIF and SCI) * 4 */
+#define _INTR_N		16	/* TMU0, TMU1, TMU2, (SCIF and SCI) * 4 */
 
 /* Interrupt priority levels */
 #define	IPL_VM		12

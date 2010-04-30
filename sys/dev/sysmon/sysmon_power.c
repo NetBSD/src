@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.42 2009/11/06 18:28:10 jakllsch Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.42.2.1 2010/04/30 14:43:50 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.42 2009/11/06 18:28:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.42.2.1 2010/04/30 14:43:50 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -135,6 +135,8 @@ static const struct power_event_description penvsys_event_desc[] = {
 	{ PENVSYS_EVENT_WARNUNDER,	"warning-under" },
 	{ PENVSYS_EVENT_BATT_CRIT,	"critical-capacity" },
 	{ PENVSYS_EVENT_BATT_WARN,	"warning-capacity" },
+	{ PENVSYS_EVENT_BATT_HIGH,	"high-capacity" },
+	{ PENVSYS_EVENT_BATT_MAX,	"maximum-capacity" },
 	{ PENVSYS_EVENT_STATE_CHANGED,	"state-changed" },
 	{ PENVSYS_EVENT_LOW_POWER,	"low-power" },
 	{ -1, NULL }
@@ -199,7 +201,7 @@ sysmon_power_init(void)
 /*
  * sysmon_queue_power_event:
  *
- *	Enqueue a power event for the power mangement daemon.  Returns
+ *	Enqueue a power event for the power management daemon.  Returns
  *	non-zero if we were able to enqueue a power event.
  */
 static int
@@ -318,6 +320,8 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 	case PENVSYS_EVENT_WARNOVER:
 	case PENVSYS_EVENT_BATT_CRIT:
 	case PENVSYS_EVENT_BATT_WARN:
+	case PENVSYS_EVENT_BATT_HIGH:
+	case PENVSYS_EVENT_BATT_MAX:
 	case PENVSYS_EVENT_STATE_CHANGED:
 	case PENVSYS_EVENT_LOW_POWER:
 	    {
@@ -537,7 +541,7 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
 /*
  * sysmonioctl_power:
  *
- *	Perform a power managmenet control request.
+ *	Perform a power management control request.
  */
 int
 sysmonioctl_power(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
@@ -806,6 +810,14 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 			break;
 		case PENVSYS_EVENT_BATT_WARN:
 			mystr = "warning capacity";
+			PENVSYS_SHOWSTATE(mystr);
+			break;
+		case PENVSYS_EVENT_BATT_HIGH:
+			mystr = "high capacity";
+			PENVSYS_SHOWSTATE(mystr);
+			break;
+		case PENVSYS_EVENT_BATT_MAX:
+			mystr = "maximum capacity";
 			PENVSYS_SHOWSTATE(mystr);
 			break;
 		case PENVSYS_EVENT_NORMAL:

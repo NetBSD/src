@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.27 2010/01/19 22:07:43 pooka Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.27.2.1 2010/04/30 14:43:51 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.27 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.27.2.1 2010/04/30 14:43:51 uebayasi Exp $");
 #ifdef	__NetBSD__
 #include "opt_inet.h"
 #endif
@@ -344,8 +344,7 @@ cdce_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+	bpf_mtap(ifp, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -709,8 +708,7 @@ cdce_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*(ifp)->if_input)((ifp), (m));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.118 2009/04/18 14:58:05 tsutsui Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.118.2.1 2010/04/30 14:44:19 uebayasi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,12 +41,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.118 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.118.2.1 2010/04/30 14:44:19 uebayasi Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_ipx.h"
 #include "opt_iso.h"
 #include "opt_pfil_hooks.h"
+#include "opt_modular.h"
+#include "opt_compat_netbsd.h"
+#endif
+
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1095,6 +1100,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPSETAUTHFAILURE:
 	case SPPPSETDNSOPTS:
 	case SPPPSETKEEPALIVE:
+#if defined(COMPAT_50) || defined(MODULAR)
+	case __SPPPSETIDLETO50:
+	case __SPPPSETKEEPALIVE50:
+#endif /* COMPAT_50 || MODULAR */
 		error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
@@ -1122,6 +1131,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SPPPGETDNSOPTS:
 	case SPPPGETDNSADDRS:
 	case SPPPGETKEEPALIVE:
+#if defined(COMPAT_50) || defined(MODULAR)
+	case __SPPPGETIDLETO50:
+	case __SPPPGETKEEPALIVE50:
+#endif /* COMPAT_50 || MODULAR */
 		error = sppp_params(sp, cmd, data);
 		break;
 
@@ -3906,7 +3919,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	/* challenge, failure and success are his authproto */
 	case CHAP_CHALLENGE:
 		if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
-		    /* can't do anything usefull */
+		    /* can't do anything useful */
 		    sp->pp_auth_failures++;
 		    printf("%s: chap input without my name and my secret being set\n",
 		    	ifp->if_xname);
@@ -4009,7 +4022,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	/* response is my authproto */
 	case CHAP_RESPONSE:
 		if (sp->hisauth.secret == NULL) {
-		    /* can't do anything usefull */
+		    /* can't do anything useful */
 		    printf("%s: chap input without his secret being set\n",
 		    	ifp->if_xname);
 		    break;
@@ -4278,7 +4291,7 @@ sppp_chap_scr(struct sppp *sp)
 	u_char clen;
 
 	if (sp->myauth.name == NULL) {
-	    /* can't do anything usefull */
+	    /* can't do anything useful */
 	    printf("%s: chap starting without my name being set\n",
 	    	sp->pp_if.if_xname);
 	    return;
@@ -4349,7 +4362,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	/* PAP request is my authproto */
 	case PAP_REQ:
 		if (sp->hisauth.name == NULL || sp->hisauth.secret == NULL) {
-		    /* can't do anything usefull */
+		    /* can't do anything useful */
 		    printf("%s: pap request without his name and his secret being set\n",
 		    	ifp->if_xname);
 		    break;
@@ -4622,7 +4635,7 @@ sppp_pap_scr(struct sppp *sp)
 	u_char idlen, pwdlen;
 
 	if (sp->myauth.secret == NULL || sp->myauth.name == NULL) {
-	    /* can't do anything usefull */
+	    /* can't do anything useful */
 	    printf("%s: pap starting without my name and secret being set\n",
 	    	sp->pp_if.if_xname);
 	    return;
@@ -5327,6 +5340,36 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 		sp->pp_max_noreceive = settings->max_noreceive;
 	    }
 	    break;
+#if defined(COMPAT_50) || defined(MODULAR)
+	case __SPPPGETIDLETO50:
+	    {
+	    	struct spppidletimeout50 *to = (struct spppidletimeout50 *)data;
+		to->idle_seconds = (uint32_t)sp->pp_idle_timeout;
+	    }
+	    break;
+	case __SPPPSETIDLETO50:
+	    {
+	    	struct spppidletimeout50 *to = (struct spppidletimeout50 *)data;
+	    	sp->pp_idle_timeout = (time_t)to->idle_seconds;
+	    }
+	    break;
+	case __SPPPGETKEEPALIVE50:
+	    {
+	    	struct spppkeepalivesettings50 *settings =
+		     (struct spppkeepalivesettings50*)data;
+		settings->maxalive = sp->pp_maxalive;
+		settings->max_noreceive = (uint32_t)sp->pp_max_noreceive;
+	    }
+	    break;
+	case __SPPPSETKEEPALIVE50:
+	    {
+	    	struct spppkeepalivesettings50 *settings =
+		     (struct spppkeepalivesettings50*)data;
+		sp->pp_maxalive = settings->maxalive;
+		sp->pp_max_noreceive = (time_t)settings->max_noreceive;
+	    }
+	    break;
+#endif /* COMPAT_50 || MODULAR */
 	default:
 		return (EINVAL);
 	}

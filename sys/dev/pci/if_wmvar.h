@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.8 2010/01/14 18:56:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.8.2.1 2010/04/30 14:43:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -72,20 +72,27 @@
 #define _DEV_PCI_IF_WMVAR_H_
 
 /* sc_flags */
-#define	WM_F_HAS_MII		0x0001	/* has MII */
-#define	WM_F_EEPROM_HANDSHAKE	0x0002	/* requires EEPROM handshake */
-#define	WM_F_EEPROM_SEMAPHORE	0x0004	/* EEPROM with semaphore */
-#define	WM_F_EEPROM_EERDEEWR	0x0008	/* EEPROM access via EERD/EEWR */
-#define	WM_F_EEPROM_SPI		0x0010	/* EEPROM is SPI */
-#define	WM_F_EEPROM_FLASH	0x0020	/* EEPROM is FLASH */
-#define	WM_F_EEPROM_INVALID	0x0040	/* EEPROM not present (bad checksum) */
-#define	WM_F_IOH_VALID		0x0080	/* I/O handle is valid */
-#define	WM_F_BUS64		0x0100	/* bus is 64-bit */
-#define	WM_F_PCIX		0x0200	/* bus is PCI-X */
-#define	WM_F_CSA		0x0400	/* bus is CSA */
-#define	WM_F_PCIE		0x0800	/* bus is PCI-Express */
-#define WM_F_SWFW_SYNC		0x1000  /* Software-Firmware synchronisation */
-#define WM_F_SWFWHW_SYNC	0x2000  /* Software-Firmware synchronisation */
+#define	WM_F_HAS_MII		0x00000001	/* has MII */
+#define	WM_F_EEPROM_HANDSHAKE	0x00000002	/* requires EEPROM handshake */
+#define	WM_F_EEPROM_SEMAPHORE	0x00000004	/* EEPROM with semaphore */
+#define	WM_F_EEPROM_EERDEEWR	0x00000008	/* EEPROM access via EERD/EEWR */
+#define	WM_F_EEPROM_SPI		0x00000010	/* EEPROM is SPI */
+#define	WM_F_EEPROM_FLASH	0x00000020	/* EEPROM is FLASH */
+#define	WM_F_EEPROM_INVALID	0x00000040	/* EEPROM not present (bad checksum) */
+#define	WM_F_IOH_VALID		0x00000080	/* I/O handle is valid */
+#define	WM_F_BUS64		0x00000100	/* bus is 64-bit */
+#define	WM_F_PCIX		0x00000200	/* bus is PCI-X */
+#define	WM_F_CSA		0x00000400	/* bus is CSA */
+#define	WM_F_PCIE		0x00000800	/* bus is PCI-Express */
+#define WM_F_SWFW_SYNC		0x00001000  /* Software-Firmware synchronisation */
+#define WM_F_SWFWHW_SYNC	0x00002000  /* Software-Firmware synchronisation */
+#define WM_F_SGMII		0x00004000  /* use SGMII */
+#define WM_F_NEWQUEUE		0x00008000  /* chips which has the new queue system */
+#define WM_F_ASF_FIRMWARE_PRES	0x00010000
+#define WM_F_ARC_SUBSYS_VALID	0x00020000
+#define WM_F_HAS_AMT		0x00040000
+#define WM_F_HAS_MANAGE		0x00080000
+#define WM_F_WOL		0x00100000
 
 typedef enum {
 	WM_T_unknown		= 0,
@@ -107,6 +114,10 @@ typedef enum {
 	WM_T_82573,			/* i82573 */
 	WM_T_82574,			/* i82574 */
 	WM_T_82583,			/* i82583 */
+	WM_T_82575,			/* i82575 */
+	WM_T_82576,			/* i82576 */
+	WM_T_82580,			/* i82580 */
+	WM_T_82580ER,			/* i82580ER */
 	WM_T_80003,			/* i80003 */
 	WM_T_ICH8,			/* ICH8 LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
@@ -129,6 +140,7 @@ typedef enum {
 } wm_phy_type;
 
 
+#define WM_GEN_POLL_TIMEOUT	640
 #define WM_PHY_CFG_TIMEOUT	100
 #define	WM_ICH8_LAN_INIT_TIMEOUT 1500
 #define	WM_MDIO_OWNERSHIP_TIMEOUT 10

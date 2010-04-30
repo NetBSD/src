@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.16 2009/10/05 23:59:31 rmind Exp $	*/
+/*	$NetBSD: ipi.c,v 1.16.2.1 2010/04/30 14:39:59 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.16 2009/10/05 23:59:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.16.2.1 2010/04/30 14:39:59 uebayasi Exp $");
 
 #include "opt_mtrr.h"
 
@@ -145,21 +145,6 @@ x86_broadcast_ipi(int ipimask)
 }
 
 void
-x86_multicast_ipi(int cpumask, int ipimask)
-{
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	if ((cpumask &= ~curcpu()->ci_cpumask) == 0)
-		return;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if ((cpumask & ci->ci_cpumask) != 0)
-			x86_send_ipi(ci, ipimask);
-	}
-}
-
-void
 x86_ipi_handler(void)
 {
 	struct cpu_info *ci = curcpu();
@@ -235,12 +220,6 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 
 void
 x86_broadcast_ipi(int ipimask)
-{
-
-}
-
-void
-x86_multicast_ipi(int cpumask, int ipimask)
 {
 
 }

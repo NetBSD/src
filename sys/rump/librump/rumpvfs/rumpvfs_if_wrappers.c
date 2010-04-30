@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.3 2009/10/15 00:31:25 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.3.2.1 2010/04/30 14:44:31 uebayasi Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -213,7 +213,7 @@ rump_pub_namei(uint32_t arg1, uint32_t arg2, const char *arg3, struct vnode **ar
 }
 
 struct componentname *
-rump_pub_makecn(u_long arg1, u_long arg2, const char *arg3, size_t arg4, kauth_cred_t arg5, struct lwp *arg6)
+rump_pub_makecn(u_long arg1, u_long arg2, const char *arg3, size_t arg4, struct kauth_cred *arg5, struct lwp *arg6)
 {
 	struct componentname * rv;
 
@@ -261,7 +261,7 @@ rump_pub_vfs_statvfs(struct mount *arg1, struct statvfs *arg2)
 }
 
 int
-rump_pub_vfs_sync(struct mount *arg1, int arg2, kauth_cred_t arg3)
+rump_pub_vfs_sync(struct mount *arg1, int arg2, struct kauth_cred *arg3)
 {
 	int rv;
 

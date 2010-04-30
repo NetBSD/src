@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.42 2009/12/17 00:29:46 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.42.2.1 2010/04/30 14:44:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,13 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.42 2009/12/17 00:29:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.42.2.1 2010/04/30 14:44:30 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/evcnt.h>
 #include <sys/filedesc.h>
+#include <sys/fstrans.h>
 #include <sys/lockf.h>
 #include <sys/kthread.h>
 #include <sys/module.h>
@@ -55,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.42 2009/12/17 00:29:46 pooka Exp $");
 #include "rump_vfs_private.h"
 
 struct cwdinfo cwdi0;
+const char *rootfstype = ROOT_FSTYPE_ANY;
 
 static void rump_rcvp_lwpset(struct vnode *, struct vnode *, struct lwp *);
 
@@ -97,10 +99,10 @@ rump_vfs_init(void)
 	}
 	vfsinit();
 	bufinit();
-	wapbl_init();
 	cwd_sys_init();
 	lf_init();
 	spec_init();
+	fstrans_init();
 
 	if (rump_threads) {
 		if ((rv = kthread_create(PRI_BIO, KTHREAD_MPSAFE, NULL,
@@ -108,7 +110,6 @@ rump_vfs_init(void)
 			panic("syncer thread create failed: %d", rv);
 	}
 
-	rootfstype = ROOT_FSTYPE_ANY;
 	root_device = &rump_rootdev;
 
 	/* bootstrap cwdi (rest done in vfs_mountroot() */
@@ -133,6 +134,17 @@ rump_vfs_init(void)
 	} else {
 		syncdelay = 0;
 	}
+
+	/*
+	 * On archs where the native kernel ABI is supported, map
+	 * host module directory to rump.  This means that kernel
+	 * modules from the host will be autoloaded to rump kernels.
+	 */
+#ifdef _RUMP_NATIVE_ABI
+	rump_etfs_register(module_base, module_base, RUMP_ETFS_DIR_SUBDIRS);
+#endif
+
+	module_init_class(MODULE_CLASS_VFS);
 }
 
 void

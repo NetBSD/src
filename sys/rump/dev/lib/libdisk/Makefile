@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/11/23 13:40:11 pooka Exp $
+#	$NetBSD: Makefile,v 1.6.2.1 2010/04/30 14:44:23 uebayasi Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../kern					\
@@ -17,8 +17,6 @@ SRCS=	subr_disk_mbr.c
 SRCS+=	subr_disk.c subr_disk_open.c
 # sys/dev
 SRCS+=	dksubr.c dk.c
-
-CFLAGS+=	-Wno-pointer-sign
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

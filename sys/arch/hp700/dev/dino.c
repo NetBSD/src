@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.22 2010/01/17 08:29:00 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.22.2.1 2010/04/30 14:39:23 uebayasi Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.22 2010/01/17 08:29:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.22.2.1 2010/04/30 14:39:23 uebayasi Exp $");
 
 /* #include "cardbus.h" */
 
@@ -544,8 +544,8 @@ dino_memalloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	/* Find used PCI MEM and narrow allocateble region down to it. */
 	for (i = 1; i < 31; i++)
 		if ((reg & 1 << i) != 0) {
-			rstart = 0xf0000000 | i << 23;
-			rend = (0xf0000000 | (i + 1) << 23) - 1;
+			rstart = HPPA_IOSPACE | i << 23;
+			rend = (HPPA_IOSPACE | (i + 1) << 23) - 1;
 			break;
 		}
 	if ((error = bus_space_alloc(sc->sc_bt, rstart, rend, size, align,
@@ -561,7 +561,7 @@ dino_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 	struct dino_softc *sc = v;
 	volatile struct dino_regs *r = sc->sc_regs;
 
-	if (bsh & 0xf0000000) {
+	if (bsh & HPPA_IOSPACE) {
 		bus_space_unmap(sc->sc_bt, bsh, size);
 		if (--sc->sc_memrefcount[((bsh >> 23) & 0x1f)] == 0)
 			/* Unmap the upper PCI MEM space. */
@@ -605,7 +605,7 @@ uint8_t
 dino_r1(void *v, bus_space_handle_t h, bus_size_t o)
 {
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		return *(volatile uint8_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -622,7 +622,7 @@ dino_r2(void *v, bus_space_handle_t h, bus_size_t o)
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -642,7 +642,7 @@ dino_r4(void *v, bus_space_handle_t h, bus_size_t o)
 	uint32_t data;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		data = *(volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -661,7 +661,7 @@ dino_r8(void *v, bus_space_handle_t h, bus_size_t o)
 	uint64_t data;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		data = *(volatile uint64_t *)h;
 	else
 		panic("dino_r8: not implemented");
@@ -673,7 +673,7 @@ void
 dino_w1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv)
 {
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		*(volatile uint8_t *)h = vv;
 	else {
 		struct dino_softc *sc = v;
@@ -690,7 +690,7 @@ dino_w2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv)
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -710,7 +710,7 @@ dino_w4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv)
 {
 	h += o;
 	vv = htole32(vv);
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		*(volatile uint32_t *)h = vv;
 	else {
 		struct dino_softc *sc = v;
@@ -725,7 +725,7 @@ void
 dino_w8(void *v, bus_space_handle_t h, bus_size_t o, uint64_t vv)
 {
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		*(volatile uint64_t *)h = htole64(vv);
 	else
 		panic("dino_w8: not implemented");
@@ -738,7 +738,7 @@ dino_rm_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t *a, bus_size_t c)
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint8_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -758,7 +758,7 @@ dino_rm_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t *a, bus_size_t c
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -780,7 +780,7 @@ dino_rm_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t *a, bus_size_t c
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -806,7 +806,7 @@ dino_wm_1(void *v, bus_space_handle_t h, bus_size_t o, const uint8_t *a, bus_siz
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint8_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -826,7 +826,7 @@ dino_wm_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_si
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -848,7 +848,7 @@ dino_wm_4(void *v, bus_space_handle_t h, bus_size_t o, const uint32_t *a, bus_si
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -874,7 +874,7 @@ dino_sm_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv, bus_size_t c)
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint8_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -894,7 +894,7 @@ dino_sm_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv, bus_size_t c
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -916,7 +916,7 @@ dino_sm_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv, bus_size_t c
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -943,7 +943,7 @@ dino_rrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -967,7 +967,7 @@ dino_rrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -996,7 +996,7 @@ dino_wrm_2(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint16_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint16_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -1020,7 +1020,7 @@ dino_wrm_4(void *v, bus_space_handle_t h, bus_size_t o,
 	volatile uint32_t *p;
 
 	h += o;
-	if (h & 0xf0000000)
+	if (h & HPPA_IOSPACE)
 		p = (volatile uint32_t *)h;
 	else {
 		struct dino_softc *sc = v;
@@ -1048,7 +1048,7 @@ dino_rr_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t *a, bus_size_t c)
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint8_t *)h;
 		while (c--)
 			*a++ = *p++;
@@ -1070,7 +1070,7 @@ dino_rr_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t *a, bus_size_t c
 	volatile uint16_t *p, data;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
 		while (c--) {
 			data = *p++;
@@ -1097,7 +1097,7 @@ dino_rr_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t *a, bus_size_t c
 	volatile uint32_t *p, data;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
 		while (c--) {
 			data = *p++;
@@ -1127,7 +1127,7 @@ dino_wr_1(void *v, bus_space_handle_t h, bus_size_t o, const uint8_t *a, bus_siz
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint8_t *)h;
 		while (c--)
 			*p++ = *a++;
@@ -1149,7 +1149,7 @@ dino_wr_2(void *v, bus_space_handle_t h, bus_size_t o, const uint16_t *a, bus_si
 	volatile uint16_t *p, data;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
 		while (c--) {
 			data = *a++;
@@ -1176,7 +1176,7 @@ dino_wr_4(void *v, bus_space_handle_t h, bus_size_t o, const uint32_t *a, bus_si
 	volatile uint32_t *p, data;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
 		while (c--) {
 			data = *a++;
@@ -1208,7 +1208,7 @@ dino_rrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 
 	c /= 2;
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
 		while (c--)
 			*a++ = *p++;
@@ -1234,7 +1234,7 @@ dino_rrr_4(void *v, bus_space_handle_t h, bus_size_t o,
 
 	c /= 4;
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
 		while (c--)
 			*a++ = *p++;
@@ -1264,7 +1264,7 @@ dino_wrr_2(void *v, bus_space_handle_t h, bus_size_t o,
 
 	c /= 2;
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
 		while (c--)
 			*p++ = *a++;
@@ -1290,7 +1290,7 @@ dino_wrr_4(void *v, bus_space_handle_t h, bus_size_t o,
 
 	c /= 4;
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
 		while (c--)
 			*p++ = *a++;
@@ -1318,7 +1318,7 @@ dino_sr_1(void *v, bus_space_handle_t h, bus_size_t o, uint8_t vv, bus_size_t c)
 	volatile uint8_t *p;
 
 	h += o;
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint8_t *)h;
 		while (c--)
 			*p++ = vv;
@@ -1341,7 +1341,7 @@ dino_sr_2(void *v, bus_space_handle_t h, bus_size_t o, uint16_t vv, bus_size_t c
 
 	h += o;
 	vv = htole16(vv);
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint16_t *)h;
 		while (c--)
 			*p++ = vv;
@@ -1366,7 +1366,7 @@ dino_sr_4(void *v, bus_space_handle_t h, bus_size_t o, uint32_t vv, bus_size_t c
 
 	h += o;
 	vv = htole32(vv);
-	if (h & 0xf0000000) {
+	if (h & HPPA_IOSPACE) {
 		p = (volatile uint32_t *)h;
 		while (c--)
 			*p++ = vv;
@@ -1599,6 +1599,10 @@ dinomatch(device_t parent, cfdata_t cfdata, void *aux)
 	    ca->ca_type.iodc_sv_model != HPPA_BRIDGE_DINO)
 		return 0;
 
+	/* do not match on the elroy family */
+	if (ca->ca_type.iodc_model == 0x78)
+		return 0;
+
 	/* Make sure we have an IRQ. */
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
 		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
@@ -1613,7 +1617,7 @@ dinoattach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = (struct confargs *)aux, nca;
 	struct pcibus_attach_args pba;
 	volatile struct dino_regs *r;
-	const char *p;
+	const char *p = NULL;
 	u_int data;
 	int s, ver;
 
@@ -1674,34 +1678,36 @@ dinoattach(device_t parent, device_t self, void *aux)
 
 	/* TODO establish the bus error interrupt */
 
-	r->iodc = 0;
-	data = r->iodc;
-	ver = (ca->ca_type.iodc_model << 4) |
-	    (ca->ca_type.iodc_revision >> 4);
-	switch (ver) {
-	case 0x05d:	p = "Dino";	/* j2240 */
-	case 0x680:	p = "Dino";
-		switch (data >> 16) {
-		case 0x6800:	ver = 0x20;	break;
-		case 0x6801:	ver = 0x21;	break;
-		case 0x6802:	ver = 0x30;	break;
-		case 0x6803:	ver = 0x31;	break;
-		default:	ver = 0x40;	break;
+	ver = ca->ca_type.iodc_revision;
+	switch ((ca->ca_type.iodc_model << 4) |
+	    (ca->ca_type.iodc_revision >> 4)) {
+	case 0x05d:
+		p = "Dino (card)";	/* j2240 */
+		/* FALLTHROUGH */
+	case 0x680:
+		if (!p)
+			p = "Dino";
+		switch (ver & 0xf) {
+		case 0:	ver = 0x20;	break;
+		case 1:	ver = 0x21;	break;
+		case 2:	ver = 0x30;	break;
+		case 3:	ver = 0x31;	break;
 		}
 		break;
 
-	case 0x682:	p = "Cujo";
-		switch (data >> 16) {
-		case 0x6820:	ver = 0x10;	break;
-		case 0x6821:	ver = 0x20;	break;
-		default:	ver = 0x30;	break;
+	case 0x682:
+		p = "Cujo";
+		switch (ver & 0xf) {
+		case 0:	ver = 0x10;	break;
+		case 1:	ver = 0x20;	break;
 		}
 		break;
 
-	default:	p = "Mojo";
-		ver = (data >> 16) & 0xff;
+	default:
+		p = "Mojo";
 		break;
 	}
+
 	sc->sc_ver = ver;
 	aprint_normal(": %s V%d.%d\n", p, ver >> 4, ver & 0xf);
 

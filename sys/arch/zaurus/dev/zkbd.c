@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.10 2010/01/08 19:42:11 dyoung Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.10.2.1 2010/04/30 14:40:01 uebayasi Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.10 2010/01/08 19:42:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.10.2.1 2010/04/30 14:40:01 uebayasi Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "lcd.h"
@@ -131,7 +131,7 @@ static void	zkbd_poll(void *v);
 static int	zkbd_on(void *v);
 static int	zkbd_sync(void *v);
 static int	zkbd_hinge(void *v);
-static bool	zkbd_resume(device_t dv, pmf_qual_t);
+static bool	zkbd_resume(device_t dv, const pmf_qual_t *);
 
 int zkbd_modstate;
 
@@ -594,7 +594,7 @@ zkbd_cnpollc(void *v, int on)
 }
 
 static bool
-zkbd_resume(device_t dv, pmf_qual_t qual)
+zkbd_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct zkbd_softc *sc = device_private(dv);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.23 2009/05/12 12:10:46 cegger Exp $	*/
+/*	$NetBSD: btuart.c,v 1.23.2.1 2010/04/30 14:43:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.23 2009/05/12 12:10:46 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.23.2.1 2010/04/30 14:43:08 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -351,8 +351,7 @@ btuartinput(int c, struct tty *tp)
 			/* new packet */
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
-				aprint_error_dev(sc->sc_dev,
-				    "out of memory\n");
+				aprint_error_dev(sc->sc_dev, "out of memory\n");
 				sc->sc_stats.err_rx++;
 				return 0;	/* (lost sync) */
 			}
@@ -367,8 +366,7 @@ btuartinput(int c, struct tty *tp)
 			/* extend mbuf */
 			MGET(m->m_next, M_DONTWAIT, MT_DATA);
 			if (m->m_next == NULL) {
-				aprint_error_dev(sc->sc_dev,
-				    "out of memory\n");
+				aprint_error_dev(sc->sc_dev, "out of memory\n");
 				sc->sc_stats.err_rx++;
 				return 0;	/* (lost sync) */
 			}

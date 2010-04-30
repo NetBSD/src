@@ -1,4 +1,4 @@
-/* $NetBSD: hpqlb_acpi.c,v 1.5 2010/01/30 18:35:49 jruoho Exp $ */
+/* $NetBSD: hpqlb_acpi.c,v 1.5.2.1 2010/04/30 14:43:06 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2008  Christoph Egger <cegger@netbsd.org>
@@ -27,24 +27,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.5 2010/01/30 18:35:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpqlb_acpi.c,v 1.5.2.1 2010/04/30 14:43:06 uebayasi Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/malloc.h>
-#include <sys/buf.h>
-#include <sys/callout.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/pmf.h>
+#include <sys/systm.h>
+
+#include <machine/pio.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
-#include <machine/pio.h>
+#include <dev/isa/isareg.h>
+
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
-#include <dev/isa/isareg.h>
 
 #define _COMPONENT		ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME		("hpqlb_acpi")
@@ -97,7 +94,7 @@ static int hpqlb_finalize(device_t);
 static int hpqlb_hotkey_handler(struct wskbd_softc *, void *, u_int, int);
 
 static void hpqlb_init(device_t);
-static bool hpqlb_resume(device_t, pmf_qual_t);
+static bool hpqlb_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(hpqlb, sizeof(struct hpqlb_softc),
     hpqlb_match, hpqlb_attach, NULL, NULL);
@@ -289,7 +286,7 @@ hpqlb_finalize(device_t self)
 }
 
 static bool
-hpqlb_resume(device_t self, pmf_qual_t qual)
+hpqlb_resume(device_t self, const pmf_qual_t *qual)
 {
 
 	hpqlb_init(self);

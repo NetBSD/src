@@ -1,9 +1,9 @@
-#	$NetBSD: IPAQ,v 1.58 2009/12/05 20:11:14 pooka Exp $
+#	$NetBSD: IPAQ,v 1.58.2.1 2010/04/30 14:39:24 uebayasi Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
 
-include	"arch/hpcarm/conf/std.hpcarm"
+include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -207,7 +207,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	cgd	2		# cryptographic disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss	4		# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 pseudo-device	biconsdev 1		# build-in console device
 

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.200 2010/01/31 15:10:12 pooka Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.200.2.1 2010/04/30 14:44:11 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.200 2010/01/31 15:10:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.200.2.1 2010/04/30 14:44:11 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -237,6 +237,91 @@ static callout_t config_twiddle_ch;
 
 static void sysctl_detach_setup(struct sysctllog **);
 
+typedef int (*cfdriver_fn)(struct cfdriver *);
+static int
+frob_cfdrivervec(struct cfdriver * const *cfdriverv,
+	cfdriver_fn drv_do, cfdriver_fn drv_undo,
+	const char *style, bool dopanic)
+{
+	void (*pr)(const char *, ...) = dopanic ? panic : printf;
+	int i = 0, error = 0, e2;
+
+	for (i = 0; cfdriverv[i] != NULL; i++) {
+		if ((error = drv_do(cfdriverv[i])) != 0) {
+			pr("configure: `%s' driver %s failed: %d",
+			    cfdriverv[i]->cd_name, style, error);
+			goto bad;
+		}
+	}
+
+	KASSERT(error == 0);
+	return 0;
+
+ bad:
+	printf("\n");
+	for (i--; i >= 0; i--) {
+		e2 = drv_undo(cfdriverv[i]);
+		KASSERT(e2 == 0);
+	}
+
+	return error;
+}
+
+typedef int (*cfattach_fn)(const char *, struct cfattach *);
+static int
+frob_cfattachvec(const struct cfattachinit *cfattachv,
+	cfattach_fn att_do, cfattach_fn att_undo,
+	const char *style, bool dopanic)
+{
+	const struct cfattachinit *cfai = NULL;
+	void (*pr)(const char *, ...) = dopanic ? panic : printf;
+	int j = 0, error = 0, e2;
+
+	for (cfai = &cfattachv[0]; cfai->cfai_name != NULL; cfai++) {
+		for (j = 0; cfai->cfai_list[j] != NULL; j++) {
+			if ((error = att_do(cfai->cfai_name,
+			    cfai->cfai_list[j]) != 0)) {
+				pr("configure: attachment `%s' "
+				    "of `%s' driver %s failed: %d",
+				    cfai->cfai_list[j]->ca_name,
+				    cfai->cfai_name, style, error);
+				goto bad;
+			}
+		}
+	}
+
+	KASSERT(error == 0);
+	return 0;
+
+ bad:
+	/*
+	 * Rollback in reverse order.  dunno if super-important, but
+	 * do that anyway.  Although the code looks a little like
+	 * someone did a little integration (in the math sense).
+	 */
+	printf("\n");
+	if (cfai) {
+		bool last;
+
+		for (last = false; last == false; ) {
+			if (cfai == &cfattachv[0])
+				last = true;
+			for (j--; j >= 0; j--) {
+				e2 = att_undo(cfai->cfai_name,
+				    cfai->cfai_list[j]);
+				KASSERT(e2 == 0);
+			}
+			if (!last) {
+				cfai--;
+				for (j = 0; cfai->cfai_list[j] != NULL; j++)
+					;
+			}
+		}
+	}
+
+	return error;
+}
+
 /*
  * Initialize the autoconfiguration data structures.  Normally this
  * is done by configure(), but some platforms need to do this very
@@ -245,8 +330,6 @@ static void sysctl_detach_setup(struct sysctllog **);
 void
 config_init(void)
 {
-	const struct cfattachinit *cfai;
-	int i, j;
 
 	KASSERT(config_initialized == false);
 
@@ -257,28 +340,76 @@ config_init(void)
 
 	callout_init(&config_twiddle_ch, CALLOUT_MPSAFE);
 
-	/* allcfdrivers is statically initialized. */
-	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
-		if (config_cfdriver_attach(cfdriver_list_initial[i]) != 0)
-			panic("configure: duplicate `%s' drivers",
-			    cfdriver_list_initial[i]->cd_name);
-	}
-
-	for (cfai = &cfattachinit[0]; cfai->cfai_name != NULL; cfai++) {
-		for (j = 0; cfai->cfai_list[j] != NULL; j++) {
-			if (config_cfattach_attach(cfai->cfai_name,
-						   cfai->cfai_list[j]) != 0)
-				panic("configure: duplicate `%s' attachment "
-				    "of `%s' driver",
-				    cfai->cfai_list[j]->ca_name,
-				    cfai->cfai_name);
-		}
-	}
+	frob_cfdrivervec(cfdriver_list_initial,
+	    config_cfdriver_attach, NULL, "bootstrap", true);
+	frob_cfattachvec(cfattachinit,
+	    config_cfattach_attach, NULL, "bootstrap", true);
 
 	initcftable.ct_cfdata = cfdata;
 	TAILQ_INSERT_TAIL(&allcftables, &initcftable, ct_list);
 
 	config_initialized = true;
+}
+
+/*
+ * Init or fini drivers and attachments.  Either all or none
+ * are processed (via rollback).  It would be nice if this were
+ * atomic to outside consumers, but with the current state of
+ * locking ...
+ */
+int
+config_init_component(struct cfdriver * const *cfdriverv,
+	const struct cfattachinit *cfattachv, struct cfdata *cfdatav)
+{
+	int error;
+
+	if ((error = frob_cfdrivervec(cfdriverv,
+	    config_cfdriver_attach, config_cfdriver_detach, "init", false))!= 0)
+		return error;
+	if ((error = frob_cfattachvec(cfattachv,
+	    config_cfattach_attach, config_cfattach_detach,
+	    "init", false)) != 0) {
+		frob_cfdrivervec(cfdriverv,
+	            config_cfdriver_detach, NULL, "init rollback", true);
+		return error;
+	}
+	if ((error = config_cfdata_attach(cfdatav, 1)) != 0) {
+		frob_cfattachvec(cfattachv,
+		    config_cfattach_detach, NULL, "init rollback", true);
+		frob_cfdrivervec(cfdriverv,
+	            config_cfdriver_detach, NULL, "init rollback", true);
+		return error;
+	}
+
+	return 0;
+}
+
+int
+config_fini_component(struct cfdriver * const *cfdriverv,
+	const struct cfattachinit *cfattachv, struct cfdata *cfdatav)
+{
+	int error;
+
+	if ((error = config_cfdata_detach(cfdatav)) != 0)
+		return error;
+	if ((error = frob_cfattachvec(cfattachv,
+	    config_cfattach_detach, config_cfattach_attach,
+	    "fini", false)) != 0) {
+		if (config_cfdata_attach(cfdatav, 0) != 0)
+			panic("config_cfdata fini rollback failed");
+		return error;
+	}
+	if ((error = frob_cfdrivervec(cfdriverv,
+	    config_cfdriver_detach, config_cfdriver_attach,
+	    "fini", false)) != 0) {
+		frob_cfattachvec(cfattachv,
+	            config_cfattach_attach, NULL, "fini rollback", true);
+		if (config_cfdata_attach(cfdatav, 0) != 0)
+			panic("config_cfdata fini rollback failed");
+		return error;
+	}
+
+	return 0;
 }
 
 void
@@ -537,7 +668,7 @@ config_stdsubmatch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 	const struct cflocdesc *cl;
 	int nlocs, i;
 
-	ci = cfiattr_lookup(cf->cf_pspec->cfp_iattr, parent->dv_cfdriver);
+	ci = cfiattr_lookup(cfdata_ifattr(cf), parent->dv_cfdriver);
 	KASSERT(ci);
 	nlocs = ci->ci_loclen;
 	KASSERT(!nlocs || locs);
@@ -669,7 +800,7 @@ rescan_with_cfdata(const struct cfdata *cf)
 				continue;
 
 			(*d->dv_cfattach->ca_rescan)(d,
-				cf1->cf_pspec->cfp_iattr, cf1->cf_loc);
+				cfdata_ifattr(cf1), cf1->cf_loc);
 		}
 	}
 	deviter_release(&di);
@@ -817,7 +948,7 @@ config_search_loc(cfsubmatch_t fn, device_t parent,
 			 * consider only children which attach to
 			 * that attribute.
 			 */
-			if (ifattr && !STREQ(ifattr, cf->cf_pspec->cfp_iattr))
+			if (ifattr && !STREQ(ifattr, cfdata_ifattr(cf)))
 				continue;
 
 			if (cfparent_match(parent, cf->cf_pspec))
@@ -1184,6 +1315,15 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	if (dev == NULL)
 		panic("config_devalloc: memory allocation for device_t failed");
 
+	dev->dv_class = cd->cd_class;
+	dev->dv_cfdata = cf;
+	dev->dv_cfdriver = cd;
+	dev->dv_cfattach = ca;
+	dev->dv_activity_count = 0;
+	dev->dv_activity_handlers = NULL;
+	dev->dv_private = dev_private;
+	dev->dv_flags = ca->ca_flags;	/* inherit flags from class */
+
 	myunit = config_unit_alloc(dev, cd, cf);
 	if (myunit == -1) {
 		config_devfree(dev);
@@ -1202,13 +1342,6 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	mutex_init(&dvl->dvl_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&dvl->dvl_cv, "pmfsusp");
 
-	dev->dv_class = cd->cd_class;
-	dev->dv_cfdata = cf;
-	dev->dv_cfdriver = cd;
-	dev->dv_cfattach = ca;
-	dev->dv_activity_count = 0;
-	dev->dv_activity_handlers = NULL;
-	dev->dv_private = dev_private;
 	memcpy(dev->dv_xname, cd->cd_name, lname);
 	memcpy(dev->dv_xname + lname, xunit, lunit);
 	dev->dv_parent = parent;
@@ -1216,12 +1349,10 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		dev->dv_depth = parent->dv_depth + 1;
 	else
 		dev->dv_depth = 0;
-	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
-	dev->dv_flags |= ca->ca_flags;	/* inherit flags from class */
+	dev->dv_flags |= DVF_ACTIVE;	/* always initially active */
 	if (locs) {
 		KASSERT(parent); /* no locators at root */
-		ia = cfiattr_lookup(cf->cf_pspec->cfp_iattr,
-				    parent->dv_cfdriver);
+		ia = cfiattr_lookup(cfdata_ifattr(cf), parent->dv_cfdriver);
 		dev->dv_locators =
 		    kmem_alloc(sizeof(int [ia->ci_loclen + 1]), KM_SLEEP);
 		*dev->dv_locators++ = sizeof(int [ia->ci_loclen + 1]);
@@ -1984,7 +2115,7 @@ device_pmf_is_registered(device_t dev)
 }
 
 bool
-device_pmf_driver_suspend(device_t dev, pmf_qual_t qual)
+device_pmf_driver_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) != 0)
 		return true;
@@ -2000,7 +2131,7 @@ device_pmf_driver_suspend(device_t dev, pmf_qual_t qual)
 }
 
 bool
-device_pmf_driver_resume(device_t dev, pmf_qual_t qual)
+device_pmf_driver_resume(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_DRIVER_SUSPENDED) == 0)
 		return true;
@@ -2027,8 +2158,8 @@ device_pmf_driver_shutdown(device_t dev, int how)
 
 bool
 device_pmf_driver_register(device_t dev,
-    bool (*suspend)(device_t, pmf_qual_t),
-    bool (*resume)(device_t, pmf_qual_t),
+    bool (*suspend)(device_t, const pmf_qual_t *),
+    bool (*resume)(device_t, const pmf_qual_t *),
     bool (*shutdown)(device_t, int))
 {
 	dev->dv_driver_suspend = suspend;
@@ -2165,7 +2296,7 @@ device_pmf_bus_private(device_t dev)
 }
 
 bool
-device_pmf_bus_suspend(device_t dev, pmf_qual_t qual)
+device_pmf_bus_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return true;
@@ -2182,7 +2313,7 @@ device_pmf_bus_suspend(device_t dev, pmf_qual_t qual)
 }
 
 bool
-device_pmf_bus_resume(device_t dev, pmf_qual_t qual)
+device_pmf_bus_resume(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) == 0)
 		return true;
@@ -2207,8 +2338,8 @@ device_pmf_bus_shutdown(device_t dev, int how)
 
 void
 device_pmf_bus_register(device_t dev, void *priv,
-    bool (*suspend)(device_t, pmf_qual_t),
-    bool (*resume)(device_t, pmf_qual_t),
+    bool (*suspend)(device_t, const pmf_qual_t *),
+    bool (*resume)(device_t, const pmf_qual_t *),
     bool (*shutdown)(device_t, int), void (*deregister)(device_t))
 {
 	dev->dv_bus_private = priv;
@@ -2237,7 +2368,7 @@ device_pmf_class_private(device_t dev)
 }
 
 bool
-device_pmf_class_suspend(device_t dev, pmf_qual_t qual)
+device_pmf_class_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) != 0)
 		return true;
@@ -2251,7 +2382,7 @@ device_pmf_class_suspend(device_t dev, pmf_qual_t qual)
 }
 
 bool
-device_pmf_class_resume(device_t dev, pmf_qual_t qual)
+device_pmf_class_resume(device_t dev, const pmf_qual_t *qual)
 {
 	if ((dev->dv_flags & DVF_CLASS_SUSPENDED) == 0)
 		return true;
@@ -2269,8 +2400,8 @@ device_pmf_class_resume(device_t dev, pmf_qual_t qual)
 
 void
 device_pmf_class_register(device_t dev, void *priv,
-    bool (*suspend)(device_t, pmf_qual_t),
-    bool (*resume)(device_t, pmf_qual_t),
+    bool (*suspend)(device_t, const pmf_qual_t *),
+    bool (*resume)(device_t, const pmf_qual_t *),
     void (*deregister)(device_t))
 {
 	dev->dv_class_private = priv;
@@ -2587,6 +2718,12 @@ deviter_release(deviter_t *di)
 	config_alldevs_unlock(s);
 }
 
+const char *
+cfdata_ifattr(const struct cfdata *cf)
+{
+	return cf->cf_pspec->cfp_iattr;
+}
+
 bool
 ifattr_match(const char *snull, const char *t)
 {
@@ -2615,7 +2752,7 @@ sysctl_detach_setup(struct sysctllog **clog)
 
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "detachall",
+		CTLTYPE_BOOL, "detachall",
 		SYSCTL_DESCR("Detach all devices at shutdown"),
 		NULL, 0, &detachall, 0,
 		CTL_CREATE, CTL_EOL);

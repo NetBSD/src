@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.152 2009/12/13 12:21:26 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.152.2.1 2010/04/30 14:39:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -587,7 +587,7 @@ Lnocache0:
 	jbsr	_C_LABEL(hp300_init)
 
 /*
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */

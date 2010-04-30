@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.300 2010/01/26 18:09:07 pooka Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.300.2.1 2010/04/30 14:44:21 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.300 2010/01/26 18:09:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.300.2.1 2010/04/30 14:44:21 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1657,6 +1657,9 @@ after_listen:
 	}
 
 	if (TCP_ECN_ALLOWED(tp)) {
+		if (tiflags & TH_CWR) {
+			tp->t_flags &= ~TF_ECN_SND_ECE;
+		}
 		switch (iptos & IPTOS_ECN_MASK) {
 		case IPTOS_ECN_CE:
 			tp->t_flags |= TF_ECN_SND_ECE;
@@ -1669,10 +1672,6 @@ after_listen:
 			/* XXX: ignore for now -- rpaulo */
 			break;
 		}
-
-		if (tiflags & TH_CWR)
-			tp->t_flags &= ~TF_ECN_SND_ECE;
-
 		/*
 		 * Congestion experienced.
 		 * Ignore if we are already trying to recover.
@@ -1786,8 +1785,11 @@ after_listen:
 					    tp->t_rxtcur);
 
 				sowwakeup(so);
-				if (so->so_snd.sb_cc)
+				if (so->so_snd.sb_cc) {
+					KERNEL_LOCK(1, NULL);
 					(void) tcp_output(tp);
+					KERNEL_UNLOCK_ONE(NULL);
+				}
 				if (tcp_saveti)
 					m_freem(tcp_saveti);
 				return;
@@ -1882,8 +1884,11 @@ after_listen:
 			}
 			sorwakeup(so);
 			tcp_setup_ack(tp, th);
-			if (tp->t_flags & TF_ACKNOW)
+			if (tp->t_flags & TF_ACKNOW) {
+				KERNEL_LOCK(1, NULL);
 				(void) tcp_output(tp);
+				KERNEL_UNLOCK_ONE(NULL);
+			}
 			if (tcp_saveti)
 				m_freem(tcp_saveti);
 			return;
@@ -2369,7 +2374,9 @@ after_listen:
 						goto drop;
 				} else if (tp->t_dupacks > tcprexmtthresh) {
 					tp->snd_cwnd += tp->t_segsz;
+					KERNEL_LOCK(1, NULL);
 					(void) tcp_output(tp);
+					KERNEL_UNLOCK_ONE(NULL);
 					goto drop;
 				}
 			} else {
@@ -2730,7 +2737,9 @@ dodata:							/* XXX */
 	 * Return any desired output.
 	 */
 	if (needoutput || (tp->t_flags & TF_ACKNOW)) {
+		KERNEL_LOCK(1, NULL);
 		(void) tcp_output(tp);
+		KERNEL_UNLOCK_ONE(NULL);
 	}
 	if (tcp_saveti)
 		m_freem(tcp_saveti);
@@ -2767,7 +2776,9 @@ dropafterack_ratelim:
 dropafterack2:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
+	KERNEL_LOCK(1, NULL);
 	(void) tcp_output(tp);
+	KERNEL_UNLOCK_ONE(NULL);
 	if (tcp_saveti)
 		m_freem(tcp_saveti);
 	return;
@@ -3353,12 +3364,9 @@ syn_cache_put(struct syn_cache *sc)
 	if (sc->sc_ipopts)
 		(void) m_free(sc->sc_ipopts);
 	rtcache_free(&sc->sc_route);
-	if (callout_invoking(&sc->sc_timer))
-		sc->sc_flags |= SCF_DEAD;
-	else {
-		callout_destroy(&sc->sc_timer);
-		pool_put(&syn_cache_pool, sc);
-	}
+	sc->sc_flags |= SCF_DEAD;
+	if (!callout_invoking(&sc->sc_timer))
+		callout_schedule(&(sc)->sc_timer, 1);
 }
 
 void
@@ -3522,7 +3530,11 @@ syn_cache_timer(void *arg)
  dropit:
 	TCP_STATINC(TCP_STAT_SC_TIMED_OUT);
 	syn_cache_rm(sc);
-	syn_cache_put(sc);	/* calls pool_put but see spl above */
+	if (sc->sc_ipopts)
+		(void) m_free(sc->sc_ipopts);
+	rtcache_free(&sc->sc_route);
+	callout_destroy(&sc->sc_timer);
+	pool_put(&syn_cache_pool, sc);
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }

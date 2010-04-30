@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.84 2010/01/09 20:56:17 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.84.2.1 2010/04/30 14:39:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.84 2010/01/09 20:56:17 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.84.2.1 2010/04/30 14:39:59 uebayasi Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -84,8 +84,6 @@ ACPI_MODULE_NAME       ("mpacpi")
 
 #include "locators.h"
 
-#define ACPI_STA_OK (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
-
 /* XXX room for PCI-to-PCI bus */
 #define BUS_BUFFER (16)
 
@@ -112,7 +110,7 @@ static ACPI_STATUS mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *, void *);
 
 #if NPCI > 0
 /* Callbacks for the ACPI namespace walk */
-static ACPI_STATUS mpacpi_pcibus_cb(ACPI_HANDLE, UINT32, void *, void **);
+static ACPI_STATUS mpacpi_pcibus_cb(ACPI_HANDLE, uint32_t, void *, void **);
 static int mpacpi_derive_bus(ACPI_HANDLE, struct acpi_softc *);
 
 static int mpacpi_pcircount(struct mpacpi_pcibus *);
@@ -505,7 +503,7 @@ mpacpi_find_pcibusses(struct acpi_softc *acpi)
 		return ENOENT;
 	TAILQ_INIT(&mpacpi_pcibusses);
 	AcpiWalkNamespace(ACPI_TYPE_DEVICE, sbhandle, 100,
-		    mpacpi_pcibus_cb, acpi, NULL);
+	    mpacpi_pcibus_cb, NULL, acpi, NULL);
 	return 0;
 }
 
@@ -689,7 +687,7 @@ out:
  * PCI root and subordinate busses.
  */
 static ACPI_STATUS
-mpacpi_pcibus_cb(ACPI_HANDLE handle, UINT32 level, void *p,
+mpacpi_pcibus_cb(ACPI_HANDLE handle, uint32_t level, void *p,
     void **status)
 {
 	ACPI_STATUS rv;
@@ -901,7 +899,7 @@ mpacpi_pcircount(struct mpacpi_pcibus *mpr)
 {
 	int count = 0;
 	ACPI_PCI_ROUTING_TABLE *PrtElement;
-	UINT8 *Buffer;
+	uint8_t *Buffer;
 
 	for (Buffer = mpr->mpr_buf.Pointer;; Buffer += PrtElement->Length) {
 		PrtElement = (ACPI_PCI_ROUTING_TABLE *)Buffer;

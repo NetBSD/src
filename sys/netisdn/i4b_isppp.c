@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.26 2010/01/19 22:08:17 pooka Exp $
+ *	$Id: i4b_isppp.c,v 1.26.2.1 2010/04/30 14:44:21 uebayasi Exp $
  *
  * $FreeBSD$
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.26 2010/01/19 22:08:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_isppp.c,v 1.26.2.1 2010/04/30 14:44:21 uebayasi Exp $");
 
 #ifndef __NetBSD__
 #define USE_ISPPP
@@ -348,7 +348,7 @@ ipppattach(void)
 		CALLOUT_INIT(&sc->sc_ch);
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
-		bpf_ops->bpf_attach(&sc->sc_sp.pp_if, DLT_PPP, sizeof(u_int), &sc->sc_sp.pp_if.if_bpf);
+		bpf_attach(&sc->sc_sp.pp_if, DLT_PPP, sizeof(u_int));
 #endif
 #endif
 	}
@@ -408,8 +408,7 @@ i4bisppp_start(struct ifnet *ifp)
 #endif /* __FreeBSD__ */
 
 #ifdef __NetBSD__
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 #endif
 #endif /* NBPFILTER > 0 || NBPF > 0 */
 
@@ -693,8 +692,7 @@ i4bisppp_rx_data_rdy(void *softc)
 #endif /* __FreeBSD__ */
 
 #ifdef __NetBSD__
-	if(sc->sc_sp.pp_if.if_bpf)
-		bpf_ops->bpf_mtap(sc->sc_sp.pp_if.if_bpf, m);
+	bpf_mtap(&sc->sc_sp.pp_if, m);
 #endif
 
 #endif /* NBPFILTER > 0  || NBPF > 0 */

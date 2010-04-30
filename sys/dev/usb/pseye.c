@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.15 2009/12/06 21:40:31 dyoung Exp $ */
+/* $NetBSD: pseye.c,v 1.15.2.1 2010/04/30 14:43:52 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.15 2009/12/06 21:40:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.15.2.1 2010/04/30 14:43:52 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -848,7 +848,7 @@ static struct cfdata pseye_cfdata[] = {
 		.cf_flags = 0,
 		.cf_pspec = &uhubparent,
 	},
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int

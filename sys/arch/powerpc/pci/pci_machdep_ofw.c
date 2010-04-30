@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.12 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.12.20.1 2010/04/30 14:39:44 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.12 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.12.20.1 2010/04/30 14:39:44 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,10 +126,10 @@ foundic:
 		}
 
 		irgot = OF_getprop(node, "reg", reg, sizeof(reg));
-		
+
 		if (!picnodes[nrofpics].intrs)
 			picnodes[nrofpics].intrs = 16;
-		
+
 		if (nrofpics > 0)
 			picnodes[nrofpics].offset = picnodes[nrofpics-1].offset
 			    + picnodes[nrofpics-1].intrs;
@@ -181,7 +181,7 @@ genofw_fixup_picnode_offsets(void)
 			continue;
 		if (picnodes[i].type == PICNODE_TYPE_IVR)
 			continue;
-		
+
 		picnodes[i].offset = curoff;
 		curoff += picnodes[i].intrs;
 	}
@@ -348,7 +348,7 @@ genofw_find_node_by_devfunc(int startnode, int bus, int dev, int func)
 {
 	int node, sz, p=0;
 	uint32_t reg;
-	
+
 	for (node = startnode; node; node = p) {
 		sz = OF_getprop(node, "reg", &reg, sizeof(reg));
 		if (sz != sizeof(reg))
@@ -500,14 +500,14 @@ genofw_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 			return (PCI_CONF_ALL & ~PCI_CONF_MAP_IO);
 
 	}
-	
+
 	tag = pci_make_tag(pct, bus, dev, func);
 	class = pci_conf_read(pct, tag, PCI_CLASS_REG);
 
 	/* leave video cards alone */
 	if (PCI_CLASS(class) == PCI_CLASS_DISPLAY)
 		return 0;
-	
+
 	/* NOTE, all device specific stuff must be above this line */
 	/* don't do this on the primary host bridge */
 	if (bus == 0 && dev == 0 && func == 0)

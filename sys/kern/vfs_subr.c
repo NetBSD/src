@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.397 2010/01/15 19:28:26 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.397.2.1 2010/04/30 14:44:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.397 2010/01/15 19:28:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.397.2.1 2010/04/30 14:44:14 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1424,8 +1424,12 @@ vrelel(vnode_t *vp, int flags)
 		/*
 		 * XXX This ugly block can be largely eliminated if
 		 * locking is pushed down into the file systems.
+		 *
+		 * Defer vnode release to vrele_thread if caller
+		 * requests it explicitly.
 		 */
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if ((curlwp == uvm.pagedaemon_lwp) ||
+		    (flags & VRELEL_ASYNC_RELE) != 0) {
 			/* The pagedaemon can't wait around; defer. */
 			defer = true;
 		} else if (curlwp == vrele_lwp) {
@@ -1597,6 +1601,23 @@ vrele(vnode_t *vp)
 	}
 	mutex_enter(&vp->v_interlock);
 	vrelel(vp, 0);
+}
+
+/*
+ * Asynchronous vnode release, vnode is released in different context.
+ */
+void
+vrele_async(vnode_t *vp)
+{
+
+	KASSERT((vp->v_iflag & VI_MARKER) == 0);
+
+	if ((vp->v_iflag & VI_INACTNOW) == 0 && vtryrele(vp)) {
+		return;
+	}
+	
+	mutex_enter(&vp->v_interlock);
+	vrelel(vp, VRELEL_ASYNC_RELE);
 }
 
 static void
@@ -2294,6 +2315,7 @@ vfs_mountedon(vnode_t *vp)
 bool
 vfs_unmountall(struct lwp *l)
 {
+
 	printf("unmounting file systems...");
 	return vfs_unmountall1(l, true, true);
 }
@@ -2301,7 +2323,8 @@ vfs_unmountall(struct lwp *l)
 static void
 vfs_unmount_print(struct mount *mp, const char *pfx)
 {
-	printf("%sunmounted %s on %s type %s\n", pfx,
+
+	aprint_verbose("%sunmounted %s on %s type %s\n", pfx,
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname,
 	    mp->mnt_stat.f_fstypename);
 }
@@ -2309,16 +2332,19 @@ vfs_unmount_print(struct mount *mp, const char *pfx)
 bool
 vfs_unmount_forceone(struct lwp *l)
 {
-	struct mount *mp, *nmp = NULL;
+	struct mount *mp, *nmp;
 	int error;
 
-	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
-		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen)
-			nmp = mp;
-	}
+	nmp = NULL;
 
-	if (nmp == NULL)
+	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
+		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen) {
+			nmp = mp;
+		}
+	}
+	if (nmp == NULL) {
 		return false;
+	}
 
 #ifdef DEBUG
 	printf("\nforcefully unmounting %s (%s)...",
@@ -2328,8 +2354,9 @@ vfs_unmount_forceone(struct lwp *l)
 	if ((error = dounmount(nmp, MNT_FORCE, l)) == 0) {
 		vfs_unmount_print(nmp, "forcefully ");
 		return true;
-	} else
-		atomic_dec_uint(&nmp->mnt_refcnt);
+	} else {
+		vfs_destroy(nmp);
+	}
 
 #ifdef DEBUG
 	printf("forceful unmount of %s failed with error %d\n",
@@ -2360,7 +2387,7 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			vfs_unmount_print(mp, "");
 			progress = true;
 		} else {
-			atomic_dec_uint(&mp->mnt_refcnt);
+			vfs_destroy(mp);
 			if (verbose) {
 				printf("unmount of %s failed with error %d\n",
 				    mp->mnt_stat.f_mntonname, error);
@@ -2368,10 +2395,12 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			any_error = true;
 		}
 	}
-	if (verbose)
+	if (verbose) {
 		printf(" done\n");
-	if (any_error && verbose)
+	}
+	if (any_error && verbose) {
 		printf("WARNING: some file systems would not unmount\n");
+	}
 	return progress;
 }
 

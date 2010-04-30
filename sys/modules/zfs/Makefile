@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/08/10 22:39:38 haad Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2010/04/30 14:44:18 uebayasi Exp $
 
 .include "../Makefile.inc"
 
@@ -10,6 +10,7 @@ ZFSDIR=	${S}/../external/cddl/osnet
 
 SRCS+=	zfs_comutil.c
 SRCS+=	zfs_deleg.c
+SRCS+=	zfs_fletcher.c
 SRCS+=	zfs_namecheck.c
 SRCS+=	zfs_prop.c
 SRCS+=	zpool_prop.c
@@ -28,6 +29,8 @@ SRCS+= trees.c
 SRCS+=	arc.c
 SRCS+=	bplist.c
 SRCS+=	dbuf.c
+SRCS+=	ddt.c
+SRCS+=	ddt_zap.c
 SRCS+=	dmu.c
 SRCS+=	dmu_object.c
 SRCS+=	dmu_objset.c
@@ -44,7 +47,6 @@ SRCS+=	dsl_pool.c
 SRCS+=	dsl_prop.c
 SRCS+=	dsl_scrub.c
 SRCS+=	dsl_synctask.c
-SRCS+=	fletcher.c
 SRCS+=	gzip.c
 SRCS+=	lzjb.c
 SRCS+=	metaslab.c
@@ -93,6 +95,7 @@ SRCS+=	zio_compress.c
 SRCS+=	zio_inject.c
 SRCS+=	zutil.c
 SRCS+=	zvol.c
+SRCS+=	zle.c
 
 .PATH: ${ZFSDIR}/sys/kern
 
@@ -113,6 +116,7 @@ CWARNFLAGS+=	-Wno-missing-prototypes
 CWARNFLAGS+=	-Wno-format
 
 CPPFLAGS+=	-I${ZFSDIR}/sys
+CPPFLAGS+=      -I${ZFSDIR}/dist/common
 CPPFLAGS+=	-I${ZFSDIR}/dist/common/acl
 CPPFLAGS+=	-I${ZFSDIR}/dist/common/zfs
 CPPFLAGS+=	-I${ZFSDIR}/dist/uts/common/fs/zfs

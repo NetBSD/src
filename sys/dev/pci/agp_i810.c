@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.65 2010/01/08 19:56:51 dyoung Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.65.2.1 2010/04/30 14:43:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.65 2010/01/08 19:56:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.65.2.1 2010/04/30 14:43:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ static int agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
 
-static bool agp_i810_resume(device_t, pmf_qual_t);
+static bool agp_i810_resume(device_t, const pmf_qual_t *);
 static int agp_i810_init(struct agp_softc *);
 
 static int agp_i810_init(struct agp_softc *);
@@ -241,6 +241,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 		case PCI_PRODUCT_INTEL_82865_HB:
 		case PCI_PRODUCT_INTEL_82845G_DRAM:
 		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+		case PCI_PRODUCT_INTEL_82855GM_MCH:
 			return agp_intel_attach(parent, self, aux);
 		}
 #endif
@@ -1016,7 +1017,7 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 }
 
 static bool
-agp_i810_resume(device_t dv, pmf_qual_t qual)
+agp_i810_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct agp_softc *sc = device_private(dv);
 	struct agp_i810_softc *isc = sc->as_chipc;

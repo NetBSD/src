@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.4 2009/12/03 15:06:04 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.4.2.1 2010/04/30 14:44:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.4 2009/12/03 15:06:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.4.2.1 2010/04/30 14:44:24 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/stat.h>
 
+#include "rump_private.h"
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
@@ -40,8 +41,7 @@ CFDRIVER_DECL(raid, DV_DISK, NULL);
 
 void raidattach(int);
 
-void
-rump_dev_raidframe_init()
+RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct bdevsw raid_bdevsw;
 	extern const struct cdevsw raid_cdevsw;

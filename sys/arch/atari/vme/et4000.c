@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.20 2009/07/19 05:43:23 tsutsui Exp $	*/
+/*	$NetBSD: et4000.c,v 1.20.2.1 2010/04/30 14:39:12 uebayasi Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.20 2009/07/19 05:43:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.20.2.1 2010/04/30 14:39:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.20 2009/07/19 05:43:23 tsutsui Exp $");
 #include <atari/atari/device.h>
 #include <atari/dev/grfioctl.h>
 #include <atari/dev/grf_etreg.h>
+
+#include "ioconf.h"
 
 /*
  * Allow a 8Kb io-region and a 1MB frame buffer to be mapped. This
@@ -128,8 +130,6 @@ struct et_softc {
 CFATTACH_DECL(et, sizeof(struct et_softc),
     et_vme_match, et_vme_attach, NULL, NULL);
 
-extern struct cfdriver et_cd;
-
 dev_type_open(etopen);
 dev_type_close(etclose);
 dev_type_read(etread);
@@ -151,7 +151,7 @@ et_vme_match(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
 	struct vme_attach_args *va = auxp;
 
-	return(et_probe_addresses(va));
+	return et_probe_addresses(va);
 }
 
 static int
@@ -173,7 +173,7 @@ et_probe_addresses(struct vme_attach_args *va)
 
 		if (vat.va_irq != VMECF_IRQ_DEFAULT) {
 			printf("et probe: config error: no irq support\n");
-			return(0);
+			return 0;
 		}
 		if (vat.va_iobase == VMECF_IOPORT_DEFAULT)
 			vat.va_iobase = et_ap->io_addr;
@@ -186,24 +186,24 @@ et_probe_addresses(struct vme_attach_args *va)
 		if (bus_space_map(iot, vat.va_iobase, vat.va_iosize, 0,
 				  &ioh)) {
 			printf("et probe: cannot map io area\n");
-			return(0);
+			return 0;
 		}
 		if (bus_space_map(memt, vat.va_maddr, vat.va_msize,
 			  	  BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
 			  	  &memh)) {
 			bus_space_unmap(iot, ioh, vat.va_iosize);
 			printf("et probe: cannot map memory area\n");
-			return(0);
+			return 0;
 		}
 		found = et_detect(&iot, &memt, &ioh, &memh, vat.va_msize);
 		bus_space_unmap(iot, ioh, vat.va_iosize);
 		bus_space_unmap(memt, memh, vat.va_msize);
 		if (found) {
 			*va = vat;
-			return(1);
+			return 1;
 		}
 	}
-	return(0);
+	return 0;
 }
 
 static void
@@ -249,10 +249,10 @@ et_detect(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh, 
 	int vgabase;
 
 	/* Test accessibility of registers and memory */
-	if(!bus_space_peek_1(*iot, *ioh, GREG_STATUS1_R))
-		return(0);
-	if(!bus_space_peek_1(*memt, *memh, 0))
-		return(0);
+	if (!bus_space_peek_1(*iot, *ioh, GREG_STATUS1_R))
+		return 0;
+	if (!bus_space_peek_1(*memt, *memh, 0))
+		return 0;
 
 	et_start(iot, ioh, &vgabase, &saved);
 
@@ -270,7 +270,7 @@ et_detect(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh, 
 		    new, (orig ^ 0x10));
 #else
 		et_stop(iot, ioh, &vgabase, &saved);
-		return(0);
+		return 0;
 #endif
 	}
 	/* Is the card and ET4000?  Check read/write of CRTC[33] */
@@ -285,7 +285,7 @@ et_detect(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh, 
 		    new, (orig ^ 0x0f));
 #else
 		et_stop(iot, ioh, &vgabase, &saved);
-		return(0);
+		return 0;
 #endif
 	}
 
@@ -310,7 +310,7 @@ et_detect(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh, 
 		printf("et4000: Video base write/read failed\n");
 #else
 		et_stop(iot, ioh, &vgabase, &saved);
-		return(0);
+		return 0;
 #endif
 	}
 	bus_space_write_4(*memt, *memh, memsize - 4, TEST_PATTERN);
@@ -320,12 +320,12 @@ et_detect(bus_space_tag_t *iot, bus_space_tag_t *memt, bus_space_handle_t *ioh, 
 		printf("et4000: Video top write/read failed\n");
 #else
 		et_stop(iot, ioh, &vgabase, &saved);
-		return(0);
+		return 0;
 #endif
 	}
 
 	et_stop(iot, ioh, &vgabase, &saved);
-	return(1);
+	return 1;
 }
 
 static void
@@ -366,11 +366,11 @@ etopen(dev_t dev, int flags, int devtype, struct lwp *l)
 
 	sc = device_lookup_private(&et_cd, minor(dev));
 	if (sc == NULL)
-		return(ENXIO);
+		return ENXIO;
 	if (sc->sc_flags & ET_SC_FLAGS_INUSE)
-		return(EBUSY);
+		return EBUSY;
 	sc->sc_flags |= ET_SC_FLAGS_INUSE;
-	return(0);
+	return 0;
 }
 
 int
@@ -383,19 +383,21 @@ etclose(dev_t dev, int flags, int devtype, struct lwp *l)
 	 */
 	sc = device_lookup_private(&et_cd, minor(dev));
 	sc->sc_flags &= ~ET_SC_FLAGS_INUSE;
-	return(0);
+	return 0;
 }
 
 int
 etread(dev_t dev, struct uio *uio, int flags)
 {
-	return(EINVAL);
+
+	return EINVAL;
 }
 
 int
 etwrite(dev_t dev, struct uio *uio, int flags)
 {
-	return(EINVAL);
+
+	return EINVAL;
 }
 
 int
@@ -407,10 +409,10 @@ etioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	sc = device_lookup_private(&et_cd, minor(dev));
 	switch (cmd) {
 	case GRFIOCON:
-		return(0);
+		return 0;
 		break;
 	case GRFIOCOFF:
-		return(0);
+		return 0;
 		break;
 	case GRFIOCGINFO:
 		g_display.gd_fbaddr = (void *) (sc->sc_maddr);
@@ -435,16 +437,16 @@ etioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		memcpy(data, (void *)&g_display, sizeof(struct grfinfo));
 		break;
 	case GRFIOCMAP:
-		return(EINVAL);
+		return EINVAL;
 		break;
 	case GRFIOCUNMAP:
-		return(EINVAL);
+		return EINVAL;
 		break;
 	default:
-		return(EINVAL);
+		return EINVAL;
 		break;
 	}
-	return(0);
+	return 0;
 }
 
 paddr_t
@@ -459,23 +461,23 @@ etmmap(dev_t dev, off_t offset, int prot)
 	 * mapped from offset 0x0 to REG_MAPPABLE
 	 */
 	if (offset >= 0 && offset <= sc->sc_iosize)
-		return(m68k_btop(sc->sc_iobase + offset));
+		return m68k_btop(sc->sc_iobase + offset);
 
 	/*
 	 * VGA memory
 	 * mapped from offset 0xa0000 to 0xc0000
 	 */
 	if (offset >= VGA_BASE && offset < (VGA_MAPPABLE + VGA_BASE))
-		return(m68k_btop(sc->sc_maddr + offset - VGA_BASE));
+		return m68k_btop(sc->sc_maddr + offset - VGA_BASE);
 
 	/*
 	 * frame buffer
 	 * mapped from offset 0x400000 to 0x4fffff
 	 */
 	if (offset >= FRAME_BASE && offset < sc->sc_msize + FRAME_BASE)
-		return(m68k_btop(sc->sc_maddr + offset - FRAME_BASE));
+		return m68k_btop(sc->sc_maddr + offset - FRAME_BASE);
 
-	return(-1);
+	return -1;
 }
 
 int 
@@ -484,16 +486,17 @@ eton(dev_t dev)
 	struct et_softc *sc;
 
 	if (minor(dev) >= et_cd.cd_ndevs)
-		return(ENXIO);
+		return ENXIO;
 	sc = device_lookup_private(&et_cd, minor(dev));
 	if (sc == NULL)
-		return(ENXIO);
-	return(0);
+		return ENXIO;
+	return 0;
 }
 
 int 
 etoff(dev_t dev)
 {
-	return(0);
+
+	return 0;
 }
 

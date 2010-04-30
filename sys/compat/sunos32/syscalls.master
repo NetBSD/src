@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.20 2009/01/13 22:27:44 pooka Exp $
+;	$NetBSD: syscalls.master,v 1.20.4.1 2010/04/30 14:43:02 uebayasi Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -34,8 +34,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_compat_sunos.h"
-
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -248,7 +246,7 @@
 153	NOARGS		{ int|netbsd32||poll(netbsd32_pollfdp_t fds, u_int nfds, \
 			    int timeout); }
 154	UNIMPL
-155	STD		{ int|sunos32_sys||nfssvc(int fd); }
+155	UNIMPL		nfssvc
 156	NOARGS		{ int|compat_43_netbsd32||ogetdirentries(int fd, netbsd32_charp buf, \
 			    u_int count, netbsd32_longp basep); }
 157	STD		{ int|sunos32_sys||statfs(const netbsd32_charp path, \
@@ -256,13 +254,8 @@
 158	STD		{ int|sunos32_sys||fstatfs(int fd, \
 			    sunos32_statfsp_t buf); }
 159	STD		{ int|sunos32_sys||unmount(netbsd32_charp path); }
-#ifdef NFS
-160	NOARGS		{ int|async||daemon(void); }
+160	UNIMPL		async_daemon
 161	NOARGS		{ int|compat_30_sys||getfh(netbsd32_charp fname, netbsd32_fhandlep_t fhp); }
-#else
-160	UNIMPL
-161	UNIMPL
-#endif
 162	NOARGS		{ int|compat_09_netbsd32||ogetdomainname(netbsd32_charp domainname, \
 			    int len); }
 163	NOARGS		{ int|compat_09_netbsd32||osetdomainname(netbsd32_charp domainname, \

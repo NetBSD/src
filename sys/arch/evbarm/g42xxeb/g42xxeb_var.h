@@ -43,7 +43,7 @@
  * G42xxeb on-board IO bus
  */
 struct obio_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_obioreg_ioh;
 

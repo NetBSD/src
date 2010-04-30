@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.36 2009/11/26 20:15:20 mrg Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.36.2.1 2010/04/30 14:39:53 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.36 2009/11/26 20:15:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.36.2.1 2010/04/30 14:39:53 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -575,7 +575,41 @@ prom_stopself(void)
 	args.nreturns = 0;
 
 	openfirmware_exit(&args);
-	panic("sun4u_stopself: failed.");
+	panic("prom_stopself: failed.");
+}
+
+bool
+prom_has_stopself(void)
+{
+	return OF_test("SUNW,stop-self") == 0;
+}
+
+int
+prom_stop_other(u_int id)
+{
+	static struct {
+		cell_t  name;
+		cell_t  nargs;
+		cell_t  nreturns;
+		cell_t	cpuid;
+		cell_t	result;
+	} args;
+
+	args.name = ADR2CELL(&"SUNW,stop-cpu-by-cpuid");
+	args.nargs = 1;
+	args.nreturns = 1;
+	args.cpuid = id;
+	args.result = 0;
+
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.result;
+}
+
+bool
+prom_has_stop_other(void)
+{
+	return OF_test("SUNW,stop-cpu-by-cpuid") == 0;
 }
 #endif
 

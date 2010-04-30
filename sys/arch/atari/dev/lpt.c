@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.32 2009/11/23 00:11:43 rmind Exp $ */
+/*	$NetBSD: lpt.c,v 1.32.2.1 2010/04/30 14:39:11 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.32 2009/11/23 00:11:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.32.2.1 2010/04/30 14:39:11 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.32 2009/11/23 00:11:43 rmind Exp $");
 #include <machine/intr.h>
 
 #include <atari/dev/ym2149reg.h>
+
+#include "ioconf.h"
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
@@ -104,6 +106,7 @@ struct lpt_softc {
 	u_char		sc_flags;
 #define	LPT_AUTOLF	0x20	/* automatic LF on CR XXX: LWP - not yet... */
 #define	LPT_NOINTR	0x40	/* do not use interrupt */
+	void		*sc_sicookie;
 };
 
 #define	LPTUNIT(s)	(minor(s) & 0x1f)
@@ -118,9 +121,9 @@ dev_type_ioctl(lpioctl);
 
 static void lptwakeup (void *arg);
 static int pushbytes (struct lpt_softc *);
-static void lptpseudointr (struct lpt_softc *);
+static void lptpseudointr (void *);
 int lptintr (struct lpt_softc *);
-int lpthwintr (struct lpt_softc *, int);
+int lpthwintr (void *);
 
 
 /*
@@ -131,8 +134,6 @@ static int  lpmatch (device_t, cfdata_t , void *);
 
 CFATTACH_DECL_NEW(lp, sizeof(struct lpt_softc),
     lpmatch, lpattach, NULL, NULL);
-
-extern struct cfdriver lp_cd;
 
 const struct cdevsw lp_cdevsw = {
 	lpopen, lpclose, noread, lpwrite, lpioctl,
@@ -166,6 +167,7 @@ lpattach(device_t pdp, device_t dp, void *auxp)
 	if (intr_establish(0, USER_VEC, 0, (hw_ifun_t)lpthwintr, sc) == NULL)
 		aprint_error_dev(dp, "Can't establish interrupt\n");
 	ym2149_strobe(1);
+	sc->sc_sicookie = softint_establish(SOFTINT_SERIAL, lptpseudointr, sc);
 
 	callout_init(&sc->sc_wakeup_ch, 0);
 }
@@ -382,21 +384,24 @@ lptintr(struct lpt_softc *sc)
 }
 
 static void
-lptpseudointr(struct lpt_softc *sc)
+lptpseudointr(void *arg)
 {
+	struct lpt_softc *sc;
 	int	s;
 
+	sc = arg;
 	s = spltty();
 	lptintr(sc);
 	splx(s);
 }
 
 int
-lpthwintr(struct lpt_softc *sc, int sr)
+lpthwintr(void *arg)
 {
-	if (!BASEPRI(sr))
-		add_sicallback((si_farg)lptpseudointr, sc, 0);
-	else lptpseudointr(sc);
+	struct lpt_softc *sc;
+
+	sc = arg;
+	softint_schedule(sc->sc_sicookie);
 	return 1;
 }
 

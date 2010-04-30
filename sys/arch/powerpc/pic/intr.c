@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: intr.c,v 1.6.20.1 2010/04/30 14:39:44 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6.20.1 2010/04/30 14:39:44 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -51,11 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2008/04/29 06:53:02 martin Exp $");
 
 #define MAX_PICS	8	/* 8 PICs ought to be enough for everyone */
 
-#define NVIRQ		32	/* 32 virtual IRQs */
-#define NIRQ		128	/* up to 128 HW IRQs */
-
-#define HWIRQ_MAX	(NVIRQ - 4 - 1)
-#define HWIRQ_MASK	0x0fffffff
 #define	LEGAL_VIRQ(x)	((x) >= 0 && (x) < NVIRQ)
 
 struct pic_ops *pics[MAX_PICS];
@@ -63,7 +58,7 @@ int num_pics = 0;
 int max_base = 0;
 uint8_t	virq[NIRQ];
 int	virq_max = 0;
-int	imask[NIPL];
+imask_t	imask[NIPL];
 int	primary_pic = 0;
 
 static int	fakeintr(void *);
@@ -94,7 +89,7 @@ pic_add(struct pic_ops *pic)
 	pic->pic_intrbase = max_base;
 	max_base += pic->pic_numintrs;
 	num_pics++;
-	
+
 	return pic->pic_intrbase;
 }
 
@@ -352,10 +347,10 @@ intr_calculatemasks(void)
 
 	/* Then figure out which IRQs use each level. */
 	for (level = 0; level < NIPL; level++) {
-		register int irqs = 0;
+		register imask_t irqs = 0;
 		for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++)
 			if (is->is_level & (1 << level))
-				irqs |= 1 << irq;
+				irqs |= 1ULL << irq;
 		imask[level] = irqs;
 	}
 
@@ -363,14 +358,14 @@ intr_calculatemasks(void)
 	 * IPL_CLOCK should mask clock interrupt even if interrupt handler
 	 * is not registered.
 	 */
-	imask[IPL_CLOCK] |= 1 << SPL_CLOCK;
+	imask[IPL_CLOCK] |= 1ULL << SPL_CLOCK;
 
 	/*
 	 * Initialize soft interrupt masks to block themselves.
 	 */
-	imask[IPL_SOFTCLOCK] = 1 << SIR_CLOCK;
-	imask[IPL_SOFTNET] = 1 << SIR_NET;
-	imask[IPL_SOFTSERIAL] = 1 << SIR_SERIAL;
+	imask[IPL_SOFTCLOCK] = 1ULL << SIR_CLOCK;
+	imask[IPL_SOFTNET] = 1ULL << SIR_NET;
+	imask[IPL_SOFTSERIAL] = 1ULL << SIR_SERIAL;
 
 	/*
 	 * IPL_NONE is used for hardware interrupts that are never blocked,
@@ -399,7 +394,7 @@ intr_calculatemasks(void)
 	/* IPL_SERIAL must block IPL_TTY */
 	imask[IPL_SERIAL] |= imask[IPL_TTY];
 
-	/* IPL_HIGH must block all other priority levels */	
+	/* IPL_HIGH must block all other priority levels */
 	for (i = IPL_NONE; i < IPL_HIGH; i++)
 		imask[IPL_HIGH] |= imask[i];
 #else	/* !SLOPPY_IPLS */
@@ -419,7 +414,7 @@ intr_calculatemasks(void)
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
-		register int irqs = 1 << irq;
+		register imask_t irqs = 1ULL << irq;
 		for (q = is->is_hand; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
 		is->is_mask = irqs;
@@ -431,7 +426,7 @@ intr_calculatemasks(void)
 		for (i = 0; i < current->pic_numintrs; i++)
 			current->pic_disable_irq(current, i);
 	}
-	
+
 	for (irq = 0, is = intrsources; irq < NVIRQ; irq++, is++) {
 		if (is->is_hand)
 			pic_enable_irq(is->is_hwirq);
@@ -459,13 +454,13 @@ pic_mark_pending(int irq)
 
 	v = virq[irq];
 	if (v == 0)
-		printf("IRQ %d maps to 0\n", irq);	
+		printf("IRQ %d maps to 0\n", irq);
 
 	msr = mfmsr();
 	mtmsr(msr & ~PSL_EE);
-	ci->ci_ipending |= 1 << v;
+	ci->ci_ipending |= 1ULL << v;
 	mtmsr(msr);
-}	
+}
 
 void
 pic_do_pending_int(void)
@@ -476,7 +471,7 @@ pic_do_pending_int(void)
 	struct pic_ops *pic;
 	int irq;
 	int pcpl;
-	int hwpend;
+	imask_t hwpend;
 	int emsr, dmsr;
 
 	if (ci->ci_iactive)
@@ -496,9 +491,10 @@ again:
 	/* Do now unmasked pendings */
 	ci->ci_idepth++;
 	while ((hwpend = (ci->ci_ipending & ~pcpl & HWIRQ_MASK)) != 0) {
-		irq = 31 - cntlzw(hwpend);
+		/* Get most significant pending bit */
+		irq = MS_PENDING(hwpend);
 		KASSERT(irq <= virq_max);
-		ci->ci_ipending &= ~(1 << irq);
+		ci->ci_ipending &= ~(1ULL << irq);
 		if (irq == 0) {
 			printf("VIRQ0");
 			continue;
@@ -536,8 +532,8 @@ again:
 	ci->ci_idepth--;
 
 #ifdef __HAVE_FAST_SOFTINTS
-	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_SERIAL)) {
-		ci->ci_ipending &= ~(1 << SIR_SERIAL);
+	if ((ci->ci_ipending & ~pcpl) & (1ULL << SIR_SERIAL)) {
+		ci->ci_ipending &= ~(1ULL << SIR_SERIAL);
 		splsoftserial();
 		mtmsr(emsr);
 		softintr__run(IPL_SOFTSERIAL);
@@ -546,8 +542,8 @@ again:
 		ci->ci_ev_softserial.ev_count++;
 		goto again;
 	}
-	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_NET)) {
-		ci->ci_ipending &= ~(1 << SIR_NET);
+	if ((ci->ci_ipending & ~pcpl) & (1ULL << SIR_NET)) {
+		ci->ci_ipending &= ~(1ULL << SIR_NET);
 		splsoftnet();
 		mtmsr(emsr);
 		softintr__run(IPL_SOFTNET);
@@ -556,8 +552,8 @@ again:
 		ci->ci_ev_softnet.ev_count++;
 		goto again;
 	}
-	if ((ci->ci_ipending & ~pcpl) & (1 << SIR_CLOCK)) {
-		ci->ci_ipending &= ~(1 << SIR_CLOCK);
+	if ((ci->ci_ipending & ~pcpl) & (1ULL << SIR_CLOCK)) {
+		ci->ci_ipending &= ~(1ULL << SIR_CLOCK);
 		splsoftclock();
 		mtmsr(emsr);
 		softintr__run(IPL_SOFTCLOCK);
@@ -581,7 +577,8 @@ pic_handle_intr(void *cookie)
 	struct intr_source *is;
 	struct intrhand *ih;
 	int irq, realirq;
-	int pcpl, msr, r_imen, bail;
+	int pcpl, msr, bail;
+	imask_t r_imen;
 
 	realirq = pic->pic_get_irq(pic, PIC_GET_IRQ);
 	if (realirq == 255)
@@ -612,7 +609,7 @@ start:
 	}
 #endif /* PIC_DEBUG */
 	KASSERT(realirq < pic->pic_numintrs);
-	r_imen = 1 << irq;
+	r_imen = 1ULL << irq;
 	is = &intrsources[irq];
 
 	if ((pcpl & r_imen) != 0) {
@@ -624,7 +621,7 @@ start:
 		/* this interrupt is no longer pending */
 		ci->ci_ipending &= ~r_imen;
 		ci->ci_idepth++;
-		
+
 		splraise(is->is_mask);
 		mtmsr(msr | PSL_EE);
 		ih = is->is_hand;
@@ -645,7 +642,7 @@ start:
 		}
 		mtmsr(msr);
 		ci->ci_cpl = pcpl;
-		
+
 		uvmexp.intrs++;
 		is->is_ev.ev_count++;
 		ci->ci_idepth--;
@@ -683,9 +680,9 @@ splraise(int ncpl)
 	int ocpl;
 
 	__asm volatile("sync; eieio");	/* don't reorder.... */
-	
+
 	ocpl = ci->ci_cpl;
-	ci->ci_cpl = ocpl | ncpl;
+	ci->ci_cpl = ncpl;
 	__asm volatile("sync; eieio");	/* reorder protect */
 	return ocpl;
 }
@@ -694,7 +691,7 @@ void
 splx(int ncpl)
 {
 	struct cpu_info *ci = curcpu();
-	
+
 	__asm volatile("sync; eieio");	/* reorder protect */
 	ci->ci_cpl = ncpl;
 	if (ci->ci_ipending & ~ncpl)
@@ -726,7 +723,7 @@ softintr(int ipl)
 
 	msrsave = mfmsr();
 	mtmsr(msrsave & ~PSL_EE);
-	curcpu()->ci_ipending |= 1 << ipl;
+	curcpu()->ci_ipending |= 1ULL << ipl;
 	mtmsr(msrsave);
 }
 
@@ -734,9 +731,9 @@ void
 genppc_cpu_configure(void)
 {
 	aprint_normal("biomask %x netmask %x ttymask %x\n",
-	    imask[IPL_BIO] & 0x1fffffff,
-	    imask[IPL_NET] & 0x1fffffff,
-	    imask[IPL_TTY] & 0x1fffffff);
+	    (u_int)imask[IPL_BIO] & 0x1fffffff,
+	    (u_int)imask[IPL_NET] & 0x1fffffff,
+	    (u_int)imask[IPL_TTY] & 0x1fffffff);
 
 	spl0();
 }

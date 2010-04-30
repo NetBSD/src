@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2009/03/14 14:46:06 dsl Exp $	*/
+/*	$NetBSD: boot.c,v 1.3.2.1 2010/04/30 14:39:46 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,6 +40,7 @@
 #include <machine/cpu.h>
 #include <machine/iplcb.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #include "boot.h"
 

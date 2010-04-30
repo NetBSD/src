@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0reg.h,v 1.5 2005/12/11 12:16:51 christos Exp $ */
+/* $NetBSD: s3c2xx0reg.h,v 1.5.100.1 2010/04/30 14:39:08 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -46,14 +46,13 @@
  * Following definitions can be foune in s3c{2800,24x0}reg.h for
  * that reason.
  *
- *  ULCON_IR                 (Infra-red mode)
- *  ULCON_PARITY_SHIFT       (Parity mode bit position)
  *  UMCON_AFC                (Auto flow control)
  *  UMSTAT_DCTS              (CTS change)
  */
 
 #define	SSCOM_ULCON 0x00 /* UART line control */
-/*       ULCON_PARITY_SHIFT and ULCON_IR is defined in s3c{2800,24x0}reg.h */
+#define	 ULCON_IR  	(1<<6)
+#define	 ULCON_PARITY_SHIFT  3
 #define	 ULCON_PARITY_NONE  (0<<ULCON_PARITY_SHIFT)
 #define	 ULCON_PARITY_ODD   (4<<ULCON_PARITY_SHIFT)
 #define	 ULCON_PARITY_EVEN  (5<<ULCON_PARITY_SHIFT)

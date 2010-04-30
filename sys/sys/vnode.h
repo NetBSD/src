@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.213.2.1 2010/02/11 05:20:28 uebayasi Exp $	*/
+/*	$NetBSD: vnode.h,v 1.213.2.2 2010/04/30 14:44:33 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -476,12 +476,6 @@ struct vnodeop_desc {
 	int		vdesc_vpp_offset;	/* return vpp location */
 	int		vdesc_cred_offset;	/* cred location, if any */
 	int		vdesc_componentname_offset; /* if any */
-	/*
-	 * Finally, we've got a list of private data (about each operation)
-	 * for each transport layer.  (Support to manage this list is not
-	 * yet part of BSD.)
-	 */
-	void *		*vdesc_transports;
 };
 
 #ifdef _KERNEL
@@ -596,12 +590,12 @@ void	vflushbuf(struct vnode *, int);
 int 	vget(struct vnode *, int);
 bool	vtryget(struct vnode *);
 void 	vgone(struct vnode *);
-void	vgonel(struct vnode *, struct lwp *);
 int	vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, bool, int);
 void	vprint(const char *, struct vnode *);
 void 	vput(struct vnode *);
 int	vrecycle(struct vnode *, kmutex_t *, struct lwp *);
 void 	vrele(struct vnode *);
+void 	vrele_async(struct vnode *);
 int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
@@ -610,6 +604,7 @@ void	vrevoke(struct vnode *);
 void	vrelel(struct vnode *, int);
 #define VRELEL_NOINACTIVE	0x01
 #define VRELEL_ONHEAD 		0x02
+#define VRELEL_ASYNC_RELE	0x03
 struct vnode *
 	vnalloc(struct mount *);
 void	vnfree(struct vnode *);
@@ -642,6 +637,7 @@ int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 	    const void *, struct lwp *);
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
 void	vn_ra_allocctx(struct vnode *);
+int	vn_fifo_bypass(void *);
 
 /* initialise global vnode management */
 void	vntblinit(void);

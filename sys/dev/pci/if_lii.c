@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.8 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.8.2.1 2010/04/30 14:43:36 uebayasi Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.8 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.8.2.1 2010/04/30 14:43:36 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -886,8 +886,7 @@ lii_start(struct ifnet *ifp)
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 		m_freem(m0);
 	}
 }
@@ -998,8 +997,7 @@ lii_rxintr(struct lii_softc *sc)
 		memcpy(mtod(m, void *), &rxp->rxp_data[0], size);
 		++ifp->if_ipackets;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		(*ifp->if_input)(ifp, m);
 	}

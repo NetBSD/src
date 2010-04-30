@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.8 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.8.2.1 2010/04/30 14:39:27 uebayasi Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -43,6 +43,9 @@ typedef	long db_expr_t;
 typedef struct trapframe db_regs_t;
 extern db_regs_t	ddb_regs;
 #define	DDB_REGS	(&ddb_regs)
+
+/* DDB commands not in db_interface.c */
+void	db_dump_trap(db_expr_t, bool, db_expr_t, const char *);
 
 /*
  * Things needed by kgdb:
@@ -111,6 +114,8 @@ static __inline int inst_trap_return(u_int ins)	{
 
 #define db_clear_single_step(r)	((r)->tf_ipsw &= ~PSW_R)
 #define db_set_single_step(r)	((r)->tf_ipsw |= PSW_R)
+
+#define DB_MACHINE_COMMANDS
 
 int db_valid_breakpoint(db_addr_t);
 int kdb_trap(int, int, db_regs_t *);

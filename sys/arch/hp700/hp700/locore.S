@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39 2009/12/10 05:10:01 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.39.2.1 2010/04/30 14:39:23 uebayasi Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
  *  suitability of this software for any purpose.
  */
 
+#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
@@ -154,25 +155,9 @@
 	.import fpu_cur_uspace, data
 	.import hp700_int_regs, data
 
-#if 0
 	BSS(pdc_stack, 4)	/* temp stack for PDC call */
 	BSS(kernelmapped, 4)	/* set when kernel is mapped */
 	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
-#else
-	.section .bss
-
-	.export	pdc_stack, data
-pdc_stack:			/* temp stack for PDC call */
-	.block	4
-
-	.export	kernelmapped, data
-kernelmapped:			/* set when kernel is mapped */
-	.block	4
-
-	.export hppa_vtop, data
-hppa_vtop:			/* a vtop translation table addr (pa=va) */
-	.block	4
-#endif
 
 	.text
 	.import kernel_setup, entry
@@ -245,12 +230,11 @@ L$start_zero_tf:
 	 * kernel stack starts a page and a trapframe above uarea address.
 	 */
 	ldo	NBPG+TRAPFRAME_SIZEOF(%t3), %sp
-	mtctl	%t3, CR_UPADDR
+	mtctl	%t3, CR_FPPADDR
 
 	/* initialize the pcb */
 	stw	%r0, PCB_ONFAULT(%t3)
 	stw	%r0, PCB_SPACE(%t3)	/* XXX HPPA_SID_KERNEL == 0 */
-	stw	%t3, PCB_UVA(%t3)
 
 	/*
 	 * Setup various pointers.
@@ -550,15 +534,28 @@ pdc_call_unmapped3:
 EXIT(pdc_call)
 
 /*
+ * int splraise(int ncpl);
+ */
+LEAF_ENTRY(splraise)
+	mfctl	CR_CURLWP, %t1
+	ldw	L_CPU(%t1),%t1
+	ldw	CI_CPL(%t1), %ret0
+	or	%ret0, %arg0, %arg0
+	bv	%r0(%rp)
+	stw	%arg0, CI_CPL(%t1)
+EXIT(splraise)
+	
+/*
  * int spllower(int ncpl);
  */
-ENTRY(spllower,64)
-	ldil	L%ipending, %r1
-	ldw	R%ipending(%r1), %r1	; load ipending
-	ldil	L%cpl, %t1
+ENTRY(spllower,HPPA_FRAME_SIZE)
+	mfctl	CR_CURLWP, %t1
+	ldw	L_CPU(%t1),%t1
+
+	ldw	CI_IPENDING(%t1), %r1	; load ipending
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
 	bv	%r0(%rp)
-	stw	%arg0, R%cpl(%t1)	; store new cpl
+	stw	%arg0, CI_CPL(%t1)	; store new cpl
 
 	/*
 	 * Dispatch interrupts.  There's a chance
@@ -571,8 +568,7 @@ ENTRY(spllower,64)
 	mfctl	%eiem, %arg1
 	mtctl	%r0, %eiem		; disable interrupts
 
-	ldil	L%ipending, %r1
-	ldw	R%ipending(%r1), %r1	; load ipending
+	ldw	CI_IPENDING(%t1), %r1	; load ipending
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
 	b,n	spllower_out		; branch if we got beaten
 	
@@ -619,14 +615,14 @@ EXIT(spllower)
  * void hp700_intr_schedule(int mask);
  */
 ENTRY(hp700_intr_schedule,0)
-	ldil	L%ipending, %t1
-	ldil	L%cpl, %t2
+	mfctl	CR_CURLWP, %t1
+	ldw	L_CPU(%t1),%t2
 	mfctl	%eiem, %arg1
 	mtctl	%r0, %eiem			; disable interrupts
-	ldw	R%ipending(%t1), %r1		; load ipending
+	ldw	CI_IPENDING(%t2), %r1		; load ipending
 	or	%r1, %arg0, %r1			; or in mask
-	stw	%r1, R%ipending(%t1)		; store ipending
-	ldw	R%cpl(%t2), %arg0		; load cpl
+	stw	%r1, CI_IPENDING(%t2)		; store ipending
+	ldw	CI_CPL(%t2), %arg0		; load cpl
 	andcm,= %r1, %arg0, %r1			; and ipending with ~cpl
 	b,n	spllower_dispatch		; dispatch if we can
 	bv	%r0(%rp)
@@ -765,7 +761,7 @@ EXIT(cpu_die)
 
 /*
  * struct lwp *
- * cpu_switchto(struct lwp *curl, struct lwp *newl)
+ * cpu_switchto(struct lwp *oldl, struct lwp *newl, bool returning)
  */
 	.align	32
 ENTRY(cpu_switchto,128)
@@ -803,7 +799,7 @@ switch_diag:
 
 	/*
 	 * cpu_lwp_fork sets the initial stack to a page above uarea address.
-	 * Check that the stack is above this value for curl.
+	 * Check that the stack is above this value for oldl.
 	 */
 	ldw	L_PCB(%arg1), %arg2
 	ldw	PCB_KSP(%arg2), %t1		/* t1 for switch_error */
@@ -820,19 +816,19 @@ switch_diag:
 kstack_ok:
 #endif
 
-	/* If old LWP exited, don't bother. */
+	/* If old LWP exited, don't bother saving anything. */
 	comb,=,n %r0, %arg0, switch_exited
 
 	/*
 	 * save old LWP context
 	 *
-	 * arg0: old LWP (curl)
+	 * arg0: old LWP (oldl)
 	 * arg1: new LWP (newl)
 	 */
 
-	ldw	L_PCB(%arg0), %t3	/* curl pcb */
+	ldw	L_PCB(%arg0), %t3	/* oldl pcb */
 	stw	%sp, PCB_KSP(%t3)
-	fdc	%r0(%t3)		/* flush curl pcb  - surely fdc PCB_KSP(%t3) */
+	fdc	%r0(%t3)		/* flush oldl pcb  - surely fdc PCB_KSP(%t3) */
 
 	/*
 	 * Save the callee-save registers. We don't need to do
@@ -857,7 +853,7 @@ kstack_ok:
 	/*
 	 * restore new LWP context
 	 *
-	 * arg0: old LWP (curl)
+	 * arg0: old LWP (oldl)
 	 * arg1: new LWP (newl)
 	 */
 switch_exited:
@@ -872,7 +868,7 @@ switch_exited:
 	mtctl	%t3, %pidr2			/* pmap_activate? */
 #endif
 	ldw	TF_CR30(%t1), %t2		/* pmap_activate? */
-	mtctl	%t2, CR_UPADDR			/* pmap_activate? */
+	mtctl	%t2, CR_FPPADDR			/* pmap_activate? */
 
 	mtctl	%arg1, CR_CURLWP
 
@@ -909,12 +905,12 @@ switch_exited:
 	/*
 	 * Save some caller-saves we want to preserve.
 	 *
-	 * We save curl (%arg0) and newl (%arg1) for the benefit of
+	 * We save oldl (%arg0) and newl (%arg1) for the benefit of
 	 * lwp_trampoline() for when it calls lwp_startup().
 	 *
-	 * curl (%arg0) is saved as it's the return value
+	 * oldl (%arg0) is saved as it's the return value
 	 */
-	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)		/* curl */
+	stw	%arg0, HPPA_FRAME_ARG(0)(%r3)		/* oldl */
 	stw	%arg1, HPPA_FRAME_ARG(1)(%r3)		/* newl */
 
 	copy	%arg1, %arg0
@@ -945,7 +941,7 @@ ALTENTRY(hppa_fpu_nop1)
 	 */
 	ldil	L%fpu_cur_uspace, %t1
 	mfctl	%ccr, %r1
-	mfctl	CR_UPADDR, %t2
+	mfctl	CR_FPPADDR, %t2
 	ldw	R%fpu_cur_uspace(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
 	comb,<>,n %t1, %t2, 0		; nullify if LWPs different
@@ -969,7 +965,7 @@ EXIT(cpu_switchto)
  * the first kernel function to call, and its argument.
  *
  * cpu_switchto() also makes sure that %arg0 and %arg1 are (still)
- * curl and newl respectively.
+ * oldl and newl respectively.
  */
 ENTRY_NOPROFILE(lwp_trampoline,HPPA_FRAME_SIZE)
 	/* no return point */

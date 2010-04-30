@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225var.h,v 1.2 2005/12/11 12:17:08 christos Exp $ */
+/*	$NetBSD: gb225var.h,v 1.2.98.1 2010/04/30 14:39:15 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -48,7 +48,7 @@
 struct opio_intr_handler;
 
 struct opio_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	bus_space_tag_t      sc_iot;
 	bus_space_handle_t   sc_ioh;

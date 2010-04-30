@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2009/12/16 23:19:07 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.2.1 2010/04/30 14:39:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2009/12/16 23:19:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.1 2010/04/30 14:39:37 uebayasi Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -130,7 +130,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2009/12/16 23:19:07 matt Exp $");
 
 #include <sys/boot_flag.h>
 
-#include "fs_mfs.h"
 #include "opt_execfmt.h"
 
 #include "zsc.h"			/* XXX */
@@ -142,7 +141,6 @@ struct cpu_info cpu_info_store;
 
 /* maps for VM objects */
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int	physmem;		/* max supported memory, changes to actual */
@@ -338,14 +336,12 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 		kgdb_connect(0);
 #endif
 
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
 	 */
 	if (boothowto & RB_MINIROOT)
 		kernend += round_page(mfs_initminiroot(kernend));
-#endif
 
 	/*
 	 * Load the rest of the available pages into the VM system.

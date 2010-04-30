@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.166 2010/01/21 15:58:32 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.166.2.1 2010/04/30 14:39:52 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.166 2010/01/21 15:58:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.166.2.1 2010/04/30 14:39:52 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -94,7 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.166 2010/01/21 15:58:32 martin Exp $"
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
+#include <dev/ebus/ebusvar.h>
 #include <dev/sbus/sbusvar.h>
+#include <dev/i2c/i2cvar.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -205,7 +207,7 @@ get_ncpus(void)
 		sparc_ncpus++;
 	}
 #else
-	sparc_ncpus = 1;
+	/* #define sparc_ncpus 1 */
 #endif
 }
 
@@ -344,17 +346,24 @@ die_old_boot_loader:
 static void
 get_bootpath_from_prom(void)
 {
+	struct btinfo_bootdev *bdev = NULL;
 	char sbuf[OFPATHLEN], *cp;
 	int chosen;
 
 	/*
 	 * Grab boot path from PROM
 	 */
-	if ((chosen = OF_finddevice("/chosen")) == -1 ||
-	    OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf)) < 0)
+	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return;
 
-	strcpy(ofbootpath, sbuf);
+	bdev = lookup_bootinfo(BTINFO_BOOTDEV);
+	if (bdev != NULL) {
+		strcpy(ofbootpath, bdev->name);
+	} else {
+		if (OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf)) < 0)
+			return;
+		strcpy(ofbootpath, sbuf);
+	}
 	DPRINTF(ACDB_BOOTDEV, ("bootpath: %s\n", ofbootpath));
 	ofbootpackage = prom_finddevice(ofbootpath);
 
@@ -564,10 +573,11 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	OF_getprop(findroot(), "name", machine_model, sizeof machine_model);
 	prom_getidprom();
 	if (i)
-		printf(": %s (%s): hostid %lx\n", machine_model,
+		aprint_normal(": %s (%s): hostid %lx\n", machine_model,
 		    machine_banner, hostid);
 	else
-		printf(": %s: hostid %lx\n", machine_model, hostid);
+		aprint_normal(": %s: hostid %lx\n", machine_model, hostid);
+	aprint_naive("\n");
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
@@ -867,6 +877,14 @@ device_register(struct device *dev, void *aux)
 		struct sbus_attach_args *sa = aux;
 
 		ofnode = sa->sa_node;
+	} else if (device_is_a(busdev, "ebus")) {
+		struct ebus_attach_args *ea = aux;
+
+		ofnode = ea->ea_node;
+	} else if (device_is_a(busdev, "iic")) {
+		struct i2c_attach_args *ia = aux;
+
+		ofnode = (int)ia->ia_cookie;
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
@@ -971,6 +989,22 @@ noether:
 				prop_dictionary_set(dict, "node-wwn", nwwnd);
 				prop_object_release(nwwnd);
 			}
+		}
+	}
+
+	/*
+	 * Check for I2C busses and add data for their direct configuration.
+	 */
+	if (device_is_a(dev, "iic")) {
+		int busnode = device_ofnode(busdev);
+
+		if (busnode) {
+			prop_dictionary_t props = device_properties(busdev);
+			prop_object_t cfg = prop_dictionary_get(props,
+				"i2c-child-devices");
+			if (!cfg)
+				of_enter_i2c_devs(props, busnode,
+				    sizeof(cell_t));
 		}
 	}
 
@@ -1102,8 +1136,6 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		prop_dictionary_set_uint32(dict, "depth", 8);
 	}
 	OF_getprop(console_node, "address", &fbaddr, sizeof(fbaddr));
-	if (fbaddr == 0)
-		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 	if (fbaddr != 0) {
 	
 		pmap_extract(pmap_kernel(), fbaddr, &fbpa);
@@ -1138,7 +1170,6 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		return;
 	if (OF_getprop(options, "output-device", output_device, 256) == 0)
 		return;
-	printf("output-device: %s\n", output_device);
 	/* find the mode string if there is one */
 	pos = strstr(output_device, ":r");
 	if (pos == NULL)

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47 2009/12/05 20:11:10 pooka Exp $
+#	$NetBSD: INSTALL,v 1.47.2.1 2010/04/30 14:39:13 uebayasi Exp $
 #
 # First try for BEBOX config file
 #
@@ -81,7 +81,7 @@ options 	INET
 config		netbsd	root on ? type ffs
 
 #pseudo-device	vnd		
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1
 pseudo-device	loop
 #pseudo-device	bpfilter		# packet filter

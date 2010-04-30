@@ -175,7 +175,7 @@ struct ndis_softc {
 	
 	/* cardbus specific */
 	cardbus_devfunc_t    ndis_res_ct;	/* cardbus devfuncs */
-	cardbustag_t         ndis_res_ctag;	/* carbus tag */
+	pcitag_t         ndis_res_ctag;	/* carbus tag */
 	bus_size_t           ndis_res_mapsize;	/* size of mapped bus space region */
 #endif /* end __NetBSD__ section */
 	int			ndis_rescnt;

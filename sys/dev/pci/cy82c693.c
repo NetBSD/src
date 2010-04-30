@@ -1,4 +1,4 @@
-/* $NetBSD: cy82c693.c,v 1.6 2008/04/28 20:23:54 martin Exp $ */
+/* $NetBSD: cy82c693.c,v 1.6.20.1 2010/04/30 14:43:32 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.6 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.6.20.1 2010/04/30 14:43:32 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -79,8 +79,7 @@ cy82c693_init(bus_space_tag_t iot)
 
 	if (cyhc_initialized) {
 		CYHC_UNLOCK(s);
-		if (iot != cyhc_handle.cyhc_iot)
-			panic("cy82c693_init");
+		KASSERT(bus_space_is_equal(iot, cyhc_handle.cyhc_iot));
 		return (&cyhc_handle);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.37 2010/01/08 11:35:08 pooka Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.37.2.1 2010/04/30 14:44:06 uebayasi Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,11 +48,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.37 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.37.2.1 2010/04/30 14:44:06 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -655,6 +656,7 @@ msdosfs_inactive(void *v)
 		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
 	struct denode *dep = VTODE(vp);
 	int error = 0;
 
@@ -662,6 +664,7 @@ msdosfs_inactive(void *v)
 	printf("msdosfs_inactive(): dep %p, de_Name[0] %x\n", dep, dep->de_Name[0]);
 #endif
 
+	fstrans_start(mp, FSTRANS_LAZY);
 	/*
 	 * Get rid of denodes related to stale file handles.
 	 */
@@ -696,6 +699,7 @@ out:
 #endif
 	*ap->a_recycle = (dep->de_Name[0] == SLOT_DELETED);
 	VOP_UNLOCK(vp, 0);
+	fstrans_done(mp);
 	return (error);
 }
 

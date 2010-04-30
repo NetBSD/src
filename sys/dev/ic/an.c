@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.58 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: an.c,v 1.58.2.1 2010/04/30 14:43:12 uebayasi Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.58 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.58.2.1 2010/04/30 14:43:12 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -319,7 +319,7 @@ an_attach(struct an_softc *sc)
 	/*
 	 * radiotap BPF device
 	 */
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_drvbpf);
 
 	memset(&sc->sc_rxtapu, 0, sizeof(sc->sc_rxtapu));
@@ -709,8 +709,7 @@ an_start(struct ifnet *ifp)
 		}
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		ifp->if_opackets++;
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
@@ -720,8 +719,7 @@ an_start(struct ifnet *ifp)
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL)
 			goto bad;
 		ieee80211_free_node(ni);
-		if (ic->ic_rawbpf)
-			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m);
 
 		wh = mtod(m, struct ieee80211_frame *);
 		if (ic->ic_flags & IEEE80211_F_PRIVACY)
@@ -767,7 +765,7 @@ an_start(struct ifnet *ifp)
 			tap->at_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 			tap->at_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
 			/* TBD tap->wt_flags */
-			bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, tap->at_ihdr.it_len, m);
+			bpf_mtap2(sc->sc_drvbpf, tap, tap->at_ihdr.it_len, m);
 		}
 
 #ifdef AN_DEBUG
@@ -1460,7 +1458,7 @@ an_rx_intr(struct an_softc *sc)
 		    (le16toh(frmhdr.an_rx_status) & AN_STAT_UNDECRYPTABLE))
 		    tap->ar_flags |= IEEE80211_RADIOTAP_F_BADFCS;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, tap->ar_ihdr.it_len, m);
 	}
 	wh = mtod(m, struct ieee80211_frame_min *);
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {

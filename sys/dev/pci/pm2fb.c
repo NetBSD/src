@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.2 2009/10/28 04:25:13 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.2.2.1 2010/04/30 14:43:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.2 2009/10/28 04:25:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.2.2.1 2010/04/30 14:43:43 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,14 +68,12 @@ struct pm2fb_softc {
 	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
 
-	bus_space_handle_t sc_fbh;
 	bus_space_handle_t sc_regh;
 	bus_addr_t sc_fb, sc_reg;
 	bus_size_t sc_fbsize, sc_regsize;
 
 	int sc_width, sc_height, sc_depth, sc_stride;
 	int sc_locked;
-	void *sc_fbaddr;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
@@ -86,7 +84,7 @@ struct pm2fb_softc {
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
 	/* engine stuff */
-	uint32_t sc_master_cntl;
+	uint32_t sc_pprod;
 };
 
 static int	pm2fb_match(device_t, cfdata_t, void *);
@@ -116,9 +114,7 @@ static void	pm2fb_bitblt(struct pm2fb_softc *, int, int, int, int, int,
 			    int, int);
 
 static void	pm2fb_cursor(void *, int, int, int);
-#if 0
 static void	pm2fb_putchar(void *, int, int, u_int, long);
-#endif
 static void	pm2fb_copycols(void *, int, int, int, int);
 static void	pm2fb_erasecols(void *, int, int, int, long);
 static void	pm2fb_copyrows(void *, int, int, int);
@@ -191,6 +187,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	unsigned long		defattr;
 	bool			is_console;
 	int i, j;
+	uint32_t flags;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -223,13 +220,8 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 
 	prop_dictionary_get_bool(dict, "is_console", &is_console);
 
-	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM,
-	    BUS_SPACE_MAP_LINEAR,
-	    &sc->sc_memt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		aprint_error("%s: failed to map the frame buffer.\n",
-		    device_xname(sc->sc_dev));
-	}
-	sc->sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_fbh);
+	pci_mapreg_info(pa->pa_pc, pa->pa_tag, 0x14, PCI_MAPREG_TYPE_MEM,
+	    &sc->sc_fb, &sc->sc_fbsize, &flags);
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_memt, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
@@ -304,11 +296,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &pm2fb_accessops;
 	aa.accesscookie = &sc->vd;
 
-	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
-	
-	printf("ap1 register: %08x\n", bus_space_read_4(sc->sc_memt, 
-	    sc->sc_regh, PM2_APERTURE1_CONTROL));
-	
+	config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);	
 }
 
 static int
@@ -358,13 +346,13 @@ pm2fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			{
 				int new_mode = *(int*)data;
 
-				/* notify the bus backend */
 				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
 						pm2fb_restore_palette(sc);
 						vcons_redraw_screen(ms);
-					}
+					} else
+						pm2fb_flush_engine(sc);
 				}
 			}
 			return 0;
@@ -420,13 +408,6 @@ pm2fb_mmap(void *v, void *vs, off_t offset, int prot)
 	}
 #endif
 
-#ifdef OFB_ALLOW_OTHERS
-	if (offset >= 0x80000000) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
-		return pa;
-	}
-#endif
 	return -1;
 }
 
@@ -441,13 +422,7 @@ pm2fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_stride;
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
-
-	ri->ri_bits = (char *)sc->sc_fbaddr;
-
-	if (existing) {
-		ri->ri_flg |= RI_CLEAR;
-	}
+	ri->ri_flg = RI_CENTER;
 
 	rasops_init(ri, sc->sc_height / 8, sc->sc_width / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
@@ -461,9 +436,7 @@ pm2fb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.cursor = pm2fb_cursor;
 	ri->ri_ops.eraserows = pm2fb_eraserows;
 	ri->ri_ops.erasecols = pm2fb_erasecols;
-#if 0
 	ri->ri_ops.putchar = pm2fb_putchar;
-#endif
 }
 
 static int
@@ -555,42 +528,59 @@ pm2fb_putpalreg(struct pm2fb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 static void
 pm2fb_init(struct pm2fb_softc *sc)
 {
-#if 0
-	uint32_t datatype;
-#endif
 	pm2fb_flush_engine(sc);
 
 	pm2fb_wait(sc, 8);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SCREEN_BASE, 0);
 #if 0
-	switch (sc->sc_depth) {
-		case 8:
-			datatype = R128_GMC_DST_8BPP_CI;
-			break;
-		case 15:
-			datatype = R128_GMC_DST_15BPP;
-			break;
-		case 16:
-			datatype = R128_GMC_DST_16BPP;
-			break;
-		case 24:
-			datatype = R128_GMC_DST_24BPP;
-			break;
-		case 32:
-			datatype = R128_GMC_DST_32BPP;
-			break;
-		default:
-			aprint_error("%s: unsupported depth %d\n",
-			    device_xname(sc->sc_dev), sc->sc_depth);
-			return;
-	}
-	sc->sc_master_cntl = R128_GMC_CLR_CMP_CNTL_DIS |
-	    R128_GMC_AUX_CLIP_DIS | datatype;
-#endif
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_BYPASS_MASK, 
 		0xffffffff);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_FB_WRITE_MASK, 
 		0xffffffff);
+#endif
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HW_WRITEMASK, 
+		0xffffffff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SW_WRITEMASK, 
+		0xffffffff);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_WRITE_MODE, 
+		PM2WM_WRITE_EN);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_SCREENSIZE,
+	    (sc->sc_height << 16) | sc->sc_width);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_SCISSOR_MODE, 
+	    PM2SC_SCREEN_EN);
+	pm2fb_wait(sc, 8);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DITHER_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_ALPHA_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_TEX_COLOUR_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_TEX_ADDRESS_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_TEX_READ_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_TEX_LUT_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_YUV_MODE, 0);
+	pm2fb_wait(sc, 8);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DEPTH_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DEPTH, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_STENCIL_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_STIPPLE_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_ROP_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_WINDOW_ORIGIN, 0);
+	sc->sc_pprod = bus_space_read_4(sc->sc_memt, sc->sc_regh, 
+	    PM2_FB_READMODE) &
+	    (PM2FB_PP0_MASK | PM2FB_PP1_MASK | PM2FB_PP2_MASK);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_FB_READMODE, 
+	    sc->sc_pprod);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_TEXMAP_FORMAT, 
+	    sc->sc_pprod);
+	pm2fb_wait(sc, 8);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DY, 1 << 16);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DXDOM, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_STARTXDOM, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_STARTXSUB, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_STARTY, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_COUNT, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_SCISSOR_MINYX, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_SCISSOR_MAXYX,
+	    0x0fff0fff);
 	pm2fb_flush_engine(sc);
 }
 
@@ -599,9 +589,9 @@ pm2fb_rectfill(struct pm2fb_softc *sc, int x, int y, int wi, int he,
      uint32_t colour)
 {
 
-	pm2fb_wait(sc, 6);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 
-	    0);
+	pm2fb_wait(sc, 7);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
 	    PM2RECFG_WRITE_EN);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_BLOCK_COLOUR,
@@ -612,8 +602,6 @@ pm2fb_rectfill(struct pm2fb_softc *sc, int x, int y, int wi, int he,
 	    (he << 16) | wi);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_RENDER,
 	    PM2RE_RECTANGLE | PM2RE_INC_X | PM2RE_INC_Y | PM2RE_FASTFILL);
-	
-	pm2fb_flush_engine(sc);
 }
 
 static void
@@ -628,11 +616,18 @@ pm2fb_bitblt(struct pm2fb_softc *sc, int xs, int ys, int xd, int yd,
 	if (xd <= xs) {
 		dir |= PM2RE_INC_X;
 	}
-	pm2fb_wait(sc, 6);
+	pm2fb_wait(sc, 7);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DDA_MODE, 0);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
-	    PM2RECFG_READ_SRC | PM2RECFG_WRITE_EN | PM2RECFG_ROP_EN |
-	    (rop << 6));
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
+	if (rop == 3) {
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
+		    PM2RECFG_READ_SRC | PM2RECFG_WRITE_EN | PM2RECFG_ROP_EN |
+		    PM2RECFG_PACKED | (rop << 6));
+	} else {
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
+		    PM2RECFG_READ_SRC | PM2RECFG_READ_DST | PM2RECFG_WRITE_EN |
+		    PM2RECFG_PACKED | PM2RECFG_ROP_EN | (rop << 6));
+	}
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_RECT_START,
 	    (yd << 16) | xd);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_RECT_SIZE,
@@ -641,7 +636,6 @@ pm2fb_bitblt(struct pm2fb_softc *sc, int xs, int ys, int xd, int yd,
 	    (((ys - yd) & 0xfff) << 16) | ((xs - xd) & 0xfff));
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_RENDER,
 	    PM2RE_RECTANGLE | dir);
-	pm2fb_flush_engine(sc);
 }
 
 static void
@@ -678,12 +672,99 @@ pm2fb_cursor(void *cookie, int on, int row, int col)
 
 }
 
-#if 0
 static void
 pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct pm2fb_softc *sc = scr->scr_cookie;
+	uint32_t mode;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		void *data;
+		uint32_t fg, bg;
+		int uc, i;
+		int x, y, wi, he;
+
+		wi = ri->ri_font->fontwidth;
+		he = ri->ri_font->fontheight;
+
+		if (!CHAR_IN_FONT(c, ri->ri_font))
+			return;
+		bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+		fg = ri->ri_devcmap[(attr >> 24) & 0xf];
+		x = ri->ri_xorigin + col * wi;
+		y = ri->ri_yorigin + row * he;
+		if (c == 0x20) {
+			pm2fb_rectfill(sc, x, y, wi, he, bg);
+		} else {
+			uc = c - ri->ri_font->firstchar;
+			data = (uint8_t *)ri->ri_font->data + uc * 
+			    ri->ri_fontscale;
+
+			mode = PM2RM_MASK_MIRROR;
+			switch (ri->ri_font->stride) {
+				case 1:
+					mode |= 3 << 7;
+					break;
+				case 2:
+					mode |= 2 << 7;
+					break;
+			}
+
+			pm2fb_wait(sc, 8);
+
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
+			    PM2_RE_MODE, mode);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_CONFIG, PM2RECFG_WRITE_EN);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_BLOCK_COLOUR, bg);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RECT_START, (y << 16) | x);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RECT_SIZE, (he << 16) | wi);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RENDER,
+			    PM2RE_RECTANGLE |
+			    PM2RE_INC_X | PM2RE_INC_Y | PM2RE_FASTFILL);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_BLOCK_COLOUR, fg);
+			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			    PM2_RE_RENDER,
+			    PM2RE_RECTANGLE | PM2RE_SYNC_ON_MASK |
+			    PM2RE_INC_X | PM2RE_INC_Y | PM2RE_FASTFILL);
+
+			pm2fb_wait(sc, he);
+			switch (ri->ri_font->stride) {
+			case 1: {
+				uint8_t *data8 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data8;
+					bus_space_write_4(sc->sc_memt, 
+					    sc->sc_regh,
+					    PM2_RE_BITMASK, reg);
+					data8++;
+				}
+				break;
+				}
+			case 2: {
+				uint16_t *data16 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data16;
+					bus_space_write_4(sc->sc_memt, 
+					    sc->sc_regh,
+					    PM2_RE_BITMASK, reg);
+					data16++;
+				}
+				break;
+			}
+			}
+		}
+	}
 }
-#endif
 
 static void
 pm2fb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.35 2009/12/23 17:17:59 stacktic Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.35.2.1 2010/04/30 14:44:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -97,6 +97,9 @@ int rumpuser_poll(struct pollfd *, int, int, int *);
 
 int rumpuser_putchar(int, int *);
 
+#define RUMPUSER_PID_SELF ((int64_t)-1)
+int rumpuser_kill(int64_t, int, int *);
+
 #define RUMPUSER_PANIC (-1)
 void rumpuser_exit(int);
 void rumpuser_seterrno(int);
@@ -105,6 +108,8 @@ int rumpuser_writewatchfile_setup(int, int, intptr_t, int *);
 int rumpuser_writewatchfile_wait(int, intptr_t *, int *);
 
 int rumpuser_dprintf(const char *, ...);
+
+int rumpuser_getnhostcpu(void);
 
 /* rumpuser_pth */
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);
@@ -187,19 +192,12 @@ int  rumpuser_net_setsockopt(int, int, int, const void *, int, int *);
 
 /* rumpuser dynloader */
 
-/* XXX: go _t, go */
-#ifdef __NetBSD__
-#include <prop/proplib.h>
-#else
-#ifndef HAVE_PROP_DICTIONARY_T
-#define HAVE_PROP_DICTIONARY_T
-typedef struct prop_dictionary *prop_dictionary_t;
-#endif
-#endif
-
 struct modinfo;
-typedef int (*rump_modinit_fn)(struct modinfo *, prop_dictionary_t);
+struct rump_component;
+typedef void (*rump_modinit_fn)(const struct modinfo *const *, size_t);
 typedef int (*rump_symload_fn)(void *, uint64_t, char *, uint64_t);
-void rumpuser_dl_module_bootstrap(rump_modinit_fn, rump_symload_fn);
+typedef void (*rump_component_init_fn)(struct rump_component *, int);
+void rumpuser_dl_bootstrap(rump_modinit_fn, rump_symload_fn);
+void rumpuser_dl_component_init(int, rump_component_init_fn);
 
 #endif /* _RUMP_RUMPUSER_H_ */

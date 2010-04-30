@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.21 2005/12/11 12:16:54 christos Exp $	*/
+/*	$NetBSD: vectors.s,v 1.21.98.1 2010/04/30 14:39:09 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1990 Regents of the University of California.
@@ -212,44 +212,25 @@ GLOBAL(uservects)
 	VECTOR(badmfpint)	|  95:
 #endif /* NNCRSCSI > 0 */
 
-#if NZS > 0
 	/*
 	 * Interrupts from the 8530 SCC
 	 */
-	ASVECTOR(sccint)	|  96: SCC Tx empty channel B
+	VECTOR(badtrap)		|  96: SCC Tx empty channel B
 	VECTOR(badtrap)		|  97: Not used
-	ASVECTOR(sccint)	|  98: SCC Ext./Status Channel B
+	VECTOR(badtrap)		|  98: SCC Ext./Status Channel B
 	VECTOR(badtrap)		|  99: Not used
-	ASVECTOR(sccint)	| 100: SCC Rx Channel B
+	VECTOR(badtrap)		| 100: SCC Rx Channel B
 	VECTOR(badtrap)		| 101: Not used
-	ASVECTOR(sccint)	| 102: SCC Special Rx cond.  Channel B
+	VECTOR(badtrap)		| 102: SCC Special Rx cond.  Channel B
 	VECTOR(badtrap)		| 103: Not used
-	ASVECTOR(sccint)	| 104: SCC Tx empty channel A
+	VECTOR(badtrap)		| 104: SCC Tx empty channel A
 	VECTOR(badtrap)		| 105: Not used
-	ASVECTOR(sccint)	| 106: SCC Ext./Status Channel A
+	VECTOR(badtrap)		| 106: SCC Ext./Status Channel A
 	VECTOR(badtrap)		| 107: Not used
-	ASVECTOR(sccint)	| 108: SCC Rx Channel A
+	VECTOR(badtrap)		| 108: SCC Rx Channel A
 	VECTOR(badtrap)		| 109: Not used
-	ASVECTOR(sccint)	| 110: SCC Special Rx cond.  Channel A
+	VECTOR(badtrap)		| 110: SCC Special Rx cond.  Channel A
 	VECTOR(badtrap)		| 111: Not used
-#else
-	VECTOR(badtrap)		|  96: Not used
-	VECTOR(badtrap)		|  97: Not used
-	VECTOR(badtrap)		|  98: Not used
-	VECTOR(badtrap)		|  99: Not used
-	VECTOR(badtrap)		| 100: Not used
-	VECTOR(badtrap)		| 101: Not used
-	VECTOR(badtrap)		| 102: Not used
-	VECTOR(badtrap)		| 103: Not used
-	VECTOR(badtrap)		| 104: Not used
-	VECTOR(badtrap)		| 105: Not used
-	VECTOR(badtrap)		| 106: Not used
-	VECTOR(badtrap)		| 107: Not used
-	VECTOR(badtrap)		| 108: Not used
-	VECTOR(badtrap)		| 109: Not used
-	VECTOR(badtrap)		| 110: Not used
-	VECTOR(badtrap)		| 111: Not used
-#endif /* NZS > 0 */
 
 #define BADTRAP16	VECTOR(badtrap) ; VECTOR(badtrap) ; \
 			VECTOR(badtrap) ; VECTOR(badtrap) ; \

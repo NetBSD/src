@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.30 2010/01/19 22:07:00 pooka Exp $	 */
+/* $NetBSD: if_bce.c,v 1.30.2.1 2010/04/30 14:43:33 uebayasi Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.30 2010/01/19 22:07:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.30.2.1 2010/04/30 14:43:33 uebayasi Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -179,7 +179,7 @@ static	int	bce_add_rxbuf(struct bce_softc *, int);
 static	void	bce_rxdrain(struct bce_softc *);
 static	void	bce_stop(struct ifnet *, int);
 static	void	bce_reset(struct bce_softc *);
-static	bool	bce_resume(device_t, pmf_qual_t);
+static	bool	bce_resume(device_t, const pmf_qual_t *);
 static	void	bce_set_filter(struct ifnet *);
 static	int	bce_mii_read(device_t, int, int);
 static	void	bce_mii_write(device_t, int, int, int);
@@ -628,8 +628,7 @@ bce_start(struct ifnet *ifp)
 		newpkts++;
 
 		/* Pass the packet to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 	if (txsfree == 0) {
 		/* No more slots left; notify upper layer. */
@@ -821,8 +820,7 @@ bce_rxintr(struct bce_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input) (ifp, m);
@@ -1367,7 +1365,7 @@ bce_set_filter(struct ifnet *ifp)
 }
 
 static bool
-bce_resume(device_t self, pmf_qual_t qual)
+bce_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct bce_softc *sc = device_private(self);
 

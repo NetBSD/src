@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/03/31 18:41:40 dyoung Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2010/04/30 14:44:17 uebayasi Exp $
 
 .include "../Makefile.inc"
 
@@ -17,6 +17,9 @@ SRCS+=	uvm_coredump.c
 .PATH:	${S}/arch/${MACHINE_CPU}/${MACHINE_CPU}
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 .PATH:	${S}/arch/x86/x86
+.endif
+.if ${MACHINE_ARCH} == "powerpc64"
+.PATH: ${S}/arch/powerpc/powerpc
 .endif
 SRCS+=	core_machdep.c
 

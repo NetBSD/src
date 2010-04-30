@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_apm.c,v 1.14 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: acpi_apm.c,v 1.14.20.1 2010/04/30 14:43:05 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,26 +35,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.14 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_apm.c,v 1.14.20.1 2010/04/30 14:43:05 uebayasi Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/sysctl.h>
-#include <sys/select.h>
+#include <sys/systm.h>
+#include <sys/queue.h>
 #include <sys/envsys.h>
+
 #include <dev/sysmon/sysmonvar.h>
 
-#include <dev/acpi/acpica.h>
+#include <dev/acpi/acpivar.h>
 #include <dev/apm/apmvar.h>
 
 static void	acpiapm_disconnect(void *);
 static void	acpiapm_enable(void *, int);
 static int	acpiapm_set_powstate(void *, u_int, u_int);
 static int	acpiapm_get_powstat(void *, u_int, struct apm_power_info *);
+static bool	apm_per_sensor(const struct sysmon_envsys *,
+			       const envsys_data_t *, void *);
 static int	acpiapm_get_event(void *, u_int *, u_int *);
 static void	acpiapm_cpu_busy(void *);
 static void	acpiapm_cpu_idle(void *);
@@ -97,7 +97,7 @@ static int capabilities = ACPI_APM_DEFAULT_CAP;
 static int acpiapm_node = CTL_EOL, standby_node = CTL_EOL;
 
 struct acpi_softc;
-extern ACPI_STATUS acpi_enter_sleep_state(struct acpi_softc *, int);
+extern void acpi_enter_sleep_state(struct acpi_softc *, int);
 static int acpiapm_match(device_t, cfdata_t , void *);
 static void acpiapm_attach(device_t, device_t, void *);
 static int sysctl_state(SYSCTLFN_PROTO);
@@ -259,6 +259,69 @@ acpiapm_set_powstate(void *opaque, u_int devid, u_int powstat)
 	return 0;
 }
 
+struct apm_sensor_info {
+	struct apm_power_info *pinfo;
+	int present;
+	int lastcap, descap, cap, warncap, lowcap, discharge;
+	int lastcap_valid, cap_valid, discharge_valid;
+};
+
+static bool
+apm_per_sensor(const struct sysmon_envsys *sme, const envsys_data_t *edata,
+	       void *arg)
+{
+	struct apm_sensor_info *info = (struct apm_sensor_info *)arg;
+	int data;
+
+	if (sme->sme_class != SME_CLASS_ACADAPTER &&
+	    sme->sme_class != SME_CLASS_BATTERY)
+		return false;
+
+	if (edata->state == ENVSYS_SINVALID)
+		return true;
+
+	data = edata->value_cur;
+
+	DPRINTF(("%s (%s) %d\n", sme->sme_name, edata->desc, data));
+
+	if (strstr(edata->desc, "connected")) {
+		info->pinfo->ac_state = data ? APM_AC_ON : APM_AC_OFF;
+	}
+	else if (strstr(edata->desc, "present") && data != 0)
+		info->present++;
+	else if (strstr(edata->desc, "charging")) {
+		if (data)
+			info->pinfo->battery_flags |= APM_BATT_FLAG_CHARGING;
+		else
+			info->pinfo->battery_flags &= ~APM_BATT_FLAG_CHARGING;
+		}
+	else if (strstr(edata->desc, "last full cap")) {
+		info->lastcap += data / 1000;
+		info->lastcap_valid = 1;
+	}
+	else if (strstr(edata->desc, "design cap"))
+		info->descap = data / 1000;
+	else if (strstr(edata->desc, "charge") &&
+	    strstr(edata->desc, "charge rate") == NULL &&
+	    strstr(edata->desc, "charge state") == NULL) {
+
+		/* Update cumulative capacity */
+		info->cap += data / 1000;
+
+		/* get warning- & critical-capacity values */
+		info->warncap = edata->limits.sel_warnmin / 1000;
+		info->lowcap = edata->limits.sel_critmin / 1000;
+
+		info->cap_valid = 1;
+		info->pinfo->nbattery++;
+	}
+	else if (strstr(edata->desc, "discharge rate")) {
+		info->discharge += data / 1000;
+		info->discharge_valid = 1;
+	}
+	return true;
+}
+
 static int
 /*ARGSUSED*/
 acpiapm_get_powstat(void *opaque, u_int batteryid,
@@ -267,17 +330,20 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 #define APM_BATT_FLAG_WATERMARK_MASK (APM_BATT_FLAG_CRITICAL |		      \
 				      APM_BATT_FLAG_LOW |		      \
 				      APM_BATT_FLAG_HIGH)
-	int i, curcap, lowcap, warncap, cap, descap, lastcap, discharge;
-	int cap_valid, lastcap_valid, discharge_valid;
-	envsys_tre_data_t etds;
-	envsys_basic_info_t ebis;
+	struct apm_sensor_info info;
 
-	/* Denote most variables as unitialized. */
-	curcap = lowcap = warncap = descap = -1;
+	/* Denote most variables as uninitialized. */
+	info.lowcap = info.warncap = info.descap = -1;
 
-	/* Prepare to aggregate these two variables over all batteries. */
-	cap = lastcap = discharge = 0;
-	cap_valid = lastcap_valid = discharge_valid = 0;
+	/*
+	 * Prepare to aggregate capacity, charge, and discharge over all
+	 * batteries.
+	 */
+	info.cap = info.lastcap = info.discharge = 0;
+	info.cap_valid = info.lastcap_valid = info.discharge_valid = 0;
+	info.present = 0;
+
+	info.pinfo = pinfo;
 
 	(void)memset(pinfo, 0, sizeof(*pinfo));
 	pinfo->ac_state = APM_AC_UNKNOWN;
@@ -289,79 +355,31 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 	pinfo->battery_state = APM_BATT_UNKNOWN; /* ignored */
 	pinfo->battery_life = APM_BATT_LIFE_UNKNOWN;
 
-	sysmonopen_envsys(0, 0, 0, &lwp0);
+	sysmon_envsys_foreach_sensor(apm_per_sensor, (void *)&info, true);
 
-	for (i = 0;; i++) {
-		const char *desc;
-		int data;
-		int flags;
+	if (info.present == 0)
+		pinfo->battery_flags |= APM_BATT_FLAG_NO_SYSTEM_BATTERY;
 
-		ebis.sensor = i;
-		if (sysmonioctl_envsys(0, ENVSYS_GTREINFO, (void *)&ebis, 0,
-		    NULL) || (ebis.validflags & ENVSYS_FVALID) == 0)
-			break;
-		etds.sensor = i;
-		if (sysmonioctl_envsys(0, ENVSYS_GTREDATA, (void *)&etds, 0,
-		    NULL))
-			continue;
-		desc = ebis.desc;
-		flags = etds.validflags;
-		data = etds.cur.data_s;
-
-		DPRINTF(("%d %s %d %d\n", i, desc, data, flags));
-		if ((flags & ENVSYS_FCURVALID) == 0)
-			continue;
-		if (strstr(desc, " connected")) {
-			pinfo->ac_state = data ? APM_AC_ON : APM_AC_OFF;
-		} else if (strstr(desc, " present") && data == 0)
-			pinfo->battery_flags |= APM_BATT_FLAG_NO_SYSTEM_BATTERY;
-		else if (strstr(desc, " charging") && data)
-			pinfo->battery_flags |= APM_BATT_FLAG_CHARGING;
-		else if (strstr(desc, " charging") && !data)
-			pinfo->battery_flags &= ~APM_BATT_FLAG_CHARGING;
-		else if (strstr(desc, " warn cap"))
-			warncap = data / 1000;
-		else if (strstr(desc, " low cap"))
-			lowcap = data / 1000;
-		else if (strstr(desc, " last full cap")) {
-			lastcap += data / 1000;
-			lastcap_valid = 1;
-		}
-		else if (strstr(desc, " design cap"))
-			descap = data / 1000;
-		else if (strstr(desc, " charge") &&
-		    strstr(desc, " charge rate") == NULL &&
-		    strstr(desc, " charge state") == NULL) {
-			cap += data / 1000;
-			cap_valid = 1;
-			pinfo->nbattery++;
-		}
-		else if (strstr(desc, " discharge rate")) {
-			discharge += data / 1000;
-			discharge_valid = 1;
-		}
-	}
-	sysmonclose_envsys(0, 0, 0, &lwp0);
-
-	if (cap_valid > 0)  {
-		if (warncap != -1 && cap < warncap)
+	if (info.cap_valid > 0)  {
+		if (info.warncap != -1 && info.cap < info.warncap)
 			pinfo->battery_flags |= APM_BATT_FLAG_CRITICAL;
-		else if (lowcap != -1) {
-			if (cap < lowcap)
+		else if (info.lowcap != -1) {
+			if (info.cap < info.lowcap)
 				pinfo->battery_flags |= APM_BATT_FLAG_LOW;
 			else
 				pinfo->battery_flags |= APM_BATT_FLAG_HIGH;
 		}
-		if (lastcap_valid > 0 && lastcap != 0)
-			pinfo->battery_life = 100 * cap / lastcap;
-		else if (descap != -1 && descap != 0)
-			pinfo->battery_life = 100 * cap / descap;
+		if (info.lastcap_valid > 0 && info.lastcap != 0)
+			pinfo->battery_life = 100 * info.cap / info.lastcap;
+		else if (info.descap != -1 && info.descap != 0)
+			pinfo->battery_life = 100 * info.cap / info.descap;
 	}
 
 	if ((pinfo->battery_flags & APM_BATT_FLAG_CHARGING) == 0) {
 		/* discharging */
-		if (discharge != -1 && cap != -1 && discharge != 0)
-			pinfo->minutes_left = 60 * cap / discharge;
+		if (info.discharge != -1 && info.discharge != 0 &&
+		    info.cap != -1)
+			pinfo->minutes_left = 60 * info.cap / info.discharge;
 	}
 	if ((pinfo->battery_flags & APM_BATT_FLAG_WATERMARK_MASK) == 0 &&
 	    (pinfo->battery_flags & APM_BATT_FLAG_NO_SYSTEM_BATTERY) == 0) {
@@ -371,8 +389,8 @@ acpiapm_get_powstat(void *opaque, u_int batteryid,
 			pinfo->battery_flags |= APM_BATT_FLAG_LOW;
 	}
 
-	DPRINTF(("%d %d %d %d %d %d\n", cap, warncap, lowcap, lastcap, descap,
-	    discharge));
+	DPRINTF(("%d %d %d %d %d %d\n", info.cap, info.warncap, info.lowcap,
+	    info.lastcap, info.descap, info.discharge));
 	DPRINTF(("pinfo %d %d %d\n", pinfo->battery_flags,
 	    pinfo->battery_life, pinfo->battery_life));
 	return 0;

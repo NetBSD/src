@@ -1,7 +1,7 @@
-/*        $NetBSD: device-mapper.c,v 1.15 2010/01/08 00:27:48 pooka Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.15.2.1 2010/04/30 14:43:10 uebayasi Exp $ */
 
 /*
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,7 +45,6 @@
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
-#include <sys/module.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -59,8 +58,12 @@ static dev_type_strategy(dmstrategy);
 static dev_type_size(dmsize);
 
 /* attach and detach routines */
-int dmattach(void);
-int dmdestroy(void);
+void dmattach(int);
+#ifdef _MODULE
+static int dmdestroy(void);
+#endif
+
+static void dm_doinit(void);
 
 static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
@@ -101,18 +104,13 @@ const struct dkdriver dmdkdriver = {
 	.d_strategy = dmstrategy
 };
 
-#ifdef _MODULE
-/* Autoconf defines */
-CFDRIVER_DECL(dm, DV_DISK, NULL);
-#endif
-
 CFATTACH_DECL3_NEW(dm, 0,
      dm_match, dm_attach, dm_detach, NULL, NULL, NULL,
      DVF_DETACH_SHUTDOWN);
 
 extern struct cfdriver dm_cd;
 
-extern uint64_t dev_counter;
+extern uint64_t dm_dev_counter;
 
 /*
  * This array is used to translate cmd to function pointer.
@@ -142,36 +140,47 @@ struct cmd_function cmd_fn[] = {
 		{NULL, NULL}	
 };
 
+#ifdef _MODULE
+#include <sys/module.h>
+
+/* Autoconf defines */
+CFDRIVER_DECL(dm, DV_DISK, NULL);
+
 MODULE(MODULE_CLASS_DRIVER, dm, NULL);
 
 /* New module handle routine */
 static int
 dm_modcmd(modcmd_t cmd, void *arg)
 {
-#ifdef _MODULE
-	int bmajor = -1, cmajor = -1;
-	int error;
+	int error, bmajor, cmajor;
 
 	error = 0;
+	bmajor = -1;
+	cmajor = -1;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		dmattach();
-
 		error = config_cfdriver_attach(&dm_cd);
 		if (error)
 			break;
 
 		error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
 		if (error) {
-			config_cfdriver_detach(&dm_cd);
-			aprint_error("Unable to register cfattach for dm driver\n");
+			aprint_error("%s: unable to register cfattach\n",
+			    dm_cd.cd_name);
+			return error;
+		}
 
+		error = devsw_attach(dm_cd.cd_name, &dm_bdevsw, &bmajor,
+		    &dm_cdevsw, &cmajor);
+		if (error) {
+			config_cfattach_detach(dm_cd.cd_name, &dm_ca);
+			config_cfdriver_detach(&dm_cd);
 			break;
 		}
 
-		error =  devsw_attach("dm", &dm_bdevsw, &bmajor,
-		    &dm_cdevsw, &cmajor);
+		dm_doinit();
+
 		break;
 
 	case MODULE_CMD_FINI:
@@ -181,11 +190,10 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		 * to disable auto-unload only if there is mounted dm device
 		 * present.
 		 */ 
-		if (dev_counter > 0)
+		if (dm_dev_counter > 0)
 			return EBUSY;
-		dmdestroy();
 
-		error = config_cfattach_detach(dm_cd.cd_name, &dm_ca);
+		error = dmdestroy();
 		if (error)
 			break;
 
@@ -201,15 +209,8 @@ dm_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return error;
-#else
-
-	if (cmd == MODULE_CMD_INIT)
-		return 0;
-	return ENOTTY;
-
-#endif /* _MODULE */
 }
-
+#endif /* _MODULE */
 
 /*
  * dm_match:
@@ -270,34 +271,52 @@ dm_detach(device_t self, int flags)
 	(void)dm_dev_free(dmv);
 
 	/* Decrement device counter After removing device */
-	atomic_dec_64(&dev_counter);
+	atomic_dec_64(&dm_dev_counter);
 
 	return 0;
 }
 
-/* attach routine */
-int
-dmattach(void)
+static void
+dm_doinit(void)
 {
-
 	dm_target_init();
 	dm_dev_init();
 	dm_pdev_init();
-
-	return 0;
 }
 
+/* attach routine */
+void
+dmattach(int n)
+{
+	int error;
+
+	error = config_cfattach_attach(dm_cd.cd_name, &dm_ca);
+	if (error) {
+		aprint_error("%s: unable to register cfattach\n",
+		    dm_cd.cd_name);
+	} else {
+		dm_doinit();
+	}
+}
+
+#ifdef _MODULE
 /* Destroy routine */
-int
+static int
 dmdestroy(void)
 {
+	int error;
 
+	error = config_cfattach_detach(dm_cd.cd_name, &dm_ca);
+	if (error)
+		return error;
+	
 	dm_dev_destroy();
 	dm_pdev_destroy();
 	dm_target_destroy();
 
 	return 0;
 }
+#endif /* _MODULE */
 
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
@@ -408,6 +427,10 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 {
 	dm_dev_t *dmv;
 
+	/* disk ioctls make sense only on block devices */
+	if (minor(dev) == 0)
+		return ENOTTY;
+	
 	switch(cmd) {
 	case DIOCGWEDGEINFO:
 	{

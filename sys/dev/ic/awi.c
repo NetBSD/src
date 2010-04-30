@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.86 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: awi.c,v 1.86.2.1 2010/04/30 14:43:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.86 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.86.2.1 2010/04/30 14:43:13 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -694,8 +694,7 @@ awi_start(struct ifnet *ifp)
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			ifp->if_opackets++;
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp, m0);
 			eh = mtod(m0, struct ether_header *);
 			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 			if (ni == NULL) {
@@ -726,8 +725,7 @@ awi_start(struct ifnet *ifp)
 				continue;
 			}
 		}
-		if (ic->ic_rawbpf)
-			bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
+		bpf_mtap3(ic->ic_rawbpf, m0);
 		if (dowep) {
 			if ((ieee80211_crypto_encap(ic, ni, m0)) == NULL) {
 				m_freem(m0);

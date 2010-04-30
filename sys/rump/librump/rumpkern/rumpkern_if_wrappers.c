@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpkern_if_wrappers.c,v 1.5 2009/11/26 09:21:16 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_wrappers.c,v 1.5.2.1 2010/04/30 14:44:30 uebayasi Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpkern.ifspec,v 1.3 2009/11/26 09:20:07 pooka Exp 
+ * from: NetBSD: rumpkern.ifspec,v 1.4 2010/03/05 18:41:46 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 
@@ -45,7 +45,7 @@ rump_pub_getversion(void)
 }
 
 int
-rump_pub_module_init(struct modinfo *arg1, prop_dictionary_t arg2)
+rump_pub_module_init(const struct modinfo * const *arg1, size_t arg2)
 {
 	int rv;
 
@@ -57,7 +57,7 @@ rump_pub_module_init(struct modinfo *arg1, prop_dictionary_t arg2)
 }
 
 int
-rump_pub_module_fini(struct modinfo *arg1)
+rump_pub_module_fini(const struct modinfo *arg1)
 {
 	int rv;
 
@@ -128,10 +128,10 @@ rump_pub_uio_free(struct uio *arg1)
 	return rv;
 }
 
-kauth_cred_t
+struct kauth_cred*
 rump_pub_cred_create(uid_t arg1, gid_t arg2, size_t arg3, gid_t *arg4)
 {
-	kauth_cred_t rv;
+	struct kauth_cred* rv;
 
 	rump_schedule();
 	rv = rump_cred_create(arg1, arg2, arg3, arg4);
@@ -140,10 +140,10 @@ rump_pub_cred_create(uid_t arg1, gid_t arg2, size_t arg3, gid_t *arg4)
 	return rv;
 }
 
-kauth_cred_t
+struct kauth_cred*
 rump_pub_cred_suserget(void)
 {
-	kauth_cred_t rv;
+	struct kauth_cred* rv;
 
 	rump_schedule();
 	rv = rump_cred_suserget();
@@ -153,7 +153,7 @@ rump_pub_cred_suserget(void)
 }
 
 void
-rump_pub_cred_put(kauth_cred_t arg1)
+rump_pub_cred_put(struct kauth_cred *arg1)
 {
 
 	rump_schedule();

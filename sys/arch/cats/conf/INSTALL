@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.74 2009/12/05 20:11:10 pooka Exp $
+#	$NetBSD: INSTALL,v 1.74.2.1 2010/04/30 14:39:13 uebayasi Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -322,6 +322,9 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #umodem*	at uhub? port ? configuration ?
 #ucom*	at umodem?
 
+# Option N.V. Wireless WAN modems
+#uhso*	at uhub? port ? configuration ?
+
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
 #atapibus* at umass?
@@ -442,7 +445,7 @@ ds1687rtc0	at isa? port 0x72	# Dallas RTC
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		2	# concatenated/striped disk devices
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.70.2.1 2010/04/29 06:31:13 uebayasi Exp $	*/
+/*	$NetBSD: vm.c,v 1.70.2.2 2010/04/30 14:44:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.2.1 2010/04/29 06:31:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.2.2 2010/04/30 14:44:30 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -508,7 +508,7 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 	struct vm_page **opp)
 {
 
-	panic("%s: unimplemented", __func__);
+	return EBUSY;
 }
 
 void
@@ -524,6 +524,14 @@ uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
 {
 
 	return 0;
+}
+
+int
+uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
+	vm_prot_t prot, bool set_max)
+{
+
+	return EOPNOTSUPP;
 }
 
 /*

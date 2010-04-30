@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.169 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.169.2.1 2010/04/30 14:44:14 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169.2.1 2010/04/30 14:44:14 uebayasi Exp $");
 
 #include "veriexec.h"
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169 2010/01/08 11:35:10 pooka Exp $"
 #include <sys/wapbl.h>
 
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/fifofs/fifo.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_readahead.h>
@@ -350,6 +351,32 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred)
 	return (error);
 }
 
+static int
+enforce_rlimit_fsize(struct vnode *vp, struct uio *uio, int ioflag)
+{
+	struct lwp *l = curlwp;
+	off_t testoff;
+
+	if (uio->uio_rw != UIO_WRITE || vp->v_type != VREG)
+		return 0;
+
+	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	if (ioflag & IO_APPEND)
+		testoff = vp->v_size;
+	else
+		testoff = uio->uio_offset;
+
+	if (testoff + uio->uio_resid >
+	    l->l_proc->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
+		mutex_enter(proc_lock);
+		psignal(l->l_proc, SIGXFSZ);
+		mutex_exit(proc_lock);
+		return EFBIG;
+	}
+
+	return 0;
+}
+
 /*
  * Package up an I/O request on a vnode into a uio and do it.
  */
@@ -381,16 +408,23 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, void *base, int len, off_t offset,
 	} else {
 		auio.uio_vmspace = l->l_proc->p_vmspace;
 	}
+
+	if ((error = enforce_rlimit_fsize(vp, &auio, ioflg)) != 0)
+		goto out;
+
 	if (rw == UIO_READ) {
 		error = VOP_READ(vp, &auio, ioflg, cred);
 	} else {
 		error = VOP_WRITE(vp, &auio, ioflg, cred);
 	}
+
 	if (aresid)
 		*aresid = auio.uio_resid;
 	else
 		if (auio.uio_resid && error == 0)
 			error = EIO;
+
+ out:
 	if ((ioflg & IO_NODELOCKED) == 0) {
 		VOP_UNLOCK(vp, 0);
 	}
@@ -519,7 +553,12 @@ vn_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
+
+	if ((error = enforce_rlimit_fsize(vp, uio, ioflag)) != 0)
+		goto out;
+
 	error = VOP_WRITE(vp, uio, ioflag, cred);
+
 	if (flags & FOF_UPDATE_OFFSET) {
 		if (ioflag & IO_APPEND) {
 			/*
@@ -534,6 +573,8 @@ vn_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		} else
 			*offset += count - uio->uio_resid;
 	}
+
+ out:
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }
@@ -923,4 +964,12 @@ vn_ra_allocctx(struct vnode *vp)
 	if (ra != NULL) {
 		uvm_ra_freectx(ra);
 	}
+}
+
+int
+vn_fifo_bypass(void *v)
+{
+	struct vop_generic_args *ap = v;
+
+	return VOCALL(fifo_vnodeop_p, ap->a_desc->vdesc_offset, v);
 }

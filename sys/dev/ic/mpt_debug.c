@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_debug.c,v 1.6 2009/04/18 14:58:02 tsutsui Exp $	*/
+/*	$NetBSD: mpt_debug.c,v 1.6.2.1 2010/04/30 14:43:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.6 2009/04/18 14:58:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_debug.c,v 1.6.2.1 2010/04/30 14:43:19 uebayasi Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -310,11 +310,11 @@ static void
 mpt_print_reply_hdr(MSG_DEFAULT_REPLY *msg)
 {
 	printf("%s Reply @ %p\n", mpt_ioc_function(msg->Function), msg);
-	printf("\tIOC Status    %s\n", mpt_ioc_status(msg->IOCStatus));
+	printf("\tIOC Status    %s\n", mpt_ioc_status(le16toh(msg->IOCStatus)));
 	printf("\tIOCLogInfo    0x%08x\n", msg->IOCLogInfo);
 	printf("\tMsgLength     0x%02x\n", msg->MsgLength);
 	printf("\tMsgFlags      0x%02x\n", msg->MsgFlags);
-	printf("\tMsgContext    0x%08x\n", msg->MsgContext);
+	printf("\tMsgContext    0x%08x\n", le32toh(msg->MsgContext));
 }
 
 static void
@@ -335,20 +335,22 @@ mpt_print_ioc_facts(MSG_IOC_FACTS_REPLY *msg)
 	printf("\tWhoInit       %s\n",		mpt_who(msg->WhoInit));
 	printf("\tBlockSize     %d\n",		msg->BlockSize);
 	printf("\tFlags         %d\n",		msg->Flags);
-	printf("\tReplyQueueDepth %d\n",	msg->ReplyQueueDepth);
-	printf("\tReqFrameSize  0x%04x\n",	msg->RequestFrameSize);
+	printf("\tReplyQueueDepth %d\n",	le16toh(msg->ReplyQueueDepth));
+	printf("\tReqFrameSize  0x%04x\n",	le16toh(msg->RequestFrameSize));
 	printf("\tFW Version    0x%08x\n",	msg->FWVersion.Word);
-	printf("\tProduct ID    0x%04x\n",	msg->ProductID);
-	printf("\tCredits       0x%04x\n",	msg->GlobalCredits);
+	printf("\tProduct ID    0x%04x\n",	le16toh(msg->ProductID));
+	printf("\tCredits       0x%04x\n",	le16toh(msg->GlobalCredits));
 	printf("\tPorts         %d\n",		msg->NumberOfPorts);
 	printf("\tEventState    0x%02x\n",	msg->EventState);
-	printf("\tHostMFA_HA    0x%08x\n",	msg->CurrentHostMfaHighAddr);
+	printf("\tHostMFA_HA    0x%08x\n",
+	    le32toh(msg->CurrentHostMfaHighAddr));
 	printf("\tSenseBuf_HA   0x%08x\n",
-	    msg->CurrentSenseBufferHighAddr);
-	printf("\tRepFrameSize  0x%04x\n",	msg->CurReplyFrameSize);
+	    le32toh(msg->CurrentSenseBufferHighAddr));
+	printf("\tRepFrameSize  0x%04x\n",
+	    le16toh(msg->CurReplyFrameSize));
 	printf("\tMaxDevices    0x%02x\n",	msg->MaxDevices);
 	printf("\tMaxBuses      0x%02x\n",	msg->MaxBuses);
-	printf("\tFWImageSize   0x%04x\n",	msg->FWImageSize);
+	printf("\tFWImageSize   0x%04x\n",	le32toh(msg->FWImageSize));
 }
 
 static void
@@ -367,9 +369,9 @@ mpt_print_scsi_io_reply(MSG_SCSI_IO_REPLY *msg)
 	printf("\tCDBLength     %d\n", msg->CDBLength);
 	printf("\tSCSI Status:  %s\n", mpt_scsi_status(msg->SCSIStatus));
 	printf("\tSCSI State:   %s\n", mpt_scsi_state(msg->SCSIState));
-	printf("\tTransferCnt   0x%04x\n", msg->TransferCount);
-	printf("\tSenseCnt      0x%04x\n", msg->SenseCount);
-	printf("\tResponseInfo  0x%08x\n", msg->ResponseInfo);
+	printf("\tTransferCnt   0x%04x\n", le32toh(msg->TransferCount));
+	printf("\tSenseCnt      0x%04x\n", le32toh(msg->SenseCount));
+	printf("\tResponseInfo  0x%08x\n", le32toh(msg->ResponseInfo));
 }
 
 
@@ -378,14 +380,14 @@ static void
 mpt_print_event_notice(MSG_EVENT_NOTIFY_REPLY *msg)
 {
 	mpt_print_reply_hdr((MSG_DEFAULT_REPLY *)msg);
-	printf("\tEvent:        %s\n", mpt_ioc_event(msg->Event));
-	printf("\tEventContext  0x%04x\n", msg->EventContext);
+	printf("\tEvent:        %s\n", mpt_ioc_event(le32toh(msg->Event)));
+	printf("\tEventContext  0x%04x\n", le32toh(msg->EventContext));
 	printf("\tAckRequired     %d\n", msg->AckRequired);
-	printf("\tEventDataLength %d\n", msg->EventDataLength);
+	printf("\tEventDataLength %d\n", le16toh(msg->EventDataLength));
 	printf("\tContinuation    %d\n", msg->MsgFlags & 0x80);
 	switch(msg->Event) {
 	case MPI_EVENT_LOG_DATA:
-		printf("\tEvtLogData:   0x%04x\n", msg->Data[0]);
+		printf("\tEvtLogData:   0x%04x\n", le32toh(msg->Data[0]));
 		break;
 
 	case MPI_EVENT_UNIT_ATTENTION:
@@ -465,7 +467,7 @@ mpt_print_request_hdr(MSG_REQUEST_HEADER *req)
 	printf("%s @ %p\n", mpt_ioc_function(req->Function), req);
 	printf("\tChain Offset  0x%02x\n", req->ChainOffset);
 	printf("\tMsgFlags      0x%02x\n", req->MsgFlags);
-	printf("\tMsgContext    0x%08x\n", req->MsgContext);
+	printf("\tMsgContext    0x%08x\n", le32toh(req->MsgContext));
 }
 
 void
@@ -480,13 +482,13 @@ mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *orig_msg)
 	printf("\tTargetID            %d\n", msg->TargetID);
 	printf("\tSenseBufferLength   %d\n", msg->SenseBufferLength);
 	printf("\tLUN:              0x%0x\n", msg->LUN[1]);
-	printf("\tControl           0x%08x ", msg->Control);
+	printf("\tControl           0x%08x ", le32toh(msg->Control));
 #define MPI_PRINT_FIELD(x)						\
 	case MPI_SCSIIO_CONTROL_ ## x :					\
 		printf(" " #x " ");					\
 		break
 
-	switch (msg->Control & MPI_SCSIIO_CONTROL_DATADIRECTION_MASK) {
+	switch (le32toh(msg->Control) & MPI_SCSIIO_CONTROL_DATADIRECTION_MASK) {
 	MPI_PRINT_FIELD(NODATATRANSFER);
 	MPI_PRINT_FIELD(WRITE);
 	MPI_PRINT_FIELD(READ);
@@ -494,7 +496,7 @@ mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *orig_msg)
 		printf(" Invalid DIR! ");
 		break;
 	}
-	switch (msg->Control & MPI_SCSIIO_CONTROL_TASKATTRIBUTE_MASK) {
+	switch (le32toh(msg->Control) & MPI_SCSIIO_CONTROL_TASKATTRIBUTE_MASK) {
 	MPI_PRINT_FIELD(SIMPLEQ);
 	MPI_PRINT_FIELD(HEADOFQ);
 	MPI_PRINT_FIELD(ORDEREDQ);
@@ -509,8 +511,8 @@ mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *orig_msg)
 	printf("\n");
 #undef MPI_PRINT_FIELD
 
-	printf("\tDataLength\t0x%08x\n", msg->DataLength);
-	printf("\tSenseBufAddr\t0x%08x\n", msg->SenseBufferLowAddr);
+	printf("\tDataLength\t0x%08x\n", le32toh(msg->DataLength));
+	printf("\tSenseBufAddr\t0x%08x\n", le32toh(msg->SenseBufferLowAddr));
 	printf("\tCDB[0:%d]\t", msg->CDBLength);
 	for (i = 0; i < msg->CDBLength; i++)
 		printf("%02x ", msg->CDB[i]);
@@ -559,12 +561,12 @@ mpt_dump_sgl(SGE_IO_UNION *su)
 		int iprt;
 
 		printf("\t");
-		flags = MPI_SGE_GET_FLAGS(se->FlagsLength);
+		flags = MPI_SGE_GET_FLAGS(le32toh(se->FlagsLength));
 		switch (flags & MPI_SGE_FLAGS_ELEMENT_MASK) {
 		case MPI_SGE_FLAGS_SIMPLE_ELEMENT:
 		{
 			printf("SE32 %p: Addr=0x%0x FlagsLength=0x%0x\n",
-			    se, se->Address, se->FlagsLength);
+			    se, le32toh(se->Address), le32toh(se->FlagsLength));
 			printf(" ");
 			break;
 		}
@@ -572,8 +574,9 @@ mpt_dump_sgl(SGE_IO_UNION *su)
 		{
 			SGE_CHAIN32 *ce = (SGE_CHAIN32 *) se;
 			printf("CE32 %p: Addr=0x%0x NxtChnO=0x%x Flgs=0x%x "
-			    "Len=0x%0x\n", ce, ce->Address, ce->NextChainOffset,
-			    ce->Flags, ce->Length);
+			    "Len=0x%0x\n", ce, le32toh(ce->Address),
+			    ce->NextChainOffset, ce->Flags,
+			    le16toh(ce->Length));
 			flags = 0;
 			break;
 		}

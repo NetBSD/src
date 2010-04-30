@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.28 2010/01/19 22:06:18 pooka Exp $ */
+/* $NetBSD: if_ie.c,v 1.28.2.1 2010/04/30 14:39:02 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.28 2010/01/19 22:06:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.28.2.1 2010/04/30 14:39:02 uebayasi Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -1284,9 +1284,7 @@ ie_read_frame(struct ie_softc *sc, int num)
 
     ifp->if_ipackets++;
 
-    if ( ifp->if_bpf ) {
-	bpf_ops->bpf_mtap(ifp->if_bpf, m);
-    };
+    bpf_mtap(ifp, m);
 
     (*ifp->if_input)(ifp, m);
 }
@@ -1493,8 +1491,7 @@ iestart(struct ifnet *ifp)
 			len += m->m_len;
 		}
 
-		if ( ifp->if_bpf )
-		    bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		m_freem(m0);
 		if (len < ETHER_MIN_LEN - ETHER_CRC_LEN) {

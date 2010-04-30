@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2010/02/05 22:01:38 pooka Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2010/04/30 14:44:26 uebayasi Exp $
 #
 
-SUBDIR=	librumpusbhc libucom libumass libulpt libusb libusbrum
-SUBDIR+=libums libukbd
-
-SUBDIR+=libwscons
+SUBDIR=	libusbrum libums libukbd
 
 .include <bsd.subdir.mk>

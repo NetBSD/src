@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.33 2009/12/13 11:24:02 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.33.2.1 2010/04/30 14:39:32 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -340,7 +340,7 @@ Lenab3:
 
 /*
  * Create a fake exception frame that returns to user mode,
- * and save its address in p->p_md.md_regs for cpu_fork().
+ * and save its address in p->p_md.md_regs for cpu_lwp_fork().
  * The new frames for process 1 and 2 will be adjusted by
  * cpu_set_kpc() to arrange for a call to a kernel function
  * before the new process does its rte out to user mode.

@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire_phy.h,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: firewire_phy.h,v 1.2.98.1 2010/04/30 14:43:24 uebayasi Exp $	*/
 /*-
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
  * All rights reserved.
@@ -30,10 +30,12 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/firewire_phy.h,v 1.3 2005/01/06 01:42:41 imp Exp $
  *
  */
+#ifndef _FIREWIRE_PHY_H_
+#define _FIREWIRE_PHY_H_
 
 #define	FW_PHY_PHYSID_REG		0x00
 #define	FW_PHY_PHYSID			(63<<2)
@@ -84,3 +86,5 @@
 
 #define FW_PHY_EDEL_REG			0x03
 #define FW_PHY_EDEL			15<<0
+
+#endif	/* _FIREWIRE_PHY_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.41 2009/07/19 05:43:22 tsutsui Exp $	*/
+/*	$NetBSD: grf.c,v 1.41.2.1 2010/04/30 14:39:10 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41 2009/07/19 05:43:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41.2.1 2010/04/30 14:39:10 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -109,6 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41 2009/07/19 05:43:22 tsutsui Exp $");
 #include <atari/dev/itevar.h>
 #include <atari/dev/viewioctl.h>
 #include <atari/dev/viewvar.h>
+
+#include "ioconf.h"
 
 #include "grfcc.h"
 #include "grfet.h"
@@ -139,8 +141,6 @@ struct grf_softc *grfsp[NGRF]; /* XXX */
 CFATTACH_DECL(grfbus, sizeof(struct device),
     grfbusmatch, grfbusattach, NULL, NULL);
 
-extern struct cfdriver grfbus_cd;
-
 dev_type_open(grfopen);
 dev_type_close(grfclose);
 dev_type_ioctl(grfioctl);
@@ -159,36 +159,38 @@ static struct cfdata *cfdata_gbus  = NULL;
 int
 grfbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)
 {
-	if(strcmp(auxp, grfbus_cd.cd_name))
-		return(0);
 
-	if(atari_realconfig == 0)
+	if (strcmp(auxp, grfbus_cd.cd_name))
+		return 0;
+
+	if (atari_realconfig == 0)
 		cfdata_gbus = cfp;
-	return(1);	/* Always there	*/
+	return 1;	/* Always there	*/
 }
 
 void
 grfbusattach(struct device *pdp, struct device *dp, void *auxp)
 {
-    grf_auxp_t	grf_auxp;
+	grf_auxp_t	grf_auxp;
 
-    grf_auxp.busprint       = grfbusprint;
-    grf_auxp.from_bus_match = 1;
+	grf_auxp.busprint       = grfbusprint;
+	grf_auxp.from_bus_match = 1;
 
-    if(dp == NULL) /* Console init	*/
-	atari_config_found(cfdata_gbus, NULL, (void*)&grf_auxp, grfbusprint);
-    else {
-	printf("\n");
-	config_found(dp, (void*)&grf_auxp, grfbusprint);
-    }
+	if (dp == NULL) /* Console init	*/
+		atari_config_found(cfdata_gbus, NULL, &grf_auxp, grfbusprint);
+	else {
+		printf("\n");
+		config_found(dp, &grf_auxp, grfbusprint);
+	}
 }
 
 int
 grfbusprint(void *auxp, const char *name)
 {
-	if(name == NULL)
-		return(UNCONF);
-	return(QUIET);
+
+	if (name == NULL)
+		return UNCONF;
+	return QUIET;
 }
 
 /*ARGSUSED*/
@@ -198,20 +200,20 @@ grfopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	struct grf_softc *gp;
 
 	if (GRFUNIT(dev) >= NGRF)
-		return(ENXIO);
+		return ENXIO;
 
 	gp = grfsp[GRFUNIT(dev)];
 	if (gp == NULL)
-		return(ENXIO);
+		return ENXIO;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
-		return(ENXIO);
+		return ENXIO;
 
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
-		return(EBUSY);
+		return EBUSY;
 	grf_viewsync(gp);
 
-	return(0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -223,7 +225,7 @@ grfclose(dev_t dev, int flags, int mode, struct lwp *l)
 	gp = grfsp[GRFUNIT(dev)];
 	(void)grfoff(dev);
 	gp->g_flags &= GF_ALIVE;
-	return(0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -255,14 +257,14 @@ grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 		error = grfsinfo(dev, (struct grfdyninfo *) data);
 		break;
 	case GRFGETVMODE:
-		return(gp->g_mode(gp, GM_GRFGETVMODE, data, 0, 0));
+		return gp->g_mode(gp, GM_GRFGETVMODE, data, 0, 0);
 	case GRFSETVMODE:
 		error = gp->g_mode(gp, GM_GRFSETVMODE, data, 0, 0);
 		if (error == 0 && gp->g_itedev)
 			ite_reinit(gp->g_itedev);
 		break;
 	case GRFGETNUMVM:
-		return(gp->g_mode(gp, GM_GRFGETNUMVM, data, 0, 0));
+		return gp->g_mode(gp, GM_GRFGETNUMVM, data, 0, 0);
 	/*
 	 * these are all hardware dependant, and have to be resolved
 	 * in the respective driver.
@@ -279,13 +281,13 @@ grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 		 * check to see whether it's a command recognized by the
 		 * view code.
 		 */
-		return((*view_cdevsw.d_ioctl)(gp->g_viewdev, cmd, data, flag,
-					      l));
+		return (*view_cdevsw.d_ioctl)(gp->g_viewdev,
+		    cmd, data, flag, l);
 		error = EINVAL;
 		break;
 
 	}
-	return(error);
+	return error;
 }
 
 /*
@@ -309,20 +311,20 @@ grfmmap(dev_t dev, off_t off, int prot)
 	 * control registers
 	 */
 	if (off >= 0 && off < gi->gd_regsize)
-		return(((paddr_t)gi->gd_regaddr + off) >> PGSHIFT);
+		return ((paddr_t)gi->gd_regaddr + off) >> PGSHIFT;
 
 	/*
 	 * VGA memory
 	 */
 	if (off >= vgabase && off < (vgabase + gi->gd_vgasize))
-		return(((paddr_t)gi->gd_vgaaddr - vgabase + off) >> PGSHIFT);
+		return ((paddr_t)gi->gd_vgaaddr - vgabase + off) >> PGSHIFT;
 
 	/*
 	 * frame buffer
 	 */
 	if (off >= linbase && off < (linbase + gi->gd_fbsize))
-		return(((paddr_t)gi->gd_fbaddr - linbase + off) >> PGSHIFT);
-	return(-1);
+		return ((paddr_t)gi->gd_fbaddr - linbase + off) >> PGSHIFT;
+	return -1;
 }
 
 int
@@ -333,14 +335,14 @@ grfon(dev_t dev)
 	gp = grfsp[GRFUNIT(dev)];
 
 	if (gp->g_flags & GF_GRFON)
-		return(0);
+		return 0;
 
 	gp->g_flags |= GF_GRFON;
 	if (gp->g_itedev != NODEV)
 		ite_off(gp->g_itedev, 3);
 
-	return(gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVON : GM_GRFON,
-							NULL, 0, 0));
+	return gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVON : GM_GRFON,
+	    NULL, 0, 0);
 }
 
 int
@@ -352,11 +354,11 @@ grfoff(dev_t dev)
 	gp = grfsp[GRFUNIT(dev)];
 
 	if ((gp->g_flags & GF_GRFON) == 0)
-		return(0);
+		return 0;
 
 	gp->g_flags &= ~GF_GRFON;
 	error = gp->g_mode(gp, (dev & GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
-						NULL, 0, 0);
+	    NULL, 0, 0);
 
 	/*
 	 * Closely tied together no X's
@@ -364,7 +366,7 @@ grfoff(dev_t dev)
 	if (gp->g_itedev != NODEV)
 		ite_on(gp->g_itedev, 2);
 
-	return(error);
+	return error;
 }
 
 int
@@ -381,7 +383,7 @@ grfsinfo(dev_t dev, struct grfdyninfo *dyninfo)
 	 */
 	if (gp->g_itedev != NODEV)
 		ite_reinit(gp->g_itedev);
-	return(error);
+	return error;
 }
 
 /*
@@ -411,8 +413,8 @@ grf_viewsync(struct grf_softc *gp)
 	gi->gd_vgasize = bm.vga_mappable;
 	gi->gd_vgabase = bm.vga_base;
 
-	if((*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGSIZE, (void *)&vs, 0,
-				  NOLWP)) {
+	if ((*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGSIZE, (void *)&vs, 0,
+	    NOLWP)) {
 		/*
 		 * fill in some default values...
 		 * XXX: Should _never_ happen
@@ -453,15 +455,15 @@ grf_mode(struct grf_softc *gp, int cmd, void *arg, int a2, int a3)
 			grf_viewsync(gp);
 			(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCDISPLAY,
 					       NULL, 0, NOLWP);
-			return(0);
+			return 0;
 	case GM_GRFOFF:
 			(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCREMOVE,
 					       NULL, 0, NOLWP);
-			return(0);
+			return 0;
 	case GM_GRFCONFIG:
 	default:
 			break;
 	}
-	return(EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 #endif	/* NGRF > 0 */

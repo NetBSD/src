@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.100 2009/05/16 19:15:34 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.100.2.1 2010/04/30 14:39:52 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.100 2009/05/16 19:15:34 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.100.2.1 2010/04/30 14:39:52 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -327,10 +327,7 @@ tickintr_establish(int pil, int (*fun)(void *))
 
 	/* set the next interrupt time */
 	ci->ci_tick_increment = ci->ci_cpu_clockrate[0] / hz;
-#ifdef DEBUG
-	printf("Using %%tick -- intr in %ld cycles\n",
-	    ci->ci_tick_increment);
-#endif
+
 	s = intr_disable();
 	next_tick(ci->ci_tick_increment);
 	intr_restore(s);
@@ -386,7 +383,7 @@ cpu_initclocks(void)
 
 	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr) {
 
-		printf("No counter-timer -- using %%tick at %luMHz as "
+		aprint_normal("No counter-timer -- using %%tick at %luMHz as "
 			"system clock.\n",
 			(unsigned long)curcpu()->ci_cpu_clockrate[1]);
 

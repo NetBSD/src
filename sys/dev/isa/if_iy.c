@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.87 2010/01/19 22:06:59 pooka Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.87.2.1 2010/04/30 14:43:26 uebayasi Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.87 2010/01/19 22:06:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.87.2.1 2010/04/30 14:43:26 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -686,8 +686,7 @@ iystart(struct ifnet *ifp)
 			continue;
         	}
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		avail = sc->tx_start - sc->tx_end;
 		if (avail <= 0)
@@ -1055,8 +1054,7 @@ iyget(struct iy_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh, int rxle
 	++ifp->if_ipackets;
 
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, top);
+	bpf_mtap(ifp, top);
 	(*ifp->if_input)(ifp, top);
 	return;
 

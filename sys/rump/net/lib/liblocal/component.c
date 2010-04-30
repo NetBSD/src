@@ -1,4 +1,4 @@
-/*	$NetBSD: component.c,v 1.1 2009/05/28 00:02:16 pooka Exp $	*/
+/*	$NetBSD: component.c,v 1.1.4.1 2010/04/30 14:44:31 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,18 +28,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1 2009/05/28 00:02:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component.c,v 1.1.4.1 2010/04/30 14:44:31 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
 
-#include <net/route.h>
-
+#include "rump_private.h"
 #include "rump_net_private.h"
 
-void
-rump_net_local_init()
+RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
 	extern struct domain unixdomain;
 

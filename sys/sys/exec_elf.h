@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.100 2009/12/20 05:50:20 thorpej Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.100.2.1 2010/04/30 14:44:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -490,7 +490,9 @@ typedef struct {
 #define	STT_FUNC		2	/* Associated with a function */
 #define	STT_SECTION		3	/* Associated with a section */
 #define	STT_FILE		4	/* Associated with a file name */
-#define	STT_NUM			5
+#define	STT_COMMON		5	/* Uninitialised common block */
+#define	STT_TLS			6	/* Thread local data object */
+#define	STT_NUM			7
 
 #define	STT_LOOS		10	/* Operating system specific range */
 #define	STT_HIOS		12

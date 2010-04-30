@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.5 2010/01/23 01:17:23 minskim Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.5.2.1 2010/04/30 14:43:56 uebayasi Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.5 2010/01/23 01:17:23 minskim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.5.2.1 2010/04/30 14:43:56 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -191,8 +191,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 
-	bpf_ops->bpf_attach(&pfsyncif->sc_if, DLT_PFSYNC, PFSYNC_HDRLEN,
-	    &pfsyncif->sc_if.if_bpf);
+	bpf_attach(&pfsyncif->sc_if, DLT_PFSYNC, PFSYNC_HDRLEN);
 
 	return (0);
 }
@@ -200,7 +199,7 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 int
 pfsync_clone_destroy(struct ifnet *ifp)
 {
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	if_detach(ifp);
 	free(pfsyncif, M_DEVBUF);
 	pfsyncif = NULL;
@@ -1551,8 +1550,7 @@ pfsync_sendout(struct pfsync_softc *sc)
 	sc->sc_mbuf = NULL;
 	sc->sc_statep.s = NULL;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	if (sc->sc_mbuf_net) {
 		m_freem(m);
@@ -1578,8 +1576,7 @@ pfsync_tdb_sendout(struct pfsync_softc *sc)
 	sc->sc_mbuf_tdb = NULL;
 	sc->sc_statep_tdb.t = NULL;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	return pfsync_sendout_mbuf(sc, m);
 }

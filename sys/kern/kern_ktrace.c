@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.150 2009/10/02 21:47:35 elad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.150.2.1 2010/04/30 14:44:09 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.150 2009/10/02 21:47:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.150.2.1 2010/04/30 14:44:09 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,7 +499,7 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
-		if ((p->p_flag & PK_MARKER) != 0 || p->p_tracep != ktd)
+		if (p->p_tracep != ktd)
 			continue;
 		mutex_enter(p->p_lock);
 		mutex_enter(&ktrace_lock);

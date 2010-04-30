@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.77 2010/01/19 22:06:25 pooka Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.77.2.1 2010/04/30 14:43:22 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.77 2010/01/19 22:06:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.77.2.1 2010/04/30 14:43:22 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -812,8 +812,7 @@ smc91cxx_start(struct ifnet *ifp)
 	ifp->if_timer = 5;
 
 	/* Hand off a copy to the bpf. */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	ifp->if_opackets++;
 	m_freem(m);
@@ -1293,8 +1292,7 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	/*
 	 * Hand the packet off to bpf listeners.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*ifp->if_input)(ifp, m);
 

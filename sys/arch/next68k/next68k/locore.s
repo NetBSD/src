@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 2009/12/13 11:24:03 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.54.2.1 2010/04/30 14:39:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -484,7 +484,7 @@ Lenab3:
 
 /* Final setup for call to main(). */
 /*
- * Create a fake exception frame so that cpu_fork() can copy it.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */

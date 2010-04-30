@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.72 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: am7990.c,v 1.72.2.1 2010/04/30 14:43:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.72 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.72.2.1 2010/04/30 14:43:12 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -497,8 +497,7 @@ am7990_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the packet
 		 * before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/*
 		 * Copy the mbuf chain into the transmit buffer.

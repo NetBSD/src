@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.103 2010/01/08 11:35:12 pooka Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.103.2.1 2010/04/30 14:44:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.103 2010/01/08 11:35:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.103.2.1 2010/04/30 14:44:37 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
-#include "fs_ffs.h"
 #endif
 
 #include <sys/param.h>
@@ -1047,7 +1046,6 @@ out:
 	}
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-#ifdef FFS
 	/*
 	 * If the last named reference to a snapshot goes away,
 	 * drop its snapshot reference so that it will be reclaimed
@@ -1057,7 +1055,6 @@ out:
 	    ip->i_nlink == 0)
 		ffs_snapgone(ip);
 	UFS_WAPBL_UPDATE(dvp, NULL, NULL, 0);
-#endif
 	return (error);
 }
 
@@ -1087,7 +1084,6 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
 	UFS_WAPBL_UPDATE(ITOV(oip), NULL, NULL, UPDATE_DIROP);
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= iflags;
-#ifdef FFS
 	/*
 	 * If the last named reference to a snapshot goes away,
 	 * drop its snapshot reference so that it will be reclaimed
@@ -1096,7 +1092,6 @@ ufs_dirrewrite(struct inode *dp, struct inode *oip, ino_t newinum, int newtype,
 	if ((oip->i_flags & SF_SNAPSHOT) != 0 && oip->i_nlink == 0)
 		ffs_snapgone(oip);
 	UFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
-#endif
 	return (error);
 }
 
