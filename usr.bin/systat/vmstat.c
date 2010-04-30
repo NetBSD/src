@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.75 2009/10/21 21:12:07 rmind Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.76 2010/04/30 13:49:22 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.75 2009/10/21 21:12:07 rmind Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.76 2010/04/30 13:49:22 njoly Exp $");
 #endif /* not lint */
 
 /*
@@ -350,8 +350,8 @@ labelvmstat(void)
 
 	/* Left hand column */
 
-	mvprintw(MEMROW, MEMCOL,     "           memory totals (in kB)");
-	mvprintw(MEMROW + 1, MEMCOL, "          real  virtual     free");
+	mvprintw(MEMROW, MEMCOL,     "              memory totals (in kB)");
+	mvprintw(MEMROW + 1, MEMCOL, "           real   virtual      free");
 	mvprintw(MEMROW + 2, MEMCOL, "Active");
 	mvprintw(MEMROW + 3, MEMCOL, "All");
 
@@ -514,15 +514,16 @@ showvmstat(void)
 
 	/* Memory totals */
 #define pgtokb(pg)	((pg) * (s.uvmexp.pagesize / 1024))
-	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 6, 8);
+	putint(pgtokb(s.uvmexp.active), MEMROW + 2, MEMCOL + 6, 9);
 	putint(pgtokb(s.uvmexp.active + s.uvmexp.swpginuse),	/* XXX */
-	    MEMROW + 2, MEMCOL + 15, 8);
-	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free), MEMROW + 3, MEMCOL + 6, 8);
+	    MEMROW + 2, MEMCOL + 16, 9);
+	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free),
+	    MEMROW + 3, MEMCOL + 6, 9);
 	putint(pgtokb(s.uvmexp.npages - s.uvmexp.free + s.uvmexp.swpginuse),
-	    MEMROW + 3, MEMCOL + 15, 8);
-	putint(pgtokb(s.uvmexp.free), MEMROW + 2, MEMCOL + 24, 8);
+	    MEMROW + 3, MEMCOL + 16, 9);
+	putint(pgtokb(s.uvmexp.free), MEMROW + 2, MEMCOL + 26, 9);
 	putint(pgtokb(s.uvmexp.free + s.uvmexp.swpages - s.uvmexp.swpginuse),
-	    MEMROW + 3, MEMCOL + 24, 8);
+	    MEMROW + 3, MEMCOL + 26, 9);
 #undef pgtokb
 
 	/* Namei cache */
