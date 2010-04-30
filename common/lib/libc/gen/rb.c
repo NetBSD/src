@@ -1,4 +1,4 @@
-/* $NetBSD: rb.c,v 1.5 2010/04/28 17:23:33 joerg Exp $ */
+/* $NetBSD: rb.c,v 1.6 2010/04/30 13:58:09 joerg Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -950,8 +950,8 @@ rb_tree_iterate(struct rb_tree *rbt, struct rb_node *self,
 		self = rbt->rbt_root;
 		if (RB_SENTINEL_P(self))
 			return NULL;
-		while (!RB_SENTINEL_P(self->rb_nodes[other]))
-			self = self->rb_nodes[other];
+		while (!RB_SENTINEL_P(self->rb_nodes[direction]))
+			self = self->rb_nodes[direction];
 		return self;
 #endif /* !RBSMALL */
 	}
@@ -997,8 +997,8 @@ rb_tree_iterate_const(const struct rb_tree *rbt, const struct rb_node *self,
 		self = rbt->rbt_root;
 		if (RB_SENTINEL_P(self))
 			return NULL;
-		while (!RB_SENTINEL_P(self->rb_nodes[other]))
-			self = self->rb_nodes[other];
+		while (!RB_SENTINEL_P(self->rb_nodes[direction]))
+			self = self->rb_nodes[direction];
 		return self;
 #endif /* !RBSMALL */
 	}
