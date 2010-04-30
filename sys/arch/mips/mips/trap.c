@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.23 2010/04/30 16:11:14 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.24 2010/04/30 18:15:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.23 2010/04/30 16:11:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.24 2010/04/30 18:15:33 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -268,6 +268,8 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			uint32_t pt_entry;
 			paddr_t pa;
 
+			kpreempt_disable();
+
 			pte = kvtopte(vaddr);
 			pt_entry = pte->pt_entry;
 			if (!mips_pg_v(pt_entry)) {
@@ -276,6 +278,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			if (pt_entry & mips_pg_ro_bit()) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
+				kpreempt_enable();
 				goto kernelfault;
 			}
 			if ((pt_entry & mips_pg_m_bit()) == 0) {
@@ -289,6 +292,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			vaddr &= ~PGOFSET;
 			pmap_tlb_update_addr(pmap_kernel(), vaddr, pt_entry,
 			    false);
+			kpreempt_enable();
 			pa = mips_tlbpfn_to_paddr(pt_entry);
 			if (!IS_VM_PHYSADDR(pa)) {
 				panic("ktlbmod: unmanaged page:"
@@ -625,7 +629,7 @@ ast(void)
 #ifdef MULTIPROCESSOR
 		if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
 			pmap_tlb_syncicache_ast(ci);
-		KASSERT(ci->ci_tlb_info->ti_synci_page_bitmap == 0);
+		KASSERT(ci->ci_tlb_info->ti_synci_page_bitmap == 0 || l->l_md.md_astpending);
 #endif
 
 		if (l->l_pflag & LP_OWEUPC) {
