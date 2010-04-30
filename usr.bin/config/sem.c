@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.34 2010/03/08 10:19:15 pooka Exp $	*/
+/*	$NetBSD: sem.c,v 1.35 2010/04/30 20:47:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1492,24 +1492,27 @@ delpseudo(const char *name)
 
 void
 adddevm(const char *name, devmajor_t cmajor, devmajor_t bmajor,
-	struct nvlist *nv)
+	struct nvlist *nv_opts, struct nvlist *nv_nodes)
 {
 	struct devm *dm;
 
 	if (cmajor != NODEVMAJOR && (cmajor < 0 || cmajor >= 4096)) {
 		cfgerror("character major %d is invalid", cmajor);
-		nvfreel(nv);
+		nvfreel(nv_opts);
+		nvfreel(nv_nodes);
 		return;
 	}
 
 	if (bmajor != NODEVMAJOR && (bmajor < 0 || bmajor >= 4096)) {
 		cfgerror("block major %d is invalid", bmajor);
-		nvfreel(nv);
+		nvfreel(nv_opts);
+		nvfreel(nv_nodes);
 		return;
 	}
 	if (cmajor == NODEVMAJOR && bmajor == NODEVMAJOR) {
 		cfgerror("both character/block majors are not specified");
-		nvfreel(nv);
+		nvfreel(nv_opts);
+		nvfreel(nv_nodes);
 		return;
 	}
 
@@ -1519,7 +1522,8 @@ adddevm(const char *name, devmajor_t cmajor, devmajor_t bmajor,
 	dm->dm_name = name;
 	dm->dm_cmajor = cmajor;
 	dm->dm_bmajor = bmajor;
-	dm->dm_opts = nv;
+	dm->dm_opts = nv_opts;
+	dm->dm_devnodes = nv_nodes;
 
 	TAILQ_INSERT_TAIL(&alldevms, dm, dm_next);
 

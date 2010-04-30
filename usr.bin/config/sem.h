@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.6 2010/03/08 10:19:15 pooka Exp $	*/
+/*	$NetBSD: sem.h,v 1.7 2010/04/30 20:47:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -67,7 +67,8 @@ void		deldev(const char *);
 void		addpseudo(const char *, int);
 void		delpseudo(const char *);
 void		addpseudoroot(const char *);
-void		adddevm(const char *, int, int, struct nvlist *);
+void		adddevm(const char *, int, int,
+			struct nvlist *, struct nvlist *);
 int		fixdevis(void);
 const char     *ref(const char *);
 const char     *starref(const char *);

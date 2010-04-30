@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.34 2010/03/22 14:40:54 pooka Exp $	*/
+/*	$NetBSD: defs.h,v 1.35 2010/04/30 20:47:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,7 +104,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20090313
+#define CONFIG_VERSION		20100430
 #define CONFIG_MINVERSION	0
 
 /*
@@ -371,6 +371,7 @@ struct devm {
 	devmajor_t	dm_cmajor;	/* character major */
 	devmajor_t	dm_bmajor;	/* block major */
 	struct nvlist	*dm_opts;	/* options */
+	struct nvlist	*dm_devnodes;	/* information on /dev nodes */
 };
 
 /*
