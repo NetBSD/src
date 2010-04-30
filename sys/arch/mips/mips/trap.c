@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.22 2010/03/11 08:19:01 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.23 2010/04/30 16:11:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.22 2010/03/11 08:19:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.23 2010/04/30 16:11:14 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -457,9 +457,18 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 	case T_BUS_ERR_IFETCH+T_USER:	/* BERR asserted to CPU */
 	case T_BUS_ERR_LD_ST+T_USER:	/* BERR asserted to CPU */
 		ksi.ksi_trap = type & ~T_USER;
-		ksi.ksi_signo = SIGSEGV; /* XXX */
 		ksi.ksi_addr = (void *)vaddr;
-		ksi.ksi_code = SEGV_MAPERR; /* XXX */
+		if ((intptr_t)vaddr < 0) {
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+		} else {
+			ksi.ksi_signo = SIGBUS;
+			if (type == T_BUS_ERR_IFETCH+T_USER
+			    || type == T_BUS_ERR_LD_ST+T_USER)
+				ksi.ksi_code = BUS_OBJERR;
+			else
+				ksi.ksi_code = BUS_ADRALN;
+		}
 		break; /* SIGNAL */
 
 	case T_BREAK:
