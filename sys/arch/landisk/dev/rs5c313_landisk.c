@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c313_landisk.c,v 1.4 2008/05/04 19:43:05 martin Exp $	*/
+/*	$NetBSD: rs5c313_landisk.c,v 1.4.20.1 2010/04/30 14:39:32 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.4 2008/05/04 19:43:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c313_landisk.c,v 1.4.20.1 2010/04/30 14:39:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ rs5c313_landisk_attach(device_t parent, device_t self, void *aux)
 	struct rs5c313_softc *sc = device_private(self);
 
 	sc->sc_dev = self;
+	sc->sc_model = MODEL_5C313;
 	sc->sc_ops = &rs5c313_landisk_ops;
 	rs5c313_attach(sc);
 }

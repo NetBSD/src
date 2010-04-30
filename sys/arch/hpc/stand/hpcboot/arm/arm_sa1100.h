@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_sa1100.h,v 1.5 2008/04/28 20:23:20 martin Exp $	*/
+/*	$NetBSD: arm_sa1100.h,v 1.5.20.1 2010/04/30 14:39:24 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@ private:
 	// test routine for SA-1100 peripherals.
 	virtual void testFramebuffer(void);
 	virtual void testUART(void);
+
+	// dump peripheral regs.
+	virtual void dumpPeripheralRegs(void);
 
 public:
 	SA1100Architecture(Console *&, MemoryManager *&);

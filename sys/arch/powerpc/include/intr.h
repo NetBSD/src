@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: intr.h,v 1.4.20.1 2010/04/30 14:39:43 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.4 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.4.20.1 2010/04/30 14:39:43 uebayasi Exp $");
 
 #ifndef POWERPC_INTR_MACHDEP_H
 #define POWERPC_INTR_MACHDEP_H
@@ -72,7 +72,16 @@ int spllower(int);
 void splx(int);
 void softintr(int);
 
-extern int imask[];
+typedef u_int imask_t;
+extern imask_t imask[];
+
+#define NVIRQ		32	/* 32 virtual IRQs */
+#define NIRQ		128	/* up to 128 HW IRQs */
+
+#define HWIRQ_MAX       (NVIRQ - 5 - 1)
+#define HWIRQ_MASK      0x07ffffff
+
+#define MS_PENDING(p)	(31 - cntlzw(p))
 
 /* Soft interrupt masks. */
 #define SIR_CLOCK	27

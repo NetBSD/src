@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.h,v 1.19 2008/04/28 20:24:02 martin Exp $	*/
+/* 	$NetBSD: wsfont.h,v 1.19.20.1 2010/04/30 14:43:55 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,6 +62,12 @@ void	wsfont_enum(void (*)(const char *, int, int, int));
 int	wsfont_lock(int, struct wsdisplay_font **);
 int	wsfont_unlock(int);
 int	wsfont_map_unichar(struct wsdisplay_font *, int);
-int	wsfont_rotate(int);
+int	wsfont_rotate(int, int);
+
+enum {
+	WSFONT_ROTATE_CW,
+	WSFONT_ROTATE_CCW,
+	WSFONT_ROTATE_UD
+};
 
 #endif	/* !_WSFONT_H_ */

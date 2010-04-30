@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.11 2010/01/08 00:09:45 dyoung Exp $	*/
+/*	$NetBSD: pcib.c,v 1.11.2.1 2010/04/30 14:39:58 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11 2010/01/08 00:09:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.11.2.1 2010/04/30 14:39:58 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -242,8 +242,8 @@ pcibrescan(device_t self, const char *ifattr, const int *loc)
 		 * Attach the ISA bus behind this bridge.
 		 */
 		memset(&iba, 0, sizeof(iba));
-		iba.iba_iot = X86_BUS_SPACE_IO;
-		iba.iba_memt = X86_BUS_SPACE_MEM;
+		iba.iba_iot = x86_bus_space_io;
+		iba.iba_memt = x86_bus_space_mem;
 #if NISA > 0
 		iba.iba_dmat = &isa_bus_dma_tag;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.50 2009/05/05 10:02:52 cegger Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.50.2.1 2010/04/30 14:43:34 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.50 2009/05/05 10:02:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.50.2.1 2010/04/30 14:43:34 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,6 @@ struct ex_pci_softc {
 	pci_chipset_tag_t psc_pc;	/* pci chipset tag */
 	pcireg_t psc_regs[0x40>>2];	/* saved PCI config regs (sparse) */
 	pcitag_t psc_tag;		/* pci device tag */
-
-	int psc_pwrmgmt_csr_reg;	/* ACPI power management register */
-	pcireg_t psc_pwrmgmt_csr;	/* ...and the contents at D0 */
 };
 
 /*
@@ -96,7 +93,6 @@ static void	ex_pci_attach(device_t, device_t, void *);
 static void	ex_pci_intr_ack(struct ex_softc *);
 
 static int	ex_pci_enable(struct ex_softc *);
-static void	ex_pci_disable(struct ex_softc *);
 
 static void	ex_pci_confreg_restore(struct ex_pci_softc *);
 static int	ex_d3tod0(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t);
@@ -237,7 +233,6 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	sc->ex_bustype = EX_BUS_PCI;
 	sc->ex_conf = epp->epp_flags;
 
 	/* Enable the card. */
@@ -277,7 +272,7 @@ ex_pci_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 0: 
 		sc->enable = ex_pci_enable;
-		sc->disable = ex_pci_disable;
+		sc->disable = NULL;
 		break;
 	default:
 		aprint_error_dev(self, "cannot activate %d\n", error);
@@ -326,12 +321,6 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 {
 
 #define PCI_CACHE_LAT_BIST	0x0c
-#define PCI_BAR0		0x10
-#define PCI_BAR1		0x14
-#define PCI_BAR2		0x18
-#define PCI_BAR3		0x1C
-#define PCI_BAR4		0x20
-#define PCI_BAR5		0x24
 #define PCI_EXP_ROM_BAR		0x30
 #define PCI_INT_GNT_LAT		0x3c
 
@@ -396,25 +385,8 @@ ex_pci_enable(struct ex_softc *sc)
 
 	aprint_debug_dev(sc->sc_dev, "going to power state D0\n");
 
-	/* Bring the device into D0 power state. */
-	pci_conf_write(psc->psc_pc, psc->psc_tag,
-	    psc->psc_pwrmgmt_csr_reg, psc->psc_pwrmgmt_csr);
-
 	/* Now restore the configuration registers. */
 	ex_pci_confreg_restore(psc);
 
 	return (0);
-}
-
-static void
-ex_pci_disable(struct ex_softc *sc)
-{
-	struct ex_pci_softc *psc = (void *) sc;
-
-	aprint_debug_dev(sc->sc_dev, "going to power state D3\n");
-
-	/* Put the device into D3 state. */
-	pci_conf_write(psc->psc_pc, psc->psc_tag,
-	    psc->psc_pwrmgmt_csr_reg, (psc->psc_pwrmgmt_csr &
-	    ~PCI_PMCSR_STATE_MASK) | PCI_PMCSR_STATE_D3);
 }

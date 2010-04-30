@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.418 2010/02/05 11:06:36 cegger Exp $	*/
+/*	$NetBSD: init_main.c,v 1.418.2.1 2010/04/30 14:44:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418 2010/02/05 11:06:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.2.1 2010/04/30 14:44:08 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -194,9 +194,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418 2010/02/05 11:06:36 cegger Exp $
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
-#ifdef WAPBL
-#include <sys/wapbl.h>
-#endif
 #ifdef KERN_SA
 #include <sys/savar.h>
 #endif
@@ -580,11 +577,6 @@ main(void)
 
 	/* Initialize the UUID system calls. */
 	uuid_init();
-
-#ifdef WAPBL
-	/* Initialize write-ahead physical block logging. */
-	wapbl_init();
-#endif
 
 	machdep_init();
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.108 2009/02/06 18:50:28 jym Exp $
+#	$NetBSD: INSTALL,v 1.108.4.1 2010/04/30 14:39:34 uebayasi Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -192,7 +192,7 @@ uhidev* 	at uhub? port ? configuration ? interface ?
 ukbd* 	at uhidev? reportid ?
 
 pseudo-device	md		1	# memory disk
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# network loopback
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 

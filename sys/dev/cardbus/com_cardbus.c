@@ -1,4 +1,4 @@
-/* $NetBSD: com_cardbus.c,v 1.23 2009/11/12 20:30:29 dyoung Exp $ */
+/* $NetBSD: com_cardbus.c,v 1.23.2.1 2010/04/30 14:43:09 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -40,7 +40,7 @@
    updated below.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.23 2009/11/12 20:30:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.23.2.1 2010/04/30 14:43:09 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,15 +57,15 @@ __KERNEL_RCSID(0, "$NetBSD: com_cardbus.c,v 1.23 2009/11/12 20:30:29 dyoung Exp 
 
 struct com_cardbus_softc {
 	struct com_softc	cc_com;
+	cardbus_intr_line_t	cc_intrline;
 	void			*cc_ih;
 	cardbus_devfunc_t	cc_ct;
 	bus_addr_t		cc_addr;
-	cardbusreg_t		cc_base;
+	pcireg_t		cc_base;
 	bus_size_t		cc_size;
-	cardbusreg_t		cc_csr;
-	int			cc_cben;
-	cardbustag_t		cc_tag;
-	cardbusreg_t		cc_reg;
+	pcireg_t		cc_csr;
+	pcitag_t		cc_tag;
+	pcireg_t		cc_reg;
 	int			cc_type;
 };
 
@@ -85,19 +85,19 @@ CFATTACH_DECL_NEW(com_cardbus, sizeof(struct com_cardbus_softc),
 static struct csdev {
 	int		vendor;
 	int		product;
-	cardbusreg_t	reg;
+	pcireg_t	reg;
 	int		type;
 } csdevs[] = {
 	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_M,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_M,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_M,
-	  CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO },
+	  PCI_BAR0, PCI_MAPREG_TYPE_IO },
 };
 
 static const int ncsdevs = sizeof(csdevs) / sizeof(csdevs[0]);
@@ -108,8 +108,8 @@ find_csdev(struct cardbus_attach_args *ca)
 	struct csdev *cp;
 
 	for(cp = csdevs; cp < csdevs + ncsdevs; cp++)
-		if(cp->vendor == CARDBUS_VENDOR(ca->ca_id) &&
-		   cp->product == CARDBUS_PRODUCT(ca->ca_id))
+		if(cp->vendor == PCI_VENDOR(ca->ca_id) &&
+		   cp->product == PCI_PRODUCT(ca->ca_id))
 			return cp;
 	return NULL;
 }
@@ -138,7 +138,7 @@ static int
 gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 {
 	int i, index = -1;
-	cardbusreg_t cis_ptr;
+	pcireg_t cis_ptr;
 	struct csdev *cp;
 
 	/* If this device is listed above, use the known values, */
@@ -172,9 +172,9 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 	}
 	csc->cc_reg = CARDBUS_CIS_ASI_BAR(ca->ca_cis.bar[index].flags);
 	if ((ca->ca_cis.bar[index].flags & 0x10) == 0)
-		csc->cc_type = CARDBUS_MAPREG_TYPE_MEM;
+		csc->cc_type = PCI_MAPREG_TYPE_MEM;
 	else
-		csc->cc_type = CARDBUS_MAPREG_TYPE_IO;
+		csc->cc_type = PCI_MAPREG_TYPE_IO;
 	return 0;
 
   multi_bar:
@@ -183,7 +183,7 @@ gofigure(struct cardbus_attach_args *ca, struct com_cardbus_softc *csc)
 	aprint_error_dev(DEVICET(csc), "address for this device, "
 	       "please report the following information\n");
 	aprint_error_dev(DEVICET(csc), "vendor 0x%x product 0x%x\n",
-	       CARDBUS_VENDOR(ca->ca_id), CARDBUS_PRODUCT(ca->ca_id));
+	       PCI_VENDOR(ca->ca_id), PCI_PRODUCT(ca->ca_id));
 	for(i = 0; i < 7; i++) {
 		/* ignore zero sized BARs */
 		if(ca->ca_cis.bar[i].size == 0)
@@ -211,8 +211,9 @@ com_cardbus_attach (device_t parent, device_t self, void *aux)
 	bus_space_tag_t		iot;
 
 	sc->sc_dev = self;
+	csc->cc_intrline = ca->ca_intrline;
 	csc->cc_ct = ca->ca_ct;
-	csc->cc_tag = Cardbus_make_tag(csc->cc_ct);
+	csc->cc_tag = ca->ca_tag;
 
 	if(gofigure(ca, csc) != 0)
 		return;
@@ -232,14 +233,12 @@ com_cardbus_attach (device_t parent, device_t self, void *aux)
 	COM_INIT_REGS(sc->sc_regs, iot, ioh, csc->cc_addr);
 
 	csc->cc_base = csc->cc_addr;
-	csc->cc_csr = CARDBUS_COMMAND_MASTER_ENABLE;
-	if(csc->cc_type == CARDBUS_MAPREG_TYPE_IO) {
-		csc->cc_base |= CARDBUS_MAPREG_TYPE_IO;
-		csc->cc_csr |= CARDBUS_COMMAND_IO_ENABLE;
-		csc->cc_cben = CARDBUS_IO_ENABLE;
+	csc->cc_csr = PCI_COMMAND_MASTER_ENABLE;
+	if(csc->cc_type == PCI_MAPREG_TYPE_IO) {
+		csc->cc_base |= PCI_MAPREG_TYPE_IO;
+		csc->cc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
-		csc->cc_csr |= CARDBUS_COMMAND_MEM_ENABLE;
-		csc->cc_cben = CARDBUS_MEM_ENABLE;
+		csc->cc_csr |= PCI_COMMAND_MEM_ENABLE;
 	}
 
 	sc->sc_frequency = COM_FREQ;
@@ -265,31 +264,25 @@ static void
 com_cardbus_setup(struct com_cardbus_softc *csc)
 {
         cardbus_devfunc_t ct = csc->cc_ct;
-        cardbus_chipset_tag_t cc = ct->ct_cc;
-        cardbus_function_tag_t cf = ct->ct_cf;
-	cardbusreg_t reg;
+	pcireg_t reg;
 
 	Cardbus_conf_write(ct, csc->cc_tag, csc->cc_reg, csc->cc_base);
 
-	/* enable accesses on cardbus bridge */
-	(*cf->cardbus_ctrl)(cc, csc->cc_cben);
-	(*cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* and the card itself */
-	reg = Cardbus_conf_read(ct, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG);
-	reg &= ~(CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MEM_ENABLE);
+	reg = Cardbus_conf_read(ct, csc->cc_tag, PCI_COMMAND_STATUS_REG);
+	reg &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
 	reg |= csc->cc_csr;
-	Cardbus_conf_write(ct, csc->cc_tag, CARDBUS_COMMAND_STATUS_REG, reg);
+	Cardbus_conf_write(ct, csc->cc_tag, PCI_COMMAND_STATUS_REG, reg);
 
         /*
          * Make sure the latency timer is set to some reasonable
          * value.
          */
-        reg = cardbus_conf_read(cc, cf, csc->cc_tag, CARDBUS_BHLC_REG);
-        if (CARDBUS_LATTIMER(reg) < 0x20) {
-                reg &= ~(CARDBUS_LATTIMER_MASK << CARDBUS_LATTIMER_SHIFT);
-                reg |= (0x20 << CARDBUS_LATTIMER_SHIFT);
-                cardbus_conf_write(cc, cf, csc->cc_tag, CARDBUS_BHLC_REG, reg);
+        reg = Cardbus_conf_read(ct, csc->cc_tag, PCI_BHLC_REG);
+        if (PCI_LATTIMER(reg) < 0x20) {
+                reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+                reg |= (0x20 << PCI_LATTIMER_SHIFT);
+                Cardbus_conf_write(ct, csc->cc_tag, PCI_BHLC_REG, reg);
         }
 }
 
@@ -297,17 +290,14 @@ static int
 com_cardbus_enable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
-	struct cardbus_softc *psc =
-		device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
+	cardbus_devfunc_t ct = csc->cc_ct;
 
-	Cardbus_function_enable(csc->cc_ct);
+	Cardbus_function_enable(ct);
 
 	com_cardbus_setup(csc);
 
 	/* establish the interrupt. */
-	csc->cc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline,
+	csc->cc_ih = Cardbus_intr_establish(ct, csc->cc_intrline,
 					    IPL_SERIAL, comintr, sc);
 	if (csc->cc_ih == NULL) {
 		aprint_error_dev(DEVICET(csc),
@@ -322,15 +312,12 @@ static void
 com_cardbus_disable(struct com_softc *sc)
 {
 	struct com_cardbus_softc *csc = (struct com_cardbus_softc*)sc;
-	struct cardbus_softc *psc =
-		device_private(device_parent(sc->sc_dev));
-	cardbus_chipset_tag_t cc = psc->sc_cc;
-	cardbus_function_tag_t cf = psc->sc_cf;
+	cardbus_devfunc_t ct = csc->cc_ct;
 
-	cardbus_intr_disestablish(cc, cf, csc->cc_ih);
+	Cardbus_intr_disestablish(ct, csc->cc_ih);
 	csc->cc_ih = NULL;
 
-	Cardbus_function_disable(csc->cc_ct);
+	Cardbus_function_disable(ct);
 }
 
 static int
@@ -338,14 +325,14 @@ com_cardbus_detach(device_t self, int flags)
 {
 	struct com_cardbus_softc *csc = device_private(self);
 	struct com_softc *sc = device_private(self);
-	struct cardbus_softc *psc = device_private(device_parent(self));
+	cardbus_devfunc_t ct = csc->cc_ct;
 	int error;
 
 	if ((error = com_detach(self, flags)) != 0)
 		return error;
 
 	if (csc->cc_ih != NULL)
-		cardbus_intr_disestablish(psc->sc_cc, psc->sc_cf, csc->cc_ih);
+		Cardbus_intr_disestablish(ct, csc->cc_ih);
 
 	Cardbus_mapreg_unmap(csc->cc_ct, csc->cc_reg, sc->sc_regs.cr_iot,
 	    sc->sc_regs.cr_ioh, csc->cc_size);

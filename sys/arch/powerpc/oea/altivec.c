@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.15 2009/11/21 17:40:29 rmind Exp $	*/
+/*	$NetBSD: altivec.c,v 1.15.2.1 2010/04/30 14:39:44 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.15 2009/11/21 17:40:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.15.2.1 2010/04/30 14:39:44 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -45,8 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.15 2009/11/21 17:40:29 rmind Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <powerpc/altivec.h>
-#include <powerpc/spr.h>
 #include <powerpc/psl.h>
+#include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 
 #ifdef MULTIPROCESSOR
 #include <arch/powerpc/pic/picvar.h>

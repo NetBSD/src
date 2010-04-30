@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.41 2010/01/19 22:06:25 pooka Exp $	*/
+/*	$NetBSD: tropic.c,v 1.41.2.1 2010/04/30 14:43:23 uebayasi Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.41 2010/01/19 22:06:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.41.2.1 2010/04/30 14:43:23 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -716,8 +716,7 @@ next:
 
 	if (m0 == 0)
 		return;
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 	first_txbuf = txbuf = TXCA_INW(sc, TXCA_FREE_QUEUE_HEAD) - XMIT_NEXTBUF;
 	framedata = txbuf + XMIT_FP_DATA;
 	size = 0;
@@ -1251,8 +1250,7 @@ tr_rint(struct tr_softc *sc)
 		ACA_SETB(sc, ACA_ISRA_o, RESP_IN_ASB);
 		++ifp->if_ipackets;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
 	}
 }
@@ -1317,8 +1315,7 @@ tr_oldxint(struct tr_softc *sc)
 		/* if data in queue, copy mbuf chain to DHB */
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 != 0) {
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp, m0);
 			/* Pull packet off interface send queue, fill DHB. */
 			trh = mtod(m0, struct token_header *);
 			hlen = sizeof(struct token_header);

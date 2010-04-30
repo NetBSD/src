@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.69.2.2 2010/04/28 08:31:07 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69.2.3 2010/04/30 14:39:44 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69.2.2 2010/04/28 08:31:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69.2.3 2010/04/30 14:39:44 uebayasi Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -86,9 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69.2.2 2010/04/28 08:31:07 uebayasi Exp $
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
 #include <powerpc/spr.h>
-#include <powerpc/oea/sr_601.h>
 #include <powerpc/bat.h>
 #include <powerpc/stdarg.h>
+#include <powerpc/oea/spr.h>
+#include <powerpc/oea/sr_601.h>
 
 #ifdef ALTIVEC
 int pmap_use_altivec;
@@ -2373,7 +2374,7 @@ pmap_activate(struct lwp *l)
 	    ("pmap_activate: lwp %p (curlwp %p)\n", l, curlwp));
 
 	/*
-	 * XXX Normally performed in cpu_fork().
+	 * XXX Normally performed in cpu_lwp_fork().
 	 */
 	pcb->pcb_pm = pmap;
 

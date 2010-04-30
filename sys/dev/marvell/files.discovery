@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.10 2005/12/11 12:22:16 christos Exp $
+#	$NetBSD: files.discovery,v 1.10.96.1 2010/04/30 14:43:27 uebayasi Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -19,44 +19,78 @@
 
 defparam	opt_marvell.h	MPSC_CONSOLE
 defparam	opt_marvell.h	GT_MPSC_DEFAULT_BAUD_RATE
-defparam	opt_marvell.h	GT_MPP_INTERRUPTS GT_MPP_WATCHDOG GT_BASE
 defparam	opt_marvell.h	GT_MPSC_FREQUENCY GT_MPSC_CLOCK_SOURCE
-defparam	opt_marvell.h	GT_PCI0_MEMBASE GT_PCI0_MEMSIZE
-defparam	opt_marvell.h	GT_PCI1_MEMBASE GT_PCI1_MEMSIZE
-defparam	opt_marvell.h	GT_PCI0_IOBASE GT_PCI0_IOSIZE
-defparam	opt_marvell.h	GT_PCI1_IOBASE GT_PCI1_IOSIZE
-defflag 	opt_marvell.h	GT_PCI0_EXT_ARBITER GT_PCI1_EXT_ARBITER
-defflag 	opt_marvell.h	GT_ECC
+defparam	opt_marvell.h	GT_MPP_WATCHDOG
+defflag 	opt_marvell.h	GT_DEVBUS GT_ECC GT_COMM GT_WATCHDOG
 
-define	gt { [unit = -1] }
+define	gt { [unit = -1], [offset = -1], [irq = -1] }
 device	gt: gt
-file	dev/marvell/gt.c			gt
+file	dev/marvell/gt.c		gt
 
-# PCI bus
+# PCI Interface
+define	gtpci
+file	dev/marvell/gtpci.c		gtpci & gtpci_gt needs-flag
 device	gtpci: pcibus
-attach	gtpci at gt
-file	dev/marvell/gtpci.c			gt & pci
+attach	gtpci at gt with gtpci_gt
+
+# PCI Express Interface
+#define	mvpex
+#file	dev/marvell/mvpex.c		mvpex & (mvpex_gt|mvpex_mbus) needs-flag
+#device	mvpex: pcibus
+#attach	mvpex at gt with mvpex_gt
 
 # Fast ethernet
+define	gfec { [port = -1], [irq = -1] }
+device	gfec: gfec
+attach	gfec at gt
 device	gfe: ether, ifnet, arp, mii
-attach	gfe at gt
-file	dev/marvell/if_gfe.c			gfe
+attach	gfe at gfec
+file	dev/marvell/if_gfe.c		gfec | gfe
 
-# Serial controller
+# Multi-Protocol Serial controller
 device	gtmpsc: tty
 attach	gtmpsc at gt
-file	dev/marvell/gtmpsc.c			gtmpsc needs-flag
+file	dev/marvell/gtmpsc.c		gtmpsc needs-flag
 
-# DMA controller
-device	gtidma
-attach	gtidma at gt
-file	dev/marvell/gtidma.c			gtidma
-
-define	obio { [offset=-1], [size=0], [irq=-1] }
+define	obio { [offset = -1], [size = 0], [irq = -1] }
 device	obio: obio
 attach	obio at gt
-file	dev/marvell/obio.c			obio
+file	dev/marvell/obio.c		obio
 
-device	gtiic: i2cbus
-attach	gtiic at gt
-file	dev/marvell/gti2c.c			gtiic
+# Serial-ATA II Host Controller (SATAHC)
+#attach	mvsata at gt with mvsata_gt
+#file	dev/marvell/mvsata_mv.c		mvsata_gt | mvsata_mbus
+
+# Gigabit Ethernet Controller Interface
+#define	mvgbec { [port = -1], [irq = -1] }
+#device	mvgbec: mvgbec
+#attach	mvgbec at gt with mvgbec_gt
+#device	mvgbe: ether, ifnet, arp, mii
+#attach	mvgbe at mvgbec
+#file	dev/marvell/if_mvgbe.c		mvgbec | mvgbe
+
+# USB 2.0 Interface
+#attach	ehci at gt with mvusb_gt
+#file	dev/marvell/ehci_mv.c		mvusb_gt | mvusb_mbus
+
+# Cryptographic Engines and Security Accelerator
+#define	mvcesa
+#file	dev/marvell/mvcesa.c		mvcesa
+#device  mvcesa: opencrypto
+#attach  mvcesa at gt with mvcesa_gt
+
+# Two-Wire Serial Interface
+define	gttwsi
+file	dev/marvell/gttwsi.c		gttwsi
+device	gttwsi: i2cbus, gttwsi
+attach	gttwsi at gt with gttwsi_gt
+
+# UART Interface
+#attach	com at gt with mvuart_gt
+#file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
+
+# IDMA Controller and XOR Engine
+#define	gtidmac
+#file	dev/marvell/gtidmac.c		gtidmac
+#device	gtidmac: dmover_service
+#attach	gtidmac at gt with gtidmac_gt

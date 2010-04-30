@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.9 2008/06/10 22:44:07 he Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.9.16.1 2010/04/30 14:43:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -36,6 +36,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _IF_GFEVAR_H_
+#define _IF_GFEVAR_H_
 
 #define	GE_RXDESC_MEMSIZE		(1 * PAGE_SIZE)
 #define	GE_RXDESC_MAX			64
@@ -114,17 +116,22 @@ enum gfe_rxprio {
 	GE_RXPRIO_LO=0
 };
 
+struct gfec_softc {
+	device_t sc_dev;		/* must be first */
+
+	bus_space_tag_t sc_iot;
+	bus_space_handle_t sc_ioh;	/* subregion for ethernet */
+
+	kmutex_t sc_mtx;
+};
+
 struct gfe_softc {
-	struct device sc_dev;		/* must be first */
+	device_t sc_dev;		/* must be first */
 	struct ethercom sc_ec;		/* common ethernet glue */
 	struct callout sc_co;		/* resource recovery */
 	mii_data_t sc_mii;		/* mii interface */
 
-	/*
-	 *
-	 */
-	bus_space_tag_t sc_gt_memt;
-	bus_space_handle_t sc_gt_memh;
+	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;	/* subregion for ethernet */
 	bus_dma_tag_t sc_dmat;
 	int sc_macno;			/* which mac? 0, 1, or 2 */
@@ -159,4 +166,9 @@ struct gfe_softc {
 	 * Receive related members
 	 */
 	struct gfe_rxqueue sc_rxq[4];	/* Hi/MedHi/MedLo/Lo receive queues */
+
+#if NRND > 0 
+	rndsource_element_t sc_rnd_source;
+#endif
 };
+#endif	/* _IF_GFEVAR_H_ */

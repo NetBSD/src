@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.15 2010/02/05 12:13:36 phx Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.15.2.1 2010/04/30 14:39:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,6 +33,8 @@
 
 #ifndef _GRF_CVREG_H
 #define _GRF_CVREG_H
+
+#include <machine/cpu.h>
 
 /*
  * This is derived from ciruss driver source

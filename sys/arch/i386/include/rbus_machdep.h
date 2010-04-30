@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.h,v 1.8 2009/12/15 22:17:12 snj Exp $	*/
+/*	$NetBSD: rbus_machdep.h,v 1.8.2.1 2010/04/30 14:39:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -40,6 +40,6 @@ struct pci_attach_args;		/* XXX */
 rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *);
 rbus_tag_t rbus_pccbb_parent_mem(struct pci_attach_args *);
 
-void rbus_min_start_hint(size_t);
+void rbus_min_start_hint(psize_t);
 
 #endif /* _ARCH_I386_I386_RBUS_MACHDEP_H_ */

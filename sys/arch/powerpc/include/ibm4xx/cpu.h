@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2009/03/14 14:46:05 dsl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.2.1 2010/04/30 14:39:43 uebayasi Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -49,16 +49,18 @@
 
 #define	PVR_403			0x00200000
 
-#define PVR_405GP      		0x40110000 
-#define PVR_405GP_PASS1 	0x40110000	/* RevA */ 
-#define PVR_405GP_PASS2 	0x40110040	/* RevB */ 
-#define PVR_405GP_PASS2_1 	0x40110082	/* RevC */ 
-#define PVR_405GP_PASS3 	0x401100c4	/* RevD */ 
-#define PVR_405GPR     		0x50910000
+#define PVR_405GP		0x40110000
+#define PVR_405GP_PASS1 	0x40110000	/* RevA */
+#define PVR_405GP_PASS2 	0x40110040	/* RevB */
+#define PVR_405GP_PASS2_1 	0x40110082	/* RevC */
+#define PVR_405GP_PASS3 	0x401100c4	/* RevD */
+#define PVR_405GPR		0x50910000
 #define PVR_405GPR_REVB		0x50910951
 
 #define	PVR_405D5X1 		0x20010000 	/* Virtex II Pro */
 #define	PVR_405D5X2 		0x20011000 	/* Virtex 4 FX */
+
+#define PVR_405EX		0x12910000
 
 #if defined(_KERNEL)
 extern char bootpath[];

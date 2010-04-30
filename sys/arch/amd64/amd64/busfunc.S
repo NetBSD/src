@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.7 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.7.18.1 2010/04/30 14:39:03 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 ENTRY(bus_space_read_1)
 	addq	%rsi, %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	1f
 	movzbl	(%rdx), %eax
 	ret
@@ -67,7 +67,7 @@ ENTRY(bus_space_read_1)
  */
 ENTRY(bus_space_read_2)
 	addq	%rsi, %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	1f
 	movzwl	(%rdx), %eax
 	ret
@@ -82,7 +82,7 @@ ENTRY(bus_space_read_2)
  */
 ENTRY(bus_space_read_4)
 	addq	%rsi, %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	1f
 	movl	(%rdx), %eax
 	ret
@@ -96,7 +96,7 @@ ENTRY(bus_space_read_4)
  */
 ENTRY(bus_space_read_8)
 	addq	%rsi, %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	.Ldopanic
 	movq	(%rdx), %rax
 	ret
@@ -112,7 +112,7 @@ STRONG_ALIAS(bus_space_read_stream_8,bus_space_read_8)
  */
 ENTRY(bus_space_write_1)
 	addq	%rsi, %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	1f
 	movb	%cl, (%rdx)
 	ret
@@ -127,7 +127,7 @@ ENTRY(bus_space_write_1)
  */
 ENTRY(bus_space_write_2)
 	addq	%rsi, %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	1f
 	movw	%cx, (%rdx)
 	ret
@@ -142,7 +142,7 @@ ENTRY(bus_space_write_2)
  */
 ENTRY(bus_space_write_4)
 	addq	%rsi, %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	1f
 	movl	%ecx, (%rdx)
 	ret
@@ -157,7 +157,7 @@ ENTRY(bus_space_write_4)
  */
 ENTRY(bus_space_write_8)
 	addq	%rsi, %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	.Ldopanic
 	movq	%rcx, (%rdx)
 	ret
@@ -173,7 +173,7 @@ STRONG_ALIAS(bus_space_write_stream_8,bus_space_write_8)
  */
 ENTRY(bus_space_read_multi_1)
 	leaq	(%rsi,%rdx,1), %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	jne	1f
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
@@ -195,7 +195,7 @@ ENTRY(bus_space_read_multi_1)
  */
 ENTRY(bus_space_read_multi_2)
 	leaq	(%rsi,%rdx,1), %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	jne	1f
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
@@ -217,7 +217,7 @@ ENTRY(bus_space_read_multi_2)
  */
 ENTRY(bus_space_read_multi_4)
 	leaq	(%rsi,%rdx,1), %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	jne	1f
 	movq	%rcx, %rdi
 	movq	%r8, %rcx
@@ -239,7 +239,7 @@ ENTRY(bus_space_read_multi_4)
  */
 ENTRY(bus_space_read_multi_8)
 	leaq	(%rsi,%rdx,1), %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	.Ldopanic
 	.align	16
 1:
@@ -261,7 +261,7 @@ STRONG_ALIAS(bus_space_read_multi_stream_8,bus_space_read_multi_8)
  */
 ENTRY(bus_space_write_multi_1)
 	leaq	(%rsi,%rdx,1), %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	jne	1f
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
@@ -283,7 +283,7 @@ ENTRY(bus_space_write_multi_1)
  */
 ENTRY(bus_space_write_multi_2)
 	leaq	(%rsi,%rdx,1), %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	jne	1f
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
@@ -305,7 +305,7 @@ ENTRY(bus_space_write_multi_2)
  */
 ENTRY(bus_space_write_multi_4)
 	leaq	(%rsi,%rdx,1), %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	jne	1f
 	movq	%rcx, %rsi
 	movq	%r8, %rcx
@@ -327,7 +327,7 @@ ENTRY(bus_space_write_multi_4)
  */
 ENTRY(bus_space_write_multi_8)
 	leaq	(%rsi,%rdx,1), %rdx
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	.Ldopanic
 	.align	16
 1:
@@ -348,7 +348,7 @@ STRONG_ALIAS(bus_space_write_multi_stream_8,bus_space_write_multi_8)
  *    bus_size_t offset, uint8_t *addr, size_t count);
  */
 ENTRY(bus_space_read_region_1)
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	2f
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
@@ -372,7 +372,7 @@ ENTRY(bus_space_read_region_1)
  *    bus_size_t offset, uint16_t *addr, size_t count);
  */
 ENTRY(bus_space_read_region_2)
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	2f
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
@@ -396,7 +396,7 @@ ENTRY(bus_space_read_region_2)
  *    bus_size_t offset, uint32_t *addr, size_t count);
  */
 ENTRY(bus_space_read_region_4)
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	2f
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
@@ -420,7 +420,7 @@ ENTRY(bus_space_read_region_4)
  *    bus_size_t offset, uint64_t *addr, size_t count);
  */
 ENTRY(bus_space_read_region_8)
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	.Ldopanic
 	addq	%rdx, %rsi
 	movq	%rcx, %rdi
@@ -439,7 +439,7 @@ STRONG_ALIAS(bus_space_read_region_stream_8,bus_space_read_region_8)
  *    bus_size_t offset, const uint8_t *addr, size_t count);
  */
 ENTRY(bus_space_write_region_1)
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	2f
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
@@ -463,7 +463,7 @@ ENTRY(bus_space_write_region_1)
  *    bus_size_t offset, const uint16_t *addr, size_t count);
  */
 ENTRY(bus_space_write_region_2)
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	2f
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
@@ -487,7 +487,7 @@ ENTRY(bus_space_write_region_2)
  *    bus_size_t offset, const uint32_t *addr, size_t count);
  */
 ENTRY(bus_space_write_region_4)
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	2f
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi
@@ -511,7 +511,7 @@ ENTRY(bus_space_write_region_4)
  *    bus_size_t offset, const uint64_t *addr, size_t count);
  */
 ENTRY(bus_space_write_region_8)
-	testl	%edi, %edi
+	cmpl	$X86_BUS_SPACE_IO, BST_TYPE(%rdi)
 	je	.Ldopanic
 	leaq	(%rdx,%rsi,1), %rdi
 	movq	%rcx, %rsi

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88 2009/12/05 20:11:15 pooka Exp $
+# $NetBSD: GENERIC,v 1.88.2.1 2010/04/30 14:39:32 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.88.2.1 $"
 
 maxusers	8
 
@@ -189,7 +189,7 @@ pseudo-device	md		1	# memory disk device
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	raid		2	# RAIDframe disk driver
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 #pseudo-device	sl			# SLIP interfaces
 #pseudo-device	tun			# Network "tunnel" device
 #pseudo-device	tap			# virtual Ethernet

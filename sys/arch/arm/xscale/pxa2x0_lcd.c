@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.27 2009/01/29 12:28:15 nonaka Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.27.4.1 2010/04/30 14:39:09 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.27 2009/01/29 12:28:15 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.27.4.1 2010/04/30 14:39:09 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,9 +82,11 @@ int		lcdintr(void *);
 
 static void	pxa2x0_lcd_initialize(struct pxa2x0_lcd_softc *, 
 		    const struct lcd_panel_geometry *);
+#if NWSDISPLAY > 0
 static void	pxa2x0_lcd_setup_rasops(struct pxa2x0_lcd_softc *,
 		    struct rasops_info *, struct pxa2x0_wsscreen_descr *,
 		    const struct lcd_panel_geometry *);
+#endif
 
 void
 pxa2x0_lcd_geometry(struct pxa2x0_lcd_softc *sc,
@@ -249,6 +251,7 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 
 	pxa2x0_lcd_initialize(sc, geom);
 
+#if NWSDISPLAY > 0
 	if (pxa2x0_lcd_console.is_console) {
 		struct pxa2x0_wsscreen_descr *descr = pxa2x0_lcd_console.descr;
 		struct pxa2x0_lcd_screen *scr;
@@ -278,6 +281,7 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 
 		aprint_normal_dev(sc->dev, "console\n");
 	}
+#endif
 }
 
 int
@@ -368,7 +372,6 @@ pxa2x0_lcd_start_dma(struct pxa2x0_lcd_softc *sc,
 	restore_interrupts(save);
 }
 
-#if NWSDISPLAY > 0
 /*
  * Disable screen refresh.
  */
@@ -391,7 +394,6 @@ pxa2x0_lcd_stop_dma(struct pxa2x0_lcd_softc *sc)
 	    ~LCCR0_DIS &
 	    bus_space_read_4(sc->iot, sc->ioh, LCDC_LCCR0));
 }
-#endif
 
 #define _rgb(r,g,b)	(((r)<<11) | ((g)<<5) | b)
 #define rgb(r,g,b)	_rgb((r)>>1,g,(b)>>1)
@@ -604,6 +606,7 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 	return error;
 }
 
+#if NWSDISPLAY > 0
 /*
  * Initialize rasops for a screen, as well as struct wsscreen_descr if this
  * is the first screen creation.
@@ -645,6 +648,7 @@ pxa2x0_lcd_setup_rasops(struct pxa2x0_lcd_softc *sc, struct rasops_info *rinfo,
 	descr->c.capabilities = rinfo->ri_caps;
 	descr->c.textops = &rinfo->ri_ops;
 }
+#endif
 
 /*
  * Power management

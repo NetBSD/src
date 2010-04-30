@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.70 2010/01/19 22:07:43 pooka Exp $ */
+/*      $NetBSD: if_qe.c,v 1.70.2.1 2010/04/30 14:43:46 uebayasi Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.70 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.70.2.1 2010/04/30 14:43:46 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -492,8 +492,7 @@ qestart(struct ifnet *ifp)
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/*
 		 * m now points to a mbuf chain that can be loaded.
 		 * Loop around and set it.
@@ -592,8 +591,7 @@ qeintr(void *arg)
 			m->m_pkthdr.len = m->m_len = len;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			if ((status1 & QE_ESETUP) == 0)
 				(*ifp->if_input)(ifp, m);
 			else

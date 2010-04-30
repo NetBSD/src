@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.10 2009/12/10 07:57:02 skrll Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.10.2.1 2010/04/30 14:44:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <machine/reg.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: bcopy.S,v 1.10 2009/12/10 07:57:02 skrll Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.10.2.1 2010/04/30 14:44:15 uebayasi Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -496,8 +496,7 @@ RCSID("$NetBSD: bcopy.S,v 1.10 2009/12/10 07:57:02 skrll Exp $")
 LEAF_ENTRY(spcopy)
 
         /*
-	 * Setup the fault handler, and load %ret0
-	 * with EFAULT, assuming the copy will fail.
+	 * Setup the fault handler, which will fill in %ret0 if triggered.
 	 */
 	mfctl	CR_CURLWP, %r31
 #ifdef	DIAGNOSTIC
@@ -517,7 +516,6 @@ Lspcopy_curlwp_ok:
 	ldil    L%spcopy_fault, %r1
 	ldw     L_PCB(%r31), %r31
 	ldo     R%spcopy_fault(%r1), %r1
-	ldi	EFAULT, %ret0
 	stw     %r1, PCB_ONFAULT(%r31)
 
 	/* Setup the space registers. */

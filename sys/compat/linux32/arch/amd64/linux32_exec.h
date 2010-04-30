@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.2 2006/08/07 14:19:57 manu Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.2.82.1 2010/04/30 14:42:59 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -46,7 +46,7 @@
 /* Hardware platform identifier string */
 #define LINUX32_PLATFORM "i686" 
 
-#define LINUX32_CPUCAP (curcpu()->ci_feature_flags)
+#define LINUX32_CPUCAP (cpu_feature[0])
 
 /* vsyscall assembly */
 static char linux32_kernel_vsyscall[] = {

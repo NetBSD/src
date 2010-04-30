@@ -1,0 +1,12 @@
+# $NetBSD: GENERIC32.UP,v 1.1.4.2 2010/04/30 14:39:50 uebayasi Exp $
+#
+# GENERIC kernel configuration for 32-bit kernel without multiprocessor support.
+#
+
+include 	"arch/sparc64/conf/GENERIC32"
+
+#ident		"GENERIC32.UP-$Revision: 1.1.4.2 $"
+
+no options 	MULTIPROCESSOR
+no cpu
+cpu0 	at mainbus0

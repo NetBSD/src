@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.67 2010/01/08 19:56:52 dyoung Exp $	*/
+/*	$NetBSD: viaide.c,v 1.67.2.1 2010/04/30 14:43:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.67 2010/01/08 19:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.67.2.1 2010/04/30 14:43:44 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,8 +59,8 @@ static int	viaide_match(device_t, cfdata_t, void *);
 static void	viaide_attach(device_t, device_t, void *);
 static const struct pciide_product_desc *
 		viaide_lookup(pcireg_t);
-static bool	viaide_suspend(device_t, pmf_qual_t);
-static bool	viaide_resume(device_t, pmf_qual_t);
+static bool	viaide_suspend(device_t, const pmf_qual_t *);
+static bool	viaide_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(viaide, sizeof(struct pciide_softc),
     viaide_match, viaide_attach, NULL, NULL);
@@ -400,7 +400,7 @@ via_pcib_match(struct pci_attach_args *pa)
 }
 
 static bool
-viaide_suspend(device_t dv, pmf_qual_t qual)
+viaide_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 
@@ -415,7 +415,7 @@ viaide_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-viaide_resume(device_t dv, pmf_qual_t qual)
+viaide_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct pciide_softc *sc = device_private(dv);
 
@@ -851,18 +851,6 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 
-	/*
-	 * Enable memory-space access if it isn't already there.
-	 */
-	if (pa->pa_memt && (pa->pa_flags & PCI_FLAGS_MEM_ENABLED) == 0) {
-		pcireg_t csr;
-
-		pa->pa_flags |= PCI_FLAGS_MEM_ENABLED;
-		csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		               csr | PCI_COMMAND_MEM_ENABLE);
-	}
-
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA | ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
@@ -890,6 +878,20 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    NULL, &satasize);
 		break;
 	case PCI_MAPREG_MEM_TYPE_32BIT:
+		/*
+		 * Enable memory-space access if it isn't already there.
+		 */
+		if ((pa->pa_flags & PCI_FLAGS_MEM_ENABLED) == 0) {
+			pcireg_t csr;
+
+			pa->pa_flags |= PCI_FLAGS_MEM_ENABLED;
+			csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    PCI_COMMAND_STATUS_REG);
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    PCI_COMMAND_STATUS_REG,
+			    csr | PCI_COMMAND_MEM_ENABLE);
+		}
+
 		ret = pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 		    0, &sc->sc_ba5_st, &sc->sc_ba5_sh,

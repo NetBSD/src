@@ -1,4 +1,4 @@
-/*	$NetBSD: astro.c,v 1.8 2009/11/29 13:51:33 skrll Exp $	*/
+/*	$NetBSD: astro.c,v 1.8.2.1 2010/04/30 14:39:22 uebayasi Exp $	*/
 
 /*	$OpenBSD: astro.c,v 1.8 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -715,7 +715,7 @@ iommu_enter(struct astro_softc *sc, bus_addr_t dva, paddr_t pa, vaddr_t va,
 	uint64_t tte;
 	uint32_t ci;
 
-#ifdef DEBUG
+#ifdef ASTRODEBUG
 	printf("iommu_enter dva %lx, pa %lx, va %lx\n", dva, pa, va);
 #endif
 

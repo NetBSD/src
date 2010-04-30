@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.49 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.49.2.1 2010/04/30 14:43:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.49 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.49.2.1 2010/04/30 14:43:37 uebayasi Exp $");
 
 
 #include <sys/param.h>
@@ -955,8 +955,7 @@ stge_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txpending == (STGE_NTXDESC - 1)) {
@@ -1340,8 +1339,7 @@ stge_rxintr(struct stge_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 #ifdef	STGE_VLAN_UNTAG
 		/*
 		 * Check for VLAN tagged packets

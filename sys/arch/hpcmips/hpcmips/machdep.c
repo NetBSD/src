@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 2010/01/21 01:23:14 pooka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108.2.1 2010/04/30 14:39:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2010/01/21 01:23:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108.2.1 2010/04/30 14:39:26 uebayasi Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -116,11 +116,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2010/01/21 01:23:14 pooka Exp $");
 #include "opt_modular.h"
 #include "opt_spec_platform.h"
 #include "biconsdev.h"
-#include "fs_mfs.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_rtc_offset.h"
-#include "fs_nfs.h"
 #include "opt_kloader.h"
 #include "opt_kloader_kernel_path.h"
 #include "debug_hpc.h"
@@ -180,12 +178,10 @@ static int __bicons_enable;
 #define DPRINTF(arg)
 #endif /* NBICONSDEV > 0 */
 
-#ifdef NFS
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-#endif
 
 #ifdef MEMORY_DISK_DYNAMIC
 #include <dev/md.h>
@@ -219,7 +215,6 @@ static char kernel_path[] = KLOADER_KERNEL_PATH;
 #endif /* KLOADER */
 
 /* maps for VM objects */
-struct vm_map *mb_map;
 struct vm_map *phys_map;
 
 /* physical memory */
@@ -415,14 +410,10 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 
 			case 'b':
 				/* boot device: -b=sd0 etc. */
-#ifdef NFS
 				if (strcmp(cp+2, "nfs") == 0)
 					rootfstype = MOUNT_NFS;
 				else
 					makebootdev(cp+2);
-#else /* NFS */
-				makebootdev(cp+2);
-#endif /* NFS */
 				cp += strlen(cp);
 				break;
 			default:
@@ -431,7 +422,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 			}
 		}
 	}
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
@@ -444,7 +434,6 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif /* MEMORY_DISK_DYNAMIC */
 		kernend = (char *)kernend + fssz;
 	}
-#endif /* MFS */
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */

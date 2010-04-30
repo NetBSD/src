@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.12 2009/12/14 00:48:35 matt Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.12.2.1 2010/04/30 14:44:08 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.12 2009/12/14 00:48:35 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.12.2.1 2010/04/30 14:44:08 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -109,53 +109,53 @@ int	netbsd_elf_probe(struct lwp *, struct exec_package *, void *, char *,
 #define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
 #define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
 
-#define MAXPHNUM	50
-
-#ifdef PAX_ASLR
 /*
- * We don't move this code in kern_pax.c because it is compiled twice.
+ * Arbitrary limits to avoid DoS for excessive memory allocation.
  */
+#define MAXPHNUM	128
+#define MAXSHNUM	32768
+#define MAXNOTESIZE	1024
+
 static void
-pax_aslr_elf(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
+elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
     Elf_Phdr *ph)
 {
-	size_t pax_align = 0, pax_offset, i;
-	uint32_t r;
+	Elf_Addr align, offset;
+	int i;
 
-	if (!pax_aslr_active(l))
-		return;
+	for (align = i = 0; i < eh->e_phnum; i++)
+		if (ph[i].p_type == PT_LOAD && ph[i].p_align > align)
+			align = ph[i].p_align;
 
-	/*
-	 * find align XXX: not all sections might have the same
-	 * alignment
-	 */
-	for (i = 0; i < eh->e_phnum; i++)
-		if (ph[i].p_type == PT_LOAD) {
-			pax_align = ph[i].p_align;
-			break;
-		}
+#ifdef PAX_ASLR
+	if (pax_aslr_active(l)) {
+		size_t pax_align, l2, delta;
+		uint32_t r;
 
-	r = arc4random();
+		pax_align = align;
 
-	if (pax_align == 0)
-		pax_align = PGSHIFT;
-#ifdef DEBUG_ASLR
-	uprintf("r=0x%x a=0x%x p=0x%x Delta=0x%lx\n", r,
-	    ilog2(pax_align), PGSHIFT, PAX_ASLR_DELTA(r,
-		ilog2(pax_align), PAX_ASLR_DELTA_EXEC_LEN));
-#endif
-	pax_offset = ELF_TRUNC(PAX_ASLR_DELTA(r,
-	    ilog2(pax_align), PAX_ASLR_DELTA_EXEC_LEN), pax_align);
+		r = arc4random();
 
-	for (i = 0; i < eh->e_phnum; i++)
-		ph[i].p_vaddr += pax_offset;
-	eh->e_entry += pax_offset;
-#ifdef DEBUG_ASLR
-	uprintf("pax offset=0x%zx entry=0x%llx\n",
-	    pax_offset, (unsigned long long)eh->e_entry);
-#endif
-}
+		if (pax_align == 0)
+			pax_align = PGSHIFT;
+		l2 = ilog2(pax_align);
+		delta = PAX_ASLR_DELTA(r, l2, PAX_ASLR_DELTA_EXEC_LEN);
+		offset = ELF_TRUNC(delta, pax_align) + PAGE_SIZE;
+#ifdef PAX_ASLR_DEBUG
+		uprintf("r=0x%x l2=0x%zx PGSHIFT=0x%x Delta=0x%zx\n", r, l2,
+		    PGSHIFT, delta);
+		uprintf("pax offset=0x%llx entry=0x%llx\n",
+		    (unsigned long long)offset,
+		    (unsigned long long)eh->e_entry);
+#endif /* PAX_ASLR_DEBUG */
+	} else
 #endif /* PAX_ASLR */
+		offset = MAX(align, PAGE_SIZE);
+
+	for (i = 0; i < eh->e_phnum; i++)
+		ph[i].p_vaddr += offset;
+	eh->e_entry += offset;
+}
 
 /*
  * Copy arguments onto the stack in the normal way, but add some
@@ -293,7 +293,7 @@ elf_check_header(Elf_Ehdr *eh, int type)
 	if (eh->e_type != type)
 		return ENOEXEC;
 
-	if (eh->e_shnum > 32768 || eh->e_phnum > 128)
+	if (eh->e_shnum > MAXSHNUM || eh->e_phnum > MAXPHNUM)
 		return ENOEXEC;
 
 	return 0;
@@ -715,10 +715,8 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	p->p_pax = epp->ep_pax_flags;
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
-#ifdef PAX_ASLR
 	if (is_dyn)
-		pax_aslr_elf(l, epp, eh, ph);
-#endif /* PAX_ASLR */
+		elf_placedynexec(l, epp, eh, ph);
 
 	/*
 	 * Load all the necessary sections
@@ -833,36 +831,36 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
     Elf_Ehdr *eh)
 {
 	size_t i;
-	Elf_Phdr *ph;
-	size_t phsize;
+	Elf_Shdr *sh;
+	Elf_Nhdr *np;
+	size_t shsize;
 	int error;
 	int isnetbsd = 0;
 	char *ndata;
 
 	epp->ep_pax_flags = 0;
-	if (eh->e_phnum > MAXPHNUM || eh->e_phnum == 0)
+	if (eh->e_shnum > MAXSHNUM || eh->e_shnum == 0)
 		return ENOEXEC;
 
-	phsize = eh->e_phnum * sizeof(Elf_Phdr);
-	ph = kmem_alloc(phsize, KM_SLEEP);
-	error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph, phsize);
+	shsize = eh->e_shnum * sizeof(Elf_Shdr);
+	sh = kmem_alloc(shsize, KM_SLEEP);
+	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
 	if (error)
 		goto out;
 
-	for (i = 0; i < eh->e_phnum; i++) {
-		Elf_Phdr *ephp = &ph[i];
-		Elf_Nhdr *np;
+	np = kmem_alloc(MAXNOTESIZE, KM_SLEEP);
+	for (i = 0; i < eh->e_shnum; i++) {
+		Elf_Shdr *shp = &sh[i];
 
-		if (ephp->p_type != PT_NOTE ||
-		    ephp->p_filesz > 1024 ||
-		    ephp->p_filesz < sizeof(Elf_Nhdr) + ELF_NOTE_NETBSD_NAMESZ)
+		if (shp->sh_type != SHT_NOTE ||
+		    shp->sh_size > MAXNOTESIZE ||
+		    shp->sh_size < sizeof(Elf_Nhdr) + ELF_NOTE_NETBSD_NAMESZ)
 			continue;
 
-		np = kmem_alloc(ephp->p_filesz, KM_SLEEP);
-		error = exec_read_from(l, epp->ep_vp, ephp->p_offset, np,
-		    ephp->p_filesz);
+		error = exec_read_from(l, epp->ep_vp, shp->sh_offset, np,
+		    shp->sh_size);
 		if (error)
-			goto next;
+			continue;
 
 		ndata = (char *)(np + 1);
 		switch (np->n_type) {
@@ -871,7 +869,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    np->n_descsz != ELF_NOTE_NETBSD_DESCSZ ||
 			    memcmp(ndata, ELF_NOTE_NETBSD_NAME,
 			    ELF_NOTE_NETBSD_NAMESZ))
-				goto next;
+				goto bad;
 			isnetbsd = 1;
 			break;
 
@@ -879,25 +877,42 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			if (np->n_namesz != ELF_NOTE_PAX_NAMESZ ||
 			    np->n_descsz != ELF_NOTE_PAX_DESCSZ ||
 			    memcmp(ndata, ELF_NOTE_PAX_NAME,
-			    ELF_NOTE_PAX_NAMESZ))
-				goto next;
+			    ELF_NOTE_PAX_NAMESZ)) {
+bad:
+#ifdef DIAGNOSTIC
+				printf("%s: bad tag %d: "
+				    "[%d %d, %d %d, %*.*s %*.*s]\n",
+				    epp->ep_name,
+				    np->n_type,
+				    np->n_namesz, ELF_NOTE_PAX_NAMESZ,
+				    np->n_descsz, ELF_NOTE_PAX_DESCSZ,
+				    ELF_NOTE_PAX_NAMESZ,
+				    ELF_NOTE_PAX_NAMESZ,
+				    ndata,
+				    ELF_NOTE_PAX_NAMESZ,
+				    ELF_NOTE_PAX_NAMESZ,
+				    ELF_NOTE_PAX_NAME);
+#endif
+				continue;
+			}
 			(void)memcpy(&epp->ep_pax_flags,
 			    ndata + ELF_NOTE_PAX_NAMESZ,
 			    sizeof(epp->ep_pax_flags));
 			break;
 
 		default:
+#ifdef DIAGNOSTIC
+			printf("%s: unknown note type %d\n", epp->ep_name,
+			    np->n_type);
+#endif
 			break;
 		}
-
-next:
-		kmem_free(np, ephp->p_filesz);
-		continue;
 	}
+	kmem_free(np, MAXNOTESIZE);
 
 	error = isnetbsd ? 0 : ENOEXEC;
 out:
-	kmem_free(ph, phsize);
+	kmem_free(sh, shsize);
 	return error;
 }
 

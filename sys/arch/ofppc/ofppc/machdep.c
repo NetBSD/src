@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2010/01/20 17:12:08 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109.2.1 2010/04/30 14:39:41 uebayasi Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/01/20 17:12:08 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109.2.1 2010/04/30 14:39:41 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/01/20 17:12:08 phx Exp $");
 #include <machine/trap.h>
 #include <machine/bus.h>
 #include <machine/isa_machdep.h>
-#include <machine/spr.h>
 
+#include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/rtas.h>
@@ -66,9 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2010/01/20 17:12:08 phx Exp $");
 
 struct pmap ofw_pmap;
 char bootpath[256];
-
-void ofwppc_batinit(void);
-void ofppc_bootstrap_console(void);
 
 extern u_int l2cr_config;
 #if (NRTAS > 0)
@@ -390,7 +388,8 @@ copy_disp_props(struct device *dev, int node, prop_dictionary_t dict)
 	}
 	if (!of_to_uint32_prop(dict, node, "address", "address")) {
 		uint32_t fbaddr = 0;
-			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
+
+		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 		if (fbaddr != 0)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}

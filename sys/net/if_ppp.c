@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.130 2010/01/19 22:08:01 pooka Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.130.2.1 2010/04/30 14:44:19 uebayasi Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.130 2010/01/19 22:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.130.2.1 2010/04/30 14:44:19 uebayasi Exp $");
 
 #include "ppp.h"
 
@@ -304,7 +304,7 @@ ppp_create(const char *name, int unit)
     IFQ_SET_READY(&sc->sc_if.if_snd);
     if_attach(&sc->sc_if);
     if_alloc_sadl(&sc->sc_if);
-    bpf_ops->bpf_attach(&sc->sc_if, DLT_NULL, 0, &sc->sc_if.if_bpf);
+    bpf_attach(&sc->sc_if, DLT_NULL, 0);
     return sc;
 }
 
@@ -326,7 +326,7 @@ ppp_clone_destroy(struct ifnet *ifp)
     LIST_REMOVE(sc, sc_iflist);
     simple_unlock(&ppp_list_mutex);
 
-    bpf_ops->bpf_detach(ifp);
+    bpf_detach(ifp);
     if_detach(ifp);
 
     free(sc, M_DEVBUF);
@@ -994,8 +994,7 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     /*
      * See if bpf wants to look at the packet.
      */
-    if (sc->sc_if.if_bpf)
-	bpf_ops->bpf_mtap(sc->sc_if.if_bpf, m0);
+    bpf_mtap(&sc->sc_if, m0);
 
     /*
      * Put the packet on the appropriate queue.
@@ -1628,8 +1627,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
     }
 
     /* See if bpf wants to look at the packet. */
-    if (sc->sc_if.if_bpf)
-	bpf_ops->bpf_mtap(sc->sc_if.if_bpf, m);
+    bpf_mtap(&sc->sc_if, m);
 
     rv = 0;
     switch (proto) {

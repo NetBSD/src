@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22.2.1 2010/04/28 08:31:06 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.2.2 2010/04/30 14:39:31 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -130,7 +130,6 @@ vaddr_t ia64_unwindtab;
 vsize_t ia64_unwindtablen;
 #endif
 
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 void *msgbufaddr;

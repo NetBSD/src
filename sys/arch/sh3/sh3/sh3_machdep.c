@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.85 2009/12/10 14:13:51 matt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.85.2.1 2010/04/30 14:39:48 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.85 2009/12/10 14:13:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.85.2.1 2010/04/30 14:39:48 uebayasi Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -110,7 +110,6 @@ int cpu_arch;
 int cpu_product;
 char cpu_model[120];
 
-struct vm_map *mb_map;
 struct vm_map *phys_map;
 
 struct pcb *curpcb;

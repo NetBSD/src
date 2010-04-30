@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.38 2009/05/04 12:19:30 cegger Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.38.2.1 2010/04/30 14:39:30 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.38 2009/05/04 12:19:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.38.2.1 2010/04/30 14:39:30 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,7 +129,8 @@ int MCA_system = 0;
 /* Used to kick MCA DMA controller */
 #define DMA_CMD		0x18		/* command the controller */
 #define DMA_EXEC	0x1A		/* tell controller how to do things */
-static bus_space_handle_t dmaiot, dmacmdh, dmaexech;
+static bus_space_handle_t dmacmdh, dmaexech;
+static bus_space_tag_t dmaiot;
 
 /*
  * MCA DMA controller commands. The exact sense of individual bits

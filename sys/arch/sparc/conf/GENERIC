@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.219 2010/01/15 20:57:12 bouyer Exp $
+# $NetBSD: GENERIC,v 1.219.2.1 2010/04/30 14:39:49 uebayasi Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.219 $"
+#ident 		"GENERIC-$Revision: 1.219.2.1 $"
 
 maxusers	32
 
@@ -688,11 +688,19 @@ cgsix0		at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 # there can be only one
 tcx0		at sbus? slot ? offset ?
 
+## Sun CG12 / Matrox SG3 accelerated 24bit framebuffer
+## runs monochrome only for now
+cgtwelve*	at sbus? slot ? offset ?
+
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m
 
 # P9100-based display on Tadpole SPARCbook 3.
 pnozz0		at sbus? slot ? offset ?
+# the SPARCbook 3 hardware docs say that accesses to P9100 registers need to be
+# 'latched in' but at least my 3GX works happily without
+# Enable it by default since we don't know which hardware really needs it.
+options PNOZZ_USE_LATCH
 
 # Sun ZX/Leo 24-bit framebuffer
 zx*		at sbus? slot ? offset ?
@@ -732,7 +740,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	putter			# for puffs and pud

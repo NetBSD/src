@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.11 2008/10/22 11:24:28 hans Exp $	*/
+/*	$NetBSD: userret.h,v 1.11.14.1 2010/04/30 14:39:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
 #include <sys/userret.h>
 
 /*
- *	Common code used by various execption handlers to
+ *	Common code used by various exception handlers to
  *	return to usermode.
  */
 static __inline void

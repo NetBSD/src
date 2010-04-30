@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.8 2008/05/03 23:52:19 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: file_manager.cpp,v 1.8.20.1 2010/04/30 14:39:24 uebayasi Exp $	*/
 
 /*-
  * Copyright(c) 1996, 2001, 2004 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 __BEGIN_DECLS
 #include <string.h>
 #include <zlib.h>
+uLong crc32(uLong crc, const Bytef *buf, uInt len);
 __END_DECLS
 
 static struct z_stream_s __stream;	// XXX for namespace.

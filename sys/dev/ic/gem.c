@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.92 2010/01/19 22:06:24 pooka Exp $ */
+/*	$NetBSD: gem.c,v 1.92.2.1 2010/04/30 14:43:15 uebayasi Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.92 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.92.2.1 2010/04/30 14:43:15 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -1588,8 +1588,7 @@ gem_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {
@@ -1845,8 +1844,7 @@ gem_rint(struct gem_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 #ifdef INET
 		/* hardware checksum */
@@ -2599,7 +2597,7 @@ gem_inten(struct gem_softc *sc)
 }
 
 bool
-gem_resume(device_t self, pmf_qual_t qual)
+gem_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct gem_softc *sc = device_private(self);
 
@@ -2609,7 +2607,7 @@ gem_resume(device_t self, pmf_qual_t qual)
 }
 
 bool
-gem_suspend(device_t self, pmf_qual_t qual)
+gem_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct gem_softc *sc = device_private(self);
 	bus_space_tag_t t = sc->sc_bustag;

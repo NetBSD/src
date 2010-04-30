@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi_acpi.c,v 1.11 2009/02/17 12:46:01 jmcneill Exp $ */
+/* $NetBSD: pcppi_acpi.c,v 1.11.2.1 2010/04/30 14:43:07 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,19 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.11 2009/02/17 12:46:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.11.2.1 2010/04/30 14:43:07 uebayasi Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 
-#include <sys/bus.h>
-
-#include <dev/acpi/acpica.h>
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 
 #include <dev/isa/pcppivar.h>

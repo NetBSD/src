@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.282 2010/01/08 11:35:12 pooka Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.282.2.1 2010/04/30 14:44:36 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.282 2010/01/08 11:35:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.282.2.1 2010/04/30 14:44:36 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -92,6 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.282 2010/01/08 11:35:12 pooka Exp $
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+#include <sys/syscallvar.h>
+#include <sys/syscall.h>
+#include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -340,6 +343,14 @@ lfs_sysctl_setup(struct sysctllog **clog)
 #endif
 }
 
+/* old cleaner syscall interface.  see VOP_FCNTL() */
+static const struct syscall_package lfs_syscalls[] = {
+	{ SYS_lfs_bmapv,	0, (sy_call_t *)sys_lfs_bmapv		},
+	{ SYS_lfs_markv,	0, (sy_call_t *)sys_lfs_markv		},
+	{ SYS_lfs_segclean,	0, (sy_call_t *)sys___lfs_segwait50	},
+	{ 0, 0, NULL },
+};
+
 static int
 lfs_modcmd(modcmd_t cmd, void *arg)
 {
@@ -347,15 +358,21 @@ lfs_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		error = syscall_establish(NULL, lfs_syscalls);
+		if (error)
+			return error;
 		error = vfs_attach(&lfs_vfsops);
-		if (error != 0)
+		if (error != 0) {
+			syscall_disestablish(NULL, lfs_syscalls);
 			break;
+		}
 		lfs_sysctl_setup(&lfs_sysctl_log);
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&lfs_vfsops);
 		if (error != 0)
 			break;
+		syscall_disestablish(NULL, lfs_syscalls);
 		sysctl_teardown(&lfs_sysctl_log);
 		break;
 	default:
@@ -516,8 +533,10 @@ int
 lfs_mountroot(void)
 {
 	extern struct vnode *rootvp;
+	struct lfs *fs = NULL;				/* LFS */
 	struct mount *mp;
 	struct lwp *l = curlwp;
+	struct ufsmount *ump;
 	int error;
 
 	if (device_class(root_device) != DV_DISK)
@@ -537,6 +556,10 @@ lfs_mountroot(void)
 	mutex_enter(&mountlist_lock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
+	ump = VFSTOUFS(mp);
+	fs = ump->um_lfs;
+	memset(fs->lfs_fsmnt, 0, sizeof(fs->lfs_fsmnt));
+	(void)copystr(mp->mnt_stat.f_mntonname, fs->lfs_fsmnt, MNAMELEN - 1, 0);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
@@ -597,8 +620,15 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 * used for our initial mount
 			 */
 			ump = VFSTOUFS(mp);
-			if (devvp != ump->um_devvp)
-				error = EINVAL;
+			if (devvp != ump->um_devvp) {
+				if (devvp->v_rdev != ump->um_devvp->v_rdev)
+					error = EINVAL;
+				else {
+					vrele(devvp);
+					devvp = ump->um_devvp;
+					vref(devvp);
+				}
+			}
 		}
 	} else {
 		if (!update) {
@@ -708,9 +738,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct ufsmount *ump;
 	struct vnode *vp;
 	struct buf *bp, *abp;
-	struct partinfo dpart;
 	dev_t dev;
-	int error, i, ronly, secsize, fsbsize;
+	int error, i, ronly, fsbsize;
 	kauth_cred_t cred;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
@@ -728,17 +757,13 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred) != 0)
-		secsize = DEV_BSIZE;
-	else
-		secsize = dpart.disklab->d_secsize;
 
 	/* Don't free random space on error. */
 	bp = NULL;
 	abp = NULL;
 	ump = NULL;
 
-	sb_addr = LFS_LABELPAD / secsize;
+	sb_addr = LFS_LABELPAD / DEV_BSIZE;
 	while (1) {
 		/* Read in the superblock. */
 		error = bread(devvp, sb_addr, LFS_SBPAD, cred, 0, &bp);
@@ -762,24 +787,20 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		}
 
 		if (dfs->dlfs_version == 1)
-			fsbsize = secsize;
+			fsbsize = DEV_BSIZE;
 		else {
-			fsbsize = 1 << (dfs->dlfs_bshift - dfs->dlfs_blktodb +
-				dfs->dlfs_fsbtodb);
+			fsbsize = 1 << dfs->dlfs_ffshift;
 			/*
 			 * Could be, if the frag size is large enough, that we
 			 * don't have the "real" primary superblock.  If that's
 			 * the case, get the real one, and try again.
 			 */
-			if (sb_addr != dfs->dlfs_sboffs[0] <<
-				       dfs->dlfs_fsbtodb) {
+			if (sb_addr != (dfs->dlfs_sboffs[0] << (dfs->dlfs_ffshift - DEV_BSHIFT))) {
 				DLOG((DLOG_MOUNT, "lfs_mountfs: sb daddr"
 				      " 0x%llx is not right, trying 0x%llx\n",
 				      (long long)sb_addr,
-				      (long long)(dfs->dlfs_sboffs[0] <<
-						  dfs->dlfs_fsbtodb)));
-				sb_addr = dfs->dlfs_sboffs[0] <<
-					  dfs->dlfs_fsbtodb;
+				      (long long)(dfs->dlfs_sboffs[0] << (dfs->dlfs_ffshift - DEV_BSHIFT))));
+				sb_addr = dfs->dlfs_sboffs[0] << (dfs->dlfs_ffshift - DEV_BSHIFT);
 				brelse(bp, 0);
 				continue;
 			}
@@ -796,7 +817,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (dfs->dlfs_sboffs[1] &&
 	    dfs->dlfs_sboffs[1] - LFS_LABELPAD / fsbsize > LFS_SBPAD / fsbsize)
 	{
-		error = bread(devvp, dfs->dlfs_sboffs[1] * (fsbsize / secsize),
+		error = bread(devvp, dfs->dlfs_sboffs[1] * (fsbsize / DEV_BSIZE),
 			LFS_SBPAD, cred, 0, &abp);
 		if (error)
 			goto out;
@@ -886,7 +907,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 
 	/* Set up the I/O information */
-	fs->lfs_devbsize = secsize;
+	fs->lfs_devbsize = DEV_BSIZE;
 	fs->lfs_iocount = 0;
 	fs->lfs_diropwait = 0;
 	fs->lfs_activesb = 0;
@@ -927,8 +948,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
-	ump->um_bptrtodb = fs->lfs_fsbtodb;
-	ump->um_seqinc = fragstofsb(fs, fs->lfs_frag);
+	ump->um_bptrtodb = fs->lfs_ffshift - DEV_BSHIFT;
+	ump->um_seqinc = fs->lfs_frag;
 	ump->um_nindir = fs->lfs_nindir;
 	ump->um_lognindir = ffs(fs->lfs_nindir) - 1;
 	for (i = 0; i < MAXQUOTAS; i++)
@@ -1043,6 +1064,13 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	if (lfs_writer_daemon == 0 && kthread_create(PRI_BIO, 0, NULL,
 	    lfs_writerd, NULL, NULL, "lfs_writer") != 0)
 		panic("fork lfs_writer");
+	/*
+	 * XXX: Get extra reference to LFS vfsops.  This prevents unload,
+	 * but also prevents kernel panic due to text being unloaded
+	 * from below lfs_writerd.  When lfs_writerd can exit, remove
+	 * this!!!
+	 */
+	vfs_getopsbyname(MOUNT_LFS);
 
 	printf("WARNING: the log-structured file system is experimental\n"
 	    "WARNING: it may cause system crashes and/or corrupt data\n");
@@ -1184,16 +1212,16 @@ lfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_bsize = fs->lfs_bsize;
 	sbp->f_frsize = fs->lfs_fsize;
 	sbp->f_iosize = fs->lfs_bsize;
-	sbp->f_blocks = fsbtofrags(fs, LFS_EST_NONMETA(fs) - VTOI(fs->lfs_ivnode)->i_lfs_effnblks);
+	sbp->f_blocks = LFS_EST_NONMETA(fs) - VTOI(fs->lfs_ivnode)->i_lfs_effnblks;
 
-	sbp->f_bfree = fsbtofrags(fs, LFS_EST_BFREE(fs));
+	sbp->f_bfree = LFS_EST_BFREE(fs);
 	KASSERT(sbp->f_bfree <= fs->lfs_dsize);
 #if 0
 	if (sbp->f_bfree < 0)
 		sbp->f_bfree = 0;
 #endif
 
-	sbp->f_bresvd = fsbtofrags(fs, LFS_EST_RSVD(fs));
+	sbp->f_bresvd = LFS_EST_RSVD(fs);
 	if (sbp->f_bfree > sbp->f_bresvd)
 		sbp->f_bavail = sbp->f_bfree - sbp->f_bresvd;
 	else

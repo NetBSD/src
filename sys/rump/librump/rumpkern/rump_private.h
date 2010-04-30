@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.42 2009/12/05 13:01:31 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.42.2.1 2010/04/30 14:44:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -59,6 +59,28 @@ extern struct device rump_rootdev;
 
 extern struct sysent rump_sysent[];
 
+enum rump_component_type {
+	RUMP_COMPONENT_DEV,
+	RUMP_COMPONENT_NET, RUMP_COMPONENT_NET_ROUTE, RUMP_COMPONENT_NET_IF,
+	RUMP_COMPONENT_VFS,
+	RUMP_COMPONENT_MAX,
+};
+struct rump_component {
+	enum rump_component_type rc_type;
+	void (*rc_init)(void);
+};
+#define RUMP_COMPONENT(type)				\
+static void rumpcompinit(void);				\
+static const struct rump_component rumpcomp = {		\
+	.rc_type = type,				\
+	.rc_init = rumpcompinit,			\
+};							\
+__link_set_add_rodata(rump_components, rumpcomp);	\
+static void rumpcompinit(void)
+
+void		rump_component_init(enum rump_component_type);
+int		rump_component_count(enum rump_component_type);
+
 void		rumpvm_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 
@@ -82,6 +104,7 @@ extern void *rump_sysproxy_arg;
 int		rump_sysproxy_copyout(const void *, void *, size_t);
 int		rump_sysproxy_copyin(const void *, void *, size_t);
 
+void	rump_cpus_bootstrap(int);
 void	rump_scheduler_init(void);
 void	rump_schedule(void);
 void	rump_unschedule(void);
@@ -92,7 +115,7 @@ void	rump_unschedule_cpu1(struct lwp *);
 void	rump_user_schedule(int);
 void	rump_user_unschedule(int, int *);
 
-void	rump_cpu_bootstrap(struct cpu_info *);
+void	rump_cpu_attach(struct cpu_info *);
 
 bool	kernel_biglocked(void);
 void	kernel_unlock_allbutone(int *);

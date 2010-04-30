@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.131 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: i82557.c,v 1.131.2.1 2010/04/30 14:43:16 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.131 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.131.2.1 2010/04/30 14:43:16 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -1007,8 +1007,7 @@ fxp_start(struct ifnet *ifp)
 		/*
 		 * Pass packet to bpf if there is a listener.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txpending == FXP_NTXCB - 1) {
@@ -1467,8 +1466,7 @@ fxp_rxintr(struct fxp_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -2491,17 +2489,22 @@ fxp_activate(device_t self, enum devact act)
  *	Detach an i82557 interface.
  */
 int
-fxp_detach(struct fxp_softc *sc)
+fxp_detach(struct fxp_softc *sc, int flags)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int i;
+	int i, s;
 
 	/* Succeed now if there's no work to do. */
 	if ((sc->sc_flags & FXPF_ATTACHED) == 0)
 		return (0);
 
-	/* Unhook our tick handler. */
-	callout_stop(&sc->sc_callout);
+	s = splnet();
+	/* Stop the interface. Callouts are stopped in it. */
+	fxp_stop(ifp, 1);
+	splx(s);
+
+	/* Destroy our callout. */
+	callout_destroy(&sc->sc_callout);
 
 	if (sc->sc_flags & FXPF_MII) {
 		/* Detach all PHYs */

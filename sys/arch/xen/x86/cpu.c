@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40 2010/01/08 19:43:26 dyoung Exp $	*/
+/*	$NetBSD: cpu.c,v 1.40.2.1 2010/04/30 14:40:00 uebayasi Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2010/01/08 19:43:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40.2.1 2010/04/30 14:40:00 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -174,6 +174,14 @@ uint32_t cpus_running = 0;
 uint32_t phycpus_attached = 0;
 uint32_t phycpus_running = 0;
 
+uint32_t cpu_feature[5]; /* X86 CPUID feature bits
+			  *	[0] basic features %edx
+			  *	[1] basic features %ecx
+			  *	[2] extended features %edx
+			  *	[3] extended features %ecx
+			  *	[4] VIA padlock features
+			  */
+
 bool x86_mp_online;
 paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
 
@@ -236,8 +244,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
-		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
-		    ~(CACHE_LINE_SIZE - 1));
+		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		ci->ci_curldt = -1;
 	} else {
 		aprint_naive(": %s Processor\n",
@@ -372,8 +379,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		aprint_naive(": Application Processor\n");
 		ptr = (uintptr_t)kmem_alloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
-		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
-		    ~(CACHE_LINE_SIZE - 1));
+		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
 		memset(ci, 0, sizeof(*ci));
 #ifdef TRAPLOG
 		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
@@ -549,14 +555,14 @@ cpu_init(struct cpu_info *ci)
 	 * On a P6 or above, enable global TLB caching if the
 	 * hardware supports it.
 	 */
-	if (cpu_feature & CPUID_PGE)
+	if (cpu_feature[0] & CPUID_PGE)
 		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
 
 #ifdef XXXMTRR
 	/*
 	 * On a P6 or above, initialize MTRR's if the hardware supports them.
 	 */
-	if (cpu_feature & CPUID_MTRR) {
+	if (cpu_feature[0] & CPUID_MTRR) {
 		if ((ci->ci_flags & CPUF_AP) == 0)
 			i686_mtrr_init_first();
 		mtrr_init_cpu(ci);
@@ -565,13 +571,13 @@ cpu_init(struct cpu_info *ci)
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
-	if (cpu_feature & CPUID_FXSR) {
+	if (cpu_feature[0] & CPUID_FXSR) {
 		lcr4(rcr4() | CR4_OSFXSR);
 
 		/*
 		 * If we have SSE/SSE2, enable XMM exceptions.
 		 */
-		if (cpu_feature & (CPUID_SSE|CPUID_SSE2))
+		if (cpu_feature[0] & (CPUID_SSE|CPUID_SSE2))
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
 
@@ -704,19 +710,14 @@ cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
 	struct pcb *pcb;
-	uint32_t blacklist_features;
 	int s, i;
-
-#ifdef __x86_64__
-        cpu_init_msrs(ci, true);
-#endif
 
 	cpu_probe(ci);
 
-	/* not on Xen... */
-	blacklist_features = ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX); /* XXX add CPUID_SVM */
+	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
+	cpu_feature[2] &= ~CPUID_FEAT_EXT_BLACKLIST;
 
-	cpu_feature &= blacklist_features;
+        cpu_init_msrs(ci, true);
 
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
@@ -994,18 +995,17 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 #endif
 }
 
-#ifdef __x86_64__
-
 void
 cpu_init_msrs(struct cpu_info *ci, bool full)
 {
+#ifdef __x86_64__
 	if (full) {
 		HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (uint64_t) ci);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
 	}
-}
 #endif	/* __x86_64__ */
+}
 
 void
 cpu_offline_md(void)
@@ -1024,7 +1024,7 @@ cpu_offline_md(void)
 #if 0
 /* XXX joerg restructure and restart CPUs individually */
 static bool
-cpu_suspend(device_t dv, pmf_qual_t qual)
+cpu_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
@@ -1052,7 +1052,7 @@ cpu_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-cpu_resume(device_t dv, pmf_qual_t qual)
+cpu_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;

@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.8 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.8.98.1 2010/04/30 14:39:41 uebayasi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.8 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.8.98.1 2010/04/30 14:39:41 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -46,15 +46,15 @@ int
 copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
-	int msr, pid, tmp, ctx;
+	int rv, msr, pid, tmp, ctx;
 	struct faultbuf env;
 
-	if (setfault(&env)) {
-		curpcb->pcb_onfault = 0;
+	if ((rv = setfault(&env))) {
+		curpcb->pcb_onfault = NULL;
 		/* XXXX -- len may be lost on a fault */
 		if (done)
 			*done = len;
-		return EFAULT;
+		return rv;
 	}
 
 	if (!(ctx = pm->pm_ctx)) {
@@ -91,7 +91,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 			: "=&r" (msr), "=&r" (pid), "=&r" (tmp), "+b" (len)
 			: "r" (ctx), "b" (udaddr), "b" (kaddr));
 	}
-	curpcb->pcb_onfault = 0;
+	curpcb->pcb_onfault = NULL;
 	if (done)
 		*done = len;
 	return 0;

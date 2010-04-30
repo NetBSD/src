@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpvfs_if_priv.h,v 1.3 2009/10/15 00:31:25 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_priv.h,v 1.3.2.1 2010/04/30 14:44:31 uebayasi Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -24,11 +24,11 @@ int rump_etfs_remove(const char *);
 void rump_freecn(struct componentname *, int);
 int rump_checksavecn(struct componentname *);
 int rump_namei(uint32_t, uint32_t, const char *, struct vnode **, struct vnode **, struct componentname **);
-struct componentname * rump_makecn(u_long, u_long, const char *, size_t, kauth_cred_t, struct lwp *);
+struct componentname * rump_makecn(u_long, u_long, const char *, size_t, struct kauth_cred *, struct lwp *);
 int rump_vfs_unmount(struct mount *, int);
 int rump_vfs_root(struct mount *, struct vnode **, int);
 int rump_vfs_statvfs(struct mount *, struct statvfs *);
-int rump_vfs_sync(struct mount *, int, kauth_cred_t);
+int rump_vfs_sync(struct mount *, int, struct kauth_cred *);
 int rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 void rump_vfs_syncwait(struct mount *);

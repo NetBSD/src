@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.23 2010/01/21 05:32:18 macallan Exp $ */
+/* 	$NetBSD: rasops.h,v 1.23.2.1 2010/04/30 14:43:47 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@ struct wsdisplay_font;
 #define RI_CURSORCLIP	0x40	/* cursor is currently clipped */
 #define RI_CFGDONE	0x80	/* rasops_reconfig() completed successfully */
 #define RI_ROTATE_CW	0x100	/* display is rotated, quarter clockwise */
+#define RI_ROTATE_CCW	0x200	/* display is rotated, quarter counter-clockwise */
+#define RI_ROTATE_UD	0x400	/* display is rotated, upside-down */
+#define RI_ROTATE_MASK	0x700
 
 struct rasops_info {
 	/* These must be filled in by the caller */

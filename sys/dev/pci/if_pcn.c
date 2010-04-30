@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.49 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.49.2.1 2010/04/30 14:43:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49.2.1 2010/04/30 14:43:36 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -1136,8 +1136,7 @@ pcn_start(struct ifnet *ifp)
 		sc->sc_txsnext = PCN_NEXTTXS(sc->sc_txsnext);
 
 		/* Pass the packet to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
@@ -1560,8 +1559,7 @@ pcn_rxintr(struct pcn_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 
 		/* Pass this up to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);

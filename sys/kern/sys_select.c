@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_select.c,v 1.21 2009/12/20 23:00:59 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.21.2.1 2010/04/30 14:44:12 uebayasi Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  *
  * Locking
  *
- * Two locks are used: <object-lock> and selcpu_t::sc_lock.
+ * Two locks are used: <object-lock> and selcluster_t::sc_lock.
  *
  * The <object-lock> might be a device driver or another subsystem, e.g.
  * socket or pipe.  This lock is not exported, and thus invisible to this
@@ -80,11 +80,11 @@
  * Lock order
  *
  *	<object-lock> ->
- *		selcpu_t::sc_lock
+ *		selcluster_t::sc_lock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.21 2009/12/20 23:00:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.21.2.1 2010/04/30 14:44:12 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,16 +111,19 @@ __KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.21 2009/12/20 23:00:59 rmind Exp $"
 #define	SEL_SCANNING	1	/* polling descriptors */
 #define	SEL_BLOCKING	2	/* about to block on select_cv */
 
-/* Per-CPU state for select()/poll(). */
-#if MAXCPUS > 32
-#error adjust this code
-#endif
-typedef struct selcpu {
+/*
+ * Per-cluster state for select()/poll().  For a system with fewer
+ * than 32 CPUs, this gives us per-CPU clusters.
+ */
+#define	SELCLUSTERS	32
+#define	SELCLUSTERMASK	(SELCLUSTERS - 1)
+
+typedef struct selcluster {
 	kmutex_t	*sc_lock;
 	sleepq_t	sc_sleepq;
 	int		sc_ncoll;
 	uint32_t	sc_mask;
-} selcpu_t;
+} selcluster_t;
 
 static inline int	selscan(char *, u_int, register_t *);
 static inline int	pollscan(struct pollfd *, u_int, register_t *);
@@ -133,6 +136,8 @@ static syncobj_t select_sobj = {
 	sleepq_lendpri,
 	syncobj_noowner,
 };
+
+static selcluster_t	*selcluster[SELCLUSTERS];
 
 /*
  * Select system call.
@@ -206,7 +211,7 @@ sel_do_scan(void *fds, u_int nfds, struct timespec *ts, sigset_t *mask,
 {
 	lwp_t		* const l = curlwp;
 	proc_t		* const p = l->l_proc;
-	selcpu_t	*sc;
+	selcluster_t	*sc;
 	kmutex_t	*lock;
 	sigset_t	oldmask;
 	struct timespec	sleepts;
@@ -228,9 +233,9 @@ sel_do_scan(void *fds, u_int nfds, struct timespec *ts, sigset_t *mask,
 		oldmask = l->l_sigmask;
 	}
 
-	sc = curcpu()->ci_data.cpu_selcpu;
+	sc = curcpu()->ci_data.cpu_selcluster;
 	lock = sc->sc_lock;
-	l->l_selcpu = sc;
+	l->l_selcluster = sc;
 	SLIST_INIT(&l->l_selwait);
 	for (;;) {
 		int ncoll;
@@ -525,17 +530,17 @@ seltrue(dev_t dev, int events, lwp_t *l)
 void
 selrecord(lwp_t *selector, struct selinfo *sip)
 {
-	selcpu_t *sc;
+	selcluster_t *sc;
 	lwp_t *other;
 
 	KASSERT(selector == curlwp);
 
-	sc = selector->l_selcpu;
+	sc = selector->l_selcluster;
 	other = sip->sel_lwp;
 
 	if (other == selector) {
 		/* `selector' has already claimed it. */
-		KASSERT(sip->sel_cpu = sc);
+		KASSERT(sip->sel_cluster = sc);
 	} else if (other == NULL) {
 		/*
 		 * First named waiter, although there may be unnamed
@@ -546,12 +551,12 @@ selrecord(lwp_t *selector, struct selinfo *sip)
 		membar_enter();
 		sip->sel_lwp = selector;
 		SLIST_INSERT_HEAD(&selector->l_selwait, sip, sel_chain);
-		/* Replace selinfo's lock with our chosen CPU's lock. */
-		sip->sel_cpu = sc;
+		/* Replace selinfo's lock with the chosen cluster's lock. */
+		sip->sel_cluster = sc;
 	} else {
 		/* Multiple waiters: record a collision. */
 		sip->sel_collision |= sc->sc_mask;
-		KASSERT(sip->sel_cpu != NULL);
+		KASSERT(sip->sel_cluster != NULL);
 	}
 }
 
@@ -559,18 +564,18 @@ selrecord(lwp_t *selector, struct selinfo *sip)
  * Do a wakeup when a selectable event occurs.  Concurrency issues:
  *
  * As per selrecord(), the caller's object lock is held.  If there
- * is a named waiter, we must acquire the associated selcpu's lock
+ * is a named waiter, we must acquire the associated selcluster's lock
  * in order to synchronize with selclear() and pollers going to sleep
  * in sel_do_scan().
  *
- * sip->sel_cpu cannot change at this point, as it is only changed
+ * sip->sel_cluser cannot change at this point, as it is only changed
  * in selrecord(), and concurrent calls to selrecord() are locked
  * out by the caller.
  */
 void
 selnotify(struct selinfo *sip, int events, long knhint)
 {
-	selcpu_t *sc;
+	selcluster_t *sc;
 	uint32_t mask;
 	int index, oflag;
 	lwp_t *l;
@@ -580,7 +585,7 @@ selnotify(struct selinfo *sip, int events, long knhint)
 
 	if (sip->sel_lwp != NULL) {
 		/* One named LWP is waiting. */
-		sc = sip->sel_cpu;
+		sc = sip->sel_cluster;
 		lock = sc->sc_lock;
 		mutex_spin_enter(lock);
 		/* Still there? */
@@ -610,7 +615,7 @@ selnotify(struct selinfo *sip, int events, long knhint)
 		do {
 			index = ffs(mask) - 1;
 			mask &= ~(1 << index);
-			sc = cpu_lookup(index)->ci_data.cpu_selcpu;
+			sc = selcluster[index];
 			lock = sc->sc_lock;
 			mutex_spin_enter(lock);
 			sc->sc_ncoll++;
@@ -633,18 +638,19 @@ static void
 selclear(void)
 {
 	struct selinfo *sip, *next;
-	selcpu_t *sc;
+	selcluster_t *sc;
 	lwp_t *l;
 	kmutex_t *lock;
 
 	l = curlwp;
-	sc = l->l_selcpu;
+	sc = l->l_selcluster;
 	lock = sc->sc_lock;
 
 	mutex_spin_enter(lock);
 	for (sip = SLIST_FIRST(&l->l_selwait); sip != NULL; sip = next) {
 		KASSERT(sip->sel_lwp == l);
-		KASSERT(sip->sel_cpu == l->l_selcpu);
+		KASSERT(sip->sel_cluster == l->l_selcluster);
+
 		/*
 		 * Read link to next selinfo record, if any.
 		 * It's no longer safe to touch `sip' after clearing
@@ -667,16 +673,23 @@ selclear(void)
 void
 selsysinit(struct cpu_info *ci)
 {
-	selcpu_t *sc;
+	selcluster_t *sc;
+	u_int index;
 
-	sc = kmem_alloc(roundup2(sizeof(selcpu_t), coherency_unit) +
-	    coherency_unit, KM_SLEEP);
-	sc = (void *)roundup2((uintptr_t)sc, coherency_unit);
-	sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
-	sleepq_init(&sc->sc_sleepq);
-	sc->sc_ncoll = 0;
-	sc->sc_mask = (1 << cpu_index(ci));
-	ci->ci_data.cpu_selcpu = sc;
+	/* If already a cluster in place for this bit, re-use. */
+	index = cpu_index(ci) & SELCLUSTERMASK;
+	sc = selcluster[index];
+	if (sc == NULL) {
+		sc = kmem_alloc(roundup2(sizeof(selcluster_t),
+		    coherency_unit) + coherency_unit, KM_SLEEP);
+		sc = (void *)roundup2((uintptr_t)sc, coherency_unit);
+		sc->sc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+		sleepq_init(&sc->sc_sleepq);
+		sc->sc_ncoll = 0;
+		sc->sc_mask = (1 << index);
+		selcluster[index] = sc;
+	}
+	ci->ci_data.cpu_selcluster = sc;
 }
 
 /*
@@ -702,7 +715,7 @@ selinit(struct selinfo *sip)
 void
 seldestroy(struct selinfo *sip)
 {
-	selcpu_t *sc;
+	selcluster_t *sc;
 	kmutex_t *lock;
 	lwp_t *l;
 
@@ -710,13 +723,13 @@ seldestroy(struct selinfo *sip)
 		return;
 
 	/*
-	 * Lock out selclear().  The selcpu pointer can't change while
+	 * Lock out selclear().  The selcluster pointer can't change while
 	 * we are here since it is only ever changed in selrecord(),
 	 * and that will not be entered again for this record because
 	 * it is dying.
 	 */
-	KASSERT(sip->sel_cpu != NULL);
-	sc = sip->sel_cpu;
+	KASSERT(sip->sel_cluster != NULL);
+	sc = sip->sel_cluster;
 	lock = sc->sc_lock;
 	mutex_spin_enter(lock);
 	if ((l = sip->sel_lwp) != NULL) {
@@ -724,7 +737,7 @@ seldestroy(struct selinfo *sip)
 		 * This should rarely happen, so although SLIST_REMOVE()
 		 * is slow, using it here is not a problem.
 		 */
-		KASSERT(l->l_selcpu == sc);
+		KASSERT(l->l_selcluster == sc);
 		SLIST_REMOVE(&l->l_selwait, sip, selinfo, sel_chain);
 		sip->sel_lwp = NULL;
 	}
@@ -736,7 +749,7 @@ pollsock(struct socket *so, const struct timespec *tsp, int events)
 {
 	int		ncoll, error, timo;
 	struct timespec	sleepts, ts;
-	selcpu_t	*sc;
+	selcluster_t	*sc;
 	lwp_t		*l;
 	kmutex_t	*lock;
 
@@ -748,9 +761,9 @@ pollsock(struct socket *so, const struct timespec *tsp, int events)
 	}
 
 	l = curlwp;
-	sc = l->l_cpu->ci_data.cpu_selcpu;
+	sc = curcpu()->ci_data.cpu_selcluster;
 	lock = sc->sc_lock;
-	l->l_selcpu = sc;
+	l->l_selcluster = sc;
 	SLIST_INIT(&l->l_selwait);
 	error = 0;
 	for (;;) {

@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.31 2010/01/24 12:25:20 mbalmer Exp $ */
+/* $NetBSD: gpio.c,v 1.31.2.1 2010/04/30 14:43:11 uebayasi Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.31 2010/01/24 12:25:20 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.31.2.1 2010/04/30 14:43:11 uebayasi Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -66,7 +66,7 @@ int	gpio_submatch(device_t, cfdata_t, const int *, void *);
 void	gpio_attach(device_t, device_t, void *);
 int	gpio_rescan(device_t, const char *, const int *);
 void	gpio_childdetached(device_t, device_t);
-bool	gpio_resume(device_t, pmf_qual_t);
+bool	gpio_resume(device_t, const pmf_qual_t *);
 int	gpio_detach(device_t, int);
 int	gpio_search(device_t, cfdata_t, const int *, void *);
 int	gpio_print(void *, const char *);
@@ -108,7 +108,7 @@ gpio_submatch(device_t parent, cfdata_t cf, const int *ip, void *aux)
 }
 
 bool
-gpio_resume(device_t self, pmf_qual_t qual)
+gpio_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct gpio_softc *sc = device_private(self);
 	int pin;
@@ -218,7 +218,7 @@ gpiobus_print(void *aux, const char *pnp)
 	struct gpiobus_attach_args *gba = aux;
 #endif
 	if (pnp != NULL)
-		printf("gpiobus at %s", pnp);
+		aprint_normal("gpiobus at %s", pnp);
 
 	return UNCONF;
 }

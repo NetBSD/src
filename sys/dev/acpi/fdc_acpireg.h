@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpireg.h,v 1.1 2003/01/09 00:22:39 jmcneill Exp $ */
+/* $NetBSD: fdc_acpireg.h,v 1.1.128.1 2010/04/30 14:43:06 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#ifndef _SYS_DEV_ACPI_FDC_ACPIREG_H
+#define _SYS_DEV_ACPI_FDC_ACPIREG_H
 
 /*
  * The ACPI floppy disk interface is similar to the i386 BIOS. Definitions
@@ -54,3 +57,5 @@ const struct fd_type fdc_acpi_fdtypes[] = {
 	{  9, 2, 18, 2, 0xff, 0xdf, 0x2a, 0x50, 40,  720, 2, FDC_250KBPS,
 	  0xf6, 1, "360KB/x" },		/* 320KB in 720KB drive */
 };
+
+#endif	/* !_SYS_DEV_ACPI_FDC_ACPIREG_H */

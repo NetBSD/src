@@ -1,0 +1,12 @@
+#	$NetBSD: std.pxa2x0,v 1.1.2.2 2010/04/30 14:39:25 uebayasi Exp $
+#
+# standard NetBSD/hpcarm options for PXA2x0 model
+
+include		"arch/hpcarm/conf/std.hpcarm"   # arch standard options
+
+# Pull in iPaq config definitions.
+include		"arch/hpcarm/conf/files.pxa2x0"
+
+options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
+
+makeoptions	TEXTADDR=0xc0200000

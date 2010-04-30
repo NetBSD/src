@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2009/11/27 03:23:09 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.2.1 2010/04/30 14:39:26 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,14 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2009/11/27 03:23:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.1 2010/04/30 14:39:26 uebayasi Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
-#include "fs_mfs.h"
-#include "fs_nfs.h"
 #include "biconsdev.h"
 #include "debug_hpc.h"
 #include "hd64465if.h"
@@ -98,12 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2009/11/27 03:23:09 rmind Exp $");
 #include <machine/autoconf.h>		/* makebootdev() */
 #include <machine/intr.h>
 
-#ifdef NFS
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsmount.h>
-#endif
 
 #include <dev/hpc/apm/apmvar.h>
 
@@ -241,14 +237,10 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		case 'b':
 			/* boot device: -b=sd0 etc. */
 			p = cp + 2;
-#ifdef NFS
 			if (strcmp(p, "nfs") == 0)
 				rootfstype = MOUNT_NFS;
 			else
 				makebootdev(p);
-#else /* NFS */
-			makebootdev(p);
-#endif /* NFS */
 			break;
 		default:
 			BOOT_FLAG(*cp, boothowto);
@@ -256,7 +248,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 		}
 	}
 
-#ifdef MFS
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
@@ -269,7 +260,6 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 #endif
 		kernend += fssz;
 	}
-#endif /* MFS */
 
 	/* Console */
 	consinit();

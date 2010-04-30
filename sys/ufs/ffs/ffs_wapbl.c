@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.13 2009/09/13 14:13:23 bouyer Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.13.2.1 2010/04/30 14:44:35 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.13 2009/09/13 14:13:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.13.2.1 2010/04/30 14:44:35 uebayasi Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.13 2009/09/13 14:13:23 bouyer Exp $"
 #include <sys/mount.h>
 #include <sys/file.h>
 #include <sys/disk.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
@@ -80,11 +79,12 @@ static int ffs_superblock_layout(struct fs *);
 static int wapbl_log_position(struct mount *, struct fs *, struct vnode *,
     daddr_t *, size_t *, size_t *, uint64_t *);
 static int wapbl_create_infs_log(struct mount *, struct fs *, struct vnode *,
-    daddr_t *, size_t *, size_t *, uint64_t *);
+    daddr_t *, size_t *, uint64_t *);
 static void wapbl_find_log_start(struct mount *, struct vnode *, off_t,
     daddr_t *, daddr_t *, size_t *);
 static int wapbl_remove_log(struct mount *);
-static int wapbl_allocate_log_file(struct mount *, struct vnode *);
+static int wapbl_allocate_log_file(struct mount *, struct vnode *,
+    daddr_t *, size_t *, uint64_t *);
 
 /*
  * Return the super block layout format - UFS1 or UFS2.
@@ -330,13 +330,6 @@ ffs_wapbl_start(struct mount *mp)
 			if (error)
 				return error;
 
-			/* XXX any other consistancy checks here? */
-			if (blksize != DEV_BSIZE) {
-				printf("%s: bad blocksize %zu\n", __func__,
-				    blksize);
-				return EINVAL;
-			}
-
 			error = wapbl_start(&mp->mnt_wapbl, mp, devvp, off,
 			    count, blksize, mp->mnt_wapbl_replay,
 			    ffs_wapbl_sync_metadata,
@@ -502,10 +495,10 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
     daddr_t *startp, size_t *countp, size_t *blksizep, uint64_t *extradatap)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
-	struct partinfo dpart;
 	daddr_t logstart, logend, desired_logsize;
-	size_t blksize;
-	int error;
+	uint64_t numsecs;
+	unsigned secsize;
+	int error, location;
 
 	if (fs->fs_journal_version == UFS_WAPBL_VERSION) {
 		switch (fs->fs_journal_location) {
@@ -544,48 +537,59 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
 
 	/* Is there space after after filesystem on partition for log? */
 	logstart = fsbtodb(fs, fs->fs_size);
-	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, FSCRED);
-	if (!error) {
-		logend  = dpart.part->p_size;
-		blksize = dpart.disklab->d_secsize;
-	} else {
-		struct dkwedge_info dkw;
-		error = VOP_IOCTL(devvp, DIOCGWEDGEINFO, &dkw, FREAD, FSCRED);
-		if (error)
-			return error;
+	error = getdisksize(devvp, &numsecs, &secsize);
+	if (error)
+		return error;
+	KDASSERT(secsize != 0);
+	logend = btodb(numsecs * secsize);
 
-		blksize = DEV_BSIZE;
-		logend = dkw.dkw_size;
-	}
-
-	if ((logend - logstart) * blksize >= desired_logsize) {
-		KDASSERT(blksize != 0);
+	if (dbtob(logend - logstart) >= desired_logsize) {
 		DPRINTF("enough space, use end-of-partition log\n");
+
+		location = UFS_WAPBL_JOURNALLOC_END_PARTITION;
+		*blksizep = secsize;
 
 		*startp = logstart;
 		*countp = (logend - logstart);
-		*blksizep = blksize;
 		*extradatap = 0;
 
-		/* update superblock with log location */
-		fs->fs_journal_version = UFS_WAPBL_VERSION;
-		fs->fs_journal_location = UFS_WAPBL_JOURNALLOC_END_PARTITION;
-		fs->fs_journal_flags = 0;
+		/* convert to physical block numbers */
+		*startp = dbtob(*startp) / secsize;
+		*countp = dbtob(*countp) / secsize;
+
 		fs->fs_journallocs[UFS_WAPBL_EPART_ADDR] = *startp;
 		fs->fs_journallocs[UFS_WAPBL_EPART_COUNT] = *countp;
 		fs->fs_journallocs[UFS_WAPBL_EPART_BLKSZ] = *blksizep;
 		fs->fs_journallocs[UFS_WAPBL_EPART_UNUSED] = *extradatap;
+	} else {
+		DPRINTF("end-of-partition has only %" PRId64 " free\n",
+		    logend - logstart);
+
+		location = UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM;
+		*blksizep = secsize;
+
+		error = wapbl_create_infs_log(mp, fs, devvp,
+		                  startp, countp, extradatap);
+		ffs_sync(mp, MNT_WAIT, FSCRED);
+
+		/* convert to physical block numbers */
+		*startp = dbtob(*startp) / secsize;
+		*countp = dbtob(*countp) / secsize;
+
+		fs->fs_journallocs[UFS_WAPBL_INFS_ADDR] = *startp;
+		fs->fs_journallocs[UFS_WAPBL_INFS_COUNT] = *countp;
+		fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ] = *blksizep;
+		fs->fs_journallocs[UFS_WAPBL_INFS_INO] = *extradatap;
+	}
+
+	if (error == 0) {
+		/* update superblock with log location */
+		fs->fs_journal_version = UFS_WAPBL_VERSION;
+		fs->fs_journal_location = location;
+		fs->fs_journal_flags = 0;
 
 		error = ffs_sbupdate(ump, MNT_WAIT);
-		return error;
 	}
-	DPRINTF("end-of-partition has only %" PRId64 " free\n",
-	    logend - logstart);
-
-	error = wapbl_create_infs_log(mp, fs, devvp, startp, countp, blksizep,
-	    extradatap);
-
-	ffs_sync(mp, MNT_WAIT, FSCRED);
 
 	return error;
 }
@@ -595,7 +599,7 @@ wapbl_log_position(struct mount *mp, struct fs *fs, struct vnode *devvp,
  */
 static int
 wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
-    daddr_t *startp, size_t *countp, size_t *blksizep, uint64_t *extradatap)
+    daddr_t *startp, size_t *countp, uint64_t *extradatap)
 {
 	struct vnode *vp, *rvp;
 	struct inode *ip;
@@ -621,7 +625,8 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	DIP_ASSIGN(ip, nlink, 1);
 	ffs_update(vp, NULL, NULL, UPDATE_WAIT);
 
-	if ((error = wapbl_allocate_log_file(mp, vp)) != 0) {
+	if ((error = wapbl_allocate_log_file(mp, vp,
+	                 startp, countp, extradatap)) != 0) {
 		/*
 		 * If we couldn't allocate the space for the log file,
 		 * remove the inode by setting its link count back to
@@ -640,16 +645,12 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	 */
 	vput(vp);
 
-	*startp = fs->fs_journallocs[UFS_WAPBL_INFS_ADDR];
-	*countp = fs->fs_journallocs[UFS_WAPBL_INFS_COUNT];
-	*blksizep = fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ];
-	*extradatap = fs->fs_journallocs[UFS_WAPBL_INFS_INO];
-
 	return 0;
 }
 
 int
-wapbl_allocate_log_file(struct mount *mp, struct vnode *vp)
+wapbl_allocate_log_file(struct mount *mp, struct vnode *vp,
+    daddr_t *startp, size_t *countp, uint64_t *extradatap)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs = ump->um_fs;
@@ -688,17 +689,11 @@ wapbl_allocate_log_file(struct mount *mp, struct vnode *vp)
 		return error;
 	}
 
-	fs->fs_journal_version = UFS_WAPBL_VERSION;
-	fs->fs_journal_location = UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM;
-	fs->fs_journal_flags = 0;
-	fs->fs_journallocs[UFS_WAPBL_INFS_ADDR] =
-	    lfragtosize(fs, addr) / DEV_BSIZE;
-	fs->fs_journallocs[UFS_WAPBL_INFS_COUNT] = logsize / DEV_BSIZE;
-	fs->fs_journallocs[UFS_WAPBL_INFS_BLKSZ] = DEV_BSIZE;
-	fs->fs_journallocs[UFS_WAPBL_INFS_INO] = VTOI(vp)->i_number;
+	*startp     = fsbtodb(fs, addr);
+	*countp     = btodb(logsize);
+	*extradatap = VTOI(vp)->i_number;
 
-	error = ffs_sbupdate(ump, MNT_WAIT);
-	return error;
+	return 0;
 }
 
 /*

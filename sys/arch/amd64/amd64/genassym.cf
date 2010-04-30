@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43 2009/11/27 03:23:04 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.43.2.1 2010/04/30 14:39:03 uebayasi Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ ifdef XEN
 include <xen/xen3-public/xen.h>
 endif  
 
-include <x86/busdefs.h>
+include <x86/bus.h>
 
 define	LSRUN			LSRUN
 define	LSONPROC		LSONPROC
@@ -363,6 +363,8 @@ define	EV_COUNT		offsetof(struct evcnt, ev_count)
 define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
+
+define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
 
 ifdef XEN
 define CPU_INFO_VCPU		offsetof(struct cpu_info, ci_vcpu)

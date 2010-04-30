@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.33 2010/01/19 23:15:50 pooka Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.33.2.1 2010/04/30 14:43:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.33 2010/01/19 23:15:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.33.2.1 2010/04/30 14:43:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>

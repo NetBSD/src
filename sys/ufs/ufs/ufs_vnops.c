@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.180 2009/10/14 09:40:27 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.180.2.1 2010/04/30 14:44:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.180 2009/10/14 09:40:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.180.2.1 2010/04/30 14:44:37 uebayasi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -267,8 +267,10 @@ ufs_close(void *v)
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	if (vp->v_usecount > 1)
 		UFS_ITIMES(vp, NULL, NULL, NULL);
+	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -371,6 +373,7 @@ ufs_getattr(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	vap = ap->a_vap;
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	UFS_ITIMES(vp, NULL, NULL, NULL);
 
 	/*
@@ -420,6 +423,7 @@ ufs_getattr(void *v)
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
+	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -671,11 +675,13 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 	if (error)
 		return (error);
 
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	ip->i_mode &= ~ALLPERMS;
 	ip->i_mode |= (mode & ALLPERMS);
 	ip->i_flag |= IN_CHANGE;
 	DIP_ASSIGN(ip, mode, ip->i_mode);
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -706,6 +712,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	if (error)
 		return (error);
 
+	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 #ifdef QUOTA
 	ogid = ip->i_gid;
 	ouid = ip->i_uid;
@@ -730,11 +737,13 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	DIP_ASSIGN(ip, uid, ouid);
 	(void) chkdq(ip, change, cred, FORCE);
 	(void) chkiq(ip, 1, cred, FORCE);
+	fstrans_done(vp->v_mount);
 	return (error);
  good:
 #endif /* QUOTA */
 	ip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
+	fstrans_done(vp->v_mount);
 	return (0);
 }
 
@@ -1908,7 +1917,7 @@ ufs_print(void *v)
 	    ip->i_mode, ip->i_uid, ip->i_gid,
 	    (long long)ip->i_size);
 	if (vp->v_type == VFIFO)
-		fifo_printinfo(vp);
+		VOCALL(fifo_vnodeop_p, VOFFSET(vop_print), v);
 	printf("\n");
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc_locore.S,v 1.4 2009/11/26 00:19:16 matt Exp $	*/
+/*	$NetBSD: pmppc_locore.S,v 1.4.2.1 2010/04/30 14:39:18 uebayasi Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "fs_kernfs.h"
 #include "opt_ipkdb.h"
 #include "opt_multiprocessor.h"
 #include "opt_openpic.h"
@@ -52,6 +51,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/spr.h>
 #include <powerpc/oea/hid.h>
 
 #include "ksyms.h"
@@ -142,7 +142,7 @@ _C_LABEL(disable_intr):
 #include <powerpc/powerpc/locore_subr.S>
 
 /*
- * Include common trap / execption code
+ * Include common trap / exception code
  */
 #include <powerpc/powerpc/trap_subr.S>
 

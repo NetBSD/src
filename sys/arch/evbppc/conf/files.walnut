@@ -1,38 +1,20 @@
-#	$NetBSD: files.walnut,v 1.15 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.walnut,v 1.15.30.1 2010/04/30 14:39:17 uebayasi Exp $
 #
 # walnut-specific configuration info
 
 file	arch/evbppc/walnut/autoconf.c
 file	arch/evbppc/walnut/consinit.c
 file	arch/evbppc/walnut/machdep.c
-file	arch/powerpc/ibm4xx/intr.c
 file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
 
 # Memory Disk for install kernel
 file	dev/md_root.c				memory_disk_hooks
-
-# Machine-independent I2O drivers.
-include	"dev/i2o/files.i2o"
 
 # Machine-independent SCSI drivers
 include	"dev/scsipi/files.scsipi"
 
 # Machine-independent ATA drivers
 include	"dev/ata/files.ata"
-
-# PCI bus support
-include	"dev/pci/files.pci"
-
-# On-chip PCI bridge
-#
-# XXX: Move these to a 405gp-specific file and re-think the
-# layout of the powerpc/ibm4xx hierarchy to accommodate SoCs.
-#
-device	pchb : pcibus
-attach	pchb at plb
-file	arch/evbppc/walnut/pci/pchb.c		pchb
-file	arch/evbppc/walnut/pci/pci_machdep.c	pci
-file	arch/powerpc/ibm4xx/dev/ibm405gp.c
 
 # Off-chip peripheral bus
 device	pbus {[addr=-1], [irq=-1]}

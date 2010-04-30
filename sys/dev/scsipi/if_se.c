@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.80 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: if_se.c,v 1.80.2.1 2010/04/30 14:43:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.80 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.80.2.1 2010/04/30 14:43:49 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -422,8 +422,7 @@ se_ifstart(struct ifnet *ifp)
 	/* If BPF is listening on this interface, let it see the
 	 * packet before we commit it to the wire.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 
 	/* We need to use m->m_pkthdr.len, so require the header */
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -666,8 +665,7 @@ se_read(struct se_softc *sc, char *data, int datalen)
 		 * Check if there's a BPF listener on this interface.
 		 * If so, hand off the raw packet to BPF.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass the packet up. */
 		(*ifp->if_input)(ifp, m);

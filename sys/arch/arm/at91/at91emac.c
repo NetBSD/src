@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.8 2010/01/22 08:56:04 martin Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.8 2010/01/22 08:56:04 martin Exp $	*/
+/*	$Id: at91emac.c,v 1.8.2.1 2010/04/30 14:39:08 uebayasi Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.8.2.1 2010/04/30 14:39:08 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.8 2010/01/22 08:56:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.8.2.1 2010/04/30 14:39:08 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -284,8 +284,7 @@ emac_intr(void *arg)
 				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
 				sc->rxq[bi].m->m_pkthdr.len = 
 					sc->rxq[bi].m->m_len = fl;
-				if (ifp->if_bpf) 
-					bpf_ops->bpf_mtap(ifp->if_bpf, sc->rxq[bi].m);
+				bpf_mtap(ifp, sc->rxq[bi].m);
 				DPRINTFN(2,("received %u bytes packet\n", fl));
                                 (*ifp->if_input)(ifp, sc->rxq[bi].m);
 				if (mtod(m, intptr_t) & 3) {
@@ -676,8 +675,7 @@ start:
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 	}
 
-	if (ifp->if_bpf) 
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	nsegs = sc->txq[bi].m_dmamap->dm_nsegs;
 	segs = sc->txq[bi].m_dmamap->dm_segs;

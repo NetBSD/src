@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.294 2010/01/09 14:15:48 tsutsui Exp $ */
+/* $NetBSD: com.c,v 1.294.2.1 2010/04/30 14:43:14 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.294 2010/01/09 14:15:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.294.2.1 2010/04/30 14:43:14 uebayasi Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -392,7 +392,7 @@ com_attach_subr(struct com_softc *sc)
 
 	CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
 
-	if (regsp->cr_iot == comcons_info.regs.cr_iot &&
+	if (bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
 	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
 		comconsattached = 1;
 
@@ -541,7 +541,7 @@ fifodone:
 	 * exclusive use.  If it's the console _and_ the
 	 * kgdb device, it doesn't.
 	 */
-	if (regsp->cr_iot == comkgdbregs.cr_iot &&
+	if (bus_space_is_equal(regsp->cr_iot, comkgdbregs.cr_iot) &&
 	    regsp->cr_iobase == comkgdbregs.cr_iobase) {
 		if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 			com_kgdb_attached = 1;
@@ -2302,7 +2302,7 @@ com_kgdb_attach1(struct com_regs *regsp, int rate, int frequency, int type,
 {
 	int res;
 
-	if (regsp->cr_iot == comcons_info.regs.cr_iot &&
+	if (bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
 	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
 #if !defined(DDB)
 		return (EBUSY); /* cannot share with console */
@@ -2371,12 +2371,13 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
 	bus_space_handle_t help;
 
 	if (!comconsattached &&
-	    iot == comcons_info.regs.cr_iot &&
+	    bus_space_is_equal(iot, comcons_info.regs.cr_iot) &&
 	    iobase == comcons_info.regs.cr_iobase)
 		help = comcons_info.regs.cr_ioh;
 #ifdef KGDB
 	else if (!com_kgdb_attached &&
-	    iot == comkgdbregs.cr_iot && iobase == comkgdbregs.cr_iobase)
+	    bus_space_is_equal(iot, comkgdbregs.cr_iot) &&
+	    iobase == comkgdbregs.cr_iobase)
 		help = comkgdbregs.cr_ioh;
 #endif
 	else
@@ -2404,7 +2405,7 @@ com_cleanup(device_t self, int how)
 }
 
 bool
-com_suspend(device_t self, pmf_qual_t qual)
+com_suspend(device_t self, const pmf_qual_t *qual)
 {
 	struct com_softc *sc = device_private(self);
 
@@ -2420,7 +2421,7 @@ com_suspend(device_t self, pmf_qual_t qual)
 }
 
 bool
-com_resume(device_t self, pmf_qual_t qual)
+com_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct com_softc *sc = device_private(self);
 

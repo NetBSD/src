@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.34 2010/01/19 22:06:59 pooka Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.34.2.1 2010/04/30 14:43:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,25 +42,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.34 2010/01/19 22:06:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.34.2.1 2010/04/30 14:43:27 uebayasi Exp $");
 
 #include "opt_inet.h"
+#include "rnd.h"
 
 #include <sys/param.h>
-#include <sys/types.h>
-#include <sys/inttypes.h>
-#include <sys/queue.h>
-
-#include <uvm/uvm_extern.h>
-
+#include <sys/bus.h>
 #include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
+#include <sys/mutex.h>
 #include <sys/socket.h>
 
-#include <sys/bus.h>
+#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -72,19 +70,29 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.34 2010/01/19 22:06:59 pooka Exp $");
 #include <netinet/if_inarp.h>
 #endif
 #include <net/bpf.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
+#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <dev/marvell/gtintrreg.h>
-#include <dev/marvell/gtethreg.h>
-
+#include <dev/marvell/gtreg.h>
 #include <dev/marvell/gtvar.h>
+#include <dev/marvell/gtethreg.h>
 #include <dev/marvell/if_gfevar.h>
+#include <dev/marvell/marvellreg.h>
+#include <dev/marvell/marvellvar.h>
+
+#include <prop/proplib.h>
+
+#include "locators.h"
+
 
 #define	GE_READ(sc, reg) \
-	bus_space_read_4((sc)->sc_gt_memt, (sc)->sc_memh, ETH__ ## reg)
+	bus_space_read_4((sc)->sc_memt, (sc)->sc_memh, (reg))
 #define	GE_WRITE(sc, reg, v) \
-	bus_space_write_4((sc)->sc_gt_memt, (sc)->sc_memh, ETH__ ## reg, (v))
+	bus_space_write_4((sc)->sc_memt, (sc)->sc_memh, (reg), (v))
 
 #define	GE_DEBUG
 #if 0
@@ -93,10 +101,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.34 2010/01/19 22:06:59 pooka Exp $");
 #endif
 
 #ifdef GE_DEBUG
-#define	GE_DPRINTF(sc, a)	do \
-				  if ((sc)->sc_ec.ec_if.if_flags & IFF_DEBUG) \
-				    printf a; \
-				while (0)
+#define	GE_DPRINTF(sc, a)					\
+	do {							\
+		if ((sc)->sc_ec.ec_if.if_flags & IFF_DEBUG)	\
+			printf a;				\
+	} while (0 /* CONSTCOND */)
 #define	GE_FUNC_ENTER(sc, func)	GE_DPRINTF(sc, ("[" func))
 #define	GE_FUNC_EXIT(sc, str)	GE_DPRINTF(sc, (str "]"))
 #else
@@ -141,20 +150,28 @@ enum gfe_hash_op {
 
 #define	STATIC
 
-STATIC int gfe_match (device_t, cfdata_t, void *);
-STATIC void gfe_attach (device_t, device_t, void *);
+
+STATIC int gfec_match(device_t, cfdata_t, void *);
+STATIC void gfec_attach(device_t, device_t, void *);
+
+STATIC int gfec_print(void *, const char *);
+STATIC int gfec_search(device_t, cfdata_t, const int *, void *);
+
+STATIC int gfec_enet_phy(device_t, int);
+STATIC int gfec_mii_read(device_t, int, int);
+STATIC void gfec_mii_write(device_t, int, int, int);
+STATIC void gfec_mii_statchg(device_t);
+
+STATIC int gfe_match(device_t, cfdata_t, void *);
+STATIC void gfe_attach(device_t, device_t, void *);
 
 STATIC int gfe_dmamem_alloc(struct gfe_softc *, struct gfe_dmamem *, int,
 	size_t, int);
 STATIC void gfe_dmamem_free(struct gfe_softc *, struct gfe_dmamem *);
 
-STATIC int gfe_ifioctl (struct ifnet *, u_long, void *);
-STATIC void gfe_ifstart (struct ifnet *);
-STATIC void gfe_ifwatchdog (struct ifnet *);
-
-STATIC int gfe_mii_read (device_t, int, int);
-STATIC void gfe_mii_write (device_t, int, int, int);
-STATIC void gfe_mii_statchg (device_t);
+STATIC int gfe_ifioctl(struct ifnet *, u_long, void *);
+STATIC void gfe_ifstart(struct ifnet *);
+STATIC void gfe_ifwatchdog(struct ifnet *);
 
 STATIC void gfe_tick(void *arg);
 
@@ -186,129 +203,314 @@ STATIC int gfe_hash_multichg(struct ethercom *, const struct ether_multi *,
 STATIC int gfe_hash_fill(struct gfe_softc *);
 STATIC int gfe_hash_alloc(struct gfe_softc *);
 
-/* Linkup to the rest of the kernel */
-CFATTACH_DECL(gfe, sizeof(struct gfe_softc),
+
+CFATTACH_DECL_NEW(gfec, sizeof(struct gfec_softc),
+    gfec_match, gfec_attach, NULL, NULL);
+CFATTACH_DECL_NEW(gfe, sizeof(struct gfe_softc),
     gfe_match, gfe_attach, NULL, NULL);
 
-extern struct cfdriver gfe_cd;
 
+/* ARGSUSED */
+int
+gfec_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct marvell_attach_args *mva = aux;
+
+	if (strcmp(mva->mva_name, cf->cf_name) != 0)
+		return 0;
+
+	switch (mva->mva_model) {
+	case MARVELL_DISCOVERY:
+		break;
+
+	default:
+		return 0;
+	}
+	if (mva->mva_offset == GTCF_OFFSET_DEFAULT)
+		return 0;
+
+	mva->mva_size = ETHC_SIZE;
+	return 1;
+}
+
+/* ARGSUSED */
+void
+gfec_attach(device_t parent, device_t self, void *aux)
+{
+	struct gfec_softc *sc = device_private(self);
+	struct marvell_attach_args *mva = aux, gfea;
+	static int gfe_irqs[] = { 32, 33, 34 };
+	int i;
+
+	aprint_naive("\n");
+	aprint_normal(": Ethernet Controller\n");
+
+	sc->sc_dev = self;
+	sc->sc_iot = mva->mva_iot;
+	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh, mva->mva_offset,
+	    mva->mva_size, &sc->sc_ioh)) {
+		aprint_error_dev(self, "Cannot map registers\n");
+		return;
+	}
+
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NET);
+
+	for (i = 0; i < ETH_NUM; i++) {
+		gfea.mva_name = "gfe";
+		gfea.mva_model = mva->mva_model;
+		gfea.mva_iot = sc->sc_iot;
+		gfea.mva_ioh = sc->sc_ioh;
+		gfea.mva_unit = i;
+		gfea.mva_dmat = mva->mva_dmat;
+		gfea.mva_irq = gfe_irqs[i];
+		config_found_sm_loc(sc->sc_dev, "gfec", NULL, &gfea,
+		    gfec_print, gfec_search);
+	}
+}
+
+int
+gfec_print(void *aux, const char *pnp)
+{
+	struct marvell_attach_args *gfea = aux;
+
+	if (pnp)
+		aprint_normal("%s at %s port %d",
+		    gfea->mva_name, pnp, gfea->mva_unit);
+	else {
+		if (gfea->mva_unit != GFECCF_PORT_DEFAULT)
+			aprint_normal(" port %d", gfea->mva_unit);
+		if (gfea->mva_irq != GFECCF_IRQ_DEFAULT)
+			aprint_normal(" irq %d", gfea->mva_irq);
+	}
+	return UNCONF;
+}
+
+/* ARGSUSED */
+int
+gfec_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
+{
+	struct marvell_attach_args *gfea = aux;
+
+	if (cf->cf_loc[GFECCF_PORT] == gfea->mva_unit &&
+	    cf->cf_loc[GFECCF_IRQ] != GFECCF_IRQ_DEFAULT)
+		gfea->mva_irq = cf->cf_loc[GFECCF_IRQ];
+
+	return config_match(parent, cf, aux);
+}
+
+int
+gfec_enet_phy(device_t dev, int unit)
+{
+	struct gfec_softc *sc = device_private(dev);
+	uint32_t epar;
+
+	epar = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ETH_EPAR);
+	return ETH_EPAR_PhyAD_GET(epar, unit);
+}
+
+int
+gfec_mii_read(device_t dev, int phy, int reg)
+{
+	struct gfec_softc *csc = device_private(device_parent(dev));
+	uint32_t data;
+	int count = 10000;
+
+	mutex_enter(&csc->sc_mtx);
+
+	do {
+		DELAY(10);
+		data = bus_space_read_4(csc->sc_iot, csc->sc_ioh, ETH_ESMIR);
+	} while ((data & ETH_ESMIR_Busy) && count-- > 0);
+
+	if (count == 0) {
+		aprint_error_dev(dev,
+		    "mii read for phy %d reg %d busied out\n", phy, reg);
+		mutex_exit(&csc->sc_mtx);
+		return ETH_ESMIR_Value_GET(data);
+	}
+
+	bus_space_write_4(csc->sc_iot, csc->sc_ioh, ETH_ESMIR,
+	    ETH_ESMIR_READ(phy, reg));
+
+	count = 10000;
+	do {
+		DELAY(10);
+		data = bus_space_read_4(csc->sc_iot, csc->sc_ioh, ETH_ESMIR);
+	} while ((data & ETH_ESMIR_ReadValid) == 0 && count-- > 0);
+
+	mutex_exit(&csc->sc_mtx);
+
+	if (count == 0)
+		aprint_error_dev(dev,
+		    "mii read for phy %d reg %d timed out\n", phy, reg);
+#if defined(GTMIIDEBUG)
+	aprint_normal_dev(dev, "mii_read(%d, %d): %#x data %#x\n",
+	    phy, reg, data, ETH_ESMIR_Value_GET(data));
+#endif
+	return ETH_ESMIR_Value_GET(data);
+}
+
+void
+gfec_mii_write (device_t dev, int phy, int reg, int value)
+{
+	struct gfec_softc *csc = device_private(device_parent(dev));
+	uint32_t data;
+	int count = 10000;
+
+	mutex_enter(&csc->sc_mtx);
+
+	do {
+		DELAY(10);
+		data = bus_space_read_4(csc->sc_iot, csc->sc_ioh, ETH_ESMIR);
+	} while ((data & ETH_ESMIR_Busy) && count-- > 0);
+
+	if (count == 0) {
+		aprint_error_dev(dev,
+		    "mii write for phy %d reg %d busied out (busy)\n",
+		    phy, reg);
+		mutex_exit(&csc->sc_mtx);
+		return;
+	}
+
+	bus_space_write_4(csc->sc_iot, csc->sc_ioh, ETH_ESMIR,
+	    ETH_ESMIR_WRITE(phy, reg, value));
+
+	count = 10000;
+	do {
+		DELAY(10);
+		data = bus_space_read_4(csc->sc_iot, csc->sc_ioh, ETH_ESMIR);
+	} while ((data & ETH_ESMIR_Busy) && count-- > 0);
+
+	mutex_exit(&csc->sc_mtx);
+
+	if (count == 0)
+		aprint_error_dev(dev,
+		    "mii write for phy %d reg %d timed out\n", phy, reg);
+#if defined(GTMIIDEBUG)
+	aprint_normal_dev(dev, "mii_write(%d, %d, %#x)\n", phy, reg, value);
+#endif
+}
+
+void
+gfec_mii_statchg(device_t dev)
+{
+	/* struct gfe_softc *sc = device_private(self); */
+	/* do nothing? */
+}
+
+/* ARGSUSED */
 int
 gfe_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct gt_softc *gt = (struct gt_softc *) parent;
-	struct gt_attach_args *ga = aux;
-	uint8_t enaddr[6];
-
-	if (!GT_ETHEROK(gt, ga, &gfe_cd))
-		return 0;
-
-	if (gtget_macaddr(gt, ga->ga_unit, enaddr) < 0)
-		return 0;
-
-	if (enaddr[0] == 0 && enaddr[1] == 0 && enaddr[2] == 0 &&
-	    enaddr[3] == 0 && enaddr[4] == 0 && enaddr[5] == 0)
-		return 0;
 
 	return 1;
 }
 
-/*
- * Attach this instance, and then all the sub-devices
- */
+/* ARGSUSED */
 void
 gfe_attach(device_t parent, device_t self, void *aux)
 {
-	struct gt_attach_args * const ga = aux;
-	struct gt_softc * const gt = device_private(parent);
+	struct marvell_attach_args *mva = aux;
 	struct gfe_softc * const sc = device_private(self);
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
-	uint32_t data;
-	uint8_t enaddr[6];
-	int phyaddr;
 	uint32_t sdcr;
-	int error;
+	int phyaddr, error;
+	prop_data_t ea;
+	uint8_t enaddr[6];
 
-	GT_ETHERFOUND(gt, ga);
+	aprint_naive("\n");
+	aprint_normal(": Ethernet Controller\n");
 
-	sc->sc_gt_memt = ga->ga_memt;
-	sc->sc_gt_memh = ga->ga_memh;
-	sc->sc_dmat = ga->ga_dmat;
-	sc->sc_macno = ga->ga_unit;
-
-	if (bus_space_subregion(sc->sc_gt_memt, sc->sc_gt_memh,
-		    ETH_BASE(sc->sc_macno), ETH_SIZE, &sc->sc_memh)) {
-		aprint_error(": failed to map registers\n");
+	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
+	    mva->mva_offset, mva->mva_size, &sc->sc_memh)) {
+		aprint_error_dev(self, "failed to map registers\n");
+		return;
 	}
+	sc->sc_dev = self;
+	sc->sc_memt = mva->mva_iot;
+	sc->sc_dmat = mva->mva_dmat;
+	sc->sc_macno = (mva->mva_offset == ETH_BASE(0)) ? 0 :
+	    ((mva->mva_offset == ETH_BASE(1)) ? 1 : 2);
 
 	callout_init(&sc->sc_co, 0);
 
-	data = bus_space_read_4(sc->sc_gt_memt, sc->sc_gt_memh, ETH_EPAR);
-	phyaddr = ETH_EPAR_PhyAD_GET(data, sc->sc_macno);
+	phyaddr = gfec_enet_phy(parent, sc->sc_macno);
 
-	gtget_macaddr(gt, sc->sc_macno, enaddr);
+	ea = prop_dictionary_get(device_properties(sc->sc_dev), "mac-addr");
+	if (ea != NULL) {
+		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
+		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
+		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
+	}
 
-	sc->sc_pcr = GE_READ(sc, EPCR);
-	sc->sc_pcxr = GE_READ(sc, EPCXR);
-	sc->sc_intrmask = GE_READ(sc, EIMR) | ETH_IR_MIIPhySTC;
+	sc->sc_pcr = GE_READ(sc, ETH_EPCR);
+	sc->sc_pcxr = GE_READ(sc, ETH_EPCXR);
+	sc->sc_intrmask = GE_READ(sc, ETH_EIMR) | ETH_IR_MIIPhySTC;
 
-	aprint_normal(": address %s", ether_sprintf(enaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(enaddr));
 
 #if defined(DEBUG)
-	aprint_normal(", pcr %#x, pcxr %#x", sc->sc_pcr, sc->sc_pcxr);
+	printf("pcr %#x, pcxr %#x\n", sc->sc_pcr, sc->sc_pcxr);
 #endif
 
 	sc->sc_pcxr &= ~ETH_EPCXR_PRIOrx_Override;
-	if (device_cfdata(&sc->sc_dev)->cf_flags & 1) {
-		aprint_normal(", phy %d (rmii)", phyaddr);
+	if (device_cfdata(self)->cf_flags & 1) {
+		aprint_normal_dev(self, "phy %d (rmii)\n", phyaddr);
 		sc->sc_pcxr |= ETH_EPCXR_RMIIEn;
 	} else {
-		aprint_normal(", phy %d (mii)", phyaddr);
+		aprint_normal_dev(self, "phy %d (mii)\n", phyaddr);
 		sc->sc_pcxr &= ~ETH_EPCXR_RMIIEn;
 	}
-	if (device_cfdata(&sc->sc_dev)->cf_flags & 2)
+	if (device_cfdata(self)->cf_flags & 2)
 		sc->sc_flags |= GE_NOFREE;
-	sc->sc_pcxr &= ~(3 << 14);
-	sc->sc_pcxr |= (ETH_EPCXR_MFL_1536 << 14);
+	/* Set Max Frame Length is 1536 */
+	sc->sc_pcxr &= ~ETH_EPCXR_MFL_SET(ETH_EPCXR_MFL_MASK);
+	sc->sc_pcxr |= ETH_EPCXR_MFL_SET(ETH_EPCXR_MFL_1536);
+	sc->sc_max_frame_length = 1536;
 
 	if (sc->sc_pcr & ETH_EPCR_EN) {
 		int tries = 1000;
 		/*
 		 * Abort transmitter and receiver and wait for them to quiese
 		 */
-		GE_WRITE(sc, ESDCMR, ETH_ESDCMR_AR|ETH_ESDCMR_AT);
+		GE_WRITE(sc, ETH_ESDCMR, ETH_ESDCMR_AR | ETH_ESDCMR_AT);
 		do {
 			delay(100);
-		} while (tries-- > 0 && (GE_READ(sc, ESDCMR) & (ETH_ESDCMR_AR|ETH_ESDCMR_AT)));
+			if (tries-- <= 0) {
+				aprint_error_dev(self, "Abort TX/RX failed\n");
+				break;
+			}
+		} while (GE_READ(sc, ETH_ESDCMR) &
+		    (ETH_ESDCMR_AR | ETH_ESDCMR_AT));
 	}
 
-	sc->sc_pcr &= ~(ETH_EPCR_EN | ETH_EPCR_RBM | ETH_EPCR_PM | ETH_EPCR_PBF);
+	sc->sc_pcr &=
+	    ~(ETH_EPCR_EN | ETH_EPCR_RBM | ETH_EPCR_PM | ETH_EPCR_PBF);
 
 #if defined(DEBUG)
-	aprint_normal(", pcr %#x, pcxr %#x", sc->sc_pcr, sc->sc_pcxr);
+	printf("pcr %#x, pcxr %#x\n", sc->sc_pcr, sc->sc_pcxr);
 #endif
 
 	/*
 	 * Now turn off the GT.  If it didn't quiese, too ***ing bad.
 	 */
-	GE_WRITE(sc, EPCR, sc->sc_pcr);
-	GE_WRITE(sc, EIMR, sc->sc_intrmask);
-	sdcr = GE_READ(sc, ESDCR);
+	GE_WRITE(sc, ETH_EPCR, sc->sc_pcr);
+	GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
+	sdcr = GE_READ(sc, ETH_ESDCR);
 	ETH_ESDCR_BSZ_SET(sdcr, ETH_ESDCR_BSZ_4);
 	sdcr |= ETH_ESDCR_RIFB;
-	GE_WRITE(sc, ESDCR, sdcr);
-	sc->sc_max_frame_length = 1536;
+	GE_WRITE(sc, ETH_ESDCR, sdcr);
 
-	aprint_normal("\n");
 	sc->sc_mii.mii_ifp = ifp;
-	sc->sc_mii.mii_readreg = gfe_mii_read;
-	sc->sc_mii.mii_writereg = gfe_mii_write;
-	sc->sc_mii.mii_statchg = gfe_mii_statchg;
+	sc->sc_mii.mii_readreg = gfec_mii_read;
+	sc->sc_mii.mii_writereg = gfec_mii_write;
+	sc->sc_mii.mii_statchg = gfec_mii_statchg;
 
 	sc->sc_ec.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
 		ether_mediastatus);
 
-	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, phyaddr,
+	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, phyaddr,
 		MII_OFFSET_ANY, MIIF_NOISOLATE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
@@ -317,9 +519,8 @@ gfe_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
-	/* ifp->if_mowner = &sc->sc_mowner; */
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #if 0
 	ifp->if_flags |= IFF_DEBUG;
@@ -341,20 +542,18 @@ gfe_attach(device_t parent, device_t self, void *aux)
 		if (!error)
 			error = gfe_hash_alloc(sc);
 		if (error)
-			aprint_error(
-			    "%s: failed to allocate resources: %d\n",
-			    ifp->if_xname, error);
+			aprint_error_dev(self,
+			    "failed to allocate resources: %d\n", error);
 	}
 
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-	bpf_ops->bpf_attach(ifp, DLT_EN10MB,
-	    sizeof(struct ether_header), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #if NRND > 0
-	rnd_attach_source(&sc->sc_rnd_source, device_xname(self), RND_TYPE_NET, 0);
+	rnd_attach_source(&sc->sc_rnd_source, device_xname(self), RND_TYPE_NET,
+	    0);
 #endif
-	intr_establish(IRQ_ETH0 + sc->sc_macno, IST_LEVEL, IPL_NET,
-	    gfe_intr, sc);
+	marvell_intr_establish(mva->mva_irq, IPL_NET, gfe_intr, sc);
 }
 
 int
@@ -549,24 +748,27 @@ gfe_ifwatchdog(struct ifnet *ifp)
 	struct gfe_txqueue * const txq = &sc->sc_txq[GE_TXPRIO_HI];
 
 	GE_FUNC_ENTER(sc, "gfe_ifwatchdog");
-	printf("%s: device timeout", device_xname(&sc->sc_dev));
+	aprint_error_dev(sc->sc_dev, "device timeout");
 	if (ifp->if_flags & IFF_RUNNING) {
-		uint32_t curtxdnum = (bus_space_read_4(sc->sc_gt_memt, sc->sc_gt_memh, txq->txq_ectdp) - txq->txq_desc_busaddr) / sizeof(txq->txq_descs[0]);
+		uint32_t curtxdnum;
+
+		curtxdnum = (GE_READ(sc, txq->txq_ectdp) -
+		    txq->txq_desc_busaddr) / sizeof(txq->txq_descs[0]);
 		GE_TXDPOSTSYNC(sc, txq, txq->txq_fi);
 		GE_TXDPOSTSYNC(sc, txq, curtxdnum);
-		printf(" (fi=%d(%#x),lo=%d,cur=%d(%#x),icm=%#x) ",
+		aprint_error(" (fi=%d(%#x),lo=%d,cur=%d(%#x),icm=%#x) ",
 		    txq->txq_fi, txq->txq_descs[txq->txq_fi].ed_cmdsts,
 		    txq->txq_lo, curtxdnum, txq->txq_descs[curtxdnum].ed_cmdsts,
-		    GE_READ(sc, EICR));
+		    GE_READ(sc, ETH_EICR));
 		GE_TXDPRESYNC(sc, txq, txq->txq_fi);
 		GE_TXDPRESYNC(sc, txq, curtxdnum);
 	}
-	printf("\n");
+	aprint_error("\n");
 	ifp->if_oerrors++;
 	(void) gfe_whack(sc, GE_WHACK_RESTART);
 	GE_FUNC_EXIT(sc, "");
 }
-
+
 int
 gfe_rx_rxqalloc(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 {
@@ -625,11 +827,11 @@ gfe_rx_rxqinit(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 	rxq->rxq_bufs = (struct gfe_rxbuf *) rxq->rxq_buf_mem.gdm_kva;
 	rxq->rxq_fi = 0;
 	rxq->rxq_active = GE_RXDESC_MAX;
-	for (idx = 0, rxd = rxq->rxq_descs,
-		boff = 0, ds = rxq->rxq_buf_mem.gdm_map->dm_segs,
-		nxtaddr = rxq->rxq_desc_busaddr + sizeof(*rxd);
-	     idx < GE_RXDESC_MAX;
-	     idx++, rxd++, nxtaddr += sizeof(*rxd)) {
+	boff = 0;
+	ds = rxq->rxq_buf_mem.gdm_map->dm_segs;
+	nxtaddr = rxq->rxq_desc_busaddr + sizeof(*rxd);
+	for (idx = 0, rxd = rxq->rxq_descs; idx < GE_RXDESC_MAX;
+	    idx++, nxtaddr += sizeof(*(++rxd))) {
 		rxd->ed_lencnt = htogt32(GE_RXBUF_SIZE << 16);
 		rxd->ed_cmdsts = htogt32(RX_CMD_F|RX_CMD_L|RX_CMD_O|RX_CMD_EI);
 		rxd->ed_bufptr = htogt32(ds->ds_addr + boff);
@@ -656,23 +858,23 @@ gfe_rx_rxqinit(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 	switch (rxprio) {
 	case GE_RXPRIO_HI:
 		rxq->rxq_intrbits |= ETH_IR_RxBuffer_3|ETH_IR_RxError_3;
-		rxq->rxq_efrdp = ETH_EFRDP3(sc->sc_macno);
-		rxq->rxq_ecrdp = ETH_ECRDP3(sc->sc_macno);
+		rxq->rxq_efrdp = ETH_EFRDP3;
+		rxq->rxq_ecrdp = ETH_ECRDP3;
 		break;
 	case GE_RXPRIO_MEDHI:
 		rxq->rxq_intrbits |= ETH_IR_RxBuffer_2|ETH_IR_RxError_2;
-		rxq->rxq_efrdp = ETH_EFRDP2(sc->sc_macno);
-		rxq->rxq_ecrdp = ETH_ECRDP2(sc->sc_macno);
+		rxq->rxq_efrdp = ETH_EFRDP2;
+		rxq->rxq_ecrdp = ETH_ECRDP2;
 		break;
 	case GE_RXPRIO_MEDLO:
 		rxq->rxq_intrbits |= ETH_IR_RxBuffer_1|ETH_IR_RxError_1;
-		rxq->rxq_efrdp = ETH_EFRDP1(sc->sc_macno);
-		rxq->rxq_ecrdp = ETH_ECRDP1(sc->sc_macno);
+		rxq->rxq_efrdp = ETH_EFRDP1;
+		rxq->rxq_ecrdp = ETH_ECRDP1;
 		break;
 	case GE_RXPRIO_LO:
 		rxq->rxq_intrbits |= ETH_IR_RxBuffer_0|ETH_IR_RxError_0;
-		rxq->rxq_efrdp = ETH_EFRDP0(sc->sc_macno);
-		rxq->rxq_ecrdp = ETH_ECRDP0(sc->sc_macno);
+		rxq->rxq_efrdp = ETH_EFRDP0;
+		rxq->rxq_ecrdp = ETH_ECRDP0;
 		break;
 	}
 	GE_FUNC_EXIT(sc, "");
@@ -717,7 +919,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		 * ignore it and go to the next packet.
 		 */
 		if ((cmdsts & (RX_CMD_F|RX_CMD_L|RX_STS_ES)) !=
-			    (RX_CMD_F|RX_CMD_L) ||
+							(RX_CMD_F|RX_CMD_L) ||
 		    buflen > sc->sc_max_frame_length) {
 			GE_DPRINTF(sc, ("!"));
 			--rxq->rxq_active;
@@ -759,8 +961,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		m->m_pkthdr.len = buflen;
 
 		ifp->if_ipackets++;
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		eh = (const struct ether_header *) m->m_data;
 		if ((ifp->if_flags & IFF_PROMISC) ||
@@ -768,7 +969,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    (rxq->rxq_cmdsts & RX_STS_HE) ||
 		    (eh->ether_dhost[0] & 1) != 0 ||
 		    memcmp(eh->ether_dhost, CLLADDR(ifp->if_sadl),
-			ETHER_ADDR_LEN) == 0) {
+							ETHER_ADDR_LEN) == 0) {
 			(*ifp->if_input)(ifp, m);
 			m = NULL;
 			GE_DPRINTF(sc, (">"));
@@ -829,7 +1030,7 @@ gfe_rx_process(struct gfe_softc *sc, uint32_t cause, uint32_t intrmask)
 		}
 		ifp->if_ierrors++;
 		GE_DPRINTF(sc, ("%s: rx queue %d filled at %u\n",
-		    device_xname(&sc->sc_dev), rxprio, rxq->rxq_fi));
+		    device_xname(sc->sc_dev), rxprio, rxq->rxq_fi));
 		memset(masks, 0, sizeof(masks));
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
 		    0, rxq->rxq_desc_mem.gdm_size,
@@ -845,7 +1046,7 @@ gfe_rx_process(struct gfe_softc *sc, uint32_t cause, uint32_t intrmask)
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 #if defined(DEBUG)
 		printf("%s: rx queue %d filled at %u=%#x(%#x/%#x)\n",
-		    device_xname(&sc->sc_dev), rxprio, rxq->rxq_fi,
+		    device_xname(sc->sc_dev), rxprio, rxq->rxq_fi,
 		    rxq->rxq_cmdsts, masks[0], masks[1]);
 #endif
 	}
@@ -869,8 +1070,8 @@ gfe_rx_prime(struct gfe_softc *sc)
 		goto bail;
 	rxq = &sc->sc_rxq[GE_RXPRIO_HI];
 	if ((sc->sc_flags & GE_RXACTIVE) == 0) {
-		GE_WRITE(sc, EFRDP3, rxq->rxq_desc_busaddr);
-		GE_WRITE(sc, ECRDP3, rxq->rxq_desc_busaddr);
+		GE_WRITE(sc, ETH_EFRDP3, rxq->rxq_desc_busaddr);
+		GE_WRITE(sc, ETH_ECRDP3, rxq->rxq_desc_busaddr);
 	}
 	sc->sc_intrmask |= rxq->rxq_intrbits;
 
@@ -879,8 +1080,8 @@ gfe_rx_prime(struct gfe_softc *sc)
 		goto bail;
 	if ((sc->sc_flags & GE_RXACTIVE) == 0) {
 		rxq = &sc->sc_rxq[GE_RXPRIO_MEDHI];
-		GE_WRITE(sc, EFRDP2, rxq->rxq_desc_busaddr);
-		GE_WRITE(sc, ECRDP2, rxq->rxq_desc_busaddr);
+		GE_WRITE(sc, ETH_EFRDP2, rxq->rxq_desc_busaddr);
+		GE_WRITE(sc, ETH_ECRDP2, rxq->rxq_desc_busaddr);
 		sc->sc_intrmask |= rxq->rxq_intrbits;
 	}
 
@@ -889,8 +1090,8 @@ gfe_rx_prime(struct gfe_softc *sc)
 		goto bail;
 	if ((sc->sc_flags & GE_RXACTIVE) == 0) {
 		rxq = &sc->sc_rxq[GE_RXPRIO_MEDLO];
-		GE_WRITE(sc, EFRDP1, rxq->rxq_desc_busaddr);
-		GE_WRITE(sc, ECRDP1, rxq->rxq_desc_busaddr);
+		GE_WRITE(sc, ETH_EFRDP1, rxq->rxq_desc_busaddr);
+		GE_WRITE(sc, ETH_ECRDP1, rxq->rxq_desc_busaddr);
 		sc->sc_intrmask |= rxq->rxq_intrbits;
 	}
 
@@ -899,8 +1100,8 @@ gfe_rx_prime(struct gfe_softc *sc)
 		goto bail;
 	if ((sc->sc_flags & GE_RXACTIVE) == 0) {
 		rxq = &sc->sc_rxq[GE_RXPRIO_LO];
-		GE_WRITE(sc, EFRDP0, rxq->rxq_desc_busaddr);
-		GE_WRITE(sc, ECRDP0, rxq->rxq_desc_busaddr);
+		GE_WRITE(sc, ETH_EFRDP0, rxq->rxq_desc_busaddr);
+		GE_WRITE(sc, ETH_ECRDP0, rxq->rxq_desc_busaddr);
 		sc->sc_intrmask |= rxq->rxq_intrbits;
 	}
 
@@ -935,18 +1136,18 @@ gfe_rx_stop(struct gfe_softc *sc, enum gfe_whack_op op)
 	sc->sc_flags &= ~GE_RXACTIVE;
 	sc->sc_idlemask &= ~(ETH_IR_RxBits|ETH_IR_RxBuffer|ETH_IR_RxError);
 	sc->sc_intrmask &= ~(ETH_IR_RxBits|ETH_IR_RxBuffer|ETH_IR_RxError);
-	GE_WRITE(sc, EIMR, sc->sc_intrmask);
-	GE_WRITE(sc, ESDCMR, ETH_ESDCMR_AR);
+	GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
+	GE_WRITE(sc, ETH_ESDCMR, ETH_ESDCMR_AR);
 	do {
 		delay(10);
-	} while (GE_READ(sc, ESDCMR) & ETH_ESDCMR_AR);
+	} while (GE_READ(sc, ETH_ESDCMR) & ETH_ESDCMR_AR);
 	gfe_rx_cleanup(sc, GE_RXPRIO_HI);
 	gfe_rx_cleanup(sc, GE_RXPRIO_MEDHI);
 	gfe_rx_cleanup(sc, GE_RXPRIO_MEDLO);
 	gfe_rx_cleanup(sc, GE_RXPRIO_LO);
 	GE_FUNC_EXIT(sc, "");
 }
-
+
 void
 gfe_tick(void *arg)
 {
@@ -969,32 +1170,32 @@ gfe_tick(void *arg)
 		if (sc->sc_idlemask & (ETH_IR_RxBuffer_3|ETH_IR_RxError_3)) {
 			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_HI];
 			rxq->rxq_fi = 0;
-			GE_WRITE(sc, EFRDP3, rxq->rxq_desc_busaddr);
-			GE_WRITE(sc, ECRDP3, rxq->rxq_desc_busaddr);
+			GE_WRITE(sc, ETH_EFRDP3, rxq->rxq_desc_busaddr);
+			GE_WRITE(sc, ETH_ECRDP3, rxq->rxq_desc_busaddr);
 		}
 		if (sc->sc_idlemask & (ETH_IR_RxBuffer_2|ETH_IR_RxError_2)) {
 			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_MEDHI];
 			rxq->rxq_fi = 0;
-			GE_WRITE(sc, EFRDP2, rxq->rxq_desc_busaddr);
-			GE_WRITE(sc, ECRDP2, rxq->rxq_desc_busaddr);
+			GE_WRITE(sc, ETH_EFRDP2, rxq->rxq_desc_busaddr);
+			GE_WRITE(sc, ETH_ECRDP2, rxq->rxq_desc_busaddr);
 		}
 		if (sc->sc_idlemask & (ETH_IR_RxBuffer_1|ETH_IR_RxError_1)) {
 			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_MEDLO];
 			rxq->rxq_fi = 0;
-			GE_WRITE(sc, EFRDP1, rxq->rxq_desc_busaddr);
-			GE_WRITE(sc, ECRDP1, rxq->rxq_desc_busaddr);
+			GE_WRITE(sc, ETH_EFRDP1, rxq->rxq_desc_busaddr);
+			GE_WRITE(sc, ETH_ECRDP1, rxq->rxq_desc_busaddr);
 		}
 		if (sc->sc_idlemask & (ETH_IR_RxBuffer_0|ETH_IR_RxError_0)) {
 			struct gfe_rxqueue *rxq = &sc->sc_rxq[GE_RXPRIO_LO];
 			rxq->rxq_fi = 0;
-			GE_WRITE(sc, EFRDP0, rxq->rxq_desc_busaddr);
-			GE_WRITE(sc, ECRDP0, rxq->rxq_desc_busaddr);
+			GE_WRITE(sc, ETH_EFRDP0, rxq->rxq_desc_busaddr);
+			GE_WRITE(sc, ETH_ECRDP0, rxq->rxq_desc_busaddr);
 		}
 		sc->sc_idlemask = 0;
 	}
 	if (intrmask != sc->sc_intrmask) {
 		sc->sc_intrmask = intrmask;
-		GE_WRITE(sc, EIMR, sc->sc_intrmask);
+		GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
 	}
 	gfe_intr(sc);
 	splx(s);
@@ -1057,7 +1258,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 			}
 #ifdef DEBUG
 			printf("%s: txenqueue: transmitter resynced at %d\n",
-			    device_xname(&sc->sc_dev), txq->txq_fi);
+			    device_xname(sc->sc_dev), txq->txq_fi);
 #endif
 		}
 		if (++txq->txq_fi == GE_TXDESC_MAX)
@@ -1095,7 +1296,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 		    (ETH_IR_TxBufferHigh|ETH_IR_TxBufferLow);
 		if (sc->sc_intrmask != intrmask) {
 			sc->sc_intrmask = intrmask;
-			GE_WRITE(sc, EIMR, sc->sc_intrmask);
+			GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
 		}
 		GE_FUNC_EXIT(sc, "#");
 		return 0;
@@ -1139,7 +1340,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	/*
 	 * Tell the SDMA engine to "Fetch!"
 	 */
-	GE_WRITE(sc, ESDCMR,
+	GE_WRITE(sc, ETH_ESDCMR,
 		 txq->txq_esdcmrbits & (ETH_ESDCMR_TXDH|ETH_ESDCMR_TXDL));
 
 	GE_DPRINTF(sc, ("(%d)", txq->txq_lo));
@@ -1155,8 +1356,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 * Move mbuf from the pending queue to the snd queue.
 	 */
 	IF_DEQUEUE(&txq->txq_pendq, m);
-	if (ifp->if_bpf != NULL)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 	m_freem(m);
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1168,7 +1368,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	intrmask |= txq->txq_intrbits & (ETH_IR_TxEndHigh|ETH_IR_TxEndLow);
 	if (sc->sc_intrmask != intrmask) {
 		sc->sc_intrmask = intrmask;
-		GE_WRITE(sc, EIMR, sc->sc_intrmask);
+		GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
 	}
 	if (ifp->if_timer == 0)
 		ifp->if_timer = 5;
@@ -1225,7 +1425,7 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 			}
 #ifdef DEBUG
 			printf("%s: txdone: transmitter resynced at %d\n",
-			    device_xname(&sc->sc_dev), txq->txq_fi);
+			    device_xname(sc->sc_dev), txq->txq_fi);
 #endif
 		}
 #if 0
@@ -1255,7 +1455,7 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 	}
 	if (txq->txq_nactive != 0)
 		panic("%s: transmit fifo%d empty but active count (%d) > 0!",
-		    device_xname(&sc->sc_dev), txprio, txq->txq_nactive);
+		    device_xname(sc->sc_dev), txprio, txq->txq_nactive);
 	ifp->if_timer = 0;
 	intrmask &= ~(txq->txq_intrbits & (ETH_IR_TxEndHigh|ETH_IR_TxEndLow));
 	intrmask &= ~(txq->txq_intrbits & (ETH_IR_TxBufferHigh|ETH_IR_TxBufferLow));
@@ -1297,8 +1497,11 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 
 	GE_FUNC_ENTER(sc, "gfe_tx_start");
 
-	sc->sc_intrmask &= ~(ETH_IR_TxEndHigh|ETH_IR_TxBufferHigh|
-			     ETH_IR_TxEndLow |ETH_IR_TxBufferLow);
+	sc->sc_intrmask &=
+	    ~(ETH_IR_TxEndHigh		|
+	      ETH_IR_TxBufferHigh	|
+	      ETH_IR_TxEndLow		|
+	      ETH_IR_TxBufferLow);
 
 	if (sc->sc_flags & GE_NOFREE) {
 		KASSERT(txq->txq_desc_mem.gdm_kva != NULL);
@@ -1324,9 +1527,8 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 	txq->txq_inptr = GE_TXBUF_SIZE;
 	txq->txq_outptr = 0;
 	for (i = 0, txd = txq->txq_descs,
-	     addr = txq->txq_desc_busaddr + sizeof(*txd);
-			i < GE_TXDESC_MAX - 1;
-			i++, txd++, addr += sizeof(*txd)) {
+	    addr = txq->txq_desc_busaddr + sizeof(*txd);
+	    i < GE_TXDESC_MAX - 1; i++, txd++, addr += sizeof(*txd)) {
 		/*
 		 * update the nxtptr to point to the next txd.
 		 */
@@ -1343,16 +1545,16 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 		txq->txq_intrbits = ETH_IR_TxEndHigh|ETH_IR_TxBufferHigh;
 		txq->txq_esdcmrbits = ETH_ESDCMR_TXDH;
 		txq->txq_epsrbits = ETH_EPSR_TxHigh;
-		txq->txq_ectdp = ETH_ECTDP1(sc->sc_macno);
-		GE_WRITE(sc, ECTDP1, txq->txq_desc_busaddr);
+		txq->txq_ectdp = ETH_ECTDP1;
+		GE_WRITE(sc, ETH_ECTDP1, txq->txq_desc_busaddr);
 		break;
 
 	case GE_TXPRIO_LO:
 		txq->txq_intrbits = ETH_IR_TxEndLow|ETH_IR_TxBufferLow;
 		txq->txq_esdcmrbits = ETH_ESDCMR_TXDL;
 		txq->txq_epsrbits = ETH_EPSR_TxLow;
-		txq->txq_ectdp = ETH_ECTDP0(sc->sc_macno);
-		GE_WRITE(sc, ECTDP0, txq->txq_desc_busaddr);
+		txq->txq_ectdp = ETH_ECTDP0;
+		GE_WRITE(sc, ETH_ECTDP0, txq->txq_desc_busaddr);
 		break;
 
 	case GE_TXPRIO_NONE:
@@ -1360,8 +1562,7 @@ gfe_tx_start(struct gfe_softc *sc, enum gfe_txprio txprio)
 	}
 #if 0
 	GE_DPRINTF(sc, ("(ectdp=%#x", txq->txq_ectdp));
-	gt_write(device_parent(&sc->sc_dev), txq->txq_ectdp,
-	    txq->txq_desc_busaddr);
+	GE_WRITE(sc->sc_dev, txq->txq_ectdp, txq->txq_desc_busaddr);
 	GE_DPRINTF(sc, (")"));
 #endif
 
@@ -1406,12 +1607,15 @@ gfe_tx_stop(struct gfe_softc *sc, enum gfe_whack_op op)
 {
 	GE_FUNC_ENTER(sc, "gfe_tx_stop");
 
-	GE_WRITE(sc, ESDCMR, ETH_ESDCMR_STDH|ETH_ESDCMR_STDL);
+	GE_WRITE(sc, ETH_ESDCMR, ETH_ESDCMR_STDH|ETH_ESDCMR_STDL);
 
 	sc->sc_intrmask = gfe_tx_done(sc, GE_TXPRIO_HI, sc->sc_intrmask);
 	sc->sc_intrmask = gfe_tx_done(sc, GE_TXPRIO_LO, sc->sc_intrmask);
-	sc->sc_intrmask &= ~(ETH_IR_TxEndHigh|ETH_IR_TxBufferHigh|
-			     ETH_IR_TxEndLow |ETH_IR_TxBufferLow);
+	sc->sc_intrmask &=
+	    ~(ETH_IR_TxEndHigh		|
+	      ETH_IR_TxBufferHigh	|
+	      ETH_IR_TxEndLow		|
+	      ETH_IR_TxBufferLow);
 
 	gfe_tx_cleanup(sc, GE_TXPRIO_HI, op == GE_WHACK_STOP);
 	gfe_tx_cleanup(sc, GE_TXPRIO_LO, op == GE_WHACK_STOP);
@@ -1419,7 +1623,7 @@ gfe_tx_stop(struct gfe_softc *sc, enum gfe_whack_op op)
 	sc->sc_ec.ec_if.if_timer = 0;
 	GE_FUNC_EXIT(sc, "");
 }
-
+
 int
 gfe_intr(void *arg)
 {
@@ -1434,9 +1638,9 @@ gfe_intr(void *arg)
 	for (cnt = 0; cnt < 4; cnt++) {
 		if (sc->sc_intrmask != intrmask) {
 			sc->sc_intrmask = intrmask;
-			GE_WRITE(sc, EIMR, sc->sc_intrmask);
+			GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
 		}
-		cause = GE_READ(sc, EICR);
+		cause = GE_READ(sc, ETH_EICR);
 		cause &= sc->sc_intrmask;
 		GE_DPRINTF(sc, (".%#x", cause));
 		if (cause == 0)
@@ -1444,7 +1648,7 @@ gfe_intr(void *arg)
 
 		claim = 1;
 
-		GE_WRITE(sc, EICR, ~cause);
+		GE_WRITE(sc, ETH_EICR, ~cause);
 #ifndef GE_NORX
 		if (cause & (ETH_IR_RxBuffer|ETH_IR_RxError))
 			intrmask = gfe_rx_process(sc, cause, intrmask);
@@ -1470,26 +1674,7 @@ gfe_intr(void *arg)
 	GE_FUNC_EXIT(sc, "");
 	return claim;
 }
-
-int
-gfe_mii_read (device_t self, int phy, int reg)
-{
-	return gt_mii_read(self, device_parent(self), phy, reg);
-}
 
-void
-gfe_mii_write (device_t self, int phy, int reg, int value)
-{
-	gt_mii_write(self, device_parent(self), phy, reg, value);
-}
-
-void
-gfe_mii_statchg (device_t self)
-{
-	/* struct gfe_softc *sc = device_private(self); */
-	/* do nothing? */
-}
-
 int
 gfe_whack(struct gfe_softc *sc, enum gfe_whack_op op)
 {
@@ -1526,26 +1711,27 @@ gfe_whack(struct gfe_softc *sc, enum gfe_whack_op op)
 			break;
 #endif
 		sc->sc_ec.ec_if.if_flags |= IFF_RUNNING;
-		GE_WRITE(sc, EPCR, sc->sc_pcr | ETH_EPCR_EN);
-		GE_WRITE(sc, EPCXR, sc->sc_pcxr);
-		GE_WRITE(sc, EICR, 0);
-		GE_WRITE(sc, EIMR, sc->sc_intrmask);
+		GE_WRITE(sc, ETH_EPCR, sc->sc_pcr | ETH_EPCR_EN);
+		GE_WRITE(sc, ETH_EPCXR, sc->sc_pcxr);
+		GE_WRITE(sc, ETH_EICR, 0);
+		GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
 #ifndef GE_NOHASH
-		GE_WRITE(sc, EHTPR, sc->sc_hash_mem.gdm_map->dm_segs->ds_addr);
+		GE_WRITE(sc, ETH_EHTPR,
+		    sc->sc_hash_mem.gdm_map->dm_segs->ds_addr);
 #endif
 #ifndef GE_NORX
-		GE_WRITE(sc, ESDCMR, ETH_ESDCMR_ERD);
+		GE_WRITE(sc, ETH_ESDCMR, ETH_ESDCMR_ERD);
 		sc->sc_flags |= GE_RXACTIVE;
 #endif
 		/* FALLTHROUGH */
 	case GE_WHACK_CHANGE:
 		GE_DPRINTF(sc, ("(pcr=%#x,imr=%#x)",
-		    GE_READ(sc, EPCR), GE_READ(sc, EIMR)));
-		GE_WRITE(sc, EPCR, sc->sc_pcr | ETH_EPCR_EN);
-		GE_WRITE(sc, EIMR, sc->sc_intrmask);
+		    GE_READ(sc, ETH_EPCR), GE_READ(sc, ETH_EIMR)));
+		GE_WRITE(sc, ETH_EPCR, sc->sc_pcr | ETH_EPCR_EN);
+		GE_WRITE(sc, ETH_EIMR, sc->sc_intrmask);
 		gfe_ifstart(&sc->sc_ec.ec_if);
 		GE_DPRINTF(sc, ("(ectdp0=%#x, ectdp1=%#x)",
-		    GE_READ(sc, ECTDP0), GE_READ(sc, ECTDP1)));
+		    GE_READ(sc, ETH_ECTDP0), GE_READ(sc, ETH_ECTDP1)));
 		GE_FUNC_EXIT(sc, "");
 		return error;
 	case GE_WHACK_STOP:
@@ -1556,8 +1742,8 @@ gfe_whack(struct gfe_softc *sc, enum gfe_whack_op op)
 	if (error)
 		GE_DPRINTF(sc, (" failed: %d\n", error));
 #endif
-	GE_WRITE(sc, EPCR, sc->sc_pcr);
-	GE_WRITE(sc, EIMR, 0);
+	GE_WRITE(sc, ETH_EPCR, sc->sc_pcr);
+	GE_WRITE(sc, ETH_EIMR, 0);
 	sc->sc_ec.ec_if.if_flags &= ~IFF_RUNNING;
 #ifndef GE_NOTX
 	gfe_tx_stop(sc, GE_WHACK_STOP);
@@ -1575,7 +1761,7 @@ gfe_whack(struct gfe_softc *sc, enum gfe_whack_op op)
 	GE_FUNC_EXIT(sc, "");
 	return error;
 }
-
+
 int
 gfe_hash_compute(struct gfe_softc *sc, const uint8_t eaddr[ETHER_ADDR_LEN])
 {
@@ -1667,7 +1853,7 @@ gfe_hash_entry_op(struct gfe_softc *sc, enum gfe_hash_op op,
 	hash = gfe_hash_compute(sc, eaddr);
 
 	if (sc->sc_hashtable == NULL) {
-		panic("%s:%d: hashtable == NULL!", device_xname(&sc->sc_dev),
+		panic("%s:%d: hashtable == NULL!", device_xname(sc->sc_dev),
 			__LINE__);
 	}
 
@@ -1764,9 +1950,10 @@ gfe_hash_entry_op(struct gfe_softc *sc, enum gfe_hash_op op,
 }
 
 int
-gfe_hash_multichg(struct ethercom *ec, const struct ether_multi *enm, u_long cmd)
+gfe_hash_multichg(struct ethercom *ec, const struct ether_multi *enm,
+		  u_long cmd)
 {
-	struct gfe_softc * const sc = ec->ec_if.if_softc;
+	struct gfe_softc *sc = ec->ec_if.if_softc;
 	int error;
 	enum gfe_hash_op op;
 	enum gfe_rxprio prio;
@@ -1787,7 +1974,7 @@ gfe_hash_multichg(struct ethercom *ec, const struct ether_multi *enm, u_long cmd
 		sc->sc_flags |= GE_ALLMULTI;
 		if ((sc->sc_pcr & ETH_EPCR_PM) == 0) {
 			sc->sc_pcr |= ETH_EPCR_PM;
-			GE_WRITE(sc, EPCR, sc->sc_pcr);
+			GE_WRITE(sc, ETH_EPCR, sc->sc_pcr);
 			GE_FUNC_EXIT(sc, "");
 			return 0;
 		}
@@ -1805,33 +1992,32 @@ gfe_hash_multichg(struct ethercom *ec, const struct ether_multi *enm, u_long cmd
 
 	error = gfe_hash_entry_op(sc, op, prio, enm->enm_addrlo);
 	if (error == EBUSY) {
-		printf("%s: multichg: tried to %s %s again\n",
-		       device_xname(&sc->sc_dev),
-		       cmd == SIOCDELMULTI ? "remove" : "add",
-		       ether_sprintf(enm->enm_addrlo));
+		aprint_error_dev(sc->sc_dev, "multichg: tried to %s %s again\n",
+		   cmd == SIOCDELMULTI ? "remove" : "add",
+		   ether_sprintf(enm->enm_addrlo));
 		GE_FUNC_EXIT(sc, "");
 		return 0;
 	}
 
 	if (error == ENOENT) {
-		printf("%s: multichg: failed to remove %s: not in table\n",
-		       device_xname(&sc->sc_dev),
-		       ether_sprintf(enm->enm_addrlo));
+		aprint_error_dev(sc->sc_dev,
+		    "multichg: failed to remove %s: not in table\n",
+		    ether_sprintf(enm->enm_addrlo));
 		GE_FUNC_EXIT(sc, "");
 		return 0;
 	}
 
 	if (error == ENOSPC) {
-		printf("%s: multichg: failed to add %s: no space; regenerating table\n",
-		       device_xname(&sc->sc_dev),
-		       ether_sprintf(enm->enm_addrlo));
+		aprint_error_dev(sc->sc_dev, "multichg:"
+		    " failed to add %s: no space; regenerating table\n",
+		    ether_sprintf(enm->enm_addrlo));
 		GE_FUNC_EXIT(sc, "");
 		return ENETRESET;
 	}
 	GE_DPRINTF(sc, ("%s: multichg: %s: %s succeeded\n",
-	       device_xname(&sc->sc_dev),
-	       cmd == SIOCDELMULTI ? "remove" : "add",
-	       ether_sprintf(enm->enm_addrlo)));
+	    device_xname(sc->sc_dev),
+	    cmd == SIOCDELMULTI ? "remove" : "add",
+	    ether_sprintf(enm->enm_addrlo)));
 	GE_FUNC_EXIT(sc, "");
 	return 0;
 }
@@ -1881,8 +2067,9 @@ gfe_hash_alloc(struct gfe_softc *sc)
 	error = gfe_dmamem_alloc(sc, &sc->sc_hash_mem, 1, sc->sc_hashmask + 1,
 	    BUS_DMA_NOCACHE);
 	if (error) {
-		printf("%s: failed to allocate %d bytes for hash table: %d\n",
-		    device_xname(&sc->sc_dev), sc->sc_hashmask + 1, error);
+		aprint_error_dev(sc->sc_dev,
+		    "failed to allocate %d bytes for hash table: %d\n",
+		    sc->sc_hashmask + 1, error);
 		GE_FUNC_EXIT(sc, "");
 		return error;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.130 2010/02/02 16:54:40 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.130.2.1 2010/04/30 14:43:54 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.130 2010/02/02 16:54:40 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.130.2.1 2010/04/30 14:43:54 uebayasi Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -166,12 +166,13 @@ extern struct cfdriver wsdisplay_cd;
 /* Autoconfiguration definitions. */
 static int wsdisplay_emul_match(device_t , cfdata_t, void *);
 static void wsdisplay_emul_attach(device_t, device_t, void *);
+static int wsdisplay_emul_detach(device_t, int);
 static int wsdisplay_noemul_match(device_t, cfdata_t, void *);
 static void wsdisplay_noemul_attach(device_t, device_t, void *);
-static bool wsdisplay_suspend(device_t, pmf_qual_t);
+static bool wsdisplay_suspend(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(wsdisplay_emul, sizeof (struct wsdisplay_softc),
-    wsdisplay_emul_match, wsdisplay_emul_attach, NULL, NULL);
+    wsdisplay_emul_match, wsdisplay_emul_attach, wsdisplay_emul_detach, NULL);
   
 CFATTACH_DECL_NEW(wsdisplay_noemul, sizeof (struct wsdisplay_softc),
     wsdisplay_noemul_match, wsdisplay_noemul_attach, NULL, NULL);
@@ -588,6 +589,16 @@ wsemuldisplaydevprint(void *aux, const char *pnp)
 }
 
 int
+wsdisplay_emul_detach(device_t dev, int how)
+{
+	struct wsdisplay_softc *sc = device_private(dev);
+
+	cv_destroy(&sc->sc_flagscv);
+	mutex_destroy(&sc->sc_flagsmtx);
+	return 0;
+}
+
+int
 wsdisplay_noemul_match(device_t parent, cfdata_t match, void *aux)
 {
 #if 0 /* -Wunused */
@@ -681,7 +692,7 @@ wsdisplay_handlex(int resume)
 }
 
 static bool
-wsdisplay_suspend(device_t dv, pmf_qual_t qual)
+wsdisplay_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct wsdisplay_softc *sc = device_private(dv);
 #ifdef DIAGNOSTIC
@@ -778,6 +789,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		wsdisplay_console_attached = 1;
 	}
 	aprint_normal("\n");
+	aprint_naive("\n");
 
 #if NWSKBD > 0 && NWSMUX > 0
 	wsmux_set_display(mux, sc->sc_dev);

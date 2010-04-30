@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.34 2010/01/19 22:08:17 pooka Exp $
+ *	$Id: i4b_ipr.c,v 1.34.2.1 2010/04/30 14:44:21 uebayasi Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.34 2010/01/19 22:08:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.34.2.1 2010/04/30 14:44:21 uebayasi Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -404,7 +404,7 @@ iripattach(void)
 #ifdef __FreeBSD__
 		bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #else
-		bpf_ops->bpf_attach(&sc->sc_if, DLT_NULL, sizeof(u_int), &sc->sc_if.if_bpf);
+		bpf_attach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #endif
 #endif
 	}
@@ -1070,11 +1070,7 @@ error:
 		mm.m_len = 4;
 		mm.m_data = (char *)&af;
 
-#ifdef __FreeBSD__
 		bpf_mtap(&sc->sc_if, &mm);
-#else
-		bpf_ops->bpf_mtap(sc->sc_if.if_bpf, &mm);
-#endif
 	}
 #endif /* NBPFILTER > 0  || NBPF > 0 */
 
@@ -1137,11 +1133,7 @@ ipr_tx_queue_empty(void *softc)
 			mm.m_len = 4;
 			mm.m_data = (char *)&af;
 
-#ifdef __FreeBSD__
 			bpf_mtap(&sc->sc_if, &mm);
-#else
-			bpf_ops->bpf_mtap(sc->sc_if.if_bpf, &mm);
-#endif
 		}
 #endif /* NBPFILTER */
 

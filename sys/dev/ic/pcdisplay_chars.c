@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.13 2007/10/19 11:59:58 ad Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.13.40.1 2010/04/30 14:43:20 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.13 2007/10/19 11:59:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.13.40.1 2010/04/30 14:43:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,6 +265,16 @@ static const struct {
 	int quality;
 } replacements[] = {
 	{0x00af, 0x2d, 3}, /* MACRON -> - */
+	{0x2010, 0x2d, 3}, /* HYPHEN -> - */
+	{0x2013, 0x2d, 3}, /* EN DASH -> - */
+	{0x2014, 0x2d, 3}, /* EM DASH -> - */
+	{0x2018, 0x60, 3}, /* LEFT SINGLE QUOTATION MARK -> ` */
+	{0x2019, 0x27, 3}, /* RIGHT SINGLE QUOTATION MARK -> ' */
+	{0x201A, 0x2c, 3}, /* SINGLE LOW QUOTATION MARK -> , */
+	{0x201c, 0x22, 3}, /* LEFT DOUBLE QUOTATION MARK -> " */
+	{0x201d, 0x22, 3}, /* RIGHT DOUBLE QUOTATION MARK -> " */
+	{0x2039, 0x3c, 3}, /* SINGLE LEFT-POINTING ANGLE QUOTATION MARK -> < */
+	{0x203a, 0x3e, 3}, /* SINGLE RIGHT-POINTING ANGLE QUOTATION MARK -> > */
 	{0x221f, 0xc0, 3}, /* RIGHT ANGLE -> light up and right */
 	{0x222a, 0x55, 3}, /* UNION -> U */
 	{0x223c, 0x7e, 3}, /* TILDE OPERATOR -> ~ */
@@ -274,8 +284,7 @@ static const struct {
 	{0x230b, 0xd9, 3}, /* RIGHT FLOOR -> light up and left */
 	{0x2329, 0x3c, 3}, /* LEFT-POINTING ANGLE BRACKET -> < */
 	{0x232a, 0x3e, 3}, /* RIGHT-POINTING ANGLE BRACKET -> > */
-	{_e003U, 0x2d, 3}, /* scan 5 -> - */
-	{_e005U, 0x5f, 3}, /* scan 9 -> _ */
+	{0x23bd, 0x5f, 3}, /* scan 9 -> _ */
 	{_e00bU, 0x7b, 3}, /* braceleftmid -> { */
 	{_e00cU, 0x7d, 3}, /* bracerightmid -> } */
 	{_e00fU, 0xd9, 3}, /* mirrored not sign? -> light up and left */
@@ -289,8 +298,9 @@ static const struct {
 	{0x03bd, 0x76, 2}, /* GREEK SMALL LETTER NU -> v */
 	{0x03c9, 0x77, 2}, /* GREEK SMALL LETTER OMEGA -> w */
 	{0x20ac, 0x45, 2}, /* EURO SIGN -> E */
-	{_e002U, 0x2d, 2}, /* scan 3 -> - */
-	{_e004U, 0x2d, 2}, /* scan 7 -> - */
+	{0x23bb, 0x2d, 2}, /* scan 3 -> - */
+	{0x23bc, 0x2d, 2}, /* scan 7 -> - */
+	{0x25cf, 0xf9, 2}, /* BLACK CIRCLE */
 	{_e007U, 0xda, 2}, /* bracelefttp -> light down and right */
 	{_e008U, 0xc0, 2}, /* braceleftbt -> light up and right */
 	{_e009U, 0xbf, 2}, /* bracerighttp -> light down and left */
@@ -325,6 +335,34 @@ static const struct {
 	{0x00e3, 0x61, 1}, /* LATIN SMALL LETTER A WITH TILDE -> a */
 	{0x00f5, 0x6f, 1}, /* LATIN SMALL LETTER O WITH TILDE -> o */
 	{0x00fd, 0x79, 1}, /* LATIN SMALL LETTER Y WITH ACUTE -> y */
+	{0x010c, 0x43, 1}, /* LATIN CAPITAL LETTER C WITH CARON -> C */
+	{0x010d, 0x63, 1}, /* LATIN SMALL LETTER C WITH CARON -> c */
+	{0x011a, 0x45, 1}, /* LATIN CAPITAL LETTER A WITH CARON -> A */
+	{0x011b, 0x65, 1}, /* LATIN SMALL LETTER A WITH CARON -> a */
+	{0x013d, 0x4c, 1}, /* LATIN CAPITAL LETTER L WITH CARON -> L */
+	{0x013e, 0x6c, 1}, /* LATIN SMALL LETTER L WITH CARON -> l */
+	{0x0147, 0x4e, 1}, /* LATIN CAPITAL LETTER N WITH CARON -> N */
+	{0x0148, 0x6e, 1}, /* LATIN SMALL LETTER N WITH CARON -> n */
+	{0x0150, 0x99, 1}, /* LATIN CAPITAL LETTER O WITH DOUBLE ACUTE */
+	{0x0151, 0x94, 1}, /* LATIN SMALL LETTER O WITH DOUBLE ACUTE */
+	{0x0158, 0x52, 1}, /* LATIN CAPITAL LETTER R WITH CARON -> R */
+	{0x0159, 0x72, 1}, /* LATIN SMALL LETTER R WITH CARON -> r */
+	{0x0160, 0x53, 1}, /* LATIN CAPITAL LETTER S WITH CARON -> S */
+	{0x0161, 0x73, 1}, /* LATIN SMALLLETTER S WITH CARON -> s */
+	{0x0164, 0x54, 1}, /* LATIN CAPITAL LETTER T WITH CARON -> T */
+	{0x0165, 0x74, 1}, /* LATIN SMALL LETTER T WITH CARON -> t */
+	{0x016c, 0x55, 1}, /* LATIN CAPITAL LETTER U WITH BREVE -> U */
+	{0x016d, 0x75, 1}, /* LATIN SMALL LETTER U WITH BREVE -> u */
+	{0x016e, 0x55, 1}, /* LATIN CAPITAL LETTER U WITH RING ABOVE -> U */
+	{0x016f, 0x75, 1}, /* LATIN SMALL LETTER U WITH RING ABOVE -> u */
+	{0x0170, 0x9a, 1}, /* LATIN CAPITAL LETTER U WITH DOUBLE ACUTE */
+	{0x0171, 0x81, 1}, /* LATIN SMALL LETTER U WITH DOUBLE ACUTE */
+	{0x017d, 0x5a, 1}, /* LATIN CAPITAL LETTER Z WITH CARON -> Z */
+	{0x017e, 0x7a, 1}, /* LATIN SMALL LETTER Z WITH CARON -> z */
+	{0x201e, 0x22, 1}, /* DOUBLE LOW QUOTATION MARK -> " */
+	{0x2026, 0x5f, 1}, /* HORIZONTAL ELLIPSIS -> _ */
+	{0x25a1, 0xfe, 1}, /* WHITE SQUARE */
+	{0x2606, 0x2a, 1}, /* WHITE STAR -> * */
 };
 
 int

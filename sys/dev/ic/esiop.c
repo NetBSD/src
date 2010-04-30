@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.49 2009/10/19 18:41:12 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.49.2.1 2010/04/30 14:43:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.49 2009/10/19 18:41:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.49.2.1 2010/04/30 14:43:15 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1533,6 +1533,8 @@ esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    target);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    esiop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1560,6 +1562,8 @@ esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    target, lun);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    esiop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1577,8 +1581,11 @@ esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			aprint_error_dev(sc->sc_c.sc_dev,
 			    "unable to load cmd DMA map: %d\n",
 			    error);
-			xs->error = XS_DRIVER_STUFFUP;
+			xs->error = (error == EAGAIN) ?
+			    XS_RESOURCE_SHORTAGE : XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
+			esiop_cmd->cmd_c.status = CMDST_FREE;
+			TAILQ_INSERT_TAIL(&sc->free_list, esiop_cmd, next);
 			splx(s);
 			return;
 		}
@@ -1590,12 +1597,16 @@ esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (error) {
 				aprint_error_dev(sc->sc_c.sc_dev,
-				    "unable to load cmd DMA map: %d",
+				    "unable to load data DMA map: %d",
 				    error);
-				xs->error = XS_DRIVER_STUFFUP;
+				xs->error = (error == EAGAIN) ?
+				    XS_RESOURCE_SHORTAGE : XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
 				bus_dmamap_unload(sc->sc_c.sc_dmat,
 				    esiop_cmd->cmd_c.dmamap_cmd);
+				esiop_cmd->cmd_c.status = CMDST_FREE;
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    esiop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1819,7 +1830,7 @@ esiop_timeout(void *v)
 	    (u_long)(bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSP)
 	    - sc->sc_c.sc_scriptaddr),
 	    bus_space_read_4(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_DSA));
-	bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_CTEST2);
+	(void)bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_CTEST2);
 	printf("istat 0x%x\n",
 	    bus_space_read_1(sc->sc_c.sc_rt, sc->sc_c.sc_rh, SIOP_ISTAT));
 #else
@@ -1917,8 +1928,7 @@ esiop_morecbd(struct esiop_softc *sc)
 		goto bad0;
 	}
 #ifdef DEBUG
-	printf("%s: alloc newcdb at PHY addr 0x%lx\n",
-	    device_xname(sc->sc_c.sc_dev),
+	aprint_debug_dev(sc->sc_c.sc_dev, "alloc newcdb at PHY addr 0x%lx\n",
 	    (unsigned long)newcbd->xferdma->dm_segs[0].ds_addr);
 #endif
 	for (i = 0; i < SIOP_NCMDPB; i++) {

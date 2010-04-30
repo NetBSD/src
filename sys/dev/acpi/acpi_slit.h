@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_slit.h,v 1.2 2009/12/04 10:42:39 njoly Exp $ */
+/* $NetBSD: acpi_slit.h,v 1.2.2.1 2010/04/30 14:43:06 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef ACPI_SLIT_H
-#define ACPI_SLIT_H
+#ifndef _SYS_DEV_ACPI_ACPI_SLIT_H
+#define _SYS_DEV_ACPI_ACPI_SLIT_H
 
 /* Returns true if ACPI SLIT table is available
  * If table does not exist, all functions below
@@ -51,4 +51,4 @@ uint32_t acpislit_cpus(void);
 /* Get distance between cpu1 and cpu2 */
 uint32_t acpislit_distance(uint32_t, uint32_t);
 
-#endif /* ACPI_SLIT_H */
+#endif	/* !_SYS_DEV_ACPI_ACPI_SLIT_H */

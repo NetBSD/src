@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.77 2009/10/21 21:12:05 rmind Exp $	*/
+/*	$NetBSD: iop.c,v 1.77.2.1 2010/04/30 14:43:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.77 2009/10/21 21:12:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.77.2.1 2010/04/30 14:43:12 uebayasi Exp $");
 
 #include "iop.h"
 
@@ -928,7 +928,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 	    BUS_DMASYNC_PREWRITE);
 	memset(st, 0, sizeof(*st));
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*st),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_POSTWRITE);
 
 	if ((rv = iop_post(sc, (u_int32_t *)&mf)) != 0)
 		return (rv);
@@ -990,17 +990,17 @@ iop_ofifo_init(struct iop_softc *sc)
 	mb[0] += 2 << 16;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_POSTWRITE);
 	*sw = 0;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTWRITE);
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	if ((rv = iop_post(sc, mb)) != 0)
 		return (rv);
 
 	POLL(5000,
 	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_POSTREAD),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD),
 	    *sw == htole32(I2O_EXEC_OUTBOUND_INIT_COMPLETE)));
 
 	if (*sw != htole32(I2O_EXEC_OUTBOUND_INIT_COMPLETE)) {
@@ -1535,7 +1535,7 @@ iop_reset(struct iop_softc *sc)
 	mf.statushigh = (u_int32_t)((u_int64_t)pa >> 32);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_POSTWRITE);
 	*sw = htole32(0);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
@@ -1545,7 +1545,7 @@ iop_reset(struct iop_softc *sc)
 
 	POLL(2500,
 	    (bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
-	    BUS_DMASYNC_POSTREAD), *sw != 0));
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD), *sw != 0));
 	if (*sw != htole32(I2O_RESET_IN_PROGRESS)) {
 		aprint_error_dev(&sc->sc_dv, "reset rejected, status 0x%x\n",
 		    le32toh(*sw));

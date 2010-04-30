@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.64 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.64.2.1 2010/04/30 14:43:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.64 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.64.2.1 2010/04/30 14:43:37 uebayasi Exp $");
 
 #include "rnd.h"
 
@@ -207,9 +207,9 @@ void sk_setfilt(struct sk_if_softc *, void *, int);
 void sk_setmulti(struct sk_if_softc *);
 void sk_tick(void *);
 
-static bool skc_suspend(device_t dv, pmf_qual_t qual);
-static bool skc_resume(device_t dv, pmf_qual_t qual);
-static bool sk_resume(device_t dv, pmf_qual_t qual);
+static bool skc_suspend(device_t, const pmf_qual_t *);
+static bool skc_resume(device_t, const pmf_qual_t *);
+static bool sk_resume(device_t dv, const pmf_qual_t *);
 
 /* #define SK_DEBUG 2 */
 #ifdef SK_DEBUG
@@ -1966,8 +1966,7 @@ sk_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 	if (pkts == 0)
 		return;
@@ -2101,8 +2100,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 
 		ifp->if_ipackets++;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		/* pass it on. */
 		(*ifp->if_input)(ifp, m);
 	}
@@ -2948,7 +2946,7 @@ sk_stop(struct ifnet *ifp, int disable)
 /* Power Management Framework */
 
 static bool
-skc_suspend(device_t dv, pmf_qual_t qual)
+skc_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_softc *sc = device_private(dv);
 
@@ -2961,7 +2959,7 @@ skc_suspend(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-skc_resume(device_t dv, pmf_qual_t qual)
+skc_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_softc *sc = device_private(dv);
 
@@ -2974,7 +2972,7 @@ skc_resume(device_t dv, pmf_qual_t qual)
 }
 
 static bool
-sk_resume(device_t dv, pmf_qual_t qual)
+sk_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct sk_if_softc *sc_if = device_private(dv);
 

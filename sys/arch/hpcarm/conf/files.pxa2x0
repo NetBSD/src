@@ -1,0 +1,31 @@
+#	$NetBSD: files.pxa2x0,v 1.1.2.2 2010/04/30 14:39:25 uebayasi Exp $
+#
+# PXA2x0 specific configuration info
+#
+
+file	arch/hpcarm/hpcarm/pxa2x0_hpc_machdep.c
+
+# Include hpcarm/XScale config definitions.
+include "arch/arm/xscale/files.pxa2x0"
+
+#
+# W-ZERO3 specific configuration info
+#
+
+# LCD frame buffer
+attach lcd at pxaip with wzero3lcd
+file arch/hpcarm/dev/wzero3_lcd.c	wzero3lcd needs-flag
+
+# keyboard
+device wzero3kbd: hpckbdif, sysmon_power, sysmon_taskq
+attach wzero3kbd at pxaip
+file arch/hpcarm/dev/wzero3_kbd.c	wzero3kbd
+
+# MMC/SD controller
+attach pxamci at pxaip with wzero3mci
+file arch/hpcarm/dev/wzero3_mci.c	wzero3mci
+
+# USB power control
+device wzero3usb
+attach wzero3usb at pxaip
+file arch/hpcarm/dev/wzero3_usb.c	wzero3usb

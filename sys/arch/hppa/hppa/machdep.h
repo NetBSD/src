@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.12 2009/08/11 17:04:18 matt Exp $	*/
+/*	$NetBSD: machdep.h,v 1.12.2.1 2010/04/30 14:39:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,6 @@ void hppa_fpu_flush(struct lwp *);
 void hppa_fpu_emulate(struct trapframe *, struct lwp *, u_int);
 
 /* Interrupt dispatching. */
-extern u_int hppa_intr_depth;
 void hppa_intr(struct trapframe *);
 
 /* Special pmap functions. */

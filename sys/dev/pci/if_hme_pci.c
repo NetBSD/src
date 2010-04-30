@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.31 2010/01/20 22:58:37 martin Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.31.2.1 2010/04/30 14:43:35 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.31 2010/01/20 22:58:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.31.2.1 2010/04/30 14:43:35 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_hme_pci.c,v 1.31 2010/01/20 22:58:37 martin Exp $
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ic/hmevar.h>
+
+#define PCI_HME_BASEADDR	PCI_BAR(0)
 
 struct hme_pci_softc {
 	struct	hme_softc	hsc_hme;	/* HME device */
@@ -142,24 +144,26 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": Sun Happy Meal Ethernet, rev. %d\n",
 	    PCI_REVISION(pa->pa_class));
+	aprint_naive(": Ethernet controller\n");
+
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_HME_BASEADDR);
 
 	/*
 	 * enable io/memory-space accesses.  this is kinda of gross; but
-	 # the hme comes up with neither IO space enabled, or memory space.
+	 * the hme comes up with neither IO space enabled, or memory space.
 	 */
-	if (pa->pa_memt)
+	switch (type) {
+	case PCI_MAPREG_TYPE_MEM:
 		pa->pa_flags |= PCI_FLAGS_MEM_ENABLED;
-	if (pa->pa_iot)
-		pa->pa_flags |= PCI_FLAGS_IO_ENABLED;
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	if (pa->pa_memt) {
-		type = PCI_MAPREG_TYPE_MEM;
 		csr |= PCI_COMMAND_MEM_ENABLE;
 		sc->sc_bustag = pa->pa_memt;
-	} else {
-		type = PCI_MAPREG_TYPE_IO;
+		break;
+	case PCI_MAPREG_TYPE_IO:
+		pa->pa_flags |= PCI_FLAGS_IO_ENABLED;
 		csr |= PCI_COMMAND_IO_ENABLE;
 		sc->sc_bustag = pa->pa_iot;
+		break;
 	}
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MEM_ENABLE);
@@ -178,7 +182,6 @@ hmeattach_pci(device_t parent, device_t self, void *aux)
 	 *
 	 */
 
-#define PCI_HME_BASEADDR	0x10
 	if (pci_mapreg_map(pa, PCI_HME_BASEADDR, type, 0,
 	    &hsc->hsc_memt, &hsc->hsc_memh, NULL, NULL) != 0) {
 		aprint_error_dev(self, "unable to map device registers\n");

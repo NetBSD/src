@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.11 2010/04/28 08:31:05 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.12 2010/04/30 14:39:07 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -213,7 +213,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.11 2010/04/28 08:31:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.12 2010/04/30 14:39:07 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2706,7 +2706,7 @@ pmap_page_remove(struct vm_page *pg)
 
 	if (flush) {
 		/*
-		 * Note: We can't use pmap_tlb_flush{I,}D() here since that
+		 * Note: We can't use pmap_tlb_flush{I,D}() here since that
 		 * would need a subsequent call to pmap_update() to ensure
 		 * curpm->pm_cstate.cs_all is reset. Our callers are not
 		 * required to do that (see pmap(9)), so we can't modify

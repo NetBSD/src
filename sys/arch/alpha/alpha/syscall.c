@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.35 2009/11/21 05:35:41 rmind Exp $ */
+/* $NetBSD: syscall.c,v 1.35.2.1 2010/04/30 14:39:02 uebayasi Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.35 2009/11/21 05:35:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.35.2.1 2010/04/30 14:39:02 uebayasi Exp $");
 
 #include "opt_sa.h"
 
@@ -338,7 +338,7 @@ child_return(void *arg)
 	struct lwp *l = arg;
 
 	/*
-	 * Return values in the frame set by cpu_fork().
+	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 
 	userret(l);

@@ -231,7 +231,7 @@ makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 
 # disk/mass storage pseudo-devices
 #pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter

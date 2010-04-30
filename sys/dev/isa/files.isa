@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.158 2010/01/19 12:41:41 pooka Exp $
+#	$NetBSD: files.isa,v 1.158.2.1 2010/04/30 14:43:26 uebayasi Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -451,9 +451,15 @@ device	smsc: sysmon_envsys
 attach	smsc at isa with smsc
 file	dev/isa/smsc.c			smsc			needs-flag
 
+# Winbond LPC Super I/O
+device	wbsio {}
+attach	wbsio at isa
+file	dev/isa/wbsio.c			wbsio
+
 # LM78 temp/fanspeed monitor
 attach	lm at isa with lm_isa
-file	dev/isa/lm_isa.c		lm_isa
+attach	lm at wbsio with lm_wbsio
+file	dev/isa/lm_isa.c		lm_isa | lm_wbsio
 
 # iTE Super I/O with hardware monitor
 device	itesio: sysmon_envsys, sysmon_wdog
@@ -521,4 +527,3 @@ file	dev/isa/toaster.c		toaster
 # ISA PnP devices often use `device' declarations listed in this file.
 #
 include	"dev/isapnp/files.isapnp"
-

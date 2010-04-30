@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.13 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: bwi.c,v 1.13.2.1 2010/04/30 14:43:13 uebayasi Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.13 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.13.2.1 2010/04/30 14:43:13 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.13 2010/01/19 22:06:24 pooka Exp $");
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
 #include <machine/endian.h>
 
 #include <dev/firmload.h>
@@ -1024,7 +1024,7 @@ bwi_attach(struct bwi_softc *sc)
 
 	ieee80211_media_init(ic, bwi_media_change, ieee80211_media_status);
 
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
 	    &sc->sc_drvbpf);
 
@@ -1056,7 +1056,7 @@ bwi_detach(struct bwi_softc *sc)
 
 	bwi_stop(ifp, 1);
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 
 	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
@@ -7442,8 +7442,7 @@ bwi_start(struct ifnet *ifp)
 			   filtered?  Different drivers appear to do it
 			   at different times.] */
 			/* TODO: PS */
-			if (ifp->if_bpf != NULL)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			m = ieee80211_encap(ic, m, ni);
 			if (m == NULL) {
 				ifp->if_oerrors++;
@@ -7451,8 +7450,7 @@ bwi_start(struct ifnet *ifp)
 				continue;
 			}
 		}
-		if (ic->ic_rawbpf != NULL)
-			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m);
 
 		wh = mtod(m, struct ieee80211_frame *);
 		/* [TRC: XXX What about ic->ic_flags & IEEE80211_F_PRIVACY?] */
@@ -8519,7 +8517,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 			mb.m_nextpkt = NULL;
 			mb.m_type = 0;
 			mb.m_flags = 0;
-			bpf_ops->bpf_mtap(sc->sc_drvbpf, &mb);
+			bpf_mtap3(sc->sc_drvbpf, &mb);
 		}
 
 		m_adj(m, -IEEE80211_CRC_LEN);
@@ -9095,7 +9093,7 @@ bwi_encap(struct bwi_softc *sc, int idx, struct mbuf *m,
 		mb.m_nextpkt = NULL;
 		mb.m_type = 0;
 		mb.m_flags = 0;
-		bpf_ops->bpf_mtap(sc->sc_drvbpf, &mb);
+		bpf_mtap3(sc->sc_drvbpf, &mb);
 	}
 
 	/*
@@ -9714,7 +9712,7 @@ bwi_calc_rssi(struct bwi_softc *sc, const struct bwi_rxbuf_hdr *hdr)
 }
 
 bool
-bwi_suspend(device_t dv, pmf_qual_t qual)
+bwi_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct bwi_softc *sc = device_private(dv);
 
@@ -9724,7 +9722,7 @@ bwi_suspend(device_t dv, pmf_qual_t qual)
 }
 
 bool
-bwi_resume(device_t dv, pmf_qual_t qual)
+bwi_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct bwi_softc *sc = device_private(dv);
 

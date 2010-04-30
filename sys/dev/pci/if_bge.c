@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.180 2010/02/03 15:36:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.180.2.1 2010/04/30 14:43:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180 2010/02/03 15:36:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.2.1 2010/04/30 14:43:33 uebayasi Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -757,13 +757,12 @@ bge_set_max_readrq(struct bge_softc *sc)
 	    + PCI_PCIE_DCSR);
 	if ((val & PCI_PCIE_DCSR_MAX_READ_REQ) !=
 	    BGE_PCIE_DEVCTL_MAX_READRQ_4096) {
-			printf("adjust device control 0x%04x ",
-			    val);
+		aprint_verbose("adjust device control 0x%04x ", val);
 		val &= ~PCI_PCIE_DCSR_MAX_READ_REQ;
 		val |= BGE_PCIE_DEVCTL_MAX_READRQ_4096;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
 		    + PCI_PCIE_DCSR, val);
-			printf("-> 0x%04x\n", val);
+		aprint_verbose("-> 0x%04x\n", val);
 	}
 }
 
@@ -3224,8 +3223,15 @@ bge_reset(struct bge_softc *sc)
 
 
 	/* Step 21: 5822 B0 errata */
-	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX)
-		BGE_SETBIT(sc, 0x66, 1 << 13 | 1 << 12 | 1 << 10);
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
+		pcireg_t msidata;
+		
+		msidata = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+		    BGE_PCI_MSI_DATA);
+		msidata |= ((1 << 13 | 1 << 12 | 1 << 10) << 16);
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MSI_DATA,
+		    msidata);
+	}
 
 	/* Step 23: restore cache line size */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ, cachesize);
@@ -3420,8 +3426,7 @@ bge_rxeof(struct bge_softc *sc)
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		m->m_pkthdr.csum_flags = M_CSUM_IPv4;
 
@@ -4237,8 +4242,7 @@ bge_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 	if (pkts == 0)
 		return;

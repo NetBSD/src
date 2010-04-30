@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.8.2.1 2010/04/28 08:25:33 uebayasi Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.8.2.2 2010/04/30 14:39:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.8.2.1 2010/04/28 08:25:33 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.8.2.2 2010/04/30 14:39:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,8 +341,7 @@ dump_misc_init(void)
 			max_paddr = top;
 	}
 #ifdef DUMP_DEBUG
-	printf("dump_misc_init: max_paddr = 0x%lx\n",
-	    (unsigned long)max_paddr);
+	printf("dump_misc_init: max_paddr = %#" PRIxPADDR "\n", max_paddr);
 #endif
 
 	sparse_dump_physmap = (void*)uvm_km_alloc(kernel_map,

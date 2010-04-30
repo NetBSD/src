@@ -1,4 +1,4 @@
-/* $NetBSD: unicode.h,v 1.3 2001/12/02 01:04:26 ross Exp $ */
+/* $NetBSD: unicode.h,v 1.3.140.1 2010/04/30 14:43:54 uebayasi Exp $ */
 
 /*
  * some private character definitions for stuff not found
@@ -7,11 +7,6 @@
  */
 
 #define _e000U 0xe000 /* mirrored question mark? */
-#define _e001U 0xe001 /* scan 1 */
-#define _e002U 0xe002 /* scan 3 */
-#define _e003U 0xe003 /* scan 5 */
-#define _e004U 0xe004 /* scan 7 */
-#define _e005U 0xe005 /* scan 9 */
 #define _e006U 0xe006 /* N/L control */
 #define _e007U 0xe007 /* bracelefttp */
 #define _e008U 0xe008 /* braceleftbt */

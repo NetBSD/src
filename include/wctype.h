@@ -1,4 +1,4 @@
-/*	$NetBSD: wctype.h,v 1.6 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: wctype.h,v 1.6.44.1 2010/04/30 14:36:18 uebayasi Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -32,7 +32,7 @@
 #define	_WCTYPE_H_
 
 #include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <sys/ansi.h>
 
 #ifdef	_BSD_WINT_T_
 typedef	_BSD_WINT_T_    wint_t;

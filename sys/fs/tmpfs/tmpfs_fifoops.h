@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.h,v 1.6 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.h,v 1.6.20.1 2010/04/30 14:44:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,10 +48,10 @@
 
 extern int (**tmpfs_fifoop_p)(void *);
 
-#define	tmpfs_fifo_lookup	fifo_lookup
-#define	tmpfs_fifo_create	fifo_create
-#define	tmpfs_fifo_mknod	fifo_mknod
-#define	tmpfs_fifo_open		fifo_open
+#define	tmpfs_fifo_lookup	vn_fifo_bypass
+#define	tmpfs_fifo_create	vn_fifo_bypass
+#define	tmpfs_fifo_mknod	vn_fifo_bypass
+#define	tmpfs_fifo_open		vn_fifo_bypass
 int	tmpfs_fifo_close	(void *);
 #define	tmpfs_fifo_access	tmpfs_access
 #define	tmpfs_fifo_getattr	tmpfs_getattr
@@ -59,35 +59,35 @@ int	tmpfs_fifo_close	(void *);
 int	tmpfs_fifo_read		(void *);
 int	tmpfs_fifo_write	(void *);
 #define	tmpfs_fifo_fcntl	tmpfs_fcntl
-#define	tmpfs_fifo_ioctl	fifo_ioctl
-#define	tmpfs_fifo_poll		fifo_poll
-#define	tmpfs_fifo_kqfilter	fifo_kqfilter
-#define	tmpfs_fifo_revoke	fifo_revoke
-#define	tmpfs_fifo_mmap		fifo_mmap
-#define	tmpfs_fifo_fsync	fifo_fsync
-#define	tmpfs_fifo_seek		fifo_seek
-#define	tmpfs_fifo_remove	fifo_remove
-#define	tmpfs_fifo_link		fifo_link
-#define	tmpfs_fifo_rename	fifo_rename
-#define	tmpfs_fifo_mkdir	fifo_mkdir
-#define	tmpfs_fifo_rmdir	fifo_rmdir
-#define	tmpfs_fifo_symlink	fifo_symlink
-#define	tmpfs_fifo_readdir	fifo_readdir
-#define	tmpfs_fifo_readlink	fifo_readlink
-#define	tmpfs_fifo_abortop	fifo_abortop
+#define	tmpfs_fifo_ioctl	vn_fifo_bypass
+#define	tmpfs_fifo_poll		vn_fifo_bypass
+#define	tmpfs_fifo_kqfilter	vn_fifo_bypass
+#define	tmpfs_fifo_revoke	vn_fifo_bypass
+#define	tmpfs_fifo_mmap		vn_fifo_bypass
+#define	tmpfs_fifo_fsync	vn_fifo_bypass
+#define	tmpfs_fifo_seek		vn_fifo_bypass
+#define	tmpfs_fifo_remove	vn_fifo_bypass
+#define	tmpfs_fifo_link		vn_fifo_bypass
+#define	tmpfs_fifo_rename	vn_fifo_bypass
+#define	tmpfs_fifo_mkdir	vn_fifo_bypass
+#define	tmpfs_fifo_rmdir	vn_fifo_bypass
+#define	tmpfs_fifo_symlink	vn_fifo_bypass
+#define	tmpfs_fifo_readdir	vn_fifo_bypass
+#define	tmpfs_fifo_readlink	vn_fifo_bypass
+#define	tmpfs_fifo_abortop	vn_fifo_bypass
 #define	tmpfs_fifo_inactive	tmpfs_inactive
 #define	tmpfs_fifo_reclaim	tmpfs_reclaim
 #define	tmpfs_fifo_lock		tmpfs_lock
 #define	tmpfs_fifo_unlock	tmpfs_unlock
-#define	tmpfs_fifo_bmap		fifo_bmap
-#define	tmpfs_fifo_strategy	fifo_strategy
+#define	tmpfs_fifo_bmap		vn_fifo_bypass
+#define	tmpfs_fifo_strategy	vn_fifo_bypass
 #define	tmpfs_fifo_print	tmpfs_print
-#define	tmpfs_fifo_pathconf	fifo_pathconf
+#define	tmpfs_fifo_pathconf	vn_fifo_bypass
 #define	tmpfs_fifo_islocked	tmpfs_islocked
-#define	tmpfs_fifo_advlock	fifo_advlock
+#define	tmpfs_fifo_advlock	vn_fifo_bypass
 #define	tmpfs_fifo_bwrite	tmpfs_bwrite
 #define	tmpfs_fifo_getpages	genfs_badop
-#define	tmpfs_fifo_putpages	fifo_putpages
+#define	tmpfs_fifo_putpages	vn_fifo_bypass
 
 /* --------------------------------------------------------------------- */
 #endif /* _FS_TMPFS_TMPFS_FIFOOPS_H_ */

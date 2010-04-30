@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.59 2008/05/30 20:10:02 tsutsui Exp $
+#	$NetBSD: POWERMAC,v 1.59.18.1 2010/04/30 14:39:34 uebayasi Exp $
 #
 # POWERMAC config file
 #
@@ -128,7 +128,7 @@ pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm
 pseudo-device	clockctl		# user control of clock subsystem

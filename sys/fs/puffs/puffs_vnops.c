@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.142 2010/01/14 14:44:13 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.142.2.1 2010/04/30 14:44:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.142 2010/01/14 14:44:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.142.2.1 2010/04/30 14:44:07 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -202,45 +202,45 @@ const struct vnodeopv_desc puffs_specop_opv_desc =
 int (**puffs_fifoop_p)(void *);
 const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, fifo_lookup },		/* lookup, ENOTDIR */
-	{ &vop_create_desc, fifo_create },		/* genfs_badop */
-	{ &vop_mknod_desc, fifo_mknod },		/* genfs_badop */
-	{ &vop_open_desc, fifo_open },			/* open */
-	{ &vop_close_desc, fifo_close },		/* close */
+	{ &vop_lookup_desc, vn_fifo_bypass },		/* lookup, ENOTDIR */
+	{ &vop_create_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_mknod_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_open_desc, vn_fifo_bypass },		/* open */
+	{ &vop_close_desc, vn_fifo_bypass },		/* close */
 	{ &vop_access_desc, puffs_vnop_checkop },	/* access */
 	{ &vop_getattr_desc, puffs_vnop_checkop },	/* getattr */
 	{ &vop_setattr_desc, puffs_vnop_checkop },	/* setattr */
 	{ &vop_read_desc, puffs_vnop_fifo_read },	/* read, update */
 	{ &vop_write_desc, puffs_vnop_fifo_write },	/* write, update */
-	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
+	{ &vop_ioctl_desc, vn_fifo_bypass },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
-	{ &vop_poll_desc, fifo_poll },			/* poll */
-	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
-	{ &vop_revoke_desc, fifo_revoke },		/* genfs_revoke */
-	{ &vop_mmap_desc, fifo_mmap },			/* genfs_badop */
-	{ &vop_fsync_desc, fifo_fsync },		/* genfs_nullop*/
-	{ &vop_seek_desc, fifo_seek },			/* genfs_badop */
-	{ &vop_remove_desc, fifo_remove },		/* genfs_badop */
-	{ &vop_link_desc, fifo_link },			/* genfs_badop */
-	{ &vop_rename_desc, fifo_rename },		/* genfs_badop */
-	{ &vop_mkdir_desc, fifo_mkdir },		/* genfs_badop */
-	{ &vop_rmdir_desc, fifo_rmdir },		/* genfs_badop */
-	{ &vop_symlink_desc, fifo_symlink },		/* genfs_badop */
-	{ &vop_readdir_desc, fifo_readdir },		/* genfs_badop */
-	{ &vop_readlink_desc, fifo_readlink },		/* genfs_badop */
-	{ &vop_abortop_desc, fifo_abortop },		/* genfs_badop */
+	{ &vop_poll_desc, vn_fifo_bypass },		/* poll */
+	{ &vop_kqfilter_desc, vn_fifo_bypass },		/* kqfilter */
+	{ &vop_revoke_desc, vn_fifo_bypass },		/* genfs_revoke */
+	{ &vop_mmap_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_fsync_desc, vn_fifo_bypass },		/* genfs_nullop*/
+	{ &vop_seek_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_remove_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_link_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_rename_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_mkdir_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_rmdir_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_symlink_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_readdir_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_readlink_desc, vn_fifo_bypass },		/* genfs_badop */
+	{ &vop_abortop_desc, vn_fifo_bypass },		/* genfs_badop */
 	{ &vop_inactive_desc, puffs_vnop_inactive },	/* REAL inactive */
 	{ &vop_reclaim_desc, puffs_vnop_reclaim },	/* REAL reclaim */
 	{ &vop_lock_desc, puffs_vnop_lock },		/* REAL lock */
 	{ &vop_unlock_desc, puffs_vnop_unlock },	/* REAL unlock */
-	{ &vop_bmap_desc, fifo_bmap },			/* dummy */
-	{ &vop_strategy_desc, fifo_strategy },		/* genfs_badop */
+	{ &vop_bmap_desc, vn_fifo_bypass },		/* dummy */
+	{ &vop_strategy_desc, vn_fifo_bypass },		/* genfs_badop */
 	{ &vop_print_desc, puffs_vnop_print },		/* REAL print */
 	{ &vop_islocked_desc, puffs_vnop_islocked },	/* REAL islocked */
-	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
-	{ &vop_advlock_desc, fifo_advlock },		/* genfs_einval */
+	{ &vop_pathconf_desc, vn_fifo_bypass },		/* pathconf */
+	{ &vop_advlock_desc, vn_fifo_bypass },		/* genfs_einval */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
-	{ &vop_putpages_desc, fifo_putpages }, 		/* genfs_null_putpages*/
+	{ &vop_putpages_desc, vn_fifo_bypass }, 	/* genfs_null_putpages*/
 #if 0
 	{ &vop_openextattr_desc, _openextattr },	/* openextattr */
 	{ &vop_closeextattr_desc, _closeextattr },	/* closeextattr */
@@ -2056,9 +2056,10 @@ puffs_vnop_print(void *v)
 
 	/* kernel portion */
 	printf("tag VT_PUFFS, vnode %p, puffs node: %p,\n"
-	    "    userspace cookie: %p\n", vp, pn, pn->pn_cookie);
+	    "\tuserspace cookie: %p", vp, pn, pn->pn_cookie);
 	if (vp->v_type == VFIFO)
-		fifo_printinfo(vp);
+		VOCALL(fifo_vnodeop_p, VOFFSET(vop_print), v);
+	printf("\n");
 
 	/* userspace portion */
 	if (EXISTSOP(pmp, PRINT)) {

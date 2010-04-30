@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2008/01/19 13:11:17 chris Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.30.1 2010/04/30 14:39:25 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_cputypes.h"
 #include "assym.h"
 #include <sys/syscall.h>
 #include <sys/errno.h>
@@ -38,6 +39,11 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/param.h>
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
+#include <arm/armreg.h>
+#include <arm/arm32/pte.h>
+#include <arm/arm32/pmap.h>     /* for PMAP_DOMAIN_KERNEL */
+#endif
 
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
@@ -53,7 +59,7 @@ ASENTRY_NP(start)
 	/* Put the processer in SVC mode */
 	mov	r5, sp
 	mrs	r4, cpsr_all
-	bic	r4, r4, #31
+	bic	r4, r4, #(PSR_MODE)
 	orr	r4, r4, #(PSR_SVC32_MODE)
 	msr	cpsr_all, r4
 	mov	sp, r5
@@ -61,6 +67,95 @@ ASENTRY_NP(start)
 	/* Disable PID virtual address mapping */
 	mov	r4, #0
 	mcr	15, 0, r4, c13, c0, 0
+
+#if defined(CPU_XSCALE_PXA250) || defined(CPU_XSCALE_PXA270)
+/*
+ * CPWAIT -- Canonical method to wait for CP15 update.
+ * NOTE: Clobbers the specified temp reg.
+ * copied from arm/arm/cpufunc_asm_xscale.S
+ * XXX: better be in a common header file.
+ */
+#define	CPWAIT_BRANCH							 \
+	sub	pc, pc, #4
+
+#define	CPWAIT(tmp)							 \
+	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
+	mov	tmp, tmp		/* wait for it to complete */	;\
+	CPWAIT_BRANCH			/* branch to next insn */
+
+	/*
+	 *  Kernel is loaded in SDRAM (0xa0200000..), and is expected to run
+	 *  in VA 0xc0200000..  
+	 */
+
+	/* build page table from scratch */
+	adr	r9, .Lstartup_pagetable
+	ldr	r9, [r9]
+	adr	r4, .Lmmu_init_table
+	b	3f
+
+2:
+	str	r8, [r9, r7]
+	add	r7, r7, #4
+	add	r8, r8, #(L1_S_SIZE)
+	subs	r6, r6, #1
+	bne	2b
+3:
+	ldmia	r4!, {r6,r7,r8}		/* # of sections, VA, PA|attr */
+	cmp	r6, #0
+	bne	2b
+
+	/* Set translation table */
+	mcr	p15, 0, r9, c2, c0, 0
+	mcr	p15, 0, r9, c8, c7, 0	/* flush I/D-TLBs */
+	CPWAIT(r9)
+
+	/* Set the Domain Access register.  Very important! */
+	mov	r9, #((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT)
+	mcr	p15, 0, r9, c3, c0, 0
+
+	/* Enable MMU */
+	mrc	p15, 0, r9, c1, c0, 0
+	orr	r9, r9, #CPU_CONTROL_SYST_ENABLE
+	orr	r9, r9, #CPU_CONTROL_MMU_ENABLE
+	mcr	p15, 0, r9, c1, c0, 0
+	CPWAIT(r9)
+
+	/* Jump to kernel code in TRUE VA */
+	adr	r9, .Lstart
+	ldmia	r9, {r9, sp}		/* and set stack pointer */
+	mov	pc, r9
+
+.Lstart:
+	.word	hpc_start
+	.word	svcstk + INIT_ARM_STACK_SIZE
+
+#define MMU_INIT(va,pa,n_sec,attr)					\
+	.word	(n_sec);						\
+	.word	4 * ((va) >> L1_S_SHIFT);				\
+	.word	(pa)|(attr);
+
+.Lstartup_pagetable:
+	.word	0xa0004000
+
+.Lmmu_init_table:	
+	/* fill all table VA==PA */
+	MMU_INIT(0x00000000, 0x00000000, 1<<(32-L1_S_SHIFT), L1_TYPE_S|L1_S_AP(AP_KRW))
+	/* map SDRAM VA==PA, WT cacheable */
+	MMU_INIT(0xa0000000, 0xa0000000, 256, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+	/* map VA 0xc0000000..0xcfffffff to PA 0xa0000000..0xafffffff */
+	MMU_INIT(0xc0000000, 0xa0000000, 256, L1_TYPE_S|L1_S_C|L1_S_AP(AP_KRW))
+
+	.word	0,0,0	/* end of table */
+
+	.bss
+svcstk:
+	.space	INIT_ARM_STACK_SIZE
+
+	.text
+	.align	0
+ASENTRY_NP(hpc_start)
+#endif
 
 	mov	fp, #0x00000000		/* trace back starts here */
 	bl	_C_LABEL(initarm)	/* Off we go */
@@ -74,19 +169,12 @@ ASENTRY_NP(start)
 	sub	fp, ip, #4
 
 	/* Setup an initial trap frame for start_init to use */
-
 	PUSHFRAME
-
 	mov	r0, sp			/* parameter to main is trap frame */ 
-
 	bl	_C_LABEL(main)		/* Lets light the flame and start her up */
-
 	PULLFRAME			/* Pull the trap frame, now valid */
-
 	movs	pc, lr			/* Exit to user process */
-
 	/* Never gets here */
-
 	b	.
 
 	.text

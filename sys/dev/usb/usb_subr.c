@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.167 2009/11/12 20:11:35 dyoung Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.167.2.1 2010/04/30 14:43:53 uebayasi Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167 2009/11/12 20:11:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.2.1 2010/04/30 14:43:53 uebayasi Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1158,14 +1158,6 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 
 	USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
 
-	err = usbd_reload_device_desc(dev);
-	if (err) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
-			      "failed\n", addr));
-		usbd_remove_device(dev, up);
-		return (err);
-	}
-
 	/* Set the address */
 	DPRINTFN(5, ("usbd_new_device: setting device address=%d\n", addr));
 	err = usbd_set_address(dev, addr);
@@ -1180,6 +1172,14 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
 	dev->address = addr;	/* new device address now */
 	bus->devices[addr] = dev;
+
+	err = usbd_reload_device_desc(dev);
+	if (err) {
+		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
+			      "failed\n", addr));
+		usbd_remove_device(dev, up);
+		return (err);
+	}
 
 	/* Re-establish the default pipe with the new address. */
 	usbd_kill_pipe(dev->default_pipe);

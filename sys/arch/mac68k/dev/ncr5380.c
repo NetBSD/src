@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.63 2009/10/20 19:10:12 snj Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.63.2.1 2010/04/30 14:39:33 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.63 2009/10/20 19:10:12 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.63.2.1 2010/04/30 14:39:33 uebayasi Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -617,7 +617,7 @@ main_exit:
  * This interrupt can only be triggered when running in non-polled DMA
  * mode. When DMA is not active, it will be silently ignored, it is usually
  * to late because the EOP interrupt of the controller happens just a tiny
- * bit earlier. It might become usefull when scatter/gather is implemented,
+ * bit earlier. It might become useful when scatter/gather is implemented,
  * because in that case only part of the DATAIN/DATAOUT transfer is taken
  * out of a single buffer.
  */

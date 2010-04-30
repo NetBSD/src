@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.176 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.176.2.1 2010/04/30 14:44:18 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.176 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.176.2.1 2010/04/30 14:44:18 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1081,8 +1081,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 
 	LIST_INIT(&ec->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
-	bpf_ops->bpf_attach(ifp, DLT_EN10MB,
-	    sizeof(struct ether_header), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
 #ifdef MBUFTRACE
 	strlcpy(ec->ec_tx_mowner.mo_name, ifp->if_xname,
 	    sizeof(ec->ec_tx_mowner.mo_name));
@@ -1110,7 +1109,7 @@ ether_ifdetach(struct ifnet *ifp)
 		bridge_ifdetach(ifp);
 #endif
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 
 #if NVLAN > 0
 	if (ec->ec_nvlans)

@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.93 2010/01/19 22:28:30 pooka Exp $	*/
+/*	$NetBSD: libkern.h,v 1.93.2.1 2010/04/30 14:44:15 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -208,7 +208,7 @@ tolower(int ch)
 #else /* DIAGNOSTIC */
 #define _DIAGASSERT(a)	assert(a)
 #define	KASSERTMSG(e, msg) do {		\
-	if (__predict_false((e)))	\
+	if (__predict_false(!(e)))	\
 		panic msg;		\
 	} while (/*CONSTCOND*/ 0)
 #ifdef __STDC__
