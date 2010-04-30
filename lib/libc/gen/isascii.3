@@ -1,4 +1,4 @@
-.\"	$NetBSD: isascii.3,v 1.17 2008/04/17 16:40:20 apb Exp $
+.\"	$NetBSD: isascii.3,v 1.18 2010/04/30 04:46:18 jruoho Exp $
 .\"
 .\" Copyright (c) 1989, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)isascii.3	5.1 (Berkeley) 5/2/91
 .\"
-.Dd April 17, 2008
+.Dd April 30, 2010
 .Dt ISASCII 3
 .Os
 .Sh NAME
@@ -75,4 +75,11 @@ is defined on all integer values.
 The
 .Fn isascii
 function conforms to
-.St -xpg4 .
+.St -xpg4
+and
+.St -p1003.1-2001 .
+The
+.St -p1003.1-2008
+revision however marked it as obsolete, noting that
+.Fn isascii
+cannot be used portably in a localized application.
