@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.23 2010/03/08 11:12:32 pooka Exp $	*/
+/*	$NetBSD: gram.y,v 1.24 2010/04/30 20:47:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,7 @@ static	int	adepth;
 #define	new_px(p, x)	new0(NULL, NULL, p, 0, x)
 #define	new_sx(s, x)	new0(NULL, s, NULL, 0, x)
 #define	new_nsx(n,s,x)	new0(n, s, NULL, 0, x)
+#define	new_i(i)	new0(NULL, NULL, NULL, i, NULL)
 
 #define	fx_atom(s)	new0(s, NULL, NULL, FX_ATOM, NULL)
 #define	fx_not(e)	new0(NULL, NULL, NULL, FX_NOT, e)
@@ -108,14 +109,15 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %token	ENDFILE
 %token	XFILE FILE_SYSTEM FLAGS
 %token	IDENT IOCONF
+%token	LINKZERO
 %token	XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS MINOR
 %token	NEEDS_COUNT NEEDS_FLAG NO
 %token	XOBJECT OBSOLETE ON OPTIONS
 %token	PACKAGE PLUSEQ PREFIX PSEUDO_DEVICE PSEUDO_ROOT
 %token	ROOT
-%token	SOURCE
+%token	SINGLE SOURCE
 %token	TYPE
-%token	VERSION
+%token	VECTOR VERSION
 %token	WITH
 %token	<num> NUMBER
 %token	<str> PATHNAME QSTRING WORD EMPTYSTRING
@@ -156,6 +158,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 %type	<list>	subarches_opt subarches
 %type	<str>	filename stringvalue locname mkvarname
 %type	<val>	device_major_block device_major_char
+%type	<list>	devnodes devnodetype devnodeflags devnode_dims
 
 %%
 
@@ -208,8 +211,8 @@ object:
 	XOBJECT filename fopts oflgs	{ addobject($2, $3, $4); };
 
 device_major:
-	DEVICE_MAJOR WORD device_major_char device_major_block fopts
-					{ adddevm($2, $3, $4, $5); };
+	DEVICE_MAJOR WORD device_major_char device_major_block fopts devnodes
+					{ adddevm($2, $3, $4, $5, $6); };
 
 device_major_block:
 	BLOCK NUMBER			{ $$ = $2.val; } |
@@ -242,6 +245,25 @@ fflag:
 	NEEDS_COUNT			{ $$ = FI_NEEDSCOUNT; } |
 	NEEDS_FLAG			{ $$ = FI_NEEDSFLAG; };
 
+devnodes:
+	devnodetype ',' devnodeflags	{ $$ = nvcat($1, $3); } |
+	devnodetype			{ $$ = $1; } |
+	/* empty */			{ $$ = new_s("DEVNODE_DONTBOTHER"); };
+
+devnodetype:
+	SINGLE				{ $$ = new_s("DEVNODE_SINGLE"); } |
+	VECTOR '=' devnode_dims		{ $$ = nvcat(new_s("DEVNODE_VECTOR"), $3); };
+
+devnode_dims:
+	NUMBER ':' NUMBER		{ struct nvlist *__nv1, *__nv2;
+					  __nv1 = new_i($1.val);
+					  __nv2 = new_i($3.val);
+					  $$ = nvcat(__nv1, __nv2); } |
+	NUMBER				{ $$ = new_i($1.val); }
+
+devnodeflags:
+	LINKZERO			{ $$ = new_s("DEVNODE_FLAG_LINKZERO");};
+	
 oflgs:
 	oflgs oflag			{ $$ = $1 | $2; } |
 	/* empty */			{ $$ = 0; };
