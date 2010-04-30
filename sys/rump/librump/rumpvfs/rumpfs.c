@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.44 2010/04/29 22:45:40 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.45 2010/04/30 09:44:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.44 2010/04/29 22:45:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.45 2010/04/30 09:44:38 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -810,8 +810,8 @@ rump_vop_readdir(void *v)
 		struct dirent dent;
 
 		dent.d_fileno = rdent->rd_node->rn_va.va_fileid;
+		strlcpy(dent.d_name, rdent->rd_name, sizeof(dent.d_name));
 		dent.d_namlen = strlen(dent.d_name);
-		strcpy(dent.d_name, rdent->rd_name);
 		dent.d_type = vdmap[rdent->rd_node->rn_va.va_type];
 		dent.d_reclen = _DIRENT_RECLEN(&dent, dent.d_namlen);
 
