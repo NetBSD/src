@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.217 2010/04/23 05:10:19 dholland Exp $	*/
+/*	$NetBSD: vnode.h,v 1.218 2010/04/30 10:03:14 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -649,6 +649,7 @@ int	dorevoke(struct vnode *, kauth_cred_t);
 int	vlockmgr(struct vnlock *, int);
 int	vlockstatus(struct vnlock *);
 int	rawdev_mounted(struct vnode *, struct vnode **);
+uint8_t	vtype2dt(enum vtype);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
