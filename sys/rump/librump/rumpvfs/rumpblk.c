@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.38 2010/04/14 16:05:53 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.39 2010/05/01 14:37:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.38 2010/04/14 16:05:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.39 2010/05/01 14:37:53 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -357,21 +357,21 @@ rumpblk_init(void)
 	}
 
 	evcnt_attach_dynamic(&ev_io_total, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "rumpblk I/O reqs");
+	    "rumpblk", "I/O reqs");
 	evcnt_attach_dynamic(&ev_io_async, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "rumpblk async I/O");
+	    "rumpblk", "async I/O");
 
 	evcnt_attach_dynamic(&ev_bread_total, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "rumpblk bytes read");
+	    "rumpblk", "bytes read");
 	evcnt_attach_dynamic(&ev_bwrite_total, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "rumpblk bytes written");
+	    "rumpblk", "bytes written");
 	evcnt_attach_dynamic(&ev_bwrite_async, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "rumpblk bytes written async");
+	    "rumpblk", "bytes written async");
 
 	evcnt_attach_dynamic(&ev_memblk_hits, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "memblk window hits");
+	    "rumpblk", "window hits");
 	evcnt_attach_dynamic(&ev_memblk_busy, EVCNT_TYPE_MISC, NULL,
-	    "rumpblk", "memblk all windows busy");
+	    "rumpblk", "all windows busy");
 
 	if (blkfail) {
 		return devsw_attach("rumpblk",
