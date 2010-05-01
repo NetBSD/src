@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.4 2010/04/06 15:10:09 nonaka Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.5 2010/05/01 21:14:39 reinoud Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.4 2010/04/06 15:10:09 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.5 2010/05/01 21:14:39 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -438,7 +438,7 @@ sdmmc_print_csd(sdmmc_response resp, struct sdmmc_csd *csd)
 int
 sdmmc_mem_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
-	int error;
+	int error = 0;
 
 	SDMMC_LOCK(sc);
 
