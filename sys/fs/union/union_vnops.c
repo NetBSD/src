@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.34 2010/01/08 11:35:09 pooka Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.35 2010/05/01 10:44:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.34 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.35 2010/05/01 10:44:59 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1795,7 +1795,7 @@ union_islocked(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 
-	return ((VTOUNION(ap->a_vp)->un_flags & UN_LOCKED) ? 1 : 0);
+	return ((VTOUNION(ap->a_vp)->un_flags & UN_LOCKED) ? LK_EXCLUSIVE : 0);
 }
 
 int
