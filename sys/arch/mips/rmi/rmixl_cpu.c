@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.10 2010/04/16 23:50:30 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.11 2010/05/01 06:10:04 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.10 2010/04/16 23:50:30 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.11 2010/05/01 06:10:04 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -298,11 +298,6 @@ cpu_setup_trampoline_common(struct cpu_info *ci, struct rmixl_cpu_trampoline_arg
 	ta->ta_lwp = (uint64_t)(intptr_t)l;
 	ta->ta_cpuinfo = (uint64_t)(intptr_t)ci;
 
-#ifdef DEBUG
-	printf("%s: sp %#"PRIx64", lwp %#"PRIx64", ci %#"PRIx64"\n",
-		__func__, ta->ta_sp, ta->ta_lwp, ta->ta_cpuinfo);
-#endif
-
 	return 0;
 }
 
@@ -321,11 +316,6 @@ cpu_setup_trampoline_callback(struct cpu_info *ci)
 #else
 	wakeup_cpu = (void *)(intptr_t)
 		(rmixl_configuration.rc_psb_info.wakeup & 0xffffffff);
-#endif
-
-#ifdef DEBUG
-	printf("%s:%d: %p, %#"PRIx64"\n", __func__, __LINE__,
-		ta, (uint64_t)1 << ci->ci_cpuid);
 #endif
 
 	rmixlfw_wakeup_cpu(rmixl_cpu_trampoline, (void *)ta,
