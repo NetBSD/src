@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fifos.c,v 1.1 2010/03/29 13:26:32 pooka Exp $	*/
+/*	$NetBSD: t_fifos.c,v 1.2 2010/05/01 10:46:29 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -32,7 +32,7 @@ ATF_TC_HEAD(fifos, tc)
 #else
 #include <err.h>
 #define atf_tc_fail_errno(a) err(1, a)
-#define atf_tc_fail(a, ...) err(1, a)
+#define atf_tc_fail(...) err(1, __VA_ARGS__)
 #endif
 
 #define teststr1 "raving & drooling"
