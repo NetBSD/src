@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.17 2010/04/12 22:40:55 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.18 2010/05/01 06:13:34 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.17 2010/04/12 22:40:55 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.18 2010/05/01 06:13:34 cliff Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -813,13 +813,13 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 	for (;;) {
 		rmixl_intrhand_t *ih;
 		uint64_t eirr;
+		uint64_t eimr;
 		uint64_t vecbit;
 		int vec;
 
 		asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
 
 #ifdef IOINTR_DEBUG
-		uint64_t eimr;
 		asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
 		printf("%s: eirr %#"PRIx64", eimr %#"PRIx64", mask %#"PRIx64"\n",
 			__func__, eirr, eimr, ipl_eimr_map[ipl-1]);
@@ -833,14 +833,16 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 		vec = 63 - dclz(eirr);
 		ih = &rmixl_intrhand[vec];
 
-		int s = splhigh();
+		asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
+		asm volatile("dmtc0 $0, $9, 7;");
 		vecbit = 1ULL << vec;
+		KASSERT ((vecbit & eimr) == 0);
 		KASSERT ((vecbit & RMIXL_EIRR_PRESERVE_MASK) == 0);
 		asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
 		eirr &= RMIXL_EIRR_PRESERVE_MASK;
 		eirr |= vecbit;
 		asm volatile("dmtc0 %0, $9, 6;" :: "r"(eirr));
-		splx(s);
+		asm volatile("dmtc0 %0, $9, 7;" :: "r"(eimr));
 
 		if (vec < 32)
 			RMIXL_PICREG_WRITE(RMIXL_PIC_INTRACK,
