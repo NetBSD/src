@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.1 2010/03/29 18:19:19 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.2 2010/05/01 10:43:31 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -28,7 +28,7 @@ ATF_TC_HEAD(basic, tc)
 	atf_tc_set_md_var(tc, "descr", "basic union functionality: two views");
 }
 #else
-#define atf_tc_fail(a, ...) errx(1, __VA_ARGS__)
+#define atf_tc_fail(...) errx(1, __VA_ARGS__)
 #endif
 
 #define MSTR "magic bus"
