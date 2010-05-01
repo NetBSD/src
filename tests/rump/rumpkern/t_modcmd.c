@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modcmd.c,v 1.5 2010/03/05 18:49:30 pooka Exp $	*/
+/*	$NetBSD: t_modcmd.c,v 1.6 2010/05/01 11:20:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
 
 #include <sys/types.h>
 #include <sys/mount.h>
+#include <sys/sysctl.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
@@ -59,6 +60,58 @@ ATF_TC_HEAD(cmsg_modcmd, tc)
 	    "a module (vfs/tmpfs) is possible");
 }
 
+static int
+disable_autoload(void)
+{
+	struct sysctlnode q, ans[256];
+	int mib[3];
+	size_t alen;
+	unsigned i;
+	bool no;
+
+	mib[0] = CTL_KERN;
+	mib[1] = CTL_QUERY;
+	alen = sizeof(ans);
+
+	memset(&q, 0, sizeof(q));
+	q.sysctl_flags = SYSCTL_VERSION;
+
+	if (rump_sys___sysctl(mib, 2, ans, &alen, &q, sizeof(q)) == -1)
+		return -1;
+
+	for (i = 0; i < __arraycount(ans); i++)
+		if (strcmp("module", ans[i].sysctl_name) == 0)
+			break;
+	if (i == __arraycount(ans)) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	mib[1] = ans[i].sysctl_num;
+	mib[2] = CTL_QUERY;
+
+	if (rump_sys___sysctl(mib, 3, ans, &alen, &q, sizeof(q)) == -1)
+		return errno;
+
+	for (i = 0; i < __arraycount(ans); i++)
+		if (strcmp("autoload", ans[i].sysctl_name) == 0)
+			break;
+	if (i == __arraycount(ans)) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	mib[2] = ans[i].sysctl_num;
+
+	no = false;
+	alen = 0;
+	if (rump_sys___sysctl(mib, 3, NULL, &alen, &no, sizeof(no)) == -1)
+		return errno;
+
+	return 0;
+
+}
+
 #define TMPFSMODULE "librumpfs_tmpfs.so"
 ATF_TC_BODY(cmsg_modcmd, tc)
 {
@@ -68,6 +121,10 @@ ATF_TC_BODY(cmsg_modcmd, tc)
 	int i, rv, loop = 0;
 
 	rump_init();
+
+	if (disable_autoload() == -1)
+		atf_tc_fail_errno("count not disable module autoload");
+
 	memset(&args, 0, sizeof(args));
 	args.ta_version = TMPFS_ARGS_VERSION;
 	args.ta_root_mode = 0777;
