@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.28 2010/05/01 11:28:40 tsutsui Exp $
+#	$NetBSD: HPW650PA,v 1.29 2010/05/01 11:35:41 tsutsui Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -8,6 +8,8 @@ include 	"arch/hpcsh/conf/std.hpcsh"
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32			# estimated number of users
+
+options 	HZ=64			# default clock rate                  
 
 # in-kernel bootloader, see kloader(4)
 options 	KLOADER
