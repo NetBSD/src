@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.388 2010/02/22 20:13:01 wiz Exp $
+.\"	$NetBSD: options.4,v 1.389 2010/05/01 13:07:34 pooka Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 22, 2010
+.Dd May 1, 2010
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -900,15 +900,12 @@ See
 .Xr mount_tmpfs 8
 for details.
 .It Cd file-system PUFFS
-.Bq Em EXPERIMENTAL
 Includes kernel support for the pass-to-userspace framework file system.
 It can be used to implement file system functionality in userspace.
 See
 .Xr puffs 3
-and
-.Xr puffs 4
 for more details.
-This option is required for sshfs:
+This enables for example sshfs:
 .Xr mount_psshfs 8 .
 .El
 .Ss File System Options
