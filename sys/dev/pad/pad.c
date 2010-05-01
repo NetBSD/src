@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.13 2010/04/09 13:39:17 ahoka Exp $ */
+/* $NetBSD: pad.c,v 1.14 2010/05/01 23:40:21 pooka Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.13 2010/04/09 13:39:17 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.14 2010/05/01 23:40:21 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -593,7 +593,7 @@ static struct cfdata pad_cfdata[] = {
 		.cf_flags = 0,
 		.cf_pspec = NULL,
 	},
-	{ NULL }
+	{ NULL, NULL, 0, 0, NULL, 0, NULL }
 };
 
 static int
