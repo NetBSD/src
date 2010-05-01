@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.35 2010/04/29 22:34:21 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.36 2010/05/01 14:44:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -79,6 +79,7 @@ struct p2k_mount {
 	struct mount *p2m_mp;
 	int p2m_nvnodes;
 	int p2m_imtmpfsman;
+	bool p2m_hasdebug;
 };
 
 struct p2k_node {
@@ -273,6 +274,7 @@ p2k_init(uint32_t puffs_flags)
 	struct p2k_mount *p2m;
 	char *envbuf;
 	bool dodaemon;
+	bool hasdebug;
 
 	PUFFSOP_INIT(pops);
 
@@ -315,6 +317,7 @@ p2k_init(uint32_t puffs_flags)
 	if (getenv("P2K_DEBUG") != NULL) {
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
 		dodaemon = false;
+		hasdebug = true;
 	}
 	if (getenv("P2K_NODETACH") != NULL) {
 		dodaemon = false;
@@ -346,6 +349,7 @@ p2k_init(uint32_t puffs_flags)
 		errno = sverrno;
 		return NULL;
 	}
+	p2m->p2m_hasdebug = hasdebug;
 
 	if (dodaemon) {
 		if (puffs_daemon(p2m->p2m_pu, 1, 1) == -1) {
@@ -566,6 +570,12 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 		}
 	}
 	p2m->p2m_ukfs = NULL;
+
+	if (p2m->p2m_hasdebug) {
+		printf("-- rump kernel event counters --\n");
+		rump_printevcnts();
+		printf("-- end of event counters --\n");
+	}
 
 	rump_pub_lwp_alloc_and_switch(0, 0);
 	return error;
