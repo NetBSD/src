@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.26 2007/11/12 15:07:35 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.27 2010/05/01 11:14:37 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* md.h -- Machine specific definitions for the i386 */
+/* md.h -- Machine specific definitions for the hpcmips */
 
 
 #include <machine/cpu.h>
@@ -71,7 +71,5 @@
  * to get incore  to ondisk inode translation for the Sun proms.
  * If not defined, we assume the port does not support disklabels and
  * hand-edited disklabel will NOT be written by MI code.
- *
- * On i386, do what the 1.2 install scripts did. 
  */
 #define DISKLABEL_CMD "disklabel -w -r"

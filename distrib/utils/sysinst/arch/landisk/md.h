@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2009/12/22 11:14:33 nonaka Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2010/05/01 11:13:01 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,7 +38,7 @@
 
 /* md.h -- Machine specific definitions for the landisk */
 
-/* evbmips uses the mbr code. */
+/* landisk uses the mbr code. */
 #include "mbr.h"
 
 /* constants and defines */
