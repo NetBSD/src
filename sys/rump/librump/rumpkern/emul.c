@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.134 2010/04/30 20:54:17 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.135 2010/05/01 09:00:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.134 2010/04/30 20:54:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.135 2010/05/01 09:00:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -75,15 +75,15 @@ int cold = 1;
 int boothowto = AB_SILENT;
 struct tty *constty;
 
-const struct bdevsw *bdevsw0[1];
+const struct bdevsw *bdevsw0[255];
 const struct bdevsw **bdevsw = bdevsw0;
-const int sys_cdevsws = 0;
-int max_cdevsws = 1;
+const int sys_cdevsws = 255;
+int max_cdevsws = 255;
 
-const struct cdevsw *cdevsw0[1];
+const struct cdevsw *cdevsw0[255];
 const struct cdevsw **cdevsw = cdevsw0;
-const int sys_bdevsws = 0;
-int max_bdevsws = 1;
+const int sys_bdevsws = 255;
+int max_bdevsws = 255;
 
 int mem_no = 2;
 
