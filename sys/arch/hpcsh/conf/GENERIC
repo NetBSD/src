@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89 2010/05/01 11:28:40 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.90 2010/05/01 11:35:41 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -31,6 +31,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32			# estimated number of users
 
+options 	HZ=64			# default clock rate
 
 # System options specific to hpcsh
 
