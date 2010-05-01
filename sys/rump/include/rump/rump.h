@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.42 2010/05/01 14:40:36 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.43 2010/05/01 23:16:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,6 +46,7 @@ struct stat;
 struct kauth_cred;
 struct lwp;
 struct modinfo;
+struct uio;
 
 /* yetch */
 #if defined(__NetBSD__)
