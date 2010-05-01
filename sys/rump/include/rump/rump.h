@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.41 2010/04/26 23:40:22 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.42 2010/05/01 14:40:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -102,6 +102,8 @@ void	rump_boot_setsigmodel(enum rump_sigmodel);
 
 void	rump_schedule(void);
 void	rump_unschedule(void);
+
+void	rump_printevcnts(void);
 
 int	rump__init(int);
 

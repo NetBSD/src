@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.169 2010/04/28 14:51:07 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.170 2010/05/01 14:40:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.169 2010/04/28 14:51:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.170 2010/05/01 14:40:36 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -806,4 +806,18 @@ rump_getversion(void)
 {
 
 	return __NetBSD_Version__;
+}
+
+/*
+ * Note: may be called unscheduled.  Not fully safe since no locking
+ * of allevents (currently that's not even available).
+ */
+void
+rump_printevcnts()
+{
+	struct evcnt *ev;
+
+	TAILQ_FOREACH(ev, &allevents, ev_list)
+		rumpuser_dprintf("%s / %s: %" PRIu64 "\n",
+		    ev->ev_group, ev->ev_name, ev->ev_count);
 }
