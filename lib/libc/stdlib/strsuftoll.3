@@ -1,4 +1,4 @@
-.\"	$NetBSD: strsuftoll.3,v 1.9 2010/05/01 08:30:00 jruoho Exp $
+.\"	$NetBSD: strsuftoll.3,v 1.10 2010/05/01 08:35:52 jruoho Exp $
 .\"
 .\" Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -134,6 +134,11 @@ nor
 fail gracefully in case of invalid,
 .Dv NULL ,
 pointers.
+.It
+Arguably the return type should be
+.Vt intmax_t
+instead of
+.Vt long long .
 .It
 The
 .Fn strsuftollx
