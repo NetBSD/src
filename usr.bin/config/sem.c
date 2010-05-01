@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.35 2010/04/30 20:47:18 pooka Exp $	*/
+/*	$NetBSD: sem.c,v 1.36 2010/05/01 22:17:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1410,17 +1410,57 @@ deldev(const char *name)
 void
 addpseudoroot(const char *name)
 {
+	char buf[NAMESIZE];
+	int unit;
+	struct attr *attr;
 	struct devi *i;
 	struct deva *iba;
 	struct devbase *ib;
 
 	fprintf(stderr, "WARNING: pseudo-root is an experimental feature\n");
 
+	if (split(name, strlen(name), buf, sizeof(buf), &unit)) {
+		cfgerror("invalid pseudo-root name `%s'", name);
+		return;
+	}
+
+	/*
+	 * Assume given pseudoroot is an interface attribute.  If it
+	 * is, do stunts.  If it isn't, try a device next.
+	 */
+	attr = ht_lookup(attrtab, intern(buf));
+	if (attr && attr->a_iattr) {
+		struct devbase *fakedev;
+		char fakename[NAMESIZE];
+
+		/*
+		 * here we cheat a bit: create a fake devbase with the
+		 * interface attribute and instantiate it.  quick, cheap,
+		 * dirty & bad for you, much like the stuff in the fridge.
+		 * and, it works, since the pseudoroot device is not included
+		 * in ioconf, just used by config to make sure we start from
+		 * the right place.
+		 */ 
+		snprintf(fakename, sizeof(fakename), "%sattrs", buf);
+		fakedev = getdevbase(intern(fakename));
+		fakedev->d_isdef = 1;
+		fakedev->d_ispseudo = 0;
+		fakedev->d_attrs = newnv(NULL, NULL, attr, 0, NULL);
+		defdevattach(NULL, fakedev, NULL, NULL);
+
+		if (unit == STAR)
+			snprintf(buf, sizeof(buf), "%s*", fakename);
+		else
+			snprintf(buf, sizeof(buf), "%s%d", fakename, unit);
+		name = buf;
+	}
+
+	/* ok, everything should be set up, so instantiate a fake device */
 	i = getdevi(name);
 	if (i == NULL)
 		return;
 	ib = i->i_base;
-	iba = ib->d_ahead; /* XXX: take the first for now, revisit later */
+	iba = ib->d_ahead;
 
 	i->i_atdeva = iba;
 	i->i_cfflags = 0;
