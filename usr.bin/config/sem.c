@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.36 2010/05/01 22:17:58 pooka Exp $	*/
+/*	$NetBSD: sem.c,v 1.37 2010/05/01 23:54:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1429,7 +1429,7 @@ addpseudoroot(const char *name)
 	 * is, do stunts.  If it isn't, try a device next.
 	 */
 	attr = ht_lookup(attrtab, intern(buf));
-	if (attr && attr->a_iattr) {
+	if (attr && attr->a_iattr && /*XXX*/strcmp(buf, "mainbus") != 0) {
 		struct devbase *fakedev;
 		char fakename[NAMESIZE];
 
