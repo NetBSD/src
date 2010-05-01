@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.48 2010/04/30 21:02:36 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.49 2010/05/01 14:46:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.48 2010/04/30 21:02:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.49 2010/05/01 14:46:32 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -364,13 +364,6 @@ rump_vp_interlock(struct vnode *vp)
 int
 rump_vfs_unmount(struct mount *mp, int mntflags)
 {
-#if 0
-	struct evcnt *ev;
-
-	printf("event counters:\n");
-	TAILQ_FOREACH(ev, &allevents, ev_list)
-		printf("%s: %llu\n", ev->ev_name, ev->ev_count);
-#endif
 
 	return VFS_UNMOUNT(mp, mntflags);
 }
