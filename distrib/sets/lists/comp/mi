@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1439 2010/04/29 15:57:18 jruoho Exp $
+#	$NetBSD: mi,v 1.1440 2010/05/01 23:27:22 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2582,6 +2582,9 @@
 ./usr/lib/librumpdev.a				comp-c-lib
 ./usr/lib/librumpdev_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_audio.a			comp-c-lib
+./usr/lib/librumpdev_audio_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_audio_p.a			comp-c-proflib		profile
 ./usr/lib/librumpdev_bpf.a			comp-c-lib
 ./usr/lib/librumpdev_bpf_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_bpf_p.a			comp-c-proflib		profile
@@ -2600,6 +2603,9 @@
 ./usr/lib/librumpdev_netsmb.a			comp-c-lib
 ./usr/lib/librumpdev_netsmb_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_netsmb_p.a			comp-c-proflib		profile
+./usr/lib/librumpdev_pad.a			comp-c-lib
+./usr/lib/librumpdev_pad_g.a			-unknown-		debuglib
+./usr/lib/librumpdev_pad_p.a			comp-c-proflib		profile
 ./usr/lib/librumpdev_raidframe.a		comp-c-lib
 ./usr/lib/librumpdev_raidframe_g.a		-unknown-		debuglib
 ./usr/lib/librumpdev_raidframe_p.a		comp-c-proflib		profile
