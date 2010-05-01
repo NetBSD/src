@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modcmd.c,v 1.6 2010/05/01 11:20:21 pooka Exp $	*/
+/*	$NetBSD: t_modcmd.c,v 1.7 2010/05/01 12:11:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -46,8 +46,11 @@
 #include <unistd.h>
 #include <util.h>
 
-#include "../../h_macros.h"
+#define USE_ATF
 
+#ifdef USE_ATF
+
+#include "../../h_macros.h"
 /*
  * We verify that modules can be loaded and unloaded.
  * tmpfs was chosen because it does not depend on an image.
@@ -59,6 +62,9 @@ ATF_TC_HEAD(cmsg_modcmd, tc)
 	atf_tc_set_md_var(tc, "descr", "Checks that loading and unloading "
 	    "a module (vfs/tmpfs) is possible");
 }
+#else
+#define atf_tc_fail_errno(...) err(1, __VA_ARGS__)
+#endif
 
 static int
 disable_autoload(void)
@@ -113,7 +119,11 @@ disable_autoload(void)
 }
 
 #define TMPFSMODULE "librumpfs_tmpfs.so"
+#ifdef USE_ATF
 ATF_TC_BODY(cmsg_modcmd, tc)
+#else
+int main(int argc, char *argv[])
+#endif
 {
 	struct tmpfs_args args;
 	const struct modinfo *const *mi_start, *const *mi_end;
@@ -175,9 +185,11 @@ ATF_TC_BODY(cmsg_modcmd, tc)
 		atf_tc_fail("mount unexpectedly succeeded");
 }
 
+#ifdef USE_ATF
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, cmsg_modcmd);
 
 	return atf_no_error();
 }
+#endif
