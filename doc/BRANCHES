@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.291 2010/03/27 10:54:12 wiz Exp $
+#	$NetBSD: BRANCHES,v 1.292 2010/05/01 01:36:25 uebayasi Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1205,7 +1205,7 @@ Description:	Support eXecute-In-Place (XIP)
 Status:		Active
 Start Date:	8 February 2010
 End Date:	
-Base Tag:	uebayasi-xip-base
+Base Tag:	uebayasi-xip-base1
 Maintainer:	Masao Uebayashi <uebayasi@NetBSD.org>
 Scope:		src/include src/sbin/mount src/sbin/mount_ffs
 		src/sys
