@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixlreg.h,v 1.1.2.11 2010/04/07 19:23:50 cliff Exp $	*/
+/*	$NetBSD: rmixlreg.h,v 1.1.2.12 2010/05/01 17:41:49 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -932,7 +932,7 @@
 #define RMIXL_FMN_BS_SGMII_TX2		_RMIXL_OFFSET(0x324)
 #define RMIXL_FMN_BS_SGMII_TX3		_RMIXL_OFFSET(0x325)
 #define RMIXL_FMN_BS_SGMII_UNUSED1	_RMIXL_OFFSET(0x326)	/* initialize as 0 */
-#define RMIXL_FMN_BS_SGMII_FCB1		_RMIXL_OFFSET(0x321)	/* Free Credit Bucket1 size */
+#define RMIXL_FMN_BS_SGMII_FCB1		_RMIXL_OFFSET(0x327)	/* Free Credit Bucket1 size */
 
 /*
  * SAE bucket size regs
