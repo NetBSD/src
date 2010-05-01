@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.8 2009/10/24 03:55:27 tsarna Exp $
+$NetBSD: README,v 1.9 2010/05/01 19:51:33 christos Exp $
 
 Organization of Sources:
 
@@ -42,13 +42,27 @@ excised as necessary, either on a per-license or per-package basis.
 The licenses currently used are:
 
 	apache2		Apache 2.0 license.
+			http://www.opensource.org/licenses/apache2.0.php
 
 	bsd		BSD (or equivalent) licensed software, possibly with
 			the "advertising clause".
+			http://www.opensource.org/licenses/bsd-license.php
+
+	cddl		Common Development and Distribution License (the sun
+			license which is based on the Mozilla Public License
+			version 1.1).
+			http://www.opensource.org/licenses/cddl1.php
 
 	gpl2		GNU Public License, version 2 (or earlier).
+			http://www.opensource.org/licenses/gpl-2.0.php
 
-	intel-fw-oem	Intel firmware license with redistribution
+	gpl3		GNU Public License, version 3.
+			http://www.opensource.org/licenses/gpl-3.0.html
+
+	ibm-public	IBM's public license:
+			http://www.opensource.org/licenses/ibmpl.php
+
+	intel-fw-eula	Intel firmware license with redistribution
 			restricted to OEM.
 
 	intel-fw-public	Intel firmware license permitting redistribution with
@@ -58,6 +72,7 @@ The licenses currently used are:
 			terms similar to BSD licensed software.
 
 	mit		MIT (X11) style license.
+			http://www.opensource.org/licenses/mit-license.php
 
 If a package has components covered by different licenses
 (for example, GPL2 and the LGPL), use the <license> subdirectory
