@@ -1,4 +1,4 @@
-.\"	$NetBSD: strsuftoll.3,v 1.8 2010/05/01 08:12:30 jruoho Exp $
+.\"	$NetBSD: strsuftoll.3,v 1.9 2010/05/01 08:30:00 jruoho Exp $
 .\"
 .\" Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,7 +106,8 @@ return either the result of the conversion,
 unless the value overflows or is not a number;
 in the latter case,
 .Fn strsuftoll
-displays an error message and terminates the process with exit code 1,
+displays an error message and terminates the process with exit code
+.Dv EXIT_FAILURE ,
 and
 .Fn strsuftollx
 returns with 0 and
@@ -133,8 +134,6 @@ nor
 fail gracefully in case of invalid,
 .Dv NULL ,
 pointers.
-.It
-The return values are inconsistent.
 .It
 The
 .Fn strsuftollx
