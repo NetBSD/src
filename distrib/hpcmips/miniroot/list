@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.15 2010/02/11 09:06:48 roy Exp $
+#	$NetBSD: list,v 1.16 2010/05/01 12:08:58 tsutsui Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -9,10 +9,10 @@ PROG	bin/rcmd
 # extras in sbin
 PROG	sbin/disklabel
 PROG	sbin/fdisk
-PROG	sbin/mount_ext2fs
-PROG	sbin/fsck_ext2fs
+PROG	sbin/fsck_msdos
 PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
+PROG	sbin/newfs_msdos
 
 # extras in /usr.bin
 PROG	usr/bin/netstat
