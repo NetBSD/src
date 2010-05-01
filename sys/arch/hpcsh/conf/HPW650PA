@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.27 2010/04/16 13:48:32 pooka Exp $
+#	$NetBSD: HPW650PA,v 1.28 2010/05/01 11:28:40 tsutsui Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -40,6 +40,7 @@ options 	EXEC_COFF	# 32-bit COFF executables
 
 # File systems
 file-system 	FFS		# UFS
+file-system 	MFS		# memory file system (requires FFS)
 file-system 	MSDOSFS		# MS-DOS file system
 file-system	NFS		# Sun NFS-compatible filesystem client
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
