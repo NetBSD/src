@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.1 2009/07/18 16:31:42 reinoud Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.2 2010/05/01 21:21:27 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.1 2009/07/18 16:31:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.2 2010/05/01 21:21:27 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -333,7 +333,7 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 	struct nilfs_super_block *super, tmp_super;
 	struct buf *bp;
 	uint64_t sb1off, sb2off;
-	uint64_t time1, time2;
+	uint64_t last_cno1, last_cno2;
 	uint64_t dev_blk;
 	int dev_bsize, dev_blks;
 	int sb1ok, sb2ok, swp;
@@ -377,9 +377,9 @@ nilfs_read_superblock(struct nilfs_device *nilfsdev)
 	sb1ok = nilfs_check_superblock_crc(&nilfsdev->super);
 	sb2ok = nilfs_check_superblock_crc(&nilfsdev->super2);
 
-	time1 = nilfs_rw64(nilfsdev->super.s_wtime);
-	time2 = nilfs_rw64(nilfsdev->super2.s_wtime);
-	swp = sb2ok && (time2 > time1);
+	last_cno1 = nilfs_rw64(nilfsdev->super.s_last_cno);
+	last_cno2 = nilfs_rw64(nilfsdev->super2.s_last_cno);
+	swp = sb2ok && (last_cno2 > last_cno1);
 
 	if (swp) {
 		printf("nilfs warning: broken superblock, using spare\n");
