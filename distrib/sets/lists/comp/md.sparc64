@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.55 2010/04/29 14:09:10 lukem Exp $
+# $NetBSD: md.sparc64,v 1.56 2010/05/02 19:43:40 nakayama Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -599,8 +599,6 @@
 ./usr/lib/sparc/libz_pic.a			comp-c-piclib		compat,pic
 ./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	obsolete
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/lib/sparc		comp-compat-debug	compat,debug
-./usr/libdata/debug/usr/lib/sparc/i18n		comp-compat-debug	compat,debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libBIG5.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libDECHanyu.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/i18n/libEUC.so.5.0.debug		comp-i18n-shlib		compat,pic,debug
