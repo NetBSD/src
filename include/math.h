@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.51 2010/02/23 00:03:09 joerg Exp $	*/
+/*	$NetBSD: math.h,v 1.52 2010/05/02 06:31:48 dholland Exp $	*/
 
 /*
  * ====================================================
@@ -356,7 +356,7 @@ float	nanf(const char *);
 long double	nanl(const char *);
 float	nextafterf(float, float);
 
-/* 7.12.14 comparision */
+/* 7.12.14 comparison */
 
 #define isunordered(x, y)	(isnan(x) || isnan(y))
 #define isgreater(x, y)		(!isunordered((x), (y)) && (x) > (y))
