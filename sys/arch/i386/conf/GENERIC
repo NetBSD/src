@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.980 2010/04/16 13:48:32 pooka Exp $
+# $NetBSD: GENERIC,v 1.981 2010/05/02 17:24:35 chs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.980 $"
+#ident 		"GENERIC-$Revision: 1.981 $"
 
 maxusers	64		# estimated number of users
 
@@ -614,7 +614,11 @@ lpt2	at isa? port 0x3bc
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
-#iic*	at amdpm?			# sensors below are on this bus
+iic*	at amdpm?
+
+# Acer Labs M7101 SMBus controller
+alipm*	at pci? dev ? function ?
+iic*	at alipm?
 
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP

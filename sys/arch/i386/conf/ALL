@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.255 2010/04/16 13:48:32 pooka Exp $
+# $NetBSD: ALL,v 1.256 2010/05/02 17:27:16 chs Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.255 $"
+#ident 		"ALL-$Revision: 1.256 $"
 
 maxusers	64		# estimated number of users
 
@@ -661,6 +661,10 @@ rd*	at cs80bus? slave ? punit ?
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 iic*	at amdpm?			# sensors below are on this bus
+
+# Acer Labs M7101 SMBus controller
+alipm*	at pci? dev ? function ?
+iic*	at alipm?
 
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
