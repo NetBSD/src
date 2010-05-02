@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.20 2010/04/02 14:11:18 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.21 2010/05/02 06:35:21 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.20 2010/04/02 14:11:18 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.21 2010/05/02 06:35:21 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -882,7 +882,7 @@ bad:
 #ifdef DIAGNOSTIC
 				printf("%s: bad tag %d: "
 				    "[%d %d, %d %d, %*.*s %*.*s]\n",
-				    epp->ep_name,
+				    epp->ep_kname,
 				    np->n_type,
 				    np->n_namesz, ELF_NOTE_PAX_NAMESZ,
 				    np->n_descsz, ELF_NOTE_PAX_DESCSZ,
