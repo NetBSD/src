@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.43 2010/04/28 15:56:24 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.44 2010/05/02 02:06:15 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.88 2010/04/10 08:37:36 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.43 2010/04/28 15:56:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.44 2010/05/02 02:06:15 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -638,13 +638,17 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 #endif
 	iwn_radiotap_attach(sc);
 
-	/* timeout_set replaced by callout_init and callout_setfunc, above. */
+	/*
+	 * XXX for NetBSD, OpenBSD timeout_set replaced by
+	 * callout_init and callout_setfunc, above.
+	*/
 
 	if (pmf_device_register(self, NULL, iwn_resume))
 		pmf_class_network_register(self, ifp);
 	else
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	/* XXX NetBSD add call to ieee80211_announce for dmesg. */
 	ieee80211_announce(ic);
 
 	return;
@@ -843,10 +847,6 @@ iwn_detach(device_t self, int flags __unused)
 	sysmon_envsys_sensor_detach(sc->sc_sme, &sc->sc_sensor);
 	sysmon_envsys_destroy(sc->sc_sme);
 #endif
-
-	/* XXX verify that this is needed */
-	if (ifp != NULL)
-		bpf_detach(ifp);
 
 	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);
@@ -1153,6 +1153,7 @@ iwn_dma_contig_alloc(bus_dma_tag_t tag, struct iwn_dma_info *dma, void **kvap,
 	if (error != 0)
 		goto fail;
 
+	/* XXX Presumably needed because of missing BUS_DMA_ZERO, above. */
 	memset(dma->vaddr, 0, size);
 	bus_dmamap_sync(tag, dma->map, 0, size, BUS_DMASYNC_PREWRITE);
 
@@ -1651,6 +1652,7 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 	DPRINTF(("calib version=%u pa type=%u voltage=%u\n",
 	    hdr.version, hdr.pa_type, le16toh(hdr.volt)));
 	sc->calib_ver = hdr.version;
+
 	if (sc->hw_type == IWN_HW_REV_TYPE_5150) {
 		/* Compute temperature offset. */
 		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
@@ -1830,12 +1832,14 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
+		/* XXX Do not abort a running scan. */
 		if (sc->sc_flags & IWN_FLAG_SCANNING) {
 			aprint_error_dev(sc->sc_dev,
 			    "scan request while scanning ignored\n");
 			break;
 		}
 
+		/* XXX Not sure if call and flags are needed. */
 		ieee80211_node_table_reset(&ic->ic_scan);
 		ic->ic_flags |= IEEE80211_F_SCAN | IEEE80211_F_ASCAN;
 		sc->sc_flags |= IWN_FLAG_SCANNING;
@@ -1954,9 +1958,6 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = ic->ic_ifp;
 	struct iwn_rx_ring *ring = &sc->rxq;
-#if 0
-	struct iwn_rbuf *rbuf;
-#endif
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct mbuf *m, *m1;
@@ -2059,8 +2060,12 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, (struct ieee80211_frame_min *)wh);
 
+	/* XXX OpenBSD adds decryption here (see also comments in iwn_tx). */
+	/* NetBSD does decryption in ieee80211_input. */
+
 	rssi = hal->get_rssi(stat);
 
+	/* XXX Added for NetBSD: scans never stop without it */
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		iwn_fix_channel(ic, m);
 
@@ -2616,7 +2621,7 @@ iwn_intr(void *arg)
 		tmp = le32toh(tmp);
 		if (tmp == 0xffffffff)	/* Shouldn't happen. */
 			tmp = 0;
-		else if (tmp & 0xc0000) /* Workaround a HW bug. */
+		else if (tmp & 0xc0000)	/* Workaround a HW bug. */
 			tmp |= 0x8000;
 		r1 = (tmp & 0xff00) << 16 | (tmp & 0xff);
 		r2 = 0;	/* Unused. */
@@ -2754,8 +2759,6 @@ iwn5000_reset_sched(struct iwn_softc *sc, int qid, int idx)
 }
 #endif
 
-#if 0
-/* XXX figure out why this (new OpenBSD) version does not work (on NetBSD! */
 static int
 iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 {
@@ -2782,10 +2785,10 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	int hdrlen2;
 
 	wh = mtod(m, struct ieee80211_frame *);
-	hdrlen2 = ieee80211_hdrsize(wh);
+	hdrlen = ieee80211_anyhdrsize(wh);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-	hdrlen = (IEEE80211_QOS_HAS_SEQ(wh)) ?
+	hdrlen2 = (IEEE80211_QOS_HAS_SEQ(wh)) ?
 	    sizeof (struct ieee80211_qosframe) :
 	    sizeof (struct ieee80211_frame);
 
@@ -2793,19 +2796,14 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    aprint_error_dev(sc->sc_dev, "hdrlen error (%d != %d)\n",
 		hdrlen, hdrlen2);
 
+	/* XXX OpenBSD sets a different tid when using QOS */
 	tid = 0;
-
-	/* Encrypt the frame if need be. */
-	/* XXX Should this be after bpf_mtap2 call, below (see OpenBSD code)? */
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		k = ieee80211_crypto_encap(ic, ni, m);
-		if (k == NULL) {
-			m_freem(m);
-			return ENOBUFS;
-		}
-		/* Packet header may have moved, reset our local pointer. */
-		wh = mtod(m, struct ieee80211_frame *);
+	if (IEEE80211_QOS_HAS_SEQ(wh)) {
+		cap = &ic->ic_wme.wme_chanParams;
+		noack = cap->cap_wmeParams[ac].wmep_noackPolicy;
 	}
+	else
+		noack = 0;
 
 	ring = &sc->txq[ac];
 	desc = &ring->desc[ring->cur];
@@ -2822,6 +2820,24 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		ridx = wn->ridx[ni->ni_txrate];
 	rinfo = &iwn_rates[ridx];
 
+	/* Encrypt the frame if need be. */
+	/*
+	 * XXX For now, NetBSD swaps the encryption and bpf sections
+	 * in order to match old code and other drivers. Tests with
+	 * tcpdump indicates that the order is irrelevant, however,
+	 * as bpf produces unencrypted data for both ordering choices.
+	 */
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		k = ieee80211_crypto_encap(ic, ni, m);
+		if (k == NULL) {
+			m_freem(m);
+			return ENOBUFS;
+		}
+		/* Packet header may have moved, reset our local pointer. */
+		wh = mtod(m, struct ieee80211_frame *);
+	}
+	totlen = m->m_pkthdr.len;
+
 	if (sc->sc_drvbpf != NULL) {
 		struct iwn_tx_radiotap_header *tap = &sc->sc_txtap;
 
@@ -2836,8 +2852,6 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
 	}
 
-	totlen = m->m_pkthdr.len;
-
 	/* Prepare TX firmware command. */
 	cmd = &ring->cmd[ring->cur];
 	cmd->code = IWN_CMD_TX_DATA;
@@ -2849,18 +2863,20 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	/* NB: No need to clear tx, all fields are reinitialized here. */
 	tx->scratch = 0;	/* clear "scratch" area */
 
-	if (IEEE80211_QOS_HAS_SEQ(wh)) {
-		cap = &ic->ic_wme.wme_chanParams;
-		noack = cap->cap_wmeParams[ac].wmep_noackPolicy;
-	}
-	else
-		noack = 0;
-
 	flags = 0;
-	if (!noack && !IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		/* Unicast frame with an ACK expected. */
+	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
+		/* Unicast frame, check if an ACK is expected. */
+		if (!noack)
 			flags |= IWN_TX_NEED_ACK;
 	}
+
+#ifdef notyet
+	/* XXX NetBSD does not define IEEE80211_FC0_SUBTYPE_BAR */
+	if ((wh->i_fc[0] &
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
+	    (IEEE80211_FC0_TYPE_CTL | IEEE80211_FC0_SUBTYPE_BAR))
+		flags |= IWN_TX_IMM_BA;		/* Cannot happen yet. */
+#endif          
 
 	if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG)
 		flags |= IWN_TX_MORE_FRAG;	/* Cannot happen yet. */
@@ -2898,9 +2914,13 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 #ifndef IEEE80211_STA_ONLY
 		/* Tell HW to set timestamp in probe responses. */
+		/* XXX NetBSD rev 1.11 added probe requests here but */
+		/* probe requests do not take timestamps (from Bergamini). */
 		if (subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 			flags |= IWN_TX_INSERT_TSTAMP;
 #endif
+		/* XXX NetBSD rev 1.11 and 1.20 added AUTH/DAUTH and RTS/CTS */
+		/* changes here. These are not needed (from Bergamini). */
 		if (subtype == IEEE80211_FC0_SUBTYPE_ASSOC_REQ ||
 		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ)
 			tx->timeout = htole16(3);
@@ -2910,7 +2930,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		tx->timeout = htole16(0);
 
 	if (hdrlen & 3) {
-		/* First segment length must be a multiple of 4. */
+		/* First segment's length must be a multiple of 4. */
 		flags |= IWN_TX_NEED_PADDING;
 		pad = 4 - (hdrlen & 3);
 	} else
@@ -2938,8 +2958,12 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	tx->hiaddr = IWN_HIADDR(data->scratch_paddr);
 
 	/* Copy 802.11 header in TX command. */
-	memcpy((uint8_t *)(tx + 1), wh, hdrlen);
+	/* XXX NetBSD changed this in rev 1.20 */
+	memcpy(((uint8_t *)tx) + sizeof(*tx), wh, hdrlen);
 
+	/* Trim 802.11 header. */
+	m_adj(m, hdrlen);
+	tx->security = 0;
 	tx->flags = htole32(flags);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
@@ -2965,7 +2989,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 				return ENOBUFS;
 			}
 		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, char *));
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, void *));
 		m1->m_pkthdr.len = m1->m_len = m->m_pkthdr.len;
 		m_freem(m);
 		m = m1;
@@ -3025,341 +3049,6 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 
 	return 0;
 }
-#else
-/* This version is from the old NetBSD driver port */
-static int
-iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
-{
-	const struct iwn_hal *hal = sc->sc_hal;
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct iwn_node *wn = (void *)ni;
-	struct iwn_tx_ring *ring;
-	struct iwn_tx_desc *desc;
-	struct iwn_tx_data *data;
-	struct iwn_tx_cmd *cmd;
-	struct iwn_cmd_data *tx;
-	const struct iwn_rate *rinfo;
-	struct ieee80211_frame *wh;
-	struct ieee80211_key *k = NULL;
-	const struct chanAccParams *cap;
-	struct mbuf *m1;
-	uint32_t flags;
-	u_int hdrlen;
-	bus_dma_segment_t *seg;
-	uint8_t ridx, txant, type;
-	int i, totlen, error, pad, noack;
-
-	wh = mtod(m, struct ieee80211_frame *);
-	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
-
-	/* JAF XXX two lines above were not in wpi. check we don't duplicate this */
-
-	if (IEEE80211_QOS_HAS_SEQ(wh)) {
-		hdrlen = sizeof (struct ieee80211_qosframe);
-		cap = &ic->ic_wme.wme_chanParams;
-		noack = cap->cap_wmeParams[ac].wmep_noackPolicy;
-	} else {
-		hdrlen = sizeof (struct ieee80211_frame);
-		noack = 0;
-	}
-	
-	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
-		k = ieee80211_crypto_encap(ic, ni, m);
-		if (k == NULL) {
-			m_freem(m);
-			return ENOBUFS;
-		}
-		/* packet header may have moved, reset our local pointer */
-		wh = mtod(m, struct ieee80211_frame *);
-	}
-
-	ring = &sc->txq[ac];
-	desc = &ring->desc[ring->cur];
-	data = &ring->data[ring->cur];
-
-	/* Choose a TX rate index. */
-	if (type == IEEE80211_FC0_TYPE_MGT) {
-		/* mgmt frames are sent at the lowest available bit-rate */
-		ridx = (ic->ic_curmode == IEEE80211_MODE_11A) ?
-		    IWN_RIDX_OFDM6 : IWN_RIDX_CCK1;
-	} else {
-		if (ic->ic_fixed_rate != -1) {
-			ridx = sc->fixed_ridx;
-		} else
-			ridx = wn->ridx[ni->ni_txrate];
-	}
-	rinfo = &iwn_rates[ridx];
-
-	if (sc->sc_drvbpf != NULL) {
-		struct iwn_tx_radiotap_header *tap = &sc->sc_txtap;
-
-		tap->wt_flags = 0;
-		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
-		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
-		tap->wt_rate = rinfo->rate;
-		tap->wt_hwqueue = ac;
-		if (wh->i_fc[1] & IEEE80211_FC1_WEP)
-			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
-
-		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
-	}
-
-	totlen = m->m_pkthdr.len;
-
-	/* Encrypt the frame if need be. */
-#ifdef IEEE80211_FC1_PROTECTED
-	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
-		/* Retrieve key for TX. */
-		k = ieee80211_get_txkey(ic, wh, ni);
-		if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
-			/* Do software encryption. */
-			if ((m = ieee80211_encrypt(ic, m, k)) == NULL)
-				return ENOBUFS;
-			/* 802.11 header may have moved. */
-			wh = mtod(m, struct ieee80211_frame *);
-			totlen = m->m_pkthdr.len;
-
-		} else	/* HW appends CCMP MIC. */
-			totlen += IEEE80211_CCMP_HDRLEN;
-	}
-#endif
-
-	/* Prepare TX firmware command. */
-	cmd = &ring->cmd[ring->cur];
-	cmd->code = IWN_CMD_TX_DATA;
-	cmd->flags = 0;
-	cmd->qid = ring->qid;
-	cmd->idx = ring->cur;
-
-	tx = (struct iwn_cmd_data *)cmd->data;
-	/* NB: No need to clear tx, all fields are reinitialized here. */
-	tx->scratch = 0;	/* clear "scratch" area */
-
-	flags = 0;
-	if (!noack && !IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		flags |= IWN_TX_NEED_ACK;
-	} else if (m->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
-		flags |= IWN_TX_NEED_RTS | IWN_TX_FULL_TXOP;
-
-#ifdef notyet
-	if ((wh->i_fc[0] &
-	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
-	    (IEEE80211_FC0_TYPE_CTL | IEEE80211_FC0_SUBTYPE_BAR))
-		flags |= IWN_TX_IMM_BA;		/* Cannot happen yet. */
-#endif
-
-	if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG)
-		flags |= IWN_TX_MORE_FRAG;	/* Cannot happen yet. */
-
-	/* Check if frame must be protected using RTS/CTS or CTS-to-self. */
-	if (!IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-		/* NB: Group frames are sent using CCK in 802.11b/g. */
-		if (totlen + IEEE80211_CRC_LEN > ic->ic_rtsthreshold) {
-			flags |= IWN_TX_NEED_RTS;
-		} else if ((ic->ic_flags & IEEE80211_F_USEPROT) &&
-		    ridx >= IWN_RIDX_OFDM6) {
-			if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
-				flags |= IWN_TX_NEED_CTS;
-			else if (ic->ic_protmode == IEEE80211_PROT_RTSCTS)
-				flags |= IWN_TX_NEED_RTS;
-		}
-		if (flags & (IWN_TX_NEED_RTS | IWN_TX_NEED_CTS)) {
-			if (sc->hw_type != IWN_HW_REV_TYPE_4965) {
-				/* 5000 autoselects RTS/CTS or CTS-to-self. */
-				flags &= ~(IWN_TX_NEED_RTS | IWN_TX_NEED_CTS);
-				flags |= IWN_TX_NEED_PROTECTION;
-			} else
-				flags |= IWN_TX_FULL_TXOP;
-		}
-	}
-
-	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
-	    type != IEEE80211_FC0_TYPE_DATA)
-		tx->id = hal->broadcast_id;
-	else
-		tx->id = wn->id;
-
-	if (type == IEEE80211_FC0_TYPE_MGT) {
-		uint8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
-
-#ifndef IEEE80211_STA_ONLY
-		/* Tell HW to set timestamp in probe responses. */
-		if ((subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP) ||
-		    (subtype == IEEE80211_FC0_SUBTYPE_PROBE_REQ))
-			flags |= IWN_TX_INSERT_TSTAMP;
-#endif
-		if (subtype == IEEE80211_FC0_SUBTYPE_ASSOC_REQ ||
-		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ ||
-		    subtype == IEEE80211_FC0_SUBTYPE_AUTH ||
-		    subtype == IEEE80211_FC0_SUBTYPE_DEAUTH) {
-			flags &= ~IWN_TX_NEED_RTS;
-			flags |= IWN_TX_NEED_CTS;
-			tx->timeout = htole16(3);
-		} else
-			tx->timeout = htole16(2);
-	} else
-		tx->timeout = htole16(0);
-
-	if (hdrlen & 3) {
-		/* First segment's length must be a multiple of 4. */
-		flags |= IWN_TX_NEED_PADDING;
-		pad = 4 - (hdrlen & 3);
-	} else
-		pad = 0;
-
-#if 0
-	if (type == IEEE80211_FC0_TYPE_CTL) {
-		uint8_t subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
-
-		/* tell h/w to set timestamp in probe responses */
-		if (subtype == 0x0080) /* linux says this is "back request" */
-			/* linux says (1 << 6) is IMM_BA_RSP_MASK */
-			flags |= (IWN_TX_NEED_ACK | (1 << 6));
-	}
-#endif
-
-	tx->len = htole16(totlen);
-	tx->tid = 0/* tid */;
-	tx->rts_ntries = 60;
-	tx->data_ntries = 15;
-	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
-	tx->plcp = rinfo->plcp;
-	tx->rflags = rinfo->flags;
-	if (tx->id == hal->broadcast_id) {
-		/* Group or management frame. */
-		tx->linkq = 0;
-		/* XXX Alternate between antenna A and B? */
-		txant = IWN_LSB(sc->txchainmask);
-		tx->rflags |= IWN_RFLAG_ANT(txant);
-	} else {
-		tx->linkq = ni->ni_rates.rs_nrates - ni->ni_txrate - 1;
-		flags |= IWN_TX_LINKQ;	/* enable MRR */
-	}
-	/* Set physical address of "scratch area". */
-	tx->loaddr = htole32(IWN_LOADDR(data->scratch_paddr));
-	tx->hiaddr = IWN_HIADDR(data->scratch_paddr);
-
-	/* Copy 802.11 header in TX command. */
-	memcpy(((uint8_t *)tx) + sizeof(*tx), wh, hdrlen);
-
-	/* Trim 802.11 header. */
-	m_adj(m, hdrlen);    
-	tx->security = 0;    
-
-#ifdef notyet
-	if (k != NULL && k->k_cipher == IEEE80211_CIPHER_CCMP) {
-		/* Trim 802.11 header and prepend CCMP IV. */
-		m_adj(m, hdrlen - IEEE80211_CCMP_HDRLEN);
-		ivp = mtod(m, uint8_t *);
-		k->k_tsc++;
-		ivp[0] = k->k_tsc;
-		ivp[1] = k->k_tsc >> 8;
-		ivp[2] = 0;
-		ivp[3] = k->k_id << 6 | IEEE80211_WEP_EXTIV;
-		ivp[4] = k->k_tsc >> 16;
-		ivp[5] = k->k_tsc >> 24;
-		ivp[6] = k->k_tsc >> 32;
-		ivp[7] = k->k_tsc >> 40;
-
-		tx->security = IWN_CIPHER_CCMP;
-		/* XXX flags |= IWN_TX_AMPDU_CCMP; */
-		memcpy(tx->key, k->k_key, k->k_len);
-
-		/* TX scheduler includes CCMP MIC len w/5000 Series. */
-		if (sc->hw_type != IWN_HW_REV_TYPE_4965)
-			totlen += IEEE80211_CCMP_MICLEN;
-	} else {
-		/* Trim 802.11 header. */
-		m_adj(m, hdrlen);
-		tx->security = 0;
-	}
-#endif
-	tx->flags = htole32(flags);
-
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-	    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-	if (error != 0 && error != EFBIG) {
-		aprint_error_dev(sc->sc_dev,
-		    "can't map mbuf (error %d)\n", error);
-		m_freem(m);
-		return error;
-	}
-	if (error != 0) {
-		/* Too many DMA segments, linearize mbuf. */
-		MGETHDR(m1, M_DONTWAIT, MT_DATA);
-		if (m1 == NULL) {
-			m_freem(m);
-			return ENOBUFS;
-		}
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(m1, M_DONTWAIT);
-			if (!(m1->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m1);
-				return ENOBUFS;
-			}
-		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, void *));
-		m1->m_pkthdr.len = m1->m_len = m->m_pkthdr.len;
-		m_freem(m);
-		m = m1;
-
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m,
-		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-		if (error != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "can't map mbuf (error %d)\n", error);
-			m_freem(m);
-			return error;
-		}
-	}
-
-	data->m = m;
-	data->ni = ni;
-
-	DPRINTFN(4, ("sending data: qid=%d idx=%d len=%d nsegs=%d\n",
-	    ring->qid, ring->cur, m->m_pkthdr.len, data->map->dm_nsegs));
-
-	/* Fill TX descriptor. */
-	desc->nsegs = 1 + data->map->dm_nsegs;
-	/* First DMA segment is used by the TX command. */
-	desc->segs[0].addr = htole32(IWN_LOADDR(data->cmd_paddr));
-	desc->segs[0].len  = htole16(IWN_HIADDR(data->cmd_paddr) |
-	    (4 + sizeof (*tx) + hdrlen + pad) << 4);
-	/* Other DMA segments are for data payload. */
-	seg = data->map->dm_segs;
-	for (i = 1; i <= data->map->dm_nsegs; i++) {
-		desc->segs[i].addr = htole32(IWN_LOADDR(seg->ds_addr));
-		desc->segs[i].len  = htole16(IWN_HIADDR(seg->ds_addr) |
-		    seg->ds_len << 4);
-		seg++;
-	}
-
-	bus_dmamap_sync(sc->sc_dmat, data->map, 0, data->map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, ring->cmd_dma.map,
-	    (char *)(void *)cmd - (char *)(void *)ring->cmd_dma.vaddr,
-	    sizeof (*cmd), BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map,
-	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
-	    sizeof (*desc), BUS_DMASYNC_PREWRITE);
-
-#ifdef notyet
-	/* Update TX scheduler. */
-	sc->sc_hal->update_sched(sc, ring->qid, ring->cur, tx->id, totlen);
-#endif
-
-	/* Kick TX ring. */
-	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
-	IWN_WRITE(sc, IWN_HBUS_TARG_WRPTR, ring->qid << 8 | ring->cur);
-
-	/* Mark TX ring as full if we reach a certain threshold. */
-	if (++ring->queued > IWN_TX_RING_HIMARK)
-		sc->qfullmsk |= 1 << ring->qid;
-
-	return 0;
-}
-#endif
 
 static void
 iwn_start(struct ifnet *ifp)
@@ -3481,6 +3170,7 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
+		/* XXX Added as it is in every NetBSD driver */
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
 		if (ifp->if_flags & IFF_UP) {
@@ -4119,8 +3809,9 @@ iwn_collect_noise(struct iwn_softc *sc,
 	for (i = 0; i < 3; i++)
 		if (val - calib->rssi[i] > 15 * 20)
 			sc->chainmask &= ~(1 << i);
-		DPRINTF(("RX chains mask: theoretical=0x%x, actual=0x%x\n",
-		    sc->rxchainmask, sc->chainmask));
+	DPRINTF(("RX chains mask: theoretical=0x%x, actual=0x%x\n",
+	    sc->rxchainmask, sc->chainmask));
+
 	/* If none of the TX antennas are connected, keep at least one. */
 	if ((sc->chainmask & sc->txchainmask) == 0)
 		sc->chainmask |= IWN_LSB(sc->txchainmask);
@@ -4907,7 +4598,7 @@ iwn_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 }
 #endif
 
-/* XXX Added for NetBSD */
+/* XXX Added for NetBSD (copied from rev 1.39). */
 
 static int
 iwn_wme_update(struct ieee80211com *ic)
@@ -6109,6 +5800,15 @@ iwn_stop(struct ifnet *ifp, int disable)
 	sc->sc_sensor.state = ENVSYS_SINVALID;
 #endif
 }
+
+/*
+ * XXX MCLGETI alternative
+ *
+ * With IWN_USE_RBUF defined it uses the rbuf cache for receive buffers
+ * as long as there are available free buffers then it uses MEXTMALLOC.,
+ * Without IWN_USE_RBUF defined it uses MEXTMALLOC exclusively.
+ * The MCLGET4K code is used for testing an alternative mbuf cache.
+ */
 
 static struct mbuf *
 MCLGETIalt(struct iwn_softc *sc, int how,
