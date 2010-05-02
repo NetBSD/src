@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.11 2009/07/20 11:43:09 nisimura Exp $ */
+/* $NetBSD: nif.c,v 1.12 2010/05/02 13:31:14 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ static struct nifdv vnifdv[] = {
 	{ "fxp", fxp_match, fxp_init, fxp_send, fxp_recv },
 	{ "tlp", tlp_match, tlp_init, tlp_send, tlp_recv },
 	{ "re",  rge_match, rge_init, rge_send, rge_recv },
+	{ "sk",  skg_match, skg_init, skg_send, skg_recv },
 };
 static int nnifdv = sizeof(vnifdv)/sizeof(vnifdv[0]);
 
@@ -107,7 +108,7 @@ netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct nifdv *dv = desc->io_netif;
 
-	return (*dv->send)(dv->priv, pkt, len);
+	return dv ? (*dv->send)(dv->priv, pkt, len) : -1;
 }
 
 /*
@@ -120,7 +121,7 @@ netif_get(struct iodesc *desc, void *pkt, size_t maxlen, saseconds_t timo)
 	struct nifdv *dv = desc->io_netif;
 	int len;
 
-	len = (*dv->recv)(dv->priv, pkt, maxlen, timo);
+	len = dv ? (*dv->recv)(dv->priv, pkt, maxlen, timo) : -1;
 	if (len == -1)
 		printf("timeout\n");
 	return len;
