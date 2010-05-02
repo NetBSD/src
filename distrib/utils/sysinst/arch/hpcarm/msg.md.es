@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2008/02/02 05:34:00 itohy Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2010/05/02 13:52:00 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,7 +96,7 @@ maquina puede dirigirse. Puede que no sea posible iniciar desde el.
 (Si contesta 'no' sera devuelto al menú de edicion de particiones.)}
 
 message set_kernel_1
-{Núcleo (GENERIC)}
+{Núcleo (IPAQ)}
 message set_kernel_2
-{Núcleo (TX3912)}
+{Núcleo (JORNADA720)}
 
