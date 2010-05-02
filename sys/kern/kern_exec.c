@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.295 2010/05/02 05:30:20 dholland Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.296 2010/05/02 23:22:51 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.295 2010/05/02 05:30:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.296 2010/05/02 23:22:51 dholland Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -296,8 +296,8 @@ check_exec(struct lwp *l, struct exec_package *epp, const char *kpath)
 	strcpy(epp->ep_resolvedname, nd.ni_cnd.cn_pnbuf);
 
 	/* dump this right away */
-#if 1 /*def DIAGNOSTIC*/
-	/* paranoia (XXX: take this out once things are working) */
+#ifdef DIAGNOSTIC
+	/* paranoia (take this out once namei stuff stabilizes) */
 	memset(nd.ni_cnd.cn_pnbuf, '~', PATH_MAX);
 #endif
 	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
