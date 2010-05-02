@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.1 2005/12/30 11:40:23 rjs Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.2 2010/05/02 13:52:00 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -92,6 +92,6 @@ chcesz to zrobic?
 (Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
 
 message set_kernel_1
-{Kernel (GENERIC)}
+{Kernel (IPAQ)}
 message set_kernel_2
-{Kernel (TX3912)}
+{Kernel (JORNADA720)}

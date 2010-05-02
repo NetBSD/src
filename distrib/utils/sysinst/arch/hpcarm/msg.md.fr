@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.3 2009/10/24 12:47:30 stacktic Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.4 2010/05/02 13:52:00 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -96,6 +96,6 @@ ne sera peut-être pas possible. Voulez-vous réellement faire ceci ?
 ('Non' vous ramènera au menu d'édition des partitions.)}
 
 message set_kernel_1
-{Kernel (GENERIC)}
+{Kernel (IPAQ)}
 message set_kernel_2
-{Kernel (TX3912)}
+{Kernel (JORNADA720)}
