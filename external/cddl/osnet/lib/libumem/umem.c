@@ -1,4 +1,4 @@
-/*	$NetBSD: umem.c,v 1.1 2009/08/07 20:57:56 haad Exp $	*/
+/*	$NetBSD: umem.c,v 1.2 2010/05/02 23:59:54 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -135,7 +135,8 @@ void *umem_cache_alloc(umem_cache_t *cache, int flags)
 	}
 
 	if(cache->constructor != NULL) {
-		if(cache->constructor(buf, cache->callback_data, flags) != 0) {
+		/* XXX NetBSD pool cache costructor has switched arguments. */
+		if(cache->constructor(cache->callback_data, buf, flags) != 0) {
 			free(buf);
 			if(!(flags & UMEM_NOFAIL))
 				return NULL;
@@ -155,7 +156,8 @@ void *umem_cache_alloc(umem_cache_t *cache, int flags)
 void umem_cache_free(umem_cache_t *cache, void *buffer)
 {
 	if(cache->destructor != NULL)
-		cache->destructor(buffer, cache->callback_data);
+		/* XXX NetBSD pool cache costructor has switched arguments. */
+		cache->destructor(cache->callback_data, buffer);
 
 	free(buffer);
 }
