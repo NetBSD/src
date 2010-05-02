@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.127 2009/09/16 15:23:04 pooka Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.128 2010/05/02 19:17:56 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.127 2009/09/16 15:23:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.128 2010/05/02 19:17:56 kefren Exp $");
 
 #include "opt_inet.h"
 #ifdef _KERNEL_OPT
@@ -410,9 +410,13 @@ route_output(struct mbuf *m, ...)
 			    (ifa = ifa_ifwithnet(info.rti_info[RTAX_IFP])) &&
 			    (ifp = ifa->ifa_ifp) && (info.rti_info[RTAX_IFA] ||
 			    info.rti_info[RTAX_GATEWAY])) {
-				ifa = ifaof_ifpforaddr(info.rti_info[RTAX_IFA] ?
-				    info.rti_info[RTAX_IFA] :
-				    info.rti_info[RTAX_GATEWAY], ifp);
+				if (info.rti_info[RTAX_IFA] == NULL ||
+				    (ifa = ifa_ifwithaddr(
+				    info.rti_info[RTAX_IFA])) == NULL)
+					ifa = ifaof_ifpforaddr(
+					    info.rti_info[RTAX_IFA] ?
+					    info.rti_info[RTAX_IFA] :
+					    info.rti_info[RTAX_GATEWAY], ifp);
 			} else if ((info.rti_info[RTAX_IFA] &&
 			    (ifa = ifa_ifwithaddr(info.rti_info[RTAX_IFA]))) ||
 			    (info.rti_info[RTAX_GATEWAY] &&
