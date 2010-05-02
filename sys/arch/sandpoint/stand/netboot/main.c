@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.23 2009/07/03 10:31:19 nisimura Exp $ */
+/* $NetBSD: main.c,v 1.24 2010/05/02 13:31:14 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -84,10 +84,17 @@ main(void)
 		printf("Sandpoint X3"); break;
 	case BRD_ENCOREPP1:
 		printf("Encore PP1"); break;
+	case BRD_QNAPTS101:
+		printf("QNAP TS-101"); break;
+	case BRD_SYNOLOGY:
+		printf("Synology DS"); break;
 	}
 	printf(", %dMB SDRAM\n", memsize >> 20);
 
 	n = pcilookup(PCI_CLASS_IDE, lata, sizeof(lata)/sizeof(lata[0]));
+	if (n == 0)
+		n = pcilookup(PCI_CLASS_MISCSTORAGE, lata,
+		    sizeof(lata)/sizeof(lata[0]));
 	if (n == 0)
 		printf("no IDE found\n");
 	else {
@@ -237,3 +244,14 @@ mkatagparams(unsigned addr, char *kcmd)
 	p->siz = 0;
 }
 #endif
+
+void *
+allocaligned(size_t size, size_t align)
+{
+	uint32_t p;
+
+	if (align-- < 2)
+		return alloc(size);
+	p = (uint32_t)alloc(size + align);
+	return (void *)((p + align) & ~align);
+}

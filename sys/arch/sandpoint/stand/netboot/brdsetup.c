@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.8 2009/07/03 10:31:19 nisimura Exp $ */
+/* $NetBSD: brdsetup.c,v 1.9 2010/05/02 13:31:14 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -104,23 +104,29 @@ brdsetup(void)
 		UART_WRITE(IER, 0x00);		/* make sure INT disabled */
 		printf("AAAAFFFFJJJJ>>>>VVVV>>>>ZZZZVVVVKKKK");
 	}
+	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
+	    0x8086) {				/* PCI_VENDOR_INTEL */
+		brdtype = BRD_QNAPTS101;
+		consname = "eumb";
+		consport = 0x4600;
+		consspeed = 57600;		/* XXX unverified */
+		ticks_per_sec = 133000000 / 4;	/* TS-101 is 266MHz */
+	}
+	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
+	    0x11ab) {				/* PCI_VENDOR_MARVELL */
+		brdtype = BRD_SYNOLOGY;
+		consname = "eumb";
+		consport = 0x4500;
+		consspeed = 115200;
+		/* XXX assume 133MHz bus clock, valid for 266MHz models */
+		ticks_per_sec = 133000000 / 4;
+	}
 
 	/* now prepare serial console */
 	if (strcmp(consname, "eumb") != 0)
 		uartbase = 0xfe000000 + consport; /* 0x3f8, 0x2f8 */
-	else {
+	else
 		uartbase = 0xfc000000 + consport; /* 0x4500, 0x4600 */
-		div = (ticks_per_sec * 4) / consspeed / 16;
-		UART_WRITE(DCR, 0x01);	/* 2 independent UART */
-		UART_WRITE(LCR, 0x80);	/* turn on DLAB bit */
-		UART_WRITE(FCR, 0x00);
-		UART_WRITE(DMB, div >> 8);
-		UART_WRITE(DLB, div & 0xff); /* 0x36 when 115200bps@100MHz */
-		UART_WRITE(LCR, 0x03);	/* 8 N 1 */
-		UART_WRITE(MCR, 0x03);	/* RTS DTR */
-		UART_WRITE(FCR, 0x07);	/* FIFO_EN | RXSR | TXSR */
-		UART_WRITE(IER, 0x00);	/* make sure INT disabled */
-	}
 }
 
 void
