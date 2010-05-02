@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.21 2008/11/15 00:49:53 njoly Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.22 2010/05/02 05:30:20 dholland Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.21 2008/11/15 00:49:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.22 2010/05/02 05:30:20 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,16 +73,8 @@ osf1_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
 	epp->ep_emul_arg = emul_arg;
 
 	emul_arg->flags = 0;
-	if (epp->ep_ndp->ni_segflg == UIO_SYSSPACE)
-		error = copystr(epp->ep_ndp->ni_dirp, emul_arg->exec_name,
-		    MAXPATHLEN + 1, NULL);
-	else
-		error = copyinstr(epp->ep_ndp->ni_dirp, emul_arg->exec_name,
-		    MAXPATHLEN + 1, NULL);
-#ifdef DIAGNOSTIC
-	if (error != 0)
-		panic("osf1_exec_ecoff_probe: copyinstr failed");
-#endif
+	/* this cannot overflow because both are size PATH_MAX */
+	strcpy(emul_arg->exec_name, epp->ep_kname);
 
 	/* do any special object file handling */
 	switch (execp->f.f_flags & ECOFF_FLAG_OBJECT_TYPE_MASK) {
