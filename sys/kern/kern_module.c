@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.64 2010/04/19 11:20:56 jruoho Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.65 2010/05/02 11:01:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.64 2010/04/19 11:20:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.65 2010/05/02 11:01:03 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -687,8 +687,15 @@ module_do_builtin(const char *name, module_t **modp)
 	}
 
 	/* Note! This is from TAILQ, not immediate above */
-	if (mi == NULL)
-		panic("can't find `%s'", name);
+	if (mi == NULL) {
+		/*
+		 * XXX: We'd like to panic here, but currently in some
+		 * cases (such as nfsserver + nfs), the dependee can be
+		 * succesfully linked without the dependencies.
+		 */
+		module_error("can't find builtin dependency `%s'", name);
+		return ENOENT;
+	}
 
 	/*
 	 * Initialize pre-requisites.
