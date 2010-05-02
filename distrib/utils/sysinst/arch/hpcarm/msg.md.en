@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.4 2010/05/02 14:00:44 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.5 2010/05/02 16:35:09 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,7 @@
 /* MD Message catalog -- English, hpcarm version */
 
 message md_hello
-{If you booted from a floppy, you may now remove the disk.
+{If you booted from an external device, you may now remove it.
 
 }
 
