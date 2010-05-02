@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.63 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.64 2010/05/02 05:30:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.63 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.64 2010/05/02 05:30:20 dholland Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -115,7 +115,7 @@ exec_script_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error, hdrlinelen, shellnamelen, shellarglen;
 	char *hdrstr = epp->ep_hdr;
-	char *cp, *shellname, *shellarg, *oldpnbuf;
+	char *cp, *shellname, *shellarg;
 	size_t shellargp_len;
 	struct exec_fakearg *shellargp;
 	struct exec_fakearg *tmpsap;
@@ -247,12 +247,7 @@ check_shell:
 	}
 #endif
 
-	/* set up the parameters for the recursive check_exec() call */
-	epp->ep_ndp->ni_dirp = shellname;
-	epp->ep_ndp->ni_segflg = UIO_SYSSPACE;
-	epp->ep_flags |= EXEC_INDIR;
-
-	/* and set up the fake args list, for later */
+	/* set up the fake args list */
 	shellargp_len = 4 * sizeof(*shellargp);
 	shellargp = kmem_alloc(shellargp_len, KM_SLEEP);
 	tmpsap = shellargp;
@@ -272,12 +267,12 @@ check_shell:
 	if ((epp->ep_flags & EXEC_HASFD) == 0) {
 #endif
 		/* normally can't fail, but check for it if diagnostic */
-		error = copyinstr(epp->ep_name, tmpsap->fa_arg, MAXPATHLEN,
+		error = copystr(epp->ep_kname, tmpsap->fa_arg, MAXPATHLEN,
 		    (size_t *)0);
 		tmpsap++;
 #ifdef DIAGNOSTIC
 		if (error != 0)
-			panic("exec_script: copyinstr couldn't fail");
+			panic("exec_script: copystr couldn't fail");
 #endif
 #ifdef FDSCRIPTS
 	} else {
@@ -287,22 +282,25 @@ check_shell:
 #endif
 	tmpsap->fa_arg = NULL;
 
+	/* Save the old vnode so we can clean it up later. */
+	scriptvp = epp->ep_vp;
+	epp->ep_vp = NULL;
+
+	/* Note that we're trying recursively. */
+	epp->ep_flags |= EXEC_INDIR;
+
 	/*
 	 * mark the header we have as invalid; check_exec will read
 	 * the header from the new executable
 	 */
 	epp->ep_hdrvalid = 0;
 
-	/*
-	 * remember the old vp and pnbuf for later, so we can restore
-	 * them if check_exec() fails.
-	 */
-	scriptvp = epp->ep_vp;
-	oldpnbuf = epp->ep_ndp->ni_cnd.cn_pnbuf;
+	/* try loading the interpreter */
+	error = check_exec(l, epp, shellname);
 
-	error = check_exec(l, epp);
 	/* note that we've clobbered the header */
 	epp->ep_flags |= EXEC_DESTR;
+
 	if (error == 0) {
 		/*
 		 * It succeeded.  Unlock the script and
@@ -315,9 +313,6 @@ check_shell:
 			VOP_CLOSE(scriptvp, FREAD, l->l_cred);
 			vput(scriptvp);
 		}
-
-		/* free the old pathname buffer */
-		PNBUF_PUT(oldpnbuf);
 
 		epp->ep_flags |= (EXEC_HASARGL | EXEC_SKIPARG);
 		epp->ep_fa = shellargp;
@@ -338,8 +333,6 @@ check_shell:
 		return (0);
 	}
 
-	/* XXX oldpnbuf not set for "goto fail" path */
-	epp->ep_ndp->ni_cnd.cn_pnbuf = oldpnbuf;
 #ifdef FDSCRIPTS
 fail:
 #endif
@@ -353,8 +346,6 @@ fail:
 		VOP_CLOSE(scriptvp, FREAD, l->l_cred);
 		vput(scriptvp);
 	}
-
-        PNBUF_PUT(epp->ep_ndp->ni_cnd.cn_pnbuf);
 
 	/* free the fake arg list, because we're not returning it */
 	if ((tmpsap = shellargp) != NULL) {
