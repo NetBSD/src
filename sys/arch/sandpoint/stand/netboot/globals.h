@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.11 2009/07/20 11:43:09 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.12 2010/05/02 13:31:14 phx Exp $ */
 
 /* clock feed */
 #ifndef TICKS_PER_SEC
@@ -12,6 +12,8 @@ extern int brdtype;
 #define BRD_SANDPOINTX3		3
 #define BRD_ENCOREPP1		10
 #define BRD_KUROBOX		100
+#define BRD_QNAPTS101		101
+#define BRD_SYNOLOGY		102
 #define BRD_UNKNOWN		-1
 
 extern char *consname;
@@ -62,6 +64,7 @@ void  pcicfgwrite(unsigned, int, unsigned);
 #define  PCI_CLASS_IDE			0x0101
 #define  PCI_CLASS_RAID			0x0104
 #define  PCI_CLASS_SATA			0x0106
+#define  PCI_CLASS_MISCSTORAGE		0x0180
 #define PCI_BHLC_REG			0x0c
 #define  PCI_HDRTYPE_TYPE(r)		(((r) >> 16) & 0x7f)
 #define  PCI_HDRTYPE_MULTIFN(r)		((r) & (0x80 << 16))
@@ -70,6 +73,9 @@ void  pcicfgwrite(unsigned, int, unsigned);
 void _wb(uint32_t, uint32_t);
 void _wbinv(uint32_t, uint32_t);
 void _inv(uint32_t, uint32_t);
+
+/* heap */
+void *allocaligned(size_t, size_t);
 
 /* NIF */
 int net_open(struct open_file *, ...);
@@ -89,3 +95,4 @@ int netif_close(int);
 NIF_DECL(fxp);
 NIF_DECL(tlp);
 NIF_DECL(rge);
+NIF_DECL(skg);
