@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.40 2010/04/25 16:10:51 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.41 2010/05/02 18:03:31 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -112,6 +112,8 @@ struct intrhand {
 #define IMASK(ci,level) (ci)->ci_imask[(level)]
 #define IUNMASK(ci,level) (ci)->ci_iunmask[(level)]
 
+#ifdef _KERNEL
+
 void Xspllower(int);
 void spllower(int);
 int splraise(int);
@@ -184,6 +186,8 @@ void x86_broadcast_ipi(int);
 void x86_ipi_handler(void);
 
 extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
+
+#endif /* _KERNEL */
 
 #endif /* !_LOCORE */
 
