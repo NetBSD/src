@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.52 2010/04/09 19:25:52 jakllsch Exp $	*/
+/*	$NetBSD: esiop.c,v 1.53 2010/05/02 17:37:52 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.52 2010/04/09 19:25:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.53 2010/05/02 17:37:52 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1597,7 +1597,7 @@ esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (error) {
 				aprint_error_dev(sc->sc_c.sc_dev,
-				    "unable to load data DMA map: %d",
+				    "unable to load data DMA map: %d\n",
 				    error);
 				xs->error = (error == EAGAIN) ?
 				    XS_RESOURCE_SHORTAGE : XS_DRIVER_STUFFUP;
