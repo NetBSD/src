@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.37 2010/05/01 23:54:35 pooka Exp $	*/
+/*	$NetBSD: sem.c,v 1.38 2010/05/02 15:35:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1407,6 +1407,12 @@ deldev(const char *name)
 	nvfreel(stack);
 }
 
+/*
+ * Insert given device "name" into devroottab.  In case "name"
+ * designates a pure interface attribute, create a fake device
+ * instance for the attribute and insert that into the roottab
+ * (this scheme avoids mucking around with the orphanage analysis).
+ */
 void
 addpseudoroot(const char *name)
 {
@@ -1425,13 +1431,23 @@ addpseudoroot(const char *name)
 	}
 
 	/*
-	 * Assume given pseudoroot is an interface attribute.  If it
-	 * is, do stunts.  If it isn't, try a device next.
+	 * Prefer device because devices with locators define an
+	 * implicit interface attribute.  However, if a device is
+	 * not available, try to attach to the interface attribute.
+	 * This makes sure adddev() doesn't get confused when we
+	 * are really attaching to a device (alternatively we maybe
+	 * could specify a non-NULL atlist to defdevattach() below).
 	 */
-	attr = ht_lookup(attrtab, intern(buf));
-	if (attr && attr->a_iattr && /*XXX*/strcmp(buf, "mainbus") != 0) {
+	ib = ht_lookup(devbasetab, intern(buf));
+	if (ib == NULL) {
 		struct devbase *fakedev;
 		char fakename[NAMESIZE];
+
+		attr = ht_lookup(attrtab, intern(buf));
+		if (!(attr && attr->a_iattr)) {
+			cfgerror("pseudo-root `%s' not available", name);
+			return;
+		}
 
 		/*
 		 * here we cheat a bit: create a fake devbase with the
@@ -1441,7 +1457,7 @@ addpseudoroot(const char *name)
 		 * in ioconf, just used by config to make sure we start from
 		 * the right place.
 		 */ 
-		snprintf(fakename, sizeof(fakename), "%sattrs", buf);
+		snprintf(fakename, sizeof(fakename), "%s_devattrs", buf);
 		fakedev = getdevbase(intern(fakename));
 		fakedev->d_isdef = 1;
 		fakedev->d_ispseudo = 0;
@@ -1458,7 +1474,7 @@ addpseudoroot(const char *name)
 	/* ok, everything should be set up, so instantiate a fake device */
 	i = getdevi(name);
 	if (i == NULL)
-		return;
+		panic("device `%s' expected to be present", name);
 	ib = i->i_base;
 	iba = ib->d_ahead;
 
