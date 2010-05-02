@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.10 2003/07/07 12:30:24 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.11 2010/05/02 14:00:44 tsutsui Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.4 2002/03/23 03:24:34 shin Exp */
 
@@ -48,50 +48,6 @@ message md_hello
 message dobad144
 {Instalowanie tablicy zlych blokow ...
 }
-
-message getboottype
-{Czy chcesz zainstalowac normalne bootbloki, czy te do uzycia z zewn. konsola?
-}
-
-message dobootblks
-{Instalowanie bootblokow na %s....
-}
-
-message onebiosmatch
-{Ten dysk odpowiada ponizszemu dyskowi BIOS:
-
-}
-
-message onebiosmatch_header
-{BIOS # cylindry  glowice sektory
------- ---------- ------- -------
-}
-
-message onebiosmatch_row
-{%-6x %-10d %-7d %d\n}
-
-message biosmultmatch
-{Ten dysk odpowiada ponizszym dyskom BIOS:
-
-}
-
-message biosmultmatch_header
-{   BIOS # cylindry  glowice sektory
-   ------ ---------- ------- -------
-}
-
-message biosmultmatch_row
-{%-1d: %-6x %-10d %-7d %d\n}
-
-message pickdisk
-{Wybierz dysk: }
-
-message partabovechs
-{Czesc NetBSD dysku lezy poza obszarem, ktory BIOS w twojej maszynie moze
-zaadresowac. Nie mozliwe bedzie bootowanie z tego dysku. Jestes pewien, ze
-chcesz to zrobic?
-
-(Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
 
 message set_kernel_1
 {Kernel (GENERIC)}
