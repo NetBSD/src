@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3 2008/02/02 05:34:00 itohy Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.4 2010/05/02 14:00:44 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,54 +46,6 @@ message md_hello
 message dobad144
 {Instalando la tabla de bloques malos ...
 }
-
-message getboottype
-{¿Le gustaría instalar el set normal de bootblocks o bootblocks por serie?
-
-Bootblocks normal usa el dispositivo de consola de BIOS como consola
-(normalmente el monitor y teclado). Bootblocks por serie usa el primer
-puerto serie como consola.
-}
-
-message dobootblks
-{Instalando bloques de arranque en %s....
-}
-
-message onebiosmatch
-{Este disco coincide con el siguiente disco de BIOS:
-
-}
-
-message onebiosmatch_header
-{BIOS # cilindros cabezal sectors
------- ---------- ------- -------
-}
-
-message onebiosmatch_row
-{%-6x %-10d %-7d %d\n}
-
-message biosmultmatch
-{Este disco coincide con los siguientes discos de BIOS:
-
-}
-
-message biosmultmatch_header
-{   BIOS # cilindros  cabezal sectors
-   ------ ---------- ------- -------
-}
-
-message biosmultmatch_row
-{%-1d: %-6x %-10d %-7d %d\n}
-
-message pickdisk
-{Escoja disco: }
-
-message partabovechs
-{La parte NetBSD del disco se halla fuera del rango que la BIOS en su
-maquina puede dirigirse. Puede que no sea posible iniciar desde el.
-¿Esta seguro de que quiere hacer esto?
-
-(Si contesta 'no' sera devuelto al menú de edicion de particiones.)}
 
 message set_kernel_1
 {Núcleo (GENERIC)}
