@@ -1,4 +1,4 @@
-/*     $NetBSD: kernel.c,v 1.3 2010/03/01 21:13:10 haad Exp $  */
+/*     $NetBSD: kernel.c,v 1.4 2010/05/02 23:50:34 haad Exp $  */
 
 /*
  * CDDL HEADER START
@@ -29,7 +29,7 @@
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kernel.c,v 1.3 2010/03/01 21:13:10 haad Exp $");
+__RCSID("$NetBSD: kernel.c,v 1.4 2010/05/02 23:50:34 haad Exp $");
 
 #include <sys/zfs_context.h>
 #include <sys/sysctl.h>
@@ -596,6 +596,8 @@ kernel_init(int mode)
 	    physmem / pgsize, (double)physmem / (1ULL << 30));
 
 	snprintf(hw_serial, sizeof (hw_serial), "%ld", gethostid());
+
+	system_taskq_init();
 
 	spa_init(mode);
 }
