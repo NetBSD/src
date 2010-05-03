@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.66 2009/04/25 21:21:48 snj Exp $
+.\"	$NetBSD: xfer,v 1.67 2010/05/03 15:08:52 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -474,9 +474,6 @@ Installation is supported from several media types, including:
 CD-ROM / DVD
 .
 .It
-.Tn MS-DOS No floppy
-.
-.It
 FTP
 .
 .if \n[x68k] \{\
@@ -518,7 +515,7 @@ kernel for 32-bit sparc computers which does not boot on \*M systems.
 .Note)
 .\}
 .
-.(tag MS-DOS\ floppy
+.(tag CD-ROM\ /\ DVD
 .
 .if \n[amiga] \{\
 .It Em AmigaDOS partition
@@ -564,73 +561,6 @@ and
 .Pa \*M/binary/sets .
 .Pp
 Proceed to the instructions on installation.
-.
-.It Em MS-DOS floppy
-.Nx
-does not include split distribution sets for installation by floppy.
-However, they can be created on a separate machine using the
-.Xr split 1
-command, running e.g.
-.Ic split -b 235k base.tgz base.
-to split the
-.Pa base.tgz
-file from
-.Pa \*M/binary/sets
-into files named
-.Pa base.aa ,
-.Pa base.ab ,
-and so on.
-Repeat this for all
-.Pa set_name.tgz
-files, splitting them into
-.Pa set_name. Ns Ar xx
-files. 
-Count the number of
-.Pa set_name. Ns Ar xx
-files that make up the
-distribution sets you want to install or upgrade.
-.ie \n[i386] \{\
-You will need one fifth that number of 1.2 MB floppies, or one sixth that
-number of 1.44 MB floppies.
-You should only use one size of floppy for the install or upgrade
-procedure; you can't use some 1.2 MB floppies and some 1.44 MB floppies.
-.\} \" \n[i386]
-.el \{\
-You will need one sixth that number of 1.44 MB floppies.
-.\} \" ! \n[i386]
-.Pp
-Format all of the floppies with
-.Tn MS-DOS .
-Do
-.Em not
-make any of them bootable
-.Tn MS-DOS
-floppies, i.e. don't use
-.Li format /s
-to format them.
-(If the floppies are bootable, then the
-.Tn MS-DOS
-system files that make them bootable will take up some space, and you
-won't be able to fit the distribution set parts on the disks.)
-If you're using floppies that are formatted for
-.Tn MS-DOS
-by their manufacturers, they probably aren't bootable, and you can use
-them out of the box.
-.Pp
-Place all of the
-.Pa "set_name." Ns Ar xx
-files on the
-.Tn MS-DOS
-disks.
-.Pp
-Once you have the files on
-.Tn MS-DOS
-disks, you can proceed to the next step in the installation or upgrade process.
-If you're installing
-.Nx
-from scratch, go to the section on preparing your hard disk, below.
-If you're upgrading an existing installation, go directly to the
-section on upgrading.
 .
 .It Em FTP
 The preparations for this installation/upgrade method are
