@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1440 2010/05/01 23:27:22 pooka Exp $
+#	$NetBSD: mi,v 1.1441 2010/05/03 05:01:53 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6277,6 +6277,7 @@
 ./usr/share/man/cat3/j0f.0			comp-c-catman		.cat
 ./usr/share/man/cat3/j1.0			comp-c-catman		.cat
 ./usr/share/man/cat3/j1f.0			comp-c-catman		.cat
+./usr/share/man/cat3/jemalloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/jn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/jnf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/jrand48.0			comp-c-catman		.cat
@@ -12102,6 +12103,7 @@
 ./usr/share/man/html3/j0f.html			comp-c-htmlman		html
 ./usr/share/man/html3/j1.html			comp-c-htmlman		html
 ./usr/share/man/html3/j1f.html			comp-c-htmlman		html
+./usr/share/man/html3/jemalloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/jn.html			comp-c-htmlman		html
 ./usr/share/man/html3/jnf.html			comp-c-htmlman		html
 ./usr/share/man/html3/jrand48.html		comp-c-htmlman		html
@@ -17845,6 +17847,7 @@
 ./usr/share/man/man3/j0f.3			comp-c-man		.man
 ./usr/share/man/man3/j1.3			comp-c-man		.man
 ./usr/share/man/man3/j1f.3			comp-c-man		.man
+./usr/share/man/man3/jemalloc.3			comp-c-man		.man
 ./usr/share/man/man3/jn.3			comp-c-man		.man
 ./usr/share/man/man3/jnf.3			comp-c-man		.man
 ./usr/share/man/man3/jrand48.3			comp-c-man		.man
