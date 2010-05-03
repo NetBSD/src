@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1385 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1386 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -581,7 +581,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	agp(4): Add support for the Intel 82855GM AGP port. [jakllsch 20100404]
 	sdmmc(4): Add support for SD 4bit bus width. [nonaka 20100406]
 	evbsh3: Add support for Alpha Project MS104-SH4, TAC T-SH7706LAN Rev.3
-	        and TAC T-SH7706LSR Rev.1. [nonaka 20100407]
+		and TAC T-SH7706LSR Rev.1. [nonaka 20100407]
 	acpi(4): Updated ACPICA to 20100121. [jruoho 20100408]
 	fss(4): Add snapshot support for MSDOS file systems. [hannken 20100409]
 	fsck_msdos(8): add -x option which allows to run fsck_msdos -n on
