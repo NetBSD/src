@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.58 2010/03/14 21:27:49 darran Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.59 2010/05/03 09:51:36 darran Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.58 2010/03/14 21:27:49 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.59 2010/05/03 09:51:36 darran Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -473,6 +473,9 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 		char *shstr = (uint8_t*)start +
 				shdr[ehdr->e_shstrndx].sh_offset;
 		for (i = 1; i < ehdr->e_shnum; i++) {
+#ifdef DEBUG
+		    	printf("ksyms: checking %s\n", &shstr[shdr[i].sh_name]);
+#endif
 			if (shdr[i].sh_type != SHT_PROGBITS)
 				continue;
 			if (strncmp(".SUNW_ctf", &shstr[shdr[i].sh_name] ,10) != 0)
@@ -486,6 +489,10 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 #endif
 			break;
 		}
+#ifdef DEBUG
+	} else {
+	    	printf("ksyms: e_shstrndx == 0\n");
+#endif
 	}
 #endif
 
