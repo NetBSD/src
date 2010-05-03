@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3 2010/05/01 12:59:26 tsutsui Exp $
+# $NetBSD: dot.profile,v 1.4 2010/05/03 14:14:35 tsutsui Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -66,5 +66,5 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	grep() sed -n "/$1/p"
 
 	# run the installation or upgrade script.
-	# sysinst XXX
+	sysinst
 fi
