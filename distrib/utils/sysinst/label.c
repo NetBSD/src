@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.54 2010/01/02 21:16:46 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.55 2010/05/03 23:04:12 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.54 2010/01/02 21:16:46 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.55 2010/05/03 23:04:12 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -195,6 +195,10 @@ edit_fs_size(menudesc *m, void *arg)
 	if (size == ~0u)
 		size = dlsize - p->pi_offset;
 	p->pi_size = size;
+	if (size == 0) {
+		p->pi_offset = 0;
+		p->pi_fstype = FS_UNUSED;
+	}
 	return 0;
 }
 
@@ -880,6 +884,8 @@ getpartsize(uint32_t partstart, uint32_t defpartsize)
 			    NULL, isize, 1,
 			    (partend - partstart) / sizemult, multname);
 		}
+		if (partend < partstart)
+			return 0;
 		return (partend - partstart);
 	}
 	/* NOTREACHED */
