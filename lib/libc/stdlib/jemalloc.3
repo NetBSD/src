@@ -43,6 +43,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
+.Ft const char *
 .Va _malloc_options ;
 .Sh DESCRIPTION
 The
@@ -299,6 +300,10 @@ If the
 .Em A
 option is set, all warnings are treated as errors.
 .Pp
+.\"
+.\" XXX: The _malloc_message should be documented
+.\"	 better in order to be worth mentioning.
+.\"
 The
 .Va _malloc_message
 variable allows the programmer to override the function which emits
