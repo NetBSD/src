@@ -1,3 +1,7 @@
+#       $NetBSD: shrc,v 1.6 2010/05/03 17:15:58 hubertf Exp $
+#
+# System-wide .shrc file for sh(1).
+
 ll(){ ls -l ${1+"$@"}; }
 
 case "$-" in *i*)
