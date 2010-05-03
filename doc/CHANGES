@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1387 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1388 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -86,7 +86,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	x68k:	pow(4) switches to use MI powerd(8) [isaki 20081220]
 	viaide(4): Add VT8237S Integrated SATA Controller support.
 		[nonaka 20081221]
-	lvm:	Add LVM functionality to NetBSD; this is done by dm(4) driver
+	lvm(8):	Add LVM functionality to NetBSD; this is done by dm(4) driver
 		in kernel and lvm2 tools made by RedHat. We use the same well
 		known interface as Linux does for managing LVM. [haad 20081222]
 	gcscaudio(4): Add AMD Geode CS5536 audio driver, from SHIMIZU Ryo.
@@ -155,7 +155,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		consoles using VESA BIOS extensions. These changes allow the
 		x86 ports to work with the genfb(4) driver, and obsoletes
 		the i386-only vesafb(4) driver. [jmcneill 20090216]
-	lvm: Import new lvm2tools 2.02.44 version and libdevmapper 1.02.30.
+	lvm(8): Import new lvm2tools 2.02.44 version and libdevmapper 1.02.30.
 		[haad 20090218]
 	compat_linux(8), compat_linux32: Add IPC_64 support for all shmctl(2)
 		commands, not only for STAT/SET. [njoly 20090218]
@@ -497,7 +497,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	udl(4): Add a driver for DisplayLink DL-1x0/1x5 based USB LCDs and
 		USB-VGA adaptors. Ported from OpenBSD by FUKAUMI Naoki
 		with many modification. [tsutsui 20091130]
-	lvm: Import new lvm2tools 2.02.56 version and libdevmapper 1.02.40.
+	lvm(8): Import new lvm2tools 2.02.56 version and libdevmapper 1.02.40.
 		[haad 20091202]
 	resolvconf(8): Import openreslv-3.3.4. [roy 20091204]
 	playstation2: Port deleted.  [pooka 20091205]
@@ -508,7 +508,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		ICMP replies to the broadcast address. [christos 20091207]
 	ntp:	Import ntp-4-2-4p8. [kardel 20091208]
 	zaurus: Add support Xorg. [nonaka 20091213]
-	sysinst: Make SHA1 the default option for cyphers.  [ahoka 20091216]
+	sysinst(8): Make SHA1 the default option for cyphers.  [ahoka 20091216]
 	atf(7): Import 0.7.  [jmmv 20091222]
 	dhcpcd(8): Import dhcpcd-5.1.4. [roy 20091223]
 	bind: Update to 9.7.0-rc1. [christos 20091226]
