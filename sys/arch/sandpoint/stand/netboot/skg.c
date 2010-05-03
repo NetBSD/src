@@ -1,4 +1,4 @@
-/* $NetBSD: skg.c,v 1.1 2010/05/02 13:31:14 phx Exp $ */
+/* $NetBSD: skg.c,v 1.2 2010/05/03 18:55:09 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -58,7 +58,7 @@
 
 struct desc {
 	uint32_t xd0, xd1, xd2, xd3, xd4;
-	uint32_t rsrvd[5];
+	uint32_t rsrvd[3];
 };
 #define CTL_LS			0x20000000
 #define CTL_FS			0x40000000
@@ -174,10 +174,10 @@ struct desc {
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc txd;
+	struct desc txd[2];
 	struct desc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
-	unsigned csr, rx, phy;
+	unsigned csr, rx, tx, phy;
 	uint16_t pssr, anlpar;
 };
 
@@ -208,7 +208,7 @@ skg_init(unsigned tag, void *data)
 	unsigned i;
 	uint16_t reg;
 
-	l = ALLOC(struct local, 64);	/* desc alignment */
+	l = ALLOC(struct local, 32);	/* desc alignment */
 	memset(l, 0, sizeof(struct local));
 	l->csr = DEVTOV(pcicfgread(tag, 0x10)); /* use mem space */
 
@@ -288,14 +288,15 @@ skg_init(unsigned tag, void *data)
 	/* setup descriptors and BMU */
 	CSR_WRITE_1(l, SK_TXAR1_COUNTERCTL, TXARCTL_ON|TXARCTL_FSYNC_ON);
 
-	txd = &l->txd;
-	txd->xd1 = htole32(VTOPHYS(txd));
+	txd = &l->txd[0];
+	txd[0].xd1 = htole32(VTOPHYS(&txd[1]));
+	txd[1].xd1 = htole32(VTOPHYS(&txd[0]));
 	rxd = &l->rxd[0];
 	rxd[0].xd0 = htole32(FRAMESIZE|CTL_DEFOPC|CTL_LS|CTL_FS|CTL_OWN);
-	rxd[0].xd1 = htole32(&rxd[1]);
+	rxd[0].xd1 = htole32(VTOPHYS(&rxd[1]));
 	rxd[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
 	rxd[1].xd0 = htole32(FRAMESIZE|CTL_DEFOPC|CTL_LS|CTL_FS|CTL_OWN);
-	rxd[1].xd1 = htole32(&rxd[0]);
+	rxd[1].xd1 = htole32(VTOPHYS(&rxd[0]));
 	rxd[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
 	wbinv(l, sizeof(struct local));
 
@@ -332,7 +333,7 @@ skg_send(void *dev, char *buf, unsigned len)
 	unsigned loop;
 
 	wbinv(buf, len);
-	txd = &l->txd;
+	txd = &l->txd[l->tx];
 	txd->xd2 = htole32(VTOPHYS(buf));
 	txd->xd0 = htole32((len & FRAMEMASK)|CTL_DEFOPC|CTL_FS|CTL_LS|CTL_OWN);
 	wbinv(txd, sizeof(struct desc));
@@ -347,6 +348,7 @@ skg_send(void *dev, char *buf, unsigned len)
 	printf("xmit failed\n");
 	return -1;
   done:
+	l->tx ^= 1;
 	return len;
 }
 
