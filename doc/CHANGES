@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1386 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1387 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -602,3 +602,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	tftpd(8): Add -c so files can be uploaded without requiring them
 		to be created before the upload. See the section on security 
 		considerations before enabling. [hubertf 20100429]
+	hpcsh: Add sysinst(8) support. [tsutsui 20100503]
