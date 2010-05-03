@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.5 2010/03/13 22:31:15 christos Exp $	*/
+/*	$NetBSD: fbt.c,v 1.6 2010/05/03 09:28:38 darran Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -1399,6 +1399,12 @@ fbt_getargdesc(void *arg __unused, dtrace_id_t id __unused, void *parg, dtrace_a
 
 	/* Get a pointer to the CTF data and it's length. */
 	if (mod_ctf_get(ctl, &mc) != 0) {
+		static int report=0;
+		if (report < 1) {
+		    report++;
+		    printf("FBT: Error no CTF section found in module \"%s\"\n",
+			    ctl->mod_info->mi_name);
+		}
 		/* No CTF data? Something wrong? *shrug* */
 		return;
 	}
