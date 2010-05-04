@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.1.2.6 2010/02/25 05:24:24 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.1.2.7 2010/05/04 17:14:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.6 2010/02/25 05:24:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.7 2010/05/04 17:14:47 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -137,7 +137,15 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.2.6 2010/02/25 05:24:24 matt Exp
 
 CTASSERT(NBPG >= sizeof(struct segtab));
 
-struct segtab	*free_segtab;		/* free list kept locally */
+struct segtab * volatile free_segtab;		/* free list kept locally */
+#ifdef DEBUG
+uint32_t nget_segtab;
+uint32_t nput_segtab;
+uint32_t npage_segtab;
+#define	SEGTAB_ADD(n, v)	(n ## _segtab += (v))
+#else
+#define	SEGTAB_ADD(n, v)	((void) 0)
+#endif
 
 static inline struct vm_page *
 pmap_pte_pagealloc(void)
@@ -183,33 +191,32 @@ void
 pmap_segtab_alloc(pmap_t pmap)
 {
 	struct segtab *stp;
-
+ again:
 	stp = NULL;
 	while (__predict_true(free_segtab != NULL)) {
 		struct segtab *next_stp;
 		stp = free_segtab;
 		next_stp = (struct segtab *)stp->seg_tab[0];
-		if (stp == atomic_cas_ptr(&free_segtab, stp, next_stp))
+		if (stp == atomic_cas_ptr(&free_segtab, stp, next_stp)) {
+			SEGTAB_ADD(nget, 1);
 			break;
+		}
 	}
 	
 	if (__predict_true(stp != NULL)) {
 		stp->seg_tab[0] = NULL;
 	} else {
-		paddr_t stp_pa;
+		struct vm_page * const stp_pg = pmap_pte_pagealloc();
 
-		for (;;) {
-			struct vm_page * const stp_pg = pmap_pte_pagealloc();
-			if (stp_pg != NULL) {
-				stp_pa = VM_PAGE_TO_PHYS(stp_pg);
-				break;
-			}
+		if (__predict_false(stp_pg == NULL)) {
 			/*
-			 * XXX What else can we do?  Could we
-			 * XXX deadlock here?
+			 * XXX What else can we do?  Could we deadlock here?
 			 */
 			uvm_wait("pmap_create");
+			goto again;
 		}
+		SEGTAB_ADD(npage, 1);
+		const paddr_t stp_pa = VM_PAGE_TO_PHYS(stp_pg);
 
 #ifdef _LP64
 		KASSERT(mips_options.mips3_xkphys_cached);
@@ -234,6 +241,7 @@ pmap_segtab_alloc(pmap_t pmap)
 				if (tmp == atomic_cas_ptr(&free_segtab, tmp, stp+1))
 					break;
 			}
+			SEGTAB_ADD(nput, n - 1);
 		}
 	}
 
@@ -302,8 +310,10 @@ pmap_segtab_free(pmap_t pmap)
 	for (;;) {
 		void *tmp = free_segtab;
 		stp->seg_tab[0] = tmp;
-		if (tmp == atomic_cas_ptr(&free_segtab, tmp, stp))
+		if (tmp == atomic_cas_ptr(&free_segtab, tmp, stp)) {
+			SEGTAB_ADD(nput, 1);
 			break;
+		}
 	}
 }
 
