@@ -1,4 +1,4 @@
-.\"	$NetBSD: byteorder.9,v 1.4 2009/10/02 09:38:29 cegger Exp $
+.\"	$NetBSD: byteorder.9,v 1.5 2010/05/04 05:49:12 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/byteorder.9,v 1.6 2003/05/21 17:32:55 ru Exp $
 .\"
-.Dd April 10, 2009
+.Dd May 4, 2010
 .Dt BYTEORDER 9
 .Os
 .Sh NAME
@@ -177,6 +177,7 @@ and
 functions encode and decode integers to/from octet stream
 on any alignment in big/little endian format.
 .Sh SEE ALSO
+.Xr bswap 3 ,
 .Xr byteorder 3
 .Sh HISTORY
 The
@@ -185,17 +186,18 @@ and
 .Fn *toh
 functions first appeared in
 .Nx 1.5 .
-These functions were introduced to handle PCI bus master devices which assumed
-host's memory used to pass integer parameters via DMA transfer was
-always little endian even on big endian systems.
+These were later ported to
+.Fx 5.0 .
+The functions were originally introduced to handle
+.Tn PCI
+bus master devices, which assumed little endian byte order in
+.Tn DMA
+transfers, even on big endian systems.
 .Pp
 The encode/decode functions first appeared in
-.Fx 5.1 ,
-and ported to
+.Fx 5.1 .
+These were later ported to
 .Nx 3.0
-as a part of
+as a part of the
 .Xr uuidgen 2
 support.
-.Sh AUTHORS
-This manual page was written by
-.An Mike Barcroft Aq mike@FreeBSD.org .
