@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.22 2010/04/06 20:43:57 jld Exp $	*/
+/*	$NetBSD: pte.h,v 1.23 2010/05/04 23:27:14 jym Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -274,5 +274,6 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define PGEX_P		0x01	/* protection violation (vs. no mapping) */
 #define PGEX_W		0x02	/* exception during a write cycle */
 #define PGEX_U		0x04	/* exception while in user mode (upl) */
+#define PGEX_X		0x10	/* exception during instruction fetch */
 
 #endif /* _I386_PTE_H_ */
