@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.16 2010/05/04 12:36:37 nonaka Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.17 2010/05/04 19:16:22 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.16 2010/05/04 12:36:37 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.17 2010/05/04 19:16:22 macallan Exp $");
 
 #include "opt_rasops.h"
 
@@ -106,8 +106,6 @@ rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int32_t *rp;
 	u_char *fr;
-
-	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -256,8 +254,6 @@ rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 		return;
 	}
 
-	ri = (struct rasops_info *)cookie;
-
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
 	if ((unsigned)row >= (unsigned)ri->ri_rows) {
@@ -322,8 +318,6 @@ rasops2_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 		rasops2_putchar(cookie, row, col, uc, attr);
 		return;
 	}
-
-	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
@@ -392,8 +386,6 @@ rasops2_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 		rasops2_putchar(cookie, row, col, uc, attr);
 		return;
 	}
-
-	ri = (struct rasops_info *)cookie;
 
 #ifdef RASOPS_CLIPPING
 	/* Catches 'row < 0' case too */
