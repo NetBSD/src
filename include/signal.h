@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.51 2009/01/11 03:04:12 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.52 2010/05/04 09:07:11 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -101,7 +101,11 @@ int *__errno(void);
 #endif
 
 #ifndef _SIGINLINE
+#if defined(__GNUC__) && !defined(__GNUC_STDC_INLINE__)
 #define _SIGINLINE extern __inline
+#else
+#define _SIGINLINE __inline
+#endif
 #endif
 
 _SIGINLINE int
@@ -149,7 +153,7 @@ sigfillset(sigset_t *set)
 	__sigfillset(set);
 	return (0);
 }
-#endif /* (__GNUC__ && __STDC__) || _LIBC */
+#endif /* (__GNUC__ && __STDC__) || _SIGINLINE */
 #endif /* !__LIBC12_SOURCE__ */
 
 /*
