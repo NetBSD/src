@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.21 2009/11/26 15:17:10 njoly Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.22 2010/05/04 05:00:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.21 2009/11/26 15:17:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.22 2010/05/04 05:00:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -670,6 +670,7 @@ static void
 voodoofb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voodoofb_softc *sc = scr->scr_cookie;
 
@@ -678,10 +679,10 @@ voodoofb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		int fg, bg, uc, i;
 		int x, y, wi, he;
 
-		wi = ri->ri_font->fontwidth;
-		he = ri->ri_font->fontheight;
+		wi = font->fontwidth;
+		he = font->fontheight;
 
-		if (!CHAR_IN_FONT(c, ri->ri_font))
+		if (!CHAR_IN_FONT(c, font))
 			return;
 		bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xf];
 		fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0xf];
@@ -690,14 +691,13 @@ voodoofb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		if (c == 0x20) {
 			voodoofb_rectfill(sc, x, y, wi, he, bg);
 		} else {
-			uc = c-ri->ri_font->firstchar;
-			data = (uint8_t *)ri->ri_font->data + uc * 
+			uc = c - font->firstchar;
+			data = (uint8_t *)font->data + uc * 
 			    ri->ri_fontscale;
 				voodoofb_setup_mono(sc, x, y, wi, he, fg, bg);		
 			for (i = 0; i < he; i++) {
-				voodoofb_feed_line(sc, 
-				    ri->ri_font->stride, data);
-				data += ri->ri_font->stride;
+				voodoofb_feed_line(sc, font->stride, data);
+				data += font->stride;
 			}
 		}
 	}
