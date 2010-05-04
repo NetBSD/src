@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2010/04/18 23:47:51 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 2010/05/04 23:27:14 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2010/04/18 23:47:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2010/05/04 23:27:14 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1146,10 +1146,9 @@ pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
 	if (flags & PMAP_NOCACHE)
 		npte |= PG_N;
 
-#ifndef XEN
 	if ((cpu_feature[2] & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
 		npte |= PG_NX;
-#endif
+
 	opte = pmap_pte_testset (pte, npte); /* zap! */
 
 	if (pmap_valid_entry(opte)) {
@@ -1268,13 +1267,12 @@ pmap_bootstrap(vaddr_t kva_start)
 	struct pcb *pcb;
 	int i;
 	vaddr_t kva;
-#ifdef XEN
-	pt_entry_t pg_nx = 0;
-#else
+#ifndef XEN
 	unsigned long p1i;
 	vaddr_t kva_end;
-	pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 #endif
+
+	pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 
 	/*
 	 * set up our local static global vars that keep track of the
