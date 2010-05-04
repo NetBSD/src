@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntopts.3,v 1.10 2009/07/14 18:56:14 joerg Exp $
+.\"	$NetBSD: getmntopts.3,v 1.11 2010/05/04 07:58:28 jruoho Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)getmntopts.3	8.3 (Berkeley) 3/30/95
 .\"
-.Dd August 26, 2007
+.Dd May 4, 2010
 .Dt GETMNTOPTS 3
 .Os
 .Sh NAME
@@ -183,7 +183,7 @@ flag, would also have an
 .Dv MOPT_UPDATE
 entry.
 This can be declared and used as follows:
-.Bd -literal
+.Bd -literal -offset indent
 #include \*[Lt]mntopts.h\*[Gt]
 
 static const struct mntopt mopts[] = {
@@ -193,13 +193,20 @@ static const struct mntopt mopts[] = {
 };
 
 \&...
+
 long val;
-mntflags = mntaltflags = 0;
 mntoptparse_t mp;
+mntflags = mntaltflags = 0;
+
 \&...
-if ((mp = getmntopts(options, mopts, \*[Am]mntflags, \*[Am]mntaltflags)) == NULL)
-	err(1, NULL);
+
+mp = getmntopts(options, mopts, \*[Am]mntflags, \*[Am]mntaltflags);
+
+if (mp == NULL)
+	err(EXIT_FAILURE, "getmntopts");
+
 \&...
+
 val = getmntoptnum(mp, "rsize");
 freemntopts(mp);
 .Ed
