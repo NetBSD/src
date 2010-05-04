@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1389 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1390 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -603,3 +603,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		to be created before the upload. See the section on security 
 		considerations before enabling. [hubertf 20100429]
 	hpcsh: Add sysinst(8) support. [tsutsui 20100503]
+	sandpoint: Added support for Marvell-SKnet in netboot.
+		[phx 20100503]
