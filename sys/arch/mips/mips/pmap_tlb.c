@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.10 2010/03/11 08:19:01 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.11 2010/05/04 17:14:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.10 2010/03/11 08:19:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.11 2010/05/04 17:14:17 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -797,14 +797,16 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		TLBINFO_UNLOCK(ti);
 		atomic_and_ulong(&ci->ci_flags, ~CPUF_USERPMAP);
 	}
+#elif defined(DEBUG)
+	tlb_set_asid(0);
 #endif
 }
 
 void
 pmap_tlb_asid_release_all(struct pmap *pm)
 {
-#ifdef MULTIPROCESSOR
 	KASSERT(pm != pmap_kernel());
+#ifdef MULTIPROCESSOR
 	KASSERT(pm->pm_onproc == 0);
 	for (u_int i = 0; pm->pm_active != 0; i++) {
 		KASSERT(i < pmap_ntlbs);
@@ -817,6 +819,18 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 			TLBINFO_UNLOCK(ti);
 		}
 	}
+#else
+	/*
+	 * Handle the case of an UP kernel which only has, at most, one ASID.
+	 * If the pmap has an ASID allocated, free it.
+	 */
+	struct pmap_tlb_info * const ti = curcpu()->ci_tlb_info;
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
+	TLBINFO_LOCK(ti);
+	if (pai->pai_asid) {
+		pmap_pai_reset(ti, pai, pm);
+	}
+	TLBINFO_UNLOCK(ti);
 #endif /* MULTIPROCESSOR */
 }
 
