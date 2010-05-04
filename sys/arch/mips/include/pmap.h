@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54.26.12 2010/03/11 08:19:01 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.26.13 2010/05/04 17:15:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -166,6 +166,8 @@ typedef struct pmap {
 #endif
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
 	u_int			pm_count;	/* pmap reference count */
+	u_int			pm_flags;
+#define	PMAP_DEFERRED_ACTIVATE	0x0001
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	struct pmap_asid_info	pm_pai[1];
 } *pmap_t;
