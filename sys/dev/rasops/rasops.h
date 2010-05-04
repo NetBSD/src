@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.24 2010/04/17 13:36:22 nonaka Exp $ */
+/* 	$NetBSD: rasops.h,v 1.25 2010/05/04 04:57:34 macallan Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,8 @@
 #ifndef _RASOPS_H_
 #define _RASOPS_H_ 1
 
-struct wsdisplay_font;
+#include <dev/wscons/wsconsio.h>
+#include <dev/wsfont/wsfont.h>
 
 /* For rasops_info::ri_flg */
 #define RI_FULLCLEAR	0x01	/* eraserows() hack to clear full screen */
@@ -67,6 +68,7 @@ struct rasops_info {
 	 * but aren't using wsfont, set ri_wsfcookie to -1.
 	 */
 	struct	wsdisplay_font *ri_font;
+	struct	wsdisplay_font ri_optfont;
 	int	ri_wsfcookie;	/* wsfont cookie */
 	void	*ri_hw;		/* driver private data; ignored by rasops */
 	int	ri_crow;	/* cursor row */
@@ -78,7 +80,8 @@ struct rasops_info {
 	 * on depths other than 15, 16, 24 and 32 bits per pel. On
 	 * 24 bit displays, ri_{r,g,b}num must be 8.
 	 */
-	u_char	ri_rnum;	/* number of bits for red */
+	u_char	ri_rnum;
+	/* number of bits for red */
 	u_char	ri_gnum;	/* number of bits for green */
 	u_char	ri_bnum;	/* number of bits for blue */
 	u_char	ri_rpos;	/* which bit red starts at */
@@ -120,6 +123,9 @@ struct rasops_info {
 #define CHAR_IN_FONT(c,font) 					\
        ((c) >= (font)->firstchar && 				\
 	((c) - (font)->firstchar) < (font)->numchars)
+
+#define PICK_FONT(ri, c) ((c & WSFONT_FLAGS_MASK) == WSFONT_FLAG_OPT) ? \
+			 &ri->ri_optfont : ri->ri_font
 
 /*
  * rasops_init().
