@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.54 2010/03/01 05:42:08 macallan Exp $ */
+/*	$NetBSD: p9100.c,v 1.55 2010/05/04 05:10:25 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.54 2010/03/01 05:42:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.55 2010/05/04 05:10:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1085,6 +1085,7 @@ static void
 p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct p9100_softc *sc = scr->scr_cookie;
 
@@ -1092,10 +1093,10 @@ p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
 	uint8_t *data;
 	int x, y, wi, he;
 
-	wi = ri->ri_font->fontwidth;
-	he = ri->ri_font->fontheight;
+	wi = font->fontwidth;
+	he = font->fontheight;
 
-	if (!CHAR_IN_FONT(c, ri->ri_font))
+	if (!CHAR_IN_FONT(c, font))
 		return;
 
 	bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xff];
@@ -1106,15 +1107,15 @@ p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
 	if (c == 0x20) {
 		p9100_rectfill(sc, x, y, wi, he, bg);
 	} else {
-		uc = c-ri->ri_font->firstchar;
-		data = (uint8_t *)ri->ri_font->data + uc *
+		uc = c - font->firstchar;
+		data = (uint8_t *)font->data + uc *
 		    ri->ri_fontscale;
 
 		p9100_setup_mono(sc, x, y, wi, 1, fg, bg);
 		for (i = 0; i < he; i++) {
-			p9100_feed_line(sc, ri->ri_font->stride,
+			p9100_feed_line(sc, font->stride,
 			    data);
-			data += ri->ri_font->stride;
+			data += font->stride;
 		}
 	}
 }
