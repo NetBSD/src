@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.3 2010/03/16 21:27:02 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.4 2010/05/04 05:00:33 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.3 2010/03/16 21:27:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.4 2010/05/04 05:00:33 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -676,6 +676,7 @@ static void
 pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct pm2fb_softc *sc = scr->scr_cookie;
 	uint32_t mode;
@@ -686,10 +687,10 @@ pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		int uc, i;
 		int x, y, wi, he;
 
-		wi = ri->ri_font->fontwidth;
-		he = ri->ri_font->fontheight;
+		wi = font->fontwidth;
+		he = font->fontheight;
 
-		if (!CHAR_IN_FONT(c, ri->ri_font))
+		if (!CHAR_IN_FONT(c, font))
 			return;
 		bg = ri->ri_devcmap[(attr >> 16) & 0xf];
 		fg = ri->ri_devcmap[(attr >> 24) & 0xf];
@@ -698,9 +699,8 @@ pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		if (c == 0x20) {
 			pm2fb_rectfill(sc, x, y, wi, he, bg);
 		} else {
-			uc = c - ri->ri_font->firstchar;
-			data = (uint8_t *)ri->ri_font->data + uc * 
-			    ri->ri_fontscale;
+			uc = c - font->firstchar;
+			data = (uint8_t *)font->data + uc * ri->ri_fontscale;
 
 			mode = PM2RM_MASK_MIRROR;
 			switch (ri->ri_font->stride) {
