@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidfile.3,v 1.10 2008/04/30 13:10:52 martin Exp $
+.\"	$NetBSD: pidfile.3,v 1.11 2010/05/04 06:41:27 jruoho Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 5, 1999
+.Dd May 4, 2010
 .Dt PIDFILE 3
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ The file name has the form
 If the
 .Ar basename
 argument is NULL,
-.Nm
+.Fn pidfile
 will determine the program name and use that instead.
 .Pp
 The pid file can be used as a quick reference if
@@ -58,7 +58,7 @@ When the program exits, the pid file will be removed automatically, unless
 the program receives a fatal signal.
 .Pp
 Note that only the first invocation of
-.Nm
+.Fn pidfile
 causes a pid file to be written; subsequent invocations have no effect
 unless a new
 .Ar basename
@@ -74,7 +74,7 @@ returns 0 on success and -1 on failure.
 .Xr atexit 3
 .Sh HISTORY
 The
-.Nm
+.Fn pidfile
 function call appeared in
 .Nx 1.5 .
 .Sh BUGS
