@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops2.c,v 1.15 2010/05/04 04:57:34 macallan Exp $	*/
+/* 	$NetBSD: rasops2.c,v 1.16 2010/05/04 12:36:37 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.15 2010/05/04 04:57:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops2.c,v 1.16 2010/05/04 12:36:37 nonaka Exp $");
 
 #include "opt_rasops.h"
 
@@ -102,7 +102,7 @@ static void
 rasops2_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int height, width, fs, rs, fb, bg, fg, lmask, rmask;
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int32_t *rp;
 	u_char *fr;
@@ -244,7 +244,7 @@ rasops2_makestamp(struct rasops_info *ri, long attr)
 static void
 rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs, rs;
 	u_char *fr, *rp;
@@ -311,7 +311,7 @@ rasops2_putchar8(void *cookie, int row, int col, u_int uc, long attr)
 static void
 rasops2_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs, rs;
 	u_char *fr, *rp;
@@ -381,7 +381,7 @@ rasops2_putchar12(void *cookie, int row, int col, u_int uc, long attr)
 static void
 rasops2_putchar16(void *cookie, int row, int col, u_int uc, long attr)
 {
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int height, fs, rs;
 	u_char *fr, *rp;
