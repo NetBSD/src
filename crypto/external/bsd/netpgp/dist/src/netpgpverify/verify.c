@@ -55,7 +55,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: verify.c,v 1.9 2010/04/14 06:31:23 agc Exp $");
+__RCSID("$NetBSD: verify.c,v 1.10 2010/05/04 00:02:46 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -569,6 +569,7 @@ typedef struct __ops_ptag_t {
  * \see RFC4880 9.1
  */
 typedef enum {
+	OPS_PKA_NONE = 0,	/* null value */
 	OPS_PKA_RSA = 1,	/* RSA (Encrypt or Sign) */
 	OPS_PKA_RSA_ENCRYPT_ONLY = 2,	/* RSA Encrypt-Only (deprecated -
 					 * \see RFC4880 13.5) */
@@ -5550,7 +5551,7 @@ __ops_pubkey_free(__ops_pubkey_t *p)
 		free_BN(&p->key.elgamal.y);
 		break;
 
-	case 0:
+	case OPS_PKA_NONE:
 		/* nothing to free */
 		break;
 
