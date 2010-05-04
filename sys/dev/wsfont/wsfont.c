@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.46 2010/04/17 13:36:22 nonaka Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.47 2010/05/04 04:53:59 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.46 2010/04/17 13:36:22 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.47 2010/05/04 04:53:59 macallan Exp $");
 
 #include "opt_wsfont.h"
 
@@ -186,6 +186,9 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_OMRON12x20
 	{ { NULL, NULL }, &omron12x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_TERMINUS8x16
+	{ { NULL, NULL }, &terminus8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 	{ { NULL, NULL }, NULL, 0, 0, 0 },
 };
@@ -835,6 +838,39 @@ static const u_int8_t iso7_chars_3[] = {
 	 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 181
 };
 
+/* 
+ * map all variants of the box drawing characters to the same basic shapes for
+ * now, encoded like this:
+ *
+ *    1
+ *    1
+ * 888 222
+ *    4
+ *    4
+ *
+ * so an upright line would be 0x05
+ */
+#define FL |WSFONT_FLAG_OPT
+static const u_int32_t netbsd_boxes[] = {
+/*00*/ 0x0a FL, 0x0a FL, 0x05 FL, 0x05 FL, 0x0a FL, 0x0a FL, 0x05 FL, 0x05 FL,
+/*08*/ 0x0a FL, 0x0a FL, 0x05 FL, 0x05 FL, 0x06 FL, 0x06 FL, 0x06 FL, 0x06 FL,
+/*10*/ 0x0c FL, 0x0c FL, 0x0c FL, 0x0c FL, 0x03 FL, 0x03 FL, 0x03 FL, 0x03 FL,
+/*18*/ 0x09 FL, 0x09 FL, 0x09 FL, 0x09 FL, 0x07 FL, 0x07 FL, 0x07 FL, 0x07 FL,
+/*20*/ 0x07 FL, 0x07 FL, 0x07 FL, 0x07 FL, 0x0d FL, 0x0d FL, 0x0d FL, 0x0d FL,
+/*28*/ 0x0d FL, 0x0d FL, 0x0d FL, 0x0d FL, 0x0e FL, 0x0e FL, 0x0e FL, 0x0e FL,
+/*30*/ 0x0e FL, 0x0e FL, 0x0e FL, 0x0e FL, 0x0b FL, 0x0b FL, 0x0b FL, 0x0b FL,
+/*38*/ 0x0b FL, 0x0b FL, 0x0b FL, 0x0b FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL,
+/*40*/ 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL,
+/*48*/ 0x0f FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x0a FL, 0x0a FL, 0x05 FL, 0x05 FL,
+/*50*/ 0x0a FL, 0x05 FL, 0x06 FL, 0x06 FL, 0x06 FL, 0x0c FL, 0x0c FL, 0x0c FL,
+/*58*/ 0x03 FL, 0x03 FL, 0x03 FL, 0x09 FL, 0x09 FL, 0x09 FL, 0x07 FL, 0x07 FL,
+/*60*/ 0x07 FL, 0x0d FL, 0x0d FL, 0x0d FL, 0x0e FL, 0x0e FL, 0x0e FL, 0x0b FL,
+/*68*/ 0x0b FL, 0x0b FL, 0x0f FL, 0x0f FL, 0x0f FL, 0x06 FL, 0x0c FL, 0x09 FL,
+/*70*/ 0x03 FL,    0 FL,    0 FL,    0 FL, 0x08 FL, 0x01 FL, 0x02 FL, 0x04 FL,
+/*78*/ 0x08 FL, 0x01 FL, 0x02 FL, 0x04 FL, 0x0a FL, 0x05 FL, 0x0a FL, 0x05 FL
+};
+#undef FL
+
 static const u_int8_t iso7_chars_32[] = {
 	175, 0,  0,  0,  0, 162, 0, 161
 };
@@ -848,6 +884,9 @@ static const struct wsfont_level2_glyphmap iso7_level2_3 =
 static const struct wsfont_level2_glyphmap iso7_level2_32 =
     { 20, 8, iso7_chars_32, 1 };
 
+static const struct wsfont_level2_glyphmap netbsd_box_drawing =
+    { 0, 128, netbsd_boxes, 4 };
+
 static const struct wsfont_level2_glyphmap *iso7_level1[] = {
 	&iso7_level2_0, NULL, NULL, &iso7_level2_3,
 	NULL, NULL, NULL, NULL,
@@ -857,14 +896,28 @@ static const struct wsfont_level2_glyphmap *iso7_level1[] = {
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
-	&iso7_level2_32
+	&iso7_level2_32, NULL, NULL, NULL,
+	NULL, &netbsd_box_drawing
+};
+
+static const struct wsfont_level2_glyphmap *iso_level1[] = {
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL,
+	NULL, &netbsd_box_drawing
 };
 
 static const struct wsfont_level1_glyphmap encodings[] = {
-	{ NULL, 0, 0 },			/* WSDISPLAY_FONTENC_ISO */
+	{ iso_level1, 0, 0x26 },	/* WSDISPLAY_FONTENC_ISO */
 	{ ibm437_level1, 0, 38 },	/* WSDISPLAY_FONTENC_IBM */
 	{ NULL, 0, 0 },			/* WSDISPLAY_FONTENC_PCVT */
-	{ iso7_level1, 0, 33 },		/* WSDISPLAY_FONTENC_ISO7 */
+	{ iso7_level1, 0, 0x26 },	/* WSDISPLAY_FONTENC_ISO7 */
 };
 
 #define MAX_ENCODING (sizeof(encodings) / sizeof(encodings[0]))
@@ -879,9 +932,6 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 	const struct wsfont_level2_glyphmap *map2;
 	int hi, lo;
 
-	if (font->encoding == WSDISPLAY_FONTENC_ISO)
-		return (c);
-
 	if (font->encoding < 0 || font->encoding >= MAX_ENCODING)
 		return (-1);
 
@@ -894,6 +944,10 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 
 	map2 = map1->level2[hi - map1->base];
 
+	/* so we don't need an identical level 2 table for hi == 0 */
+	if (hi == 0 && font->encoding == WSDISPLAY_FONTENC_ISO)
+		return lo;
+ 
 	if (map2 == NULL || lo < map2->base || lo >= map2->base + map2->size)
 		return (-1);
 
