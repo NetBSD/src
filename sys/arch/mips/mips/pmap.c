@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.23 2010/04/08 16:05:31 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.24 2010/05/04 17:15:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.23 2010/04/08 16:05:31 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.24 2010/05/04 17:15:36 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -788,11 +788,12 @@ pmap_destroy(pmap_t pmap)
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
 		printf("pmap_destroy(%p)\n", pmap);
 #endif
-	if (atomic_add_int_nv(&pmap->pm_count, 1) > 0) {
+	if (atomic_dec_uint_nv(&pmap->pm_count) > 0) {
 		PMAP_COUNT(dereference);
 		return;
 	}
 
+	KASSERT(pmap->pm_count == 0);
 	PMAP_COUNT(destroy);
 	kpreempt_disable();
 	pmap_tlb_asid_release_all(pmap);
@@ -814,7 +815,7 @@ pmap_reference(pmap_t pmap)
 		printf("pmap_reference(%p)\n", pmap);
 #endif
 	if (pmap != NULL) {
-		atomic_add_int(&pmap->pm_count, 1);
+		atomic_inc_uint(&pmap->pm_count);
 	}
 	PMAP_COUNT(reference);
 }
@@ -845,12 +846,10 @@ pmap_deactivate(struct lwp *l)
 {
 	PMAP_COUNT(deactivate);
 
-#ifdef MULTIPROCESSOR
 	kpreempt_disable();
 	curcpu()->ci_pmap_segbase = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
 	pmap_tlb_asid_deactivate(l->l_proc->p_vmspace->vm_map.pmap);
 	kpreempt_enable();
-#endif
 }
 
 void
@@ -858,13 +857,22 @@ pmap_update(struct pmap *pm)
 {
 	PMAP_COUNT(update);
 
-#ifdef MULTIPROCESSOR
 	kpreempt_disable();
+#ifdef MULTIPROCESSOR
 	u_int pending = atomic_swap_uint(&pm->pm_shootdown_pending, 0);
 	if (pending && pmap_tlb_shootdown_bystanders(pm))
 		PMAP_COUNT(shootdown_ipis);
-	kpreempt_enable();
 #endif
+	/*
+	 * If pmap_remove_all was called, we deactivated ourselves and nuked
+	 * our ASID.  Now we have to reactivate ourselves.
+	 */
+	if (__predict_false(pm->pm_flags & PMAP_DEFERRED_ACTIVATE)) {
+		pm->pm_flags ^= PMAP_DEFERRED_ACTIVATE;
+		pmap_tlb_asid_acquire(pm, curlwp);
+		pmap_segtab_activate(pm, curlwp);
+	}
+	kpreempt_enable();
 }
 
 /*
@@ -1634,6 +1642,7 @@ pmap_remove_all(struct pmap *pmap)
 	 */
 	pmap_tlb_asid_deactivate(pmap);
 	pmap_tlb_asid_release_all(pmap);
+	pmap->pm_flags |= PMAP_DEFERRED_ACTIVATE;
 	kpreempt_enable();
 }
 /*
@@ -2340,7 +2349,7 @@ pmap_pvlist_lock(struct vm_page *pg, bool list_change)
 		lock = atomic_cas_ptr(&pg->mdpage.pvh_lock, NULL, new_lock);
 		if (lock == NULL) {
 			lock = new_lock;
-			atomic_add_int(&pli->pli_lock_refs[lockid], 1);
+			atomic_inc_uint(&pli->pli_lock_refs[lockid]);
 		}
 	}
 
