@@ -1,4 +1,4 @@
-# $NetBSD: t_rc_d_cli.sh,v 1.1 2010/03/15 19:03:08 jmmv Exp $
+# $NetBSD: t_rc_d_cli.sh,v 1.2 2010/05/04 09:33:57 jmmv Exp $
 #
 # Copyright (c) 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@ no_command_head() {
 }
 no_command_body() {
 	export h_simple=YES
-	rc_helper=$(atf_get_srcdir)/h_simple.sh
+	rc_helper=$(atf_get_srcdir)/h_simple
 
 	atf_check -s eq:1 -o empty -e ignore ${rc_helper}
 }
@@ -46,7 +46,7 @@ default_start_no_args_head() {
 }
 default_start_no_args_body() {
 	export h_simple=YES
-	rc_helper=$(atf_get_srcdir)/h_simple.sh
+	rc_helper=$(atf_get_srcdir)/h_simple
 
 	atf_check -s eq:0 -o ignore -e empty ${rc_helper} start
 	${rc_helper} forcestop
@@ -59,7 +59,7 @@ default_start_with_args_head() {
 }
 default_start_with_args_body() {
 	export h_simple=YES
-	rc_helper=$(atf_get_srcdir)/h_simple.sh
+	rc_helper=$(atf_get_srcdir)/h_simple
 
 	atf_check -s eq:1 -o ignore -e ignore ${rc_helper} start foo
 	if ${rc_helper} status >/dev/null; then
@@ -75,7 +75,7 @@ default_stop_no_args_head() {
 }
 default_stop_no_args_body() {
 	export h_simple=YES
-	rc_helper=$(atf_get_srcdir)/h_simple.sh
+	rc_helper=$(atf_get_srcdir)/h_simple
 
 	${rc_helper} start
 	atf_check -s eq:0 -o ignore -e empty ${rc_helper} stop
@@ -88,7 +88,7 @@ default_stop_with_args_head() {
 }
 default_stop_with_args_body() {
 	export h_simple=YES
-	rc_helper=$(atf_get_srcdir)/h_simple.sh
+	rc_helper=$(atf_get_srcdir)/h_simple
 
 	${rc_helper} start
 	atf_check -s eq:1 -o ignore -e ignore ${rc_helper} stop foo
@@ -106,7 +106,7 @@ default_restart_no_args_head() {
 }
 default_restart_no_args_body() {
 	export h_simple=YES
-	rc_helper=$(atf_get_srcdir)/h_simple.sh
+	rc_helper=$(atf_get_srcdir)/h_simple
 
 	${rc_helper} start
 	atf_check -s eq:0 -o ignore -e empty ${rc_helper} restart
@@ -120,7 +120,7 @@ default_restart_with_args_head() {
 }
 default_restart_with_args_body() {
 	export h_simple=YES
-	rc_helper=$(atf_get_srcdir)/h_simple.sh
+	rc_helper=$(atf_get_srcdir)/h_simple
 
 	${rc_helper} start
 	atf_check -s eq:1 -o ignore -e ignore ${rc_helper} restart foo
@@ -131,7 +131,7 @@ do_overriden_no_args() {
 	local command="${1}"; shift
 
 	export h_args=YES
-	rc_helper=$(atf_get_srcdir)/h_args.sh
+	rc_helper=$(atf_get_srcdir)/h_args
 
 	cat >expout <<EOF
 pre${command}:.
@@ -145,7 +145,7 @@ do_overriden_with_args() {
 	local command="${1}"; shift
 
 	export h_args=YES
-	rc_helper=$(atf_get_srcdir)/h_args.sh
+	rc_helper=$(atf_get_srcdir)/h_args
 
 	cat >expout <<EOF
 pre${command}:.
