@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.40 2010/04/18 23:47:51 jym Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.41 2010/05/04 23:27:14 jym Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -262,10 +262,8 @@
 #ifdef XEN
 /* Not on Xen */
 #define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR)
-#define CPUID_EXT_FEAT_BLACKLIST (CPUID_NOX)
 #else
 #define CPUID_FEAT_BLACKLIST	 0
-#define CPUID_EXT_FEAT_BLACKLIST 0
 #endif /* XEN */
 
 /*
