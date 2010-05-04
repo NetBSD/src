@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.43 2010/04/18 23:47:52 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.44 2010/05/04 23:27:14 jym Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.43 2010/04/18 23:47:52 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2010/05/04 23:27:14 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1005,6 +1005,9 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
 	}
 #endif	/* __x86_64__ */
+
+	if (cpu_feature[2] & CPUID_NOX)
+		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
 }
 
 void

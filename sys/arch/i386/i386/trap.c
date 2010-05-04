@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.256 2010/04/23 19:18:09 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.257 2010/05/04 23:27:13 jym Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.256 2010/04/23 19:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.257 2010/05/04 23:27:13 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -671,6 +671,8 @@ faultcommon:
 			map = &vm->vm_map;
 		if (frame->tf_err & PGEX_W)
 			ftype = VM_PROT_WRITE;
+		else if (frame->tf_err & PGEX_X)
+			ftype = VM_PROT_EXECUTE;
 		else
 			ftype = VM_PROT_READ;
 
