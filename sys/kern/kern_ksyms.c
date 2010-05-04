@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.59 2010/05/03 09:51:36 darran Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.60 2010/05/04 14:14:54 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.59 2010/05/03 09:51:36 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.60 2010/05/04 14:14:54 tsutsui Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -282,11 +282,11 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 
 	/* sanity check for pre-malloc map table used during startup */
 	if ((nmap == ksyms_nmap) && (nsyms >= KSYMS_MAX_ID)) {
-	    printf("kern_ksyms: ERROR %d > %d, increase KSYMS_MAX_ID\n",
+		printf("kern_ksyms: ERROR %d > %d, increase KSYMS_MAX_ID\n",
 		    nsyms, KSYMS_MAX_ID);
 
-	    /* truncate for now */
-	    nsyms = KSYMS_MAX_ID-1;
+		/* truncate for now */
+		nsyms = KSYMS_MAX_ID - 1;
 	}
 
 	tab->sd_symstart = symstart;
@@ -349,11 +349,12 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 
 #ifdef KDTRACE_HOOKS
 		if (nmap != NULL) {
-			/* Save the size, replace it with the symbol id so
+			/*
+			 * Save the size, replace it with the symbol id so
 			 * the mapping can be done after the cleanup and sort.
 			 */
 			nmap[i] = nsym[n].st_size;
-			nsym[n].st_size = i+1;	/* zero is reserved */
+			nsym[n].st_size = i + 1;	/* zero is reserved */
 		}
 #endif
 
@@ -390,7 +391,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	 */
 	if (nmap != NULL) {
 		int new;
-		for (new=0; new<n; new++) {
+		for (new = 0; new < n; new++) {
 			uint32_t orig = nsym[new].st_size - 1;
 			uint32_t size = nmap[orig];
 	
@@ -470,15 +471,16 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 	/* Find the CTF section */
 	shdr = (Elf_Shdr *)((uint8_t *)start + ehdr->e_shoff);
 	if (ehdr->e_shstrndx != 0) {
-		char *shstr = (uint8_t*)start +
-				shdr[ehdr->e_shstrndx].sh_offset;
+		char *shstr = (uint8_t *)start +
+		    shdr[ehdr->e_shstrndx].sh_offset;
 		for (i = 1; i < ehdr->e_shnum; i++) {
 #ifdef DEBUG
 		    	printf("ksyms: checking %s\n", &shstr[shdr[i].sh_name]);
 #endif
 			if (shdr[i].sh_type != SHT_PROGBITS)
 				continue;
-			if (strncmp(".SUNW_ctf", &shstr[shdr[i].sh_name] ,10) != 0)
+			if (strncmp(".SUNW_ctf", &shstr[shdr[i].sh_name], 10)
+			    != 0)
 				continue;
 			ctfstart = (uint8_t *)start + shdr[i].sh_offset;
 			ctfsize = shdr[i].sh_size;
@@ -631,12 +633,12 @@ ksyms_mod_foreach(const char *mod, ksyms_callback_t callback, void *opaque)
 
 		/* now iterate through the symbols */
 		maxsym = sym + st->sd_symsize / sizeof(Elf_Sym);
-		for (symindx=0; sym < maxsym; sym++,symindx++) {
+		for (symindx = 0; sym < maxsym; sym++, symindx++) {
 			if (callback(str + sym->st_name, symindx,
-				    (void *)sym->st_value,
-				    sym->st_size,
-				    sym->st_info,
-				    opaque) != 0) {
+			    (void *)sym->st_value,
+			    sym->st_size,
+			    sym->st_info,
+			    opaque) != 0) {
 				break;
 			}
 		}
@@ -716,7 +718,7 @@ ksyms_modload(const char *name, void *symstart, vsize_t symsize,
 	st = kmem_zalloc(sizeof(*st), KM_SLEEP);
 	mutex_enter(&ksyms_lock);
 	addsymtab(name, symstart, symsize, strstart, strsize, st, symstart,
-		NULL, 0, NULL);
+	    NULL, 0, NULL);
 	mutex_exit(&ksyms_lock);
 }
 
