@@ -1,4 +1,4 @@
-.\"	$NetBSD: dbm_clearerr.3,v 1.4 2008/04/30 13:10:50 martin Exp $
+.\"	$NetBSD: dbm_clearerr.3,v 1.5 2010/05/05 06:55:57 jruoho Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 30, 2004
+.Dd May 5, 2010
 .Dt DBM_CLEARERR 3
 .Os
 .Sh NAME
@@ -298,7 +298,9 @@ The
 and
 .Fn dbm_store
 functions conform to
-.St -xpg4.2 .
+.St -xpg4.2
+and
+.St -susv2 .
 The
 .Fn dbm_dirfno
 function is an extension.
