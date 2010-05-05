@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.16 2010/05/05 13:19:51 joerg Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.17 2010/05/05 22:10:50 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.16 2010/05/05 13:19:51 joerg Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.17 2010/05/05 22:10:50 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,22 +81,18 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "qo:uV:")) != -1)
+	while ((ch = getopt(argc, argv, "o:quV:v")) != -1)
 		switch (ch) {
-		case 'q':
-			otherflag = 1;
-			warndup = 0;
-			break;
 		case 'o':
 			otherflag = 1;
 			dbname = optarg;
 			break;
+		case 'q':
+			otherflag = 1;
+			warndup = 0;
+			break;
 		case 'u':
 			unique++;
-			break;
-		case 'v':
-			otherflag = 1;
-			warndup = 1;
 			break;
 		case 'V':
 			if (strcmp(optarg, "db") == 0)
@@ -105,6 +101,10 @@ main(int argc, char *argv[])
 				use_db = 0;
 			else
 				usage();
+			break;
+		case 'v':
+			otherflag = 1;
+			warndup = 1;
 			break;
 		default:
 			usage();
