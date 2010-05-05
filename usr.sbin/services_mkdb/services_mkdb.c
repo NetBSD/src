@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.15 2010/04/25 00:54:46 joerg Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.16 2010/05/05 13:19:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.15 2010/04/25 00:54:46 joerg Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.16 2010/05/05 13:19:51 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	const char *fname = _PATH_SERVICES;
 	const char *dbname = NULL;
 	int	 use_db = 0;
-	int	 warndup = 1;
+	int	 warndup = 0;
 	int	 unique = 0;
 	int	 otherflag = 0;
 	size_t	 cnt = 0;
@@ -93,6 +93,10 @@ main(int argc, char *argv[])
 			break;
 		case 'u':
 			unique++;
+			break;
+		case 'v':
+			otherflag = 1;
+			warndup = 1;
 			break;
 		case 'V':
 			if (strcmp(optarg, "db") == 0)
