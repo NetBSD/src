@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.13 2010/05/05 06:04:19 jruoho Exp $
+.\" $NetBSD: iconv.3,v 1.14 2010/05/05 22:07:58 wiz Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -182,13 +182,13 @@ The
 .Fn iconv_open
 function may cause an error in the following cases:
 .Bl -tag -width Er
-.It Bq Er ENOMEM
-Memory is exhausted.
 .It Bq Er EINVAL
 There is no converter specified by
 .Fa srcname
 and
 .Fa dstname .
+.It Bq Er ENOMEM
+Memory is exhausted.
 .El
 .Pp
 The
@@ -205,6 +205,10 @@ The
 .Fn iconv
 function may cause an error in the following cases:
 .Bl -tag -width Er
+.It Bq Er E2BIG
+The output buffer pointed to by
+.Fa *dst
+is too small to store the result string.
 .It Bq Er EBADF
 The conversion descriptor specified by
 .Fa cd
@@ -214,10 +218,6 @@ The string pointed to by
 .Fa *src
 contains a byte sequence which does not describe a valid character of
 the source codeset.
-.It Bq Er E2BIG
-The output buffer pointed to by
-.Fa *dst
-is too small to store the result string.
 .It Bq Er EINVAL
 The string pointed to by
 .Fa *src
