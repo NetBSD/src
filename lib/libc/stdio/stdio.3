@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdio.3,v 1.23 2010/05/04 07:43:12 jruoho Exp $
+.\"	$NetBSD: stdio.3,v 1.24 2010/05/05 04:13:16 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)stdio.3	8.7 (Berkeley) 4/19/94
 .\"
-.Dd May 4, 2010
+.Dd May 5, 2010
 .Dt STDIO 3
 .Os
 .Sh NAME
@@ -225,6 +225,93 @@ The
 .Nm
 library conforms to
 .St -ansiC .
+.Sh LIST OF FUNCTIONS
+.Bl -column "putchar_unlocked" "Description"
+.It Sy Function	Description
+.It clearerr	check and reset stream status
+.It fclose	close a stream
+.It fdopen	stream open functions
+.It feof	check and reset stream status
+.It ferror	check and reset stream status
+.It fflush	flush a stream
+.It fgetc	get next character or word from input stream
+.It fgetln	get a line from a stream
+.It fgetpos	reposition a stream
+.It fgets	get a line from a stream
+.It fgetwc	get next wide character from input stream
+.It fileno	check and reset stream status
+.It flockfile	lock a stream
+.It fopen	stream open functions
+.It fprintf	formatted output conversion
+.It fpurge	flush a stream
+.It fputc	output a character or word to a stream
+.It fputs	output a line to a stream
+.It fputwc	output a wide character to a stream
+.It fread	binary stream input/output
+.It freopen	stream open functions
+.It fropen	open a stream
+.It fscanf	input format conversion
+.It fseek	reposition a stream
+.It fsetpos	reposition a stream
+.It ftell	reposition a stream
+.It ftrylockfile	lock a stream (non-blocking)
+.It funlockfile	unlock a stream
+.It funopen	open a stream
+.It fwide	set/get orientation of a stream
+.It fwopen	open a stream
+.It fwrite	binary stream input/output
+.It getc	get next character or word from input stream
+.It getc_unlocked	get next character or word from input stream
+.It             Ta (no implicit locking)
+.It getchar	get next character or word from input stream
+.It getchar_unlocked	get next character or word from input stream
+.It             Ta (no implicit locking)
+.It getdelim	get a delimited record from a stream
+.It getline	get a line from a stream
+.It gets	get a line from a stream
+.It getw	get next character or word from input stream
+.It getwc	get next wide character from input stream
+.It getwchar	get next wide character from input stream
+.It mkstemp	create unique temporary file
+.It mktemp	create unique temporary file
+.It perror	system error messages
+.It printf	formatted output conversion
+.It putc	output a character or word to a stream
+.It putc_unlocked	output a character or word to a stream
+.It             Ta (no implicit locking)
+.It putchar	output a character or word to a stream
+.It putchar_unlocked	output a character or word to a stream
+.It             Ta (no implicit locking)
+.It puts	output a line to a stream
+.It putw	output a character or word to a stream
+.It putwc	output a wide character to a stream
+.It putwchar	output a wide character to a stream
+.It remove	remove directory entry
+.It rewind	reposition a stream
+.It scanf	input format conversion
+.It setbuf	stream buffering operations
+.It setbuffer	stream buffering operations
+.It setlinebuf	stream buffering operations
+.It setvbuf	stream buffering operations
+.It snprintf	formatted output conversion
+.It sprintf	formatted output conversion
+.It sscanf	input format conversion
+.It strerror	system error messages
+.It sys_errlist	system error messages
+.It sys_nerr	system error messages
+.It tempnam	temporary file routines
+.It tmpfile	temporary file routines
+.It tmpnam	temporary file routines
+.It ungetc	un-get character from input stream
+.It ungetwc	un-get wide character from input stream
+.It vfprintf	formatted output conversion
+.It vfscanf	input format conversion
+.It vprintf	formatted output conversion
+.It vscanf	input format conversion
+.It vsnprintf	formatted output conversion
+.It vsprintf	formatted output conversion
+.It vsscanf	input format conversion
+.El
 .Sh BUGS
 The standard buffered functions do not interact well with certain other
 library and system functions, especially
