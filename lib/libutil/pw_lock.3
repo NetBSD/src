@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_lock.3,v 1.13 2007/02/17 09:37:55 wiz Exp $
+.\"	$NetBSD: pw_lock.3,v 1.14 2010/05/05 22:05:31 wiz Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,7 +94,9 @@ fails and you do not wish to retry, you should make sure to call
 to clean up the lock file.
 If the
 .Ar username
-argument is not NULL, only database entries pertaining to the specified user
+argument is not
+.Dv NULL ,
+only database entries pertaining to the specified user
 will be modified.
 If the
 .Ar secureonly
