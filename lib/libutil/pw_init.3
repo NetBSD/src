@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_init.3,v 1.14 2004/08/04 15:07:37 wiz Exp $
+.\"	$NetBSD: pw_init.3,v 1.15 2010/05/05 22:05:31 wiz Exp $
 .\"
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,7 +86,8 @@ if EDITOR is not set) on the file
 .Pa /etc/ptmp
 if
 .Fa filename
-is NULL).
+is
+.Dv NULL ) .
 If
 .Fa notsetuid
 is nonzero,
@@ -112,7 +113,9 @@ in
 .Fa pw .
 If
 .Fa old_pw
-is not NULL, it checks to make sure the old entry is the same as
+is not
+.Dv NULL ,
+it checks to make sure the old entry is the same as
 the one described in
 .Fa old_pw
 or the process is aborted.
