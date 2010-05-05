@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.130 2010/04/05 08:03:42 he Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.131 2010/05/05 02:20:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.130 2010/04/05 08:03:42 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.131 2010/05/05 02:20:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -812,7 +812,8 @@ malloc_type_attach(struct malloc_type *type)
 		struct malloc_type *ksp;
 		for (ksp = kmemstatistics; ksp != NULL; ksp = ksp->ks_next) {
 			if (ksp == type)
-				panic("malloc_type_attach: already on list");
+				panic("%s: `%s' already on list", __func__,
+				    type->ks_shortdesc);
 		}
 	}
 #endif
