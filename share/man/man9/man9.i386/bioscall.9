@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioscall.9,v 1.8 2008/04/30 13:10:59 martin Exp $
+.\"	$NetBSD: bioscall.9,v 1.9 2010/05/05 05:49:38 jruoho Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 1, 1998
+.Dd May 5, 2010
 .Dt BIOSCALL 9 i386
 .Os
 .Sh NAME
@@ -39,9 +39,10 @@
 .Fn bioscall "int function" "struct bioscallregs *regs"
 .Sh DESCRIPTION
 The
-.Nm
-function switches the processor into real mode, calls the BIOS interrupt
-numbered
+.Fn bioscall
+function switches the processor into real mode, calls the
+.Tn BIOS
+interrupt numbered
 .Fa function ,
 and returns to protected mode.
 .Pp
@@ -50,10 +51,13 @@ bootstrap when necessary to probe devices or pseudo-devices.
 .Pp
 The register values specified by
 .Fa *regs
-(with one exception) are installed before the BIOS interrupt is called.
-The processor flags are handled specially.  Only the following flags are
-passed to the
-BIOS from the registers in
+(with one exception) are installed before the
+.Tn BIOS
+interrupt is called.
+The processor flags are handled specially.
+Only the following flags are passed to the
+.Tn BIOS
+from the registers in
 .Fa regs
 (the remainder come from the processor's flags register at the time
 of the call):
@@ -71,23 +75,32 @@ structure is defined to contain structures for each register, to allow
 access to 32-, 16- or 8-bit wide sections of the registers.
 Definitions are provided which simplify access to the union members.
 .Sh RETURN VALUES
-.Nm
-fills in
+The
+.Fn bioscall
+function fills in
 .Fa *regs
-with the processor registers as returned from the BIOS call.
+with the processor registers as returned from the
+.Tn BIOS
+call.
 .Sh EXAMPLES
 The Advanced Power Management driver calls
-.Nm
-by setting up a register structure with the APM installation check and
-device types in registers
+.Fn bioscall
+by setting up a register structure with the
+.Tn APM
+installation check and device types in registers
 .Fa ax
 and
 .Fa bx ,
-then calls the BIOS to fetch the details for calling the APM support
-through a protected-mode interface.  The BIOS returns these details in
-the registers:
+then calls the
+.Tn BIOS
+to fetch the details for calling the
+.Tn APM
+support through a protected-mode interface.
+The
+.Tn BIOS
+returns these details in the registers:
 .Pp
-.Bd -literal
+.Bd -literal -offset indent
 #include \*[Lt]i386/bioscall.h\*[Gt]
 #include \*[Lt]i386/apmvar.h\*[Gt]
 struct bioscallregs regs;
@@ -104,11 +117,14 @@ bioscall(APM_SYSTEM_BIOS, \*[Am]regs);
 .Sh REFERENCES
 .Xr apm 4
 .Sh HISTORY
-.Nm
-first appeared in
+The
+.Fn bioscall
+function first appeared in
 .Nx 1.3 .
 .Sh BUGS
-Not all BIOS functions are safe to call through the trampoline, as they
+Not all
+.Tn BIOS
+functions are safe to call through the trampoline, as they
 may depend on system state which has been disturbed or used for other
 purposes once the
 .Nx
