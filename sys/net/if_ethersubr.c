@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.177 2010/04/05 07:22:23 joerg Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.178 2010/05/05 18:12:24 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.177 2010/04/05 07:22:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.178 2010/05/05 18:12:24 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -198,7 +198,8 @@ static	int ether_output(struct ifnet *, struct mbuf *,
  * Assumes that ifp is actually pointer to ethercom structure.
  */
 static int
-ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
+ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
+	const struct sockaddr * const dst,
 	struct rtentry *rt0)
 {
 	uint16_t etype = 0;
