@@ -1,4 +1,4 @@
-.\"	$NetBSD: services_mkdb.8,v 1.11 2010/05/05 13:19:51 joerg Exp $
+.\"	$NetBSD: services_mkdb.8,v 1.12 2010/05/05 22:11:19 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,8 +68,6 @@ Don't warn about duplicate services.
 This is the default behavior.
 .It Fl u
 Print the services file to stdout, omitting duplicate entries and comments.
-.It Fl v
-Warn about duplicate services.
 .It Fl V
 Create a specific version of the database style.
 .Ar style
@@ -80,6 +78,8 @@ to request the CDB format (default) or
 to request the DB format.
 The DB format is useful for compatibility with old statically
 linked binaries.
+.It Fl v
+Warn about duplicate services.
 .El
 .Pp
 The databases are used by the C library services routines (see
