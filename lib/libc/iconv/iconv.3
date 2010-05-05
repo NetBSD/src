@@ -1,4 +1,4 @@
-.\" $NetBSD: iconv.3,v 1.12 2004/08/02 13:38:21 tshiozak Exp $
+.\" $NetBSD: iconv.3,v 1.13 2010/05/05 06:04:19 jruoho Exp $
 .\"
 .\" Copyright (c)2003 Citrus Project,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 1, 2004
+.Dd May 5, 2010
 .Dt ICONV 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -80,14 +80,14 @@ the values pointed to by
 and
 .Fa dstleft
 are updated as follows:
-.Bl -tag -width 01234567
-.It *src
+.Bl -tag -width 01234567 -offset indent
+.It Fa *src
 Pointer to the byte just after the last character fetched.
-.It *srcleft
+.It Fa *srcleft
 Number of remaining bytes in the source buffer.
-.It *dst
+.It Fa *dst
 Pointer to the byte just after the last character stored.
-.It *dstleft
+.It Fa *dstleft
 Number of remainder bytes in the destination buffer.
 .El
 .Pp
@@ -118,15 +118,13 @@ and the conversion is continued.
 returns the number of such
 .Dq invalid conversions .
 .Pp
-There are two special cases of
-.Fn iconv :
-.Bl -tag -width 0123
-.It "src == NULL || *src == NULL"
-.\"
 If the source and/or destination codesets are stateful,
 .Fn iconv
 places these into their initial state.
-.Pp
+There are two special cases of
+.Fn iconv :
+.Bl -enum -offset indent
+.It
 If both
 .Fa dst
 and
@@ -142,7 +140,7 @@ The buffer size is specified by the value pointed to by
 as above.
 .Fn iconv
 will fail if the buffer is too small to store the shift sequence.
-.Pp
+.It
 On the other hand,
 .Fa dst
 or
@@ -159,7 +157,9 @@ Upon successful completion of
 it returns a conversion descriptor.
 Otherwise,
 .Fn iconv_open
-returns (iconv_t)\-1 and sets errno to indicate the error.
+returns (iconv_t)\-1 and sets
+.Va errno
+to indicate the error.
 .Pp
 Upon successful completion of
 .Fn iconv_close ,
