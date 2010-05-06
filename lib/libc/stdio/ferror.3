@@ -1,4 +1,4 @@
-.\"	$NetBSD: ferror.3,v 1.12 2010/05/06 08:14:08 jruoho Exp $
+.\"	$NetBSD: ferror.3,v 1.13 2010/05/06 09:18:06 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -98,9 +98,9 @@ may fail and return \-1 in case the argument
 is not associated with a valid file descriptor.
 (In such case the
 .Nx
-implementation, contrary to the
+implementation does not follow the optional
 .Tn POSIX
-standard, does not set
+recommendation and set the
 .Va errno
 to
 .Er EBADF . )
