@@ -1,4 +1,4 @@
-/*	$NetBSD: input.cpp,v 1.1.1.3 2006/02/06 18:13:59 wiz Exp $	*/
+/*	$NetBSD: input.cpp,v 1.2 2010/05/06 19:00:08 drochner Exp $	*/
 
 // -*- C++ -*-
 
@@ -997,7 +997,7 @@ next_command(void)
 inline bool
 odd(const int n)
 {
-  return (n & 1 == 1) ? true : false;
+  return (n & 1) ? true : false;
 }
 
 //////////////////////////////////////////////////////////////////////
