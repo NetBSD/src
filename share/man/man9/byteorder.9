@@ -1,4 +1,4 @@
-.\"	$NetBSD: byteorder.9,v 1.6 2010/05/05 06:19:15 jruoho Exp $
+.\"	$NetBSD: byteorder.9,v 1.7 2010/05/06 08:02:47 dholland Exp $
 .\"
 .\" Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
 .\" All rights reserved.
@@ -188,11 +188,11 @@ functions first appeared in
 .Nx 1.5 .
 These were later ported to
 .Fx 5.0 .
-The functions were originally introduced to handle
+These functions were originally introduced to handle
 .Tn PCI
-bus master devices which assumed little endian byte order in
+bus master devices that do little endian
 .Tn DMA
-transfers, even on big endian systems.
+transfers on big endian systems.
 .Pp
 The encode/decode functions first appeared in
 .Fx 5.1 .
