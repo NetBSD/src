@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.12 2010/04/12 22:42:06 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.13 2010/05/06 20:48:39 cliff Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.12 2010/04/12 22:42:06 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.13 2010/05/06 20:48:39 cliff Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -1030,8 +1030,6 @@ rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS104:
 	case MIPS_XLS108:
-	case MIPS_XLS204:
-	case MIPS_XLS208:
 	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
 		switch (pa->pa_bus) {
@@ -1042,6 +1040,29 @@ rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
 		case 2:
 			link = 1;
 			irq = 27;
+			break;
+		default:
+			panic("%s: bad bus %d\n", __func__, pa->pa_bus);
+		}
+		break;
+	case MIPS_XLS204:
+	case MIPS_XLS208:
+		switch (pa->pa_bus) {
+		case 1:
+			link = 0;
+			irq = 26;
+			break;
+		case 2:
+			link = 1;
+			irq = 27;
+			break;
+		case 3:
+			link = 2;
+			irq = 23;
+			break;
+		case 4:
+			link = 3;
+			irq = 24;
 			break;
 		default:
 			panic("%s: bad bus %d\n", __func__, pa->pa_bus);
@@ -1097,11 +1118,20 @@ rmixl_pcie_intr_string(void *v, pci_intr_handle_t pih)
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS104:
 	case MIPS_XLS108:
-	case MIPS_XLS204:
-	case MIPS_XLS208:
 	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
 		switch (irq) {
+		case 26:
+		case 27:
+			name = rmixl_intr_string(irq);
+			break;
+		}
+		break;
+	case MIPS_XLS204:
+	case MIPS_XLS208:
+		switch (irq) {
+		case 23:
+		case 24:
 		case 26:
 		case 27:
 			name = rmixl_intr_string(irq);
