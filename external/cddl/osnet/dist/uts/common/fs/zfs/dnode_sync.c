@@ -437,11 +437,6 @@ dnode_undirty_dbufs(list_t *list)
 			ASSERT(db->db_blkid == DB_BONUS_BLKID ||
 			    dr->dt.dl.dr_data == db->db_buf);
 			dbuf_unoverride(dr);
-			mutex_exit(&db->db_mtx);
-		} else {
-			mutex_exit(&db->db_mtx);
-			mutex_destroy(&dr->dt.di.dr_mtx);
-			dnode_undirty_dbufs(&dr->dt.di.dr_children);
 		}
 		kmem_free(dr, sizeof (dbuf_dirty_record_t));
 		dbuf_rele_and_unlock(db, (void *)(uintptr_t)txg);
