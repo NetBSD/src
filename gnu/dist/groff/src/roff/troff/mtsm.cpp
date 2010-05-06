@@ -1,4 +1,4 @@
-/*	$NetBSD: mtsm.cpp,v 1.1.1.1 2006/02/06 18:14:11 wiz Exp $	*/
+/*	$NetBSD: mtsm.cpp,v 1.2 2010/05/06 18:54:35 drochner Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 2003, 2004 Free Software Foundation, Inc.
@@ -615,12 +615,12 @@ int state_set::is_in(int_value_state i)
 
 int state_set::is_in(units_value_state u)
 {
-  return (unitsset & (1 << (int)u) != 0);
+  return ((unitsset & (1 << (int)u)) != 0);
 }
 
 int state_set::is_in(string_value_state s)
 {
-  return (stringset & (1 << (int)s) != 0);
+  return ((stringset & (1 << (int)s)) != 0);
 }
 
 void state_set::add(units_value_state, int n)
