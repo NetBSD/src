@@ -1,3 +1,5 @@
+/*	$NetBSD: funcs.h,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /*
  * Id: funcs.h,v 1.9 2004/01/23 18:56:42 vixie Exp
  */
@@ -29,7 +31,7 @@ void		set_cron_uid(void),
 		load_database(cron_db *),
 		open_logfile(void),
 		sigpipe_func(void),
-		job_add(entry *, user *),
+		job_add(entry *, user *, time_t),
 		do_command(entry *, user *),
 		link_user(cron_db *, user *),
 		unlink_user(cron_db *, user *),
@@ -45,22 +47,19 @@ void		set_cron_uid(void),
 int		job_runqueue(void),
 		set_debug_flags(const char *),
 		get_char(FILE *),
-		get_string(char *, int, FILE *, char *),
-		swap_uids(void),
-		swap_uids_back(void),
+		get_string(char *, int, FILE *, const char *),
 		load_env(char *, FILE *),
 		cron_pclose(FILE *),
 		glue_strings(char *, size_t, const char *, const char *, char),
 		strcmp_until(const char *, const char *, char),
-		allowed(const char * ,const char * ,const char *),
 		strdtb(char *);
 
 size_t		strlens(const char *, ...);
 
-char		*env_get(char *, char **),
+char		*env_get(const char *, char **),
 		*arpadate(time_t *),
-		*mkprints(unsigned char *, unsigned int),
-		*first_word(char *, char *),
+		*mkprints(char *, size_t),
+		*first_word(char *, const char *),
 		**env_init(void),
 		**env_copy(char **),
 		**env_set(char **, char *);
@@ -68,9 +67,9 @@ char		*env_get(char *, char **),
 user		*load_user(int, struct passwd *, const char *),
 		*find_user(cron_db *, const char *);
 
-entry		*load_entry(FILE *, void (*)(), struct passwd *, char **);
+entry		*load_entry(FILE *, void (*)(const char *), struct passwd *, char **);
 
-FILE		*cron_popen(char *, char *, struct passwd *);
+FILE		*cron_popen(char *, const char *, struct passwd *);
 
 struct passwd	*pw_dup(const struct passwd *);
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: cron.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -18,9 +20,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
+#if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
+#else
+__RCSID("$NetBSD: cron.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+#endif
 #endif
 
 #define	MAIN_PROGRAM
@@ -48,10 +54,10 @@ static void
 usage(void) {
 	const char **dflags;
 
-	fprintf(stderr, "usage:  %s [-n] [-x [", ProgramName);
+	(void)fprintf(stderr, "usage:  %s [-n] [-x [", getprogname());
 	for (dflags = DebugFlagNames; *dflags; dflags++)
-		fprintf(stderr, "%s%s", *dflags, dflags[1] ? "," : "]");
-	fprintf(stderr, "]\n");
+		(void)fprintf(stderr, "%s%s", *dflags, dflags[1] ? "," : "]");
+	(void)fprintf(stderr, "]\n");
 	exit(ERROR_EXIT);
 }
 
@@ -59,22 +65,18 @@ int
 main(int argc, char *argv[]) {
 	struct sigaction sact;
 	cron_db	database;
-	int fd;
 
-	ProgramName = argv[0];
+	setprogname(argv[0]);
+	(void)setlocale(LC_ALL, "");
 
-	setlocale(LC_ALL, "");
-
-#if defined(BSD)
-	setlinebuf(stdout);
-	setlinebuf(stderr);
-#endif
+	(void)setvbuf(stdout, NULL, _IOLBF, 0);
+	(void)setvbuf(stderr, NULL, _IOLBF, 0);
 
 	NoFork = 0;
 	parse_args(argc, argv);
 
-	bzero((char *)&sact, sizeof sact);
-	sigemptyset(&sact.sa_mask);
+	(void)memset(&sact, 0, sizeof sact);
+	(void)sigemptyset(&sact.sa_mask);
 	sact.sa_flags = 0;
 #ifdef SA_RESTART
 	sact.sa_flags |= SA_RESTART;
@@ -100,29 +102,12 @@ main(int argc, char *argv[]) {
 	 */
 	if (DebugFlags) {
 #if DEBUGGING
-		(void) fprintf(stderr, "[%ld] cron started\n", (long)getpid());
+		(void)fprintf(stderr, "[%ld] cron started\n", (long)getpid());
 #endif
 	} else if (NoFork == 0) {
-		switch (fork()) {
-		case -1:
+		if (daemon(1, 0)) {
 			log_it("CRON",getpid(),"DEATH","can't fork");
-			exit(0);
-			break;
-		case 0:
-			/* child process */
-			(void) setsid();
-			if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) >= 0) {
-				(void) dup2(fd, STDIN);
-				(void) dup2(fd, STDOUT);
-				(void) dup2(fd, STDERR);
-				if (fd != STDERR)
-					(void) close(fd);
-			}
-			log_it("CRON",getpid(),"STARTUP",CRON_VERSION);
-			break;
-		default:
-			/* parent process should just die */
-			_exit(0);
+			exit(1);
 		}
 	}
 
@@ -145,7 +130,7 @@ main(int argc, char *argv[]) {
 	 * timeRunning: is the time we last awakened.
 	 * clockTime: is the time when set_time was last called.
 	 */
-	while (TRUE) {
+	for (;;) {
 		int timeDiff;
 		enum timejump wakeupKind;
 
@@ -185,10 +170,10 @@ main(int argc, char *argv[]) {
 				 * minute until caught up.
 				 */
 				Debug(DSCH, ("[%ld], normal case %d minutes to go\n",
-				    (long)getpid(), timeDiff))
+				    (long)getpid(), timeDiff));
 				do {
 					if (job_runqueue())
-						sleep(10);
+						(void)sleep(10);
 					virtualTime++;
 					find_jobs(virtualTime, &database,
 					    TRUE, TRUE);
@@ -208,14 +193,14 @@ main(int argc, char *argv[]) {
 				 * housekeeping.
 				 */
 				Debug(DSCH, ("[%ld], DST begins %d minutes to go\n",
-				    (long)getpid(), timeDiff))
+				    (long)getpid(), timeDiff));
 				/* run wildcard jobs for current minute */
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 	
 				/* run fixed-time jobs for each minute missed */
 				do {
 					if (job_runqueue())
-						sleep(10);
+						(void)sleep(10);
 					virtualTime++;
 					find_jobs(virtualTime, &database,
 					    FALSE, TRUE);
@@ -234,7 +219,7 @@ main(int argc, char *argv[]) {
 				 * change until we are caught up.
 				 */
 				Debug(DSCH, ("[%ld], DST ends %d minutes to go\n",
-				    (long)getpid(), timeDiff))
+				    (long)getpid(), timeDiff));
 				find_jobs(timeRunning, &database, TRUE, FALSE);
 				break;
 			default:
@@ -243,14 +228,14 @@ main(int argc, char *argv[]) {
 				 * jump virtual time, and run everything
 				 */
 				Debug(DSCH, ("[%ld], clock jumped\n",
-				    (long)getpid()))
+				    (long)getpid()));
 				virtualTime = timeRunning;
 				find_jobs(timeRunning, &database, TRUE, TRUE);
 			}
 		}
 
 		/* Jobs to be run (if any) are loaded; clear the queue. */
-		job_runqueue();
+		(void)job_runqueue();
 
 		/* Check to see if we received a signal while running jobs. */
 		if (got_sighup) {
@@ -273,7 +258,7 @@ run_reboot_jobs(cron_db *db) {
 	for (u = db->head; u != NULL; u = u->next) {
 		for (e = u->crontab; e != NULL; e = e->next) {
 			if (e->flags & WHEN_REBOOT)
-				job_add(e, u);
+				job_add(e, u, StartTime);
 		}
 	}
 	(void) job_runqueue();
@@ -297,7 +282,7 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 
 	Debug(DSCH, ("[%ld] tick(%d,%d,%d,%d,%d) %s %s\n",
 		     (long)getpid(), minute, hour, dom, month, dow,
-		     doWild?" ":"No wildcard",doNonWild?" ":"Wildcard only"))
+		     doWild?" ":"No wildcard",doNonWild?" ":"Wildcard only"));
 
 	/* the dom/dow situation is odd.  '* * 1,15 * Sun' will run on the
 	 * first and fifteenth AND every Sunday;  '* * * * Sun' will run *only*
@@ -309,7 +294,7 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 		for (e = u->crontab; e != NULL; e = e->next) {
 			Debug(DSCH|DEXT, ("user [%s:%ld:%ld:...] cmd=\"%s\"\n",
 			    e->pwd->pw_name, (long)e->pwd->pw_uid,
-			    (long)e->pwd->pw_gid, e->cmd))
+			    (long)e->pwd->pw_gid, e->cmd));
 			if (bit_test(e->minute, minute) &&
 			    bit_test(e->hour, hour) &&
 			    bit_test(e->month, month) &&
@@ -321,7 +306,7 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 				if ((doNonWild &&
 				    !(e->flags & (MIN_STAR|HR_STAR))) || 
 				    (doWild && (e->flags & (MIN_STAR|HR_STAR))))
-					job_add(e, u);
+					job_add(e, u, virtualSecond);
 			}
 		}
 	}
@@ -345,9 +330,9 @@ set_time(int initialize) {
 		isdst = tm.tm_isdst;
 		GMToff = get_gmtoff(&StartTime, &tm);
 		Debug(DSCH, ("[%ld] GMToff=%ld\n",
-		    (long)getpid(), (long)GMToff))
+		    (long)getpid(), (long)GMToff));
 	}
-	clockTime = (StartTime + GMToff) / (time_t)SECONDS_PER_MINUTE;
+	clockTime = (int)((StartTime + GMToff) / (time_t)SECONDS_PER_MINUTE);
 }
 
 /*
@@ -360,11 +345,12 @@ cron_sleep(int target) {
 
 	t1 = time(NULL) + GMToff;
 	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - t1) + 1;
-	Debug(DSCH, ("[%ld] Target time=%ld, sec-to-wait=%d\n",
-	    (long)getpid(), (long)target*SECONDS_PER_MINUTE, seconds_to_wait))
+	Debug(DSCH, ("[%ld] Target time=%lld, sec-to-wait=%d\n",
+	    (long)getpid(), (long long)target*SECONDS_PER_MINUTE,
+	    seconds_to_wait));
 
 	while (seconds_to_wait > 0 && seconds_to_wait < 65) {
-		sleep((unsigned int) seconds_to_wait);
+		(void)sleep((unsigned int) seconds_to_wait);
 
 		/*
 		 * Check to see if we were interrupted by a signal.
@@ -385,18 +371,21 @@ cron_sleep(int target) {
 	}
 }
 
+/*ARGSUSED*/
 static void
-sighup_handler(int x) {
+sighup_handler(int x __unused) {
 	got_sighup = 1;
 }
 
+/*ARGSUSED*/
 static void
-sigchld_handler(int x) {
+sigchld_handler(int x __unused) {
 	got_sigchld = 1;
 }
 
+/*ARGSUSED*/
 static void
-quit(int x) {
+quit(int x __unused) {
 	(void) unlink(_PATH_CRON_PID);
 	_exit(0);
 }
@@ -414,17 +403,17 @@ sigchld_reaper(void) {
 				continue;
 			Debug(DPROC,
 			      ("[%ld] sigchld...no children\n",
-			       (long)getpid()))
+			       (long)getpid()));
 			break;
 		case 0:
 			Debug(DPROC,
 			      ("[%ld] sigchld...no dead kids\n",
-			       (long)getpid()))
+			       (long)getpid()));
 			break;
 		default:
 			Debug(DPROC,
 			      ("[%ld] sigchld...pid #%ld died, stat=%d\n",
-			       (long)getpid(), (long)pid, WEXITSTATUS(waiter)))
+			       (long)getpid(), (long)pid, WEXITSTATUS(waiter)));
 			break;
 		}
 	} while (pid > 0);
@@ -438,6 +427,7 @@ parse_args(int argc, char *argv[]) {
 		switch (argch) {
 		default:
 			usage();
+			break;
 		case 'x':
 			if (!set_debug_flags(optarg))
 				usage();

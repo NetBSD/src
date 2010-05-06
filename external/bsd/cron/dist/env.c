@@ -1,3 +1,5 @@
+/*	$NetBSD: env.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -18,16 +20,20 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
+#if 0
 static char rcsid[] = "Id: env.c,v 1.10 2004/01/23 18:56:42 vixie Exp";
+#else
+__RCSID("$NetBSD: env.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+#endif
 #endif
 
 #include "cron.h"
 
 char **
 env_init(void) {
-	char **p = (char **) malloc(sizeof(char **));
+	char **p = malloc(sizeof(char **));
 
 	if (p != NULL)
 		p[0] = NULL;
@@ -49,8 +55,8 @@ env_copy(char **envp) {
 	char **p;
 
 	for (count = 0; envp[count] != NULL; count++)
-		NULL;
-	p = (char **) malloc((count+1) * sizeof(char *));  /* 1 for the NULL */
+		continue;
+	p = malloc((count+1) * sizeof(*p));  /* 1 for the NULL */
 	if (p != NULL) {
 		for (i = 0; i < count; i++)
 			if ((p[i] = strdup(envp[i])) == NULL) {
@@ -101,8 +107,7 @@ env_set(char **envp, char *envstr) {
 	 */
 	if ((envtmp = strdup(envstr)) == NULL)
 		return (NULL);
-	p = (char **) realloc((void *) envp,
-			      (size_t) ((count+1) * sizeof(char **)));
+	p = realloc(envp, (size_t) ((count+1) * sizeof(*p)));
 	if (p == NULL) {
 		free(envtmp);
 		return (NULL);
@@ -121,7 +126,7 @@ enum env_state {
 	VALUEI,		/* First char of VALUE, may be quote */
 	VALUE,		/* Subsequent chars of VALUE */
 	FINI,		/* All done, skipping trailing whitespace */
-	ERROR,		/* Error */
+	ERROR		/* Error */
 };
 
 /* return	ERR = end of file
@@ -142,10 +147,10 @@ load_env(char *envstr, FILE *f) {
 	if (EOF == get_string(envstr, MAX_ENVSTR, f, "\n"))
 		return (ERR);
 
-	Debug(DPARS, ("load_env, read <%s>\n", envstr))
+	Debug(DPARS, ("load_env, read <%s>\n", envstr));
 
-	bzero(name, sizeof name);
-	bzero(val, sizeof val);
+	(void)memset(name, 0, sizeof name);
+	(void)memset(val, 0, sizeof val);
 	str = name;
 	state = NAMEI;
 	quotechar = '\0';
@@ -211,8 +216,8 @@ load_env(char *envstr, FILE *f) {
 		}
 	}
 	if (state != FINI && !(state == VALUE && !quotechar)) {
-		Debug(DPARS, ("load_env, not an env var, state = %d\n", state))
-		fseek(f, filepos, 0);
+		Debug(DPARS, ("load_env, not an env var, state = %d\n", state));
+		(void)fseek(f, filepos, 0);
 		Set_LineNum(fileline);
 		return (FALSE);
 	}
@@ -231,19 +236,19 @@ load_env(char *envstr, FILE *f) {
 	 */
 	if (!glue_strings(envstr, MAX_ENVSTR, name, val, '='))
 		return (FALSE);
-	Debug(DPARS, ("load_env, <%s> <%s> -> <%s>\n", name, val, envstr))
+	Debug(DPARS, ("load_env, <%s> <%s> -> <%s>\n", name, val, envstr));
 	return (TRUE);
 }
 
 char *
-env_get(char *name, char **envp) {
-	int len = strlen(name);
+env_get(const char *name, char **envp) {
+	size_t len = strlen(name);
 	char *p, *q;
 
 	while ((p = *envp++) != NULL) {
 		if (!(q = strchr(p, '=')))
 			continue;
-		if ((q - p) == len && !strncmp(p, name, len))
+		if ((size_t)(q - p) == len && !strncmp(p, name, len))
 			return (q+1);
 	}
 	return (NULL);

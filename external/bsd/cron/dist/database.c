@@ -1,3 +1,5 @@
+/*	$NetBSD: database.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -18,9 +20,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
+#if 0
 static char rcsid[] = "Id: database.c,v 1.7 2004/01/23 18:56:42 vixie Exp";
+#else
+__RCSID("$NetBSD: database.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+#endif
 #endif
 
 /* vix 26jan87 [RCS has the log]
@@ -42,7 +48,7 @@ load_database(cron_db *old_db) {
 	DIR *dir;
 	user *u, *nu;
 
-	Debug(DLOAD, ("[%ld] load_database()\n", (long)getpid()))
+	Debug(DLOAD, ("[%ld] load_database()\n", (long)getpid()));
 
 	/* before we start loading any data, do a stat on SPOOL_DIR
 	 * so that if anything changes as of this moment (i.e., before we've
@@ -67,7 +73,7 @@ load_database(cron_db *old_db) {
 	 */
 	if (old_db->mtime == TMAX(statbuf.st_mtime, syscron_stat.st_mtime)) {
 		Debug(DLOAD, ("[%ld] spool dir mtime unch, no load needed.\n",
-			      (long)getpid()))
+			      (long)getpid()));
 		return;
 	}
 
@@ -105,7 +111,7 @@ load_database(cron_db *old_db) {
 
 		if (strlen(dp->d_name) >= sizeof fname)
 			continue;	/* XXX log? */
-		(void) strcpy(fname, dp->d_name);
+		(void)strlcpy(fname, dp->d_name, sizeof(fname));
 		
 		if (!glue_strings(tabname, sizeof tabname, SPOOL_DIR,
 				  fname, '/'))
@@ -114,7 +120,7 @@ load_database(cron_db *old_db) {
 		process_crontab(fname, fname, tabname,
 				&statbuf, &new_db, old_db);
 	}
-	closedir(dir);
+	(void)closedir(dir);
 
 	/* if we don't do this, then when our children eventually call
 	 * getpwnam() in do_command.c's child_process to verify MAILTO=,
@@ -124,9 +130,9 @@ load_database(cron_db *old_db) {
 
 	/* whatever's left in the old database is now junk.
 	 */
-	Debug(DLOAD, ("unlinking old database:\n"))
+	Debug(DLOAD, ("unlinking old database:\n"));
 	for (u = old_db->head;  u != NULL;  u = nu) {
-		Debug(DLOAD, ("\t%s\n", u->name))
+		Debug(DLOAD, ("\t%s\n", u->name));
 		nu = u->next;
 		unlink_user(old_db, u);
 		free_user(u);
@@ -135,7 +141,7 @@ load_database(cron_db *old_db) {
 	/* overwrite the database control block with the new one.
 	 */
 	*old_db = new_db;
-	Debug(DLOAD, ("load_database is done\n"))
+	Debug(DLOAD, ("load_database is done\n"));
 }
 
 void
@@ -220,14 +226,14 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		goto next_crontab;
 	}
 
-	Debug(DLOAD, ("\t%s:", fname))
+	Debug(DLOAD, ("\t%s:", fname));
 	u = find_user(old_db, fname);
 	if (u != NULL) {
 		/* if crontab has not changed since we last read it
 		 * in, then we can just use our existing entry.
 		 */
 		if (u->mtime == statbuf->st_mtime) {
-			Debug(DLOAD, (" [no change, using old data]"))
+			Debug(DLOAD, (" [no change, using old data]"));
 			unlink_user(old_db, u);
 			link_user(new_db, u);
 			goto next_crontab;
@@ -240,7 +246,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		 * users will be deleted from the old database when
 		 * we finish with the crontab...
 		 */
-		Debug(DLOAD, (" [delete old data]"))
+		Debug(DLOAD, (" [delete old data]"));
 		unlink_user(old_db, u);
 		free_user(u);
 		log_it(fname, getpid(), "RELOAD", tabname);
@@ -253,7 +259,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 
  next_crontab:
 	if (crontab_fd >= OK) {
-		Debug(DLOAD, (" [done]\n"))
-		close(crontab_fd);
+		Debug(DLOAD, (" [done]\n"));
+		(void)close(crontab_fd);
 	}
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: externs.h,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -40,6 +42,7 @@
 #include <grp.h>
 #include <locale.h>
 #include <pwd.h>
+#include <err.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -67,9 +70,6 @@
 #define TIME_T	time_t
 #define PID_T	pid_t
 
-#ifndef TZNAME_ALREADY_DEFINED
-extern char *tzname[2];
-#endif
 #define TZONE(tm) tzname[(tm).tm_isdst]
 
 #if (defined(BSD)) && (BSD >= 198606) || defined(__linux)

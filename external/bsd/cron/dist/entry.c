@@ -1,3 +1,5 @@
+/*	$NetBSD: entry.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -19,9 +21,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
+#if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
+#else
+__RCSID("$NetBSD: entry.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+#endif
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -37,7 +43,7 @@ typedef	enum ecode {
 	e_cmd, e_timespec, e_username, e_option, e_memory
 } ecode_e;
 
-static const char *ecodes[] =
+static const char * const ecodes[] =
 	{
 		"no error",
 		"bad minute",
@@ -52,9 +58,9 @@ static const char *ecodes[] =
 		"out of memory"
 	};
 
-static int	get_list(bitstr_t *, int, int, const char *[], int, FILE *),
-		get_range(bitstr_t *, int, int, const char *[], int, FILE *),
-		get_number(int *, int, const char *[], int, FILE *, const char *),
+static int	get_list(bitstr_t *, int, int, const char * const [], int, FILE *),
+		get_range(bitstr_t *, int, int, const char * const [], int, FILE *),
+		get_number(int *, int, const char * const [], int, FILE *, const char *),
 		set_element(bitstr_t *, int, int, int);
 
 void
@@ -69,7 +75,8 @@ free_entry(entry *e) {
  * otherwise return a pointer to a new entry.
  */
 entry *
-load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
+load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
+    char **envp) {
 	/* this function reads one crontab entry -- the next -- from a file.
 	 * it skips any leading blank lines, ignores comments, and returns
 	 * NULL if for any reason the entry can't be read and parsed.
@@ -90,7 +97,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 	char envstr[MAX_ENVSTR];
 	char **tenvp;
 
-	Debug(DPARS, ("load_entry()...about to eat comments\n"))
+	Debug(DPARS, ("load_entry()...about to eat comments\n"));
 
 	skip_comments(file);
 
@@ -141,20 +148,21 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_set(e->dow, 0);
-			e->flags |= DOW_STAR;
+			e->flags |= DOM_STAR;
 		} else if (!strcmp("daily", cmd) || !strcmp("midnight", cmd)) {
 			bit_set(e->minute, 0);
 			bit_set(e->hour, 0);
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
+			e->flags |= DOM_STAR | DOW_STAR;
 		} else if (!strcmp("hourly", cmd)) {
 			bit_set(e->minute, 0);
 			bit_nset(e->hour, 0, (LAST_HOUR-FIRST_HOUR+1));
 			bit_nset(e->dom, 0, (LAST_DOM-FIRST_DOM+1));
 			bit_nset(e->month, 0, (LAST_MONTH-FIRST_MONTH+1));
 			bit_nset(e->dow, 0, (LAST_DOW-FIRST_DOW+1));
-			e->flags |= HR_STAR;
+			e->flags |= DOM_STAR | DOW_STAR;
 		} else {
 			ecode = e_timespec;
 			goto eof;
@@ -168,7 +176,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 			goto eof;
 		}
 	} else {
-		Debug(DPARS, ("load_entry()...about to parse numerics\n"))
+		Debug(DPARS, ("load_entry()...about to parse numerics\n"));
 
 		if (ch == '*')
 			e->flags |= MIN_STAR;
@@ -244,10 +252,10 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 	if (!pw) {
 		char		*username = cmd;	/* temp buffer */
 
-		Debug(DPARS, ("load_entry()...about to parse username\n"))
+		Debug(DPARS, ("load_entry()...about to parse username\n"));
 		ch = get_string(username, MAX_COMMAND, file, " \t\n");
 
-		Debug(DPARS, ("load_entry()...got %s\n",username))
+		Debug(DPARS, ("load_entry()...got %s\n",username));
 		if (ch == EOF || ch == '\n' || ch == '*') {
 			ecode = e_cmd;
 			goto eof;
@@ -259,14 +267,14 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 			goto eof;
 		}
 		Debug(DPARS, ("load_entry()...uid %ld, gid %ld\n",
-			      (long)pw->pw_uid, (long)pw->pw_gid))
+			      (long)pw->pw_uid, (long)pw->pw_gid));
 	}
 
 	if ((e->pwd = pw_dup(pw)) == NULL) {
 		ecode = e_memory;
 		goto eof;
 	}
-	bzero(e->pwd->pw_passwd, strlen(e->pwd->pw_passwd));
+	(void)memset(e->pwd->pw_passwd, 0, strlen(e->pwd->pw_passwd));
 
 	/* copy and fix up environment.  some variables are just defaults and
 	 * others are overrides.
@@ -332,7 +340,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 		log_it("CRON", getpid(), "error", "can't set USER");
 #endif
 
-	Debug(DPARS, ("load_entry()...about to parse command\n"))
+	Debug(DPARS, ("load_entry()...about to parse command\n"));
 
 	/* If the first character of the command is '-' it is a cron option.
 	 */
@@ -340,13 +348,13 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 		switch (ch = get_char(file)) {
 		case 'q':
 			e->flags |= DONT_LOG;
-			Skip_Nonblanks(ch, file)
+			Skip_Nonblanks(ch, file);
 			break;
 		default:
 			ecode = e_option;
 			goto eof;
 		}
-		Skip_Blanks(ch, file)
+		Skip_Blanks(ch, file);
 		if (ch == EOF || ch == '\n') {
 			ecode = e_cmd;
 			goto eof;
@@ -374,7 +382,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 		goto eof;
 	}
 
-	Debug(DPARS, ("load_entry()...returning successfully\n"))
+	Debug(DPARS, ("load_entry()...returning successfully\n"));
 
 	/* success, fini, return pointer to the entry we just created...
 	 */
@@ -396,7 +404,7 @@ load_entry(FILE *file, void (*error_func)(), struct passwd *pw, char **envp) {
 }
 
 static int
-get_list(bitstr_t *bits, int low, int high, const char *names[],
+get_list(bitstr_t *bits, int low, int high, const char * const names[],
 	 int ch, FILE *file)
 {
 	int done;
@@ -407,7 +415,7 @@ get_list(bitstr_t *bits, int low, int high, const char *names[],
 	 * assume the same thing.
 	 */
 
-	Debug(DPARS|DEXT, ("get_list()...entered\n"))
+	Debug(DPARS|DEXT, ("get_list()...entered\n"));
 
 	/* list = range {"," range}
 	 */
@@ -430,42 +438,73 @@ get_list(bitstr_t *bits, int low, int high, const char *names[],
 
 	/* exiting.  skip to some blanks, then skip over the blanks.
 	 */
-	Skip_Nonblanks(ch, file)
-	Skip_Blanks(ch, file)
+	Skip_Nonblanks(ch, file);
+	Skip_Blanks(ch, file);
 
-	Debug(DPARS|DEXT, ("get_list()...exiting w/ %02x\n", ch))
+	Debug(DPARS|DEXT, ("get_list()...exiting w/ %02x\n", ch));
 
 	return (ch);
 }
 
 
 static int
-get_range(bitstr_t *bits, int low, int high, const char *names[],
+random_with_range(int low, int high)
+{
+	/* Kind of crappy error detection, but...
+	 */
+	if (low >= high)
+		return low;
+	else
+		return arc4random() % (high - low + 1) + low;
+}
+
+static int
+get_range(bitstr_t *bits, int low, int high, const char * const names[],
 	  int ch, FILE *file)
 {
 	/* range = number | number "-" number [ "/" number ]
 	 */
 
 	int i, num1, num2, num3;
+	int	qmark, star;
 
-	Debug(DPARS|DEXT, ("get_range()...entering, exit won't show\n"))
+	qmark = star = FALSE;
+	Debug(DPARS|DEXT, ("get_range()...entering, exit won't show\n"));
 
 	if (ch == '*') {
 		/* '*' means "first-last" but can still be modified by /step
 		 */
+		star = TRUE;
 		num1 = low;
 		num2 = high;
 		ch = get_char(file);
 		if (ch == EOF)
 			return (EOF);
-	} else {
+	} else if (ch == '?') {
+	} else if (ch == '?') {
+		qmark = TRUE;
+		ch = get_char(file);
+		if (ch == EOF)
+			return EOF;
+		if (!isdigit(ch)) {
+			num1 = random_with_range(low, high);
+			if (EOF == set_element(bits, low, high, num1))
+				return EOF;
+			return ch;
+		}
+	}
+
+	if (!star) {
 		ch = get_number(&num1, low, names, ch, file, ",- \t\n");
 		if (ch == EOF)
 			return (EOF);
 
 		if (ch != '-') {
 			/* not a range, it's a single number.
+			 * a single number after '?' is bogus.
 			 */
+			if (qmark)
+				return EOF;
 			if (EOF == set_element(bits, low, high, num1)) {
 				unget_char(ch, file);
 				return (EOF);
@@ -483,12 +522,28 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 			ch = get_number(&num2, low, names, ch, file, "/, \t\n");
 			if (ch == EOF || num1 > num2)
 				return (EOF);
+
+			/* if we have a random range, it is really
+			 * like having a single number.
+			 */
+			if (qmark) {
+				if (num1 > num2)
+					return EOF;
+				num1 = random_with_range(num1, num2);
+				if (EOF == set_element(bits, low, high, num1))
+					return EOF;
+				return ch;
+			}
 		}
 	}
 
 	/* check for step size
 	 */
 	if (ch == '/') {
+		/* '?' is incompatible with '/'
+		 */
+		if (qmark)
+			return EOF;
 		/* eat the slash
 		 */
 		ch = get_char(file);
@@ -524,7 +579,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 }
 
 static int
-get_number(int *numptr, int low, const char *names[], int ch, FILE *file,
+get_number(int *numptr, int low, const char * const names[], int ch, FILE *file,
     const char *terms) {
 	char temp[MAX_TEMPSTR], *pc;
 	int len, i;
@@ -561,7 +616,7 @@ get_number(int *numptr, int low, const char *names[], int ch, FILE *file,
 			for (i = 0;  names[i] != NULL;  i++) {
 				Debug(DPARS|DEXT,
 					("get_num, compare(%s,%s)\n", names[i],
-					temp))
+					temp));
 				if (!strcasecmp(names[i], temp)) {
 					*numptr = i+low;
 					return (ch);
@@ -577,7 +632,7 @@ bad:
 
 static int
 set_element(bitstr_t *bits, int low, int high, int number) {
-	Debug(DPARS|DEXT, ("set_element(?,%d,%d,%d)\n", low, high, number))
+	Debug(DPARS|DEXT, ("set_element(?,%d,%d,%d)\n", low, high, number));
 
 	if (number < low || number > high)
 		return (EOF);

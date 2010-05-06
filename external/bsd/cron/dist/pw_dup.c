@@ -29,8 +29,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
+#if 0
 static char rcsid[] = "Id: pw_dup.c,v 1.2 2004/01/23 18:56:43 vixie Exp";
+#else
+__RCSID("$NetBSD: pw_dup.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+#endif
 #endif
 
 #include <sys/param.h>
@@ -41,13 +46,20 @@ static char rcsid[] = "Id: pw_dup.c,v 1.2 2004/01/23 18:56:43 vixie Exp";
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <bitstring.h>
 
 #include "config.h"
+#include "macros.h"
+#include "structs.h"
+#include "funcs.h"
 
 struct passwd *
 pw_dup(const struct passwd *pw) {
 	char		*cp;
-	size_t		 nsize, psize, csize, gsize, dsize, ssize, total;
+	size_t		 nsize, psize, gsize, dsize, ssize, total;
+#ifdef LOGIN_CAP
+	size_t		 csize;
+#endif
 	struct passwd	*newpw;
 
 	/* Allocate in one big chunk for easy freeing */
@@ -55,32 +67,38 @@ pw_dup(const struct passwd *pw) {
 	if (pw->pw_name) {
 		nsize = strlen(pw->pw_name) + 1;
 		total += nsize;
-	}
+	} else
+		nsize = 0;
 	if (pw->pw_passwd) {
 		psize = strlen(pw->pw_passwd) + 1;
 		total += psize;
-	}
+	} else
+		psize = 0;
 #ifdef LOGIN_CAP
 	if (pw->pw_class) {
 		csize = strlen(pw->pw_class) + 1;
 		total += csize;
-	}
+	} else
+		csize = 0;
 #endif /* LOGIN_CAP */
 	if (pw->pw_gecos) {
 		gsize = strlen(pw->pw_gecos) + 1;
 		total += gsize;
-	}
+	} else
+		gsize = 0;
 	if (pw->pw_dir) {
 		dsize = strlen(pw->pw_dir) + 1;
 		total += dsize;
-	}
+	} else
+		dsize = 0;
 	if (pw->pw_shell) {
 		ssize = strlen(pw->pw_shell) + 1;
 		total += ssize;
-	}
-	if ((cp = malloc(total)) == NULL)
+	} else
+		ssize = 0;
+	if ((newpw = malloc(total)) == NULL)
 		return (NULL);
-	newpw = (struct passwd *)cp;
+	cp = (char *)(void *)newpw;
 
 	/*
 	 * Copy in passwd contents and make strings relative to space

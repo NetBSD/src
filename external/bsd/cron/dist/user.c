@@ -1,3 +1,5 @@
+/*	$NetBSD: user.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -18,9 +20,13 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
+#if 0
 static char rcsid[] = "Id: user.c,v 1.5 2004/01/23 18:56:43 vixie Exp";
++#else
++__RCSID("$NetBSD: user.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+#endif
 #endif
 
 /* vix 26jan87 [log is in RCS file]
@@ -54,11 +60,11 @@ load_user(int crontab_fd, struct passwd	*pw, const char *name) {
 		return (NULL);
 	}
 
-	Debug(DPARS, ("load_user()\n"))
+	Debug(DPARS, ("load_user()\n"));
 
 	/* file is open.  build user entry, then read the crontab file.
 	 */
-	if ((u = (user *) malloc(sizeof(user))) == NULL)
+	if ((u = malloc(sizeof(*u))) == NULL)
 		return (NULL);
 	if ((u->name = strdup(name)) == NULL) {
 		save_errno = errno;
@@ -108,7 +114,7 @@ load_user(int crontab_fd, struct passwd	*pw, const char *name) {
 
  done:
 	env_free(envp);
-	fclose(file);
-	Debug(DPARS, ("...load_user() done\n"))
+	(void)fclose(file);
+	Debug(DPARS, ("...load_user() done\n"));
 	return (u);
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: macros.h,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /*
  * Id: macros.h,v 1.9 2004/01/23 18:56:43 vixie Exp
  */
@@ -71,25 +73,24 @@
 
 #define	Skip_Blanks(c, f) \
 			while (c == '\t' || c == ' ') \
-				c = get_char(f);
+				c = get_char(f)
 
 #define	Skip_Nonblanks(c, f) \
 			while (c!='\t' && c!=' ' && c!='\n' && c != EOF) \
-				c = get_char(f);
+				c = get_char(f)
 
 #if DEBUGGING
 # define Debug(mask, message) \
 			if ((DebugFlags & (mask)) != 0) \
-				printf message;
+				printf message
 #else /* !DEBUGGING */
-# define Debug(mask, message) \
-			;
+# define Debug(mask, message) do {} while (/*CONSTCOND*/0)
 #endif /* DEBUGGING */
 
-#define	MkUpper(ch)	(islower(ch) ? toupper(ch) : ch)
-#define	Set_LineNum(ln)	{Debug(DPARS|DEXT,("linenum=%d\n",ln)); \
-			 LineNumber = ln; \
-			}
+#define	Set_LineNum(ln)	do { \
+	Debug(DPARS|DEXT,("linenum=%d\n", ln)); \
+	LineNumber = ln; \
+} while (/*CONSTCOND*/0)
 
 #ifdef HAVE_TM_GMTOFF
 #define	get_gmtoff(c, t)	((t)->tm_gmtoff)
