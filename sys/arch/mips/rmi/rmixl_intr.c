@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.18 2010/05/01 06:13:34 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.19 2010/05/06 20:48:39 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.18 2010/05/01 06:13:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.19 2010/05/06 20:48:39 cliff Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -159,8 +159,47 @@ static const char * const rmixl_irtnames_xlrxxx[NIRTS] = {
 };
 
 /*
+ * rmixl_irtnames_xls2xx
+ * - use for XLS2xx
+ */
+static const char * const rmixl_irtnames_xls2xx[NIRTS] = {
+	"int 0 (watchdog)",	/*  0 */
+	"int 1 (timer0)",	/*  1 */
+	"int 2 (timer1)",	/*  2 */
+	"int 3 (timer2)",	/*  3 */
+	"int 4 (timer3)",	/*  4 */
+	"int 5 (timer4)",	/*  5 */
+	"int 6 (timer5)",	/*  6 */
+	"int 7 (timer6)",	/*  7 */
+	"int 8 (timer7)",	/*  8 */
+	"int 9 (uart0)",	/*  9 */
+	"int 10 (uart1)",	/* 10 */
+	"int 11 (i2c0)",	/* 11 */
+	"int 12 (i2c1)",	/* 12 */
+	"int 13 (pcmcia)",	/* 13 */
+	"int 14 (gpio_a)",	/* 14 */
+	"int 15 (irq15)",	/* 15 */
+	"int 16 (bridge_tb)",	/* 16 */
+	"int 17 (gmac0)",	/* 17 */
+	"int 18 (gmac1)",	/* 18 */
+	"int 19 (gmac2)",	/* 19 */
+	"int 20 (gmac3)",	/* 20 */
+	"int 21 (irq21)",	/* 21 */
+	"int 22 (irq22)",	/* 22 */
+	"int 23 (pcie_link2)",	/* 23 */
+	"int 24 (pcie_link3)",	/* 24 */
+	"int 25 (bridge_err)",	/* 25 */
+	"int 26 (pcie_link0)",	/* 26 */
+	"int 27 (pcie_link1)",	/* 27 */
+	"int 28 (irq28)",	/* 28 */
+	"int 29 (pcie_err)",	/* 29 */
+	"int 30 (gpio_b)",	/* 30 */
+	"int 31 (usb)",		/* 31 */
+};
+
+/*
  * rmixl_irtnames_xls1xx
- * - use for XLS1xx, XLS2xx, XLS4xx-Lite
+ * - use for XLS1xx, XLS4xx-Lite
  */
 static const char * const rmixl_irtnames_xls1xx[NIRTS] = {
 	"int 0 (watchdog)",	/*  0 */
@@ -517,11 +556,13 @@ rmixl_intr_string_xls(int irq)
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS104:
 	case MIPS_XLS108:
-	case MIPS_XLS204:
-	case MIPS_XLS208:
 	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
 		name = rmixl_irtnames_xls1xx[irq];
+		break;
+	case MIPS_XLS204:
+	case MIPS_XLS208:
+		name = rmixl_irtnames_xls2xx[irq];
 		break;
 	case MIPS_XLS404:
 	case MIPS_XLS408:
