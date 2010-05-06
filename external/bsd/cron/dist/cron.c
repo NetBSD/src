@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: cron.c,v 1.3 2010/05/06 21:50:16 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+__RCSID("$NetBSD: cron.c,v 1.3 2010/05/06 21:50:16 christos Exp $");
 #endif
 #endif
 
@@ -37,7 +37,7 @@ enum timejump { negative, small, medium, large };
 
 static	void	usage(void),
 		run_reboot_jobs(cron_db *),
-		find_jobs(int, cron_db *, int, int),
+		find_jobs(time_t, cron_db *, int, int),
 		set_time(int),
 		cron_sleep(int),
 		sigchld_handler(int),
@@ -47,7 +47,7 @@ static	void	usage(void),
 		parse_args(int c, char *v[]);
 
 static	volatile sig_atomic_t	got_sighup, got_sigchld;
-static	int			timeRunning, virtualTime, clockTime;
+static	time_t			timeRunning, virtualTime, clockTime;
 static	long			GMToff;
 
 static void
@@ -205,7 +205,7 @@ main(int argc, char *argv[]) {
 					find_jobs(virtualTime, &database,
 					    FALSE, TRUE);
 					set_time(FALSE);
-				} while (virtualTime< timeRunning &&
+				} while (virtualTime < timeRunning &&
 				    clockTime == timeRunning);
 				break;
 	
@@ -265,20 +265,32 @@ run_reboot_jobs(cron_db *db) {
 }
 
 static void
-find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
+find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
 	time_t virtualSecond  = vtime * SECONDS_PER_MINUTE;
 	struct tm *tm = gmtime(&virtualSecond);
 	int minute, hour, dom, month, dow;
 	user *u;
 	entry *e;
+	char		*orig_tz, *job_tz;
 
-	/* make 0-based values out of these so we can use them as indicies
-	 */
-	minute = tm->tm_min -FIRST_MINUTE;
-	hour = tm->tm_hour -FIRST_HOUR;
-	dom = tm->tm_mday -FIRST_DOM;
-	month = tm->tm_mon +1 /* 0..11 -> 1..12 */ -FIRST_MONTH;
-	dow = tm->tm_wday -FIRST_DOW;
+#define maketime(tz1, tz2) do { \
+	char *t = tz1; \
+	if (t != NULL && *t != '\0') \
+		setenv("TZ", t, 1); \
+	else if ((tz2) != NULL) \
+		setenv("TZ", (tz2), 1); \
+	else \
+		unsetenv("TZ"); \
+	tm = localtime(&virtualSecond); \
+	minute = tm->tm_min -FIRST_MINUTE; \
+	hour = tm->tm_hour -FIRST_HOUR; \
+	dom = tm->tm_mday -FIRST_DOM; \
+	month = tm->tm_mon + 1 /* 0..11 -> 1..12 */ -FIRST_MONTH; \
+	dow = tm->tm_wday -FIRST_DOW; \
+	} while (/*CONSTCOND*/0)
+
+	orig_tz = getenv("TZ");
+	maketime(NULL, orig_tz);
 
 	Debug(DSCH, ("[%ld] tick(%d,%d,%d,%d,%d) %s %s\n",
 		     (long)getpid(), minute, hour, dom, month, dow,
@@ -295,6 +307,8 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 			Debug(DSCH|DEXT, ("user [%s:%ld:%ld:...] cmd=\"%s\"\n",
 			    e->pwd->pw_name, (long)e->pwd->pw_uid,
 			    (long)e->pwd->pw_gid, e->cmd));
+			job_tz = env_get("CRON_TZ", e->envp);
+			maketime(job_tz, orig_tz);
 			if (bit_test(e->minute, minute) &&
 			    bit_test(e->hour, hour) &&
 			    bit_test(e->month, month) &&
@@ -306,7 +320,7 @@ find_jobs(int vtime, cron_db *db, int doWild, int doNonWild) {
 				if ((doNonWild &&
 				    !(e->flags & (MIN_STAR|HR_STAR))) || 
 				    (doWild && (e->flags & (MIN_STAR|HR_STAR))))
-					job_add(e, u, virtualSecond);
+					job_add(e, u, StartTime);
 			}
 		}
 	}
@@ -332,7 +346,7 @@ set_time(int initialize) {
 		Debug(DSCH, ("[%ld] GMToff=%ld\n",
 		    (long)getpid(), (long)GMToff));
 	}
-	clockTime = (int)((StartTime + GMToff) / (time_t)SECONDS_PER_MINUTE);
+	clockTime = (StartTime + GMToff) / (time_t)SECONDS_PER_MINUTE;
 }
 
 /*
