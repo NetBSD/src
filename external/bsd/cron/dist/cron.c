@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.3 2010/05/06 21:50:16 christos Exp $	*/
+/*	$NetBSD: cron.c,v 1.4 2010/05/06 22:38:14 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.3 2010/05/06 21:50:16 christos Exp $");
+__RCSID("$NetBSD: cron.c,v 1.4 2010/05/06 22:38:14 christos Exp $");
 #endif
 #endif
 
@@ -324,6 +324,10 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
 			}
 		}
 	}
+	if (orig_tz != NULL)
+		setenv("TZ", orig_tz, 1);
+	else
+		unsetenv("TZ");
 }
 
 /*
