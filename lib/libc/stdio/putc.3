@@ -1,4 +1,4 @@
-.\"	$NetBSD: putc.3,v 1.11 2003/08/07 16:43:29 agc Exp $
+.\"	$NetBSD: putc.3,v 1.12 2010/05/06 09:01:34 jruoho Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)putc.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 25, 2001
+.Dd May 6, 2010
 .Dt PUTC 3
 .Os
 .Sh NAME
@@ -150,10 +150,18 @@ and
 .Fn putchar_unlocked
 conform to
 .St -p1003.1-96 .
-A function
+.Sh HISTORY
+The functions
+.Fn putc ,
+.Fn putchar ,
+and
 .Fn putw
-function appeared in
+first appeared in
 .At v6 .
+The function
+.Fn fputc
+appeared in
+.At v7 .
 .Sh BUGS
 The size and byte order of an
 .Em int
