@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring.h,v 1.8 2005/02/06 04:38:18 perry Exp $	*/
+/*	$NetBSD: bitstring.h,v 1.9 2010/05/06 18:54:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,20 +56,20 @@ typedef	unsigned char bitstr_t;
 /* internal macros */
 				/* byte of the bitstring bit is in */
 #define	_bit_byte(bit) \
-	((bit) >> 3)
+	(uint32_t)((bit) >> 3)
 
 				/* mask for the bit within its byte */
 #define	_bit_mask(bit) \
-	(1 << ((bit)&0x7))
+	(uint32_t)((1 << (uint32_t)((bit)&0x7)))
 
 /* external macros */
 				/* bytes in a bitstring of nbits bits */
 #define	bitstr_size(nbits) \
-	(((nbits) + 7) >> 3)
+	(size_t)((uint32_t)((nbits) + 7) >> 3)
 
 				/* allocate a bitstring */
 #define	bit_alloc(nbits) \
-	(bitstr_t *)calloc((size_t)bitstr_size(nbits), sizeof(bitstr_t))
+	calloc(bitstr_size(nbits), sizeof(bitstr_t))
 
 				/* allocate a bitstring on the stack */
 #define	bit_decl(name, nbits) \
@@ -77,15 +77,15 @@ typedef	unsigned char bitstr_t;
 
 				/* is bit N of bitstring name set? */
 #define	bit_test(name, bit) \
-	((name)[_bit_byte(bit)] & _bit_mask(bit))
+	/*LINTED bitwise on signed*/((name)[_bit_byte(bit)] & _bit_mask(bit))
 
 				/* set bit N of bitstring name */
 #define	bit_set(name, bit) \
-	((name)[_bit_byte(bit)] |= _bit_mask(bit))
+	/*LINTED bitwise on signed*/((name)[_bit_byte(bit)] |= _bit_mask(bit))
 
 				/* clear bit N of bitstring name */
 #define	bit_clear(name, bit) \
-	((name)[_bit_byte(bit)] &= ~_bit_mask(bit))
+	/*LINTED bitwise on signed*/((name)[_bit_byte(bit)] &= ~_bit_mask(bit))
 
 				/* clear bits start ... stop in bitstring */
 #define	bit_nclear(name, start, stop) do { \
@@ -94,8 +94,8 @@ typedef	unsigned char bitstr_t;
 	while (_start <= _stop) { \
 		bit_clear(_name, _start); \
 		_start++; \
-		} \
-} while(0)
+	} \
+} while(/*CONSTCOND*/0)
 
 				/* set bits start ... stop in bitstring */
 #define	bit_nset(name, start, stop) do { \
@@ -104,8 +104,8 @@ typedef	unsigned char bitstr_t;
 	while (_start <= _stop) { \
 		bit_set(_name, _start); \
 		_start++; \
-		} \
-} while(0)
+	} \
+} while(/*CONSTCOND*/0)
 
 				/* find first bit clear in name */
 #define	bit_ffc(name, nbits, value) do { \
@@ -117,7 +117,7 @@ typedef	unsigned char bitstr_t;
 			break; \
 		} \
 	*(value) = _value; \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 				/* find first bit set in name */
 #define	bit_ffs(name, nbits, value) do { \
@@ -129,6 +129,6 @@ typedef	unsigned char bitstr_t;
 			break; \
 		} \
 	*(value) = _value; \
-} while(0)
+} while(/*CONSTCOND*/0)
 
 #endif /* !_BITSTRING_H_ */
