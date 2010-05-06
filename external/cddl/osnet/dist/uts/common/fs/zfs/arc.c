@@ -4487,7 +4487,7 @@ l2arc_feed_thread(void)
 		(void) cv_timedwait(&l2arc_feed_thr_cv, &l2arc_feed_thr_lock,
 		    (hz * l2arc_feed_secs));
 		CALLB_CPR_SAFE_END(&cpr, &l2arc_feed_thr_lock);
-		next = ddi_get_lbolt() + hz;
+		next = ddi_get_lbolt();
 
 		/*
 		 * Quick check for L2ARC devices.
