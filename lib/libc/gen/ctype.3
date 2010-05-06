@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.20 2010/04/05 21:33:54 joerg Exp $
+.\"	$NetBSD: ctype.3,v 1.21 2010/05/06 11:46:11 jruoho Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctype.3	6.5 (Berkeley) 4/19/91
 .\"
-.Dd March 11, 2009
+.Dd May 6, 2010
 .Dt CTYPE 3
 .Os
 .Sh NAME
@@ -74,10 +74,11 @@ The above functions perform character tests and conversions on the integer
 See the specific manual pages for information about the
 test or conversion performed by each function.
 .Sh EXAMPLES
-To print an upper-case version of a string on stdout, use the following
-code:
-.Bd -literal
-const char *s = ...;
+To print an upper-case version of a string to stdout,
+the following code can be used:
+.Bd -literal -offset indent
+const char *s = "xyz";
+
 while (*s != '\e0') {
     putchar(toupper((int)(unsigned char)*s));
     s++;
@@ -104,6 +105,10 @@ These functions, with the exception of
 .Fn isblank ,
 conform to
 .St -ansiC .
+All described functions, including
+.Fn isblank ,
+also conform to
+.St -p1003.1-2001 .
 .Sh CAVEATS
 The first argument of these functions is of type
 .Vt int ,
