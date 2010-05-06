@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.28 2010/04/12 22:02:52 cliff Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.29 2010/05/06 19:49:10 cliff Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.28 2010/04/12 22:02:52 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.29 2010/05/06 19:49:10 cliff Exp $");
 
 #define __INTR_PRIVATE
 
@@ -211,6 +211,7 @@ typedef struct rmiclfw_psb_id {
 static rmiclfw_psb_id_t rmiclfw_psb_id[] = {
 	{	0x4958d4fb00000056ULL, PSB_TYPE_RMI  },
 	{	0x4aacdb6a00000056ULL, PSB_TYPE_RMI  },
+	{	0x4b67d03200000056ULL, PSB_TYPE_RMI  },
 	{	0x49a5a8fa00000056ULL, PSB_TYPE_DELL },
 	{	0x4b8ead3100000056ULL, PSB_TYPE_DELL },
 };
