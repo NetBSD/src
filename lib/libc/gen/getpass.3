@@ -1,4 +1,4 @@
-.\"	$NetBSD: getpass.3,v 1.12 2010/04/30 05:50:46 jruoho Exp $
+.\"	$NetBSD: getpass.3,v 1.13 2010/05/06 11:09:39 jruoho Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getpass.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd April 30, 2010
+.Dd May 6, 2010
 .Dt GETPASS 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ The
 function displays a prompt to, and reads in a password from,
 .Pa /dev/tty .
 If this file is not accessible,
-.Nm
+.Fn getpass
 displays the prompt on the standard error output and reads from the standard
 input.
 .Pp
@@ -57,10 +57,10 @@ characters in length.
 Any additional
 characters and the terminating newline character are discarded.
 .Pp
-.Nm
+.Fn getpass
 turns off character echoing while reading the password.
 .Sh RETURN VALUES
-.Nm
+.Fn getpass
 returns a pointer to the null terminated password.
 .Sh FILES
 .Bl -tag -width /dev/tty -compact
@@ -79,16 +79,16 @@ The function was removed in the
 standard.
 .Sh HISTORY
 A
-.Nm
+.Fn getpass
 function appeared in
 .At v7 .
 .Sh BUGS
 The
-.Nm
+.Fn getpass
 function leaves its result in an internal static object and returns
 a pointer to that object.
 Subsequent calls to
-.Nm
+.Fn getpass
 will modify the same object.
 .Sh SECURITY CONSIDERATIONS
 The calling process should zero the password as soon as possible to
