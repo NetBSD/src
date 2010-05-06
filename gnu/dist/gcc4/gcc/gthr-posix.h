@@ -62,9 +62,15 @@ typedef pthread_mutex_t __gthread_recursive_mutex_t;
 # ifndef __gthrw_pragma
 #  define __gthrw_pragma(pragma)
 # endif
+# ifdef __clang__
+# define __gthrw2(name,name2,type) \
+  static __typeof(type) name __attribute__ ((__weakref__(#name2))); \
+  __gthrw_pragma(weak type)
+# else
 # define __gthrw2(name,name2,type) \
   extern __typeof(type) name __attribute__ ((__weakref__(#name2))); \
   __gthrw_pragma(weak type)
+# endif
 # define __gthrw_(name) __gthrw_ ## name
 #else
 # define __gthrw2(name,name2,type)
