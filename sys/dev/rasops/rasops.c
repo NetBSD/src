@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.63 2010/05/04 04:57:34 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.64 2010/05/06 04:30:18 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.63 2010/05/04 04:57:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.64 2010/05/06 04:30:18 macallan Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -163,6 +163,8 @@ void	rasops_make_box_chars_8(struct rasops_info *);
 void	rasops_make_box_chars_16(struct rasops_info *);
 void	rasops_make_box_chars_32(struct rasops_info *);
 
+extern int cold;
+
 /*
  * Initialize a 'rasops_info' descriptor.
  */
@@ -250,15 +252,18 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 	}
 
 	/* autogenerate box drawing characters */
+	ri->ri_optfont.firstchar = WSFONT_FLAG_OPT;
+	ri->ri_optfont.numchars = 16;
 	ri->ri_optfont.fontwidth = ri->ri_font->fontwidth;
 	ri->ri_optfont.fontheight = ri->ri_font->fontheight;
 	ri->ri_optfont.stride = ri->ri_font->stride;
-	ri->ri_optfont.firstchar = WSFONT_FLAG_OPT;
-	ri->ri_optfont.numchars = 16;
-	
 	len = ri->ri_optfont.fontheight * ri->ri_optfont.stride *
-	      ri->ri_optfont.numchars; 
-	if ((ri->ri_optfont.data = kmem_zalloc(len, KM_SLEEP)) != NULL) {
+		      ri->ri_optfont.numchars; 
+
+	if (((ri->ri_flg & RI_NO_AUTO) == 0) && 
+	  ((ri->ri_optfont.data = kmem_zalloc(len, KM_SLEEP)) != NULL)) {
+
+	
 		switch (ri->ri_optfont.stride) {
 		case 1:
 			rasops_make_box_chars_8(ri);
@@ -270,7 +275,8 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 			rasops_make_box_chars_32(ri);
 			break;
 		}
-	}
+	} else
+		memset(&ri->ri_optfont, 0, sizeof(ri->ri_optfont));
 
 	if (ri->ri_font->fontwidth > 32 || ri->ri_font->fontwidth < 4)
 		panic("rasops_init: fontwidth assumptions botched!");
