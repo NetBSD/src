@@ -1,3 +1,5 @@
+/*	$NetBSD: cron.h,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
