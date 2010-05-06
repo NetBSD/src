@@ -1,3 +1,5 @@
+.\"	$NetBSD: crontab.1,v 1.2 2010/05/06 18:53:17 christos Exp $
+.\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
 .\" */
@@ -17,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: crontab.1,v 1.7 2004/01/23 19:03:32 vixie Exp
+.\" Id: crontab.1,v 1.7 2004/01/23 19:03:32 vixie Exp 
 .\"
 .TH CRONTAB 1 "29 December 1993"
 .UC 4
@@ -52,6 +54,12 @@ file does exist, then you must \fBnot\fR be listed in the
 file in order to use this command.  If neither of these files exists,
 only the super user will be allowed to use this command.
 .PP
+The default maximum size for a crontab is 256 kilobytes, but this may be
+changed for all users on the system by putting the desired maximum size
+(in bytes) in the
+.I maxtabsize
+file.
+.PP
 If the
 .I -u
 option is given, it specifies the name of the user whose crontab is to be
@@ -59,11 +67,11 @@ tweaked.  If this option is not given,
 .I crontab
 examines "your" crontab, i.e., the crontab of the person executing the
 command.  Note that
-.IR su (8)
+.IR su (1)
 can confuse
 .I crontab
 and that if you are running inside of
-.IR su (8)
+.IR su (1)
 you should always use the
 .I -u
 option for safety's sake.
@@ -88,8 +96,9 @@ from the editor, the modified crontab will be installed automatically.
 crontab(5), cron(8)
 .SH FILES
 .nf
-/var/cron/cron.allow
-/var/cron/cron.deny
+/var/cron/allow
+/var/cron/deny
+/var/cron/maxtabsize
 .fi
 .SH STANDARDS
 The
@@ -102,4 +111,4 @@ A fairly informative usage message appears if you run it with a bad command
 line.
 .SH AUTHOR
 .nf
-Paul Vixie <vixie@isc.org>
+Paul Vixie \*[Lt]paul@vix.com\*[Gt]

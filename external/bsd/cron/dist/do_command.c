@@ -1,3 +1,5 @@
+/*	$NetBSD: do_command.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -18,21 +20,26 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
+#include <sys/cdefs.h>
 #if !defined(lint) && !defined(LINT)
+#if 0
 static char rcsid[] = "Id: do_command.c,v 1.9 2004/01/23 18:56:42 vixie Exp";
+#else
+__RCSID("$NetBSD: do_command.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+#endif
 #endif
 
 #include "cron.h"
+#include <unistd.h>
 
-static void		child_process(entry *, user *);
+static void		child_process(entry *);
 static int		safe_p(const char *, const char *);
 
 void
 do_command(entry *e, user *u) {
 	Debug(DPROC, ("[%ld] do_command(%s, (%s,%ld,%ld))\n",
 		      (long)getpid(), e->cmd, u->name,
-		      (long)e->pwd->pw_uid, (long)e->pwd->pw_gid))
+		      (long)e->pwd->pw_uid, (long)e->pwd->pw_gid));
 
 	/* fork to become asynchronous -- parent process is done immediately,
 	 * and continues to run the normal cron code, which means return to
@@ -48,37 +55,28 @@ do_command(entry *e, user *u) {
 	case 0:
 		/* child process */
 		acquire_daemonlock(1);
-		child_process(e, u);
+		child_process(e);
 		Debug(DPROC, ("[%ld] child process done, exiting\n",
-			      (long)getpid()))
+			      (long)getpid()));
 		_exit(OK_EXIT);
 		break;
 	default:
 		/* parent process */
 		break;
 	}
-	Debug(DPROC, ("[%ld] main process returning to work\n",(long)getpid()))
+	Debug(DPROC, ("[%ld] main process returning to work\n",(long)getpid()));
 }
 
 static void
-child_process(entry *e, user *u) {
+child_process(entry *e) {
 	int stdin_pipe[2], stdout_pipe[2];
-	char *input_data, *usernm, *mailto;
+	char * volatile input_data;
+	char *usernm, * volatile mailto;
 	int children = 0;
 
-	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd))
+	Debug(DPROC, ("[%ld] child_process('%s')\n", (long)getpid(), e->cmd));
 
-#ifdef CAPITALIZE_FOR_PS
-	/* mark ourselves as different to PS command watchers by upshifting
-	 * our program name.  This has no effect on some kernels.
-	 */
-	/*local*/{
-		char	*pch;
-
-		for (pch = ProgramName;  *pch;  pch++)
-			*pch = MkUpper(*pch);
-	}
-#endif /* CAPITALIZE_FOR_PS */
+	setproctitle("running job");
 
 	/* discover some useful and important environment settings
 	 */
@@ -94,8 +92,10 @@ child_process(entry *e, user *u) {
 
 	/* create some pipes to talk to our future child
 	 */
-	pipe(stdin_pipe);	/* child's stdin */
-	pipe(stdout_pipe);	/* child's stdout */
+	if (pipe(stdin_pipe) == -1) 	/* child's stdin */
+		log_it("CRON", getpid(), "error", "create child stdin pipe");
+	if (pipe(stdout_pipe) == -1)	/* child's stdout */
+		log_it("CRON", getpid(), "error", "create child stdout pipe");
 	
 	/* since we are a forked process, we can diddle the command string
 	 * we were passed -- nobody else is going to use it again, right?
@@ -111,26 +111,34 @@ child_process(entry *e, user *u) {
 		int ch;
 		char *p;
 
-		for (input_data = p = e->cmd;
-		     (ch = *input_data) != '\0';
-		     input_data++, p++) {
-			if (p != input_data)
-				*p = ch;
-			if (escaped) {
-				if (ch == '%')
-					*--p = ch;
-				escaped = FALSE;
-				continue;
+		/* translation:
+		 *	\% -> %
+		 *	%  -> end of command, following is command input.
+		 *	\x -> \x	for all x != %
+		 */
+		input_data = p = e->cmd;
+		while ((ch = *input_data++) != '\0') {
+ 			if (escaped) {
+				if (ch != '%')
+					*p++ = '\\';
+			} else {
+				if (ch == '%') {
+					break;
+				}
 			}
-			if (ch == '\\') {
-				escaped = TRUE;
-				continue;
-			}
-			if (ch == '%') {
-				*input_data++ = '\0';
-				break;
+
+			if (!(escaped = (ch == '\\'))) {
+				*p++ = ch;
 			}
 		}
+		if (ch == '\0') {
+			/* move pointer back, so that code below
+			 * won't think we encountered % sequence */
+			input_data--;
+		}
+		if (escaped)
+			*p++ = '\\';
+
 		*p = '\0';
 	}
 
@@ -143,7 +151,7 @@ child_process(entry *e, user *u) {
 		/*NOTREACHED*/
 	case 0:
 		Debug(DPROC, ("[%ld] grandchild process vfork()'ed\n",
-			      (long)getpid()))
+			      (long)getpid()));
 
 		/* write a log message.  we've waited this long to do it
 		 * because it was not until now that we knew the PID that
@@ -151,9 +159,9 @@ child_process(entry *e, user *u) {
 		 * PID is part of the log message.
 		 */
 		if ((e->flags & DONT_LOG) == 0) {
-			char *x = mkprints((u_char *)e->cmd, strlen(e->cmd));
+			char *x = mkprints(e->cmd, strlen(e->cmd));
 
-			log_it(usernm, getpid(), "CMD", x);
+			log_it(usernm, getpid(), "CMD START", x);
 			free(x);
 		}
 
@@ -163,7 +171,8 @@ child_process(entry *e, user *u) {
 
 		/* get new pgrp, void tty, etc.
 		 */
-		(void) setsid();
+		if (setsid() == -1)
+			syslog(LOG_ERR, "setsid() failure: %m");
 
 		/* close the pipe ends that we won't use.  this doesn't affect
 		 * the parent, who has to read and write them; it keeps the
@@ -171,21 +180,21 @@ child_process(entry *e, user *u) {
 		 * which would keep it from sending SIGPIPE in otherwise
 		 * appropriate circumstances.
 		 */
-		close(stdin_pipe[WRITE_PIPE]);
-		close(stdout_pipe[READ_PIPE]);
+		(void)close(stdin_pipe[WRITE_PIPE]);
+		(void)close(stdout_pipe[READ_PIPE]);
 
 		/* grandchild process.  make std{in,out} be the ends of
 		 * pipes opened by our daddy; make stderr go to stdout.
 		 */
 		if (stdin_pipe[READ_PIPE] != STDIN) {
-			dup2(stdin_pipe[READ_PIPE], STDIN);
-			close(stdin_pipe[READ_PIPE]);
+			(void)dup2(stdin_pipe[READ_PIPE], STDIN);
+			(void)close(stdin_pipe[READ_PIPE]);
 		}
 		if (stdout_pipe[WRITE_PIPE] != STDOUT) {
-			dup2(stdout_pipe[WRITE_PIPE], STDOUT);
-			close(stdout_pipe[WRITE_PIPE]);
+			(void)dup2(stdout_pipe[WRITE_PIPE], STDOUT);
+			(void)close(stdout_pipe[WRITE_PIPE]);
 		}
-		dup2(STDOUT, STDERR);
+		(void)dup2(STDOUT, STDERR);
 
 		/* set our directory, uid and gid.  Set gid first, since once
 		 * we set uid, we've lost root privledges.
@@ -196,29 +205,26 @@ child_process(entry *e, user *u) {
 			auth_session_t *as;
 #endif
 			login_cap_t *lc;
-			char **p;
-			extern char **environ;
+			char *p;
 
 			if ((lc = login_getclass(e->pwd->pw_class)) == NULL) {
-				fprintf(stderr,
-				    "unable to get login class for %s\n",
+				warnx("unable to get login class for `%s'",
 				    e->pwd->pw_name);
 				_exit(ERROR_EXIT);
 			}
 			if (setusercontext(lc, e->pwd, e->pwd->pw_uid, LOGIN_SETALL) < 0) {
-				fprintf(stderr,
-				    "setusercontext failed for %s\n",
+				warnx("setusercontext failed for `%s'",
 				    e->pwd->pw_name);
 				_exit(ERROR_EXIT);
 			}
 #ifdef BSD_AUTH
 			as = auth_open();
 			if (as == NULL || auth_setpwd(as, e->pwd) != 0) {
-				fprintf(stderr, "can't malloc\n");
+				warn("can't malloc");
 				_exit(ERROR_EXIT);
 			}
 			if (auth_approval(as, lc, usernm, "cron") <= 0) {
-				fprintf(stderr, "approval failed for %s\n",
+				warnx("approval failed for `%s'",
 				    e->pwd->pw_name);
 				_exit(ERROR_EXIT);
 			}
@@ -230,25 +236,48 @@ child_process(entry *e, user *u) {
 			 * we just added one via login.conf, add it to
 			 * the crontab environment.
 			 */
-			if (env_get("PATH", e->envp) == NULL && environ != NULL) {
-				for (p = environ; *p; p++) {
-					if (strncmp(*p, "PATH=", 5) == 0) {
-						e->envp = env_set(e->envp, *p);
-						break;
-					}
-				}
+			if (env_get("PATH", e->envp) == NULL) {
+				if ((p = getenv("PATH")) != NULL)
+					e->envp = env_set(e->envp, p);
 			}
 		}
 #else
-		setgid(e->pwd->pw_gid);
-		initgroups(usernm, e->pwd->pw_gid);
+		if (setgid(e->pwd->pw_gid) != 0) {
+			syslog(LOG_ERR, "setgid failed");
+			_exit(ERROR_EXIT);
+		}
+		if (initgroups(usernm, e->pwd->pw_gid) != 0) {
+			syslog(LOG_ERR, "initgroups failed");
+			_exit(ERROR_EXIT);
+		}
 #if (defined(BSD)) && (BSD >= 199103)
+		if (setlogin(usernm) < 0) {
+			syslog(LOG_ERR, "setlogin() failure: %m");
+			_exit(ERROR_EXIT);
+		}
+
 		setlogin(usernm);
 #endif /* BSD */
-		setuid(e->pwd->pw_uid);	/* we aren't root after this... */
-
+		if (setuid(e->pwd->pw_uid) != 0) {
+			syslog(LOG_ERR, "setuid failed");
+			_exit(ERROR_EXIT);
+		}
+		/* we aren't root after this... */
 #endif /* LOGIN_CAP */
-		chdir(env_get("HOME", e->envp));
+
+		if (chdir(env_get("HOME", e->envp)) != 0) {
+			syslog(LOG_ERR, "chdir $HOME failed");
+			_exit(ERROR_EXIT);
+		}
+
+#ifdef USE_SIGCHLD
+		/* our grandparent is watching for our death by catching
+		 * SIGCHLD.  the parent is ignoring SIGCHLD's; we want
+		 * to restore default behaviour.
+		 */
+		(void) signal(SIGCHLD, SIG_DFL);
+#endif
+		(void) signal(SIGHUP, SIG_DFL);
 
 		/*
 		 * Exec the command.
@@ -258,16 +287,15 @@ child_process(entry *e, user *u) {
 
 # if DEBUGGING
 			if (DebugFlags & DTEST) {
-				fprintf(stderr,
+				(void)fprintf(stderr,
 				"debug DTEST is on, not exec'ing command.\n");
-				fprintf(stderr,
+				(void)fprintf(stderr,
 				"\tcmd='%s' shell='%s'\n", e->cmd, shell);
 				_exit(OK_EXIT);
 			}
 # endif /*DEBUGGING*/
-			execle(shell, shell, "-c", e->cmd, (char *)0, e->envp);
-			fprintf(stderr, "execl: couldn't exec `%s'\n", shell);
-			perror("execl");
+			(void)execle(shell, shell, "-c", e->cmd, NULL, e->envp);
+			warn("execl: couldn't exec `%s'", shell);
 			_exit(ERROR_EXIT);
 		}
 		break;
@@ -282,13 +310,13 @@ child_process(entry *e, user *u) {
 	 * the user's command.
 	 */
 
-	Debug(DPROC, ("[%ld] child continues, closing pipes\n",(long)getpid()))
+	Debug(DPROC, ("[%ld] child continues, closing pipes\n",(long)getpid()));
 
 	/* close the ends of the pipe that will only be referenced in the
 	 * grandchild process...
 	 */
-	close(stdin_pipe[READ_PIPE]);
-	close(stdout_pipe[WRITE_PIPE]);
+	(void)close(stdin_pipe[READ_PIPE]);
+	(void)close(stdout_pipe[WRITE_PIPE]);
 
 	/*
 	 * write, to the pipe connected to child's stdin, any input specified
@@ -308,12 +336,12 @@ child_process(entry *e, user *u) {
 		int ch;
 
 		Debug(DPROC, ("[%ld] child2 sending data to grandchild\n",
-			      (long)getpid()))
+			      (long)getpid()));
 
 		/* close the pipe we don't use, since we inherited it and
 		 * are part of its reference count now.
 		 */
-		close(stdout_pipe[READ_PIPE]);
+		(void)close(stdout_pipe[READ_PIPE]);
 
 		/* translation:
 		 *	\% -> %
@@ -323,36 +351,36 @@ child_process(entry *e, user *u) {
 		while ((ch = *input_data++) != '\0') {
 			if (escaped) {
 				if (ch != '%')
-					putc('\\', out);
+					(void)putc('\\', out);
 			} else {
 				if (ch == '%')
 					ch = '\n';
 			}
 
 			if (!(escaped = (ch == '\\'))) {
-				putc(ch, out);
+				(void)putc(ch, out);
 				need_newline = (ch != '\n');
 			}
 		}
 		if (escaped)
-			putc('\\', out);
+			(void)putc('\\', out);
 		if (need_newline)
-			putc('\n', out);
+			(void)putc('\n', out);
 
 		/* close the pipe, causing an EOF condition.  fclose causes
 		 * stdin_pipe[WRITE_PIPE] to be closed, too.
 		 */
-		fclose(out);
+		(void)fclose(out);
 
 		Debug(DPROC, ("[%ld] child2 done sending to grandchild\n",
-			      (long)getpid()))
+			      (long)getpid()));
 		exit(0);
 	}
 
 	/* close the pipe to the grandkiddie's stdin, since its wicked uncle
 	 * ernie back there has it open and will close it when he's done.
 	 */
-	close(stdin_pipe[WRITE_PIPE]);
+	(void)close(stdin_pipe[WRITE_PIPE]);
 
 	children++;
 
@@ -364,20 +392,20 @@ child_process(entry *e, user *u) {
 	 */
 
 	Debug(DPROC, ("[%ld] child reading output from grandchild\n",
-		      (long)getpid()))
+		      (long)getpid()));
 
 	/*local*/{
 		FILE	*in = fdopen(stdout_pipe[READ_PIPE], "r");
 		int	ch = getc(in);
 
 		if (ch != EOF) {
-			FILE	*mail;
+			FILE	*mail = NULL;
 			int	bytes = 1;
 			int	status = 0;
 
 			Debug(DPROC|DEXT,
 			      ("[%ld] got data (%x:%c) from grandchild\n",
-			       (long)getpid(), ch, ch))
+			       (long)getpid(), ch, ch));
 
 			/* get name of recipient.  this is MAILTO if set to a
 			 * valid local username; USER otherwise.
@@ -404,36 +432,40 @@ child_process(entry *e, user *u) {
 			if (mailto && safe_p(usernm, mailto)) {
 				char	**env;
 				char	mailcmd[MAX_COMMAND];
-				char	hostname[MAXHOSTNAMELEN];
+				char	hostname[MAXHOSTNAMELEN + 1];
 
-				gethostname(hostname, MAXHOSTNAMELEN);
+				(void)gethostname(hostname, MAXHOSTNAMELEN);
 				if (strlens(MAILFMT, MAILARG, NULL) + 1
 				    >= sizeof mailcmd) {
-					fprintf(stderr, "mailcmd too long\n");
+					warnx("mailcmd too long");
 					(void) _exit(ERROR_EXIT);
 				}
-				(void)sprintf(mailcmd, MAILFMT, MAILARG);
+				(void)snprintf(mailcmd, sizeof(mailcmd), 
+				    MAILFMT, MAILARG);
 				if (!(mail = cron_popen(mailcmd, "w", e->pwd))) {
-					perror(mailcmd);
+					warn("cannot run `%s'", mailcmd);
 					(void) _exit(ERROR_EXIT);
 				}
-				fprintf(mail, "From: root (Cron Daemon)\n");
-				fprintf(mail, "To: %s\n", mailto);
-				fprintf(mail, "Subject: Cron <%s@%s> %s\n",
-					usernm, first_word(hostname, "."),
-					e->cmd);
+				(void)fprintf(mail,
+				    "From: root (Cron Daemon)\n");
+				(void)fprintf(mail, "To: %s\n", mailto);
+				(void)fprintf(mail,
+				    "Subject: Cron <%s@%s> %s\n",
+				    usernm, first_word(hostname, "."), e->cmd);
+				(void)fprintf(mail,
+				    "Auto-Submitted: auto-generated\n");
 #ifdef MAIL_DATE
-				fprintf(mail, "Date: %s\n",
+				(void)fprintf(mail, "Date: %s\n",
 					arpadate(&StartTime));
 #endif /*MAIL_DATE*/
 				for (env = e->envp;  *env;  env++)
-					fprintf(mail, "X-Cron-Env: <%s>\n",
-						*env);
-				fprintf(mail, "\n");
+					(void)fprintf(mail,
+					    "X-Cron-Env: <%s>\n", *env);
+				(void)fprintf(mail, "\n");
 
 				/* this was the first char from the pipe
 				 */
-				putc(ch, mail);
+				(void)putc(ch, mail);
 			}
 
 			/* we have to read the input pipe no matter whether
@@ -444,7 +476,7 @@ child_process(entry *e, user *u) {
 			while (EOF != (ch = getc(in))) {
 				bytes++;
 				if (mailto)
-					putc(ch, mail);
+					(void)putc(ch, mail);
 			}
 
 			/* only close pipe if we opened it -- i.e., we're
@@ -453,7 +485,7 @@ child_process(entry *e, user *u) {
 
 			if (mailto) {
 				Debug(DPROC, ("[%ld] closing pipe to mail\n",
-					      (long)getpid()))
+					      (long)getpid()));
 				/* Note: the pclose will probably see
 				 * the termination of the grandchild
 				 * in addition to the mail process, since
@@ -470,7 +502,7 @@ child_process(entry *e, user *u) {
 			if (mailto && status) {
 				char buf[MAX_TEMPSTR];
 
-				sprintf(buf,
+				(void)snprintf(buf, sizeof(buf),
 			"mailed %d byte%s of output but got status 0x%04x\n",
 					bytes, (bytes==1)?"":"s",
 					status);
@@ -480,9 +512,9 @@ child_process(entry *e, user *u) {
 		} /*if data from grandchild*/
 
 		Debug(DPROC, ("[%ld] got EOF from grandchild\n",
-			      (long)getpid()))
+			      (long)getpid()));
 
-		fclose(in);	/* also closes stdout_pipe[READ_PIPE] */
+		(void)fclose(in);	/* also closes stdout_pipe[READ_PIPE] */
 	}
 
 	/* wait for children to die.
@@ -492,20 +524,28 @@ child_process(entry *e, user *u) {
 		PID_T pid;
 
 		Debug(DPROC, ("[%ld] waiting for grandchild #%d to finish\n",
-			      (long)getpid(), children))
+			      (long)getpid(), children));
 		while ((pid = wait(&waiter)) < OK && errno == EINTR)
 			;
 		if (pid < OK) {
 			Debug(DPROC,
 			      ("[%ld] no more grandchildren--mail written?\n",
-			       (long)getpid()))
+			       (long)getpid()));
 			break;
 		}
 		Debug(DPROC, ("[%ld] grandchild #%ld finished, status=%04x",
-			      (long)getpid(), (long)pid, WEXITSTATUS(waiter)))
+			      (long)getpid(), (long)pid, WEXITSTATUS(waiter)));
 		if (WIFSIGNALED(waiter) && WCOREDUMP(waiter))
-			Debug(DPROC, (", dumped core"))
-		Debug(DPROC, ("\n"))
+			Debug(DPROC, (", dumped core"));
+		Debug(DPROC, ("\n"));
+	}
+
+	/* Log the time when we finished deadling with the job */
+	/*local*/{
+		char *x = mkprints(e->cmd, strlen(e->cmd));
+
+		log_it(usernm, getpid(), "CMD FINISH", x);
+		free(x);
 	}
 }
 

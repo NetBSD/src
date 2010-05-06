@@ -1,3 +1,5 @@
+/*	$NetBSD: globals.h,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+
 /*
  * Id: globals.h,v 1.10 2004/01/23 19:03:33 vixie Exp
  */
@@ -27,6 +29,7 @@
 # define INIT(x)
 #endif
 
+#ifndef __lint__
 XTRN const char *copyright[]
 #ifdef MAIN_PROGRAM
 	= {
@@ -39,6 +42,8 @@ XTRN const char *copyright[]
 	}
 #endif
 	;
+#endif
+
 
 XTRN const char *MonthNames[]
 #ifdef MAIN_PROGRAM
@@ -59,7 +64,6 @@ XTRN const char *DowNames[]
 #endif
 	;
 
-XTRN char	*ProgramName INIT("amnesia");
 XTRN int	LineNumber INIT(0);
 XTRN time_t	StartTime INIT(0);
 XTRN int	NoFork INIT(0);

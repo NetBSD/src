@@ -59,7 +59,7 @@ DESTMAN		=	$(DESTROOT)/share/man
 INCLUDE		=	-I.
 #INCLUDE	=
 #<<need getopt()>>
-LIBS		=
+LIBS		= -lutil
 #<<optimize or debug?>>
 #CDEBUG		=	-O
 CDEBUG		=	-g
