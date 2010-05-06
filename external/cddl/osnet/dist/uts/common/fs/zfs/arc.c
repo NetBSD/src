@@ -174,7 +174,10 @@ static void	*zio_arena;
 #include <sys/callback.h>
 /* Structures used for memory and kva space reclaim. */
 static struct callback_entry arc_kva_reclaim_entry;
+
+#ifdef _KERNEL
 static struct uvm_reclaim_hook arc_hook;
+#endif
 
 #endif	/* __NetBSD__ */
 
