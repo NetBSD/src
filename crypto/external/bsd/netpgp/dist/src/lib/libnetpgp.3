@@ -1,4 +1,4 @@
-.\" $NetBSD: libnetpgp.3,v 1.12 2010/03/14 00:55:32 agc Exp $
+.\" $NetBSD: libnetpgp.3,v 1.13 2010/05/07 16:29:09 agc Exp $
 .\"
 .\" Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 13, 2010
+.Dd May 5, 2010
 .Dt LIBNETPGP 3
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 The following functions relate to initialisations and finalisations:
 .Ft int
 .Fo netpgp_init
-.Fa "netpgp_t *netpgp" "char *userid" "char *pubringfile" "char *secringfile"
+.Fa "netpgp_t *netpgp"
 .Fc
 .Ft int
 .Fo netpgp_end
@@ -175,12 +175,16 @@ process be initialised using the
 function, which will set up the public and private keyrings, and set the
 user identity to the
 .Ar userid
-argument passed to the function.
-If no public key ring file is provided, initial values will be taken from those
+argument passed stored in the
+.Dv netpgp_t
+structure, and set using the
+.Fn netpgp_setvar
+function.
+If no public key ring file is set, initial values will be taken from those
 in the
 .Pa .gnupg/pubring.gpg
 file in the user's home directory.
-Similarily, if no secret key ring file is provided,
+Similarily, if no secret key ring file is set,
 initial values will be taken from those
 in the
 .Pa .gnupg/secring.gpg
