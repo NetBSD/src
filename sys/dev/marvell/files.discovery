@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.11 2010/04/28 13:51:56 kiyohara Exp $
+#	$NetBSD: files.discovery,v 1.12 2010/05/07 17:06:32 kiyohara Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -90,7 +90,7 @@ attach	gttwsi at gt with gttwsi_gt
 #file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
 
 # IDMA Controller and XOR Engine
-#define	gtidmac
-#file	dev/marvell/gtidmac.c		gtidmac
-#device	gtidmac: dmover_service
-#attach	gtidmac at gt with gtidmac_gt
+define	gtidmac
+file	dev/marvell/gtidmac.c		gtidmac
+device	gtidmac: dmover_service
+attach	gtidmac at gt with gtidmac_gt
