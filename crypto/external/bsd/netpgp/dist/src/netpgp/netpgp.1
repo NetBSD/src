@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgp.1,v 1.11 2010/03/20 20:34:56 joerg Exp $
+.\" $NetBSD: netpgp.1,v 1.12 2010/05/07 05:58:25 agc Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -431,43 +431,6 @@ uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
 uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
 uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
 uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
-%
-.Ed
-.Pp
-For operations like signing and encrypting a file at the same time,
-the best way is to make use of pipelines:
-.Bd -literal
-% netpgp --sign \*[Lt] example | netpgp --encrypt --userid=c0596823 \*[Gt] example.gpg
-netpgp: default key set to "C0596823"
-pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
-uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
-netpgp passphrase:
-% netpgp --decrypt \*[Lt] example.gpg | netpgp --cat
-netpgp: default key set to "C0596823"
-netpgp: default key set to "C0596823"
-pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
-uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
-netpgp passphrase:
-Good signature for \*[Lt]stdin\*[Gt] made Mon Feb 22 07:21:19 2010
-using RSA (Encrypt or Sign) key 1b68dcfcc0596823
-pub 2048/RSA (Encrypt or Sign) 1b68dcfcc0596823 2004-01-12
-Key fingerprint: d415 9deb 336d e4cc cdfa 00cd 1b68 dcfc c059 6823
-uid              Alistair Crooks \*[Lt]alistair@hockley-crooks.com\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@pkgsrc.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@netbsd.org\*[Gt]
-uid              Alistair Crooks \*[Lt]agc@alistaircrooks.com\*[Gt]
-uid              Alistair Crooks (Yahoo!) \*[Lt]agcrooks@yahoo-inc.com\*[Gt]
-\&...contents of original file...
 %
 .Ed
 .Pp
