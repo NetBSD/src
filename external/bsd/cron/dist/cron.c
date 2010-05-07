@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.4 2010/05/06 22:38:14 christos Exp $	*/
+/*	$NetBSD: cron.c,v 1.5 2010/05/07 17:12:00 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.4 2010/05/06 22:38:14 christos Exp $");
+__RCSID("$NetBSD: cron.c,v 1.5 2010/05/07 17:12:00 christos Exp $");
 #endif
 #endif
 
@@ -362,7 +362,7 @@ cron_sleep(int target) {
 	int seconds_to_wait;
 
 	t1 = time(NULL) + GMToff;
-	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - t1) + 1;
+	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - t1);
 	Debug(DSCH, ("[%ld] Target time=%lld, sec-to-wait=%d\n",
 	    (long)getpid(), (long long)target*SECONDS_PER_MINUTE,
 	    seconds_to_wait));
