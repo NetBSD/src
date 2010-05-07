@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.45 2010/04/14 00:22:21 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.46 2010/05/07 16:22:39 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -829,7 +829,7 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 					overwrite);
 }
 
-#define ARMOR_HEAD	"-----BEGIN PGP MESSAGE-----\r\n"
+#define ARMOR_HEAD	"-----BEGIN PGP MESSAGE-----"
 
 /* decrypt a file */
 int
@@ -837,7 +837,7 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 {
 	const unsigned	 overwrite = 1;
 	__ops_io_t	*io;
-	unsigned	 realarmour;
+	unsigned	 realarmor;
 	FILE		*fp;
 	char		 buf[BUFSIZ];
 
@@ -847,21 +847,21 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 			"netpgp_decrypt_file: no filename specified\n");
 		return 0;
 	}
-	realarmour = (unsigned)armored;
+	realarmor = (unsigned)armored;
 	if ((fp = fopen(f, "r")) == NULL) {
 		(void) fprintf(io->errs,
 			"netpgp_decrypt_file: can't open '%s'\n", f);
 		return 0;
 	}
 	if (fgets(buf, sizeof(buf), fp) == NULL) {
-		realarmour = 0;
+		realarmor = 0;
 	} else {
-		realarmour = (strcmp(buf, ARMOR_HEAD) == 0);
+		realarmor = (strncmp(buf, ARMOR_HEAD, strlen(ARMOR_HEAD)) == 0);
 	}
 	(void) fclose(fp);
 	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
 				netpgp->pubring,
-				(unsigned)realarmour, overwrite,
+				(unsigned)realarmor, overwrite,
 				netpgp->passfp, get_passphrase_cb);
 }
 
@@ -943,12 +943,17 @@ netpgp_sign_file(netpgp_t *netpgp,
 	return ret;
 }
 
+#define ARMOR_SIG_HEAD	"-----BEGIN PGP SIGNATURE-----"
+
 /* verify a file */
 int
 netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armored)
 {
 	__ops_validation_t	 result;
 	__ops_io_t		*io;
+	unsigned		 realarmor;
+	FILE			*fp;
+	char			 buf[BUFSIZ];
 
 	(void) memset(&result, 0x0, sizeof(result));
 	io = netpgp->io;
@@ -957,8 +962,20 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 			"netpgp_verify_file: no filename specified\n");
 		return 0;
 	}
-	if (__ops_validate_file(io, &result, in, out, armored,
-						netpgp->pubring)) {
+	realarmor = (unsigned)armored;
+	if ((fp = fopen(in, "r")) == NULL) {
+		(void) fprintf(io->errs,
+			"netpgp_decrypt_file: can't open '%s'\n", in);
+		return 0;
+	}
+	if (fgets(buf, sizeof(buf), fp) == NULL) {
+		realarmor = 0;
+	} else {
+		realarmor = (strncmp(buf, ARMOR_SIG_HEAD, strlen(ARMOR_SIG_HEAD)) == 0 ||
+			     strncmp(buf, ARMOR_HEAD, strlen(ARMOR_HEAD)) == 0);
+	}
+	(void) fclose(fp);
+	if (__ops_validate_file(io, &result, in, out, (const int)realarmor, netpgp->pubring)) {
 		resultp(io, in, &result, netpgp->pubring);
 		return 1;
 	}
@@ -1160,20 +1177,20 @@ netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 {
 	__ops_memory_t	*mem;
 	__ops_io_t	*io;
-	unsigned	 realarmour;
+	unsigned	 realarmor;
 	size_t		 m;
 
 	io = netpgp->io;
-	realarmour = (unsigned) armored;
+	realarmor = (unsigned) armored;
 	if (input == NULL) {
 		(void) fprintf(io->errs,
 			"netpgp_decrypt_memory: no memory\n");
 		return 0;
 	}
-	realarmour = (strncmp(input, ARMOR_HEAD, sizeof(ARMOR_HEAD) - 1) == 0);
+	realarmor = (strncmp(input, ARMOR_HEAD, sizeof(ARMOR_HEAD) - 1) == 0);
 	mem = __ops_decrypt_buf(netpgp->io, input, insize, netpgp->secring,
 				netpgp->pubring,
-				realarmour, netpgp->passfp,
+				realarmor, netpgp->passfp,
 				get_passphrase_cb);
 	m = MIN(__ops_mem_len(mem), outsize);
 	(void) memcpy(out, __ops_mem_data(mem), m);
@@ -1206,7 +1223,7 @@ netpgp_get_info(const char *type)
 
 /* list all the packets in a file */
 int
-netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
+netpgp_list_packets(netpgp_t *netpgp, char *f, int armor, char *pubringname)
 {
 	__ops_keyring_t	*keyring;
 	const unsigned	 noarmor = 0;
@@ -1243,7 +1260,7 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armour, char *pubringname)
 	}
 	netpgp->pubring = keyring;
 	netpgp_setvar(netpgp, "pubring", pubringname);
-	ret = __ops_list_packets(io, f, (unsigned)armour,
+	ret = __ops_list_packets(io, f, (unsigned)armor,
 					netpgp->secring,
 					netpgp->pubring,
 					netpgp->passfp,
