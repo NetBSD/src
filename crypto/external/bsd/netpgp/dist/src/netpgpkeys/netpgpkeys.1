@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.8 2010/04/14 08:14:26 wiz Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.9 2010/05/07 05:55:46 agc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -261,6 +261,16 @@ but selecting this option will allow core dumps to be written to disk.
 This option should be used wisely, and any core dumps should
 be deleted in a secure manner when no longer needed.
 .El
+.Pp
+It is often useful to be able to refer to another user's identity by
+using their
+.Nm
+.Dq fingerprint .
+This can be found in the output from normal
+.Fl Fl list-keys
+and
+.Fl Fl list-sigs
+commands.
 .Sh PASS PHRASES
 The pass phrase cannot be changed by
 .Nm
