@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.32 2010/04/14 00:19:22 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.33 2010/05/07 16:20:07 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -793,47 +793,58 @@ __ops_validate_file(__ops_io_t *io,
 	validate_data_cb_t	 validation;
 	__ops_stream_t		*parse = NULL;
 	struct stat		 st;
+	const char		*signame;
 	const int		 printerrors = 1;
 	unsigned		 ret;
-	int64_t		 	 sigsize;
-	char			 origfile[MAXPATHLEN];
-	char			*detachname;
+	char			 f[MAXPATHLEN];
+	char			*dataname;
 	int			 realarmour;
 	int			 outfd = 0;
 	int			 infd;
 	int			 cc;
 
-#define SIG_OVERHEAD	284 /* XXX - depends on sig size? */
-
-	realarmour = user_says_armoured;
 	if (stat(infile, &st) < 0) {
-		(void) fprintf(io->errs, "can't validate \"%s\"\n", infile);
+		(void) fprintf(io->errs, "__ops_validate_file: can't open '%s'\n", infile);
 		return 0;
 	}
-	sigsize = st.st_size;
-	detachname = NULL;
-	cc = snprintf(origfile, sizeof(origfile), "%s", infile);
-	if (strcmp(&origfile[cc - 4], ".sig") == 0) {
-		origfile[cc - 4] = 0x0;
-		if (stat(origfile, &st) == 0 &&
-		    st.st_size > sigsize - SIG_OVERHEAD) {
-			detachname = netpgp_strdup(origfile);
+	realarmour = user_says_armoured;
+	dataname = NULL;
+	signame = NULL;
+	cc = snprintf(f, sizeof(f), "%s", infile);
+	if (strcmp(&f[cc - 4], ".sig") == 0 || strcmp(&f[cc - 4], ".asc") == 0) {
+		/* we've been given a sigfile as infile */
+		f[cc - 4] = 0x0;
+		/* set dataname to name of file which was signed */
+		dataname = f;
+		signame = infile;
+	} else {
+		cc = snprintf(f, sizeof(f), "%s.sig", infile);
+		if (stat(f, &st) == 0) {
+			/* been given f and f.sig exists */
+			dataname = __UNCONST(infile);
+			signame = f;
+		} else {
+			cc = snprintf(f, sizeof(f), "%s.asc", infile);
+			if (stat(f, &st) == 0) {
+				/* been given f and f.asc exists */
+				dataname = __UNCONST(infile);
+				signame = f;
+				realarmour = 1;
+			} else {
+				signame = infile;
+			}
 		}
 	}
-	if (strcmp(&origfile[cc - 4], ".asc") == 0) {
-		realarmour = 1;
-	}
-
 	(void) memset(&validation, 0x0, sizeof(validation));
-
-	infd = __ops_setup_file_read(io, &parse, infile, &validation,
+	infd = __ops_setup_file_read(io, &parse, signame, &validation,
 				validate_data_cb, 1);
 	if (infd < 0) {
-		free(detachname);
 		return 0;
 	}
 
-	validation.detachname = detachname;
+	if (dataname) {
+		validation.detachname = netpgp_strdup(dataname);
+	}
 
 	/* Set verification reader and handling options */
 	validation.result = result;
