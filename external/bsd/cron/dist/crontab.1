@@ -1,4 +1,4 @@
-.\"	$NetBSD: crontab.1,v 1.2 2010/05/06 18:53:17 christos Exp $
+.\"	$NetBSD: crontab.1,v 1.3 2010/05/07 20:43:40 christos Exp $
 .\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
@@ -21,94 +21,128 @@
 .\"
 .\" Id: crontab.1,v 1.7 2004/01/23 19:03:32 vixie Exp 
 .\"
-.TH CRONTAB 1 "29 December 1993"
-.UC 4
-.SH NAME
-crontab \- maintain crontab files for individual users (ISC Cron V4.1)
-.SH SYNOPSIS
-.B crontab
-.RB [ -u
-.IR user ] " file"
-.br
-.B crontab
-.RB [ -u
-.IR user ]
-.RB [ -l " | " -r " | " -e ]
-.SH DESCRIPTION
-.I Crontab
+.Dd May 6, 2010
+.Dt CRONTAB 1
+.Os
+.Sh NAME
+.Nm crontab
+.Nd maintain crontab files for individual users (ISC Cron V4.1)
+.Sh SYNOPSIS
+.Nm
+.Op Fl u Ar user
+.Nm
+.Op Fl l
+.Op Fl r
+.Op Fl e
+.Sh DESCRIPTION
+.Nm
 is the program used to install, deinstall or list the tables
 used to drive the
-.IR cron (8)
-daemon in ISC Cron.  Each user can have their own crontab, and though
-these are files in /var, they are not intended to be edited directly.
-.PP
+.Xr cron 8
+daemon in ISC Cron.
+Each user can have their own crontab, and though
+these are files in
+.Pa /var/cron ,
+they are not intended to be edited directly.
+.Pp
 If the
-.I cron.allow
+.Pa /var/cron/allow
 file exists, then you must be listed therein in order to be allowed to use
-this command.  If the
-.I cron.allow
+this command.
+If the
+.Pa /var/cron/allow
 file does not exist but the
-.I cron.deny
-file does exist, then you must \fBnot\fR be listed in the
-.I cron.deny
-file in order to use this command.  If neither of these files exists,
-only the super user will be allowed to use this command.
-.PP
+.Pa /var/cron/deny
+file does exist, then you must not be listed in the
+.Pa /var/cron/deny
+file in order to use this command.
+If neither of these files exists, depending on the compiled in settings,
+only the super user will be allowed to use this command,
+or everyone will be allowed to use this command.
+On
+.Nx
+everyone is allowed to use this command.
+.Pp
 The default maximum size for a crontab is 256 kilobytes, but this may be
 changed for all users on the system by putting the desired maximum size
 (in bytes) in the
-.I maxtabsize
+.Pa /var/cron/maxtabsize
 file.
-.PP
+.Pp
 If the
-.I -u
+.Fl u
 option is given, it specifies the name of the user whose crontab is to be
 tweaked.  If this option is not given,
-.I crontab
-examines "your" crontab, i.e., the crontab of the person executing the
-command.  Note that
-.IR su (1)
+.Nm
+examines
+.Dq your
+crontab, i.e., the crontab of the person executing the command.
+Note that
+.Xr su 1
 can confuse
-.I crontab
+.Nm
 and that if you are running inside of
-.IR su (1)
+.Xr su 1
 you should always use the
-.I -u
+.Fl u
 option for safety's sake.
-.PP
+.Pp
 The first form of this command is used to install a new crontab from some
-named file or standard input if the pseudo-filename ``-'' is given.
-.PP
+named file or standard input if the pseudo-filename 
+.Dq -
+is given.
+.Pp
 The
-.I -l
+.Fl l
 option causes the current crontab to be displayed on standard output.
-.PP
+.Pp
 The
-.I -r
+.Fl r
 option causes the current crontab to be removed.
-.PP
+.Pp
 The
-.I -e
+.Fl e
 option is used to edit the current crontab using the editor specified by
-the \s-1VISUAL\s+1 or \s-1EDITOR\s+1 environment variables.  After you exit
-from the editor, the modified crontab will be installed automatically.
-.SH "SEE ALSO"
-crontab(5), cron(8)
-.SH FILES
-.nf
-/var/cron/allow
-/var/cron/deny
-/var/cron/maxtabsize
-.fi
-.SH STANDARDS
+the 
+.Dv VISUAL
+or
+.Dv EDITOR
+environment variables.
+After you exit from the editor, the modified crontab will be installed
+automatically.
+.Sh SEE ALSO
+.Xr crontab 5 ,
+.Xr cron 8
+.Sh FILES
+.Bl -tag -width /var/cron/maxtabsize -compact 
+.It Pa /var/cron/allow
+Optional list of users that are allowed to use
+.Nm .
+.It Pa /var/cron/deny
+Optional list of users that are disallowed to use
+.Nm .
+.It Pa /var/cron/maxtabsize
+Maximum size of
+.Nm
+.It Pa /var/cron/tabs/
+Directory containing the individual user crontab files, named after the user.
+files.
+Defaults to
+.Dv 256
+kilobytes.
+.El
+.Sh STANDARDS
 The
-.I crontab
-command conforms to IEEE Std1003.2-1992 (``POSIX'').  This new command syntax
+.Nm
+command conforms to
+.St -p1003.2 .
+This new command syntax
 differs from previous versions of Vixie Cron, as well as from the classic
-SVR3 syntax.
-.SH DIAGNOSTICS
+.At V3
+syntax.
+.Sh DIAGNOSTICS
 A fairly informative usage message appears if you run it with a bad command
 line.
-.SH AUTHOR
-.nf
-Paul Vixie \*[Lt]paul@vix.com\*[Gt]
+.Sh AUTHORS
+.An Paul Vixie
+.Aq vixie@isc.org
