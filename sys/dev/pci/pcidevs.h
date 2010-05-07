@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1024 2010/04/17 15:57:48 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1025 2010/05/07 14:21:43 kiyohara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1027 2010/04/17 15:57:23 christos Exp
+ *	NetBSD: pcidevs,v 1.1028 2010/05/07 14:19:36 kiyohara Exp
  */
 
 /*
@@ -2050,7 +2050,8 @@
 #define	PCI_PRODUCT_MARVELL_88F6281	0x6281		/* 88F6281 SoC Kirkwood */
 #define	PCI_PRODUCT_MARVELL_GT64130	0x6320		/* GT-64130 System Controller */
 #define	PCI_PRODUCT_MARVELL_GT64260	0x6430		/* GT-64260 System Controller */
-#define	PCI_PRODUCT_MARVELL_GT64360	0x6460		/* MV6436x System Controller */
+#define	PCI_PRODUCT_MARVELL_MV64360	0x6460		/* MV6436x System Controller */
+#define	PCI_PRODUCT_MARVELL_MV64460	0x6480		/* MV6446x System Controller */
 #define	PCI_PRODUCT_MARVELL_88SX7042	0x7042		/* 88SX7042 SATA IIe */
 #define	PCI_PRODUCT_MARVELL_88W8660	0x8660		/* 88W8660 SoC Orion1 */
 
