@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.63 2010/04/12 13:57:38 ahoka Exp $	*/
+/*	$NetBSD: pf.c,v 1.64 2010/05/07 17:41:57 degroote Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.63 2010/04/12 13:57:38 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.64 2010/05/07 17:41:57 degroote Exp $");
 
 #include "pflog.h"
 
@@ -257,6 +257,8 @@ int			 pf_check_congestion(struct ifqueue *);
 extern struct pool pfr_ktable_pl;
 extern struct pool pfr_kentry_pl;
 
+extern int pf_state_lock;
+
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	{ &pf_state_pl, PFSTATE_HIWAT },
 	{ &pf_src_tree_pl, PFSNODE_HIWAT },
@@ -267,6 +269,10 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 
 #define STATE_LOOKUP()							\
 	do {								\
+		if (pf_state_lock) {		    \
+			*state = NULL;				\
+			return (PF_DROP);			\
+		}								\
 		if (direction == PF_IN)					\
 			*state = pf_find_state(kif, &key, PF_EXT_GWY);	\
 		else							\
@@ -940,8 +946,9 @@ pf_purge_thread(void *v)
 		s = splsoftnet();
 
 		/* process a fraction of the state table every second */
-		pf_purge_expired_states(1 + (pf_status.states
-		    / pf_default_rule.timeout[PFTM_INTERVAL]));
+		if (! pf_state_lock)
+			pf_purge_expired_states(1 + (pf_status.states
+						/ pf_default_rule.timeout[PFTM_INTERVAL]));
 
 		/* purge other expired types every PFTM_INTERVAL seconds */
 		if (++nloops >= pf_default_rule.timeout[PFTM_INTERVAL]) {
@@ -3339,6 +3346,11 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			m_copyback(m, off, hdrlen, pd->hdr.any);
 		PFLOG_PACKET(kif, h, m, af, direction, reason, r->log ? r : nr,
 		    a, ruleset, pd);
+	}
+
+	if (r->keep_state && pf_state_lock) {
+		REASON_SET(&reason, PFRES_STATELOCKED);
+		return PF_DROP;
 	}
 
 	if ((r->action == PF_DROP) &&

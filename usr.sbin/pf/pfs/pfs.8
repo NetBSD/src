@@ -1,0 +1,75 @@
+.Dd July 21, 2009
+.Dt PFS 8
+.Os
+.Sh NAME
+.Nm pfs 
+.Nd saves and restores information for NAT and state tables.
+.Sh SYNOPSIS
+.Nm
+.Op Fl v
+.Fl l
+.Nm
+.Op Fl v
+.Fl u
+.Nm
+.Op Fl v
+.Op Fl b
+.Fl w
+.Ar filename
+.Nm
+.Op Fl v
+.Op Fl b
+.Fl r
+.Ar filename
+.Nm
+.Op Fl v
+.Op Fl b
+.Fl R
+.Ar filename
+.Nm
+.Op Fl v
+.Op Fl b
+.Fl W
+.Ar filename
+.Sh DESCRIPTION
+The
+.Nm
+command allows state information created for NAT entries and rules using
+.Pa keep state
+to be locked (modification prevented) and then saved to disk,
+allowing for the system to experience a reboot, followed by the restoration
+of that information, resulting in connections not being interrupted.
+.Sh OPTIONS
+.Bl -tag -width indent
+.It Fl b
+The information are read or stored using binary format. The default format is
+a readable ascii format, similar to 
+.Pa pfctl.conf 
+syntax.
+.It Fl v
+Provides a verbose description of what's being done.
+.It Fl u
+Unlock state tables in the kernel.
+.It Fl l
+Lock state tables in the kernel.
+.It Fl r
+Read information in from the specified file and load it into the
+kernel.  This requires the state tables to have already been locked
+and does not change the lock once complete.
+.It Fl w
+Write information out to the specified file and from the kernel.
+This requires the state tables to have already been locked
+and does not change the lock once complete.
+.It Fl R
+Restores  information in from the specified file and load it into the
+kernel.  The state tables are locked at the beginning of this operation and
+unlocked once complete.
+.It Fl W
+Write information out to the specified file and from the kernel.  The state
+tables are locked at the beginning of this operation and unlocked once
+complete.
+.El
+.Sh FILES
+/dev/pf
+.Sh SEE ALSO
+.Xr pf 4
