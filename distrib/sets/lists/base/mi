@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.863 2010/04/27 02:51:04 lukem Exp $
+# $NetBSD: mi,v 1.864 2010/05/07 17:41:57 degroote Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -279,6 +279,7 @@
 ./sbin/nologin					base-sysutil-root
 ./sbin/pfctl					base-pf-root		pf
 ./sbin/pflogd					base-pf-root		pf
+./sbin/pfs						base-pf-root		pf
 ./sbin/ping					base-netutil-root
 ./sbin/ping6					base-netutil-root	use_inet6
 ./sbin/poweroff					base-sysutil-root

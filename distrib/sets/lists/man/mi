@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1205 2010/04/25 00:54:45 joerg Exp $
+# $NetBSD: mi,v 1.1206 2010/05/07 17:41:57 degroote Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2448,6 +2448,7 @@
 ./usr/share/man/cat8/peace.0			man-sys-catman		.cat
 ./usr/share/man/cat8/pfctl.0			man-pf-catman		pf,.cat
 ./usr/share/man/cat8/pflogd.0			man-pf-catman		pf,.cat
+./usr/share/man/cat8/pfs.0				man-pf-catman		pf,.cat
 ./usr/share/man/cat8/pfspamd-setup.0		man-obsolete		obsolete
 ./usr/share/man/cat8/pfspamd.0			man-obsolete		obsolete
 ./usr/share/man/cat8/pfspamdb.0			man-obsolete		obsolete
@@ -4877,6 +4878,7 @@
 ./usr/share/man/html8/peace.html		man-sys-htmlman		html
 ./usr/share/man/html8/pfctl.html		man-pf-htmlman		pf,html
 ./usr/share/man/html8/pflogd.html		man-pf-htmlman		pf,html
+./usr/share/man/html8/pfs.html			man-pf-htmlman		pf,html
 ./usr/share/man/html8/pickup.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/ping.html			man-netutil-htmlman	html
 ./usr/share/man/html8/ping6.html		man-netutil-htmlman	use_inet6,html
@@ -7540,6 +7542,7 @@
 ./usr/share/man/man8/peace.8			man-sys-man		.man
 ./usr/share/man/man8/pfctl.8			man-pf-man		pf,.man
 ./usr/share/man/man8/pflogd.8			man-pf-man		pf,.man
+./usr/share/man/man8/pfs.8				man-pf-man		pf,.man
 ./usr/share/man/man8/pfspamd-setup.8		man-obsolete		obsolete
 ./usr/share/man/man8/pfspamd.8			man-obsolete		obsolete
 ./usr/share/man/man8/pfspamdb.8			man-obsolete		obsolete
