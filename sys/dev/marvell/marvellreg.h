@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellreg.h,v 1.1 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: marvellreg.h,v 1.2 2010/05/07 14:25:07 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -31,8 +31,8 @@
 #include <dev/pci/pcidevs.h>
 
 #define MARVELL_DISCOVERY		PCI_PRODUCT_MARVELL_GT64260
-#define MARVELL_DISCOVERY_II		PCI_PRODUCT_MARVELL_GT64360
-#define MARVELL_DISCOVERY_III		0x6480 /* PCI_PRODUCT_MARVELL_GT64460 */
+#define MARVELL_DISCOVERY_II		PCI_PRODUCT_MARVELL_MV64360
+#define MARVELL_DISCOVERY_III		PCI_PRODUCT_MARVELL_MV64460
 #if 0
 #define MARVELL_DISCOVERY_LT		/* XXXX */
 #define MARVELL_DISCOVERY_V		/* XXXX */
