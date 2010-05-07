@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.102 2008/08/19 12:16:49 haad Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.102.10.1 2010/05/07 06:15:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -117,6 +117,7 @@ struct disklabel {
 			char *un_d_boot0;	/* primary bootstrap name */
 			char *un_d_boot1;	/* secondary bootstrap name */
 		} un_b;
+		uint64_t un_d_pad;		/* force 8 byte alignment */
 	} d_un;
 #define	d_packname	d_un.un_d_packname
 #define	d_boot0		d_un.un_b.un_d_boot0
