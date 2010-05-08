@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.47 2010/04/16 13:48:30 pooka Exp $
+#	$NetBSD: GUMSTIX,v 1.48 2010/05/08 22:16:26 mrg Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -90,6 +90,7 @@ options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK  # block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
