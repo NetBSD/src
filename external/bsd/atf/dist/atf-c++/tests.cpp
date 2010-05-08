@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -55,15 +55,12 @@ extern "C" {
 }
 
 #include "atf-c++/application.hpp"
-#include "atf-c++/config.hpp"
 #include "atf-c++/env.hpp"
 #include "atf-c++/exceptions.hpp"
-#include "atf-c++/expand.hpp"
 #include "atf-c++/formats.hpp"
 #include "atf-c++/fs.hpp"
 #include "atf-c++/io.hpp"
 #include "atf-c++/sanity.hpp"
-#include "atf-c++/signals.hpp"
 #include "atf-c++/tests.hpp"
 #include "atf-c++/text.hpp"
 #include "atf-c++/ui.hpp"
@@ -71,26 +68,6 @@ extern "C" {
 
 namespace impl = atf::tests;
 #define IMPL_NAME "atf::tests"
-
-// ------------------------------------------------------------------------
-// Auxiliary stuff for the timeout implementation.
-// ------------------------------------------------------------------------
-
-namespace timeout {
-    static pid_t current_body = 0;
-    static bool killed = false;
-
-    void
-    sigalrm_handler(int signo)
-    {
-        PRE(signo == SIGALRM);
-
-        if (current_body != 0) {
-            ::killpg(current_body, SIGTERM);
-            killed = true;
-        }
-    }
-} // namespace timeout
 
 // ------------------------------------------------------------------------
 // The "tcr" class.
@@ -161,6 +138,83 @@ impl::tcr::operator=(const tcr& o)
                                     o.get_reason().c_str());
     }
     return *this;
+}
+
+namespace {
+
+class tcr_reader : public atf::formats::atf_tcr_reader {
+    std::string m_result, m_reason;
+
+    void
+    got_result(const std::string& str)
+    {
+        m_result = str;
+    }
+
+    void
+    got_reason(const std::string& str)
+    {
+        m_reason = str;
+    }
+
+public:
+    tcr_reader(std::istream& is) :
+        atf_tcr_reader(is)
+    {
+    }
+
+    atf::tests::tcr
+    get_tcr(void)
+        const
+    {
+        using atf::tests::tcr;
+
+        if (m_result == "passed")
+            return tcr(tcr::passed_state);
+        else if (m_result == "failed")
+            return tcr(tcr::failed_state, m_reason);
+        else if (m_result == "skipped")
+            return tcr(tcr::skipped_state, m_reason);
+        else {
+            UNREACHABLE;
+            return tcr(tcr::failed_state, "UNKNOWN");
+        }
+    }
+};
+
+} // anonymous namespace
+
+impl::tcr
+impl::tcr::read(const fs::path& p)
+{
+    std::ifstream is(p.c_str());
+    if (!is)
+        throw std::runtime_error("Cannot open results file `" + p.str() + "'");
+
+    tcr_reader r(is);
+    r.read();
+    return r.get_tcr();
+}
+
+void
+impl::tcr::write(const fs::path& p)
+    const
+{
+    std::ofstream os(p.c_str());
+    if (!os)
+        throw std::runtime_error("Cannot create results file `" + p.str() +
+                                 "'");
+
+    atf::formats::atf_tcr_writer w(os);
+    if (get_state() == impl::tcr::passed_state) {
+        w.result("passed");
+    } else if (get_state() == impl::tcr::failed_state) {
+        w.result("failed");
+        w.reason(get_reason());
+    } else if (get_state() == impl::tcr::skipped_state) {
+        w.result("skipped");
+        w.reason(get_reason());
+    }
 }
 
 // ------------------------------------------------------------------------
@@ -277,6 +331,21 @@ impl::tc::get_md_var(const std::string& var)
     return atf_tc_get_md_var(&m_tc, var.c_str());
 }
 
+const impl::vars_map
+impl::tc::get_md_vars(void)
+    const
+{
+    vars_map vars;
+
+    atf_map_citer_t iter;
+    atf_map_for_each_c(iter, atf_tc_get_md_vars(&m_tc)) {
+        vars.insert(vars_map::value_type(atf_map_citer_key(iter),
+                    static_cast< const char * >(atf_map_citer_data(iter))));
+    }
+
+    return vars;
+}
+
 void
 impl::tc::set_md_var(const std::string& var, const std::string& val)
 {
@@ -285,27 +354,22 @@ impl::tc::set_md_var(const std::string& var, const std::string& val)
         throw_atf_error(err);
 }
 
-impl::tcr
-impl::tc::run(int fdout, int fderr, const fs::path& workdirbase)
+void
+impl::tc::run(const fs::path& resfile)
     const
 {
-    atf_tcr_t tcrc;
-    tcr tcrr(tcr::failed_state, "UNINITIALIZED");
-
-    atf_error_t err = atf_tc_run(&m_tc, &tcrc, fdout, fderr,
-                                 workdirbase.c_path());
+    atf_error_t err = atf_tc_run(&m_tc, resfile.c_path());
     if (atf_is_error(err))
         throw_atf_error(err);
+}
 
-    if (atf_tcr_has_reason(&tcrc)) {
-        const atf_dynstr_t* r = atf_tcr_get_reason(&tcrc);
-        tcrr = tcr(atf_tcr_get_state(&tcrc), atf_dynstr_cstring(r));
-    } else {
-        tcrr = tcr(atf_tcr_get_state(&tcrc));
-    }
-
-    atf_tcr_fini(&tcrc);
-    return tcrr;
+void
+impl::tc::run_cleanup(void)
+    const
+{
+    atf_error_t err = atf_tc_cleanup(&m_tc);
+    if (atf_is_error(err))
+        throw_atf_error(err);
 }
 
 void
@@ -324,18 +388,21 @@ impl::tc::require_prog(const std::string& prog)
 void
 impl::tc::pass(void)
 {
+    atf_reset_exit_checks();
     atf_tc_pass();
 }
 
 void
 impl::tc::fail(const std::string& reason)
 {
+    atf_reset_exit_checks();
     atf_tc_fail("%s", reason.c_str());
 }
 
 void
 impl::tc::skip(const std::string& reason)
 {
+    atf_reset_exit_checks();
     atf_tc_skip("%s", reason.c_str());
 }
 
@@ -351,11 +418,8 @@ private:
     static const char* m_description;
 
     bool m_lflag;
-    int m_results_fd;
-    std::auto_ptr< std::ostream > m_results_os;
+    atf::fs::path m_resfile;
     atf::fs::path m_srcdir;
-    atf::fs::path m_workdir;
-    std::vector< std::string > m_tcnames;
 
     atf::tests::vars_map m_vars;
 
@@ -370,13 +434,16 @@ private:
     void handle_srcdir(void);
 
     tc_vector init_tcs(void);
-    static tc_vector filter_tcs(tc_vector,
-                                const std::vector< std::string >&);
 
-    std::ostream& results_stream(void);
+    enum tc_part {
+        BODY,
+        CLEANUP,
+    };
 
-    int list_tcs(void);
-    int run_tcs(void);
+    void list_tcs(void);
+    impl::tc* find_tc(tc_vector, const std::string&);
+    static std::pair< std::string, tc_part > process_tcarg(const std::string&);
+    int run_tc(const std::string&);
 
 public:
     tp(void (*)(tc_vector&));
@@ -391,9 +458,8 @@ const char* tp::m_description =
 tp::tp(void (*add_tcs)(tc_vector&)) :
     app(m_description, "atf-test-program(1)", "atf(7)"),
     m_lflag(false),
-    m_results_fd(STDOUT_FILENO),
+    m_resfile("resfile"), // XXX
     m_srcdir("."),
-    m_workdir(atf::config::get("atf_workdir")),
     m_add_tcs(add_tcs)
 {
 }
@@ -412,7 +478,7 @@ std::string
 tp::specific_args(void)
     const
 {
-    return "[test_case1 [.. test_caseN]]";
+    return "test_case";
 }
 
 tp::options_set
@@ -422,15 +488,13 @@ tp::specific_options(void)
     using atf::application::option;
     options_set opts;
     opts.insert(option('l', "", "List test cases and their purpose"));
-    opts.insert(option('r', "fd", "The file descriptor to which the test "
-                                  "program will send the results of the "
-                                  "test cases"));
+    opts.insert(option('r', "resfile", "The file to which the test program "
+                                       "will write the results of the "
+                                       "executed test case"));
     opts.insert(option('s', "srcdir", "Directory where the test's data "
                                       "files are located"));
     opts.insert(option('v', "var=value", "Sets the configuration variable "
                                          "`var' to `value'"));
-    opts.insert(option('w', "workdir", "Directory where the test's "
-                                       "temporary files are located"));
     return opts;
 }
 
@@ -443,10 +507,7 @@ tp::process_option(int ch, const char* arg)
         break;
 
     case 'r':
-        {
-            std::istringstream ss(arg);
-            ss >> m_results_fd;
-        }
+        m_resfile = atf::fs::path(arg);
         break;
 
     case 's':
@@ -455,10 +516,6 @@ tp::process_option(int ch, const char* arg)
 
     case 'v':
         parse_vflag(arg);
-        break;
-
-    case 'w':
-        m_workdir = atf::fs::path(arg);
         break;
 
     default:
@@ -529,148 +586,117 @@ public:
     }
 };
 
-tp::tc_vector
-tp::filter_tcs(tc_vector tcs, const std::vector< std::string >& tcnames)
-{
-    tc_vector tcso;
-
-    if (tcnames.empty()) {
-        // Special case: added for efficiency because this is the most
-        // typical situation.
-        tcso = tcs;
-    } else {
-        // Collect all the test cases' identifiers.
-        std::vector< std::string > ids;
-        for (tc_vector::iterator iter = tcs.begin();
-             iter != tcs.end(); iter++) {
-            impl::tc* tc = *iter;
-
-            ids.push_back(tc->get_md_var("ident"));
-        }
-
-        // Iterate over all names provided by the user and, for each one,
-        // expand it as if it were a glob pattern.  Collect all expansions.
-        std::vector< std::string > exps;
-        for (std::vector< std::string >::const_iterator iter = tcnames.begin();
-             iter != tcnames.end(); iter++) {
-            const std::string& glob = *iter;
-
-            std::vector< std::string > ms =
-                atf::expand::expand_glob(glob, ids);
-            if (ms.empty())
-                throw std::runtime_error("Unknown test case `" + glob + "'");
-            exps.insert(exps.end(), ms.begin(), ms.end());
-        }
-
-        // For each expansion, locate its corresponding test case and add
-        // it to the output set.
-        for (std::vector< std::string >::const_iterator iter = exps.begin();
-             iter != exps.end(); iter++) {
-            const std::string& name = *iter;
-
-            tc_vector::iterator tciter =
-                std::find_if(tcs.begin(), tcs.end(), tc_equal_to_ident(name));
-            INV(tciter != tcs.end());
-            tcso.push_back(*tciter);
-        }
-    }
-
-    return tcso;
-}
-
-int
+void
 tp::list_tcs(void)
 {
-    tc_vector tcs = filter_tcs(init_tcs(), m_tcnames);
-
-    std::string::size_type maxlen = 0;
-    for (tc_vector::const_iterator iter = tcs.begin();
-         iter != tcs.end(); iter++) {
-        const impl::tc* tc = *iter;
-
-        if (maxlen < tc->get_md_var("ident").length())
-            maxlen = tc->get_md_var("ident").length();
-    }
+    tc_vector tcs = init_tcs();
+    atf::formats::atf_tp_writer writer(std::cout);
 
     for (tc_vector::const_iterator iter = tcs.begin();
          iter != tcs.end(); iter++) {
-        const impl::tc* tc = *iter;
+        const impl::vars_map vars = (*iter)->get_md_vars();
 
-        std::cout << atf::ui::format_text_with_tag(tc->get_md_var("descr"),
-                                                   tc->get_md_var("ident"),
-                                                   false, maxlen + 4)
-                  << std::endl;
+        {
+            impl::vars_map::const_iterator iter2 = vars.find("ident");
+            INV(iter2 != vars.end());
+            writer.start_tc((*iter2).second);
+        }
+
+        for (impl::vars_map::const_iterator iter2 = vars.begin();
+             iter2 != vars.end(); iter2++) {
+            const std::string& key = (*iter2).first;
+            if (key != "ident")
+                writer.tc_meta_data(key, (*iter2).second);
+        }
+
+        writer.end_tc();
     }
-
-    return EXIT_SUCCESS;
 }
 
-std::ostream&
-tp::results_stream(void)
+impl::tc*
+tp::find_tc(tc_vector tcs, const std::string& name)
 {
-    if (m_results_fd == STDOUT_FILENO)
-        return std::cout;
-    else if (m_results_fd == STDERR_FILENO)
-        return std::cerr;
-    else
-        return *m_results_os;
-}
-
-int
-tp::run_tcs(void)
-{
-    tc_vector tcs = filter_tcs(init_tcs(), m_tcnames);
-
-    if (!atf::fs::exists(m_workdir))
-        throw std::runtime_error("Cannot find the work directory `" +
-                                 m_workdir.str() + "'");
-
-    int errcode = EXIT_SUCCESS;
-
-    atf::signals::signal_holder sighup(SIGHUP);
-    atf::signals::signal_holder sigint(SIGINT);
-    atf::signals::signal_holder sigterm(SIGTERM);
-
-    atf::formats::atf_tcs_writer w(results_stream(), std::cout, std::cerr,
-                                   tcs.size());
+    std::vector< std::string > ids;
     for (tc_vector::iterator iter = tcs.begin();
          iter != tcs.end(); iter++) {
         impl::tc* tc = *iter;
 
-        w.start_tc(tc->get_md_var("ident"));
-        impl::tcr tcr = tc->run(STDOUT_FILENO, STDERR_FILENO, m_workdir);
-        w.end_tc(tcr);
-
-        sighup.process();
-        sigint.process();
-        sigterm.process();
-
-        if (tcr.get_state() == impl::tcr::failed_state)
-            errcode = EXIT_FAILURE;
+        if (tc->get_md_var("ident") == name)
+            return tc;
     }
+    throw atf::application::usage_error("Unknown test case `%s'",
+                                        name.c_str());
+}
 
-    return errcode;
+std::pair< std::string, tp::tc_part >
+tp::process_tcarg(const std::string& tcarg)
+{
+    const std::string::size_type pos = tcarg.find(':');
+    if (pos == std::string::npos) {
+        return std::make_pair(tcarg, BODY);
+    } else {
+        const std::string tcname = tcarg.substr(0, pos);
+
+        const std::string partname = tcarg.substr(pos + 1);
+        if (partname == "body")
+            return std::make_pair(tcname, BODY);
+        else if (partname == "cleanup")
+            return std::make_pair(tcname, CLEANUP);
+        else {
+            using atf::application::usage_error;
+            throw usage_error("Invalid test case part `%s'", partname.c_str());
+        }
+    }
+}
+
+int
+tp::run_tc(const std::string& tcarg)
+{
+    const std::pair< std::string, tc_part > fields = process_tcarg(tcarg);
+
+    impl::tc* tc = find_tc(init_tcs(), fields.first);
+
+    try {
+        switch (fields.second) {
+        case BODY:
+            tc->run(m_resfile);
+            break;
+        case CLEANUP:
+            tc->run_cleanup();
+            break;
+        default:
+            UNREACHABLE;
+        }
+        return EXIT_SUCCESS;
+    } catch (const std::runtime_error& e) {
+        // TODO: Handle error.
+        return EXIT_FAILURE;
+    }
 }
 
 int
 tp::main(void)
 {
+    using atf::application::usage_error;
+
     int errcode;
 
     handle_srcdir();
 
-    for (int i = 0; i < m_argc; i++)
-        m_tcnames.push_back(m_argv[i]);
+    if (m_lflag) {
+        if (m_argc > 0)
+            throw usage_error("Cannot provide test case names with -l");
 
-    if (m_lflag)
-        errcode = list_tcs();
-    else {
-        if (m_results_fd != STDOUT_FILENO && m_results_fd != STDERR_FILENO) {
-            atf::io::file_handle fh(m_results_fd);
-            m_results_os =
-                std::auto_ptr< std::ostream >(new atf::io::postream(fh));
-        }
-        errcode = run_tcs();
+        list_tcs();
+        errcode = EXIT_SUCCESS;
+    } else {
+        if (m_argc == 0)
+            throw usage_error("Must provide a test case name");
+        else if (m_argc > 1)
+            throw usage_error("Cannot provide more than one test case name");
+        INV(m_argc == 1);
+
+        errcode = run_tc(m_argv[0]);
     }
 
     return errcode;

@@ -202,6 +202,7 @@ public:
 
 class child {
     atf_process_child_t m_child;
+    bool m_waited;
 
     template< class OutStream, class ErrStream > friend
     child fork(void (*)(void*), const OutStream&, const ErrStream&, void*);

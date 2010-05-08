@@ -1,0 +1,10 @@
+Content-Type: application/X-atf-tp; version="1"
+
+ident: single_test
+descr: Some description
+timeout: 300
+require.arch: thearch
+require.config: foo-bar
+require.machine: themachine
+require.progs: /bin/cp mv
+require.user: root

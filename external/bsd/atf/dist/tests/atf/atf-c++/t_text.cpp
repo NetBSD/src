@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -132,6 +132,32 @@ ATF_TEST_CASE_BODY(join)
         str = join(words, ",");
         ATF_CHECK_EQUAL(str, "bar,baz,foo");
     }
+}
+
+ATF_TEST_CASE(match);
+ATF_TEST_CASE_HEAD(match)
+{
+    set_md_var("descr", "Tests the match function");
+}
+ATF_TEST_CASE_BODY(match)
+{
+    using atf::text::match;
+
+    ATF_CHECK_THROW(match("", "["), std::runtime_error);
+
+    ATF_CHECK(match("", ""));
+    ATF_CHECK(!match("foo", ""));
+
+    ATF_CHECK(match("", ".*"));
+    ATF_CHECK(match("", "[a-z]*"));
+
+    ATF_CHECK(match("hello", "hello"));
+    ATF_CHECK(match("hello", "[a-z]+"));
+    ATF_CHECK(match("hello", "^[a-z]+$"));
+
+    ATF_CHECK(!match("hello", "helooo"));
+    ATF_CHECK(!match("hello", "[a-z]+5"));
+    ATF_CHECK(!match("hello", "^ [a-z]+$"));
 }
 
 ATF_TEST_CASE(split);
@@ -336,6 +362,7 @@ ATF_INIT_TEST_CASES(tcs)
     // Add the test cases for the free functions.
     ATF_ADD_TEST_CASE(tcs, duplicate);
     ATF_ADD_TEST_CASE(tcs, join);
+    ATF_ADD_TEST_CASE(tcs, match);
     ATF_ADD_TEST_CASE(tcs, split);
     ATF_ADD_TEST_CASE(tcs, split_delims);
     ATF_ADD_TEST_CASE(tcs, trim);

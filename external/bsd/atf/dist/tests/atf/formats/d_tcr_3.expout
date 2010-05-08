@@ -1,0 +1,3 @@
+got_result(skipped)
+got_reason(The reason)
+got_eof()

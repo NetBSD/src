@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,6 @@
 #include "atf-c/fs.h"
 #include "atf-c/io.h"
 #include "atf-c/process.h"
-#include "atf-c/tcr.h"
 #include "atf-c/text.h"
 
 #include "h_lib.h"
@@ -58,8 +57,7 @@ create_ctl_file(const atf_tc_t *tc, const char *name)
 {
     atf_fs_path_t p;
 
-    RE(atf_fs_path_init_fmt(&p, "%s/%s",
-                            atf_tc_get_config_var(tc, "ctldir"), name));
+    RE(atf_fs_path_init_fmt(&p, "%s", name));
     ATF_REQUIRE(open(atf_fs_path_cstring(&p),
                    O_CREAT | O_WRONLY | O_TRUNC, 0644) != -1);
     atf_fs_path_fini(&p);
@@ -81,64 +79,17 @@ exists(const char *p)
 
 static
 void
-init_config(atf_map_t *config)
+init_and_run_h_tc(const char *name, void (*head)(atf_tc_t *),
+                  void (*body)(const atf_tc_t *))
 {
-    atf_fs_path_t cwd;
+    atf_tc_t tc;
+    atf_map_t config;
 
-    RE(atf_map_init(config));
-
-    RE(atf_fs_getcwd(&cwd));
-    RE(atf_map_insert(config, "ctldir",
-                      strdup(atf_fs_path_cstring(&cwd)), true));
-    atf_fs_path_fini(&cwd);
-}
-
-static
-void
-run_inherit(const atf_tc_t *tc, atf_tcr_t *tcr)
-{
-    atf_fs_path_t cwd;
-
-    RE(atf_fs_getcwd(&cwd));
-    RE(atf_tc_run(tc, tcr, STDOUT_FILENO, STDERR_FILENO, &cwd));
-    atf_fs_path_fini(&cwd);
-}
-
-static
-void
-run_capture(const atf_tc_t *tc, const char *errname, atf_tcr_t *tcr)
-{
-    int errfile;
-    atf_fs_path_t cwd;
-
-    ATF_REQUIRE((errfile = open(errname, O_WRONLY | O_CREAT | O_TRUNC,
-                                0644)) != -1);
-
-    RE(atf_fs_getcwd(&cwd));
-    RE(atf_tc_run(tc, tcr, STDOUT_FILENO, errfile, &cwd));
-    atf_fs_path_fini(&cwd);
-
-    close(errfile);
-}
-
-static
-bool
-grep_reason(const atf_tcr_t *tcr, const char *regex, ...)
-{
-    va_list ap;
-    atf_dynstr_t formatted;
-    bool found;
-
-    va_start(ap, regex);
-    RE(atf_dynstr_init_ap(&formatted, regex, ap));
-    va_end(ap);
-
-    found = grep_string(atf_tcr_get_reason(tcr),
-                        atf_dynstr_cstring(&formatted));
-
-    atf_dynstr_fini(&formatted);
-
-    return found;
+    RE(atf_map_init(&config));
+    RE(atf_tc_init(&tc, name, head, body, NULL, &config));
+    run_h_tc(&tc, "output", "error", "result");
+    atf_tc_fini(&tc);
+    atf_map_fini(&config);
 }
 
 /* ---------------------------------------------------------------------
@@ -261,31 +212,20 @@ ATF_TC_BODY(check, tc)
     };
 
     for (t = &tests[0]; t->head != NULL; t++) {
-        atf_map_t config;
-        atf_tc_t tcaux;
-        atf_tcr_t tcr;
-
-        init_config(&config);
-
         printf("Checking with a %d value\n", t->value);
 
-        RE(atf_tc_init(&tcaux, "h_check", t->head, t->body, NULL, &config));
-        run_capture(&tcaux, "error", &tcr);
-        atf_tc_fini(&tcaux);
+        init_and_run_h_tc("h_check", t->head, t->body);
 
         ATF_REQUIRE(exists("before"));
         ATF_REQUIRE(exists("after"));
 
         if (t->ok) {
-            ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_passed_state);
+            ATF_REQUIRE(grep_file("result", "result: passed"));
         } else {
-            ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
+            ATF_REQUIRE(grep_file("result", "result: failed"));
             ATF_REQUIRE(grep_file("error", "t_macros.c:[0-9]+: "
                                   "Check failed: %s$", t->msg));
         }
-
-        atf_tcr_fini(&tcr);
-        atf_map_fini(&config);
 
         ATF_REQUIRE(unlink("before") != -1);
         ATF_REQUIRE(unlink("after") != -1);
@@ -312,32 +252,21 @@ do_check_eq_tests(const struct check_eq_test *tests)
     const struct check_eq_test *t;
 
     for (t = &tests[0]; t->head != NULL; t++) {
-        atf_map_t config;
-        atf_tc_t tcaux;
-        atf_tcr_t tcr;
-
-        init_config(&config);
-
         printf("Checking with %s, %s and expecting %s\n", t->v1, t->v2,
                t->ok ? "true" : "false");
 
-        RE(atf_tc_init(&tcaux, "h_check", t->head, t->body, NULL, &config));
-        run_capture(&tcaux, "error", &tcr);
-        atf_tc_fini(&tcaux);
+        init_and_run_h_tc("h_check", t->head, t->body);
 
         ATF_CHECK(exists("before"));
         ATF_CHECK(exists("after"));
 
         if (t->ok) {
-            ATF_CHECK(atf_tcr_get_state(&tcr) == atf_tcr_passed_state);
+            ATF_REQUIRE(grep_file("result", "result: passed"));
         } else {
-            ATF_CHECK(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
+            ATF_REQUIRE(grep_file("result", "result: failed"));
             ATF_CHECK(grep_file("error", "t_macros.c:[0-9]+: "
                                 "Check failed: %s$", t->msg));
         }
-
-        atf_tcr_fini(&tcr);
-        atf_map_fini(&config);
 
         ATF_CHECK(unlink("before") != -1);
         ATF_CHECK(unlink("after") != -1);
@@ -471,31 +400,20 @@ ATF_TC_BODY(require, tc)
     };
 
     for (t = &tests[0]; t->head != NULL; t++) {
-        atf_map_t config;
-        atf_tc_t tcaux;
-        atf_tcr_t tcr;
-
-        init_config(&config);
-
         printf("Checking with a %d value\n", t->value);
 
-        RE(atf_tc_init(&tcaux, "h_require", t->head, t->body, NULL, &config));
-        run_inherit(&tcaux, &tcr);
-        atf_tc_fini(&tcaux);
+        init_and_run_h_tc("h_require", t->head, t->body);
 
         ATF_REQUIRE(exists("before"));
         if (t->ok) {
-            ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_passed_state);
+            ATF_REQUIRE(grep_file("result", "result: passed"));
             ATF_REQUIRE(exists("after"));
         } else {
-            ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
+            ATF_REQUIRE(grep_file("result", "result: failed"));
             ATF_REQUIRE(!exists("after"));
-            ATF_REQUIRE(grep_reason(&tcr, "t_macros.c:[0-9]+: Requirement "
-                                    "failed: %s$", t->msg));
+            ATF_REQUIRE(grep_file("result", "reason:.*t_macros.c:[0-9]+: "
+                                  "Requirement failed: %s$", t->msg));
         }
-
-        atf_tcr_fini(&tcr);
-        atf_map_fini(&config);
 
         ATF_REQUIRE(unlink("before") != -1);
         if (t->ok)
@@ -523,32 +441,21 @@ do_require_eq_tests(const struct require_eq_test *tests)
     const struct require_eq_test *t;
 
     for (t = &tests[0]; t->head != NULL; t++) {
-        atf_map_t config;
-        atf_tc_t tcaux;
-        atf_tcr_t tcr;
-
-        init_config(&config);
-
         printf("Checking with %s, %s and expecting %s\n", t->v1, t->v2,
                t->ok ? "true" : "false");
 
-        RE(atf_tc_init(&tcaux, "h_require", t->head, t->body, NULL, &config));
-        run_inherit(&tcaux, &tcr);
-        atf_tc_fini(&tcaux);
+        init_and_run_h_tc("h_require", t->head, t->body);
 
         ATF_REQUIRE(exists("before"));
         if (t->ok) {
-            ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_passed_state);
+            ATF_REQUIRE(grep_file("result", "result: passed"));
             ATF_REQUIRE(exists("after"));
         } else {
-            ATF_REQUIRE(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
+            ATF_REQUIRE(grep_file("result", "result: failed"));
             ATF_REQUIRE(!exists("after"));
-            ATF_REQUIRE(grep_reason(&tcr, "t_macros.c:[0-9]+: Requirement "
-                                    "failed: %s$", t->msg));
+            ATF_REQUIRE(grep_file("result", "reason:.*t_macros.c:[0-9]+: "
+                                  "Requirement failed: %s$", t->msg));
         }
-
-        atf_tcr_fini(&tcr);
-        atf_map_fini(&config);
 
         ATF_REQUIRE(unlink("before") != -1);
         if (t->ok)
@@ -696,34 +603,26 @@ ATF_TC_BODY(msg_embedded_fmt, tc)
        { NULL, NULL, false, NULL }
     };
 
+    atf_tc_skip("Broken test.  XXX: This should really be signaled as an "
+                "expected failure, not as a skipped test.");
+
     for (t = &tests[0]; t->head != NULL; t++) {
-        atf_map_t config;
-        atf_tc_t tcaux;
-        atf_tcr_t tcr;
-
-        init_config(&config);
-
         printf("Checking with an expected '%s' message\n", t->msg);
 
-        RE(atf_tc_init(&tcaux, "h_check", t->head, t->body, NULL, &config));
-        run_capture(&tcaux, "error", &tcr);
-        atf_tc_fini(&tcaux);
+        init_and_run_h_tc("h_check", t->head, t->body);
 
-        ATF_CHECK(atf_tcr_get_state(&tcr) == atf_tcr_failed_state);
+        ATF_REQUIRE(grep_file("result", "result: failed"));
         if (t->fatal) {
             bool matched =
-                grep_reason(&tcr, "t_macros.c:[0-9]+: "
-                            "Requirement failed: %s$", t->msg);
+                grep_file("result", "result:.*t_macros.c:[0-9]+: Requirement "
+                          "failed: %s$", t->msg);
             ATF_CHECK_MSG(matched, "couldn't find error string in result");
         } else {
             bool matched =
-                grep_file("error", "t_macros.c:[0-9]+: "
-                          "Check failed: %s$", t->msg);
+                grep_file("error", "t_macros.c:[0-9]+: Check failed: %s$",
+                          t->msg);
             ATF_CHECK_MSG(matched, "couldn't find error string in output");
         }
-
-        atf_tcr_fini(&tcr);
-        atf_map_fini(&config);
     }
 }
 

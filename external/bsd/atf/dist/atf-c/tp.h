@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@
 struct atf_fs_path;
 struct atf_map;
 struct atf_tc;
+struct atf_tcr;
 
 /* ---------------------------------------------------------------------
  * The "atf_tp" type.
@@ -56,6 +57,7 @@ void atf_tp_fini(atf_tp_t *);
 
 /* Getters. */
 const struct atf_map *atf_tp_get_config(const atf_tp_t *);
+bool atf_tp_has_tc(const atf_tp_t *, const char *);
 const struct atf_tc *atf_tp_get_tc(const atf_tp_t *, const char *);
 const atf_list_t *atf_tp_get_tcs(const atf_tp_t *);
 
@@ -66,7 +68,8 @@ atf_error_t atf_tp_add_tc(atf_tp_t *, struct atf_tc *);
  * Free functions.
  * --------------------------------------------------------------------- */
 
-atf_error_t atf_tp_run(const atf_tp_t *, const atf_list_t *, int,
-                       const struct atf_fs_path *, size_t *);
+atf_error_t atf_tp_run(const atf_tp_t *, const char *,
+                       const struct atf_fs_path *);
+atf_error_t atf_tp_cleanup(const atf_tp_t *, const char *);
 
 #endif /* ATF_C_TP_H */

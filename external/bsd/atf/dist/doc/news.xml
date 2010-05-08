@@ -16,6 +16,66 @@
   </author>
 </articleinfo>
 
+<section id="atf-0-8">
+
+<title>Changes in version 0.8</title>
+
+<para>Experimental version released on May 7th, 2010.</para>
+
+<itemizedlist>
+
+<listitem><para>Test programs no longer run several test cases in a row.
+The execution of a test program now requires a test case name, and that
+single test case is executed.  To execute several test cases, use the
+atf-run utility as usual.</para></listitem>
+
+<listitem><para>Test programs no longer fork a subprocess to isolate the
+execution of test cases.  They run the test case code in-process, and a
+crash of the test case will result in a crash of the test program.  This is
+to ease debugging of faulty test cases.</para></listitem>
+
+<listitem><para>Test programs no longer isolate their test cases.  This
+means that they will not create temporary directories nor sanitize the
+environment any more.  Yes: running a test case that depends on system
+state by hand will most likely yield different results depending on where
+(machine, directory, user environment, etc.) it is run.  Isolation has been
+moved to atf-run.</para></listitem>
+
+<listitem><para>Test programs no longer print a cryptic format
+(<literal>application/X-atf-tcs</literal>) on a special file channel.  They
+can now print whatever they want on the screen.  Because test programs can
+now only run one test case every time, providing controlled output is not
+necessary any more.</para></listitem>
+
+<listitem><para>Test programs no longer write their status into a special
+file descriptor.  Instead, they create a file with the results, which is
+later parsed by atf-run.  This changes the semantics of the
+<literal>-r</literal> flag.</para></listitem>
+
+<listitem><para>atf-run has been adjusted to perform the test case
+isolation.  As a result, there is now a single canonical place that
+implements the isolation of test caes.  In previous releases, the three
+language bindings (C, C++ and shell) had to be kept in sync with each other
+(read: not a nice thing to do at all).  As a side effect of this change,
+writing bindings for other languages will be much, much easier from now
+on.</para></listitem>
+
+<listitem><para>atf-run forks test programs on a test case basis, instead
+of on a test program basis as it did before.  This is to provide the
+test case isolation that was before implemented by the test programs
+themselves.</para></listitem>
+
+<listitem><para>Removed the atf-exec tool.  This was used to implement test
+case isolation in atf-sh, but it is now unnecessary.</para></listitem>
+
+<listitem><para>It is now optional to define the <literal>descr</literal>
+meta-data property.  It has been proven to be mostly useless, because test
+cases often carry a descriptive name of their own.</para></listitem>
+
+</itemizedlist>
+
+</section>
+
 <section id="atf-0-7">
 
 <title>Changes in version 0.7</title>
