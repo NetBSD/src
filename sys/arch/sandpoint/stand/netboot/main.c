@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.24 2010/05/02 13:31:14 phx Exp $ */
+/* $NetBSD: main.c,v 1.25 2010/05/08 14:40:08 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,7 +58,8 @@ int brdtype;
 char *consname = CONSNAME;
 int consport = CONSPORT;
 int consspeed = CONSSPEED;
-int ticks_per_sec = TICKS_PER_SEC;
+int ticks_per_sec;
+uint32_t busclock, cpuclock;
 
 void
 main(void)
@@ -89,7 +90,8 @@ main(void)
 	case BRD_SYNOLOGY:
 		printf("Synology DS"); break;
 	}
-	printf(", %dMB SDRAM\n", memsize >> 20);
+	printf(", cpu %u MHz, bus %u MHz, %dMB SDRAM\n",
+	    cpuclock / 1000000, busclock / 1000000, memsize >> 20);
 
 	n = pcilookup(PCI_CLASS_IDE, lata, sizeof(lata)/sizeof(lata[0]));
 	if (n == 0)
