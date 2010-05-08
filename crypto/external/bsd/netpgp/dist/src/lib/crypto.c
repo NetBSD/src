@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.21 2010/03/05 16:01:09 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.22 2010/05/08 02:17:15 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -109,11 +109,8 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "\nDECRYPTING\n");
-		(void) fprintf(stderr, "encrypted data     : ");
-		for (i = 0; i < 16; i++) {
-			(void) fprintf(stderr, "%2x ", encmpibuf[i]);
-		}
+		(void) fprintf(stderr, "\nDECRYPTING\nencrypted data     : ");
+		hexdump(stderr, encmpibuf, 16, " ");
 		(void) fprintf(stderr, "\n");
 	}
 	n = __ops_rsa_private_decrypt(mpibuf, encmpibuf,
@@ -126,9 +123,7 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 
 	if (__ops_get_debug_level(__FILE__)) {
 		(void) fprintf(stderr, "decrypted encoded m buf     : ");
-		for (i = 0; i < 16; i++) {
-			(void) fprintf(stderr, "%2x ", mpibuf[i]);
-		}
+		hexdump(stderr, mpibuf, 16, " ");
 		(void) fprintf(stderr, "\n");
 	}
 	if (n <= 0) {
@@ -136,9 +131,9 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
-		printf(" decrypted=%d ", n);
-		hexdump(stdout, mpibuf, (unsigned)n, "");
-		printf("\n");
+		fprintf(stderr, " decrypted=%d ", n);
+		hexdump(stderr, mpibuf, (unsigned)n, "");
+		fprintf(stderr, "\n");
 	}
 	/* Decode EME-PKCS1_V1_5 (RFC 2437). */
 
@@ -163,12 +158,9 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
-		int             j;
-
-		printf("decoded m buf:\n");
-		for (j = 0; j < n - i; j++)
-			printf("%2x ", buf[j]);
-		printf("\n");
+		fprintf(stderr, "decoded m buf:\n");
+		hexdump(stderr, buf, n - i, " ");
+		fprintf(stderr, "\n");
 	}
 	return n - i;
 }
@@ -205,11 +197,8 @@ __ops_rsa_encrypt_mpi(const uint8_t *encoded_m_buf,
 	skp->rsa.encrypted_m = BN_bin2bn(encmpibuf, n, NULL);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		int             i;
 		(void) fprintf(stderr, "encrypted mpi buf     : ");
-		for (i = 0; i < 16; i++) {
-			(void) fprintf(stderr, "%2x ", encmpibuf[i]);
-		}
+		hexdump(stderr, encmpibuf, 16, " ");
 		(void) fprintf(stderr, "\n");
 	}
 	return 1;
