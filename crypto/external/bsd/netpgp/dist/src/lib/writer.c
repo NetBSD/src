@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.21 2010/05/08 00:24:47 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.22 2010/05/08 02:17:16 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -955,16 +955,10 @@ encrypt_writer(const uint8_t *src,
 					src + done, size);
 
 		if (__ops_get_debug_level(__FILE__)) {
-			int             i = 0;
-
 			(void) fprintf(stderr, "WRITING:\nunencrypted: ");
-			for (i = 0; i < 16; i++) {
-				(void) fprintf(stderr, "%2x ", src[done + i]);
-			}
+			hexdump(stderr, &src[done], 16, " ");
 			(void) fprintf(stderr, "\nencrypted:   ");
-			for (i = 0; i < 16; i++) {
-				(void) fprintf(stderr, "%2x ", encbuf[i]);
-			}
+			hexdump(stderr, encbuf, 16, " ");
 			(void) fprintf(stderr, "\n");
 		}
 		if (!stacked_write(writer, encbuf, size, errors)) {
