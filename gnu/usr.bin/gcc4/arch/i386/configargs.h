@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
 /* Generated automatically. */
-static const char configuration_arguments[] = "/home/drochner/netbsd/work.src.usbdev/tools/gcc/../../gnu/dist/gcc4/configure --target=i486--netbsdelf --enable-long-long --enable-threads --enable-__cxa_atexit --with-arch=i486 --with-tune=nocona --disable-multilib --disable-symvers --build=i386-unknown-netbsdelf5.99.29 --host=i486--netbsdelf";
+static const char configuration_arguments[] = "/usr/src/tools/gcc/../../gnu/dist/gcc4/configure --target=i486--netbsdelf --enable-long-long --enable-threads --enable-__cxa_atexit --with-arch=i486 --with-tune=nocona --disable-multilib --disable-symvers --build=x86_64-unknown-netbsd5.0. --host=i486--netbsdelf";
 static const char thread_model[] = "posix";
 
 static const struct {
