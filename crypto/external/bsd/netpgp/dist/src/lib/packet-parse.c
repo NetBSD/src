@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.31 2010/03/08 07:37:24 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.32 2010/05/08 00:33:28 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2669,18 +2669,10 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 
 		__ops_crypt_any(&decrypt, pkt.u.seckey.alg);
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned	i;
-
 			fprintf(stderr, "\nREADING:\niv=");
-			for (i = 0;
-			     i < __ops_block_size(pkt.u.seckey.alg);
-			     i++) {
-				fprintf(stderr, "%02x ", pkt.u.seckey.iv[i]);
-			}
+			hexdump(stderr, pkt.u.seckey.iv, __ops_block_size(pkt.u.seckey.alg), " ");
 			fprintf(stderr, "\nkey=");
-			for (i = 0; i < CAST_KEY_LENGTH; i++) {
-				fprintf(stderr, "%02x ", key[i]);
-			}
+			hexdump(stderr, key, CAST_KEY_LENGTH, " ");
 			fprintf(stderr, "\n");
 		}
 		decrypt.set_iv(&decrypt, pkt.u.seckey.iv);

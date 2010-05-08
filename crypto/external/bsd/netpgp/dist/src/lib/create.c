@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.25 2010/04/14 00:25:10 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.26 2010/05/08 00:33:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -425,21 +425,11 @@ write_seckey_body(const __ops_seckey_t *key,
 	__ops_encrypt_init(&crypted);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned	i2;
-
 		(void) fprintf(stderr, "\nWRITING:\niv=");
-		for (i2 = 0; i2 < __ops_block_size(key->alg); i2++) {
-			(void) fprintf(stderr, "%02x ", key->iv[i2]);
-		}
-		(void) fprintf(stderr, "\n");
-
-		(void) fprintf(stderr, "key=");
-		for (i2 = 0; i2 < CAST_KEY_LENGTH; i2++) {
-			(void) fprintf(stderr, "%02x ", sesskey[i2]);
-		}
-		(void) fprintf(stderr, "\n");
-
-		(void) fprintf(stderr, "turning encryption on...\n");
+		hexdump(stderr, key->iv, __ops_block_size(key->alg), " ");
+		(void) fprintf(stderr, "\nkey=");
+		hexdump(stderr, sesskey, CAST_KEY_LENGTH, " ");
+		(void) fprintf(stderr, "\nturning encryption on...\n");
 	}
 	__ops_push_enc_crypt(output, &crypted);
 
