@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,7 @@
 #include <sstream>
 
 #include "atf-c++/parser.hpp"
+#include "atf-c++/text.hpp"
 
 namespace impl = atf::parser;
 #define IMPL_NAME "atf::parser"
@@ -63,6 +64,12 @@ impl::parse_error::what(void)
     }
 }
 
+impl::parse_error::operator std::string(void)
+    const
+{
+    return atf::text::to_string(first) + ": " + second;
+}
+
 // ------------------------------------------------------------------------
 // The "parse_errors" class.
 // ------------------------------------------------------------------------
@@ -83,12 +90,7 @@ impl::parse_errors::what(void)
     const throw()
 {
     try {
-        std::ostringstream oss;
-        for (const_iterator iter = begin(); iter != end(); iter++) {
-            oss << (*iter).first << ": " << (*iter).second
-                << std::endl;
-        }
-        m_msg = oss.str();
+        m_msg = atf::text::join(*this, "\n");
         return m_msg.c_str();
     } catch (...) {
         return "Could not format messages for parsing errors.";

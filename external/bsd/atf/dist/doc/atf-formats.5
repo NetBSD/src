@@ -1,7 +1,7 @@
 .\"
 .\" Automated Testing Framework (atf)
 .\"
-.\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 4, 2007
+.Dd January 4, 2010
 .Dt ATF-FORMATS 5
 .Os
 .Sh NAME
@@ -149,101 +149,36 @@ An example:
 var1 = this is a variable value
 var2 = this is another one      # Optional comment at the end.
 .Ed
-.Ss Format: application/X-atf-tcs, version: 1
+.Ss Format: application/X-atf-tcr, version: 1
 The
-.Sq application/X-atf-tcs
-format is used to describe the results of a collection of test cases;
-in other words, it represents
-.Em the output of a test program .
-Unfortunately, it is not easy to control, from inside a test program, what
-it prints to both its standard output and standard error streams.
-This is specially the case of test programs written in the POSIX shell
-language, because they are constantly executing external tools that may
-print unexpected messages at all times.
-Due to this, ATF imposes no restrictions on what a test program can send to
-these two channels; in fact, they are encouraged to print as much useful
-information as possible to aid in the debugging of test failures.
-.Pp
-Because we have no control over the two standard streams, the
-.Sq application/X-atf-tcs
-format describes the structure of a third stream, known as the
-.Em results output ,
-that test programs must generate.
-(Note that test programs send, by default, the results output to the
-standard output; use their
-.Fl r
-flag to change this whenever you need to parse the data.)
-This stream is decoupled from the other two and has the following grammar:
+.Sq application/X-atf-tcr
+format is used to represent the result of a single test case.
+It is composed of a mandatory result type and an optional reason fields.
+Its grammar is as follows:
 .Bd -literal -offset indent
-DATA ::= TCS-COUNT TC-STANZA* EOF
-TCS-COUNT ::= 'tcs-count' COLON POSITIVE-NUMBER NEWLINE
-TC-STANZA ::= TC-START TC-END
-TC-START ::= 'tc-start' COLON STRING NEWLINE
-TC-END ::= 'tc-end' COLON STRING COMMA TCR NEWLINE
-TCR ::= 'passed' | ('failed' | 'skipped') COMMA STRING
+DATA ::= RESULT REASON? EOF
+RESULT ::= 'result' COLON ('passed' | 'failed' | 'skipped')
+REASON ::= 'reason' COLON STRING
 .Ed
 .Pp
-The meaning of the constructions above is:
-.Bl -tag -width TCSXCOUNTXX
-.It TCS-COUNT
-Indicates the number of test cases that will be executed.
-There will be this exact amount of
-.Sq TC-STANZA
-constructions following it.
-.It TC-START
-Indicates the beginning of a test case.
-This is accompanied by the test case's name.
-.It TC-END
-Indicates the completion of a test case.
-This is accompanied by the test case's name, its result and the reason
-associated with this result (if applicable).
-.El
+The reason string is a free-format string ending at the first encountered
+newline character; it should not be quoted, as otherwise the quotation
+characters will appear as part of the reason message.
 .Pp
-There are multiple reasons behind this design:
-.Bl -bullet
-.It
-The reader of this format must be able to show real-time progress to the
-user as the test cases are processed.
-Therefore, the
-.Sq TC-START
-construction tells the reader
-.Em when
-a test case has started to process data.
-.It
-The reader of this format has to be able to provide useful statistics to
-the user without having to wait for the end of the file.
-Hence, the existence of the
-.Sq TCS-COUNT
-construction located at the beginning of the file.
-.It
-Text-based tools have to be able to easily look for the results of a given
-test case.
-This is why the
-.Sq TC-END
-construction duplicate the test case name already provided in
-.Sq TC-START .
-.El
+The reason field can only appear when the result is not
+.Sq passed .
 .Pp
 An example:
+An example:
 .Bd -literal -offset indent
-tcs-count: 2
-tc-start: add
-tc-end: add, passed
-tc-start: subtract
-tc-end: subtract, failed, Calculated an unexpected value
+result: passed
 .Ed
 .Pp
-Going back to the standard output and standard error streams, the reader
-has to be able to match the messages in those two streams to the test cases
-they belong to.
-To do this, these two streams must print a magic string that separates the
-output of test cases from each other, which is enough to synchronize their
-contents with the results output.
-This string is
-.Sq __atf_tc_separator__
-and it must printed on a line of its own.
-The last test case should not be followed by this line because the end of
-file marker takes its role.
+Another example:
+.Bd -literal -offset indent
+result: skipped
+reason: This test requires superuser privileges
+.Ed
 .Ss Format: application/X-atf-tps, version: 2
 The
 .Sq application/X-atf-tps

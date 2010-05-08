@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -560,6 +560,25 @@ public:
     //! \brief Returns the file descriptor attached to this stream.
     //!
     file_handle& handle(void);
+};
+
+// ------------------------------------------------------------------------
+// The "std_muxer" class.
+// ------------------------------------------------------------------------
+
+class unbuffered_istream;
+
+class std_muxer {
+protected:
+    virtual void got_stdout_line(const std::string&);
+    virtual void got_stderr_line(const std::string&);
+    virtual void got_eof(void);
+
+public:
+    std_muxer(void);
+    virtual ~std_muxer(void);
+
+    void read(unbuffered_istream&, unbuffered_istream&);
 };
 
 // ------------------------------------------------------------------------

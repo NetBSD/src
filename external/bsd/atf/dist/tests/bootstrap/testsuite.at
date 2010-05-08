@@ -51,6 +51,16 @@ m4_define(COUNT_IN_LINES,
 
 m4_define(COUNT_LINES, [test @S|@[(wc -l $1 | awk '{ print @S|@1 }')] = $2])
 
+m4_define(TCR_DATA, [cat >$1 <<EOF
+Content-Type: application/X-atf-tcr; version="1"
+
+result: $2
+EOF
+          m4_ifnblank([$3], [echo "reason: $3" >>$1])])
+
+m4_define(CHECK_TCR, [TCR_DATA([expres], $2, $3)
+                      AT_CHECK([diff -u expres $1], [0], [], [])])
+
 m4_define(CHECK_TCS_TCR,
           [AT_CHECK([grep '^tc-end: $1, $2' $3], [0], [ignore], [])])
 

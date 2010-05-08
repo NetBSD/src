@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,52 +27,109 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#if defined(HAVE_CONFIG_H)
+#include "bconfig.h"
+#endif
+
 extern "C" {
-#include "atf-c/error.h"
+#include <signal.h>
+#include <unistd.h>
 }
 
+#include <cerrno>
+
 #include "atf-c++/exceptions.hpp"
+#include "atf-c++/sanity.hpp"
 #include "atf-c++/signals.hpp"
 
 namespace impl = atf::signals;
 #define IMPL_NAME "atf::signals"
 
-const int impl::last_signo = atf_signals_last_signo;
+const int impl::last_signo = LAST_SIGNO;
 
 // ------------------------------------------------------------------------
 // The "signal_holder" class.
 // ------------------------------------------------------------------------
 
-impl::signal_holder::signal_holder(int signo)
+namespace {
+
+static bool happened[LAST_SIGNO + 1];
+
+static
+void
+holder_handler(const int signo)
 {
-    atf_error_t err = atf_signal_holder_init(&m_sh, signo);
-    if (atf_is_error(err))
-        throw_atf_error(err);
+    happened[signo] = true;
+}
+
+} // anonymous namespace
+
+impl::signal_holder::signal_holder(const int signo) :
+    m_signo(signo),
+    m_sp(NULL)
+{
+    happened[signo] = false;
+    m_sp = new signal_programmer(m_signo, holder_handler);
 }
 
 impl::signal_holder::~signal_holder(void)
 {
-    atf_signal_holder_fini(&m_sh);
+    if (m_sp != NULL)
+        delete m_sp;
+
+    if (happened[m_signo])
+        ::kill(::getpid(), m_signo);
 }
 
 void
 impl::signal_holder::process(void)
 {
-    atf_signal_holder_process(&m_sh);
+    if (happened[m_signo]) {
+        delete m_sp;
+        m_sp = NULL;
+        happened[m_signo] = false;
+        ::kill(::getpid(), m_signo);
+        m_sp = new signal_programmer(m_signo, holder_handler);
+    }
 }
 
 // ------------------------------------------------------------------------
 // The "signal_programmer" class.
 // ------------------------------------------------------------------------
 
-impl::signal_programmer::signal_programmer(int signo, handler h)
+impl::signal_programmer::signal_programmer(const int signo, const handler h) :
+    m_signo(signo),
+    m_handler(h)
 {
-    atf_error_t err = atf_signal_programmer_init(&m_sp, signo, h);
-    if (atf_is_error(err))
-        throw_atf_error(err);
+    struct ::sigaction sa;
+
+    sa.sa_handler = m_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    if (::sigaction(m_signo, &sa, &m_oldsa) == -1)
+        throw atf::system_error(IMPL_NAME, "Could not install handler for "
+                                "signal", errno);
 }
 
 impl::signal_programmer::~signal_programmer(void)
 {
-    atf_signal_programmer_fini(&m_sp);
+    if (::sigaction(m_signo, &m_oldsa, NULL) == -1)
+        UNREACHABLE;
+}
+
+// ------------------------------------------------------------------------
+// Free functions.
+// ------------------------------------------------------------------------
+
+void
+impl::reset(const int signo)
+{
+    struct ::sigaction sa;
+
+    sa.sa_handler = SIG_DFL;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+
+    (void)::sigaction(signo, &sa, NULL);
 }

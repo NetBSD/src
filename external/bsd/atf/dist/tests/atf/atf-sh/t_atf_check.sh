@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -40,12 +40,12 @@ info_ok_body()
     h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir)"
 
     atf_check -s eq:0 -o save:stdout -e save:stderr -x \
-              "${h} -r3 atf_check_info_ok 3>resout"
+              "${h} atf_check_info_ok"
     grep 'Executing command.*true' stdout >/dev/null || \
         atf_fail "atf_check does not print an informative message"
 
     atf_check -s eq:0 -o save:stdout -e save:stderr -x \
-              "${h} -r3 atf_check_info_fail 3>resout"
+              "${h} atf_check_info_fail"
     grep 'Executing command.*false' stdout >/dev/null || \
         atf_fail "atf_check does not print an informative message"
 }
@@ -62,7 +62,7 @@ expout_mismatch_body()
     h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir)"
 
     atf_check -s eq:1 -o save:stdout -e save:stderr -x \
-              "${h} -r3 atf_check_expout_mismatch 3>resout"
+              "${h} atf_check_expout_mismatch"
     grep 'Executing command.*echo bar' stdout >/dev/null || \
         atf_fail "atf_check does not print an informative message"
     grep 'incorrect stdout' stderr >/dev/null || \
@@ -87,7 +87,7 @@ experr_mismatch_body()
     h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir)"
 
     atf_check -s eq:1 -o save:stdout -e save:stderr -x \
-              "${h} -r3 atf_check_experr_mismatch 3>resout"
+              "${h} atf_check_experr_mismatch"
     grep 'Executing command.*echo bar' stdout >/dev/null || \
         atf_fail "atf_check does not print an informative message"
     grep 'incorrect stdout' stderr >/dev/null && \
@@ -111,7 +111,7 @@ null_stdout_body()
     h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir)"
 
     atf_check -s eq:1 -o save:stdout -e save:stderr -x \
-              "${h} -r3 atf_check_null_stdout 3>resout"
+              "${h} atf_check_null_stdout"
     grep 'Executing command.*echo.*These.*contents' stdout >/dev/null || \
         atf_fail "atf_check does not print an informative message"
     grep 'incorrect stdout' stderr >/dev/null || \
@@ -133,7 +133,7 @@ null_stderr_body()
     h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir)"
 
     atf_check -s eq:1 -o save:stdout -e save:stderr -x \
-              "${h} -r3 atf_check_null_stderr 3>resout"
+              "${h} atf_check_null_stderr"
     grep 'Executing command.*echo.*These.*contents' stdout >/dev/null || \
         atf_fail "atf_check does not print an informative message"
     grep 'incorrect stdout' stderr >/dev/null && \
@@ -153,21 +153,19 @@ equal_body()
 {
     h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir)"
 
-    atf_check -s eq:0 -o ignore -e ignore -x \
-              "${h} -r3 atf_check_equal_ok 3>resout"
+    atf_check -s eq:0 -o ignore -e ignore -x "${h} atf_check_equal_ok"
 
     atf_check -s eq:1 -o ignore -e ignore -x \
-              "${h} -r3 atf_check_equal_fail 3>resout"
-    atf_check -s eq:0 -o ignore -e empty \
-              grep 'a != b (a != b)' resout
+        "${h} -r resfile atf_check_equal_fail"
+    atf_check -s eq:0 -o ignore -e empty grep '^reason: a != b (a != b)$' \
+        resfile
 
-    atf_check -s eq:0 -o ignore -e ignore -x \
-              "${h} -r3 atf_check_equal_eval_ok 3>resout"
+    atf_check -s eq:0 -o ignore -e ignore -x "${h} atf_check_equal_eval_ok"
 
     atf_check -s eq:1 -o ignore -e ignore -x \
-              "${h} -r3 atf_check_equal_eval_fail 3>resout"
+        "${h} -r resfile atf_check_equal_eval_fail"
     atf_check -s eq:0 -o ignore -e empty \
-              grep '\${x} != \${y} (a != b)' resout
+        grep '^reason: \${x} != \${y} (a != b)$' resfile
 }
 
 atf_init_test_cases()

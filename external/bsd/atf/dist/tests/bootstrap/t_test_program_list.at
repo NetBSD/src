@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -31,16 +31,30 @@ AT_SETUP([test_program: list test cases])
 
 for h in tp_basic_c tp_basic_cpp tp_basic_sh; do
 
-AT_CHECK([TEST_HELPER(${h}) -l], [0], [stdout], [])
-AT_CHECK([COUNT_LINES(stdout, 4)], [0], [ignore], [])
-AT_CHECK([grep 'pass .*always passes' stdout], [0], [ignore], [])
-AT_CHECK([grep 'fail .*always fails' stdout], [0], [ignore], [])
-AT_CHECK([grep 'skip .*always skipped' stdout], [0], [ignore], [])
-AT_CHECK([grep 'default .*explicitly' stdout], [0], [ignore], [])
+AT_DATA([expout], [Content-Type: application/X-atf-tp; version="1"
 
-AT_CHECK([TEST_HELPER(${h}) -l pass], [0], [stdout], [])
-AT_CHECK([COUNT_LINES(stdout, 1)], [0], [ignore], [])
-AT_CHECK([grep 'pass .*always passes' stdout], [0], [ignore], [])
+ident: pass
+descr: An empty test case that always passes
+
+ident: fail
+descr: An empty test case that always fails
+
+ident: skip
+descr: An empty test case that is always skipped
+
+ident: default
+descr: A test case that passes without explicitly stating it
+])
+
+AT_CHECK([TEST_HELPER(${h}) -l], [0], [expout], [])
+
+AT_CHECK([TEST_HELPER(${h}) -l pass], [1], [], [stderr])
+AT_CHECK([grep 'Cannot provide test case names with -l' stderr],
+         [0], [ignore], [])
+
+AT_CHECK([TEST_HELPER(${h}) -l pass fail], [1], [], [stderr])
+AT_CHECK([grep 'Cannot provide test case names with -l' stderr],
+         [0], [ignore], [])
 
 done
 
