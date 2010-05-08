@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.26 2010/05/08 15:26:54 phx Exp $ */
+/* $NetBSD: main.c,v 1.27 2010/05/08 19:41:07 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -91,6 +91,8 @@ main(void)
 		printf("Kuro Box"); break;
 	case BRD_SYNOLOGY:
 		printf("Synology DS"); break;
+	case BRD_STORCENTER:
+		printf("IOMEGA StorCenter"); break;
 	default:
 		printf("Unknown board"); break;
 	}
