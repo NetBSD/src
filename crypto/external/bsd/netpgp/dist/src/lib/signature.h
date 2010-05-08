@@ -126,7 +126,9 @@ int __ops_sign_detached(__ops_io_t *,
 			__ops_seckey_t *,
 			const char *,
 			const int64_t,
-			const uint64_t);
+			const uint64_t,
+			const unsigned,
+			const unsigned);
 
 /* armoured stuff */
 unsigned __ops_crc24(unsigned, uint8_t);

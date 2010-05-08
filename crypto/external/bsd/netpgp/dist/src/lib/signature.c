@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.26 2010/03/05 16:01:10 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.27 2010/05/08 00:31:07 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -335,31 +335,14 @@ rsa_verify(__ops_hash_alg_t type,
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned	zz;
-		unsigned	uu;
-
-		printf("\n");
-		printf("hashbuf_from_sig\n");
-		for (zz = 0; zz < debug_len_decrypted; zz++) {
-			printf("%02x ", hashbuf_from_sig[n + zz]);
-		}
-		printf("\n");
-		printf("prefix\n");
-		for (zz = 0; zz < plen; zz++) {
-			printf("%02x ", prefix[zz]);
-		}
-		printf("\n");
-
-		printf("\n");
-		printf("hash from sig\n");
-		for (uu = 0; uu < hash_length; uu++) {
-			printf("%02x ", hashbuf_from_sig[n + plen + uu]);
-		}
-		printf("\n");
-		printf("hash passed in (should match hash from sig)\n");
-		for (uu = 0; uu < hash_length; uu++) {
-			printf("%02x ", hash[uu]);
-		}
+		(void) fprintf(stderr, "\nhashbuf_from_sig\n");
+		hexdump(stderr, hashbuf_from_sig, debug_len_decrypted, " ");
+		printf("\nprefix\n");
+		hexdump(stderr, prefix, plen, " ");
+		(void) fprintf(stderr, "\nhash from sig\n");
+		hexdump(stderr, &hashbuf_from_sig[n + plen], hash_length, " ");
+		(void) fprintf(stderr, "\nhash passed in (should match hash from sig)\n");
+		hexdump(stderr, hash, hash_length, " ");
 		printf("\n");
 	}
 	return (memcmp(&hashbuf_from_sig[n], prefix, plen) == 0 &&
@@ -938,11 +921,12 @@ __ops_sig_get_hash(__ops_create_sig_t *sig)
 	return &sig->hash;
 }
 
+/* open up an output file */
 static int 
 open_output_file(__ops_output_t **output,
 			const char *inname,
 			const char *outname,
-			const unsigned armored,
+			const char *suffix,
 			const unsigned overwrite)
 {
 	int             fd;
@@ -958,8 +942,7 @@ open_output_file(__ops_output_t **output,
 			(void) fprintf(stderr, "open_output_file: bad alloc\n");
 			fd = -1;
 		} else {
-			(void) snprintf(f, flen, "%s.%s", inname,
-					(armored) ? "asc" : "gpg");
+			(void) snprintf(f, flen, "%s.%s", inname, suffix);
 			fd = __ops_setup_file_write(output, f, overwrite);
 			free(f);
 		}
@@ -995,9 +978,9 @@ __ops_sign_file(__ops_io_t *io,
 	__ops_hash_alg_t	 hash_alg;
 	__ops_memory_t		*infile;
 	__ops_output_t		*output;
-	uint8_t		 keyid[OPS_KEY_ID_SIZE];
 	__ops_hash_t		*hash;
 	unsigned		 ret;
+	uint8_t			 keyid[OPS_KEY_ID_SIZE];
 	int			 fd_out;
 
 	sig = NULL;
@@ -1023,7 +1006,8 @@ __ops_sign_file(__ops_io_t *io,
 	}
 
 	/* setup output file */
-	fd_out = open_output_file(&output, inname, outname, armored, overwrite);
+	fd_out = open_output_file(&output, inname, outname,
+				(armored) ? "asc" : "gpg", overwrite);
 	if (fd_out < 0) {
 		__ops_memory_free(infile);
 		return 0;
@@ -1148,7 +1132,7 @@ __ops_sign_buf(__ops_io_t *io,
 	__ops_hash_alg_t	 hash_alg;
 	__ops_output_t		*output;
 	__ops_memory_t		*mem;
-	uint8_t		 keyid[OPS_KEY_ID_SIZE];
+	uint8_t			 keyid[OPS_KEY_ID_SIZE];
 	__ops_hash_t		*hash;
 	unsigned		 ret;
 
@@ -1249,20 +1233,28 @@ __ops_sign_detached(__ops_io_t *io,
 			__ops_seckey_t *seckey,
 			const char *hash,
 			const int64_t from,
-			const uint64_t duration)
+			const uint64_t duration,
+			const unsigned armored, const unsigned overwrite)
 {
 	__ops_create_sig_t	*sig;
 	__ops_hash_alg_t	 alg;
 	__ops_output_t		*output;
 	__ops_memory_t		*mem;
-	uint8_t	 	 keyid[OPS_KEY_ID_SIZE];
-	char			 fname[MAXPATHLEN];
+	uint8_t	 	 	 keyid[OPS_KEY_ID_SIZE];
 	int			 fd;
 
 	/* find out which hash algorithm to use */
 	alg = __ops_str_to_hash_alg(hash);
 	if (alg == OPS_HASH_UNKNOWN) {
 		(void) fprintf(io->errs,"Unknown hash algorithm: %s\n", hash);
+		return 0;
+	}
+
+	/* setup output file */
+	fd = open_output_file(&output, f, sigfile,
+				(armored) ? "asc" : "sig", overwrite);
+	if (fd < 0) {
+		(void) fprintf(io->errs,"Can't open output file: %s\n", f);
 		return 0;
 	}
 
@@ -1273,7 +1265,12 @@ __ops_sign_detached(__ops_io_t *io,
 	/* read the contents of 'f', and add that to the signature */
 	mem = __ops_memory_new();
 	if (!__ops_mem_readfile(mem, f)) {
+		__ops_teardown_file_write(output, fd);
 		return 0;
+	}
+	/* set armoured/not armoured here */
+	if (armored) {
+		__ops_writer_push_armor_msg(output);
 	}
 	__ops_sig_add_data(sig, __ops_mem_data(mem), __ops_mem_len(mem));
 	__ops_memory_free(mem);
@@ -1284,24 +1281,9 @@ __ops_sign_detached(__ops_io_t *io,
 	__ops_keyid(keyid, sizeof(keyid), &seckey->pubkey);
 	__ops_add_issuer_keyid(sig, keyid);
 	__ops_end_hashed_subpkts(sig);
-
-	/* write the signature to the detached file */
-	if (sigfile == NULL) {
-		(void) snprintf(fname, sizeof(fname), "%s.sig", f);
-		sigfile = fname;
-	}
-	fd = open(sigfile, O_CREAT|O_TRUNC|O_WRONLY, 0666);
-	if (fd < 0) {
-		(void) fprintf(io->errs, "can't write signature to \"%s\"\n",
-				sigfile);
-		return 0;
-	}
-
-	output = __ops_output_new();
-	__ops_writer_set_fd(output, fd);
 	__ops_write_sig(output, sig, &seckey->pubkey, seckey);
+	__ops_teardown_file_write(output, fd);
 	__ops_seckey_free(seckey);
-	(void) close(fd);
 
 	return 1;
 }
