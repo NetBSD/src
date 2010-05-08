@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.9 2010/05/02 13:31:14 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.10 2010/05/08 14:40:08 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #include <sys/param.h>
 
+#include <powerpc/oea/spr.h>
+
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libkern/libkern.h>
@@ -40,30 +42,89 @@
 const unsigned dcache_line_size = 32;		/* 32B linesize */
 const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
 
+static uint32_t ns_per_tick;
+
 void brdsetup(void);
 void setup_82C686B(void);
 void setup_83C553F(void);
 
 static inline u_quad_t mftb(void);
 
-unsigned uartbase;
+unsigned uart1base;	/* console */
+unsigned uart2base;	/* optional satellite processor */
 #define THR		0
 #define DLB		0
-#define DMB		1
+#define DHB		1
 #define IER		1
 #define FCR		2
 #define LCR		3
+#define  LCR_DLAB	0x80
+#define  LCR_PEVEN	0x18
+#define  LCR_PNONE	0x00
+#define  LCR_8BITS	0x03
 #define MCR		4
+#define  MCR_RTS	0x02
+#define  MCR_DTR	0x01
 #define LSR		5
-#define DCR		11
-#define LSR_THRE	0x20
-#define UART_READ(r)		*(volatile char *)(uartbase + (r))
-#define UART_WRITE(r, v)	*(volatile char *)(uartbase + (r)) = (v)
+#define  LSR_THRE	0x20
+#define DCR		0x11
+#define UART_READ(base, r)	*(volatile char *)(base + (r))
+#define UART_WRITE(base, r, v)	*(volatile char *)(base + (r)) = (v)
+
+static __inline uint32_t
+cputype(void)
+{
+	uint32_t pvr;
+
+	__asm volatile ("mfpvr %0" : "=r"(pvr));
+	return pvr >> 16;
+}
+
+static void
+init_uart(unsigned base, unsigned speed, uint8_t lcr)
+{
+	unsigned div;
+
+	div = busclock / speed / 16;
+	UART_WRITE(base, LCR, 0x80);		/* turn on DLAB bit */
+	UART_WRITE(base, FCR, 0x00);
+	UART_WRITE(base, DHB, div >> 8);	/* set speed */
+	UART_WRITE(base, DLB, div & 0xff);
+	UART_WRITE(base, LCR, lcr);
+	UART_WRITE(base, FCR, 0x07);		/* FIFO on, TXRX FIFO reset */
+	UART_WRITE(base, IER, 0x00);		/* make sure INT disabled */
+}
+
+/* talk to satellite processor */
+static void
+send_sat(char *msg)
+{
+	unsigned savedbase;
+
+	savedbase = uart1base;
+	uart1base = uart2base;
+	while (*msg)
+		putchar(*msg++);
+	uart1base = savedbase;
+}
 
 void
 brdsetup(void)
 {
-	unsigned pchb, pcib, div;
+	static uint8_t pci_to_memclk[] = {
+		30, 30, 10, 10, 20, 10, 10, 10,
+		10, 20, 20, 15, 20, 15, 20, 30,
+		30, 40, 15, 40, 20, 25, 20, 40,
+		25, 20, 10, 20, 15, 15, 20, 00
+	};
+	static uint8_t mem_to_cpuclk[] = {
+		25, 30, 45, 20, 20, 00, 10, 30,
+		30, 20, 45, 30, 25, 35, 30, 35,
+		20, 25, 20, 30, 35, 40, 40, 20,
+		30, 25, 40, 30, 30, 25, 35, 00
+	};
+	uint32_t extclk;
+	unsigned pchb, pcib, val;
 
 	/* BAT to arrange address space */
 
@@ -72,6 +133,9 @@ brdsetup(void)
 	pcicfgwrite(pchb, 0x78, 0xfc000000);
 
 	brdtype = BRD_UNKNOWN;
+	extclk = EXT_CLK_FREQ;	/* usually 33MHz */
+	busclock = 0;
+
 	if (pcifinddev(0x10ad, 0x0565, &pcib) == 0) {
 		brdtype = BRD_SANDPOINTX3;
 		setup_83C553F();
@@ -86,31 +150,7 @@ brdsetup(void)
 		brdtype = BRD_KUROBOX;
 		consname = "eumb";
 		consport = 0x4600;
-		consspeed = 57600;
-		if (pcifinddev(0x10ec, 0x8169, &pcib) == 0) /* KURO-BOX/HG */
-			ticks_per_sec = 133000000 / 4;
-
-		/* Stop Watchdog */
-		uartbase = 0xfc000000 + 0x4500;
-		div = (ticks_per_sec * 4) / 9600 / 16;
-		UART_WRITE(DCR, 0x01);	/* 2 independent UART */
-		UART_WRITE(LCR, 0x80);	/* turn on DLAB bit */
-		UART_WRITE(FCR, 0x00);
-		UART_WRITE(DMB, div >> 8);
-		UART_WRITE(DLB, div & 0xff);
-		UART_WRITE(LCR, 0x03 | 0x18);	/* 8 E 1 */
-		UART_WRITE(MCR, 0x03);		/* RTS DTR */
-		UART_WRITE(FCR, 0x07);		/* FIFO_EN | RXSR | TXSR */
-		UART_WRITE(IER, 0x00);		/* make sure INT disabled */
-		printf("AAAAFFFFJJJJ>>>>VVVV>>>>ZZZZVVVVKKKK");
-	}
-	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
-	    0x8086) {				/* PCI_VENDOR_INTEL */
-		brdtype = BRD_QNAPTS101;
-		consname = "eumb";
-		consport = 0x4600;
-		consspeed = 57600;		/* XXX unverified */
-		ticks_per_sec = 133000000 / 4;	/* TS-101 is 266MHz */
+		consspeed = 115200;
 	}
 	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
 	    0x11ab) {				/* PCI_VENDOR_MARVELL */
@@ -118,15 +158,56 @@ brdsetup(void)
 		consname = "eumb";
 		consport = 0x4500;
 		consspeed = 115200;
-		/* XXX assume 133MHz bus clock, valid for 266MHz models */
-		ticks_per_sec = 133000000 / 4;
+	}
+	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
+	    0x8086) {				/* PCI_VENDOR_INTEL */
+		brdtype = BRD_QNAPTS101;
+		consname = "eumb";
+		consport = 0x4600;
+		consspeed = 115200;
 	}
 
+	/* determine clock frequencies */
+	if (busclock == 0) {
+		if (cputype() == MPC8245) {
+			/* PLL_CFG from PCI host bridge register 0xe2 */
+			val = pcicfgread(pchb, 0xe0);
+			busclock = (extclk *
+			    pci_to_memclk[(val >> 19) & 0x1f] + 10) / 10;
+			/* PLLRATIO from HID1 */
+			__asm ("mfspr %0,1009" : "=r"(val));
+			cpuclock = ((uint64_t)busclock *
+			    mem_to_cpuclk[val >> 27] + 10) / 10;
+		} else
+			busclock = 100000000;	/* 100MHz bus clock default */
+	}
+	ticks_per_sec = busclock >> 2;
+	ns_per_tick = 1000000000 / ticks_per_sec;
+
 	/* now prepare serial console */
-	if (strcmp(consname, "eumb") != 0)
-		uartbase = 0xfe000000 + consport; /* 0x3f8, 0x2f8 */
-	else
-		uartbase = 0xfc000000 + consport; /* 0x4500, 0x4600 */
+	if (strcmp(consname, "eumb") == 0) {
+		uart1base = 0xfc000000 + consport;	/* 0x4500, 0x4600 */
+		UART_WRITE(uart1base, DCR, 0x01);	/* enable DUART mode */
+		uart2base = uart1base ^ 0x0300;
+	} else
+		uart1base = 0xfe000000 + consport;	/* 0x3f8, 0x2f8 */
+
+	/* configure 2nd UART when needed */
+	switch (brdtype) {
+	case BRD_KUROBOX:
+		init_uart(uart2base, 9600, LCR_8BITS | LCR_PEVEN);
+		/* Stop Watchdog */
+		send_sat("AAAAFFFFJJJJ>>>>VVVV>>>>ZZZZVVVVKKKK");
+		break;
+	case BRD_SYNOLOGY:
+		init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
+		/* beep, power LED on, status LED off */
+		send_sat("247");
+		break;
+	case BRD_QNAPTS101:
+		init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
+		break;
+	}
 }
 
 void
@@ -139,16 +220,23 @@ putchar(int c)
 
 	timo = 0x00100000;
 	do {
-		lsr = UART_READ(LSR);
+		lsr = UART_READ(uart1base, LSR);
 	} while (timo-- > 0 && (lsr & LSR_THRE) == 0);
 	if (timo > 0)
-		UART_WRITE(THR, c);
+		UART_WRITE(uart1base, THR, c);
 }
 
 void
 _rtt(void)
 {
-	run(0, 0, 0, 0, (void *)0xFFF00100); /* reset entry */
+	switch (brdtype) {
+	case BRD_SYNOLOGY:
+		send_sat("C");
+		break;
+	default:
+		run(0, 0, 0, 0, (void *)0xFFF00100); /* reset entry */
+		break;
+	}
 	/* NOTREACHED */
 }
 
@@ -168,7 +256,7 @@ getsecs(void)
 {
 	u_quad_t tb = mftb();
 
-	return (tb / TICKS_PER_SEC);
+	return (tb / ticks_per_sec);
 }
 
 /*
@@ -181,7 +269,7 @@ delay(u_int n)
 	u_long tbh, tbl, scratch;
 
 	tb = mftb();
-	tb += (n * 1000 + NS_PER_TICK - 1) / NS_PER_TICK;
+	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
 	asm volatile ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw 0, %0,%2; blt 1b; 2:" : "=&r"(scratch) : "r"(tbh), "r"(tbl));

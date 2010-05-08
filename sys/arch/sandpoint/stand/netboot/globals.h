@@ -1,10 +1,9 @@
-/* $NetBSD: globals.h,v 1.12 2010/05/02 13:31:14 phx Exp $ */
+/* $NetBSD: globals.h,v 1.13 2010/05/08 14:40:08 phx Exp $ */
 
 /* clock feed */
-#ifndef TICKS_PER_SEC
-#define TICKS_PER_SEC   (100000000 / 4)          /* 100MHz front bus */
+#ifndef EXT_CLK_FREQ
+#define EXT_CLK_FREQ	33333333	/* external clock (PCI clock) */
 #endif
-#define NS_PER_TICK     (1000000000 / TICKS_PER_SEC)
 
 /* brd type */
 extern int brdtype;
@@ -20,6 +19,7 @@ extern char *consname;
 extern int consport;
 extern int consspeed;
 extern int ticks_per_sec;
+extern uint32_t cpuclock, busclock;
 
 unsigned mpc107memsize(void);
 
