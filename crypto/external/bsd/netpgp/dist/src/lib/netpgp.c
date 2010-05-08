@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.46 2010/05/07 16:22:39 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.47 2010/05/08 00:31:07 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -829,7 +829,7 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 					overwrite);
 }
 
-#define ARMOR_HEAD	"-----BEGIN PGP MESSAGE-----"
+#define ARMOR_HEAD	"-----BEGIN PGP MESSAGE-----\r\n"
 
 /* decrypt a file */
 int
@@ -856,7 +856,7 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 	if (fgets(buf, sizeof(buf), fp) == NULL) {
 		realarmor = 0;
 	} else {
-		realarmor = (strncmp(buf, ARMOR_HEAD, strlen(ARMOR_HEAD)) == 0);
+		realarmor = (strcmp(buf, ARMOR_HEAD) == 0);
 	}
 	(void) fclose(fp);
 	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
@@ -931,7 +931,9 @@ netpgp_sign_file(netpgp_t *netpgp,
 	if (detached) {
 		ret = __ops_sign_detached(io, f, out, seckey, hashalg,
 				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
-				get_duration(netpgp_getvar(netpgp, "duration")));
+				get_duration(netpgp_getvar(netpgp, "duration")),
+				(unsigned)armored,
+				overwrite);
 	} else {
 		ret = __ops_sign_file(io, f, out, seckey, hashalg,
 				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
@@ -943,7 +945,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 	return ret;
 }
 
-#define ARMOR_SIG_HEAD	"-----BEGIN PGP SIGNATURE-----"
+#define ARMOR_SIG_HEAD	"-----BEGIN PGP SIGNATURE-----\r\n"
 
 /* verify a file */
 int
@@ -971,8 +973,7 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 	if (fgets(buf, sizeof(buf), fp) == NULL) {
 		realarmor = 0;
 	} else {
-		realarmor = (strncmp(buf, ARMOR_SIG_HEAD, strlen(ARMOR_SIG_HEAD)) == 0 ||
-			     strncmp(buf, ARMOR_HEAD, strlen(ARMOR_HEAD)) == 0);
+		realarmor = (strcmp(buf, ARMOR_SIG_HEAD) == 0);
 	}
 	(void) fclose(fp);
 	if (__ops_validate_file(io, &result, in, out, (const int)realarmor, netpgp->pubring)) {
