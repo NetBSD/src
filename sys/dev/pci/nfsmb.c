@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.20 2009/05/09 07:13:57 pgoyette Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.21 2010/05/08 07:41:44 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.20 2009/05/09 07:13:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.21 2010/05/08 07:41:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,6 +124,8 @@ nfsmbc_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_NVIDIA_MCP65_SMB:
 		case PCI_PRODUCT_NVIDIA_MCP67_SMB:
 		case PCI_PRODUCT_NVIDIA_MCP73_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP78S_SMB:
+		case PCI_PRODUCT_NVIDIA_MCP79_SMB:
 			return 1;
 		}
 	}
