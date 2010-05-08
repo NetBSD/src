@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.25 2009/11/25 14:28:50 rmind Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.26 2010/05/08 01:33:00 isaki Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -84,7 +84,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.25 2009/11/25 14:28:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.26 2010/05/08 01:33:00 isaki Exp $");
+
+#include "opt_slhci.h"
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
