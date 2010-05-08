@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.28 2010/04/16 13:48:30 pooka Exp $
+#	$NetBSD: ALCHEMY,v 1.29 2010/05/08 22:16:27 mrg Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.28 $"
+#ident 		"ALCHEMY-$Revision: 1.29 $"
 
 maxusers	32
 
@@ -112,6 +112,8 @@ options 	INET		# Internet protocols
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
