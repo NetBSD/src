@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.10 2010/05/08 14:40:08 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.11 2010/05/08 19:41:07 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ brdsetup(void)
 		brdtype = BRD_KUROBOX;
 		consname = "eumb";
 		consport = 0x4600;
-		consspeed = 115200;
+		consspeed = 57600;
 	}
 	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
 	    0x11ab) {				/* PCI_VENDOR_MARVELL */
@@ -162,6 +162,13 @@ brdsetup(void)
 	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
 	    0x8086) {				/* PCI_VENDOR_INTEL */
 		brdtype = BRD_QNAPTS101;
+		consname = "eumb";
+		consport = 0x4600;
+		consspeed = 115200;
+	}
+	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
+	    0x10ec) {				/* PCI_VENDOR_REALTEK */
+		brdtype = BRD_STORCENTER;
 		consname = "eumb";
 		consport = 0x4600;
 		consspeed = 115200;
@@ -205,6 +212,7 @@ brdsetup(void)
 		send_sat("247");
 		break;
 	case BRD_QNAPTS101:
+	case BRD_STORCENTER:
 		init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
 		break;
 	}
