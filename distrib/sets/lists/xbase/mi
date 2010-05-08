@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.86 2010/04/27 05:34:15 lukem Exp $
+# $NetBSD: mi,v 1.87 2010/05/08 05:04:58 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2810,6 +2810,7 @@
 ./usr/X11R7/share/pciids				base-x11-root	xorg
 ./usr/libdata/debug/usr/X11R6				base-sys-usr	x11
 ./usr/libdata/debug/usr/X11R6/bin			base-sys-usr	x11
+./usr/libdata/debug/usr/X11R6/lib			base-sys-usr	x11
 ./usr/libdata/debug/usr/X11R6/libexec			base-sys-usr	x11
 ./usr/libdata/debug/usr/X11R7				base-sys-usr	xorg
 ./usr/libdata/debug/usr/X11R7/bin			base-sys-usr	xorg
