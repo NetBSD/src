@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.34 2010/05/08 00:33:28 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.35 2010/05/08 02:17:15 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1466,19 +1466,10 @@ encrypted_data_reader(void *dest,
 					encrypted->decrypted, buffer, n);
 
 				if (__ops_get_debug_level(__FILE__)) {
-					int             i;
-
-					(void) fprintf(stderr,
-						"READING:\nencrypted: ");
-					for (i = 0; i < 16; i++) {
-						(void) fprintf(stderr,
-							"%2x ", buffer[i]);
-					}
+					(void) fprintf(stderr, "READING:\nencrypted: ");
+					hexdump(stderr, buffer, 16, " ");
 					(void) fprintf(stderr, "\ndecrypted: ");
-					for (i = 0; i < 16; i++) {
-						(void) fprintf(stderr, "%2x ",
-						encrypted->decrypted[i]);
-					}
+					hexdump(stderr, encrypted->decrypted, 16, " ");
 					(void) fprintf(stderr, "\n");
 				}
 			} else {
