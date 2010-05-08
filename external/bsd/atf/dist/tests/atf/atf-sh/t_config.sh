@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ has_head()
 }
 has_body()
 {
-    h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir) -r3 3>/dev/null"
+    h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir)"
 
     atf_check -s eq:0 -o save:stdout -e empty -x \
               "TEST_VARIABLE=foo ${h} config_has"
@@ -57,7 +57,7 @@ get_head()
 }
 get_body()
 {
-    h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir) -r3 3>/dev/null"
+    h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir)"
 
     echo "Querying an undefined variable"
     ( atf_config_get "undefined" ) >out 2>err && \

@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -424,6 +424,118 @@ ATF_TEST_CASE_BODY(postream)
 }
 
 // ------------------------------------------------------------------------
+// Test cases for the "std_muxer" class.
+// ------------------------------------------------------------------------
+
+class test_std_muxer : public atf::io::std_muxer {
+public:
+    std::vector< std::string > m_stdout_lines, m_stderr_lines;
+    bool m_eof;
+
+    test_std_muxer(void) :
+        m_eof(false)
+    {
+    }
+
+private:
+    void
+    got_stdout_line(const std::string& line)
+    {
+        ATF_CHECK(!m_eof);
+        m_stdout_lines.push_back(line);
+    }
+
+    void
+    got_stderr_line(const std::string& line)
+    {
+        ATF_CHECK(!m_eof);
+        m_stderr_lines.push_back(line);
+    }
+
+    void
+    got_eof(void)
+    {
+        ATF_CHECK(!m_eof);
+        m_eof = true;
+    }
+};
+
+static
+int
+create_file(const char* name, const std::vector< std::string >& lines)
+{
+    const int wrfd = ::open(name, O_CREAT | O_WRONLY | O_TRUNC,
+                            S_IRUSR | S_IWUSR);
+    ATF_CHECK(wrfd != -1);
+
+    for (std::vector< std::string >::const_iterator iter = lines.begin();
+         iter != lines.end(); iter++) {
+        const std::string line = *iter + "\n";
+        ATF_CHECK(::write(wrfd, line.c_str(), line.size()) != -1);
+    }
+
+    ::close(wrfd);
+
+    const int rdfd = ::open(name, O_RDONLY);
+    ATF_CHECK(rdfd != -1);
+    return rdfd;
+}
+
+ATF_TEST_CASE(std_muxer_empty);
+ATF_TEST_CASE_HEAD(std_muxer_empty)
+{
+    set_md_var("descr", "Tests the std_muxer class");
+}
+ATF_TEST_CASE_BODY(std_muxer_empty)
+{
+    std::vector< std::string > outlines;
+    atf::io::file_handle outfh(create_file("out.txt", outlines));
+    atf::io::unbuffered_istream outs(outfh);
+
+    std::vector< std::string > errlines;
+    atf::io::file_handle errfh(create_file("err.txt", errlines));
+    atf::io::unbuffered_istream errs(errfh);
+
+    test_std_muxer m;
+    m.read(outs, errs);
+    ATF_CHECK(m.m_eof);
+    ATF_CHECK(m.m_stdout_lines.empty());
+    ATF_CHECK(m.m_stderr_lines.empty());
+}
+
+ATF_TEST_CASE(std_muxer_lines);
+ATF_TEST_CASE_HEAD(std_muxer_lines)
+{
+    set_md_var("descr", "Tests the std_muxer class");
+}
+ATF_TEST_CASE_BODY(std_muxer_lines)
+{
+    std::vector< std::string > outlines;
+    outlines.push_back("stdout line 1");
+    outlines.push_back("stdout line 2");
+    outlines.push_back("stdout line 3");
+    atf::io::file_handle outfh(create_file("out.txt", outlines));
+    atf::io::unbuffered_istream outs(outfh);
+
+    std::vector< std::string > errlines;
+    errlines.push_back("stderr line a");
+    errlines.push_back("stderr line b");
+    atf::io::file_handle errfh(create_file("err.txt", errlines));
+    atf::io::unbuffered_istream errs(errfh);
+
+    test_std_muxer m;
+    m.read(outs, errs);
+    ATF_CHECK(m.m_eof);
+    ATF_CHECK_EQUAL(3, m.m_stdout_lines.size());
+    ATF_CHECK_EQUAL("stdout line 1", m.m_stdout_lines[0]);
+    ATF_CHECK_EQUAL("stdout line 2", m.m_stdout_lines[1]);
+    ATF_CHECK_EQUAL("stdout line 3", m.m_stdout_lines[2]);
+    ATF_CHECK_EQUAL(2, m.m_stderr_lines.size());
+    ATF_CHECK_EQUAL("stderr line a", m.m_stderr_lines[0]);
+    ATF_CHECK_EQUAL("stderr line b", m.m_stderr_lines[1]);
+}
+
+// ------------------------------------------------------------------------
 // Tests cases for the header file.
 // ------------------------------------------------------------------------
 
@@ -457,6 +569,10 @@ ATF_INIT_TEST_CASES(tcs)
 
     // Add the tests for the "postream" class.
     ATF_ADD_TEST_CASE(tcs, postream);
+
+    // Add the tests for the "std_muxer" class.
+    ATF_ADD_TEST_CASE(tcs, std_muxer_empty);
+    ATF_ADD_TEST_CASE(tcs, std_muxer_lines);
 
     // Add the test cases for the header file.
     ATF_ADD_TEST_CASE(tcs, include);

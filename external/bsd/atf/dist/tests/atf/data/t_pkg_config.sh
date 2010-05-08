@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -89,16 +89,16 @@ c_build_body()
 
 #include <atf-c.h>
 
-ATF_TC(tp);
-ATF_TC_HEAD(tp, tc) {
+ATF_TC(tc);
+ATF_TC_HEAD(tc, tc) {
     atf_tc_set_md_var(tc, "descr", "A test case");
 }
-ATF_TC_BODY(tp, tc) {
+ATF_TC_BODY(tc, tc) {
     printf("Running\n");
 }
 
 ATF_TP_ADD_TCS(tp) {
-    ATF_TP_ADD_TC(tp, tp);
+    ATF_TP_ADD_TC(tp, tc);
 
     return atf_no_error();
 }
@@ -137,8 +137,7 @@ EOF
 
     atf_check -s eq:0 -o empty -e empty test -x tp
     atf_check -s eq:0 -o save:stdout -e empty -x \
-              "LD_LIBRARY_PATH=${libpath} ./tp"
-    atf_check -s eq:0 -o ignore -e empty grep 'application/X-atf-tcs' stdout
+              "LD_LIBRARY_PATH=${libpath} ./tp tc"
     atf_check -s eq:0 -o ignore -e empty grep 'Running' stdout
 }
 
@@ -177,16 +176,16 @@ cxx_build_body()
 
 #include <atf-c++.hpp>
 
-ATF_TEST_CASE(tp);
-ATF_TEST_CASE_HEAD(tp) {
+ATF_TEST_CASE(tc);
+ATF_TEST_CASE_HEAD(tc) {
     set_md_var("descr", "A test case");
 }
-ATF_TEST_CASE_BODY(tp) {
+ATF_TEST_CASE_BODY(tc) {
     std::cout << "Running" << std::endl;
 }
 
 ATF_INIT_TEST_CASES(tcs) {
-    ATF_ADD_TEST_CASE(tcs, tp);
+    ATF_ADD_TEST_CASE(tcs, tc);
 }
 EOF
 
@@ -224,8 +223,7 @@ EOF
 
     atf_check -s eq:0 -o empty -e empty test -x tp
     atf_check -s eq:0 -o save:stdout -e empty -x \
-              "LD_LIBRARY_PATH=${libpath} ./tp"
-    atf_check -s eq:0 -o ignore -e empty grep 'application/X-atf-tcs' stdout
+              "LD_LIBRARY_PATH=${libpath} ./tp tc"
     atf_check -s eq:0 -o ignore -e empty grep 'Running' stdout
 }
 

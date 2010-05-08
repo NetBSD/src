@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,6 @@
 struct atf_dynstr;
 struct atf_fs_path;
 struct atf_tc;
-struct atf_tcr;
 
 typedef void (*atf_tc_head_t)(struct atf_tc *);
 typedef void (*atf_tc_body_t)(const struct atf_tc *);
@@ -92,6 +91,7 @@ const char *atf_tc_get_config_var(const atf_tc_t *, const char *);
 const char *atf_tc_get_config_var_wd(const atf_tc_t *, const char *,
                                      const char *);
 const char *atf_tc_get_md_var(const atf_tc_t *, const char *);
+const atf_map_t *atf_tc_get_md_vars(const atf_tc_t *);
 bool atf_tc_has_config_var(const atf_tc_t *, const char *);
 bool atf_tc_has_md_var(const atf_tc_t *, const char *);
 
@@ -102,8 +102,8 @@ atf_error_t atf_tc_set_md_var(atf_tc_t *, const char *, const char *, ...);
  * Free functions.
  * --------------------------------------------------------------------- */
 
-atf_error_t atf_tc_run(const atf_tc_t *, struct atf_tcr *,
-                       int, int, const struct atf_fs_path *);
+atf_error_t atf_tc_run(const atf_tc_t *, const struct atf_fs_path *);
+atf_error_t atf_tc_cleanup(const atf_tc_t *);
 
 /* To be run from test case bodies only. */
 void atf_tc_fail(const char *, ...) ATF_DEFS_ATTRIBUTE_NORETURN;

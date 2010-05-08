@@ -55,6 +55,14 @@ call_mtn() {
     ${MTN} --root=${ROOT} "${@}"
 }
 
+# extract_certs rev
+#
+extract_certs() {
+    # TODO: Improve 'mtn automate' so that we don't need this awk dance
+    # to extract the correct values.
+    call_mtn automate certs ${1} | awk -f ${ROOT}/admin/extract-certs.awk
+}
+
 #
 # get_rev_info_into_vars
 #
@@ -71,11 +79,8 @@ get_rev_info_into_vars() {
         rev_modified=true
     fi
 
-    datetime=$(call_mtn automate certs ${rev_base_id} | \
-               grep 'value "[2-9][0-9][0-9][0-9]-[01][0-9]-[0-3][0-9]' | \
-               cut -d '"' -f 2)
-    rev_date=$(echo ${datetime} | cut -d T -f 1)
-    rev_time=$(echo ${datetime} | cut -d T -f 2)
+    # The following defines several rev_* variables.
+    eval $(extract_certs ${rev_base_id})
 }
 
 #
@@ -88,6 +93,7 @@ generate_h() {
 
     >${revfile}
 
+    echo "#define PACKAGE_REVISION_BRANCH \"${rev_branch}\"" >>${revfile}
     echo "#define PACKAGE_REVISION_BASE \"${rev_base_id}\"" >>${revfile}
 
     if [ ${rev_modified} = true ]; then

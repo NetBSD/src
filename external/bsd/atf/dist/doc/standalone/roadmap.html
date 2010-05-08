@@ -24,12 +24,17 @@ href="standalone.css" />
 </li>
 <li>
 <p>
-<a href="#plan-0-8">The plan to 0.8</a>
+<a href="#plan-0-9">The plan to 0.9</a>
 </p>
 </li>
 <li>
 <p>
-<a href="#plan-0-9">The plan to 0.9</a>
+<a href="#plan-0-10">The plan to 0.10</a>
+</p>
+</li>
+<li>
+<p>
+<a href="#plan-misc">The plan to fix miscellaneous issues</a>
 </p>
 </li>
 <li>
@@ -62,7 +67,7 @@ in the
 specification (TODO: Add link somehow).
 </p>
 <h1>
-<a name="plan-0-8">The plan to 0.8</a>
+<a name="plan-0-9">The plan to 0.9</a>
 </h1>
 <ul>
 <li>
@@ -113,7 +118,7 @@ cases.
 </li>
 </ul>
 <h1>
-<a name="plan-0-9">The plan to 0.9</a>
+<a name="plan-0-10">The plan to 0.10</a>
 </h1>
 <ul>
 <li>
@@ -135,6 +140,167 @@ problems:
 78eeacf3b9284493e5e96b7866fc1d163a13bc02
 8e200683a2b70eadca728c2e0347d4790777b3fc
 872393ed0177cbcc30ffacede228eb3986c42ab7
+</p>
+</li>
+</ul>
+<h1>
+<a name="plan-misc">The plan to fix miscellaneous issues</a>
+</h1>
+<ul>
+<li>
+<p xml:space="preserve">
+Consider getting rid of the checked-in top-level documents.
+Don't know why we are doing that at all.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Get rid of the "C object model", e.g.
+<tt>atf_object_t</tt>.  It is completely useless at this point
+and just causes pain.  If we want to catch leaks, let's just use
+Valgrind
+in a platform where this tool works.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Validate test program command line syntax: -r has to be
+invalid when running the cleanup part of a test case.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Make test case list sort properties alphabetically?  Wrap
+them on line boundaries when printing to terminal?
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Proper cleanup of a test case when ctrl+c from
+atf-run.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+When running tests/atf/atf-run/t_atf_run manually, it
+overwrites Atffile.  This is a bit annoying and should be somehow
+fixed.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Templatize the void* cookie in atf-c++'s
+fork.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Remove obsolete helper tests in tests/atf/test_programs/h_*
+for cleanup.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Document the applications/X-atf-tp
+format.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Update atf-test-program(4) to reflect the command-line
+changes.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Update atf-test-case(4) to reflect the isolation
+changes.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Fix default for -r flag in test programs.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Fix any XXX and TODO items introduced by this
+branch.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Get rid of atf-compile.  Instead, just write a wrapper
+around sh that loads the necessary library files and then executes
+the test
+program.  Make it be usable with #! /...
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Drop the tests/ hierarchy and intermix test programs with
+the source files.  (The installed layout would remain the same.) 
+Rename
+t_* to *_test.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Get rid of the data/ subdirectory: just put the files where
+they belong.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Get rid of h_{pass,fail,skip} duplicates.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Add a use.fs metadata property, defaulting to
+no.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Reverse arguments to ATF_CHECK_THROW.  Also add a macro to
+check the error message of an exception, alongside its
+type.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Get rid of the atf::tests::vars_map monstrosity and prune
+unnecessary inclusions of atf-c++/tests.hpp.  I'm thinking that we
+need a
+simple "types" file containing convenience types used thorough the
+code,
+and that we need a "strong_typedef" wrapper for them.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Do not use std::endl.  Understand what it is for first, and
+then decide.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+It looks like atf-c++/signals may be unused.  Review and
+delete as required.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+The suggested 
+<tt>atf-run | atf-report</tt> does
+not work quite well because most shells lose the exit code of the
+first
+command in the pipeline.  Therefore, it's not possible to get the
+result
+of the execution of the test suite.  Find a way around this; maybe
+implement
+a wrapping tool.
 </p>
 </li>
 </ul>

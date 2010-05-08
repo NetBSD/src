@@ -1,0 +1,5 @@
+Content-Type: application/X-atf-tcr; version="1"
+
+result: failed
+reason: The reason
+reason: Another reason

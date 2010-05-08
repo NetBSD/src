@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,7 @@
 #include "atf-c/config.h"
 #include "atf-c/fs.h"
 #include "atf-c/io.h"
+#include "atf-c/process.h"
 #include "atf-c/tcr.h"
 
 #include "h_lib.h"
@@ -152,8 +153,7 @@ ATF_TC_BODY(h_build_cpp_ok, tc)
     bool success;
     atf_fs_path_t test_p;
 
-    RE(atf_fs_path_init_fmt(&test_p, "%s/test.p",
-                            atf_tc_get_config_var(tc, "callerdir")));
+    RE(atf_fs_path_init_fmt(&test_p, "test.p"));
 
     ATF_REQUIRE((sfile = fopen("test.c", "w")) != NULL);
     fprintf(sfile, "#define A foo\n");
@@ -228,36 +228,18 @@ ATF_TC_BODY(h_build_cxx_o_fail, tc)
 
 static
 void
-run_h_tc(atf_tc_t *tc, const atf_tc_pack_t *tcpack,
-         const char *outname, const char *errname)
+init_and_run_h_tc(atf_tc_t *tc, const atf_tc_pack_t *tcpack,
+                  const char *outname, const char *errname)
 {
-    atf_fs_path_t cwd;
     atf_map_t config;
-    atf_tcr_t tcr;
-    int fdout, fderr;
 
-    RE(atf_fs_getcwd(&cwd));
     RE(atf_map_init(&config));
-    RE(atf_map_insert(&config, "callerdir",
-                      strdup(atf_fs_path_cstring(&cwd)), true));
-
-    ATF_REQUIRE((fdout = open(outname, O_CREAT | O_WRONLY | O_TRUNC,
-                              0600)) != -1);
-    ATF_REQUIRE((fderr = open(errname, O_CREAT | O_WRONLY | O_TRUNC,
-                              0600)) != -1);
 
     RE(atf_tc_init_pack(tc, tcpack, &config));
-    RE(atf_tc_run(tc, &tcr, fdout, fderr, &cwd));
+    run_h_tc(tc, outname, errname, "result");
     atf_tc_fini(tc);
 
-    ATF_CHECK_EQ(atf_tcr_get_state(&tcr), atf_tcr_passed_state);
-    atf_tcr_fini(&tcr);
-
-    close(fderr);
-    close(fdout);
-
     atf_map_fini(&config);
-    atf_fs_path_fini(&cwd);
 }
 
 ATF_TC(build_c_o);
@@ -268,12 +250,12 @@ ATF_TC_HEAD(build_c_o, tc)
 }
 ATF_TC_BODY(build_c_o, tc)
 {
-    run_h_tc(&ATF_TC_NAME(h_build_c_o_ok),
+    init_and_run_h_tc(&ATF_TC_NAME(h_build_c_o_ok),
              &ATF_TC_PACK_NAME(h_build_c_o_ok), "stdout", "stderr");
     ATF_CHECK(grep_file("stdout", "-o test.o"));
     ATF_CHECK(grep_file("stdout", "-c test.c"));
 
-    run_h_tc(&ATF_TC_NAME(h_build_c_o_fail),
+    init_and_run_h_tc(&ATF_TC_NAME(h_build_c_o_fail),
              &ATF_TC_PACK_NAME(h_build_c_o_fail), "stdout", "stderr");
     ATF_CHECK(grep_file("stdout", "-o test.o"));
     ATF_CHECK(grep_file("stdout", "-c test.c"));
@@ -289,13 +271,13 @@ ATF_TC_HEAD(build_cpp, tc)
 }
 ATF_TC_BODY(build_cpp, tc)
 {
-    run_h_tc(&ATF_TC_NAME(h_build_cpp_ok),
+    init_and_run_h_tc(&ATF_TC_NAME(h_build_cpp_ok),
              &ATF_TC_PACK_NAME(h_build_cpp_ok), "stdout", "stderr");
     ATF_CHECK(grep_file("stdout", "-o.*test.p"));
     ATF_CHECK(grep_file("stdout", "test.c"));
     ATF_CHECK(grep_file("test.p", "foo bar"));
 
-    run_h_tc(&ATF_TC_NAME(h_build_cpp_fail),
+    init_and_run_h_tc(&ATF_TC_NAME(h_build_cpp_fail),
              &ATF_TC_PACK_NAME(h_build_cpp_fail), "stdout", "stderr");
     ATF_CHECK(grep_file("stdout", "-o test.p"));
     ATF_CHECK(grep_file("stdout", "test.c"));
@@ -311,12 +293,12 @@ ATF_TC_HEAD(build_cxx_o, tc)
 }
 ATF_TC_BODY(build_cxx_o, tc)
 {
-    run_h_tc(&ATF_TC_NAME(h_build_cxx_o_ok),
+    init_and_run_h_tc(&ATF_TC_NAME(h_build_cxx_o_ok),
              &ATF_TC_PACK_NAME(h_build_cxx_o_ok), "stdout", "stderr");
     ATF_CHECK(grep_file("stdout", "-o test.o"));
     ATF_CHECK(grep_file("stdout", "-c test.cpp"));
 
-    run_h_tc(&ATF_TC_NAME(h_build_cxx_o_fail),
+    init_and_run_h_tc(&ATF_TC_NAME(h_build_cxx_o_fail),
              &ATF_TC_PACK_NAME(h_build_cxx_o_fail), "stdout", "stderr");
     ATF_CHECK(grep_file("stdout", "-o test.o"));
     ATF_CHECK(grep_file("stdout", "-c test.cpp"));

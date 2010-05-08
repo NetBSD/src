@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,10 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+extern "C" {
+#include <regex.h>
+}
+
 #include <cctype>
 #include <cstring>
 
@@ -47,6 +51,32 @@ impl::duplicate(const char* str)
     char* copy = new char[std::strlen(str) + 1];
     std::strcpy(copy, str);
     return copy;
+}
+
+bool
+impl::match(const std::string& str, const std::string& regex)
+{
+    bool found;
+
+    // Special case: regcomp does not like empty regular expressions.
+    if (regex.empty()) {
+        found = str.empty();
+    } else {
+        ::regex_t preg;
+
+        if (::regcomp(&preg, regex.c_str(), REG_EXTENDED) != 0)
+            throw std::runtime_error("Invalid regular expression '" + regex +
+                                     "'");
+
+        const int res = ::regexec(&preg, str.c_str(), 0, NULL, 0);
+        regfree(&preg);
+        if (res != 0 && res != REG_NOMATCH)
+            throw std::runtime_error("Invalid regular expression " + regex);
+
+        found = res == 0;
+    }
+
+    return found;
 }
 
 std::string

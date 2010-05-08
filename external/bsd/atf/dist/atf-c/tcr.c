@@ -27,9 +27,15 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/stat.h>
+
+#include <errno.h>
+#include <fcntl.h>
 #include <stdbool.h>
+#include <unistd.h>
 
 #include "atf-c/error.h"
+#include "atf-c/fs.h"
 #include "atf-c/io.h"
 #include "atf-c/sanity.h"
 #include "atf-c/tcr.h"
@@ -312,4 +318,55 @@ out_state:
     atf_dynstr_fini(&state);
 out:
     return err;
+}
+
+atf_error_t
+atf_tcr_write(const atf_tcr_t *tcr, const atf_fs_path_t *resfile)
+{
+    atf_error_t err;
+    int fd, ret;
+
+    fd = open(atf_fs_path_cstring(resfile), O_CREAT | O_WRONLY | O_TRUNC,
+              S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if (fd == -1) {
+        err = atf_libc_error(errno, "Cannot create results file `%s'",
+                             atf_fs_path_cstring(resfile));
+        goto out;
+    }
+
+    err = atf_io_write_fmt(fd, "Content-Type: application/X-atf-tcr; "
+                           "version=\"1\"\n\n");
+    if (atf_is_error(err))
+        goto err_file;
+
+    if (atf_tcr_get_state(tcr) == atf_tcr_passed_state) {
+        err = atf_io_write_fmt(fd, "result: passed\n");
+    } else if (atf_tcr_get_state(tcr) == atf_tcr_failed_state) {
+        err = atf_io_write_fmt(fd, "result: failed\n");
+        if (!atf_is_error(err))
+            err = atf_io_write_fmt(fd, "reason: %s\n",
+                                   atf_dynstr_cstring(atf_tcr_get_reason(tcr)));
+    } else if (atf_tcr_get_state(tcr) == atf_tcr_skipped_state) {
+        err = atf_io_write_fmt(fd, "result: skipped\n");
+        if (!atf_is_error(err))
+            err = atf_io_write_fmt(fd, "reason: %s\n",
+                                   atf_dynstr_cstring(atf_tcr_get_reason(tcr)));
+    } else {
+        UNREACHABLE;
+    }
+    if (atf_is_error(err))
+        goto err_file;
+
+out_fd:
+    ret = close(fd);
+    INV(ret != -1);
+out:
+    return err;
+
+err_file:
+    {
+        atf_error_t err2 = atf_fs_unlink(resfile);
+        INV(!atf_is_error(err2));
+    }
+    goto out_fd;
 }

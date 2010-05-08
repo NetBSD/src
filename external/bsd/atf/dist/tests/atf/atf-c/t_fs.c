@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,10 +52,10 @@ static
 void
 create_dir(const char *p, int mode)
 {
-    int fd;
+    int ret;
 
-    fd = mkdir(p, mode);
-    if (fd == -1)
+    ret = mkdir(p, mode);
+    if (ret == -1)
         atf_tc_fail("Could not create helper directory %s", p);
 }
 
@@ -68,6 +68,7 @@ create_file(const char *p, int mode)
     fd = open(p, O_CREAT | O_WRONLY | O_TRUNC, mode);
     if (fd == -1)
         atf_tc_fail("Could not create helper file %s", p);
+    close(fd);
 }
 
 static

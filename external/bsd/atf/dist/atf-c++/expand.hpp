@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,76 +30,11 @@
 #if !defined(_ATF_CXX_EXPAND_HPP_)
 #define _ATF_CXX_EXPAND_HPP_
 
-#include <stdexcept>
 #include <string>
 #include <vector>
 
-#include <atf-c++/utils.hpp>
-
 namespace atf {
 namespace expand {
-
-// ------------------------------------------------------------------------
-// The "pattern_error" class.
-// ------------------------------------------------------------------------
-
-//!
-//! \brief An error class to hold information about bad patterns.
-//!
-//! The pattern_error class is used to represent an error when parsing
-//! or comparing a pattern against a string.
-//!
-class pattern_error : public std::runtime_error {
-    struct shared_data {
-        //!
-        //! \brief Number of live references to this shared_data.
-        //!
-        size_t m_refs;
-
-        //!
-        //! \brief A pointer to the error message.
-        //!
-        //! This variable holds a pointer to the error message describing
-        //! why the pattern failed.  This is a pointer to dynamic memory
-        //! allocated by the code that constructed this class.
-        //!
-        char *m_what;
-    };
-    mutable shared_data* m_sd;
-
-    //!
-    //! \brief Assignment operator for pattern_error.
-    //!
-    //! This assignment operator is made private to prevent its usage.
-    //! We cannot modify the parent's message once constructed, so we
-    //! cannot safely implement this method.
-    //!
-    pattern_error& operator=(const pattern_error&);
-
-public:
-    //!
-    //! \brief Constructs a new pattern_error.
-    //!
-    //! Constructs a new pattern error, to be thrown as an exception,
-    //! with the given error message.  The error message must be a
-    //! pointer to dynamically allocated memory, obtained by using the
-    //! 'new char[...]' construction.
-    //!
-    pattern_error(atf::utils::auto_array< char >&);
-
-    //!
-    //! \brief Copy-constructor for pattern_error.
-    //!
-    pattern_error(const pattern_error&);
-
-    //!
-    //! \brief Destroys the pattern_error.
-    //!
-    //! Destroys the object and releases the memory that was held by the
-    //! error message given during construction.
-    //!
-    ~pattern_error(void) throw();
-};
 
 // ------------------------------------------------------------------------
 // Free functions.

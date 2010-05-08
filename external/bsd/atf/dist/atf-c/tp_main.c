@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,10 +38,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "atf-c/config.h"
 #include "atf-c/dynstr.h"
 #include "atf-c/error.h"
-#include "atf-c/expand.h"
 #include "atf-c/fs.h"
 #include "atf-c/object.h"
 #include "atf-c/map.h"
@@ -62,6 +60,11 @@ static const char *progname = NULL;
  * program, so it can be kept private.  Don't know if that's the best idea
  * though. */
 int atf_tp_main(int, char **, atf_error_t (*)(atf_tp_t *));
+
+enum tc_part {
+    BODY,
+    CLEANUP,
+};
 
 /* ---------------------------------------------------------------------
  * The "usage" and "user" error types.
@@ -177,10 +180,10 @@ print_error(const atf_error_t err)
 struct params {
     bool m_do_list;
     bool m_do_usage;
-    int m_fd;
     const char *m_srcdir;
-    const char *m_workdir;
-    atf_list_t m_tcglobs;
+    char *m_tcname;
+    enum tc_part m_tcpart;
+    atf_fs_path_t m_resfile;
     atf_map_t m_config;
 };
 
@@ -192,19 +195,20 @@ params_init(struct params *p)
 
     p->m_do_list = false;
     p->m_do_usage = false;
-    p->m_fd = STDOUT_FILENO;
     p->m_srcdir = ".";
-    p->m_workdir = atf_config_get("atf_workdir");
+    p->m_tcname = NULL;
+    p->m_tcpart = BODY;
 
-    err = atf_list_init(&p->m_tcglobs);
+    err = atf_fs_path_init_fmt(&p->m_resfile, "resfile"); /* XXX Bad default */
     if (atf_is_error(err))
-        goto out;
+        return err;
 
     err = atf_map_init(&p->m_config);
-    if (atf_is_error(err))
-        atf_list_fini(&p->m_tcglobs);
+    if (atf_is_error(err)) {
+        atf_fs_path_fini(&p->m_resfile);
+        return err;
+    }
 
-out:
     return err;
 }
 
@@ -213,26 +217,9 @@ void
 params_fini(struct params *p)
 {
     atf_map_fini(&p->m_config);
-    atf_list_fini(&p->m_tcglobs);
-}
-
-static
-atf_error_t
-parse_rflag(const char *arg, int *value)
-{
-    atf_error_t err;
-
-    if (strlen(arg) != 1 || !isdigit((int)arg[0])) {
-        err = usage_error("Invalid value for -r; must be a single digit.");
-        goto out;
-    }
-
-    *value = arg[0] - '0';
-    INV(*value >= 0 && *value <= 9);
-    err = atf_no_error();
-
-out:
-    return err;
+    atf_fs_path_fini(&p->m_resfile);
+    if (p->m_tcname != NULL)
+        free(p->m_tcname);
 }
 
 static
@@ -258,108 +245,40 @@ out:
 }
 
 /* ---------------------------------------------------------------------
- * Test case filtering.
+ * Test case listing.
  * --------------------------------------------------------------------- */
 
 static
-atf_error_t
-match_tcs(const atf_tp_t *tp, const char *glob, atf_list_t *ids)
+void
+list_tcs(const atf_tp_t *tp)
 {
-    atf_error_t err;
-    bool found;
     atf_list_citer_t iter;
+    const atf_list_t *tcs;
 
-    err = atf_no_error();
-    found = false;
-    atf_list_for_each_c(iter, atf_tp_get_tcs(tp)) {
+    printf("Content-Type: application/X-atf-tp; version=\"1\"\n\n");
+
+    tcs = atf_tp_get_tcs(tp);
+
+    atf_list_for_each_c(iter, tcs) {
         const atf_tc_t *tc = atf_list_citer_data(iter);
-        const char *ident = atf_tc_get_ident(tc);
+        const atf_map_t *vars = atf_tc_get_md_vars(tc);
+        atf_map_citer_t iter2;
 
-        if (atf_expand_is_glob(glob)) {
-            bool matches;
+        if (!atf_equal_list_citer_list_citer(iter, atf_list_begin_c(tcs)))
+            printf("\n");
 
-            err = atf_expand_matches_glob(glob, ident, &matches);
-            if (!atf_is_error(err) && matches) {
-                err = atf_list_append(ids, strdup(ident), true);
-                found = true;
-            }
-        } else {
-            if (strcmp(glob, tc->m_ident) == 0) {
-                err = atf_list_append(ids, strdup(ident), true);
-                found = true;
+        iter2 = atf_map_find_c(vars, "ident");
+        printf("ident: %s\n", (const char *)atf_map_citer_data(iter2));
+
+        atf_map_for_each_c(iter2, vars) {
+            const char *key = atf_map_citer_key(iter2);
+
+            if (strcmp(key, "ident") != 0) {
+                const char *value = atf_map_citer_data(iter2);
+                printf("%s: %s\n", key, value);
             }
         }
-
-        if (atf_is_error(err))
-            break;
     }
-
-    if (!atf_is_error(err) && !found)
-        err = user_error("Unknown test case `%s'", glob);
-
-    return err;
-}
-
-static
-atf_error_t
-filter_tcs(const atf_tp_t *tp, const atf_list_t *globs, atf_list_t *ids)
-{
-    atf_error_t err;
-    atf_list_citer_t iter;
-
-    err = atf_list_init(ids);
-    if (atf_is_error(err))
-        goto out;
-
-    atf_list_for_each_c(iter, globs) {
-        const char *glob = atf_list_citer_data(iter);
-        err = match_tcs(tp, glob, ids);
-        if (atf_is_error(err)) {
-            atf_list_fini(ids);
-            goto out;
-        }
-    }
-
-out:
-    return err;
-}
-
-static
-atf_error_t
-list_tcs(const atf_tp_t *tp, const atf_list_t *tcids)
-{
-    atf_error_t err;
-    size_t col;
-    atf_list_citer_t iter;
-
-    PRE(atf_list_size(tcids) > 0);
-
-    err = atf_no_error();
-
-    /* Calculate column where to start descriptions. */
-    col = 0;
-    atf_list_for_each_c(iter, tcids) {
-        const char *id = atf_list_citer_data(iter);
-        const atf_tc_t *tc = atf_tp_get_tc(tp, id);
-        const size_t len = strlen(atf_tc_get_ident(tc));
-
-        if (col < len)
-            col = len;
-    }
-    col += 4;
-
-    /* Pretty-print test case identifiers and descriptions. */
-    atf_list_for_each_c(iter, tcids) {
-        const char *id = atf_list_citer_data(iter);
-        const atf_tc_t *tc = atf_tp_get_tc(tp, id);
-        const char *descr = atf_tc_get_md_var(tc, "descr");
-
-        err = print_tag(stdout, id, false, col, "%s", descr);
-        if (atf_is_error(err))
-            break;
-    }
-
-    return err;
 }
 
 /* ---------------------------------------------------------------------
@@ -370,8 +289,7 @@ static
 void
 usage(void)
 {
-    print_tag(stdout, "Usage: ", false, 0,
-              "%s [options] [test_case1 [.. test_caseN]]", progname);
+    print_tag(stdout, "Usage: ", false, 0, "%s [options] test_case", progname);
     printf("\n");
     print_tag(stdout, "", false, 0, "This is an independent atf test "
               "program.");
@@ -381,17 +299,14 @@ usage(void)
               "Shows this help message");
     print_tag(stdout, "    -l              ", false, 0,
               "List test cases and their purpose");
-    print_tag(stdout, "    -r fd           ", false, 0,
-              "The file descriptor to which the test program "
-              "will send the results of the test cases");
+    print_tag(stdout, "    -r resfile      ", false, 0,
+              "The file to which the test program will write the results "
+              "of the executed test case");
     print_tag(stdout, "    -s srcdir       ", false, 0,
               "Directory where the test's data files are "
               "located");
     print_tag(stdout, "    -v var=value    ", false, 0,
               "Sets the configuration variable `var' to `value'");
-    print_tag(stdout, "    -w workdir      ", false, 0,
-              "Directory where the test's temporary files are "
-              "located");
     printf("\n");
     print_tag(stdout, "", false, 0, "For more details please see "
               "atf-test-program(1) and atf(7).");
@@ -399,8 +314,42 @@ usage(void)
 
 static
 atf_error_t
+handle_tcarg(const char *tcarg, char **tcname, enum tc_part *tcpart)
+{
+    atf_error_t err;
+
+    err = atf_no_error();
+
+    *tcname = strdup(tcarg);
+    if (*tcname == NULL) {
+        err = atf_no_memory_error();
+        goto out;
+    }
+
+    char *delim = strchr(*tcname, ':');
+    if (delim != NULL) {
+        *delim = '\0';
+
+        delim++;
+        if (strcmp(delim, "body") == 0) {
+            *tcpart = BODY;
+        } else if (strcmp(delim, "cleanup") == 0) {
+            *tcpart = CLEANUP;
+        } else {
+            err = usage_error("Invalid test case part `%s'", delim);
+            goto out;
+        }
+    }
+
+out:
+    return err;
+}
+
+static
+atf_error_t
 process_params(int argc, char **argv, struct params *p)
 {
+    const int original_argc = argc;
     atf_error_t err;
     int ch;
 
@@ -410,7 +359,7 @@ process_params(int argc, char **argv, struct params *p)
 
     opterr = 0;
     while (!atf_is_error(err) &&
-           (ch = getopt(argc, argv, GETOPT_POSIX ":hlr:s:v:w:")) != -1) {
+           (ch = getopt(argc, argv, GETOPT_POSIX ":hlr:s:v:")) != -1) {
         switch (ch) {
         case 'h':
             p->m_do_usage = true;
@@ -421,7 +370,14 @@ process_params(int argc, char **argv, struct params *p)
             break;
 
         case 'r':
-            err = parse_rflag(optarg, &p->m_fd);
+            {
+                atf_fs_path_t resfile;
+                err = atf_fs_path_init_fmt(&resfile, "%s", optarg);
+                if (!atf_is_error(err)) {
+                    atf_fs_path_fini(&p->m_resfile);
+                    p->m_resfile = resfile;
+                }
+            }
             break;
 
         case 's':
@@ -430,10 +386,6 @@ process_params(int argc, char **argv, struct params *p)
 
         case 'v':
             err = parse_vflag(optarg, &p->m_config);
-            break;
-
-        case 'w':
-            p->m_workdir = optarg;
             break;
 
         case ':':
@@ -449,12 +401,22 @@ process_params(int argc, char **argv, struct params *p)
     argv += optind;
 
     if (!atf_is_error(err)) {
-        char **arg;
-        for (arg = argv; !atf_is_error(err) && *arg != NULL; arg++)
-            err = atf_list_append(&p->m_tcglobs, strdup(*arg), true);
-
-        if (!atf_is_error(err) && atf_list_size(&p->m_tcglobs) == 0)
-            err = atf_list_append(&p->m_tcglobs, strdup("*"), true);
+        if (p->m_do_usage) {
+            if (original_argc != 2)
+                err = usage_error("-h must be given alone.");
+        } else if (p->m_do_list) {
+            if (argc > 0)
+                err = usage_error("Cannot provide test case names with -l");
+        } else {
+            if (argc == 0)
+                err = usage_error("Must provide a test case name");
+            else if (argc == 1)
+                err = handle_tcarg(argv[0], &p->m_tcname, &p->m_tcpart);
+            else if (argc > 1) {
+                err = usage_error("Cannot provide more than one test case "
+                                  "name");
+            }
+        }
     }
 
     if (atf_is_error(err))
@@ -516,28 +478,47 @@ out:
 
 static
 atf_error_t
-handle_workdir(struct params *p, atf_fs_path_t *workdir)
+run_tc(const atf_tp_t *tp, struct params *p, int *exitcode)
 {
     atf_error_t err;
-    bool b;
 
-    err = atf_fs_path_init_fmt(workdir, "%s", p->m_workdir);
-    if (atf_is_error(err))
-        goto out;
+    err = atf_no_error();
 
-    err = atf_fs_exists(workdir, &b);
-    if (atf_is_error(err)) {
-        atf_fs_path_fini(workdir);
+    if (!atf_tp_has_tc(tp, p->m_tcname)) {
+        err = usage_error("Unknown test case `%s'", p->m_tcname);
         goto out;
     }
 
-    if (!b) {
-        atf_fs_path_fini(workdir);
-        err = user_error("Cannot find the work directory `%s'",
-                         p->m_workdir);
-    } else
-        INV(!atf_is_error(err));
+    switch (p->m_tcpart) {
+    case BODY:
+        err = atf_tp_run(tp, p->m_tcname, &p->m_resfile);
+        if (atf_is_error(err)) {
+            /* TODO: Handle error */
+            *exitcode = EXIT_FAILURE;
+            atf_error_free(err);
+        } else {
+            *exitcode = EXIT_SUCCESS;
+        }
 
+        break;
+
+    case CLEANUP:
+        err = atf_tp_cleanup(tp, p->m_tcname);
+        if (atf_is_error(err)) {
+            /* TODO: Handle error */
+            *exitcode = EXIT_FAILURE;
+            atf_error_free(err);
+        } else {
+            *exitcode = EXIT_SUCCESS;
+        }
+
+        break;
+
+    default:
+        UNREACHABLE;
+    }
+
+    INV(!atf_is_error(err));
 out:
     return err;
 }
@@ -551,20 +532,14 @@ controlled_main(int argc, char **argv,
     atf_error_t err;
     struct params p;
     atf_tp_t tp;
-    atf_list_t tcids;
-    atf_fs_path_t workdir;
 
     err = process_params(argc, argv, &p);
     if (atf_is_error(err))
         goto out;
 
     if (p.m_do_usage) {
-        if (argc != 2) {
-            err = usage_error("-h must be given alone.");
-        } else {
-            usage();
-            *exitcode = EXIT_SUCCESS;
-        }
+        usage();
+        *exitcode = EXIT_SUCCESS;
         goto out_p;
     }
 
@@ -572,38 +547,24 @@ controlled_main(int argc, char **argv,
     if (atf_is_error(err))
         goto out_p;
 
-    err = handle_workdir(&p, &workdir);
-    if (atf_is_error(err))
-        goto out_p;
-
     err = atf_tp_init(&tp, &p.m_config);
     if (atf_is_error(err))
-        goto out_workdir;
+        goto out_p;
 
     err = add_tcs_hook(&tp);
     if (atf_is_error(err))
         goto out_tp;
 
-    err = filter_tcs(&tp, &p.m_tcglobs, &tcids);
-    if (atf_is_error(err))
-        goto out_tp;
-
     if (p.m_do_list) {
-        err = list_tcs(&tp, &tcids);
-        if (!atf_is_error(err))
-            *exitcode = EXIT_SUCCESS;
+        list_tcs(&tp);
+        INV(!atf_is_error(err));
+        *exitcode = EXIT_SUCCESS;
     } else {
-        size_t failed;
-        err = atf_tp_run(&tp, &tcids, p.m_fd, &workdir, &failed);
-        if (!atf_is_error(err))
-            *exitcode = failed > 0 ? EXIT_FAILURE : EXIT_SUCCESS;
+        err = run_tc(&tp, &p, exitcode);
     }
 
-    atf_list_fini(&tcids);
 out_tp:
     atf_tp_fini(&tp);
-out_workdir:
-    atf_fs_path_fini(&workdir);
 out_p:
     params_fini(&p);
 out:

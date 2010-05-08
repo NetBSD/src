@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -27,17 +27,41 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-extern "C" {
-#include "atf-c/error.h"
-#include "atf-c/expand.h"
-}
+#include <stdexcept>
 
-#include "atf-c++/exceptions.hpp"
 #include "atf-c++/expand.hpp"
-#include "atf-c++/sanity.hpp"
+#include "atf-c++/text.hpp"
 
 namespace impl = atf::expand;
 #define IMPL_NAME "atf::expand"
+
+// ------------------------------------------------------------------------
+// Auxiliary functions.
+// ------------------------------------------------------------------------
+
+namespace {
+
+std::string
+glob_to_regex(const std::string& glob)
+{
+    std::string regex;
+    regex.reserve(glob.length() * 2);
+
+    regex += '^';
+    for (std::string::const_iterator iter = glob.begin(); iter != glob.end();
+         iter++) {
+        switch (*iter) {
+        case '*': regex += ".*"; break;
+        case '?': regex += "."; break;
+        default: regex += *iter;
+        }
+    }
+    regex += '$';
+
+    return regex;
+}
+
+} // anonymous namespace
 
 // ------------------------------------------------------------------------
 // Free functions.
@@ -46,18 +70,12 @@ namespace impl = atf::expand;
 bool
 impl::is_glob(const std::string& glob)
 {
-    return atf_expand_is_glob(glob.c_str());
+    // NOTE: Keep this in sync with glob_to_regex!
+    return glob.find_first_of("*?") != std::string::npos;
 }
 
 bool
 impl::matches_glob(const std::string& glob, const std::string& candidate)
 {
-    bool result;
-    atf_error_t err;
-
-    err = atf_expand_matches_glob(glob.c_str(), candidate.c_str(), &result);
-    if (atf_is_error(err))
-        throw_atf_error(err);
-
-    return result;
+    return atf::text::match(candidate, glob_to_regex(glob));
 }

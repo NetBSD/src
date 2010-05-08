@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -50,35 +49,6 @@
 /* ---------------------------------------------------------------------
  * Auxiliary functions.
  * --------------------------------------------------------------------- */
-
-static
-void
-write_cwd(const atf_tc_t *tc, const char *confvar)
-{
-    atf_fs_path_t cwd;
-    const char *p;
-    FILE *f;
-
-    p = atf_tc_get_config_var(tc, confvar);
-
-    f = fopen(p, "w");
-    if (f == NULL)
-        atf_tc_fail("Could not open %s for writing", p);
-
-    RE(atf_fs_getcwd(&cwd));
-    fprintf(f, "%s\n", atf_fs_path_cstring(&cwd));
-    atf_fs_path_fini(&cwd);
-
-    fclose(f);
-}
-
-static
-void
-safe_mkdir(const char* path)
-{
-    if (mkdir(path, 0755) == -1)
-        atf_tc_fail("mkdir(2) of %s failed", path);
-}
 
 static
 void
@@ -287,77 +257,8 @@ ATF_TC_BODY(config_multi_value, tc)
 }
 
 /* ---------------------------------------------------------------------
- * Helper tests for "t_env".
- * --------------------------------------------------------------------- */
-
-ATF_TC(env_home);
-ATF_TC_HEAD(env_home, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_env test "
-                      "program");
-}
-ATF_TC_BODY(env_home, tc)
-{
-    atf_fs_path_t cwd, home;
-    atf_fs_stat_t stcwd, sthome;
-
-    ATF_REQUIRE(atf_env_has("HOME"));
-
-    RE(atf_fs_getcwd(&cwd));
-    RE(atf_fs_path_init_fmt(&home, "%s", atf_env_get("HOME")));
-
-    RE(atf_fs_stat_init(&stcwd, &cwd));
-    RE(atf_fs_stat_init(&sthome, &home));
-
-    ATF_REQUIRE_EQ(atf_fs_stat_get_device(&stcwd),
-                    atf_fs_stat_get_device(&sthome));
-    ATF_REQUIRE_EQ(atf_fs_stat_get_inode(&stcwd),
-                    atf_fs_stat_get_inode(&sthome));
-}
-
-ATF_TC(env_list);
-ATF_TC_HEAD(env_list, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_env test "
-                      "program");
-}
-ATF_TC_BODY(env_list, tc)
-{
-    int exitcode = system("env");
-    ATF_REQUIRE(WIFEXITED(exitcode));
-    ATF_REQUIRE(WEXITSTATUS(exitcode) == EXIT_SUCCESS);
-}
-
-/* ---------------------------------------------------------------------
  * Helper tests for "t_fork".
  * --------------------------------------------------------------------- */
-
-ATF_TC(fork_mangle_fds);
-ATF_TC_HEAD(fork_mangle_fds, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_fork test "
-                      "program");
-}
-ATF_TC_BODY(fork_mangle_fds, tc)
-{
-    long resfd;
-
-    RE(atf_text_to_long(atf_tc_get_config_var(tc, "resfd"), &resfd));
-
-    if (close(STDIN_FILENO) == -1)
-        atf_tc_fail("Failed to close stdin");
-    if (close(STDOUT_FILENO) == -1)
-        atf_tc_fail("Failed to close stdout");
-    if (close(STDERR_FILENO) == -1)
-        atf_tc_fail("Failed to close stderr");
-    if (close(resfd) == -1)
-        atf_tc_fail("Failed to close results descriptor");
-
-#if defined(F_CLOSEM)
-    if (fcntl(0, F_CLOSEM) == -1)
-        atf_tc_fail("Failed to close everything");
-#endif
-}
 
 ATF_TC(fork_stop);
 ATF_TC_HEAD(fork_stop, tc)
@@ -386,169 +287,16 @@ ATF_TC_BODY(fork_stop, tc)
     printf("Exiting\n");
 }
 
-ATF_TC(fork_umask);
-ATF_TC_HEAD(fork_umask, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_fork test "
-                      "program");
-}
-ATF_TC_BODY(fork_umask, tc)
-{
-    printf("umask: %04o\n", (unsigned int)umask(0));
-}
-
 /* ---------------------------------------------------------------------
  * Helper tests for "t_meta_data".
  * --------------------------------------------------------------------- */
 
-ATF_TC(ident_1);
-ATF_TC_HEAD(ident_1, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-}
-ATF_TC_BODY(ident_1, tc)
-{
-    ATF_REQUIRE(strcmp(atf_tc_get_md_var(tc, "ident"), "ident_1") == 0);
-}
-
-ATF_TC(ident_2);
-ATF_TC_HEAD(ident_2, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-}
-ATF_TC_BODY(ident_2, tc)
-{
-    ATF_REQUIRE(strcmp(atf_tc_get_md_var(tc, "ident"), "ident_2") == 0);
-}
-
-ATF_TC(require_arch);
-ATF_TC_HEAD(require_arch, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-    atf_tc_set_md_var(tc, "require.arch", "%s",
-                   atf_tc_get_config_var_wd(tc, "arch", "not-set"));
-}
-ATF_TC_BODY(require_arch, tc)
+ATF_TC(metadata_no_descr);
+ATF_TC_HEAD(metadata_no_descr, tc)
 {
 }
-
-ATF_TC(require_config);
-ATF_TC_HEAD(require_config, tc)
+ATF_TC_BODY(metadata_no_descr, tc)
 {
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-    atf_tc_set_md_var(tc, "require.config", "var1 var2");
-}
-ATF_TC_BODY(require_config, tc)
-{
-    printf("var1: %s\n", atf_tc_get_config_var(tc, "var1"));
-    printf("var2: %s\n", atf_tc_get_config_var(tc, "var2"));
-}
-
-ATF_TC(require_machine);
-ATF_TC_HEAD(require_machine, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-    atf_tc_set_md_var(tc, "require.machine", "%s",
-                   atf_tc_get_config_var_wd(tc, "machine", "not-set"));
-}
-ATF_TC_BODY(require_machine, tc)
-{
-}
-
-ATF_TC(require_progs_body);
-ATF_TC_HEAD(require_progs_body, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-}
-ATF_TC_BODY(require_progs_body, tc)
-{
-    atf_tc_require_prog(atf_tc_get_config_var(tc, "progs"));
-}
-
-ATF_TC(require_progs_head);
-ATF_TC_HEAD(require_progs_head, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-    atf_tc_set_md_var(tc, "require.progs", "%s",
-                   atf_tc_get_config_var_wd(tc, "progs", "not-set"));
-}
-ATF_TC_BODY(require_progs_head, tc)
-{
-}
-
-ATF_TC(require_user);
-ATF_TC_HEAD(require_user, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-    atf_tc_set_md_var(tc, "require.user", "%s",
-                   atf_tc_get_config_var_wd(tc, "user", "not-set"));
-}
-ATF_TC_BODY(require_user, tc)
-{
-}
-
-ATF_TC(require_user2);
-ATF_TC_HEAD(require_user2, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-    atf_tc_set_md_var(tc, "require.user", "%s",
-                   atf_tc_get_config_var_wd(tc, "user2", "not-set"));
-}
-ATF_TC_BODY(require_user2, tc)
-{
-}
-
-ATF_TC(require_user3);
-ATF_TC_HEAD(require_user3, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-    atf_tc_set_md_var(tc, "require.user", "%s",
-                   atf_tc_get_config_var_wd(tc, "user3", "not-set"));
-}
-ATF_TC_BODY(require_user3, tc)
-{
-}
-
-ATF_TC(timeout);
-ATF_TC_HEAD(timeout, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-    atf_tc_set_md_var(tc, "timeout", "%s",
-                   atf_tc_get_config_var_wd(tc, "timeout", "0"));
-}
-ATF_TC_BODY(timeout, tc)
-{
-    long s;
-
-    RE(atf_text_to_long(atf_tc_get_config_var(tc, "sleep"), &s));
-    sleep(s);
-}
-
-ATF_TC(timeout2);
-ATF_TC_HEAD(timeout2, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_meta_data "
-                      "test program");
-    atf_tc_set_md_var(tc, "timeout", "%s",
-                   atf_tc_get_config_var_wd(tc, "timeout2", "0"));
-}
-ATF_TC_BODY(timeout2, tc)
-{
-    long s;
-
-    RE(atf_text_to_long(atf_tc_get_config_var(tc, "sleep2"), &s));
-    sleep(s);
 }
 
 /* ---------------------------------------------------------------------
@@ -601,44 +349,6 @@ ATF_TC_BODY(status_newlines_skip, tc)
 }
 
 /* ---------------------------------------------------------------------
- * Helper tests for "t_workdir".
- * --------------------------------------------------------------------- */
-
-ATF_TC(workdir_path);
-ATF_TC_HEAD(workdir_path, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_workdir test "
-                      "program");
-}
-ATF_TC_BODY(workdir_path, tc)
-{
-    write_cwd(tc, "pathfile");
-}
-
-ATF_TC(workdir_cleanup);
-ATF_TC_HEAD(workdir_cleanup, tc)
-{
-    atf_tc_set_md_var(tc, "descr", "Helper test case for the t_workdir test "
-                      "program");
-}
-ATF_TC_BODY(workdir_cleanup, tc)
-{
-    write_cwd(tc, "pathfile");
-
-    safe_mkdir("1");
-    safe_mkdir("1/1");
-    safe_mkdir("1/2");
-    safe_mkdir("1/3");
-    safe_mkdir("1/3/1");
-    safe_mkdir("1/3/2");
-    safe_mkdir("2");
-    touch("2/1");
-    touch("2/2");
-    safe_mkdir("2/3");
-    touch("2/3/1");
-}
-
-/* ---------------------------------------------------------------------
  * Main.
  * --------------------------------------------------------------------- */
 
@@ -658,28 +368,11 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, config_value);
     ATF_TP_ADD_TC(tp, config_multi_value);
 
-    /* Add helper tests for t_env. */
-    ATF_TP_ADD_TC(tp, env_home);
-    ATF_TP_ADD_TC(tp, env_list);
-
     /* Add helper tests for t_fork. */
-    ATF_TP_ADD_TC(tp, fork_mangle_fds);
     ATF_TP_ADD_TC(tp, fork_stop);
-    ATF_TP_ADD_TC(tp, fork_umask);
 
     /* Add helper tests for t_meta_data. */
-    ATF_TP_ADD_TC(tp, ident_1);
-    ATF_TP_ADD_TC(tp, ident_2);
-    ATF_TP_ADD_TC(tp, require_arch);
-    ATF_TP_ADD_TC(tp, require_config);
-    ATF_TP_ADD_TC(tp, require_machine);
-    ATF_TP_ADD_TC(tp, require_progs_body);
-    ATF_TP_ADD_TC(tp, require_progs_head);
-    ATF_TP_ADD_TC(tp, require_user);
-    ATF_TP_ADD_TC(tp, require_user2);
-    ATF_TP_ADD_TC(tp, require_user3);
-    ATF_TP_ADD_TC(tp, timeout);
-    ATF_TP_ADD_TC(tp, timeout2);
+    ATF_TP_ADD_TC(tp, metadata_no_descr);
 
     /* Add helper tests for t_srcdir. */
     ATF_TP_ADD_TC(tp, srcdir_exists);
@@ -687,10 +380,6 @@ ATF_TP_ADD_TCS(tp)
     /* Add helper tests for t_status. */
     ATF_TP_ADD_TC(tp, status_newlines_fail);
     ATF_TP_ADD_TC(tp, status_newlines_skip);
-
-    /* Add helper tests for t_workdir. */
-    ATF_TP_ADD_TC(tp, workdir_path);
-    ATF_TP_ADD_TC(tp, workdir_cleanup);
 
     return atf_no_error();
 }

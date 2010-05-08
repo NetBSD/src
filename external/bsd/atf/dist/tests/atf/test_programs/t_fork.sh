@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,22 +30,6 @@
 # TODO: This test program is about checking the test case's "environment"
 # (not the variables).  Should be named something else than t_fork.
 
-atf_test_case mangle_fds
-mangle_fds_head()
-{
-    atf_set "descr" "Tests that mangling standard descriptors does not" \
-                    "affect the test case's reporting of status"
-}
-mangle_fds_body()
-{
-    for h in $(get_helpers); do
-        atf_check -s eq:0 -o ignore -e ignore -x \
-                  "${h} -s $(atf_get_srcdir) -r3 -v resfd=3 \
-                   fork_mangle_fds 3>resout"
-        atf_check -s eq:0 -o ignore -e empty grep 'passed' resout
-    done
-}
-
 atf_test_case stop
 stop_head()
 {
@@ -56,7 +40,7 @@ stop_body()
 {
     for h in $(get_helpers); do
         ${h} -s $(atf_get_srcdir) -v pidfile=$(pwd)/pid \
-             -v donefile=$(pwd)/done -r3 fork_stop 3>resout &
+             -v donefile=$(pwd)/done -r resfile fork_stop &
         ppid=${!}
         echo "Waiting for pid file for test program ${ppid}"
         while test ! -f pid; do sleep 1; done
@@ -67,37 +51,14 @@ stop_body()
         echo "Wrote done file"
         kill -CONT ${pid}
         wait ${ppid}
-        atf_check -s eq:0 -o ignore -e empty grep 'fork_stop, passed' resout
+        atf_check -s eq:0 -o ignore -e empty grep 'result: passed' resfile
         rm -f pid done
-    done
-}
-
-atf_test_case umask
-umask_head()
-{
-    atf_set "descr" "Tests that the umask is properly set in the test" \
-                    "cases"
-}
-umask_body()
-{
-    echo 0022 >expout
-    atf_check -s eq:0 -o file:expout -e empty -x "umask"
-
-    for h in $(get_helpers); do
-        umask 0000
-        atf_check -s eq:0 -o save:stdout -e ignore -x \
-                  "${h} -s $(atf_get_srcdir) -r3 fork_umask 3>resout"
-        atf_check -s eq:0 -o ignore -e empty grep 'umask: 0022' stdout
-        atf_check -s eq:0 -o ignore -e empty grep 'passed' resout
-        umask 0022
     done
 }
 
 atf_init_test_cases()
 {
-    atf_add_test_case mangle_fds
     atf_add_test_case stop
-    atf_add_test_case umask
 }
 
 # vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4

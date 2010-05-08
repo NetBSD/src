@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,8 @@
 #include <atf-c/dynstr.h>
 #include <atf-c/error_fwd.h>
 #include <atf-c/object.h>
+
+struct atf_fs_path;
 
 /* ---------------------------------------------------------------------
  * The "atf_tcr" type.
@@ -75,5 +77,6 @@ bool atf_equal_tcr_tcr(const atf_tcr_t *, const atf_tcr_t *);
 /* Serialization. */
 atf_error_t atf_tcr_serialize(const atf_tcr_t *, const int);
 atf_error_t atf_tcr_deserialize(atf_tcr_t *, const int);
+atf_error_t atf_tcr_write(const atf_tcr_t *, const struct atf_fs_path *);
 
 #endif /* ATF_C_TCR_H */

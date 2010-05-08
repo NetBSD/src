@@ -46,7 +46,6 @@
 #include "atf-c/io.h"
 #include "atf-c/process.h"
 #include "atf-c/sanity.h"
-#include "atf-c/signals.h"
 
 #include "h_lib.h"
 
@@ -753,7 +752,7 @@ child_spawn_loop_and_wait_eintr(void *v)
 {
     atf_process_child_t child;
     atf_process_status_t status;
-    atf_signal_programmer_t sighup_programmer;
+    struct sigaction sighup, old_sighup;
 
 #define RE_ABORT(expr) \
     do { \
@@ -774,8 +773,11 @@ child_spawn_loop_and_wait_eintr(void *v)
         atf_process_stream_fini(&errsb);
     }
 
-    RE_ABORT(atf_signal_programmer_init(&sighup_programmer, SIGHUP,
-                                        nop_signal));
+    sighup.sa_handler = nop_signal;
+    sigemptyset(&sighup.sa_mask);
+    sighup.sa_flags = 0;
+    if (sigaction(SIGHUP, &sighup, &old_sighup) == -1)
+        abort();
 
     printf("waiting\n");
     fflush(stdout);
@@ -797,7 +799,7 @@ child_spawn_loop_and_wait_eintr(void *v)
     }
     atf_error_free(err);
 
-    atf_signal_programmer_fini(&sighup_programmer);
+    sigaction(SIGHUP, &old_sighup, NULL);
 
     fprintf(stderr, "Child is killing subchild\n");
     kill(atf_process_child_pid(&child), SIGTERM);

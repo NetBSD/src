@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,3 +64,4 @@ void build_check_c_o(const atf_tc_t *, const char *, const char *);
 void get_h_processes_path(const atf_tc_t *, struct atf_fs_path *);
 bool grep_string(const struct atf_dynstr *, const char *);
 bool grep_file(const char *, const char *, ...);
+void run_h_tc(atf_tc_t *, const char *, const char *, const char *);

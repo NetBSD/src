@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,12 +73,33 @@ new_entry(const char *key, void *value, bool managed)
  * Getters.
  */
 
+const char *
+atf_map_citer_key(const atf_map_citer_t citer)
+{
+    const struct map_entry *me = citer.m_entry;
+    PRE(me != NULL);
+    return me->m_key;
+}
+
 const void *
 atf_map_citer_data(const atf_map_citer_t citer)
 {
     const struct map_entry *me = citer.m_entry;
     PRE(me != NULL);
     return me->m_value;
+}
+
+atf_map_citer_t
+atf_map_citer_next(const atf_map_citer_t citer)
+{
+    atf_map_citer_t newciter;
+
+    newciter = citer;
+    newciter.m_listiter = atf_list_citer_next(citer.m_listiter);
+    newciter.m_entry = ((const struct map_entry *)
+                        atf_list_citer_data(newciter.m_listiter));
+
+    return newciter;
 }
 
 bool
@@ -96,12 +117,33 @@ atf_equal_map_citer_map_citer(const atf_map_citer_t i1,
  * Getters.
  */
 
+const char *
+atf_map_iter_key(const atf_map_iter_t iter)
+{
+    const struct map_entry *me = iter.m_entry;
+    PRE(me != NULL);
+    return me->m_key;
+}
+
 void *
 atf_map_iter_data(const atf_map_iter_t iter)
 {
     const struct map_entry *me = iter.m_entry;
     PRE(me != NULL);
     return me->m_value;
+}
+
+atf_map_iter_t
+atf_map_iter_next(const atf_map_iter_t iter)
+{
+    atf_map_iter_t newiter;
+
+    newiter = iter;
+    newiter.m_listiter = atf_list_iter_next(iter.m_listiter);
+    newiter.m_entry = ((struct map_entry *)
+                       atf_list_iter_data(newiter.m_listiter));
+
+    return newiter;
 }
 
 bool
@@ -157,11 +199,32 @@ atf_map_fini(atf_map_t *m)
  */
 
 atf_map_iter_t
+atf_map_begin(atf_map_t *m)
+{
+    atf_map_iter_t iter;
+    iter.m_map = m;
+    iter.m_listiter = atf_list_begin(&m->m_list);
+    iter.m_entry = atf_list_iter_data(iter.m_listiter);
+    return iter;
+}
+
+atf_map_citer_t
+atf_map_begin_c(const atf_map_t *m)
+{
+    atf_map_citer_t citer;
+    citer.m_map = m;
+    citer.m_listiter = atf_list_begin_c(&m->m_list);
+    citer.m_entry = atf_list_citer_data(citer.m_listiter);
+    return citer;
+}
+
+atf_map_iter_t
 atf_map_end(atf_map_t *m)
 {
     atf_map_iter_t iter;
     iter.m_map = m;
     iter.m_entry = NULL;
+    iter.m_listiter = atf_list_end(&m->m_list);
     return iter;
 }
 
@@ -171,6 +234,7 @@ atf_map_end_c(const atf_map_t *m)
     atf_map_citer_t iter;
     iter.m_map = m;
     iter.m_entry = NULL;
+    iter.m_listiter = atf_list_end_c(&m->m_list);
     return iter;
 }
 
@@ -186,6 +250,7 @@ atf_map_find(atf_map_t *m, const char *key)
             atf_map_iter_t i;
             i.m_map = m;
             i.m_entry = me;
+            i.m_listiter = iter;
             return i;
         }
     }
@@ -205,6 +270,7 @@ atf_map_find_c(const atf_map_t *m, const char *key)
             atf_map_citer_t i;
             i.m_map = m;
             i.m_entry = me;
+            i.m_listiter = iter;
             return i;
         }
     }

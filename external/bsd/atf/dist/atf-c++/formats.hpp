@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -95,48 +95,76 @@ public:
 };
 
 // ------------------------------------------------------------------------
-// The "atf_tcs_reader" class.
+// The "atf_tcr_reader" class.
 // ------------------------------------------------------------------------
 
-class atf_tcs_reader {
+class atf_tcr_reader {
     std::istream& m_is;
 
-    void read_out_err(void*,
-                      atf::io::unbuffered_istream&,
-                      atf::io::unbuffered_istream&);
-
 protected:
-    virtual void got_ntcs(size_t);
-    virtual void got_tc_start(const std::string&);
-    virtual void got_tc_end(const atf::tests::tcr&);
-    virtual void got_stdout_line(const std::string&);
-    virtual void got_stderr_line(const std::string&);
+    virtual void got_result(const std::string&);
+    virtual void got_reason(const std::string&);
     virtual void got_eof(void);
 
 public:
-    atf_tcs_reader(std::istream&);
-    virtual ~atf_tcs_reader(void);
+    atf_tcr_reader(std::istream&);
+    virtual ~atf_tcr_reader(void);
 
-    void read(atf::io::unbuffered_istream&, atf::io::unbuffered_istream&);
+    void read(void);
 };
 
 // ------------------------------------------------------------------------
-// The "atf_tcs_writer" class.
+// The "atf_tcr_writer" class.
 // ------------------------------------------------------------------------
 
-class atf_tcs_writer {
+class atf_tcr_writer {
     std::ostream& m_os;
-    std::ostream& m_cout;
-    std::ostream& m_cerr;
-
-    size_t m_ntcs, m_curtc;
-    std::string m_tcname;
 
 public:
-    atf_tcs_writer(std::ostream&, std::ostream&, std::ostream&, size_t);
+    atf_tcr_writer(std::ostream&);
+
+    void result(const std::string&);
+    void reason(const std::string&);
+};
+
+// ------------------------------------------------------------------------
+// The "atf_tp_reader" class.
+// ------------------------------------------------------------------------
+
+class atf_tp_reader {
+    std::istream& m_is;
+
+    void validate_and_insert(const std::string&, const std::string&,
+                             const size_t,
+                             std::map< std::string, std::string >&);
+
+protected:
+    virtual void got_tc(const std::string&,
+                        const std::map< std::string, std::string >&);
+    virtual void got_eof(void);
+
+public:
+    atf_tp_reader(std::istream&);
+    virtual ~atf_tp_reader(void);
+
+    void read(void);
+};
+
+// ------------------------------------------------------------------------
+// The "atf_tp_writer" class.
+// ------------------------------------------------------------------------
+
+class atf_tp_writer {
+    std::ostream& m_os;
+
+    bool m_is_first;
+
+public:
+    atf_tp_writer(std::ostream&);
 
     void start_tc(const std::string&);
-    void end_tc(const atf::tests::tcr&);
+    void end_tc(void);
+    void tc_meta_data(const std::string&, const std::string&);
 };
 
 // ------------------------------------------------------------------------

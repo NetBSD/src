@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,44 @@
 #include "atf-c++/parser.hpp"
 
 #include "h_lib.hpp"
+
+// ------------------------------------------------------------------------
+// Tests for the "parse_error" class.
+// ------------------------------------------------------------------------
+
+ATF_TEST_CASE(parse_error_to_string);
+ATF_TEST_CASE_HEAD(parse_error_to_string)
+{
+    set_md_var("descr", "Tests the parse_error conversion to strings");
+}
+ATF_TEST_CASE_BODY(parse_error_to_string)
+{
+    using atf::parser::parse_error;
+
+    const parse_error e(123, "This is the message");
+    ATF_CHECK_EQUAL("123: This is the message", std::string(e));
+}
+
+// ------------------------------------------------------------------------
+// Tests for the "parse_errors" class.
+// ------------------------------------------------------------------------
+
+ATF_TEST_CASE(parse_errors_what);
+ATF_TEST_CASE_HEAD(parse_errors_what)
+{
+    set_md_var("descr", "Tests the parse_errors description");
+}
+ATF_TEST_CASE_BODY(parse_errors_what)
+{
+    using atf::parser::parse_error;
+    using atf::parser::parse_errors;
+
+    parse_errors es;
+    es.push_back(parse_error(2, "Second error"));
+    es.push_back(parse_error(1, "First error"));
+
+    ATF_CHECK_EQUAL("2: Second error\n1: First error", std::string(es.what()));
+}
 
 // ------------------------------------------------------------------------
 // Tests for the "token" class.
@@ -697,6 +735,12 @@ HEADER_TC(include, "atf-c++/parser.hpp", "d_include_parser_hpp.cpp");
 
 ATF_INIT_TEST_CASES(tcs)
 {
+    // Add test cases for the "parse_error" class.
+    ATF_ADD_TEST_CASE(tcs, parse_error_to_string);
+
+    // Add test cases for the "parse_errors" class.
+    ATF_ADD_TEST_CASE(tcs, parse_errors_what);
+
     // Add test cases for the "token" class.
     ATF_ADD_TEST_CASE(tcs, token_getters);
 

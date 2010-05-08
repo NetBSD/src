@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -84,6 +84,9 @@ public:
     const std::string get_reason(void) const;
 
     tcr& operator=(const tcr&);
+
+    static tcr read(const fs::path&);
+    void write(const fs::path&) const;
 };
 
 // ------------------------------------------------------------------------
@@ -116,11 +119,13 @@ public:
     const std::string get_config_var(const std::string&, const std::string&)
         const;
     const std::string get_md_var(const std::string&) const;
+    const vars_map get_md_vars(void) const;
     bool has_config_var(const std::string&) const;
     bool has_md_var(const std::string&) const;
     void set_md_var(const std::string&, const std::string&);
 
-    tcr run(int, int, const fs::path&) const;
+    void run(const fs::path&) const;
+    void run_cleanup(void) const;
 
     // To be called from the child process only.
     static void pass(void);

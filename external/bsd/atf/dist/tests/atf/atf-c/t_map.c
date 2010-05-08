@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,6 +62,44 @@ ATF_TC_BODY(map_init, tc)
  * Getters.
  */
 
+ATF_TC(find);
+ATF_TC_HEAD(find, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Checks the atf_map_find function");
+}
+ATF_TC_BODY(find, tc)
+{
+    atf_map_t map;
+    char val1[] = "V1";
+    char val2[] = "V2";
+    atf_map_iter_t iter;
+
+    RE(atf_map_init(&map));
+    RE(atf_map_insert(&map, "K1", val1, false));
+    RE(atf_map_insert(&map, "K2", val2, false));
+
+    iter = atf_map_find(&map, "K0");
+    ATF_REQUIRE(atf_equal_map_iter_map_iter(iter, atf_map_end(&map)));
+
+    iter = atf_map_find(&map, "K1");
+    ATF_REQUIRE(!atf_equal_map_iter_map_iter(iter, atf_map_end(&map)));
+    ATF_REQUIRE(strcmp(atf_map_iter_key(iter), "K1") == 0);
+    ATF_REQUIRE(strcmp(atf_map_iter_data(iter), "V1") == 0);
+    strcpy(atf_map_iter_data(iter), "Z1");
+
+    iter = atf_map_find(&map, "K1");
+    ATF_REQUIRE(!atf_equal_map_iter_map_iter(iter, atf_map_end(&map)));
+    ATF_REQUIRE(strcmp(atf_map_iter_key(iter), "K1") == 0);
+    ATF_REQUIRE(strcmp(atf_map_iter_data(iter), "Z1") == 0);
+
+    iter = atf_map_find(&map, "K2");
+    ATF_REQUIRE(!atf_equal_map_iter_map_iter(iter, atf_map_end(&map)));
+    ATF_REQUIRE(strcmp(atf_map_iter_key(iter), "K2") == 0);
+    ATF_REQUIRE(strcmp(atf_map_iter_data(iter), "V2") == 0);
+
+    atf_map_fini(&map);
+}
+
 ATF_TC(find_c);
 ATF_TC_HEAD(find_c, tc)
 {
@@ -83,10 +121,12 @@ ATF_TC_BODY(find_c, tc)
 
     iter = atf_map_find_c(&map, "K1");
     ATF_REQUIRE(!atf_equal_map_citer_map_citer(iter, atf_map_end_c(&map)));
+    ATF_REQUIRE(strcmp(atf_map_citer_key(iter), "K1") == 0);
     ATF_REQUIRE(strcmp(atf_map_citer_data(iter), "V1") == 0);
 
     iter = atf_map_find_c(&map, "K2");
     ATF_REQUIRE(!atf_equal_map_citer_map_citer(iter, atf_map_end_c(&map)));
+    ATF_REQUIRE(strcmp(atf_map_citer_key(iter), "K2") == 0);
     ATF_REQUIRE(strcmp(atf_map_citer_data(iter), "V2") == 0);
 
     atf_map_fini(&map);
@@ -133,6 +173,93 @@ ATF_TC_BODY(map_insert, tc)
     ATF_REQUIRE_EQ(ptr, buf2);
 
     atf_map_fini(&map);
+}
+
+/*
+ * Macros.
+ */
+
+ATF_TC(map_for_each);
+ATF_TC_HEAD(map_for_each, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Checks the atf_map_for_each macro");
+}
+ATF_TC_BODY(map_for_each, tc)
+{
+    atf_map_t map;
+    atf_map_iter_t iter;
+    size_t count, i, size;
+    char keys[10][5];
+    int nums[10];
+
+    printf("Iterating over empty map\n");
+    RE(atf_map_init(&map));
+    count = 0;
+    atf_map_for_each(iter, &map) {
+        count++;
+        printf("Item count is now %zd\n", count);
+    }
+    ATF_REQUIRE_EQ(count, 0);
+    atf_map_fini(&map);
+
+    for (size = 0; size <= 10; size++) {
+        printf("Iterating over map of %zd elements\n", size);
+        RE(atf_map_init(&map));
+        for (i = 0; i < size; i++) {
+            nums[i] = i + 1;
+            snprintf(keys[i], sizeof(keys[i]), "%d", nums[i]);
+            RE(atf_map_insert(&map, keys[i], &nums[i], false));
+        }
+        count = 0;
+        atf_map_for_each(iter, &map) {
+            printf("Retrieved item: %d\n", *(int *)atf_map_iter_data(iter));
+            count++;
+        }
+        ATF_REQUIRE_EQ(count, size);
+        atf_map_fini(&map);
+    }
+}
+
+ATF_TC(map_for_each_c);
+ATF_TC_HEAD(map_for_each_c, tc)
+{
+    atf_tc_set_md_var(tc, "descr", "Checks the atf_map_for_each_c macro");
+}
+ATF_TC_BODY(map_for_each_c, tc)
+{
+    atf_map_t map;
+    atf_map_citer_t iter;
+    size_t count, i, size;
+    char keys[10][5];
+    int nums[10];
+
+    printf("Iterating over empty map\n");
+    RE(atf_map_init(&map));
+    count = 0;
+    atf_map_for_each_c(iter, &map) {
+        count++;
+        printf("Item count is now %zd\n", count);
+    }
+    ATF_REQUIRE_EQ(count, 0);
+    atf_map_fini(&map);
+
+    for (size = 0; size <= 10; size++) {
+        printf("Iterating over map of %zd elements\n", size);
+        RE(atf_map_init(&map));
+        for (i = 0; i < size; i++) {
+            nums[i] = i + 1;
+            snprintf(keys[i], sizeof(keys[i]), "%d", nums[i]);
+            RE(atf_map_insert(&map, keys[i], &nums[i], false));
+        }
+        count = 0;
+        atf_map_for_each_c(iter, &map) {
+            printf("Retrieved item: %d\n",
+                   *(const int *)atf_map_citer_data(iter));
+            count++;
+        }
+        ATF_REQUIRE_EQ(count, size);
+        atf_map_fini(&map);
+    }
 }
 
 /*
@@ -184,10 +311,15 @@ ATF_TP_ADD_TCS(tp)
     ATF_TP_ADD_TC(tp, map_init);
 
     /* Getters. */
+    ATF_TP_ADD_TC(tp, find);
     ATF_TP_ADD_TC(tp, find_c);
 
     /* Modifiers. */
     ATF_TP_ADD_TC(tp, map_insert);
+
+    /* Macros. */
+    ATF_TP_ADD_TC(tp, map_for_each);
+    ATF_TP_ADD_TC(tp, map_for_each_c);
 
     /* Other. */
     ATF_TP_ADD_TC(tp, stable_keys);

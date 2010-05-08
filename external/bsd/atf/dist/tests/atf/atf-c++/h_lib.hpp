@@ -33,6 +33,10 @@
 #   define TESTS_ATF_ATF_CXX_HPP_LIB_H
 #endif
 
+#include <cstdlib>
+
+#include "atf-c++/process.hpp"
+
 #define HEADER_TC(name, hdrname, sfile) \
     BUILD_TC(name, sfile, \
              "Tests that the " hdrname " file can be included on " \
@@ -58,3 +62,38 @@ class tc;
 
 void build_check_cxx_o(const atf::tests::tc&, const char*, const char*);
 atf::fs::path get_h_processes_path(const atf::tests::tc&);
+bool grep_file(const char*, const char*);
+bool grep_string(const std::string&, const char*);
+
+struct run_h_tc_data {
+    const atf::tests::vars_map& m_config;
+
+    run_h_tc_data(const atf::tests::vars_map& config) :
+        m_config(config) {}
+};
+
+template< class TestCase >
+void
+run_h_tc_child(void* v)
+{
+    run_h_tc_data* data = static_cast< run_h_tc_data* >(v);
+
+    TestCase tc;
+    tc.init(data->m_config);
+    tc.run(atf::fs::path("result"));
+    std::exit(EXIT_SUCCESS);
+}
+
+template< class TestCase >
+void
+run_h_tc(atf::tests::vars_map config = atf::tests::vars_map())
+{
+    run_h_tc_data data(config);
+    atf::process::child c = atf::process::fork(
+        run_h_tc_child< TestCase >,
+        atf::process::stream_redirect_path(atf::fs::path("stdout")),
+        atf::process::stream_redirect_path(atf::fs::path("stderr")),
+        &data);
+    const atf::process::status s = c.wait();
+    ATF_CHECK(s.exited());
+}

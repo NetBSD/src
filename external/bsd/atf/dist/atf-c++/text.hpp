@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -71,6 +71,11 @@ join(const T& words, const std::string& separator)
 
     return str;
 }
+
+//!
+//! \brief Checks if the string matches a regular expression.
+//!
+bool match(const std::string&, const std::string&);
 
 //!
 //! \brief Splits a string into words.

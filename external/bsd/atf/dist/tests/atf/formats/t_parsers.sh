@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -132,28 +132,45 @@ config_body()
         d_config_54
 }
 
-atf_test_case tcs
-tcs_head()
+atf_test_case tcr
+tcr_head()
 {
-    atf_set "descr" "Verifies the application/X-atf-tcs parser"
+    atf_set "descr" "Verifies the application/X-atf-tcr parser"
 }
-tcs_body()
+tcr_body()
 {
-    run_header_tests application/X-atf-tcs 1
-    run_tests application/X-atf-tcs \
-        d_tcs_1 \
-        d_tcs_2 \
-        d_tcs_3 \
-        d_tcs_4 \
-        d_tcs_5 \
-        d_tcs_50 \
-        d_tcs_51 \
-        d_tcs_52 \
-        d_tcs_53 \
-        d_tcs_54 \
-        d_tcs_55 \
-        d_tcs_56 \
-        d_tcs_57
+    run_header_tests application/X-atf-tcr 1
+    run_tests application/X-atf-tcr \
+        d_tcr_1 \
+        d_tcr_2 \
+        d_tcr_3 \
+        d_tcr_50 \
+        d_tcr_51 \
+        d_tcr_52 \
+        d_tcr_53 \
+        d_tcr_54 \
+        d_tcr_60 \
+        d_tcr_61 \
+        d_tcr_70 \
+        d_tcr_71 \
+        d_tcr_72 \
+        d_tcr_73 \
+        d_tcr_74 \
+        d_tcr_75 \
+        d_tcr_76 \
+        d_tcr_77
+}
+
+atf_test_case tp
+tp_head()
+{
+    atf_set "descr" "Verifies the application/X-atf-tp parser"
+}
+tp_body()
+{
+    run_header_tests application/X-atf-tp 1
+    run_tests application/X-atf-tp \
+        d_tp_1
 }
 
 atf_test_case tps
@@ -193,7 +210,8 @@ atf_init_test_cases()
 {
     atf_add_test_case atffile
     atf_add_test_case config
-    atf_add_test_case tcs
+    atf_add_test_case tcr
+    atf_add_test_case tp
     atf_add_test_case tps
 }
 

@@ -28,6 +28,8 @@
 //
 
 extern "C" {
+#include <signal.h>
+
 #include "atf-c/error.h"
 #include "atf-c/process.h"
 }
@@ -279,12 +281,21 @@ impl::status::coredump(void)
 // ------------------------------------------------------------------------
 
 impl::child::child(atf_process_child_t& c) :
-    m_child(c)
+    m_child(c),
+    m_waited(false)
 {
 }
 
 impl::child::~child(void)
 {
+    if (!m_waited) {
+        ::kill(atf_process_child_pid(&m_child), SIGTERM);
+
+        atf_process_status_t s;
+        atf_error_t err = atf_process_child_wait(&m_child, &s);
+        INV(!atf_is_error(err));
+        atf_process_status_fini(&s);
+    }
 }
 
 impl::status
@@ -296,6 +307,7 @@ impl::child::wait(void)
     if (atf_is_error(err))
         throw_atf_error(err);
 
+    m_waited = true;
     return status(s);
 }
 
