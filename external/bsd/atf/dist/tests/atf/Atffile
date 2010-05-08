@@ -6,6 +6,11 @@ tp: atf-c
 tp: atf-c++
 tp: atf-sh
 tp: test_programs
-tp: tools
+tp: atf-check
+tp: atf-cleanup
+tp: atf-compile
+tp: atf-config
+tp: atf-report
+tp: atf-run
 tp: formats
 tp: data

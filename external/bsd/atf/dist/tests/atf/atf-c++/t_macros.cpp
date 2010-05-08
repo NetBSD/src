@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -32,11 +32,13 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 
 #include "atf-c++/fs.hpp"
 #include "atf-c++/macros.hpp"
+#include "atf-c++/process.hpp"
 #include "atf-c++/text.hpp"
 
 #include "h_lib.hpp"
@@ -49,17 +51,7 @@ static
 void
 create_ctl_file(const atf::tests::tc& tc, const char *name)
 {
-    atf::fs::path p = atf::fs::path(tc.get_config_var("ctldir")) / name;
-    ATF_CHECK(open(p.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0644) != -1);
-}
-
-static
-atf::tests::vars_map
-init_config(void)
-{
-    atf::tests::vars_map config;
-    config["ctldir"] = atf::fs::get_current_dir().str();
-    return config;
+    ATF_CHECK(open(name, O_CREAT | O_WRONLY | O_TRUNC, 0644) != -1);
 }
 
 // ------------------------------------------------------------------------
@@ -164,12 +156,8 @@ ATF_TEST_CASE_HEAD(pass)
 }
 ATF_TEST_CASE_BODY(pass)
 {
-    ATF_TEST_CASE_NAME(h_pass) tcaux;
-    tcaux.init(init_config());
-    atf::tests::tcr tcr =
-        tcaux.run(STDOUT_FILENO, STDERR_FILENO, atf::fs::get_current_dir());
-
-    ATF_CHECK(tcr.get_state() == atf::tests::tcr::passed_state);
+    run_h_tc< ATF_TEST_CASE_NAME(h_pass) >();
+    ATF_CHECK(grep_file("result", "result: passed"));
     ATF_CHECK(atf::fs::exists(atf::fs::path("before")));
     ATF_CHECK(!atf::fs::exists(atf::fs::path("after")));
 }
@@ -181,13 +169,9 @@ ATF_TEST_CASE_HEAD(fail)
 }
 ATF_TEST_CASE_BODY(fail)
 {
-    ATF_TEST_CASE_NAME(h_fail) tcaux;
-    tcaux.init(init_config());
-    atf::tests::tcr tcr =
-        tcaux.run(STDOUT_FILENO, STDERR_FILENO, atf::fs::get_current_dir());
-
-    ATF_CHECK(tcr.get_state() == atf::tests::tcr::failed_state);
-    ATF_CHECK(tcr.get_reason() == "Failed on purpose");
+    run_h_tc< ATF_TEST_CASE_NAME(h_fail) >();
+    ATF_CHECK(grep_file("result", "result: failed"));
+    ATF_CHECK(grep_file("result", "reason: Failed on purpose"));
     ATF_CHECK(atf::fs::exists(atf::fs::path("before")));
     ATF_CHECK(!atf::fs::exists(atf::fs::path("after")));
 }
@@ -199,13 +183,9 @@ ATF_TEST_CASE_HEAD(skip)
 }
 ATF_TEST_CASE_BODY(skip)
 {
-    ATF_TEST_CASE_NAME(h_skip) tcaux;
-    tcaux.init(init_config());
-    atf::tests::tcr tcr =
-        tcaux.run(STDOUT_FILENO, STDERR_FILENO, atf::fs::get_current_dir());
-
-    ATF_CHECK(tcr.get_state() == atf::tests::tcr::skipped_state);
-    ATF_CHECK(tcr.get_reason() == "Skipped on purpose");
+    run_h_tc< ATF_TEST_CASE_NAME(h_skip) >();
+    ATF_CHECK(grep_file("result", "result: skipped"));
+    ATF_CHECK(grep_file("result", "reason: Skipped on purpose"));
     ATF_CHECK(atf::fs::exists(atf::fs::path("before")));
     ATF_CHECK(!atf::fs::exists(atf::fs::path("after")));
 }
@@ -230,24 +210,20 @@ ATF_TEST_CASE_BODY(check)
     const atf::fs::path after("after");
 
     for (t = &tests[0]; t->cond != NULL; t++) {
-        atf::tests::vars_map config = init_config();
+        atf::tests::vars_map config;
         config["condition"] = t->cond;
 
         std::cout << "Checking with a " << t->cond << " value" << std::endl;
 
-        ATF_TEST_CASE_NAME(h_check) tcaux;
-        tcaux.init(config);
-        atf::tests::tcr tcr = tcaux.run(STDOUT_FILENO, STDERR_FILENO,
-                                        atf::fs::get_current_dir());
+        run_h_tc< ATF_TEST_CASE_NAME(h_check) >(config);
 
         ATF_CHECK(atf::fs::exists(before));
         if (t->ok) {
-            ATF_CHECK(tcr.get_state() == atf::tests::tcr::passed_state);
+            ATF_CHECK(grep_file("result", "result: passed"));
             ATF_CHECK(atf::fs::exists(after));
         } else {
-            ATF_CHECK(tcr.get_state() == atf::tests::tcr::failed_state);
-            ATF_CHECK(tcr.get_reason().find("condition not met") !=
-                      std::string::npos);
+            ATF_CHECK(grep_file("result", "result: failed"));
+            ATF_CHECK(grep_file("result", "reason: .*condition not met"));
             ATF_CHECK(!atf::fs::exists(after));
         }
 
@@ -280,7 +256,7 @@ ATF_TEST_CASE_BODY(check_equal)
     const atf::fs::path after("after");
 
     for (t = &tests[0]; t->v1 != NULL; t++) {
-        atf::tests::vars_map config = init_config();
+        atf::tests::vars_map config;
         config["v1"] = t->v1;
         config["v2"] = t->v2;
 
@@ -288,19 +264,15 @@ ATF_TEST_CASE_BODY(check_equal)
                   << " and expecting " << (t->ok ? "true" : "false")
                   << std::endl;
 
-        ATF_TEST_CASE_NAME(h_check_equal) tcaux;
-        tcaux.init(config);
-        atf::tests::tcr tcr = tcaux.run(STDOUT_FILENO, STDERR_FILENO,
-                                        atf::fs::get_current_dir());
+        run_h_tc< ATF_TEST_CASE_NAME(h_check_equal) >(config);
 
         ATF_CHECK(atf::fs::exists(before));
         if (t->ok) {
-            ATF_CHECK(tcr.get_state() == atf::tests::tcr::passed_state);
+            ATF_CHECK(grep_file("result", "result: passed"));
             ATF_CHECK(atf::fs::exists(after));
         } else {
-            ATF_CHECK(tcr.get_state() == atf::tests::tcr::failed_state);
-            ATF_CHECK(tcr.get_reason().find("v1 != v2") !=
-                      std::string::npos);
+            ATF_CHECK(grep_file("result", "result: failed"));
+            ATF_CHECK(grep_file("result", "reason: .*v1 != v2"));
             ATF_CHECK(!atf::fs::exists(after));
         }
 
@@ -332,26 +304,23 @@ ATF_TEST_CASE_BODY(check_throw)
     const atf::fs::path after("after");
 
     for (t = &tests[0]; t->what != NULL; t++) {
-        atf::tests::vars_map config = init_config();
+        atf::tests::vars_map config;
         config["what"] = t->what;
 
         std::cout << "Checking with " << t->what << " and expecting "
                   << (t->ok ? "true" : "false") << std::endl;
 
-        ATF_TEST_CASE_NAME(h_check_throw) tcaux;
-        tcaux.init(config);
-        atf::tests::tcr tcr = tcaux.run(STDOUT_FILENO, STDERR_FILENO,
-                                        atf::fs::get_current_dir());
+        run_h_tc< ATF_TEST_CASE_NAME(h_check_throw) >(config);
 
         ATF_CHECK(atf::fs::exists(before));
         if (t->ok) {
-            ATF_CHECK(tcr.get_state() == atf::tests::tcr::passed_state);
+            ATF_CHECK(grep_file("result", "result: passed"));
             ATF_CHECK(atf::fs::exists(after));
         } else {
-            ATF_CHECK(tcr.get_state() == atf::tests::tcr::failed_state);
+            ATF_CHECK(grep_file("result", "result: failed"));
             std::cout << "Checking that message contains '" << t->msg
                       << "'" << std::endl;
-            ATF_CHECK(tcr.get_reason().find(t->msg) != std::string::npos);
+            ATF_CHECK(grep_file("result", t->msg));
             ATF_CHECK(!atf::fs::exists(after));
         }
 

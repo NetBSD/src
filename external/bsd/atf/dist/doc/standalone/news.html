@@ -19,6 +19,11 @@ href="standalone.css" />
 <ol>
 <li>
 <p>
+<a href="#atf-0-8">Changes in version 0.8</a>
+</p>
+</li>
+<li>
+<p>
 <a href="#atf-0-7">Changes in version 0.7</a>
 </p>
 </li>
@@ -55,6 +60,109 @@ href="standalone.css" />
 </ol>
 </div>
 <div xmlns="" class="contents">
+<h1>
+<a name="atf-0-8">Changes in version 0.8</a>
+</h1>
+<p xml:space="preserve">
+Experimental version released on May 7th, 2010.
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Test programs no longer run several test cases in a row.
+The execution of a test program now requires a test case name, and
+that
+single test case is executed.  To execute several test cases, use
+the
+atf-run utility as usual.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Test programs no longer fork a subprocess to isolate the
+execution of test cases.  They run the test case code in-process,
+and a
+crash of the test case will result in a crash of the test program. 
+This is
+to ease debugging of faulty test cases.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Test programs no longer isolate their test cases.  This
+means that they will not create temporary directories nor sanitize
+the
+environment any more.  Yes: running a test case that depends on
+system
+state by hand will most likely yield different results depending on
+where
+(machine, directory, user environment, etc.) it is run.  Isolation
+has been
+moved to atf-run.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Test programs no longer print a cryptic format
+(
+<tt>application/X-atf-tcs</tt>) on a special file channel.  They
+can now print whatever they want on the screen.  Because test
+programs can
+now only run one test case every time, providing controlled output
+is not
+necessary any more.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Test programs no longer write their status into a special
+file descriptor.  Instead, they create a file with the results,
+which is
+later parsed by atf-run.  This changes the semantics of the
+<tt>-r</tt> flag.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+atf-run has been adjusted to perform the test case
+isolation.  As a result, there is now a single canonical place that
+implements the isolation of test caes.  In previous releases, the
+three
+language bindings (C, C++ and shell) had to be kept in sync with
+each other
+(read: not a nice thing to do at all).  As a side effect of this
+change,
+writing bindings for other languages will be much, much easier from
+now
+on.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+atf-run forks test programs on a test case basis, instead
+of on a test program basis as it did before.  This is to provide
+the
+test case isolation that was before implemented by the test
+programs
+themselves.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Removed the atf-exec tool.  This was used to implement test
+case isolation in atf-sh, but it is now unnecessary.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+It is now optional to define the 
+<tt>descr</tt>
+meta-data property.  It has been proven to be mostly useless,
+because test
+cases often carry a descriptive name of their own.
+</p>
+</li>
+</ul>
 <h1>
 <a name="atf-0-7">Changes in version 0.7</a>
 </h1>

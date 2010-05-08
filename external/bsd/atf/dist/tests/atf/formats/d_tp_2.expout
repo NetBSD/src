@@ -1,0 +1,4 @@
+got_tc(test_case_1, {descr=This is the description, ident=test_case_1, timeout=300})
+got_tc(test_case_2, {ident=test_case_2})
+got_tc(test_case_3, {X-prop1=A custom property, descr=Third test case, ident=test_case_3})
+got_eof()

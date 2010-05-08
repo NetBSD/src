@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,9 +36,9 @@ default_status_head()
 default_status_body()
 {
     h="$(atf_get_srcdir)/h_misc -s $(atf_get_srcdir)"
-    atf_check -s eq:0 -o ignore -e ignore ${h} -r3 tc_pass_true
-    atf_check -s eq:0 -o ignore -e ignore ${h} -r3 tc_pass_false
-    atf_check -s eq:1 -o ignore -e save:stderr ${h} -r3 tc_fail
+    atf_check -s eq:0 -o ignore -e ignore ${h} tc_pass_true
+    atf_check -s eq:0 -o ignore -e ignore ${h} tc_pass_false
+    atf_check -s eq:1 -o ignore -e save:stderr ${h} tc_fail
     atf_check -s eq:0 -o ignore -e empty grep "An error" stderr
 }
 

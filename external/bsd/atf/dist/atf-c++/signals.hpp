@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,17 +34,13 @@ extern "C" {
 #include <signal.h>
 }
 
-#include <map>
-
-extern "C" {
-#include "atf-c/signals.h"
-}
-
 namespace atf {
 namespace signals {
 
 extern const int last_signo;
-typedef atf_signal_handler_t handler;
+typedef void (*handler)(const int);
+
+class signal_programmer;
 
 // ------------------------------------------------------------------------
 // The "signal_holder" class.
@@ -54,10 +50,11 @@ typedef atf_signal_handler_t handler;
 // A RAII model to hold a signal while the object is alive.
 //
 class signal_holder {
-    atf_signal_holder_t m_sh;
+    const int m_signo;
+    signal_programmer* m_sp;
 
 public:
-    signal_holder(int);
+    signal_holder(const int);
     ~signal_holder(void);
 
     void process(void);
@@ -71,12 +68,20 @@ public:
 // A RAII model to program a signal while the object is alive.
 //
 class signal_programmer {
-    atf_signal_programmer_t m_sp;
+    const int m_signo;
+    const handler m_handler;
+    struct sigaction m_oldsa;
 
 public:
-    signal_programmer(int, handler);
+    signal_programmer(const int, const handler);
     ~signal_programmer(void);
 };
+
+// ------------------------------------------------------------------------
+// Free functions.
+// ------------------------------------------------------------------------
+
+void reset(const int);
 
 } // namespace signals
 } // namespace atf

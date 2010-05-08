@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -411,7 +411,7 @@ ATF_TC_BODY(to_long, tc)
  * Tests cases for the header file.
  * --------------------------------------------------------------------- */
 
-HEADER_TC(include, "atf-c/tp.h", "d_include_tp_h.c");
+HEADER_TC(include, "atf-c/text.h", "d_include_text_h.c");
 
 /* ---------------------------------------------------------------------
  * Main.

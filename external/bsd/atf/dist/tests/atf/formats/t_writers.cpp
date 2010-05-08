@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,138 +64,107 @@ check_equal(const std::string& str, const std::string& exp)
     }
 }
 
-ATF_TEST_CASE(tcs);
-ATF_TEST_CASE_HEAD(tcs)
+ATF_TEST_CASE(tp);
+ATF_TEST_CASE_HEAD(tp)
 {
-    set_md_var("descr", "Verifies the application/X-atf-tcs writer");
+    set_md_var("descr", "Verifies the application/X-atf-tp writer");
 }
-ATF_TEST_CASE_BODY(tcs)
+ATF_TEST_CASE_BODY(tp)
 {
-    std::ostringstream exprss, exposs, expess;
-    std::ostringstream rss, oss, ess;
+    std::ostringstream expss;
+    std::ostringstream ss;
 
 #define RESET \
-    exprss.str(""); exposs.str(""); expess.str(""); \
-    rss.str(""); oss.str(""); ess.str("")
+    expss.str(""); \
+    ss.str("")
 
 #define CHECK \
-    check_equal(rss.str(), exprss.str()); \
-    check_equal(oss.str(), exposs.str()); \
-    check_equal(ess.str(), expess.str())
+    check_equal(ss.str(), expss.str())
 
     {
         RESET;
 
-        atf::formats::atf_tcs_writer w(rss, oss, ess, 0);
-        exprss << "Content-Type: application/X-atf-tcs; version=\"1\""
-               << std::endl << std::endl
-               << "tcs-count: 0" << std::endl;
+        atf::formats::atf_tp_writer w(ss);
+        expss << "Content-Type: application/X-atf-tp; version=\"1\""
+              << std::endl << std::endl;
         CHECK;
     }
 
     {
         RESET;
 
-        atf::formats::atf_tcs_writer w(rss, oss, ess, 123);
-        exprss << "Content-Type: application/X-atf-tcs; version=\"1\""
-               << std::endl << std::endl
-               << "tcs-count: 123" << std::endl;
+        atf::formats::atf_tp_writer w(ss);
+        expss << "Content-Type: application/X-atf-tp; version=\"1\""
+              << std::endl << std::endl;
+        CHECK;
+
+        w.start_tc("test1");
+        expss << "ident: test1" << std::endl;
+        CHECK;
+
+        w.end_tc();
         CHECK;
     }
 
     {
         RESET;
 
-        atf::formats::atf_tcs_writer w(rss, oss, ess, 1);
-        exprss << "Content-Type: application/X-atf-tcs; version=\"1\""
-               << std::endl << std::endl
-               << "tcs-count: 1" << std::endl;
+        atf::formats::atf_tp_writer w(ss);
+        expss << "Content-Type: application/X-atf-tp; version=\"1\""
+              << std::endl << std::endl;
         CHECK;
 
-        w.start_tc("foo");
-        exprss << "tc-start: foo" << std::endl;
+        w.start_tc("test1");
+        expss << "ident: test1" << std::endl;
         CHECK;
 
-        w.end_tc(atf::tests::tcr(atf::tests::tcr::passed_state));
-        exprss << "tc-end: foo, passed" << std::endl;
-        CHECK;
-    }
-
-    {
-        RESET;
-
-        atf::formats::atf_tcs_writer w(rss, oss, ess, 1);
-        exprss << "Content-Type: application/X-atf-tcs; version=\"1\""
-               << std::endl << std::endl
-               << "tcs-count: 1" << std::endl;
+        w.end_tc();
         CHECK;
 
-        w.start_tc("foo");
-        exprss << "tc-start: foo" << std::endl;
+        w.start_tc("test2");
+        expss << std::endl << "ident: test2" << std::endl;
         CHECK;
 
-        w.end_tc(atf::tests::tcr(atf::tests::tcr::failed_state,
-                                 "Failed reason, comma"));
-        exprss << "tc-end: foo, failed, Failed reason, comma" << std::endl;
+        w.end_tc();
         CHECK;
     }
 
     {
         RESET;
 
-        atf::formats::atf_tcs_writer w(rss, oss, ess, 1);
-        exprss << "Content-Type: application/X-atf-tcs; version=\"1\""
-               << std::endl << std::endl
-               << "tcs-count: 1" << std::endl;
+        atf::formats::atf_tp_writer w(ss);
+        expss << "Content-Type: application/X-atf-tp; version=\"1\""
+              << std::endl << std::endl;
         CHECK;
 
-        w.start_tc("foo");
-        exprss << "tc-start: foo" << std::endl;
+        w.start_tc("test1");
+        expss << "ident: test1" << std::endl;
         CHECK;
 
-        w.end_tc(atf::tests::tcr(atf::tests::tcr::skipped_state,
-                                 "Skipped reason, comma"));
-        exprss << "tc-end: foo, skipped, Skipped reason, comma" << std::endl;
-        CHECK;
-    }
-
-    {
-        RESET;
-
-        atf::formats::atf_tcs_writer w(rss, oss, ess, 3);
-        exprss << "Content-Type: application/X-atf-tcs; version=\"1\""
-               << std::endl << std::endl
-               << "tcs-count: 3" << std::endl;
+        w.tc_meta_data("descr", "the description");
+        expss << "descr: the description" << std::endl;
         CHECK;
 
-        w.start_tc("foo");
-        exprss << "tc-start: foo" << std::endl;
+        w.end_tc();
         CHECK;
 
-        w.end_tc(atf::tests::tcr(atf::tests::tcr::passed_state));
-        exprss << "tc-end: foo, passed" << std::endl;
-        exposs << "__atf_tc_separator__" << std::endl;
-        expess << "__atf_tc_separator__" << std::endl;
+        w.start_tc("test2");
+        expss << std::endl << "ident: test2" << std::endl;
         CHECK;
 
-        w.start_tc("bar");
-        exprss << "tc-start: bar" << std::endl;
+        w.tc_meta_data("descr", "second test case");
+        expss << "descr: second test case" << std::endl;
         CHECK;
 
-        w.end_tc(atf::tests::tcr(atf::tests::tcr::failed_state,
-                                 "The reason"));
-        exprss << "tc-end: bar, failed, The reason" << std::endl;
-        exposs << "__atf_tc_separator__" << std::endl;
-        expess << "__atf_tc_separator__" << std::endl;
+        w.tc_meta_data("require.progs", "/bin/cp");
+        expss << "require.progs: /bin/cp" << std::endl;
         CHECK;
 
-        w.start_tc("baz");
-        exprss << "tc-start: baz" << std::endl;
+        w.tc_meta_data("X-custom", "foo bar baz");
+        expss << "X-custom: foo bar baz" << std::endl;
         CHECK;
 
-        w.end_tc(atf::tests::tcr(atf::tests::tcr::skipped_state,
-                                 "The reason"));
-        exprss << "tc-end: baz, skipped, The reason" << std::endl;
+        w.end_tc();
         CHECK;
     }
 
@@ -449,6 +418,6 @@ ATF_TEST_CASE_BODY(tps)
 
 ATF_INIT_TEST_CASES(tcs)
 {
-    ATF_ADD_TEST_CASE(tcs, tcs);
+    ATF_ADD_TEST_CASE(tcs, tp);
     ATF_ADD_TEST_CASE(tcs, tps);
 }

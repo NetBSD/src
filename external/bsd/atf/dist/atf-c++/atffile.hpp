@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,11 @@
 #include <atf-c++/tests.hpp>
 
 namespace atf {
+namespace atffile {
+
+// ------------------------------------------------------------------------
+// The "atffile" class.
+// ------------------------------------------------------------------------
 
 class atffile {
     atf::tests::vars_map m_conf;
@@ -44,13 +49,22 @@ class atffile {
     atf::tests::vars_map m_props;
 
 public:
-    atffile(const fs::path&);
+    atffile(const atf::tests::vars_map&,
+            const std::vector< std::string >&,
+            const atf::tests::vars_map&);
 
     const atf::tests::vars_map& conf(void) const;
     const std::vector< std::string >& tps(void) const;
     const atf::tests::vars_map& props(void) const;
 };
 
+// ------------------------------------------------------------------------
+// Free functions.
+// ------------------------------------------------------------------------
+
+atffile read(const fs::path&);
+
+} // namespace atffile
 } // namespace atf
 
 #endif // !defined(_ATF_CXX_ATFFILE_HPP_)

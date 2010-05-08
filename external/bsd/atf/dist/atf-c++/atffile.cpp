@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,9 @@
 #include "atf-c++/exceptions.hpp"
 #include "atf-c++/expand.hpp"
 #include "atf-c++/formats.hpp"
+#include "atf-c++/sanity.hpp"
+
+namespace impl = atf::atffile;
 
 // ------------------------------------------------------------------------
 // The "reader" helper class.
@@ -108,7 +111,45 @@ public:
 // The "atffile" class.
 // ------------------------------------------------------------------------
 
-atf::atffile::atffile(const atf::fs::path& filename)
+impl::atffile::atffile(const atf::tests::vars_map& config_vars,
+                       const std::vector< std::string >& test_program_names,
+                       const atf::tests::vars_map& properties) :
+    m_conf(config_vars),
+    m_tps(test_program_names),
+    m_props(properties)
+{
+    PRE(properties.find("test-suite") != properties.end());
+}
+
+const std::vector< std::string >&
+impl::atffile::tps(void)
+    const
+{
+    return m_tps;
+}
+
+const atf::tests::vars_map&
+impl::atffile::conf(void)
+    const
+{
+    return m_conf;
+}
+
+const atf::tests::vars_map&
+impl::atffile::props(void)
+    const
+{
+    return m_props;
+}
+
+// ------------------------------------------------------------------------
+// Free functions.
+// ------------------------------------------------------------------------
+
+// XXX Glob expansion and file existance checks certainly do not belong in
+// a *parser*.  This needs to be taken out...
+impl::atffile
+impl::read(const atf::fs::path& filename)
 {
     // Scan the directory where the atffile lives in to gather a list of
     // all possible test programs in it.
@@ -137,33 +178,10 @@ atf::atffile::atffile(const atf::fs::path& filename)
     r.read();
     is.close();
 
-    // Update the atffile with the data accumulated in the reader.
-    m_conf = r.conf();
-    m_props = r.props();
-    m_tps = r.tps();
-
     // Sanity checks.
-    if (m_props.find("test-suite") == m_props.end())
-        throw std::runtime_error("Undefined property `test-suite'");
-}
+    if (r.props().find("test-suite") == r.props().end())
+        throw atf::not_found_error< std::string >
+            ("Undefined property `test-suite'", "test-suite");
 
-const std::vector< std::string >&
-atf::atffile::tps(void)
-    const
-{
-    return m_tps;
-}
-
-const atf::tests::vars_map&
-atf::atffile::conf(void)
-    const
-{
-    return m_conf;
-}
-
-const atf::tests::vars_map&
-atf::atffile::props(void)
-    const
-{
-    return m_props;
+    return atffile(r.conf(), r.tps(), r.props());
 }

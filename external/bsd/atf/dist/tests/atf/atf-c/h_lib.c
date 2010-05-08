@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -128,4 +128,52 @@ grep_file(const char *file, const char *regex, ...)
     atf_dynstr_fini(&formatted);
 
     return found;
+}
+
+struct run_h_tc_data {
+    atf_tc_t *m_tc;
+    const char *m_resname;
+};
+
+static
+void
+run_h_tc_child(void *v)
+{
+    struct run_h_tc_data *data = (struct run_h_tc_data *)v;
+    atf_fs_path_t respath;
+
+    RE(atf_fs_path_init_fmt(&respath, data->m_resname));
+    RE(atf_tc_run(data->m_tc, &respath));
+    atf_fs_path_fini(&respath);
+}
+
+/* TODO: Investigate if it's worth to add this functionality as part of
+ * the public API.  I.e. a function to easily run a test case body in a
+ * subprocess. */
+void
+run_h_tc(atf_tc_t *tc, const char *outname, const char *errname,
+         const char *resname)
+{
+    atf_fs_path_t outpath, errpath;
+    atf_process_stream_t outb, errb;
+    atf_process_child_t child;
+    atf_process_status_t status;
+
+    RE(atf_fs_path_init_fmt(&outpath, outname));
+    RE(atf_fs_path_init_fmt(&errpath, errname));
+
+    struct run_h_tc_data data = { tc, resname };
+
+    RE(atf_process_stream_init_redirect_path(&outb, &outpath));
+    RE(atf_process_stream_init_redirect_path(&errb, &errpath));
+    RE(atf_process_fork(&child, run_h_tc_child, &outb, &errb, &data));
+    atf_process_stream_fini(&errb);
+    atf_process_stream_fini(&outb);
+
+    RE(atf_process_child_wait(&child, &status));
+    ATF_CHECK(atf_process_status_exited(&status));
+    atf_process_status_fini(&status);
+
+    atf_fs_path_fini(&errpath);
+    atf_fs_path_fini(&outpath);
 }

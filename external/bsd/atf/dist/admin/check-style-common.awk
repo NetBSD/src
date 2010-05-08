@@ -55,7 +55,7 @@ BEGIN {
     if (skip)
         next
 
-    if (length > 79)
+    if (length > 80)
         warn("Line too long to fit on screen")
 }
 

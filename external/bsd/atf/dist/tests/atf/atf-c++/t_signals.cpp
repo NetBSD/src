@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,11 @@ extern "C" {
 }
 
 #include <cerrno>
+#include <iostream>
 
 #include "atf-c++/exceptions.hpp"
 #include "atf-c++/macros.hpp"
+#include "atf-c++/process.hpp"
 #include "atf-c++/signals.hpp"
 
 #include "h_lib.hpp"
@@ -215,6 +217,44 @@ ATF_TEST_CASE_BODY(signal_programmer_preserve)
 }
 
 // ------------------------------------------------------------------------
+// Tests cases for the free functions.
+// ------------------------------------------------------------------------
+
+static
+void
+reset_child(void *v)
+{
+    sigusr1::program();
+
+    sigusr1::happened = false;
+    atf::signals::reset(SIGUSR1);
+    kill(::getpid(), SIGUSR1);
+
+    if (sigusr1::happened) {
+        std::cerr << "Signal was not resetted correctly" << std::endl;
+        abort();
+    } else {
+        exit(EXIT_SUCCESS);
+    }
+}
+
+ATF_TEST_CASE(reset);
+ATF_TEST_CASE_HEAD(reset)
+{
+    set_md_var("descr", "Tests the reset function");
+}
+ATF_TEST_CASE_BODY(reset)
+{
+    atf::process::child c =
+        atf::process::fork(reset_child, atf::process::stream_inherit(),
+                           atf::process::stream_inherit(), NULL);
+
+    const atf::process::status s = c.wait();
+    ATF_CHECK(s.exited() || s.signaled());
+    ATF_CHECK(!s.signaled() || s.termsig() == SIGUSR1);
+}
+
+// ------------------------------------------------------------------------
 // Tests cases for the header file.
 // ------------------------------------------------------------------------
 
@@ -234,6 +274,9 @@ ATF_INIT_TEST_CASES(tcs)
     // Add the tests for the "signal_programmer" class.
     ATF_ADD_TEST_CASE(tcs, signal_programmer_program);
     ATF_ADD_TEST_CASE(tcs, signal_programmer_preserve);
+
+    // Add the test cases for the free functions.
+    ATF_ADD_TEST_CASE(tcs, reset);
 
     // Add the test cases for the header file.
     ATF_ADD_TEST_CASE(tcs, include);

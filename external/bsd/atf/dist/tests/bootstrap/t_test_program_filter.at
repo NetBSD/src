@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -31,61 +31,37 @@ AT_SETUP([test_program: filter test cases by name])
 
 for h in tp_basic_c tp_basic_cpp tp_basic_sh; do
 
-AT_DATA([expres], [Content-Type: application/X-atf-tcs; version="1"
+dnl Try an invalid test case name.
+AT_CHECK([TEST_HELPER(${h}) invalid], 1, [], [stderr])
+AT_CHECK([grep "Unknown test case .invalid'" stderr],
+         [0], [ignore], [])
 
-tcs-count: 4
-tc-start: pass
-tc-end: pass, passed
-tc-start: fail
-tc-end: fail, failed, On purpose
-tc-start: skip
-tc-end: skip, skipped, By design
-tc-start: default
-tc-end: default, passed
+dnl Try a glob as a test case name.
+AT_CHECK([TEST_HELPER(${h}) "*p*"], 1, [], [stderr])
+AT_CHECK([grep "Unknown test case .\\*p\\*'" stderr],
+         [0], [ignore], [])
+
+AT_DATA([expres], [Content-Type: application/X-atf-tcr; version="1"
+
+result: passed
 ])
-AT_CHECK([TEST_HELPER(${h}) -r3 3>resout], 1, [ignore], [ignore])
-AT_CHECK([cmp -s resout expres], [0], [], [])
-AT_CHECK([TEST_HELPER(${h}) -r3 3>resout "*"], 1, [ignore], [ignore])
-AT_CHECK([cmp -s resout expres], [0], [], [])
-
-AT_DATA([expres], [Content-Type: application/X-atf-tcs; version="1"
-
-tcs-count: 1
-tc-start: pass
-tc-end: pass, passed
-])
-AT_CHECK([TEST_HELPER(${h}) -r3 pass 3>resout], 0, [ignore], [ignore])
+AT_CHECK([TEST_HELPER(${h}) -r resout pass], 0, [ignore], [ignore])
 AT_CHECK([cmp -s resout expres], [0], [], [])
 
-AT_DATA([expres], [Content-Type: application/X-atf-tcs; version="1"
+AT_DATA([expres], [Content-Type: application/X-atf-tcr; version="1"
 
-tcs-count: 2
-tc-start: pass
-tc-end: pass, passed
-tc-start: pass
-tc-end: pass, passed
+result: skipped
+reason: By design
 ])
-AT_CHECK([TEST_HELPER(${h}) -r3 pass "p*" 3>resout], 0, [ignore], [ignore])
+AT_CHECK([TEST_HELPER(${h}) -r resout skip], 0, [ignore], [ignore])
 AT_CHECK([cmp -s resout expres], [0], [], [])
 
-AT_DATA([expres], [Content-Type: application/X-atf-tcs; version="1"
+AT_DATA([expres], [Content-Type: application/X-atf-tcr; version="1"
 
-tcs-count: 1
-tc-start: skip
-tc-end: skip, skipped, By design
+result: failed
+reason: On purpose
 ])
-AT_CHECK([TEST_HELPER(${h}) -r3 skip 3>resout], 0, [ignore], [ignore])
-AT_CHECK([cmp -s resout expres], [0], [], [])
-
-AT_DATA([expres], [Content-Type: application/X-atf-tcs; version="1"
-
-tcs-count: 2
-tc-start: fail
-tc-end: fail, failed, On purpose
-tc-start: default
-tc-end: default, passed
-])
-AT_CHECK([TEST_HELPER(${h}) -r3 "*f*" 3>resout], 1, [ignore], [ignore])
+AT_CHECK([TEST_HELPER(${h}) -r resout fail], 1, [ignore], [ignore])
 AT_CHECK([cmp -s resout expres], [0], [], [])
 
 done

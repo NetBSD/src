@@ -27,9 +27,9 @@ specification (TODO: Add link somehow).</para>
 
 </section>
 
-<section id="plan-0-8">
+<section id="plan-0-9">
 
-<title>The plan to 0.8</title>
+<title>The plan to 0.9</title>
 
 <itemizedlist>
 
@@ -62,9 +62,9 @@ cases.</para></listitem>
 
 </section>
 
-<section id="plan-0-9">
+<section id="plan-0-10">
 
-<title>The plan to 0.9</title>
+<title>The plan to 0.10</title>
 
 <itemizedlist>
 
@@ -81,6 +81,94 @@ problems:</para>
 <para>78eeacf3b9284493e5e96b7866fc1d163a13bc02
 8e200683a2b70eadca728c2e0347d4790777b3fc
 872393ed0177cbcc30ffacede228eb3986c42ab7</para></listitem>
+
+</itemizedlist>
+
+</section>
+
+<section id="plan-misc">
+
+<title>The plan to fix miscellaneous issues</title>
+
+<itemizedlist>
+
+<listitem><para>Consider getting rid of the checked-in top-level documents.
+Don't know why we are doing that at all.</para></listitem>
+
+<listitem><para>Get rid of the "C object model", e.g.
+<literal>atf_object_t</literal>.  It is completely useless at this point
+and just causes pain.  If we want to catch leaks, let's just use Valgrind
+in a platform where this tool works.</para></listitem>
+
+<listitem><para>Validate test program command line syntax: -r has to be
+invalid when running the cleanup part of a test case.</para></listitem>
+
+<listitem><para>Make test case list sort properties alphabetically?  Wrap
+them on line boundaries when printing to terminal?</para></listitem>
+
+<listitem><para>Proper cleanup of a test case when ctrl+c from
+atf-run.</para></listitem>
+
+<listitem><para>When running tests/atf/atf-run/t_atf_run manually, it
+overwrites Atffile.  This is a bit annoying and should be somehow
+fixed.</para></listitem>
+
+<listitem><para>Templatize the void* cookie in atf-c++'s
+fork.</para></listitem>
+
+<listitem><para>Remove obsolete helper tests in tests/atf/test_programs/h_*
+for cleanup.</para></listitem>
+
+<listitem><para>Document the applications/X-atf-tp
+format.</para></listitem>
+
+<listitem><para>Update atf-test-program(4) to reflect the command-line
+changes.</para></listitem>
+
+<listitem><para>Update atf-test-case(4) to reflect the isolation
+changes.</para></listitem>
+
+<listitem><para>Fix default for -r flag in test programs.</para></listitem>
+
+<listitem><para>Fix any XXX and TODO items introduced by this
+branch.</para></listitem>
+
+<listitem><para>Get rid of atf-compile.  Instead, just write a wrapper
+around sh that loads the necessary library files and then executes the test
+program.  Make it be usable with #! /...</para></listitem>
+
+<listitem><para>Drop the tests/ hierarchy and intermix test programs with
+the source files.  (The installed layout would remain the same.)  Rename
+t_* to *_test.</para></listitem>
+
+<listitem><para>Get rid of the data/ subdirectory: just put the files where
+they belong.</para></listitem>
+
+<listitem><para>Get rid of h_{pass,fail,skip} duplicates.</para></listitem>
+
+<listitem><para>Add a use.fs metadata property, defaulting to
+no.</para></listitem>
+
+<listitem><para>Reverse arguments to ATF_CHECK_THROW.  Also add a macro to
+check the error message of an exception, alongside its
+type.</para></listitem>
+
+<listitem><para>Get rid of the atf::tests::vars_map monstrosity and prune
+unnecessary inclusions of atf-c++/tests.hpp.  I'm thinking that we need a
+simple "types" file containing convenience types used thorough the code,
+and that we need a "strong_typedef" wrapper for them.</para></listitem>
+
+<listitem><para>Do not use std::endl.  Understand what it is for first, and
+then decide.</para></listitem>
+
+<listitem><para>It looks like atf-c++/signals may be unused.  Review and
+delete as required.</para></listitem>
+
+<listitem><para>The suggested <literal>atf-run | atf-report</literal> does
+not work quite well because most shells lose the exit code of the first
+command in the pipeline.  Therefore, it's not possible to get the result
+of the execution of the test suite.  Find a way around this; maybe implement
+a wrapping tool.</para></listitem>
 
 </itemizedlist>
 
