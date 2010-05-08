@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1206 2010/05/07 17:41:57 degroote Exp $
+# $NetBSD: mi,v 1.1207 2010/05/08 08:14:36 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -53,7 +53,7 @@
 ./usr/share/man/cat1/atf-cleanup.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-compile.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat,atf
-./usr/share/man/cat1/atf-exec.0			man-atf-catman		.cat,atf
+./usr/share/man/cat1/atf-exec.0			man-atf-catman		obsolete
 ./usr/share/man/cat1/atf-format.0		man-atf-catman		.cat,atf
 ./usr/share/man/cat1/atf-killpg.0		man-obsolete		obsolete
 ./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat,atf
@@ -2792,7 +2792,7 @@
 ./usr/share/man/html1/atf-cleanup.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-compile.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-config.html		man-atf-htmlman		html,atf
-./usr/share/man/html1/atf-exec.html		man-atf-htmlman		html,atf
+./usr/share/man/html1/atf-exec.html		man-atf-htmlman		obsolete
 ./usr/share/man/html1/atf-format.html		man-atf-htmlman		html,atf
 ./usr/share/man/html1/atf-killpg.html		man-obsolete		obsolete
 ./usr/share/man/html1/atf-report.html		man-atf-htmlman		html,atf
@@ -5147,7 +5147,7 @@
 ./usr/share/man/man1/atf-cleanup.1		man-atf-man		.man,atf
 ./usr/share/man/man1/atf-compile.1		man-atf-man		.man,atf
 ./usr/share/man/man1/atf-config.1		man-atf-man		.man,atf
-./usr/share/man/man1/atf-exec.1			man-atf-man		.man,atf
+./usr/share/man/man1/atf-exec.1			man-atf-man		obsolete
 ./usr/share/man/man1/atf-format.1		man-atf-man		.man,atf
 ./usr/share/man/man1/atf-killpg.1		man-obsolete		obsolete
 ./usr/share/man/man1/atf-report.1		man-atf-man		.man,atf
