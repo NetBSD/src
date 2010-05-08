@@ -303,8 +303,10 @@ main(int argc, char **argv)
 	}
 	/* initialise, and read keys from file */
 	if (!netpgp_init(&netpgp)) {
-		if (stat(netpgp_getvar(&netpgp, "homedir"), &st) < 0 &&
-		    mkdir("homedir", 0700) < 0) {
+		if (stat(netpgp_getvar(&netpgp, "homedir"), &st) < 0) {
+			(void) mkdir(netpgp_getvar(&netpgp, "homedir"), 0700);
+		}
+		if (stat(netpgp_getvar(&netpgp, "homedir"), &st) < 0) {
 			(void) fprintf(stderr, "can't create home directory '%s'\n",
 				netpgp_getvar(&netpgp, "homedir"));
 			exit(EXIT_ERROR);
