@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC,v 1.46 2010/05/08 18:03:15 phx Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.45 $"
+#ident 		"GENERIC-$Revision: 1.46 $"
 
 maxusers	32
 
@@ -194,8 +194,8 @@ wd*		at atabus? drive ? flags 0x0000	# the drives themselves
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
-msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
+skc*	at pci? dev ? function ?	# Marvell Yukon Gigabit Ethernet
+sk*	at skc?				# Marvell Yukon Gigabit Ethernet
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 inphy*	at mii? phy ?			# Intel 82555 PHYs

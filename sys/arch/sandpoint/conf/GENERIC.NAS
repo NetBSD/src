@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.NAS,v 1.11 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC.NAS,v 1.12 2010/05/08 18:03:15 phx Exp $
 #
 # machine description file for GENERIC.NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC.NAS-$Revision: 1.11 $"
+#ident 		"GENERIC.NAS-$Revision: 1.12 $"
 
 maxusers	32
 
@@ -180,8 +180,8 @@ wd*		at atabus? drive ? flags 0x0000	# the drives themselves
 # PCI network interfaces
 tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
-msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
+skc*	at pci? dev ? function ?	# Marvell Yukon Gigabit Ethernet
+sk*	at skc?				# Marvell Yukon Gigabit Ethernet
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 
