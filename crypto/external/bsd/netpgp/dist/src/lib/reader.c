@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.33 2010/04/14 00:19:52 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.34 2010/05/08 00:33:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1611,25 +1611,16 @@ se_ip_data_reader(void *dest_,
 			return -1;
 		}
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned	i;
-
 			fprintf(stderr, "\n\nentire SE IP packet (len=%d):\n",
 					decrypted_region.length);
-			for (i = 0; i < decrypted_region.length; i++) {
-				fprintf(stderr, "0x%02x ", buf[i]);
-				if (!((i + 1) % 8))
-					fprintf(stderr, "\n");
-			}
+			hexdump(stderr, buf, decrypted_region.length, " "); 
 			fprintf(stderr, "\n\n");
 		}
 		/* verify leading preamble */
 
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned	i;
-
 			fprintf(stderr, "\npreamble: ");
-			for (i = 0; i < se_ip->decrypt->blocksize + 2; i++)
-				fprintf(stderr, " 0x%02x", buf[i]);
+			hexdump(stderr, buf, se_ip->decrypt->blocksize , " ");
 			fprintf(stderr, "\n");
 		}
 		b = se_ip->decrypt->blocksize;
@@ -1655,17 +1646,11 @@ se_ip_data_reader(void *dest_,
 		mdc_hash = mdc + 2;
 
 		if (__ops_get_debug_level(__FILE__)) {
-			unsigned	i;
-
 			fprintf(stderr, "\nplaintext (len=%" PRIsize "u): ",
 				sz_plaintext);
-			for (i = 0; i < sz_plaintext; i++)
-				fprintf(stderr, " 0x%02x", plaintext[i]);
-			fprintf(stderr, "\n");
-
+			hexdump(stderr, plaintext, sz_plaintext, " ");
 			fprintf(stderr, "\nmdc (len=%" PRIsize "u): ", sz_mdc);
-			for (i = 0; i < sz_mdc; i++)
-				fprintf(stderr, " 0x%02x", mdc[i]);
+			hexdump(stderr, mdc, sz_mdc, " ");
 			fprintf(stderr, "\n");
 		}
 		__ops_calc_mdc_hash(preamble, sz_preamble, plaintext,
