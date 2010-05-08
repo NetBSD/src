@@ -1,14 +1,15 @@
-# $NetBSD: Makefile,v 1.3 2009/12/22 13:38:11 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/05/08 08:12:35 jmmv Exp $
 
 .include <bsd.own.mk>
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
-.PATH:		${SRCDIR}/tools
+.PATH:		${SRCDIR}/atf-run
 .PATH:		${SRCDIR}/data ${SRCDIR}/atf-sh
 
 BINDIR=		/usr/bin
 PROG_CXX=	atf-run
-SRCS=		atf-run.cpp
+SRCS=		atf-run.cpp config.cpp requirements.cpp test-program.cpp \
+		timer.cpp
 MAN=		atf-run.1
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
@@ -32,7 +33,7 @@ FILESDIR_atf-c++.pc=	/usr/lib/pkgconfig
 
 realall: atf-c.pc
 atf-c.pc: atf-c.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.7,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.8,g' \
 	    -e 's,__CC__,gcc,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
@@ -41,7 +42,7 @@ CLEANFILES+=	atf-c.pc
 
 realall: atf-c++.pc
 atf-c++.pc: atf-c++.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.7,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.8,g' \
 	    -e 's,__CXX__,g++,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
