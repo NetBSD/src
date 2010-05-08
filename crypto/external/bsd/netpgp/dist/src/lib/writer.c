@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.20 2010/04/14 00:18:46 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.21 2010/05/08 00:24:47 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1171,13 +1171,9 @@ __ops_write_se_ip_pktset(__ops_output_t *output,
 	preamble[crypted->blocksize + 1] = preamble[crypted->blocksize - 1];
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned    i;
-
-		fprintf(stderr, "\npreamble: ");
-		for (i = 0; i < preamblesize; i++) {
-			fprintf(stderr, " 0x%02x", preamble[i]);
-		}
-		fprintf(stderr, "\n");
+		(void) fprintf(stderr, "\npreamble: ");
+		hexdump(stderr, preamble, preamblesize, " ");
+		(void) fprintf(stderr, "\n");
 	}
 
 	/* now construct MDC packet and add to the end of the buffer */
@@ -1186,22 +1182,10 @@ __ops_write_se_ip_pktset(__ops_output_t *output,
 	__ops_write_mdc(mdcoutput, hashed);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned    i;
-		size_t          sz_plaintext = len;
-		size_t          sz_mdc2 = 1 + 1 + OPS_SHA1_HASH_SIZE;
-		uint8_t  *digest;
-
 		(void) fprintf(stderr, "\nplaintext: ");
-		for (i = 0; i < sz_plaintext; i++) {
-			(void) fprintf(stderr, " 0x%02x", data[i]);
-		}
-		(void) fprintf(stderr, "\n");
-
+		hexdump(stderr, data, len, " ");
 		(void) fprintf(stderr, "\nmdc: ");
-		digest = __ops_mem_data(mdc);
-		for (i = 0; i < sz_mdc2; i++) {
-			(void) fprintf(stderr, " 0x%02x", digest[i]);
-		}
+		hexdump(stderr, __ops_mem_data(mdc), OPS_SHA1_HASH_SIZE + 1 + 1, " ");
 		(void) fprintf(stderr, "\n");
 	}
 
