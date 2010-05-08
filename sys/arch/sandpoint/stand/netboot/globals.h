@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.13 2010/05/08 14:40:08 phx Exp $ */
+/* $NetBSD: globals.h,v 1.14 2010/05/08 19:41:07 phx Exp $ */
 
 /* clock feed */
 #ifndef EXT_CLK_FREQ
@@ -13,6 +13,7 @@ extern int brdtype;
 #define BRD_KUROBOX		100
 #define BRD_QNAPTS101		101
 #define BRD_SYNOLOGY		102
+#define BRD_STORCENTER		103
 #define BRD_UNKNOWN		-1
 
 extern char *consname;
