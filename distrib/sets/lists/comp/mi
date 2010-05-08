@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1441 2010/05/03 05:01:53 jruoho Exp $
+#	$NetBSD: mi,v 1.1442 2010/05/08 08:14:36 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -147,7 +147,7 @@
 ./usr/include/atf-c/env.h			comp-atf-include	atf
 ./usr/include/atf-c/error.h			comp-atf-include	atf
 ./usr/include/atf-c/error_fwd.h			comp-atf-include	atf
-./usr/include/atf-c/expand.h			comp-atf-include	atf
+./usr/include/atf-c/expand.h			comp-atf-include	obsolete
 ./usr/include/atf-c/fs.h			comp-atf-include	atf
 ./usr/include/atf-c/io.h			comp-atf-include	atf
 ./usr/include/atf-c/list.h			comp-atf-include	atf
@@ -156,7 +156,7 @@
 ./usr/include/atf-c/object.h			comp-atf-include	atf
 ./usr/include/atf-c/process.h			comp-atf-include	atf
 ./usr/include/atf-c/sanity.h			comp-atf-include	atf
-./usr/include/atf-c/signals.h			comp-atf-include	atf
+./usr/include/atf-c/signals.h			comp-atf-include	obsolete
 ./usr/include/atf-c/tc.h			comp-atf-include	atf
 ./usr/include/atf-c/tcr.h			comp-atf-include	atf
 ./usr/include/atf-c/text.h			comp-atf-include	atf
@@ -3377,7 +3377,7 @@
 ./usr/libdata/debug/usr/games/worms.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/wump.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/libexec/atf-cleanup.debug	comp-atf-debug		debug
-./usr/libdata/debug/usr/libexec/atf-exec.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/libexec/atf-exec.debug	comp-atf-debug		obsolete
 ./usr/libdata/debug/usr/libexec/atf-format.debug	comp-atf-debug		debug
 ./usr/libdata/debug/usr/libexec/atf-killpg.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/atrun.debug	comp-cron-debug		debug
