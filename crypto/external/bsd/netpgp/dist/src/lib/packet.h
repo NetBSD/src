@@ -1046,7 +1046,6 @@ typedef struct {
 	unsigned        length;
 } __ops_fingerprint_t;
 
-void __ops_init(void);
 void __ops_finish(void);
 void __ops_keyid(uint8_t *, const size_t, const __ops_pubkey_t *);
 void __ops_fingerprint(__ops_fingerprint_t *, const __ops_pubkey_t *);

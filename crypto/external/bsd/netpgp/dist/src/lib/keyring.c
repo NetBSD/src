@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.34 2010/04/14 00:23:09 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.35 2010/05/08 00:33:28 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -86,6 +86,7 @@ __RCSID("$NetBSD: keyring.c,v 1.34 2010/04/14 00:23:09 agc Exp $");
 #include "packet.h"
 #include "crypto.h"
 #include "validate.h"
+#include "netpgpdefs.h"
 #include "netpgpdigest.h"
 
 
@@ -801,17 +802,6 @@ __ops_keyring_free(__ops_keyring_t *keyring)
 	keyring->keyc = keyring->keyvsize = 0;
 }
 
-/* simple function to print out a binary keyid */
-void
-__ops_pkeyid(FILE *fp, const uint8_t *keyid, size_t size)
-{
-	size_t	i;
-
-	for (i = 0 ; i < size ; i++) {
-		(void) fprintf(fp, "%02x", keyid[i]);
-	}
-}
-
 /**
    \ingroup HighLevel_KeyringFind
 
@@ -834,10 +824,9 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(io->errs,
 				"__ops_getkeybyid: keyring keyid ");
-			__ops_pkeyid(io->errs, keyring->keys[*from].key_id,
-				OPS_KEY_ID_SIZE);
+			hexdump(io->errs, keyring->keys[*from].key_id, OPS_KEY_ID_SIZE, "");
 			(void) fprintf(io->errs, ", keyid ");
-			__ops_pkeyid(io->errs, keyid, OPS_KEY_ID_SIZE);
+			hexdump(io->errs, keyid, OPS_KEY_ID_SIZE, "");
 			(void) fprintf(io->errs, "\n");
 		}
 		if (memcmp(keyring->keys[*from].key_id, keyid,
@@ -915,10 +904,7 @@ getkeybyname(__ops_io_t *io,
 	(void) memset(keyid, 0x0, sizeof(keyid));
 	str2keyid(name, keyid, sizeof(keyid));
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(io->outs,
-			"name \"%s\", keyid %02x%02x%02x%02x\n",
-			name,
-			keyid[0], keyid[1], keyid[2], keyid[3]);
+		hexdump(io->outs, keyid, 4, "");
 	}
 	savedstart = *from;
 	if ((kp = __ops_getkeybyid(io, keyring, keyid, from)) != NULL) {

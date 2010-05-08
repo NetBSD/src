@@ -116,7 +116,6 @@ struct _ops_crypt_t {
 	void				*decrypt_key;
 };
 
-void __ops_crypto_init(void);
 void __ops_crypto_finish(void);
 void __ops_hash_md5(__ops_hash_t *);
 void __ops_hash_sha1(__ops_hash_t *);
