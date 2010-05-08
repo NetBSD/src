@@ -1,0 +1,11 @@
+Content-Type: application/X-atf-tp; version="1"
+
+ident: test_case_1
+descr: This is the description
+timeout: 300
+
+ident: test_case_2
+
+ident: test_case_3
+X-prop1: A custom property
+descr: Third test case

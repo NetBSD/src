@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -36,25 +36,21 @@ vflag_head()
 vflag_body()
 {
     for h in $(get_helpers); do
-        atf_check -s eq:0 -o ignore -e ignore -x \
-                  "${h} -s $(atf_get_srcdir) -r3 \
-                   config_unset 3>resout"
-        atf_check -s eq:0 -o ignore -e empty grep 'passed' resout
+        atf_check -s eq:0 -o ignore -e ignore ${h} -s $(atf_get_srcdir) \
+            -r resfile config_unset
+        atf_check -s eq:0 -o ignore -e empty grep 'passed' resfile
 
-        atf_check -s eq:0 -o ignore -e ignore -x \
-                  "${h} -s $(atf_get_srcdir) -r3 -v 'test=' \
-                   config_empty 3>resout"
-        atf_check -s eq:0 -o ignore -e empty grep 'passed' resout
+        atf_check -s eq:0 -o ignore -e ignore ${h} -s $(atf_get_srcdir) \
+            -r resfile -v 'test=' config_empty
+        atf_check -s eq:0 -o ignore -e empty grep 'passed' resfile
 
-        atf_check -s eq:0 -o ignore -e ignore -x \
-                  "${h} -s $(atf_get_srcdir) -r3 -v 'test=foo' \
-                   config_value 3>resout"
-        atf_check -s eq:0 -o ignore -e empty grep 'passed' resout
+        atf_check -s eq:0 -o ignore -e ignore ${h} -s $(atf_get_srcdir) \
+            -r resfile -v 'test=foo' config_value
+        atf_check -s eq:0 -o ignore -e empty grep 'passed' resfile
 
-        atf_check -s eq:0 -o ignore -e ignore -x \
-                  "${h} -s $(atf_get_srcdir) -r3 -v 'test=foo bar' \
-                   config_multi_value 3>resout"
-        atf_check -s eq:0 -o ignore -e empty grep 'passed' resout
+        atf_check -s eq:0 -o ignore -e ignore -x ${h} -s $(atf_get_srcdir) \
+            -r resfile -v \'test=foo bar\' config_multi_value
+        atf_check -s eq:0 -o ignore -e empty grep 'passed' resfile
     done
 }
 

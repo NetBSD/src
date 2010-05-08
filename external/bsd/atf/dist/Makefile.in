@@ -28,7 +28,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -96,6 +96,13 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+bin_PROGRAMS = atf-check/atf-check$(EXEEXT) \
+	atf-config/atf-config$(EXEEXT) \
+	atf-compile/atf-compile$(EXEEXT) \
+	atf-report/atf-report$(EXEEXT) atf-run/atf-run$(EXEEXT) \
+	atf-version/atf-version$(EXEEXT)
+libexec_PROGRAMS = atf-cleanup/atf-cleanup$(EXEEXT) \
+	atf-format/atf-format$(EXEEXT)
 check_PROGRAMS = tests/bootstrap/h_app_empty$(EXEEXT) \
 	tests/bootstrap/h_app_opts_args$(EXEEXT) \
 	tests/bootstrap/h_tp_basic_c$(EXEEXT) \
@@ -106,18 +113,16 @@ atf_atf_c_PROGRAMS = tests/atf/atf-c/t_atf_c$(EXEEXT) \
 	tests/atf/atf-c/t_config$(EXEEXT) \
 	tests/atf/atf-c/t_dynstr$(EXEEXT) \
 	tests/atf/atf-c/t_env$(EXEEXT) \
-	tests/atf/atf-c/t_error$(EXEEXT) \
-	tests/atf/atf-c/t_expand$(EXEEXT) \
-	tests/atf/atf-c/t_fs$(EXEEXT) tests/atf/atf-c/t_h_lib$(EXEEXT) \
-	tests/atf/atf-c/t_io$(EXEEXT) tests/atf/atf-c/t_list$(EXEEXT) \
+	tests/atf/atf-c/t_error$(EXEEXT) tests/atf/atf-c/t_fs$(EXEEXT) \
+	tests/atf/atf-c/t_h_lib$(EXEEXT) tests/atf/atf-c/t_io$(EXEEXT) \
+	tests/atf/atf-c/t_list$(EXEEXT) \
 	tests/atf/atf-c/t_macros$(EXEEXT) \
 	tests/atf/atf-c/t_map$(EXEEXT) \
 	tests/atf/atf-c/t_process$(EXEEXT) \
-	tests/atf/atf-c/t_signals$(EXEEXT) \
 	tests/atf/atf-c/t_tc$(EXEEXT) tests/atf/atf-c/t_tcr$(EXEEXT) \
 	tests/atf/atf-c/t_sanity$(EXEEXT) \
-	tests/atf/atf-c/t_text$(EXEEXT) tests/atf/atf-c/t_ui$(EXEEXT) \
-	tests/atf/atf-c/t_user$(EXEEXT) \
+	tests/atf/atf-c/t_text$(EXEEXT) tests/atf/atf-c/t_tp$(EXEEXT) \
+	tests/atf/atf-c/t_ui$(EXEEXT) tests/atf/atf-c/t_user$(EXEEXT) \
 	tests/atf/atf-c/h_processes$(EXEEXT)
 atf_atf_c___PROGRAMS = tests/atf/atf-c++/t_atf_c++$(EXEEXT) \
 	tests/atf/atf-c++/t_application$(EXEEXT) \
@@ -141,19 +146,23 @@ atf_atf_c___PROGRAMS = tests/atf/atf-c++/t_atf_c++$(EXEEXT) \
 	tests/atf/atf-c++/t_ui$(EXEEXT) \
 	tests/atf/atf-c++/t_user$(EXEEXT) \
 	tests/atf/atf-c++/t_utils$(EXEEXT)
+atf_atf_compile_PROGRAMS = tests/atf/atf-compile/h_mode$(EXEEXT)
+atf_atf_report_PROGRAMS = tests/atf/atf-report/h_fail$(EXEEXT) \
+	tests/atf/atf-report/h_pass$(EXEEXT) \
+	tests/atf/atf-report/h_misc$(EXEEXT)
+atf_atf_run_PROGRAMS = tests/atf/atf-run/h_bad_metadata$(EXEEXT) \
+	tests/atf/atf-run/h_several_tcs$(EXEEXT) \
+	tests/atf/atf-run/h_zero_tcs$(EXEEXT) \
+	tests/atf/atf-run/h_fail$(EXEEXT) \
+	tests/atf/atf-run/h_pass$(EXEEXT) \
+	tests/atf/atf-run/h_misc$(EXEEXT) \
+	tests/atf/atf-run/t_config$(EXEEXT) \
+	tests/atf/atf-run/t_requirements$(EXEEXT) \
+	tests/atf/atf-run/t_test_program$(EXEEXT)
 atf_formats_PROGRAMS = tests/atf/formats/h_parser$(EXEEXT) \
 	tests/atf/formats/t_writers$(EXEEXT)
 atf_test_programs_PROGRAMS = tests/atf/test_programs/h_c$(EXEEXT) \
 	tests/atf/test_programs/h_cpp$(EXEEXT)
-atf_tools_PROGRAMS = tests/atf/tools/h_fail$(EXEEXT) \
-	tests/atf/tools/h_misc$(EXEEXT) \
-	tests/atf/tools/h_mode$(EXEEXT) \
-	tests/atf/tools/h_pass$(EXEEXT)
-bin_PROGRAMS = tools/atf-check$(EXEEXT) tools/atf-config$(EXEEXT) \
-	tools/atf-compile$(EXEEXT) tools/atf-report$(EXEEXT) \
-	tools/atf-run$(EXEEXT) tools/atf-version$(EXEEXT)
-libexec_PROGRAMS = tools/atf-cleanup$(EXEEXT) tools/atf-exec$(EXEEXT) \
-	tools/atf-format$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(atf_c_HEADERS) \
 	$(atf_c___HEADERS) $(dist_man_MANS) $(include_HEADERS) \
@@ -205,20 +214,30 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(atf_atf_cdir)" \
-	"$(DESTDIR)$(atf_atf_c__dir)" "$(DESTDIR)$(atf_formatsdir)" \
-	"$(DESTDIR)$(atf_test_programsdir)" \
-	"$(DESTDIR)$(atf_toolsdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(atf_atf_shdir)" \
-	"$(DESTDIR)$(atf_datadir)" "$(DESTDIR)$(atf_formatsdir)" \
-	"$(DESTDIR)$(atf_test_programsdir)" \
-	"$(DESTDIR)$(atf_toolsdir)" "$(DESTDIR)$(man1dir)" \
+	"$(DESTDIR)$(atf_atf_c__dir)" \
+	"$(DESTDIR)$(atf_atf_compiledir)" \
+	"$(DESTDIR)$(atf_atf_reportdir)" "$(DESTDIR)$(atf_atf_rundir)" \
+	"$(DESTDIR)$(atf_formatsdir)" \
+	"$(DESTDIR)$(atf_test_programsdir)" "$(DESTDIR)$(bindir)" \
+	"$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(atf_atf_checkdir)" \
+	"$(DESTDIR)$(atf_atf_cleanupdir)" \
+	"$(DESTDIR)$(atf_atf_compiledir)" \
+	"$(DESTDIR)$(atf_atf_configdir)" \
+	"$(DESTDIR)$(atf_atf_reportdir)" "$(DESTDIR)$(atf_atf_rundir)" \
+	"$(DESTDIR)$(atf_atf_shdir)" "$(DESTDIR)$(atf_datadir)" \
+	"$(DESTDIR)$(atf_formatsdir)" \
+	"$(DESTDIR)$(atf_test_programsdir)" "$(DESTDIR)$(man1dir)" \
 	"$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man4dir)" \
 	"$(DESTDIR)$(man5dir)" "$(DESTDIR)$(man7dir)" \
 	"$(DESTDIR)$(atf_atf_cdir)" "$(DESTDIR)$(atf_atf_c__dir)" \
+	"$(DESTDIR)$(atf_atf_checkdir)" \
+	"$(DESTDIR)$(atf_atf_cleanupdir)" \
+	"$(DESTDIR)$(atf_atf_compiledir)" \
+	"$(DESTDIR)$(atf_atf_configdir)" \
+	"$(DESTDIR)$(atf_atf_reportdir)" "$(DESTDIR)$(atf_atf_rundir)" \
 	"$(DESTDIR)$(atf_atf_shdir)" "$(DESTDIR)$(atf_datadir)" \
 	"$(DESTDIR)$(atf_formatsdir)" "$(DESTDIR)$(atf_shdir)" \
-	"$(DESTDIR)$(atf_test_programsdir)" \
-	"$(DESTDIR)$(atf_toolsdir)" "$(DESTDIR)$(cssdir)" \
+	"$(DESTDIR)$(atf_test_programsdir)" "$(DESTDIR)$(cssdir)" \
 	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(dtddir)" \
 	"$(DESTDIR)$(egdir)" "$(DESTDIR)$(hooksdir)" \
 	"$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(pkgtestsdir)" \
@@ -236,11 +255,11 @@ am_libatf_c___la_OBJECTS = atf-c++/application.lo atf-c++/atffile.lo \
 libatf_c___la_OBJECTS = $(am_libatf_c___la_OBJECTS)
 libatf_c_la_LIBADD =
 am_libatf_c_la_OBJECTS = atf-c/build.lo atf-c/check.lo atf-c/config.lo \
-	atf-c/dynstr.lo atf-c/env.lo atf-c/error.lo atf-c/expand.lo \
-	atf-c/fs.lo atf-c/io.lo atf-c/list.lo atf-c/map.lo \
-	atf-c/object.lo atf-c/process.lo atf-c/sanity.lo \
-	atf-c/signals.lo atf-c/text.lo atf-c/ui.lo atf-c/user.lo \
-	atf-c/tc.lo atf-c/tcr.lo atf-c/tp.lo atf-c/tp_main.lo
+	atf-c/dynstr.lo atf-c/env.lo atf-c/error.lo atf-c/fs.lo \
+	atf-c/io.lo atf-c/list.lo atf-c/map.lo atf-c/object.lo \
+	atf-c/process.lo atf-c/sanity.lo atf-c/text.lo atf-c/ui.lo \
+	atf-c/user.lo atf-c/tc.lo atf-c/tcr.lo atf-c/tp.lo \
+	atf-c/tp_main.lo
 nodist_libatf_c_la_OBJECTS =
 libatf_c_la_OBJECTS = $(am_libatf_c_la_OBJECTS) \
 	$(nodist_libatf_c_la_OBJECTS)
@@ -253,8 +272,58 @@ am_tests_atf_atf_c_libh_la_OBJECTS = tests/atf/atf-c/h_lib.lo
 tests_atf_atf_c_libh_la_OBJECTS =  \
 	$(am_tests_atf_atf_c_libh_la_OBJECTS)
 PROGRAMS = $(atf_atf_c_PROGRAMS) $(atf_atf_c___PROGRAMS) \
-	$(atf_formats_PROGRAMS) $(atf_test_programs_PROGRAMS) \
-	$(atf_tools_PROGRAMS) $(bin_PROGRAMS) $(libexec_PROGRAMS)
+	$(atf_atf_compile_PROGRAMS) $(atf_atf_report_PROGRAMS) \
+	$(atf_atf_run_PROGRAMS) $(atf_formats_PROGRAMS) \
+	$(atf_test_programs_PROGRAMS) $(bin_PROGRAMS) \
+	$(libexec_PROGRAMS)
+am_atf_check_atf_check_OBJECTS = atf-check/atf-check.$(OBJEXT)
+nodist_atf_check_atf_check_OBJECTS =
+atf_check_atf_check_OBJECTS = $(am_atf_check_atf_check_OBJECTS) \
+	$(nodist_atf_check_atf_check_OBJECTS)
+atf_check_atf_check_DEPENDENCIES = libatf-c++.la
+am_atf_cleanup_atf_cleanup_OBJECTS =  \
+	atf-cleanup/atf-cleanup.$(OBJEXT)
+nodist_atf_cleanup_atf_cleanup_OBJECTS =
+atf_cleanup_atf_cleanup_OBJECTS =  \
+	$(am_atf_cleanup_atf_cleanup_OBJECTS) \
+	$(nodist_atf_cleanup_atf_cleanup_OBJECTS)
+atf_cleanup_atf_cleanup_DEPENDENCIES = libatf-c++.la
+am_atf_compile_atf_compile_OBJECTS =  \
+	atf-compile/atf-compile.$(OBJEXT)
+nodist_atf_compile_atf_compile_OBJECTS =
+atf_compile_atf_compile_OBJECTS =  \
+	$(am_atf_compile_atf_compile_OBJECTS) \
+	$(nodist_atf_compile_atf_compile_OBJECTS)
+atf_compile_atf_compile_DEPENDENCIES = libatf-c++.la
+am_atf_config_atf_config_OBJECTS = atf-config/atf-config.$(OBJEXT)
+nodist_atf_config_atf_config_OBJECTS =
+atf_config_atf_config_OBJECTS = $(am_atf_config_atf_config_OBJECTS) \
+	$(nodist_atf_config_atf_config_OBJECTS)
+atf_config_atf_config_DEPENDENCIES = libatf-c++.la
+am_atf_format_atf_format_OBJECTS = atf-format/atf-format.$(OBJEXT)
+nodist_atf_format_atf_format_OBJECTS =
+atf_format_atf_format_OBJECTS = $(am_atf_format_atf_format_OBJECTS) \
+	$(nodist_atf_format_atf_format_OBJECTS)
+atf_format_atf_format_DEPENDENCIES = libatf-c++.la
+am_atf_report_atf_report_OBJECTS = atf-report/atf-report.$(OBJEXT)
+nodist_atf_report_atf_report_OBJECTS =
+atf_report_atf_report_OBJECTS = $(am_atf_report_atf_report_OBJECTS) \
+	$(nodist_atf_report_atf_report_OBJECTS)
+atf_report_atf_report_DEPENDENCIES = libatf-c++.la
+am_atf_run_atf_run_OBJECTS = atf-run/atf-run.$(OBJEXT) \
+	atf-run/config.$(OBJEXT) atf-run/requirements.$(OBJEXT) \
+	atf-run/test-program.$(OBJEXT) atf-run/timer.$(OBJEXT)
+nodist_atf_run_atf_run_OBJECTS =
+atf_run_atf_run_OBJECTS = $(am_atf_run_atf_run_OBJECTS) \
+	$(nodist_atf_run_atf_run_OBJECTS)
+atf_run_atf_run_DEPENDENCIES = libatf-c++.la
+am_atf_version_atf_version_OBJECTS =  \
+	atf-version/atf-version.$(OBJEXT)
+nodist_atf_version_atf_version_OBJECTS =
+atf_version_atf_version_OBJECTS =  \
+	$(am_atf_version_atf_version_OBJECTS) \
+	$(nodist_atf_version_atf_version_OBJECTS)
+atf_version_atf_version_DEPENDENCIES = libatf-c++.la
 am_tests_atf_atf_c___t_application_OBJECTS =  \
 	tests/atf/atf-c++/t_application.$(OBJEXT)
 tests_atf_atf_c___t_application_OBJECTS =  \
@@ -426,12 +495,6 @@ tests_atf_atf_c_t_error_OBJECTS =  \
 	$(am_tests_atf_atf_c_t_error_OBJECTS)
 tests_atf_atf_c_t_error_DEPENDENCIES = tests/atf/atf-c/libh.la \
 	libatf-c.la
-am_tests_atf_atf_c_t_expand_OBJECTS =  \
-	tests/atf/atf-c/t_expand.$(OBJEXT)
-tests_atf_atf_c_t_expand_OBJECTS =  \
-	$(am_tests_atf_atf_c_t_expand_OBJECTS)
-tests_atf_atf_c_t_expand_DEPENDENCIES = tests/atf/atf-c/libh.la \
-	libatf-c.la
 am_tests_atf_atf_c_t_fs_OBJECTS = tests/atf/atf-c/t_fs.$(OBJEXT)
 tests_atf_atf_c_t_fs_OBJECTS = $(am_tests_atf_atf_c_t_fs_OBJECTS)
 tests_atf_atf_c_t_fs_DEPENDENCIES = tests/atf/atf-c/libh.la \
@@ -472,12 +535,6 @@ tests_atf_atf_c_t_sanity_OBJECTS =  \
 	$(am_tests_atf_atf_c_t_sanity_OBJECTS)
 tests_atf_atf_c_t_sanity_DEPENDENCIES = tests/atf/atf-c/libh.la \
 	libatf-c.la
-am_tests_atf_atf_c_t_signals_OBJECTS =  \
-	tests/atf/atf-c/t_signals.$(OBJEXT)
-tests_atf_atf_c_t_signals_OBJECTS =  \
-	$(am_tests_atf_atf_c_t_signals_OBJECTS)
-tests_atf_atf_c_t_signals_DEPENDENCIES = tests/atf/atf-c/libh.la \
-	libatf-c.la
 am_tests_atf_atf_c_t_tc_OBJECTS = tests/atf/atf-c/t_tc.$(OBJEXT)
 tests_atf_atf_c_t_tc_OBJECTS = $(am_tests_atf_atf_c_t_tc_OBJECTS)
 tests_atf_atf_c_t_tc_DEPENDENCIES = tests/atf/atf-c/libh.la \
@@ -490,6 +547,10 @@ am_tests_atf_atf_c_t_text_OBJECTS = tests/atf/atf-c/t_text.$(OBJEXT)
 tests_atf_atf_c_t_text_OBJECTS = $(am_tests_atf_atf_c_t_text_OBJECTS)
 tests_atf_atf_c_t_text_DEPENDENCIES = tests/atf/atf-c/libh.la \
 	libatf-c.la
+am_tests_atf_atf_c_t_tp_OBJECTS = tests/atf/atf-c/t_tp.$(OBJEXT)
+tests_atf_atf_c_t_tp_OBJECTS = $(am_tests_atf_atf_c_t_tp_OBJECTS)
+tests_atf_atf_c_t_tp_DEPENDENCIES = tests/atf/atf-c/libh.la \
+	libatf-c.la
 am_tests_atf_atf_c_t_ui_OBJECTS = tests/atf/atf-c/t_ui.$(OBJEXT)
 tests_atf_atf_c_t_ui_OBJECTS = $(am_tests_atf_atf_c_t_ui_OBJECTS)
 tests_atf_atf_c_t_ui_DEPENDENCIES = tests/atf/atf-c/libh.la \
@@ -498,6 +559,73 @@ am_tests_atf_atf_c_t_user_OBJECTS = tests/atf/atf-c/t_user.$(OBJEXT)
 tests_atf_atf_c_t_user_OBJECTS = $(am_tests_atf_atf_c_t_user_OBJECTS)
 tests_atf_atf_c_t_user_DEPENDENCIES = tests/atf/atf-c/libh.la \
 	libatf-c.la
+am_tests_atf_atf_compile_h_mode_OBJECTS =  \
+	tests/atf/atf-compile/h_mode.$(OBJEXT)
+tests_atf_atf_compile_h_mode_OBJECTS =  \
+	$(am_tests_atf_atf_compile_h_mode_OBJECTS)
+tests_atf_atf_compile_h_mode_DEPENDENCIES = libatf-c++.la
+am_tests_atf_atf_report_h_fail_OBJECTS =  \
+	tests/atf/atf-report/h_fail.$(OBJEXT)
+tests_atf_atf_report_h_fail_OBJECTS =  \
+	$(am_tests_atf_atf_report_h_fail_OBJECTS)
+tests_atf_atf_report_h_fail_DEPENDENCIES = libatf-c++.la
+am_tests_atf_atf_report_h_misc_OBJECTS =  \
+	tests/atf/atf-report/h_misc.$(OBJEXT)
+tests_atf_atf_report_h_misc_OBJECTS =  \
+	$(am_tests_atf_atf_report_h_misc_OBJECTS)
+tests_atf_atf_report_h_misc_DEPENDENCIES = libatf-c++.la
+am_tests_atf_atf_report_h_pass_OBJECTS =  \
+	tests/atf/atf-report/h_pass.$(OBJEXT)
+tests_atf_atf_report_h_pass_OBJECTS =  \
+	$(am_tests_atf_atf_report_h_pass_OBJECTS)
+tests_atf_atf_report_h_pass_DEPENDENCIES = libatf-c++.la
+am_tests_atf_atf_run_h_bad_metadata_OBJECTS =  \
+	tests/atf/atf-run/h_bad_metadata.$(OBJEXT)
+tests_atf_atf_run_h_bad_metadata_OBJECTS =  \
+	$(am_tests_atf_atf_run_h_bad_metadata_OBJECTS)
+tests_atf_atf_run_h_bad_metadata_DEPENDENCIES = libatf-c.la
+am_tests_atf_atf_run_h_fail_OBJECTS =  \
+	tests/atf/atf-run/h_fail.$(OBJEXT)
+tests_atf_atf_run_h_fail_OBJECTS =  \
+	$(am_tests_atf_atf_run_h_fail_OBJECTS)
+tests_atf_atf_run_h_fail_DEPENDENCIES = libatf-c++.la
+am_tests_atf_atf_run_h_misc_OBJECTS =  \
+	tests/atf/atf-run/h_misc.$(OBJEXT)
+tests_atf_atf_run_h_misc_OBJECTS =  \
+	$(am_tests_atf_atf_run_h_misc_OBJECTS)
+tests_atf_atf_run_h_misc_DEPENDENCIES = libatf-c++.la
+am_tests_atf_atf_run_h_pass_OBJECTS =  \
+	tests/atf/atf-run/h_pass.$(OBJEXT)
+tests_atf_atf_run_h_pass_OBJECTS =  \
+	$(am_tests_atf_atf_run_h_pass_OBJECTS)
+tests_atf_atf_run_h_pass_DEPENDENCIES = libatf-c++.la
+am_tests_atf_atf_run_h_several_tcs_OBJECTS =  \
+	tests/atf/atf-run/h_several_tcs.$(OBJEXT)
+tests_atf_atf_run_h_several_tcs_OBJECTS =  \
+	$(am_tests_atf_atf_run_h_several_tcs_OBJECTS)
+tests_atf_atf_run_h_several_tcs_DEPENDENCIES = libatf-c.la
+am_tests_atf_atf_run_h_zero_tcs_OBJECTS =  \
+	tests/atf/atf-run/h_zero_tcs.$(OBJEXT)
+tests_atf_atf_run_h_zero_tcs_OBJECTS =  \
+	$(am_tests_atf_atf_run_h_zero_tcs_OBJECTS)
+tests_atf_atf_run_h_zero_tcs_DEPENDENCIES = libatf-c.la
+am_tests_atf_atf_run_t_config_OBJECTS =  \
+	tests/atf/atf-run/t_config.$(OBJEXT) atf-run/config.$(OBJEXT)
+tests_atf_atf_run_t_config_OBJECTS =  \
+	$(am_tests_atf_atf_run_t_config_OBJECTS)
+tests_atf_atf_run_t_config_DEPENDENCIES = libatf-c++.la
+am_tests_atf_atf_run_t_requirements_OBJECTS =  \
+	tests/atf/atf-run/t_requirements.$(OBJEXT) \
+	atf-run/requirements.$(OBJEXT)
+tests_atf_atf_run_t_requirements_OBJECTS =  \
+	$(am_tests_atf_atf_run_t_requirements_OBJECTS)
+tests_atf_atf_run_t_requirements_DEPENDENCIES = libatf-c++.la
+am_tests_atf_atf_run_t_test_program_OBJECTS =  \
+	tests/atf/atf-run/t_test_program.$(OBJEXT) \
+	atf-run/test-program.$(OBJEXT) atf-run/timer.$(OBJEXT)
+tests_atf_atf_run_t_test_program_OBJECTS =  \
+	$(am_tests_atf_atf_run_t_test_program_OBJECTS)
+tests_atf_atf_run_t_test_program_DEPENDENCIES = libatf-c++.la
 am_tests_atf_formats_h_parser_OBJECTS =  \
 	tests/atf/formats/h_parser.$(OBJEXT)
 tests_atf_formats_h_parser_OBJECTS =  \
@@ -520,18 +648,6 @@ tests_atf_test_programs_h_cpp_OBJECTS =  \
 	$(am_tests_atf_test_programs_h_cpp_OBJECTS)
 tests_atf_test_programs_h_cpp_DEPENDENCIES =  \
 	tests/atf/atf-c++/libh.la libatf-c++.la
-am_tests_atf_tools_h_fail_OBJECTS = tests/atf/tools/h_fail.$(OBJEXT)
-tests_atf_tools_h_fail_OBJECTS = $(am_tests_atf_tools_h_fail_OBJECTS)
-tests_atf_tools_h_fail_DEPENDENCIES = libatf-c++.la
-am_tests_atf_tools_h_misc_OBJECTS = tests/atf/tools/h_misc.$(OBJEXT)
-tests_atf_tools_h_misc_OBJECTS = $(am_tests_atf_tools_h_misc_OBJECTS)
-tests_atf_tools_h_misc_DEPENDENCIES = libatf-c++.la
-am_tests_atf_tools_h_mode_OBJECTS = tests/atf/tools/h_mode.$(OBJEXT)
-tests_atf_tools_h_mode_OBJECTS = $(am_tests_atf_tools_h_mode_OBJECTS)
-tests_atf_tools_h_mode_DEPENDENCIES = libatf-c++.la
-am_tests_atf_tools_h_pass_OBJECTS = tests/atf/tools/h_pass.$(OBJEXT)
-tests_atf_tools_h_pass_OBJECTS = $(am_tests_atf_tools_h_pass_OBJECTS)
-tests_atf_tools_h_pass_DEPENDENCIES = libatf-c++.la
 am_tests_bootstrap_h_app_empty_OBJECTS =  \
 	tests/bootstrap/h_app_empty.$(OBJEXT)
 tests_bootstrap_h_app_empty_OBJECTS =  \
@@ -552,36 +668,11 @@ am_tests_bootstrap_h_tp_basic_cpp_OBJECTS =  \
 tests_bootstrap_h_tp_basic_cpp_OBJECTS =  \
 	$(am_tests_bootstrap_h_tp_basic_cpp_OBJECTS)
 tests_bootstrap_h_tp_basic_cpp_DEPENDENCIES = libatf-c++.la
-am_tools_atf_check_OBJECTS = tools/atf-check.$(OBJEXT)
-tools_atf_check_OBJECTS = $(am_tools_atf_check_OBJECTS)
-tools_atf_check_DEPENDENCIES = libatf-c++.la
-am_tools_atf_cleanup_OBJECTS = tools/atf-cleanup.$(OBJEXT)
-tools_atf_cleanup_OBJECTS = $(am_tools_atf_cleanup_OBJECTS)
-tools_atf_cleanup_DEPENDENCIES = libatf-c++.la
-am_tools_atf_compile_OBJECTS = tools/atf-compile.$(OBJEXT)
-tools_atf_compile_OBJECTS = $(am_tools_atf_compile_OBJECTS)
-tools_atf_compile_DEPENDENCIES = libatf-c++.la
-am_tools_atf_config_OBJECTS = tools/atf-config.$(OBJEXT)
-tools_atf_config_OBJECTS = $(am_tools_atf_config_OBJECTS)
-tools_atf_config_DEPENDENCIES = libatf-c++.la
-am_tools_atf_exec_OBJECTS = tools/atf-exec.$(OBJEXT)
-tools_atf_exec_OBJECTS = $(am_tools_atf_exec_OBJECTS)
-tools_atf_exec_DEPENDENCIES = libatf-c++.la
-am_tools_atf_format_OBJECTS = tools/atf-format.$(OBJEXT)
-tools_atf_format_OBJECTS = $(am_tools_atf_format_OBJECTS)
-tools_atf_format_DEPENDENCIES = libatf-c++.la
-am_tools_atf_report_OBJECTS = tools/atf-report.$(OBJEXT)
-tools_atf_report_OBJECTS = $(am_tools_atf_report_OBJECTS)
-tools_atf_report_DEPENDENCIES = libatf-c++.la
-am_tools_atf_run_OBJECTS = tools/atf-run.$(OBJEXT)
-tools_atf_run_OBJECTS = $(am_tools_atf_run_OBJECTS)
-tools_atf_run_DEPENDENCIES = libatf-c++.la
-am_tools_atf_version_OBJECTS = tools/atf-version.$(OBJEXT)
-tools_atf_version_OBJECTS = $(am_tools_atf_version_OBJECTS)
-tools_atf_version_DEPENDENCIES = libatf-c++.la
-SCRIPTS = $(atf_atf_sh_SCRIPTS) $(atf_data_SCRIPTS) \
-	$(atf_formats_SCRIPTS) $(atf_test_programs_SCRIPTS) \
-	$(atf_tools_SCRIPTS)
+SCRIPTS = $(atf_atf_check_SCRIPTS) $(atf_atf_cleanup_SCRIPTS) \
+	$(atf_atf_compile_SCRIPTS) $(atf_atf_config_SCRIPTS) \
+	$(atf_atf_report_SCRIPTS) $(atf_atf_run_SCRIPTS) \
+	$(atf_atf_sh_SCRIPTS) $(atf_data_SCRIPTS) \
+	$(atf_formats_SCRIPTS) $(atf_test_programs_SCRIPTS)
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/admin/depcomp
 am__depfiles_maybe = depfiles
@@ -608,6 +699,21 @@ SOURCES = $(libatf_c___la_SOURCES) $(libatf_c_la_SOURCES) \
 	$(nodist_libatf_c_la_SOURCES) \
 	$(tests_atf_atf_c___libh_la_SOURCES) \
 	$(tests_atf_atf_c_libh_la_SOURCES) \
+	$(atf_check_atf_check_SOURCES) \
+	$(nodist_atf_check_atf_check_SOURCES) \
+	$(atf_cleanup_atf_cleanup_SOURCES) \
+	$(nodist_atf_cleanup_atf_cleanup_SOURCES) \
+	$(atf_compile_atf_compile_SOURCES) \
+	$(nodist_atf_compile_atf_compile_SOURCES) \
+	$(atf_config_atf_config_SOURCES) \
+	$(nodist_atf_config_atf_config_SOURCES) \
+	$(atf_format_atf_format_SOURCES) \
+	$(nodist_atf_format_atf_format_SOURCES) \
+	$(atf_report_atf_report_SOURCES) \
+	$(nodist_atf_report_atf_report_SOURCES) \
+	$(atf_run_atf_run_SOURCES) $(nodist_atf_run_atf_run_SOURCES) \
+	$(atf_version_atf_version_SOURCES) \
+	$(nodist_atf_version_atf_version_SOURCES) \
 	$(tests_atf_atf_c___t_application_SOURCES) \
 	$(tests_atf_atf_c___t_atf_c___SOURCES) \
 	$(tests_atf_atf_c___t_atffile_SOURCES) \
@@ -638,7 +744,6 @@ SOURCES = $(libatf_c___la_SOURCES) $(libatf_c_la_SOURCES) \
 	$(tests_atf_atf_c_t_dynstr_SOURCES) \
 	$(tests_atf_atf_c_t_env_SOURCES) \
 	$(tests_atf_atf_c_t_error_SOURCES) \
-	$(tests_atf_atf_c_t_expand_SOURCES) \
 	$(tests_atf_atf_c_t_fs_SOURCES) \
 	$(tests_atf_atf_c_t_h_lib_SOURCES) \
 	$(tests_atf_atf_c_t_io_SOURCES) \
@@ -647,32 +752,43 @@ SOURCES = $(libatf_c___la_SOURCES) $(libatf_c_la_SOURCES) \
 	$(tests_atf_atf_c_t_map_SOURCES) \
 	$(tests_atf_atf_c_t_process_SOURCES) \
 	$(tests_atf_atf_c_t_sanity_SOURCES) \
-	$(tests_atf_atf_c_t_signals_SOURCES) \
 	$(tests_atf_atf_c_t_tc_SOURCES) \
 	$(tests_atf_atf_c_t_tcr_SOURCES) \
 	$(tests_atf_atf_c_t_text_SOURCES) \
+	$(tests_atf_atf_c_t_tp_SOURCES) \
 	$(tests_atf_atf_c_t_ui_SOURCES) \
 	$(tests_atf_atf_c_t_user_SOURCES) \
+	$(tests_atf_atf_compile_h_mode_SOURCES) \
+	$(tests_atf_atf_report_h_fail_SOURCES) \
+	$(tests_atf_atf_report_h_misc_SOURCES) \
+	$(tests_atf_atf_report_h_pass_SOURCES) \
+	$(tests_atf_atf_run_h_bad_metadata_SOURCES) \
+	$(tests_atf_atf_run_h_fail_SOURCES) \
+	$(tests_atf_atf_run_h_misc_SOURCES) \
+	$(tests_atf_atf_run_h_pass_SOURCES) \
+	$(tests_atf_atf_run_h_several_tcs_SOURCES) \
+	$(tests_atf_atf_run_h_zero_tcs_SOURCES) \
+	$(tests_atf_atf_run_t_config_SOURCES) \
+	$(tests_atf_atf_run_t_requirements_SOURCES) \
+	$(tests_atf_atf_run_t_test_program_SOURCES) \
 	$(tests_atf_formats_h_parser_SOURCES) \
 	$(tests_atf_formats_t_writers_SOURCES) \
 	$(tests_atf_test_programs_h_c_SOURCES) \
 	$(tests_atf_test_programs_h_cpp_SOURCES) \
-	$(tests_atf_tools_h_fail_SOURCES) \
-	$(tests_atf_tools_h_misc_SOURCES) \
-	$(tests_atf_tools_h_mode_SOURCES) \
-	$(tests_atf_tools_h_pass_SOURCES) \
 	$(tests_bootstrap_h_app_empty_SOURCES) \
 	$(tests_bootstrap_h_app_opts_args_SOURCES) \
 	$(tests_bootstrap_h_tp_basic_c_SOURCES) \
-	$(tests_bootstrap_h_tp_basic_cpp_SOURCES) \
-	$(tools_atf_check_SOURCES) $(tools_atf_cleanup_SOURCES) \
-	$(tools_atf_compile_SOURCES) $(tools_atf_config_SOURCES) \
-	$(tools_atf_exec_SOURCES) $(tools_atf_format_SOURCES) \
-	$(tools_atf_report_SOURCES) $(tools_atf_run_SOURCES) \
-	$(tools_atf_version_SOURCES)
+	$(tests_bootstrap_h_tp_basic_cpp_SOURCES)
 DIST_SOURCES = $(libatf_c___la_SOURCES) $(libatf_c_la_SOURCES) \
 	$(tests_atf_atf_c___libh_la_SOURCES) \
 	$(tests_atf_atf_c_libh_la_SOURCES) \
+	$(atf_check_atf_check_SOURCES) \
+	$(atf_cleanup_atf_cleanup_SOURCES) \
+	$(atf_compile_atf_compile_SOURCES) \
+	$(atf_config_atf_config_SOURCES) \
+	$(atf_format_atf_format_SOURCES) \
+	$(atf_report_atf_report_SOURCES) $(atf_run_atf_run_SOURCES) \
+	$(atf_version_atf_version_SOURCES) \
 	$(tests_atf_atf_c___t_application_SOURCES) \
 	$(tests_atf_atf_c___t_atf_c___SOURCES) \
 	$(tests_atf_atf_c___t_atffile_SOURCES) \
@@ -703,7 +819,6 @@ DIST_SOURCES = $(libatf_c___la_SOURCES) $(libatf_c_la_SOURCES) \
 	$(tests_atf_atf_c_t_dynstr_SOURCES) \
 	$(tests_atf_atf_c_t_env_SOURCES) \
 	$(tests_atf_atf_c_t_error_SOURCES) \
-	$(tests_atf_atf_c_t_expand_SOURCES) \
 	$(tests_atf_atf_c_t_fs_SOURCES) \
 	$(tests_atf_atf_c_t_h_lib_SOURCES) \
 	$(tests_atf_atf_c_t_io_SOURCES) \
@@ -712,29 +827,33 @@ DIST_SOURCES = $(libatf_c___la_SOURCES) $(libatf_c_la_SOURCES) \
 	$(tests_atf_atf_c_t_map_SOURCES) \
 	$(tests_atf_atf_c_t_process_SOURCES) \
 	$(tests_atf_atf_c_t_sanity_SOURCES) \
-	$(tests_atf_atf_c_t_signals_SOURCES) \
 	$(tests_atf_atf_c_t_tc_SOURCES) \
 	$(tests_atf_atf_c_t_tcr_SOURCES) \
 	$(tests_atf_atf_c_t_text_SOURCES) \
+	$(tests_atf_atf_c_t_tp_SOURCES) \
 	$(tests_atf_atf_c_t_ui_SOURCES) \
 	$(tests_atf_atf_c_t_user_SOURCES) \
+	$(tests_atf_atf_compile_h_mode_SOURCES) \
+	$(tests_atf_atf_report_h_fail_SOURCES) \
+	$(tests_atf_atf_report_h_misc_SOURCES) \
+	$(tests_atf_atf_report_h_pass_SOURCES) \
+	$(tests_atf_atf_run_h_bad_metadata_SOURCES) \
+	$(tests_atf_atf_run_h_fail_SOURCES) \
+	$(tests_atf_atf_run_h_misc_SOURCES) \
+	$(tests_atf_atf_run_h_pass_SOURCES) \
+	$(tests_atf_atf_run_h_several_tcs_SOURCES) \
+	$(tests_atf_atf_run_h_zero_tcs_SOURCES) \
+	$(tests_atf_atf_run_t_config_SOURCES) \
+	$(tests_atf_atf_run_t_requirements_SOURCES) \
+	$(tests_atf_atf_run_t_test_program_SOURCES) \
 	$(tests_atf_formats_h_parser_SOURCES) \
 	$(tests_atf_formats_t_writers_SOURCES) \
 	$(tests_atf_test_programs_h_c_SOURCES) \
 	$(tests_atf_test_programs_h_cpp_SOURCES) \
-	$(tests_atf_tools_h_fail_SOURCES) \
-	$(tests_atf_tools_h_misc_SOURCES) \
-	$(tests_atf_tools_h_mode_SOURCES) \
-	$(tests_atf_tools_h_pass_SOURCES) \
 	$(tests_bootstrap_h_app_empty_SOURCES) \
 	$(tests_bootstrap_h_app_opts_args_SOURCES) \
 	$(tests_bootstrap_h_tp_basic_c_SOURCES) \
-	$(tests_bootstrap_h_tp_basic_cpp_SOURCES) \
-	$(tools_atf_check_SOURCES) $(tools_atf_cleanup_SOURCES) \
-	$(tools_atf_compile_SOURCES) $(tools_atf_config_SOURCES) \
-	$(tools_atf_exec_SOURCES) $(tools_atf_format_SOURCES) \
-	$(tools_atf_report_SOURCES) $(tools_atf_run_SOURCES) \
-	$(tools_atf_version_SOURCES)
+	$(tests_bootstrap_h_tp_basic_cpp_SOURCES)
 man1dir = $(mandir)/man1
 man3dir = $(mandir)/man3
 man4dir = $(mandir)/man4
@@ -742,10 +861,12 @@ man5dir = $(mandir)/man5
 man7dir = $(mandir)/man7
 NROFF = nroff
 MANS = $(dist_man_MANS) $(man_MANS)
-DATA = $(atf_atf_c_DATA) $(atf_atf_c___DATA) $(atf_atf_sh_DATA) \
-	$(atf_data_DATA) $(atf_formats_DATA) $(atf_sh_DATA) \
-	$(atf_test_programs_DATA) $(atf_tools_DATA) $(css_DATA) \
-	$(doc_DATA) $(dtd_DATA) $(eg_DATA) $(hooks_DATA) \
+DATA = $(atf_atf_c_DATA) $(atf_atf_c___DATA) $(atf_atf_check_DATA) \
+	$(atf_atf_cleanup_DATA) $(atf_atf_compile_DATA) \
+	$(atf_atf_config_DATA) $(atf_atf_report_DATA) \
+	$(atf_atf_run_DATA) $(atf_atf_sh_DATA) $(atf_data_DATA) \
+	$(atf_formats_DATA) $(atf_sh_DATA) $(atf_test_programs_DATA) \
+	$(css_DATA) $(doc_DATA) $(dtd_DATA) $(eg_DATA) $(hooks_DATA) \
 	$(noinst_DATA) $(pkgconfig_DATA) $(pkgtests_DATA) $(xsl_DATA)
 HEADERS = $(atf_c_HEADERS) $(atf_c___HEADERS) $(include_HEADERS)
 ETAGS = etags
@@ -911,24 +1032,31 @@ top_srcdir = @top_srcdir@
 
 # Explicitly initialize some variables so that we can use += later on
 # without making Automake complain.
-CLEANFILES = admin/revision.h data/atf-c.pc data/atf-c++.pc doc/atf.7 \
+CLEANFILES = admin/revision.h atf-compile/atf-host-compile \
+	atf-compile/atf-host-compile.tmp atf-version/revision.h \
+	data/atf-c.pc data/atf-c++.pc doc/atf.7 \
 	tests/bootstrap/h_tp_basic_sh \
-	tests/bootstrap/h_tp_atf_check_sh installcheck.log \
-	tests/atf/atf-sh/h_misc tests/atf/atf-sh/t_atf_check \
-	tests/atf/atf-sh/t_config tests/atf/atf-sh/t_normalize \
-	tests/atf/atf-sh/t_tc tests/atf/atf-sh/t_tp \
-	tests/atf/data/t_pkg_config tests/atf/formats/t_parsers \
-	tests/atf/test_programs/h_sh tests/atf/test_programs/t_cleanup \
-	tests/atf/test_programs/t_config tests/atf/test_programs/t_env \
+	tests/bootstrap/h_tp_atf_check_sh tests/bootstrap/h_tp_fail \
+	tests/bootstrap/h_tp_pass installcheck.fifo installcheck.log \
+	tests/atf/atf-check/t_integration \
+	tests/atf/atf-cleanup/t_integration \
+	tests/atf/atf-compile/t_integration \
+	tests/atf/atf-config/t_integration \
+	tests/atf/atf-report/t_integration \
+	tests/atf/atf-run/t_integration tests/atf/atf-sh/h_misc \
+	tests/atf/atf-sh/t_atf_check tests/atf/atf-sh/t_config \
+	tests/atf/atf-sh/t_normalize tests/atf/atf-sh/t_tc \
+	tests/atf/atf-sh/t_tp tests/atf/data/t_pkg_config \
+	tests/atf/formats/t_parsers tests/atf/test_programs/h_sh \
+	tests/atf/test_programs/t_config \
 	tests/atf/test_programs/t_fork \
 	tests/atf/test_programs/t_meta_data \
 	tests/atf/test_programs/t_srcdir \
-	tests/atf/test_programs/t_status \
-	tests/atf/test_programs/t_workdir tests/atf/tools/t_atf_check \
-	tests/atf/tools/t_atf_cleanup tests/atf/tools/t_atf_compile \
-	tests/atf/tools/t_atf_config tests/atf/tools/t_atf_exec \
-	tests/atf/tools/t_atf_report tests/atf/tools/t_atf_run \
-	tools/atf-host-compile tools/atf-host-compile.tmp revision.h
+	tests/atf/test_programs/t_status
+
+# TOOL dir basename extradeps nodist_extradeps
+#
+# Builds a binary tool named 'basename' and to be installed in 'dir'.
 
 # -------------------------------------------------------------------------
 # Top directory.
@@ -943,7 +1071,8 @@ EXTRA_DIST = Makefile.am.m4 $(doc_DATA) admin/check-install.sh \
 	admin/check-style-shell.awk admin/check-style.sh \
 	admin/choose-revision.sh admin/generate-makefile.sh \
 	admin/generate-revision.sh admin/generate-revision-dist.sh \
-	admin/revision-dist.h $(atf_sh_DATA) $(css_DATA) $(dtd_DATA) \
+	admin/revision-dist.h atf-compile/atf-host-compile.sh \
+	$(atf_sh_DATA) $(hooks_DATA) $(css_DATA) $(dtd_DATA) \
 	$(eg_DATA) data/atf-c.pc.in data/atf-c++.pc.in $(xsl_DATA) \
 	doc/atf.7.in doc/build-xml.sh doc/standalone/standalone.css \
 	$(_STANDALONE_XSLT) doc/authors.xml \
@@ -956,31 +1085,30 @@ EXTRA_DIST = Makefile.am.m4 $(doc_DATA) admin/check-install.sh \
 	doc/standalone/roadmap.html doc/text/roadmap.txt \
 	doc/specification.xml doc/standalone/specification.html \
 	doc/text/specification.txt tests/bootstrap/h_tp_basic_sh.sh \
-	tests/bootstrap/h_tp_atf_check_sh.sh tests/bootstrap/testsuite \
-	tests/bootstrap/package.m4 tests/bootstrap/testsuite.at \
-	$(testsuite_incs) $(pkgtests_DATA) $(atf_atf_c_DATA) \
-	$(atf_atf_c___DATA) $(atf_atf_sh_DATA) \
-	tests/atf/atf-sh/h_misc.sh tests/atf/atf-sh/t_atf_check.sh \
-	tests/atf/atf-sh/t_config.sh tests/atf/atf-sh/t_normalize.sh \
-	tests/atf/atf-sh/t_tc.sh tests/atf/atf-sh/t_tp.sh \
-	$(atf_data_DATA) tests/atf/data/t_pkg_config.sh \
-	$(atf_formats_DATA) tests/atf/formats/t_parsers.sh \
-	$(atf_test_programs_DATA) tests/atf/test_programs/common.sh \
+	tests/bootstrap/h_tp_atf_check_sh.sh \
+	tests/bootstrap/h_tp_fail.sh tests/bootstrap/h_tp_pass.sh \
+	tests/bootstrap/testsuite tests/bootstrap/package.m4 \
+	tests/bootstrap/testsuite.at $(testsuite_incs) \
+	$(pkgtests_DATA) $(atf_atf_c_DATA) $(atf_atf_c___DATA) \
+	$(atf_atf_check_DATA) tests/atf/atf-check/t_integration.sh \
+	$(atf_atf_cleanup_DATA) tests/atf/atf-cleanup/t_integration.sh \
+	$(atf_atf_compile_DATA) tests/atf/atf-compile/t_integration.sh \
+	$(atf_atf_config_DATA) tests/atf/atf-config/t_integration.sh \
+	$(atf_atf_report_DATA) tests/atf/atf-report/t_integration.sh \
+	$(atf_atf_run_DATA) tests/atf/atf-run/t_integration.sh \
+	$(atf_atf_sh_DATA) tests/atf/atf-sh/h_misc.sh \
+	tests/atf/atf-sh/t_atf_check.sh tests/atf/atf-sh/t_config.sh \
+	tests/atf/atf-sh/t_normalize.sh tests/atf/atf-sh/t_tc.sh \
+	tests/atf/atf-sh/t_tp.sh $(atf_data_DATA) \
+	tests/atf/data/t_pkg_config.sh $(atf_formats_DATA) \
+	tests/atf/formats/t_parsers.sh $(atf_test_programs_DATA) \
+	tests/atf/test_programs/common.sh \
 	tests/atf/test_programs/h_sh.sh \
-	tests/atf/test_programs/t_cleanup.sh \
 	tests/atf/test_programs/t_config.sh \
-	tests/atf/test_programs/t_env.sh \
 	tests/atf/test_programs/t_fork.sh \
 	tests/atf/test_programs/t_meta_data.sh \
 	tests/atf/test_programs/t_srcdir.sh \
-	tests/atf/test_programs/t_status.sh \
-	tests/atf/test_programs/t_workdir.sh $(atf_tools_DATA) \
-	tests/atf/tools/t_atf_check.sh \
-	tests/atf/tools/t_atf_cleanup.sh \
-	tests/atf/tools/t_atf_compile.sh \
-	tests/atf/tools/t_atf_config.sh tests/atf/tools/t_atf_exec.sh \
-	tests/atf/tools/t_atf_report.sh tests/atf/tools/t_atf_run.sh \
-	tools/atf-host-compile.sh $(hooks_DATA)
+	tests/atf/test_programs/t_status.sh
 doc_DATA = AUTHORS COPYING NEWS README
 noinst_DATA = INSTALL doc/standalone/authors.html doc/text/authors.txt \
 	doc/standalone/copying.html doc/text/copying.txt \
@@ -1007,8 +1135,10 @@ AM_CPPFLAGS = "-DATF_ARCH=\"$(atf_arch)\"" \
               "-DATF_WORKDIR=\"$(ATF_WORKDIR)\""
 
 ATF_COMPILE_DEPS = $(srcdir)/atf-sh/atf.init.subr \
-	tools/atf-host-compile
-ATF_COMPILE_SH = ./tools/atf-host-compile
+	atf-compile/atf-host-compile
+ATF_COMPILE_SH = ./atf-compile/atf-host-compile
+BUILT_SOURCES = admin/revision.h $(srcdir)/admin/revision-dist.h \
+	atf-version/revision.h
 
 # -------------------------------------------------------------------------
 # `atf-c' directory.
@@ -1031,8 +1161,6 @@ libatf_c_la_SOURCES = atf-c/build.c \
                       atf-c/error.c \
                       atf-c/error.h \
                       atf-c/error_fwd.h \
-                      atf-c/expand.c \
-                      atf-c/expand.h \
                       atf-c/fs.c \
                       atf-c/fs.h \
                       atf-c/io.c \
@@ -1048,8 +1176,6 @@ libatf_c_la_SOURCES = atf-c/build.c \
                       atf-c/process.h \
                       atf-c/sanity.c \
                       atf-c/sanity.h \
-                      atf-c/signals.c \
-                      atf-c/signals.h \
                       atf-c/text.c \
                       atf-c/text.h \
                       atf-c/ui.c \
@@ -1076,7 +1202,6 @@ atf_c_HEADERS = atf-c/build.h \
                 atf-c/env.h \
                 atf-c/error.h \
                 atf-c/error_fwd.h \
-                atf-c/expand.h \
                 atf-c/fs.h \
                 atf-c/io.h \
                 atf-c/list.h \
@@ -1085,7 +1210,6 @@ atf_c_HEADERS = atf-c/build.h \
                 atf-c/object.h \
                 atf-c/process.h \
                 atf-c/sanity.h \
-                atf-c/signals.h \
                 atf-c/tc.h \
                 atf-c/tcr.h \
                 atf-c/text.h \
@@ -1095,11 +1219,12 @@ atf_c_HEADERS = atf-c/build.h \
 
 atf_cdir = $(includedir)/atf-c
 dist_man_MANS = atf-c/atf-c-api.3 atf-c++/atf-c++-api.3 \
-	atf-sh/atf-sh-api.3 doc/atf-formats.5 doc/atf-test-case.4 \
-	doc/atf-test-program.1 tools/atf-check.1 tools/atf-config.1 \
-	tools/atf-cleanup.1 tools/atf-compile.1 tools/atf-exec.1 \
-	tools/atf-format.1 tools/atf-report.1 tools/atf-run.1 \
-	tools/atf-version.1
+	atf-check/atf-check.1 atf-config/atf-config.1 \
+	atf-cleanup/atf-cleanup.1 atf-compile/atf-compile.1 \
+	atf-format/atf-format.1 atf-report/atf-report.1 \
+	atf-run/atf-run.1 atf-sh/atf-sh-api.3 \
+	atf-version/atf-version.1 doc/atf-formats.5 \
+	doc/atf-test-case.4 doc/atf-test-program.1
 libatf_c___la_LIBADD = libatf-c.la
 libatf_c___la_SOURCES = atf-c++/application.cpp \
                         atf-c++/application.hpp \
@@ -1164,6 +1289,35 @@ atf_c___HEADERS = atf-c++/application.hpp \
                   atf-c++/utils.hpp
 
 atf_c__dir = $(includedir)/atf-c++
+atf_check_atf_check_SOURCES = atf-check/atf-check.cpp
+nodist_atf_check_atf_check_SOURCES = 
+atf_check_atf_check_LDADD = libatf-c++.la
+atf_config_atf_config_SOURCES = atf-config/atf-config.cpp
+nodist_atf_config_atf_config_SOURCES = 
+atf_config_atf_config_LDADD = libatf-c++.la
+atf_cleanup_atf_cleanup_SOURCES = atf-cleanup/atf-cleanup.cpp
+nodist_atf_cleanup_atf_cleanup_SOURCES = 
+atf_cleanup_atf_cleanup_LDADD = libatf-c++.la
+atf_compile_atf_compile_SOURCES = atf-compile/atf-compile.cpp
+nodist_atf_compile_atf_compile_SOURCES = 
+atf_compile_atf_compile_LDADD = libatf-c++.la
+atf_format_atf_format_SOURCES = atf-format/atf-format.cpp
+nodist_atf_format_atf_format_SOURCES = 
+atf_format_atf_format_LDADD = libatf-c++.la
+atf_report_atf_report_SOURCES = atf-report/atf-report.cpp
+nodist_atf_report_atf_report_SOURCES = 
+atf_report_atf_report_LDADD = libatf-c++.la
+atf_run_atf_run_SOURCES = atf-run/atf-run.cpp atf-run/config.cpp \
+                        atf-run/config.hpp \
+                        atf-run/requirements.cpp \
+                        atf-run/requirements.hpp \
+                        atf-run/test-program.cpp \
+                        atf-run/test-program.hpp \
+                        atf-run/timer.cpp \
+                        atf-run/timer.hpp
+
+nodist_atf_run_atf_run_SOURCES = 
+atf_run_atf_run_LDADD = libatf-c++.la
 
 # -------------------------------------------------------------------------
 # `atf-sh' directory.
@@ -1173,6 +1327,11 @@ atf_sh_DATA = atf-sh/atf.footer.subr \
               atf-sh/atf.init.subr
 
 atf_shdir = $(pkgdatadir)
+atf_version_atf_version_SOURCES = atf-version/atf-version.cpp
+nodist_atf_version_atf_version_SOURCES = atf-version/revision.h
+atf_version_atf_version_LDADD = libatf-c++.la
+hooksdir = $(pkgdatadir)
+hooks_DATA = atf-run/atf-run.hooks
 
 # -------------------------------------------------------------------------
 # `data' directory.
@@ -1214,7 +1373,8 @@ tests_bootstrap_h_tp_basic_c_LDADD = libatf-c.la
 tests_bootstrap_h_tp_basic_cpp_SOURCES = tests/bootstrap/h_tp_basic_cpp.cpp
 tests_bootstrap_h_tp_basic_cpp_LDADD = libatf-c++.la
 check_SCRIPTS = tests/bootstrap/h_tp_basic_sh \
-	tests/bootstrap/h_tp_atf_check_sh
+	tests/bootstrap/h_tp_atf_check_sh tests/bootstrap/h_tp_fail \
+	tests/bootstrap/h_tp_pass
 DISTCLEANFILES = \
 		tests/bootstrap/atconfig \
 		testsuite.lineno \
@@ -1250,7 +1410,6 @@ atf_atf_c_DATA = tests/atf/atf-c/Atffile \
                  tests/atf/atf-c/d_include_env_h.c \
                  tests/atf/atf-c/d_include_error_fwd_h.c \
                  tests/atf/atf-c/d_include_error_h.c \
-                 tests/atf/atf-c/d_include_expand_h.c \
                  tests/atf/atf-c/d_include_fs_h.c \
                  tests/atf/atf-c/d_include_io_h.c \
                  tests/atf/atf-c/d_include_list_h.c \
@@ -1259,7 +1418,6 @@ atf_atf_c_DATA = tests/atf/atf-c/Atffile \
                  tests/atf/atf-c/d_include_object_h.c \
                  tests/atf/atf-c/d_include_process_h.c \
                  tests/atf/atf-c/d_include_sanity_h.c \
-                 tests/atf/atf-c/d_include_signals_h.c \
                  tests/atf/atf-c/d_include_tc_h.c \
                  tests/atf/atf-c/d_include_tcr_h.c \
                  tests/atf/atf-c/d_include_text_h.c \
@@ -1287,8 +1445,6 @@ tests_atf_atf_c_t_env_SOURCES = tests/atf/atf-c/t_env.c
 tests_atf_atf_c_t_env_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_atf_c_t_error_SOURCES = tests/atf/atf-c/t_error.c
 tests_atf_atf_c_t_error_LDADD = tests/atf/atf-c/libh.la libatf-c.la
-tests_atf_atf_c_t_expand_SOURCES = tests/atf/atf-c/t_expand.c
-tests_atf_atf_c_t_expand_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_atf_c_t_fs_SOURCES = tests/atf/atf-c/t_fs.c
 tests_atf_atf_c_t_fs_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_atf_c_t_h_lib_SOURCES = tests/atf/atf-c/t_h_lib.c
@@ -1303,8 +1459,6 @@ tests_atf_atf_c_t_map_SOURCES = tests/atf/atf-c/t_map.c
 tests_atf_atf_c_t_map_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_atf_c_t_process_SOURCES = tests/atf/atf-c/t_process.c
 tests_atf_atf_c_t_process_LDADD = tests/atf/atf-c/libh.la libatf-c.la
-tests_atf_atf_c_t_signals_SOURCES = tests/atf/atf-c/t_signals.c
-tests_atf_atf_c_t_signals_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_atf_c_t_tc_SOURCES = tests/atf/atf-c/t_tc.c
 tests_atf_atf_c_t_tc_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_atf_c_t_tcr_SOURCES = tests/atf/atf-c/t_tcr.c
@@ -1313,6 +1467,8 @@ tests_atf_atf_c_t_sanity_SOURCES = tests/atf/atf-c/t_sanity.c
 tests_atf_atf_c_t_sanity_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_atf_c_t_text_SOURCES = tests/atf/atf-c/t_text.c
 tests_atf_atf_c_t_text_LDADD = tests/atf/atf-c/libh.la libatf-c.la
+tests_atf_atf_c_t_tp_SOURCES = tests/atf/atf-c/t_tp.c
+tests_atf_atf_c_t_tp_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_atf_c_t_ui_SOURCES = tests/atf/atf-c/t_ui.c
 tests_atf_atf_c_t_ui_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_atf_c_t_user_SOURCES = tests/atf/atf-c/t_user.c
@@ -1391,6 +1547,50 @@ tests_atf_atf_c___t_user_SOURCES = tests/atf/atf-c++/t_user.cpp
 tests_atf_atf_c___t_user_LDADD = tests/atf/atf-c++/libh.la libatf-c++.la
 tests_atf_atf_c___t_utils_SOURCES = tests/atf/atf-c++/t_utils.cpp
 tests_atf_atf_c___t_utils_LDADD = tests/atf/atf-c++/libh.la libatf-c++.la
+atf_atf_check_DATA = tests/atf/atf-check/Atffile
+atf_atf_checkdir = $(pkgtestsdir)/atf-check
+atf_atf_check_SCRIPTS = tests/atf/atf-check/t_integration
+atf_atf_cleanup_DATA = tests/atf/atf-cleanup/Atffile
+atf_atf_cleanupdir = $(pkgtestsdir)/atf-cleanup
+atf_atf_cleanup_SCRIPTS = tests/atf/atf-cleanup/t_integration
+atf_atf_compile_DATA = tests/atf/atf-compile/Atffile
+atf_atf_compiledir = $(pkgtestsdir)/atf-compile
+tests_atf_atf_compile_h_mode_SOURCES = tests/atf/atf-compile/h_mode.cpp
+tests_atf_atf_compile_h_mode_LDADD = libatf-c++.la
+atf_atf_compile_SCRIPTS = tests/atf/atf-compile/t_integration
+atf_atf_config_DATA = tests/atf/atf-config/Atffile
+atf_atf_configdir = $(pkgtestsdir)/atf-config
+atf_atf_config_SCRIPTS = tests/atf/atf-config/t_integration
+atf_atf_report_DATA = tests/atf/atf-report/Atffile
+atf_atf_reportdir = $(pkgtestsdir)/atf-report
+tests_atf_atf_report_h_fail_SOURCES = tests/atf/atf-report/h_fail.cpp
+tests_atf_atf_report_h_fail_LDADD = libatf-c++.la
+tests_atf_atf_report_h_pass_SOURCES = tests/atf/atf-report/h_pass.cpp
+tests_atf_atf_report_h_pass_LDADD = libatf-c++.la
+tests_atf_atf_report_h_misc_SOURCES = tests/atf/atf-report/h_misc.cpp
+tests_atf_atf_report_h_misc_LDADD = libatf-c++.la
+atf_atf_report_SCRIPTS = tests/atf/atf-report/t_integration
+atf_atf_run_DATA = tests/atf/atf-run/Atffile
+atf_atf_rundir = $(pkgtestsdir)/atf-run
+tests_atf_atf_run_h_bad_metadata_SOURCES = tests/atf/atf-run/h_bad_metadata.c
+tests_atf_atf_run_h_bad_metadata_LDADD = libatf-c.la
+tests_atf_atf_run_h_several_tcs_SOURCES = tests/atf/atf-run/h_several_tcs.c
+tests_atf_atf_run_h_several_tcs_LDADD = libatf-c.la
+tests_atf_atf_run_h_zero_tcs_SOURCES = tests/atf/atf-run/h_zero_tcs.c
+tests_atf_atf_run_h_zero_tcs_LDADD = libatf-c.la
+tests_atf_atf_run_h_fail_SOURCES = tests/atf/atf-run/h_fail.cpp
+tests_atf_atf_run_h_fail_LDADD = libatf-c++.la
+tests_atf_atf_run_h_pass_SOURCES = tests/atf/atf-run/h_pass.cpp
+tests_atf_atf_run_h_pass_LDADD = libatf-c++.la
+tests_atf_atf_run_h_misc_SOURCES = tests/atf/atf-run/h_misc.cpp
+tests_atf_atf_run_h_misc_LDADD = libatf-c++.la
+tests_atf_atf_run_t_config_SOURCES = tests/atf/atf-run/t_config.cpp atf-run/config.cpp
+tests_atf_atf_run_t_config_LDADD = libatf-c++.la
+tests_atf_atf_run_t_requirements_SOURCES = tests/atf/atf-run/t_requirements.cpp atf-run/requirements.cpp
+tests_atf_atf_run_t_requirements_LDADD = libatf-c++.la
+tests_atf_atf_run_t_test_program_SOURCES = tests/atf/atf-run/t_test_program.cpp atf-run/test-program.cpp atf-run/timer.cpp
+tests_atf_atf_run_t_test_program_LDADD = libatf-c++.la
+atf_atf_run_SCRIPTS = tests/atf/atf-run/t_integration
 atf_atf_sh_DATA = tests/atf/atf-sh/Atffile
 atf_atf_shdir = $(pkgtestsdir)/atf-sh
 atf_atf_sh_SCRIPTS = tests/atf/atf-sh/h_misc \
@@ -1467,51 +1667,78 @@ atf_formats_DATA = tests/atf/formats/Atffile \
                    tests/atf/formats/d_headers_8.experr \
                    tests/atf/formats/d_headers_9 \
                    tests/atf/formats/d_headers_9.experr \
-                   tests/atf/formats/d_tcs_1 \
-                   tests/atf/formats/d_tcs_1.errin \
-                   tests/atf/formats/d_tcs_1.expout \
-                   tests/atf/formats/d_tcs_1.outin \
-                   tests/atf/formats/d_tcs_2 \
-                   tests/atf/formats/d_tcs_2.errin \
-                   tests/atf/formats/d_tcs_2.expout \
-                   tests/atf/formats/d_tcs_2.outin \
-                   tests/atf/formats/d_tcs_3 \
-                   tests/atf/formats/d_tcs_3.errin \
-                   tests/atf/formats/d_tcs_3.expout \
-                   tests/atf/formats/d_tcs_3.outin \
-                   tests/atf/formats/d_tcs_4 \
-                   tests/atf/formats/d_tcs_4.errin \
-                   tests/atf/formats/d_tcs_4.expout \
-                   tests/atf/formats/d_tcs_4.outin \
-                   tests/atf/formats/d_tcs_5 \
-                   tests/atf/formats/d_tcs_5.errin \
-                   tests/atf/formats/d_tcs_5.expout \
-                   tests/atf/formats/d_tcs_5.outin \
-                   tests/atf/formats/d_tcs_50 \
-                   tests/atf/formats/d_tcs_50.experr \
-                   tests/atf/formats/d_tcs_51 \
-                   tests/atf/formats/d_tcs_51.experr \
-                   tests/atf/formats/d_tcs_52 \
-                   tests/atf/formats/d_tcs_52.experr \
-                   tests/atf/formats/d_tcs_53 \
-                   tests/atf/formats/d_tcs_53.experr \
-                   tests/atf/formats/d_tcs_53.expout \
-                   tests/atf/formats/d_tcs_54 \
-                   tests/atf/formats/d_tcs_54.experr \
-                   tests/atf/formats/d_tcs_54.expout \
-                   tests/atf/formats/d_tcs_55 \
-                   tests/atf/formats/d_tcs_55.experr \
-                   tests/atf/formats/d_tcs_55.expout \
-                   tests/atf/formats/d_tcs_56 \
-                   tests/atf/formats/d_tcs_56.errin \
-                   tests/atf/formats/d_tcs_56.experr \
-                   tests/atf/formats/d_tcs_56.expout \
-                   tests/atf/formats/d_tcs_56.outin \
-                   tests/atf/formats/d_tcs_57 \
-                   tests/atf/formats/d_tcs_57.errin \
-                   tests/atf/formats/d_tcs_57.experr \
-                   tests/atf/formats/d_tcs_57.expout \
-                   tests/atf/formats/d_tcs_57.outin \
+                   tests/atf/formats/d_tcr_1 \
+                   tests/atf/formats/d_tcr_1.expout \
+                   tests/atf/formats/d_tcr_2 \
+                   tests/atf/formats/d_tcr_2.expout \
+                   tests/atf/formats/d_tcr_3 \
+                   tests/atf/formats/d_tcr_3.expout \
+                   tests/atf/formats/d_tcr_50 \
+                   tests/atf/formats/d_tcr_50.experr \
+                   tests/atf/formats/d_tcr_51 \
+                   tests/atf/formats/d_tcr_51.experr \
+                   tests/atf/formats/d_tcr_52 \
+                   tests/atf/formats/d_tcr_52.experr \
+                   tests/atf/formats/d_tcr_53 \
+                   tests/atf/formats/d_tcr_53.experr \
+                   tests/atf/formats/d_tcr_54 \
+                   tests/atf/formats/d_tcr_54.experr \
+                   tests/atf/formats/d_tcr_60 \
+                   tests/atf/formats/d_tcr_60.experr \
+                   tests/atf/formats/d_tcr_61 \
+                   tests/atf/formats/d_tcr_61.expout \
+                   tests/atf/formats/d_tcr_61.experr \
+                   tests/atf/formats/d_tcr_70 \
+                   tests/atf/formats/d_tcr_70.experr \
+                   tests/atf/formats/d_tcr_70.expout \
+                   tests/atf/formats/d_tcr_71 \
+                   tests/atf/formats/d_tcr_71.experr \
+                   tests/atf/formats/d_tcr_71.expout \
+                   tests/atf/formats/d_tcr_72 \
+                   tests/atf/formats/d_tcr_72.experr \
+                   tests/atf/formats/d_tcr_72.expout \
+                   tests/atf/formats/d_tcr_73 \
+                   tests/atf/formats/d_tcr_73.experr \
+                   tests/atf/formats/d_tcr_73.expout \
+                   tests/atf/formats/d_tcr_74 \
+                   tests/atf/formats/d_tcr_74.experr \
+                   tests/atf/formats/d_tcr_74.expout \
+                   tests/atf/formats/d_tcr_75 \
+                   tests/atf/formats/d_tcr_75.experr \
+                   tests/atf/formats/d_tcr_75.expout \
+                   tests/atf/formats/d_tcr_76 \
+                   tests/atf/formats/d_tcr_76.experr \
+                   tests/atf/formats/d_tcr_76.expout \
+                   tests/atf/formats/d_tcr_77 \
+                   tests/atf/formats/d_tcr_77.experr \
+                   tests/atf/formats/d_tp_1 \
+                   tests/atf/formats/d_tp_1.expout \
+                   tests/atf/formats/d_tp_2 \
+                   tests/atf/formats/d_tp_2.expout \
+                   tests/atf/formats/d_tp_3 \
+                   tests/atf/formats/d_tp_3.expout \
+                   tests/atf/formats/d_tp_4 \
+                   tests/atf/formats/d_tp_4.expout \
+                   tests/atf/formats/d_tp_50 \
+                   tests/atf/formats/d_tp_50.experr \
+                   tests/atf/formats/d_tp_51 \
+                   tests/atf/formats/d_tp_51.experr \
+                   tests/atf/formats/d_tp_52 \
+                   tests/atf/formats/d_tp_52.expout \
+                   tests/atf/formats/d_tp_53 \
+                   tests/atf/formats/d_tp_53.experr \
+                   tests/atf/formats/d_tp_54 \
+                   tests/atf/formats/d_tp_54.experr \
+                   tests/atf/formats/d_tp_55 \
+                   tests/atf/formats/d_tp_55.experr \
+                   tests/atf/formats/d_tp_56 \
+                   tests/atf/formats/d_tp_56.experr \
+                   tests/atf/formats/d_tp_57 \
+                   tests/atf/formats/d_tp_57.experr \
+                   tests/atf/formats/d_tp_58 \
+                   tests/atf/formats/d_tp_58.experr \
+                   tests/atf/formats/d_tp_59 \
+                   tests/atf/formats/d_tp_59.experr \
                    tests/atf/formats/d_tps_1 \
                    tests/atf/formats/d_tps_1.expout \
                    tests/atf/formats/d_tps_2 \
@@ -1581,48 +1808,11 @@ tests_atf_test_programs_h_c_LDADD = tests/atf/atf-c/libh.la libatf-c.la
 tests_atf_test_programs_h_cpp_SOURCES = tests/atf/test_programs/h_cpp.cpp
 tests_atf_test_programs_h_cpp_LDADD = tests/atf/atf-c++/libh.la libatf-c++.la
 atf_test_programs_SCRIPTS = tests/atf/test_programs/h_sh \
-	tests/atf/test_programs/t_cleanup \
-	tests/atf/test_programs/t_config tests/atf/test_programs/t_env \
+	tests/atf/test_programs/t_config \
 	tests/atf/test_programs/t_fork \
 	tests/atf/test_programs/t_meta_data \
 	tests/atf/test_programs/t_srcdir \
-	tests/atf/test_programs/t_status \
-	tests/atf/test_programs/t_workdir
-atf_tools_DATA = tests/atf/tools/Atffile
-atf_toolsdir = $(pkgtestsdir)/tools
-tests_atf_tools_h_fail_SOURCES = tests/atf/tools/h_fail.cpp
-tests_atf_tools_h_fail_LDADD = libatf-c++.la
-tests_atf_tools_h_misc_SOURCES = tests/atf/tools/h_misc.cpp
-tests_atf_tools_h_misc_LDADD = libatf-c++.la
-tests_atf_tools_h_mode_SOURCES = tests/atf/tools/h_mode.cpp
-tests_atf_tools_h_mode_LDADD = libatf-c++.la
-tests_atf_tools_h_pass_SOURCES = tests/atf/tools/h_pass.cpp
-tests_atf_tools_h_pass_LDADD = libatf-c++.la
-atf_tools_SCRIPTS = tests/atf/tools/t_atf_check \
-	tests/atf/tools/t_atf_cleanup tests/atf/tools/t_atf_compile \
-	tests/atf/tools/t_atf_config tests/atf/tools/t_atf_exec \
-	tests/atf/tools/t_atf_report tests/atf/tools/t_atf_run
-tools_atf_check_SOURCES = tools/atf-check.cpp
-tools_atf_check_LDADD = libatf-c++.la
-tools_atf_config_SOURCES = tools/atf-config.cpp
-tools_atf_config_LDADD = libatf-c++.la
-tools_atf_cleanup_SOURCES = tools/atf-cleanup.cpp
-tools_atf_cleanup_LDADD = libatf-c++.la
-tools_atf_compile_SOURCES = tools/atf-compile.cpp
-tools_atf_compile_LDADD = libatf-c++.la
-tools_atf_exec_SOURCES = tools/atf-exec.cpp
-tools_atf_exec_LDADD = libatf-c++.la
-tools_atf_format_SOURCES = tools/atf-format.cpp
-tools_atf_format_LDADD = libatf-c++.la
-tools_atf_report_SOURCES = tools/atf-report.cpp
-tools_atf_report_LDADD = libatf-c++.la
-tools_atf_run_SOURCES = tools/atf-run.cpp
-tools_atf_run_LDADD = libatf-c++.la
-tools_atf_version_SOURCES = tools/atf-version.cpp revision.h
-tools_atf_version_LDADD = libatf-c++.la
-BUILT_SOURCES = revision.h
-hooksdir = $(pkgdatadir)
-hooks_DATA = tools/atf-run.hooks
+	tests/atf/test_programs/t_status
 all: $(BUILT_SOURCES) bconfig.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -1777,7 +1967,6 @@ atf-c/config.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/dynstr.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/env.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/error.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
-atf-c/expand.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/fs.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/io.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/list.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
@@ -1786,8 +1975,6 @@ atf-c/object.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/process.lo: atf-c/$(am__dirstamp) \
 	atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/sanity.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
-atf-c/signals.lo: atf-c/$(am__dirstamp) \
-	atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/text.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/ui.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
 atf-c/user.lo: atf-c/$(am__dirstamp) atf-c/$(DEPDIR)/$(am__dirstamp)
@@ -1904,6 +2091,135 @@ clean-atf_atf_c__PROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+install-atf_atf_compilePROGRAMS: $(atf_atf_compile_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_compiledir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_compiledir)"
+	@list='$(atf_atf_compile_PROGRAMS)'; test -n "$(atf_atf_compiledir)" || list=; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p || test -f $$p1; \
+	  then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(atf_atf_compiledir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(atf_atf_compiledir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-atf_atf_compilePROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_compile_PROGRAMS)'; test -n "$(atf_atf_compiledir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' `; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_compiledir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_compiledir)" && rm -f $$files
+
+clean-atf_atf_compilePROGRAMS:
+	@list='$(atf_atf_compile_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
+install-atf_atf_reportPROGRAMS: $(atf_atf_report_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_reportdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_reportdir)"
+	@list='$(atf_atf_report_PROGRAMS)'; test -n "$(atf_atf_reportdir)" || list=; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p || test -f $$p1; \
+	  then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(atf_atf_reportdir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(atf_atf_reportdir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-atf_atf_reportPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_report_PROGRAMS)'; test -n "$(atf_atf_reportdir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' `; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_reportdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_reportdir)" && rm -f $$files
+
+clean-atf_atf_reportPROGRAMS:
+	@list='$(atf_atf_report_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
+install-atf_atf_runPROGRAMS: $(atf_atf_run_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_rundir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_rundir)"
+	@list='$(atf_atf_run_PROGRAMS)'; test -n "$(atf_atf_rundir)" || list=; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p || test -f $$p1; \
+	  then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(atf_atf_rundir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(atf_atf_rundir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-atf_atf_runPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_run_PROGRAMS)'; test -n "$(atf_atf_rundir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' `; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_rundir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_rundir)" && rm -f $$files
+
+clean-atf_atf_runPROGRAMS:
+	@list='$(atf_atf_run_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
 install-atf_formatsPROGRAMS: $(atf_formats_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	test -z "$(atf_formatsdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_formatsdir)"
@@ -1984,49 +2300,6 @@ uninstall-atf_test_programsPROGRAMS:
 
 clean-atf_test_programsPROGRAMS:
 	@list='$(atf_test_programs_PROGRAMS)'; test -n "$$list" || exit 0; \
-	echo " rm -f" $$list; \
-	rm -f $$list || exit $$?; \
-	test -n "$(EXEEXT)" || exit 0; \
-	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
-	echo " rm -f" $$list; \
-	rm -f $$list
-install-atf_toolsPROGRAMS: $(atf_tools_PROGRAMS)
-	@$(NORMAL_INSTALL)
-	test -z "$(atf_toolsdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_toolsdir)"
-	@list='$(atf_tools_PROGRAMS)'; test -n "$(atf_toolsdir)" || list=; \
-	for p in $$list; do echo "$$p $$p"; done | \
-	sed 's/$(EXEEXT)$$//' | \
-	while read p p1; do if test -f $$p || test -f $$p1; \
-	  then echo "$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n;h' -e 's|.*|.|' \
-	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
-	sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
-	    else { print "f", $$3 "/" $$4, $$1; } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	    test -z "$$files" || { \
-	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(atf_toolsdir)$$dir'"; \
-	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(atf_toolsdir)$$dir" || exit $$?; \
-	    } \
-	; done
-
-uninstall-atf_toolsPROGRAMS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(atf_tools_PROGRAMS)'; test -n "$(atf_toolsdir)" || list=; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
-	      -e 's/$$/$(EXEEXT)/' `; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(atf_toolsdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(atf_toolsdir)" && rm -f $$files
-
-clean-atf_toolsPROGRAMS:
-	@list='$(atf_tools_PROGRAMS)'; test -n "$$list" || exit 0; \
 	echo " rm -f" $$list; \
 	rm -f $$list || exit $$?; \
 	test -n "$(EXEEXT)" || exit 0; \
@@ -2128,6 +2401,102 @@ clean-libexecPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+atf-check/$(am__dirstamp):
+	@$(MKDIR_P) atf-check
+	@: > atf-check/$(am__dirstamp)
+atf-check/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) atf-check/$(DEPDIR)
+	@: > atf-check/$(DEPDIR)/$(am__dirstamp)
+atf-check/atf-check.$(OBJEXT): atf-check/$(am__dirstamp) \
+	atf-check/$(DEPDIR)/$(am__dirstamp)
+atf-check/atf-check$(EXEEXT): $(atf_check_atf_check_OBJECTS) $(atf_check_atf_check_DEPENDENCIES) atf-check/$(am__dirstamp)
+	@rm -f atf-check/atf-check$(EXEEXT)
+	$(CXXLINK) $(atf_check_atf_check_OBJECTS) $(atf_check_atf_check_LDADD) $(LIBS)
+atf-cleanup/$(am__dirstamp):
+	@$(MKDIR_P) atf-cleanup
+	@: > atf-cleanup/$(am__dirstamp)
+atf-cleanup/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) atf-cleanup/$(DEPDIR)
+	@: > atf-cleanup/$(DEPDIR)/$(am__dirstamp)
+atf-cleanup/atf-cleanup.$(OBJEXT): atf-cleanup/$(am__dirstamp) \
+	atf-cleanup/$(DEPDIR)/$(am__dirstamp)
+atf-cleanup/atf-cleanup$(EXEEXT): $(atf_cleanup_atf_cleanup_OBJECTS) $(atf_cleanup_atf_cleanup_DEPENDENCIES) atf-cleanup/$(am__dirstamp)
+	@rm -f atf-cleanup/atf-cleanup$(EXEEXT)
+	$(CXXLINK) $(atf_cleanup_atf_cleanup_OBJECTS) $(atf_cleanup_atf_cleanup_LDADD) $(LIBS)
+atf-compile/$(am__dirstamp):
+	@$(MKDIR_P) atf-compile
+	@: > atf-compile/$(am__dirstamp)
+atf-compile/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) atf-compile/$(DEPDIR)
+	@: > atf-compile/$(DEPDIR)/$(am__dirstamp)
+atf-compile/atf-compile.$(OBJEXT): atf-compile/$(am__dirstamp) \
+	atf-compile/$(DEPDIR)/$(am__dirstamp)
+atf-compile/atf-compile$(EXEEXT): $(atf_compile_atf_compile_OBJECTS) $(atf_compile_atf_compile_DEPENDENCIES) atf-compile/$(am__dirstamp)
+	@rm -f atf-compile/atf-compile$(EXEEXT)
+	$(CXXLINK) $(atf_compile_atf_compile_OBJECTS) $(atf_compile_atf_compile_LDADD) $(LIBS)
+atf-config/$(am__dirstamp):
+	@$(MKDIR_P) atf-config
+	@: > atf-config/$(am__dirstamp)
+atf-config/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) atf-config/$(DEPDIR)
+	@: > atf-config/$(DEPDIR)/$(am__dirstamp)
+atf-config/atf-config.$(OBJEXT): atf-config/$(am__dirstamp) \
+	atf-config/$(DEPDIR)/$(am__dirstamp)
+atf-config/atf-config$(EXEEXT): $(atf_config_atf_config_OBJECTS) $(atf_config_atf_config_DEPENDENCIES) atf-config/$(am__dirstamp)
+	@rm -f atf-config/atf-config$(EXEEXT)
+	$(CXXLINK) $(atf_config_atf_config_OBJECTS) $(atf_config_atf_config_LDADD) $(LIBS)
+atf-format/$(am__dirstamp):
+	@$(MKDIR_P) atf-format
+	@: > atf-format/$(am__dirstamp)
+atf-format/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) atf-format/$(DEPDIR)
+	@: > atf-format/$(DEPDIR)/$(am__dirstamp)
+atf-format/atf-format.$(OBJEXT): atf-format/$(am__dirstamp) \
+	atf-format/$(DEPDIR)/$(am__dirstamp)
+atf-format/atf-format$(EXEEXT): $(atf_format_atf_format_OBJECTS) $(atf_format_atf_format_DEPENDENCIES) atf-format/$(am__dirstamp)
+	@rm -f atf-format/atf-format$(EXEEXT)
+	$(CXXLINK) $(atf_format_atf_format_OBJECTS) $(atf_format_atf_format_LDADD) $(LIBS)
+atf-report/$(am__dirstamp):
+	@$(MKDIR_P) atf-report
+	@: > atf-report/$(am__dirstamp)
+atf-report/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) atf-report/$(DEPDIR)
+	@: > atf-report/$(DEPDIR)/$(am__dirstamp)
+atf-report/atf-report.$(OBJEXT): atf-report/$(am__dirstamp) \
+	atf-report/$(DEPDIR)/$(am__dirstamp)
+atf-report/atf-report$(EXEEXT): $(atf_report_atf_report_OBJECTS) $(atf_report_atf_report_DEPENDENCIES) atf-report/$(am__dirstamp)
+	@rm -f atf-report/atf-report$(EXEEXT)
+	$(CXXLINK) $(atf_report_atf_report_OBJECTS) $(atf_report_atf_report_LDADD) $(LIBS)
+atf-run/$(am__dirstamp):
+	@$(MKDIR_P) atf-run
+	@: > atf-run/$(am__dirstamp)
+atf-run/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) atf-run/$(DEPDIR)
+	@: > atf-run/$(DEPDIR)/$(am__dirstamp)
+atf-run/atf-run.$(OBJEXT): atf-run/$(am__dirstamp) \
+	atf-run/$(DEPDIR)/$(am__dirstamp)
+atf-run/config.$(OBJEXT): atf-run/$(am__dirstamp) \
+	atf-run/$(DEPDIR)/$(am__dirstamp)
+atf-run/requirements.$(OBJEXT): atf-run/$(am__dirstamp) \
+	atf-run/$(DEPDIR)/$(am__dirstamp)
+atf-run/test-program.$(OBJEXT): atf-run/$(am__dirstamp) \
+	atf-run/$(DEPDIR)/$(am__dirstamp)
+atf-run/timer.$(OBJEXT): atf-run/$(am__dirstamp) \
+	atf-run/$(DEPDIR)/$(am__dirstamp)
+atf-run/atf-run$(EXEEXT): $(atf_run_atf_run_OBJECTS) $(atf_run_atf_run_DEPENDENCIES) atf-run/$(am__dirstamp)
+	@rm -f atf-run/atf-run$(EXEEXT)
+	$(CXXLINK) $(atf_run_atf_run_OBJECTS) $(atf_run_atf_run_LDADD) $(LIBS)
+atf-version/$(am__dirstamp):
+	@$(MKDIR_P) atf-version
+	@: > atf-version/$(am__dirstamp)
+atf-version/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) atf-version/$(DEPDIR)
+	@: > atf-version/$(DEPDIR)/$(am__dirstamp)
+atf-version/atf-version.$(OBJEXT): atf-version/$(am__dirstamp) \
+	atf-version/$(DEPDIR)/$(am__dirstamp)
+atf-version/atf-version$(EXEEXT): $(atf_version_atf_version_OBJECTS) $(atf_version_atf_version_DEPENDENCIES) atf-version/$(am__dirstamp)
+	@rm -f atf-version/atf-version$(EXEEXT)
+	$(CXXLINK) $(atf_version_atf_version_OBJECTS) $(atf_version_atf_version_LDADD) $(LIBS)
 tests/atf/atf-c++/t_application.$(OBJEXT):  \
 	tests/atf/atf-c++/$(am__dirstamp) \
 	tests/atf/atf-c++/$(DEPDIR)/$(am__dirstamp)
@@ -2295,11 +2664,6 @@ tests/atf/atf-c/t_error.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
 tests/atf/atf-c/t_error$(EXEEXT): $(tests_atf_atf_c_t_error_OBJECTS) $(tests_atf_atf_c_t_error_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
 	@rm -f tests/atf/atf-c/t_error$(EXEEXT)
 	$(LINK) $(tests_atf_atf_c_t_error_OBJECTS) $(tests_atf_atf_c_t_error_LDADD) $(LIBS)
-tests/atf/atf-c/t_expand.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
-	tests/atf/atf-c/$(DEPDIR)/$(am__dirstamp)
-tests/atf/atf-c/t_expand$(EXEEXT): $(tests_atf_atf_c_t_expand_OBJECTS) $(tests_atf_atf_c_t_expand_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
-	@rm -f tests/atf/atf-c/t_expand$(EXEEXT)
-	$(LINK) $(tests_atf_atf_c_t_expand_OBJECTS) $(tests_atf_atf_c_t_expand_LDADD) $(LIBS)
 tests/atf/atf-c/t_fs.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
 	tests/atf/atf-c/$(DEPDIR)/$(am__dirstamp)
 tests/atf/atf-c/t_fs$(EXEEXT): $(tests_atf_atf_c_t_fs_OBJECTS) $(tests_atf_atf_c_t_fs_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
@@ -2340,11 +2704,6 @@ tests/atf/atf-c/t_sanity.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
 tests/atf/atf-c/t_sanity$(EXEEXT): $(tests_atf_atf_c_t_sanity_OBJECTS) $(tests_atf_atf_c_t_sanity_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
 	@rm -f tests/atf/atf-c/t_sanity$(EXEEXT)
 	$(LINK) $(tests_atf_atf_c_t_sanity_OBJECTS) $(tests_atf_atf_c_t_sanity_LDADD) $(LIBS)
-tests/atf/atf-c/t_signals.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
-	tests/atf/atf-c/$(DEPDIR)/$(am__dirstamp)
-tests/atf/atf-c/t_signals$(EXEEXT): $(tests_atf_atf_c_t_signals_OBJECTS) $(tests_atf_atf_c_t_signals_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
-	@rm -f tests/atf/atf-c/t_signals$(EXEEXT)
-	$(LINK) $(tests_atf_atf_c_t_signals_OBJECTS) $(tests_atf_atf_c_t_signals_LDADD) $(LIBS)
 tests/atf/atf-c/t_tc.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
 	tests/atf/atf-c/$(DEPDIR)/$(am__dirstamp)
 tests/atf/atf-c/t_tc$(EXEEXT): $(tests_atf_atf_c_t_tc_OBJECTS) $(tests_atf_atf_c_t_tc_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
@@ -2360,6 +2719,11 @@ tests/atf/atf-c/t_text.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
 tests/atf/atf-c/t_text$(EXEEXT): $(tests_atf_atf_c_t_text_OBJECTS) $(tests_atf_atf_c_t_text_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
 	@rm -f tests/atf/atf-c/t_text$(EXEEXT)
 	$(LINK) $(tests_atf_atf_c_t_text_OBJECTS) $(tests_atf_atf_c_t_text_LDADD) $(LIBS)
+tests/atf/atf-c/t_tp.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
+	tests/atf/atf-c/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-c/t_tp$(EXEEXT): $(tests_atf_atf_c_t_tp_OBJECTS) $(tests_atf_atf_c_t_tp_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
+	@rm -f tests/atf/atf-c/t_tp$(EXEEXT)
+	$(LINK) $(tests_atf_atf_c_t_tp_OBJECTS) $(tests_atf_atf_c_t_tp_LDADD) $(LIBS)
 tests/atf/atf-c/t_ui.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
 	tests/atf/atf-c/$(DEPDIR)/$(am__dirstamp)
 tests/atf/atf-c/t_ui$(EXEEXT): $(tests_atf_atf_c_t_ui_OBJECTS) $(tests_atf_atf_c_t_ui_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
@@ -2370,6 +2734,99 @@ tests/atf/atf-c/t_user.$(OBJEXT): tests/atf/atf-c/$(am__dirstamp) \
 tests/atf/atf-c/t_user$(EXEEXT): $(tests_atf_atf_c_t_user_OBJECTS) $(tests_atf_atf_c_t_user_DEPENDENCIES) tests/atf/atf-c/$(am__dirstamp)
 	@rm -f tests/atf/atf-c/t_user$(EXEEXT)
 	$(LINK) $(tests_atf_atf_c_t_user_OBJECTS) $(tests_atf_atf_c_t_user_LDADD) $(LIBS)
+tests/atf/atf-compile/$(am__dirstamp):
+	@$(MKDIR_P) tests/atf/atf-compile
+	@: > tests/atf/atf-compile/$(am__dirstamp)
+tests/atf/atf-compile/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tests/atf/atf-compile/$(DEPDIR)
+	@: > tests/atf/atf-compile/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-compile/h_mode.$(OBJEXT):  \
+	tests/atf/atf-compile/$(am__dirstamp) \
+	tests/atf/atf-compile/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-compile/h_mode$(EXEEXT): $(tests_atf_atf_compile_h_mode_OBJECTS) $(tests_atf_atf_compile_h_mode_DEPENDENCIES) tests/atf/atf-compile/$(am__dirstamp)
+	@rm -f tests/atf/atf-compile/h_mode$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_compile_h_mode_OBJECTS) $(tests_atf_atf_compile_h_mode_LDADD) $(LIBS)
+tests/atf/atf-report/$(am__dirstamp):
+	@$(MKDIR_P) tests/atf/atf-report
+	@: > tests/atf/atf-report/$(am__dirstamp)
+tests/atf/atf-report/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tests/atf/atf-report/$(DEPDIR)
+	@: > tests/atf/atf-report/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-report/h_fail.$(OBJEXT):  \
+	tests/atf/atf-report/$(am__dirstamp) \
+	tests/atf/atf-report/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-report/h_fail$(EXEEXT): $(tests_atf_atf_report_h_fail_OBJECTS) $(tests_atf_atf_report_h_fail_DEPENDENCIES) tests/atf/atf-report/$(am__dirstamp)
+	@rm -f tests/atf/atf-report/h_fail$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_report_h_fail_OBJECTS) $(tests_atf_atf_report_h_fail_LDADD) $(LIBS)
+tests/atf/atf-report/h_misc.$(OBJEXT):  \
+	tests/atf/atf-report/$(am__dirstamp) \
+	tests/atf/atf-report/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-report/h_misc$(EXEEXT): $(tests_atf_atf_report_h_misc_OBJECTS) $(tests_atf_atf_report_h_misc_DEPENDENCIES) tests/atf/atf-report/$(am__dirstamp)
+	@rm -f tests/atf/atf-report/h_misc$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_report_h_misc_OBJECTS) $(tests_atf_atf_report_h_misc_LDADD) $(LIBS)
+tests/atf/atf-report/h_pass.$(OBJEXT):  \
+	tests/atf/atf-report/$(am__dirstamp) \
+	tests/atf/atf-report/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-report/h_pass$(EXEEXT): $(tests_atf_atf_report_h_pass_OBJECTS) $(tests_atf_atf_report_h_pass_DEPENDENCIES) tests/atf/atf-report/$(am__dirstamp)
+	@rm -f tests/atf/atf-report/h_pass$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_report_h_pass_OBJECTS) $(tests_atf_atf_report_h_pass_LDADD) $(LIBS)
+tests/atf/atf-run/$(am__dirstamp):
+	@$(MKDIR_P) tests/atf/atf-run
+	@: > tests/atf/atf-run/$(am__dirstamp)
+tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) tests/atf/atf-run/$(DEPDIR)
+	@: > tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/h_bad_metadata.$(OBJEXT):  \
+	tests/atf/atf-run/$(am__dirstamp) \
+	tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/h_bad_metadata$(EXEEXT): $(tests_atf_atf_run_h_bad_metadata_OBJECTS) $(tests_atf_atf_run_h_bad_metadata_DEPENDENCIES) tests/atf/atf-run/$(am__dirstamp)
+	@rm -f tests/atf/atf-run/h_bad_metadata$(EXEEXT)
+	$(LINK) $(tests_atf_atf_run_h_bad_metadata_OBJECTS) $(tests_atf_atf_run_h_bad_metadata_LDADD) $(LIBS)
+tests/atf/atf-run/h_fail.$(OBJEXT): tests/atf/atf-run/$(am__dirstamp) \
+	tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/h_fail$(EXEEXT): $(tests_atf_atf_run_h_fail_OBJECTS) $(tests_atf_atf_run_h_fail_DEPENDENCIES) tests/atf/atf-run/$(am__dirstamp)
+	@rm -f tests/atf/atf-run/h_fail$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_run_h_fail_OBJECTS) $(tests_atf_atf_run_h_fail_LDADD) $(LIBS)
+tests/atf/atf-run/h_misc.$(OBJEXT): tests/atf/atf-run/$(am__dirstamp) \
+	tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/h_misc$(EXEEXT): $(tests_atf_atf_run_h_misc_OBJECTS) $(tests_atf_atf_run_h_misc_DEPENDENCIES) tests/atf/atf-run/$(am__dirstamp)
+	@rm -f tests/atf/atf-run/h_misc$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_run_h_misc_OBJECTS) $(tests_atf_atf_run_h_misc_LDADD) $(LIBS)
+tests/atf/atf-run/h_pass.$(OBJEXT): tests/atf/atf-run/$(am__dirstamp) \
+	tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/h_pass$(EXEEXT): $(tests_atf_atf_run_h_pass_OBJECTS) $(tests_atf_atf_run_h_pass_DEPENDENCIES) tests/atf/atf-run/$(am__dirstamp)
+	@rm -f tests/atf/atf-run/h_pass$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_run_h_pass_OBJECTS) $(tests_atf_atf_run_h_pass_LDADD) $(LIBS)
+tests/atf/atf-run/h_several_tcs.$(OBJEXT):  \
+	tests/atf/atf-run/$(am__dirstamp) \
+	tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/h_several_tcs$(EXEEXT): $(tests_atf_atf_run_h_several_tcs_OBJECTS) $(tests_atf_atf_run_h_several_tcs_DEPENDENCIES) tests/atf/atf-run/$(am__dirstamp)
+	@rm -f tests/atf/atf-run/h_several_tcs$(EXEEXT)
+	$(LINK) $(tests_atf_atf_run_h_several_tcs_OBJECTS) $(tests_atf_atf_run_h_several_tcs_LDADD) $(LIBS)
+tests/atf/atf-run/h_zero_tcs.$(OBJEXT):  \
+	tests/atf/atf-run/$(am__dirstamp) \
+	tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/h_zero_tcs$(EXEEXT): $(tests_atf_atf_run_h_zero_tcs_OBJECTS) $(tests_atf_atf_run_h_zero_tcs_DEPENDENCIES) tests/atf/atf-run/$(am__dirstamp)
+	@rm -f tests/atf/atf-run/h_zero_tcs$(EXEEXT)
+	$(LINK) $(tests_atf_atf_run_h_zero_tcs_OBJECTS) $(tests_atf_atf_run_h_zero_tcs_LDADD) $(LIBS)
+tests/atf/atf-run/t_config.$(OBJEXT):  \
+	tests/atf/atf-run/$(am__dirstamp) \
+	tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/t_config$(EXEEXT): $(tests_atf_atf_run_t_config_OBJECTS) $(tests_atf_atf_run_t_config_DEPENDENCIES) tests/atf/atf-run/$(am__dirstamp)
+	@rm -f tests/atf/atf-run/t_config$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_run_t_config_OBJECTS) $(tests_atf_atf_run_t_config_LDADD) $(LIBS)
+tests/atf/atf-run/t_requirements.$(OBJEXT):  \
+	tests/atf/atf-run/$(am__dirstamp) \
+	tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/t_requirements$(EXEEXT): $(tests_atf_atf_run_t_requirements_OBJECTS) $(tests_atf_atf_run_t_requirements_DEPENDENCIES) tests/atf/atf-run/$(am__dirstamp)
+	@rm -f tests/atf/atf-run/t_requirements$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_run_t_requirements_OBJECTS) $(tests_atf_atf_run_t_requirements_LDADD) $(LIBS)
+tests/atf/atf-run/t_test_program.$(OBJEXT):  \
+	tests/atf/atf-run/$(am__dirstamp) \
+	tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+tests/atf/atf-run/t_test_program$(EXEEXT): $(tests_atf_atf_run_t_test_program_OBJECTS) $(tests_atf_atf_run_t_test_program_DEPENDENCIES) tests/atf/atf-run/$(am__dirstamp)
+	@rm -f tests/atf/atf-run/t_test_program$(EXEEXT)
+	$(CXXLINK) $(tests_atf_atf_run_t_test_program_OBJECTS) $(tests_atf_atf_run_t_test_program_LDADD) $(LIBS)
 tests/atf/formats/$(am__dirstamp):
 	@$(MKDIR_P) tests/atf/formats
 	@: > tests/atf/formats/$(am__dirstamp)
@@ -2406,32 +2863,6 @@ tests/atf/test_programs/h_cpp.$(OBJEXT):  \
 tests/atf/test_programs/h_cpp$(EXEEXT): $(tests_atf_test_programs_h_cpp_OBJECTS) $(tests_atf_test_programs_h_cpp_DEPENDENCIES) tests/atf/test_programs/$(am__dirstamp)
 	@rm -f tests/atf/test_programs/h_cpp$(EXEEXT)
 	$(CXXLINK) $(tests_atf_test_programs_h_cpp_OBJECTS) $(tests_atf_test_programs_h_cpp_LDADD) $(LIBS)
-tests/atf/tools/$(am__dirstamp):
-	@$(MKDIR_P) tests/atf/tools
-	@: > tests/atf/tools/$(am__dirstamp)
-tests/atf/tools/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) tests/atf/tools/$(DEPDIR)
-	@: > tests/atf/tools/$(DEPDIR)/$(am__dirstamp)
-tests/atf/tools/h_fail.$(OBJEXT): tests/atf/tools/$(am__dirstamp) \
-	tests/atf/tools/$(DEPDIR)/$(am__dirstamp)
-tests/atf/tools/h_fail$(EXEEXT): $(tests_atf_tools_h_fail_OBJECTS) $(tests_atf_tools_h_fail_DEPENDENCIES) tests/atf/tools/$(am__dirstamp)
-	@rm -f tests/atf/tools/h_fail$(EXEEXT)
-	$(CXXLINK) $(tests_atf_tools_h_fail_OBJECTS) $(tests_atf_tools_h_fail_LDADD) $(LIBS)
-tests/atf/tools/h_misc.$(OBJEXT): tests/atf/tools/$(am__dirstamp) \
-	tests/atf/tools/$(DEPDIR)/$(am__dirstamp)
-tests/atf/tools/h_misc$(EXEEXT): $(tests_atf_tools_h_misc_OBJECTS) $(tests_atf_tools_h_misc_DEPENDENCIES) tests/atf/tools/$(am__dirstamp)
-	@rm -f tests/atf/tools/h_misc$(EXEEXT)
-	$(CXXLINK) $(tests_atf_tools_h_misc_OBJECTS) $(tests_atf_tools_h_misc_LDADD) $(LIBS)
-tests/atf/tools/h_mode.$(OBJEXT): tests/atf/tools/$(am__dirstamp) \
-	tests/atf/tools/$(DEPDIR)/$(am__dirstamp)
-tests/atf/tools/h_mode$(EXEEXT): $(tests_atf_tools_h_mode_OBJECTS) $(tests_atf_tools_h_mode_DEPENDENCIES) tests/atf/tools/$(am__dirstamp)
-	@rm -f tests/atf/tools/h_mode$(EXEEXT)
-	$(CXXLINK) $(tests_atf_tools_h_mode_OBJECTS) $(tests_atf_tools_h_mode_LDADD) $(LIBS)
-tests/atf/tools/h_pass.$(OBJEXT): tests/atf/tools/$(am__dirstamp) \
-	tests/atf/tools/$(DEPDIR)/$(am__dirstamp)
-tests/atf/tools/h_pass$(EXEEXT): $(tests_atf_tools_h_pass_OBJECTS) $(tests_atf_tools_h_pass_DEPENDENCIES) tests/atf/tools/$(am__dirstamp)
-	@rm -f tests/atf/tools/h_pass$(EXEEXT)
-	$(CXXLINK) $(tests_atf_tools_h_pass_OBJECTS) $(tests_atf_tools_h_pass_LDADD) $(LIBS)
 tests/bootstrap/$(am__dirstamp):
 	@$(MKDIR_P) tests/bootstrap
 	@: > tests/bootstrap/$(am__dirstamp)
@@ -2462,57 +2893,210 @@ tests/bootstrap/h_tp_basic_cpp.$(OBJEXT):  \
 tests/bootstrap/h_tp_basic_cpp$(EXEEXT): $(tests_bootstrap_h_tp_basic_cpp_OBJECTS) $(tests_bootstrap_h_tp_basic_cpp_DEPENDENCIES) tests/bootstrap/$(am__dirstamp)
 	@rm -f tests/bootstrap/h_tp_basic_cpp$(EXEEXT)
 	$(CXXLINK) $(tests_bootstrap_h_tp_basic_cpp_OBJECTS) $(tests_bootstrap_h_tp_basic_cpp_LDADD) $(LIBS)
-tools/$(am__dirstamp):
-	@$(MKDIR_P) tools
-	@: > tools/$(am__dirstamp)
-tools/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) tools/$(DEPDIR)
-	@: > tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-check.$(OBJEXT): tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-check$(EXEEXT): $(tools_atf_check_OBJECTS) $(tools_atf_check_DEPENDENCIES) tools/$(am__dirstamp)
-	@rm -f tools/atf-check$(EXEEXT)
-	$(CXXLINK) $(tools_atf_check_OBJECTS) $(tools_atf_check_LDADD) $(LIBS)
-tools/atf-cleanup.$(OBJEXT): tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-cleanup$(EXEEXT): $(tools_atf_cleanup_OBJECTS) $(tools_atf_cleanup_DEPENDENCIES) tools/$(am__dirstamp)
-	@rm -f tools/atf-cleanup$(EXEEXT)
-	$(CXXLINK) $(tools_atf_cleanup_OBJECTS) $(tools_atf_cleanup_LDADD) $(LIBS)
-tools/atf-compile.$(OBJEXT): tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-compile$(EXEEXT): $(tools_atf_compile_OBJECTS) $(tools_atf_compile_DEPENDENCIES) tools/$(am__dirstamp)
-	@rm -f tools/atf-compile$(EXEEXT)
-	$(CXXLINK) $(tools_atf_compile_OBJECTS) $(tools_atf_compile_LDADD) $(LIBS)
-tools/atf-config.$(OBJEXT): tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-config$(EXEEXT): $(tools_atf_config_OBJECTS) $(tools_atf_config_DEPENDENCIES) tools/$(am__dirstamp)
-	@rm -f tools/atf-config$(EXEEXT)
-	$(CXXLINK) $(tools_atf_config_OBJECTS) $(tools_atf_config_LDADD) $(LIBS)
-tools/atf-exec.$(OBJEXT): tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-exec$(EXEEXT): $(tools_atf_exec_OBJECTS) $(tools_atf_exec_DEPENDENCIES) tools/$(am__dirstamp)
-	@rm -f tools/atf-exec$(EXEEXT)
-	$(CXXLINK) $(tools_atf_exec_OBJECTS) $(tools_atf_exec_LDADD) $(LIBS)
-tools/atf-format.$(OBJEXT): tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-format$(EXEEXT): $(tools_atf_format_OBJECTS) $(tools_atf_format_DEPENDENCIES) tools/$(am__dirstamp)
-	@rm -f tools/atf-format$(EXEEXT)
-	$(CXXLINK) $(tools_atf_format_OBJECTS) $(tools_atf_format_LDADD) $(LIBS)
-tools/atf-report.$(OBJEXT): tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-report$(EXEEXT): $(tools_atf_report_OBJECTS) $(tools_atf_report_DEPENDENCIES) tools/$(am__dirstamp)
-	@rm -f tools/atf-report$(EXEEXT)
-	$(CXXLINK) $(tools_atf_report_OBJECTS) $(tools_atf_report_LDADD) $(LIBS)
-tools/atf-run.$(OBJEXT): tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-run$(EXEEXT): $(tools_atf_run_OBJECTS) $(tools_atf_run_DEPENDENCIES) tools/$(am__dirstamp)
-	@rm -f tools/atf-run$(EXEEXT)
-	$(CXXLINK) $(tools_atf_run_OBJECTS) $(tools_atf_run_LDADD) $(LIBS)
-tools/atf-version.$(OBJEXT): tools/$(am__dirstamp) \
-	tools/$(DEPDIR)/$(am__dirstamp)
-tools/atf-version$(EXEEXT): $(tools_atf_version_OBJECTS) $(tools_atf_version_DEPENDENCIES) tools/$(am__dirstamp)
-	@rm -f tools/atf-version$(EXEEXT)
-	$(CXXLINK) $(tools_atf_version_OBJECTS) $(tools_atf_version_LDADD) $(LIBS)
+install-atf_atf_checkSCRIPTS: $(atf_atf_check_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_checkdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_checkdir)"
+	@list='$(atf_atf_check_SCRIPTS)'; test -n "$(atf_atf_checkdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n' \
+	    -e 'h;s|.*|.|' \
+	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
+	      if (++n[d] == $(am__install_max)) { \
+		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
+	    else { print "f", d "/" $$4, $$1 } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	     test -z "$$files" || { \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(atf_atf_checkdir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(atf_atf_checkdir)$$dir" || exit $$?; \
+	     } \
+	; done
+
+uninstall-atf_atf_checkSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_check_SCRIPTS)'; test -n "$(atf_atf_checkdir)" || exit 0; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	       sed -e 's,.*/,,;$(transform)'`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_checkdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_checkdir)" && rm -f $$files
+install-atf_atf_cleanupSCRIPTS: $(atf_atf_cleanup_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_cleanupdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_cleanupdir)"
+	@list='$(atf_atf_cleanup_SCRIPTS)'; test -n "$(atf_atf_cleanupdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n' \
+	    -e 'h;s|.*|.|' \
+	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
+	      if (++n[d] == $(am__install_max)) { \
+		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
+	    else { print "f", d "/" $$4, $$1 } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	     test -z "$$files" || { \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(atf_atf_cleanupdir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(atf_atf_cleanupdir)$$dir" || exit $$?; \
+	     } \
+	; done
+
+uninstall-atf_atf_cleanupSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_cleanup_SCRIPTS)'; test -n "$(atf_atf_cleanupdir)" || exit 0; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	       sed -e 's,.*/,,;$(transform)'`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_cleanupdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_cleanupdir)" && rm -f $$files
+install-atf_atf_compileSCRIPTS: $(atf_atf_compile_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_compiledir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_compiledir)"
+	@list='$(atf_atf_compile_SCRIPTS)'; test -n "$(atf_atf_compiledir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n' \
+	    -e 'h;s|.*|.|' \
+	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
+	      if (++n[d] == $(am__install_max)) { \
+		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
+	    else { print "f", d "/" $$4, $$1 } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	     test -z "$$files" || { \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(atf_atf_compiledir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(atf_atf_compiledir)$$dir" || exit $$?; \
+	     } \
+	; done
+
+uninstall-atf_atf_compileSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_compile_SCRIPTS)'; test -n "$(atf_atf_compiledir)" || exit 0; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	       sed -e 's,.*/,,;$(transform)'`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_compiledir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_compiledir)" && rm -f $$files
+install-atf_atf_configSCRIPTS: $(atf_atf_config_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_configdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_configdir)"
+	@list='$(atf_atf_config_SCRIPTS)'; test -n "$(atf_atf_configdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n' \
+	    -e 'h;s|.*|.|' \
+	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
+	      if (++n[d] == $(am__install_max)) { \
+		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
+	    else { print "f", d "/" $$4, $$1 } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	     test -z "$$files" || { \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(atf_atf_configdir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(atf_atf_configdir)$$dir" || exit $$?; \
+	     } \
+	; done
+
+uninstall-atf_atf_configSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_config_SCRIPTS)'; test -n "$(atf_atf_configdir)" || exit 0; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	       sed -e 's,.*/,,;$(transform)'`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_configdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_configdir)" && rm -f $$files
+install-atf_atf_reportSCRIPTS: $(atf_atf_report_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_reportdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_reportdir)"
+	@list='$(atf_atf_report_SCRIPTS)'; test -n "$(atf_atf_reportdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n' \
+	    -e 'h;s|.*|.|' \
+	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
+	      if (++n[d] == $(am__install_max)) { \
+		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
+	    else { print "f", d "/" $$4, $$1 } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	     test -z "$$files" || { \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(atf_atf_reportdir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(atf_atf_reportdir)$$dir" || exit $$?; \
+	     } \
+	; done
+
+uninstall-atf_atf_reportSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_report_SCRIPTS)'; test -n "$(atf_atf_reportdir)" || exit 0; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	       sed -e 's,.*/,,;$(transform)'`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_reportdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_reportdir)" && rm -f $$files
+install-atf_atf_runSCRIPTS: $(atf_atf_run_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_rundir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_rundir)"
+	@list='$(atf_atf_run_SCRIPTS)'; test -n "$(atf_atf_rundir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n' \
+	    -e 'h;s|.*|.|' \
+	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
+	      if (++n[d] == $(am__install_max)) { \
+		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
+	    else { print "f", d "/" $$4, $$1 } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	     test -z "$$files" || { \
+	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(atf_atf_rundir)$$dir'"; \
+	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(atf_atf_rundir)$$dir" || exit $$?; \
+	     } \
+	; done
+
+uninstall-atf_atf_runSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_run_SCRIPTS)'; test -n "$(atf_atf_rundir)" || exit 0; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	       sed -e 's,.*/,,;$(transform)'`; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_rundir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_rundir)" && rm -f $$files
 install-atf_atf_shSCRIPTS: $(atf_atf_sh_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	test -z "$(atf_atf_shdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_shdir)"
@@ -2649,40 +3233,6 @@ uninstall-atf_test_programsSCRIPTS:
 	test -n "$$list" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(atf_test_programsdir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(atf_test_programsdir)" && rm -f $$files
-install-atf_toolsSCRIPTS: $(atf_tools_SCRIPTS)
-	@$(NORMAL_INSTALL)
-	test -z "$(atf_toolsdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_toolsdir)"
-	@list='$(atf_tools_SCRIPTS)'; test -n "$(atf_toolsdir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  if test -f "$$d$$p"; then echo "$$d$$p"; echo "$$p"; else :; fi; \
-	done | \
-	sed -e 'p;s,.*/,,;n' \
-	    -e 'h;s|.*|.|' \
-	    -e 'p;x;s,.*/,,;$(transform)' | sed 'N;N;N;s,\n, ,g' | \
-	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1; } \
-	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
-	    if ($$2 == $$4) { files[d] = files[d] " " $$1; \
-	      if (++n[d] == $(am__install_max)) { \
-		print "f", d, files[d]; n[d] = 0; files[d] = "" } } \
-	    else { print "f", d "/" $$4, $$1 } } \
-	  END { for (d in files) print "f", d, files[d] }' | \
-	while read type dir files; do \
-	     if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
-	     test -z "$$files" || { \
-	       echo " $(INSTALL_SCRIPT) $$files '$(DESTDIR)$(atf_toolsdir)$$dir'"; \
-	       $(INSTALL_SCRIPT) $$files "$(DESTDIR)$(atf_toolsdir)$$dir" || exit $$?; \
-	     } \
-	; done
-
-uninstall-atf_toolsSCRIPTS:
-	@$(NORMAL_UNINSTALL)
-	@list='$(atf_tools_SCRIPTS)'; test -n "$(atf_toolsdir)" || exit 0; \
-	files=`for p in $$list; do echo "$$p"; done | \
-	       sed -e 's,.*/,,;$(transform)'`; \
-	test -n "$$list" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(atf_toolsdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(atf_toolsdir)" && rm -f $$files
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -2734,8 +3284,6 @@ mostlyclean-compile:
 	-rm -f atf-c/env.lo
 	-rm -f atf-c/error.$(OBJEXT)
 	-rm -f atf-c/error.lo
-	-rm -f atf-c/expand.$(OBJEXT)
-	-rm -f atf-c/expand.lo
 	-rm -f atf-c/fs.$(OBJEXT)
 	-rm -f atf-c/fs.lo
 	-rm -f atf-c/io.$(OBJEXT)
@@ -2750,8 +3298,6 @@ mostlyclean-compile:
 	-rm -f atf-c/process.lo
 	-rm -f atf-c/sanity.$(OBJEXT)
 	-rm -f atf-c/sanity.lo
-	-rm -f atf-c/signals.$(OBJEXT)
-	-rm -f atf-c/signals.lo
 	-rm -f atf-c/tc.$(OBJEXT)
 	-rm -f atf-c/tc.lo
 	-rm -f atf-c/tcr.$(OBJEXT)
@@ -2766,6 +3312,18 @@ mostlyclean-compile:
 	-rm -f atf-c/ui.lo
 	-rm -f atf-c/user.$(OBJEXT)
 	-rm -f atf-c/user.lo
+	-rm -f atf-check/atf-check.$(OBJEXT)
+	-rm -f atf-cleanup/atf-cleanup.$(OBJEXT)
+	-rm -f atf-compile/atf-compile.$(OBJEXT)
+	-rm -f atf-config/atf-config.$(OBJEXT)
+	-rm -f atf-format/atf-format.$(OBJEXT)
+	-rm -f atf-report/atf-report.$(OBJEXT)
+	-rm -f atf-run/atf-run.$(OBJEXT)
+	-rm -f atf-run/config.$(OBJEXT)
+	-rm -f atf-run/requirements.$(OBJEXT)
+	-rm -f atf-run/test-program.$(OBJEXT)
+	-rm -f atf-run/timer.$(OBJEXT)
+	-rm -f atf-version/atf-version.$(OBJEXT)
 	-rm -f tests/atf/atf-c++/h_lib.$(OBJEXT)
 	-rm -f tests/atf/atf-c++/h_lib.lo
 	-rm -f tests/atf/atf-c++/t_application.$(OBJEXT)
@@ -2800,7 +3358,6 @@ mostlyclean-compile:
 	-rm -f tests/atf/atf-c/t_dynstr.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_env.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_error.$(OBJEXT)
-	-rm -f tests/atf/atf-c/t_expand.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_fs.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_h_lib.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_io.$(OBJEXT)
@@ -2809,33 +3366,33 @@ mostlyclean-compile:
 	-rm -f tests/atf/atf-c/t_map.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_process.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_sanity.$(OBJEXT)
-	-rm -f tests/atf/atf-c/t_signals.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_tc.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_tcr.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_text.$(OBJEXT)
+	-rm -f tests/atf/atf-c/t_tp.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_ui.$(OBJEXT)
 	-rm -f tests/atf/atf-c/t_user.$(OBJEXT)
+	-rm -f tests/atf/atf-compile/h_mode.$(OBJEXT)
+	-rm -f tests/atf/atf-report/h_fail.$(OBJEXT)
+	-rm -f tests/atf/atf-report/h_misc.$(OBJEXT)
+	-rm -f tests/atf/atf-report/h_pass.$(OBJEXT)
+	-rm -f tests/atf/atf-run/h_bad_metadata.$(OBJEXT)
+	-rm -f tests/atf/atf-run/h_fail.$(OBJEXT)
+	-rm -f tests/atf/atf-run/h_misc.$(OBJEXT)
+	-rm -f tests/atf/atf-run/h_pass.$(OBJEXT)
+	-rm -f tests/atf/atf-run/h_several_tcs.$(OBJEXT)
+	-rm -f tests/atf/atf-run/h_zero_tcs.$(OBJEXT)
+	-rm -f tests/atf/atf-run/t_config.$(OBJEXT)
+	-rm -f tests/atf/atf-run/t_requirements.$(OBJEXT)
+	-rm -f tests/atf/atf-run/t_test_program.$(OBJEXT)
 	-rm -f tests/atf/formats/h_parser.$(OBJEXT)
 	-rm -f tests/atf/formats/t_writers.$(OBJEXT)
 	-rm -f tests/atf/test_programs/h_c.$(OBJEXT)
 	-rm -f tests/atf/test_programs/h_cpp.$(OBJEXT)
-	-rm -f tests/atf/tools/h_fail.$(OBJEXT)
-	-rm -f tests/atf/tools/h_misc.$(OBJEXT)
-	-rm -f tests/atf/tools/h_mode.$(OBJEXT)
-	-rm -f tests/atf/tools/h_pass.$(OBJEXT)
 	-rm -f tests/bootstrap/h_app_empty.$(OBJEXT)
 	-rm -f tests/bootstrap/h_app_opts_args.$(OBJEXT)
 	-rm -f tests/bootstrap/h_tp_basic_c.$(OBJEXT)
 	-rm -f tests/bootstrap/h_tp_basic_cpp.$(OBJEXT)
-	-rm -f tools/atf-check.$(OBJEXT)
-	-rm -f tools/atf-cleanup.$(OBJEXT)
-	-rm -f tools/atf-compile.$(OBJEXT)
-	-rm -f tools/atf-config.$(OBJEXT)
-	-rm -f tools/atf-exec.$(OBJEXT)
-	-rm -f tools/atf-format.$(OBJEXT)
-	-rm -f tools/atf-report.$(OBJEXT)
-	-rm -f tools/atf-run.$(OBJEXT)
-	-rm -f tools/atf-version.$(OBJEXT)
 
 distclean-compile:
 	-rm -f *.tab.c
@@ -2864,7 +3421,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/dynstr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/env.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/error.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/expand.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/fs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/io.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/list.Plo@am__quote@
@@ -2872,7 +3428,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/object.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/process.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/sanity.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/signals.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/tc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/tcr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/text.Plo@am__quote@
@@ -2880,6 +3435,18 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/tp_main.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/ui.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@atf-c/$(DEPDIR)/user.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-check/$(DEPDIR)/atf-check.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-cleanup/$(DEPDIR)/atf-cleanup.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-compile/$(DEPDIR)/atf-compile.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-config/$(DEPDIR)/atf-config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-format/$(DEPDIR)/atf-format.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-report/$(DEPDIR)/atf-report.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-run/$(DEPDIR)/atf-run.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-run/$(DEPDIR)/config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-run/$(DEPDIR)/requirements.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-run/$(DEPDIR)/test-program.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-run/$(DEPDIR)/timer.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@atf-version/$(DEPDIR)/atf-version.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c++/$(DEPDIR)/h_lib.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c++/$(DEPDIR)/t_application.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c++/$(DEPDIR)/t_atf_c++.Po@am__quote@
@@ -2912,7 +3479,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_dynstr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_env.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_error.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_expand.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_fs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_h_lib.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_io.Po@am__quote@
@@ -2921,33 +3487,33 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_map.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_process.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_sanity.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_signals.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_tc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_tcr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_text.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_tp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_ui.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-c/$(DEPDIR)/t_user.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-compile/$(DEPDIR)/h_mode.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-report/$(DEPDIR)/h_fail.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-report/$(DEPDIR)/h_misc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-report/$(DEPDIR)/h_pass.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-run/$(DEPDIR)/h_bad_metadata.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-run/$(DEPDIR)/h_fail.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-run/$(DEPDIR)/h_misc.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-run/$(DEPDIR)/h_pass.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-run/$(DEPDIR)/h_several_tcs.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-run/$(DEPDIR)/h_zero_tcs.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-run/$(DEPDIR)/t_config.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-run/$(DEPDIR)/t_requirements.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/atf-run/$(DEPDIR)/t_test_program.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/formats/$(DEPDIR)/h_parser.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/formats/$(DEPDIR)/t_writers.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/test_programs/$(DEPDIR)/h_c.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/atf/test_programs/$(DEPDIR)/h_cpp.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/tools/$(DEPDIR)/h_fail.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/tools/$(DEPDIR)/h_misc.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/tools/$(DEPDIR)/h_mode.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tests/atf/tools/$(DEPDIR)/h_pass.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/bootstrap/$(DEPDIR)/h_app_empty.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/bootstrap/$(DEPDIR)/h_app_opts_args.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/bootstrap/$(DEPDIR)/h_tp_basic_c.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@tests/bootstrap/$(DEPDIR)/h_tp_basic_cpp.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/atf-check.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/atf-cleanup.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/atf-compile.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/atf-config.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/atf-exec.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/atf-format.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/atf-report.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/atf-run.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@tools/$(DEPDIR)/atf-version.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -3004,13 +3570,22 @@ clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf atf-c/.libs atf-c/_libs
 	-rm -rf atf-c++/.libs atf-c++/_libs
+	-rm -rf atf-check/.libs atf-check/_libs
+	-rm -rf atf-cleanup/.libs atf-cleanup/_libs
+	-rm -rf atf-compile/.libs atf-compile/_libs
+	-rm -rf atf-config/.libs atf-config/_libs
+	-rm -rf atf-format/.libs atf-format/_libs
+	-rm -rf atf-report/.libs atf-report/_libs
+	-rm -rf atf-run/.libs atf-run/_libs
+	-rm -rf atf-version/.libs atf-version/_libs
 	-rm -rf tests/atf/atf-c/.libs tests/atf/atf-c/_libs
 	-rm -rf tests/atf/atf-c++/.libs tests/atf/atf-c++/_libs
+	-rm -rf tests/atf/atf-compile/.libs tests/atf/atf-compile/_libs
+	-rm -rf tests/atf/atf-report/.libs tests/atf/atf-report/_libs
+	-rm -rf tests/atf/atf-run/.libs tests/atf/atf-run/_libs
 	-rm -rf tests/atf/formats/.libs tests/atf/formats/_libs
 	-rm -rf tests/atf/test_programs/.libs tests/atf/test_programs/_libs
-	-rm -rf tests/atf/tools/.libs tests/atf/tools/_libs
 	-rm -rf tests/bootstrap/.libs tests/bootstrap/_libs
-	-rm -rf tools/.libs tools/_libs
 
 distclean-libtool:
 	-rm -f libtool config.lt
@@ -3244,6 +3819,126 @@ uninstall-atf_atf_c__DATA:
 	test -n "$$files" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(atf_atf_c__dir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(atf_atf_c__dir)" && rm -f $$files
+install-atf_atf_checkDATA: $(atf_atf_check_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_checkdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_checkdir)"
+	@list='$(atf_atf_check_DATA)'; test -n "$(atf_atf_checkdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(atf_atf_checkdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(atf_atf_checkdir)" || exit $$?; \
+	done
+
+uninstall-atf_atf_checkDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_check_DATA)'; test -n "$(atf_atf_checkdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_checkdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_checkdir)" && rm -f $$files
+install-atf_atf_cleanupDATA: $(atf_atf_cleanup_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_cleanupdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_cleanupdir)"
+	@list='$(atf_atf_cleanup_DATA)'; test -n "$(atf_atf_cleanupdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(atf_atf_cleanupdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(atf_atf_cleanupdir)" || exit $$?; \
+	done
+
+uninstall-atf_atf_cleanupDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_cleanup_DATA)'; test -n "$(atf_atf_cleanupdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_cleanupdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_cleanupdir)" && rm -f $$files
+install-atf_atf_compileDATA: $(atf_atf_compile_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_compiledir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_compiledir)"
+	@list='$(atf_atf_compile_DATA)'; test -n "$(atf_atf_compiledir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(atf_atf_compiledir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(atf_atf_compiledir)" || exit $$?; \
+	done
+
+uninstall-atf_atf_compileDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_compile_DATA)'; test -n "$(atf_atf_compiledir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_compiledir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_compiledir)" && rm -f $$files
+install-atf_atf_configDATA: $(atf_atf_config_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_configdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_configdir)"
+	@list='$(atf_atf_config_DATA)'; test -n "$(atf_atf_configdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(atf_atf_configdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(atf_atf_configdir)" || exit $$?; \
+	done
+
+uninstall-atf_atf_configDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_config_DATA)'; test -n "$(atf_atf_configdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_configdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_configdir)" && rm -f $$files
+install-atf_atf_reportDATA: $(atf_atf_report_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_reportdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_reportdir)"
+	@list='$(atf_atf_report_DATA)'; test -n "$(atf_atf_reportdir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(atf_atf_reportdir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(atf_atf_reportdir)" || exit $$?; \
+	done
+
+uninstall-atf_atf_reportDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_report_DATA)'; test -n "$(atf_atf_reportdir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_reportdir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_reportdir)" && rm -f $$files
+install-atf_atf_runDATA: $(atf_atf_run_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(atf_atf_rundir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_rundir)"
+	@list='$(atf_atf_run_DATA)'; test -n "$(atf_atf_rundir)" || list=; \
+	for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  echo "$$d$$p"; \
+	done | $(am__base_list) | \
+	while read files; do \
+	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(atf_atf_rundir)'"; \
+	  $(INSTALL_DATA) $$files "$(DESTDIR)$(atf_atf_rundir)" || exit $$?; \
+	done
+
+uninstall-atf_atf_runDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(atf_atf_run_DATA)'; test -n "$(atf_atf_rundir)" || list=; \
+	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
+	test -n "$$files" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(atf_atf_rundir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(atf_atf_rundir)" && rm -f $$files
 install-atf_atf_shDATA: $(atf_atf_sh_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(atf_atf_shdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_atf_shdir)"
@@ -3344,26 +4039,6 @@ uninstall-atf_test_programsDATA:
 	test -n "$$files" || exit 0; \
 	echo " ( cd '$(DESTDIR)$(atf_test_programsdir)' && rm -f" $$files ")"; \
 	cd "$(DESTDIR)$(atf_test_programsdir)" && rm -f $$files
-install-atf_toolsDATA: $(atf_tools_DATA)
-	@$(NORMAL_INSTALL)
-	test -z "$(atf_toolsdir)" || $(MKDIR_P) "$(DESTDIR)$(atf_toolsdir)"
-	@list='$(atf_tools_DATA)'; test -n "$(atf_toolsdir)" || list=; \
-	for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; \
-	done | $(am__base_list) | \
-	while read files; do \
-	  echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(atf_toolsdir)'"; \
-	  $(INSTALL_DATA) $$files "$(DESTDIR)$(atf_toolsdir)" || exit $$?; \
-	done
-
-uninstall-atf_toolsDATA:
-	@$(NORMAL_UNINSTALL)
-	@list='$(atf_tools_DATA)'; test -n "$(atf_toolsdir)" || list=; \
-	files=`for p in $$list; do echo $$p; done | sed -e 's|^.*/||'`; \
-	test -n "$$files" || exit 0; \
-	echo " ( cd '$(DESTDIR)$(atf_toolsdir)' && rm -f" $$files ")"; \
-	cd "$(DESTDIR)$(atf_toolsdir)" && rm -f $$files
 install-cssDATA: $(css_DATA)
 	@$(NORMAL_INSTALL)
 	test -z "$(cssdir)" || $(MKDIR_P) "$(DESTDIR)$(cssdir)"
@@ -3815,7 +4490,7 @@ all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(SCRIPTS) $(MANS) $(DATA) \
 install-binPROGRAMS: install-libLTLIBRARIES
 
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(atf_atf_cdir)" "$(DESTDIR)$(atf_atf_c__dir)" "$(DESTDIR)$(atf_formatsdir)" "$(DESTDIR)$(atf_test_programsdir)" "$(DESTDIR)$(atf_toolsdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(atf_atf_shdir)" "$(DESTDIR)$(atf_datadir)" "$(DESTDIR)$(atf_formatsdir)" "$(DESTDIR)$(atf_test_programsdir)" "$(DESTDIR)$(atf_toolsdir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man4dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(man7dir)" "$(DESTDIR)$(atf_atf_cdir)" "$(DESTDIR)$(atf_atf_c__dir)" "$(DESTDIR)$(atf_atf_shdir)" "$(DESTDIR)$(atf_datadir)" "$(DESTDIR)$(atf_formatsdir)" "$(DESTDIR)$(atf_shdir)" "$(DESTDIR)$(atf_test_programsdir)" "$(DESTDIR)$(atf_toolsdir)" "$(DESTDIR)$(cssdir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(dtddir)" "$(DESTDIR)$(egdir)" "$(DESTDIR)$(hooksdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(pkgtestsdir)" "$(DESTDIR)$(xsldir)" "$(DESTDIR)$(atf_cdir)" "$(DESTDIR)$(atf_c__dir)" "$(DESTDIR)$(includedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(atf_atf_cdir)" "$(DESTDIR)$(atf_atf_c__dir)" "$(DESTDIR)$(atf_atf_compiledir)" "$(DESTDIR)$(atf_atf_reportdir)" "$(DESTDIR)$(atf_atf_rundir)" "$(DESTDIR)$(atf_formatsdir)" "$(DESTDIR)$(atf_test_programsdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(libexecdir)" "$(DESTDIR)$(atf_atf_checkdir)" "$(DESTDIR)$(atf_atf_cleanupdir)" "$(DESTDIR)$(atf_atf_compiledir)" "$(DESTDIR)$(atf_atf_configdir)" "$(DESTDIR)$(atf_atf_reportdir)" "$(DESTDIR)$(atf_atf_rundir)" "$(DESTDIR)$(atf_atf_shdir)" "$(DESTDIR)$(atf_datadir)" "$(DESTDIR)$(atf_formatsdir)" "$(DESTDIR)$(atf_test_programsdir)" "$(DESTDIR)$(man1dir)" "$(DESTDIR)$(man3dir)" "$(DESTDIR)$(man4dir)" "$(DESTDIR)$(man5dir)" "$(DESTDIR)$(man7dir)" "$(DESTDIR)$(atf_atf_cdir)" "$(DESTDIR)$(atf_atf_c__dir)" "$(DESTDIR)$(atf_atf_checkdir)" "$(DESTDIR)$(atf_atf_cleanupdir)" "$(DESTDIR)$(atf_atf_compiledir)" "$(DESTDIR)$(atf_atf_configdir)" "$(DESTDIR)$(atf_atf_reportdir)" "$(DESTDIR)$(atf_atf_rundir)" "$(DESTDIR)$(atf_atf_shdir)" "$(DESTDIR)$(atf_datadir)" "$(DESTDIR)$(atf_formatsdir)" "$(DESTDIR)$(atf_shdir)" "$(DESTDIR)$(atf_test_programsdir)" "$(DESTDIR)$(cssdir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(dtddir)" "$(DESTDIR)$(egdir)" "$(DESTDIR)$(hooksdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(pkgtestsdir)" "$(DESTDIR)$(xsldir)" "$(DESTDIR)$(atf_cdir)" "$(DESTDIR)$(atf_c__dir)" "$(DESTDIR)$(includedir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: $(BUILT_SOURCES)
@@ -3845,20 +4520,38 @@ distclean-generic:
 	-rm -f atf-c++/$(am__dirstamp)
 	-rm -f atf-c/$(DEPDIR)/$(am__dirstamp)
 	-rm -f atf-c/$(am__dirstamp)
+	-rm -f atf-check/$(DEPDIR)/$(am__dirstamp)
+	-rm -f atf-check/$(am__dirstamp)
+	-rm -f atf-cleanup/$(DEPDIR)/$(am__dirstamp)
+	-rm -f atf-cleanup/$(am__dirstamp)
+	-rm -f atf-compile/$(DEPDIR)/$(am__dirstamp)
+	-rm -f atf-compile/$(am__dirstamp)
+	-rm -f atf-config/$(DEPDIR)/$(am__dirstamp)
+	-rm -f atf-config/$(am__dirstamp)
+	-rm -f atf-format/$(DEPDIR)/$(am__dirstamp)
+	-rm -f atf-format/$(am__dirstamp)
+	-rm -f atf-report/$(DEPDIR)/$(am__dirstamp)
+	-rm -f atf-report/$(am__dirstamp)
+	-rm -f atf-run/$(DEPDIR)/$(am__dirstamp)
+	-rm -f atf-run/$(am__dirstamp)
+	-rm -f atf-version/$(DEPDIR)/$(am__dirstamp)
+	-rm -f atf-version/$(am__dirstamp)
 	-rm -f tests/atf/atf-c++/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/atf/atf-c++/$(am__dirstamp)
 	-rm -f tests/atf/atf-c/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/atf/atf-c/$(am__dirstamp)
+	-rm -f tests/atf/atf-compile/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tests/atf/atf-compile/$(am__dirstamp)
+	-rm -f tests/atf/atf-report/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tests/atf/atf-report/$(am__dirstamp)
+	-rm -f tests/atf/atf-run/$(DEPDIR)/$(am__dirstamp)
+	-rm -f tests/atf/atf-run/$(am__dirstamp)
 	-rm -f tests/atf/formats/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/atf/formats/$(am__dirstamp)
 	-rm -f tests/atf/test_programs/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/atf/test_programs/$(am__dirstamp)
-	-rm -f tests/atf/tools/$(DEPDIR)/$(am__dirstamp)
-	-rm -f tests/atf/tools/$(am__dirstamp)
 	-rm -f tests/bootstrap/$(DEPDIR)/$(am__dirstamp)
 	-rm -f tests/bootstrap/$(am__dirstamp)
-	-rm -f tools/$(DEPDIR)/$(am__dirstamp)
-	-rm -f tools/$(am__dirstamp)
 	-test -z "$(DISTCLEANFILES)" || rm -f $(DISTCLEANFILES)
 
 maintainer-clean-generic:
@@ -3868,14 +4561,16 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-atf_atf_cPROGRAMS clean-atf_atf_c__PROGRAMS \
-	clean-atf_formatsPROGRAMS clean-atf_test_programsPROGRAMS \
-	clean-atf_toolsPROGRAMS clean-binPROGRAMS clean-checkPROGRAMS \
-	clean-generic clean-libLTLIBRARIES clean-libexecPROGRAMS \
-	clean-libtool clean-noinstLTLIBRARIES mostlyclean-am
+	clean-atf_atf_compilePROGRAMS clean-atf_atf_reportPROGRAMS \
+	clean-atf_atf_runPROGRAMS clean-atf_formatsPROGRAMS \
+	clean-atf_test_programsPROGRAMS clean-binPROGRAMS \
+	clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
+	clean-libexecPROGRAMS clean-libtool clean-noinstLTLIBRARIES \
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
-	-rm -rf atf-c++/$(DEPDIR) atf-c/$(DEPDIR) tests/atf/atf-c++/$(DEPDIR) tests/atf/atf-c/$(DEPDIR) tests/atf/formats/$(DEPDIR) tests/atf/test_programs/$(DEPDIR) tests/atf/tools/$(DEPDIR) tests/bootstrap/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf atf-c++/$(DEPDIR) atf-c/$(DEPDIR) atf-check/$(DEPDIR) atf-cleanup/$(DEPDIR) atf-compile/$(DEPDIR) atf-config/$(DEPDIR) atf-format/$(DEPDIR) atf-report/$(DEPDIR) atf-run/$(DEPDIR) atf-version/$(DEPDIR) tests/atf/atf-c++/$(DEPDIR) tests/atf/atf-c/$(DEPDIR) tests/atf/atf-compile/$(DEPDIR) tests/atf/atf-report/$(DEPDIR) tests/atf/atf-run/$(DEPDIR) tests/atf/formats/$(DEPDIR) tests/atf/test_programs/$(DEPDIR) tests/bootstrap/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-hdr distclean-libtool distclean-local distclean-tags
@@ -3894,16 +4589,22 @@ info-am:
 
 install-data-am: install-atf_atf_cDATA install-atf_atf_cPROGRAMS \
 	install-atf_atf_c__DATA install-atf_atf_c__PROGRAMS \
-	install-atf_atf_shDATA install-atf_atf_shSCRIPTS \
-	install-atf_cHEADERS install-atf_c__HEADERS \
-	install-atf_dataDATA install-atf_dataSCRIPTS \
-	install-atf_formatsDATA install-atf_formatsPROGRAMS \
-	install-atf_formatsSCRIPTS install-atf_shDATA \
-	install-atf_test_programsDATA \
+	install-atf_atf_checkDATA install-atf_atf_checkSCRIPTS \
+	install-atf_atf_cleanupDATA install-atf_atf_cleanupSCRIPTS \
+	install-atf_atf_compileDATA install-atf_atf_compilePROGRAMS \
+	install-atf_atf_compileSCRIPTS install-atf_atf_configDATA \
+	install-atf_atf_configSCRIPTS install-atf_atf_reportDATA \
+	install-atf_atf_reportPROGRAMS install-atf_atf_reportSCRIPTS \
+	install-atf_atf_runDATA install-atf_atf_runPROGRAMS \
+	install-atf_atf_runSCRIPTS install-atf_atf_shDATA \
+	install-atf_atf_shSCRIPTS install-atf_cHEADERS \
+	install-atf_c__HEADERS install-atf_dataDATA \
+	install-atf_dataSCRIPTS install-atf_formatsDATA \
+	install-atf_formatsPROGRAMS install-atf_formatsSCRIPTS \
+	install-atf_shDATA install-atf_test_programsDATA \
 	install-atf_test_programsPROGRAMS \
-	install-atf_test_programsSCRIPTS install-atf_toolsDATA \
-	install-atf_toolsPROGRAMS install-atf_toolsSCRIPTS \
-	install-cssDATA install-docDATA install-dtdDATA install-egDATA \
+	install-atf_test_programsSCRIPTS install-cssDATA \
+	install-docDATA install-dtdDATA install-egDATA \
 	install-hooksDATA install-includeHEADERS install-man \
 	install-pkgconfigDATA install-pkgtestsDATA install-xslDATA
 
@@ -3938,7 +4639,7 @@ installcheck-am: installcheck-local
 maintainer-clean: maintainer-clean-am
 	-rm -f $(am__CONFIG_DISTCLEAN_FILES)
 	-rm -rf $(top_srcdir)/autom4te.cache
-	-rm -rf atf-c++/$(DEPDIR) atf-c/$(DEPDIR) tests/atf/atf-c++/$(DEPDIR) tests/atf/atf-c/$(DEPDIR) tests/atf/formats/$(DEPDIR) tests/atf/test_programs/$(DEPDIR) tests/atf/tools/$(DEPDIR) tests/bootstrap/$(DEPDIR) tools/$(DEPDIR)
+	-rm -rf atf-c++/$(DEPDIR) atf-c/$(DEPDIR) atf-check/$(DEPDIR) atf-cleanup/$(DEPDIR) atf-compile/$(DEPDIR) atf-config/$(DEPDIR) atf-format/$(DEPDIR) atf-report/$(DEPDIR) atf-run/$(DEPDIR) atf-version/$(DEPDIR) tests/atf/atf-c++/$(DEPDIR) tests/atf/atf-c/$(DEPDIR) tests/atf/atf-compile/$(DEPDIR) tests/atf/atf-report/$(DEPDIR) tests/atf/atf-run/$(DEPDIR) tests/atf/formats/$(DEPDIR) tests/atf/test_programs/$(DEPDIR) tests/bootstrap/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
@@ -3957,6 +4658,15 @@ ps-am:
 
 uninstall-am: uninstall-atf_atf_cDATA uninstall-atf_atf_cPROGRAMS \
 	uninstall-atf_atf_c__DATA uninstall-atf_atf_c__PROGRAMS \
+	uninstall-atf_atf_checkDATA uninstall-atf_atf_checkSCRIPTS \
+	uninstall-atf_atf_cleanupDATA uninstall-atf_atf_cleanupSCRIPTS \
+	uninstall-atf_atf_compileDATA \
+	uninstall-atf_atf_compilePROGRAMS \
+	uninstall-atf_atf_compileSCRIPTS uninstall-atf_atf_configDATA \
+	uninstall-atf_atf_configSCRIPTS uninstall-atf_atf_reportDATA \
+	uninstall-atf_atf_reportPROGRAMS \
+	uninstall-atf_atf_reportSCRIPTS uninstall-atf_atf_runDATA \
+	uninstall-atf_atf_runPROGRAMS uninstall-atf_atf_runSCRIPTS \
 	uninstall-atf_atf_shDATA uninstall-atf_atf_shSCRIPTS \
 	uninstall-atf_cHEADERS uninstall-atf_c__HEADERS \
 	uninstall-atf_dataDATA uninstall-atf_dataSCRIPTS \
@@ -3964,13 +4674,11 @@ uninstall-am: uninstall-atf_atf_cDATA uninstall-atf_atf_cPROGRAMS \
 	uninstall-atf_formatsSCRIPTS uninstall-atf_shDATA \
 	uninstall-atf_test_programsDATA \
 	uninstall-atf_test_programsPROGRAMS \
-	uninstall-atf_test_programsSCRIPTS uninstall-atf_toolsDATA \
-	uninstall-atf_toolsPROGRAMS uninstall-atf_toolsSCRIPTS \
-	uninstall-binPROGRAMS uninstall-cssDATA uninstall-docDATA \
-	uninstall-dtdDATA uninstall-egDATA uninstall-hooksDATA \
-	uninstall-includeHEADERS uninstall-libLTLIBRARIES \
-	uninstall-libexecPROGRAMS uninstall-man \
-	uninstall-pkgconfigDATA uninstall-pkgtestsDATA \
+	uninstall-atf_test_programsSCRIPTS uninstall-binPROGRAMS \
+	uninstall-cssDATA uninstall-docDATA uninstall-dtdDATA \
+	uninstall-egDATA uninstall-hooksDATA uninstall-includeHEADERS \
+	uninstall-libLTLIBRARIES uninstall-libexecPROGRAMS \
+	uninstall-man uninstall-pkgconfigDATA uninstall-pkgtestsDATA \
 	uninstall-xslDATA
 
 uninstall-man: uninstall-man1 uninstall-man3 uninstall-man4 \
@@ -3980,57 +4688,72 @@ uninstall-man: uninstall-man1 uninstall-man3 uninstall-man4 \
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-am clean \
 	clean-atf_atf_cPROGRAMS clean-atf_atf_c__PROGRAMS \
-	clean-atf_formatsPROGRAMS clean-atf_test_programsPROGRAMS \
-	clean-atf_toolsPROGRAMS clean-binPROGRAMS clean-checkPROGRAMS \
-	clean-generic clean-libLTLIBRARIES clean-libexecPROGRAMS \
-	clean-libtool clean-noinstLTLIBRARIES ctags dist dist-all \
-	dist-bzip2 dist-gzip dist-hook dist-lzma dist-shar dist-tarZ \
-	dist-xz dist-zip distcheck distclean distclean-compile \
-	distclean-generic distclean-hdr distclean-libtool \
-	distclean-local distclean-tags distcleancheck distdir \
-	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-atf_atf_cDATA \
+	clean-atf_atf_compilePROGRAMS clean-atf_atf_reportPROGRAMS \
+	clean-atf_atf_runPROGRAMS clean-atf_formatsPROGRAMS \
+	clean-atf_test_programsPROGRAMS clean-binPROGRAMS \
+	clean-checkPROGRAMS clean-generic clean-libLTLIBRARIES \
+	clean-libexecPROGRAMS clean-libtool clean-noinstLTLIBRARIES \
+	ctags dist dist-all dist-bzip2 dist-gzip dist-hook dist-lzma \
+	dist-shar dist-tarZ dist-xz dist-zip distcheck distclean \
+	distclean-compile distclean-generic distclean-hdr \
+	distclean-libtool distclean-local distclean-tags \
+	distcleancheck distdir distuninstallcheck dvi dvi-am html \
+	html-am info info-am install install-am install-atf_atf_cDATA \
 	install-atf_atf_cPROGRAMS install-atf_atf_c__DATA \
-	install-atf_atf_c__PROGRAMS install-atf_atf_shDATA \
-	install-atf_atf_shSCRIPTS install-atf_cHEADERS \
-	install-atf_c__HEADERS install-atf_dataDATA \
-	install-atf_dataSCRIPTS install-atf_formatsDATA \
-	install-atf_formatsPROGRAMS install-atf_formatsSCRIPTS \
-	install-atf_shDATA install-atf_test_programsDATA \
+	install-atf_atf_c__PROGRAMS install-atf_atf_checkDATA \
+	install-atf_atf_checkSCRIPTS install-atf_atf_cleanupDATA \
+	install-atf_atf_cleanupSCRIPTS install-atf_atf_compileDATA \
+	install-atf_atf_compilePROGRAMS install-atf_atf_compileSCRIPTS \
+	install-atf_atf_configDATA install-atf_atf_configSCRIPTS \
+	install-atf_atf_reportDATA install-atf_atf_reportPROGRAMS \
+	install-atf_atf_reportSCRIPTS install-atf_atf_runDATA \
+	install-atf_atf_runPROGRAMS install-atf_atf_runSCRIPTS \
+	install-atf_atf_shDATA install-atf_atf_shSCRIPTS \
+	install-atf_cHEADERS install-atf_c__HEADERS \
+	install-atf_dataDATA install-atf_dataSCRIPTS \
+	install-atf_formatsDATA install-atf_formatsPROGRAMS \
+	install-atf_formatsSCRIPTS install-atf_shDATA \
+	install-atf_test_programsDATA \
 	install-atf_test_programsPROGRAMS \
-	install-atf_test_programsSCRIPTS install-atf_toolsDATA \
-	install-atf_toolsPROGRAMS install-atf_toolsSCRIPTS \
-	install-binPROGRAMS install-cssDATA install-data \
-	install-data-am install-docDATA install-dtdDATA install-dvi \
-	install-dvi-am install-egDATA install-exec install-exec-am \
-	install-hooksDATA install-html install-html-am \
-	install-includeHEADERS install-info install-info-am \
-	install-libLTLIBRARIES install-libexecPROGRAMS install-man \
-	install-man1 install-man3 install-man4 install-man5 \
-	install-man7 install-pdf install-pdf-am install-pkgconfigDATA \
-	install-pkgtestsDATA install-ps install-ps-am install-strip \
-	install-xslDATA installcheck installcheck-am \
-	installcheck-local installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-atf_atf_cDATA \
-	uninstall-atf_atf_cPROGRAMS uninstall-atf_atf_c__DATA \
-	uninstall-atf_atf_c__PROGRAMS uninstall-atf_atf_shDATA \
-	uninstall-atf_atf_shSCRIPTS uninstall-atf_cHEADERS \
-	uninstall-atf_c__HEADERS uninstall-atf_dataDATA \
-	uninstall-atf_dataSCRIPTS uninstall-atf_formatsDATA \
-	uninstall-atf_formatsPROGRAMS uninstall-atf_formatsSCRIPTS \
-	uninstall-atf_shDATA uninstall-atf_test_programsDATA \
+	install-atf_test_programsSCRIPTS install-binPROGRAMS \
+	install-cssDATA install-data install-data-am install-docDATA \
+	install-dtdDATA install-dvi install-dvi-am install-egDATA \
+	install-exec install-exec-am install-hooksDATA install-html \
+	install-html-am install-includeHEADERS install-info \
+	install-info-am install-libLTLIBRARIES install-libexecPROGRAMS \
+	install-man install-man1 install-man3 install-man4 \
+	install-man5 install-man7 install-pdf install-pdf-am \
+	install-pkgconfigDATA install-pkgtestsDATA install-ps \
+	install-ps-am install-strip install-xslDATA installcheck \
+	installcheck-am installcheck-local installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-atf_atf_cDATA uninstall-atf_atf_cPROGRAMS \
+	uninstall-atf_atf_c__DATA uninstall-atf_atf_c__PROGRAMS \
+	uninstall-atf_atf_checkDATA uninstall-atf_atf_checkSCRIPTS \
+	uninstall-atf_atf_cleanupDATA uninstall-atf_atf_cleanupSCRIPTS \
+	uninstall-atf_atf_compileDATA \
+	uninstall-atf_atf_compilePROGRAMS \
+	uninstall-atf_atf_compileSCRIPTS uninstall-atf_atf_configDATA \
+	uninstall-atf_atf_configSCRIPTS uninstall-atf_atf_reportDATA \
+	uninstall-atf_atf_reportPROGRAMS \
+	uninstall-atf_atf_reportSCRIPTS uninstall-atf_atf_runDATA \
+	uninstall-atf_atf_runPROGRAMS uninstall-atf_atf_runSCRIPTS \
+	uninstall-atf_atf_shDATA uninstall-atf_atf_shSCRIPTS \
+	uninstall-atf_cHEADERS uninstall-atf_c__HEADERS \
+	uninstall-atf_dataDATA uninstall-atf_dataSCRIPTS \
+	uninstall-atf_formatsDATA uninstall-atf_formatsPROGRAMS \
+	uninstall-atf_formatsSCRIPTS uninstall-atf_shDATA \
+	uninstall-atf_test_programsDATA \
 	uninstall-atf_test_programsPROGRAMS \
-	uninstall-atf_test_programsSCRIPTS uninstall-atf_toolsDATA \
-	uninstall-atf_toolsPROGRAMS uninstall-atf_toolsSCRIPTS \
-	uninstall-binPROGRAMS uninstall-cssDATA uninstall-docDATA \
-	uninstall-dtdDATA uninstall-egDATA uninstall-hooksDATA \
-	uninstall-includeHEADERS uninstall-libLTLIBRARIES \
-	uninstall-libexecPROGRAMS uninstall-man uninstall-man1 \
-	uninstall-man3 uninstall-man4 uninstall-man5 uninstall-man7 \
-	uninstall-pkgconfigDATA uninstall-pkgtestsDATA \
-	uninstall-xslDATA
+	uninstall-atf_test_programsSCRIPTS uninstall-binPROGRAMS \
+	uninstall-cssDATA uninstall-docDATA uninstall-dtdDATA \
+	uninstall-egDATA uninstall-hooksDATA uninstall-includeHEADERS \
+	uninstall-libLTLIBRARIES uninstall-libexecPROGRAMS \
+	uninstall-man uninstall-man1 uninstall-man3 uninstall-man4 \
+	uninstall-man5 uninstall-man7 uninstall-pkgconfigDATA \
+	uninstall-pkgtestsDATA uninstall-xslDATA
 
 $(srcdir)/Makefile.am: $(srcdir)/admin/generate-makefile.sh \
                        $(srcdir)/Makefile.am.m4
@@ -4084,6 +4807,19 @@ $(srcdir)/README: $(srcdir)/doc/text/readme.txt
 	    cp $(srcdir)/doc/text/readme.txt $(srcdir)/README; \
 	fi
 
+.PHONY: clean-all
+clean-all:
+	MTN="$(MTN)" $(SH) $(srcdir)/admin/clean-all.sh
+
+.PHONY: release
+release:
+	$(SH) $(srcdir)/admin/release.sh $(PACKAGE_VERSION) $(DIST_ARCHIVES)
+
+.PHONY: release-test
+release-test:
+	XML_CATALOG_FILE="$(XML_CATALOG_FILE)" $(SH) \
+		$(srcdir)/admin/release-test.sh $(DIST_ARCHIVES)
+
 # -------------------------------------------------------------------------
 # `admin' directory.
 # -------------------------------------------------------------------------
@@ -4103,6 +4839,7 @@ check-style:
 
 .PHONY: admin/revision.h
 admin/revision.h:
+	test -d admin || mkdir -p admin
 	@$(top_srcdir)/admin/generate-revision.sh \
 	    -f h -m "$(MTN)" -r $(top_srcdir) -o admin/revision.h \
 	    -v $(PACKAGE_VERSION)
@@ -4116,6 +4853,18 @@ $(srcdir)/admin/revision-dist.h: admin/revision.h
 dist-hook: kill-defs-h
 kill-defs-h:
 	rm -f $(distdir)/atf-c/defs.h
+
+atf-compile/atf-host-compile: $(srcdir)/atf-compile/atf-host-compile.sh
+	sed -e 's,__ATF_PKGDATADIR__,$(srcdir)/atf-sh,g' \
+	    -e 's,__ATF_SHELL__,$(ATF_SHELL),g' \
+	    <$(srcdir)/atf-compile/atf-host-compile.sh \
+	    >atf-compile/atf-host-compile.tmp
+	chmod +x atf-compile/atf-host-compile.tmp
+	mv atf-compile/atf-host-compile.tmp atf-compile/atf-host-compile
+atf-version/revision.h: admin/revision.h $(srcdir)/admin/revision-dist.h
+	@$(top_srcdir)/admin/choose-revision.sh \
+	    admin/revision.h $(srcdir)/admin/revision-dist.h \
+	    atf-version/revision.h
 data/atf-c.pc: $(srcdir)/data/atf-c.pc.in
 	test -d data || mkdir -p data
 	sed -e 's,__ATF_VERSION__,@PACKAGE_VERSION@,g' \
@@ -4210,6 +4959,16 @@ tests/bootstrap/h_tp_atf_check_sh: \
 		$(ATF_COMPILE_DEPS)
 	test -d tests/bootstrap || mkdir -p tests/bootstrap
 	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/bootstrap/h_tp_atf_check_sh.sh
+tests/bootstrap/h_tp_fail: \
+		$(srcdir)/tests/bootstrap/h_tp_fail.sh \
+		$(ATF_COMPILE_DEPS)
+	test -d tests/bootstrap || mkdir -p tests/bootstrap
+	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/bootstrap/h_tp_fail.sh
+tests/bootstrap/h_tp_pass: \
+		$(srcdir)/tests/bootstrap/h_tp_pass.sh \
+		$(ATF_COMPILE_DEPS)
+	test -d tests/bootstrap || mkdir -p tests/bootstrap
+	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/bootstrap/h_tp_pass.sh
 
 distclean-local:
 	-rm -rf testsuite.dir
@@ -4243,96 +5002,79 @@ installcheck-bootstrap: $(srcdir)/tests/bootstrap/testsuite check
 .PHONY: installcheck-atf
 installcheck-atf:
 	logfile=$$(pwd)/installcheck.log; \
+	fifofile=$$(pwd)/installcheck.fifo; \
 	cd $(pkgtestsdir); \
-	$(TESTS_ENVIRONMENT) atf-run | tee $${logfile} | atf-report; \
+	rm -f $${fifofile}; \
+	mkfifo $${fifofile}; \
+	cat $${fifofile} | tee $${logfile} | $(TESTS_ENVIRONMENT) atf-report & \
+	$(TESTS_ENVIRONMENT) atf-run >>$${fifofile}; \
 	res=$${?}; \
+	wait; \
+	rm $${fifofile}; \
 	echo; \
 	echo "The verbatim output of atf-run has been saved to" \
-	     "installcheck.log"; \
-	exit $${res}
-tests/atf/atf-sh/h_misc: $(srcdir)/tests/atf/atf-sh/h_misc.sh $(ATF_COMPILE_DEPS)
+	     "installcheck.log; exit was $${res}"; \
+	test $${res} -eq 0
+tests/atf/atf-check/t_integration: $(srcdir)/tests/atf/atf-check/t_integration.sh  $(ATF_COMPILE_DEPS)
+	test -d tests/atf/atf-check || mkdir -p tests/atf/atf-check
+	$(ATF_COMPILE_SH) -o tests/atf/atf-check/t_integration $(srcdir)/tests/atf/atf-check/t_integration.sh
+tests/atf/atf-cleanup/t_integration: $(srcdir)/tests/atf/atf-cleanup/t_integration.sh  $(ATF_COMPILE_DEPS)
+	test -d tests/atf/atf-cleanup || mkdir -p tests/atf/atf-cleanup
+	$(ATF_COMPILE_SH) -o tests/atf/atf-cleanup/t_integration $(srcdir)/tests/atf/atf-cleanup/t_integration.sh
+tests/atf/atf-compile/t_integration: $(srcdir)/tests/atf/atf-compile/t_integration.sh  $(ATF_COMPILE_DEPS)
+	test -d tests/atf/atf-compile || mkdir -p tests/atf/atf-compile
+	$(ATF_COMPILE_SH) -o tests/atf/atf-compile/t_integration $(srcdir)/tests/atf/atf-compile/t_integration.sh
+tests/atf/atf-config/t_integration: $(srcdir)/tests/atf/atf-config/t_integration.sh  $(ATF_COMPILE_DEPS)
+	test -d tests/atf/atf-config || mkdir -p tests/atf/atf-config
+	$(ATF_COMPILE_SH) -o tests/atf/atf-config/t_integration $(srcdir)/tests/atf/atf-config/t_integration.sh
+tests/atf/atf-report/t_integration: $(srcdir)/tests/atf/atf-report/t_integration.sh  $(ATF_COMPILE_DEPS)
+	test -d tests/atf/atf-report || mkdir -p tests/atf/atf-report
+	$(ATF_COMPILE_SH) -o tests/atf/atf-report/t_integration $(srcdir)/tests/atf/atf-report/t_integration.sh
+tests/atf/atf-run/t_integration: $(srcdir)/tests/atf/atf-run/t_integration.sh  $(ATF_COMPILE_DEPS)
+	test -d tests/atf/atf-run || mkdir -p tests/atf/atf-run
+	$(ATF_COMPILE_SH) -o tests/atf/atf-run/t_integration $(srcdir)/tests/atf/atf-run/t_integration.sh
+tests/atf/atf-sh/h_misc: $(srcdir)/tests/atf/atf-sh/h_misc.sh  $(ATF_COMPILE_DEPS)
 	test -d tests/atf/atf-sh || mkdir -p tests/atf/atf-sh
 	$(ATF_COMPILE_SH) -o tests/atf/atf-sh/h_misc $(srcdir)/tests/atf/atf-sh/h_misc.sh
-tests/atf/atf-sh/t_atf_check: $(srcdir)/tests/atf/atf-sh/t_atf_check.sh $(ATF_COMPILE_DEPS)
+tests/atf/atf-sh/t_atf_check: $(srcdir)/tests/atf/atf-sh/t_atf_check.sh  $(ATF_COMPILE_DEPS)
 	test -d tests/atf/atf-sh || mkdir -p tests/atf/atf-sh
 	$(ATF_COMPILE_SH) -o tests/atf/atf-sh/t_atf_check $(srcdir)/tests/atf/atf-sh/t_atf_check.sh
-tests/atf/atf-sh/t_config: $(srcdir)/tests/atf/atf-sh/t_config.sh $(ATF_COMPILE_DEPS)
+tests/atf/atf-sh/t_config: $(srcdir)/tests/atf/atf-sh/t_config.sh  $(ATF_COMPILE_DEPS)
 	test -d tests/atf/atf-sh || mkdir -p tests/atf/atf-sh
 	$(ATF_COMPILE_SH) -o tests/atf/atf-sh/t_config $(srcdir)/tests/atf/atf-sh/t_config.sh
-tests/atf/atf-sh/t_normalize: $(srcdir)/tests/atf/atf-sh/t_normalize.sh $(ATF_COMPILE_DEPS)
+tests/atf/atf-sh/t_normalize: $(srcdir)/tests/atf/atf-sh/t_normalize.sh  $(ATF_COMPILE_DEPS)
 	test -d tests/atf/atf-sh || mkdir -p tests/atf/atf-sh
 	$(ATF_COMPILE_SH) -o tests/atf/atf-sh/t_normalize $(srcdir)/tests/atf/atf-sh/t_normalize.sh
-tests/atf/atf-sh/t_tc: $(srcdir)/tests/atf/atf-sh/t_tc.sh $(ATF_COMPILE_DEPS)
+tests/atf/atf-sh/t_tc: $(srcdir)/tests/atf/atf-sh/t_tc.sh  $(ATF_COMPILE_DEPS)
 	test -d tests/atf/atf-sh || mkdir -p tests/atf/atf-sh
 	$(ATF_COMPILE_SH) -o tests/atf/atf-sh/t_tc $(srcdir)/tests/atf/atf-sh/t_tc.sh
-tests/atf/atf-sh/t_tp: $(srcdir)/tests/atf/atf-sh/t_tp.sh $(ATF_COMPILE_DEPS)
+tests/atf/atf-sh/t_tp: $(srcdir)/tests/atf/atf-sh/t_tp.sh  $(ATF_COMPILE_DEPS)
 	test -d tests/atf/atf-sh || mkdir -p tests/atf/atf-sh
 	$(ATF_COMPILE_SH) -o tests/atf/atf-sh/t_tp $(srcdir)/tests/atf/atf-sh/t_tp.sh
-tests/atf/data/t_pkg_config: $(srcdir)/tests/atf/data/t_pkg_config.sh $(ATF_COMPILE_DEPS)
+tests/atf/data/t_pkg_config: $(srcdir)/tests/atf/data/t_pkg_config.sh  $(ATF_COMPILE_DEPS)
 	test -d tests/atf/data || mkdir -p tests/atf/data
 	$(ATF_COMPILE_SH) -o tests/atf/data/t_pkg_config $(srcdir)/tests/atf/data/t_pkg_config.sh
-tests/atf/formats/t_parsers: $(srcdir)/tests/atf/formats/t_parsers.sh $(ATF_COMPILE_DEPS)
+tests/atf/formats/t_parsers: $(srcdir)/tests/atf/formats/t_parsers.sh  $(ATF_COMPILE_DEPS)
 	test -d tests/atf/formats || mkdir -p tests/atf/formats
 	$(ATF_COMPILE_SH) -o tests/atf/formats/t_parsers $(srcdir)/tests/atf/formats/t_parsers.sh
-tests/atf/test_programs/h_sh: $(srcdir)/tests/atf/test_programs/h_sh.sh $(ATF_COMPILE_DEPS)
+tests/atf/test_programs/h_sh: $(srcdir)/tests/atf/test_programs/h_sh.sh  $(ATF_COMPILE_DEPS)
 	test -d tests/atf/test_programs || mkdir -p tests/atf/test_programs
 	$(ATF_COMPILE_SH) -o tests/atf/test_programs/h_sh $(srcdir)/tests/atf/test_programs/h_sh.sh
-tests/atf/test_programs/t_cleanup: $(srcdir)/tests/atf/test_programs/t_cleanup.sh $(ATF_COMPILE_DEPS)
+tests/atf/test_programs/t_config: $(srcdir)/tests/atf/test_programs/t_config.sh $(srcdir)/tests/atf/test_programs/common.sh $(ATF_COMPILE_DEPS)
 	test -d tests/atf/test_programs || mkdir -p tests/atf/test_programs
-	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_cleanup $(srcdir)/tests/atf/test_programs/t_cleanup.sh
-tests/atf/test_programs/t_config: $(srcdir)/tests/atf/test_programs/t_config.sh $(ATF_COMPILE_DEPS)
+	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_config $(srcdir)/tests/atf/test_programs/t_config.sh $(srcdir)/tests/atf/test_programs/common.sh
+tests/atf/test_programs/t_fork: $(srcdir)/tests/atf/test_programs/t_fork.sh $(srcdir)/tests/atf/test_programs/common.sh $(ATF_COMPILE_DEPS)
 	test -d tests/atf/test_programs || mkdir -p tests/atf/test_programs
-	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_config $(srcdir)/tests/atf/test_programs/t_config.sh
-tests/atf/test_programs/t_env: $(srcdir)/tests/atf/test_programs/t_env.sh $(ATF_COMPILE_DEPS)
+	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_fork $(srcdir)/tests/atf/test_programs/t_fork.sh $(srcdir)/tests/atf/test_programs/common.sh
+tests/atf/test_programs/t_meta_data: $(srcdir)/tests/atf/test_programs/t_meta_data.sh $(srcdir)/tests/atf/test_programs/common.sh $(ATF_COMPILE_DEPS)
 	test -d tests/atf/test_programs || mkdir -p tests/atf/test_programs
-	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_env $(srcdir)/tests/atf/test_programs/t_env.sh
-tests/atf/test_programs/t_fork: $(srcdir)/tests/atf/test_programs/t_fork.sh $(ATF_COMPILE_DEPS)
+	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_meta_data $(srcdir)/tests/atf/test_programs/t_meta_data.sh $(srcdir)/tests/atf/test_programs/common.sh
+tests/atf/test_programs/t_srcdir: $(srcdir)/tests/atf/test_programs/t_srcdir.sh $(srcdir)/tests/atf/test_programs/common.sh $(ATF_COMPILE_DEPS)
 	test -d tests/atf/test_programs || mkdir -p tests/atf/test_programs
-	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_fork $(srcdir)/tests/atf/test_programs/t_fork.sh
-tests/atf/test_programs/t_meta_data: $(srcdir)/tests/atf/test_programs/t_meta_data.sh $(ATF_COMPILE_DEPS)
+	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_srcdir $(srcdir)/tests/atf/test_programs/t_srcdir.sh $(srcdir)/tests/atf/test_programs/common.sh
+tests/atf/test_programs/t_status: $(srcdir)/tests/atf/test_programs/t_status.sh $(srcdir)/tests/atf/test_programs/common.sh $(ATF_COMPILE_DEPS)
 	test -d tests/atf/test_programs || mkdir -p tests/atf/test_programs
-	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_meta_data $(srcdir)/tests/atf/test_programs/t_meta_data.sh
-tests/atf/test_programs/t_srcdir: $(srcdir)/tests/atf/test_programs/t_srcdir.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/test_programs || mkdir -p tests/atf/test_programs
-	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_srcdir $(srcdir)/tests/atf/test_programs/t_srcdir.sh
-tests/atf/test_programs/t_status: $(srcdir)/tests/atf/test_programs/t_status.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/test_programs || mkdir -p tests/atf/test_programs
-	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_status $(srcdir)/tests/atf/test_programs/t_status.sh
-tests/atf/test_programs/t_workdir: $(srcdir)/tests/atf/test_programs/t_workdir.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/test_programs || mkdir -p tests/atf/test_programs
-	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_workdir $(srcdir)/tests/atf/test_programs/t_workdir.sh
-tests/atf/tools/t_atf_check: $(srcdir)/tests/atf/tools/t_atf_check.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/tools || mkdir -p tests/atf/tools
-	$(ATF_COMPILE_SH) -o tests/atf/tools/t_atf_check $(srcdir)/tests/atf/tools/t_atf_check.sh
-tests/atf/tools/t_atf_cleanup: $(srcdir)/tests/atf/tools/t_atf_cleanup.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/tools || mkdir -p tests/atf/tools
-	$(ATF_COMPILE_SH) -o tests/atf/tools/t_atf_cleanup $(srcdir)/tests/atf/tools/t_atf_cleanup.sh
-tests/atf/tools/t_atf_compile: $(srcdir)/tests/atf/tools/t_atf_compile.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/tools || mkdir -p tests/atf/tools
-	$(ATF_COMPILE_SH) -o tests/atf/tools/t_atf_compile $(srcdir)/tests/atf/tools/t_atf_compile.sh
-tests/atf/tools/t_atf_config: $(srcdir)/tests/atf/tools/t_atf_config.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/tools || mkdir -p tests/atf/tools
-	$(ATF_COMPILE_SH) -o tests/atf/tools/t_atf_config $(srcdir)/tests/atf/tools/t_atf_config.sh
-tests/atf/tools/t_atf_exec: $(srcdir)/tests/atf/tools/t_atf_exec.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/tools || mkdir -p tests/atf/tools
-	$(ATF_COMPILE_SH) -o tests/atf/tools/t_atf_exec $(srcdir)/tests/atf/tools/t_atf_exec.sh
-tests/atf/tools/t_atf_report: $(srcdir)/tests/atf/tools/t_atf_report.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/tools || mkdir -p tests/atf/tools
-	$(ATF_COMPILE_SH) -o tests/atf/tools/t_atf_report $(srcdir)/tests/atf/tools/t_atf_report.sh
-tests/atf/tools/t_atf_run: $(srcdir)/tests/atf/tools/t_atf_run.sh $(ATF_COMPILE_DEPS)
-	test -d tests/atf/tools || mkdir -p tests/atf/tools
-	$(ATF_COMPILE_SH) -o tests/atf/tools/t_atf_run $(srcdir)/tests/atf/tools/t_atf_run.sh
-
-tools/atf-host-compile: $(srcdir)/tools/atf-host-compile.sh
-	sed -e 's,__ATF_PKGDATADIR__,$(srcdir)/atf-sh,g' \
-	    -e 's,__ATF_SHELL__,$(ATF_SHELL),g' \
-	    <$(srcdir)/tools/atf-host-compile.sh \
-	    >tools/atf-host-compile.tmp
-	chmod +x tools/atf-host-compile.tmp
-	mv tools/atf-host-compile.tmp tools/atf-host-compile
-revision.h: admin/revision.h $(srcdir)/admin/revision-dist.h
-	@$(top_srcdir)/admin/choose-revision.sh \
-	    admin/revision.h $(srcdir)/admin/revision-dist.h revision.h
+	$(ATF_COMPILE_SH) -o tests/atf/test_programs/t_status $(srcdir)/tests/atf/test_programs/t_status.sh $(srcdir)/tests/atf/test_programs/common.sh
 
 # vim: syntax=make:noexpandtab:shiftwidth=8:softtabstop=8
 

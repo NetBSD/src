@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -173,49 +173,8 @@ config_multi_value_body()
 }
 
 # -------------------------------------------------------------------------
-# Helper tests for "t_env".
-# -------------------------------------------------------------------------
-
-atf_test_case env_home
-env_home_head()
-{
-    atf_set "descr" "Helper test case for the t_env test program"
-}
-env_home_body()
-{
-    [ -n "${HOME}" ] || atf_fail "HOME is undefined"
-    h=$(cd ${HOME} && pwd -P)
-    [ "${h}" = "$(pwd -P)" ] || atf_fail "HOME is invalid"
-}
-
-atf_test_case env_list
-env_list_head()
-{
-    atf_set "descr" "Helper test case for the t_env test program"
-}
-env_list_body()
-{
-    env
-}
-
-# -------------------------------------------------------------------------
 # Helper tests for "t_fork".
 # -------------------------------------------------------------------------
-
-atf_test_case fork_mangle_fds
-fork_mangle_fds_head()
-{
-    atf_set "descr" "Helper test case for the t_fork test program"
-}
-fork_mangle_fds_body()
-{
-    resfd=$(atf_config_get resfd)
-    touch in
-    exec 0<in
-    exec 1>out
-    exec 2>err
-    eval "exec ${resfd}>res"
-}
 
 atf_test_case fork_stop
 fork_stop_head()
@@ -231,150 +190,18 @@ fork_stop_body()
     echo "Exiting"
 }
 
-atf_test_case fork_umask
-fork_umask_head()
-{
-    atf_set "descr" "Helper test case for the t_fork test program"
-}
-fork_umask_body()
-{
-    echo "umask: $(umask)"
-}
-
 # -------------------------------------------------------------------------
 # Helper tests for "t_meta_data".
 # -------------------------------------------------------------------------
 
-atf_test_case ident_1
-ident_1_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-}
-ident_1_body()
-{
-    atf_check_equal '$(atf_get ident)' ident_1
-}
-
-atf_test_case ident_2
-ident_2_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-}
-ident_2_body()
-{
-    atf_check_equal '$(atf_get ident)' ident_2
-}
-
-atf_test_case require_arch
-require_arch_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-    atf_set "require.arch" "$(atf_config_get arch)"
-}
-require_arch_body()
+atf_test_case metadata_no_descr
+metadata_no_descr_head()
 {
     :
 }
-
-atf_test_case require_config
-require_config_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-    atf_set "require.config" "var1 var2"
-}
-require_config_body()
-{
-    echo "var1: $(atf_config_get var1)"
-    echo "var2: $(atf_config_get var2)"
-}
-
-atf_test_case require_machine
-require_machine_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-    atf_set "require.machine" "$(atf_config_get machine)"
-}
-require_machine_body()
+metadata_no_descr_body()
 {
     :
-}
-
-atf_test_case require_progs_body
-require_progs_body_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-}
-require_progs_body_body()
-{
-    for p in $(atf_config_get progs); do
-        atf_require_prog ${p}
-    done
-}
-
-atf_test_case require_progs_head
-require_progs_head_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-    atf_set "require.progs" "$(atf_config_get progs)"
-}
-require_progs_head_body()
-{
-    :
-}
-
-atf_test_case require_user
-require_user_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-    atf_set "require.user" "$(atf_config_get user)"
-}
-require_user_body()
-{
-    :
-}
-
-atf_test_case require_user2
-require_user2_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-    atf_set "require.user" "$(atf_config_get user2)"
-}
-require_user2_body()
-{
-    :
-}
-
-atf_test_case require_user3
-require_user3_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-    atf_set "require.user" "$(atf_config_get user3)"
-}
-require_user3_body()
-{
-    :
-}
-
-atf_test_case timeout
-timeout_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-    atf_set "timeout" $(atf_config_get timeout 0)
-}
-timeout_body()
-{
-    sleep $(atf_config_get sleep)
-}
-
-atf_test_case timeout2
-timeout2_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-    atf_set "timeout2" $(atf_config_get timeout2 0)
-}
-timeout2_body()
-{
-    sleep $(atf_config_get sleep2)
 }
 
 # -------------------------------------------------------------------------
@@ -389,42 +216,6 @@ srcdir_exists_head()
 srcdir_exists_body()
 {
     [ -f "$(atf_get_srcdir)/datafile" ] || atf_fail "Cannot find datafile"
-}
-
-# -------------------------------------------------------------------------
-# Helper tests for "t_workdir".
-# -------------------------------------------------------------------------
-
-atf_test_case workdir_path
-workdir_path_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-}
-workdir_path_body()
-{
-    pwd -P >$(atf_config_get pathfile)
-}
-
-atf_test_case workdir_cleanup
-workdir_cleanup_head()
-{
-    atf_set "descr" "Helper test case for the t_meta_data test program"
-}
-workdir_cleanup_body()
-{
-    pwd -P >$(atf_config_get pathfile)
-
-    mkdir 1
-    mkdir 1/1
-    mkdir 1/2
-    mkdir 1/3
-    mkdir 1/3/1
-    mkdir 1/3/2
-    mkdir 2
-    touch 2/1
-    touch 2/2
-    mkdir 2/3
-    touch 2/3/1
 }
 
 # -------------------------------------------------------------------------
@@ -447,35 +238,14 @@ atf_init_test_cases()
     atf_add_test_case config_value
     atf_add_test_case config_multi_value
 
-    # Add helper tests for t_env.
-    atf_add_test_case env_home
-    atf_add_test_case env_list
-
     # Add helper tests for t_fork.
-    atf_add_test_case fork_mangle_fds
     atf_add_test_case fork_stop
-    atf_add_test_case fork_umask
 
     # Add helper tests for t_meta_data.
-    atf_add_test_case ident_1
-    atf_add_test_case ident_2
-    atf_add_test_case require_arch
-    atf_add_test_case require_config
-    atf_add_test_case require_machine
-    atf_add_test_case require_progs_body
-    atf_add_test_case require_progs_head
-    atf_add_test_case require_user
-    atf_add_test_case require_user2
-    atf_add_test_case require_user3
-    atf_add_test_case timeout
-    atf_add_test_case timeout2
+    atf_add_test_case metadata_no_descr
 
     # Add helper tests for t_srcdir.
     atf_add_test_case srcdir_exists
-
-    # Add helper tests for t_workdir.
-    atf_add_test_case workdir_path
-    atf_add_test_case workdir_cleanup
 }
 
 # vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4

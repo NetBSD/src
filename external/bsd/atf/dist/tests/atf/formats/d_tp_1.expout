@@ -1,0 +1,4 @@
+got_tc(test_case_1, {ident=test_case_1})
+got_tc(test_case_2, {ident=test_case_2})
+got_tc(test_case_3, {ident=test_case_3})
+got_eof()
