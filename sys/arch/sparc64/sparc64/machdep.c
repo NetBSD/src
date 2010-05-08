@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.252 2010/03/04 08:01:35 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.253 2010/05/08 07:34:02 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252 2010/03/04 08:01:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253 2010/05/08 07:34:02 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -811,7 +811,6 @@ dumpsys(void)
 			for (off = 0; off < n; off += PAGE_SIZE)
 				pmap_kenter_pa(dumpspace+off, maddr+off,
 				    VM_PROT_READ, 0);
-			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
 					(void *)dumpspace, (size_t)n);
 			pmap_kremove(dumpspace, n);
@@ -822,7 +821,6 @@ dumpsys(void)
 			blkno += btodb(n);
 		}
 	}
-	pmap_update(pmap_kernel());
 
 	switch (error) {
 
@@ -1732,7 +1730,6 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);
-	pmap_update(pmap_kernel());
 	return (0);
 }
 
