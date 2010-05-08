@@ -1,4 +1,4 @@
-.\"	$NetBSD: ferror.3,v 1.13 2010/05/06 09:18:06 jruoho Exp $
+.\"	$NetBSD: ferror.3,v 1.14 2010/05/08 11:35:14 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -96,13 +96,13 @@ However, the function
 may fail and return \-1 in case the argument
 .Fa stream
 is not associated with a valid file descriptor.
-(In such case the
+(In this case the
 .Nx
 implementation does not follow the optional
 .Tn POSIX
-recommendation and set the
+recommendation to set the
 .Va errno
-to
+variable to
 .Er EBADF . )
 .Sh SEE ALSO
 .Xr open 2 ,
