@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.XFree86,v 1.1 2009/09/07 19:34:30 mrg Exp $
+#	$NetBSD: NetBSD.dist.XFree86,v 1.2 2010/05/08 05:04:58 lukem Exp $
 
 ./usr/X11R6
 ./usr/X11R6/bin
@@ -174,4 +174,5 @@
 ./usr/X11R6/share/examples/ssh-askpass
 ./usr/libdata/debug/usr/X11R6
 ./usr/libdata/debug/usr/X11R6/bin
+./usr/libdata/debug/usr/X11R6/lib
 ./usr/libdata/debug/usr/X11R6/libexec
