@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.864 2010/05/07 17:41:57 degroote Exp $
+# $NetBSD: mi,v 1.865 2010/05/08 08:14:37 jmmv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -878,7 +878,7 @@
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
 ./usr/libexec/atf-cleanup			base-atf-bin		atf
-./usr/libexec/atf-exec				base-atf-bin		atf
+./usr/libexec/atf-exec				base-atf-bin		obsolete
 ./usr/libexec/atf-format			base-atf-bin		atf
 ./usr/libexec/atf-killpg			base-obsolete		obsolete
 ./usr/libexec/atrun				base-cron-bin
