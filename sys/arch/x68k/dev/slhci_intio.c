@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.12 2008/12/18 05:56:42 isaki Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.13 2010/05/08 02:48:31 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.12 2008/12/18 05:56:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_intio.c,v 1.13 2010/05/08 02:48:31 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ slhci_intio_attach(device_t parent, device_t self, void *aux)
 	int nc_size;
 
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = self;
+	sc->sc_bus.hci_private = sc;
 
 	printf(": Nereid USB\n");
 
