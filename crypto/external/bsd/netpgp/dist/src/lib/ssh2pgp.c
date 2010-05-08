@@ -349,8 +349,8 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 {
 	__ops_crypt_t	crypted;
 	__ops_hash_t	hash;
-	unsigned    done = 0;
-	unsigned    i = 0;
+	unsigned	done = 0;
+	unsigned	i = 0;
 	uint8_t		sesskey[CAST_KEY_LENGTH];
 	uint8_t		hashed[OPS_SHA1_HASH_SIZE];
 
