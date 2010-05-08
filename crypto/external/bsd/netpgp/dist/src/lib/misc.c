@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.28 2010/04/02 15:28:16 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.29 2010/05/08 00:33:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -698,16 +698,10 @@ __ops_calc_mdc_hash(const uint8_t *preamble,
 	uint8_t		c;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned	i;
-
-		(void) fprintf(stderr, "__ops_calc_mdc_hash():\n");
-		(void) fprintf(stderr, "\npreamble: ");
-		for (i = 0; i < sz_preamble; i++)
-			(void) fprintf(stderr, " 0x%02x", preamble[i]);
-		(void) fprintf(stderr, "\n");
+		(void) fprintf(stderr, "__ops_calc_mdc_hash():\npreamble: ");
+		hexdump(stderr, preamble, sz_preamble, " ");
 		(void) fprintf(stderr, "\nplaintext (len=%u): ", sz_plaintext);
-		for (i = 0; i < sz_plaintext; i++)
-			(void) fprintf(stderr, " 0x%02x", plaintext[i]);
+		hexdump(stderr, plaintext, sz_plaintext, " ");
 		(void) fprintf(stderr, "\n");
 	}
 	/* init */
@@ -733,13 +727,8 @@ __ops_calc_mdc_hash(const uint8_t *preamble,
 	hash.finish(&hash, hashed);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned	i;
-
-		(void) fprintf(stderr, "\nhashed (len=%d): ",
-				OPS_SHA1_HASH_SIZE);
-		for (i = 0; i < OPS_SHA1_HASH_SIZE; i++) {
-			(void) fprintf(stderr, " 0x%02x", hashed[i]);
-		}
+		(void) fprintf(stderr, "\nhashed (len=%d): ", OPS_SHA1_HASH_SIZE);
+		hexdump(stderr, hashed, OPS_SHA1_HASH_SIZE, " ");
 		(void) fprintf(stderr, "\n");
 	}
 }
@@ -1065,24 +1054,10 @@ hexdump(FILE *fp, const uint8_t *src, size_t length, const char *sep)
 
 /**
  * \ingroup HighLevel_Functions
- * \brief Initialises OpenPGP::SDK. To be called before any other OPS function.
- *
- * Initialises OpenPGP::SDK and the underlying openssl library.
- */
-
-void 
-__ops_init(void)
-{
-	__ops_crypto_init();
-}
-
-/**
- * \ingroup HighLevel_Functions
  * \brief Closes down OpenPGP::SDK.
  *
  * Close down OpenPGP:SDK, release any resources under the control of
- * the library. No OpenPGP:SDK function other than __ops_init() should
- * be called after this function.
+ * the library. 
  */
 
 void 

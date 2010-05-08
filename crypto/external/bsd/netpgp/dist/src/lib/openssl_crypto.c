@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.21 2010/04/14 00:21:40 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.22 2010/05/08 00:33:28 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -538,18 +538,12 @@ __ops_dsa_verify(const uint8_t *hash, size_t hash_length,
 	odsa->pub_key = dsa->y;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		unsigned        i;
-
 		(void) fprintf(stderr, "hash passed in:\n");
-		for (i = 0; i < hash_length; i++) {
-			(void) fprintf(stderr, "%02x ", hash[i]);
-		}
-		(void) fprintf(stderr, "\n");
-		printf("hash_length=%" PRIsize "d\n", hash_length);
-		printf("Q=%d\n", BN_num_bytes(odsa->q));
+		hexdump(stderr, hash, hash_length, " ");
+		(void) fprintf(stderr, "\nhash_length=%" PRIsize "d\n", hash_length);
+		(void) fprintf(stderr, "Q=%d\n", BN_num_bytes(odsa->q));
 	}
-	/* XXX - Flexelint -  Info 732: Loss of sign (assignment) (int to unsigned) */
-	if ((qlen = BN_num_bytes(odsa->q)) < hash_length) {
+	if ((qlen = (unsigned)BN_num_bytes(odsa->q)) < hash_length) {
 		hash_length = qlen;
 	}
 	ret = DSA_do_verify(hash, (int)hash_length, osig, odsa);
@@ -621,7 +615,7 @@ __ops_rsa_private_encrypt(uint8_t *out,
 	int             n;
 
 	orsa = RSA_new();
-	orsa->n = BN_dup(pubkey->n);	/* XXX: do we need n? */
+	orsa->n = BN_dup(pubkey->n);
 	orsa->d = seckey->d;
 	orsa->p = seckey->q;
 	orsa->q = seckey->p;
@@ -745,22 +739,6 @@ __ops_rsa_public_encrypt(uint8_t *out,
 
 /**
    \ingroup Core_Crypto
-   \brief initialises openssl
-   \note Would usually call __ops_init() instead
-   \sa __ops_init()
-*/
-void 
-__ops_crypto_init(void)
-{
-#ifdef DMALLOC
-	CRYPTO_malloc_debug_init();
-	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-#endif
-}
-
-/**
-   \ingroup Core_Crypto
    \brief Finalise openssl
    \note Would usually call __ops_finish() instead
    \sa __ops_finish()
@@ -770,9 +748,6 @@ __ops_crypto_finish(void)
 {
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_state((unsigned long)0);
-#ifdef DMALLOC
-	CRYPTO_mem_leaks_fp(stderr);
-#endif
 }
 
 /**
