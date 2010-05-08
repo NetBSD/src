@@ -1,9 +1,9 @@
-.\"	$NetBSD: crontab.1,v 1.3 2010/05/07 20:43:40 christos Exp $
+.\"	$NetBSD: crontab.1,v 1.4 2010/05/08 11:55:01 wiz Exp $
 .\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
 .\" */
-.\" 
+.\"
 .\" Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (c) 1997,2000 by Internet Software Consortium, Inc.
 .\"
@@ -19,7 +19,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: crontab.1,v 1.7 2004/01/23 19:03:32 vixie Exp 
+.\" Id: crontab.1,v 1.7 2004/01/23 19:03:32 vixie Exp
 .\"
 .Dd May 6, 2010
 .Dt CRONTAB 1
@@ -31,12 +31,10 @@
 .Nm
 .Op Fl u Ar user
 .Nm
-.Op Fl l
-.Op Fl r
-.Op Fl e
+.Op Fl elr
 .Sh DESCRIPTION
 .Nm
-is the program used to install, deinstall or list the tables
+is the program used to install, deinstall, or list the tables
 used to drive the
 .Xr cron 8
 daemon in ISC Cron.
@@ -72,7 +70,8 @@ file.
 If the
 .Fl u
 option is given, it specifies the name of the user whose crontab is to be
-tweaked.  If this option is not given,
+tweaked.
+If this option is not given,
 .Nm
 examines
 .Dq your
@@ -88,7 +87,7 @@ you should always use the
 option for safety's sake.
 .Pp
 The first form of this command is used to install a new crontab from some
-named file or standard input if the pseudo-filename 
+named file or standard input if the pseudo-filename
 .Dq -
 is given.
 .Pp
@@ -103,18 +102,15 @@ option causes the current crontab to be removed.
 The
 .Fl e
 option is used to edit the current crontab using the editor specified by
-the 
+the
 .Dv VISUAL
 or
 .Dv EDITOR
 environment variables.
 After you exit from the editor, the modified crontab will be installed
 automatically.
-.Sh SEE ALSO
-.Xr crontab 5 ,
-.Xr cron 8
 .Sh FILES
-.Bl -tag -width /var/cron/maxtabsize -compact 
+.Bl -tag -width /var/cron/maxtabsize -compact
 .It Pa /var/cron/allow
 Optional list of users that are allowed to use
 .Nm .
@@ -124,13 +120,19 @@ Optional list of users that are disallowed to use
 .It Pa /var/cron/maxtabsize
 Maximum size of
 .Nm
-.It Pa /var/cron/tabs/
-Directory containing the individual user crontab files, named after the user.
 files.
 Defaults to
 .Dv 256
 kilobytes.
+.It Pa /var/cron/tabs/
+Directory containing the individual user crontab files, named after the user.
 .El
+.Sh DIAGNOSTICS
+A fairly informative usage message appears if you run it with a bad command
+line.
+.Sh SEE ALSO
+.Xr crontab 5 ,
+.Xr cron 8
 .Sh STANDARDS
 The
 .Nm
@@ -140,9 +142,6 @@ This new command syntax
 differs from previous versions of Vixie Cron, as well as from the classic
 .At V3
 syntax.
-.Sh DIAGNOSTICS
-A fairly informative usage message appears if you run it with a bad command
-line.
 .Sh AUTHORS
 .An Paul Vixie
 .Aq vixie@isc.org

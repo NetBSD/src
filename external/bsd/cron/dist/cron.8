@@ -1,5 +1,5 @@
-.\"	$NetBSD: cron.8,v 1.2 2010/05/06 18:53:17 christos Exp $
-.\" 
+.\"	$NetBSD: cron.8,v 1.3 2010/05/08 11:55:01 wiz Exp $
+.\"
 .\" Id: cron.8,v 1.8 2004/01/23 19:03:32 vixie Exp
 .\"
 .Dd May 5, 2010
@@ -19,7 +19,8 @@ is normally started during system boot by
 framework, if cron is switched on in
 .Xr rc.conf 5 .
 .Pp
-It will return immediately so you don't have to starti it with '&'.
+It will return immediately so you don't have to start it with
+.Sq \*[Am] .
 .Pp
 .Nm
 searches
@@ -112,18 +113,18 @@ Jobs that run more frequently are scheduled normally.
 If time has moved forward, those jobs that would have run in the
 interval that has been skipped will be run immediately.
 Conversely, if time has moved backward, care is taken to avoid running
-jobs twice.  
+jobs twice.
 .Pp
 Time changes of more than 3 hours are considered to be corrections to
 the clock or timezone, and the new time is used immediately.
 .Sh SIGNALS
-On receipt of a 
+On receipt of a
 .Dv SIGHUP ,
 the cron daemon will close and reopen its
 log file.
-This is useful in scripts which rotate and age log files.  
+This is useful in scripts which rotate and age log files.
 Naturally this is not relevant if cron was built to use
-.Xr syslog 3.
+.Xr syslog 3 .
 .Sh FILES
 .Bl -tag -width /var/cron/tabs -compact
 .It Pa /var/cron/tabs
