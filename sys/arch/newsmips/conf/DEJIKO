@@ -1,4 +1,4 @@
-# 	$NetBSD: DEJIKO,v 1.27 2010/04/16 13:48:34 pooka Exp $
+# 	$NetBSD: DEJIKO,v 1.28 2010/05/08 22:16:28 mrg Exp $
 #
 #	Dejiko's sekai-seifuku NEWS5000 nyo.
 
@@ -33,6 +33,8 @@ options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 options 	INET			# Internet protocols
 options 	IPFILTER_LOG		# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	NFS_BOOT_BOOTPARAM
 options 	NFS_BOOTPARAM_NOGATEWAY
 
