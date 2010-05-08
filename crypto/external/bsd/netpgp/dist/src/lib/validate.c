@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.33 2010/05/07 16:20:07 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.34 2010/05/08 00:26:39 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -804,36 +804,29 @@ __ops_validate_file(__ops_io_t *io,
 	int			 cc;
 
 	if (stat(infile, &st) < 0) {
-		(void) fprintf(io->errs, "__ops_validate_file: can't open '%s'\n", infile);
+		(void) fprintf(io->errs,
+			"__ops_validate_file: can't open '%s'\n", infile);
 		return 0;
 	}
 	realarmour = user_says_armoured;
 	dataname = NULL;
 	signame = NULL;
 	cc = snprintf(f, sizeof(f), "%s", infile);
-	if (strcmp(&f[cc - 4], ".sig") == 0 || strcmp(&f[cc - 4], ".asc") == 0) {
+	if (strcmp(&f[cc - 4], ".sig") == 0) {
 		/* we've been given a sigfile as infile */
 		f[cc - 4] = 0x0;
 		/* set dataname to name of file which was signed */
 		dataname = f;
 		signame = infile;
+	} else if (strcmp(&f[cc - 4], ".asc") == 0) {
+		/* we've been given an armored sigfile as infile */
+		f[cc - 4] = 0x0;
+		/* set dataname to name of file which was signed */
+		dataname = f;
+		signame = infile;
+		realarmour = 1;
 	} else {
-		cc = snprintf(f, sizeof(f), "%s.sig", infile);
-		if (stat(f, &st) == 0) {
-			/* been given f and f.sig exists */
-			dataname = __UNCONST(infile);
-			signame = f;
-		} else {
-			cc = snprintf(f, sizeof(f), "%s.asc", infile);
-			if (stat(f, &st) == 0) {
-				/* been given f and f.asc exists */
-				dataname = __UNCONST(infile);
-				signame = f;
-				realarmour = 1;
-			} else {
-				signame = infile;
-			}
-		}
+		signame = infile;
 	}
 	(void) memset(&validation, 0x0, sizeof(validation));
 	infd = __ops_setup_file_read(io, &parse, signame, &validation,
