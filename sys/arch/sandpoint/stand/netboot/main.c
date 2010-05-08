@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.25 2010/05/08 14:40:08 phx Exp $ */
+/* $NetBSD: main.c,v 1.26 2010/05/08 15:26:54 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -87,8 +87,12 @@ main(void)
 		printf("Encore PP1"); break;
 	case BRD_QNAPTS101:
 		printf("QNAP TS-101"); break;
+	case BRD_KUROBOX:
+		printf("Kuro Box"); break;
 	case BRD_SYNOLOGY:
 		printf("Synology DS"); break;
+	default:
+		printf("Unknown board"); break;
 	}
 	printf(", cpu %u MHz, bus %u MHz, %dMB SDRAM\n",
 	    cpuclock / 1000000, busclock / 1000000, memsize >> 20);
