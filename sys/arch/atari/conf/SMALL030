@@ -1,11 +1,11 @@
 #
-# $NetBSD: SMALL030,v 1.9 2010/04/29 22:42:28 chs Exp $
+# $NetBSD: SMALL030,v 1.10 2010/05/08 20:41:24 tsutsui Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
-#		NetBSD: GENERIC.in,v 1.88 2010/04/29 22:40:50 chs Exp $
+#		NetBSD: GENERIC.in,v 1.89 2010/05/08 20:39:55 tsutsui Exp $
 include "arch/atari/conf/std.atari"
 makeoptions COPTS="-Os"
 maxusers 16
@@ -18,8 +18,6 @@ file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
-file-system PTYFS # experimental - /dev/ptm support
-file-system TMPFS # Efficient memory file-system
 options WAPBL # File system journaling support - Experimental
 options PANICWAIT # Require keystroke to dump/reboot
 options COMPAT_16 # Compatibility with NetBSD 1.6
