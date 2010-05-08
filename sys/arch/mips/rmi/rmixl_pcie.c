@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.1.2.13 2010/05/06 20:48:39 cliff Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.1.2.14 2010/05/08 18:08:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.13 2010/05/06 20:48:39 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.1.2.14 2010/05/08 18:08:34 matt Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -1014,8 +1014,17 @@ rmixl_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 int
 rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
 {
+	int device;
 	u_int link;
 	u_int irq;
+
+	/*
+	 * The bus is unimportant since it can change depending on the
+	 * configuration.  We are tied to device # of PCIe bridge we are
+	 * ultimately attached to.
+	 */
+	pci_decompose_tag(pa->pa_pc, pa->pa_intrtag,
+	    NULL, &device, NULL);
 
 #ifdef DEBUG
 	DPRINTF(("%s: ps_bus %d, pa_intrswiz %#x, pa_intrtag %#lx,"
@@ -1032,71 +1041,32 @@ rmixl_pcie_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *pih)
 	case MIPS_XLS108:
 	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
-		switch (pa->pa_bus) {
-		case 1:
-			link = 0;
-			irq = 26;
-			break;
-		case 2:
-			link = 1;
-			irq = 27;
-			break;
-		default:
-			panic("%s: bad bus %d\n", __func__, pa->pa_bus);
-		}
+		if (device > 1)
+			panic("%s: bad bus %d", __func__, device);
+		link = device;
+		irq = device + 26;
 		break;
 	case MIPS_XLS204:
-	case MIPS_XLS208:
-		switch (pa->pa_bus) {
-		case 1:
-			link = 0;
-			irq = 26;
-			break;
-		case 2:
-			link = 1;
-			irq = 27;
-			break;
-		case 3:
-			link = 2;
-			irq = 23;
-			break;
-		case 4:
-			link = 3;
-			irq = 24;
-			break;
-		default:
-			panic("%s: bad bus %d\n", __func__, pa->pa_bus);
-		}
+	case MIPS_XLS208: {
+		if (device > 3)
+			panic("%s: bad bus %d", __func__, device);
+		link = device;
+		irq = device + (device & 2 ? 21 : 26);
 		break;
+	}
 	case MIPS_XLS404:
 	case MIPS_XLS408:
 	case MIPS_XLS416:
 	case MIPS_XLS608: 
 	case MIPS_XLS616:
-		switch (pa->pa_bus) {
-		case 1:
-			link = 0;
-			irq = 26;
-			break;
-		case 2:
-			link = 1;
-			irq = 27;
-			break;
-		case 3:
-			link = 2;
-			irq = 28;
-			break;
-		case 4:
-			link = 3;
-			irq = 29;
-			break;
-		default:
-			panic("%s: bad bus %d\n", __func__, pa->pa_bus);
-		}
+		if (device > 3)
+			panic("%s: bad bus %d", __func__, device);
+		link = device;
+		irq = device + 26;
 		break;
 	default:
 		panic("%s: cpu IMPL %#x not supported\n",
-			__func__, MIPS_PRID_IMPL(mips_options.mips_cpu_id));
+		    __func__, MIPS_PRID_IMPL(mips_options.mips_cpu_id));
 	}
 
 	if (pa->pa_intrpin != PCI_INTERRUPT_PIN_NONE)
