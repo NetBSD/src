@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2009/12/23 20:17:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2010/05/08 23:18:44 hans Exp $
 
 .include <bsd.own.mk>
 
@@ -32,6 +32,15 @@ MKNATIVE_CONFIGURE_PRESET= \
 	bash_cv_func_sigsetjmp=present \
 	bash_cv_func_strcoll_broken=no \
 	bash_cv_must_reinstall_sighandlers=no
+
+# Recent versions of Solaris have ncurses, but they hide the lib in an
+# odd directory. Prevent configure from finding the ncurses headers,
+# Solaris curses is sufficient.
+.if ${BUILD_OSTYPE} == "SunOS"
+CONFIGURE_ENV+=	ac_cv_header_ncurses_h=no \
+		ac_cv_header_ncurses_ncurses_h=no \
+		ac_cv_header_ncurses_term_h=no
+.endif
 
 # Disable sim unless it's known to work (configure's default is to
 # enable sim if supported).
