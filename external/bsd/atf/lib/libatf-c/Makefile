@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2009/12/22 13:38:10 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/05/08 08:12:33 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -40,7 +40,6 @@ SRCS=		build.c \
 		dynstr.c \
 		env.c \
 		error.c \
-		expand.c \
 		fs.c \
 		io.c \
 		list.c \
@@ -48,7 +47,6 @@ SRCS=		build.c \
 		object.c \
 		process.c \
 		sanity.c \
-		signals.c \
 		text.c \
 		ui.c \
 		user.c \
@@ -65,7 +63,6 @@ INCS=		build.h \
 		env.h \
 		error.h \
 		error_fwd.h \
-		expand.h \
 		fs.h \
 		io.h \
 		list.h \
@@ -74,7 +71,6 @@ INCS=		build.h \
 		object.h \
 		process.h \
 		sanity.h \
-		signals.h \
 		tc.h \
 		tcr.h \
 		text.h \

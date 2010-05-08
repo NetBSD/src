@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2009/01/19 07:13:06 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/05/08 08:12:35 jmmv Exp $
 
 .include <bsd.own.mk>
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
-.PATH:		${SRCDIR}/admin ${SRCDIR}/tools
+.PATH:		${SRCDIR}/admin ${SRCDIR}/atf-version
 
 BINDIR=		/usr/bin
 PROG_CXX=	atf-version
@@ -12,7 +12,7 @@ MAN=		atf-version.1
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libatf-c
-CPPFLAGS+=	-I.
+CPPFLAGS+=	-I..
 LDADD+=		-latf-c++ -latf-c
 
 WARNS?=		2

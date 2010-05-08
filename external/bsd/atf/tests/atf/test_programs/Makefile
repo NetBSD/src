@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2009/02/17 17:29:19 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/05/08 08:12:34 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -14,8 +14,7 @@ TESTS_C=	h_c
 TESTS_CXX=	h_cpp
 
 TESTS_SH=	h_sh
-.for t in t_cleanup t_config t_env t_fork t_meta_data t_srcdir \
-          t_status t_workdir
+.for t in t_config t_fork t_meta_data t_srcdir t_status 
 TESTS_SH+=		${t}
 TESTS_SH_SRC_${t}=	common.sh ${t}.sh
 .endfor

@@ -73,6 +73,10 @@
 /* Define to the last valid signal number */
 #define LAST_SIGNO 63
 
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
+
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
 
@@ -83,25 +87,25 @@
 #define PACKAGE_BUGREPORT "atf-devel@NetBSD.org"
 
 /* Define to the copyright string applicable to this package. */
-#define PACKAGE_COPYRIGHT "Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc."
+#define PACKAGE_COPYRIGHT "Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc."
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "Automated Testing Framework"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Automated Testing Framework 0.7"
+#define PACKAGE_STRING "Automated Testing Framework 0.8"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "atf"
 
 /* Define to the home page for this package. */
-#define PACKAGE_URL ""
+#define PACKAGE_URL "http://www.NetBSD.org/~jmmv/atf/"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "0.7"
+#define PACKAGE_VERSION "0.8"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION "0.7"
+#define VERSION "0.8"
