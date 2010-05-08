@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/12/22 13:38:10 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2010/05/08 08:12:34 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,6 @@ FILES=		d_include_atf_c_h.c \
 		d_include_env_h.c \
 		d_include_error_fwd_h.c \
 		d_include_error_h.c \
-		d_include_expand_h.c \
 		d_include_fs_h.c \
 		d_include_io_h.c \
 		d_include_list_h.c \
@@ -33,7 +32,6 @@ FILES=		d_include_atf_c_h.c \
 		d_include_object_h.c \
 		d_include_process_h.c \
 		d_include_sanity_h.c \
-		d_include_signals_h.c \
 		d_include_tc_h.c \
 		d_include_tcr_h.c \
 		d_include_text_h.c \
@@ -50,7 +48,6 @@ TESTS_C=
 		t_dynstr \
 		t_env \
 		t_error \
-		t_expand \
 		t_fs \
 		t_h_lib \
 		t_io \
@@ -59,10 +56,10 @@ TESTS_C=
 		t_map \
 		t_process \
 		t_sanity \
-		t_signals \
 		t_tc \
 		t_tcr \
 		t_text \
+		t_tp \
 		t_ui \
 		t_user
 TESTS_C+=	${test}

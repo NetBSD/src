@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/01/19 07:13:06 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/05/08 08:12:34 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -80,51 +80,78 @@ FILES=		d_atffile_1 \
 		d_headers_8.experr \
 		d_headers_9 \
 		d_headers_9.experr \
-		d_tcs_1 \
-		d_tcs_1.errin \
-		d_tcs_1.expout \
-		d_tcs_1.outin \
-		d_tcs_2 \
-		d_tcs_2.errin \
-		d_tcs_2.expout \
-		d_tcs_2.outin \
-		d_tcs_3 \
-		d_tcs_3.errin \
-		d_tcs_3.expout \
-		d_tcs_3.outin \
-		d_tcs_4 \
-		d_tcs_4.errin \
-		d_tcs_4.expout \
-		d_tcs_4.outin \
-		d_tcs_5 \
-		d_tcs_5.errin \
-		d_tcs_5.expout \
-		d_tcs_5.outin \
-		d_tcs_50 \
-		d_tcs_50.experr \
-		d_tcs_51 \
-		d_tcs_51.experr \
-		d_tcs_52 \
-		d_tcs_52.experr \
-		d_tcs_53 \
-		d_tcs_53.experr \
-		d_tcs_53.expout \
-		d_tcs_54 \
-		d_tcs_54.experr \
-		d_tcs_54.expout \
-		d_tcs_55 \
-		d_tcs_55.experr \
-		d_tcs_55.expout \
-		d_tcs_56 \
-		d_tcs_56.errin \
-		d_tcs_56.experr \
-		d_tcs_56.expout \
-		d_tcs_56.outin \
-		d_tcs_57 \
-		d_tcs_57.errin \
-		d_tcs_57.experr \
-		d_tcs_57.expout \
-		d_tcs_57.outin \
+		d_tcr_1 \
+		d_tcr_1.expout \
+		d_tcr_2 \
+		d_tcr_2.expout \
+		d_tcr_3 \
+		d_tcr_3.expout \
+		d_tcr_50 \
+		d_tcr_50.experr \
+		d_tcr_51 \
+		d_tcr_51.experr \
+		d_tcr_52 \
+		d_tcr_52.experr \
+		d_tcr_53 \
+		d_tcr_53.experr \
+		d_tcr_54 \
+		d_tcr_54.experr \
+		d_tcr_60 \
+		d_tcr_60.experr \
+		d_tcr_61 \
+		d_tcr_61.experr \
+		d_tcr_61.expout \
+		d_tcr_70 \
+		d_tcr_70.experr \
+		d_tcr_70.expout \
+		d_tcr_71 \
+		d_tcr_71.experr \
+		d_tcr_71.expout \
+		d_tcr_72 \
+		d_tcr_72.experr \
+		d_tcr_72.expout \
+		d_tcr_73 \
+		d_tcr_73.experr \
+		d_tcr_73.expout \
+		d_tcr_74 \
+		d_tcr_74.experr \
+		d_tcr_74.expout \
+		d_tcr_75 \
+		d_tcr_75.experr \
+		d_tcr_75.expout \
+		d_tcr_76 \
+		d_tcr_76.experr \
+		d_tcr_76.expout \
+		d_tcr_77 \
+		d_tcr_77.experr \
+		d_tp_1 \
+		d_tp_1.expout \
+		d_tp_2 \
+		d_tp_2.expout \
+		d_tp_3 \
+		d_tp_3.expout \
+		d_tp_4 \
+		d_tp_4.expout \
+		d_tp_50 \
+		d_tp_50.experr \
+		d_tp_51 \
+		d_tp_51.experr \
+		d_tp_52 \
+		d_tp_52.expout \
+		d_tp_53 \
+		d_tp_53.experr \
+		d_tp_54 \
+		d_tp_54.experr \
+		d_tp_55 \
+		d_tp_55.experr \
+		d_tp_56 \
+		d_tp_56.experr \
+		d_tp_57 \
+		d_tp_57.experr \
+		d_tp_58 \
+		d_tp_58.experr \
+		d_tp_59 \
+		d_tp_59.experr \
 		d_tps_1 \
 		d_tps_1.expout \
 		d_tps_2 \
