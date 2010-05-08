@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.47 2010/05/08 00:31:07 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.48 2010/05/08 04:17:45 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1368,6 +1368,7 @@ netpgp_set_homedir(netpgp_t *netpgp, char *home, const char *subdir, const int q
 		(void) fprintf(stderr,
 			"netpgp: warning homedir \"%s\" not found\n", d);
 	}
+	netpgp_setvar(netpgp, "homedir", d);
 	return 1;
 }
 
