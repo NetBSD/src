@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.4 2008/04/07 16:36:50 nisimura Exp $
+$NetBSD: README.NAS,v 1.5 2010/05/08 18:48:44 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -11,10 +11,11 @@ re.11	cmdide.12	Kurobox HG
 re.11	iteide.12/13	classic TeraStation
 re.11	satalink.12/13	TeraStation Pro
 re.11	iteide.12	Gigabit LinkStation
-mak.15	iteide.13	Synology DS-106j/LinkStation LANxxxG
-mak.15	satalink.13	Synology DS-101g+/106e/106/207
-mak.15	satalink.12/13	Synology CS-406/RS-406/CS-406e/CS-407e
+sk.15	iteide.13	Synology DS-106j/LinkStation LANxxxG
+sk.15	satalink.13	Synology DS-101g+/106e/106/207
+sk.15	satalink.12/13	Synology CS-406/RS-406/CS-406e/CS-407e
 wm.15	satalink.13 	QNAP TS-101/201
+re.15	viaide.13	IOMEGA StorCenter
 
 - PCI line/pin and EPIC IRQ assignments
 
@@ -22,6 +23,7 @@ wm.15	satalink.13 	QNAP TS-101/201
 Kurobox		11, 12, 13, 14	-> 0, 1, 4, 3
 Synology	12, 13, 14, 15	-> 4, 0, 1, 2
 QNAP		12, 13, 14, 15	-> 0, 1, 2, 3
+StorCenter	12, 13, 14, 15  -> 0, 1, 2, 3
 
 - USB EHCI is a multiple function PCI device which has
   pin assignment A, B and C.
@@ -44,3 +46,4 @@ Synology DS407
 [ research still in progress ]
 
 ---
+
