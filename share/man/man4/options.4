@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.389 2010/05/01 13:07:34 pooka Exp $
+.\"	$NetBSD: options.4,v 1.390 2010/05/08 22:25:11 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 1, 2010
+.Dd May 8, 2010
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1940,10 +1940,17 @@ This option assumes
 .It Cd options IPFILTER_LOG
 This option, in conjunction with
 .Em pseudo-device ipfilter ,
-enables logging of IP packets using ip-filter.
+enables logging of IP packets using IP-Filter.
+.It Cd options IPFILTER_LOOKUP
+This option enables the
+IP-Filter
+.Xr ippool 8
+functionality to be enabled.
+.It Cd options IPFILTER_COMPAT
+This option enables older IP-Filter binaries to work.
 .It Cd options IPFILTER_DEFAULT_BLOCK
-This option sets the default policy of ip-filter.
-If it is set, ip-filter will block packets by default.
+This option sets the default policy of IP-Filter.
+If it is set, IP-Filter will block packets by default.
 .It Cd options BRIDGE_IPF
 This option causes
 .Em bridge
