@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.2 2010/04/24 21:52:34 nonaka Exp $
+#	$NetBSD: WZERO3,v 1.3 2010/05/09 02:03:35 nonaka Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.3 $"
 
 # estimated number of users
 maxusers	32
@@ -117,7 +117,9 @@ options 	NFS_BOOT_DHCP
 options 	WSEMUL_VT100
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=2
-
+# The X server requires theses two options
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
 # customization of console and kernel output - see dev/wscons/wsdisplayvar.h
 #options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_DEFAULT_FG=WSCOL_WHITE
