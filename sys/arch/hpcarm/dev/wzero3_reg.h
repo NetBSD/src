@@ -1,7 +1,7 @@
-/*	$NetBSD: wzero3_reg.h,v 1.1 2010/04/17 13:36:21 nonaka Exp $	*/
+/*	$NetBSD: wzero3_reg.h,v 1.2 2010/05/09 10:39:59 nonaka Exp $	*/
 
 /*
- * Copyright (c) 2008, 2009 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (c) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,7 +38,7 @@
 #define	GPIO_WS003SH_SLIDE		12	/* In */
 #define	GPIO_WS003SH_FULLKEY_LED	17	/* Out: H:ON, L:OFF */
 #define	GPIO_WS003SH_ANTENNA_LED	37	/* Out: H:ON, L:OFF */
-//	DONT_TOUCH(RESET?)		89	/* Out */
+#define	GPIO_WS003SH_RESET		89	/* Out */
 #define	GPIO_WS003SH_POWER_BUTTON	95	/* In */
 #define	GPIO_WS003SH_VIB		97	/* Out */
 #define	GPIO_WS003SH_USB_CLIENT_DETECT	103	/* In */
@@ -52,10 +52,12 @@
 #define	GPIO_WS007SH_RESET_BUTTON	1	/* In: L: press, H: release */
 #define	GPIO_WS007SH_POWER_BUTTON	9	/* In */
 #define	GPIO_WS007SH_TOUCH_PANEL	21	/* In */
+#define	GPIO_WS007SH_ADS7846_CS		33	/* Out: SSP SFRM */
 #define	GPIO_WS007SH_USB_CLIENT_DETECT	35	/* In */
 #define	GPIO_WS007SH_USB_HOST_POWER	37	/* Out */
 #define	GPIO_WS007SH_USB_HOST_DETECT	41	/* In */
 #define	GPIO_WS007SH_SD_DETECT		48	/* In */
+#define	GPIO_WS007SH_HSYNC		75	/* In */
 #define	GPIO_WS007SH_SLIDE		104	/* In */
 #define	GPIO_WS007SH_SD_POWER		107	/* Out: H:ON, L:OFF */
 
