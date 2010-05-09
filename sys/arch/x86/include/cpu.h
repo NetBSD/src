@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.21 2010/04/18 23:47:51 jym Exp $	*/
+/*	$NetBSD: cpu.h,v 1.22 2010/05/09 20:32:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -95,9 +95,6 @@ struct cpu_info {
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	ci_cpumask;		/* (1 << CPU ID) */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
-	uint8_t ci_packageid;
-	uint8_t ci_coreid;
-	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/*
