@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.1 2010/04/17 13:36:21 nonaka Exp $
+#	$NetBSD: files.pxa2x0,v 1.2 2010/05/09 10:39:59 nonaka Exp $
 #
 # PXA2x0 specific configuration info
 #
@@ -12,6 +12,11 @@ include "arch/arm/xscale/files.pxa2x0"
 # W-ZERO3 specific configuration info
 #
 
+# Dedicated SSP unit for touch screen
+device wzero3ssp
+attach wzero3ssp at pxaip
+file arch/hpcarm/dev/wzero3_ssp.c	wzero3ssp
+
 # LCD frame buffer
 attach lcd at pxaip with wzero3lcd
 file arch/hpcarm/dev/wzero3_lcd.c	wzero3lcd needs-flag
@@ -20,6 +25,11 @@ file arch/hpcarm/dev/wzero3_lcd.c	wzero3lcd needs-flag
 device wzero3kbd: hpckbdif, sysmon_power, sysmon_taskq
 attach wzero3kbd at pxaip
 file arch/hpcarm/dev/wzero3_kbd.c	wzero3kbd
+
+# touchpad
+device wzero3tp: wsmousedev, hpctpanel
+attach wzero3tp at pxaip
+file arch/hpcarm/dev/wzero3_tp.c	wzero3tp
 
 # MMC/SD controller
 attach pxamci at pxaip with wzero3mci
