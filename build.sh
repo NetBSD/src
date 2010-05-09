@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.233 2010/03/30 13:17:47 cegger Exp $
+#	$NetBSD: build.sh,v 1.234 2010/05/09 18:53:03 morr Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1361,7 +1361,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.233 2010/03/30 13:17:47 cegger Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.234 2010/05/09 18:53:03 morr Exp $
 # with these arguments: ${_args}
 #
 
@@ -1502,6 +1502,7 @@ releasekernel()
 
 buildmodules()
 {
+	setmakeenv MKBINUTILS no
 	if ! ${do_tools} && ! ${buildmoduleswarned:-false}; then
 		# Building tools every time we build modules is clearly
 		# unnecessary as well as a kernel.
