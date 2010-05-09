@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1442 2010/05/08 08:14:36 jmmv Exp $
+#	$NetBSD: mi,v 1.1443 2010/05/09 05:44:43 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2929,6 +2929,7 @@
 ./usr/libdata/debug/sbin/newfs_udf.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/pfctl.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/pflogd.debug		comp-pf-debug		pf,debug
+./usr/libdata/debug/sbin/pfs.debug		comp-pf-debug		pf,debug
 ./usr/libdata/debug/sbin/ping.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/ping6.debug		comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/sbin/pppoectl.debug		comp-netutil-debug	debug
