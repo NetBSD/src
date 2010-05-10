@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2010/05/02 14:00:44 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2010/05/10 16:33:45 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,3 +51,5 @@ message set_kernel_1
 {Kernel (IPAQ)}
 message set_kernel_2
 {Kernel (JORNADA720)}
+message set_kernel_3
+{Kernel (WZERO3)}
