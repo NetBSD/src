@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 2009/05/23 06:45:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2010/05/10 03:37:45 mrg Exp $
 #
 #	$eterna: Makefile,v 1.27 2009/05/22 21:51:38 mrg Exp $
+#
+# berkeley (netbsd) makefile.  see Makefile.boot for other systems.
 
 # compile-time options are:
 #	DEBUG			/* include debugging support */
@@ -17,9 +19,12 @@ MAN=	httpd.8
 BUILDSYMLINKS+=bozohttpd.8 httpd.8
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c
+SRCS+=	main.c
 
 LDADD=	-lcrypt
 DPADD=	${LIBCRYPT}
+
+WARNS?=	4
 
 .include <bsd.own.mk>
 
