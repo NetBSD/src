@@ -1,6 +1,6 @@
-/*	$NetBSD: bozohttpd.h,v 1.12 2010/05/10 03:37:45 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.13 2010/05/10 14:44:19 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.h,v 1.30 2010/05/10 02:51:28 mrg Exp $	*/
+/*	$eterna: bozohttpd.h,v 1.31 2010/05/10 14:36:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -213,13 +213,13 @@ extern	void	bozo_auth_check_401(bozo_httpreq_t *, int);
 extern	void	bozo_auth_cgi_setenv(bozo_httpreq_t *, char ***);
 extern	int	bozo_auth_cgi_count(bozo_httpreq_t *);
 #else
-#define		bozo_auth_check(w, x, y)		0
+#define		bozo_auth_check(x, y)			0
 #define		bozo_auth_cleanup(x)			/* nothing */
-#define		bozo_auth_check_headers(x, y, z, a, b)	0
-#define		bozo_auth_check_special_files(w, x, y)	0
-#define		bozo_auth_check_401(w, x, y)		/* nothing */
-#define		bozo_auth_cgi_setenv(w, x, y)		/* nothing */
-#define		bozo_auth_cgi_count(x)		0
+#define		bozo_auth_check_headers(y, z, a, b)	0
+#define		bozo_auth_check_special_files(x, y)	0
+#define		bozo_auth_check_401(x, y)		/* nothing */
+#define		bozo_auth_cgi_setenv(x, y)		/* nothing */
+#define		bozo_auth_cgi_count(x)			0
 #endif /* DO_HTPASSWD */
 
 
