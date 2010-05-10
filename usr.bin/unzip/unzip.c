@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.13 2010/04/29 06:32:19 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.14 2010/05/10 15:45:22 joerg Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.13 2010/04/29 06:32:19 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.14 2010/05/10 15:45:22 joerg Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -572,10 +572,8 @@ recheck:
 		 * guess wrong, we print a warning message later.
 		 */
 		if (a_opt && n == 0) {
-			if (check_binary(buffer, len)) {
+			if (check_binary(buffer, len))
 				text = 0;
-				break;
-			}
 		}
 
 		/* simple case */
