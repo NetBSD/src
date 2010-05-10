@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2010/02/28 22:45:45 haad Exp $
+#	$NetBSD: Makefile,v 1.5 2010/05/10 06:27:57 haad Exp $
 
 LIB=	umem
-SRCS=	umem.c stub_stand.c
+SRCS=	umem.c
 
 .include "../../Makefile.zfs"
 .include <bsd.lib.mk>
