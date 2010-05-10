@@ -1,6 +1,6 @@
-/*	$NetBSD: auth-bozo.c,v 1.8 2010/05/10 03:37:45 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.9 2010/05/10 14:44:19 mrg Exp $	*/
 
-/*	$eterna: auth-bozo.c,v 1.15 2010/05/10 02:51:28 mrg Exp $	*/
+/*	$eterna: auth-bozo.c,v 1.16 2010/05/10 14:36:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -53,8 +53,9 @@ static	ssize_t	base64_decode(const unsigned char *, size_t,
  * Check if HTTP authentication is required
  */
 int
-bozo_auth_check(bozohttpd_t *httpd, bozo_httpreq_t *request, const char *file)
+bozo_auth_check(bozo_httpreq_t *request, const char *file)
 {
+	bozohttpd_t *httpd = request->hr_httpd;
 	struct stat sb;
 	char dir[MAXPATHLEN], authfile[MAXPATHLEN], *basename;
 	char user[BUFSIZ], *pass;
@@ -68,7 +69,7 @@ bozo_auth_check(bozohttpd_t *httpd, bozo_httpreq_t *request, const char *file)
 	else {
 		*basename++ = '\0';
 			/* ensure basename(file) != AUTH_FILE */
-		if (bozo_check_special_files(httpd, request, basename))
+		if (bozo_check_special_files(request, basename))
 			return 1;
 	}
 	request->hr_authrealm = bozostrdup(httpd, dir);
@@ -127,8 +128,10 @@ bozo_auth_cleanup(bozo_httpreq_t *request)
 }
 
 int
-bozo_auth_check_headers(bozohttpd_t *httpd, bozo_httpreq_t *request, char *val, char *str, ssize_t len)
+bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str, ssize_t len)
 {
+	bozohttpd_t *httpd = request->hr_httpd;
+
 	if (strcasecmp(val, "authorization") == 0 &&
 	    strncasecmp(str, "Basic ", 6) == 0) {
 		char	authbuf[BUFSIZ];
@@ -158,9 +161,11 @@ bozo_auth_check_headers(bozohttpd_t *httpd, bozo_httpreq_t *request, char *val, 
 }
 
 int
-bozo_auth_check_special_files(bozohttpd_t *httpd, bozo_httpreq_t *request,
+bozo_auth_check_special_files(bozo_httpreq_t *request,
 				const char *name)
 {
+	bozohttpd_t *httpd = request->hr_httpd;
+
 	if (strcmp(name, AUTH_FILE) == 0)
 		return bozo_http_error(httpd, 403, request,
 				"no permission to open authfile");
@@ -168,8 +173,10 @@ bozo_auth_check_special_files(bozohttpd_t *httpd, bozo_httpreq_t *request,
 }
 
 void
-bozo_auth_check_401(bozohttpd_t *httpd, bozo_httpreq_t *request, int code)
+bozo_auth_check_401(bozo_httpreq_t *request, int code)
 {
+	bozohttpd_t *httpd = request->hr_httpd;
+
 	if (code == 401)
 		bozo_printf(httpd,
 			"WWW-Authenticate: Basic realm=\"%s\"\r\n",
@@ -179,9 +186,11 @@ bozo_auth_check_401(bozohttpd_t *httpd, bozo_httpreq_t *request, int code)
 
 #ifndef NO_CGIBIN_SUPPORT
 void
-bozo_auth_cgi_setenv(bozohttpd_t *httpd, bozo_httpreq_t *request,
+bozo_auth_cgi_setenv(bozo_httpreq_t *request,
 			char ***curenvpp)
 {
+	bozohttpd_t *httpd = request->hr_httpd;
+
 	if (request->hr_authuser && *request->hr_authuser) {
 		bozo_setenv(httpd, "AUTH_TYPE", "Basic", (*curenvpp)++);
 		bozo_setenv(httpd, "REMOTE_USER", request->hr_authuser,
