@@ -1,4 +1,10 @@
-$eterna: CHANGES,v 1.68 2009/05/22 21:51:38 mrg Exp $
+$eterna: CHANGES,v 1.70 2010/05/10 02:24:30 mrg Exp $
+
+changes since bozohttpd 20090522:
+	o  major rework and clean up of internal interfaces.  move the main
+	   program into main.c, the remaining parts are useable as library.
+	   add bindings for lua.  by Alistair G. Crooks <agc@netbsd.org>
+	o  fix http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=566325
 
 changes since bozohttpd 20090417:
 	o  avoid dying in daemon mode for some uncommon, but recoverable, errors
