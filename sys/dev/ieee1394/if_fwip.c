@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.22 2010/03/29 03:05:28 kiyohara Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.23 2010/05/10 12:17:32 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,13 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.22 2010/03/29 03:05:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.23 2010/05/10 12:17:32 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
@@ -344,6 +344,8 @@ fwip_init(struct ifnet *ifp)
 
 	fc = sc->sc_fd.fc;
 	if (sc->sc_dma_ch < 0) {
+		const size_t size = sizeof(struct fw_bulkxfer) * rx_queue_len;
+
 		sc->sc_dma_ch = fw_open_isodma(fc, /* tx */0);
 		if (sc->sc_dma_ch < 0)
 			return ENXIO;
@@ -360,11 +362,9 @@ fwip_init(struct ifnet *ifp)
 		xferq->psize = MCLBYTES;
 		xferq->queued = 0;
 		xferq->buf = NULL;
-		xferq->bulkxfer = (struct fw_bulkxfer *) malloc(
-			sizeof(struct fw_bulkxfer) * xferq->bnchunk,
-							M_FWIP, M_WAITOK);
+		xferq->bulkxfer = kmem_alloc(size, KM_SLEEP);
 		if (xferq->bulkxfer == NULL) {
-			aprint_error_ifnet(ifp, "if_fwip: malloc failed\n");
+			aprint_error_ifnet(ifp, "if_fwip: kmem alloc failed\n");
 			return ENOMEM;
 		}
 		STAILQ_INIT(&xferq->stvalid);
@@ -455,7 +455,8 @@ fwip_stop(struct ifnet *ifp, int disable)
 
 		for (i = 0; i < xferq->bnchunk; i++)
 			m_freem(xferq->bulkxfer[i].mbuf);
-		free(xferq->bulkxfer, M_FWIP);
+		kmem_free(xferq->bulkxfer,
+		    sizeof(struct fw_bulkxfer) * xferq->bnchunk);
 
 		fw_bindremove(fc, &sc->sc_fwb);
 		for (xfer = STAILQ_FIRST(&sc->sc_fwb.xferlist); xfer != NULL;
