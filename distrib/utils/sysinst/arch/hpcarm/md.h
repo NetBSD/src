@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.4 2007/11/12 15:07:35 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.5 2010/05/10 16:33:45 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,6 +61,7 @@
  */
 #define SET_KERNEL_1_NAME	"kern-IPAQ"
 #define SET_KERNEL_2_NAME	"kern-JORNADA720"
+#define SET_KERNEL_3_NAME	"kern-WZERO3"
 
 
 /*
