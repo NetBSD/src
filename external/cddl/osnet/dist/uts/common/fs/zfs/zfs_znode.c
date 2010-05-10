@@ -484,7 +484,8 @@ zfs_create_share_dir(zfsvfs_t *zfsvfs, dmu_tx_t *tx)
 	sharezp->z_zfsvfs = zfsvfs;
 
 	vp = ZTOV(sharezp);
-	vn_reinit(vp);
+	error = getnewvnode(VT_ZFS, zfsvfs->z_parent->z_vfs,
+	    zfs_vnodeop_p, &zp->z_vnode);
 	vp->v_type = VDIR;
 
 	VERIFY(0 == zfs_acl_ids_create(sharezp, IS_ROOT_NODE, &vattr,
