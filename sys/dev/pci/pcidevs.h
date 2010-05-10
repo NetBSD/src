@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1026 2010/05/08 07:20:11 pgoyette Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1027 2010/05/10 06:39:30 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1029 2010/05/08 07:18:46 pgoyette Exp
+ *	NetBSD: pcidevs,v 1.1030 2010/05/10 06:38:45 matt Exp
  */
 
 /*
@@ -1995,6 +1995,7 @@
 #define	PCI_PRODUCT_MARVELL_88W8310	0x1fa7		/* Libertas 88W8310 */
 #define	PCI_PRODUCT_MARVELL_88W8335_1	0x1faa		/* Libertas 88W8335 */
 #define	PCI_PRODUCT_MARVELL_88W8335_2	0x1fab		/* Libertas 88W8335 */
+#define	PCI_PRODUCT_MARVELL_88SB2211	0x2211		/* 88SB2211 x1 PCIe-PCI Bridge */
 #define	PCI_PRODUCT_MARVELL_88W8300_2	0x2a01		/* Libertas 88W8300 */
 #define	PCI_PRODUCT_MARVELL_GT64115	0x4111		/* GT-64115 System Controller */
 #define	PCI_PRODUCT_MARVELL_GT64011	0x4146		/* GT-64011 System Controller */
