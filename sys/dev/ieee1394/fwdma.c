@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.c,v 1.14 2010/04/29 06:56:00 kiyohara Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.15 2010/05/10 12:17:32 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.14 2010/04/29 06:56:00 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.15 2010/05/10 12:17:32 kiyohara Exp $");
 #if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simokawa Exp $");
 #endif
@@ -46,7 +46,7 @@ __FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simok
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/select.h>
 
 #include <machine/vmparam.h>
@@ -155,9 +155,9 @@ fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment, int esize, int n,
 	}
 	size = sizeof(struct fwdma_alloc_multi) +
 	    sizeof(struct fwdma_seg) * nseg;
-	am = (struct fwdma_alloc_multi *)malloc(size, M_FW, M_WAITOK | M_ZERO);
+	am = kmem_zalloc(size, KM_SLEEP);
 	if (am == NULL) {
-		aprint_error_dev(fc->dev, "malloc failed\n");
+		aprint_error_dev(fc->dev, "kmem alloc failed\n");
 		return NULL;
 	}
 	am->ssize = ssize;
@@ -184,8 +184,11 @@ void
 fwdma_free_multiseg(struct fwdma_alloc_multi *am)
 {
 	struct fwdma_seg *seg;
+	int nseg;
 
+	nseg = am->nseg;
 	for (seg = am->seg; am->nseg--; seg++)
 		fwdma_free(am->dma_tag, seg->dma_map, seg->v_addr);
-	free(am, M_FW);
+	kmem_free(am,
+	    sizeof(struct fwdma_alloc_multi) + sizeof(struct fwdma_seg) * nseg);
 }
