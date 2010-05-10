@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.19 2010/04/29 06:53:48 kiyohara Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.20 2010/05/10 12:17:32 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.19 2010/04/29 06:53:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.20 2010/05/10 12:17:32 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.19 2010/04/29 06:53:48 kiyohara Exp $");
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
@@ -91,7 +91,7 @@ struct fw_drv1 {
 
 static int fwdev_allocbuf(struct firewire_comm *, struct fw_xferq *,
 			  struct fw_bufspec *);
-static int fwdev_freebuf(struct fw_xferq *);
+static int fwdev_freebuf(struct fw_xferq *, struct fw_bufspec *);
 static int fw_read_async(struct fw_drv1 *, struct uio *, int);
 static int fw_write_async(struct fw_drv1 *, struct uio *, int);
 static void fw_hand(struct fw_xfer *);
@@ -120,7 +120,7 @@ fw_open(dev_t dev, int flags, int fmt, struct lwp *td)
 	sc->si_drv1 = (void *)-1;
 	mutex_exit(&sc->fc->fc_mtx);
 
-	sc->si_drv1 = malloc(sizeof(struct fw_drv1), M_FW, M_WAITOK | M_ZERO);
+	sc->si_drv1 = kmem_zalloc(sizeof(struct fw_drv1), KM_SLEEP);
 	if (sc->si_drv1 == NULL)
 		return ENOMEM;
 
@@ -170,7 +170,7 @@ fw_close(dev_t dev, int flags, int fmt, struct lwp *td)
 			fc->irx_disable(fc, ir->dmach);
 		}
 		/* free extbuf */
-		fwdev_freebuf(ir);
+		fwdev_freebuf(ir, &d->bufreq.rx);
 		/* drain receiving buffer */
 		for (xfer = STAILQ_FIRST(&ir->q); xfer != NULL;
 		    xfer = STAILQ_FIRST(&ir->q)) {
@@ -195,12 +195,12 @@ fw_close(dev_t dev, int flags, int fmt, struct lwp *td)
 			fc->itx_disable(fc, it->dmach);
 		}
 		/* free extbuf */
-		fwdev_freebuf(it);
+		fwdev_freebuf(it, &d->bufreq.tx);
 		it->flag &=
 		    ~(FWXFERQ_OPEN | FWXFERQ_MODEMASK | FWXFERQ_CHTAGMASK);
 		d->it = NULL;
 	}
-	free(sc->si_drv1, M_FW);
+	kmem_free(sc->si_drv1, sizeof(struct fw_drv1));
 	sc->si_drv1 = NULL;
 
 	return err;
@@ -577,8 +577,8 @@ out:
 			err = EINVAL;
 			break;
 		}
-		fwb = (struct fw_bind *)malloc(sizeof(struct fw_bind),
-		    M_FW, M_WAITOK);
+		fwb = (struct fw_bind *)kmem_alloc(sizeof(struct fw_bind),
+		    KM_SLEEP);
 		if (fwb == NULL) {
 			err = ENOMEM;
 			break;
@@ -635,7 +635,7 @@ out:
 				break;
 			}
 			/* myself */
-			ptr = malloc(CROMSIZE, M_FW, M_WAITOK);
+			ptr = kmem_alloc(CROMSIZE, KM_SLEEP);
 			len = CROMSIZE;
 			for (i = 0; i < CROMSIZE/4; i++)
 				((uint32_t *)ptr)[i] = ntohl(fc->config_rom[i]);
@@ -735,8 +735,7 @@ fwdev_allocbuf(struct firewire_comm *fc, struct fw_xferq *q,
 		return EBUSY;
 
 	q->bulkxfer =
-	    (struct fw_bulkxfer *)malloc(sizeof(struct fw_bulkxfer) * b->nchunk,
-								M_FW, M_WAITOK);
+	    kmem_alloc(sizeof(struct fw_bulkxfer) * b->nchunk, KM_SLEEP);
 	if (q->bulkxfer == NULL)
 		return ENOMEM;
 
@@ -745,7 +744,7 @@ fwdev_allocbuf(struct firewire_comm *fc, struct fw_xferq *q,
 	    b->nchunk * b->npacket, BUS_DMA_WAITOK);
 
 	if (q->buf == NULL) {
-		free(q->bulkxfer, M_FW);
+		kmem_free(q->bulkxfer, sizeof(struct fw_bulkxfer) * b->nchunk);
 		q->bulkxfer = NULL;
 		return ENOMEM;
 	}
@@ -773,14 +772,14 @@ fwdev_allocbuf(struct firewire_comm *fc, struct fw_xferq *q,
 }
 
 static int
-fwdev_freebuf(struct fw_xferq *q)
+fwdev_freebuf(struct fw_xferq *q, struct fw_bufspec *b)
 {
 
 	if (q->flag & FWXFERQ_EXTBUF) {
 		if (q->buf != NULL)
 			fwdma_free_multiseg(q->buf);
 		q->buf = NULL;
-		free(q->bulkxfer, M_FW);
+		kmem_free(q->bulkxfer, sizeof(struct fw_bulkxfer) * b->nchunk);
 		q->bulkxfer = NULL;
 		q->flag &= ~FWXFERQ_EXTBUF;
 		q->psize = 0;

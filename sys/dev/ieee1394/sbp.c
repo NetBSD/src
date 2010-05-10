@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.30 2010/04/29 06:51:26 kiyohara Exp $	*/
+/*	$NetBSD: sbp.c,v 1.31 2010/05/10 12:17:33 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.30 2010/04/29 06:51:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.31 2010/05/10 12:17:33 kiyohara Exp $");
 
 
 #include <sys/param.h>
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.30 2010/04/29 06:51:26 kiyohara Exp $");
 #include <sys/callout.h>
 #include <sys/condvar.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
@@ -708,12 +708,14 @@ END_DEBUG
 
 	/* Reallocate */
 	if (maxlun != target->num_lun) {
-		newluns = (struct sbp_dev **) realloc(target->luns,
-		    sizeof(struct sbp_dev *) * maxlun,
-		    M_SBP, M_NOWAIT | M_ZERO);
+		const int sbp_dev_p_sz = sizeof(struct sbp_dev *);
 
-		if (newluns == NULL) {
-			aprint_error_dev(sc->sc_fd.dev, "realloc failed\n");
+		newluns = kmem_alloc(sbp_dev_p_sz * maxlun, KM_NOSLEEP);
+		if (newluns != NULL)
+			memcpy(*newluns, target->luns,
+			    sizeof(struct sbp_dev *) * target->num_lun);
+		else {
+			aprint_error_dev(sc->sc_fd.dev, "kmem alloc failed\n");
 			newluns = target->luns;
 			maxlun = target->num_lun;
 		}
@@ -722,12 +724,9 @@ END_DEBUG
 		 * We must zero the extended region for the case
 		 * realloc() doesn't allocate new buffer.
 		 */
-		if (maxlun > target->num_lun) {
-			const int sbp_dev_p_sz = sizeof(struct sbp_dev *);
-
+		if (maxlun > target->num_lun)
 			memset(&newluns[target->num_lun], 0,
 			    sbp_dev_p_sz * (maxlun - target->num_lun));
-		}
 
 		target->luns = newluns;
 		target->num_lun = maxlun;
@@ -749,11 +748,10 @@ END_DEBUG
 
 		sdev = target->luns[lun];
 		if (sdev == NULL) {
-			sdev = malloc(sizeof(struct sbp_dev),
-			    M_SBP, M_NOWAIT | M_ZERO);
+			sdev = kmem_zalloc(sizeof(struct sbp_dev), KM_NOSLEEP);
 			if (sdev == NULL) {
 				aprint_error_dev(sc->sc_fd.dev,
-				    "malloc failed\n");
+				    "kmem alloc failed\n");
 				goto next;
 			}
 			target->luns[lun] = sdev;
@@ -787,7 +785,7 @@ END_DEBUG
 		fwdma_alloc_setup(sc->sc_fd.dev, sc->sc_dmat, SBP_DMA_SIZE,
 		    &sdev->dma, sizeof(uint32_t), BUS_DMA_NOWAIT);
 		if (sdev->dma.v_addr == NULL) {
-			free(sdev, M_SBP);
+			kmem_free(sdev, sizeof(struct sbp_dev));
 			target->luns[lun] = NULL;
 			goto next;
 		}
@@ -2048,7 +2046,7 @@ sbp_free_sdev(struct sbp_dev *sdev)
 	for (i = 0; i < SBP_QUEUE_LEN; i++)
 		bus_dmamap_destroy(sc->sc_dmat, sdev->ocb[i].dmamap);
 	fwdma_free(sdev->dma.dma_tag, sdev->dma.dma_map, sdev->dma.v_addr);
-	free(sdev, M_SBP);
+	kmem_free(sdev, sizeof(struct sbp_dev));
 	sdev = NULL;
 }
 
@@ -2070,7 +2068,7 @@ sbp_free_target(struct sbp_target *target)
 		fw_xfer_free_buf(xfer);
 	}
 	STAILQ_INIT(&target->xferlist);
-	free(target->luns, M_SBP);
+	kmem_free(target->luns, sizeof(struct sbp_dev *) * target->num_lun);
 	target->num_lun = 0;
 	target->luns = NULL;
 	target->fwdev = NULL;
@@ -2217,7 +2215,8 @@ sbp_timeout(void *arg)
 		/* XXX give up */
 		sbp_scsipi_detach_target(target);
 		if (target->luns != NULL)
-			free(target->luns, M_SBP);
+			kmem_free(target->luns,
+			    sizeof(struct sbp_dev *) * target->num_lun);
 		target->num_lun = 0;
 		target->luns = NULL;
 		target->fwdev = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.c,v 1.12 2010/03/29 03:05:27 kiyohara Exp $	*/
+/*	$NetBSD: fwmem.c,v 1.13 2010/05/10 12:17:32 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.12 2010/03/29 03:05:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.13 2010/05/10 12:17:32 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwmem.c,v 1.12 2010/03/29 03:05:27 kiyohara Exp $");
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/sysctl.h>
 
 #include <dev/ieee1394/firewire.h>
@@ -185,9 +185,7 @@ fwmem_open(dev_t dev, int flags, int fmt, struct lwp *td)
 		fms = (struct fwmem_softc *)sc->si_drv1;
 		fms->refcount++;
 	} else {
-		sc->si_drv1 = (void *)-1;
-		sc->si_drv1 = malloc(sizeof(struct fwmem_softc),
-		    M_FWMEM, M_WAITOK);
+		sc->si_drv1 = kmem_alloc(sizeof(struct fwmem_softc), KM_SLEEP);
 		if (sc->si_drv1 == NULL)
 			return ENOMEM;
 		fms = (struct fwmem_softc *)sc->si_drv1;
@@ -225,7 +223,7 @@ fwmem_close(dev_t dev, int flags, int fmt, struct lwp *td)
 			STAILQ_REMOVE_HEAD(&fms->xferlist, link);
 			fw_xfer_free(xfer);
 		}
-		free(sc->si_drv1, M_FW);
+		kmem_free(sc->si_drv1, sizeof(struct fwmem_softc));
 		sc->si_drv1 = NULL;
 	}
 

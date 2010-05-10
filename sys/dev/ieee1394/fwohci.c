@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.125 2010/04/29 06:53:13 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.126 2010/05/10 12:17:32 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.125 2010/04/29 06:53:13 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.126 2010/05/10 12:17:32 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.125 2010/04/29 06:53:13 kiyohara Exp $"
 #include <sys/errno.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
@@ -1703,10 +1703,10 @@ fwohci_db_free(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 			db_tr->buf = NULL;
 		}
 	}
-	dbch->ndb = 0;
 	db_tr = STAILQ_FIRST(&dbch->db_trq);
 	fwdma_free_multiseg(dbch->am);
-	free(db_tr, M_FW);
+	kmem_free(db_tr, sizeof(struct fwohcidb_tr) * dbch->ndb);
+	dbch->ndb = 0;
 	STAILQ_INIT(&dbch->db_trq);
 	dbch->flags &= ~FWOHCI_DBCH_INIT;
 	seldestroy(&dbch->xferq.rsel);
@@ -1726,9 +1726,9 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 	/* allocate DB entries and attach one to each DMA channels */
 	/* DB entry must start at 16 bytes bounary. */
 	STAILQ_INIT(&dbch->db_trq);
-	db_tr = (struct fwohcidb_tr *)malloc(db_tr_sz, M_FW, M_WAITOK | M_ZERO);
+	db_tr = kmem_zalloc(db_tr_sz, KM_SLEEP);
 	if (db_tr == NULL) {
-		aprint_error_dev(fc->dev, "malloc(1) failed\n");
+		aprint_error_dev(fc->dev, "kmem alloc failed\n");
 		return;
 	}
 
@@ -1743,7 +1743,7 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 #endif
 	if (dbch->am == NULL) {
 		aprint_error_dev(fc->dev, "fwdma_malloc_multiseg failed\n");
-		free(db_tr, M_FW);
+		kmem_free(db_tr, sizeof(struct fwohcidb_tr) * dbch->ndb);
 		return;
 	}
 	/* Attach DB to DMA ch. */
@@ -2140,9 +2140,9 @@ fwohci_task_sid(struct fwohci_softc *sc)
 		return;
 	}
 	plen -= 4; /* chop control info */
-	buf = (uint32_t *)malloc(OHCI_SIDSIZE, M_FW, M_NOWAIT);
+	buf = kmem_alloc(OHCI_SIDSIZE, KM_NOSLEEP);
 	if (buf == NULL) {
-		aprint_error_dev(fc->dev, "malloc failed\n");
+		aprint_error_dev(fc->dev, "kmem alloc failed\n");
 		return;
 	}
 	for (i = 0; i < plen / 4; i++)
@@ -2156,7 +2156,7 @@ fwohci_task_sid(struct fwohci_softc *sc)
 	fw_drain_txq(fc);
 #endif
 	fw_sidrcv(fc, buf, plen);
-	free(buf, M_FW);
+	kmem_free(buf, OHCI_SIDSIZE);
 }
 
 static void

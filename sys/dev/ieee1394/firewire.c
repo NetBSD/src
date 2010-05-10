@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.30 2010/04/06 10:45:15 reinoud Exp $	*/
+/*	$NetBSD: firewire.c,v 1.31 2010/05/10 12:17:32 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.30 2010/04/06 10:45:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.31 2010/05/10 12:17:32 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.30 2010/04/06 10:45:15 reinoud Exp $"
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -217,28 +217,24 @@ firewireattach(device_t parent, device_t self, void *aux)
 	if (fc->nisodma > FWMAXNDMA)
 	    fc->nisodma = FWMAXNDMA;
 
-	fc->crom_src_buf =
-	    (struct crom_src_buf *)malloc(sizeof(struct crom_src_buf),
-	    M_FW, M_NOWAIT | M_ZERO);
+	fc->crom_src_buf = kmem_zalloc(sizeof(struct crom_src_buf), KM_NOSLEEP);
 	if (fc->crom_src_buf == NULL) {
-		aprint_error_dev(fc->bdev, "Malloc Failure crom src buff\n");
+		aprint_error_dev(fc->bdev,
+		    "kmem alloc failure crom src buff\n");
 		return;
 	}
 	fc->topology_map =
-	    (struct fw_topology_map *)malloc(sizeof(struct fw_topology_map),
-	    M_FW, M_NOWAIT | M_ZERO);
+	    kmem_zalloc(sizeof(struct fw_topology_map), KM_NOSLEEP);
 	if (fc->topology_map == NULL) {
 		aprint_error_dev(fc->dev, "Malloc Failure topology map\n");
-		free(fc->crom_src_buf, M_FW);
+		kmem_free(fc->crom_src_buf, sizeof(struct crom_src_buf));
 		return;
 	}
-	fc->speed_map =
-	    (struct fw_speed_map *)malloc(sizeof(struct fw_speed_map),
-	    M_FW, M_NOWAIT | M_ZERO);
+	fc->speed_map = kmem_zalloc(sizeof(struct fw_speed_map), KM_NOSLEEP);
 	if (fc->speed_map == NULL) {
 		aprint_error_dev(fc->dev, "Malloc Failure speed map\n");
-		free(fc->crom_src_buf, M_FW);
-		free(fc->topology_map, M_FW);
+		kmem_free(fc->crom_src_buf, sizeof(struct crom_src_buf));
+		kmem_free(fc->topology_map, sizeof(struct fw_topology_map));
 		return;
 	}
 
@@ -262,7 +258,7 @@ firewireattach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "kthread_create failed\n");
 	config_pending_incr();
 
-	devlist = malloc(sizeof(struct firewire_dev_list), M_DEVBUF, M_NOWAIT);
+	devlist = kmem_alloc(sizeof(struct firewire_dev_list), KM_NOSLEEP);
 	if (devlist == NULL) {
 		aprint_error_dev(self, "device list allocation failed\n");
 		return;
@@ -273,7 +269,7 @@ firewireattach(device_t parent, device_t self, void *aux)
 	faa.fwdev = NULL;
 	devlist->dev = config_found(sc->dev, &faa, firewire_print);
 	if (devlist->dev == NULL)
-		free(devlist, M_DEVBUF);
+		kmem_free(devlist, sizeof(struct firewire_dev_list));
 	else
 		SLIST_INSERT_HEAD(&sc->devlist, devlist, link);
 
@@ -315,7 +311,7 @@ firewiredetach(device_t self, int flags)
 		if ((err = config_detach(devlist->dev, flags)) != 0)
 			return err;
 		SLIST_REMOVE(&sc->devlist, devlist, firewire_dev_list, link);
-		free(devlist, M_DEVBUF);
+		kmem_free(devlist, sizeof(struct firewire_dev_list));
 	}
 
 	callout_stop(&fc->timeout_callout);
@@ -326,11 +322,11 @@ firewiredetach(device_t self, int flags)
 	for (fwdev = STAILQ_FIRST(&fc->devices); fwdev != NULL;
 	    fwdev = fwdev_next) {
 		fwdev_next = STAILQ_NEXT(fwdev, link);
-		free(fwdev, M_FW);
+		kmem_free(fwdev, sizeof(struct fw_device));
 	}
-	free(fc->topology_map, M_FW);
-	free(fc->speed_map, M_FW);
-	free(fc->crom_src_buf, M_FW);
+	kmem_free(fc->topology_map, sizeof(struct fw_topology_map));
+	kmem_free(fc->speed_map, sizeof(struct fw_speed_map));
+	kmem_free(fc->crom_src_buf, sizeof(struct crom_src_buf));
 
 	cv_destroy(&fc->fc_cv);
 	mutex_destroy(&fc->wait_lock);
@@ -586,7 +582,7 @@ fw_busreset(struct firewire_comm *fc, uint32_t new_status)
 	 * Configuration ROM.
 	 */
 #define FW_MAX_GENERATION	0xF
-	newrom = malloc(CROMSIZE, M_FW, M_NOWAIT | M_ZERO);
+	newrom = kmem_zalloc(CROMSIZE, KM_NOSLEEP);
 	src = &fc->crom_src_buf->src;
 	crom_load(src, newrom, CROMSIZE);
 	if (memcmp(newrom, fc->config_rom, CROMSIZE) != 0) {
@@ -594,7 +590,7 @@ fw_busreset(struct firewire_comm *fc, uint32_t new_status)
 			src->businfo.generation = FW_GENERATION_CHANGEABLE;
 		memcpy((void *)fc->config_rom, newrom, CROMSIZE);
 	}
-	free(newrom, M_FW);
+	kmem_free(newrom, CROMSIZE);
 }
 
 /* Call once after reboot */
@@ -810,7 +806,7 @@ fw_xfer_alloc(struct malloc_type *type)
 {
 	struct fw_xfer *xfer;
 
-	xfer = malloc(sizeof(struct fw_xfer), type, M_NOWAIT | M_ZERO);
+	xfer = kmem_zalloc(sizeof(struct fw_xfer), KM_NOSLEEP);
 	if (xfer == NULL)
 		return xfer;
 
@@ -831,17 +827,17 @@ fw_xfer_alloc_buf(struct malloc_type *type, int send_len, int recv_len)
 	xfer->send.pay_len = send_len;
 	xfer->recv.pay_len = recv_len;
 	if (send_len > 0) {
-		xfer->send.payload = malloc(send_len, type, M_NOWAIT | M_ZERO);
+		xfer->send.payload = kmem_zalloc(send_len, KM_NOSLEEP);
 		if (xfer->send.payload == NULL) {
 			fw_xfer_free(xfer);
 			return NULL;
 		}
 	}
 	if (recv_len > 0) {
-		xfer->recv.payload = malloc(recv_len, type, M_NOWAIT);
+		xfer->recv.payload = kmem_alloc(recv_len, KM_NOSLEEP);
 		if (xfer->recv.payload == NULL) {
 			if (xfer->send.payload != NULL)
-				free(xfer->send.payload, type);
+				kmem_free(xfer->send.payload, send_len);
 			fw_xfer_free(xfer);
 			return NULL;
 		}
@@ -912,7 +908,7 @@ fw_xfer_free(struct fw_xfer* xfer)
 	}
 	fw_xfer_unload(xfer);
 	cv_destroy(&xfer->cv);
-	free(xfer, xfer->malloc);
+	kmem_free(xfer, sizeof(struct fw_xfer));
 }
 
 void
@@ -924,14 +920,12 @@ fw_xfer_free_buf(struct fw_xfer* xfer)
 		return;
 	}
 	fw_xfer_unload(xfer);
-	if (xfer->send.payload != NULL) {
-		free(xfer->send.payload, xfer->malloc);
-	}
-	if (xfer->recv.payload != NULL) {
-		free(xfer->recv.payload, xfer->malloc);
-	}
+	if (xfer->send.payload != NULL)
+		kmem_free(xfer->send.payload, xfer->send.pay_len);
+	if (xfer->recv.payload != NULL)
+		kmem_free(xfer->recv.payload, xfer->recv.pay_len);
 	cv_destroy(&xfer->cv);
-	free(xfer, xfer->malloc);
+	kmem_free(xfer, sizeof(struct fw_xfer));
 }
 
 void
@@ -1769,8 +1763,7 @@ fw_explore_node(struct fw_device *dfwdev)
 	mutex_exit(&fc->fc_mtx);
 	if (fwdev == NULL) {
 		/* new device */
-		fwdev =
-		    malloc(sizeof(struct fw_device), M_FW, M_NOWAIT | M_ZERO);
+		fwdev = kmem_zalloc(sizeof(struct fw_device), KM_NOSLEEP);
 		if (fwdev == NULL) {
 			if (firewire_debug)
 				printf("node%d: no memory\n", node);
@@ -1887,7 +1880,7 @@ fw_explore(struct firewire_comm *fc)
 	char nodes[63];
 
 	todo = 0;
-	dfwdev = malloc(sizeof(*dfwdev), M_TEMP, M_NOWAIT);
+	dfwdev = kmem_alloc(sizeof(struct fw_device), KM_NOSLEEP);
 	if (dfwdev == NULL)
 		return;
 	/* setup dummy fwdev */
@@ -1928,7 +1921,7 @@ fw_explore(struct firewire_comm *fc)
 		}
 		todo = todo2;
 	}
-	free(dfwdev, M_TEMP);
+	kmem_free(dfwdev, sizeof(struct fw_device));
 }
 
 static void
@@ -1982,8 +1975,8 @@ fw_attach_dev(struct firewire_comm *fc)
 		mutex_exit(&fc->fc_mtx);
 		switch (fwdev->status) {
 		case FWDEVNEW:
-			devlist = malloc(sizeof(struct firewire_dev_list),
-			    M_DEVBUF, M_NOWAIT);
+			devlist = kmem_alloc(sizeof(struct firewire_dev_list),
+			    KM_NOSLEEP);
 			if (devlist == NULL) {
 				aprint_error_dev(fc->bdev,
 				    "memory allocation failed\n");
@@ -1997,7 +1990,8 @@ fw_attach_dev(struct firewire_comm *fc)
 			fwdev->sbp = config_found_sm_loc(sc->dev, "ieee1394if",
 			    locs, &fwa, firewire_print, config_stdsubmatch);
 			if (fwdev->sbp == NULL) {
-				free(devlist, M_DEVBUF);
+				kmem_free(devlist,
+				    sizeof(struct firewire_dev_list));
 				break;
 			}
 
@@ -2058,13 +2052,13 @@ fw_attach_dev(struct firewire_comm *fc)
 
 			SLIST_REMOVE(&sc->devlist, devlist, firewire_dev_list,
 			    link);
-			free(devlist, M_DEVBUF);
+			kmem_free(devlist, sizeof(struct firewire_dev_list));
 
 			if (config_detach(fwdev->sbp, DETACH_FORCE) != 0)
 				return;
 
 			STAILQ_REMOVE(&fc->devices, fwdev, fw_device, link);
-			free(fwdev, M_FW);
+			kmem_free(fwdev, sizeof(struct fw_device));
 		}
 	}
 
