@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.3 2010/04/21 00:27:42 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.1.4.4 2010/05/10 06:55:44 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.1.4.3 2010/04/20 22:03:26 matt Exp
+ *	NetBSD: pcidevs,v 1.962.4.1.4.4 2010/05/10 06:55:25 matt Exp
  */
 
 /*
@@ -6642,6 +6642,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_2,
 	    "Libertas 88W8335",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SB2211,
+	    "88SB2211 x1 PCIe-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8300_2,
@@ -14836,4 +14840,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3107;
+const int pci_nproducts = 3108;
