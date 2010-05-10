@@ -1,7 +1,7 @@
-/*	$eterna: ssl-bozo.c,v 1.9 2008/11/06 05:08:11 mrg Exp $	*/
+/*	$eterna: ssl-bozo.c,v 1.11 2010/05/10 02:51:28 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2008 Matthew R. Green
+ * Copyright (c) 1997-2010 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,132 +30,218 @@
 
 /* this code implements SSL for bozohttpd */
 
-#ifndef NO_SSL_SUPPORT
-
+#include <stdarg.h>
+#include <stdio.h>
 #include <unistd.h>
+
+#include "bozohttpd.h"
+
+#ifndef NO_SSL_SUPPORT
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-#include "bozohttpd.h"
+#ifndef USE_ARG
+#define USE_ARG(x)	/*LINTED*/(void)&(x)
+#endif
 
-static	SSL_CTX		*ssl_context;
-static	const SSL_METHOD	*ssl_method;
-static	SSL		*bozossl;
-static	char		*certificate_file;
-static	char		*privatekey_file;
-
-static	int	ssl_printf(const char *, ...);
-static	ssize_t	ssl_read(int, void *, size_t);
-static	ssize_t	ssl_write(int, const void *, size_t);
-static	int	ssl_flush(FILE *);
-
-void
-ssl_init(void)
-{
-	if (!certificate_file)
-		return;
-	SSL_library_init();
-	SSL_load_error_strings();
-
-	ssl_method = SSLv23_server_method();
-	ssl_context = SSL_CTX_new(ssl_method);
-
-	/* XXX we need to learn how to check the SSL stack for more info */
-	if (ssl_context == NULL)
-		error(1, "SSL context initialization failed.");
-
-	SSL_CTX_use_certificate_file(ssl_context, certificate_file,
-	    SSL_FILETYPE_PEM);
-	SSL_CTX_use_PrivateKey_file(ssl_context, privatekey_file,
-	    SSL_FILETYPE_PEM);
-
-	/* check consistency of key vs certificate */
-	if (!SSL_CTX_check_private_key(ssl_context))
-		error(1, "check private key failed");
-}
-
-void
-ssl_accept()
-{
-	if (ssl_context) {
-		bozossl = SSL_new(ssl_context); /* XXX global sucks */
-		SSL_set_rfd(bozossl, 0);
-		SSL_set_wfd(bozossl, 1);
-		SSL_accept(bozossl);
-	}
-}
-
-void
-ssl_destroy()
-{
-	if (bozossl)
-		SSL_free(bozossl);
-}
-
-void
-ssl_set_opts(char *cert, char *priv)
-{
-	certificate_file = cert;
-	privatekey_file = priv;
-	debug((DEBUG_NORMAL, "using cert/priv files: %s & %s", certificate_file,
-	    privatekey_file));
-	if (Iflag_set == 0)
-		Iflag = "https";
-	bozoprintf = ssl_printf;
-	bozoread = ssl_read;
-	bozowrite = ssl_write;
-	bozoflush = ssl_flush;
-}
+/* this structure encapsulates the ssl info */
+typedef struct sslinfo_t {
+	SSL_CTX			*ssl_context;
+	const SSL_METHOD	*ssl_method;
+	SSL			*bozossl;
+	char			*certificate_file;
+	char			*privatekey_file;
+} sslinfo_t;
 
 static int
-ssl_printf(const char * fmt, ...)
+bozo_ssl_printf(bozohttpd_t *httpd, const char * fmt, ...)
 {
-	int nbytes;
-	char *buf;
-	va_list ap;
+	sslinfo_t	*sslinfo;
+	va_list		 ap;
+	char		*buf;
+	int		 nbytes;
 
+	sslinfo = httpd->sslinfo;
 	/* XXX we need more elegant/proper handling of SSL_write return */
 	va_start(ap, fmt);
 	if ((nbytes = vasprintf(&buf, fmt, ap)) != -1) 
-		SSL_write(bozossl, buf, nbytes);
+		SSL_write(sslinfo->bozossl, buf, nbytes);
 	va_end(ap);
+
+	free(buf);
 
 	return nbytes;
 }
 
 static ssize_t
-ssl_read(int fd, void *buf, size_t nbytes)
+bozo_ssl_read(bozohttpd_t *httpd, int fd, void *buf, size_t nbytes)
 {
-	ssize_t rbytes;
+	sslinfo_t	*sslinfo;
+	ssize_t		 rbytes;
 
+	USE_ARG(fd);
+	sslinfo = httpd->sslinfo;
 	/* XXX we need elegant/proper handling of SSL_read return */
-	rbytes = (ssize_t)SSL_read(bozossl, buf, nbytes);
-	if (1 > rbytes) {
-		if (SSL_get_error(bozossl, rbytes) == SSL_ERROR_WANT_READ)
-			warning("SSL_ERROR_WANT_READ");
+	rbytes = (ssize_t)SSL_read(sslinfo->bozossl, buf, (int)nbytes);
+	if (rbytes < 1) {
+		if (SSL_get_error(sslinfo->bozossl, rbytes) ==
+				SSL_ERROR_WANT_READ)
+			bozo_warn(httpd, "SSL_ERROR_WANT_READ");
 		else
-			warning("SSL_ERROR OTHER");
+			bozo_warn(httpd, "SSL_ERROR OTHER");
 	}
 
 	return rbytes;
 }
 
 static ssize_t
-ssl_write(int fd, const void *buf, size_t nbytes)
+bozo_ssl_write(bozohttpd_t *httpd, int fd, const void *buf, size_t nbytes)
 {
-	ssize_t wbytes;
+	sslinfo_t	*sslinfo;
+	ssize_t		 wbytes;
 
+	USE_ARG(fd);
+	sslinfo = httpd->sslinfo;
 	/* XXX we need elegant/proper handling of SSL_write return */
-	wbytes = (ssize_t)SSL_write(bozossl, buf, nbytes);
+	wbytes = (ssize_t)SSL_write(sslinfo->bozossl, buf, (int)nbytes);
 
 	return wbytes;
 }
 
 static int
-ssl_flush(FILE *fp)
+bozo_ssl_flush(bozohttpd_t *httpd, FILE *fp)
 {
+	USE_ARG(httpd);
+	USE_ARG(fp);
 	/* nothing to see here, move right along */
 	return 0;
 }
+
+void
+bozo_ssl_init(bozohttpd_t *httpd)
+{
+	sslinfo_t	*sslinfo;
+
+	sslinfo = httpd->sslinfo;
+	if (sslinfo == NULL || !sslinfo->certificate_file)
+		return;
+	SSL_library_init();
+	SSL_load_error_strings();
+
+	sslinfo->ssl_method = SSLv23_server_method();
+	sslinfo->ssl_context = SSL_CTX_new(sslinfo->ssl_method);
+
+	/* XXX we need to learn how to check the SSL stack for more info */
+	if (sslinfo->ssl_context == NULL)
+		bozo_err(httpd, 1, "SSL context initialization failed.");
+
+	SSL_CTX_use_certificate_file(sslinfo->ssl_context,
+		sslinfo->certificate_file, SSL_FILETYPE_PEM);
+	SSL_CTX_use_PrivateKey_file(sslinfo->ssl_context,
+		sslinfo->privatekey_file, SSL_FILETYPE_PEM);
+
+	/* check consistency of key vs certificate */
+	if (!SSL_CTX_check_private_key(sslinfo->ssl_context))
+		bozo_err(httpd, 1, "check private key failed");
+}
+
+void
+bozo_ssl_accept(bozohttpd_t *httpd)
+{
+	sslinfo_t	*sslinfo;
+
+	sslinfo = httpd->sslinfo;
+	if (sslinfo != NULL && sslinfo->ssl_context) {
+		sslinfo->bozossl = SSL_new(sslinfo->ssl_context);
+		SSL_set_rfd(sslinfo->bozossl, 0);
+		SSL_set_wfd(sslinfo->bozossl, 1);
+		SSL_accept(sslinfo->bozossl);
+	}
+}
+
+void
+bozo_ssl_destroy(bozohttpd_t *httpd)
+{
+	sslinfo_t	*sslinfo;
+
+	sslinfo = httpd->sslinfo;
+	if (sslinfo && sslinfo->bozossl)
+		SSL_free(sslinfo->bozossl);
+}
+
+void
+bozo_ssl_set_opts(bozohttpd_t *httpd, const char *cert, const char *priv)
+{
+	sslinfo_t	*sslinfo;
+
+	if ((sslinfo = httpd->sslinfo) == NULL) {
+		sslinfo = bozomalloc(httpd, sizeof(*sslinfo));
+		if (sslinfo == NULL) {
+			bozo_err(httpd, 1, "sslinfo allocation failed");
+		}
+		httpd->sslinfo = sslinfo;
+	}
+	sslinfo->certificate_file = strdup(cert);
+	sslinfo->privatekey_file = strdup(priv);
+	debug((httpd, DEBUG_NORMAL, "using cert/priv files: %s & %s",
+		sslinfo->certificate_file,
+		sslinfo->privatekey_file));
+	if (!httpd->bindport) {
+		httpd->bindport = strdup("https");
+	}
+}
+
 #endif /* NO_SSL_SUPPORT */
+
+int
+bozo_printf(bozohttpd_t *httpd, const char *fmt, ...)
+{
+	va_list	args;
+	int	cc;
+
+	va_start(args, fmt);
+#ifndef NO_SSL_SUPPORT
+	if (httpd->sslinfo) {
+		cc = bozo_ssl_printf(httpd, fmt, args);
+		va_end(args);
+		return cc;
+	}
+#endif
+	cc = vprintf(fmt, args);
+	va_end(args);
+	return cc;
+}
+
+ssize_t
+bozo_read(bozohttpd_t *httpd, int fd, void *buf, size_t len)
+{
+#ifndef NO_SSL_SUPPORT
+	if (httpd->sslinfo) {
+		return bozo_ssl_read(httpd, fd, buf, len);
+	}
+#endif
+	return read(fd, buf, len);
+}
+
+ssize_t
+bozo_write(bozohttpd_t *httpd, int fd, const void *buf, size_t len)
+{
+#ifndef NO_SSL_SUPPORT
+	if (httpd->sslinfo) {
+		return bozo_ssl_write(httpd, fd, buf, len);
+	}
+#endif
+	return write(fd, buf, len);
+}
+
+int
+bozo_flush(bozohttpd_t *httpd, FILE *fp)
+{
+#ifndef NO_SSL_SUPPORT
+	if (httpd->sslinfo) {
+		return bozo_ssl_flush(httpd, fp);
+	}
+#endif
+	return fflush(fp);
+}

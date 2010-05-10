@@ -1,7 +1,7 @@
-/*	$eterna: tilde-luzah-bozo.c,v 1.10 2009/04/18 05:36:04 mrg Exp $	*/
+/*	$eterna: tilde-luzah-bozo.c,v 1.13 2010/05/10 02:51:28 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Matthew R. Green
+ * Copyright (c) 1997-2010 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,15 +42,8 @@
 
 #include "bozohttpd.h"
 
-#ifndef PUBLIC_HTML
-#define PUBLIC_HTML		"public_html"
-#endif
-
-	int	uflag;		/* allow /~user/ translation */
-	const char *public_html	= PUBLIC_HTML;
-
 /*
- * user_transform does this:
+ * bozo_user_transform does this:
  *	- chdir's /~user/public_html
  *	- returns the rest of the file, index.html appended if required
  *	- returned malloced file to serve in request->hr_file,
@@ -60,10 +53,9 @@
  * enabled.
  */
 int
-user_transform(request, isindex)
-	http_req *request;
-	int *isindex;
+bozo_user_transform(bozo_httpreq_t *request, int *isindex)
 {
+	bozohttpd_t *httpd = request->hr_httpd;
 	char	c, *s, *file = NULL;
 	struct	passwd *pw;
 
@@ -75,48 +67,53 @@ user_transform(request, isindex)
 		*isindex = (c == '/' || c == '\0');
 	}
 
-	debug((DEBUG_OBESE, "looking for user %s", request->hr_file + 2));
+	debug((httpd, DEBUG_OBESE, "looking for user %s",
+		request->hr_file + 2));
 	pw = getpwnam(request->hr_file + 2);
 	/* fix this up immediately */
 	if (s)
 		s[-1] = '/';
 	if (pw == NULL) {
-		(void)http_error(404, request, "no such user");
+		(void)bozo_http_error(httpd, 404, request, "no such user");
 		return 0;
 	}
 
-	debug((DEBUG_OBESE, "user %s home dir %s uid %d gid %d", pw->pw_name,
-	    pw->pw_dir, pw->pw_uid, pw->pw_gid));
+	debug((httpd, DEBUG_OBESE, "user %s home dir %s uid %d gid %d",
+		pw->pw_name, pw->pw_dir, pw->pw_uid, pw->pw_gid));
 
 	if (chdir(pw->pw_dir) < 0) {
-		warning("chdir1 error: %s: %s", pw->pw_dir, strerror(errno));
-		(void)http_error(403, request, "can't chdir to homedir");
+		bozo_warn(httpd, "chdir1 error: %s: %s", pw->pw_dir,
+			strerror(errno));
+		(void)bozo_http_error(httpd, 403, request,
+			"can't chdir to homedir");
 		return 0;
 	}
-	if (chdir(public_html) < 0) {
-		warning("chdir2 error: %s: %s", public_html, strerror(errno));
-		(void)http_error(403, request, "can't chdir to public_html");
+	if (chdir(httpd->public_html) < 0) {
+		bozo_warn(httpd, "chdir2 error: %s: %s", httpd->public_html,
+			strerror(errno));
+		(void)bozo_http_error(httpd, 403, request,
+			"can't chdir to public_html");
 		return 0;
 	}
 	if (s == NULL || *s == '\0') {
-		file = bozostrdup(index_html);
+		file = bozostrdup(httpd, httpd->index_html);
 	} else {
-		file = bozomalloc(strlen(s) +
-		    (*isindex ? strlen(index_html) + 1 : 1));
+		file = bozomalloc(httpd, strlen(s) +
+		    (*isindex ? strlen(httpd->index_html) + 1 : 1));
 		strcpy(file, s);
 		if (*isindex)
-			strcat(file, index_html);
+			strcat(file, httpd->index_html);
 	}
 
 	/* see transform_request() */
 	if (*file == '/' || strcmp(file, "..") == 0 ||
 	    strstr(file, "/..") || strstr(file, "../")) {
-		(void)http_error(403, request, "illegal request");
+		(void)bozo_http_error(httpd, 403, request, "illegal request");
 		free(file);
 		return 0;
 	}
 
-	if (auth_check(request, file)) {
+	if (bozo_auth_check(httpd, request, file)) {
 		free(file);
 		return 0;
 	}
@@ -124,7 +121,7 @@ user_transform(request, isindex)
 	free(request->hr_file);
 	request->hr_file = file;
 
-	debug((DEBUG_FAT, "transform_user returning %s under %s", file,
+	debug((httpd, DEBUG_FAT, "transform_user returning %s under %s", file,
 	    pw->pw_dir));
 	return 1;
 }

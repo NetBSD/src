@@ -1,4 +1,4 @@
-#	$eterna: Makefile,v 1.27 2009/05/22 21:51:38 mrg Exp $
+#	$eterna: Makefile,v 1.29 2010/05/10 02:24:30 mrg Exp $
 #
 # berkeley (netbsd) makefile.  see Makefile.boot for other systems.
 
@@ -20,8 +20,9 @@ PROG?=	bozohttpd
 MAN=	bozohttpd.8
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c
+SRCS+=	main.c
 
-WARNS=	3
+WARNS?=	4
 
 check:
 	cd $(.CURDIR)/testsuite && $(MAKE) check

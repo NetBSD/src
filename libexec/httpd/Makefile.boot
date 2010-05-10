@@ -1,4 +1,4 @@
-# $eterna: Makefile.boot,v 1.7 2005/09/27 20:09:20 mrg Exp $
+# $eterna: Makefile.boot,v 1.8 2010/05/10 02:24:30 mrg Exp $
 #
 # very simple makefile to compile bozohttpd, should work with every make.
 # see Makefile for a list of compile options that may be placed in CFLAGS.
@@ -11,7 +11,7 @@ CRYPTOLIBDIR=	# -L/usr/local/lib
 CRYPTOLIBS=	$(CRYPTOLIBDIR) -lcrypto -lssl
 
 FILES=	bozohttpd.c auth-bozo.c cgi-bozo.c content-bozo.c daemon-bozo.c \
-	dir-index-bozo.c ssl-bozo.c tilde-luzah-bozo.c
+	dir-index-bozo.c ssl-bozo.c tilde-luzah-bozo.c main.c
 
 all:
 	$(CC) $(CFLAGS) -o bozohttpd $(FILES) $(CRYPTOLIBS)
