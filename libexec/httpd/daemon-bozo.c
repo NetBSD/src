@@ -1,4 +1,4 @@
-/*	$eterna: daemon-bozo.c,v 1.19 2010/05/10 02:51:28 mrg Exp $	*/
+/*	$eterna: daemon-bozo.c,v 1.20 2010/05/10 04:39:00 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -134,7 +134,6 @@ bozo_daemon_closefds(bozohttpd_t *httpd)
 static void
 daemon_runchild(bozohttpd_t *httpd, int fd)
 {
-
 	httpd->request_times++;
 
 	/* setup stdin/stdout/stderr */
@@ -142,6 +141,33 @@ daemon_runchild(bozohttpd_t *httpd, int fd)
 	dup2(fd, 1);
 	/*dup2(fd, 2);*/
 	close(fd);
+}
+
+static int
+daemon_poll_err(bozohttpd_t *httpd, int fd, int idx)
+{
+	if ((httpd->fds[idx].revents & (POLLNVAL|POLLERR|POLLHUP)) == 0)
+		return 0;
+
+	bozo_warn(httpd, "poll on fd %d pid %d revents %d: %s",
+	    httpd->fds[idx].fd, getpid(), httpd->fds[idx].revents,
+	    strerror(errno));
+	bozo_warn(httpd, "nsock = %d", httpd->nsock);
+	close(httpd->sock[idx]);
+	httpd->nsock--;
+	bozo_warn(httpd, "nsock now = %d", httpd->nsock);
+	/* no sockets left */
+	if (httpd->nsock == 0)
+		exit(0);
+	/* last socket closed is the easy case */
+	if (httpd->nsock != idx) {
+		memmove(&httpd->fds[idx], &httpd->fds[idx+1],
+			(httpd->nsock - idx) * sizeof(*httpd->fds));
+		memmove(&httpd->sock[idx], &httpd->sock[idx+1],
+			(httpd->nsock - idx) * sizeof(*httpd->sock));
+	}
+
+	return 1;
 }
 
 /*
@@ -192,30 +218,8 @@ again:
 		}
 
 		for (i = 0; i < httpd->nsock; i++) {
-			if (httpd->fds[i].revents & (POLLNVAL|POLLERR|POLLHUP)) {
-				bozo_warn(httpd,
-					"poll on fd %d pid %d revents %d: %s",
-					httpd->fds[i].fd, getpid(),
-					httpd->fds[i].revents,
-					strerror(errno));
-				bozo_warn(httpd, "nsock = %d", httpd->nsock);
-				close(httpd->sock[i]);
-				httpd->nsock--;
-				bozo_warn(httpd, "nsock now = %d", httpd->nsock);
-				/* no sockets left */
-				if (httpd->nsock == 0)
-					exit(0);
-				/* last socket; easy case */
-				if (httpd->nsock == i)
-					break;
-				memmove(&httpd->fds[i], &httpd->fds[i+i],
-					(httpd->nsock - i) *
-						sizeof(*httpd->fds));
-				memmove(&httpd->sock[i], &httpd->sock[i+i],
-					(httpd->nsock - i) *
-						sizeof(*httpd->sock));
+			if (daemon_poll_err(httpd, fd, i))
 				break;
-			}
 			if (httpd->fds[i].revents == 0)
 				continue;
 

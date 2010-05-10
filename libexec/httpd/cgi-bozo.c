@@ -1,4 +1,4 @@
-/*	$eterna: cgi-bozo.c,v 1.35 2010/05/10 02:51:28 mrg Exp $	*/
+/*	$eterna: cgi-bozo.c,v 1.36 2010/05/10 14:36:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -277,7 +277,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 
 	len = strlen(url);
 
-	if (bozo_auth_check(httpd, request, url + 1))
+	if (bozo_auth_check(request, url + 1))
 		goto out;
 
 	if (!httpd->cgibin ||
@@ -400,7 +400,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	if (request->hr_remoteaddr && *request->hr_remoteaddr)
 		bozo_setenv(httpd, "REMOTE_ADDR", request->hr_remoteaddr,
 				curenvp++);
-	bozo_auth_cgi_setenv(httpd, request, &curenvp);
+	bozo_auth_cgi_setenv(request, &curenvp);
 
 	free(file);
 	free(url);

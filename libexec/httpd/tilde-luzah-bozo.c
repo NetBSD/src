@@ -1,4 +1,4 @@
-/*	$eterna: tilde-luzah-bozo.c,v 1.13 2010/05/10 02:51:28 mrg Exp $	*/
+/*	$eterna: tilde-luzah-bozo.c,v 1.14 2010/05/10 14:36:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -113,7 +113,7 @@ bozo_user_transform(bozo_httpreq_t *request, int *isindex)
 		return 0;
 	}
 
-	if (bozo_auth_check(httpd, request, file)) {
+	if (bozo_auth_check(request, file)) {
 		free(file);
 		return 0;
 	}

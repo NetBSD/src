@@ -1,4 +1,4 @@
-/*	$eterna: bozohttpd.c,v 1.165 2010/05/10 02:52:34 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.167 2010/05/10 14:36:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -656,7 +656,7 @@ bozo_read_request(bozohttpd_t *httpd)
 			while (*val == ' ' || *val == '\t')
 				val++;
 
-			if (bozo_auth_check_headers(httpd, request, val, str, len))
+			if (bozo_auth_check_headers(request, val, str, len))
 				goto next_header;
 
 			hdr = addmerge_header(request, val, str, len);
@@ -843,7 +843,7 @@ check_direct_access(bozo_httpreq_t *request)
 	char dir[MAXPATHLEN], dirfile[MAXPATHLEN], *basename;
 
 	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
-	debug((httpd, DEBUG_FAT, "check_bzredirect: dir %s", dir));
+	debug((request->hr_httpd, DEBUG_FAT, "check_bzredirect: dir %s", dir));
 	basename = strrchr(dir, '/');
 
 	if ((!basename || basename[1] != '\0') &&
@@ -1032,7 +1032,7 @@ check_bzredirect(bozo_httpreq_t *request)
 	 * use it as the directory to look for the redir file.
 	 */
 	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
-	debug((httpd, DEBUG_FAT, "check_bzredirect: dir %s", dir));
+	debug((request->hr_httpd, DEBUG_FAT, "check_bzredirect: dir %s", dir));
 	basename = strrchr(dir, '/');
 
 	if ((!basename || basename[1] != '\0') &&
@@ -1056,14 +1056,16 @@ check_bzredirect(bozo_httpreq_t *request)
 			return;
 		absolute = 1;
 	}
-	debug((httpd, DEBUG_FAT, "check_bzredirect: calling readlink"));
+	debug((request->hr_httpd, DEBUG_FAT,
+	       "check_bzredirect: calling readlink"));
 	rv = readlink(redir, redirpath, sizeof redirpath - 1);
 	if (rv == -1 || rv == 0) {
-		debug((httpd, DEBUG_FAT, "readlink failed"));
+		debug((request->hr_httpd, DEBUG_FAT, "readlink failed"));
 		return;
 	}
 	redirpath[rv] = '\0';
-	debug((httpd, DEBUG_FAT, "readlink returned \"%s\"", redirpath));
+	debug((request->hr_httpd, DEBUG_FAT,
+	       "readlink returned \"%s\"", redirpath));
 	
 	/* now we have the link pointer, redirect to the real place */
 	if (absolute)
@@ -1072,7 +1074,8 @@ check_bzredirect(bozo_httpreq_t *request)
 		snprintf(finalredir = redir, sizeof(redir), "/%s/%s", dir,
 			 redirpath);
 
-	debug((httpd, DEBUG_FAT, "check_bzredirect: new redir %s", finalredir));
+	debug((request->hr_httpd, DEBUG_FAT,
+	       "check_bzredirect: new redir %s", finalredir));
 	handle_redirect(request, finalredir, absolute);
 }
 
@@ -1301,7 +1304,7 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 		goto bad_done;
 	}
 
-	if (bozo_auth_check(httpd, request, newfile))
+	if (bozo_auth_check(request, newfile))
 		goto bad_done;
 
 	if (strlen(newfile)) {
@@ -1464,7 +1467,7 @@ bozo_check_special_files(bozo_httpreq_t *request, const char *name)
 	if (strcmp(name, ABSREDIRECT_FILE) == 0)
 		return bozo_http_error(httpd, 403, request,
 		    "no permission to open redirect file");
-	return bozo_auth_check_special_files(httpd, request, name);
+	return bozo_auth_check_special_files(request, name);
 }
 
 /* generic header printing routine */
@@ -1708,7 +1711,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		size = 0;
 
 	bozo_printf(httpd, "%s %s\r\n", proto, header);
-	bozo_auth_check_401(httpd, request, code);
+	bozo_auth_check_401(request, code);
 
 	bozo_printf(httpd, "Content-Type: text/html\r\n");
 	bozo_printf(httpd, "Content-Length: %d\r\n", size);
@@ -1789,6 +1792,9 @@ bozodgetln(bozohttpd_t *httpd, int fd, ssize_t *lenp,
 	 * programs (for we pass stdin off to them).  could fix this
 	 * by becoming a fd-passing program instead of just exec'ing
 	 * the program
+	 *
+	 * the above is no longer true, we are the fd-passing
+	 * program already.
 	 */
 	for (; readfn(httpd, fd, &c, 1) == 1; ) {
 		debug((httpd, DEBUG_EXPLODING, "bozodgetln read %c", c));
