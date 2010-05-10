@@ -1,9 +1,9 @@
-/*	$NetBSD: auth-bozo.c,v 1.7 2009/04/18 21:22:03 mrg Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.8 2010/05/10 03:37:45 mrg Exp $	*/
 
-/*	$eterna: auth-bozo.c,v 1.13 2009/04/18 07:38:56 mrg Exp $	*/
+/*	$eterna: auth-bozo.c,v 1.15 2010/05/10 02:51:28 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Matthew R. Green
+ * Copyright (c) 1997-2010 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,7 +53,7 @@ static	ssize_t	base64_decode(const unsigned char *, size_t,
  * Check if HTTP authentication is required
  */
 int
-auth_check(http_req *request, const char *file)
+bozo_auth_check(bozohttpd_t *httpd, bozo_httpreq_t *request, const char *file)
 {
 	struct stat sb;
 	char dir[MAXPATHLEN], authfile[MAXPATHLEN], *basename;
@@ -68,23 +68,23 @@ auth_check(http_req *request, const char *file)
 	else {
 		*basename++ = '\0';
 			/* ensure basename(file) != AUTH_FILE */
-		if (check_special_files(request, basename))
+		if (bozo_check_special_files(httpd, request, basename))
 			return 1;
 	}
-	request->hr_authrealm = bozostrdup(dir);
+	request->hr_authrealm = bozostrdup(httpd, dir);
 
 	snprintf(authfile, sizeof(authfile), "%s/%s", dir, AUTH_FILE);
 	if (stat(authfile, &sb) < 0) {
-		debug((DEBUG_NORMAL,
-		    "auth_check realm `%s' dir `%s' authfile `%s' missing",
+		debug((httpd, DEBUG_NORMAL,
+		    "bozo_auth_check realm `%s' dir `%s' authfile `%s' missing",
 		    dir, file, authfile));
 		return 0;
 	}
 	if ((fp = fopen(authfile, "r")) == NULL)
-		return http_error(403, request, "no permission to open "
-						"authfile");
-	debug((DEBUG_NORMAL,
-	    "auth_check realm `%s' dir `%s' authfile `%s' open",
+		return bozo_http_error(httpd, 403, request,
+			"no permission to open authfile");
+	debug((httpd, DEBUG_NORMAL,
+	    "bozo_auth_check realm `%s' dir `%s' authfile `%s' open",
 	    dir, file, authfile));
 	if (request->hr_authuser && request->hr_authpass) {
 		while (fgets(user, sizeof(user), fp) != NULL) {
@@ -94,24 +94,26 @@ auth_check(http_req *request, const char *file)
 			if ((pass = strchr(user, ':')) == NULL)
 				continue;
 			*pass++ = '\0';
-			debug((DEBUG_NORMAL,
-			    "auth_check authfile `%s':`%s' client `%s':`%s'",
+			debug((httpd, DEBUG_NORMAL,
+			    "bozo_auth_check authfile `%s':`%s' "
+			    	"client `%s':`%s'",
 			    user, pass, request->hr_authuser,
 			    request->hr_authpass));
 			if (strcmp(request->hr_authuser, user) != 0)
 				continue;
-			if (strcmp(crypt(request->hr_authpass, pass), pass))
+			if (strcmp(crypt(request->hr_authpass, pass),
+					pass) != 0)
 				break;
 			fclose(fp);
 			return 0;
 		}
 	}
 	fclose(fp);
-	return http_error(401, request, "bad auth");
+	return bozo_http_error(httpd, 401, request, "bad auth");
 }
 
 void
-auth_cleanup(http_req *request)
+bozo_auth_cleanup(bozo_httpreq_t *request)
 {
 
 	if (request == NULL)
@@ -125,7 +127,7 @@ auth_cleanup(http_req *request)
 }
 
 int
-auth_check_headers(http_req *request, char *val, char *str, ssize_t len)
+bozo_auth_check_headers(bozohttpd_t *httpd, bozo_httpreq_t *request, char *val, char *str, ssize_t len)
 {
 	if (strcasecmp(val, "authorization") == 0 &&
 	    strncasecmp(str, "Basic ", 6) == 0) {
@@ -133,18 +135,20 @@ auth_check_headers(http_req *request, char *val, char *str, ssize_t len)
 		char	*pass = NULL;
 		ssize_t	alen;
 
-		alen = base64_decode((unsigned char *)str + 6, len - 6,
-		    (unsigned char *)authbuf, sizeof(authbuf) - 1);
+		alen = base64_decode((unsigned char *)str + 6,
+					(size_t)(len - 6),
+					(unsigned char *)authbuf,
+					sizeof(authbuf) - 1);
 		if (alen != -1)
 			authbuf[alen] = '\0';
 		if (alen == -1 ||
 		    (pass = strchr(authbuf, ':')) == NULL)
-			return http_error(400, request,
+			return bozo_http_error(httpd, 400, request,
 			    "bad authorization field");
 		*pass++ = '\0';
-		request->hr_authuser = bozostrdup(authbuf);
-		request->hr_authpass = bozostrdup(pass);
-		debug((DEBUG_FAT,
+		request->hr_authuser = bozostrdup(httpd, authbuf);
+		request->hr_authpass = bozostrdup(httpd, pass);
+		debug((httpd, DEBUG_FAT,
 		    "decoded authorization `%s' as `%s':`%s'",
 		    str, request->hr_authuser, request->hr_authpass));
 			/* don't store in request->headers */
@@ -154,34 +158,39 @@ auth_check_headers(http_req *request, char *val, char *str, ssize_t len)
 }
 
 int
-auth_check_special_files(http_req *request, const char *name)
+bozo_auth_check_special_files(bozohttpd_t *httpd, bozo_httpreq_t *request,
+				const char *name)
 {
 	if (strcmp(name, AUTH_FILE) == 0)
-		return http_error(403, request, "no permission to open authfile");
+		return bozo_http_error(httpd, 403, request,
+				"no permission to open authfile");
 	return 0;
 }
 
 void
-auth_check_401(http_req *request, int code)
+bozo_auth_check_401(bozohttpd_t *httpd, bozo_httpreq_t *request, int code)
 {
 	if (code == 401)
-		bozoprintf("WWW-Authenticate: Basic realm=\"%s\"\r\n",
-		    request && request->hr_authrealm ? request->hr_authrealm :
-		    "default realm");
+		bozo_printf(httpd,
+			"WWW-Authenticate: Basic realm=\"%s\"\r\n",
+			(request && request->hr_authrealm) ?
+				request->hr_authrealm : "default realm");
 }
 
 #ifndef NO_CGIBIN_SUPPORT
 void
-auth_cgi_setenv(http_req *request, char ***curenvpp)
+bozo_auth_cgi_setenv(bozohttpd_t *httpd, bozo_httpreq_t *request,
+			char ***curenvpp)
 {
 	if (request->hr_authuser && *request->hr_authuser) {
-		spsetenv("AUTH_TYPE", "Basic", (*curenvpp)++);
-		spsetenv("REMOTE_USER", request->hr_authuser, (*curenvpp)++);
+		bozo_setenv(httpd, "AUTH_TYPE", "Basic", (*curenvpp)++);
+		bozo_setenv(httpd, "REMOTE_USER", request->hr_authuser,
+				(*curenvpp)++);
 	}
 }
 
 int
-auth_cgi_count(http_req *request)
+bozo_auth_cgi_count(bozo_httpreq_t *request)
 {
 	return (request->hr_authuser && *request->hr_authuser) ? 2 : 0;
 }
@@ -219,9 +228,11 @@ base64_decode(const unsigned char *in, size_t ilen, unsigned char *out,
 			    return(-1)
 
 		IN_CHECK(in[i + 0]);
+		/*LINTED*/
 		*(cp++) = decodetable[in[i + 0]] << 2
 			| decodetable[in[i + 1]] >> 4;
 		IN_CHECK(in[i + 1]);
+		/*LINTED*/
 		*(cp++) = decodetable[in[i + 1]] << 4
 			| decodetable[in[i + 2]] >> 2;
 		IN_CHECK(in[i + 2]);

@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.15 2009/05/23 08:26:26 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.16 2010/05/10 03:37:45 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.165 2010/05/10 02:52:34 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2009 Matthew R. Green
+ * Copyright (c) 1997-2010 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20090522"
+#define SERVER_SOFTWARE		"bozohttpd/20100509"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -119,6 +119,13 @@
 #endif
 #ifndef ABSREDIRECT_FILE
 #define ABSREDIRECT_FILE	".bzabsredirect"
+#endif
+#ifndef PUBLIC_HTML
+#define PUBLIC_HTML		"public_html"
+#endif
+
+#ifndef USE_ARG
+#define USE_ARG(x)	/*LINTED*/(void)&(x)
 #endif
 
 /*
@@ -158,402 +165,105 @@
 #endif
 
 /* variables and functions */
-
-	int	bflag;		/* background; drop into daemon mode */
-	int	fflag;		/* keep daemon mode in foreground */
-static	int	eflag;		/* don't clean environ; -t/-U only */
-	const char *Iflag = "http";/* bind port; default "http" */
-	int	Iflag_set;
-	int	dflag = 0;	/* debugging level */
-	char	*myname;	/* my name */
-
 #ifndef LOG_FTP
 #define LOG_FTP LOG_DAEMON
 #endif
 
-static	char	*tflag;		/* root directory */
-static	char 	*Uflag;		/* user name to switch to */
-static	int	Vflag;		/* unknown vhosts go to normal slashdir */
-static	int	nflag;		/* avoid gethostby*() */
-static	int	rflag;		/* make sure referrer = me unless url = / */
-static	int	sflag;		/* log to stderr even if it is not a TTY */
-static	char	*vpath;		/* virtual directory base */
-
-	size_t	page_size;	/* page size */
-	char	*slashdir;	/* www slash directory */
-
-	const char *server_software = SERVER_SOFTWARE;
-	const char *index_html = INDEX_HTML;
-	const char http_09[] = "HTTP/0.9";
-	const char http_10[] = "HTTP/1.0";
-	const char http_11[] = "HTTP/1.1";
-	const char text_plain[]	= "text/plain";
-
-static	void	usage(void);
-static	void	alarmer(int);
 volatile sig_atomic_t	alarmhit;
 
-static	void	parse_request(char *, char **, char **, char **, char **);
-static	void	clean_request(http_req *request);
-static	http_req *read_request(void);
-static	struct headers *addmerge_header(http_req *, char *, char *, ssize_t);
-static int mmap_and_write_part(int, off_t, size_t);
-static	void	process_request(http_req *);
-static	int	check_direct_access(http_req *request);
-static	int	transform_request(http_req *, int *);
-static	void	handle_redirect(http_req *, const char *, int);
-
-static	int	check_virtual(http_req *);
-static	void	check_bzredirect(http_req *);
-static	void	fix_url_percent(http_req *);
-static	int	process_proto(http_req *, const char *);
-static	int	process_method(http_req *, const char *);
-static	void	escape_html(http_req *);
-
-static	const char *http_errors_short(int);
-static	const char *http_errors_long(int);
-
-
-/* bozotic io */
-int	(*bozoprintf)(const char *, ...) = printf;
-ssize_t	(*bozoread)(int, void *, size_t) = read;
-ssize_t	(*bozowrite)(int, const void *, size_t) = write;
-int	(*bozoflush)(FILE *) = fflush;
-
-	char	*progname;
-
-	int	main(int, char **);
-
-static void
-usage(void)
+/*
+ * check there's enough space in the prefs and names arrays.
+ */
+static int
+size_arrays(bozoprefs_t *bozoprefs, unsigned needed)
 {
-	warning("usage: %s [options] slashdir [myname]", progname);
-	warning("options:");
-#ifdef DEBUG
-	warning("   -d\t\t\tenable debug support");
-#endif
-	warning("   -s\t\t\talways log to stderr");
-#ifndef NO_USER_SUPPORT
-	warning("   -u\t\t\tenable ~user/public_html support");
-	warning("   -p dir\t\tchange `public_html' directory name]");
-#endif
-#ifndef NO_DYNAMIC_CONTENT
-	warning("   -M arg t c c11\tadd this mime extenstion");
-#endif
-#ifndef NO_CGIBIN_SUPPORT
-#ifndef NO_DYNAMIC_CONTENT
-	warning("   -C arg prog\t\tadd this CGI handler");
-#endif
-	warning("   -c cgibin\t\tenable cgi-bin support in this directory");
-#endif
-#ifndef NO_DAEMON_MODE
-	warning("   -b\t\t\tbackground and go into daemon mode");
-	warning("   -f\t\t\tkeep daemon mode in the foreground");
-	warning("   -i address\t\tbind on this address (daemon mode only)");
-	warning("   -I port\t\tbind on this port (daemon mode only)");
-#endif
-	warning("   -S version\t\tset server version string");
-	warning("   -t dir\t\tchroot to `dir'");
-	warning("   -U username\t\tchange user to `user'");
-	warning("   -e\t\t\tdon't clean the environment (-t and -U only)");
-	warning("   -v virtualroot\tenable virtual host support in this directory");
-	warning("   -r\t\t\tmake sure sub-pages come from this host via referrer");
-#ifndef NO_DIRINDEX_SUPPORT
-	warning("   -X\t\t\tenable automatic directory index support");
-	warning("   -H\t\t\thide files starting with a period (.) in index mode");
-#endif
-	warning("   -x index\t\tchange default `index.html' file name");
-#ifndef NO_SSL_SUPPORT
-	warning("   -Z cert privkey\tspecify path to server certificate and private key file\n"
-		"\t\t\tin pem format and enable bozohttpd in SSL mode");
-#endif /* NO_SSL_SUPPORT */
-	error(1, "%s failed to start", progname);
+	char	**temp;
+
+	if (bozoprefs->size == 0) {
+		/* only get here first time around */
+		bozoprefs->size = needed;
+		if ((bozoprefs->name = calloc(sizeof(char *), needed)) == NULL) {
+			(void) fprintf(stderr, "size_arrays: bad alloc\n");
+			return 0;
+		}
+		if ((bozoprefs->value = calloc(sizeof(char *), needed)) == NULL) {
+			free(bozoprefs->name);
+			(void) fprintf(stderr, "size_arrays: bad alloc\n");
+			return 0;
+		}
+	} else if (bozoprefs->c == bozoprefs->size) {
+		/* only uses 'needed' when filled array */
+		bozoprefs->size += needed;
+		temp = realloc(bozoprefs->name, sizeof(char *) * needed);
+		if (temp == NULL) {
+			(void) fprintf(stderr, "size_arrays: bad alloc\n");
+			return 0;
+		}
+		bozoprefs->name = temp;
+		temp = realloc(bozoprefs->value, sizeof(char *) * needed);
+		if (temp == NULL) {
+			(void) fprintf(stderr, "size_arrays: bad alloc\n");
+			return 0;
+		}
+		bozoprefs->value = temp;
+	}
+	return 1;
+}
+
+static int
+findvar(bozoprefs_t *bozoprefs, const char *name)
+{
+	unsigned	i;
+
+	for (i = 0 ; i < bozoprefs->c && strcmp(bozoprefs->name[i], name) != 0; i++)
+		;
+	return (i == bozoprefs->c) ? -1 : (int)i;
 }
 
 int
-main(int argc, char **argv)
+bozo_set_pref(bozoprefs_t *bozoprefs, const char *name, const char *value)
 {
-	http_req *request;
-	extern	char **environ;
-	char	*cleanenv[1];
-	uid_t	uid;
-	int	c;
+	int	i;
 
-	uid = 0;	/* XXX gcc */
-
-	if ((progname = strrchr(argv[0], '/')) != NULL)
-		progname++;
-	else
-		progname = argv[0];
-
-	openlog(progname, LOG_PID|LOG_NDELAY, LOG_FTP);
-
-	while ((c = getopt(argc, argv,
-			   "C:HI:M:S:U:VXZ:bc:defhi:np:rst:uv:x:z:")) != -1) {
-		switch(c) {
-
-		case 'M':
-#ifndef NO_DYNAMIC_CONTENT
-			/* make sure there's four arguments */
-			if (argc - optind < 3)
-				usage();
-			add_content_map_mime(optarg, argv[optind],
-			    argv[optind+1], argv[optind+2]);
-			optind += 3;
-			break;
-#else
-			error(1, "dynmic mime content support is not enabled");
-			/* NOTREACHED */
-#endif /* NO_DYNAMIC_CONTENT */
-
-		case 'n':
-			nflag = 1;
-			break;
-
-		case 'r':
-			rflag = 1;
-			break;
-
-		case 's':
-			sflag = 1;
-			break;
-
-		case 'S':
-			server_software = optarg;
-			break;
-		case 'Z':
-#ifndef NO_SSL_SUPPORT
-			/* make sure there's two arguments */
-			if (argc - optind < 1)
-				usage();
-			ssl_set_opts(optarg, argv[optind++]);
-			break;
-#else
-			error(1, "ssl support is not enabled");
-			/* NOT REACHED */
-#endif /* NO_SSL_SUPPORT */
-		case 'U':
-			Uflag = optarg;
-			break;
-
-		case 'V':
-			Vflag = 1;
-			break;
-
-		case 'v':
-			vpath = optarg;
-			break;
-
-		case 'x':
-			index_html = optarg;
-			break;
-
-#ifndef NO_DAEMON_MODE
-		case 'b':
-			/*
-			 * test suite support - undocumented
-			 * bflag == 2 (aka, -b -b) means to
-			 * only process 1 per kid
-			 */
-			if (bflag)
-				bflag = 2;
-			else
-				bflag = 1;
-			break;
-
-		case 'e':
-			eflag = 1;
-			break;
-
-		case 'f':
-			fflag = 1;
-			break;
-
-		case 'i':
-			iflag = optarg;
-			break;
-
-		case 'I':
-			Iflag_set = 1;
-			Iflag = optarg;
-			break;
-#else /* NO_DAEMON_MODE */
-		case 'b':
-		case 'e':
-		case 'f':
-		case 'i':
-		case 'I':
-			error(1, "Daemon mode is not enabled");
-			/* NOTREACHED */
-#endif /* NO_DAEMON_MODE */
-
-#ifndef NO_CGIBIN_SUPPORT
-		case 'c':
-			set_cgibin(optarg);
-			break;
-
-		case 'C':
-#ifndef NO_DYNAMIC_CONTENT
-			/* make sure there's two arguments */
-			if (argc - optind < 1)
-				usage();
-			add_content_map_cgi(optarg, argv[optind++]);
-			break;
-#else
-			error(1, "dynmic CGI handler support is not enabled");
-			/* NOTREACHED */
-#endif /* NO_DYNAMIC_CONTENT */
-
-#else
-		case 'c':
-		case 'C':
-			error(1, "CGI is not enabled");
-			/* NOTREACHED */
-#endif /* NO_CGIBIN_SUPPORT */
-
-		case 'd':
-			dflag++;
-#ifndef DEBUG
-			if (dflag == 1)
-				warning("Debugging is not enabled");
-#endif /* !DEBUG */
-			break;
-
-#ifndef NO_USER_SUPPORT
-		case 'p':
-			public_html = optarg;
-			break;
-
-		case 't':
-			tflag = optarg;
-			break;
-
-		case 'u':
-			uflag = 1;
-			break;
-#else
-		case 'p':
-		case 't':
-		case 'u':
-			error(1, "User support is not enabled");
-			/* NOTREACHED */
-#endif /* NO_USER_SUPPORT */
-
-#ifndef NO_DIRINDEX_SUPPORT
-		case 'H':
-			Hflag = 1;
-			break;
-
-		case 'X':
-			Xflag = 1;
-			break;
-
-#else
-		case 'H':
-		case 'X':
-			error(1, "directory indexing is not enabled");
-			/* NOTREACHED */
-#endif /* NO_DIRINDEX_SUPPORT */
-
-		default:
-			usage();
-			/* NOTREACHED */
+	if ((i = findvar(bozoprefs, name)) < 0) {
+		/* add the element to the array */
+		if (size_arrays(bozoprefs, bozoprefs->size + 15)) {
+			bozoprefs->name[i = bozoprefs->c++] = strdup(name);
+		}
+	} else {
+		/* replace the element in the array */
+		if (bozoprefs->value[i]) {
+			free(bozoprefs->value[i]);
+			bozoprefs->value[i] = NULL;
 		}
 	}
-	argc -= optind;
-	argv += optind;
+	/* sanity checks for range of values go here */
+	bozoprefs->value[i] = strdup(value);
+	return 1;
+}
 
-	if (argc == 1) {
-		myname = bozomalloc(MAXHOSTNAMELEN+1);
-		/* XXX we do not check for FQDN here */
-		if (gethostname(myname, MAXHOSTNAMELEN+1) < 0)
-			error(1, "gethostname");
-		myname[MAXHOSTNAMELEN] = '\0';
-	} else if (argc == 2)
-		myname = argv[1];
-	else
-		usage();
-	
-	slashdir = argv[0];
-	debug((DEBUG_OBESE, "myname is %s, slashdir is %s", myname, slashdir));
+/*
+ * get a variable's value, or NULL
+ */
+char *
+bozo_get_pref(bozoprefs_t *bozoprefs, const char *name)
+{
+	int	i;
 
-#ifdef _SC_PAGESIZE
-	page_size = (long)sysconf(_SC_PAGESIZE);
-#else
-	page_size = 4096;
-#endif
-
-	/*
-	 * initialise ssl and daemon mode if necessary.
-	 */
-	ssl_init();
-	daemon_init();
-
-	/*
-	 * prevent info leakage between different compartments.
-	 * some PATH values in the environment would be invalided
-	 * by chroot. cross-user settings might result in undesirable
-	 * effects.
-	 */
-	if ((tflag != NULL || Uflag != NULL) && !eflag) {
-		cleanenv[0] = NULL;
-		environ = cleanenv;
-	}
-	
-	/*
-	 * look up user/group information.
-	 */
-	if (Uflag != NULL) {
-		struct passwd *pw;
-
-		if ((pw = getpwnam(Uflag)) == NULL)
-			error(1, "getpwnam(%s): %s", Uflag, strerror(errno));
-		if (initgroups(pw->pw_name, pw->pw_gid) == -1)
-			error(1, "initgroups: %s", strerror(errno));
-		if (setgid(pw->pw_gid) == -1)
-			error(1, "setgid(%u): %s", pw->pw_gid, strerror(errno));
-		uid = pw->pw_uid;
-	}
-
-	/*
-	 * handle chroot.
-	 */
-	if (tflag != NULL) {
-		if (chdir(tflag) == -1)
-			error(1, "chdir(%s): %s", tflag, strerror(errno));
-		if (chroot(tflag) == -1)
-			error(1, "chroot(%s): %s", tflag, strerror(errno));
-	}
-
-	if (Uflag != NULL)
-		if (setuid(uid) == -1)
-			error(1, "setuid(%d): %s", uid, strerror(errno));
-
-	/*
-	 * read and process the HTTP request.
-	 */
-	do {
-		request = read_request();
-		if (request) {
-			process_request(request);
-			clean_request(request);
-		}
-	} while (bflag);
-
-	return (0);
+	return ((i = findvar(bozoprefs, name)) < 0) ? NULL :
+			bozoprefs->value[i];
 }
 
 char *
-http_date(void)
+bozo_http_date(char *date, size_t datelen)
 {
-	static	char date[40];
 	struct	tm *tm;
 	time_t	now;
 
 	/* Sun, 06 Nov 1994 08:49:37 GMT */
 	now = time(NULL);
 	tm = gmtime(&now);	/* HTTP/1.1 spec rev 06 sez GMT only */
-	strftime(date, sizeof date, "%a, %d %b %Y %H:%M:%S GMT", tm);
+	strftime(date, datelen, "%a, %d %b %Y %H:%M:%S GMT", tm);
 	return date;
 }
 
@@ -563,12 +273,14 @@ http_date(void)
  * "in" for proto and method.
  */
 static void
-parse_request(char *in, char **method, char **file, char **query, char **proto)
+parse_request(bozohttpd_t *httpd, char *in, char **method, char **file,
+		char **query, char **proto)
 {
 	ssize_t	len;
 	char	*val;
-	
-	debug((DEBUG_EXPLODING, "parse in: %s", in));
+
+	USE_ARG(httpd);
+	debug((httpd, DEBUG_EXPLODING, "parse in: %s", in));
 	*method = *file = *query = *proto = NULL;
 
 	len = (ssize_t)strlen(in);
@@ -585,47 +297,38 @@ parse_request(char *in, char **method, char **file, char **query, char **proto)
 			*file = val;
 		else
 			*file = in;
-		return;
-	}
-	*file = val;
+	} else {
+		*file = val;
 
-	*query = strchr(*file, '?');
-	if (*query)
-		*(*query)++ = '\0';
+		*query = strchr(*file, '?');
+		if (*query)
+			*(*query)++ = '\0';
 
-	if (in) {
-		while (*in && (*in == ' ' || *in == '\t'))
-			in++;
-		if (*in)
-			*proto = in;
+		if (in) {
+			while (*in && (*in == ' ' || *in == '\t'))
+				in++;
+			if (*in)
+				*proto = in;
+		}
 	}
 
 	/* allocate private copies */
-	*file = strdup(*file);
+	*file = bozostrdup(httpd, *file);
 	if (*query)
-		*query = strdup(*query);
+		*query = bozostrdup(httpd, *query);
 
-	debug((DEBUG_FAT, "url: method: \"%s\" file: \"%s\" query: \"%s\" proto: \"%s\"", 
-	       *method, *file, *query, *proto));
+	debug((httpd, DEBUG_FAT,
+		"url: method: \"%s\" file: \"%s\" query: \"%s\" proto: \"%s\"",
+		*method, *file, *query, *proto));
 }
 
 /*
- * send a HTTP/1.1 408 response if we timeout.
+ * cleanup a bozo_httpreq_t after use
  */
-/* ARGSUSED */
-static void
-alarmer(int sig)
+void
+bozo_clean_request(bozo_httpreq_t *request)
 {
-	alarmhit = 1;
-}
-
-/*
- * cleanup a http_req after use
- */
-static void
-clean_request(http_req *request)
-{
-	struct	headers *hdr, *ohdr = NULL;
+	struct bozoheaders *hdr, *ohdr = NULL;
 
 	if (request == NULL)
 		return;
@@ -638,7 +341,7 @@ clean_request(http_req *request)
 	MF(hr_file);
 	MF(hr_query);
 #undef MF
-	auth_cleanup(request);
+	bozo_auth_cleanup(request);
 	for (hdr = SIMPLEQ_FIRST(&request->hr_headers); hdr;
 	    hdr = SIMPLEQ_NEXT(hdr, h_next)) {
 		free(hdr->h_value);
@@ -654,11 +357,157 @@ clean_request(http_req *request)
 }
 
 /*
- * This function reads a http request from stdin, returning a pointer to a
- * http_req structure, describing the request.
+ * send a HTTP/1.1 408 response if we timeout.
  */
-static http_req *
-read_request(void)
+/* ARGSUSED */
+static void
+alarmer(int sig)
+{
+	alarmhit = 1;
+}
+
+/*
+ * add or merge this header (val: str) into the requests list
+ */
+static bozoheaders_t *
+addmerge_header(bozo_httpreq_t *request, char *val,
+		char *str, ssize_t len)
+{
+	struct	bozoheaders *hdr;
+
+	USE_ARG(len);
+	/* do we exist already? */
+	SIMPLEQ_FOREACH(hdr, &request->hr_headers, h_next) {
+		if (strcasecmp(val, hdr->h_header) == 0)
+			break;
+	}
+
+	if (hdr) {
+		/* yup, merge it in */
+		char *nval;
+
+		if (asprintf(&nval, "%s, %s", hdr->h_value, str) == -1) {
+			(void)bozo_http_error(request->hr_httpd, 500, NULL,
+			     "memory allocation failure");
+			return NULL;
+		}
+		free(hdr->h_value);
+		hdr->h_value = nval;
+	} else {
+		/* nope, create a new one */
+
+		hdr = bozomalloc(request->hr_httpd, sizeof *hdr);
+		hdr->h_header = bozostrdup(request->hr_httpd, val);
+		if (str && *str)
+			hdr->h_value = bozostrdup(request->hr_httpd, str);
+		else
+			hdr->h_value = bozostrdup(request->hr_httpd, " ");
+
+		SIMPLEQ_INSERT_TAIL(&request->hr_headers, hdr, h_next);
+		request->hr_nheaders++;
+	}
+
+	return hdr;
+}
+
+/*
+ * as the prototype string is not constant (eg, "HTTP/1.1" is equivalent
+ * to "HTTP/001.01"), we MUST parse this.
+ */
+static int
+process_proto(bozo_httpreq_t *request, const char *proto)
+{
+	char	majorstr[16], *minorstr;
+	int	majorint, minorint;
+
+	if (proto == NULL) {
+got_proto_09:
+		request->hr_proto = request->hr_httpd->consts.http_09;
+		debug((request->hr_httpd, DEBUG_FAT, "request %s is http/0.9",
+			request->hr_file));
+		return 0;
+	}
+
+	if (strncasecmp(proto, "HTTP/", 5) != 0)
+		goto bad;
+	strncpy(majorstr, proto + 5, sizeof majorstr);
+	majorstr[sizeof(majorstr)-1] = 0;
+	minorstr = strchr(majorstr, '.');
+	if (minorstr == NULL)
+		goto bad;
+	*minorstr++ = 0;
+
+	majorint = atoi(majorstr);
+	minorint = atoi(minorstr);
+
+	switch (majorint) {
+	case 0:
+		if (minorint != 9)
+			break;
+		goto got_proto_09;
+	case 1:
+		if (minorint == 0)
+			request->hr_proto = request->hr_httpd->consts.http_10;
+		else if (minorint == 1)
+			request->hr_proto = request->hr_httpd->consts.http_11;
+		else
+			break;
+
+		debug((request->hr_httpd, DEBUG_FAT, "request %s is %s",
+		    request->hr_file, request->hr_proto));
+		SIMPLEQ_INIT(&request->hr_headers);
+		request->hr_nheaders = 0;
+		return 0;
+	}
+bad:
+	return bozo_http_error(request->hr_httpd, 404, NULL, "unknown prototype");
+}
+
+/*
+ * process each type of HTTP method, setting this HTTP requests
+ # method type.
+ */
+static struct method_map {
+	const char *name;
+	int	type;
+} method_map[] = {
+	{ "GET", 	HTTP_GET, },
+	{ "POST",	HTTP_POST, },
+	{ "HEAD",	HTTP_HEAD, },
+#if 0	/* other non-required http/1.1 methods */
+	{ "OPTIONS",	HTTP_OPTIONS, },
+	{ "PUT",	HTTP_PUT, },
+	{ "DELETE",	HTTP_DELETE, },
+	{ "TRACE",	HTTP_TRACE, },
+	{ "CONNECT",	HTTP_CONNECT, },
+#endif
+	{ NULL,		0, },
+};
+
+static int
+process_method(bozo_httpreq_t *request, const char *method)
+{
+	struct	method_map *mmp;
+
+	if (request->hr_proto == request->hr_httpd->consts.http_11)
+		request->hr_allow = "GET, HEAD, POST";
+
+	for (mmp = method_map; mmp->name; mmp++)
+		if (strcasecmp(method, mmp->name) == 0) {
+			request->hr_method = mmp->type;
+			request->hr_methodstr = mmp->name;
+			return 0;
+		}
+
+	return bozo_http_error(request->hr_httpd, 404, request, "unknown method");
+}
+
+/*
+ * This function reads a http request from stdin, returning a pointer to a
+ * bozo_httpreq_t structure, describing the request.
+ */
+bozo_httpreq_t *
+bozo_read_request(bozohttpd_t *httpd)
 {
 	struct	sigaction	sa;
 	char	*str, *val, *method, *file, *proto, *query;
@@ -669,17 +518,18 @@ read_request(void)
 	ssize_t	len;
 	int	line = 0;
 	socklen_t slen;
-	http_req *request;
+	bozo_httpreq_t *request;
 
 	/*
-	 * if we're in daemon mode, daemon_fork() will return here once
+	 * if we're in daemon mode, bozo_daemon_fork() will return here once
 	 * for each child, then we can setup SSL.
 	 */
-	daemon_fork();
-	ssl_accept();
+	bozo_daemon_fork(httpd);
+	bozo_ssl_accept(httpd);
 
-	request = bozomalloc(sizeof *request);
-	memset(request, 0, sizeof *request);
+	request = bozomalloc(httpd, sizeof(*request));
+	memset(request, 0, sizeof(*request));
+	request->hr_httpd = httpd;
 	request->hr_allow = request->hr_host = NULL;
 	request->hr_content_type = request->hr_content_length = NULL;
 	request->hr_range = NULL;
@@ -688,36 +538,37 @@ read_request(void)
 	request->hr_file = NULL;
 
 	slen = sizeof(ss);
-	if (getpeername(0, (struct sockaddr *)&ss, &slen) < 0)
+	if (getpeername(0, (struct sockaddr *)(void *)&ss, &slen) < 0)
 		host = addr = NULL;
 	else {
-		if (getnameinfo((struct sockaddr *)&ss, slen,
+		if (getnameinfo((struct sockaddr *)(void *)&ss, slen,
 		    abuf, sizeof abuf, NULL, 0, NI_NUMERICHOST) == 0)
 			addr = abuf;
 		else
 			addr = NULL;
-		if (nflag == 0 && getnameinfo((struct sockaddr *)&ss, slen,
-		    hbuf, sizeof hbuf, NULL, 0, 0) == 0)
+		if (httpd->numeric == 0 &&
+		    getnameinfo((struct sockaddr *)(void *)&ss, slen,
+				hbuf, sizeof hbuf, NULL, 0, 0) == 0)
 			host = hbuf;
 		else
 			host = NULL;
 	}
 	if (host != NULL)
-		request->hr_remotehost = bozostrdup(host);
+		request->hr_remotehost = bozostrdup(request->hr_httpd, host);
 	if (addr != NULL)
-		request->hr_remoteaddr = bozostrdup(addr);
+		request->hr_remoteaddr = bozostrdup(request->hr_httpd, addr);
 	slen = sizeof(ss);
-	if (getsockname(0, (struct sockaddr *)&ss, &slen) < 0)
+	if (getsockname(0, (struct sockaddr *)(void *)&ss, &slen) < 0)
 		port = NULL;
 	else {
-		if (getnameinfo((struct sockaddr *)&ss, slen, NULL, 0,
-		    bufport, sizeof bufport, NI_NUMERICSERV) == 0)
+		if (getnameinfo((struct sockaddr *)(void *)&ss, slen, NULL, 0,
+				bufport, sizeof bufport, NI_NUMERICSERV) == 0)
 			port = bufport;
 		else
 			port = NULL;
 	}
 	if (port != NULL)
-		request->hr_serverport = bozostrdup(port);
+		request->hr_serverport = bozostrdup(request->hr_httpd, port);
 
 	/*
 	 * setup a timer to make sure the request is not hung
@@ -729,10 +580,11 @@ read_request(void)
 	sigaction(SIGALRM, &sa, NULL);	/* XXX */
 
 	alarm(MAX_WAIT_TIME);
-	while ((str = bozodgetln(STDIN_FILENO, &len, bozoread)) != NULL) {
+	while ((str = bozodgetln(httpd, STDIN_FILENO, &len, bozo_read)) != NULL) {
 		alarm(0);
 		if (alarmhit) {
-			(void)http_error(408, NULL, "request timed out");
+			(void)bozo_http_error(httpd, 408, NULL,
+					"request timed out");
 			goto cleanup;
 		}
 		line++;
@@ -740,29 +592,32 @@ read_request(void)
 		if (line == 1) {
 
 			if (len < 1) {
-				(void)http_error(404, NULL, "null method");
+				(void)bozo_http_error(httpd, 404, NULL,
+						"null method");
 				goto cleanup;
 			}
 
-			warning("got request ``%s'' from host %s to port %s",
-			    str,
-			    host ? host : addr ? addr : "<local>",
-			    port ? port : "<stdin>");
+			bozo_warn(httpd, "got request ``%s'' from host %s to port %s",
+				str,
+				host ? host : addr ? addr : "<local>",
+				port ? port : "<stdin>");
 #if 0
-			debug((DEBUG_FAT, "read_req, getting request: ``%s''",
-			    str));
+			debug((httpd, DEBUG_FAT,
+				"read_req, getting request: ``%s''", str));
 #endif
 
 			/* we allocate return space in file and query only */
-			parse_request(str, &method, &file, &query, &proto);
+			parse_request(httpd, str, &method, &file, &query, &proto);
 			request->hr_file = file;
 			request->hr_query = query;
 			if (method == NULL) {
-				(void)http_error(404, NULL, "null method");
+				(void)bozo_http_error(httpd, 404, NULL,
+						"null method");
 				goto cleanup;
 			}
 			if (file == NULL) {
-				(void)http_error(404, NULL, "null file");
+				(void)bozo_http_error(httpd, 404, NULL,
+						"null file");
 				goto cleanup;
 			}
 
@@ -776,25 +631,26 @@ read_request(void)
 				goto cleanup;
 			}
 
-			debug((DEBUG_FAT, "got file \"%s\" query \"%s\"",
+			debug((httpd, DEBUG_FAT, "got file \"%s\" query \"%s\"",
 			    request->hr_file,
 			    request->hr_query ? request->hr_query : "<none>"));
 
 			/* http/0.9 has no header processing */
-			if (request->hr_proto == http_09)
+			if (request->hr_proto == httpd->consts.http_09)
 				break;
 		} else {		/* incoming headers */
-			struct	headers *hdr;
+			bozoheaders_t *hdr;
 
 			if (*str == '\0')
 				break;
 
 			val = bozostrnsep(&str, ":", &len);
-			debug((DEBUG_EXPLODING,
+			debug((httpd, DEBUG_EXPLODING,
 			    "read_req2: after bozostrnsep: str ``%s'' val ``%s''",
 			    str, val));
 			if (val == NULL || len == -1) {
-				(void)http_error(404, request, "no header");
+				(void)bozo_http_error(httpd, 404, request,
+						"no header");
 				goto cleanup;
 			}
 			while (*str == ' ' || *str == '\t')
@@ -802,7 +658,7 @@ read_request(void)
 			while (*val == ' ' || *val == '\t')
 				val++;
 
-			if (auth_check_headers(request, val, str, len))
+			if (bozo_auth_check_headers(httpd, request, val, str, len))
 				goto next_header;
 
 			hdr = addmerge_header(request, val, str, len);
@@ -815,7 +671,8 @@ read_request(void)
 				request->hr_host = hdr->h_value;
 			/* HTTP/1.1 rev06 draft spec: 14.20 */
 			else if (strcasecmp(hdr->h_header, "expect") == 0) {
-				(void)http_error(417, request, "we don't support Expect:");
+				(void)bozo_http_error(httpd, 417, request,
+						"we don't support Expect:");
 				goto cleanup;
 			}
 			else if (strcasecmp(hdr->h_header, "referrer") == 0 ||
@@ -823,10 +680,11 @@ read_request(void)
 				request->hr_referrer = hdr->h_value;
 			else if (strcasecmp(hdr->h_header, "range") == 0)
 				request->hr_range = hdr->h_value;
-			else if (strcasecmp(hdr->h_header, "if-modified-since") == 0)
+			else if (strcasecmp(hdr->h_header,
+					"if-modified-since") == 0)
 				request->hr_if_modified_since = hdr->h_value;
 
-			debug((DEBUG_FAT, "adding header %s: %s",
+			debug((httpd, DEBUG_FAT, "adding header %s: %s",
 			    hdr->h_header, hdr->h_value));
 		}
 next_header:
@@ -838,19 +696,23 @@ next_header:
 	signal(SIGALRM, SIG_DFL);
 
 	/* RFC1945, 8.3 */
-	if (request->hr_method == HTTP_POST && request->hr_content_length == NULL) {
-		(void)http_error(400, request, "missing content length");
+	if (request->hr_method == HTTP_POST &&
+	    request->hr_content_length == NULL) {
+		(void)bozo_http_error(httpd, 400, request,
+				"missing content length");
 		goto cleanup;
 	}
 
 	/* HTTP/1.1 draft rev-06, 14.23 & 19.6.1.1 */
-	if (request->hr_proto == http_11 && request->hr_host == NULL) {
-		(void)http_error(400, request, "missing Host header");
+	if (request->hr_proto == httpd->consts.http_11 &&
+	    request->hr_host == NULL) {
+		(void)bozo_http_error(httpd, 400, request,
+				"missing Host header");
 		goto cleanup;
 	}
 
 	if (request->hr_range != NULL) {
-		debug((DEBUG_FAT, "hr_range: %s", request->hr_range));
+		debug((httpd, DEBUG_FAT, "hr_range: %s", request->hr_range));
 		/* support only simple ranges %d- and %d-%d */
 		if (strchr(request->hr_range, ',') == NULL) {
 			const char *rstart, *dash;
@@ -877,63 +739,21 @@ next_header:
 		}
 	}
 
-	debug((DEBUG_FAT, "read_request returns url %s in request", 
+	debug((httpd, DEBUG_FAT, "bozo_read_request returns url %s in request",
 	       request->hr_file));
-	return (request);
+	return request;
 
 cleanup:
-	clean_request(request);
+	bozo_clean_request(request);
 
 	/* If SSL enabled cleanup SSL structure. */
-	ssl_destroy();
+	bozo_ssl_destroy(httpd);
 
 	return NULL;
 }
 
-/*
- * add or merge this header (val: str) into the requests list
- */
-static struct headers *
-addmerge_header(http_req *request, char *val, char *str, ssize_t len)
-{
-	struct	headers *hdr;
-
-	/* do we exist already? */
-	SIMPLEQ_FOREACH(hdr, &request->hr_headers, h_next) {
-		if (strcasecmp(val, hdr->h_header) == 0)
-			break;
-	}
-
-	if (hdr) {
-		/* yup, merge it in */
-		char *nval;
-
-		if (asprintf(&nval, "%s, %s", hdr->h_value, str) == -1) {
-			(void)http_error(500, NULL,
-			     "memory allocation failure");
-			return NULL;
-		}
-		free(hdr->h_value);
-		hdr->h_value = nval;
-	} else {
-		/* nope, create a new one */
-
-		hdr = bozomalloc(sizeof *hdr);
-		hdr->h_header = bozostrdup(val);
-		if (str && *str)
-			hdr->h_value = bozostrdup(str);
-		else
-			hdr->h_value = bozostrdup(" ");
-
-		SIMPLEQ_INSERT_TAIL(&request->hr_headers, hdr, h_next);
-		request->hr_nheaders++;
-	}
-
-	return hdr;
-}
-
 static int
-mmap_and_write_part(int fd, off_t first_byte_pos, size_t sz)
+mmap_and_write_part(bozohttpd_t *httpd, int fd, off_t first_byte_pos, size_t sz)
 {
 	size_t mappedsz, wroffset;
 	off_t mappedoffset;
@@ -954,14 +774,15 @@ mmap_and_write_part(int fd, off_t first_byte_pos, size_t sz)
 	 *
 	 * we use the write offset in all writes
 	 */
-	mappedoffset = first_byte_pos & ~(page_size - 1);
-	mappedsz = (first_byte_pos - mappedoffset + sz + page_size - 1) &
-		  ~(page_size - 1);
-	wroffset = first_byte_pos - mappedoffset;
+	mappedoffset = first_byte_pos & ~(httpd->page_size - 1);
+	mappedsz = (size_t)
+		(first_byte_pos - mappedoffset + sz + httpd->page_size - 1) &
+		~(httpd->page_size - 1);
+	wroffset = (size_t)(first_byte_pos - mappedoffset);
 
 	addr = mmap(0, mappedsz, PROT_READ, MAP_SHARED, fd, mappedoffset);
 	if (addr == (char *)-1) {
-		warning("mmap failed: %s", strerror(errno));
+		bozo_warn(httpd, "mmap failed: %s", strerror(errno));
 		return -1;
 	}
 	mappedaddr = addr;
@@ -969,23 +790,25 @@ mmap_and_write_part(int fd, off_t first_byte_pos, size_t sz)
 #ifdef MADV_SEQUENTIAL
 	(void)madvise(addr, sz, MADV_SEQUENTIAL);
 #endif
-	while (sz > WRSZ) {
-		if (bozowrite(STDOUT_FILENO, addr + wroffset, WRSZ) != WRSZ) {
-			warning("write failed: %s", strerror(errno));
+	while (sz > BOZO_WRSZ) {
+		if (bozo_write(httpd, STDOUT_FILENO, addr + wroffset,
+				BOZO_WRSZ) != BOZO_WRSZ) {
+			bozo_warn(httpd, "write failed: %s", strerror(errno));
 			goto out;
 		}
-		debug((DEBUG_OBESE, "wrote %d bytes", WRSZ));
-		sz -= WRSZ;
-		addr += WRSZ;
+		debug((httpd, DEBUG_OBESE, "wrote %d bytes", BOZO_WRSZ));
+		sz -= BOZO_WRSZ;
+		addr += BOZO_WRSZ;
 	}
-	if (sz && (size_t)bozowrite(STDOUT_FILENO, addr + wroffset, sz) != sz) {
-		warning("final write failed: %s", strerror(errno));
+	if (sz && (size_t)bozo_write(httpd, STDOUT_FILENO, addr + wroffset,
+				sz) != sz) {
+		bozo_warn(httpd, "final write failed: %s", strerror(errno));
 		goto out;
 	}
-	debug((DEBUG_OBESE, "wrote %d bytes", (int)sz));
+	debug((httpd, DEBUG_OBESE, "wrote %d bytes", (int)sz));
  out:
 	if (munmap(mappedaddr, mappedsz) < 0) {
-		warning("munmap failed");
+		bozo_warn(httpd, "munmap failed");
 		return -1;
 	}
 
@@ -1011,15 +834,506 @@ parse_http_date(const char *val, time_t *timestamp)
 }
 
 /*
- * process_request does the following:
+ * checks to see if this request has a valid .bzdirect file.  returns
+ * 0 on failure and 1 on success.
+ */
+static int
+check_direct_access(bozo_httpreq_t *request)
+{
+	FILE *fp;
+	struct stat sb;
+	char dir[MAXPATHLEN], dirfile[MAXPATHLEN], *basename;
+
+	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
+	debug((httpd, DEBUG_FAT, "check_bzredirect: dir %s", dir));
+	basename = strrchr(dir, '/');
+
+	if ((!basename || basename[1] != '\0') &&
+	    lstat(dir, &sb) == 0 && S_ISDIR(sb.st_mode))
+		/* nothing */;
+	else if (basename == NULL)
+		strcpy(dir, ".");
+	else {
+		*basename++ = '\0';
+		bozo_check_special_files(request, basename);
+	}
+
+	snprintf(dirfile, sizeof(dirfile), "%s/%s", dir, DIRECT_ACCESS_FILE);
+	if (stat(dirfile, &sb) < 0 ||
+	    (fp = fopen(dirfile, "r")) == NULL)
+		return 0;
+	fclose(fp);
+	return 1;
+}
+
+/*
+ * do automatic redirection -- if there are query parameters for the URL
+ * we will tack these on to the new (redirected) URL.
+ */
+static void
+handle_redirect(bozo_httpreq_t *request,
+		const char *url, int absolute)
+{
+	bozohttpd_t *httpd = request->hr_httpd;
+	char *urlbuf;
+	char portbuf[20];
+	int query = 0;
+	
+	if (url == NULL) {
+		if (asprintf(&urlbuf, "/%s/", request->hr_file) < 0)
+			bozo_err(httpd, 1, "asprintf");
+		url = urlbuf;
+	} else
+		urlbuf = NULL;
+
+	if (request->hr_query && strlen(request->hr_query)) {
+		query = 1;
+	}
+
+	if (request->hr_serverport && strcmp(request->hr_serverport, "80") != 0)
+		snprintf(portbuf, sizeof(portbuf), ":%s",
+		    request->hr_serverport);
+	else
+		portbuf[0] = '\0';
+	bozo_warn(httpd, "redirecting %s%s%s", httpd->virthostname, portbuf, url);
+	debug((httpd, DEBUG_FAT, "redirecting %s", url));
+	bozo_printf(httpd, "%s 301 Document Moved\r\n", request->hr_proto);
+	if (request->hr_proto != httpd->consts.http_09) 
+		bozo_print_header(request, NULL, "text/html", NULL);
+	if (request->hr_proto != httpd->consts.http_09) {
+		bozo_printf(httpd, "Location: http://");
+		if (absolute == 0)
+			bozo_printf(httpd, "%s%s", httpd->virthostname, portbuf);
+		if (query) {
+		  bozo_printf(httpd, "%s?%s\r\n", url, request->hr_query);
+		} else {
+		  bozo_printf(httpd, "%s\r\n", url);
+		}
+	}
+	bozo_printf(httpd, "\r\n");
+	if (request->hr_method == HTTP_HEAD)
+		goto head;
+	bozo_printf(httpd, "<html><head><title>Document Moved</title></head>\n");
+	bozo_printf(httpd, "<body><h1>Document Moved</h1>\n");
+	bozo_printf(httpd, "This document had moved <a href=\"http://");
+	if (query) {
+	  if (absolute)
+	    bozo_printf(httpd, "%s?%s", url, request->hr_query);
+	  else
+	    bozo_printf(httpd, "%s%s%s?%s", httpd->virthostname, portbuf, url,
+	    		request->hr_query);
+        } else {
+	  if (absolute)
+	    bozo_printf(httpd, "%s", url);
+	  else
+	    bozo_printf(httpd, "%s%s%s", httpd->virthostname, portbuf, url);
+	}
+	bozo_printf(httpd, "\">here</a>\n");
+	bozo_printf(httpd, "</body></html>\n");
+head:
+	bozo_flush(httpd, stdout);
+	if (urlbuf)
+		free(urlbuf);
+}
+
+/*
+ * deal with virtual host names; we do this:
+ *	if we have a virtual path root (httpd->virtbase), and we are given a
+ *	virtual host spec (Host: ho.st or http://ho.st/), see if this
+ *	directory exists under httpd->virtbase.  if it does, use this as the
+ #	new slashdir.
+ */
+static int
+check_virtual(bozo_httpreq_t *request)
+{
+	bozohttpd_t *httpd = request->hr_httpd;
+	char *file = request->hr_file, *s;
+	struct dirent **list;
+	size_t len;
+	int i;
+
+	if (!httpd->virtbase)
+		goto use_slashdir;
+
+	/*
+	 * convert http://virtual.host/ to request->hr_host
+	 */
+	debug((httpd, DEBUG_OBESE, "checking for http:// virtual host in ``%s''",
+			file));
+	if (strncasecmp(file, "http://", 7) == 0) {
+		/* we would do virtual hosting here? */
+		file += 7;
+		s = strchr(file, '/');
+		/* HTTP/1.1 draft rev-06, 5.2: URI takes precedence over Host: */
+		request->hr_host = file;
+		request->hr_file = bozostrdup(request->hr_httpd, s ? s : "/");
+		debug((httpd, DEBUG_OBESE, "got host ``%s'' file is now ``%s''",
+		    request->hr_host, request->hr_file));
+	} else if (!request->hr_host)
+		goto use_slashdir;
+
+	/*
+	 * ok, we have a virtual host, use scandir(3) to find a case
+	 * insensitive match for the virtual host we are asked for.
+	 * note that if the virtual host is the same as the master,
+	 * we don't need to do anything special.
+	 */
+	len = strlen(request->hr_host);
+	debug((httpd, DEBUG_OBESE,
+	    "check_virtual: checking host `%s' under httpd->virtbase `%s' "
+	    "for file `%s'",
+	    request->hr_host, httpd->virtbase, request->hr_file));
+	if (strncasecmp(httpd->virthostname, request->hr_host, len) != 0) {
+		s = 0;
+		for (i = scandir(httpd->virtbase, &list, 0, 0); i--; list++) {
+			debug((httpd, DEBUG_OBESE, "looking at dir``%s''",
+			    (*list)->d_name));
+			if (strncasecmp((*list)->d_name, request->hr_host,
+			    len) == 0) {
+				/* found it, punch it */
+				httpd->virthostname = (*list)->d_name;
+				if (asprintf(&s, "%s/%s", httpd->virtbase,
+						httpd->virthostname) < 0)
+					bozo_err(httpd, 1, "asprintf");
+				break;
+			}
+		}
+		if (s == 0) {
+			if (httpd->unknown_slash)
+				goto use_slashdir;
+			return bozo_http_error(httpd, 404, request,
+						"unknown URL");
+		}
+	} else
+use_slashdir:
+		s = httpd->slashdir;
+
+	/*
+	 * ok, nailed the correct slashdir, chdir to it
+	 */
+	if (chdir(s) < 0)
+		return bozo_http_error(httpd, 404, request,
+					"can't chdir to slashdir");
+	return 0;
+}
+
+/*
+ * checks to see if this request has a valid .bzredirect file.  returns
+ * 0 on failure and 1 on success.
+ */
+static void
+check_bzredirect(bozo_httpreq_t *request)
+{
+	struct stat sb;
+	char dir[MAXPATHLEN], redir[MAXPATHLEN], redirpath[MAXPATHLEN + 1];
+	char *basename, *finalredir;
+	int rv, absolute;
+
+	/*
+	 * if this pathname is really a directory, but doesn't end in /,
+	 * use it as the directory to look for the redir file.
+	 */
+	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
+	debug((httpd, DEBUG_FAT, "check_bzredirect: dir %s", dir));
+	basename = strrchr(dir, '/');
+
+	if ((!basename || basename[1] != '\0') &&
+	    lstat(dir, &sb) == 0 && S_ISDIR(sb.st_mode))
+		/* nothing */;
+	else if (basename == NULL)
+		strcpy(dir, ".");
+	else {
+		*basename++ = '\0';
+		bozo_check_special_files(request, basename);
+	}
+
+	snprintf(redir, sizeof(redir), "%s/%s", dir, REDIRECT_FILE);
+	if (lstat(redir, &sb) == 0) {
+		if (!S_ISLNK(sb.st_mode))
+			return;
+		absolute = 0;
+	} else {
+		snprintf(redir, sizeof(redir), "%s/%s", dir, ABSREDIRECT_FILE);
+		if (lstat(redir, &sb) < 0 || !S_ISLNK(sb.st_mode))
+			return;
+		absolute = 1;
+	}
+	debug((httpd, DEBUG_FAT, "check_bzredirect: calling readlink"));
+	rv = readlink(redir, redirpath, sizeof redirpath - 1);
+	if (rv == -1 || rv == 0) {
+		debug((httpd, DEBUG_FAT, "readlink failed"));
+		return;
+	}
+	redirpath[rv] = '\0';
+	debug((httpd, DEBUG_FAT, "readlink returned \"%s\"", redirpath));
+	
+	/* now we have the link pointer, redirect to the real place */
+	if (absolute)
+		finalredir = redirpath;
+	else
+		snprintf(finalredir = redir, sizeof(redir), "/%s/%s", dir,
+			 redirpath);
+
+	debug((httpd, DEBUG_FAT, "check_bzredirect: new redir %s", finalredir));
+	handle_redirect(request, finalredir, absolute);
+}
+
+/* this fixes the %HH hack that RFC2396 requires.  */
+static void
+fix_url_percent(bozo_httpreq_t *request)
+{
+	bozohttpd_t *httpd = request->hr_httpd;
+	char	*s, *t, buf[3], *url;
+	char	*end;	/* if end is not-zero, we don't translate beyond that */
+
+	url = request->hr_file;
+
+	end = url + strlen(url);
+
+	/* fast forward to the first % */
+	if ((s = strchr(url, '%')) == NULL)
+		return;
+
+	t = s;
+	do {
+		if (end && s >= end) {
+			debug((httpd, DEBUG_EXPLODING,
+				"fu_%%: past end, filling out.."));
+			while (*s)
+				*t++ = *s++;
+			break;
+		}
+		debug((httpd, DEBUG_EXPLODING,
+			"fu_%%: got s == %%, s[1]s[2] == %c%c",
+			s[1], s[2]));
+		if (s[1] == '\0' || s[2] == '\0') {
+			(void)bozo_http_error(httpd, 400, request,
+			    "percent hack missing two chars afterwards");
+			goto copy_rest;
+		}
+		if (s[1] == '0' && s[2] == '0') {
+			(void)bozo_http_error(httpd, 404, request,
+					"percent hack was %00");
+			goto copy_rest;
+		}
+		if (s[1] == '2' && s[2] == 'f') {
+			(void)bozo_http_error(httpd, 404, request,
+					"percent hack was %2f (/)");
+			goto copy_rest;
+		}
+			
+		buf[0] = *++s;
+		buf[1] = *++s;
+		buf[2] = '\0';
+		s++;
+		*t = (char)strtol(buf, NULL, 16);
+		debug((httpd, DEBUG_EXPLODING,
+				"fu_%%: strtol put '%02x' into *t", *t));
+		if (*t++ == '\0') {
+			(void)bozo_http_error(httpd, 400, request,
+					"percent hack got a 0 back");
+			goto copy_rest;
+		}
+
+		while (*s && *s != '%') {
+			if (end && s >= end)
+				break;
+			*t++ = *s++;
+		}
+	} while (*s);
+copy_rest:
+	while (*s) {
+		if (s >= end)
+			break;
+		*t++ = *s++;
+	}
+	*t = '\0';
+	debug((httpd, DEBUG_FAT, "fix_url_percent returns %s in url",
+			request->hr_file));
+}
+
+/*
+ * transform_request does this:
+ *	- ``expand'' %20 crapola
+ *	- punt if it doesn't start with /
+ *	- check httpd->untrustedref / referrer
+ *	- look for "http://myname/" and deal with it.
+ *	- maybe call bozo_process_cgi() 
+ *	- check for ~user and call bozo_user_transform() if so
+ *	- if the length > 1, check for trailing slash.  if so,
+ *	  add the index.html file
+ *	- if the length is 1, return the index.html file
+ *	- disallow anything ending up with a file starting
+ *	  at "/" or having ".." in it.
+ *	- anything else is a really weird internal error
+ *	- returns malloced file to serve, if unhandled
+ */
+static int
+transform_request(bozo_httpreq_t *request, int *isindex)
+{
+	bozohttpd_t *httpd = request->hr_httpd;
+	char	*file, *newfile = NULL;
+	size_t	len;
+
+	file = NULL;
+	*isindex = 0;
+	debug((httpd, DEBUG_FAT, "tf_req: file %s", request->hr_file));
+	fix_url_percent(request);
+	if (check_virtual(request)) {
+		goto bad_done;
+	}
+	file = request->hr_file;
+
+	if (file[0] != '/') {
+		(void)bozo_http_error(httpd, 404, request, "unknown URL");
+		goto bad_done;
+	}
+
+	check_bzredirect(request);
+
+	if (httpd->untrustedref) {
+		int to_indexhtml = 0;
+
+#define TOP_PAGE(x)	(strcmp((x), "/") == 0 || \
+			 strcmp((x) + 1, httpd->index_html) == 0 || \
+			 strcmp((x) + 1, "favicon.ico") == 0) 
+		
+		debug((httpd, DEBUG_EXPLODING, "checking httpd->untrustedref"));
+		/*
+		 * first check that this path isn't allowed via .bzdirect file,
+		 * and then check referrer; make sure that people come via the
+		 * real name... otherwise if we aren't looking at / or
+		 * /index.html, redirect...  we also special case favicon.ico.
+		 */
+		if (check_direct_access(request))
+			/* nothing */;
+		else if (request->hr_referrer) {
+			const char *r = request->hr_referrer;
+
+			debug((httpd, DEBUG_FAT,
+				"checking referrer \"%s\" vs virthostname %s",
+				r, httpd->virthostname));
+			if (strncmp(r, "http://", 7) != 0 ||
+			    (strncasecmp(r + 7, httpd->virthostname,
+			    		 strlen(httpd->virthostname)) != 0 &&
+			     !TOP_PAGE(file)))
+				to_indexhtml = 1;
+		} else {
+			const char *h = request->hr_host;
+
+			debug((httpd, DEBUG_FAT, "url has no referrer at all"));
+			/* if there's no referrer, let / or /index.html past */
+			if (!TOP_PAGE(file) ||
+			    (h && strncasecmp(h, httpd->virthostname,
+			    		strlen(httpd->virthostname)) != 0))
+				to_indexhtml = 1;
+		}
+
+		if (to_indexhtml) {
+			char *slashindexhtml;
+
+			if (asprintf(&slashindexhtml, "/%s",
+					httpd->index_html) < 0)
+				bozo_err(httpd, 1, "asprintf");
+			debug((httpd, DEBUG_FAT,
+				"httpd->untrustedref: redirecting %s to %s",
+				file, slashindexhtml));
+			handle_redirect(request, slashindexhtml, 0);
+			free(slashindexhtml);
+			return 0;
+		}
+	}
+
+	len = strlen(file);
+	if (/*CONSTCOND*/0) {
+#ifndef NO_USER_SUPPORT
+	} else if (len > 1 && httpd->enable_users && file[1] == '~') {
+		if (file[2] == '\0') {
+			(void)bozo_http_error(httpd, 404, request,
+						"missing username");
+			goto bad_done;
+		}
+		if (strchr(file + 2, '/') == NULL) {
+			handle_redirect(request, NULL, 0);
+			return 0;
+		}
+		debug((httpd, DEBUG_FAT, "calling bozo_user_transform"));
+
+		return bozo_user_transform(request, isindex);
+#endif /* NO_USER_SUPPORT */
+	} else if (len > 1) {
+		debug((httpd, DEBUG_FAT, "file[len-1] == %c", file[len-1]));
+		if (file[len-1] == '/') {	/* append index.html */
+			*isindex = 1;
+			debug((httpd, DEBUG_FAT, "appending index.html"));
+			newfile = bozomalloc(httpd,
+					len + strlen(httpd->index_html) + 1);
+			strcpy(newfile, file + 1);
+			strcat(newfile, httpd->index_html);
+		} else
+			newfile = bozostrdup(request->hr_httpd, file + 1);
+	} else if (len == 1) {
+		debug((httpd, DEBUG_EXPLODING, "tf_req: len == 1"));
+		newfile = bozostrdup(request->hr_httpd, httpd->index_html);
+		*isindex = 1;
+	} else {	/* len == 0 ? */
+		(void)bozo_http_error(httpd, 500, request,
+					"request->hr_file is nul?");
+		goto bad_done;
+	}
+
+	if (newfile == NULL) {
+		(void)bozo_http_error(httpd, 500, request, "internal failure");
+		goto bad_done;
+	}
+
+	/*
+	 * look for "http://myname/" and deal with it as necessary.
+	 */
+
+	/*
+	 * stop traversing outside our domain 
+	 *
+	 * XXX true security only comes from our parent using chroot(2)
+	 * before execve(2)'ing us.  or our own built in chroot(2) support.
+	 */
+	if (*newfile == '/' || strcmp(newfile, "..") == 0 ||
+	    strstr(newfile, "/..") || strstr(newfile, "../")) {
+		(void)bozo_http_error(httpd, 403, request, "illegal request");
+		goto bad_done;
+	}
+
+	if (bozo_auth_check(httpd, request, newfile))
+		goto bad_done;
+
+	if (strlen(newfile)) {
+		free(request->hr_file);
+		request->hr_file = newfile;
+	}
+
+	if (bozo_process_cgi(request))
+		return 0;
+
+	debug((httpd, DEBUG_FAT, "transform_request set: %s", newfile));
+	return 1;
+bad_done:
+	debug((httpd, DEBUG_FAT, "transform_request returning: 0"));
+	if (newfile)
+		free(newfile);
+	return 0;
+}
+
+/*
+ * bozo_process_request does the following:
  *	- check the request is valid
  *	- process cgi-bin if necessary
  *	- transform a filename if necesarry
  *	- return the HTTP request
  */
-static void
-process_request(http_req *request)
+void
+bozo_process_request(bozo_httpreq_t *request)
 {
+	bozohttpd_t *httpd = request->hr_httpd;
 	struct	stat sb;
 	time_t timestamp;
 	char	*file;
@@ -1038,20 +1352,20 @@ process_request(http_req *request)
 
 	fd = open(file, O_RDONLY);
 	if (fd < 0) {
-		debug((DEBUG_FAT, "open failed: %s", strerror(errno)));
+		debug((httpd, DEBUG_FAT, "open failed: %s", strerror(errno)));
 		if (errno == EPERM)
-			(void)http_error(403, request, "no permission to open file");
+			(void)bozo_http_error(httpd, 403, request,
+						"no permission to open file");
 		else if (errno == ENOENT) {
-			if (directory_index(request, file, isindex)) 
-				;
-			else
-				(void)http_error(404, request, "no file");
+			if (!bozo_dir_index(request, file, isindex)) 
+				(void)bozo_http_error(httpd, 404, request,
+							"no file");
 		} else
-			(void)http_error(500, request, "open file");
+			(void)bozo_http_error(httpd, 500, request, "open file");
 		goto cleanup_nofd;
 	}
 	if (fstat(fd, &sb) < 0) {
-		(void)http_error(500, request, "can't fstat");
+		(void)bozo_http_error(httpd, 500, request, "can't fstat");
 		goto cleanup;
 	}
 	if (S_ISDIR(sb.st_mode)) {
@@ -1063,9 +1377,10 @@ process_request(http_req *request)
 	    parse_http_date(request->hr_if_modified_since, &timestamp) &&
 	    timestamp >= sb.st_mtime) {
 		/* XXX ignore subsecond of timestamp */
-		bozoprintf("%s 304 Not Modified\r\n", request->hr_proto);
-		bozoprintf("\r\n");
-		bozoflush(stdout);
+		bozo_printf(httpd, "%s 304 Not Modified\r\n",
+				request->hr_proto);
+		bozo_printf(httpd, "\r\n");
+		bozo_flush(httpd, stdout);
 		goto cleanup;
 	}
 
@@ -1079,26 +1394,26 @@ process_request(http_req *request)
 		request->hr_first_byte_pos = 0;
 		request->hr_last_byte_pos = sb.st_size - 1;
 	}
-	debug((DEBUG_FAT, "have_range %d first_pos %qd last_pos %qd",
+	debug((httpd, DEBUG_FAT, "have_range %d first_pos %qd last_pos %qd",
 	    request->hr_have_range,
 	    request->hr_first_byte_pos, request->hr_last_byte_pos));
 	if (request->hr_have_range)
-		bozoprintf("%s 206 Partial Content\r\n", request->hr_proto);
+		bozo_printf(httpd, "%s 206 Partial Content\r\n",
+				request->hr_proto);
 	else
-		bozoprintf("%s 200 OK\r\n", request->hr_proto);
+		bozo_printf(httpd, "%s 200 OK\r\n", request->hr_proto);
 
-	if (request->hr_proto != http_09) {
-		type = content_type(request, file);
-		encoding = content_encoding(request, file);
+	if (request->hr_proto != httpd->consts.http_09) {
+		type = bozo_content_type(request, file);
+		encoding = bozo_content_encoding(request, file);
 
-		print_header(request, &sb, type, encoding);
-		bozoprintf("\r\n");
+		bozo_print_header(request, &sb, type, encoding);
+		bozo_printf(httpd, "\r\n");
 	}
-	bozoflush(stdout);
+	bozo_flush(httpd, stdout);
 
 	if (request->hr_method != HTTP_HEAD) {
 		off_t szleft, cur_byte_pos;
-		static size_t mmapsz = MMAPSZ;
 
 		szleft =
 		     request->hr_last_byte_pos - request->hr_first_byte_pos + 1;
@@ -1109,16 +1424,16 @@ process_request(http_req *request)
 			size_t sz;
 
 			/* This should take care of the first unaligned chunk */
-			if ((cur_byte_pos & (page_size - 1)) != 0)
-				sz = cur_byte_pos & ~page_size;
-			if ((off_t)mmapsz < szleft)
-				sz = mmapsz;
+			if ((cur_byte_pos & (httpd->page_size - 1)) != 0)
+				sz = (size_t)(cur_byte_pos & ~httpd->page_size);
+			if ((off_t)httpd->mmapsz < szleft)
+				sz = httpd->mmapsz;
 			else
-				sz = szleft;
-			if (mmap_and_write_part(fd, cur_byte_pos, sz)) {
+				sz = (size_t)szleft;
+			if (mmap_and_write_part(httpd, fd, cur_byte_pos, sz)) {
 				if (errno == ENOMEM) {
-					mmapsz /= 2;
-					if (mmapsz >= page_size)
+					httpd->mmapsz /= 2;
+					if (httpd->mmapsz >= httpd->page_size)
 						goto retry;
 				}
 				goto cleanup;
@@ -1135,431 +1450,37 @@ process_request(http_req *request)
 	/*close(STDERR_FILENO);*/
 }
 
-/*
- * deal with virtual host names; we do this:
- *	if we have a virtual path root (vpath), and we are given a
- *	virtual host spec (Host: ho.st or http://ho.st/), see if this
- *	directory exists under vpath.  if it does, use this as the
- #	new slashdir.
- */
-static int
-check_virtual(http_req *request)
-{
-	char *file = request->hr_file, *s;
-	struct dirent **list;
-	size_t len;
-	int i;
-
-	if (!vpath)
-		goto use_slashdir;
-
-	/*
-	 * convert http://virtual.host/ to request->hr_host
-	 */
-	debug((DEBUG_OBESE, "checking for http:// virtual host in ``%s''", file));
-	if (strncasecmp(file, "http://", 7) == 0) {
-		/* we would do virtual hosting here? */
-		file += 7;
-		s = strchr(file, '/');
-		/* HTTP/1.1 draft rev-06, 5.2: URI takes precedence over Host: */
-		request->hr_host = file;
-		request->hr_file = bozostrdup(s ? s : "/");
-		debug((DEBUG_OBESE, "got host ``%s'' file is now ``%s''",
-		    request->hr_host, request->hr_file));
-	} else if (!request->hr_host)
-		goto use_slashdir;
-
-
-	/*
-	 * ok, we have a virtual host, use scandir(3) to find a case
-	 * insensitive match for the virtual host we are asked for.
-	 * note that if the virtual host is the same as the master,
-	 * we don't need to do anything special.
-	 */
-	len = strlen(request->hr_host);
-	debug((DEBUG_OBESE,
-	    "check_virtual: checking host `%s' under vpath `%s' for file `%s'",
-	    request->hr_host, vpath, request->hr_file));
-	if (strncasecmp(myname, request->hr_host, len) != 0) {
-		s = 0;
-		for (i = scandir(vpath, &list, 0, 0); i--; list++) {
-			debug((DEBUG_OBESE, "looking at dir``%s''",
-			    (*list)->d_name));
-			if (strncasecmp((*list)->d_name, request->hr_host,
-			    len) == 0) {
-				/* found it, punch it */
-				myname = (*list)->d_name;
-				if (asprintf(&s, "%s/%s", vpath, myname) < 0)
-					error(1, "asprintf");
-				break;
-			}
-		}
-		if (s == 0) {
-			if (Vflag)
-				goto use_slashdir;
-			return http_error(404, request, "unknown URL");
-		}
-	} else
-use_slashdir:
-		s = slashdir;
-
-	/*
-	 * ok, nailed the correct slashdir, chdir to it
-	 */
-	if (chdir(s) < 0)
-		return http_error(404, request, "can't chdir to slashdir");
-	return 0;
-}
-
 /* make sure we're not trying to access special files */
 int
-check_special_files(http_req *request, const char *name)
+bozo_check_special_files(bozo_httpreq_t *request, const char *name)
 {
+	bozohttpd_t *httpd = request->hr_httpd;
+
 	/* ensure basename(name) != special files */
 	if (strcmp(name, DIRECT_ACCESS_FILE) == 0)
-		return http_error(403, request,
+		return bozo_http_error(httpd, 403, request,
 		    "no permission to open direct access file");
 	if (strcmp(name, REDIRECT_FILE) == 0)
-		return http_error(403, request,
+		return bozo_http_error(httpd, 403, request,
 		    "no permission to open redirect file");
 	if (strcmp(name, ABSREDIRECT_FILE) == 0)
-		return http_error(403, request,
+		return bozo_http_error(httpd, 403, request,
 		    "no permission to open redirect file");
-	return auth_check_special_files(request, name);
-}
-
-/*
- * checks to see if this request has a valid .bzredirect file.  returns
- * 0 on failure and 1 on success.
- */
-static void
-check_bzredirect(http_req *request)
-{
-	struct stat sb;
-	char dir[MAXPATHLEN], redir[MAXPATHLEN], redirpath[MAXPATHLEN + 1];
-	char *basename, *finalredir;
-	int rv, absolute;
-
-	/*
-	 * if this pathname is really a directory, but doesn't end in /,
-	 * use it as the directory to look for the redir file.
-	 */
-	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
-	debug((DEBUG_FAT, "check_bzredirect: dir %s", dir));
-	basename = strrchr(dir, '/');
-
-	if ((!basename || basename[1] != '\0') &&
-	    lstat(dir, &sb) == 0 && S_ISDIR(sb.st_mode))
-		/* nothing */;
-	else if (basename == NULL)
-		strcpy(dir, ".");
-	else {
-		*basename++ = '\0';
-		check_special_files(request, basename);
-	}
-
-	snprintf(redir, sizeof(redir), "%s/%s", dir, REDIRECT_FILE);
-	if (lstat(redir, &sb) == 0) {
-		if (S_ISLNK(sb.st_mode) == 0)
-			return;
-		absolute = 0;
-	} else {
-		snprintf(redir, sizeof(redir), "%s/%s", dir, ABSREDIRECT_FILE);
-		if (lstat(redir, &sb) < 0 || S_ISLNK(sb.st_mode) == 0)
-			return;
-		absolute = 1;
-	}
-	debug((DEBUG_FAT, "check_bzredirect: calling readlink"));
-	rv = readlink(redir, redirpath, sizeof redirpath - 1);
-	if (rv == -1 || rv == 0) {
-		debug((DEBUG_FAT, "readlink failed"));
-		return;
-	}
-	redirpath[rv] = '\0';
-	debug((DEBUG_FAT, "readlink returned \"%s\"", redirpath));
-	
-	/* now we have the link pointer, redirect to the real place */
-	if (absolute)
-		finalredir = redirpath;
-	else
-		snprintf(finalredir = redir, sizeof(redir), "/%s/%s", dir,
-			 redirpath);
-
-	debug((DEBUG_FAT, "check_bzredirect: new redir %s", finalredir));
-	handle_redirect(request, finalredir, absolute);
-}
-
-/*
- * checks to see if this request has a valid .bzdirect file.  returns
- * 0 on failure and 1 on success.
- */
-static int
-check_direct_access(http_req *request)
-{
-	FILE *fp;
-	struct stat sb;
-	char dir[MAXPATHLEN], dirfile[MAXPATHLEN], *basename;
-
-	snprintf(dir, sizeof(dir), "%s", request->hr_file + 1);
-	debug((DEBUG_FAT, "check_bzredirect: dir %s", dir));
-	basename = strrchr(dir, '/');
-
-	if ((!basename || basename[1] != '\0') &&
-	    lstat(dir, &sb) == 0 && S_ISDIR(sb.st_mode))
-		/* nothing */;
-	else if (basename == NULL)
-		strcpy(dir, ".");
-	else {
-		*basename++ = '\0';
-		check_special_files(request, basename);
-	}
-
-	snprintf(dirfile, sizeof(dirfile), "%s/%s", dir, DIRECT_ACCESS_FILE);
-	if (stat(dirfile, &sb) < 0 ||
-	    (fp = fopen(dirfile, "r")) == NULL)
-		return 0;
-	fclose(fp);
-	return 1;
-}
-
-/*
- * transform_request does this:
- *	- ``expand'' %20 crapola
- *	- punt if it doesn't start with /
- *	- check rflag / referrer
- *	- look for "http://myname/" and deal with it.
- *	- maybe call process_cgi() 
- *	- check for ~user and call user_transform() if so
- *	- if the length > 1, check for trailing slash.  if so,
- *	  add the index.html file
- *	- if the length is 1, return the index.html file
- *	- disallow anything ending up with a file starting
- *	  at "/" or having ".." in it.
- *	- anything else is a really weird internal error
- *	- returns malloced file to serve, if unhandled
- */
-int
-transform_request(http_req *request, int *isindex)
-{
-	char	*file, *newfile = NULL;
-	size_t	len;
-
-	file = NULL;
-	*isindex = 0;
-	debug((DEBUG_FAT, "tf_req: file %s", request->hr_file));
-	fix_url_percent(request);
-	if (check_virtual(request)) {
-		goto bad_done;
-	}
-	file = request->hr_file;
-
-	if (file[0] != '/') {
-		(void)http_error(404, request, "unknown URL");
-		goto bad_done;
-	}
-
-	check_bzredirect(request);
-
-	if (rflag) {
-		int to_indexhtml = 0;
-
-#define TOP_PAGE(x)	(strcmp((x), "/") == 0 || \
-			 strcmp((x) + 1, index_html) == 0 || \
-			 strcmp((x) + 1, "favicon.ico") == 0) 
-		
-		debug((DEBUG_EXPLODING, "checking rflag"));
-		/*
-		 * first check that this path isn't allowed via .bzdirect file,
-		 * and then check referrer; make sure that people come via the
-		 * real name... otherwise if we aren't looking at / or
-		 * /index.html, redirect...  we also special case favicon.ico.
-		 */
-		if (check_direct_access(request))
-			/* nothing */;
-		else if (request->hr_referrer) {
-			const char *r = request->hr_referrer;
-
-			debug((DEBUG_FAT,
-			   "checking referrer \"%s\" vs myname %s", r, myname));
-			if (strncmp(r, "http://", 7) != 0 ||
-			    (strncasecmp(r + 7, myname, strlen(myname)) != 0 &&
-			     !TOP_PAGE(file)))
-				to_indexhtml = 1;
-		} else {
-			const char *h = request->hr_host;
-
-			debug((DEBUG_FAT, "url has no referrer at all"));
-			/* if there's no referrer, let / or /index.html past */
-			if (!TOP_PAGE(file) ||
-			    (h && strncasecmp(h, myname, strlen(myname)) != 0))
-				to_indexhtml = 1;
-		}
-
-		if (to_indexhtml) {
-			char *slashindexhtml;
-
-			if (asprintf(&slashindexhtml, "/%s", index_html) < 0)
-				error(1, "asprintf");
-			debug((DEBUG_FAT, "rflag: redirecting %s to %s", file, slashindexhtml));
-			handle_redirect(request, slashindexhtml, 0);
-			free(slashindexhtml);
-			return 0;
-		}
-	}
-
-	len = strlen(file);
-	if (0) {
-#ifndef NO_USER_SUPPORT
-	} else if (len > 1 && uflag && file[1] == '~') {
-		if (file[2] == '\0') {
-			(void)http_error(404, request, "missing username");
-			goto bad_done;
-		}
-		if (strchr(file + 2, '/') == NULL) {
-			handle_redirect(request, NULL, 0);
-			return 0;
-		}
-		debug((DEBUG_FAT, "calling user_transform"));
-
-		return (user_transform(request, isindex));
-#endif /* NO_USER_SUPPORT */
-	} else if (len > 1) {
-		debug((DEBUG_FAT, "file[len-1] == %c", file[len-1]));
-		if (file[len-1] == '/') {	/* append index.html */
-			*isindex = 1;
-			debug((DEBUG_FAT, "appending index.html"));
-			newfile = bozomalloc(len + strlen(index_html) + 1);
-			strcpy(newfile, file + 1);
-			strcat(newfile, index_html);
-		} else
-			newfile = bozostrdup(file + 1);
-	} else if (len == 1) {
-		debug((DEBUG_EXPLODING, "tf_req: len == 1"));
-		newfile = bozostrdup(index_html);
-		*isindex = 1;
-	} else {	/* len == 0 ? */
-		(void)http_error(500, request, "request->hr_file is nul?");
-		goto bad_done;
-	}
-
-	if (newfile == NULL) {
-		(void)http_error(500, request, "internal failure");
-		goto bad_done;
-	}
-
-	/*
-	 * look for "http://myname/" and deal with it as necessary.
-	 */
-
-	/*
-	 * stop traversing outside our domain 
-	 *
-	 * XXX true security only comes from our parent using chroot(2)
-	 * before execve(2)'ing us.  or our own built in chroot(2) support.
-	 */
-	if (*newfile == '/' || strcmp(newfile, "..") == 0 ||
-	    strstr(newfile, "/..") || strstr(newfile, "../")) {
-		(void)http_error(403, request, "illegal request");
-		goto bad_done;
-	}
-
-	if (auth_check(request, newfile))
-		goto bad_done;
-
-	if (strlen(newfile)) {
-		free(request->hr_file);
-		request->hr_file = newfile;
-	}
-
-	if (process_cgi(request))
-		return 0;
-
-	debug((DEBUG_FAT, "transform_request set: %s", newfile));
-	return 1;
-bad_done:
-	debug((DEBUG_FAT, "transform_request returning: 0"));
-	if (newfile)
-		free(newfile);
-	return 0;
-}
-
-/*
- * do automatic redirection -- if there are query parameters for the URL
- * we will tack these on to the new (redirected) URL.
- */
-static void
-handle_redirect(http_req *request, const char *url, int absolute)
-{
-	char *urlbuf;
-	char portbuf[20];
-	int query = 0;
-	
-	if (url == NULL) {
-		if (asprintf(&urlbuf, "/%s/", request->hr_file) < 0)
-			error(1, "asprintf");
-		url = urlbuf;
-	} else
-		urlbuf = NULL;
-
-	if (request->hr_query && strlen(request->hr_query)) {
-		query = 1;
-	}
-
-	if (request->hr_serverport && strcmp(request->hr_serverport, "80") != 0)
-		snprintf(portbuf, sizeof(portbuf), ":%s",
-		    request->hr_serverport);
-	else
-		portbuf[0] = '\0';
-	warning("redirecting %s%s%s", myname, portbuf, url);
-	debug((DEBUG_FAT, "redirecting %s", url));
-	bozoprintf("%s 301 Document Moved\r\n", request->hr_proto);
-	if (request->hr_proto != http_09) 
-		print_header(request, NULL, "text/html", NULL);
-	if (request->hr_proto != http_09) {
-		bozoprintf("Location: http://");
-		if (absolute == 0)
-			bozoprintf("%s%s", myname, portbuf);
-		if (query) {
-		  bozoprintf("%s?%s\r\n", url, request->hr_query);
-		} else {
-		  bozoprintf("%s\r\n", url);
-		}
-	}
-	bozoprintf("\r\n");
-	if (request->hr_method == HTTP_HEAD)
-		goto head;
-	bozoprintf("<html><head><title>Document Moved</title></head>\n");
-	bozoprintf("<body><h1>Document Moved</h1>\n");
-	bozoprintf("This document had moved <a href=\"http://");
-	if (query) {
-	  if (absolute)
-	    bozoprintf("%s?%s", url, request->hr_query);
-	  else
-	    bozoprintf("%s%s%s?%s", myname, portbuf, url, request->hr_query);
-        } else {
-	  if (absolute)
-	    bozoprintf("%s", url);
-	  else
-	    bozoprintf("%s%s%s", myname, portbuf, url);
-	}
-	bozoprintf("\">here</a>\n");
-	bozoprintf("</body></html>\n");
-head:
-	bozoflush(stdout);
-	if (urlbuf)
-		free(urlbuf);
+	return bozo_auth_check_special_files(httpd, request, name);
 }
 
 /* generic header printing routine */
 void
-print_header(http_req *request, struct stat *sbp, const char *type,
-	     const char *encoding)
+bozo_print_header(bozo_httpreq_t *request,
+		struct stat *sbp, const char *type, const char *encoding)
 {
+	bozohttpd_t *httpd = request->hr_httpd;
 	off_t len;
+	char	date[40];
 
-	bozoprintf("Date: %s\r\n", http_date());
-	bozoprintf("Server: %s\r\n", server_software);
-	bozoprintf("Accept-Ranges: bytes\r\n");
+	bozo_printf(httpd, "Date: %s\r\n", bozo_http_date(date, sizeof(date)));
+	bozo_printf(httpd, "Server: %s\r\n", httpd->server_software);
+	bozo_printf(httpd, "Accept-Ranges: bytes\r\n");
 	if (sbp) {
 		char filedate[40];
 		struct	tm *tm;
@@ -1567,32 +1488,88 @@ print_header(http_req *request, struct stat *sbp, const char *type,
 		tm = gmtime(&sbp->st_mtime);
 		strftime(filedate, sizeof filedate,
 		    "%a, %d %b %Y %H:%M:%S GMT", tm);
-		bozoprintf("Last-Modified: %s\r\n", filedate);
+		bozo_printf(httpd, "Last-Modified: %s\r\n", filedate);
 	}
 	if (type && *type)
-		bozoprintf("Content-Type: %s\r\n", type);
+		bozo_printf(httpd, "Content-Type: %s\r\n", type);
 	if (encoding && *encoding)
-		bozoprintf("Content-Encoding: %s\r\n", encoding);
+		bozo_printf(httpd, "Content-Encoding: %s\r\n", encoding);
 	if (sbp) {
 		if (request->hr_have_range) {
-			len = request->hr_last_byte_pos - request->hr_first_byte_pos +1;
-			bozoprintf("Content-Range: bytes %qd-%qd/%qd\r\n",
-			    (long long) request->hr_first_byte_pos,
-			    (long long) request->hr_last_byte_pos,
-			    (long long) sbp->st_size);
-		}
-		else
+			len = request->hr_last_byte_pos -
+					request->hr_first_byte_pos +1;
+			bozo_printf(httpd,
+				"Content-Range: bytes %qd-%qd/%qd\r\n",
+				(long long) request->hr_first_byte_pos,
+				(long long) request->hr_last_byte_pos,
+				(long long) sbp->st_size);
+		} else
 			len = sbp->st_size;
-		bozoprintf("Content-Length: %qd\r\n", (long long)len);
+		bozo_printf(httpd, "Content-Length: %qd\r\n", (long long)len);
 	}
-	if (request && request->hr_proto == http_11)
-		bozoprintf("Connection: close\r\n");
-	bozoflush(stdout);
+	if (request && request->hr_proto == httpd->consts.http_11)
+		bozo_printf(httpd, "Connection: close\r\n");
+	bozo_flush(httpd, stdout);
+}
+
+#ifdef DEBUG
+void
+debug__(bozohttpd_t *httpd, int level, const char *fmt, ...)
+{
+	va_list	ap;
+	int savederrno;
+	
+	/* only log if the level is low enough */
+	if (httpd->debug < level)
+		return;
+
+	savederrno = errno;
+	va_start(ap, fmt);
+	if (httpd->logstderr) {
+		vfprintf(stderr, fmt, ap);
+		fputs("\n", stderr);
+	} else
+		vsyslog(LOG_DEBUG, fmt, ap);
+	va_end(ap);
+	errno = savederrno;
+}
+#endif /* DEBUG */
+
+/* these are like warn() and err(), except for syslog not stderr */
+void
+bozo_warn(bozohttpd_t *httpd, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (httpd->logstderr || isatty(STDERR_FILENO)) {
+		//fputs("warning: ", stderr);
+		vfprintf(stderr, fmt, ap);
+		fputs("\n", stderr);
+	} else
+		vsyslog(LOG_INFO, fmt, ap);
+	va_end(ap);
+}
+
+void
+bozo_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (httpd->logstderr || isatty(STDERR_FILENO)) {
+		//fputs("error: ", stderr);
+		vfprintf(stderr, fmt, ap);
+		fputs("\n", stderr);
+	} else
+		vsyslog(LOG_ERR, fmt, ap);
+	va_end(ap);
+	exit(code);
 }
 
 /* this escape HTML tags */
 static void
-escape_html(http_req *request)
+escape_html(bozo_httpreq_t *request)
 {
 	int	i, j;
 	char	*url = request->hr_file, *tmp;
@@ -1645,276 +1622,6 @@ escape_html(http_req *request)
 	request->hr_file = tmp;
 }
 
-/* this fixes the %HH hack that RFC2396 requires.  */
-static void
-fix_url_percent(http_req *request)
-{
-	char	*s, *t, buf[3], *url;
-	char	*end;	/* if end is not-zero, we don't translate beyond that */
-
-	url = request->hr_file;
-
-	end = url + strlen(url);
-
-	/* fast forward to the first % */
-	if ((s = strchr(url, '%')) == NULL)
-		return;
-
-	t = s;
-	do {
-		if (end && s >= end) {
-			debug((DEBUG_EXPLODING, "fu_%%: past end, filling out.."));
-			while (*s)
-				*t++ = *s++;
-			break;
-		}
-		debug((DEBUG_EXPLODING, "fu_%%: got s == %%, s[1]s[2] == %c%c",
-		    s[1], s[2]));
-		if (s[1] == '\0' || s[2] == '\0') {
-			(void)http_error(400, request,
-			    "percent hack missing two chars afterwards");
-			goto copy_rest;
-		}
-		if (s[1] == '0' && s[2] == '0') {
-			(void)http_error(404, request, "percent hack was %00");
-			goto copy_rest;
-		}
-		if (s[1] == '2' && s[2] == 'f') {
-			(void)http_error(404, request, "percent hack was %2f (/)");
-			goto copy_rest;
-		}
-			
-		buf[0] = *++s;
-		buf[1] = *++s;
-		buf[2] = '\0';
-		s++;
-		*t = (char)strtol(buf, NULL, 16);
-		debug((DEBUG_EXPLODING, "fu_%%: strtol put '%02x' into *t", *t));
-		if (*t++ == '\0') {
-			(void)http_error(400, request, "percent hack got a 0 back");
-			goto copy_rest;
-		}
-
-		while (*s && *s != '%') {
-			if (end && s >= end)
-				break;
-			*t++ = *s++;
-		}
-	} while (*s);
-copy_rest:
-	while (*s) {
-		if (s >= end)
-			break;
-		*t++ = *s++;
-	}
-	*t = '\0';
-	debug((DEBUG_FAT, "fix_url_percent returns %s in url", request->hr_file));
-}
-
-/*
- * process each type of HTTP method, setting this HTTP requests
- # method type.
- */
-static struct method_map {
-	const char *name;
-	int	type;
-} method_map[] = {
-	{ "GET", 	HTTP_GET, },
-	{ "POST",	HTTP_POST, },
-	{ "HEAD",	HTTP_HEAD, },
-#if 0	/* other non-required http/1.1 methods */
-	{ "OPTIONS",	HTTP_OPTIONS, },
-	{ "PUT",	HTTP_PUT, },
-	{ "DELETE",	HTTP_DELETE, },
-	{ "TRACE",	HTTP_TRACE, },
-	{ "CONNECT",	HTTP_CONNECT, },
-#endif
-	{ NULL,		0, },
-};
-
-static int
-process_method(http_req *request, const char *method)
-{
-	struct	method_map *mmp;
-
-	if (request->hr_proto == http_11)
-		request->hr_allow = "GET, HEAD, POST";
-
-	for (mmp = method_map; mmp->name; mmp++)
-		if (strcasecmp(method, mmp->name) == 0) {
-			request->hr_method = mmp->type;
-			request->hr_methodstr = mmp->name;
-			return 0;
-		}
-
-	return http_error(404, request, "unknown method");
-}
-
-/*
- * as the prototype string is not constant (eg, "HTTP/1.1" is equivalent
- * to "HTTP/001.01"), we MUST parse this.
- */
-static int
-process_proto(http_req *request, const char *proto)
-{
-	char	majorstr[16], *minorstr;
-	int	majorint, minorint;
-
-	if (proto == NULL) {
-got_proto_09:
-		request->hr_proto = http_09;
-		debug((DEBUG_FAT, "request %s is http/0.9", request->hr_file));
-		return 0;
-	}
-
-	if (strncasecmp(proto, "HTTP/", 5) != 0)
-		goto bad;
-	strncpy(majorstr, proto + 5, sizeof majorstr);
-	majorstr[sizeof(majorstr)-1] = 0;
-	minorstr = strchr(majorstr, '.');
-	if (minorstr == NULL)
-		goto bad;
-	*minorstr++ = 0;
-
-	majorint = atoi(majorstr);
-	minorint = atoi(minorstr);
-
-	switch (majorint) {
-	case 0:
-		if (minorint != 9)
-			break;
-		goto got_proto_09;
-	case 1:
-		if (minorint == 0)
-			request->hr_proto = http_10;
-		else if (minorint == 1)
-			request->hr_proto = http_11;
-		else
-			break;
-
-		debug((DEBUG_FAT, "request %s is %s", request->hr_file,
-		    request->hr_proto));
-		SIMPLEQ_INIT(&request->hr_headers);
-		request->hr_nheaders = 0;
-		return 0;
-	}
-bad:
-	return http_error(404, NULL, "unknown prototype");
-}
-
-#ifdef DEBUG
-void
-debug__(int level, const char *fmt, ...)
-{
-	va_list	ap;
-	int savederrno;
-	
-	/* only log if the level is low enough */
-	if (dflag < level)
-		return;
-
-	savederrno = errno;
-	va_start(ap, fmt);
-	if (sflag) {
-		vfprintf(stderr, fmt, ap);
-		fputs("\n", stderr);
-	} else
-		vsyslog(LOG_DEBUG, fmt, ap);
-	va_end(ap);
-	errno = savederrno;
-}
-#endif /* DEBUG */
-
-/* these are like warn() and err(), except for syslog not stderr */
-void
-warning(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	if (sflag || isatty(STDERR_FILENO)) {
-		//fputs("warning: ", stderr);
-		vfprintf(stderr, fmt, ap);
-		fputs("\n", stderr);
-	} else
-		vsyslog(LOG_INFO, fmt, ap);
-	va_end(ap);
-}
-
-void
-error(int code, const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	if (sflag || isatty(STDERR_FILENO)) {
-		//fputs("error: ", stderr);
-		vfprintf(stderr, fmt, ap);
-		fputs("\n", stderr);
-	} else
-		vsyslog(LOG_ERR, fmt, ap);
-	va_end(ap);
-	exit(code);
-}
-
-/* the follow functions and variables are used in handling HTTP errors */
-/* ARGSUSED */
-int
-http_error(int code, http_req *request, const char *msg)
-{
-	static	char buf[BUFSIZ];
-	char portbuf[20];
-	const char *header = http_errors_short(code);
-	const char *reason = http_errors_long(code);
-	const char *proto = (request && request->hr_proto) ? request->hr_proto : http_11;
-	int	size;
-
-	debug((DEBUG_FAT, "http_error %d: %s", code, msg));
-	if (header == NULL || reason == NULL) {
-		error(1, "http_error() failed (short = %p, long = %p)",
-		    header, reason);
-		return code;
-	}
-
-	if (request && request->hr_serverport &&
-	    strcmp(request->hr_serverport, "80") != 0)
-		snprintf(portbuf, sizeof(portbuf), ":%s", request->hr_serverport);
-	else
-		portbuf[0] = '\0';
-
-	if (request && request->hr_file) {
-		escape_html(request);
-		size = snprintf(buf, sizeof buf,
-		    "<html><head><title>%s</title></head>\n"
-		    "<body><h1>%s</h1>\n"
-		    "%s: <pre>%s</pre>\n"
- 		    "<hr><address><a href=\"http://%s%s/\">%s%s</a></address>\n"
-		    "</body></html>\n",
-		    header, header, request->hr_file, reason,
-		    myname, portbuf, myname, portbuf);
-		if (size >= (int)sizeof buf) {
-			warning("http_error buffer too small, truncated");
-			size = (int)sizeof buf;
-		}
-	} else
-		size = 0;
-
-	bozoprintf("%s %s\r\n", proto, header);
-	auth_check_401(request, code);
-
-	bozoprintf("Content-Type: text/html\r\n");
-	bozoprintf("Content-Length: %d\r\n", size);
-	bozoprintf("Server: %s\r\n", server_software);
-	if (request && request->hr_allow)
-		bozoprintf("Allow: %s\r\n", request->hr_allow);
-	bozoprintf("\r\n");
-	if (size)
-		bozoprintf("%s", buf);
-	bozoflush(stdout);
-
-	return code;
-}
-
 /* short map between error code, and short/long messages */
 static struct errors_map {
 	int	code;			/* HTTP return code */
@@ -1954,6 +1661,68 @@ http_errors_long(int code)
 		if (ep->code == code)
 			return (ep->longmsg);
 	return (help);
+}
+
+/* the follow functions and variables are used in handling HTTP errors */
+/* ARGSUSED */
+int
+bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
+		const char *msg)
+{
+	char portbuf[20];
+	const char *header = http_errors_short(code);
+	const char *reason = http_errors_long(code);
+	const char *proto = (request && request->hr_proto) ?
+				request->hr_proto : httpd->consts.http_11;
+	int	size;
+
+	debug((httpd, DEBUG_FAT, "bozo_http_error %d: %s", code, msg));
+	if (header == NULL || reason == NULL) {
+		bozo_err(httpd, 1,
+			"bozo_http_error() failed (short = %p, long = %p)",
+			header, reason);
+		return code;
+	}
+
+	if (request && request->hr_serverport &&
+	    strcmp(request->hr_serverport, "80") != 0)
+		snprintf(portbuf, sizeof(portbuf), ":%s",
+				request->hr_serverport);
+	else
+		portbuf[0] = '\0';
+
+	if (request && request->hr_file) {
+		escape_html(request);
+		size = snprintf(httpd->errorbuf, BUFSIZ,
+		    "<html><head><title>%s</title></head>\n"
+		    "<body><h1>%s</h1>\n"
+		    "%s: <pre>%s</pre>\n"
+ 		    "<hr><address><a href=\"http://%s%s/\">%s%s</a></address>\n"
+		    "</body></html>\n",
+		    header, header, request->hr_file, reason,
+		    httpd->virthostname, portbuf, httpd->virthostname, portbuf);
+		if (size >= (int)BUFSIZ) {
+			bozo_warn(httpd,
+				"bozo_http_error buffer too small, truncated");
+			size = (int)BUFSIZ;
+		}
+	} else
+		size = 0;
+
+	bozo_printf(httpd, "%s %s\r\n", proto, header);
+	bozo_auth_check_401(httpd, request, code);
+
+	bozo_printf(httpd, "Content-Type: text/html\r\n");
+	bozo_printf(httpd, "Content-Length: %d\r\n", size);
+	bozo_printf(httpd, "Server: %s\r\n", httpd->server_software);
+	if (request && request->hr_allow)
+		bozo_printf(httpd, "Allow: %s\r\n", request->hr_allow);
+	bozo_printf(httpd, "\r\n");
+	if (size)
+		bozo_printf(httpd, "%s", httpd->errorbuf);
+	bozo_flush(httpd, stdout);
+
+	return code;
 }
 
 /* Below are various modified libc functions */
@@ -1998,20 +1767,20 @@ bozostrnsep(char **strp, const char *delim, ssize_t	*lenp)
  * terminate the string.
  */
 char *
-bozodgetln(int fd, ssize_t *lenp, ssize_t (*readfn)(int, void *, size_t))
+bozodgetln(bozohttpd_t *httpd, int fd, ssize_t *lenp,
+	ssize_t (*readfn)(bozohttpd_t *, int, void *, size_t))
 {
-	static	char *buffer;
-	static	ssize_t buflen = 0;
 	ssize_t	len;
 	int	got_cr = 0;
 	char	c, *nbuffer;
 
 	/* initialise */
-	if (buflen == 0) {
-		buflen = 128;	/* should be plenty for most requests */
-		buffer = malloc(buflen);
-		if (buffer == NULL) {
-			buflen = 0;
+	if (httpd->getln_buflen == 0) {
+		/* should be plenty for most requests */
+		httpd->getln_buflen = 128;
+		httpd->getln_buffer = malloc((size_t)httpd->getln_buflen);
+		if (httpd->getln_buffer == NULL) {
+			httpd->getln_buflen = 0;
 			return NULL;
 		}
 	}
@@ -2023,18 +1792,20 @@ bozodgetln(int fd, ssize_t *lenp, ssize_t (*readfn)(int, void *, size_t))
 	 * by becoming a fd-passing program instead of just exec'ing
 	 * the program
 	 */
-	for (; readfn(fd, &c, 1) == 1; ) {
-		debug((DEBUG_EXPLODING, "bozodgetln read %c", c));
+	for (; readfn(httpd, fd, &c, 1) == 1; ) {
+		debug((httpd, DEBUG_EXPLODING, "bozodgetln read %c", c));
 
-		if (len >= buflen - 1) {
-			buflen *= 2;
-			debug((DEBUG_EXPLODING, "bozodgetln: "
-			    "reallocating buffer to buflen %zu", buflen));
-			nbuffer = bozorealloc(buffer, buflen);
-			buffer = nbuffer;
+		if (len >= httpd->getln_buflen - 1) {
+			httpd->getln_buflen *= 2;
+			debug((httpd, DEBUG_EXPLODING, "bozodgetln: "
+				"reallocating buffer to buflen %zu",
+				httpd->getln_buflen));
+			nbuffer = bozorealloc(httpd, httpd->getln_buffer,
+				(size_t)httpd->getln_buflen);
+			httpd->getln_buffer = nbuffer;
 		}
 
-		buffer[len++] = c;
+		httpd->getln_buffer[len++] = c;
 		if (c == '\r') {
 			got_cr = 1;
 			continue;
@@ -2054,48 +1825,240 @@ bozodgetln(int fd, ssize_t *lenp, ssize_t (*readfn)(int, void *, size_t))
 		}
 
 	}
-	buffer[len] = '\0';
-	debug((DEBUG_OBESE, "bozodgetln returns: ``%s'' with len %d",
-	       buffer, len));
+	httpd->getln_buffer[len] = '\0';
+	debug((httpd, DEBUG_OBESE, "bozodgetln returns: ``%s'' with len %d",
+	       httpd->getln_buffer, len));
 	*lenp = len;
-	return (buffer);
+	return httpd->getln_buffer;
 }
 
 void *
-bozorealloc(void *ptr, size_t size)
+bozorealloc(bozohttpd_t *httpd, void *ptr, size_t size)
 {
 	void	*p;
 
 	p = realloc(ptr, size);
 	if (p == NULL) {
-		(void)http_error(500, NULL, "memory allocation failure");
+		(void)bozo_http_error(httpd, 500, NULL,
+				"memory allocation failure");
 		exit(1);
 	}
 	return (p);
 }
 
 void *
-bozomalloc(size_t size)
+bozomalloc(bozohttpd_t *httpd, size_t size)
 {
 	void	*p;
 
 	p = malloc(size);
 	if (p == NULL) {
-		(void)http_error(500, NULL, "memory allocation failure");
+		(void)bozo_http_error(httpd, 500, NULL,
+				"memory allocation failure");
 		exit(1);
 	}
 	return (p);
 }
 
 char *
-bozostrdup(const char *str)
+bozostrdup(bozohttpd_t *httpd, const char *str)
 {
 	char	*p;
 
 	p = strdup(str);
 	if (p == NULL) {
-		(void)http_error(500, NULL, "memory allocation failure");
+		(void)bozo_http_error(httpd, 500, NULL,
+					"memory allocation failure");
 		exit(1);
 	}
 	return (p);
+}
+
+/* set default values in bozohttpd_t struct */
+int
+bozo_init_httpd(bozohttpd_t *httpd)
+{
+	/* make sure everything is clean */
+	(void) memset(httpd, 0x0, sizeof(*httpd));
+
+	/* constants */
+	httpd->consts.http_09 = "HTTP/0.9";
+	httpd->consts.http_10 = "HTTP/1.0";
+	httpd->consts.http_11 = "HTTP/1.1";
+	httpd->consts.text_plain = "text/plain";
+
+	/* mmap region size */
+	httpd->mmapsz = BOZO_MMAPSZ;
+
+	/* error buffer for bozo_http_error() */
+	if ((httpd->errorbuf = malloc(BUFSIZ)) == NULL) {
+		(void) fprintf(stderr,
+			"bozohttpd: memory_allocation failure\n");
+		return 0;
+	}
+	return 1;
+}
+
+/* set default values in bozoprefs_t struct */
+int
+bozo_init_prefs(bozoprefs_t *prefs)
+{
+	/* make sure everything is clean */
+	(void) memset(prefs, 0x0, sizeof(*prefs));
+
+	/* set up default values */
+	bozo_set_pref(prefs, "server software", SERVER_SOFTWARE);
+	bozo_set_pref(prefs, "index.html", INDEX_HTML);
+	bozo_set_pref(prefs, "public_html", PUBLIC_HTML);
+
+	return 1;
+}
+
+/* set default values */
+int
+bozo_set_defaults(bozohttpd_t *httpd, bozoprefs_t *prefs)
+{
+	return bozo_init_httpd(httpd) && bozo_init_prefs(prefs);
+}
+
+/* set the virtual host name, port and root */
+int
+bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
+		const char *root)
+{
+	struct passwd	 *pw;
+	extern char	**environ;
+	uid_t		  uid;
+	char		 *cleanenv[1];
+	char		 *chrootdir;
+	char		 *username;
+	char		 *portnum;
+	char		 *cp;
+	int		  dirtyenv;
+
+	dirtyenv = 0;
+
+	if (vhost == NULL) {
+		httpd->virthostname = bozomalloc(httpd, MAXHOSTNAMELEN+1);
+		/* XXX we do not check for FQDN here */
+		if (gethostname(httpd->virthostname, MAXHOSTNAMELEN+1) < 0)
+			bozo_err(httpd, 1, "gethostname");
+		httpd->virthostname[MAXHOSTNAMELEN] = '\0';
+	} else {
+		httpd->virthostname = strdup(vhost);
+	}
+	httpd->slashdir = strdup(root);
+	if ((portnum = bozo_get_pref(prefs, "port number")) != NULL) {
+		httpd->bindport = strdup(portnum);
+	}
+
+	/* go over preferences now */
+	if ((cp = bozo_get_pref(prefs, "numeric")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		httpd->numeric = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "trusted referal")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		httpd->untrustedref = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "log to stderr")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		httpd->logstderr = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "bind address")) != NULL) {
+		httpd->bindaddress = strdup(cp);
+	}
+	if ((cp = bozo_get_pref(prefs, "background")) != NULL) {
+		httpd->background = atoi(cp);
+	}
+	if ((cp = bozo_get_pref(prefs, "foreground")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		httpd->foreground = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "unknown slash")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		httpd->unknown_slash = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "virtual base")) != NULL) {
+		httpd->virtbase = strdup(cp);
+	}
+	if ((cp = bozo_get_pref(prefs, "enable users")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		httpd->enable_users = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "dirty environment")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		dirtyenv = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "hide dots")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		httpd->hide_dots = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "directory indexing")) != NULL &&
+	    strcmp(cp, "true") == 0) {
+		httpd->dir_indexing = 1;
+	}
+	httpd->server_software =
+			strdup(bozo_get_pref(prefs, "server software"));
+	httpd->index_html = strdup(bozo_get_pref(prefs, "index.html"));
+
+	/*
+	 * initialise ssl and daemon mode if necessary.
+	 */
+	bozo_ssl_init(httpd);
+	bozo_daemon_init(httpd);
+
+	if ((username = bozo_get_pref(prefs, "username")) == NULL) {
+		if ((pw = getpwuid(uid = 0)) == NULL)
+			bozo_err(httpd, 1, "getpwuid(0): %s", strerror(errno));
+		httpd->username = strdup(pw->pw_name);
+	} else {
+		httpd->username = strdup(username);
+		if ((pw = getpwnam(httpd->username)) == NULL)
+			bozo_err(httpd, 1, "getpwnam(%s): %s", httpd->username,
+					strerror(errno));
+		if (initgroups(pw->pw_name, pw->pw_gid) == -1)
+			bozo_err(httpd, 1, "initgroups: %s", strerror(errno));
+		if (setgid(pw->pw_gid) == -1)
+			bozo_err(httpd, 1, "setgid(%u): %s", pw->pw_gid,
+					strerror(errno));
+		uid = pw->pw_uid;
+	}
+	/*
+	 * handle chroot.
+	 */
+	if ((chrootdir = bozo_get_pref(prefs, "chroot dir")) != NULL) {
+		httpd->rootdir = strdup(chrootdir);
+		if (chdir(httpd->rootdir) == -1)
+			bozo_err(httpd, 1, "chdir(%s): %s", httpd->rootdir,
+				strerror(errno));
+		if (chroot(httpd->rootdir) == -1)
+			bozo_err(httpd, 1, "chroot(%s): %s", httpd->rootdir,
+				strerror(errno));
+	}
+
+	if (username != NULL)
+		if (setuid(uid) == -1)
+			bozo_err(httpd, 1, "setuid(%d): %s", uid,
+					strerror(errno));
+
+	/*
+	 * prevent info leakage between different compartments.
+	 * some PATH values in the environment would be invalided
+	 * by chroot. cross-user settings might result in undesirable
+	 * effects.
+	 */
+	if ((chrootdir != NULL || username != NULL) && !dirtyenv) {
+		cleanenv[0] = NULL;
+		environ = cleanenv;
+	}
+#ifdef _SC_PAGESIZE
+	httpd->page_size = (long)sysconf(_SC_PAGESIZE);
+#else
+	httpd->page_size = 4096;
+#endif
+	debug((httpd, DEBUG_OBESE, "myname is %s, slashdir is %s",
+			httpd->virthostname, httpd->slashdir));
+
+	return 1;
 }
