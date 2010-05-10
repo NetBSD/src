@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1393 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1394 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -609,3 +609,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[jym 20100505]
 	cron: Import 4.1 from isc. [christos 20100506]
 	atf(7): Import 0.8.  [jmmv 20100508]
+	bozohttpd: Update to bozohttpd-20100509.  [mrg 20100509]
