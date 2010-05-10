@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2 2009/06/07 22:38:46 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 2010/05/10 20:28:05 jnemeth Exp $	*/
 /* $OpenBSD: misc.c,v 1.71 2009/02/21 19:32:04 tobias Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.2 2009/06/07 22:38:46 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.3 2010/05/10 20:28:05 jnemeth Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -676,6 +676,7 @@ tun_open(int tun, int mode)
 
 	debug("%s: %s mode %d fd %d", __func__, ifr.ifr_name, mode, fd);
 	/* Set the tunnel device operation mode */
+	snprintf(ifr.ifr_name, sizeof(ifr.ifr_name), "%s%d", tunbase, tun);
 	if ((sock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1)
 		goto failed;
 
