@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.28 2010/04/28 20:27:36 dyoung Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.29 2010/05/10 18:46:58 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28 2010/04/28 20:27:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.29 2010/05/10 18:46:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.28 2010/04/28 20:27:36 dyoung Exp $"
 
 #ifdef XEN
 #include <xen/hypervisor.h>
-#include <xen/xenpmap.h>
-
-#define	pmap_extract(a, b, c)	pmap_extract_ma(a, b, c)
 #endif
 
 /*
@@ -339,11 +336,7 @@ x86_mem_add_mapping(bus_addr_t bpa, bus_size_t size,
 	*bshp = (bus_space_handle_t)(sva + (bpa & PGOFSET));
 
 	for (va = sva; pa != endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
-#ifdef XEN
 		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
-#else
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, pmapflags);
-#endif /* XEN */
 	}
 	pmap_update(pmap_kernel());
 
@@ -395,7 +388,7 @@ _x86_memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
 			}
 #endif
 
-			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
+			if (pmap_extract_ma(pmap_kernel(), va, &bpa) == FALSE) {
 				panic("_x86_memio_unmap:"
 				    " wrong virtual address");
 			}
@@ -447,7 +440,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 			panic("x86_memio_unmap: overflow");
 #endif
 
-		(void) pmap_extract(pmap_kernel(), va, &bpa);
+		(void) pmap_extract_ma(pmap_kernel(), va, &bpa);
 		bpa += (bsh & PGOFSET);
 
 		pmap_kremove(va, endva - va);

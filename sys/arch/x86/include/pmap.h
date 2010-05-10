@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29 2010/02/09 22:51:13 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30 2010/05/10 18:46:58 dyoung Exp $	*/
 
 /*
  *
@@ -228,6 +228,12 @@ void		pmap_emap_enter(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_emap_remove(vaddr_t, vsize_t);
 void		pmap_emap_sync(bool);
 
+void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
+		    pd_entry_t * const **);
+void		pmap_unmap_ptes(struct pmap *, struct pmap *);
+
+int		pmap_pdes_invalid(vaddr_t, pd_entry_t * const *, pd_entry_t *);
+
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
 void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
@@ -247,6 +253,12 @@ bool	pmap_pageidlezero(paddr_t);
 /*
  * inline functions
  */
+
+__inline static bool __unused
+pmap_pdes_valid(vaddr_t va, pd_entry_t * const *pdes, pd_entry_t *lastpde)
+{
+	return pmap_pdes_invalid(va, pdes, lastpde) == 0;
+}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing
@@ -401,16 +413,16 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 /* Xen helpers to change bits of a pte */
 #define XPMAP_UPDATE_DIRECT	1	/* Update direct map entry flags too */
 
+paddr_t	vtomach(vaddr_t);
+#define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
+
+#endif	/* XEN */
+
 /* pmap functions with machine addresses */
 void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t, u_int);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
-
-paddr_t	vtomach(vaddr_t);
-#define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
-
-#endif	/* XEN */
 
 /*
  * Hooks for the pool allocator.

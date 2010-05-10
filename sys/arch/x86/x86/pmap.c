@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108 2010/05/04 23:27:14 jym Exp $	*/
+/*	$NetBSD: pmap.c,v 1.109 2010/05/10 18:46:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2010/05/04 23:27:14 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2010/05/10 18:46:58 dyoung Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -531,6 +531,8 @@ static struct pool_cache pmap_pv_cache;
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
 static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
 
+int pmap_enter_default(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
+
 /*
  * pool and cache that PDPs are allocated from
  */
@@ -580,8 +582,6 @@ static void		 pmap_free_ptp(struct pmap *, struct vm_page *,
 				       pd_entry_t * const *);
 static bool		 pmap_is_curpmap(struct pmap *);
 static bool		 pmap_is_active(struct pmap *, struct cpu_info *, bool);
-static void		 pmap_map_ptes(struct pmap *, struct pmap **,
-				       pt_entry_t **, pd_entry_t * const **);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
 					 pt_entry_t *, vaddr_t,
 					 struct pv_entry **);
@@ -589,13 +589,8 @@ static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  vaddr_t, vaddr_t, vaddr_t,
 					  struct pv_entry **);
 
-static void		 pmap_unmap_ptes(struct pmap *, struct pmap *);
 static void		 pmap_unmap_apdp(void);
 static bool		 pmap_get_physpage(vaddr_t, int, paddr_t *);
-static int		 pmap_pdes_invalid(vaddr_t, pd_entry_t * const *,
-					   pd_entry_t *);
-#define	pmap_pdes_valid(va, pdes, lastpde)	\
-	(pmap_pdes_invalid((va), (pdes), (lastpde)) == 0)
 static void		 pmap_alloc_level(pd_entry_t * const *, vaddr_t, int,
 					  long *);
 
@@ -781,7 +776,7 @@ pmap_reference(struct pmap *pmap)
  * => must be undone with pmap_unmap_ptes before returning
  */
 
-static void
+void
 pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	      pd_entry_t **ptepp, pd_entry_t * const **pdeppp)
 {
@@ -914,7 +909,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 
-static void
+void
 pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 {
 
@@ -1122,47 +1117,7 @@ pmap_emap_remove(vaddr_t sva, vsize_t len)
 	}
 }
 
-#ifdef XEN
-/*
- * pmap_kenter_ma: enter a kernel mapping without R/M (pv_entry) tracking
- *
- * => no need to lock anything, assume va is already allocated
- * => should be faster than normal pmap enter function
- * => we expect a MACHINE address
- */
-
-void
-pmap_kenter_ma(vaddr_t va, paddr_t ma, vm_prot_t prot, u_int flags)
-{
-	pt_entry_t *pte, opte, npte;
-
-	if (va < VM_MIN_KERNEL_ADDRESS)
-		pte = vtopte(va);
-	else
-		pte = kvtopte(va);
-
-	npte = ma | ((prot & VM_PROT_WRITE) ? PG_RW : PG_RO) |
-	     PG_V | PG_k;
-	if (flags & PMAP_NOCACHE)
-		npte |= PG_N;
-
-	if ((cpu_feature[2] & CPUID_NOX) && !(prot & VM_PROT_EXECUTE))
-		npte |= PG_NX;
-
-	opte = pmap_pte_testset (pte, npte); /* zap! */
-
-	if (pmap_valid_entry(opte)) {
-#if defined(MULTIPROCESSOR)
-		kpreempt_disable();
-		pmap_tlb_shootdown(pmap_kernel(), va, 0, opte);
-		kpreempt_enable();
-#else
-		/* Don't bother deferring in the single CPU case. */
-		pmap_update_pg(va);
-#endif
-	}
-}
-#endif	/* XEN */
+__weak_alias(pmap_kenter_ma, pmap_kenter_pa);
 
 #if defined(__x86_64__)
 /*
@@ -2883,7 +2838,7 @@ pmap_deactivate(struct lwp *l)
  * some misc. functions
  */
 
-static int
+int
 pmap_pdes_invalid(vaddr_t va, pd_entry_t * const *pdes, pd_entry_t *lastpde)
 {
 	int i;
@@ -2977,39 +2932,9 @@ vtophys(vaddr_t va)
 	return (0);
 }
 
-#ifdef XEN
-/*
- * pmap_extract_ma: extract a MA for the given VA
- */
+__weak_alias(pmap_extract_ma, pmap_extract);
 
-bool
-pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
-{
-	pt_entry_t *ptes, pte;
-	pd_entry_t pde;
-	pd_entry_t * const *pdes;
-	struct pmap *pmap2;
- 
-	kpreempt_disable();
-	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
-	if (!pmap_pdes_valid(va, pdes, &pde)) {
-		pmap_unmap_ptes(pmap, pmap2);
-		kpreempt_enable();
-		return false;
-	}
- 
-	pte = ptes[pl1_i(va)];
-	pmap_unmap_ptes(pmap, pmap2);
-	kpreempt_enable();
- 
-	if (__predict_true((pte & PG_V) != 0)) {
-		if (pap != NULL)
-			*pap = (pte & PG_FRAME) | (va & (NBPD_L1 - 1));
-		return true;
-	}
-				 
-	return false;
-}
+#ifdef XEN
 
 /*
  * vtomach: virtual address to machine address.  For use by
@@ -3027,8 +2952,6 @@ vtomach(vaddr_t va)
 }
 
 #endif /* XEN */
-
-
 
 /*
  * pmap_virtual_space: used during bootup [pmap_steal_memory] to
@@ -3985,24 +3908,25 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
  * defined as macro in pmap.h
  */
 
+__weak_alias(pmap_enter, pmap_enter_default);
+
+int
+pmap_enter_default(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
+    u_int flags)
+{
+	return pmap_enter_ma(pmap, va, pa, pa, prot, flags, 0);
+}
+
 /*
  * pmap_enter: enter a mapping into a pmap
  *
  * => must be done "now" ... no lazy-evaluation
  * => we set pmap => pv_head locking
  */
-#ifdef XEN
 int
 pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	   vm_prot_t prot, u_int flags, int domid)
 {
-#else /* XEN */
-int
-pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
-	   u_int flags)
-{
-	paddr_t ma = pa;
-#endif /* XEN */
 	pt_entry_t *ptes, opte, npte;
 	pt_entry_t *ptep;
 	pd_entry_t * const *pdes;
@@ -4213,22 +4137,6 @@ out2:
 
 	return error;
 }
-
-#ifdef XEN
-int
-pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
-{
-        paddr_t ma;
-
-	if (__predict_false(pa < pmap_pa_start || pmap_pa_end <= pa)) {
-		ma = pa; /* XXX hack */
-	} else {
-		ma = xpmap_ptom(pa);
-	}
-
-	return pmap_enter_ma(pmap, va, ma, pa, prot, flags, DOMID_SELF);
-}
-#endif /* XEN */
 
 static bool
 pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)

@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.106 2009/11/03 05:23:28 dyoung Exp $
+#	$NetBSD: files.xen,v 1.107 2010/05/10 18:46:58 dyoung Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -106,6 +106,7 @@ file	arch/xen/x86/hypervisor_machdep.c
 # file 	arch/x86/x86/mtrr_i686.c	mtrr
 file	arch/x86/x86/syscall.c
 file	arch/xen/x86/x86_xpmap.c
+file	arch/xen/x86/xen_pmap.c
 file	arch/xen/x86/xen_intr.c
 file	arch/xen/x86/xenfunc.c
 
