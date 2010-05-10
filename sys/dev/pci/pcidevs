@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1029 2010/05/08 07:18:46 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1030 2010/05/10 06:38:45 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1988,6 +1988,7 @@ product MARVELL 88W8300_1	0x1fa6	Libertas 88W8300
 product MARVELL 88W8310		0x1fa7	Libertas 88W8310
 product MARVELL 88W8335_1	0x1faa	Libertas 88W8335
 product MARVELL 88W8335_2	0x1fab	Libertas 88W8335
+product MARVELL	88SB2211	0x2211	88SB2211 x1 PCIe-PCI Bridge
 product MARVELL	88W8300_2	0x2a01	Libertas 88W8300
 product MARVELL	GT64115		0x4111	GT-64115 System Controller
 product MARVELL	GT64011		0x4146	GT-64011 System Controller
