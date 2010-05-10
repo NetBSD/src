@@ -1,3 +1,4 @@
+
 /*
  * CDDL HEADER START
  *
@@ -671,13 +672,14 @@ spa_thread(void *arg)
 	callb_cpr_t cprinfo;
 
 	spa_t *spa = arg;
-#ifdef PORT_SOLARIS
-	user_t *pu = PTOU(curproc);
 
 	CALLB_CPR_INIT(&cprinfo, &spa->spa_proc_lock, callb_generic_cpr,
 	    spa->spa_name);
 
 	ASSERT(curproc != &p0);
+#ifdef PORT_SOLARIS
+	user_t *pu = PTOU(curproc);
+
 	(void) snprintf(pu->u_psargs, sizeof (pu->u_psargs),
 	    "zpool-%s", spa->spa_name);
 	(void) strlcpy(pu->u_comm, pu->u_psargs, sizeof (pu->u_comm));
@@ -753,7 +755,7 @@ spa_activate(spa_t *spa, int mode)
 	ASSERT(spa->spa_proc_state == SPA_PROC_NONE);
 	ASSERT(spa->spa_proc == &p0);
 	spa->spa_did = 0;
-
+#if 0
 	/* Only create a process if we're going to be around a while. */
 	if (spa_create_process && strcmp(spa->spa_name, TRYIMPORT_NAME) != 0) {
 		if (newproc(spa_thread, (caddr_t)spa, syscid, maxclsyspri,
@@ -773,7 +775,8 @@ spa_activate(spa_t *spa, int mode)
 			    spa->spa_name);
 #endif
 		}
-	}
+	}	
+#endif
 	mutex_exit(&spa->spa_proc_lock);
 
 	/* If we didn't create a process, we need to create our taskqs. */
