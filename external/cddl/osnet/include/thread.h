@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.2 2010/05/03 00:31:32 haad Exp $	*/
+/*	$NetBSD: thread.h,v 1.3 2010/05/10 06:26:11 haad Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -91,9 +91,16 @@ thr_create(void *stack_base, size_t stack_size, void *(*start_func) (void*),
 	if(flags & THR_DETACHED)
 		pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
+	thread_t th_id;
+	thread_t *t_id;
+	if(new_thread_ID != NULL)
+		t_id = new_thread_ID;
+	else
+		t_id = &th_id;
+
 	/* This function ignores the THR_BOUND flag, since NPTL doesn't seem to support PTHREAD_SCOPE_PROCESS */
 
-	ret = pthread_create(new_thread_ID, &attr, start_func, arg);
+	ret = pthread_create(t_id, &attr, start_func, arg);
 
 	pthread_attr_destroy(&attr);
 
