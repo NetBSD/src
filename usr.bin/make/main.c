@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.185 2010/05/05 14:10:39 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.186 2010/05/10 15:54:21 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.185 2010/05/05 14:10:39 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.186 2010/05/10 15:54:21 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.185 2010/05/05 14:10:39 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.186 2010/05/10 15:54:21 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1902,22 +1902,21 @@ PrintOnError(GNode *gn, const char *s)
 	 */
 	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL, 0);
     }
+    strncpy(tmp, "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
+	    sizeof(tmp) - 1);
+    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+    if (cp) {
+	if (*cp)
+	    printf("%s", cp);
+	free(cp);
+    }
     /*
-     * See if there is a .ERROR target, and run it if so.
+     * Finally, see if there is a .ERROR target, and run it if so.
      */
     en = Targ_FindNode(".ERROR", TARG_NOCREATE);
     if (en) {
 	en->type |= OP_SPECIAL;
 	Compat_Make(en, en);
-    }
-    
-    strncpy(tmp, "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
-	    sizeof(tmp) - 1);
-    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
-    if (cp) {
-	    if (*cp)
-		    printf("%s", cp);
-	    free(cp);
     }
 }
 
