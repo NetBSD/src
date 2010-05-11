@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.118 2008/09/10 01:56:22 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.118.6.1 2010/05/11 21:02:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.118 2008/09/10 01:56:22 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.118.6.1 2010/05/11 21:02:43 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -744,7 +744,7 @@ static void
 set_metric(const char *value, int key)
 {
 	int flag = 0;
-	u_long noval, *valp = &noval;
+	u_quad_t noval, *valp = &noval;
 
 	switch (key) {
 #define caseof(x, y, z)	case x: valp = &rt_metrics.z; flag = y; break
@@ -1422,7 +1422,7 @@ rtmsg(int cmd, int flags, struct sou *soup)
 
 #define NEXTADDR(w, u) \
 	if (rtm_addrs & (w)) {\
-	    l = ROUNDUP(u.sa.sa_len); memmove(cp, &(u), l); cp += l;\
+	    l = RT_ROUNDUP(u.sa.sa_len); memmove(cp, &(u), l); cp += l;\
 	    if (verbose && ! shortoutput) sodump(&(u),#u);\
 	}
 
@@ -1539,7 +1539,7 @@ mask_addr(struct sou *soup)
 #endif /* SMALL */
 }
 
-const char *msgtypes[] = {
+const char * const msgtypes[] = {
 	"",
 	"RTM_ADD: Add Route",
 	"RTM_DELETE: Delete Route",
@@ -1823,16 +1823,16 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 	if (! shortoutput) {
 		(void)printf("\n%s\n", "\
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire");
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
-		printf("%8ld%c ", msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
-		printf("%8ld%c ", msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
-		printf("%8ld%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
+		printf("%8qd%c ", rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
+		printf("%8qd%c ", rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
+		printf("%8qd%c ", rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
+		printf("%8qd%c ", msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
+		printf("%8qd%c ", msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
+		printf("%8qd%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
+		printf("%8qd%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
 		if (rtm->rtm_rmx.rmx_expire)
 			rtm->rtm_rmx.rmx_expire -= time(0);
-		printf("%8ld%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
+		printf("%8qd%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
 	}
 #undef lock
 #undef msec
