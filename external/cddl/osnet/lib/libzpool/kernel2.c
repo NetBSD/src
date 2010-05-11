@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel2.c,v 1.1 2009/08/07 20:57:56 haad Exp $	*/
+/*	$NetBSD: kernel2.c,v 1.2 2010/05/11 22:18:10 haad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: kernel2.c,v 1.1 2009/08/07 20:57:56 haad Exp $");
+__RCSID("$NetBSD: kernel2.c,v 1.2 2010/05/11 22:18:10 haad Exp $");
 
 #include <sys/zfs_context.h>
 
@@ -239,6 +239,7 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 clock_t
 cv_timedwait(kcondvar_t *cv, kmutex_t *mp, clock_t abstime)
 {
+	struct timespec nowts;
 	struct timespec ts;
 	uint64_t when;
 	int error;
@@ -247,10 +248,14 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mp, clock_t abstime)
 		cv_init(cv, NULL, 0, NULL);
 	}
 
+	clock_gettime(CLOCK_REALTIME, &nowts);
+	
 	/* convert back from 119hz to nanoseconds. */
-	when = abstime << 23;
+	when = (uint64_t)abstime << 23;
 	ts.tv_sec = (long)(abstime / 1000000000);
 	ts.tv_nsec = (long)(abstime % 1000000000);
+
+	timespecadd(&ts, &nowts, &ts);
 	
 	do {
 		error = pthread_cond_timedwait(GET(cv), GET(mp), &ts);
