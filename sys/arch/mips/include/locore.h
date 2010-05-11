@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.23 2010/05/11 21:51:34 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.24 2010/05/11 22:08:02 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -282,12 +282,12 @@ mips3_lw_a64(uint64_t addr)
 #elif defined(__mips_n32)
 	uint32_t sr = mips_cp0_status_read();
 	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
-	rv = *(const uint32_t *)addr;
+	__asm volatile("lw	%0, 0(%1)" : "=r"(rv) : "d"(addr));
 	mips_cp0_status_write(sr);
 #elif defined(_LP64)
 	rv = *(const uint32_t *)addr;
 #else
-	__asm volatile("lw	%0, 0(%1)" : "=r"(rv) : "d"(addr));
+#error unknown ABI
 #endif
 	return (rv);
 }
@@ -319,12 +319,12 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 #elif defined(__mips_n32)
 	uint32_t sr = mips_cp0_status_read();
 	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
-	*(uint32_t *)addr = val;
+	__asm volatile("sw	%1, 0(%0)" :: "d"(addr), "r"(val));
 	mips_cp0_status_write(sr);
 #elif defined(_LP64)
 	*(uint32_t *)addr = val;
 #else
-	__asm volatile("sw	%1, 0(%0)" :: "d"(addr), "r"(val));
+#error unknown ABI
 #endif
 }
 #endif	/* MIPS3 || MIPS4 || MIPS64 */
