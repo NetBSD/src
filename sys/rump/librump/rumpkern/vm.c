@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.72 2010/04/28 16:34:25 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.73 2010/05/11 14:06:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.72 2010/04/28 16:34:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.73 2010/05/11 14:06:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -511,6 +511,7 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 	return EBUSY;
 }
 
+#ifdef DEBUGPRINT
 void
 uvm_object_printit(struct uvm_object *uobj, bool full,
 	void (*pr)(const char *, ...))
@@ -518,6 +519,7 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 
 	/* nada for now */
 }
+#endif
 
 vaddr_t
 uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
