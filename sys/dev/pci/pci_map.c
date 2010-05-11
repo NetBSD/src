@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.24 2008/07/22 04:52:19 bjs Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.25 2010/05/11 16:49:35 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.24 2008/07/22 04:52:19 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.25 2010/05/11 16:49:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,22 +80,22 @@ pci_io_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 
 	if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_IO) {
 		aprint_debug("pci_io_find: expected type i/o, found mem\n");
-		return (1);
+		return 1;
 	}
 
 	if (PCI_MAPREG_IO_SIZE(mask) == 0) {
 		aprint_debug("pci_io_find: void region\n");
-		return (1);
+		return 1;
 	}
 
-	if (basep != 0)
+	if (basep != NULL)
 		*basep = PCI_MAPREG_IO_ADDR(address);
-	if (sizep != 0)
+	if (sizep != NULL)
 		*sizep = PCI_MAPREG_IO_SIZE(mask);
-	if (flagsp != 0)
+	if (flagsp != NULL)
 		*flagsp = 0;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -154,7 +154,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 		 */
 		if (PCI_MAPREG_TYPE(address) != PCI_MAPREG_TYPE_MEM) {
 			printf("pci_mem_find: expected type mem, found i/o\n");
-			return (1);
+			return 1;
 		}
 		/* XXX Allow 64bit bars for 32bit requests.*/
 		if (PCI_MAPREG_MEM_TYPE(address) !=
@@ -165,7 +165,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 			    "expected mem type %08x, found %08x\n",
 			    PCI_MAPREG_MEM_TYPE(type),
 			    PCI_MAPREG_MEM_TYPE(address));
-			return (1);
+			return 1;
 		}
 	}
 
@@ -175,7 +175,7 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 	if ((is64bit && PCI_MAPREG_MEM64_SIZE(wmask) == 0) ||
 	    (!is64bit && PCI_MAPREG_MEM_SIZE(mask) == 0)) {
 		aprint_debug("pci_mem_find: void region\n");
-		return (1);
+		return 1;
 	}
 
 	switch (PCI_MAPREG_MEM_TYPE(address)) {
@@ -194,30 +194,30 @@ pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 		    (address1 != 0 || mask1 != 0xffffffff)) {
 			printf("pci_mem_find: 64-bit memory map which is "
 			    "inaccessible on a 32-bit platform\n");
-			return (1);
+			return 1;
 		}
 		break;
 	default:
 		printf("pci_mem_find: reserved mapping register type\n");
-		return (1);
+		return 1;
 	}
 
 	if (sizeof(u_int64_t) > sizeof(bus_addr_t)) {
-		if (basep != 0)
+		if (basep != NULL)
 			*basep = PCI_MAPREG_MEM_ADDR(address);
-		if (sizep != 0)
+		if (sizep != NULL)
 			*sizep = PCI_MAPREG_MEM_SIZE(mask);
 	} else {
-		if (basep != 0)
+		if (basep != NULL)
 			*basep = PCI_MAPREG_MEM64_ADDR(waddress);
-		if (sizep != 0)
+		if (sizep != NULL)
 			*sizep = PCI_MAPREG_MEM64_SIZE(wmask);
 	}
-	if (flagsp != 0)
+	if (flagsp != NULL)
 		*flagsp = (isrom || PCI_MAPREG_MEM_PREFETCHABLE(address)) ?
 		    BUS_SPACE_MAP_PREFETCHABLE : 0;
 
-	return (0);
+	return 0;
 }
 
 #define _PCI_MAPREG_TYPEBITS(reg) \
@@ -229,7 +229,7 @@ pcireg_t
 pci_mapreg_type(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 
-	return (_PCI_MAPREG_TYPEBITS(pci_conf_read(pc, tag, reg)));
+	return _PCI_MAPREG_TYPEBITS(pci_conf_read(pc, tag, reg));
 }
 
 int
@@ -246,11 +246,11 @@ pci_mapreg_probe(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *typep)
 	splx(s);
 
 	if (mask == 0) /* unimplemented mapping register */
-		return (0);
+		return 0;
 
-	if (typep)
+	if (typep != NULL)
 		*typep = _PCI_MAPREG_TYPEBITS(address);
-	return (1);
+	return 1;
 }
 
 int
@@ -259,11 +259,11 @@ pci_mapreg_info(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 {
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO)
-		return (pci_io_find(pc, tag, reg, type, basep, sizep,
-		    flagsp));
+		return pci_io_find(pc, tag, reg, type, basep, sizep,
+		    flagsp);
 	else
-		return (pci_mem_find(pc, tag, reg, type, basep, sizep,
-		    flagsp));
+		return pci_mem_find(pc, tag, reg, type, basep, sizep,
+		    flagsp);
 }
 
 int
@@ -288,17 +288,17 @@ pci_mapreg_submap(struct pci_attach_args *pa, int reg, pcireg_t type,
 
 	if (PCI_MAPREG_TYPE(type) == PCI_MAPREG_TYPE_IO) {
 		if ((pa->pa_flags & PCI_FLAGS_IO_ENABLED) == 0)
-			return (1);
+			return 1;
 		if (pci_io_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
 		    &size, &flags))
-			return (1);
+			return 1;
 		tag = pa->pa_iot;
 	} else {
 		if ((pa->pa_flags & PCI_FLAGS_MEM_ENABLED) == 0)
-			return (1);
+			return 1;
 		if (pci_mem_find(pa->pa_pc, pa->pa_tag, reg, type, &base,
 		    &size, &flags))
-			return (1);
+			return 1;
 		tag = pa->pa_memt;
 	}
 
@@ -321,21 +321,21 @@ pci_mapreg_submap(struct pci_attach_args *pa, int reg, pcireg_t type,
 	base += offset;
 
 	if ((maxsize < size && offset + maxsize <= size) || offset != 0)
-		return (1);
+		return 1;
 
 	if (bus_space_map(tag, base, maxsize, busflags | flags, &handle))
-		return (1);
+		return 1;
 
-	if (tagp != 0)
+	if (tagp != NULL)
 		*tagp = tag;
-	if (handlep != 0)
+	if (handlep != NULL)
 		*handlep = handle;
-	if (basep != 0)
+	if (basep != NULL)
 		*basep = base;
-	if (sizep != 0)
+	if (sizep != NULL)
 		*sizep = maxsize;
 
-	return (0);
+	return 0;
 }
 
 int
