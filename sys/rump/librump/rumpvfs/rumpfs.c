@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.49 2010/05/11 14:42:24 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.50 2010/05/11 16:59:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.49 2010/05/11 14:42:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.50 2010/05/11 16:59:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -119,6 +119,7 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 
 struct rumpfs_dent {
 	char *rd_name;
+	int rd_namelen;
 	struct rumpfs_node *rd_node;
 
 	LIST_ENTRY(rumpfs_dent) rd_entries;
@@ -480,6 +481,22 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 	return 0;
 }
 
+
+static void
+makedir(struct rumpfs_node *rnd,
+	struct componentname *cnp, struct rumpfs_node *rn)
+{
+	struct rumpfs_dent *rdent;
+
+	rdent = kmem_alloc(sizeof(*rdent), KM_SLEEP);
+	rdent->rd_name = kmem_alloc(cnp->cn_namelen+1, KM_SLEEP);
+	rdent->rd_node = rn;
+	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
+	rdent->rd_namelen = strlen(rdent->rd_name);
+
+	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
+}
+
 /*
  * Simple lookup for faking lookup of device entry for rump file systems
  * and for locating/creating directories.  Yes, this will panic if you
@@ -515,7 +532,7 @@ rump_vop_lookup(void *v)
 	if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		vref(dvp);
 		*vpp = dvp;
-		goto out;
+		return 0;
 	}
 
 	/* check for etfs */
@@ -574,7 +591,7 @@ rump_vop_lookup(void *v)
 		goto getvnode;
 	} else {
 		LIST_FOREACH(rd, &rnd->rn_dir, rd_entries) {
-			if (strlen(rd->rd_name) == cnp->cn_namelen &&
+			if (rd->rd_namelen == cnp->cn_namelen &&
 			    strncmp(rd->rd_name, cnp->cn_nameptr,
 			      cnp->cn_namelen) == 0)
 				break;
@@ -606,7 +623,6 @@ rump_vop_lookup(void *v)
 			return rv;
 	}
 
- out:
 	return 0;
 }
 
@@ -637,7 +653,6 @@ rump_vop_mkdir(void *v)
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
-	struct rumpfs_dent *rdent;
 	int rv = 0;
 
 	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
@@ -645,12 +660,7 @@ rump_vop_mkdir(void *v)
 	if (rv)
 		goto out;
 
-	rdent = kmem_alloc(sizeof(*rdent), KM_SLEEP);
-	rdent->rd_name = kmem_alloc(cnp->cn_namelen+1, KM_SLEEP);
-	rdent->rd_node = (*vpp)->v_data;
-	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
-
-	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
+	makedir(rnd, cnp, rn);
 
  out:
 	vput(dvp);
@@ -671,7 +681,6 @@ rump_vop_mknod(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vattr *va = ap->a_vap;
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
-	struct rumpfs_dent *rdent;
 	int rv;
 
 	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE);
@@ -679,13 +688,7 @@ rump_vop_mknod(void *v)
 	if (rv)
 		goto out;
 
-	rdent = kmem_alloc(sizeof(*rdent), KM_SLEEP);
-	rdent->rd_name = kmem_alloc(cnp->cn_namelen+1, KM_SLEEP);
-	rdent->rd_node = (*vpp)->v_data;
-	rdent->rd_node->rn_va.va_rdev = va->va_rdev;
-	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
-
-	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
+	makedir(rnd, cnp, rn);
 
  out:
 	vput(dvp);
@@ -706,7 +709,6 @@ rump_vop_create(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	struct vattr *va = ap->a_vap;
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
-	struct rumpfs_dent *rdent;
 	int rv;
 
 	if (va->va_type != VSOCK) {
@@ -718,13 +720,7 @@ rump_vop_create(void *v)
 	if (rv)
 		goto out;
 
-	rdent = kmem_alloc(sizeof(*rdent), KM_SLEEP);
-	rdent->rd_name = kmem_alloc(cnp->cn_namelen+1, KM_SLEEP);
-	rdent->rd_node = (*vpp)->v_data;
-	rdent->rd_node->rn_va.va_rdev = NODEV;
-	strlcpy(rdent->rd_name, cnp->cn_nameptr, cnp->cn_namelen+1);
-
-	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
+	makedir(rnd, cnp, rn);
 
  out:
 	vput(dvp);
