@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.6 2006/12/23 11:05:14 jdc Exp $	*/
+/*	$NetBSD: show.c,v 1.6.24.1 2010/05/11 21:03:20 matt Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -254,13 +254,13 @@ p_rtentry(struct rt_msghdr *rtm)
 	    WID_GW(sa->sa_family));
 	p_flags(rtm->rtm_flags, "%-6.6s ");
 #ifdef notyet /* XXX: elad */
-	printf("%6d %8ld ", (int)rtm->rtm_rmx.rmx_refcnt,
+	printf("%6d %8"PRId64" ", (int)rtm->rtm_rmx.rmx_refcnt,
 	    rtm->rtm_rmx.rmx_pksent);
 #else
 	printf("%6s %8s ", "-", "-");
 #endif
 	if (rtm->rtm_rmx.rmx_mtu)
-		printf("%6ld", rtm->rtm_rmx.rmx_mtu);
+		printf("%6"PRId64, rtm->rtm_rmx.rmx_mtu);
 	else
 		printf("%6s", "-");
 	putchar((rtm->rtm_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
