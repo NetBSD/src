@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.18.16.7 2010/03/11 22:26:56 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.18.16.8 2010/05/11 21:08:51 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.7 2010/03/11 22:26:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18.16.8 2010/05/11 21:08:51 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -157,7 +157,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			DELAY(100);
 		}
 		if ((cpus_hatched & cpu_mask) == 0) {
-			aprint_error(": failed to hatched!\n");
+			aprint_error(": failed to hatch!\n");
 			return;
 		}
 #else
