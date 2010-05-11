@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.11.78.3 2010/01/20 06:58:36 matt Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.11.78.4 2010/05/11 20:55:22 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.11.78.3 2010/01/20 06:58:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.11.78.4 2010/05/11 20:55:22 matt Exp $");
 
 #include <sys/param.h>
 
@@ -266,10 +266,15 @@ mipsNN_icache_sync_range_index_32(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mci->mci_picache_way_mask);
+	if (size >= mci->mci_picache_way_size) {
+		va = MIPS_KSEG0_START;
+		eva = va + mci->mci_picache_way_size;
+	} else {
+		va = MIPS_PHYS_TO_KSEG0(va & mci->mci_picache_way_mask);
 
-	eva = round_line32(va + size);
-	va = trunc_line32(va);
+		eva = round_line32(va + size);
+		va = trunc_line32(va);
+	}
 
 	/*
 	 * GCC generates better code in the loops if we reference local
