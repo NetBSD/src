@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.183 2010/04/25 11:24:46 ad Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.184 2010/05/11 09:08:12 njoly Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.183 2010/04/25 11:24:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.184 2010/05/11 09:08:12 njoly Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -150,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.183 2010/04/25 11:24:46 ad Exp $");
  * such that moving from one pair to the succeeding pair was observed
  * to roughly halve interrupt rate under sustained input packet load.
  * The values were empirically chosen to avoid overflowing internal
- * limits on the  bcm5700: inreasing rx_ticks much beyond 600
+ * limits on the  bcm5700: increasing rx_ticks much beyond 600
  * results in internal wrapping and higher interrupt rates.
  * The limit of 46 frames was chosen to match NFS workloads.
  *
@@ -1300,7 +1300,7 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 
 
 /*
- * Intialize a standard receive ring descriptor.
+ * Initialize a standard receive ring descriptor.
  */
 static int
 bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
@@ -2449,7 +2449,7 @@ bge_setpowerstate(struct bge_softc *sc, int powerlevel)
 	/*
 	 * Entering ACPI power states D1-D3 is achieved by wiggling
 	 * GMII gpio pins. Example code assumes all hardware vendors
-	 * followed Broadom's sample pcb layout. Until we verify that
+	 * followed Broadcom's sample pcb layout. Until we verify that
 	 * for all supported OEM cards, states D1-D3 are  unsupported.
 	 */
 	aprint_error_dev(sc->bge_dev,
@@ -3204,7 +3204,7 @@ bge_reset(struct bge_softc *sc)
 		marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
 	CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 
-	/* Step 17: Poll until the firmware iitializeation is complete */
+	/* Step 17: Poll until the firmware initialization is complete */
 	bge_poll_fw(sc);
 
 	/* XXX 5721, 5751 and 5752 */
@@ -3301,7 +3301,7 @@ bge_reset(struct bge_softc *sc)
  * on the receive return list.
  *
  * Note: we have to be able to handle two possibilities here:
- * 1) the frame is from the jumbo recieve ring
+ * 1) the frame is from the jumbo receive ring
  * 2) the frame is from the standard receive ring
  */
 
