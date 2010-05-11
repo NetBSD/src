@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.22 2010/03/21 17:38:32 cliff Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.23 2010/05/11 21:51:34 matt Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -279,6 +279,11 @@ mips3_lw_a64(uint64_t addr)
 	    );
 
 	mips_cp0_status_write(sr);
+#elif defined(__mips_n32)
+	uint32_t sr = mips_cp0_status_read();
+	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
+	rv = *(const uint32_t *)addr;
+	mips_cp0_status_write(sr);
 #elif defined(_LP64)
 	rv = *(const uint32_t *)addr;
 #else
@@ -310,6 +315,11 @@ mips3_sw_a64(uint64_t addr, uint32_t val)
 	    : "=d"(addr): "r"(val), "0"(addr)
 	    );
 
+	mips_cp0_status_write(sr);
+#elif defined(__mips_n32)
+	uint32_t sr = mips_cp0_status_read();
+	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
+	*(uint32_t *)addr = val;
 	mips_cp0_status_write(sr);
 #elif defined(_LP64)
 	*(uint32_t *)addr = val;
