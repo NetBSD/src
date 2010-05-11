@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.82 2010/04/30 20:54:17 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.83 2010/05/11 21:08:07 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -67,6 +67,13 @@ SRCS+=	vnode_if.c
 
 # sys/dev
 SRCS+=	clock_subr.c
+
+# Non-kernel ABI gets this for the whole rump build, as opposed to
+# kernel ABI where we need to specifically set it here to get
+# some things like the atomic ops implementation right.
+.ifdef RUMPKMOD
+CPPFLAGS+=	-D_RUMPKERNEL
+.endif
 
 # Flip the comment to the other line if you want to use malloc(3)
 # directly instead of the kernel allocators backed by malloc(3)/mmap(2).
