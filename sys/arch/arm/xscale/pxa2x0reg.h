@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.19 2010/05/11 11:28:47 nonaka Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.20 2010/05/11 13:23:09 nonaka Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -1070,6 +1070,18 @@ struct pxa2x0_dma_desc {
 #define SSP_SSSR	0x08
 #define  SSSR_TNF	(1<<2)
 #define  SSSR_RNE	(1<<3)
+#define  SSSR_BUSY	(1<<4)
+#define  SSSR_TFS	(1<<5)
+#define  SSSR_RFS	(1<<6)
+#define  SSSR_ROR	(1<<7)
+#define  SSSR_TFL	(0xf<<8)
+#define  SSSR_RFL	(0xf<<12)
+#define  SSSR_PINT	(1<<18)
+#define  SSSR_TINT	(1<<19)
+#define  SSSR_EOC	(1<<20)
+#define  SSSR_TUR	(1<<21)
+#define  SSSR_CSS	(1<<22)
+#define  SSSR_BCE	(1<<23)
 #define SSP_SSDR	0x10
 
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */
