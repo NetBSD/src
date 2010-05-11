@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.18 2009/03/16 11:32:27 nonaka Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.19 2010/05/11 11:28:47 nonaka Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -278,18 +278,30 @@ struct pxa2x0_dma_desc {
 #define CKEN_PWM1	(1<<1)
 #define CKEN_AC97	(1<<2)
 #define CKEN_SSP	(1<<3)
+#define CKEN_SSP2	(1<<3)	/* PXA270 */
+#define CKEN_SSP3	(1<<4)	/* PXA270 */
 #define CKEN_HWUART	(1<<4)
 #define CKEN_STUART	(1<<5)
 #define CKEN_FFUART	(1<<6)
 #define CKEN_BTUART	(1<<7)
 #define CKEN_I2S	(1<<8)
 #define CKEN_NSSP	(1<<9)
+#define CKEN_OST	(1<<9)	/* PXA270 */
 #define CKEN_USBHC	(1<<10)
 #define CKEN_USBDC	(1<<11)
 #define CKEN_MMC	(1<<12)
 #define CKEN_FICP	(1<<13)
 #define CKEN_I2C	(1<<14)
+#define CKEN_PI2C	(1<<15)	/* PXA270 */
 #define CKEN_LCD	(1<<16)
+#define CKEN_MSLI	(1<<17)	/* PXA270 */
+#define CKEN_USIM	(1<<18)	/* PXA270 */
+#define CKEN_KPI	(1<<19)	/* PXA270 */
+#define CKEN_INTMEM	(1<<20)	/* PXA270 */
+#define CKEN_MSHC	(1<<21)	/* PXA270 */
+#define CKEN_MEMCTL	(1<<22)	/* PXA270 */
+#define CKEN_SSP1	(1<<23)	/* PXA270 */
+#define CKEN_QCAP	(1<<24)	/* PXA270 */
 
 #define OSCC_OOK	(1<<0)	/* 32.768 kHz oscillator status */
 #define OSCC_OON	(1<<1)	/* 32.768 kHz oscillator */
