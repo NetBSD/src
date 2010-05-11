@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.140 2008/10/24 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.140.8.1 2010/05/11 21:00:13 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -179,7 +179,11 @@ struct if_data {
 	u_quad_t ifi_omcasts;		/* packets sent via multicast */
 	u_quad_t ifi_iqdrops;		/* dropped on input, this interface */
 	u_quad_t ifi_noproto;		/* destined for unsupported protocol */
-	struct	timeval ifi_lastchange;	/* last operational state change */
+	union {
+		struct	timeval ifi_un_lastchange; /* last operational state change */
+		u_quad_t ifi_un_pad[2];
+	} ifi_un;
+#define	ifi_lastchange	ifi_un.ifi_un_lastchange
 };
 
 /*
