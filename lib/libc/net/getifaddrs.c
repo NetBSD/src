@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.11.20.1 2010/04/21 05:28:09 matt Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.11.20.2 2010/05/11 21:01:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.11.20.1 2010/04/21 05:28:09 matt Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.11.20.2 2010/05/11 21:01:23 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,8 +51,7 @@ __weak_alias(getifaddrs,_getifaddrs)
 __weak_alias(freeifaddrs,_freeifaddrs)
 #endif
 
-#define	SALIGN	(sizeof(long) - 1)
-#define	SA_RLEN(sa)	((sa)->sa_len ? (((sa)->sa_len + SALIGN) & ~SALIGN) : (SALIGN + 1))
+#define	SA_RLEN(sa)	RT_ROUNDUP((sa)->sa_len)
 
 int
 getifaddrs(struct ifaddrs **pif)
@@ -107,8 +106,7 @@ getifaddrs(struct ifaddrs **pif)
 				idx = ifm->ifm_index;
 				++icnt;
 				dl = (struct sockaddr_dl *)(void *)(ifm + 1);
-				dcnt += SA_RLEN((const struct sockaddr *)(const void *)dl) +
-				    ALIGNBYTES;
+				dcnt += SA_RLEN((const struct sockaddr *)(const void *)dl);
 				dcnt += sizeof(ifm->ifm_data);
 				ncnt += dl->sdl_nlen + 1;
 			} else
