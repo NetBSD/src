@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.33.38.10 2010/02/28 23:45:06 matt Exp $	*/
+/*	$NetBSD: fp.S,v 1.33.38.11 2010/05/11 20:54:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -920,7 +920,7 @@ add_sub_s:
  * Perform the addition.
  */
 5:
-	move	t8, zero			# no shifted bits (sticky reg)
+	move	t9, zero			# no shifted bits (sticky reg)
 	beq	t1, ta1, 4f			# no shift needed
 	subu	v0, t1, ta1			# v0 = difference of exponents
 	move	v1, v0				# v1 = abs(difference)
@@ -928,7 +928,7 @@ add_sub_s:
 	negu	v1
 1:
 	ble	v1, SFRAC_BITS+2, 2f		# is difference too great?
-	li	t8, STICKYBIT			# set the sticky bit
+	li	t9, STICKYBIT			# set the sticky bit
 	bge	v0, zero, 1f			# check which exp is larger
 	move	t1, ta1				# result exp is FTs
 	move	t2, zero			# FSs fraction shifted is zero
@@ -941,11 +941,11 @@ add_sub_s:
 	subu	t9, t9, v1
 	bgt	v0, zero, 3f			# if FS > FT, shift FTs frac
 	move	t1, ta1				# FT > FS, result exp is FTs
-	sll	t8, t2, t9			# save bits shifted out
+	sll	t9, t2, t9			# save bits shifted out
 	srl	t2, t2, v1			# shift FSs fraction
 	b	4f
 3:
-	sll	t8, ta2, t9			# save bits shifted out
+	sll	t9, ta2, t9			# save bits shifted out
 	srl	ta2, ta2, v1			# shift FTs fraction
 4:
 	bne	t0, ta0, 1f			# if signs differ, subtract
@@ -964,17 +964,17 @@ add_sub_s:
 	and	t0, t0, ta0			# compute result sign
 	b	result_fs_s
 2:
-	sltu	t9, zero, t8			# compute t2:zero - ta2:t8
-	subu	t8, zero, t8
+	sltu	v0, zero, t9			# compute t2:zero - ta2:t9
+	subu	t9, zero, t9
 	subu	t2, t2, ta2			# subtract fractions
-	subu	t2, t2, t9			# subtract barrow
+	subu	t2, t2, v0			# subtract barrow
 	b	norm_s
 3:
 	move	t0, ta0				# sign of result = FTs
-	sltu	t9, zero, t8			# compute ta2:zero - t2:t8
-	subu	t8, zero, t8
+	sltu	v0, zero, t9			# compute ta2:zero - t2:t9
+	subu	t9, zero, t9
 	subu	t2, ta2, t2			# subtract fractions
-	subu	t2, t2, t9			# subtract barrow
+	subu	t2, t2, v0			# subtract barrow
 	b	norm_s
 
 /*
@@ -1045,7 +1045,7 @@ add_sub_d:
  * Perform the addition.
  */
 5:
-	move	t8, zero			# no shifted bits (sticky reg)
+	move	t9, zero			# no shifted bits (sticky reg)
 	beq	t1, ta1, 4f			# no shift needed
 	subu	v0, t1, ta1			# v0 = difference of exponents
 	move	v1, v0				# v1 = abs(difference)
@@ -1053,7 +1053,7 @@ add_sub_d:
 	negu	v1
 1:
 	ble	v1, DFRAC_BITS+2, 2f		# is difference too great?
-	li	t8, STICKYBIT			# set the sticky bit
+	li	t9, STICKYBIT			# set the sticky bit
 	bge	v0, zero, 1f			# check which exp is larger
 	move	t1, ta1				# result exp is FTs
 	move	t2, zero			# FSs fraction shifted is zero
@@ -1070,41 +1070,41 @@ add_sub_d:
 	blt	v1, t9, 1f			# shift right by < 32?
 	subu	v1, v1, t9
 	subu	t9, t9, v1
-	sll	t8, t2, t9			# save bits shifted out
+	sll	v0, t2, t9			# save bits shifted out
 	sltu	t9, zero, t3			# dont lose any one bits
-	or	t8, t8, t9			# save sticky bit
+	or	t9, t9, v0			# save sticky bit
 	srl	t3, t2, v1			# shift FSs fraction
 	move	t2, zero
 	b	4f
 1:
-	subu	t9, t9, v1
-	sll	t8, t3, t9			# save bits shifted out
+	subu	v0, t9, v1
+	sll	t9, t3, v0			# save bits shifted out
 	srl	t3, t3, v1			# shift FSs fraction
-	sll	t9, t2, t9			# save bits shifted out of t2
-	or	t3, t3, t9			# and put into t3
+	sll	v0, t2, v0			# save bits shifted out of t2
+	or	t3, t3, v0			# and put into t3
 	srl	t2, t2, v1
 	b	4f
 3:
 	blt	v1, t9, 1f			# shift right by < 32?
 	subu	v1, v1, t9
-	subu	t9, t9, v1
-	sll	t8, ta2, t9			# save bits shifted out
+	subu	v0, t9, v1
+	sll	t9, ta2, v0			# save bits shifted out
 	srl	ta3, ta2, v1			# shift FTs fraction
 	move	ta2, zero
 	b	4f
 1:
-	subu	t9, t9, v1
-	sll	t8, ta3, t9			# save bits shifted out
+	subu	v0, t9, v1
+	sll	t9, ta3, v0			# save bits shifted out
 	srl	ta3, ta3, v1			# shift FTs fraction
-	sll	t9, ta2, t9			# save bits shifted out of t2
-	or	ta3, ta3, t9			# and put into t3
+	sll	v0, ta2, v0			# save bits shifted out of t2
+	or	ta3, ta3, v0			# and put into t3
 	srl	ta2, ta2, v1
 4:
 	bne	t0, ta0, 1f			# if signs differ, subtract
 	addu	t3, t3, ta3			# add fractions
-	sltu	t9, t3, ta3			# compute carry
+	sltu	v0, t3, ta3			# compute carry
 	addu	t2, t2, ta2			# add fractions
-	addu	t2, t2, t9			# add carry
+	addu	t2, t2, v0			# add carry
 	b	norm_d
 1:
 	blt	t2, ta2, 3f			# subtract larger from smaller
@@ -1122,8 +1122,8 @@ add_sub_d:
 	and	t0, t0, ta0			# compute result sign
 	b	result_fs_d
 2:
-	beq	t8, zero, 1f			# compute t2:t3:zero - ta2:ta3:t8
-	subu	t8, zero, t8
+	beq	t9, zero, 1f			# compute t2:t3:zero - ta2:ta3:t9
+	subu	t9, zero, t9
 	sltu	v0, t3, 1			# compute barrow out
 	subu	t3, t3, 1			# subtract barrow
 	subu	t2, t2, v0
@@ -1135,8 +1135,8 @@ add_sub_d:
 	b	norm_d
 3:
 	move	t0, ta0				# sign of result = FTs
-	beq	t8, zero, 1f			# compute ta2:ta3:zero - t2:t3:t8
-	subu	t8, zero, t8
+	beq	t9, zero, 1f			# compute ta2:ta3:zero - t2:t3:t9
+	subu	t9, zero, t9
 	sltu	v0, ta3, 1			# compute barrow out
 	subu	ta3, ta3, 1			# subtract barrow
 	subu	ta2, ta2, v0
@@ -1189,7 +1189,7 @@ mul_s:
 	addu	t1, t1, ta1			# compute result exponent
 	addu	t1, t1, 9			# account for binary point
 	multu	t2, ta2				# multiply fractions
-	mflo	t8
+	mflo	t9
 	mfhi	t2
 	b	norm_s
 
@@ -1247,20 +1247,20 @@ mul_d:
 	move	ta0, t2				# free up t2,t3 for result
 	move	ta1, t3
 	mflo	a3				# save low order bits
-	mfhi	t8
-	not	v0, t8
+	mfhi	t9
+	not	v0, t9
 	multu	ta0, ta3				# multiply FS(high) * FT(low)
 	mflo	v1
 	mfhi	t3				# init low result
 	sltu	v0, v0, v1			# compute carry
-	addu	t8, v1
+	addu	t9, v1
 	multu	ta1, ta2				# multiply FS(low) * FT(high)
 	addu	t3, t3, v0			# add carry
-	not	v0, t8
+	not	v0, t9
 	mflo	v1
 	mfhi	t2
 	sltu	v0, v0, v1
-	addu	t8, v1
+	addu	t9, v1
 	multu	ta0, ta2				# multiply FS(high) * FT(high)
 	addu	t3, v0
 	not	v1, t3
@@ -1273,8 +1273,8 @@ mul_d:
 	sltu	v0, v0, v1
 	addu	t2, v0
 	addu	t3, v1
-	sltu	a3, zero, a3			# reduce t8,a3 to just t8
-	or	t8, a3
+	sltu	a3, zero, a3			# reduce t9,a3 to just t9
+	or	t9, a3
 	b	norm_d
 
 /*
@@ -1333,18 +1333,18 @@ div_s:
 	subu	t1, t1, ta1			# compute exponent
 	subu	t1, t1, 3			# compensate for result position
 	li	v0, SFRAC_BITS+3		# number of bits to divide
-	move	t8, t2				# init dividend
+	move	t9, t2				# init dividend
 	move	t2, zero			# init result
 1:
-	bltu	t8, ta2, 3f			# is dividend >= divisor?
+	bltu	t9, ta2, 3f			# is dividend >= divisor?
 2:
-	subu	t8, t8, ta2			# subtract divisor from dividend
+	subu	t9, t9, ta2			# subtract divisor from dividend
 	or	t2, t2, 1			# remember that we did
-	bne	t8, zero, 3f			# if not done, continue
+	bne	t9, zero, 3f			# if not done, continue
 	sll	t2, t2, v0			# shift result to final position
 	b	norm_s
 3:
-	sll	t8, t8, 1			# shift dividend
+	sll	t9, t9, 1			# shift dividend
 	sll	t2, t2, 1			# shift result
 	subu	v0, v0, 1			# are we done?
 	bne	v0, zero, 1b			# no, continue
@@ -1414,22 +1414,24 @@ div_d:
 	subu	t1, t1, ta1			# compute exponent
 	subu	t1, t1, 3			# compensate for result position
 	li	v0, DFRAC_BITS+3		# number of bits to divide
-	move	t8, t2				# init dividend
-	move	t9, t3
+	move	t9, t2				# init dividend
+	move	v1, t3
 	move	t2, zero			# init result
 	move	t3, zero
 1:
-	bltu	t8, ta2, 3f			# is dividend >= divisor?
-	bne	t8, ta2, 2f
-	bltu	t9, ta3, 3f
+	bltu	t9, ta2, 3f			# is dividend >= divisor?
+	bne	t9, ta2, 2f
+	bltu	v1, ta3, 3f
 2:
-	sltu	v1, t9, ta3			# subtract divisor from dividend
-	subu	t9, t9, ta3
-	subu	t8, t8, ta2
-	subu	t8, t8, v1
+	.set	noat
+	sltu	AT, v1, ta3			# subtract divisor from dividend
+	subu	v1, v1, ta3
+	subu	t9, t9, ta2
+	subu	t9, t9, AT
+	.set	at
 	or	t3, t3, 1			# remember that we did
-	bne	t8, zero, 3f			# if not done, continue
-	bne	t9, zero, 3f
+	bne	t9, zero, 3f			# if not done, continue
+	bne	v1, zero, 3f
 	li	v1, 32				# shift result to final position
 	blt	v0, v1, 2f			# shift < 32 bits?
 	subu	v0, v0, v1			# shift by > 32 bits
@@ -1437,26 +1439,30 @@ div_d:
 	move	t3, zero
 	b	norm_d
 2:
+	.set	noat
 	subu	v1, v1, v0			# shift by < 32 bits
 	sll	t2, t2, v0			# shift upper part
-	srl	t9, t3, v1			# save bits shifted out
-	or	t2, t2, t9			# and put into upper part
+	srl	AT, t3, v1			# save bits shifted out
+	or	t2, t2, AT			# and put into upper part
 	sll	t3, t3, v0
 	b	norm_d
+	.set	at
 3:
-	sll	t8, t8, 1			# shift dividend
-	srl	v1, t9, 31			# save bit shifted out
-	or	t8, t8, v1			# and put into upper part
-	sll	t9, t9, 1
+	.set	noat
+	sll	t9, t9, 1			# shift dividend
+	srl	AT, v1, 31			# save bit shifted out
+	or	t9, t9, AT			# and put into upper part
+	sll	v1, v1, 1
 	sll	t2, t2, 1			# shift result
-	srl	v1, t3, 31			# save bit shifted out
-	or	t2, t2, v1			# and put into upper part
+	srl	AT, t3, 31			# save bit shifted out
+	or	t2, t2, AT			# and put into upper part
 	sll	t3, t3, 1
 	subu	v0, v0, 1			# are we done?
 	bne	v0, zero, 1b			# no, continue
-	sltu	v0, zero, t9			# be sure to save any one bits
-	or	t8, t8, v0			# from the lower remainder
+	sltu	v0, zero, v1			# be sure to save any one bits
+	or	t9, t9, v0			# from the lower remainder
 	b	norm_d
+	.set	at
 
 #ifdef MIPS3_PLUS
 sqrt_s:
@@ -1486,16 +1492,16 @@ sqrt_s:
 	/* generate sqrt(FS) bit by bit */
 	add	t2, t2, t2			# ix += ix;
 	move	ta0, zero			# q = 0; (result)
-	li	t8, SIMPL_ONE<<1		# r = 0x01000000;
+	li	t9, SIMPL_ONE<<1		# r = 0x01000000;
 	move	ta2, zero			# s = 0;
-1:	beq	t8, zero, 3f			# while (r != 0) {
-	add	t9, ta2, t8			#	t = s + r;
-	bgt	t9, t2, 2f			#	if (t <= ix)
-	add	ta2, t9, t8			#		s = t + r;
-	sub	t2, t2, t9			#		ix -= t;
-	add	ta0, ta0, t8			#		q += r;
+1:	beq	t9, zero, 3f			# while (r != 0) {
+	add	v0, ta2, t9			#	t = s + r;
+	bgt	v0, t2, 2f			#	if (t <= ix)
+	add	ta2, v0, t9			#		s = t + r;
+	sub	t2, t2, v0			#		ix -= t;
+	add	ta0, ta0, t9			#		q += r;
 2:	add	t2, t2, t2			#	ix += ix;
-	srl	t8, t8, 1			# 	r >>= 1;
+	srl	t9, t9, 1			# 	r >>= 1;
 	b	1b				# }
 3:
 	/* rounding -- all mips rounding modes use the same rounding here */
@@ -1556,48 +1562,50 @@ sqrt_d:
 	move	ta1, zero			# q1 = 0;	(result)
 	move	ta2, zero			# s0 = 0;
 	move	ta3, zero			# s1 = 0;
-	li	t8, DIMPL_ONE<<1		# t = 0x00200000;
-1:	beq	t8, zero, 3f			# while (r != 0) {
-	add	t9, ta2, t8			#	t = s0+r;
-	bgt	t9, t2, 2f			#	if (t <= ix0)
-	add	ta2, t9, t8			#		s0 = t + r;
-	sub	t2, t2, t9			#		ix0 -= t;
-	add	ta0, ta0, t8			#		q += r;
+	li	t9, DIMPL_ONE<<1		# t = 0x00200000;
+1:	beq	t9, zero, 3f			# while (r != 0) {
+	add	v0, ta2, t9			#	t = s0+r;
+	bgt	v0, t2, 2f			#	if (t <= ix0)
+	add	ta2, v0, t9			#		s0 = t + r;
+	sub	t2, t2, v0			#		ix0 -= t;
+	add	ta0, ta0, t9			#		q += r;
 2:	add	t2, t2, t2			#	ix0 += ix0;
 	srl	v0, t3, 31			# 	ix0 += (ix1&sign)>>31)
 	and	v0, v0, 1			# 	...
 	add	t2, t2, v0			# 	...
 	addu	t3, t3, t3			#	ix1 += ix1;
-	srl	t8, t8, 1			#	r >>= 1;
+	srl	t9, t9, 1			#	r >>= 1;
 	b	1b				# }
 3:
 	/* then lower bits */
-	li	t8, 1<<31			# r = sign;
-1:	beq	t8, zero, 4f			# while (r != 0) {
-	addu	v1, ta3, t8			#    t1 = s1 + r;
-	move	t9, ta2				#    t = s0;
-	blt	t9, t2, 2f			#    if ( (t<ix0) ||
-	bne	t9, t2, 3f			#         ((t == ix0) &&
+	li	t9, 1<<31			# r = sign;
+1:	beq	t9, zero, 4f			# while (r != 0) {
+	addu	v1, ta3, t9			#    t1 = s1 + r;
+	move	v0, ta2				#    t = s0;
+	blt	v0, t2, 2f			#    if ( (t<ix0) ||
+	bne	v0, t2, 3f			#         ((t == ix0) &&
 	bgtu	v1, t3, 3f			#          (t1 <= ix1)))
-2:	addu	ta3, v1, t8			#	s1 = t1 + r;
-	srl	v0, v1, 31			#	if (((t1&sign)==sign) &&
-	and	v0, v0, 1			#	...
-	beq	v0, zero, 2f			#	...
-	srl	v0, ta3, 31			#	    (s1&sign) == 0)
-	and	v0, v0, 1			#	    ...
-	bne	v0, zero, 2f			#	    ...
+2:	addu	ta3, v1, t9			#	s1 = t1 + r;
+	.set	noat
+	srl	AT, v1, 31			#	if (((t1&sign)==sign) &&
+	and	AT, AT, 1			#	...
+	beq	AT, zero, 2f			#	...
+	srl	AT, ta3, 31			#	    (s1&sign) == 0)
+	and	AT, AT, 1			#	    ...
+	bne	AT, zero, 2f			#	    ...
 	add	ta2, ta2, 1			#	    s0 += 1;
-2:	sub	t2, t2, t9			#	ix0 -= t;
+	.set	at
+2:	sub	t2, t2, v0			#	ix0 -= t;
 	bgeu	t3, v1, 2f			#	if (ix1 < t1)
 	sub	t2, t2, 1			#	    ix0 -= 1;
 2:	subu	t3, t3, v1			#	ix1 -= t1;
-	addu	ta1, ta1, t8			#	q1 += r;
+	addu	ta1, ta1, t9			#	q1 += r;
 3:	add	t2, t2, t2			#    ix0 += ix0;
 	srl	v0, t3, 31			#    ix0 += (ix1&sign)>>31)
 	and	v0, v0, 1			#    ...
 	add	t2, t2, v0			#    ...
 	addu	t3, t3, t3			#    ix1 += ix1;
-	srl	t8, t8, 1			#    r >>= 1;
+	srl	t9, t9, 1			#    r >>= 1;
 	b	1b				# }
 4:
 
@@ -1718,8 +1726,8 @@ cvt_s_d:
 	bne	t1, DEXP_INF, 1f		# is FS an infinity?
 	li	t1, SEXP_INF			# convert to single
 	sll	t2, t2, 3			# convert D fraction to S
-	srl	t8, t3, 32 - 3
-	or	t2, t2, t8
+	srl	t9, t3, 32 - 3
+	or	t2, t2, t9
 	b	result_fs_s
 1:
 	bne	t1, zero, 2f			# is FS zero?
@@ -1734,9 +1742,9 @@ cvt_s_d:
 	or	t2, t2, DIMPL_ONE		# add implied one bit
 3:
 	sll	t2, t2, 3			# convert D fraction to S
-	srl	t8, t3, 32 - 3
-	or	t2, t2, t8
-	sll	t8, t3, 3
+	srl	t9, t3, 32 - 3
+	or	t2, t2, t9
+	sll	t9, t3, 3
 	b	norm_noshift_s
 
 /*
@@ -1748,55 +1756,61 @@ cvt_s_w:
 	move	t1, zero
 	b	result_fs_s
 /*
- * Find out how many leading zero bits are in t2 and put in t9.
+ * Find out how many leading zero bits are in t2 and put in v1.
  */
+#if __mips == 32 || __mips == 64
+	clz	v1, t2
+#else
+	.set	noat
 1:
 	move	v0, t2
-	move	t9, zero
-	srl	v1, v0, 16
-	bne	v1, zero, 1f
-	addu	t9, 16
+	move	v1, zero
+	srl	AT, v0, 16
+	bne	AT, zero, 1f
+	addu	v1, 16
 	sll	v0, 16
 1:
-	srl	v1, v0, 24
-	bne	v1, zero, 1f
-	addu	t9, 8
+	srl	AT, v0, 24
+	bne	AT, zero, 1f
+	addu	v1, 8
 	sll	v0, 8
 1:
-	srl	v1, v0, 28
-	bne	v1, zero, 1f
-	addu	t9, 4
+	srl	AT, v0, 28
+	bne	AT, zero, 1f
+	addu	v1, 4
 	sll	v0, 4
 1:
-	srl	v1, v0, 30
-	bne	v1, zero, 1f
-	addu	t9, 2
+	srl	AT, v0, 30
+	bne	AT, zero, 1f
+	addu	v1, 2
 	sll	v0, 2
 1:
-	srl	v1, v0, 31
-	bne	v1, zero, 1f
-	addu	t9, 1
+	srl	AT, v0, 31
+	bne	AT, zero, 1f
+	addu	v1, 1
+	.set	at
+#endif /* __mips == 32 || __mips == 64 */
 /*
  * Now shift t2 the correct number of bits.
  */
 1:
-	subu	t9, t9, SLEAD_ZEROS		# dont count leading zeros
+	subu	v1, v1, SLEAD_ZEROS		# dont count leading zeros
 	li	t1, 23				# init exponent
-	subu	t1, t1, t9			# compute exponent
-	beq	t9, zero, 1f
+	subu	t1, t1, v1			# compute exponent
+	beq	v1, zero, 1f
 	li	v0, 32
-	blt	t9, zero, 2f			# if shift < 0, shift right
-	subu	v0, v0, t9
-	sll	t2, t2, t9			# shift left
+	blt	v1, zero, 2f			# if shift < 0, shift right
+	subu	v0, v0, v1
+	sll	t2, t2, v1			# shift left
 1:
 	add	t1, t1, SEXP_BIAS		# bias exponent
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
 	b	result_fs_s
 2:
-	negu	t9				# shift right by t9
-	subu	v0, v0, t9
-	sll	t8, t2, v0			# save bits shifted out
-	srl	t2, t2, t9
+	negu	v1				# shift right by v1
+	subu	v0, v0, v1
+	sll	t9, t2, v0			# save bits shifted out
+	srl	t2, t2, v1
 	b	norm_noshift_s
 
 /*
@@ -1812,7 +1826,7 @@ cvt_d_s:
 	bne	t1, zero, 2f			# is FS denormalized or zero?
 	beq	t2, zero, result_fs_d		# is FS zero?
 	jal	_C_LABEL(renorm_fs_s)
-	move	t8, zero
+	move	t9, zero
 	b	norm_d
 2:
 	addu	t1, t1, DEXP_BIAS - SEXP_BIAS	# bias exponent correctly
@@ -1830,55 +1844,61 @@ cvt_d_w:
 	move	t3, zero
 	b	result_fs_d
 /*
- * Find out how many leading zero bits are in t2 and put in t9.
+ * Find out how many leading zero bits are in t2 and put in at.
  */
+#if __mips == 32 || __mips == 64
+	clz	v1, t2
+#else /* __mips == 32 || __mips == 64 */
+	.set	noat
 1:
 	move	v0, t2
-	move	t9, zero
-	srl	v1, v0, 16
-	bne	v1, zero, 1f
-	addu	t9, 16
+	move	v1, zero
+	srl	AT, v0, 16
+	bne	AT, zero, 1f
+	addu	v1, 16
 	sll	v0, 16
 1:
-	srl	v1, v0, 24
-	bne	v1, zero, 1f
-	addu	t9, 8
+	srl	AT, v0, 24
+	bne	AT, zero, 1f
+	addu	v1, 8
 	sll	v0, 8
 1:
-	srl	v1, v0, 28
-	bne	v1, zero, 1f
-	addu	t9, 4
+	srl	AT, v0, 28
+	bne	AT, zero, 1f
+	addu	v1, 4
 	sll	v0, 4
 1:
-	srl	v1, v0, 30
-	bne	v1, zero, 1f
-	addu	t9, 2
+	srl	AT, v0, 30
+	bne	AT, zero, 1f
+	addu	v1, 2
 	sll	v0, 2
 1:
-	srl	v1, v0, 31
-	bne	v1, zero, 1f
-	addu	t9, 1
+	srl	AT, v0, 31
+	bne	AT, zero, 1f
+	addu	v1, 1
+1:
+	.set	at
+#endif /* __mips == 32 || __mips == 64 */
 /*
  * Now shift t2 the correct number of bits.
  */
-1:
-	subu	t9, t9, DLEAD_ZEROS		# dont count leading zeros
+	subu	v1, v1, DLEAD_ZEROS		# dont count leading zeros
 	li	t1, DEXP_BIAS + 20		# init exponent
-	subu	t1, t1, t9			# compute exponent
-	beq	t9, zero, 1f
+	subu	t1, t1, v1			# compute exponent
+	beq	v1, zero, 1f
 	li	v0, 32
-	blt	t9, zero, 2f			# if shift < 0, shift right
-	subu	v0, v0, t9
-	sll	t2, t2, t9			# shift left
+	blt	v1, zero, 2f			# if shift < 0, shift right
+	subu	v0, v0, v1
+	sll	t2, t2, v1			# shift left
 1:
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 	move	t3, zero
 	b	result_fs_d
 2:
-	negu	t9				# shift right by t9
-	subu	v0, v0, t9
+	negu	v1				# shift right by v1
+	subu	v0, v0, v1
 	sll	t3, t2, v0
-	srl	t2, t2, t9
+	srl	t2, t2, v1
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 	b	result_fs_d
 
@@ -1958,19 +1978,19 @@ cvt_w:
 	blt	v0, zero, 1f			# if shift < 0, shift right
 	subu	v1, v1, v0			# shift left
 	sll	t2, t2, v0
-	srl	t9, t3, v1			# save bits shifted out of t3
-	or	t2, t2, t9			# and put into t2
+	srl	v1, t3, v1			# save bits shifted out of t3
+	or	t2, t2, v1			# and put into t2
 	sll	t3, t3, v0			# shift FSs fraction
 	b	2f
 1:
 	negu	v0				# shift right by v0
 	subu	v1, v1, v0
-	sll	t8, t3, v1			# save bits shifted out
-	sltu	t8, zero, t8			# dont lose any ones
+	sll	t9, t3, v1			# save bits shifted out
+	sltu	t9, zero, t9			# dont lose any ones
 	srl	t3, t3, v0			# shift FSs fraction
-	or	t3, t3, t8
-	sll	t9, t2, v1			# save bits shifted out of t2
-	or	t3, t3, t9			# and put into t3
+	or	t3, t3, t9
+	sll	v1, t2, v1			# save bits shifted out of t2
+	or	t3, t3, v1			# and put into t3
 	srl	t2, t2, v0
 /*
  * round result (t0 is sign, t2 is integer part, t3 is fractional part).
@@ -2160,60 +2180,84 @@ unordered:
  * normalized position. After that, round and handle exceptions.
  */
 norm_s:
-	move	v0, t2
-	move	t9, zero			# t9 = num of leading zeros
+#if __mips == 32 || __mips == 64
+#ifdef __mips_o32
 	bne	t2, zero, 1f
-	move	v0, t8
-	addu	t9, 32
+	clz	v1, t9
+	addu	v1, 32
+	b	2f
 1:
-	srl	v1, v0, 16
-	bne	v1, zero, 1f
-	addu	t9, 16
+	clz	v1, t2
+2:
+#elif __mips_isa_rev == 2
+	move	v0, t9
+	dins	v0, t2, 32, 32
+	dclz	v1, v0
+#else
+	dsll	v0, t9, 32
+	dsrl	v0, v0, 32
+	dsll	v1, t2, 32
+	or	v0, v1
+	dclz	v1, v0
+#endif
+#else
+	.set	noat
+	move	v0, t2				# MSW
+	move	v1, zero			# v1 = num of leading zeros
+	bne	t2, zero, 1f
+	move	v0, t9				# LSW
+	addu	v1, 32
+1:
+	srl	AT, v0, 16
+	bne	AT, zero, 1f
+	addu	v1, 16
 	sll	v0, 16
 1:
-	srl	v1, v0, 24
-	bne	v1, zero, 1f
-	addu	t9, 8
+	srl	AT, v0, 24
+	bne	AT, zero, 1f
+	addu	v1, 8
 	sll	v0, 8
 1:
-	srl	v1, v0, 28
-	bne	v1, zero, 1f
-	addu	t9, 4
+	srl	AT, v0, 28
+	bne	AT, zero, 1f
+	addu	v1, 4
 	sll	v0, 4
 1:
-	srl	v1, v0, 30
-	bne	v1, zero, 1f
-	addu	t9, 2
+	srl	AT, v0, 30
+	bne	AT, zero, 1f
+	addu	v1, 2
 	sll	v0, 2
 1:
-	srl	v1, v0, 31
-	bne	v1, zero, 1f
-	addu	t9, 1
+	srl	AT, v0, 31
+	bne	AT, zero, 1f
+	addu	v1, 1
+2:
+	.set	at
+#endif	/* __mips == 32 || __mips == 64 */
 /*
- * Now shift t2,t8 the correct number of bits.
+ * Now shift t2,t9 the correct number of bits.
  */
-1:
-	subu	t9, t9, SLEAD_ZEROS		# dont count leading zeros
-	subu	t1, t1, t9			# adjust the exponent
-	beq	t9, zero, norm_noshift_s
-	li	v1, 32
-	blt	t9, zero, 1f			# if shift < 0, shift right
-	subu	v1, v1, t9
-	sll	t2, t2, t9			# shift t2,t8 left
-	srl	v0, t8, v1			# save bits shifted out
+	subu	v1, v1, SLEAD_ZEROS		# dont count leading zeros
+	subu	t1, t1, v1			# adjust the exponent
+	beq	v1, zero, norm_noshift_s
+	li	ta1, 32
+	blt	v1, zero, 1f			# if shift < 0, shift right
+	subu	ta1, ta1, v1
+	sll	t2, t2, v1			# shift t2,t9 left
+	srl	v0, t9, ta1			# save bits shifted out
 	or	t2, t2, v0
-	sll	t8, t8, t9
+	sll	t9, t9, v1
 	b	norm_noshift_s
 1:
-	negu	t9				# shift t2,t8 right by t9
-	subu	v1, v1, t9
-	sll	v0, t8, v1			# save bits shifted out
+	negu	v1				# shift t2,t9 right by at
+	subu	ta1, ta1, v1
+	sll	v0, t9, ta1			# save bits shifted out
 	sltu	v0, zero, v0			# be sure to save any one bits
-	srl	t8, t8, t9
-	or	t8, t8, v0
-	sll	v0, t2, v1			# save bits shifted out
-	or	t8, t8, v0
-	srl	t2, t2, t9
+	srl	t9, t9, v1
+	or	t9, t9, v0
+	sll	v0, t2, ta1			# save bits shifted out
+	or	t9, t9, v0
+	srl	t2, t2, v1
 norm_noshift_s:
 	move	ta1, t1				# save unrounded exponent
 	move	ta2, t2				# save unrounded fraction
@@ -2226,7 +2270,7 @@ norm_noshift_s:
 1:
 	bne	t0, zero, 5f			# if sign is negative, truncate
 2:
-	beq	t8, zero, 5f			# if exact, continue
+	beq	t9, zero, 5f			# if exact, continue
 	addu	t2, t2, 1			# add rounding bit
 	bne	t2, SIMPL_ONE<<1, 5f		# need to adjust exponent?
 	addu	t1, t1, 1			# adjust exponent
@@ -2234,8 +2278,8 @@ norm_noshift_s:
 	b	5f
 3:
 	li	v0, GUARDBIT			# load guard bit for rounding
-	addu	v0, v0, t8			# add remainder
-	sltu	v1, v0, t8			# compute carry out
+	addu	v0, v0, t9			# add remainder
+	sltu	v1, v0, t9			# compute carry out
 	beq	v1, zero, 4f			# if no carry, continue
 	addu	t2, t2, 1			# add carry to result
 	bne	t2, SIMPL_ONE<<1, 4f		# need to adjust exponent?
@@ -2247,7 +2291,7 @@ norm_noshift_s:
 5:
 	bgt	t1, SEXP_MAX, overflow_s	# overflow?
 	blt	t1, SEXP_MIN, underflow_s	# underflow?
-	bne	t8, zero, inexact_s		# is result inexact?
+	bne	t9, zero, inexact_s		# is result inexact?
 	addu	t1, t1, SEXP_BIAS		# bias exponent
 	and	t2, t2, ~SIMPL_ONE		# clear implied one bit
 	b	result_fs_s
@@ -2324,9 +2368,9 @@ underflow_s:
 1:
 	move	t1, ta1				# get unrounded exponent
 	move	t2, ta2				# get unrounded fraction
-	li	t9, SEXP_MIN			# compute shift amount
-	subu	t9, t9, t1			# shift t2,t8 right by t9
-	blt	t9, SFRAC_BITS+2, 3f		# shift all the bits out?
+	li	v0, SEXP_MIN			# compute shift amount
+	subu	v0, v0, t1			# shift t2,t9 right by at
+	blt	v0, SFRAC_BITS+2, 3f		# shift all the bits out?
 	move	t1, zero			# result is inexact zero
 	move	t2, zero
 	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
@@ -2346,12 +2390,14 @@ underflow_s:
 	addu	t2, t2, 1			# add rounding bit
 	b	inexact_nobias_s
 3:
+	.set	noat
 	li	v1, 32
-	subu	v1, v1, t9
-	sltu	v0, zero, t8			# be sure to save any one bits
-	sll	t8, t2, v1			# save bits shifted out
-	or	t8, t8, v0			# include sticky bits
-	srl	t2, t2, t9
+	subu	v1, v1, v0
+	sltu	AT, zero, t9			# be sure to save any one bits
+	sll	t9, t2, v1			# save bits shifted out
+	or	t9, t9, AT			# include sticky bits
+	srl	t2, t2, v0
+	.set	at
 /*
  * Now round the denormalized result.
  */
@@ -2364,13 +2410,13 @@ underflow_s:
 1:
 	bne	t0, zero, 5f			# if sign is negative, truncate
 2:
-	beq	t8, zero, 5f			# if exact, continue
+	beq	t9, zero, 5f			# if exact, continue
 	addu	t2, t2, 1			# add rounding bit
 	b	5f
 3:
 	li	v0, GUARDBIT			# load guard bit for rounding
-	addu	v0, v0, t8			# add remainder
-	sltu	v1, v0, t8			# compute carry out
+	addu	v0, v0, t9			# add remainder
+	sltu	v1, v0, t9			# compute carry out
 	beq	v1, zero, 4f			# if no carry, continue
 	addu	t2, t2, 1			# add carry to result
 4:
@@ -2379,7 +2425,7 @@ underflow_s:
 5:
 	move	t1, zero			# denorm or zero exponent
 	jal	_C_LABEL(set_fd_s)		# save result
-	beq	t8, zero, done			# check for exact result
+	beq	t9, zero, done			# check for exact result
 	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
 	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
@@ -2398,79 +2444,97 @@ underflow_s:
  * normalized position. After that, round and handle exceptions.
  */
 norm_d:
+#if __mips == 32 || __mips == 64
+	bne	t2, zero, 2f
+	bne	t3, zero, 1f
+	clz	v1, t9
+	addu	v1, 64
+	b	3f
+1:
+	clz	v1, t3
+	addu	v1, 32
+	b	3f
+2:
+	clz	v1, t2
+3:
+#else
+	.set	noat
 	move	v0, t2
-	move	t9, zero			# t9 = num of leading zeros
+	move	v1, zero			# v1 = num of leading zeros
 	bne	t2, zero, 1f
 	move	v0, t3
-	addu	t9, 32
+	addu	v1, 32
 	bne	t3, zero, 1f
-	move	v0, t8
-	addu	t9, 32
+	move	v0, t9
+	addu	v1, 32
 1:
-	srl	v1, v0, 16
-	bne	v1, zero, 1f
-	addu	t9, 16
+	srl	AT, v0, 16
+	bne	AT, zero, 1f
+	addu	v1, 16
 	sll	v0, 16
 1:
-	srl	v1, v0, 24
-	bne	v1, zero, 1f
-	addu	t9, 8
+	srl	AT, v0, 24
+	bne	AT, zero, 1f
+	addu	v1, 8
 	sll	v0, 8
 1:
-	srl	v1, v0, 28
-	bne	v1, zero, 1f
-	addu	t9, 4
+	srl	AT, v0, 28
+	bne	AT, zero, 1f
+	addu	v1, 4
 	sll	v0, 4
 1:
-	srl	v1, v0, 30
-	bne	v1, zero, 1f
-	addu	t9, 2
+	srl	AT, v0, 30
+	bne	AT, zero, 1f
+	addu	v1, 2
 	sll	v0, 2
 1:
-	srl	v1, v0, 31
-	bne	v1, zero, 1f
-	addu	t9, 1
-/*
- * Now shift t2,t3,t8 the correct number of bits.
- */
+	srl	AT, v0, 31
+	bne	AT, zero, 1f
+	addu	v1, 1
 1:
-	subu	t9, t9, DLEAD_ZEROS		# dont count leading zeros
-	subu	t1, t1, t9			# adjust the exponent
-	beq	t9, zero, norm_noshift_d
-	li	v1, 32
-	blt	t9, zero, 2f			# if shift < 0, shift right
-	blt	t9, v1, 1f			# shift by < 32?
-	subu	t9, t9, v1			# shift by >= 32
-	subu	v1, v1, t9
-	sll	t2, t3, t9			# shift left by t9
-	srl	v0, t8, v1			# save bits shifted out
+	.set	at
+#endif /* __mips_isa == 32 || __mips_isa == 64 */
+/*
+ * Now shift t2,t3,t9 the correct number of bits.
+ */
+	subu	v1, v1, DLEAD_ZEROS		# dont count leading zeros
+	subu	t1, t1, v1			# adjust the exponent
+	beq	v1, zero, norm_noshift_d
+
+	li	ta1, 32
+	blt	v1, zero, 2f			# if shift < 0, shift right
+	blt	v1, ta1, 1f			# shift by < 32?
+	subu	v1, v1, ta1			# shift by >= 32
+	subu	ta1, ta1, v1
+	sll	t2, t3, v1			# shift left by v1
+	srl	v0, t9, ta1			# save bits shifted out
 	or	t2, t2, v0
-	sll	t3, t8, t9
-	move	t8, zero
+	sll	t3, t9, v1
+	move	t9, zero
 	b	norm_noshift_d
 1:
-	subu	v1, v1, t9
-	sll	t2, t2, t9			# shift left by t9
-	srl	v0, t3, v1			# save bits shifted out
+	subu	ta1, ta1, v1
+	sll	t2, t2, v1			# shift left by v1
+	srl	v0, t3, ta1			# save bits shifted out
 	or	t2, t2, v0
-	sll	t3, t3, t9
-	srl	v0, t8, v1			# save bits shifted out
+	sll	t3, t3, v1
+	srl	v0, t9, ta1			# save bits shifted out
 	or	t3, t3, v0
-	sll	t8, t8, t9
+	sll	t9, t9, v1
 	b	norm_noshift_d
 2:
-	negu	t9				# shift right by t9
-	subu	v1, v1, t9			#  (known to be < 32 bits)
-	sll	v0, t8, v1			# save bits shifted out
+	negu	v1				# shift right by at
+	subu	ta1, ta1, v1			#  (known to be < 32 bits)
+	sll	v0, t9, ta1			# save bits shifted out
 	sltu	v0, zero, v0			# be sure to save any one bits
-	srl	t8, t8, t9
-	or	t8, t8, v0
-	sll	v0, t3, v1			# save bits shifted out
-	or	t8, t8, v0
-	srl	t3, t3, t9
-	sll	v0, t2, v1			# save bits shifted out
+	srl	t9, t9, v1
+	or	t9, t9, v0
+	sll	v0, t3, ta1			# save bits shifted out
+	or	t9, t9, v0
+	srl	t3, t3, v1
+	sll	v0, t2, ta1			# save bits shifted out
 	or	t3, t3, v0
-	srl	t2, t2, t9
+	srl	t2, t2, v1
 norm_noshift_d:
 	move	ta1, t1				# save unrounded exponent
 	move	ta2, t2				# save unrounded fraction (MS)
@@ -2484,7 +2548,7 @@ norm_noshift_d:
 1:
 	bne	t0, zero, 5f			# if sign is negative, truncate
 2:
-	beq	t8, zero, 5f			# if exact, continue
+	beq	t9, zero, 5f			# if exact, continue
 	addu	t3, t3, 1			# add rounding bit
 	bne	t3, zero, 5f			# branch if no carry
 	addu	t2, t2, 1			# add carry
@@ -2494,8 +2558,8 @@ norm_noshift_d:
 	b	5f
 3:
 	li	v0, GUARDBIT			# load guard bit for rounding
-	addu	v0, v0, t8			# add remainder
-	sltu	v1, v0, t8			# compute carry out
+	addu	v0, v0, t9			# add remainder
+	sltu	v1, v0, t9			# compute carry out
 	beq	v1, zero, 4f			# branch if no carry
 	addu	t3, t3, 1			# add carry
 	bne	t3, zero, 4f			# branch if no carry
@@ -2509,7 +2573,7 @@ norm_noshift_d:
 5:
 	bgt	t1, DEXP_MAX, overflow_d	# overflow?
 	blt	t1, DEXP_MIN, underflow_d	# underflow?
-	bne	t8, zero, inexact_d		# is result inexact?
+	bne	t9, zero, inexact_d		# is result inexact?
 	addu	t1, t1, DEXP_BIAS		# bias exponent
 	and	t2, t2, ~DIMPL_ONE		# clear implied one bit
 	b	result_fs_d
@@ -2589,9 +2653,9 @@ underflow_d:
 	move	t1, ta1				# get unrounded exponent
 	move	t2, ta2				# get unrounded fraction (MS)
 	move	t3, ta3				# get unrounded fraction (LS)
-	li	t9, DEXP_MIN			# compute shift amount
-	subu	t9, t9, t1			# shift t2,t8 right by t9
-	blt	t9, DFRAC_BITS+2, 3f		# shift all the bits out?
+	li	v0, DEXP_MIN			# compute shift amount
+	subu	v0, v0, t1			# shift t2,t9 right by at
+	blt	v0, DFRAC_BITS+2, 3f		# shift all the bits out?
 	move	t1, zero			# result is inexact zero
 	move	t2, zero
 	move	t3, zero
@@ -2613,24 +2677,28 @@ underflow_d:
 	b	inexact_nobias_d
 3:
 	li	v1, 32
-	blt	t9, v1, 1f			# shift by < 32?
-	subu	t9, t9, v1			# shift right by >= 32
-	subu	v1, v1, t9
-	sltu	v0, zero, t8			# be sure to save any one bits
-	sll	t8, t2, v1			# save bits shifted out
-	or	t8, t8, v0			# include sticky bits
-	srl	t3, t2, t9
+	blt	v0, v1, 1f			# shift by < 32?
+	subu	v0, v0, v1			# shift right by >= 32
+	subu	v1, v1, v0
+	.set	noat
+	sltu	AT, zero, t9			# be sure to save any one bits
+	sll	t9, t2, v1			# save bits shifted out
+	or	t9, t9, AT			# include sticky bits
+	srl	t3, t2, v0
 	move	t2, zero
+	.set	at
 	b	2f
 1:
-	subu	v1, v1, t9			# shift right by t9
-	sltu	v0, zero, t8			# be sure to save any one bits
-	sll	t8, t3, v1			# save bits shifted out
-	or	t8, t8, v0			# include sticky bits
-	srl	t3, t3, t9
-	sll	v0, t2, v1			# save bits shifted out
-	or	t3, t3, v0
-	srl	t2, t2, t9
+	.set	noat
+	subu	v1, v1, v0			# shift right by at
+	sltu	AT, zero, t9			# be sure to save any one bits
+	sll	t9, t3, v1			# save bits shifted out
+	or	t9, t9, AT			# include sticky bits
+	srl	t3, t3, v0
+	sll	AT, t2, v1			# save bits shifted out
+	or	t3, t3, AT
+	srl	t2, t2, v0
+	.set	at
 /*
  * Now round the denormalized result.
  */
@@ -2644,15 +2712,15 @@ underflow_d:
 1:
 	bne	t0, zero, 5f			# if sign is negative, truncate
 2:
-	beq	t8, zero, 5f			# if exact, continue
+	beq	t9, zero, 5f			# if exact, continue
 	addu	t3, t3, 1			# add rounding bit
 	bne	t3, zero, 5f			# if no carry, continue
 	addu	t2, t2, 1			# add carry
 	b	5f
 3:
 	li	v0, GUARDBIT			# load guard bit for rounding
-	addu	v0, v0, t8			# add remainder
-	sltu	v1, v0, t8			# compute carry out
+	addu	v0, v0, t9			# add remainder
+	sltu	v1, v0, t9			# compute carry out
 	beq	v1, zero, 4f			# if no carry, continue
 	addu	t3, t3, 1			# add rounding bit
 	bne	t3, zero, 4f			# if no carry, continue
@@ -2663,7 +2731,7 @@ underflow_d:
 5:
 	move	t1, zero			# denorm or zero exponent
 	jal	_C_LABEL(set_fd_d)		# save result
-	beq	t8, zero, done			# check for exact result
+	beq	t9, zero, done			# check for exact result
 	or	a2, a2, MIPS_FPU_EXCEPTION_UNDERFLOW | MIPS_FPU_STICKY_UNDERFLOW
 	or	a2, a2, MIPS_FPU_EXCEPTION_INEXACT | MIPS_FPU_STICKY_INEXACT
 	and	v0, a2, MIPS_FPU_ENABLE_INEXACT
@@ -4195,41 +4263,47 @@ END(set_fd_d)
  */
 STATIC_LEAF(renorm_fs_s)
 /*
- * Find out how many leading zero bits are in t2 and put in t9.
+ * Find out how many leading zero bits are in t2 and put in at.
  */
+#if __mips == 32 || __mips == 64
+	clz	v1, t2
+#else
+	.set	noat
 	move	v0, t2
-	move	t9, zero
-	srl	v1, v0, 16
-	bne	v1, zero, 1f
-	addu	t9, 16
+	move	v1, zero
+	srl	AT, v0, 16
+	bne	AT, zero, 1f
+	addu	v1, 16
 	sll	v0, 16
 1:
-	srl	v1, v0, 24
-	bne	v1, zero, 1f
-	addu	t9, 8
+	srl	AT, v0, 24
+	bne	AT, zero, 1f
+	addu	v1, 8
 	sll	v0, 8
 1:
-	srl	v1, v0, 28
-	bne	v1, zero, 1f
-	addu	t9, 4
+	srl	AT, v0, 28
+	bne	AT, zero, 1f
+	addu	v1, 4
 	sll	v0, 4
 1:
-	srl	v1, v0, 30
-	bne	v1, zero, 1f
-	addu	t9, 2
+	srl	AT, v0, 30
+	bne	AT, zero, 1f
+	addu	v1, 2
 	sll	v0, 2
 1:
-	srl	v1, v0, 31
-	bne	v1, zero, 1f
-	addu	t9, 1
+	srl	AT, v0, 31
+	bne	AT, zero, 1f
+	addu	v1, 1
+1:
+	.set	at
+#endif /* __mips == 32 || __mips == 64 */
 /*
  * Now shift t2 the correct number of bits.
  */
-1:
-	subu	t9, t9, SLEAD_ZEROS	# dont count normal leading zeros
+	subu	v1, v1, SLEAD_ZEROS	# dont count normal leading zeros
 	li	t1, SEXP_MIN
-	subu	t1, t1, t9		# adjust exponent
-	sll	t2, t2, t9
+	subu	t1, t1, v1		# adjust exponent
+	sll	t2, t2, v1
 	j	ra
 END(renorm_fs_s)
 
@@ -4244,57 +4318,88 @@ END(renorm_fs_s)
  */
 STATIC_LEAF(renorm_fs_d)
 /*
- * Find out how many leading zero bits are in t2,t3 and put in t9.
+ * Find out how many leading zero bits are in t2,t3 and put in v1.
  */
+#if __mips == 32 || __mips == 64
+#ifdef __mips_o32
+	bne	ta2, zero, 1f
+	clz	v1, ta3
+	addu	v1, 32
+	b	2f
+1:
+	clz	v1, ta2
+2:
+#elif __mips_isa_rev == 2
+	move	v0, ta3
+	dins	v0, ta2, 32, 32
+	dclz	v1, v0
+#else
+	dsll	v0, ta3, 32
+	dsrl	v0, v0, 32
+	dsll	v1, ta2, 32
+	or	v0, v1
+	dclz	v1, v0
+#endif /* __mips_o32 */
+#else
+	.set	noat
 	move	v0, t2
-	move	t9, zero
+	move	v1, zero
 	bne	t2, zero, 1f
 	move	v0, t3
-	addu	t9, 32
+	addu	v1, 32
 1:
-	srl	v1, v0, 16
-	bne	v1, zero, 1f
-	addu	t9, 16
+	srl	AT, v0, 16
+	bne	AT, zero, 1f
+	addu	v1, 16
 	sll	v0, 16
 1:
-	srl	v1, v0, 24
-	bne	v1, zero, 1f
-	addu	t9, 8
+	srl	AT, v0, 24
+	bne	AT, zero, 1f
+	addu	v1, 8
 	sll	v0, 8
 1:
-	srl	v1, v0, 28
-	bne	v1, zero, 1f
-	addu	t9, 4
+	srl	AT, v0, 28
+	bne	AT, zero, 1f
+	addu	v1, 4
 	sll	v0, 4
 1:
-	srl	v1, v0, 30
-	bne	v1, zero, 1f
-	addu	t9, 2
+	srl	AT, v0, 30
+	bne	AT, zero, 1f
+	addu	v1, 2
 	sll	v0, 2
 1:
-	srl	v1, v0, 31
-	bne	v1, zero, 1f
-	addu	t9, 1
+	srl	AT, v0, 31
+	bne	AT, zero, 1f
+	addu	v1, 1
+1:
+	.set	at
+#endif /* __mips == 32 || __mips == 64 */
 /*
  * Now shift t2,t3 the correct number of bits.
  */
-1:
-	subu	t9, t9, DLEAD_ZEROS	# dont count normal leading zeros
+	subu	v1, v1, DLEAD_ZEROS	# dont count normal leading zeros
 	li	t1, DEXP_MIN
-	subu	t1, t1, t9		# adjust exponent
+	subu	t1, t1, v1		# adjust exponent
+#ifdef __mips_o32
 	li	v0, 32
-	blt	t9, v0, 1f
-	subu	t9, t9, v0		# shift fraction left >= 32 bits
-	sll	t2, t3, t9
+	blt	v1, v0, 1f
+	subu	v1, v1, v0		# shift fraction left >= 32 bits
+	sll	t2, t3, v1
 	move	t3, zero
 	j	ra
 1:
-	subu	v0, v0, t9		# shift fraction left < 32 bits
-	sll	t2, t2, t9
-	srl	v1, t3, v0
-	or	t2, t2, v1
-	sll	t3, t3, t9
+	subu	v0, v0, v1		# shift fraction left < 32 bits
+	sll	t2, t2, v1
+	srl	v0, t3, v0
+	or	t2, t2, v0
+	sll	t3, t3, v1
 	j	ra
+#else
+	dsll	v0, v0, t1
+	dsrl	t2, v0, 32		# MSW
+	sll	t3, v0, 0		# LSW
+	j	ra
+#endif
 END(renorm_fs_d)
 
 /*----------------------------------------------------------------------------
@@ -4307,42 +4412,48 @@ END(renorm_fs_d)
  *----------------------------------------------------------------------------
  */
 STATIC_LEAF(renorm_ft_s)
+#if __mips == 32 || __mips == 64
+	clz	v1, ta2
+#else
+	.set	noat
 /*
- * Find out how many leading zero bits are in ta2 and put in t9.
+ * Find out how many leading zero bits are in ta2 and put in v1.
  */
 	move	v0, ta2
-	move	t9, zero
-	srl	v1, v0, 16
-	bne	v1, zero, 1f
-	addu	t9, 16
+	move	v1, zero
+	srl	AT, v0, 16
+	bne	AT, zero, 1f
+	addu	v1, 16
 	sll	v0, 16
 1:
-	srl	v1, v0, 24
-	bne	v1, zero, 1f
-	addu	t9, 8
+	srl	AT, v0, 24
+	bne	AT, zero, 1f
+	addu	v1, 8
 	sll	v0, 8
 1:
-	srl	v1, v0, 28
-	bne	v1, zero, 1f
-	addu	t9, 4
+	srl	AT, v0, 28
+	bne	AT, zero, 1f
+	addu	v1, 4
 	sll	v0, 4
 1:
-	srl	v1, v0, 30
-	bne	v1, zero, 1f
-	addu	t9, 2
+	srl	AT, v0, 30
+	bne	AT, zero, 1f
+	addu	v1, 2
 	sll	v0, 2
 1:
-	srl	v1, v0, 31
-	bne	v1, zero, 1f
-	addu	t9, 1
+	srl	AT, v0, 31
+	bne	AT, zero, 1f
+	addu	v1, 1
+1:
+	.set	at
+#endif /* __mips == 32 || __mips == 64 */
 /*
  * Now shift ta2 the correct number of bits.
  */
-1:
-	subu	t9, t9, SLEAD_ZEROS	# dont count normal leading zeros
+	subu	v1, v1, SLEAD_ZEROS	# dont count normal leading zeros
 	li	ta1, SEXP_MIN
-	subu	ta1, ta1, t9		# adjust exponent
-	sll	ta2, ta2, t9
+	subu	ta1, ta1, v1		# adjust exponent
+	sll	ta2, ta2, v1
 	j	ra
 END(renorm_ft_s)
 
@@ -4357,57 +4468,88 @@ END(renorm_ft_s)
  */
 STATIC_LEAF(renorm_ft_d)
 /*
- * Find out how many leading zero bits are in ta2,ta3 and put in t9.
+ * Find out how many leading zero bits are in ta2,ta3 and put in at.
  */
+#if __mips == 32 || __mips == 64
+#ifdef __mips_o32
+	bne	ta2, zero, 1f
+	clz	v1, ta3
+	addu	v1, 32
+	b	2f
+1:
+	clz	v1, ta2
+2:
+#elif __mips_isa_rev == 2
+	move	v0, ta3
+	dins	v0, ta2, 32, 32
+	dclz	v1, v0
+#else
+	dsll	v0, ta3, 32
+	dsrl	v0, v0, 32
+	dsll	v1, ta2, 32
+	or	v0, v1
+	dclz	v1, v0
+#endif /* __mips_o32 */
+#else
+	.set	noat
 	move	v0, ta2
-	move	t9, zero
+	move	v1, zero
 	bne	ta2, zero, 1f
 	move	v0, ta3
-	addu	t9, 32
+	addu	v1, 32
 1:
-	srl	v1, v0, 16
-	bne	v1, zero, 1f
-	addu	t9, 16
+	srl	AT, v0, 16
+	bne	AT, zero, 1f
+	addu	v1, 16
 	sll	v0, 16
 1:
-	srl	v1, v0, 24
-	bne	v1, zero, 1f
-	addu	t9, 8
+	srl	AT, v0, 24
+	bne	AT, zero, 1f
+	addu	v1, 8
 	sll	v0, 8
 1:
-	srl	v1, v0, 28
-	bne	v1, zero, 1f
-	addu	t9, 4
+	srl	AT, v0, 28
+	bne	AT, zero, 1f
+	addu	v1, 4
 	sll	v0, 4
 1:
-	srl	v1, v0, 30
-	bne	v1, zero, 1f
-	addu	t9, 2
+	srl	AT, v0, 30
+	bne	AT, zero, 1f
+	addu	v1, 2
 	sll	v0, 2
 1:
-	srl	v1, v0, 31
-	bne	v1, zero, 1f
-	addu	t9, 1
+	srl	AT, v0, 31
+	bne	AT, zero, 1f
+	addu	v1, 1
+1:
+	.set	at
+#endif /* __mips == 32 || __mips == 64 */
 /*
  * Now shift ta2,ta3 the correct number of bits.
  */
-1:
-	subu	t9, t9, DLEAD_ZEROS	# dont count normal leading zeros
+	subu	v1, v1, DLEAD_ZEROS	# dont count normal leading zeros
 	li	ta1, DEXP_MIN
-	subu	ta1, ta1, t9		# adjust exponent
+	subu	ta1, ta1, v1		# adjust exponent
+#ifdef __mips_o32
 	li	v0, 32
-	blt	t9, v0, 1f
-	subu	t9, t9, v0		# shift fraction left >= 32 bits
-	sll	ta2, ta3, t9
+	blt	v1, v0, 1f
+	subu	v1, v1, v0		# shift fraction left >= 32 bits
+	sll	ta2, ta3, v1
 	move	ta3, zero
 	j	ra
 1:
-	subu	v0, v0, t9		# shift fraction left < 32 bits
-	sll	ta2, ta2, t9
-	srl	v1, ta3, v0
-	or	ta2, ta2, v1
-	sll	ta3, ta3, t9
+	subu	v0, v0, v1		# shift fraction left < 32 bits
+	sll	ta2, ta2, v1
+	srl	v0, ta3, v0
+	or	ta2, ta2, v0
+	sll	ta3, ta3, v1
 	j	ra
+#else
+	dsll	v0, v0, t1
+	dsrl	ta2, v0, 32
+	sll	ta3, v0, 0
+	j	ra
+#endif	/* __mips_o32 */
 END(renorm_ft_d)
 
 #ifdef FPEMUL
