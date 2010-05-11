@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.7 2008/03/15 18:30:13 martin Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.8 2010/05/11 09:46:46 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,4 +52,4 @@ message dobootblks
 message set_kernel_1
 {Kernel (GENERIC)}
 message set_kernel_2
-{Kernel (GENERIC.MP)}
+{Kernel (GENERIC.UP)}
