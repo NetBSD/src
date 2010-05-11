@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.49 2010/05/01 14:46:32 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.50 2010/05/11 14:49:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.49 2010/05/01 14:46:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.50 2010/05/11 14:49:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -91,7 +91,7 @@ rump_vfs_init(void)
 	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
 	} else {
-		desiredvnodes = 1<<16;
+		desiredvnodes = 1<<10;
 	}
 
 	rumpblk_init();
