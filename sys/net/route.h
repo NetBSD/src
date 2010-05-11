@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.70.16.1 2009/04/03 17:59:03 snj Exp $	*/
+/*	$NetBSD: route.h,v 1.70.16.1.4.1 2010/05/11 21:00:13 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -67,16 +67,16 @@ struct route {
  * retransmission behavior and are included in the routing structure.
  */
 struct rt_metrics {
-	u_long	rmx_locks;	/* Kernel must leave these values alone */
-	u_long	rmx_mtu;	/* MTU for this path */
-	u_long	rmx_hopcount;	/* max hops expected */
-	u_long	rmx_expire;	/* lifetime for route, e.g. redirect */
-	u_long	rmx_recvpipe;	/* inbound delay-bandwidth product */
-	u_long	rmx_sendpipe;	/* outbound delay-bandwidth product */
-	u_long	rmx_ssthresh;	/* outbound gateway buffer limit */
-	u_long	rmx_rtt;	/* estimated round trip time */
-	u_long	rmx_rttvar;	/* estimated rtt variance */
-	u_long	rmx_pksent;	/* packets sent using this route */
+	u_quad_t rmx_locks;	/* Kernel must leave these values alone */
+	u_quad_t rmx_mtu;	/* MTU for this path */
+	u_quad_t rmx_hopcount;	/* max hops expected */
+	u_quad_t rmx_expire;	/* lifetime for route, e.g. redirect */
+	u_quad_t rmx_recvpipe;	/* inbound delay-bandwidth product */
+	u_quad_t rmx_sendpipe;	/* outbound delay-bandwidth product */
+	u_quad_t rmx_ssthresh;	/* outbound gateway buffer limit */
+	u_quad_t rmx_rtt;	/* estimated round trip time */
+	u_quad_t rmx_rttvar;	/* estimated rtt variance */
+	u_quad_t rmx_pksent;	/* packets sent using this route */
 };
 
 /*
@@ -179,11 +179,11 @@ struct rt_msghdr {
 	int	rtm_seq;	/* for sender to identify action */
 	int	rtm_errno;	/* why failed */
 	int	rtm_use;	/* from rtentry */
-	u_long	rtm_inits;	/* which metrics we are initializing */
+	u_quad_t rtm_inits;	/* which metrics we are initializing */
 	struct	rt_metrics rtm_rmx; /* metrics themselves */
 };
 
-#define RTM_VERSION	3	/* Up the ante and ignore older versions */
+#define RTM_VERSION	4	/* Up the ante and ignore older versions */
 
 #define RTM_ADD		0x1	/* Add Route */
 #define RTM_DELETE	0x2	/* Delete Route */
@@ -241,7 +241,7 @@ struct rt_msghdr {
 #define RTAX_MAX	8	/* size of array to allocate */
 
 #define RT_ROUNDUP(a) \
-	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(u_quad_t) - 1))) : sizeof(u_quad_t))
 #define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
 
 struct rt_addrinfo {
