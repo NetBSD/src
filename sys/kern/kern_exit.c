@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.227 2010/03/03 00:47:30 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.228 2010/05/11 09:30:29 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.227 2010/03/03 00:47:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.228 2010/05/11 09:30:29 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -805,7 +805,7 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 					/*
 					 * We may occasionally arrive here
 					 * after receiving a signal, but
-					 * immediatley before the child
+					 * immediately before the child
 					 * process is zombified.  The wait
 					 * will be short, so avoid returning
 					 * to userspace.
