@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.1.2.8 2010/04/12 22:01:14 cliff Exp $
+#	$NetBSD: XLSATX,v 1.1.2.9 2010/05/11 21:08:01 matt Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.1.2.8 $"
+#ident 		"XLSATX-$Revision: 1.1.2.9 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -160,6 +160,9 @@ rmixl_usbi0	at obio0	addr 0x25000 intr 31
 ohci0		at rmixl_usbi0	addr 0x24400 size 0x400 intr 0
 ohci1		at rmixl_usbi0	addr 0x24800 size 0x400 intr 1
 ehci0		at rmixl_usbi0	addr 0x24000 size 0x400 intr 2
+siisata*	at pci? dev ? function ?
+atabus*		at ata?
+wd*		at atabus? drive ? flags 0x0000
 
 # USB
 usb*		at ohci?
