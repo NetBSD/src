@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.71 2008/04/23 15:35:37 thorpej Exp $	*/
+/*	$NetBSD: route.c,v 1.71.10.1 2010/05/11 21:03:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.71 2008/04/23 15:35:37 thorpej Exp $");
+__RCSID("$NetBSD: route.c,v 1.71.10.1 2010/05/11 21:03:20 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,7 +272,7 @@ p_krtentry(rt)
 	p_flags(rt->rt_flags, "%-6.6s ");
 	printf("%6d %8lu ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
-		printf("%6lu", rt->rt_rmx.rmx_mtu); 
+		printf("%6"PRIu64, rt->rt_rmx.rmx_mtu); 
 	else
 		printf("%6s", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
@@ -286,23 +286,23 @@ p_krtentry(rt)
 	}
 	putchar('\n');
  	if (vflag) {
- 		printf("\texpire   %10lu%c  recvpipe %10ld%c  "
-		       "sendpipe %10ld%c\n",
+ 		printf("\texpire   %10"PRIu64"%c  recvpipe %10"PRId64"%c  "
+		       "sendpipe %10"PRId64"%c\n",
  			rt->rt_rmx.rmx_expire, 
  			(rt->rt_rmx.rmx_locks & RTV_EXPIRE) ? 'L' : ' ',
  			rt->rt_rmx.rmx_recvpipe,
  			(rt->rt_rmx.rmx_locks & RTV_RPIPE) ? 'L' : ' ',
  			rt->rt_rmx.rmx_sendpipe,
  			(rt->rt_rmx.rmx_locks & RTV_SPIPE) ? 'L' : ' ');
- 		printf("\tssthresh %10lu%c  rtt      %10ld%c  "
-		       "rttvar   %10ld%c\n",
+ 		printf("\tssthresh %10"PRIu64"%c  rtt      %10"PRId64"%c  "
+		       "rttvar   %10"PRId64"%c\n",
  			rt->rt_rmx.rmx_ssthresh, 
  			(rt->rt_rmx.rmx_locks & RTV_SSTHRESH) ? 'L' : ' ',
  			rt->rt_rmx.rmx_rtt, 
  			(rt->rt_rmx.rmx_locks & RTV_RTT) ? 'L' : ' ',
  			rt->rt_rmx.rmx_rttvar, 
 			(rt->rt_rmx.rmx_locks & RTV_RTTVAR) ? 'L' : ' ');
- 		printf("\thopcount %10lu%c\n",
+ 		printf("\thopcount %10"PRIu64"%c\n",
  			rt->rt_rmx.rmx_hopcount, 
 			(rt->rt_rmx.rmx_locks & RTV_HOPCOUNT) ? 'L' : ' ');
  	}
