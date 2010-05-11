@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.135 2010/04/16 02:57:15 rmind Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.136 2010/05/11 20:21:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.135 2010/04/16 02:57:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.136 2010/05/11 20:21:56 pooka Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -153,7 +153,7 @@ do {									\
 static int
 nmbclusters_limit(void)
 {
-#if defined(PMAP_MAP_POOLPAGE) || defined(_RUMPKERNEL)
+#if defined(PMAP_MAP_POOLPAGE)
 	/* direct mapping, doesn't use space in kmem_map */
 	vsize_t max_size = physmem / 4;
 #else
