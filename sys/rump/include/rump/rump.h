@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.43 2010/05/01 23:16:31 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.44 2010/05/11 20:09:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -108,7 +108,7 @@ void	rump_printevcnts(void);
 
 int	rump__init(int);
 
-#ifndef _RUMPKERNEL
+#ifndef _KERNEL
 #include <rump/rumpkern_if_pub.h>
 #include <rump/rumpvfs_if_pub.h>
 #include <rump/rumpnet_if_pub.h>

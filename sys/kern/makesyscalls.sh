@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.95 2010/04/27 10:57:46 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.96 2010/05/11 20:09:46 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -244,9 +244,9 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysarghdr
 
 	printf " * created from%s\n */\n\n", $0 > rumpcallshdr
-	printf "#ifdef _RUMPKERNEL\n" > rumpcallshdr
-	printf "#error Interface not supported inside rump kernel\n" > rumpcallshdr
-	printf "#endif /* _RUMPKERNEL */\n\n" > rumpcallshdr
+	printf "#ifdef _KERNEL\n" > rumpcallshdr
+	printf "#error Interface not supported inside kernel\n" > rumpcallshdr
+	printf "#endif /* _KERNEL */\n\n" > rumpcallshdr
 	printf "#include <sys/types.h>\n" > rumpcallshdr
 	printf "#include <sys/select.h>\n\n" > rumpcallshdr
 	printf "#include <signal.h>\n\n" > rumpcallshdr
