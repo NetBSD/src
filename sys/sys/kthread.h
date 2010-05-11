@@ -1,4 +1,4 @@
-/*	$NetBSD: kthread.h,v 1.8 2009/01/29 22:00:26 ad Exp $	*/
+/*	$NetBSD: kthread.h,v 1.9 2010/05/11 22:26:00 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #define	KTHREAD_MPSAFE	0x02	/* does not need kernel_lock */
 #define	KTHREAD_INTR	0x04	/* interrupt handler */
 #define	KTHREAD_TS	0x08	/* timeshared */
+#define	KTHREAD_JOINABLE	0x10	/* joinable thread */
 
 int	kthread_create(pri_t, int, struct cpu_info *,
 		       void (*)(void *), void *,
@@ -51,6 +52,7 @@ int	kthread_create(pri_t, int, struct cpu_info *,
 	    __attribute__((__format__(__printf__,7,8)));
 void	kthread_exit(int) __dead;
 void	kthread_destroy(lwp_t *);
+int	kthread_join(lwp_t *);
 #endif /* _KERNEL */
 
 #endif /* _SYS_KTHREAD_H_ */
