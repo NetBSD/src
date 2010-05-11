@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.143.8.1 2010/04/21 00:28:22 matt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.143.8.2 2010/05/11 21:06:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.143.8.1 2010/04/21 00:28:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.143.8.2 2010/05/11 21:06:45 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1539,7 +1539,7 @@ db_show_rtentry(struct rtentry *rt, void *w)
 {
 	db_printf("rtentry=%p", rt);
 
-	db_printf(" flags=0x%x refcnt=%d use=%ld expire=%ld\n",
+	db_printf(" flags=0x%x refcnt=%d use=%ld expire=%"PRId64"\n",
 			  rt->rt_flags, rt->rt_refcnt,
 			  rt->rt_use, rt->rt_expire);
 
