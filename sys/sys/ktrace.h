@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.55 2008/10/20 11:36:39 ad Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.55.10.1 2010/05/11 20:58:10 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -66,10 +66,12 @@ struct ktr_header {
 	union {
 		struct timeval _tv;	/* v0 timestamp */
 		struct timespec _ts;	/* v1 timespec */
+		uint64_t _tpad[2];
 	} _ktr_time;
 	union {
 		const void *_buf;	/* v0 unused */
 		lwpid_t _lid;		/* v1 lwp id */
+		register_t *_reg;	/* for alignment */
 	} _ktr_id;
 };
 
