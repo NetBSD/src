@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.136 2010/05/11 20:21:56 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.137 2010/05/11 20:25:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.136 2010/05/11 20:21:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.137 2010/05/11 20:25:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -67,7 +67,7 @@ struct lwp lwp0;
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
-int nkmempages = 256*256/2; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
+int nkmempages = 256*256/2; /* from le chapeau */
 const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
