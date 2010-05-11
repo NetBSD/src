@@ -1,6 +1,6 @@
-	$NetBSD: README.dirs,v 1.9 2009/09/04 10:54:44 pooka Exp $
+	$NetBSD: README.dirs,v 1.10 2010/05/11 09:45:59 pooka Exp $
 
-    Runnable Userspace Meta Programs
+    rump kernel support
 
 Quick rundown of the current directory structure:
 
