@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.40 2010/05/04 12:20:50 tsutsui Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.41 2010/05/11 20:07:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.40 2010/05/04 12:20:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.41 2010/05/11 20:07:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ typedef struct mbr_partition mbr_partition_t;
 #define SCANBLOCKS 3
 #define DISKLABEL_SIZE 404
 #if LABELSECTOR*DEV_BSIZE + LABELOFFSET > SCANBLOCKS*DEV_BSIZE - DISKLABEL_SIZE
-#ifndef _RUMPKERNEL /* XXX: see src/sys/rump/dev/lib/libdisk/Makefile */
+#if _MACHINE != ews4800mips /* XXX: fail silently, ews4800mips LABELSECTOR */
 #error Invalid LABELSECTOR or LABELOFFSET
 #endif
 #endif
