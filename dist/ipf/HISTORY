@@ -2432,7 +2432,7 @@ Didn't compile cleanly without IPFILTER_LOG defined (Mathew Green).
 
 ipftest now deals with tcpdump3 binary output files (from libpcap) with -P.
 
-Brought ipftest program upto date with actual filter code.
+Brought ipftest program up to date with actual filter code.
 
 Filter would cause a match to occur when it wasn't meant to if the packet
 had short headers and was missing portions that should have been there.
