@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.48 2010/05/11 09:28:40 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.49 2010/05/11 14:42:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.48 2010/05/11 09:28:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.49 2010/05/11 14:42:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -446,7 +446,7 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 	struct vattr *va = &rn->rn_va;
 	int rv;
 
-	KASSERT(mutex_owned(&reclock));
+	KASSERT(!mutex_owned(&reclock));
 
 	if (va->va_type == VCHR || va->va_type == VBLK) {
 		vpops = rump_specop_p;
@@ -471,7 +471,10 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 	vp->v_data = rn;
 
 	vn_lock(vp, LK_RETRY | LK_EXCLUSIVE);
+	mutex_enter(&reclock);
 	rn->rn_vp = vp;
+	mutex_exit(&reclock);
+
 	*vpp = vp;
 
 	return 0;
@@ -597,9 +600,8 @@ rump_vop_lookup(void *v)
 			goto getvnode;
 		*vpp = vp;
 	} else {
-		rv = makevnode(dvp->v_mount, rn, vpp);
-		rn->rn_vp = *vpp;
 		mutex_exit(&reclock);
+		rv = makevnode(dvp->v_mount, rn, vpp);
 		if (rv)
 			return rv;
 	}
@@ -639,9 +641,7 @@ rump_vop_mkdir(void *v)
 	int rv = 0;
 
 	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
-	mutex_enter(&reclock);
 	rv = makevnode(dvp->v_mount, rn, vpp);
-	mutex_exit(&reclock);
 	if (rv)
 		goto out;
 
@@ -675,9 +675,7 @@ rump_vop_mknod(void *v)
 	int rv;
 
 	rn = makeprivate(va->va_type, va->va_rdev, DEV_BSIZE);
-	mutex_enter(&reclock);
 	rv = makevnode(dvp->v_mount, rn, vpp);
-	mutex_exit(&reclock);
 	if (rv)
 		goto out;
 
@@ -716,9 +714,7 @@ rump_vop_create(void *v)
 		goto out;
 	}
 	rn = makeprivate(VSOCK, NODEV, DEV_BSIZE);
-	mutex_enter(&reclock);
 	rv = makevnode(dvp->v_mount, rn, vpp);
-	mutex_exit(&reclock);
 	if (rv)
 		goto out;
 
@@ -1062,9 +1058,7 @@ rumpfs_mountroot()
 	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
 
 	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
-	mutex_enter(&reclock);
 	error = makevnode(mp, rn, &rfsmp->rfsmp_rvp);
-	mutex_exit(&reclock);
 	if (error)
 		panic("could not create root vnode: %d", error);
 	rfsmp->rfsmp_rvp->v_vflag |= VV_ROOT;
