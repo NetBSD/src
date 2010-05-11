@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.22 2010/04/27 10:58:55 pooka Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.23 2010/05/11 20:11:47 pooka Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -7,9 +7,9 @@
  * created from	NetBSD: syscalls.master,v 1.233 2010/04/21 16:17:04 pooka Exp
  */
 
-#ifdef _RUMPKERNEL
-#error Interface not supported inside rump kernel
-#endif /* _RUMPKERNEL */
+#ifdef _KERNEL
+#error Interface not supported inside kernel
+#endif /* _KERNEL */
 
 #include <sys/types.h>
 #include <sys/select.h>
