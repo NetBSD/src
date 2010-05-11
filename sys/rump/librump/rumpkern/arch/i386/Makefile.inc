@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.3 2009/01/01 19:07:43 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2010/05/11 21:03:41 pooka Exp $
 #
 
-SRCS+=	rumpcpu.c rumpspl.c
+SRCS+=	rumpcpu.c rumpspl.c cpu_counter.c
 
 .PATH:	${RUMPTOP}/../arch/i386/i386
 SRCS+=	kobj_machdep.c
