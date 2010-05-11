@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.62 2010/04/23 19:18:09 rmind Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.63 2010/05/11 02:34:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.62 2010/04/23 19:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.63 2010/05/11 02:34:39 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -612,21 +612,21 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, registe
 	int error;
 
 	switch (SCARG(uap, op)) {
-		case X86_IOPL:
-			error = x86_iopl(l,
-			    NETBSD32PTR64(SCARG(uap, parms)), retval);
-			break;
-		case X86_GET_MTRR:
-			error = x86_64_get_mtrr32(l,
-			    NETBSD32PTR64(SCARG(uap, parms)), retval);
-			break;
-		case X86_SET_MTRR:
-			error = x86_64_set_mtrr32(l,
-			    NETBSD32PTR64(SCARG(uap, parms)), retval);
-			break;
-		default:
-			error = EINVAL;
-			break;
+	case X86_IOPL:
+		error = x86_iopl(l,
+		    NETBSD32PTR64(SCARG(uap, parms)), retval);
+		break;
+	case X86_GET_MTRR:
+		error = x86_64_get_mtrr32(l,
+		    NETBSD32PTR64(SCARG(uap, parms)), retval);
+		break;
+	case X86_SET_MTRR:
+		error = x86_64_set_mtrr32(l,
+		    NETBSD32PTR64(SCARG(uap, parms)), retval);
+		break;
+	default:
+		error = EINVAL;
+		break;
 	}
 	return error;
 }
