@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.11 2010/05/08 19:41:07 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.12 2010/05/12 18:33:09 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ unsigned uart1base;	/* console */
 unsigned uart2base;	/* optional satellite processor */
 #define THR		0
 #define DLB		0
-#define DHB		1
+#define DMB		1
 #define IER		1
 #define FCR		2
 #define LCR		3
@@ -88,7 +88,7 @@ init_uart(unsigned base, unsigned speed, uint8_t lcr)
 	div = busclock / speed / 16;
 	UART_WRITE(base, LCR, 0x80);		/* turn on DLAB bit */
 	UART_WRITE(base, FCR, 0x00);
-	UART_WRITE(base, DHB, div >> 8);	/* set speed */
+	UART_WRITE(base, DMB, div >> 8);	/* set speed */
 	UART_WRITE(base, DLB, div & 0xff);
 	UART_WRITE(base, LCR, lcr);
 	UART_WRITE(base, FCR, 0x07);		/* FIFO on, TXRX FIFO reset */
