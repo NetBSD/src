@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.296 2010/05/02 23:22:51 dholland Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.297 2010/05/12 03:40:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.296 2010/05/02 23:22:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.297 2010/05/12 03:40:38 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -1209,8 +1209,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	lwp_lock(l);
 	l->l_flag |= oldlwpflags;
 	lwp_unlock(l);
-	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
+
+	PNBUF_PUT(pathbuf);
 
 	if (modgen != module_gen && error == ENOEXEC) {
 		modgen = module_gen;
@@ -1223,10 +1224,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
  exec_abort:
 	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
-	PNBUF_PUT(pathbuf);
-	PNBUF_PUT(resolvedpathbuf);
 	rw_exit(&p->p_reflock);
 	rw_exit(&exec_lock);
+
+	PNBUF_PUT(pathbuf);
+	PNBUF_PUT(resolvedpathbuf);
 
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
