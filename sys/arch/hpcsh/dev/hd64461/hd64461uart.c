@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.23 2010/05/12 16:41:08 kiyohara Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.24 2010/05/12 18:16:53 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.23 2010/05/12 16:41:08 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.24 2010/05/12 18:16:53 kiyohara Exp $");
 
 #include "opt_kgdb.h"
 
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.23 2010/05/12 16:41:08 kiyohara Ex
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/console.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
@@ -153,7 +155,7 @@ hd64461uart_attach(device_t parent, device_t self, void *aux)
 	struct hd64461_attach_args *ha = aux;
 	struct hd64461uart_softc *sc = device_private(self);
 	struct com_softc *csc = &sc->sc_com;
-	uint16_t r16;
+	uint16_t r16, or16;
 	bus_space_handle_t ioh;
 
 	csc->sc_dev = self;
@@ -171,17 +173,19 @@ hd64461uart_attach(device_t parent, device_t self, void *aux)
 	/* switch port to UART */
 
 	/* supply clock */
-	r16 = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
+	r16 = or16 = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
 	r16 &= ~HD64461_SYSSTBCR_SURTSD;
+	if (platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA))
+		r16 &= ~(HD64461_SYSSTBCR_SAFECKE_IST |
+		    HD64461_SYSSTBCR_SAFECKE_OST);
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
 
 	/* sanity check */
 	if (!com_probe_subr(&csc->sc_regs)) {
 		aprint_error(": device problem. don't attach.\n");
 
-		/* stop clock */
-		r16 |= HD64461_SYSSTBCR_SURTSD;
-		hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
+		/* restore old clock */
+		hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, or16);
 		return;
 	}
 
