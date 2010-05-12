@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.28 2010/05/11 22:26:00 haad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.29 2010/05/12 15:53:20 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.28 2010/05/11 22:26:00 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.29 2010/05/12 15:53:20 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.28 2010/05/11 22:26:00 haad Exp $
  * Fork a kernel thread.  Any process can request this to be done.
  *
  * With joinable kthreads KTHREAD_JOINABLE flag this should be known.
- * 1. If you specify KTHREAD_JOINABLE, you must call kthread_join() to reap the thread.
- *    It will not be automatically reaped by the system.
- * 2. For any given call to kthread_create(KTHREAD_JOINABLE), you may call kthread_join()
- *    only once on the returned lwp_t *.
+ * 1. If you specify KTHREAD_JOINABLE, you must call kthread_join() to reap
+ *    the thread. It will not be automatically reaped by the system.
+ * 2. For any given call to kthread_create(KTHREAD_JOINABLE), you may call
+ *    kthread_join() only once on the returned lwp_t *.
  */
 int
 kthread_create(pri_t pri, int flag, struct cpu_info *ci,
