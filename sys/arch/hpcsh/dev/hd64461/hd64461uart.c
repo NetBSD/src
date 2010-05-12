@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.24 2010/05/12 18:16:53 kiyohara Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.25 2010/05/12 18:22:36 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.24 2010/05/12 18:16:53 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.25 2010/05/12 18:22:36 kiyohara Exp $");
 
 #include "opt_kgdb.h"
 
@@ -124,20 +124,20 @@ hd64461uart_kgdb_init(void)
 {
 
 	if (strcmp(kgdb_devname, "hd64461uart") != 0)
-		return (1);
+		return 1;
 
 	if (hd64461uart_chip.console)
-		return (1);	/* can't share with console */
+		return 1;	/* can't share with console */
 
 	hd64461uart_init();
 
 	if (com_kgdb_attach(hd64461uart_chip.io_tag, 0x0, kgdb_rate,
 	    COM_FREQ, COM_TYPE_NORMAL, CONMODE) != 0) {
 		printf("%s: KGDB console open failed.\n", __func__);
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	return 0;
 }
 #endif /* KGDB */
 
@@ -146,7 +146,7 @@ hd64461uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
 
-	return (ha->ha_module_id == HD64461_MODULE_UART);
+	return ha->ha_module_id == HD64461_MODULE_UART;
 }
 
 STATIC void
