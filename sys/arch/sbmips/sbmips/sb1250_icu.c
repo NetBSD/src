@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9.36.11 2010/03/16 02:34:48 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.9.36.12 2010/05/12 19:11:33 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.11 2010/03/16 02:34:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.12 2010/05/12 19:11:33 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -207,9 +207,10 @@ sb1250_cpu_init(struct cpu_softc *cpu)
 	    MIPS_PHYS_TO_KSEG1(A_IMR_MAPPER(cpu->sb1cpu_ci->ci_cpuid));
 #ifdef MULTIPROCESSOR
 	cpu->sb1cpu_imr_all =
-	    ~(M_INT_MBOX_0|M_INT_MBOX_1|M_INT_MBOX_2|M_INT_MBOX_3);
+	    ~(M_INT_MBOX_0|M_INT_MBOX_1|M_INT_MBOX_2|M_INT_MBOX_3
+	      |M_INT_WATCHDOG_TIMER_0|M_INT_WATCHDOG_TIMER_1);
 #else
-	cpu->sb1cpu_imr_all = ~0ULL;
+	cpu->sb1cpu_imr_all = ~(M_INT_WATCHDOG_TIMER_0|M_INT_WATCHDOG_TIMER_1);
 #endif
 
 	for (u_int i = 0; i < K_INT_SOURCES; i++, evcnts++) {
@@ -217,6 +218,8 @@ sb1250_cpu_init(struct cpu_softc *cpu)
 		evcnt_attach_dynamic(evcnts, EVCNT_TYPE_INTR, NULL,
 		    xname, sb1250_intr_names[i]);
 	}
+	WRITE_REG(cpu->sb1cpu_imr_base + SB1250_I_MAP(K_INT_WATCHDOG_TIMER_0), K_INT_MAP_NMI);
+	WRITE_REG(cpu->sb1cpu_imr_base + SB1250_I_MAP(K_INT_WATCHDOG_TIMER_1), K_INT_MAP_NMI);
 
 	WRITE_REG(cpu->sb1cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->sb1cpu_imr_all);
 #ifdef MULTIPROCESSOR
