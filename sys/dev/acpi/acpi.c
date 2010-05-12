@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.194 2010/04/27 08:36:06 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.195 2010/05/12 16:11:05 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.194 2010/04/27 08:36:06 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.195 2010/05/12 16:11:05 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -984,19 +984,12 @@ static void
 acpi_rescan_capabilities(struct acpi_softc *sc)
 {
 	struct acpi_devnode *ad;
-	ACPI_DEVICE_INFO *di;
 	ACPI_HANDLE tmp;
 	ACPI_STATUS rv;
 
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
-		di = ad->ad_devinfo;
-
-		if (di->Type != ACPI_TYPE_DEVICE)
-			continue;
-
-		if ((di->Valid & ACPI_VALID_STA) != 0 &&
-		    (di->CurrentStatus & ACPI_STA_OK) != ACPI_STA_OK)
+		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
 			continue;
 
 		/*
