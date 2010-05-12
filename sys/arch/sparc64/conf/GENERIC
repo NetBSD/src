@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.126 2010/05/08 22:16:30 mrg Exp $
+# $NetBSD: GENERIC,v 1.127 2010/05/12 12:25:59 nakayama Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.126 $"
+#ident 		"GENERIC-$Revision: 1.127 $"
 
 maxusers	64
 
@@ -392,10 +392,7 @@ atapibus* at atapi?
 # 0x0fac means 'use PIO mode 4, DMA mode 2, disable UltraDMA'.
 # (0xc=1100, 0xa=1010, 0xf=1111)
 # 0x0000 means "use whatever the drive claims to support".
-
-## Disable UDMA 4 which causes data corruption on the Acer Labs
-## chipset on Sun Blade 100 and Netra X1 machines.
-wd*     at atabus? drive ? flags 0x0000
+wd*	at atabus? drive ? flags 0x0000
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
