@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.184 2010/05/12 03:43:46 rmind Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.185 2010/05/12 08:11:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.184 2010/05/12 03:43:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.185 2010/05/12 08:11:16 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -992,7 +992,8 @@ pool_get(struct pool *pp, int flags)
 	if (pp->pr_itemsperpage == 0)
 		panic("pool_get: pool '%s': pr_itemsperpage is zero, "
 		    "pool not initialized?", pp->pr_wchan);
-	if ((cpu_intr_p() || cpu_softintr_p()) && pp->pr_ipl == IPL_NONE)
+	if ((cpu_intr_p() || cpu_softintr_p()) && pp->pr_ipl == IPL_NONE &&
+	    !cold && panicstr == NULL)
 		panic("pool '%s' is IPL_NONE, but called from "
 		    "interrupt context\n", pp->pr_wchan);
 #endif
@@ -2529,7 +2530,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 	int s;
 
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()) ||
-	    (pc->pc_pool.pr_ipl != IPL_NONE || cold),
+	    (pc->pc_pool.pr_ipl != IPL_NONE || cold || panicstr != NULL),
 	    ("pool '%s' is IPL_NONE, but called from interrupt context\n",
 	    pc->pc_pool.pr_wchan));
 
