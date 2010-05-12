@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.22 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.23 2010/05/12 16:41:08 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.22 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.23 2010/05/12 16:41:08 kiyohara Exp $");
 
 #include "opt_kgdb.h"
 
@@ -188,7 +188,7 @@ hd64461uart_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(csc);
 
 	hd6446x_intr_establish(HD64461_INTC_UART, IST_LEVEL, IPL_TTY,
-	    comintr, self);
+	    comintr, csc);
 }
 
 STATIC void
