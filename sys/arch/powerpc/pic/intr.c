@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.8 2010/04/24 09:39:57 kiyohara Exp $ */
+/*	$NetBSD: intr.c,v 1.9 2010/05/12 06:11:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8 2010/04/24 09:39:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9 2010/05/12 06:11:31 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -682,7 +682,7 @@ splraise(int ncpl)
 	__asm volatile("sync; eieio");	/* don't reorder.... */
 
 	ocpl = ci->ci_cpl;
-	ci->ci_cpl = ncpl;
+	ci->ci_cpl = ocpl | ncpl;
 	__asm volatile("sync; eieio");	/* reorder protect */
 	return ocpl;
 }
