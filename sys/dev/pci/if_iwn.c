@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.44 2010/05/02 02:06:15 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.45 2010/05/12 12:26:16 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.88 2010/04/10 08:37:36 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.44 2010/05/02 02:06:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.45 2010/05/12 12:26:16 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -76,18 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.44 2010/05/02 02:06:15 christos Exp $")
 #include <dev/pci/if_iwnvar.h>
 
 static const pci_product_id_t iwn_devices[] = {
-/* XXX From old NetBSD iwn driver (used by pcidevs) */
-	PCI_PRODUCT_INTEL_PRO_WL_4965AGN_1,
-	PCI_PRODUCT_INTEL_PRO_WL_4965AGN_2,
-	PCI_PRODUCT_INTEL_PRO_WL_5100AGN_1,
-	PCI_PRODUCT_INTEL_PRO_WL_5100AGN_2,
-	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_1,
-	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_2,
-	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_1,
-	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_2,
-	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2,
-#if 0
-/* XXX From new OpenBSD iwn driver (not in pcidevs) */
 	PCI_PRODUCT_INTEL_WIFI_LINK_4965_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_4965_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_5100_1,
@@ -101,13 +89,13 @@ static const pci_product_id_t iwn_devices[] = {
 	PCI_PRODUCT_INTEL_WIFI_LINK_1000_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_1000_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_1,
+	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_1,
 	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2,
-#endif
 };
 
 /*
@@ -713,15 +701,12 @@ iwn_hal_attach(struct iwn_softc *sc, pci_product_id_t pid)
 		sc->limits = &iwn6000_sensitivity_limits;
 		sc->fwname = "iwlwifi-6000-4.ucode";
 		switch (pid) {
-/* XXX not yet defined for NetBSD (not in pcidevs) */
-#ifdef PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1
 		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1:
 		case PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2:
 			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
 			sc->txchainmask = IWN_ANT_BC;
 			sc->rxchainmask = IWN_ANT_BC;
 			break;
-#endif
 		default:
 			sc->txchainmask = IWN_ANT_ABC;
 			sc->rxchainmask = IWN_ANT_ABC;
