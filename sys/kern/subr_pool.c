@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.183 2010/04/25 11:49:04 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.184 2010/05/12 03:43:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.183 2010/04/25 11:49:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.184 2010/05/12 03:43:46 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -562,6 +562,11 @@ pool_reclaim_register(struct pool *pp)
 	callback_register(&vm_map_to_kernel(map)->vmk_reclaim_callback,
 	    &pp->pr_reclaimerentry, pp, pool_reclaim_callback);
 	splx(s);
+
+#ifdef DIAGNOSTIC
+	/* Diagnostic drain attempt. */
+	uvm_km_va_drain(map, 0);
+#endif
 }
 
 static void
@@ -984,19 +989,16 @@ pool_get(struct pool *pp, int flags)
 	void *v;
 
 #ifdef DIAGNOSTIC
-	if (__predict_false(pp->pr_itemsperpage == 0))
-		panic("pool_get: pool %p: pr_itemsperpage is zero, "
-		    "pool not initialized?", pp);
-	if (__predict_false(curlwp == NULL && doing_shutdown == 0 &&
-			    (flags & PR_WAITOK) != 0))
-		panic("pool_get: %s: must have NOWAIT", pp->pr_wchan);
-
-#endif /* DIAGNOSTIC */
-#ifdef LOCKDEBUG
+	if (pp->pr_itemsperpage == 0)
+		panic("pool_get: pool '%s': pr_itemsperpage is zero, "
+		    "pool not initialized?", pp->pr_wchan);
+	if ((cpu_intr_p() || cpu_softintr_p()) && pp->pr_ipl == IPL_NONE)
+		panic("pool '%s' is IPL_NONE, but called from "
+		    "interrupt context\n", pp->pr_wchan);
+#endif
 	if (flags & PR_WAITOK) {
 		ASSERT_SLEEPABLE();
 	}
-#endif
 
 	mutex_enter(&pp->pr_lock);
 	pr_enter(pp, file, line);
@@ -1604,6 +1606,8 @@ pool_sethardlimit(struct pool *pp, int n, const char *warnmess, int ratecap)
 
 /*
  * Release all complete pages that have not been used recently.
+ *
+ * Might be called from interrupt context.
  */
 int
 #ifdef POOL_DIAGNOSTIC
@@ -1617,6 +1621,10 @@ pool_reclaim(struct pool *pp)
 	uint32_t curtime;
 	bool klock;
 	int rv;
+
+	if (cpu_intr_p() || cpu_softintr_p()) {
+		KASSERT(pp->pr_ipl != IPL_NONE);
+	}
 
 	if (pp->pr_drain_hook != NULL) {
 		/*
@@ -2520,11 +2528,14 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 	void *object;
 	int s;
 
-#ifdef LOCKDEBUG
+	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()) ||
+	    (pc->pc_pool.pr_ipl != IPL_NONE || cold),
+	    ("pool '%s' is IPL_NONE, but called from interrupt context\n",
+	    pc->pc_pool.pr_wchan));
+
 	if (flags & PR_WAITOK) {
 		ASSERT_SLEEPABLE();
 	}
-#endif
 
 	/* Lock out interrupts and disable preemption. */
 	s = splvm();
