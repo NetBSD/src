@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.30 2010/03/20 23:31:30 chs Exp $	   */
+/*	$NetBSD: subr.S,v 1.31 2010/05/12 01:58:22 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -372,6 +372,7 @@ softint_common:
 	movl	%r0,PCB_FP(%r3)		/* and as the FP too */
 	movab	CA_ARGNO(%r0),PCB_AP(%r3) /* update the AP as well */
 	movab	softint_process,PCB_PC(%r3) /* and where we will start */
+	movl	$PSL_HIGHIPL,PCB_PSL(%r3) /* Needs to running at IPL_HIGH */
 
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* set PA of new pcb */
 	ldpctx				/* load it */
