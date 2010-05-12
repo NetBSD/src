@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.11 2010/04/27 05:34:14 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.12 2010/05/12 15:59:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.11 2010/04/27 05:34:14 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.12 2010/05/12 15:59:52 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -104,10 +104,7 @@ static const struct sysctlnode	*anode = NULL;
 static struct acpi_power_res	*acpi_power_res_init(ACPI_HANDLE);
 static struct acpi_power_res	*acpi_power_res_get(ACPI_HANDLE);
 
-#if 0
 static ACPI_STATUS	 acpi_power_get_direct(struct acpi_devnode *);
-#endif
-
 static ACPI_STATUS	 acpi_power_get_indirect(struct acpi_devnode *);
 static ACPI_STATUS	 acpi_power_switch(struct acpi_devnode *,
 						   int, bool);
@@ -267,7 +264,16 @@ acpi_power_get(struct acpi_devnode *ad, int *state)
 		goto fail;
 	}
 
+	/*
+	 * Because the _PSC control method, like _STA,
+	 * is known to be implemented incorrectly in
+	 * many systems, we first try to retrieve the
+	 * power state indirectly via power resources.
+	 */
 	rv = acpi_power_get_indirect(ad);
+
+	if (ACPI_FAILURE(rv))
+		rv = acpi_power_get_direct(ad);
 
 	if (ACPI_FAILURE(rv))
 		goto fail;
@@ -296,11 +302,6 @@ fail:
 	return false;
 }
 
-#if 0
-/*
- * Unfortunately, comparable to _STA, there are systems
- * where the convenient _PSC is implemented incorrectly.
- */
 static ACPI_STATUS
 acpi_power_get_direct(struct acpi_devnode *ad)
 {
@@ -315,7 +316,6 @@ acpi_power_get_direct(struct acpi_devnode *ad)
 
 	return rv;
 }
-#endif
 
 static ACPI_STATUS
 acpi_power_get_indirect(struct acpi_devnode *ad)
@@ -410,33 +410,33 @@ acpi_power_set(struct acpi_devnode *ad, int state)
 	}
 
 	/*
-	 * We first sweep through the resources required
-	 * for the target state, turning things on and
-	 * building references. After this we dereference
-	 * the resources required for the current state,
+	 * We first sweep through the resources required for the target
+	 * state, turning things on and building references. After this
+	 * we dereference the resources required for the current state,
 	 * turning the resources off as we go.
 	 */
 	rv = acpi_power_switch(ad, state, true);
 
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv) && rv != AE_CTRL_CONTINUE)
 		goto fail;
 
 	rv = acpi_power_switch(ad, ad->ad_state, false);
 
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv) && rv != AE_CTRL_CONTINUE)
 		goto fail;
 
-	ad->ad_state = state;
-
 	/*
-	 * Last but not least, invoke the power
-	 * state switch method, if available.
+	 * Last but not least, invoke the power state switch method,
+	 * if available. Because some systems use only _PSx for the
+	 * power state transitions, we do this even if there is no _PRx.
 	 */
 	(void)snprintf(path, sizeof(path), "_PS%d", state);
 	(void)AcpiEvaluateObject(ad->ad_handle, path, NULL, NULL);
 
 	aprint_debug_dev(ad->ad_root, "%s turned from "
 	    "D%d to D%d\n", ad->ad_name, old, state);
+
+	ad->ad_state = state;
 
 	return true;
 
@@ -472,12 +472,15 @@ acpi_power_switch(struct acpi_devnode *ad, int state, bool on)
 	pkg = acpi_power_pkg_get(ad->ad_handle, state);
 
 	if (pkg == NULL)
-		return AE_NOT_EXIST;
+		return AE_CTRL_CONTINUE;
 
 	if (on != false)
 		rv = acpi_foreach_package_object(pkg, acpi_power_res_on, ad);
 	else
 		rv = acpi_foreach_package_object(pkg, acpi_power_res_off, ad);
+
+	if (rv == AE_CTRL_CONTINUE)
+		rv = AE_ERROR;
 
 	ACPI_FREE(pkg);
 
