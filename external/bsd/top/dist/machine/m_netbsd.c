@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.11 2009/10/21 21:11:57 rmind Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.12 2010/05/12 22:09:36 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.11 2009/10/21 21:11:57 rmind Exp $
+ * $Id: m_netbsd.c,v 1.12 2010/05/12 22:09:36 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.11 2009/10/21 21:11:57 rmind Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.12 2010/05/12 22:09:36 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -70,14 +70,15 @@ __RCSID("$NetBSD: m_netbsd.c,v 1.11 2009/10/21 21:11:57 rmind Exp $");
 #include "loadavg.h"
 #include "username.h"
 
-static void percentages64 __P((int, int *, u_int64_t *, u_int64_t *,
-    u_int64_t *));
-static int get_cpunum __P((u_int64_t));
+static void percentages64(int, int *, u_int64_t *, u_int64_t *,
+    u_int64_t *);
+static int get_cpunum(u_int64_t);
 
 
 /* get_process_info passes back a handle.  This is what it looks like: */
 
 struct handle {
+	struct process_select *sel;
 	struct kinfo_proc2 **next_proc;	/* points to next valid proc pointer */
 	int remaining;		/* number of pointers remaining */
 };
@@ -188,17 +189,17 @@ const char *ordernames[] = {
 };
 
 /* forward definitions for comparison functions */
-static int compare_cpu __P((struct proc **, struct proc **));
-static int compare_prio __P((struct proc **, struct proc **));
-static int compare_res __P((struct proc **, struct proc **));
-static int compare_size __P((struct proc **, struct proc **));
-static int compare_state __P((struct proc **, struct proc **));
-static int compare_time __P((struct proc **, struct proc **));
-static int compare_pid __P((struct proc **, struct proc **));
-static int compare_command __P((struct proc **, struct proc **));
-static int compare_username __P((struct proc **, struct proc **));
+static int compare_cpu(struct proc **, struct proc **);
+static int compare_prio(struct proc **, struct proc **);
+static int compare_res(struct proc **, struct proc **);
+static int compare_size(struct proc **, struct proc **);
+static int compare_state(struct proc **, struct proc **);
+static int compare_time(struct proc **, struct proc **);
+static int compare_pid(struct proc **, struct proc **);
+static int compare_command(struct proc **, struct proc **);
+static int compare_username(struct proc **, struct proc **);
 
-int (*proc_compares[]) __P((struct proc **, struct proc **)) = {
+int (*proc_compares[])(struct proc **, struct proc **) = {
 	compare_cpu,
 	compare_prio,
 	compare_res,
@@ -247,6 +248,57 @@ int threadmode;
 /* define pagetok in terms of pageshift */
 
 #define pagetok(size) ((size) << pageshift)
+
+/*
+ * Print swapped processes as <pname> and
+ * system processes as [pname]
+ */
+static const char *
+get_pretty(const struct kinfo_proc2 *pp)
+{
+	if ((pp->p_flag & P_SYSTEM) != 0)
+		return "[]";
+	if ((pp->p_flag & P_INMEM) == 0)
+		return "<>";
+	return "";
+}
+
+static const char *
+get_command(const struct process_select *sel, struct kinfo_proc2 *pp)
+{
+	static char cmdbuf[128];
+	const char *pretty;
+	char **argv;
+	if (pp == NULL)
+		return "<gone>";
+	pretty = get_pretty(pp);
+
+	if (sel->fullcmd == 0 || kd == NULL || (argv = kvm_getargv2(kd, pp,
+	    sizeof(cmdbuf))) == NULL) {
+		if (pretty[0] != '\0' && pp->p_comm[0] != pretty[0])
+			snprintf(cmdbuf, sizeof(cmdbuf), "%c%s%c", pretty[0],
+			    printable(pp->p_comm), pretty[1]);
+		else
+			strlcpy(cmdbuf, printable(pp->p_comm), sizeof(cmdbuf));
+	} else {
+		char *d = cmdbuf;
+		if (pretty[0] != '\0' && argv[0][0] != pretty[0]) 
+			*d++ = pretty[0];
+		while (*argv) {
+			const char *s = printable(*argv++);
+			while (d < cmdbuf + sizeof(cmdbuf) - 2 &&
+			    (*d++ = *s++) != '\0')
+				continue;
+			if (d > cmdbuf && d < cmdbuf + sizeof(cmdbuf) - 2 &&
+			    d[-1] == '\0')
+				d[-1] = ' ';
+		}
+		if (pretty[0] != '\0' && pretty[0] == cmdbuf[0])
+			*d++ = pretty[1];
+		*d++ = '\0';
+	}
+	return cmdbuf;
+}
 
 static int
 get_cpunum(id)
@@ -364,6 +416,7 @@ machine_init(statics)
 	statics->swap_names = swapnames;
 	statics->order_names = ordernames;
 	statics->flags.threads = 1;
+	statics->flags.fullcmds = 1;
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_BOOTTIME;
@@ -637,6 +690,7 @@ get_proc_info(struct system_info *si, struct process_select *sel,
 	/* pass back a handle */
 	handle.next_proc = pref;
 	handle.remaining = active_procs;
+	handle.sel = sel;
 	return((caddr_t)&handle);
 }
 
@@ -750,6 +804,7 @@ get_lwp_info(struct system_info *si, struct process_select *sel,
 	/* pass back a handle */
 	handle.next_proc = (struct kinfo_proc2 **)lref;
 	handle.remaining = active_lwps;
+	handle.sel = sel;
 
 	return((caddr_t)&handle);
 }
@@ -778,7 +833,6 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 #endif
 	char wmesg[KI_WMESGLEN + 1];
 	static char fmt[MAX_COLS];		/* static area where result is built */
-	const char *pretty = "";
 
 	/* find and remember the next proc structure */
 	hp = (struct handle *)handle;
@@ -786,24 +840,6 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 	hp->remaining--;
 
 	/* get the process's user struct and set cputime */
-	if ((pp->p_flag & P_SYSTEM) != 0)
-		pretty = "[]";
-
-	if (pretty[0] != '\0') {
-		/*
-		 * Print swapped processes as <pname> and
-		 * system processes as [pname]
-		 */
-		char *comm = pp->p_comm;
-#define COMSIZ sizeof(pp->p_comm)
-		char buf[COMSIZ];
-		(void) strncpy(buf, comm, COMSIZ);
-		comm[0] = pretty[0];
-		(void) strncpy(&comm[1], buf, COMSIZ - 2);
-		comm[COMSIZ - 2] = '\0';
-		(void) strncat(comm, &pretty[1], COMSIZ - 1);
-		comm[COMSIZ - 1] = '\0';
-	}
 
 #if 0
 	/* This does not produce the correct results */
@@ -852,7 +888,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 	    format_time(cputime),
 	    (wcpu >= 100.0) ? 0 : 2, wcpu,
 	    (cpu >= 100.0) ? 0 : 2, cpu,
-	    printable(pp->p_comm));
+	    get_command(hp->sel, pp));
 
 	/* return the result */
 	return(fmt);
@@ -867,14 +903,11 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 	double pct;
 	struct handle *hp;
 	const char *statep;
-	static char gone[] = "<gone>";
 #ifdef KI_NOCPU
 	char state[10];
 #endif
 	char wmesg[KI_WMESGLEN + 1];
 	static char fmt[MAX_COLS];		/* static area where result is built */
-	const char *pretty = "";
-	char *comm;
 	int uid;
 
 	/* find and remember the next proc structure */
@@ -884,30 +917,7 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 	pp = proc_from_thread(pl);
 
 	/* get the process's user struct and set cputime */
-	if (pp) {
-		comm = pp->p_comm;
-		if ((pp->p_flag & P_SYSTEM) != 0)
-			pretty = "[]";
-
-		if (pretty[0] != '\0' && comm[0] != pretty[0]) {
-			/*
-			 * Print swapped processes as <pname> and
-			 * system processes as [pname]
-			 */
-#define COMSIZ sizeof(pp->p_comm)
-			char buf[COMSIZ];
-			(void) strncpy(buf, comm, COMSIZ);
-			comm[0] = pretty[0];
-			(void) strncpy(&comm[1], buf, COMSIZ - 2);
-			comm[COMSIZ - 2] = '\0';
-			(void) strncat(comm, &pretty[1], COMSIZ - 1);
-			comm[COMSIZ - 1] = '\0';
-		}
-		uid = pp->p_ruid;
-	} else {
-		comm = gone;
-		uid = 0;
-	}
+	uid = pp ? pp->p_ruid : 0;
 
 	cputime = pl->l_rtime_sec;
 
@@ -952,7 +962,7 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 	    format_time(cputime),
 	    100.0 * weighted_cpu(l_, pct, pl),
 	    100.0 * pct,
-	    printable(comm),
+	    get_command(hp->sel, pp),
 	    printable(pl->l_name));
 
 	/* return the result */
