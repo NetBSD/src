@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.26 2010/04/28 00:32:30 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.27 2010/05/12 16:48:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26 2010/04/28 00:32:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2010/05/12 16:48:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -128,7 +128,7 @@ doclock(void *noarg)
 		if (!CPU_IS_PRIMARY(curcpu()))
 			continue;
 #else
-		if (curcpu()->ci_index == 0)
+		if (curcpu()->ci_index != 0)
 			continue;
 #endif
 
