@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.20 2009/08/03 23:29:19 rmind Exp $
+.\"     $NetBSD: kthread.9,v 1.21 2010/05/12 15:54:47 haad Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,6 +34,7 @@
 .Nm kthread_create ,
 .Nm kthread_destroy ,
 .Nm kthread_exit
+.Nm kthread_join
 .Nd kernel threads
 .Sh SYNOPSIS
 .In sys/kthread.h
@@ -108,6 +109,8 @@ the thread will be created bound to the CPU specified by
 .Fa ci ,
 meaning that it will only ever execute on that CPU.
 By default, the threads are free to execute on any CPU in the system.
+.Dv KTHREAD_JOINABLE
+Request creation of joinable kthread.
 .It Fa func
 A function to be called when the thread begins executing.
 This function must not return.
@@ -139,6 +142,8 @@ The kthread must be in the
 .It Fn kthread_exit "ecode"
 Exit from a kernel thread.
 Must only be called by a kernel thread.
+.It Fn kthread_join "l"
+Suspend execution of running LWP untils the target kthread terminates.
 .El
 .Sh RETURN VALUES
 Upon successful completion,
