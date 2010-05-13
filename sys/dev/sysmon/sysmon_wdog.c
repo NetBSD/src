@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.24 2007/12/16 21:07:45 dyoung Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.24.28.1 2010/05/13 15:23:56 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.24 2007/12/16 21:07:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.24.28.1 2010/05/13 15:23:56 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -78,6 +78,7 @@ sysmon_wdog_init(void)
 	mutex_init(&sysmon_wdog_list_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sysmon_wdog_mtx, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 	cv_init(&sysmon_wdog_cv, "wdogref");
+	callout_init(&sysmon_wdog_callout, 0);
 }
 
 /*
@@ -96,7 +97,6 @@ sysmonopen_wdog(dev_t dev, int flag, int mode, struct lwp *l)
 		if (sysmon_wdog_sdhook == NULL)
 			printf("WARNING: unable to register watchdog "
 			    "shutdown hook\n");
-		callout_init(&sysmon_wdog_callout, 0);
 	}
 	mutex_exit(&sysmon_wdog_list_mtx);
 
