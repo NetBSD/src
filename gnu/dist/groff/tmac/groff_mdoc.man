@@ -562,8 +562,8 @@ The body of a man page is easily constructed from a basic template:
 .Bd -literal -offset indent
 \&.\e" The following commands are required for all man pages.
 \&.Dd Month day, year
-\&.Os [OPERATING_SYSTEM] [version/release]
 \&.Dt DOCUMENT_TITLE [section number] [architecture/volume]
+\&.Os [OPERATING_SYSTEM] [version/release]
 \&.Sh NAME
 \&.Nm name
 \&.Nd one line description of name
@@ -599,13 +599,14 @@ The body of a man page is easily constructed from a basic template:
 .
 The first items in the template are the commands
 .Ql .Dd ,
-.Ql .Os ,
+.Ql .Dt ,
 and
-.Ql .Dt ;
-the document date, the operating system the man page or subject source is
-developed or modified for, and the man page title (in
+.Ql .Os ;
+the document date, the man page title (in
 .Em upper case )
-along with the section of the manual the page belongs in.
+along with the section of the manual the page belongs in, and
+the operating system the man page or subject source is
+developed or modified for.
 These commands identify the page and are discussed below in
 .Sx TITLE MACROS .
 .Pp
