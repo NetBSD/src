@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1444 2010/05/13 13:08:08 jruoho Exp $
+#	$NetBSD: mi,v 1.1445 2010/05/13 17:48:50 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8144,6 +8144,8 @@
 ./usr/share/man/cat3/syslog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/syslog_r.0			comp-c-catman		.cat
 ./usr/share/man/cat3/syslog_ss.0		comp-obsolete		obsolete
+./usr/share/man/cat3/syslogp.0			comp-c-catman		.cat
+./usr/share/man/cat3/syslogp_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/system.0			comp-c-catman		.cat
 ./usr/share/man/cat3/t_freent.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/t_getent.0			comp-obsolete		obsolete
@@ -8314,6 +8316,8 @@
 ./usr/share/man/cat3/vsyslog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsyslog_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vsyslog_ss.0		comp-obsolete		obsolete
+./usr/share/man/cat3/vsyslogp.0			comp-c-catman		.cat
+./usr/share/man/cat3/vsyslogp_r.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vtimes.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/vwarn.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vwarnx.0			comp-c-catman		.cat
@@ -13906,6 +13910,8 @@
 ./usr/share/man/html3/sysexits.html		comp-c-htmlman		html
 ./usr/share/man/html3/syslog.html		comp-c-htmlman		html
 ./usr/share/man/html3/syslog_r.html		comp-c-htmlman		html
+./usr/share/man/html3/syslogp.html		comp-c-htmlman		html
+./usr/share/man/html3/syslogp_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/system.html		comp-c-htmlman		html
 ./usr/share/man/html3/t_freent.html		comp-obsolete		obsolete
 ./usr/share/man/html3/t_getent.html		comp-obsolete		obsolete
@@ -14060,6 +14066,8 @@
 ./usr/share/man/html3/vswscanf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsyslog.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsyslog_r.html		comp-c-htmlman		html
+./usr/share/man/html3/vsyslogp.html		comp-c-htmlman		html
+./usr/share/man/html3/vsyslogp_r.html		comp-c-htmlman		html
 ./usr/share/man/html3/vwarn.html		comp-c-htmlman		html
 ./usr/share/man/html3/vwarnx.html		comp-c-htmlman		html
 ./usr/share/man/html3/vwprintf.html		comp-c-htmlman		html
@@ -19712,6 +19720,8 @@
 ./usr/share/man/man3/syslog.3			comp-c-man		.man
 ./usr/share/man/man3/syslog_r.3			comp-c-man		.man
 ./usr/share/man/man3/syslog_ss.3		comp-obsolete		obsolete
+./usr/share/man/man3/syslogp.3			comp-c-man		.man
+./usr/share/man/man3/syslogp_r.3		comp-c-man		.man
 ./usr/share/man/man3/system.3			comp-c-man		.man
 ./usr/share/man/man3/t_freent.3			comp-obsolete		obsolete
 ./usr/share/man/man3/t_getent.3			comp-obsolete		obsolete
@@ -19882,6 +19892,8 @@
 ./usr/share/man/man3/vsyslog.3			comp-c-man		.man
 ./usr/share/man/man3/vsyslog_r.3		comp-c-man		.man
 ./usr/share/man/man3/vsyslog_ss.3		comp-obsolete		obsolete
+./usr/share/man/man3/vsyslogp.3			comp-c-man		.man
+./usr/share/man/man3/vsyslogp_r.3		comp-c-man		.man
 ./usr/share/man/man3/vtimes.3			comp-obsolete		obsolete
 ./usr/share/man/man3/vwarn.3			comp-c-man		.man
 ./usr/share/man/man3/vwarnx.3			comp-c-man		.man
