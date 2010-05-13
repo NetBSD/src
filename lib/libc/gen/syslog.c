@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.47 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.48 2010/05/13 22:40:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.47 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.48 2010/05/13 22:40:14 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -224,6 +224,8 @@ void
 vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	const char *sdfmt, const char *msgfmt, va_list ap)
 {
+	static const char BRCOSP[] = "]: ";
+	static const char CRLF[] = "\r\n";
 	size_t cnt, prlen, tries;
 	char ch, *p, *t;
 	struct timeval tv;
@@ -233,12 +235,12 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 #define TBUF_LEN	2048
 #define FMT_LEN		1024
 #define MAXTRIES	10
-	char *stdp = NULL;	/* pacify gcc */
 	char tbuf[TBUF_LEN], fmt_cpy[FMT_LEN], fmt_cat[FMT_LEN] = "";
-	size_t tbuf_left, fmt_left;
+	size_t tbuf_left, fmt_left, msgsdlen;
 	char *fmt = fmt_cat;
 	int signal_safe = pri & LOG_SIGNAL_SAFE;
-	int opened;
+	struct iovec iov[7];	/* prog + [ + pid + ]: + fmt + crlf */
+	int opened, iovcnt;
 
 	pri &= ~LOG_SIGNAL_SAFE;
 
@@ -306,19 +308,40 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	prlen = snprintf_ss(p, tbuf_left, " %s ", hostname);
 	DEC();
 
-	if (data->log_stat & LOG_PERROR)
-		stdp = p;
 	if (data->log_tag == NULL)
 		data->log_tag = getprogname();
 
 	prlen = snprintf_ss(p, tbuf_left, "%s ",
 	    data->log_tag ? data->log_tag : "-");
+	if (data->log_stat & (LOG_PERROR|LOG_CONS)) {
+		iovcnt = 0;
+		iov[iovcnt].iov_base = p;
+		iov[iovcnt].iov_len = prlen - 1;
+		iovcnt++;
+	}
 	DEC();
 
-	if (data->log_stat & LOG_PID)
+	if (data->log_stat & LOG_PID) {
 		prlen = snprintf_ss(p, tbuf_left, "%d ", getpid());
-	else
+		if (data->log_stat & (LOG_PERROR|LOG_CONS)) {
+			iov[iovcnt].iov_base = __UNCONST("[");
+			iov[iovcnt].iov_len = 1;
+			iovcnt++;
+			iov[iovcnt].iov_base = p;
+			iov[iovcnt].iov_len = prlen - 1;
+			iovcnt++;
+			iov[iovcnt].iov_base = __UNCONST(BRCOSP);
+			iov[iovcnt].iov_len = 3;
+			iovcnt++;
+		}
+	} else {
 		prlen = snprintf_ss(p, tbuf_left, "- ");
+		if (data->log_stat & (LOG_PERROR|LOG_CONS)) {
+			iov[iovcnt].iov_base = __UNCONST(BRCOSP + 1);
+			iov[iovcnt].iov_len = 2;
+			iovcnt++;
+		}
+	}
 	DEC();
 
 	/*
@@ -334,6 +357,11 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 		strlcat(fmt_cat, sdfmt, FMT_LEN);
 	} else
 		strlcat(fmt_cat, "-", FMT_LEN);
+
+	if (data->log_stat & (LOG_PERROR|LOG_CONS))
+		msgsdlen = strlen(fmt_cat) + 1;
+	else
+		msgsdlen = 0;	/* XXX: GCC */
 
 	if (msgfmt != NULL && *msgfmt != '\0') {
 		strlcat(fmt_cat, " ", FMT_LEN);
@@ -376,18 +404,21 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 		prlen = vsnprintf_ss(p, tbuf_left, fmt_cpy, ap);
 	else
 		prlen = vsnprintf(p, tbuf_left, fmt_cpy, ap);
+
+	if (data->log_stat & (LOG_PERROR|LOG_CONS)) {
+		iov[iovcnt].iov_base = p + msgsdlen;
+		iov[iovcnt].iov_len = prlen - msgsdlen;
+		iovcnt++;
+	}
+
 	DEC();
 	cnt = p - tbuf;
 
 	/* Output to stderr if requested. */
 	if (data->log_stat & LOG_PERROR) {
-		struct iovec iov[2];
-
-		iov[0].iov_base = stdp;
-		iov[0].iov_len = cnt - (stdp - tbuf);
-		iov[1].iov_base = __UNCONST("\n");
-		iov[1].iov_len = 1;
-		(void)writev(STDERR_FILENO, iov, 2);
+		iov[iovcnt].iov_base = __UNCONST(CRLF + 1);
+		iov[iovcnt].iov_len = 1;
+		(void)writev(STDERR_FILENO, iov, iovcnt + 1);
 	}
 
 	/* Get connected, output the message to the local logger. */
@@ -422,14 +453,10 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	 * Make sure the error reported is the one from the syslogd failure.
 	 */
 	if (tries == MAXTRIES && (data->log_stat & LOG_CONS) &&
-	    (fd = open(_PATH_CONSOLE, O_WRONLY|O_NONBLOCK, 0)) >= 0 &&
-	    (p = strchr(tbuf, '>')) != NULL) {
-		struct iovec iov[2];
-		iov[0].iov_base = ++p;
-		iov[0].iov_len = cnt - (p - tbuf);
-		iov[1].iov_base = __UNCONST("\r\n");
-		iov[1].iov_len = 2;
-		(void)writev(fd, iov, 2);
+	    (fd = open(_PATH_CONSOLE, O_WRONLY|O_NONBLOCK, 0)) >= 0) {
+		iov[iovcnt].iov_base = __UNCONST(CRLF);
+		iov[iovcnt].iov_len = 2;
+		(void)writev(fd, iov, iovcnt + 1);
 		(void)close(fd);
 	}
 
