@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.115.2.4.4.1 2010/04/27 23:09:07 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.115.2.4.4.2 2010/05/13 05:36:49 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.115.2.4.4.1 2010/04/27 23:09:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.115.2.4.4.2 2010/05/13 05:36:49 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -249,6 +249,7 @@ route_output(struct mbuf *m, ...)
 	rtm->rtm_pid = curproc->p_pid;
 	memset(&info, 0, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
+	KASSERT(sizeof(*rtm) == RT_ROUNDUP(sizeof(*rtm)));
 	if (rt_xaddrs(rtm->rtm_type, (const char *)(rtm + 1), len + (char *)rtm,
 	    &info))
 		senderr(EINVAL);
@@ -583,6 +584,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 	default:
 		len = sizeof(struct rt_msghdr);
 	}
+	len = RT_ROUNDUP(len);
 	if (len > MHLEN + MLEN)
 		panic("rt_msg1: message too long");
 	else if (len > MHLEN) {
@@ -611,6 +613,7 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 		m_copyback(m, len, dlen, sa);
 		len += dlen;
 	}
+	KASSERT(len == RT_ROUNDUP(len));
 	if (m->m_pkthdr.len != len) {
 		m_freem(m);
 		return NULL;
@@ -663,6 +666,7 @@ again:
 	default:
 		len = sizeof(struct rt_msghdr);
 	}
+	len = RT_ROUNDUP(len);
 	if ((cp0 = cp) != NULL)
 		cp += len;
 	for (i = 0; i < RTAX_MAX; i++) {
@@ -702,7 +706,7 @@ again:
 			}
 		}
 	}
-	len = ALIGN(len);
+	KASSERT(len == RT_ROUNDUP(len));
 	if (cp) {
 		struct rt_msghdr *rtm = (struct rt_msghdr *)cp0;
 
