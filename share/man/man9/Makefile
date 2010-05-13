@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.330 2010/04/29 15:57:19 jruoho Exp $
+#       $NetBSD: Makefile,v 1.331 2010/05/13 13:08:08 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -379,7 +379,8 @@ MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 kprintf.9 sprintf.9 \
 	kprintf.9 aprint_error_ifnet.9 kprintf.9 aprint_get_error_count.9
 MLINKS+=kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create.9 \
-	kthread.9 kthread_destroy.9
+	kthread.9 kthread_destroy.9 \
+	kthread.9 kthread_join.9
 MLINKS+=linedisc.9 ttyldisc_add.9 \
 	linedisc.9 ttyldisc_lookup.9 \
 	linedisc.9 ttyldisc_remove.9

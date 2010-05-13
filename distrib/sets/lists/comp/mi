@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1443 2010/05/09 05:44:43 lukem Exp $
+#	$NetBSD: mi,v 1.1444 2010/05/13 13:08:08 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9181,6 +9181,7 @@
 ./usr/share/man/cat9/kthread_create1.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/kthread_destroy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kthread_exit.0		comp-sys-catman		.cat
+./usr/share/man/cat9/kthread_join.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/le16dec.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/le16enc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/le16toh.0			comp-sys-catman		.cat
@@ -14883,6 +14884,7 @@
 ./usr/share/man/html9/kthread_create.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_destroy.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kthread_exit.html		comp-sys-htmlman	html
+./usr/share/man/html9/kthread_join.html		comp-sys-htmlman	html
 ./usr/share/man/html9/le16dec.html		comp-sys-htmlman	html
 ./usr/share/man/html9/le16enc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/le16toh.html		comp-sys-htmlman	html
@@ -20746,6 +20748,7 @@
 ./usr/share/man/man9/kthread_create1.9		comp-obsolete		obsolete
 ./usr/share/man/man9/kthread_destroy.9		comp-sys-man		.man
 ./usr/share/man/man9/kthread_exit.9		comp-sys-man		.man
+./usr/share/man/man9/kthread_join.9		comp-sys-man		.man
 ./usr/share/man/man9/le16dec.9			comp-sys-man		.man
 ./usr/share/man/man9/le16enc.9			comp-sys-man		.man
 ./usr/share/man/man9/le16toh.9			comp-sys-man		.man
