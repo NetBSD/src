@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.25 2010/05/12 18:22:36 kiyohara Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.26 2010/05/13 18:07:40 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.25 2010/05/12 18:22:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.26 2010/05/13 18:07:40 kiyohara Exp $");
 
 #include "opt_kgdb.h"
 
@@ -116,6 +116,9 @@ hd64461uartcninit(struct consdev *cp)
 	    COM_TYPE_NORMAL, CONMODE);
 
 	hd64461uart_chip.console = 1;
+	/* Don't stop to suply AFECK */
+	if (platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA))
+		use_afeck = 1;
 }
 
 #ifdef KGDB
@@ -137,6 +140,8 @@ hd64461uart_kgdb_init(void)
 		return 1;
 	}
 
+	if (platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA))
+		use_afeck = 1;
 	return 0;
 }
 #endif /* KGDB */
