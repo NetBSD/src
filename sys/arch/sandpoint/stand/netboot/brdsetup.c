@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.12 2010/05/12 18:33:09 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.13 2010/05/13 10:40:02 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ void
 delay(u_int n)
 {
 	u_quad_t tb;
-	u_long tbh, tbl, scratch;
+	u_long scratch, tbh, tbl;
 
 	tb = mftb();
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
@@ -308,7 +308,7 @@ _wbinv(uint32_t adr, uint32_t siz)
 void
 _inv(uint32_t adr, uint32_t siz)
 {
-	uint32_t off, bnd;
+	uint32_t bnd, off;
 
 	off = adr & (dcache_line_size - 1);
 	adr -= off;
@@ -342,7 +342,7 @@ _inv(uint32_t adr, uint32_t siz)
 unsigned
 mpc107memsize()
 {
-	unsigned tag, val, n, bankn, end;
+	unsigned bankn, end, n, tag, val;
 
 	tag = pcimaketag(0, 0, 0);
 
@@ -411,7 +411,7 @@ mpc107memsize()
 void
 setup_82C686B()
 {
-	unsigned pcib, ide, usb12, usb34, ac97, pmgt, val;
+	unsigned ac97, ide, pcib, pmgt, usb12, usb34, val;
 
 	pcib  = pcimaketag(0, 22, 0);
 	ide   = pcimaketag(0, 22, 1);
@@ -468,7 +468,7 @@ void
 setup_83C553F()
 {
 #if 0
-	unsigned pcib, ide, val;
+	unsigned ide, pcib, val;
 
 	pcib = pcimaketag(0, 11, 0);
 	ide  = pcimaketag(0, 11, 1);
@@ -478,7 +478,7 @@ setup_83C553F()
 void
 pcifixup(void)
 {
-	unsigned pcib, ide, nic, val, steer, irq;
+	unsigned ide, irq, nic, pcib, steer, usb, val;
 	int line;
 
 	switch (brdtype) {
@@ -677,6 +677,33 @@ pcifixup(void)
 		val = pcicfgread(nic, 0x3c) & 0xffff0000;
 		val |= (('A' - '@') << 8) | 25;
 		pcicfgwrite(nic, 0x3c, val);
+		break;
+
+	case BRD_KUROBOX:
+		nic  = pcimaketag(0, 11, 0);
+		val = pcicfgread(nic, 0x3c) & 0xffff0000;
+		val |= (('A' - '@') << 8) | 11;
+		pcicfgwrite(nic, 0x3c, val);
+
+		ide  = pcimaketag(0, 12, 0);
+		val = pcicfgread(ide, 0x3c) & 0xffff0000;
+		val |= (('A' - '@') << 8) | 12;
+		pcicfgwrite(ide, 0x3c, val);
+
+		usb  = pcimaketag(0, 14, 0);
+		val = pcicfgread(usb, 0x3c) & 0xffff0000;
+		val |= (('A' - '@') << 8) | 14;
+		pcicfgwrite(usb, 0x3c, val);
+
+		usb  = pcimaketag(0, 14, 1);
+		val = pcicfgread(usb, 0x3c) & 0xffff0000;
+		val |= (('B' - '@') << 8) | 14;
+		pcicfgwrite(usb, 0x3c, val);
+
+		usb  = pcimaketag(0, 14, 2);
+		val = pcicfgread(usb, 0x3c) & 0xffff0000;
+		val |= (('C' - '@') << 8) | 14;
+		pcicfgwrite(usb, 0x3c, val);
 		break;
 	}
 }
