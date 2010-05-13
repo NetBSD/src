@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.140.8.1 2010/05/11 21:00:13 matt Exp $	*/
+/*	$NetBSD: if.h,v 1.140.8.2 2010/05/13 05:51:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -514,6 +514,7 @@ struct ifa_msghdr {
 	int	ifam_flags;	/* value of ifa_flags */
 	u_short	ifam_index;	/* index for associated ifp */
 	int	ifam_metric;	/* value of ifa_metric */
+	int	ifam_spare;	/* pad to multiple of 64 bits */
 };
 
 /*
