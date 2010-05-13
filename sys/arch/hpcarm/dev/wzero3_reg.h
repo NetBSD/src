@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_reg.h,v 1.2 2010/05/09 10:39:59 nonaka Exp $	*/
+/*	$NetBSD: wzero3_reg.h,v 1.3 2010/05/13 21:01:59 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -35,16 +35,23 @@
  * WS003SH/WS004SH specific parameter
  */
 #define	GPIO_WS003SH_SD_DETECT		9	/* In */
+#define	GPIO_WS003SH_TOUCH_PANEL	11	/* In */
 #define	GPIO_WS003SH_SLIDE		12	/* In */
 #define	GPIO_WS003SH_FULLKEY_LED	17	/* Out: H:ON, L:OFF */
 #define	GPIO_WS003SH_ANTENNA_LED	37	/* Out: H:ON, L:OFF */
+#define	GPIO_WS003SH_MAX1233_CS		48	/* Out */
 #define	GPIO_WS003SH_RESET		89	/* Out */
 #define	GPIO_WS003SH_POWER_BUTTON	95	/* In */
 #define	GPIO_WS003SH_VIB		97	/* Out */
 #define	GPIO_WS003SH_USB_CLIENT_DETECT	103	/* In */
 #define	GPIO_WS003SH_SD_POWER		107	/* Out: H:ON, L:OFF */
-#define	GPIO_WS003SH_LCD_POWER		114	/* Out: H:ON, L:OFF XXX */
+#define	GPIO_WS003SH_CHARGE		114	/* Out: H:ON, L:OFF */
 #define	GPIO_WS003SH_AC_DETECT		115	/* In */
+
+/* WS003SH: GPIO OUT pin
+ * CLR: 10,16,18,19,20,21,23,33,40,56,87,90,91,104,119,120
+ * SET: 39,54,57
+ */
 
 /*
  * WS007SH specific parameter
@@ -52,7 +59,7 @@
 #define	GPIO_WS007SH_RESET_BUTTON	1	/* In: L: press, H: release */
 #define	GPIO_WS007SH_POWER_BUTTON	9	/* In */
 #define	GPIO_WS007SH_TOUCH_PANEL	21	/* In */
-#define	GPIO_WS007SH_ADS7846_CS		33	/* Out: SSP SFRM */
+#define	GPIO_WS007SH_ADS7846_CS		33	/* Out */
 #define	GPIO_WS007SH_USB_CLIENT_DETECT	35	/* In */
 #define	GPIO_WS007SH_USB_HOST_POWER	37	/* Out */
 #define	GPIO_WS007SH_USB_HOST_DETECT	41	/* In */
@@ -86,12 +93,14 @@ port	I/O(Active)	name 	desc
  */
 #define	GPIO_WS011SH_RESET_BUTTON	1	/* In */
 #define	GPIO_WS011SH_POWER_BUTTON	9	/* In */
+#define	GPIO_WS011SH_TENKEY		14	/* In */
 #define	GPIO_WS011SH_TOUCH_PANEL	21	/* In */
 #define	GPIO_WS011SH_USB_HOST_POWER	37	/* Out */
 #define	GPIO_WS011SH_USB_HOST_DETECT	41	/* In */
 #define	GPIO_WS011SH_SD_DETECT		48	/* In */
 #define	GPIO_WS011SH_SLIDE		51	/* In */
 #define	GPIO_WS011SH_KEY_LOCK		52	/* In */
+#define	GPIO_WS011SH_HSYNC		75	/* In */
 #define	GPIO_WS011SH_SD_POWER		107	/* Out */
 #define	GPIO_WS011SH_USB_CLIENT_DETECT	116	/* In */
 
