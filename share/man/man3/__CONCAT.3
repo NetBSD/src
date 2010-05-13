@@ -1,4 +1,4 @@
-.\"	$NetBSD: __CONCAT.3,v 1.4 2010/05/13 19:31:28 joerg Exp $ $
+.\"	$NetBSD: __CONCAT.3,v 1.5 2010/05/13 21:03:33 joerg Exp $ $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,8 +76,8 @@ calls produce the same output:
 
 #define NetBSD	"NetBSD"
 
-(void)printf("%s\\n", __CONCAT(Net, BSD));
-(void)printf("%s%s\\n", __STRING(Net), __STRING(BSD));
+(void)printf("%s\en", __CONCAT(Net, BSD));
+(void)printf("%s%s\en", __STRING(Net), __STRING(BSD));
 .Ed
 .Sh SEE ALSO
 .Xr cpp 1
