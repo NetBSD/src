@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.38 2009/02/16 20:36:11 is Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.39 2010/05/13 18:19:18 christos Exp $	*/
 /*	$KAME: traceroute6.c,v 1.67 2004/01/25 03:24:39 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.38 2009/02/16 20:36:11 is Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.39 2010/05/13 18:19:18 christos Exp $");
 #endif
 #endif
 
@@ -864,7 +864,7 @@ main(argc, argv)
 			struct timeval t1, t2;
 
 			(void) gettimeofday(&t1, NULL);
-			if (!useicmp && htons(port + seq + 1) == 0)
+			if (!useicmp && htons((in_port_t)(port + seq + 1)) == 0)
 				seq++;
 			send_probe(++seq, hops);
 			while ((cc = wait_for_reply(rcvsock, &rcvmhdr))) {
