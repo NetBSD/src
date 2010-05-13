@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.7 2009/11/24 13:12:01 tnozaki Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.8 2010/05/13 17:52:11 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -899,7 +899,7 @@ ex_tagf_alloc(SCR *sp, const char *str)
 
 	/* Create new queue. */
 	for (p = t = str;; ++p) {
-		if (*p == '\0' || isblank(*p)) {
+		if (*p == '\0' || isblank((unsigned char)*p)) {
 			if ((len = p - t) > 1) {
 				MALLOC_RET(sp, tfp, TAGF *, sizeof(TAGF));
 				MALLOC(sp, tfp->name, char *, len + 1);

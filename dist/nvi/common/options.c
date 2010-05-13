@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.7 2009/11/14 23:31:37 christos Exp $ */
+/*	$NetBSD: options.c,v 1.8 2010/05/13 17:52:11 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -1036,7 +1036,7 @@ opts_save(SCR *sp, FILE *fp)
 			}
 			(void)putc('=', fp);
 			for (np = O_STR(sp, cnt); (nch = *np) != '\0'; ++np) {
-				if (isblank(nch) || nch == '\\')
+				if (isblank((unsigned char)nch) || nch == '\\')
 					(void)putc('\\', fp);
 				(void)putc(nch, fp);
 			}

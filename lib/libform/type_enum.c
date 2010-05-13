@@ -1,4 +1,4 @@
-/*	$NetBSD: type_enum.c,v 1.10 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: type_enum.c,v 1.11 2010/05/13 17:52:12 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_enum.c,v 1.10 2004/11/24 11:57:09 blymn Exp $");
+__RCSID("$NetBSD: type_enum.c,v 1.11 2010/05/13 17:52:12 tnozaki Exp $");
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -71,7 +71,7 @@ trim_blanks(char *field)
 	else
 		return 0;
 	
-	while ((i > 0) && isblank(field[i]))
+	while ((i > 0) && isblank((unsigned char)field[i]))
 		i--;
 	
 	return i;

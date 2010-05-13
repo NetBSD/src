@@ -1,4 +1,4 @@
-/*	$NetBSD: number.c,v 1.13 2009/08/12 08:12:20 dholland Exp $	*/
+/*	$NetBSD: number.c,v 1.14 2010/05/13 17:52:11 tnozaki Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)number.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: number.c,v 1.13 2009/08/12 08:12:20 dholland Exp $");
+__RCSID("$NetBSD: number.c,v 1.14 2010/05/13 17:52:11 tnozaki Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ convert(line)
 	flen = 0;
 	fraction = NULL;
 	for (p = line; *p != '\0' && *p != '\n'; ++p) {
-		if (isblank(*p)) {
+		if (isblank((unsigned char)*p)) {
 			if (p == line) {
 				++line;
 				continue;

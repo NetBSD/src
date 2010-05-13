@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.46 2009/08/16 18:01:49 martin Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.47 2010/05/13 17:52:12 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: ldconfig.c,v 1.46 2009/08/16 18:01:49 martin Exp $");
+__RCSID("$NetBSD: ldconfig.c,v 1.47 2010/05/13 17:52:12 tnozaki Exp $");
 #endif
 
 
@@ -198,10 +198,10 @@ do_conf(void)
 			line[len] = '\0';
 		}
 
-		while (isblank(*line)) { line++; len--; }
+		while (isblank((unsigned char)*line)) { line++; len--; }
 		if ((c = strchr(line, '#')) == NULL)
 			c = line + len;
-		while (--c >= line && isblank(*c)) continue;
+		while (--c >= line && isblank((unsigned char)*c)) continue;
 		if (c >= line) {
 			*++c = '\0';
 			rval |= dodir(line, 0, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.22 2010/04/28 18:04:31 drochner Exp $	*/
+/*	$NetBSD: factor.c,v 1.23 2010/05/13 17:52:11 tnozaki Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.22 2010/04/28 18:04:31 drochner Exp $");
+__RCSID("$NetBSD: factor.c,v 1.23 2010/05/13 17:52:11 tnozaki Exp $");
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 					err(1, "stdin");
 				exit (0);
 			}
-			for (p = buf; isblank(*p); ++p);
+			for (p = buf; isblank((unsigned char)*p); ++p);
 			if (*p == '\n' || *p == '\0')
 				continue;
 			if (*p == '-')

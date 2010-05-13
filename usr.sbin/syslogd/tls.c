@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.4 2009/01/18 10:35:26 lukem Exp $	*/
+/*	$NetBSD: tls.c,v 1.5 2010/05/13 17:52:12 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.4 2009/01/18 10:35:26 lukem Exp $");
+__RCSID("$NetBSD: tls.c,v 1.5 2010/05/13 17:52:12 tnozaki Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -1194,7 +1194,7 @@ parse_tls_destination(const char *p, struct filed *f, size_t linenum)
 				logerror("unknown keyword %s "
 				    "in config line %zu", p, linenum);
 			}
-			while (*p == ',' || isblank(*p))
+			while (*p == ',' || isblank((unsigned char)*p))
 				p++;
 			if (*p == '\0') {
 				logerror("unterminated ("
