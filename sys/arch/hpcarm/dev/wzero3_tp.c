@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_tp.c,v 1.1 2010/05/09 10:40:00 nonaka Exp $	*/
+/*	$NetBSD: wzero3_tp.c,v 1.2 2010/05/13 21:01:59 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.1 2010/05/09 10:40:00 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.2 2010/05/13 21:01:59 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,21 +64,23 @@ __KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.1 2010/05/09 10:40:00 nonaka Exp $")
 #define	DPRINTF(s)
 #endif
 
-/*
- * ADS784x touch screen controller
- */
-#define ADSCTRL_PD0_SH          0       /* PD0 bit */
-#define ADSCTRL_PD1_SH          1       /* PD1 bit */
-#define ADSCTRL_DFR_SH          2       /* SER/DFR bit */
-#define ADSCTRL_MOD_SH          3       /* Mode bit */
-#define ADSCTRL_ADR_SH          4       /* Address setting */
-#define ADSCTRL_STS_SH          7       /* Start bit */
-
-#define POLL_TIMEOUT_RATE0	((hz * 150)/1000)
-#define POLL_TIMEOUT_RATE1	(hz / 100) /* XXX every tick */
+#define POLL_TIMEOUT_RATE0	((hz * 150) / 1000)
+#define POLL_TIMEOUT_RATE1	((hz + 99) / 100) /* XXX every tick */
 
 /* Settable via sysctl. */
 int wzero3tp_rawmode;
+
+static const struct wsmouse_calibcoords ws003sh_default_calib = {
+	0, 0, 479, 639,				/* minx, miny, maxx, maxy */
+	5,					/* samplelen */
+	{
+		{ 2028, 2004, 240, 320 },	/* rawx, rawy, x, y */
+		{ 3312,  705,  48,  64 },
+		{ 3316, 3371,  48, 576 },
+		{  739, 3392, 432, 576 },
+		{  749,  673, 432,  64 },
+	}
+};
 
 static const struct wsmouse_calibcoords ws007sh_default_calib = {
 	0, 0, 479, 639,				/* minx, miny, maxx, maxy */
@@ -108,10 +110,26 @@ struct wzero3tp_softc {
 	int sc_buttons; /* button emulation ? */
 	struct device *sc_wsmousedev;
 	struct wzero3tp_pos sc_oldpos;
-	int sc_resx;
-	int sc_resy;
 	struct tpcalib_softc sc_tpcalib;
 };
+
+static void nulldrv_init(void);
+static int nulldrv_readpos(struct wzero3tp_pos *);
+static void nulldrv_suspend(void);
+static void nulldrv_resume(void);
+
+static void ws007sh_wait_for_hsync(void);
+
+void max1233_init(void);
+int max1233_readpos(struct wzero3tp_pos *);
+void max1233_suspend(void);
+void max1233_resume(void);
+
+void ads7846_init(void);
+int ads7846_readpos(struct wzero3tp_pos *);
+void ads7846_suspend(void);
+void ads7846_resume(void);
+extern void (*ads7846_wait_for_hsync)(void);
 
 static int	wzero3tp_match(device_t, cfdata_t, void *);
 static void	wzero3tp_attach(device_t, device_t, void *);
@@ -136,59 +154,74 @@ static const struct wsmouse_accessops wzero3tp_accessops = {
 struct wzero3tp_model {
 	platid_mask_t *platid;
 	const char *name;
-	int resx, resy;
 	int intr_pin;
 	const struct wsmouse_calibcoords *calib;
+	void (*wait_for_hsync)(void);
+	struct chip {
+		void (*init)(void);
+		int (*readpos)(struct wzero3tp_pos *);
+		void (*suspend)(void);
+		void (*resume)(void);
+	} chip;
 } wzero3tp_table[] = {
-#if 0
 	/* WS003SH */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS003SH,
 		"WS003SH",
-		480, 640,
-		-1,
+		GPIO_WS003SH_TOUCH_PANEL,
+		&ws003sh_default_calib,
 		NULL,
+		{ max1233_init, max1233_readpos,
+		  max1233_suspend, max1233_resume, },
 	},
 	/* WS004SH */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS004SH,
 		"WS004SH",
-		480, 640,
-		-1,
+		GPIO_WS003SH_TOUCH_PANEL,
+		&ws003sh_default_calib,
 		NULL,
+		{ max1233_init, max1233_readpos,
+		  max1233_suspend, max1233_resume, },
 	},
-#endif
 	/* WS007SH */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS007SH,
 		"WS007SH",
-		480, 640,
 		GPIO_WS007SH_TOUCH_PANEL,
 		&ws007sh_default_calib,
+		ws007sh_wait_for_hsync,
+		{ ads7846_init, ads7846_readpos,
+		  ads7846_suspend, ads7846_resume, },
 	},
-#if 0
 	/* WS011SH */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS011SH,
 		"WS011SH",
-		480, 800,
 		GPIO_WS011SH_TOUCH_PANEL,
 		NULL,
+		NULL,
+		{ nulldrv_init, nulldrv_readpos,
+		  nulldrv_suspend, nulldrv_resume, },
 	},
+#if 0
 	/* WS0020H */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS020SH,
 		"WS020SH",
-		480, 800,
 		-1,
 		NULL,
+		NULL,
+		{ nulldrv_init, nulldrv_readpos,
+		  nulldrv_suspend, nulldrv_resume, },
 	},
 #endif
 	{
-		NULL, NULL, -1, -1, -1, NULL,
+		NULL, NULL, -1, NULL, NULL,
+		{ nulldrv_init, nulldrv_readpos,
+		  nulldrv_suspend, nulldrv_resume, },
 	},
 };
-
 
 static const struct wzero3tp_model *
 wzero3tp_lookup(void)
@@ -222,28 +255,34 @@ wzero3tp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	sc->sc_model = wzero3tp_lookup();
-	if (sc->sc_model == NULL)
-		return;
-
 	aprint_normal(": touch panel\n");
 	aprint_naive("\n");
+
+	sc->sc_model = wzero3tp_lookup();
+	if (sc->sc_model == NULL) {
+		aprint_error_dev(self, "unknown model\n");
+		return;
+	}
 
 	callout_init(&sc->sc_tp_poll, 0);
 	callout_setfunc(&sc->sc_tp_poll, wzero3tp_poll, sc);
 
+	if (sc->sc_model->wait_for_hsync)
+		ads7846_wait_for_hsync = sc->sc_model->wait_for_hsync;
+
+	(*sc->sc_model->chip.init)();
+
 	a.accessops = &wzero3tp_accessops;
 	a.accesscookie = sc;
-
-	sc->sc_resx = sc->sc_model->resx;
-	sc->sc_resy = sc->sc_model->resy;
 
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 
 	/* Initialize calibration, set default parameters. */
 	tpcalib_init(&sc->sc_tpcalib);
-	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-	    __UNCONST(sc->sc_model->calib), 0, 0);
+	if (sc->sc_model->calib) {
+		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
+		    __UNCONST(sc->sc_model->calib), 0, 0);
+	}
 }
 
 static int
@@ -251,7 +290,7 @@ wzero3tp_enable(void *v)
 {
 	struct wzero3tp_softc *sc = (struct wzero3tp_softc *)v;
 
-	DPRINTF(("%s: wzero3tp_enable()\n", device_xname(sc->sc_dev)));
+	DPRINTF(("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_enabled) {
 		DPRINTF(("%s: already enabled\n", device_xname(sc->sc_dev)));
@@ -264,17 +303,15 @@ wzero3tp_enable(void *v)
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't establish power handler\n");
 
-	if (sc->sc_model->intr_pin >= 0) {
-		pxa2x0_gpio_set_function(sc->sc_model->intr_pin, GPIO_IN);
+	pxa2x0_gpio_set_function(sc->sc_model->intr_pin, GPIO_IN);
 
-		/* XXX */
-		if (sc->sc_gh == NULL) {
-			sc->sc_gh = pxa2x0_gpio_intr_establish(
-			    sc->sc_model->intr_pin, IST_EDGE_FALLING, IPL_TTY,
-			    wzero3tp_irq, sc);
-		} else {
-			pxa2x0_gpio_intr_unmask(sc->sc_gh);
-		}
+	/* XXX */
+	if (sc->sc_gh == NULL) {
+		sc->sc_gh = pxa2x0_gpio_intr_establish(
+		    sc->sc_model->intr_pin, IST_EDGE_FALLING, IPL_TTY,
+		    wzero3tp_irq, sc);
+	} else {
+		pxa2x0_gpio_intr_unmask(sc->sc_gh);
 	}
 
 	/* enable interrupts */
@@ -289,14 +326,13 @@ wzero3tp_disable(void *v)
 {
 	struct wzero3tp_softc *sc = (struct wzero3tp_softc *)v;
 
-	DPRINTF(("%s: wzero3tp_disable()\n", device_xname(sc->sc_dev)));
+	DPRINTF(("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	callout_stop(&sc->sc_tp_poll);
 
 	pmf_device_deregister(sc->sc_dev);
 
-	if (sc->sc_gh)
-		pxa2x0_gpio_intr_mask(sc->sc_gh);
+	pxa2x0_gpio_intr_mask(sc->sc_gh);
 
 	/* disable interrupts */
 	sc->sc_enabled = 0;
@@ -307,22 +343,16 @@ wzero3tp_suspend(device_t dv, const pmf_qual_t *qual)
 {
 	struct wzero3tp_softc *sc = device_private(dv);
 
-	DPRINTF(("%s: wzero3tp_suspend()\n", device_xname(sc->sc_dev)));
+	DPRINTF(("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	sc->sc_enabled = 0;
-	if (sc->sc_gh)
-		pxa2x0_gpio_intr_mask(sc->sc_gh);
+	pxa2x0_gpio_intr_mask(sc->sc_gh);
 
 	callout_stop(&sc->sc_tp_poll);
 
-	/* Turn off reference voltage but leave ADC on. */
-	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846,
-	    (1<<ADSCTRL_PD1_SH) | (1<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
+	(*sc->sc_model->chip.suspend)();
 
-	if (sc->sc_model->intr_pin >= 0) {
-		pxa2x0_gpio_set_function(sc->sc_model->intr_pin,
-		    GPIO_OUT|GPIO_SET);
-	}
+	pxa2x0_gpio_set_function(sc->sc_model->intr_pin, GPIO_OUT|GPIO_SET);
 
 	return true;
 }
@@ -332,115 +362,17 @@ wzero3tp_resume(device_t dv, const pmf_qual_t *qual)
 {
 	struct wzero3tp_softc *sc = device_private(dv);
 
-	DPRINTF(("%s: wzero3tp_resume()\n", device_xname(sc->sc_dev)));
+	DPRINTF(("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
-	if (sc->sc_model->intr_pin >= 0)
-		pxa2x0_gpio_set_function(sc->sc_model->intr_pin, GPIO_IN);
-	if (sc->sc_gh)
-		pxa2x0_gpio_intr_mask(sc->sc_gh);
+	pxa2x0_gpio_set_function(sc->sc_model->intr_pin, GPIO_IN);
+	pxa2x0_gpio_intr_mask(sc->sc_gh);
 
-	/* Enable automatic low power mode. */
-	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846,
-	    (4<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH));
+	(*sc->sc_model->chip.resume)();
 
-	if (sc->sc_gh)
-		pxa2x0_gpio_intr_unmask(sc->sc_gh);
+	pxa2x0_gpio_intr_unmask(sc->sc_gh);
 	sc->sc_enabled = 1;
 	
 	return true;
-}
-
-#define HSYNC()								\
-do {									\
-	while (pxa2x0_gpio_get_bit(GPIO_WS007SH_HSYNC) == 0)		\
-		continue;						\
-	while (pxa2x0_gpio_get_bit(GPIO_WS007SH_HSYNC) != 0)		\
-		continue;						\
-} while (/*CONSTCOND*/0)
-
-static uint32_t wzero3tp_sync_ads784x(int, int, uint32_t);
-static int wzero3tp_readpos(struct wzero3tp_pos *);
-
-/*
- * Communicate synchronously with the ADS784x touch screen controller.
- */
-static uint32_t
-wzero3tp_sync_ads784x(int dorecv/* XXX */, int dosend/* XXX */, uint32_t cmd)
-{
-	uint32_t rv = 0;
-
-	HSYNC();
-
-	if (dorecv)
-		rv = wzero3ssp_ic_stop(WZERO3_SSP_IC_ADS7846);
-
-	if (dosend) {
-		/* send dummy command; discard SSDR */
-		(void)wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846, cmd);
-
-		/* wait for refresh */
-		HSYNC();
-
-		/* send the actual command; keep ADS784x enabled */
-		wzero3ssp_ic_start(WZERO3_SSP_IC_ADS7846, cmd);
-	}
-
-	return rv;
-}
-
-static int
-wzero3tp_readpos(struct wzero3tp_pos *pos)
-{
-	int cmd, cmd0;
-	int z0, z1;
-	int down;
-
-	cmd0 = (1<<ADSCTRL_STS_SH) | (1<<ADSCTRL_PD0_SH) | (1<<ADSCTRL_PD1_SH);
-
-	/* check that pen is down */
-	cmd = cmd0 | (3<<ADSCTRL_ADR_SH);
-	z0 = wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846, cmd);
-	DPRINTF(("ztp_readpos(): first z0 = %d\n", z0));
-
-	down = (z0 >= 10);
-	if (!down)
-		goto out;
-
-	/* Y (discard) */
-	cmd = cmd0 | (1<<ADSCTRL_ADR_SH);
-	(void)wzero3tp_sync_ads784x(0, 1, cmd);
-
-	/* Y */
-	cmd = cmd0 | (1<<ADSCTRL_ADR_SH);
-	(void)wzero3tp_sync_ads784x(1, 1, cmd);
-
-	/* X */
-	cmd = cmd0 | (5<<ADSCTRL_ADR_SH);
-	pos->y = wzero3tp_sync_ads784x(1, 1, cmd);
-	DPRINTF(("wzero3tp_readpos(): y = %d\n", pos->y));
-
-	/* Z0 */
-	cmd = cmd0 | (3<<ADSCTRL_ADR_SH);
-	pos->x = wzero3tp_sync_ads784x(1, 1, cmd);
-	DPRINTF(("wzero3tp_readpos(): x = %d\n", pos->x));
-
-	/* Z1 */
-	cmd = cmd0 | (4<<ADSCTRL_ADR_SH);
-	z0 = wzero3tp_sync_ads784x(1, 1, cmd);
-	z1 = wzero3tp_sync_ads784x(1, 0, cmd);
-	DPRINTF(("wzero3tp_readpos(): z0 = %d, z1 = %d\n", z0, z1));
-
-	/* check that pen is still down */
-	if (z0 == 0 || (pos->x * (z1 - z0) / z0) >= 15000)
-		down = 0;
-	pos->z = down;
-
-out:
-	/* Enable automatic low power mode. */
-	cmd = (1<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH);
-	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846, cmd);
-
-	return down;
 }
 
 static void
@@ -468,17 +400,14 @@ wzero3tp_irq(void *v)
 
 	s = splhigh();
 
-	if (sc->sc_model->intr_pin >= 0)
-		pindown = pxa2x0_gpio_get_bit(sc->sc_model->intr_pin) ? 0 : 1;
-	else
-		pindown = 0;/*XXX*/
+	pindown = pxa2x0_gpio_get_bit(sc->sc_model->intr_pin) ? 0 : 1;
 	DPRINTF(("%s: pindown = %d\n", device_xname(sc->sc_dev), pindown));
 	if (pindown) {
 		pxa2x0_gpio_intr_mask(sc->sc_gh);
 		callout_schedule(&sc->sc_tp_poll, POLL_TIMEOUT_RATE1);
 	}
 
-	down = wzero3tp_readpos(&tp);
+	down = (*sc->sc_model->chip.readpos)(&tp);
 	DPRINTF(("%s: x = %d, y = %d, z = %d, down = %d\n",
 	    device_xname(sc->sc_dev), tp.x, tp.y, tp.z, down));
 
@@ -486,8 +415,7 @@ wzero3tp_irq(void *v)
 		pxa2x0_gpio_intr_unmask(sc->sc_gh);
 		callout_schedule(&sc->sc_tp_poll, POLL_TIMEOUT_RATE0);
 	}
-	if (sc->sc_model->intr_pin >= 0)
-		pxa2x0_gpio_clear_intr(sc->sc_model->intr_pin);
+	pxa2x0_gpio_clear_intr(sc->sc_model->intr_pin);
 
 	splx(s);
 	
@@ -546,4 +474,292 @@ wzero3tp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	return EPASSTHROUGH;
+}
+
+/*----------------------------------------------------------------------------
+ * null driver
+ */
+static void
+nulldrv_init(void)
+{
+
+	/* Nothing to do */
+}
+
+static int
+nulldrv_readpos(struct wzero3tp_pos *pos)
+{
+
+	pos->x = 0;
+	pos->y = 0;
+	pos->z = 0;
+
+	return 0;
+}
+
+static void
+nulldrv_suspend(void)
+{
+
+	/* Nothing to do */
+}
+
+static void
+nulldrv_resume(void)
+{
+
+	/* Nothing to do */
+}
+
+/*----------------------------------------------------------------------------
+ * model specific functions
+ */
+static void
+ws007sh_wait_for_hsync(void)
+{
+
+	while (pxa2x0_gpio_get_bit(GPIO_WS007SH_HSYNC) == 0)
+		continue;
+	while (pxa2x0_gpio_get_bit(GPIO_WS007SH_HSYNC) != 0)
+		continue;
+}
+
+/*----------------------------------------------------------------------------
+ * MAX1233 touch screen controller for WS003SH/WS004SH
+ */
+#define	MAXCTRL_ADDR_SH		0	/* Address bit[5:0] */
+#define	MAXCTRL_PAGE_SH		6	/* Page bit (0:Data/1:Control) */
+#define	MAXCTRL_RW_SH		15	/* R/W bit (0:Write/1:Read) */
+
+/* VREF=2.5V, sets interrupt initiated touch-screen scans
+ * 3.5us/sample, 4 data ave., settling time: 100us */
+#define	MAX1233_ADCCTRL		0x8b43
+
+void
+max1233_init(void)
+{
+
+	/* Enable automatic low power mode. */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),
+	    0x0001);
+	/* Wait for touch */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),
+	    MAX1233_ADCCTRL);
+}
+
+void
+max1233_suspend(void)
+{
+
+	/* power down. */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),
+	    0xc000);
+	/* DAC off */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (2<<MAXCTRL_ADDR_SH),
+	    0x8000);
+}
+
+void
+max1233_resume(void)
+{
+
+	/* Enable automatic low power mode. */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),
+	    0x0001);
+	/* Wait for touch */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),
+	    MAX1233_ADCCTRL);
+	/* DAC on */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (2<<MAXCTRL_ADDR_SH),
+	    0x0000);
+}
+
+int
+max1233_readpos(struct wzero3tp_pos *pos)
+{
+	uint32_t z1 = 0, z2 = 0, rt;
+	uint32_t status;
+	int down;
+
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),
+	    0x0b43);
+
+	while ((status = (wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+		    (1<<MAXCTRL_RW_SH)
+		    | (1<<MAXCTRL_PAGE_SH)
+		    | (0<<MAXCTRL_ADDR_SH), 0) & 0x4000)) != 0x4000) {
+		DPRINTF(("%s: status=%#x\n", __func__, status));
+	}
+	DPRINTF(("%s: status=%#x\n", __func__, status));
+
+	z1 = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (2<<MAXCTRL_ADDR_SH),0);
+	DPRINTF(("%s: first z1=%d\n", __func__, z1));
+
+	down = (z1 >= 10);
+	if (!down)
+		goto out;
+
+	pos->x = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),0);
+	DPRINTF(("%s: x=%d\n", __func__, pos->x));
+	pos->y = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (1<<MAXCTRL_ADDR_SH),0);
+	DPRINTF(("%s: y=%d\n", __func__, pos->y));
+	z1 = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (2<<MAXCTRL_ADDR_SH),0);
+	DPRINTF(("%s: z1=%d\n", __func__, z1));
+	z2 = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (3<<MAXCTRL_ADDR_SH),0);
+	DPRINTF(("%s: z2=%d\n", __func__, z2));
+
+	if (z1) {
+		rt = 400/*XXX*/;
+		rt *= pos->x;
+		rt *= (z2 / z1) - 1;
+		rt >>= 12;
+	} else
+		rt = 0;
+	DPRINTF(("%s: rt=%d\n", __func__, rt));
+
+	/* check that pen is still down */
+	if (z1 == 0 || rt == 0)
+		down = 0;
+	pos->z = down;
+
+out:
+	return down;
+}
+
+/*----------------------------------------------------------------------------
+ * ADS7846/TSC2046 touch screen controller for WS007SH
+ */
+#define ADSCTRL_PD0_SH          0       /* PD0 bit */
+#define ADSCTRL_PD1_SH          1       /* PD1 bit */
+#define ADSCTRL_DFR_SH          2       /* SER/DFR bit */
+#define ADSCTRL_MOD_SH          3       /* Mode bit */
+#define ADSCTRL_ADR_SH          4       /* Address setting */
+#define ADSCTRL_STS_SH          7       /* Start bit */
+
+static uint32_t ads7846_sync(int, int, uint32_t);
+
+void
+ads7846_init(void)
+{
+
+	/* Enable automatic low power mode. */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846,
+	    (4<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH), 0);
+}
+
+void
+ads7846_suspend(void)
+{
+
+	/* Turn off reference voltage but leave ADC on. */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846,
+	    (1<<ADSCTRL_PD1_SH) | (1<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH), 0);
+}
+
+void
+ads7846_resume(void)
+{
+
+	/* Enable automatic low power mode. */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846,
+	    (4<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH), 0);
+}
+
+int
+ads7846_readpos(struct wzero3tp_pos *pos)
+{
+	int cmd, cmd0;
+	int z0, z1;
+	int down;
+
+	cmd0 = (1<<ADSCTRL_STS_SH) | (1<<ADSCTRL_PD0_SH) | (1<<ADSCTRL_PD1_SH);
+
+	/* check that pen is down */
+	cmd = cmd0 | (3<<ADSCTRL_ADR_SH);
+	z0 = wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846, cmd, 0);
+	DPRINTF(("%s: first z0 = %d\n", __func__, z0));
+
+	down = (z0 >= 10);
+	if (!down)
+		goto out;
+
+	/* Y (discard) */
+	cmd = cmd0 | (1<<ADSCTRL_ADR_SH);
+	(void)ads7846_sync(0, 1, cmd);
+
+	/* Y */
+	cmd = cmd0 | (1<<ADSCTRL_ADR_SH);
+	(void)ads7846_sync(1, 1, cmd);
+
+	/* X */
+	cmd = cmd0 | (5<<ADSCTRL_ADR_SH);
+	pos->y = ads7846_sync(1, 1, cmd);
+	DPRINTF(("%s: y = %d\n", __func__, pos->y));
+
+	/* Z0 */
+	cmd = cmd0 | (3<<ADSCTRL_ADR_SH);
+	pos->x = ads7846_sync(1, 1, cmd);
+	DPRINTF(("%s: x = %d\n", __func__, pos->x));
+
+	/* Z1 */
+	cmd = cmd0 | (4<<ADSCTRL_ADR_SH);
+	z0 = ads7846_sync(1, 1, cmd);
+	z1 = ads7846_sync(1, 0, cmd);
+	DPRINTF(("%s: z0 = %d, z1 = %d\n", __func__, z0, z1));
+
+	/* check that pen is still down */
+	if (z0 == 0 || (pos->x * (z1 - z0) / z0) >= 15000)
+		down = 0;
+	pos->z = down;
+
+out:
+	/* Enable automatic low power mode. */
+	cmd = (1<<ADSCTRL_ADR_SH) | (1<<ADSCTRL_STS_SH);
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846, cmd, 0);
+
+	return down;
+}
+
+void (*ads7846_wait_for_hsync)(void);
+
+/*
+ * Communicate synchronously with the ADS784x touch screen controller.
+ */
+static uint32_t
+ads7846_sync(int dorecv, int dosend, uint32_t cmd)
+{
+	uint32_t rv = 0;
+
+	if (ads7846_wait_for_hsync)
+		(*ads7846_wait_for_hsync)();
+
+	if (dorecv)
+		rv = wzero3ssp_ic_stop(WZERO3_SSP_IC_ADS7846);
+
+	if (dosend) {
+		/* send dummy command; discard SSDR */
+		(void)wzero3ssp_ic_send(WZERO3_SSP_IC_ADS7846, cmd, 0);
+
+		/* wait for refresh */
+		if (ads7846_wait_for_hsync)
+			(*ads7846_wait_for_hsync)();
+
+		/* send the actual command; keep ADS784x enabled */
+		wzero3ssp_ic_start(WZERO3_SSP_IC_ADS7846, cmd);
+	}
+
+	return rv;
 }
