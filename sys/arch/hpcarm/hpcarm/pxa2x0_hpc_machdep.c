@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.6 2010/05/09 10:40:00 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.7 2010/05/13 21:01:59 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.6 2010/05/09 10:40:00 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.7 2010/05/13 21:01:59 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -265,6 +265,12 @@ const struct pmap_devmap pxa2x0_devmap[] = {
 static void
 ws003sh_cpu_reset(void)
 {
+	uint32_t rv;
+
+	rv = pxa2x0_memctl_read(MEMCTL_MSC0);
+	if ((rv & 0xffff0000) == 0x7ff00000) {
+		pxa2x0_memctl_write(MEMCTL_MSC0, (rv & 0xffff) | 0x7ee00000);
+	}
 
 	pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
 	for (;;)
@@ -275,6 +281,10 @@ static struct pxa2x0_gpioconf ws003sh_boarddep_gpioconf[] = {
 	/* FFUART */
 	{  98, GPIO_ALT_FN_3_OUT },	/* FFRTS */
 	{  99, GPIO_ALT_FN_3_OUT },	/* FFTXD */
+	/* SSP3 */
+	{  34, GPIO_ALT_FN_3_OUT },	/* SSPSCLK3 */
+	{  38, GPIO_ALT_FN_1_OUT },	/* SSPTXD3 */
+	{  82, GPIO_ALT_FN_1_IN },	/* SSPRXD3 */
 
 	{ -1 }
 };
@@ -299,6 +309,10 @@ static struct pxa2x0_gpioconf ws011sh_boarddep_gpioconf[] = {
 	/* FFUART */
 	{  98, GPIO_ALT_FN_3_OUT },	/* FFRTS */
 	{  99, GPIO_ALT_FN_3_OUT },	/* FFTXD */
+	/* SSP2 */
+	{  19, GPIO_ALT_FN_1_OUT },	/* SSPSCLK2 */
+	{  86, GPIO_ALT_FN_1_IN },	/* SSPRXD2 */
+	{  87, GPIO_ALT_FN_1_OUT },	/* SSPTXD2 */
 
 	{ -1 }
 };
@@ -433,7 +447,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 			pxa2x0_gpio_config(ws011sh_gpioconf);
 		}
 		pxa2x0_clkman_config(CKEN_FFUART, 1);
-		pxa2x0_clkman_config(CKEN_NSSP, 1); /* XXXOST */
+		pxa2x0_clkman_config(CKEN_OST, 1);
 		pxa2x0_clkman_config(CKEN_USBHC, 0);
 		pxa2x0_clkman_config(CKEN_USBDC, 0);
 		pxa2x0_clkman_config(CKEN_AC97, 0);
