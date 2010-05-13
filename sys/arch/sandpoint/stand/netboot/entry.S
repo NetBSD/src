@@ -1,4 +1,4 @@
-/* $NetBSD: entry.S,v 1.5 2010/03/02 21:52:32 matt Exp $ */
+/* $NetBSD: entry.S,v 1.6 2010/05/13 10:40:02 phx Exp $ */
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
@@ -47,6 +47,21 @@ _start:
 	ori	11,11,HID0_DCE
 
 4:
+	lis	1,BAT123@ha
+	addi	1,1,BAT123@l
+	lwz	3,0(1)
+	lwz	4,4(1)
+	mtdbatl	1,3
+	mtdbatu	1,4
+	lwz	3,8(1)
+	lwz	4,12(1)
+	mtdbatl	2,3
+	mtdbatu	2,4
+	lwz	3,16(1)
+	lwz	4,20(1)
+	mtdbatl	3,3
+	mtdbatu	3,4
+
 	sync
 	mtspr	SPR_HID0,8		/* enable and invalidate caches */
 	sync
@@ -148,3 +163,16 @@ iole32toh:
 	lwbrx	3,0,3
 	eieio
 	blr
+
+	.data
+#define	xBATL(pa, wimg, pp)						\
+	((pa) | (wimg) | (pp))
+#define	xBATU(va, len, v)						\
+	((va) | ((len) & BAT_BL) | ((v) & BAT_V))
+BAT123:
+	.long xBATL(0x80000000, BAT_I|BAT_G, BAT_PP_RW)
+	.long xBATU(0x80000000, BAT_BL_256M, BAT_Vs)
+	.long xBATL(0xfc000000, BAT_I|BAT_G, BAT_PP_RW)
+	.long xBATU(0xfc000000, BAT_BL_64M, BAT_Vs)
+	.long 0
+	.long 0
