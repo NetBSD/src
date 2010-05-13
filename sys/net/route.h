@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.70.16.1.4.1 2010/05/11 21:00:13 matt Exp $	*/
+/*	$NetBSD: route.h,v 1.70.16.1.4.2 2010/05/13 05:34:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -239,6 +239,9 @@ struct rt_msghdr {
 #define RTAX_AUTHOR	6	/* sockaddr for author of redirect */
 #define RTAX_BRD	7	/* for NEWADDR, broadcast or p-p dest addr */
 #define RTAX_MAX	8	/* size of array to allocate */
+
+#define	RTAX_NAMES	{ "dst", "gateway", "netmask", "genmask", \
+			  "ifp", "ifa", "author", "brd" }
 
 #define RT_ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(u_quad_t) - 1))) : sizeof(u_quad_t))
