@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.27 2010/05/08 19:41:07 phx Exp $ */
+/* $NetBSD: main.c,v 1.28 2010/05/13 10:40:02 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,15 +64,15 @@ uint32_t busclock, cpuclock;
 void
 main(void)
 {
-	int n, b, d, f, howto;
-	unsigned memsize, tag;
-	unsigned long marks[MARK_MAX];
 	struct btinfo_memory bi_mem;
 	struct btinfo_console bi_cons;
 	struct btinfo_clock bi_clk;
 	struct btinfo_bootpath bi_path;
 	struct btinfo_rootdevice bi_rdev;
-	unsigned lnif[1][2], lata[1][2];
+	unsigned long marks[MARK_MAX];
+	unsigned lata[1][2], lnif[1][2];
+	unsigned memsize, tag;
+	int b, d, f, fd, howto, n;
 
 	/* determine SDRAM size */
 	memsize = mpc107memsize();
@@ -132,12 +132,15 @@ main(void)
 	if (netif_init(tag) == 0)
 		printf("no NIC device driver is found\n");
 
-	printf("Try NFS load /netbsd\n");
-	marks[MARK_START] = 0;
-	if (loadfile("net:", marks, LOAD_KERNEL) < 0) {
-		printf("load failed. Restarting...\n");
-		_rtt();
+	if ((fd = open("net:", 0)) < 0) {
+		if (errno == ENOENT)
+			printf("\"%s\" not found\n", bootfile);
+		goto loadfail;
 	}
+	printf("loading \"%s\" ", bootfile);
+	marks[MARK_START] = 0;
+	if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
+		goto loadfail;
 
 	howto = RB_SINGLE | AB_VERBOSE;
 #ifdef START_DDB_SESSION
@@ -175,6 +178,10 @@ main(void)
 
 	/* should never come here */
 	printf("exec returned. Restarting...\n");
+	_rtt();
+
+  loadfail:
+	printf("load failed. Restarting...\n");
 	_rtt();
 }
 
