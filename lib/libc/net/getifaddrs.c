@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.11.20.2 2010/05/11 21:01:23 matt Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.11.20.3 2010/05/13 05:38:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.11.20.2 2010/05/11 21:01:23 matt Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.11.20.3 2010/05/13 05:38:16 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,6 +45,10 @@ __RCSID("$NetBSD: getifaddrs.c,v 1.11.20.2 2010/05/11 21:01:23 matt Exp $");
 #include <ifaddrs.h>
 #include <stdlib.h>
 #include <string.h>
+ 
+#ifdef RTDEBUG
+#include <stdio.h>
+#endif
 
 #ifdef __weak_alias
 __weak_alias(getifaddrs,_getifaddrs)
@@ -76,6 +80,10 @@ getifaddrs(struct ifaddrs **pif)
 	char *data;
 	char *names;
 
+#ifdef RTDEBUG
+	static const char rtax_names[][8] = RTAX_NAMES;
+#endif
+
 	_DIAGASSERT(pif != NULL);
 
 	mib[0] = CTL_NET;
@@ -97,6 +105,11 @@ getifaddrs(struct ifaddrs **pif)
 		rtm = (struct rt_msghdr *)(void *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
+#ifdef RTDEBUG
+		printf("%d: %zd rtm len=%d type=%d\n", __LINE__,
+			(char *)rtm - buf,
+			rtm->rtm_msglen, rtm->rtm_type);
+#endif
 		switch (rtm->rtm_type) {
 		case RTM_IFINFO:
 			ifm = (struct if_msghdr *)(void *)rtm;
@@ -105,10 +118,18 @@ getifaddrs(struct ifaddrs **pif)
 
 				idx = ifm->ifm_index;
 				++icnt;
-				dl = (struct sockaddr_dl *)(void *)(ifm + 1);
+				dl = (struct sockaddr_dl *)
+				    ((uintptr_t)ifm + RT_ROUNDUP(sizeof(*ifm)));
 				dcnt += SA_RLEN((const struct sockaddr *)(const void *)dl);
-				dcnt += sizeof(ifm->ifm_data);
+				dcnt += RT_ROUNDUP(sizeof(ifm->ifm_data));
 				ncnt += dl->sdl_nlen + 1;
+#ifdef RTDEBUG
+				printf("%d: %zd sdl idx=%d dcnt=%#x flags=%#x name=",
+					__LINE__, (const char *)dl - buf, idx,
+					dcnt, ifm->ifm_flags);
+				fwrite(dl->sdl_data, 1, dl->sdl_nlen, stdout);
+				putchar('\n');
+#endif
 			} else
 				idx = 0;
 			break;
@@ -121,8 +142,14 @@ getifaddrs(struct ifaddrs **pif)
 #define	RTA_MASKS	(RTA_NETMASK | RTA_IFA | RTA_BRD)
 			if (idx == 0 || (ifam->ifam_addrs & RTA_MASKS) == 0)
 				break;
-			p = (char *)(void *)(ifam + 1);
+			p = (char *)
+			    ((uintptr_t)ifam + RT_ROUNDUP(sizeof(*ifam)));
 			++icnt;
+#ifdef RTDEBUG
+			printf("%d: %zd sa index=%d addrs=%#x\n",
+				__LINE__, p - buf,
+				ifam->ifam_index, ifam->ifam_addrs);
+#endif
 			/* Scan to look for length of address */
 			alen = 0;
 			for (p0 = p, i = 0; i < RTAX_MAX; i++) {
@@ -131,6 +158,11 @@ getifaddrs(struct ifaddrs **pif)
 					continue;
 				sa = (struct sockaddr *)(void *)p;
 				len = SA_RLEN(sa);
+#ifdef RTDEBUG
+				printf("%d: %zd sa %s len=%d family=%d\n",
+					__LINE__, p - buf, rtax_names[i],
+					sa->sa_len, sa->sa_family);
+#endif
 				if (i == RTAX_IFA) {
 					alen = len;
 					break;
@@ -147,6 +179,11 @@ getifaddrs(struct ifaddrs **pif)
 					dcnt += alen;
 				else
 					dcnt += len;
+#ifdef RTDEBUG
+				printf("%d: %zd sa %s dcnt=%#x, len=%d family=%d\n",
+					__LINE__, p - buf, rtax_names[i], dcnt,
+					sa->sa_len, sa->sa_family);
+#endif
 				p += len;
 			}
 			break;
@@ -158,24 +195,33 @@ getifaddrs(struct ifaddrs **pif)
 		free(buf);
 		return (0);
 	}
-	data = malloc(sizeof(struct ifaddrs) * icnt + dcnt + ncnt);
+	data = malloc(RT_ROUNDUP(sizeof(struct ifaddrs) * icnt) + dcnt + ncnt);
 	if (data == NULL) {
 		free(buf);
 		return(-1);
 	}
 
 	ifa = (struct ifaddrs *)(void *)data;
-	data += sizeof(struct ifaddrs) * icnt;
+	data += RT_ROUNDUP(sizeof(struct ifaddrs) * icnt);
 	names = data + dcnt;
 
 	memset(ifa, 0, sizeof(struct ifaddrs) * icnt);
 	ift = ifa;
+#ifdef RTDEBUG
+	printf("ifa=%p data=%p names=%p end=%p\n",
+	    ifa, data, names, names + ncnt);
+#endif
 
 	idx = 0;
 	for (next = buf; next < buf + needed; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)(void *)next;
 		if (rtm->rtm_version != RTM_VERSION)
 			continue;
+#ifdef RTDEBUG
+		printf("%d: %zd rtm len=%d type=%d\n", __LINE__,
+			(char *)rtm - buf,
+			rtm->rtm_msglen, rtm->rtm_type);
+#endif
 		switch (rtm->rtm_type) {
 		case RTM_IFINFO:
 			ifm = (struct if_msghdr *)(void *)rtm;
@@ -183,7 +229,8 @@ getifaddrs(struct ifaddrs **pif)
 				const struct sockaddr_dl *dl;
 
 				idx = ifm->ifm_index;
-				dl = (struct sockaddr_dl *)(void *)(ifm + 1);
+				dl = (struct sockaddr_dl *)
+				    ((uintptr_t)ifm + RT_ROUNDUP(sizeof(*ifm)));
 
 				memset(&cif, 0, sizeof(cif));
 
@@ -192,6 +239,12 @@ getifaddrs(struct ifaddrs **pif)
 				memcpy(names, dl->sdl_data,
 				    (size_t)dl->sdl_nlen);
 				names[dl->sdl_nlen] = 0;
+
+#ifdef RTDEBUG
+				printf("%d: %zd sdl idx=%d flags=%#x name=%s\n",
+					__LINE__, (const char *)dl - buf, idx,
+					ifm->ifm_flags, names);
+#endif
 				names += dl->sdl_nlen + 1;
 
 				cif.ifa_addr = (struct sockaddr *)(void *)data;
@@ -216,7 +269,13 @@ getifaddrs(struct ifaddrs **pif)
 			ift->ifa_name = cif.ifa_name;
 			ift->ifa_flags = cif.ifa_flags;
 			ift->ifa_data = NULL;
-			p = (char *)(void *)(ifam + 1);
+			p = (char *)
+			    ((uintptr_t)ifam + RT_ROUNDUP(sizeof(*ifam)));
+#ifdef RTDEBUG
+			printf("%d: %zd sa index=%d addrs=%#x name=%s\n",
+				__LINE__, p - buf,
+				ifam->ifam_index, ifam->ifam_addrs, ifa->ifa_name);
+#endif
 			/* Scan to look for length of address */
 			alen = 0;
 			for (p0 = p, i = 0; i < RTAX_MAX; i++) {
@@ -225,6 +284,11 @@ getifaddrs(struct ifaddrs **pif)
 					continue;
 				sa = (struct sockaddr *)(void *)p;
 				len = SA_RLEN(sa);
+#ifdef RTDEBUG
+				printf("%d: %zd sa %s len=%d family=%d\n",
+					__LINE__, p - buf, rtax_names[i],
+					sa->sa_len, sa->sa_family);
+#endif
 				if (i == RTAX_IFA) {
 					alen = len;
 					break;
@@ -237,6 +301,11 @@ getifaddrs(struct ifaddrs **pif)
 					continue;
 				sa = (struct sockaddr *)(void *)p;
 				len = SA_RLEN(sa);
+#ifdef RTDEBUG
+				printf("%d: %zd sa %s len=%d family=%d\n",
+					__LINE__, p - buf, rtax_names[i],
+					sa->sa_len, sa->sa_family);
+#endif
 				switch (i) {
 				case RTAX_IFA:
 					ift->ifa_addr =
@@ -269,11 +338,21 @@ getifaddrs(struct ifaddrs **pif)
 				p += len;
 			}
 
-
+#ifdef RTDEBUG
+			if (ift->ifa_name == NULL || ift->ifa_name[0] == 0)
+				printf("%p: ifa_name == NULL!\n", ift);
+			else
+				printf("%p: ifa_name=%s\n", ift, ift->ifa_name);
+#endif
 			ift = (ift->ifa_next = ift + 1);
 			break;
 		}
 	}
+
+#ifdef RTDEBUG
+	printf("ifa=%p data=%p names=%p\n",
+	    ifa, data, names);
+#endif
 
 	free(buf);
 	if (--ift >= ifa) {
