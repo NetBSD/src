@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.5 2009/11/24 13:12:01 tnozaki Exp $ */
+/*	$NetBSD: ex_cscope.c,v 1.6 2010/05/13 17:52:11 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1994, 1996
@@ -606,8 +606,8 @@ create_cs_cmd(SCR *sp, const char *pattern, size_t *searchp)
 		goto usage;
 
 	/* Skip leading blanks, check for command character. */
-	for (; isblank(pattern[0]); ++pattern);
-	if (pattern[0] == '\0' || !isblank(pattern[1]))
+	for (; isblank((unsigned char)pattern[0]); ++pattern);
+	if (pattern[0] == '\0' || !isblank((unsigned char)pattern[1]))
 		goto usage;
 	for (*searchp = 0, p = CSCOPE_QUERIES;
 	    *p != '\0' && *p != pattern[0]; ++*searchp, ++p);
@@ -619,7 +619,7 @@ create_cs_cmd(SCR *sp, const char *pattern, size_t *searchp)
 	}
 
 	/* Skip <blank> characters to the pattern. */
-	for (p = pattern + 1; *p != '\0' && isblank(*p); ++p);
+	for (p = pattern + 1; *p != '\0' && isblank((unsigned char)*p); ++p);
 	if (*p == '\0') {
 usage:		(void)csc_help(sp, "find");
 		return (NULL);
