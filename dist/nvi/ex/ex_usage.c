@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_usage.c,v 1.4 2009/12/23 12:44:22 mlelstv Exp $ */
+/*	$NetBSD: ex_usage.c,v 1.5 2010/05/13 17:52:11 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -178,7 +178,7 @@ nokey:			(void)ex_printf(sp,
 		else
 			(void)ex_printf(sp,
 			    "  Key:%s%s\nUsage: %s\n",
-			    isblank(*kp->help) ? "" : " ", kp->help, kp->usage);
+			    isblank((unsigned char)*kp->help) ? "" : " ", kp->help, kp->usage);
 		break;
 	case 0:
 		for (key = 0; key <= MAXVIKEY && !INTERRUPTED(sp); ++key) {

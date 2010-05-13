@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.17 2009/08/12 08:25:27 dholland Exp $	*/
+/*	$NetBSD: primes.c,v 1.18 2010/05/13 17:52:12 tnozaki Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.17 2009/08/12 08:25:27 dholland Exp $");
+__RCSID("$NetBSD: primes.c,v 1.18 2010/05/13 17:52:12 tnozaki Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ read_num_buf(void)
 				err(1, "stdin");
 			exit(0);
 		}
-		for (p = buf; isblank(*p); ++p);
+		for (p = buf; isblank((unsigned char)*p); ++p);
 		if (*p == '\n' || *p == '\0')
 			continue;
 		if (*p == '-')
