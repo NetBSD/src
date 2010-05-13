@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.22 2010/05/13 09:56:12 wiz Exp $
+.\"     $NetBSD: kthread.9,v 1.23 2010/05/13 13:04:56 jruoho Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 12, 2010
+.Dd May 13, 2010
 .Dt KTHREAD 9
 .Os
 .Sh NAME
@@ -45,6 +45,8 @@
 .Fn kthread_destroy "lwp_t *l"
 .Ft void
 .Fn kthread_exit "int ecode"
+.Ft int
+.Fn kthread_join "lwp_t *l"
 .Sh DESCRIPTION
 Kernel threads are light-weight processes which execute entirely
 within the kernel.
@@ -67,6 +69,46 @@ causing
 to select the default priority level.
 .It Fa flags
 Flags that can be logically ORed together to alter the thread's behaviour.
+.It Fa ci
+If
+.No non- Ns Dv NULL ,
+the thread will be created bound to the CPU specified by
+.Fa ci ,
+meaning that it will only ever execute on that CPU.
+By default, the threads are free to execute on any CPU in the system.
+.It Fa func
+A function to be called when the thread begins executing.
+This function must not return.
+If the thread runs to completion, it must call
+.Fn kthread_exit
+to properly terminate itself.
+.It Fa arg
+An argument to be passed to
+.Fn func .
+May be
+.Dv NULL
+if not required.
+.It Fa newlp
+A pointer to receive the new lwp structure for the kernel thread.
+May not be
+.Dv NULL
+if
+.Dv KTHREAD_JOINABLE
+is specified in
+.Fa flags ;
+otherwise may be
+.Dv NULL
+if not required.
+.It Fa fmt
+A string containing format information used to display the kernel
+thread name.
+Must not be
+.Dv NULL .
+.El
+.Pp
+The following
+.Va flags
+are defined.
 .Bl -tag -width KTHREAD_JOINABLE
 .It Dv KTHREAD_IDLE
 Causes the thread to be created in the
@@ -100,37 +142,11 @@ Threads in the
 class do not have their priority dynamically
 adjusted by the scheduler.
 .It Dv KTHREAD_JOINABLE
-Request creation of joinable kthread.
-.El
-.It Fa ci
-If
-.No non- Ns Dv NULL ,
-the thread will be created bound to the CPU specified by
-.Fa ci ,
-meaning that it will only ever execute on that CPU.
-By default, the threads are free to execute on any CPU in the system.
-.It Fa func
-A function to be called when the thread begins executing.
-This function must not return.
-If the thread runs to completion, it must call
-.Fn kthread_exit
-to properly terminate itself.
-.It Fa arg
-An argument to be passed to
-.Fn func .
-May be
-.Dv NULL
-if not required.
-.It Fa newpl
-A pointer to receive the new lwp structure for the kernel thread.
-May be
-.Dv NULL
-if not required.
-.It Fa fmt
-A string containing format information used to display the kernel
-thread name.
-Must not be
-.Dv NULL .
+Requests creation of joinable kthread.
+When this flag is specified, the
+.Fn kthread_join
+function can be called only once for the lwp structure returned in
+.Fa newlp .
 .El
 .It Fn kthread_destroy "l"
 From another thread executing in the kernel, cause a kthread to exit.
@@ -142,6 +158,8 @@ Exit from a kernel thread.
 Must only be called by a kernel thread.
 .It Fn kthread_join "l"
 Suspend execution of the LWP until the target kthread terminates.
+Conceptually the function can be compared to the user space
+.Xr pthread_join 3 .
 .El
 .Sh RETURN VALUES
 Upon successful completion,
