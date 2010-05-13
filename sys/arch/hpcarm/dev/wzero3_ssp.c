@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_ssp.c,v 1.1 2010/05/09 10:40:00 nonaka Exp $	*/
+/*	$NetBSD: wzero3_ssp.c,v 1.2 2010/05/13 21:01:59 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_ssp.c,v 1.1 2010/05/09 10:40:00 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_ssp.c,v 1.2 2010/05/13 21:01:59 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,13 +47,18 @@ __KERNEL_RCSID(0, "$NetBSD: wzero3_ssp.c,v 1.1 2010/05/09 10:40:00 nonaka Exp $"
 #include <hpcarm/dev/wzero3_reg.h>
 #include <hpcarm/dev/wzero3_sspvar.h>
 
-#define WS007SH_SSCR0_ADS7846	0x06ab	/* 12bit/Microwire/div by 7 */
+#define WS003SH_SSCR0_MAX1233	0x0000048f	/* 16bit/SPI/div by 5 */
+#define WS007SH_SSCR0_ADS7846	0x000006ab	/* 12bit/Microwire/div by 7 */
+#define WS011SH_SSCR0_TP	0x0010068f	/* 32bit/SPI/div by 7 */
+#define WS011SH_SSCR0_TENKEY	0x0000068f	/* 16bit/SPI/div by 7 */
 
+struct wzero3ssp_model;
 struct wzero3ssp_softc {
 	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	kmutex_t sc_mtx;
+	const struct wzero3ssp_model *sc_model;
 };
 
 static int	wzero3ssp_match(device_t, cfdata_t, void *);
@@ -64,39 +69,45 @@ CFATTACH_DECL_NEW(wzero3ssp, sizeof(struct wzero3ssp_softc),
 
 static void	wzero3ssp_init(struct wzero3ssp_softc *);
 static bool	wzero3ssp_resume(device_t dv, const pmf_qual_t *);
-static uint32_t	wzero3ssp_read_ads7846(uint32_t);
+static uint32_t	wzero3ssp_read_ads7846(struct wzero3ssp_softc *, uint32_t);
+static uint32_t	wzero3ssp_read_max1233(struct wzero3ssp_softc *, uint32_t,
+		    uint32_t);
 
 static struct wzero3ssp_softc *wzero3ssp_sc;
 
 static const struct wzero3ssp_model {
 	platid_mask_t *platid;
+	u_long sspaddr;
 } wzero3ssp_table[] = {
-#if 0
 	/* WS003SH */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS003SH,
+		PXA2X0_SSP2_BASE,
 	},
 	/* WS004SH */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS004SH,
+		PXA2X0_SSP2_BASE,
 	},
-#endif
 	/* WS007SH */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS007SH,
+		PXA2X0_SSP1_BASE,
 	},
-#if 0
 	/* WS011SH */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS011SH,
+		PXA2X0_SSP1_BASE,
 	},
+#if 0
 	/* WS0020H */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS020SH,
+		PXA2X0_SSP1_BASE,
 	},
 #endif
 	{
-		NULL,
+		NULL, 0,
 	},
 };
 
@@ -137,10 +148,16 @@ wzero3ssp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
+	sc->sc_model = wzero3ssp_lookup();
+	if (sc->sc_model == NULL) {
+		aprint_error_dev(self, "unknown model\n");
+		return;
+	}
+
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_TTY);
 
 	sc->sc_iot = &pxa2x0_bs_tag;
-	if (bus_space_map(sc->sc_iot, PXA2X0_SSP1_BASE, PXA2X0_SSP_SIZE, 0,
+	if (bus_space_map(sc->sc_iot, sc->sc_model->sspaddr, PXA2X0_SSP_SIZE, 0,
 	     &sc->sc_ioh)) {
 		aprint_error_dev(sc->sc_dev, "can't map bus space\n");
 		return;
@@ -161,12 +178,26 @@ static void
 wzero3ssp_init(struct wzero3ssp_softc *sc)
 {
 
-	pxa2x0_clkman_config(CKEN_SSP, 1);
+	if (sc->sc_model->sspaddr == PXA2X0_SSP1_BASE)
+		pxa2x0_clkman_config(CKEN_SSP2, 1);
+	else if (sc->sc_model->sspaddr == PXA2X0_SSP2_BASE)
+		pxa2x0_clkman_config(CKEN_SSP3, 1);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR1, 0);
 
-	pxa2x0_gpio_set_function(GPIO_WS007SH_ADS7846_CS, GPIO_OUT|GPIO_SET);
+	/* XXX */
+	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS003SH)
+	 || platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS004SH)) {
+		pxa2x0_gpio_set_function(39/*GPIO_WS003SH_XXX*/,
+		    GPIO_OUT|GPIO_SET);
+		pxa2x0_gpio_set_function(GPIO_WS003SH_MAX1233_CS,
+		    GPIO_OUT|GPIO_SET);
+	}
+	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS007SH)) {
+		pxa2x0_gpio_set_function(GPIO_WS007SH_ADS7846_CS,
+		    GPIO_OUT|GPIO_SET);
+	}
 }
 
 static bool
@@ -213,6 +244,10 @@ wzero3ssp_ic_start(int ic, uint32_t cmd)
 		    & SSSR_TNF) != SSSR_TNF)
 			continue;	/* poll */
 		break;
+	case WZERO3_SSP_IC_MAX1233:
+	case WZERO3_SSP_IC_NUM:
+	default:
+		break;
 	}
 }
 
@@ -235,13 +270,14 @@ wzero3ssp_ic_stop(int ic)
 		    & SSSR_RNE) != SSSR_RNE)
 			continue;	/* poll */
 		rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
+		pxa2x0_gpio_set_bit(GPIO_WS007SH_ADS7846_CS);
 		break;
+	case WZERO3_SSP_IC_MAX1233:
+	case WZERO3_SSP_IC_NUM:
 	default:
 		rv = 0;
 		break;
 	}
-
-	pxa2x0_gpio_set_bit(GPIO_WS007SH_ADS7846_CS);
 
 	mutex_exit(&sc->sc_mtx);
 
@@ -253,29 +289,32 @@ wzero3ssp_ic_stop(int ic)
  * each direction, and deactivate the chip-select again.
  */
 uint32_t
-wzero3ssp_ic_send(int ic, uint32_t data)
+wzero3ssp_ic_send(int ic, uint32_t data, uint32_t data2)
 {
+	struct wzero3ssp_softc *sc;
+
+	if (wzero3ssp_sc == NULL) {
+		aprint_error("%s: not configured\n", __func__);
+		return 0;
+	}
+	sc = wzero3ssp_sc;
 
 	switch (ic) {
 	case WZERO3_SSP_IC_ADS7846:
-		return wzero3ssp_read_ads7846(data);
+		return wzero3ssp_read_ads7846(sc, data);
+	case WZERO3_SSP_IC_MAX1233:
+		return wzero3ssp_read_max1233(sc, data, data2);
+	case WZERO3_SSP_IC_NUM:
 	default:
-		aprint_error("wzero3ssp: wzero3ssp_ic_send: invalid IC %d\n", ic);
+		aprint_error("%s: invalid IC %d\n", __func__, ic);
 		return 0;
 	}
 }
 
 static uint32_t
-wzero3ssp_read_ads7846(uint32_t cmd)
+wzero3ssp_read_ads7846(struct wzero3ssp_softc *sc, uint32_t cmd)
 {
-	struct wzero3ssp_softc *sc;
 	uint32_t rv;
-
-	if (wzero3ssp_sc == NULL) {
-		printf("wzero3ssp_read_ads7846: not configured\n");
-		return 0;
-	}
-	sc = wzero3ssp_sc;
 
 	mutex_enter(&sc->sc_mtx);
 
@@ -286,17 +325,57 @@ wzero3ssp_read_ads7846(uint32_t cmd)
 	pxa2x0_gpio_clear_bit(GPIO_WS007SH_ADS7846_CS);
 
 	/* send cmd */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR, cmd);
-	while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
-	    & SSSR_TNF) != SSSR_TNF)
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_TNF))
 		continue;	/* poll */
-	delay(1);
-	while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
-	    & SSSR_RNE) != SSSR_RNE)
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR, cmd);
+	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_BUSY)
+		continue;	/* poll */
+
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_RNE))
 		continue;	/* poll */
 	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
 
 	pxa2x0_gpio_set_bit(GPIO_WS007SH_ADS7846_CS);
+
+	mutex_exit(&sc->sc_mtx);
+
+	return rv;
+}
+
+static uint32_t
+wzero3ssp_read_max1233(struct wzero3ssp_softc *sc, uint32_t cmd, uint32_t data)
+{
+	uint32_t rv;
+
+	mutex_enter(&sc->sc_mtx);
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0,
+	    WS003SH_SSCR0_MAX1233);
+
+	pxa2x0_gpio_set_bit(39/*GPIO_WS003SH_XXX*/);
+	pxa2x0_gpio_clear_bit(GPIO_WS003SH_MAX1233_CS);
+
+	/* send cmd */
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_TNF))
+		continue;	/* poll */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR, cmd);
+	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_BUSY)
+		continue;	/* poll */
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_RNE))
+		continue;	/* poll */
+	(void)bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
+
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_TNF))
+		continue;	/* poll */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR, data);
+	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_BUSY)
+		continue;	/* poll */
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_RNE))
+		continue;	/* poll */
+	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
+
+	pxa2x0_gpio_set_bit(GPIO_WS003SH_MAX1233_CS);
 
 	mutex_exit(&sc->sc_mtx);
 

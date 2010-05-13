@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_sspvar.h,v 1.1 2010/05/09 10:40:00 nonaka Exp $	*/
+/*	$NetBSD: wzero3_sspvar.h,v 1.2 2010/05/13 21:01:59 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -29,10 +29,14 @@
 #ifndef	_HPCARM_DEV_WZERO3_SSPVAR_H_
 #define	_HPCARM_DEV_WZERO3_SSPVAR_H_
 
-#define	WZERO3_SSP_IC_ADS7846		1	/* touch screen controller */
+enum {
+	WZERO3_SSP_IC_ADS7846,	/* touch screen controller */
+	WZERO3_SSP_IC_MAX1233,	/* touch screen controller */
+	WZERO3_SSP_IC_NUM
+};
 
 void		wzero3ssp_ic_start(int, uint32_t);
-uint32_t	wzero3ssp_ic_send(int, uint32_t);
 uint32_t	wzero3ssp_ic_stop(int);
+uint32_t	wzero3ssp_ic_send(int, uint32_t, uint32_t);
 
 #endif	/* _HPCARM_DEV_WZERO3_SSPVAR_H_ */
