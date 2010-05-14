@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.60 2010/02/26 07:01:17 wiz Exp $
+.\"	$NetBSD: dump.8,v 1.61 2010/05/14 05:04:58 jruoho Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)dump.8	8.3 (Berkeley) 5/1/95
 .\"
-.Dd February 25, 2010
+.Dd May 14, 2010
 .Dt DUMP 8
 .Os
 .Sh NAME
@@ -542,12 +542,15 @@ flag was inspired by the
 .Fl x
 flag from Sun's Solstice Backup utility.
 .Sh BUGS
+At least the following caveats can be mentioned.
+.Bl -bullet
+.It
 Fewer than 32 read errors on the file system are ignored.
-.Pp
+.It
 Each reel requires a new process, so parent processes for
 reels already written just hang around until the entire tape
 is written.
-.Pp
+.It
 .Nm
 with the
 .Fl W
@@ -558,12 +561,12 @@ in
 .Pa /etc/dumpdates ,
 even if listed in
 .Pa /etc/fstab .
-.Pp
+.It
 When dumping a list of files or subdirectories, access privileges are
 required to scan the directory (as this is done via the
 .Xr fts 3
 routines rather than directly accessing the file system).
-.Pp
+.It
 It would be nice if
 .Nm
 knew about the dump sequence,
@@ -572,7 +575,8 @@ told the operator which tape to mount when,
 and provided more assistance
 for the operator running
 .Xr restore 8 .
-.Pp
+.It
 Snapshot support is
 .Em experimental .
 Be sure you have a backup before you use it.
+.El
