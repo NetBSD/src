@@ -1,4 +1,4 @@
-.\"	$NetBSD: bzip2.1,v 1.6 2010/05/14 09:16:17 wiz Exp $
+.\"	$NetBSD: bzip2.1,v 1.7 2010/05/14 12:02:23 wiz Exp $
 .\"
 .Dd May 14, 2010
 .Dt BZIP2 1
@@ -340,7 +340,7 @@ Text Compression Corpus totalling 3,141,622 bytes.
 This column gives some feel for how compression varies with block size.
 These figures tend to understate the advantage of larger block sizes
 for larger files, since the Corpus is dominated by smaller files.
-.Bl column "Flag" "Compression" "Decompression" "Decompression -s" "Corpus size"
+.Bl -column "Flag" "Compression" "Decompression" "DecompressionXXs" "Corpus size"
 .It Sy Flag Ta Sy Compression Ta Sy Decompression Ta Sy Decompression Fl s Ta Sy Corpus size
 .It -1 Ta 1200k Ta  500k Ta  350k Ta 914704
 .It -2 Ta 2000k Ta  900k Ta  600k Ta 877703
