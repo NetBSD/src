@@ -1,4 +1,4 @@
-.\"	$NetBSD: byteorder.9,v 1.7 2010/05/06 08:02:47 dholland Exp $
+.\"	$NetBSD: byteorder.9,v 1.8 2010/05/14 05:23:35 dholland Exp $
 .\"
 .\" Copyright (c) 2002 Mike Barcroft <mike@FreeBSD.org>
 .\" All rights reserved.
@@ -190,9 +190,9 @@ These were later ported to
 .Fx 5.0 .
 These functions were originally introduced to handle
 .Tn PCI
-bus master devices that do little endian
-.Tn DMA
-transfers on big endian systems.
+bus master devices that
+.Pq via Tn DMA
+transfer little endian data even on big endian systems.
 .Pp
 The encode/decode functions first appeared in
 .Fx 5.1 .
