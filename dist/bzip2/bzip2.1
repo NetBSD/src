@@ -1,4 +1,4 @@
-.\"	$NetBSD: bzip2.1,v 1.8 2010/05/14 16:43:07 joerg Exp $
+.\"	$NetBSD: bzip2.1,v 1.9 2010/05/14 16:43:34 joerg Exp $
 .\"
 .Dd May 14, 2010
 .Dt BZIP2 1
@@ -429,12 +429,6 @@ improvements.
 I imagine
 .Nm bzip2
 will perform best on machines with very large caches.
-.Sh EXIT STATUS
-0 for a normal exit, 1 for environmental problems (file not found,
-invalid flags, I/O errors, etc.), 2 to indicate a corrupt compressed
-file, 3 for an internal consistency error (e.g., bug) which caused
-.Nm bzip2
-to panic.
 .Sh ENVIRONMENT
 .Nm bzip2
 will read arguments from the environment variables
@@ -444,6 +438,12 @@ and
 in that order, and will process them before any arguments read from
 the command line.
 This gives a convenient way to supply default arguments.
+.Sh EXIT STATUS
+0 for a normal exit, 1 for environmental problems (file not found,
+invalid flags, I/O errors, etc.), 2 to indicate a corrupt compressed
+file, 3 for an internal consistency error (e.g., bug) which caused
+.Nm bzip2
+to panic.
 .Sh AUTHORS
 .An -nosplit
 .An Julian Seward
