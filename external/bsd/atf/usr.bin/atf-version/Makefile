@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2010/05/08 08:12:35 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2010/05/14 15:30:39 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ MAN=		atf-version.1
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libatf-c
-CPPFLAGS+=	-I..
+CPPFLAGS+=	-I.. -I.
 LDADD+=		-latf-c++ -latf-c
 
 WARNS?=		2
