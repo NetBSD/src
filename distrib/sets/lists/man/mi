@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1207 2010/05/08 08:14:36 jmmv Exp $
+# $NetBSD: mi,v 1.1208 2010/05/14 16:19:58 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2510,6 +2510,7 @@
 ./usr/share/man/cat8/rbootd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/rc.0			man-rc-catman		.cat
 ./usr/share/man/cat8/rc.d.0			man-rc-catman		.cat
+./usr/share/man/cat8/rc.local.0			man-rc-catman		.cat
 ./usr/share/man/cat8/rc.shutdown.0		man-rc-catman		.cat
 ./usr/share/man/cat8/rc.subr.0			man-rc-catman		.cat
 ./usr/share/man/cat8/rcorder.0			man-sysutil-catman	.cat
@@ -4920,6 +4921,7 @@
 ./usr/share/man/html8/rbootd.html		man-bootserver-htmlman	html
 ./usr/share/man/html8/rc.html			man-rc-htmlman		html
 ./usr/share/man/html8/rc.d.html			man-rc-htmlman		html
+./usr/share/man/html8/rc.local.html		man-rc-htmlman		html
 ./usr/share/man/html8/rc.shutdown.html		man-rc-htmlman		html
 ./usr/share/man/html8/rc.subr.html		man-rc-htmlman		html
 ./usr/share/man/html8/rcorder.html		man-sysutil-htmlman	html
@@ -7604,6 +7606,7 @@
 ./usr/share/man/man8/rbootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/rc.8			man-rc-man		.man
 ./usr/share/man/man8/rc.d.8			man-rc-man		.man
+./usr/share/man/man8/rc.local.8			man-rc-man		.man
 ./usr/share/man/man8/rc.shutdown.8		man-rc-man		.man
 ./usr/share/man/man8/rc.subr.8			man-rc-man		.man
 ./usr/share/man/man8/rcorder.8			man-sysutil-man		.man

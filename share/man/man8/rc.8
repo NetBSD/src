@@ -1,4 +1,4 @@
-.\" 	$NetBSD: rc.8,v 1.35 2010/04/14 13:07:19 wiz Exp $
+.\" 	$NetBSD: rc.8,v 1.36 2010/05/14 16:19:58 jruoho Exp $
 .\"
 .\" Copyright (c) 2000-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,16 +27,18 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 14, 2010
+.Dd May 14, 2010
 .Dt RC 8
 .Os
 .Sh NAME
 .Nm rc ,
+.Nm rc.local ,
 .Nm rc.shutdown ,
 .Nm rc.d/
 .Nd startup and shutdown scripts
 .Sh SYNOPSIS
 .Nm rc
+.Nm rc.local
 .Nm rc.shutdown
 .Nm rc.d/
 .Sh DESCRIPTION
@@ -52,6 +54,12 @@ is starting the automatic reboot process,
 .Nm
 is invoked with the argument of
 .Sq autoboot .
+.Pp
+.Nm rc.local
+is a command script to which local boot-time actions can be added.
+It is (nearly) the last thing invoked by
+.Nm rc
+during a normal boot.
 .Pp
 .Nm rc.shutdown
 is the command script which shuts down various services, and is invoked by
@@ -323,6 +331,8 @@ Startup script called by
 .Xr init 8 .
 .It Pa /etc/rc.d/
 Directory containing control scripts for each service.
+.It Pa /etc/rc.local
+Local startup script.
 .It Pa /etc/rc.shutdown
 Shutdown script called by
 .Xr shutdown 8 .
