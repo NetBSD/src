@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.35 2010/01/26 15:11:56 wiz Exp $
+# $NetBSD: mi,v 1.36 2010/05/14 22:42:31 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -446,7 +446,7 @@
 ./usr/share/man/cat5/lj4_font.0			text-groff-catman	.cat,groff
 ./usr/share/man/cat5/tmac.0			text-groff-catman	.cat,groff
 ./usr/share/man/cat7/ditroff.0			text-groff-catman	.cat,groff
-./usr/share/man/cat7/groff.0			text-groff-catman	.cat,groff,groff
+./usr/share/man/cat7/groff.0			text-groff-catman	.cat,groff
 ./usr/share/man/cat7/groff_char.0		text-groff-catman	.cat,groff
 ./usr/share/man/cat7/groff_diff.0		text-groff-catman	.cat,groff
 ./usr/share/man/cat7/groff_man.0		text-groff-catman	.cat,groff
@@ -617,7 +617,7 @@
 ./usr/share/tmac/an.tmac			text-groff-share	share,groff
 ./usr/share/tmac/andoc.tmac			text-groff-share	share,groff
 ./usr/share/tmac/ascii.tmac			text-groff-share	share,groff
-./usr/share/tmac/composite.tmac			text-groff-share	share,groff,groff
+./usr/share/tmac/composite.tmac			text-groff-share	share,groff
 ./usr/share/tmac/cp1047.tmac			text-groff-share	share,groff
 ./usr/share/tmac/devtag.tmac			text-groff-share	share,groff
 ./usr/share/tmac/doc.tmac			text-groff-share	share,groff
