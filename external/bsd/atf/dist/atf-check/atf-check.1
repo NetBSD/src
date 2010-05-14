@@ -107,8 +107,8 @@ atf-check -s ne:0 'false' || atf_fail
 
 # Checking stdout/stderr
 echo foobar >expout
-atf-check -o file:expout -e inline:"xx\\tyy\\n" \\
-    'echo foobar ; printf "xx\\tyy\\n" >&2' || atf_fail
+atf-check -o file:expout -e inline:"xx\etyy\en" \e
+    'echo foobar ; printf "xx\etyy\en" >&2' || atf_fail
 .Ed
 .Sh SEE ALSO
 .Xr atf 7
