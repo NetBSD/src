@@ -1,4 +1,4 @@
-.\"	$NetBSD: evdns.3,v 1.1.1.1 2009/11/02 10:00:53 plunky Exp $
+.\"	$NetBSD: evdns.3,v 1.2 2010/05/14 03:02:13 joerg Exp $
 .\"
 .\"
 .\" Copyright (c) 2006 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2006
+.Dd May 14, 2010
 .Dt EVDNS 3
 .Os
 .Sh NAME
@@ -125,11 +125,13 @@ The library keeps track of the state of nameservers and will avoid
 them when they go down. Otherwise it will round robin between them.
 .Pp
 Quick start guide:
-  #include "evdns.h"
-  void callback(int result, char type, int count, int ttl,
+.Bd -literal -offset indent
+#include \*[Lt]evdns.h\*[Gt]
+void callback(int result, char type, int count, int ttl,
 	 void *addresses, void *arg);
-  evdns_resolv_conf_parse(DNS_OPTIONS_ALL, "/etc/resolv.conf");
-  evdns_resolve("www.hostname.com", 0, callback, NULL);
+evdns_resolv_conf_parse(DNS_OPTIONS_ALL, "/etc/resolv.conf");
+evdns_resolve("www.hostname.com", 0, callback, NULL);
+.Ed
 .Pp
 When the lookup is complete the callback function is called. The
 first argument will be one of the DNS_ERR_* defines in evdns.h.
