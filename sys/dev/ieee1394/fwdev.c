@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.20 2010/05/10 12:17:32 kiyohara Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.21 2010/05/14 12:10:07 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.20 2010/05/10 12:17:32 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.21 2010/05/14 12:10:07 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -654,7 +654,7 @@ out:
 		err = copyout(ptr, crom_buf->ptr, len);
 		if (fwdev == NULL)
 			/* myself */
-			free(ptr, M_FW);
+			kmem_free(ptr, CROMSIZE);
 		break;
 
 	default:
