@@ -30,7 +30,7 @@
 #if defined(HAVE_CONFIG_H)
 #include "bconfig.h"
 #endif
-#include "atf-version/revision.h"
+#include "revision.h"
 
 #include <cstdlib>
 #include <iostream>
