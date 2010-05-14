@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.24 2009/08/19 15:26:59 joerg Exp $
+.\" $NetBSD: mixerctl.1,v 1.25 2010/05/14 17:20:06 joerg Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -166,6 +166,11 @@ record.record=220,220 volume
 record.record.source=mic  [ mic cd dac ]
 monitor.monitor=0 volume
 .Ed
+.Sh COMPATIBILITY
+The old
+.Fl f
+flag is still supported.
+This support will be removed eventually.
 .Sh SEE ALSO
 .Xr audioctl 1 ,
 .Xr audio 4 ,
@@ -176,8 +181,3 @@ The
 .Nm
 command first appeared in
 .Nx 1.3 .
-.Sh COMPATIBILITY
-The old
-.Fl f
-flag is still supported.
-This support will be removed eventually.
