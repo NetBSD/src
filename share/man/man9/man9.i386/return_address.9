@@ -1,4 +1,4 @@
-.\"	$NetBSD: return_address.9,v 1.4 2010/05/05 22:01:10 wiz Exp $
+.\"	$NetBSD: return_address.9,v 1.5 2010/05/14 18:28:40 joerg Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,7 +68,7 @@ To use
 .Fn return_address
 effecively, try a kernel configuration option such as
 .Bd -literal
-makeoptions     DEBUG="-g -fno-omit-frame-pointer \\
+makeoptions     DEBUG="-g -fno-omit-frame-pointer \e
 		       -fno-optimize-sibling-calls -O0"
 .Ed
 .Sh RETURN VALUES
