@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.105 2010/02/08 19:02:33 joerg Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.106 2010/05/14 05:02:06 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -127,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105 2010/02/08 19:02:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.106 2010/05/14 05:02:06 cegger Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -626,7 +626,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		 */
 
 		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg),
-		    prot | PMAP_KMPAGE, 0);
+		    prot, PMAP_KMPAGE);
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
 		loopsize -= PAGE_SIZE;
@@ -711,7 +711,7 @@ again:
 		}
 	}
 	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
+	    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
 	pmap_update(pmap_kernel());
 
 	return va;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.212 2010/02/15 07:55:33 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.213 2010/05/14 05:02:05 cegger Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -211,7 +211,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2010/02/15 07:55:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2010/05/14 05:02:05 cegger Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -3318,7 +3318,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, opte;
 #ifdef PMAP_CACHE_VIVT
-	struct vm_page *pg = (prot & PMAP_KMPAGE) ? PHYS_TO_VM_PAGE(pa) : NULL;
+	struct vm_page *pg = (flags & PMAP_KMPAGE) ? PHYS_TO_VM_PAGE(pa) : NULL;
 #endif
 #ifdef PMAP_CACHE_VIPT
 	struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
@@ -3346,7 +3346,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (opg) {
 			KASSERT(opg != pg);
 			KASSERT((opg->mdpage.pvh_attrs & PVF_KMPAGE) == 0);
-			KASSERT((prot & PMAP_KMPAGE) == 0);
+			KASSERT((flags & PMAP_KMPAGE) == 0);
 			simple_lock(&opg->mdpage.pvh_slock);
 			pv = pmap_kremove_pg(opg, va);
 			simple_unlock(&opg->mdpage.pvh_slock);
@@ -3366,7 +3366,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	PTE_SYNC(ptep);
 
 	if (pg) {
-		if (prot & PMAP_KMPAGE) {
+		if (flags & PMAP_KMPAGE) {
 			simple_lock(&pg->mdpage.pvh_slock);
 			KASSERT(pg->mdpage.urw_mappings == 0);
 			KASSERT(pg->mdpage.uro_mappings == 0);
@@ -4769,7 +4769,7 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 		 */
 		KASSERT(SLIST_EMPTY(&pg->mdpage.pvh_list));
 		pmap_kenter_pa(va, pa,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
 #endif
 	}
 
@@ -5457,7 +5457,7 @@ pmap_postinit(void)
 			paddr_t pa = VM_PAGE_TO_PHYS(m);
 
 			pmap_kenter_pa(va, pa,
-			    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
+			    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
 
 			/*
 			 * Make sure the L1 descriptor table is mapped
