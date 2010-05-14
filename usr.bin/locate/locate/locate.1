@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.1,v 1.16 2005/10/05 06:29:03 hubertf Exp $
+.\"	$NetBSD: locate.1,v 1.17 2010/05/14 17:06:40 joerg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,16 +70,16 @@ The environment variable
 .Ar LOCATE_PATH
 has the same effect.
 .El
-.Sh EXIT STATUS
-.Nm
-exits with a 0 if a match is found, and \*[Gt]0 if no match is found or if
-another problem (such as a missing or corrupted database file) is
-encountered.
 .Sh FILES
 .Bl -tag -width /usr/libexec/locate.updatedb -compact
 .It Pa /var/db/locate.database
 Default database
 .El
+.Sh EXIT STATUS
+.Nm
+exits with a 0 if a match is found, and \*[Gt]0 if no match is found or if
+another problem (such as a missing or corrupted database file) is
+encountered.
 .Sh SEE ALSO
 .Xr find 1 ,
 .Xr fnmatch 3 ,
