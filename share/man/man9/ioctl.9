@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.27 2009/10/02 09:38:29 cegger Exp $
+.\" $NetBSD: ioctl.9,v 1.28 2010/05/14 18:39:05 joerg Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -244,34 +244,6 @@ structure and not a pointer to it or sizeof(struct foo)
 In order for the new ioctl to be known to the system it is installed
 in either \*[Lt]sys/ioctl.h\*[Gt] or one of the files that are reached from
 \*[Lt]sys/ioctl.h\*[Gt].
-.Sh EXAMPLES
-.Bd -literal -offset indent
-#define	FOOIOCTL	_IOWR('i', 23, int)
-
-int a = 3;
-error = ioctl(s, FOOICTL, \*[Am]a);
-.Ed
-.Pp
-Within the ioctl()-routine of the driver, it can be then accessed like
-.Bd -literal -offset indent
-driver_ioctl(..., u_long cmd, void *data)
-{
-	...
-	switch (cmd) {
-
-	case FOOIOCTL:
-		int *a = (int *)data;
-		printf(" Value passed: %d\en", *a);
-		break;
-	}
-}
-.Ed
-.Sh NOTES
-Note that if you for example try to read information from an ethernet
-driver where the name of the card is included in the third argument
-(e.g., ioctl(s, READFROMETH, struct ifreq *)), then you have to use
-the _IOWR() form not the _IOR(), as passing the name of the card to the
-kernel already consists of writing data.
 .Sh RETURN VALUES
 All ioctl() routines should return either 0 or a defined error code.
 The use of magic numbers such as -1, to indicate that a given ioctl
@@ -311,5 +283,33 @@ then it will there be changed to
 .Cm ENOTTY
 to be returned to user space, thereby providing the proper error
 notification to the application.
+.Sh EXAMPLES
+.Bd -literal -offset indent
+#define	FOOIOCTL	_IOWR('i', 23, int)
+
+int a = 3;
+error = ioctl(s, FOOICTL, \*[Am]a);
+.Ed
+.Pp
+Within the ioctl()-routine of the driver, it can be then accessed like
+.Bd -literal -offset indent
+driver_ioctl(..., u_long cmd, void *data)
+{
+	...
+	switch (cmd) {
+
+	case FOOIOCTL:
+		int *a = (int *)data;
+		printf(" Value passed: %d\en", *a);
+		break;
+	}
+}
+.Ed
+.Sh NOTES
+Note that if you for example try to read information from an ethernet
+driver where the name of the card is included in the third argument
+(e.g., ioctl(s, READFROMETH, struct ifreq *)), then you have to use
+the _IOWR() form not the _IOR(), as passing the name of the card to the
+kernel already consists of writing data.
 .Sh SEE ALSO
 .Xr ioctl 2
