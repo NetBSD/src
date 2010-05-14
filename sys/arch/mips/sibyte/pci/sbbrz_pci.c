@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.1.2.5 2010/01/21 08:47:22 cyber Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.1.2.6 2010/05/14 22:26:00 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.5 2010/01/21 08:47:22 cyber Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.1.2.6 2010/05/14 22:26:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,12 +184,14 @@ sbbrz_pci_conf_read(void *cpv, pcitag_t tag, int offset)
 	addr = A_PHYS_LDTPCI_CFG_MATCH_BITS + tag + offset;
 	addr = MIPS_PHYS_TO_XKPHYS(MIPS3_TLB_ATTR_UNCACHED, addr);
 
-#ifdef _punt_on_64
 	if (badaddr64(addr, 4) != 0)
 		return 0xffffffff;
-#endif
 
-	return mips3_lw_a64(addr);
+	pcireg_t rv = mips3_lw_a64(addr);
+#ifdef __mips_o32
+	__asm volatile("sync");
+#endif
+	return rv;
 }
 
 void
