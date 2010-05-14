@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.73 2010/05/11 14:06:08 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.74 2010/05/14 13:04:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.73 2010/05/11 14:06:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.74 2010/05/14 13:04:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -612,6 +612,13 @@ uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t vaddr)
 {
 
 	rumpuser_unmap((void *)vaddr, PAGE_SIZE);
+}
+
+void
+uvm_km_va_drain(struct vm_map *map, uvm_flag_t flags)
+{
+
+	/* we eventually maybe want some model for available memory */
 }
 
 /*
