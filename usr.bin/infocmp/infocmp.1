@@ -1,4 +1,4 @@
-.\"	$NetBSD: infocmp.1,v 1.3 2010/02/05 16:43:46 roy Exp $
+.\"	$NetBSD: infocmp.1,v 1.4 2010/05/14 17:02:01 joerg Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,8 +102,6 @@ This only works if the database was compiled with the
 flag passed to
 .Xr tic 1 .
 .El
-.Sh EXIT STATUS
-.Ex -std infocmp
 .Sh ENVIRONMENT
 .Bl -tag -width Ev
 .It Ev COLUMNS
@@ -117,6 +115,8 @@ uses the contents of the
 .Ev TERM
 environment variable if no terminal name is given on the command line.
 .El
+.Sh EXIT STATUS
+.Ex -std infocmp
 .Sh SEE ALSO
 .Xr tic 1 ,
 .Xr terminfo 5
