@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.70.8.4 2010/01/29 00:16:58 matt Exp $
+# $NetBSD: GENERIC,v 1.70.8.5 2010/05/14 23:16:08 cliff Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70.8.4 $"
+#ident 		"GENERIC-$Revision: 1.70.8.5 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -34,8 +34,8 @@ options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
-#makeoptions 	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=340000	# size for embedded symbol table
+makeoptions 	DEBUG="-g"	# compile full symbol table
+options 	SYMTAB_SPACE=380000	# size for embedded symbol table
 
 # Compatibility options
 options 	COMPAT_43	# compatibility with 4.3BSD binaries
@@ -145,6 +145,8 @@ pci*		at sbbrz? bus ?
 ppb*		at pci? dev ?
 pci*		at ppb?
 
+ohci*		at pci? dev ? function ?        # Open Host Controller
+
 bge*		at pci? dev ?
 
 #sbicu*		at sbscd? offset ?
@@ -163,6 +165,17 @@ m41t81rtc*	at smbus? chan ? dev ?		# ST M41T81 RTC
 
 # MII/PHY support
 brgphy*		at mii? phy ?
+
+# USB
+usb*		at ohci?
+uhub*		at usb?
+uhub*		at uhub? port ?
+umass*		at uhub? port ? configuration ? interface ?
+wd*		at umass?
+scsibus*	at umass? channel ?
+sd*		at scsibus? target ? lun ?
+uplcom* 	at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+ucom*   	at uplcom? portno ?
 
 # Pseudo-devices
 
