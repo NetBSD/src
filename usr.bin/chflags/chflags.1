@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.18 2009/06/29 03:49:41 dholland Exp $
+.\"	$NetBSD: chflags.1,v 1.19 2010/05/14 05:07:22 jruoho Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)chflags.1	8.4 (Berkeley) 5/2/95
 .\"
-.Dd May 2, 1995
+.Dd May 14, 2010
 .Dt CHFLAGS 1
 .Os
 .Sh NAME
@@ -86,23 +86,26 @@ the file flags of the link itself is changed.
 .Pp
 Flags are a comma separated list of keywords.
 The following keywords are currently defined:
-.Bd -literal -offset indent -compact
-arch	set the archived flag (super-user only)
-opaque	set the opaque flag (owner or super-user only)
-nodump	set the nodump flag (owner or super-user only)
-sappnd	set the system append-only flag (super-user only)
-schg	set the system immutable flag (super-user only)
-uappnd	set the user append-only flag (owner or super-user only)
-uchg	set the user immutable flag (owner or super-user only)
-.Ed
+.Bl -column -offset indent "Keyword   " "system append-only" "Who"
+.It Sy Keyword Ta Sy Flag Ta Sy Who
+.It Em arch Ta archived Ta super-user only
+.It Em opaque Ta opaque Ta owner or super-user only
+.It Em nodump Ta nodump Ta owner or super-user only
+.It Em sappnd Ta system append-only Ta super-user only
+.It Em schg Ta system immutable Ta super-user only
+.It Em uappnd Ta user append-only Ta owner or super-user only
+.It Em uchg Ta user immutable Ta owner or super-user only
+.El
 .Pp
 Putting the letters
 .Dq no
 before an option causes the flag to be turned off.
 For example:
-.Bd -literal -offset indent -compact
-nouchg	the immutable bit should be cleared
-.Ed
+.Pp
+.Bl -tag -offset indent
+.It Em nouchg
+the immutable bit should be cleared
+.El
 .Pp
 The
 .Fl H ,
