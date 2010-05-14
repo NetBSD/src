@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.93.38.8 2010/03/01 19:29:41 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.93.38.9 2010/05/14 22:26:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -442,7 +442,6 @@ END(mips3_sd)
  * See if access to addr with a len type instruction causes a machine check.
  * len is length of access in bytes (can be 1, 2, 4, or 8).
  */
-#if !defined(__mips_o32)
 LEAF(badaddr64)
 	PTR_L	v1, L_ADDR(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(baderr64)
@@ -450,8 +449,26 @@ LEAF(badaddr64)
 	/* Enable KX */
 	mfc0	t0, MIPS_COP_0_STATUS
 	or	t1, t0, MIPS3_SR_KX
+#ifdef __mips_o32
+	and	t2, t0, MIPS_SR_INT_IE	# disable interrupts
+	xor	t1, t2
+#endif
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
+
+#ifdef __mips_o32
+#ifdef __MIPSEB__
+	dsll	a0, a0, 32	# MSW
+	dsll	a1, a1, 32	# LSW
+	dsrl	a1, a1, 32
+#else
+	dsll	a1, a1, 32	# MSW
+	dsll	a0, a0, 32	# LSW
+	dsrl	a0, a0, 32
+#endif
+	or	a0, a1		# combine
+	move	a1, a2		# move up length argument
+#endif /* __mips_o32 */
 
 	bne	a1, 1, 2f
 	PTR_S	v0, U_PCB_ONFAULT(v1)
@@ -470,8 +487,11 @@ LEAF(badaddr64)
 8:
 	REG_L	v0, (a0)
 9:
+	sync
 	mtc0	t0, MIPS_COP_0_STATUS           # Restore KX
 	COP0_SYNC
+	nop
+	nop
 	PTR_S	zero, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero			# made it w/o errors
@@ -484,7 +504,6 @@ LEAF(baderr64)
 	j	ra
 	li	v0, -1
 END(baderr64)
-#endif
 
 /*
  * uint64_t mips3_cp0_tlb_entry_hi_probe(void);
