@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.52 2010/04/14 13:05:43 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.53 2010/05/14 18:52:46 jruoho Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 14, 2010
+.Dd May 14, 2010
 .Dt BUS_DMA 9
 .Os
 .Sh NAME
@@ -94,7 +94,7 @@
 .Fn bus_dmatag_destroy "bus_dma_tag_t tag"
 .Sh DESCRIPTION
 Provide a bus- and machine-independent "DMA mapping interface."
-.Sh NOTES
+.Sh IMPLEMENTATION NOTES
 All data structures, function prototypes, and macros will be defined
 by the port-specific header
 .In machine/bus.h .
