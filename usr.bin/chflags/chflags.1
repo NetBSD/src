@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.19 2010/05/14 05:07:22 jruoho Exp $
+.\"	$NetBSD: chflags.1,v 1.20 2010/05/14 08:31:38 jruoho Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,15 +86,15 @@ the file flags of the link itself is changed.
 .Pp
 Flags are a comma separated list of keywords.
 The following keywords are currently defined:
-.Bl -column -offset indent "Keyword   " "system append-only" "Who"
-.It Sy Keyword Ta Sy Flag Ta Sy Who
+.Bl -column -offset indent "Keyword   " "system append-only" "Permission"
+.It Sy Keyword Ta Sy Flag Ta Sy Permission
 .It Em arch Ta archived Ta super-user only
-.It Em opaque Ta opaque Ta owner or super-user only
-.It Em nodump Ta nodump Ta owner or super-user only
+.It Em opaque Ta opaque Ta owner or super-user
+.It Em nodump Ta nodump Ta owner or super-user
 .It Em sappnd Ta system append-only Ta super-user only
 .It Em schg Ta system immutable Ta super-user only
-.It Em uappnd Ta user append-only Ta owner or super-user only
-.It Em uchg Ta user immutable Ta owner or super-user only
+.It Em uappnd Ta user append-only Ta owner or super-user
+.It Em uchg Ta user immutable Ta owner or super-user
 .El
 .Pp
 Putting the letters
