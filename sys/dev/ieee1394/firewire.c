@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.31 2010/05/10 12:17:32 kiyohara Exp $	*/
+/*	$NetBSD: firewire.c,v 1.32 2010/05/14 12:25:19 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.31 2010/05/10 12:17:32 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.32 2010/05/14 12:25:19 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -920,9 +920,9 @@ fw_xfer_free_buf(struct fw_xfer* xfer)
 		return;
 	}
 	fw_xfer_unload(xfer);
-	if (xfer->send.payload != NULL)
+	if (xfer->send.pay_len > 0)
 		kmem_free(xfer->send.payload, xfer->send.pay_len);
-	if (xfer->recv.payload != NULL)
+	if (xfer->recv.pay_len > 0)
 		kmem_free(xfer->recv.payload, xfer->recv.pay_len);
 	cv_destroy(&xfer->cv);
 	kmem_free(xfer, sizeof(struct fw_xfer));
