@@ -34,7 +34,7 @@
 .\"     @(#)malloc.3	8.1 (Berkeley) 6/4/93
 .\" $FreeBSD: src/lib/libc/stdlib/malloc.3,v 1.73 2007/06/15 22:32:33 jasone Exp $
 .\"
-.Dd May 2, 2010
+.Dd May 14, 2010
 .Os
 .Dt JEMALLOC 3
 .Sh NAME
@@ -54,7 +54,7 @@ implementation specifically designed to be scalable
 on modern multi-processor systems.
 It is the default user space system allocator in
 .Nx .
-.Sh TUNING
+.Pp
 When the first call is made to one of the memory allocation
 routines such as
 .Fn malloc
@@ -291,7 +291,7 @@ the performance impact for storing such information would be prohibitive.
 There are a number of allocator implementations available on the Internet
 which focus on detecting and pinpointing problems by trading performance for
 extra sanity checks and detailed diagnostics.
-.Sh DIAGNOSTIC MESSAGES
+.Sh DIAGNOSTICS
 If any of the memory allocation/deallocation functions detect an error or
 warning condition, a message will be printed to file descriptor
 .Dv STDERR_FILENO .
