@@ -1,4 +1,4 @@
-.\"	$NetBSD: sftp.1,v 1.3 2009/10/14 17:33:20 joerg Exp $
+.\"	$NetBSD: sftp.1,v 1.4 2010/05/14 01:44:05 joerg Exp $
 .\" $OpenBSD: sftp.1,v 1.69 2008/12/09 15:35:00 sobrado Exp $
 .\"
 .\" Copyright (c) 2001 Damien Miller.  All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 9 2008
+.Dd December 9, 2008
 .Dt SFTP 1
 .Os
 .Sh NAME
@@ -204,7 +204,7 @@ This option may be useful in debugging the client and server.
 Specify how many requests may be outstanding at any one time.
 Increasing this may slightly improve file transfer speed
 but will increase memory usage.
-The default is 256 outstanding requests providing for 8MB 
+The default is 256 outstanding requests providing for 8MB
 of outstanding data with a 32KB buffer.
 .It Fl S Ar program
 Name of the
