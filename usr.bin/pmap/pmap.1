@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.16 2010/03/22 18:34:14 joerg Exp $
+.\"	$NetBSD: pmap.1,v 1.17 2010/05/14 17:31:26 joerg Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -244,11 +244,11 @@ the include file
 .Bl -column VM_MAP_WIREFUTURE VM_MAP_WIREFUTURE -offset indent
 .It Dv "VM_MAP_PAGEABLE"   Ta No "0x01   entries are pageable"
 .It Dv "VM_MAP_INTRSAFE"   Ta No "0x02   interrupt safe map"
-.It Dv "VM_MAP_WIREFUTURE" Ta No "0x04   future mappings are wired
-.It Dv "VM_MAP_BUSY"       Ta No "0x08   map is busy
-.It Dv "VM_MAP_WANTLOCK"   Ta No "0x10   want to write-lock
-.It Dv "VM_MAP_DYING"      Ta No "0x20   map is being destroyed
-.It Dv "VM_MAP_TOPDOWN"    Ta No "0x40   arrange map top-down
+.It Dv "VM_MAP_WIREFUTURE" Ta No "0x04   future mappings are wired"
+.It Dv "VM_MAP_BUSY"       Ta No "0x08   map is busy"
+.It Dv "VM_MAP_WANTLOCK"   Ta No "0x10   want to write-lock"
+.It Dv "VM_MAP_DYING"      Ta No "0x20   map is being destroyed"
+.It Dv "VM_MAP_TOPDOWN"    Ta No "0x40   arrange map top-down"
 .El
 .Pp
 The
