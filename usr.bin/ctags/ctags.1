@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctags.1,v 1.15 2003/08/07 11:13:30 agc Exp $
+.\"	$NetBSD: ctags.1,v 1.16 2010/05/14 16:48:36 joerg Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -171,15 +171,15 @@ of the second section of the yacc file, and
 .Ar yylex
 is the start of
 the second section of the lex file.
-.Sh EXIT STATUS
-.Nm
-exits with a value of 1 if an error occurred, 0 otherwise.
-Duplicate objects are not considered errors.
 .Sh FILES
 .Bl -tag -width tags -compact
 .It Pa tags
 default output tags file
 .El
+.Sh EXIT STATUS
+.Nm
+exits with a value of 1 if an error occurred, 0 otherwise.
+Duplicate objects are not considered errors.
 .Sh SEE ALSO
 .Xr ex 1 ,
 .Xr vi 1
