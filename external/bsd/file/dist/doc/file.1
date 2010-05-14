@@ -1,4 +1,4 @@
-.\"	$NetBSD: file.1,v 1.4 2009/05/08 21:45:52 wiz Exp $
+.\"	$NetBSD: file.1,v 1.5 2010/05/14 16:51:32 joerg Exp $
 .\"
 .\" $File: file.man,v 1.79 2008/11/06 22:49:08 rrt Exp $
 .Dd October 9, 2008
@@ -321,9 +321,6 @@ Print the version of the program and exit.
 .It Fl z , Fl Fl uncompress
 Try to look inside compressed files.
 .El
-.Sh RETURN VALUES
-.Nm
-returns 0 on success, and non-zero on error.
 .Sh ENVIRONMENT
 The environment variable
 .Ev MAGIC
@@ -356,6 +353,8 @@ Default compiled list of magic.
 .It Pa /usr/share/misc/magic
 Directory containing default magic files.
 .El
+.Sh EXIT STATUS
+.Ex -std
 .Sh EXAMPLES
 .Bd -literal -offset indent
 $ file file.c file /dev/{wd0a,hda}
