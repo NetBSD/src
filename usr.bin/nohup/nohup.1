@@ -1,4 +1,4 @@
-.\"	$NetBSD: nohup.1,v 1.13 2005/07/14 22:16:39 wiz Exp $
+.\"	$NetBSD: nohup.1,v 1.14 2010/05/14 17:28:56 joerg Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,6 +78,13 @@ either in the current directory or the user's home directory,
 will exit without invoking
 .Ar utility ,
 with an exit value as described below.
+.Sh ENVIRONMENT
+The following variable is used by
+.Nm .
+.Bl -tag -width flag
+.It Ev HOME
+User's home directory.
+.El
 .Sh EXIT STATUS
 The
 .Nm
@@ -98,13 +105,6 @@ Otherwise, the exit status of
 .Nm
 will be that of
 .Ar utility .
-.Sh ENVIRONMENT
-The following variable is used by
-.Nm .
-.Bl -tag -width flag
-.It Ev HOME
-User's home directory.
-.El
 .Sh SEE ALSO
 .Xr signal 3
 .Sh STANDARDS
