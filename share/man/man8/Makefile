@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 2008/10/20 22:29:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.97 2010/05/14 16:19:58 jruoho Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	MAKEDEV.8 MAKEDEV.local.8 afterboot.8 boot.8 compat_30.8 \
@@ -20,6 +20,7 @@ MLINKS+=compat_pecoff.8 peace.8
 MLINKS+=compat_netbsd32.8 netbsd32.8
 MLINKS+=nis.8 yp.8
 MLINKS+=rc.8 rc.d.8
+MLINKS+=rc.8 rc.local.8
 MLINKS+=rc.8 rc.shutdown.8
 
 SUBDIR= man8.acorn26 man8.acorn32 man8.alpha man8.amd64 man8.amiga man8.atari \
