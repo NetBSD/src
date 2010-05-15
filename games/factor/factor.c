@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.23 2010/05/13 17:52:11 tnozaki Exp $	*/
+/*	$NetBSD: factor.c,v 1.24 2010/05/15 21:22:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.23 2010/05/13 17:52:11 tnozaki Exp $");
+__RCSID("$NetBSD: factor.c,v 1.24 2010/05/15 21:22:39 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,7 +177,7 @@ main(int argc, char *argv[])
 	else
 		for (; *argv != NULL; ++argv) {
 			if (argv[0][0] == '-')
-				errx(1, "negative numbers aren't permitted.");
+				errx(1, "numbers <= 1 aren't permitted.");
 			if (BN_dec2bn(&val, argv[0]) == 0)
 				errx(1, "%s: illegal numeric format.", argv[0]);
 			pr_fact(val);
@@ -204,12 +204,8 @@ pr_fact(BIGNUM *val)
 	const ubig *fact;		/* The factor found. */
 
 	/* Firewall - catch 0 and 1. */
-	if (BN_is_zero(val))	/* Historical practice; 0 just exits. */
-		exit(0);
-	if (BN_is_one(val)) {
-		printf("1: 1\n");
-		return;
-	}
+	if (BN_is_zero(val) || BN_is_one(val))
+		errx(1, "numbers <= 1 aren't permitted.");
 
 	/* Factor value. */
 
