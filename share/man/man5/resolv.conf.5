@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.24 2006/02/25 02:28:56 wiz Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.25 2010/05/15 16:20:03 jruoho Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd January 16, 1999
+.Dd May 15, 2010
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -89,7 +89,8 @@ If no
 entry is present, the domain is determined
 from the local host name returned by
 .Xr gethostname 3 ;
-the domain part is taken to be everything after the first `.'.
+the domain part is taken to be everything after the first
+.Sq \&. .
 Finally, if the host name does not contain a domain part, the root
 domain is assumed.
 .It Sy lookup
@@ -219,7 +220,16 @@ resides in
 .Xr hostname 7 ,
 .Xr named 8
 .Rs
+.%A Paul Vixie
+.%A Kevin J. Dunlap
+.%A Michael J. Karels
 .%T "Name Server Operations Guide for BIND"
+.%N Release 4.9.4
+.%I CSRG,
+.%I Department of Electrical Engineering and Computer Sciences,
+.%I University of California, Berkeley
+.%D July 16, 1996
+.%U http://www.dns.net/dnsrd/docs/bog/bog.html
 .Re
 .Sh HISTORY
 The
