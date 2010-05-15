@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdents.2,v 1.20 2010/04/14 09:10:30 wiz Exp $
+.\"	$NetBSD: getdents.2,v 1.21 2010/05/15 15:38:41 jruoho Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)getdirentries.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd April 14, 2010
+.Dd May 15, 2010
 .Dt GETDENTS 2
 .Os
 .Sh NAME
@@ -63,61 +63,19 @@ with buffers smaller than this size.
 .Pp
 The data in the buffer is a series of
 .Em dirent
-structures each containing the following entries:
+structures:
 .Bd -literal -offset indent
-ino_t		d_fileno;
-uint16_t	d_reclen;
-uint16_t	d_namlen;
-uint8_t		d_type;
-char    	d_name[MAXNAMLEN + 1];
+struct dirent {
+	ino_t	 d_fileno;		/* file number of entry */
+	uint16_t d_reclen;		/* length of this record */
+	uint16_t d_namlen;		/* length of d_name */
+	uint8_t  d_type;		/* file type, see below */
+	char	 d_name[MAXNAMELEN + 1];
+};
 .Ed
 .Pp
-These are:
-.Bl -enum -offset indent
-.It
-The
-.Fa d_fileno
-entry is a number which is unique for each
-distinct file in the filesystem.
-Files that are linked by hard links (see
-.Xr link 2 )
-have the same
-.Fa d_fileno .
-If
-.Fa d_fileno
-is zero, the entry refers to a deleted file.
-.It
-The
-.Fa d_reclen
-entry is the length, in bytes, of the directory record.
-.It
-The
-.Fa d_namlen
-entry specifies the length of the file name excluding the NUL.
-Thus the actual size of
-.Fa d_name
-may vary from 1 to
-.Dv MAXNAMLEN
-\&+ 1.
-.It
-The
-.Fa d_type
-is the type of file, where the following are possible types:
-.Dv DT_UNKNOWN ,
-.Dv DT_FIFO ,
-.Dv DT_CHR ,
-.Dv DT_DIR ,
-.Dv DT_BLK ,
-.Dv DT_REG ,
-.Dv DT_LNK ,
-.Dv DT_SOCK ,
-and
-.Dv DT_WHT .
-.It
-The
-.Fa d_name
-entry contains a NUL-terminated file name.
-.El
+The structure is described in
+.Xr dirent 5 .
 .Pp
 Entries may be separated by extra space.
 The
