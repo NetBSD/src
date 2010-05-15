@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.78 2010/05/15 06:38:34 tsutsui Exp $ */
+/* $NetBSD: tga.c,v 1.79 2010/05/15 08:53:27 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.78 2010/05/15 06:38:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.79 2010/05/15 08:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,6 +404,7 @@ tgaattach(device_t parent, device_t self, void *aux)
 #endif
 	if (console) {
 		sc->sc_dc = &tga_console_dc;
+		sc->sc_dc->dc_rinfo.ri_flg &= ~RI_NO_AUTO;
 		sc->nscreens = 1;
 	} else {
 		sc->sc_dc = malloc(sizeof(struct tga_devconfig), M_DEVBUF,
