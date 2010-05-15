@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.25 2008/05/26 10:31:22 nisimura Exp $	*/
+/*	$NetBSD: pvr.c,v 1.26 2010/05/15 06:48:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.25 2008/05/26 10:31:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.26 2010/05/15 06:48:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,8 @@ pvr_getdevconfig(struct fb_devconfig *dc)
 	pvrinit(dc);
 
 	dc->rinfo.ri_flg = 0;
+	if (dc == &pvr_console_dc)
+		dc->rinfo.ri_flg |= RI_NO_AUTO;
 	dc->rinfo.ri_depth = dc->dc_depth;
 	dc->rinfo.ri_bits = (void *) dc->dc_videobase;
 	dc->rinfo.ri_width = dc->dc_wid;
