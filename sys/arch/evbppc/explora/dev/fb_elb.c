@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.9 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.10 2010/05/15 07:38:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.9 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.10 2010/05/15 07:38:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -176,6 +176,8 @@ fb_init(struct fb_dev *fb, int full)
 		ri->ri_stride = ri->ri_width;
 		ri->ri_bits = fb->fb_vram;
 		ri->ri_flg = RI_CENTER;
+		if (ri == &console_dev.fb_ri)
+			ri->ri_flg |= RI_NO_AUTO;
 
 		rasops_init(ri, 500, 500);
 	} else {
