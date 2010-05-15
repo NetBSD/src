@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.51 2009/08/22 17:38:06 tsutsui Exp $ */
+/* $NetBSD: xcfb.c,v 1.52 2010/05/15 07:01:37 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.51 2009/08/22 17:38:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.52 2010/05/15 07:01:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,6 +280,8 @@ xcfb_common_init(struct rasops_info *ri)
 	xcfbhwinit((void *)ri->ri_hw);
 
 	ri->ri_flg = RI_CENTER;
+	if (ri == &xcfb_console_ri)
+		ri->ri_flg |= RI_NO_AUTO;
 	ri->ri_depth = 8;
 	ri->ri_width = 1024;
 	ri->ri_height = 768;

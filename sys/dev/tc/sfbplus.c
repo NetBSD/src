@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.33 2009/08/22 17:38:06 tsutsui Exp $ */
+/* $NetBSD: sfbplus.c,v 1.34 2010/05/15 07:01:37 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.33 2009/08/22 17:38:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.34 2010/05/15 07:01:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,6 +369,8 @@ sfbp_common_init(struct rasops_info *ri)
 	}
 
 	ri->ri_flg = RI_CENTER;
+	if (ri == &sfbp_console_ri)
+		ri->ri_flg |= RI_NO_AUTO;
 	ri->ri_flg = 0;			/* XXX 32bpp RI_CENTER fails XXX */
 	ri->ri_depth = depth;
 	ri->ri_width = (hsetup & 0x1ff) << 2;
