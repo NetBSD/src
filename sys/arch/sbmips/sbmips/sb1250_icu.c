@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9.36.12 2010/05/12 19:11:33 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.9.36.13 2010/05/15 06:22:38 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.12 2010/05/12 19:11:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.13 2010/05/15 06:22:38 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -62,13 +62,15 @@ static const struct ipl_sr_map sb1250_ipl_sr_map = {
 	[IPL_SOFTNET]	=	MIPS_SOFT_INT_MASK,
 	[IPL_SOFTSERIAL] =	MIPS_SOFT_INT_MASK,
 	[IPL_VM]	=	MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
-#if IPL_SCHED == IPL_HIGH
-	[IPL_SCHED]	=	MIPS_INT_MASK,
-#else
+#if IPL_SCHED < IPL_HIGH
 	[IPL_SCHED]	=	MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
 			  	    | MIPS_INT_MASK_1 | MIPS_INT_MASK_5,
 #endif
+	[IPL_HIGH]	=	MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
+			  	    | MIPS_INT_MASK_1 | MIPS_INT_MASK_5,
+#if 0
 	[IPL_HIGH]	=	MIPS_INT_MASK,
+#endif
     },
 };
 
@@ -218,8 +220,10 @@ sb1250_cpu_init(struct cpu_softc *cpu)
 		evcnt_attach_dynamic(evcnts, EVCNT_TYPE_INTR, NULL,
 		    xname, sb1250_intr_names[i]);
 	}
+#if 0
 	WRITE_REG(cpu->sb1cpu_imr_base + SB1250_I_MAP(K_INT_WATCHDOG_TIMER_0), K_INT_MAP_NMI);
 	WRITE_REG(cpu->sb1cpu_imr_base + SB1250_I_MAP(K_INT_WATCHDOG_TIMER_1), K_INT_MAP_NMI);
+#endif
 
 	WRITE_REG(cpu->sb1cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->sb1cpu_imr_all);
 #ifdef MULTIPROCESSOR
@@ -341,7 +345,9 @@ sb1250_intr_establish(u_int num, u_int ipl,
 	ih->ih_arg = arg;
 	ih->ih_ipl = ipl;
 
-	if (ipl > IPL_VM)
+	if (num <= K_INT_WATCHDOG_TIMER_1)
+		WRITE_REG(cpu->sb1cpu_imr_base + SB1250_I_MAP(num), K_INT_MAP_I4);
+	else if (ipl > IPL_VM)
 		WRITE_REG(cpu->sb1cpu_imr_base + SB1250_I_MAP(num), K_INT_MAP_I1);
 
 	WRITE_REG(cpu->sb1cpu_imr_base + R_IMR_INTERRUPT_MASK, cpu->sb1cpu_imr_all);
