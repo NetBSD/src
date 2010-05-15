@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1031 2010/05/12 12:26:16 christos Exp $
+$NetBSD: pcidevs,v 1.1032 2010/05/15 20:10:37 jakllsch Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -603,6 +603,7 @@ vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor BELKIN		0x1799	Belkin
 vendor HAWKING		0x17b3	Hawking Technology
 vendor SANDBURST	0x17ba	Sandburst
+vendor NETCHIP		0x17cc	PLX Technology (NetChip)
 vendor I4		0x17cf	I4
 vendor ARECA		0x17d3	Areca
 vendor S2IO		0x17d5	S2io Technologies
@@ -3196,6 +3197,10 @@ product NEOMAGIC NMMM256ZX_VGA	0x0006	MagicMedia 256ZX VGA
 product NEOMAGIC NMMM256XLP_AU	0x0016	MagicMedia 256XL+ Audio
 product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
+
+/* NetChip (now PLX) products */
+product NETCHIP NET2280		0x2280	NET2280 USB Device Controller
+product NETCHIP NET2282		0x2282	NET2282 USB Device Controller
 
 /* Netgear products */
 product NETGEAR GA620		0x620a	GA620 1000baseSX Ethernet
