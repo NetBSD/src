@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.32 2010/05/14 12:25:19 kiyohara Exp $	*/
+/*	$NetBSD: firewire.c,v 1.33 2010/05/15 10:42:51 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.32 2010/05/14 12:25:19 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.33 2010/05/15 10:42:51 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.32 2010/05/14 12:25:19 kiyohara Exp $
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/kmem.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
