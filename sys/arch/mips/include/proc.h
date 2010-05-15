@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.36.7 2010/03/11 08:12:37 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.36.8 2010/05/15 20:27:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@ struct mdlwp {
 	vaddr_t	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
 	volatile u_int md_astpending;	/* AST pending on return to userland */
+	register_t md_tinfo;		/* thread info (TLS) */
 };
 
 struct mdproc {
