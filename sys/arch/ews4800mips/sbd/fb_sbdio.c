@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.8 2009/11/07 07:27:43 cegger Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.9 2010/05/15 06:39:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.8 2009/11/07 07:27:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.9 2010/05/15 06:39:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,6 +258,7 @@ fb_sbdio_cnattach(uint32_t mem, uint32_t reg, int flags)
 	ga->flags = flags;
 	fb_pmap_enter((paddr_t)mem, (paddr_t)reg, &memva, &regva);
 	ri->ri_bits = (void *)memva;
+	ri->ri_flg = RI_NO_AUTO;
 	ga->reg_addr = regva;
 
 	fb_common_init(ri, ga);
