@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.9 2010/05/15 06:39:06 tsutsui Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.10 2010/05/15 08:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.9 2010/05/15 06:39:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.10 2010/05/15 08:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,7 @@ fb_sbdio_attach(device_t parent, device_t self, void *aux)
 	if (console) {
 		/* already initialized in fb_cnattach() */
 		sc->sc_ri = ri = &fb_console_ri;
+		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->sc_ga = &fb_console_ga;
 		sc->sc_nscreens = 1;
 	} else {
