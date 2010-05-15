@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.9 2010/02/01 04:16:19 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.10 2010/05/15 20:27:48 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.9 2010/02/01 04:16:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.10 2010/05/15 20:27:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ void	MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct trapframe *);
 void	MachEmulateLWC0(uint32_t, struct trapframe *, uint32_t);
 void	MachEmulateSWC0(uint32_t, struct trapframe *, uint32_t);
 void	MachEmulateSpecial(uint32_t, struct trapframe *, uint32_t);
+void	MachEmulateSpecial3(uint32_t, struct trapframe *, uint32_t);
 void	MachEmulateLWC1(uint32_t, struct trapframe *, uint32_t);
 void	MachEmulateLDC1(uint32_t, struct trapframe *, uint32_t);
 void	MachEmulateSWC1(uint32_t, struct trapframe *, uint32_t);
@@ -243,6 +244,9 @@ MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
 	case OP_SPECIAL:
 		MachEmulateSpecial(inst, tf, cause);
 		break;
+	case OP_SPECIAL3:
+		MachEmulateSpecial3(inst, tf, cause);
+		break;
 	case OP_COP1:
 #if defined(FPEMUL)
 		MachEmulateFP(inst, &tf->tf_registers, cause);
@@ -414,9 +418,37 @@ MachEmulateSpecial(uint32_t inst, struct trapframe *tf, uint32_t cause)
 		tf->tf_regs[_R_CAUSE] = cause;
 		tf->tf_regs[_R_BADVADDR] = tf->tf_regs[_R_PC];
 		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = cause;
-		ksi.ksi_code = SEGV_MAPERR;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (void *)(intptr_t)tf->tf_regs[_R_PC];
+		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
+		break;
+	}
+
+	update_pc(tf, cause);
+}
+
+void
+MachEmulateSpecial3(uint32_t inst, struct trapframe *tf, uint32_t cause)
+{
+	ksiginfo_t ksi;
+	switch (((InstFmt)inst).RType.func) {
+	case OP_RDHWR:
+		switch (((InstFmt)inst).RType.rd) {
+		case 29:
+			tf->tf_regs[((InstFmt)inst).RType.rt] =
+			    curlwp->l_md.md_tinfo;
+			break;
+		}
+		/* FALLTHROUGH */
+	default:
+		tf->tf_regs[_R_CAUSE] = cause;
+		tf->tf_regs[_R_BADVADDR] = tf->tf_regs[_R_PC];
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_trap = cause;
+		ksi.ksi_code = ILL_ILLOPC;
 		ksi.ksi_addr = (void *)(intptr_t)tf->tf_regs[_R_PC];
 		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
 		break;
