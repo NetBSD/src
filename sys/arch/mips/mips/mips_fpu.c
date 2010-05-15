@@ -29,17 +29,23 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.2 2010/03/01 19:26:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fpu.c,v 1.1.2.3 2010/05/15 20:13:43 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/cpu.h>
+#ifdef DIAGNOSTIC
+#include <sys/proc.h>
+#endif
 #include <sys/lwp.h>
 #include <sys/user.h>
 
 #include <mips/locore.h>
 #include <mips/regnum.h>
+#ifdef DIAGNOSTIC
+#include <mips/cpu.h>
+#endif
 
 #ifndef NOFPU
 static struct {
@@ -137,7 +143,9 @@ fpusave(struct lwp *l)
 	mips_fpreg_t * const fp = l->l_addr->u_pcb.pcb_fpregs.r_regs;
 	uint32_t status, fpcsr;
 
+#ifdef LOCKDEBUG
 	KASSERT(mutex_locked(&fp_mutex));
+#endif
 
 	/*
 	 * Don't do anything if the FPU is already off.
@@ -148,7 +156,7 @@ fpusave(struct lwp *l)
 	/*
 	 * this thread yielded the FPA.
 	 */
-	KASSERT(l->l_fpcpu == ci);
+	KASSERT(l->l_fpcpu == curcpu());
 	KASSERT(l->l_fpcpu->ci_fpcurlwp == l);
 	KASSERT(tf->tf_regs[_R_SR] & MIPS_SR_COP_1_BIT);	/* it should be on */
 
