@@ -1,4 +1,4 @@
-/*	$NetBSD: xafb.c,v 1.15 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: xafb.c,v 1.16 2010/05/15 10:01:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -29,7 +29,7 @@
 /* "xa" frame buffer driver.  Currently supports 1280x1024x8 only. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.15 2008/04/09 15:40:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xafb.c,v 1.16 2010/05/15 10:01:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -152,6 +152,7 @@ xafb_attach(device_t parent, device_t self, void *aux)
 	if (console) {
 		dc = &xafb_console_dc;
 		ri = &dc->dc_ri;
+		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->sc_nscreens = 1;
 	} else {
 		dc = malloc(sizeof(struct xafb_devconfig), M_DEVBUF,
@@ -216,6 +217,8 @@ xafb_common_init(struct xafb_devconfig *dc)
 	ri->ri_stride = 2048;
 	ri->ri_bits = (void *)dc->dc_fbbase;
 	ri->ri_flg = RI_FORCEMONO | RI_FULLCLEAR;
+	if (dc == &xafb_console_dc)
+		ri->ri_flg |= RI_NO_AUTO;
 
 	rasops_init(ri, 44, 100);
 
