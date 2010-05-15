@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_tp.c,v 1.2 2010/05/13 21:01:59 nonaka Exp $	*/
+/*	$NetBSD: wzero3_tp.c,v 1.3 2010/05/15 03:54:35 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.2 2010/05/13 21:01:59 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.3 2010/05/15 03:54:35 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -590,7 +590,7 @@ max1233_readpos(struct wzero3tp_pos *pos)
 
 	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
 	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),
-	    0x0b43);
+	    0x0bf3);
 
 	while ((status = (wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
 		    (1<<MAXCTRL_RW_SH)
