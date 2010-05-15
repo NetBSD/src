@@ -1,6 +1,6 @@
-/*	$NetBSD: ssl-bozo.c,v 1.7 2010/05/10 03:37:45 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.8 2010/05/15 06:48:27 mrg Exp $	*/
 
-/*	$eterna: ssl-bozo.c,v 1.11 2010/05/10 02:51:28 mrg Exp $	*/
+/*	$eterna: ssl-bozo.c,v 1.13 2010/05/12 12:24:58 rtr Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -34,6 +34,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include "bozohttpd.h"
@@ -56,20 +57,56 @@ typedef struct sslinfo_t {
 	char			*privatekey_file;
 } sslinfo_t;
 
+/*
+ * bozo_ssl_err
+ *
+ * bozo_ssl_err works just like bozo_err except in addition to printing
+ * the error provided by the caller at the point of error it pops and
+ * prints all errors from the SSL error queue.
+ */
+static void
+bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
+{
+        va_list ap;
+
+        va_start(ap, fmt);
+        if (httpd->logstderr || isatty(STDERR_FILENO)) {
+                vfprintf(stderr, fmt, ap);
+                fputs("\n", stderr);
+        } else
+                vsyslog(LOG_ERR, fmt, ap);
+        va_end(ap);
+
+	unsigned int sslcode = ERR_get_error();
+	do {
+		const char *sslfmt = "SSL Error: %s:%s:%s";
+
+		if (httpd->logstderr || isatty(STDERR_FILENO)) {
+			fprintf(stderr, sslfmt,
+			    ERR_lib_error_string(sslcode),
+			    ERR_func_error_string(sslcode),
+			    ERR_reason_error_string(sslcode));
+		} else {
+			syslog(LOG_ERR, sslfmt,
+			    ERR_lib_error_string(sslcode),
+			    ERR_func_error_string(sslcode),
+			    ERR_reason_error_string(sslcode));
+		}
+	} while (0 != (sslcode = ERR_get_error()));
+	exit(code);
+}
+
 static int
-bozo_ssl_printf(bozohttpd_t *httpd, const char * fmt, ...)
+bozo_ssl_printf(bozohttpd_t *httpd, const char * fmt, va_list ap)
 {
 	sslinfo_t	*sslinfo;
-	va_list		 ap;
 	char		*buf;
 	int		 nbytes;
 
 	sslinfo = httpd->sslinfo;
 	/* XXX we need more elegant/proper handling of SSL_write return */
-	va_start(ap, fmt);
 	if ((nbytes = vasprintf(&buf, fmt, ap)) != -1) 
 		SSL_write(sslinfo->bozossl, buf, nbytes);
-	va_end(ap);
 
 	free(buf);
 
@@ -135,17 +172,26 @@ bozo_ssl_init(bozohttpd_t *httpd)
 	sslinfo->ssl_context = SSL_CTX_new(sslinfo->ssl_method);
 
 	/* XXX we need to learn how to check the SSL stack for more info */
-	if (sslinfo->ssl_context == NULL)
-		bozo_err(httpd, 1, "SSL context initialization failed.");
+	if (NULL == sslinfo->ssl_context)
+		bozo_ssl_err(httpd, EXIT_FAILURE,
+		    "SSL context creation failed");
 
-	SSL_CTX_use_certificate_file(sslinfo->ssl_context,
-		sslinfo->certificate_file, SSL_FILETYPE_PEM);
-	SSL_CTX_use_PrivateKey_file(sslinfo->ssl_context,
-		sslinfo->privatekey_file, SSL_FILETYPE_PEM);
+	if (1 != SSL_CTX_use_certificate_file(sslinfo->ssl_context,
+	    sslinfo->certificate_file, SSL_FILETYPE_PEM))
+		bozo_ssl_err(httpd, EXIT_FAILURE,
+		    "Unable to use certificate file '%s'",
+		    sslinfo->certificate_file);
+
+	if (1 != SSL_CTX_use_PrivateKey_file(sslinfo->ssl_context,
+	    sslinfo->privatekey_file, SSL_FILETYPE_PEM))
+		bozo_ssl_err(httpd, EXIT_FAILURE,
+		    "Unable to use private key file '%s'",
+		    sslinfo->privatekey_file);
 
 	/* check consistency of key vs certificate */
 	if (!SSL_CTX_check_private_key(sslinfo->ssl_context))
-		bozo_err(httpd, 1, "check private key failed");
+		bozo_ssl_err(httpd, EXIT_FAILURE,
+		    "Check private key failed");
 }
 
 void

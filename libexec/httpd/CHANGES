@@ -1,4 +1,8 @@
-$eterna: CHANGES,v 1.70 2010/05/10 02:24:30 mrg Exp $
+$eterna: CHANGES,v 1.71 2010/05/13 04:19:04 mrg Exp $
+
+changes since bozohttpd 20100509:
+	o  fix some compile issues
+	o  fix SSL mode.  from rtr.
 
 changes since bozohttpd 20090522:
 	o  major rework and clean up of internal interfaces.  move the main
