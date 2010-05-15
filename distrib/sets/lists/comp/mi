@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1445 2010/05/13 17:48:50 jruoho Exp $
+#	$NetBSD: mi,v 1.1446 2010/05/15 09:00:52 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,7 +7,7 @@
 ./usr/bin/ar					comp-util-bin		binutils
 ./usr/bin/as					comp-util-bin		binutils
 ./usr/bin/asa					comp-fortran-bin
-./usr/bin/atf-compile				comp-atf-bin		cxx
+./usr/bin/atf-compile				comp-atf-bin		atf
 ./usr/bin/c++					comp-cxx-bin		gcccmds
 ./usr/bin/c++filt				comp-cxx-bin		binutils
 ./usr/bin/c89					comp-c-bin
@@ -2968,12 +2968,12 @@
 ./usr/libdata/debug/usr/bin/as.debug		comp-util-debug		binutils,debug
 ./usr/libdata/debug/usr/bin/asa.debug		comp-fortran-debug	debug
 ./usr/libdata/debug/usr/bin/at.debug		comp-cron-debug		debug
-./usr/libdata/debug/usr/bin/atf-check.debug	comp-atf-debug		debug
-./usr/libdata/debug/usr/bin/atf-compile.debug	comp-atf-debug		debug
-./usr/libdata/debug/usr/bin/atf-config.debug	comp-atf-debug		debug
-./usr/libdata/debug/usr/bin/atf-report.debug	comp-atf-debug		debug
-./usr/libdata/debug/usr/bin/atf-run.debug	comp-atf-debug		debug
-./usr/libdata/debug/usr/bin/atf-version.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/bin/atf-check.debug	comp-atf-debug		atf,debug
+./usr/libdata/debug/usr/bin/atf-compile.debug	comp-atf-debug		atf,debug
+./usr/libdata/debug/usr/bin/atf-config.debug	comp-atf-debug		atf,debug
+./usr/libdata/debug/usr/bin/atf-report.debug	comp-atf-debug		atf,debug
+./usr/libdata/debug/usr/bin/atf-run.debug	comp-atf-debug		atf,debug
+./usr/libdata/debug/usr/bin/atf-version.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/bin/audioctl.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/audioplay.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/audiorecord.debug	comp-audio-debug	debug
@@ -3377,9 +3377,9 @@
 ./usr/libdata/debug/usr/games/worm.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/worms.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/wump.debug	comp-games-debug	debug
-./usr/libdata/debug/usr/libexec/atf-cleanup.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/libexec/atf-cleanup.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/libexec/atf-exec.debug	comp-atf-debug		obsolete
-./usr/libdata/debug/usr/libexec/atf-format.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/libexec/atf-format.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/libexec/atf-killpg.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/libexec/atrun.debug	comp-cron-debug		debug
 ./usr/libdata/debug/usr/libexec/cc1.debug	comp-c-debug		gcccmds,debug
