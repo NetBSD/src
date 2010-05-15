@@ -1,4 +1,4 @@
-.\"	$NetBSD: dir.5,v 1.22 2010/03/22 18:58:32 joerg Exp $
+.\"	$NetBSD: dir.5,v 1.23 2010/05/15 15:38:41 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)dir.5	8.3 (Berkeley) 4/19/94
 .\"
-.Dd October 31, 2008
+.Dd May 15, 2010
 .Dt DIRENT 5
 .Os
 .Sh NAME
@@ -73,49 +73,132 @@ been grafted a file system object, such as a physical disk or a
 partitioned area of such a disk.
 (See
 .Xr mount 8 . )
-.Pp
+.Sh IMPLEMENTATION NOTES
 The directory entry format is defined in the file
-.In sys/dirent.h :
-.Bd -literal
-/*
- * A directory entry has a struct dirent at the front of it, containing
- * its inode number, the length of the entry, and the length of the name
- * contained in the entry.  These are followed by the name padded to an
- * 8 byte boundary with null bytes.  All names are guaranteed null
- * terminated.  The maximum length of a name in a directory is MAXNAMLEN.
- */
-
-struct dirent {
-	ino_t    d_fileno;	/* file number of entry */
-	uint16_t d_reclen;	/* length of this record */
-	uint16_t d_namlen;	/* length of string in d_name */
-	uint8_t  d_type;	/* file type, see below */
-#define MAXNAMLEN       511
-	char d_name[MAXNAMLEN + 1]; /* name must be no longer than this */
-};
-
-/*
- * File types
- */
-#define DT_UNKNOWN	0
-#define DT_FIFO		1
-#define DT_CHR		2
-#define DT_DIR		4
-#define DT_BLK		6
-#define DT_REG		8
-#define DT_LNK		10
-#define DT_SOCK		12
-#define DT_WHT		14
+.In sys/dirent.h ,
+which is also included by
+.In dirent.h .
+The format is represented by the
+.Em dirent
+structure, which contains the following entries:
+.Bd -literal -offset indent
+ino_t		d_fileno;
+uint16_t	d_reclen;
+uint16_t	d_namlen;
+uint8_t		d_type;
+char    	d_name[MAXNAMLEN + 1];
 .Ed
+.Pp
+These are:
+.Bl -enum -offset indent
+.It
+The
+.Fa d_fileno
+entry is a number which is unique for each
+distinct file in the filesystem.
+Files that are linked by hard links (see
+.Xr link 2 )
+have the same
+.Fa d_fileno .
+If
+.Fa d_fileno
+is zero, the entry refers to a deleted file.
+The type
+.Va ino_t
+is defined in
+.In sys/types.h .
+.It
+The
+.Fa d_reclen
+entry is the length, in bytes, of the directory record.
+.It
+The
+.Fa d_namlen
+entry specifies the length of the file name excluding the NUL.
+Thus the actual size of
+.Fa d_name
+may vary from 1 to
+.Dv MAXNAMLEN
+\&+ 1.
+.It
+The
+.Fa d_type
+is the type of the file:
+.Pp
+.Bl -tag -width "DT_UNKNOWN   " -offset indent -compact
+.It Dv DT_UNKNOWN
+unknown file type
+.It Dv DT_FIFO
+named pipe
+.It Dv DT_CHR
+character device
+.It Dv DT_DIR
+directory
+.It Dv DT_BLK
+block device
+.It Dv DT_REG
+regular file
+.It Dv DT_LNK
+symbolic link
+.It Dv DT_SOCK
+.Tn UNIX
+domain socket
+.It Dv DT_WHT
+dummy
+.Dq whiteout inode
+.El
+.It
+The
+.Fa d_name
+entry contains a NUL-terminated file name.
+.El
+.Sh COMPATIBILITY
+The
+.St -p1003.1-2001
+standard specifies only the fields
+.Va d_ino
+and
+.Va d_name .
+The remaining fields are available on many, but not all systems.
+.Pp
+Furthermore, the standard leaves the size of
+.Va d_name
+as unspecified, mentioning only that the number of
+bytes preceding the terminating NUL shall not exceed
+.Dv NAME_MAX .
+Because of this, and because the
+.Va d_namlen
+field may not be present, a portable application should determine the size of
+.Va d_name
+by using
+.Xr strlen 3
+instead of applying the
+.Fn sizeof
+operator.
+.Pp
 .Sh SEE ALSO
 .Xr getdents 2 ,
 .Xr fs 5 ,
 .Xr inode 5
+.\" .Sh STANDARDS
+.\" Given the noted limitations, the
+.\".In dirent.h
+.\" header conforms to
+.\" .St -p1003.1-2001 .
 .Sh HISTORY
 A
 dir structure appeared in
 .At v7 .
 The
-.Nm
+.Em dirent
 structure appeared in
 .Nx 1.3 .
+.\"
+.\" XXX: Unclear, cf. PR lib/43310.
+.\"
+.\" .Sh BUGS
+.\" The
+.\" .Nx
+.\" implementation uses a statically allocated buffer for the
+.\" .Va d_name
+.\" entry.
