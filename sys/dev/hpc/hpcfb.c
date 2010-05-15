@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.53 2010/02/24 22:37:57 dyoung Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.54 2010/05/15 06:01:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.53 2010/02/24 22:37:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.54 2010/05/15 06:01:12 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -451,6 +451,9 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 #else
 	ri->ri_flg = RI_CURSOR;
 #endif
+	if (dc == &hpcfb_console_dc)
+		ri->ri_flg |= RI_NO_AUTO;
+
 	switch (ri->ri_depth) {
 	case 8:
 		if (32 <= fbconf->hf_pack_width &&
