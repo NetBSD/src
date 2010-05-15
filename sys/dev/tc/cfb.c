@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.58 2010/05/15 07:01:37 tsutsui Exp $ */
+/* $NetBSD: cfb.c,v 1.59 2010/05/15 08:53:27 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.58 2010/05/15 07:01:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.59 2010/05/15 08:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,6 +255,7 @@ cfbattach(device_t parent, device_t self, void *aux)
 	console = (ta->ta_addr == cfb_consaddr);
 	if (console) {
 		sc->sc_ri = ri = &cfb_console_ri;
+		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->nscreens = 1;
 	}
 	else {

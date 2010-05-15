@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.54 2010/05/15 06:01:12 tsutsui Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.55 2010/05/15 08:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.54 2010/05/15 06:01:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.55 2010/05/15 08:53:27 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -305,6 +305,7 @@ hpcfbattach(device_t parent, device_t self, void *aux)
 
 	if (hpcfbconsole) {
 		sc->sc_dc = &hpcfb_console_dc;
+		sc->sc_dc->dc_rinfo.ri_flg &= ~RI_NO_AUTO;
 		hpcfb_console_dc.dc_sc = sc;
 		printf(": %dx%d pixels, %d colors, %dx%d chars",
 		    sc->sc_dc->dc_rinfo.ri_width,sc->sc_dc->dc_rinfo.ri_height,

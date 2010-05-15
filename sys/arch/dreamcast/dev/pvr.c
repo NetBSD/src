@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.26 2010/05/15 06:48:22 tsutsui Exp $	*/
+/*	$NetBSD: pvr.c,v 1.27 2010/05/15 08:53:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.26 2010/05/15 06:48:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.27 2010/05/15 08:53:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,6 +289,7 @@ pvr_attach(struct device *parent, struct device *self, void *aux)
 	console = pvr_is_console;
 	if (console) {
 		sc->sc_dc = &pvr_console_dc;
+		sc->sc_dc->rinfo.ri_flg &= ~RI_NO_AUTO;
 		sc->nscreens = 1;
 	} else {
 		sc->sc_dc = malloc(sizeof(struct fb_devconfig), M_DEVBUF,
