@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.73 2010/05/08 08:14:37 jmmv Exp $
+# $NetBSD: mi,v 1.74 2010/05/15 09:00:53 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -312,26 +312,26 @@
 ./usr/tests/atf/atf-c++/t_user			tests-atf-tests		atf
 ./usr/tests/atf/atf-c++/t_utils			tests-atf-tests		atf
 ./usr/tests/atf/atf-check			tests-atf-tests
-./usr/tests/atf/atf-check/Atffile		tests-atf-tests
+./usr/tests/atf/atf-check/Atffile		tests-atf-tests		atf
 ./usr/tests/atf/atf-check/t_integration		tests-atf-tests		atf
 ./usr/tests/atf/atf-cleanup			tests-atf-tests
-./usr/tests/atf/atf-cleanup/Atffile		tests-atf-tests
+./usr/tests/atf/atf-cleanup/Atffile		tests-atf-tests		atf
 ./usr/tests/atf/atf-cleanup/t_integration	tests-atf-tests		atf
 ./usr/tests/atf/atf-compile			tests-atf-tests
-./usr/tests/atf/atf-compile/Atffile		tests-atf-tests
+./usr/tests/atf/atf-compile/Atffile		tests-atf-tests		atf
 ./usr/tests/atf/atf-compile/h_mode		tests-atf-tests		atf
 ./usr/tests/atf/atf-compile/t_integration	tests-atf-tests		atf
 ./usr/tests/atf/atf-config			tests-atf-tests
-./usr/tests/atf/atf-config/Atffile		tests-atf-tests
+./usr/tests/atf/atf-config/Atffile		tests-atf-tests		atf
 ./usr/tests/atf/atf-config/t_integration	tests-atf-tests		atf
 ./usr/tests/atf/atf-report			tests-atf-tests
-./usr/tests/atf/atf-report/Atffile		tests-atf-tests
+./usr/tests/atf/atf-report/Atffile		tests-atf-tests		atf
 ./usr/tests/atf/atf-report/h_fail		tests-atf-tests		atf
 ./usr/tests/atf/atf-report/h_misc		tests-atf-tests		atf
 ./usr/tests/atf/atf-report/h_pass		tests-atf-tests		atf
 ./usr/tests/atf/atf-report/t_integration	tests-atf-tests		atf
 ./usr/tests/atf/atf-run				tests-atf-tests
-./usr/tests/atf/atf-run/Atffile			tests-atf-tests
+./usr/tests/atf/atf-run/Atffile			tests-atf-tests		atf
 ./usr/tests/atf/atf-run/h_bad_metadata		tests-atf-tests		atf
 ./usr/tests/atf/atf-run/h_fail			tests-atf-tests		atf
 ./usr/tests/atf/atf-run/h_misc			tests-atf-tests		atf
