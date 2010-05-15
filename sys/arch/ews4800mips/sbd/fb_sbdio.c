@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.10 2010/05/15 08:53:27 tsutsui Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.11 2010/05/15 16:35:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.10 2010/05/15 08:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.11 2010/05/15 16:35:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,6 +203,8 @@ fb_common_init(struct rasops_info *ri, struct ga *ga)
 	ri->ri_flg = RI_CENTER | RI_CLEAR;
 	if (!ga_active)
 		ri->ri_flg |= RI_FORCEMONO;
+	if (ri == &fb_console_ri)
+		ri->ri_flg |= RI_NO_AUTO;
 
 	ri->ri_depth = 8;
 	ri->ri_width = 1280;
@@ -259,7 +261,6 @@ fb_sbdio_cnattach(uint32_t mem, uint32_t reg, int flags)
 	ga->flags = flags;
 	fb_pmap_enter((paddr_t)mem, (paddr_t)reg, &memva, &regva);
 	ri->ri_bits = (void *)memva;
-	ri->ri_flg = RI_NO_AUTO;
 	ga->reg_addr = regva;
 
 	fb_common_init(ri, ga);
