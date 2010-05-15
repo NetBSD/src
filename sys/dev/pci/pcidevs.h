@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1028 2010/05/12 12:27:07 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1029 2010/05/15 20:11:41 jakllsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1031 2010/05/12 12:26:16 christos Exp
+ *	NetBSD: pcidevs,v 1.1032 2010/05/15 20:10:37 jakllsch Exp
  */
 
 /*
@@ -610,6 +610,7 @@
 #define	PCI_VENDOR_BELKIN	0x1799		/* Belkin */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst */
+#define	PCI_VENDOR_NETCHIP	0x17cc		/* PLX Technology (NetChip) */
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
 #define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
@@ -3203,6 +3204,10 @@
 #define	PCI_PRODUCT_NEOMAGIC_NMMM256XLP_AU	0x0016		/* MagicMedia 256XL+ Audio */
 #define	PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU	0x8005		/* MagicMedia 256AV Audio */
 #define	PCI_PRODUCT_NEOMAGIC_NMMM256ZX_AU	0x8006		/* MagicMedia 256ZX Audio */
+
+/* NetChip (now PLX) products */
+#define	PCI_PRODUCT_NETCHIP_NET2280	0x2280		/* NET2280 USB Device Controller */
+#define	PCI_PRODUCT_NETCHIP_NET2282	0x2282		/* NET2282 USB Device Controller */
 
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 1000baseSX Ethernet */
