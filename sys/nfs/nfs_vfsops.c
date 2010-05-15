@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.211 2010/03/02 23:19:09 pooka Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.212 2010/05/15 20:24:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.211 2010/03/02 23:19:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.212 2010/05/15 20:24:57 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -234,7 +234,7 @@ nfs_statvfs(struct mount *mp, struct statvfs *sbp)
 		sbp->f_ffree = tquad;
 		sbp->f_favail = tquad;
 		sbp->f_fresvd = 0;
-		sbp->f_namemax = MAXNAMLEN;
+		sbp->f_namemax = NFS_MAXNAMLEN;
 	} else {
 		sbp->f_bsize = NFS_FABLKSIZE;
 		sbp->f_frsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
@@ -246,7 +246,7 @@ nfs_statvfs(struct mount *mp, struct statvfs *sbp)
 		sbp->f_ffree = 0;
 		sbp->f_favail = 0;
 		sbp->f_fresvd = 0;
-		sbp->f_namemax = MAXNAMLEN;
+		sbp->f_namemax = NFS_MAXNAMLEN;
 	}
 	copy_statvfs_info(sbp, mp);
 	nfsm_reqdone;
