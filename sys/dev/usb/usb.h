@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.84 2010/03/06 21:07:47 plunky Exp $	*/
+/*	$NetBSD: usb.h,v 1.85 2010/05/15 20:45:43 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -197,6 +197,7 @@ typedef struct {
 #define  UDESC_OTHER_SPEED_CONFIGURATION 0x07
 #define  UDESC_INTERFACE_POWER	0x08
 #define  UDESC_OTG		0x09
+#define  UDESC_DEBUG		0x0a
 #define  UDESC_CS_DEVICE	0x21	/* class specific */
 #define  UDESC_CS_CONFIG	0x22
 #define  UDESC_CS_STRING	0x23
@@ -395,6 +396,13 @@ typedef struct {
 #define UOTG_A_ALT_HNP_SUPPORT	5
 
 typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDebugInEndpoint;
+	uByte		bDebugOutEndpoint;
+} UPACKED usb_debug_descriptor_t;
+
+typedef struct {
 	uWord		wStatus;
 /* Device status flags */
 #define UDS_SELF_POWERED		0x0001
@@ -576,6 +584,27 @@ typedef struct {
 
 #define USB_UNCONFIG_NO 0
 #define USB_UNCONFIG_INDEX (-1)
+
+
+/* Packet IDs */
+#define UPID_RESERVED	0xf0
+#define UPID_OUT	0xe1
+#define UPID_ACK	0xd2
+#define UPID_DATA0	0xc3
+#define UPID_PING	0xb4
+#define UPID_SOF	0xa5
+#define UPID_NYET	0x96
+#define UPID_DATA2	0x87
+#define UPID_SPLIT	0x78
+#define UPID_IN		0x69
+#define UPID_NAK	0x5a
+#define UPID_DATA1	0x4b
+#define UPID_ERR	0x3c
+#define UPID_PREAMBLE	0x3c
+#define UPID_SETUP	0x2d
+#define UPID_STALL	0x1e
+#define UPID_MDATA	0x0f
+
 
 /*** ioctl() related stuff ***/
 
