@@ -1,6 +1,6 @@
-/*	$NetBSD: bozohttpd.c,v 1.18 2010/05/10 14:53:17 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.19 2010/05/15 06:48:27 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.c,v 1.168 2010/05/10 14:49:19 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.169 2010/05/13 04:17:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -109,7 +109,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20100510"
+#define SERVER_SOFTWARE		"bozohttpd/20100512"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
