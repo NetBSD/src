@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.24 2008/04/09 15:40:30 tsutsui Exp $	*/
+/*	$NetBSD: fb.c,v 1.25 2010/05/15 10:01:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.24 2008/04/09 15:40:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.25 2010/05/15 10:01:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -143,6 +143,7 @@ fb_attach(device_t parent, device_t self, void *aux)
 	if (console) {
 		dc = &fb_console_dc;
 		ri = &dc->dc_ri;
+		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->sc_nscreens = 1;
 	} else {
 		dc = malloc(sizeof(struct fb_devconfig), M_DEVBUF,
@@ -201,6 +202,8 @@ fb_common_init(struct fb_devconfig *dc)
 	ri->ri_stride = 2048 / 8;
 	ri->ri_bits = dc->dc_fbbase;
 	ri->ri_flg = RI_FULLCLEAR;
+	if (dc == &fb_console_dc)
+		ri->ri_flg |= RI_NO_AUTO;
 
 	rasops_init(ri, 24, 80);
 	rows = (height - 2) / ri->ri_font->fontheight;
