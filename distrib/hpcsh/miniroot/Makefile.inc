@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2010/05/03 14:14:35 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2010/05/15 05:08:53 tsutsui Exp $
 
 WARNS=		1
 DBG=		-Os
@@ -10,3 +10,5 @@ MAKEDEVTARGETS=	all
 LISTS+=		${DISTRIBDIR}/common/list.sysinst.en
 MTREECONF+=	${.CURDIR}/mtree.usr.install
 IMAGEDEPENDS+=	${ARCHDIR}/dot.profile
+
+.include "${DISTRIBDIR}/common/Makefile.dhcpcd"
