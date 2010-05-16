@@ -1,4 +1,4 @@
-/* $NetBSD: skg.c,v 1.2 2010/05/03 18:55:09 phx Exp $ */
+/* $NetBSD: skg.c,v 1.3 2010/05/16 11:27:49 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -227,25 +227,20 @@ skg_init(unsigned tag, void *data)
 
 	/* read ethernet address */
 	en = data;
-	for (i = 0; i < 6; i++)
-		en[i] = CSR_READ_1(l, SK_MAC0 + i);
+	if (brdtype == BRD_SYNOLOGY)
+		read_mac_from_flash(en);
+	else
+		for (i = 0; i < 6; i++)
+			en[i] = CSR_READ_1(l, SK_MAC0 + i);
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 	    en[0], en[1], en[2], en[3], en[4], en[5]);
 	printf("PHY %d (%04x.%04x)\n", l->phy,
 	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3));
 
 	/* set station address */
-	for (i = 0; i < 3; i++) {
-#if 0
-		CSR_WRITE_2(l, YUKON_SA1 + i * 4,
-		    CSR_READ_2(l, SK_MAC0 + i * 2));
-		CSR_WRITE_2(l, YUKON_SA2 + i * 4,
-		    CSR_READ_2(l, SK_MAC1 + i * 2));
-#else
+	for (i = 0; i < 3; i++)
 		CSR_WRITE_2(l, YUKON_SA1 + i * 4,
 		    (en[i * 2] << 8) | en[i * 2 + 1]);
-#endif
-	}
 
 	/* configure RX and TX MAC FIFO */
 	CSR_WRITE_1(l, SK_RXMF1_CTRL_TEST, RFCTL_RESET_CLEAR);

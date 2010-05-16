@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.4 2007/10/17 19:56:56 garbled Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.5 2010/05/16 11:27:49 phx Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -42,6 +42,7 @@ struct btinfo_common {
 #define BTINFO_CLOCK		4
 #define BTINFO_BOOTPATH		5
 #define BTINFO_ROOTDEVICE	6
+#define BTINFO_NET		7
 
 struct btinfo_magic {
 	struct btinfo_common common;
@@ -74,6 +75,12 @@ struct btinfo_rootdevice {
 	struct btinfo_common common;
 	char devname[16];
 	unsigned cookie;
+};
+
+struct btinfo_net {
+	struct btinfo_common common;
+	char devname[16];
+	uint8_t mac_address[6];
 };
 
 #define BOOTINFO_MAXSIZE 4096

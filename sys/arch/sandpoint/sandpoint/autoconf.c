@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2009/03/18 10:22:35 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2010/05/16 11:27:49 phx Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,22 +35,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2009/03/18 10:22:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2010/05/16 11:27:49 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+
+#include <dev/cons.h>
 #include <dev/pci/pcivar.h>
 
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <machine/bootinfo.h>
+#include <machine/pio.h>
 
 static struct btinfo_rootdevice *bi_rdev;
 static struct btinfo_bootpath *bi_path;
-
-#include <dev/cons.h>
-#include <machine/pio.h>
-
+static struct btinfo_net *bi_net;
 
 /*
  * Determine i/o configuration for a machine.
@@ -61,6 +64,7 @@ cpu_configure(void)
 
 	bi_rdev = lookup_bootinfo(BTINFO_ROOTDEVICE);
 	bi_path = lookup_bootinfo(BTINFO_BOOTPATH);
+	bi_net = lookup_bootinfo(BTINFO_NET);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -85,18 +89,28 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
+	struct pci_attach_args *pa;
 
-	if (bi_rdev == NULL)
-		return; /* no clue to determine */
-
-	if (dev->dv_class == DV_IFNET
-	    && device_is_a(dev, bi_rdev->devname)) {
-		struct pci_attach_args *pa = aux;
-
-		if (bi_rdev->cookie == pa->pa_tag)
+	if (dev->dv_class == DV_IFNET) {
+		pa = aux;
+		if (bi_rdev != NULL && device_is_a(dev, bi_rdev->devname)
+		    && bi_rdev->cookie == pa->pa_tag)
 			booted_device = dev;
+		if (bi_net != NULL && device_is_a(dev, bi_net->devname)) {
+			prop_data_t pd;
+
+			pd = prop_data_create_data_nocopy(bi_net->mac_address,
+			    ETHER_ADDR_LEN);
+			KASSERT(pd != NULL);
+			if (prop_dictionary_set(device_properties(dev),
+			    "mac-address", pd) == false)
+				printf("WARNING: unable to set mac-addr "
+				    "property for %s\n", dev->dv_xname);
+			prop_object_release(pd);
+			bi_net = NULL;	/* do it just once */
+		}
 	}
-	if (dev->dv_class == DV_DISK
+	if (bi_rdev != NULL && dev->dv_class == DV_DISK
 	    && device_is_a(dev, bi_rdev->devname)) {
 		booted_device = dev;
 		booted_partition = 0;
