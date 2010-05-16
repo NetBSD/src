@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.9 2010/05/14 18:52:46 jruoho Exp $
+.\"	$NetBSD: kmem.9,v 1.10 2010/05/16 05:18:35 jruoho Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd May 14, 2010
+.Dd May 16, 2010
 .Dt KMEM 9
 .Os
 .\" ------------------------------------------------------------
@@ -136,7 +136,7 @@ Freeing
 .Dv NULL
 is illegal.
 .\" ------------------------------------------------------------
-.Sh IMPLEMENTATION NOTES
+.Sh NOTES
 Making
 .Dv KM_SLEEP
 allocations while holding mutexes or reader/writer locks is discouraged, as the
