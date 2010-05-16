@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.19.16.6 2010/02/28 03:32:23 matt Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.19.16.7 2010/05/16 00:34:45 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.6 2010/02/28 03:32:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.19.16.7 2010/05/16 00:34:45 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -71,7 +71,9 @@ static const struct ipl_sr_map malta_ipl_sr_map = {
 	[IPL_SOFTCLOCK] =	MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =		MIPS_SOFT_INT_MASK,
 	[IPL_VM] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0,
-	[IPL_SCHED] =		MIPS_INT_MASK,
+	[IPL_SCHED] =		MIPS_SOFT_INT_MASK | MIPS_INT_MASK_0
+				    | MIPS_INT_MASK_5,
+	[IPL_DDB] =		MIPS_INT_MASK,
 	[IPL_HIGH] =		MIPS_INT_MASK,
     },
 };

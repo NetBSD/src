@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.11 2010/05/15 23:11:38 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.12 2010/05/16 00:34:45 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,8 @@
 #define	IPL_SOFTSERIAL	(IPL_SOFTNET)	/* shares SWINT with softnet */
 #define	IPL_VM		(IPL_SOFTSERIAL+1)
 #define	IPL_SCHED	(IPL_VM+1)
-#define	IPL_HIGH	(IPL_SCHED)
+#define	IPL_DDB		(IPL_SCHED+1)
+#define	IPL_HIGH	(IPL_DDB+1)
 
 #define	_IPL_N		(IPL_HIGH+1)
 
@@ -83,7 +84,7 @@ struct splsw {
 };
 
 struct ipl_sr_map {
-	uint32_t sr_bits[_IPL_N+1];
+	uint32_t sr_bits[_IPL_N];
 };
 #else
 struct splsw;
