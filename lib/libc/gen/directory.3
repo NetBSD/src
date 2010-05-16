@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.29 2009/01/11 02:46:27 christos Exp $
+.\"	$NetBSD: directory.3,v 1.30 2010/05/16 07:52:58 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd December 5, 2008
+.Dd May 16, 2010
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
@@ -48,9 +48,9 @@
 .Sh SYNOPSIS
 .In dirent.h
 .Ft DIR *
-.Fn fdopendir "int fd"
-.Ft DIR *
 .Fn opendir "const char *filename"
+.Ft DIR *
+.Fn fdopendir "int fd"
 .Ft struct dirent *
 .Fn readdir "DIR *dirp"
 .Ft int
@@ -66,45 +66,81 @@
 .Ft int
 .Fn dirfd "DIR *dirp"
 .Sh DESCRIPTION
+The type
+.Vt DIR
+represents a directory stream;
+an ordered sequence of all directory entries in a particular directory.
+The purpose of the
+.Vt DIR
+structure is similar to that of the
+.Vt FILE
+structure maintained by the
+.Xr stdio 3
+library functions.
+.Sh FUNCTIONS
+The following standard directory operations are defined.
+.Bl -tag -width XXX
+.It Fn opendir "filename"
 The
 .Fn opendir
 function opens the directory named by
 .Fa filename
-and associates a
-.Em directory stream
-with it.
-.Pp
+and associates a directory stream with it.
+The directory stream is positioned at the first entry.
+Upon successful completion, a pointer to
+.Vt DIR
+type is returned. Otherwise,
+.Fn opendir
+returns
+.Dv NULL .
+.It Fn fdopendir "fd"
 The
 .Fn fdopendir
-function associates a
-.Em directory stream
-with the directory file descriptor
+function associates a directory stream with the directory file descriptor
 .Fa fd .
-The file descriptor
+The file offset associated with
 .Fa fd
-must not be used further by the caller in any way.
+at the time of the call determines which entries are returned.
 .Pp
-Both functions return a pointer to be used to identify the
-.Em directory stream
-in subsequent operations.
-The pointer
-.Dv NULL
-is returned if
-.Fa filename
-cannot be accessed, or if it cannot
-.Xr malloc 3
-enough memory to hold the whole thing.
-.Pp
+Upon failure,
+.Fn fdopendir
+returns
+.Dv NULL .
+Otherwise the file descriptor is under the control of the system,
+and if any attempt is made to close the file descriptor,
+or to modify the state of the associated description,
+other than by means of
+.Fn closedir ,
+.Fn readdir ,
+.Fn readdir_r ,
+.Fn rewinddir() ,
+the behavior is undefined.
+The file descriptor can be closed by calling
+.Fn closedir .
+.It Fn readdir "dirp"
 The
 .Fn readdir
-function
-returns a pointer to the next directory entry.
+function returns a pointer to the directory entry at the current position
+in the directory stream specified by
+.Fa dirp ,
+and positions the directory stream at the next entry.
 It returns
 .Dv NULL
 upon reaching the end of the directory or detecting an invalid
 .Fn seekdir
 operation.
+The returned structure is described in
+.Xr dirent 5 .
 .Pp
+The returned pointer to the
+.Em dirent
+structure points to data which may be overwritten by another call to
+.Fn readdir
+on the same directory stream.
+This data is not however overwritten by another call to
+.Fn readdir
+on a different directory stream.
+.It Fn readdir_r "dirp" "entry" "result"
 The
 .Fn readdir_r
 function
@@ -126,62 +162,189 @@ The
 function
 returns 0 on success or an error number to indicate failure.
 .Pp
+Like
+.Fn readdir ,
+the
+.Fn readdir_r
+function may buffer several directory entries per actual read operation.
+Both functions mark for update the
+.Em st_atime
+field (see
+.Xr stat 2 )
+of the directory each time the directory is actually read.
+.It Fn telldir "dirp"
 The
 .Fn telldir
-function
-returns the current location associated with the named
-.Em directory stream .
+function returns the current location associated
+with the directory stream specified by
+.Fa dirp .
 .Pp
+If the most recent operation on the particular directory stream was a
+.Fn seekdir ,
+the directory position returned from
+.Fn telldir
+is the same as
+.Fa loc
+supplied as an argument to the
+.Fn seekdir
+call.
+.It Fn seekdir "dirp" "loc"
 The
 .Fn seekdir
-function
-sets the position of the next
+function sets the position of the next
 .Fn readdir
-operation on the
-.Em directory stream .
-The new position reverts to the one associated with the
-.Em directory stream
-when the
+operation on the directory stream specified by
+.Fa dirp .
+The value of
+.Fa loc
+should come from a previous call to
+.Fn telldir
+using the same directory stream.
+.Pp
+The new position reverts to the one associated
+with the directory stream when the
 .Fn telldir
 operation was performed.
 Values returned by
 .Fn telldir
 are good only for the lifetime of the
-.Dv DIR
+.Vt DIR
 pointer,
 .Fa dirp ,
 from which they are derived.
 If the directory is closed and then reopened, the
 .Fn telldir
 value cannot be re-used.
-.Pp
+.It Fn rewinddir "dirp"
 The
 .Fn rewinddir
-function
-resets the position of the named
-.Em directory stream
-to the beginning of the directory.
+function resets the position of the named directory
+stream to the beginning of the directory.
+It also causes the directory stream to refer to the
+current state of the corresponding directory, as if a call to
+.Fn opendir
+would have been made.
 .Pp
+If
+.Fa dirp
+does not refer to a valid directory stream, the behavior is undefined.
+.It Fn closedir "dirp"
 The
 .Fn closedir
-function
-closes the named
-.Em directory stream
+function closes the directory stream
 and frees the structure associated with the
 .Fa dirp
 pointer,
-returning 0 on success.
-On failure, \-1 is returned and the global variable
-.Va errno
-is set to indicate the error.
-.Pp
+returning 0 on success and \-1 on failure.
+.It Fn dirfd "dirp"
 The
 .Fn dirfd
-function
-returns the integer file descriptor associated with the named
-.Em directory stream ,
-see
-.Xr open 2 .
+function returns the integer file descriptor
+associated with the directory stream specified by
+.Fa dirp .
+Upon failure,
+.Fn dirfd
+returns \-1.
+The returned file descriptor should be closed by
+.Fn closedir
+instead of
+.Xr close 2 .
+.Pp
+The rationale of
+.Fn dirfd
+is to provide a mechanism by which a file descriptor
+can be obtained for the use of the
+.Xr fchdir 3
+function.
+.El
+.Pp
+.\"
+.\" XXX: The returned errors should be enumrated.
+.\"
+All described functions that return a value may set
+.Vt errno
+to indicate the error.
+.Sh COMPATIBILITY
+The described directory operations have traditionally been problematic
+in terms of portability.
+A good example is the semantics around
+.Sq \&.
+(dot) and
+.Sq \&..
+(dot-dot).
+Based on historical implementations,
+the rules about file descriptors apply to directory streams as well.
+The
+.St -p1003.1-2008
+standard does not however any more mandate that directory streams
+are necessarily implemented by using file descriptors.
+.Pp
+The following additional remarks can be noted from the
+.St -p1003.1-2008
+standard.
+.Bl -bullet -offset 2n
+.It
+If the type
+.Vt DIR
+is implemented using a file descriptor,
+like in
+.Nx ,
+applications should be able to open only
+.Dv OPEN_MAX
+files and directories.
+Otherwise the limit is left as unspecified.
+.It
+When a file descriptor is used to implement the directory stream, the
+.Fn closedir
+function behaves as if the
+.Dv FD_CLOEXEC
+had been set for the file descriptor.
+In another words, it is mandatory that
+.Fn closedir
+deallocates the file descriptor.
+.It
+If directory streams are not implemented by using file descriptors,
+functions such as
+.Fn dirfd
+may fail with
+.Er ENOTSUP .
+.It
+If a file is removed from or added to the directory
+after the most recent call to
+.Fn opendir
+or
+.Fn rewinddir ,
+it is unspecified whether a subsequent call to
+.Fn readdir
+returns an entry for that file.
+.It
+When using the function
+.Fn seekdir ,
+note that if the value of
+.Fa loc
+was not obtained from an earlier call to
+.Fn telldir ,
+or if a call to
+.Fn rewinddir
+occurred between the calls to
+.Fn telldir
+and
+.Fn seekdir ,
+any subsequent call to
+.Fn readdir
+is unspecified, possibly resulting undefined behavior.
+.It
+After a call to
+.Xr fork 2 ,
+either the parent or child (but not both) can continue processing the
+directory stream using
+.Fn readdir ,
+.Fn rewinddir ,
+or
+.Fn seekdir .
+However, if both the parent and child processes use these functions,
+the result is undefined.
+.El
 .Sh EXAMPLES
 Sample code which searches a directory for entry
 .Dq name
@@ -215,6 +378,8 @@ and
 .Fn closedir
 functions conform to
 .St -p1003.1-90 .
+Rest of the functions conform to
+.St -p1003.1-2008 .
 .Sh HISTORY
 The
 .Fn opendir ,
