@@ -205,6 +205,7 @@ main(int argc, char **argv)
 	/* set some defaults */
 	netpgp_set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
 	netpgp_setvar(&netpgp, "sshkeydir", "/etc/ssh");
+	netpgp_setvar(&netpgp, "res", "<stdout>");
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
@@ -288,7 +289,7 @@ main(int argc, char **argv)
 				"No output filename argument provided\n");
 				exit(EXIT_ERROR);
 			}
-			netpgp_setvar(&netpgp, "results", optarg);
+			netpgp_setvar(&netpgp, "res", optarg);
 			break;
 		case SSHKEYFILE:
 			netpgp_setvar(&netpgp, "sshkeyfile", optarg);
