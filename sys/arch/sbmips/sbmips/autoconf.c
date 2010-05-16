@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.6.96.1 2010/02/23 20:24:37 matt Exp $ */
+/* $NetBSD: autoconf.c,v 1.6.96.2 2010/05/16 05:16:08 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,14 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.96.1 2010/02/23 20:24:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.96.2 2010/05/16 05:16:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <machine/intr.h>
+#include <sys/intr.h>
 
 void
 cpu_configure(void)
@@ -61,7 +61,7 @@ cpu_rootconf(void)
 	/* XXXCGD don't know how to find the root device */
 
 	printf("boot device: %s\n",
-		booted_device ? booted_device->dv_xname : "<unknown>");
+		booted_device ? device_xname(booted_device) : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
