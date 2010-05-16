@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1446 2010/05/15 09:00:52 njoly Exp $
+#	$NetBSD: mi,v 1.1447 2010/05/16 15:33:29 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4393,6 +4393,7 @@
 ./usr/share/man/cat3/DSA_set_method.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/DSA_sign.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/DSA_size.0			comp-c-catman		crypto,.cat
+./usr/share/man/cat3/DTTOIF.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ERR_GET_LIB.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ERR_clear_error.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ERR_error_string.0		comp-c-catman		crypto,.cat
@@ -4467,6 +4468,7 @@
 ./usr/share/man/cat3/GCQ_INIT.0			comp-sys-catman		.cat
 ./usr/share/man/cat3/GCQ_INIT_HEAD.0		comp-sys-catman		.cat
 ./usr/share/man/cat3/GCQ_ITEM.0			comp-sys-catman		.cat
+./usr/share/man/cat3/IFTODT.0			comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_EMPTY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_ENTRY.0		comp-c-catman		.cat
 ./usr/share/man/cat3/LIST_FIRST.0		comp-c-catman		.cat
@@ -5526,7 +5528,9 @@
 ./usr/share/man/cat3/dgettext.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dh.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/difftime.0			comp-c-catman		.cat
+./usr/share/man/cat3/dir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/directory.0		comp-c-catman		.cat
+./usr/share/man/cat3/dirent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dirfd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/dirname.0			comp-c-catman		.cat
 ./usr/share/man/cat3/disklabel_dkcksum.0	comp-c-catman		.cat
@@ -10285,6 +10289,7 @@
 ./usr/share/man/html3/DSA_set_method.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/DSA_sign.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/DSA_size.html		comp-c-htmlman		crypto,html
+./usr/share/man/html3/DTTOIF.html		comp-c-htmlman		html
 ./usr/share/man/html3/ERR_GET_LIB.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/ERR_clear_error.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/ERR_error_string.html	comp-c-htmlman		crypto,html
@@ -10359,6 +10364,7 @@
 ./usr/share/man/html3/GCQ_INIT.html		comp-sys-htmlman	html
 ./usr/share/man/html3/GCQ_INIT_HEAD.html	comp-sys-htmlman	html
 ./usr/share/man/html3/GCQ_ITEM.html		comp-sys-htmlman	html
+./usr/share/man/html3/IFTODT.html		comp-c-htmlman		html
 ./usr/share/man/html3/LIST_EMPTY.html		comp-c-htmlman		html
 ./usr/share/man/html3/LIST_ENTRY.html		comp-c-htmlman		html
 ./usr/share/man/html3/LIST_FIRST.html		comp-c-htmlman		html
@@ -11362,7 +11368,9 @@
 ./usr/share/man/html3/devname.html		comp-c-htmlman		html
 ./usr/share/man/html3/dgettext.html		comp-c-htmlman		html
 ./usr/share/man/html3/difftime.html		comp-c-htmlman		html
+./usr/share/man/html3/dir.html			comp-c-htmlman		html
 ./usr/share/man/html3/directory.html		comp-c-htmlman		html
+./usr/share/man/html3/dirent.html		comp-c-htmlman		html
 ./usr/share/man/html3/dirfd.html		comp-c-htmlman		html
 ./usr/share/man/html3/dirname.html		comp-c-htmlman		html
 ./usr/share/man/html3/disklabel_dkcksum.html	comp-c-htmlman		html
@@ -15973,6 +15981,7 @@
 ./usr/share/man/man3/DSA_set_method.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/DSA_sign.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/DSA_size.3			comp-c-man		crypto,.man
+./usr/share/man/man3/DTTOIF.3			comp-c-man		.man
 ./usr/share/man/man3/ERR_GET_LIB.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/ERR_clear_error.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/ERR_error_string.3		comp-c-man		crypto,.man
@@ -16047,6 +16056,7 @@
 ./usr/share/man/man3/GCQ_INIT.3			comp-sys-man		.man
 ./usr/share/man/man3/GCQ_INIT_HEAD.3		comp-sys-man		.man
 ./usr/share/man/man3/GCQ_ITEM.3			comp-sys-man		.man
+./usr/share/man/man3/IFTODT.3			comp-c-man		.man
 ./usr/share/man/man3/LIST_EMPTY.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_ENTRY.3		comp-c-man		.man
 ./usr/share/man/man3/LIST_FIRST.3		comp-c-man		.man
@@ -17106,7 +17116,9 @@
 ./usr/share/man/man3/dgettext.3			comp-c-man		.man
 ./usr/share/man/man3/dh.3			comp-obsolete		obsolete
 ./usr/share/man/man3/difftime.3			comp-c-man		.man
+./usr/share/man/man3/dir.3			comp-c-man		.man
 ./usr/share/man/man3/directory.3		comp-c-man		.man
+./usr/share/man/man3/dirent.3			comp-c-man		.man
 ./usr/share/man/man3/dirfd.3			comp-c-man		.man
 ./usr/share/man/man3/dirname.3			comp-c-man		.man
 ./usr/share/man/man3/disklabel_dkcksum.3	comp-c-man		.man
