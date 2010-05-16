@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.14 2010/05/08 19:41:07 phx Exp $ */
+/* $NetBSD: globals.h,v 1.15 2010/05/16 11:27:49 phx Exp $ */
 
 /* clock feed */
 #ifndef EXT_CLK_FREQ
@@ -23,6 +23,7 @@ extern int ticks_per_sec;
 extern uint32_t cpuclock, busclock;
 
 unsigned mpc107memsize(void);
+void read_mac_from_flash(uint8_t *);
 
 /* PPC processor ctl */
 void __syncicache(void *, size_t);

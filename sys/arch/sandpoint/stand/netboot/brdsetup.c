@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.13 2010/05/13 10:40:02 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.14 2010/05/16 11:27:49 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -706,4 +706,78 @@ pcifixup(void)
 		pcicfgwrite(usb, 0x3c, val);
 		break;
 	}
+}
+
+struct fis_dir_entry {
+	char		name[16];
+	uint32_t	startaddr;
+	uint32_t	loadaddr;
+	uint32_t	flashsize;
+	uint32_t	entryaddr;
+	uint32_t	filesize;
+	char		pad[256 - (16 + 5 * sizeof(uint32_t))];
+};
+
+#define FIS_LOWER_LIMIT	0xfff00000
+
+/*
+ * Look for a Redboot-style Flash Image System FIS-directory and
+ * return a pointer to the start address of the requested file.
+ */
+static void *
+redboot_fis_lookup(const char *filename)
+{
+	static const char FISdirname[16] = {
+	    'F', 'I', 'S', ' ',
+	    'd', 'i', 'r', 'e', 'c', 't', 'o', 'r', 'y', 0, 0, 0
+	};
+	struct fis_dir_entry *dir;
+
+	/*
+	 * The FIS directory is usually in the last sector of the flash.
+	 * But we do not know the sector size (erase size), so start
+	 * at 0xffffff00 and scan backwards in steps of the FIS directory
+	 * entry size (0x100).
+	 */
+	for (dir = (struct fis_dir_entry *)0xffffff00;
+	    (uint32_t)dir >= FIS_LOWER_LIMIT; dir--)
+		if (memcmp(dir->name, FISdirname, sizeof(FISdirname)) == 0)
+			break;
+	if ((uint32_t)dir < FIS_LOWER_LIMIT) {
+		printf("No FIS directory found!\n");
+		return NULL;
+	}
+
+	/* Now find filename by scanning the directory from beginning. */
+	dir = (struct fis_dir_entry *)dir->startaddr;
+	while (dir->name[0] != 0xff && (uint32_t)dir < 0xffffff00) {
+		if (strcmp(dir->name, filename) == 0)
+			return (void *)dir->startaddr;	/* found */
+		dir++;
+	}
+	printf("\"%s\" not found in FIS directory!\n", filename);
+	return NULL;
+}
+
+/*
+ * For cost saving reasons some NAS boxes are missing the ROM for the
+ * NIC's ethernet address and keep it in their Flash memory.
+ */
+void
+read_mac_from_flash(uint8_t *mac)
+{
+	uint8_t *p;
+
+	if (brdtype == BRD_SYNOLOGY) {
+		p = redboot_fis_lookup("vendor");
+		if (p != NULL) {
+			memcpy(mac, p, 6);
+			return;
+		}
+	} else
+		printf("Warning: This board has no known method defined "
+		    "to determine its MAC address!\n");
+
+	/* set to 00:00:00:00:00:00 in case of error */
+	memset(mac, 0, 6);
 }
