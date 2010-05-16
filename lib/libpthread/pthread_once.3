@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_once.3,v 1.4 2010/03/22 21:56:05 joerg Exp $
+.\" $NetBSD: pthread_once.3,v 1.5 2010/05/16 12:36:32 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_once.3,v 1.14 2002/09/16 19:29:29 mini Exp $
 .\"
-.Dd January 30, 2003
+.Dd May 16, 2010
 .Dt PTHREAD_ONCE 3
 .Os
 .Sh NAME
@@ -107,7 +107,7 @@ is as if
 was never called.
 .Pp
 The constant
-.Fa PTHREAD_ONCE_INIT
+.Dv PTHREAD_ONCE_INIT
 is defined by header
 .In pthread.h .
 .Pp
@@ -116,7 +116,7 @@ The behavior of
 is undefined if
 .Fa once_control
 has automatic storage duration or is not initialized by
-.Fa PTHREAD_ONCE_INIT .
+.Dv PTHREAD_ONCE_INIT .
 .Sh RETURN VALUES
 If successful,  the
 .Fn pthread_once
