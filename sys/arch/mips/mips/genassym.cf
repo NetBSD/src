@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44.12.21 2010/03/01 19:29:41 matt Exp $
+#	$NetBSD: genassym.cf,v 1.44.12.22 2010/05/16 00:40:51 matt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -303,6 +303,7 @@ define	IPL_SOFTNET		IPL_SOFTNET
 define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
 define	IPL_VM			IPL_VM
 define	IPL_SCHED		IPL_SCHED
+define	IPL_DDB			IPL_DDB
 define	IPL_HIGH		IPL_HIGH
 
 ifdef __HAVE_PREEMPTION
