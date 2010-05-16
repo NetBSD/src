@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.31 2010/05/16 08:01:14 jruoho Exp $
+.\"	$NetBSD: directory.3,v 1.32 2010/05/16 11:37:06 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,7 +89,8 @@ and associates a directory stream with it.
 The directory stream is positioned at the first entry.
 Upon successful completion, a pointer to
 .Vt DIR
-type is returned. Otherwise,
+type is returned.
+Otherwise,
 .Fn opendir
 returns
 .Dv NULL .
@@ -254,16 +255,34 @@ The rationale of
 .Fn dirfd
 is to provide a mechanism by which a file descriptor
 can be obtained for the use of the
-.Xr fchdir 3
+.Xr fchdir 2
 function.
 .El
 .Pp
 .\"
-.\" XXX: The returned errors should be enumrated.
+.\" XXX: The returned errors should be enumerated.
 .\"
 All described functions that return a value may set
 .Vt errno
 to indicate the error.
+.Sh EXAMPLES
+Sample code which searches a directory for entry
+.Dq name
+is:
+.Bd -literal -offset indent
+len = strlen(name);
+dirp = opendir(".");
+if (dirp != NULL) {
+	while ((dp = readdir(dirp)) != NULL)
+		if (dp-\*[Gt]d_namlen == len \*[Am]\*[Am]
+		    !strcmp(dp-\*[Gt]d_name, name)) {
+			(void)closedir(dirp);
+			return (FOUND);
+		}
+	(void)closedir(dirp);
+}
+return (NOT_FOUND);
+.Ed
 .Sh COMPATIBILITY
 The described directory operations have traditionally been problematic
 in terms of portability.
@@ -345,24 +364,6 @@ or
 However, if both the parent and child processes use these functions,
 the result is undefined.
 .El
-.Sh EXAMPLES
-Sample code which searches a directory for entry
-.Dq name
-is:
-.Bd -literal -offset indent
-len = strlen(name);
-dirp = opendir(".");
-if (dirp != NULL) {
-	while ((dp = readdir(dirp)) != NULL)
-		if (dp-\*[Gt]d_namlen == len \*[Am]\*[Am]
-		    !strcmp(dp-\*[Gt]d_name, name)) {
-			(void)closedir(dirp);
-			return (FOUND);
-		}
-	(void)closedir(dirp);
-}
-return (NOT_FOUND);
-.Ed
 .Sh SEE ALSO
 .Xr close 2 ,
 .Xr lseek 2 ,
@@ -378,7 +379,7 @@ and
 .Fn closedir
 functions conform to
 .St -p1003.1-90 .
-Rest of the functions conform to
+The other functions conform to
 .St -p1003.1-2008 .
 .Sh HISTORY
 The
