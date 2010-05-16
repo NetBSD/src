@@ -38,10 +38,10 @@
 .Sh SYNOPSIS
 .In sys/types.h
 .In sys/dirent.h
-.Ft size
-.Fn IFTODT "mode"
-.Ft dirtype
+.Ft mode
 .Fn DTTOIF "dirtype"
+.Ft dirtype
+.Fn IFTODT "mode"
 .Sh DESCRIPTION
 Directories provide a convenient hierarchical method of grouping
 files while obscuring the underlying details of the storage medium.
@@ -161,13 +161,13 @@ The
 type is internal to the implementation and
 should not be seen in normal user applications.
 The macros
-.Fn IFTODT
-and
 .Fn DTTOIF
+and
+.Fn IFTODT
 can be used to convert from
-.Em struct stat
-types to
 .Em struct dirent
+types to
+.Em struct stat
 types, and vice versa.
 .Sh COMPATIBILITY
 The
