@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1208 2010/05/14 16:19:58 jruoho Exp $
+# $NetBSD: mi,v 1.1209 2010/05/16 15:33:29 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1758,8 +1758,8 @@
 ./usr/share/man/cat5/dhcpcd.conf.0		man-dhcpcd-catman	.cat
 ./usr/share/man/cat5/dhcpd.conf.0		man-dhcpd-catman	.cat
 ./usr/share/man/cat5/dhcpd.leases.0		man-dhcpd-catman	.cat
-./usr/share/man/cat5/dir.0			man-c-catman		.cat
-./usr/share/man/cat5/dirent.0			man-c-catman		.cat
+./usr/share/man/cat5/dir.0			man-obsolete		obsolete
+./usr/share/man/cat5/dirent.0			man-obsolete		obsolete
 ./usr/share/man/cat5/disklabel.0		man-sys-catman		.cat
 ./usr/share/man/cat5/disktab.0			man-sys-catman		.cat
 ./usr/share/man/cat5/editrc.0			man-sys-catman		.cat
@@ -4336,8 +4336,8 @@
 ./usr/share/man/html5/dhcpcd.conf.html		man-dhcpcd-htmlman	html
 ./usr/share/man/html5/dhcpd.conf.html		man-dhcpd-htmlman	html
 ./usr/share/man/html5/dhcpd.leases.html		man-dhcpd-htmlman	html
-./usr/share/man/html5/dir.html			man-c-htmlman		html
-./usr/share/man/html5/dirent.html		man-c-htmlman		html
+./usr/share/man/html5/dir.html			man-obsolete		obsolete
+./usr/share/man/html5/dirent.html		man-obsolete		obsolete
 ./usr/share/man/html5/disklabel.html		man-sys-htmlman		html
 ./usr/share/man/html5/disktab.html		man-sys-htmlman		html
 ./usr/share/man/html5/editrc.html		man-sys-htmlman		html
@@ -6854,8 +6854,8 @@
 ./usr/share/man/man5/dhcpcd.conf.5		man-dhcpcd-man		.man
 ./usr/share/man/man5/dhcpd.conf.5		man-dhcpd-man		.man
 ./usr/share/man/man5/dhcpd.leases.5		man-dhcpd-man		.man
-./usr/share/man/man5/dir.5			man-c-man		.man
-./usr/share/man/man5/dirent.5			man-c-man		.man
+./usr/share/man/man5/dir.5			man-obsolete		obsolete
+./usr/share/man/man5/dirent.5			man-obsolete		obsolete
 ./usr/share/man/man5/disklabel.5		man-sys-man		.man
 ./usr/share/man/man5/disktab.5			man-sys-man		.man
 ./usr/share/man/man5/editrc.5			man-sys-man		.man
