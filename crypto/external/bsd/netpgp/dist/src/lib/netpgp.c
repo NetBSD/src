@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.49 2010/05/16 06:21:14 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.50 2010/05/16 06:48:52 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -419,22 +419,28 @@ netpgp_init(netpgp_t *netpgp)
 		return 0;
 	}
 	io->outs = stdout;
-	if ((stream = netpgp_getvar(netpgp, "stdout")) != NULL &&
-	    strcmp(stream, "stderr") == 0) {
+	if ((stream = netpgp_getvar(netpgp, "outs")) != NULL &&
+	    strcmp(stream, "<stderr>") == 0) {
 		io->outs = stderr;
 	}
 	io->errs = stderr;
-	if ((stream = netpgp_getvar(netpgp, "stderr")) != NULL &&
-	    strcmp(stream, "stdout") == 0) {
+	if ((stream = netpgp_getvar(netpgp, "errs")) != NULL &&
+	    strcmp(stream, "<stdout>") == 0) {
 		io->errs = stdout;
 	}
-	if ((results = netpgp_getvar(netpgp, "results")) == NULL) {
+	if ((results = netpgp_getvar(netpgp, "res")) == NULL) {
 		io->res = io->errs;
-	} else if ((io->res = fopen(results, "w")) == NULL) {
-		(void) fprintf(io->errs, "Can't open results %s for writing\n",
-			results);
-		free(io);
-		return 0;
+	} else if (strcmp(results, "<stdout>") == 0) {
+		io->res = stdout;
+	} else if (strcmp(results, "<stderr>") == 0) {
+		io->res = stderr;
+	} else {
+		if ((io->res = fopen(results, "w")) == NULL) {
+			(void) fprintf(io->errs, "Can't open results %s for writing\n",
+				results);
+			free(io);
+			return 0;
+		}
 	}
 	netpgp->io = io;
 	if ((passfd = netpgp_getvar(netpgp, "pass-fd")) != NULL &&
