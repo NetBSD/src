@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.48 2010/05/08 04:17:45 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.49 2010/05/16 06:21:14 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1274,8 +1274,11 @@ netpgp_list_packets(netpgp_t *netpgp, char *f, int armor, char *pubringname)
 int
 netpgp_setvar(netpgp_t *netpgp, const char *name, const char *value)
 {
-	int	i;
+	char	*newval;
+	int	 i;
 
+	/* protect against the case where 'value' is netpgp->value[i] */
+	newval = netpgp_strdup(value);
 	if ((i = findvar(netpgp, name)) < 0) {
 		/* add the element to the array */
 		if (size_arrays(netpgp, netpgp->size + 15)) {
@@ -1290,11 +1293,12 @@ netpgp_setvar(netpgp_t *netpgp, const char *name, const char *value)
 	}
 	/* sanity checks for range of values */
 	if (strcmp(name, "hash") == 0 || strcmp(name, "algorithm") == 0) {
-		if (__ops_str_to_hash_alg(value) == OPS_HASH_UNKNOWN) {
+		if (__ops_str_to_hash_alg(newval) == OPS_HASH_UNKNOWN) {
+			free(newval);
 			return 0;
 		}
 	}
-	netpgp->value[i] = netpgp_strdup(value);
+	netpgp->value[i] = newval;
 	return 1;
 }
 
