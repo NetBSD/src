@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.28 2010/05/13 10:40:02 phx Exp $ */
+/* $NetBSD: main.c,v 1.29 2010/05/16 11:27:49 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@ main(void)
 	struct btinfo_clock bi_clk;
 	struct btinfo_bootpath bi_path;
 	struct btinfo_rootdevice bi_rdev;
+	struct btinfo_net bi_net;
 	unsigned long marks[MARK_MAX];
 	unsigned lata[1][2], lnif[1][2];
 	unsigned memsize, tag;
@@ -158,12 +159,19 @@ main(void)
 	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), bootfile);
 	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), rootdev);
 	bi_rdev.cookie = tag; /* PCI tag for fxp netboot case */
+	if (brdtype == BRD_SYNOLOGY) {
+		/* need to set MAC address for Marvell-SKnet */
+		strcpy(bi_net.devname, "sk");
+		memcpy(bi_net.mac_address, en, sizeof(en));
+	}
 
 	bi_add(&bi_cons, BTINFO_CONSOLE, sizeof(bi_cons));
 	bi_add(&bi_mem, BTINFO_MEMORY, sizeof(bi_mem));
 	bi_add(&bi_clk, BTINFO_CLOCK, sizeof(bi_clk));
 	bi_add(&bi_path, BTINFO_BOOTPATH, sizeof(bi_path));
 	bi_add(&bi_rdev, BTINFO_ROOTDEVICE, sizeof(bi_rdev));
+	if (brdtype == BRD_SYNOLOGY)
+		bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
 
 	printf("entry=%p, ssym=%p, esym=%p\n",
 	    (void *)marks[MARK_ENTRY],
