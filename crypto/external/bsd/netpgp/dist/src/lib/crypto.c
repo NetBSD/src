@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.22 2010/05/08 02:17:15 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.23 2010/05/16 02:46:25 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -159,7 +159,7 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 
 	if (__ops_get_debug_level(__FILE__)) {
 		fprintf(stderr, "decoded m buf:\n");
-		hexdump(stderr, buf, n - i, " ");
+		hexdump(stderr, buf, (size_t)(n - i), " ");
 		fprintf(stderr, "\n");
 	}
 	return n - i;
