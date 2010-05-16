@@ -1,4 +1,4 @@
-.\"	$NetBSD: dir.5,v 1.24 2010/05/16 08:56:17 jruoho Exp $
+.\" $NetBSD $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"     @(#)dir.5	8.3 (Berkeley) 4/19/94
 .\"
 .Dd May 16, 2010
-.Dt DIRENT 5
+.Dt DIRENT 3
 .Os
 .Sh NAME
 .Nm dirent
@@ -38,6 +38,10 @@
 .Sh SYNOPSIS
 .In sys/types.h
 .In sys/dirent.h
+.Ft size
+.Fn IFTODT "mode"
+.Ft dirtype
+.Fn DTTOIF "dirtype"
 .Sh DESCRIPTION
 Directories provide a convenient hierarchical method of grouping
 files while obscuring the underlying details of the storage medium.
@@ -123,40 +127,48 @@ may vary from 1 to
 .It
 The
 .Fa d_type
-is the type of the file:
-.Pp
-.Bl -tag -width "DT_UNKNOWN   " -offset indent -compact
-.It Dv DT_UNKNOWN
-unknown file type
-.It Dv DT_FIFO
-named pipe
-.It Dv DT_CHR
-character device
-.It Dv DT_DIR
-directory
-.It Dv DT_BLK
-block device
-.It Dv DT_REG
-regular file
-.It Dv DT_LNK
-symbolic link
-.It Dv DT_SOCK
-.Tn UNIX
-domain socket
-.It Dv DT_WHT
-dummy
-.Dq whiteout inode
-.El
-.Pp
-The
-.Dv DT_WHT
-type is internal to the implementation and
-should not be seen in user applications.
+is the type of the file.
 .It
 The
 .Fa d_name
 entry contains a NUL-terminated file name.
 .El
+.Pp
+The following table lists the types available for
+.Vt d_type
+and the corresponding ones used in the
+.Em struct stat
+(see
+.Xr stat 2 ) ,
+respectively:
+.Pp
+.Bl -column -offset indent -compact \
+"DT_UNKNOWN " "DT_UNKNOWN " "DT_UNKNOWN "
+.It Sy Dirent Ta Sy Stat Ta Sy Description
+.It Dv DT_UNKNOWN Ta - Ta unknown file type
+.It Dv DT_FIFO Ta Dv S_IFIFO Ta named pipe
+.It Dv DT_CHR Ta Dv S_IFCHR Ta character device
+.It Dv DT_DIR Ta Dv S_IFDIR Ta directory
+.It Dv DT_BLK Ta Dv S_IFBLK Ta block device
+.It Dv DT_REG Ta Dv S_IFREG Ta regular file
+.It Dv DT_LNK Ta Dv S_IFLNK Ta symbolic link
+.It Dv DT_SOCK Ta Dv S_IFSOCK Ta UNIX domain socket
+.It Dv DT_WHT Ta Dv S_IFWHT Ta dummy Dq whiteout inode
+.El
+.Pp
+The
+.Dv DT_WHT
+type is internal to the implementation and
+should not be seen in normal user applications.
+The macros
+.Fn IFTODT
+and
+.Fn DTTOIF
+can be used to convert from
+.Em struct stat
+types to
+.Em struct dirent
+types, and vice versa.
 .Sh COMPATIBILITY
 The
 .St -p1003.1-2001
