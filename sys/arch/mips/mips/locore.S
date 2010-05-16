@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.167.38.17 2010/02/28 03:28:54 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.167.38.18 2010/05/16 05:00:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -319,8 +319,13 @@ softint_cleanup:
 	REG_L	ra, CALLFRAME_RA(sp)
 	REG_L	v0, CALLFRAME_S0(sp)		# get softint lwp
 	PTR_S	zero, L_CTXSWITCH(v0)		# clear l_ctxswtch
+#if IPL_SCHED != IPL_HIGH
+	j	_C_LABEL(splhigh_noprof)
+#else
 	j	ra
+#endif
 	 PTR_ADDU sp, CALLFRAME_SIZ
+
 /*
  * Arguments:
  *	a0	the LWP to switch to
