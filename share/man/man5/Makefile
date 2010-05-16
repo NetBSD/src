@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.63 2010/04/22 06:48:28 jruoho Exp $
+#	$NetBSD: Makefile,v 1.64 2010/05/16 15:33:30 jruoho Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5
 
 MAN=	a.out.5 acct.5 ar.5 boot.cfg.5 \
-	core.5 daily.conf.5 dir.5 disktab.5 elf.5 \
+	core.5 daily.conf.5 disktab.5 elf.5 \
 	ethers.5 forward.5 \
 	fs.5 fstab.5 genassym.cf.5 gpio.conf.5 group.5 hesiod.conf.5 \
 	hosts.5 hosts.equiv.5 ifaliases.5 ifconfig.if.5 intro.5 \
@@ -18,7 +18,7 @@ MAN=	a.out.5 acct.5 ar.5 boot.cfg.5 \
 	stab.5 statvfs.5 sysctl.conf.5 ttyaction.5 \
 	utmp.5 utmpx.5 veriexec.5 weekly.conf.5 wscons.conf.5
 
-MLINKS=	dir.5 dirent.5 fs.5 inode.5 hosts.equiv.5 rhosts.5
+MLINKS=	fs.5 inode.5 hosts.equiv.5 rhosts.5
 MLINKS+=utmp.5 wtmp.5 utmp.5 lastlog.5 passwd.5 master.passwd.5
 MLINKS+=utmpx.5 wtmpx.5 utmpx.5 lastlogx.5
 

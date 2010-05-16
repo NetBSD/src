@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.50 2010/04/28 07:35:30 jruoho Exp $
+#	$NetBSD: Makefile,v 1.51 2010/05/16 15:33:30 jruoho Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
-	__arraycount.3 assert.3 bits.3 bitstring.3 dlfcn.3 end.3 \
+	__arraycount.3 assert.3 bits.3 bitstring.3 dirent.3 dlfcn.3 end.3 \
 	fast_divide32.3 ffs32.3 gcq.3 intro.3 inttypes.3 iso646.3 offsetof.3 \
 	queue.3 rb.3 stdarg.3 stdbool.3 stddef.3 stdint.3 stdlib.3 sysexits.3 \
 	tgmath.3 timeradd.3 tree.3 types.3 varargs.3
@@ -200,6 +200,9 @@ MLINKS+=rb.3 rb_tree_init.3 \
 	rb.3 rb_tree_iterate.3
 MLINKS+=stdarg.3 va_arg.3 stdarg.3 va_copy.3 \
 	stdarg.3 va_end.3 stdarg.3 va_start.3
+MLINKS+=dirent.3 dir.3 \
+	dirent.3 IFTODT.3 \
+	dirent.3 DTTOIF.3
 MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
 	dlfcn.3 dlerror.3 dlfcn.3 dladdr.3
 MLINKS+=timeradd.3 timersub.3 \
