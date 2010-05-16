@@ -1,4 +1,4 @@
-.\"	$NetBSD: time.1,v 1.19 2009/01/24 15:00:55 skrll Exp $
+.\"	$NetBSD: time.1,v 1.20 2010/05/16 07:40:13 dholland Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,16 +61,17 @@ Times are reported in seconds.
 Available options:
 .Bl -tag -width Ds
 .It Fl c
-Displays the default
-.Xr csh 1
-summary format.
+Displays information in the format used by the
+.Nm
+builtin of
+.Xr csh 1 .
 .It Fl l
 Lists resource utilization information.
 The contents of the
 .Ar utility
 process'
 .Em rusage
-structure are printed, see below.
+structure are printed; see below.
 .It Fl p
 The output is formatted as specified by
 .St -p1003.2-92 .
@@ -90,7 +91,7 @@ to users of these shells.
 If the
 .Fl l
 option is given, the following resource usage
-informations are displayed
+information is displayed
 in addition to the timing information:
 .Bl -item -offset indent -compact
 .It
@@ -122,6 +123,10 @@ voluntary context switches
 .It
 involuntary context switches
 .El
+Resource usage is the total for the execution of
+.Ar utility
+and any child processes it spawns, as per
+.Xr wait4 2 .
 .Sh EXIT STATUS
 The
 .Nm
