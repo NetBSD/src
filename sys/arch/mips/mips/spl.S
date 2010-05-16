@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.2.5 2010/04/20 22:08:13 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.6 2010/05/16 00:34:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.1.2.5 2010/04/20 22:08:13 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.1.2.6 2010/05/16 00:34:45 matt Exp $")
 
 #include "assym.h"
 
@@ -51,9 +51,8 @@ _C_LABEL(ipl_sr_map):
 	.word	MIPS_SOFT_INT_MASK	/* IPL_SOFT{NET,SERIAL} */
 	.word	MIPS_INT_MASK		/* IPL_VM */
 	.word	MIPS_INT_MASK		/* IPL_SCHED */
-#if IPL_SCHED != IPL_HIGH
+	.word	MIPS_INT_MASK		/* IPL_DDB */
 	.word	MIPS_INT_MASK		/* IPL_HIGH */
-#endif
 
 	.text
 /*
@@ -236,6 +235,13 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	j	ra				## return
 	 nop
 END(_splsw_splhigh)
+
+STATIC_LEAF(_splsw_splddb)
+	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_DDB
+	li	a1, IPL_DDB
+	b	_splraise
+	 nop
+END(_splsw_splddb)
 
 STATIC_LEAF(_splsw_splsched)
 	INT_L	a0, _C_LABEL(ipl_sr_map) + 4*IPL_SCHED
