@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.46 2010/05/08 18:03:15 phx Exp $
+# $NetBSD: GENERIC,v 1.47 2010/05/17 22:52:17 phx Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.46 $"
+#ident 		"GENERIC-$Revision: 1.47 $"
 
 maxusers	32
 
@@ -101,6 +101,7 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 
 options 	INET
+options		INET6		# IPV6
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
