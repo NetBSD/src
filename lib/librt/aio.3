@@ -1,4 +1,4 @@
-.\" $NetBSD: aio.3,v 1.2 2010/05/17 17:55:49 jruoho Exp $ $
+.\" $NetBSD: aio.3,v 1.3 2010/05/17 19:04:55 jruoho Exp $ $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -40,7 +40,7 @@ The
 standard defines an interface for asynchronous input and output.
 Although in
 .Nx
-this provided as part of the
+this is provided as part of the
 .Lb librt ,
 the implementation largely resides in the kernel.
 .Ss Rationale
@@ -158,10 +158,10 @@ The members
 and
 .Va aio_nbytes
 are conceptually similar to the parameters
-.Fa buf ,
-.Fa fildes ,
+.Sq buf ,
+.Sq fildes ,
 and
-.Fa nbytes
+.Sq nbytes
 used in the standard
 .Xr read 2
 and
@@ -334,7 +334,7 @@ with possible extensions.
 For instance, the
 .Fx
 implementation uses a function
-.Dq Fn aio_waitcomplete
+.Sq Fn aio_waitcomplete
 to wait for the next completion of an
 .Nm aio
 request.
