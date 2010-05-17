@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsync.2,v 1.16 2005/01/25 23:55:20 wrstuden Exp $
+.\"	$NetBSD: fsync.2,v 1.17 2010/05/17 12:38:04 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fsync.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 14, 2003
+.Dd May 17, 2010
 .Dt FSYNC 2
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@ must be open for writing.
 .Pp
 .Fn fsync_range
 may flush the file data in one of two manners:
-.Bl -tag -width FDATASYNC
+.Bl -tag -width FDATASYNC -offset indent
 .It Dv FDATASYNC
 Synchronize the file data and sufficient meta-data to retrieve the
 data for the specified range.
@@ -86,7 +86,7 @@ By default,
 does not flush disk caches, assuming that storage media are able to ensure
 completed writes are transfered to media.
 The
-.Fa FDISKSYNC
+.Dv FDISKSYNC
 flag may be included in the
 .Fa how
 parameter to trigger flushing of all disk caches for the file.
