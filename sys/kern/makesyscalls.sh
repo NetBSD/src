@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.96 2010/05/11 20:09:46 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.97 2010/05/17 12:35:20 njoly Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -240,10 +240,16 @@ NR == 1 {
 	printf "const char *const %s[] = {\n",namesname > sysnamesbottom
 
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
+	printf "#ifndef _" constprefix "SYSCALL_H_\n" > sysnumhdr
+	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
 
 	printf " * created from%s\n */\n\n", $0 > sysarghdr
+	printf "#ifndef _" constprefix "SYSCALLARGS_H_\n" > sysarghdr
+	printf "#define	_" constprefix "SYSCALLARGS_H_\n\n" > sysarghdr
 
 	printf " * created from%s\n */\n\n", $0 > rumpcallshdr
+	printf "#ifndef _RUMP_RUMP_SYSCALLS_H_\n" > rumpcallshdr
+	printf "#define _RUMP_RUMP_SYSCALLS_H_\n\n" > rumpcallshdr
 	printf "#ifdef _KERNEL\n" > rumpcallshdr
 	printf "#error Interface not supported inside kernel\n" > rumpcallshdr
 	printf "#endif /* _KERNEL */\n\n" > rumpcallshdr
@@ -251,10 +257,6 @@ NR == 1 {
 	printf "#include <sys/select.h>\n\n" > rumpcallshdr
 	printf "#include <signal.h>\n\n" > rumpcallshdr
 
-	printf "#ifndef _" constprefix "SYSCALL_H_\n" > sysnumhdr
-	printf "#define	_" constprefix "SYSCALL_H_\n\n" > sysnumhdr
-	printf "#ifndef _" constprefix "SYSCALLARGS_H_\n" > sysarghdr
-	printf "#define	_" constprefix "SYSCALLARGS_H_\n\n" > sysarghdr
 	printf "%s", sysarghdrextra > sysarghdr
 	# Write max number of system call arguments to both headers
 	printf("#define\t%sMAXSYSARGS\t%d\n\n", constprefix, maxsysargs) \
@@ -804,6 +806,7 @@ END {
 cat $sysprotos >> $sysarghdr
 echo "#endif /* _${constprefix}SYSCALL_H_ */" >> $sysnumhdr
 echo "#endif /* _${constprefix}SYSCALLARGS_H_ */" >> $sysarghdr
+printf "\n#endif /* _RUMP_RUMP_SYSCALLS_H_ */\n" >> $rumpcallshdr
 cat $sysdcl $sysent > $syssw
 cat $sysnamesbottom >> $sysnames
 cat $rumpsysent >> $rumpcalls
