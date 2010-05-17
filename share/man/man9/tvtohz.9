@@ -1,4 +1,4 @@
-.\"	$NetBSD: tvtohz.9,v 1.3 2010/04/05 19:37:13 joerg Exp $
+.\"	$NetBSD: tvtohz.9,v 1.4 2010/05/17 20:18:30 jruoho Exp $
 .\"
 .\" Copyright (c) 2000 Kelly Yancey
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/tvtohz.9,v 1.4 2005/02/09 18:07:17 ru Exp $
 .\"
-.Dd November 24, 2008
+.Dd May 17, 2010
 .Dt TVTOHZ 9
 .Os
 .Sh NAME
@@ -47,6 +47,7 @@ of system ticks that would elapse.
 Returns the integral number of system ticks expected to elapse in the given
 interval, including the current tick.
 .Sh SEE ALSO
+.Xr timeval 3 ,
 .Xr microtime 9 ,
 .Xr microuptime 9 ,
 .Xr timecounter 9 ,
