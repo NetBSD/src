@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1448 2010/05/17 07:10:15 jruoho Exp $
+#	$NetBSD: mi,v 1.1449 2010/05/17 17:15:42 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4804,6 +4804,7 @@
 ./usr/share/man/cat3/addr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/addstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/affinity.0			comp-c-catman		.cat
+./usr/share/man/cat3/aio.0			comp-c-catman		.cat
 ./usr/share/man/cat3/aio_cancel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/aio_error.0		comp-c-catman		.cat
 ./usr/share/man/cat3/aio_fsync.0		comp-c-catman		.cat
@@ -10704,6 +10705,7 @@
 ./usr/share/man/html3/addr.html			comp-c-htmlman		html
 ./usr/share/man/html3/addstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/affinity.html		comp-c-htmlman		html
+./usr/share/man/html3/aio.html			comp-c-htmlman		html
 ./usr/share/man/html3/aio_cancel.html		comp-c-htmlman		html
 ./usr/share/man/html3/aio_error.html		comp-c-htmlman		html
 ./usr/share/man/html3/aio_fsync.html		comp-c-htmlman		html
@@ -16404,6 +16406,7 @@
 ./usr/share/man/man3/addr.3			comp-c-man		.man
 ./usr/share/man/man3/addstr.3			comp-c-man		.man
 ./usr/share/man/man3/affinity.3			comp-c-man		.man
+./usr/share/man/man3/aio.3			comp-c-man		.man
 ./usr/share/man/man3/aio_cancel.3		comp-c-man		.man
 ./usr/share/man/man3/aio_error.3		comp-c-man		.man
 ./usr/share/man/man3/aio_fsync.3		comp-c-man		.man
