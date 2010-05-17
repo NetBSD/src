@@ -1,4 +1,4 @@
-.\" $NetBSD: aio_suspend.3,v 1.3 2007/08/07 20:45:04 wiz Exp $
+.\" $NetBSD: aio_suspend.3,v 1.4 2010/05/17 19:22:31 jruoho Exp $
 .\"
 .\" Copyright (c) 1999 Softweyr LLC.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/lib/libc/sys/aio_suspend.2,v 1.22 2004/12/23 23:45:25 keramida Exp $
 .\"
-.Dd May 4, 2007
+.Dd May 17, 2010
 .Dt AIO_SUSPEND 3
 .Os
 .Sh NAME
@@ -44,7 +44,9 @@ The
 system call suspends the calling process until at least one of the
 specified asynchronous I/O requests have completed, a signal is
 delivered, or the
-.Fa timeout
+.Fa struct timeout
+(see
+.Xr timespec 3 )
 has passed.
 .Pp
 The
@@ -54,16 +56,20 @@ is an array of
 .Fa nent
 pointers to asynchronous I/O requests.
 Array members containing
-null pointers will be silently ignored.
+.Dv NULL
+pointers will be silently ignored.
 .Pp
 If
 .Fa timeout
-is not a null pointer, it specifies a maximum interval to suspend.
+is not a
+.Dv NULL
+pointer, it specifies a maximum interval to suspend.
 If
 .Fa timeout
-is a null pointer, the suspend blocks indefinitely.
-To effect a
-poll, the
+is a
+.DV NULL
+pointer, the suspend blocks indefinitely.
+To effect a poll, the
 .Fa timeout
 should point to a zero-value timespec structure.
 .Sh RETURN VALUES
@@ -95,10 +101,8 @@ asynchronous I/O requests, or at least one of the requests is not
 valid.
 .El
 .Sh SEE ALSO
-.Xr aio_cancel 3 ,
-.Xr aio_error 3 ,
-.Xr aio_return 3 ,
-.Xr aio_write 3
+.Xr aio 3 ,
+.Xr timespec 3
 .Sh STANDARDS
 The
 .Fn aio_suspend
