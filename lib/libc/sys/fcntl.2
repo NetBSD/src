@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.36 2009/06/03 09:03:24 wiz Exp $
+.\"	$NetBSD: fcntl.2,v 1.37 2010/05/17 12:16:43 jruoho Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd June 1, 2009
+.Dd May 17, 2010
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -315,7 +315,7 @@ or an
 request fails or blocks respectively when another process has existing
 locks on bytes in the specified region and the type of any of those
 locks conflicts with the type specified in the request.
-.Pp
+.Sh COMPATIBILITY
 This interface follows the completely stupid semantics of
 .At V
 and
@@ -334,6 +334,7 @@ opens, reads, and closes the password database.
 The database close will release all locks that the process has
 associated with the database, even if the library routine never
 requested a lock on the database.
+.Pp
 Another minor semantic problem with this interface is that
 locks are not inherited by a child process created using the
 .Xr fork 2
