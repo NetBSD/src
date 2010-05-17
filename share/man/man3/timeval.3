@@ -1,4 +1,4 @@
-.\" $NetBSD: timeval.3,v 1.3 2010/05/17 12:27:13 jruoho Exp $
+.\" $NetBSD: timeval.3,v 1.4 2010/05/17 20:25:19 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -129,8 +129,26 @@ If
 .Va it_value
 is non-zero, it indicates the time left to the next timer expiration.
 A value zero implies that the timer is disabled.
-.El
+.It
+The following structure is used by
+.Xr microtime 9 ,
+among others:
+.Bd -literal -offset indent
+struct bintime {
+	time_t		sec;
+	uint64_t	frac;
+};
+.Ed
 .Pp
+The
+.Va sec
+member specifies the time in seconds and the
+.Va frac
+represents 64-bit fraction of seconds.
+The
+.Va struct bintime
+is meant to be used in the kernel only.
+.El
 .Sh STANDARDS
 These structures conform to
 .St -p1003.1-2004 .
