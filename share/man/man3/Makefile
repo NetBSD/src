@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.51 2010/05/16 15:33:30 jruoho Exp $
+#	$NetBSD: Makefile,v 1.52 2010/05/17 07:10:16 jruoho Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
 	__arraycount.3 assert.3 bits.3 bitstring.3 dirent.3 dlfcn.3 end.3 \
 	fast_divide32.3 ffs32.3 gcq.3 intro.3 inttypes.3 iso646.3 offsetof.3 \
 	queue.3 rb.3 stdarg.3 stdbool.3 stddef.3 stdint.3 stdlib.3 sysexits.3 \
-	tgmath.3 timeradd.3 tree.3 types.3 varargs.3
+	tgmath.3 timeradd.3 timeval.3 tree.3 types.3 varargs.3
 
 USETBL=	# used by queue.3
 
@@ -209,6 +209,11 @@ MLINKS+=timeradd.3 timersub.3 \
 	timeradd.3 timerclear.3 \
 	timeradd.3 timerisset.3 \
 	timeradd.3 timercmp.3
+MLINKS+=timeval.3 timespec.3 \
+	timeval.3 itimerval.3 \
+	timeval.3 itimerspec.3 \
+	timeval.3 TIMEVAL_TO_TIMESPEC.3 \
+	timeval.3 TIMESPEC_TO_TIMEVAL.3
 MLINKS+=tree.3 SPLAY_PROTOTYPE.3 tree.3 SPLAY_GENERATE.3 \
 	tree.3 SPLAY_ENTRY.3 tree.3 SPLAY_HEAD.3 \
 	tree.3 SPLAY_INITIALIZER.3 tree.3 SPLAY_ROOT.3 \
