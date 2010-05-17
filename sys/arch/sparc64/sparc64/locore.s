@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.328 2010/03/20 23:31:30 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.329 2010/05/17 11:51:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -4294,7 +4294,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	/*
 	 * Get pointer to our cpu_info struct
 	 */
-
+	mov	%l1, %l7			! save cpu_info pointer
 	ldx	[%l1 + CI_PADDR], %l1		! Load the interrupt stack's PA
 
 	sethi	%hi(0xa0000000), %l2		! V=1|SZ=01|NFO=0|IE=0
@@ -4322,10 +4322,8 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	!! being lwp0 here and it's uarea is mapped special
 	!! and already accessible here)
 	flushw
-	sethi	%hi(CPUINFO_VA+CI_CURLWP), %l0
-	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_CURLWP)], %l0
+	LDPTR	[%l7 + CI_CPCB], %l0		! load PCB/uarea pointer
 	set	USPACE - TF_SIZE - CC64FSZ, %l1
-	LDPTR	[%l0 + L_PCB], %l0
  	add	%l1, %l0, %l0
 #ifdef _LP64
 	andn	%l0, 0x0f, %l0			! Needs to be 16-byte aligned
@@ -4357,13 +4355,11 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	/*
 	 * install our TSB pointers
 	 */
-	sethi	%hi(CPUINFO_VA+CI_TSB_DMMU), %l0
-	sethi	%hi(CPUINFO_VA+CI_TSB_IMMU), %l1
 	sethi	%hi(_C_LABEL(tsbsize)), %l2
 	sethi	%hi(0x1fff), %l3
 	sethi	%hi(TSB), %l4
-	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_TSB_DMMU)], %l0
-	LDPTR	[%l1 + %lo(CPUINFO_VA+CI_TSB_IMMU)], %l1
+	LDPTR	[%l7 + CI_TSB_DMMU], %l0
+	LDPTR	[%l7 + CI_TSB_IMMU], %l1
 	ld	[%l2 + %lo(_C_LABEL(tsbsize))], %l2
 	or	%l3, %lo(0x1fff), %l3
 	or	%l4, %lo(TSB), %l4
@@ -4406,12 +4402,15 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	sethi	%hi(0x40000), %o2
 	btst	%o2, %o1
 	bz	0f
-	
+
+	LDPTR	[%l7 + CI_SPINUP], %o1
 	set	1f, %o0		! Debug printf
 	call	_C_LABEL(prom_printf)
+	 mov	%sp, %o2
+
 	.data
 1:
-	.asciz	"Calling startup routine...\r\n"
+	.asciz	"Calling startup routine %p with stack at %p...\r\n"
 	_ALIGN
 	.text
 0:	
@@ -4420,8 +4419,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 * Call our startup routine.
 	 */
 
-	sethi	%hi(CPUINFO_VA+CI_SPINUP), %l0
-	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_SPINUP)], %o1
+	LDPTR	[%l7 + CI_SPINUP], %o1
 
 	call	%o1				! Call routine
 	 clr	%o0				! our frame arg is ignored
