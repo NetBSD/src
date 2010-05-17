@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1447 2010/05/16 15:33:29 jruoho Exp $
+#	$NetBSD: mi,v 1.1448 2010/05/17 07:10:15 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4760,6 +4760,8 @@
 ./usr/share/man/cat3/TAILQ_NEXT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_PREV.0		comp-c-catman		.cat
 ./usr/share/man/cat3/TAILQ_REMOVE.0		comp-c-catman		.cat
+./usr/share/man/cat3/TIMESPEC_TO_TIMEVAL.0		comp-c-catman		.cat
+./usr/share/man/cat3/TIMEVAL_TO_TIMESPEC.0		comp-c-catman		.cat
 ./usr/share/man/cat3/X509_NAME_ENTRY_get_object.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/X509_NAME_add_entry_by_txt.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/X509_NAME_get_index_by_NID.0	comp-c-catman		crypto,.cat
@@ -6278,6 +6280,8 @@
 ./usr/share/man/cat3/iswupper.0			comp-c-catman		.cat
 ./usr/share/man/cat3/iswxdigit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/isxdigit.0			comp-c-catman		.cat
+./usr/share/man/cat3/itimerspec.0		comp-c-catman		.cat
+./usr/share/man/cat3/itimerval.0		comp-c-catman		.cat
 ./usr/share/man/cat3/j0.0			comp-c-catman		.cat
 ./usr/share/man/cat3/j0f.0			comp-c-catman		.cat
 ./usr/share/man/cat3/j1.0			comp-c-catman		.cat
@@ -8221,6 +8225,8 @@
 ./usr/share/man/cat3/timerisset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timersub.0			comp-c-catman		.cat
 ./usr/share/man/cat3/times.0			comp-c-catman		.cat
+./usr/share/man/cat3/timespec.0			comp-c-catman		.cat
+./usr/share/man/cat3/timeval.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timezone.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tmpfile.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tmpnam.0			comp-c-catman		.cat
@@ -10654,6 +10660,8 @@
 ./usr/share/man/html3/TAILQ_NEXT.html		comp-c-htmlman		html
 ./usr/share/man/html3/TAILQ_PREV.html		comp-c-htmlman		html
 ./usr/share/man/html3/TAILQ_REMOVE.html		comp-c-htmlman		html
+./usr/share/man/html3/TIMESPEC_TO_TIMEVAL.html	comp-c-htmlman		html
+./usr/share/man/html3/TIMEVAL_TO_TIMESPEC.html	comp-c-htmlman		html
 ./usr/share/man/html3/X509_NAME_ENTRY_get_object.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/X509_NAME_add_entry_by_txt.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/X509_NAME_get_index_by_NID.html	comp-c-htmlman		crypto,html
@@ -12113,6 +12121,8 @@
 ./usr/share/man/html3/iswupper.html		comp-c-htmlman		html
 ./usr/share/man/html3/iswxdigit.html		comp-c-htmlman		html
 ./usr/share/man/html3/isxdigit.html		comp-c-htmlman		html
+./usr/share/man/html3/itimerspec.html		comp-c-htmlman		html
+./usr/share/man/html3/itimerval.html		comp-c-htmlman		html
 ./usr/share/man/html3/j0.html			comp-c-htmlman		html
 ./usr/share/man/html3/j0f.html			comp-c-htmlman		html
 ./usr/share/man/html3/j1.html			comp-c-htmlman		html
@@ -13978,6 +13988,8 @@
 ./usr/share/man/html3/timerisset.html		comp-c-htmlman		html
 ./usr/share/man/html3/timersub.html		comp-c-htmlman		html
 ./usr/share/man/html3/times.html		comp-c-htmlman		html
+./usr/share/man/html3/timespec.html		comp-c-htmlman		html
+./usr/share/man/html3/timeval.html		comp-c-htmlman		html
 ./usr/share/man/html3/timezone.html		comp-c-htmlman		html
 ./usr/share/man/html3/tmpfile.html		comp-c-htmlman		html
 ./usr/share/man/html3/tmpnam.html		comp-c-htmlman		html
@@ -16348,6 +16360,8 @@
 ./usr/share/man/man3/TAILQ_NEXT.3		comp-c-man		.man
 ./usr/share/man/man3/TAILQ_PREV.3		comp-c-man		.man
 ./usr/share/man/man3/TAILQ_REMOVE.3		comp-c-man		.man
+./usr/share/man/man3/TIMESPEC_TO_TIMEVAL.3	comp-c-man		.man
+./usr/share/man/man3/TIMEVAL_TO_TIMESPEC.3	comp-c-man		.man
 ./usr/share/man/man3/X509_NAME_ENTRY_get_object.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/X509_NAME_add_entry_by_txt.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/X509_NAME_get_index_by_NID.3	comp-c-man		crypto,.man
@@ -17866,6 +17880,8 @@
 ./usr/share/man/man3/iswupper.3			comp-c-man		.man
 ./usr/share/man/man3/iswxdigit.3		comp-c-man		.man
 ./usr/share/man/man3/isxdigit.3			comp-c-man		.man
+./usr/share/man/man3/itimerspec.3		comp-c-man		.man
+./usr/share/man/man3/itimerval.3		comp-c-man		.man
 ./usr/share/man/man3/j0.3			comp-c-man		.man
 ./usr/share/man/man3/j0f.3			comp-c-man		.man
 ./usr/share/man/man3/j1.3			comp-c-man		.man
@@ -19805,6 +19821,8 @@
 ./usr/share/man/man3/timerisset.3		comp-c-man		.man
 ./usr/share/man/man3/timersub.3			comp-c-man		.man
 ./usr/share/man/man3/times.3			comp-c-man		.man
+./usr/share/man/man3/timespec.3			comp-c-man		.man
+./usr/share/man/man3/timeval.3			comp-c-man		.man
 ./usr/share/man/man3/timezone.3			comp-c-man		.man
 ./usr/share/man/man3/tmpfile.3			comp-c-man		.man
 ./usr/share/man/man3/tmpnam.3			comp-c-man		.man
