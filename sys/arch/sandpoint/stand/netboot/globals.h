@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.15 2010/05/16 11:27:49 phx Exp $ */
+/* $NetBSD: globals.h,v 1.16 2010/05/17 17:50:08 phx Exp $ */
 
 /* clock feed */
 #ifndef EXT_CLK_FREQ
@@ -15,6 +15,16 @@ extern int brdtype;
 #define BRD_SYNOLOGY		102
 #define BRD_STORCENTER		103
 #define BRD_UNKNOWN		-1
+
+#ifndef CONSNAME
+#define CONSNAME "com"
+#endif
+#ifndef CONSPORT
+#define CONSPORT 0x3f8
+#endif
+#ifndef CONSSPEED
+#define CONSSPEED 115200
+#endif
 
 extern char *consname;
 extern int consport;
