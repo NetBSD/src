@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.14 2010/05/16 11:27:49 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.15 2010/05/17 17:48:59 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -151,6 +151,11 @@ brdsetup(void)
 		consname = "eumb";
 		consport = 0x4600;
 		consspeed = 57600;
+		if (PCI_VENDOR(pcicfgread(pcimaketag(0, 11, 0), PCI_ID_REG))
+		    == 0x10ec)
+			extclk = 32768000;      /* decr 2457600Hz */
+		else
+			extclk = 32521333;      /* decr 2439100Hz */
 	}
 	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
 	    0x11ab) {				/* PCI_VENDOR_MARVELL */
