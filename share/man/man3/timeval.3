@@ -1,4 +1,4 @@
-.\" $NetBSD: timeval.3,v 1.5 2010/05/17 20:32:09 jruoho Exp $
+.\" $NetBSD: timeval.3,v 1.6 2010/05/18 05:57:07 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,14 +27,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 17, 2010
+.Dd May 18, 2010
 .Dt TIMEVAL 3
 .Os
 .Sh NAME
 .Nm timeval ,
 .Nm timespec ,
 .Nm itimerval ,
-.Nm itimerspec
+.Nm itimerspec ,
+.Nm bintime
 .Nd time structures
 .Sh SYNOPSIS
 .In sys/time.h
@@ -142,12 +143,14 @@ struct bintime {
 .Pp
 The
 .Va sec
-member specifies the time in seconds and the
+member specifies the time in seconds and
 .Va frac
-represents 64-bit fraction of seconds.
+represents a 64-bit fraction of seconds.
 The
 .Va struct bintime
 is meant to be used in the kernel only.
+It is further described in
+.Xr timecounter 9 .
 .El
 .Sh SEE ALSO
 .Xr timeradd 3
