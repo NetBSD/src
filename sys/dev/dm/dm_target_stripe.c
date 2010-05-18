@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.9 2010/01/04 00:14:41 haad Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.10 2010/05/18 15:10:41 haad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 		dmt->init = &dm_target_stripe_init;
 		dmt->status = &dm_target_stripe_status;
 		dmt->strategy = &dm_target_stripe_strategy;
+		dmt->sync = &dm_target_stripe_sync;
 		dmt->deps = &dm_target_stripe_deps;
 		dmt->destroy = &dm_target_stripe_destroy;
 		dmt->upcall = &dm_target_stripe_upcall;
@@ -237,7 +238,28 @@ dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 	return 0;
 }
-/* Doesn't do anything here. */
+/* Sync underlying disk caches. */
+int
+dm_target_stripe_sync(dm_table_entry_t * table_en)
+{
+	int cmd, err, i;
+	dm_target_stripe_config_t *tsc;
+
+	tsc = table_en->target_config;
+
+	err = 0;
+	cmd = 1;
+
+	for (i = 0; i < tsc->stripe_num; i++) {
+		if ((err = VOP_IOCTL(tsc->stripe_devs[i].pdev->pdev_vnode, DIOCCACHESYNC,
+			    &cmd, FREAD|FWRITE, kauth_cred_get())) != 0)
+			return err;
+	}
+	
+	return err;
+
+}
+/* Destroy target specific data. */
 int
 dm_target_stripe_destroy(dm_table_entry_t * table_en)
 {
