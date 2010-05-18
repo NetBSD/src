@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.263 2010/03/30 01:50:03 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.264 2010/05/18 04:30:16 mrg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.263 2010/03/30 01:50:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.264 2010/05/18 04:30:16 mrg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1217,15 +1217,17 @@ cpu_pmap_prepare(struct cpu_info *ci, bool initial)
 }
 
 /*
- * Initialize the per CPU parts for the cpu running this code (despite the
- * passed cpuinfo).
+ * Initialize the per CPU parts for the cpu running this code.
  */
 void
 cpu_pmap_init(struct cpu_info *ci)
 {
 	size_t ctxsize;
 
-	mutex_init(&ci->ci_ctx_lock, MUTEX_SPIN, IPL_VM);
+	/*
+	 * We delay initialising ci_ctx_lock here as LOCKDEBUG isn't
+	 * running for cpu0 yet..
+	 */
 	ci->ci_pmap_next_ctx = 1;
 #ifdef SUN4V
 #error find out if we have 16 or 13 bit context ids
