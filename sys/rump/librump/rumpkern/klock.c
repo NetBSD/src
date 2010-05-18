@@ -1,4 +1,4 @@
-/*	$NetBSD: klock.c,v 1.1 2010/05/18 15:12:19 pooka Exp $	*/
+/*	$NetBSD: klock.c,v 1.2 2010/05/18 15:16:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.1 2010/05/18 15:12:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.2 2010/05/18 15:16:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,18 +45,18 @@ __KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.1 2010/05/18 15:12:19 pooka Exp $");
 static volatile int lockcnt;
 
 bool
-kernel_biglocked()
+rump_kernel_isbiglocked()
 {
 
 	return rumpuser_mutex_held(rump_giantlock) && lockcnt > 0;
 }
 
 void
-kernel_unlock_allbutone(int *countp)
+rump_kernel_unlock_allbutone(int *countp)
 {
 	int minusone = lockcnt-1;
 
-	KASSERT(kernel_biglocked());
+	KASSERT(rump_kernel_isbiglocked());
 	if (minusone) {
 		_kernel_unlock(minusone, countp);
 	}
@@ -72,7 +72,7 @@ kernel_unlock_allbutone(int *countp)
 }
 
 void
-kernel_ununlock_allbutone(int nlocks)
+rump_kernel_ununlock_allbutone(int nlocks)
 {
 
 	KASSERT(rumpuser_mutex_held(rump_giantlock) && lockcnt == 0);
