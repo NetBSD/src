@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.1.2.9 2010/05/11 21:08:01 matt Exp $
+#	$NetBSD: XLSATX,v 1.1.2.10 2010/05/18 19:51:43 cliff Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.1.2.9 $"
+#ident 		"XLSATX-$Revision: 1.1.2.10 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -141,7 +141,8 @@ cpunode*	at mainbus? node ?
 cpucore*	at cpunode? core ?
 cpu*		at cpucore? thread ?
 obio0		at cpunode?
-com0		at obio0	addr 0x14000 mult 4 intr 9
+com0		at obio0	addr 0x14000 intr 9
+com1		at obio0	addr 0x15000 intr 10
 options		COM_REGMAP
 rmixl_pcix0	at obio0
 pci*		at rmixl_pcix0

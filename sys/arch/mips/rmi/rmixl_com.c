@@ -1,4 +1,4 @@
-/* $Id: rmixl_com.c,v 1.1.2.12 2010/04/12 22:42:07 cliff Exp $ */
+/* $Id: rmixl_com.c,v 1.1.2.13 2010/05/18 19:51:43 cliff Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.12 2010/04/12 22:42:07 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.13 2010/05/18 19:51:43 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,18 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_com.c,v 1.1.2.12 2010/04/12 22:42:07 cliff Exp
 #include <mips/rmi/rmixl_comvar.h>
 
 #include "opt_com.h"
+
+/* span of UART regs in bytes */
+#define RMIXL_IO_DEV_UART_SIZE	(COM_NPORTS * sizeof(uint32_t))
+
+#define RMIXL_COM_INIT_REGS(regs, bst, ioh, addr) 		\
+	do {							\
+		memset(&regs, 0, sizeof(regs));			\
+		COM_INIT_REGS(regs, bst, ioh, addr);		\
+		regs.cr_nports = RMIXL_IO_DEV_UART_SIZE;	\
+		rmixl_com_initmap(&regs);			\
+	} while (0)
+
 
 struct rmixl_com_softc {
 	struct com_softc sc_com;
@@ -226,6 +238,7 @@ rmixl_com_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 	bus_space_tag_t bst;
+	bus_space_handle_t ioh;
 	bus_addr_t addr;
 	bus_size_t size;
 	struct com_regs	regs;
@@ -233,23 +246,19 @@ rmixl_com_match(device_t parent, cfdata_t cf, void *aux)
 
 	bst = obio->obio_eb_bst;
 	addr = obio->obio_addr;
-	size = obio->obio_size;
+	size = (bus_size_t)RMIXL_IO_DEV_UART_SIZE;
 
 	if (com_is_console(bst, addr, &regs.cr_ioh))
 		return 1;
 
-	if (bus_space_map(bst, addr, size, 0, &regs.cr_ioh))
+	if (bus_space_map(bst, addr, size, 0, &ioh))
 		return 0;		/* FAIL */
 
-	memset(&regs, 0, sizeof(regs));
-	regs.cr_iot = bst;
-	regs.cr_iobase = addr;
-	regs.cr_nports = size;
-	rmixl_com_initmap(&regs);
+	RMIXL_COM_INIT_REGS(regs, bst, ioh, addr);
 
 	rv = com_probe_subr(&regs);
 
-	bus_space_unmap(bst, regs.cr_ioh, size);
+	bus_space_unmap(bst, ioh, size);
 
 	return rv;
 }
@@ -270,7 +279,7 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 
 	bst = obio->obio_eb_bst;
 	addr = obio->obio_addr;
-	size = obio->obio_size;
+	size = (bus_size_t)RMIXL_IO_DEV_UART_SIZE;
 
 	if (!com_is_console(bst, addr, &ioh)
 	&&  bus_space_map(bst, addr, size, 0, &ioh) != 0) {
@@ -278,10 +287,7 @@ rmixl_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	memset(&sc->sc_regs, 0, sizeof(sc->sc_regs));
-	COM_INIT_REGS(sc->sc_regs, bst, ioh, addr);
-	sc->sc_regs.cr_nports = size;
-	rmixl_com_initmap(&sc->sc_regs);
+	RMIXL_COM_INIT_REGS(sc->sc_regs, bst, ioh, addr);
 
 	com_attach_subr(sc);
 
@@ -301,7 +307,7 @@ rmixl_com_initmap(struct com_regs *regsp)
 	 * map the 4 byte register stride
 	 */
 	sz = sizeof(regsp->cr_map) / sizeof(regsp->cr_map[0]);
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < sz; i++)
 		regsp->cr_map[i] = com_std_map[i] * 4;
 }
 
@@ -310,17 +316,11 @@ rmixl_com_cnattach(bus_addr_t addr, int speed, int freq,
 	int type, tcflag_t mode)
 {
 	bus_space_tag_t bst;
-	bus_size_t sz;
 	struct com_regs	regs;
 
 	bst = (bus_space_tag_t)&rmixl_configuration.rc_obio_eb_memt;
-	sz = COM_NPORTS * sizeof(uint32_t);	/* span of UART regs in bytes */
 
-	memset(&regs, 0, sizeof(regs));
-	rmixl_com_initmap(&regs);
-	regs.cr_iot = bst;
-	regs.cr_iobase = addr;
-	regs.cr_nports = sz;
+	RMIXL_COM_INIT_REGS(regs, bst, 0, addr);
 
 	comcnattach1(&regs, speed, freq, type, mode);
 }
