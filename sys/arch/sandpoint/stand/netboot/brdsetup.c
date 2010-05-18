@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.15 2010/05/17 17:48:59 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.16 2010/05/18 10:41:30 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -126,9 +126,14 @@ brdsetup(void)
 	uint32_t extclk;
 	unsigned pchb, pcib, val;
 
-	/* BAT to arrange address space */
-
-	/* EUMBBAR */
+	/*
+	 * CHRP specification "Map-B" BAT012 layout
+	 *   BAT0 0000-0000 (256MB) SDRAM
+	 *   BAT1 8000-0000 (256MB) PCI mem space
+	 *   BAT2 fc00-0000 (64MB)  EUMB, PCI I/O space, misc devs, flash
+	 *
+	 * EUMBBAR is at fc00-0000.
+	 */
 	pchb = pcimaketag(0, 0, 0);
 	pcicfgwrite(pchb, 0x78, 0xfc000000);
 
@@ -401,7 +406,7 @@ mpc107memsize()
 	end |= ((val >> bankn) & 0xff) << 20;
 	end |= 0xfffff;
 
-	return (end + 1); /* size of bankN SDRAM */
+	return (end + 1); /* assume the end address matches total amount */
 }
 
 /*
@@ -685,30 +690,57 @@ pcifixup(void)
 		break;
 
 	case BRD_KUROBOX:
-		nic  = pcimaketag(0, 11, 0);
-		val = pcicfgread(nic, 0x3c) & 0xffff0000;
-		val |= (('A' - '@') << 8) | 11;
+		nic = pcimaketag(0, 11, 0);
+		val = pcicfgread(nic, 0x3c) & 0xffffff00;
+		val |= 11;
 		pcicfgwrite(nic, 0x3c, val);
 
-		ide  = pcimaketag(0, 12, 0);
-		val = pcicfgread(ide, 0x3c) & 0xffff0000;
-		val |= (('A' - '@') << 8) | 12;
+		ide = pcimaketag(0, 12, 0);
+		val = pcicfgread(ide, 0x3c) & 0xffffff00;
+		val |= 12;
 		pcicfgwrite(ide, 0x3c, val);
 
-		usb  = pcimaketag(0, 14, 0);
-		val = pcicfgread(usb, 0x3c) & 0xffff0000;
-		val |= (('A' - '@') << 8) | 14;
+		usb = pcimaketag(0, 14, 0);
+		val = pcicfgread(usb, 0x3c) & 0xffffff00;
+		val |= 14;
 		pcicfgwrite(usb, 0x3c, val);
 
-		usb  = pcimaketag(0, 14, 1);
-		val = pcicfgread(usb, 0x3c) & 0xffff0000;
-		val |= (('B' - '@') << 8) | 14;
+		usb = pcimaketag(0, 14, 1);
+		val = pcicfgread(usb, 0x3c) & 0xffffff00;
+		val |= 14;
 		pcicfgwrite(usb, 0x3c, val);
 
-		usb  = pcimaketag(0, 14, 2);
-		val = pcicfgread(usb, 0x3c) & 0xffff0000;
-		val |= (('C' - '@') << 8) | 14;
+		usb = pcimaketag(0, 14, 2);
+		val = pcicfgread(usb, 0x3c) & 0xffffff00;
+		val |= 14;
 		pcicfgwrite(usb, 0x3c, val);
+		break;
+
+	case BRD_SYNOLOGY:
+		ide = pcimaketag(0, 13, 0);
+		val = pcicfgread(ide, 0x3c) & 0xffffff00;
+		val |= 13;
+		pcicfgwrite(ide, 0x3c, val);
+
+		usb = pcimaketag(0, 14, 0);
+		val = pcicfgread(usb, 0x3c) & 0xffffff00;
+		val |= 14;
+		pcicfgwrite(usb, 0x3c, val);
+
+		usb = pcimaketag(0, 14, 1);
+		val = pcicfgread(usb, 0x3c) & 0xffffff00;
+		val |= 14;
+		pcicfgwrite(usb, 0x3c, val);
+
+		usb = pcimaketag(0, 14, 2);
+		val = pcicfgread(usb, 0x3c) & 0xffffff00;
+		val |= 14;
+		pcicfgwrite(usb, 0x3c, val);
+
+		nic = pcimaketag(0, 15, 0);
+		val = pcicfgread(nic, 0x3c) & 0xffffff00;
+		val |= 15;
+		pcicfgwrite(nic, 0x3c, val);
 		break;
 	}
 }
