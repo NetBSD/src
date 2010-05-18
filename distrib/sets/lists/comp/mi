@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1449 2010/05/17 17:15:42 jruoho Exp $
+#	$NetBSD: mi,v 1.1450 2010/05/18 09:07:37 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8227,6 +8227,11 @@
 ./usr/share/man/cat3/timersub.0			comp-c-catman		.cat
 ./usr/share/man/cat3/times.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timespec.0			comp-c-catman		.cat
+./usr/share/man/cat3/timespecadd.0		comp-c-catman		.cat
+./usr/share/man/cat3/timespecclear.0		comp-c-catman		.cat
+./usr/share/man/cat3/timespeccmp.0		comp-c-catman		.cat
+./usr/share/man/cat3/timespecisset.0		comp-c-catman		.cat
+./usr/share/man/cat3/timespecsub.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timeval.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timezone.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tmpfile.0			comp-c-catman		.cat
@@ -13991,6 +13996,11 @@
 ./usr/share/man/html3/timersub.html		comp-c-htmlman		html
 ./usr/share/man/html3/times.html		comp-c-htmlman		html
 ./usr/share/man/html3/timespec.html		comp-c-htmlman		html
+./usr/share/man/html3/timespecadd.html		comp-c-htmlman		html
+./usr/share/man/html3/timespecclear.html	comp-c-htmlman		html
+./usr/share/man/html3/timespeccmp.html		comp-c-htmlman		html
+./usr/share/man/html3/timespecisset.html	comp-c-htmlman		html
+./usr/share/man/html3/timespecsub.html		comp-c-htmlman		html
 ./usr/share/man/html3/timeval.html		comp-c-htmlman		html
 ./usr/share/man/html3/timezone.html		comp-c-htmlman		html
 ./usr/share/man/html3/tmpfile.html		comp-c-htmlman		html
@@ -19825,6 +19835,11 @@
 ./usr/share/man/man3/timersub.3			comp-c-man		.man
 ./usr/share/man/man3/times.3			comp-c-man		.man
 ./usr/share/man/man3/timespec.3			comp-c-man		.man
+./usr/share/man/man3/timespecadd.3		comp-c-man		.man
+./usr/share/man/man3/timespecclear.3		comp-c-man		.man
+./usr/share/man/man3/timespeccmp.3		comp-c-man		.man
+./usr/share/man/man3/timespecisset.3		comp-c-man		.man
+./usr/share/man/man3/timespecsub.3		comp-c-man		.man
 ./usr/share/man/man3/timeval.3			comp-c-man		.man
 ./usr/share/man/man3/timezone.3			comp-c-man		.man
 ./usr/share/man/man3/tmpfile.3			comp-c-man		.man
