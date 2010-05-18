@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.25 2009/12/20 13:56:36 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.26 2010/05/18 15:16:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.25 2009/12/20 13:56:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.26 2010/05/18 15:16:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,7 +62,7 @@ sleeper(struct ltsleeper *ltsp, int timo)
 	int rv, nlocks;
 
 	LIST_INSERT_HEAD(&sleepers, ltsp, entries);
-	kernel_unlock_allbutone(&nlocks);
+	rump_kernel_unlock_allbutone(&nlocks);
 
 	/* protected by biglock */
 	if (timo) {
@@ -88,7 +88,7 @@ sleeper(struct ltsleeper *ltsp, int timo)
 
 	LIST_REMOVE(ltsp, entries);
 	rumpuser_cv_destroy(ltsp->cv);
-	kernel_ununlock_allbutone(nlocks);
+	rump_kernel_ununlock_allbutone(nlocks);
 
 	return rv;
 }
@@ -139,7 +139,7 @@ do_wakeup(wchan_t ident, void (*wakeupfn)(struct rumpuser_cv *))
 {
 	struct ltsleeper *ltsp;
 
-	KASSERT(kernel_biglocked());
+	KASSERT(rump_kernel_isbiglocked());
 	LIST_FOREACH(ltsp, &sleepers, entries) {
 		if (ltsp->id == ident) {
 			wakeupfn(ltsp->cv);
