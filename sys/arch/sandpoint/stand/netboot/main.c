@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.29 2010/05/16 11:27:49 phx Exp $ */
+/* $NetBSD: main.c,v 1.30 2010/05/18 15:07:50 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -163,6 +163,7 @@ main(void)
 		/* need to set MAC address for Marvell-SKnet */
 		strcpy(bi_net.devname, "sk");
 		memcpy(bi_net.mac_address, en, sizeof(en));
+		bi_net.cookie = tag;
 	}
 
 	bi_add(&bi_cons, BTINFO_CONSOLE, sizeof(bi_cons));
