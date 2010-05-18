@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.12 2010/01/04 00:14:41 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.13 2010/05/18 15:10:38 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -289,6 +289,7 @@ dm_target_init(void)
 	dmt->init = &dm_target_linear_init;
 	dmt->status = &dm_target_linear_status;
 	dmt->strategy = &dm_target_linear_strategy;
+	dmt->sync = &dm_target_linear_sync;
 	dmt->deps = &dm_target_linear_deps;
 	dmt->destroy = &dm_target_linear_destroy;
 	dmt->upcall = &dm_target_linear_upcall;
@@ -302,39 +303,12 @@ dm_target_init(void)
 	dmt3->init = &dm_target_stripe_init;
 	dmt3->status = &dm_target_stripe_status;
 	dmt3->strategy = &dm_target_stripe_strategy;
+	dmt3->sync = &dm_target_stripe_sync;
 	dmt3->deps = &dm_target_stripe_deps;
 	dmt3->destroy = &dm_target_stripe_destroy;
 	dmt3->upcall = &dm_target_stripe_upcall;
 
 	r = dm_target_insert(dmt3);
-
-#ifdef notyet
-	dmt5->version[0] = 1;
-	dmt5->version[1] = 0;
-	dmt5->version[2] = 5;
-	strlcpy(dmt5->name, "snapshot", DM_MAX_TYPE_NAME);
-	dmt5->init = &dm_target_snapshot_init;
-	dmt5->status = &dm_target_snapshot_status;
-	dmt5->strategy = &dm_target_snapshot_strategy;
-	dmt5->deps = &dm_target_snapshot_deps;
-	dmt5->destroy = &dm_target_snapshot_destroy;
-	dmt5->upcall = &dm_target_snapshot_upcall;
-
-	r = dm_target_insert(dmt5);
-
-	dmt6->version[0] = 1;
-	dmt6->version[1] = 0;
-	dmt6->version[2] = 5;
-	strlcpy(dmt6->name, "snapshot-origin", DM_MAX_TYPE_NAME);
-	dmt6->init = &dm_target_snapshot_orig_init;
-	dmt6->status = &dm_target_snapshot_orig_status;
-	dmt6->strategy = &dm_target_snapshot_orig_strategy;
-	dmt6->deps = &dm_target_snapshot_orig_deps;
-	dmt6->destroy = &dm_target_snapshot_orig_destroy;
-	dmt6->upcall = &dm_target_snapshot_orig_upcall;
-
-	r = dm_target_insert(dmt6);
-#endif
 
 	return r;
 }
