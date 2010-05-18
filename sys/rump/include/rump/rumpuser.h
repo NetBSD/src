@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.40 2010/04/28 00:33:45 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.41 2010/05/18 14:58:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,8 +40,8 @@ struct msghdr;
 struct pollfd;
 struct sockaddr;
 
-typedef void (*kernel_lockfn)(int);
-typedef void (*kernel_unlockfn)(int, int *);
+typedef void (*kernel_lockfn)(int, void *);
+typedef void (*kernel_unlockfn)(int, int *, void *);
 
 int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 #define RUMPUSER_FT_OTHER 0
