@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27 2010/05/12 16:48:21 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.28 2010/05/18 14:58:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2010/05/12 16:48:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.28 2010/05/18 14:58:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
+#include <sys/malloc.h>
 #include <sys/intr.h>
 #include <sys/timetc.h>
 
@@ -57,7 +58,6 @@ struct softint {
 	LIST_ENTRY(softint) si_entries;
 };
 
-static struct rumpuser_mtx *si_mtx;
 struct softint_lev {
 	struct rumpuser_cv *si_cv;
 	LIST_HEAD(, softint) si_pending;
@@ -140,9 +140,9 @@ doclock(void *noarg)
 }
 
 /*
- * Soft interrupt execution thread.  Note that we run without a CPU
- * context until we start processing the interrupt.  This is to avoid
- * lock recursion.
+ * Soft interrupt execution thread.  This thread is pinned to the
+ * same CPU that scheduled the interrupt, so we don't need to do
+ * lock against si_lvl.
  */
 static void
 sithread(void *arg)
@@ -155,16 +155,9 @@ sithread(void *arg)
 	struct softint_lev *si_lvlp, *si_lvl;
 	struct cpu_data *cd = &curcpu()->ci_data;
 
-	rump_unschedule();
-
 	si_lvlp = cd->cpu_softcpu;
 	si_lvl = &si_lvlp[mylevel];
 
-	/*
-	 * XXX: si_mtx is unnecessary, and should open an interface
-	 * which allows to use schedmtx for the cv wait
-	 */
-	rumpuser_mutex_enter_nowrap(si_mtx);
 	for (;;) {
 		if (!LIST_EMPTY(&si_lvl->si_pending)) {
 			si = LIST_FIRST(&si_lvl->si_pending);
@@ -175,28 +168,19 @@ sithread(void *arg)
 			si->si_flags &= ~SI_ONLIST;
 			LIST_REMOVE(si, si_entries);
 			if (si->si_flags & SI_KILLME) {
-				rumpuser_mutex_exit(si_mtx);
-				rump_schedule();
 				softint_disestablish(si);
-				rump_unschedule();
-				rumpuser_mutex_enter_nowrap(si_mtx);
 				continue;
 			}
 		} else {
-			rumpuser_cv_wait_nowrap(si_lvl->si_cv, si_mtx);
+			rump_schedlock_cv_wait(si_lvl->si_cv);
 			continue;
 		}
-		rumpuser_mutex_exit(si_mtx);
 
-		rump_schedule();
 		if (!mpsafe)
 			KERNEL_LOCK(1, curlwp);
 		func(funarg);
 		if (!mpsafe)
 			KERNEL_UNLOCK_ONE(curlwp);
-		rump_unschedule();
-
-		rumpuser_mutex_enter_nowrap(si_mtx);
 	}
 
 	panic("sithread unreachable");
@@ -206,7 +190,6 @@ void
 rump_intr_init()
 {
 
-	rumpuser_mutex_init(&si_mtx);
 	cv_init(&lbolt, "oh kath ra");
 }
 
@@ -232,6 +215,9 @@ softint_init(struct cpu_info *ci)
 		LIST_INIT(&slev[i].si_pending);
 	}
 	cd->cpu_softcpu = slev;
+
+	/* softint might run on different physical CPU */
+	membar_sync();
 
 	for (i = 0; i < SOFTINT_COUNT; i++) {
 		rv = kthread_create(PRI_NONE,
@@ -261,7 +247,7 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 {
 	struct softint *si;
 
-	si = kmem_alloc(sizeof(*si), KM_SLEEP);
+	si = malloc(sizeof(*si), M_TEMP, M_WAITOK);
 	si->si_func = func;
 	si->si_arg = arg;
 	si->si_flags = flags & SOFTINT_MPSAFE ? SI_MPSAFE : 0;
@@ -295,13 +281,11 @@ softint_disestablish(void *cook)
 {
 	struct softint *si = cook;
 
-	rumpuser_mutex_enter(si_mtx);
 	if (si->si_flags & SI_ONLIST) {
 		si->si_flags |= SI_KILLME;
 		return;
 	}
-	rumpuser_mutex_exit(si_mtx);
-	kmem_free(si, sizeof(*si));
+	free(si, M_TEMP);
 }
 
 void

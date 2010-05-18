@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.13 2010/04/28 00:42:16 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.14 2010/05/18 14:58:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.13 2010/04/28 00:42:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.14 2010/05/18 14:58:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -60,6 +60,7 @@ int ncpu;
 #define RCPU_FREELIST	0x04	/* CPU is on freelist */
 
 static LIST_HEAD(,rumpcpu) cpu_freelist = LIST_HEAD_INITIALIZER(cpu_freelist);
+
 static struct rumpuser_mtx *schedmtx;
 static struct rumpuser_cv *schedcv, *lwp0cv;
 
@@ -118,6 +119,23 @@ rump_scheduler_init()
 	}
 }
 
+/*
+ * condvar ops using scheduler lock as the rumpuser interlock.
+ */
+void
+rump_schedlock_cv_wait(struct rumpuser_cv *cv)
+{
+
+	rumpuser_cv_wait(cv, schedmtx);
+}
+
+int
+rump_schedlock_cv_timedwait(struct rumpuser_cv *cv, const struct timespec *ts)
+{
+
+	return rumpuser_cv_timedwait(cv, schedmtx, ts->tv_sec, ts->tv_nsec);
+}
+
 void
 rump_schedule()
 {
@@ -159,9 +177,19 @@ rump_schedule()
 void
 rump_schedule_cpu(struct lwp *l)
 {
-	struct rumpcpu *rcpu;
 
-	rumpuser_mutex_enter_nowrap(schedmtx);
+	rump_schedule_cpu_interlock(l, NULL);
+}
+
+void
+rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
+{
+	struct rumpcpu *rcpu;
+	bool schedlock = interlock == schedmtx;
+
+	if (!schedlock)
+		rumpuser_mutex_enter_nowrap(schedmtx);
+
 	if (l->l_pflag & LP_BOUND) {
 		KASSERT(l->l_cpu != NULL);
 		rcpu = &rcpu_storage[l->l_cpu-&rump_cpus[0]];
@@ -236,16 +264,24 @@ void
 rump_unschedule_cpu(struct lwp *l)
 {
 
-	if ((l->l_pflag & LP_INTR) == 0)
-		rump_softint_run(l->l_cpu);
-	rump_unschedule_cpu1(l);
+	rump_unschedule_cpu_interlock(l, NULL);
 }
 
 void
-rump_unschedule_cpu1(struct lwp *l)
+rump_unschedule_cpu_interlock(struct lwp *l, void *interlock)
+{
+
+	if ((l->l_pflag & LP_INTR) == 0)
+		rump_softint_run(l->l_cpu);
+	rump_unschedule_cpu1(l, interlock);
+}
+
+void
+rump_unschedule_cpu1(struct lwp *l, void *interlock)
 {
 	struct rumpcpu *rcpu;
 	struct cpu_info *ci;
+	bool schedlock = interlock == schedmtx;
 
 	ci = l->l_cpu;
 	if ((l->l_pflag & LP_BOUND) == 0) {
@@ -256,6 +292,7 @@ rump_unschedule_cpu1(struct lwp *l)
 	KASSERT(rcpu->rcpu_flags & RCPU_BUSY);
 
 	rumpuser_mutex_enter_nowrap(schedmtx);
+
 	if (rcpu->rcpu_flags & RCPU_WANTED) {
 		/*
 		 * The assumption is that there will usually be max 1
@@ -270,7 +307,9 @@ rump_unschedule_cpu1(struct lwp *l)
 		rumpuser_cv_signal(schedcv);
 	}
 	rcpu->rcpu_flags &= ~RCPU_BUSY;
-	rumpuser_mutex_exit(schedmtx);
+
+	if (!schedlock)
+		rumpuser_mutex_exit(schedmtx);
 }
 
 /* Give up and retake CPU (perhaps a different one) */
