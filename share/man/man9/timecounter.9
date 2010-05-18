@@ -1,4 +1,4 @@
-.\"	$NetBSD: timecounter.9,v 1.7 2009/10/25 18:35:45 joerg Exp $
+.\"	$NetBSD: timecounter.9,v 1.8 2010/05/18 06:05:08 jruoho Exp $
 .\"	$OpenBSD: tc_init.9,v 1.4 2007/05/31 19:20:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -37,7 +37,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 26, 2008
+.Dd May 18, 2010
 .Dt TIMECOUNTER 9
 .Os
 .Sh NAME
@@ -56,13 +56,13 @@ for tracking time.
 A timecounter is a binary counter which has two properties:
 .Bl -bullet -offset indent
 .It
-it runs at a fixed, known frequency
+it runs at a fixed, known frequency; and
 .It
 it has sufficient bits to not roll over in less than approximately
 max(2 msec,
 .Pf 2/ Em HZ
 seconds) (the value 2 here is really 1 + delta, for some
-indeterminate value of delta)
+indeterminate value of delta).
 .El
 .Pp
 The interface between the hardware which implements a timecounter and the
@@ -103,7 +103,7 @@ This mask should mask off any unimplemented bits.
 Frequency of the counter in Hz.
 .It Va tc_name
 Name of the timecounter.
-Can be any nul-terminated string.
+Can be any NUL-terminated string.
 .It Va tc_quality
 Used to determine if this timecounter is better than another timecounter \-
 higher means better.
@@ -144,7 +144,8 @@ field in the traditional
 .Va timeval
 and
 .Va timespec
-structures.
+structures, described in
+.Xr timeval 3 .
 .Pp
 The
 .Va frac
@@ -166,11 +167,10 @@ without expensive 64 bit arithmetics.
 .Sh CODE REFERENCES
 The timecounter framework is implemented in the file
 .Pa sys/kern/kern_tc.c .
-.Pp
 The
 .Va bintime
 structure and related functions are defined in the file
-.Pa sys/sys/time.h .
+.In sys/time.h .
 .Sh SEE ALSO
 .Xr clock_settime 2 ,
 .Xr ntp_adjtime 2 ,
@@ -190,9 +190,10 @@ structure and related functions are defined in the file
 .Xr nanouptime 9 ,
 .Xr time_second 9
 .Rs
-.%A "Poul-Henning Kamp"
+.%A Poul-Henning Kamp
 .%T "Timecounters: Efficient and precise timekeeping in SMP kernels"
 .%J "Proceedings of EuroBSDCon 2002, Amsterdam"
+.%D 15-17 November, 2002
 .%U http://phk.freebsd.dk/pubs/timecounter.pdf
 .Re
 .Sh HISTORY
