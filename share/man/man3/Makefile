@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2010/05/17 07:10:16 jruoho Exp $
+#	$NetBSD: Makefile,v 1.53 2010/05/18 09:07:38 jruoho Exp $
 #	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN=	_DIAGASSERT.3 __CONCAT.3 __UNCONST.3 CMSG_DATA.3 \
@@ -208,7 +208,12 @@ MLINKS+=dlfcn.3 dlopen.3 dlfcn.3 dlclose.3 dlfcn.3 dlsym.3 dlfcn.3 dlctl.3 \
 MLINKS+=timeradd.3 timersub.3 \
 	timeradd.3 timerclear.3 \
 	timeradd.3 timerisset.3 \
-	timeradd.3 timercmp.3
+	timeradd.3 timercmp.3 \
+	timeradd.3 timespecadd.3 \
+	timeradd.3 timespecsub.3 \
+	timeradd.3 timespecclear.3 \
+	timeradd.3 timespecisset.3 \
+	timeradd.3 timespeccmp.3
 MLINKS+=timeval.3 timespec.3 \
 	timeval.3 itimerval.3 \
 	timeval.3 itimerspec.3 \
