@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.40 2010/05/18 14:58:42 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.41 2010/05/18 15:12:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.40 2010/05/18 14:58:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.41 2010/05/18 15:12:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -280,110 +280,4 @@ cv_is_valid(kcondvar_t *cv)
 {
 
 	return RUMPCV(cv) != NULL;
-}
-
-/*
- * giant lock
- */
-
-static volatile int lockcnt;
-
-bool
-kernel_biglocked()
-{
-
-	return rumpuser_mutex_held(rump_giantlock) && lockcnt > 0;
-}
-
-void
-kernel_unlock_allbutone(int *countp)
-{
-	int minusone = lockcnt-1;
-
-	KASSERT(kernel_biglocked());
-	if (minusone) {
-		_kernel_unlock(minusone, countp);
-	}
-	KASSERT(lockcnt == 1);
-	*countp = minusone;
-
-	/*
-	 * We drop lockcnt to 0 since rumpuser doesn't know that the
-	 * kernel biglock is being used as the interlock for cv in
-	 * tsleep.
-	 */
-	lockcnt = 0;
-}
-
-void
-kernel_ununlock_allbutone(int nlocks)
-{
-
-	KASSERT(rumpuser_mutex_held(rump_giantlock) && lockcnt == 0);
-	lockcnt = 1;
-	_kernel_lock(nlocks);
-}
-
-void
-_kernel_lock(int nlocks)
-{
-
-	while (nlocks--) {
-		if (!rumpuser_mutex_tryenter(rump_giantlock)) {
-			struct lwp *l = curlwp;
-
-			rump_unschedule_cpu1(l, NULL);
-			rumpuser_mutex_enter_nowrap(rump_giantlock);
-			rump_schedule_cpu(l);
-		}
-		lockcnt++;
-	}
-}
-
-void
-_kernel_unlock(int nlocks, int *countp)
-{
-
-	if (!rumpuser_mutex_held(rump_giantlock)) {
-		KASSERT(nlocks == 0);
-		if (countp)
-			*countp = 0;
-		return;
-	}
-
-	if (countp)
-		*countp = lockcnt;
-	if (nlocks == 0)
-		nlocks = lockcnt;
-	if (nlocks == -1) {
-		KASSERT(lockcnt == 1);
-		nlocks = 1;
-	}
-	KASSERT(nlocks <= lockcnt);
-	while (nlocks--) {
-		lockcnt--;
-		rumpuser_mutex_exit(rump_giantlock);
-	}
-}
-
-void
-rump_user_unschedule(int nlocks, int *countp, void *interlock)
-{
-
-	_kernel_unlock(nlocks, countp);
-	/*
-	 * XXX: technically we should unschedule_cpu1() here, but that
-	 * requires rump_intr_enter/exit to be implemented.
-	 */
-	rump_unschedule_cpu_interlock(curlwp, interlock);
-}
-
-void
-rump_user_schedule(int nlocks, void *interlock)
-{
-
-	rump_schedule_cpu_interlock(curlwp, interlock);
-
-	if (nlocks)
-		_kernel_lock(nlocks);
 }
