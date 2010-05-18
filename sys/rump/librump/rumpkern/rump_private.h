@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.44 2010/04/27 23:30:30 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.45 2010/05/18 14:58:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -109,11 +109,17 @@ void	rump_scheduler_init(void);
 void	rump_schedule(void);
 void	rump_unschedule(void);
 void 	rump_schedule_cpu(struct lwp *);
+void 	rump_schedule_cpu_interlock(struct lwp *, void *);
 void	rump_unschedule_cpu(struct lwp *);
-void	rump_unschedule_cpu1(struct lwp *);
+void	rump_unschedule_cpu_interlock(struct lwp *, void *);
+void	rump_unschedule_cpu1(struct lwp *, void *);
 
-void	rump_user_schedule(int);
-void	rump_user_unschedule(int, int *);
+void	rump_schedlock_cv_wait(struct rumpuser_cv *);
+int	rump_schedlock_cv_timedwait(struct rumpuser_cv *,
+				    const struct timespec *);
+
+void	rump_user_schedule(int, void *);
+void	rump_user_unschedule(int, int *, void *);
 
 void	rump_cpu_attach(struct cpu_info *);
 

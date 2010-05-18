@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.1 2010/02/26 18:54:20 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.2 2010/05/18 14:58:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.1 2010/02/26 18:54:20 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.2 2010/05/18 14:58:41 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -131,7 +131,7 @@ rumpuser_biothread(void *arg)
 	int error, dummy;
 
 	/* unschedule from CPU.  we reschedule before running the interrupt */
-	rumpuser__kunlock(0, &dummy);
+	rumpuser__kunlock(0, &dummy, NULL);
 	assert(dummy == 0);
 
 	NOFAIL_ERRNO(pthread_mutex_lock(&rumpuser_aio_mtx.pthmtx));
@@ -169,9 +169,9 @@ rumpuser_biothread(void *arg)
 #endif
 			}
 		}
-		rumpuser__klock(0);
+		rumpuser__klock(0, NULL);
 		biodone(rua->rua_bp, (size_t)rv, error);
-		rumpuser__kunlock(0, &dummy);
+		rumpuser__kunlock(0, &dummy, NULL);
 
 		rua->rua_bp = NULL;
 
@@ -443,12 +443,15 @@ rumpuser_cv_destroy(struct rumpuser_cv *cv)
 void
 rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 {
+	int nlocks;
 
 	cv->nwaiters++;
+	rumpuser__kunlock(0, &nlocks, mtx);
 	assert(mtx->recursion == 1);
 	mtxexit(mtx);
-	KLOCK_WRAP(NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx)));
+	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
 	mtxenter(mtx);
+	rumpuser__klock(nlocks, mtx);
 	cv->nwaiters--;
 }
 
@@ -469,15 +472,17 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	int64_t sec, int64_t nsec)
 {
 	struct timespec ts;
-	int rv;
+	int rv, nlocks;
 
 	/* LINTED */
 	ts.tv_sec = sec; ts.tv_nsec = nsec;
 
 	cv->nwaiters++;
+	rumpuser__kunlock(0, &nlocks, mtx);
 	mtxexit(mtx);
-	KLOCK_WRAP(rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts));
+	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
 	mtxenter(mtx);
+	rumpuser__klock(nlocks, mtx);
 	cv->nwaiters--;
 	if (rv != 0 && rv != ETIMEDOUT)
 		abort();
