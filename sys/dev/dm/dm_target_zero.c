@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.10 2010/01/04 00:12:22 haad Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.11 2010/05/18 15:10:38 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -40,6 +40,15 @@
 
 #include "dm.h"
 
+/* dm_target_zero.c */
+int dm_target_zero_init(dm_dev_t *, void**,  char *);
+char * dm_target_zero_status(void *);
+int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_zero_sync(dm_table_entry_t *);
+int dm_target_zero_destroy(dm_table_entry_t *);
+int dm_target_zero_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);
+
 #ifdef DM_TARGET_MODULE
 /*
  * Every target can be compiled directly to dm driver or as a
@@ -75,6 +84,7 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
 		dmt->init = &dm_target_zero_init;
 		dmt->status = &dm_target_zero_status;
 		dmt->strategy = &dm_target_zero_strategy;
+		dmt->sync = &dm_target_zero_sync;		 
 		dmt->deps = &dm_target_zero_deps;
 		dmt->destroy = &dm_target_zero_destroy;
 		dmt->upcall = &dm_target_zero_upcall;
@@ -136,6 +146,13 @@ dm_target_zero_strategy(dm_table_entry_t * table_en, struct buf * bp)
 				 * that there is no other io to done  */
 
 	biodone(bp);
+
+	return 0;
+}
+/* Sync underlying disk caches. */
+int
+dm_target_zero_sync(dm_table_entry_t * table_en)
+{
 
 	return 0;
 }
