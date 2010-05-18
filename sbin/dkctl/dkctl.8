@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.20 2009/08/02 22:49:08 wiz Exp $
+.\"	$NetBSD: dkctl.8,v 1.21 2010/05/18 23:33:03 wiz Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 30, 2009
+.Dd May 19, 2010
 .Dt DKCTL 8
 .Os
 .Sh NAME
@@ -171,6 +171,16 @@ To get the list of supported schedulers, use the following command:
 $ sysctl kern.bufq.strategies
 .Ed
 .El
+.Pp
+Note: The
+.Ic addwedge
+and
+.Ic delwedge
+commands only modify the in-kernel representation of disks; for
+modifying information on the disks themselves, refer to
+.Xr fdisk 8
+or
+.Xr gpt 8 .
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr dk 4 ,
@@ -178,6 +188,8 @@ $ sysctl kern.bufq.strategies
 .Xr wd 4 ,
 .Xr disklabel 5 ,
 .Xr atactl 8 ,
+.Xr fdisk 8 ,
+.Xr gpt 8 ,
 .Xr scsictl 8
 .Sh HISTORY
 The
