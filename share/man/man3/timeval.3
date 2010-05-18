@@ -1,4 +1,4 @@
-.\" $NetBSD: timeval.3,v 1.6 2010/05/18 05:57:07 jruoho Exp $
+.\" $NetBSD: timeval.3,v 1.7 2010/05/18 07:04:27 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,7 @@ struct timespec {
 .Pp
 The
 .Va tv_sec
-member is again the number of elapsed time in whole seconds.
+member is again the elapsed time in whole seconds.
 The
 .Va tv_nsec
 member represents the rest of the elapsed time in nanoseconds.
@@ -152,5 +152,34 @@ is meant to be used in the kernel only.
 It is further described in
 .Xr timecounter 9 .
 .El
+.Sh EXAMPLES
+It can be stressed that the traditional
+.Tn UNIX
+.Va timeval
+and
+.Va timespec
+structures represent elapsed time, measured by the system clock
+(see
+.Xr hz 9 ) .
+The following sketch implements a function suitable
+for use in a context where the
+.Va timespec
+structure is required for a conditional timeout:
+.Bd -literal -offset indent
+static void
+example(struct timespec *spec, time_t minutes)
+{
+	struct timeval elapsed;
+
+	_DIAGASSERT(spec != NULL);
+
+	(void)gettimeofday(&elapsed, NULL);
+
+	TIMEVAL_TO_TIMESPEC(&elapsed, spec);
+
+	/* Add the offset for timeout in minutes. */
+	spec->tv_sec = spec->tv_sec + minutes * 60;
+}
+.Ed
 .Sh SEE ALSO
 .Xr timeradd 3
