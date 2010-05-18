@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.5 2010/05/16 11:27:49 phx Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.6 2010/05/18 15:07:50 phx Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -80,6 +80,7 @@ struct btinfo_rootdevice {
 struct btinfo_net {
 	struct btinfo_common common;
 	char devname[16];
+	unsigned cookie;
 	uint8_t mac_address[6];
 };
 
