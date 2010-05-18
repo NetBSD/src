@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2010/05/16 11:27:49 phx Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2010/05/18 15:07:50 phx Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2010/05/16 11:27:49 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2010/05/18 15:07:50 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,13 +90,39 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct pci_attach_args *pa;
+	static device_t boot_parent = NULL, net_parent = NULL;
+	static pcitag_t boot_tag, net_tag;
+	pcitag_t tag;
+
+	if (device_is_a(dev, "skc")) {
+		pa = aux;
+		if (bi_rdev != NULL && bi_rdev->cookie == pa->pa_tag) {
+			boot_parent = dev;
+			boot_tag = pa->pa_tag;
+		}
+		if (bi_net != NULL && bi_net->cookie == pa->pa_tag) {
+			net_parent = dev;
+			net_tag = pa->pa_tag;
+		}
+	}
 
 	if (dev->dv_class == DV_IFNET) {
-		pa = aux;
+		if (device_is_a(device_parent(dev), "pci")) {
+			pa = aux;
+			tag = pa->pa_tag;
+		} else if (device_parent(dev) == boot_parent)
+			tag = boot_tag;
+		else if (device_parent(dev) == net_parent)
+			tag = net_tag;
+		else
+			tag = 0;
+
 		if (bi_rdev != NULL && device_is_a(dev, bi_rdev->devname)
-		    && bi_rdev->cookie == pa->pa_tag)
+		    && bi_rdev->cookie == tag)
 			booted_device = dev;
-		if (bi_net != NULL && device_is_a(dev, bi_net->devname)) {
+
+		if (bi_net != NULL && device_is_a(dev, bi_net->devname)
+		    && bi_net->cookie == tag) {
 			prop_data_t pd;
 
 			pd = prop_data_create_data_nocopy(bi_net->mac_address,
