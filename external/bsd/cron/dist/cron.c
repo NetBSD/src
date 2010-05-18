@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.5 2010/05/07 17:12:00 christos Exp $	*/
+/*	$NetBSD: cron.c,v 1.6 2010/05/18 21:49:51 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 1.12 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.5 2010/05/07 17:12:00 christos Exp $");
+__RCSID("$NetBSD: cron.c,v 1.6 2010/05/18 21:49:51 christos Exp $");
 #endif
 #endif
 
@@ -264,14 +264,97 @@ run_reboot_jobs(cron_db *db) {
 	(void) job_runqueue();
 }
 
+static const char *
+bitprint(const bitstr_t *b, size_t l)
+{
+	size_t i, set, clear;
+	static char result[1024];
+	char tmp[1024];
+
+	result[0] = '\0';
+	for (i = 0;;) {
+		for (; i < l; i++)
+			if (bit_test(b, i))
+				break;
+		if (i == l)
+			return result;
+		set = i;
+		for (; i < l; i++)
+			if (!bit_test(b, i))
+				break;
+		clear = i;
+		if (set == 0 && clear == l) {
+			snprintf(result, sizeof(result), "*");
+			return result;
+		}
+		if (clear == l || set == clear - 1)
+			snprintf(tmp, sizeof(tmp), ",%zu", set);
+		else
+			snprintf(tmp, sizeof(tmp), ",%zu-%zu", set, clear - 1);
+		if (result[0] == '\0')
+			strlcpy(result, tmp + 1, sizeof(result));
+		else
+			strlcat(result, tmp, sizeof(result));
+	}
+}
+
+static const char *
+flagsprint(int flags)
+{
+	static char result[1024];
+
+	result[0] = '\0';
+	if (flags & MIN_STAR)
+		strlcat(result, ",min", sizeof(result));
+	if (flags & HR_STAR)
+		strlcat(result, ",hr", sizeof(result));
+	if (flags & DOM_STAR)
+		strlcat(result, ",dom", sizeof(result));
+	if (flags & DOW_STAR)
+		strlcat(result, ",dow", sizeof(result));
+	if (flags & WHEN_REBOOT)
+		strlcat(result, ",reboot", sizeof(result));
+	if (flags & DONT_LOG)
+		strlcat(result, ",nolog", sizeof(result));
+
+	return result + (result[0] == ',');
+}
+
+static void
+printone(char *res, size_t len, const char *b)
+{
+	int comma = strchr(b, ',') != NULL;
+	if (comma)
+		strlcat(res, "[", len);
+	strlcat(res, b, len);
+	strlcat(res, "]," + (comma ? 0 : 1), len);
+}
+
+static const char *
+tick(const entry *e)
+{
+	static char result[1024];
+
+	result[0] = '\0';
+	printone(result, sizeof(result), bitprint(e->minute, MINUTE_COUNT));
+	printone(result, sizeof(result), bitprint(e->hour, HOUR_COUNT));
+	printone(result, sizeof(result), bitprint(e->dom, DOM_COUNT));
+	printone(result, sizeof(result), bitprint(e->month, MONTH_COUNT));
+	printone(result, sizeof(result), bitprint(e->dow, DOW_COUNT));
+	strlcat(result, "flags=", sizeof(result));
+	strlcat(result, flagsprint(e->flags), sizeof(result));
+	return result;
+}
+
 static void
 find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
-	time_t virtualSecond  = vtime * SECONDS_PER_MINUTE;
-	struct tm *tm = gmtime(&virtualSecond);
+	time_t virtualSecond = vtime * SECONDS_PER_MINUTE;
+	struct tm *tm;
 	int minute, hour, dom, month, dow;
 	user *u;
 	entry *e;
-	char		*orig_tz, *job_tz;
+#ifndef CRON_LOCALTIME
+	char *orig_tz, *job_tz;
 
 #define maketime(tz1, tz2) do { \
 	char *t = tz1; \
@@ -281,6 +364,7 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
 		setenv("TZ", (tz2), 1); \
 	else \
 		unsetenv("TZ"); \
+	tzset(); \
 	tm = localtime(&virtualSecond); \
 	minute = tm->tm_min -FIRST_MINUTE; \
 	hour = tm->tm_hour -FIRST_HOUR; \
@@ -291,6 +375,9 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
 
 	orig_tz = getenv("TZ");
 	maketime(NULL, orig_tz);
+#else
+	tm = gmtime(&virtualSecond);
+#endif
 
 	Debug(DSCH, ("[%ld] tick(%d,%d,%d,%d,%d) %s %s\n",
 		     (long)getpid(), minute, hour, dom, month, dow,
@@ -304,11 +391,19 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
 	 */
 	for (u = db->head; u != NULL; u = u->next) {
 		for (e = u->crontab; e != NULL; e = e->next) {
-			Debug(DSCH|DEXT, ("user [%s:%ld:%ld:...] cmd=\"%s\"\n",
-			    e->pwd->pw_name, (long)e->pwd->pw_uid,
-			    (long)e->pwd->pw_gid, e->cmd));
+#ifndef CRON_LOCALTIME
 			job_tz = env_get("CRON_TZ", e->envp);
 			maketime(job_tz, orig_tz);
+#else
+#define job_tz "N/A"
+#define orig_tz "N/A"
+#endif
+			Debug(DSCH|DEXT, ("user [%s:%ld:%ld:...] "
+			    "[jobtz=%s, origtz=%s] "
+			    "tick(%s), cmd=\"%s\"\n",
+			    e->pwd->pw_name, (long)e->pwd->pw_uid,
+			    (long)e->pwd->pw_gid, job_tz, orig_tz,
+			    tick(e), e->cmd));
 			if (bit_test(e->minute, minute) &&
 			    bit_test(e->hour, hour) &&
 			    bit_test(e->month, month) &&
@@ -324,10 +419,12 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
 			}
 		}
 	}
+#ifndef CRON_LOCALTIME
 	if (orig_tz != NULL)
 		setenv("TZ", orig_tz, 1);
 	else
 		unsetenv("TZ");
+#endif
 }
 
 /*
@@ -337,11 +434,12 @@ find_jobs(time_t vtime, cron_db *db, int doWild, int doNonWild) {
  */
 static void
 set_time(int initialize) {
+
+#ifdef CRON_LOCALTIME
 	struct tm tm;
 	static int isdst;
 
 	StartTime = time(NULL);
-
 	/* We adjust the time to GMT so we can catch DST changes. */
 	tm = *localtime(&StartTime);
 	if (initialize || tm.tm_isdst != isdst) {
@@ -350,6 +448,9 @@ set_time(int initialize) {
 		Debug(DSCH, ("[%ld] GMToff=%ld\n",
 		    (long)getpid(), (long)GMToff));
 	}
+#else
+	StartTime = time(NULL);
+#endif
 	clockTime = (StartTime + GMToff) / (time_t)SECONDS_PER_MINUTE;
 }
 
