@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.178 2010/05/05 18:12:24 dyoung Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.179 2010/05/19 18:58:22 jakllsch Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.178 2010/05/05 18:12:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.179 2010/05/19 18:58:22 jakllsch Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1224,38 +1224,47 @@ const uint8_t ether_ip6multicast_max[ETHER_ADDR_LEN] =
  * ether_aton implementation, not using a static buffer.
  */
 int
-ether_nonstatic_aton(u_char *dest, char *str)
+ether_nonstatic_aton(u_char *dest, const char *src)
 {
-        int i;
-        char *cp = str;
-        u_char val[6];
+	int i;
+	char str[3 * ETHER_ADDR_LEN + 2];
+	u_char val[ETHER_ADDR_LEN];
+	char *cp;
 
-#define set_value                       \
-        if (*cp > '9' && *cp < 'a')     \
-                *cp -= 'A' - 10;        \
-        else if (*cp > '9')             \
-                *cp -= 'a' - 10;        \
-        else                            \
-                *cp -= '0'
+#define set_value			\
+	if (*cp > '9' && *cp < 'a')	\
+		*cp -= 'A' - 10;	\
+	else if (*cp > '9')		\
+		*cp -= 'a' - 10;	\
+	else				\
+		*cp -= '0'
 
-        for (i = 0; i < 6; i++, cp++) {
-                if (!isxdigit(*cp))
-                        return (1);
-                set_value;
-                val[i] = *cp++;
-                if (isxdigit(*cp)) {
-                        set_value;
-                        val[i] *= 16;
-                        val[i] += *cp++;
-                }
-                if (*cp == ':' || i == 5)
-                        continue;
-                else
-                        return 1;
-        }
-        memcpy(dest, val, 6);
+	strlcpy(str, src, sizeof(str));
 
-        return 0;
+	cp = str;
+
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		if (!isxdigit(*cp))
+			return 1;
+		set_value;
+		val[i] = *cp++;
+		if (isxdigit(*cp)) {
+			set_value;
+			val[i] <<= 4;
+			val[i] += *cp++;
+		}
+		if (*cp == ':' || *cp == '-' || *cp == '.' || *cp == ' ') {
+			cp++;
+			continue;
+		}
+		if (isxdigit(*cp) || i == (ETHER_ADDR_LEN - 1))
+			continue;
+		return 1;
+	}
+	memcpy(dest, val, ETHER_ADDR_LEN);
+
+	return 0;
+#undef set_value
 }
 
 

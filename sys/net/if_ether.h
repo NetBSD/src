@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.56 2009/03/18 15:14:31 cegger Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.57 2010/05/19 18:58:22 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -310,7 +310,7 @@ char	*ether_snprintf(char *, size_t, const uint8_t *);
 uint32_t ether_crc32_le(const uint8_t *, size_t);
 uint32_t ether_crc32_be(const uint8_t *, size_t);
 
-int	ether_nonstatic_aton(u_char *, char *);
+int	ether_nonstatic_aton(u_char *, const char *);
 #else
 /*
  * Prototype ethers(3) functions.
