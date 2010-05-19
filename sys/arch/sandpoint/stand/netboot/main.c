@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.30 2010/05/18 15:07:50 phx Exp $ */
+/* $NetBSD: main.c,v 1.31 2010/05/19 15:05:58 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,6 +40,23 @@
 
 #include "globals.h"
 
+static const struct bootarg {
+	const char *name;
+	int value;
+} bootargs[] = {
+	{ "multi",	RB_AUTOBOOT },
+	{ "auto",	RB_AUTOBOOT },
+	{ "ask",	RB_ASKNAME },
+	{ "single",	RB_SINGLE },
+	{ "ddb",	RB_KDB },
+	{ "userconf",	RB_USERCONF },
+	{ "norm",	AB_NORMAL },
+	{ "quiet",	AB_QUIET },
+	{ "verb",	AB_VERBOSE },
+	{ "silent",	AB_SILENT },
+	{ "debug",	AB_DEBUG }
+};
+
 void *bootinfo; /* low memory reserved to pass bootinfo structures */
 int bi_size;	/* BOOTINFO_MAXSIZE */
 char *bi_next;
@@ -48,7 +65,7 @@ extern char bootfile[];	/* filled by DHCP */
 char rootdev[4];	/* NIF nickname, filled by netif_init() */
 uint8_t en[6];		/* NIC macaddr, fill by netif_init() */
 
-void main(void);
+void main(int, char **);
 void bi_init(void *);
 void bi_add(void *, int, int);
 
@@ -62,7 +79,7 @@ int ticks_per_sec;
 uint32_t busclock, cpuclock;
 
 void
-main(void)
+main(int argc, char *argv[])
 {
 	struct btinfo_memory bi_mem;
 	struct btinfo_console bi_cons;
@@ -73,7 +90,7 @@ main(void)
 	unsigned long marks[MARK_MAX];
 	unsigned lata[1][2], lnif[1][2];
 	unsigned memsize, tag;
-	int b, d, f, fd, howto, n;
+	int b, d, f, fd, howto, i, n;
 
 	/* determine SDRAM size */
 	memsize = mpc107memsize();
@@ -143,10 +160,19 @@ main(void)
 	if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
 		goto loadfail;
 
-	howto = RB_SINGLE | AB_VERBOSE;
-#ifdef START_DDB_SESSION
-	howto |= RB_KDB;
-#endif
+	/* get boot mode and boot options */
+	howto = RB_AUTOBOOT;
+	for (n = 1; n < argc; n++) {
+		for (i = 0; i < sizeof(bootargs) / sizeof(bootargs[0]); i++) {
+			if (strncasecmp(argv[n], bootargs[i].name,
+			    strlen(bootargs[i].name)) == 0) {
+				howto |= bootargs[i].value;
+				break;
+			}
+		}
+		if (i >= sizeof(bootargs) / sizeof(bootargs[0]))
+			break;	/* break on first garbage argument */
+	}
 
 	bootinfo = (void *)0x4000;
 	bi_init(bootinfo);

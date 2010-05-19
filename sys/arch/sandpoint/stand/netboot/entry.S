@@ -1,4 +1,4 @@
-/* $NetBSD: entry.S,v 1.6 2010/05/13 10:40:02 phx Exp $ */
+/* $NetBSD: entry.S,v 1.7 2010/05/19 15:05:58 phx Exp $ */
 
 #include <powerpc/psl.h>
 #include <powerpc/spr.h>
@@ -9,6 +9,8 @@
 	.text
 	.globl _start
 _start:
+	mr	30,3
+	mr	31,4
 	mfspr	11,SPR_HID0
 	andi.	0,11,HID0_DCE
 	ori	11,11,HID0_ICE
@@ -89,6 +91,8 @@ _start:
 	addi	1,1,-4
 
 	bl	brdsetup
+	mr	3,30
+	mr	4,31
 	bl	main
 
 hang:	b	hang
