@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.28 2010/04/05 07:21:48 joerg Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.29 2010/05/19 20:41:59 christos Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.28 2010/04/05 07:21:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.29 2010/05/19 20:41:59 christos Exp $");
 #ifdef	__NetBSD__
 #include "opt_inet.h"
 #endif
@@ -268,7 +268,7 @@ cdce_attach(device_t parent, device_t self, void *aux)
 		memcpy(&eaddr[1], &hardclock_ticks, sizeof(u_int32_t));
 		eaddr[5] = (u_int8_t)(device_unit(sc->cdce_dev));
 	} else {
-		(void)ether_nonstatic_aton(eaddr, eaddr_str);
+		(void)ether_aton_r(eaddr, sizeof(eaddr), eaddr_str);
 	}
 
 	s = splnet();
