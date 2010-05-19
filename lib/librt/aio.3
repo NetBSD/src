@@ -1,4 +1,4 @@
-.\" $NetBSD: aio.3,v 1.4 2010/05/17 19:22:31 jruoho Exp $ $
+.\" $NetBSD: aio.3,v 1.5 2010/05/19 06:35:20 jruoho Exp $ $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 17, 2010
+.Dd May 19, 2010
 .Dt AIO 3
 .Os
 .Sh NAME
@@ -184,10 +184,21 @@ Asynchronous
 operations are not strictly sequential;
 operations are carried out in arbitrary order and more than one
 operation for one file descriptor can be started.
-Each operation must specify an offset, but the actual file offset
-is never updated as a result of an
+The requested read or write operation starts
+from the absolute position specified by
+.Va aio_offset ,
+as if
+.Xr lseek 2
+would have been called with
+.Dv SEEK_SET
+immediately prior to the operation.
+The
+.Tn POSIX
+standard does not specify what happens after an
 .Nm
-operation.
+operation has been successfully completed.
+Depending on the implementation,
+the actual file offset may or may not be updated.
 .Ss Errors and Completion
 Asynchronous
 .Tn I/O
@@ -244,37 +255,8 @@ structure for re-use.
 The notification model is implemented by using the
 .Va aio_sigevent
 member of the Asynchronous I/O Control Block.
-The structure
-.Em sigevent
-is defined in
-.In signal.h .
-The relevant fields for
-.Nm
-are
-.Va sigev_notify ,
-.Va sigev_signo ,
-and the function pointer
-.Va sigev_notify_function .
-The
-.Va sigev_notify
-member determines the type of the action:
-.Bl -enum -offset indent
-.It
-If it is
-.Dv SIGEV_NONE ,
-no notification is sent.
-.It
-If it is
-.Dv SIGEV_SIGNAL ,
-the signal determined by
-.Va sigev_signo
-is sent when the operation completes.
-.It
-If it is
-.Dv SIGEV_THREAD ,
-a thread is created which starts executing the function specified by
-.Va sigev_notify_function .
-.El
+The operational model and the used structure are described in
+.Xr sigevent 3 .
 .Pp
 The
 .Fn aio_suspend
@@ -351,9 +333,16 @@ The
 interface first appeared in
 .Nx 5.0 .
 .Sh CAVEATS
+Few limitations can be mentioned:
+.Bl -bullet
+.It
+Undefined behavior results if simultaneous asynchronous operations
+use the same Asynchronous I/O Control Block.
+.It
 When an asynchronous read operation is outstanding,
 undefined behavior may follow if the contents of
 .Va aiocb
 are altered, or if memory associated with the structure, or the
 .Va aio_buf
 buffer, is deallocated.
+.El
