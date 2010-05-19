@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.17 2010/05/18 14:32:38 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.18 2010/05/19 15:04:51 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -168,7 +168,8 @@ brdsetup(void)
 		consname = "eumb";
 		consport = 0x4500;
 		consspeed = 115200;
-		extclk = 33164526;
+		extclk = 33164691;	/* from Synology/Linux source */
+		/* extclk = 33168000;	XXX better precision? */
 	}
 	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
 	    0x8086) {				/* PCI_VENDOR_INTEL */
