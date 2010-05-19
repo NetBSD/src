@@ -1,4 +1,4 @@
-.\" $NetBSD: sigevent.3,v 1.2 2010/05/19 06:59:44 wiz Exp $
+.\" $NetBSD: sigevent.3,v 1.3 2010/05/19 08:02:46 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\"
@@ -141,6 +141,23 @@ the provided attribute specifies the behavior of the thread; see
 the type is
 .Va pthread_attr_t
 in practice.)
+.Pp
+The threads are created as detached,
+or in an unspecified way if
+.Xr pthread_attr_setdetachstate 3
+is used with
+.Va sigev_notify_attributes
+to set
+.Dv PTHREAD_CREATE_JOINABLE .
+It is not valid to call
+.Xr pthread_join 3
+in either case.
+Hence, it is also impossible to determine the lifetime of the created thread.
+This in turn means that it is neither possibly to recovery the memory nor
+the address of the memory possibly dedicated as thread stack via
+.Fn pthread_attr_setstack
+or
+.Fn pthread_attr_setstackaddr .
 .El
 .\"
 .\" .Sh EXAMPLES
