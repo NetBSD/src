@@ -1,0 +1,26 @@
+#!/bin/sh
+
+cat << __EOF > $2
+
+#include <ctype.h>
+#include <sys/types.h>
+#include <errno.h>
+
+#define ETHER_ADDR_LEN 6
+
+int ether_aton_r(u_char *dest, size_t len, const char *str);
+
+__EOF
+
+ed $1 << _EOF > /dev/null 2>&1
+1
+/^ether_aton_r/
+-
+-
+1,.d
+/^}$/
++
+.,\$d
+W $2
+q
+_EOF
