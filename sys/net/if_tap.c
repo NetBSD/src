@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.64 2010/04/05 07:22:24 joerg Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.65 2010/05/19 20:41:59 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.64 2010/04/05 07:22:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.65 2010/05/19 20:41:59 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -1391,7 +1391,7 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* Commit change */
-	if (ether_nonstatic_aton(enaddr, addr) != 0)
+	if (ether_aton_r(enaddr, sizeof(enaddr), addr) != 0)
 		return (EINVAL);
 	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
 	return (error);

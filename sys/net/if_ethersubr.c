@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.179 2010/05/19 18:58:22 jakllsch Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.180 2010/05/19 20:41:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.179 2010/05/19 18:58:22 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.180 2010/05/19 20:41:59 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1224,49 +1224,42 @@ const uint8_t ether_ip6multicast_max[ETHER_ADDR_LEN] =
  * ether_aton implementation, not using a static buffer.
  */
 int
-ether_nonstatic_aton(u_char *dest, const char *src)
+ether_aton_r(u_char *dest, size_t len, const char *str)
 {
-	int i;
-	char str[3 * ETHER_ADDR_LEN + 2];
-	u_char val[ETHER_ADDR_LEN];
-	char *cp;
+        int i;
+        const u_char *cp = (const void *)str;
+	u_char *ep;
 
-#define set_value			\
-	if (*cp > '9' && *cp < 'a')	\
-		*cp -= 'A' - 10;	\
-	else if (*cp > '9')		\
-		*cp -= 'a' - 10;	\
-	else				\
-		*cp -= '0'
+#define atox(c)	(((c) < '9') ? ((c) - '0') : ((toupper(c) - 'A') + 10))
 
-	strlcpy(str, src, sizeof(str));
+	if (len < ETHER_ADDR_LEN)
+		return ENOSPC;
 
-	cp = str;
-
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		if (!isxdigit(*cp))
-			return 1;
-		set_value;
-		val[i] = *cp++;
-		if (isxdigit(*cp)) {
-			set_value;
-			val[i] <<= 4;
-			val[i] += *cp++;
-		}
-		if (*cp == ':' || *cp == '-' || *cp == '.' || *cp == ' ') {
+	ep = dest + ETHER_ADDR_LEN;
+	 
+	while (*cp) {
+                if (!isxdigit(*cp))
+                        return EINVAL;
+		*dest = atox(*cp);
+		cp++;
+                if (isxdigit(*cp)) {
+                        *dest = (*dest << 4) | atox(*cp);
+			dest++;
 			cp++;
-			continue;
+                } else
+			*dest++;
+		if (dest == ep)
+			return *cp == '\0' ? 0 : ENAMETOOLONG;
+		switch (*cp) {
+		case ':':
+		case '-':
+		case '.':
+			cp++;
+			break;
 		}
-		if (isxdigit(*cp) || i == (ETHER_ADDR_LEN - 1))
-			continue;
-		return 1;
-	}
-	memcpy(dest, val, ETHER_ADDR_LEN);
-
-	return 0;
-#undef set_value
+        }
+	return ENOBUFS;
 }
-
 
 /*
  * Convert a sockaddr into an Ethernet address or range of Ethernet
