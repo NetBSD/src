@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2009/05/16 22:21:18 ad Exp $
+#	$NetBSD: Makefile,v 1.57 2010/05/19 20:04:43 jruoho Exp $
 #
 
 WARNS=	4
@@ -115,12 +115,26 @@ MAN+=	affinity.3 pthread.3 \
 
 MLINKS+=	affinity.3 pthread_setaffinity_np.3
 MLINKS+=	affinity.3 pthread_getaffinity_np.3
+
 MLINKS+=	pthread_attr.3 pthread_attr_init.3
 MLINKS+=	pthread_attr.3 pthread_attr_destroy.3
+MLINKS+=	pthread_attr.3 pthread_attr_setstacksize.3
+MLINKS+=	pthread_attr.3 pthread_attr_getstacksize.3
+MLINKS+=	pthread_attr.3 pthread_attr_setguardsize.3
+MLINKS+=	pthread_attr.3 pthread_attr_getguardsize.3
+MLINKS+=	pthread_attr.3 pthread_attr_setstackaddr.3
+MLINKS+=	pthread_attr.3 pthread_attr_getstackaddr.3
 MLINKS+=	pthread_attr.3 pthread_attr_setdetachstate.3
 MLINKS+=	pthread_attr.3 pthread_attr_getdetachstate.3
+MLINKS+=	pthread_attr.3 pthread_attr_setinheritsched.3
+MLINKS+=	pthread_attr.3 pthread_attr_getinheritsched.3
 MLINKS+=	pthread_attr.3 pthread_attr_setschedparam.3
 MLINKS+=	pthread_attr.3 pthread_attr_getschedparam.3
+MLINKS+=	pthread_attr.3 pthread_attr_setschedpolicy.3
+MLINKS+=	pthread_attr.3 pthread_attr_getschedpolicy.3
+MLINKS+=	pthread_attr.3 pthread_attr_setscope.3
+MLINKS+=	pthread_attr.3 pthread_attr_getscope.3
+
 MLINKS+=	pthread_barrierattr.3 pthread_barrierattr_init.3
 MLINKS+=	pthread_barrierattr.3 pthread_barrierattr_destroy.3
 MLINKS+=	pthread_cleanup_push.3 pthread_cleanup_pop.3
