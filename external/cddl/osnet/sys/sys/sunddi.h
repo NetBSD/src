@@ -1,4 +1,4 @@
-/*	$NetBSD: sunddi.h,v 1.3 2010/02/21 01:46:36 darran Exp $	*/
+/*	$NetBSD: sunddi.h,v 1.4 2010/05/19 18:01:26 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -31,8 +31,13 @@
 #ifndef _OPENSOLARIS_SYS_SUNDDI_H_
 #define	_OPENSOLARIS_SYS_SUNDDI_H_
 
+#ifndef _KERNEL
 #define	ddi_copyin(from, to, size, flag)	(bcopy((from), (to), (size)), 0)
 #define	ddi_copyout(from, to, size, flag)	(bcopy((from), (to), (size)), 0)
+#else
+#define	ddi_copyin(from, to, size, flag)	(ioctl_copyin((flag), (from), (to), (size)))
+#define	ddi_copyout(from, to, size, flag)	(ioctl_copyout((flag), (from), (to), (size)))
+#endif
 int ddi_strtoul(const char *str, char **nptr, int base, unsigned long *result);
 
 #endif	/* _OPENSOLARIS_SYS_SUNDDI_H_ */
