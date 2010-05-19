@@ -4454,16 +4454,8 @@ zfsdev_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 
 	zc = kmem_zalloc(sizeof (zfs_cmd_t), KM_SLEEP);
 
-	/* XXX is this still needed ? */
-	error = xcopyin((void *)arg, zc, sizeof (zfs_cmd_t));
-	printf("zfsdev_ioct zc_value %s, zc_string\n", zc->zc_value, zc->zc_string);
-	printf("zfsdev_ioctl -> calling zfs_ioc_vec secpolicy function on %d\n", vec);
-	if (error == 0)
-#if 0	
 	error = ddi_copyin((void *)arg, zc, sizeof (zfs_cmd_t), flag);
-
 	if ((error == 0) && !(flag & FKIOCTL))
-#endif
 		error = zfs_ioc_vec[vec].zvec_secpolicy(zc, cr);
 
 	/*
