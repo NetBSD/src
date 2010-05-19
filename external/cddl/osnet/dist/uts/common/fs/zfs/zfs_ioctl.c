@@ -4626,14 +4626,13 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 		spa_init(FREAD | FWRITE);
-		zfs_init();
 		zvol_init();
 		zfs_vfsinit(16, MOUNT_ZFS); /* I need to use well defined args. */
 		error = devsw_attach("zfs", &zfs_bdevsw, &zfs_bmajor,
 		    &zfs_cdevsw, &zfs_cmajor);
 		if (error != 0) {
 			zvol_fini();
-			zfs_fini();
+			zfs_vfsfini();
 			spa_fini();
 			lwp_specific_key_delete(zfs_fsyncer_key);
 			lwp_specific_key_delete(rrw_tsd_key);
@@ -4647,7 +4646,6 @@ zfs_modcmd(modcmd_t cmd, void *arg)
 		error = devsw_detach(&zfs_bdevsw, &zfs_cdevsw);
 		zvol_fini();
 		zfs_vfsfini();
-		zfs_fini();
 		spa_fini();
 		lwp_specific_key_delete(zfs_fsyncer_key);
 		lwp_specific_key_delete(rrw_tsd_key);
