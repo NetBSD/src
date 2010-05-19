@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2010/05/19 21:55:36 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2010/05/19 21:59:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.1 2010/05/19 21:55:36 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2010/05/19 21:59:34 christos Exp $");
 
 #include <stdio.h>
 #include <ctype.h>
@@ -60,6 +60,7 @@ main(int argc, char *argv[])
 #define ZERO { 0, 0, 0, 0, 0, 0 }
 	    { { 0, 1, 0x22, 3, 0x14, 5 }, "0:1:22-3:14:05", 0 },
 	    { { 0, 1, 0x22, 3, 0x14, 5 }, "000122031405", 0 },
+	    { { 0xa, 0xB, 0xcc, 0xdD, 0xEE, 0xf }, "0a0BccdDEE0f", 0 },
 	    { ZERO,			  "0:1:2-3:04:05:06", ENAMETOOLONG },
 	    { ZERO,			  "0:1:2-3:04:", ENOBUFS },
 	    { ZERO,			  "0:1:2-3:04:x7", EINVAL },
