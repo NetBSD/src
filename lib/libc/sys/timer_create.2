@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_create.2,v 1.10 2010/03/22 19:30:55 joerg Exp $
+.\"	$NetBSD: timer_create.2,v 1.11 2010/05/19 06:44:51 jruoho Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 13, 2003
+.Dd May 19, 2010
 .Dt TIMER_CREATE 2
 .Os
 .Sh NAME
@@ -60,24 +60,25 @@ The timer is created in a disarmed state.
 .Pp
 An optional
 .Pq non- Ns Dv NULL
-sigevent argument can be specified by the
+.Em struct sigevent
+argument can be specified by the
 .Ar evp
 argument.
 If the
 .Ar evp
 argument is
 .Dv NULL ,
-then it defaults to
-.Fa sigev_notify
-set to
+then
+.Fa evp-\*[Gt]sigev_notify
+defaults to
 .Dv SIGEV_SIGNAL
 and
-.Fa sigev_value
-set to
+.Fa evp-\*[Gt]sigev_value
+is set to
 .Ar timerid .
-See
-.Xr siginfo 2
-for accessing those values from a signal handler.
+Refer to
+.Xr sigevent 3
+for more details.
 .Sh NOTES
 Timers are not inherited after a
 .Xr fork 2
