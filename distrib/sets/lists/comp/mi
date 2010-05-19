@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1450 2010/05/18 09:07:37 jruoho Exp $
+#	$NetBSD: mi,v 1.1451 2010/05/19 06:28:53 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7951,6 +7951,7 @@
 ./usr/share/man/cat3/sigblock.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sigdelset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sigemptyset.0		comp-c-catman		.cat
+./usr/share/man/cat3/sigevent.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sigfillset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sighold.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sigignore.0		comp-c-catman		.cat
@@ -13747,6 +13748,7 @@
 ./usr/share/man/html3/sigblock.html		comp-c-htmlman		html
 ./usr/share/man/html3/sigdelset.html		comp-c-htmlman		html
 ./usr/share/man/html3/sigemptyset.html		comp-c-htmlman		html
+./usr/share/man/html3/sigevent.html		comp-c-htmlman		html
 ./usr/share/man/html3/sigfillset.html		comp-c-htmlman		html
 ./usr/share/man/html3/sighold.html		comp-c-htmlman		html
 ./usr/share/man/html3/sigignore.html		comp-c-htmlman		html
@@ -19559,6 +19561,7 @@
 ./usr/share/man/man3/sigblock.3			comp-c-man		.man
 ./usr/share/man/man3/sigdelset.3		comp-c-man		.man
 ./usr/share/man/man3/sigemptyset.3		comp-c-man		.man
+./usr/share/man/man3/sigevent.3			comp-c-man		.man
 ./usr/share/man/man3/sigfillset.3		comp-c-man		.man
 ./usr/share/man/man3/sighold.3			comp-c-man		.man
 ./usr/share/man/man3/sigignore.3		comp-c-man		.man
