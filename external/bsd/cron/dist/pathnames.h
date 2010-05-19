@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3 2010/05/19 12:50:49 christos Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -56,8 +56,8 @@
 			/* cron allow/deny file.  At least cron.deny must
 			 * exist for ordinary users to run crontab.
 			 */
-#define	CRON_ALLOW	"cron.allow"
-#define	CRON_DENY	"cron.deny"
+#define	CRON_ALLOW	"allow"
+#define	CRON_DENY	"deny"
 
 			/* undefining this turns off logging to a file.  If
 			 * neither LOG_FILE or SYSLOG is defined, we don't log.
