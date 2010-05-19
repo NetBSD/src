@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.180 2010/05/19 20:41:59 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.181 2010/05/19 20:43:51 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.180 2010/05/19 20:41:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.181 2010/05/19 20:43:51 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1226,7 +1226,6 @@ const uint8_t ether_ip6multicast_max[ETHER_ADDR_LEN] =
 int
 ether_aton_r(u_char *dest, size_t len, const char *str)
 {
-        int i;
         const u_char *cp = (const void *)str;
 	u_char *ep;
 
@@ -1247,7 +1246,7 @@ ether_aton_r(u_char *dest, size_t len, const char *str)
 			dest++;
 			cp++;
                 } else
-			*dest++;
+			dest++;
 		if (dest == ep)
 			return *cp == '\0' ? 0 : ENAMETOOLONG;
 		switch (*cp) {
