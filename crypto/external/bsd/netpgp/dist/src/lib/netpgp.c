@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.50 2010/05/16 06:48:52 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.51 2010/05/19 02:50:16 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -886,7 +886,7 @@ netpgp_sign_file(netpgp_t *netpgp,
 	__ops_seckey_t		*seckey;
 	const unsigned		 overwrite = 1;
 	__ops_io_t		*io;
-	char			*hashalg;
+	const char		*hashalg;
 	int			 ret;
 
 	io = netpgp->io;
@@ -934,6 +934,9 @@ netpgp_sign_file(netpgp_t *netpgp,
 	} while (seckey == NULL);
 	/* sign file */
 	hashalg = netpgp_getvar(netpgp, "hash");
+	if (seckey->pubkey.alg == OPS_PKA_DSA) {
+		hashalg = "sha1";
+	}
 	if (detached) {
 		ret = __ops_sign_detached(io, f, out, seckey, hashalg,
 				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
@@ -1017,7 +1020,7 @@ netpgp_sign_memory(netpgp_t *netpgp,
 	__ops_seckey_t		*seckey;
 	__ops_memory_t		*signedmem;
 	__ops_io_t		*io;
-	char			*hashalg;
+	const char		*hashalg;
 	int			 ret;
 
 	io = netpgp->io;
@@ -1059,6 +1062,9 @@ netpgp_sign_memory(netpgp_t *netpgp,
 	/* sign file */
 	(void) memset(out, 0x0, outsize);
 	hashalg = netpgp_getvar(netpgp, "hash");
+	if (seckey->pubkey.alg == OPS_PKA_DSA) {
+		hashalg = "sha1";
+	}
 	signedmem = __ops_sign_buf(io, mem, size, seckey,
 				get_birthtime(netpgp_getvar(netpgp, "birthtime")),
 				get_duration(netpgp_getvar(netpgp, "duration")),
