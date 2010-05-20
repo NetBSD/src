@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.52 2010/05/20 00:36:31 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.53 2010/05/20 14:42:21 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -294,9 +294,9 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 	return 1;
 }
 
-/* set ssh uid to first one in ring */
+/* set ssh uid to first one in pubring */
 static void
-set_ssh_userid(__ops_keyring_t *pubring, char *id, size_t len, int last)
+set_first_pubring(__ops_keyring_t *pubring, char *id, size_t len, int last)
 {
 	uint8_t	*src;
 	int	 i;
@@ -383,7 +383,7 @@ get_birthtime(char *s)
 
 /* resolve the userid */
 static const __ops_key_t *
-resolve_userid(netpgp_t *netpgp, const char *userid)
+resolve_userid(netpgp_t *netpgp, const __ops_keyring_t *keyring, const char *userid)
 {
 	const __ops_key_t	*key;
 	__ops_io_t		*io;
@@ -394,7 +394,7 @@ resolve_userid(netpgp_t *netpgp, const char *userid)
 		userid += 2;
 	}
 	io = netpgp->io;
-	if ((key = __ops_getkeybyname(io, netpgp->pubring, userid)) == NULL) {
+	if ((key = __ops_getkeybyname(io, keyring, userid)) == NULL) {
 		(void) fprintf(io->errs, "Can't find key '%s'\n", userid);
 	}
 	return key;
@@ -511,7 +511,7 @@ netpgp_init(netpgp_t *netpgp)
 			return 0;
 		}
 		if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
-			set_ssh_userid(netpgp->pubring, id, sizeof(id), last);
+			set_first_pubring(netpgp->pubring, id, sizeof(id), last);
 			netpgp_setvar(netpgp, "userid", userid = id);
 		}
 		if (userid == NULL) {
@@ -611,8 +611,10 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const
 			(pubs.c == 1) ? "" : "s");
 	}
 	for (k = 0 ; k < pubs.c ; k++) {
-		(void) fprintf(fp, "%s", pubs.v[k]);
-		free(pubs.v[k]);
+		if (pubs.v[k]) {
+			(void) fprintf(fp, "%s%s", pubs.v[k], (k < pubs.c - 1) ? "\n" : "");
+			free(pubs.v[k]);
+		}
 	}
 	free(pubs.v);
 	return pubs.c;
@@ -669,11 +671,9 @@ char *
 netpgp_get_key(netpgp_t *netpgp, const char *name, const char *fmt)
 {
 	const __ops_key_t	*key;
-	__ops_io_t		*io;
 	char			*newkey;
 
-	io = netpgp->io;
-	if ((key = resolve_userid(netpgp, name)) == NULL) {
+	if ((key = resolve_userid(netpgp, netpgp->pubring, name)) == NULL) {
 		return NULL;
 	}
 	if (strcmp(fmt, "mr") == 0) {
@@ -696,7 +696,7 @@ netpgp_export_key(netpgp_t *netpgp, char *name)
 	__ops_io_t		*io;
 
 	io = netpgp->io;
-	if ((key = resolve_userid(netpgp, name)) == NULL) {
+	if ((key = resolve_userid(netpgp, netpgp->pubring, name)) == NULL) {
 		return NULL;
 	}
 	return __ops_export_key(io, key, NULL);
@@ -822,7 +822,8 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 		return 0;
 	}
 	suffix = (armored) ? ".asc" : ".gpg";
-	if ((keypair = resolve_userid(netpgp, userid)) == NULL) {
+	/* get key with which to sign */
+	if ((keypair = resolve_userid(netpgp, netpgp->pubring, userid)) == NULL) {
 		return 0;
 	}
 	if (out == NULL) {
@@ -893,14 +894,9 @@ netpgp_sign_file(netpgp_t *netpgp,
 			"netpgp_sign_file: no filename specified\n");
 		return 0;
 	}
-	if (userid == NULL) {
-		userid = netpgp_getvar(netpgp, "userid");
-	}
 	/* get key with which to sign */
-	keypair = __ops_getkeybyname(io, netpgp->secring, userid);
-	if (keypair == NULL) {
-		(void) fprintf(io->errs, "Userid '%s' not found in secring\n",
-				userid);
+	if ((keypair = resolve_userid(netpgp, netpgp->secring, userid)) == NULL) {
+		(void) fprintf(io->errs, "netpgp_sign_file: userid '%s' not found\n", userid);
 		return 0;
 	}
 	ret = 1;
@@ -1027,14 +1023,7 @@ netpgp_sign_memory(netpgp_t *netpgp,
 			"netpgp_sign_memory: no memory to sign\n");
 		return 0;
 	}
-	if (userid == NULL) {
-		userid = netpgp_getvar(netpgp, "userid");
-	}
-	/* get key with which to sign */
-	keypair = __ops_getkeybyname(io, netpgp->secring, userid);
-	if (keypair == NULL) {
-		(void) fprintf(io->errs, "Userid '%s' not found in keyring\n",
-				userid);
+	if ((keypair = resolve_userid(netpgp, netpgp->secring, userid)) == NULL) {
 		return 0;
 	}
 	ret = 1;
@@ -1155,13 +1144,7 @@ netpgp_encrypt_memory(netpgp_t *netpgp,
 			"netpgp_encrypt_buf: no memory to encrypt\n");
 		return 0;
 	}
-	if (userid == NULL) {
-		userid = netpgp_getvar(netpgp, "userid");
-	}
-	keypair = __ops_getkeybyname(io, netpgp->pubring, userid);
-	if (keypair == NULL) {
-		(void) fprintf(io->errs, "Userid '%s' not found in keyring\n",
-					userid);
+	if ((keypair = resolve_userid(netpgp, netpgp->pubring, userid)) == NULL) {
 		return 0;
 	}
 	if (in == out) {
