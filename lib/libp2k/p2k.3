@@ -1,4 +1,4 @@
-.\"     $NetBSD: p2k.3,v 1.7 2009/11/21 22:32:52 wiz Exp $
+.\"     $NetBSD: p2k.3,v 1.8 2010/05/20 05:43:54 jruoho Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 21, 2009
+.Dd May 20, 2010
 .Dt P2K 3
 .Os
 .Sh NAME
@@ -63,8 +63,9 @@ p2k Library (libp2k, \-lp2k)
 .Sh DESCRIPTION
 The
 .Nm
-library translates the puffs protocol to the kernel vfs protocol and
-back again.
+library translates the puffs protocol to the kernel
+.Xr vfs 9
+protocol and back again.
 It can therefore be used to mount and run kernel file system code as
 a userspace daemon.
 .Pp
@@ -83,7 +84,7 @@ are handled by
 The "run_fs" variants of the interfaces are provided as a convenience
 for the common case.
 They execute all of init, setup and mainloop in one call.
-.Pp
+.Sh ENVIRONMENT
 The following environment variables affect the behaviour of
 .Nm .
 They are useful mostly for debugging purposes.
@@ -96,7 +97,7 @@ options; for example, the
 .Xr rump_cd9660 8
 arguments are really parsed by
 .Xr mount_cd9660 8 .
-.Bl -tag -width "XP2K_NOCACHE_PAGE"
+.Bl -tag -width "XP2K_NOCACHE_PAGE" -offset 2n
 .It Dv P2K_DEBUG
 Do not detach from tty and print information about each puffs operation.
 .It Dv P2K_NODETACH
