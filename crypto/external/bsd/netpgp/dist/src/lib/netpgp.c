@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.51 2010/05/19 02:50:16 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.52 2010/05/20 00:36:31 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -381,6 +381,25 @@ get_birthtime(char *s)
 	return (uint64_t)strtoll(s, NULL, 10);
 }
 
+/* resolve the userid */
+static const __ops_key_t *
+resolve_userid(netpgp_t *netpgp, const char *userid)
+{
+	const __ops_key_t	*key;
+	__ops_io_t		*io;
+
+	if (userid == NULL) {
+		userid = netpgp_getvar(netpgp, "userid");
+	} else if (userid[0] == '0' && userid[1] == 'x') {
+		userid += 2;
+	}
+	io = netpgp->io;
+	if ((key = __ops_getkeybyname(io, netpgp->pubring, userid)) == NULL) {
+		(void) fprintf(io->errs, "Can't find key '%s'\n", userid);
+	}
+	return key;
+}
+
 /***************************************************************************/
 /* exported functions start here */
 /***************************************************************************/
@@ -654,14 +673,7 @@ netpgp_get_key(netpgp_t *netpgp, const char *name, const char *fmt)
 	char			*newkey;
 
 	io = netpgp->io;
-	if (name == NULL) {
-		name = netpgp_getvar(netpgp, "userid");
-	} else if (name[0] == '0' && name[1] == 'x') {
-		name += 2;
-	}
-	key = __ops_getkeybyname(netpgp->io, netpgp->pubring, name);
-	if (key == NULL) {
-		(void) fprintf(io->errs, "Can't find key '%s'\n", name);
+	if ((key = resolve_userid(netpgp, name)) == NULL) {
 		return NULL;
 	}
 	if (strcmp(fmt, "mr") == 0) {
@@ -684,16 +696,8 @@ netpgp_export_key(netpgp_t *netpgp, char *name)
 	__ops_io_t		*io;
 
 	io = netpgp->io;
-	if (name == NULL) {
-		name = netpgp_getvar(netpgp, "userid");
-	} else if (name[0] == '0' && name[1] == 'x') {
-		name += 2;
-	}
-	key = __ops_getkeybyname(io, netpgp->pubring, name);
-	if (key == NULL) {
-		(void) fprintf(io->errs,
-			"Cannot find own key \"%s\" in keyring\n", name);
-		return 0;
+	if ((key = resolve_userid(netpgp, name)) == NULL) {
+		return NULL;
 	}
 	return __ops_export_key(io, key, NULL);
 }
@@ -817,14 +821,8 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 			"netpgp_encrypt_file: no filename specified\n");
 		return 0;
 	}
-	if (userid == NULL) {
-		userid = netpgp_getvar(netpgp, "userid");
-	}
 	suffix = (armored) ? ".asc" : ".gpg";
-	keypair = __ops_getkeybyname(io, netpgp->pubring, userid);
-	if (keypair == NULL) {
-		(void) fprintf(io->errs, "Userid '%s' not found in keyring\n",
-					userid);
+	if ((keypair = resolve_userid(netpgp, userid)) == NULL) {
 		return 0;
 	}
 	if (out == NULL) {
