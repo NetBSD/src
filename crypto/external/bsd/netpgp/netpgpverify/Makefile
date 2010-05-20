@@ -1,10 +1,16 @@
-#	$NetBSD: Makefile,v 1.3 2009/06/09 00:56:15 agc Exp $
+#	$NetBSD: Makefile,v 1.4 2010/05/20 00:33:01 agc Exp $
+
+.include <bsd.own.mk>
 
 PROG=		netpgpverify
 BINDIR=		/usr/bin
 SRCS=		verify.c
 
 CPPFLAGS+=	-I${.CURDIR}/../dist/include -I${.CURDIR}/../lib
+
+LIBNETPGPDIR!=	cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
+LDADD+=		-L${LIBNETPGPDIR} -lnetpgp
+DPADD+=		${LIBNETPGPDIR}/libnetpgp.a
 
 LDADD+=		-lcrypto -lz -lbz2
 DPADD+=		${LIBCRYPTO} ${LIBZ} ${LIBBZ2}
