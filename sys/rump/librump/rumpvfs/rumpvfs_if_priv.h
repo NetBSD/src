@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpvfs_if_priv.h,v 1.4 2010/04/14 14:14:53 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_priv.h,v 1.5 2010/05/20 15:58:09 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.1 2009/10/14 17:17:00 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.3 2010/05/20 15:46:47 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 
@@ -31,6 +31,7 @@ int rump_vfs_statvfs(struct mount *, struct statvfs *);
 int rump_vfs_sync(struct mount *, int, struct kauth_cred *);
 int rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
+int rump_vfs_extattrctl(struct mount *, int, struct vnode *, int, const char *);
 void rump_vfs_syncwait(struct mount *);
 int rump_vfs_getmp(const char *, struct mount **);
 void rump_rcvp_set(struct vnode *, struct vnode *);
