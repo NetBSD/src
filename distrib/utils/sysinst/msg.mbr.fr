@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.14 2006/09/04 22:00:52 hubertf Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.14.28.1 2010/05/20 05:36:35 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,7 +63,7 @@ message Use_the_entire_disk
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Taille totale du disque %d %s.
+{   Taille totale du disque %lu %s.
 
 .if BOOTSEL
    Début(%3s) Taille(%3s) Flg Type                   Nom de démarrage

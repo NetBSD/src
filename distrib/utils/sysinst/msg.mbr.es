@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.es,v 1.4 2005/12/08 16:51:45 xtraeme Exp $	*/
+/*	$NetBSD: msg.mbr.es,v 1.4.30.1 2010/05/20 05:36:35 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ message Use_the_entire_disk
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Tamaño total del disco %d %s.
+{   Tamaño total del disco %lu %s.
 
 .if BOOTSEL
    Inicio(%3s) Tamaño(%3s) Opc Tipo                    Bootmenu
