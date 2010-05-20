@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.79.14.2 2010/05/20 05:09:40 snj Exp $ */
+/*	$NetBSD: mbr.c,v 1.79.14.3 2010/05/20 05:36:35 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1156,8 +1156,8 @@ set_mbr_header(menudesc *m, void *arg)
 
 	msg_display(MSG_editparttable);
 
-	msg_table_add(MSG_part_header, dlsize/sizemult, multname, multname,
-	    multname, multname);
+	msg_table_add(MSG_part_header, (unsigned long)(dlsize/sizemult),
+	    multname, multname, multname, multname);
 
 	if (num_opts == 0) {
 		num_opts = 6;
@@ -1282,16 +1282,16 @@ edit_mbr(mbr_info_t *mbri)
 		return(md_mbr_use_wholedisk(mbri));
 	}
 
+	/* Default to MB, and use bios geometry for cylinder size */
+	set_sizemultname_meg();
+	current_cylsize = bhead * bsec;
+
 	mbr_menu = new_menu(NULL, NULL, 16, 0, -1, 15, 70,
 			MC_NOBOX | MC_ALWAYS_SCROLL | MC_NOCLEAR,
 			set_mbr_header, set_mbr_label, NULL,
 			NULL, MSG_Partition_table_ok);
 	if (mbr_menu == -1)
 		return 0;
-
-	/* Default to MB, and use bios geometry for cylinder size */
-	set_sizemultname_meg();
-	current_cylsize = bhead * bsec;
 
 	for (;;) {
 		ptstart = 0;
