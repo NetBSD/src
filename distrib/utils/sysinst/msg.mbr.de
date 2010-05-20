@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.de,v 1.8.26.1 2010/05/20 05:32:45 snj Exp $	*/
+/*	$NetBSD: msg.mbr.de,v 1.8.26.2 2010/05/20 05:34:34 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -66,7 +66,7 @@ message Use_the_entire_disk
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Festplattenkapazität insgesamt %lu %s.
+{   Festplattenkapazität insgesamt %d %s.
 
 .if BOOTSEL
    Start(%3s) Größe(%3s) Flag Typ                    Bootmenü
