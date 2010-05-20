@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.50 2010/05/11 14:49:07 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.51 2010/05/20 15:46:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.50 2010/05/11 14:49:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.51 2010/05/20 15:46:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -409,6 +409,14 @@ rump_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
 {
 
 	return VFS_VPTOFH(vp, fid, fidsize);
+}
+
+int
+rump_vfs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
+	int attrnamespace, const char *attrname)
+{
+
+	return VFS_EXTATTRCTL(mp, cmd, vp, attrnamespace, attrname);
 }
 
 /*ARGSUSED*/
