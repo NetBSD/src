@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.32 2010/05/20 19:27:26 phx Exp $ */
+/* $NetBSD: main.c,v 1.33 2010/05/20 20:18:51 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,23 +57,6 @@ static const struct bootarg {
 	{ "debug",	AB_DEBUG }
 };
 
-static const struct prodfamily {
-	int id;
-	const char *family;
-	const char *verbose;
-} prodfamilies[] = {
-	{ BRD_SANDPOINTX2,	"sandpointx2",	"Sandpoint X2" },
-	{ BRD_SANDPOINTX3,	"sandpointx3",	"Sandpoint X3" },
-	{ BRD_ENCOREPP1,	"encorepp1",	"EnCore PP1"},
-	{ BRD_KUROBOX,		"kurobox",	"KuroBox"},
-	{ BRD_QNAPTS101,	"qnap",		"QNAP TS-101"},
-	{ BRD_SYNOLOGY,		"synology",	"Synology DS"},
-	{ BRD_STORCENTER,	"iomega",	"IOMEGA Storcenter"},
-	{ BRD_UNKNOWN,		"unknown",	"Unknown board" }
-};
-
-static const struct prodfamily *get_prodfamily(void);
-
 void *bootinfo; /* low memory reserved to pass bootinfo structures */
 int bi_size;	/* BOOTINFO_MAXSIZE */
 char *bi_next;
@@ -89,9 +72,9 @@ void bi_add(void *, int, int);
 extern char bootprog_rev[], bootprog_maker[], bootprog_date[];
 
 int brdtype;
-char *consname = CONSNAME;
-int consport = CONSPORT;
-int consspeed = CONSSPEED;
+char *consname;
+int consport;
+int consspeed;
 int ticks_per_sec;
 uint32_t busclock, cpuclock;
 
@@ -105,7 +88,7 @@ main(int argc, char *argv[])
 	struct btinfo_rootdevice bi_rdev;
 	struct btinfo_net bi_net;
 	struct btinfo_prodfamily bi_fam;
-	const struct prodfamily *pfam;
+	struct brdprop *brdprop;
 	unsigned long marks[MARK_MAX];
 	unsigned lata[1][2], lnif[1][2];
 	unsigned memsize, tag;
@@ -118,8 +101,8 @@ main(int argc, char *argv[])
 	printf(">> NetBSD/sandpoint Boot, Revision %s\n", bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
-	pfam = get_prodfamily();
-	printf("%s, cpu %u MHz, bus %u MHz, %dMB SDRAM\n", pfam->verbose,
+	brdprop = brd_lookup(brdtype);
+	printf("%s, cpu %u MHz, bus %u MHz, %dMB SDRAM\n", brdprop->verbose,
 	    cpuclock / 1000000, busclock / 1000000, memsize >> 20);
 
 	n = pcilookup(PCI_CLASS_IDE, lata, sizeof(lata)/sizeof(lata[0]));
@@ -190,7 +173,7 @@ main(int argc, char *argv[])
 	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), bootfile);
 	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), rootdev);
 	bi_rdev.cookie = tag; /* PCI tag for fxp netboot case */
-	snprintf(bi_fam.name, sizeof(bi_fam.name), pfam->family);
+	snprintf(bi_fam.name, sizeof(bi_fam.name), brdprop->family);
 
 	bi_add(&bi_cons, BTINFO_CONSOLE, sizeof(bi_cons));
 	bi_add(&bi_mem, BTINFO_MEMORY, sizeof(bi_mem));
@@ -224,17 +207,6 @@ main(int argc, char *argv[])
   loadfail:
 	printf("load failed. Restarting...\n");
 	_rtt();
-}
-
-static const struct prodfamily *
-get_prodfamily(void)
-{
-	const struct prodfamily *pfam;
-
-	for (pfam = prodfamilies; pfam->id != BRD_UNKNOWN; pfam++)
-		if (pfam->id == brdtype)
-			break;
-	return pfam;
 }
 
 void

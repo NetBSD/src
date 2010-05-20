@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.16 2010/05/17 17:50:08 phx Exp $ */
+/* $NetBSD: globals.h,v 1.17 2010/05/20 20:18:51 phx Exp $ */
 
 /* clock feed */
 #ifndef EXT_CLK_FREQ
@@ -16,15 +16,19 @@ extern int brdtype;
 #define BRD_STORCENTER		103
 #define BRD_UNKNOWN		-1
 
-#ifndef CONSNAME
-#define CONSNAME "com"
-#endif
-#ifndef CONSPORT
-#define CONSPORT 0x3f8
-#endif
-#ifndef CONSSPEED
-#define CONSSPEED 115200
-#endif
+struct brdprop {
+	const char *family;
+	const char *verbose;
+	int brdtype;
+	uint32_t extclk;
+	char *consname;
+	int consport;
+	int consspeed;
+	void (*setup)(struct brdprop *);
+	void (*brdfix)(struct brdprop *);
+	void (*pcifix)(struct brdprop *);
+	void (*reset)(void);
+};
 
 extern char *consname;
 extern int consport;
@@ -32,6 +36,8 @@ extern int consspeed;
 extern int ticks_per_sec;
 extern uint32_t cpuclock, busclock;
 
+/* board specific support code */
+struct brdprop *brd_lookup(int);
 unsigned mpc107memsize(void);
 void read_mac_from_flash(uint8_t *);
 
