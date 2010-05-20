@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.42.6.2 2009/04/04 17:39:09 snj Exp $	*/
+/*	$NetBSD: vector.S,v 1.42.6.3 2010/05/20 05:51:59 snj Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.6.2 2009/04/04 17:39:09 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.42.6.3 2010/05/20 05:51:59 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1082,6 +1082,18 @@ IDTVEC(tss_trap08)
 	addl	$12,%esp
 	iret
 	jmp	1b
+
+/*
+ * trap() calls here when it detects a fault in INTRFASTEXIT (loading the
+ * segment registers or during the iret itself).
+ * The address of the (possibly reconstructed) user trap frame is
+ * passed as an argument.
+ * Typically the code will have raised a SIGSEGV which will be actioned
+ * by the code below.
+ */
+_C_LABEL(trap_return_fault_return):	.globl	trap_return_fault_return
+	mov	4(%esp),%esp	/* frame for user return */
+	jmp	_C_LABEL(trapreturn)
 
 /* LINTSTUB: Ignore */
 NENTRY(alltraps)
