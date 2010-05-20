@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond_wait.3,v 1.14 2010/05/18 06:31:17 jruoho Exp $
+.\" $NetBSD: pthread_cond_wait.3,v 1.15 2010/05/20 04:41:11 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_cond_wait.3,v 1.16 2002/09/16 19:29:28 mini Exp $
 .\"
-.Dd May 18, 2010
+.Dd May 19, 2010
 .Dt PTHREAD_COND_WAIT 3
 .Os
 .Sh NAME
@@ -82,7 +82,7 @@ with the same condition variable.
 The current thread holds the lock on
 .Fa mutex
 upon return from the
-.Fa pthread_cond_wait
+.Fn pthread_cond_wait
 call.
 .Pp
 The
