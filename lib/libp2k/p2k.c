@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.36 2010/05/01 14:44:48 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.37 2010/05/20 00:13:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -314,6 +314,8 @@ p2k_init(uint32_t puffs_flags)
 	PUFFSOP_SET(pops, p2k, node, abortop);
 
 	dodaemon = true;
+	hasdebug = false;
+
 	if (getenv("P2K_DEBUG") != NULL) {
 		puffs_flags |= PUFFS_FLAG_OPDUMP;
 		dodaemon = false;
