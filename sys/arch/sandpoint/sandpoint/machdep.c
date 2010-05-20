@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2009/11/27 03:23:13 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2010/05/20 19:27:25 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2009/11/27 03:23:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2010/05/20 19:27:25 phx Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -584,4 +584,23 @@ kcomcnputc(dev_t dev, int c)
 static void
 kcomcnpollc(dev_t dev, int on)
 {
+}
+
+SYSCTL_SETUP(sysctl_machdep_prodfamily, "sysctl machdep prodfamily")
+{
+	const struct sysctlnode *mnode, *node;
+	struct btinfo_prodfamily *pfam;
+
+	pfam = lookup_bootinfo(BTINFO_PRODFAMILY);
+	if (pfam != NULL) {
+		sysctl_createv(NULL, 0, NULL, &mnode,
+		    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
+		    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
+
+		sysctl_createv(NULL, 0, &mnode, &node,
+		    CTLFLAG_PERMANENT, CTLTYPE_STRING, "prodfamily",
+		    SYSCTL_DESCR("Board family name."),
+		    NULL, 0, pfam->name, 0,
+		    CTL_CREATE, CTL_EOL);
+	}
 }
