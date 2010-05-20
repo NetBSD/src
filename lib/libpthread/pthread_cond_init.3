@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond_init.3,v 1.9 2008/05/26 08:43:57 wiz Exp $
+.\" $NetBSD: pthread_cond_init.3,v 1.10 2010/05/20 04:40:23 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_cond_init.3,v 1.13 2002/09/16 19:29:28 mini Exp $
 .\"
-.Dd January 30, 2003
+.Dd May 20, 2010
 .Dt PTHREAD_COND_INIT 3
 .Os
 .Sh NAME
@@ -63,6 +63,8 @@
 .In pthread.h
 .Ft int
 .Fn pthread_cond_init "pthread_cond_t * restrict cond" "const pthread_condattr_t * restrict attr"
+.Pp
+.Va pthread_cond_t cond = Dv PTHREAD_COND_INITIALIZER;
 .Sh DESCRIPTION
 The
 .Fn pthread_cond_init
@@ -80,6 +82,18 @@ A single predicate should always be associated with a
 condition variable.
 The predicate should identify a state of the
 shared data that must be true before the thread proceeds.
+.Pp
+The macro
+.Dv PTHREAD_COND_INITIALIZER
+can be used to initialize a condition variable when it can be statically
+allocated and the default attributes are appropriate.
+The effect is similar to calling
+.Fn pthread_cond_init
+with
+.Fa attr
+specified as
+.Dv NULL ,
+except that no error checking is done.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_cond_init
