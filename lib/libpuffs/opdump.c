@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.30 2010/01/07 22:46:11 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.31 2010/05/20 13:07:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.30 2010/01/07 22:46:11 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.31 2010/05/20 13:07:28 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ const char *vfsop_revmap[] = {
 	"PUFFS_VFS_INIT",
 	"PUFFS_VFS_DONE",
 	"PUFFS_VFS_SNAPSHOT",
-	"PUFFS_VFS_EXTATTCTL",
+	"PUFFS_VFS_EXTATTRCTL",
 	"PUFFS_VFS_SUSPEND"
 };
 /* XXX! */
@@ -109,7 +109,6 @@ const char *vnop_revmap[] = {
 	"PUFFS_VN_WHITEOUT",
 	"PUFFS_VN_GETPAGES",
 	"PUFFS_VN_PUTPAGES",
-	"PUFFS_VN_BWRITE",
 	"PUFFS_VN_GETEXTATTR",
 	"PUFFS_VN_LISTEXTATTR",
 	"PUFFS_VN_OPENEXTATTR",
@@ -295,7 +294,7 @@ dumpattr(struct vattr *vap)
 	printf("gid: %s\n", buf);
 
 	DEFAULTBUF();
-	if (vap->va_fsid != (dev_t)PUFFS_VNOVAL)
+	if ((unsigned long long)vap->va_fsid!=(unsigned long long)PUFFS_VNOVAL)
 		snprintf(buf, sizeof(buf), "0x%llx",
 		    (unsigned long long)vap->va_fsid);
 	printf(DINT DINT "fsid: %s, ", buf);
