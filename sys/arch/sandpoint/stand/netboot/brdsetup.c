@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.18 2010/05/19 15:04:51 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.19 2010/05/20 20:18:51 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -39,16 +39,82 @@
 
 #include "globals.h"
 
-const unsigned dcache_line_size = 32;		/* 32B linesize */
-const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
+#define BRD_DECL(xxx) \
+    void xxx ## setup(struct brdprop *); \
+    void xxx ## brdfix(struct brdprop *); \
+    void xxx ## pcifix(struct brdprop *); \
+    void xxx ## reset(void)
 
+BRD_DECL(enc);
+BRD_DECL(mot);
+BRD_DECL(kuro);
+BRD_DECL(syno);
+
+static struct brdprop brdlist[] = {
+    {
+	"sandpoint",
+	"Sandpoint X3",
+	BRD_SANDPOINTX3,
+	0,
+	"com", 0x3f8, 115200,
+	motsetup, NULL, motpcifix },
+    {
+	"encpp1",
+	"EnCore PP1",
+	BRD_ENCOREPP1,
+	0,
+	"com", 0x3f8, 115200,
+	encsetup, NULL, encpcifix },
+    {
+	"kurobox",
+	"KuroBox",
+	BRD_KUROBOX,
+	32768000,
+	"eumb", 0x4600, 57600,
+	kurosetup, kurobrdfix, kuropcifix },
+    {
+	"synology",
+	"Synology DS",
+	BRD_SYNOLOGY,
+	33164691,	/* from Synology/Linux source */
+	/* 33168000,		XXX better precision? */
+	"eumb", 0x4500, 115200,
+	synosetup, synobrdfix, synopcifix, synoreset },
+    {
+	"qnap",
+	"QNAP TS-101",
+	BRD_QNAPTS101,
+	0,
+	"eumb", 0x4500, 115200,
+	NULL, NULL, NULL },
+    {
+	"iomega",
+	"IOMEGA Storcenter",
+	BRD_STORCENTER,
+	0,
+	"eumb", 0x4500, 115200,
+	NULL, NULL, NULL },
+    {
+	"unknown",
+	"Unknown board",
+	BRD_UNKNOWN,
+	0,
+	"eumb", 0x4500, 115200,
+	NULL, NULL, NULL }, /* must be the last */
+};
+
+static struct brdprop *brdprop;
 static uint32_t ns_per_tick;
 
-void brdsetup(void);
-void setup_82C686B(void);
-void setup_83C553F(void);
-
+static void brdfixup(void);
+static void setup(void);
+static inline uint32_t cputype(void);
 static inline u_quad_t mftb(void);
+static void init_uart(unsigned, unsigned, uint8_t);
+static void send_sat(char *);
+
+const unsigned dcache_line_size = 32;		/* 32B linesize */
+const unsigned dcache_range_size = 4 * 1024;	/* 16KB / 4-way */
 
 unsigned uart1base;	/* console */
 unsigned uart2base;	/* optional satellite processor */
@@ -71,42 +137,7 @@ unsigned uart2base;	/* optional satellite processor */
 #define UART_READ(base, r)	*(volatile char *)(base + (r))
 #define UART_WRITE(base, r, v)	*(volatile char *)(base + (r)) = (v)
 
-static __inline uint32_t
-cputype(void)
-{
-	uint32_t pvr;
-
-	__asm volatile ("mfpvr %0" : "=r"(pvr));
-	return pvr >> 16;
-}
-
-static void
-init_uart(unsigned base, unsigned speed, uint8_t lcr)
-{
-	unsigned div;
-
-	div = busclock / speed / 16;
-	UART_WRITE(base, LCR, 0x80);		/* turn on DLAB bit */
-	UART_WRITE(base, FCR, 0x00);
-	UART_WRITE(base, DMB, div >> 8);	/* set speed */
-	UART_WRITE(base, DLB, div & 0xff);
-	UART_WRITE(base, LCR, lcr);
-	UART_WRITE(base, FCR, 0x07);		/* FIFO on, TXRX FIFO reset */
-	UART_WRITE(base, IER, 0x00);		/* make sure INT disabled */
-}
-
-/* talk to satellite processor */
-static void
-send_sat(char *msg)
-{
-	unsigned savedbase;
-
-	savedbase = uart1base;
-	uart1base = uart2base;
-	while (*msg)
-		putchar(*msg++);
-	uart1base = savedbase;
-}
+void brdsetup(void);
 
 void
 brdsetup(void)
@@ -143,50 +174,32 @@ brdsetup(void)
 
 	if (pcifinddev(0x10ad, 0x0565, &pcib) == 0) {
 		brdtype = BRD_SANDPOINTX3;
-		setup_83C553F();
 	}
 	else if (pcifinddev(0x1106, 0x0686, &pcib) == 0) {
 		brdtype = BRD_ENCOREPP1;
-		setup_82C686B();
 	}
 	else if ((pcicfgread(pcimaketag(0, 11, 0), PCI_CLASS_REG) >> 16) ==
 	    PCI_CLASS_ETH) {
 		/* tlp (ADMtek AN985) or re (RealTek 8169S) at dev 11 */
 		brdtype = BRD_KUROBOX;
-		consname = "eumb";
-		consport = 0x4600;
-		consspeed = 57600;
-		if (PCI_VENDOR(pcicfgread(pcimaketag(0, 11, 0), PCI_ID_REG))
-		    == 0x10ec)
-			extclk = 32768000;      /* decr 2457600Hz */
-		else
-			extclk = 32521333;      /* decr 2439100Hz */
 	}
 	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
 	    0x11ab) {				/* PCI_VENDOR_MARVELL */
 		brdtype = BRD_SYNOLOGY;
-		consname = "eumb";
-		consport = 0x4500;
-		consspeed = 115200;
-		extclk = 33164691;	/* from Synology/Linux source */
-		/* extclk = 33168000;	XXX better precision? */
 	}
 	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
 	    0x8086) {				/* PCI_VENDOR_INTEL */
 		brdtype = BRD_QNAPTS101;
-		consname = "eumb";
-		consport = 0x4500;
-		consspeed = 115200;
-	}
-	else if (PCI_VENDOR(pcicfgread(pcimaketag(0, 15, 0), PCI_ID_REG)) ==
-	    0x10ec) {				/* PCI_VENDOR_REALTEK */
-		brdtype = BRD_STORCENTER;
-		consname = "eumb";
-		consport = 0x4500;
-		consspeed = 115200;
 	}
 
+	brdprop = brd_lookup(brdtype);
+
+	/* brd dependent adjustments */
+	setup();
+
 	/* determine clock frequencies */
+	if (brdprop->extclk != 0)
+		extclk = brdprop->extclk;
 	if (busclock == 0) {
 		if (cputype() == MPC8245) {
 			/* PLL_CFG from PCI host bridge register 0xe2 */
@@ -203,6 +216,10 @@ brdsetup(void)
 	ticks_per_sec = busclock >> 2;
 	ns_per_tick = 1000000000 / ticks_per_sec;
 
+	consname = brdprop->consname;
+	consport = brdprop->consport;
+	consspeed = brdprop->consspeed;
+
 	/* now prepare serial console */
 	if (strcmp(consname, "eumb") == 0) {
 		uart1base = 0xfc000000 + consport;	/* 0x4500, 0x4600 */
@@ -211,64 +228,461 @@ brdsetup(void)
 	} else
 		uart1base = 0xfe000000 + consport;	/* 0x3f8, 0x2f8 */
 
-	/* configure 2nd UART when needed */
-	switch (brdtype) {
-	case BRD_KUROBOX:
-		init_uart(uart2base, 9600, LCR_8BITS | LCR_PEVEN);
-		/* Stop Watchdog */
-		send_sat("AAAAFFFFJJJJ>>>>VVVV>>>>ZZZZVVVVKKKK");
-		break;
-	case BRD_SYNOLOGY:
-		init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
-		/* beep, power LED on, status LED off */
-		send_sat("247");
-		break;
-	case BRD_QNAPTS101:
-	case BRD_STORCENTER:
-		init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
-		break;
+	/* more brd adjustments */
+	brdfixup();
+}
+
+struct brdprop *
+brd_lookup(int brd)
+{
+	u_int i;
+
+	for (i = 0; i < sizeof(brdlist)/sizeof(brdlist[0]); i++) {
+		if (brdlist[i].brdtype == brd)
+			return &brdlist[i];
 	}
+	return &brdlist[i - 1];
+}
+
+static void
+setup()
+{
+	if (brdprop->setup == NULL)
+		return;
+	(*brdprop->setup)(brdprop);
+}
+
+static void
+brdfixup()
+{
+	if (brdprop->brdfix == NULL)
+		return;
+	(*brdprop->brdfix)(brdprop);
 }
 
 void
-putchar(int c)
+pcifixup()
 {
-	unsigned timo, lsr;
+	if (brdprop->pcifix == NULL)
+		return;
+	(*brdprop->pcifix)(brdprop);
+}
 
-	if (c == '\n')
-		putchar('\r');
+void
+encsetup(struct brdprop *brd)
+{
+#ifdef COSNAME
+	brd->consname = CONSNAME;
+#endif
+#ifdef CONSPORT
+	brd->consport = CONSPORT;
+#endif
+#ifdef CONSSPEED
+	brd->consspeed = CONSSPEED;
+#endif
+}
 
-	timo = 0x00100000;
-	do {
-		lsr = UART_READ(uart1base, LSR);
-	} while (timo-- > 0 && (lsr & LSR_THRE) == 0);
-	if (timo > 0)
-		UART_WRITE(uart1base, THR, c);
+void
+encbrdfix(struct brdprop *brd)
+{
+	unsigned ac97, ide, pcib, pmgt, usb12, umot4, val;
+
+/*
+ * VIA82C686B Southbridge
+ *	0.22.0	1106.0686	PCI-ISA bridge
+ *	0.22.1	1106.0571	IDE (viaide)
+ *	0.22.2	1106.3038	USB 0/1 (uhci)
+ *	0.22.3	1106.3038	USB 2/3 (uhci)
+ *	0.22.4	1106.3057	power management
+ *	0.22.5	1106.3058	AC97 (auvia)
+ */
+	pcib  = pcimaketag(0, 22, 0);
+	ide   = pcimaketag(0, 22, 1);
+	usb12 = pcimaketag(0, 22, 2);
+	umot4 = pcimaketag(0, 22, 3);
+	pmgt  = pcimaketag(0, 22, 4);
+	ac97  = pcimaketag(0, 22, 5);
+
+#define	CFG(i,v) do { \
+   *(volatile unsigned char *)(0xfe000000 + 0x3f0) = (i); \
+   *(volatile unsigned char *)(0xfe000000 + 0x3f1) = (v); \
+   } while (0)
+	val = pcicfgread(pcib, 0x84);
+	val |= (02 << 8);
+	pcicfgwrite(pcib, 0x84, val);
+	CFG(0xe2, 0x0f); /* use COM1/2, don't use FDC/LPT */
+	val = pcicfgread(pcib, 0x84);
+	val &= ~(02 << 8);
+	pcicfgwrite(pcib, 0x84, val);
+
+	/* route pin C to i8259 IRQ 5, pin D to 11 */
+	val = pcicfgread(pcib, 0x54);
+	val = (val & 0xff) | 0xb0500000; /* Dx CB Ax xS */
+	pcicfgwrite(pcib, 0x54, val);
+
+	/* enable EISA ELCR1 (0x4d0) and ELCR2 (0x4d1) */
+	val = pcicfgread(pcib, 0x44);
+	val = val | 0x20000000;
+	pcicfgwrite(pcib, 0x44, val);
+
+	/* select level trigger for IRQ 5/11 at ELCR1/2 */
+	*(volatile uint8_t *)0xfe0004d0 = 0x20; /* bit 5 */
+	*(volatile uint8_t *)0xfe0004d1 = 0x08; /* bit 11 */
+
+	/* USB and AC97 are hardwired with pin D and C */
+	val = pcicfgread(usb12, 0x3c) &~ 0xff;
+	val |= 11;
+	pcicfgwrite(usb12, 0x3c, val);
+	val = pcicfgread(umot4, 0x3c) &~ 0xff;
+	val |= 11;
+	pcicfgwrite(umot4, 0x3c, val);
+	val = pcicfgread(ac97, 0x3c) &~ 0xff;
+	val |= 5;
+	pcicfgwrite(ac97, 0x3c, val);
+}
+
+void
+motsetup(struct brdprop *brd)
+{
+#ifdef COSNAME
+	brd->consname = CONSNAME;
+#endif
+#ifdef CONSPORT
+	brd->consport = CONSPORT;
+#endif
+#ifdef CONSSPEED
+	brd->consspeed = CONSSPEED;
+#endif
+}
+
+void
+motbrdfix(struct brdprop *brd)
+{
+/*
+ * WinBond/Symphony Lab 83C553 with PC87308 "SuperIO"
+ *
+ *	0.11.0	10ad.0565	PCI-ISA bridge
+ *	0.11.1	10ad.0105	IDE (slide)
+ */
+}
+
+void
+motpcifix(struct brdprop *brd)
+{
+	unsigned ide, nic, pcib, steer, val;
+	int line;
+
+	pcib = pcimaketag(0, 11, 0);
+	ide  = pcimaketag(0, 11, 1);
+	nic  = pcimaketag(0, 15, 0);
+
+	/*
+	 * //// WinBond PIRQ ////
+	 * 0x40 - bit 5 (0x20) indicates PIRQ presense
+	 * 0x60 - PIRQ interrupt routing steer
+	 */
+	if (pcicfgread(pcib, 0x40) & 0x20) {
+		steer = pcicfgread(pcib, 0x60);
+		if ((steer & 0x80808080) == 0x80808080)
+			printf("PIRQ[0-3] disabled\n");
+		else {
+			unsigned i, v = steer;
+			for (i = 0; i < 4; i++, v >>= 8) {
+				if ((v & 0x80) != 0 || (v & 0xf) == 0)
+					continue;
+				printf("PIRQ[%d]=%d\n", i, v & 0xf);
+				}
+			}
+		}
+#if 1
+	/*
+	 * //// IDE fixup -- case A ////
+	 * - "native PCI mode" (ide 0x09)
+	 * - don't use ISA IRQ14/15 (pcib 0x43)
+	 * - native IDE for both channels (ide 0x40)
+	 * - LEGIRQ bit 11 steers interrupt to pin C (ide 0x40)
+	 * - sign as PCI pin C line 11 (ide 0x3d/3c)
+	 */
+	/* ide: 0x09 - programming interface; 1000'SsPp */
+	val = pcicfgread(ide, 0x08);
+	val &= 0xffff00ff;
+	pcicfgwrite(ide, 0x08, val | (0x8f << 8));
+
+	/* pcib: 0x43 - IDE interrupt routing */
+	val = pcicfgread(pcib, 0x40) & 0x00ffffff;
+	pcicfgwrite(pcib, 0x40, val);
+
+	/* pcib: 0x45/44 - PCI interrupt routing */
+	val = pcicfgread(pcib, 0x44) & 0xffff0000;
+	pcicfgwrite(pcib, 0x44, val);
+
+	/* ide: 0x41/40 - IDE channel */
+	val = pcicfgread(ide, 0x40) & 0xffff0000;
+	val |= (1 << 11) | 0x33; /* LEGIRQ turns on PCI interrupt */
+	pcicfgwrite(ide, 0x40, val);
+
+	/* ide: 0x3d/3c - use PCI pin C/line 11 */
+	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	val |= 11; /* pin designation is hardwired to pin A */
+	pcicfgwrite(ide, 0x3c, val);
+#else
+	/*
+	 * //// IDE fixup -- case B ////
+	 * - "compatiblity mode" (ide 0x09)
+	 * - IDE primary/secondary interrupt routing (pcib 0x43)
+	 * - PCI interrupt routing (pcib 0x45/44)
+	 * - no PCI pin/line assignment (ide 0x3d/3c)
+	 */
+	/* ide: 0x09 - programming interface; 1000'SsPp */
+	val = pcicfgread(ide, 0x08);
+	val &= 0xffff00ff;
+	pcicfgwrite(ide, 0x08, val | (0x8a << 8));
+
+	/* pcib: 0x43 - IDE interrupt routing */
+	val = pcicfgread(pcib, 0x40) & 0x00ffffff;
+	pcicfgwrite(pcib, 0x40, val | (0xee << 24));
+
+	/* ide: 0x45/44 - PCI interrupt routing */
+	val = pcicfgread(ide, 0x44) & 0xffff0000;
+	pcicfgwrite(ide, 0x44, val);
+
+	/* ide: 0x3d/3c - turn off PCI pin/line */
+	val = pcicfgread(ide, 0x3c) & 0xffff0000;
+	pcicfgwrite(ide, 0x3c, val);
+#endif
+
+	/*
+	 * //// fxp fixup ////
+	 * - use PCI pin A line 15 (fxp 0x3d/3c)
+	 */
+	val = pcicfgread(nic, 0x3c) & 0xffff0000;
+	pcidecomposetag(nic, NULL, &line, NULL);
+	val |= (('A' - '@') << 8) | line;
+	pcicfgwrite(nic, 0x3c, val);
+}
+
+void
+encpcifix(struct brdprop *brd)
+{
+	unsigned ide, irq, nic, pcib, steer, val;
+
+#define	STEER(v, b) (((v) & (b)) ? "edge" : "level")
+	pcib = pcimaketag(0, 22, 0);
+	ide  = pcimaketag(0, 22, 1);
+	nic  = pcimaketag(0, 25, 0);
+
+	/*
+	 * //// VIA PIRQ ////
+	 * 0x57/56/55/54 - Dx CB Ax xS
+	 */
+	val = pcicfgread(pcib, 0x54);	/* Dx CB Ax xs */
+	steer = val & 0xf;
+	irq = (val >> 12) & 0xf;	/* 15:12 */
+	if (irq) {
+		printf("pin A -> irq %d, %s\n",
+			irq, STEER(steer, 0x1));
+	}
+	irq = (val >> 16) & 0xf;	/* 19:16 */
+	if (irq) {
+		printf("pin B -> irq %d, %s\n",
+			irq, STEER(steer, 0x2));
+	}
+	irq = (val >> 20) & 0xf;	/* 23:20 */
+	if (irq) {
+		printf("pin C -> irq %d, %s\n",
+			irq, STEER(steer, 0x4));
+	}
+	irq = (val >> 28);		/* 31:28 */
+	if (irq) {
+		printf("pin D -> irq %d, %s\n",
+			irq, STEER(steer, 0x8));
+	}
+#if 0
+	/*
+	 * //// IDE fixup ////
+	 * - "native mode" (ide 0x09)
+	 * - use primary only (ide 0x40)
+	 */
+	/* ide: 0x09 - programming interface; 1000'SsPp */
+	val = pcicfgread(ide, 0x08) & 0xffff00ff;
+	pcicfgwrite(ide, 0x08, val | (0x8f << 8));
+
+	/* ide: 0x10-20 - leave them PCI memory space assigned */
+
+	/* ide: 0x40 - use primary only */
+	val = pcicfgread(ide, 0x40) &~ 03;
+	val |= 02;
+	pcicfgwrite(ide, 0x40, val);
+#else
+	/*
+	 * //// IDE fixup ////
+	 * - "compatiblity mode" (ide 0x09)
+	 * - use primary only (ide 0x40)
+	 * - remove PCI pin assignment (ide 0x3d)
+	 */
+	/* ide: 0x09 - programming interface; 1000'SsPp */
+	val = pcicfgread(ide, 0x08) & 0xffff00ff;
+	val |= (0x8a << 8);
+	pcicfgwrite(ide, 0x08, val);
+
+	/* ide: 0x10-20 */
+	/*
+	experiment shows writing ide: 0x09 changes these
+	register behaviour. The pcicfgwrite() above writes
+	0x8a at ide: 0x09 to make sure legacy IDE.  Then
+	reading BAR0-3 is to return value 0s even though
+	pcisetup() has written range assignments.  Value
+	overwrite makes no effect. Having 0x8f for native
+	PCIIDE doesn't change register values and brings no
+	weirdness.
+	 */
+
+	/* ide: 0x40 - use primary only */
+	val = pcicfgread(ide, 0x40) &~ 03;
+	val |= 02;
+	pcicfgwrite(ide, 0x40, val);
+
+		/* ide: 0x3d/3c - turn off PCI pin */
+	val = pcicfgread(ide, 0x3c) & 0xffff00ff;
+	pcicfgwrite(ide, 0x3c, val);
+#endif
+	/*
+	 * //// USBx2, audio, and modem fixup ////
+	 * - disable USB #0 and #1 (pcib 0x48 and 0x85)
+	 * - disable AC97 audio and MC97 modem (pcib 0x85)
+	 */
+
+	/* pcib: 0x48 - disable USB #0 at function 2 */
+	val = pcicfgread(pcib, 0x48);
+	pcicfgwrite(pcib, 0x48, val | 04);
+
+	/* pcib: 0x85 - disable USB #1 at function 3 */
+	/* pcib: 0x85 - disable AC97/MC97 at function 5/6 */
+	val = pcicfgread(pcib, 0x84);
+	pcicfgwrite(pcib, 0x84, val | 0x1c00);
+
+	/*
+	 * //// fxp fixup ////
+	 * - use PCI pin A line 25 (fxp 0x3d/3c)
+	 */
+	/* 0x3d/3c - PCI pin/line */
+	val = pcicfgread(nic, 0x3c) & 0xffff0000;
+	val |= (('A' - '@') << 8) | 25;
+	pcicfgwrite(nic, 0x3c, val);
+}
+
+void
+kurosetup(struct brdprop *brd)
+{
+
+	if (PCI_VENDOR(pcicfgread(pcimaketag(0, 11, 0), PCI_ID_REG)) == 0x10ec)
+		brd->extclk = 32768000; /* decr 2457600Hz */
+	else
+		brd->extclk = 32521333; /* decr 2439100Hz */
+}
+
+void
+kurobrdfix(struct brdprop *brd)
+{
+
+	init_uart(uart2base, 9600, LCR_8BITS | LCR_PEVEN);
+	/* Stop Watchdog */
+	send_sat("AAAAFFFFJJJJ>>>>VVVV>>>>ZZZZVVVVKKKK");
+}
+
+void
+kuropcifix(struct brdprop *brd)
+{
+	unsigned ide, nic, usb, val;
+
+	nic = pcimaketag(0, 11, 0);
+	val = pcicfgread(nic, 0x3c) & 0xffffff00;
+	val |= 11;
+	pcicfgwrite(nic, 0x3c, val);
+
+	ide = pcimaketag(0, 12, 0);
+	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	val |= 12;
+	pcicfgwrite(ide, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 0);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 1);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 2);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+}
+
+void
+synosetup(struct brdprop *brd)
+{
+	/* nothing */
+}
+
+void
+synobrdfix(struct brdprop *brd)
+{
+
+	init_uart(uart2base, 9600, LCR_8BITS | LCR_PNONE);
+	/* beep, power LED on, status LED off */
+	send_sat("247");
+}
+
+void
+synopcifix(struct brdprop *brd)
+{
+	unsigned ide, nic, usb, val;
+
+	ide = pcimaketag(0, 13, 0);
+	val = pcicfgread(ide, 0x3c) & 0xffffff00;
+	val |= 13;
+	pcicfgwrite(ide, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 0);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 1);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	usb = pcimaketag(0, 14, 2);
+	val = pcicfgread(usb, 0x3c) & 0xffffff00;
+	val |= 14;
+	pcicfgwrite(usb, 0x3c, val);
+
+	nic = pcimaketag(0, 15, 0);
+	val = pcicfgread(nic, 0x3c) & 0xffffff00;
+	val |= 15;
+	pcicfgwrite(nic, 0x3c, val);
+}
+
+void
+synoreset()
+{
+
+	send_sat("C");
+	/*NOTRECHED*/
 }
 
 void
 _rtt(void)
 {
-	switch (brdtype) {
-	case BRD_SYNOLOGY:
-		send_sat("C");
-		break;
-	default:
+	if (brdprop->reset != NULL)
+		(*brdprop->reset)();
+	else
 		run(0, 0, 0, 0, (void *)0xFFF00100); /* reset entry */
-		break;
-	}
-	/* NOTREACHED */
-}
-
-static inline u_quad_t
-mftb(void)
-{
-	u_long scratch;
-	u_quad_t tb;
-
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
-	    : "=r"(tb), "=r"(scratch));
-	return (tb);
+	/*NOTREACHED*/
 }
 
 satime_t
@@ -351,6 +765,70 @@ _inv(uint32_t adr, uint32_t siz)
 	asm volatile ("sync");
 }
 
+static inline uint32_t
+cputype(void)
+{
+	uint32_t pvr;
+
+	__asm volatile ("mfpvr %0" : "=r"(pvr));
+	return pvr >> 16;
+}
+
+static inline u_quad_t
+mftb(void)
+{
+	u_long scratch;
+	u_quad_t tb;
+
+	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
+	    : "=r"(tb), "=r"(scratch));
+	return (tb);
+}
+
+static void
+init_uart(unsigned base, unsigned speed, uint8_t lcr)
+{
+	unsigned div;
+
+	div = busclock / speed / 16;
+	UART_WRITE(base, LCR, 0x80);		/* turn on DLAB bit */
+	UART_WRITE(base, FCR, 0x00);
+	UART_WRITE(base, DMB, div >> 8);	/* set speed */
+	UART_WRITE(base, DLB, div & 0xff);
+	UART_WRITE(base, LCR, lcr);
+	UART_WRITE(base, FCR, 0x07);		/* FIFO on, TXRX FIFO reset */
+	UART_WRITE(base, IER, 0x00);		/* make sure INT disabled */
+}
+
+/* talk to satellite processor */
+static void
+send_sat(char *msg)
+{
+	unsigned savedbase;
+
+	savedbase = uart1base;
+	uart1base = uart2base;
+	while (*msg)
+		putchar(*msg++);
+	uart1base = savedbase;
+}
+
+void
+putchar(int c)
+{
+	unsigned timo, lsr;
+
+	if (c == '\n')
+		putchar('\r');
+
+	timo = 0x00100000;
+	do {
+		lsr = UART_READ(uart1base, LSR);
+	} while (timo-- > 0 && (lsr & LSR_THRE) == 0);
+	if (timo > 0)
+		UART_WRITE(uart1base, THR, c);
+}
+
 unsigned
 mpc107memsize()
 {
@@ -409,342 +887,6 @@ mpc107memsize()
 	end |= 0xfffff;
 
 	return (end + 1); /* assume the end address matches total amount */
-}
-
-/*
- * VIA82C686B Southbridge
- *	0.22.0	1106.0686	PCI-ISA bridge
- *	0.22.1	1106.0571	IDE (viaide)
- *	0.22.2	1106.3038	USB 0/1 (uhci)
- *	0.22.3	1106.3038	USB 2/3 (uhci)
- *	0.22.4	1106.3057	power management
- *	0.22.5	1106.3058	AC97 (auvia)
- */
-void
-setup_82C686B()
-{
-	unsigned ac97, ide, pcib, pmgt, usb12, usb34, val;
-
-	pcib  = pcimaketag(0, 22, 0);
-	ide   = pcimaketag(0, 22, 1);
-	usb12 = pcimaketag(0, 22, 2);
-	usb34 = pcimaketag(0, 22, 3);
-	pmgt  = pcimaketag(0, 22, 4);
-	ac97  = pcimaketag(0, 22, 5);
-
-#define	CFG(i,v) do { \
-   *(volatile unsigned char *)(0xfe000000 + 0x3f0) = (i); \
-   *(volatile unsigned char *)(0xfe000000 + 0x3f1) = (v); \
-   } while (0)
-	val = pcicfgread(pcib, 0x84);
-	val |= (02 << 8);
-	pcicfgwrite(pcib, 0x84, val);
-	CFG(0xe2, 0x0f); /* use COM1/2, don't use FDC/LPT */
-	val = pcicfgread(pcib, 0x84);
-	val &= ~(02 << 8);
-	pcicfgwrite(pcib, 0x84, val);
-
-	/* route pin C to i8259 IRQ 5, pin D to 11 */
-	val = pcicfgread(pcib, 0x54);
-	val = (val & 0xff) | 0xb0500000; /* Dx CB Ax xS */
-	pcicfgwrite(pcib, 0x54, val);
-
-	/* enable EISA ELCR1 (0x4d0) and ELCR2 (0x4d1) */
-	val = pcicfgread(pcib, 0x44);
-	val = val | 0x20000000;
-	pcicfgwrite(pcib, 0x44, val);
-
-	/* select level trigger for IRQ 5/11 at ELCR1/2 */
-	*(volatile uint8_t *)0xfe0004d0 = 0x20; /* bit 5 */
-	*(volatile uint8_t *)0xfe0004d1 = 0x08; /* bit 11 */
-
-	/* USB and AC97 are hardwired with pin D and C */
-	val = pcicfgread(usb12, 0x3c) &~ 0xff;
-	val |= 11;
-	pcicfgwrite(usb12, 0x3c, val);
-	val = pcicfgread(usb34, 0x3c) &~ 0xff;
-	val |= 11;
-	pcicfgwrite(usb34, 0x3c, val);
-	val = pcicfgread(ac97, 0x3c) &~ 0xff;
-	val |= 5;
-	pcicfgwrite(ac97, 0x3c, val);
-}
-
-/*
- * WinBond/Symphony Lab 83C553 with PC87308 "SuperIO"
- *
- *	0.11.0	10ad.0565	PCI-ISA bridge
- *	0.11.1	10ad.0105	IDE (slide)
- */
-void
-setup_83C553F()
-{
-#if 0
-	unsigned ide, pcib, val;
-
-	pcib = pcimaketag(0, 11, 0);
-	ide  = pcimaketag(0, 11, 1);
-#endif
-}
-
-void
-pcifixup(void)
-{
-	unsigned ide, irq, nic, pcib, steer, usb, val;
-	int line;
-
-	switch (brdtype) {
-	case BRD_SANDPOINTX3:
-		pcib = pcimaketag(0, 11, 0);
-		ide  = pcimaketag(0, 11, 1);
-		nic  = pcimaketag(0, 15, 0);
-
-		/*
-		 * //// WinBond PIRQ ////
-		 * 0x40 - bit 5 (0x20) indicates PIRQ presense
-		 * 0x60 - PIRQ interrupt routing steer
-		 */
-		if (pcicfgread(pcib, 0x40) & 0x20) {
-			steer = pcicfgread(pcib, 0x60);
-			if ((steer & 0x80808080) == 0x80808080)
-				printf("PIRQ[0-3] disabled\n");
-			else {
-				unsigned i, v = steer;
-				for (i = 0; i < 4; i++, v >>= 8) {
-					if ((v & 0x80) != 0 || (v & 0xf) == 0)
-						continue;
-					printf("PIRQ[%d]=%d\n", i, v & 0xf);
-				}
-			}
-		}
-#if 1
-		/*
-		 * //// IDE fixup -- case A ////
-		 * - "native PCI mode" (ide 0x09)
-		 * - don't use ISA IRQ14/15 (pcib 0x43)
-		 * - native IDE for both channels (ide 0x40)
-		 * - LEGIRQ bit 11 steers interrupt to pin C (ide 0x40)
-		 * - sign as PCI pin C line 11 (ide 0x3d/3c)
-		 */
-		/* ide: 0x09 - programming interface; 1000'SsPp */
-		val = pcicfgread(ide, 0x08);
-		val &= 0xffff00ff;
-		pcicfgwrite(ide, 0x08, val | (0x8f << 8));
-
-		/* pcib: 0x43 - IDE interrupt routing */
-		val = pcicfgread(pcib, 0x40) & 0x00ffffff;
-		pcicfgwrite(pcib, 0x40, val);
-
-		/* pcib: 0x45/44 - PCI interrupt routing */
-		val = pcicfgread(pcib, 0x44) & 0xffff0000;
-		pcicfgwrite(pcib, 0x44, val);
-
-		/* ide: 0x41/40 - IDE channel */
-		val = pcicfgread(ide, 0x40) & 0xffff0000;
-		val |= (1 << 11) | 0x33; /* LEGIRQ turns on PCI interrupt */
-		pcicfgwrite(ide, 0x40, val);
-
-		/* ide: 0x3d/3c - use PCI pin C/line 11 */
-		val = pcicfgread(ide, 0x3c) & 0xffffff00;
-		val |= 11; /* pin designation is hardwired to pin A */
-		pcicfgwrite(ide, 0x3c, val);
-#else
-		/*
-		 * //// IDE fixup -- case B ////
-		 * - "compatiblity mode" (ide 0x09)
-		 * - IDE primary/secondary interrupt routing (pcib 0x43)
-		 * - PCI interrupt routing (pcib 0x45/44)
-		 * - no PCI pin/line assignment (ide 0x3d/3c)
-		 */
-		/* ide: 0x09 - programming interface; 1000'SsPp */
-		val = pcicfgread(ide, 0x08);
-		val &= 0xffff00ff;
-		pcicfgwrite(ide, 0x08, val | (0x8a << 8));
-
-		/* pcib: 0x43 - IDE interrupt routing */
-		val = pcicfgread(pcib, 0x40) & 0x00ffffff;
-		pcicfgwrite(pcib, 0x40, val | (0xee << 24));
-
-		/* ide: 0x45/44 - PCI interrupt routing */
-		val = pcicfgread(ide, 0x44) & 0xffff0000;
-		pcicfgwrite(ide, 0x44, val);
-
-		/* ide: 0x3d/3c - turn off PCI pin/line */
-		val = pcicfgread(ide, 0x3c) & 0xffff0000;
-		pcicfgwrite(ide, 0x3c, val);
-#endif
-
-		/*
-		 * //// fxp fixup ////
-		 * - use PCI pin A line 15 (fxp 0x3d/3c)
-		 */
-		val = pcicfgread(nic, 0x3c) & 0xffff0000;
-		pcidecomposetag(nic, NULL, &line, NULL);
-		val |= (('A' - '@') << 8) | line;
-		pcicfgwrite(nic, 0x3c, val);
-		break;
-
-	case BRD_ENCOREPP1:
-#define	STEER(v, b) (((v) & (b)) ? "edge" : "level")
-
-		pcib = pcimaketag(0, 22, 0);
-		ide  = pcimaketag(0, 22, 1);
-		nic  = pcimaketag(0, 25, 0);
-
-		/*
-		 * //// VIA PIRQ ////
-		 * 0x57/56/55/54 - Dx CB Ax xS
-		 */
-		val = pcicfgread(pcib, 0x54);	/* Dx CB Ax xs */
-		steer = val & 0xf;
-		irq = (val >> 12) & 0xf;	/* 15:12 */
-		if (irq) {
-			printf("pin A -> irq %d, %s\n",
-				irq, STEER(steer, 0x1));
-		}
-		irq = (val >> 16) & 0xf;	/* 19:16 */
-		if (irq) {
-			printf("pin B -> irq %d, %s\n",
-				irq, STEER(steer, 0x2));
-		}
-		irq = (val >> 20) & 0xf;	/* 23:20 */
-		if (irq) {
-			printf("pin C -> irq %d, %s\n",
-				irq, STEER(steer, 0x4));
-		}
-		irq = (val >> 28);		/* 31:28 */
-		if (irq) {
-			printf("pin D -> irq %d, %s\n",
-				irq, STEER(steer, 0x8));
-		}
-#if 0
-		/*
-		 * //// IDE fixup ////
-		 * - "native mode" (ide 0x09)
-		 * - use primary only (ide 0x40)
-		 */
-		/* ide: 0x09 - programming interface; 1000'SsPp */
-		val = pcicfgread(ide, 0x08) & 0xffff00ff;
-		pcicfgwrite(ide, 0x08, val | (0x8f << 8));
-
-		/* ide: 0x10-20 - leave them PCI memory space assigned */
-
-		/* ide: 0x40 - use primary only */
-		val = pcicfgread(ide, 0x40) &~ 03;
-		val |= 02;
-		pcicfgwrite(ide, 0x40, val);
-#else
-		/*
-		 * //// IDE fixup ////
-		 * - "compatiblity mode" (ide 0x09)
-		 * - use primary only (ide 0x40)
-		 * - remove PCI pin assignment (ide 0x3d)
-		 */
-		/* ide: 0x09 - programming interface; 1000'SsPp */
-		val = pcicfgread(ide, 0x08) & 0xffff00ff;
-		val |= (0x8a << 8);
-		pcicfgwrite(ide, 0x08, val);
-
-		/* ide: 0x10-20 */
-		/*
-		experiment shows writing ide: 0x09 changes these
-		register behaviour. The pcicfgwrite() above writes
-		0x8a at ide: 0x09 to make sure legacy IDE.  Then
-		reading BAR0-3 is to return value 0s even though
-		pcisetup() has written range assignments.  Value
-		overwrite makes no effect. Having 0x8f for native
-		PCIIDE doesn't change register values and brings no
-		weirdness.
-		 */
-
-		/* ide: 0x40 - use primary only */
-		val = pcicfgread(ide, 0x40) &~ 03;
-		val |= 02;
-		pcicfgwrite(ide, 0x40, val);
-
-			/* ide: 0x3d/3c - turn off PCI pin */
-		val = pcicfgread(ide, 0x3c) & 0xffff00ff;
-		pcicfgwrite(ide, 0x3c, val);
-#endif
-		/*
-		 * //// USBx2, audio, and modem fixup ////
-		 * - disable USB #0 and #1 (pcib 0x48 and 0x85)
-		 * - disable AC97 audio and MC97 modem (pcib 0x85)
-		 */
-
-		/* pcib: 0x48 - disable USB #0 at function 2 */
-		val = pcicfgread(pcib, 0x48);
-		pcicfgwrite(pcib, 0x48, val | 04);
-
-		/* pcib: 0x85 - disable USB #1 at function 3 */
-		/* pcib: 0x85 - disable AC97/MC97 at function 5/6 */
-		val = pcicfgread(pcib, 0x84);
-		pcicfgwrite(pcib, 0x84, val | 0x1c00);
-
-		/*
-		 * //// fxp fixup ////
-		 * - use PCI pin A line 25 (fxp 0x3d/3c)
-		 */
-		/* 0x3d/3c - PCI pin/line */
-		val = pcicfgread(nic, 0x3c) & 0xffff0000;
-		val |= (('A' - '@') << 8) | 25;
-		pcicfgwrite(nic, 0x3c, val);
-		break;
-
-	case BRD_KUROBOX:
-		nic = pcimaketag(0, 11, 0);
-		val = pcicfgread(nic, 0x3c) & 0xffffff00;
-		val |= 11;
-		pcicfgwrite(nic, 0x3c, val);
-
-		ide = pcimaketag(0, 12, 0);
-		val = pcicfgread(ide, 0x3c) & 0xffffff00;
-		val |= 12;
-		pcicfgwrite(ide, 0x3c, val);
-
-		usb = pcimaketag(0, 14, 0);
-		val = pcicfgread(usb, 0x3c) & 0xffffff00;
-		val |= 14;
-		pcicfgwrite(usb, 0x3c, val);
-
-		usb = pcimaketag(0, 14, 1);
-		val = pcicfgread(usb, 0x3c) & 0xffffff00;
-		val |= 14;
-		pcicfgwrite(usb, 0x3c, val);
-
-		usb = pcimaketag(0, 14, 2);
-		val = pcicfgread(usb, 0x3c) & 0xffffff00;
-		val |= 14;
-		pcicfgwrite(usb, 0x3c, val);
-		break;
-
-	case BRD_SYNOLOGY:
-		ide = pcimaketag(0, 13, 0);
-		val = pcicfgread(ide, 0x3c) & 0xffffff00;
-		val |= 13;
-		pcicfgwrite(ide, 0x3c, val);
-
-		usb = pcimaketag(0, 14, 0);
-		val = pcicfgread(usb, 0x3c) & 0xffffff00;
-		val |= 14;
-		pcicfgwrite(usb, 0x3c, val);
-
-		usb = pcimaketag(0, 14, 1);
-		val = pcicfgread(usb, 0x3c) & 0xffffff00;
-		val |= 14;
-		pcicfgwrite(usb, 0x3c, val);
-
-		usb = pcimaketag(0, 14, 2);
-		val = pcicfgread(usb, 0x3c) & 0xffffff00;
-		val |= 14;
-		pcicfgwrite(usb, 0x3c, val);
-
-		nic = pcimaketag(0, 15, 0);
-		val = pcicfgread(nic, 0x3c) & 0xffffff00;
-		val |= 15;
-		pcicfgwrite(nic, 0x3c, val);
-		break;
-	}
 }
 
 struct fis_dir_entry {
