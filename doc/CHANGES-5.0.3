@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0.3,v 1.1.2.12 2010/04/23 04:21:59 snj Exp $
+# $NetBSD: CHANGES-5.0.3,v 1.1.2.13 2010/05/20 05:57:43 snj Exp $
 
 A complete list of changes from the NetBSD 5.0.2 release to the NetBSD 5.0.3
 release:
@@ -226,4 +226,34 @@ sys/arch/xen/x86/cpu.c				patch
 	inability of the kernel to detect fraudulent use of memory mappings
 	marked as not being executable).
 	[jym, ticket #1380]
+
+sys/conf/copyright				1.7
+
+	Welcome to 2010.
+	[tsutsui, ticket #1388]
+
+sys/arch/i386/i386/trap.c			1.251-1.253 via patch
+sys/arch/i386/i386/vector.S			1.50-1.51 via patch
+
+	If we fault on the 'iret' during return to userpace (eg if %eip is
+	outside the bounds of %cs) then hack the stack to contain a normal
+	fault frame for the signal setup code (etc).
+	Previously the code assumed that the original user trap frame was
+	still present - at it is for faults when loading the segment
+	registers.
+	--
+	If we fault on the iret during return to userspace, see if we need
+	to do a lazy update of %cs to make the stack executable.  If a
+	change is made, just retry the failing sequence.  Signal handlers
+	as gcc nested local functions now work!
+	--
+	Fix 'fault on load of %gs during retirn to userspace' to look for
+	the correct instruction bytes.  Take the 'fault on load segment
+	register' through the same path as 'fault on iret' so we don't have
+	to fixup the broken stackframe that contains a mix of user and
+	kernel registers. Update comments about how the faults during
+	return to userspace are processed.  Setting an invalid %gs in the
+	saved context of a signal handler causes a SIGSEGV handler to be
+	entered with what look like valid registers.
+	[riz, ticket #1401]
 
