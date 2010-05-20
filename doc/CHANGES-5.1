@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.230 2010/05/20 06:06:48 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.231 2010/05/20 18:46:36 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17297,6 +17297,12 @@ sys/arch/i386/i386/vector.S			1.50-1.51 via patch
 	saved context of a signal handler causes a SIGSEGV handler to be
 	entered with what look like valid registers.
 	[riz, ticket #1401]
+
+sys/arch/i386/i386/pmc.c			patch
+sys/arch/x86/x86/via_padlock.c			patch
+
+	Fix build of the i386 ALL kernel.
+	[sborrill, ticket #1404]
 
 gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
