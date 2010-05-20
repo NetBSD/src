@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1452 2010/05/19 20:04:42 jruoho Exp $
+#	$NetBSD: mi,v 1.1453 2010/05/20 06:52:01 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -19171,6 +19171,7 @@
 ./usr/share/man/man3/pthread.3			comp-c-man		.man
 ./usr/share/man/man3/pthread_atfork.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_attr.3		comp-c-man		.man
+./usr/share/man/man3/pthread_attr_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getdetachstate.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getguardsize.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getinheritsched.3	comp-c-man		.man
