@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.31 2010/05/19 15:05:58 phx Exp $ */
+/* $NetBSD: main.c,v 1.32 2010/05/20 19:27:26 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -57,6 +57,23 @@ static const struct bootarg {
 	{ "debug",	AB_DEBUG }
 };
 
+static const struct prodfamily {
+	int id;
+	const char *family;
+	const char *verbose;
+} prodfamilies[] = {
+	{ BRD_SANDPOINTX2,	"sandpointx2",	"Sandpoint X2" },
+	{ BRD_SANDPOINTX3,	"sandpointx3",	"Sandpoint X3" },
+	{ BRD_ENCOREPP1,	"encorepp1",	"EnCore PP1"},
+	{ BRD_KUROBOX,		"kurobox",	"KuroBox"},
+	{ BRD_QNAPTS101,	"qnap",		"QNAP TS-101"},
+	{ BRD_SYNOLOGY,		"synology",	"Synology DS"},
+	{ BRD_STORCENTER,	"iomega",	"IOMEGA Storcenter"},
+	{ BRD_UNKNOWN,		"unknown",	"Unknown board" }
+};
+
+static const struct prodfamily *get_prodfamily(void);
+
 void *bootinfo; /* low memory reserved to pass bootinfo structures */
 int bi_size;	/* BOOTINFO_MAXSIZE */
 char *bi_next;
@@ -87,6 +104,8 @@ main(int argc, char *argv[])
 	struct btinfo_bootpath bi_path;
 	struct btinfo_rootdevice bi_rdev;
 	struct btinfo_net bi_net;
+	struct btinfo_prodfamily bi_fam;
+	const struct prodfamily *pfam;
 	unsigned long marks[MARK_MAX];
 	unsigned lata[1][2], lnif[1][2];
 	unsigned memsize, tag;
@@ -98,23 +117,9 @@ main(int argc, char *argv[])
 	printf("\n");
 	printf(">> NetBSD/sandpoint Boot, Revision %s\n", bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
-	switch (brdtype) {
-	case BRD_SANDPOINTX3:
-		printf("Sandpoint X3"); break;
-	case BRD_ENCOREPP1:
-		printf("Encore PP1"); break;
-	case BRD_QNAPTS101:
-		printf("QNAP TS-101"); break;
-	case BRD_KUROBOX:
-		printf("Kuro Box"); break;
-	case BRD_SYNOLOGY:
-		printf("Synology DS"); break;
-	case BRD_STORCENTER:
-		printf("IOMEGA StorCenter"); break;
-	default:
-		printf("Unknown board"); break;
-	}
-	printf(", cpu %u MHz, bus %u MHz, %dMB SDRAM\n",
+
+	pfam = get_prodfamily();
+	printf("%s, cpu %u MHz, bus %u MHz, %dMB SDRAM\n", pfam->verbose,
 	    cpuclock / 1000000, busclock / 1000000, memsize >> 20);
 
 	n = pcilookup(PCI_CLASS_IDE, lata, sizeof(lata)/sizeof(lata[0]));
@@ -185,20 +190,21 @@ main(int argc, char *argv[])
 	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), bootfile);
 	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), rootdev);
 	bi_rdev.cookie = tag; /* PCI tag for fxp netboot case */
-	if (brdtype == BRD_SYNOLOGY) {
-		/* need to set MAC address for Marvell-SKnet */
-		strcpy(bi_net.devname, "sk");
-		memcpy(bi_net.mac_address, en, sizeof(en));
-		bi_net.cookie = tag;
-	}
+	snprintf(bi_fam.name, sizeof(bi_fam.name), pfam->family);
 
 	bi_add(&bi_cons, BTINFO_CONSOLE, sizeof(bi_cons));
 	bi_add(&bi_mem, BTINFO_MEMORY, sizeof(bi_mem));
 	bi_add(&bi_clk, BTINFO_CLOCK, sizeof(bi_clk));
 	bi_add(&bi_path, BTINFO_BOOTPATH, sizeof(bi_path));
 	bi_add(&bi_rdev, BTINFO_ROOTDEVICE, sizeof(bi_rdev));
-	if (brdtype == BRD_SYNOLOGY)
+	bi_add(&bi_fam, BTINFO_PRODFAMILY, sizeof(bi_fam));
+	if (brdtype == BRD_SYNOLOGY) {
+		/* need to set MAC address for Marvell-SKnet */
+		strcpy(bi_net.devname, "sk");
+		memcpy(bi_net.mac_address, en, sizeof(en));
+		bi_net.cookie = tag;
 		bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
+	}
 
 	printf("entry=%p, ssym=%p, esym=%p\n",
 	    (void *)marks[MARK_ENTRY],
@@ -218,6 +224,17 @@ main(int argc, char *argv[])
   loadfail:
 	printf("load failed. Restarting...\n");
 	_rtt();
+}
+
+static const struct prodfamily *
+get_prodfamily(void)
+{
+	const struct prodfamily *pfam;
+
+	for (pfam = prodfamilies; pfam->id != BRD_UNKNOWN; pfam++)
+		if (pfam->id == brdtype)
+			break;
+	return pfam;
 }
 
 void
