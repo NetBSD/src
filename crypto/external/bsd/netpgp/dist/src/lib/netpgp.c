@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.53 2010/05/20 14:42:21 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.54 2010/05/20 14:43:42 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -896,7 +896,6 @@ netpgp_sign_file(netpgp_t *netpgp,
 	}
 	/* get key with which to sign */
 	if ((keypair = resolve_userid(netpgp, netpgp->secring, userid)) == NULL) {
-		(void) fprintf(io->errs, "netpgp_sign_file: userid '%s' not found\n", userid);
 		return 0;
 	}
 	ret = 1;
