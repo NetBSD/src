@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.127.4.2 2010/03/29 00:29:44 snj Exp $	*/
+/*	$NetBSD: in.c,v 1.127.4.3 2010/05/20 05:05:58 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.127.4.2 2010/03/29 00:29:44 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.127.4.3 2010/05/20 05:05:58 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -398,7 +398,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			if (ia == 0)
 				return (ENOBUFS);
 			bzero((void *)ia, sizeof *ia);
-			mutex_enter(softnet_lock);
 			TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 			IFAREF(&ia->ia_ifa);
 			ifa_insert(ifp, &ia->ia_ifa);
@@ -418,7 +417,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			ia->ia_ifp = ifp;
 			ia->ia_idsalt = arc4random() % 65535;
 			LIST_INIT(&ia->ia_multiaddrs);
-			mutex_exit(softnet_lock);
 			newifaddr = 1;
 		}
 		break;
@@ -466,14 +464,12 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	case SIOCSIFDSTADDR:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
-		mutex_enter(softnet_lock);
 		oldaddr = ia->ia_dstaddr;
 		ia->ia_dstaddr = *satocsin(ifreq_getdstaddr(cmd, ifr));
 		if (ifp->if_ioctl != NULL &&
 		    (error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR,
 		                              (void *)ia)) != 0) {
 			ia->ia_dstaddr = oldaddr;
-			mutex_exit(softnet_lock);
 			return error;
 		}
 		if (ia->ia_flags & IFA_ROUTE) {
@@ -482,7 +478,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 			rtinit(&ia->ia_ifa, RTM_ADD, RTF_HOST|RTF_UP);
 		}
-		mutex_exit(softnet_lock);
 		break;
 
 	case SIOCSIFBRDADDR:
@@ -492,7 +487,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		break;
 
 	case SIOCSIFADDR:
-		mutex_enter(softnet_lock);
 		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
 		    1);
 #ifdef PFIL_HOOKS
@@ -500,22 +494,18 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			(void)pfil_run_hooks(&if_pfil,
 			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
 #endif
-		mutex_exit(softnet_lock);
 		break;
 
 	case SIOCSIFNETMASK:
-		mutex_enter(softnet_lock);
 		in_ifscrub(ifp, ia);
 		ia->ia_sockmask = *satocsin(ifreq_getaddr(cmd, ifr));
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 		error = in_ifinit(ifp, ia, NULL, 0);
-		mutex_exit(softnet_lock);
 		break;
 
 	case SIOCAIFADDR:
 		maskIsNew = 0;
 		hostIsNew = 1;
-		mutex_enter(softnet_lock);
 		if (ia->ia_addr.sin_family != AF_INET)
 			;
 		else if (ifra->ifra_addr.sin_len == 0) {
@@ -548,7 +538,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			(void)pfil_run_hooks(&if_pfil,
 			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
 #endif
-		mutex_exit(softnet_lock);
 		break;
 
 	case SIOCGIFALIAS:
@@ -565,13 +554,11 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		break;
 
 	case SIOCDIFADDR:
-		mutex_enter(softnet_lock);
 		in_purgeaddr(&ia->ia_ifa);
 #ifdef PFIL_HOOKS
 		(void)pfil_run_hooks(&if_pfil, (struct mbuf **)SIOCDIFADDR,
 		    ifp, PFIL_IFADDR);
 #endif
-		mutex_exit(softnet_lock);
 		break;
 
 #ifdef MROUTING
