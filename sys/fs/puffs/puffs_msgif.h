@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.69 2010/01/07 22:45:31 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.70 2010/05/20 12:09:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -67,9 +67,9 @@ enum {
 	PUFFS_VFS_ROOT,		PUFFS_VFS_STATVFS,	PUFFS_VFS_SYNC,
 	PUFFS_VFS_VGET,		PUFFS_VFS_FHTOVP,	PUFFS_VFS_VPTOFH,
 	PUFFS_VFS_INIT,		PUFFS_VFS_DONE,		PUFFS_VFS_SNAPSHOT,
-	PUFFS_VFS_EXTATTCTL,	PUFFS_VFS_SUSPEND
+	PUFFS_VFS_EXTATTRCTL,	PUFFS_VFS_SUSPEND
 };
-#define PUFFS_VFS_MAX PUFFS_VFS_EXTATTCTL
+#define PUFFS_VFS_MAX PUFFS_VFS_EXTATTRCTL /* XXX: NOT TRUE!! */
 
 /* moreXXX: we don't need everything here either */
 enum {
