@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.228 2010/04/24 07:03:20 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.229 2010/05/20 05:59:43 snj Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17133,11 +17133,6 @@ sys/arch/xen/x86/xen_bus_dma.c			1.20
 	under NetBSD dom0.
 	[jym, ticket #1334]
 
-sys/netinet/in.c				1.137 via patch
-
-	Fixed a number of race conditions when receiving ipv4 packets.
-	[bouyer, ticket #1357]
-
 xsrc/external/mit/xorg-server/dist/render/glyph.c 1.2
 
 	Merge fdo git change 185185eeb44a277c324be0f58a4b4a469b56b69b.
@@ -17222,4 +17217,84 @@ sys/sys/param.h					patch
 
 	Welcome to 5.1_RC1!
 	[snj]
+
+lib/libpthread/pthread.c			1.114, 1.115
+
+	Correctly set pt_lid in the child, after a fork
+	--
+	Fix the pthread pt_lid in the fork callback function that runs in
+	the child instead of a function that may be going away.
+	[explorer, ticket #1353]
+
+distrib/utils/sysinst/mbr.c			1.83
+
+	The 16bit "bootmenu valid" magic is slightly weak; collisions have
+	been seen in the wild. So, before accepting arbitrary strings from
+	there, validate at least slightly and ignore if the entries are
+	not properly 0 terminated or contain control characters.
+	[martin, ticket #1375]
+
+sys/net/bpf_filter.c				1.36
+
+	The correct check for BPF_K is with BPF_SRC for BPF_ALU ops.
+	Fixes possible division-by-zero crashes by evil filter expressions
+	like "len / 0 = 1".  Fixes PR kern/43185.
+	[drochner, ticket #1381]
+
+crypto/external/bsd/openssh/dist/ssh_config	1.3 via patch
+crypto/external/bsd/openssh/dist/ssh_config.5	1.3 via patch
+crypto/external/bsd/openssh/dist/sshd_config.5	1.4 via patch
+
+	Don't mention "umac-64@openssh.com" MAC algorithm which is not
+	enabled in our SSH client and daemon as it causes crashes on
+	architectures which strict aligment requirements (e.g.,
+	NetBSD/sparc64).  PR bin/43221.
+	[drochner, ticket #1384]
+
+sys/conf/copyright				1.7
+
+	Welcome to 2010.
+	[tsutsui, ticket #1388]
+
+distrib/utils/sysinst/mbr.c			1.84
+distrib/utils/sysinst/msg.mbr.de		1.10
+distrib/utils/sysinst/msg.mbr.en		1.14
+distrib/utils/sysinst/msg.mbr.es		1.5
+distrib/utils/sysinst/msg.mbr.fr		1.16
+distrib/utils/sysinst/msg.mbr.pl		1.12
+
+	Fix a varargs argument type mismatch on 32bit archs - change format
+	to explicitly use %lu and cast the passed value accordingly.
+	[martin, ticket #1396]
+
+distrib/amd64/floppies/common/boot.cfg		1.3
+
+	Update boot.cfg banner/menu to reflect that installation floppies
+	have ACPI support.
+	[dholland, ticket #1400]
+
+sys/arch/i386/i386/trap.c			1.251-1.253 via patch
+sys/arch/i386/i386/vector.S			1.50-1.51 via patch
+
+	If we fault on the 'iret' during return to userpace (eg if %eip is
+	outside the bounds of %cs) then hack the stack to contain a normal
+	fault frame for the signal setup code (etc).
+	Previously the code assumed that the original user trap frame was
+	still present - at it is for faults when loading the segment
+	registers.
+	--
+	If we fault on the iret during return to userspace, see if we need
+	to do a lazy update of %cs to make the stack executable.  If a
+	change is made, just retry the failing sequence.  Signal handlers
+	as gcc nested local functions now work!
+	--
+	Fix 'fault on load of %gs during retirn to userspace' to look for
+	the correct instruction bytes.  Take the 'fault on load segment
+	register' through the same path as 'fault on iret' so we don't have
+	to fixup the broken stackframe that contains a mix of user and
+	kernel registers. Update comments about how the faults during
+	return to userspace are processed.  Setting an invalid %gs in the
+	saved context of a signal handler causes a SIGSEGV handler to be
+	entered with what look like valid registers.
+	[riz, ticket #1401]
 
