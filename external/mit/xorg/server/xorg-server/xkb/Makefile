@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/09/25 06:07:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2010/05/20 12:51:17 christos Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -30,13 +30,15 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/../include
 
-# For ${XKBCOMPDIR}
+# For ${XKBROOTDIR} and ${XKBCOMPDIR}
 .include "../../../bin/xkbcomp/Makefile.common"
 
+# XXX: ddxLoad.c expects XKM_OUTPUT_DIR to have a trailing '/'.
+
 CPPFLAGS+=	-DXKB_IN_SERVER -DHAVE_XKB_CONFIG_H \
-		-DXKB_BASE_DIRECTORY=\"${X11LIBDIR}/xkb\" \
+		-DXKB_BASE_DIRECTORY=\"${XKBROOTDIR}\" \
 		-DXKB_BIN_DIRECTORY=\"${X11BINDIR}\" \
-		-DXKM_OUTPUT_DIR=\"${XKBCOMPDIR}\" \
+		-DXKM_OUTPUT_DIR=\"${XKBCOMPDIR}/\" \
 		-DXKB_DFLT_DISABLED=0
 
 COPTS.XKBAlloc.c=	-Wno-error	# XXX gcc 3.3
