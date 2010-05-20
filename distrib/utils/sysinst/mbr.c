@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.79.14.1 2009/05/18 19:35:13 bouyer Exp $ */
+/*	$NetBSD: mbr.c,v 1.79.14.2 2010/05/20 05:09:40 snj Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1377,6 +1377,45 @@ get_partname(int typ)
 	return unknown;
 }
 
+#ifdef BOOTSEL
+static int
+validate_and_set_names(mbr_info_t *mbri, const struct mbr_bootsel *src,
+    uint32_t ext_base)
+{
+	size_t i, l;
+	const unsigned char *p;
+
+	/*
+	 * The 16 bit magic used to detect wether mbr_bootsel is valid
+	 * or not is pretty week - collisions have been seen in the wild;
+	 * but maybe it is just foreign tools corruption reminiscents
+	 * of NetBSD MBRs. Anyway, before accepting a boot menu definition,
+	 * make sure it is kinda "sane".
+	 */
+
+	for (i = 0; i < MBR_PART_COUNT; i++) {
+		/*
+		 * Make sure the name does not contain controll chars
+		 * (not using iscntrl due to minimalistic locale support
+		 * in miniroot environments) and is properly 0-terminated.
+		 */
+		for (l = 0, p = (const unsigned char *)&src->mbrbs_nametab[i];
+		    *p != 0; l++, p++) {
+			if (l >	MBR_BS_PARTNAMESIZE)
+				return 0;
+			if (*p < ' ')	/* hacky 'iscntrl' */
+				return 0;
+		}
+	}
+
+	memcpy(&mbri->mbrb, src, sizeof(*src));
+
+	if (ext_base == 0)
+		return mbri->mbrb.mbrbs_defkey - SCAN_1;
+	return 0;
+}
+#endif
+
 int
 read_mbr(const char *disk, mbr_info_t *mbri)
 {
@@ -1434,15 +1473,14 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 #if BOOTSEL
 		if (mbrs->mbr_bootsel_magic == htole16(MBR_MAGIC)) {
 			/* old bootsel, grab bootsel info */
-			mbri->mbrb = *(struct mbr_bootsel *)
-				((uint8_t *)mbrs + MBR_BS_OLD_OFFSET);
-			if (ext_base == 0)
-				bootkey = mbri->mbrb.mbrbs_defkey - SCAN_1;
+			bootkey = validate_and_set_names(mbri, 
+				(struct mbr_bootsel *)
+				((uint8_t *)mbrs + MBR_BS_OLD_OFFSET),
+				ext_base);
 		} else if (mbrs->mbr_bootsel_magic == htole16(MBR_BS_MAGIC)) {
 			/* new location */
-			mbri->mbrb = mbrs->mbr_bootsel;
-			if (ext_base == 0)
-				bootkey = mbri->mbrb.mbrbs_defkey - SCAN_1;
+			bootkey = validate_and_set_names(mbri,
+			    &mbrs->mbr_bootsel, ext_base);
 		}
 		/* Save original flags for mbr code update tests */
 		mbri->oflags = mbri->mbrb.mbrbs_flags;
