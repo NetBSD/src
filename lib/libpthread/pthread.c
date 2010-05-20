@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.106.2.2 2010/01/11 00:47:29 snj Exp $	*/
+/*	$NetBSD: pthread.c,v 1.106.2.3 2010/05/20 05:02:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.106.2.2 2010/01/11 00:47:29 snj Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.106.2.3 2010/05/20 05:02:07 snj Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -240,11 +240,14 @@ pthread__init(void)
 static void
 pthread__fork_callback(void)
 {
+	struct __pthread_st *self;
 
 	/* lwpctl state is not copied across fork. */
 	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &pthread__first->pt_lwpctl)) {
 		err(1, "_lwp_ctl");
 	}
+	self = pthread__self();
+	self->pt_lid = _lwp_self();
 }
 
 static void
