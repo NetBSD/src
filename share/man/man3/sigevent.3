@@ -1,4 +1,4 @@
-.\" $NetBSD: sigevent.3,v 1.3 2010/05/19 08:02:46 jruoho Exp $
+.\" $NetBSD: sigevent.3,v 1.4 2010/05/20 07:13:16 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\"
@@ -23,7 +23,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 18, 2010
+.Dd May 20, 2010
 .Dt SIGEVENT 3
 .Os
 .Sh NAME
@@ -38,13 +38,17 @@ standard extends traditional
 .Tn UNIX
 signal semantics by providing facilities
 for realtime signal generation and delivery.
+.Pp
 .\"
-.\" XXX: Remove the paragraph once RT signals are supported.
+.\" XXX: Remove once these are fixed.
 .\"
-Although
-.Nx
-does not yet support realtime signals,
-the described interface is fully functional.
+.Bf -symbolic
+Please note that this manual describes an interface that
+is not yet fully functional in
+.Nx :
+neither realtime signals nor SIGEV_THREAD
+are currently supported.
+.Ef
 .Pp
 Realtime functions that can generate realtime signals include:
 .Bl -enum -offset 3n
@@ -174,8 +178,3 @@ The
 .Va sigevent
 structure first appeared in
 .Nx 1.6 .
-.\"
-.\" XXX: Remove the paragraph once RT signals are supported.
-.\"
-.Sh BUGS
-Realtime signals are not yet supported.
