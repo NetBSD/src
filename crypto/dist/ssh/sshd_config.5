@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.15 2008/04/06 23:38:20 christos Exp $
+.\"	$NetBSD: sshd_config.5,v 1.15.8.1 2010/05/20 05:25:30 snj Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -538,7 +538,7 @@ for data integrity protection.
 Multiple algorithms must be comma-separated.
 The default is:
 .Bd -literal -offset indent
-hmac-md5,hmac-sha1,umac-64@openssh.com,
+hmac-md5,hmac-sha1,
 hmac-ripemd160,hmac-sha1-96,hmac-md5-96
 .Ed
 .It Cm Match
