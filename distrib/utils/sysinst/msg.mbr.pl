@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.11.32.1 2010/05/20 05:32:45 snj Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.11.32.2 2010/05/20 05:34:34 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,7 +61,7 @@ message Use_the_entire_disk
 
 /* the %s's will expand into three character strings */
 message part_header
-{   Calkowity rozmiar dysku %lu %s.
+{   Calkowity rozmiar dysku %d %s.
 
 .if BOOTSEL
     Pocz(%3s)  Rozm(%3s) Flg Rodzaj                  Wpis menu
