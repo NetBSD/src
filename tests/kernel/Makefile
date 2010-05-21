@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2009/12/08 15:20:20 uebayasi Exp $
+# $NetBSD: Makefile,v 1.4 2010/05/21 16:47:45 pooka Exp $
 
 NOMAN=		# defined
 
@@ -18,10 +18,12 @@ TESTS_C+=	t_rnd
 TESTS_C+=	t_time
 TESTS_C+=	t_ucontext
 TESTS_C+=	t_writev
+TESTS_C+=	t_extattrctl
 
 TESTS_SH=	t_umount
 
 LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser -lpthread
+LDADD.t_extattrctl+= -lrumpvfs -lrump -lrumpuser -lpthread
 
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent
