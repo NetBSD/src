@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.54 2010/05/20 14:43:42 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.55 2010/05/21 06:53:51 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -600,7 +600,9 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const
 						"pub",
 						&key->key.pubkey, psigs);
 			}
-			pubs.c += 1;
+			if (pubs.v[pubs.c] != NULL) {
+				pubs.c += 1;
+			}
 			k += 1;
 		}
 	} while (key != NULL);
@@ -611,10 +613,8 @@ netpgp_match_keys(netpgp_t *netpgp, char *name, const char *fmt, void *vp, const
 			(pubs.c == 1) ? "" : "s");
 	}
 	for (k = 0 ; k < pubs.c ; k++) {
-		if (pubs.v[k]) {
-			(void) fprintf(fp, "%s%s", pubs.v[k], (k < pubs.c - 1) ? "\n" : "");
-			free(pubs.v[k]);
-		}
+		(void) fprintf(fp, "%s%s", pubs.v[k], (k < pubs.c - 1) ? "\n" : "");
+		free(pubs.v[k]);
 	}
 	free(pubs.v);
 	return pubs.c;
