@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.71 2010/05/21 10:16:54 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.72 2010/05/21 10:40:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -61,18 +61,15 @@
 #define PUFFSOP_OPCLASS(a)	((a) & PUFFSOP_OPCMASK)
 #define PUFFSOP_WANTREPLY(a)	(((a) & PUFFSOPFLAG_FAF) == 0)
 
-/* XXX: we don't need everything */
 enum {
 	PUFFS_VFS_MOUNT,	PUFFS_VFS_START,	PUFFS_VFS_UNMOUNT,
-	PUFFS_VFS_ROOT,		PUFFS_VFS_STATVFS,	PUFFS_VFS_SYNC,
-	PUFFS_VFS_VGET,		PUFFS_VFS_FHTOVP,	PUFFS_VFS_VPTOFH,
-	PUFFS_VFS_INIT,		PUFFS_VFS_DONE,		PUFFS_VFS_SNAPSHOT,
-	PUFFS_VFS_EXTATTRCTL,	PUFFS_VFS_SUSPEND
+	PUFFS_VFS_ROOT,		PUFFS_VFS_QUOTACTL,	PUFFS_VFS_STATVFS,
+	PUFFS_VFS_SYNC,		PUFFS_VFS_VGET,		PUFFS_VFS_FHTOVP,
+	PUFFS_VFS_VPTOFH,	PUFFS_VFS_INIT,		PUFFS_VFS_DONE,
+	PUFFS_VFS_SNAPSHOT,	PUFFS_VFS_EXTATTRCTL,	PUFFS_VFS_SUSPEND
 };
-#define PUFFS_VFS_SPARE 0
-#define PUFFS_VFS_MAX (PUFFS_VFS_EXTATTRCTL+PUFFS_VFS_SPARE)
+#define PUFFS_VFS_MAX PUFFS_VFS_SUSPEND
 
-/* moreXXX: we don't need everything here either */
 enum {
 	PUFFS_VN_LOOKUP,	PUFFS_VN_CREATE,	PUFFS_VN_MKNOD,
 	PUFFS_VN_OPEN,		PUFFS_VN_CLOSE,		PUFFS_VN_ACCESS,
@@ -89,27 +86,24 @@ enum {
 	PUFFS_VN_ADVLOCK,	PUFFS_VN_LEASE,		PUFFS_VN_WHITEOUT,
 	PUFFS_VN_GETPAGES,	PUFFS_VN_PUTPAGES,	PUFFS_VN_GETEXTATTR,
 	PUFFS_VN_LISTEXTATTR,	PUFFS_VN_OPENEXTATTR,	PUFFS_VN_DELETEEXTATTR,
-	PUFFS_VN_SETEXTATTR	/* PUFFS_VN_CLOSEEXTATTR */
+	PUFFS_VN_SETEXTATTR,	PUFFS_VN_CLOSEEXTATTR
+	/* NOTE: If you add an op, decrement PUFFS_VN_SPARE accordingly */
 };
-#define PUFFS_VN_SPARE 0
-#define PUFFS_VN_MAX (PUFFS_VN_SETEXTATTR+PUFFS_VN_SPARE)
+#define PUFFS_VN_MAX PUFFS_VN_CLOSEEXTATTR
+#define PUFFS_VN_SPARE 32
 
 /*
  * These signal invalid parameters the file system returned.
  */
 enum {
+	PUFFS_ERR_ERROR,
 	PUFFS_ERR_MAKENODE,	PUFFS_ERR_LOOKUP,	PUFFS_ERR_READDIR,
 	PUFFS_ERR_READLINK,	PUFFS_ERR_READ,		PUFFS_ERR_WRITE,
-	PUFFS_ERR_VPTOFH,	PUFFS_ERR_ERROR
+	PUFFS_ERR_VPTOFH,	PUFFS_ERR_GETEXTATTR,	PUFFS_ERR_LISTEXTATTR
 };
-#define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
+#define PUFFS_ERR_MAX PUFFS_ERR_LISTEXTATTR
 
-/* trick to avoid protocol bump */
-#define PUFFS_ERR_GETEXTATTR PUFFS_ERR_ERROR
-#define PUFFS_ERR_LISTEXTATTR PUFFS_ERR_ERROR
-
-#define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	29
+#define PUFFSVERSION	30
 #define PUFFSNAMESIZE	32
 
 #define PUFFS_TYPEPREFIX "puffs|"
@@ -137,18 +131,25 @@ struct puffs_kargs {
 	size_t		pa_fhsize;
 	int		pa_fhflags;
 
-	puffs_cookie_t	pa_root_cookie;
-	enum vtype	pa_root_vtype;
-	voff_t		pa_root_vsize;
-	dev_t		pa_root_rdev;
-
-	struct statvfs	pa_svfsb;
+	uint8_t		pa_vnopmask[PUFFS_VN_MAX + PUFFS_VN_SPARE];
 
 	char		pa_typename[_VFS_NAMELEN];
 	char		pa_mntfromname[_VFS_MNAMELEN];
 
-	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
+	puffs_cookie_t	pa_root_cookie;
+	enum vtype	pa_root_vtype;
+	voff_t		pa_root_vsize;
+	union {
+		dev_t		dev;
+		uint64_t	container;
+	} devunion;
+
+	struct statvfs	pa_svfsb;
+
+	uint32_t	pa_spare[128];
 };
+#define pa_root_rdev devunion.dev
+
 #define PUFFS_KFLAG_NOCACHE_NAME	0x01	/* don't use name cache     */
 #define PUFFS_KFLAG_NOCACHE_PAGE	0x02	/* don't use page cache	    */
 #define PUFFS_KFLAG_NOCACHE		0x03	/* no cache whatsoever      */
@@ -165,7 +166,7 @@ struct puffs_kargs {
 #define PUFFS_FHFLAG_PASSTHROUGH	0x08
 #define PUFFS_FHFLAG_MASK		0x0f
 
-#define PUFFS_FHSIZE_MAX	1020	/* XXX: FHANDLE_SIZE_MAX - 4 */
+#define PUFFS_FHSIZE_MAX	1020	/* FHANDLE_SIZE_MAX - 4 */
 
 struct puffs_req {
 	struct putter_hdr	preq_pth;
@@ -211,7 +212,6 @@ struct puffs_req {
  * 2) page cache for one entire node
  */
 
-/* XXX: needs restructuring */
 struct puffs_flush {
 	struct puffs_req	pf_req;
 
@@ -226,9 +226,6 @@ struct puffs_flush {
 #define PUFFS_INVAL_NAMECACHE_ALL		2
 #define PUFFS_INVAL_PAGECACHE_NODE_RANGE	3
 #define PUFFS_FLUSH_PAGECACHE_NODE_RANGE	4
-
-/* keep this for now */
-#define PUFFSREQSIZEOP		_IOR ('p', 1, size_t)
 
 /*
  * Credentials for an operation.  Can be either struct uucred for
@@ -251,7 +248,7 @@ struct puffs_kcred {
  * else treated as garbage
  */
 #define PUFFS_MSG_MAXSIZE	2*MAXPHYS
-#define PUFFS_MSGSTRUCT_MAX	4096 /* XXX: approxkludge */
+#define PUFFS_MSGSTRUCT_MAX	4096 /* approximate */
 
 #define PUFFS_EXTNAMELEN NAME_MAX /* currently same as EXTATTR_MAXNAMELEN */
 
@@ -543,7 +540,7 @@ struct puffs_vnmsg_readlink {
 
 	struct puffs_kcred	pvnr_cred;		/* OUT */
 	size_t			pvnr_linklen;		/* IN  */
-	char			pvnr_link[MAXPATHLEN];	/* IN, XXX  */
+	char			pvnr_link[MAXPATHLEN];	/* IN  */
 };
 
 struct puffs_vnmsg_reclaim {
