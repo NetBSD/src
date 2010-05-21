@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.35 2010/05/08 00:33:28 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.36 2010/05/21 14:28:44 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -885,7 +885,7 @@ getkeybyname(__ops_io_t *io,
 {
 	const __ops_key_t	*kp;
 	__ops_userid_t		*uidp;
-	unsigned    	 i = 0;
+	unsigned    	 	 i = 0;
 	__ops_key_t		*keyp;
 	unsigned		 savedstart;
 	regex_t			 r;
