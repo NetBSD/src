@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_spl.S,v 1.1.2.2 2010/04/14 01:23:15 cliff Exp $	*/
+/*	$NetBSD: rmixl_spl.S,v 1.1.2.3 2010/05/21 23:35:21 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.2 2010/04/14 01:23:15 cliff Exp $");
+RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.3 2010/05/21 23:35:21 cliff Exp $");
 
 #include "assym.h"
 
-#define PARANOIA	/* XXX TMP FIXME */
 
 #define MAP_SCALESHIFT		3
-#define RMIXL_SOFT_INT_MASK_0	(MIPS_SOFT_INT_MASK_1 >> 8)
+#define RMIXL_SOFT_INT_MASK_1	(MIPS_SOFT_INT_MASK_1 >> 8)
 #define RMIXL_SOFT_INT_MASK	(MIPS_SOFT_INT_MASK >> 8)
 #define RMIXL_INT_MASK_1	(MIPS_INT_MASK_1 >> 8)
 #define RMIXL_INT_MASK_5	(MIPS_INT_MASK_5 >> 8)
@@ -55,20 +54,21 @@ RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.2 2010/04/14 01:23:15 cliff Exp $");
 /* 
  * Array of mask of bits to set in the EIMR when we go to a
  * given hardware interrupt priority level.
+ * The softint bits in [IPL_NONE] and [IPL_SOFTCLOCK] should stay constant
+ * Hard intr bits are managed by rmixl_vec_establish and rmixl_vec_disestablish.
  */
-	.rdata
+	.data
 	.globl	_C_LABEL(ipl_eimr_map)
 	.type	_C_LABEL(ipl_eimr_map),@object
 	.p2align MAP_SCALESHIFT
 _C_LABEL(ipl_eimr_map):
-	.dword	~0			/* IPL_NONE */
-	.dword	~RMIXL_SOFT_INT_MASK_0	/* IPL_SOFT{CLOCK,BIO} */
-	.dword	~RMIXL_SOFT_INT_MASK	/* IPL_SOFT{NET,SERIAL} */
-	.dword	RMIXL_INT_MASK_5	/* IPL_VM */
+	.dword	RMIXL_SOFT_INT_MASK	/* IPL_NONE */
+	.dword	RMIXL_SOFT_INT_MASK_1	/* IPL_SOFT{CLOCK,BIO} */
+	.dword	0			/* IPL_SOFT{NET,SERIAL} */
+	.dword	0			/* IPL_VM */
 	.dword	0			/* IPL_SCHED */
-#if IPL_SCHED != IPL_HIGH
+	.dword	0			/* IPL_DDB */
 	.dword	0			/* IPL_HIGH */
-#endif
 
 	.text
 /*
@@ -252,6 +252,13 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	 nop
 END(_splsw_splhigh)
 
+STATIC_LEAF(_splsw_splddb)
+	REG_L	a0, _C_LABEL(ipl_eimr_map) + 8*IPL_DDB
+	li	a1, IPL_DDB
+	b	_splraise
+	 nop
+END(_splsw_splddb)
+
 STATIC_LEAF(_splsw_splsched)
 	REG_L	a0, _C_LABEL(ipl_eimr_map) + 8*IPL_SCHED
 	li	a1, IPL_SCHED
@@ -297,29 +304,25 @@ END(_splsw_splsoftclock)
 STATIC_LEAF(_splsw_splintr)
 	dmfc0	ta1, RMIXL_COP_0_EIRR		# get active interrupts
 						# restrict to hard int bits:
-	and	v1, ta1, RMIXL_SOFT_INT_MASK	#  v1 &= ~RMIXL_SOFT_INT_MASK
-	xor	v1, ta1				#   "      "
+	and	v1, ta1, RMIXL_SOFT_INT_MASK	#  v1 = ta1 & ~RMIXL_SOFT_INT_MASK
+	xor	v1, ta1				#   "       "
 
-	li	v0, IPL_NONE			# return IPL_NONE ...
-	beq	v1, zero, 2f			# ... if nothing pending
-	 nop
-
-	li	v0, IPL_VM			# start at IPL_VM
+	li	v0, IPL_NONE
 	PTR_LA	ta3, _C_LABEL(ipl_eimr_map) + 8*IPL_VM
 	REG_L	ta2, -8(ta3)			# load 'enabled' bits for IPL_SOFTSERIAL
-						#  ta2 has 'enabled' ints
 	and	v1, ta2				# apply to pending bits
+	beq	v1, zero, 4f			# if nothing pending...
+	 nop					# ... return IPL_NONE
 
+	li	v0, IPL_VM			# ipl=IPL_VM
 1:
-	REG_L	ta2, (ta3)			# load 'enabled' bits for ipl in v0
+	REG_L	ta2, (ta3)			# load 'enabled' bits for ipl
 	and	ta2, v1				# any match to pending intrs?
 	beq	ta2, zero, 2f			#  no, return ipl
-
-	PTR_ADDU ta3, 1 << MAP_SCALESHIFT	# point to next entry
-	addiu	v0, 1				#  increase ipl by 1
-	move	v1, ta2				# reduce down pending intrs
-	b	1b				# and check them
-	 nop
+	 PTR_ADDI ta3, 1 << MAP_SCALESHIFT	#  point to next entry
+	addiu	v0, 1				# ipl++
+	move	v1, ta2				# update highest pending
+	b	1b				# loop
 
 2:
 	/*
@@ -329,8 +332,7 @@ STATIC_LEAF(_splsw_splintr)
 	 *   the RMI evbmips_iointr function will sort through
 	 *   individial EIRR requests
 	 */
-	beq	v1, zero, 4f			# skip ahead if nothing pending
-	 li	t2, RMIXL_INT_MASK_5		# load RMIXL_INT_MASK_5
+	li	t2, RMIXL_INT_MASK_5		# load RMIXL_INT_MASK_5
 	and	t1, v1, t2			# save count/compare intr request value
 	nor	t0, zero, t2			# invert the mask
 	and	v1, t0				# v1 &= ~RMIXL_INT_MASK_5
