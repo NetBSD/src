@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.h,v 1.1.2.3 2010/04/13 18:15:16 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.h,v 1.1.2.4 2010/05/21 23:35:42 cliff Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,20 +32,29 @@
 #define _MIPS_RMI_RMIXL_INTR_H_
 
 /*
- * An 'irq' is an EIRR bit numbers or 'vector' as used in the PRM
- * - PIC-based irqs are in the range 0..31 and index into the IRT
- * - IRT entry <n> always routes to vector <n>
- * - non-PIC-based irqs are in the range 32..63
- * - only 1 intrhand_t per irq/vector
+ * A 'vector' is bit number in EIRR/EIMR
+ * - non-IRT-based interrupts use vectors 0..31
+ * - IRT-based interrupts use vectors 32..63 
+ * - RMIXL_VECTOR_IRT(vec) is used to index into the IRT
+ * - IRT entry n always routes to vector RMIXL_IRT_VECTOR(n)
+ * - only 1 intrhand_t per vector
  */
 #define	NINTRVECS	64	/* bit width of the EIRR */
 #define	NIRTS		32	/* #entries in the Interrupt Redirection Table */
 
 /*
- * reserved vectors >=32
+ * mapping between IRT index and vector number
  */
-#define RMIXL_INTRVEC_IPI	32
-#define RMIXL_INTRVEC_FMN	33
+#define RMIXL_VECTOR_IS_IRT(vec)	((vec) >= 32)
+#define RMIXL_IRT_VECTOR(irt)		((irt) + 32)
+#define RMIXL_VECTOR_IRT(vec)		((vec) - 32)
+
+/*
+ * vectors (0 <= vec < 8)  are CAUSE[8..15] (including softintrs and count/compare)
+ * vectors (8 <= vec < 31) are for other non-IRT based interrupts
+ */
+#define RMIXL_INTRVEC_IPI	8
+#define RMIXL_INTRVEC_FMN	9
 
 typedef enum {
 	RMIXL_TRIG_NONE=0,
@@ -69,7 +78,7 @@ typedef struct rmixl_intrhand {
         int (*ih_func)(void *);
         void *ih_arg; 
         int ih_mpsafe; 			/* true if does not need kernel lock */
-        int ih_irq;			/* >=32 if not-PIC-based */
+        int ih_vec;			/* vector is bit number in EIRR/EIMR */
         int ih_ipl; 			/* interrupt priority */
         int ih_cpumask; 		/* CPUs which may handle this irpt */
 } rmixl_intrhand_t;

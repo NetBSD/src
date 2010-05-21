@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.19 2010/05/06 20:48:39 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.20 2010/05/21 23:35:42 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.19 2010/05/06 20:48:39 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.20 2010/05/21 23:35:42 cliff Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -116,7 +116,7 @@ int iointr_debug = IOINTR_DEBUG;
 /*
  * IRT assignments depends on the RMI chip family
  * (XLS1xx vs. XLS2xx vs. XLS3xx vs. XLS6xx)
- * use the right irq (and display string table) for the CPU that's running.
+ * use the right display string table for the CPU that's running.
  */
 
 /*
@@ -124,38 +124,38 @@ int iointr_debug = IOINTR_DEBUG;
  * - use for XLRxxx
  */
 static const char * const rmixl_irtnames_xlrxxx[NIRTS] = {
-	"int 0 (watchdog)",	/*  0 */
-	"int 1 (timer0)",	/*  1 */
-	"int 2 (timer1)",	/*  2 */
-	"int 3 (timer2)",	/*  3 */
-	"int 4 (timer3)",	/*  4 */
-	"int 5 (timer4)",	/*  5 */
-	"int 6 (timer5)",	/*  6 */
-	"int 7 (timer6)",	/*  7 */
-	"int 8 (timer7)",	/*  8 */
-	"int 9 (uart0)",	/*  9 */
-	"int 10 (uart1)",	/* 10 */
-	"int 11 (i2c0)",	/* 11 */
-	"int 12 (i2c1)",	/* 12 */
-	"int 13 (pcmcia)",	/* 13 */
-	"int 14 (gpio)",	/* 14 */
-	"int 15 (hyper)",	/* 15 */
-	"int 16 (pcix)",	/* 16 */
-	"int 17 (gmac0)",	/* 17 */
-	"int 18 (gmac1)",	/* 18 */
-	"int 19 (gmac2)",	/* 19 */
-	"int 20 (gmac3)",	/* 20 */
-	"int 21 (xgs0)",	/* 21 */
-	"int 22 (xgs1)",	/* 22 */
-	"int 23 (irq23)",	/* 23 */
-	"int 24 (hyper_fatal)",	/* 24 */
-	"int 25 (bridge_aerr)",	/* 25 */
-	"int 26 (bridge_berr)",	/* 26 */
-	"int 27 (bridge_tb)",	/* 27 */
-	"int 28 (bridge_nmi)",	/* 28 */
-	"int 29 (bridge_sram_derr)",	/* 29 */
-	"int 30 (gpio_fatal)",	/* 30 */
-	"int 31 (reserved)",	/* 31 */
+	"pic int 0 (watchdog)",		/*  0 */
+	"pic int 1 (timer0)",		/*  1 */
+	"pic int 2 (timer1)",		/*  2 */
+	"pic int 3 (timer2)",		/*  3 */
+	"pic int 4 (timer3)",		/*  4 */
+	"pic int 5 (timer4)",		/*  5 */
+	"pic int 6 (timer5)",		/*  6 */
+	"pic int 7 (timer6)",		/*  7 */
+	"pic int 8 (timer7)",		/*  8 */
+	"pic int 9 (uart0)",		/*  9 */
+	"pic int 10 (uart1)",		/* 10 */
+	"pic int 11 (i2c0)",		/* 11 */
+	"pic int 12 (i2c1)",		/* 12 */
+	"pic int 13 (pcmcia)",		/* 13 */
+	"pic int 14 (gpio)",		/* 14 */
+	"pic int 15 (hyper)",		/* 15 */
+	"pic int 16 (pcix)",		/* 16 */
+	"pic int 17 (gmac0)",		/* 17 */
+	"pic int 18 (gmac1)",		/* 18 */
+	"pic int 19 (gmac2)",		/* 19 */
+	"pic int 20 (gmac3)",		/* 20 */
+	"pic int 21 (xgs0)",		/* 21 */
+	"pic int 22 (xgs1)",		/* 22 */
+	"pic int 23 (irq23)",		/* 23 */
+	"pic int 24 (hyper_fatal)",	/* 24 */
+	"pic int 25 (bridge_aerr)",	/* 25 */
+	"pic int 26 (bridge_berr)",	/* 26 */
+	"pic int 27 (bridge_tb)",	/* 27 */
+	"pic int 28 (bridge_nmi)",	/* 28 */
+	"pic int 29 (bridge_sram_derr)",/* 29 */
+	"pic int 30 (gpio_fatal)",	/* 30 */
+	"pic int 31 (reserved)",	/* 31 */
 };
 
 /*
@@ -163,38 +163,38 @@ static const char * const rmixl_irtnames_xlrxxx[NIRTS] = {
  * - use for XLS2xx
  */
 static const char * const rmixl_irtnames_xls2xx[NIRTS] = {
-	"int 0 (watchdog)",	/*  0 */
-	"int 1 (timer0)",	/*  1 */
-	"int 2 (timer1)",	/*  2 */
-	"int 3 (timer2)",	/*  3 */
-	"int 4 (timer3)",	/*  4 */
-	"int 5 (timer4)",	/*  5 */
-	"int 6 (timer5)",	/*  6 */
-	"int 7 (timer6)",	/*  7 */
-	"int 8 (timer7)",	/*  8 */
-	"int 9 (uart0)",	/*  9 */
-	"int 10 (uart1)",	/* 10 */
-	"int 11 (i2c0)",	/* 11 */
-	"int 12 (i2c1)",	/* 12 */
-	"int 13 (pcmcia)",	/* 13 */
-	"int 14 (gpio_a)",	/* 14 */
-	"int 15 (irq15)",	/* 15 */
-	"int 16 (bridge_tb)",	/* 16 */
-	"int 17 (gmac0)",	/* 17 */
-	"int 18 (gmac1)",	/* 18 */
-	"int 19 (gmac2)",	/* 19 */
-	"int 20 (gmac3)",	/* 20 */
-	"int 21 (irq21)",	/* 21 */
-	"int 22 (irq22)",	/* 22 */
-	"int 23 (pcie_link2)",	/* 23 */
-	"int 24 (pcie_link3)",	/* 24 */
-	"int 25 (bridge_err)",	/* 25 */
-	"int 26 (pcie_link0)",	/* 26 */
-	"int 27 (pcie_link1)",	/* 27 */
-	"int 28 (irq28)",	/* 28 */
-	"int 29 (pcie_err)",	/* 29 */
-	"int 30 (gpio_b)",	/* 30 */
-	"int 31 (usb)",		/* 31 */
+	"pic int 0 (watchdog)",		/*  0 */
+	"pic int 1 (timer0)",		/*  1 */
+	"pic int 2 (timer1)",		/*  2 */
+	"pic int 3 (timer2)",		/*  3 */
+	"pic int 4 (timer3)",		/*  4 */
+	"pic int 5 (timer4)",		/*  5 */
+	"pic int 6 (timer5)",		/*  6 */
+	"pic int 7 (timer6)",		/*  7 */
+	"pic int 8 (timer7)",		/*  8 */
+	"pic int 9 (uart0)",		/*  9 */
+	"pic int 10 (uart1)",		/* 10 */
+	"pic int 11 (i2c0)",		/* 11 */
+	"pic int 12 (i2c1)",		/* 12 */
+	"pic int 13 (pcmcia)",		/* 13 */
+	"pic int 14 (gpio_a)",		/* 14 */
+	"pic int 15 (irq15)",		/* 15 */
+	"pic int 16 (bridge_tb)",	/* 16 */
+	"pic int 17 (gmac0)",		/* 17 */
+	"pic int 18 (gmac1)",		/* 18 */
+	"pic int 19 (gmac2)",		/* 19 */
+	"pic int 20 (gmac3)",		/* 20 */
+	"pic int 21 (irq21)",		/* 21 */
+	"pic int 22 (irq22)",		/* 22 */
+	"pic int 23 (pcie_link2)",	/* 23 */
+	"pic int 24 (pcie_link3)",	/* 24 */
+	"pic int 25 (bridge_err)",	/* 25 */
+	"pic int 26 (pcie_link0)",	/* 26 */
+	"pic int 27 (pcie_link1)",	/* 27 */
+	"pic int 28 (irq28)",		/* 28 */
+	"pic int 29 (pcie_err)",	/* 29 */
+	"pic int 30 (gpio_b)",		/* 30 */
+	"pic int 31 (usb)",		/* 31 */
 };
 
 /*
@@ -202,38 +202,38 @@ static const char * const rmixl_irtnames_xls2xx[NIRTS] = {
  * - use for XLS1xx, XLS4xx-Lite
  */
 static const char * const rmixl_irtnames_xls1xx[NIRTS] = {
-	"int 0 (watchdog)",	/*  0 */
-	"int 1 (timer0)",	/*  1 */
-	"int 2 (timer1)",	/*  2 */
-	"int 3 (timer2)",	/*  3 */
-	"int 4 (timer3)",	/*  4 */
-	"int 5 (timer4)",	/*  5 */
-	"int 6 (timer5)",	/*  6 */
-	"int 7 (timer6)",	/*  7 */
-	"int 8 (timer7)",	/*  8 */
-	"int 9 (uart0)",	/*  9 */
-	"int 10 (uart1)",	/* 10 */
-	"int 11 (i2c0)",	/* 11 */
-	"int 12 (i2c1)",	/* 12 */
-	"int 13 (pcmcia)",	/* 13 */
-	"int 14 (gpio_a)",	/* 14 */
-	"int 15 (irq15)",	/* 15 */
-	"int 16 (bridge_tb)",	/* 16 */
-	"int 17 (gmac0)",	/* 17 */
-	"int 18 (gmac1)",	/* 18 */
-	"int 19 (gmac2)",	/* 19 */
-	"int 20 (gmac3)",	/* 20 */
-	"int 21 (irq21)",	/* 21 */
-	"int 22 (irq22)",	/* 22 */
-	"int 23 (irq23)",	/* 23 */
-	"int 24 (irq24)",	/* 24 */
-	"int 25 (bridge_err)",	/* 25 */
-	"int 26 (pcie_link0)",	/* 26 */
-	"int 27 (pcie_link1)",	/* 27 */
-	"int 28 (irq28)",	/* 28 */
-	"int 29 (pcie_err)",	/* 29 */
-	"int 30 (gpio_b)",	/* 30 */
-	"int 31 (usb)",		/* 31 */
+	"pic int 0 (watchdog)",		/*  0 */
+	"pic int 1 (timer0)",		/*  1 */
+	"pic int 2 (timer1)",		/*  2 */
+	"pic int 3 (timer2)",		/*  3 */
+	"pic int 4 (timer3)",		/*  4 */
+	"pic int 5 (timer4)",		/*  5 */
+	"pic int 6 (timer5)",		/*  6 */
+	"pic int 7 (timer6)",		/*  7 */
+	"pic int 8 (timer7)",		/*  8 */
+	"pic int 9 (uart0)",		/*  9 */
+	"pic int 10 (uart1)",		/* 10 */
+	"pic int 11 (i2c0)",		/* 11 */
+	"pic int 12 (i2c1)",		/* 12 */
+	"pic int 13 (pcmcia)",		/* 13 */
+	"pic int 14 (gpio_a)",		/* 14 */
+	"pic int 15 (irq15)",		/* 15 */
+	"pic int 16 (bridge_tb)",	/* 16 */
+	"pic int 17 (gmac0)",		/* 17 */
+	"pic int 18 (gmac1)",		/* 18 */
+	"pic int 19 (gmac2)",		/* 19 */
+	"pic int 20 (gmac3)",		/* 20 */
+	"pic int 21 (irq21)",		/* 21 */
+	"pic int 22 (irq22)",		/* 22 */
+	"pic int 23 (irq23)",		/* 23 */
+	"pic int 24 (irq24)",		/* 24 */
+	"pic int 25 (bridge_err)",	/* 25 */
+	"pic int 26 (pcie_link0)",	/* 26 */
+	"pic int 27 (pcie_link1)",	/* 27 */
+	"pic int 28 (irq28)",		/* 28 */
+	"pic int 29 (pcie_err)",	/* 29 */
+	"pic int 30 (gpio_b)",		/* 30 */
+	"pic int 31 (usb)",		/* 31 */
 };
 
 /*
@@ -241,38 +241,38 @@ static const char * const rmixl_irtnames_xls1xx[NIRTS] = {
  * - use for XLS4xx, XLS6xx
  */
 static const char * const rmixl_irtnames_xls4xx[NIRTS] = {
-	"int 0 (watchdog)",	/*  0 */
-	"int 1 (timer0)",	/*  1 */
-	"int 2 (timer1)",	/*  2 */
-	"int 3 (timer2)",	/*  3 */
-	"int 4 (timer3)",	/*  4 */
-	"int 5 (timer4)",	/*  5 */
-	"int 6 (timer5)",	/*  6 */
-	"int 7 (timer6)",	/*  7 */
-	"int 8 (timer7)",	/*  8 */
-	"int 9 (uart0)",	/*  9 */
-	"int 10 (uart1)",	/* 10 */
-	"int 11 (i2c0)",	/* 11 */
-	"int 12 (i2c1)",	/* 12 */
-	"int 13 (pcmcia)",	/* 13 */
-	"int 14 (gpio_a)",	/* 14 */
-	"int 15 (irq15)",	/* 15 */
-	"int 16 (bridge_tb)",	/* 16 */
-	"int 17 (gmac0)",	/* 17 */
-	"int 18 (gmac1)",	/* 18 */
-	"int 19 (gmac2)",	/* 19 */
-	"int 20 (gmac3)",	/* 20 */
-	"int 21 (irq21)",	/* 21 */
-	"int 22 (irq22)",	/* 22 */
-	"int 23 (irq23)",	/* 23 */
-	"int 24 (irq24)",	/* 24 */
-	"int 25 (bridge_err)",	/* 25 */
-	"int 26 (pcie_link0)",	/* 26 */
-	"int 27 (pcie_link1)",	/* 27 */
-	"int 28 (pcie_link2)",	/* 28 */
-	"int 29 (pcie_link3)",	/* 29 */
-	"int 30 (gpio_b)",	/* 30 */
-	"int 31 (usb)",		/* 31 */
+	"pic int 0 (watchdog)",		/*  0 */
+	"pic int 1 (timer0)",		/*  1 */
+	"pic int 2 (timer1)",		/*  2 */
+	"pic int 3 (timer2)",		/*  3 */
+	"pic int 4 (timer3)",		/*  4 */
+	"pic int 5 (timer4)",		/*  5 */
+	"pic int 6 (timer5)",		/*  6 */
+	"pic int 7 (timer6)",		/*  7 */
+	"pic int 8 (timer7)",		/*  8 */
+	"pic int 9 (uart0)",		/*  9 */
+	"pic int 10 (uart1)",		/* 10 */
+	"pic int 11 (i2c0)",		/* 11 */
+	"pic int 12 (i2c1)",		/* 12 */
+	"pic int 13 (pcmcia)",		/* 13 */
+	"pic int 14 (gpio_a)",		/* 14 */
+	"pic int 15 (irq15)",		/* 15 */
+	"pic int 16 (bridge_tb)",	/* 16 */
+	"pic int 17 (gmac0)",		/* 17 */
+	"pic int 18 (gmac1)",		/* 18 */
+	"pic int 19 (gmac2)",		/* 19 */
+	"pic int 20 (gmac3)",		/* 20 */
+	"pic int 21 (irq21)",		/* 21 */
+	"pic int 22 (irq22)",		/* 22 */
+	"pic int 23 (irq23)",		/* 23 */
+	"pic int 24 (irq24)",		/* 24 */
+	"pic int 25 (bridge_err)",	/* 25 */
+	"pic int 26 (pcie_link0)",	/* 26 */
+	"pic int 27 (pcie_link1)",	/* 27 */
+	"pic int 28 (pcie_link2)",	/* 28 */
+	"pic int 29 (pcie_link3)",	/* 29 */
+	"pic int 30 (gpio_b)",		/* 30 */
+	"pic int 31 (usb)",		/* 31 */
 };
 
 /*
@@ -281,70 +281,70 @@ static const char * const rmixl_irtnames_xls4xx[NIRTS] = {
  * - covers all vectors, not just IRT intrs
  */
 static const char * const rmixl_vecnames_common[NINTRVECS] = {
-	"int 0",	/*  0 */
-	"int 1",	/*  1 */
-	"int 2",	/*  2 */
-	"int 3",	/*  3 */
-	"int 4",	/*  4 */
-	"int 5",	/*  5 */
-	"int 6",	/*  6 */
-	"int 7",	/*  7 */
-	"int 8",	/*  8 */
-	"int 9",	/*  9 */
-	"int 10",	/* 10 */
-	"int 11",	/* 11 */
-	"int 12",	/* 12 */
-	"int 13",	/* 13 */
-	"int 14",	/* 14 */
-	"int 15",	/* 15 */
-	"int 16",	/* 16 */
-	"int 17",	/* 17 */
-	"int 18",	/* 18 */
-	"int 19",	/* 19 */
-	"int 20",	/* 20 */
-	"int 21",	/* 21 */
-	"int 22",	/* 22 */
-	"int 23",	/* 23 */
-	"int 24",	/* 24 */
-	"int 25",	/* 25 */
-	"int 26",	/* 26 */
-	"int 27",	/* 27 */
-	"int 28",	/* 28 */
-	"int 29",	/* 29 */
-	"int 30",	/* 30 */
-	"int 31",	/* 31 */
-	"int 32 (ipi)",	/* 32 */
-	"int 33 (fmn)",	/* 33 */
-	"int 34",	/* 34 */
-	"int 35",	/* 35 */
-	"int 36",	/* 36 */
-	"int 37",	/* 37 */
-	"int 38",	/* 38 */
-	"int 39",	/* 39 */
-	"int 40",	/* 40 */
-	"int 41",	/* 41 */
-	"int 42",	/* 42 */
-	"int 43",	/* 43 */
-	"int 44",	/* 44 */
-	"int 45",	/* 45 */
-	"int 46",	/* 46 */
-	"int 47",	/* 47 */
-	"int 48",	/* 48 */
-	"int 49",	/* 49 */
-	"int 50",	/* 50 */
-	"int 51",	/* 51 */
-	"int 52",	/* 52 */
-	"int 53",	/* 53 */
-	"int 54",	/* 54 */
-	"int 55",	/* 55 */
-	"int 56",	/* 56 */
-	"int 57",	/* 57 */
-	"int 58",	/* 58 */
-	"int 59",	/* 59 */
-	"int 60",	/* 60 */
-	"int 61",	/* 61 */
-	"int 62",	/* 63 */
-	"int 63",	/* 63 */
+	"vec 0",		/*  0 */
+	"vec 1",		/*  1 */
+	"vec 2",		/*  2 */
+	"vec 3",		/*  3 */
+	"vec 4",		/*  4 */
+	"vec 5",		/*  5 */
+	"vec 6",		/*  6 */
+	"vec 7",		/*  7 */
+	"vec 8 (ipi)",		/*  8 */
+	"vec 9 (fmn)",		/*  9 */
+	"vec 10",		/* 10 */
+	"vec 11",		/* 11 */
+	"vec 12",		/* 12 */
+	"vec 13",		/* 13 */
+	"vec 14",		/* 14 */
+	"vec 15",		/* 15 */
+	"vec 16",		/* 16 */
+	"vec 17",		/* 17 */
+	"vec 18",		/* 18 */
+	"vec 19",		/* 19 */
+	"vec 20",		/* 20 */
+	"vec 21",		/* 21 */
+	"vec 22",		/* 22 */
+	"vec 23",		/* 23 */
+	"vec 24",		/* 24 */
+	"vec 25",		/* 25 */
+	"vec 26",		/* 26 */
+	"vec 27",		/* 27 */
+	"vec 28",		/* 28 */
+	"vec 29",		/* 29 */
+	"vec 30",		/* 30 */
+	"vec 31",		/* 31 */
+	"vec 32",		/* 32 */
+	"vec 33",		/* 33 */
+	"vec 34",		/* 34 */
+	"vec 35",		/* 35 */
+	"vec 36",		/* 36 */
+	"vec 37",		/* 37 */
+	"vec 38",		/* 38 */
+	"vec 39",		/* 39 */
+	"vec 40",		/* 40 */
+	"vec 41",		/* 41 */
+	"vec 42",		/* 42 */
+	"vec 43",		/* 43 */
+	"vec 44",		/* 44 */
+	"vec 45",		/* 45 */
+	"vec 46",		/* 46 */
+	"vec 47",		/* 47 */
+	"vec 48",		/* 48 */
+	"vec 49",		/* 49 */
+	"vec 50",		/* 50 */
+	"vec 51",		/* 51 */
+	"vec 52",		/* 52 */
+	"vec 53",		/* 53 */
+	"vec 54",		/* 54 */
+	"vec 55",		/* 55 */
+	"vec 56",		/* 56 */
+	"vec 57",		/* 57 */
+	"vec 58",		/* 58 */
+	"vec 59",		/* 59 */
+	"vec 60",		/* 60 */
+	"vec 61",		/* 61 */
+	"vec 62",		/* 63 */
+	"vec 63",		/* 63 */
 };
 
 /*
@@ -365,7 +365,7 @@ static const char *rmixl_intr_string_xls(int);
 static uint32_t rmixl_irt_thread_mask(int);
 static void rmixl_irt_init(int);
 static void rmixl_irt_disestablish(int);
-static void rmixl_irt_establish(int, int,
+static void rmixl_irt_establish(int, int, int,
 		rmixl_intr_trigger_t, rmixl_intr_polarity_t);
 
 #ifdef MULTIPROCESSOR
@@ -374,9 +374,10 @@ static int rmixl_ipi_intr(void *);
 #endif
 
 #if defined(IOINTR_DEBUG) || defined(DIAGNOSTIC)
-int rmixl_intrhand_print_subr(int);
-int rmixl_intrhand_print(void);
-int rmixl_irt_print(void);
+int  rmixl_intrhand_print_subr(int);
+int  rmixl_intrhand_print(void);
+int  rmixl_irt_print(void);
+void rmixl_ipl_eimr_map_print(void);
 #endif
 
 
@@ -391,20 +392,6 @@ dclz(uint64_t val)
 	return nlz;
 }
 
-static inline void
-rmixl_irt_entry_print(u_int irq)
-{
-#if defined(IOINTR_DEBUG) || defined(DDB)
-	uint32_t c0, c1;
-
-	if ((irq < 0) || (irq > NIRTS))
-		return;
-	c0 = RMIXL_PICREG_READ(RMIXL_PIC_IRTENTRYC0(irq));
-	c1 = RMIXL_PICREG_READ(RMIXL_PIC_IRTENTRYC1(irq));
-	printf("irt[%d]: %#x, %#x\n", irq, c0, c1);
-#endif
-}
-
 void
 evbmips_intr_init(void)
 {
@@ -413,20 +400,6 @@ evbmips_intr_init(void)
 	KASSERT(cpu_rmixlr(mips_options.mips_cpu)
 	     || cpu_rmixls(mips_options.mips_cpu));
 
-#ifdef IOINTR_DEBUG
-	printf("IPL_NONE=%d, mask %#"PRIx64"\n",
-		IPL_NONE, ipl_eimr_map[IPL_NONE]);
-	printf("IPL_SOFTCLOCK=%d, mask %#"PRIx64"\n",
-		IPL_SOFTCLOCK, ipl_eimr_map[IPL_SOFTCLOCK]);
-	printf("IPL_SOFTNET=%d, mask %#"PRIx64"\n",
-		IPL_SOFTNET, ipl_eimr_map[IPL_SOFTNET]);
-	printf("IPL_VM=%d, mask %#"PRIx64"\n",
-		IPL_VM, ipl_eimr_map[IPL_VM]);
-	printf("IPL_SCHED=%d, mask %#"PRIx64"\n",
-		IPL_SCHED, ipl_eimr_map[IPL_HIGH]);
-	printf("IPL_HIGH=%d, mask %#"PRIx64"\n",
-		IPL_HIGH, ipl_eimr_map[IPL_NONE]);
-#endif
 
 #ifdef DIAGNOSTIC
 	if (rmixl_pic_init_done != 0)
@@ -503,8 +476,10 @@ rmixl_intr_init_cpu(struct cpu_info *ci)
 	struct rmixl_cpu_softc *sc = (void *)ci->ci_softc;
 	KASSERT(sc != NULL);
 
-	/* zero the EIRR ? */
-	uint64_t eirr = 0;
+	/* ack any pending in the EIRR, zeroing CAUSE[8..15] */
+	uint64_t eirr;
+	asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
+	eirr &= ~0xff;
 	asm volatile("dmtc0 %0, $9, 6;" :: "r"(eirr));
 
 	for (int vec=0; vec < NINTRVECS; vec++)
@@ -521,20 +496,23 @@ rmixl_intr_init_cpu(struct cpu_info *ci)
  * rmixl_intr_string - return pointer to display name of a PIC-based interrupt
  */
 const char *
-rmixl_intr_string(int irq)
+rmixl_intr_string(int vec)
 {
-	if (irq < 0 || irq >= NINTRVECS)
-		panic("%s: irq index %d out of range, max %d",
-			__func__, irq, NIRTS - 1);
+	int irt;
 
-	if (irq >= NIRTS)
-		return rmixl_vecnames_common[irq];
+	if (vec < 0 || vec >= NINTRVECS)
+		panic("%s: vec index %d out of range, max %d",
+			__func__, vec, NINTRVECS - 1);
 
+	if (! RMIXL_VECTOR_IS_IRT(vec))
+		return rmixl_vecnames_common[vec];
+
+	irt = RMIXL_VECTOR_IRT(vec);
 	switch(cpu_rmixl_chip_type(mips_options.mips_cpu)) {
 	case CIDFL_RMI_TYPE_XLR:
-		return rmixl_intr_string_xlr(irq);
+		return rmixl_intr_string_xlr(irt);
 	case CIDFL_RMI_TYPE_XLS:
-		return rmixl_intr_string_xls(irq);
+		return rmixl_intr_string_xls(irt);
 	case CIDFL_RMI_TYPE_XLP:
 		panic("%s: RMI XLP not yet supported", __func__);
 	}
@@ -543,13 +521,13 @@ rmixl_intr_string(int irq)
 }
 
 static const char *
-rmixl_intr_string_xlr(int irq)
+rmixl_intr_string_xlr(int irt)
 {
-	return rmixl_irtnames_xlrxxx[irq];
+	return rmixl_irtnames_xlrxxx[irt];
 }
 
 static const char *
-rmixl_intr_string_xls(int irq)
+rmixl_intr_string_xls(int irt)
 {
 	const char *name;
 
@@ -558,21 +536,21 @@ rmixl_intr_string_xls(int irq)
 	case MIPS_XLS108:
 	case MIPS_XLS404LITE:
 	case MIPS_XLS408LITE:
-		name = rmixl_irtnames_xls1xx[irq];
+		name = rmixl_irtnames_xls1xx[irt];
 		break;
 	case MIPS_XLS204:
 	case MIPS_XLS208:
-		name = rmixl_irtnames_xls2xx[irq];
+		name = rmixl_irtnames_xls2xx[irt];
 		break;
 	case MIPS_XLS404:
 	case MIPS_XLS408:
 	case MIPS_XLS416:
 	case MIPS_XLS608:
 	case MIPS_XLS616:
-		name = rmixl_irtnames_xls4xx[irq];
+		name = rmixl_irtnames_xls4xx[irt];
 		break;
 	default:
-		name = rmixl_vecnames_common[irq];
+		name = rmixl_vecnames_common[RMIXL_IRT_VECTOR(irt)];
 		break;
 	}
 
@@ -632,38 +610,44 @@ rmixl_irt_thread_mask(int cpumask)
 
 /*
  * rmixl_irt_init
- * - invalidate IRT Entry for irq
+ * - initialize IRT Entry for given index
  * - unmask Thread#0 in low word (assume we only have 1 thread)
  */
 static void
-rmixl_irt_init(int irq)
+rmixl_irt_init(int irt)
 {
-	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), 0);	/* high word */
-	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC0(irq), 0);	/* low  word */
+	KASSERT(irt < NIRTS);
+	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irt), 0);	/* high word */
+	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC0(irt), 0);	/* low  word */
 }
 
 /*
  * rmixl_irt_disestablish
- * - invalidate IRT Entry for irq
- * - writes to IRTENTRYC1 only; leave IRTENTRYC0 as-is
+ * - invalidate IRT Entry for given index
  */
 static void
-rmixl_irt_disestablish(int irq)
+rmixl_irt_disestablish(int irt)
 {
-	DPRINTF(("%s: irq %d, irtc1 %#x\n", __func__, irq, 0));
-	rmixl_irt_init(irq);
+	DPRINTF(("%s: irt %d, irtc1 %#x\n", __func__, irt, 0));
+	rmixl_irt_init(irt);
 }
 
 /*
  * rmixl_irt_establish
- * - construct an IRT Entry for irq and write to PIC
+ * - construct an IRT Entry for irt and write to PIC
  */
 static void
-rmixl_irt_establish(int irq, int cpumask, rmixl_intr_trigger_t trigger,
+rmixl_irt_establish(int irt, int vec, int cpumask, rmixl_intr_trigger_t trigger,
 	rmixl_intr_polarity_t polarity)
 {
 	uint32_t irtc1;
 	uint32_t irtc0;
+
+	if (irt >= NIRTS)
+		panic("%s: bad irt %d\n", __func__, irt);
+
+	if (! RMIXL_VECTOR_IS_IRT(vec))
+		panic("%s: bad vec %d\n", __func__, vec);
 
 	switch (trigger) {
 	case RMIXL_TRIG_EDGE:
@@ -686,8 +670,8 @@ rmixl_irt_establish(int irq, int cpumask, rmixl_intr_trigger_t trigger,
 	/*
 	 * XXX IRT entries are not shared
 	 */
-	KASSERT(RMIXL_PICREG_READ(RMIXL_PIC_IRTENTRYC0(irq)) == 0);
-	KASSERT(RMIXL_PICREG_READ(RMIXL_PIC_IRTENTRYC1(irq)) == 0);
+	KASSERT(RMIXL_PICREG_READ(RMIXL_PIC_IRTENTRYC0(irt)) == 0);
+	KASSERT(RMIXL_PICREG_READ(RMIXL_PIC_IRTENTRYC1(irt)) == 0);
 
 	irtc0 = rmixl_irt_thread_mask(cpumask);
 
@@ -700,15 +684,15 @@ rmixl_irt_establish(int irq, int cpumask, rmixl_intr_trigger_t trigger,
 	if ((polarity == RMIXL_POLR_FALLING) || (polarity == RMIXL_POLR_LOW))
 		irtc1 |= RMIXL_PIC_IRTENTRYC1_P;
 
-	irtc1 |= irq;	/* route to vector 'irq' */
+	irtc1 |= vec;			/* vector in EIRR */
 
 	/*
 	 * write IRT Entry to PIC
 	 */
-	DPRINTF(("%s: irq %d, irtc0 %#x, irtc1 %#x\n",
-		__func__, irq, irtc0, irtc1));
-	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC0(irq), irtc0);	/* low  word */
-	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irq), irtc1);	/* high word */
+	DPRINTF(("%s: irt %d, irtc0 %#x, irtc1 %#x\n",
+		__func__, irt, irtc0, irtc1));
+	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC0(irt), irtc0);	/* low  word */
+	RMIXL_PICREG_WRITE(RMIXL_PIC_IRTENTRYC1(irt), irtc1);	/* high word */
 }
 
 void *
@@ -716,11 +700,11 @@ rmixl_vec_establish(int vec, int cpumask, int ipl,
 	int (*func)(void *), void *arg, bool mpsafe)
 {
 	rmixl_intrhand_t *ih;
+	uint64_t eimr_bit;
 	int s;
 
-	DPRINTF(("%s: vec %d, cpumask %#x, ipl %d, func %p, arg %p, "
-		"vec %d\n",
-			__func__, vec, cpumask, ipl, func, arg, vec));
+	DPRINTF(("%s: vec %d, cpumask %#x, ipl %d, func %p, arg %p\n"
+			__func__, vec, cpumask, ipl, func, arg));
 #ifdef DIAGNOSTIC
 	if (rmixl_pic_init_done == 0)
 		panic("%s: called before evbmips_intr_init", __func__);
@@ -739,25 +723,43 @@ rmixl_vec_establish(int vec, int cpumask, int ipl,
 	s = splhigh();
 
 	ih = &rmixl_intrhand[vec];
+	if (ih->ih_func != NULL) {
+#ifdef DIAGNOSTIC
+		printf("%s: intrhand[%d] busy\n", __func__, vec);
+#endif
+		splx(s);
+		return NULL;
+	}
 
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_mpsafe = mpsafe;
-	ih->ih_irq = vec;
+	ih->ih_vec = vec;
 	ih->ih_ipl = ipl;
 	ih->ih_cpumask = cpumask;
+
+	eimr_bit = (uint64_t)1 << vec;
+	for (int i=ih->ih_ipl; --i >= 0; ) {
+		KASSERT((ipl_eimr_map[i] & eimr_bit) == 0);
+		ipl_eimr_map[i] |= eimr_bit;
+	}
 
 	splx(s);
 
 	return ih;
 }
 
+/*
+ * rmixl_intr_establish
+ * - used to establish an IRT-based interrupt only
+ */
 void *
-rmixl_intr_establish(int irq, int cpumask, int ipl,
+rmixl_intr_establish(int irt, int cpumask, int ipl,
 	rmixl_intr_trigger_t trigger, rmixl_intr_polarity_t polarity,
 	int (*func)(void *), void *arg, bool mpsafe)
 {
 	rmixl_intrhand_t *ih;
+	int vec;
 	int s;
 
 #ifdef DIAGNOSTIC
@@ -768,27 +770,28 @@ rmixl_intr_establish(int irq, int cpumask, int ipl,
 	/*
 	 * check args
 	 */
-	if (irq < 0 || irq >= NINTRVECS)
-		panic("%s: irq %d out of range, max %d",
-			__func__, irq, NIRTS - 1);
+	if (irt < 0 || irt >= NIRTS)
+		panic("%s: irt %d out of range, max %d",
+			__func__, irt, NIRTS - 1);
 	if (ipl <= 0 || ipl >= _IPL_N)
 		panic("%s: ipl %d out of range, min %d, max %d",
 			__func__, ipl, 1, _IPL_N - 1);
 
-	DPRINTF(("%s: irq %d, ipl %d\n", __func__, irq, ipl));
+	vec = RMIXL_IRT_VECTOR(irt);
+
+	DPRINTF(("%s: irt %d, vec %d, ipl %d\n", __func__, irt, vec, ipl));
 
 	s = splhigh();
 
 	/*
 	 * establish vector
 	 */
-	ih = rmixl_vec_establish(irq, cpumask, ipl, func, arg, mpsafe);
+	ih = rmixl_vec_establish(vec, cpumask, ipl, func, arg, mpsafe);
 
 	/*
 	 * establish IRT Entry
 	 */
-	if (irq < 32)
-		rmixl_irt_establish(irq, cpumask, trigger, polarity);
+	rmixl_irt_establish(irt, vec, cpumask, trigger, polarity);
 
 	splx(s);
 
@@ -799,13 +802,21 @@ void
 rmixl_vec_disestablish(void *cookie)
 {
 	rmixl_intrhand_t *ih = cookie;
+	uint64_t eimr_bit;
 	int s;
 
-	KASSERT(ih = &rmixl_intrhand[ih->ih_irq]);
+	KASSERT(ih->ih_vec < NINTRVECS);
+	KASSERT(ih == &rmixl_intrhand[ih->ih_vec]);
 
 	s = splhigh();
 
-	ih->ih_func = NULL;	/* XXX race */
+	ih->ih_func = NULL;
+
+	eimr_bit = (uint64_t)1 << ih->ih_vec;
+	for (int i=ih->ih_ipl; --i >= 0; ) {
+		KASSERT((ipl_eimr_map[i] & eimr_bit) != 0);
+		ipl_eimr_map[i] ^= eimr_bit;
+	}
 
 	splx(s);
 }
@@ -817,16 +828,17 @@ rmixl_intr_disestablish(void *cookie)
 	int vec;
 	int s;
 
-	vec = ih->ih_irq;
+	vec = ih->ih_vec;
 
-	KASSERT(ih = &rmixl_intrhand[vec]);
+	KASSERT(vec < NINTRVECS);
+	KASSERT(ih == &rmixl_intrhand[vec]);
 
 	s = splhigh();
 
 	/*
 	 * disable/invalidate the IRT Entry if needed
 	 */
-	if (vec < 32)
+	if (RMIXL_VECTOR_IS_IRT(vec))
 		rmixl_irt_disestablish(vec);
 
 	/*
@@ -867,12 +879,14 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 #endif	/* IOINTR_DEBUG */
 
 		eirr &= ipl_eimr_map[ipl-1];
+		eirr &= ~ipl_eimr_map[ipl];		/* mask off higher ints */
 		eirr &= ~(MIPS_SOFT_INT_MASK >> 8);	/* mask off soft ints */
 		if (eirr == 0)
 			break;
 
 		vec = 63 - dclz(eirr);
 		ih = &rmixl_intrhand[vec];
+		KASSERT (ih->ih_ipl == ipl);
 
 		asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
 		asm volatile("dmtc0 $0, $9, 7;");
@@ -885,9 +899,9 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 		asm volatile("dmtc0 %0, $9, 6;" :: "r"(eirr));
 		asm volatile("dmtc0 %0, $9, 7;" :: "r"(eimr));
 
-		if (vec < 32)
+		if (RMIXL_VECTOR_IS_IRT(vec))
 			RMIXL_PICREG_WRITE(RMIXL_PIC_INTRACK,
-				(uint32_t)vecbit);
+				1 << RMIXL_VECTOR_IRT(vec));
 
 		if (ih->ih_func != NULL) {
 #ifdef MULTIPROCESSOR
@@ -902,7 +916,6 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 			(void)(*ih->ih_func)(ih->ih_arg);
 #endif /* MULTIPROCESSOR */
 		}
-
 		sc->sc_vec_evcnts[vec].ev_count++;
 	}
 }
@@ -950,13 +963,13 @@ rmixl_ipi_intr(void *arg)
 }
 #endif	/* MULTIPROCESSOR */
 
-#if defined(DIAGNOSTIC) || defined(IOINTR_DEBUG)
+#if defined(DIAGNOSTIC) || defined(IOINTR_DEBUG) || defined(DDB)
 int
 rmixl_intrhand_print_subr(int vec)
 {
 	rmixl_intrhand_t *ih = &rmixl_intrhand[vec];
-	printf("vec %d: func %p, arg %p, irq %d, ipl %d, mask %#x\n",
-		vec, ih->ih_func, ih->ih_arg, ih->ih_irq, ih->ih_ipl,
+	printf("vec %d: func %p, arg %p, vec %d, ipl %d, mask %#x\n",
+		vec, ih->ih_func, ih->ih_arg, ih->ih_vec, ih->ih_ipl,
 		ih->ih_cpumask);
 	return 0;
 }
@@ -967,6 +980,19 @@ rmixl_intrhand_print(void)
 		rmixl_intrhand_print_subr(vec);
 	return 0;
 }
+
+static inline void
+rmixl_irt_entry_print(u_int irt)
+{
+	uint32_t c0, c1;
+
+	if ((irt < 0) || (irt > NIRTS))
+		return;
+	c0 = RMIXL_PICREG_READ(RMIXL_PIC_IRTENTRYC0(irt));
+	c1 = RMIXL_PICREG_READ(RMIXL_PIC_IRTENTRYC1(irt));
+	printf("irt[%d]: %#x, %#x\n", irt, c0, c1);
+}
+
 int
 rmixl_irt_print(void)
 {
@@ -975,4 +1001,24 @@ rmixl_irt_print(void)
 		rmixl_irt_entry_print(irt);
 	return 0;
 }
+
+void
+rmixl_ipl_eimr_map_print(void)
+{
+	printf("IPL_NONE=%d, mask %#"PRIx64"\n",
+		IPL_NONE, ipl_eimr_map[IPL_NONE]);
+	printf("IPL_SOFTCLOCK=%d, mask %#"PRIx64"\n",
+		IPL_SOFTCLOCK, ipl_eimr_map[IPL_SOFTCLOCK]);
+	printf("IPL_SOFTNET=%d, mask %#"PRIx64"\n",
+		IPL_SOFTNET, ipl_eimr_map[IPL_SOFTNET]);
+	printf("IPL_VM=%d, mask %#"PRIx64"\n",
+		IPL_VM, ipl_eimr_map[IPL_VM]);
+	printf("IPL_SCHED=%d, mask %#"PRIx64"\n",
+		IPL_SCHED, ipl_eimr_map[IPL_SCHED]);
+	printf("IPL_DDB=%d, mask %#"PRIx64"\n",
+		IPL_DDB, ipl_eimr_map[IPL_DDB]);
+	printf("IPL_HIGH=%d, mask %#"PRIx64"\n",
+		IPL_HIGH, ipl_eimr_map[IPL_HIGH]);
+}
+
 #endif
