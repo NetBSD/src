@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.106 2010/05/19 12:16:45 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.107 2010/05/21 10:50:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.106 2010/05/19 12:16:45 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.107 2010/05/21 10:50:52 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -70,10 +70,11 @@ do {									\
 		opmask[PUFFS_VN_##upper] = 1;				\
 } while (/*CONSTCOND*/0)
 static void
-fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
+fillvnopmask(struct puffs_ops *pops, struct puffs_kargs *pa)
 {
+	uint8_t *opmask = pa->pa_vnopmask;
 
-	memset(opmask, 0, PUFFS_VN_MAX);
+	memset(opmask, 0, sizeof(pa->pa_vnopmask));
 
 	FILLOP(create,   CREATE);
 	FILLOP(mknod,    MKNOD);
@@ -100,6 +101,11 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 	FILLOP(read,     READ);
 	FILLOP(write,    WRITE);
 	FILLOP(abortop,  ABORTOP);
+
+	FILLOP(getextattr,  GETEXTATTR);
+	FILLOP(setextattr,  SETEXTATTR);
+	FILLOP(listextattr, LISTEXTATTR);
+	FILLOP(deleteextattr, DELETEEXTATTR);
 }
 #undef FILLOP
 
@@ -609,9 +615,8 @@ do {									\
 	return rv;
 }
 
-/*ARGSUSED*/
 struct puffs_usermount *
-_puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
+puffs_init(struct puffs_ops *pops, const char *mntfromname,
 	const char *puffsname, void *priv, uint32_t pflags)
 {
 	struct puffs_usermount *pu;
@@ -635,9 +640,9 @@ _puffs_init(int dummy, struct puffs_ops *pops, const char *mntfromname,
 		goto failfree;
 	memset(pargs, 0, sizeof(struct puffs_kargs));
 
-	pargs->pa_vers = PUFFSDEVELVERS | PUFFSVERSION;
+	pargs->pa_vers = PUFFSVERSION;
 	pargs->pa_flags = PUFFS_FLAG_KERN(pflags);
-	fillvnopmask(pops, pargs->pa_vnopmask);
+	fillvnopmask(pops, pargs);
 	puffs_setmntinfo(pu, mntfromname, puffsname);
 
 	puffs_zerostatvfs(&pargs->pa_svfsb);
