@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1453 2010/05/20 06:52:01 wiz Exp $
+#	$NetBSD: mi,v 1.1454 2010/05/21 21:46:48 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2960,7 +2960,7 @@
 ./usr/libdata/debug/sbin/wsconsctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/zfs.debug		comp-zfs-debug		zfs,debug
 ./usr/libdata/debug/sbin/zpool.debug		comp-zfs-debug		zfs,debug
-./usr/libdata/debug/usr/bin/addftinfo.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/addftinfo.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/addr2line.debug	comp-debug-debug	binutils,debug
 ./usr/libdata/debug/usr/bin/apply.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/apropos.debug	comp-man-debug		debug
@@ -3027,7 +3027,7 @@
 ./usr/libdata/debug/usr/bin/du.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/eject.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/env.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/eqn.debug		comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/eqn.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/error.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/expand.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/f77.debug		comp-fortran-debug	gcc=3,gcccmds,debug
@@ -3059,26 +3059,26 @@
 ./usr/libdata/debug/usr/bin/gkermit.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/gprof.debug		comp-debug-debug	binutils,debug
 ./usr/libdata/debug/usr/bin/grep.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/grn.debug		comp-groff-debug	debug
-./usr/libdata/debug/usr/bin/grodvi.debug	comp-groff-debug	debug
-./usr/libdata/debug/usr/bin/groff.debug		comp-groff-debug	debug
-./usr/libdata/debug/usr/bin/grolbp.debug	comp-groff-debug	debug
-./usr/libdata/debug/usr/bin/grolj4.debug	comp-groff-debug	debug
-./usr/libdata/debug/usr/bin/grops.debug		comp-groff-debug	debug
-./usr/libdata/debug/usr/bin/grotty.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/grn.debug		comp-groff-debug	groff,debug
+./usr/libdata/debug/usr/bin/grodvi.debug	comp-groff-debug	groff,debug
+./usr/libdata/debug/usr/bin/groff.debug		comp-groff-debug	groff,debug
+./usr/libdata/debug/usr/bin/grolbp.debug	comp-groff-debug	groff,debug
+./usr/libdata/debug/usr/bin/grolj4.debug	comp-groff-debug	groff,debug
+./usr/libdata/debug/usr/bin/grops.debug		comp-groff-debug	groff,debug
+./usr/libdata/debug/usr/bin/grotty.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/gss.debug		comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/gzip.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/head.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/hesinfo.debug	comp-hesiod-debug	hesiod,debug
 ./usr/libdata/debug/usr/bin/hexdump.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/host.debug		comp-netutil-debug	debug
-./usr/libdata/debug/usr/bin/hpftodit.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/hpftodit.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/hxtool.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/bin/iconv.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/id.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ident.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/indent.debug	comp-c-debug		debug
-./usr/libdata/debug/usr/bin/indxbib.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/indxbib.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/info.debug		comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/infocmp.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/infokey.debug	comp-texinfo-debug	debug
@@ -3116,7 +3116,7 @@
 ./usr/libdata/debug/usr/bin/lesskey.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/lex.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/lint.debug		comp-c-debug		debug
-./usr/libdata/debug/usr/bin/lkbib.debug		comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/lkbib.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/locale.debug	comp-locale-debug	debug
 ./usr/libdata/debug/usr/bin/locate.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/lock.debug		comp-util-debug		debug
@@ -3124,7 +3124,7 @@
 ./usr/libdata/debug/usr/bin/login.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/logname.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/look.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/lookbib.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/lookbib.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/lpq.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/bin/lpr.debug		comp-lpr-debug		debug
 ./usr/libdata/debug/usr/bin/lprm.debug		comp-lpr-debug		debug
@@ -3191,13 +3191,13 @@
 ./usr/libdata/debug/usr/bin/pawd.debug		comp-amd-debug		debug
 ./usr/libdata/debug/usr/bin/paxctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/pcc.debug		comp-c-debug		pcccmds,debug
-./usr/libdata/debug/usr/bin/pfbtops.debug	comp-groff-debug	debug
-./usr/libdata/debug/usr/bin/pic.debug		comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/pfbtops.debug	comp-groff-debug	groff,debug
+./usr/libdata/debug/usr/bin/pic.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/pkill.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pmap.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/post-grohtml.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/post-grohtml.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/pr.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/pre-grohtml.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/pre-grohtml.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/printenv.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/printf.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/progress.debug	comp-util-debug		debug
@@ -3215,7 +3215,7 @@
 ./usr/libdata/debug/usr/bin/rcsmerge.debug	comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rdist.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/readelf.debug	comp-util-debug		binutils,debug
-./usr/libdata/debug/usr/bin/refer.debug		comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/refer.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/renice.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rev.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/revoke.debug	comp-util-debug		debug
@@ -3263,12 +3263,12 @@
 ./usr/libdata/debug/usr/bin/tabs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tail.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/talk.debug		comp-netutil-debug	debug
-./usr/libdata/debug/usr/bin/tbl.debug		comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/tbl.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/tcopy.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tee.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/telnet.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/texindex.debug	comp-texinfo-debug	debug
-./usr/libdata/debug/usr/bin/tfmtodit.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/tfmtodit.debug	comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/tftp.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/tic.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/time.debug		comp-util-debug		debug
@@ -3278,7 +3278,7 @@
 ./usr/libdata/debug/usr/bin/touch.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tput.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tr.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/troff.debug		comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/troff.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/tset.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tsort.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tty.debug		comp-util-debug		debug
