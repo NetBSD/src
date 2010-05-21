@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.114 2010/01/12 18:42:39 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.115 2010/05/21 10:50:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -89,6 +89,8 @@ struct puffs_node {
 	LIST_ENTRY(puffs_node)	pn_entries;
 
 	LIST_HEAD(,puffs_kcache)pn_cacheinfo;	/* PUFFS_KFLAG_CACHE	*/
+
+	void			*pn_spare[4];
 };
 #define PUFFS_NODE_REMOVED	0x01		/* not on entry list	*/
 
@@ -159,7 +161,8 @@ struct puffs_ops {
 	    struct puffs_newinfo *);
 	int (*puffs_fs_nodetofh)(struct puffs_usermount *, puffs_cookie_t,
 	    void *, size_t *);
-	void (*puffs_fs_suspend)(struct puffs_usermount *, int);
+	int (*puffs_fs_extattrctl)(struct puffs_usermount *, int,
+	    puffs_cookie_t, int, int, const char *);
 
 	int (*puffs_node_lookup)(struct puffs_usermount *,
 	    puffs_cookie_t, struct puffs_newinfo *, const struct puffs_cn *);
@@ -220,11 +223,17 @@ struct puffs_ops {
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
 	int (*puffs_node_abortop)(struct puffs_usermount *, puffs_cookie_t,
 	    const struct puffs_cn *);
+	int (*puffs_node_getextattr)(struct puffs_usermount *, puffs_cookie_t,
+	    int, const char *, size_t *, uint8_t *, size_t *,
+	    const struct puffs_cred *);
+	int (*puffs_node_setextattr)(struct puffs_usermount *, puffs_cookie_t,
+	    int, const char *, uint8_t *, size_t *, const struct puffs_cred *);
+	int (*puffs_node_listextattr)(struct puffs_usermount *, puffs_cookie_t,
+	    int, size_t *, uint8_t *, size_t *, const struct puffs_cred *);
+	int (*puffs_node_deleteextattr)(struct puffs_usermount *,
+	    puffs_cookie_t, int, const char *, const struct puffs_cred *);
 
-#if 0
-	/* enable next time this structure is changed */
 	void *puffs_ops_spare[32];
-#endif
 };
 
 typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
@@ -289,7 +298,8 @@ enum {
 	    size_t, struct puffs_newinfo *);				\
 	int fsname##_fs_nodetofh(struct puffs_usermount *,		\
 	    puffs_cookie_t, void *, size_t *);				\
-	void fsname##_fs_suspend(struct puffs_usermount *, int);	\
+	int fsname##_fs_extattrctl(struct puffs_usermount *, int,	\
+	    puffs_cookie_t, int, int, const char *);			\
 									\
 	int fsname##_node_lookup(struct puffs_usermount *,		\
 	    puffs_cookie_t, struct puffs_newinfo *,			\
@@ -358,7 +368,19 @@ enum {
 	    puffs_cookie_t, uint8_t *, off_t, size_t *,			\
 	    const struct puffs_cred *, int);				\
 	int fsname##_node_abortop(struct puffs_usermount *,		\
-	    puffs_cookie_t, const struct puffs_cn *);
+	    puffs_cookie_t, const struct puffs_cn *);			\
+	int fsname##_node_getextattr(struct puffs_usermount *,		\
+	    puffs_cookie_t, int, const char *, size_t *, uint8_t *,	\
+	    size_t *, const struct puffs_cred *);			\
+	int fsname##_node_setextattr(struct puffs_usermount *,		\
+	    puffs_cookie_t, int, const char *, uint8_t *, size_t *,	\
+	    const struct puffs_cred *);					\
+	int fsname##_node_listextattr(struct puffs_usermount *,		\
+	    puffs_cookie_t, int, size_t *, uint8_t *, size_t *,		\
+	    const struct puffs_cred *);					\
+	int fsname##_node_deleteextattr(struct puffs_usermount *,	\
+	    puffs_cookie_t, int, const char *,				\
+	    const struct puffs_cred *);
 
 #define PUFFSOP_INIT(ops)						\
     ops = malloc(sizeof(struct puffs_ops));				\
@@ -369,11 +391,6 @@ enum {
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
 PUFFSOP_PROTOS(puffs_null)	/* XXX */
-
-#define PUFFS_DEVEL_LIBVERSION 34
-#define puffs_init(a,b,c,d,e) \
-    _puffs_init(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e)
-
 
 #define PNPATH(pnode)	((pnode)->pn_po.po_path)
 #define PNPLEN(pnode)	((pnode)->pn_po.po_len)
@@ -419,7 +436,7 @@ typedef void (*puffs_framev_cb)(struct puffs_usermount *,
 __BEGIN_DECLS
 
 #define PUFFS_DEFER ((void *)-1)
-struct puffs_usermount *_puffs_init(int, struct puffs_ops *, const char *,
+struct puffs_usermount *puffs_init(struct puffs_ops *, const char *,
 				    const char *, void *, uint32_t);
 int		puffs_mount(struct puffs_usermount *, const char *, int, void*);
 int		puffs_exit(struct puffs_usermount *, int);
