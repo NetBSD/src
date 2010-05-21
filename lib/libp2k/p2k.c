@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.37 2010/05/20 00:13:02 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.38 2010/05/21 10:52:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -283,6 +283,7 @@ p2k_init(uint32_t puffs_flags)
 	PUFFSOP_SET(pops, p2k, fs, sync);
 	PUFFSOP_SET(pops, p2k, fs, fhtonode);
 	PUFFSOP_SET(pops, p2k, fs, nodetofh);
+	PUFFSOP_SET(pops, p2k, fs, extattrctl);
 
 	PUFFSOP_SET(pops, p2k, node, lookup);
 	PUFFSOP_SET(pops, p2k, node, create);
@@ -312,6 +313,11 @@ p2k_init(uint32_t puffs_flags)
 	PUFFSOP_SET(pops, p2k, node, inactive);
 	PUFFSOP_SET(pops, p2k, node, reclaim);
 	PUFFSOP_SET(pops, p2k, node, abortop);
+
+	PUFFSOP_SET(pops, p2k, node, getextattr);
+	PUFFSOP_SET(pops, p2k, node, setextattr);
+	PUFFSOP_SET(pops, p2k, node, listextattr);
+	PUFFSOP_SET(pops, p2k, node, deleteextattr);
 
 	dodaemon = true;
 	hasdebug = false;
@@ -640,6 +646,26 @@ p2k_fs_nodetofh(struct puffs_usermount *pu, puffs_cookie_t cookie, void *fid,
 	struct vnode *vp = cookie;
 
 	return rump_pub_vfs_vptofh(vp, fid, fidsize);
+}
+
+int
+p2k_fs_extattrctl(struct puffs_usermount *pu, int cmd,
+	puffs_cookie_t cookie, int flags,
+	int attrnamespace, const char *attrname)
+{
+	struct p2k_mount *p2m = puffs_getspecific(pu);
+	struct mount *mp = p2m->p2m_mp;
+	struct vnode *vp;
+
+	if (flags & PUFFS_EXTATTRCTL_HASNODE) {
+		vp = OPC2VP(cookie);
+		RUMP_VOP_LOCK(vp, LK_EXCLUSIVE | LK_RETRY);
+	} else {
+		vp = NULL;
+	}
+
+	/* vfsop unlocks (but doesn't release) vnode, so we're done here */
+	return rump_pub_vfs_extattrctl(mp, cmd, vp, attrnamespace, attrname);
 }
 
 /*ARGSUSED*/
@@ -1271,6 +1297,109 @@ p2k_node_write(struct puffs_usermount *pu, puffs_cookie_t opc,
 	rv = RUMP_VOP_WRITE(vp, uio, ioflag, cred);
 	RUMP_VOP_UNLOCK(vp, 0);
 	*resid = rump_pub_uio_free(uio);
+	cred_destroy(cred);
+
+	return rv;
+}
+
+/*ARGSUSED*/
+int
+p2k_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int attrnamespace, const char *attrname, size_t *attrsize,
+	uint8_t *attr, size_t *resid, const struct puffs_cred *pcr)
+{
+	struct vnode *vp = OPC2VP(opc);
+	struct kauth_cred *cred;
+	struct uio *uio;
+	int rv;
+
+	if (attr)
+		uio = rump_pub_uio_setup(attr, *resid, 0, RUMPUIO_READ);
+	else
+		uio = NULL;
+
+	cred = cred_create(pcr);
+	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
+	rv = RUMP_VOP_GETEXTATTR(vp, attrnamespace, attrname, uio,
+	    attrsize, cred);
+	RUMP_VOP_UNLOCK(vp, 0);
+	cred_destroy(cred);
+
+	if (uio)
+		*resid = rump_pub_uio_free(uio);
+
+	return rv;
+}
+
+/*ARGSUSED*/
+int
+p2k_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int attrnamespace, const char *attrname,
+	uint8_t *attr, size_t *resid, const struct puffs_cred *pcr)
+{
+	struct vnode *vp = OPC2VP(opc);
+	struct kauth_cred *cred;
+	struct uio *uio;
+	int rv;
+
+	if (attr)
+		uio = rump_pub_uio_setup(attr, *resid, 0, RUMPUIO_READ);
+	else
+		uio = NULL;
+
+	cred = cred_create(pcr);
+	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
+	rv = RUMP_VOP_SETEXTATTR(vp, attrnamespace, attrname, uio, cred);
+	RUMP_VOP_UNLOCK(vp, 0);
+	cred_destroy(cred);
+
+	if (uio)
+		*resid = rump_pub_uio_free(uio);
+
+	return rv;
+}
+
+/*ARGSUSED*/
+int
+p2k_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int attrnamespace, size_t *attrsize,
+	uint8_t *attrs, size_t *resid, const struct puffs_cred *pcr)
+{
+	struct vnode *vp = OPC2VP(opc);
+	struct kauth_cred *cred;
+	struct uio *uio;
+	int rv;
+
+	if (attrs)
+		uio = rump_pub_uio_setup(attrs, *resid, 0, RUMPUIO_READ);
+	else
+		uio = NULL;
+
+	cred = cred_create(pcr);
+	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
+	rv = RUMP_VOP_LISTEXTATTR(vp, attrnamespace, uio, attrsize, cred);
+	RUMP_VOP_UNLOCK(vp, 0);
+	cred_destroy(cred);
+
+	if (uio)
+		*resid = rump_pub_uio_free(uio);
+
+	return rv;
+}
+
+/*ARGSUSED*/
+int
+p2k_node_deleteextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int attrnamespace, const char *attrname, const struct puffs_cred *pcr)
+{
+	struct vnode *vp = OPC2VP(opc);
+	struct kauth_cred *cred;
+	int rv;
+
+	cred = cred_create(pcr);
+	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
+	rv = RUMP_VOP_DELETEEXTATTR(vp, attrnamespace, attrname, cred);
+	RUMP_VOP_UNLOCK(vp, 0);
 	cred_destroy(cred);
 
 	return rv;
