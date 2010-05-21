@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.42 2010/03/05 17:56:46 phx Exp $ */
+/* $NetBSD: machdep.c,v 1.43 2010/05/21 12:52:14 phx Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,10 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2010/03/05 17:56:46 phx Exp $");
-
-#include "opt_ddb.h"
-#include "opt_ipkdb.h"
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2010/05/21 12:52:14 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -46,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2010/03/05 17:56:46 phx Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/cons.h>
+
 #include <machine/autoconf.h>
 #include <machine/powerpc.h>
 #include <machine/stdarg.h>
@@ -53,14 +52,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2010/03/05 17:56:46 phx Exp $");
 #include <powerpc/oea/bat.h>
 #include <powerpc/pic/picvar.h>
 
-#include <dev/cons.h>
-
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/amiga/memlist.h>
 #include <amigappc/amigappc/p5reg.h>
+
+#include "opt_ddb.h"
+#include "opt_ipkdb.h"
 
 #include "fd.h"
 #include "ser.h"
@@ -74,6 +74,10 @@ extern void serintr(void);
 extern void fdintr(int);
 #endif
 
+#define AMIGAMEMREGIONS 8
+static struct mem_region physmemr[AMIGAMEMREGIONS], availmemr[AMIGAMEMREGIONS];
+static char model[80];
+
 /*
  * patched by some devices at attach time (currently, only the coms)
  */
@@ -84,10 +88,6 @@ int amiga_serialspl = 4;
  * DMA transfer lengths.
  */
 int ser_open_speed;
-
-#define AMIGAMEMREGIONS 8
-static struct mem_region physmemr[AMIGAMEMREGIONS], availmemr[AMIGAMEMREGIONS];
-char cpu_model[80];
 
 /* interrupt handler chains for level2 and level6 interrupt */
 struct isr *isr_ports;
@@ -258,16 +258,21 @@ amigappc_install_handlers(void)
 static void
 amigappc_identify(void)
 {
-	extern u_long ticks_per_sec, ns_per_tick;
-	static const char pll603[] = {10, 10, 10, 10, 20, 20, 25, 0,
-			30, 0, 40, 0, 15,0, 35, 0};
-	static const char pll604[] = {10, 10, 70, 10, 20, 65, 25, 45,
-			30, 55, 40, 50, 15, 60, 35, 0};
-	const char *mach, *pup, *cpuname;
-	const char *p5type_p = (const char *)0xf00010;
+	extern u_long ns_per_tick, ticks_per_sec;
+	static const char pll603[] = {
+		10, 10, 10, 10, 20, 20, 25, 00,
+		30, 00, 40, 00, 15, 00, 35, 00
+	};
+	static const char pll604[] = {
+		10, 10, 70, 10, 20, 65, 25, 45,
+		30, 55, 40, 50, 15, 60, 35, 00
+	};
+	const char *cpuname, *mach, *p5type_p, *pup;
+	int busclock, cpu, cpuclock;
 	register int pvr, hid1;
-	int cpu = 604;
-	int cpuclock, busclock;
+
+	/* PowerUp ROM id location */
+	p5type_p = (const char *)0xf00010;
 
 	/*
 	 * PVR holds the CPU-type and version while
@@ -276,15 +281,12 @@ amigappc_identify(void)
 	__asm ("mfpvr %0; mfspr %1,1009" : "=r"(pvr), "=r"(hid1));
 
 	/* Amiga types which can run a PPC board */
-	if (is_a4000()) {
+	if (is_a4000())
 		mach = "Amiga 4000";
-	}
-	else if (is_a3000()) {
+	else if (is_a3000())
 		mach = "Amiga 3000";
-	}
-	else {
+	else
 		mach = "Amiga 1200";
-	}
 
 	/* find CPU type - BlizzardPPC has 603e, CyberstormPPC has 604e */
 	switch (pvr >> 16) {
@@ -311,6 +313,7 @@ amigappc_identify(void)
 		break;
 	default:
 		cpuname = "unknown";
+		cpu = 604;
 		break;
 	}
 
@@ -343,21 +346,17 @@ amigappc_identify(void)
 		break;
 	}
 
-	/*
-	 * compute cpuclock based on PLL configuration
-	 */
+	/* compute cpuclock based on PLL configuration */
 	if (cpu == 603)
 		cpuclock = busclock * pll603[hid1>>28 & 0xf] / 10;
 	else /* 604 */
 		cpuclock = busclock * pll604[hid1>>28 & 0xf] / 10;
 
-	snprintf(cpu_model, sizeof(cpu_model),
+	snprintf(model, sizeof(model),
 	    "%s %s (%s v%d.%d %d MHz, busclk %d MHz)", mach, pup, cpuname,
 	    pvr>>8 & 0xff, pvr & 0xff, cpuclock/1000000, busclock/1000000);
 
-	/*
-	 * set timebase
-	 */
+	/* set timebase */
 	ticks_per_sec = busclock / 4;
 	ns_per_tick = 1000000000 / ticks_per_sec;
 }
@@ -366,17 +365,14 @@ static void
 amigappc_reboot(void)
 {
 
-	/*
-	 * reboot CSPPC/BPPC
-	 */
+	/* reboot CSPPC/BPPC */
 	if (!is_a1200()) {
 		P5write(P5_REG_LOCK,0x60);
 		P5write(P5_REG_LOCK,0x50);
 		P5write(P5_REG_LOCK,0x30);
 		P5write(P5_REG_SHADOW,P5_SET_CLEAR|P5_SHADOW);
 		P5write(P5_REG_LOCK,0x00);
-	}
-	else
+	} else
 		P5write(P5_BPPC_MAGIC,0x00);
 
 	P5write(P5_REG_LOCK,0x60);
@@ -389,8 +385,8 @@ amigappc_reboot(void)
 static void
 amigappc_bat_add(paddr_t pa, register_t len, register_t prot)
 {
-	static int ni = 0, nd = 0;
-	const u_int i = pa >> 28;
+	static int nd = 0, ni = 0;
+	const uint32_t i = pa >> 28;
 
 	battable[i].batl = BATL(pa, prot, BAT_PP_RW);
 	battable[i].batu = BATU(pa, len, BAT_Vs);
@@ -398,7 +394,7 @@ amigappc_bat_add(paddr_t pa, register_t len, register_t prot)
 	/*
 	 * Let's start loading the BAT registers.
 	 */
-	if (!(prot & (BAT_I|BAT_G))) {
+	if (!(prot & (BAT_I | BAT_G))) {
 		switch (ni) {
 		case 0:
 			__asm volatile ("isync");
@@ -478,7 +474,9 @@ static void
 amigappc_batinit(paddr_t pa, ...)
 {
 	va_list ap;
-	register_t msr = mfmsr();
+	register_t msr;
+
+	msr = mfmsr();
 
 	/*
 	 * Set BAT registers to unmapped to avoid overlapping mappings below.
@@ -501,9 +499,10 @@ amigappc_batinit(paddr_t pa, ...)
 	 */
 	va_start(ap, pa);
 	while (pa != ~0) {
-		register_t len = va_arg(ap, register_t);
-		register_t prot = va_arg(ap, register_t);
+		register_t len, prot;
 
+		len = va_arg(ap, register_t);
+		prot = va_arg(ap, register_t);
 		amigappc_bat_add(pa, len, prot);
 		pa = va_arg(ap, paddr_t);
 	}
@@ -520,7 +519,7 @@ initppc(u_int startkernel, u_int endkernel)
 	 * amigappc memory region set
 	 */
 	ms = &memlist->m_seg[0];
-	for (i=0, r=0; i<memlist->m_nseg; i++, ms++) {
+	for (i = 0, r = 0; i < memlist->m_nseg; i++, ms++) {
 		if (ms->ms_attrib & MEMF_FAST) {
 			/*
 			 * XXX Only recognize the memory segment in which
@@ -630,7 +629,7 @@ cpu_startup(void)
 	/*
 	 * hello world
 	 */
-	oea_startup(cpu_model);
+	oea_startup(model);
 
 	/* Setup interrupts */
 	pic_init();
