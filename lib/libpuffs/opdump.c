@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.32 2010/05/21 08:46:14 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.33 2010/05/21 10:43:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.32 2010/05/21 08:46:14 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.33 2010/05/21 10:43:07 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -55,6 +55,7 @@ const char *vfsop_revmap[] = {
 	"PUFFS_VFS_START",
 	"PUFFS_VFS_UNMOUNT",
 	"PUFFS_VFS_ROOT",
+	"PUFFS_VFS_QUOTACTL",
 	"PUFFS_VFS_STATVFS",
 	"PUFFS_VFS_SYNC",
 	"PUFFS_VFS_VGET",
@@ -114,6 +115,7 @@ const char *vnop_revmap[] = {
 	"PUFFS_VN_OPENEXTATTR",
 	"PUFFS_VN_DELETEEXTATTR",
 	"PUFFS_VN_SETEXTATTR",
+	"PUFFS_VN_CLOSEEXTATTR",
 };
 /* XXX! */
 const char *cacheop_revmap[] = {
@@ -121,13 +123,16 @@ const char *cacheop_revmap[] = {
 };
 /* XXX! */
 const char *errnot_revmap[] = {
+	"PUFFS_ERR_ERROR",
 	"PUFFS_ERR_MAKENODE",
 	"PUFFS_ERR_LOOKUP",
 	"PUFFS_ERR_READDIR",
 	"PUFFS_ERR_READLINK",
 	"PUFFS_ERR_READ",
 	"PUFFS_ERR_WRITE",
-	"PUFFS_ERR_VPTOFH"
+	"PUFFS_ERR_VPTOFH",
+	"PUFFS_ERR_GETEXTATTR",
+	"PUFFS_ERR_LISTEXTATTR",
 };
 /* XXX! */
 const char *flush_revmap[] = {
