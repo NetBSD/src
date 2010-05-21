@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_puffs.c,v 1.2 2010/01/14 22:06:54 pooka Exp $	*/
+/*	$NetBSD: mount_puffs.c,v 1.3 2010/05/21 11:59:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_puffs.c,v 1.2 2010/01/14 22:06:54 pooka Exp $");
+__RCSID("$NetBSD: mount_puffs.c,v 1.3 2010/05/21 11:59:38 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -96,7 +96,7 @@ main(int argc, char *argv[])
 	if (mount(MOUNT_PUFFS, argv[1], mntflags, &kargs, sizeof(kargs)) == -1)
 		err(1, "mount");
 	
-	printf("version=%d, ", kargs.pa_vers & ~PUFFSDEVELVERS);
+	printf("version=%d, ", kargs.pa_vers);
 	printf("flags=0x%x, ", kargs.pa_flags);
 
 	printf("root cookie=%p, ", kargs.pa_root_cookie);
