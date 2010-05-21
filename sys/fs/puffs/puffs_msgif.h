@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.70 2010/05/20 12:09:45 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.71 2010/05/21 10:16:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -69,7 +69,8 @@ enum {
 	PUFFS_VFS_INIT,		PUFFS_VFS_DONE,		PUFFS_VFS_SNAPSHOT,
 	PUFFS_VFS_EXTATTRCTL,	PUFFS_VFS_SUSPEND
 };
-#define PUFFS_VFS_MAX PUFFS_VFS_EXTATTRCTL /* XXX: NOT TRUE!! */
+#define PUFFS_VFS_SPARE 0
+#define PUFFS_VFS_MAX (PUFFS_VFS_EXTATTRCTL+PUFFS_VFS_SPARE)
 
 /* moreXXX: we don't need everything here either */
 enum {
@@ -88,9 +89,10 @@ enum {
 	PUFFS_VN_ADVLOCK,	PUFFS_VN_LEASE,		PUFFS_VN_WHITEOUT,
 	PUFFS_VN_GETPAGES,	PUFFS_VN_PUTPAGES,	PUFFS_VN_GETEXTATTR,
 	PUFFS_VN_LISTEXTATTR,	PUFFS_VN_OPENEXTATTR,	PUFFS_VN_DELETEEXTATTR,
-	PUFFS_VN_SETEXTATTR
+	PUFFS_VN_SETEXTATTR	/* PUFFS_VN_CLOSEEXTATTR */
 };
-#define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
+#define PUFFS_VN_SPARE 0
+#define PUFFS_VN_MAX (PUFFS_VN_SETEXTATTR+PUFFS_VN_SPARE)
 
 /*
  * These signal invalid parameters the file system returned.
@@ -101,6 +103,10 @@ enum {
 	PUFFS_ERR_VPTOFH,	PUFFS_ERR_ERROR
 };
 #define PUFFS_ERR_MAX PUFFS_ERR_VPTOFH
+
+/* trick to avoid protocol bump */
+#define PUFFS_ERR_GETEXTATTR PUFFS_ERR_ERROR
+#define PUFFS_ERR_LISTEXTATTR PUFFS_ERR_ERROR
 
 #define PUFFSDEVELVERS	0x80000000
 #define PUFFSVERSION	29
@@ -247,6 +253,8 @@ struct puffs_kcred {
 #define PUFFS_MSG_MAXSIZE	2*MAXPHYS
 #define PUFFS_MSGSTRUCT_MAX	4096 /* XXX: approxkludge */
 
+#define PUFFS_EXTNAMELEN NAME_MAX /* currently same as EXTATTR_MAXNAMELEN */
+
 #define PUFFS_TOMOVE(a,b) (MIN((a), b->pmp_msg_maxsize - PUFFS_MSGSTRUCT_MAX))
 
 /* puffs struct componentname built by kernel */
@@ -326,6 +334,17 @@ struct puffs_vfsmsg_suspend {
 #define PUFFS_SUSPEND_SUSPENDED	1
 #define PUFFS_SUSPEND_RESUME	2
 #define PUFFS_SUSPEND_ERROR	3
+
+#define PUFFS_EXTATTRCTL_HASNODE	0x01
+#define PUFFS_EXTATTRCTL_HASATTRNAME	0x02
+struct puffs_vfsmsg_extattrctl {
+	struct puffs_req	pvfsr_pr;
+
+	int			pvfsr_cmd;			  /* OUT */
+	int			pvfsr_attrnamespace;		  /* OUT */
+	int			pvfsr_flags;			  /* OUT */
+	char			pvfsr_attrname[PUFFS_EXTNAMELEN]; /* OUT */
+};
 
 /*
  * aux structures for vnode operations.
@@ -571,6 +590,54 @@ struct puffs_vnmsg_abortop {
 	struct puffs_kcred	pvnr_cn_cred;		/* OUT	*/
 };
 
+struct puffs_vnmsg_getextattr {
+	struct puffs_req	pvn_pr;
+
+	int			pvnr_attrnamespace;		/* OUT	  */
+	char			pvnr_attrname[PUFFS_EXTNAMELEN];/* OUT	  */
+
+	struct puffs_kcred	pvnr_cred;			/* OUT	  */
+	size_t			pvnr_datasize;			/* IN	  */
+
+	size_t			pvnr_resid;			/* IN/OUT */
+	uint8_t			pvnr_data[0]			/* IN	  */
+				    __aligned(ALIGNBYTES+1);
+};
+
+struct puffs_vnmsg_setextattr {
+	struct puffs_req	pvn_pr;
+
+	int			pvnr_attrnamespace;		/* OUT	  */
+	char			pvnr_attrname[PUFFS_EXTNAMELEN];/* OUT	  */
+
+	struct puffs_kcred	pvnr_cred;			/* OUT	*/
+
+	size_t			pvnr_resid;			/* IN/OUT */
+	uint8_t			pvnr_data[0]			/* OUT	  */
+				    __aligned(ALIGNBYTES+1);
+};
+
+struct puffs_vnmsg_listextattr {
+	struct puffs_req	pvn_pr;
+
+	int			pvnr_attrnamespace;		/* OUT	  */
+
+	struct puffs_kcred	pvnr_cred;			/* OUT	*/
+	size_t			pvnr_datasize;			/* IN	  */
+
+	size_t			pvnr_resid;			/* IN/OUT */
+	uint8_t			pvnr_data[0]			/* IN	  */
+				    __aligned(ALIGNBYTES+1);
+};
+
+struct puffs_vnmsg_deleteextattr {
+	struct puffs_req	pvn_pr;
+
+	int			pvnr_attrnamespace;		/* OUT	  */
+	char			pvnr_attrname[PUFFS_EXTNAMELEN];/* OUT	  */
+
+	struct puffs_kcred	pvnr_cred;			/* OUT	*/
+};
 
 /*
  * For cache reports.  Everything is always out-out-out, no replies
