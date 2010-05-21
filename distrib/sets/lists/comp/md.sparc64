@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.56 2010/05/02 19:43:40 nakayama Exp $
+# $NetBSD: md.sparc64,v 1.57 2010/05/21 11:07:21 pooka Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -666,7 +666,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libobjc.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libopcodes.so.4.0.debug		comp-compat-shlib	compat,pic,binutils,debug
 ./usr/libdata/debug/usr/lib/sparc/libossaudio.so.1.0.debug		comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libp2k.so.1.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libp2k.so.2.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpam.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpcap.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpci.so.2.0.debug			comp-compat-shlib	compat,pic,debug
@@ -674,9 +674,9 @@
 ./usr/libdata/debug/usr/lib/sparc/libprop.so.1.1.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpthread.so.1.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libpthread_dbg.so.2.0.debug		comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libpuffs.so.1.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libpuffs.so.2.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libradius.so.4.0.debug		comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/librefuse.so.1.0.debug		comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/librefuse.so.2.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libresolv.so.2.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libroken.so.14.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librpcsvc.so.1.0.debug		comp-compat-shlib	compat,pic,debug
