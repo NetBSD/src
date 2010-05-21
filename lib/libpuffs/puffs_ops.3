@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.25 2009/04/11 16:48:53 wiz Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.26 2010/05/21 11:20:50 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 16, 2007
+.Dd May 21, 2010
 .Dt PUFFS_OPS 3
 .Os
 .Sh NAME
@@ -52,7 +52,10 @@
 .Fa "size_t *fidsize"
 .Fc
 .Ft void
-.Fn puffs_fs_suspend "struct puffs_usermount *pu" "int status"
+.Fo puffs_fs_extattrctl
+.Fa "struct puffs_usermount *pu" "int cmd" "puffs_cookie_t cookie" "int flags"
+.Fa "int attrnamespace" "const char *attrname"
+.Fc
 .Ft int
 .Fo puffs_fs_unmount
 .Fa "struct puffs_usermount *pu" "int flags"
@@ -174,6 +177,30 @@
 .Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
 .Fc
 .Ft int
+.Fo puffs_node_getextattr
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int attrnamespace"
+.Fa "const char *attrname" "size_t *attrsize" "uint8_t *attr" "size_t *resid"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_setextattr
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int attrnamespace"
+.Fa "const char *attrname" "uint8_t *attr" "size_t *resid"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_listextattr
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int attrnamespace"
+.Fa "size_t *attrssize" "uint8_t *attrs" "size_t *resid"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
+.Fo puffs_node_deleteextattr
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int attrnamespace"
+.Fa "const char *attrname"
+.Fa "const struct puffs_cred *pcr"
+.Fc
+.Ft int
 .Fn puffs_node_print "struct puffs_usermount *pu" "puffs_cookie_t opc"
 .Ft int
 .Fo puffs_node_reclaim
@@ -292,11 +319,6 @@ In either case, the handle length should be supplied to the kernel in
 .Fa fidsize .
 File systems with static length handles can ignore the size parameter as
 the kernel always supplies the correct size buffer.
-.It Fn puffs_fs_suspend "pu" "status"
-Called when file system suspension reaches various phases.
-See
-.Xr puffs_suspend 3
-for more information.
 .It Fn puffs_fs_unmount "pu" "flags"
 Unmount the file system.
 The kernel has assumedly flushed all cached data when this callback
