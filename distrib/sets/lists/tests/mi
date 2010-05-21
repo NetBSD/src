@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.75 2010/05/19 19:17:08 jruoho Exp $
+# $NetBSD: mi,v 1.76 2010/05/21 16:59:12 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -163,6 +163,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_pipe.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_ttypty.debug	tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_extattrctl.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_extent.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-kernel-tests	debug,atf
@@ -1065,6 +1066,7 @@
 ./usr/tests/kernel/kqueue/write/t_fifo		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write/t_pipe		tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue/write/t_ttypty	tests-kernel-tests		atf
+./usr/tests/kernel/t_extattrctl			tests-kernel-tests		atf
 ./usr/tests/kernel/t_extent			tests-kernel-tests		atf
 ./usr/tests/kernel/t_lock			tests-kernel-tests		atf
 ./usr/tests/kernel/t_lwpctl			tests-kernel-tests		atf
