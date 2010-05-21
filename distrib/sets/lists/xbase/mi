@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.88 2010/05/15 15:34:09 nonaka Exp $
+# $NetBSD: mi,v 1.89 2010/05/21 06:09:34 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1530,6 +1530,7 @@
 ./usr/X11R7/lib/X11/app-defaults/SshAskpass		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/UXTerm			-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Viewres		-unknown-	xorg
+./usr/X11R7/lib/X11/app-defaults/Viewres-color		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/XCalc			-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/XCalc-color		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/XClipboard		-unknown-	xorg
@@ -1550,6 +1551,7 @@
 ./usr/X11R7/lib/X11/app-defaults/Xedit-color		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Xfd			-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Xgc			-unknown-	xorg
+./usr/X11R7/lib/X11/app-defaults/Xgc-color		-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Xmag			-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Xman			-unknown-	xorg
 ./usr/X11R7/lib/X11/app-defaults/Xmessage		-unknown-	xorg
