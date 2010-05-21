@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.536 2010/05/01 23:27:22 pooka Exp $
+# $NetBSD: shl.mi,v 1.537 2010/05/21 11:07:20 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -112,7 +112,7 @@
 ./usr/lib/libobjc.so.3.0			base-sys-shlib		gcc=4
 ./usr/lib/libopenpgpsdk.so.0.9			base-obsolete		obsolete
 ./usr/lib/libossaudio.so.1.0			base-sys-shlib
-./usr/lib/libp2k.so.1.0				base-puffs-shlib
+./usr/lib/libp2k.so.2.0				base-puffs-shlib
 ./usr/lib/libpam.so.3.0				base-sys-shlib		pam
 ./usr/lib/libpcap.so.3.0			base-net-shlib
 ./usr/lib/libpci.so.2.0				base-sys-shlib
@@ -120,9 +120,9 @@
 ./usr/lib/libprop.so.1.1			base-sys-shlib
 ./usr/lib/libpthread.so.1.0			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.2.0			base-sys-shlib
-./usr/lib/libpuffs.so.1.1			base-puffs-shlib
+./usr/lib/libpuffs.so.2.0			base-puffs-shlib
 ./usr/lib/libradius.so.4.0			base-net-shlib
-./usr/lib/librefuse.so.1.0			base-refuse-shlib
+./usr/lib/librefuse.so.2.0			base-refuse-shlib
 ./usr/lib/libresolv.so.2.0			base-net-shlib
 ./usr/lib/libroken.so.14.0			base-krb5-shlib		kerberos
 ./usr/lib/librpcsvc.so.1.0			base-net-shlib

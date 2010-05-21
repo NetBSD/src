@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.117 2010/05/01 23:27:23 pooka Exp $
+# $NetBSD: shl.mi,v 1.118 2010/05/21 11:07:21 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -247,7 +247,7 @@
 ./usr/libdata/debug/usr/lib/libobjc.so.3.0.debug	comp-sys-debug	gcc=4,debug
 ./usr/libdata/debug/usr/lib/libopcodes.so.4.0.debug	comp-c-debug	binutils,debug
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.0.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libp2k.so.1.0.debug		comp-puffs-debug	debug
+./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug		comp-puffs-debug	debug
 ./usr/libdata/debug/usr/lib/libpam.so.3.0.debug		comp-sys-debug	pam,debug
 ./usr/libdata/debug/usr/lib/libpcap.so.3.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libpci.so.2.0.debug		comp-sys-debug	debug
@@ -255,9 +255,9 @@
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpthread.so.1.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libpthread_dbg.so.2.0.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libpuffs.so.1.1.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/lib/libradius.so.4.0.debug	comp-net-debug	debug
-./usr/libdata/debug/usr/lib/librefuse.so.1.0.debug	comp-refuse-debug	debug
+./usr/libdata/debug/usr/lib/librefuse.so.2.0.debug	comp-refuse-debug	debug
 ./usr/libdata/debug/usr/lib/libresolv.so.2.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/libroken.so.14.0.debug	comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug	comp-net-debug	debug
