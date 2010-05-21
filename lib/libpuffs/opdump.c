@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.31 2010/05/20 13:07:28 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.32 2010/05/21 08:46:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.31 2010/05/20 13:07:28 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.32 2010/05/21 08:46:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -141,39 +141,54 @@ const char *flush_revmap[] = {
 void
 puffsdump_req(struct puffs_req *preq)
 {
+	char buf[128];
 	static struct timeval tv_prev;
 	struct timeval tv_now, tv;
 	const char **map;
-	int isvn = 0;
+	const char *optype;
+	size_t maxhandle;
+	int opclass, isvn = 0;
 
 	printf("reqid: %" PRIu64 ", ", preq->preq_id);
-	switch (PUFFSOP_OPCLASS(preq->preq_opclass)) {
+	opclass = PUFFSOP_OPCLASS(preq->preq_opclass);
+	switch (opclass) {
 	case PUFFSOP_VFS:
 		map = vfsop_revmap;
+		maxhandle = __arraycount(vfsop_revmap);
 		break;
 	case PUFFSOP_VN:
 		map = vnop_revmap;
+		maxhandle = __arraycount(vnop_revmap);
 		isvn = 1;
 		break;
 	case PUFFSOP_CACHE:
 		map = cacheop_revmap;
+		maxhandle = __arraycount(cacheop_revmap);
 		break;
 	case PUFFSOP_ERROR:
 		map = errnot_revmap;
+		maxhandle = __arraycount(errnot_revmap);
 		break;
 	case PUFFSOP_FLUSH:
 		map = flush_revmap;
+		maxhandle = __arraycount(flush_revmap);
 		break;
 	default:
-		printf("unhandled opclass\n");
+		printf("unhandled opclass %d\n", opclass);
 		return;
+	}
+
+	if (preq->preq_optype < maxhandle) {
+		optype = map[preq->preq_optype];
+	} else {
+		snprintf(buf, sizeof(buf), "UNKNOWN (%d)", preq->preq_optype);
+		optype = buf;
 	}
 
 	printf("opclass %d%s, optype: %s, "
 	    "cookie: %p,\n" DINT "aux: %p, auxlen: %zu, pid: %d, lwpid: %d\n",
-	    PUFFSOP_OPCLASS(preq->preq_opclass),
-	    PUFFSOP_WANTREPLY(preq->preq_opclass) ? "" : " (FAF)",
-	    map[preq->preq_optype], preq->preq_cookie,
+	    opclass, PUFFSOP_WANTREPLY(preq->preq_opclass) ? "" : " (FAF)",
+	    optype, preq->preq_cookie,
 	    preq->preq_buf, preq->preq_buflen,
 	    preq->preq_pid, preq->preq_lid);
 
