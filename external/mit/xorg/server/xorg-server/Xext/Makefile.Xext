@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xext,v 1.7 2009/08/22 02:40:26 mrg Exp $
+#	$NetBSD: Makefile.Xext,v 1.8 2010/05/22 02:42:37 mrg Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/Xext
 
@@ -22,6 +22,7 @@ COPTS.xres.c=			-Wno-error
 COPTS.xvdisp.c+=		-Wno-error
 COPTS.xvmain.c+=		-Wno-error
 COPTS.xvmc.c+=			-Wno-error
+COPTS.bigreq.c+=		-Wno-error	# XXX bigreqstr.h
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
