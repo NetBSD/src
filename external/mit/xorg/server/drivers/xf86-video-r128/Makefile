@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/04/21 02:45:25 rafal Exp $
+#	$NetBSD: Makefile,v 1.3 2010/05/22 23:04:01 mrg Exp $
 
 DRIVER=		xf86-video-r128
 DRIVER_NAME=	r128_drv
@@ -12,5 +12,7 @@ MAN=	r128.4
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
 CPPFLAGS+=	-DWITH_VGAHW
 .endif
+
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 
 .include "../Makefile.xf86-driver"
