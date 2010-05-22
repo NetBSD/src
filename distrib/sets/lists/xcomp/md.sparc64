@@ -1,4 +1,4 @@
-#	$NetBSD: md.sparc64,v 1.9 2010/04/30 05:20:34 lukem Exp $
+#	$NetBSD: md.sparc64,v 1.10 2010/05/22 21:12:29 mrg Exp $
 ./usr/X11R6/include/X11/extensions/dpms.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/dpmsstr.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86misc.h		-unknown-	x11
@@ -36,7 +36,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libsuncg6_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libsunffb_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libsunleo_drv.so.1.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libvoid_drv.so.1.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libvoid_drv.so.1.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libws_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libwsfb_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-		xorg,debug
