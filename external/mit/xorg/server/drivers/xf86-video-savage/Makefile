@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2009/10/08 19:06:51 snj Exp $
+#	$NetBSD: Makefile,v 1.8 2010/05/22 23:04:02 mrg Exp $
 
 DRIVER=		xf86-video-savage
 DRIVER_NAME=	savage_drv
@@ -21,7 +21,7 @@ MAN=	savage.4
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/drm
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 
 CPPFLAGS.savage_driver.c=	-DPACKAGE_VERSION=\"${PACKAGE_MAJOR}\"
 CPPFLAGS.savage_exa.c=		-Wno-error	# volatile -> mempcy
