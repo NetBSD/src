@@ -1,4 +1,4 @@
-/*	$NetBSD: ldef.h,v 1.5 2010/05/22 06:38:15 tnozaki Exp $	*/
+/*	$NetBSD: ldef.h,v 1.6 2010/05/22 07:18:44 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,6 +33,8 @@
  *
  *	@(#)ldef.h	8.1 (Berkeley) 6/6/93
  */
+
+#include "ctype_local.h"
 
 /*
  * This should look a LOT like a _RuneEntry
