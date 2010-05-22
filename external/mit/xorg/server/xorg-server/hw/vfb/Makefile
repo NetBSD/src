@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/06/12 01:59:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2010/05/22 05:45:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -105,6 +105,8 @@ DPADD+=	${LIBX86_64}
 LDADD+=	-lalpha
 DPADD+=	${LIBALPHA}
 .endif
+
+COPTS.miinitext.c+=	-Wno-error	# XXX xf86bigfstr.h
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
