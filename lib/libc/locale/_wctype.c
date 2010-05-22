@@ -1,4 +1,4 @@
-/* $NetBSD: _wctype.c,v 1.5 2009/01/18 22:03:19 tnozaki Exp $ */
+/* $NetBSD: _wctype.c,v 1.6 2010/05/22 07:18:43 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctype.c,v 1.5 2009/01/18 22:03:19 tnozaki Exp $");
+__RCSID("$NetBSD: _wctype.c,v 1.6 2010/05/22 07:18:43 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: _wctype.c,v 1.5 2009/01/18 22:03:19 tnozaki Exp $");
 #include <errno.h>
 #include <string.h>
 
-#include "rune.h"
+#include "rune_local.h"
 #include "_wctrans_local.h"
 #include "_wctype_local.h"
 

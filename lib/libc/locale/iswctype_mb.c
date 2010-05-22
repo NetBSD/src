@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_mb.c,v 1.6 2010/03/27 22:14:09 tnozaki Exp $ */
+/* $NetBSD: iswctype_mb.c,v 1.7 2010/05/22 07:18:43 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_mb.c,v 1.6 2010/03/27 22:14:09 tnozaki Exp $");
+__RCSID("$NetBSD: iswctype_mb.c,v 1.7 2010/05/22 07:18:43 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: iswctype_mb.c,v 1.6 2010/03/27 22:14:09 tnozaki Exp $");
 
 #include "setlocale_local.h"
 
-#include "rune.h"
+#include "rune_local.h"
 #include "_wctype_local.h"
 #include "_wctrans_local.h"
 

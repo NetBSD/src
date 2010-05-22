@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale1.c,v 1.2 2003/03/11 17:23:07 tshiozak Exp $	*/
+/*	$NetBSD: setlocale1.c,v 1.3 2010/05/22 07:18:43 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -28,13 +28,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale1.c,v 1.2 2003/03/11 17:23:07 tshiozak Exp $");
+__RCSID("$NetBSD: setlocale1.c,v 1.3 2010/05/22 07:18:43 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #define __SETLOCALE_SOURCE__
 #include <locale.h>
-#include "rune.h"
+#include "rune_local.h"
 
 __warn_references(setlocale,
     "warning: reference to compatibility setlocale(); include <locale.h> for correct reference")
