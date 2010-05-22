@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.5 2010/05/22 13:15:59 tnozaki Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.6 2010/05/22 13:50:02 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -76,5 +76,8 @@ _current_cache(void)
 {
 	return (*_current_locale())->cache;
 }
+
+extern size_t __mb_len_max_runtime;
+#define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
 
 #endif /*_SETLOCALE_LOCAL_H_*/
