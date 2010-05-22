@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2008/11/06 22:28:26 veego Exp $
+#	$NetBSD: Makefile,v 1.5 2010/05/22 02:41:49 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xxf86misc
-.PATH:	${X11SRCDIR.${LIB}}/src ${X11SRCDIR.${LIB}}/man
+.PATH:	${X11SRCDIR.${LIB}}/src
+.PATH:	${X11SRCDIR.${LIB}}/man
 
 SRCS=	XF86Misc.c
 
