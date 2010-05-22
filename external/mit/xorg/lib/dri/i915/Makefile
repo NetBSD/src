@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2010/04/07 19:56:01 yhardy Exp $
+# $NetBSD: Makefile,v 1.8 2010/05/22 22:44:16 mrg Exp $
 
 MODULE=	i915
 
@@ -59,5 +59,8 @@ SRCS=	\
 CPPFLAGS+=	 -DI915 -DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP
 
 LIBDPLIBS+=	drm_intel	${.CURDIR}/../../libdrm_intel
+
+COPTS.intel_context.c+=	-Wno-error	# XXX
+COPTS.intel_swapbuffers.c+=	-Wno-error	# XXX
 
 .include "${.CURDIR}/../dri.mk"
