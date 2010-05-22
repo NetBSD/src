@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/06/18 03:32:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2010/05/22 05:45:01 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -30,6 +30,8 @@ SUBDIR = \
 	shadow \
 	wfb \
 	xorgxkb
+
+COPTS.miinitext.c=	-Wno-error	# XXX xf86bigfstr.h
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
