@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2008/11/06 22:28:25 veego Exp $
+#	$NetBSD: Makefile,v 1.5 2010/05/22 09:22:15 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xss
-.PATH:	${X11SRCDIR.XScrnSaver}/src ${X11SRCDIR.XScrnSaver}/man
+.PATH:	${X11SRCDIR.XScrnSaver}/src
+.PATH:	${X11SRCDIR.XScrnSaver}/man
+.PATH:	${X11SRCDIR.XScrnSaver}/include/X11/extensions
 
 SRCS=	XScrnSaver.c
 
@@ -27,6 +29,9 @@ MLINKS=	Xss.3 XScreenSaverAllocInfo.3 \
 	Xss.3 XScreenSaverUnsetAttributes.3
 
 PKGDIST=	XScrnSaver
+
+INCS=	scrnsaver.h
+INCSDIR=${X11INCDIR}/X11/extensions
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
