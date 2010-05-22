@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.28 2010/05/22 21:12:29 mrg Exp $
+# $NetBSD: md.i386,v 1.29 2010/05/22 23:19:45 mrg Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -70,7 +70,7 @@
 ./usr/X11R6/man/man3/XF86VidModeSwitchToMode.3		-unknown-	.man,x11
 ./usr/X11R6/man/man3/XF86VidModeValidateModeLine.3	-unknown-	.man,x11
 ./usr/X11R6/man/man4/fpit.4				-unknown-	.man,x11
-./usr/X11R7/include/intel_bufmgr.h			-unknown-	xorg
+./usr/X11R7/include/intel_bufmgr.h			-unknown-	obsolete
 ./usr/X11R7/lib/libdrm_intel.a				-unknown-	xorg
 ./usr/X11R7/lib/libdrm_intel_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libdrm_intel_p.a			-unknown-	profile,xorg
