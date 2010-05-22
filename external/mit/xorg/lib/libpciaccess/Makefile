@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2009/11/09 07:24:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/05/22 10:31:20 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ LIB=	pciaccess
 .PATH:	${X11SRCDIR.${LIB}}/include
 
 SRCS=	common_bridge.c \
+	common_io.c \
 	common_iterator.c \
 	common_init.c \
 	common_interface.c \
