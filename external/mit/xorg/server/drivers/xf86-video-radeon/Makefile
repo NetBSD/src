@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/05/22 10:18:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2010/05/22 23:04:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -35,7 +35,7 @@ CPPFLAGS+=	-DDISABLE_EASF -DENABLE_ALL_SERVICE_FUNCTIONS \
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/AtomBios/includes \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/dri \
-		-I${DESTDIR}${X11INCDIR}/drm \
+		-I${DESTDIR}${X11INCDIR}/libdrm \
 		-I${X11SRCDIR.${DRIVER}}/../include
 
 # XXX

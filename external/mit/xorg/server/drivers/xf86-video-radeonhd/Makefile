@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2009/11/09 01:46:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2010/05/22 23:04:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,8 @@ MAN=		radeonhd.4
 
 CPPFLAGS+=	-DDRIVER_PARSER -DDISABLE_EASF -DENABLE_ALL_SERVICE_FUNCTIONS
 
-CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/AtomBios/includes
+CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/AtomBios/includes \
+		-I${DESTDIR}${X11INCDIR}/libdrm
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
 
 # XXX
