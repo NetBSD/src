@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.104 2010/05/22 11:20:18 mrg Exp $
+#	 $NetBSD: mi,v 1.105 2010/05/22 23:03:13 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5491,21 +5491,41 @@
 ./usr/X11R7/include/X11/drm/via_3d_reg.h		-unknown-	obsolete
 ./usr/X11R7/include/X11/drm/via_drm.h			-unknown-	obsolete
 ./usr/X11R7/include/X11/drm/xgi_drm.h			-unknown-	obsolete
-./usr/X11R7/include/drm/drm.h				-unknown-	xorg
-./usr/X11R7/include/drm/drm_mode.h			-unknown-	xorg
-./usr/X11R7/include/drm/drm_sarea.h			-unknown-	xorg
-./usr/X11R7/include/drm/i915_drm.h			-unknown-	xorg
-./usr/X11R7/include/drm/mach64_drm.h			-unknown-	xorg
-./usr/X11R7/include/drm/mga_drm.h			-unknown-	xorg
-./usr/X11R7/include/drm/nouveau_drm.h			-unknown-	xorg
-./usr/X11R7/include/drm/r128_drm.h			-unknown-	xorg
-./usr/X11R7/include/drm/r300_reg.h			-unknown-	xorg
-./usr/X11R7/include/drm/radeon_drm.h			-unknown-	xorg
-./usr/X11R7/include/drm/savage_drm.h			-unknown-	xorg
-./usr/X11R7/include/drm/sis_drm.h			-unknown-	xorg
-./usr/X11R7/include/drm/via_3d_reg.h			-unknown-	xorg
-./usr/X11R7/include/drm/via_drm.h			-unknown-	xorg
-./usr/X11R7/include/drm/xgi_drm.h			-unknown-	xorg
+./usr/X11R7/include/drm/drm.h				-unknown-	obsolete
+./usr/X11R7/include/drm/drm_mode.h			-unknown-	obsolete
+./usr/X11R7/include/drm/drm_sarea.h			-unknown-	obsolete
+./usr/X11R7/include/drm/i915_drm.h			-unknown-	obsolete
+./usr/X11R7/include/drm/mach64_drm.h			-unknown-	obsolete
+./usr/X11R7/include/drm/mga_drm.h			-unknown-	obsolete
+./usr/X11R7/include/drm/nouveau_drm.h			-unknown-	obsolete
+./usr/X11R7/include/drm/r128_drm.h			-unknown-	obsolete
+./usr/X11R7/include/drm/r300_reg.h			-unknown-	obsolete
+./usr/X11R7/include/drm/radeon_drm.h			-unknown-	obsolete
+./usr/X11R7/include/drm/savage_drm.h			-unknown-	obsolete
+./usr/X11R7/include/drm/sis_drm.h			-unknown-	obsolete
+./usr/X11R7/include/drm/via_3d_reg.h			-unknown-	obsolete
+./usr/X11R7/include/drm/via_drm.h			-unknown-	obsolete
+./usr/X11R7/include/drm/xgi_drm.h			-unknown-	obsolete
+./usr/X11R7/include/libdrm/drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/drm_mode.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/drm_sarea.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/i915_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/intel_bufmgr.h		-unknown-	xorg
+./usr/X11R7/include/libdrm/mach64_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/mga_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/nouveau_drm.h		-unknown-	xorg
+./usr/X11R7/include/libdrm/r128_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/radeon_bo.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/radeon_bo_gem.h		-unknown-	xorg
+./usr/X11R7/include/libdrm/radeon_bo_int.h		-unknown-	xorg
+./usr/X11R7/include/libdrm/radeon_cs.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/radeon_cs_gem.h		-unknown-	xorg
+./usr/X11R7/include/libdrm/radeon_cs_int.h		-unknown-	xorg
+./usr/X11R7/include/libdrm/radeon_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/savage_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/sis_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/via_drm.h			-unknown-	xorg
+./usr/X11R7/include/libkms/libkms.h			-unknown-	xorg
 ./usr/X11R7/include/X11/dri/xf86driproto.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/EVI.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/EVIproto.h		-unknown-	xorg
