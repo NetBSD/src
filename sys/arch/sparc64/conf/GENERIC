@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.127 2010/05/12 12:25:59 nakayama Exp $
+# $NetBSD: GENERIC,v 1.128 2010/05/22 15:55:02 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.127 $"
+#ident 		"GENERIC-$Revision: 1.128 $"
 
 maxusers	64
 
@@ -851,13 +851,9 @@ audio*		at audiobus?
 midi*		at midibus?
 
 
-## Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
-## systems.  If your sun4 system has a cgfour installed in the P4 slot,
-## the P4 entries for "bwtwo" will attach to the overlay plane of the
-## "cgfour".
-
-#bwtwo0		at sbus? slot ? offset ?	# sun4c and sun4m
-#bwtwo*		at sbus? slot ? offset ?
+## Sun "bwtwo" black and white framebuffer
+bwtwo0		at sbus? slot ? offset ?
+bwtwo*		at sbus? slot ? offset ?
 
 ## Sun "cgthree" Sbus color framebuffer
 cgthree0	at sbus? slot ? offset ?
