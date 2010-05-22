@@ -1,4 +1,4 @@
-/* $NetBSD: nl_langinfo.c,v 1.14 2010/03/27 15:25:22 tnozaki Exp $ */
+/* $NetBSD: nl_langinfo.c,v 1.15 2010/05/22 13:15:59 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nl_langinfo.c,v 1.14 2010/03/27 15:25:22 tnozaki Exp $");
+__RCSID("$NetBSD: nl_langinfo.c,v 1.15 2010/05/22 13:15:59 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,13 +43,10 @@ char *
 nl_langinfo(nl_item item)
 {
 	const char *s;
-	struct _locale_impl_t *impl;
 
 	s = NULL;
-	if (item >= D_T_FMT && item <= ALT_DIGITS) {
-		impl = *_current_locale();
-		s = impl->cache.items[(size_t)item];
-	}
+	if (item >= D_T_FMT && item <= ALT_DIGITS)
+		s = _current_cache()->items[(size_t)item];
 	if (s == NULL)
 		s = "";
 	return __UNCONST(s);
