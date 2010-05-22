@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.7 2010/05/22 17:47:25 tnozaki Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.8 2010/05/22 18:15:21 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,11 +40,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 
-#ifdef HAVE_NBTOOL_CONFIG_H
-#define _CTYPE_CACHE_SIZE	(1 << 8)
-#else
 #include "ctype_local.h"
-#endif
 
 /* for cross host tools on older systems */
 #ifndef UINT32_C
