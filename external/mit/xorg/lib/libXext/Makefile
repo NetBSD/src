@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/05 01:47:55 cube Exp $
+#	$NetBSD: Makefile,v 1.5 2010/05/22 02:27:08 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xext
-.PATH:	${X11SRCDIR.${LIB}}/src ${X11SRCDIR.${LIB}}/man
+.PATH:	${X11SRCDIR.${LIB}}/src
+.PATH:	${X11SRCDIR.${LIB}}/man
+.PATH:	${X11SRCDIR.${LIB}}/include/X11/extensions/
 
 SRCS=	DPMS.c MITMisc.c XAppgroup.c XEVI.c XLbx.c XMultibuf.c XSecurity.c \
 	XShape.c XShm.c XSync.c XTestExt1.c Xcup.c Xdbe.c extutil.c globals.c
@@ -61,6 +63,28 @@ MLINKS+=	Xmbuf.3 XmbufQueryExtension.3 \
 MLINKS+=	Xevi.3 XeviQueryVersion.3 \
 		Xevi.3 XeviGetVisualInfo.3 \
 		Xevi.3 XeviQueryExtension.3
+
+INCS=	MITMisc.h \
+	XEVI.h \
+	XLbx.h \
+	XShm.h \
+	Xag.h \
+	Xcup.h \
+	Xdbe.h \
+	Xext.h \
+	Xge.h \
+	dpms.h \
+	extutil.h \
+	lbxbuf.h \
+	lbxbufstr.h \
+	lbximage.h \
+	multibuf.h \
+	security.h \
+	shape.h \
+	sync.h \
+	xtestext1.h
+
+INCSDIR=${X11INCDIR}/X11/extensions
 
 PKGDIST=	${LIB}
 
