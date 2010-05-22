@@ -1,4 +1,4 @@
-/*	$NetBSD: runeglue.c,v 1.16 2010/05/22 06:38:15 tnozaki Exp $	*/
+/*	$NetBSD: runeglue.c,v 1.17 2010/05/22 07:18:43 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: runeglue.c,v 1.16 2010/05/22 06:38:15 tnozaki Exp $");
+__RCSID("$NetBSD: runeglue.c,v 1.17 2010/05/22 07:18:43 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: runeglue.c,v 1.16 2010/05/22 06:38:15 tnozaki Exp $");
 #include "citrus_module.h"
 #include "citrus_ctype.h"
 
-#include "rune.h"
 #include "rune_local.h"
 
 #if EOF != -1
