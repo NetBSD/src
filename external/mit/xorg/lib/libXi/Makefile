@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2009/03/10 04:50:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2010/05/22 02:41:33 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xi
 .PATH:	${X11SRCDIR.${LIB}}/src
-.PATH:	${X11SRCDIR.${LIB}}/man
+.PATH:	${X11SRCDIR.${LIB}}/include/X11/extensions
 
 SRCS=	XAllowDv.c XChgDCtl.c XChgFCtl.c XChgKMap.c XChgKbd.c \
 	XChgPnt.c XChgProp.c XCloseDev.c XDevBell.c XExtInt.c \
@@ -22,33 +22,15 @@ LIBDPLIBS=\
 	Xext	${.CURDIR}/../libXext \
 	X11	${.CURDIR}/../libX11/dynamic
 
-MAN=	XAllowDeviceEvents.3 XChangeDeviceDontPropagateList.3 \
-	XChangeKeyboardDevice.3 XChangePointerDevice.3 XDeviceBell.3 \
-	XGetDeviceControl.3 XGetDeviceKeyMapping.3 \
-	XGetDeviceModifierMapping.3 XGetDeviceMotionEvents.3 \
-	XGetExtensionVersion.3 XGetFeedbackControl.3 XGrabDevice.3 \
-	XGrabDeviceButton.3 XGrabDeviceKey.3 XListInputDevices.3 \
-	XOpenDevice.3 XQueryDeviceState.3 XSelectExtensionEvent.3 \
-	XSendExtensionEvent.3 XSetDeviceButtonMapping.3 XSetDeviceFocus.3 \
-	XSetDeviceMode.3 XSetDeviceValuators.3 \
-	XGetDeviceProperty.3 XListDeviceProperties.3
+INCS=	XInput.h \
+	XInput2.h
 
-MLINKS=	XGetDeviceControl.3 XChangeDeviceControl.3 \
-	XGetFeedbackControl.3 XChangeFeedbackControl.3 \
-	XGetDeviceKeyMapping.3 XChangeDeviceKeyMapping.3 \
-	XGetDeviceModifierMapping.3 XSetDeviceModifierMapping.3 \
-	XChangeDeviceDontPropagateList.3 XGetDeviceDontPropagateList.3 \
-	XGetDeviceMotionEvents.3 XDeviceTimeCoord.3 \
-	XGrabDeviceButton.3 XUngrabDeviceButton.3 \
-	XGrabDeviceKey.3 XUngrabDeviceKey.3 \
-	XGrabDevice.3 XUngrabDevice.3 \
-	XListInputDevices.3 XFreeDeviceList.3 \
-	XOpenDevice.3 XCloseDevice.3 \
-	XSetDeviceButtonMapping.3 XGetDeviceButtonMapping.3 \
-	XSetDeviceFocus.3 XGetDeviceFocus.3 \
-	XSelectExtensionEvent.3 XGetSelectedExtensionEvents.3
+INCSDIR=${X11INCDIR}/X11/extensions
 
 PKGDIST=	${LIB}
+
+COPTS.XExtInt.c+=	-Wno-error	# XXX
+COPTS.XSndExEv.c+=	-Wno-error	# XXX
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
