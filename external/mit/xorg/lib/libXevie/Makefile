@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/11/06 22:28:25 veego Exp $
+#	$NetBSD: Makefile,v 1.5 2010/05/22 02:40:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,8 @@ LIBDPLIBS=	X11	${.CURDIR}/../libX11/dynamic \
 		Xext	${.CURDIR}/../libXext
 
 PKGDIST=	${LIB}
+
+COPTS.Xevie.c+=	-Wno-error	# XXX
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
