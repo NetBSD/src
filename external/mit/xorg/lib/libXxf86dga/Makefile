@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2008/11/06 22:28:26 veego Exp $
+#	$NetBSD: Makefile,v 1.4 2010/05/22 02:27:08 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xxf86dga
 .PATH:	${X11SRCDIR.${LIB}}/src
 .PATH:	${X11SRCDIR.${LIB}}/man
+.PATH:	${X11SRCDIR.${LIB}}/include/X11/extensions
 
 SRCS=	XF86DGA.c XF86DGA2.c
 
@@ -37,6 +38,11 @@ CPPFLAGS.XF86DGA2.c=	-Wno-error
 
 LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		X11	${.CURDIR}/../libX11/dynamic
+
+INCS=	Xxf86dga.h \
+	xf86dga1.h
+
+INCSDIR=${X11INCDIR}/X11/extensions
 
 PKGDIST=	${LIB}
 
