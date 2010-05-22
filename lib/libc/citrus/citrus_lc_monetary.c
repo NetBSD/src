@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_monetary.c,v 1.2 2009/01/11 02:46:24 christos Exp $ */
+/* $NetBSD: citrus_lc_monetary.c,v 1.3 2010/05/22 08:13:18 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_monetary.c,v 1.2 2009/01/11 02:46:24 christos Exp $");
+__RCSID("$NetBSD: citrus_lc_monetary.c,v 1.3 2010/05/22 08:13:18 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -61,7 +61,7 @@ __RCSID("$NetBSD: citrus_lc_monetary.c,v 1.2 2009/01/11 02:46:24 christos Exp $"
 #include "citrus_db.h"
 #include "citrus_db_hash.h"
 #include "citrus_memstream.h"
-#include "rune.h"
+#include "rune_local.h"
 
 #include "fix_grouping.h"
 #include "citrus_fix_grouping.h"
