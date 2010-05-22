@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2009/03/10 04:50:24 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/05/22 02:40:55 mrg Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xinput
 SRCS=	buttonmap.c feedback.c list.c property.c setint.c setmode.c \
-	setptr.c state.c test.c version.c xinput.c \
+	setptr.c state.c test.c xinput.c
 
 CPPFLAGS+=	-DVERSION='"1.4.0"'
 
