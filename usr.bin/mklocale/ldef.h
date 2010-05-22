@@ -1,4 +1,4 @@
-/*	$NetBSD: ldef.h,v 1.7 2010/05/22 17:43:29 tnozaki Exp $	*/
+/*	$NetBSD: ldef.h,v 1.8 2010/05/22 18:15:21 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,6 +46,6 @@ typedef struct rune_list {
 } rune_list;
 
 typedef struct rune_map {
-    u_int32_t		map[1<<8];
+    u_int32_t		map[_CTYPE_CACHE_SIZE];
     rune_list		*root;
 } rune_map;

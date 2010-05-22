@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_local.h,v 1.1 2010/05/22 06:38:15 tnozaki Exp $ */
+/* $NetBSD: ctype_local.h,v 1.2 2010/05/22 18:15:21 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 2010 Citrus Project,
@@ -28,7 +28,7 @@
 #ifndef _CTYPE_LOCAL_H_
 #define _CTYPE_LOCAL_H_
 
-#include <machine/limits.h>
+#include <limits.h>
 
 #define _CTYPE_NUM_CHARS	(1 << CHAR_BIT)
 #define _CTYPE_CACHE_SIZE	(1 << 8)
