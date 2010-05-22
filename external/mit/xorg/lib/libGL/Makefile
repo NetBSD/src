@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.10 2009/10/08 19:06:50 snj Exp $
+#	$NetBSD: Makefile,v 1.11 2010/05/22 08:52:34 mrg Exp $
 
 .include <bsd.own.mk>
 
 LIB=		GL
+
+SUBDIR=		internal
 
 # glx
 .PATH:		${X11SRCDIR.MesaLib}/src/glx/x11
@@ -102,3 +104,4 @@ PKGCONFIG_VERSION.gl=	7.4.2
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
+.include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.102 2010/05/22 06:21:05 mrg Exp $
+#	 $NetBSD: mi,v 1.103 2010/05/22 08:52:33 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5188,7 +5188,9 @@
 ./usr/X11R7/include/GL/glxmd.h				-unknown-	xorg
 ./usr/X11R7/include/GL/glxproto.h			-unknown-	xorg
 ./usr/X11R7/include/GL/glxtokens.h			-unknown-	xorg
+./usr/X11R7/include/GL/internal/dri_interface.h		-unknown-	xorg
 ./usr/X11R7/include/GL/internal/glcore.h		-unknown-	xorg
+./usr/X11R7/include/GL/internal/sarea.h			-unknown-	xorg
 ./usr/X11R7/include/GL/osmesa.h				-unknown-	xorg
 ./usr/X11R7/include/GL/xmesa.h				-unknown-	xorg
 ./usr/X11R7/include/GL/xmesa_x.h			-unknown-	xorg
