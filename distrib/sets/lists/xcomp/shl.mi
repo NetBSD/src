@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.19 2010/05/09 12:02:04 lukem Exp $
+#	$NetBSD: shl.mi,v 1.20 2010/05/22 10:32:18 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -200,7 +200,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/libfontenc.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libfreetype.so.7.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libglut.so.4.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/libpciaccess.so.0.1.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libpciaccess.so.0.2.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libpixman-1.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libxkbfile.so.2.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libxkbui.so.2.0.debug	-unknown-		xorg,debug
