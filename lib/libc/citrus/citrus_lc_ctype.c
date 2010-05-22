@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_ctype.c,v 1.4 2010/03/27 15:25:21 tnozaki Exp $ */
+/* $NetBSD: citrus_lc_ctype.c,v 1.5 2010/05/22 08:13:18 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.4 2010/03/27 15:25:21 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.5 2010/05/22 08:13:18 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -57,7 +57,6 @@ __RCSID("$NetBSD: citrus_lc_ctype.c,v 1.4 2010/03/27 15:25:21 tnozaki Exp $");
 #include "citrus_module.h"
 #include "citrus_ctype.h"
 
-#include "rune.h"
 #include "rune_local.h"
 #include "multibyte.h"
 
