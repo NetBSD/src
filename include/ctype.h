@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.29 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: ctype.h,v 1.30 2010/05/22 06:38:15 tnozaki Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -116,19 +116,6 @@ __END_DECLS
 #define isblank(c)	((int)((_ctype_ + 1)[(c)] & _B))
 #endif
 
-#endif
-
-#ifdef _CTYPE_PRIVATE
-#include <machine/limits.h>	/* for CHAR_BIT */
-
-#define _CTYPE_NUM_CHARS	(1 << CHAR_BIT)
-
-#define _CTYPE_ID	 	"BSDCTYPE"
-#define _CTYPE_REV		2
-
-extern const uint8_t _C_ctype_[];
-extern const int16_t _C_toupper_[];
-extern const int16_t _C_tolower_[];
 #endif
 
 #endif /* !_CTYPE_H_ */

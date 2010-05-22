@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_.c,v 1.16 2003/08/07 16:42:46 agc Exp $	*/
+/*	$NetBSD: ctype_.c,v 1.17 2010/05/22 06:38:15 tnozaki Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,15 +39,17 @@
 #if 0
 /*static char *sccsid = "from: @(#)ctype_.c	5.6 (Berkeley) 6/1/90";*/
 #else
-__RCSID("$NetBSD: ctype_.c,v 1.16 2003/08/07 16:42:46 agc Exp $");
+__RCSID("$NetBSD: ctype_.c,v 1.17 2010/05/22 06:38:15 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#define _CTYPE_PRIVATE
-
-#include <sys/types.h>
-#include <limits.h>
 #include <ctype.h>
+#include <stdio.h>
+#include "ctype_local.h"
+
+#if EOF != -1
+#error "EOF != -1"
+#endif
 
 const unsigned char _C_ctype_[1 + _CTYPE_NUM_CHARS] = {
 	0,
@@ -69,4 +71,4 @@ const unsigned char _C_ctype_[1 + _CTYPE_NUM_CHARS] = {
 	_L,	_L,	_L,	_P,	_P,	_P,	_P,	_C
 };
 
-const unsigned char *_ctype_ = _C_ctype_;
+const unsigned char *_ctype_ = &_C_ctype_[0];

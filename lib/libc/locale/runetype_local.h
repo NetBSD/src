@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.5 2009/11/09 14:22:31 tnozaki Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.6 2010/05/22 06:38:15 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,6 +39,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include "ctype_local.h"
 
 /* for cross host tools on older systems */
 #ifndef UINT32_C
@@ -49,8 +50,7 @@
 typedef uint32_t	__nbrune_t;
 typedef uint64_t	__runepad_t;
 
-#define	_NB_CACHED_RUNES	(1 << 8)	/* Must be a power of 2 */
-#define _NB_RUNE_ISCACHED(c)	((c)>=0 && (c)<_CACHED_RUNES)
+#define _NB_RUNE_ISCACHED(c)	((c)>=0 && (c)<_CTYPE_CACHE_SIZE)
 
 #define _NB_DEFAULT_INVALID_RUNE ((__nbrune_t)-3)
 
@@ -108,12 +108,12 @@ typedef struct {
 	int32_t		frl_invalid_rune;
 	uint32_t	frl_pad3;	/* backward compatibility */
 
-	_RuneType	frl_runetype[_NB_CACHED_RUNES];
-	int32_t		frl_maplower[_NB_CACHED_RUNES];
-	int32_t		frl_mapupper[_NB_CACHED_RUNES];
+	_RuneType	frl_runetype[_CTYPE_CACHE_SIZE];
+	int32_t		frl_maplower[_CTYPE_CACHE_SIZE];
+	int32_t		frl_mapupper[_CTYPE_CACHE_SIZE];
 
 	/*
-	 * The following are to deal with Runes larger than _CACHED_RUNES - 1.
+	 * The following are to deal with Runes larger than _CTYPE_CACHE_SIZE - 1.
 	 * Their data is actually contiguous with this structure so as to make
 	 * it easier to read/write from/to disk.
 	 */
@@ -190,9 +190,9 @@ typedef struct _NBRuneLocale {
 	char		rl_magic[8];	/* Magic saying what version we are */
 	char		rl_encoding[32];/* ASCII name of this encoding */
 	__nbrune_t	rl_invalid_rune;
-	_RuneType	rl_runetype[_NB_CACHED_RUNES];
-	__nbrune_t	rl_maplower[_NB_CACHED_RUNES];
-	__nbrune_t	rl_mapupper[_NB_CACHED_RUNES];
+	_RuneType	rl_runetype[_CTYPE_CACHE_SIZE];
+	__nbrune_t	rl_maplower[_CTYPE_CACHE_SIZE];
+	__nbrune_t	rl_mapupper[_CTYPE_CACHE_SIZE];
 	_NBRuneRange	rl_runetype_ext;
 	_NBRuneRange	rl_maplower_ext;
 	_NBRuneRange	rl_mapupper_ext;
