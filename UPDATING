@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.209 2010/02/22 12:35:32 njoly Exp $
+$NetBSD: UPDATING,v 1.210 2010/05/22 02:31:25 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20100520:
+	The location of the xkb compiled descriptions has changed. Please
+	remove usr/X11R7/lib/X11/xkb/compiled from your $DESTDIR.
+
 
 20100222:
 	The shared objects file extension has been changed from .so to
