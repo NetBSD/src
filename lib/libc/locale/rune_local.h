@@ -1,4 +1,4 @@
-/*	$NetBSD: rune_local.h,v 1.13 2010/05/22 07:18:43 tnozaki Exp $	*/
+/*	$NetBSD: rune_local.h,v 1.14 2010/05/22 13:50:02 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -111,9 +111,6 @@
 /*
  * global variables
  */
-extern size_t __mb_len_max_runtime;
-#define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
-
 extern const _RuneLocale _DefaultRuneLocale;
 extern const _RuneLocale *_CurrentRuneLocale;
 
