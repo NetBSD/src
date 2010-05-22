@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.105 2010/05/22 23:03:13 mrg Exp $
+#	 $NetBSD: mi,v 1.106 2010/05/22 23:19:45 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6215,6 +6215,9 @@
 ./usr/X11R7/lib/libdrm.a				-unknown-	xorg
 ./usr/X11R7/lib/libdrm_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libdrm_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libdrm_radeon.a				-unknown-	xorg
+./usr/X11R7/lib/libdrm_radeon_g.a			-unknown-	debuglib,xorg
+./usr/X11R7/lib/libdrm_radeon_p.a			-unknown-	profile,xorg
 ./usr/X11R7/lib/libexpat.a				-unknown-	xorg
 ./usr/X11R7/lib/libexpat_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libexpat_p.a				-unknown-	profile,xorg
