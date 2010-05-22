@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.6 2009/03/10 16:36:07 mrg Exp $
+#	$NetBSD: Makefile.libx11,v 1.7 2010/05/22 02:41:13 mrg Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.${LIB}}/src
@@ -87,6 +87,7 @@ SRCS=	\
 	FreeCols.c \
 	FreeCurs.c \
 	FreeEData.c \
+	FreeEventData.c \
 	FreeGC.c \
 	FreePix.c \
 	FSSaver.c \
@@ -96,6 +97,7 @@ SRCS=	\
 	GetAtomNm.c \
 	GetColor.c \
 	GetDflt.c \
+	GetEventData.c \
 	GetFPath.c \
 	GetFProp.c \
 	GetGCVals.c \
@@ -446,5 +448,8 @@ CPPFLAGS.ximtrans.c=	$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES) $(XTRANS_
 
 COPTS.StBytes.c+=	-Wno-error
 COPTS.lcUTF8.c+=	-Wno-error
+COPTS.Font.c+=		-Wno-error	# XXX xf86bigfstr.h
+COPTS.OpenDis.c+=	-Wno-error	# XXX xf86bigfstr.h
+COPTS.XlibInt.c+=	-Wno-error	# XXX xcmiscstr.h
 
 .include "${NETBSDSRCDIR}/external/mit/xorg/tools/makekeys/Makefile.makekeys"
