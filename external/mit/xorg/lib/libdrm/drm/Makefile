@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2010/05/22 22:43:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2010/05/22 23:19:24 mrg Exp $
 
-# install include/drm files
+# install include/libdrm files
 
 .include <bsd.own.mk>
 
 .PATH:	${X11SRCDIR.drm}/include/drm
 .PATH:	${X11SRCDIR.drm}/intel
 .PATH:	${X11SRCDIR.drm}/radeon
-.PATH:	${X11SRCDIR.drm}/libkms
 
 INCS=	drm.h \
 	drm_mode.h \
@@ -27,8 +26,7 @@ INCS=	drm.h \
 	radeon_drm.h \
 	savage_drm.h \
 	sis_drm.h \
-	via_drm.h \
-	libkms.h
+	via_drm.h
 
 INCSDIR=${X11INCDIR}/libdrm
 
