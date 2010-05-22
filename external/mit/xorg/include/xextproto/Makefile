@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/05/22 02:27:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/05/22 05:44:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,8 @@ INCS=	EVI.h \
 	dbeproto.h \
 	dpmsconst.h \
 	dpmsproto.h \
+	ge.h \
+	geproto.h \
 	lbx.h \
 	lbxproto.h \
 	mitmiscconst.h \
