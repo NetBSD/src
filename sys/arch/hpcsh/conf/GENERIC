@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90 2010/05/01 11:35:41 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.91 2010/05/22 19:02:08 plunky Exp $
 #
 # GENERIC machine description file
 #
@@ -332,6 +332,10 @@ bthub*	at btuart?
 # Bluetooth Keyboard
 #btkbd*	at bthidev? reportid ?
 #wskbd*	at btkbd? console ? mux 1
+
+# Bluetooth Apple Magic Mouse
+#btmagic* at bthub?
+#wsmouse* at btmagic? mux 0
 
 # Bluetooth Audio support
 #btsco*	at bthub?
