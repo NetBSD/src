@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.6 2010/05/22 06:38:15 tnozaki Exp $ */
+/* $NetBSD: global_locale.c,v 1.7 2010/05/22 07:18:43 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.6 2010/05/22 06:38:15 tnozaki Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.7 2010/05/22 07:18:43 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,7 +40,7 @@ __RCSID("$NetBSD: global_locale.c,v 1.6 2010/05/22 06:38:15 tnozaki Exp $");
 #include <locale.h>
 #include <stdlib.h>
 #ifdef WITH_RUNE
-#include "rune.h"
+#include "rune_local.h"
 #else
 #include "bsdctype.h"
 #endif
