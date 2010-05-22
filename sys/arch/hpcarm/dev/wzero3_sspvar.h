@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_sspvar.h,v 1.2 2010/05/13 21:01:59 nonaka Exp $	*/
+/*	$NetBSD: wzero3_sspvar.h,v 1.3 2010/05/22 15:37:58 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -32,6 +32,7 @@
 enum {
 	WZERO3_SSP_IC_ADS7846,	/* touch screen controller */
 	WZERO3_SSP_IC_MAX1233,	/* touch screen controller */
+	WZERO3_SSP_IC_AK4184,	/* touch screen controller */
 	WZERO3_SSP_IC_NUM
 };
 
