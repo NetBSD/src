@@ -1,4 +1,4 @@
-/*	$NetBSD: ldef.h,v 1.6 2010/05/22 07:18:44 tnozaki Exp $	*/
+/*	$NetBSD: ldef.h,v 1.7 2010/05/22 17:43:29 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,8 +34,6 @@
  *	@(#)ldef.h	8.1 (Berkeley) 6/6/93
  */
 
-#include "ctype_local.h"
-
 /*
  * This should look a LOT like a _RuneEntry
  */
@@ -48,6 +46,6 @@ typedef struct rune_list {
 } rune_list;
 
 typedef struct rune_map {
-    u_int32_t		map[_CTYPE_NUM_CHARS];
+    u_int32_t		map[1<<8];
     rune_list		*root;
 } rune_map;
