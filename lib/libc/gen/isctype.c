@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.18 2009/01/11 02:46:27 christos Exp $ */
+/* $NetBSD: isctype.c,v 1.19 2010/05/22 13:15:59 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.18 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.19 2010/05/22 13:15:59 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -44,8 +44,7 @@ __RCSID("$NetBSD: isctype.c,v 1.18 2009/01/11 02:46:27 christos Exp $");
 
 #include "setlocale_local.h"
 
-#define _CTYPE_TAB(table, i) \
-    (((*_current_locale())->cache.table + 1)[i])
+#define _CTYPE_TAB(table, i)	((_current_cache()->table + 1)[i])
 
 #undef isalnum
 #undef isalpha

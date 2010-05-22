@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.7 2010/05/22 07:18:43 tnozaki Exp $ */
+/* $NetBSD: global_locale.c,v 1.8 2010/05/22 13:15:59 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.7 2010/05/22 07:18:43 tnozaki Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.8 2010/05/22 13:15:59 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -134,16 +134,17 @@ static const char *_global_items[(size_t)ALT_DIGITS + 1] = {
 	[(size_t)ALT_DIGITS ] = NULL,
 };
 
-struct _locale_impl_t _global_locale =
-{
-    .cache = {
-        .ctype_tab   = (const unsigned char *)&_C_ctype_[0],
-        .tolower_tab = (const short *)&_C_tolower_[0],
-        .toupper_tab = (const short *)&_C_toupper_[0],
-        .mb_cur_max = (size_t)1,
-        .ldata = &_global_ldata,
-        .items = &_global_items[0],
-    },
+static struct _locale_cache_t _global_cache = {
+    .ctype_tab   = (const unsigned char *)&_C_ctype_[0],
+    .tolower_tab = (const short *)&_C_tolower_[0],
+    .toupper_tab = (const short *)&_C_toupper_[0],
+    .mb_cur_max = (size_t)1,
+    .ldata = &_global_ldata,
+    .items = &_global_items[0],
+};
+
+struct _locale_impl_t _global_locale = {
+    .cache = &_global_cache,
     .query = { _C_LOCALE },
     .part_name = {
 	[(size_t)LC_ALL     ] = _C_LOCALE,
