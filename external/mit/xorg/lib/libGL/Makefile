@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2010/05/22 08:52:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2010/05/22 22:50:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -57,7 +57,7 @@ SRCS+=	${SRCS.dri} ${SRCS.mesa} ${SRCS.glx}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/GL \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
-		-I${DESTDIR}${X11INCDIR}/drm \
+		-I${DESTDIR}${X11INCDIR}/libdrm \
 		-I${X11SRCDIR.MesaLib}/include \
 		-I${X11SRCDIR.MesaLib}/include/GL/internal \
 		-I${X11SRCDIR.MesaLib}/src/mesa \
