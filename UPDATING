@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.210 2010/05/22 02:31:25 christos Exp $
+$NetBSD: UPDATING,v 1.211 2010/05/22 09:11:04 tnozaki Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20100522:
+	private section of <ctype.h> was splitted, and now mklocale(1)
+	include ctype_local.h, so you have to make cleandir tools/mklocale.
 
 20100520:
 	The location of the xkb compiled descriptions has changed. Please
