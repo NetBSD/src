@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xext,v 1.8 2010/05/22 02:42:37 mrg Exp $
+#	$NetBSD: Makefile.Xext,v 1.9 2010/05/22 05:45:01 mrg Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/Xext
 
@@ -9,7 +9,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod
 CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
 
-COPTS.mbuf.c+=			-Wno-error
+#COPTS.mbuf.c+=			-Wno-error
 COPTS.panoramiX.c+=		-Wno-error
 COPTS.panoramiXprocs.c+=	-Wno-error
 COPTS.saver.c+=			-Wno-error
@@ -23,6 +23,7 @@ COPTS.xvdisp.c+=		-Wno-error
 COPTS.xvmain.c+=		-Wno-error
 COPTS.xvmc.c+=			-Wno-error
 COPTS.bigreq.c+=		-Wno-error	# XXX bigreqstr.h
+COPTS.xcmisc.c+=		-Wno-error	# XXX xcmiscstr.h
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

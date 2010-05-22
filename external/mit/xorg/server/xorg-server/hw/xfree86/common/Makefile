@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2009/08/22 02:40:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2010/05/22 05:45:01 mrg Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -121,6 +121,8 @@ COPTS.xf86Cursor.c=		-Wno-error
 COPTS.xf86RandR.c=		-Wno-error
 COPTS.xf86Helper.c=		-Wno-error
 COPTS.xf86cmap.c=		-Wno-error
+COPTS.xf86Cursor.c=		-Wno-error	# XXX xf86dgastr.h
+COPTS.xf86DGA.c=		-Wno-error	# XXX xf86dgastr.h
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
