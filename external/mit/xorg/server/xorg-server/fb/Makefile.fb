@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fb,v 1.6 2009/08/22 01:44:58 mrg Exp $
+#	$NetBSD: Makefile.fb,v 1.7 2010/05/22 02:40:40 mrg Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/fb
 SRCS.fb=	fb24_32.c fballpriv.c fbarc.c fbbits.c fbblt.c \
@@ -23,6 +23,7 @@ CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
 COPTS.fbpict.c=		-Wno-error
 COPTS.fbwindow.c=	-Wno-error
 COPTS.colormap.c=	-Wno-error
+COPTS.fboverlay.c=	-Wno-error	# XXX shmstr.h
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
