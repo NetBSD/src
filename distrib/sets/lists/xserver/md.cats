@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.37 2009/12/14 15:27:14 skrll Exp $
+# $NetBSD: md.cats,v 1.38 2010/05/22 21:12:30 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -419,8 +419,8 @@
 ./usr/X11R7/lib/modules/drivers/vga_drv.so.4		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/via_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/via_drv.so.0		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ws_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/wsfb_drv.so		-unknown-	xorg
@@ -594,7 +594,7 @@
 ./usr/X11R7/man/cat4/vesa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vga.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/via.0				-unknown-	obsolete
-./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/void.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/ws.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
@@ -632,7 +632,7 @@
 ./usr/X11R7/man/html4/vesa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/vga.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/via.html				-unknown-	obsolete
-./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/void.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/ws.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
@@ -670,7 +670,7 @@
 ./usr/X11R7/man/man4/vesa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vga.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/via.4				-unknown-	obsolete
-./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/void.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
