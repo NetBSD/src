@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.28 2010/05/22 06:38:15 tnozaki Exp $	*/
+/*	$NetBSD: yacc.y,v 1.29 2010/05/22 17:43:29 tnozaki Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.28 2010/05/22 06:38:15 tnozaki Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.29 2010/05/22 17:43:29 tnozaki Exp $");
 #endif
 #endif /* not lint */
 
@@ -303,7 +303,7 @@ main(ac, av)
 	return 0;
     }
 
-    for (x = 0; x < _CTYPE_NUM_CHARS; ++x) {
+    for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
 	mapupper.map[x] = x;
 	maplower.map[x] = x;
     }
@@ -421,7 +421,7 @@ add_map(map, list, flag)
     rune_list *r;
     __nbrune_t run;
 
-    while (list->min < _CTYPE_NUM_CHARS && list->min <= list->max) {
+    while (list->min < _CTYPE_CACHE_SIZE && list->min <= list->max) {
 	if (flag)
 	    map->map[list->min++] |= flag;
 	else
@@ -655,7 +655,7 @@ dump_tables()
      * (Machines like Crays cannot share with little machines due to
      *  word size.  Sigh.  We tried.)
      */
-    for (x = 0; x < _CTYPE_NUM_CHARS; ++x) {
+    for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
 	file_new_locale.frl_runetype[x] = htonl(types.map[x]);
 	file_new_locale.frl_maplower[x] = htonl(maplower.map[x]);
 	file_new_locale.frl_mapupper[x] = htonl(mapupper.map[x]);
@@ -778,7 +778,7 @@ dump_tables()
 
     fprintf(stderr, "\nMAPLOWER:\n\n");
 
-    for (x = 0; x < _CTYPE_NUM_CHARS; ++x) {
+    for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
 	if (isprint(maplower.map[x]))
 	    fprintf(stderr, " '%c'", (int)maplower.map[x]);
 	else if (maplower.map[x])
@@ -797,7 +797,7 @@ dump_tables()
 
     fprintf(stderr, "\nMAPUPPER:\n\n");
 
-    for (x = 0; x < _CTYPE_NUM_CHARS; ++x) {
+    for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
 	if (isprint(mapupper.map[x]))
 	    fprintf(stderr, " '%c'", (int)mapupper.map[x]);
 	else if (mapupper.map[x])
@@ -817,7 +817,7 @@ dump_tables()
 
     fprintf(stderr, "\nTYPES:\n\n");
 
-    for (x = 0; x < _CTYPE_NUM_CHARS; ++x) {
+    for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
 	u_int32_t r = types.map[x];
 
 	if (r) {
