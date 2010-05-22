@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.22 2010/05/22 06:38:15 tnozaki Exp $	*/
+/*	$NetBSD: runetable.c,v 1.23 2010/05/22 07:18:43 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.22 2010/05/22 06:38:15 tnozaki Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.23 2010/05/22 07:18:43 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: runetable.c,v 1.22 2010/05/22 06:38:15 tnozaki Exp $");
 #include "citrus_module.h"
 #include "citrus_ctype.h"
 
-#include "rune.h"
 #include "rune_local.h"
 
 const _RuneLocale _DefaultRuneLocale = {
