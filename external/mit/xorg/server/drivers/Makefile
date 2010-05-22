@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.39 2010/02/11 04:07:17 macallan Exp $
+#	$NetBSD: Makefile,v 1.40 2010/05/22 21:12:19 mrg Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
 	xf86-input-mouse \
-	xf86-input-void \
 	xf86-input-ws
 
 .if ${MACHINE_ARCH} == "i386"
