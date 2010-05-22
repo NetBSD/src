@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.53 2009/11/28 12:10:25 mbalmer Exp $
+# $NetBSD: md.macppc,v 1.54 2010/05/22 21:12:30 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xmacppc					-unknown-	x11
@@ -353,8 +353,8 @@
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tdfx_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/tdfx_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	obsolete
+./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ws_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/wsfb_drv.so		-unknown-	xorg
@@ -515,7 +515,7 @@
 ./usr/X11R7/man/cat4/r128.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeon.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/tdfx.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/void.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/ws.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
@@ -537,7 +537,7 @@
 ./usr/X11R7/man/html4/r128.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeon.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/tdfx.html				-unknown-	html,xorg
-./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/void.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/ws.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
@@ -559,7 +559,7 @@
 ./usr/X11R7/man/man4/r128.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeon.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/tdfx.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/void.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
