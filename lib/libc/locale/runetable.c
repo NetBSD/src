@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.21 2009/01/18 22:03:19 tnozaki Exp $	*/
+/*	$NetBSD: runetable.c,v 1.22 2010/05/22 06:38:15 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,18 +39,19 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.21 2009/01/18 22:03:19 tnozaki Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.22 2010/05/22 06:38:15 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <stdlib.h>
-#define _CTYPE_PRIVATE
+#include <assert.h>
 #include <ctype.h>
 #include <locale.h>
-#include <assert.h>
+#include <stdlib.h>
 #include <wchar.h>
+
 #include "citrus_module.h"
 #include "citrus_ctype.h"
+
 #include "rune.h"
 #include "rune_local.h"
 

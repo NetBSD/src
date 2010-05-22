@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.17 2009/01/18 22:03:19 tnozaki Exp $	*/
+/*	$NetBSD: rune.h,v 1.18 2010/05/22 06:38:15 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -74,7 +74,6 @@
  */
 
 #define _RUNE_ISCACHED		_NB_RUNE_ISCACHED
-#define _CACHED_RUNES		_NB_CACHED_RUNES
 #define _DEFAULT_INVALID_RUNE	_NB_DEFAULT_INVALID_RUNE
 #define _RuneEntry		_NBRuneEntry
 #define _RuneRange		_NBRuneRange

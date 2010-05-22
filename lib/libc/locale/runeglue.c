@@ -1,4 +1,4 @@
-/*	$NetBSD: runeglue.c,v 1.15 2009/01/11 02:46:29 christos Exp $	*/
+/*	$NetBSD: runeglue.c,v 1.16 2010/05/22 06:38:15 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -35,28 +35,26 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: runeglue.c,v 1.15 2009/01/11 02:46:29 christos Exp $");
+__RCSID("$NetBSD: runeglue.c,v 1.16 2010/05/22 06:38:15 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#define _CTYPE_PRIVATE
+#include <sys/types.h>
 #include <assert.h>
+#include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
-#include <sys/types.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
+
 #include "citrus_module.h"
 #include "citrus_ctype.h"
+
 #include "rune.h"
 #include "rune_local.h"
 
 #if EOF != -1
 #error "EOF != -1"
-#endif
-#if _CACHED_RUNES != 256
-#error "_CACHED_RUNES != 256"
 #endif
 
 int
@@ -72,12 +70,12 @@ __runetable_to_netbsd_ctype(rl)
 	new_ctype = malloc(sizeof(*new_ctype) * (1 + _CTYPE_NUM_CHARS));
 	if (!new_ctype)
 		return -1;
-	new_toupper = malloc(sizeof(*new_toupper) * (1 + 256));
+	new_toupper = malloc(sizeof(*new_toupper) * (1 + _CTYPE_NUM_CHARS));
 	if (!new_toupper) {
 		free(new_ctype);
 		return -1;
 	}
-	new_tolower = malloc(sizeof(*new_tolower) * (1 + 256));
+	new_tolower = malloc(sizeof(*new_tolower) * (1 + _CTYPE_NUM_CHARS));
 	if (!new_tolower) {
 		free(new_ctype);
 		free(new_toupper);
@@ -85,13 +83,13 @@ __runetable_to_netbsd_ctype(rl)
 	}
 
 	memset(new_ctype, 0, sizeof(*new_ctype) * (1 + _CTYPE_NUM_CHARS));
-	memset(new_toupper, 0, sizeof(*new_toupper) * (1 + 256));
-	memset(new_tolower, 0, sizeof(*new_tolower) * (1 + 256));
+	memset(new_toupper, 0, sizeof(*new_toupper) * (1 + _CTYPE_NUM_CHARS));
+	memset(new_tolower, 0, sizeof(*new_tolower) * (1 + _CTYPE_NUM_CHARS));
 
 	new_ctype[0] = 0;
 	new_toupper[0] = EOF;
 	new_tolower[0] = EOF;
-	for (i = 0; i < _CTYPE_NUM_CHARS; i++) {
+	for (i = 0; i < _CTYPE_CACHE_SIZE; i++) {
 		new_ctype[i + 1] = 0;
 		new_toupper[i + 1] = i;
 		new_tolower[i + 1] = i;

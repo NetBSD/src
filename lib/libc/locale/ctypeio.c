@@ -1,4 +1,4 @@
-/* $NetBSD: ctypeio.c,v 1.11 2010/01/17 23:12:30 wiz Exp $ */
+/* $NetBSD: ctypeio.c,v 1.12 2010/05/22 06:38:15 tnozaki Exp $ */
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -26,12 +26,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ctypeio.c,v 1.11 2010/01/17 23:12:30 wiz Exp $");
+__RCSID("$NetBSD: ctypeio.c,v 1.12 2010/05/22 06:38:15 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <assert.h>
-#define _CTYPE_PRIVATE
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -69,11 +68,11 @@ __loadctype(const char * __restrict path, _BSDCTypeLocale ** __restrict pdata)
 		goto bad0;
 
 	if (fread(&len, sizeof(uint32_t), 1, fp) != 1 ||
-	    (len = ntohl(len)) != _CTYPE_NUM_CHARS)
+	    (len = ntohl(len)) != _CTYPE_CACHE_SIZE)
 		goto bad0;
 
 	ptr = malloc(sizeof(*data) + ((sizeof(uint8_t) +
-	    sizeof(int16_t) + sizeof(int16_t)) * (len + 1)));
+	    sizeof(int16_t) + sizeof(int16_t)) * (_CTYPE_NUM_CHARS + 1)));
 	if (ptr == NULL) {
 		fclose(fp);
 		return ENOMEM;
@@ -86,13 +85,13 @@ __loadctype(const char * __restrict path, _BSDCTypeLocale ** __restrict pdata)
 	ptr += sizeof(uint8_t);
 	if (fread((void *)ptr, sizeof(uint8_t), len, fp) != len)
 		goto bad1;
-	ptr += sizeof(uint8_t) * len;
+	ptr += sizeof(uint8_t) * _CTYPE_NUM_CHARS;
 
 	(new_toupper = (void *)ptr)[0] = (int16_t)EOF;
 	ptr += sizeof(int16_t);
 	if (fread((void *)ptr, sizeof(int16_t), len, fp) != len)
 		goto bad1;
-	ptr += sizeof(int16_t) * len;
+	ptr += sizeof(int16_t) * _CTYPE_NUM_CHARS;
 
 	(new_tolower = (void *)ptr)[0] = (int16_t)EOF;
 	ptr += sizeof(int16_t);
@@ -105,6 +104,11 @@ __loadctype(const char * __restrict path, _BSDCTypeLocale ** __restrict pdata)
 		new_tolower[i] = ntohs(new_tolower[i]);
 	}
 #endif
+	for (i = _CTYPE_CACHE_SIZE + 1; i <= _CTYPE_NUM_CHARS; i++) {
+		new_ctype[i] = 0;
+		new_toupper[i] = i;
+		new_tolower[i] = i;
+	}
 
 	fclose(fp);
 

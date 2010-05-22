@@ -1,4 +1,4 @@
-/* $NetBSD: global_locale.c,v 1.5 2010/03/27 16:47:05 christos Exp $ */
+/* $NetBSD: global_locale.c,v 1.6 2010/05/22 06:38:15 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: global_locale.c,v 1.5 2010/03/27 16:47:05 christos Exp $");
+__RCSID("$NetBSD: global_locale.c,v 1.6 2010/05/22 06:38:15 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/localedef.h>
-#define _CTYPE_PRIVATE
 #include <ctype.h>
 #include <langinfo.h>
 #include <limits.h>

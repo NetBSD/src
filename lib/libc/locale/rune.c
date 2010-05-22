@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.33 2009/02/12 05:00:46 lukem Exp $	*/
+/*	$NetBSD: rune.c,v 1.34 2010/05/22 06:38:15 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.33 2009/02/12 05:00:46 lukem Exp $");
+__RCSID("$NetBSD: rune.c,v 1.34 2010/05/22 06:38:15 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -273,7 +273,7 @@ _Read_RuneMagi(fp)
 	rl->rl_invalid_rune = ntohl((u_int32_t)frl.frl_invalid_rune);
 	rl->rl_variable_len = ntohl((u_int32_t)frl.frl_variable_len);
 
-	for (x = 0; x < _CACHED_RUNES; ++x) {
+	for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
 		rl->rl_runetype[x] = ntohl(frl.frl_runetype[x]);
 
 		/* XXX assumes rune_t = u_int32_t */
@@ -352,7 +352,6 @@ _NukeRune(rl)
 /*
  * read in old LC_CTYPE declaration file, convert into runelocale info
  */
-#define _CTYPE_PRIVATE
 #include <limits.h>
 #include <ctype.h>
 
@@ -395,7 +394,7 @@ _Read_CTypeAsRune(fp)
 
 	if (fread(&len, sizeof(u_int32_t), 1, fp) != 1)
 		goto bad;
-	if ((len = ntohl(len)) != _CTYPE_NUM_CHARS)
+	if ((len = ntohl(len)) != _CTYPE_CACHE_SIZE)
 		goto bad;
 
 	if ((new_ctype = malloc(sizeof(u_int8_t) * (1 + len))) == NULL ||
@@ -426,7 +425,7 @@ _Read_CTypeAsRune(fp)
 	rl->rl_invalid_rune = _DefaultRuneLocale.rl_invalid_rune;	/*XXX*/
 	rl->rl_variable_len = 0;
 
-	for (x = 0; x < _CACHED_RUNES; ++x) {
+	for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
 		if ((uint32_t) x > len)
 			continue;
 

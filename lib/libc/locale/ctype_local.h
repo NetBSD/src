@@ -1,7 +1,7 @@
-/* $NetBSD: bsdctype.c,v 1.3 2010/05/22 06:38:15 tnozaki Exp $ */
+/* $NetBSD: ctype_local.h,v 1.1 2010/05/22 06:38:15 tnozaki Exp $ */
 
 /*-
- * Copyright (c)2008 Citrus Project,
+ * Copyright (c) 2010 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,21 +25,23 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#ifndef _CTYPE_LOCAL_H_
+#define _CTYPE_LOCAL_H_
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bsdctype.c,v 1.3 2010/05/22 06:38:15 tnozaki Exp $");
-#endif /* LIBC_SCCS and not lint */
+#include <machine/limits.h>
 
-#include <sys/types.h>
-#include <ctype.h>
+#define _CTYPE_NUM_CHARS	(1 << CHAR_BIT)
+#define _CTYPE_CACHE_SIZE	(1 << 8)
 
-#include "bsdctype.h"
+#define _CTYPE_ID		"BSDCTYPE"
+#define _CTYPE_REV		2
 
-const _BSDCTypeLocale _DefaultBSDCTypeLocale = {
-    _C_ctype_,
-    _C_tolower_,
-    _C_toupper_
-};
+extern const unsigned char _C_ctype_[];
+extern const short _C_toupper_[];
+extern const short _C_tolower_[];
 
-const _BSDCTypeLocale *_CurrentBSDCTypeLocale = &_DefaultBSDCTypeLocale;
+#endif
+#ifndef _CTYPE_LOCAL_H_
+#define _CTYPE_LOCAL_H_
+
+#endif /*_CTYPE_LOCAL_H_*/

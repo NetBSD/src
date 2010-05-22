@@ -1,4 +1,4 @@
-/*	$NetBSD: tolower_.c,v 1.11 2009/01/11 02:46:27 christos Exp $	*/
+/*	$NetBSD: tolower_.c,v 1.12 2010/05/22 06:38:15 tnozaki Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,17 +7,18 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-__RCSID("$NetBSD: tolower_.c,v 1.11 2009/01/11 02:46:27 christos Exp $");
+__RCSID("$NetBSD: tolower_.c,v 1.12 2010/05/22 06:38:15 tnozaki Exp $");
 #endif /* LIBC_RCS and not lint */
 
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include "ctype_local.h"
 
 #if EOF != -1
 #error "EOF != -1"
 #endif
 
-const short _C_tolower_[1 + 256] = {
+const short _C_tolower_[1 + _CTYPE_NUM_CHARS] = {
 	EOF,
 	0x00,	0x01,	0x02,	0x03,	0x04,	0x05,	0x06,	0x07,
 	0x08,	0x09,	0x0a,	0x0b,	0x0c,	0x0d,	0x0e,	0x0f,
@@ -53,4 +54,4 @@ const short _C_tolower_[1 + 256] = {
 	0xf8,	0xf9,	0xfa,	0xfb,	0xfc,	0xfd,	0xfe,	0xff
 };
 
-const short *_tolower_tab_ = _C_tolower_;
+const short *_tolower_tab_ = &_C_tolower_[0];

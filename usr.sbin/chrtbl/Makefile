@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/01/02 00:20:23 tnozaki Exp $
+#	$NetBSD: Makefile,v 1.9 2010/05/22 06:38:15 tnozaki Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,8 @@ PROG=	chrtbl
 MAN=	chrtbl.8
 
 SRCS=	chrtbl.c ctypeio.c
+
+CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/locale
 
 .include <bsd.prog.mk>
 
