@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_tp.c,v 1.3 2010/05/15 03:54:35 nonaka Exp $	*/
+/*	$NetBSD: wzero3_tp.c,v 1.4 2010/05/22 15:37:58 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.3 2010/05/15 03:54:35 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.4 2010/05/22 15:37:58 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,6 +94,18 @@ static const struct wsmouse_calibcoords ws007sh_default_calib = {
 	}
 };
 
+static const struct wsmouse_calibcoords ws011sh_default_calib = {
+	0, 0, 479, 799,				/* minx, miny, maxx, maxy */
+	5,					/* samplelen */
+	{
+		{ 2126, 2048, 240, 400 },	/* rawx, rawy, x, y */
+		{  527, 3464,  48,  80 },
+		{ 3628, 3376,  48, 720 },
+		{ 3351,  595, 432, 720 },
+		{  554,  562, 432,  80 },
+	}
+};
+
 struct wzero3tp_pos {
 	int x;
 	int y;
@@ -130,6 +142,11 @@ int ads7846_readpos(struct wzero3tp_pos *);
 void ads7846_suspend(void);
 void ads7846_resume(void);
 extern void (*ads7846_wait_for_hsync)(void);
+
+void ak4184_init(void);
+int ak4184_readpos(struct wzero3tp_pos *);
+void ak4184_suspend(void);
+void ak4184_resume(void);
 
 static int	wzero3tp_match(device_t, cfdata_t, void *);
 static void	wzero3tp_attach(device_t, device_t, void *);
@@ -199,10 +216,10 @@ struct wzero3tp_model {
 		&platid_mask_MACH_SHARP_WZERO3_WS011SH,
 		"WS011SH",
 		GPIO_WS011SH_TOUCH_PANEL,
+		&ws011sh_default_calib,
 		NULL,
-		NULL,
-		{ nulldrv_init, nulldrv_readpos,
-		  nulldrv_suspend, nulldrv_resume, },
+		{ ak4184_init, ak4184_readpos,
+		  ak4184_suspend, ak4184_resume, },
 	},
 #if 0
 	/* WS0020H */
@@ -622,7 +639,7 @@ max1233_readpos(struct wzero3tp_pos *pos)
 	DPRINTF(("%s: z2=%d\n", __func__, z2));
 
 	if (z1) {
-		rt = 400/*XXX*/;
+		rt = 400 /* XXX: X plate ohms */;
 		rt *= pos->x;
 		rt *= (z2 / z1) - 1;
 		rt >>= 12;
@@ -642,12 +659,12 @@ out:
 /*----------------------------------------------------------------------------
  * ADS7846/TSC2046 touch screen controller for WS007SH
  */
-#define ADSCTRL_PD0_SH          0       /* PD0 bit */
-#define ADSCTRL_PD1_SH          1       /* PD1 bit */
-#define ADSCTRL_DFR_SH          2       /* SER/DFR bit */
-#define ADSCTRL_MOD_SH          3       /* Mode bit */
-#define ADSCTRL_ADR_SH          4       /* Address setting */
-#define ADSCTRL_STS_SH          7       /* Start bit */
+#define ADSCTRL_PD0_SH		0	/* PD0 bit */
+#define ADSCTRL_PD1_SH		1	/* PD1 bit */
+#define ADSCTRL_DFR_SH		2	/* SER/DFR bit */
+#define ADSCTRL_MOD_SH		3	/* Mode bit */
+#define ADSCTRL_ADR_SH		4	/* Address setting */
+#define ADSCTRL_STS_SH		7	/* Start bit */
 
 static uint32_t ads7846_sync(int, int, uint32_t);
 
@@ -759,6 +776,109 @@ ads7846_sync(int dorecv, int dosend, uint32_t cmd)
 
 		/* send the actual command; keep ADS784x enabled */
 		wzero3ssp_ic_start(WZERO3_SSP_IC_ADS7846, cmd);
+	}
+
+	return rv;
+}
+
+/*----------------------------------------------------------------------------
+ * AK4184 touch screen controller for WS011SH
+ */
+#define AKMCTRL_PD_SH	12	/* Power down bit */
+#define AKMCTRL_ADR_SH	13	/* Address setting bits */
+#define AKMCTRL_STS_SH	15	/* Start bit */
+
+static uint32_t ak4184_sync(int, int, uint32_t);
+
+void
+ak4184_init(void)
+{
+
+	/* Enable automatic low power mode. */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184,
+	    (1<<AKMCTRL_STS_SH) | (0<<AKMCTRL_ADR_SH) | (0<<AKMCTRL_PD_SH), 0);
+}
+
+int
+ak4184_readpos(struct wzero3tp_pos *pos)
+{
+	u_int rt;
+	int z1, z2;
+
+	/* X (discard) */
+	(void)ak4184_sync(0, 1,
+	    (1<<AKMCTRL_STS_SH) | (0<<AKMCTRL_ADR_SH) | (1<<AKMCTRL_PD_SH));
+
+	/* X */
+	(void)ak4184_sync(1, 1,
+	    (1<<AKMCTRL_STS_SH) | (0<<AKMCTRL_ADR_SH) | (1<<AKMCTRL_PD_SH));
+
+	/* Y */
+	pos->x = ak4184_sync(1, 1,
+	    (1<<AKMCTRL_STS_SH) | (1<<AKMCTRL_ADR_SH) | (1<<AKMCTRL_PD_SH));
+	DPRINTF(("%s: x=%d\n", __func__, pos->x));
+	pos->y = ak4184_sync(1, 1,
+	    (1<<AKMCTRL_STS_SH) | (2<<AKMCTRL_ADR_SH) | (1<<AKMCTRL_PD_SH));
+	DPRINTF(("%s: y=%d\n", __func__, pos->y));
+	z1 = ak4184_sync(1, 1,
+	    (1<<AKMCTRL_STS_SH) | (3<<AKMCTRL_ADR_SH) | (1<<AKMCTRL_PD_SH));
+	DPRINTF(("%s: z1=%d\n", __func__, z1));
+	z2 = ak4184_sync(1, 0,
+	    (1<<AKMCTRL_STS_SH) | (3<<AKMCTRL_ADR_SH) | (1<<AKMCTRL_PD_SH));
+	DPRINTF(("%s: z2=%d\n", __func__, z2));
+
+	if (z1 >= 10) {
+		rt = 400 /* XXX: X plate ohms */;
+		rt *= pos->x;
+		rt *= (z2 / z1) - 1;
+		rt >>= 12;
+	} else
+		rt = 0;
+	DPRINTF(("%s: rt=%d\n", __func__, rt));
+
+	/* check that pen is still down */
+	if (z1 == 0 || rt == 0)
+		pos->z = 0;
+	else
+		pos->z = 1;
+
+	/* Enable automatic low power mode. */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184,
+	    (1<<AKMCTRL_STS_SH) | (0<<AKMCTRL_ADR_SH) | (0<<AKMCTRL_PD_SH), 0);
+
+	return pos->z;
+}
+
+void
+ak4184_suspend(void)
+{
+
+	/* Nothing to do */
+}
+
+void
+ak4184_resume(void)
+{
+
+	/* Enable automatic low power mode. */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184,
+	    (1<<AKMCTRL_STS_SH) | (0<<AKMCTRL_ADR_SH) | (0<<AKMCTRL_PD_SH), 0);
+}
+
+static uint32_t
+ak4184_sync(int dorecv, int dosend, uint32_t cmd)
+{
+	uint32_t rv = 0;
+
+	if (dorecv)
+		rv = wzero3ssp_ic_stop(WZERO3_SSP_IC_AK4184);
+
+	if (dosend) {
+		/* send dummy command; discard SSDR */
+		(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184, cmd, 0);
+
+		/* send the actual command; keep AK4184 enabled */
+		wzero3ssp_ic_start(WZERO3_SSP_IC_AK4184, cmd);
 	}
 
 	return rv;
