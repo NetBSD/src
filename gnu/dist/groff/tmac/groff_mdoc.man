@@ -1989,8 +1989,8 @@ Part 2: Shell and Utilities
 .Pp
 .
 X/Open
-.Bl -tag -width ".Li -p1003.1g-2000" -compact -offset indent
 .Pp
+.Bl -tag -width ".Li -p1003.1g-2000" -compact -offset indent
 .It Li -susv2
 .St -susv2
 .It Li -svid4
@@ -2278,16 +2278,16 @@ respectively.
 .
 .Bd -filled -offset 4n
 .Bl -column "quote" "close" "open" "Angle Bracket Enclosure" "`string' or string"
-.Em Quote Ta Em Open Ta Em Close Ta Em Function               Ta Em Result
-.No .Aq   Ta    .Ao  Ta    .Ac   Ta "Angle Bracket Enclosure" Ta Ao string Ac
-.No .Bq   Ta    .Bo  Ta    .Bc   Ta "Bracket Enclosure"       Ta Bo string Bc
-.No .Brq  Ta    .Bro Ta    .Brc  Ta "Brace Enclosure"         Ta Bro string Brc
-.No .Dq   Ta    .Do  Ta    .Dc   Ta "Double Quote"            Ta Do string Dc
-.No .Eq   Ta    .Eo  Ta    .Ec   Ta "Enclose String (in XX)"  Ta XXstringXX
-.No .Pq   Ta    .Po  Ta    .Pc   Ta "Parenthesis Enclosure"   Ta Po string Pc
-.No .Ql   Ta         Ta          Ta "Quoted Literal"          Ta So string Sc or Li string
-.No .Qq   Ta    .Qo  Ta    .Qc   Ta "Straight Double Quote"   Ta Qo string Qc
-.No .Sq   Ta    .So  Ta    .Sc   Ta "Single Quote"            Ta So string Sc
+.It Em Quote Ta Em Open Ta Em Close Ta Em Function               Ta Em Result
+.It No .Aq   Ta    .Ao  Ta    .Ac   Ta "Angle Bracket Enclosure" Ta Ao string Ac
+.It No .Bq   Ta    .Bo  Ta    .Bc   Ta "Bracket Enclosure"       Ta Bo string Bc
+.It No .Brq  Ta    .Bro Ta    .Brc  Ta "Brace Enclosure"         Ta Bro string Brc
+.It No .Dq   Ta    .Do  Ta    .Dc   Ta "Double Quote"            Ta Do string Dc
+.It No .Eq   Ta    .Eo  Ta    .Ec   Ta "Enclose String (in XX)"  Ta XXstringXX
+.It No .Pq   Ta    .Po  Ta    .Pc   Ta "Parenthesis Enclosure"   Ta Po string Pc
+.It No .Ql   Ta         Ta          Ta "Quoted Literal"          Ta So string Sc or Li string
+.It No .Qq   Ta    .Qo  Ta    .Qc   Ta "Straight Double Quote"   Ta Qo string Qc
+.It No .Sq   Ta    .So  Ta    .Sc   Ta "Single Quote"            Ta So string Sc
 .El
 .Ed
 .Pp
