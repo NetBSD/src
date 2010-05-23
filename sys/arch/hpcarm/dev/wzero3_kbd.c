@@ -1,7 +1,7 @@
-/*	$NetBSD: wzero3_kbd.c,v 1.3 2010/04/24 21:51:56 nonaka Exp $	*/
+/*	$NetBSD: wzero3_kbd.c,v 1.4 2010/05/23 11:57:04 nonaka Exp $	*/
 
 /*
- * Copyright (c) 2008, 2009 NONAKA Kimihiro <nonaka@netbsd.org>
+ * Copyright (c) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.3 2010/04/24 21:51:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.4 2010/05/23 11:57:04 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ static int wzero3kbd_poll(void *arg);
 static int wzero3kbd_poll1(void *arg);
 
 /*
- * WS003SH keyscan map
+ * WS003SH/WS004SH/WS007SH keyscan map
 	col#0	col#1	col#2	col#3	col#4	col#5	col#6	col#7	col#8	col#9	col#10	col#11
 row#0:	CTRL	1	3	5	6	7	9	0	BS	(none)	ROTATE	CAMERA
 row#1:	(none)	2	4	r	y	8	i	o	p	(none)	VOL-	VOL+
@@ -156,12 +156,24 @@ row#6:	IE	MOJI	(none)	OK	ACTION	,	LEFT	DOWN	RIGHT	(none)	RSOFT	(none)
  * WS011SH keyscan map
 	col#0	col#1	col#2	col#3	col#4	col#5	col#6	col#7	col#8	col#9	col#10	col#11
 row#0	Ctrl	(none)	(none)	(none)	(none)	(none)	(none)	(none)	Del	(none)	ROTATE	(none)
-row#1	(none)	(none)	(none)	R	Y	(none)	I	O	(none)	(none)	(none)	(none)
+row#1	(none)	(none)	(none)	R	Y	(none)	I	O	P	(none)	(none)	(none)
 row#2	Tab	Q	E	T	G	U	J	K	(none)	(none)	(none)	(none)
 row#3	(none)	W	S	F	V	H	M	L	(none)	(none)	Shift	(none)
 row#4	(none)	A	D	C	B	N	.	(none)	Enter	(none)	(none)	(none)
-row#5	(none)	Z	X	-	Space	/	(none)	UP	(none)	(none)	(none)	(none)
-row#6	(none)	MOJI	HAN/ZEN	OK	(none)	,	LEFT	DOWN	RIGHT	(none)	Fn	(none)
+row#5	(none)	Z	X	-	Space	/	(none)	UP	(none)	(none)	(none)	Fn
+row#6	(none)	MOJI	HAN/ZEN	OK	(none)	,	LEFT	DOWN	RIGHT	(none)	(none)	(none)
+*/
+
+/*
+ * WS020SH keyscan map
+	col#0	col#1	col#2	col#3	col#4	col#5	col#6	col#7	col#8	col#9	col#10	col#11
+row#0	Ctrl	(none)	(none)	(none)	(none)	(none)	(none)	(none)	Del	(none)	ROTATE	(none)
+row#1	(none)	(none)	(none)	R	Y	(none)	I	O	P	(none)	MEDIA	(none)
+row#2	Tab	Q	E	T	G	U	J	K	(none)	(none)	(none)	(none)
+row#3	(none)	W	S	F	V	H	M	L	(none)	(none)	LShift	(none)
+row#4	(none)	A	D	C	B	N	.	(none)	Enter	(none)	RShift	(none)
+row#5	(none)	Z	X	-	Space	/	(none)	UP	(none)	DOWN	(none)	Fn
+row#6	(none)	MOJI	HAN/ZEN	OK	(none)	,	LEFT	(none)	RIGHT	(none)	(none)	(none)
 */
 
 static const struct wzero3kbd_model {
@@ -212,8 +224,8 @@ static const struct wzero3kbd_model {
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS020SH,
 		-1,	/* XXX */
-		-1,	/* XXX */
-		-1,	/* XXX */
+		GPIO_WS020SH_POWER_BUTTON,
+		GPIO_WS020SH_RESET_BUTTON,
 		WS003SH_NCOLUMN,
 		WS003SH_NROW,
 	},
@@ -370,6 +382,10 @@ wzero3kbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)) {
 		sc->sc_nouse_pin = GPIO_WS011SH_SD_DETECT;  /* SD_DETECT */
+		sc->sc_nouse_pin2 = 77;  /* Vsync? */
+	}
+	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS020SH)) {
+		sc->sc_nouse_pin = GPIO_WS020SH_SD_DETECT;  /* SD_DETECT */
 		sc->sc_nouse_pin2 = 77;  /* Vsync? */
 	}
 
