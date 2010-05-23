@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_mci.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $	*/
+/*	$NetBSD: wzero3_mci.c,v 1.2 2010/05/23 11:53:18 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_mci.c,v 1.1 2010/04/17 13:36:21 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_mci.c,v 1.2 2010/05/23 11:53:18 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,8 +108,8 @@ struct wzero3mci_model {
 	/* WS0020H */
 	{
 		&platid_mask_MACH_SHARP_WZERO3_WS020SH,
-		-1,
-		-1
+		GPIO_WS020SH_SD_DETECT,
+		GPIO_WS020SH_SD_POWER,	
 	},
 
 	{
