@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.127 2010/05/23 02:25:50 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.128 2010/05/23 18:56:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.127 2010/05/23 02:25:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.128 2010/05/23 18:56:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.127 2010/05/23 02:25:50 christos Exp $"
 #include <sys/errno.h>
 #include <sys/conf.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
@@ -414,7 +414,6 @@ fwohci_init(struct fwohci_softc *sc)
 		aprint_error_dev(sc->fc.dev, "config_rom alloc failed.");
 		return ENOMEM;
 	}
-	sc->fc.new_rom = kmem_zalloc(CROMSIZE, KM_SLEEP);
 
 #if 0
 	memset(sc->fc.config_rom, 0, CROMSIZE);
@@ -428,7 +427,7 @@ fwohci_init(struct fwohci_softc *sc)
 	sc->fc.config_rom[0] |= fw_crc16(&sc->fc.config_rom[1], 5*4);
 #endif
 
-/* SID receive buffer must align 2^11 */
+/* SID recieve buffer must align 2^11 */
 #define	OHCI_SIDSIZE	(1 << 11)
 	sc->sid_buf = fwdma_alloc_setup(sc->fc.dev, sc->fc.dmat, OHCI_SIDSIZE,
 	    &sc->sid_dma, OHCI_SIDSIZE, BUS_DMA_NOWAIT);
@@ -436,7 +435,6 @@ fwohci_init(struct fwohci_softc *sc)
 		aprint_error_dev(sc->fc.dev, "sid_buf alloc failed.");
 		return ENOMEM;
 	}
-	sc->sid_tmp_buf = kmem_alloc(OHCI_SIDSIZE, KM_SLEEP);
 
 	fwdma_alloc_setup(sc->fc.dev, sc->fc.dmat, sizeof(uint32_t),
 	    &sc->dummy_dma, sizeof(uint32_t), BUS_DMA_NOWAIT);
@@ -508,13 +506,9 @@ fwohci_detach(struct fwohci_softc *sc, int flags)
 	if (sc->sid_buf != NULL)
 		fwdma_free(sc->sid_dma.dma_tag, sc->sid_dma.dma_map,
 		    sc->sid_dma.v_addr);
-	if (sc->sid_tmp_buf != NULL)
-		kmem_free(sc->sid_tmp_buf, OHCI_SIDSIZE);
 	if (sc->fc.config_rom != NULL)
 		fwdma_free(sc->crom_dma.dma_tag, sc->crom_dma.dma_map,
 		    sc->crom_dma.v_addr);
-	if (sc->fc.new_rom != NULL)
-		kmem_free(sc->fc.new_rom, CROMSIZE);
 
 	fwohci_db_free(sc, &sc->arrq);
 	fwohci_db_free(sc, &sc->arrs);
@@ -1709,10 +1703,10 @@ fwohci_db_free(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 			db_tr->buf = NULL;
 		}
 	}
+	dbch->ndb = 0;
 	db_tr = STAILQ_FIRST(&dbch->db_trq);
 	fwdma_free_multiseg(dbch->am);
-	kmem_free(db_tr, sizeof(struct fwohcidb_tr) * dbch->ndb);
-	dbch->ndb = 0;
+	free(db_tr, M_FW);
 	STAILQ_INIT(&dbch->db_trq);
 	dbch->flags &= ~FWOHCI_DBCH_INIT;
 	seldestroy(&dbch->xferq.rsel);
@@ -1732,9 +1726,9 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 	/* allocate DB entries and attach one to each DMA channels */
 	/* DB entry must start at 16 bytes bounary. */
 	STAILQ_INIT(&dbch->db_trq);
-	db_tr = kmem_zalloc(db_tr_sz, KM_SLEEP);
+	db_tr = (struct fwohcidb_tr *)malloc(db_tr_sz, M_FW, M_WAITOK | M_ZERO);
 	if (db_tr == NULL) {
-		aprint_error_dev(fc->dev, "kmem alloc failed\n");
+		aprint_error_dev(fc->dev, "malloc(1) failed\n");
 		return;
 	}
 
@@ -1749,7 +1743,7 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 #endif
 	if (dbch->am == NULL) {
 		aprint_error_dev(fc->dev, "fwdma_malloc_multiseg failed\n");
-		kmem_free(db_tr, sizeof(struct fwohcidb_tr) * dbch->ndb);
+		free(db_tr, M_FW);
 		return;
 	}
 	/* Attach DB to DMA ch. */
@@ -2146,7 +2140,11 @@ fwohci_task_sid(struct fwohci_softc *sc)
 		return;
 	}
 	plen -= 4; /* chop control info */
-	buf = sc->sid_tmp_buf;
+	buf = (uint32_t *)malloc(OHCI_SIDSIZE, M_FW, M_NOWAIT);
+	if (buf == NULL) {
+		aprint_error_dev(fc->dev, "malloc failed\n");
+		return;
+	}
 	for (i = 0; i < plen / 4; i++)
 		buf[i] = FWOHCI_DMA_READ(sc->sid_buf[i + 1]);
 #if 1 /* XXX needed?? */
@@ -2158,6 +2156,7 @@ fwohci_task_sid(struct fwohci_softc *sc)
 	fw_drain_txq(fc);
 #endif
 	fw_sidrcv(fc, buf, plen);
+	free(buf, M_FW);
 }
 
 static void
