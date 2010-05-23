@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2010/04/11 17:23:10 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.5 2010/05/23 14:08:05 veego Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -149,6 +149,6 @@ aslcompilerparse.c: ${TOPDIR}/aslcompiler.y
 aslcompilerlex.c: ${TOPDIR}/aslcompiler.l
 	${LEX} -i -PAslCompiler -o${.TARGET} ${.ALLSRC}
 
-CLEANFILES+=	aslcompilerlex.c aslcompilerparse.c aslcompiler.y.h y.output
+CLEANFILES+=	aslcompilerlex.c aslcompilerparse.c aslcompiler.y.h aslcompilerparse.output
 
 .include <bsd.prog.mk>
