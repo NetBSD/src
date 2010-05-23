@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.108 2010/05/23 01:30:26 mrg Exp $
+#	 $NetBSD: mi,v 1.109 2010/05/23 21:32:50 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6552,7 +6552,7 @@
 ./usr/X11R7/man/cat3/XChangeDeviceDontPropagateList.0	-unknown-	obsolete
 ./usr/X11R7/man/cat3/XChangeDeviceKeyMapping.0		-unknown-	obsolete
 ./usr/X11R7/man/cat3/XChangeFeedbackControl.0		-unknown-	obsolete
-./usr/X11R7/man/cat3/XChangeKeyboardControl.0		-unknown-	obsolete
+./usr/X11R7/man/cat3/XChangeKeyboardControl.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XChangeKeyboardDevice.0		-unknown-	obsolete
 ./usr/X11R7/man/cat3/XChangeKeyboardMapping.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XChangePointerControl.0		-unknown-	.cat,xorg
@@ -7455,7 +7455,7 @@
 ./usr/X11R7/man/html3/XChangeDeviceDontPropagateList.html	-unknown-	obsolete
 ./usr/X11R7/man/html3/XChangeDeviceKeyMapping.html	-unknown-	obsolete
 ./usr/X11R7/man/html3/XChangeFeedbackControl.html	-unknown-	obsolete
-./usr/X11R7/man/html3/XChangeKeyboardControl.html	-unknown-	obsolete
+./usr/X11R7/man/html3/XChangeKeyboardControl.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XChangeKeyboardDevice.html	-unknown-	obsolete
 ./usr/X11R7/man/html3/XChangeKeyboardMapping.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XChangePointerControl.html	-unknown-	html,xorg
@@ -8357,7 +8357,7 @@
 ./usr/X11R7/man/man3/XChangeDeviceDontPropagateList.3	-unknown-	obsolete
 ./usr/X11R7/man/man3/XChangeDeviceKeyMapping.3		-unknown-	obsolete
 ./usr/X11R7/man/man3/XChangeFeedbackControl.3		-unknown-	obsolete
-./usr/X11R7/man/man3/XChangeKeyboardControl.3		-unknown-	obsolete
+./usr/X11R7/man/man3/XChangeKeyboardControl.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XChangeKeyboardDevice.3		-unknown-	obsolete
 ./usr/X11R7/man/man3/XChangeKeyboardMapping.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XChangePointerControl.3		-unknown-	.man,xorg

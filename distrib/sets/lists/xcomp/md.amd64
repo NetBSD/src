@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.25 2010/05/23 06:41:19 mrg Exp $
+# $NetBSD: md.amd64,v 1.26 2010/05/23 21:32:50 mrg Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -104,12 +104,13 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libr128_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libr200_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libr300_dri.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/libr600_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libradeon_dri.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/libs3v_dri.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/libs3v_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libsavage_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libsis_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libtdfx_dri.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/dri/libtrident_dri.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/libtrident_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libunichrome_dri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libapm_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libark_drv.so.0.debug	-unknown-		xorg,debug
