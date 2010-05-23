@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.81 2009/12/13 05:04:37 nonaka Exp $
+#	$NetBSD: bsd.x11.mk,v 1.82 2010/05/23 21:23:59 veego Exp $
 
 .include <bsd.init.mk>
 
@@ -232,7 +232,7 @@ realinstall:	pkgconfig-install
 
 .for _pkg in ${PKGCONFIG:O:u}
 PKGDIST.${_pkg}?=	${X11SRCDIR.${PKGDIST:U${_pkg}}}
-_PKGDEST.${_pkg}=	${DESTDIR}/${X11USRLIBDIR}/pkgconfig/${_pkg}.pc
+_PKGDEST.${_pkg}=	${DESTDIR}${X11USRLIBDIR}/pkgconfig/${_pkg}.pc
 
 .PATH:	${PKGDIST.${_pkg}}
 
