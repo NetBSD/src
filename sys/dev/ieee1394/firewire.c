@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.33 2010/05/15 10:42:51 kiyohara Exp $	*/
+/*	$NetBSD: firewire.c,v 1.34 2010/05/23 02:24:40 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.33 2010/05/15 10:42:51 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.34 2010/05/23 02:24:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -548,7 +548,6 @@ fw_busreset(struct firewire_comm *fc, uint32_t new_status)
 	struct firewire_dev_list *devlist;
 	struct firewire_dev_comm *fdc;
 	struct crom_src *src;
-	uint32_t *newrom;
 
 	if (fc->status == FWBUSMGRELECT)
 		callout_stop(&fc->bmr_callout);
@@ -583,15 +582,13 @@ fw_busreset(struct firewire_comm *fc, uint32_t new_status)
 	 * Configuration ROM.
 	 */
 #define FW_MAX_GENERATION	0xF
-	newrom = kmem_zalloc(CROMSIZE, KM_NOSLEEP);
 	src = &fc->crom_src_buf->src;
-	crom_load(src, newrom, CROMSIZE);
-	if (memcmp(newrom, fc->config_rom, CROMSIZE) != 0) {
+	crom_load(src, fc->new_rom, CROMSIZE);
+	if (memcmp(fc->new_rom, fc->config_rom, CROMSIZE) != 0) {
 		if (src->businfo.generation++ > FW_MAX_GENERATION)
 			src->businfo.generation = FW_GENERATION_CHANGEABLE;
-		memcpy((void *)fc->config_rom, newrom, CROMSIZE);
+		memcpy(fc->config_rom, fc->new_rom, CROMSIZE);
 	}
-	kmem_free(newrom, CROMSIZE);
 }
 
 /* Call once after reboot */
