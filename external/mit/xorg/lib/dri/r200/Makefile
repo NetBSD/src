@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2010/05/23 21:31:53 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2010/05/23 23:21:30 mrg Exp $
 
 MODULE=	r200
 
@@ -43,6 +43,8 @@ SRCS+= \
 	radeon_cs_space_drm.c \
 	radeon_bo.c \
 	radeon_cs.c
+
+LIBDPLIBS+=	drm_radeon	${.CURDIR}/../../libdrm_radeon
 
 # XXX
 .if ${MACHINE_ARCH} == "sparc64"

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/05/23 21:31:53 mrg Exp $
+# $NetBSD: Makefile,v 1.2 2010/05/23 23:21:31 mrg Exp $
 
 MODULE=	r600
 
@@ -47,6 +47,8 @@ SRCS+= \
 	radeon_cs_space_drm.c \
 	radeon_bo.c \
 	radeon_cs.c
+
+LIBDPLIBS+=	drm_radeon	${.CURDIR}/../../libdrm_radeon
 
 COPTS.radeon_screen.c=  -Wno-error	# XXX const
 
