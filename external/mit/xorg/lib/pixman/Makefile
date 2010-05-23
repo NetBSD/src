@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2009/11/09 01:11:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2010/05/23 04:26:19 mrg Exp $
 
 NOLINT=	1	# defined
 
@@ -57,7 +57,7 @@ MKDEPFLAGS+=		-mmmx -msse2 -fvisibility=hidden
 INCS=	pixman.h pixman-version.h
 INCSDIR=${X11INCDIR}/pixman-1
 
-CPPFLAGS+=	-DPIXMAN_DISABLE_DEPRECATED -DHAVE_CONFIG_H \
+CPPFLAGS+=	-DHAVE_CONFIG_H \
 		-I${X11SRCDIR.pixman}/../include \
 		-I${X11SRCDIR.pixman}/../combine \
 		-I${X11SRCDIR.pixman}/pixman
