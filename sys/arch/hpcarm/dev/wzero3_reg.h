@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_reg.h,v 1.4 2010/05/22 15:37:58 nonaka Exp $	*/
+/*	$NetBSD: wzero3_reg.h,v 1.5 2010/05/23 11:49:16 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -104,5 +104,18 @@ port	I/O(Active)	name 	desc
 #define	GPIO_WS011SH_HSYNC		75	/* In */
 #define	GPIO_WS011SH_SD_POWER		107	/* Out */
 #define	GPIO_WS011SH_USB_CLIENT_DETECT	116	/* In */
+
+/*
+ * WS020SH specific parameter
+ */
+#define	GPIO_WS020SH_RESET_BUTTON	1	/* In */
+#define	GPIO_WS020SH_TOUCH_PANEL	21	/* In */
+#define	GPIO_WS020SH_USB_HOST_DETECT	41	/* In */
+#define	GPIO_WS020SH_SD_DETECT		48	/* In */
+#define	GPIO_WS020SH_SLIDE		51	/* In */
+#define	GPIO_WS020SH_KEY_LOCK		52	/* In */
+#define	GPIO_WS020SH_POWER_BUTTON	55	/* In */
+#define	GPIO_WS020SH_SD_POWER		107	/* Out */
+#define	GPIO_WS020SH_USB_CLIENT_DETECT	116	/* In */
 
 #endif	/* _HPCARM_DEV_WZERO3_REG_H_ */
