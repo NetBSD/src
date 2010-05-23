@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.74 2010/05/22 21:12:30 mrg Exp $
+# $NetBSD: md.i386,v 1.75 2010/05/23 06:41:19 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -140,6 +140,7 @@
 ./usr/X11R6/lib/modules/drivers/vga_drv.o		-unknown-	x11
 ./usr/X11R6/lib/modules/drivers/via_drv.o		-unknown-	x11
 ./usr/X11R6/lib/modules/drivers/vmware_drv.o		-unknown-	x11
+./usr/X11R6/lib/modules/drivers/vmwlegacy_drv.o		-unknown-	x11
 ./usr/X11R6/lib/modules/drivers/wsfb.o			-obsolete-	obsolete
 ./usr/X11R6/lib/modules/drivers/wsfb_drv.o		-unknown-	x11
 ./usr/X11R6/lib/modules/extensions/libGLcore.a		-unknown-	x11
@@ -546,7 +547,9 @@
 ./usr/X11R7/lib/modules/drivers/vmmouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmmouse_drv.so.12	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmware_drv.so.10	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmware_drv.so.11	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so.11	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg
