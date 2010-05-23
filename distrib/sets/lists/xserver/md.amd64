@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.56 2010/05/22 21:12:29 mrg Exp $
+# $NetBSD: md.amd64,v 1.57 2010/05/23 06:41:19 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -473,7 +473,9 @@
 ./usr/X11R7/lib/modules/drivers/vmmouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmmouse_drv.so.12	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/vmware_drv.so.10	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmware_drv.so.11	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmwlegacy_drv.so.11	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg
