@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.1 2010/05/23 18:49:14 martin Exp $	*/
+/*	$NetBSD: copy.S,v 1.2 2010/05/23 19:54:17 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -611,6 +611,64 @@ Lcopyfault:
 #endif
 	retl
 	 wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
+
+
+STRONG_ALIAS(ucas_int,ucas_32)
+#ifdef _LP64
+STRONG_ALIAS(ucas_ptr,ucas_64)
+#else
+STRONG_ALIAS(ucas_ptr,ucas_32)
+#endif
+
+/*
+ * Compare-and-swap the pointer in the user-space.
+ *
+ * int	ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ */
+ENTRY(ucas_32)
+	sethi	%hi(CPCB), %o4
+	wr	%g0, ASI_AIUS, %asi
+	LDPTR	[%o4 + %lo(CPCB)], %o4
+	set	Lcopyfault, %o5				! reusing copyin/copyout
+	membar	#Sync					! fault handler
+	STPTR	%o5, [%o4 + PCB_ONFAULT]
+
+	casa	[%o0] %asi, %o1, %o2			! cas, result in %o2
+
+	sethi	%hi(CPCB), %o4
+	LDPTR	[%o4 + %lo(CPCB)], %o4
+	membar	#Sync
+	STPTR	%g0, [%o4 + PCB_ONFAULT]
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
+	membar	#StoreStore|#StoreLoad
+	stw	%o2, [%o3]		! store the cas result in *result
+	retl
+	 clr	%o0			! return 0
+
+/*
+ * Compare-and-swap the 64-bit integer in the user-space.
+ *
+ * int	ucas_64(volatile int64_t *uptr, int64_t old, int64_t new, int64_t *ret);
+ */
+ENTRY(ucas_64)
+	sethi	%hi(CPCB), %o4
+	wr	%g0, ASI_AIUS, %asi
+	LDPTR	[%o4 + %lo(CPCB)], %o4
+	set	Lcopyfault, %o5				! reusing copyin/copyout
+	membar	#Sync					! fault handler
+	STPTR	%o5, [%o4 + PCB_ONFAULT]
+
+	casxa	[%o0] %asi, %o1, %o2			! cas, result in %o2
+
+	sethi	%hi(CPCB), %o4
+	LDPTR	[%o4 + %lo(CPCB)], %o4
+	membar	#Sync
+	STPTR	%g0, [%o4 + PCB_ONFAULT]
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore ASI
+	membar	#StoreStore|#StoreLoad
+	stx	%o2, [%o3]		! store the cas result in *result
+	retl
+	 clr	%o0			! return 0
 
 /*
  * {fu,su}{,i}{byte,word}
