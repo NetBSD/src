@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.107 2010/05/22 23:21:36 mrg Exp $
+#	 $NetBSD: mi,v 1.108 2010/05/23 01:30:26 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6279,6 +6279,7 @@
 ./usr/X11R7/lib/pkgconfig/kbproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/lbxutil.pc			-obsolete-	obsolete
 ./usr/X11R7/lib/pkgconfig/libdrm.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/libdrm_radeon.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libfs.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/pciaccess.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/pixman-1.pc			-unknown-	xorg
