@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/04/07 20:04:16 yhardy Exp $
+#	$NetBSD: Makefile,v 1.6 2010/05/23 01:59:12 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,6 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/main \
 		-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/common \
 		-I${X11SRCDIR.MesaLib}/src/mesa \
 		-I${X11SRCDIR.MesaLib}/include \
-		-I${DESTDIR}${X11INCDIR}/drm \
 		-I${DESTDIR}${X11INCDIR}/X11
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB} \
