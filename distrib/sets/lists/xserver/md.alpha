@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.27 2010/05/22 21:12:29 mrg Exp $
+# $NetBSD: md.alpha,v 1.28 2010/05/23 10:50:28 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
 ./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
@@ -266,7 +266,7 @@
 ./usr/X11R7/man/cat4/tdfx.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/trident.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/tseng.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/vga.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/vga.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/void.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/ws.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
@@ -323,7 +323,7 @@
 ./usr/X11R7/man/html4/tdfx.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/trident.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/tseng.html			-unknown-	html,xorg
-./usr/X11R7/man/html4/vga.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/vga.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/void.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/ws.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
@@ -380,7 +380,7 @@
 ./usr/X11R7/man/man4/tdfx.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/trident.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/tseng.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/vga.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/vga.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/void.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
