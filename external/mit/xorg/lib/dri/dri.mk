@@ -1,4 +1,4 @@
-# $NetBSD: dri.mk,v 1.9 2010/05/22 22:43:57 mrg Exp $
+# $NetBSD: dri.mk,v 1.10 2010/05/23 21:31:52 mrg Exp $
 
 # XXX DRI_LIB_DEPS
 
@@ -33,6 +33,7 @@ CPPFLAGS+=	-Wno-stack-protector
 SRCS+=	driverfuncs.c utils.c
 .else
 SRCS+=	dri_util.c drirenderbuffer.c driverfuncs.c texmem.c
+SRCS+=	dri_metaops.c
 SRCS+=	utils.c vblank.c xmlconfig.c
 .endif
 

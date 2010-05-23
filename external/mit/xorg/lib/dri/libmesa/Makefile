@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/05/23 01:59:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2010/05/23 21:31:52 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ LIBISMODULE=	yes
 
 SHLIB_MAJOR=	0
 
-MESA_SRC_MODULES=	glapi main math vbo tnl shader swrast slang ss
+MESA_SRC_MODULES=	glapi main math vbo tnl shader swrast slang ss common
 
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/main \
 		-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
@@ -17,9 +17,11 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/main \
 		-I${X11SRCDIR.MesaLib}/include \
 		-I${DESTDIR}${X11INCDIR}/X11
 
+
 CPPFLAGS+=	${X11FLAGS.THREADLIB} \
 		-DPTHREADS -D_NETBSD_SOURCE -DUSE_EXTERNAL_DXTN_LIB=1 \
-		-DHAVE_ALIAS
+		-DHAVE_ALIAS -DIN_DRI_DRIVER
+#CPPFLAGS+=	-DGLX_DIRECT_RENDERING -DGLX_INDIRECT_RENDERING -DHAVE_POSIX_MEMALIGN
 CFLAGS+=	-pthread
 
 .include "../../libOSMesa/libmesa.mk"
@@ -27,5 +29,7 @@ CFLAGS+=	-pthread
 .include <bsd.x11.mk>
 
 LIBDIR=		${X11USRLIBDIR}/modules/dri
+
+#LIBDPLIBS+=	GL	${.CURDIR}/../../libGL
 
 .include <bsd.lib.mk>
