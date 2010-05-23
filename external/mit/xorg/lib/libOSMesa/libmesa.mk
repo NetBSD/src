@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.4 2009/06/16 00:26:11 mrg Exp $
+#	$NetBSD: libmesa.mk,v 1.5 2010/05/23 21:31:53 mrg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -24,6 +24,7 @@ SRCS.main= \
 	colortab.c \
 	context.c \
 	convolve.c \
+	cpuinfo.c \
 	debug.c \
 	depth.c \
 	depthstencil.c \
@@ -39,6 +40,7 @@ SRCS.main= \
 	feedback.c \
 	ffvertex_prog.c \
 	fog.c \
+	formats.c \
 	framebuffer.c \
 	get.c \
 	getstring.c \
@@ -61,18 +63,23 @@ SRCS.main= \
 	rastpos.c \
 	rbadaptors.c \
 	readpix.c \
+	remap.c \
 	renderbuffer.c \
 	scissor.c \
 	shaders.c \
+	shared.c \
 	state.c \
 	stencil.c \
+	syncobj.c \
 	texcompress.c \
 	texcompress_s3tc.c \
 	texcompress_fxt1.c \
 	texenv.c \
 	texenvprogram.c \
+	texfetch.c \
 	texformat.c \
 	texgen.c \
+	texgetimage.c \
 	teximage.c \
 	texobj.c \
 	texparam.c \
@@ -80,7 +87,16 @@ SRCS.main= \
 	texstate.c \
 	texstore.c \
 	varray.c \
+	viewport.c \
 	vtxfmt.c
+
+# GL API sources
+PATHS.glapi=	glapi main
+SRCS.glapi= \
+	dispatch.c \
+	glapi.c \
+	glapi_getproc.c \
+	glthread.c
 
 # Math sources
 PATHS.math=	math
@@ -91,11 +107,13 @@ SRCS.math= \
 	m_eval.c \
 	m_matrix.c \
 	m_translate.c \
-	m_vector.c \
+	m_vector.c
+
+SRCS.math+= \
 	m_xform.c
 
 # Software raster sources
-PATHS.swrast=	swrast swrast_setup
+PATHS.swrast=		swrast swrast_setup
 INCLUDES.swrast=	shader
 SRCS.swrast= \
 	s_aaline.c \
@@ -106,7 +124,7 @@ SRCS.swrast= \
 	s_bitmap.c \
 	s_blend.c \
 	s_blit.c \
-	s_buffers.c \
+	s_clear.c \
 	s_copypix.c \
 	s_context.c \
 	s_depth.c \
@@ -114,7 +132,6 @@ SRCS.swrast= \
 	s_feedback.c \
 	s_fog.c \
 	s_fragprog.c \
-	s_imaging.c \
 	s_lines.c \
 	s_logic.c \
 	s_masking.c \
@@ -124,15 +141,14 @@ SRCS.swrast= \
 	s_stencil.c \
 	s_texcombine.c \
 	s_texfilter.c \
-	s_texstore.c \
 	s_triangle.c \
 	s_zoom.c
 
 # swrast_setup
-.PATH:		${X11SRCDIR.MesaLib}/src/mesa/swrast_setup
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/swrast_setup
 SRCS.ss= \
 	ss_context.c \
-	ss_triangle.c
+	ss_triangle.c 
 
 # TNL sources
 PATHS.tnl=	tnl
@@ -155,7 +171,7 @@ SRCS.tnl= \
 	t_vp_build.c \
 	t_vertex.c \
 	t_vertex_sse.c \
-	t_vertex_generic.c
+	t_vertex_generic.c 
 
 # VBO sources
 PATHS.vbo=	vbo
@@ -173,73 +189,121 @@ SRCS.vbo= \
 	vbo_save.c \
 	vbo_save_api.c \
 	vbo_save_draw.c \
-	vbo_save_loopback.c
+	vbo_save_loopback.c 
 
 COPTS.vbo_save_draw.c=	-Wno-error
 
+# statetracker
+
 # Shader sources
-PATHS.shader=	shader shader/grammar
+PATHS.shader=		shader shader/grammar
 INCLUDES.shader=	shader/slang shader/grammar
 SRCS.shader= \
 	arbprogparse.c \
 	arbprogram.c \
 	atifragshader.c \
 	grammar_mesa.c \
+	hash_table.c \
+	lex.yy.c \
 	nvfragparse.c \
 	nvprogram.c \
 	nvvertparse.c \
 	program.c \
+	program_parse.tab.c \
+	program_parse_extra.c \
 	prog_cache.c \
-	prog_debug.c \
 	prog_execute.c \
 	prog_instruction.c \
 	prog_noise.c \
+	prog_optimize.c \
 	prog_parameter.c \
+	prog_parameter_layout.c \
 	prog_print.c \
 	prog_statevars.c \
 	prog_uniform.c \
 	programopt.c \
-	shader_api.c \
+	symbol_table.c \
+	shader_api.c
 
 # Shader language sources
 PATHS.slang=	shader/slang
 INCLUDES.slang=	shader shader/grammar
 SRCS.slang= \
-	slang_builtin.c \
-	slang_codegen.c \
-	slang_compile.c \
-	slang_compile_function.c \
-	slang_compile_operation.c \
-	slang_compile_struct.c \
-	slang_compile_variable.c \
-	slang_emit.c \
-	slang_ir.c \
-	slang_label.c \
-	slang_link.c \
-	slang_log.c \
-	slang_mem.c \
-	slang_preprocess.c \
-	slang_print.c \
-	slang_simplify.c \
-	slang_storage.c \
-	slang_typeinfo.c \
-	slang_vartable.c \
+	slang_builtin.c	\
+	slang_codegen.c	\
+	slang_compile.c	\
+	slang_compile_function.c	\
+	slang_compile_operation.c	\
+	slang_compile_struct.c	\
+	slang_compile_variable.c	\
+	slang_emit.c	\
+	slang_ir.c	\
+	slang_label.c	\
+	slang_link.c	\
+	slang_log.c	\
+	slang_mem.c	\
+	slang_preprocess.c	\
+	slang_print.c	\
+	slang_simplify.c	\
+	slang_storage.c	\
+	slang_typeinfo.c	\
+	slang_vartable.c	\
 	slang_utility.c
 
-# GL API sources
-PATHS.glapi=	glapi main
-SRCS.glapi= \
-	dispatch.c \
-	glapi.c \
-	glapi_getproc.c \
-	glthread.c
+.if 0
+ASM_C_SOURCES =	\
+	x86/common_x86.c \
+	x86/x86_xform.c \
+	x86/3dnow.c \
+	x86/sse.c \
+	x86/rtasm/x86sse.c \
+	sparc/sparc.c \
+	ppc/common_ppc.c \
+	x86-64/x86-64.c
+
+X86_SOURCES =			\
+	x86/common_x86_asm.S	\
+	x86/x86_xform2.S	\
+	x86/x86_xform3.S	\
+	x86/x86_xform4.S	\
+	x86/x86_cliptest.S	\
+	x86/mmx_blend.S		\
+	x86/3dnow_xform1.S	\
+	x86/3dnow_xform2.S	\
+	x86/3dnow_xform3.S	\
+	x86/3dnow_xform4.S	\
+	x86/3dnow_normal.S	\
+	x86/sse_xform1.S	\
+	x86/sse_xform2.S	\
+	x86/sse_xform3.S	\
+	x86/sse_xform4.S	\
+	x86/sse_normal.S	\
+	x86/read_rgba_span_x86.S
+
+X86_API =			\
+	x86/glapi_x86.S
+
+X86-64_SOURCES =		\
+	x86-64/xform4.S
+
+X86-64_API =			\
+	x86-64/glapi_x86-64.S
+
+SPARC_SOURCES =			\
+	sparc/clip.S		\
+	sparc/norm.S		\
+	sparc/xform.S
+
+SPARC_API =			\
+	sparc/glapi_sparc.S
+.endif
 
 # Common driver sources
 PATHS.common=	drivers/common
 INCLUDES.common=	shader
 SRCS.common= \
-	driverfuncs.c
-
+	driverfuncs.c	\
+	meta.c
 
 # OSMesa driver sources
 PATHS.osmesa=	drivers/osmesa
