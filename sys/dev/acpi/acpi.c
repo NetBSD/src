@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.195 2010/05/12 16:11:05 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.196 2010/05/23 22:05:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.195 2010/05/12 16:11:05 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.196 2010/05/23 22:05:54 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1153,7 +1153,7 @@ acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
 			    ad->ad_pciinfo->ap_downbus);
 	}
 
-	aprint_normal("\n\n");
+	aprint_normal("\n");
 
 	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
 	    acpi_print_tree(child, level + 1);
