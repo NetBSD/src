@@ -1,4 +1,4 @@
-/*	$NetBSD: firewirereg.h,v 1.12 2010/05/23 02:24:40 christos Exp $	*/
+/*	$NetBSD: firewirereg.h,v 1.13 2010/05/23 18:56:58 christos Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -141,7 +141,6 @@ struct firewire_comm {
 	uint32_t csr_arc[CSRSIZE/4];
 #define CROMSIZE 0x400
 	uint32_t *config_rom;
-	uint32_t *new_rom;
 	struct crom_src_buf *crom_src_buf;
 	struct crom_src *crom_src;
 	struct crom_chunk *crom_root;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcivar.h,v 1.31 2010/05/23 02:25:50 christos Exp $	*/
+/*	$NetBSD: fwohcivar.h,v 1.32 2010/05/23 18:56:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi SHimokawa
@@ -66,7 +66,6 @@ struct fwohci_softc {
 	} arrq, arrs, atrq, atrs, it[OHCI_DMA_ITCH], ir[OHCI_DMA_IRCH];
 	u_int maxrec;
 	uint32_t *sid_buf;
-	uint32_t *sid_tmp_buf;
 	struct fwdma_alloc sid_dma;
 	struct fwdma_alloc crom_dma;
 	struct fwdma_alloc dummy_dma;
