@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.36 2010/05/22 23:03:13 mrg Exp $
+# $NetBSD: shl.mi,v 1.37 2010/05/23 04:26:19 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -107,6 +107,6 @@
 ./usr/X11R7/lib/libglut.so.4.0			-unknown-		xorg
 ./usr/X11R7/lib/liblbxutil.so.2.0		-obsolete-		obsolete
 ./usr/X11R7/lib/libpciaccess.so.0.2		-unknown-		xorg
-./usr/X11R7/lib/libpixman-1.so.2.0		-unknown-		xorg
+./usr/X11R7/lib/libpixman-1.so.2.1		-unknown-		xorg
 ./usr/X11R7/lib/libxkbfile.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libxkbui.so.2.0			-unknown-		xorg
