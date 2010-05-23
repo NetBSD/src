@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2010/05/22 22:50:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2010/05/23 01:19:34 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -100,7 +100,7 @@ MKLINT=no
 
 PKGCONFIG=	gl
 PKGDIST.gl=	${X11SRCDIR.MesaLib}/src/mesa
-PKGCONFIG_VERSION.gl=	7.4.2
+PKGCONFIG_VERSION.gl=	7.4.4
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

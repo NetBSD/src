@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/06/23 04:48:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/05/23 01:19:34 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -74,7 +74,7 @@ DPADD+=		${LIBM}
 
 PKGCONFIG=	glut
 PKGDIST.glut=	${X11SRCDIR.MesaGLUT}/src/glut/glx
-PKGCONFIG_VERSION.glut=	7.4.2
+PKGCONFIG_VERSION.glut=	7.4.4
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
