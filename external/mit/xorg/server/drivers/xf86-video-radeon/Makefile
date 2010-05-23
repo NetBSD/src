@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2010/05/22 23:04:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2010/05/23 06:16:13 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,15 +16,17 @@ SRCS.DRI=	radeon_dri.c
 CPPFLAGS+=	${X11FLAGS.DRI}
 .endif
 
+#RADEON_KMS_SRCS=radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
+
 SRCS.EXA=	radeon_exa.c r600_exa.c r6xx_accel.c \
 		r600_textured_videofuncs.c r600_shader.c
 
-SRCS=	radeon_accel.c radeon_cursor.c radeon_dga.c \
+SRCS=	radeon_accel.c radeon_cursor.c \
 	radeon_driver.c radeon_video.c radeon_bios.c \
 	radeon_mm_i2c.c radeon_vip.c radeon_misc.c radeon_probe.c \
 	legacy_crtc.c legacy_output.c radeon_textured_video.c \
 	radeon_crtc.c radeon_output.c radeon_modes.c radeon_tv.c \
-	radeon_legacy_memory.c \
+	radeon_legacy_memory.c radeon_pm.c \
 	$(SRCS.ATOMBIOS) radeon_atombios.c radeon_atomwrapper.c \
 	$(SRCS.DRI) $(SRCS.EXA) atombios_output.c atombios_crtc.c
 MAN=	radeon.4
