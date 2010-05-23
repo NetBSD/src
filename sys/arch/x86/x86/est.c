@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.13 2009/10/05 23:59:31 rmind Exp $	*/
+/*	$NetBSD: est.c,v 1.14 2010/05/23 22:06:38 christos Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -81,7 +81,7 @@
 /* #define EST_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.13 2009/10/05 23:59:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.14 2010/05/23 22:06:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1125,25 +1125,23 @@ est_init_main(int vendor)
 	if (idhi == 0 || idlo == 0 || cur == 0 ||
 	    ((cur >> 8) & 0xff) < ((idlo >> 8) & 0xff) ||
 	    ((cur >> 8) & 0xff) > ((idhi >> 8) & 0xff)) {
-		aprint_debug("%s: strange msr value 0x%016llx\n", __func__, msr);
+		aprint_debug("%s: strange msr value 0x%016llx\n",
+		    __func__, msr);
 		return;
 	}
 #endif
 
 #ifdef __amd64__
-	if (crlo == 0 || crhi == crlo) {
-		aprint_debug("%s: crlo == 0 || crhi == crlo\n", __func__);
-		return;
-	}
-
-	if (crhi == 0 || crcur == 0 || crlo > crhi ||
-	    crcur < crlo || crcur > crhi) {
+	if (crlo == 0 || crhi == 0 || crcur == 0 || crhi == crlo ||
+	    crlo > crhi || crcur < crlo || crcur > crhi) {
 		/*
 		 * Do complain about other weirdness, because we first want to
 		 * know about it, before we decide what to do with it
 		 */
 		aprint_debug("%s: strange msr value 0x%" PRIu64 "\n",
 		    __func__, msr);
+		aprint_debug("%s: crhi=%" PRIu8 ", crlo=%" PRIu8 ", crcur=%"
+		    PRIu8 "\n", __func__, crhi, crlo, crcur);
 		return;
 	}
 #endif
