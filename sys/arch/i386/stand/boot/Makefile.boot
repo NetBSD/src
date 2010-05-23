@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.42 2009/11/20 17:28:19 dsl Exp $
+# $NetBSD: Makefile.boot,v 1.43 2010/05/23 13:59:12 veego Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -135,7 +135,7 @@ cleanlibdir:
 LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 # LIBLIST= ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN}
 
-CLEANFILES+= ${PROG}.tmp ${PROG}.map vers.c
+CLEANFILES+= ${PROG}.tmp ${PROG}.map ${PROG}.syms vers.c
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${VERSIONFILE} x86 ${NEWVERSWHAT}
