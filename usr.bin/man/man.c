@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.39 2009/10/07 08:30:31 cegger Exp $	*/
+/*	$NetBSD: man.c,v 1.40 2010/05/23 22:04:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.39 2009/10/07 08:30:31 cegger Exp $");
+__RCSID("$NetBSD: man.c,v 1.40 2010/05/23 22:04:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: man.c,v 1.39 2009/10/07 08:30:31 cegger Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+#include <locale.h>
 
 #include "manconf.h"
 #include "pathnames.h"
@@ -98,6 +99,8 @@ struct manstate {
 
 	/* other misc stuff */
 	const char *pager;	/* pager to use */
+	const char *machine;	/* machine */
+	const char *machclass;	/* machine class */
 	size_t pagerlen;	/* length of the above */
 };
 
@@ -112,7 +115,9 @@ static void	 how(char *);
 static void	 jump(char **, char *, char *);
 static int	 manual(char *, struct manstate *, glob_t *);
 static void	 onsig(int);
-static void	 usage(void);
+static void	 usage(void) __attribute__((__noreturn__));
+static void	 addpath(struct manstate *, const char *, size_t, const char *);
+static const char *getclass(const char *);
 
 /*
  * main function
@@ -122,12 +127,13 @@ main(int argc, char **argv)
 {
 	static struct manstate m = { 0 }; 	/* init to zero */
 	int ch, abs_section, found;
-	const char *machine;
 	ENTRY *esubd, *epath;
-	char *p, **ap, *cmd, buf[MAXPATHLEN * 2];
+	char *p, **ap, *cmd;
 	size_t len;
 	glob_t pg;
 
+	setprogname(argv[0]);
+	setlocale(LC_ALL, "");
 	/*
 	 * parse command line...
 	 */
@@ -191,15 +197,15 @@ main(int argc, char **argv)
 	 */
 	config(m.conffile);    /* exits on error ... */
 
-	if ((machine = getenv("MACHINE")) == NULL) {
+	if ((m.machine = getenv("MACHINE")) == NULL) {
 		struct utsname utsname;
 
-		if (uname(&utsname) == -1) {
-			perror("uname");
-			exit(EXIT_FAILURE);
-		}
-		machine = utsname.machine;
+		if (uname(&utsname) == -1)
+			err(EXIT_FAILURE, "uname");
+		m.machine = utsname.machine;
 	}
+
+	m.machclass = getclass(m.machine);
 
 	if (!m.cat && !m.how && !m.where) {  /* if we need a pager ... */
 		if (!isatty(STDOUT_FILENO)) {
@@ -315,38 +321,21 @@ main(int argc, char **argv)
 			len = strlen(p);
 			if (len < 1)
 				continue;
-			TAILQ_FOREACH(esubd, &m.subdirs->entrylist, q) {
-				snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-					 p, (p[len-1] == '/') ? "" : "/",
-					 esubd->s, machine);
-				if (addentry(m.mymanpath, buf, 0) < 0)
-					errx(EXIT_FAILURE, "malloc failed");
-			}
+			TAILQ_FOREACH(esubd, &m.subdirs->entrylist, q)
+				addpath(&m, p, len, esubd->s);
 		}
 
 	} else {
 
 		TAILQ_FOREACH(epath, &m.defaultpath->entrylist, q) {
 			/* handle trailing "/" magic here ... */
-		  	if (abs_section &&
-			    epath->s[epath->len - 1] != '/') {
-
-				(void)snprintf(buf, sizeof(buf),
-				    "%s{/%s,}", epath->s, machine);
-				if (addentry(m.mymanpath, buf, 0) < 0)
-					errx(EXIT_FAILURE, "malloc failed");
+		  	if (abs_section && epath->s[epath->len - 1] != '/') {
+				addpath(&m, "", 1, epath->s);
 				continue;
 			}
 
-			TAILQ_FOREACH(esubd, &m.subdirs->entrylist, q) {
-				snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-					 epath->s, 
-					 (epath->s[epath->len-1] == '/') ? ""
-									 : "/",
-					 esubd->s, machine);
-				if (addentry(m.mymanpath, buf, 0) < 0)
-					errx(EXIT_FAILURE, "malloc failed");
-			}
+			TAILQ_FOREACH(esubd, &m.subdirs->entrylist, q)
+				addpath(&m, epath->s, epath->len, esubd->s);
 		}
 
 	}
@@ -363,14 +352,8 @@ main(int argc, char **argv)
 			len = strlen(p);
 			if (len < 1)
 				continue;
-			TAILQ_FOREACH(esubd, &m.subdirs->entrylist, q) {
-				snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-					 p, (p[len-1] == '/') ? "" : "/",
-					 esubd->s, machine);
-				/* add at front */
-				if (addentry(m.mymanpath, buf, 1) < 0)
-					errx(EXIT_FAILURE, "malloc failed");
-			}
+			TAILQ_FOREACH(esubd, &m.subdirs->entrylist, q)
+				addpath(&m, p, len, esubd->s);
 		}
 
 	}
@@ -917,8 +900,7 @@ jump(char **argv, char *flag, char *name)
 	for (; *arg; ++arg)
 		arg[0] = arg[1];
 	execvp(name, argv);
-	(void)fprintf(stderr, "%s: Command not found.\n", name);
-	exit(EXIT_FAILURE);
+	err(EXIT_FAILURE, "Cannot execute `%s'", name);
 }
 
 /* 
@@ -967,6 +949,28 @@ cleanup(void)
 	return rval;
 }
 
+static const char *
+getclass(const char *machine)
+{
+	char buf[BUFSIZ];
+	TAG *t;
+	snprintf(buf, sizeof(buf), "_%s", machine);
+	t = gettag(buf, 0);
+	return t != NULL && t->s ? t->s : NULL;
+}
+
+static void
+addpath(struct manstate *m, const char *dir, size_t len, const char *sub)
+{
+	char buf[2 * MAXPATHLEN + 1];
+	(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,%s%s%s}",
+	     dir, (dir[len - 1] == '/') ? "" : "/", sub, m->machine,
+	     m->machclass ? "/" : "", m->machclass ? m->machclass : "",
+	     m->machclass ? "," : "");
+	if (addentry(m->mymanpath, buf, 0) < 0)
+		errx(EXIT_FAILURE, "malloc failed");
+}
+
 /*
  * usage --
  *	print usage message and die
@@ -974,10 +978,10 @@ cleanup(void)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-acw|-h] [-C cfg] [-M path] "
+	(void)fprintf(stderr, "Usage: %s [-acw|-h] [-C cfg] [-M path] "
 	    "[-m path] [-S srch] [[-s] sect] name ...\n", getprogname());
 	(void)fprintf(stderr, 
-	    "usage: %s -k [-C cfg] [-M path] [-m path] keyword ...\n", 
+	    "Usage: %s -k [-C cfg] [-M path] [-m path] keyword ...\n", 
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
