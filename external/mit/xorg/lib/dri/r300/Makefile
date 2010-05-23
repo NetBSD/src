@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2010/05/23 21:31:53 mrg Exp $
+# $NetBSD: Makefile,v 1.5 2010/05/23 23:21:30 mrg Exp $
 
 MODULE=	r300
 
@@ -46,6 +46,8 @@ SRCS+= \
 	radeon_cs_space_drm.c \
 	radeon_bo.c \
 	radeon_cs.c
+
+LIBDPLIBS+=	drm_radeon	${.CURDIR}/../../libdrm_radeon
 
 #	../common/mm.c \
 #	../common/vblank.c \
