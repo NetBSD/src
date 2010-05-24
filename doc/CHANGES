@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1395 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1396 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -611,3 +611,12 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	atf(7): Import 0.8.  [jmmv 20100508]
 	bozohttpd: Update to bozohttpd-20100509.  [mrg 20100509]
 	btmagic(4): Added Apple Magic Mouse driver.  [plunky 20100522]
+	X11: Updated many packages, notably: Mesa 7.7.1, xextproto 7.1.1,
+		libXext 1.1.1, libXi 1.3 (XInput2), libX11 1.3.3, pixman 0.18.2, 
+		xinput 1.5.1, xf86-input-keyboard 1.4.0, xf86-input-mouse 1.5.0,
+		xf86-video-ati 6.13.0, xf86-video-mga 1.4.12,
+		xf86-video-nv 2.1.17, xf86-video-siliconmotion 1.7.4,
+		xf86-video-vesa 2.3.0, xf86-video-vmware-11.0.1.  [mrg 20100523]
+	radeondrm(4): Ported across several updates from FreeBSD drm, Mesa 7.7.1
+		r600 (Radeon HD 3000/4000 series) driver now works.
+		[mrg 20100523]
