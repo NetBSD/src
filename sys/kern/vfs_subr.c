@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.400 2010/04/30 10:03:13 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.401 2010/05/24 03:50:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.400 2010/04/30 10:03:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.401 2010/05/24 03:50:25 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.400 2010/04/30 10:03:13 pooka Exp $")
 #include <sys/atomic.h>
 #include <sys/kthread.h>
 #include <sys/wapbl.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -2617,6 +2618,11 @@ done:
 		initproc->p_cwdi->cwdi_cdir = rootvnode;
 		vref(initproc->p_cwdi->cwdi_cdir);
 		initproc->p_cwdi->cwdi_rdir = NULL;
+		/*
+		 * Enable loading of modules from the filesystem
+		 */
+		module_load_vfs_init();
+
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.65 2010/05/02 11:01:03 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.66 2010/05/24 03:50:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.65 2010/05/02 11:01:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.66 2010/05/24 03:50:25 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -97,15 +97,25 @@ static void	module_enqueue(module_t *);
 
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
-int		module_eopnotsupp(void);
+int		module_eopnotsupp(const char *, int, bool, module_t *,
+				  prop_dictionary_t *);
+
+int		(*module_load_vfs_vec)(const char *, int, bool, module_t *,
+				       prop_dictionary_t *);
 
 int
-module_eopnotsupp(void)
+module_eopnotsupp(const char *name, int flags, bool autoload, module_t *mod,
+		  prop_dictionary_t *filedictp)
 {
-
 	return EOPNOTSUPP;
 }
 __weak_alias(module_load_vfs,module_eopnotsupp);
+
+void
+module_load_vfs_init(void)
+{
+	module_load_vfs_vec = module_load_vfs;
+}
 
 /*
  * module_error:
@@ -314,6 +324,8 @@ module_init(void)
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&module_thread_cv, "modunload");
 	mutex_init(&module_thread_lock, MUTEX_DEFAULT, IPL_NONE);
+	module_load_vfs_vec = module_eopnotsupp;
+
 #ifdef MODULAR	/* XXX */
 	module_init_md();
 #endif
@@ -846,7 +858,8 @@ module_do_load(const char *name, bool isdep, int flags,
 			return ENOMEM;
 		}
 
-		error = module_load_vfs(name, flags, autoload, mod, &filedict);
+		error = (*module_load_vfs_vec)(name, flags, autoload, mod,
+					       &filedict);
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
 			depth--;
