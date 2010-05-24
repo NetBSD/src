@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.22 2010/04/26 23:18:51 pooka Exp $	*/
+/*	$NetBSD: module.h,v 1.23 2010/05/24 03:50:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -135,11 +135,15 @@ int	module_hold(const char *);
 void	module_rele(const char *);
 int	module_find_section(const char *, void **, size_t *);
 void	module_thread_kick(void);
+void	module_load_vfs_init(void);
 
 void	module_whatis(uintptr_t, void (*)(const char *, ...));
 void	module_print_list(void (*)(const char *, ...));
 
 #ifdef _MODULE_INTERNAL
+extern
+int	(*module_load_vfs_vec)(const char *, int, bool, module_t *,
+			       prop_dictionary_t *);
 int	module_load_vfs(const char *, int, bool, module_t *,
 			prop_dictionary_t *);
 void	module_error(const char *, ...)
