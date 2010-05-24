@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.13 2010/04/12 14:12:43 ahoka Exp $
+# $NetBSD: mi,v 1.14 2010/05/24 20:29:41 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -80,6 +80,8 @@
 ./@MODULEDIR@/null/null.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/overlay				base-kernel-modules	kmod
 ./@MODULEDIR@/overlay/overlay.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/pciverbose			base-kernel-modules	kmod
+./@MODULEDIR@/pciverbose/pciverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/pf				base-kernel-modules	kmod
 ./@MODULEDIR@/pf/pf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/portal				base-obsolete		obsolete
