@@ -621,6 +621,9 @@ typedef struct {
 	int			flags;
 	void *			vaddr;
 } pci_map_data_t;
+
+/* XXX */
+#define readl(va) (*(volatile u_int32_t *) (va))
 #endif
 
 typedef struct drm_local_map {
