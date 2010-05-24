@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.5 2010/05/24 15:34:49 pgoyette Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.6 2010/05/24 16:37:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.5 2010/05/24 15:34:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.6 2010/05/24 16:37:17 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.5 2010/05/24 15:34:49 pgoyette
 
 static int	module_load_plist_vfs(const char *, const bool,
 				      prop_dictionary_t *);
-int	(*module_load_vfs_vec)(const char *, int, bool, module_t *,
-			       prop_dictionary_t *) = (void *)eopnotsupp;
 
 void
 module_load_vfs_init(void)
