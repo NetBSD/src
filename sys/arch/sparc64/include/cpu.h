@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90 2010/03/28 05:24:00 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.91 2010/05/24 09:49:17 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -248,7 +248,7 @@ void	cpu_boot_secondary_processors(void);
  *	broadcast - send to to all cpus but ourselves
  *	send - send to just this cpu
  */
-typedef void (* ipifunc_t)(void *);
+typedef void (* ipifunc_t)(void *, void *);
 
 void	sparc64_multicast_ipi(sparc64_cpuset_t, ipifunc_t, uint64_t, uint64_t);
 void	sparc64_broadcast_ipi(ipifunc_t, uint64_t, uint64_t);
