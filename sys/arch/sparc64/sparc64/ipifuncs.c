@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.36 2010/03/28 05:24:00 mrg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.37 2010/05/24 09:49:17 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.36 2010/03/28 05:24:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.37 2010/05/24 09:49:17 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,19 +67,19 @@ static void	sparc64_ipi_error(const char *, sparc64_cpuset_t, sparc64_cpuset_t);
 /*
  * These are the "function" entry points in locore.s to handle IPI's.
  */
-void	sparc64_ipi_halt(void *);
-void	sparc64_ipi_pause(void *);
-void	sparc64_ipi_flush_pte_us(void *);
-void	sparc64_ipi_flush_pte_usiii(void *);
-void	sparc64_ipi_dcache_flush_page_us(void *);
-void	sparc64_ipi_dcache_flush_page_usiii(void *);
-void	sparc64_ipi_blast_dcache(void *);
+void	sparc64_ipi_halt(void *, void *);
+void	sparc64_ipi_pause(void *, void *);
+void	sparc64_ipi_flush_pte_us(void *, void *);
+void	sparc64_ipi_flush_pte_usiii(void *, void *);
+void	sparc64_ipi_dcache_flush_page_us(void *, void *);
+void	sparc64_ipi_dcache_flush_page_usiii(void *, void *);
+void	sparc64_ipi_blast_dcache(void *, void *);
 
 /*
  * Process cpu stop-self event.
  */
 void
-sparc64_ipi_halt_thiscpu(void *arg)
+sparc64_ipi_halt_thiscpu(void *arg, void *arg2)
 {
 	extern void prom_printf(const char *fmt, ...);
 
