@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm,v 1.2 2009/06/23 04:42:58 mrg Exp $
+#	$NetBSD: files.drm,v 1.3 2010/05/24 01:57:06 mrg Exp $
 
 # direct rendering modules
 define	drmbase
@@ -92,7 +92,9 @@ attach	radeondrm at drm
 file	external/bsd/drm/dist/bsd-core/radeon_drv.c		radeondrm
 file	external/bsd/drm/dist/shared-core/r300_cmdbuf.c		radeondrm
 file	external/bsd/drm/dist/shared-core/r600_cp.c		radeondrm
+file	external/bsd/drm/dist/shared-core/r600_blit.c		radeondrm
 file	external/bsd/drm/dist/shared-core/radeon_cp.c		radeondrm
+file	external/bsd/drm/dist/shared-core/radeon_cs.c		radeondrm
 file	external/bsd/drm/dist/shared-core/radeon_irq.c		radeondrm
 file	external/bsd/drm/dist/shared-core/radeon_mem.c		radeondrm
 file	external/bsd/drm/dist/shared-core/radeon_state.c	radeondrm
