@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.163 2010/04/29 23:12:21 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.164 2010/05/24 21:04:49 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.163 2010/04/29 23:12:21 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.164 2010/05/24 21:04:49 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.163 2010/04/29 23:12:21 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.164 2010/05/24 21:04:49 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -510,11 +510,11 @@ Parse_Error(int type, const char *fmt, ...)
  *	variables, print the message and exit(1) (for .error) or just print
  *	a warning if the directive is malformed.
  */
-static void
+static Boolean
 ParseMessage(char *line)
 {
     int mtype;
-    
+
     switch(*line) {
     case 'i':
 	mtype = 0;
@@ -527,11 +527,13 @@ ParseMessage(char *line)
 	break;
     default:
 	Parse_Error(PARSE_WARNING, "invalid syntax: \".%s\"", line);
-	return;
+	return FALSE;
     }
 
-    while (!isspace((u_char)*line))
+    while (isalpha((u_char)*line))
 	line++;
+    if (!isspace((u_char)*line))
+	return FALSE;			/* not for us */
     while (isspace((u_char)*line))
 	line++;
 
@@ -543,6 +545,7 @@ ParseMessage(char *line)
 	/* Terminate immediately. */
 	exit(1);
     }
+    return TRUE;
 }
 
 /*-
@@ -2567,8 +2570,8 @@ Parse_File(const char *name, int fd)
 		} else if (strncmp(cp, "info", 4) == 0 ||
 			   strncmp(cp, "error", 5) == 0 ||
 			   strncmp(cp, "warning", 7) == 0) {
-		    ParseMessage(cp);
-		    continue;
+		    if (ParseMessage(cp))
+			continue;
 		}		    
 	    }
 
