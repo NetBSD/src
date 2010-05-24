@@ -1,4 +1,4 @@
-.\"	$NetBSD: expr.1,v 1.29 2008/04/30 13:10:46 martin Exp $
+.\"	$NetBSD: expr.1,v 1.30 2010/05/24 00:29:30 joerg Exp $
 .\"
 .\" Copyright (c) 2000,2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@ Characters special to the command interpreter must be escaped.
 Operators are listed below in order of increasing precedence.
 Operators with equal precedence are grouped within { } symbols.
 .Bl -tag -width indent
-.It Ar expr1 Li | Ar expr2
+.It Ar expr1 Li \&| Ar expr2
 Returns the evaluation of
 .Ar expr1
 if it is neither an empty string nor zero;
@@ -72,7 +72,7 @@ or 0 if the relation is false.
 Returns the results of addition or subtraction of integer-valued arguments.
 .It Ar expr1 Li "{*, /, %}" Ar expr2
 Returns the results of multiplication, integer division, or remainder of integer-valued arguments.
-.It Ar expr1 Li : Ar expr2
+.It Ar expr1 Li \&: Ar expr2
 The
 .Dq \&:
 operator matches
@@ -100,7 +100,7 @@ Parentheses are used for grouping in the usual manner.
 .Pp
 Additionally, the following keywords are recognized:
 .Bl -tag -width indent
-.It length Ar expr 
+.It length Ar expr
 Returns the length of the specified string in bytes.
 .El
 .Pp
@@ -126,7 +126,7 @@ compare operators
 .It
 .Dq \*[Am]
 .It
-.Dq \Z'\*[tty-rn]'|
+.Dq \&|
 .El
 .Sh EXIT STATUS
 The
@@ -159,38 +159,6 @@ in variable a.
 The following example returns the number of characters in variable a.
 .Dl expr $a Li : '.*'
 .El
-.Sh STANDARDS
-The
-.Nm
-utility conforms to
-.St -p1003.2 .
-The
-.Ar length
-keyword is an extension for compatibility with GNU
-.Nm .
-.Sh AUTHORS
-Original implementation was written by
-.An J.T. Conklin
-.Aq jtc@NetBSD.org .
-It was rewritten for
-.Nx 1.6
-by
-.An Jaromir Dolecek
-.Aq jdolecek@NetBSD.org .
-.Sh NOTES
-The empty string
-.Dq
-cannot be matched with the intuitive:
-.Bd -literal -offset indent
-expr '' : '$'
-.Ed
-.Pp
-The reason is that the returned number of matched characters (zero)
-is indistinguishable from a failed match, so this returns failure.
-To match the empty string, use something like:
-.Bd -literal -offset indent
-expr x'' : 'x$'
-.Ed
 .Sh COMPATIBILITY
 This implementation of
 .Nm
@@ -249,3 +217,35 @@ Although
 handles both cases correctly, you should not depend on this behavior
 for portability reasons and avoid passing bare '--' as first
 argument.
+.Sh STANDARDS
+The
+.Nm
+utility conforms to
+.St -p1003.2 .
+The
+.Ar length
+keyword is an extension for compatibility with GNU
+.Nm .
+.Sh AUTHORS
+Original implementation was written by
+.An J.T. Conklin
+.Aq jtc@NetBSD.org .
+It was rewritten for
+.Nx 1.6
+by
+.An Jaromir Dolecek
+.Aq jdolecek@NetBSD.org .
+.Sh NOTES
+The empty string
+.Do Dc
+cannot be matched with the intuitive:
+.Bd -literal -offset indent
+expr '' : '$'
+.Ed
+.Pp
+The reason is that the returned number of matched characters (zero)
+is indistinguishable from a failed match, so this returns failure.
+To match the empty string, use something like:
+.Bd -literal -offset indent
+expr x'' : 'x$'
+.Ed
