@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.2 2010/05/23 19:54:17 martin Exp $	*/
+/*	$NetBSD: copy.S,v 1.3 2010/05/24 02:19:10 mrg Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -70,6 +70,7 @@
 #include <machine/ctlreg.h>
 #include <machine/asm.h>
 #include <machine/locore.h>
+#include <machine/psl.h>
 
 #include "ksyms.h"
 
