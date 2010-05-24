@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.50 2010/02/24 22:38:01 dyoung Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.51 2010/05/24 20:29:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.50 2010/02/24 22:38:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.51 2010/05/24 20:29:49 pgoyette Exp $");
 
 #include "ehci.h"
 
@@ -172,7 +172,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(pa->pa_id);
+	vendor = pci_findvendor_vec(pa->pa_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	if (vendor)
 		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));

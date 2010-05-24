@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.73 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: azalia.c,v 1.74 2010/05/24 20:29:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.73 2010/02/24 22:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.74 2010/05/24 20:29:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -342,8 +342,8 @@ azalia_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->pciid = pa->pa_id;
-	vendor = pci_findvendor(pa->pa_id);
-	name = pci_findproduct(pa->pa_id);
+	vendor = pci_findvendor_vec(pa->pa_id);
+	name = pci_findproduct_vec(pa->pa_id);
 	if (vendor != NULL && name != NULL) {
 		aprint_normal_dev(self, "host: %s %s (rev. %d)",
 		    vendor, name, PCI_REVISION(pa->pa_class));
