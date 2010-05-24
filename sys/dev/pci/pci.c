@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.127 2010/02/24 22:38:01 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.128 2010/05/24 20:29:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.127 2010/02/24 22:38:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.128 2010/05/24 20:29:41 pgoyette Exp $");
 
 #include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
@@ -106,7 +107,12 @@ pcirescan(device_t self, const char *ifattr, const int *locators)
 	KASSERT(ifattr && !strcmp(ifattr, "pci"));
 	KASSERT(locators);
 
+	pci_verbose_ctl(true);	/* Try to load the pciverbose module */
+
 	pci_enumerate_bus(sc, locators, NULL, NULL);
+
+	pci_verbose_ctl(false);	/* Now try to unload it */
+
 	return 0;
 }
 
