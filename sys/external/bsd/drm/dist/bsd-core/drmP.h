@@ -294,7 +294,7 @@ enum {
 
 #elif   defined(__NetBSD__)
 
-#define PAGE_ALIGN(addr)    ALIGN(addr)
+#define PAGE_ALIGN(addr)	round_page(addr)
 #define DRM_SUSER(p)    (kauth_cred_getsvuid((p)->p_cred) == 0)
 #define DRM_AGP_FIND_DEVICE()	agp_find_device(0)
 #ifdef MTRR_TYPE_WC
