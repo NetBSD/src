@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.6 2009/12/04 11:13:04 njoly Exp $ */
+/* $NetBSD: gcscehci.c,v 1.7 2010/05/24 20:29:49 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.6 2009/12/04 11:13:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.7 2010/05/24 20:29:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ gcscehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_bus.usbrev = USBREV_2_0;
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(pa->pa_id);
+	vendor = pci_findvendor_vec(pa->pa_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	if (vendor)
 		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));

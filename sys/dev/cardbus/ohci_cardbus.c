@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.36 2010/03/10 00:21:10 dyoung Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.37 2010/05/24 20:29:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.36 2010/03/10 00:21:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.37 2010/05/24 20:29:49 pgoyette Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -150,7 +150,7 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Figure out vendor for root hub descriptor. */
-	vendor = pci_findvendor(ca->ca_id);
+	vendor = pci_findvendor_vec(ca->ca_id);
 	sc->sc.sc_id_vendor = PCI_VENDOR(ca->ca_id);
 	if (vendor)
 		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
