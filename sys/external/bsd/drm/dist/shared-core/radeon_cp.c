@@ -1936,9 +1936,9 @@ void radeon_commit_ring(drm_radeon_private_t *dev_priv)
 
 	/* check if the ring is padded out to 16-dword alignment */
 
-	tail_aligned = dev_priv->ring.tail & 0xf;
+	tail_aligned = dev_priv->ring.tail & (RADEON_RING_ALIGN - 1);
 	if (tail_aligned) {
-		int num_p2 = 16 - tail_aligned;
+		int num_p2 = RADEON_RING_ALIGN - tail_aligned;
 
 		ring = dev_priv->ring.start;
 		/* pad with some CP_PACKET2 */
@@ -2031,6 +2031,8 @@ int radeon_driver_firstopen(struct drm_device *dev)
 
 	dev_priv->gart_info.table_size = RADEON_PCIGART_TABLE_SIZE;
 
+	DRM_SPININIT(&dev_priv->cs.cs_mutex, "cs_mtx");
+
 	ret = drm_addmap(dev, drm_get_resource_start(dev, 2),
 			 drm_get_resource_len(dev, 2), _DRM_REGISTERS,
 			 _DRM_READ_ONLY, &dev_priv->mmio);
@@ -2052,6 +2054,9 @@ int radeon_driver_unload(struct drm_device *dev)
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 
 	DRM_DEBUG("\n");
+
+	DRM_SPINUNINIT(&dev_priv->cs.cs_mutex);
+
 	drm_free(dev_priv, sizeof(*dev_priv), DRM_MEM_DRIVER);
 
 	dev->dev_private = NULL;
