@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.67 2010/05/24 15:34:48 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.68 2010/05/24 16:37:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.67 2010/05/24 15:34:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.68 2010/05/24 16:37:17 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -78,6 +78,8 @@ u_int		module_gen = 1;
 static kcondvar_t module_thread_cv;
 static kmutex_t module_thread_lock;
 static int	module_thread_ticks;
+int (*module_load_vfs_vec)(const char *, int, bool, module_t *,
+			   prop_dictionary_t *) = (void *)eopnotsupp; 
 
 static kauth_listener_t	module_listener;
 
