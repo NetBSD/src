@@ -67,12 +67,12 @@ __ops_create_sig_t *__ops_create_sig_new(void);
 void __ops_create_sig_delete(__ops_create_sig_t *);
 
 unsigned __ops_check_useridcert_sig(const __ops_pubkey_t *,
-			  const __ops_userid_t *,
+			  const uint8_t *,
 			  const __ops_sig_t *,
 			  const __ops_pubkey_t *,
 			  const uint8_t *);
 unsigned __ops_check_userattrcert_sig(const __ops_pubkey_t *,
-			  const __ops_userattr_t *,
+			  const __ops_data_t *,
 			  const __ops_sig_t *,
 			  const __ops_pubkey_t *,
 			  const uint8_t *);
@@ -90,7 +90,7 @@ unsigned __ops_check_hash_sig(__ops_hash_t *,
 			 const __ops_pubkey_t *);
 void __ops_sig_start_key_sig(__ops_create_sig_t *,
 				  const __ops_pubkey_t *,
-				  const __ops_userid_t *,
+				  const uint8_t *,
 				  __ops_sig_type_t);
 void __ops_start_sig(__ops_create_sig_t *,
 			const __ops_seckey_t *,

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.36 2010/05/21 14:28:44 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.37 2010/05/25 01:05:10 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -267,7 +267,7 @@ decrypt_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		return OPS_FINISHED;
 
 	case OPS_PARSER_ERROR:
-		fprintf(stderr, "parse error: %s\n", content->error.error);
+		fprintf(stderr, "parse error: %s\n", content->error);
 		return OPS_FINISHED;
 
 	case OPS_PTAG_CT_SECRET_KEY:
@@ -363,7 +363,7 @@ __ops_get_userid_count(const __ops_key_t *key)
 const uint8_t *
 __ops_get_userid(const __ops_key_t *key, unsigned subscript)
 {
-	return key->uids[subscript].userid;
+	return key->uids[subscript];
 }
 
 /**
@@ -396,21 +396,21 @@ __ops_is_key_supported(const __ops_key_t *key)
 \param src Source User ID
 \note If dst already has a userid, it will be freed.
 */
-static __ops_userid_t * 
-__ops_copy_userid(__ops_userid_t *dst, const __ops_userid_t *src)
+static uint8_t * 
+__ops_copy_userid(uint8_t **dst, const uint8_t *src)
 {
 	size_t          len;
 
-	len = strlen((char *) src->userid);
-	if (dst->userid) {
-		free(dst->userid);
+	len = strlen((const char *) src);
+	if (*dst) {
+		free(*dst);
 	}
-	if ((dst->userid = calloc(1, len + 1)) == NULL) {
+	if ((*dst = calloc(1, len + 1)) == NULL) {
 		(void) fprintf(stderr, "__ops_copy_userid: bad alloc\n");
 	} else {
-		(void) memcpy(dst->userid, src->userid, len);
+		(void) memcpy(*dst, src, len);
 	}
-	return dst;
+	return *dst;
 }
 
 /* \todo check where pkt pointers are copied */
@@ -443,15 +443,15 @@ __ops_copy_packet(__ops_subpacket_t *dst, const __ops_subpacket_t *src)
 \param userid User ID to add
 \return Pointer to new User ID
 */
-__ops_userid_t  *
-__ops_add_userid(__ops_key_t *key, const __ops_userid_t *userid)
+uint8_t  *
+__ops_add_userid(__ops_key_t *key, const uint8_t *userid)
 {
-	__ops_userid_t  *uidp;
+	uint8_t  **uidp;
 
 	EXPAND_ARRAY(key, uid);
 	/* initialise new entry in array */
 	uidp = &key->uids[key->uidc++];
-	uidp->userid = NULL;
+	*uidp = NULL;
 	/* now copy it */
 	return __ops_copy_userid(uidp, userid);
 }
@@ -487,7 +487,7 @@ __ops_add_subpacket(__ops_key_t *keydata, const __ops_subpacket_t *packet)
 \return 1 if OK; else 0
 */
 unsigned 
-__ops_add_selfsigned_userid(__ops_key_t *key, __ops_userid_t *userid)
+__ops_add_selfsigned_userid(__ops_key_t *key, uint8_t *userid)
 {
 	__ops_create_sig_t	*sig;
 	__ops_subpacket_t	 sigpacket;
@@ -540,7 +540,7 @@ __ops_add_selfsigned_userid(__ops_key_t *key, __ops_userid_t *userid)
 \param type OPS_PTAG_CT_PUBLIC_KEY or OPS_PTAG_CT_SECRET_KEY
 */
 void 
-__ops_keydata_init(__ops_key_t *keydata, const __ops_content_tag_t type)
+__ops_keydata_init(__ops_key_t *keydata, const __ops_content_enum type)
 {
 	if (keydata->type != OPS_PTAG_CT_RESERVED) {
 		(void) fprintf(stderr,
@@ -598,24 +598,24 @@ cb_keyring_read(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_PTAG_SS_KEY_EXPIRY:
 		EXPAND_ARRAY(keyring, key);
 		if (keyring->keyc > 0) {
-			keyring->keys[keyring->keyc - 1].key.pubkey.duration = pkt->u.ss_time.time;
+			keyring->keys[keyring->keyc - 1].key.pubkey.duration = pkt->u.ss_time;
 		}
 		break;
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
 		key = &keyring->keys[keyring->keyc - 1];
 		(void) memcpy(&key->subsigs[key->subsigc - 1].sig.info.signer_id,
-			      pkt->u.ss_issuer.key_id,
-			      sizeof(pkt->u.ss_issuer.key_id));
+			      pkt->u.ss_issuer,
+			      sizeof(pkt->u.ss_issuer));
 		key->subsigs[key->subsigc - 1].sig.info.signer_id_set = 1;
 		break;
 	case OPS_PTAG_SS_CREATION_TIME:
 		key = &keyring->keys[keyring->keyc - 1];
-		key->subsigs[key->subsigc - 1].sig.info.birthtime = pkt->u.ss_time.time;
+		key->subsigs[key->subsigc - 1].sig.info.birthtime = pkt->u.ss_time;
 		key->subsigs[key->subsigc - 1].sig.info.birthtime_set = 1;
 		break;
 	case OPS_PTAG_SS_EXPIRATION_TIME:
 		key = &keyring->keys[keyring->keyc - 1];
-		key->subsigs[key->subsigc - 1].sig.info.duration = pkt->u.ss_time.time;
+		key->subsigs[key->subsigc - 1].sig.info.duration = pkt->u.ss_time;
 		key->subsigs[key->subsigc - 1].sig.info.duration_set = 1;
 		break;
 	case OPS_PTAG_SS_PRIMARY_USER_ID:
@@ -884,7 +884,7 @@ getkeybyname(__ops_io_t *io,
 			unsigned *from)
 {
 	const __ops_key_t	*kp;
-	__ops_userid_t		*uidp;
+	uint8_t			**uidp;
 	unsigned    	 	 i = 0;
 	__ops_key_t		*keyp;
 	unsigned		 savedstart;
@@ -922,12 +922,10 @@ getkeybyname(__ops_io_t *io,
 		for (i = 0 ; i < keyp->uidc; i++, uidp++) {
 			if (__ops_get_debug_level(__FILE__)) {
 				(void) fprintf(io->outs,
-					"keyid \"%s\" len %"
-					PRIsize "u, keyid[len] '%c'\n",
-				       (char *) uidp->userid,
-				       len, uidp->userid[len]);
+					"keyid \"%s\" len %" PRIsize "u\n",
+				       (char *) *uidp, len);
 			}
-			if (regexec(&r, (char *)uidp->userid, 0, NULL, 0) == 0) {
+			if (regexec(&r, (char *)*uidp, 0, NULL, 0) == 0) {
 				regfree(&r);
 				return keyp;
 			}

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.27 2010/05/08 00:31:07 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.28 2010/05/25 01:05:11 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -479,22 +479,21 @@ finalise_sig(__ops_hash_t *hash,
  */
 unsigned
 __ops_check_useridcert_sig(const __ops_pubkey_t *key,
-			  const __ops_userid_t *id,
+			  const uint8_t *id,
 			  const __ops_sig_t *sig,
 			  const __ops_pubkey_t *signer,
 			  const uint8_t *raw_packet)
 {
 	__ops_hash_t	hash;
-	size_t          userid_len = strlen((char *) id->userid);
+	size_t          userid_len;
 
+	userid_len = strlen((const char *) id);
 	init_key_sig(&hash, sig, key);
-
 	if (sig->info.version == OPS_V4) {
 		__ops_hash_add_int(&hash, 0xb4, 1);
 		__ops_hash_add_int(&hash, userid_len, 4);
 	}
-	hash.add(&hash, id->userid, userid_len);
-
+	hash.add(&hash, id, userid_len);
 	return finalise_sig(&hash, sig, signer, raw_packet);
 }
 
@@ -512,7 +511,7 @@ __ops_check_useridcert_sig(const __ops_pubkey_t *key,
  */
 unsigned
 __ops_check_userattrcert_sig(const __ops_pubkey_t *key,
-				const __ops_userattr_t *attribute,
+				const __ops_data_t *attribute,
 				const __ops_sig_t *sig,
 				const __ops_pubkey_t *signer,
 				const uint8_t *raw_packet)
@@ -520,13 +519,11 @@ __ops_check_userattrcert_sig(const __ops_pubkey_t *key,
 	__ops_hash_t      hash;
 
 	init_key_sig(&hash, sig, key);
-
 	if (sig->info.version == OPS_V4) {
 		__ops_hash_add_int(&hash, 0xd1, 1);
-		__ops_hash_add_int(&hash, attribute->data.len, 4);
+		__ops_hash_add_int(&hash, attribute->len, 4);
 	}
-	hash.add(&hash, attribute->data.contents, attribute->data.len);
-
+	hash.add(&hash, attribute->contents, attribute->len);
 	return finalise_sig(&hash, sig, signer, raw_packet);
 }
 
@@ -638,7 +635,7 @@ start_sig_in_mem(__ops_create_sig_t *sig)
 void 
 __ops_sig_start_key_sig(__ops_create_sig_t *sig,
 				  const __ops_pubkey_t *key,
-				  const __ops_userid_t *id,
+				  const uint8_t *id,
 				  __ops_sig_type_t type)
 {
 	sig->output = __ops_output_new();
@@ -650,15 +647,11 @@ __ops_sig_start_key_sig(__ops_create_sig_t *sig,
 	sig->sig.info.hash_alg = OPS_HASH_SHA1;
 	sig->sig.info.key_alg = key->alg;
 	sig->sig.info.type = type;
-
 	sig->hashlen = (unsigned)-1;
-
 	init_key_sig(&sig->hash, &sig->sig, key);
-
 	__ops_hash_add_int(&sig->hash, 0xb4, 1);
-	__ops_hash_add_int(&sig->hash, strlen((char *) id->userid), 4);
-	sig->hash.add(&sig->hash, id->userid, strlen((char *) id->userid));
-
+	__ops_hash_add_int(&sig->hash, strlen((const char *) id), 4);
+	sig->hash.add(&sig->hash, id, strlen((const char *) id));
 	start_sig_in_mem(sig);
 }
 
@@ -1126,7 +1119,7 @@ __ops_sign_buf(__ops_io_t *io,
 		const unsigned armored,
 		const unsigned cleartext)
 {
-	__ops_litdata_type_t	 ld_type;
+	__ops_litdata_enum	 ld_type;
 	__ops_create_sig_t	*sig;
 	__ops_sig_type_t	 sig_type;
 	__ops_hash_alg_t	 hash_alg;

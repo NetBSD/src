@@ -72,7 +72,7 @@ void __ops_memory_init(__ops_memory_t *, size_t);
 void __ops_memory_pad(__ops_memory_t *, size_t);
 void __ops_memory_add(__ops_memory_t *, const uint8_t *, size_t);
 void __ops_memory_place_int(__ops_memory_t *, unsigned, unsigned, size_t);
-void __ops_memory_make_packet(__ops_memory_t *, __ops_content_tag_t);
+void __ops_memory_make_packet(__ops_memory_t *, __ops_content_enum);
 void __ops_memory_clear(__ops_memory_t *);
 void __ops_memory_release(__ops_memory_t *);
 

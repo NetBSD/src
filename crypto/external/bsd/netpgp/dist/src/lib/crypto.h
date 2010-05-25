@@ -148,7 +148,7 @@ int __ops_rsa_private_decrypt(uint8_t *, const uint8_t *, size_t,
 unsigned __ops_block_size(__ops_symm_alg_t);
 unsigned __ops_key_size(__ops_symm_alg_t);
 
-int __ops_decrypt_data(__ops_content_tag_t, __ops_region_t *,
+int __ops_decrypt_data(__ops_content_enum, __ops_region_t *,
 			__ops_stream_t *);
 
 int __ops_crypt_any(__ops_crypt_t *, __ops_symm_alg_t);
@@ -210,7 +210,7 @@ __ops_decrypt_buf(__ops_io_t *,
 
 /* Keys */
 __ops_key_t  *__ops_rsa_new_selfsign_key(const int,
-			const unsigned long, __ops_userid_t *, const char *);
+			const unsigned long, uint8_t *, const char *);
 
 int __ops_dsa_size(const __ops_dsa_pubkey_t *);
 DSA_SIG *__ops_dsa_sign(uint8_t *, unsigned,

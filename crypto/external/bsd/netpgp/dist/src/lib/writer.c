@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.22 2010/05/08 02:17:16 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.23 2010/05/25 01:05:11 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -164,7 +164,7 @@ __ops_write_mpi(__ops_output_t *output, const BIGNUM *bn)
  */
 
 unsigned 
-__ops_write_ptag(__ops_output_t *output, __ops_content_tag_t tag)
+__ops_write_ptag(__ops_output_t *output, __ops_content_enum tag)
 {
 	uint8_t   c;
 
@@ -1156,7 +1156,7 @@ __ops_write_se_ip_pktset(__ops_output_t *output,
 
 	if (!__ops_write_ptag(output, OPS_PTAG_CT_SE_IP_DATA) ||
 	    !__ops_write_length(output, 1 + bufsize) ||
-	    !__ops_write_scalar(output, SE_IP_DATA_VERSION, 1)) {
+	    !__ops_write_scalar(output, OPS_SE_IP_DATA_VERSION, 1)) {
 		free(preamble);
 		return 0;
 	}
@@ -1530,7 +1530,7 @@ static unsigned
 stream_write_litdata_first(__ops_output_t *output,
 				const uint8_t *data,
 				unsigned len,
-				const __ops_litdata_type_t type)
+				const __ops_litdata_enum type)
 {
 	/* \todo add filename  */
 	/* \todo add date */
@@ -1621,7 +1621,7 @@ stream_write_se_ip_first(__ops_output_t *output,
 	}
 	__ops_write_ptag(output, OPS_PTAG_CT_SE_IP_DATA);
 	write_partial_len(output, sz_pd);
-	__ops_write_scalar(output, SE_IP_DATA_VERSION, 1);
+	__ops_write_scalar(output, OPS_SE_IP_DATA_VERSION, 1);
 	__ops_push_enc_crypt(output, se_ip->crypt);
 
 	__ops_random(preamble, blocksize);

@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.55 2010/05/21 06:53:51 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.56 2010/05/25 01:05:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -726,11 +726,11 @@ netpgp_import_key(netpgp_t *netpgp, char *f)
 int
 netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 {
-	__ops_userid_t		 uid;
 	__ops_output_t		*create;
 	const unsigned		 noarmor = 0;
 	__ops_key_t		*key;
 	__ops_io_t		*io;
+	uint8_t			*uid;
 	char			 newid[1024];
 	char			 filename[MAXPATHLEN];
 	char			 dir[MAXPATHLEN];
@@ -738,7 +738,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	char			*ringfile;
 	int             	 fd;
 
-	(void) memset(&uid, 0x0, sizeof(uid));
+	uid = NULL;
 	io = netpgp->io;
 	/* generate a new key */
 	if (id) {
@@ -746,8 +746,8 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	} else {
 		(void) snprintf(newid, sizeof(newid), "RSA %d-bit key <%s@localhost>", numbits, getenv("LOGNAME"));
 	}
-	uid.userid = (uint8_t *)newid;
-	key = __ops_rsa_new_selfsign_key(numbits, 65537UL, &uid, netpgp_getvar(netpgp, "hash"));
+	uid = (uint8_t *)newid;
+	key = __ops_rsa_new_selfsign_key(numbits, 65537UL, uid, netpgp_getvar(netpgp, "hash"));
 	if (key == NULL) {
 		(void) fprintf(io->errs, "Cannot generate key\n");
 		return 0;

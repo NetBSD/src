@@ -60,7 +60,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-show.c,v 1.15 2010/03/05 16:01:09 agc Exp $");
+__RCSID("$NetBSD: packet-show.c,v 1.16 2010/05/25 01:05:11 agc Exp $");
 #endif
 
 #include <stdlib.h>
@@ -490,7 +490,7 @@ add_bitmap_entry(__ops_text_t *map, const char *str, uint8_t bit)
  */
 
 static __ops_text_t *
-text_from_bytemapped_octets(__ops_data_t *data,
+text_from_bytemapped_octets(const __ops_data_t *data,
 			    const char *(*text_fn)(uint8_t octet))
 {
 	__ops_text_t	*text;
@@ -581,7 +581,7 @@ showall_octets_bits(__ops_data_t *data, __ops_bit_map_t **map, size_t nmap)
  * \return string or "Unknown"
 */
 const char     *
-__ops_show_packet_tag(__ops_packet_tag_t packet_tag)
+__ops_show_packet_tag(__ops_content_enum packet_tag)
 {
 	const char     *ret;
 
@@ -600,7 +600,7 @@ __ops_show_packet_tag(__ops_packet_tag_t packet_tag)
  * \return string or "Unknown"
  */
 const char     *
-__ops_show_ss_type(__ops_ss_type_t ss_type)
+__ops_show_ss_type(__ops_content_enum ss_type)
 {
 	return __ops_str_from_map(ss_type, ss_type_map);
 }
@@ -665,9 +665,9 @@ __ops_show_ss_zpref(uint8_t octet)
  * \return pointer to structure, if no error
  */
 __ops_text_t     *
-__ops_showall_ss_zpref(__ops_ss_zpref_t ss_zpref)
+__ops_showall_ss_zpref(const __ops_data_t *ss_zpref)
 {
-	return text_from_bytemapped_octets(&ss_zpref.data,
+	return text_from_bytemapped_octets(ss_zpref,
 					&__ops_show_ss_zpref);
 }
 
@@ -694,9 +694,9 @@ __ops_show_hash_alg(uint8_t hash)
  * \return pointer to structure, if no error
  */
 __ops_text_t     *
-__ops_showall_ss_hashpref(__ops_ss_hashpref_t ss_hashpref)
+__ops_showall_ss_hashpref(const __ops_data_t *ss_hashpref)
 {
-	return text_from_bytemapped_octets(&ss_hashpref.data,
+	return text_from_bytemapped_octets(ss_hashpref,
 					   &__ops_show_hash_alg);
 }
 
@@ -727,9 +727,9 @@ __ops_show_ss_skapref(uint8_t octet)
  * \return pointer to structure, if no error
  */
 __ops_text_t     *
-__ops_showall_ss_skapref(__ops_ss_skapref_t ss_skapref)
+__ops_showall_ss_skapref(const __ops_data_t *ss_skapref)
 {
-	return text_from_bytemapped_octets(&ss_skapref.data,
+	return text_from_bytemapped_octets(ss_skapref,
 					   &__ops_show_ss_skapref);
 }
 
@@ -758,7 +758,7 @@ __ops_show_ss_feature(uint8_t octet, unsigned offset)
  */
 /* XXX: shouldn't this use show_all_octets_bits? */
 __ops_text_t     *
-__ops_showall_ss_features(__ops_ss_features_t ss_features)
+__ops_showall_ss_features(__ops_data_t ss_features)
 {
 	__ops_text_t	*text;
 	const char	*str;
@@ -772,10 +772,10 @@ __ops_showall_ss_features(__ops_ss_features_t ss_features)
 
 	__ops_text_init(text);
 
-	for (i = 0; i < ss_features.data.len; i++) {
+	for (i = 0; i < ss_features.len; i++) {
 		mask = 0x80;
 		for (j = 0; j < 8; j++, mask = (unsigned)mask >> 1) {
-			bit = ss_features.data.contents[i] & mask;
+			bit = ss_features.contents[i] & mask;
 			if (bit) {
 				str = __ops_show_ss_feature(bit, i);
 				if (!add_bitmap_entry(text, str, bit)) {
@@ -810,7 +810,7 @@ __ops_show_ss_key_flag(uint8_t octet, __ops_bit_map_t *map)
  * \return pointer to structure, if no error
  */
 __ops_text_t     *
-__ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
+__ops_showall_ss_key_flags(const __ops_data_t *ss_key_flags)
 {
 	__ops_text_t	*text;
 	const char	*str;
@@ -825,9 +825,9 @@ __ops_showall_ss_key_flags(__ops_ss_key_flags_t ss_key_flags)
 
 	/* xxx - TBD: extend to handle multiple octets of bits - rachel */
 	for (i = 0, mask = 0x80; i < 8; i++, mask = (unsigned)mask >> 1) {
-		bit = ss_key_flags.data.contents[0] & mask;
+		bit = ss_key_flags->contents[0] & mask;
 		if (bit) {
-			str = __ops_show_ss_key_flag(bit, &ss_key_flags_map[0]);
+			str = __ops_show_ss_key_flag(bit, ss_key_flags_map);
 			if (!add_bitmap_entry(text, netpgp_strdup(str), bit)) {
 				__ops_text_free(text);
 				return NULL;
@@ -865,7 +865,7 @@ __ops_show_keyserv_pref(uint8_t prefs, __ops_bit_map_t *map)
  *
 */
 __ops_text_t     *
-__ops_show_keyserv_prefs(__ops_ss_key_server_prefs_t prefs)
+__ops_show_keyserv_prefs(const __ops_data_t *prefs)
 {
 	__ops_text_t	*text;
 	const char	*str;
@@ -881,7 +881,7 @@ __ops_show_keyserv_prefs(__ops_ss_key_server_prefs_t prefs)
 	/* xxx - TBD: extend to handle multiple octets of bits - rachel */
 
 	for (i = 0, mask = 0x80; i < 8; i++, mask = (unsigned)mask >> 1) {
-		bit = prefs.data.contents[0] & mask;
+		bit = prefs->contents[0] & mask;
 		if (bit) {
 			str = __ops_show_keyserv_pref(bit,
 						ss_key_server_prefs_map);

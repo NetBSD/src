@@ -107,7 +107,7 @@ unsigned __ops_writer_close(__ops_output_t *);
 
 unsigned __ops_write(__ops_output_t *, const void *, unsigned);
 unsigned __ops_write_length(__ops_output_t *, unsigned);
-unsigned __ops_write_ptag(__ops_output_t *, __ops_content_tag_t);
+unsigned __ops_write_ptag(__ops_output_t *, __ops_content_enum);
 unsigned __ops_write_scalar(__ops_output_t *, unsigned, unsigned);
 unsigned __ops_write_mpi(__ops_output_t *, const BIGNUM *);
 

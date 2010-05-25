@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.30 2010/03/16 04:14:29 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.31 2010/05/25 01:05:11 agc Exp $");
 #endif
 
 #include <string.h>
@@ -456,7 +456,7 @@ __ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 		}
 		n += snprintf(&uidbuf[n], sizeof(uidbuf) - n, "uid%s%s%s\n",
 				(psigs) ? "    " : "              ",
-				key->uids[i].userid,
+				key->uids[i],
 				(isrevoked(key, i) >= 0) ? " [REVOKED]" : "");
 		for (j = 0 ; j < key->subsigc ; j++) {
 			if (psigs) {
@@ -480,7 +480,7 @@ __ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 					"sig        %s  %s  %s\n",
 					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, OPS_KEY_ID_SIZE, ""),
 					ptimestr(t, sizeof(t), key->subsigs[j].sig.info.birthtime),
-					(trustkey) ? (char *)trustkey->uids[trustkey->uid0].userid : "[unknown]");
+					(trustkey) ? (char *)trustkey->uids[trustkey->uid0] : "[unknown]");
 			}
 		}
 	}
@@ -517,7 +517,7 @@ __ops_hkp_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 			"uid:%lld:%lld:%s\n",
 			(long long)pubkey->birthtime,
 			(long long)pubkey->duration,
-			key->uids[i].userid);
+			key->uids[i]);
 		for (j = 0 ; j < key->subsigc ; j++) {
 			if (psigs) {
 				if (key->subsigs[j].uid != i) {
@@ -545,7 +545,7 @@ __ops_hkp_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 					"sig:%s:%lld:%s\n",
 					strhexdump(keyid, key->subsigs[j].sig.info.signer_id, OPS_KEY_ID_SIZE, ""),
 					(long long)key->subsigs[j].sig.info.birthtime,
-					(trustkey) ? (char *)trustkey->uids[trustkey->uid0].userid : "");
+					(trustkey) ? (char *)trustkey->uids[trustkey->uid0] : "");
 			}
 		}
 	}
@@ -667,7 +667,7 @@ __ops_sprint_pubkey(const __ops_key_t *key, char *out, size_t outsize)
 \param seckey
 */
 static void
-__ops_print_seckey_verbose(const __ops_content_tag_t type,
+__ops_print_seckey_verbose(const __ops_content_enum type,
 				const __ops_seckey_t *seckey)
 {
 	printf("------- SECRET KEY or ENCRYPTED SECRET KEY ------\n");
@@ -727,7 +727,7 @@ __ops_print_seckey_verbose(const __ops_content_tag_t type,
 \param key
 */
 static void 
-__ops_print_pk_sesskey(__ops_content_tag_t tag,
+__ops_print_pk_sesskey(__ops_content_enum tag,
 			 const __ops_pk_sesskey_t * key)
 {
 	print_tagname(0, (tag == OPS_PTAG_CT_PK_SESSION_KEY) ?
@@ -765,7 +765,7 @@ start_subpacket(int *indent, int type)
 	*indent += 1;
 	print_indent(*indent);
 	printf("-- %s (type 0x%02x)\n",
-	       __ops_show_ss_type((__ops_ss_type_t)type),
+	       __ops_show_ss_type((__ops_content_enum)type),
 	       type - OPS_PTAG_SIG_SUBPKT_BASE);
 }
 
@@ -792,14 +792,14 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	}
 	if (pkt->tag == OPS_PARSER_PTAG) {
 		printf("=> OPS_PARSER_PTAG: %s\n",
-			__ops_show_packet_tag((__ops_packet_tag_t)content->ptag.type));
+			__ops_show_packet_tag((__ops_content_enum)content->ptag.type));
 	} else {
 		printf("=> %s\n", __ops_show_packet_tag(pkt->tag));
 	}
 
 	switch (pkt->tag) {
 	case OPS_PARSER_ERROR:
-		printf("parse error: %s\n", content->error.error);
+		printf("parse error: %s\n", content->error);
 		break;
 
 	case OPS_PARSER_ERRCODE:
@@ -824,7 +824,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		       content->ptag.type, content->ptag.length_type,
 		       content->ptag.length, content->ptag.length,
 		       content->ptag.position, content->ptag.position);
-		print_tagname(print->indent, __ops_show_packet_tag((__ops_packet_tag_t)content->ptag.type));
+		print_tagname(print->indent, __ops_show_packet_tag((__ops_content_enum)content->ptag.type));
 		break;
 
 	case OPS_PTAG_CT_SE_DATA_HEADER:
@@ -834,7 +834,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_CT_SE_IP_DATA_HEADER:
 		print_tagname(print->indent, 
 			"SYMMETRIC ENCRYPTED INTEGRITY PROTECTED DATA HEADER");
-		printf("Version: %d\n", content->se_ip_data_header.version);
+		printf("Version: %d\n", content->se_ip_data_header);
 		break;
 
 	case OPS_PTAG_CT_SE_IP_DATA_BODY:
@@ -858,12 +858,12 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 
 	case OPS_PTAG_CT_TRUST:
 		print_tagname(print->indent, "TRUST");
-		print_data(print->indent, "Trust", &content->trust.data);
+		print_data(print->indent, "Trust", &content->trust);
 		break;
 
 	case OPS_PTAG_CT_USER_ID:
 		print_tagname(print->indent, "USER ID");
-		print_utf8_string(print->indent, "userid", content->userid.userid);
+		print_utf8_string(print->indent, "userid", content->userid);
 		break;
 
 	case OPS_PTAG_CT_SIGNATURE:
@@ -931,7 +931,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_CT_COMPRESSED:
 		print_tagname(print->indent, "COMPRESSED");
 		print_uint(print->indent, "Compressed Data Type",
-			(unsigned)content->compressed.type);
+			(unsigned)content->compressed);
 		break;
 
 	case OPS_PTAG_CT_1_PASS_SIG:
@@ -956,8 +956,8 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_CT_USER_ATTR:
 		print_tagname(print->indent, "USER ATTRIBUTE");
 		print_hexdump(print->indent, "User Attribute",
-			      content->userattr.data.contents,
-			      content->userattr.data.len);
+			      content->userattr.contents,
+			      content->userattr.len);
 		break;
 
 	case OPS_PTAG_RAW_SS:
@@ -976,20 +976,20 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 
 	case OPS_PTAG_SS_CREATION_TIME:
 		start_subpacket(&print->indent, pkt->tag);
-		print_time(print->indent, "Signature Creation Time", content->ss_time.time);
+		print_time(print->indent, "Signature Creation Time", content->ss_time);
 		end_subpacket(&print->indent);
 		break;
 
 	case OPS_PTAG_SS_EXPIRATION_TIME:
 		start_subpacket(&print->indent, pkt->tag);
 		print_duration(print->indent, "Signature Expiration Time",
-			content->ss_time.time);
+			content->ss_time);
 		end_subpacket(&print->indent);
 		break;
 
 	case OPS_PTAG_SS_KEY_EXPIRY:
 		start_subpacket(&print->indent, pkt->tag);
-		print_duration(print->indent, "Key Expiration Time", content->ss_time.time);
+		print_duration(print->indent, "Key Expiration Time", content->ss_time);
 		end_subpacket(&print->indent);
 		break;
 
@@ -1003,7 +1003,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 
 	case OPS_PTAG_SS_REVOCABLE:
 		start_subpacket(&print->indent, pkt->tag);
-		print_boolean(print->indent, "Revocable", content->ss_revocable.revocable);
+		print_boolean(print->indent, "Revocable", content->ss_revocable);
 		end_subpacket(&print->indent);
 		break;
 
@@ -1026,17 +1026,15 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Issuer Key Id",
-			      &content->ss_issuer.key_id[0],
-			      sizeof(content->ss_issuer.key_id));
+			      content->ss_issuer, sizeof(content->ss_issuer));
 		end_subpacket(&print->indent);
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_SKA:
 		start_subpacket(&print->indent, pkt->tag);
 		print_data(print->indent, "Preferred Symmetric Algorithms",
-			   &content->ss_skapref.data);
-
-		text = __ops_showall_ss_skapref(content->ss_skapref);
+			   &content->ss_skapref);
+		text = __ops_showall_ss_skapref(&content->ss_skapref);
 		print_text_breakdown(print->indent, text);
 		__ops_text_free(text);
 
@@ -1046,16 +1044,15 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_SS_PRIMARY_USER_ID:
 		start_subpacket(&print->indent, pkt->tag);
 		print_boolean(print->indent, "Primary User ID",
-			      content->ss_primary_userid.primary_userid);
+			      content->ss_primary_userid);
 		end_subpacket(&print->indent);
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_HASH:
 		start_subpacket(&print->indent, pkt->tag);
 		print_data(print->indent, "Preferred Hash Algorithms",
-			   &content->ss_hashpref.data);
-
-		text = __ops_showall_ss_hashpref(content->ss_hashpref);
+			   &content->ss_hashpref);
+		text = __ops_showall_ss_hashpref(&content->ss_hashpref);
 		print_text_breakdown(print->indent, text);
 		__ops_text_free(text);
 		end_subpacket(&print->indent);
@@ -1064,9 +1061,8 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_SS_PREF_COMPRESS:
 		start_subpacket(&print->indent, pkt->tag);
 		print_data(print->indent, "Preferred Compression Algorithms",
-			   &content->ss_zpref.data);
-
-		text = __ops_showall_ss_zpref(content->ss_zpref);
+			   &content->ss_zpref);
+		text = __ops_showall_ss_zpref(&content->ss_zpref);
 		print_text_breakdown(print->indent, text);
 		__ops_text_free(text);
 		end_subpacket(&print->indent);
@@ -1074,9 +1070,9 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 
 	case OPS_PTAG_SS_KEY_FLAGS:
 		start_subpacket(&print->indent, pkt->tag);
-		print_data(print->indent, "Key Flags", &content->ss_key_flags.data);
+		print_data(print->indent, "Key Flags", &content->ss_key_flags);
 
-		text = __ops_showall_ss_key_flags(content->ss_key_flags);
+		text = __ops_showall_ss_key_flags(&content->ss_key_flags);
 		print_text_breakdown(print->indent, text);
 		__ops_text_free(text);
 
@@ -1086,9 +1082,8 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_SS_KEYSERV_PREFS:
 		start_subpacket(&print->indent, pkt->tag);
 		print_data(print->indent, "Key Server Preferences",
-			   &content->ss_key_server_prefs.data);
-
-		text = __ops_show_keyserv_prefs(content->ss_key_server_prefs);
+			   &content->ss_key_server_prefs);
+		text = __ops_show_keyserv_prefs(&content->ss_key_server_prefs);
 		print_text_breakdown(print->indent, text);
 		__ops_text_free(text);
 
@@ -1097,9 +1092,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 
 	case OPS_PTAG_SS_FEATURES:
 		start_subpacket(&print->indent, pkt->tag);
-		print_data(print->indent, "Features",
-			   &content->ss_features.data);
-
+		print_data(print->indent, "Features", &content->ss_features);
 		text = __ops_showall_ss_features(content->ss_features);
 		print_text_breakdown(print->indent, text);
 		__ops_text_free(text);
@@ -1129,28 +1122,27 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_SS_REGEXP:
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Regular Expression",
-			      (uint8_t *) content->ss_regexp.regexp,
-			      strlen(content->ss_regexp.regexp));
-		print_string(print->indent, NULL, content->ss_regexp.regexp);
+			      (uint8_t *) content->ss_regexp,
+			      strlen(content->ss_regexp));
+		print_string(print->indent, NULL, content->ss_regexp);
 		end_subpacket(&print->indent);
 		break;
 
 	case OPS_PTAG_SS_POLICY_URI:
 		start_subpacket(&print->indent, pkt->tag);
-		print_string(print->indent, "Policy URL", content->ss_policy.url);
+		print_string(print->indent, "Policy URL", content->ss_policy);
 		end_subpacket(&print->indent);
 		break;
 
 	case OPS_PTAG_SS_SIGNERS_USER_ID:
 		start_subpacket(&print->indent, pkt->tag);
-		print_utf8_string(print->indent, "Signer's User ID",
-			content->ss_signer.userid);
+		print_utf8_string(print->indent, "Signer's User ID", content->ss_signer);
 		end_subpacket(&print->indent);
 		break;
 
 	case OPS_PTAG_SS_PREF_KEYSERV:
 		start_subpacket(&print->indent, pkt->tag);
-		print_string(print->indent, "Preferred Key Server", content->ss_keyserv.name);
+		print_string(print->indent, "Preferred Key Server", content->ss_keyserv);
 		end_subpacket(&print->indent);
 		break;
 
@@ -1172,16 +1164,16 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_SS_USERDEFINED10:
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Internal or user-defined",
-			      content->ss_userdef.data.contents,
-			      content->ss_userdef.data.len);
+			      content->ss_userdef.contents,
+			      content->ss_userdef.len);
 		end_subpacket(&print->indent);
 		break;
 
 	case OPS_PTAG_SS_RESERVED:
 		start_subpacket(&print->indent, pkt->tag);
 		print_hexdump(print->indent, "Reserved",
-			      content->ss_userdef.data.contents,
-			      content->ss_userdef.data.len);
+			      content->ss_userdef.contents,
+			      content->ss_userdef.len);
 		end_subpacket(&print->indent);
 		break;
 
@@ -1278,7 +1270,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 		case OPS_PKA_PRIVATE09:
 		case OPS_PKA_PRIVATE10:
 			print_data(print->indent, "Private/Experimental",
-			   &content->sig.info.sig.unknown.data);
+			   &content->sig.info.sig.unknown);
 			break;
 
 		default:
@@ -1309,7 +1301,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
 		print_tagname(print->indent, "SIGNED CLEARTEXT HEADER");
-		print_headers(&content->cleartext_head.headers);
+		print_headers(&content->cleartext_head);
 		break;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_BODY:
@@ -1321,7 +1313,7 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER:
 		print_tagname(print->indent, "SIGNED CLEARTEXT TRAILER");
 		printf("hash algorithm: %d\n",
-		       content->cleartext_trailer.hash->alg);
+		       content->cleartext_trailer->alg);
 		printf("\n");
 		break;
 

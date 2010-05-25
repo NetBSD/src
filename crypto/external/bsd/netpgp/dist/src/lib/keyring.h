@@ -103,14 +103,14 @@ unsigned __ops_get_userid_count(const __ops_key_t *);
 const uint8_t *__ops_get_userid(const __ops_key_t *, unsigned);
 unsigned __ops_is_key_supported(const __ops_key_t *);
 
-__ops_userid_t *__ops_add_userid(__ops_key_t *, const __ops_userid_t *);
+uint8_t *__ops_add_userid(__ops_key_t *, const uint8_t *);
 __ops_subpacket_t *__ops_add_subpacket(__ops_key_t *,
 						const __ops_subpacket_t *);
 
-unsigned __ops_add_selfsigned_userid(__ops_key_t *, __ops_userid_t *);
+unsigned __ops_add_selfsigned_userid(__ops_key_t *, uint8_t *);
 
 __ops_key_t  *__ops_keydata_new(void);
-void __ops_keydata_init(__ops_key_t *, const __ops_content_tag_t);
+void __ops_keydata_init(__ops_key_t *, const __ops_content_enum);
 
 int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_stream_t *);
 

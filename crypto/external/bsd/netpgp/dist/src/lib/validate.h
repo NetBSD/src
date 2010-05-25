@@ -64,8 +64,8 @@ typedef struct {
 		ATTRIBUTE = 1,
 		ID
 	}               	 last_seen;
-	__ops_userid_t		 userid;
-	__ops_userattr_t	 userattr;
+	uint8_t			*userid;
+	__ops_data_t		 userattr;
 	uint8_t			 hash[OPS_MAX_HASH_SIZE];
 	const __ops_keyring_t	*keyring;
 	validate_reader_t	*reader;
@@ -82,7 +82,7 @@ typedef struct {
 	} type;
 	union {
 		__ops_litdata_body_t	 litdata_body;
-		__ops_cleartext_body_t	 cleartext_body;
+		__ops_fixed_body_t	 cleartext_body;
 	} data;
 	uint8_t			 	 hash[OPS_MAX_HASH_SIZE];
 	__ops_memory_t			*mem;
