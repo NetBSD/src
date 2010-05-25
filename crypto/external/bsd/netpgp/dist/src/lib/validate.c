@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.34 2010/05/08 00:26:39 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.35 2010/05/25 01:05:11 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -277,7 +277,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ID:
-		if (key->userid.userid) {
+		if (key->userid) {
 			__ops_userid_free(&key->userid);
 		}
 		key->userid = content->userid;
@@ -285,15 +285,15 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		return OPS_KEEP_MEMORY;
 
 	case OPS_PTAG_CT_USER_ATTR:
-		if (content->userattr.data.len == 0) {
+		if (content->userattr.len == 0) {
 			(void) fprintf(io->errs,
 			"__ops_validate_key_cb: user attribute length 0");
 			return OPS_FINISHED;
 		}
 		(void) fprintf(io->outs, "user attribute, length=%d\n",
-			(int) content->userattr.data.len);
-		if (key->userattr.data.len) {
-			__ops_userattr_free(&key->userattr);
+			(int) content->userattr.len);
+		if (key->userattr.len) {
+			__ops_data_free(&key->userattr);
 		}
 		key->userattr = content->userattr;
 		key->last_seen = ATTRIBUTE;
@@ -323,7 +323,7 @@ __ops_validate_key_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		case OPS_SIG_REV_CERT:
 			valid = (key->last_seen == ID) ?
 			    __ops_check_useridcert_sig(&key->pubkey,
-					&key->userid,
+					key->userid,
 					&content->sig,
 					__ops_get_pubkey(signer),
 					key->reader->key->packets[
@@ -713,7 +713,7 @@ __ops_validate_key_sigs(__ops_validation_t *result,
 		__ops_pubkey_free(&keysigs.subkey);
 	}
 	__ops_userid_free(&keysigs.userid);
-	__ops_userattr_free(&keysigs.userattr);
+	__ops_data_free(&keysigs.userattr);
 
 	__ops_stream_delete(stream);
 

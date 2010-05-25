@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.34 2010/05/08 02:54:25 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.35 2010/05/25 01:05:10 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -89,7 +89,7 @@ __RCSID("$NetBSD: packet-parse.c,v 1.34 2010/05/08 02:54:25 agc Exp $");
 #include "netpgpdigest.h"
 
 #define ERRP(cbinfo, cont, err)	do {					\
-	cont.u.error.error = err;					\
+	cont.u.error = err;						\
 	CALLBACK(OPS_PARSER_ERROR, cbinfo, &cont);			\
 	return 0;							\
 	/*NOTREACHED*/							\
@@ -780,8 +780,8 @@ limited_read_new_length(unsigned *length, __ops_region_t *region,
 \ingroup Core_Create
 \brief Free allocated memory
 */
-static void 
-data_free(__ops_data_t *data)
+void 
+__ops_data_free(__ops_data_t *data)
 {
 	free(data->contents);
 	data->contents = NULL;
@@ -833,10 +833,10 @@ __ops_headers_free(__ops_headers_t *headers)
 \brief Free allocated memory
 */
 static void 
-cleartext_trailer_free(__ops_cleartext_trailer_t *trailer)
+cleartext_trailer_free(struct _ops_hash_t **trailer)
 {
-	free(trailer->hash);
-	trailer->hash = NULL;
+	free(*trailer);
+	*trailer = NULL;
 }
 
 /**
@@ -850,47 +850,6 @@ __ops_cmd_get_passphrase_free(__ops_seckey_passphrase_t *skp)
 		free(*skp->passphrase);
 		*skp->passphrase = NULL;
 	}
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this signature sub-packet type
-*/
-static void 
-ss_userdef_free(__ops_ss_userdef_t *ss_userdef)
-{
-	data_free(&ss_userdef->data);
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this signature sub-packet type
-*/
-static void 
-ss_reserved_free(__ops_ss_unknown_t *ss_unknown)
-{
-	data_free(&ss_unknown->data);
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this packet type
-*/
-static void 
-trust_free(__ops_trust_t *trust)
-{
-	data_free(&trust->data);
-}
-
-/**
- * \ingroup Core_Create
- * \brief Free the memory used when parsing a private/experimental PKA signature
- * \param unknown_sig
- */
-static void 
-free_unknown_sig_pka(__ops_unknown_sig_t *unknown_sig)
-{
-	data_free(&unknown_sig->data);
 }
 
 /**
@@ -939,134 +898,12 @@ sig_free(__ops_sig_t *sig)
 	case OPS_PKA_PRIVATE08:
 	case OPS_PKA_PRIVATE09:
 	case OPS_PKA_PRIVATE10:
-		free_unknown_sig_pka(&sig->info.sig.unknown);
+		__ops_data_free(&sig->info.sig.unknown);
 		break;
 
 	default:
 		(void) fprintf(stderr, "sig_free: bad sig type\n");
 	}
-}
-
-/**
- \ingroup Core_Create
- \brief Free the memory used when parsing this signature sub-packet type
- \param ss_skapref
-*/
-static void 
-ss_skapref_free(__ops_ss_skapref_t *ss_skapref)
-{
-	data_free(&ss_skapref->data);
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this signature sub-packet type
-   \param ss_hashpref
-*/
-static void 
-ss_hashpref_free(__ops_ss_hashpref_t *ss_hashpref)
-{
-	data_free(&ss_hashpref->data);
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this signature sub-packet type
-*/
-static void 
-ss_zpref_free(__ops_ss_zpref_t *ss_zpref)
-{
-	data_free(&ss_zpref->data);
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this signature sub-packet type
-*/
-static void 
-ss_key_flags_free(__ops_ss_key_flags_t *ss_key_flags)
-{
-	data_free(&ss_key_flags->data);
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this signature sub-packet type
-*/
-static void 
-ss_key_server_prefs_free(__ops_ss_key_server_prefs_t *ss_key_server_prefs)
-{
-	data_free(&ss_key_server_prefs->data);
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this signature sub-packet type
-*/
-static void 
-ss_features_free(__ops_ss_features_t *ss_features)
-{
-	data_free(&ss_features->data);
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this signature sub-packet type
-*/
-static void 
-ss_notation_free(__ops_ss_notation_t *ss_notation)
-{
-	data_free(&ss_notation->name);
-	data_free(&ss_notation->value);
-}
-
-/**
-\ingroup Core_Create
-\brief Free allocated memory
-*/
-/* ! Free the memory used when parsing this signature sub-packet type */
-static void 
-ss_regexp_free(__ops_ss_regexp_t *regexp)
-{
-	string_free(&regexp->regexp);
-}
-
-/**
-\ingroup Core_Create
-\brief Free allocated memory
-*/
-/* ! Free the memory used when parsing this signature sub-packet type */
-static void 
-ss_policy_free(__ops_ss_policy_t *policy)
-{
-	string_free(&policy->url);
-}
-
-/**
-\ingroup Core_Create
-\brief Free allocated memory
-*/
-/* ! Free the memory used when parsing this signature sub-packet type */
-static void 
-ss_keyserv_free(__ops_ss_keyserv_t *preferred_key_server)
-{
-	string_free(&preferred_key_server->name);
-}
-
-/**
-   \ingroup Core_Create
-   \brief Free the memory used when parsing this signature sub-packet type
-*/
-static void 
-ss_revocation_free(__ops_ss_revocation_t *ss_revocation)
-{
-	string_free(&ss_revocation->reason);
-}
-
-static void 
-ss_embedded_sig_free(__ops_ss_embedded_sig_t *ss_embedded_sig)
-{
-	data_free(&ss_embedded_sig->sig);
 }
 
 /**
@@ -1103,7 +940,7 @@ __ops_parser_content_free(__ops_packet_t *c)
 		break;
 
 	case OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER:
-		__ops_headers_free(&c->u.cleartext_head.headers);
+		__ops_headers_free(&c->u.cleartext_head);
 		break;
 
 	case OPS_PTAG_CT_ARMOUR_HEADER:
@@ -1115,7 +952,7 @@ __ops_parser_content_free(__ops_packet_t *c)
 		break;
 
 	case OPS_PTAG_CT_TRUST:
-		trust_free(&c->u.trust);
+		__ops_data_free(&c->u.trust);
 		break;
 
 	case OPS_PTAG_CT_SIGNATURE:
@@ -1137,47 +974,48 @@ __ops_parser_content_free(__ops_packet_t *c)
 		break;
 
 	case OPS_PTAG_CT_USER_ATTR:
-		__ops_userattr_free(&c->u.userattr);
+		__ops_data_free(&c->u.userattr);
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_SKA:
-		ss_skapref_free(&c->u.ss_skapref);
+		__ops_data_free(&c->u.ss_skapref);
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_HASH:
-		ss_hashpref_free(&c->u.ss_hashpref);
+		__ops_data_free(&c->u.ss_hashpref);
 		break;
 
 	case OPS_PTAG_SS_PREF_COMPRESS:
-		ss_zpref_free(&c->u.ss_zpref);
+		__ops_data_free(&c->u.ss_zpref);
 		break;
 
 	case OPS_PTAG_SS_KEY_FLAGS:
-		ss_key_flags_free(&c->u.ss_key_flags);
+		__ops_data_free(&c->u.ss_key_flags);
 		break;
 
 	case OPS_PTAG_SS_KEYSERV_PREFS:
-		ss_key_server_prefs_free(&c->u.ss_key_server_prefs);
+		__ops_data_free(&c->u.ss_key_server_prefs);
 		break;
 
 	case OPS_PTAG_SS_FEATURES:
-		ss_features_free(&c->u.ss_features);
+		__ops_data_free(&c->u.ss_features);
 		break;
 
 	case OPS_PTAG_SS_NOTATION_DATA:
-		ss_notation_free(&c->u.ss_notation);
+		__ops_data_free(&c->u.ss_notation.name);
+		__ops_data_free(&c->u.ss_notation.value);
 		break;
 
 	case OPS_PTAG_SS_REGEXP:
-		ss_regexp_free(&c->u.ss_regexp);
+		string_free(&c->u.ss_regexp);
 		break;
 
 	case OPS_PTAG_SS_POLICY_URI:
-		ss_policy_free(&c->u.ss_policy);
+		string_free(&c->u.ss_policy);
 		break;
 
 	case OPS_PTAG_SS_PREF_KEYSERV:
-		ss_keyserv_free(&c->u.ss_keyserv);
+		string_free(&c->u.ss_keyserv);
 		break;
 
 	case OPS_PTAG_SS_USERDEFINED00:
@@ -1191,19 +1029,19 @@ __ops_parser_content_free(__ops_packet_t *c)
 	case OPS_PTAG_SS_USERDEFINED08:
 	case OPS_PTAG_SS_USERDEFINED09:
 	case OPS_PTAG_SS_USERDEFINED10:
-		ss_userdef_free(&c->u.ss_userdef);
+		__ops_data_free(&c->u.ss_userdef);
 		break;
 
 	case OPS_PTAG_SS_RESERVED:
-		ss_reserved_free(&c->u.ss_unknown);
+		__ops_data_free(&c->u.ss_unknown);
 		break;
 
 	case OPS_PTAG_SS_REVOCATION_REASON:
-		ss_revocation_free(&c->u.ss_revocation);
+		string_free(&c->u.ss_revocation.reason);
 		break;
 
 	case OPS_PTAG_SS_EMBEDDED_SIGNATURE:
-		ss_embedded_sig_free(&c->u.ss_embedded_sig);
+		__ops_data_free(&c->u.ss_embedded_sig);
 		break;
 
 	case OPS_PARSER_PACKET_END:
@@ -1394,7 +1232,7 @@ parse_pubkey_data(__ops_pubkey_t *key, __ops_region_t *region,
  * \see RFC4880 5.5.2
  */
 static int 
-parse_pubkey(__ops_content_tag_t tag, __ops_region_t *region,
+parse_pubkey(__ops_content_enum tag, __ops_region_t *region,
 		 __ops_stream_t *stream)
 {
 	__ops_packet_t pkt;
@@ -1411,18 +1249,6 @@ parse_pubkey(__ops_content_tag_t tag, __ops_region_t *region,
 	CALLBACK(tag, &stream->cbinfo, &pkt);
 
 	return 1;
-}
-
-
-/**
-\ingroup Core_Create
-\brief Free allocated memory
-*/
-/* ! Free the memory used when parsing this packet type */
-void 
-__ops_userattr_free(__ops_userattr_t *user_att)
-{
-	data_free(&user_att->data);
 }
 
 /**
@@ -1443,18 +1269,15 @@ parse_userattr(__ops_region_t *region, __ops_stream_t *stream)
 	 * xxx- treat as raw data for now. Could break down further into
 	 * attribute sub-packets later - rachel
 	 */
-
 	if (region->readc != 0) {
 		/* We should not have read anything so far */
 		(void) fprintf(stderr, "parse_userattr: bad length\n");
 		return 0;
 	}
-
-	if (!read_data(&pkt.u.userattr.data, region, stream))
+	if (!read_data(&pkt.u.userattr, region, stream)) {
 		return 0;
-
+	}
 	CALLBACK(OPS_PTAG_CT_USER_ATTR, &stream->cbinfo, &pkt);
-
 	return 1;
 }
 
@@ -1464,10 +1287,10 @@ parse_userattr(__ops_region_t *region, __ops_stream_t *stream)
 */
 /* ! Free the memory used when parsing this packet type */
 void 
-__ops_userid_free(__ops_userid_t *id)
+__ops_userid_free(uint8_t **id)
 {
-	free(id->userid);
-	id->userid = NULL;
+	free(*id);
+	*id = NULL;
 }
 
 /**
@@ -1500,17 +1323,17 @@ parse_userid(__ops_region_t *region, __ops_stream_t *stream)
 		return 0;
 	}
 
-	if ((pkt.u.userid.userid = calloc(1, region->length + 1)) == NULL) {
+	if ((pkt.u.userid = calloc(1, region->length + 1)) == NULL) {
 		(void) fprintf(stderr, "parse_userid: bad alloc\n");
 		return 0;
 	}
 
 	if (region->length &&
-	    !limread(pkt.u.userid.userid, region->length, region,
+	    !limread(pkt.u.userid, region->length, region,
 			stream)) {
 		return 0;
 	}
-	pkt.u.userid.userid[region->length] = '\0';
+	pkt.u.userid[region->length] = 0x0;
 	CALLBACK(OPS_PTAG_CT_USER_ID, &stream->cbinfo, &pkt);
 	return 1;
 }
@@ -1692,7 +1515,7 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 	t7 = 1 << (c & 7);
 
 	pkt.critical = (unsigned)c >> 7;
-	pkt.tag = (__ops_content_tag_t)(OPS_PTAG_SIG_SUBPKT_BASE + (c & 0x7f));
+	pkt.tag = (__ops_content_enum)(OPS_PTAG_SIG_SUBPKT_BASE + (c & 0x7f));
 
 	/* Application wants it delivered raw */
 	if (stream->ss_raw[t8] & t7) {
@@ -1714,14 +1537,14 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 	case OPS_PTAG_SS_CREATION_TIME:
 	case OPS_PTAG_SS_EXPIRATION_TIME:
 	case OPS_PTAG_SS_KEY_EXPIRY:
-		if (!limited_read_time(&pkt.u.ss_time.time, &subregion, stream))
+		if (!limited_read_time(&pkt.u.ss_time, &subregion, stream))
 			return 0;
 		if (pkt.tag == OPS_PTAG_SS_CREATION_TIME) {
-			sig->info.birthtime = pkt.u.ss_time.time;
+			sig->info.birthtime = pkt.u.ss_time;
 			sig->info.birthtime_set = 1;
 		}
 		if (pkt.tag == OPS_PTAG_SS_EXPIRATION_TIME) {
-			sig->info.duration = pkt.u.ss_time.time;
+			sig->info.duration = pkt.u.ss_time;
 			sig->info.duration_set = 1;
 		}
 		break;
@@ -1737,34 +1560,31 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 		if (!limread(&bools, 1, &subregion, stream)) {
 			return 0;
 		}
-		pkt.u.ss_revocable.revocable = !!bools;
+		pkt.u.ss_revocable = !!bools;
 		break;
 
 	case OPS_PTAG_SS_ISSUER_KEY_ID:
-		if (!limread(pkt.u.ss_issuer.key_id, OPS_KEY_ID_SIZE,
-				&subregion, stream)) {
+		if (!limread(pkt.u.ss_issuer, OPS_KEY_ID_SIZE, &subregion, stream)) {
 			return 0;
 		}
-		(void) memcpy(sig->info.signer_id,
-			pkt.u.ss_issuer.key_id, OPS_KEY_ID_SIZE);
+		(void) memcpy(sig->info.signer_id, pkt.u.ss_issuer, OPS_KEY_ID_SIZE);
 		sig->info.signer_id_set = 1;
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_SKA:
-		if (!read_data(&pkt.u.ss_skapref.data, &subregion, stream)) {
+		if (!read_data(&pkt.u.ss_skapref, &subregion, stream)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PTAG_SS_PREFERRED_HASH:
-		if (!read_data(&pkt.u.ss_hashpref.data, &subregion, stream)) {
+		if (!read_data(&pkt.u.ss_hashpref, &subregion, stream)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PTAG_SS_PREF_COMPRESS:
-		if (!read_data(&pkt.u.ss_zpref.data,
-				&subregion, stream)) {
+		if (!read_data(&pkt.u.ss_zpref, &subregion, stream)) {
 			return 0;
 		}
 		break;
@@ -1773,38 +1593,36 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 		if (!limread(&bools, 1, &subregion, stream)) {
 			return 0;
 		}
-		pkt.u.ss_primary_userid.primary_userid = !!bools;
+		pkt.u.ss_primary_userid = !!bools;
 		break;
 
 	case OPS_PTAG_SS_KEY_FLAGS:
-		if (!read_data(&pkt.u.ss_key_flags.data, &subregion, stream)) {
+		if (!read_data(&pkt.u.ss_key_flags, &subregion, stream)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PTAG_SS_KEYSERV_PREFS:
-		if (!read_data(&pkt.u.ss_key_server_prefs.data, &subregion,
-				stream)) {
+		if (!read_data(&pkt.u.ss_key_server_prefs, &subregion, stream)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PTAG_SS_FEATURES:
-		if (!read_data(&pkt.u.ss_features.data, &subregion, stream)) {
+		if (!read_data(&pkt.u.ss_features, &subregion, stream)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PTAG_SS_SIGNERS_USER_ID:
-		if (!read_unsig_str(&pkt.u.ss_signer.userid, &subregion,
-				stream)) {
+		if (!read_unsig_str(&pkt.u.ss_signer, &subregion, stream)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PTAG_SS_EMBEDDED_SIGNATURE:
 		/* \todo should do something with this sig? */
-		if (!read_data(&pkt.u.ss_embedded_sig.sig, &subregion, stream)) {
+		if (!read_data(&pkt.u.ss_embedded_sig, &subregion, stream)) {
 			return 0;
 		}
 		break;
@@ -1835,19 +1653,19 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 		break;
 
 	case OPS_PTAG_SS_POLICY_URI:
-		if (!read_string(&pkt.u.ss_policy.url, &subregion, stream)) {
+		if (!read_string(&pkt.u.ss_policy, &subregion, stream)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PTAG_SS_REGEXP:
-		if (!read_string(&pkt.u.ss_regexp.regexp, &subregion, stream)) {
+		if (!read_string(&pkt.u.ss_regexp, &subregion, stream)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PTAG_SS_PREF_KEYSERV:
-		if (!read_string(&pkt.u.ss_keyserv.name, &subregion, stream)) {
+		if (!read_string(&pkt.u.ss_keyserv, &subregion, stream)) {
 			return 0;
 		}
 		break;
@@ -1863,13 +1681,13 @@ parse_one_sig_subpacket(__ops_sig_t *sig,
 	case OPS_PTAG_SS_USERDEFINED08:
 	case OPS_PTAG_SS_USERDEFINED09:
 	case OPS_PTAG_SS_USERDEFINED10:
-		if (!read_data(&pkt.u.ss_userdef.data, &subregion, stream)) {
+		if (!read_data(&pkt.u.ss_userdef, &subregion, stream)) {
 			return 0;
 		}
 		break;
 
 	case OPS_PTAG_SS_RESERVED:
-		if (!read_data(&pkt.u.ss_unknown.data, &subregion, stream)) {
+		if (!read_data(&pkt.u.ss_unknown, &subregion, stream)) {
 			return 0;
 		}
 		break;
@@ -2155,8 +1973,7 @@ parse_v4_sig(__ops_region_t *region, __ops_stream_t *stream)
 	case OPS_PKA_PRIVATE08:
 	case OPS_PKA_PRIVATE09:
 	case OPS_PKA_PRIVATE10:
-		if (!read_data(&pkt.u.sig.info.sig.unknown.data, region,
-				stream)) {
+		if (!read_data(&pkt.u.sig.info.sig.unknown, region, stream)) {
 			return 0;
 		}
 		break;
@@ -2231,7 +2048,7 @@ parse_compressed(__ops_region_t *region, __ops_stream_t *stream)
 		return 0;
 	}
 
-	pkt.u.compressed.type = (__ops_compression_type_t)c;
+	pkt.u.compressed = (__ops_compression_type_t)c;
 
 	CALLBACK(OPS_PTAG_CT_COMPRESSED, &stream->cbinfo, &pkt);
 
@@ -2240,7 +2057,7 @@ parse_compressed(__ops_region_t *region, __ops_stream_t *stream)
 	 * once decompressed, so recursively handle them
 	 */
 
-	return __ops_decompress(region, stream, pkt.u.compressed.type);
+	return __ops_decompress(region, stream, pkt.u.compressed);
 }
 
 /* XXX: this could be improved by sharing all hashes that are the */
@@ -2330,7 +2147,7 @@ parse_trust(__ops_region_t *region, __ops_stream_t *stream)
 {
 	__ops_packet_t pkt;
 
-	if (!read_data(&pkt.u.trust.data, region, stream)) {
+	if (!read_data(&pkt.u.trust, region, stream)) {
 		return 0;
 	}
 	CALLBACK(OPS_PTAG_CT_TRUST, &stream->cbinfo, &pkt);
@@ -2362,7 +2179,7 @@ parse_litdata(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.litdata_header.format = (__ops_litdata_type_t)c;
+	pkt.u.litdata_header.format = (__ops_litdata_enum)c;
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
@@ -2445,7 +2262,7 @@ consume_packet(__ops_region_t *region, __ops_stream_t *stream, unsigned warn)
 
 	if (read_data(&remainder, region, stream)) {
 		/* now throw it away */
-		data_free(&remainder);
+		__ops_data_free(&remainder);
 		if (warn) {
 			OPS_ERROR(&stream->errors, OPS_E_P_PACKET_CONSUMED,
 				"Warning: packet consumer");
@@ -2830,8 +2647,8 @@ parse_pk_sesskey(__ops_region_t *region,
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.pk_sesskey.version = (__ops_pk_sesskey_version_t)c;
-	if (pkt.u.pk_sesskey.version != OPS_PKSK_V3) {
+	pkt.u.pk_sesskey.version = c;
+	if (pkt.u.pk_sesskey.version != 3) {
 		OPS_ERROR_1(&stream->errors, OPS_E_PROTO_BAD_PKSK_VRSN,
 			"Bad public-key encrypted session key version (%d)",
 			    pkt.u.pk_sesskey.version);
@@ -2962,7 +2779,7 @@ parse_pk_sesskey(__ops_region_t *region,
 }
 
 static int 
-__ops_decrypt_se_data(__ops_content_tag_t tag, __ops_region_t *region,
+__ops_decrypt_se_data(__ops_content_enum tag, __ops_region_t *region,
 		    __ops_stream_t *stream)
 {
 	__ops_crypt_t	*decrypt;
@@ -3024,7 +2841,7 @@ __ops_decrypt_se_data(__ops_content_tag_t tag, __ops_region_t *region,
 }
 
 static int 
-__ops_decrypt_se_ip_data(__ops_content_tag_t tag, __ops_region_t *region,
+__ops_decrypt_se_ip_data(__ops_content_enum tag, __ops_region_t *region,
 		       __ops_stream_t *stream)
 {
 	__ops_crypt_t	*decrypt;
@@ -3097,9 +2914,9 @@ parse_se_ip_data(__ops_region_t *region, __ops_stream_t *stream)
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
 	}
-	pkt.u.se_ip_data_header.version = (__ops_se_ip_version_t)c;
+	pkt.u.se_ip_data_header = c;
 
-	if (pkt.u.se_ip_data_header.version != OPS_SE_IP_V1) {
+	if (pkt.u.se_ip_data_header != OPS_SE_IP_DATA_VERSION) {
 		(void) fprintf(stderr, "parse_se_ip_data: bad version\n");
 		return 0;
 	}
@@ -3172,7 +2989,7 @@ __ops_parse_packet(__ops_stream_t *stream, uint32_t *pktlen)
 	*pktlen = 0;
 
 	if (!(ptag & OPS_PTAG_ALWAYS_SET)) {
-		pkt.u.error.error = "Format error (ptag bit not set)";
+		pkt.u.error = "Format error (ptag bit not set)";
 		CALLBACK(OPS_PARSER_ERROR, &stream->cbinfo, &pkt);
 		return 0;
 	}
@@ -3379,7 +3196,7 @@ __ops_parse(__ops_stream_t *stream, const int perrors)
  * \todo Make all packet types optional, not just subpackets */
 void 
 __ops_parse_options(__ops_stream_t *stream,
-		  __ops_content_tag_t tag,
+		  __ops_content_enum tag,
 		  __ops_parse_type_t type)
 {
 	unsigned	t7;

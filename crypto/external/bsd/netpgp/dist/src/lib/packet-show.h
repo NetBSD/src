@@ -80,30 +80,30 @@ typedef struct {
 void __ops_text_init(__ops_text_t *);
 void __ops_text_free(__ops_text_t *);
 
-const char *__ops_show_packet_tag(__ops_packet_tag_t);
-const char *__ops_show_ss_type(__ops_ss_type_t);
+const char *__ops_show_packet_tag(__ops_content_enum);
+const char *__ops_show_ss_type(__ops_content_enum);
 
 const char *__ops_show_sig_type(__ops_sig_type_t);
 const char *__ops_show_pka(__ops_pubkey_alg_t);
 
-__ops_text_t *__ops_showall_ss_zpref(__ops_ss_zpref_t);
+__ops_text_t *__ops_showall_ss_zpref(const __ops_data_t *);
 const char *__ops_show_ss_zpref(uint8_t);
 
-__ops_text_t *__ops_showall_ss_hashpref(__ops_ss_hashpref_t);
+__ops_text_t *__ops_showall_ss_hashpref(const __ops_data_t *);
 const char *__ops_show_hash_alg(uint8_t);
 const char *__ops_show_symm_alg(uint8_t);
 
-__ops_text_t *__ops_showall_ss_skapref(__ops_ss_skapref_t);
+__ops_text_t *__ops_showall_ss_skapref(const __ops_data_t *);
 const char *__ops_show_ss_skapref(uint8_t);
 
 const char *__ops_show_ss_rr_code(__ops_ss_rr_code_t);
 
-__ops_text_t *__ops_showall_ss_features(__ops_ss_features_t);
+__ops_text_t *__ops_showall_ss_features(__ops_data_t);
 
-__ops_text_t *__ops_showall_ss_key_flags(__ops_ss_key_flags_t);
+__ops_text_t *__ops_showall_ss_key_flags(const __ops_data_t *);
 const char *__ops_show_ss_key_flag(uint8_t, __ops_bit_map_t *);
 
-__ops_text_t *__ops_show_keyserv_prefs(__ops_ss_key_server_prefs_t);
+__ops_text_t *__ops_show_keyserv_prefs(const __ops_data_t *);
 const char *__ops_show_keyserv_pref(uint8_t, __ops_bit_map_t *);
 
 __ops_text_t *__ops_showall_notation(__ops_ss_notation_t);

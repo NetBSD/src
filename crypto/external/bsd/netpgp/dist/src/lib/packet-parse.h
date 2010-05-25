@@ -144,7 +144,7 @@ typedef enum {
 	OPS_PARSE_IGNORE	/* Don't callback */
 } __ops_parse_type_t;
 
-void __ops_parse_options(__ops_stream_t *, __ops_content_tag_t,
+void __ops_parse_options(__ops_stream_t *, __ops_content_enum,
 			__ops_parse_type_t);
 
 unsigned __ops_limited_read(uint8_t *, size_t, __ops_region_t *,
