@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.27 2010/05/08 02:17:15 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.28 2010/05/25 01:05:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -99,7 +99,7 @@ __RCSID("$NetBSD: create.c,v 1.27 2010/05/08 02:17:15 agc Exp $");
 unsigned 
 __ops_write_ss_header(__ops_output_t *output,
 			unsigned length,
-			__ops_content_tag_t type)
+			__ops_content_enum type)
 {
 	return __ops_write_length(output, length) &&
 		__ops_write_scalar(output, (unsigned)(type -
@@ -122,9 +122,9 @@ __ops_write_ss_header(__ops_output_t *output,
  */
 
 void 
-__ops_fast_create_userid(__ops_userid_t *id, uint8_t *userid)
+__ops_fast_create_userid(uint8_t **id, uint8_t *userid)
 {
-	id->userid = userid;
+	*id = userid;
 }
 
 /**
@@ -135,11 +135,11 @@ __ops_fast_create_userid(__ops_userid_t *id, uint8_t *userid)
  * \return 1 if OK, otherwise 0
  */
 unsigned 
-__ops_write_struct_userid(__ops_output_t *output, __ops_userid_t *id)
+__ops_write_struct_userid(__ops_output_t *output, const uint8_t *id)
 {
 	return __ops_write_ptag(output, OPS_PTAG_CT_USER_ID) &&
-		__ops_write_length(output, strlen((char *) id->userid)) &&
-		__ops_write(output, id->userid, strlen((char *) id->userid));
+		__ops_write_length(output, strlen((const char *) id)) &&
+		__ops_write(output, id, strlen((const char *) id));
 }
 
 /**
@@ -153,10 +153,7 @@ __ops_write_struct_userid(__ops_output_t *output, __ops_userid_t *id)
 unsigned 
 __ops_write_userid(const uint8_t *userid, __ops_output_t *output)
 {
-	__ops_userid_t   id;
-
-	id.userid = __UNCONST(userid);
-	return __ops_write_struct_userid(output, &id);
+	return __ops_write_struct_userid(output, userid);
 }
 
 /**
@@ -520,7 +517,7 @@ __ops_write_xfer_pubkey(__ops_output_t *output,
 
 	/* user ids and corresponding signatures */
 	for (i = 0; i < key->uidc; i++) {
-		if (!__ops_write_struct_userid(output, &key->uids[i])) {
+		if (!__ops_write_struct_userid(output, key->uids[i])) {
 			return 0;
 		}
 		for (j = 0; j < key->packetc; j++) {
@@ -579,7 +576,7 @@ __ops_write_xfer_seckey(__ops_output_t *output,
 
 	/* user ids and corresponding signatures */
 	for (i = 0; i < key->uidc; i++) {
-		if (!__ops_write_struct_userid(output, &key->uids[i])) {
+		if (!__ops_write_struct_userid(output, key->uids[i])) {
 			return 0;
 		}
 		for (j = 0; j < key->packetc; j++) {
@@ -1096,7 +1093,7 @@ unsigned
 __ops_write_litdata(__ops_output_t *output,
 			const uint8_t *data,
 			const int maxlen,
-			const __ops_litdata_type_t type)
+			const __ops_litdata_enum type)
 {
 	/*
          * RFC4880 does not specify a meaning for filename or date.
@@ -1123,7 +1120,7 @@ __ops_write_litdata(__ops_output_t *output,
 
 unsigned 
 __ops_fileread_litdata(const char *filename,
-				 const __ops_litdata_type_t type,
+				 const __ops_litdata_enum type,
 				 __ops_output_t *output)
 {
 	__ops_memory_t	*mem;

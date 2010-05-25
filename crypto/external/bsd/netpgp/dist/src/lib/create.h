@@ -77,8 +77,8 @@ int __ops_filewrite(const char *, const char *, const size_t, const unsigned);
 void __ops_build_pubkey(__ops_memory_t *, const __ops_pubkey_t *, unsigned);
 
 unsigned __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *, uint8_t *);
-unsigned __ops_write_struct_userid(__ops_output_t *, __ops_userid_t *);
-unsigned __ops_write_ss_header(__ops_output_t *, unsigned, __ops_content_tag_t);
+unsigned __ops_write_struct_userid(__ops_output_t *, const uint8_t *);
+unsigned __ops_write_ss_header(__ops_output_t *, unsigned, __ops_content_enum);
 unsigned __ops_write_struct_seckey(const __ops_seckey_t *,
 			    const uint8_t *,
 			    const size_t,
@@ -90,7 +90,7 @@ unsigned __ops_write_one_pass_sig(__ops_output_t *,
 unsigned __ops_write_litdata(__ops_output_t *, 
 				const uint8_t *,
 				const int,
-				const __ops_litdata_type_t);
+				const __ops_litdata_enum);
 __ops_pk_sesskey_t *__ops_create_pk_sesskey(const __ops_key_t *);
 unsigned __ops_write_pk_sesskey(__ops_output_t *, __ops_pk_sesskey_t *);
 unsigned __ops_write_xfer_pubkey(__ops_output_t *,
@@ -101,7 +101,7 @@ unsigned   __ops_write_xfer_seckey(__ops_output_t *,
 				const size_t,
 				const unsigned);
 
-void __ops_fast_create_userid(__ops_userid_t *, uint8_t *);
+void __ops_fast_create_userid(uint8_t **, uint8_t *);
 unsigned __ops_write_userid(const uint8_t *, __ops_output_t *);
 void __ops_fast_create_rsa_pubkey(__ops_pubkey_t *, time_t, BIGNUM *, BIGNUM *);
 unsigned __ops_write_rsa_pubkey(time_t, const BIGNUM *, const BIGNUM *,
@@ -111,7 +111,7 @@ void __ops_fast_create_rsa_seckey(__ops_seckey_t *, time_t, BIGNUM *,
 				BIGNUM *, BIGNUM *);
 unsigned encode_m_buf(const uint8_t *, size_t, const __ops_pubkey_t *,
 				uint8_t *);
-unsigned __ops_fileread_litdata(const char *, const __ops_litdata_type_t,
+unsigned __ops_fileread_litdata(const char *, const __ops_litdata_enum,
 				__ops_output_t *);
 unsigned __ops_write_symm_enc_data(const uint8_t *, const int,
 				__ops_output_t *);

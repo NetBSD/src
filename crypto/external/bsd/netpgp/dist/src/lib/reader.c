@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.35 2010/05/08 02:17:15 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.36 2010/05/25 01:05:11 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -559,14 +559,14 @@ process_dash_escaped(dearmour_t *dearmour,
 			__ops_reader_t *readinfo,
 			__ops_cbdata_t *cbinfo)
 {
-	__ops_packet_t content;
-	__ops_packet_t content2;
-	__ops_cleartext_body_t *body = &content.u.cleartext_body;
-	__ops_cleartext_trailer_t *trailer = &content2.u.cleartext_trailer;
-	const char     *hashstr;
-	__ops_hash_t     *hash;
-	int             total;
+	__ops_fixed_body_t	*body;
+	__ops_packet_t		 content2;
+	__ops_packet_t		 content;
+	const char		*hashstr;
+	__ops_hash_t		*hash;
+	int			 total;
 
+	body = &content.u.cleartext_body;
 	if ((hash = calloc(1, sizeof(*hash))) == NULL) {
 		OPS_ERROR(errors, OPS_E_R_BAD_FORMAT,
 			"process_dash_escaped: bad alloc");
@@ -683,7 +683,6 @@ process_dash_escaped(dearmour_t *dearmour,
 	}
 
 	/* don't send that one character, because it's part of the trailer */
-	trailer->hash = hash;
 	CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_TRAILER, cbinfo, &content2);
 	return total;
 }
@@ -1151,7 +1150,7 @@ got_minus:
 
 			if (strcmp(buf, "BEGIN PGP SIGNED MESSAGE") == 0) {
 				__ops_dup_headers(
-					&content.u.cleartext_head.headers,
+					&content.u.cleartext_head,
 					&dearmour->headers);
 				CALLBACK(OPS_PTAG_CT_SIGNED_CLEARTEXT_HEADER,
 					cbinfo,
@@ -1284,7 +1283,7 @@ got_minus2:
 						&content);
 				base64(dearmour);
 			} else {
-				content.u.armour_trailer.type = buf;
+				content.u.armour_trailer = buf;
 				CALLBACK(OPS_PTAG_CT_ARMOUR_TRAILER, cbinfo,
 						&content);
 				dearmour->state = OUTSIDE_BLOCK;

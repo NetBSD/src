@@ -214,12 +214,12 @@ findstr(str_t *array, const char *name)
 int
 __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 {
-	__ops_userid_t	 userid;
 	__ops_pubkey_t	*pubkey;
 	struct stat	 st;
 	bufgap_t	 bg;
 	uint32_t	 len;
 	int64_t		 off;
+	uint8_t		*userid;
 	char		 hostname[256];
 	char		 owner[256];
 	char		*space;
@@ -323,15 +323,15 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 				(int)strlen(space + 1) - 1,
 				space + 1);
 		}
-		(void) __ops_asprintf((char **)(void *)&userid.userid,
+		(void) __ops_asprintf((char **)(void *)&userid,
 						"%s (%s) %s",
 						hostname,
 						f,
 						owner);
 		__ops_keyid(key->key_id, sizeof(key->key_id), pubkey);
-		__ops_add_userid(key, &userid);
+		__ops_add_userid(key, userid);
 		__ops_fingerprint(&key->fingerprint, pubkey);
-		free(userid.userid);
+		free(userid);
 		if (__ops_get_debug_level(__FILE__)) {
 			/*__ops_print_keydata(io, keyring, key, "pub", pubkey, 0);*/
 			__OPS_USED(io); /* XXX */

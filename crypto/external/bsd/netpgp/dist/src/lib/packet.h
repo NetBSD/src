@@ -74,9 +74,9 @@ typedef struct __ops_printstate_t {
  */
 
 typedef struct {
-	size_t          len;
+	size_t           len;
 	uint8_t		*contents;
-	uint8_t		mmapped;	/* contents need an munmap(2) */
+	uint8_t		 mmapped;	/* contents need an munmap(2) */
 } __ops_data_t;
 
 /************************************/
@@ -294,7 +294,7 @@ typedef enum {
 	OPS_PARSER_ERROR = 0x500,	/* Internal Use: Parser Error */
 	OPS_PARSER_ERRCODE = 0x500 + 1	/* Internal Use: Parser Error
 					 * with errcode returned */
-} __ops_content_tag_t;
+} __ops_content_enum;
 
 enum {
 	OPS_REVOCATION_NO_REASON	= 0,
@@ -303,14 +303,6 @@ enum {
 	OPS_REVOCATION_RETIRED		= 3,
 	OPS_REVOCATION_NO_LONGER_VALID	= 0x20
 };
-
-typedef __ops_content_tag_t __ops_packet_tag_t;
-typedef __ops_content_tag_t __ops_ss_type_t;
-
-/** Structure to hold one parse error string. */
-typedef struct {
-	const char     *error;	/* error message. */
-} __ops_parser_error_t;
 
 /** Structure to hold one error code */
 typedef struct {
@@ -324,7 +316,7 @@ typedef struct {
 	unsigned        new_format;	/* Whether this packet tag is new
 					 * (1) or old format (0) */
 	unsigned        type;	/* content_tag value - See
-					 * #__ops_content_tag_t for meanings */
+					 * #__ops_content_enum for meanings */
 	__ops_ptag_of_lt_t length_type;	/* Length type (#__ops_ptag_of_lt_t)
 					 * - only if this packet tag is old
 					 * format.  Set to 0 if new format. */
@@ -537,12 +529,12 @@ unsigned   __ops_is_hash_alg_supported(const __ops_hash_alg_t *);
 
 /** __ops_seckey_t
  */
-typedef struct {
-	__ops_pubkey_t			pubkey;
+typedef struct __ops_seckey_t {
+	__ops_pubkey_t			pubkey;		/* public key */
 	__ops_s2k_usage_t		s2k_usage;
 	__ops_s2k_specifier_t		s2k_specifier;
-	__ops_symm_alg_t		alg;
-	__ops_hash_alg_t		hash_alg;
+	__ops_symm_alg_t		alg;		/* symmetric alg */
+	__ops_hash_alg_t		hash_alg;	/* hash algorithm */
 	uint8_t				salt[OPS_SALT_SIZE];
 	unsigned			octetc;
 	uint8_t				iv[OPS_MAX_BLOCK_SIZE];
@@ -550,22 +542,6 @@ typedef struct {
 	unsigned			checksum;
 	uint8_t			       *checkhash;
 } __ops_seckey_t;
-
-/** Structure to hold one trust packet's data */
-
-typedef struct {
-	__ops_data_t      data;	/* Trust Packet */
-} __ops_trust_t;
-
-/** Structure to hold one user id */
-typedef struct {
-	uint8_t		*userid;/* User ID - UTF-8 string */
-} __ops_userid_t;
-
-/** Structure to hold one user attribute */
-typedef struct {
-	__ops_data_t      data;	/* User Attribute */
-} __ops_userattr_t;
 
 /** Signature Type.
  * OpenPGP defines different signature types that allow giving
@@ -608,33 +584,28 @@ typedef enum {
 } __ops_sig_type_t;
 
 /** Struct to hold params of an RSA signature */
-typedef struct {
+typedef struct __ops_rsa_sig_t {
 	BIGNUM         *sig;	/* the signature value (m^d % n) */
 } __ops_rsa_sig_t;
 
 /** Struct to hold params of a DSA signature */
-typedef struct {
+typedef struct __ops_dsa_sig_t {
 	BIGNUM         *r;	/* DSA value r */
 	BIGNUM         *s;	/* DSA value s */
 } __ops_dsa_sig_t;
 
 /** __ops_elgamal_signature_t */
-typedef struct {
+typedef struct __ops_elgamal_sig_t {
 	BIGNUM         *r;
 	BIGNUM         *s;
 } __ops_elgamal_sig_t;
-
-/** Struct to hold data for a private/experimental signature */
-typedef struct {
-	__ops_data_t      data;
-} __ops_unknown_sig_t;
 
 /** Union to hold signature params of any algorithm */
 typedef union {
 	__ops_rsa_sig_t rsa;/* An RSA Signature */
 	__ops_dsa_sig_t dsa;/* A DSA Signature */
 	__ops_elgamal_sig_t elgamal;	/* deprecated */
-	__ops_unknown_sig_t unknown;	/* private or experimental */
+	__ops_data_t unknown;	/* private or experimental */
 } __ops_sig_union_t;
 
 #define OPS_KEY_ID_SIZE		8
@@ -645,7 +616,7 @@ typedef union {
  * \see RFC4880 5.2.2
  * \see RFC4880 5.2.3
  */
-typedef struct {
+typedef struct __ops_sig_info_t {
 	__ops_version_t   version;/* signature version number */
 	__ops_sig_type_t  type;	/* signature type value */
 	time_t          birthtime;	/* creation time of the signature */
@@ -673,101 +644,37 @@ typedef struct __ops_sig_t {
 
 /** The raw bytes of a signature subpacket */
 
-typedef struct {
-	__ops_content_tag_t	 tag;
+typedef struct __ops_ss_raw_t {
+	__ops_content_enum	 tag;
 	size_t          	 length;
 	uint8_t			*raw;
 } __ops_ss_raw_t;
 
 /** Signature Subpacket : Trust Level */
 
-typedef struct {
-	uint8_t		level;	/* Trust Level */
-	uint8_t		amount;	/* Amount */
+typedef struct __ops_ss_trust_t {
+	uint8_t			 level;		/* Trust Level */
+	uint8_t			 amount;	/* Amount */
 } __ops_ss_trust_t;
 
-/** Signature Subpacket : Revocable */
-typedef struct {
-	unsigned		revocable;
-} __ops_ss_revocable_t;
-
-/** Signature Subpacket : Time */
-typedef struct {
-	time_t			time;
-} __ops_ss_time_t;
-
-/** Signature Subpacket : Key ID */
-typedef struct {
-	uint8_t		key_id[OPS_KEY_ID_SIZE];
-} __ops_ss_key_id_t;
-
 /** Signature Subpacket : Notation Data */
-typedef struct {
+typedef struct __ops_ss_notation_t {
 	__ops_data_t		flags;
 	__ops_data_t		name;
 	__ops_data_t		value;
 } __ops_ss_notation_t;
 
-/** Signature Subpacket : User Defined */
-typedef struct {
-	__ops_data_t		data;
-} __ops_ss_userdef_t;
-
-/** Signature Subpacket : Unknown */
-typedef struct {
-	__ops_data_t		data;
-} __ops_ss_unknown_t;
-
-/** Signature Subpacket : Preferred Symmetric Key Algorithm */
-typedef struct {
-	__ops_data_t		data;
-	/*
-	 * Note that value 0 may represent the plaintext algorithm so we
-	 * cannot expect data->contents to be a null-terminated list
-	 */
-} __ops_ss_skapref_t;
-
-/** Signature Subpacket : Preferrred Hash Algorithm */
-typedef struct {
-	__ops_data_t      data;
-} __ops_ss_hashpref_t;
-
-/** Signature Subpacket : Preferred Compression */
-typedef struct {
-	__ops_data_t      data;
-} __ops_ss_zpref_t;
-
-/** Signature Subpacket : Key Flags */
-typedef struct {
-	__ops_data_t      data;
-} __ops_ss_key_flags_t;
-
-/** Signature Subpacket : Key Server Preferences */
-typedef struct {
-	__ops_data_t      data;
-} __ops_ss_key_server_prefs_t;
-
-/** Signature Subpacket : Features */
-typedef struct {
-	__ops_data_t      data;
-} __ops_ss_features_t;
-
 /** Signature Subpacket : Signature Target */
-typedef struct {
+typedef struct __ops_ss_sig_target_t {
 	__ops_pubkey_alg_t	pka_alg;
 	__ops_hash_alg_t	hash_alg;
 	__ops_data_t		hash;
 } __ops_ss_sig_target_t;
 
-/** Signature Subpacket : Embedded Signature */
-typedef struct {
-	__ops_data_t      sig;
-} __ops_ss_embedded_sig_t;
-
 /** __ops_subpacket_t */
 typedef struct __ops_subpacket_t {
-	size_t          length;
-	uint8_t		*raw;
+	size_t          	 length;
+	uint8_t			*raw;
 } __ops_subpacket_t;
 
 /** Types of Compression */
@@ -777,15 +684,6 @@ typedef enum {
 	OPS_C_ZLIB = 2,
 	OPS_C_BZIP2 = 3
 } __ops_compression_type_t;
-
-/*
- * unlike most structures, this will feed its data as a stream to the
- * application instead of directly including it
- */
-/** __ops_compressed_t */
-typedef struct {
-	__ops_compression_type_t type;
-} __ops_compressed_t;
 
 /** __ops_one_pass_sig_t */
 typedef struct {
@@ -797,37 +695,17 @@ typedef struct {
 	unsigned		nested;
 } __ops_one_pass_sig_t;
 
-/** Signature Subpacket : Primary User ID */
-typedef struct {
-	unsigned   primary_userid;
-} __ops_ss_primary_userid_t;
-
-/** Signature Subpacket : Regexp */
-typedef struct {
-	char           *regexp;
-} __ops_ss_regexp_t;
-
-/** Signature Subpacket : Policy URL */
-typedef struct {
-	char           *url;
-} __ops_ss_policy_t;
-
-/** Signature Subpacket : Preferred Key Server */
-typedef struct {
-	char           *name;
-} __ops_ss_keyserv_t;
-
 /** Signature Subpacket : Revocation Key */
 typedef struct {
-	uint8_t   class;
-	uint8_t   algid;
-	uint8_t   fingerprint[OPS_FINGERPRINT_SIZE];
+	uint8_t   		class;
+	uint8_t   		algid;
+	uint8_t   		fingerprint[OPS_FINGERPRINT_SIZE];
 } __ops_ss_revocation_key_t;
 
 /** Signature Subpacket : Revocation Reason */
 typedef struct {
-	uint8_t   code;
-	char           *reason;
+	uint8_t   		 code;
+	char			*reason;
 } __ops_ss_revocation_t;
 
 /** litdata_type_t */
@@ -837,11 +715,11 @@ typedef enum {
 	OPS_LDT_UTF8 = 'u',
 	OPS_LDT_LOCAL = 'l',
 	OPS_LDT_LOCAL2 = '1'
-} __ops_litdata_type_t;
+} __ops_litdata_enum;
 
 /** __ops_litdata_header_t */
 typedef struct {
-	__ops_litdata_type_t	format;
+	__ops_litdata_enum	format;
 	char			filename[256];
 	time_t			mtime;
 } __ops_litdata_header_t;
@@ -852,12 +730,6 @@ typedef struct {
 	uint8_t		*data;
 	void		*mem;		/* __ops_memory_t pointer */
 } __ops_litdata_body_t;
-
-/** __ops_mdc_t */
-typedef struct {
-	unsigned	 length;
-	uint8_t		*data;
-} __ops_mdc_t;
 
 /** __ops_header_var_t */
 typedef struct {
@@ -877,43 +749,22 @@ typedef struct {
 	__ops_headers_t	 headers;
 } __ops_armour_header_t;
 
-/** __ops_armour_trailer_t */
-typedef struct {
-	const char     *type;
-} __ops_armour_trailer_t;
-
-/** __ops_cleartext_head_t */
-typedef struct {
-	__ops_headers_t   headers;
-} __ops_cleartext_head_t;
-
-/** __ops_cleartext_body_t */
-typedef struct {
+/** __ops_fixed_body_t */
+typedef struct __ops_fixed_body_t {
 	unsigned        length;
 	uint8_t		data[8192];	/* \todo fix hard-coded value? */
-} __ops_cleartext_body_t;
+} __ops_fixed_body_t;
 
-/** __ops_cleartext_trailer_t */
-typedef struct {
-	struct _ops_hash_t *hash;	/* This will not have been
-					 * finalised, but will have seen all
-					 * the cleartext data in canonical
-					 * form */
-} __ops_cleartext_trailer_t;
-
-/** __ops_unarmoured_text_t */
-typedef struct {
-	unsigned        length;
+/** __ops_dyn_body_t */
+typedef struct __ops_dyn_body_t {
+	unsigned         length;
 	uint8_t		*data;
-} __ops_unarmoured_text_t;
+} __ops_dyn_body_t;
 
-typedef enum {
-	SE_IP_DATA_VERSION = 1
-} __ops_se_ip_data_version_t;
-
-typedef enum {
+enum {
+	OPS_SE_IP_DATA_VERSION = 1,
 	OPS_PKSK_V3 = 3
-} __ops_pk_sesskey_version_t;
+};
 
 /** __ops_pk_sesskey_params_rsa_t */
 typedef struct {
@@ -935,7 +786,7 @@ typedef union {
 
 /** __ops_pk_sesskey_t */
 typedef struct {
-	__ops_pk_sesskey_version_t	version;
+	unsigned			version;
 	uint8_t				key_id[OPS_KEY_ID_SIZE];
 	__ops_pubkey_alg_t		alg;
 	__ops_pk_sesskey_params_t	params;
@@ -952,27 +803,6 @@ typedef struct {
 					 * content */
 } __ops_seckey_passphrase_t;
 
-typedef enum {
-	OPS_SE_IP_V1 = 1
-} __ops_se_ip_version_t;
-
-/** __ops_se_ip_data_header_t */
-typedef struct {
-	__ops_se_ip_version_t version;
-} __ops_se_ip_data_header_t;
-
-/** __ops_se_ip_data_body_t */
-typedef struct {
-	unsigned         length;
-	uint8_t		*data;	/* \todo remember to free this */
-} __ops_se_ip_data_body_t;
-
-/** __ops_se_data_body_t */
-typedef struct {
-	unsigned	length;
-	uint8_t		data[8192];	/* \todo parameterise this! */
-} __ops_se_data_body_t;
-
 /** __ops_get_seckey_t */
 typedef struct {
 	const __ops_seckey_t **seckey;
@@ -981,61 +811,61 @@ typedef struct {
 
 /** __ops_parser_union_content_t */
 typedef union {
-	__ops_parser_error_t		error;
+	const char 			*error;
 	__ops_parser_errcode_t		errcode;
 	__ops_ptag_t			ptag;
 	__ops_pubkey_t			pubkey;
-	__ops_trust_t			trust;
-	__ops_userid_t			userid;
-	__ops_userattr_t		userattr;
+	__ops_data_t			trust;
+	uint8_t				*userid;
+	__ops_data_t			userattr;
 	__ops_sig_t			sig;
 	__ops_ss_raw_t			ss_raw;
 	__ops_ss_trust_t		ss_trust;
-	__ops_ss_revocable_t		ss_revocable;
-	__ops_ss_time_t			ss_time;
-	__ops_ss_key_id_t		ss_issuer;
+	unsigned			ss_revocable;
+	time_t				ss_time;
+	uint8_t				ss_issuer[OPS_KEY_ID_SIZE];
 	__ops_ss_notation_t		ss_notation;
 	__ops_subpacket_t		packet;
-	__ops_compressed_t		compressed;
+	__ops_compression_type_t	compressed;
 	__ops_one_pass_sig_t		one_pass_sig;
-	__ops_ss_skapref_t		ss_skapref;
-	__ops_ss_hashpref_t		ss_hashpref;
-	__ops_ss_zpref_t		ss_zpref;
-	__ops_ss_key_flags_t		ss_key_flags;
-	__ops_ss_key_server_prefs_t	ss_key_server_prefs;
-	__ops_ss_primary_userid_t	ss_primary_userid;
-	__ops_ss_regexp_t		ss_regexp;
-	__ops_ss_policy_t		ss_policy;
-	__ops_ss_keyserv_t		ss_keyserv;
+	__ops_data_t			ss_skapref;
+	__ops_data_t			ss_hashpref;
+	__ops_data_t			ss_zpref;
+	__ops_data_t			ss_key_flags;
+	__ops_data_t			ss_key_server_prefs;
+	unsigned			ss_primary_userid;
+	char				*ss_regexp;
+	char				*ss_policy;
+	char				*ss_keyserv;
 	__ops_ss_revocation_key_t	ss_revocation_key;
-	__ops_ss_userdef_t		ss_userdef;
-	__ops_ss_unknown_t		ss_unknown;
+	__ops_data_t			ss_userdef;
+	__ops_data_t			ss_unknown;
 	__ops_litdata_header_t		litdata_header;
 	__ops_litdata_body_t		litdata_body;
-	__ops_mdc_t			mdc;
-	__ops_ss_features_t		ss_features;
+	__ops_dyn_body_t		mdc;
+	__ops_data_t			ss_features;
 	__ops_ss_sig_target_t		ss_sig_target;
-	__ops_ss_embedded_sig_t		ss_embedded_sig;
+	__ops_data_t			ss_embedded_sig;
 	__ops_ss_revocation_t		ss_revocation;
 	__ops_seckey_t			seckey;
-	__ops_userid_t			ss_signer;
+	uint8_t				*ss_signer;
 	__ops_armour_header_t		armour_header;
-	__ops_armour_trailer_t		armour_trailer;
-	__ops_cleartext_head_t		cleartext_head;
-	__ops_cleartext_body_t		cleartext_body;
-	__ops_cleartext_trailer_t	cleartext_trailer;
-	__ops_unarmoured_text_t		unarmoured_text;
+	const char 			*armour_trailer;
+	__ops_headers_t			cleartext_head;
+	__ops_fixed_body_t		cleartext_body;
+	struct _ops_hash_t		*cleartext_trailer;
+	__ops_dyn_body_t		unarmoured_text;
 	__ops_pk_sesskey_t		pk_sesskey;
 	__ops_seckey_passphrase_t	skey_passphrase;
-	__ops_se_ip_data_header_t	se_ip_data_header;
-	__ops_se_ip_data_body_t		se_ip_data_body;
-	__ops_se_data_body_t		se_data_body;
+	unsigned			se_ip_data_header;
+	__ops_dyn_body_t		se_ip_data_body;
+	__ops_fixed_body_t		se_data_body;
 	__ops_get_seckey_t		get_seckey;
 } __ops_contents_t;
 
 /** __ops_packet_t */
 struct __ops_packet_t {
-	__ops_content_tag_t	tag;		/* type of contents */
+	__ops_content_enum	tag;		/* type of contents */
 	uint8_t			critical;	/* for sig subpackets */
 	__ops_contents_t	u;		/* union for contents */
 };
@@ -1050,25 +880,12 @@ void __ops_finish(void);
 void __ops_keyid(uint8_t *, const size_t, const __ops_pubkey_t *);
 void __ops_fingerprint(__ops_fingerprint_t *, const __ops_pubkey_t *);
 void __ops_pubkey_free(__ops_pubkey_t *);
-void __ops_userid_free(__ops_userid_t *);
-void __ops_userattr_free(__ops_userattr_t *);
+void __ops_userid_free(uint8_t **);
+void __ops_data_free(__ops_data_t *);
 void __ops_sig_free(__ops_sig_t *);
-void __ops_trust_free(__ops_trust_t *);
-void __ops_ss_skapref_free(__ops_ss_skapref_t *);
-void __ops_ss_hashpref_free(__ops_ss_hashpref_t *);
-void __ops_ss_zpref_free(__ops_ss_zpref_t *);
-void __ops_ss_key_flags_free(__ops_ss_key_flags_t *);
-void __ops_ss_key_server_prefs_free(__ops_ss_key_server_prefs_t *);
-void __ops_ss_features_free(__ops_ss_features_t *);
 void __ops_ss_notation_free(__ops_ss_notation_t *);
-void __ops_ss_policy_free(__ops_ss_policy_t *);
-void __ops_ss_keyserv_free(__ops_ss_keyserv_t *);
-void __ops_ss_regexp_free(__ops_ss_regexp_t *);
-void __ops_ss_userdef_free(__ops_ss_userdef_t *);
-void __ops_ss_reserved_free(__ops_ss_unknown_t *);
 void __ops_ss_revocation_free(__ops_ss_revocation_t *);
 void __ops_ss_sig_target_free(__ops_ss_sig_target_t *);
-void __ops_ss_embedded_sig_free(__ops_ss_embedded_sig_t *);
 
 void __ops_subpacket_free(__ops_subpacket_t *);
 void __ops_parser_content_free(__ops_packet_t *);
@@ -1108,7 +925,7 @@ typedef union {
 
 /* sigpacket_t */
 typedef struct {
-	__ops_userid_t		*userid;
+	uint8_t			**userid;
 	__ops_subpacket_t	*packet;
 } sigpacket_t;
 
@@ -1129,13 +946,13 @@ typedef struct __ops_subsig_t {
 
 /* describes a user's key */
 struct __ops_key_t {
-	DYNARRAY(__ops_userid_t, uid);		/* array of user ids */
+	DYNARRAY(uint8_t *, uid);		/* array of user ids */
 	DYNARRAY(__ops_subpacket_t, packet);	/* array of raw subpackets */
 	DYNARRAY(__ops_subsig_t, subsig);	/* array of signature subkeys */
 	DYNARRAY(__ops_revoke_t, revoke);	/* array of signature revocations */
 	uint8_t			key_id[OPS_KEY_ID_SIZE];
 	__ops_fingerprint_t	fingerprint;	/* pgp fingerprint */
-	__ops_content_tag_t	type;		/* type of key */
+	__ops_content_enum	type;		/* type of key */
 	__ops_keydata_key_t	key;		/* pubkey/seckey data */
 	uint32_t		uid0;		/* primary uid index in uids array */
 	uint8_t			revoked;

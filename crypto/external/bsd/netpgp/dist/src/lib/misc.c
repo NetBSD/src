@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.29 2010/05/08 00:33:28 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.30 2010/05/25 01:05:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -130,12 +130,12 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_PTAG_CT_USER_ID:
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(stderr, "User ID: %s for key %d\n",
-					content->userid.userid,
+					content->userid,
 					keyring->keyc - 1);
 		}
 		if (keyring->keyc > 0) {
 			__ops_add_userid(&keyring->keys[keyring->keyc - 1],
-						&content->userid);
+						content->userid);
 			return OPS_KEEP_MEMORY;
 		}
 		OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID, "No userid found");
@@ -150,7 +150,7 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		return OPS_RELEASE_MEMORY;
 
 	case OPS_PARSER_ERROR:
-		(void) fprintf(stderr, "Error: %s\n", content->error.error);
+		(void) fprintf(stderr, "Error: %s\n", content->error);
 		return OPS_FINISHED;
 
 	case OPS_PARSER_ERRCODE:
@@ -883,7 +883,7 @@ __ops_memory_release(__ops_memory_t *mem)
 }
 
 void 
-__ops_memory_make_packet(__ops_memory_t *out, __ops_content_tag_t tag)
+__ops_memory_make_packet(__ops_memory_t *out, __ops_content_enum tag)
 {
 	size_t          extra;
 
