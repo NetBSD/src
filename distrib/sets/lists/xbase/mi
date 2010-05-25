@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.91 2010/05/22 23:19:44 mrg Exp $
+# $NetBSD: mi,v 1.92 2010/05/25 13:13:55 nonaka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2306,6 +2306,8 @@
 ./usr/X11R7/lib/X11/xkb/symbols/sharp_vndr/sl-c3x00	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sharp_vndr/ws003sh	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sharp_vndr/ws007sh	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sharp_vndr/ws011sh	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sharp_vndr/ws020sh	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/shift			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/si			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sk			-unknown-	xorg
