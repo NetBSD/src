@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.206 2010/04/05 07:20:28 joerg Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.207 2010/05/25 01:17:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.206 2010/04/05 07:20:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.207 2010/05/25 01:17:55 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -908,10 +908,10 @@ static const struct wm_product {
 	  "82567V-2 LAN Controller",
 	  WM_T_ICH10,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LM,
-	  "PCH LAN (82578LM) Controller",
+	  "PCH LAN (82577LM) Controller",
 	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LC,
-	  "PCH LAN (82578LC) Controller",
+	  "PCH LAN (82577LC) Controller",
 	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DM,
 	  "PCH LAN (82578DM) Controller",
@@ -5320,7 +5320,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
-		 /* XXX sould put sw semaphore, too */
+		 /* XXX should put sw semaphore, too */
 		wm_put_swsm_semaphore(sc);
 		break;
 	case WM_T_82575:
