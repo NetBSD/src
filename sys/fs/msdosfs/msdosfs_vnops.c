@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.65 2010/04/23 15:38:46 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.66 2010/05/25 10:15:34 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.65 2010/04/23 15:38:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.66 2010/05/25 10:15:34 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1059,7 +1059,6 @@ abortit:
 		if (doingdirectory)
 			panic("rename: lost dir entry");
 		vrele(ap->a_fvp);
-		VOP_UNLOCK(fvp, 0);
 		xp = NULL;
 	} else {
 		vrele(fvp);
