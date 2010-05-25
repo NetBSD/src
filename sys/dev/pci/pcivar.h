@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.87 2010/05/24 20:29:41 pgoyette Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.88 2010/05/25 08:35:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -279,13 +279,13 @@ int	pci_vpd_write(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
 /*
  * Misc.
  */
-const char *pci_findvendor(pcireg_t);
-const char *pci_findproduct(pcireg_t);
+const char *pci_findvendor_real(pcireg_t);
+const char *pci_findproduct_real(pcireg_t);
 const char *pci_null(pcireg_t);
 void pci_verbose_ctl(bool);
 
-extern const char *(*pci_findvendor_vec)(pcireg_t);
-extern const char *(*pci_findproduct_vec)(pcireg_t);
+extern const char *(*pci_findvendor)(pcireg_t);
+extern const char *(*pci_findproduct)(pcireg_t);
 extern const char *pci_unmatched;
 
 int	pci_find_device(struct pci_attach_args *pa,
