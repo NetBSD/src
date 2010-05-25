@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.8 2010/03/02 14:45:55 pooka Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.9 2010/05/25 11:02:07 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.8 2010/03/02 14:45:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.9 2010/05/25 11:02:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,6 +371,10 @@ wapbl_ufs_rename(void *v)
 		error = ENOENT;	/* XXX ufs_rename sets "0" here */
 		goto out2;
 	}
+	/*
+	 * XXX: if fvp != a_fvp, a_fvp can now have 0 references and yet we
+	 * access a_fvp->inode via ip later.  boom.
+	 */
 	vrele(ap->a_fvp);
 
 	/* save directory lookup information in case tdvp == fdvp */
