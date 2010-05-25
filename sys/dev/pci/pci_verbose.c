@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.c,v 1.1 2010/05/24 20:29:40 pgoyette Exp $	*/
+/*	$NetBSD: pci_verbose.c,v 1.2 2010/05/25 08:35:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.1 2010/05/24 20:29:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.2 2010/05/25 08:35:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -82,13 +82,13 @@ pciverbose_modcmd(modcmd_t cmd, void *arg)
 	aprint_normal("%s: cmd %d\n", __func__, cmd);	/* XXX */
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		pci_findvendor_vec = pci_findvendor;
-		pci_findproduct_vec = pci_findproduct;
+		pci_findvendor = pci_findvendor_real;
+		pci_findproduct = pci_findproduct_real;
 		pci_unmatched = "unmatched ";
 		return 0;
 	case MODULE_CMD_FINI:
-		pci_findvendor_vec = pci_null;
-		pci_findproduct_vec = pci_null;
+		pci_findvendor = pci_null;
+		pci_findproduct = pci_null;
 		pci_unmatched = "";
 		return 0;
 	default:
@@ -113,7 +113,7 @@ pci_untokenstring(const uint16_t *token, char *buf, size_t len)
 }
 
 const char *
-pci_findvendor(pcireg_t id_reg)
+pci_findvendor_real(pcireg_t id_reg)
 {
 	static char buf[256];
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);
@@ -133,7 +133,7 @@ pci_findvendor(pcireg_t id_reg)
 }
 
 const char *
-pci_findproduct(pcireg_t id_reg)
+pci_findproduct_real(pcireg_t id_reg)
 {
 	static char buf[256];
 	pci_vendor_id_t vendor = PCI_VENDOR(id_reg);

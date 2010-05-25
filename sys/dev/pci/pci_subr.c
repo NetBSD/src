@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.80 2010/05/24 20:29:41 pgoyette Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.81 2010/05/25 08:35:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.80 2010/05/24 20:29:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.81 2010/05/25 08:35:45 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -300,15 +300,15 @@ static const struct pci_class pci_class[] = {
  * In kernel, these routines are provided and linked via the
  * pciverbose module.
  */
-const char *(*pci_findvendor_vec)(pcireg_t id_reg) = pci_null;
-const char *(*pci_findproduct_vec)(pcireg_t id_reg) = pci_null;
+const char *(*pci_findvendor)(pcireg_t id_reg) = pci_null;
+const char *(*pci_findproduct)(pcireg_t id_reg) = pci_null;
 const char *pci_unmatched = "";
 #else
 /*
  * For userland we just set the vectors here.
  */
-const char *(*pci_findvendor_vec)(pcireg_t id_reg) = pci_findvendor;
-const char *(*pci_findproduct_vec)(pcireg_t id_reg) = pci_findproduct;
+const char *(*pci_findvendor)(pcireg_t id_reg) = pci_findvendor_real;
+const char *(*pci_findproduct)(pcireg_t id_reg) = pci_findproduct_real;
 const char *pci_unmatched = "unmatched ";
 #endif
 
@@ -362,8 +362,8 @@ pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
 	interface = PCI_INTERFACE(class_reg);
 	revision = PCI_REVISION(class_reg);
 
-	vendor_namep = pci_findvendor_vec(id_reg);
-	product_namep = pci_findproduct_vec(id_reg);
+	vendor_namep = pci_findvendor(id_reg);
+	product_namep = pci_findproduct(id_reg);
 
 	classp = pci_class;
 	while (classp->name != NULL) {
@@ -439,13 +439,13 @@ pci_conf_print_common(
 	pcireg_t rval;
 
 	rval = regs[o2i(PCI_ID_REG)];
-	name = pci_findvendor_vec(rval);
+	name = pci_findvendor(rval);
 	if (name)
 		printf("    Vendor Name: %s (0x%04x)\n", name,
 		    PCI_VENDOR(rval));
 	else
 		printf("    Vendor ID: 0x%04x\n", PCI_VENDOR(rval));
-	name = pci_findproduct_vec(rval);
+	name = pci_findproduct(rval);
 	if (name)
 		printf("    Device Name: %s (0x%04x)\n", name,
 		    PCI_PRODUCT(rval));
