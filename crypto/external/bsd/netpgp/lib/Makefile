@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2009/12/05 07:17:29 agc Exp $
+# $NetBSD: Makefile,v 1.9 2010/05/25 01:06:41 agc Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ SRCS+= symmetric.c validate.c writer.c
 SRCS+= ssh2pgp.c fastctype.c bufgap.c
 CPPFLAGS+= -I${.CURDIR} -I${EXTDIST}/include
 MAN= libnetpgp.3
-WARNS=4
+WARNS=5
 
 EXTDIST=${.CURDIR}/../dist
 
