@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.59 2010/05/24 20:29:49 pgoyette Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.60 2010/05/25 08:37:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.59 2010/05/24 20:29:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.60 2010/05/25 08:37:10 pgoyette Exp $");
 
 #include "midi.h"
 
@@ -259,8 +259,8 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 
 	cs_card = cs4280_identify_card(pa);
 	if (cs_card != NULL) {
-		vendor = pci_findvendor_vec(cs_card->id);
-		product = pci_findproduct_vec(cs_card->id); 
+		vendor = pci_findvendor(cs_card->id);
+		product = pci_findproduct(cs_card->id); 
 		if (vendor == NULL)
 			aprint_normal_dev(&sc->sc_dev,
 					  "vendor 0x%04x product 0x%04x\n",
