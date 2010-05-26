@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.68 2010/05/24 16:37:17 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.69 2010/05/26 23:53:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.68 2010/05/24 16:37:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.69 2010/05/26 23:53:21 pooka Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -98,6 +98,8 @@ static module_t	*module_lookup(const char *);
 static void	module_enqueue(module_t *);
 
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
+
+static void	sysctl_module_setup(void);
 
 /*
  * module_error:
@@ -328,6 +330,8 @@ module_init(void)
 			module_error("builtin %s failed: %d\n",
 			    (*mip)->mi_name, rv);
 	}
+
+	sysctl_module_setup();
 }
 
 /*
@@ -346,16 +350,19 @@ module_init2(void)
 		panic("module_init: %d", error);
 }
 
-SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
+static struct sysctllog *module_sysctllog;
+
+static void
+sysctl_module_setup(void)
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&module_sysctllog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "kern", NULL,
 		NULL, 0, NULL, 0,
 		CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, &node,
+	sysctl_createv(&module_sysctllog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "module",
 		SYSCTL_DESCR("Module options"),
@@ -365,13 +372,13 @@ SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
 	if (node == NULL)
 		return;
 
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_BOOL, "autoload",
 		SYSCTL_DESCR("Enable automatic load of modules"),
 		NULL, 0, &module_autoload_on, 0,
 		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_BOOL, "verbose",
 		SYSCTL_DESCR("Enable verbose output"),
