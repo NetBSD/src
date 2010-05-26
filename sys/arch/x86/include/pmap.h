@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29.2.3 2010/04/26 04:48:49 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.4 2010/05/26 04:55:23 rmind Exp $	*/
 
 /*
  *
@@ -251,8 +251,9 @@ typedef enum tlbwhy {
 	TLBSHOOT__MAX,
 } tlbwhy_t;
 
-void	pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, tlbwhy_t);
-void	pmap_tlb_shootnow(void);
+void		pmap_tlb_init(void);
+void		pmap_tlb_shootdown(pmap_t, vaddr_t, pt_entry_t, tlbwhy_t);
+void		pmap_tlb_shootnow(void);
 
 #define	__HAVE_PMAP_EMAP
 
