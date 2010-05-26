@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.266 2010/04/23 19:41:03 joerg Exp $
+#	$NetBSD: bsd.README,v 1.267 2010/05/26 01:10:10 uwe Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1478,9 +1478,6 @@ NOSUBDIR	If this variable is defined, then the SUBDIR variable
 
 SUBDIR		For all of the directories listed in ${SUBDIR}, the
 		specified directory will be visited and the target made.
-		There is also a default target which allows the command
-		"make subdir" where subdir is any directory listed in
-		${SUBDIR}.
 
 		As a special case, the use of a token .WAIT as an
 		entry in SUBDIR acts as a synchronization barrier
