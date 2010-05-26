@@ -1,4 +1,4 @@
-;       $NetBSD: rumpvfs.ifspec,v 1.3 2010/05/20 15:46:47 pooka Exp $
+;       $NetBSD: rumpvfs.ifspec,v 1.4 2010/05/26 21:50:56 pooka Exp $
 
 NAME|vfs
 PUBHDR|include/rump/rumpvfs_if_pub.h
@@ -50,6 +50,8 @@ int		|vfs_extattrctl	|struct mount *, int, struct vnode *,	\
 				 int, const char *
 void		|vfs_syncwait	|struct mount *
 int		|vfs_getmp	|const char *, struct mount **
+
+void		|vfs_mount_print|const char *, int
 
 void		|rcvp_set	|struct vnode *, struct vnode *
 struct vnode *	|cdir_get	|void
