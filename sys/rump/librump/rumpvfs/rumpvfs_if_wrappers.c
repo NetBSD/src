@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.5 2010/05/20 15:47:45 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.6 2010/05/26 21:51:59 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.3 2010/05/20 15:46:47 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.4 2010/05/26 21:50:56 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 
@@ -327,6 +327,15 @@ rump_pub_vfs_getmp(const char *arg1, struct mount **arg2)
 	rump_unschedule();
 
 	return rv;
+}
+
+void
+rump_pub_vfs_mount_print(const char *arg1, int arg2)
+{
+
+	rump_schedule();
+	rump_vfs_mount_print(arg1, arg2);
+	rump_unschedule();
 }
 
 void
