@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.6 2010/05/26 04:55:23 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.7 2010/05/26 04:57:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.6 2010/05/26 04:55:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.7 2010/05/26 04:57:21 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -900,7 +900,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	curpmap = ci->ci_pmap;
 	if (vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap) {
 		/* Our own pmap so just load it: easy. */
-		if (ci->ci_want_pmapload) {
+		if (__predict_false(ci->ci_want_pmapload)) {
 			mutex_exit(pmap->pm_lock);
 			pmap_load();
 			goto retry;
@@ -913,7 +913,9 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		 * to the kernel pmap in order to destroy a user pmap.
 		 */
 		if (!pmap_reactivate(pmap)) {
+			u_int gen = uvm_emap_gen_return();
 			tlbflush();
+			uvm_emap_update(gen);
 		}
 	} else {
 		/*
@@ -980,7 +982,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 
 	/*
 	 * We cannot tolerate context switches while mapped in.
-	 * if it's our own pmap all we have to do is unlock.
+	 * If it is our own pmap all we have to do is unlock.
 	 */
 	KASSERT(pmap->pm_ncsw == curlwp->l_ncsw);
 	mypmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
@@ -990,7 +992,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	}
 
 	/*
-	 * Mark whatever's on the cpu now as lazy and unlock.
+	 * Mark whatever's on the CPU now as lazy and unlock.
 	 * If the pmap was already installed, we are done.
 	 */
 	ci = curcpu();
