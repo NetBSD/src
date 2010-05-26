@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.27 2010/05/26 17:52:35 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.28 2010/05/26 21:27:00 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.27 2010/05/26 17:52:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.28 2010/05/26 21:27:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -493,7 +493,9 @@ sysvbfs_rename(void *arg)
 		struct componentname *a_tcnp;
 	} */ *ap = arg;
 	struct vnode *fvp = ap->a_fvp;
+	struct vnode *fdvp = ap->a_fdvp;
 	struct vnode *tvp = ap->a_tvp;
+	struct vnode *tdvp = ap->a_tdvp;
 	struct sysvbfs_node *bnode = fvp->v_data;
 	struct bfs *bfs = bnode->bmp->bfs;
 	const char *from_name = ap->a_fcnp->cn_nameptr;
@@ -501,7 +503,7 @@ sysvbfs_rename(void *arg)
 	int error;
 
 	DPRINTF("%s: %s->%s\n", __func__, from_name, to_name);
-	if ((fvp->v_mount != ap->a_tdvp->v_mount) ||
+	if ((fvp->v_mount != tdvp->v_mount) ||
 	    (tvp && (fvp->v_mount != tvp->v_mount))) {
 		error = EXDEV;
 		printf("cross-device link\n");
@@ -513,12 +515,17 @@ sysvbfs_rename(void *arg)
 
 	error = bfs_file_rename(bfs, from_name, to_name);
  out:
-	vput(ap->a_tdvp);
 	if (tvp)
-		vput(ap->a_tvp);  /* locked on entry */
-	if (ap->a_tdvp != ap->a_fdvp)
-		vrele(ap->a_fdvp);
-	vrele(ap->a_fvp); /* unlocked and refcnt is incremented on entry. */
+		vput(tvp);
+
+	/* tdvp == tvp probably can't happen with this fs, but safety first */
+	if (tdvp == tvp)
+		vrele(tdvp);
+	else
+		vput(tdvp);
+
+	vrele(fdvp);
+	vrele(fvp);
 
 	return 0;
 }
