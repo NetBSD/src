@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.34 2010/05/26 15:04:40 christos Exp $ */
+/* $NetBSD: mkdep.c,v 1.35 2010/05/26 18:07:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.34 2010/05/26 15:04:40 christos Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.35 2010/05/26 18:07:34 christos Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -269,7 +269,7 @@ main(int argc, char **argv)
 		if (suff_list == NULL)
 			err(2, "malloc");
 		sl = suff_list;
-		for (s = suffixes; (s = strchr(s, '.')); s += sz, sl++ ) {
+		for (s = suffixes; (s = strchr(s, '.')); s += sz, sl++) {
 			sz = strcspn(s, ", ");
 			if (sz > sizeof sl->suff)
 				errx(2, "suffix too long");
@@ -368,7 +368,7 @@ main(int argc, char **argv)
 				 * Not found, check for .o, since the
 				 * original file will have it.
 				 */
-				if (sl->len == 0) {
+				if (sl->len == 0 && suff_list->len != 0) {
 					if (memcmp(suf - 2, ".o", 2) == 0)
 						slen = 2;
 					else
