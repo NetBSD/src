@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.74 2010/05/14 13:04:14 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.75 2010/05/26 21:48:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.74 2010/05/14 13:04:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.75 2010/05/26 21:48:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -517,7 +517,7 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 	void (*pr)(const char *, ...))
 {
 
-	/* nada for now */
+	pr("VM OBJECT at %p, refs %d", uobj, uobj->uo_refs);
 }
 #endif
 
