@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.51 2010/05/20 15:46:47 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.52 2010/05/26 21:50:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.51 2010/05/20 15:46:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.52 2010/05/26 21:50:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -428,6 +428,36 @@ rump_vfs_syncwait(struct mount *mp)
 	n = buf_syncwait();
 	if (n)
 		printf("syncwait: unsynced buffers: %d\n", n);
+}
+
+/*
+ * Dump info about mount point.  No locking.
+ */
+void
+rump_vfs_mount_print(const char *path, int full)
+{
+#ifdef DEBUGPRINT
+	struct vnode *mvp;
+	struct vnode *vp;
+	int error;
+
+	rumpuser_dprintf("\n==== dumping mountpoint at ``%s'' ====\n\n", path);
+	if ((error = namei_simple_user(path, NSM_FOLLOW_NOEMULROOT, &mvp))!=0) {
+		rumpuser_dprintf("==== lookup error %d ====\n\n", error);
+		return;
+	}
+	vfs_mount_print(mvp->v_mount, full, (void *)rumpuser_dprintf);
+	if (full) {
+		rumpuser_dprintf("\n== dumping vnodes ==\n\n");
+		TAILQ_FOREACH(vp, &mvp->v_mount->mnt_vnodelist, v_mntvnodes) {
+			vfs_vnode_print(vp, full, (void *)rumpuser_dprintf);
+		}
+	}
+	vrele(mvp);
+	rumpuser_dprintf("\n==== done ====\n\n");
+#else
+	rumpuser_dprintf("mount dump not supported without DEBUGPRINT\n");
+#endif
 }
 
 void
