@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.33 2009/04/12 14:23:30 lukem Exp $ */
+/* $NetBSD: mkdep.c,v 1.34 2010/05/26 15:04:40 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: mkdep.c,v 1.33 2009/04/12 14:23:30 lukem Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.34 2010/05/26 15:04:40 christos Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -193,6 +193,7 @@ main(int argc, char **argv)
 	int	ok_ind, ch;
 	size_t	sz;
 	int	fd;
+	size_t  slen;
 	const char *fname;
 	const char *suffixes = NULL, *s;
 	suff_list_t *suff_list = NULL, *sl;
@@ -363,9 +364,20 @@ main(int argc, char **argv)
 						    sl->len))
 						break;
 				}
+				/*
+				 * Not found, check for .o, since the
+				 * original file will have it.
+				 */
+				if (sl->len == 0) {
+					if (memcmp(suf - 2, ".o", 2) == 0)
+						slen = 2;
+					else
+						slen = 0;
+				} else
+					slen = sl->len;
 			}
-			if (suff_list != NULL && sl->len != 0) {
-				suf -= sl->len;
+			if (suff_list != NULL && slen != 0) {
+				suf -= slen;
 				for (sl = suff_list; sl->len != 0; sl++) {
 					if (sl != suff_list)
 						write(dependfile, " ", 1);
