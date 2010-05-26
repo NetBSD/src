@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.26 2010/01/08 11:35:09 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.27 2010/05/26 17:52:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.26 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.27 2010/05/26 17:52:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,11 +83,12 @@ sysvbfs_lookup(void *arg)
 	DPRINTF("%s: %s op=%d %d\n", __func__, name, nameiop,
 	    cnp->cn_flags);
 
+	*a->a_vpp = NULL;
+
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
 	if ((error = VOP_ACCESS(a->a_dvp, VEXEC, cnp->cn_cred)) != 0) {
 		return error;	/* directory permittion. */
 	}
-
 
 	if (namelen == 1 && name[0] == '.') {	/* "." */
 		vref(v);
