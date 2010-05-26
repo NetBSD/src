@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.267 2010/05/26 01:10:10 uwe Exp $
+#	$NetBSD: bsd.README,v 1.268 2010/05/26 14:52:10 njoly Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -396,7 +396,7 @@ USE_SKEY	If "no", disables building S/key authentication
 
 USE_SSP		If "no", disables GCC stack protection code, which
 		detects stack overflows and aborts the program. The
-		stack protecion code imposes a performance penalty
+		stack protection code imposes a performance penalty
 		of about 5%.
 		Default: "no", unless "USE_FORT" is set to "yes"
 
