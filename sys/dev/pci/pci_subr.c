@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.81 2010/05/25 08:35:45 pgoyette Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.82 2010/05/26 09:42:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.81 2010/05/25 08:35:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.82 2010/05/26 09:42:42 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -328,10 +328,13 @@ void pci_verbose_ctl(bool load)
 
 	if (load) {
 		if (loaded++ == 0)
-			module_load("pciverbose", MODCTL_LOAD_FORCE, NULL,
-				    MODULE_CLASS_MISC);
+			if (module_load("pciverbose", MODCTL_LOAD_FORCE, NULL,
+				    MODULE_CLASS_MISC) !=0 )
+				loaded = 0;
 		return;
 	}
+	if (loaded == 0)
+		return;
 	if (--loaded == 0)
 		module_unload("pciverbose");
 }
