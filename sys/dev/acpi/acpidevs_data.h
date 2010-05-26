@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.17 2010/04/18 10:22:33 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.18 2010/05/26 09:48:26 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.19 2010/04/18 10:22:01 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.20 2010/05/26 09:47:17 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -179,14 +179,6 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0502",
 	    "Multiport serial device (non-intelligent 16550)",
-	},
-	{
-	    "PNP0510",
-	    "Generic IRDA-compatible device",
-	},
-	{
-	    "PNP0511",
-	    "Generic IRDA-compatible device",
 	},
 	{
 	    "PNP0600",
@@ -1089,10 +1081,6 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "AMD PCNet32 (VL version)",
 	},
 	{
-	    "PNP8294",
-	    "IrDA Infrared NDIS driver (Microsoft-supplied)",
-	},
-	{
 	    "PNP82BD",
 	    "IBM PCMCIA-NIC",
 	},
@@ -1137,12 +1125,32 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Reserved for Microsoft Networking components",
 	},
 	{
+	    "PNP8390",
+	    "Generic network adapter",
+	},
+	{
+	    "PNP0510",
+	    "Generic IrDA-compatible device",
+	},
+	{
+	    "PNP0511",
+	    "Generic IrDA-compatible device",
+	},
+	{
+	    "PNP8294",
+	    "IrDA Infrared NDIS driver (Microsoft-supplied)",
+	},
+	{
 	    "PNP8389",
 	    "Peer IrLAN infrared driver (Microsoft-supplied)",
 	},
 	{
-	    "PNP8390",
-	    "Generic network adapter",
+	    "HWPC224",
+	    "NSC SuperIO chip (inc. IrDA device)",
+	},
+	{
+	    "IBM0071",
+	    "NSC SuperIO chip (inc. IrDA device)",
 	},
 	{
 	    "ITE8708",
@@ -1150,7 +1158,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "NSC6001",
-	    "NSC IrDA Fast Infrared Port",
+	    "NSC SuperIO chip (inc. IrDA device)",
 	},
 	{
 	    "PNPA002",
