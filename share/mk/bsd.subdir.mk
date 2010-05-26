@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.51 2009/12/19 00:14:43 christos Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.52 2010/05/26 00:48:15 uwe Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -7,7 +7,7 @@
 
 .for dir in ${SUBDIR}
 .if "${dir}" == ".WAIT"
-# Don't play with .WAI
+# Don't play with .WAIT
 __REALSUBDIR+=${dir}
 .else
 .if "${dir:H}" != ""
