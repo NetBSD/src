@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.27 2010/04/05 07:22:24 joerg Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.28 2010/05/26 23:46:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.27 2010/04/05 07:22:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.28 2010/05/26 23:46:44 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -1003,7 +1003,7 @@ static bool
 agr_ports_enter(struct agr_softc *sc)
 {
 	mutex_enter(&sc->sc_entry_mtx);
-	while (sc->sc_wrports != 0)
+	while (sc->sc_wrports)
 		cv_wait(&sc->sc_ports_cv, &sc->sc_entry_mtx);
 	sc->sc_rdports++;
 	mutex_exit(&sc->sc_entry_mtx);
