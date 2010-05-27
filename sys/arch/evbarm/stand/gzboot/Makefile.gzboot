@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.15 2009/01/12 07:45:24 tsutsui Exp $
+#	$NetBSD: Makefile.gzboot,v 1.16 2010/05/27 06:58:13 dholland Exp $
 
 NOMAN=  # defined
 
@@ -85,7 +85,7 @@ SA_AS=		library
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib
