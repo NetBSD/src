@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.402 2010/05/27 23:54:35 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.403 2010/05/27 23:58:38 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.402 2010/05/27 23:54:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.403 2010/05/27 23:58:38 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1335,6 +1335,11 @@ vget(vnode_t *vp, int flags)
 			return ENOENT;
 		}
 	}
+
+	/*
+	 * Ok, we got it in good shape.  Just locking left.
+	 */
+	KASSERT((vp->v_iflag & VI_CLEAN) == 0);
 	if (flags & LK_TYPE_MASK) {
 		error = vn_lock(vp, flags | LK_INTERLOCK);
 		if (error != 0) {
@@ -1343,7 +1348,6 @@ vget(vnode_t *vp, int flags)
 	} else {
 		mutex_exit(&vp->v_interlock);
 	}
-	KASSERT(error || (vp->v_iflag & VI_CLEAN) == 0);
 	return error;
 }
 
