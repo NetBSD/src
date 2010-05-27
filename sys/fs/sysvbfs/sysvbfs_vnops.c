@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.29 2010/05/27 13:22:02 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.30 2010/05/27 23:40:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.29 2010/05/27 13:22:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.30 2010/05/27 23:40:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -481,6 +481,10 @@ sysvbfs_remove(void *arg)
 		vput(vp);
 	vput(dvp);
 
+	if (err == 0) {
+		bnode->removed = 1;
+	}
+
 	if (err || (ap->a_cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 
@@ -518,11 +522,26 @@ sysvbfs_rename(void *arg)
 
 	KDASSERT(fvp->v_type == VREG);
 	KDASSERT(tvp == NULL ? true : tvp->v_type == VREG);
+	KASSERT(tdvp == fdvp);
+
+	/*
+	 * Make sure the source hasn't been removed between lookup
+	 * and target directory lock.
+	 */
+	if (bnode->removed) {
+		error = ENOENT;
+		goto out;
+	}
 
 	error = bfs_file_rename(bfs, from_name, to_name);
  out:
-	if (tvp)
+	if (tvp) {
+		if (error == 0) {
+			struct sysvbfs_node *tbnode = tvp->v_data;
+			tbnode->removed = 1;
+		}
 		vput(tvp);
+	}
 
 	/* tdvp == tvp probably can't happen with this fs, but safety first */
 	if (tdvp == tvp)
@@ -604,9 +623,13 @@ sysvbfs_inactive(void *arg)
 		bool *a_recycle;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
+	struct sysvbfs_node *bnode = v->v_data;
 
 	DPRINTF("%s:\n", __func__);
-	*a->a_recycle = true;
+	if (bnode->removed)
+		*a->a_recycle = true;
+	else
+		*a->a_recycle = false;
 	VOP_UNLOCK(v, 0);
 
 	return 0;
