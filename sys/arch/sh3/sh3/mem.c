@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26.64.1 2010/04/28 08:31:07 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.64.2 2010/05/27 14:47:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.64.1 2010/04/28 08:31:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.64.2 2010/05/27 14:47:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.64.1 2010/04/28 08:31:07 uebayasi Exp $
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 void *zeropage;
 bool __mm_mem_addr(paddr_t);
