@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.401 2010/05/24 03:50:25 pgoyette Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.402 2010/05/27 23:54:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.401 2010/05/24 03:50:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.402 2010/05/27 23:54:35 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1286,7 +1286,7 @@ vtryget(vnode_t *vp)
 int
 vget(vnode_t *vp, int flags)
 {
-	int error;
+	int error = 0;
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
@@ -1340,10 +1340,11 @@ vget(vnode_t *vp, int flags)
 		if (error != 0) {
 			vrele(vp);
 		}
-		return error;
+	} else {
+		mutex_exit(&vp->v_interlock);
 	}
-	mutex_exit(&vp->v_interlock);
-	return 0;
+	KASSERT(error || (vp->v_iflag & VI_CLEAN) == 0);
+	return error;
 }
 
 /*
