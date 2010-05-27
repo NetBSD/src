@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.24 2009/11/06 18:34:22 joerg Exp $	*/
+/*	$NetBSD: init.c,v 1.25 2010/05/27 05:52:29 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include "sort.h"
 
-__RCSID("$NetBSD: init.c,v 1.24 2009/11/06 18:34:22 joerg Exp $");
+__RCSID("$NetBSD: init.c,v 1.25 2010/05/27 05:52:29 dholland Exp $");
 
 #include <ctype.h>
 #include <string.h>
@@ -249,6 +249,16 @@ fixit(int *argc, char **argv)
 	size_t sz;
 
 	for (i = 1; i < *argc; i++) {
+		/*
+		 * Stop where getopt will stop, to avoid turning e.g.
+		 * "sort x +3" into "sort x -k4.1" which will croak if
+		 * +3 was in fact really a file name.
+		 */
+		if (argv[i][0] == '-' && argv[i][1] == '-')
+			break;
+		if (argv[i][0] != '-' && argv[i][0] != '+')
+			break;
+
 		if (argv[i][0] != '+' && !fplus)
 			continue;
 
