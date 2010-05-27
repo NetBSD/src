@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: seq.c,v 1.6 2010/05/27 08:30:35 dholland Exp $");
+__RCSID("$NetBSD: seq.c,v 1.7 2010/05/27 08:40:19 dholland Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -162,6 +162,8 @@ main(int argc, char *argv[])
 		if (!valid_format(fmt))
 			errx(1, "invalid format string: `%s'", fmt);
 		fmt = unescape(fmt);
+		if (!valid_format(fmt))
+			errx(1, "invalid format string");
 		/*
 	         * XXX to be bug for bug compatible with Plan 9 add a
 		 * newline if none found at the end of the format string.
