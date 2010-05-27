@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootxx,v 1.4 2009/03/15 06:17:02 tsutsui Exp $
+#	$NetBSD: Makefile.bootxx,v 1.5 2010/05/27 06:58:13 dholland Exp $
 
 NOMAN		=
 
@@ -53,7 +53,7 @@ ${PROG}: ${OBJS} ${LIBS}
 	ls -al ${PROG}
 #	-rm -f ${BASE}.tmp
 
-clean cleandir distclean: cleanlibdir
+clean cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib
