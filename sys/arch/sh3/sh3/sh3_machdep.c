@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.85.2.1 2010/04/30 14:39:48 uebayasi Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.85.2.2 2010/05/27 14:47:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.85.2.1 2010/04/30 14:39:48 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.85.2.2 2010/05/27 14:47:29 uebayasi Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.85.2.1 2010/04/30 14:39:48 uebayas
 const char kgdb_devname[] = KGDB_DEVNAME;
 #endif /* KGDB */
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <sh3/cache.h>
 #include <sh3/clock.h>

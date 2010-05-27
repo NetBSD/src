@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.51.2.1 2010/04/30 14:39:09 uebayasi Exp $	*/
+/*	$NetBSD: bus.c,v 1.51.2.2 2010/05/27 14:47:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.51.2.1 2010/04/30 14:39:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.51.2.2 2010/05/27 14:47:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.51.2.1 2010/04/30 14:39:09 uebayasi Exp $"
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/cpu.h>
 #include <m68k/cacheops.h>

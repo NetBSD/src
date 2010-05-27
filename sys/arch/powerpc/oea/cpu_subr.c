@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.54.2.1 2010/04/30 14:39:44 uebayasi Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.54.2.2 2010/05/27 14:47:29 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54.2.1 2010/04/30 14:39:44 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54.2.2 2010/05/27 14:47:29 uebayasi Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.54.2.1 2010/04/30 14:39:44 uebayasi E
 #include <sys/lwp.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/oea/hid.h>
