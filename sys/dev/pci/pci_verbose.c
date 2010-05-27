@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.c,v 1.3 2010/05/27 05:53:35 pgoyette Exp $	*/
+/*	$NetBSD: pci_verbose.c,v 1.4 2010/05/27 23:13:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.3 2010/05/27 05:53:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.4 2010/05/27 23:13:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -78,7 +78,6 @@ MODULE(MODULE_CLASS_MISC, pciverbose, NULL);
 static int
 pciverbose_modcmd(modcmd_t cmd, void *arg)
 {
-	aprint_normal("%s: cmd %d\n", __func__, cmd);	/* XXX */
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		pci_findvendor = pci_findvendor_real;
