@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.88.2.1 2010/04/30 14:39:52 uebayasi Exp $ */
+/*	$NetBSD: cpu.c,v 1.88.2.2 2010/05/27 14:47:30 uebayasi Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88.2.1 2010/04/30 14:39:52 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88.2.2 2010/05/27 14:47:30 uebayasi Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.88.2.1 2010/04/30 14:39:52 uebayasi Exp $"
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
