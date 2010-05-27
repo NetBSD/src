@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.235 2010/05/11 20:36:04 pooka Exp $
+#	$NetBSD: build.sh,v 1.236 2010/05/27 05:41:54 pgoyette Exp $
 #
 # Copyright (c) 2001-2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1361,7 +1361,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.235 2010/05/11 20:36:04 pooka Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.236 2010/05/27 05:41:54 pgoyette Exp $
 # with these arguments: ${_args}
 #
 
@@ -1522,7 +1522,7 @@ buildmodules()
 	${runcmd} "${makewrapper}" ${parallel} do-sys-modules ||
 	    bomb "Failed to make do-sys-modules"
 
-	statusmsg "Successful built kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
+	statusmsg "Successful build of kernel modules for NetBSD/${MACHINE} ${DISTRIBVER}"
 }
 
 installworld()
