@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.c,v 1.2 2010/05/25 08:35:45 pgoyette Exp $	*/
+/*	$NetBSD: pci_verbose.c,v 1.3 2010/05/27 05:53:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.2 2010/05/25 08:35:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.3 2010/05/27 05:53:35 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -55,11 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.2 2010/05/25 08:35:45 pgoyette Exp
 #endif
 
 #include <dev/pci/pcireg.h>
-#ifdef _KERNEL
-#include <dev/pci/pcivar.h>
-#endif
-
 #include <dev/pci/pcidevs.h>
+#ifdef _KERNEL
+#include <dev/pci/pci_verbose.h>
+#endif
 
 /*
  * Descriptions of of known vendors and devices ("products").

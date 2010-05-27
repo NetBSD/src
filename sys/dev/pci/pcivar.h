@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.88 2010/05/25 08:35:45 pgoyette Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.89 2010/05/27 05:53:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -45,11 +45,11 @@
 #include <sys/pmf.h>
 #include <sys/bus.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pci_verbose.h>
 
 /*
  * Structures and definitions needed by the machine-dependent header.
  */
-typedef u_int32_t pcireg_t;		/* configuration space register XXX */
 struct pcibus_attach_args;
 struct pci_softc;
 
@@ -279,15 +279,6 @@ int	pci_vpd_write(pci_chipset_tag_t, pcitag_t, int, int, pcireg_t *);
 /*
  * Misc.
  */
-const char *pci_findvendor_real(pcireg_t);
-const char *pci_findproduct_real(pcireg_t);
-const char *pci_null(pcireg_t);
-void pci_verbose_ctl(bool);
-
-extern const char *(*pci_findvendor)(pcireg_t);
-extern const char *(*pci_findproduct)(pcireg_t);
-extern const char *pci_unmatched;
-
 int	pci_find_device(struct pci_attach_args *pa,
 			int (*match)(struct pci_attach_args *));
 int	pci_dma64_available(struct pci_attach_args *);
