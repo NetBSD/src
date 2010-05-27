@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.43 2010/05/23 13:59:12 veego Exp $
+# $NetBSD: Makefile.boot,v 1.44 2010/05/27 06:58:14 dholland Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -127,7 +127,7 @@ Z_AS= library
 LIBZ= ${ZLIB}
 
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

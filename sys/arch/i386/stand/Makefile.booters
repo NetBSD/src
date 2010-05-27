@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.78 2009/03/30 09:22:52 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.79 2010/05/27 06:58:13 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -91,7 +91,7 @@ I386DIR= ${I386_STAND_DIR}/lib
 .include "${I386DIR}/Makefile.inc"
 LIBI386=		${I386LIB}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib
