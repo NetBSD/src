@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.5 2010/05/08 18:48:44 phx Exp $
+$NetBSD: README.NAS,v 1.6 2010/05/27 15:35:46 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -6,13 +6,14 @@ The following NAS products are known by NetBSD/sandpoint.
 
 NIC	IDE		machine description
 ----	----		--------------------------
-tlp.11	cmdide.12	classic Kurobox
-re.11	cmdide.12	Kurobox HG
-re.11	iteide.12/13	classic TeraStation
-re.11	satalink.12/13	TeraStation Pro
-re.11	iteide.12	Gigabit LinkStation
-sk.15	iteide.13	Synology DS-106j/LinkStation LANxxxG
-sk.15	satalink.13	Synology DS-101g+/106e/106/207
+tlp.11	cmdide.12	classic KuroBox, LinkStation HD-HLAN(LS1)
+re.11	cmdide.12	KuroBox HG
+re.11	iteide.12	Gigabit LinkStation HD-HGLAN
+re.11	iteide.12/13	classic TeraStation HD-HTGL
+re.11	satalink.12/13	TeraStation Pro TS-TGL v1
+sk.15	iteide.13	Synology DS-106j, LinkStation LANxxxG
+sk.15	satalink.13	Synology DS-101g+/106e/106/106x/107e/107/207
+			DS-108j/109j/209j
 sk.15	satalink.12/13	Synology CS-406/RS-406/CS-406e/CS-407e
 wm.15	satalink.13 	QNAP TS-101/201
 re.15	viaide.13	IOMEGA StorCenter
