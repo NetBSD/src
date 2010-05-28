@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.7 2010/05/22 23:19:45 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.8 2010/05/28 17:17:12 ghen Exp $
 
 ./usr/X11R7
 ./usr/X11R7/bin
@@ -131,10 +131,12 @@
 ./usr/X11R7/lib/X11/xkb/semantics
 ./usr/X11R7/lib/X11/xkb/symbols
 ./usr/X11R7/lib/X11/xkb/symbols/digital_vndr
+./usr/X11R7/lib/X11/xkb/symbols/extras
 ./usr/X11R7/lib/X11/xkb/symbols/fujitsu_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/hp_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/nec_vndr
+./usr/X11R7/lib/X11/xkb/symbols/nokia_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/sgi_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/sharp_vndr
 ./usr/X11R7/lib/X11/xkb/symbols/sony_vndr
