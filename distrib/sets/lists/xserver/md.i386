@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.77 2010/05/28 04:12:02 mrg Exp $
+# $NetBSD: md.i386,v 1.78 2010/05/28 04:55:07 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -489,7 +489,7 @@
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/geode_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/geode_drv.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/geode_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i128_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i740_drv.so		-unknown-	xorg
