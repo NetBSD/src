@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.18 2010/05/27 14:54:42 phx Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.19 2010/05/28 15:45:11 phx Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.18 2010/05/27 14:54:42 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.19 2010/05/28 15:45:11 phx Exp $");
 
 #include "opt_pci.h"
 
@@ -322,8 +322,8 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		*ihp = (line == 13) ? 4 : line - 11;
 		break;
 	case BRD_QNAPTS101:
-		/* map line 12-15 to EPIC IRQ0-3 */
-		*ihp = line - 12;
+		/* map line 13-16 to EPIC IRQ0-3 */
+		*ihp = line - 13;
 		break;
 	case BRD_SYNOLOGY:
 		/* map line 12,13-15 to EPIC IRQ4,0-2 */
