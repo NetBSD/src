@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63.2.3 2010/04/30 14:39:27 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63.2.4 2010/05/28 08:32:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.3 2010/04/30 14:39:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.4 2010/05/28 08:32:20 uebayasi Exp $");
 
 #include "opt_device_page.h"
 #include "opt_xip.h"
@@ -1118,7 +1118,7 @@ pmap_destroy(pmap_t pmap)
 				continue;
 
 			sheep = PHYS_TO_VM_PAGE(PTE_PAGE(*pde));
-			struct vm_page_md * const md = VM_PAGE_TO_MD(sheap);
+			struct vm_page_md * const md = VM_PAGE_TO_MD(sheep);
 			for (haggis = md->pvh_list; haggis != NULL; )
 				if (haggis->pv_pmap == pmap) {
 
