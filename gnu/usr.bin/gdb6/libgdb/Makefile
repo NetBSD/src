@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/05/03 14:48:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2010/05/28 19:11:23 jklos Exp $
 
 .include <bsd.own.mk>
 
@@ -39,3 +39,7 @@ COPTS+=	-Wno-stack-protector
 
 # Don't run yacc/bison or lex
 .y.c .y.h .l.c:
+
+.if ${MACHINE} == "amiga"
+COPTS.dwarf2-frame.c+=-O1
+.endif
