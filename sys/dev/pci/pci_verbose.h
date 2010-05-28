@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.h,v 1.1 2010/05/27 05:53:35 pgoyette Exp $ */
+/*	$NetBSD: pci_verbose.h,v 1.2 2010/05/28 02:24:27 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #ifndef _DEV_PCI_PCIVERBOSE_H_
-#define	_DEV_PCI_PCIVERBOSE_H
+#define	_DEV_PCI_PCIVERBOSE_H_
 
 /*
  * Misc.
@@ -47,4 +47,4 @@ extern const char *(*pci_findvendor)(pcireg_t);
 extern const char *(*pci_findproduct)(pcireg_t);
 extern const char *pci_unmatched;
 
-#endif /* _DEV_PCI_PCIVERBOSE_H */
+#endif /* _DEV_PCI_PCIVERBOSE_H_ */
