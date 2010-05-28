@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.36 2010/04/30 14:44:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.37 2010/05/28 06:41:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.36 2010/04/30 14:44:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.37 2010/05/28 06:41:15 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -126,7 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.36 2010/04/30 14:44:38 uebayasi
 /*
  * physical memory config is stored in vm_physmem.
  */
-/* XXXUEBS make these array of pointers */
 /* XXXUEBS merge these two */
 
 SIMPLEQ_HEAD(vm_physseg_freelist, vm_physseg);
@@ -940,7 +939,6 @@ uvm_physseg_insert(struct vm_physseg_freelist *freelist,
     struct vm_physseg **segs, int nsegs, const paddr_t start, const paddr_t end)
 {
 	struct vm_physseg *ps;
-	int lcv;
 
 	ps = SIMPLEQ_FIRST(freelist);
 	KASSERT(ps != NULL);
@@ -951,6 +949,7 @@ uvm_physseg_insert(struct vm_physseg_freelist *freelist,
 	segs[nsegs] = ps;
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	{
+		int lcv;
 		int x;
 		/* sort by address for binary search */
 		for (lcv = 0 ; lcv < nsegs ; lcv++)
@@ -963,6 +962,7 @@ uvm_physseg_insert(struct vm_physseg_freelist *freelist,
 	}
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BIGFIRST)
 	{
+		int lcv;
 		int x;
 		/* sort by largest segment first */
 		for (lcv = 0 ; lcv < nsegs ; lcv++)
