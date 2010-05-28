@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2010/05/28 04:12:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.42 2010/05/28 04:16:06 mrg Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -7,7 +7,7 @@ SUBDIR= \
 
 .if ${MACHINE_ARCH} == "i386"
 SUBDIR+= \
-	xf86-input-elographics
+	xf86-input-elographics \
 	xf86-video-geode
 .endif
 
