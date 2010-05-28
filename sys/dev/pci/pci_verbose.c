@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.c,v 1.4 2010/05/27 23:13:10 pgoyette Exp $	*/
+/*	$NetBSD: pci_verbose.c,v 1.5 2010/05/28 02:38:41 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,11 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.4 2010/05/27 23:13:10 pgoyette Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_pci.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.5 2010/05/28 02:38:41 pgoyette Exp $");
 
 #include <sys/param.h>
 
