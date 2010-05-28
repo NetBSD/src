@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.45 2010/05/06 19:51:20 cliff Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.46 2010/05/28 21:24:47 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.45 2010/05/06 19:51:20 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.46 2010/05/28 21:24:47 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -1239,8 +1239,11 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	/*
 	 * allow 64bit ops in userland for non-O32 ABIs
 	 */
-	if (l->l_proc->p_md.md_abi != _MIPS_BSD_API_O32)
+	if (l->l_proc->p_md.md_abi == _MIPS_BSD_API_N32 && CPUISMIPS64) {
+		tf->tf_regs[_R_SR] |= MIPS_SR_PX;
+	} else if (l->l_proc->p_md.md_abi != _MIPS_BSD_API_O32) {
 		tf->tf_regs[_R_SR] |= MIPS_SR_UX;
+	}
 	if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi))
 		tf->tf_regs[_R_SR] |= MIPS3_SR_FR;
 #endif
