@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.39.2.2 2010/04/28 16:33:47 uebayasi Exp $	*/
+/*	$NetBSD: specdev.h,v 1.39.2.3 2010/05/28 06:51:41 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ typedef struct specdev {
 #define v_rdev		v_specnode->sn_rdev
 #define v_speclockf	v_specnode->sn_dev->sd_lockf
 #define v_specmountpoint v_specnode->sn_dev->sd_mountpoint
-#define v_phys_addr	v_specnode->sn_dev->sd_phys_addr
+#define v_physseg	v_specnode->sn_dev->sd_physseg
 
 /*
  * Special device management
