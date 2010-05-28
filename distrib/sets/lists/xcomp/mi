@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.109 2010/05/23 21:32:50 mrg Exp $
+#	 $NetBSD: mi,v 1.110 2010/05/28 13:01:23 ghen Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6320,6 +6320,7 @@
 ./usr/X11R7/lib/pkgconfig/xineramaproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xkbfile.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xkbui.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xkeyboard-config.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xmu.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xmuu.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xorg-server.pc		-unknown-	xorg
