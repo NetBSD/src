@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1396 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1397 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -620,3 +620,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	radeondrm(4): Ported across several updates from FreeBSD drm, Mesa 7.7.1
 		r600 (Radeon HD 3000/4000 series) driver now works.
 		[mrg 20100523]
+	X11: Added support for xf86-video-geode and xf86-video-openchrome.
+		[mrg 20100527]
