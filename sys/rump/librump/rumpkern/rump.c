@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.171 2010/05/11 14:57:20 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.172 2010/05/28 16:44:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.171 2010/05/11 14:57:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.172 2010/05/28 16:44:14 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -269,7 +269,7 @@ rump__init(int rump_version)
 	/* init minimal lwp/cpu context */
 	l = &lwp0;
 	l->l_lid = 1;
-	l->l_cpu = rump_cpu;
+	l->l_cpu = l->l_target_cpu = rump_cpu;
 	rumpuser_set_curlwp(l);
 
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -533,6 +533,7 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
 	l->l_cpu = NULL;
+	l->l_target_cpu = rump_cpu;
 	lwp_initspecific(l);
 	LIST_INSERT_HEAD(&alllwp, l, l_list);
 
@@ -545,7 +546,7 @@ rump_lwp_switch(struct lwp *newlwp)
 	struct lwp *l = curlwp;
 
 	rumpuser_set_curlwp(NULL);
-	newlwp->l_cpu = l->l_cpu;
+	newlwp->l_cpu = newlwp->l_target_cpu = l->l_cpu;
 	newlwp->l_mutex = l->l_mutex;
 	l->l_mutex = NULL;
 	l->l_cpu = NULL;
