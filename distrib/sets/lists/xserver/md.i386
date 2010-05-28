@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.78 2010/05/28 04:55:07 mrg Exp $
+# $NetBSD: md.i386,v 1.79 2010/05/28 11:14:08 njoly Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -744,7 +744,7 @@
 ./usr/X11R7/man/cat4/vmmouse.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vmware.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	obsolete
-./usr/X11R7/man/cat4/ws.0				-unknown-	obsolete
+./usr/X11R7/man/cat4/ws.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
