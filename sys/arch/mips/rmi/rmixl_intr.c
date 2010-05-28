@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.20 2010/05/21 23:35:42 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.21 2010/05/28 22:14:53 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.20 2010/05/21 23:35:42 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.21 2010/05/28 22:14:53 cliff Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -474,13 +474,11 @@ void
 rmixl_intr_init_cpu(struct cpu_info *ci)
 {
 	struct rmixl_cpu_softc *sc = (void *)ci->ci_softc;
+	extern void rmixl_spl_init_cpu(void);
+
 	KASSERT(sc != NULL);
 
-	/* ack any pending in the EIRR, zeroing CAUSE[8..15] */
-	uint64_t eirr;
-	asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
-	eirr &= ~0xff;
-	asm volatile("dmtc0 %0, $9, 6;" :: "r"(eirr));
+	rmixl_spl_init_cpu();
 
 	for (int vec=0; vec < NINTRVECS; vec++)
 		evcnt_attach_dynamic(&sc->sc_vec_evcnts[vec],
