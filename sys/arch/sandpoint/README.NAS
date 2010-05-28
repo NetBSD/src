@@ -1,4 +1,4 @@
-$NetBSD: README.NAS,v 1.6 2010/05/27 15:35:46 phx Exp $
+$NetBSD: README.NAS,v 1.7 2010/05/28 15:45:11 phx Exp $
 
 //// MPC8241/8245 NAS products ////
 
@@ -23,7 +23,7 @@ re.15	viaide.13	IOMEGA StorCenter
 		PCI IDSEL	   EPIC IRQ
 Kurobox		11, 12, 13, 14	-> 0, 1, 4, 3
 Synology	12, 13, 14, 15	-> 4, 0, 1, 2
-QNAP		12, 13, 14, 15	-> 0, 1, 2, 3
+QNAP		13, 14, 15, 16	-> 0, 1, 2, 3
 StorCenter	12, 13, 14, 15  -> 0, 1, 2, 3
 
 - USB EHCI is a multiple function PCI device which has
