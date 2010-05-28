@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.13 2010/03/11 08:19:01 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.14 2010/05/28 21:23:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,8 +98,8 @@
  * and some QED CPUs perform some virtual address checks before the
  * offset is calculated.
  */
-#define	USRSTACK	(VM_MAXUSER_ADDRESS-PAGE_SIZE) /* Start of user stack */
-#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-PAGE_SIZE)
+#define	USRSTACK	(VM_MAXUSER_ADDRESS-0x8000) /* Start of user stack */
+#define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-0x8000)
 
 /* alignment requirement for u-area space in bytes */
 #define	USPACE_ALIGN	USPACE
