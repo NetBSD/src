@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.57.2.1 2010/04/27 08:20:09 uebayasi Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.57.2.2 2010/05/28 15:26:22 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.2.1 2010/04/27 08:20:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.57.2.2 2010/05/28 15:26:22 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -428,7 +428,9 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		    ufi->orig_map->pmap, curr_va, paddr, mapprot);
 		/*
 		 * XXXUEBS
-		 * always map device pages as unmanaged (uncached) for now.
+		 * always map device pages as unmanaged (uncached) for
+		 * now.  this may be changed when UVM will support some
+		 * "managed" device pages like PAT in the future.
 		 */
 		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr,
 		    mapprot, PMAP_CANFAIL | PMAP_UNMANAGED | mapprot) != 0) {
