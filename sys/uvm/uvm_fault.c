@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.173 2010/02/24 15:58:26 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.174 2010/05/28 23:41:14 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173 2010/02/24 15:58:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.174 2010/05/28 23:41:14 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1512,6 +1512,8 @@ uvm_fault_upper_done(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg)
 {
+	const bool wire_paging = flt->wire_paging;
+
 	UVMHIST_FUNC("uvm_fault_upper_done"); UVMHIST_CALLED(maphist);
 
 	/*
@@ -1519,7 +1521,7 @@ uvm_fault_upper_done(
 	 */
 
 	mutex_enter(&uvm_pageqlock);
-	if (flt->wire_paging) {
+	if (wire_paging) {
 		uvm_pagewire(pg);
 
 		/*
@@ -1530,11 +1532,15 @@ uvm_fault_upper_done(
 		 */
 
 		pg->flags &= ~(PG_CLEAN);
-		uvm_anon_dropswap(anon);
+
 	} else {
 		uvm_pageactivate(pg);
 	}
 	mutex_exit(&uvm_pageqlock);
+
+	if (wire_paging) {
+		uvm_anon_dropswap(anon);
+	}
 }
 
 /*
@@ -2206,6 +2212,8 @@ uvm_fault_lower_done(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct uvm_object *uobj, struct vm_anon *anon, struct vm_page *pg)
 {
+	bool dropswap = false;
+
 	UVMHIST_FUNC("uvm_fault_lower_done"); UVMHIST_CALLED(maphist);
 
 	mutex_enter(&uvm_pageqlock);
@@ -2222,13 +2230,16 @@ uvm_fault_lower_done(
 
 			KASSERT(uobj != NULL);
 			pg->flags &= ~(PG_CLEAN);
-			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
+			dropswap = true;
 		}
 	} else {
 		uvm_pageactivate(pg);
 	}
 	mutex_exit(&uvm_pageqlock);
 
+	if (dropswap) {
+		uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
+	}
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
 
