@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.58 2010/05/23 21:32:51 mrg Exp $
+# $NetBSD: md.amd64,v 1.59 2010/05/28 04:12:02 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -438,6 +438,8 @@
 ./usr/X11R7/lib/modules/drivers/nsc_drv.so.2		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/nv_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/nv_drv.so.2		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/openchrome_drv.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/openchrome_drv.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
@@ -620,6 +622,7 @@
 ./usr/X11R7/man/cat4/neomagic.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/nsc.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/nv.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/openchrome.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/r128.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeon.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeonhd.0				-unknown-	.cat,xorg
@@ -663,6 +666,7 @@
 ./usr/X11R7/man/html4/neomagic.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/nsc.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/nv.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/openchrome.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/r128.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeon.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeonhd.html			-unknown-	html,xorg
@@ -706,6 +710,7 @@
 ./usr/X11R7/man/man4/neomagic.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/nsc.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/nv.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/openchrome.4			-unknown-	.man,xorg
 ./usr/X11R7/man/man4/r128.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeon.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeonhd.4				-unknown-	.man,xorg

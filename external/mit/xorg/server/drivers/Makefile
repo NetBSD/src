@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2010/05/22 21:12:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.41 2010/05/28 04:12:02 mrg Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -8,6 +8,7 @@ SUBDIR= \
 .if ${MACHINE_ARCH} == "i386"
 SUBDIR+= \
 	xf86-input-elographics
+	xf86-video-geode
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
@@ -133,11 +134,6 @@ SUBDIR+= \
 	xf86-video-cirrus \
 	xf86-video-cirrus_alpine \
 	xf86-video-cirrus_laguna \
-
-# replace with xf86-video-geode
-#	xf86-video-cyrix \
-
-SUBDIR+= \
 	xf86-video-glint \
 	xf86-video-i128 \
 	xf86-video-i740 \
@@ -151,6 +147,7 @@ SUBDIR+= \
 	xf86-video-mga \
 	xf86-video-neomagic \
 	xf86-video-nv \
+	xf86-video-openchrome \
 	xf86-video-r128 \
 	xf86-video-radeon \
 	xf86-video-radeonhd \
@@ -164,8 +161,6 @@ SUBDIR+= \
 	xf86-video-trident \
 	xf86-video-tseng \
 
-# replace with xf86-video-openchrome
-#	xf86-video-via
 .elif ${MACHINE} == "zaurus"
 SUBDIR+= \
 	xf86-video-wsfb
