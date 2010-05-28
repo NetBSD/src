@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_spl.S,v 1.1.2.3 2010/05/21 23:35:21 cliff Exp $	*/
+/*	$NetBSD: rmixl_spl.S,v 1.1.2.4 2010/05/28 22:14:53 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.3 2010/05/21 23:35:21 cliff Exp $");
+RCSID("$NetBSD: rmixl_spl.S,v 1.1.2.4 2010/05/28 22:14:53 cliff Exp $");
 
 #include "assym.h"
 
@@ -71,6 +71,29 @@ _C_LABEL(ipl_eimr_map):
 	.dword	0			/* IPL_HIGH */
 
 	.text
+
+/*
+ * initialize cp0 interrupt control for this cpu
+ * - set STATUS[IE]
+ * - clear EIRR and EIMR
+ * on return, all interrupts are disabled by EIMR
+ *
+ * henceforth STATUS[IE] is expected to remain normally set
+ * but may be cleared and restored for temporary interrupt disablement
+ *
+ * call before the first call to spl0 on this cpu
+ */
+LEAF_NOPROFILE(rmixl_spl_init_cpu)
+	mfc0	t0, MIPS_COP_0_STATUS		# get STATUS
+	ori	t0, MIPS_SR_INT_IE		# set IE
+	mtc0	zero, MIPS_COP_0_STATUS		## disable all ints in STATUS
+	dmtc0	zero, RMIXL_COP_0_EIMR		##  "       "   "   "  EIMR
+	dmtc0	zero, RMIXL_COP_0_EIRR		## clear EIRR
+	mtc0	t0, MIPS_COP_0_STATUS		## set STATUS | IE
+	j	ra
+	 nop
+END(rmixl_spl_init_cpu)
+
 /*
  * RMIXL processor interrupt control
  *
@@ -86,15 +109,10 @@ _splraise:
 	INT_L	v0, CPU_INFO_CPL(a3)		# get current IPL from cpu_info
 	sltu	v1, a1, v0			# newipl < curipl
 	bnez	v1, 2f				# yes, don't change.
-	 mfc0	a2, MIPS_COP_0_STATUS		# load STATUS
-	and	a2, ~MIPS_INT_MASK		# clear STATUS[IM]
-	sll	v1, a0, 8			# EIMR[7:0] to STATUS[15:8]
-	and	v1, MIPS_INT_MASK		#  "        "   "
-	or	v1, a2				# new STATUS value
-	mtc0	zero, MIPS_COP_0_STATUS		## disable all ints in STATUS
+	 nop
+	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
 	dmtc0	a0, RMIXL_COP_0_EIMR		## set new EIMR
-	mtc0	v1, MIPS_COP_0_STATUS		## set new STATUS
 #ifdef PARANOIA
 	j	ra
 	 nop
@@ -118,22 +136,14 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 99:	beqz	v0, 99b				# loop forever if false
 	 nop
 #endif /* PARANOIA */
-	#move	a1, zero			# avoid lookup on splx(IPL_NONE)
-	#beq	a0, zero, 1f			# skip load
 	PTR_LA	v1, _C_LABEL(ipl_eimr_map)	# get address of table
 	sll	a2, a0, MAP_SCALESHIFT		# convert IPL to array offset
 	PTR_ADDU v1, a2				# add to table addr
 	REG_L	v1, (v1)			# load EIMR bits for this IPL
 1:
-	dmfc0	a2, MIPS_COP_0_STATUS		# load STATUS
-	and	a2, ~MIPS_INT_MASK		# clear STATUS[IM]
-	sll	v0, v1, 8			# EIMR[7:0] to STATUS[15:8]
-	and	v0, MIPS_INT_MASK		#  "        "   "
-	or	v0, a2				# new STATUS value
 	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
-	INT_S	a0, CPU_INFO_CPL(a3)		## save IPL in cpu_info (KSEG0)
+	INT_S	a0, CPU_INFO_CPL(a3)		## save IPL in cpu_info
 	dmtc0	v1, RMIXL_COP_0_EIMR		## set new EIMR
-	mtc0	v0, MIPS_COP_0_STATUS		## set new STATUS
 #ifdef PARANOIA
 	j	ra
 	 nop
@@ -155,23 +165,13 @@ END(_splsw_splx)
 STATIC_LEAF(_splsw_spl0)
 	REG_L	v1, _C_LABEL(ipl_eimr_map) + 8*IPL_NONE
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
-	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
-	dmfc0	a2, MIPS_COP_0_STATUS		# load STATUS
-	and	a2, ~MIPS_INT_MASK		# clear STATUS[IM]
-	sll	v0, v1, 8			# EIMR[7:0] to STATUS[15:8]
-	and	v0, MIPS_INT_MASK		#  "        "   "
-	or	v0, MIPS_SR_INT_IE		# set STATUS[IE]
-	or	v0, a2				# new STATUS value
-	mtc0	zero, MIPS_COP_0_STATUS		## disable all interrupts
+	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
 #if IPL_NONE == 0
 	INT_S	zero, CPU_INFO_CPL(a3)		## set ipl to 0
 #else
 #error IPL_NONE != 0
 #endif
 	dmtc0	v1, RMIXL_COP_0_EIMR		## set new EIMR
-	mtc0	v0, MIPS_COP_0_STATUS		## set new STATUS
-	nop
-	nop
 	j	ra
 	 nop
 END(_splsw_spl0)
@@ -186,31 +186,26 @@ LEAF_NOPROFILE(rmixl_spln)
 END(rmixl_spln)
 
 STATIC_LEAF(_splsw_setsoftintr)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts (2 cycles)
-	nop
-	nop
+	dmfc0	v1, RMIXL_COP_0_EIMR		# save EIMR register
+	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
 	mfc0	v0, MIPS_COP_0_CAUSE		## load cause register
-	nop
 	or	v0, v0, a0			## set soft intr. bits
 	mtc0	v0, MIPS_COP_0_CAUSE		## store back
-	mtc0	v1, MIPS_COP_0_STATUS		## enable interrupts
+	dmtc0	v1, RMIXL_COP_0_EIMR		## restore EIMR
 	j	ra
-	nop
+	 nop
 END(_splsw_setsoftintr)
 
 STATIC_LEAF(_splsw_clrsoftintr)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts (2 cycles)
-	nop
-	nop
+	dmfc0	v1, RMIXL_COP_0_EIMR		# save EIMR register
+	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
 	mfc0	v0, MIPS_COP_0_CAUSE		## load cause register
 	nor	a0, zero, a0			## bitwise inverse of A0
 	and	v0, v0, a0			## clear soft intr. bits
 	mtc0	v0, MIPS_COP_0_CAUSE		## store back
-	mtc0	v1, MIPS_COP_0_STATUS		## enable interrupts
+	dmtc0	v1, RMIXL_COP_0_EIMR		## enable EIMR
 	j	ra
-	nop
+	 nop
 END(_splsw_clrsoftintr)
 
 STATIC_LEAF(_splsw_splraise)
@@ -229,15 +224,10 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	INT_L	v0, CPU_INFO_CPL(a3)		# get current IPL from cpu_info
 	li	a1, IPL_HIGH			# 
 	beq	v0, a1, 1f			# don't do anything if IPL_HIGH
-	mfc0	v1, MIPS_COP_0_STATUS		# load STATUS
-	move	a2, zero			# clear for EIMR
-	and	a0, v1, MIPS_INT_MASK		# select all interrupts
-	xor	a0, v1				# clear STATUS[IM]
-	mtc0	zero, MIPS_COP_0_STATUS		## disable all interrupts
+	 nop
+	dmtc0	zero, RMIXL_COP_0_EIMR		## disable all interrupts
 	INT_S	a1, CPU_INFO_CPL(a3)		## save IPL in cpu_info
-	dmtc0	a2, RMIXL_COP_0_EIMR		## set new EIMR
-	mtc0	a0, MIPS_COP_0_STATUS		## set new STATUS
-	 nop					# XXXXX
+						## interrupts remain disabled!
 #ifdef PARANOIA
 	j	ra				# return
 	 nop
@@ -323,6 +313,7 @@ STATIC_LEAF(_splsw_splintr)
 	addiu	v0, 1				# ipl++
 	move	v1, ta2				# update highest pending
 	b	1b				# loop
+	 nop
 
 2:
 	/*
