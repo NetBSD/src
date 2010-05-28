@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/11 01:49:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2010/05/28 12:38:35 ghen Exp $
 
 .include <bsd.own.mk>
 
 FILESDIR=	${X11LIBDIR}/xkb/symbols/sun_vndr
-FILES=		cs cz de dk es fi fr gb gr hu it jp ko lt lv nl no \
-		pl pt ru se solaris sw tr tuv tw us usb
+FILES=		ara be br ca ch cz de dk ee es fi fr gb gr it jp kr \
+		lt lv nl no pl pt ro ru se sk solaris tr tuv tw ua us
 
 .PATH:		${X11SRCDIR.xkeyboard-config}/symbols/sun_vndr
 
