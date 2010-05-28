@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.92 2010/05/25 13:13:55 nonaka Exp $
+# $NetBSD: mi,v 1.93 2010/05/28 12:38:34 ghen Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1845,6 +1845,7 @@
 ./usr/X11R7/lib/X11/xkb/compat/README			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/accessx			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/basic			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/compat/caps			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/complete			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/default			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/compat/iso9995			-unknown-	xorg
@@ -1889,6 +1890,7 @@
 ./usr/X11R7/lib/X11/xkb/geometry/macintosh		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/microsoft		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/nec			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/geometry/nokia			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/northgate		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/pc			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/sgi			-obsolete-	obsolete
@@ -1902,6 +1904,7 @@
 ./usr/X11R7/lib/X11/xkb/geometry/sony			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/sun			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/thinkpad		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/geometry/typematrix		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/geometry/winbook		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes			base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes.dir			-unknown-	xorg
@@ -1915,6 +1918,7 @@
 ./usr/X11R7/lib/X11/xkb/keycodes/digital_vndr		base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes/digital_vndr/lk	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes/digital_vndr/pc	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/keycodes/empty			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes/evdev			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes/fujitsu		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/keycodes/hp			-unknown-	xorg
@@ -2025,9 +2029,11 @@
 ./usr/X11R7/lib/X11/xkb/rules				base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/rules/README			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/rules/base			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/rules/base.extras.xml		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/rules/base.lst			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/rules/base.xml			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/rules/evdev			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/rules/evdev.extras.xml		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/rules/evdev.lst			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/rules/evdev.xml			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/rules/sgi			-unknown-	obsolete
@@ -2065,9 +2071,11 @@
 ./usr/X11R7/lib/X11/xkb/symbols/ben			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/bg			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/br			-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/braille			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/braille			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/brai			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/bs			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/bt			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/bw			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/by			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ca			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ca_enhanced		-unknown-	obsolete
@@ -2099,9 +2107,14 @@
 ./usr/X11R7/lib/X11/xkb/symbols/ee			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/el			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/en_US			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/empty			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/epo			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/es			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/et			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/extras			base-x11-root	xorg
+./usr/X11R7/lib/X11/xkb/symbols/extras/apl		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/extras/rs		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/extras/us		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/eurosign		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/fi			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/fo			-unknown-	xorg
@@ -2145,6 +2158,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/iu			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/jp			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/kan			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/ke			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/keypad			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/kg			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/kh			-unknown-	xorg
@@ -2185,11 +2199,12 @@
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/ch	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/de	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/dk	-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/es	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/es	-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/fi	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/fr	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/gb	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/it	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/jp	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/nl	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/no	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/macintosh_vndr/pt	-unknown-	xorg
@@ -2198,7 +2213,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/mao			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/me			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/mk			-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/ml			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/ml			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/mm			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/mn			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/mt			-unknown-	xorg
@@ -2212,6 +2227,10 @@
 ./usr/X11R7/lib/X11/xkb/symbols/ng			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/nl			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/no			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/nokia_vndr		base-x11-root	xorg
+./usr/X11R7/lib/X11/xkb/symbols/nokia_vndr/rx-44	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/nokia_vndr/rx-51	-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/nokia_vndr/su-8w	-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/np			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ogham			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/olpc			-unknown-	xorg
@@ -2312,6 +2331,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/si			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sk			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sk_qwerty		-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sn			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sony			-obsolete-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/sony/us			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/sony_vndr		base-x11-root	xorg
@@ -2323,45 +2343,59 @@
 ./usr/X11R7/lib/X11/xkb/symbols/sun/us			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/sun/usb			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr		base-x11-root	xorg
-./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/cs		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/ara		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/be		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/br		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/ca		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/ch		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/cs		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/cz		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/de		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/dk		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/ee		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/es		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/fi		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/fr		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/gb		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/gr		-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/hu		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/hu		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/it		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/jp		-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/ko		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/ko		-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/kr		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/lt		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/lv		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/nl		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/no		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/pl		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/pt		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/ro		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/ru		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/se		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/sk		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/solaris	-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/sw		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/sw		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/tr		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/tuv		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/tw		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/ua		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/us		-unknown-	xorg
-./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/usb		-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/sun_vndr/usb		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/sy			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/syr			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/syr_phonetic		-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/tel			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/terminate		-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/th			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/th_pat			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/th_tis			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/tj			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/tm			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tml			-unknown-	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/tr			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/tr_f			-unknown-	obsolete
+./usr/X11R7/lib/X11/xkb/symbols/typo			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/symbols/tz			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/ua			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/us			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/us_group2		-unknown-	obsolete
@@ -2405,6 +2439,7 @@
 ./usr/X11R7/lib/X11/xkb/types/iso9995			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/types/level5			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/types/mousekeys			-unknown-	xorg
+./usr/X11R7/lib/X11/xkb/types/nokia			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/types/numpad			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/types/pc			-unknown-	xorg
 ./usr/X11R7/lib/X11/xkb/xkbcomp				-unknown-	xorg
