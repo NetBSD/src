@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/11 01:49:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2010/05/28 12:38:35 ghen Exp $
 
 .include <bsd.own.mk>
 
 XKBNAME=	types
 FILES=		README basic cancel caps complete default extra \
-		iso9995 level5 mousekeys numpad pc
+		iso9995 level5 mousekeys nokia numpad pc
 
 XKBDIR=		1
 
