@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.30.2.2 2010/04/28 08:31:05 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.30.2.3 2010/05/28 15:40:05 uebayasi Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.2 2010/04/28 08:31:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.3 2010/05/28 15:40:05 uebayasi Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -634,8 +634,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	UVMHIST_FUNC("pmap_enter");
 
 	UVMHIST_CALLED(pmaphist);
-	return pmap_enter1(pmap, va, pa, prot, flags,
-	    (flags & PMAP_UNMANAGED) != 0);
+	return pmap_enter1(pmap, va, pa, prot, flags, 1);
 }
 
 static int
