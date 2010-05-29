@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.25 2010/04/29 10:03:12 jruoho Exp $
+.\"	$NetBSD: strftime.3,v 1.26 2010/05/29 20:32:18 dholland Exp $
 .\"
-.Dd April 29, 2010
+.Dd May 29, 2010
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -247,3 +247,6 @@ zero and it is not possible to distinguish between success and error.
 For example, in many locales
 .Cm \&%p
 yields an empty string.
+This problem can be avoided by inserting an extra space at the
+beginning of the format string and then skipping over it or removing
+it from the result.
