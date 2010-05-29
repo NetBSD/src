@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.37 2010/05/24 09:49:17 martin Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.38 2010/05/29 21:59:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.37 2010/05/24 09:49:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.38 2010/05/29 21:59:34 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -65,7 +65,7 @@ static void	sparc64_ipi_error(const char *, sparc64_cpuset_t, sparc64_cpuset_t);
 
  
 /*
- * These are the "function" entry points in locore.s to handle IPI's.
+ * These are the "function" entry points in locore.s/mp_subr.s to handle IPI's.
  */
 void	sparc64_ipi_halt(void *, void *);
 void	sparc64_ipi_pause(void *, void *);
@@ -74,6 +74,7 @@ void	sparc64_ipi_flush_pte_usiii(void *, void *);
 void	sparc64_ipi_dcache_flush_page_us(void *, void *);
 void	sparc64_ipi_dcache_flush_page_usiii(void *, void *);
 void	sparc64_ipi_blast_dcache(void *, void *);
+void	sparc64_ipi_ccall(void *, void *);
 
 /*
  * Process cpu stop-self event.
@@ -461,3 +462,30 @@ sparc64_ipi_error(const char *s, sparc64_cpuset_t cpus_succeeded,
 
 	printf("\n");
 }
+
+void
+sparc64_generic_xcall(struct cpu_info *target, ipi_c_call_func_t func,
+	void *arg)
+{
+	/* if target == NULL broadcast to everything but curcpu */
+	if (target)
+		sparc64_send_ipi(target->ci_cpuid, sparc64_ipi_ccall,
+		    (uint64_t)(uintptr_t)func, (uint64_t)(uintptr_t)arg);
+	else {
+		
+		sparc64_multicast_ipi(cpus_active, sparc64_ipi_ccall,
+		    (uint64_t)(uintptr_t)func, (uint64_t)(uintptr_t)arg);
+	}
+}
+
+#if 0
+/* XXX: remove once a public prototype is available */
+void	xc_ipi_handler(void);
+void	xc_send_ipi(struct cpu_info *);
+
+void
+xc_send_ipi(struct cpu_info *target)
+{
+	sparc64_generic_xcall(target, (ipi_c_call_func_t)xc_ipi_handler, NULL);
+}
+#endif

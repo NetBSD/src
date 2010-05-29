@@ -1,4 +1,4 @@
-/*	$NetBSD: mp_subr.S,v 1.1 2010/05/23 18:49:14 martin Exp $	*/
+/*	$NetBSD: mp_subr.S,v 1.2 2010/05/29 21:59:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -407,5 +407,23 @@ ENTRY(sparc64_ipi_dcache_flush_page_us)
 	membar	#Sync
 	ba,a	ret_from_intr_vector
 	 nop
-#endif
 
+/*
+ * Setup a C compatible environment and call a MI function.
+ *
+ * On entry:
+ *	%g2 = function to call
+ *	%g3 = single argument to called function
+ */
+ENTRY(sparc64_ipi_ccall)
+	save %sp, -CC64FSZ-16, %sp			! create a stack frame
+	stx %g2, [%fp + BIAS -16 + 0]			! save function pointer
+	stx %g3, [%fp + BIAS -16 + 8]			! and argument
+	wrpr    %g0, PSTATE_KERN, %pstate		! switch globals
+	ldx [%fp + BIAS -16 + 0], %l0			! reload function
+	call %l0					! call function
+	 ldx [%fp + BIAS -16 + 8], %o0			! reload argument 
+	restore						! pop stack frame
+	ba,a	ret_from_intr_vector			! and return from IPI
+	 nop
+#endif
