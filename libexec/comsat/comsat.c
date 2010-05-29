@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.41 2010/05/29 23:08:06 dholland Exp $	*/
+/*	$NetBSD: comsat.c,v 1.42 2010/05/29 23:12:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.41 2010/05/29 23:08:06 dholland Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.42 2010/05/29 23:12:30 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ notify(const struct utmpentry *ep, off_t offset)
 		return;
 	}
 	(void)signal(SIGALRM, SIG_DFL);
-	(void)alarm((u_int)30);
+	(void)alarm(30);
 	if ((tp = fopen(tty, "w")) == NULL) {
 		dsyslog(LOG_ERR, "open `%s' (%s)", tty, strerror(errno));
 		_exit(1);
