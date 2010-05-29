@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.97 2010/04/23 17:43:45 dholland Exp $
+$NetBSD: acronyms.comp,v 1.98 2010/05/29 22:43:01 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -35,6 +35,7 @@ ATAPI	advanced technology attachment packet interface
 ATC	address translation cache
 ATM	asynchronous transfer mode
 ATX	advanced technology extended
+AWK	Aho, Werner, and Kernighan
 BAR	base address register
 BCD	binary coded decimal
 BEDO	burst extended data output
@@ -68,6 +69,7 @@ CGA	color graphics {array,adapter}
 CGI	common gateway interface
 CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
+CIFS	common internet file system
 CIS	contact image sensor
 CJK	Chinese, Japanese, and Korean
 CLI	command line interface
@@ -251,6 +253,7 @@ LCD	liquid crystal display
 LCP	link control protocol
 LDAP	lightweight directory access protocol
 LED	light emitting diode
+LFS	log-structured file system
 LIFO	last in first out
 LILO	last in last out
 LILO	Linux loader
@@ -270,7 +273,9 @@ LZW	Lempel Ziv Welch
 MAC	medium access control
 MAC	mandatory access control
 MBR	master boot record
+MCGA	multicolor graphics adapter
 MDA	mail delivery agent
+MDA	monochrome display adapter
 MDRAM	multibank dynamic random access memory
 MFC	merge from current
 MFM	modified frequency modulation
@@ -299,6 +304,7 @@ NIC	network interface card
 NIS	network information service
 NLS	native language support
 NMI	non-maskable interrupt
+NNTP	network news transfer protocol
 NOP	no operation
 NRZ	non-return to zero
 NSA	National Security Agency
@@ -399,6 +405,7 @@ RNG	random number generator
 ROM	read only memory
 RPC	remote procedure call
 RPM	revolutions per minute
+RSS	really simple syndication
 RTC	real time clock
 RTF	rich text format
 RTOS	real time operating system
@@ -503,6 +510,7 @@ VCM	virtual channel memory
 VESA	video electronics standards association
 VG	volume group
 VGA	video graphics {array,adapter}
+WAP	wireless access point
 WIFI    wireless fidelity
 VLAN	virtual local area network
 VLSI	very large scale integration
@@ -531,5 +539,6 @@ XSS	cross site scripting
 XT	extended technology
 XUL	XML user interface language
 YACC	yet another compiler compiler
+YP	yellow pages (aka NIS)
 ZFOD	zero-filled on demand
 ZIFS	zero insertion force socket
