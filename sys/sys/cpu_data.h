@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.30 2010/05/09 20:18:40 rmind Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.31 2010/05/29 05:53:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct cpu_data {
 	lwp_t		*cpu_onproc;		/* bottom level LWP */
 	CIRCLEQ_ENTRY(cpu_info) cpu_qchain;	/* circleq of all CPUs */
 
-	cpuid_t		cpu_node_id;
+	cpuid_t		cpu_package_id;
 	cpuid_t		cpu_core_id;
 	cpuid_t		cpu_smt_id;
 
@@ -114,7 +114,7 @@ struct cpu_data {
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
 
-#define	ci_node_id		ci_data.cpu_node_id
+#define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id
 #define	ci_smt_id		ci_data.cpu_smt_id
 
