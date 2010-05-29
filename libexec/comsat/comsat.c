@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.40 2010/05/29 23:05:22 dholland Exp $	*/
+/*	$NetBSD: comsat.c,v 1.41 2010/05/29 23:08:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.40 2010/05/29 23:05:22 dholland Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.41 2010/05/29 23:08:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -261,7 +261,7 @@ notify(const struct utmpentry *ep, off_t offset)
 	}
 	cr = (ttybuf.c_oflag & ONLCR) && (ttybuf.c_oflag & OPOST) ?
 	    "\n" : "\n\r";
-	/* Set uid/gid/groups to users in case mail drop is on nfs */
+	/* Set uid/gid/groups to user's in case mail drop is on nfs */
 	if ((p = getpwnam(ep->name)) == NULL ||
 	    initgroups(p->pw_name, p->pw_gid) == -1 ||
 	    setgid(p->pw_gid) == -1 ||
@@ -292,7 +292,7 @@ jkfprintf(FILE *tp, const char *name, off_t offset, const char *cr)
 	/*
 	 * Print the first 7 lines or 560 characters of the new mail
 	 * (whichever comes first).  Skip header crap other than
-	 * From, Subject, To, and Date.
+	 * From and Subject.
 	 */
 	linecnt = 7;
 	charcnt = 560;
