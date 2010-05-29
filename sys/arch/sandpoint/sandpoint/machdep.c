@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2010/05/20 19:27:25 phx Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2010/05/29 22:47:02 phx Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2010/05/20 19:27:25 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2010/05/29 22:47:02 phx Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -98,14 +98,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2010/05/20 19:27:25 phx Exp $");
 #include "ksyms.h"
 
 char bootinfo[BOOTINFO_MAXSIZE];
+void (*md_reboot)(int);
 
 void initppc(u_int, u_int, u_int, void *);
 void consinit(void);
 void sandpoint_bus_space_init(void);
 size_t mpc107memsize(void);
 
-#define	OFMEMREGIONS	32
-struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
+/* we support single chunk of memory */
+struct mem_region physmemr[2], availmemr[2];
 
 paddr_t avail_end;
 struct pic_ops *isa_pic = NULL;
@@ -142,8 +143,10 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 		memsize = mpc107memsize();
 	physmemr[0].start = 0;
 	physmemr[0].size = memsize;
+	physmemr[1].size = 0;
 	availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
 	availmemr[0].size = memsize - availmemr[0].start;
+	availmemr[1].size = 0;
 	avail_end = physmemr[0].start + physmemr[0].size; /* XXX */
 
 	clockinfo = lookup_bootinfo(BTINFO_CLOCK);
@@ -360,7 +363,7 @@ cpu_reboot(int howto, char *what)
 	}	    
 	
 	/* Disable intr */
-	splhigh();	
+	/* splhigh(); */
 	
 	/* Do dump if requested */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
@@ -370,25 +373,21 @@ cpu_reboot(int howto, char *what)
 
 	pmf_system_shutdown(boothowto);
 	 
-	if (howto & RB_HALT) {
+	if ((howto & RB_POWERDOWN) == RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cnpollc(1);	/* for proper keyboard command handling */
 		cngetc();  
 		cnpollc(0);
+		howto = RB_AUTOBOOT;
 	}
-    
-	printf("rebooting...\n\n");
 
-#if 1
-    {
-	/* XXX reboot scheme is target dependent XXX */
-	extern void jump_to_ppc_reset_entry(void);
-	jump_to_ppc_reset_entry();
-    }
-#endif
-	while (1);
+	if (md_reboot != NULL) {
+		(*md_reboot)(howto);
+		/* should not come here */
+	}
+	while (1) ; /* may practice PPC processor reset sequence here */
 }
 
 struct powerpc_bus_space sandpoint_io_space_tag = {
