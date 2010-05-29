@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.26 2010/05/29 22:53:49 dholland Exp $	*/
+/*	$NetBSD: wump.c,v 1.27 2010/05/29 22:56:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.26 2010/05/29 22:53:49 dholland Exp $");
+__RCSID("$NetBSD: wump.c,v 1.27 2010/05/29 22:56:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -454,17 +454,17 @@ shoot(room_list)
 			lnk = (random() % link_num);
 			if (lnk == player_loc)
 				(void)printf(
-"*thunk*  The arrow can't find a way from %d to %d and flys back into\n\
+"*thunk*  The arrow can't find a way from %d to %d and flies back into\n\
 your room!\n",
 				    arrow_location, next);
 			else if (cave[arrow_location].tunnel[lnk] > room_num)
 				(void)printf(
-"*thunk*  The arrow flys randomly into a magic tunnel, thence into\n\
+"*thunk*  The arrow flies randomly into a magic tunnel, thence into\n\
 room %d!\n",
 				    cave[arrow_location].tunnel[lnk]);
 			else
 				(void)printf(
-"*thunk*  The arrow can't find a way from %d to %d and flys randomly\n\
+"*thunk*  The arrow can't find a way from %d to %d and flies randomly\n\
 into room %d!\n",
 				    arrow_location, next,
 				    cave[arrow_location].tunnel[lnk]);
@@ -831,7 +831,7 @@ no_arrows()
 	(void)printf(
 "\nYou turn and look at your quiver, and realize with a sinking feeling\n\
 that you've just shot your last arrow (figuratively, too).  Sensing this\n\
-with its psychic powers, the evil Wumpus rampagees through the cave, finds\n\
+with its psychic powers, the evil Wumpus rampages through the cave, finds\n\
 you, and with a mighty *ROAR* eats you alive!\n");
 }
 
