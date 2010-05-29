@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.98 2010/05/29 22:43:01 dholland Exp $
+$NetBSD: acronyms.comp,v 1.99 2010/05/29 22:45:41 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -510,8 +510,6 @@ VCM	virtual channel memory
 VESA	video electronics standards association
 VG	volume group
 VGA	video graphics {array,adapter}
-WAP	wireless access point
-WIFI    wireless fidelity
 VLAN	virtual local area network
 VLSI	very large scale integration
 VLSM	variable length subnet mask
@@ -524,6 +522,7 @@ WAN	wide area network
 WAP	wireless application protocol
 WEP	wired equivalent privacy
 WFI	wait for interrupt
+WIFI    wireless fidelity
 WLAN	wireless local area network
 WPA	wi-fi protected access
 WRAM	window random access memory
