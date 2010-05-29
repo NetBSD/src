@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2010/05/28 12:38:34 ghen Exp $
+#	$NetBSD: Makefile,v 1.3 2010/05/29 07:58:24 ghen Exp $
+#
+#	When upgrading, re-assemble the files base, base.lst, evdev and
+#	evdev.lst by running ./configure && make in the dist directory,
+#	and copy the resulting files back here.
 
 .include <bsd.own.mk>
 
