@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.52 2008/07/20 00:52:39 lukem Exp $ */
+/* $NetBSD: date.c,v 1.53 2010/05/29 20:41:58 dholland Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.52 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: date.c,v 1.53 2010/05/29 20:41:58 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,11 +118,11 @@ main(int argc, char *argv[])
 	if (!rflag && time(&tval) == -1)
 		err(EXIT_FAILURE, "time");
 
-	format = "%a %b %e %H:%M:%S %Z %Y";
+	format = "+%a %b %e %H:%M:%S %Z %Y";
 
 	/* allow the operands in any order */
 	if (*argv && **argv == '+') {
-		format = *argv + 1;
+		format = *argv;
 		++argv;
 	}
 
@@ -132,14 +132,14 @@ main(int argc, char *argv[])
 	}
 
 	if (*argv && **argv == '+')
-		format = *argv + 1;
+		format = *argv;
 
 	if ((buf = malloc(bufsiz = 1024)) == NULL)
 		goto bad;
 	while (strftime(buf, bufsiz, format, localtime(&tval)) == 0)
 		if ((buf = realloc(buf, bufsiz <<= 1)) == NULL)
 			goto bad;
-	(void)printf("%s\n", buf);
+	(void)printf("%s\n", buf+1);
 	free(buf);
 	return 0;
 bad:
