@@ -1,4 +1,4 @@
-.\"	$NetBSD: comsat.8,v 1.13 2004/06/25 17:36:04 wiz Exp $
+.\"	$NetBSD: comsat.8,v 1.14 2010/05/29 23:08:06 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)comsat.8	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 25, 2004
+.Dd May 29, 2010
 .Dt COMSAT 8
 .Os
 .Sh NAME
@@ -65,9 +65,7 @@ is used as a seek offset into the appropriate mailbox file and
 the first 7 lines or 560 characters of the message are printed
 on the user's terminal.
 Lines which appear to be part of the message header other than the
-.Dq From ,
-.Dq \&To ,
-.Dq Date ,
+.Dq From
 or
 .Dq Subject
 lines are not included in the displayed message.
