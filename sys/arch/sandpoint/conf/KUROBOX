@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX,v 1.1 2010/05/17 22:52:17 phx Exp $
+#	$NetBSD: KUROBOX,v 1.2 2010/05/29 22:47:02 phx Exp $
 #
 # KuroBox/LinkStation support
 #
@@ -6,6 +6,7 @@
 include "arch/sandpoint/conf/GENERIC.NAS"
 
 no com0
-no com1
+no satmgr0
 com0	at eumb? unit 1			# console at 0x4600
-com1	at eumb? unit 0
+#com1	at eumb? unit 0
+satmgr0 at eumb? unit 0			# satmgr at 0x4500
