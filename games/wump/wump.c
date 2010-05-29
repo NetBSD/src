@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.25 2009/08/27 00:19:52 dholland Exp $	*/
+/*	$NetBSD: wump.c,v 1.26 2010/05/29 22:53:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.25 2009/08/27 00:19:52 dholland Exp $");
+__RCSID("$NetBSD: wump.c,v 1.26 2010/05/29 22:53:49 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ main(argc, argv)
 			}
 			if (room_num > MAX_ROOMS_IN_CAVE) {
 				(void)fprintf(stderr,
-	"Even wumpii can't furnish caves that large!\n");
+	"Even wumpi can't furnish caves that large!\n");
 				exit(1);
 			}
 			break;
@@ -187,7 +187,7 @@ main(argc, argv)
 			link_num = atoi(optarg);
 			if (link_num < 2) {
 				(void)fprintf(stderr,
-	"Wumpii like extra doors in their caves!\n");
+	"Wumpi like extra doors in their caves!\n");
 				exit(1);
 			}
 			break;
@@ -261,7 +261,7 @@ display_room_stats()
 
 	/*
 	 * Routine will explain what's going on with the current room, as well
-	 * as describe whether there are pits, bats, & wumpii nearby.  It's
+	 * as describe whether there are pits, bats, & wumpi nearby.  It's
 	 * all pretty mindless, really.
 	 */
 	(void)printf(
