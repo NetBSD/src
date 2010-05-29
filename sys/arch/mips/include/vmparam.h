@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41.28.14 2010/05/28 21:23:21 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41.28.15 2010/05/29 18:04:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,8 @@
  *
  * USRSTACK needs to start a little below 0x8000000 because the R8000
  * and some QED CPUs perform some virtual address checks before the
- * offset is calculated.
+ * offset is calculated.  We use 0x8000 since that's the max displacement
+ * in an instruction.
  */
 #define	USRSTACK	(VM_MAXUSER_ADDRESS-0x8000) /* Start of user stack */
 #define	USRSTACK32	((uint32_t)VM_MAXUSER32_ADDRESS-0x8000)
@@ -107,6 +108,7 @@
 /*
  * Virtual memory related constants, all in bytes
  */
+#if defined(__mips_o32)
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(64*1024*1024)		/* max text size */
 #endif
@@ -122,6 +124,26 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
+#else
+/*
+ * 64-bit ABIs need more space.
+ */
+#ifndef MAXTSIZ
+#define	MAXTSIZ		(128*1024*1024)		/* max text size */
+#endif
+#ifndef DFLDSIZ
+#define	DFLDSIZ		(256*1024*1024)		/* initial data size limit */
+#endif
+#ifndef MAXDSIZ
+#define	MAXDSIZ		(1536*1024*1024)	/* max data size */
+#endif
+#ifndef	DFLSSIZ
+#define	DFLSSIZ		(16*1024*1024)		/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ
+#define	MAXSSIZ		(120*1024*1024)		/* max stack size */
+#endif
+#endif /* !__mips_o32 */
 
 /*
  * Virtual memory related constants, all in bytes
