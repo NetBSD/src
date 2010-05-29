@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.169 2010/05/29 01:14:29 pgoyette Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.170 2010/05/29 06:44:22 cegger Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.169 2010/05/29 01:14:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.170 2010/05/29 06:44:22 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -132,7 +132,7 @@ void usb_verbose_ctl(bool load)
 	if (loaded == 0)
 		return; 
 	if (--loaded == 0)
-		module_unload("pciverbose");
+		module_unload("usbverbose");
 }
 
 const char *
