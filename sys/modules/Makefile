@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2010/05/24 20:29:41 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.43 2010/05/29 01:14:30 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,7 @@ SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
+SUBDIR+=	usbverbose
 SUBDIR+=	vnd
 SUBDIR+=	tprof
 .if (defined(NOTYET))
