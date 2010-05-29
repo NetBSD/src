@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.39 2009/03/14 11:43:24 lukem Exp $	*/
+/*	$NetBSD: comsat.c,v 1.40 2010/05/29 23:05:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.39 2009/03/14 11:43:24 lukem Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.40 2010/05/29 23:05:22 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ static volatile sig_atomic_t needupdate;
 
 int main(int, char *[]);
 static void jkfprintf(FILE *, const char *, off_t, const char *);
-static void mailfor(const char *);
+static void mailfor(char *);
 static void notify(const struct utmpentry *, off_t);
 static void onalrm(int);
 static void checkutmp(void);
@@ -183,7 +183,7 @@ checkutmp(void)
 }
 
 static void
-mailfor(const char *name)
+mailfor(char *name)
 {
 	struct utmpentry *ep;
 	char *cp, *fn;
