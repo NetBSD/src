@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.98 2010/05/29 01:14:29 pgoyette Exp $
+#	$NetBSD: files.usb,v 1.99 2010/05/29 17:39:41 martin Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -288,6 +288,11 @@ file    dev/usb/uipaq.c			uipaq
 device	ukyopon: ucombus, umodem_common
 attach	ukyopon at usbifif
 file	dev/usb/ukyopon.c		ukyopon
+
+# ArkMicroChips 3116 based serial (used with some Nokia USB cables too)
+device	uark: ucombus
+attach	uark at usbdevif
+file	dev/usb/uark.c		uark
 
 # Silicon Labs CP210x serial driver
 device	uslsa: ucombus
