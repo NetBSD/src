@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.69 2010/05/29 23:17:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.69 2010/05/29 23:17:53 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -216,6 +216,91 @@ ubc_init(void)
 }
 
 /*
+ * ubc_fault_page: helper of ubc_fault to handle a single page.
+ */
+
+static inline void
+ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
+    struct vm_page *pg, vm_prot_t prot, vm_prot_t access_type, vaddr_t va)
+{
+	struct uvm_object *uobj;
+	vm_prot_t mask;
+	int error;
+	bool rdonly;
+
+	uobj = pg->uobject;
+	mutex_enter(&uobj->vmobjlock);
+	if (pg->flags & PG_WANTED) {
+		wakeup(pg);
+	}
+	KASSERT((pg->flags & PG_FAKE) == 0);
+	if (pg->flags & PG_RELEASED) {
+		mutex_enter(&uvm_pageqlock);
+		uvm_pagefree(pg);
+		mutex_exit(&uvm_pageqlock);
+		mutex_exit(&uobj->vmobjlock);
+		return;
+	}
+	if (pg->loan_count != 0) {
+
+		/*
+		 * Avoid unneeded loan break, if possible.
+		 */
+
+		if ((access_type & VM_PROT_WRITE) == 0) {
+			prot &= ~VM_PROT_WRITE;
+		}
+		if (prot & VM_PROT_WRITE) {
+			struct vm_page *newpg;
+
+			newpg = uvm_loanbreak(pg);
+			if (newpg == NULL) {
+				uvm_page_unbusy(&pg, 1);
+				mutex_exit(&uobj->vmobjlock);
+				uvm_wait("ubc_loanbrk");
+				/*
+				 * Note: will re-fault.
+				 */
+				return;
+			}
+			pg = newpg;
+		}
+	}
+
+	/*
+	 * Note that a page whose backing store is partially allocated
+	 * is marked as PG_RDONLY.
+	 */
+
+	KASSERT((pg->flags & PG_RDONLY) == 0 ||
+	    (access_type & VM_PROT_WRITE) == 0 ||
+	    pg->offset < umap->writeoff ||
+	    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
+
+	rdonly = ((access_type & VM_PROT_WRITE) == 0 &&
+	    (pg->flags & PG_RDONLY) != 0) ||
+	    UVM_OBJ_NEEDS_WRITEFAULT(uobj);
+	mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
+
+	error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
+	    prot & mask, PMAP_CANFAIL | (access_type & mask));
+
+	mutex_enter(&uvm_pageqlock);
+	uvm_pageactivate(pg);
+	mutex_exit(&uvm_pageqlock);
+	pg->flags &= ~(PG_BUSY|PG_WANTED);
+	UVM_PAGE_OWN(pg, NULL);
+	mutex_exit(&uobj->vmobjlock);
+
+	if (error) {
+		/*
+		 * Note: will re-fault.
+		 */
+		uvm_wait("ubc_pmfail");
+	}
+}
+
+/*
  * ubc_fault: fault routine for ubc mapping
  */
 
@@ -226,10 +311,11 @@ ubc_fault(struct uvm_faultinfo *ufi, vaddr_t ign1, struct vm_page **ign2,
 	struct uvm_object *uobj;
 	struct ubc_map *umap;
 	vaddr_t va, eva, ubc_offset, slot_offset;
+	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT];
 	int i, error, npages;
-	struct vm_page *pgs[ubc_winsize >> PAGE_SHIFT], *pg;
 	vm_prot_t prot;
-	UVMHIST_FUNC("ubc_fault");  UVMHIST_CALLED(ubchist);
+
+	UVMHIST_FUNC("ubc_fault"); UVMHIST_CALLED(ubchist);
 
 	/*
 	 * no need to try with PGO_LOCKED...
@@ -307,97 +393,32 @@ again:
 		return error;
 	}
 
+	/*
+	 * For virtually-indexed, virtually-tagged caches we should avoid
+	 * creating writable mappings when we do not absolutely need them,
+	 * since the "compatible alias" trick does not work on such caches.
+	 * Otherwise, we can always map the pages writable.
+	 */
+
+#ifdef PMAP_CACHE_VIVT
+	prot = VM_PROT_READ | access_type;
+#else
+	prot = VM_PROT_READ | VM_PROT_WRITE;
+#endif
 	va = ufi->orig_rvaddr;
 	eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
 	UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0, 0);
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
-		bool rdonly;
-		vm_prot_t mask;
+		struct vm_page *pg;
 
-		/*
-		 * for virtually-indexed, virtually-tagged caches we should
-		 * avoid creating writable mappings when we don't absolutely
-		 * need them, since the "compatible alias" trick doesn't work
-		 * on such caches.  otherwise, we can always map the pages
-		 * writable.
-		 */
-
-#ifdef PMAP_CACHE_VIVT
-		prot = VM_PROT_READ | access_type;
-#else
-		prot = VM_PROT_READ | VM_PROT_WRITE;
-#endif
 		UVMHIST_LOG(ubchist, "pgs[%d] = %p", i, pgs[i], 0, 0);
 		pg = pgs[i];
 
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
-
-		uobj = pg->uobject;
-		mutex_enter(&uobj->vmobjlock);
-		if (pg->flags & PG_WANTED) {
-			wakeup(pg);
-		}
-		KASSERT((pg->flags & PG_FAKE) == 0);
-		if (pg->flags & PG_RELEASED) {
-			mutex_enter(&uvm_pageqlock);
-			uvm_pagefree(pg);
-			mutex_exit(&uvm_pageqlock);
-			mutex_exit(&uobj->vmobjlock);
-			continue;
-		}
-		if (pg->loan_count != 0) {
-
-			/*
-			 * avoid unneeded loan break if possible.
-			 */
-
-			if ((access_type & VM_PROT_WRITE) == 0)
-				prot &= ~VM_PROT_WRITE;
-
-			if (prot & VM_PROT_WRITE) {
-				struct vm_page *newpg;
-
-				newpg = uvm_loanbreak(pg);
-				if (newpg == NULL) {
-					uvm_page_unbusy(&pg, 1);
-					mutex_exit(&uobj->vmobjlock);
-					uvm_wait("ubc_loanbrk");
-					continue; /* will re-fault */
-				}
-				pg = newpg;
-			}
-		}
-
-		/*
-		 * note that a page whose backing store is partially allocated
-		 * is marked as PG_RDONLY.
-		 */
-
-		rdonly = ((access_type & VM_PROT_WRITE) == 0 &&
-		    (pg->flags & PG_RDONLY) != 0) ||
-		    UVM_OBJ_NEEDS_WRITEFAULT(uobj);
-		KASSERT((pg->flags & PG_RDONLY) == 0 ||
-		    (access_type & VM_PROT_WRITE) == 0 ||
-		    pg->offset < umap->writeoff ||
-		    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
-		mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
-		error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
-		    prot & mask, PMAP_CANFAIL | (access_type & mask));
-		mutex_enter(&uvm_pageqlock);
-		uvm_pageactivate(pg);
-		mutex_exit(&uvm_pageqlock);
-		pg->flags &= ~(PG_BUSY|PG_WANTED);
-		UVM_PAGE_OWN(pg, NULL);
-		mutex_exit(&uobj->vmobjlock);
-		if (error) {
-			UVMHIST_LOG(ubchist, "pmap_enter fail %d",
-			    error, 0, 0, 0);
-			uvm_wait("ubc_pmfail");
-			/* will refault */
-		}
+		ubc_fault_page(ufi, umap, pg, prot, access_type, va);
 	}
 	pmap_update(ufi->orig_map->pmap);
 	return 0;
