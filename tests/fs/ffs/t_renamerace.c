@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.9 2009/10/14 18:22:50 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.10 2010/05/30 05:35:48 dholland Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -11,6 +11,7 @@
 #include <atf-c.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,7 +62,7 @@ w2(void *arg)
 
 /* XXX: how to do cleanup if we use mkdtemp? */
 #define IMAGENAME "/tmp/ffsatf.img"
-static char image[MAXPATHLEN];
+static char image[PATH_MAX];
 
 #define FAKEBLK "/dev/sp00ka"
 
