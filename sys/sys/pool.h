@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.68 2009/12/30 18:57:16 elad Exp $	*/
+/*	$NetBSD: pool.h,v 1.69 2010/05/30 02:28:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #endif
 
 #ifdef __POOL_EXPOSE
+#include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/queue.h>
