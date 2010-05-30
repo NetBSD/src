@@ -1,4 +1,4 @@
-/* $NetBSD: ctype_local.h,v 1.2 2010/05/22 18:15:21 tnozaki Exp $ */
+/* $NetBSD: ctype_local.h,v 1.3 2010/05/30 11:36:12 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 2010 Citrus Project,
@@ -39,9 +39,5 @@
 extern const unsigned char _C_ctype_[];
 extern const short _C_toupper_[];
 extern const short _C_tolower_[];
-
-#endif
-#ifndef _CTYPE_LOCAL_H_
-#define _CTYPE_LOCAL_H_
 
 #endif /*_CTYPE_LOCAL_H_*/
