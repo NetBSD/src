@@ -1,6 +1,7 @@
-/*	$NetBSD: t_basic.c,v 1.1 2010/03/30 01:05:28 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.2 2010/05/30 06:09:17 dholland Exp $	*/
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mount.h>
 
 #include <atf-c.h>
