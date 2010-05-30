@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.20 2009/08/20 02:40:57 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.20.4.1 2010/05/30 05:17:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.20 2009/08/20 02:40:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.20.4.1 2010/05/30 05:17:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -682,6 +682,7 @@ static void
 chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct chipsfb_softc *sc = scr->scr_cookie;
 
@@ -694,10 +695,10 @@ chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		int fg, bg, uc;
 		int x, y, wi, he;
 
-		wi = ri->ri_font->fontwidth;
-		he = ri->ri_font->fontheight;
+		wi = font->fontwidth;
+		he = font->fontheight;
 
-		if (!CHAR_IN_FONT(c, ri->ri_font))
+		if (!CHAR_IN_FONT(c, font))
 			return;
 		bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xf];
 		fg = (u_char)ri->ri_devcmap[(attr >> 24) & 0xf];
@@ -706,11 +707,11 @@ chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		if (c == 0x20) {
 			chipsfb_rectfill(sc, x, y, wi, he, bg);
 		} else {
-			uc = c-ri->ri_font->firstchar;
-			data = (uint8_t *)ri->ri_font->data + uc *
+			uc = c - font->firstchar;
+			data = (uint8_t *)font->data + uc *
 			    ri->ri_fontscale;
 			chipsfb_setup_mono(sc, x, y, wi, he, fg, bg);
-			chipsfb_feed(sc, ri->ri_font->stride * he, data);
+			chipsfb_feed(sc, font->stride * he, data);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.19 2010/01/16 13:29:47 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.19.4.1 2010/05/30 05:16:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.19 2010/01/16 13:29:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.19.4.1 2010/05/30 05:16:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,8 +208,6 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	hppa_fpu_flush(l);
 	memcpy(&mcp->__fpregs, pcb->pcb_fpregs, sizeof(mcp->__fpregs));
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs,
-	    sizeof(pcb->pcb_fpregs));
 	*flags |= _UC_FPU;
 }
 
@@ -254,7 +252,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 #endif
 
 		tf->tf_ipsw	= gr[0] |
-		    (hppa_cpu_info->hci_features & HPPA_FTRS_W32B ? PSW_O : 0);
+		    (hppa_cpu_ispa20_p() ? PSW_O : 0);
 		tf->tf_r1	= gr[1];
 		tf->tf_rp	= gr[2];
 		tf->tf_r3	= gr[3];
@@ -320,8 +318,6 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 		hppa_fpu_flush(l);
 		memcpy(pcb->pcb_fpregs, &mcp->__fpregs, sizeof(mcp->__fpregs));
-		fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs,
-		    sizeof(pcb->pcb_fpregs));
 	}
 
 	mutex_enter(p->p_lock);
@@ -355,6 +351,10 @@ hppa_ras(struct lwp *l)
 	}
 }
 
+/*
+ * Preempt the current LWP if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
@@ -363,8 +363,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	if (ci->ci_want_resched && !immed)
 		return;
 	ci->ci_want_resched = 1;
-	/* setsoftast(ci->ci_data.cpu_onproc); */
-	setsoftast();
+	setsoftast(ci->ci_data.cpu_onproc);
 
 #ifdef MULTIPROCESSOR
 	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {

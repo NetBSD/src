@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.35 2010/01/05 05:04:38 macallan Exp $	*/
+/*	$NetBSD: zx.c,v 1.35.4.1 2010/05/30 05:17:42 rmind Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.35 2010/01/05 05:04:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.35.4.1 2010/05/30 05:17:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -993,9 +993,9 @@ static void
 zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct zx_softc *sc = scr->scr_cookie;
-	struct wsdisplay_font *font;
 	volatile uint32_t *dp;
 	uint8_t *fb;
 	int fs, i, ul;
@@ -1007,14 +1007,12 @@ zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
 	if (uc == ' ') {
 		int x, y;
 
-		x = ri->ri_xorigin + ri->ri_font->fontwidth * col;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		zx_fillrect(sc, x, y, ri->ri_font->fontwidth,
-			    ri->ri_font->fontheight, bg, ZX_STD_ROP);
+		x = ri->ri_xorigin + font->fontwidth * col;
+		y = ri->ri_yorigin + font->fontheight * row;
+		zx_fillrect(sc, x, y, font->fontwidth,
+			    font->fontheight, bg, ZX_STD_ROP);
 		return;
 	}
-
-	font = ri->ri_font;
 
 	dp = (volatile uint32_t *)sc->sc_pixels +
 	    ((row * font->fontheight + ri->ri_yorigin) << 11) +

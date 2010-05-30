@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.51 2010/03/11 04:00:36 mrg Exp $	*/
+/*	$NetBSD: esiop.c,v 1.51.2.1 2010/05/30 05:17:21 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.51 2010/03/11 04:00:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.51.2.1 2010/05/30 05:17:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1533,6 +1533,8 @@ esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    target);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    esiop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1560,6 +1562,8 @@ esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 				    target, lun);
 				xs->error = XS_RESOURCE_SHORTAGE;
 				scsipi_done(xs);
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    esiop_cmd, next);
 				splx(s);
 				return;
 			}
@@ -1577,8 +1581,11 @@ esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			aprint_error_dev(sc->sc_c.sc_dev,
 			    "unable to load cmd DMA map: %d\n",
 			    error);
-			xs->error = XS_DRIVER_STUFFUP;
+			xs->error = (error == EAGAIN) ?
+			    XS_RESOURCE_SHORTAGE : XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
+			esiop_cmd->cmd_c.status = CMDST_FREE;
+			TAILQ_INSERT_TAIL(&sc->free_list, esiop_cmd, next);
 			splx(s);
 			return;
 		}
@@ -1590,12 +1597,16 @@ esiop_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			     BUS_DMA_READ : BUS_DMA_WRITE));
 			if (error) {
 				aprint_error_dev(sc->sc_c.sc_dev,
-				    "unable to load cmd DMA map: %d",
+				    "unable to load data DMA map: %d\n",
 				    error);
-				xs->error = XS_DRIVER_STUFFUP;
+				xs->error = (error == EAGAIN) ?
+				    XS_RESOURCE_SHORTAGE : XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
 				bus_dmamap_unload(sc->sc_c.sc_dmat,
 				    esiop_cmd->cmd_c.dmamap_cmd);
+				esiop_cmd->cmd_c.status = CMDST_FREE;
+				TAILQ_INSERT_TAIL(&sc->free_list,
+				    esiop_cmd, next);
 				splx(s);
 				return;
 			}

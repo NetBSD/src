@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.249 2010/03/06 21:12:04 plunky Exp $
+# $NetBSD: ALL,v 1.249.2.1 2010/05/30 05:16:53 rmind Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.249 $"
+#ident 		"ALL-$Revision: 1.249.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -229,6 +229,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 options 	TCP_SIGNATURE	# RFC 2385 support, used with BGP
@@ -374,7 +375,6 @@ acpitz* 	at acpi?		# ACPI Thermal Zone
 acpiwmi*	at acpi?		# ACPI WMI Mapper
 
 # Mainboard devices
-aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
@@ -392,6 +392,8 @@ thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
+wmidell*	at acpiwmibus?		# Dell WMI mappings
+wmihp*		at acpiwmibus?		# HP WMI mappings
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
@@ -404,6 +406,9 @@ sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
 vald* at acpi?
+
+# Toshiba LCD brightness
+valz* at acpi?
 
 # Plug-and-Play BIOS and attached devices
 
@@ -658,6 +663,10 @@ rd*	at cs80bus? slave ? punit ?
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 iic*	at amdpm?			# sensors below are on this bus
 
+# Acer Labs M7101 SMBus controller
+alipm*	at pci? dev ? function ?
+iic*	at alipm?
+
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
 
@@ -765,6 +774,7 @@ isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mfi*	at pci? dev ? function ?	# LSI MegaRAID SAS
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 mpt*	at pci? dev ? function ?	# LSI Fusion SCSI/FC
+nca*	at pci? dev ? function ?	# Domex DMX-3191D
 njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
@@ -1334,10 +1344,13 @@ sbp*	at ieee1394if? euihi ? euilo ?	# SCSI over IEEE1394
 
 # SD/MMC/SDIO Controller and Device support
 
-# SD/MMC controller
-sdhc*  at pci?				# SD Host Controller
-sdmmc* at sdhc? 			# SD/MMC bus
+# PCI SD/MMC controller
+sdhc*	at pci?				# SD Host Controller
 
+# CardBus SD/MMC controller
+sdhc*	at cardbus? function ?		# SD Host Controller
+
+sdmmc* at sdhc? 			# SD/MMC bus
 ld*	at sdmmc?
 
 
@@ -1487,6 +1500,10 @@ wsmouse* at btms? mux 0
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 btsco* at bthub?
 
@@ -1561,7 +1578,7 @@ options 	RF_INCLUDE_CHAINDECLUSTER=1
 options 	RF_INCLUDE_INTERDECLUSTER=1
 options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 options 	MEMORY_DISK_HOOKS	# enable root ramdisk

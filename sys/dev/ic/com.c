@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.295 2010/02/24 22:37:58 dyoung Exp $ */
+/* $NetBSD: com.c,v 1.295.2.1 2010/05/30 05:17:21 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.295 2010/02/24 22:37:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.295.2.1 2010/05/30 05:17:21 rmind Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -392,7 +392,7 @@ com_attach_subr(struct com_softc *sc)
 
 	CSR_WRITE_1(regsp, COM_REG_IER, sc->sc_ier);
 
-	if (regsp->cr_iot == comcons_info.regs.cr_iot &&
+	if (bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
 	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
 		comconsattached = 1;
 
@@ -541,7 +541,7 @@ fifodone:
 	 * exclusive use.  If it's the console _and_ the
 	 * kgdb device, it doesn't.
 	 */
-	if (regsp->cr_iot == comkgdbregs.cr_iot &&
+	if (bus_space_is_equal(regsp->cr_iot, comkgdbregs.cr_iot) &&
 	    regsp->cr_iobase == comkgdbregs.cr_iobase) {
 		if (!ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
 			com_kgdb_attached = 1;
@@ -2302,7 +2302,7 @@ com_kgdb_attach1(struct com_regs *regsp, int rate, int frequency, int type,
 {
 	int res;
 
-	if (regsp->cr_iot == comcons_info.regs.cr_iot &&
+	if (bus_space_is_equal(regsp->cr_iot, comcons_info.regs.cr_iot) &&
 	    regsp->cr_iobase == comcons_info.regs.cr_iobase) {
 #if !defined(DDB)
 		return (EBUSY); /* cannot share with console */
@@ -2371,12 +2371,13 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
 	bus_space_handle_t help;
 
 	if (!comconsattached &&
-	    iot == comcons_info.regs.cr_iot &&
+	    bus_space_is_equal(iot, comcons_info.regs.cr_iot) &&
 	    iobase == comcons_info.regs.cr_iobase)
 		help = comcons_info.regs.cr_ioh;
 #ifdef KGDB
 	else if (!com_kgdb_attached &&
-	    iot == comkgdbregs.cr_iot && iobase == comkgdbregs.cr_iobase)
+	    bus_space_is_equal(iot, comkgdbregs.cr_iot) &&
+	    iobase == comkgdbregs.cr_iobase)
 		help = comkgdbregs.cr_ioh;
 #endif
 	else

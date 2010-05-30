@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.58 2009/12/14 00:47:11 matt Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.58.4.1 2010/05/30 05:17:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.58 2009/12/14 00:47:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.58.4.1 2010/05/30 05:17:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -79,7 +78,7 @@ netbsd32_get_iov(struct netbsd32_iovec *iov32, int iovlen, struct iovec *aiov,
 		return NULL;
 
 	if (iovlen > aiov_len)
-		iov = malloc(iovlen * sizeof (*iov), M_TEMP, M_WAITOK);
+		iov = kmem_alloc(iovlen * sizeof(*iov), KM_SLEEP);
 
 	iovp = iov;
 	for (i = 0; i < iovlen; iov32 += N_IOV32, i += N_IOV32) {
@@ -89,7 +88,7 @@ netbsd32_get_iov(struct netbsd32_iovec *iov32, int iovlen, struct iovec *aiov,
 		error = copyin(iov32, aiov32, n * sizeof (*iov32));
 		if (error != 0) {
 			if (iov != aiov)
-				free(iov, M_TEMP);
+				kmem_free(iov, iovlen * sizeof(*iov));
 			return NULL;
 		}
 		for (j = 0; j < n; iovp++, j++) {
@@ -144,7 +143,7 @@ dofilereadv32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt, 
 			error = EINVAL;
 			goto out;
 		}
-		iov = malloc(iovlen, M_IOV, M_WAITOK);
+		iov = kmem_alloc(iovlen, KM_SLEEP);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
@@ -180,7 +179,7 @@ dofilereadv32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt, 
 	 * if tracing, save a copy of iovec
 	 */
 	if (ktrpoint(KTR_GENIO)) {
-		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
+		ktriov = kmem_alloc(iovlen, KM_SLEEP);
 		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
 	}
 
@@ -194,13 +193,13 @@ dofilereadv32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt, 
 
 	if (ktriov != NULL) {
 		ktrgeniov(fd, UIO_READ, ktriov, cnt, error);
-		free(ktriov, M_TEMP);
+		kmem_free(ktriov, iovlen);
 	}
 
 	*retval = cnt;
 done:
 	if (needfree)
-		free(needfree, M_IOV);
+		kmem_free(needfree, iovlen);
 out:
 	fd_putfile(fd);
 	return (error);
@@ -248,7 +247,7 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 			error = EINVAL;
 			goto out;
 		}
-		iov = malloc(iovlen, M_IOV, M_WAITOK);
+		iov = kmem_alloc(iovlen, KM_SLEEP);
 		needfree = iov;
 	} else if ((u_int)iovcnt > 0) {
 		iov = aiov;
@@ -284,7 +283,7 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 	 * if tracing, save a copy of iovec
 	 */
 	if (ktrpoint(KTR_GENIO))  {
-		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
+		ktriov = kmem_alloc(iovlen, KM_SLEEP);
 		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
 	}
 
@@ -303,12 +302,12 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 	cnt -= auio.uio_resid;
 	if (ktriov != NULL) {
 		ktrgenio(fd, UIO_WRITE, ktriov, cnt, error);
-		free(ktriov, M_TEMP);
+		kmem_free(ktriov, iovlen);
 	}
 	*retval = cnt;
 done:
 	if (needfree)
-		free(needfree, M_IOV);
+		kmem_free(needfree, iovlen);
 out:
 	fd_putfile(fd);
 	return (error);
@@ -363,10 +362,10 @@ netbds32_copyout_statvfs(const void *kp, void *up, size_t len)
 	struct netbsd32_statvfs *sbuf_32;
 	int error;
 
-	sbuf_32 = malloc(sizeof *sbuf_32, M_TEMP, M_WAITOK);
+	sbuf_32 = kmem_alloc(sizeof(*sbuf_32), KM_SLEEP);
 	netbsd32_from_statvfs(kp, sbuf_32);
 	error = copyout(sbuf_32, up, sizeof(*sbuf_32));
-	free(sbuf_32, M_TEMP);
+	kmem_free(sbuf_32, sizeof(*sbuf_32));
 
 	return error;
 }
@@ -723,7 +722,7 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 	else if (len < 2)
 		return ERANGE;
 
-	path = (char *)malloc(len, M_TEMP, M_WAITOK);
+	path = kmem_alloc(len, KM_SLEEP);
 	if (!path)
 		return ENOMEM;
 
@@ -751,7 +750,7 @@ netbsd32___getcwd(struct lwp *l, const struct netbsd32___getcwd_args *uap, regis
 	error = copyout(bp, SCARG_P32(uap, bufp), lenused);
 
 out:
-	free(path, M_TEMP);
+	kmem_free(path, len);
 	return error;
 }
 

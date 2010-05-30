@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.39 2009/08/12 23:29:19 matt Exp $
+# 	$NetBSD: WAPIKO,v 1.39.4.1 2010/05/30 05:17:00 rmind Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -53,6 +53,8 @@ options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	INET		# Internet protocols
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 config	netbsd root on ? type ?
 
@@ -97,7 +99,7 @@ wsmouse0 at ms?
 
 pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd		4	# concatenated and striped disks
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter		# Berkeley Packet Filter

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.85 2010/01/19 22:06:59 pooka Exp $	*/
+/*	$NetBSD: if_el.c,v 1.85.4.1 2010/05/30 05:17:28 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.85 2010/01/19 22:06:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.85.4.1 2010/05/30 05:17:28 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -389,8 +389,7 @@ elstart(struct ifnet *ifp)
 			break;
 
 		/* Give the packet to the bpf, if any. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		/* Disable the receiver. */
 		bus_space_write_1(iot, ioh, EL_AC, EL_AC_HOST);
@@ -597,8 +596,7 @@ elread(struct el_softc *sc, int len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*ifp->if_input)(ifp, m);
 }

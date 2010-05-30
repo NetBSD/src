@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.21 2010/03/12 21:53:16 darran Exp $	*/
+/*	$NetBSD: module.h,v 1.21.2.1 2010/05/30 05:18:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -135,21 +135,25 @@ int	module_hold(const char *);
 void	module_rele(const char *);
 int	module_find_section(const char *, void **, size_t *);
 void	module_thread_kick(void);
+void	module_load_vfs_init(void);
 
 void	module_whatis(uintptr_t, void (*)(const char *, ...));
 void	module_print_list(void (*)(const char *, ...));
 
 #ifdef _MODULE_INTERNAL
+extern
+int	(*module_load_vfs_vec)(const char *, int, bool, module_t *,
+			       prop_dictionary_t *);
 int	module_load_vfs(const char *, int, bool, module_t *,
 			prop_dictionary_t *);
 void	module_error(const char *, ...)
 			     __attribute__((__format__(__printf__,1,2)));
 void	module_print(const char *, ...)
 			     __attribute__((__format__(__printf__,1,2)));
+#endif /* _MODULE_INTERNAL */
 
 #define MODULE_BASE_SIZE 64
 extern char	module_base[MODULE_BASE_SIZE];
-#endif /* _MODULE_INTERNAL */
 
 #else	/* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_cardbus.c,v 1.26 2010/02/26 00:57:01 dyoung Exp $	*/
+/*	$NetBSD: adv_cardbus.c,v 1.26.2.1 2010/05/30 05:17:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.26 2010/02/26 00:57:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_cardbus.c,v 1.26.2.1 2010/05/30 05:17:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,6 @@ adv_cardbus_attach(device_t parent, device_t self,
 	struct adv_cardbus_softc *csc = device_private(self);
 	struct asc_softc *sc = &csc->sc_adv;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	pcireg_t reg;
@@ -181,20 +179,20 @@ adv_cardbus_attach(device_t parent, device_t self,
 	}
 
 	/* Enable the appropriate bits in the PCI CSR. */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG);
+	reg = Cardbus_conf_read(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG);
 	reg &= ~(PCI_COMMAND_IO_ENABLE|PCI_COMMAND_MEM_ENABLE);
 	reg |= csc->sc_csr;
-	cardbus_conf_write(cc, cf, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
+	Cardbus_conf_write(ct, ca->ca_tag, PCI_COMMAND_STATUS_REG, reg);
 
 	/*
 	 * Make sure the latency timer is set to some reasonable
 	 * value.
 	 */
-	reg = cardbus_conf_read(cc, cf, ca->ca_tag, PCI_BHLC_REG);
+	reg = Cardbus_conf_read(ct, ca->ca_tag, PCI_BHLC_REG);
 	if (PCI_LATTIMER(reg) < latency) {
 		reg &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
 		reg |= (latency << PCI_LATTIMER_SHIFT);
-		cardbus_conf_write(cc, cf, ca->ca_tag, PCI_BHLC_REG, reg);
+		Cardbus_conf_write(ct, ca->ca_tag, PCI_BHLC_REG, reg);
 	}
 
 	ASC_SET_CHIP_CONTROL(iot, ioh, ASC_CC_HALT);
@@ -218,7 +216,7 @@ adv_cardbus_attach(device_t parent, device_t self,
 	/*
 	 * Establish the interrupt.
 	 */
-	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
+	sc->sc_ih = Cardbus_intr_establish(ct, ca->ca_intrline, IPL_BIO,
 	    adv_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev,
@@ -245,8 +243,7 @@ adv_cardbus_detach(device_t self, int flags)
 		return rv;
 
 	if (sc->sc_ih) {
-		cardbus_intr_disestablish(csc->sc_ct->ct_cc,
-		    csc->sc_ct->ct_cf, sc->sc_ih);
+		Cardbus_intr_disestablish(csc->sc_ct, sc->sc_ih);
 		sc->sc_ih = 0;
 	}
 

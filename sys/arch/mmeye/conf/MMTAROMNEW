@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.42 2009/12/05 20:11:15 pooka Exp $
+#	$NetBSD: MMTAROMNEW,v 1.42.4.1 2010/05/30 05:16:59 rmind Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -202,7 +202,7 @@ cinclude "arch/mmeye/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 #pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 

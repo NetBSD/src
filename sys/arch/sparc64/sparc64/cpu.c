@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.94 2010/03/13 15:01:53 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.94.2.1 2010/05/30 05:17:08 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.94 2010/03/13 15:01:53 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.94.2.1 2010/05/30 05:17:08 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -281,6 +281,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 #endif
 	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
 			     device_xname(dev), "timer");
+	mutex_init(&ci->ci_ctx_lock, MUTEX_SPIN, IPL_VM);
 
 	clk = prom_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {

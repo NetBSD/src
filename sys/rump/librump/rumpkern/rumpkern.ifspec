@@ -1,4 +1,4 @@
-;	$NetBSD: rumpkern.ifspec,v 1.4 2010/03/05 18:41:46 pooka Exp $
+;	$NetBSD: rumpkern.ifspec,v 1.4.4.1 2010/05/30 05:18:06 rmind Exp $
 
 NAME|kern
 PUBHDR|include/rump/rumpkern_if_pub.h
@@ -20,9 +20,9 @@ size_t		|uio_getresid	|struct uio *
 off_t		|uio_getoff	|struct uio *
 size_t		|uio_free	|struct uio *
 
-kauth_cred_t	|cred_create	|uid_t, gid_t, size_t, gid_t *
-kauth_cred_t	|cred_suserget	|void
-void		|cred_put	|kauth_cred_t
+struct kauth_cred*|cred_create	|uid_t, gid_t, size_t, gid_t *
+struct kauth_cred*|cred_suserget|void
+void		  |cred_put	|struct kauth_cred *
 
 ; lwp interfaces.  these need much love
 struct lwp *	|newproc_switch		|void

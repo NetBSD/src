@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.3 2009/10/15 00:31:25 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.3.6.1 2010/05/30 05:18:07 rmind Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.1 2009/10/14 17:17:00 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.4 2010/05/26 21:50:56 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 
@@ -213,7 +213,7 @@ rump_pub_namei(uint32_t arg1, uint32_t arg2, const char *arg3, struct vnode **ar
 }
 
 struct componentname *
-rump_pub_makecn(u_long arg1, u_long arg2, const char *arg3, size_t arg4, kauth_cred_t arg5, struct lwp *arg6)
+rump_pub_makecn(u_long arg1, u_long arg2, const char *arg3, size_t arg4, struct kauth_cred *arg5, struct lwp *arg6)
 {
 	struct componentname * rv;
 
@@ -261,7 +261,7 @@ rump_pub_vfs_statvfs(struct mount *arg1, struct statvfs *arg2)
 }
 
 int
-rump_pub_vfs_sync(struct mount *arg1, int arg2, kauth_cred_t arg3)
+rump_pub_vfs_sync(struct mount *arg1, int arg2, struct kauth_cred *arg3)
 {
 	int rv;
 
@@ -296,6 +296,18 @@ rump_pub_vfs_vptofh(struct vnode *arg1, struct fid *arg2, size_t *arg3)
 	return rv;
 }
 
+int
+rump_pub_vfs_extattrctl(struct mount *arg1, int arg2, struct vnode *arg3, int arg4, const char *arg5)
+{
+	int rv;
+
+	rump_schedule();
+	rv = rump_vfs_extattrctl(arg1, arg2, arg3, arg4, arg5);
+	rump_unschedule();
+
+	return rv;
+}
+
 void
 rump_pub_vfs_syncwait(struct mount *arg1)
 {
@@ -315,6 +327,15 @@ rump_pub_vfs_getmp(const char *arg1, struct mount **arg2)
 	rump_unschedule();
 
 	return rv;
+}
+
+void
+rump_pub_vfs_mount_print(const char *arg1, int arg2)
+{
+
+	rump_schedule();
+	rump_vfs_mount_print(arg1, arg2);
+	rump_unschedule();
 }
 
 void

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.220 2010/03/01 06:14:17 macallan Exp $
+# $NetBSD: GENERIC,v 1.220.2.1 2010/05/30 05:17:07 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.220 $"
+#ident 		"GENERIC-$Revision: 1.220.2.1 $"
 
 maxusers	32
 
@@ -201,7 +201,7 @@ file-system	UNION		# union file system
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 ## File system options.
@@ -231,6 +231,7 @@ options 	NTP		# Network Time Protocol in-kernel support
 options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
@@ -688,6 +689,10 @@ cgsix0		at obio0 addr 0x0b000000 level 4	# sun4/100 P4
 # there can be only one
 tcx0		at sbus? slot ? offset ?
 
+## Sun CG12 / Matrox SG3 accelerated 24bit framebuffer
+## runs monochrome only for now
+cgtwelve*	at sbus? slot ? offset ?
+
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
 cgfourteen*	at obio0			# sun4m
 
@@ -736,7 +741,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 pseudo-device	wsfont
 pseudo-device	putter			# for puffs and pud

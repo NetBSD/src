@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.104 2009/05/19 18:39:26 phx Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.104.4.1 2010/05/30 05:16:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.104 2009/05/19 18:39:26 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.104.4.1 2010/05/30 05:16:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,10 +284,8 @@ mbattach(struct device *pdp, struct device *dp, void *auxp)
 		config_found(dp, __UNCONST("amidisplaycc"), simple_devprint);
 		config_found(dp, __UNCONST("fdc"), simple_devprint);
 	}
-	if (is_a4000() || is_a1200()) {
+	if (is_a4000() || is_a1200())
 		config_found(dp, __UNCONST("wdc"), simple_devprint);
-		config_found(dp, __UNCONST("idesc"), simple_devprint);
-	}
 	if (is_a4000())			/* Try to configure A4000T SCSI */
 		config_found(dp, __UNCONST("afsc"), simple_devprint);
 	if (is_a3000())

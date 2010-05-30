@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.66.4.1 2010/03/16 15:38:08 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.66.4.2 2010/05/30 05:17:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.66.4.1 2010/03/16 15:38:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.66.4.2 2010/05/30 05:17:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -594,7 +594,6 @@ tmpfs_write(void *v)
 	bool extended;
 	int error;
 	off_t oldsize;
-	struct proc *p = curproc;
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
 
@@ -610,15 +609,6 @@ tmpfs_write(void *v)
 
 	if (uio->uio_resid == 0) {
 		error = 0;
-		goto out;
-	}
-
-	if (((uio->uio_offset + uio->uio_resid) >
-	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur)) {
-		mutex_enter(proc_lock);
-		psignal(p, SIGXFSZ);
-		mutex_exit(proc_lock);
-		error = EFBIG;
 		goto out;
 	}
 
@@ -1336,11 +1326,11 @@ tmpfs_print(void *v)
 	printf("tag VT_TMPFS, tmpfs_node %p, flags 0x%x, links %d\n",
 	    node, node->tn_flags, node->tn_links);
 	printf("\tmode 0%o, owner %d, group %d, size %" PRIdMAX
-	    ", status 0x%x\n",
+	    ", status 0x%x",
 	    node->tn_mode, node->tn_uid, node->tn_gid,
 	    (uintmax_t)node->tn_size, node->tn_status);
 	if (vp->v_type == VFIFO)
-		fifo_printinfo(vp);
+		VOCALL(fifo_vnodeop_p, VOFFSET(vop_print), v);
 	printf("\n");
 
 	return 0;

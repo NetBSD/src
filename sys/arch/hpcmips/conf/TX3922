@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.87 2010/03/07 09:39:43 plunky Exp $
+#	$NetBSD: TX3922,v 1.87.2.1 2010/05/30 05:16:51 rmind Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -344,7 +344,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk
 pseudo-device	vnd			# disk-like interface to files
 

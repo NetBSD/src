@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.43.2.1 2010/03/16 15:38:13 rmind Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.43.2.2 2010/05/30 05:18:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,18 +29,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43.2.1 2010/03/16 15:38:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43.2.2 2010/05/30 05:18:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/evcnt.h>
 #include <sys/filedesc.h>
+#include <sys/fstrans.h>
 #include <sys/lockf.h>
 #include <sys/kthread.h>
 #include <sys/module.h>
 #include <sys/namei.h>
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/vnode.h>
 #include <sys/wapbl.h>
@@ -55,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43.2.1 2010/03/16 15:38:13 rmind Exp 
 #include "rump_vfs_private.h"
 
 struct cwdinfo cwdi0;
+const char *rootfstype = ROOT_FSTYPE_ANY;
 
 static void rump_rcvp_lwpset(struct vnode *, struct vnode *, struct lwp *);
 
@@ -75,6 +78,8 @@ pvfs_rele(struct proc *p)
 void
 rump_vfs_init(void)
 {
+	extern struct devsw_conv devsw_conv0[];
+	extern int max_devsw_convs;
 	extern struct vfsops rumpfs_vfsops;
 	char buf[64];
 	int error;
@@ -86,7 +91,7 @@ rump_vfs_init(void)
 	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
 	} else {
-		desiredvnodes = 1<<16;
+		desiredvnodes = 1<<10;
 	}
 
 	rumpblk_init();
@@ -97,10 +102,10 @@ rump_vfs_init(void)
 	}
 	vfsinit();
 	bufinit();
-	wapbl_init();
 	cwd_sys_init();
 	lf_init();
 	spec_init();
+	fstrans_init();
 
 	if (rump_threads) {
 		if ((rv = kthread_create(PRI_BIO, KTHREAD_MPSAFE, NULL,
@@ -108,7 +113,6 @@ rump_vfs_init(void)
 			panic("syncer thread create failed: %d", rv);
 	}
 
-	rootfstype = ROOT_FSTYPE_ANY;
 	root_device = &rump_rootdev;
 
 	/* bootstrap cwdi (rest done in vfs_mountroot() */
@@ -134,7 +138,18 @@ rump_vfs_init(void)
 		syncdelay = 0;
 	}
 
+	/*
+	 * On archs where the native kernel ABI is supported, map
+	 * host module directory to rump.  This means that kernel
+	 * modules from the host will be autoloaded to rump kernels.
+	 */
+#ifdef _RUMP_NATIVE_ABI
+	rump_etfs_register(module_base, module_base, RUMP_ETFS_DIR_SUBDIRS);
+#endif
+
 	module_init_class(MODULE_CLASS_VFS);
+
+	rump_vfs_builddevs(devsw_conv0, max_devsw_convs);
 }
 
 void
@@ -349,13 +364,6 @@ rump_vp_interlock(struct vnode *vp)
 int
 rump_vfs_unmount(struct mount *mp, int mntflags)
 {
-#if 0
-	struct evcnt *ev;
-
-	printf("event counters:\n");
-	TAILQ_FOREACH(ev, &allevents, ev_list)
-		printf("%s: %llu\n", ev->ev_name, ev->ev_count);
-#endif
 
 	return VFS_UNMOUNT(mp, mntflags);
 }
@@ -403,6 +411,14 @@ rump_vfs_vptofh(struct vnode *vp, struct fid *fid, size_t *fidsize)
 	return VFS_VPTOFH(vp, fid, fidsize);
 }
 
+int
+rump_vfs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
+	int attrnamespace, const char *attrname)
+{
+
+	return VFS_EXTATTRCTL(mp, cmd, vp, attrnamespace, attrname);
+}
+
 /*ARGSUSED*/
 void
 rump_vfs_syncwait(struct mount *mp)
@@ -412,6 +428,36 @@ rump_vfs_syncwait(struct mount *mp)
 	n = buf_syncwait();
 	if (n)
 		printf("syncwait: unsynced buffers: %d\n", n);
+}
+
+/*
+ * Dump info about mount point.  No locking.
+ */
+void
+rump_vfs_mount_print(const char *path, int full)
+{
+#ifdef DEBUGPRINT
+	struct vnode *mvp;
+	struct vnode *vp;
+	int error;
+
+	rumpuser_dprintf("\n==== dumping mountpoint at ``%s'' ====\n\n", path);
+	if ((error = namei_simple_user(path, NSM_FOLLOW_NOEMULROOT, &mvp))!=0) {
+		rumpuser_dprintf("==== lookup error %d ====\n\n", error);
+		return;
+	}
+	vfs_mount_print(mvp->v_mount, full, (void *)rumpuser_dprintf);
+	if (full) {
+		rumpuser_dprintf("\n== dumping vnodes ==\n\n");
+		TAILQ_FOREACH(vp, &mvp->v_mount->mnt_vnodelist, v_mntvnodes) {
+			vfs_vnode_print(vp, full, (void *)rumpuser_dprintf);
+		}
+	}
+	vrele(mvp);
+	rumpuser_dprintf("\n==== done ====\n\n");
+#else
+	rumpuser_dprintf("mount dump not supported without DEBUGPRINT\n");
+#endif
 }
 
 void

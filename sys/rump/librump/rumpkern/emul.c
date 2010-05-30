@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.123 2010/03/01 11:35:58 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.123.2.1 2010/05/30 05:18:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.123 2010/03/01 11:35:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.123.2.1 2010/05/30 05:18:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -62,46 +62,30 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.123 2010/03/01 11:35:58 pooka Exp $");
 
 #include "rump_private.h"
 
-time_t time_second = 1;
-
 kmutex_t *proc_lock;
 struct lwp lwp0;
 struct vnode *rootvp;
-dev_t rootdev;
+dev_t rootdev = NODEV;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
-int doing_shutdown;
+int nkmempages = 256*256/2; /* from le chapeau */
 const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
 struct timeval boottime;
-struct emul emul_netbsd;
 int cold = 1;
 int boothowto = AB_SILENT;
 struct tty *constty;
 
-char hostname[MAXHOSTNAMELEN];
-size_t hostnamelen;
-
-const char *panicstr;
-const char *domainname;
-int domainnamelen;
-
-const struct filterops sig_filtops;
-
-#define DEVSW_SIZE 255
-const struct bdevsw *bdevsw0[DEVSW_SIZE]; /* XXX storage size */
+const struct bdevsw *bdevsw0[255];
 const struct bdevsw **bdevsw = bdevsw0;
-const int sys_cdevsws = DEVSW_SIZE;
-int max_cdevsws = DEVSW_SIZE;
+const int sys_cdevsws = 255;
+int max_cdevsws = 255;
 
-const struct cdevsw *cdevsw0[DEVSW_SIZE]; /* XXX storage size */
+const struct cdevsw *cdevsw0[255];
 const struct cdevsw **cdevsw = cdevsw0;
-const int sys_bdevsws = DEVSW_SIZE;
-int max_bdevsws = DEVSW_SIZE;
+const int sys_bdevsws = 255;
+int max_bdevsws = 255;
 
-struct devsw_conv devsw_conv0;
-struct devsw_conv *devsw_conv = &devsw_conv0;
-int max_devsw_convs = 0;
 int mem_no = 2;
 
 struct device *booted_device;
@@ -111,6 +95,8 @@ int booted_partition;
 /* XXX: unused */
 kmutex_t tty_lock;
 krwlock_t exec_lock;
+
+struct lwplist alllwp = LIST_HEAD_INITIALIZER(alllwp);
 
 /* sparc doesn't sport constant page size */
 #ifdef __sparc__
@@ -124,72 +110,11 @@ struct loadavg averunnable = {
 	FSCALE,
 };
 
-void
-getnanouptime(struct timespec *ts)
-{
-
-	rump_getuptime(ts);
-}
-
-void
-getmicrouptime(struct timeval *tv)
-{
-	struct timespec ts;
-
-	getnanouptime(&ts);
-	TIMESPEC_TO_TIMEVAL(tv, &ts);
-}
-
-static void
-gettime(struct timespec *ts)
-{
-	uint64_t sec, nsec;
-	int error;
-
-	rumpuser_gettime(&sec, &nsec, &error);
-	ts->tv_sec = sec;
-	ts->tv_nsec = nsec;
-}
-
-void
-nanotime(struct timespec *ts)
-{
-
-	if (rump_threads) {
-		rump_gettime(ts);
-	} else {
-		gettime(ts);
-	}
-}
-
-/* hooray for mick, so what if I do */
-void
-getnanotime(struct timespec *ts)
-{
-
-	nanotime(ts);
-}
-
-void
-microtime(struct timeval *tv)
-{
-	struct timespec ts;
-
-	if (rump_threads) {
-		rump_gettime(&ts);
-		TIMESPEC_TO_TIMEVAL(tv, &ts);
-	} else {
-		gettime(&ts);
-		TIMESPEC_TO_TIMEVAL(tv, &ts);
-	}
-}
-
-void
-getmicrotime(struct timeval *tv)
-{
-
-	microtime(tv);
-}
+struct emul emul_netbsd = {
+	.e_name = "netbsd-rump",
+	.e_sysent = rump_sysent,
+	.e_vm_default_addr = uvm_default_mapaddr,
+};
 
 struct proc *
 p_find(pid_t pid, uint flags)
@@ -205,55 +130,8 @@ pg_find(pid_t pid, uint flags)
 	panic("%s: not implemented", __func__);
 }
 
-void
-psignal(struct proc *p, int signo)
-{
-
-	switch (signo) {
-	case SIGSYS:
-		break;
-	default:
-		panic("unhandled signal %d\n", signo);
-	}
-}
-
-void
-pgsignal(struct pgrp *pgrp, int sig, int checktty)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
 int
 pgid_in_session(struct proc *p, pid_t pg_id)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-int
-sigispending(struct lwp *l, int signo)
-{
-
-	return 0;
-}
-
-void
-sigpending1(struct lwp *l, sigset_t *ss)
 {
 
 	panic("%s: not implemented", __func__);
@@ -265,7 +143,7 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 	extern int hz;
 	int rv, error;
 	uint64_t sec, nsec;
-	
+
 	if (mtx)
 		mutex_exit(mtx);
 
@@ -280,13 +158,6 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 		return error;
 
 	return 0;
-}
-
-void
-suspendsched(void)
-{
-
-	/* we don't control scheduling currently, can't do anything now */
 }
 
 void
@@ -315,13 +186,6 @@ assert_sleepable(void)
 {
 
 	/* always sleepable, although we should improve this */
-}
-
-void
-tc_setclock(const struct timespec *ts)
-{
-
-	panic("%s: not implemented", __func__);
 }
 
 int
@@ -371,32 +235,6 @@ rump_delay(unsigned int us)
 	rumpuser_nanosleep(&sec, &nsec, &error);
 }
 void (*delay_func)(unsigned int) = rump_delay;
-
-bool
-kpreempt(uintptr_t where)
-{
-
-	return false;
-}
-
-/*
- * There is no kernel thread preemption in rump currently.  But call
- * the implementing macros anyway in case they grow some side-effects
- * down the road.
- */
-void
-kpreempt_disable(void)
-{
-
-	KPREEMPT_DISABLE(curlwp);
-}
-
-void
-kpreempt_enable(void)
-{
-
-	KPREEMPT_ENABLE(curlwp);
-}
 
 void
 proc_sesshold(struct session *ss)
@@ -459,54 +297,4 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* this function is __dead, we must exit */
 	rumpuser_exit(0);
-}
-
-int
-syscall_establish(const struct emul *em, const struct syscall_package *sp)
-{
-	extern struct sysent rump_sysent[];
-	int i;
-
-	KASSERT(em == NULL || em == &emul_netbsd);
-
-	for (i = 0; sp[i].sp_call; i++)
-		rump_sysent[sp[i].sp_code].sy_call = sp[i].sp_call;
-
-	return 0;
-}
-
-int
-syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
-{
-
-	return 0;
-}
-
-void
-calcru(struct proc *p, struct timeval *up, struct timeval *sp,
-	struct timeval *ip, struct timeval *rp)
-{
-
-	panic("%s unimplemented", __func__);
-}
-
-int
-sigismasked(struct lwp *l, int sig)
-{
-
-	return 0;
-}
-
-void
-sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
-{
-
-	panic("%s unimplemented", __func__);
-}
-
-void
-ksiginfo_queue_drain0(ksiginfoq_t *kq)
-{
-
-	panic("%s unimplemented", __func__);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.36 2010/01/19 22:07:44 pooka Exp $	*/
+/*	$NetBSD: if_url.c,v 1.36.4.1 2010/05/30 05:17:44 rmind Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.36 2010/01/19 22:07:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.36.4.1 2010/05/30 05:17:44 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -879,8 +879,7 @@ url_start(struct ifnet *ifp)
 
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+	bpf_mtap(ifp, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -1056,8 +1055,7 @@ url_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		goto done1;
 	}
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	DPRINTF(("%s: %s: deliver %d\n", USBDEVNAME(sc->sc_dev),
 		 __func__, m->m_len));

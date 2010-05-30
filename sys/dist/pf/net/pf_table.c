@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_table.c,v 1.15 2009/07/28 18:15:26 minskim Exp $	*/
+/*	$NetBSD: pf_table.c,v 1.15.4.1 2010/05/30 05:17:47 rmind Exp $	*/
 /*	$OpenBSD: pf_table.c,v 1.70 2007/05/23 11:53:45 markus Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_table.c,v 1.15 2009/07/28 18:15:26 minskim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_table.c,v 1.15.4.1 2010/05/30 05:17:47 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -221,6 +221,16 @@ pfr_initialize(void)
 
 	memset(&pfr_ffaddr, 0xff, sizeof(pfr_ffaddr));
 }
+
+#ifdef _MODULE
+void
+pfr_destroy(void)
+{
+	pool_destroy(&pfr_ktable_pl);
+	pool_destroy(&pfr_kentry_pl);
+	pool_destroy(&pfr_kentry_pl2);
+}
+#endif /* _MODULE */
 
 int
 pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)

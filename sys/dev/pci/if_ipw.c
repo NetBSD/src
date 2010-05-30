@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.50 2010/01/19 22:07:00 pooka Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.50.4.1 2010/05/30 05:17:33 rmind Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.50 2010/01/19 22:07:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.50.4.1 2010/05/30 05:17:33 rmind Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -305,7 +305,7 @@ ipw_attach(device_t parent, device_t self, void *aux)
 
 	ieee80211_media_init(ic, ipw_media_change, ipw_media_status);
 
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + 64, &sc->sc_drvbpf);
 
 	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
@@ -344,7 +344,7 @@ ipw_detach(struct device* self, int flags)
 		ipw_stop(ifp, 1);
 		ipw_free_firmware(sc);
 
-		bpf_ops->bpf_detach(ifp);
+		bpf_detach(ifp);
 		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
 
@@ -1061,7 +1061,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 
 		tap->wr_antsignal = status->rssi;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
 
 	if (ic->ic_state == IEEE80211_S_SCAN)
@@ -1329,7 +1329,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 	if (sc->sc_drvbpf != NULL) {
 		struct ipw_tx_radiotap_header *tap = &sc->sc_txtap;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
 
 	shdr = TAILQ_FIRST(&sc->sc_free_shdr);
@@ -1496,8 +1496,7 @@ ipw_start(struct ifnet *ifp)
 			continue;
 		}
 
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 
 		m0 = ieee80211_encap(ic, m0, ni);
 		if (m0 == NULL) {
@@ -1505,8 +1504,7 @@ ipw_start(struct ifnet *ifp)
 			continue;
 		}
 
-		if (ic->ic_rawbpf != NULL)
-			bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
+		bpf_mtap3(ic->ic_rawbpf, m0);
 
 		if (ipw_tx_start(ifp, m0, ni) != 0) {
 			ieee80211_free_node(ni);

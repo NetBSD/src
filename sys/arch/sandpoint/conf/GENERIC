@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.45 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC,v 1.45.4.1 2010/05/30 05:17:05 rmind Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ options 	PIC_I8259
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.45 $"
+#ident 		"GENERIC-$Revision: 1.45.4.1 $"
 
 maxusers	32
 
@@ -101,6 +101,7 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 
 options 	INET
+options		INET6		# IPV6
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -194,8 +195,8 @@ wd*		at atabus? drive ? flags 0x0000	# the drives themselves
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
-msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
+skc*	at pci? dev ? function ?	# Marvell Yukon Gigabit Ethernet
+sk*	at skc?				# Marvell Yukon Gigabit Ethernet
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 inphy*	at mii? phy ?			# Intel 82555 PHYs

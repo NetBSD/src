@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.43 2010/02/08 19:02:31 joerg Exp $
+#	$NetBSD: INSTALL,v 1.43.2.1 2010/05/30 05:17:07 rmind Exp $
 #
 #	Shark installation kernel
 #
@@ -254,7 +254,7 @@ pseudo-device	bpfilter		# packet filter
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
-#pseudo-device	fss	4		# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
 pseudo-device	md	1		# Ramdisk driver

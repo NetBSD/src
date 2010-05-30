@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.22.1 2010/05/30 05:17:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 
 #define ICU_LEN		32
 #define IRQ_SLAVE	2
-extern int imask[];
 
 #endif
 

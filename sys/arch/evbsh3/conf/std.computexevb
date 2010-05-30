@@ -1,0 +1,10 @@
+#       $NetBSD: std.computexevb,v 1.1.4.2 2010/05/30 05:16:46 rmind Exp $
+#
+# standard NetBSD/evbsh3 for COMPUTEXEVB options
+
+# Pull in COMPUTEXEVB config definitions.
+include "arch/evbsh3/conf/files.computexevb"
+
+options 	EVBSH3_BOARDTYPE="computexevb"
+makeoptions	BOARDTYPE="computexevb"
+makeoptions	BOARDMKFRAG="${THISSH3}/conf/mk.computexevb"

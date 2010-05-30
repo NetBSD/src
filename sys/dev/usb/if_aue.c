@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.118 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.118.4.1 2010/05/30 05:17:44 rmind Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.118 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.118.4.1 2010/05/30 05:17:44 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -1171,8 +1171,7 @@ aue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * a broadcast packet, multicast packet, matches our ethernet
 	 * address or the interface is in promiscuous mode.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", device_xname(sc->aue_dev),
 		    __func__, m->m_len));
@@ -1381,8 +1380,7 @@ aue_start(struct ifnet *ifp)
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+	bpf_mtap(ifp, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

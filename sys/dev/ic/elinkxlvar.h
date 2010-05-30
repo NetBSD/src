@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlvar.h,v 1.20 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: elinkxlvar.h,v 1.20.22.1 2010/05/30 05:17:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@
  */
 struct ex_softc {
 	device_t sc_dev;
+	device_suspensor_t sc_suspensor;
+	pmf_qual_t sc_qual;
 	void *sc_ih;
 
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
@@ -106,11 +108,6 @@ struct ex_softc {
 #define EX_FLAGS_100MBIT		0x1000
 #define EX_FLAGS_POWERMGMT		0x2000
 #define EX_FLAGS_ATTACHED		0x4000	/* attach has succeeded */
-
-	u_char	ex_bustype;		/* parent bus type (currently unused) */
-
-#define EX_BUS_PCI	0
-#define EX_BUS_CARDBUS	1
 
 #if NRND > 0
 	rndsource_element_t rnd_source;

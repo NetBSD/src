@@ -1,9 +1,8 @@
-# $NetBSD: files.netbt,v 1.4 2006/09/10 15:45:56 plunky Exp $
+# $NetBSD: files.netbt,v 1.4.78.1 2010/05/30 05:18:02 rmind Exp $
 
 # Bluetooth Protocols
 
 define	bluetooth
-defflag	opt_bluetooth.h		BLUETOOTH
 
 # Bluetooth HCI controller (bthub attaches here)
 define	btbus	{ }

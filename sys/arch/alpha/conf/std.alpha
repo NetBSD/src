@@ -1,4 +1,4 @@
-# $NetBSD: std.alpha,v 1.25 2007/10/17 19:52:57 garbled Exp $
+# $NetBSD: std.alpha,v 1.25.42.1 2010/05/30 05:16:35 rmind Exp $
 #
 # Standard/required configuration info for NetBSD/alpha.
 
@@ -12,3 +12,6 @@ options 	HZ=1024
 options 	EXEC_ECOFF	# (native) ECOFF binary support
 options 	EXEC_ELF64	# (native) ELF64 binary support
 options 	EXEC_SCRIPT	# shell script support
+
+# Atheros HAL options
+include "external/isc/atheros_hal/conf/std.ath_hal"

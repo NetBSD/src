@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.44 2009/12/10 05:10:04 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.44.4.1 2010/05/30 05:17:11 rmind Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -65,7 +65,6 @@ define	P0BR		offsetof(struct pcb, P0BR)
 define	P0LR		offsetof(struct pcb, P0LR)
 define	P1BR		offsetof(struct pcb, P1BR)
 define	P1LR		offsetof(struct pcb, P1LR)
-define	IFTRAP		offsetof(struct pcb, iftrap)
 define	ESP		offsetof(struct pcb, ESP)
 define	SSP		offsetof(struct pcb, SSP)
 define	KSP		offsetof(struct pcb, KSP)
@@ -78,6 +77,7 @@ define	PCB_FP		offsetof(struct pcb, FP)
 define	PCB_PC		offsetof(struct pcb, PC)
 define	PCB_PSL		offsetof(struct pcb, PSL)
 define	PCB_PADDR	offsetof(struct pcb, pcb_paddr)
+define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
 
 define	SOFTINT_CLOCK	SOFTINT_CLOCK
 define	SOFTINT_BIO	SOFTINT_BIO
@@ -163,6 +163,7 @@ define	IPL_NONE	IPL_NONE
 define	VC_DIAGTIMM	offsetof(struct vs_cpu, vc_diagtimm)
 
 define	PSL_IS		PSL_IS
+define	PSL_HIGHIPL	PSL_HIGHIPL
 
 define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
 define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.6 2010/02/28 11:47:28 martin Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.6.2.1 2010/05/30 05:17:24 rmind Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -24,8 +24,7 @@
 #include <sys/kernel.h>
 #include <sys/rwlock.h>
 #include <sys/proc.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -167,7 +166,7 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 
 #if 0
         printf("%s: exec op: %d addr: 0x%x cmdlen: %d len: %d flags 0x%x\n",
-            sc->sc_dev.dv_xname, op, addr, cmdlen, len, flags);
+            device_xname(sc->sc_dev), op, addr, (int)cmdlen, (int)len, flags);
 #endif
 
 	if (cold || sc->sc_poll)
@@ -267,9 +266,9 @@ pcfiic_read(struct pcfiic_softc *sc, bus_size_t r)
 void
 pcfiic_write(struct pcfiic_softc *sc, bus_size_t r, u_int8_t v)
 {
+	volatile uint8_t junk;
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], v);
-	bus_space_barrier(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], 1,
-	    BUS_SPACE_BARRIER_WRITE);
+	junk = bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCF_S1);
 }
 
 void

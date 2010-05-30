@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.h,v 1.3 2010/03/05 21:01:44 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.h,v 1.3.2.1 2010/05/30 05:17:17 rmind Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #ifndef _SYS_DEV_ACPI_ACPI_WAKEDEV_H
 #define _SYS_DEV_ACPI_ACPI_WAKEDEV_H
 
-int	acpi_wakedev_scan(struct acpi_softc *);
+void	acpi_wakedev_add(struct acpi_devnode *);
 void	acpi_wakedev_commit(struct acpi_softc *, int);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_WAKEDEV_H */

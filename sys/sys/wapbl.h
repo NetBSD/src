@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.10 2009/04/10 21:14:14 ad Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.10.6.1 2010/05/30 05:18:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -108,8 +108,6 @@ struct wapbl_entry {
 	size_t we_unsynced_bufbytes;	/* Byte count of unsynced buffers */
 #endif
 };
-
-void	wapbl_init(void);
 
 /* Start using a log */
 int	wapbl_start(struct wapbl **, struct mount *, struct vnode *, daddr_t,

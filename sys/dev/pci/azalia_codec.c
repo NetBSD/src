@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.77 2009/04/07 14:47:53 stacktic Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.77.4.1 2010/05/30 05:17:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.77 2009/04/07 14:47:53 stacktic Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.77.4.1 2010/05/30 05:17:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -3176,9 +3176,9 @@ alc888_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 static int
 alc888_mixer_init(codec_t *this)
 {
-	mixer_item_t *m, *mdac = NULL;
+	mixer_item_t *m = NULL;
 	mixer_devinfo_t *d;
-	int err, i;
+	int err, i, mdac_index = -1;
 
 	err = generic_mixer_init(this);
 	if (err)
@@ -3193,10 +3193,10 @@ alc888_mixer_init(codec_t *this)
 	/* We're looking for front l/r mixer, which we know is nid 0x0c */
 	for (i = 0; i < this->nmixers; i++)
 		if (this->mixers[i].nid == 0x0c) {
-			mdac = &this->mixers[i];
+			mdac_index = i;
 			break;
 		}
-	if (mdac) {
+	if (mdac_index >= 0) {
 		/*
 		 * ALC888 doesn't have a master mixer, so create a fake
 		 * inputs.dac that mirrors outputs.master
@@ -3207,7 +3207,7 @@ alc888_mixer_init(codec_t *this)
 
 		m = &this->mixers[this->nmixers];
 		d = &m->devinfo;
-		memcpy(m, mdac, sizeof(*m));
+		memcpy(m, &this->mixers[mdac_index], sizeof(*m));
 		d->mixer_class = AZ_CLASS_INPUT;
 		snprintf(d->label.name, sizeof(d->label.name), AudioNdac);
 		this->nmixers++;

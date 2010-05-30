@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.8 2010/02/09 16:53:13 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.8.4.1 2010/05/30 05:18:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.8 2010/02/09 16:53:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.8.4.1 2010/05/30 05:18:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -136,13 +136,14 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k->f = func;
 	k->arg = arg;
 	k->mylwp = l = rump_lwp_alloc(0, rump_nextlid());
+	l->l_flag |= LW_SYSTEM;
 	if (flags & KTHREAD_MPSAFE)
 		l->l_pflag |= LP_MPSAFE;
 	if (flags & KTHREAD_INTR)
 		l->l_pflag |= LP_INTR;
 	if (ci) {
 		l->l_pflag |= LP_BOUND;
-		l->l_cpu = ci;
+		l->l_target_cpu = ci;
 	}
 	if (thrname) {
 		l->l_name = kmem_alloc(MAXCOMLEN, KM_SLEEP);

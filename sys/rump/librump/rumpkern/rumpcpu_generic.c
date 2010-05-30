@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcpu_generic.c,v 1.1 2009/10/15 01:29:06 pooka Exp $	*/
+/*	$NetBSD: rumpcpu_generic.c,v 1.1.6.1 2010/05/30 05:18:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -29,14 +29,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcpu_generic.c,v 1.1 2009/10/15 01:29:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcpu_generic.c,v 1.1.6.1 2010/05/30 05:18:06 rmind Exp $");
 
 #include <sys/param.h>
 
 #include "rump_private.h"
 
 void
-rump_cpu_bootstrap(struct cpu_info *ci)
+rump_cpu_attach(struct cpu_info *ci)
 {
 
 	/* nada */

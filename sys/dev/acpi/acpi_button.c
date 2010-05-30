@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.34 2010/03/05 14:00:16 jruoho Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.34.2.1 2010/05/30 05:17:17 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.34 2010/03/05 14:00:16 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.34.2.1 2010/05/30 05:17:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.34 2010/03/05 14:00:16 jruoho Exp 
 
 #define _COMPONENT		 ACPI_BUTTON_COMPONENT
 ACPI_MODULE_NAME		 ("acpi_button")
+
+#define ACPI_NOTIFY_BUTTON	 0x80
 
 struct acpibut_softc {
 	struct acpi_devnode	*sc_node;
@@ -110,7 +112,6 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 	struct acpibut_softc *sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	const char *desc;
-	ACPI_STATUS rv;
 
 	sc->sc_smpsw.smpsw_name = device_xname(self);
 
@@ -130,12 +131,7 @@ acpibut_attach(device_t parent, device_t self, void *aux)
 
 	(void)pmf_device_register(self, NULL, NULL);
 	(void)sysmon_pswitch_register(&sc->sc_smpsw);
-
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler, self);
-
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self, "failed to install notify handler\n");
+	(void)acpi_register_notify(sc->sc_node, acpibut_notify_handler);
 }
 
 /*
@@ -147,15 +143,9 @@ static int
 acpibut_detach(device_t self, int flags)
 {
 	struct acpibut_softc *sc = device_private(self);
-	ACPI_STATUS rv;
-
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
 
 	pmf_device_deregister(self);
+	acpi_deregister_notify(sc->sc_node);
 	sysmon_pswitch_unregister(&sc->sc_smpsw);
 
 	return 0;
@@ -189,8 +179,7 @@ acpibut_notify_handler(ACPI_HANDLE handle, uint32_t notify, void *context)
 
 	switch (notify) {
 
-     /* case ACPI_NOTIFY_S0SleepButtonPressed: */
-	case ACPI_NOTIFY_S0PowerButtonPressed:
+	case ACPI_NOTIFY_BUTTON:
 		(void)AcpiOsExecute(handler, acpibut_pressed_event, dv);
 		break;
 

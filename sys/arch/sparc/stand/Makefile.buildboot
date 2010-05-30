@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.26 2009/11/27 11:11:22 tsutsui Exp $
+#	$NetBSD: Makefile.buildboot,v 1.26.4.1 2010/05/30 05:17:07 rmind Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
@@ -58,7 +58,7 @@ LIBSA=		${SALIB}
 
 .include <bsd.klinks.mk>
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

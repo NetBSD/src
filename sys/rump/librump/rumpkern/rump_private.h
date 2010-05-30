@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.43 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.43.2.1 2010/05/30 05:18:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -104,21 +104,28 @@ extern void *rump_sysproxy_arg;
 int		rump_sysproxy_copyout(const void *, void *, size_t);
 int		rump_sysproxy_copyin(const void *, void *, size_t);
 
+void	rump_cpus_bootstrap(int);
 void	rump_scheduler_init(void);
 void	rump_schedule(void);
 void	rump_unschedule(void);
 void 	rump_schedule_cpu(struct lwp *);
+void 	rump_schedule_cpu_interlock(struct lwp *, void *);
 void	rump_unschedule_cpu(struct lwp *);
-void	rump_unschedule_cpu1(struct lwp *);
+void	rump_unschedule_cpu_interlock(struct lwp *, void *);
+void	rump_unschedule_cpu1(struct lwp *, void *);
 
-void	rump_user_schedule(int);
-void	rump_user_unschedule(int, int *);
+void	rump_schedlock_cv_wait(struct rumpuser_cv *);
+int	rump_schedlock_cv_timedwait(struct rumpuser_cv *,
+				    const struct timespec *);
 
-void	rump_cpu_bootstrap(struct cpu_info *);
+void	rump_user_schedule(int, void *);
+void	rump_user_unschedule(int, int *, void *);
 
-bool	kernel_biglocked(void);
-void	kernel_unlock_allbutone(int *);
-void	kernel_ununlock_allbutone(int);
+void	rump_cpu_attach(struct cpu_info *);
+
+bool	rump_kernel_isbiglocked(void);
+void	rump_kernel_unlock_allbutone(int *);
+void	rump_kernel_ununlock_allbutone(int);
 
 void	rump_intr_init(void);
 void	rump_softint_run(struct cpu_info *);

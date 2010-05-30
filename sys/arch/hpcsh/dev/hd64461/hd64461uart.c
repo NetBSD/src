@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.22 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.22.22.1 2010/05/30 05:16:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.22 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.22.22.1 2010/05/30 05:16:52 rmind Exp $");
 
 #include "opt_kgdb.h"
 
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.22 2008/04/28 20:23:22 martin Exp 
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/console.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
@@ -56,6 +58,18 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.22 2008/04/28 20:23:22 martin Exp 
 #include <hpcsh/dev/hd64461/hd64461intcreg.h>
 #include <hpcsh/dev/hd64461/hd64461uartvar.h>
 #include <hpcsh/dev/hd64461/hd64461uartreg.h>
+
+#define	HD64461UART_INIT_REGS(regs, tag, hdl, addr)			\
+	do {								\
+		int i;							\
+									\
+		regs.cr_iot = tag;					\
+		regs.cr_ioh = hdl;					\
+		regs.cr_iobase = addr;					\
+		regs.cr_nports = COM_NPORTS;				\
+		for (i = 0; i < __arraycount(regs.cr_map); i++)		\
+			regs.cr_map[i] = com_std_map[i] << 1;		\
+	} while (0)
 
 STATIC struct hd64461uart_chip {
 	struct hpcsh_bus_space __tag_body;
@@ -81,9 +95,6 @@ CFATTACH_DECL_NEW(hd64461uart, sizeof(struct hd64461uart_softc),
     hd64461uart_match, hd64461uart_attach, NULL, NULL);
 
 STATIC void hd64461uart_init(void);
-STATIC uint8_t hd64461uart_read_1(void *, bus_space_handle_t, bus_size_t);
-STATIC void hd64461uart_write_1(void *, bus_space_handle_t, bus_size_t,
-    uint8_t);
 
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 #ifndef COMCN_SPEED
@@ -107,35 +118,43 @@ hd64461uartcnprobe(struct consdev *cp)
 void
 hd64461uartcninit(struct consdev *cp)
 {
+	struct com_regs regs;
 
 	hd64461uart_init();
 
-	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ,
-	    COM_TYPE_NORMAL, CONMODE);
+	HD64461UART_INIT_REGS(regs, hd64461uart_chip.io_tag, 0x0, 0x0);
+	comcnattach1(&regs, COMCN_SPEED, COM_FREQ, COM_TYPE_NORMAL, CONMODE);
 
 	hd64461uart_chip.console = 1;
+	/* Don't stop to suply AFECK */
+	if (platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA))
+		use_afeck = 1;
 }
 
 #ifdef KGDB
 int
 hd64461uart_kgdb_init(void)
 {
+	struct com_regs regs;
 
 	if (strcmp(kgdb_devname, "hd64461uart") != 0)
-		return (1);
+		return 1;
 
 	if (hd64461uart_chip.console)
-		return (1);	/* can't share with console */
+		return 1;	/* can't share with console */
 
 	hd64461uart_init();
 
-	if (com_kgdb_attach(hd64461uart_chip.io_tag, 0x0, kgdb_rate,
-	    COM_FREQ, COM_TYPE_NORMAL, CONMODE) != 0) {
+	HD64461UART_INIT_REGS(regs, hd64461uart_chip.io_tag, NULL, 0x0);
+	if (com_kgdb_attach1(&regs,
+	    kgdb_rate, COM_FREQ, COM_TYPE_NORMAL, CONMODE) != 0) {
 		printf("%s: KGDB console open failed.\n", __func__);
-		return (1);
+		return 1;
 	}
 
-	return (0);
+	if (platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA))
+		use_afeck = 1;
+	return 0;
 }
 #endif /* KGDB */
 
@@ -144,7 +163,7 @@ hd64461uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
 
-	return (ha->ha_module_id == HD64461_MODULE_UART);
+	return ha->ha_module_id == HD64461_MODULE_UART;
 }
 
 STATIC void
@@ -153,7 +172,7 @@ hd64461uart_attach(device_t parent, device_t self, void *aux)
 	struct hd64461_attach_args *ha = aux;
 	struct hd64461uart_softc *sc = device_private(self);
 	struct com_softc *csc = &sc->sc_com;
-	uint16_t r16;
+	uint16_t r16, or16;
 	bus_space_handle_t ioh;
 
 	csc->sc_dev = self;
@@ -164,31 +183,33 @@ hd64461uart_attach(device_t parent, device_t self, void *aux)
 	if (!sc->sc_chip->console)
 		hd64461uart_init();
 
-	bus_space_map(sc->sc_chip->io_tag, 0, 8, 0, &ioh);
+	bus_space_map(sc->sc_chip->io_tag, 0x0, 8, 0, &ioh);
 	csc->sc_frequency = COM_FREQ;
-	COM_INIT_REGS(csc->sc_regs, sc->sc_chip->io_tag, ioh, 0);
+	HD64461UART_INIT_REGS(csc->sc_regs, sc->sc_chip->io_tag, ioh, 0x0);
 
 	/* switch port to UART */
 
 	/* supply clock */
-	r16 = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
+	r16 = or16 = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
 	r16 &= ~HD64461_SYSSTBCR_SURTSD;
+	if (platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA))
+		r16 &= ~(HD64461_SYSSTBCR_SAFECKE_IST |
+		    HD64461_SYSSTBCR_SAFECKE_OST);
 	hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
 
 	/* sanity check */
 	if (!com_probe_subr(&csc->sc_regs)) {
 		aprint_error(": device problem. don't attach.\n");
 
-		/* stop clock */
-		r16 |= HD64461_SYSSTBCR_SURTSD;
-		hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
+		/* restore old clock */
+		hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, or16);
 		return;
 	}
 
 	com_attach_subr(csc);
 
 	hd6446x_intr_establish(HD64461_INTC_UART, IST_LEVEL, IPL_TTY,
-	    comintr, self);
+	    comintr, csc);
 }
 
 STATIC void
@@ -201,23 +222,4 @@ hd64461uart_init(void)
 	hd64461uart_chip.io_tag = bus_space_create(
 		&hd64461uart_chip.__tag_body, "HD64461 UART I/O",
 		HD64461_UART_REGBASE, 0); /* no extent */
-
-	/* override bus_space_read_1, bus_space_write_1 */
-	hd64461uart_chip.io_tag->hbs_r_1 = hd64461uart_read_1;
-	hd64461uart_chip.io_tag->hbs_w_1 = hd64461uart_write_1;
-}
-
-STATIC uint8_t
-hd64461uart_read_1(void *t, bus_space_handle_t h, bus_size_t ofs)
-{
-
-	return *(volatile uint8_t *)(h + (ofs << 1));
-}
-
-STATIC void
-hd64461uart_write_1(void *t, bus_space_handle_t h, bus_size_t ofs,
-    uint8_t val)
-{
-
-	*(volatile uint8_t *)(h + (ofs << 1)) = val;
 }

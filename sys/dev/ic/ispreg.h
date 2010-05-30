@@ -1,4 +1,4 @@
-/* $NetBSD: ispreg.h,v 1.33 2009/06/25 23:44:02 mjacob Exp $ */
+/* $NetBSD: ispreg.h,v 1.33.4.1 2010/05/30 05:17:23 rmind Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -679,13 +679,13 @@ typedef struct {
 #define	SXP_PINS_LVD_MODE		0x1000
 #define	SXP_PINS_HVD_MODE		0x0800
 #define	SXP_PINS_SE_MODE		0x0400
+#define	SXP_PINS_MODE_MASK		(SXP_PINS_LVD_MODE|SXP_PINS_HVD_MODE|SXP_PINS_SE_MODE)
 
 /* The above have to be put together with the DIFFM pin to make sense */
 #define	ISP1080_LVD_MODE		(SXP_PINS_LVD_MODE)
 #define	ISP1080_HVD_MODE		(SXP_PINS_HVD_MODE|SXP_PINS_DIFF_MODE)
 #define	ISP1080_SE_MODE			(SXP_PINS_SE_MODE)
-#define	ISP1080_MODE_MASK	\
-    (SXP_PINS_LVD_MODE|SXP_PINS_HVD_MODE|SXP_PINS_SE_MODE|SXP_PINS_DIFF_MODE)
+#define	ISP1080_MODE_MASK		(SXP_PINS_MODE_MASK|SXP_PINS_DIFF_MODE)
 
 /*
  * RISC and Host Command and Control Block Register Offsets

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.61 2010/01/19 22:06:19 pooka Exp $ */
+/*	$NetBSD: if_ed.c,v 1.61.4.1 2010/05/30 05:16:37 rmind Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.61 2010/01/19 22:06:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.61.4.1 2010/05/30 05:16:37 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -547,8 +547,7 @@ outloop:
 		ed_xmit(sc);
 
 	/* Tap off here if there is a BPF listener. */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 
 	m_freem(m0);
 
@@ -992,12 +991,7 @@ ed_get_packet(struct ed_softc *sc, void *buf, u_short len)
 		return;
 	}
 
-	/*
-	 * Check if there's a BPF listener on this interface.  If so, hand off
-	 * the raw packet to bpf.
-	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*ifp->if_input)(ifp, m);
 }

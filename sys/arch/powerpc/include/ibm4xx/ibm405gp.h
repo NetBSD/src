@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm405gp.h,v 1.10 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: ibm405gp.h,v 1.10.100.1 2010/05/30 05:17:03 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -75,6 +75,7 @@
 /*
  * Internal peripheral addresses
  */
+#define	IBM405GP_IP_BASE		0xef600000
 
 #define	IBM405GP_UART0_BASE		0xef600300
 #define	IBM405GP_UART1_BASE		0xef600400

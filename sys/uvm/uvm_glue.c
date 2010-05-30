@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.144.2.2 2010/04/25 15:27:38 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.144.2.3 2010/05/30 05:18:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.144.2.2 2010/04/25 15:27:38 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.144.2.3 2010/05/30 05:18:09 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.144.2.2 2010/04/25 15:27:38 rmind Exp
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
+
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
@@ -407,6 +409,9 @@ uvm_init_limits(struct proc *p)
 /*
  * uvm_scheduler: process zero main loop.
  */
+
+extern struct loadavg averunnable;
+
 void
 uvm_scheduler(void)
 {
@@ -418,7 +423,7 @@ uvm_scheduler(void)
 	lwp_unlock(l);
 
 	for (;;) {
-		/* XXX/TODO: move some workload to this LWP? */
-		(void)kpause("uvm", false, 0, NULL);
+		sched_pstats();
+		(void)kpause("uvm", false, hz, NULL);
 	}
 }

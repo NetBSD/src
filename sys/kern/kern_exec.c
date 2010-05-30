@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.294 2010/03/01 21:10:15 darran Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.294.2.1 2010/05/30 05:17:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.294 2010/03/01 21:10:15 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.294.2.1 2010/05/30 05:17:56 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -278,20 +278,29 @@ static struct pool_allocator exec_palloc = {
  */
 int
 /*ARGSUSED*/
-check_exec(struct lwp *l, struct exec_package *epp)
+check_exec(struct lwp *l, struct exec_package *epp, const char *kpath)
 {
 	int		error, i;
 	struct vnode	*vp;
-	struct nameidata *ndp;
+	struct nameidata nd;
 	size_t		resid;
 
-	ndp = epp->ep_ndp;
-	ndp->ni_cnd.cn_nameiop = LOOKUP;
-	ndp->ni_cnd.cn_flags = FOLLOW | LOCKLEAF | SAVENAME | TRYEMULROOT;
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | SAVENAME | TRYEMULROOT,
+	       UIO_SYSSPACE, kpath);
+
 	/* first get the vnode */
-	if ((error = namei(ndp)) != 0)
+	if ((error = namei(&nd)) != 0)
 		return error;
-	epp->ep_vp = vp = ndp->ni_vp;
+	epp->ep_vp = vp = nd.ni_vp;
+	/* this cannot overflow as both are size PATH_MAX */
+	strcpy(epp->ep_resolvedname, nd.ni_cnd.cn_pnbuf);
+
+	/* dump this right away */
+#ifdef DIAGNOSTIC
+	/* paranoia (take this out once namei stuff stabilizes) */
+	memset(nd.ni_cnd.cn_pnbuf, '~', PATH_MAX);
+#endif
+	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 
 	/* check access and type */
 	if (vp->v_type != VREG) {
@@ -321,7 +330,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	VOP_UNLOCK(vp, 0);
 
 #if NVERIEXEC > 0
-	error = veriexec_verify(l, vp, ndp->ni_cnd.cn_pnbuf,
+	error = veriexec_verify(l, vp, epp->ep_resolvedname,
 	    epp->ep_flags & EXEC_INDIR ? VERIEXEC_INDIRECT : VERIEXEC_DIRECT,
 	    NULL);
 	if (error)
@@ -329,7 +338,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 #endif /* NVERIEXEC > 0 */
 
 #ifdef PAX_SEGVGUARD
-	error = pax_segvguard(l, vp, ndp->ni_cnd.cn_pnbuf, false);
+	error = pax_segvguard(l, vp, epp->ep_resolvedname, false);
 	if (error)
 		goto bad2;
 #endif /* PAX_SEGVGUARD */
@@ -411,7 +420,6 @@ bad2:
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(vp, FREAD, l->l_cred);
 	vput(vp);
-	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
 
 bad1:
@@ -420,7 +428,6 @@ bad1:
 	 * (which we don't yet have open).
 	 */
 	vput(vp);				/* was still locked */
-	PNBUF_PUT(ndp->ni_cnd.cn_pnbuf);
 	return error;
 }
 
@@ -513,7 +520,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 {
 	int			error;
 	struct exec_package	pack;
-	struct nameidata	nid;
 	struct vattr		attr;
 	struct proc		*p;
 	char			*argp;
@@ -531,7 +537,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
 	char			*pathbuf;
-	size_t			pathbuflen;
+	char			*resolvedpathbuf;
+	const char		*commandname;
 	u_int			modgen;
 
 	p = l->l_proc;
@@ -584,22 +591,25 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * see exec_script_makecmds().
 	 */
 	pathbuf = PNBUF_GET();
-	error = copyinstr(path, pathbuf, MAXPATHLEN, &pathbuflen);
+	error = copyinstr(path, pathbuf, MAXPATHLEN, NULL);
 	if (error) {
 		DPRINTF(("execve: copyinstr path %d", error));
 		goto clrflg;
 	}
-
-	NDINIT(&nid, LOOKUP, NOFOLLOW | TRYEMULROOT, UIO_SYSSPACE, pathbuf);
+	resolvedpathbuf = PNBUF_GET();
+#ifdef DIAGNOSTIC
+	strcpy(resolvedpathbuf, "/wrong");
+#endif
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
 	pack.ep_name = path;
+	pack.ep_kname = pathbuf;
+	pack.ep_resolvedname = resolvedpathbuf;
 	pack.ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
 	pack.ep_hdrlen = exec_maxhdrsz;
 	pack.ep_hdrvalid = 0;
-	pack.ep_ndp = &nid;
 	pack.ep_emul_arg = NULL;
 	pack.ep_vmcmds.evs_cnt = 0;
 	pack.ep_vmcmds.evs_used = 0;
@@ -613,7 +623,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	rw_enter(&exec_lock, RW_READER);
 
 	/* see if we can run it. */
-	if ((error = check_exec(l, &pack)) != 0) {
+	if ((error = check_exec(l, &pack, pathbuf)) != 0) {
 		if (error != ENOENT) {
 			DPRINTF(("execve: check exec failed %d\n", error));
 		}
@@ -853,8 +863,14 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	arginfo.ps_nenvstr = envc;
 
 	/* set command name & other accounting info */
-	i = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
-	(void)memcpy(p->p_comm, nid.ni_cnd.cn_nameptr, i);
+	commandname = strrchr(pack.ep_resolvedname, '/');
+	if (commandname != NULL) {
+		commandname++;
+	} else {
+		commandname = pack.ep_resolvedname;
+	}
+	i = min(strlen(commandname), MAXCOMLEN);
+	(void)memcpy(p->p_comm, commandname, i);
 	p->p_comm[i] = '\0';
 
 	dp = PNBUF_GET();
@@ -1075,8 +1091,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	pool_put(&exec_pool, argp);
 
-	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
-
 	/* notify others that we exec'd */
 	KNOTE(&p->p_klist, NOTE_EXEC);
 
@@ -1163,6 +1177,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	PNBUF_PUT(pathbuf);
+	PNBUF_PUT(resolvedpathbuf);
 	return (EJUSTRETURN);
 
  bad:
@@ -1177,7 +1192,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	VOP_CLOSE(pack.ep_vp, FREAD, l->l_cred);
 	vput(pack.ep_vp);
-	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	pool_put(&exec_pool, argp);
 
  freehdr:
@@ -1189,12 +1203,15 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	rw_exit(&exec_lock);
 
+	PNBUF_PUT(resolvedpathbuf);
+
  clrflg:
 	lwp_lock(l);
 	l->l_flag |= oldlwpflags;
 	lwp_unlock(l);
-	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
+
+	PNBUF_PUT(pathbuf);
 
 	if (modgen != module_gen && error == ENOEXEC) {
 		modgen = module_gen;
@@ -1207,9 +1224,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
  exec_abort:
 	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
-	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 	rw_exit(&exec_lock);
+
+	PNBUF_PUT(pathbuf);
+	PNBUF_PUT(resolvedpathbuf);
 
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
@@ -1220,7 +1239,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		VM_MAXUSER_ADDRESS - VM_MIN_ADDRESS);
 	if (pack.ep_emul_arg)
 		free(pack.ep_emul_arg, M_TEMP);
-	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	pool_put(&exec_pool, argp);
 	kmem_free(pack.ep_hdr, pack.ep_hdrlen);
 	if (pack.ep_emul_root != NULL)

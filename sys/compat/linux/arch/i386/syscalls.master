@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.101 2009/11/24 10:42:43 njoly Exp $
+	$NetBSD: syscalls.master,v 1.101.4.1 2010/05/30 05:17:15 rmind Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -227,7 +227,7 @@
 118	NOARGS		{ int|sys||fsync(int fd); }
 119	STD		{ int|linux_sys||sigreturn(struct linux_sigcontext *scp); }
 120	STD		{ int|linux_sys||clone(int flags, void *stack, \
-			    void *parent_tidptr, void *child_tidptr); }
+			    void *parent_tidptr, void *tls, void *child_tidptr); }
 121	STD		{ int|linux_sys||setdomainname(char *domainname, \
 			    int len); }
 122	STD		{ int|linux_sys||uname(struct linux_utsname *up); }

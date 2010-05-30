@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -163,7 +163,7 @@ ACPI_STRING_TABLE           StandardDataTypes[] = {
 
 char                        LinuxHeader[] =
 "/*\n"
-" * Copyright (C) 2000 - 2009, Intel Corp.\n"
+" * Copyright (C) 2000 - 2010, Intel Corp.\n"
 " * All rights reserved.\n"
 " *\n"
 " * Redistribution and use in source and binary forms, with or without\n"
@@ -281,6 +281,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_EXCEPTION_HANDLER",              SRC_TYPE_SIMPLE},
     {"ACPI_EXDUMP_INFO",                    SRC_TYPE_STRUCT},
     {"ACPI_EXECUTE_TYPE",                   SRC_TYPE_SIMPLE},
+    {"ACPI_EXECUTE_WALK",                   SRC_TYPE_STRUCT},
     {"ACPI_EXTERNAL_LIST",                  SRC_TYPE_STRUCT},
     {"ACPI_FADT_INFO",                      SRC_TYPE_STRUCT},
     {"ACPI_FADT_PM_INFO",                   SRC_TYPE_STRUCT},
@@ -390,6 +391,8 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_PREDEFINED_INFO",                SRC_TYPE_UNION},
     {"ACPI_PREDEFINED_NAMES",               SRC_TYPE_STRUCT},
     {"ACPI_PSCOPE_STATE",                   SRC_TYPE_STRUCT},
+    {"ACPI_REPAIR_FUNCTION",                SRC_TYPE_SIMPLE},
+    {"ACPI_REPAIR_INFO",                    SRC_TYPE_STRUCT},
     {"ACPI_RESOURCE",                       SRC_TYPE_STRUCT},
     {"ACPI_RESOURCE_ADDRESS",               SRC_TYPE_STRUCT},
     {"ACPI_RESOURCE_ADDRESS16",             SRC_TYPE_STRUCT},
@@ -497,7 +500,6 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ASL_RESOURCE_NODE",                   SRC_TYPE_STRUCT},
     {"ASL_WALK_CALLBACK",                   SRC_TYPE_SIMPLE},
     {"COMMAND_INFO",                        SRC_TYPE_STRUCT},
-    {"UINT32_STRUCT",                       SRC_TYPE_STRUCT},
     {"UINT64_OVERLAY",                      SRC_TYPE_UNION},
     {"UINT64_STRUCT",                       SRC_TYPE_STRUCT},
 
@@ -778,11 +780,15 @@ ACPI_CONVERSION_TABLE       StatsConversionTable = {
 ACPI_STRING_TABLE           CustomReplacements[] = {
 
 
-    {"(c) 1999 - 2009",      "(c) 1999 - 2009",         REPLACE_WHOLE_WORD},
+    {"ACPI_INTEGER_MAX", "ACPI_UINT64_MAX",   REPLACE_WHOLE_WORD},
 
 #if 0
+    {"(ACPI_INTEGER)", "(UINT64)",   REPLACE_WHOLE_WORD},
+    {"ACPI_INTEGER        ", "UINT64              ",   REPLACE_WHOLE_WORD},
+    {"ACPI_INTEGER", "UINT64",   REPLACE_WHOLE_WORD},
+    {"(c) 1999 - 2009",      "(c) 1999 - 2010",         REPLACE_WHOLE_WORD}, /* Main ACPICA source */
+    {"(c) 2006 - 2009",      "(c) 2006 - 2010",         REPLACE_WHOLE_WORD}, /* Test suites */
     {"#include \"acpi.h\"",   "#include \"acpi.h\"\n#include \"accommon.h\"",  REPLACE_SUBSTRINGS},
-    {"(c) 1999 - 2009",      "(c) 1999 - 2009",         REPLACE_WHOLE_WORD},
     {"AcpiTbSumTable", "AcpiTbSumTable",  REPLACE_WHOLE_WORD},
     {"ACPI_SIG_BOOT", "ACPI_SIG_BOOT",   REPLACE_WHOLE_WORD},
     {"ACPI_SIG_DBGP", "ACPI_SIG_DBGP",   REPLACE_WHOLE_WORD},

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ral_cardbus.c,v 1.20 2010/02/26 00:57:02 dyoung Exp $	*/
+/*	$NetBSD: if_ral_cardbus.c,v 1.20.2.1 2010/05/30 05:17:19 rmind Exp $	*/
 /*	$OpenBSD: if_ral_cardbus.c,v 1.6 2006/01/09 20:03:31 damien Exp $  */
 
 /*-
@@ -22,7 +22,7 @@
  * CardBus front-end for the Ralink RT2560/RT2561/RT2561S/RT2661 driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.20 2010/02/26 00:57:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ral_cardbus.c,v 1.20.2.1 2010/05/30 05:17:19 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -163,11 +163,6 @@ ral_cardbus_attach(device_t parent, device_t self,
 		return;
 	}
 
-#if rbus
-#else
-	(*cf->cardbus_mem_open)(cc, 0, base, base + csc->sc_mapsize);
-#endif
-
 	csc->sc_bar_val = base | PCI_MAPREG_TYPE_MEM;
 
 	/* set up the PCI configuration registers */
@@ -184,8 +179,6 @@ ral_cardbus_detach(device_t self, int flags)
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)self;
 	struct rt2560_softc *sc = &csc->sc_sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 	int error;
 
 	error = (*csc->sc_opns->detach)(sc);
@@ -194,7 +187,7 @@ ral_cardbus_detach(device_t self, int flags)
 
 	/* unhook the interrupt handler */
 	if (csc->sc_ih != NULL) {
-		cardbus_intr_disestablish(cc, cf, csc->sc_ih);
+		Cardbus_intr_disestablish(ct, csc->sc_ih);
 		csc->sc_ih = NULL;
 	}
 
@@ -210,8 +203,6 @@ ral_cardbus_enable(struct rt2560_softc *sc)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* power on the socket */
 	Cardbus_function_enable(ct);
@@ -220,7 +211,7 @@ ral_cardbus_enable(struct rt2560_softc *sc)
 	ral_cardbus_setup(csc);
 
 	/* map and establish the interrupt handler */
-	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
+	csc->sc_ih = Cardbus_intr_establish(ct, csc->sc_intrline, IPL_NET,
 	    csc->sc_opns->intr, sc);
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev,
@@ -237,11 +228,9 @@ ral_cardbus_disable(struct rt2560_softc *sc)
 {
 	struct ral_cardbus_softc *csc = (struct ral_cardbus_softc *)sc;
 	cardbus_devfunc_t ct = csc->sc_ct;
-	cardbus_chipset_tag_t cc = ct->ct_cc;
-	cardbus_function_tag_t cf = ct->ct_cf;
 
 	/* unhook the interrupt handler */
-	cardbus_intr_disestablish(cc, cf, csc->sc_ih);
+	Cardbus_intr_disestablish(ct, csc->sc_ih);
 	csc->sc_ih = NULL;
 
 	/* power down the socket */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28 2010/03/06 08:08:29 mrg Exp $ */
+/*	$NetBSD: intr.h,v 1.28.2.1 2010/05/30 05:17:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,12 +61,13 @@ void fpusave_lwp(struct lwp *, bool);
 #if defined(MULTIPROCESSOR)
 #ifndef _LOCORE
 void	sparc64_ipi_init (void);
-void	sparc64_ipi_halt_thiscpu (void *);
+void	sparc64_ipi_halt_thiscpu (void *, void *);
 void	sparc64_ipi_pause_thiscpu (void *);
 void	sparc64_do_pause(void);
-void	sparc64_ipi_drop_fpstate (void *);
-void	sparc64_ipi_save_fpstate (void *);
-void	sparc64_ipi_nop (void *);
+void	sparc64_ipi_drop_fpstate (void *, void *);
+void	sparc64_ipi_save_fpstate (void *, void *);
+void	sparc64_ipi_nop (void *, void *);
+void	sparc64_ipi_ccall(void *, void *);
 void	mp_halt_cpus (void);
 void	mp_pause_cpus (void);
 void	mp_resume_cpus (void);

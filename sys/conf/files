@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.982 2010/03/13 08:33:26 darran Exp $
+#	$NetBSD: files,v 1.982.2.1 2010/05/30 05:17:16 rmind Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20090313
+version 	20100430
 
 #
 # device classes
@@ -109,6 +109,7 @@ defparam opt_pax.h		PAX_MPROTECT
  				PAX_ASLR_DELTA_STACK_LSB
  				PAX_ASLR_DELTA_STACK_LEN
  				PAX_ASLR_DELTA_PROG_LEN
+				PAX_ASLR_DEBUG
 
 defflag	opt_fileassoc.h		FILEASSOC
 
@@ -326,6 +327,13 @@ attach	video at videobus
 
 device	lm: sysmon_envsys
 file	dev/ic/nslm7x.c			lm			needs-flag
+
+# JEDEC standard SPD EPROM
+#
+# (included here so files.i2c can define an attachment)
+
+device	spdmem
+file	dev/ic/spdmem.c			spdmem
 
 # I2C device support
 include "dev/i2c/files.i2c"
@@ -1035,6 +1043,10 @@ file	dev/ic/lm700x.c			lm700x
 define	pcf8584
 file	dev/ic/pcf8584.c		pcf8584
 
+# PCA9564 i2c controller
+define	pca9564
+file	dev/ic/pca9564.c		pca9564
+
 # ACPI power management timer (hardware access, independent of ACPI)
 #
 define acpipmtimer
@@ -1382,7 +1394,7 @@ file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
 file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
 file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
 file	dev/firmload.c			firmload
-file	dev/fss.c			fss			needs-count
+file	dev/fss.c			fss
 file	dev/keylock.c			keylock
 file	dev/lockstat.c			lockstat		needs-flag
 file	dev/md.c			md			needs-count
@@ -1465,6 +1477,7 @@ file	kern/kern_ssp.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
 file	kern/kern_synch.c
+file	kern/kern_syscall.c
 file	kern/kern_sysctl.c
 file	kern/kern_tc.c
 file	kern/kern_time.c
@@ -1498,6 +1511,7 @@ file	kern/subr_kobj.c
 file	kern/subr_kobj_vfs.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
+file	kern/subr_lwp_specificdata.c
 file	kern/subr_once.c
 file	kern/subr_optstr.c
 file	kern/subr_percpu.c

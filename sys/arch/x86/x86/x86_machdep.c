@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.39.2.1 2010/03/18 04:36:53 rmind Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.39.2.2 2010/05/30 05:17:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39.2.1 2010/03/18 04:36:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.39.2.2 2010/05/30 05:17:13 rmind Exp $");
 
 #include "opt_modular.h"
 
@@ -333,7 +333,7 @@ void
 x86_cpu_idle_init(void)
 {
 #ifndef XEN
-	if ((curcpu()->ci_feature2_flags & CPUID2_MONITOR) == 0 ||
+	if ((cpu_feature[1] & CPUID2_MONITOR) == 0 ||
 	    cpu_vendor == CPUVENDOR_AMD) {
 		strlcpy(x86_cpu_idle_text, "halt", sizeof(x86_cpu_idle_text));
 		x86_cpu_idle = x86_cpu_idle_halt;

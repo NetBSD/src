@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.205 2010/03/10 15:04:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.205.2.1 2010/05/30 05:17:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.205 2010/03/10 15:04:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.205.2.1 2010/05/30 05:17:35 rmind Exp $");
 
 #include "rnd.h"
 
@@ -908,10 +908,10 @@ static const struct wm_product {
 	  "82567V-2 LAN Controller",
 	  WM_T_ICH10,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LM,
-	  "PCH LAN (82578LM) Controller",
+	  "PCH LAN (82577LM) Controller",
 	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_M_LC,
-	  "PCH LAN (82578LC) Controller",
+	  "PCH LAN (82577LC) Controller",
 	  WM_T_PCH,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_PCH_D_DM,
 	  "PCH LAN (82578DM) Controller",
@@ -2695,8 +2695,7 @@ wm_start(struct ifnet *ifp)
 		sc->sc_txsnext = WM_NEXTTXS(sc, sc->sc_txsnext);
 
 		/* Pass the packet to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree <= 2) {
@@ -3185,8 +3184,7 @@ wm_rxintr(struct wm_softc *sc)
 		ifp->if_ipackets++;
 
 		/* Pass this up to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -5322,7 +5320,7 @@ wm_gmii_reset(struct wm_softc *sc)
 	case WM_T_82573:
 	case WM_T_82574:
 	case WM_T_82583:
-		 /* XXX sould put sw semaphore, too */
+		 /* XXX should put sw semaphore, too */
 		wm_put_swsm_semaphore(sc);
 		break;
 	case WM_T_82575:

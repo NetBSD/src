@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.13 2010/03/07 09:39:42 plunky Exp $
+#	$NetBSD: PMPPC,v 1.13.2.1 2010/05/30 05:16:43 rmind Exp $
 #
 #	PMPPC
 #
@@ -106,6 +106,8 @@ options 	PIM		# Protocol Independent Multicast
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -431,7 +433,7 @@ radio*	at radiodev?
 audio*	at audiobus?
 
 pseudo-device	vnd			# disk-like interface to files
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 #pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback

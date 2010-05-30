@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.92 2009/10/19 18:41:12 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.92.4.1 2010/05/30 05:17:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.92 2009/10/19 18:41:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.92.4.1 2010/05/30 05:17:18 rmind Exp $");
 
 #include "opt_ata.h"
 
@@ -201,7 +201,7 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		}
 		/*
 		 * disable interrupts, all commands here should be quick
-		 * enouth to be able to poll, and we don't go here that often
+		 * enough to be able to poll, and we don't go here that often
 		 */
 		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT | WDCTL_IDS);

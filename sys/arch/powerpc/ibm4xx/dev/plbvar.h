@@ -1,4 +1,4 @@
-/* $NetBSD: plbvar.h,v 1.4 2005/12/11 12:18:42 christos Exp $ */
+/* $NetBSD: plbvar.h,v 1.4.100.1 2010/05/30 05:17:02 rmind Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,8 @@
 #include <machine/bus.h>
 
 struct plb_dev {
-        const char *plb_name;
+	int plb_pvr;
+	const char *plb_name;
 };
 
 struct plb_attach_args {

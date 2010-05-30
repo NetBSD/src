@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.41.4.1 2010/03/16 15:38:12 rmind Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.41.4.2 2010/05/30 05:17:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.41.4.1 2010/03/16 15:38:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.41.4.2 2010/05/30 05:17:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ sched_sync(void *v)
 {
 	struct synclist *slp;
 	struct vnode *vp;
-	long starttime;
+	time_t starttime;
 	bool synced;
 
 	updateproc = curlwp;

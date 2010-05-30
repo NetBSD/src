@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.43 2010/03/10 09:42:46 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.43.2.1 2010/05/30 05:17:17 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -49,13 +49,12 @@
 #include <dev/isa/isavar.h>
 
 #include <dev/acpi/acpica.h>
+#include <dev/acpi/acpi_util.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
 /*
- * acpibus_attach_args:
- *
- *	This structure is used to attach the ACPI "bus".
+ * This structure is used to attach the ACPI "bus".
  */
 struct acpibus_attach_args {
 	bus_space_tag_t aa_iot;		/* PCI I/O space tag */
@@ -66,64 +65,81 @@ struct acpibus_attach_args {
 };
 
 /*
- * Types of switches that ACPI understands.
+ * ACPI driver capabilities.
  */
-#define	ACPI_SWITCH_POWERBUTTON		0
-#define	ACPI_SWITCH_SLEEPBUTTON		1
-#define	ACPI_SWITCH_LID			2
-#define	ACPI_NSWITCHES			3
+#define ACPI_DEVICE_POWER		__BIT(0)
+#define ACPI_DEVICE_WAKEUP		__BIT(1)
 
 /*
- * acpi_devnode:
- *
- *	An ACPI device node.
+ * PCI information for ACPI device nodes that correspond to PCI devices.
  */
-struct acpi_devnode {
-	device_t		 ad_device;	/* Device */
-	device_t		 ad_parent;	/* Backpointer to the parent */
-	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
-	ACPI_HANDLE		 ad_handle;	/* Device handle */
-	char			 ad_name[5];	/* Device name */
-	uint32_t		 ad_type;	/* Device type */
-
-	SIMPLEQ_ENTRY(acpi_devnode) ad_list;
+struct acpi_pci_info {
+	uint16_t		 ap_segment;	/* PCI segment group */
+	uint16_t		 ap_bus;	/* PCI bus */
+	uint16_t		 ap_device;	/* PCI device */
+	uint16_t		 ap_function;	/* PCI function */
+	bool			 ap_bridge;	/* PCI bridge (PHB or PPB) */
+	uint16_t		 ap_downbus;	/* PCI bridge downstream bus */
 };
 
 /*
- * acpi_softc:
+ * An ACPI device node.
  *
- *	Software state of the ACPI subsystem.
+ * Remarks:
+ *
+ *	ad_device	NULL if no device has attached to the node
+ *	ad_root		never NULL
+ *	ad_parent	only NULL if root of the tree ("\")
+ *	ad_pciinfo	NULL if not a PCI device
+ *	ad_notify	NULL if there is no notify handler
+ *	ad_devinfo	never NULL
+ *	ad_handle	never NULL
+ */
+struct acpi_devnode {
+	device_t		 ad_device;	/* Device */
+	device_t		 ad_root;	/* Backpointer to acpi_softc */
+	struct acpi_devnode	*ad_parent;	/* Backpointer to parent */
+	struct acpi_pci_info	*ad_pciinfo;	/* PCI info */
+	ACPI_NOTIFY_HANDLER	 ad_notify;	/* Device notify */
+	ACPI_DEVICE_INFO	*ad_devinfo;	/* Device info */
+	ACPI_HANDLE		 ad_handle;	/* Device handle */
+	char			 ad_name[5];	/* Device name */
+	uint32_t		 ad_flags;	/* Device flags */
+	uint32_t		 ad_type;	/* Device type */
+	int			 ad_state;	/* Device power state */
+	int			 ad_wake;	/* Device wakeup */
+
+	SIMPLEQ_ENTRY(acpi_devnode)	ad_list;
+	SIMPLEQ_ENTRY(acpi_devnode)	ad_child_list;
+	SIMPLEQ_HEAD(, acpi_devnode)	ad_child_head;
+};
+
+/*
+ * Software state of the ACPI subsystem.
  */
 struct acpi_softc {
-	device_t sc_dev;		/* base device info */
-	bus_space_tag_t sc_iot;		/* PCI I/O space tag */
-	bus_space_tag_t sc_memt;	/* PCI MEM space tag */
-	pci_chipset_tag_t sc_pc;	/* PCI chipset tag */
-	int sc_pciflags;		/* PCI bus flags */
-	int sc_pci_bus;			/* internal PCI fixup */
-	isa_chipset_tag_t sc_ic;	/* ISA chipset tag */
+	device_t		 sc_dev;	/* base device info */
+	device_t		 sc_apmbus;	/* APM pseudo-bus */
 
-	void *sc_sdhook;		/* shutdown hook */
+	struct acpi_devnode	*sc_root;	/* root of the device tree */
 
-	/*
-	 * Power switch handlers for fixed-feature buttons.
-	 */
-	struct sysmon_pswitch sc_smpsw_power;
-	struct sysmon_pswitch sc_smpsw_sleep;
+	bus_space_tag_t		 sc_iot;	/* PCI I/O space tag */
+	bus_space_tag_t		 sc_memt;	/* PCI MEM space tag */
+	pci_chipset_tag_t	 sc_pc;		/* PCI chipset tag */
+	int			 sc_pciflags;	/* PCI bus flags */
+	int			 sc_pci_bus;	/* internal PCI fixup */
+	isa_chipset_tag_t	 sc_ic;		/* ISA chipset tag */
 
-	/*
-	 * Sleep state to transition to when a given
-	 * switch is activated.
-	 */
-	int sc_switch_sleep[ACPI_NSWITCHES];
+	void			*sc_sdhook;	/* shutdown hook */
 
-	int sc_sleepstate;		/* current sleep state */
+	int			 sc_quirks;
+	int			 sc_sleepstate;
+	int			 sc_sleepstates;
 
-	int sc_quirks;
+	struct sysmon_pswitch	 sc_smpsw_power;
+	struct sysmon_pswitch	 sc_smpsw_sleep;
 
-	device_t	sc_apmbus;
-
-	SIMPLEQ_HEAD(, acpi_devnode) sc_devnodes; /* devices */
+	SIMPLEQ_HEAD(, acpi_devnode)	ad_head;
 };
 
 /*
@@ -246,32 +262,19 @@ extern int acpi_active;
 
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
-int		acpi_check(device_t, const char *);
 int		acpi_probe(void);
+int		acpi_check(device_t, const char *);
+
 ACPI_PHYSICAL_ADDRESS	acpi_OsGetRootPointer(void);
-int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
-void		acpi_set_wake_gpe(ACPI_HANDLE);
-void		acpi_clear_wake_gpe(ACPI_HANDLE);
 
-ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
-ACPI_STATUS	acpi_eval_set_integer(ACPI_HANDLE handle, const char *path,
-		    ACPI_INTEGER arg);
-ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, const char *, char **);
-ACPI_STATUS	acpi_eval_struct(ACPI_HANDLE, const char *, ACPI_BUFFER *);
-ACPI_STATUS	acpi_eval_reference_handle(ACPI_OBJECT *, ACPI_HANDLE *);
-
-ACPI_STATUS	acpi_foreach_package_object(ACPI_OBJECT *,
-		    ACPI_STATUS (*)(ACPI_OBJECT *, void *), void *);
-ACPI_STATUS	acpi_get(ACPI_HANDLE, ACPI_BUFFER *,
-		    ACPI_STATUS (*)(ACPI_HANDLE, ACPI_BUFFER *));
-const char*	acpi_name(ACPI_HANDLE);
+bool		acpi_register_notify(struct acpi_devnode *,
+				     ACPI_NOTIFY_HANDLER);
+void		acpi_deregister_notify(struct acpi_devnode *);
 
 ACPI_STATUS	acpi_resource_parse(device_t, ACPI_HANDLE, const char *,
 		    void *, const struct acpi_resource_parse_ops *);
 void		acpi_resource_print(device_t, struct acpi_resources *);
 void		acpi_resource_cleanup(struct acpi_resources *);
-
-ACPI_STATUS	acpi_pwr_switch_consumer(ACPI_HANDLE, int);
 
 void *		acpi_pci_link_devbyhandle(ACPI_HANDLE);
 void		acpi_pci_link_add_reference(void *, int, int, int, int);
@@ -289,12 +292,12 @@ struct acpi_irq		*acpi_res_irq(struct acpi_resources *, int);
 struct acpi_drq		*acpi_res_drq(struct acpi_resources *, int);
 
 /*
- * power state transition
+ * Sleep state transition.
  */
-ACPI_STATUS	acpi_enter_sleep_state(struct acpi_softc *, int);
+void			acpi_enter_sleep_state(struct acpi_softc *, int);
 
 /*
- * quirk handling
+ * Quirk handling.
  */
 struct acpi_quirk {
 	const char *aq_tabletype; /* what type of table (FADT, DSDT, etc) */
@@ -304,12 +307,6 @@ struct acpi_quirk {
 	const char *aq_tabid;	/* compared against the table TableId */
 	int aq_quirks;		/* the actual quirks */
 };
-
-#define AQ_GT		0	/* > */
-#define AQ_LT		1	/* < */
-#define AQ_GTE		2	/* >= */
-#define AQ_LTE		3	/* <= */
-#define AQ_EQ		4	/* == */
 
 #define ACPI_QUIRK_BROKEN	0x00000001	/* totally broken */
 #define ACPI_QUIRK_BADPCI	0x00000002	/* bad PCI hierarchy */

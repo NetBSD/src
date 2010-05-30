@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.19 2007/12/20 23:03:03 dsl Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.19.32.1 2010/05/30 05:17:16 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,14 +58,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.19 2007/12/20 23:03:03 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.19.32.1 2010/05/30 05:17:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/socket.h>
@@ -114,30 +113,26 @@ osf1_sys_sendmsg_xopen(struct lwp *l, const struct osf1_sys_sendmsg_xopen_args *
 	flags = emul_flags_translate(osf1_sendrecv_msg_flags_xtab,
 	    SCARG(uap, flags), &leftovers);
 	if (leftovers != 0)
-{
-printf("sendmsg flags leftover: 0x%lx\n", leftovers);
 		return (EINVAL);
-}
 
 	iov_len = bsd_msghdr.msg_iovlen;
 	if (iov_len > IOV_MAX)
 		return EMSGSIZE;
-	bsd_iovec = malloc(iov_len * sizeof (struct iovec), M_IOV, M_WAITOK);
+	bsd_iovec = kmem_alloc(iov_len * sizeof(struct iovec), KM_SLEEP);
 	bsd_msghdr.msg_iov = bsd_iovec;
 
 	osf_iovec_ptr = osf_msghdr.msg_iov;
 	for (i = 0; i < iov_len; i++) {
 		error = copyin(&osf_iovec_ptr[i], &osf_iovec, sizeof osf_iovec);
-		if (error != 0) {
-			free(bsd_iovec, M_TEMP);
-			return (error);
-		}
+		if (error != 0)
+			goto err;
                 bsd_iovec[i].iov_base = osf_iovec.iov_base;
                 bsd_iovec[i].iov_len = osf_iovec.iov_len;
 	}
 
 	error = do_sys_sendmsg(l, SCARG(uap, s), &bsd_msghdr, flags, retval);
-	free(bsd_iovec, M_TEMP);
+err:
+	kmem_free(bsd_iovec, iov_len * sizeof(struct iovec));
 	return error;
 }
 

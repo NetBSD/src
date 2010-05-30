@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.284 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.284.4.1 2010/05/30 05:18:02 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.284 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.284.4.1 2010/05/30 05:18:02 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -231,6 +231,7 @@ u_long	in_multihash;				/* size of hash table - 1 */
 int	in_multientries;			/* total number of addrs */
 struct	in_multihashhead *in_multihashtbl;
 struct	ifqueue ipintrq;
+
 uint16_t ip_id;
 
 percpu_t *ipstat_percpu;
@@ -474,18 +475,35 @@ ipintr(void)
 {
 	int s;
 	struct mbuf *m;
+	struct ifqueue lcl_intrq;
+
+	memset(&lcl_intrq, 0, sizeof(lcl_intrq));
+	ipintrq.ifq_maxlen = ipqmaxlen;
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
-	while (!IF_IS_EMPTY(&ipintrq)) {
+	if (!IF_IS_EMPTY(&ipintrq)) {
 		s = splnet();
-		IF_DEQUEUE(&ipintrq, m);
+
+		/* Take existing queue onto stack */
+		lcl_intrq = ipintrq;
+
+		/* Zero out global queue, preserving maxlen and drops */
+		ipintrq.ifq_head = NULL;
+		ipintrq.ifq_tail = NULL;
+		ipintrq.ifq_len = 0;
+		ipintrq.ifq_maxlen = lcl_intrq.ifq_maxlen;
+		ipintrq.ifq_drops = lcl_intrq.ifq_drops;
+
 		splx(s);
+	}
+	KERNEL_UNLOCK_ONE(NULL);
+	while (!IF_IS_EMPTY(&lcl_intrq)) {
+		IF_DEQUEUE(&lcl_intrq, m);
 		if (m == NULL)
 			break;
 		ip_input(m);
 	}
-	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
 

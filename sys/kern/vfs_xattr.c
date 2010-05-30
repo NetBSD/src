@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.20 2009/06/29 05:08:18 dholland Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.20.4.1 2010/05/30 05:17:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.20 2009/06/29 05:08:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.20.4.1 2010/05/30 05:17:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,22 +161,22 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 			return (error);
 	}
 
+	error = namei_simple_user(SCARG(uap, path),
+				NSM_FOLLOW_NOEMULROOT, &path_vp);
+	if (error) {
+		return (error);
+	}
+
 	file_vp = NULL;
 	if (SCARG(uap, filename) != NULL) {
 		NDINIT(&file_nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 		    SCARG(uap, filename));
 		error = namei(&file_nd);
-		if (error)
+		if (error) {
+			vrele(path_vp);
 			return (error);
+		}
 		file_vp = file_nd.ni_vp;
-	}
-
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_NOEMULROOT, &path_vp);
-	if (error) {
-		if (file_vp != NULL)
-			vput(file_vp);
-		return (error);
 	}
 
 	error = VFS_EXTATTRCTL(path_vp->v_mount, SCARG(uap, cmd), file_vp,
@@ -185,8 +185,6 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 
 	if (file_vp != NULL)
 		vrele(file_vp);
-
-	/* XXX missing in the original code - am *I* missing something? */
 	vrele(path_vp);
 
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.16 2008/11/18 14:01:03 joerg Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.16.8.1 2010/05/30 05:17:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.16 2008/11/18 14:01:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.16.8.1 2010/05/30 05:17:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -136,19 +136,15 @@ uuid_node(uint16_t *node)
  * the Unix time since 00:00:00.00, January 1, 1970 to the date of the
  * Gregorian reform to the Christian calendar.
  */
-/*
- * At present, NetBSD has no timespec source, only timeval sources.  So,
- * we use timeval.
- */
 static uint64_t
 uuid_time(void)
 {
-	struct timeval tv;
+	struct timespec tsp;
 	uint64_t xtime = 0x01B21DD213814000LL;
 
-	microtime(&tv);
-	xtime += (uint64_t)tv.tv_sec * 10000000LL;
-	xtime += (uint64_t)(10 * tv.tv_usec);
+	nanotime(&tsp);
+	xtime += (uint64_t)tsp.tv_sec * 10000000LL;
+	xtime += (uint64_t)(tsp.tv_nsec / 100);
 	return (xtime & ((1LL << 60) - 1LL));
 }
 

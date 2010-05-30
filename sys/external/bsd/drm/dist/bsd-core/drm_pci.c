@@ -137,7 +137,7 @@ drm_pci_alloc(struct drm_device *dev, size_t size,
 		free(dmah, DRM_MEM_DMA);
 		return NULL;
 	}
-	if ((ret = bus_dmamap_create(dmah->tag, size, 1, size, maxaddr,
+	if ((ret = bus_dmamap_create(dmah->tag, size, 1, size, 0,
 	     BUS_DMA_NOWAIT, &dmah->map)) != 0) {
 		printf("drm: Unable to create DMA map, error %d\n", ret);
 		bus_dmamem_unmap(dmah->tag, dmah->vaddr, size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.35 2008/08/20 13:01:54 joerg Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.35.16.1 2010/05/30 05:18:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.35 2008/08/20 13:01:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.35.16.1 2010/05/30 05:18:01 rmind Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -513,7 +513,7 @@ bpf_validate(struct bpf_insn *f, int len)
 				/*
 				 * Check for constant division by 0.
 				 */
-				if (BPF_RVAL(p->code) == BPF_K && p->k == 0)
+				if (BPF_SRC(p->code) == BPF_K && p->k == 0)
 					return 0;
 				break;
 			default:

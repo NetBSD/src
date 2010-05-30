@@ -1,7 +1,7 @@
-/*	$NetBSD: uvm_emap.c,v 1.6 2009/11/07 07:27:49 cegger Exp $	*/
+/*	$NetBSD: uvm_emap.c,v 1.6.4.1 2010/05/30 05:18:09 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -46,11 +46,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.6 2009/11/07 07:27:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_emap.c,v 1.6.4.1 2010/05/30 05:18:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-
+#include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/lwp.h>
 #include <sys/vmem.h>
@@ -105,9 +105,11 @@ uvm_emap_sysinit(void)
 #endif
 	/* Initial generation value is 1. */
 	uvm_emap_gen = 1;
-	for (i = 0; i < MAXCPUS; i++) {
-		ucpu = &uvm.cpus[i];
-		ucpu->emap_gen = 1;
+	for (i = 0; i < maxcpus; i++) {
+		ucpu = uvm.cpus[i];
+		if (ucpu != NULL) {
+			ucpu->emap_gen = 1;
+		}
 	}
 }
 

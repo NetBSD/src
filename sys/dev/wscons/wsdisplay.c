@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.132 2010/03/11 04:00:36 mrg Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.132.2.1 2010/05/30 05:17:46 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.132 2010/03/11 04:00:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.132.2.1 2010/05/30 05:17:46 rmind Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -166,12 +166,13 @@ extern struct cfdriver wsdisplay_cd;
 /* Autoconfiguration definitions. */
 static int wsdisplay_emul_match(device_t , cfdata_t, void *);
 static void wsdisplay_emul_attach(device_t, device_t, void *);
+static int wsdisplay_emul_detach(device_t, int);
 static int wsdisplay_noemul_match(device_t, cfdata_t, void *);
 static void wsdisplay_noemul_attach(device_t, device_t, void *);
 static bool wsdisplay_suspend(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL_NEW(wsdisplay_emul, sizeof (struct wsdisplay_softc),
-    wsdisplay_emul_match, wsdisplay_emul_attach, NULL, NULL);
+    wsdisplay_emul_match, wsdisplay_emul_attach, wsdisplay_emul_detach, NULL);
   
 CFATTACH_DECL_NEW(wsdisplay_noemul, sizeof (struct wsdisplay_softc),
     wsdisplay_noemul_match, wsdisplay_noemul_attach, NULL, NULL);
@@ -585,6 +586,16 @@ wsemuldisplaydevprint(void *aux, const char *pnp)
 #endif
 
 	return (UNCONF);
+}
+
+int
+wsdisplay_emul_detach(device_t dev, int how)
+{
+	struct wsdisplay_softc *sc = device_private(dev);
+
+	cv_destroy(&sc->sc_flagscv);
+	mutex_destroy(&sc->sc_flagsmtx);
+	return 0;
 }
 
 int

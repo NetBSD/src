@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20.4.1 2010/04/26 02:43:34 rmind Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.4.2 2010/05/30 05:17:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,9 +94,6 @@ struct cpu_info {
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	ci_cpumask;		/* (1 << CPU ID) */
 	uint32_t ci_initapicid;		/* our intitial APIC ID */
-	uint8_t ci_packageid;
-	uint8_t ci_coreid;
-	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/*
@@ -141,15 +138,18 @@ struct cpu_info {
 	uint32_t sc_apic_version;	/* local APIC version */
 
 	uint32_t	ci_signature;	 /* X86 cpuid type */
-	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
-	uint32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
-	uint32_t	ci_feature3_flags;/* X86 extended %edx feature bits */
-	uint32_t	ci_feature4_flags;/* X86 extended %ecx feature bits */
-	uint32_t	ci_padlock_flags;/* VIA PadLock feature bits */
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
 	volatile uint32_t	ci_lapic_counter;
 
+	uint32_t	ci_feat_val[5]; /* X86 CPUID feature bits
+					 *	[0] basic features %edx
+					 *	[1] basic features %ecx
+					 *	[2] extended features %edx
+					 *	[3] extended features %ecx
+					 *	[4] VIA padlock features
+					 */
+	
 	const struct cpu_functions *ci_func;  /* start/stop functions */
 	struct trapframe *ci_ddb_regs;
 
@@ -321,9 +321,6 @@ struct timeval;
 
 extern int biosbasemem;
 extern int biosextmem;
-extern unsigned int cpu_feature;
-extern unsigned int cpu_feature2;
-extern unsigned int cpu_feature_padlock;
 extern int cpu;
 extern int cpuid_level;
 extern int cpu_class;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.77 2010/02/27 05:41:22 tsutsui Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.77.2.1 2010/05/30 05:17:21 rmind Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.77 2010/02/27 05:41:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.77.2.1 2010/05/30 05:17:21 rmind Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -478,8 +478,7 @@ dp8390_start(struct ifnet *ifp)
 		panic("dp8390_start: no header mbuf");
 
 	/* Tap off here if there is a BPF listener. */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 
 	/* txb_new points to next open buffer slot. */
 	buffer = sc->mem_start +
@@ -957,8 +956,7 @@ dp8390_read(struct dp8390_softc *sc, int buf, u_short len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*ifp->if_input)(ifp, m);
 }
@@ -1394,7 +1392,7 @@ dp8390_ipkdb_init(struct ipkdb_if *kip)
 	/* If output active, wait for packets to drain */
 	while (sc->txb_inuse) {
 		while ((cmd = (NIC_GET(regt, regh, ED_P0_ISR) &
-		    (ED_ISR_PTX | ED_ISR_TXE))) != 0)
+		    (ED_ISR_PTX | ED_ISR_TXE))) == 0)
 			DELAY(1);
 		NIC_PUT(regt, regh, ED_P0_ISR, cmd);
 		if (--sc->txb_inuse)
@@ -1524,7 +1522,7 @@ dp8390_ipkdb_send(struct ipkdb_if *kip, uint8_t *buf, int l)
 	dp8390_xmit(sc);
 
 	while ((NIC_GET(regt, regh, ED_P0_ISR) &
-	    (ED_ISR_PTX | ED_ISR_TXE)) != 0)
+	    (ED_ISR_PTX | ED_ISR_TXE)) == 0)
 		DELAY(1);
 
 	sc->txb_inuse--;

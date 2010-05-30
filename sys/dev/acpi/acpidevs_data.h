@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.12 2010/01/18 16:50:08 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.12.4.1 2010/05/30 05:17:17 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.14 2010/01/18 16:34:47 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.20 2010/05/26 09:47:17 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -179,14 +179,6 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNP0502",
 	    "Multiport serial device (non-intelligent 16550)",
-	},
-	{
-	    "PNP0510",
-	    "Generic IRDA-compatible device",
-	},
-	{
-	    "PNP0511",
-	    "Generic IRDA-compatible device",
 	},
 	{
 	    "PNP0600",
@@ -469,6 +461,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "WMI mapper device",
 	},
 	{
+	    "PNP0C15",
+	    "ACPI docking station",
+	},
+	{
 	    "PNP0C80",
 	    "Memory Device",
 	},
@@ -638,6 +634,10 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "SYN1003",
+	    "Synaptics PS/2-style Touchpad",
+	},
+	{
+	    "SYN013B",
 	    "Synaptics PS/2-style Touchpad",
 	},
 	{
@@ -1081,10 +1081,6 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "AMD PCNet32 (VL version)",
 	},
 	{
-	    "PNP8294",
-	    "IrDA Infrared NDIS driver (Microsoft-supplied)",
-	},
-	{
 	    "PNP82BD",
 	    "IBM PCMCIA-NIC",
 	},
@@ -1129,16 +1125,40 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Reserved for Microsoft Networking components",
 	},
 	{
-	    "PNP8389",
-	    "Peer IrLAN infrared driver (Microsoft-supplied)",
-	},
-	{
 	    "PNP8390",
 	    "Generic network adapter",
 	},
 	{
+	    "PNP0510",
+	    "Generic IrDA-compatible device",
+	},
+	{
+	    "PNP0511",
+	    "Generic IrDA-compatible device",
+	},
+	{
+	    "PNP8294",
+	    "IrDA Infrared NDIS driver (Microsoft-supplied)",
+	},
+	{
+	    "PNP8389",
+	    "Peer IrLAN infrared driver (Microsoft-supplied)",
+	},
+	{
+	    "HWPC224",
+	    "NSC SuperIO chip (inc. IrDA device)",
+	},
+	{
+	    "IBM0071",
+	    "NSC SuperIO chip (inc. IrDA device)",
+	},
+	{
+	    "ITE8708",
+	    "ITE Tech IrDA Infrared device",
+	},
+	{
 	    "NSC6001",
-	    "NSC IrDA Fast Infrared Port",
+	    "NSC SuperIO chip (inc. IrDA device)",
 	},
 	{
 	    "PNPA002",
@@ -1289,6 +1309,18 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	    "Compaq 2400/9600 Modem (TBD)",
 	},
 	{
+	    "ATM1200",
+	    "Atmel Trusted Platform Module",
+	},
+	{
+	    "IFX0102",
+	    "Infineon Trusted Platform Module",
+	},
+	{
+	    "NSC1100",
+	    "NSC Trusted Platform Module",
+	},
+	{
 	    "ACPI0001",
 	    "SMBus 1.0 Host Controller",
 	},
@@ -1346,6 +1378,6 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "INT0800",
-	    "Intel FWH Random Number Generator",
+	    "Intel Firmware Hub Device",
 	},
 };

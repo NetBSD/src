@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.33 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.33.4.1 2010/05/30 05:16:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.33 2009/10/20 19:10:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_et.c,v 1.33.4.1 2010/05/30 05:16:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -281,7 +281,8 @@ et_save_view(view_t *v)
 void
 et_free_view(view_t *v)
 {
-	if(v) {
+
+	if (v) {
 		et_remove_view(v);
 		if (v->colormap != &gra_con_cmap)
 			free(v->colormap, M_DEVBUF);
@@ -311,8 +312,7 @@ et_alloc_view(dmode_t *mode, dimen_t *dim, u_char depth)
 	if (!atari_realconfig) {
 		v  = &gra_con_view;
 		bm = &con_bm;
-	}
-	else {
+	} else {
 		v  = malloc(sizeof(*v), M_DEVBUF, M_WAITOK);
 		bm = malloc(sizeof(*bm), M_DEVBUF, M_WAITOK);
 	}
@@ -348,8 +348,8 @@ et_alloc_view(dmode_t *mode, dimen_t *dim, u_char depth)
 		sa->fb_size  = 0;
 		bm->plane    = (u_char *)sa->sv_fb;
 		et_loadmode(mode->data, &sa->sv_regs);
-	}
-	else v->save_area = NULL;
+	} else
+		v->save_area = NULL;
 	
 	v->colormap = alloc_colormap(mode);
 	if (v->colormap) {
@@ -513,7 +513,7 @@ et_loadmode(struct grfvideo_mode *mode, et_sv_reg_t *regs)
 	/*
 	 * Set the clock...
 	 */
-	for(clock = ET_NUMCLOCKS-1; clock > 0; clock--) {
+	for (clock = ET_NUMCLOCKS-1; clock > 0; clock--) {
 		if (et_clockfreqs[clock] <= mode->pixel_clock)
 			break;
 	}
@@ -631,7 +631,7 @@ et_loadmode(struct grfvideo_mode *mode, et_sv_reg_t *regs)
 	/* I'm unable to try the rest.... */
 	regs->misc_output = tmp;
 
-	if(regs == &loc_regs)
+	if (regs == &loc_regs)
 		et_hwrest(regs);
 }
 
@@ -649,13 +649,13 @@ et_hwsave(et_sv_reg_t *et_regs)
 	 * General VGA registers
 	 */
 	et_regs->misc_output = vgar(ba, GREG_MISC_OUTPUT_R);
-	for(i = 0; i < 25; i++)
+	for (i = 0; i < 25; i++)
 		et_regs->crt[i]  = RCrt(ba, i);
-	for(i = 0; i < 21; i++)
+	for (i = 0; i < 21; i++)
 		et_regs->attr[i] = RAttr(ba, i | 0x20);
-	for(i = 0; i < 9; i++)
+	for (i = 0; i < 9; i++)
 		et_regs->grf[i]  = RGfx(ba, i);
-	for(i = 0; i < 5; i++)
+	for (i = 0; i < 5; i++)
 		et_regs->seq[i]  = RSeq(ba, i);
 
 	/*
@@ -689,7 +689,7 @@ et_hwrest(et_sv_reg_t *et_regs)
 	 * General VGA registers
 	 */
 	WSeq(ba, SEQ_ID_RESET, 0x01);
-	for(i = 1; i < 5; i++)
+	for (i = 1; i < 5; i++)
 		WSeq(ba, i, et_regs->seq[i]);
 	WSeq(ba, SEQ_ID_RESET, 0x03);
 
@@ -698,11 +698,11 @@ et_hwrest(et_sv_reg_t *et_regs)
 	 */
 	WCrt(ba, CRT_ID_END_VER_RETR,
 		et_regs->crt[CRT_ID_END_VER_RETR] & 0x7f);
-	for(i = 0; i < 25; i++)
+	for (i = 0; i < 25; i++)
 		WCrt(ba, i, et_regs->crt[i]);
-	for(i = 0; i < 9; i++)
+	for (i = 0; i < 9; i++)
 		WGfx(ba, i, et_regs->grf[i]);
-	for(i = 0; i < 21; i++)
+	for (i = 0; i < 21; i++)
 		WAttr(ba, i | 0x20, et_regs->attr[i]);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.46 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.46.4.1 2010/05/30 05:18:01 rmind Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.46 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.46.4.1 2010/05/30 05:18:01 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -126,7 +126,7 @@ faith_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_dlt = DLT_NULL;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	bpf_ops->bpf_attach(ifp, DLT_NULL, sizeof(u_int), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_NULL, sizeof(u_int));
 	return (0);
 }
 
@@ -134,7 +134,7 @@ int
 faith_clone_destroy(struct ifnet *ifp)
 {
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	if_detach(ifp);
 	free(ifp, M_DEVBUF);
 
@@ -158,8 +158,7 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		m_adj(m, sizeof(int));
 	}
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap_af(ifp->if_bpf, af, m);
+	bpf_mtap_af(ifp, af, m);
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
 		m_freem(m);

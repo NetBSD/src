@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.40 2010/01/19 22:08:17 pooka Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.40.4.1 2010/05/30 05:18:02 rmind Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.40 2010/01/19 22:08:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.40.4.1 2010/05/30 05:18:02 rmind Exp $");
 
 /*
  * TODO:
@@ -800,7 +800,7 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	carp_set_enaddr(sc);
 	LIST_INIT(&sc->sc_ac.ec_multiaddrs);
-	bpf_ops->bpf_attach(ifp, DLT_EN10MB, ETHER_HDR_LEN, &ifp->if_bpf);
+	bpf_attach(ifp, DLT_EN10MB, ETHER_HDR_LEN);
 	return (0);
 }
 
@@ -1366,8 +1366,7 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 
 	m->m_pkthdr.rcvif = ifp;
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 	ifp->if_ipackets++;
 	ether_input(ifp, m);
 	return (0);

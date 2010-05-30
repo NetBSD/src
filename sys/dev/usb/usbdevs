@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.547 2010/03/14 08:44:46 explorer Exp $
+$NetBSD: usbdevs,v 1.547.2.1 2010/05/30 05:17:45 rmind Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -423,6 +423,7 @@ vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
 vendor RIM		0x0fca	Research In Motion
 vendor DYNASTREAM	0x0fcf	Dynastream Innovations
+vendor SUNRISING	0x0fe6	SUNRISING
 vendor QUALCOMM		0x1004	Qualcomm
 vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
@@ -694,6 +695,7 @@ product AOX USB101		0x0008	USB ethernet controller engine
 product APPLE EXT_KBD		0x020c	Apple Extended USB Keyboard
 product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE MIGHTYMOUSE	0x0304	Mighty Mouse
+product APPLE MAGICMOUSE	0x030d	Magic Mouse
 product APPLE EXT_KBD_HUB	0x1003	Hub in Apple Extended USB Keyboard
 product APPLE SPEAKERS		0x1101	Speakers
 product APPLE IPHONE		0x1290	iPhone
@@ -963,6 +965,7 @@ product DIGITALSTREAM PS2	0x0001	PS/2 Active Adapter
 
 /* DisplayLink products */
 product DISPLAYLINK LD220	0x0100	Samsung LD220
+product DISPLAYLINK LD190	0x0102	Samsung LD190
 product DISPLAYLINK U70		0x0103	Samsung U70
 product DISPLAYLINK VCUD60	0x0136	Rextron DVI
 product DISPLAYLINK DLDVI	0x0141	DisplayLink DVI
@@ -2288,6 +2291,9 @@ product SUN KEYBOARD_TYPE_6	0x0005	Type 6 USB keyboard
 product SUN KEYBOARD_TYPE_7	0x00a2	Type 7 USB keyboard
 /* XXX The above is a North American PC style keyboard possibly */
 product SUN MOUSE		0x0100	Type 6 USB mouse
+
+/* SUNRISING products */
+product SUNRISING SR9600	0x8101	SR9600 Ethernet
 
 /* SuperTop products */
 product SUPERTOP IDEBRIDGE      0x6600  SuperTop IDE Bridge

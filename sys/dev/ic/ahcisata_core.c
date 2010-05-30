@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.25 2010/03/12 19:03:14 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.25.2.1 2010/05/30 05:17:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.25 2010/03/12 19:03:14 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.25.2.1 2010/05/30 05:17:20 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -39,12 +39,11 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.25 2010/03/12 19:03:14 jakllsch 
 
 #include <uvm/uvm_extern.h>
 
-#include <dev/ic/wdcreg.h>
 #include <dev/ata/atareg.h>
 #include <dev/ata/satavar.h>
 #include <dev/ata/satareg.h>
-#include <dev/ata/satafisreg.h>
 #include <dev/ata/satafisvar.h>
+#include <dev/ata/satafisreg.h>
 #include <dev/ic/ahcisatavar.h>
 
 #include <dev/scsipi/scsi_all.h> /* for SCSI status */
@@ -790,6 +789,7 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	int slot = 0; /* XXX slot */
 	struct ata_command *ata_c = xfer->c_cmd;
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
+	struct ahci_channel *achp = (struct ahci_channel *)chp;
 
 	AHCIDEBUG_PRINT(("ahci_cmd_complete channel %d CMD 0x%x CI 0x%x\n",
 	    chp->ch_channel, AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)),
@@ -809,18 +809,17 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 		wakeup(&chp->ch_queue->active_xfer);
 		return 0;
 	}
-	if (is) {
-		ata_c->r_head = 0;
-		ata_c->r_count = 0;
-		ata_c->r_sector = 0;
-		ata_c->r_cyl = 0;
-		if (chp->ch_status & WDCS_BSY) {
-			ata_c->flags |= AT_TIMEOU;
-		} else if (chp->ch_status & WDCS_ERR) {
-			ata_c->r_error = chp->ch_error;
-			ata_c->flags |= AT_ERROR;
-		}
+
+	if (chp->ch_status & WDCS_BSY) {
+		ata_c->flags |= AT_TIMEOU;
+	} else if (chp->ch_status & WDCS_ERR) {
+		ata_c->r_error = chp->ch_error;
+		ata_c->flags |= AT_ERROR;
 	}
+
+	if (ata_c->flags & AT_READREG)
+		satafis_rdh_cmd_readreg(ata_c, achp->ahcic_rfis->rfis_rfis);
+
 	ahci_cmd_done(chp, xfer, slot);
 	return 0;
 }

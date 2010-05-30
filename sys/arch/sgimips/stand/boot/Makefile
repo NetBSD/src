@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2009/12/16 19:00:48 matt Exp $
+#	$NetBSD: Makefile,v 1.16.4.1 2010/05/30 05:17:06 rmind Exp $
 
 
 # Don't strip the ECOFF'ed version on install -- strip gets confused by that,
@@ -40,6 +40,6 @@ ip2xboot: ${OBJS} ${LIBS}
 	@${STRIP} -s ${.TARGET}.elf -o ${.TARGET}
 	@${SIZE} ${.TARGET}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib

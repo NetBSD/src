@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_stub.c,v 1.4 2010/01/25 22:18:17 pooka Exp $	*/
+/*	$NetBSD: bpf_stub.c,v 1.4.6.1 2010/05/30 05:18:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.4 2010/01/25 22:18:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_stub.c,v 1.4.6.1 2010/05/30 05:18:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -65,7 +65,6 @@ struct bpf_ops bpf_ops_stub = {
 	.bpf_mtap = 		(void *)bpf_stub_warn,
 	.bpf_mtap2 = 		(void *)bpf_stub_warn,
 	.bpf_mtap_af = 		(void *)bpf_stub_warn,
-	.bpf_mtap_et = 		(void *)bpf_stub_warn,
 	.bpf_mtap_sl_in = 	(void *)bpf_stub_warn,
 	.bpf_mtap_sl_out =	(void *)bpf_stub_warn,
 };

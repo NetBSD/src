@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops32.c,v 1.18 2009/03/14 21:04:22 dsl Exp $	*/
+/*	 $NetBSD: rasops32.c,v 1.18.4.1 2010/05/30 05:17:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.18 2009/03/14 21:04:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops32.c,v 1.18.4.1 2010/05/30 05:17:41 rmind Exp $");
 
 #include "opt_rasops.h"
 
@@ -70,11 +70,11 @@ static void
 rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 {
 	int width, height, cnt, fs, fb, clr[2];
-	struct rasops_info *ri;
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, uc);
 	int32_t *dp, *rp, *hp, *hrp;
 	u_char *fr;
 
-	ri = (struct rasops_info *)cookie;
 	hp = hrp = NULL;
 
 #ifdef RASOPS_CLIPPING
@@ -87,8 +87,8 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 #endif
 
 	/* check if character fits into font limits */
-	if (uc < ri->ri_font->firstchar ||
-	    (uc - ri->ri_font->firstchar) >= ri->ri_font->numchars)
+	if (uc < font->firstchar ||
+	    (uc - font->firstchar) >= font->numchars)
 	    return;
 
 	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
@@ -96,8 +96,8 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 		hrp = (int32_t *)(ri->ri_hwbits + row*ri->ri_yscale +
 		    col*ri->ri_xscale);
 
-	height = ri->ri_font->fontheight;
-	width = ri->ri_font->fontwidth;
+	height = font->fontheight;
+	width = font->fontwidth;
 
 	clr[0] = ri->ri_devcmap[(attr >> 16) & 0xf];
 	clr[1] = ri->ri_devcmap[(attr >> 24) & 0xf];
@@ -118,9 +118,9 @@ rasops32_putchar(void *cookie, int row, int col, u_int uc, long attr)
 			}
 		}
 	} else {
-		uc -= ri->ri_font->firstchar;
-		fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
-		fs = ri->ri_font->stride;
+		uc -= font->firstchar;
+		fr = (u_char *)font->data + uc * ri->ri_fontscale;
+		fs = font->stride;
 
 		while (height--) {
 			dp = rp;

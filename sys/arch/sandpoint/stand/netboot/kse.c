@@ -1,4 +1,4 @@
-/* $NetBSD: kse.c,v 1.3 2009/01/25 03:39:28 nisimura Exp $ */
+/* $NetBSD: kse.c,v 1.3.8.1 2010/05/30 05:17:05 rmind Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
-#define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
+#define ALLOC(T,A)		(T *)allocaligned(sizeof(T),(A))
 
 struct desc {
 	uint32_t xd0, xd1, xd2, xd3;

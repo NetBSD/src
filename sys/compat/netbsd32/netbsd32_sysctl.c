@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.30 2009/01/11 02:45:49 christos Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.30.6.1 2010/05/30 05:17:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.30 2009/01/11 02:45:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.30.6.1 2010/05/30 05:17:15 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.30 2009/01/11 02:45:49 christo
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>

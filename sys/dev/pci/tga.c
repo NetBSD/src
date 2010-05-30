@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.77 2009/05/16 14:27:30 tsutsui Exp $ */
+/* $NetBSD: tga.c,v 1.77.4.1 2010/05/30 05:17:39 rmind Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.77 2009/05/16 14:27:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.77.4.1 2010/05/30 05:17:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,6 +331,8 @@ tga_init(bus_space_tag_t memt, pci_chipset_tag_t pc, pcitag_t tag,
 	rip->ri_height = dc->dc_ht;
 	rip->ri_stride = dc->dc_rowbytes;
 	rip->ri_hw = dc;
+	if (dc == &tga_console_dc)
+		rip->ri_flg |= RI_NO_AUTO;
 
 	if (tgac->tgac_phys_depth == 32) {
 		rip->ri_rnum = 8;
@@ -402,6 +404,7 @@ tgaattach(device_t parent, device_t self, void *aux)
 #endif
 	if (console) {
 		sc->sc_dc = &tga_console_dc;
+		sc->sc_dc->dc_rinfo.ri_flg &= ~RI_NO_AUTO;
 		sc->nscreens = 1;
 	} else {
 		sc->sc_dc = malloc(sizeof(struct tga_devconfig), M_DEVBUF,

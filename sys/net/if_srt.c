@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.13 2010/01/19 22:08:01 pooka Exp $ */
+/* $NetBSD: if_srt.c,v 1.13.4.1 2010/05/30 05:18:01 rmind Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.13 2010/01/19 22:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.13.4.1 2010/05/30 05:18:01 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -262,7 +262,7 @@ srt_clone_create(struct if_clone *cl, int unit)
 	if_attach(&sc->intf);
 	if_alloc_sadl(&sc->intf);
 #ifdef BPFILTER_NOW_AVAILABLE
-	bpf_ops->bpf_attach(&sc->intf, 0, 0, &sc->intf.if_bpf);
+	bpf_attach(&sc->intf, 0, 0);
 #endif
 	softcv[unit] = sc;
 	return 0;
@@ -277,7 +277,7 @@ srt_clone_destroy(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_UP) || (sc->kflags & SKF_CDEVOPEN))
 		return EBUSY;
 #ifdef BPFILTER_NOW_AVAILABLE
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 #endif
 	if_detach(ifp);
 	if (sc->unit < 0 || sc->unit > SRT_MAXUNIT) {

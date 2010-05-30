@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.112 2010/02/24 22:37:56 dyoung Exp $	*/
+/*	$NetBSD: ata.c,v 1.112.2.1 2010/05/30 05:17:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.112 2010/02/24 22:37:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.112.2.1 2010/05/30 05:17:18 rmind Exp $");
 
 #include "opt_ata.h"
 
@@ -1232,7 +1232,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			 */
 			if (atac->atac_set_modes)
 				/*
-				 * It's OK to pool here, it's fast enouth
+				 * It's OK to pool here, it's fast enough
 				 * to not bother waiting for interrupt
 				 */
 				if (ata_set_mode(drvp, 0x08 | (i + 3),

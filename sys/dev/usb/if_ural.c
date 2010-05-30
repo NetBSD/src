@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.34 2010/01/19 22:07:44 pooka Exp $ */
+/*	$NetBSD: if_ural.c,v 1.34.4.1 2010/05/30 05:17:44 rmind Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.34 2010/01/19 22:07:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.34.4.1 2010/05/30 05:17:44 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -504,7 +504,7 @@ USB_ATTACH(ural)
 	ic->ic_newstate = ural_newstate;
 	ieee80211_media_init(ic, ural_media_change, ieee80211_media_status);
 
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof (struct ieee80211_frame) + 64, &sc->sc_drvbpf);
 
 	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
@@ -552,7 +552,7 @@ USB_DETACH(ural)
 		usbd_close_pipe(sc->sc_tx_pipeh);
 	}
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	ieee80211_ifdetach(ic);
 	if_detach(ifp);
 
@@ -986,7 +986,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		tap->wr_antenna = sc->rx_ant;
 		tap->wr_antsignal = desc->rssi;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 	}
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1246,7 +1246,7 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RAL_TX_DESC_SIZE);
@@ -1337,7 +1337,7 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		tap->wt_chan_flags = htole16(ic->ic_curchan->ic_flags);
 		tap->wt_antenna = sc->tx_ant;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m0);
 	}
 
 	m_copydata(m0, 0, m0->m_pkthdr.len, data->buf + RAL_TX_DESC_SIZE);
@@ -1389,8 +1389,7 @@ ural_start(struct ifnet *ifp)
 
 			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 			m0->m_pkthdr.rcvif = NULL;
-			if (ic->ic_rawbpf != NULL)
-				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (ural_tx_mgt(sc, m0, ni) != 0)
 				break;
 
@@ -1416,15 +1415,13 @@ ural_start(struct ifnet *ifp)
 				m_freem(m0);
 				continue;
 			}
-			if (ifp->if_bpf != NULL)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp, m0);
 			m0 = ieee80211_encap(ic, m0, ni);
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
 				continue;
 			}
-			if (ic->ic_rawbpf != NULL)
-				bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
+			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (ural_tx_data(sc, m0, ni) != 0) {
 				ieee80211_free_node(ni);
 				ifp->if_oerrors++;

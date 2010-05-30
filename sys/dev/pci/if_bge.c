@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.180 2010/02/03 15:36:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.180.4.1 2010/05/30 05:17:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180 2010/02/03 15:36:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.1 2010/05/30 05:17:33 rmind Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -150,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180 2010/02/03 15:36:36 msaitoh Exp $")
  * such that moving from one pair to the succeeding pair was observed
  * to roughly halve interrupt rate under sustained input packet load.
  * The values were empirically chosen to avoid overflowing internal
- * limits on the  bcm5700: inreasing rx_ticks much beyond 600
+ * limits on the  bcm5700: increasing rx_ticks much beyond 600
  * results in internal wrapping and higher interrupt rates.
  * The limit of 46 frames was chosen to match NFS workloads.
  *
@@ -757,13 +757,12 @@ bge_set_max_readrq(struct bge_softc *sc)
 	    + PCI_PCIE_DCSR);
 	if ((val & PCI_PCIE_DCSR_MAX_READ_REQ) !=
 	    BGE_PCIE_DEVCTL_MAX_READRQ_4096) {
-			printf("adjust device control 0x%04x ",
-			    val);
+		aprint_verbose("adjust device control 0x%04x ", val);
 		val &= ~PCI_PCIE_DCSR_MAX_READ_REQ;
 		val |= BGE_PCIE_DEVCTL_MAX_READRQ_4096;
 		pci_conf_write(sc->sc_pc, sc->sc_pcitag, sc->bge_pciecap
 		    + PCI_PCIE_DCSR, val);
-			printf("-> 0x%04x\n", val);
+		aprint_verbose("-> 0x%04x\n", val);
 	}
 }
 
@@ -1301,7 +1300,7 @@ bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 
 
 /*
- * Intialize a standard receive ring descriptor.
+ * Initialize a standard receive ring descriptor.
  */
 static int
 bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m,
@@ -2450,7 +2449,7 @@ bge_setpowerstate(struct bge_softc *sc, int powerlevel)
 	/*
 	 * Entering ACPI power states D1-D3 is achieved by wiggling
 	 * GMII gpio pins. Example code assumes all hardware vendors
-	 * followed Broadom's sample pcb layout. Until we verify that
+	 * followed Broadcom's sample pcb layout. Until we verify that
 	 * for all supported OEM cards, states D1-D3 are  unsupported.
 	 */
 	aprint_error_dev(sc->bge_dev,
@@ -3205,7 +3204,7 @@ bge_reset(struct bge_softc *sc)
 		marbmode = CSR_READ_4(sc, BGE_MARB_MODE);
 	CSR_WRITE_4(sc, BGE_MARB_MODE, BGE_MARBMODE_ENABLE | marbmode);
 
-	/* Step 17: Poll until the firmware iitializeation is complete */
+	/* Step 17: Poll until the firmware initialization is complete */
 	bge_poll_fw(sc);
 
 	/* XXX 5721, 5751 and 5752 */
@@ -3224,8 +3223,15 @@ bge_reset(struct bge_softc *sc)
 
 
 	/* Step 21: 5822 B0 errata */
-	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX)
-		BGE_SETBIT(sc, 0x66, 1 << 13 | 1 << 12 | 1 << 10);
+	if (BGE_CHIPREV(sc->bge_chipid) == BGE_CHIPREV_5704_BX) {
+		pcireg_t msidata;
+		
+		msidata = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+		    BGE_PCI_MSI_DATA);
+		msidata |= ((1 << 13 | 1 << 12 | 1 << 10) << 16);
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_MSI_DATA,
+		    msidata);
+	}
 
 	/* Step 23: restore cache line size */
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, BGE_PCI_CACHESZ, cachesize);
@@ -3295,7 +3301,7 @@ bge_reset(struct bge_softc *sc)
  * on the receive return list.
  *
  * Note: we have to be able to handle two possibilities here:
- * 1) the frame is from the jumbo recieve ring
+ * 1) the frame is from the jumbo receive ring
  * 2) the frame is from the standard receive ring
  */
 
@@ -3420,8 +3426,7 @@ bge_rxeof(struct bge_softc *sc)
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		m->m_pkthdr.csum_flags = M_CSUM_IPv4;
 
@@ -4237,8 +4242,7 @@ bge_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 	if (pkts == 0)
 		return;

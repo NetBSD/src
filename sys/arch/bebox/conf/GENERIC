@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116 2009/12/05 20:11:10 pooka Exp $
+# $NetBSD: GENERIC,v 1.116.4.1 2010/05/30 05:16:41 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.116 $"
+#ident 		"GENERIC-$Revision: 1.116.4.1 $"
 
 maxusers	32
 
@@ -89,13 +89,13 @@ file-system	MSDOSFS		# MS-DOS file system
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
 #file-system	OVERLAY		# overlay file system
-#file-system	PROCFS		# /proc
+file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 #file-system	SMBFS		# CIFS; also needs nsmb (below)
-#file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 #file-system	HFS		# experimental - Apple HFS+ (read-only)
 
@@ -129,6 +129,7 @@ options 	INET6		# IPV6
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -278,7 +279,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device
 pseudo-device	vnd			# disk-like interface to files

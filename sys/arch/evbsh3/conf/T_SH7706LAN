@@ -1,0 +1,123 @@
+#	$NetBSD: T_SH7706LAN,v 1.2.2.2 2010/05/30 05:16:46 rmind Exp $
+#
+#	TAC T-SH7706LAN Rev.3 config file
+#
+
+include "arch/evbsh3/conf/std.evbsh3.el"
+include "arch/evbsh3/conf/std.t_sh7706lan"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+maxusers	32
+
+# kloader-related
+options 	KLOADER
+options 	KLOADER_KERNEL_PATH="\"/netbsd\""
+#options 	KLOADER_DEBUG
+
+# Standard system options
+
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+options 	NTP		# NTP phase/frequency locked loop
+
+options 	KTRACE		# system call tracing via ktrace(1)
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+
+options 	USERCONF	# userconf(4) support
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
+
+# Development and Debugging options
+options 	DIAGNOSTIC	# expensive kernel consistency checks
+#options 	DEBUG		# expensive debugging checks/support
+#options 	LOCKDEBUG	# expensive locking checks/support
+#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	DDB		# in-kernel debugger
+#options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+#options 	DDB_VERBOSE_HELP
+#makeoptions    DEBUG="-g"      # compile full symbol table
+options 	SYMTAB_SPACE=320000
+
+# Compatibility options
+options 	COMPAT_14	# NetBSD 1.4
+options 	COMPAT_15	# NetBSD 1.5
+options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0
+options 	COMPAT_50	# NetBSD 5.0
+options 	COMPAT_43	# and 4.3BSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# File systems
+file-system 	FFS		# UFS
+file-system 	KERNFS		# /kern
+file-system 	MSDOSFS		# MS-DOS file system
+file-system 	NFS		# Network File System client
+file-system 	PTYFS		# /dev/ptm support
+file-system 	PROCFS		# /proc
+file-system	TMPFS		# Efficient memory file-system
+
+# File system options
+options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
+
+# Networking options
+options 	INET		# IP + ICMP + TCP + UDP
+options 	INET6		# IPV6
+options 	PFIL_HOOKS	# pfil(9) packet filter hooks
+options 	IPFILTER_LOG	# ipmon(8) log support
+options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
+
+# Kernel root file system and dump configuration.
+config		netbsd	root on ? type ?
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
+
+#
+# Device configuration
+#
+mainbus0 at root
+cpu* at mainbus?
+shb* at mainbus?
+wdog0 at shb?
+options 	SCIFCONSOLE,SCIFCN_SPEED=115200
+scif0 at shb?
+
+# Network interface
+ne0 at mainbus?				# Realtek RTL8019AS
+
+# Serial pheripheral interface for MMC
+scimci0 at shb?
+sdmmc* at scimci?
+#options 	SCIMCI_DEBUG
+#options 	SDMMC_DEBUG
+#options 	SDMMC_DUMP_CSD
+ld* at sdmmc?				# MMC card
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
+pseudo-device	md		1	# memory disk device (ramdisk)
+
+pseudo-device	vnd			# disk-like interface to files
+options 	VND_COMPRESSION		# compressed vnd(4)
+
+# network pseudo-devices
+pseudo-device	bpfilter		# Berkeley packet filter
+pseudo-device	ipfilter		# IP filter (firewall) and NAT
+pseudo-device	loop			# network loopback
+
+# miscellaneous pseudo-devices
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl

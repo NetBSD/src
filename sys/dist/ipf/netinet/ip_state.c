@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.35 2009/11/22 19:09:16 mbalmer Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.35.4.1 2010/05/30 05:17:47 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -115,10 +115,10 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.35 2009/11/22 19:09:16 mbalmer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.35.4.1 2010/05/30 05:17:47 rmind Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.98 2009/07/21 09:40:56 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.100 2010/01/31 16:22:55 darrenr Exp";
 #endif
 #endif
 
@@ -151,7 +151,7 @@ static ipstate_t *fr_stclone __P((fr_info_t *, tcphdr_t *, ipstate_t *));
 static void fr_fixinisn __P((fr_info_t *, ipstate_t *));
 static void fr_fixoutisn __P((fr_info_t *, ipstate_t *));
 static void fr_checknewisn __P((fr_info_t *, ipstate_t *));
-static int fr_stateiter __P((ipftoken_t *, ipfgeniter_t *));
+static int fr_stateiter __P((ipftoken_t *, ipfgeniter_t *, ipfobj_t *));
 static int fr_stgettable __P((char *));
 
 int fr_stputent __P((void *));
@@ -423,7 +423,7 @@ void * data;
 	int error;
 
 	sp = &st;
-	error = fr_inobj(data, &st, IPFOBJ_IPSTATE);
+	error = fr_inobj(data, NULL, &st, IPFOBJ_IPSTATE);
 	if (error)
 		return EFAULT;
 
@@ -611,15 +611,16 @@ void *ctx;
 	    {
 		ipftoken_t *token;
 		ipfgeniter_t iter;
+		ipfobj_t obj;
 
-		error = fr_inobj(data, &iter, IPFOBJ_GENITER);
+		error = fr_inobj(data, &obj, &iter, IPFOBJ_GENITER);
 		if (error != 0)
 			break;
 
 		SPL_SCHED(s);
 		token = ipf_findtoken(IPFGENITER_STATE, uid, ctx);
 		if (token != NULL) {
-			error = fr_stateiter(token, &iter);
+			error = fr_stateiter(token, &iter, &obj);
 			WRITE_ENTER(&ipf_tokens);
 			if (token->ipt_data == NULL)
 				ipf_freetoken(token);
@@ -678,7 +679,7 @@ void *data;
 	ipstate_save_t ips;
 	int error;
 
-	error = fr_inobj(data, &ips, IPFOBJ_STATESAVE);
+	error = fr_inobj(data, NULL, &ips, IPFOBJ_STATESAVE);
 	if (error != 0)
 		return error;
 
@@ -737,7 +738,7 @@ void *data;
 	frentry_t *fr;
 	char *name;
 
-	error = fr_inobj(data, &ips, IPFOBJ_STATESAVE);
+	error = fr_inobj(data, NULL, &ips, IPFOBJ_STATESAVE);
 	if (error)
 		return EFAULT;
 
@@ -932,7 +933,7 @@ ipf_state_matchipv4addrs(is1, is2)
 
 	if (is1->is_saddr == is2->is_saddr && is1->is_daddr == is2->is_daddr)
 		rv = 2;
-	else if (is1->is_saddr == is2->is_daddr && 
+	else if (is1->is_saddr == is2->is_daddr &&
 	    is1->is_daddr == is2->is_saddr) {
 		/* force strong match for ICMP protocol */
 		rv = (is1->is_p == IPPROTO_ICMP) ? 2 : 1;
@@ -959,8 +960,8 @@ ipf_state_matchipv6addrs(is1, is2)
 {
 	int	rv;
 
-	if (IP6_EQ(&is1->is_src, &is2->is_src) && 
-	    IP6_EQ(&is1->is_dst, &is2->is_dst))  
+	if (IP6_EQ(&is1->is_src, &is2->is_src) &&
+	    IP6_EQ(&is1->is_dst, &is2->is_dst))
 		rv = 2;
 	else if (IP6_EQ(&is1->is_src, &is2->is_dst) &&
 	    IP6_EQ(&is1->is_dst, &is2->is_src)) {
@@ -1028,10 +1029,10 @@ ipf_state_matchports(ppairs1, ppairs2)
 {
 	int	rv;
 
-	if (ppairs1->us_sport == ppairs2->us_sport && 
+	if (ppairs1->us_sport == ppairs2->us_sport &&
 	    ppairs1->us_dport == ppairs2->us_dport)
 		rv = 2;
-	else if (ppairs1->us_sport == ppairs2->us_dport && 
+	else if (ppairs1->us_sport == ppairs2->us_dport &&
 		    ppairs1->us_dport == ppairs2->us_sport)
 		rv = 1;
 	else
@@ -1993,7 +1994,7 @@ ipstate_t *is;
 	/*
 	 * It has not yet been placed on any timeout queue, so make sure
 	 * all of that data is zero'd out.
-	 */     
+	 */
 	clone->is_sti.tqe_pnext = NULL;
 	clone->is_sti.tqe_next = NULL;
 	clone->is_sti.tqe_ifq = NULL;
@@ -3004,10 +3005,14 @@ matched:
 	fr = is->is_rule;
 	if (fr != NULL) {
 		if ((fin->fin_out == 0) && (fr->fr_nattag.ipt_num[0] != 0)) {
-			if (fin->fin_nattag == NULL)
+			if (fin->fin_nattag == NULL) {
+				RWLOCK_EXIT(&ipf_state);
 				return NULL;
-			if (fr_matchtag(&fr->fr_nattag, fin->fin_nattag) != 0)
+			}
+			if (fr_matchtag(&fr->fr_nattag, fin->fin_nattag) != 0) {
+				RWLOCK_EXIT(&ipf_state);
 				return NULL;
+			}
 		}
 		(void) strncpy(fin->fin_group, fr->fr_group, FR_GROUPLEN);
 		fin->fin_icode = fr->fr_icode;
@@ -4324,9 +4329,10 @@ int rev;
 /* This function handles the SIOCGENITER ioctl for the state tables and     */
 /* walks through the list of entries in the state table list (ips_list.)    */
 /* ------------------------------------------------------------------------ */
-static int fr_stateiter(token, itp)
+static int fr_stateiter(token, itp, obj)
 ipftoken_t *token;
 ipfgeniter_t *itp;
+ipfobj_t *obj;
 {
 	ipstate_t *is, *next, zero;
 	int error, count;
@@ -4342,6 +4348,8 @@ ipfgeniter_t *itp;
 		return EINVAL;
 
 	error = 0;
+	obj->ipfo_type = IPFOBJ_IPSTATE;
+	obj->ipfo_size = sizeof(ipstate_t);
 
 	READ_ENTER(&ipf_state);
 
@@ -4378,10 +4386,11 @@ ipfgeniter_t *itp;
 		 */
 		RWLOCK_EXIT(&ipf_state);
 
+		obj->ipfo_ptr = dst;
 		/*
 		 * Copy out data and clean up references and tokens.
 		 */
-		error = COPYOUT(next, dst, sizeof(*next));
+		error = fr_outobjk(obj, next);
 		if (error != 0)
 			error = EFAULT;
 
@@ -4424,7 +4433,7 @@ char *data;
 	ipftable_t table;
 	int error;
 
-	error = fr_inobj(data, &table, IPFOBJ_GTABLE);
+	error = fr_inobj(data, NULL, &table, IPFOBJ_GTABLE);
 	if (error != 0)
 		return error;
 

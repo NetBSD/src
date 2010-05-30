@@ -1,0 +1,10 @@
+#       $NetBSD: std.kzsh401,v 1.1.4.2 2010/05/30 05:16:46 rmind Exp $
+#
+# standard NetBSD/evbsh3 for KZSH401 options
+
+# Pull in KZSH401 config definitions.
+include "arch/evbsh3/conf/files.kzsh401"
+
+options 	EVBSH3_BOARDTYPE="kzsh401"
+makeoptions	BOARDTYPE="kzsh401"
+makeoptions	BOARDMKFRAG="${THISSH3}/conf/mk.kzsh401"

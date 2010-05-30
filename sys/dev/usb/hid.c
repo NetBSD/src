@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.28 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: hid.c,v 1.28.22.1 2010/05/30 05:17:44 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.28 2008/04/28 20:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.28.22.1 2010/05/30 05:17:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,30 +427,43 @@ hid_locate(const void *desc, int size, u_int32_t u, u_int8_t id, enum hid_kind k
 	return (0);
 }
 
+long
+hid_get_data(const u_char *buf, const struct hid_location *loc)
+{
+	u_int hsize = loc->size;
+	u_long data;
+
+	if (hsize == 0)
+		return (0);
+
+	data = hid_get_udata(buf, loc);
+	if (data < (1 << (hsize - 1)))
+		return (data);
+	return data - (1 << hsize);
+}
+
 u_long
-hid_get_data(u_char *buf, struct hid_location *loc)
+hid_get_udata(const u_char *buf, const struct hid_location *loc)
 {
 	u_int hpos = loc->pos;
 	u_int hsize = loc->size;
-	u_int32_t data;
-	int i, s;
-
-	DPRINTFN(10, ("hid_get_data: loc %d/%d\n", hpos, hsize));
+	u_int i, num, off;
+	u_long data;
 
 	if (hsize == 0)
 		return (0);
 
 	data = 0;
-	s = hpos / 8;
-	for (i = hpos; i < hpos+hsize; i += 8)
-		data |= buf[i / 8] << ((i / 8 - s) * 8);
+	off = hpos / 8;
+	num = (hpos + hsize + 7) / 8 - off;
+
+	for (i = 0; i < num; i++)
+		data |= buf[off + i] << (i * 8);
+
 	data >>= hpos % 8;
 	data &= (1 << hsize) - 1;
-	hsize = 32 - hsize;
-	/* Sign extend */
-	data = ((int32_t)data << hsize) >> hsize;
-	DPRINTFN(10,("hid_get_data: loc %d/%d = %lu\n",
-		    loc->pos, loc->size, (long)data));
+
+	DPRINTFN(10,("hid_get_udata: loc %d/%d = %lu\n", hpos, hsize, data));
 	return (data);
 }
 

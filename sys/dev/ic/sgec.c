@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.37 2010/01/19 22:06:25 pooka Exp $ */
+/*      $NetBSD: sgec.c,v 1.37.4.1 2010/05/30 05:17:25 rmind Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.37 2010/01/19 22:06:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.37.4.1 2010/05/30 05:17:25 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -467,8 +467,7 @@ sgec_intr(struct ze_softc *sc)
 				m->m_pkthdr.rcvif = ifp;
 				m->m_pkthdr.len = m->m_len =
 				    len - ETHER_CRC_LEN;
-				if (ifp->if_bpf)
-					bpf_ops->bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp, m);
 				(*ifp->if_input)(ifp, m);
 			}
 		}
@@ -509,8 +508,7 @@ sgec_intr(struct ze_softc *sc)
 			ifp->if_opackets++;
 			bus_dmamap_unload(sc->sc_dmat, map);
 			KASSERT(sc->sc_txmbuf[lastack]);
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, sc->sc_txmbuf[lastack]);
+			bpf_mtap(ifp, sc->sc_txmbuf[lastack]);
 			m_freem(sc->sc_txmbuf[lastack]);
 			sc->sc_txmbuf[lastack] = 0;
 			if (++lastack == TXDESCS)

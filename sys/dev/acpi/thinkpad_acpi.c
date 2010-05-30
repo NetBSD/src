@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.28 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.28.2.1 2010/05/30 05:17:17 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.28 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.28.2.1 2010/05/30 05:17:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -113,7 +113,7 @@ static void	thinkpad_attach(device_t, device_t, void *);
 static int	thinkpad_detach(device_t, int);
 
 static ACPI_STATUS thinkpad_mask_init(thinkpad_softc_t *, uint32_t);
-static void	thinkpad_notify_handler(ACPI_HANDLE, UINT32, void *);
+static void	thinkpad_notify_handler(ACPI_HANDLE, uint32_t, void *);
 static void	thinkpad_get_hotkeys(void *);
 
 static void	thinkpad_sensors_init(thinkpad_softc_t *);
@@ -219,12 +219,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 		goto fail;
 	}
 
-	/* Install notify handler for events */
-	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, thinkpad_notify_handler, sc);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self, "couldn't install notify handler: %s\n",
-		    AcpiFormatException(rv));
+	(void)acpi_register_notify(sc->sc_node, thinkpad_notify_handler);
 
 	/* Register power switches with sysmon */
 	psw = sc->sc_smpsw;
@@ -275,14 +270,9 @@ static int
 thinkpad_detach(device_t self, int flags)
 {
 	struct thinkpad_softc *sc = device_private(self);
-	ACPI_STATUS rv;
 	int i;
 
-	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
-	    ACPI_DEVICE_NOTIFY, thinkpad_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
+	acpi_deregister_notify(sc->sc_node);
 
 	for (i = 0; i < TP_PSW_LAST; i++)
 		sysmon_pswitch_unregister(&sc->sc_smpsw[i]);
@@ -302,21 +292,19 @@ thinkpad_detach(device_t self, int flags)
 }
 
 static void
-thinkpad_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
+thinkpad_notify_handler(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
-	thinkpad_softc_t *sc = (thinkpad_softc_t *)opaque;
-	device_t self = sc->sc_dev;
-	ACPI_STATUS rv;
- 
+	device_t self = opaque;
+	thinkpad_softc_t *sc;
+
+	sc = device_private(self);
+
 	if (notify != 0x80) {
 		aprint_debug_dev(self, "unknown notify 0x%02x\n", notify);
 		return;
 	}
 
-	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, thinkpad_get_hotkeys, sc);
-	if (ACPI_FAILURE(rv))
-		aprint_error_dev(self, "couldn't queue hotkey handler: %s\n",
-		    AcpiFormatException(rv));
+	(void)AcpiOsExecute(OSL_NOTIFY_HANDLER, thinkpad_get_hotkeys, sc);
 }
 
 static void

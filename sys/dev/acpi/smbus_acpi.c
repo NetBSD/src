@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.9.4.1 2010/05/30 05:17:17 rmind Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.9 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.9.4.1 2010/05/30 05:17:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -212,14 +212,10 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 	if (smi_buf.Pointer != NULL)
 		ACPI_FREE(smi_buf.Pointer);
 
-	/* Install notify handler if possible */
-	rv = AcpiInstallNotifyHandler(sc->sc_devnode->ad_handle,
-		ACPI_DEVICE_NOTIFY, acpi_smbus_notify_handler, self);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error(": unable to install DEVICE NOTIFY handler: %s\n",
-		    AcpiFormatException(rv));
-		sc->sc_poll_alert = 2;	/* If failed, fall-back to polling */
-	}
+	/* If failed, fall-back to polling. */
+	if (acpi_register_notify(sc->sc_devnode,
+		acpi_smbus_notify_handler) != true)
+		sc->sc_poll_alert = 2;
 
 	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, acpi_smbus_tick, self);
@@ -280,15 +276,9 @@ static int
 acpi_smbus_detach(device_t self, int flags)
 {
 	struct acpi_smbus_softc *sc = device_private(self);
-	ACPI_STATUS rv;
-
-	rv = AcpiRemoveNotifyHandler(sc->sc_devnode->ad_handle,
-	    ACPI_DEVICE_NOTIFY, acpi_smbus_notify_handler);
-
-	if (ACPI_FAILURE(rv))
-		return EBUSY;
 
 	pmf_device_deregister(self);
+	acpi_deregister_notify(sc->sc_devnode);
 
 	callout_halt(&sc->sc_callout, NULL);
 	callout_destroy(&sc->sc_callout);

@@ -1,8 +1,8 @@
-/*	$NetBSD: fwdma.c,v 1.12 2008/01/04 21:17:59 ad Exp $	*/
+/*	$NetBSD: fwdma.c,v 1.12.32.1 2010/05/30 05:17:27 rmind Exp $	*/
 /*-
  * Copyright (c) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  * 4. Neither the name of the author nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,161 +31,118 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.12 2008/01/04 21:17:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdma.c,v 1.12.32.1 2010/05/30 05:17:27 rmind Exp $");
 #if defined(__FreeBSD__)
 __FBSDID("$FreeBSD: src/sys/dev/firewire/fwdma.c,v 1.9 2007/06/06 14:31:36 simokawa Exp $");
 #endif
 
-#if defined(__FreeBSD__)
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/types.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
-#include <sys/malloc.h>
-#if defined(__FreeBSD__) && __FreeBSD_version >= 501102 
-#include <sys/mutex.h>
-#endif
-
 #include <sys/bus.h>
-#include <sys/bus.h>
-
-#ifdef __DragonFly__
-#include <bus/firewire/fw_port.h>
-#include <bus/firewire/firewire.h>
-#include <bus/firewire/firewirereg.h>
-#include <bus/firewire/fwdma.h>
-#else
-#include <dev/firewire/fw_port.h>
-#include <dev/firewire/firewire.h>
-#include <dev/firewire/firewirereg.h>
-#include <dev/firewire/fwdma.h>
-#endif
-#elif defined(__NetBSD__)
-#include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/select.h>
 
-#include <sys/bus.h>
+#include <machine/vmparam.h>
 
-#include <dev/ieee1394/fw_port.h>
 #include <dev/ieee1394/firewire.h>
 #include <dev/ieee1394/firewirereg.h>
 #include <dev/ieee1394/fwdma.h>
-#endif
 
-static void
-fwdma_map_cb(void *arg, bus_dma_segment_t *segs, int nseg, int error)
-{
-	bus_addr_t *baddr;
+#define BUS_SPACE_MAXSIZE_32BIT		0xffffffff
 
-	if (error)
-		printf("fwdma_map_cb: error=%d\n", error);
-	baddr = (bus_addr_t *)arg;
-	*baddr = segs->ds_addr;
-}
 
 void *
-fwdma_malloc(struct firewire_comm *fc, int alignment, bus_size_t size,
-	struct fwdma_alloc *dma, int flag)
+fwdma_malloc(device_t dev, bus_dma_tag_t dmat, bus_dmamap_t *dmamap,
+	     bus_size_t size, int alignment, int flags)
 {
+	bus_dma_segment_t segs;
+	int nsegs;
 	int err;
-
-	dma->v_addr = NULL;
-	err = fw_bus_dma_tag_create(
-		/*parent*/ fc->dmat,
-		/*alignment*/ alignment,
-		/*boundary*/ 0,
-		/*lowaddr*/ BUS_SPACE_MAXADDR_32BIT,
-		/*highaddr*/ BUS_SPACE_MAXADDR,
-		/*filter*/NULL, /*filterarg*/NULL,
-		/*maxsize*/ size,
-		/*nsegments*/ 1,
-		/*maxsegsz*/ BUS_SPACE_MAXSIZE_32BIT,
-		/*flags*/ BUS_DMA_ALLOCNOW,
-		/*lockfunc*/busdma_lock_mutex,
-		/*lockarg*/FW_GMTX(fc),
-		&dma->fw_dma_tag);
-	if (err) {
-		printf("fwdma_malloc: failed(1)\n");
-		return(NULL);
-	}
-
-	err = fw_bus_dmamem_alloc(dma->fw_dma_tag, &dma->v_addr,
-		flag, &dma->dma_map);
-	if (err) {
-		printf("fwdma_malloc: failed(2)\n");
-		fw_bus_dma_tag_destroy(dma->fw_dma_tag);
-		return(NULL);
-	}
-
-	err = fw_bus_dmamap_load(dma->fw_dma_tag, dma->dma_map, dma->v_addr,
-		size, fwdma_map_cb, &dma->bus_addr, flag);
-	if (err != 0) {
-		printf("fwdma_malloc: failed(3)\n");
-		fw_bus_dmamem_free(dma->fw_dma_tag, dma->v_addr, dma->dma_map);
-		fw_bus_dma_tag_destroy(dma->fw_dma_tag);
-		return(NULL);
-	}
-
-	return(dma->v_addr);
-}
-
-void
-fwdma_free(struct firewire_comm *fc, struct fwdma_alloc *dma)
-{
-        fw_bus_dmamap_unload(dma->fw_dma_tag, dma->dma_map);
-	fw_bus_dmamem_free(dma->fw_dma_tag, dma->v_addr, dma->dma_map);
-	fw_bus_dma_tag_destroy(dma->fw_dma_tag);
-}
-
-
-void *
-fwdma_malloc_size(fw_bus_dma_tag_t dmat, bus_dmamap_t *dmamap,
-	bus_size_t size, bus_addr_t *bus_addr, int flag)
-{
 	void *v_addr;
 
-	if (fw_bus_dmamem_alloc(dmat, &v_addr, flag, dmamap)) {
-		printf("fwdma_malloc_size: failed(1)\n");
-		return(NULL);
+	err = bus_dmamem_alloc(dmat, size, alignment, 0, &segs, 1,
+	    &nsegs, flags);
+	if (err) {
+		aprint_error_dev(dev, "DMA memory allocation failed %d\n", err);
+		return NULL;
 	}
-	if (fw_bus_dmamap_load(dmat, *dmamap, v_addr, size,
-			fwdma_map_cb, bus_addr, flag)) {
-		printf("fwdma_malloc_size: failed(2)\n");
-		fw_bus_dmamem_free(dmat, v_addr, *dmamap);
-		return(NULL);
+
+	err = bus_dmamem_map(dmat, &segs, nsegs, size, &v_addr, flags);
+	if (err) {
+		aprint_error_dev(dev, "DMA memory map failed %d\n", err);
+		bus_dmamem_free(dmat, &segs, nsegs);
+		return NULL;
 	}
-	return(v_addr);
+
+	if (*dmamap == NULL) {
+		err = bus_dmamap_create(dmat, size, nsegs,
+		    BUS_SPACE_MAXSIZE_32BIT, 0, flags, dmamap);
+		if (err) {
+			aprint_error_dev(dev,
+			    "DMA map create failed %d\n", err);
+			bus_dmamem_unmap(dmat, v_addr, size);
+			bus_dmamem_free(dmat, &segs, nsegs);
+			return NULL;
+		}
+	}
+
+	err = bus_dmamap_load(dmat, *dmamap, v_addr, size, NULL, flags);
+	if (err != 0) {
+		aprint_error_dev(dev, "DMA map load failed %d\n", err);
+		bus_dmamap_destroy(dmat, *dmamap);
+		bus_dmamem_unmap(dmat, v_addr, size);
+		bus_dmamem_free(dmat, &segs, nsegs);
+		return NULL;
+	}
+
+	return v_addr;
 }
 
 void
-fwdma_free_size(fw_bus_dma_tag_t dmat, bus_dmamap_t dmamap, void *vaddr,
-    bus_size_t size)
+fwdma_free(bus_dma_tag_t dmat, bus_dmamap_t dmamap, void *vaddr)
 {
-	fw_bus_dmamap_unload(dmat, dmamap);
-	fw_bus_dmamem_free(dmat, vaddr, dmamap);
-} 
+
+	bus_dmamap_unload(dmat, dmamap);
+	bus_dmamem_unmap(dmat, vaddr, dmamap->dm_mapsize);
+	bus_dmamem_free(dmat, dmamap->dm_segs, dmamap->dm_nsegs);
+	bus_dmamap_destroy(dmat, dmamap);
+}
+
+
+void *
+fwdma_alloc_setup(device_t dev, bus_dma_tag_t dmat, bus_size_t size,
+		  struct fwdma_alloc *dma, int alignment, int flags)
+{
+
+	dma->v_addr =
+	    fwdma_malloc(dev, dmat, &dma->dma_map, size, alignment, flags);
+	if (dma->v_addr != NULL) {
+		dma->dma_tag = dmat;
+		dma->bus_addr = dma->dma_map->dm_segs[0].ds_addr;
+	}
+	return dma->v_addr;
+}
 
 /*
  * Allocate multisegment dma buffers
  * each segment size is eqaul to ssize except last segment.
  */
 struct fwdma_alloc_multi *
-fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment,
-		int esize, int n, int flag)
+fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment, int esize, int n,
+		      int flags)
 {
 	struct fwdma_alloc_multi *am;
 	struct fwdma_seg *seg;
 	bus_size_t ssize;
-	int nseg, size;
+	size_t size;
+	int nseg;
 
 	if (esize > PAGE_SIZE) {
 		/* round up to PAGE_SIZE */
@@ -196,55 +153,31 @@ fwdma_malloc_multiseg(struct firewire_comm *fc, int alignment,
 		ssize = rounddown(PAGE_SIZE, esize);
 		nseg = howmany(n, ssize / esize);
 	}
-	size = sizeof (struct fwdma_alloc_multi) +
-	    sizeof (struct fwdma_seg) * nseg;
-	am = (struct fwdma_alloc_multi *)malloc(size, M_FW, M_WAITOK);
+	size = sizeof(struct fwdma_alloc_multi) +
+	    sizeof(struct fwdma_seg) * nseg;
+	am = (struct fwdma_alloc_multi *)malloc(size, M_FW, M_WAITOK | M_ZERO);
 	if (am == NULL) {
-		printf("fwdma_malloc_multiseg: malloc failed\n");
-		return(NULL);
+		aprint_error_dev(fc->dev, "malloc failed\n");
+		return NULL;
 	}
-	memset(am, 0, size);
 	am->ssize = ssize;
 	am->esize = esize;
 	am->nseg = 0;
-	if (fw_bus_dma_tag_create(
-			/*parent*/ fc->dmat,
-			/*alignment*/ alignment,
-			/*boundary*/ 0,
-			/*lowaddr*/ BUS_SPACE_MAXADDR_32BIT,
-			/*highaddr*/ BUS_SPACE_MAXADDR,
-			/*filter*/NULL, /*filterarg*/NULL,
-			/*maxsize*/ ssize,
-			/*nsegments*/ 1,
-			/*maxsegsz*/ BUS_SPACE_MAXSIZE_32BIT,
-			/*flags*/ BUS_DMA_ALLOCNOW,
-			/*lockfunc*/busdma_lock_mutex,
-			/*lockarg*/FW_GMTX(fc),
-			&am->fw_dma_tag)) {
-		printf("fwdma_malloc_multiseg: tag_create failed\n");
-		free(am, M_FW);
-		return(NULL);
-	}
+	am->dma_tag = fc->dmat;
 
-#if 0
-#if defined(__DragonFly__) || __FreeBSD_version < 500000
-	printf("malloc_multi: ssize=%d nseg=%d\n", ssize, nseg);
-#else
-	printf("malloc_multi: ssize=%td nseg=%d\n", ssize, nseg);
-#endif
-#endif
-	for (seg = &am->seg[0]; nseg --; seg ++) {
-		seg->v_addr = fwdma_malloc_size(am->fw_dma_tag, &seg->dma_map,
-			ssize, &seg->bus_addr, flag);
+	for (seg = am->seg; nseg--; seg++) {
+		seg->v_addr = fwdma_malloc(fc->dev, am->dma_tag, &seg->dma_map,
+		    ssize, alignment, flags);
 		if (seg->v_addr == NULL) {
-			printf("fwdma_malloc_multi: malloc_size failed %d\n",
-				am->nseg);
+			aprint_error_dev(fc->dev, "malloc_size failed %d\n",
+			    am->nseg);
 			fwdma_free_multiseg(am);
-			return(NULL);
+			return NULL;
 		}
+		seg->bus_addr = seg->dma_map->dm_segs[0].ds_addr;
 		am->nseg++;
 	}
-	return(am);
+	return am;
 }
 
 void
@@ -252,10 +185,7 @@ fwdma_free_multiseg(struct fwdma_alloc_multi *am)
 {
 	struct fwdma_seg *seg;
 
-	for (seg = &am->seg[0]; am->nseg --; seg ++) {
-		fwdma_free_size(am->fw_dma_tag, seg->dma_map,
-			seg->v_addr, am->ssize);
-	}
-	fw_bus_dma_tag_destroy(am->fw_dma_tag);
+	for (seg = am->seg; am->nseg--; seg++)
+		fwdma_free(am->dma_tag, seg->dma_map, seg->v_addr);
 	free(am, M_FW);
 }

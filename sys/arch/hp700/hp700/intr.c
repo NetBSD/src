@@ -1,4 +1,5 @@
-/*	$NetBSD: intr.c,v 1.22 2010/03/11 07:21:24 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.22.2.1 2010/05/30 05:16:49 rmind Exp $	*/
+/*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2010/03/11 07:21:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22.2.1 2010/05/30 05:16:49 rmind Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -57,17 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22 2010/03/11 07:21:24 skrll Exp $");
 /* The priority level masks. */
 int imask[NIPL];
 
-/* The current priority level. */
-volatile int cpl;
-
-/* The pending interrupts. */
-volatile int ipending;
-
 /* Shared interrupts */
 int ishared;
-
-/* Nonzero iff we are running an interrupt. */
-u_int hppa_intr_depth;
 
 /* The list of all interrupt registers. */
 struct hp700_int_reg *hp700_int_regs[HP700_INT_BITS];
@@ -137,6 +129,7 @@ hp700_intr_reg_establish(struct hp700_int_reg *int_reg)
 void
 hp700_intr_bootstrap(void)
 {
+	struct cpu_info *ci = curcpu();
 	int i;
 
 	/* Initialize all prority level masks to mask everything. */
@@ -144,13 +137,13 @@ hp700_intr_bootstrap(void)
 		imask[i] = -1;
 
 	/* We are now at the highest priority level. */
-	cpl = -1;
+	ci->ci_cpl = -1;
 
 	/* There are no pending interrupts. */
-	ipending = 0;
+	ci->ci_ipending = 0;
 
 	/* We are not running an interrupt. */
-	hppa_intr_depth = 0;
+	ci->ci_intr_depth = 0;
 
 	/* There are no interrupt handlers. */
 	memset(hp700_int_bits, 0, sizeof(hp700_int_bits));
@@ -175,7 +168,7 @@ hp700_intr_establish(device_t dv, int ipl, int (*handler)(void *),
 	
 	/* Panic on a bad interrupt bit. */
 	if (bit_pos < 0 || bit_pos >= HP700_INT_BITS)
-		panic("hp700_intr_establish: bad interrupt bit");
+		panic("%s: bad interrupt bit %d", __func__, bit_pos);
 
 	/*
 	 * Panic if this int bit is already handled,
@@ -277,10 +270,11 @@ _hp700_intr_spl_mask(void *_int_bit)
 void
 hp700_intr_init(void)
 {
-	int idx, bit_pos;
 	struct hp700_int_bit *int_bit;
-	int mask;
 	struct hp700_int_reg *int_reg;
+	struct cpu_info *ci = curcpu();
+	int idx, bit_pos;
+	int mask;
 	int eiem;
 
 	/*
@@ -339,8 +333,8 @@ hp700_intr_init(void)
 	 * Because we're paranoid, we force these values for cpl and ipending,
 	 * even though they should be unchanged since hp700_intr_bootstrap().
 	 */
-	cpl = -1;
-	ipending = 0;
+	ci->ci_cpl = -1;
+	ci->ci_ipending = 0;
 	eiem = 0;
 	for (idx = 0; idx < HP700_INT_BITS; idx++) {
 		int_reg = hp700_int_regs[idx];
@@ -374,6 +368,7 @@ hppa_intr(struct trapframe *frame)
 	int i;
 	struct hp700_int_reg *int_reg;
 	int hp700_intr_ipending_new(struct hp700_int_reg *, int);
+	struct cpu_info *ci = curcpu();
 
 	extern char ucas_ras_start[];
 	extern char ucas_ras_end[];
@@ -418,11 +413,12 @@ hppa_intr(struct trapframe *frame)
 	 */
 	mfctl(CR_EIRR, eirr);
 	mtctl(eirr, CR_EIRR);
-	ipending |= hp700_intr_ipending_new(&int_reg_cpu, eirr);
+
+	ci->ci_ipending |= hp700_intr_ipending_new(&int_reg_cpu, eirr);
 
 	/* If we have interrupts to dispatch, do so. */
-	if (ipending & ~cpl)
-		hp700_intr_dispatch(cpl, frame->tf_eiem, frame);
+	if (ci->ci_ipending & ~ci->ci_cpl)
+		hp700_intr_dispatch(ci->ci_cpl, frame->tf_eiem, frame);
 
 	/* We are done if there are no shared interrupts. */
 	if (ishared == 0)
@@ -439,15 +435,15 @@ hppa_intr(struct trapframe *frame)
 		ipending_new = *int_reg->int_reg_level;
 		while (ipending_new != 0) {
 			pending = ffs(ipending_new) - 1;
-			ipending |= int_reg->int_reg_bits_map[31 ^ pending]
-			    & ishared;
+			ci->ci_ipending |=
+			    int_reg->int_reg_bits_map[31 ^ pending] & ishared;
 			ipending_new &= ~(1 << pending);
 		}
 	}
 
 	/* If we still have interrupts to dispatch, do so. */
-	if (ipending & ~cpl)
-		hp700_intr_dispatch(cpl, frame->tf_eiem, frame);
+	if (ci->ci_ipending & ~ci->ci_cpl)
+		hp700_intr_dispatch(ci->ci_cpl, frame->tf_eiem, frame);
 }
 		
 /*
@@ -457,6 +453,7 @@ hppa_intr(struct trapframe *frame)
 void
 hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 {
+	struct cpu_info *ci = curcpu();
 	int ipending_run;
 	u_int old_hppa_intr_depth;
 	int bit_pos;
@@ -466,13 +463,13 @@ hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 	int handled;
 
 	/* Increment our depth, grabbing the previous value. */
-	old_hppa_intr_depth = hppa_intr_depth++;
+	old_hppa_intr_depth = ci->ci_intr_depth++;
 
 	/* Loop while we have interrupts to dispatch. */
 	for (;;) {
 
 		/* Read ipending and mask it with ncpl. */
-		ipending_run = (ipending & ~ncpl);
+		ipending_run = (ci->ci_ipending & ~ncpl);
 		if (ipending_run == 0)
 			break;
 
@@ -502,8 +499,8 @@ hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 		 * the level required to run this interrupt,
 		 * and reenable interrupts.
 		 */
-		ipending &= ~(1 << bit_pos);
-		cpl = ncpl | int_bit->int_bit_spl;
+		ci->ci_ipending &= ~(1 << bit_pos);
+		ci->ci_cpl = ncpl | int_bit->int_bit_spl;
 		mtctl(eiem, CR_EIEM);
 
 		/* Count and dispatch the interrupt. */
@@ -520,17 +517,18 @@ hp700_intr_dispatch(int ncpl, int eiem, struct trapframe *frame)
 	}
 
 	/* Interrupts are disabled again, restore cpl and the depth. */
-	cpl = ncpl;
-	hppa_intr_depth = old_hppa_intr_depth;
+	ci->ci_cpl = ncpl;
+	ci->ci_intr_depth = old_hppa_intr_depth;
 }
 
 bool
 cpu_intr_p(void)
 {
+	struct cpu_info *ci = curcpu();
 
 #ifdef __HAVE_FAST_SOFTINTS
 #error this should not count fast soft interrupts
 #else
-	return hppa_intr_depth != 0;
+	return ci->ci_intr_depth != 0;
 #endif
 }

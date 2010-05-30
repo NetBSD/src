@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.16 2009/03/14 21:04:08 dsl Exp $	*/
+/*	$NetBSD: leo.c,v 1.16.4.1 2010/05/30 05:16:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.16 2009/03/14 21:04:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.16.4.1 2010/05/30 05:16:41 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.16 2009/03/14 21:04:08 dsl Exp $");
 #include <atari/vme/vmevar.h>
 #include <atari/vme/leovar.h>
 #include <atari/vme/leoioctl.h>
+
+#include "ioconf.h"
 
 static struct leo_addresses {
 	u_long reg_addr;
@@ -98,8 +100,6 @@ static int leo_scroll(struct leo_softc *, int);
 
 CFATTACH_DECL(leo, sizeof(struct leo_softc),
     leo_match, leo_attach, NULL, NULL);
-
-extern struct cfdriver leo_cd;
 
 dev_type_open(leoopen);
 dev_type_close(leoclose);

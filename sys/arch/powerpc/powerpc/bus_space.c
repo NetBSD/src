@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.21 2010/02/25 23:31:48 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.21.2.1 2010/05/30 05:17:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21 2010/02/25 23:31:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.1 2010/05/30 05:17:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -660,12 +660,22 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 #endif /* defined (PPC_OEA) || defined(PPC_OEA601) */
 	bpa = pa - t->pbs_offset;
 
+#ifdef PPC_IBM4XX
+	/*
+	 * XXX: Temporary kludge.
+	 * Don't bother checking the extent during very early bootstrap.
+	 */
+	if (extent_flags) {
+#endif
 	if (extent_free(t->pbs_extent, bpa, size, EX_NOWAIT | extent_flags)) {
 		printf("memio_unmap: %s 0x%lx, size 0x%lx\n",
 		    (t->pbs_flags & _BUS_SPACE_IO_TYPE) ? "port" : "mem",
 		    (unsigned long)bpa, (unsigned long)size);
 		printf("memio_unmap: can't free region\n");
 	}
+#ifdef PPC_IBM4XX
+	}
+#endif
 
 	unmapiodev(va, size);
 }

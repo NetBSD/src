@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.12 2009/03/18 10:22:24 cegger Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.12.4.1 2010/05/30 05:16:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.12 2009/03/18 10:22:24 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.12.4.1 2010/05/30 05:16:39 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,14 +95,14 @@ alloc_stmem(u_long size, void **phys_addr)
 	 */
 	bfit = NULL;
 	mn   = free_list.cqh_first;
-	for(; mn != (void *)&free_list; mn = mn->free_link.cqe_next) {
-		if(size <= mn->size) {
-			if((bfit != NULL) && (bfit->size < mn->size))
+	for (; mn != (void *)&free_list; mn = mn->free_link.cqe_next) {
+		if (size <= mn->size) {
+			if ((bfit != NULL) && (bfit->size < mn->size))
 				continue;
 			bfit = mn;
 		}
 	}
-	if(bfit != NULL)
+	if (bfit != NULL)
 		mn = bfit;
 	if (mn == (void *)&free_list) {
 		printf("St-mem pool exhausted, binpatch 'st_pool_size'"

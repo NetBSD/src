@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.38 2010/03/05 18:47:49 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.38.2.1 2010/05/30 05:18:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,8 +40,8 @@ struct msghdr;
 struct pollfd;
 struct sockaddr;
 
-typedef void (*kernel_lockfn)(int);
-typedef void (*kernel_unlockfn)(int, int *);
+typedef void (*kernel_lockfn)(int, void *);
+typedef void (*kernel_unlockfn)(int, int *, void *);
 
 int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 #define RUMPUSER_FT_OTHER 0
@@ -97,6 +97,9 @@ int rumpuser_poll(struct pollfd *, int, int, int *);
 
 int rumpuser_putchar(int, int *);
 
+#define RUMPUSER_PID_SELF ((int64_t)-1)
+int rumpuser_kill(int64_t, int, int *);
+
 #define RUMPUSER_PANIC (-1)
 void rumpuser_exit(int);
 void rumpuser_seterrno(int);
@@ -105,6 +108,8 @@ int rumpuser_writewatchfile_setup(int, int, intptr_t, int *);
 int rumpuser_writewatchfile_wait(int, intptr_t *, int *);
 
 int rumpuser_dprintf(const char *, ...);
+
+int rumpuser_getnhostcpu(void);
 
 /* rumpuser_pth */
 void rumpuser_thrinit(kernel_lockfn, kernel_unlockfn, int);

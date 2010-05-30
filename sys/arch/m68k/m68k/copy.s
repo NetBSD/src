@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.41 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: copy.s,v 1.41.22.1 2010/05/30 05:16:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,7 +159,6 @@ Lcidone:
 Lciret:
 	rts
 Lcifault:
-	moveq	#EFAULT,%d0		| got a fault
 	bra	Lcidone
 
 /*
@@ -225,7 +224,6 @@ Lcodone:
 Lcoret:
 	rts
 Lcofault:
-	moveq	#EFAULT,%d0
 	bra	Lcodone
 
 /*
@@ -295,7 +293,6 @@ Lcisexit:
 	clrl	%a0@(PCB_ONFAULT)
 	rts
 Lcisfault:
-	moveq	#EFAULT,%d0
 	bra	Lcisdone
 
 /*
@@ -335,7 +332,6 @@ Lcosexit:
 	clrl	%a0@(PCB_ONFAULT)
 	rts
 Lcosfault:
-	moveq	#EFAULT,%d0
 	bra	Lcosdone
 
 /*
@@ -366,7 +362,6 @@ Lkcdone:
 	rts
 Lkcfault:
 	addl	#16,%sp			| pop args and return address
-	moveq	#EFAULT,%d0		| indicate a fault
 	bra	Lkcdone
 
 /*

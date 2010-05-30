@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.225.4.3 2010/04/25 19:39:00 rmind Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.225.4.4 2010/05/30 05:16:58 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.3 2010/04/25 19:39:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.4 2010/05/30 05:16:58 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd32.h"
@@ -130,7 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.225.4.3 2010/04/25 19:39:00 rmind
 #include <sys/core.h>
 #include <sys/device.h>
 #include <sys/kcore.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
@@ -1944,17 +1944,14 @@ void
 startlwp(void *arg)
 {
 	ucontext_t *uc = arg;
-	int err;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext(curlwp, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("%s: Error %d from cpu_setmcontext", __func__, err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
-	userret(curlwp);
+	kmem_free(uc, sizeof(ucontext_t));
+	userret(l);
 }
 
 #ifdef COMPAT_NETBSD32
@@ -1965,17 +1962,15 @@ void
 startlwp32(void *arg)
 {
 	ucontext32_t *uc = arg;
-	int err;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext32(curlwp, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("%s: Error %d from cpu_setmcontext32", __func__, err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
-	userret(curlwp);
+	/* Note: we are freeing ucontext_t, not ucontext32_t. */
+	kmem_free(uc, sizeof(ucontext_t));
+	userret(l);
 }
 #endif /* COMPAT_NETBSD32 */
 

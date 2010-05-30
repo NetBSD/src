@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.12 2009/08/23 15:16:16 jmcneill Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.12.4.1 2010/05/30 05:17:17 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.12 2009/08/23 15:16:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.12.4.1 2010/05/30 05:17:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -140,6 +140,13 @@ AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function,
 void
 AcpiOsSleep(ACPI_INTEGER Milliseconds)
 {
+	static bool once = false;
+
+	if (Milliseconds > 2000 && once != true) {
+		aprint_error("acpi0: WARNING: long Sleep()\n");
+		once = true;
+	}
+
 	if (cold || doing_shutdown || acpi_suspended)
 		DELAY(Milliseconds * 1000);
 	else {

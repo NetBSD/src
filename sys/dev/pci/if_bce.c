@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.31 2010/02/24 22:38:00 dyoung Exp $	 */
+/* $NetBSD: if_bce.c,v 1.31.2.1 2010/05/30 05:17:32 rmind Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.31 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.31.2.1 2010/05/30 05:17:32 rmind Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -628,8 +628,7 @@ bce_start(struct ifnet *ifp)
 		newpkts++;
 
 		/* Pass the packet to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 	if (txsfree == 0) {
 		/* No more slots left; notify upper layer. */
@@ -821,8 +820,7 @@ bce_rxintr(struct bce_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input) (ifp, m);

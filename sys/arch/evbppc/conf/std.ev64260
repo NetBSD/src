@@ -1,4 +1,4 @@
-#	$NetBSD: std.ev64260,v 1.7 2008/01/08 13:47:49 joerg Exp $
+#	$NetBSD: std.ev64260,v 1.7.32.1 2010/05/30 05:16:43 rmind Exp $
 #
 # standard, required NetBSD/evbppc 'options'
 
@@ -18,6 +18,6 @@ makeoptions	BOARDTYPE="ev64260"
 options 	INTSTK=16384
 
 options		PPC_INTR_IMPL="<powerpc/marvell/marvell_intr.h>"
-options		PPC_PCI_MACHDEP_IMPL="<powerpc/marvell/pci_machdep.h>"
+options		PPC_PCI_MACHDEP_IMPL="<powerpc/pci_machdep.h>"
 
 include "arch/evbppc/conf/files.ev64260"

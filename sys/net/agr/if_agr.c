@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.26 2010/02/08 17:59:06 dyoung Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.26.2.1 2010/05/30 05:18:02 rmind Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.26 2010/02/08 17:59:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.26.2.1 2010/05/30 05:18:02 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -155,10 +155,7 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	}
 #endif
 
-	if (ifp->if_bpf) {
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
-	}
-
+	bpf_mtap(ifp, m);
 	(*ifp->if_input)(ifp, m);
 }
 
@@ -429,9 +426,7 @@ agr_start(struct ifnet *ifp)
 		if (m == NULL) {
 			break;
 		}
-		if (ifp->if_bpf) {
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
-		}
+		bpf_mtap(ifp, m);
 		port = agr_select_tx_port(sc, m);
 		if (port) {
 			int error;
@@ -1008,7 +1003,7 @@ static bool
 agr_ports_enter(struct agr_softc *sc)
 {
 	mutex_enter(&sc->sc_entry_mtx);
-	while (sc->sc_wrports != 0)
+	while (sc->sc_wrports)
 		cv_wait(&sc->sc_ports_cv, &sc->sc_entry_mtx);
 	sc->sc_rdports++;
 	mutex_exit(&sc->sc_entry_mtx);

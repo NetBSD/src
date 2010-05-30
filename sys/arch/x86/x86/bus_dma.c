@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.53 2010/02/26 19:25:07 jym Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.53.2.1 2010/05/30 05:17:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.53 2010/02/26 19:25:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.53.2.1 2010/05/30 05:17:12 rmind Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -155,14 +155,28 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
+	bus_size_t uboundary;
 
 	/* Always round the size. */
 	size = round_page(size);
 
+	KASSERT(boundary >= PAGE_SIZE || boundary == 0);
+
 	/*
 	 * Allocate pages from the VM system.
-	 */
-	error = uvm_pglistalloc(size, low, high, alignment, boundary,
+	 * We accept boundaries < size, splitting in multiple segments
+	 * if needed. uvm_pglistalloc does not, so compute an appropriate
+         * boundary: next power of 2 >= size
+         */
+
+	if (boundary == 0)
+		uboundary = 0;
+	else {
+		uboundary = boundary;
+		while (uboundary < size)
+			uboundary = uboundary << 1;
+	}
+	error = uvm_pglistalloc(size, low, high, alignment, uboundary,
 	    &mlist, nsegs, (flags & BUS_DMA_NOWAIT) == 0);
 	if (error)
 		return (error);
@@ -186,10 +200,13 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 			panic("_bus_dmamem_alloc_range");
 		}
 #endif
-		if (curaddr == (lastaddr + PAGE_SIZE))
+		if (curaddr == (lastaddr + PAGE_SIZE) &&
+		    (lastaddr & boundary) == (curaddr & boundary)) {
 			segs[curseg].ds_len += PAGE_SIZE;
-		else {
+		} else {
 			curseg++;
+			if (curseg >= nsegs)
+				return EFBIG;
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}

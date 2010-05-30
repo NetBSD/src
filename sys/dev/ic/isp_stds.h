@@ -1,4 +1,4 @@
-/* $NetBSD: isp_stds.h,v 1.4 2010/01/03 02:47:09 mjacob Exp $ */
+/* $NetBSD: isp_stds.h,v 1.4.4.1 2010/05/30 05:17:23 rmind Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -155,7 +155,7 @@ typedef struct {
 #define	FCP_SNSLEN_VALID		0x02
 #define	FCP_RSPLEN_VALID		0x01
 
-#define FCP_MAX_RSPLEN 0x8
+#define FCP_MAX_RSPLEN			0x08
 /*
  * FCP Response Code Definitions
  * Source: NCITS T10, Project 1144D, Revision 08 (aka FCP2r08)

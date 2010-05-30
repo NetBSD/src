@@ -1,0 +1,6 @@
+#	$NetBSD: files.computexevb,v 1.1.4.2 2010/05/30 05:16:46 rmind Exp $
+#
+#	COMPUTEXEVB configuration info
+
+file	arch/evbsh3/computexevb/computexevb.c
+file	arch/evbsh3/computexevb/clock_machdep.c

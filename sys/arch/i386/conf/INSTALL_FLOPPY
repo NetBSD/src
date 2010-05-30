@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.8 2010/01/03 03:53:34 dholland Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.8.4.1 2010/05/30 05:16:53 rmind Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -749,7 +749,7 @@ cinclude "arch/i386/conf/INSTALL.local"
 #pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 

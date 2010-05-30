@@ -1,13 +1,13 @@
-#	$NetBSD: JORNADA820,v 1.16 2009/12/05 20:11:14 pooka Exp $
+#	$NetBSD: JORNADA820,v 1.16.4.1 2010/05/30 05:16:50 rmind Exp $
 #
 #	JORNADA -- Windows-CE based jornada 820
 #
 
-include	"arch/hpcarm/conf/std.hpcarm"
+include	"arch/hpcarm/conf/std.sa11x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.16.4.1 $"
 
 # estimated number of users
 maxusers	32
@@ -260,7 +260,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	cgd	2		# cryptographic disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss	4		# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 #pseudo-device	biconsdev 1		# build-in console device
 #pseudo-device	wsmux

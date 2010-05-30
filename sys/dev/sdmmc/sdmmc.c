@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.1 2009/04/21 03:00:30 nonaka Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.1.12.1 2010/05/30 05:17:43 rmind Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.1 2009/04/21 03:00:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.1.12.1 2010/05/30 05:17:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.1 2009/04/21 03:00:30 nonaka Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 
 #include <dev/sdmmc/sdmmc_ioreg.h>
 #include <dev/sdmmc/sdmmcchip.h>
@@ -85,6 +86,7 @@ CFATTACH_DECL_NEW(sdmmc, sizeof(struct sdmmc_softc),
 static void sdmmc_doattach(device_t);
 static void sdmmc_task_thread(void *);
 static void sdmmc_discover_task(void *);
+static void sdmmc_polling_card(void *);
 static void sdmmc_card_attach(struct sdmmc_softc *);
 static void sdmmc_card_detach(struct sdmmc_softc *, int);
 static int sdmmc_print(void *, const char *);
@@ -115,6 +117,7 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_sct = saa->saa_sct;
+	sc->sc_spi_sct = saa->saa_spi_sct;
 	sc->sc_sch = saa->saa_sch;
 	sc->sc_dmat = saa->saa_dmat;
 	sc->sc_clkmin = saa->saa_clkmin;
@@ -131,6 +134,12 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 			    "couldn't create dma map. (error=%d)\n", error);
 			return;
 		}
+	}
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_POLL_CARD_DET)) {
+		callout_init(&sc->sc_card_detect_ch, 0);
+		callout_reset(&sc->sc_card_detect_ch, hz,
+		    sdmmc_polling_card, sc);
 	}
 
 	SIMPLEQ_INIT(&sc->sf_head);
@@ -291,6 +300,29 @@ sdmmc_discover_task(void *arg)
 	}
 }
 
+static void
+sdmmc_polling_card(void *arg)
+{
+	struct sdmmc_softc *sc = (struct sdmmc_softc *)arg;
+	int card_detect;
+	int s;
+
+	s = splsdmmc();
+	card_detect = sdmmc_chip_card_detect(sc->sc_sct, sc->sc_sch);
+	if (card_detect) {
+		if (!ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
+			sdmmc_needs_discover(sc->sc_dev);
+		}
+	} else {
+		if (ISSET(sc->sc_flags, SMF_CARD_PRESENT)) {
+			sdmmc_needs_discover(sc->sc_dev);
+		}
+	}
+	splx(s);
+
+	callout_schedule(&sc->sc_card_detect_ch, hz);
+}
+
 /*
  * Called from process context when a card is present.
  */
@@ -325,6 +357,15 @@ sdmmc_card_attach(struct sdmmc_softc *sc)
 	}
 
 	/*
+	 * Initialize the I/O functions and memory cards.
+	 */
+	error = sdmmc_init(sc);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "init failed\n");
+		goto err;
+	}
+
+	/*
 	 * Set SD/MMC bus clock.
 	 */
 #ifdef SDMMC_DEBUG
@@ -337,15 +378,6 @@ sdmmc_card_attach(struct sdmmc_softc *sc)
 	}
 #endif
 	(void)sdmmc_chip_bus_clock(sc->sc_sct, sc->sc_sch, sc->sc_busclk);
-
-	/*
-	 * Initialize the I/O functions and memory cards.
-	 */
-	error = sdmmc_init(sc);
-	if (error) {
-		aprint_error_dev(sc->sc_dev, "init failed\n");
-		goto err;
-	}
 
 	SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
 		if (ISSET(sc->sc_flags, SMF_IO_MODE) && sf->number < 1)
@@ -475,13 +507,16 @@ sdmmc_enable(struct sdmmc_softc *sc)
 	/* XXX wait for card to power up */
 	sdmmc_delay(100000);
 
-	/* Initialize SD I/O card function(s). */
-	error = sdmmc_io_enable(sc);
-	if (error)
-		goto out;
+	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
+		/* Initialize SD I/O card function(s). */
+		error = sdmmc_io_enable(sc);
+		if (error)
+			goto out;
+	}
 
-	/* Initialize SD/MMC memory card(s). */
-	if (ISSET(sc->sc_flags, SMF_MEM_MODE))
+		/* Initialize SD/MMC memory card(s). */
+	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE) ||
+	    ISSET(sc->sc_flags, SMF_MEM_MODE))
 		error = sdmmc_mem_enable(sc);
 
 out:
@@ -495,8 +530,10 @@ sdmmc_disable(struct sdmmc_softc *sc)
 {
 	/* XXX complete commands if card is still present. */
 
-	/* Make sure no card is still selected. */
-	(void)sdmmc_select_card(sc, NULL);
+	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
+		/* Make sure no card is still selected. */
+		(void)sdmmc_select_card(sc, NULL);
+	}
 
 	/* Turn off bus power and clock. */
 	(void)sdmmc_chip_bus_width(sc->sc_sct, sc->sc_sch, 1);
@@ -566,9 +603,11 @@ static int
 sdmmc_scan(struct sdmmc_softc *sc)
 {
 
-	/* Scan for I/O functions. */
-	if (ISSET(sc->sc_flags, SMF_IO_MODE))
-		sdmmc_io_scan(sc);
+	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
+		/* Scan for I/O functions. */
+		if (ISSET(sc->sc_flags, SMF_IO_MODE))
+			sdmmc_io_scan(sc);
+	}
 
 	/* Scan for memory cards on the bus. */
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE))
@@ -593,9 +632,12 @@ sdmmc_init(struct sdmmc_softc *sc)
 
 	/* Initialize all identified card functions. */
 	SIMPLEQ_FOREACH(sf, &sc->sf_head, sf_list) {
-		if (ISSET(sc->sc_flags, SMF_IO_MODE) &&
-		    sdmmc_io_init(sc, sf) != 0) {
-			aprint_error_dev(sc->sc_dev, "i/o init failed\n");
+		if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
+			if (ISSET(sc->sc_flags, SMF_IO_MODE) &&
+			    sdmmc_io_init(sc, sf) != 0) {
+				aprint_error_dev(sc->sc_dev,
+				    "i/o init failed\n");
+			}
 		}
 
 		if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
@@ -622,7 +664,7 @@ sdmmc_delay(u_int usecs)
 }
 
 int
-sdmmc_app_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
+sdmmc_app_command(struct sdmmc_softc *sc, struct sdmmc_function *sf, struct sdmmc_command *cmd)
 {
 	struct sdmmc_command acmd;
 	int error;
@@ -633,12 +675,18 @@ sdmmc_app_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 
 	memset(&acmd, 0, sizeof(acmd));
 	acmd.c_opcode = MMC_APP_CMD;
-	acmd.c_arg = 0;
-	acmd.c_flags = SCF_CMD_AC | SCF_RSP_R1;
+	if (sf != NULL) {
+		acmd.c_arg = sf->rca << 16;
+		acmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R1;
+	} else {
+		acmd.c_arg = 0;
+		acmd.c_flags = SCF_CMD_BCR | SCF_RSP_R1 | SCF_RSP_SPI_R1;
+	}
 
 	error = sdmmc_mmc_command(sc, &acmd);
 	if (error == 0) {
-		if (!ISSET(MMC_R1(acmd.c_resp), MMC_R1_APP_CMD)) {
+		if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE) &&
+		    !ISSET(MMC_R1(acmd.c_resp), MMC_R1_APP_CMD)) {
 			/* Card does not support application commands. */
 			error = ENODEV;
 		} else {
@@ -659,13 +707,13 @@ sdmmc_mmc_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 {
 	int error;
 
-	DPRINTF(1,("sdmmc_mmc_command: cmd=%#x, arg=%#x, flags=%#x\n",
+	DPRINTF(1,("sdmmc_mmc_command: cmd=%d, arg=%#x, flags=%#x\n",
 	    cmd->c_opcode, cmd->c_arg, cmd->c_flags));
 
 	/* Don't lock */
 
 #if defined(DIAGNOSTIC) || defined(SDMMC_DEBUG)
-	if (cmd->c_data) {
+	if (cmd->c_data && !ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		if (sc->sc_card == NULL)
 			panic("%s: deselected card\n", DEVNAME(sc));
 	}
@@ -698,7 +746,7 @@ sdmmc_go_idle_state(struct sdmmc_softc *sc)
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_opcode = MMC_GO_IDLE_STATE;
-	cmd.c_flags = SCF_CMD_BC | SCF_RSP_R0;
+	cmd.c_flags = SCF_CMD_BC | SCF_RSP_R0 | SCF_RSP_SPI_R1;
 
 	(void)sdmmc_mmc_command(sc, &cmd);
 }
@@ -713,6 +761,9 @@ sdmmc_set_relative_addr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	int error;
 
 	/* Don't lock */
+
+	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
+		return EIO;
 
 	memset(&cmd, 0, sizeof(cmd));
 	if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
@@ -741,6 +792,9 @@ sdmmc_select_card(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 
 	/* Don't lock */
 
+	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
+		return EIO;
+
 	if (sc->sc_card == sf
 	 || (sf && sc->sc_card && sc->sc_card->rca == sf->rca)) {
 		sc->sc_card = sf;
@@ -764,11 +818,9 @@ sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 {
 	int i;
 
-	DPRINTF(1,("%s: cmd %u arg=%#x data=%p dlen=%d flags=%#x "
-	    "proc=\"%s\" (error %d)\n",
+	DPRINTF(1,("%s: cmd %u arg=%#x data=%p dlen=%d flags=%#x (error %d)\n",
 	    DEVNAME(sc), cmd->c_opcode, cmd->c_arg, cmd->c_data,
-	    cmd->c_datalen, cmd->c_flags, curproc ? curproc->p_comm : "",
-	    cmd->c_error));
+	    cmd->c_datalen, cmd->c_flags, cmd->c_error));
 
 	if (cmd->c_error || sdmmcdebug < 1)
 		return;
@@ -780,6 +832,66 @@ sdmmc_dump_command(struct sdmmc_softc *sc, struct sdmmc_command *cmd)
 	else if (ISSET(cmd->c_flags, SCF_RSP_PRESENT))
 		for (i = 0; i < 4; i++)
 			aprint_normal("%02x ", ((uint8_t *)cmd->c_resp)[i]);
+	else
+		aprint_normal("none");
 	aprint_normal("\n");
+}
+
+void
+sdmmc_dump_data(const char *title, void *ptr, size_t size)
+{
+	char buf[16];
+	uint8_t *p = ptr;
+	int i, j;
+
+	printf("sdmmc_dump_data: %s\n", title ? title : "");
+	printf("--------+--------------------------------------------------+------------------+\n");
+	printf("offset  | +0 +1 +2 +3 +4 +5 +6 +7  +8 +9 +a +b +c +d +e +f | data             |\n");
+	printf("--------+--------------------------------------------------+------------------+\n");
+	for (i = 0; i < (int)size; i++) {
+		if ((i % 16) == 0) {
+			printf("%08x| ", i);
+		} else if ((i % 16) == 8) {
+			printf(" ");
+		}
+
+		printf("%02x ", p[i]);
+		buf[i % 16] = p[i];
+
+		if ((i % 16) == 15) {
+			printf("| ");
+			for (j = 0; j < 16; j++) {
+				if (buf[j] >= 0x20 && buf[j] <= 0x7e) {
+					printf("%c", buf[j]);
+				} else {
+					printf(".");
+				}
+			}
+			printf(" |\n");
+		}
+	}
+	if ((i % 16) != 0) {
+		j = (i % 16);
+		for (; j < 16; j++) {
+			printf("   ");
+			if ((j % 16) == 8) {
+				printf(" ");
+			}
+		}
+
+		printf("| ");
+		for (j = 0; j < (i % 16); j++) {
+			if (buf[j] >= 0x20 && buf[j] <= 0x7e) {
+				printf("%c", buf[j]);
+			} else {
+				printf(".");
+			}
+		}
+		for (; j < 16; j++) {
+			printf(" ");
+		}
+		printf(" |\n");
+	}
+	printf("--------+--------------------------------------------------+------------------+\n");
 }
 #endif

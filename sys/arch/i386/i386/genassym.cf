@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.85.2.1 2010/04/26 02:43:34 rmind Exp $
+#	$NetBSD: genassym.cf,v 1.85.2.2 2010/05/30 05:16:53 rmind Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ endif
 include <machine/tlog.h>
 
 
-include <x86/busdefs.h>
+include <x86/bus.h>
 
 define	PAGE_SIZE		PAGE_SIZE
 
@@ -313,7 +313,6 @@ define	CPU_INFO_CC_SKEW	offsetof(struct cpu_info, ci_data.cpu_cc_skew)
 
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
 define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
-define	CPU_INFO_FEATURES	offsetof(struct cpu_info, ci_feature_flags)
 
 define	CPU_TLOG_OFFSET		offsetof(struct cpu_info, ci_tlog_offset)
 define	CPU_TLOG_BASE		offsetof(struct cpu_info, ci_tlog_base)
@@ -439,6 +438,8 @@ define	EV_COUNT		offsetof(struct evcnt, ev_count)
 define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
+
+define	BST_TYPE		offsetof(struct bus_space_tag, bst_type)
 
 define	L1_SHIFT		L1_SHIFT
 define	L2_SHIFT		L2_SHIFT

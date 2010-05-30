@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.298 2010/03/11 04:00:36 mrg Exp $	*/
+/*	$NetBSD: cd.c,v 1.298.2.1 2010/05/30 05:17:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.298 2010/03/11 04:00:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.298.2.1 2010/05/30 05:17:42 rmind Exp $");
 
 #include "rnd.h"
 
@@ -510,6 +510,12 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct scsipi_periph *periph = cd->sc_periph;
 	struct scsipi_adapter *adapt = periph->periph_channel->chan_adapter;
 	int part = CDPART(dev);
+	int silent = 0;
+
+	if (part == RAW_PART && ((cd->sc_dk.dk_label->d_npartitions == 0) ||
+	    (part < cd->sc_dk.dk_label->d_npartitions &&
+	    cd->sc_dk.dk_label->d_partitions[part].p_fstype == FS_UNUSED)))
+		silent = XS_CTL_SILENT;
 
 	mutex_enter(&cd->sc_lock);
 
@@ -526,14 +532,14 @@ cdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	if (cd->sc_dk.dk_openmask == 0) {
 		/* synchronise caches on last close */
-		cdcachesync(periph, 0);
+		cdcachesync(periph, silent);
 
 		/* drain outstanding calls */
 		scsipi_wait_drain(periph);
 
 		scsipi_prevent(periph, SPAMR_ALLOW,
 		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
-		    XS_CTL_IGNORE_NOT_READY);
+		    XS_CTL_IGNORE_NOT_READY | silent);
 		periph->periph_flags &= ~PERIPH_OPEN;
 
 		scsipi_wait_drain(periph);
@@ -1270,6 +1276,7 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		case ODIOCEJECT:
 		case DIOCEJECT:
 		case DIOCCACHESYNC:
+		case DIOCTUR:
 		case SCIOCIDENTIFY:
 		case OSCIOCIDENTIFY:
 		case SCIOCCOMMAND:
@@ -1396,6 +1403,15 @@ cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		free(newlabel, M_TEMP);
 		return error;
 #endif
+
+	case DIOCTUR: {
+		/* test unit ready */
+		error = scsipi_test_unit_ready(cd->sc_periph, XS_CTL_SILENT);
+		*((int*)addr) = (error == 0);
+		if (error == ENODEV || error == EIO || error == 0)
+			return 0;			
+		return error;
+	}
 
 	case CDIOCPLAYTRACKS: {
 		/* PLAY_MSF command */
@@ -1855,18 +1871,18 @@ cd_size(struct cd_softc *cd, int flags)
 	u_long size;
 	int error;
 
-	/* set up fake values */
-	blksize = 2048;
-	size    = 400000;
-
-	/* if this function bounces with an error return fake value */
 	error = read_cd_capacity(cd->sc_periph, &blksize, &size);
 	if (error)
-		return size;
+		goto error;
 
 	if (blksize != 2048) {
-		if (cd_setblksize(cd) == 0)
+		if (cd_setblksize(cd) == 0) {
 			blksize = 2048;
+			error = read_cd_capacity(cd->sc_periph,
+			    &blksize, &size);
+			if (error)
+				goto error;
+		}
 	}
 	cd->params.blksize     = blksize;
 	cd->params.disksize    = size;
@@ -1874,6 +1890,22 @@ cd_size(struct cd_softc *cd, int flags)
 
 	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
 	    ("cd_size: %u %lu\n", blksize, size));
+
+	return size;
+
+error:
+	/*
+	 * Something went wrong - return fake values
+	 *
+	 * XXX - what is this good for? Should return 0 and let the caller deal
+	 */
+	cd->params.blksize     = 2048;
+	cd->params.disksize    = 400000;
+	cd->params.disksize512 = ((u_int64_t)cd->params.disksize
+				  * cd->params.blksize) / DEV_BSIZE;
+
+	SC_DEBUG(cd->sc_periph, SCSIPI_DB2,
+	    ("cd_size: failed, fake values %u %lu\n", blksize, size));
 
 	return size;
 }

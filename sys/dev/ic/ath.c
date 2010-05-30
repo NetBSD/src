@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.108 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: ath.c,v 1.108.4.1 2010/05/30 05:17:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.108 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.108.4.1 2010/05/30 05:17:20 rmind Exp $");
 #endif
 
 /*
@@ -648,7 +648,7 @@ ath_detach(struct ath_softc *sc)
 
 	s = splnet();
 	ath_stop(ifp, 1);
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	/*
 	 * NB: the order of these is important:
 	 * o call the 802.11 layer before detaching the hal to
@@ -1355,8 +1355,7 @@ ath_start(struct ifnet *ifp)
 			}
 			ifp->if_opackets++;
 
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			/*
 			 * Encapsulate the packet in prep for transmission.
 			 */
@@ -3172,8 +3171,8 @@ rx_accept:
 			sc->sc_rx_th.wr_antnoise = nf;
 			sc->sc_rx_th.wr_antenna = ds->ds_rxstat.rs_antenna;
 
-			bpf_ops->bpf_mtap2(sc->sc_drvbpf,
-			    &sc->sc_rx_th, sc->sc_rx_th_len, m);
+			bpf_mtap2(sc->sc_drvbpf, &sc->sc_rx_th,
+			    sc->sc_rx_th_len, m);
 		}
 
 		if (ds->ds_rxstat.rs_status & rxerr_tap) {
@@ -3931,8 +3930,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	if (IFF_DUMPPKTS(sc, ATH_DEBUG_XMIT))
 		ieee80211_dump_pkt(mtod(m0, void *), m0->m_len,
 			sc->sc_hwmap[txrate].ieeerate, -1);
-	if (ic->ic_rawbpf)
-		bpf_ops->bpf_mtap(ic->ic_rawbpf, m0);
+	bpf_mtap3(ic->ic_rawbpf, m0);
 	if (sc->sc_drvbpf) {
 		u_int64_t tsf = ath_hal_gettsf64(ah);
 
@@ -3946,8 +3944,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		sc->sc_tx_th.wt_txpower = ni->ni_txpower;
 		sc->sc_tx_th.wt_antenna = sc->sc_txantenna;
 
-		bpf_ops->bpf_mtap2(sc->sc_drvbpf,
-		    &sc->sc_tx_th, sc->sc_tx_th_len, m0);
+		bpf_mtap2(sc->sc_drvbpf, &sc->sc_tx_th, sc->sc_tx_th_len, m0);
 	}
 
 	/*
@@ -5380,7 +5377,7 @@ ath_bpfattach(struct ath_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_if;
 
-	bpf_ops->bpf_attach(ifp, DLT_IEEE802_11_RADIO,
+	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
 	    sizeof(struct ieee80211_frame) + sizeof(sc->sc_tx_th),
 	    &sc->sc_drvbpf);
 

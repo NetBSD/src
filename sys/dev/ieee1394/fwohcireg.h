@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.17 2007/11/05 19:08:57 kiyohara Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.17.42.1 2010/05/30 05:17:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -32,10 +32,13 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
- * $FreeBSD: src/sys/dev/firewire/fwohcireg.h,v 1.23 2007/04/30 14:06:30 simokawa Exp $
+ *
+ * $FreeBSD: src/sys/dev/firewire/fwohcireg.h,v 1.24 2009/02/12 03:05:42 sbruno Exp $
  *
  */
+#ifndef _FWOHCIREG_H_
+#define _FWOHCIREG_H_
+
 #define		PCI_CBMEM		PCIR_BAR(0)
 
 #define		FW_VENDORID_NATSEMI	0x100B
@@ -83,16 +86,12 @@
 
 #define PCI_INTERFACE_OHCI	0x10
 
-#if defined(__FreeBSD__)
-#define FW_OHCI_BASE_REG	0x10
-#elif defined(__NetBSD__)
 #define PCI_OHCI_MAP_REGISTER	0x10
-#endif
 
-#define		OHCI_DMA_ITCH		0x20
-#define		OHCI_DMA_IRCH		0x20
+#define	OHCI_DMA_ITCH		0x20
+#define	OHCI_DMA_IRCH		0x20
 
-#define		OHCI_MAX_DMA_CH		(0x4 + OHCI_DMA_ITCH + OHCI_DMA_IRCH)
+#define	OHCI_MAX_DMA_CH		(0x4 + OHCI_DMA_ITCH + OHCI_DMA_IRCH)
 
 
 typedef uint32_t 	fwohcireg_t;
@@ -190,7 +189,7 @@ struct fwohcidb {
 
 #define FWOHCIEV_MASK 0x1f
 
-struct ohci_dma{
+struct ohci_dma {
 	fwohcireg_t	cntl;
 
 #define	OHCI_CNTL_CYCMATCH_S	(0x1 << 31)
@@ -217,7 +216,7 @@ struct ohci_dma{
 	fwohcireg_t	dummy3;
 };
 
-struct ohci_itdma{
+struct ohci_itdma {
 	fwohcireg_t	cntl;
 	fwohcireg_t	cntl_clr;
 	fwohcireg_t	dummy0;
@@ -268,20 +267,20 @@ struct ohci_registers {
 #define	FWOHCI_INTSTATCLR	0x84
 #define	FWOHCI_INTMASK		0x88
 #define	FWOHCI_INTMASKCLR	0x8c
-	fwohcireg_t	int_stat;   /*       0x80 */
-	fwohcireg_t	int_clear;  /*       0x84 */
-	fwohcireg_t	int_mask;   /*       0x88 */
-	fwohcireg_t	int_mask_clear;   /*       0x8c */
-	fwohcireg_t	it_int_stat;   /*       0x90 */
-	fwohcireg_t	it_int_clear;  /*       0x94 */
-	fwohcireg_t	it_int_mask;   /*       0x98 */
-	fwohcireg_t	it_mask_clear;   /*       0x9c */
-	fwohcireg_t	ir_int_stat;   /*       0xa0 */
-	fwohcireg_t	ir_int_clear;  /*       0xa4 */
-	fwohcireg_t	ir_int_mask;   /*       0xa8 */
-	fwohcireg_t	ir_mask_clear;   /*       0xac */
-	fwohcireg_t	dummy5[11];	/* dummy 0xb0-d8 */
-	fwohcireg_t	fairness;   /* fairness control      0xdc */
+	fwohcireg_t	int_stat;	/*			0x80 */
+	fwohcireg_t	int_clear;	/*			0x84 */
+	fwohcireg_t	int_mask;	/*			0x88 */
+	fwohcireg_t	int_mask_clear;	/*			0x8c */
+	fwohcireg_t	it_int_stat;	/*			0x90 */
+	fwohcireg_t	it_int_clear;	/*			0x94 */
+	fwohcireg_t	it_int_mask;	/*			0x98 */
+	fwohcireg_t	it_mask_clear;	/*			0x9c */
+	fwohcireg_t	ir_int_stat;	/*			0xa0 */
+	fwohcireg_t	ir_int_clear;	/*			0xa4 */
+	fwohcireg_t	ir_int_mask;	/*			0xa8 */
+	fwohcireg_t	ir_mask_clear;	/*			0xac */
+	fwohcireg_t	dummy5[11];	/* dummy		0xb0-d8 */
+	fwohcireg_t	fairness;	/* fairness control	0xdc */
 	fwohcireg_t	link_cntl;		/* Chip control 0xe0*/
 	fwohcireg_t	link_cntl_clr;	/* Chip control clear 0xe4*/
 #define FWOHCI_NODEID	0xe8
@@ -334,7 +333,8 @@ struct ohci_registers {
 	struct ohci_dma dma_irch[0x20];
 };
 
-struct fwohcidb_tr{
+struct fwohcidb_tr {
+	int idx;
 	STAILQ_ENTRY(fwohcidb_tr) link;
 	struct fw_xfer *xfer;
 	struct fwohcidb *db;
@@ -347,8 +347,8 @@ struct fwohcidb_tr{
 /*
  * OHCI info structure.
  */
-struct fwohci_txpkthdr{
-	union{
+struct fwohci_txpkthdr {
+	union {
 		uint32_t ld[4];
 		struct {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -362,7 +362,7 @@ struct fwohci_txpkthdr{
 				 :8,
 				 spd:16; /* XXX include reserved fields */
 #endif
-		}common;
+		} common;
 		struct {
 #if BYTE_ORDER == BIG_ENDIAN
 			uint32_t :8,
@@ -382,11 +382,11 @@ struct fwohci_txpkthdr{
 				 :8;
 #endif
 			BIT16x2(dst, );
-		}asycomm;
+		} asycomm;
 		struct {
 #if BYTE_ORDER == BIG_ENDIAN
 			uint32_t :13,
-			         spd:3,
+				 spd:3,
 				 chtag:8,
 				 tcode:4,
 				 sy:4;
@@ -394,14 +394,14 @@ struct fwohci_txpkthdr{
 			uint32_t sy:4,
 				 tcode:4,
 				 chtag:8,
-			         spd:3,
+				 spd:3,
 				 :13;
 #endif
 			BIT16x2(len, );
-		}stream;
-	}mode;
+		} stream;
+	} mode;
 };
-struct fwohci_trailer{
+struct fwohci_trailer {
 #if BYTE_ORDER == BIG_ENDIAN
 	uint32_t stat:16,
 		  time:16;
@@ -417,38 +417,39 @@ struct fwohci_trailer{
 #define	OHCI_CNTL_PHYPKT	(0x1 << 10)
 #define	OHCI_CNTL_SID		(0x1 << 9)
 
+/*
+ * defined in OHCI 1.1
+ * chapter 6.1
+ */
 #define OHCI_INT_DMA_ATRQ	(0x1 << 0)
 #define OHCI_INT_DMA_ATRS	(0x1 << 1)
 #define OHCI_INT_DMA_ARRQ	(0x1 << 2)
 #define OHCI_INT_DMA_ARRS	(0x1 << 3)
 #define OHCI_INT_DMA_PRRQ	(0x1 << 4)
 #define OHCI_INT_DMA_PRRS	(0x1 << 5)
-#define OHCI_INT_DMA_IT	(0x1 << 6)
-#define OHCI_INT_DMA_IR	(0x1 << 7)
-#define OHCI_INT_PW_ERR	(0x1 << 8)
-#define OHCI_INT_LR_ERR	(0x1 << 9)
-
+#define OHCI_INT_DMA_IT		(0x1 << 6)
+#define OHCI_INT_DMA_IR		(0x1 << 7)
+#define OHCI_INT_PW_ERR		(0x1 << 8)
+#define OHCI_INT_LR_ERR		(0x1 << 9)
 #define OHCI_INT_PHY_SID	(0x1 << 16)
 #define OHCI_INT_PHY_BUS_R	(0x1 << 17)
-
 #define OHCI_INT_REG_FAIL	(0x1 << 18)
-
 #define OHCI_INT_PHY_INT	(0x1 << 19)
 #define OHCI_INT_CYC_START	(0x1 << 20)
 #define OHCI_INT_CYC_64SECOND	(0x1 << 21)
 #define OHCI_INT_CYC_LOST	(0x1 << 22)
 #define OHCI_INT_CYC_ERR	(0x1 << 23)
-
 #define OHCI_INT_ERR		(0x1 << 24)
 #define OHCI_INT_CYC_LONG	(0x1 << 25)
 #define OHCI_INT_PHY_REG	(0x1 << 26)
-
 #define OHCI_INT_EN		(0x1 << 31)
 
-#define IP_CHANNELS             0x0234
+#define IP_CHANNELS		0x0234
 #define FWOHCI_MAXREC		2048
 
 #define	OHCI_ISORA		0x02
 #define	OHCI_ISORB		0x04
 
 #define FWOHCITCODE_PHY		0xe
+
+#endif	/* _FWOHCIREG_H_ */

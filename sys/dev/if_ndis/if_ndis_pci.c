@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.17 2009/10/20 19:04:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pci.c,v 1.17.4.1 2010/05/30 05:17:28 rmind Exp $");
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pci.c,v 1.8.2.3 2005/03/31 04:24:36 wpaul Exp $");
 #endif
@@ -276,7 +276,7 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 				}
 				sc->ndis_res_io->res_base = base;
 				sc->ndis_res_io->res_size = size;
-				sc->ndis_res_io->res_tag  = X86_BUS_SPACE_IO;
+				sc->ndis_res_io->res_tag  = x86_bus_space_io;
 				bus_space_map(sc->ndis_res_io->res_tag,
 					 sc->ndis_res_io->res_base,
 					 sc->ndis_res_io->res_size,
@@ -303,7 +303,7 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 					}
 					sc->ndis_res_altmem->res_base = base;
 					sc->ndis_res_altmem->res_size = size;
-					sc->ndis_res_altmem->res_tag  = X86_BUS_SPACE_MEM;
+					sc->ndis_res_altmem->res_tag  = x86_bus_space_mem;
 					
 					
 					if(bus_space_map(sc->ndis_res_altmem->res_tag,
@@ -321,7 +321,7 @@ void ndis_attach_pci(device_t parent, device_t self, void *aux)
 					}
 					sc->ndis_res_mem->res_base = base;
 					sc->ndis_res_mem->res_size = size;
-					sc->ndis_res_mem->res_tag  = X86_BUS_SPACE_MEM;
+					sc->ndis_res_mem->res_tag  = x86_bus_space_mem;
 					
 					if(bus_space_map(sc->ndis_res_mem->res_tag,
 						sc->ndis_res_mem->res_base,

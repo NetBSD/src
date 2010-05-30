@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.49 2009/03/14 21:04:02 dsl Exp $ */
+/* $NetBSD: apecs.c,v 1.49.4.1 2010/05/30 05:16:35 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.49 2009/03/14 21:04:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.49.4.1 2010/05/30 05:16:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,23 +97,22 @@ __KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.49 2009/03/14 21:04:02 dsl Exp $");
 #include <alpha/pci/pci_1000.h>
 #endif
 
-int	apecsmatch(struct device *, struct cfdata *, void *);
-void	apecsattach(struct device *, struct device *, void *);
+static int apecsmatch(device_t, cfdata_t, void *);
+static void apecsattach(device_t, device_t, void *);
 
-CFATTACH_DECL(apecs, sizeof(struct apecs_softc),
-    apecsmatch, apecsattach, NULL, NULL);
+CFATTACH_DECL_NEW(apecs, 0, apecsmatch, apecsattach, NULL, NULL);
 
 extern struct cfdriver apecs_cd;
 
-int	apecs_bus_get_window(int, int,
-	    struct alpha_bus_space_translation *);
+static int apecs_bus_get_window(int, int,
+    struct alpha_bus_space_translation *);
 
 /* There can be only one. */
 int apecsfound;
 struct apecs_config apecs_configuration;
 
-int
-apecsmatch(struct device *parent, struct cfdata *match, void *aux)
+static int
+apecsmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -163,10 +162,9 @@ apecs_init(struct apecs_config *acp, int mallocsafe)
 	acp->ac_initted = 1;
 }
 
-void
-apecsattach(struct device *parent, struct device *self, void *aux)
+static void
+apecsattach(device_t parent, device_t self, void *aux)
 {
-	struct apecs_softc *sc = (struct apecs_softc *)self;
 	struct apecs_config *acp;
 	struct pcibus_attach_args pba;
 
@@ -177,7 +175,7 @@ apecsattach(struct device *parent, struct device *self, void *aux)
 	 * set up the chipset's info; done once at console init time
 	 * (maybe), but doesn't hurt to do twice.
 	 */
-	acp = sc->sc_acp = &apecs_configuration;
+	acp = &apecs_configuration;
 	apecs_init(acp, 1);
 
 	apecs_dma_init(acp);
@@ -237,7 +235,7 @@ apecsattach(struct device *parent, struct device *self, void *aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
-int
+static int
 apecs_bus_get_window(int type, int window, struct alpha_bus_space_translation *abst)
 {
 	struct apecs_config *acp = &apecs_configuration;

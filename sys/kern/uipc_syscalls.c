@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.140 2010/01/21 04:40:22 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.140.4.1 2010/05/30 05:17:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.140 2010/01/21 04:40:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.140.4.1 2010/05/30 05:17:58 rmind Exp $");
 
 #include "opt_pipe.h"
 
@@ -463,26 +463,19 @@ int
 do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		register_t *retsize)
 {
-	struct uio	auio;
-	int		i, len, error, iovlen;
+	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov = NULL;
 	struct mbuf	*to, *control;
 	struct socket	*so;
-	struct iovec	*tiov;
-	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov;
-	struct iovec	*ktriov = NULL;
+	struct uio	auio;
+	size_t		len, iovsz;
+	int		i, error;
 
 	ktrkuser("msghdr", mp, sizeof *mp);
 
-	/* If the caller passed us stuff in mbufs, we must free them */
-	if (mp->msg_flags & MSG_NAMEMBUF)
-		to = mp->msg_name;
-	else
-		to = NULL;
-
-	if (mp->msg_flags & MSG_CONTROLMBUF)
-		control = mp->msg_control;
-	else
-		control = NULL;
+	/* If the caller passed us stuff in mbufs, we must free them. */
+	to = (mp->msg_flags & MSG_NAMEMBUF) ? mp->msg_name : NULL;
+	control = (mp->msg_flags & MSG_CONTROLMBUF) ? mp->msg_control : NULL;
+	iovsz = mp->msg_iovlen * sizeof(struct iovec);
 
 	if (mp->msg_flags & MSG_IOVUSRSPACE) {
 		if ((unsigned int)mp->msg_iovlen > UIO_SMALLIOV) {
@@ -490,12 +483,10 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 				error = EMSGSIZE;
 				goto bad;
 			}
-			iov = malloc(sizeof(struct iovec) * mp->msg_iovlen,
-			    M_IOV, M_WAITOK);
+			iov = kmem_alloc(iovsz, KM_SLEEP);
 		}
 		if (mp->msg_iovlen != 0) {
-			error = copyin(mp->msg_iov, iov,
-			    (size_t)(mp->msg_iovlen * sizeof(struct iovec)));
+			error = copyin(mp->msg_iov, iov, iovsz);
 			if (error)
 				goto bad;
 		}
@@ -511,13 +502,6 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	auio.uio_vmspace = l->l_proc->p_vmspace;
 
 	for (i = 0, tiov = mp->msg_iov; i < mp->msg_iovlen; i++, tiov++) {
-#if 0
-		/* cannot happen; iov_len is unsigned */
-		if (tiov->iov_len < 0) {
-			error = EINVAL;
-			goto bad;
-		}
-#endif
 		/*
 		 * Writes return ssize_t because -1 is returned on error.
 		 * Therefore, we must restrict the length to SSIZE_MAX to
@@ -551,9 +535,8 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 	}
 
 	if (ktrpoint(KTR_GENIO)) {
-		iovlen = auio.uio_iovcnt * sizeof(struct iovec);
-		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		memcpy(ktriov, auio.uio_iov, iovlen);
+		ktriov = kmem_alloc(iovsz, KM_SLEEP);
+		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
 
 	if ((error = fd_getsock(s, &so)) != 0)
@@ -587,11 +570,11 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 bad:
 	if (ktriov != NULL) {
 		ktrgeniov(s, UIO_WRITE, ktriov, *retsize, error);
-		free(ktriov, M_TEMP);
+		kmem_free(ktriov, iovsz);
 	}
 
  	if (iov != aiov)
-		free(iov, M_IOV);
+ 		kmem_free(iov, iovsz);
 	if (to)
 		m_freem(to);
 	if (control)
@@ -771,12 +754,11 @@ int
 do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
     struct mbuf **control, register_t *retsize)
 {
-	struct uio	auio;
-	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov;
-	struct iovec	*tiov;
-	int		i, len, error, iovlen;
+	struct iovec	aiov[UIO_SMALLIOV], *iov = aiov, *tiov, *ktriov;
 	struct socket	*so;
-	struct iovec	*ktriov;
+	struct uio	auio;
+	size_t		len, iovsz;
+	int		i, error;
 
 	ktrkuser("msghdr", mp, sizeof *mp);
 
@@ -787,18 +769,18 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 	if ((error = fd_getsock(s, &so)) != 0)
 		return (error);
 
+	iovsz = mp->msg_iovlen * sizeof(struct iovec);
+
 	if (mp->msg_flags & MSG_IOVUSRSPACE) {
 		if ((unsigned int)mp->msg_iovlen > UIO_SMALLIOV) {
 			if ((unsigned int)mp->msg_iovlen > IOV_MAX) {
 				error = EMSGSIZE;
 				goto out;
 			}
-			iov = malloc(sizeof(struct iovec) * mp->msg_iovlen,
-			    M_IOV, M_WAITOK);
+			iov = kmem_alloc(iovsz, KM_SLEEP);
 		}
 		if (mp->msg_iovlen != 0) {
-			error = copyin(mp->msg_iov, iov,
-			    (size_t)(mp->msg_iovlen * sizeof(struct iovec)));
+			error = copyin(mp->msg_iov, iov, iovsz);
 			if (error)
 				goto out;
 		}
@@ -814,13 +796,6 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 
 	tiov = auio.uio_iov;
 	for (i = 0; i < mp->msg_iovlen; i++, tiov++) {
-#if 0
-		/* cannot happen iov_len is unsigned */
-		if (tiov->iov_len < 0) {
-			error = EINVAL;
-			goto out;
-		}
-#endif
 		/*
 		 * Reads return ssize_t because -1 is returned on error.
 		 * Therefore we must restrict the length to SSIZE_MAX to
@@ -835,9 +810,8 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 
 	ktriov = NULL;
 	if (ktrpoint(KTR_GENIO)) {
-		iovlen = auio.uio_iovcnt * sizeof(struct iovec);
-		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		memcpy(ktriov, auio.uio_iov, iovlen);
+		ktriov = kmem_alloc(iovsz, KM_SLEEP);
+		memcpy(ktriov, auio.uio_iov, iovsz);
 	}
 
 	len = auio.uio_resid;
@@ -853,7 +827,7 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 
 	if (ktriov != NULL) {
 		ktrgeniov(s, UIO_READ, ktriov, len, error);
-		free(ktriov, M_TEMP);
+		kmem_free(ktriov, iovsz);
 	}
 
 	if (error != 0) {
@@ -866,7 +840,7 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 	}
  out:
 	if (iov != aiov)
-		free(iov, M_TEMP);
+		kmem_free(iov, iovsz);
 	fd_putfile(s);
 	return (error);
 }

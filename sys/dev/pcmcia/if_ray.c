@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.78 2010/01/19 22:07:43 pooka Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.78.4.1 2010/05/30 05:17:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.78 2010/01/19 22:07:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.78.4.1 2010/05/30 05:17:41 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -1228,7 +1228,7 @@ ray_intr_start(struct ray_softc *sc)
 				m0->m_len -=  sizeof(struct ieee80211_frame);
 				m0->m_pkthdr.len -=  sizeof(struct ieee80211_frame);
 			}
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+			bpf_mtap(ifp, m0);
 			if (ifp->if_flags & IFF_LINK0) {
 				m0->m_data -= sizeof(struct ieee80211_frame);
 				m0->m_len +=  sizeof(struct ieee80211_frame);
@@ -1513,8 +1513,7 @@ done:
 		eh = (struct ether_header *)(frame + 1);
 	}
 	m_adj(m, (char *)eh - (char *)frame);
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 	/* XXX doesn't appear to be included m->m_flags |= M_HASFCS; */
 	ifp->if_ipackets++;
 	(*ifp->if_input)(ifp, m);

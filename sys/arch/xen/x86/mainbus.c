@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.10 2010/02/15 23:53:56 dyoung Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.10.2.1 2010/05/30 05:17:14 rmind Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10 2010/02/15 23:53:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.10.2.1 2010/05/30 05:17:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,8 +201,8 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 #if NIPMI > 0
 	memset(&mba.mba_ipmi, 0, sizeof(mba.mba_ipmi));
-	mba.mba_ipmi.iaa_iot = X86_BUS_SPACE_IO;
-	mba.mba_ipmi.iaa_memt = X86_BUS_SPACE_MEM;
+	mba.mba_ipmi.iaa_iot = x86_bus_space_io;
+	mba.mba_ipmi.iaa_memt = x86_bus_space_mem;
 	if (ipmi_probe(&mba.mba_ipmi))
 		config_found_ia(self, "ipmibus", &mba.mba_ipmi, 0);
 #endif

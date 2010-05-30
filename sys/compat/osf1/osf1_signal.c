@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.35 2008/04/24 18:39:23 ad Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.35.24.1 2010/05/30 05:17:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.35 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.35.24.1 2010/05/30 05:17:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.35 2008/04/24 18:39:23 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 
 #include <sys/syscallargs.h>
 

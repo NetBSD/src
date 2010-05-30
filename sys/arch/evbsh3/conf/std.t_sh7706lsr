@@ -1,0 +1,23 @@
+#       $NetBSD: std.t_sh7706lsr,v 1.1.4.2 2010/05/30 05:16:47 rmind Exp $
+#
+# standard NetBSD/evbsh3 for SH7706LSR options
+
+# Pull in SH7706LSR config definitions.
+include "arch/evbsh3/conf/files.t_sh7706lan"
+
+options 	EXEC_COFF
+
+options 	SH3
+options 	SH7706			# 120MHz
+options 	PCLOCK=40000000		# 40.000MHz
+
+options 	IOM_ROM_BEGIN=0x00000000
+options 	IOM_ROM_SIZE=0x00080000 # 512KiB
+options 	IOM_RAM_BEGIN=0x0c000000
+options 	IOM_RAM_SIZE=0x02000000 # 32MiB
+
+options 	DONT_INIT_BSC
+
+options 	EVBSH3_BOARDTYPE=t_sh7706lsr
+makeoptions	BOARDTYPE="t_sh7706lsr"
+makeoptions	BOARDMKFRAG="${THISSH3}/conf/mk.t_sh7706lan"

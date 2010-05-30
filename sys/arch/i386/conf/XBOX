@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.21 2010/03/06 21:12:04 plunky Exp $
+# $NetBSD: XBOX,v 1.21.2.1 2010/05/30 05:16:53 rmind Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -56,11 +56,11 @@ options 	INET		# IP + ICMP + TCP + UDP
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options 	MIIVERBOSE	# verbose PHY autoconfig messages
-options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	MIIVERBOSE	# verbose PHY autoconfig messages
+#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	NFS_BOOT_DHCP
 
@@ -261,7 +261,7 @@ pseudo-device	swcrypto	# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	cgd		4	# cryptographic disk devices
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files

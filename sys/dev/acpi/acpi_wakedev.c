@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_wakedev.c,v 1.6 2010/03/09 18:15:22 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.6.2.1 2010/05/30 05:17:17 rmind Exp $ */
 
 /*-
- * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,12 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.6 2010/03/09 18:15:22 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.6.2.1 2010/05/30 05:17:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
-#include <sys/queue.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 
@@ -43,20 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.6 2010/03/09 18:15:22 jruoho Exp 
 #define _COMPONENT		   ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME		   ("acpi_wakedev")
 
-struct acpi_wakedev {
-	struct acpi_devnode	  *aw_node;
-	struct sysctllog	  *aw_sysctllog;
-	int			   aw_enabled;
-
-	TAILQ_ENTRY(acpi_wakedev)  aw_list;
-};
-
-struct acpi_wakedev;
-static int acpi_wakedev_node = -1;
-
-static TAILQ_HEAD(, acpi_wakedev) acpi_wakedevlist =
-    TAILQ_HEAD_INITIALIZER(acpi_wakedevlist);
-
 static const char * const acpi_wakedev_default[] = {
 	"PNP0C0C",	/* power button */
 	"PNP0C0E",	/* sleep button */
@@ -65,127 +49,76 @@ static const char * const acpi_wakedev_default[] = {
 	NULL,
 };
 
-static void	acpi_wakedev_sysctl_add(struct acpi_wakedev *);
-static bool	acpi_wakedev_add(struct acpi_softc *, struct acpi_devnode *);
-static void	acpi_wakedev_print(struct acpi_wakedev *);
+static const struct sysctlnode *rnode = NULL;
+
 static void	acpi_wakedev_prepare(struct acpi_devnode *, int, int);
+static void	acpi_wakedev_gpe(struct acpi_devnode *, int);
 
-SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.wake subtree setup")
+SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 {
-	const struct sysctlnode *rnode;
 	int err;
 
-	err = sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "hw", NULL,
-	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
-	if (err)
-		return;
 	err = sysctl_createv(NULL, 0, NULL, &rnode,
-	    CTLFLAG_PERMANENT,
-	    CTLTYPE_NODE, "wake", NULL,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_HW, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(NULL, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi",
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	err = sysctl_createv(NULL, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE,
+	    "wake", SYSCTL_DESCR("ACPI device wake-up"),
 	    NULL, 0, NULL, 0,
-	    CTL_HW, CTL_CREATE, CTL_EOL);
-	if (err)
-		return;
-	acpi_wakedev_node = rnode->sysctl_num;
+	    CTL_CREATE, CTL_EOL);
+
+	if (err != 0)
+		goto fail;
+
+	return;
+
+fail:
+	rnode = NULL;
 }
 
-static void
-acpi_wakedev_sysctl_add(struct acpi_wakedev *aw)
+void
+acpi_wakedev_add(struct acpi_devnode *ad)
 {
 	int err;
 
-	if (acpi_wakedev_node == -1)
+	KASSERT(ad != NULL && ad->ad_root != NULL);
+	KASSERT((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0);
+
+	ad->ad_wake = 0;
+
+	if (acpi_match_hid(ad->ad_devinfo, acpi_wakedev_default))
+		ad->ad_wake = 1;
+
+	if (rnode == NULL)
 		return;
 
-	err = sysctl_createv(&aw->aw_sysctllog, 0, NULL, NULL,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, aw->aw_node->ad_name,
-	    NULL, NULL, 0, &aw->aw_enabled, 0,
-	    CTL_HW, acpi_wakedev_node, CTL_CREATE, CTL_EOL);
-	if (err)
-		aprint_error("%s: sysctl_createv(hw.wake.%s) failed (%d)\n",
-		    __func__, aw->aw_node->ad_name, err);
-}
+	err = sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, ad->ad_name,
+	    NULL, NULL, 0, &ad->ad_wake, 0,
+	    CTL_CREATE, CTL_EOL);
 
-static bool
-acpi_wakedev_add(struct acpi_softc *sc, struct acpi_devnode *ad)
-{
-	struct acpi_wakedev *aw;
-	ACPI_HANDLE hdl;
-
-	if (ACPI_FAILURE(AcpiGetHandle(ad->ad_handle, "_PRW", &hdl)))
-		return false;
-
-	aw = kmem_alloc(sizeof(*aw), KM_SLEEP);
-	if (aw == NULL) {
-		aprint_error("%s: kmem_alloc failed\n", __func__);
-		return false;
-	}
-	aw->aw_node = ad;
-	aw->aw_sysctllog = NULL;
-	if (acpi_match_hid(ad->ad_devinfo, acpi_wakedev_default))
-		aw->aw_enabled = 1;
-	else
-		aw->aw_enabled = 0;
-
-	TAILQ_INSERT_TAIL(&acpi_wakedevlist, aw, aw_list);
-
-	acpi_wakedev_sysctl_add(aw);
-
-	return true;
-}
-
-static void
-acpi_wakedev_print(struct acpi_wakedev *aw)
-{
-	aprint_debug(" %s", aw->aw_node->ad_name);
-}
-
-int
-acpi_wakedev_scan(struct acpi_softc *sc)
-{
-	struct acpi_devnode *ad;
-	struct acpi_wakedev *aw;
-	ACPI_DEVICE_INFO *di;
-	int count = 0;
-
-#define ACPI_STA_DEV_VALID	\
-	(ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|ACPI_STA_DEV_OK)
-
-	SIMPLEQ_FOREACH(ad, &sc->sc_devnodes, ad_list) {
-
-		di = ad->ad_devinfo;
-
-		if (di->Type != ACPI_TYPE_DEVICE)
-			continue;
-
-		if ((di->Valid & ACPI_VALID_STA) != 0 &&
-		    (di->CurrentStatus & ACPI_STA_DEV_VALID) !=
-		     ACPI_STA_DEV_VALID)
-			continue;
-
-		if (acpi_wakedev_add(sc, ad) == true)
-			++count;
-	}
-
-#undef ACPI_STA_DEV_VALID
-
-	if (count == 0)
-		return 0;
-
-	aprint_debug_dev(sc->sc_dev, "wakeup devices:");
-	TAILQ_FOREACH(aw, &acpi_wakedevlist, aw_list)
-		acpi_wakedev_print(aw);
-	aprint_debug("\n");
-
-	return count;
+	if (err != 0)
+		aprint_error_dev(ad->ad_root, "sysctl_createv"
+		    "(hw.acpi.wake.%s) failed (err %d)\n", ad->ad_name, err);
 }
 
 void
 acpi_wakedev_commit(struct acpi_softc *sc, int state)
 {
-	struct acpi_wakedev *aw;
+	struct acpi_devnode *ad;
 
 	/*
 	 * As noted in ACPI 3.0 (p. 243), preparing
@@ -197,16 +130,13 @@ acpi_wakedev_commit(struct acpi_softc *sc, int state)
 	 *
 	 * XXX: The first one is yet to be implemented.
 	 */
-	TAILQ_FOREACH(aw, &acpi_wakedevlist, aw_list) {
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
-		if (aw->aw_enabled) {
-			aprint_debug_dev(sc->sc_dev, "set wake GPE (%s)\n",
-			    aw->aw_node->ad_name);
-			acpi_set_wake_gpe(aw->aw_node->ad_handle);
-		} else
-			acpi_clear_wake_gpe(aw->aw_node->ad_handle);
+		if ((ad->ad_flags & ACPI_DEVICE_WAKEUP) == 0)
+			continue;
 
-		acpi_wakedev_prepare(aw->aw_node, aw->aw_enabled, state);
+		acpi_wakedev_gpe(ad, ad->ad_wake);
+		acpi_wakedev_prepare(ad, ad->ad_wake, state);
 	}
 }
 
@@ -259,6 +189,74 @@ acpi_wakedev_prepare(struct acpi_devnode *ad, int enable, int state)
 	return;
 
 fail:
-	aprint_error_dev(ad->ad_device, "failed to evaluate wake "
+	aprint_error_dev(ad->ad_root, "failed to evaluate wake "
 	    "control method: %s\n", AcpiFormatException(rv));
+}
+
+static void
+acpi_wakedev_gpe(struct acpi_devnode *ad, int enable)
+{
+	ACPI_OBJECT *elm, *obj;
+	ACPI_INTEGER val;
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+
+	rv = acpi_eval_struct(ad->ad_handle, METHOD_NAME__PRW, &buf);
+
+	if (ACPI_FAILURE(rv))
+		return;
+
+	obj = buf.Pointer;
+
+	if (obj->Type != ACPI_TYPE_PACKAGE || obj->Package.Count < 2)
+		goto out;
+
+	/*
+	 * As noted in ACPI 3.0 (section 7.2.10), the _PRW object is
+	 * a package in which the first element is either an integer
+	 * or again a package. In the latter case the package inside
+	 * the package element has two elements, a reference handle
+	 * and the GPE number.
+	 */
+	elm = &obj->Package.Elements[0];
+
+	switch (elm->Type) {
+
+	case ACPI_TYPE_INTEGER:
+		val = elm->Integer.Value;
+		break;
+
+	case ACPI_TYPE_PACKAGE:
+
+		if (elm->Package.Count < 2)
+			goto out;
+
+		if (elm->Package.Elements[0].Type != ACPI_TYPE_LOCAL_REFERENCE)
+			goto out;
+
+		if (elm->Package.Elements[1].Type != ACPI_TYPE_INTEGER)
+			goto out;
+
+		val = elm->Package.Elements[1].Integer.Value;
+		break;
+
+	default:
+		goto out;
+	}
+
+	/*
+	 * Set or unset a GPE as both runtime and wake.
+	 */
+	if (enable == 0)
+		(void)AcpiDisableGpe(NULL, val, ACPI_NOT_ISR);
+	else {
+		(void)AcpiSetGpeType(NULL, val, ACPI_GPE_TYPE_WAKE_RUN);
+		(void)AcpiEnableGpe(NULL, val, ACPI_NOT_ISR);
+	}
+
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "wake GPE %s for %s\n",
+		(enable != 0) ? "enabled" : "disabled", ad->ad_name));
+
+out:
+	ACPI_FREE(buf.Pointer);
 }

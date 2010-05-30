@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.40 2010/02/08 19:02:28 joerg Exp $
+# $NetBSD: INSTALL,v 1.40.2.1 2010/05/30 05:16:48 rmind Exp $
 #
 # INSTALL machine description file
 #
@@ -222,7 +222,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	loop			# loopback network interface
 #pseudo-device	ipfilter 		# IP Filter package
 #pseudo-device	gre			# generic L3 over IP tunnel

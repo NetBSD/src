@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.134 2010/02/08 22:55:36 joerg Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.134.2.1 2010/05/30 05:17:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.134 2010/02/08 22:55:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.134.2.1 2010/05/30 05:17:58 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_nmbclusters.h"
@@ -100,17 +100,9 @@ int	max_datalen;
 
 static int mb_ctor(void *, void *, int);
 
-static void	*mclpool_alloc(struct pool *, int);
-static void	mclpool_release(struct pool *, void *);
-
 static void	sysctl_kern_mbuf_setup(void);
 
 static struct sysctllog *mbuf_sysctllog;
-
-static struct pool_allocator mclpool_allocator = {
-	.pa_alloc = mclpool_alloc,
-	.pa_free = mclpool_release,
-};
 
 static struct mbuf *m_copym0(struct mbuf *, int, int, int, int);
 static struct mbuf *m_split0(struct mbuf *, int, int, int);
@@ -161,7 +153,7 @@ do {									\
 static int
 nmbclusters_limit(void)
 {
-#if defined(PMAP_MAP_POOLPAGE) || defined(_RUMPKERNEL)
+#if defined(PMAP_MAP_POOLPAGE)
 	/* direct mapping, doesn't use space in kmem_map */
 	vsize_t max_size = physmem / 4;
 #else
@@ -192,14 +184,12 @@ mbinit(void)
 
 	sysctl_kern_mbuf_setup();
 
-	mclpool_allocator.pa_backingmap = kmem_map;
-
 	mb_cache = pool_cache_init(msize, 0, 0, 0, "mbpl",
 	    NULL, IPL_VM, mb_ctor, NULL, NULL);
 	KASSERT(mb_cache != NULL);
 
-	mcl_cache = pool_cache_init(mclbytes, 0, 0, 0, "mclpl",
-	    &mclpool_allocator, IPL_VM, NULL, NULL, NULL);
+	mcl_cache = pool_cache_init(mclbytes, 0, 0, 0, "mclpl", NULL,
+	    IPL_VM, NULL, NULL, NULL);
 	KASSERT(mcl_cache != NULL);
 
 	pool_cache_set_drain_hook(mb_cache, m_reclaim, NULL);
@@ -459,22 +449,6 @@ sysctl_kern_mbuf_setup(void)
 #endif /* MBUFTRACE */
 }
 
-static void *
-mclpool_alloc(struct pool *pp, int flags)
-{
-	bool waitok = (flags & PR_WAITOK) ? true : false;
-
-	return ((void *)uvm_km_alloc_poolpage(kmem_map, waitok));
-}
-
-static void
-mclpool_release(struct pool *pp, void *v)
-{
-
-	uvm_km_free_poolpage(kmem_map, (vaddr_t)v);
-}
-
-/*ARGSUSED*/
 static int
 mb_ctor(void *arg, void *object, int flags)
 {

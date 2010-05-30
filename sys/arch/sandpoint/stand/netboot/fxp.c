@@ -1,4 +1,4 @@
-/* $NetBSD: fxp.c,v 1.10 2009/01/12 09:41:59 tsutsui Exp $ */
+/* $NetBSD: fxp.c,v 1.10.6.1 2010/05/30 05:17:05 rmind Exp $ */
 
 /*
  * most of the following code was imported from dev/ic/i82557.c; the
@@ -97,7 +97,7 @@
 #define wbinv(adr, siz)		_wbinv(VTOPHYS(adr), (uint32_t)(siz))
 #define inv(adr, siz)		_inv(VTOPHYS(adr), (uint32_t)(siz))
 #define DELAY(n)		delay(n)
-#define ALLOC(T,A)	(T *)((unsigned)alloc(sizeof(T) + (A)) &~ ((A) - 1))
+#define ALLOC(T,A)		(T *)allocaligned(sizeof(T),(A))
 
 struct txdesc {
 	volatile uint16_t cb_status;

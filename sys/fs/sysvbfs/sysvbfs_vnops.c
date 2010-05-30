@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.26 2010/01/08 11:35:09 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.26.4.1 2010/05/30 05:17:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.26 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.26.4.1 2010/05/30 05:17:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,11 +83,12 @@ sysvbfs_lookup(void *arg)
 	DPRINTF("%s: %s op=%d %d\n", __func__, name, nameiop,
 	    cnp->cn_flags);
 
+	*a->a_vpp = NULL;
+
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
 	if ((error = VOP_ACCESS(a->a_dvp, VEXEC, cnp->cn_cred)) != 0) {
 		return error;	/* directory permittion. */
 	}
-
 
 	if (namelen == 1 && name[0] == '.') {	/* "." */
 		vref(v);
@@ -166,6 +167,9 @@ sysvbfs_create(void *arg)
  unlock_exit:
 	/* unlock parent directory */
 	vput(a->a_dvp);	/* locked at sysvbfs_lookup(); */
+
+	if (err || (a->a_cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(a->a_cnp->cn_pnbuf);
 
 	return err;
 }
@@ -477,6 +481,13 @@ sysvbfs_remove(void *arg)
 		vput(vp);
 	vput(dvp);
 
+	if (err == 0) {
+		bnode->removed = 1;
+	}
+
+	if (err || (ap->a_cnp->cn_flags & SAVESTART) == 0)
+		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
+
 	return err;
 }
 
@@ -492,7 +503,9 @@ sysvbfs_rename(void *arg)
 		struct componentname *a_tcnp;
 	} */ *ap = arg;
 	struct vnode *fvp = ap->a_fvp;
+	struct vnode *fdvp = ap->a_fdvp;
 	struct vnode *tvp = ap->a_tvp;
+	struct vnode *tdvp = ap->a_tdvp;
 	struct sysvbfs_node *bnode = fvp->v_data;
 	struct bfs *bfs = bnode->bmp->bfs;
 	const char *from_name = ap->a_fcnp->cn_nameptr;
@@ -500,7 +513,7 @@ sysvbfs_rename(void *arg)
 	int error;
 
 	DPRINTF("%s: %s->%s\n", __func__, from_name, to_name);
-	if ((fvp->v_mount != ap->a_tdvp->v_mount) ||
+	if ((fvp->v_mount != tdvp->v_mount) ||
 	    (tvp && (fvp->v_mount != tvp->v_mount))) {
 		error = EXDEV;
 		printf("cross-device link\n");
@@ -509,15 +522,35 @@ sysvbfs_rename(void *arg)
 
 	KDASSERT(fvp->v_type == VREG);
 	KDASSERT(tvp == NULL ? true : tvp->v_type == VREG);
+	KASSERT(tdvp == fdvp);
+
+	/*
+	 * Make sure the source hasn't been removed between lookup
+	 * and target directory lock.
+	 */
+	if (bnode->removed) {
+		error = ENOENT;
+		goto out;
+	}
 
 	error = bfs_file_rename(bfs, from_name, to_name);
  out:
-	vput(ap->a_tdvp);
-	if (tvp)
-		vput(ap->a_tvp);  /* locked on entry */
-	if (ap->a_tdvp != ap->a_fdvp)
-		vrele(ap->a_fdvp);
-	vrele(ap->a_fvp); /* unlocked and refcnt is incremented on entry. */
+	if (tvp) {
+		if (error == 0) {
+			struct sysvbfs_node *tbnode = tvp->v_data;
+			tbnode->removed = 1;
+		}
+		vput(tvp);
+	}
+
+	/* tdvp == tvp probably can't happen with this fs, but safety first */
+	if (tdvp == tvp)
+		vrele(tdvp);
+	else
+		vput(tdvp);
+
+	vrele(fdvp);
+	vrele(fvp);
 
 	return 0;
 }
@@ -590,9 +623,13 @@ sysvbfs_inactive(void *arg)
 		bool *a_recycle;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
+	struct sysvbfs_node *bnode = v->v_data;
 
 	DPRINTF("%s:\n", __func__);
-	*a->a_recycle = true;
+	if (bnode->removed)
+		*a->a_recycle = true;
+	else
+		*a->a_recycle = false;
 	VOP_UNLOCK(v, 0);
 
 	return 0;

@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.18 2010/01/19 22:07:01 pooka Exp $
+ * $NetBSD: if_lmc.h,v 1.18.4.1 2010/05/30 05:17:34 rmind Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -981,9 +981,9 @@ typedef int intr_return_t;
 # define SLEEP(usecs)		tsleep(sc, PZERO, DEVICE_NAME, 1+(usecs/tick))
 # define DMA_SYNC(map, size, flags) bus_dmamap_sync(ring->tag, map, 0, size, flags)
 # define DMA_LOAD(map, addr, size)  bus_dmamap_load(ring->tag, map, addr, size, 0, BUS_DMA_NOWAIT)
-#  define LMC_BPF_MTAP(sc, mbuf)	if ((sc)->ifp->if_bpf) bpf_ops->bpf_mtap((sc)->ifp->if_bpf, mbuf)
-#  define LMC_BPF_ATTACH(sc, dlt, len)	bpf_ops->bpf_attach((sc)->ifp, dlt, len, &(sc)->ifp->if_bpf)
-#  define LMC_BPF_DETACH(sc)		bpf_ops->bpf_detach((sc)->ifp)
+#  define LMC_BPF_MTAP(sc, mbuf)	bpf_mtap((sc)->ifp, mbuf)
+#  define LMC_BPF_ATTACH(sc, dlt, len)	bpf_attach((sc)->ifp, dlt, len)
+#  define LMC_BPF_DETACH(sc)		bpf_detach((sc)->ifp)
 
 static int driver_announced = 0;	/* print driver info once only */
 

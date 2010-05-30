@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.38 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.38.2.1 2010/05/30 05:17:17 rmind Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.38 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.38.2.1 2010/05/30 05:17:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -225,7 +225,7 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	ACPI_OBJECT *fde;
 	ACPI_BUFFER abuf;
 	ACPI_STATUS rv;
-	UINT32 *p;
+	uint32_t *p;
 	int i, drives = -1;
 
 	rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDE", &abuf);
@@ -236,23 +236,23 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 #endif
 		return drives;
 	}
-	fde = (ACPI_OBJECT *)abuf.Pointer;
+	fde = abuf.Pointer;
 	if (fde->Type != ACPI_TYPE_BUFFER) {
 		aprint_error_dev(sc->sc_dev, "expected BUFFER, got %u\n",
 		    fde->Type);
 		goto out;
 	}
-	if (fde->Buffer.Length < 5 * sizeof(UINT32)) {
+	if (fde->Buffer.Length < 5 * sizeof(uint32_t)) {
 		aprint_error_dev(sc->sc_dev,
 		    "expected buffer len of %lu, got %u\n",
-		    (unsigned long)(5 * sizeof(UINT32)), fde->Buffer.Length);
+		    (unsigned long)(5 * sizeof(uint32_t)), fde->Buffer.Length);
 		goto out;
 	}
 
-	p = (UINT32 *) fde->Buffer.Pointer;
+	p = (uint32_t *)fde->Buffer.Pointer;
 
 	/*
-	 * Indexes 0 through 3 are each UINT32 booleans. True if a drive
+	 * Indexes 0 through 3 are each uint32_t booleans. True if a drive
 	 * is present.
 	 */
 	drives = 0;
@@ -302,7 +302,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			sc->sc_knownfds[i] = &fdc_acpi_fdtypes[0];
 			continue;
 		}
-		fdi = (ACPI_OBJECT *)abuf.Pointer;
+		fdi = abuf.Pointer;
 		if (fdi->Type != ACPI_TYPE_PACKAGE) {
 			aprint_error_dev(sc->sc_dev,
 			    "expected PACKAGE, got %u\n", fdi->Type);

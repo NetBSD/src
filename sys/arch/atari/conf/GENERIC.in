@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.84 2010/03/13 16:30:02 tsutsui Exp $
+#	$NetBSD: GENERIC.in,v 1.84.2.1 2010/05/30 05:16:39 rmind Exp $
 #
 # Generic atari
 #
@@ -89,6 +89,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
@@ -112,8 +113,6 @@ file-system 	FFS		# Berkeley fast file system
 file-system 	MFS		# Memory based filesystem
 file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
-#file-system	PTYFS		# experimental - /dev/ptm support
-#file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 #if !defined(SMALL030_KERNEL)
@@ -129,6 +128,7 @@ file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
 file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
 #endif /* !SMALL030_KERNEL */
 
 # File system options
@@ -233,7 +233,7 @@ options 	DISKLABEL_NBDA		# NetBSD disklabels (required)
 options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #if !defined(SMALL030_KERNEL)
 #if !defined(FALCON_KERNEL)
-options 	SERCONSOLE		# modem1 console support, breaks Falcon
+#options 	SERCONSOLE		# modem1 console support, breaks Falcon
 #endif /* !FALCON_KERNEL */
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
 options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
@@ -290,7 +290,7 @@ pseudo-device	ccd		4	# concatenating disk driver
 # options	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
@@ -349,6 +349,7 @@ grfcc2		at grfbus0	# 3rd graphics driver
 ite2		at grfcc2	# 3rd tty
 lp0		at mainbus0	# centronics printer
 ser0		at mainbus0	# UART on first 68901 (ttyB0)
+ne0		at mainbus0	# EtherNEC on Atari ROM cartridge slot
 
 #if defined(TT030_KERNEL)
 avmebus0	at mainbus0	# VME bus

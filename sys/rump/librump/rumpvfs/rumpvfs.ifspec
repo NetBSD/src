@@ -1,4 +1,4 @@
-;       $NetBSD: rumpvfs.ifspec,v 1.1 2009/10/14 17:17:00 pooka Exp $
+;       $NetBSD: rumpvfs.ifspec,v 1.1.6.1 2010/05/30 05:18:07 rmind Exp $
 
 NAME|vfs
 PUBHDR|include/rump/rumpvfs_if_pub.h
@@ -38,16 +38,20 @@ int		|namei		|uint32_t, uint32_t, const char *,	\
 				 struct vnode **, struct vnode **,	\
 				 struct componentname **
 struct componentname *|makecn	|u_long, u_long, const char *, size_t,	\
-				 kauth_cred_t, struct lwp *
+				 struct kauth_cred *, struct lwp *
 
 int		|vfs_unmount	|struct mount *, int
 int		|vfs_root	|struct mount *, struct vnode **, int
 int		|vfs_statvfs	|struct mount *, struct statvfs *
-int		|vfs_sync	|struct mount *, int, kauth_cred_t
+int		|vfs_sync	|struct mount *, int, struct kauth_cred *
 int		|vfs_fhtovp	|struct mount *, struct fid *, struct vnode **
 int		|vfs_vptofh	|struct vnode *, struct fid *, size_t *
+int		|vfs_extattrctl	|struct mount *, int, struct vnode *,	\
+				 int, const char *
 void		|vfs_syncwait	|struct mount *
 int		|vfs_getmp	|const char *, struct mount **
+
+void		|vfs_mount_print|const char *, int
 
 void		|rcvp_set	|struct vnode *, struct vnode *
 struct vnode *	|cdir_get	|void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machfbreg.h,v 1.3 2005/12/11 12:22:50 christos Exp $	*/
+/*	$NetBSD: machfbreg.h,v 1.3.98.1 2010/05/30 05:17:36 rmind Exp $	*/
 
 /*
  * Copyright 1992,1993,1994,1995,1996,1997 by Kevin E. Martin, Chapel Hill, North Carolina.
@@ -277,13 +277,17 @@
 #define CTD_FIFO5               0x01000000
 
 /* CLOCK_CNTL register constants */
-#define CLOCK_SEL		0x0f
-#define CLOCK_DIV		0x30
-#define CLOCK_DIV1		0x00
-#define CLOCK_DIV2		0x10
-#define CLOCK_DIV4		0x20
-#define CLOCK_STROBE		0x40
-#define PLL_WR_EN		0x02
+#define CLOCK_SEL		0x0000000f
+#define CLOCK_DIV		0x00000030
+#define CLOCK_DIV1		0x00000000
+#define CLOCK_DIV2		0x00000010
+#define CLOCK_DIV4		0x00000020
+#define CLOCK_STROBE		0x00000040
+#define PLL_WR_EN		0x00000200
+#define PLL_ADDR		0x0000fc00
+#define PLL_ADDR_SHIFT		10
+#define PLL_DATA		0x00ff0000
+#define PLL_DATA_SHIFT		16
 
 /* PLL registers */
 #define PLL_MACRO_CNTL		0x01
@@ -291,6 +295,7 @@
 #define PLL_GEN_CNTL		0x03
 #define MCLK_FB_DIV		0x04
 #define PLL_VCLK_CNTL		0x05
+  #define PLL_VCLK_RESET		0x04
 #define VCLK_POST_DIV		0x06
 #define VCLK0_FB_DIV		0x07
 #define VCLK1_FB_DIV		0x08

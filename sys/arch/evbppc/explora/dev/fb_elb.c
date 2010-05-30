@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_elb.c,v 1.9 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: fb_elb.c,v 1.9.22.1 2010/05/30 05:16:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.9 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_elb.c,v 1.9.22.1 2010/05/30 05:16:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -139,6 +139,7 @@ fb_elb_attach(struct device *parent, struct device *self, void *aux)
 
 	if (is_console) {
 		sc->sc_fb = &console_dev;
+		sc->sc_fb->fb_ri.ri_flg &= ~RI_NO_AUTO;
 	} else {
 		sc->sc_fb = malloc(sizeof(struct fb_dev), M_DEVBUF, M_WAITOK);
 		memset(sc->sc_fb, 0, sizeof(struct fb_dev));
@@ -176,6 +177,8 @@ fb_init(struct fb_dev *fb, int full)
 		ri->ri_stride = ri->ri_width;
 		ri->ri_bits = fb->fb_vram;
 		ri->ri_flg = RI_CENTER;
+		if (ri == &console_dev.fb_ri)
+			ri->ri_flg |= RI_NO_AUTO;
 
 		rasops_init(ri, 500, 500);
 	} else {

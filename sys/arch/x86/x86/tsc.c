@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.25 2009/03/27 19:53:20 drochner Exp $	*/
+/*	$NetBSD: tsc.c,v 1.25.4.1 2010/05/30 05:17:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.25 2009/03/27 19:53:20 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.25.4.1 2010/05/30 05:17:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ tsc_tc_init(void)
 	uint32_t descs[4];
 	bool safe;
 
-	if ((cpu_feature & CPUID_TSC) == 0) {
+	if (!cpu_hascounter()) {
 		return;
 	}
 
@@ -255,5 +255,5 @@ int
 cpu_hascounter(void)
 {
 
-	return cpu_feature & CPUID_TSC;
+	return cpu_feature[0] & CPUID_TSC;
 }

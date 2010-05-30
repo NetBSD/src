@@ -8,7 +8,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2009, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2010, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -125,18 +125,6 @@
 #define BLOCK_COMMA_LIST        4
 #define ACPI_DEFAULT_RESNAME    *(const UINT32 *) "__RD"
 
-typedef struct acpi_external_list
-{
-    char                        *Path;
-    char                        *InternalPath;
-    struct acpi_external_list   *Next;
-    UINT32                      Value;
-    UINT16                      Length;
-    UINT8                       Type;
-
-} ACPI_EXTERNAL_LIST;
-
-extern ACPI_EXTERNAL_LIST       *AcpiGbl_ExternalList;
 
 typedef const struct acpi_dmtable_info
 {
@@ -273,6 +261,7 @@ extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHest7[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHest8[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHest9[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHestNotify[];
+extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHestBank[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHpet[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoIvrs[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoIvrs0[];
@@ -474,14 +463,6 @@ void
 AcpiDmMatchOp (
     ACPI_PARSE_OBJECT       *Op);
 
-BOOLEAN
-AcpiDmCommaIfListMember (
-    ACPI_PARSE_OBJECT       *Op);
-
-void
-AcpiDmCommaIfFieldMember (
-    ACPI_PARSE_OBJECT       *Op);
-
 
 /*
  * dmnames
@@ -555,6 +536,33 @@ AcpiDmIsStringBuffer (
 
 
 /*
+ * dmextern
+ */
+void
+AcpiDmAddToExternalList (
+    ACPI_PARSE_OBJECT       *Op,
+    char                    *Path,
+    UINT8                   Type,
+    UINT32                  Value);
+
+void
+AcpiDmAddExternalsToNamespace (
+    void);
+
+UINT32
+AcpiDmGetExternalMethodCount (
+    void);
+
+void
+AcpiDmClearExternalList (
+    void);
+
+void
+AcpiDmEmitExternals (
+    void);
+
+
+/*
  * dmresrc
  */
 void
@@ -589,16 +597,8 @@ AcpiDmIsResourceTemplate (
     ACPI_PARSE_OBJECT       *Op);
 
 void
-AcpiDmIndent (
-    UINT32                  Level);
-
-void
 AcpiDmBitList (
     UINT16                  Mask);
-
-void
-AcpiDmDecodeAttribute (
-    UINT8                   Attribute);
 
 void
 AcpiDmDescriptorName (
@@ -726,10 +726,21 @@ AcpiDmVendorSmallDescriptor (
  * dmutils
  */
 void
-AcpiDmAddToExternalList (
-    char                    *Path,
-    UINT8                   Type,
-    UINT32                  Value);
+AcpiDmDecodeAttribute (
+    UINT8                   Attribute);
+
+void
+AcpiDmIndent (
+    UINT32                  Level);
+
+BOOLEAN
+AcpiDmCommaIfListMember (
+    ACPI_PARSE_OBJECT       *Op);
+
+void
+AcpiDmCommaIfFieldMember (
+    ACPI_PARSE_OBJECT       *Op);
+
 
 /*
  * dmrestag

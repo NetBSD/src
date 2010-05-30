@@ -1,10 +1,9 @@
-/* $NetBSD: globals.h,v 1.11 2009/07/20 11:43:09 nisimura Exp $ */
+/* $NetBSD: globals.h,v 1.11.4.1 2010/05/30 05:17:05 rmind Exp $ */
 
 /* clock feed */
-#ifndef TICKS_PER_SEC
-#define TICKS_PER_SEC   (100000000 / 4)          /* 100MHz front bus */
+#ifndef EXT_CLK_FREQ
+#define EXT_CLK_FREQ	33333333	/* external clock (PCI clock) */
 #endif
-#define NS_PER_TICK     (1000000000 / TICKS_PER_SEC)
 
 /* brd type */
 extern int brdtype;
@@ -12,14 +11,35 @@ extern int brdtype;
 #define BRD_SANDPOINTX3		3
 #define BRD_ENCOREPP1		10
 #define BRD_KUROBOX		100
+#define BRD_QNAPTS101		101
+#define BRD_SYNOLOGY		102
+#define BRD_STORCENTER		103
 #define BRD_UNKNOWN		-1
+
+struct brdprop {
+	const char *family;
+	const char *verbose;
+	int brdtype;
+	uint32_t extclk;
+	char *consname;
+	int consport;
+	int consspeed;
+	void (*setup)(struct brdprop *);
+	void (*brdfix)(struct brdprop *);
+	void (*pcifix)(struct brdprop *);
+	void (*reset)(void);
+};
 
 extern char *consname;
 extern int consport;
 extern int consspeed;
 extern int ticks_per_sec;
+extern uint32_t cpuclock, busclock;
 
+/* board specific support code */
+struct brdprop *brd_lookup(int);
 unsigned mpc107memsize(void);
+void read_mac_from_flash(uint8_t *);
 
 /* PPC processor ctl */
 void __syncicache(void *, size_t);
@@ -62,6 +82,7 @@ void  pcicfgwrite(unsigned, int, unsigned);
 #define  PCI_CLASS_IDE			0x0101
 #define  PCI_CLASS_RAID			0x0104
 #define  PCI_CLASS_SATA			0x0106
+#define  PCI_CLASS_MISCSTORAGE		0x0180
 #define PCI_BHLC_REG			0x0c
 #define  PCI_HDRTYPE_TYPE(r)		(((r) >> 16) & 0x7f)
 #define  PCI_HDRTYPE_MULTIFN(r)		((r) & (0x80 << 16))
@@ -70,6 +91,9 @@ void  pcicfgwrite(unsigned, int, unsigned);
 void _wb(uint32_t, uint32_t);
 void _wbinv(uint32_t, uint32_t);
 void _inv(uint32_t, uint32_t);
+
+/* heap */
+void *allocaligned(size_t, size_t);
 
 /* NIF */
 int net_open(struct open_file *, ...);
@@ -89,3 +113,4 @@ int netif_close(int);
 NIF_DECL(fxp);
 NIF_DECL(tlp);
 NIF_DECL(rge);
+NIF_DECL(skg);

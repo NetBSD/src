@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.29 2009/12/05 20:11:02 pooka Exp $
+# $NetBSD: INSTALL,v 1.29.4.1 2010/05/30 05:16:34 rmind Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -190,7 +190,7 @@ wsdisplay0	at arcvideo0
 #pseudo-device	ccd		4
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 #pseudo-device	ipfilter
 pseudo-device	loop
 pseudo-device	md		1

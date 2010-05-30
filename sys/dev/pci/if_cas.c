@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.7 2010/03/11 04:00:36 mrg Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.7.4.1 2010/05/30 05:17:33 rmind Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.7 2010/03/11 04:00:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.7.4.1 2010/05/30 05:17:33 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -1295,8 +1295,7 @@ cas_rint(struct cas_softc *sc)
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
-				if (ifp->if_bpf)
-					bpf_ops->bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp, m);
 
 				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
@@ -1329,8 +1328,7 @@ cas_rint(struct cas_softc *sc)
 				 * Pass this up to any BPF listeners, but only
 				 * pass it up the stack if its for us.
 				 */
-				if (ifp->if_bpf)
-					bpf_ops->bpf_mtap(ifp->if_bpf, m);
+				bpf_mtap(ifp, m);
 
 				ifp->if_ipackets++;
 				m->m_pkthdr.csum_flags = 0;
@@ -2040,8 +2038,7 @@ cas_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/*
 		 * Encapsulate this packet and start it going...
