@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.132 2010/04/25 15:55:24 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.133 2010/05/30 02:25:15 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -33,6 +33,7 @@
 #ifndef _SYS_LWP_H_
 #define _SYS_LWP_H_
 
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
