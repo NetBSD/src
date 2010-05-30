@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.21 2010/02/26 19:25:07 jym Exp $	*/
+/*	$NetBSD: pte.h,v 1.21.2.1 2010/05/30 05:16:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -164,10 +164,10 @@
  *
  * The PAE extension extends the size of the PTE to 64 bits (52bits physical
  * address) and is compatible with the amd64 PTE format. The first level
- * maps 2M, the second 1G, so a third level page table is intruduced to
+ * maps 2M, the second 1G, so a third level page table is introduced to
  * map the 4GB virtual address space. This PD has only 4 entries.
- * We can't use recursive mapping at level 3 to map the PD pages, as
- * this would eat one GB of address space. In addition, Xen impose restrictions
+ * We can't use recursive mapping at level 3 to map the PD pages, as this
+ * would eat one GB of address space. In addition, Xen imposes restrictions
  * on the entries we put in the L3 page (for example, the page pointed to by
  * the last slot can't be shared among different L3 pages), which makes 
  * handling this L3 page in the same way we do for L2 on i386 (or L4 on amd64)
@@ -274,5 +274,6 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define PGEX_P		0x01	/* protection violation (vs. no mapping) */
 #define PGEX_W		0x02	/* exception during a write cycle */
 #define PGEX_U		0x04	/* exception while in user mode (upl) */
+#define PGEX_X		0x10	/* exception during instruction fetch */
 
 #endif /* _I386_PTE_H_ */

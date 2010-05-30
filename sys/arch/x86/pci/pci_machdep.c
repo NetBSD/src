@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.41 2010/03/14 20:19:06 dyoung Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.41.2.1 2010/05/30 05:17:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2010/03/14 20:19:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41.2.1 2010/05/30 05:17:12 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2010/03/14 20:19:06 dyoung Exp 
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -94,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.41 2010/03/14 20:19:06 dyoung Exp 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pccbbreg.h>
 #include <dev/pci/pcidevs.h>
 
 #include "acpica.h"
@@ -129,25 +132,23 @@ static int pci_mode = PCI_CONF_MODE;
 static int pci_mode = -1;
 #endif
 
+struct pci_conf_lock {
+	uint32_t cl_cpuno;	/* 0: unlocked
+				 * 1 + n: locked by CPU n (0 <= n)
+				 */
+	uint32_t cl_sel;	/* the address that's being read. */
+};
+
+static void pci_conf_unlock(struct pci_conf_lock *);
+static uint32_t pci_conf_selector(pcitag_t, int);
+static unsigned int pci_conf_port(pcitag_t, int);
+static void pci_conf_select(uint32_t);
+static void pci_conf_lock(struct pci_conf_lock *, uint32_t);
 static void pci_bridge_hook(pci_chipset_tag_t, pcitag_t, void *);
 struct pci_bridge_hook_arg {
 	void (*func)(pci_chipset_tag_t, pcitag_t, void *); 
 	void *arg; 
 }; 
-
-__cpu_simple_lock_t pci_conf_lock = __SIMPLELOCK_UNLOCKED;
-
-#define	PCI_CONF_LOCK(s)						\
-do {									\
-	(s) = splhigh();						\
-	__cpu_simple_lock(&pci_conf_lock);				\
-} while (0)
-
-#define	PCI_CONF_UNLOCK(s)						\
-do {									\
-	__cpu_simple_unlock(&pci_conf_lock);				\
-	splx((s));							\
-} while (0)
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
 #define	PCI_MODE1_ADDRESS_REG	0x0cf8
@@ -243,6 +244,75 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 };
 #endif
 
+static struct pci_conf_lock cl0 = {
+	  .cl_cpuno = 0UL
+	, .cl_sel = 0UL
+};
+
+static struct pci_conf_lock * const cl = &cl0;
+
+static void
+pci_conf_lock(struct pci_conf_lock *ocl, uint32_t sel)
+{
+	uint32_t cpuno;
+
+	KASSERT(sel != 0);
+
+	kpreempt_disable();
+	cpuno = cpu_number() + 1;
+	/* If the kernel enters pci_conf_lock() through an interrupt
+	 * handler, then the CPU may already hold the lock.
+	 *
+	 * If the CPU does not already hold the lock, spin until
+	 * we can acquire it.
+	 */
+	if (cpuno == cl->cl_cpuno) {
+		ocl->cl_cpuno = cpuno;
+	} else {
+		u_int spins;
+
+		ocl->cl_cpuno = 0;
+
+		spins = SPINLOCK_BACKOFF_MIN;
+		while (atomic_cas_32(&cl->cl_cpuno, 0, cpuno) != 0) {
+			SPINLOCK_BACKOFF(spins);
+#ifdef LOCKDEBUG
+			if (SPINLOCK_SPINOUT(spins)) {
+				panic("%s: cpu %" PRId32
+				    " spun out waiting for cpu %" PRId32,
+				    __func__, cpuno, cl->cl_cpuno);
+			}
+#endif	/* LOCKDEBUG */
+		}
+	}
+
+	/* Only one CPU can be here, so an interlocked atomic_swap(3)
+	 * is not necessary.
+	 *
+	 * Evaluating atomic_cas_32_ni()'s argument, cl->cl_sel,
+	 * and applying atomic_cas_32_ni() is not an atomic operation,
+	 * however, any interrupt that, in the middle of the
+	 * operation, modifies cl->cl_sel, will also restore
+	 * cl->cl_sel.  So cl->cl_sel will have the same value when
+	 * we apply atomic_cas_32_ni() as when we evaluated it,
+	 * before.
+	 */
+	ocl->cl_sel = atomic_cas_32_ni(&cl->cl_sel, cl->cl_sel, sel);
+	pci_conf_select(sel);
+}
+
+static void
+pci_conf_unlock(struct pci_conf_lock *ocl)
+{
+	uint32_t sel;
+
+	sel = atomic_cas_32_ni(&cl->cl_sel, cl->cl_sel, ocl->cl_sel);
+	pci_conf_select(ocl->cl_sel);
+	if (ocl->cl_cpuno != cl->cl_cpuno)
+		atomic_cas_32(&cl->cl_cpuno, cl->cl_cpuno, ocl->cl_cpuno);
+	kpreempt_enable();
+}
+
 static uint32_t
 pci_conf_selector(pcitag_t tag, int reg)
 {
@@ -277,16 +347,16 @@ pci_conf_port(pcitag_t tag, int reg)
 }
 
 static void
-pci_conf_select(uint32_t addr)
+pci_conf_select(uint32_t sel)
 {
 	pcitag_t tag;
 
 	switch (pci_mode) {
 	case 1:
-		outl(PCI_MODE1_ADDRESS_REG, addr);
+		outl(PCI_MODE1_ADDRESS_REG, sel);
 		return;
 	case 2:
-		tag.mode1 = addr;
+		tag.mode1 = sel;
 		outb(PCI_MODE2_ENABLE_REG, tag.mode2.enable);
 		if (tag.mode2.enable != 0)
 			outb(PCI_MODE2_FORWARD_REG, tag.mode2.forward);
@@ -345,8 +415,10 @@ pci_make_tag(pci_chipset_tag_t pc, int bus, int device, int function)
 	pcitag_t tag;
 
 	if (pc != NULL) {
-		if (pc->pc_make_tag != NULL)
-			return (*pc->pc_make_tag)(pc, bus, device, function);
+		if ((pc->pc_present & PCI_OVERRIDE_MAKE_TAG) != 0) {
+			return (*pc->pc_ov->ov_make_tag)(pc->pc_ctx,
+			    pc, bus, device, function);
+		}
 		if (pc->pc_super != NULL) {
 			return pci_make_tag(pc->pc_super, bus, device,
 			    function);
@@ -380,8 +452,9 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 {
 
 	if (pc != NULL) {
-		if (pc->pc_decompose_tag != NULL) {
-			(*pc->pc_decompose_tag)(pc, tag, bp, dp, fp);
+		if ((pc->pc_present & PCI_OVERRIDE_DECOMPOSE_TAG) != 0) {
+			(*pc->pc_ov->ov_decompose_tag)(pc->pc_ctx,
+			    pc, tag, bp, dp, fp);
 			return;
 		}
 		if (pc->pc_super != NULL) {
@@ -413,17 +486,18 @@ pci_decompose_tag(pci_chipset_tag_t pc, pcitag_t tag,
 }
 
 pcireg_t
-pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
-    int reg)
+pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
-	int s;
+	struct pci_conf_lock ocl;
 
 	KASSERT((reg & 0x3) == 0);
 
 	if (pc != NULL) {
-		if (pc->pc_conf_read != NULL)
-			return (*pc->pc_conf_read)(pc, tag, reg);
+		if ((pc->pc_present & PCI_OVERRIDE_CONF_READ) != 0) {
+			return (*pc->pc_ov->ov_conf_read)(pc->pc_ctx,
+			    pc, tag, reg);
+		}
 		if (pc->pc_super != NULL)
 			return pci_conf_read(pc->pc_super, tag, reg);
 	}
@@ -437,25 +511,23 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 	}
 #endif
 
-	PCI_CONF_LOCK(s);
-	pci_conf_select(pci_conf_selector(tag, reg));
+	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
 	data = inl(pci_conf_port(tag, reg));
-	pci_conf_select(0);
-	PCI_CONF_UNLOCK(s);
+	pci_conf_unlock(&ocl);
 	return data;
 }
 
 void
-pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
-    pcireg_t data)
+pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
-	int s;
+	struct pci_conf_lock ocl;
 
 	KASSERT((reg & 0x3) == 0);
 
 	if (pc != NULL) {
-		if (pc->pc_conf_write != NULL) {
-			(*pc->pc_conf_write)(pc, tag, reg, data);
+		if ((pc->pc_present & PCI_OVERRIDE_CONF_WRITE) != 0) {
+			(*pc->pc_ov->ov_conf_write)(pc->pc_ctx, pc, tag, reg,
+			    data);
 			return;
 		}
 		if (pc->pc_super != NULL) {
@@ -473,11 +545,9 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 	}
 #endif
 
-	PCI_CONF_LOCK(s);
-	pci_conf_select(pci_conf_selector(tag, reg));
+	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
 	outl(pci_conf_port(tag, reg), data);
-	pci_conf_select(0);
-	PCI_CONF_UNLOCK(s);
+	pci_conf_unlock(&ocl);
 }
 
 void
@@ -697,4 +767,76 @@ pci_bridge_hook(pci_chipset_tag_t pc, pcitag_t tag, void *ctx)
 		PCI_SUBCLASS(reg) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
 		(*bridge_hook->func)(pc, tag, bridge_hook->arg);
 	}
+}
+
+static const void *
+bit_to_function_pointer(const struct pci_overrides *ov, uint64_t bit)
+{
+	switch (bit) {
+	case PCI_OVERRIDE_CONF_READ:
+		return ov->ov_conf_read;
+	case PCI_OVERRIDE_CONF_WRITE:
+		return ov->ov_conf_write;
+	case PCI_OVERRIDE_INTR_MAP:
+		return ov->ov_intr_map;
+	case PCI_OVERRIDE_INTR_STRING:
+		return ov->ov_intr_string;
+	case PCI_OVERRIDE_INTR_EVCNT:
+		return ov->ov_intr_evcnt;
+	case PCI_OVERRIDE_INTR_ESTABLISH:
+		return ov->ov_intr_establish;
+	case PCI_OVERRIDE_INTR_DISESTABLISH:
+		return ov->ov_intr_disestablish;
+	case PCI_OVERRIDE_MAKE_TAG:
+		return ov->ov_make_tag;
+	case PCI_OVERRIDE_DECOMPOSE_TAG:
+		return ov->ov_decompose_tag;
+	default:
+		return NULL;
+	}
+}
+
+void
+pci_chipset_tag_destroy(pci_chipset_tag_t pc)
+{
+	kmem_free(pc, sizeof(struct pci_chipset_tag));
+}
+
+int
+pci_chipset_tag_create(pci_chipset_tag_t opc, const uint64_t present,
+    const struct pci_overrides *ov, void *ctx, pci_chipset_tag_t *pcp)
+{
+	uint64_t bit, bits, nbits;
+	pci_chipset_tag_t pc;
+	const void *fp;
+
+	if (ov == NULL || present == 0)
+		return EINVAL;
+
+	pc = kmem_alloc(sizeof(struct pci_chipset_tag), KM_SLEEP);
+
+	if (pc == NULL)
+		return ENOMEM;
+
+	pc->pc_super = opc;
+
+	for (bits = present; bits != 0; bits = nbits) {
+		nbits = bits & (bits - 1);
+		bit = nbits ^ bits;
+		if ((fp = bit_to_function_pointer(ov, bit)) == NULL) {
+			printf("%s: missing bit %" PRIx64 "\n", __func__, bit);
+			goto einval;
+		}
+	}
+
+	pc->pc_ov = ov;
+	pc->pc_present = present;
+	pc->pc_ctx = ctx;
+
+	*pcp = pc;
+
+	return 0;
+einval:
+	kmem_free(pc, sizeof(struct pci_chipset_tag));
+	return EINVAL;
 }

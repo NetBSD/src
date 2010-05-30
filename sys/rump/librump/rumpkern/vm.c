@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.70.4.1 2010/03/16 15:38:13 rmind Exp $	*/
+/*	$NetBSD: vm.c,v 1.70.4.2 2010/05/30 05:18:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.4.1 2010/03/16 15:38:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.70.4.2 2010/05/30 05:18:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -508,22 +508,32 @@ uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
 	struct vm_page **opp)
 {
 
-	panic("%s: unimplemented", __func__);
+	return EBUSY;
 }
 
+#ifdef DEBUGPRINT
 void
 uvm_object_printit(struct uvm_object *uobj, bool full,
 	void (*pr)(const char *, ...))
 {
 
-	/* nada for now */
+	pr("VM OBJECT at %p, refs %d", uobj, uobj->uo_refs);
 }
+#endif
 
 vaddr_t
 uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
 {
 
 	return 0;
+}
+
+int
+uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
+	vm_prot_t prot, bool set_max)
+{
+
+	return EOPNOTSUPP;
 }
 
 /*
@@ -602,6 +612,13 @@ uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t vaddr)
 {
 
 	rumpuser_unmap((void *)vaddr, PAGE_SIZE);
+}
+
+void
+uvm_km_va_drain(struct vm_map *map, uvm_flag_t flags)
+{
+
+	/* we eventually maybe want some model for available memory */
 }
 
 /*

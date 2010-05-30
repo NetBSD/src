@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1022 2010/03/14 03:54:59 mrg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1022.2.1 2010/05/30 05:17:37 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1025 2010/03/14 03:13:04 mrg Exp
+ *	NetBSD: pcidevs,v 1.1032 2010/05/15 20:10:37 jakllsch Exp
  */
 
 /*
@@ -610,6 +610,7 @@
 #define	PCI_VENDOR_BELKIN	0x1799		/* Belkin */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst */
+#define	PCI_VENDOR_NETCHIP	0x17cc		/* PLX Technology (NetChip) */
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
 #define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
@@ -1995,6 +1996,7 @@
 #define	PCI_PRODUCT_MARVELL_88W8310	0x1fa7		/* Libertas 88W8310 */
 #define	PCI_PRODUCT_MARVELL_88W8335_1	0x1faa		/* Libertas 88W8335 */
 #define	PCI_PRODUCT_MARVELL_88W8335_2	0x1fab		/* Libertas 88W8335 */
+#define	PCI_PRODUCT_MARVELL_88SB2211	0x2211		/* 88SB2211 x1 PCIe-PCI Bridge */
 #define	PCI_PRODUCT_MARVELL_88W8300_2	0x2a01		/* Libertas 88W8300 */
 #define	PCI_PRODUCT_MARVELL_GT64115	0x4111		/* GT-64115 System Controller */
 #define	PCI_PRODUCT_MARVELL_GT64011	0x4146		/* GT-64011 System Controller */
@@ -2050,7 +2052,8 @@
 #define	PCI_PRODUCT_MARVELL_88F6281	0x6281		/* 88F6281 SoC Kirkwood */
 #define	PCI_PRODUCT_MARVELL_GT64130	0x6320		/* GT-64130 System Controller */
 #define	PCI_PRODUCT_MARVELL_GT64260	0x6430		/* GT-64260 System Controller */
-#define	PCI_PRODUCT_MARVELL_GT64360	0x6460		/* MV6436x System Controller */
+#define	PCI_PRODUCT_MARVELL_MV64360	0x6460		/* MV6436x System Controller */
+#define	PCI_PRODUCT_MARVELL_MV64460	0x6480		/* MV6446x System Controller */
 #define	PCI_PRODUCT_MARVELL_88SX7042	0x7042		/* 88SX7042 SATA IIe */
 #define	PCI_PRODUCT_MARVELL_88W8660	0x8660		/* 88W8660 SoC Orion1 */
 
@@ -2235,6 +2238,12 @@
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX PCI, Cache and Memory Controller (PCMC) */
 #define	PCI_PRODUCT_INTEL_GDT_RAID1	0x0600		/* GDT RAID */
 #define	PCI_PRODUCT_INTEL_GDT_RAID2	0x061f		/* GDT RAID */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_1	0x0082		/* Centrino Advanced-N 6205 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_1	0x0083		/* WiFi Link 1000 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_1000_2	0x0084		/* WiFi Link 1000 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_2	0x0085		/* Centrino Advanced-N 6205 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_1	0x0087		/* Centrino Advanced-N 6250 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6050_2X2_2	0x0089		/* Centrino Advanced-N 6250 */
 #define	PCI_PRODUCT_INTEL_80960RM	0x0962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_80960RN	0x0964		/* i960 RN PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82542	0x1000		/* i82542 Gigabit Ethernet */
@@ -2729,6 +2738,7 @@
 #define	PCI_PRODUCT_INTEL_82830MP_IV	0x3577		/* 82830MP Integrated Video */
 #define	PCI_PRODUCT_INTEL_82830MP_IO_2	0x3578		/* 82830MP CPU to I/O Bridge 2 */
 #define	PCI_PRODUCT_INTEL_82855GM_MCH	0x3580		/* 82855GM Host-Hub Controller */
+#define	PCI_PRODUCT_INTEL_82855GM_AGP	0x3581		/* 82855GM Host-AGP Bridge */
 #define	PCI_PRODUCT_INTEL_82855GM_IGD	0x3582		/* 82855GM GMCH Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82855GM_MC	0x3584		/* 82855GM GMCH Memory Controller */
 #define	PCI_PRODUCT_INTEL_82855GM_CP	0x3585		/* 82855GM GMCH Configuration Process */
@@ -2788,14 +2798,20 @@
 #define	PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1	0x4223		/* PRO/Wireless LAN 2915ABG Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2	0x4224		/* PRO/Wireless LAN 2915ABG Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2	0x4227		/* PRO/Wireless LAN 3945ABG Mini-PCI Adapter */
-#define	PCI_PRODUCT_INTEL_PRO_WL_4965AGN_1	0x4229		/* PRO/Wireless LAN 4965AGN Mini-PCI Adapter */
-#define	PCI_PRODUCT_INTEL_PRO_WL_4965AGN_2	0x4230		/* PRO/Wireless LAN 4965AGN Mini-PCI Adapter */
-#define	PCI_PRODUCT_INTEL_PRO_WL_5100AGN_1	0x4232		/* Pro/Wireless LAN 5100AGN Mini-PCI Adapter */
-#define	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_1	0x4235		/* Pro/Wireless LAN 5300AGN Mini-PCI Adapter */
-#define	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_2	0x4236		/* Pro/Wireless LAN 5300AGN Mini-PCI Adapter */
-#define	PCI_PRODUCT_INTEL_PRO_WL_5100AGN_2	0x4237		/* Pro/Wireless LAN 5100AGN Mini-PCI Adapter */
-#define	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_1	0x423a		/* Pro/Wireless LAN 5350AGN Mini-PCI Adapter */
-#define	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_2	0x423b		/* Pro/Wireless LAN 5350AGN Mini-PCI Adapter */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_4965_1	0x4229		/* Wireless WiFi Link 4965 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_1	0x422b		/* Centrino Ultimate-N 6300 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_1	0x422c		/* Centrino Advanced-N 6200 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_4965_2	0x4230		/* Wireless WiFi Link 4965 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_5100_1	0x4232		/* WiFi Link 5100 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_5300_1	0x4235		/* WiFi Link 5300 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_5300_2	0x4236		/* WiFi Link 5300 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_5100_2	0x4237		/* WiFi Link 5100 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_3X3_2	0x4238		/* Centrino Ultimate-N 6300 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_6000_IPA_2	0x4239		/* Centrino Advanced-N 6200 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_5350_1	0x423a		/* WiFi Link 5350 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_5350_2	0x423b		/* WiFi Link 5350 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_5150_1	0x423c		/* WiFi Link 5150 */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_5150_2	0x423d		/* WiFi Link 5150 */
 #define	PCI_PRODUCT_INTEL_80312_ATU	0x530d		/* 80310 ATU */
 #define	PCI_PRODUCT_INTEL_82371SB_ISA	0x7000		/* 82371SB (PIIX3) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82371SB_IDE	0x7010		/* 82371SB (PIIX3) IDE Interface */
@@ -3189,6 +3205,10 @@
 #define	PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU	0x8005		/* MagicMedia 256AV Audio */
 #define	PCI_PRODUCT_NEOMAGIC_NMMM256ZX_AU	0x8006		/* MagicMedia 256ZX Audio */
 
+/* NetChip (now PLX) products */
+#define	PCI_PRODUCT_NETCHIP_NET2280	0x2280		/* NET2280 USB Device Controller */
+#define	PCI_PRODUCT_NETCHIP_NET2282	0x2282		/* NET2282 USB Device Controller */
+
 /* Netgear products */
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 1000baseSX Ethernet */
 #define	PCI_PRODUCT_NETGEAR_GA620T	0x630a		/* GA620 1000baseT Ethernet */
@@ -3509,6 +3529,8 @@
 #define	PCI_PRODUCT_NVIDIA_MCP73_AHCI_12	0x07fb		/* nForce MCP73 AHCI Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP73_HDA_1	0x07fc		/* nForce MCP73 High Definition Audio Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP73_HDA_2	0x07fd		/* nForce MCP73 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP78S_SMB	0x0752		/* nForce MCP78S SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP79_SMB	0x0aa2		/* nForce MCP79 SMBus Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP79_LAN1	0x0ab0		/* nForce MCP79 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP79_LAN2	0x0ab1		/* nForce MCP79 Gigabit Ethernet Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP79_LAN3	0x0ab2		/* nForce MCP79 Gigabit Ethernet Controller */

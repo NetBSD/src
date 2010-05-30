@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.8 2009/12/14 00:46:05 matt Exp $	*/
+/*	$NetBSD: copy.S,v 1.8.4.1 2010/05/30 05:16:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -159,9 +159,8 @@ LEAF(copyoutstr)
 END(copyoutstr)
 
 LEAF(copystrerr)
-	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	 li	v0, EFAULT			# return EFAULT
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copystrerr)
 
 /*
@@ -203,9 +202,8 @@ LEAF(kcopyerr)
 	REG_L	ra, CALLFRAME_SIZ+CALLFRAME_RA(sp) 	# restore ra
 	PTR_S	s0, PCB_ONFAULT(v1)
 	REG_L	s0, CALLFRAME_SIZ+CALLFRAME_S0(sp) 	# restore s0
-	PTR_ADDU sp, sp, 2*CALLFRAME_SIZ	# kill stack frame
 	j	ra
-	 li	v0, EFAULT			# return EFAULT
+	 PTR_ADDU sp, sp, 2*CALLFRAME_SIZ	# kill stack frame
 END(kcopyerr)
 
 /*
@@ -266,9 +264,8 @@ LEAF(copyerr)
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	REG_L	ra, CALLFRAME_RA(sp)
 	PTR_ADDU sp, sp, CALLFRAME_SIZ
-	PTR_S	zero, PCB_ONFAULT(v1)
 	j	ra
-	 li	v0, EFAULT			# return EFAULT
+	 PTR_S	zero, PCB_ONFAULT(v1)
 END(copyerr)
 
 /*

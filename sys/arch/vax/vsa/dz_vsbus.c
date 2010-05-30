@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.40 2008/03/15 00:57:15 matt Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.40.26.1 2010/05/30 05:17:11 rmind Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.40 2008/03/15 00:57:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.40.26.1 2010/05/30 05:17:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -162,7 +162,7 @@ dz_vsbus_attach(device_t parent, device_t self, void *aux)
 	 * due to the nature of how bus_space_* works on VAX, this will
 	 * be perfectly good until everything is converted.
 	 */
-	if (dz_regs == 0) /* This isn't console */ {
+	if (cn_tab->cn_dev != makedev(cdevsw_lookup_major(&dz_cdevsw), 0)) {
 		dz_regs = vax_map_physmem(va->va_paddr, 1);
 		consline = -1;
 	} else
@@ -286,6 +286,9 @@ dzcnprobe(struct consdev *cndev)
 	dz_regs = iospace;
 	dz = (void *)dz_regs;
 	ioaccess(iospace, ioaddr, 1);
+	dz->csr = 0;    /* Disable scanning until initting is done */
+	dz->tcr = (1 << minor(cndev->cn_dev));    /* Turn on xmitter */
+	dz->csr = 0x20; /* Turn scanning back on */
 }
 
 void

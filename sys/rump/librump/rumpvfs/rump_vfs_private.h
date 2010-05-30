@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs_private.h,v 1.10 2009/12/17 00:29:46 pooka Exp $	*/
+/*	$NetBSD: rump_vfs_private.h,v 1.10.4.1 2010/05/30 05:18:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
 #define _SYS_RUMP_VFS_PRIVATE_H_
 
 #include <sys/types.h>
+#include <sys/conf.h>
 
 void		rump_vfs_init(void);
 void		rump_vfs_fini(void);
@@ -37,7 +38,7 @@ void		rumpfs_init(void);
 
 int		rump_devnull_init(void);
 
-#define RUMPBLK	254
+#define RUMPBLK_DEVMAJOR 197 /* from conf/majors, XXX: not via config yet */
 #define RUMPBLK_SIZENOTSET ((uint64_t)-1)
 int	rumpblk_register(const char *, devminor_t *, uint64_t, uint64_t);
 int	rumpblk_init(void);
@@ -47,6 +48,7 @@ void	rump_biodone(void *, size_t, int);
 int     rump_vfs_makeonedevnode(dev_t, const char *, devmajor_t, devminor_t);
 int     rump_vfs_makedevnodes(dev_t, const char *, char,
 			      devmajor_t, devminor_t, int);
+void	rump_vfs_builddevs(struct devsw_conv *, size_t numelem);
 
 #include <sys/mount.h>
 #include <sys/vnode.h>

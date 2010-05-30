@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.123 2010/02/08 19:02:29 joerg Exp $
+#	$NetBSD: GENERIC_TINY,v 1.123.2.1 2010/05/30 05:16:53 rmind Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -121,6 +121,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
 #options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -540,7 +541,7 @@ cinclude "arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)

@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK3X,v 1.38 2009/02/06 18:50:28 jym Exp $
+# $NetBSD: RAMDISK3X,v 1.38.6.1 2010/05/30 05:17:10 rmind Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -141,4 +141,4 @@ pseudo-device	md		2
 # Misc.
 pseudo-device	loop		1	# network loopback
 pseudo-device	sl			# CSLIP
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device

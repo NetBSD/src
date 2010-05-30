@@ -1,4 +1,4 @@
-/*	$NetBSD: mallocvar.h,v 1.7 2007/11/07 16:12:25 matt Exp $	*/
+/*	$NetBSD: mallocvar.h,v 1.7.40.1 2010/05/30 05:18:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,6 +38,7 @@
 
 #define	M_MAGIC		877983977
 
+#define MAXBUCKET	15
 /*
  * This structure describes a type of malloc'd memory and carries
  * allocation statistics for that memory.
@@ -56,7 +57,7 @@ struct malloc_type {
 	u_long	ks_maxused;	/* maximum number ever used */
 	u_long	ks_limit;	/* most that are allowed to exist */
 	u_long	ks_size;	/* sizes of this thing that are allocated */
-	u_long	ks_spare;
+	u_short	ks_active[MAXBUCKET+1];	/* number of active allocations per size */
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_debug.c,v 1.1 2010/01/31 11:26:20 jruoho Exp $ */
+/* $NetBSD: acpi_debug.c,v 1.1.6.1 2010/05/30 05:17:17 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.1 2010/01/31 11:26:20 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.1.6.1 2010/05/30 05:17:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -65,9 +65,8 @@ static int               acpi_debug_sysctl_level(SYSCTLFN_PROTO);
 void
 acpi_debug_init(void)
 {
-	const struct sysctlnode *node;
-	const char *layer;
-	const char *level;
+	const struct sysctlnode *rnode;
+	const char *layer, *level;
 	int rv;
 
 	KASSERT(acpi_debug_layer_d == NULL);
@@ -78,34 +77,45 @@ acpi_debug_init(void)
 	if (rv != 0)
 		goto fail;
 
-	rv = sysctl_createv(NULL, 0, NULL, NULL,
+	rv = sysctl_createv(NULL, 0, NULL, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw",
-	    NULL, NULL, 0, NULL, 0, CTL_HW, CTL_EOL);
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_HW, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;
 
-	rv = sysctl_createv(NULL, 0, NULL, &node,
+	rv = sysctl_createv(NULL, 0, &rnode, &rnode,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "acpi",
-	    NULL, NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	    NULL, NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;
 
-	rv = sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_READWRITE, CTLTYPE_STRING, "debug_layer",
+	rv = sysctl_createv(NULL, 0, &rnode, &rnode,
+	    0, CTLTYPE_NODE, "debug",
+	    SYSCTL_DESCR("ACPI debug subtree"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_STRING, "layer",
 	    SYSCTL_DESCR("ACPI debug layer"),
 	    acpi_debug_sysctl_layer, 0, acpi_debug_layer_s, ACPI_DEBUG_MAX,
-	    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
+	    CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;
 
-	rv = sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_READWRITE, CTLTYPE_STRING, "debug_level",
+	rv = sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_STRING, "level",
 	    SYSCTL_DESCR("ACPI debug level"),
 	    acpi_debug_sysctl_level, 0, acpi_debug_level_s, ACPI_DEBUG_MAX,
-	    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
+	    CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)
 		goto fail;

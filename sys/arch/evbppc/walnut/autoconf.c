@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2007/02/22 05:27:47 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.68.1 2010/05/30 05:16:44 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2007/02/22 05:27:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.68.1 2010/05/30 05:16:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,15 +41,16 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2007/02/22 05:27:47 thorpej Exp $"
 
 #include <dev/ic/comreg.h>	/* For COM_FREQ */
 
-#include <powerpc/ibm4xx/dcr405gp.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
+#include <powerpc/ibm4xx/spr.h>
 
 /*
  * List of port-specific devices to attach to the processor local bus.
  */
 static const struct plb_dev local_plb_devs [] = {
-	{ "pbus", },
-	{ NULL }
+	{ IBM405GP, "pbus", },
+	{ 0, NULL }
 };
 
 /*

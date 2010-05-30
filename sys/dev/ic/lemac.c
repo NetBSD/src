@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.37 2010/01/19 22:06:24 pooka Exp $ */
+/* $NetBSD: lemac.c,v 1.37.4.1 2010/05/30 05:17:23 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.37 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.37.4.1 2010/05/30 05:17:23 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -309,7 +309,7 @@ lemac_input(
     }
     if (sc->sc_if.if_bpf != NULL) {
 	m->m_pkthdr.len = m->m_len = length;
-	bpf_ops->bpf_mtap(sc->sc_if.if_bpf, m);
+	bpf_mtap(&sc->sc_if, m);
     }
     /*
      * If this is single cast but not to us
@@ -730,8 +730,7 @@ lemac_ifstart(
 	}
 
 	LEMAC_OUTB(sc, LEMAC_REG_TQ, tx_pg);	/* tell chip to transmit this packet */
-	if (sc->sc_if.if_bpf != NULL)
-	    bpf_ops->bpf_mtap(sc->sc_if.if_bpf, m);
+	bpf_mtap(&sc->sc_if, m);
 	m_freem(m);			/* free the mbuf */
     }
     LEMAC_INTR_ENABLE(sc);

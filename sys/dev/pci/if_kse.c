@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.21 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.21.4.1 2010/05/30 05:17:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.21 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.21.4.1 2010/05/30 05:17:34 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -999,8 +999,7 @@ kse_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
@@ -1197,8 +1196,7 @@ rxintr(struct kse_softc *sc)
 			if (rxstat & (R0_TCPE | R0_UDPE))
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
 #ifdef KSEDIAGNOSTIC
 		if (kse_monitor_rxintr > 0) {

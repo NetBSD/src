@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.80 2009/08/22 17:38:06 tsutsui Exp $ */
+/* $NetBSD: sfb.c,v 1.80.4.1 2010/05/30 05:17:43 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.80 2009/08/22 17:38:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.80.4.1 2010/05/30 05:17:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,6 +268,7 @@ sfbattach(device_t parent, device_t self, void *aux)
 	console = (ta->ta_addr == sfb_consaddr);
 	if (console) {
 		sc->sc_ri = ri = &sfb_console_ri;
+		ri->ri_flg &= ~RI_NO_AUTO;
 		sc->nscreens = 1;
 	}
 	else {
@@ -345,6 +346,8 @@ sfb_common_init(struct rasops_info *ri)
 	sfbhwinit(base);
 
 	ri->ri_flg = RI_CENTER;
+	if (ri == &sfb_console_ri)
+		ri->ri_flg |= RI_NO_AUTO;
 	ri->ri_depth = 8;
 	ri->ri_width = (hsetup & 0x1ff) << 2;
 	ri->ri_height = (vsetup & 0x7ff);

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.130 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: elink3.c,v 1.130.4.1 2010/05/30 05:17:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.130 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.130.4.1 2010/05/30 05:17:21 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -1155,8 +1155,7 @@ startagain:
 	bus_space_write_2(iot, ioh, ELINK_COMMAND, SET_TX_START_THRESH |
 	    ((len / 4 + sc->tx_start_thresh) /* >> sc->ep_pktlenshift*/));
 
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+	bpf_mtap(ifp, m0);
 
 	/*
 	 * Do the output at a high interrupt priority level so that an
@@ -1502,8 +1501,7 @@ again:
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*ifp->if_input)(ifp, m);
 

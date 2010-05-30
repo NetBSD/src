@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.116 2010/01/19 22:08:01 pooka Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.116.4.1 2010/05/30 05:18:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.116 2010/01/19 22:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.116.4.1 2010/05/30 05:18:01 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -242,8 +242,7 @@ sl_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_READY(&sc->sc_if.if_snd);
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
-	bpf_ops->bpf_attach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN,
-	    &sc->sc_if.if_bpf);
+	bpf_attach(&sc->sc_if, DLT_SLIP, SLIP_HDRLEN);
 	LIST_INSERT_HEAD(&sl_softc_list, sc, sc_iflist);
 	return 0;
 }
@@ -258,7 +257,7 @@ sl_clone_destroy(struct ifnet *ifp)
 
 	LIST_REMOVE(sc, sc_iflist);
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	if_detach(ifp);
 
 	free(sc, M_DEVBUF);
@@ -752,8 +751,8 @@ slintr(void *arg)
 				    sl_compress_tcp(m, ip, &sc->sc_comp, 1);
 		}
 #endif
-		if (sc->sc_if.if_bpf && bpf_m != NULL)
-			bpf_ops->bpf_mtap_sl_out(sc->sc_if.if_bpf, mtod(m, u_char *), bpf_m);
+		if (bpf_m)
+			bpf_mtap_sl_out(&sc->sc_if, mtod(m, u_char *), bpf_m);
 		getbinuptime(&sc->sc_lastpacket);
 
 		s = spltty();
@@ -909,7 +908,7 @@ slintr(void *arg)
 		m->m_data = (void *) pktstart;
 		m->m_pkthdr.len = m->m_len = len;
 		if (sc->sc_if.if_bpf) {
-			bpf_ops->bpf_mtap_sl_in(sc->sc_if.if_bpf, chdr, &m);
+			bpf_mtap_sl_in(&sc->sc_if, chdr, &m);
 			if (m == NULL)
 				continue;
 		}

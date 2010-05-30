@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.22 2009/10/20 19:10:10 snj Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.22.4.1 2010/05/30 05:16:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.22 2009/10/20 19:10:10 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.22.4.1 2010/05/30 05:16:39 rmind Exp $");
 
 #ifdef TT_VIDEO
 /*
@@ -182,7 +182,8 @@ tt_save_view(view_t *v)
 void
 tt_free_view(view_t *v)
 {
-	if(v) {
+
+	if (v) {
 		tt_remove_view(v);
 		if (v->colormap != &gra_con_cmap)
 			free(v->colormap, M_DEVBUF);
@@ -254,7 +255,8 @@ tt_use_colormap(view_t *v, colormap_t *cm)
 	 */
 	if (v->flags & VF_DISPLAY)
 		creg = &creg[cm->first];
-	else creg = NULL;
+	else
+		creg = NULL;
 
 	vcreg  = &vcm->entry[cm->first];
 	ncreg -= cm->first;
@@ -282,8 +284,9 @@ tt_alloc_view(dmode_t *mode, dimen_t *dim, u_char depth)
 
 	if (!atari_realconfig)
 		v = &gra_con_view;
-	else v = malloc(sizeof(*v), M_DEVBUF, M_NOWAIT);
-	if(v == NULL)
+	else
+		v = malloc(sizeof(*v), M_DEVBUF, M_NOWAIT);
+	if (v == NULL)
 		return (NULL);
 	
 	bm = alloc_bitmap(mode->size.width, mode->size.height, mode->depth);
@@ -397,8 +400,7 @@ alloc_colormap(dmode_t *dm)
 	if (!atari_realconfig) {
 		cm = &gra_con_cmap;
 		cm->entry = gra_con_colors;
-	}
-	else {
+	} else {
 		int size;
 
 		size = sizeof(*cm) + (nentries * sizeof(cm->entry[0]));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.42 2010/03/03 00:09:03 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.42.2.1 2010/05/30 05:17:13 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42 2010/03/03 00:09:03 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.42.2.1 2010/05/30 05:17:13 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -173,6 +173,14 @@ uint32_t cpus_running = 0;
 
 uint32_t phycpus_attached = 0;
 uint32_t phycpus_running = 0;
+
+uint32_t cpu_feature[5]; /* X86 CPUID feature bits
+			  *	[0] basic features %edx
+			  *	[1] basic features %ecx
+			  *	[2] extended features %edx
+			  *	[3] extended features %ecx
+			  *	[4] VIA padlock features
+			  */
 
 bool x86_mp_online;
 paddr_t mp_trampoline_paddr = MP_TRAMPOLINE;
@@ -547,14 +555,14 @@ cpu_init(struct cpu_info *ci)
 	 * On a P6 or above, enable global TLB caching if the
 	 * hardware supports it.
 	 */
-	if (cpu_feature & CPUID_PGE)
+	if (cpu_feature[0] & CPUID_PGE)
 		lcr4(rcr4() | CR4_PGE);	/* enable global TLB caching */
 
 #ifdef XXXMTRR
 	/*
 	 * On a P6 or above, initialize MTRR's if the hardware supports them.
 	 */
-	if (cpu_feature & CPUID_MTRR) {
+	if (cpu_feature[0] & CPUID_MTRR) {
 		if ((ci->ci_flags & CPUF_AP) == 0)
 			i686_mtrr_init_first();
 		mtrr_init_cpu(ci);
@@ -563,13 +571,13 @@ cpu_init(struct cpu_info *ci)
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
-	if (cpu_feature & CPUID_FXSR) {
+	if (cpu_feature[0] & CPUID_FXSR) {
 		lcr4(rcr4() | CR4_OSFXSR);
 
 		/*
 		 * If we have SSE/SSE2, enable XMM exceptions.
 		 */
-		if (cpu_feature & (CPUID_SSE|CPUID_SSE2))
+		if (cpu_feature[0] & (CPUID_SSE|CPUID_SSE2))
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
 
@@ -702,19 +710,14 @@ cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
 	struct pcb *pcb;
-	uint32_t blacklist_features;
 	int s, i;
-
-#ifdef __x86_64__
-        cpu_init_msrs(ci, true);
-#endif
 
 	cpu_probe(ci);
 
-	/* not on Xen... */
-	blacklist_features = ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX); /* XXX add CPUID_SVM */
+	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
+	cpu_feature[2] &= ~CPUID_FEAT_EXT_BLACKLIST;
 
-	cpu_feature &= blacklist_features;
+        cpu_init_msrs(ci, true);
 
 	KDASSERT((ci->ci_flags & CPUF_PRESENT) == 0);
 	atomic_or_32(&ci->ci_flags, CPUF_PRESENT);
@@ -992,18 +995,20 @@ mp_cpu_start_cleanup(struct cpu_info *ci)
 #endif
 }
 
-#ifdef __x86_64__
-
 void
 cpu_init_msrs(struct cpu_info *ci, bool full)
 {
+#ifdef __x86_64__
 	if (full) {
 		HYPERVISOR_set_segment_base (SEGBASE_FS, 0);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_KERNEL, (uint64_t) ci);
 		HYPERVISOR_set_segment_base (SEGBASE_GS_USER, 0);
 	}
-}
 #endif	/* __x86_64__ */
+
+	if (cpu_feature[2] & CPUID_NOX)
+		wrmsr(MSR_EFER, rdmsr(MSR_EFER) | EFER_NXE);
+}
 
 void
 cpu_offline_md(void)

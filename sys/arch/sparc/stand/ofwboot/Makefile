@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2009/11/27 11:14:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.22.4.1 2010/05/30 05:17:07 rmind Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -59,7 +59,7 @@ CPPFLAGS+=	-DSPARC_BOOT_AOUT
 CPPFLAGS+=	-DSPARC_BOOT_ELF
 CPPFLAGS+=	-DSPARC_BOOT_UFS
 CPPFLAGS+=	-DSPARC_BOOT_NFS
-#CPPFLAGS+=	-DSPARC_BOOT_CD9660
+CPPFLAGS+=	-DSPARC_BOOT_CD9660
 
 ### find out what to use for libkern
 KERN_AS=	library
@@ -87,7 +87,7 @@ LIBSA=		${SALIB}
 .endif
 CLEANFILES+= machine sparc64 sparc
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

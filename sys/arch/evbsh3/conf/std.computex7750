@@ -1,0 +1,10 @@
+#       $NetBSD: std.computex7750,v 1.1.4.2 2010/05/30 05:16:46 rmind Exp $
+#
+# standard NetBSD/evbsh3 for COMPUTEX7750 options
+
+# Pull in COMPUTEX7750 config definitions.
+include "arch/evbsh3/conf/files.computex7750"
+
+options 	EVBSH3_BOARDTYPE="computex7750"
+makeoptions	BOARDTYPE="computex7750"
+makeoptions	BOARDMKFRAG="${THISSH3}/conf/mk.computex7750"

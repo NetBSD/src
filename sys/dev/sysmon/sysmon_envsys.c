@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.97 2010/03/14 18:03:15 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.97.2.1 2010/05/30 05:17:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.97 2010/03/14 18:03:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.97.2.1 2010/05/30 05:17:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -84,7 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.97 2010/03/14 18:03:15 pgoyette 
 
 kmutex_t sme_global_mtx;
 
-static prop_dictionary_t sme_propd;
+prop_dictionary_t sme_propd;
+
 static uint32_t sysmon_envsys_next_sensor_index;
 static struct sysmon_envsys *sysmon_envsys_find_40(u_int);
 
@@ -755,12 +756,20 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 
 out:
 	/*
-	 * No errors? register the events that were set in the driver
-	 * and make an initial data refresh if was requested.
+	 * No errors?  Make an initial data refresh if was requested,
+	 * then register the events that were set in the driver.  Do
+	 * the refresh first in case it is needed to establish the
+	 * limits or max_value needed by some events.
 	 */
 	if (error == 0) {
 		nevent = 0;
 		sysmon_task_queue_init();
+
+		if (sme->sme_flags & SME_INIT_REFRESH) {
+			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
+			DPRINTF(("%s: scheduled initial refresh for '%s'\n",
+				__func__, sme->sme_name));
+		}
 		SLIST_FOREACH(evdv, &sme_evdrv_list, evdrv_head) {
 			sysmon_task_queue_sched(0,
 			    sme_event_drvadd, evdv->evdrv);
@@ -768,9 +777,6 @@ out:
 		}
 		DPRINTF(("%s: driver '%s' registered (nsens=%d nevent=%d)\n",
 		    __func__, sme->sme_name, sme->sme_nsensors, nevent));
-
-		if (sme->sme_flags & SME_INIT_REFRESH)
-			sysmon_task_queue_sched(0, sme_initial_refresh, sme);
 	}
 
 out2:
@@ -854,6 +860,7 @@ void
 sysmon_envsys_unregister(struct sysmon_envsys *sme)
 {
 	prop_array_t array;
+	struct sysmon_envsys *osme;
 
 	KASSERT(sme != NULL);
 
@@ -862,11 +869,16 @@ sysmon_envsys_unregister(struct sysmon_envsys *sme)
 	 */
 	sme_event_unregister_all(sme);
 	/*
-	 * Decrement global sensors counter (only used for compatibility
-	 * with previous API) and remove the device from the list.
+	 * Decrement global sensors counter and the first_sensor index
+	 * for remaining devices in the list (only used for compatibility
+	 * with previous API), and remove the device from the list.
 	 */
 	mutex_enter(&sme_global_mtx);
 	sysmon_envsys_next_sensor_index -= sme->sme_nsensors;
+	LIST_FOREACH(osme, &sysmon_envsys_list, sme_list) {
+		if (osme->sme_fsensor >= sme->sme_fsensor)
+			osme->sme_fsensor -= sme->sme_nsensors;
+	}
 	LIST_REMOVE(sme, sme_list);
 	mutex_exit(&sme_global_mtx);
 
@@ -1041,6 +1053,7 @@ sme_remove_userprops(void)
 	prop_dictionary_t sdict;
 	envsys_data_t *edata = NULL;
 	char tmp[ENVSYS_DESCLEN];
+	sysmon_envsys_lim_t lims;
 	int ptype;
 
 	mutex_enter(&sme_global_mtx);
@@ -1078,10 +1091,6 @@ sme_remove_userprops(void)
 				    "maximum-capacity");
 				ptype = PENVSYS_EVENT_CAPACITY;
 			}
-			if (ptype != 0)
-				sme_event_unregister(sme, edata->desc, ptype);
-
-			ptype = 0;
 			if (edata->upropset & PROP_WARNMAX) {
 				prop_dictionary_remove(sdict, "warning-max");
 				ptype = PENVSYS_EVENT_LIMITS;
@@ -1101,9 +1110,6 @@ sme_remove_userprops(void)
 				prop_dictionary_remove(sdict, "critical-min");
 				ptype = PENVSYS_EVENT_LIMITS;
 			}
-			if (ptype != 0)
-				sme_event_unregister(sme, edata->desc, ptype);
-
 			if (edata->upropset & PROP_RFACT) {
 				(void)sme_sensor_upint32(sdict, "rfact", 0);
 				edata->rfact = 0;
@@ -1113,8 +1119,36 @@ sme_remove_userprops(void)
 				(void)sme_sensor_upstring(sdict,
 			  	    "description", edata->desc);
 
-			if (edata->upropset)
-				edata->upropset = 0;
+			if (ptype == 0)
+				continue;
+
+			/*
+			 * If there were any limit values removed, we
+			 * need to revert to initial limits.
+			 *
+			 * First, tell the driver that we need it to 
+			 * restore any h/w limits which may have been 
+			 * changed to stored, boot-time values.  Then
+			 * we need to retrieve those limits and update
+			 * the event data in the dictionary.
+			 */
+			if (sme->sme_set_limits) {
+				DPRINTF(("%s: reset limits for %s %s\n",
+					__func__, sme->sme_name, edata->desc));
+				(*sme->sme_set_limits)(sme, edata, NULL, NULL);
+			}
+			if (sme->sme_get_limits) {
+				DPRINTF(("%s: retrieve limits for %s %s\n",
+					__func__, sme->sme_name, edata->desc));
+				lims = edata->limits;
+				(*sme->sme_get_limits)(sme, edata, &lims,
+						       &edata->upropset);
+			}
+			if (edata->upropset) {
+				DPRINTF(("%s: install limits for %s %s\n",
+					__func__, sme->sme_name, edata->desc));
+				sme_update_limits(sme, edata);
+			}
 		}
 
 		/*
@@ -1136,6 +1170,7 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 			    prop_dictionary_t dict)
 {
 	prop_dictionary_t pdict;
+	const char *class;
 	int error = 0;
 
 	pdict = prop_dictionary_create();
@@ -1143,8 +1178,8 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 		return EINVAL;
 
 	/*
-	 * Add the 'refresh-timeout' object into the 'device-properties'
-	 * dictionary. We use by default 30 seconds.
+	 * Add the 'refresh-timeout' and 'dev-class' objects into the
+	 * 'device-properties' dictionary.
 	 *
 	 * 	...
 	 * 	<dict>
@@ -1152,7 +1187,9 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 	 * 		<dict>
 	 * 			<key>refresh-timeout</key>
 	 * 			<integer>120</integer<
-	 * 		</dict<
+	 *			<key>device-class</key>
+	 *			<string>class_name</string>
+	 * 		</dict>
 	 * 	</dict>
 	 * 	...
 	 *
@@ -1162,6 +1199,16 @@ sme_add_property_dictionary(struct sysmon_envsys *sme, prop_array_t array,
 
 	if (!prop_dictionary_set_uint64(pdict, "refresh-timeout",
 					sme->sme_events_timeout)) {
+		error = EINVAL;
+		goto out;
+	}
+	if (sme->sme_class == SME_CLASS_BATTERY)
+		class = "battery";
+	else if (sme->sme_class == SME_CLASS_ACADAPTER)
+		class = "ac-adapter";
+	else
+		class = "other";
+	if (!prop_dictionary_set_cstring_nocopy(pdict, "device-class", class)) {
 		error = EINVAL;
 		goto out;
 	}
@@ -1982,4 +2029,37 @@ out:
 		error = EINVAL;
 
 	return error;
+}
+
+/*
+ * + sysmon_envsys_foreach_sensor
+ *
+ *	Walk through the devices' sensor lists and execute the callback.
+ *	If the callback returns false, the remainder of the current
+ *	device's sensors are skipped.
+ */
+void   
+sysmon_envsys_foreach_sensor(sysmon_envsys_callback_t func, void *arg,
+			     bool refresh)
+{
+	struct sysmon_envsys *sme;
+	envsys_data_t *sensor;
+
+	mutex_enter(&sme_global_mtx);
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+
+		sysmon_envsys_acquire(sme, false);
+		TAILQ_FOREACH(sensor, &sme->sme_sensors_list, sensors_head) {
+			if (refresh &&
+			    (sme->sme_flags & SME_DISABLE_REFRESH) == 0) {
+				mutex_enter(&sme->sme_mtx);
+				(*sme->sme_refresh)(sme, sensor);
+				mutex_exit(&sme->sme_mtx);
+			}
+			if (!(*func)(sme, sensor, arg))
+				break;
+		}
+		sysmon_envsys_release(sme, false);
+	}
+	mutex_exit(&sme_global_mtx);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.38 2010/01/19 22:08:01 pooka Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.38.4.1 2010/05/30 05:18:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.38 2010/01/19 22:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.38.4.1 2010/05/30 05:18:01 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -338,6 +338,5 @@ hippi_ifattach(struct ifnet *ifp, void *lla)
 
 	if_set_sadl(ifp, lla, 6, true);
 
-	bpf_ops->bpf_attach(ifp, DLT_HIPPI,
-	    sizeof(struct hippi_header), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_HIPPI, sizeof(struct hippi_header));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.36 2009/11/21 04:16:52 rmind Exp $ */
+/*	$NetBSD: syscall.c,v 1.36.4.1 2010/05/30 05:17:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36 2009/11/21 04:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36.4.1 2010/05/30 05:17:09 rmind Exp $");
 
 #include "opt_sa.h"
 
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.36 2009/11/21 04:16:52 rmind Exp $");
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/signal.h>
+#include <sys/kmem.h>
 #include <sys/ktrace.h>
 #include <sys/syscall.h>
 #include <sys/syscallvar.h>
@@ -473,26 +474,20 @@ child_return(void *arg)
 	ktrsysret((l->l_proc->p_lflag & PL_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 }
 
-
-
 /* 
  * Start a new LWP
  */
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l, 0, 0);
 }
 

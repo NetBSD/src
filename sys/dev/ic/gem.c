@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.93 2010/02/24 22:37:58 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.93.2.1 2010/05/30 05:17:22 rmind Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.93 2010/02/24 22:37:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.93.2.1 2010/05/30 05:17:22 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -714,7 +714,7 @@ gem_stop(struct ifnet *ifp, int disable)
 
 	DPRINTF(sc, ("%s: gem_stop\n", device_xname(sc->sc_dev)));
 
-	callout_stop(&sc->sc_tick_ch);
+	callout_halt(&sc->sc_tick_ch, NULL);
 	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) != 0)
 		gem_pcs_stop(sc, disable);
 	else
@@ -1588,8 +1588,7 @@ gem_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (txs == NULL || sc->sc_txfree == 0) {
@@ -1845,8 +1844,7 @@ gem_rint(struct gem_softc *sc)
 		 * Pass this up to any BPF listeners, but only
 		 * pass it up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 #ifdef INET
 		/* hardware checksum */

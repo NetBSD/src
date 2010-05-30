@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.12 2009/06/12 00:24:33 nisimura Exp $ */
+/* $NetBSD: pci.c,v 1.12.4.1 2010/05/30 05:17:05 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -219,12 +219,11 @@ deviceinit(int bus, int dev, int func, unsigned long data)
 	val = 0x80 << 8 | 0x08 /* 32B cache line */;
 	cfgwrite(bus, dev, func, 0x0c, val);
 
-#if 1
-/* skip IDE controller BAR assignment */
-val = cfgread(bus, dev, func, PCI_CLASS_REG);
-if ((val >> 16) == PCI_CLASS_IDE)
-	return 0;
-#endif
+	/* skip legacy mode IDE controller BAR assignment */
+	val = cfgread(bus, dev, func, PCI_CLASS_REG);
+	if ((val >> 16) == PCI_CLASS_IDE && ((val >> 8) & 0x05) == 0)
+		return 0;
+
 	memassign(bus, dev, func);
 
 	/* descending toward PCI-PCI bridge */

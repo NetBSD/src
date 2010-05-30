@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev_private.h,v 1.10 2010/03/01 13:12:20 pooka Exp $	*/
+/*	$NetBSD: rump_dev_private.h,v 1.10.2.1 2010/05/30 05:18:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -38,5 +38,12 @@ void	rump_pdev_finalize(void);
 struct mainbus_attach_args {
 	int maa_unit;
 };
+
+#define FLAWLESSCALL(call)						\
+do {									\
+	int att_error;							\
+	if ((att_error = call) != 0)					\
+		panic("\"%s\" failed", #call);				\
+} while (/*CONSTCOND*/0)
 
 #endif /* _SYS_RUMP_DEV_PRIVATE_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2010/02/21 11:14:47 darran Exp $
+#	$NetBSD: Makefile,v 1.39.2.1 2010/05/30 05:18:00 rmind Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,8 @@ SUBDIR+=	nilfs
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	overlay
+SUBDIR+=	pciverbose
+SUBDIR+=	pf
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
@@ -53,6 +55,7 @@ SUBDIR+=	tmpfs
 SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
+SUBDIR+=	usbverbose
 SUBDIR+=	vnd
 SUBDIR+=	tprof
 .if (defined(NOTYET))
@@ -85,6 +88,7 @@ SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	drm
 SUBDIR+=	i915drm
+SUBDIR+=	pad
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
@@ -98,6 +102,7 @@ SUBDIR+=	exec_aout
 SUBDIR+=	i915drm
 SUBDIR+=	radeondrm
 SUBDIR+=	viadrm
+SUBDIR+=	pad
 .endif
 
 .include <bsd.own.mk>

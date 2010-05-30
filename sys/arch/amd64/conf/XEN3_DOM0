@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.52 2010/03/07 09:39:42 plunky Exp $
+# $NetBSD: XEN3_DOM0,v 1.52.2.1 2010/05/30 05:16:36 rmind Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -733,6 +733,10 @@ wsmouse* at btms? mux 0
 btkbd* at bthidev? reportid ?
 wskbd* at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+btmagic* at bthub?
+wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 btsco* at bthub?
 
@@ -768,7 +772,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options 	RF_INCLUDE_INTERDECLUSTER=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files

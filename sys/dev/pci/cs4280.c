@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.57 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.57.2.1 2010/05/30 05:17:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.57 2010/02/24 22:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.57.2.1 2010/05/30 05:17:31 rmind Exp $");
 
 #include "midi.h"
 
@@ -242,6 +242,7 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc;
 	const struct cs4280_card_t *cs_card;
 	char const *intrstr;
+	const char *vendor, *product;
 	pcireg_t reg;
 	char devinfo[256];
 	uint32_t mem;
@@ -258,9 +259,19 @@ cs4280_attach(device_t parent, device_t self, void *aux)
 
 	cs_card = cs4280_identify_card(pa);
 	if (cs_card != NULL) {
-		aprint_normal_dev(&sc->sc_dev, "%s %s\n",
-			      pci_findvendor(cs_card->id),
-			      pci_findproduct(cs_card->id));
+		vendor = pci_findvendor(cs_card->id);
+		product = pci_findproduct(cs_card->id); 
+		if (vendor == NULL)
+			aprint_normal_dev(&sc->sc_dev,
+					  "vendor 0x%04x product 0x%04x\n",
+					  PCI_VENDOR(cs_card->id),
+					  PCI_PRODUCT(cs_card->id));
+		else if (product == NULL)
+			aprint_normal_dev(&sc->sc_dev, "%s product 0x%04x\n",
+					  vendor, PCI_PRODUCT(cs_card->id));
+		else
+			aprint_normal_dev(&sc->sc_dev, "%s %s\n",
+					  vendor, product);
 		sc->sc_flags = cs_card->flags;
 	} else {
 		sc->sc_flags = CS428X_FLAG_NONE;

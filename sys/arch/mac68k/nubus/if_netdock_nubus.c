@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.20 2010/01/19 22:06:20 pooka Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.20.4.1 2010/05/30 05:16:57 rmind Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.20 2010/01/19 22:06:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.20.4.1 2010/05/30 05:16:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -451,8 +451,7 @@ netdock_start(struct ifnet *ifp)
 			panic("%s: netdock_start: no header mbuf",
 			    device_xname(sc->sc_dev));
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		if ((netdock_put(sc, m)) == 0) {
 			IF_PREPEND(&ifp->if_snd, m);
@@ -764,8 +763,7 @@ netdock_read(struct netdock_softc *sc, int len)
 	if (m == 0)
 		return (0);
 
-	if (ifp->if_bpf) 
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	(*ifp->if_input)(ifp, m);
 

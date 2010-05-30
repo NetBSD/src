@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.NAS,v 1.11 2009/12/05 20:11:16 pooka Exp $
+# $NetBSD: GENERIC.NAS,v 1.11.4.1 2010/05/30 05:17:05 rmind Exp $
 #
 # machine description file for GENERIC.NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC.NAS-$Revision: 1.11 $"
+#ident 		"GENERIC.NAS-$Revision: 1.11.4.1 $"
 
 maxusers	32
 
@@ -102,6 +102,7 @@ options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 
 options 	INET
+options		INET6		# IPV6
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 #options 	ALTQ		# Manipulate network interfaces' output queues
@@ -158,10 +159,9 @@ pci*	at mainbus0 bus ?
 pchb*	at pci? dev ? function ?	# PCI host bridge
 
 eumb*	at mainbus0
-com0	at eumb? unit 1			# console is at 0x4600
-com1	at eumb? unit 0
-#com0	at eumb? unit 0			# standard case
+com0	at eumb? unit 0			# console at 0x4500
 #com1	at eumb? unit 1
+satmgr0 at eumb? unit 1			# satmgr at 0x4600
 ociic*	at eumb?
 iic*	at ociic?
 rs5c372rtc* at iic? addr 0x32
@@ -180,8 +180,8 @@ wd*		at atabus? drive ? flags 0x0000	# the drives themselves
 # PCI network interfaces
 tlp*	at pci? dev ? function ?	# DEC Tulip and similar
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
-msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
+skc*	at pci? dev ? function ?	# Marvell Yukon Gigabit Ethernet
+sk*	at skc?				# Marvell Yukon Gigabit Ethernet
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2007/12/17 19:12:00 garbled Exp $
+#	$NetBSD: Makefile,v 1.1.40.1 2010/05/30 05:17:04 rmind Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -46,7 +46,7 @@ LIBS= ${LIBSA} ${LIBZ} ${LIBKERN}
 
 realall: machine-links ${LIBS}
 
-cleandir distclean: cleanlibdir
+cleandir distclean: .WAIT cleanlibdir
 
 cleanlibdir:
 	-rm -rf lib

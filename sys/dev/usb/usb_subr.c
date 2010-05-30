@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.167 2009/11/12 20:11:35 dyoung Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.167.4.1 2010/05/30 05:17:45 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167 2009/11/12 20:11:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167.4.1 2010/05/30 05:17:45 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167 2009/11/12 20:11:35 dyoung Exp $"
 #include <sys/proc.h>
 
 #include <sys/bus.h>
+#include <sys/module.h>
 
 #include <dev/usb/usb.h>
 
@@ -54,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.167 2009/11/12 20:11:35 dyoung Exp $"
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
+#include <dev/usb/usb_verbose.h>
 
 #include "locators.h"
 
@@ -81,26 +83,6 @@ Static usbd_status usbd_probe_and_attach(device_t parent,
 
 Static u_int32_t usb_cookie_no = 0;
 
-#ifdef USBVERBOSE
-typedef u_int16_t usb_vendor_id_t;
-typedef u_int16_t usb_product_id_t;
-
-/*
- * Descriptions of of known vendors and devices ("products").
- */
-struct usb_vendor {
-	usb_vendor_id_t		vendor;
-	const char		*vendorname;
-};
-struct usb_product {
-	usb_vendor_id_t		vendor;
-	usb_product_id_t	product;
-	const char		*productname;
-};
-
-#include <dev/usb/usbdevs_data.h>
-#endif /* USBVERBOSE */
-
 Static const char * const usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
 	"IN_PROGRESS",
@@ -123,6 +105,35 @@ Static const char * const usbd_error_strs[] = {
 	"INTERRUPTED",
 	"XXX",
 };
+
+void (*get_usb_vendor)(char *, usb_vendor_id_t) = (void *)get_usb_none;
+void (*get_usb_product)(char *, usb_vendor_id_t, usb_product_id_t) =
+	(void *)get_usb_none;
+
+void get_usb_none(void)
+{
+	/* Nothing happens */
+}
+
+/*
+ * Load/unload the usbverbose module
+ */
+void usb_verbose_ctl(bool load)
+{
+	static int loaded = 0;
+ 
+	if (load) {
+		if (loaded++ == 0)
+			if (module_load("usbverbose", MODCTL_LOAD_FORCE,
+					NULL, MODULE_CLASS_MISC) != 0)
+				loaded = 0;
+		return; 
+	}
+	if (loaded == 0)
+		return; 
+	if (--loaded == 0)
+		module_unload("usbverbose");
+}
 
 const char *
 usbd_errstr(usbd_status err)
@@ -192,9 +203,6 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev,
 		int useencoded)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
-#ifdef USBVERBOSE
-	int n;
-#endif
 
 	v[0] = p[0] = '\0';
 	if (dev == NULL)
@@ -208,22 +216,12 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev,
 		    USBD_NORMAL_COMPLETION)
 			usbd_trim_spaces(p);
 	}
-	/* There is no need for strlcpy & snprintf below. */
-#ifdef USBVERBOSE
 	if (v[0] == '\0')
-		for (n = 0; n < usb_nvendors; n++)
-			if (usb_vendors[n].vendor == UGETW(udd->idVendor)) {
-				strcpy(v, usb_vendors[n].vendorname);
-				break;
-			}
+		get_usb_vendor(v, UGETW(udd->idVendor));
 	if (p[0] == '\0')
-		for (n = 0; n < usb_nproducts; n++)
-			if (usb_products[n].vendor == UGETW(udd->idVendor) &&
-			    usb_products[n].product == UGETW(udd->idProduct)) {
-				strcpy(p, usb_products[n].productname);
-				break;
-			}
-#endif
+		get_usb_product(p, UGETW(udd->idVendor), UGETW(udd->idProduct));
+
+	/* There is no need for snprintf below. */
 	if (v[0] == '\0')
 		sprintf(v, "vendor 0x%04x", UGETW(udd->idVendor));
 	if (p[0] == '\0')
@@ -1158,14 +1156,6 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 
 	USETW(dev->def_ep_desc.wMaxPacketSize, dd->bMaxPacketSize);
 
-	err = usbd_reload_device_desc(dev);
-	if (err) {
-		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
-			      "failed\n", addr));
-		usbd_remove_device(dev, up);
-		return (err);
-	}
-
 	/* Set the address */
 	DPRINTFN(5, ("usbd_new_device: setting device address=%d\n", addr));
 	err = usbd_set_address(dev, addr);
@@ -1180,6 +1170,14 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
 	dev->address = addr;	/* new device address now */
 	bus->devices[addr] = dev;
+
+	err = usbd_reload_device_desc(dev);
+	if (err) {
+		DPRINTFN(-1, ("usbd_new_device: addr=%d, getting full desc "
+			      "failed\n", addr));
+		usbd_remove_device(dev, up);
+		return (err);
+	}
 
 	/* Re-establish the default pipe with the new address. */
 	usbd_kill_pipe(dev->default_pipe);

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.23 2010/03/14 18:07:01 pgoyette Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.23.2.1 2010/05/30 05:17:31 rmind Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.23 2010/03/14 18:07:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.23.2.1 2010/05/30 05:17:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -237,6 +237,9 @@ arc_detach(device_t self, int flags)
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
 		aprint_error_dev(self, "timeout waiting to flush cache\n");
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
 
 	return 0;
 }
@@ -1804,8 +1807,12 @@ arc_create_sensors(void *arg)
 	kthread_exit(0);
 
 bad:
-	kmem_free(sc->sc_sensors, slen);
 	sysmon_envsys_destroy(sc->sc_sme);
+	kmem_free(sc->sc_sensors, slen);
+
+	sc->sc_sme = NULL;
+	sc->sc_sensors = NULL;
+
 	kthread_exit(0);
 }
 

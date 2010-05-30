@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_pnpbios.c,v 1.20 2009/10/20 10:34:21 cegger Exp $	*/
+/*	$NetBSD: ess_pnpbios.c,v 1.20.4.1 2010/05/30 05:16:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.20 2009/10/20 10:34:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.20.4.1 2010/05/30 05:16:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ess_pnpbios.c,v 1.20 2009/10/20 10:34:21 cegger Exp 
 int ess_pnpbios_match(device_t, cfdata_t, void *);
 void ess_pnpbios_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ess_pnpbios, sizeof(struct ess_softc),
+CFATTACH_DECL_NEW(ess_pnpbios, sizeof(struct ess_softc),
     ess_pnpbios_match, ess_pnpbios_attach, NULL, NULL);
 
 int
@@ -86,6 +86,8 @@ ess_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
 	struct ess_softc *sc = device_private(self);
 	struct pnpbiosdev_attach_args *aa = aux;
+
+	sc->sc_dev = self;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {
 		aprint_error(": can't map i/o space\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.36 2010/01/19 22:07:02 pooka Exp $ */
+/* $NetBSD: if_txp.c,v 1.36.4.1 2010/05/30 05:17:35 rmind Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.36 2010/01/19 22:07:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.36.4.1 2010/05/30 05:17:35 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -726,8 +726,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r, struct txp_dma_alloc
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
 			sumflags |= (M_CSUM_IPv4|M_CSUM_IPv4_BAD);
@@ -1507,8 +1506,7 @@ txp_start(struct ifnet *ifp)
 
 		ifp->if_timer = 5;
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		txd->tx_flags |= TX_FLAGS_VALID;
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_txhiring_dma.dma_map,

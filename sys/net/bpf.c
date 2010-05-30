@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.156 2010/03/13 20:38:48 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.156.2.1 2010/05/30 05:18:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.156 2010/03/13 20:38:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.156.2.1 2010/05/30 05:18:00 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1296,7 +1296,7 @@ bpf_kqfilter(struct file *fp, struct knote *kn)
  * buffer.
  */
 static void
-bpf_tap(struct bpf_if *bp, u_char *pkt, u_int pktlen)
+_bpf_tap(struct bpf_if *bp, u_char *pkt, u_int pktlen)
 {
 	struct bpf_d *d;
 	u_int slen;
@@ -1386,7 +1386,7 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
  * a buffer, and the tail is in an mbuf chain.
  */
 static void
-bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
+_bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 {
 	u_int pktlen;
 	struct mbuf mb;
@@ -1416,7 +1416,7 @@ bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
  * Incoming linkage from device drivers, when packet is in an mbuf chain.
  */
 static void
-bpf_mtap(struct bpf_if *bp, struct mbuf *m)
+_bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 {
 	void *(*cpfn)(void *, const void *, size_t);
 	u_int pktlen, buflen;
@@ -1451,7 +1451,7 @@ bpf_mtap(struct bpf_if *bp, struct mbuf *m)
  * try to free it or keep a pointer a to it).
  */
 static void
-bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m)
+_bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m)
 {
 	struct mbuf m0;
 
@@ -1460,25 +1460,7 @@ bpf_mtap_af(struct bpf_if *bp, uint32_t af, struct mbuf *m)
 	m0.m_len = 4;
 	m0.m_data = (char *)&af;
 
-	bpf_mtap(bp, &m0);
-}
-
-static void
-bpf_mtap_et(struct bpf_if *bp, uint16_t et, struct mbuf *m)
-{
-	struct mbuf m0;
-
-	m0.m_flags = 0;
-	m0.m_next = m;
-	m0.m_len = 14;
-	m0.m_data = m0.m_dat;
-
-	((uint32_t *)m0.m_data)[0] = 0;
-	((uint32_t *)m0.m_data)[1] = 0;
-	((uint32_t *)m0.m_data)[2] = 0;
-	((uint16_t *)m0.m_data)[6] = et;
-
-	bpf_mtap(bp, &m0);
+	_bpf_mtap(bp, &m0);
 }
 
 /*
@@ -1488,7 +1470,7 @@ bpf_mtap_et(struct bpf_if *bp, uint16_t et, struct mbuf *m)
  * in the input buffer.
  */
 static void
-bpf_mtap_sl_in(struct bpf_if *bp, u_char *chdr, struct mbuf **m)
+_bpf_mtap_sl_in(struct bpf_if *bp, u_char *chdr, struct mbuf **m)
 {
 	int s;
 	u_char *hp;
@@ -1502,7 +1484,7 @@ bpf_mtap_sl_in(struct bpf_if *bp, u_char *chdr, struct mbuf **m)
 	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
 
 	s = splnet();
-	bpf_mtap(bp, *m);
+	_bpf_mtap(bp, *m);
 	splx(s);
 
 	m_adj(*m, SLIP_HDRLEN);
@@ -1514,7 +1496,7 @@ bpf_mtap_sl_in(struct bpf_if *bp, u_char *chdr, struct mbuf **m)
  * at the beginning of the mbuf.
  */
 static void
-bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
+_bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 {
 	struct mbuf m0;
 	u_char *hp;
@@ -1531,7 +1513,7 @@ bpf_mtap_sl_out(struct bpf_if *bp, u_char *chdr, struct mbuf *m)
 	(void)memcpy(&hp[SLX_CHDR], chdr, CHDR_LEN);
 
 	s = splnet();
-	bpf_mtap(bp, &m0);
+	_bpf_mtap(bp, &m0);
 	splx(s);
 	m_freem(m);
 }
@@ -1667,7 +1649,7 @@ bpf_freed(struct bpf_d *d)
  * (variable length headers not yet supported).
  */
 static void
-bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
+_bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
 {
 	struct bpf_if *bp;
 	bp = malloc(sizeof(*bp), M_DEVBUF, M_DONTWAIT);
@@ -1701,7 +1683,7 @@ bpfattach(struct ifnet *ifp, u_int dlt, u_int hdrlen, struct bpf_if **driverp)
  * Remove an interface from bpf.
  */
 static void
-bpfdetach(struct ifnet *ifp)
+_bpfdetach(struct ifnet *ifp)
 {
 	struct bpf_if *bp, **pbp;
 	struct bpf_d *d;
@@ -1736,7 +1718,7 @@ bpfdetach(struct ifnet *ifp)
  * Change the data link type of a interface.
  */
 static void
-bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
+_bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 {
 	struct bpf_if *bp;
 
@@ -1955,17 +1937,16 @@ SYSCTL_SETUP(sysctl_net_bpf_setup, "sysctl net.bpf subtree setup")
 }
 
 struct bpf_ops bpf_ops_kernel = {
-	.bpf_attach =		bpfattach,
-	.bpf_detach =		bpfdetach,
-	.bpf_change_type =	bpf_change_type,
+	.bpf_attach =		_bpfattach,
+	.bpf_detach =		_bpfdetach,
+	.bpf_change_type =	_bpf_change_type,
 
-	.bpf_tap =		bpf_tap,
-	.bpf_mtap =		bpf_mtap,
-	.bpf_mtap2 =		bpf_mtap2,
-	.bpf_mtap_af =		bpf_mtap_af,
-	.bpf_mtap_et =		bpf_mtap_et,
-	.bpf_mtap_sl_in =	bpf_mtap_sl_in,
-	.bpf_mtap_sl_out =	bpf_mtap_sl_out,
+	.bpf_tap =		_bpf_tap,
+	.bpf_mtap =		_bpf_mtap,
+	.bpf_mtap2 =		_bpf_mtap2,
+	.bpf_mtap_af =		_bpf_mtap_af,
+	.bpf_mtap_sl_in =	_bpf_mtap_sl_in,
+	.bpf_mtap_sl_out =	_bpf_mtap_sl_out,
 };
 
 MODULE(MODULE_CLASS_DRIVER, bpf, NULL);
@@ -1995,8 +1976,24 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 		/*
-		 * bpf_ops is not (yet) referenced in the callers before
-		 * attach.  maybe other issues too.  "safety first".
+		 * While there is no reference counting for bpf callers,
+		 * unload could at least in theory be done similarly to 
+		 * system call disestablishment.  This should even be
+		 * a little simpler:
+		 * 
+		 * 1) replace op vector with stubs
+		 * 2) post update to all cpus with xc
+		 * 3) check that nobody is in bpf anymore
+		 *    (it's doubtful we'd want something like l_sysent,
+		 *     but we could do something like *signed* percpu
+		 *     counters.  if the sum is 0, we're good).
+		 * 4) if fail, unroll changes
+		 *
+		 * NOTE: change won't be atomic to the outside.  some
+		 * packets may be not captured even if unload is
+		 * not succesful.  I think packet capture not working
+		 * is a perfectly logical consequence of trying to
+		 * disable packet capture.
 		 */
 		error = EOPNOTSUPP;
 		break;

@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.30 2009/02/06 18:50:27 jym Exp $
+#	$NetBSD: CQREEKSH3,v 1.30.6.1 2010/05/30 05:16:46 rmind Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,6 +7,7 @@
 include "arch/evbsh3/conf/std.evbsh3.eb"
 # for little endian
 #include "arch/evbsh3/conf/std.evbsh3.el"
+include "arch/evbsh3/conf/std.cqreeksh3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.89 2010/03/06 08:08:29 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.89.2.1 2010/05/30 05:17:08 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,7 +151,10 @@ struct cpu_info {
  * the right pointer and you get to the pmap segment tables.  These are
  * physical addresses, of course.
  *
+ * ci_ctx_lock protects this CPUs context allocation/free.
+ * These are all allocated almost with in the same cacheline.
  */
+	kmutex_t		ci_ctx_lock;
 	int			ci_pmap_next_ctx;
 	int			ci_numctx;
 	paddr_t 		*ci_ctxbusy;
@@ -244,12 +247,21 @@ void	cpu_boot_secondary_processors(void);
  *	multicast - send to everyone in the sparc64_cpuset_t
  *	broadcast - send to to all cpus but ourselves
  *	send - send to just this cpu
+ * The called function do not follow the C ABI, so need to be coded in
+ * assembler.
  */
-typedef void (* ipifunc_t)(void *);
+typedef void (* ipifunc_t)(void *, void *);
 
 void	sparc64_multicast_ipi(sparc64_cpuset_t, ipifunc_t, uint64_t, uint64_t);
 void	sparc64_broadcast_ipi(ipifunc_t, uint64_t, uint64_t);
 void	sparc64_send_ipi(int, ipifunc_t, uint64_t, uint64_t);
+
+/*
+ * Call an arbitrary C function on another cpu (or all others but ourself)
+ */
+typedef void (*ipi_c_call_func_t)(void*);
+void	sparc64_generic_xcall(struct cpu_info*, ipi_c_call_func_t, void*);
+
 #endif
 
 /*

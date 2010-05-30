@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.38 2010/01/13 12:54:49 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.38.4.1 2010/05/30 05:17:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -84,10 +84,10 @@
 #define CR4_OSXMMEXCPT	0x00000400	/* enable unmasked SSE exceptions */
 
 /*
- * CPUID "features" bits in %edx
+ * CPUID "features" bits
  */
 
-/* Fn80000001 %edx feature */
+/* Fn00000001 %edx features */
 #define	CPUID_FPU	0x00000001	/* processor has an FPU? */
 #define	CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
 #define	CPUID_DE	0x00000004	/* has debugging extension */
@@ -127,26 +127,20 @@
 			    "\30MMX\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM" \
 			    "\37IA64\40SBF"
 
-/*
- * CPUID Intel extended features - %EDX
- */
+/* Intel Fn80000001 extended features - %edx */
 #define CPUID_SYSCALL	0x00000800	/* SYSCALL/SYSRET */
-#define CPUID_XD	0x00100000	/* Execute Disable */
+#define CPUID_XD	0x00100000	/* Execute Disable (like CPUID_NOX) */
 #define CPUID_EM64T	0x20000000	/* Intel EM64T */
 
 #define CPUID_INTEL_EXT_FLAGS	"\20\14SYSCALL/SYSRET\25XD\36EM64T"
 
-/*
- * CPUID Intel extended features - %ECX
- */
+/* Intel Fn80000001 extended features - %ecx */
 #define	CPUID_LAHF	0x00000001	/* LAHF/SAHF in IA-32e mode, 64bit sub*/
 
 #define	CPUID_INTEL_FLAGS4	"\20\1LAHF"
 
-/*
- * AMD/VIA processor specific flags.
- */
 
+/* AMD/VIA Fn80000001 extended features - %edx */
 /*	CPUID_SYSCALL			   SYSCALL/SYSRET */
 #define CPUID_MPC	0x00080000	/* Multiprocessing Capable */
 #define CPUID_NOX	0x00100000	/* No Execute Page Protection */
@@ -161,8 +155,7 @@
 #define CPUID_EXT_FLAGS	"\20\14SYSCALL/SYSRET\24MPC\25NOX\27MXX\32FFXSR" \
 			    "\33P1GB\34RDTSCP\36LONG\0373DNOW2\0403DNOW"
 
-
-/* AMD Fn80000001 %ecx features */
+/* AMD Fn80000001 extended features - %ecx */
 #define CPUID_LAHF	0x00000001	/* LAHF/SAHF instruction */
 #define CPUID_CMPLEGACY	0x00000002	/* Compare Legacy */
 #define CPUID_SVM	0x00000004	/* Secure Virtual Machine */
@@ -264,6 +257,14 @@
 /* Extended family and model are defined on amd64 processors */
 #define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
 #define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
+
+/* Blacklists of CPUID flags - used to mask certain features */
+#ifdef XEN
+/* Not on Xen */
+#define CPUID_FEAT_BLACKLIST	 (CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR)
+#else
+#define CPUID_FEAT_BLACKLIST	 0
+#endif /* XEN */
 
 /*
  * Model-specific registers for the i386 family

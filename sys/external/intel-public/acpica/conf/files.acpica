@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.1 2009/08/18 16:38:51 jmcneill Exp $
+#	$NetBSD: files.acpica,v 1.1.6.1 2010/05/30 05:17:48 rmind Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/intel-public/acpica/dist/include"
@@ -97,6 +97,7 @@ file	external/intel-public/acpica/dist/namespace/nsobject.c		acpica
 file	external/intel-public/acpica/dist/namespace/nsparse.c		acpica
 file	external/intel-public/acpica/dist/namespace/nspredef.c		acpica
 file	external/intel-public/acpica/dist/namespace/nsrepair.c		acpica
+file	external/intel-public/acpica/dist/namespace/nsrepair2.c		acpica
 file	external/intel-public/acpica/dist/namespace/nssearch.c		acpica
 file	external/intel-public/acpica/dist/namespace/nsutils.c		acpica
 file	external/intel-public/acpica/dist/namespace/nswalk.c		acpica

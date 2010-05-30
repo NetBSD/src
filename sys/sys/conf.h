@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.135.4.1 2010/03/18 04:36:54 rmind Exp $	*/
+/*	$NetBSD: conf.h,v 1.135.4.2 2010/05/30 05:18:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -228,15 +228,24 @@ int	seltrue_kqfilter(dev_t, struct knote *);
 #endif
 #define	DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
 
-#endif /* _KERNEL */
+enum devnode_class {
+	DEVNODE_DONTBOTHER,
+	DEVNODE_SINGLE,
+	DEVNODE_VECTOR
+};
+#define DEVNODE_FLAG_LINKZERO	0x01	/* create name -> name0 link */
 
 struct devsw_conv {
 	const char *d_name;
 	devmajor_t d_bmajor;
 	devmajor_t d_cmajor;
+
+	/* information about /dev nodes related to the device */
+	enum devnode_class d_class;
+	int d_flags;
+	int d_vectdim[2];
 };
 
-#ifdef _KERNEL
 void devsw_init(void);
 const char *devsw_blk2name(devmajor_t);
 const char *cdevsw_getname(devmajor_t);

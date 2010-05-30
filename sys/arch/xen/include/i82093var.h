@@ -1,4 +1,4 @@
-/*	 $NetBSD: i82093var.h,v 1.3 2009/07/29 12:02:06 cegger Exp $ */
+/*	 $NetBSD: i82093var.h,v 1.3.4.1 2010/05/30 05:17:13 rmind Exp $ */
 
 #include "opt_xen.h"
 #define _IOAPIC_CUSTOM_RW
@@ -33,8 +33,6 @@ ioapic_write_ul(struct ioapic_softc *sc, int regid, uint32_t val)
 	op.u.apic_op.reg = regid;
 	op.u.apic_op.value = val;
 	ret = HYPERVISOR_physdev_op(&op);
-	if (ret) {
+	if (ret)
 		printf("PHYSDEVOP_APIC_WRITE ret %d\n", ret);
-		panic("PHYSDEVOP_APIC_WRITE");
-	}
 }

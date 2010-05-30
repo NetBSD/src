@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.135 2009/11/21 03:11:01 rmind Exp $	*/
+/*	$NetBSD: npx.c,v 1.135.4.1 2010/05/30 05:16:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.135 2009/11/21 03:11:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.135.4.1 2010/05/30 05:16:54 rmind Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -123,6 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.135 2009/11/21 03:11:01 rmind Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 #include <machine/pcb.h>
 #include <machine/trap.h>
 #include <machine/specialreg.h>
@@ -215,7 +216,7 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	int status;
 	unsigned irqmask;
 
-	if (cpu_feature & CPUID_FPU) {
+	if (cpu_feature[0] & CPUID_FPU) {
 		i386_fpu_exception = 1;
 		return NPX_CPUID;
 	}

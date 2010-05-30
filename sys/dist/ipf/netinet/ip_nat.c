@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.40 2009/08/19 08:36:11 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.40.4.1 2010/05/30 05:17:46 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -105,6 +105,7 @@ extern struct ifnet vpnif;
 #include "netinet/ip_frag.h"
 #include "netinet/ip_state.h"
 #include "netinet/ip_proxy.h"
+#include "netinet/ipl.h"
 #ifdef	IPFILTER_SYNC
 #include "netinet/ip_sync.h"
 #endif
@@ -119,10 +120,10 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.40 2009/08/19 08:36:11 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.40.4.1 2010/05/30 05:17:46 rmind Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.127 2009/07/21 09:40:55 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.130 2010/03/16 02:24:52 darrenr Exp";
 #endif
 #endif
 
@@ -215,8 +216,8 @@ static	int	nat_resolverule __P((ipnat_t *));
 static	nat_t	*fr_natclone __P((fr_info_t *, nat_t *));
 static	void	nat_mssclamp __P((tcphdr_t *, u_32_t, fr_info_t *, u_short *));
 static	int	nat_wildok __P((nat_t *, int, int, int, int));
-static	int	nat_getnext __P((ipftoken_t *, ipfgeniter_t *));
-static	int	nat_iterator __P((ipftoken_t *, ipfgeniter_t *));
+static	int	nat_getnext __P((ipftoken_t *, ipfgeniter_t *, ipfobj_t *));
+static	int	nat_iterator __P((ipftoken_t *, ipfgeniter_t *, ipfobj_t *));
 
 
 /* ------------------------------------------------------------------------ */
@@ -667,8 +668,12 @@ void *ctx;
 		return EPERM;
 	}
 # else
-	if ((securelevel >= 2) && (mode & FWRITE)) {
-		return EPERM;
+#  if defined(__FreeBSD_version) && (__FreeBSD_version >= 500034)
+        if (securelevel_ge(curthread->td_ucred, 3) && (mode & FWRITE)) {
+#  else
+        if ((securelevel >= 3) && (mode & FWRITE)) {
+#  endif
+                return EPERM;
 	}
 # endif
 #endif
@@ -691,7 +696,7 @@ void *ctx;
 			bcopy(data, (char *)&natd, sizeof(natd));
 			error = 0;
 		} else {
-			error = fr_inobj(data, &natd, IPFOBJ_IPNAT);
+			error = fr_inobj(data, NULL, &natd, IPFOBJ_IPNAT);
 		}
 	}
 
@@ -825,7 +830,7 @@ void *ctx;
 	    {
 		natlookup_t nl;
 
-		error = fr_inobj(data, &nl, IPFOBJ_NATLOOKUP);
+		error = fr_inobj(data, NULL, &nl, IPFOBJ_NATLOOKUP);
 		if (error == 0) {
 			void *ptr;
 
@@ -912,13 +917,14 @@ void *ctx;
 	    {
 		ipfgeniter_t iter;
 		ipftoken_t *token;
+		ipfobj_t obj;
 
 		SPL_SCHED(s);
-		error = fr_inobj(data, &iter, IPFOBJ_GENITER);
+		error = fr_inobj(data, &obj, &iter, IPFOBJ_GENITER);
 		if (error == 0) {
 			token = ipf_findtoken(iter.igi_type, uid, ctx);
 			if (token != NULL) {
-				error = nat_iterator(token, &iter);
+				error = nat_iterator(token, &iter, &obj);
 				WRITE_ENTER(&ipf_tokens);
 				if (token->ipt_data == NULL)
 					ipf_freetoken(token);
@@ -1289,7 +1295,7 @@ int getlock;
 	nat_save_t *ipn, ipns;
 	nat_t *n, *nat;
 
-	error = fr_inobj(data, &ipns, IPFOBJ_NATSAVE);
+	error = fr_inobj(data, NULL, &ipns, IPFOBJ_NATSAVE);
 	if (error != 0)
 		return error;
 
@@ -1416,6 +1422,10 @@ int getlock;
 	ipnat_t *in;
 	int error;
 
+	error = fr_inobj(data, NULL, &ipn, IPFOBJ_NATSAVE);
+	if (error != 0)
+		return error;
+
 	/*
 	 * Initialise early because of code at junkput label.
 	 */
@@ -1425,13 +1435,6 @@ int getlock;
 	ipnn = NULL;
 	fin = NULL;
 	fr = NULL;
-
-	KMALLOC(ipn, nat_save_t *);
-	if (ipn == NULL)
-		return ENOMEM;
-	error = fr_inobj(data, ipn, IPFOBJ_NATSAVE);
-	if (error != 0)
-		goto junkput;
 
 	/*
 	 * New entry, copy in the rest of the NAT entry if it's size is more
@@ -4128,7 +4131,7 @@ u_32_t *passp;
 	if (((fin->fin_flx & FI_ICMPERR) != 0) &&
 	    (nat = nat_icmperror(fin, &nflags, NAT_INBOUND)))
 		/*EMPTY*/;
-	else if ((fin->fin_flx & FI_FRAG) && 
+	else if ((fin->fin_flx & FI_FRAG) &&
 		 (nat = fr_nat_knownfrag(fin)))
 		natadd = 0;
 	else if ((nat = nat_inlookup(fin, nflags|NAT_SEARCH, (u_int)fin->fin_p,
@@ -5086,9 +5089,10 @@ int rev;
 /* copy it out to the storage space pointed to by itp.  The next item       */
 /* in the list to look at is put back in the ipftoken struture.             */
 /* ------------------------------------------------------------------------ */
-static int nat_getnext(t, itp)
+static int nat_getnext(t, itp, obj)
 ipftoken_t *t;
 ipfgeniter_t *itp;
+ipfobj_t *obj;
 {
 	hostmap_t *hm = NULL, *nexthm = NULL, zerohm;
 	ipnat_t *ipn = NULL, *nextipnat = NULL, zeroipn;
@@ -5213,7 +5217,10 @@ ipfgeniter_t *itp;
 			break;
 
 		case IPFGENITER_IPNAT :
-			error = COPYOUT(nextipnat, dst, sizeof(*nextipnat));
+			obj->ipfo_size = sizeof(ipnat_t);
+			obj->ipfo_ptr = dst;
+			obj->ipfo_type = IPFOBJ_IPNAT;
+			error = fr_outobjk(obj, nextipnat);
 			if (error != 0)
 				error = EFAULT;
 			if (ipn != NULL) {
@@ -5233,7 +5240,10 @@ ipfgeniter_t *itp;
 			break;
 
 		case IPFGENITER_NAT :
-			error = COPYOUT(nextnat, dst, sizeof(*nextnat));
+			obj->ipfo_size = sizeof(nat_t);
+			obj->ipfo_ptr = dst;
+			obj->ipfo_type = IPFOBJ_NAT;
+			error = fr_outobjk(obj, nextnat);
 			if (error != 0)
 				error = EFAULT;
 			if (nat != NULL) {
@@ -5243,7 +5253,7 @@ ipfgeniter_t *itp;
 				if (nextnat->nat_next == NULL) {
 					t->ipt_data = NULL;
 					break;
-				}	
+				}
 				dst += sizeof(*nextnat);
 				nat = nextnat;
 				nextnat = nextnat->nat_next;
@@ -5272,9 +5282,10 @@ ipfgeniter_t *itp;
 /* linked lists of NAT related information to go through: NAT rules, active */
 /* NAT mappings and the NAT fragment cache.                                 */
 /* ------------------------------------------------------------------------ */
-static int nat_iterator(token, itp)
+static int nat_iterator(token, itp, obj)
 ipftoken_t *token;
 ipfgeniter_t *itp;
+ipfobj_t *obj;
 {
 	int error;
 
@@ -5288,7 +5299,7 @@ ipfgeniter_t *itp;
 	case IPFGENITER_HOSTMAP :
 	case IPFGENITER_IPNAT :
 	case IPFGENITER_NAT :
-		error = nat_getnext(token, itp);
+		error = nat_getnext(token, itp, obj);
 		break;
 
 	case IPFGENITER_NATFRAG :
@@ -5481,7 +5492,7 @@ char *data;
 	ipftable_t table;
 	int error;
 
-	error = fr_inobj(data, &table, IPFOBJ_GTABLE);
+	error = fr_inobj(data, NULL, &table, IPFOBJ_GTABLE);
 	if (error != 0)
 		return error;
 

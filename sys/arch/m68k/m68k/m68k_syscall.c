@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.39 2010/02/25 07:17:48 skrll Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.39.2.1 2010/05/30 05:16:57 rmind Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.39 2010/02/25 07:17:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.39.2.1 2010/05/30 05:16:57 rmind Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.39 2010/02/25 07:17:48 skrll Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/sa.h>
@@ -483,23 +483,19 @@ child_return(void *arg)
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
 	struct frame *f = (struct frame *)l->l_md.md_regs;
+	int error;
 
 	f->f_regs[D0] = 0;
 	f->f_sr &= ~PSL_C;
 	f->f_format = FMT0;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	machine_userret(l, f, 0);
 }
 

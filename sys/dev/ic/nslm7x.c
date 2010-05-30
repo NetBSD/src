@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.54 2010/02/13 04:09:36 jakllsch Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.54.2.1 2010/05/30 05:17:24 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.54 2010/02/13 04:09:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.54.2.1 2010/05/30 05:17:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1740,6 +1740,7 @@ lm_match(struct lm_softc *sc)
 		return 0;
 	}
 
+	aprint_naive("\n");
 	aprint_normal("\n");
 	aprint_normal_dev(sc->sc_dev,
 	    "National Semiconductor %s Hardware monitor\n", model);
@@ -1755,6 +1756,7 @@ def_match(struct lm_softc *sc)
 	int chipid;
 
 	chipid = (*sc->lm_readreg)(sc, LMD_CHIPID) & LM_ID_MASK;
+	aprint_naive("\n");
 	aprint_normal("\n");
 	aprint_error_dev(sc->sc_dev, "Unknown chip (ID %d)\n", chipid);
 
@@ -1817,6 +1819,7 @@ wb_match(struct lm_softc *sc)
 	const char *model = NULL;
 	int banksel, vendid, devid, cf_flags;
 
+	aprint_naive("\n");
 	aprint_normal("\n");
 	/* Read vendor ID */
 	banksel = (*sc->lm_readreg)(sc, WB_BANKSEL);

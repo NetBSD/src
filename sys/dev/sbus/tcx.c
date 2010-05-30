@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.42 2009/09/17 16:39:48 tsutsui Exp $ */
+/*	$NetBSD: tcx.c,v 1.42.4.1 2010/05/30 05:17:42 rmind Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.42 2009/09/17 16:39:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.42.4.1 2010/05/30 05:17:42 rmind Exp $");
 
 /*
  * define for cg8 emulation on S24 (24-bit version of tcx) for the SS5;
@@ -931,6 +931,7 @@ static void
 tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct tcx_softc *sc = scr->scr_cookie;
 	uint64_t bg, fg, temp, mask;
@@ -939,18 +940,17 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 	uint8_t *cdata;
 	uint16_t *wdata;
 
-	addr = ri->ri_xorigin +
-	    col * ri->ri_font->fontwidth +
-	    (ri->ri_yorigin + row * ri->ri_font->fontheight) * ri->ri_width;
+	addr = ri->ri_xorigin + col * font->fontwidth +
+	    (ri->ri_yorigin + row * font->fontheight) * ri->ri_width;
 
 	/* check if the character is crossing a 32 pixel boundary */
 	if ((addr & 0xffffe0) ==
-	    ((addr + ri->ri_font->fontwidth - 1) & 0xffffe0)) {
+	    ((addr + font->fontwidth - 1) & 0xffffe0)) {
 		/* phew, not split */
 		shift = addr & 0x1f;
 		addr &= 0xffffe0;
-		fmask = 0xffffffff >> (32 - ri->ri_font->fontwidth);
-		fmask = fmask << (32 - ri->ri_font->fontwidth - shift);
+		fmask = 0xffffffff >> (32 - font->fontwidth);
+		fmask = fmask << (32 - font->fontwidth - shift);
 		mask = fmask;
 		bg = 0x3000000000000000LL |
 		    ((uint64_t)ri->ri_devcmap[(attr >> 16) & 0xff] &
@@ -959,12 +959,12 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 		temp = 0x3000000000000000LL |
 		    ((uint64_t)ri->ri_devcmap[(attr >> 24) & 0xff] & 0xff) << 
 		    	32;
-		uc = c - ri->ri_font->firstchar;
-		cdata = (uint8_t *)ri->ri_font->data + uc * ri->ri_fontscale;
+		uc = c - font->firstchar;
+		cdata = (uint8_t *)font->data + uc * ri->ri_fontscale;
 
-		if (ri->ri_font->fontwidth < 9) {
+		if (font->fontwidth < 9) {
 			/* byte by byte */
-			for (i = 0; i < ri->ri_font->fontheight; i++) {
+			for (i = 0; i < font->fontheight; i++) {
 				sc->sc_rstip[addr] = bg;
 				if (*cdata != 0) {
 					if (shift > 24) {
@@ -979,10 +979,10 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 				cdata++;
 				addr += ri->ri_width;
 			}
-		} else if (ri->ri_font->fontwidth < 17) {
+		} else if (font->fontwidth < 17) {
 			/* short by short */
 			wdata = (uint16_t *)cdata;
-			for (i = 0; i < ri->ri_font->fontheight; i++) {
+			for (i = 0; i < font->fontheight; i++) {
 				sc->sc_rstip[addr] = bg;
 				if (*wdata != 0) {
 					if (shift > 16) {
@@ -1007,7 +1007,7 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 		addr &= 0xffffe0;
 		mask = 0xffffffff >> shift;
 		maskr = (uint64_t)(0xffffffffUL << 
-		    (32 - (ri->ri_font->fontwidth + shift - 32)));
+		    (32 - (font->fontwidth + shift - 32)));
 		bg = 0x3000000000000000LL |
 		    ((uint64_t)ri->ri_devcmap[(attr >> 16) & 0xff] &
 		      0xff) << 32;
@@ -1017,12 +1017,12 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 		    ((uint64_t)ri->ri_devcmap[(attr >> 24) & 0xff] & 0xff) << 
 		      32;
 
-		uc = c - ri->ri_font->firstchar;
-		cdata = (uint8_t *)ri->ri_font->data + uc * ri->ri_fontscale;
+		uc = c - font->firstchar;
+		cdata = (uint8_t *)font->data + uc * ri->ri_fontscale;
 
-		if (ri->ri_font->fontwidth < 9) {
+		if (font->fontwidth < 9) {
 			/* byte by byte */
-			for (i = 0; i < ri->ri_font->fontheight; i++) {
+			for (i = 0; i < font->fontheight; i++) {
 				sc->sc_rstip[addr] = bg;
 				sc->sc_rstip[addr + 32] = bgr;
 				bork = *cdata;
@@ -1035,10 +1035,10 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 				cdata++;
 				addr += ri->ri_width;
 			}
-		} else if (ri->ri_font->fontwidth < 17) {
+		} else if (font->fontwidth < 17) {
 			/* short by short */
 			wdata = (uint16_t *)cdata;
-			for (i = 0; i < ri->ri_font->fontheight; i++) {
+			for (i = 0; i < font->fontheight; i++) {
 				sc->sc_rstip[addr] = bg;
 				sc->sc_rstip[addr + 32] = bgr;
 				bork = *wdata;

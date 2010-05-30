@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.37 2010/01/19 22:06:20 pooka Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.37.4.1 2010/05/30 05:16:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.37 2010/01/19 22:06:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.37.4.1 2010/05/30 05:16:57 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -262,8 +262,7 @@ mcstart(struct ifnet *ifp)
 		 * If bpf is listening on this interface, let it
 		 * see the packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/*
 		 * Copy the mbuf chain into the transmit buffer.
@@ -583,8 +582,7 @@ mace_read(struct mc_softc *sc, void *pkt, int len)
 	ifp->if_ipackets++;
 
 	/* Pass the packet to any BPF listeners. */
-	if (ifp->if_bpf) 
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.13 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.13.4.1 2010/05/30 05:17:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.13 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.13.4.1 2010/05/30 05:17:34 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -1143,8 +1143,7 @@ jme_intr_rx(jme_softc_t *sc) {
 		}
 		ifp->if_ipackets++;
 		ipackets++;
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, mhead);
+		bpf_mtap(ifp, mhead);
 
 		if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) &&
 		    (flags & JME_RD_IPV4)) {
@@ -1661,8 +1660,7 @@ nexttx:
 			break;
 		}
 		/* Pass packet to bpf if there is a listener */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, mb_head);
+		bpf_mtap(ifp, mb_head);
 	}
 #ifdef JMEDEBUG_TX
 	printf("jme_ifstart enq %d\n", enq);

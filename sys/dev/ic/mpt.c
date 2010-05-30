@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.13 2009/04/18 14:58:02 tsutsui Exp $	*/
+/*	$NetBSD: mpt.c,v 1.13.4.1 2010/05/30 05:17:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -27,6 +27,75 @@
 /*
  * Additional Copyright (c) 2002 by Matthew Jacob under same license.
  */
+/*-
+ * Copyright (c) 2002, 2006 by Matthew Jacob
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon including
+ *    a substantially similar Disclaimer requirement for further binary
+ *    redistribution.
+ * 3. Neither the names of the above listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE COPYRIGHT
+ * OWNER OR CONTRIBUTOR IS ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Support from Chris Ellsworth in order to make SAS adapters work
+ * is gratefully acknowledged.
+ *
+ *
+ * Support from LSI-Logic has also gone a great deal toward making this a
+ * workable subsystem and is gratefully acknowledged.
+ */
+/*-
+ * Copyright (c) 2004, Avid Technology, Inc. and its contributors.
+ * Copyright (c) 2005, WHEEL Sp. z o.o.
+ * Copyright (c) 2004, 2005 Justin T. Gibbs
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce at minimum a disclaimer
+ *    substantially similar to the "NO WARRANTY" disclaimer below
+ *    ("Disclaimer") and any redistribution must be conditioned upon including
+ *    a substantially similar Disclaimer requirement for further binary
+ *    redistribution.
+ * 3. Neither the names of the above listed copyright holders nor the names
+ *    of any contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF THE COPYRIGHT
+ * OWNER OR CONTRIBUTOR IS ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 
 /*
@@ -41,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.13 2009/04/18 14:58:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.13.4.1 2010/05/30 05:17:23 rmind Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -346,7 +415,7 @@ mpt_send_handshake_cmd(mpt_softc_t *mpt, size_t len, void *cmd)
 
 	/* Send the command */
 	for (i = 0; i < len; i++) {
-		mpt_write(mpt, MPT_OFFSET_DOORBELL, *data32++);
+		mpt_write(mpt, MPT_OFFSET_DOORBELL, htole32(*data32++));
 		if (mpt_wait_db_ack(mpt) != MPT_OK) {
 			mpt_prt(mpt,
 			    "mpt_send_handshake_cmd timeout! index = %d", i);
@@ -375,7 +444,8 @@ mpt_recv_handshake_reply(mpt_softc_t *mpt, size_t reply_len, void *reply)
 		mpt_prt(mpt, "mpt_recv_handshake_cmd timeout1");
 		return ETIMEDOUT;
 	}
-	*data16++ = mpt_read(mpt, MPT_OFFSET_DOORBELL) & MPT_DB_DATA_MASK;
+	*data16++ = le16toh(mpt_read(mpt, MPT_OFFSET_DOORBELL) &
+			    MPT_DB_DATA_MASK);
 	mpt_write(mpt, MPT_OFFSET_INTR_STATUS, 0);
 
 	/* Get Second Word */
@@ -383,7 +453,8 @@ mpt_recv_handshake_reply(mpt_softc_t *mpt, size_t reply_len, void *reply)
 		mpt_prt(mpt, "mpt_recv_handshake_cmd timeout2");
 		return ETIMEDOUT;
 	}
-	*data16++ = mpt_read(mpt, MPT_OFFSET_DOORBELL) & MPT_DB_DATA_MASK;
+	*data16++ = le16toh(mpt_read(mpt, MPT_OFFSET_DOORBELL) &
+			    MPT_DB_DATA_MASK);
 	mpt_write(mpt, MPT_OFFSET_INTR_STATUS, 0);
 
 	/* With the second word, we can now look at the length */
@@ -406,7 +477,7 @@ mpt_recv_handshake_reply(mpt_softc_t *mpt, size_t reply_len, void *reply)
 		datum = mpt_read(mpt, MPT_OFFSET_DOORBELL);
 
 		if (reply_left-- > 0)
-			*data16++ = datum & MPT_DB_DATA_MASK;
+			*data16++ = le16toh(datum & MPT_DB_DATA_MASK);
 
 		mpt_write(mpt, MPT_OFFSET_INTR_STATUS, 0);
 	}
@@ -435,7 +506,7 @@ mpt_get_iocfacts(mpt_softc_t *mpt, MSG_IOC_FACTS_REPLY *freplp)
 
 	memset(&f_req, 0, sizeof f_req);
 	f_req.Function = MPI_FUNCTION_IOC_FACTS;
-	f_req.MsgContext =  0x12071942;
+	f_req.MsgContext = htole32(0x12071942);
 	error = mpt_send_handshake_cmd(mpt, sizeof f_req, &f_req);
 	if (error)
 		return(error);
@@ -452,7 +523,7 @@ mpt_get_portfacts(mpt_softc_t *mpt, MSG_PORT_FACTS_REPLY *freplp)
 	/* XXX: Only getting PORT FACTS for Port 0 */
 	memset(&f_req, 0, sizeof f_req);
 	f_req.Function = MPI_FUNCTION_PORT_FACTS;
-	f_req.MsgContext =  0x12071943;
+	f_req.MsgContext =  htole32(0x12071943);
 	error = mpt_send_handshake_cmd(mpt, sizeof f_req, &f_req);
 	if (error)
 		return(error);
@@ -478,8 +549,8 @@ mpt_send_ioc_init(mpt_softc_t *mpt, u_int32_t who)
 	init.Function = MPI_FUNCTION_IOC_INIT;
 	init.MaxDevices = mpt->mpt_max_devices;
 	init.MaxBuses = 1;
-	init.ReplyFrameSize = MPT_REPLY_SIZE;
-	init.MsgContext = 0x12071941;
+	init.ReplyFrameSize = htole16(MPT_REPLY_SIZE);
+	init.MsgContext = htole32(0x12071941);
 
 	if ((error = mpt_send_handshake_cmd(mpt, sizeof init, &init)) != 0) {
 		return(error);
@@ -515,11 +586,11 @@ mpt_read_cfg_header(mpt_softc_t *mpt, int PageType, int PageNumber,
 	cfgp->Function = MPI_FUNCTION_CONFIG;
 	cfgp->Header.PageNumber = (U8) PageNumber;
 	cfgp->Header.PageType = (U8) PageType;
-	cfgp->PageAddress = PageAddress;
+	cfgp->PageAddress = htole32(PageAddress);
 	MPI_pSGE_SET_FLAGS(((SGE_SIMPLE32 *) &cfgp->PageBufferSGE),
 	    (MPI_SGE_FLAGS_LAST_ELEMENT | MPI_SGE_FLAGS_END_OF_BUFFER |
 	    MPI_SGE_FLAGS_SIMPLE_ELEMENT | MPI_SGE_FLAGS_END_OF_LIST));
-	cfgp->MsgContext = req->index | 0x80000000;
+	cfgp->MsgContext = htole32(req->index | 0x80000000);
 
 	mpt_check_doorbell(mpt);
 	mpt_send_cmd(mpt, req);
@@ -567,15 +638,16 @@ mpt_read_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	cfgp->Header = *hdr;
  	amt = (cfgp->Header.PageLength * sizeof (u_int32_t));
 	cfgp->Header.PageType &= MPI_CONFIG_PAGETYPE_MASK;
-	cfgp->PageAddress = PageAddress;
+	cfgp->PageAddress = htole32(PageAddress);
 	se = (SGE_SIMPLE32 *) &cfgp->PageBufferSGE;
-	se->Address = req->req_pbuf + CFG_DATA_OFF;
+	se->Address = htole32(req->req_pbuf + CFG_DATA_OFF);
 	MPI_pSGE_SET_LENGTH(se, amt);
 	MPI_pSGE_SET_FLAGS(se, (MPI_SGE_FLAGS_SIMPLE_ELEMENT |
 	    MPI_SGE_FLAGS_LAST_ELEMENT | MPI_SGE_FLAGS_END_OF_BUFFER |
 	    MPI_SGE_FLAGS_END_OF_LIST));
+	se->FlagsLength = htole32(se->FlagsLength);
 
-	cfgp->MsgContext = req->index | 0x80000000;
+	cfgp->MsgContext = htole32(req->index | 0x80000000);
 
 	mpt_check_doorbell(mpt);
 	mpt_send_cmd(mpt, req);
@@ -650,16 +722,17 @@ mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	cfgp->Function = MPI_FUNCTION_CONFIG;
 	cfgp->Header = *hdr;
  	amt = (cfgp->Header.PageLength * sizeof (u_int32_t));
-	cfgp->PageAddress = PageAddress;
+	cfgp->PageAddress = htole32(PageAddress);
 
 	se = (SGE_SIMPLE32 *) &cfgp->PageBufferSGE;
-	se->Address = req->req_pbuf + CFG_DATA_OFF;
+	se->Address = htole32(req->req_pbuf + CFG_DATA_OFF);
 	MPI_pSGE_SET_LENGTH(se, amt);
 	MPI_pSGE_SET_FLAGS(se, (MPI_SGE_FLAGS_SIMPLE_ELEMENT |
 	    MPI_SGE_FLAGS_LAST_ELEMENT | MPI_SGE_FLAGS_END_OF_BUFFER |
 	    MPI_SGE_FLAGS_END_OF_LIST | MPI_SGE_FLAGS_HOST_TO_IOC));
+	se->FlagsLength = htole32(se->FlagsLength);
 
-	cfgp->MsgContext = req->index | 0x80000000;
+	cfgp->MsgContext = htole32(req->index | 0x80000000);
 
 	if (cfgp->Header.PageType == MPI_CONFIG_PAGETYPE_SCSI_PORT &&
 	    cfgp->Header.PageNumber == 0) {
@@ -697,7 +770,7 @@ mpt_write_cfg_page(mpt_softc_t *mpt, int PageAddress, fCONFIG_PAGE_HEADER *hdr)
 	reply = (MSG_CONFIG_REPLY *) MPT_REPLY_PTOV(mpt, req->sequence);
         if ((reply->IOCStatus & MPI_IOCSTATUS_MASK) != MPI_IOCSTATUS_SUCCESS) {
 		mpt_prt(mpt, "mpt_write_cfg_page: Config Info Status %x",
-		    reply->IOCStatus);
+		    le16toh(reply->IOCStatus));
 		mpt_free_reply(mpt, (req->sequence << 1));
 		return (-1);
 	}
@@ -792,6 +865,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
 	 */
 
 	rv = mpt_read_cfg_page(mpt, 0, &mpt->mpt_port_page0.Header);
+	mpt2host_config_page_scsi_port_0(&mpt->mpt_port_page0);
 	if (rv) {
 		mpt_prt(mpt, "failed to read SPI Port Page 0");
 	} else if (mpt->verbose > 1) {
@@ -802,6 +876,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
 	}
 
 	rv = mpt_read_cfg_page(mpt, 0, &mpt->mpt_port_page1.Header);
+	mpt2host_config_page_scsi_port_1(&mpt->mpt_port_page1);
 	if (rv) {
 		mpt_prt(mpt, "failed to read SPI Port Page 1");
 	} else if (mpt->verbose > 1) {
@@ -812,6 +887,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
 	}
 
 	rv = mpt_read_cfg_page(mpt, 0, &mpt->mpt_port_page2.Header);
+	mpt2host_config_page_scsi_port_2(&mpt->mpt_port_page2);
 	if (rv) {
 		mpt_prt(mpt, "failed to read SPI Port Page 2");
 	} else if (mpt->verbose > 1) {
@@ -819,7 +895,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
 		    "SPI Port Page 2: Flags %x Settings %x",
 		    mpt->mpt_port_page2.PortFlags,
 		    mpt->mpt_port_page2.PortSettings);
-		for (i = 0; i < 16; i++) {
+		for (i = 0; i < 1; i++) {
 			mpt_prt(mpt,
 		  	    "SPI Port Page 2 Tgt %d: timo %x SF %x Flags %x",
 			    i, mpt->mpt_port_page2.DeviceSettings[i].Timeout,
@@ -830,6 +906,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
 
 	for (i = 0; i < 16; i++) {
 		rv = mpt_read_cfg_page(mpt, i, &mpt->mpt_dev_page0[i].Header);
+		mpt2host_config_page_scsi_device_0(&mpt->mpt_dev_page0[i]);
 		if (rv) {
 			mpt_prt(mpt, "cannot read SPI Tgt %d Device Page 0", i);
 			continue;
@@ -841,6 +918,7 @@ mpt_read_config_info_spi(mpt_softc_t *mpt)
 			    mpt->mpt_dev_page0[i].Information);
 		}
 		rv = mpt_read_cfg_page(mpt, i, &mpt->mpt_dev_page1[i].Header);
+		mpt2host_config_page_scsi_device_1(&mpt->mpt_dev_page1[i]);
 		if (rv) {
 			mpt_prt(mpt, "cannot read SPI Tgt %d Device Page 1", i);
 			continue;
@@ -870,17 +948,20 @@ mpt_set_initial_config_spi(mpt_softc_t *mpt)
 
 	if (mpt->mpt_port_page1.Configuration != pp1val) {
 		fCONFIG_PAGE_SCSI_PORT_1 tmp;
+
 		mpt_prt(mpt,
 		    "SPI Port Page 1 Config value bad (%x)- should be %x",
 		    mpt->mpt_port_page1.Configuration, pp1val);
 		tmp = mpt->mpt_port_page1;
 		tmp.Configuration = pp1val;
+		host2mpt_config_page_scsi_port_1(&tmp);
 		if (mpt_write_cfg_page(mpt, 0, &tmp.Header)) {
 			return (-1);
 		}
 		if (mpt_read_cfg_page(mpt, 0, &tmp.Header)) {
 			return (-1);
 		}
+		mpt2host_config_page_scsi_port_1(&tmp);
 		if (tmp.Configuration != pp1val) {
 			mpt_prt(mpt,
 			    "failed to reset SPI Port Page 1 Config value");
@@ -889,8 +970,10 @@ mpt_set_initial_config_spi(mpt_softc_t *mpt)
 		mpt->mpt_port_page1 = tmp;
 	}
 
+	i = 0;
 	for (i = 0; i < 16; i++) {
 		fCONFIG_PAGE_SCSI_DEVICE_1 tmp;
+
 		tmp = mpt->mpt_dev_page1[i];
 		tmp.RequestedParameters = 0;
 		tmp.Configuration = 0;
@@ -899,12 +982,14 @@ mpt_set_initial_config_spi(mpt_softc_t *mpt)
 			    "Set Tgt %d SPI DevicePage 1 values to %x 0 %x",
 			    i, tmp.RequestedParameters, tmp.Configuration);
 		}
+		host2mpt_config_page_scsi_device_1(&tmp);
 		if (mpt_write_cfg_page(mpt, i, &tmp.Header)) {
 			return (-1);
 		}
 		if (mpt_read_cfg_page(mpt, i, &tmp.Header)) {
 			return (-1);
 		}
+		mpt2host_config_page_scsi_device_1(&tmp);
 		mpt->mpt_dev_page1[i] = tmp;
 		if (mpt->verbose > 1) {
 			mpt_prt(mpt,
@@ -932,7 +1017,7 @@ mpt_send_port_enable(mpt_softc_t *mpt, int port)
 	memset(enable_req, 0, sizeof *enable_req);
 
 	enable_req->Function   = MPI_FUNCTION_PORT_ENABLE;
-	enable_req->MsgContext = req->index | 0x80000000;
+	enable_req->MsgContext = htole32(req->index | 0x80000000);
 	enable_req->PortNumber = port;
 
 	mpt_check_doorbell(mpt);
@@ -972,7 +1057,7 @@ mpt_send_event_request(mpt_softc_t *mpt, int onoff)
 	memset(enable_req, 0, sizeof *enable_req);
 
 	enable_req->Function   = MPI_FUNCTION_EVENT_NOTIFICATION;
-	enable_req->MsgContext = req->index | 0x80000000;
+	enable_req->MsgContext = htole32(req->index | 0x80000000);
 	enable_req->Switch     = onoff;
 
 	mpt_check_doorbell(mpt);
@@ -1075,11 +1160,12 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 			mpt_prt(mpt, "mpt_get_iocfacts failed");
 			continue;
 		}
+		mpt2host_iocfacts_reply(&facts);
 
 		if (mpt->verbose > 1) {
 			mpt_prt(mpt,
 			    "IOCFACTS: GlobalCredits=%d BlockSize=%u "
-			    "Request Frame Size %u\n", facts.GlobalCredits,
+			    "Request Frame Size %u", facts.GlobalCredits,
 			    facts.BlockSize, facts.RequestFrameSize);
 		}
 		mpt->mpt_max_devices = facts.MaxDevices;
@@ -1090,10 +1176,11 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 			mpt_prt(mpt, "mpt_get_portfacts failed");
 			continue;
 		}
+		mpt2host_portfacts_reply(&pfp);
 
 		if (mpt->verbose > 1) {
 			mpt_prt(mpt,
-			    "PORTFACTS: Type %x PFlags %x IID %d MaxDev %d\n",
+			    "PORTFACTS: Type %x PFlags %x IID %d MaxDev %d",
 			    pfp.PortType, pfp.ProtocolFlags, pfp.PortSCSIID,
 			    pfp.MaxDevices);
 		}
@@ -1202,3 +1289,223 @@ mpt_init(mpt_softc_t *mpt, u_int32_t who)
 	mpt_enable_ints(mpt);
 	return (0);
 }
+
+/*
+ * Endian Conversion Functions- only used on Big Endian machines
+ */
+#if	_BYTE_ORDER == _BIG_ENDIAN
+void
+mpt2host_sge_simple_union(SGE_SIMPLE_UNION *sge)
+{
+
+	MPT_2_HOST32(sge, FlagsLength);
+	MPT_2_HOST32(sge, _u.Address64.Low);
+	MPT_2_HOST32(sge, _u.Address64.High);
+}
+
+void
+mpt2host_iocfacts_reply(MSG_IOC_FACTS_REPLY *rp)
+{
+
+	MPT_2_HOST16(rp, MsgVersion);
+#if 0
+	MPT_2_HOST16(rp, HeaderVersion);
+#endif
+	MPT_2_HOST32(rp, MsgContext);
+	MPT_2_HOST16(rp, IOCExceptions);
+	MPT_2_HOST16(rp, IOCStatus);
+	MPT_2_HOST32(rp, IOCLogInfo);
+	MPT_2_HOST16(rp, ReplyQueueDepth);
+	MPT_2_HOST16(rp, RequestFrameSize);
+	MPT_2_HOST16(rp, Reserved_0101_FWVersion);
+	MPT_2_HOST16(rp, ProductID);
+	MPT_2_HOST32(rp, CurrentHostMfaHighAddr);
+	MPT_2_HOST16(rp, GlobalCredits);
+	MPT_2_HOST32(rp, CurrentSenseBufferHighAddr);
+	MPT_2_HOST16(rp, CurReplyFrameSize);
+	MPT_2_HOST32(rp, FWImageSize);
+#if 0
+	MPT_2_HOST32(rp, IOCCapabilities);
+#endif
+	MPT_2_HOST32(rp, FWVersion.Word);
+#if 0
+	MPT_2_HOST16(rp, HighPriorityQueueDepth);
+	MPT_2_HOST16(rp, Reserved2);
+	mpt2host_sge_simple_union(&rp->HostPageBufferSGE);
+	MPT_2_HOST32(rp, ReplyFifoHostSignalingAddr);
+#endif
+}
+
+void
+mpt2host_portfacts_reply(MSG_PORT_FACTS_REPLY *pfp)
+{
+
+	MPT_2_HOST16(pfp, Reserved);
+	MPT_2_HOST16(pfp, Reserved1);
+	MPT_2_HOST32(pfp, MsgContext);
+	MPT_2_HOST16(pfp, Reserved2);
+	MPT_2_HOST16(pfp, IOCStatus);
+	MPT_2_HOST32(pfp, IOCLogInfo);
+	MPT_2_HOST16(pfp, MaxDevices);
+	MPT_2_HOST16(pfp, PortSCSIID);
+	MPT_2_HOST16(pfp, ProtocolFlags);
+	MPT_2_HOST16(pfp, MaxPostedCmdBuffers);
+	MPT_2_HOST16(pfp, MaxPersistentIDs);
+	MPT_2_HOST16(pfp, MaxLanBuckets);
+	MPT_2_HOST16(pfp, Reserved4);
+	MPT_2_HOST32(pfp, Reserved5);
+}
+
+void
+mpt2host_config_page_scsi_port_0(fCONFIG_PAGE_SCSI_PORT_0 *sp0)
+{
+
+	MPT_2_HOST32(sp0, Capabilities);
+	MPT_2_HOST32(sp0, PhysicalInterface);
+}
+
+void
+mpt2host_config_page_scsi_port_1(fCONFIG_PAGE_SCSI_PORT_1 *sp1)
+{
+
+	MPT_2_HOST32(sp1, Configuration);
+	MPT_2_HOST32(sp1, OnBusTimerValue);
+#if 0
+	MPT_2_HOST16(sp1, IDConfig);
+#endif
+}
+
+void
+host2mpt_config_page_scsi_port_1(fCONFIG_PAGE_SCSI_PORT_1 *sp1)
+{
+
+	HOST_2_MPT32(sp1, Configuration);
+	HOST_2_MPT32(sp1, OnBusTimerValue);
+#if 0
+	HOST_2_MPT16(sp1, IDConfig);
+#endif
+}
+
+void
+mpt2host_config_page_scsi_port_2(fCONFIG_PAGE_SCSI_PORT_2 *sp2)
+{
+	int i;
+
+	MPT_2_HOST32(sp2, PortFlags);
+	MPT_2_HOST32(sp2, PortSettings);
+	for (i = 0; i < sizeof(sp2->DeviceSettings) /
+	    sizeof(*sp2->DeviceSettings); i++) {
+		MPT_2_HOST16(sp2, DeviceSettings[i].DeviceFlags);
+	}
+}
+
+void
+mpt2host_config_page_scsi_device_0(fCONFIG_PAGE_SCSI_DEVICE_0 *sd0)
+{
+
+	MPT_2_HOST32(sd0, NegotiatedParameters);
+	MPT_2_HOST32(sd0, Information);
+}
+
+void
+host2mpt_config_page_scsi_device_0(fCONFIG_PAGE_SCSI_DEVICE_0 *sd0)
+{
+
+	HOST_2_MPT32(sd0, NegotiatedParameters);
+	HOST_2_MPT32(sd0, Information);
+}
+
+void
+mpt2host_config_page_scsi_device_1(fCONFIG_PAGE_SCSI_DEVICE_1 *sd1)
+{
+
+	MPT_2_HOST32(sd1, RequestedParameters);
+	MPT_2_HOST32(sd1, Reserved);
+	MPT_2_HOST32(sd1, Configuration);
+}
+
+void
+host2mpt_config_page_scsi_device_1(fCONFIG_PAGE_SCSI_DEVICE_1 *sd1)
+{
+
+	HOST_2_MPT32(sd1, RequestedParameters);
+	HOST_2_MPT32(sd1, Reserved);
+	HOST_2_MPT32(sd1, Configuration);
+}
+
+void
+mpt2host_config_page_fc_port_0(fCONFIG_PAGE_FC_PORT_0 *fp0)
+{
+
+	MPT_2_HOST32(fp0, Flags);
+	MPT_2_HOST32(fp0, PortIdentifier);
+	MPT_2_HOST32(fp0, WWNN.Low);
+	MPT_2_HOST32(fp0, WWNN.High);
+	MPT_2_HOST32(fp0, WWPN.Low);
+	MPT_2_HOST32(fp0, WWPN.High);
+	MPT_2_HOST32(fp0, SupportedServiceClass);
+	MPT_2_HOST32(fp0, SupportedSpeeds);
+	MPT_2_HOST32(fp0, CurrentSpeed);
+	MPT_2_HOST32(fp0, MaxFrameSize);
+	MPT_2_HOST32(fp0, FabricWWNN.Low);
+	MPT_2_HOST32(fp0, FabricWWNN.High);
+	MPT_2_HOST32(fp0, FabricWWPN.Low);
+	MPT_2_HOST32(fp0, FabricWWPN.High);
+	MPT_2_HOST32(fp0, DiscoveredPortsCount);
+	MPT_2_HOST32(fp0, MaxInitiators);
+}
+
+void
+mpt2host_config_page_fc_port_1(fCONFIG_PAGE_FC_PORT_1 *fp1)
+{
+
+	MPT_2_HOST32(fp1, Flags);
+	MPT_2_HOST32(fp1, NoSEEPROMWWNN.Low);
+	MPT_2_HOST32(fp1, NoSEEPROMWWNN.High);
+	MPT_2_HOST32(fp1, NoSEEPROMWWPN.Low);
+	MPT_2_HOST32(fp1, NoSEEPROMWWPN.High);
+}
+
+void
+host2mpt_config_page_fc_port_1(fCONFIG_PAGE_FC_PORT_1 *fp1)
+{
+
+	HOST_2_MPT32(fp1, Flags);
+	HOST_2_MPT32(fp1, NoSEEPROMWWNN.Low);
+	HOST_2_MPT32(fp1, NoSEEPROMWWNN.High);
+	HOST_2_MPT32(fp1, NoSEEPROMWWPN.Low);
+	HOST_2_MPT32(fp1, NoSEEPROMWWPN.High);
+}
+
+void
+mpt2host_config_page_raid_vol_0(fCONFIG_PAGE_RAID_VOL_0 *volp)
+{
+	int i;
+
+	MPT_2_HOST16(volp, VolumeStatus.Reserved);
+	MPT_2_HOST16(volp, VolumeSettings.Settings);
+	MPT_2_HOST32(volp, MaxLBA);
+#if 0
+	MPT_2_HOST32(volp, MaxLBAHigh);
+#endif
+	MPT_2_HOST32(volp, StripeSize);
+	MPT_2_HOST32(volp, Reserved2);
+	MPT_2_HOST32(volp, Reserved3);
+	for (i = 0; i < MPI_RAID_VOL_PAGE_0_PHYSDISK_MAX; i++) {
+		MPT_2_HOST16(volp, PhysDisk[i].Reserved);
+	}
+}
+
+void
+mpt2host_config_page_raid_phys_disk_0(fCONFIG_PAGE_RAID_PHYS_DISK_0 *rpd0)
+{
+
+	MPT_2_HOST32(rpd0, Reserved1);
+	MPT_2_HOST16(rpd0, PhysDiskStatus.Reserved);
+	MPT_2_HOST32(rpd0, MaxLBA);
+	MPT_2_HOST16(rpd0, ErrorData.Reserved);
+	MPT_2_HOST16(rpd0, ErrorData.ErrorCount);
+	MPT_2_HOST16(rpd0, ErrorData.SmartCount);
+}
+
+#endif

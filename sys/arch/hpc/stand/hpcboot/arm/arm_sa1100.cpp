@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_sa1100.cpp,v 1.2 2008/04/28 20:23:20 martin Exp $	*/
+/*	$NetBSD: arm_sa1100.cpp,v 1.2.22.1 2010/05/30 05:16:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,13 +56,13 @@
 __BEGIN_DECLS
 
 // 2nd bootloader
-void boot_func(kaddr_t, kaddr_t, kaddr_t, kaddr_t);
-extern char boot_func_end[];
-#define	BOOT_FUNC_START		reinterpret_cast <vaddr_t>(boot_func)
-#define	BOOT_FUNC_END		reinterpret_cast <vaddr_t>(boot_func_end)
+void boot_func_sa1100(kaddr_t, kaddr_t, kaddr_t, kaddr_t);
+extern char boot_func_end_sa1100[];
+#define	BOOT_FUNC_START		reinterpret_cast <vaddr_t>(boot_func_sa1100)
+#define	BOOT_FUNC_END		reinterpret_cast <vaddr_t>(boot_func_end_sa1100)
 
 /* jump to 2nd loader */
-void FlatJump(kaddr_t, kaddr_t, kaddr_t, kaddr_t);
+void FlatJump_sa1100(kaddr_t, kaddr_t, kaddr_t, kaddr_t);
 
 __END_DECLS
 
@@ -88,6 +88,10 @@ SA1100Architecture::init(void)
 	_mem->loadBank(DRAM_BANK1_START, DRAM_BANK_SIZE);
 	_mem->loadBank(DRAM_BANK2_START, DRAM_BANK_SIZE);
 	_mem->loadBank(DRAM_BANK3_START, DRAM_BANK_SIZE);
+
+	// set D-cache information
+	dcachesize = 8192;
+	DPRINTF((TEXT("D-cache size = %d\n"), dcachesize));
 
 	return TRUE;
 }
@@ -132,6 +136,11 @@ __END_MACRO
 	_('H');_('e');_('l');_('l');_('o');_(' ');
 	_('W');_('o');_('r');_('l');_('d');_('\r');_('\n');
 	_mem->unmapPhysicalPage(uart);
+}
+
+void
+SA1100Architecture::dumpPeripheralRegs(void)
+{
 }
 
 BOOL
@@ -180,6 +189,6 @@ SA1100Architecture::jump(paddr_t info, paddr_t pvec)
 	WritebackDCache();
 
 	SetKMode(1);
-	FlatJump(info, pvec, sp, _loader_addr);
+	FlatJump_sa1100(info, pvec, sp, _loader_addr);
 	// NOTREACHED
 }

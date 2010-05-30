@@ -1,8 +1,11 @@
-#	$NetBSD: files.ibm4xx,v 1.10 2006/03/13 15:31:11 shige Exp $
+#	$NetBSD: files.ibm4xx,v 1.10.90.1 2010/05/30 05:17:02 rmind Exp $
 #
 # IBM 4xx specific configuration info
 
 include "arch/powerpc/fpu/files.fpu"
+
+defflag opt_uic.h			MULTIUIC
+file	arch/powerpc/ibm4xx/intr.c
 
 # Board Properties
 file	arch/powerpc/ibm4xx/board_prop.c
@@ -37,9 +40,32 @@ file	arch/powerpc/ibm4xx/dev/gpio_opb.c	opbgpio
 # On-chip ethernet device(s)
 device	emac: ether, ifnet, arp, mii
 attach	emac at opb
-file	arch/powerpc/ibm4xx/dev/if_emac.c	emac
+file	arch/powerpc/ibm4xx/dev/if_emac.c	emac	needs-flag
+file	arch/powerpc/ibm4xx/dev/mal.c		emac
+defflag	opt_emac.h	EMAC_ZMII_PHY EMAC_RGMII_PHY
+#file	arch/powerpc/ibm4xx/dev/zmii.c		emac_zmii_phy
+file	arch/powerpc/ibm4xx/dev/rgmii.c		emac_rgmii_phy
 
 # Watchdog timer
 device	wdog: sysmon_wdog
 attach	wdog at opb
 file	arch/powerpc/ibm4xx/dev/wdog.c		wdog
+
+
+# Machine-independent I2O drivers.
+include	"dev/i2o/files.i2o"
+
+# PCI bus support
+include	"dev/pci/files.pci"
+
+# On-chip PCI bridge
+device	pchb : pcibus
+attach	pchb at plb
+file	arch/powerpc/ibm4xx/pci/pchb.c		pchb
+file	arch/powerpc/ibm4xx/pci/pci_machdep.c	pci
+file	arch/powerpc/ibm4xx/dev/ibm405gp.c	pchb | pci
+
+# On-chip IIC controller
+device	gpiic: i2cbus, i2c_bitbang
+attach	gpiic at opb
+file	arch/powerpc/ibm4xx/dev/gpiic_opb.c	gpiic

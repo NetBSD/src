@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.44 2008/11/24 11:41:14 ad Exp $
+# $NetBSD: FOURMEG,v 1.44.8.1 2010/05/30 05:17:09 rmind Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.44 $"
+#ident 		"FOURMEG-$Revision: 1.44.8.1 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -233,5 +233,5 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	ccd		4	# concatenated disks
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	clockctl		# user control of clock subsystem

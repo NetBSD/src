@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.53 2010/02/24 22:37:57 dyoung Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.53.2.1 2010/05/30 05:17:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.53 2010/02/24 22:37:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.53.2.1 2010/05/30 05:17:20 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -305,6 +305,7 @@ hpcfbattach(device_t parent, device_t self, void *aux)
 
 	if (hpcfbconsole) {
 		sc->sc_dc = &hpcfb_console_dc;
+		sc->sc_dc->dc_rinfo.ri_flg &= ~RI_NO_AUTO;
 		hpcfb_console_dc.dc_sc = sc;
 		printf(": %dx%d pixels, %d colors, %dx%d chars",
 		    sc->sc_dc->dc_rinfo.ri_width,sc->sc_dc->dc_rinfo.ri_height,
@@ -451,6 +452,9 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 #else
 	ri->ri_flg = RI_CURSOR;
 #endif
+	if (dc == &hpcfb_console_dc)
+		ri->ri_flg |= RI_NO_AUTO;
+
 	switch (ri->ri_depth) {
 	case 8:
 		if (32 <= fbconf->hf_pack_width &&

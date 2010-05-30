@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.141 2010/03/01 21:10:17 darran Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.141.2.1 2010/05/30 05:17:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141 2010/03/01 21:10:17 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141.2.1 2010/05/30 05:17:56 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -242,12 +242,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.141 2010/03/01 21:10:17 darran Exp $"
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
 
-struct lwplist	alllwp = LIST_HEAD_INITIALIZER(alllwp);
-
-struct pool lwp_uc_pool;
-
-static pool_cache_t lwp_cache;
-static specificdata_domain_t lwp_specificdata_domain;
+struct lwplist		alllwp = LIST_HEAD_INITIALIZER(alllwp);
+static pool_cache_t	lwp_cache;
 
 /* DTrace proc provider probes */
 SDT_PROBE_DEFINE(proc,,,lwp_create,
@@ -267,10 +263,7 @@ void
 lwpinit(void)
 {
 
-	pool_init(&lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
-	    &pool_allocator_nointr, IPL_NONE);
-	lwp_specificdata_domain = specificdata_domain_create();
-	KASSERT(lwp_specificdata_domain != NULL);
+	lwpinit_specificdata();
 	lwp_sys_init();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
 	    "lwppl", NULL, IPL_NONE, NULL, NULL, NULL);
@@ -372,6 +365,44 @@ lwp_continue(struct lwp *l)
 
 	/* setrunnable() will release the lock. */
 	setrunnable(l);
+}
+
+/*
+ * Restart a stopped LWP.
+ *
+ * Must be called with p_lock held, and the LWP NOT locked.  Will unlock the
+ * LWP before return.
+ */
+void
+lwp_unstop(struct lwp *l)
+{
+	struct proc *p = l->l_proc;
+    
+	KASSERT(mutex_owned(proc_lock));
+	KASSERT(mutex_owned(p->p_lock));
+
+	lwp_lock(l);
+
+	/* If not stopped, then just bail out. */
+	if (l->l_stat != LSSTOP) {
+		lwp_unlock(l);
+		return;
+	}
+
+	p->p_stat = SACTIVE;
+	p->p_sflag &= ~PS_STOPPING;
+
+	if (!p->p_waited)
+		p->p_pptr->p_nstopchild--;
+
+	if (l->l_wchan == NULL) {
+		/* setrunnable() will release the lock. */
+		setrunnable(l);
+	} else {
+		l->l_stat = LSSLEEP;
+		p->p_nrlwps++;
+		lwp_unlock(l);
+	}
 }
 
 /*
@@ -791,7 +822,7 @@ lwp_exit(struct lwp *l)
 	fd_free();
 
 	/* Delete the specificdata while it's still safe to sleep. */
-	specificdata_fini(lwp_specificdata_domain, &l->l_specdataref);
+	lwp_finispecific(l);
 
 	/*
 	 * Release our cached credentials.
@@ -1396,11 +1427,25 @@ lwp_delref(struct lwp *l)
 	struct proc *p = l->l_proc;
 
 	mutex_enter(p->p_lock);
+	lwp_delref2(l);
+	mutex_exit(p->p_lock);
+}
+
+/*
+ * Remove one reference to an LWP.  If this is the last reference,
+ * then we must finalize the LWP's death.  The proc mutex is held
+ * on entry.
+ */
+void
+lwp_delref2(struct lwp *l)
+{
+	struct proc *p = l->l_proc;
+
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat != LSZOMB);
 	KASSERT(l->l_refcnt > 0);
 	if (--l->l_refcnt == 0)
 		cv_broadcast(&p->p_lwpcv);
-	mutex_exit(p->p_lock);
 }
 
 /*
@@ -1461,91 +1506,6 @@ lwp_find_first(proc_t *p)
 }
 
 /*
- * lwp_specific_key_create --
- *	Create a key for subsystem lwp-specific data.
- */
-int
-lwp_specific_key_create(specificdata_key_t *keyp, specificdata_dtor_t dtor)
-{
-
-	return (specificdata_key_create(lwp_specificdata_domain, keyp, dtor));
-}
-
-/*
- * lwp_specific_key_delete --
- *	Delete a key for subsystem lwp-specific data.
- */
-void
-lwp_specific_key_delete(specificdata_key_t key)
-{
-
-	specificdata_key_delete(lwp_specificdata_domain, key);
-}
-
-/*
- * lwp_initspecific --
- *	Initialize an LWP's specificdata container.
- */
-void
-lwp_initspecific(struct lwp *l)
-{
-	int error;
-
-	error = specificdata_init(lwp_specificdata_domain, &l->l_specdataref);
-	KASSERT(error == 0);
-}
-
-/*
- * lwp_finispecific --
- *	Finalize an LWP's specificdata container.
- */
-void
-lwp_finispecific(struct lwp *l)
-{
-
-	specificdata_fini(lwp_specificdata_domain, &l->l_specdataref);
-}
-
-/*
- * lwp_getspecific --
- *	Return lwp-specific data corresponding to the specified key.
- *
- *	Note: LWP specific data is NOT INTERLOCKED.  An LWP should access
- *	only its OWN SPECIFIC DATA.  If it is necessary to access another
- *	LWP's specifc data, care must be taken to ensure that doing so
- *	would not cause internal data structure inconsistency (i.e. caller
- *	can guarantee that the target LWP is not inside an lwp_getspecific()
- *	or lwp_setspecific() call).
- */
-void *
-lwp_getspecific(specificdata_key_t key)
-{
-
-	return (specificdata_getspecific_unlocked(lwp_specificdata_domain,
-						  &curlwp->l_specdataref, key));
-}
-
-void *
-_lwp_getspecific_by_lwp(struct lwp *l, specificdata_key_t key)
-{
-
-	return (specificdata_getspecific_unlocked(lwp_specificdata_domain,
-						  &l->l_specdataref, key));
-}
-
-/*
- * lwp_setspecific --
- *	Set lwp-specific data corresponding to the specified key.
- */
-void
-lwp_setspecific(specificdata_key_t key, void *data)
-{
-
-	specificdata_setspecific(lwp_specificdata_domain,
-				 &curlwp->l_specdataref, key, data);
-}
-
-/*
  * Allocate a new lwpctl structure for a user LWP.
  */
 int
@@ -1565,7 +1525,7 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 	if (l->l_lcpage != NULL) {
 		lcp = l->l_lcpage;
 		*uaddr = lcp->lcp_uaddr + (vaddr_t)l->l_lwpctl - lcp->lcp_kaddr;
-		return (EINVAL);
+		return 0;
 	}
 
 	/* First time around, allocate header structure for the process. */

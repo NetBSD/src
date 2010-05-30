@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.45 2010/02/08 19:02:28 joerg Exp $
+#	$NetBSD: WALNUT,v 1.45.2.1 2010/05/30 05:16:43 rmind Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -39,7 +39,7 @@ options 	USERCONF	# userconf(4) support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=410000	# size for embedded symbol table
+options 	SYMTAB_SPACE=420000	# size for embedded symbol table
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 
@@ -110,6 +110,8 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
+options 	IPFILTER_COMPAT # Compat for IP-Filter
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -256,7 +258,7 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		4	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
-#pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	fss			# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter

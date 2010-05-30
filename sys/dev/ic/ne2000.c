@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.70 2010/03/13 15:27:40 tsutsui Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.70.2.1 2010/05/30 05:17:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.70 2010/03/13 15:27:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.70.2.1 2010/05/30 05:17:24 rmind Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -484,7 +484,7 @@ ne2000_detect(bus_space_tag_t nict, bus_space_handle_t nich,
 	 * then we don't know what this board is.
 	 */
 	ne2000_writemem(nict, nich, asict, asich, test_pattern, 16384,
-	    sizeof(test_pattern), useword, 0);
+	    sizeof(test_pattern), useword, 1);
 	ne2000_readmem(nict, nich, asict, asich, 16384, test_buffer,
 	    sizeof(test_buffer), useword);
 
@@ -979,9 +979,6 @@ ne2000_ipkdb_attach(struct ipkdb_if *kip)
 
 	if (dp8390_ipkdb_attach(kip))
 		return -1;
-
-	dp->mem_ring = dp->mem_start
-		+ ((dp->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	if (!(kip->flags & IPKDB_MYHW)) {
 		char romdata[16];

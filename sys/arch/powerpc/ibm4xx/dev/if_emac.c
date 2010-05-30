@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.35 2010/01/22 08:56:05 martin Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.35.4.1 2010/05/30 05:17:02 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -35,9 +35,26 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.35 2010/01/22 08:56:05 martin Exp $");
+/*
+ * emac(4) supports following ibm4xx's EMACs.
+ *   XXXX: ZMII and 'TCP Accelaration Hardware' not support yet...
+ *
+ *            tested
+ *            ------
+ * 405EP	-  10/100 x2
+ * 405EX/EXr	o  10/100/1000 x2 (EXr x1), STA v2, 256bit hash-Table, RGMII
+ * 405GP/GPr	o  10/100
+ * 440EP	-  10/100 x2, ZMII
+ * 440GP	-  10/100 x2, ZMII
+ * 440GX	-  10/100/1000 x4, ZMII/RGMII(ch 2, 3), TAH(ch 2, 3)
+ * 440SP	-  10/100/1000
+ * 440SPe	-  10/100/1000, STA v2
+ */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.35.4.1 2010/05/30 05:17:02 rmind Exp $");
+
+#include "opt_emac.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,15 +72,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.35 2010/01/22 08:56:05 martin Exp $");
 
 #include <net/bpf.h>
 
-#include <powerpc/ibm4xx/dev/opbvar.h>
-
-#include <powerpc/ibm4xx/ibm405gp.h>
+#include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/mal405gp.h>
-#include <powerpc/ibm4xx/dcr405gp.h>
 #include <powerpc/ibm4xx/dev/emacreg.h>
 #include <powerpc/ibm4xx/dev/if_emacreg.h>
+#include <powerpc/ibm4xx/dev/if_emacvar.h>
+#include <powerpc/ibm4xx/dev/malvar.h>
+#include <powerpc/ibm4xx/dev/opbreg.h>
+#include <powerpc/ibm4xx/dev/opbvar.h>
+#include <powerpc/ibm4xx/dev/plbvar.h>
+#if defined(EMAC_ZMII_PHY) || defined(EMAC_RGMII_PHY)
+#include <powerpc/ibm4xx/dev/rmiivar.h>
+#endif
 
 #include <dev/mii/miivar.h>
+
+#include "locators.h"
+
 
 /*
  * Transmit descriptor list size.  There are two Tx channels, each with
@@ -126,7 +151,8 @@ struct emac_rxsoft {
  * Software state per device.
  */
 struct emac_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
+	int sc_instance;		/* instance no. */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
@@ -137,7 +163,12 @@ struct emac_softc {
 	struct mii_data sc_mii;		/* MII/media information */
 	struct callout sc_callout;	/* tick callout */
 
-	u_int32_t sc_mr1;		/* copy of Mode Register 1 */
+	uint32_t sc_mr1;		/* copy of Mode Register 1 */
+	uint32_t sc_stacr_read;		/* Read opcode of STAOPC of STACR */
+	uint32_t sc_stacr_write;	/* Write opcode of STAOPC of STACR */
+	uint32_t sc_stacr_bits;		/* misc bits of STACR */
+	bool sc_stacr_completed;	/* Operation completed of STACR */
+	int sc_htsize;			/* Hash Table size */
 
 	bus_dmamap_t sc_cddmamap;	/* control data dma map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -156,8 +187,6 @@ struct emac_softc {
 	struct evcnt sc_ev_txintr;	/* Tx interrupts */
 	struct evcnt sc_ev_rxde;	/* Rx descriptor interrupts */
 	struct evcnt sc_ev_txde;	/* Tx descriptor interrupts */
-	struct evcnt sc_ev_wol;		/* Wake-On-Lan interrupts */
-	struct evcnt sc_ev_serr;	/* MAL system error interrupts */
 	struct evcnt sc_ev_intr;	/* General EMAC interrupts */
 
 	struct evcnt sc_ev_txreap;	/* Calls to Tx descriptor reaper */
@@ -175,6 +204,10 @@ struct emac_softc {
 	int sc_txsdirty;		/* dirty Tx jobs */
 
 	int sc_rxptr;			/* next ready RX descriptor/descsoft */
+
+	void (*sc_rmii_enable)(device_t, int);		/* reduced MII enable */
+	void (*sc_rmii_disable)(device_t, int);		/* reduced MII disable*/
+	void (*sc_rmii_speed)(device_t, int, int);	/* reduced MII speed */
 };
 
 #ifdef EMAC_EVENT_COUNTERS
@@ -239,94 +272,110 @@ do {									\
 #define	EMAC_READ(sc, reg) \
 	bus_space_read_stream_4((sc)->sc_st, (sc)->sc_sh, (reg))
 
-#define	EMAC_SET_FILTER(aht, category) \
+#define	EMAC_SET_FILTER(aht, crc) \
 do {									\
-	(aht)[3 - ((category) >> 4)] |= 1 << ((category) & 0xf);	\
+	(aht)[3 - (((crc) >> 26) >> 4)] |= 1 << (((crc) >> 26) & 0xf);	\
+} while (/*CONSTCOND*/0)
+#define	EMAC_SET_FILTER256(aht, crc) \
+do {									\
+	(aht)[7 - (((crc) >> 24) >> 5)] |= 1 << (((crc) >> 24) & 0x1f);	\
 } while (/*CONSTCOND*/0)
 
-static int	emac_match(struct device *, struct cfdata *, void *);
-static void	emac_attach(struct device *, struct device *, void *);
+static int	emac_match(device_t, cfdata_t, void *);
+static void	emac_attach(device_t, device_t, void *);
 
-static int	emac_add_rxbuf(struct emac_softc *, int);
-static int	emac_init(struct ifnet *);
-static int	emac_ioctl(struct ifnet *, u_long, void *);
-static void	emac_reset(struct emac_softc *);
-static void	emac_rxdrain(struct emac_softc *);
-static int	emac_txreap(struct emac_softc *);
+static int	emac_intr(void *);
 static void	emac_shutdown(void *);
+
 static void	emac_start(struct ifnet *);
+static int	emac_ioctl(struct ifnet *, u_long, void *);
+static int	emac_init(struct ifnet *);
 static void	emac_stop(struct ifnet *, int);
 static void	emac_watchdog(struct ifnet *);
+
+static int	emac_add_rxbuf(struct emac_softc *, int);
+static void	emac_rxdrain(struct emac_softc *);
 static int	emac_set_filter(struct emac_softc *);
+static int	emac_txreap(struct emac_softc *);
 
-static int	emac_wol_intr(void *);
-static int	emac_serr_intr(void *);
-static int	emac_txeob_intr(void *);
-static int	emac_rxeob_intr(void *);
-static int	emac_txde_intr(void *);
-static int	emac_rxde_intr(void *);
-static int	emac_intr(void *);
+static void	emac_soft_reset(struct emac_softc *);
+static void	emac_smart_reset(struct emac_softc *);
 
-static int	emac_mii_readreg(struct device *, int, int);
-static void	emac_mii_statchg(struct device *);
-static void	emac_mii_tick(void *);
+static int	emac_mii_readreg(device_t, int, int);
+static void	emac_mii_writereg(device_t, int, int, int);
+static void	emac_mii_statchg(device_t);
 static uint32_t	emac_mii_wait(struct emac_softc *);
-static void	emac_mii_writereg(struct device *, int, int, int);
+static void	emac_mii_tick(void *);
 
 int		emac_copy_small = 0;
 
-CFATTACH_DECL(emac, sizeof(struct emac_softc),
+CFATTACH_DECL_NEW(emac, sizeof(struct emac_softc),
     emac_match, emac_attach, NULL, NULL);
 
+
 static int
-emac_match(struct device *parent, struct cfdata *cf, void *aux)
+emac_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct opb_attach_args *oaa = aux;
 
 	/* match only on-chip ethernet devices */
 	if (strcmp(oaa->opb_name, cf->cf_name) == 0)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
-emac_attach(struct device *parent, struct device *self, void *aux)
+emac_attach(device_t parent, device_t self, void *aux)
 {
 	struct opb_attach_args *oaa = aux;
-	struct emac_softc *sc = (struct emac_softc *)self;
+	struct emac_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 	bus_dma_segment_t seg;
-	int error, i, nseg;
+	int error, i, nseg, opb_freq, opbc, mii_phy = MII_PHY_ANY;
 	const uint8_t *enaddr;
+	prop_dictionary_t dict = device_properties(self);
 	prop_data_t ea;
 
 	bus_space_map(oaa->opb_bt, oaa->opb_addr, EMAC_NREG, 0, &sc->sc_sh);
+
+	sc->sc_dev = self;
+	sc->sc_instance = oaa->opb_instance;
 	sc->sc_st = oaa->opb_bt;
 	sc->sc_dmat = oaa->opb_dmat;
 
-	printf(": 405GP EMAC\n");
-
 	callout_init(&sc->sc_callout, 0);
 
-	/*
-	 * Set up Mode Register 1 - set receive and transmit FIFOs to maximum
-	 * size, allow transmit of multiple packets (only channel 0 is used).
-	 *
-	 * XXX: Allow pause packets??
-	 */
-	sc->sc_mr1 = MR1_RFS_4KB | MR1_TFS_2KB | MR1_TR0_MULTIPLE;
+	aprint_naive("\n");
+	aprint_normal(": Ethernet Media Access Controller\n");
 
-	intr_establish(oaa->opb_irq    , IST_LEVEL, IPL_NET, emac_wol_intr, sc);
-	intr_establish(oaa->opb_irq + 1, IST_LEVEL, IPL_NET, emac_serr_intr, sc);
-	intr_establish(oaa->opb_irq + 2, IST_LEVEL, IPL_NET, emac_txeob_intr, sc);
-	intr_establish(oaa->opb_irq + 3, IST_LEVEL, IPL_NET, emac_rxeob_intr, sc);
-	intr_establish(oaa->opb_irq + 4, IST_LEVEL, IPL_NET, emac_txde_intr, sc);
-	intr_establish(oaa->opb_irq + 5, IST_LEVEL, IPL_NET, emac_rxde_intr, sc);
-	intr_establish(oaa->opb_irq + 6, IST_LEVEL, IPL_NET, emac_intr, sc);
-	printf("%s: interrupting at irqs %d .. %d\n", sc->sc_dev.dv_xname,
-	    oaa->opb_irq, oaa->opb_irq + 6);
+	/* Fetch the Ethernet address. */
+	ea = prop_dictionary_get(dict, "mac-address");
+	if (ea == NULL) {
+		aprint_error_dev(self, "unable to get mac-address property\n");
+		return;
+	}
+	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
+	KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
+	enaddr = prop_data_data_nocopy(ea);
+	aprint_normal_dev(self, "Ethernet address %s\n", ether_sprintf(enaddr));
+
+#if defined(EMAC_ZMII_PHY) || defined(EMAC_RGMII_PHY)
+	/* Fetch the MII offset. */
+	prop_dictionary_get_uint32(dict, "mii-phy", &mii_phy);
+
+#ifdef EMAC_ZMII_PHY
+	if (oaa->opb_flags & OPB_FLAGS_EMAC_RMII_ZMII)
+		zmii_attach(parent, sc->sc_instance, &sc->sc_rmii_enable,
+		    &sc->sc_rmii_disable, &sc->sc_rmii_speed);
+#endif
+#ifdef EMAC_RGMII_PHY
+	if (oaa->opb_flags & OPB_FLAGS_EMAC_RMII_RGMII)
+		rgmii_attach(parent, sc->sc_instance, &sc->sc_rmii_enable,
+		    &sc->sc_rmii_disable, &sc->sc_rmii_speed);
+#endif
+#endif
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -334,32 +383,33 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct emac_control_data), 0, 0, &seg, 1, &nseg, 0)) != 0) {
-		printf("%s: unable to allocate control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(self,
+		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
 	    sizeof(struct emac_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map control data, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(self,
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct emac_control_data), 1,
 	    sizeof(struct emac_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		printf("%s: unable to create control data DMA map, "
-		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		aprint_error_dev(self,
+		    "unable to create control data DMA map, error = %d\n",
+		    error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct emac_control_data), NULL,
 	    0)) != 0) {
-		printf("%s: unable to load control data DMA map, error = %d\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(self,
+		    "unable to load control data DMA map, error = %d\n", error);
 		goto fail_3;
 	}
 
@@ -370,8 +420,9 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    EMAC_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			printf("%s: unable to create tx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(self,
+			    "unable to create tx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail_4;
 		}
 	}
@@ -382,31 +433,80 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < EMAC_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			printf("%s: unable to create rx DMA map %d, "
-			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
+			aprint_error_dev(self,
+			    "unable to create rx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
-	/*
-	 * Reset the chip to a known state.
-	 */
-	emac_reset(sc);
+	/* Soft Reset the EMAC.  The chip to a known state. */
+	emac_soft_reset(sc);
 
-	/* Fetch the Ethernet address. */
-	ea = prop_dictionary_get(device_properties(&sc->sc_dev), "mac-address");
-	if (ea == NULL) {
-		printf("%s: unable to get mac-addr property\n",
-		    sc->sc_dev.dv_xname);
-		return;
+	opb_freq = opb_get_frequency();
+	switch (opb_freq) {
+	case  50000000: opbc =  STACR_OPBC_50MHZ; break;
+	case  66666666: opbc =  STACR_OPBC_66MHZ; break;
+	case  83333333: opbc =  STACR_OPBC_83MHZ; break;
+	case 100000000: opbc = STACR_OPBC_100MHZ; break;
+
+	default:
+		if (opb_freq > 100000000) {
+			opbc = STACR_OPBC_A100MHZ;
+			break;
+		}
+		aprint_error_dev(self, "unsupport OPB frequency %dMHz\n",
+		    opb_freq / 1000 / 1000);
+		goto fail_5;
 	}
-	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
-	KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-	enaddr = prop_data_data_nocopy(ea);
+	if (oaa->opb_flags & OPB_FLAGS_EMAC_GBE) {
+		sc->sc_mr1 =
+		    MR1_RFS_GBE(MR1__FS_16KB)	|
+		    MR1_TFS_GBE(MR1__FS_16KB)	|
+		    MR1_TR0_MULTIPLE		|
+		    MR1_OBCI(opbc);
+		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
-	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(enaddr));
+		if (oaa->opb_flags & OPB_FLAGS_EMAC_STACV2) {
+			sc->sc_stacr_read = STACR_STAOPC_READ;
+			sc->sc_stacr_write = STACR_STAOPC_WRITE;
+			sc->sc_stacr_bits = STACR_OC;
+			sc->sc_stacr_completed = false;
+		} else {
+			sc->sc_stacr_read = STACR_READ;
+			sc->sc_stacr_write = STACR_WRITE;
+			sc->sc_stacr_completed = true;
+		}
+	} else {
+		/*
+		 * Set up Mode Register 1 - set receive and transmit FIFOs to
+		 * maximum size, allow transmit of multiple packets (only
+		 * channel 0 is used).
+		 *
+		 * XXX: Allow pause packets??
+		 */
+		sc->sc_mr1 =
+		    MR1_RFS(MR1__FS_4KB) |
+		    MR1_TFS(MR1__FS_2KB) |
+		    MR1_TR0_MULTIPLE;
+
+		sc->sc_stacr_read = STACR_READ;
+		sc->sc_stacr_write = STACR_WRITE;
+		sc->sc_stacr_bits = STACR_OPBC(opbc);
+		sc->sc_stacr_completed = true;
+	}
+
+	intr_establish(oaa->opb_irq, IST_LEVEL, IPL_NET, emac_intr, sc);
+	mal_intr_establish(sc->sc_instance, sc);
+
+	if (oaa->opb_flags & OPB_FLAGS_EMAC_HT256)
+		sc->sc_htsize = 256;
+	else
+		sc->sc_htsize = 64;
+
+	/* Clear all interrupts */
+	EMAC_WRITE(sc, EMAC_ISR, ISR_ALL);
 
 	/*
 	 * Initialise the media structures.
@@ -418,8 +518,7 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ethercom.ec_mii = mii;
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
-	mii_attach(&sc->sc_dev, mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	mii_attach(self, mii, 0xffffffff, mii_phy, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_NONE);
@@ -427,14 +526,14 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
 
 	ifp = &sc->sc_ethercom.ec_if;
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, self->dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = emac_ioctl;
 	ifp->if_start = emac_start;
-	ifp->if_watchdog = emac_watchdog;
+	ifp->if_ioctl = emac_ioctl;
 	ifp->if_init = emac_init;
 	ifp->if_stop = emac_stop;
+	ifp->if_watchdog = emac_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
@@ -452,31 +551,27 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Attach the event counters.
 	 */
-	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "rxintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "txintr");
-	evcnt_attach_dynamic(&sc->sc_ev_rxde, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "rxde");
+	    NULL, self->dv_xname, "txintr");
+	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,
+	    NULL, self->dv_xname, "rxintr");
 	evcnt_attach_dynamic(&sc->sc_ev_txde, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "txde");
-	evcnt_attach_dynamic(&sc->sc_ev_wol, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "wol");
-	evcnt_attach_dynamic(&sc->sc_ev_serr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "serr");
+	    NULL, self->dv_xname, "txde");
+	evcnt_attach_dynamic(&sc->sc_ev_rxde, EVCNT_TYPE_INTR,
+	    NULL, self->dv_xname, "rxde");
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "intr");
+	    NULL, self->dv_xname, "intr");
 
 	evcnt_attach_dynamic(&sc->sc_ev_txreap, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txreap");
+	    NULL, self->dv_xname, "txreap");
 	evcnt_attach_dynamic(&sc->sc_ev_txsstall, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txsstall");
+	    NULL, self->dv_xname, "txsstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdstall, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txdstall");
+	    NULL, self->dv_xname, "txdstall");
 	evcnt_attach_dynamic(&sc->sc_ev_txdrop, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txdrop");
+	    NULL, self->dv_xname, "txdrop");
 	evcnt_attach_dynamic(&sc->sc_ev_tu, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "tu");
+	    NULL, self->dv_xname, "tu");
 #endif /* EMAC_EVENT_COUNTERS */
 
 	/*
@@ -484,8 +579,8 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_sdhook = shutdownhook_establish(emac_shutdown, sc);
 	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "WARNING: unable to establish shutdown hook\n");
 
 	return;
 
@@ -518,8 +613,23 @@ fail_0:
 }
 
 /*
- * Device shutdown routine.
+ * EMAC General interrupt handler
  */
+static int
+emac_intr(void *arg)
+{
+	struct emac_softc *sc = arg;
+	uint32_t status;
+
+	EMAC_EVCNT_INCR(&sc->sc_ev_intr);
+	status = EMAC_READ(sc, EMAC_ISR);
+
+	/* Clear the interrupt status bits. */
+	EMAC_WRITE(sc, EMAC_ISR, status);
+
+	return 1;
+}
+
 static void
 emac_shutdown(void *arg)
 {
@@ -528,7 +638,11 @@ emac_shutdown(void *arg)
 	emac_stop(&sc->sc_ethercom.ec_if, 0);
 }
 
-/* ifnet interface function */
+
+/*
+ * ifnet interface functions
+ */
+
 static void
 emac_start(struct ifnet *ifp)
 {
@@ -585,9 +699,9 @@ emac_start(struct ifnet *ifp)
 		if (error) {
 			if (error == EFBIG) {
 				EMAC_EVCNT_INCR(&sc->sc_ev_txdrop);
-				printf("%s: Tx packet consumes too many "
-				    "DMA segments, dropping...\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_ifnet(ifp,
+				    "Tx packet consumes too many "
+				    "DMA segments, dropping...\n");
 				    IFQ_DEQUEUE(&ifp->if_snd, m0);
 				    m_freem(m0);
 				    continue;
@@ -640,18 +754,19 @@ emac_start(struct ifnet *ifp)
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = EMAC_NEXTTX(nexttx)) {
+			struct mal_descriptor *txdesc =
+			    &sc->sc_txdescs[nexttx];
+
 			/*
 			 * If this is the first descriptor we're
 			 * enqueueing, don't set the TX_READY bit just
 			 * yet.  That could cause a race condition.
 			 * We'll do it below.
 			 */
-			sc->sc_txdescs[nexttx].md_data =
-			    dmamap->dm_segs[seg].ds_addr;
-			sc->sc_txdescs[nexttx].md_data_len =
-			    dmamap->dm_segs[seg].ds_len;
-			sc->sc_txdescs[nexttx].md_stat_ctrl =
-			    (sc->sc_txdescs[nexttx].md_stat_ctrl & MAL_TX_WRAP) |
+			txdesc->md_data = dmamap->dm_segs[seg].ds_addr;
+			txdesc->md_data_len = dmamap->dm_segs[seg].ds_len;
+			txdesc->md_stat_ctrl =
+			    (txdesc->md_stat_ctrl & MAL_TX_WRAP) |
 			    (nexttx == firsttx ? 0 : MAL_TX_READY) |
 			    EMAC_TXC_GFCS | EMAC_TXC_GPAD;
 			lasttx = nexttx;
@@ -684,7 +799,7 @@ emac_start(struct ifnet *ifp)
 		/*
 		 * Tell the EMAC that a new packet is available.
 		 */
-		EMAC_WRITE(sc, EMAC_TMR0, TMR0_GNP0);
+		EMAC_WRITE(sc, EMAC_TMR0, TMR0_GNP0 | TMR0_TFAE_2);
 
 		/* Advance the tx pointer. */
 		sc->sc_txfree -= txs->txs_ndesc;
@@ -696,19 +811,67 @@ emac_start(struct ifnet *ifp)
 		/*
 		 * Pass the packet to any BPF listeners.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
-	if (sc->sc_txfree == 0) {
+	if (sc->sc_txfree == 0)
 		/* No more slots left; notify upper layer. */
 		ifp->if_flags |= IFF_OACTIVE;
-	}
 
-	if (sc->sc_txfree != ofree) {
+	if (sc->sc_txfree != ofree)
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
+}
+
+static int
+emac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+{
+	struct emac_softc *sc = ifp->if_softc;
+	int s, error;
+
+	s = splnet();
+
+	switch (cmd) {
+	case SIOCSIFMTU:
+	{
+		struct ifreq *ifr = (struct ifreq *)data;
+		int maxmtu;
+
+		if (sc->sc_ethercom.ec_capabilities & ETHERCAP_JUMBO_MTU)
+			maxmtu = EMAC_MAX_MTU;
+		else
+			maxmtu = ETHERMTU;
+
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > maxmtu)
+			error = EINVAL;
+		else if ((error = ifioctl_common(ifp, cmd, data)) != ENETRESET)
+			break;
+		else if (ifp->if_flags & IFF_UP)
+			error = emac_init(ifp);
+		else
+			error = 0;
+		break;
 	}
+
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			if (ifp->if_flags & IFF_RUNNING)
+				error = emac_set_filter(sc);
+			else
+				error = 0;
+		}
+	}
+
+	/* try to get more packets going */
+	emac_start(ifp);
+
+	splx(s);
+	return error;
 }
 
 static int
@@ -725,16 +888,16 @@ emac_init(struct ifnet *ifp)
 	emac_stop(ifp, 0);
 
 	/* Reset the chip to a known state. */
-	emac_reset(sc);
+	emac_soft_reset(sc);
 
-	/* 
+	/*
 	 * Initialise the transmit descriptor ring.
 	 */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	/* set wrap on last descriptor */
 	sc->sc_txdescs[EMAC_NTXDESC - 1].md_stat_ctrl |= MAL_TX_WRAP;
 	EMAC_CDTXSYNC(sc, 0, EMAC_NTXDESC,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = EMAC_NTXDESC;
 	sc->sc_txnext = 0;
 
@@ -755,9 +918,10 @@ emac_init(struct ifnet *ifp)
 		rxs = &sc->sc_rxsoft[i];
 		if (rxs->rxs_mbuf == NULL) {
 			if ((error = emac_add_rxbuf(sc, i)) != 0) {
-				printf("%s: unable to allocate or map rx "
-				    "buffer %d, error = %d\n",
-				    sc->sc_dev.dv_xname, i, error);
+				aprint_error_ifnet(ifp,
+				    "unable to allocate or map rx buffer %d,"
+				    " error = %d\n",
+				    i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -777,25 +941,22 @@ emac_init(struct ifnet *ifp)
 		goto out;
 
 	/*
-	 * Give the transmit and receive rings to the MAL.
-	 */
-	mtdcr(DCR_MAL0_TXCTP0R, EMAC_CDTXADDR(sc, 0));
-	mtdcr(DCR_MAL0_RXCTP0R, EMAC_CDRXADDR(sc, 0));
-
-	/*
 	 * Load the MAC address.
 	 */
 	EMAC_WRITE(sc, EMAC_IAHR, enaddr[0] << 8 | enaddr[1]);
 	EMAC_WRITE(sc, EMAC_IALR,
 	    enaddr[2] << 24 | enaddr[3] << 16 | enaddr[4] << 8 | enaddr[5]);
 
-	/*
-	 * Set the receive channel buffer size (in units of 16 bytes).
-	 */
-#if MCLBYTES > (4096 - 16)	/* XXX! */
-# error	MCLBYTES > max rx channel buffer size
-#endif
-	mtdcr(DCR_MAL0_RCBS0, MCLBYTES / 16);
+	/* Enable the transmit and receive channel on the MAL. */
+	error = mal_start(sc->sc_instance,
+	    EMAC_CDTXADDR(sc, 0), EMAC_CDRXADDR(sc, 0));
+	if (error)
+		goto out;
+
+	sc->sc_mr1 &= ~MR1_JPSM;
+	if (ifp->if_mtu > ETHERMTU)
+		/* Enable Jumbo Packet Support Mode */
+		sc->sc_mr1 |= MR1_JPSM;
 
 	/* Set fifos, media modes. */
 	EMAC_WRITE(sc, EMAC_MR1, sc->sc_mr1);
@@ -804,7 +965,7 @@ emac_init(struct ifnet *ifp)
 	 * Enable Individual and (possibly) Broadcast Address modes,
 	 * runt packets, and strip padding.
 	 */
-	EMAC_WRITE(sc, EMAC_RMR, RMR_IAE | RMR_RRP | RMR_SP |
+	EMAC_WRITE(sc, EMAC_RMR, RMR_IAE | RMR_RRP | RMR_SP | RMR_TFAE_2 |
 	    (ifp->if_flags & IFF_PROMISC ? RMR_PME : 0) |
 	    (ifp->if_flags & IFF_BROADCAST ? RMR_BAE : 0));
 
@@ -836,18 +997,27 @@ emac_init(struct ifnet *ifp)
 	EMAC_WRITE(sc, EMAC_IPGVR, 8);
 
 	/*
-	 * Set interrupt status enable bits for EMAC and MAL.
+	 * Set interrupt status enable bits for EMAC.
 	 */
 	EMAC_WRITE(sc, EMAC_ISER,
-	    ISR_BP | ISR_SE | ISR_ALE | ISR_BFCS | ISR_PTLE | ISR_ORE | ISR_IRE);
-	mtdcr(DCR_MAL0_IER, MAL0_IER_DE | MAL0_IER_NWE | MAL0_IER_TO |
-	    MAL0_IER_OPB | MAL0_IER_PLB);
-
-	/*
-	 * Enable the transmit and receive channel on the MAL.
-	 */
-	mtdcr(DCR_MAL0_RXCASR, MAL0_RXCASR_CHAN0);
-	mtdcr(DCR_MAL0_TXCASR, MAL0_TXCASR_CHAN0);
+	    ISR_TXPE |		/* TX Parity Error */
+	    ISR_RXPE |		/* RX Parity Error */
+	    ISR_TXUE |		/* TX Underrun Event */
+	    ISR_RXOE |		/* RX Overrun Event */
+	    ISR_OVR  |		/* Overrun Error */
+	    ISR_PP   |		/* Pause Packet */
+	    ISR_BP   |		/* Bad Packet */
+	    ISR_RP   |		/* Runt Packet */
+	    ISR_SE   |		/* Short Event */
+	    ISR_ALE  |		/* Alignment Error */
+	    ISR_BFCS |		/* Bad FCS */
+	    ISR_PTLE |		/* Packet Too Long Error */
+	    ISR_ORE  |		/* Out of Range Error */
+	    ISR_IRE  |		/* In Range Error */
+	    ISR_SE0  |		/* Signal Quality Error 0 (SQE) */
+	    ISR_TE0  |		/* Transmit Error 0 */
+	    ISR_MOS  |		/* MMA Operation Succeeded */
+	    ISR_MOF);		/* MMA Operation Failed */
 
 	/*
 	 * Enable the transmit and receive channel on the EMAC.
@@ -869,94 +1039,11 @@ emac_init(struct ifnet *ifp)
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ifp->if_timer = 0;
-		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
+		aprint_error_ifnet(ifp, "interface not running\n");
 	}
-	return (error);
+	return error;
 }
 
-static int
-emac_add_rxbuf(struct emac_softc *sc, int idx)
-{
-	struct emac_rxsoft *rxs = &sc->sc_rxsoft[idx];
-	struct mbuf *m;
-	int error;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)  
-		return (ENOBUFS);
-
-	MCLGET(m, M_DONTWAIT);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		return (ENOBUFS);
-	}
-
-	if (rxs->rxs_mbuf != NULL)
-		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
-
-	rxs->rxs_mbuf = m;
-
-	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    sc->sc_dev.dv_xname, idx, error);
-		panic("emac_add_rxbuf");		/* XXX */
-	}
-
-	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
-	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-
-	EMAC_INIT_RXDESC(sc, idx);
-
-	return (0);
-}
-
-/* ifnet interface function */
-static void
-emac_watchdog(struct ifnet *ifp)
-{
-	struct emac_softc *sc = ifp->if_softc;
-
-	/*
-	 * Since we're not interrupting every packet, sweep
-	 * up before we report an error.
-	 */
-	emac_txreap(sc);
-
-	if (sc->sc_txfree != EMAC_NTXDESC) {
-		printf("%s: device timeout (txfree %d txsfree %d txnext %d)\n",
-		    sc->sc_dev.dv_xname, sc->sc_txfree, sc->sc_txsfree,
-		    sc->sc_txnext);
-		ifp->if_oerrors++;
-
-		/* Reset the interface. */
-		(void)emac_init(ifp);
-	} else if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: recovered from device timeout\n",
-		    sc->sc_dev.dv_xname);
-
-	/* try to get more packets going */
-	emac_start(ifp);
-}
-
-static void
-emac_rxdrain(struct emac_softc *sc)
-{
-	struct emac_rxsoft *rxs;
-	int i;
-
-	for (i = 0; i < EMAC_NRXDESC; i++) {
-		rxs = &sc->sc_rxsoft[i];
-		if (rxs->rxs_mbuf != NULL) {
-			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
-			m_freem(rxs->rxs_mbuf);
-			rxs->rxs_mbuf = NULL;
-		}
-	}
-}
-
-/* ifnet interface function */
 static void
 emac_stop(struct ifnet *ifp, int disable)
 {
@@ -971,14 +1058,10 @@ emac_stop(struct ifnet *ifp, int disable)
 	mii_down(&sc->sc_mii);
 
 	/* Disable interrupts. */
-#if 0	/* Can't disable MAL interrupts without a reset... */
 	EMAC_WRITE(sc, EMAC_ISER, 0);
-#endif
-	mtdcr(DCR_MAL0_IER, 0);
 
 	/* Disable the receive and transmit channels. */
-	mtdcr(DCR_MAL0_RXCARR, MAL0_RXCARR_CHAN0);
-	mtdcr(DCR_MAL0_TXCARR, MAL0_TXCARR_CHAN0 | MAL0_TXCARR_CHAN1);
+	mal_stop(sc->sc_instance);
 
 	/* Disable the transmit enable and receive MACs. */
 	EMAC_WRITE(sc, EMAC_MR0,
@@ -1004,52 +1087,84 @@ emac_stop(struct ifnet *ifp, int disable)
 	ifp->if_timer = 0;
 }
 
-/* ifnet interface function */
-static int
-emac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
+static void
+emac_watchdog(struct ifnet *ifp)
 {
 	struct emac_softc *sc = ifp->if_softc;
-	int s, error;
 
-	s = splnet();
+	/*
+	 * Since we're not interrupting every packet, sweep
+	 * up before we report an error.
+	 */
+	emac_txreap(sc);
 
-	error = ether_ioctl(ifp, cmd, data);
-	if (error == ENETRESET) { 
-		/*
-		 * Multicast list has changed; set the hardware filter
-		 * accordingly.
-		 */
-		if (ifp->if_flags & IFF_RUNNING)
-			error = emac_set_filter(sc);
-		else
-			error = 0;
-	}
+	if (sc->sc_txfree != EMAC_NTXDESC) {
+		aprint_error_ifnet(ifp,
+		    "device timeout (txfree %d txsfree %d txnext %d)\n",
+		    sc->sc_txfree, sc->sc_txsfree, sc->sc_txnext);
+		ifp->if_oerrors++;
+
+		/* Reset the interface. */
+		(void)emac_init(ifp);
+	} else if (ifp->if_flags & IFF_DEBUG)
+		aprint_error_ifnet(ifp, "recovered from device timeout\n");
 
 	/* try to get more packets going */
 	emac_start(ifp);
+}
 
-	splx(s);
-	return (error);
+static int
+emac_add_rxbuf(struct emac_softc *sc, int idx)
+{
+	struct emac_rxsoft *rxs = &sc->sc_rxsoft[idx];
+	struct mbuf *m;
+	int error;
+
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL)
+		return ENOBUFS;
+
+	MCLGET(m, M_DONTWAIT);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		return ENOBUFS;
+	}
+
+	if (rxs->rxs_mbuf != NULL)
+		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
+
+	rxs->rxs_mbuf = m;
+
+	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap,
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "can't load rx DMA map %d, error = %d\n", idx, error);
+		panic("emac_add_rxbuf");		/* XXX */
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
+	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
+
+	EMAC_INIT_RXDESC(sc, idx);
+
+	return 0;
 }
 
 static void
-emac_reset(struct emac_softc *sc)
+emac_rxdrain(struct emac_softc *sc)
 {
+	struct emac_rxsoft *rxs;
+	int i;
 
-	/* reset the MAL */
-	mtdcr(DCR_MAL0_CFG, MAL0_CFG_SR);
-
-	EMAC_WRITE(sc, EMAC_MR0, MR0_SRST);
-	delay(5);
-
-	/* XXX: check if MR0_SRST is clear until a timeout instead? */
-	EMAC_WRITE(sc, EMAC_MR0, EMAC_READ(sc, EMAC_MR0) & ~MR0_SRST);
-
-	/* XXX clear interrupts in EMAC_ISR just to be sure?? */
-
-	/* set the MAL config register */
-	mtdcr(DCR_MAL0_CFG, MAL0_CFG_PLBB | MAL0_CFG_OPBBL | MAL0_CFG_LEA |
-	    MAL0_CFG_SD | MAL0_CFG_PLBLT);
+	for (i = 0; i < EMAC_NRXDESC; i++) {
+		rxs = &sc->sc_rxsoft[i];
+		if (rxs->rxs_mbuf != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
+			m_freem(rxs->rxs_mbuf);
+			rxs->rxs_mbuf = NULL;
+		}
+	}
 }
 
 static int
@@ -1058,8 +1173,17 @@ emac_set_filter(struct emac_softc *sc)
 	struct ether_multistep step;
 	struct ether_multi *enm;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint32_t rmr, crc, gaht[4] = {0, 0, 0, 0};
-	int category, cnt = 0;
+	uint32_t rmr, crc, mask, tmp, reg, gaht[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	int regs, cnt = 0, i;
+
+	if (sc->sc_htsize == 256) {
+		reg = EMAC_GAHT256(0);
+		regs = 8;
+	} else {
+		reg = EMAC_GAHT64(0);
+		regs = 4;
+	}
+	mask = (1ULL << (sc->sc_htsize / regs)) - 1;
 
 	rmr = EMAC_READ(sc, EMAC_RMR);
 	rmr &= ~(RMR_PMME | RMR_MAE);
@@ -1077,107 +1201,37 @@ emac_set_filter(struct emac_softc *sc)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			gaht[0] = gaht[1] = gaht[2] = gaht[3] = 0xffff;
+			gaht[0] = gaht[1] = gaht[2] = gaht[3] =
+			    gaht[4] = gaht[5] = gaht[6] = gaht[7] = mask;
 			break;
 		}
 
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 
-		/* Just want the 6 most significant bits. */
-		category = crc >> 26;
-		EMAC_SET_FILTER(gaht, category);
+		if (sc->sc_htsize == 256)
+			EMAC_SET_FILTER256(gaht, crc);
+		else
+			EMAC_SET_FILTER(gaht, crc);
 
 		ETHER_NEXT_MULTI(step, enm);
 		cnt++;
 	}
 
-	if ((gaht[0] & gaht[1] & gaht[2] & gaht[3]) == 0xffff) {
+	for (i = 1, tmp = gaht[0]; i < regs; i++)
+		tmp &= gaht[i];
+	if (tmp == mask) {
 		/* All categories are true. */
 		ifp->if_flags |= IFF_ALLMULTI;
 		rmr |= RMR_PMME;
 	} else if (cnt != 0) {
 		/* Some categories are true. */
-		EMAC_WRITE(sc, EMAC_GAHT1, gaht[0]); 
-		EMAC_WRITE(sc, EMAC_GAHT2, gaht[1]);
-		EMAC_WRITE(sc, EMAC_GAHT3, gaht[2]);
-		EMAC_WRITE(sc, EMAC_GAHT4, gaht[3]);
-
+		for (i = 0; i < regs; i++)
+			EMAC_WRITE(sc, reg + (i << 2), gaht[i]);
 		rmr |= RMR_MAE;
 	}
 	EMAC_WRITE(sc, EMAC_RMR, rmr);
 
 	return 0;
-}
-
-/*
- * EMAC General interrupt handler
- */
-static int
-emac_intr(void *arg)
-{
-	struct emac_softc *sc = arg;
-	uint32_t status;
-
-	EMAC_EVCNT_INCR(&sc->sc_ev_intr);
-	status = EMAC_READ(sc, EMAC_ISR);
-
-	/* Clear the interrupt status bits. */
-	EMAC_WRITE(sc, EMAC_ISR, status);
-
-	return (0);
-}
-
-/*
- * EMAC Wake-On-LAN interrupt handler
- */
-static int
-emac_wol_intr(void *arg)
-{
-	struct emac_softc *sc = arg;
-
-	EMAC_EVCNT_INCR(&sc->sc_ev_wol);
-	printf("%s: emac_wol_intr\n", sc->sc_dev.dv_xname);
-	return (0);
-}
-
-/*
- * MAL System ERRor interrupt handler
- */
-static int
-emac_serr_intr(void *arg)
-{
-#ifdef EMAC_EVENT_COUNTERS
-	struct emac_softc *sc = arg;
-#endif
-	u_int32_t esr;
-
-	EMAC_EVCNT_INCR(&sc->sc_ev_serr);
-	esr = mfdcr(DCR_MAL0_ESR);
-
-	/* Clear the interrupt status bits. */
-	mtdcr(DCR_MAL0_ESR, esr);
-	return (0);
-}
-
-/*
- * MAL Transmit End-Of-Buffer interrupt handler.
- * NOTE: This shouldn't be called!
- */
-static int
-emac_txeob_intr(void *arg)
-{
-	struct emac_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int handled;
-
-	EMAC_EVCNT_INCR(&sc->sc_ev_txintr);
-	handled = emac_txreap(arg);
-
-	/* try to get more packets going */
-	emac_start(ifp);
-
-	return (handled);
-	
 }
 
 /*
@@ -1189,13 +1243,10 @@ emac_txreap(struct emac_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct emac_txsoft *txs;
 	int handled, i;
-	u_int32_t txstat;
+	uint32_t txstat;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_txreap);
 	handled = 0;
-
-	/* Clear the interrupt */
-	mtdcr(DCR_MAL0_TXEOBISR, mfdcr(DCR_MAL0_TXEOBISR));
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1228,7 +1279,8 @@ emac_txreap(struct emac_softc *sc)
 			EMAC_EVCNT_INCR(&sc->sc_ev_tu);
 #endif /* EMAC_EVENT_COUNTERS */
 
-		if (txstat & (EMAC_TXS_EC | EMAC_TXS_MC | EMAC_TXS_SC | EMAC_TXS_LC)) {
+		if (txstat &
+		    (EMAC_TXS_EC | EMAC_TXS_MC | EMAC_TXS_SC | EMAC_TXS_LC)) {
 			if (txstat & EMAC_TXS_EC)
 				ifp->if_collisions += 16;
 			else if (txstat & EMAC_TXS_MC)
@@ -1242,11 +1294,10 @@ emac_txreap(struct emac_softc *sc)
 
 		if (ifp->if_flags & IFF_DEBUG) {
 			if (txstat & EMAC_TXS_ED)
-				printf("%s: excessive deferral\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_ifnet(ifp, "excessive deferral\n");
 			if (txstat & EMAC_TXS_EC)
-				printf("%s: excessive collisions\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_ifnet(ifp,
+				    "excessive collisions\n");
 		}
 
 		sc->sc_txfree += txs->txs_ndesc;
@@ -1267,28 +1318,261 @@ emac_txreap(struct emac_softc *sc)
 	if (sc->sc_txsfree == EMAC_TXQUEUELEN)
 		ifp->if_timer = 0;
 
-	return (handled);
+	return handled;
 }
 
+
 /*
- * MAL Receive End-Of-Buffer interrupt handler
+ * Reset functions
  */
+
+static void
+emac_soft_reset(struct emac_softc *sc)
+{
+	uint32_t sdr;
+	int t = 0;
+
+	/*
+	 * The PHY must provide a TX Clk in order perform a soft reset the
+	 * EMAC.  If none is present, select the internal clock,
+	 * SDR0_MFR[E0CS,E1CS].  After the soft reset, select the external
+	 * clock.
+	 */
+
+	sdr = mfsdr(DCR_SDR0_MFR);
+	sdr |= SDR0_MFR_ECS(sc->sc_instance);
+	mtsdr(DCR_SDR0_MFR, sdr);
+
+	EMAC_WRITE(sc, EMAC_MR0, MR0_SRST);
+
+	sdr = mfsdr(DCR_SDR0_MFR);
+	sdr &= ~SDR0_MFR_ECS(sc->sc_instance);
+	mtsdr(DCR_SDR0_MFR, sdr);
+
+	delay(5);
+
+	/* wait finish */
+	while (EMAC_READ(sc, EMAC_MR0) & MR0_SRST) {
+		if (++t == 1000000 /* 1sec XXXXX */) {
+			aprint_error_dev(sc->sc_dev, "Soft Reset failed\n");
+			return;
+		}
+		delay(1);
+	}
+}
+
+static void
+emac_smart_reset(struct emac_softc *sc)
+{
+	uint32_t mr0;
+	int t = 0;
+
+	mr0 = EMAC_READ(sc, EMAC_MR0);
+	if (mr0 & (MR0_TXE | MR0_RXE)) {
+		mr0 &= ~(MR0_TXE | MR0_RXE);
+		EMAC_WRITE(sc, EMAC_MR0, mr0);
+
+		/* wait idel state */
+		while ((EMAC_READ(sc, EMAC_MR0) & (MR0_TXI | MR0_RXI)) !=
+		    (MR0_TXI | MR0_RXI)) {
+			if (++t == 1000000 /* 1sec XXXXX */) {
+				aprint_error_dev(sc->sc_dev,
+				    "Smart Reset failed\n");
+				return;
+			}
+			delay(1);
+		}
+	}
+}
+
+
+/*
+ * MII related functions
+ */
+
 static int
+emac_mii_readreg(device_t self, int phy, int reg)
+{
+	struct emac_softc *sc = device_private(self);
+	uint32_t sta_reg;
+
+	if (sc->sc_rmii_enable)
+		sc->sc_rmii_enable(device_parent(self), sc->sc_instance);
+
+	/* wait for PHY data transfer to complete */
+	if (emac_mii_wait(sc))
+		goto fail;
+
+	sta_reg =
+	    sc->sc_stacr_read		|
+	    (reg << STACR_PRA_SHIFT)	|
+	    (phy << STACR_PCDA_SHIFT)	|
+	    sc->sc_stacr_bits;
+	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
+
+	if (emac_mii_wait(sc))
+		goto fail;
+	sta_reg = EMAC_READ(sc, EMAC_STACR);
+
+	if (sc->sc_rmii_disable)
+		sc->sc_rmii_disable(device_parent(self), sc->sc_instance);
+
+	if (sta_reg & STACR_PHYE)
+		return 0;
+	return sta_reg >> STACR_PHYD_SHIFT;
+
+fail:
+	if (sc->sc_rmii_disable)
+		sc->sc_rmii_disable(device_parent(self), sc->sc_instance);
+	return 0;
+}
+
+static void
+emac_mii_writereg(device_t self, int phy, int reg, int val)
+{
+	struct emac_softc *sc = device_private(self);
+	uint32_t sta_reg;
+
+	if (sc->sc_rmii_enable)
+		sc->sc_rmii_enable(device_parent(self), sc->sc_instance);
+
+	/* wait for PHY data transfer to complete */
+	if (emac_mii_wait(sc))
+		goto out;
+
+	sta_reg =
+	    (val << STACR_PHYD_SHIFT)	|
+	    sc->sc_stacr_write		|
+	    (reg << STACR_PRA_SHIFT)	|
+	    (phy << STACR_PCDA_SHIFT)	|
+	    sc->sc_stacr_bits;
+	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
+
+	if (emac_mii_wait(sc))
+		goto out;
+	if (EMAC_READ(sc, EMAC_STACR) & STACR_PHYE)
+		aprint_error_dev(sc->sc_dev, "MII PHY Error\n");
+
+out:
+	if (sc->sc_rmii_disable)
+		sc->sc_rmii_disable(device_parent(self), sc->sc_instance);
+}
+
+static void
+emac_mii_statchg(device_t self)
+{
+	struct emac_softc *sc = device_private(self);
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data *mii = &sc->sc_mii;
+
+	/*
+	 * MR1 can only be written immediately after a reset...
+	 */
+	emac_smart_reset(sc);
+
+	sc->sc_mr1 &= ~(MR1_FDE | MR1_ILE | MR1_EIFC | MR1_MF_MASK | MR1_IST);
+	if (mii->mii_media_active & IFM_FDX)
+		sc->sc_mr1 |= (MR1_FDE | MR1_EIFC | MR1_IST);
+	if (mii->mii_media_active & IFM_FLOW)
+		sc->sc_mr1 |= MR1_EIFC;
+	if (mii->mii_media_active & IFM_LOOP)
+		sc->sc_mr1 |= MR1_ILE;
+	switch (IFM_SUBTYPE(mii->mii_media_active)) {
+	case IFM_1000_T:
+		sc->sc_mr1 |= (MR1_MF_1000MBS | MR1_IST);
+		break;
+
+	case IFM_100_TX:
+		sc->sc_mr1 |= (MR1_MF_100MBS | MR1_IST);
+		break;
+
+	case IFM_10_T:
+		sc->sc_mr1 |= MR1_MF_10MBS;
+		break;
+
+	case IFM_NONE:
+		break;
+
+	default:
+		aprint_error_dev(self, "unknown sub-type %d\n",
+		    IFM_SUBTYPE(mii->mii_media_active));
+		break;
+	}
+	if (sc->sc_rmii_speed)
+		sc->sc_rmii_speed(device_parent(self), sc->sc_instance,
+		    IFM_SUBTYPE(mii->mii_media_active));
+
+	EMAC_WRITE(sc, EMAC_MR1, sc->sc_mr1);
+
+	/* Enable TX and RX if already RUNNING */
+	if (ifp->if_flags & IFF_RUNNING)
+		EMAC_WRITE(sc, EMAC_MR0, MR0_TXE | MR0_RXE);
+}
+
+static uint32_t
+emac_mii_wait(struct emac_softc *sc)
+{
+	int i;
+	uint32_t oc;
+
+	/* wait for PHY data transfer to complete */
+	i = 0;
+	oc = EMAC_READ(sc, EMAC_STACR) & STACR_OC;
+	while ((oc == STACR_OC) != sc->sc_stacr_completed) {
+		delay(7);
+		if (i++ > 5) {
+			aprint_error_dev(sc->sc_dev, "MII timed out\n");
+			return -1;
+		}
+		oc = EMAC_READ(sc, EMAC_STACR) & STACR_OC;
+	}
+	return 0;
+}
+
+static void
+emac_mii_tick(void *arg)
+{
+	struct emac_softc *sc = arg;
+	int s;
+
+	if (!device_is_active(sc->sc_dev))
+		return;
+
+	s = splnet();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+
+	callout_reset(&sc->sc_callout, hz, emac_mii_tick, sc);
+}
+
+int
+emac_txeob_intr(void *arg)
+{
+	struct emac_softc *sc = arg;
+	int handled = 0;
+
+	EMAC_EVCNT_INCR(&sc->sc_ev_txintr);
+	handled |= emac_txreap(sc);
+
+	/* try to get more packets going */
+	emac_start(&sc->sc_ethercom.ec_if);
+
+	return handled;
+}
+
+int
 emac_rxeob_intr(void *arg)
 {
 	struct emac_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct emac_rxsoft *rxs;
 	struct mbuf *m;
-	u_int32_t rxstat;
+	uint32_t rxstat;
 	int i, len;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_rxintr);
 
-	/* Clear the interrupt */
-	mtdcr(DCR_MAL0_RXEOBISR, mfdcr(DCR_MAL0_RXEOBISR));
-
-	for (i = sc->sc_rxptr;; i = EMAC_NEXTRX(i)) {
+	for (i = sc->sc_rxptr; ; i = EMAC_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
 		EMAC_CDRXSYNC(sc, i,
@@ -1310,10 +1594,10 @@ emac_rxeob_intr(void *arg)
 		if (rxstat & (EMAC_RXS_OE | EMAC_RXS_BP | EMAC_RXS_SE |
 		    EMAC_RXS_AE | EMAC_RXS_BFCS | EMAC_RXS_PTL | EMAC_RXS_ORE |
 		    EMAC_RXS_IRE)) {
-#define	PRINTERR(bit, str)						\
-			if (rxstat & (bit))				\
-				printf("%s: receive error: %s\n",	\
-				    sc->sc_dev.dv_xname, str)
+#define	PRINTERR(bit, str)					\
+			if (rxstat & (bit))			\
+				aprint_error_ifnet(ifp,		\
+				    "receive error: %s\n", str)
 			ifp->if_ierrors++;
 			PRINTERR(EMAC_RXS_OE, "overrun error");
 			PRINTERR(EMAC_RXS_BP, "bad packet");
@@ -1381,8 +1665,7 @@ emac_rxeob_intr(void *arg)
 		 * Pass this up to any BPF listeners, but only
 		 * pass if up the stack if it's for us.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -1391,160 +1674,39 @@ emac_rxeob_intr(void *arg)
 	/* Update the receive pointer. */
 	sc->sc_rxptr = i;
 
-	return (0);
+	return 1;
 }
 
-/*
- * MAL Transmit Descriptor Error interrupt handler
- */
-static int
+int
 emac_txde_intr(void *arg)
 {
 	struct emac_softc *sc = arg;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_txde);
-	printf("%s: emac_txde_intr\n", sc->sc_dev.dv_xname);
-	return (0);
+	aprint_error_dev(sc->sc_dev, "emac_txde_intr\n");
+	return 1;
 }
 
-/*
- * MAL Receive Descriptor Error interrupt handler
- */
-static int
+int
 emac_rxde_intr(void *arg)
 {
-	int i;
 	struct emac_softc *sc = arg;
+	int i;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_rxde);
-	printf("%s: emac_rxde_intr\n", sc->sc_dev.dv_xname);
+	aprint_error_dev(sc->sc_dev, "emac_rxde_intr\n");
 	/*
 	 * XXX!
 	 * This is a bit drastic; we just drop all descriptors that aren't
 	 * "clean".  We should probably send any that are up the stack.
 	 */
 	for (i = 0; i < EMAC_NRXDESC; i++) {
-		EMAC_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		EMAC_CDRXSYNC(sc, i,
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		if (sc->sc_rxdescs[i].md_data_len != MCLBYTES) {
+		if (sc->sc_rxdescs[i].md_data_len != MCLBYTES)
 			EMAC_INIT_RXDESC(sc, i);
-		}
-
 	}
 
-	/* Reenable the receive channel */
-	mtdcr(DCR_MAL0_RXCASR, MAL0_RXCASR_CHAN0);
-
-	/* Clear the interrupt */
-	mtdcr(DCR_MAL0_RXDEIR, mfdcr(DCR_MAL0_RXDEIR));
-
-	return (0);
-}
-
-static uint32_t
-emac_mii_wait(struct emac_softc *sc)
-{
-	int i;
-	uint32_t reg;
-
-	/* wait for PHY data transfer to complete */
-	i = 0;
-	while ((reg = EMAC_READ(sc, EMAC_STACR) & STACR_OC) == 0) {
-		delay(7);
-		if (i++ > 5) {
-			printf("%s: MII timed out\n", sc->sc_dev.dv_xname);
-			return (0);
-		}
-	}
-	return (reg);
-}
-
-static int
-emac_mii_readreg(struct device *self, int phy, int reg)
-{
-	struct emac_softc *sc = (struct emac_softc *)self;
-	uint32_t sta_reg;
-
-	/* wait for PHY data transfer to complete */
-	if (emac_mii_wait(sc) == 0)
-		return (0);
-
-	sta_reg = reg << STACR_PRASHIFT;
-	sta_reg |= STACR_READ;
-	sta_reg |= phy << STACR_PCDASHIFT;
-
-	sta_reg &= ~STACR_OPBC_MASK;
-	sta_reg |= STACR_OPBC_50MHZ;
-
-
-	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
-
-	if ((sta_reg = emac_mii_wait(sc)) == 0)
-		return (0);
-	sta_reg = EMAC_READ(sc, EMAC_STACR);
-	if ((sta_reg & STACR_PHYE) != 0)
-		return (0);
-	return (sta_reg >> STACR_PHYDSHIFT);
-}
-
-static void
-emac_mii_writereg(struct device *self, int phy, int reg, int val)
-{
-	struct emac_softc *sc = (struct emac_softc *)self;
-	uint32_t sta_reg;
-
-	/* wait for PHY data transfer to complete */
-	if (emac_mii_wait(sc) == 0)
-		return;
-
-	sta_reg = reg << STACR_PRASHIFT;
-	sta_reg |= STACR_WRITE;
-	sta_reg |= phy << STACR_PCDASHIFT;
-
-	sta_reg &= ~STACR_OPBC_MASK;
-	sta_reg |= STACR_OPBC_50MHZ;
-
-	sta_reg |= val << STACR_PHYDSHIFT;
-
-	EMAC_WRITE(sc, EMAC_STACR, sta_reg);
-
-	if ((sta_reg = emac_mii_wait(sc)) == 0)
-		return;
-	if ((sta_reg & STACR_PHYE) != 0)
-		/* error */
-		return;
-}
-
-static void
-emac_mii_statchg(struct device *self)
-{
-	struct emac_softc *sc = (void *)self;
-
-	if (sc->sc_mii.mii_media_active & IFM_FDX)
-		sc->sc_mr1 |= MR1_FDE;
-	else
-		sc->sc_mr1 &= ~(MR1_FDE | MR1_EIFC);
-
-	/* XXX 802.1x flow-control? */
-
-	/*
-	 * MR1 can only be written immediately after a reset...
-	 */
-	emac_reset(sc);
-}
-
-static void
-emac_mii_tick(void *arg)
-{
-	struct emac_softc *sc = arg;
-	int s;
-
-	if (!device_is_active(&sc->sc_dev))
-		return;
-
-	s = splnet();
-	mii_tick(&sc->sc_mii);
-	splx(s);
-
-	callout_reset(&sc->sc_callout, hz, emac_mii_tick, sc);
+	return 1;
 }

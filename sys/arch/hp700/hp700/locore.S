@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43 2010/03/08 07:42:47 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.43.2.1 2010/05/30 05:16:49 rmind Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -230,12 +230,11 @@ L$start_zero_tf:
 	 * kernel stack starts a page and a trapframe above uarea address.
 	 */
 	ldo	NBPG+TRAPFRAME_SIZEOF(%t3), %sp
-	mtctl	%t3, CR_UPADDR
+	mtctl	%t3, CR_FPPADDR
 
 	/* initialize the pcb */
 	stw	%r0, PCB_ONFAULT(%t3)
 	stw	%r0, PCB_SPACE(%t3)	/* XXX HPPA_SID_KERNEL == 0 */
-	stw	%t3, PCB_UVA(%t3)
 
 	/*
 	 * Setup various pointers.
@@ -535,15 +534,28 @@ pdc_call_unmapped3:
 EXIT(pdc_call)
 
 /*
+ * int splraise(int ncpl);
+ */
+LEAF_ENTRY(splraise)
+	mfctl	CR_CURLWP, %t1
+	ldw	L_CPU(%t1),%t1
+	ldw	CI_CPL(%t1), %ret0
+	or	%ret0, %arg0, %arg0
+	bv	%r0(%rp)
+	stw	%arg0, CI_CPL(%t1)
+EXIT(splraise)
+	
+/*
  * int spllower(int ncpl);
  */
-ENTRY(spllower,64)
-	ldil	L%ipending, %r1
-	ldw	R%ipending(%r1), %r1	; load ipending
-	ldil	L%cpl, %t1
+ENTRY(spllower,HPPA_FRAME_SIZE)
+	mfctl	CR_CURLWP, %t1
+	ldw	L_CPU(%t1),%t1
+
+	ldw	CI_IPENDING(%t1), %r1	; load ipending
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
 	bv	%r0(%rp)
-	stw	%arg0, R%cpl(%t1)	; store new cpl
+	stw	%arg0, CI_CPL(%t1)	; store new cpl
 
 	/*
 	 * Dispatch interrupts.  There's a chance
@@ -556,8 +568,7 @@ ENTRY(spllower,64)
 	mfctl	%eiem, %arg1
 	mtctl	%r0, %eiem		; disable interrupts
 
-	ldil	L%ipending, %r1
-	ldw	R%ipending(%r1), %r1	; load ipending
+	ldw	CI_IPENDING(%t1), %r1	; load ipending
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
 	b,n	spllower_out		; branch if we got beaten
 	
@@ -604,14 +615,14 @@ EXIT(spllower)
  * void hp700_intr_schedule(int mask);
  */
 ENTRY(hp700_intr_schedule,0)
-	ldil	L%ipending, %t1
-	ldil	L%cpl, %t2
+	mfctl	CR_CURLWP, %t1
+	ldw	L_CPU(%t1),%t2
 	mfctl	%eiem, %arg1
 	mtctl	%r0, %eiem			; disable interrupts
-	ldw	R%ipending(%t1), %r1		; load ipending
+	ldw	CI_IPENDING(%t2), %r1		; load ipending
 	or	%r1, %arg0, %r1			; or in mask
-	stw	%r1, R%ipending(%t1)		; store ipending
-	ldw	R%cpl(%t2), %arg0		; load cpl
+	stw	%r1, CI_IPENDING(%t2)		; store ipending
+	ldw	CI_CPL(%t2), %arg0		; load cpl
 	andcm,= %r1, %arg0, %r1			; and ipending with ~cpl
 	b,n	spllower_dispatch		; dispatch if we can
 	bv	%r0(%rp)
@@ -857,7 +868,7 @@ switch_exited:
 	mtctl	%t3, %pidr2			/* pmap_activate? */
 #endif
 	ldw	TF_CR30(%t1), %t2		/* pmap_activate? */
-	mtctl	%t2, CR_UPADDR			/* pmap_activate? */
+	mtctl	%t2, CR_FPPADDR			/* pmap_activate? */
 
 	mtctl	%arg1, CR_CURLWP
 
@@ -930,7 +941,7 @@ ALTENTRY(hppa_fpu_nop1)
 	 */
 	ldil	L%fpu_cur_uspace, %t1
 	mfctl	%ccr, %r1
-	mfctl	CR_UPADDR, %t2
+	mfctl	CR_FPPADDR, %t2
 	ldw	R%fpu_cur_uspace(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
 	comb,<>,n %t1, %t2, 0		; nullify if LWPs different

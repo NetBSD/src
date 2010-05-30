@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.684.2.1 2010/03/18 04:36:49 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.684.2.2 2010/05/30 05:16:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.1 2010/03/18 04:36:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.684.2.2 2010/05/30 05:16:53 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -245,10 +245,6 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 int	physmem;
-
-unsigned int cpu_feature;
-unsigned int cpu_feature2;
-unsigned int cpu_feature_padlock;
 
 int	cpu_class;
 int	i386_fpu_present;
@@ -525,8 +521,8 @@ i386_proc0_tss_ldt_init(void)
 	pcb->pcb_esp0 = uvm_lwp_getuarea(l) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
-	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 #ifndef XEN
 	lldt(pmap_kernel()->pm_ldt_sel);
@@ -1013,8 +1009,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
 	} else
 		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
-	memcpy(pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
-	memcpy(pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
+	memcpy(&pcb->pcb_fsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, &gdt[GUDATA_SEL], sizeof(pcb->pcb_gsd));
 
 	tf = l->l_md.md_regs;
 #ifndef XEN
@@ -1300,16 +1296,15 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
 	cpu_probe(&cpu_info_primary);
-	cpu_feature = cpu_info_primary.ci_feature_flags;
-	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
-	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	pcb = lwp_getpcb(&lwp0);
 
+	cpu_feature[0] &= ~CPUID_FEAT_BLACKLIST;
+
+	cpu_init_msrs(&cpu_info_primary, true);
+
 #ifdef XEN
-	/* not on Xen... */
-	cpu_feature &= ~(CPUID_PGE|CPUID_PSE|CPUID_MTRR|CPUID_FXSR|CPUID_NOX);
 	pcb->pcb_cr3 = PDPpaddr - KERNBASE;
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));

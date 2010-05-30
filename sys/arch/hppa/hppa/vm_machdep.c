@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 2010/03/08 14:52:29 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.41.2.1 2010/05/30 05:16:52 rmind Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 2010/03/08 14:52:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41.2.1 2010/05/30 05:16:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 2010/03/08 14:52:29 skrll Exp $"
 #include <sys/ptrace.h>
 #include <sys/exec.h>
 #include <sys/core.h>
+#include <sys/pool.h>
 
 #include <machine/cpufunc.h>
 #include <machine/pmap.h>
@@ -48,27 +49,25 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 2010/03/08 14:52:29 skrll Exp $"
 
 #include <uvm/uvm.h>
 
+extern struct pool hppa_fppl;
+
 #include <hppa/hppa/machdep.h>
 
 static inline void
 cpu_activate_pcb(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
-	bool ok;
 	struct pcb *pcb = lwp_getpcb(l);
-	vaddr_t uarea = (vaddr_t)pcb;
 #ifdef DIAGNOSTIC
-	vaddr_t maxsp = (vaddr_t)uarea + USPACE;
+	vaddr_t uarea = (vaddr_t)pcb;
+	vaddr_t maxsp = uarea + USPACE;
 #endif
 	KASSERT(tf == (void *)(uarea + PAGE_SIZE));
-	/*
-	 * Stash the physical for the pcb of U for later perusal
-	 */
-	pcb->pcb_uva = uarea;
-	ok = pmap_extract(pmap_kernel(), uarea, (paddr_t *)&tf->tf_cr30);
-	KASSERT(ok);
 
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb, sizeof(struct pcb));
+	/*
+	 * Stash the physical address of FP regs for later perusal
+	 */
+	tf->tf_cr30 = (u_int)pcb->pcb_fpregs;
 
 #ifdef DIAGNOSTIC
 	/* Create the kernel stack red zone. */
@@ -94,6 +93,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);
 
+	l2->l_md.md_astpending = 0;
 	l2->l_md.md_flags = 0;
 
 	/* Flush the parent LWP out of the FPU. */
@@ -101,13 +101,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	/* Now copy the parent PCB into the child. */
 	memcpy(pcb2, pcb1, sizeof(struct pcb));
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb1, sizeof(pcb1->pcb_fpregs));
+
+	pcb2->pcb_fpregs = pool_get(&hppa_fppl, PR_WAITOK);
+	*pcb2->pcb_fpregs = *pcb1->pcb_fpregs;
 
 	/* reset any of the pending FPU exceptions from parent */
-	pcb2->pcb_fpregs[0] = HPPA_FPU_FORK(pcb2->pcb_fpregs[0]);
-	pcb2->pcb_fpregs[1] = 0;
-	pcb2->pcb_fpregs[2] = 0;
-	pcb2->pcb_fpregs[3] = 0;
+	pcb2->pcb_fpregs->fpr_regs[0] =
+	    HPPA_FPU_FORK(pcb2->pcb_fpregs->fpr_regs[0]);
+	pcb2->pcb_fpregs->fpr_regs[1] = 0;
+	pcb2->pcb_fpregs->fpr_regs[2] = 0;
+	pcb2->pcb_fpregs->fpr_regs[3] = 0;
 
 	uv = uvm_lwp_getuarea(l2);
 	sp = (register_t)uv + PAGE_SIZE;
@@ -136,7 +139,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	mfctl(CR_EIEM, tf->tf_eiem);
 	tf->tf_ipsw = PSW_C | PSW_Q | PSW_P | PSW_D | PSW_I /* | PSW_L */ |
 	    (kpsw & PSW_O);
-	pcb2->pcb_fpregs[HPPA_NFPREGS] = 0;
 
 	/*
 	 * Set up return value registers as libc:fork() expects
@@ -216,13 +218,15 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
-
+	struct pcb *pcb = lwp_getpcb(l);
+	
 	/*
 	 * If this thread was using the FPU, disable the FPU and record
 	 * that it's unused.
 	 */
 
 	hppa_fpu_flush(l);
+	pool_put(&hppa_fppl, pcb->pcb_fpregs);
 }
 
 void

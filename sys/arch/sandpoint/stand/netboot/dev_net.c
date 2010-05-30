@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.7 2009/01/12 09:41:59 tsutsui Exp $ */
+/* $NetBSD: dev_net.c,v 1.7.6.1 2010/05/30 05:17:05 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -66,8 +66,8 @@ net_open(struct open_file *f, ...)
 			goto bad;
 		}
 
-		/* XXX always to use "netbsd" kernel filename */
-		strcpy(bootfile, "/netbsd");
+		if (bootfile[0] == '\0')
+			strcpy(bootfile, "netbsd");
 
 		if (nfs_mount(netdev_sock, rootip, rootpath) != 0) {
 			error = errno;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.398.2.1 2010/03/16 15:38:10 rmind Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.398.2.2 2010/05/30 05:17:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.1 2010/03/16 15:38:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.2 2010/05/30 05:17:58 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.1 2010/03/16 15:38:10 rmind Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/dirent.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
@@ -118,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.1 2010/03/16 15:38:10 rmind Exp
 #include <sys/atomic.h>
 #include <sys/kthread.h>
 #include <sys/wapbl.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -1284,7 +1286,7 @@ vtryget(vnode_t *vp)
 int
 vget(vnode_t *vp, int flags)
 {
-	int error;
+	int error = 0;
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
@@ -1333,15 +1335,20 @@ vget(vnode_t *vp, int flags)
 			return ENOENT;
 		}
 	}
+
+	/*
+	 * Ok, we got it in good shape.  Just locking left.
+	 */
+	KASSERT((vp->v_iflag & VI_CLEAN) == 0);
 	if (flags & LK_TYPE_MASK) {
 		error = vn_lock(vp, flags | LK_INTERLOCK);
 		if (error != 0) {
 			vrele(vp);
 		}
-		return error;
+	} else {
+		mutex_exit(vp->v_interlock);
 	}
-	mutex_exit(vp->v_interlock);
-	return 0;
+	return error;
 }
 
 /*
@@ -2315,6 +2322,7 @@ vfs_mountedon(vnode_t *vp)
 bool
 vfs_unmountall(struct lwp *l)
 {
+
 	printf("unmounting file systems...");
 	return vfs_unmountall1(l, true, true);
 }
@@ -2322,7 +2330,8 @@ vfs_unmountall(struct lwp *l)
 static void
 vfs_unmount_print(struct mount *mp, const char *pfx)
 {
-	printf("%sunmounted %s on %s type %s\n", pfx,
+
+	aprint_verbose("%sunmounted %s on %s type %s\n", pfx,
 	    mp->mnt_stat.f_mntfromname, mp->mnt_stat.f_mntonname,
 	    mp->mnt_stat.f_fstypename);
 }
@@ -2330,16 +2339,19 @@ vfs_unmount_print(struct mount *mp, const char *pfx)
 bool
 vfs_unmount_forceone(struct lwp *l)
 {
-	struct mount *mp, *nmp = NULL;
+	struct mount *mp, *nmp;
 	int error;
 
-	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
-		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen)
-			nmp = mp;
-	}
+	nmp = NULL;
 
-	if (nmp == NULL)
+	CIRCLEQ_FOREACH_REVERSE(mp, &mountlist, mnt_list) {
+		if (nmp == NULL || mp->mnt_gen > nmp->mnt_gen) {
+			nmp = mp;
+		}
+	}
+	if (nmp == NULL) {
 		return false;
+	}
 
 #ifdef DEBUG
 	printf("\nforcefully unmounting %s (%s)...",
@@ -2349,8 +2361,9 @@ vfs_unmount_forceone(struct lwp *l)
 	if ((error = dounmount(nmp, MNT_FORCE, l)) == 0) {
 		vfs_unmount_print(nmp, "forcefully ");
 		return true;
-	} else
-		atomic_dec_uint(&nmp->mnt_refcnt);
+	} else {
+		vfs_destroy(nmp);
+	}
 
 #ifdef DEBUG
 	printf("forceful unmount of %s failed with error %d\n",
@@ -2381,7 +2394,7 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			vfs_unmount_print(mp, "");
 			progress = true;
 		} else {
-			atomic_dec_uint(&mp->mnt_refcnt);
+			vfs_destroy(mp);
 			if (verbose) {
 				printf("unmount of %s failed with error %d\n",
 				    mp->mnt_stat.f_mntonname, error);
@@ -2389,10 +2402,12 @@ vfs_unmountall1(struct lwp *l, bool force, bool verbose)
 			any_error = true;
 		}
 	}
-	if (verbose)
+	if (verbose) {
 		printf(" done\n");
-	if (any_error && verbose)
+	}
+	if (any_error && verbose) {
 		printf("WARNING: some file systems would not unmount\n");
+	}
 	return progress;
 }
 
@@ -2608,6 +2623,11 @@ done:
 		initproc->p_cwdi->cwdi_cdir = rootvnode;
 		vref(initproc->p_cwdi->cwdi_cdir);
 		initproc->p_cwdi->cwdi_rdir = NULL;
+		/*
+		 * Enable loading of modules from the filesystem
+		 */
+		module_load_vfs_init();
+
 	}
 	return (error);
 }
@@ -2963,6 +2983,26 @@ vlockstatus(struct vnlock *vl)
 		return LK_SHARED;
 	}
 	return 0;
+}
+
+static const uint8_t vttodt_tab[9] = {
+	DT_UNKNOWN,	/* VNON  */
+	DT_REG,		/* VREG  */
+	DT_DIR,		/* VDIR  */
+	DT_BLK,		/* VBLK  */
+	DT_CHR,		/* VCHR  */
+	DT_LNK,		/* VLNK  */
+	DT_SOCK,	/* VSUCK */
+	DT_FIFO,	/* VFIFO */
+	DT_UNKNOWN	/* VBAD  */
+};
+
+uint8_t
+vtype2dt(enum vtype vt)
+{
+
+	CTASSERT(VBAD == __arraycount(vttodt_tab) - 1);
+	return vttodt_tab[vt];
 }
 
 /*

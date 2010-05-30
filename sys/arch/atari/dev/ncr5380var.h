@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.7 2009/10/20 19:10:11 snj Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.7.4.1 2010/05/30 05:16:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -32,34 +32,42 @@
  * Various debug definitions
  */
 #ifdef DBG_NOSTATIC
-#	define	static
+#define	static
 #endif
+
 #ifdef DBG_SEL
-#	define	DBG_SELPRINT(a,b)	printf(a,b)
+#define DBG_SELPRINT(a,b)	printf(a,b)
 #else
-#	define DBG_SELPRINT(a,b)
+#define DBG_SELPRINT(a,b)
 #endif
+
 #ifdef DBG_PIO
-#	define DBG_PIOPRINT(a,b,c) 	printf(a,b,c)
+#define DBG_PIOPRINT(a,b,c) 	printf(a,b,c)
 #else
-#	define DBG_PIOPRINT(a,b,c)
+#define DBG_PIOPRINT(a,b,c)
 #endif
+
 #ifdef DBG_INF
-#	define DBG_INFPRINT(a,b,c)	a(b,c)
+#define DBG_INFPRINT(a,b,c)	a(b,c)
 #else
-#	define DBG_INFPRINT(a,b,c)
+#define DBG_INFPRINT(a,b,c)
 #endif
+
 #ifdef DBG_PID
-	/* static	char	*last_hit = NULL, *olast_hit = NULL; */
-	static const char *last_hit[DBG_PID];
-#	define	PID(a)	\
-	{ int i; \
-	  for (i=0; i< DBG_PID-1; i++) \
-		last_hit[i] = last_hit[i+1]; \
-	  last_hit[DBG_PID-1] = a; } \
-		/* olast_hit = last_hit; last_hit = a; */
+#if 0
+static char *last_hit = NULL, *olast_hit = NULL;
+#endif
+static const char *last_hit[DBG_PID];
+#define	PID(a)								\
+	{								\
+		int i;							\
+		for (i = 0; i < DBG_PID - 1; i++)			\
+			last_hit[i] = last_hit[i + 1];			\
+			last_hit[DBG_PID - 1] = a;			\
+	}								\
+	/* olast_hit = last_hit; last_hit = a; */
 #else
-#	define	PID(a)
+#define	PID(a)
 #endif
 
 #endif /* _NCR5380VAR_H */

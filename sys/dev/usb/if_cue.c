@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.58 2010/02/24 17:00:25 plunky Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.58.2.1 2010/05/30 05:17:44 rmind Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.58 2010/02/24 17:00:25 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.58.2.1 2010/05/30 05:17:44 rmind Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -820,8 +820,7 @@ cue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	 * a broadcast packet, multicast packet, matches our ethernet
 	 * address or the interface is in promiscuous mode.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	DPRINTFN(10,("%s: %s: deliver %d\n", USBDEVNAME(sc->cue_dev),
 		    __func__, m->m_len));
@@ -1001,8 +1000,7 @@ cue_start(struct ifnet *ifp)
 	 * If there's a BPF listener, bounce a copy of this frame
 	 * to him.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+	bpf_mtap(ifp, m_head);
 
 	ifp->if_flags |= IFF_OACTIVE;
 

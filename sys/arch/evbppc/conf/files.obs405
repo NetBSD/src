@@ -1,15 +1,10 @@
-#	$NetBSD: files.obs405,v 1.20 2008/07/04 17:31:07 kiyohara Exp $
+#	$NetBSD: files.obs405,v 1.20.18.1 2010/05/30 05:16:43 rmind Exp $
 #
 # obs405-specific configuration info
 
 file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
 file	arch/powerpc/ibm4xx/ibm40x_machdep.c
 file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
-file	arch/powerpc/ibm4xx/intr.c
-file	arch/powerpc/ibm4xx/openbios/openbios.c
-file	arch/evbppc/obs405/consinit.c
-file	arch/evbppc/obs405/obs266_autoconf.c
-file	arch/evbppc/obs405/obs266_machdep.c
 file	arch/evbppc/obs405/obs405_autoconf.c
 file	arch/evbppc/obs405/obs405_machdep.c
 
@@ -21,17 +16,3 @@ include	"dev/scsipi/files.scsipi"
 
 # Machine-independent ATA drivers
 include	"dev/ata/files.ata"
-
-#
-# Machine-independent CardBus drivers
-#
-include "dev/cardbus/files.cardbus"
-include "dev/pcmcia/files.pcmcia"
-
-file arch/evbppc/obs405/rbus_machdep.c		cardbus
-
-include "dev/usb/files.usb"
-
-include "dev/ieee1394/files.ieee1394"
-
-include "dev/bluetooth/files.bluetooth"

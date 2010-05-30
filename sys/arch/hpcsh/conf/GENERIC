@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.87 2009/12/05 20:11:14 pooka Exp $
+# $NetBSD: GENERIC,v 1.87.4.1 2010/05/30 05:16:52 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -31,6 +31,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 maxusers	32			# estimated number of users
 
+options 	HZ=64			# default clock rate
 
 # System options specific to hpcsh
 
@@ -112,7 +113,7 @@ options 	EXEC_COFF	# 32-bit COFF executables
 
 # File systems
 file-system 	FFS		# UFS
-#file-system 	MFS		# memory file system (requires FFS)
+file-system 	MFS		# memory file system (requires FFS)
 #file-system 	EXT2FS		# second extended file system (linux)
 file-system 	MSDOSFS		# MS-DOS file system
 file-system	NFS		# Sun NFS-compatible filesystem client
@@ -332,6 +333,10 @@ bthub*	at btuart?
 #btkbd*	at bthidev? reportid ?
 #wskbd*	at btkbd? console ? mux 1
 
+# Bluetooth Apple Magic Mouse
+#btmagic* at bthub?
+#wsmouse* at btmagic? mux 0
+
 # Bluetooth Audio support
 #btsco*	at bthub?
 
@@ -341,7 +346,7 @@ bthub*	at btuart?
 # disk/mass storage pseudo-devices
 #pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	fss		4	# file system snapshot device
+pseudo-device	fss			# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback

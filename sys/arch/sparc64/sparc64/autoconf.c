@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.173 2010/03/11 03:54:56 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.173.2.1 2010/05/30 05:17:08 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.173 2010/03/11 03:54:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.173.2.1 2010/05/30 05:17:08 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -346,17 +346,24 @@ die_old_boot_loader:
 static void
 get_bootpath_from_prom(void)
 {
+	struct btinfo_bootdev *bdev = NULL;
 	char sbuf[OFPATHLEN], *cp;
 	int chosen;
 
 	/*
 	 * Grab boot path from PROM
 	 */
-	if ((chosen = OF_finddevice("/chosen")) == -1 ||
-	    OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf)) < 0)
+	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return;
 
-	strcpy(ofbootpath, sbuf);
+	bdev = lookup_bootinfo(BTINFO_BOOTDEV);
+	if (bdev != NULL) {
+		strcpy(ofbootpath, bdev->name);
+	} else {
+		if (OF_getprop(chosen, "bootpath", sbuf, sizeof(sbuf)) < 0)
+			return;
+		strcpy(ofbootpath, sbuf);
+	}
 	DPRINTF(ACDB_BOOTDEV, ("bootpath: %s\n", ofbootpath));
 	ofbootpackage = prom_finddevice(ofbootpath);
 

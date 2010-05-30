@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.129 2009/12/14 00:48:35 matt Exp $	*/
+/*	$NetBSD: exec.h,v 1.129.4.1 2010/05/30 05:18:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -171,10 +171,11 @@ struct exec_vmcmd_set {
 
 struct exec_package {
 	const char *ep_name;		/* file's name */
+	const char *ep_kname;		/* kernel-side copy of file's name */
+	char *ep_resolvedname;		/* fully resolved path from namei */
 	void	*ep_hdr;		/* file's exec header */
 	u_int	ep_hdrlen;		/* length of ep_hdr */
 	u_int	ep_hdrvalid;		/* bytes of ep_hdr that are valid */
-	struct nameidata *ep_ndp;	/* namei data pointer for lookups */
 	struct	exec_vmcmd_set ep_vmcmds;  /* vmcmds used to build vmspace */
 	struct	vnode *ep_vp;		/* executable's vnode */
 	struct	vattr *ep_vap;		/* executable's attributes */
@@ -243,7 +244,8 @@ int	copyargs		(struct lwp *, struct exec_package *,
 void	setregs			(struct lwp *, struct exec_package *, vaddr_t);
 int	check_veriexec		(struct lwp *, struct vnode *,
 				     struct exec_package *, int);
-int	check_exec		(struct lwp *, struct exec_package *);
+int	check_exec		(struct lwp *, struct exec_package *,
+				     const char *kpath);
 int	exec_init		(int);
 int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);

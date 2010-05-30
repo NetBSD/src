@@ -1,0 +1,9 @@
+#       $NetBSD: mk.t_sh7706lan,v 1.1.4.2 2010/05/30 05:16:46 rmind Exp $
+
+TEXTADDR="0x8c002000"
+
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
+	${OBJCOPY} -S -O binary $@ $@.bin
+
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
