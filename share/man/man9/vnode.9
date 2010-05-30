@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.47 2010/02/21 13:33:03 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.48 2010/05/30 13:50:16 ahoka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 11, 2010
+.Dd May 30, 2010
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -130,40 +130,40 @@ longer needed and can be recycled.
 The vnode has the following structure:
 .Bd -literal
 struct vnode {
-        struct uvm_object v_uobj;               /* uvm object */
-#define v_usecount      v_uobj.uo_refs
-#define v_interlock     v_uobj.vmobjlock
-        voff_t          v_size;                 /* size of file */
-        int             v_flag;                 /* flags */
-        int             v_numoutput;            /* num pending writes */
-        long            v_writecount;           /* ref count of writers */
-        long            v_holdcnt;              /* page \*[Am] buffer refs */
-        struct mount    *v_mount;               /* ptr to vfs we are in */
-        int             (**v_op)(void *);       /* vnode ops vector */
-        TAILQ_ENTRY(vnode) v_freelist;          /* vnode freelist */
-        LIST_ENTRY(vnode) v_mntvnodes;          /* vnodes for mount pt */
-        struct buflists v_cleanblkhd;           /* clean blocklist head */
-        struct buflists v_dirtyblkhd;           /* dirty blocklist head */
-        LIST_ENTRY(vnode) v_synclist;           /* dirty vnodes */
-        LIST_HEAD(, namecache) v_dnclist;       /* namecaches for children */
-        LIST_HEAD(, namecache) v_nclist;        /* namecaches for our parent */
-        union {
-                struct mount    *vu_mountedhere;/* ptr to mounted vfs */
-                struct socket   *vu_socket;     /* unix ipc (VSOCK) */
-                struct specinfo *vu_specinfo;   /* device (VCHR, VBLK) */
-                struct fifoinfo *vu_fifoinfo;   /* fifo (VFIFO) */
-        } v_un;
-#define v_mountedhere   v_un.vu_mountedhere
-#define v_socket        v_un.vu_socket
-#define v_specinfo      v_un.vu_specinfo
-#define v_fifoinfo      v_un.vu_fifoinfo
-        struct nqlease  *v_lease;               /* Soft ref to lease */
-        enum vtype      v_type;                 /* vnode type */
-        enum vtagtype   v_tag;                  /* underlying data type */
-        struct lock     v_lock;                 /* lock for this vnode */
-        struct lock     *v_vnlock;              /* ptr to vnode lock */
-        void            *v_data;                /* private data for fs */
-        struct klist    v_klist;                /* knotes attached to vnode */
+	struct uvm_object v_uobj;		/* the VM object */
+	kcondvar_t	v_cv;			/* synchronization */
+	voff_t		v_size;			/* size of file */
+	voff_t		v_writesize;		/* new size after write */
+	int		v_iflag;		/* VI_* flags */
+	int		v_vflag;		/* VV_* flags */
+	int		v_uflag;		/* VU_* flags */
+	int		v_numoutput;		/* # of pending writes */
+	int		v_writecount;		/* ref count of writers */
+	int		v_holdcnt;		/* page & buffer refs */
+	int		v_synclist_slot;	/* synclist slot index */
+	struct mount	*v_mount;		/* ptr to vfs we are in */
+	int		(**v_op)(void *);	/* vnode operations vector */
+	TAILQ_ENTRY(vnode) v_freelist;		/* vnode freelist */
+	struct vnodelst	*v_freelisthd;		/* which freelist? */
+	TAILQ_ENTRY(vnode) v_mntvnodes;		/* vnodes for mount point */
+	struct buflists	v_cleanblkhd;		/* clean blocklist head */
+	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
+	TAILQ_ENTRY(vnode) v_synclist;		/* vnodes with dirty bufs */
+	LIST_HEAD(, namecache) v_dnclist;	/* namecaches (children) */
+	LIST_HEAD(, namecache) v_nclist;	/* namecaches (parent) */
+	union {
+		struct mount	*vu_mountedhere;/* ptr to vfs (VDIR) */
+		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
+		struct specnode	*vu_specnode;	/* device (VCHR, VBLK) */
+		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
+		struct uvm_ractx *vu_ractx;	/* read-ahead ctx (VREG) */
+	} v_un;
+	enum vtype	v_type;			/* vnode type */
+	enum vtagtype	v_tag;			/* type of underlying data */
+	struct vnlock	v_lock;			/* lock for this vnode */
+	struct vnlock	*v_vnlock;		/* pointer to lock */
+	void 		*v_data;		/* private data for fs */
+	struct klist	v_klist;		/* notes attached to vnode */
 };
 .Ed
 .Pp
