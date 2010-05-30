@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.81 2009/11/12 19:44:17 dyoung Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.82 2010/05/30 04:38:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.81 2009/11/12 19:44:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.82 2010/05/30 04:38:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,7 @@ atapibusattach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Probe the bus for devices. */
+	scsipi_verbose_ctl(true);
 	atapi_probe_bus(sc, -1);
 }
 
@@ -206,6 +207,7 @@ atapibusdetach(device_t self, int flags)
 			return (error);
 		KASSERT(scsipi_lookup_periph(chan, target, 0) == NULL);
 	}
+	scsipi_verbose_ctl(false);
 	return (0);
 }
 
