@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2010/03/22 01:29:29 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2010/05/30 08:28:53 tnozaki Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -20,6 +20,8 @@
 USE_FORT?=	yes
 
 USE_SHLIBDIR=	yes
+
+CITRUS?=	yes
 
 .include <bsd.own.mk>
 

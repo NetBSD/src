@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_sb.c,v 1.8 2009/01/11 02:46:28 christos Exp $ */
+/* $NetBSD: iswctype_sb.c,v 1.9 2010/05/30 08:28:53 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_sb.c,v 1.8 2009/01/11 02:46:28 christos Exp $");
+__RCSID("$NetBSD: iswctype_sb.c,v 1.9 2010/05/30 08:28:53 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -105,7 +105,7 @@ wctype(const char *charclass)
 		 if (!strcmp(charclass, _wctype_decl[i].name))
 			return (wctype_t)__UNCONST(&_wctype_decl[i]);
 	}
-	return (wctrans_t)NULL;
+	return (wctype_t)NULL;
 }
 
 struct _wctrans_priv_t {
