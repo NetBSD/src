@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.108.4.1 2010/03/16 15:38:17 rmind Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.108.4.2 2010/05/30 05:18:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.108.4.1 2010/03/16 15:38:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.108.4.2 2010/05/30 05:18:09 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -318,6 +318,8 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 	UVMHIST_FUNC("uao_set_swslot"); UVMHIST_CALLED(pdhist);
 	UVMHIST_LOG(pdhist, "aobj %p pageidx %d slot %d",
 	    aobj, pageidx, slot, 0);
+
+	KASSERT(mutex_owned(uobj->vmobjlock) || uobj->uo_refs == 0);
 
 	/*
 	 * if noswap flag is set, then we can't set a non-zero slot.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.3 2009/04/26 13:05:55 nonaka Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.3.12.1 2010/05/30 05:17:43 rmind Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -96,6 +96,8 @@
 #define MMC_R3(resp)			((resp)[0])
 #define SD_R6(resp)			((resp)[0])
 #define MMC_R7(resp)			((resp)[0])
+#define MMC_SPI_R1(resp)		((resp)[0])
+#define MMC_SPI_R7(resp)		((resp)[1])
 
 /* RCA argument and response */
 #define MMC_ARG_RCA(rca)		((rca) << 16)
@@ -104,6 +106,45 @@
 /* bus width argument */
 #define SD_ARG_BUS_WIDTH_1		0
 #define SD_ARG_BUS_WIDTH_4		2
+
+/* EXT_CSD fields */
+#define EXT_CSD_BUS_WIDTH		183	/* R/W */
+
+/* EXT_CSD field definitions */
+#define EXT_CSD_CMD_SET_NORMAL		(1U << 0)
+#define EXT_CSD_CMD_SET_SECURE		(1U << 1)
+#define EXT_CSD_CMD_SET_CPSECURE	(1U << 2)
+
+/* EXT_CSD_BUS_WIDTH */
+#define EXT_CSD_BUS_WIDTH_1		0	/* 1 bit mode */
+#define EXT_CSD_BUS_WIDTH_4		1	/* 4 bit mode */
+#define EXT_CSD_BUS_WIDTH_8		2	/* 8 bit mode */
+
+/* MMC_SWITCH access mode */
+#define MMC_SWITCH_MODE_CMD_SET		0x00	/* Change the command set */
+#define MMC_SWITCH_MODE_SET_BITS	0x01	/* Set bits in value */
+#define MMC_SWITCH_MODE_CLEAR_BITS	0x02	/* Clear bits in value */
+#define MMC_SWITCH_MODE_WRITE_BYTE	0x03	/* Set target to value */
+
+/* SPI mode reports R1/R2(SEND_STATUS) status. */
+#define R1_SPI_IDLE		(1 << 0)
+#define R1_SPI_ERASE_RESET	(1 << 1)
+#define R1_SPI_ILLEGAL_COMMAND	(1 << 2)
+#define R1_SPI_COM_CRC		(1 << 3)
+#define R1_SPI_ERASE_SEQ	(1 << 4)
+#define R1_SPI_ADDRESS		(1 << 5)
+#define R1_SPI_PARAMETER	(1 << 6)
+/* R1 bit 7 is always zero */
+#define R2_SPI_CARD_LOCKED	(1 << 8)
+#define R2_SPI_WP_ERASE_SKIP	(1 << 9)	/* or lock/unlock fail */
+#define R2_SPI_LOCK_UNLOCK_FAIL	R2_SPI_WP_ERASE_SKIP
+#define R2_SPI_ERROR		(1 << 10)
+#define R2_SPI_CC_ERROR		(1 << 11)
+#define R2_SPI_CARD_ECC_ERROR	(1 << 12)
+#define R2_SPI_WP_VIOLATION	(1 << 13)
+#define R2_SPI_ERASE_PARAM	(1 << 14)
+#define R2_SPI_OUT_OF_RANGE	(1 << 15)	/* or CSD overwrite */
+#define R2_SPI_CSD_OVERWRITE	R2_SPI_OUT_OF_RANGE
 
 /* MMC R2 response (CSD) */
 #define MMC_CSD_CSDVER(resp)		MMC_RSP_BITS((resp), 126, 2)

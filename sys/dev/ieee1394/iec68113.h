@@ -1,4 +1,4 @@
-/*	$NetBSD: iec68113.h,v 1.3 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: iec68113.h,v 1.3.16.1 2010/05/30 05:17:28 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -31,10 +31,13 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/iec68113.h,v 1.9 2005/01/06 01:42:41 imp Exp $
  *
  */
+
+#ifndef _IEC68113_H_
+#define _IEC68113_H_
 
 #define		DV_BROADCAST_ON (1<<30)
 #define		oMPR		0x900
@@ -126,3 +129,5 @@ struct dvdbc{
 	uint8_t payload[77];
 #define	DV_DSF_12	0x80	/* PAL: payload[0] in Header DIF */
 };
+
+#endif	/* _IEC68113_H_ */

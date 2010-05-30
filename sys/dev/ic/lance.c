@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.44 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: lance.c,v 1.44.4.1 2010/05/30 05:17:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.44 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.44.4.1 2010/05/30 05:17:23 rmind Exp $");
 
 #include "rnd.h"
 
@@ -482,8 +482,7 @@ lance_read(struct lance_softc *sc, int boff, int len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf)
-		bpf_ops->bpf_mtap(ifp->if_bpf, m);
+	bpf_mtap(ifp, m);
 
 	/* Pass the packet up. */
 	(*ifp->if_input)(ifp, m);

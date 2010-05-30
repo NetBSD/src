@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.292 2010/02/24 22:38:08 dyoung Exp $	*/
+/*	$NetBSD: sd.c,v 1.292.2.1 2010/05/30 05:17:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.292 2010/02/24 22:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.292.2.1 2010/05/30 05:17:42 rmind Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -994,6 +994,7 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct scsipi_periph *periph = sd->sc_periph;
 	int part = SDPART(dev);
 	int error = 0;
+	int s;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel *newlabel = NULL;
 #endif
@@ -1013,6 +1014,8 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		case ODIOCEJECT:
 		case DIOCGCACHE:
 		case DIOCSCACHE:
+		case DIOCGSTRATEGY:
+		case DIOCSSTRATEGY:
 		case SCIOCIDENTIFY:
 		case OSCIOCIDENTIFY:
 		case SCIOCCOMMAND:
@@ -1229,6 +1232,48 @@ sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	    	struct dkwedge_list *dkwl = (void *) addr;
 
 		return (dkwedge_list(&sd->sc_dk, dkwl, l));
+	    }
+
+	case DIOCGSTRATEGY:
+	    {
+		struct disk_strategy *dks = addr;
+
+		s = splbio();
+		strlcpy(dks->dks_name, bufq_getstrategyname(sd->buf_queue),
+		    sizeof(dks->dks_name));
+		splx(s);
+		dks->dks_paramlen = 0;
+
+		return 0;
+	    }
+
+	case DIOCSSTRATEGY:
+	    {
+		struct disk_strategy *dks = addr;
+		struct bufq_state *new;
+		struct bufq_state *old;
+
+		if ((flag & FWRITE) == 0) {
+			return EBADF;
+		}
+
+		if (dks->dks_param != NULL) {
+			return EINVAL;
+		}
+		dks->dks_name[sizeof(dks->dks_name) - 1] = 0; /* ensure term */
+		error = bufq_alloc(&new, dks->dks_name,
+		    BUFQ_EXACT|BUFQ_SORT_RAWBLOCK);
+		if (error) {
+			return error;
+		}
+		s = splbio();
+		old = sd->buf_queue;
+		bufq_move(new, old);
+		sd->buf_queue = new;
+		splx(s);
+		bufq_free(old);
+		
+		return 0;
 	    }
 
 	default:

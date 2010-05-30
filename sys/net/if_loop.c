@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.71 2010/01/19 22:08:01 pooka Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.71.4.1 2010/05/30 05:18:01 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.71 2010/01/19 22:08:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.71.4.1 2010/05/30 05:18:01 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -174,7 +174,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 		lo0ifp = ifp;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	bpf_ops->bpf_attach(ifp, DLT_NULL, sizeof(u_int), &ifp->if_bpf);
+	bpf_attach(ifp, DLT_NULL, sizeof(u_int));
 #ifdef MBUFTRACE
 	ifp->if_mowner = malloc(sizeof(struct mowner), M_DEVBUF,
 	    M_WAITOK | M_ZERO);
@@ -198,7 +198,7 @@ loop_clone_destroy(struct ifnet *ifp)
 	free(ifp->if_mowner, M_DEVBUF);
 #endif
 
-	bpf_ops->bpf_detach(ifp);
+	bpf_detach(ifp);
 	if_detach(ifp);
 
 	free(ifp, M_DEVBUF);
@@ -216,8 +216,8 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	MCLAIM(m, ifp->if_mowner);
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("looutput: no header mbuf");
-	if (ifp->if_bpf && (ifp->if_flags & IFF_LOOPBACK))
-		bpf_ops->bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
+	if (ifp->if_flags & IFF_LOOPBACK)
+		bpf_mtap_af(ifp, dst->sa_family, m);
 	m->m_pkthdr.rcvif = ifp;
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {

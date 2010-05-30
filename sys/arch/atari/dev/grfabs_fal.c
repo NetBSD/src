@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.26 2009/10/21 21:50:14 snj Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.26.4.1 2010/05/30 05:16:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.26 2009/10/21 21:50:14 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.26.4.1 2010/05/30 05:16:39 rmind Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -278,7 +278,8 @@ falcon_detect(dmode_t *dm)
 		dm->depth = 4;
 	else if (stshift == 1)		/* 4 color */
 		dm->depth = 2;
-	else dm->depth = 1;		/* 2 color */
+	else
+		dm->depth = 1;		/* 2 color */
 
 	/*
 	 * Now calculate the screen hight
@@ -353,7 +354,8 @@ falcon_display_switch(void)
 	struct videl	*vregs;
 	static int vbl_count = 1;
 
-	if(vbl_count--) return;
+	if (vbl_count--)
+		return;
 
 	v = (view_t*)falcon_needs_vbl;
 
@@ -364,7 +366,8 @@ falcon_display_switch(void)
 	 * Write to videl registers only on VGA displays
 	 * This is only a hack. Must be fixed soon. XXX -- Thomas
 	 */
-	if(mon_type != FAL_VGA) return;
+	if (mon_type != FAL_VGA)
+		return;
 
 	vregs = vm_regs(v->mode);
 
@@ -511,7 +514,8 @@ falcon_alloc_view(dmode_t *mode, dimen_t *dim, u_char depth)
 
 	if (!atari_realconfig)
 		v = &gra_con_view;
-	else v = malloc(sizeof(*v), M_DEVBUF, M_NOWAIT);
+	else
+		v = malloc(sizeof(*v), M_DEVBUF, M_NOWAIT);
 	if (v == NULL)
 		return(NULL);
 	
@@ -611,8 +615,7 @@ alloc_colormap(dmode_t *dm)
 	if (!atari_realconfig) {
 		cm = &gra_con_cmap;
 		cm->entry = gra_con_colors;
-	}
-	else {
+	} else {
 		int size;
 
 		size = sizeof(*cm) + (nentries * sizeof(cm->entry[0]));

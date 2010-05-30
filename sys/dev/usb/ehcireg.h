@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.29 2008/11/28 17:18:21 jmorse Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.29.8.1 2010/05/30 05:17:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -321,5 +321,36 @@ typedef struct {
 	volatile ehci_link_t	fstn_back;
 } ehci_fstn_t;
 #define EHCI_FSTN_ALIGN 32
+
+/* Debug Port */
+#define PCI_CAP_DEBUGPORT_OFFSET __BITS(28,16)
+#define PCI_CAP_DEBUGPORT_BAR	__BITS(31,29)
+/* Debug Port Registers, offset into DEBUGPORT_BAR at DEBUGPORT_OFFSET */
+#define EHCI_DEBUG_SC		0x00
+/* Status/Control Register */
+#define  EHCI_DSC_DATA_LENGTH	__BITS(3,0)
+#define  EHCI_DSC_WRITE		__BIT(4)
+#define  EHCI_DSC_GO		__BIT(5)
+#define  EHCI_DSC_ERROR		__BIT(6)
+#define  EHCI_DSC_EXCEPTION	__BITS(9,7)
+#define   EHCI_DSC_EXCEPTION_NONE	0
+#define   EHCI_DSC_EXCEPTION_XACT	1
+#define   EHCI_DSC_EXCEPTION_HW		2
+#define  EHCI_DSC_IN_USE	__BIT(10)
+#define  EHCI_DSC_DONE		__BIT(16)
+#define  EHCI_DSC_ENABLED	__BIT(28)
+#define  EHCI_DSC_OWNER		__BIT(30)
+#define EHCI_DEBUG_UPR		0x04
+/* USB PIDs Register */
+#define  EHCI_DPR_TOKEN		__BITS(7,0)
+#define  EHCI_DPR_SEND		__BITS(15,8)
+#define  EHCI_DPR_RECIEVED	__BITS(23,16)
+/* Data Registers */
+#define EHCI_DEBUG_DATA0123	0x08
+#define EHCI_DEBUG_DATA4567	0x0c
+#define EHCI_DEBUG_DAR		0x10
+/* Device Address Register */
+#define  EHCI_DAR_ENDPOINT	__BITS(3,0)
+#define  EHCI_DAR_ADDRESS	__BITS(14,8)
 
 #endif /* _DEV_PCI_EHCIREG_H_ */

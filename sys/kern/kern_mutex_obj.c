@@ -1,11 +1,11 @@
-/*	$NetBSD: kern_mutex_obj.c,v 1.1 2009/11/04 13:29:45 pooka Exp $	*/
+/*	$NetBSD: kern_mutex_obj.c,v 1.1.6.1 2010/05/30 05:17:57 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe and Andrew Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.1 2009/11/04 13:29:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex_obj.c,v 1.1.6.1 2010/05/30 05:17:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

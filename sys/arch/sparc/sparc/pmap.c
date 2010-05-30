@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.339.4.1 2010/04/25 21:08:42 rmind Exp $ */
+/*	$NetBSD: pmap.c,v 1.339.4.2 2010/05/30 05:17:07 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339.4.1 2010/04/25 21:08:42 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339.4.2 2010/05/30 05:17:07 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -316,6 +316,7 @@ int	seginval;		/* [4/4c] the invalid segment number */
 int	reginval;		/* [4/3mmu] the invalid region number */
 
 static kmutex_t demap_lock;
+static bool	lock_available = false;	/* demap_lock has been initialized */
 
 /*
  * (sun4/4c)
@@ -780,12 +781,14 @@ updatepte4m(vaddr_t va, int *pte, int bic, int bis, int ctx, u_int cpuset)
 {
 	int oldval, swapval;
 	volatile int *vpte = (volatile int *)pte;
+	bool can_lock = lock_available;
 
 	/*
 	 * Can only be one of these happening in the system
 	 * at any one time.
 	 */
-	mutex_spin_enter(&demap_lock);
+	if (__predict_true(can_lock))
+		mutex_spin_enter(&demap_lock);
 
 	/*
 	 * The idea is to loop swapping zero into the pte, flushing
@@ -804,7 +807,8 @@ updatepte4m(vaddr_t va, int *pte, int bic, int bis, int ctx, u_int cpuset)
 	swapval = (oldval & ~bic) | bis;
 	swap(vpte, swapval);
 
-	mutex_spin_exit(&demap_lock);
+	if (__predict_true(can_lock))
+		mutex_spin_exit(&demap_lock);
 
 	return (oldval);
 }
@@ -3027,6 +3031,7 @@ pmap_bootstrap(int nctx, int nregion, int nsegment)
 	pmap_page_upload();
 	mutex_init(&demap_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&ctx_lock, MUTEX_DEFAULT, IPL_SCHED);
+	lock_available = true;
 }
 
 #if defined(SUN4) || defined(SUN4C)
@@ -6743,6 +6748,7 @@ pmap_extract4m(struct pmap *pm, vaddr_t va, paddr_t *pap)
 	struct segmap *sp;
 	int pte;
 	int vr, vs, s, v = false;
+	bool can_lock = lock_available;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -6786,9 +6792,11 @@ pmap_extract4m(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		 * the middle of the PTE update protocol. So, acquire the
 		 * demap lock and retry.
 		 */
-		mutex_spin_enter(&demap_lock);
+		if (__predict_true(can_lock))
+			mutex_spin_enter(&demap_lock);
 		pte = sp->sg_pte[VA_SUN4M_VPG(va)];
-		mutex_spin_exit(&demap_lock);
+		if (__predict_true(can_lock))
+			mutex_spin_exit(&demap_lock);
 		if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 			goto out;
 	}

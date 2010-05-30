@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.49 2010/01/19 22:07:01 pooka Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.49.4.1 2010/05/30 05:17:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49 2010/01/19 22:07:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.49.4.1 2010/05/30 05:17:34 rmind Exp $");
 
 #include "rnd.h"
 
@@ -1136,8 +1136,7 @@ pcn_start(struct ifnet *ifp)
 		sc->sc_txsnext = PCN_NEXTTXS(sc->sc_txsnext);
 
 		/* Pass the packet to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
+		bpf_mtap(ifp, m0);
 	}
 
 	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
@@ -1560,8 +1559,7 @@ pcn_rxintr(struct pcn_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 
 		/* Pass this up to any BPF listeners. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -2035,12 +2033,12 @@ pcn_79c970_mediainit(struct pcn_softc *sc)
 
 #define	ADD(str, m, d)							\
 do {									\
-	printf("%s%s", sep, str);					\
+	aprint_normal("%s%s", sep, str);					\
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|(m), (d), NULL);	\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
-	printf("%s: ", device_xname(sc->sc_dev));
+	aprint_normal("%s: ", device_xname(sc->sc_dev));
 	ADD("10base5", IFM_10_5, PORTSEL_AUI);
 	if (sc->sc_variant->pcv_chipid == PARTID_Am79c970A)
 		ADD("10base5-FDX", IFM_10_5|IFM_FDX, PORTSEL_AUI);
@@ -2050,7 +2048,7 @@ do {									\
 	ADD("auto", IFM_AUTO, 0);
 	if (sc->sc_variant->pcv_chipid == PARTID_Am79c970A)
 		ADD("auto-FDX", IFM_AUTO|IFM_FDX, 0);
-	printf("\n");
+	aprint_normal("\n");
 
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 }

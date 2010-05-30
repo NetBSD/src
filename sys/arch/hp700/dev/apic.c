@@ -1,4 +1,4 @@
-/*	$NetBSD: apic.c,v 1.6 2010/01/05 13:20:29 mbalmer Exp $	*/
+/*	$NetBSD: apic.c,v 1.6.4.1 2010/05/30 05:16:49 rmind Exp $	*/
 
 /*	$OpenBSD: apic.c,v 1.7 2007/10/06 23:50:54 krw Exp $	*/
 
@@ -235,19 +235,19 @@ apic_intr(void *v)
 	struct apic_iv *iv = v;
 	struct elroy_softc *sc = iv->sc;
 	volatile struct elroy_regs *r = sc->sc_regs;
+	uint32_t irq = APIC_INT_IRQ(iv->ih);
 	int claimed = 0;
 
 	while (iv) {
 		if (iv->handler(iv->arg)) {
 			if (iv->cnt)
 				iv->cnt->ev_count++;
-			/* Signal EOI. */
-			elroy_write32(&r->apic_eoi,
-			    htole32((31 - APIC_INT_IRQ(iv->ih)) & APIC_ENT0_VEC));
 			claimed = 1;
 		}
 		iv = iv->next;
 	}
+	/* Signal EOI. */
+	elroy_write32(&r->apic_eoi, htole32((31 - irq) & APIC_ENT0_VEC));
 
 	return (claimed);
 }

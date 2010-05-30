@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.31 2009/09/26 14:44:11 tsutsui Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.31.4.1 2010/05/30 05:17:31 rmind Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.31 2009/09/26 14:44:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.31.4.1 2010/05/30 05:17:31 rmind Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -440,10 +440,8 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
                         	       PCI_COMMAND_STATUS_REG, command);
 		}
 #ifdef AHD_DEBUG
-		printf("%s: doing memory mapping tag0 0x%x, tag1 0x%x, "
-		    "shs0 0x%lx, shs1 0x%lx\n",
-		    ahd_name(ahd), ahd->tags[0], ahd->tags[1],
-		    ahd->bshs[0], ahd->bshs[1]);
+		printf("%s: doing memory mapping shs0 0x%lx, shs1 0x%lx\n",
+		    ahd_name(ahd), ahd->bshs[0], ahd->bshs[1]);
 #endif
 	}
 
@@ -467,9 +465,8 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
                         	       PCI_COMMAND_STATUS_REG, command);
 		}
 #ifdef AHD_DEBUG
-		printf("%s: doing io mapping tag0 0x%x, tag1 0x%x, "
-		    "shs0 0x%lx, shs1 0x%lx\n", ahd_name(ahd), ahd->tags[0],
-		    ahd->tags[1], ahd->bshs[0], ahd->bshs[1]);
+		printf("%s: doing io mapping shs0 0x%lx, shs1 0x%lx\n",
+		    ahd_name(ahd), ahd->bshs[0], ahd->bshs[1]);
 #endif
 
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.37 2010/03/15 00:17:55 jakllsch Exp $ */
+/*	$NetBSD: if_atu.c,v 1.37.2.1 2010/05/30 05:17:44 rmind Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.37 2010/03/15 00:17:55 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.37.2.1 2010/05/30 05:17:44 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -1850,8 +1850,7 @@ atu_start(struct ifnet *ifp)
 				splx(s);
 				break;
 			}
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			ni = ieee80211_find_txnode(ic,
 			    mtod(m, struct ether_header *)->ether_dhost);
 			if (ni == NULL) {
@@ -1880,8 +1879,7 @@ atu_start(struct ifnet *ifp)
 			/* sc->sc_stats.ast_tx_mgmt++; */
 		}
 
-		if (ic->ic_rawbpf)
-			bpf_ops->bpf_mtap(ic->ic_rawbpf, m);
+		bpf_mtap3(ic->ic_rawbpf, m);
 
 		if (atu_tx_start(sc, ni, c, m)) {
 bad:

@@ -1,4 +1,4 @@
-#	$NetBSD: files.bluetooth,v 1.13 2008/06/10 12:49:16 drochner Exp $
+#	$NetBSD: files.bluetooth,v 1.13.18.1 2010/05/30 05:17:19 rmind Exp $
 #
 # Config file for machine independent Bluetooth devices
 
@@ -26,6 +26,11 @@ file dev/bluetooth/btkbd.c		btkbd
 device btms: hid, wsmousedev
 attach btms at bthidbus
 file dev/bluetooth/btms.c		btms
+
+# Apple MagicMouse
+device btmagic: bluetooth, hid, wsmousedev
+attach btmagic at bthub
+file dev/bluetooth/btmagic.c		btmagic
 
 # SCO Audio
 device btsco: bluetooth, audiobus, auconv, mulaw, aurateconv

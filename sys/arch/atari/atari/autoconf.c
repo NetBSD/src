@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2009/03/08 05:25:30 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.4.1 2010/05/30 05:16:38 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2009/03/08 05:25:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56.4.1 2010/05/30 05:16:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.56 2009/03/08 05:25:30 tsutsui Exp $"
 #include <atari/atari/device.h>
 
 static void findroot(void);
-void mbattach(struct device *, struct device *, void *);
-int mbprint(void *, const char *);
 int mbmatch(struct device *, struct cfdata *, void *);
+void mbattach(struct device *, struct device *, void *);
+#if 0
+int mbprint(void *, const char *);
+#endif
 
 int atari_realconfig;
 #include <sys/kernel.h>
@@ -59,8 +61,7 @@ int atari_realconfig;
 void
 cpu_configure(void)
 {
-	extern int atari_realconfig;
-	
+
 	atari_realconfig = 1;
 
 	init_sicallback();
@@ -98,7 +99,6 @@ atari_config_found(struct cfdata *pcfp, struct device *pdp, void *auxp,
 	struct device temp;
 	struct cfdata *cf;
 	const struct cfattach *ca;
-	extern int	atari_realconfig;
 
 	if (atari_realconfig)
 		return config_found(pdp, auxp, pfn) != NULL;
@@ -280,11 +280,13 @@ mbattach(struct device *pdp, struct device *dp, void *auxp)
 	config_found(dp, __UNCONST("nvr")     , simple_devprint);
 	config_found(dp, __UNCONST("lpt")     , simple_devprint);
 	config_found(dp, __UNCONST("wdc")     , simple_devprint);
+	config_found(dp, __UNCONST("ne")      , simple_devprint);
 	config_found(dp, __UNCONST("isab")    , simple_devprint);
 	config_found(dp, __UNCONST("pcib")    , simple_devprint);
 	config_found(dp, __UNCONST("avmebus") , simple_devprint);
 }
 
+#if 0
 int
 mbprint(void *auxp, const char *pnp)
 {
@@ -293,3 +295,4 @@ mbprint(void *auxp, const char *pnp)
 		aprint_normal("%s at %s", (char *)auxp, pnp);
 	return UNCONF;
 }
+#endif

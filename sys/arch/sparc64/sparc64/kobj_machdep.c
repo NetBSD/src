@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.3 2009/05/20 08:32:35 jnemeth Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.3.4.1 2010/05/30 05:17:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 Jake Burkholder.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3 2009/05/20 08:32:35 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3.4.1 2010/05/30 05:17:08 rmind Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -164,7 +164,7 @@ static const long reloc_target_bitmask[] = {
 	_BM(22), _BM(10),		/* _HIPLT22, LOPLT10 */
 	_BM(32), _BM(22), _BM(10),	/* _PCPLT32, _PCPLT22, _PCPLT10 */
 	_BM(10), _BM(11), -1,		/* _10, _11, _64 */
-	_BM(13), _BM(22),		/* _OLO10, _HH22 */
+	_BM(10), _BM(22),		/* _OLO10, _HH22 */
 	_BM(10), _BM(22),		/* _HM10, _LM22 */
 	_BM(22), _BM(10), _BM(22),	/* _PC_HH22, _PC_HM10, _PC_LM22 */
 	_BM(16), _BM(19),		/* _WDISP16, _WDISP19 */
@@ -203,6 +203,9 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	if (rtype == R_SPARC_NONE)
 		return 0;
 
+	if ((rtype & 0x00ff) == R_SPARC_OLO10)
+		rtype = R_SPARC_OLO10;
+
 	if (rtype == R_SPARC_RELATIVE) {
 		kobj_stat(ko, &base, NULL);
 		value = rela->r_addend + (Elf_Addr)base;
@@ -212,8 +215,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	}
 
 	if (rtype == R_SPARC_JMP_SLOT || rtype == R_SPARC_COPY ||
-	    rtype >= sizeof(reloc_target_bitmask) /
-	    sizeof(*reloc_target_bitmask))
+	    rtype >= __arraycount(reloc_target_bitmask))
 		return -1;
 
 	if (RELOC_UNALIGNED(rtype))

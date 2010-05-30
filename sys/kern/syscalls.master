@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.232 2010/03/02 19:34:26 pooka Exp $
+	$NetBSD: syscalls.master,v 1.232.2.1 2010/05/30 05:17:58 rmind Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -371,9 +371,9 @@
 191	STD 		{ long|sys||pathconf(const char *path, int name); }
 192	STD 		{ long|sys||fpathconf(int fd, int name); }
 193	UNIMPL
-194	STD 		{ int|sys||getrlimit(int which, \
+194	STD 	RUMP	{ int|sys||getrlimit(int which, \
 			    struct rlimit *rlp); }
-195	STD 		{ int|sys||setrlimit(int which, \
+195	STD 	RUMP	{ int|sys||setrlimit(int which, \
 			    const struct rlimit *rlp); }
 196	COMPAT_12 MODULAR { int|sys||getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }

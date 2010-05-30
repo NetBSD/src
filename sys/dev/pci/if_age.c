@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.37 2010/02/24 22:38:00 dyoung Exp $ */
+/*	$NetBSD: if_age.c,v 1.37.2.1 2010/05/30 05:17:32 rmind Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.37 2010/02/24 22:38:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.37.2.1 2010/05/30 05:17:32 rmind Exp $");
 
 #include "vlan.h"
 
@@ -1059,8 +1059,7 @@ age_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 
 	if (enq) {
@@ -1480,8 +1479,7 @@ age_rxeof(struct age_softc *sc, struct rx_rdesc *rxrd)
 			}
 #endif
 
-			if (ifp->if_bpf)
-				bpf_ops->bpf_mtap(ifp->if_bpf, m);
+			bpf_mtap(ifp, m);
 			/* Pass it on. */
 			ether_input(ifp, m);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.6 2010/02/24 22:38:08 dyoung Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.6.2.1 2010/05/30 05:17:43 rmind Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.6 2010/02/24 22:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.6.2.1 2010/05/30 05:17:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,6 +121,7 @@ static int	sdhc_wait_state(struct sdhc_host *, uint32_t, uint32_t);
 static int	sdhc_soft_reset(struct sdhc_host *, int);
 static int	sdhc_wait_intr(struct sdhc_host *, int, int);
 static void	sdhc_transfer_data(struct sdhc_host *, struct sdmmc_command *);
+static int	sdhc_transfer_data_dma(struct sdhc_host *, struct sdmmc_command *);
 static int	sdhc_transfer_data_pio(struct sdhc_host *, struct sdmmc_command *);
 static void	sdhc_read_data_pio(struct sdhc_host *, uint8_t *, int);
 static void	sdhc_write_data_pio(struct sdhc_host *, uint8_t *, int);
@@ -225,7 +226,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		hp->clkbase = SDHC_BASE_FREQ_KHZ(caps);
 	if (hp->clkbase == 0) {
 		/* The attachment driver must tell us. */
-		aprint_error_dev(sc->sc_dev,"unknown base clock frequency\n");
+		aprint_error_dev(sc->sc_dev, "unknown base clock frequency\n");
 		goto err;
 	} else if (hp->clkbase < 10000 || hp->clkbase > 63000) {
 		/* SDHC 1.0 supports only 10-63 MHz. */
@@ -294,7 +295,6 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	if (ISSET(hp->flags, SHF_USE_DMA))
 		saa.saa_caps |= SMC_CAPS_DMA;
 #endif
-
 	hp->sdmmc = config_found(sc->sc_dev, &saa, NULL);
 
 	return 0;
@@ -307,6 +307,25 @@ err:
 	sc->sc_host[--sc->sc_nhosts] = NULL;
 err1:
 	return 1;
+}
+
+int
+sdhc_detach(device_t dev, int flags)
+{
+	struct sdhc_host *hp = (struct sdhc_host *)dev;
+	struct sdhc_softc *sc = hp->sc;
+	int rv = 0;
+
+	if (hp->sdmmc)
+		rv = config_detach(hp->sdmmc, flags);
+
+	cv_destroy(&hp->intr_cv);
+	mutex_destroy(&hp->intr_mtx);
+	mutex_destroy(&hp->host_mtx);
+	free(hp, M_DEVBUF);
+	sc->sc_host[--sc->sc_nhosts] = NULL;
+
+	return rv;
 }
 
 bool
@@ -759,10 +778,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	uint16_t command;
 	int error;
 
-	DPRINTF(1,("%s: start cmd %d arg=%08x data=%p dlen=%d flags=%08x "
-	    "proc=%p \"%s\"\n", HDEVNAME(hp), cmd->c_opcode, cmd->c_arg,
-	    cmd->c_data, cmd->c_datalen, cmd->c_flags, curproc,
-	    curproc ? curproc->p_comm : ""));
+	DPRINTF(1,("%s: start cmd %d arg=%08x data=%p dlen=%d flags=%08x\n",
+	    HDEVNAME(hp), cmd->c_opcode, cmd->c_arg, cmd->c_data,
+	    cmd->c_datalen, cmd->c_flags));
 
 	/*
 	 * The maximum block length for commands should be the minimum
@@ -799,10 +817,13 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			mode |= SDHC_AUTO_CMD12_ENABLE;
 		}
 	}
-#if notyet
-	if (cmd->c_dmap != NULL && cmd->c_datalen > 0)
-		mode |= SDHC_DMA_ENABLE;
-#endif
+	if (cmd->c_dmamap != NULL && cmd->c_datalen > 0) {
+		if (cmd->c_dmamap->dm_nsegs == 1) {
+			mode |= SDHC_DMA_ENABLE;
+		} else {
+			cmd->c_dmamap = NULL;
+		}
+	}
 
 	/*
 	 * Prepare command register value. (2.2.6)
@@ -839,6 +860,10 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	/* Alert the user not to remove the card. */
 	HSET1(hp, SDHC_HOST_CTL, SDHC_LED_ON);
 
+	/* Set DMA start address. */
+	if (ISSET(mode, SDHC_DMA_ENABLE))
+		HWRITE4(hp, SDHC_DMA_ADDR, cmd->c_dmamap->dm_segs[0].ds_addr);
+
 	/*
 	 * Start a CPU data transfer.  Writing to the high order byte
 	 * of the SDHC_COMMAND register triggers the SD command. (1.5)
@@ -873,13 +898,55 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	}
 #endif
 
-	error = sdhc_transfer_data_pio(hp, cmd);
+	if (cmd->c_dmamap != NULL)
+		error = sdhc_transfer_data_dma(hp, cmd);
+	else
+		error = sdhc_transfer_data_pio(hp, cmd);
 	if (error)
 		cmd->c_error = error;
 	SET(cmd->c_flags, SCF_ITSDONE);
 
 	DPRINTF(1,("%s: data transfer done (error=%d)\n",
 	    HDEVNAME(hp), cmd->c_error));
+}
+
+static int
+sdhc_transfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
+{
+	bus_dmamap_t dmap = cmd->c_dmamap;
+	uint16_t blklen = cmd->c_blklen;
+	uint16_t blkcnt = cmd->c_datalen / blklen;
+	uint16_t remain;
+	int error = 0;
+
+	for (;;) {
+		if (!sdhc_wait_intr(hp,
+		    SDHC_DMA_INTERRUPT|SDHC_TRANSFER_COMPLETE,
+		    SDHC_DMA_TIMEOUT)) {
+			error = ETIMEDOUT;
+			break;
+		}
+
+		/* single block mode */
+		if (blkcnt == 1)
+			break;
+
+		/* multi block mode */
+		remain = HREAD2(hp, SDHC_BLOCK_COUNT);
+		if (remain == 0)
+			break;
+
+		HWRITE4(hp, SDHC_DMA_ADDR,
+		    dmap->dm_segs[0].ds_addr + (blkcnt - remain) * blklen);
+	}
+
+#if 0
+	if (error == 0 && !sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE,
+	    SDHC_TRANSFER_TIMEOUT))
+		error = ETIMEDOUT;
+#endif
+
+	return error;
 }
 
 static int

@@ -1,8 +1,9 @@
-#	$NetBSD: files.ipfilter,v 1.9 2010/01/24 14:25:57 pooka Exp $
+#	$NetBSD: files.ipfilter,v 1.9.4.1 2010/05/30 05:18:02 rmind Exp $
 
 defflag	opt_ipfilter.h	IPFILTER_LOG		# logging of ip packets
 defflag	opt_ipfilter.h	IPFILTER_DEFAULT_BLOCK
 defflag	opt_ipfilter.h	IPFILTER_LOOKUP
+defflag	opt_ipfilter.h	IPFILTER_COMPAT		# IPFilter version compat.
 
 defpseudo ipfilter: ifnet, bpf_filter		# XXX not really an ifnet
 
@@ -19,5 +20,6 @@ file	dist/ipf/netinet/ip_proxy.c		ipfilter
 file	dist/ipf/netinet/ip_scan.c		ipfilter
 file	dist/ipf/netinet/ip_state.c		ipfilter
 file	dist/ipf/netinet/ip_sync.c		ipfilter
+file	dist/ipf/netinet/ip_fil_compat.c	ipfilter & ipfilter_compat
 
 makeoptions	ipfilter	CPPFLAGS+="-I$S/dist/ipf"

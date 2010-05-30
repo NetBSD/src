@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.326 2010/02/25 03:33:09 macallan Exp $
+#	$NetBSD: files.pci,v 1.326.2.1 2010/05/30 05:17:32 rmind Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -25,6 +25,8 @@ file	dev/pci/pci_usrreq.c		pci
 file	dev/pci/pciconf.c		pci & pci_netbsd_configure
 
 file	dev/pci/pcibusprint.c		pcibus
+
+file	dev/pci/pci_verbose.c		pci & pciverbose
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
 # with USB.  This is a combo chip:
@@ -810,19 +812,19 @@ device	cxgbc { }
 attach	cxgbc at pci
 device	cxgb: ether, ifnet, arp
 attach	cxgb at cxgbc
-file	dev/pci/cxgb_main.c		cxgbc | cxgb
-file	dev/pci/cxgb_mc5.c		cxgbc | cxgb
-file	dev/pci/cxgb_vsc8211.c		cxgbc | cxgb
-file	dev/pci/cxgb_ael1002.c		cxgbc | cxgb
-file	dev/pci/cxgb_mv88e1xxx.c	cxgbc | cxgb
-file	dev/pci/cxgb_vsc7323.c		cxgbc | cxgb
-file	dev/pci/cxgb_xgmac.c		cxgbc | cxgb
-file	dev/pci/cxgb_t3_hw.c		cxgbc | cxgb
-file	dev/pci/cxgb_sge.c		cxgbc | cxgb
-file	dev/pci/cxgb_lro.c		cxgbc | cxgb
-# file	dev/pci/cxgb_offload.c		cxgbc | cxgb
-file	dev/pci/cxgb_l2t.c		cxgbc | cxgb
-file	dev/pci/cxgb_osdep.c		cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_main.c	cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_mc5.c		cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_vsc8211.c	cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_ael1002.c	cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_mv88e1xxx.c	cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_vsc7323.c	cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_xgmac.c	cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_t3_hw.c	cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_sge.c		cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_lro.c		cxgbc | cxgb
+# file	dev/pci/cxgb/cxgb_offload.c	cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_l2t.c		cxgbc | cxgb
+file	dev/pci/cxgb/cxgb_osdep.c	cxgbc | cxgb
 
 # Chips & Technologies 65550 framebuffer console driver
 device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode
@@ -1005,3 +1007,7 @@ device		wcfb: wsemuldisplaydev, rasops8, vcons
 attach		wcfb at pci
 file		dev/pci/wcfb.c	wcfb
 defflag		opt_wcfb.h	WCFB_DEBUG
+
+# Domex 536, 5380-compatible SCSI HBA
+attach	nca at pci with nca_pci
+file	dev/pci/nca_pci.c	nca_pci

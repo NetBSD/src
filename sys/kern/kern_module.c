@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.60 2010/03/05 20:10:05 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.60.2.1 2010/05/30 05:17:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.60 2010/03/05 20:10:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.60.2.1 2010/05/30 05:17:57 rmind Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -78,6 +78,8 @@ u_int		module_gen = 1;
 static kcondvar_t module_thread_cv;
 static kmutex_t module_thread_lock;
 static int	module_thread_ticks;
+int (*module_load_vfs_vec)(const char *, int, bool, module_t *,
+			   prop_dictionary_t *) = (void *)eopnotsupp; 
 
 static kauth_listener_t	module_listener;
 
@@ -97,15 +99,7 @@ static void	module_enqueue(module_t *);
 
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
 
-int		module_eopnotsupp(void);
-
-int
-module_eopnotsupp(void)
-{
-
-	return EOPNOTSUPP;
-}
-__weak_alias(module_load_vfs,module_eopnotsupp);
+static void	sysctl_module_setup(void);
 
 /*
  * module_error:
@@ -314,6 +308,7 @@ module_init(void)
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&module_thread_cv, "modunload");
 	mutex_init(&module_thread_lock, MUTEX_DEFAULT, IPL_NONE);
+
 #ifdef MODULAR	/* XXX */
 	module_init_md();
 #endif
@@ -335,6 +330,8 @@ module_init(void)
 			module_error("builtin %s failed: %d\n",
 			    (*mip)->mi_name, rv);
 	}
+
+	sysctl_module_setup();
 }
 
 /*
@@ -353,16 +350,19 @@ module_init2(void)
 		panic("module_init: %d", error);
 }
 
-SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
+static struct sysctllog *module_sysctllog;
+
+static void
+sysctl_module_setup(void)
 {
 	const struct sysctlnode *node = NULL;
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&module_sysctllog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "kern", NULL,
 		NULL, 0, NULL, 0,
 		CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, &node,
+	sysctl_createv(&module_sysctllog, 0, NULL, &node,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_NODE, "module",
 		SYSCTL_DESCR("Module options"),
@@ -372,15 +372,15 @@ SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
 	if (node == NULL)
 		return;
 
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "autoload",
+		CTLTYPE_BOOL, "autoload",
 		SYSCTL_DESCR("Enable automatic load of modules"),
 		NULL, 0, &module_autoload_on, 0,
 		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "verbose",
+		CTLTYPE_BOOL, "verbose",
 		SYSCTL_DESCR("Enable verbose output"),
 		NULL, 0, &module_verbose_on, 0,
 		CTL_CREATE, CTL_EOL);
@@ -395,6 +395,7 @@ SYSCTL_SETUP(sysctl_module_setup, "sysctl module setup")
 void
 module_init_class(modclass_t class)
 {
+	TAILQ_HEAD(, module) bi_fail = TAILQ_HEAD_INITIALIZER(bi_fail);
 	module_t *mod;
 	modinfo_t *mi;
 
@@ -408,7 +409,16 @@ module_init_class(modclass_t class)
 			mi = mod->mod_info;
 			if (class != MODULE_CLASS_ANY && class != mi->mi_class)
 				continue;
-			(void)module_do_builtin(mi->mi_name, NULL);
+			/*
+			 * If initializing a builtin module fails, don't try
+			 * to load it again.  But keep it around and queue it
+			 * on the disabled list after we're done with module
+			 * init.
+			 */
+			if (module_do_builtin(mi->mi_name, NULL) != 0) {
+				TAILQ_REMOVE(&module_builtins, mod, mod_chain);
+				TAILQ_INSERT_TAIL(&bi_fail, mod, mod_chain);
+			}
 			break;
 		}
 	} while (mod != NULL);
@@ -427,6 +437,13 @@ module_init_class(modclass_t class)
 			break;
 		}
 	} while (mod != NULL);
+
+	/* failed builtin modules remain disabled */
+	while ((mod = TAILQ_FIRST(&bi_fail)) != NULL) {
+		TAILQ_REMOVE(&bi_fail, mod, mod_chain);
+		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
+	}
+
 	mutex_exit(&module_lock);
 }
 
@@ -670,8 +687,15 @@ module_do_builtin(const char *name, module_t **modp)
 	}
 
 	/* Note! This is from TAILQ, not immediate above */
-	if (mi == NULL)
-		panic("can't find `%s'", name);
+	if (mi == NULL) {
+		/*
+		 * XXX: We'd like to panic here, but currently in some
+		 * cases (such as nfsserver + nfs), the dependee can be
+		 * succesfully linked without the dependencies.
+		 */
+		module_error("can't find builtin dependency `%s'", name);
+		return ENOENT;
+	}
 
 	/*
 	 * Initialize pre-requisites.
@@ -771,8 +795,10 @@ module_do_load(const char *name, bool isdep, int flags,
 	}
 	if (mod) {
 		if ((flags & MODCTL_LOAD_FORCE) == 0) {
-			module_error("use -f to reinstate "
-			    "builtin module \"%s\"", name);
+			if (!autoload) {
+				module_error("use -f to reinstate "
+				    "builtin module \"%s\"", name);
+			}
 			depth--;
 			return EPERM;
 		} else {
@@ -820,7 +846,8 @@ module_do_load(const char *name, bool isdep, int flags,
 			return ENOMEM;
 		}
 
-		error = module_load_vfs(name, flags, autoload, mod, &filedict);
+		error = module_load_vfs_vec(name, flags, autoload, mod,
+					    &filedict);
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
 			depth--;
@@ -1170,6 +1197,8 @@ module_thread(void *cookie)
 		mutex_enter(&module_lock);
 		for (mod = TAILQ_FIRST(&module_list); mod != NULL; mod = next) {
 			next = TAILQ_NEXT(mod, mod_chain);
+			if (mod->mod_source == MODULE_SOURCE_KERNEL)
+				continue;
 			if (uvmexp.free < uvmexp.freemin) {
 				module_thread_ticks = hz;
 			} else if (mod->mod_autotime == 0) {

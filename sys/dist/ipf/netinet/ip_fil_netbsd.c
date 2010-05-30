@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.53 2009/10/05 03:44:01 elad Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.53.4.1 2010/05/30 05:17:46 rmind Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,10 +8,10 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.53 2009/10/05 03:44:01 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.53.4.1 2010/05/30 05:17:46 rmind Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.66 2009/05/17 17:45:26 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.67 2009/12/19 05:41:08 darrenr Exp";
 #endif
 #endif
 
@@ -998,6 +998,14 @@ mb_t *m, **mpp;
 	fnew.fin_hlen = hlen;
 	fnew.fin_dp = (char *)ip + hlen;
 	(void) fr_makefrip(hlen, ip, &fnew);
+
+	if (fin->fin_fr != NULL && fin->fin_fr->fr_type == FR_T_IPF) {
+		frdest_t *fdp = &fin->fin_fr->fr_rif;
+
+		if ((fdp->fd_ifp != NULL) &&
+		    (fdp->fd_ifp != (struct ifnet *)-1))
+			return fr_fastroute(m, mpp, &fnew, fdp);
+	}
 
 	return fr_fastroute(m, mpp, &fnew, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.176.4.1 2010/03/16 15:38:11 rmind Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.176.4.2 2010/05/30 05:17:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.176.4.1 2010/03/16 15:38:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.176.4.2 2010/05/30 05:17:59 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,8 @@ genfs_einval(void *v)
 
 /*
  * Called when an fs doesn't support a particular vop.
- * This takes care to vrele, vput, or vunlock passed in vnodes.
+ * This takes care to vrele, vput, or vunlock passed in vnodes
+ * and calls VOP_ABORTOP for a componentname (in non-rename VOP).
  */
 int
 genfs_eopnotsupp(void *v)
@@ -181,14 +182,35 @@ genfs_eopnotsupp(void *v)
 	} */ *ap = v;
 	struct vnodeop_desc *desc = ap->a_desc;
 	struct vnode *vp, *vp_last = NULL;
-	int flags, i, j, offset;
+	int flags, i, j, offset_cnp, offset_vp;
+
+	KASSERT(desc->vdesc_offset != VOP_LOOKUP_DESCOFFSET);
+	KASSERT(desc->vdesc_offset != VOP_ABORTOP_DESCOFFSET);
+
+	/*
+	 * Free componentname that lookup potentially SAVENAMEd.
+	 *
+	 * As is logical, componentnames for VOP_RENAME are handled by
+	 * the caller of VOP_RENAME.  Yay, rename!
+	 */
+	if (desc->vdesc_offset != VOP_RENAME_DESCOFFSET &&
+	    (offset_vp = desc->vdesc_vp_offsets[0]) != VDESC_NO_OFFSET &&
+	    (offset_cnp = desc->vdesc_componentname_offset) != VDESC_NO_OFFSET){
+		struct componentname *cnp;
+		struct vnode *dvp;
+
+		dvp = *VOPARG_OFFSETTO(struct vnode **, offset_vp, ap);
+		cnp = *VOPARG_OFFSETTO(struct componentname **, offset_cnp, ap);
+
+		VOP_ABORTOP(dvp, cnp);
+	}
 
 	flags = desc->vdesc_flags;
 	for (i = 0; i < VDESC_MAX_VPS; flags >>=1, i++) {
-		if ((offset = desc->vdesc_vp_offsets[i]) == VDESC_NO_OFFSET)
+		if ((offset_vp = desc->vdesc_vp_offsets[i]) == VDESC_NO_OFFSET)
 			break;	/* stop at end of list */
 		if ((j = flags & VDESC_VP0_WILLPUT)) {
-			vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
+			vp = *VOPARG_OFFSETTO(struct vnode **, offset_vp, ap);
 
 			/* Skip if NULL */
 			if (!vp)

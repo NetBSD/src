@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.14 2010/01/19 22:07:02 pooka Exp $ */
+/*      $NetBSD: if_xge.c,v 1.14.4.1 2010/05/30 05:17:36 rmind Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.14 2010/01/19 22:07:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.14.4.1 2010/05/30 05:17:36 rmind Exp $");
 
 #include "rnd.h"
 
@@ -810,8 +810,7 @@ xge_intr(void *pv)
 				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
 		}
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		(*ifp->if_input)(ifp, m);
 
@@ -994,8 +993,7 @@ xge_start(struct ifnet *ifp)
 		TXP_WCSR(TXDL_PAR, par);
 		TXP_WCSR(TXDL_LCR, lcr);
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		sc->sc_nexttx = NEXTTX(nexttx);
 	}

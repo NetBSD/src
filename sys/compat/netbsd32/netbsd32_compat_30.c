@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.29 2009/01/26 13:00:04 njoly Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.29.6.1 2010/05/30 05:17:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.29 2009/01/26 13:00:04 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.29.6.1 2010/05/30 05:17:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -79,13 +78,13 @@ compat_30_netbsd32_getdents(struct lwp *l, const struct compat_30_netbsd32_getde
 		error = EBADF;
 		goto out;
 	}
-	buf = malloc(count, M_TEMP, M_WAITOK);
+	buf = kmem_alloc(count, KM_SLEEP);
 	error = vn_readdir(fp, buf, UIO_SYSSPACE, count, &done, l, 0, 0);
 	if (error == 0) {
 		*retval = netbsd32_to_dirent12(buf, done);
 		error = copyout(buf, SCARG_P32(uap, buf), *retval);
 	}
-	free(buf, M_TEMP);
+	kmem_free(buf, count);
  out:
  	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -210,10 +209,10 @@ compat_30_netbsd32_fhstatvfs1(struct lwp *l, const struct compat_30_netbsd32_fhs
 	    SCARG(uap, flags));
 
 	if (error != 0) {
-		s32 = malloc(sizeof *s32, M_TEMP, M_WAITOK);
+		s32 = kmem_alloc(sizeof(*s32), KM_SLEEP);
 		netbsd32_from_statvfs(sbuf, s32);
 		error = copyout(s32, SCARG_P32(uap, buf), sizeof *s32);
-		free(s32, M_TEMP);
+		kmem_free(s32, sizeof(*s32));
 	}
 	STATVFSBUF_PUT(sbuf);
 

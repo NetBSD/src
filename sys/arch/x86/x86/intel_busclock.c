@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.9 2009/12/03 14:47:15 sborrill Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.9.4.1 2010/05/30 05:17:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.9 2009/12/03 14:47:15 sborrill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.9.4.1 2010/05/30 05:17:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,9 @@ p3_get_bus_clock(struct cpu_info *ci)
 			break;
 		case 2:
 			bus_clock = 10000;
+			break;
+		case 3:
+			bus_clock = 10666;
 			break;
 		default:
 			aprint_debug("%s: unknown i686 EBL_CR_POWERON "

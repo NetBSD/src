@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.28 2010/01/19 22:06:24 pooka Exp $ */
+/* $NetBSD: i82596.c,v 1.28.4.1 2010/05/30 05:17:22 rmind Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.28 2010/01/19 22:06:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.28.4.1 2010/05/30 05:17:22 rmind Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -280,8 +280,7 @@ iee_intr(void *intarg)
 			    device_xname(sc->sc_dev));
 		bus_dmamap_sync(sc->sc_dmat, rx_map, 0,
 		    rx_map->dm_mapsize, BUS_DMASYNC_PREREAD);
-		if (ifp->if_bpf != 0)
-			bpf_ops->bpf_mtap(ifp->if_bpf, rx_mbuf);
+		bpf_mtap(ifp, rx_mbuf);
 		(*ifp->if_input)(ifp, rx_mbuf);
 		ifp->if_ipackets++;
 		sc->sc_rx_mbuf[sc->sc_rx_done] = new_mbuf;
@@ -808,8 +807,7 @@ iee_start(struct ifnet *ifp)
 			iee_cb_setup(sc, IEE_CB_CMD_TR);
 		sc->sc_next_tbd += n;
 		/* Pass packet to bpf if someone listens. */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, sc->sc_tx_mbuf[t]);
+		bpf_mtap(ifp, sc->sc_tx_mbuf[t]);
 	}
 	if (t == 0)
 		/* No packets got set up for TX. */

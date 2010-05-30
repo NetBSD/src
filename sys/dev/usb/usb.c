@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.120 2009/12/19 11:41:56 pooka Exp $	*/
+/*	$NetBSD: usb.c,v 1.120.4.1 2010/05/30 05:17:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.120 2009/12/19 11:41:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.120.4.1 2010/05/30 05:17:45 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -55,10 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.120 2009/12/19 11:41:56 pooka Exp $");
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/intr.h>
+#include <sys/module.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usb_verbose.h>
 
 #define USB_DEV_MINOR 255
 
@@ -186,6 +188,9 @@ usb_attach(device_t parent, device_t self, void *aux)
 		USB_ATTACH_ERROR_RETURN;
 	}
 	aprint_normal("\n");
+
+	/* Try to load the usbverbose module */
+	usb_verbose_ctl(true);
 
 	config_interrupts(self, usb_doattach);
 }
@@ -980,6 +985,9 @@ usb_detach(device_t self, int flags)
 	ue = usb_alloc_event();
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_DETACH, ue);
+
+	/* Try to unload the usbverbose module */
+	usb_verbose_ctl(false);
 
 	return (0);
 }

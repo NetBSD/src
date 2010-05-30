@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.10 2010/01/19 22:07:00 pooka Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.10.4.1 2010/05/30 05:17:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.10 2010/01/19 22:07:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.10.4.1 2010/05/30 05:17:32 rmind Exp $");
 
 #include "vlan.h"
 
@@ -1077,8 +1077,7 @@ ale_start(struct ifnet *ifp)
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
-		if (ifp->if_bpf != NULL)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m_head);
+		bpf_mtap(ifp, m_head);
 	}
 
 	if (enq) {
@@ -1550,8 +1549,7 @@ ale_rxeof(struct ale_softc *sc)
 #endif
 
 
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 
 		/* Pass it to upper layer. */
 		ether_input(ifp, m);

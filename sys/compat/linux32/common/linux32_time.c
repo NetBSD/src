@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.29 2009/07/21 18:50:43 njoly Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.29.4.1 2010/05/30 05:17:15 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.29 2009/07/21 18:50:43 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.29.4.1 2010/05/30 05:17:15 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.29 2009/07/21 18:50:43 njoly Exp 
 #include <sys/ucred.h>
 #include <sys/swap.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/timetc.h>
 
 #include <machine/types.h>
 
@@ -287,19 +286,17 @@ linux32_sys_clock_settime(struct lwp *l,
 	int error;
 	struct timespec ts;
 	struct linux32_timespec lts;
+	clockid_t id;
 
-	switch (SCARG(uap, which)) {
-	case LINUX_CLOCK_REALTIME:
-		break;
-	default:
-		return EINVAL;
-	}
+	error = linux_to_native_clockid(&id, SCARG(uap, which));
+	if (error != 0)
+		return error;
 
 	if ((error = copyin(SCARG_P32(uap, tp), &lts, sizeof lts)))
 		return error;
 
 	linux32_to_native_timespec(&ts, &lts);
-	return settime(l->l_proc, &ts);
+	return clock_settime1(l->l_proc, id, &ts, true);
 }
 
 int
@@ -310,19 +307,18 @@ linux32_sys_clock_gettime(struct lwp *l,
 		syscallarg(clockid_t) which;
 		syscallarg(linux32_timespecp_t) tp;
 	} */
+	int error;
+	clockid_t id;
 	struct timespec ts;
 	struct linux32_timespec lts;
 
-	switch (SCARG(uap, which)) {
-	case LINUX_CLOCK_REALTIME:
-		nanotime(&ts);
-		break;
-	case LINUX_CLOCK_MONOTONIC:
-		nanouptime(&ts);
-		break;
-	default:
-		return EINVAL;
-	}
+	error = linux_to_native_clockid(&id, SCARG(uap, which));
+	if (error != 0)
+		return error;
+
+	error = clock_gettime1(id, &ts);
+	if (error != 0)
+		return error;
 
 	native_to_linux32_timespec(&lts, &ts);
 	return copyout(&lts, SCARG_P32(uap, tp), sizeof lts);
@@ -345,8 +341,10 @@ linux32_sys_clock_getres(struct lwp *l,
 	if (error != 0 || SCARG_P32(uap, tp) == NULL)
 		return error;
 
-	ts.tv_sec = 0;
-	ts.tv_nsec = 1000000000 / tc_getfrequency();
+	error = clock_getres1(id, &ts);
+	if (error != 0)
+		return error;
+
 	native_to_linux32_timespec(&lts, &ts);
 	return copyout(&lts, SCARG_P32(uap, tp), sizeof lts);
 }
@@ -375,7 +373,7 @@ linux32_sys_clock_nanosleep(struct lwp *l,
 		return error;
 	linux32_to_native_timespec(&rqts, &lrqts);
 
-	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : 0);
+	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : NULL);
 	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
 		return error;
 

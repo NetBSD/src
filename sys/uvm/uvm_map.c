@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.290.2.2 2010/03/17 06:03:18 rmind Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.290.2.3 2010/05/30 05:18:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.290.2.2 2010/03/17 06:03:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.290.2.3 2010/05/30 05:18:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -4738,7 +4738,7 @@ again:
 	va = args.uma_start;
 
 	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE, 0);
+	    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE);
 	pmap_update(vm_map_pmap(map));
 
 #endif

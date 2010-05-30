@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.37 2010/01/19 22:06:21 pooka Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.37.4.1 2010/05/30 05:16:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.37 2010/01/19 22:06:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.37.4.1 2010/05/30 05:16:57 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -386,8 +386,7 @@ gmac_rint(struct gmac_softc *sc)
 		 * Check if there's a BPF listener on this interface.
 		 * If so, hand off the raw packet to BPF.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		(*ifp->if_input)(ifp, m);
 		ifp->if_ipackets++;
 
@@ -498,8 +497,7 @@ gmac_start(struct ifnet *ifp)
 		 * If BPF is listening on this interface, let it see the
 		 * packet before we commit it to the wire.
 		 */
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		m_freem(m);
 
 		i++;

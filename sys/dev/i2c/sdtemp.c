@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.12 2010/03/14 18:05:49 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.12.2.1 2010/05/30 05:17:20 rmind Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.12 2010/03/14 18:05:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.12.2.1 2010/05/30 05:17:20 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,8 @@ struct sdtemp_softc {
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t *sc_sensor;
+	sysmon_envsys_lim_t sc_deflims;
+	uint32_t sc_defprops;
 	int sc_resolution;
 	uint16_t sc_capability;
 };
@@ -327,6 +329,10 @@ sdtemp_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	iic_release_bus(sc->sc_tag, 0);
 	if (*props != 0)
 		*props |= PROP_DRIVER_LIMITS;
+	if (sc->sc_defprops == 0) {
+		sc->sc_deflims  = *limits;
+		sc->sc_defprops = *props;
+	}
 }
 
 /* Send current limit values to the device */
@@ -337,6 +343,10 @@ sdtemp_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	uint16_t val;
 	struct sdtemp_softc *sc = sme->sme_cookie;
 
+	if (limits == NULL) {
+		limits = &sc->sc_deflims;
+		props  = &sc->sc_defprops;
+	}
 	iic_acquire_bus(sc->sc_tag, 0);
 	if (*props & PROP_WARNMIN) {
 		val = __UK2C(limits->sel_warnmin);

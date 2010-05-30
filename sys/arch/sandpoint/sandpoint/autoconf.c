@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2009/03/18 10:22:35 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.4.1 2010/05/30 05:17:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,22 +35,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2009/03/18 10:22:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.4.1 2010/05/30 05:17:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+
+#include <dev/cons.h>
 #include <dev/pci/pcivar.h>
 
+#include <net/if.h>
+#include <net/if_ether.h>
+
 #include <machine/bootinfo.h>
+#include <machine/pio.h>
 
 static struct btinfo_rootdevice *bi_rdev;
 static struct btinfo_bootpath *bi_path;
-
-#include <dev/cons.h>
-#include <machine/pio.h>
-
+static struct btinfo_net *bi_net;
 
 /*
  * Determine i/o configuration for a machine.
@@ -61,6 +64,7 @@ cpu_configure(void)
 
 	bi_rdev = lookup_bootinfo(BTINFO_ROOTDEVICE);
 	bi_path = lookup_bootinfo(BTINFO_BOOTPATH);
+	bi_net = lookup_bootinfo(BTINFO_NET);
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("configure: mainbus not configured");
@@ -85,18 +89,54 @@ cpu_rootconf(void)
 void
 device_register(struct device *dev, void *aux)
 {
+	struct pci_attach_args *pa;
+	static device_t boot_parent = NULL, net_parent = NULL;
+	static pcitag_t boot_tag, net_tag;
+	pcitag_t tag;
 
-	if (bi_rdev == NULL)
-		return; /* no clue to determine */
-
-	if (dev->dv_class == DV_IFNET
-	    && device_is_a(dev, bi_rdev->devname)) {
-		struct pci_attach_args *pa = aux;
-
-		if (bi_rdev->cookie == pa->pa_tag)
-			booted_device = dev;
+	if (device_is_a(dev, "skc")) {
+		pa = aux;
+		if (bi_rdev != NULL && bi_rdev->cookie == pa->pa_tag) {
+			boot_parent = dev;
+			boot_tag = pa->pa_tag;
+		}
+		if (bi_net != NULL && bi_net->cookie == pa->pa_tag) {
+			net_parent = dev;
+			net_tag = pa->pa_tag;
+		}
 	}
-	if (dev->dv_class == DV_DISK
+
+	if (dev->dv_class == DV_IFNET) {
+		if (device_is_a(device_parent(dev), "pci")) {
+			pa = aux;
+			tag = pa->pa_tag;
+		} else if (device_parent(dev) == boot_parent)
+			tag = boot_tag;
+		else if (device_parent(dev) == net_parent)
+			tag = net_tag;
+		else
+			tag = 0;
+
+		if (bi_rdev != NULL && device_is_a(dev, bi_rdev->devname)
+		    && bi_rdev->cookie == tag)
+			booted_device = dev;
+
+		if (bi_net != NULL && device_is_a(dev, bi_net->devname)
+		    && bi_net->cookie == tag) {
+			prop_data_t pd;
+
+			pd = prop_data_create_data_nocopy(bi_net->mac_address,
+			    ETHER_ADDR_LEN);
+			KASSERT(pd != NULL);
+			if (prop_dictionary_set(device_properties(dev),
+			    "mac-address", pd) == false)
+				printf("WARNING: unable to set mac-addr "
+				    "property for %s\n", dev->dv_xname);
+			prop_object_release(pd);
+			bi_net = NULL;	/* do it just once */
+		}
+	}
+	if (bi_rdev != NULL && dev->dv_class == DV_DISK
 	    && device_is_a(dev, bi_rdev->devname)) {
 		booted_device = dev;
 		booted_partition = 0;

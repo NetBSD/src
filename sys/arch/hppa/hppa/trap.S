@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.46 2010/03/11 21:37:52 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.46.2.1 2010/05/30 05:16:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -106,10 +106,6 @@
  */
 
 	.section .data
-	.align	64
-L$trap_tmp_save:
-	.block	TF_PHYS
-	.size	L$trap_tmp_save, .-L$trap_tmp_save
 
 	/* Normal stack alignment */
 	.align	64
@@ -118,7 +114,6 @@ emergency_stack_start:
 	.block	32768
 	.export emergency_stack_end, data
 emergency_stack_end:
-	.block	4
 
 	.text
 
@@ -422,13 +417,13 @@ syscall_return:
 	mtctl	%r0, %eiem
 
 	/*
-	 * 1a. Copy a `phys' part of the frame into temp store
-	 *	(see a note for trapall)
-	 *	hopefully no page fault would happen on or after the copy,
-	 *	and interrupts are disabled.
+	 * Copy the `phys' part of the frame into CPU local temporary store (see
+	 * a note for trapall).  Hopefully no page fault would happen on or after
+	 * the copy, and interrupts are disabled.
 	 */
-	ldil	L%L$trap_tmp_save, %t2
-	ldo	R%L$trap_tmp_save(%t2), %t2
+	mfctl	CR_CURLWP, %t2
+	ldw	L_CPU(%t2), %t2
+	ldo	CI_TRAPSAVE(%t2), %t2
 
 	ldw  0(%t3), %r1 ! ldw  4(%t3), %t1 ! stw %r1,  0(%t2) ! stw %t1,  4(%t2)
 	ldw  8(%t3), %r1 ! ldw 12(%t3), %t1 ! stw %r1,  8(%t2) ! stw %t1, 12(%t2)
@@ -509,9 +504,12 @@ syscall_return:
 #endif
 	ldw	TF_CR0(%sr3, %t3), %t1
 	mtctl	%t1, %rctr
-	ldw	TF_CR30(%sr3, %t3), %t1
-	mtctl	%t1, CR_UPADDR
 
+	ldw	TF_CR30(%sr3, %t3), %t1
+	mtctl	%t1, CR_FPPADDR
+
+	mfctl	CR_CURLWP, %t3
+	ldw	L_CPU(%sr3, %t3), %t3
 	/*
 	 * Clear the system mask, this puts us back into physical mode.  Reload
 	 * the trapframe pointer with the correspondent PA value.  %sp will be
@@ -519,9 +517,8 @@ syscall_return:
 	 * anyway.
 	 */
 	ssm	0, %r0
-	ldil	L%L$trap_tmp_save, %t3
-	ldo	R%L$trap_tmp_save(%t3), %t3
-	nop ! nop ! nop ! nop ! nop
+	ldo	CI_TRAPSAVE(%t3), %t3
+	nop ! nop ! nop ! nop ! nop ! nop
 	rsm	RESET_PSW, %r0
 
 	/* finally we can restore the space and offset queues and the ipsw */
@@ -957,7 +954,7 @@ ALTENTRY(hppa_fpu_nop0)
 	/* Call hppa_fpu_swap. */
 	ldil	L%fpu_cur_uspace, %arg0
 	ldw	R%fpu_cur_uspace(%arg0), %arg0
-	mfctl	CR_UPADDR, %arg1
+	mfctl	CR_FPPADDR, %arg1
 	blr	0, %rp
 	b	hppa_fpu_swap
 	nop
@@ -1028,11 +1025,14 @@ L$emulate_fpu:
 EXIT(TLABEL(emu))
 
 /*
- * void hppa_fpu_swap(paddr_t out, paddr_t in);
- * or
- * void hppa_fpu_swap(struct pcb *out, NULL);
+ * void hppa_fpu_swapout(struct pcb *out);
+ * void hppa_fpu_swap(struct fpreg *out, struct fpreg *in);
  */
-LEAF_ENTRY_NOPROFILE(hppa_fpu_swap)
+LEAF_ENTRY_NOPROFILE(hppa_fpu_swapout)
+	ldw	PCB_FPREGS(%arg0), %arg0
+	copy	%r0, %arg1
+
+ALTENTRY(hppa_fpu_swap)
 
 	/*
 	 * Note that this function must work in physical mode as well as virtual
@@ -1055,7 +1055,6 @@ LEAF_ENTRY_NOPROFILE(hppa_fpu_swap)
 	/*
 	 * Swap out the current FPU state.
 	 */
-	ldo	PCB_FPREGS(%arg0), %arg0
 	fstds,ma %fr0 , 8(%arg0)	/* fr0 must be saved first */
 	fstds,ma %fr1 , 8(%arg0)
 	fstds,ma %fr2 , 8(%arg0)
@@ -1121,7 +1120,7 @@ L$fpu_swap_in:
 	/*
 	 * Swap in the new FPU state.
 	 */
-	ldo	PCB_FPREGS+31*8(%arg1), %arg1
+	ldo	31*8(%arg1), %arg1
 	fldds,ma -8(%arg1), %fr31
 	fldds,ma -8(%arg1), %fr30
 	fldds,ma -8(%arg1), %fr29
@@ -1183,7 +1182,7 @@ L$fpu_no_swap_in:
 	depi	0, 25, 2, %r1
 	b	L$fpu_swap_done
 	mtctl	%r1, %ccr
-EXIT(hppa_fpu_swap)
+EXIT(hppa_fpu_swapout)
 
 	/* Construct the virtual address tag. */
 	/* NB: it is legal for off and t to be the same. */
@@ -1911,14 +1910,15 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	/* do not overwrite %tr4(%cr28) it contains the contents of r24 */
 	mtctl	%t3, %tr2
 
-	ldil	L%L$trap_tmp_save, %t3
-	ldo	R%L$trap_tmp_save(%t3), %t3
-	stw	%t1, TF_R22(%t3)	/* use ,bc */
-	stw	%t2, TF_R21(%t3)
+	mfctl	CR_CURLWP, %t3
+	ldw	L_CPU(%t3), %t3
+
+	stw	%t1, CI_TRAPSAVE + TF_R22(%t3)	/* use ,bc */
+	stw	%t2, CI_TRAPSAVE + TF_R21(%t3)
 
 	mfctl	%tr2, %t1
-	stw	%sp, TF_R30(%t3)	/* sp */
-	stw	%t1, TF_R20(%t3)	/* t3 */
+	stw	%sp, CI_TRAPSAVE + TF_R30(%t3)	/* sp */
+	stw	%t1, CI_TRAPSAVE + TF_R20(%t3)	/* t3 */
 
 	/*
 	 * Now, save away other volatile state that prevents us from turning
@@ -1928,16 +1928,15 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 
 	mfctl	%eiem, %t1
 	mfctl	%ipsw, %t2
-	stw	%t1, TF_CR15(%t3)	/* use ,bc */
-	stw	%t2, TF_CR22(%t3)
+	stw	%t1, CI_TRAPSAVE + TF_CR15(%t3)	/* use ,bc */
+	stw	%t2, CI_TRAPSAVE + TF_CR22(%t3)
 
 	mfsp	%sr3, %t1
 	mfctl	%pidr1, %t2
-	stw	%t1, TF_SR3(%t3)
-	stw	%t2, TF_CR8(%t3)
+	stw	%t1, CI_TRAPSAVE + TF_SR3(%t3)
+	stw	%t2, CI_TRAPSAVE + TF_CR8(%t3)
 
 	/* Setup kernel context */
-
 	ldi	HPPA_PID_KERNEL,%t1
 	mtctl	%t1, %pidr1
 	mtsp	%r0, %sr3
@@ -1952,8 +1951,8 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	mfctl	%pcsq, %t1
 	mtctl	%r0, %pcsq
 	mfctl	%pcsq, %t2
-	stw	%t1, TF_IISQH(%t3)	/* use ,bc */
-	stw	%t2, TF_IISQT(%t3)
+	stw	%t1, CI_TRAPSAVE + TF_IISQH(%t3)	/* use ,bc */
+	stw	%t2, CI_TRAPSAVE + TF_IISQT(%t3)
 	mtctl	%r0, %pcsq
 
 	/*
@@ -1976,10 +1975,10 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	comb,<>	%t1, %t2, L$trap_from_kernel	/* if %t1 != %t2 => kernel */
 	dep	%r0, 31, 6, %sp			/* Assumed stack align step 2 */
 
-	mfctl	CR_UPADDR, %t2
+	mfctl	CR_CURLWP, %t2
 	depi	1, T_USER_POS, 1, %r1
 	depi	1, TFF_LAST_POS, 1, %r1
-	ldw	PCB_UVA(%t2), %sp
+	ldw	L_PCB(%t2), %sp
 #ifdef DIAGNOSTIC
 	b	L$trap_have_stack
 #endif
@@ -1992,7 +1991,7 @@ L$trap_from_kernel:
 	 * of TLB or protection fault on the kernel stack.
 	 */
 	mtctl	%t1, %tr2
-	ldw	TF_R30(%t3), %t1
+	ldw	CI_TRAPSAVE + TF_R30(%t3), %t1
 	mfctl	%ior, %t2
 	dep	%r0, 31, PGSHIFT, %t1
 	dep	%r0, 31, PGSHIFT, %t2
@@ -2021,24 +2020,24 @@ L$trap_have_stack:
 	ldil	L%trapnowvirt, %t2
 	ldo	R%trapnowvirt(%t2), %t2
 	mtctl	%t2, %pcoq
-	stw	%t1, TF_IIOQH(%t3)
+	stw	%t1, CI_TRAPSAVE + TF_IIOQH(%t3)
 	ldo	4(%t2), %t2
 	mfctl	%pcoq, %t1
-	stw	%t1, TF_IIOQT(%t3)
+	stw	%t1, CI_TRAPSAVE + TF_IIOQT(%t3)
 	mtctl	%t2, %pcoq
 
 	/* save the interruption space and offset registers */
 	mfctl	%isr, %t1
 	mfctl	%ior, %t2
-	stw	%t1, TF_CR20(%t3)	/* use ,bc */
-	stw	%t2, TF_CR21(%t3)
+	stw	%t1, CI_TRAPSAVE + TF_CR20(%t3)	/* use ,bc */
+	stw	%t2, CI_TRAPSAVE + TF_CR21(%t3)
 
 	/* save the interruption instruction register */
 	mfctl	%iir, %t2
-	stw	%t2, TF_CR19(%t3)
+	stw	%t2, CI_TRAPSAVE + TF_CR19(%t3)
 
 	/* save the trap type and flags */
-	stw	%r1, TF_FLAGS(%t3)
+	stw	%r1, CI_TRAPSAVE + TF_FLAGS(%t3)
 
 	/* gotta get it before R is up */
 	mfctl	%rctr, %t1
@@ -2120,8 +2119,10 @@ trapnowvirt:
 	/*
 	 * Copy partially saved state from the store into the frame
 	 */
-	ldil	L%L$trap_tmp_save, %t2
-	ldo	R%L$trap_tmp_save(%t2), %t2
+	mfctl	CR_CURLWP, %t2
+	ldw	L_CPU(%t2), %t2
+	ldo	CI_TRAPSAVE(%t2), %t2
+
 	/* use ,bc each line */
 	ldw  0(%t2), %r1 ! ldw  4(%t2), %t1 ! stw %r1,  0(%t3) ! stw %t1,  4(%t3)
 	ldw  8(%t2), %r1 ! ldw 12(%t2), %t1 ! stw %r1,  8(%t3) ! stw %t1, 12(%t3)
@@ -2189,7 +2190,7 @@ trapnowvirt:
 	mfctl	%cr28, %t2
 	stw	%t2, TF_CR28(%t3)
 #endif
-	mfctl	CR_UPADDR, %t1
+	mfctl	CR_FPPADDR, %t1
 	stw	%t1, TF_CR30(%t3)
 
 	/*

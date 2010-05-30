@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.135 2010/02/24 22:38:10 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.135.2.1 2010/05/30 05:18:08 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -431,6 +431,10 @@ int getdisksize(struct vnode *, uint64_t *, unsigned *);
 int config_handle_wedges(struct device *, int);
 
 void	config_init(void);
+int	config_init_component(struct cfdriver *const*,
+			      const struct cfattachinit *, struct cfdata *);
+int	config_fini_component(struct cfdriver *const*,
+			      const struct cfattachinit *, struct cfdata *);
 void	config_init_mi(void);
 void	drvctl_init(void);
 

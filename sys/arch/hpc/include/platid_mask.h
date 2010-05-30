@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.23 2009/01/29 21:20:42 nonaka Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.23.6.1 2010/05/30 05:16:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -398,11 +398,12 @@ extern platid_t platid_mask_MACH_CASIO_CASSIOPEIAA_A55V;
 #  define CASIO_CASSIOPEIAA_A55V ((int)&platid_mask_MACH_CASIO_CASSIOPEIAA_A55V)
 #endif
 #endif /* hpcsh */
-#ifdef hpcmips
+#if defined(hpcmips) || defined(hpcarm)
 extern platid_t platid_mask_MACH_SHARP;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define SHARP ((int)&platid_mask_MACH_SHARP)
 #endif
+#if defined(hpcmips)
 extern platid_t platid_mask_MACH_SHARP_TRIPAD;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define SHARP_TRIPAD ((int)&platid_mask_MACH_SHARP_TRIPAD)
@@ -464,6 +465,33 @@ extern platid_t platid_mask_MACH_SHARP_MOBILON_HC1200;
 #  define SHARP_MOBILON_HC1200 ((int)&platid_mask_MACH_SHARP_MOBILON_HC1200)
 #endif
 #endif /* hpcmips */
+#if defined(hpcarm)
+extern platid_t platid_mask_MACH_SHARP_WZERO3;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_WZERO3 ((int)&platid_mask_MACH_SHARP_WZERO3)
+#endif
+extern platid_t platid_mask_MACH_SHARP_WZERO3_WS003SH;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_WZERO3_WS003SH ((int)&platid_mask_MACH_SHARP_WZERO3_WS003SH)
+#endif
+extern platid_t platid_mask_MACH_SHARP_WZERO3_WS004SH;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_WZERO3_WS004SH ((int)&platid_mask_MACH_SHARP_WZERO3_WS004SH)
+#endif
+extern platid_t platid_mask_MACH_SHARP_WZERO3_WS007SH;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_WZERO3_WS007SH ((int)&platid_mask_MACH_SHARP_WZERO3_WS007SH)
+#endif
+extern platid_t platid_mask_MACH_SHARP_WZERO3_WS011SH;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_WZERO3_WS011SH ((int)&platid_mask_MACH_SHARP_WZERO3_WS011SH)
+#endif
+extern platid_t platid_mask_MACH_SHARP_WZERO3_WS020SH;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define SHARP_WZERO3_WS020SH ((int)&platid_mask_MACH_SHARP_WZERO3_WS020SH)
+#endif
+#endif /* hpcarm */
+#endif /* hpcmips || hpcarm */
 #ifdef hpcmips
 extern platid_t platid_mask_MACH_FUJITSU;
 #ifdef PLATID_DEFINE_MASK_NICKNAME

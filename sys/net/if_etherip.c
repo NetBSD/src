@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.28 2010/01/19 22:08:00 pooka Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.28.4.1 2010/05/30 05:18:01 rmind Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.28 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.28.4.1 2010/05/30 05:18:01 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -373,8 +373,7 @@ etheripintr(void *arg)
 		if (m == NULL)
 			break;
 		
-		if (ifp->if_bpf)
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
+		bpf_mtap(ifp, m);
 		
 		ifp->if_opackets++;
 		if (sc->sc_src && sc->sc_dst) {
@@ -692,7 +691,7 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	/* Commit change */
-	if (ether_nonstatic_aton(enaddr, addr) != 0)
+	if (ether_aton_r(enaddr, sizeof(enaddr), addr) != 0)
 		return EINVAL;
 
 	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.280 2010/03/03 00:47:31 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.280.2.1 2010/05/30 05:17:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.280 2010/03/03 00:47:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.280.2.1 2010/05/30 05:17:57 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -128,7 +128,6 @@ syncobj_t sched_syncobj = {
 	syncobj_noowner,
 };
 
-callout_t 	sched_pstats_ch;
 unsigned	sched_pstats_ticks;
 kcondvar_t	lbolt;			/* once a second sleep address */
 
@@ -152,8 +151,6 @@ synch_init(void)
 {
 
 	cv_init(&lbolt, "lbolt");
-	callout_init(&sched_pstats_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&sched_pstats_ch, sched_pstats, NULL);
 
 	evcnt_attach_dynamic(&kpreempt_ev_crit, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "defer: critical section");
@@ -161,8 +158,6 @@ synch_init(void)
 	   "kpreempt", "defer: kernel_lock");
 	evcnt_attach_dynamic(&kpreempt_ev_immed, EVCNT_TYPE_MISC, NULL,
 	   "kpreempt", "immediate");
-
-	sched_pstats(NULL);
 }
 
 /*
@@ -1148,42 +1143,76 @@ syncobj_noowner(wchan_t wchan)
 }
 
 /* Decay 95% of proc::p_pctcpu in 60 seconds, ccpu = exp(-1/20) */
-const fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;
+const fixpt_t ccpu = 0.95122942450071400909 * FSCALE;
+
+/*
+ * Constants for averages over 1, 5 and 15 minutes when sampling at
+ * 5 second intervals.
+ */
+static const fixpt_t cexp[ ] = {
+	0.9200444146293232 * FSCALE,	/* exp(-1/12) */
+	0.9834714538216174 * FSCALE,	/* exp(-1/60) */
+	0.9944598480048967 * FSCALE,	/* exp(-1/180) */
+};
 
 /*
  * sched_pstats:
  *
- * Update process statistics and check CPU resource allocation.
- * Call scheduler-specific hook to eventually adjust process/LWP
- * priorities.
+ * => Update process statistics and check CPU resource allocation.
+ * => Call scheduler-specific hook to eventually adjust LWP priorities.
+ * => Compute load average of a quantity on 1, 5 and 15 minute intervals.
  */
 void
-sched_pstats(void *arg)
+sched_pstats(void)
 {
+	extern struct loadavg averunnable;
+	struct loadavg *avg = &averunnable;
 	const int clkhz = (stathz != 0 ? stathz : hz);
-	static bool backwards;
-	struct rlimit *rlim;
-	struct lwp *l;
+	static bool backwards = false;
+	static u_int lavg_count = 0;
 	struct proc *p;
-	long runtm;
-	fixpt_t lpctcpu;
-	u_int lcpticks;
-	int sig;
+	int nrun;
 
 	sched_pstats_ticks++;
-
+	if (++lavg_count >= 5) {
+		lavg_count = 0;
+		nrun = 0;
+	}
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(p, &allproc) {
+		struct lwp *l;
+		struct rlimit *rlim;
+		long runtm;
+		int sig;
+
 		/* Increment sleep time (if sleeping), ignore overflow. */
 		mutex_enter(p->p_lock);
 		runtm = p->p_rtime.sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			fixpt_t lpctcpu;
+			u_int lcpticks;
+
 			if (__predict_false((l->l_flag & LW_IDLE) != 0))
 				continue;
 			lwp_lock(l);
 			runtm += l->l_rtime.sec;
 			l->l_swtime++;
 			sched_lwp_stats(l);
+
+			/* For load average calculation. */
+			if (__predict_false(lavg_count == 0) &&
+			    (l->l_flag & (LW_SINTR | LW_SYSTEM)) == 0) {
+				switch (l->l_stat) {
+				case LSSLEEP:
+					if (l->l_slptime > 1) {
+						break;
+					}
+				case LSRUN:
+				case LSONPROC:
+				case LSIDL:
+					nrun++;
+				}
+			}
 			lwp_unlock(l);
 
 			l->l_pctcpu = (l->l_pctcpu * ccpu) >> FSHIFT;
@@ -1227,7 +1256,17 @@ sched_pstats(void *arg)
 		}
 	}
 	mutex_exit(proc_lock);
-	uvm_meter();
+
+	/* Load average calculation. */
+	if (__predict_false(lavg_count == 0)) {
+		int i;
+		CTASSERT(__arraycount(cexp) == __arraycount(avg->ldavg));
+		for (i = 0; i < __arraycount(cexp); i++) {
+			avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
+			    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
+		}
+	}
+
+	/* Lightning bolt. */
 	cv_broadcast(&lbolt);
-	callout_schedule(&sched_pstats_ch, hz);
 }

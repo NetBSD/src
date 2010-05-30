@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.1 2010/03/09 22:39:32 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.1.4.1 2010/05/30 05:17:03 rmind Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -143,14 +143,20 @@
 #define   TSR_FIS		  0x04000000 /* Fixed-interval Interrupt Status (W1C) */
 #define	SPR_TCR			340	/* E... Timer Control Register */
 #define   TCR_WP		  0xc0000000 /* Watchdog Period */
+#define	  TCR_WP_2_N(n)		  ((((64 - (n)) & 3) << 30) | (((64 - (n)) & 0x3c0) << 15))
+#define	  TCR_WP_2_64		  0x00000000
+#define	  TCR_WP_2_1		  0xc01e0000
 #define   TCR_WRC		  0x30000000 /* Watchdog Timer Reset Control */
 #define   TCR_WIE		  0x08000000 /* Watchdog Time Interrupt Enable */
 #define   TCR_DIE		  0x04000000 /* Decremnter Interrupt Enable */
 #define   TCR_FP		  0x03000000 /* Fixed-interval Timer Period */
+#define	  TCR_FP_2_N(n)		  ((((64 - (n)) & 3) << 24) | (((64 - (n)) & 0x3c0) << 11))
+#define	  TCR_FP_2_64		  0x00000000
+#define	  TCR_FP_2_1		  0x0301e000
 #define   TCR_FIE		  0x00800000 /* Fixed-interval Interrupt Enable */
 #define   TCR_ARE		  0x00400000 /* Auto-reload Enable */
-#define   TCR_WPEXT		  0x80000000 /* Watchdog Period Extension */
-#define   TCR_FPEXT		  0x80000000 /* Fixed-interval Period Extension */
+#define   TCR_WPEXT		  0x001e0000 /* Watchdog Period Extension */
+#define   TCR_FPEXT		  0x0001e000 /* Fixed-interval Period Extension */
 
 #define	SPR_IVOR0		400	/* E... Critical input interrupt offset */
 #define	SPR_IVOR1		401	/* E... Machine check interrupt offset */

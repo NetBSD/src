@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.16 2010/01/19 22:08:18 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.16.4.1 2010/05/30 05:18:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.16 2010/01/19 22:08:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_virt.c,v 1.16.4.1 2010/05/30 05:18:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -232,9 +232,7 @@ virtif_worker(void *arg)
 		}
 		m->m_len = m->m_pkthdr.len = n;
 		m->m_pkthdr.rcvif = ifp;
-		if (ifp->if_bpf) {
-			bpf_ops->bpf_mtap(ifp->if_bpf, m);
-		}
+		bpf_mtap(ifp, m);
 		ether_input(ifp, m);
 	}
 
@@ -269,9 +267,7 @@ virtif_sender(void *arg)
 		}
 		if (i == LB_SH)
 			panic("lazy bum");
-		if (ifp->if_bpf) {
-			bpf_ops->bpf_mtap(ifp->if_bpf, m0);
-		}
+		bpf_mtap(ifp, m0);
 		rumpuser_writev(sc->sc_tapfd, io, i, &error);
 		m_freem(m0);
 		mutex_enter(&sc->sc_sendmtx);

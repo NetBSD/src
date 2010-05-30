@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.11.2.1 2010/05/30 05:17:17 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.11 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.11.2.1 2010/05/30 05:17:17 rmind Exp $");
 
 #include "opt_acpi.h"
 
@@ -47,16 +47,28 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.11 2010/03/05 14:00:17 jruoho Exp 
 
 #include <dev/acpi/acpivar.h>
 
+#define AQ_GT		0	/* > */
+#define AQ_LT		1	/* < */
+#define AQ_GTE		2	/* >= */
+#define AQ_LTE		3	/* <= */
+#define AQ_EQ		4	/* == */
+
 static int acpi_rev_cmp(uint32_t, uint32_t, int);
 
 /*
- * XXX add more
+ * XXX: Add more.
  */
 static struct acpi_quirk acpi_quirks[] = {
+
+	{ ACPI_SIG_FADT, "ASUS  ", 0x30303031, AQ_LTE, "CUV4X-D ",
+	  ACPI_QUIRK_BROKEN },
+
 	{ ACPI_SIG_FADT, "PTLTD ", 0x06040000, AQ_LTE, "  FACP  ",
 	  ACPI_QUIRK_BROKEN },
+
 	{ ACPI_SIG_FADT, "NVIDIA", 0x06040000, AQ_EQ, "CK8     ",
 	  ACPI_QUIRK_IRQ0 },
+
 	{ ACPI_SIG_FADT, "HP    ", 0x06040012, AQ_LTE, "HWPC20F ",
 	  ACPI_QUIRK_BROKEN },
 };

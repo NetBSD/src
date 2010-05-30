@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.13 2009/10/02 21:56:28 elad Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.13.4.1 2010/05/30 05:17:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.13 2009/10/02 21:56:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.13.4.1 2010/05/30 05:17:58 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -94,7 +94,7 @@ void
 psets_init(void)
 {
 
-	psets_max = max(MAXCPUS, 32);
+	psets_max = max(maxcpus, 32);
 	psets = kmem_zalloc(psets_max * sizeof(void *), KM_SLEEP);
 	psets_count = 0;
 

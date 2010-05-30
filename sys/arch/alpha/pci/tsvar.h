@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.7 2009/10/30 18:55:45 mhitch Exp $ */
+/* $NetBSD: tsvar.h,v 1.7.4.1 2010/05/30 05:16:35 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -39,10 +39,6 @@
 
 #define	tsvar() { Generate ctags(1) key. }
 
-struct tsc_softc {
-	struct	device tsc_dev;
-};
-
 struct tsp_config {
 	int	pc_pslot;		/* Pchip 0 or 1 */
 	int	pc_initted;		/* Initialized */
@@ -64,11 +60,6 @@ struct tsp_config {
 	long	pc_mem_exstorage[_FSTORE];
 	struct	extent *pc_io_ex, *pc_mem_ex;
 	int	pc_mallocsafe;
-};
-
-struct tsp_softc {
-	struct	device sc_dev;
-	struct	tsp_config *sc_ccp;
 };
 
 struct tsp_attach_args {

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.116.2.1 2010/03/18 04:36:48 rmind Exp $
+#	$NetBSD: files.atari,v 1.116.2.2 2010/05/30 05:16:39 rmind Exp $
 
 maxpartitions 16
 
@@ -181,6 +181,10 @@ file	dev/isa/fd.c			fdisa needs-flag
 
 attach	wdc at mainbus with wdc_mb: mbdma
 file	arch/atari/dev/wdc_mb.c		wdc_mb
+
+# EtherNEC on Atari ROM cartridge slot
+attach	ne at mainbus with ne_mb: rtl80x9
+file	arch/atari/dev/if_ne_mb.c	ne_mb
 
 # ISA Plug 'n Play devices
 file	arch/atari/isa/isapnp_machdep.c	isapnp

@@ -1,4 +1,4 @@
-/*	$NetBSD: iec13213.h,v 1.3 2008/05/02 19:50:04 xtraeme Exp $	*/
+/*	$NetBSD: iec13213.h,v 1.3.22.1 2010/05/30 05:17:28 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -31,10 +31,13 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/iec13213.h,v 1.14 2005/01/06 01:42:41 imp Exp $
  *
  */
+
+#ifndef _IEC13213_H_
+#define _IEC13213_H_
 
 #define	STATE_CLEAR	0x0000
 #define	STATE_SET	0x0004
@@ -162,7 +165,7 @@ struct csrtext {
 
 struct bus_info {
 #define	CSR_BUS_NAME_IEEE1394	0x31333934
-	uint32_t bus_name;	
+	uint32_t bus_name;
 #if BYTE_ORDER == BIG_ENDIAN
 	uint32_t irmc:1,		/* iso. resource manager capable */
 		 cmc:1,			/* cycle master capable */
@@ -233,12 +236,12 @@ struct crom_src {
 
 struct crom_chunk {
 	STAILQ_ENTRY(crom_chunk) link;
-	struct crom_chunk *ref_chunk; 
-	int ref_index; 
+	struct crom_chunk *ref_chunk;
+	int ref_index;
 	int offset;
 	struct {
 		BIT16x2(crc_len, crc);
-		uint32_t buf[CROM_MAX_CHUNK_LEN]; 
+		uint32_t buf[CROM_MAX_CHUNK_LEN];
 	} data;
 };
 
@@ -250,3 +253,5 @@ extern int crom_add_simple_text(struct crom_src *src, struct crom_chunk *,
 					struct crom_chunk *, const char *);
 extern int crom_load(struct crom_src *, uint32_t *, int);
 #endif
+
+#endif	/* _IEC13213_H_ */

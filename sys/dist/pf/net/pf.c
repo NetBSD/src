@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.61 2010/01/19 22:08:00 pooka Exp $	*/
+/*	$NetBSD: pf.c,v 1.61.4.1 2010/05/30 05:17:47 rmind Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.61 2010/01/19 22:08:00 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.61.4.1 2010/05/30 05:17:47 rmind Exp $");
 
 #include "pflog.h"
 
@@ -257,6 +257,8 @@ int			 pf_check_congestion(struct ifqueue *);
 extern struct pool pfr_ktable_pl;
 extern struct pool pfr_kentry_pl;
 
+extern int pf_state_lock;
+
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	{ &pf_state_pl, PFSTATE_HIWAT },
 	{ &pf_src_tree_pl, PFSNODE_HIWAT },
@@ -267,6 +269,10 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 
 #define STATE_LOOKUP()							\
 	do {								\
+		if (pf_state_lock) {		    \
+			*state = NULL;				\
+			return (PF_DROP);			\
+		}								\
 		if (direction == PF_IN)					\
 			*state = pf_find_state(kif, &key, PF_EXT_GWY);	\
 		else							\
@@ -917,19 +923,32 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *s)
 	return (0);
 }
 
+#ifdef _LKM
+volatile int pf_purge_thread_stop;
+volatile int pf_purge_thread_running;
+#endif
+
 void
 pf_purge_thread(void *v)
 {
 	int nloops = 0, s;
 
+#ifdef _LKM
+	pf_purge_thread_running = 1;
+	pf_purge_thread_stop = 0;
+
+	while (!pf_purge_thread_stop) {
+#else
 	for (;;) {
+#endif /* !_LKM */
 		tsleep(pf_purge_thread, PWAIT, "pftm", 1 * hz);
 
 		s = splsoftnet();
 
 		/* process a fraction of the state table every second */
-		pf_purge_expired_states(1 + (pf_status.states
-		    / pf_default_rule.timeout[PFTM_INTERVAL]));
+		if (! pf_state_lock)
+			pf_purge_expired_states(1 + (pf_status.states
+						/ pf_default_rule.timeout[PFTM_INTERVAL]));
 
 		/* purge other expired types every PFTM_INTERVAL seconds */
 		if (++nloops >= pf_default_rule.timeout[PFTM_INTERVAL]) {
@@ -940,6 +959,12 @@ pf_purge_thread(void *v)
 
 		splx(s);
 	}
+
+#ifdef _LKM
+	pf_purge_thread_running = 0;
+	wakeup(&pf_purge_thread_running);
+	kthread_exit(0);
+#endif /* _LKM */
 }
 
 u_int32_t
@@ -2926,7 +2951,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
 
-	hlen = 0;	/* XXXGCC -Wunitialized m68k */
+	hlen = 0;	/* XXXGCC -Wuninitialized m68k */
 
 	memset(&ro, 0, sizeof(ro));
 	switch (af) {
@@ -3321,6 +3346,11 @@ pf_test_rule(struct pf_rule **rm, struct pf_state **sm, int direction,
 			m_copyback(m, off, hdrlen, pd->hdr.any);
 		PFLOG_PACKET(kif, h, m, af, direction, reason, r->log ? r : nr,
 		    a, ruleset, pd);
+	}
+
+	if (r->keep_state && pf_state_lock) {
+		REASON_SET(&reason, PFRES_STATELOCKED);
+		return PF_DROP;
 	}
 
 	if ((r->action == PF_DROP) &&
@@ -4312,8 +4342,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct pfi_kif *kif,
 	int		 state_icmp = 0;
 	struct pf_state_key_cmp key;
 
-	icmpsum = NULL;	/* XXXGCC -Wunitialized m68k */
-	icmptype = 0;	/* XXXGCC -Wunitialized m68k */
+	icmpsum = NULL;	/* XXXGCC -Wuninitialized m68k */
+	icmptype = 0;	/* XXXGCC -Wuninitialized m68k */
 
 	switch (pd->proto) {
 #ifdef INET

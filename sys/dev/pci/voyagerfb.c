@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.2 2009/08/20 02:40:57 macallan Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.2.4.1 2010/05/30 05:17:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.2 2009/08/20 02:40:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.2.4.1 2010/05/30 05:17:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,6 +679,7 @@ static void
 voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 {
 	struct rasops_info *ri = cookie;
+	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct voyagerfb_softc *sc = scr->scr_cookie;
 	uint32_t cmd;
@@ -687,10 +688,10 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		int fg, bg, uc;
 		uint8_t *data;
 		int x, y, wi, he;
-		wi = ri->ri_font->fontwidth;
-		he = ri->ri_font->fontheight;
+		wi = font->fontwidth;
+		he = font->fontheight;
 
-		if (!CHAR_IN_FONT(c, ri->ri_font))
+		if (!CHAR_IN_FONT(c, font))
 			return;
 		bg = ri->ri_devcmap[(attr >> 16) & 0x0f];
 		fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
@@ -699,9 +700,8 @@ voyagerfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		if (c == 0x20) {
 			voyagerfb_rectfill(sc, x, y, wi, he, bg);
 		} else {
-			uc = c - ri->ri_font->firstchar;
-			data = (uint8_t *)ri->ri_font->data + uc * 
-			    ri->ri_fontscale;
+			uc = c - font->firstchar;
+			data = (uint8_t *)font->data + uc * ri->ri_fontscale;
 			cmd = ROP_COPY |
 			      SM502_CTRL_USE_ROP2 |
 			      SM502_CTRL_CMD_HOSTWRT |

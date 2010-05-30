@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.44 2010/03/14 18:04:29 pgoyette Exp $ */
+/*	$NetBSD: ipmi.c,v 1.44.2.1 2010/05/30 05:17:12 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.44 2010/03/14 18:04:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.44.2.1 2010/05/30 05:17:12 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,8 +84,8 @@ struct ipmi_sensor {
 	char		i_envdesc[64];
 	int 		i_envtype; /* envsys compatible type */
 	int		i_envnum; /* envsys index */
-	sysmon_envsys_lim_t i_limits;
-	uint32_t	i_props;
+	sysmon_envsys_lim_t i_limits, i_deflims;
+	uint32_t	i_props, i_defprops;
 	SLIST_ENTRY(ipmi_sensor) i_list;
 };
 
@@ -1359,6 +1359,10 @@ ipmi_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	/* Find the ipmi_sensor corresponding to this edata */
 	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
 		if (ipmi_s->i_envnum == edata->sensor) {
+			if (limits == NULL) {
+				limits = &ipmi_s->i_deflims;
+				props  = &ipmi_s->i_defprops;
+			}
 			*props |= PROP_DRIVER_LIMITS;
 			ipmi_s->i_limits = *limits;
 			ipmi_s->i_props  = *props;
@@ -1381,6 +1385,10 @@ ipmi_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 			ipmi_get_sensor_limits(sc, ipmi_s, limits, props);
 			ipmi_s->i_limits = *limits;
 			ipmi_s->i_props  = *props;
+			if (ipmi_s->i_defprops == 0) {
+				ipmi_s->i_defprops = *props;
+				ipmi_s->i_deflims  = *limits;
+			}
 			return;
 		}
 	}
@@ -1724,8 +1732,8 @@ ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia)
 	if (bus_space_map(sc->sc_iot, ia->iaa_if_iobase,
 	    sc->sc_if->nregs * sc->sc_if_iospacing,
 	    0, &sc->sc_ioh)) {
-		printf("ipmi: bus_space_map(%x %x %x 0 %p) failed\n",
-		    sc->sc_iot, ia->iaa_if_iobase,
+		printf("ipmi: bus_space_map(..., %x, %x, 0, %p) failed\n",
+		    ia->iaa_if_iobase,
 		    sc->sc_if->nregs * sc->sc_if_iospacing, &sc->sc_ioh);
 		return (-1);
 	}

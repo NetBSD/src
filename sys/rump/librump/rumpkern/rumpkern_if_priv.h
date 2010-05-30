@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpkern_if_priv.h,v 1.6 2010/03/05 18:43:59 pooka Exp $	*/
+/*	$NetBSD: rumpkern_if_priv.h,v 1.6.4.1 2010/05/30 05:18:06 rmind Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -15,9 +15,9 @@ struct uio * rump_uio_setup(void *, size_t, off_t, enum rump_uiorw);
 size_t rump_uio_getresid(struct uio *);
 off_t rump_uio_getoff(struct uio *);
 size_t rump_uio_free(struct uio *);
-kauth_cred_t rump_cred_create(uid_t, gid_t, size_t, gid_t *);
-kauth_cred_t rump_cred_suserget(void);
-void rump_cred_put(kauth_cred_t);
+struct kauth_cred* rump_cred_create(uid_t, gid_t, size_t, gid_t *);
+struct kauth_cred* rump_cred_suserget(void);
+void rump_cred_put(struct kauth_cred *);
 struct lwp * rump_newproc_switch(void);
 struct lwp * rump_lwp_alloc(pid_t, lwpid_t);
 struct lwp * rump_lwp_alloc_and_switch(pid_t, lwpid_t);

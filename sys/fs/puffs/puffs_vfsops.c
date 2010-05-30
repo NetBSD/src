@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.87.2.1 2010/03/16 15:38:07 rmind Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.87.2.2 2010/05/30 05:17:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.87.2.1 2010/03/16 15:38:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.87.2.2 2010/05/30 05:17:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -111,11 +111,9 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 
 	args = (struct puffs_kargs *)data;
 
-	/* devel phase */
-	if (args->pa_vers != (PUFFSVERSION | PUFFSDEVELVERS)) {
+	if (args->pa_vers != PUFFSVERSION) {
 		printf("puffs_mount: development version mismatch: "
-		    "kernel %d, lib %d\n",
-		    PUFFSVERSION, args->pa_vers & ~PUFFSDEVELVERS);
+		    "kernel %d, lib %d\n", PUFFSVERSION, args->pa_vers);
 		error = EINVAL;
 		goto out;
 	}
@@ -758,6 +756,56 @@ puffs_vfsop_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ts)
 	return EOPNOTSUPP;
 }
 
+int
+puffs_vfsop_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
+	int attrnamespace, const char *attrname)
+{
+	PUFFS_MSG_VARS(vfs, extattrctl);
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
+	struct puffs_node *pnp;
+	puffs_cookie_t pnc;
+	int error, flags;
+
+	if (vp) {
+		/* doesn't make sense for puffs servers */
+		if (vp->v_mount != mp)
+			return EXDEV;
+		pnp = vp->v_data;
+		pnc = pnp->pn_cookie;
+		flags = PUFFS_EXTATTRCTL_HASNODE;
+	} else {
+		pnp = pnc = NULL;
+		flags = 0;
+	}
+
+	PUFFS_MSG_ALLOC(vfs, extattrctl);
+	extattrctl_msg->pvfsr_cmd = cmd;
+	extattrctl_msg->pvfsr_attrnamespace = attrnamespace;
+	extattrctl_msg->pvfsr_flags = flags;
+	if (attrname) {
+		strlcpy(extattrctl_msg->pvfsr_attrname, attrname,
+		    sizeof(extattrctl_msg->pvfsr_attrname));
+		extattrctl_msg->pvfsr_flags |= PUFFS_EXTATTRCTL_HASATTRNAME;
+	}
+	puffs_msg_setinfo(park_extattrctl,
+	    PUFFSOP_VFS, PUFFS_VFS_EXTATTRCTL, pnc);
+
+	puffs_msg_enqueue(pmp, park_extattrctl);
+	if (vp) {
+		mutex_enter(&pnp->pn_mtx);
+		puffs_referencenode(pnp);
+		mutex_exit(&pnp->pn_mtx);
+		VOP_UNLOCK(vp, 0);
+	}
+	error = puffs_msg_wait2(pmp, park_extattrctl, pnp, NULL);
+	PUFFS_MSG_RELEASE(extattrctl);
+	if (vp) {
+		puffs_releasenode(pnp);
+	}
+
+	return checkerr(pmp, error, __func__);
+}
+
 const struct vnodeopv_desc * const puffs_vnodeopv_descs[] = {
 	&puffs_vnodeop_opv_desc,
 	&puffs_specop_opv_desc,
@@ -784,7 +832,7 @@ struct vfsops puffs_vfsops = {
 	puffs_vfsop_done,		/* done		*/
 	NULL,				/* mountroot	*/
 	puffs_vfsop_snapshot,		/* snapshot	*/
-	vfs_stdextattrctl,		/* extattrctl	*/
+	puffs_vfsop_extattrctl,		/* extattrctl	*/
 	(void *)eopnotsupp,		/* suspendctl	*/
 	genfs_renamelock_enter,
 	genfs_renamelock_exit,

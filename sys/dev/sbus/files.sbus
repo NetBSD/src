@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.35 2010/03/01 05:42:08 macallan Exp $
+#	$NetBSD: files.sbus,v 1.35.2.1 2010/05/30 05:17:42 rmind Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -148,3 +148,9 @@ device	agten: fb, rasops8, bt_dac, wsemuldisplaydev, vcons
 attach	agten at sbus
 file	dev/sbus/agten.c		agten needs-flag
 file	dev/ic/i128.c			agten
+
+# Sun CG12 / Matrox SG3
+defflag opt_cgtwelve.h	CG12_DEBUG
+device	cgtwelve: fb, rasops1, rasops8, wsemuldisplaydev, vcons
+attach	cgtwelve at sbus
+file	dev/sbus/cgtwelve.c		cgtwelve

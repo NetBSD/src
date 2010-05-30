@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.26 2009/11/26 00:19:16 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26.4.1 2010/05/30 05:16:43 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2009/11/26 00:19:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26.4.1 2010/05/30 05:16:43 rmind Exp $");
 
 #include "opt_marvell.h"
 #include "opt_modular.h"
@@ -45,52 +45,37 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2009/11/26 00:19:16 matt Exp $");
 #include "opt_ns.h"
 #include "opt_ipkdb.h"
 
+#define _POWERPC_BUS_DMA_PRIVATE
+
 #include <sys/param.h>
+#include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/mount.h>
-#include <sys/msgbuf.h>
-#include <sys/proc.h>
-#include <sys/reboot.h>
 #include <sys/extent.h>
-#include <sys/syslog.h>
+#include <sys/kernel.h>
+#include <sys/ksyms.h>
+#include <sys/mount.h>
+#include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/termios.h>
-#include <sys/ksyms.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>
 
-#include <machine/bus.h>
 #include <machine/db_machdep.h>
-#include <machine/intr.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
-#include <machine/trap.h>
 
 #include <powerpc/oea/bat.h>
-#include <powerpc/marvell/watchdog.h>
+#include <powerpc/pic/picvar.h>
+#include <powerpc/pio.h>
 
 #include <ddb/db_extern.h>
 
 #include <dev/cons.h>
-
-#include "vga.h"
-#if (NVGA > 0)
-#include <dev/ic/mc6845reg.h>
-#include <dev/ic/pcdisplayvar.h>
-#include <dev/ic/vgareg.h>
-#include <dev/ic/vgavar.h>
-#endif
-
-#include "isa.h"
-#if (NISA > 0)
-void isa_intr_init(void);
-#endif
 
 #include "com.h"
 #if (NCOM > 0)
@@ -100,16 +85,18 @@ void isa_intr_init(void);
 
 #include <dev/marvell/gtreg.h>
 #include <dev/marvell/gtvar.h>
-#include <dev/marvell/gtethreg.h>
 
 #include "gtmpsc.h"
 #if (NGTMPSC > 0)
+#include <dev/marvell/gtbrgreg.h>
 #include <dev/marvell/gtsdmareg.h>
 #include <dev/marvell/gtmpscreg.h>
 #include <dev/marvell/gtmpscvar.h>
 #endif
 
 #include "ksyms.h"
+#include "locators.h"
+
 
 /*
  * Global variables used here and there
@@ -117,64 +104,62 @@ void isa_intr_init(void);
 #define	PMONMEMREGIONS	32
 struct mem_region physmemr[PMONMEMREGIONS], availmemr[PMONMEMREGIONS];
 
-char *bootpath;
-
 void initppc(u_int, u_int, u_int, void *); /* Called from locore */
-void strayintr(int);
-int lcsplx(int);
-void gt_bus_space_init(void);
-void gt_find_memory(bus_space_tag_t, bus_space_handle_t, paddr_t);
-void gt_halt(bus_space_tag_t, bus_space_handle_t);
-void return_to_dink(int);
+static void gt_bus_space_init(void);
+static inline void gt_record_memory(int, paddr_t, paddr_t, paddr_t);
+static void gt_find_memory(paddr_t);
 
-void kcomcnputs(dev_t, const char *);
+bus_addr_t gt_base = 0;
 
-struct powerpc_bus_space gt_pci0_mem_bs_tag = {
+extern int primary_pic;
+struct pic_ops *discovery_pic;
+struct pic_ops *discovery_gpp_pic[4];
+
+
+struct powerpc_bus_space ev64260_pci0_mem_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0x00000000, 0x00000000,
 };
-struct powerpc_bus_space gt_pci0_io_bs_tag = {
+struct powerpc_bus_space ev64260_pci0_io_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x00000000, 0x00000000, 0x00000000,
 };
-struct powerpc_bus_space gt_pci1_mem_bs_tag = {
+struct powerpc_bus_space ev64260_pci1_mem_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0x00000000, 0x00000000,
 };
-struct powerpc_bus_space gt_pci1_io_bs_tag = {
+struct powerpc_bus_space ev64260_pci1_io_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
 	0x00000000, 0x00000000, 0x00000000,
 };
-struct powerpc_bus_space gt_obio0_bs_tag = {
+struct powerpc_bus_space ev64260_obio0_bs_tag = {
 	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE|OBIO0_STRIDE,
 	0x00000000, 0x00000000, 0x00000000,
 };
-struct powerpc_bus_space gt_obio1_bs_tag = {
+struct powerpc_bus_space ev64260_obio1_bs_tag = {
 	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE|OBIO1_STRIDE,
 	0x00000000, 0x00000000, 0x00000000,
 };
-struct powerpc_bus_space gt_obio2_bs_tag = {
+struct powerpc_bus_space ev64260_obio2_bs_tag = {
 	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE|OBIO2_STRIDE,
 	0x00000000, 0x00000000, 0x00000000,
 };
-struct powerpc_bus_space gt_obio3_bs_tag = {
+struct powerpc_bus_space ev64260_obio3_bs_tag = {
 	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE|OBIO3_STRIDE,
 	0x00000000, 0x00000000, 0x00000000,
 };
-struct powerpc_bus_space gt_bootcs_bs_tag = {
+struct powerpc_bus_space ev64260_bootcs_bs_tag = {
 	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE,
 	0x00000000, 0x00000000, 0x00000000,
 };
-struct powerpc_bus_space gt_mem_bs_tag = {
+struct powerpc_bus_space ev64260_gt_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	GT_BASE, 0x00000000, 0x00010000,
+	0x00000000, 0x00000000, GT_SIZE,
 };
 
-bus_space_handle_t gt_memh;
-
-struct powerpc_bus_space *obio_bs_tags[5] = {
-	&gt_obio0_bs_tag, &gt_obio1_bs_tag, &gt_obio2_bs_tag,
-	&gt_obio3_bs_tag, &gt_bootcs_bs_tag
+struct powerpc_bus_space *ev64260_obio_bs_tags[5] = {
+	&ev64260_obio0_bs_tag, &ev64260_obio1_bs_tag, &ev64260_obio2_bs_tag,
+	&ev64260_obio3_bs_tag, &ev64260_bootcs_bs_tag
 };
 
 static char ex_storage[10][EXTENT_FIXED_STORAGE_SIZE(8)]
@@ -195,30 +180,54 @@ const struct gt_decode_info {
     {	GT_BootCS_Low_Decode,	GT_BootCS_High_Decode },
 };
 
+struct powerpc_bus_dma_tag ev64260_bus_dma_tag = {
+        0,				/* _bounce_thresh */
+	_bus_dmamap_create,
+	_bus_dmamap_destroy,
+	_bus_dmamap_load,
+	_bus_dmamap_load_mbuf,
+	_bus_dmamap_load_uio,
+	_bus_dmamap_load_raw,
+	_bus_dmamap_unload,
+	_bus_dmamap_sync,
+	_bus_dmamem_alloc,
+	_bus_dmamem_free,
+	_bus_dmamem_map,
+	_bus_dmamem_unmap,
+	_bus_dmamem_mmap,
+};
+
+
 void
 initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 {
-	oea_batinit(0xf0000000, BAT_BL_256M);
-	oea_init((void (*)(void))ext_intr);
+	extern struct cfdata cfdata[];
+	cfdata_t cf = &cfdata[0];
 
-	DELAY(100000);
+	/* Get mapped address of gt(System Controller) */
+	while (cf->cf_name != NULL) {
+		if (strcmp(cf->cf_name, "gt") == 0 &&
+		    *cf->cf_loc != MAINBUSCF_ADDR_DEFAULT)
+			break;
+		cf++;
+	}
+	if (cf->cf_name == NULL)
+		panic("where is gt?");
+	gt_base = *cf->cf_loc;
+
+	ev64260_gt_bs_tag.pbs_offset = gt_base;
+	ev64260_gt_bs_tag.pbs_base = gt_base;
+	ev64260_gt_bs_tag.pbs_limit += gt_base;
+	oea_batinit(gt_base, BAT_BL_256M);
+
+	oea_init(NULL);
 
 	gt_bus_space_init();
-	gt_find_memory(&gt_mem_bs_tag, gt_memh, roundup(endkernel, PAGE_SIZE));
-	gt_halt(&gt_mem_bs_tag, gt_memh);
-
-	/*
-	 * Now that we known how much memory, reinit the bats.
-	 */
-	oea_batinit(0xf0000000, BAT_BL_256M);
+	gt_find_memory(roundup(endkernel, PAGE_SIZE));
 
 	consinit();
 
-#if (NISA > 0)
-	isa_intr_init();
-#endif
-
-        /*
+	/*
 	 * Set the page size.
 	 */
 	uvm_setpagesize();
@@ -245,67 +254,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 #endif
 }
 
-void
-mem_regions(struct mem_region **mem, struct mem_region **avail)
-{
-	*mem = physmemr;
-	*avail = availmemr;
-}
-
-static inline void
-gt_record_memory(int j, paddr_t start, paddr_t end, paddr_t endkernel)
-{
-	physmemr[j].start = start;
-	physmemr[j].size = end - start;
-	if (start < endkernel)
-		start = endkernel;
-	availmemr[j].start = start;
-	availmemr[j].size = end - start;
-}
-
-void
-gt_find_memory(bus_space_tag_t memt, bus_space_handle_t memh,
-	paddr_t endkernel)
-{
-	paddr_t start = ~0, end = 0;
-	int i, j = 0, first = 1;
-
-	/*
-	 * Round kernel end to a page boundary.
-	 */
-	for (i = 0; i < 4; i++) {
-		paddr_t nstart, nend;
-		nstart = GT_LowAddr_GET(bus_space_read_4(&gt_mem_bs_tag,
-		    gt_memh, decode_regs[i].low_decode));
-		nend = GT_HighAddr_GET(bus_space_read_4(&gt_mem_bs_tag,
-		    gt_memh, decode_regs[i].high_decode)) + 1;
-		if (nstart >= nend)
-			continue;
-		if (first) {
-			/*
-			 * First entry?  Just remember it.
-			 */
-			start = nstart;
-			end  = nend;
-			first = 0;
-		} else if (nstart == end) {
-			/*
-			 * Contiguous?  Just update the end.
-			 */
-			end = nend;
-		} else {
-			/*
-			 * Disjoint?  record it.
-			 */
-			gt_record_memory(j, start, end, endkernel);
-			start = nstart;
-			end = nend;
-			j++;
-		}
-	}
-	gt_record_memory(j, start, end, endkernel);
-}
-
 /*
  * Machine dependent startup code.
  */
@@ -316,6 +264,19 @@ cpu_startup(void)
 
 	oea_startup(NULL);
 
+	pic_init();
+	discovery_pic = setup_discovery_pic();
+	primary_pic = 0;
+	discovery_gpp_pic[0] = setup_discovery_gpp_pic(discovery_pic, 0);
+	discovery_gpp_pic[1] = setup_discovery_gpp_pic(discovery_pic, 8);
+	discovery_gpp_pic[2] = setup_discovery_gpp_pic(discovery_pic, 16);
+	discovery_gpp_pic[3] = setup_discovery_gpp_pic(discovery_pic, 24);
+	/*
+	 * GPP interrupts establishes later.
+	 */
+
+	oea_install_extint(pic_ext_intr);
+
 	/*
 	 * Now that we have VM, malloc()s are OK in bus_space.
 	 */
@@ -324,7 +285,7 @@ cpu_startup(void)
 	/*
 	 * Now allow hardware interrupts.
 	 */
-	splhigh();
+	splraise(-1);
 	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 	    :	"=r"(msr)
 	    :	"K"(PSL_EE));
@@ -337,9 +298,34 @@ cpu_startup(void)
 void
 consinit(void)
 {
+
 #ifdef MPSC_CONSOLE
 	/* PMON using MPSC0 @ 9600 */
-	gtmpsccnattach(&gt_mem_bs_tag, gt_memh, MPSC_CONSOLE, 9600,
+	const int brg = GTMPSC_CRR_BRG0;
+	const int baud = 9600;
+	uint32_t cr;
+
+#if 1
+	/*
+	 * XXX HACK FIXME
+	 * PMON output has not been flushed.  give him a chance
+	 */
+	DELAY(100000);  /* XXX */
+#endif
+	/* Setup MPSC Routing Registers */
+	out32rb(gt_base + GTMPSC_MRR, GTMPSC_MRR_RES);
+	cr = in32rb(gt_base + GTMPSC_RCRR);
+	cr &= ~GTMPSC_CRR(MPSC_CONSOLE, GTMPSC_CRR_MASK);
+	cr |= GTMPSC_CRR(MPSC_CONSOLE, brg);
+	out32rb(gt_base + GTMPSC_RCRR, cr);
+	out32rb(gt_base + GTMPSC_TCRR, cr);
+
+	/* Setup Baud Rate Configuration Register of Baud Rate Generator */
+	out32rb(gt_base + BRG_BCR(brg),
+	    BRG_BCR_EN | GT_MPSC_CLOCK_SOURCE | compute_cdv(baud));
+
+	gtmpsccnattach(&ev64260_gt_bs_tag, &ev64260_bus_dma_tag, gt_base,
+	    MPSC_CONSOLE, brg, baud,
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
 #else
 	/* PPCBOOT using COM1 @ 57600 */
@@ -347,15 +333,6 @@ consinit(void)
 	    COM_FREQ*2, COM_TYPE_NORMAL,
 	    (TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8);
 #endif
-}
-
-/*
- * Stray interrupts.
- */
-void
-strayintr(int irq)
-{
-	log(LOG_ERR, "stray interrupt %d\n", irq);
 }
 
 /*
@@ -405,96 +382,39 @@ cpu_reboot(int howto, char *what)
 	*ap++ = 0;
 	if (ap[-2] == '-')
 		*ap1 = 0;
-#if 0
-	{
-		void mvpppc_reboot(void);
-		mvpppc_reboot();
-	}
-#endif
 	gt_watchdog_reset();
 	/* NOTREACHED */
 	while (1);
 }
 
-int
-lcsplx(int ipl)
-{
-	return spllower(ipl);
-}
-
 void
-gt_halt(bus_space_tag_t memt, bus_space_handle_t memh)
+mem_regions(struct mem_region **mem, struct mem_region **avail)
 {
-	int i;
-	u_int32_t data;
 
-	/*
-	 * Shut down the MPSC ports
-	 */
-	for (i = 0; i < 2; i++) {
-		bus_space_write_4(memt, memh,
-		    SDMA_U_SDCM(i), SDMA_SDCM_AR|SDMA_SDCM_AT);
-		for (;;) {
-			data = bus_space_read_4(memt, memh,
-			    SDMA_U_SDCM(i));
-			if (((SDMA_SDCM_AR|SDMA_SDCM_AT) & data) == 0)
-				break;
-		}
-	}
-
-	/*
-	 * Shut down the Ethernets
-	 */
-	for (i = 0; i < 3; i++) {
-		bus_space_write_4(memt, memh,
-		    ETH_ESDCMR(2), ETH_ESDCMR_AR|ETH_ESDCMR_AT);
-		for (;;) {
-			data = bus_space_read_4(memt, memh,
-			    ETH_ESDCMR(i));
-			if (((ETH_ESDCMR_AR|ETH_ESDCMR_AT) & data) == 0)
-				break;
-		}
-		data = bus_space_read_4(memt, memh, ETH_EPCR(i));
-		data &= ~ETH_EPCR_EN;
-		bus_space_write_4(memt, memh, ETH_EPCR(i), data);
-	}
+	*mem = physmemr;
+	*avail = availmemr;
 }
 
-int
-gtget_macaddr(struct gt_softc *gt, int macno, char *enaddr)
-{
-	enaddr[0] = 0x02;
-	enaddr[1] = 0x00;
-	enaddr[2] = 0x04;
-	enaddr[3] = 0x00;
-	enaddr[4] = 0x00;
-	enaddr[5] = 0x04 + macno;
-
-	return 0;
-}
-
-void
+static void
 gt_bus_space_init(void)
 {
-	bus_space_tag_t gt_memt = &gt_mem_bs_tag;
 	const struct gt_decode_info *di;
 	uint32_t datal, datah;
-	int error;
-	int bs = 0;
-	int j;
+	int error, bs, i;
 
-	error = bus_space_init(&gt_mem_bs_tag, "gtmem",
+	bs = 0;
+	error = bus_space_init(&ev64260_gt_bs_tag, "gt",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
+	bs++;
 
-	error = bus_space_map(gt_memt, 0, 0x10000, 0, &gt_memh);
+	for (i = 0, di = &decode_regs[4]; i < 5; i++, di++) {
+		struct powerpc_bus_space *memt = ev64260_obio_bs_tags[i];
 
-	for (j = 0, di = &decode_regs[4]; j < 5; j++, di++) {
-		struct powerpc_bus_space *memt = obio_bs_tags[j];
-		datal = bus_space_read_4(gt_memt, gt_memh, di->low_decode);
-		datah = bus_space_read_4(gt_memt, gt_memh, di->high_decode);
+		datal = in32rb(gt_base + di->low_decode);
+		datah = in32rb(gt_base + di->high_decode);
 
 		if (GT_LowAddr_GET(datal) >= GT_HighAddr_GET(datal)) {
-			obio_bs_tags[j] = NULL;
+			ev64260_obio_bs_tags[i] = NULL;
 			continue;
 		}
 		memt->pbs_offset = GT_LowAddr_GET(datal);
@@ -506,119 +426,163 @@ gt_bus_space_init(void)
 		bs++;
 	}
 
-	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_Mem0_Low_Decode);
-	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_Mem0_High_Decode);
+	datal = in32rb(gt_base + GT_PCI0_Mem0_Low_Decode);
+	datah = in32rb(gt_base + GT_PCI0_Mem0_High_Decode);
 #if defined(GT_PCI0_MEMBASE)
 	datal &= ~0xfff;
 	datal |= (GT_PCI0_MEMBASE >> 20);
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI0_Mem0_Low_Decode, datal);
+	out32rb(gt_base + GT_PCI0_Mem0_Low_Decode, datal);
 #endif
 #if defined(GT_PCI0_MEMSIZE)
 	datah &= ~0xfff;
-	datah |= (GT_PCI0_MEMSIZE + GT_LowAddr_GET(datal) - 1)  >> 20;
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI0_Mem0_High_Decode, datal);
+	datah |= (GT_PCI0_MEMSIZE + GT_LowAddr_GET(datal) - 1) >> 20;
+	out32rb(gt_base + GT_PCI0_Mem0_High_Decode, datal);
 #endif
-	gt_pci0_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
-	gt_pci0_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
+	ev64260_pci0_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
+	ev64260_pci0_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
 
-	error = bus_space_init(&gt_pci0_mem_bs_tag, "pci0-mem",
+	error = bus_space_init(&ev64260_pci0_mem_bs_tag, "pci0-mem",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
 	bs++;
 
+#if 1	/* XXXXXX */
 	/*
 	 * Make sure PCI0 Memory is BAT mapped.
 	 */
 	if (GT_LowAddr_GET(datal) < GT_HighAddr_GET(datal))
-		oea_iobat_add(gt_pci0_mem_bs_tag.pbs_base & SEGMENT_MASK, BAT_BL_256M);
+		oea_iobat_add(ev64260_pci0_mem_bs_tag.pbs_base & SEGMENT_MASK,
+		    BAT_BL_256M);
+#endif
 
 	/*
 	 * Make sure that I/O space start at 0.
 	 */
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_IO_Remap, 0);
+	out32rb(gt_base + GT_PCI1_IO_Remap, 0);
 
-	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_IO_Low_Decode);
-	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI0_IO_High_Decode);
+	datal = in32rb(gt_base + GT_PCI0_IO_Low_Decode);
+	datah = in32rb(gt_base + GT_PCI0_IO_High_Decode);
 #if defined(GT_PCI0_IOBASE)
 	datal &= ~0xfff;
 	datal |= (GT_PCI0_IOBASE >> 20);
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI0_IO_Low_Decode, datal);
+	out32rb(gt_base + GT_PCI0_IO_Low_Decode, datal);
 #endif
 #if defined(GT_PCI0_IOSIZE)
 	datah &= ~0xfff;
-	datah |= (GT_PCI0_IOSIZE + GT_LowAddr_GET(datal) - 1)  >> 20;
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI0_IO_High_Decode, datal);
+	datah |= (GT_PCI0_IOSIZE + GT_LowAddr_GET(datal) - 1) >> 20;
+	out32rb(gt_base + GT_PCI0_IO_High_Decode, datal);
 #endif
-	gt_pci0_io_bs_tag.pbs_offset = GT_LowAddr_GET(datal);
-	gt_pci0_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
-	    gt_pci0_io_bs_tag.pbs_offset;
+	ev64260_pci0_io_bs_tag.pbs_offset = GT_LowAddr_GET(datal);
+	ev64260_pci0_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
+	    ev64260_pci0_io_bs_tag.pbs_offset;
 
-	error = bus_space_init(&gt_pci0_io_bs_tag, "pci0-ioport",
+	error = bus_space_init(&ev64260_pci0_io_bs_tag, "pci0-ioport",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
 	bs++;
 
-#if 0
-	error = extent_alloc_region(gt_pci0_io_bs_tag.pbs_extent,
-	    0x10000, 0x7F0000, EX_NOWAIT);
-	if (error)
-		panic("gt_bus_space_init: can't block out reserved "
-		    "I/O space 0x10000-0x7fffff: error=%d\n", error);
-#endif
-
-	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_Mem0_Low_Decode);
-	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_Mem0_High_Decode);
+	datal = in32rb(gt_base + GT_PCI1_Mem0_Low_Decode);
+	datah = in32rb(gt_base + GT_PCI1_Mem0_High_Decode);
 #if defined(GT_PCI1_MEMBASE)
 	datal &= ~0xfff;
 	datal |= (GT_PCI1_MEMBASE >> 20);
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_Mem0_Low_Decode, datal);
+	out32rb(gt_base + GT_PCI1_Mem0_Low_Decode, datal);
 #endif
 #if defined(GT_PCI1_MEMSIZE)
 	datah &= ~0xfff;
-	datah |= (GT_PCI1_MEMSIZE + GT_LowAddr_GET(datal) - 1)  >> 20;
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_Mem0_High_Decode, datal);
+	datah |= (GT_PCI1_MEMSIZE + GT_LowAddr_GET(datal) - 1) >> 20;
+	out32rb(gt_base + GT_PCI1_Mem0_High_Decode, datal);
 #endif
-	gt_pci1_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
-	gt_pci1_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
+	ev64260_pci1_mem_bs_tag.pbs_base  = GT_LowAddr_GET(datal);
+	ev64260_pci1_mem_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1;
 
-	error = bus_space_init(&gt_pci1_mem_bs_tag, "pci1-mem",
+	error = bus_space_init(&ev64260_pci1_mem_bs_tag, "pci1-mem",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
 	bs++;
 
+#if 1	/* XXXXXX */
 	/*
 	 * Make sure PCI1 Memory is BAT mapped.
 	 */
 	if (GT_LowAddr_GET(datal) < GT_HighAddr_GET(datal))
-		oea_iobat_add(gt_pci1_mem_bs_tag.pbs_base & SEGMENT_MASK, BAT_BL_256M);
+		oea_iobat_add(ev64260_pci1_mem_bs_tag.pbs_base & SEGMENT_MASK,
+		    BAT_BL_256M);
+#endif
 
 	/*
 	 * Make sure that I/O space start at 0.
 	 */
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_IO_Remap, 0);
+	out32rb(gt_base + GT_PCI1_IO_Remap, 0);
 
-	datal = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_IO_Low_Decode);
-	datah = bus_space_read_4(gt_memt, gt_memh, GT_PCI1_IO_High_Decode);
+	datal = in32rb(gt_base + GT_PCI1_IO_Low_Decode);
+	datah = in32rb(gt_base + GT_PCI1_IO_High_Decode);
 #if defined(GT_PCI1_IOBASE)
 	datal &= ~0xfff;
 	datal |= (GT_PCI1_IOBASE >> 20);
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_IO_Low_Decode, datal);
+	out32rb(gt_base + GT_PCI1_IO_Low_Decode, datal);
 #endif
 #if defined(GT_PCI1_IOSIZE)
 	datah &= ~0xfff;
-	datah |= (GT_PCI1_IOSIZE + GT_LowAddr_GET(datal) - 1)  >> 20;
-	bus_space_write_4(gt_memt, gt_memh, GT_PCI1_IO_High_Decode, datal);
+	datah |= (GT_PCI1_IOSIZE + GT_LowAddr_GET(datal) - 1) >> 20;
+	out32rb(gt_base + GT_PCI1_IO_High_Decode, datal);
 #endif
-	gt_pci1_io_bs_tag.pbs_offset = GT_LowAddr_GET(datal);
-	gt_pci1_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
-	    gt_pci1_io_bs_tag.pbs_offset;
+	ev64260_pci1_io_bs_tag.pbs_offset = GT_LowAddr_GET(datal);
+	ev64260_pci1_io_bs_tag.pbs_limit = GT_HighAddr_GET(datah) + 1 -
+	    ev64260_pci1_io_bs_tag.pbs_offset;
 
-	error = bus_space_init(&gt_pci1_io_bs_tag, "pci1-ioport",
+	error = bus_space_init(&ev64260_pci1_io_bs_tag, "pci1-ioport",
 	    ex_storage[bs], sizeof(ex_storage[bs]));
 	bs++;
+}
 
-#if 0
-	error = extent_alloc_region(gt_pci1_io_bs_tag.pbs_extent,
-	     0x10000, 0x7F0000, EX_NOWAIT);
-	if (error)
-		panic("gt_bus_space_init: can't block out reserved "
-		    "I/O space 0x10000-0x7fffff: error=%d\n", error);
-#endif
+static inline void
+gt_record_memory(int j, paddr_t start, paddr_t end, paddr_t endkernel)
+{
+	physmemr[j].start = start;
+	physmemr[j].size = end - start;
+	if (start < endkernel)
+		start = endkernel;
+	availmemr[j].start = start;
+	availmemr[j].size = end - start;
+}
+
+static void
+gt_find_memory(paddr_t endkernel)
+{
+	paddr_t start = ~0, end = 0;
+	const struct gt_decode_info *di;
+	int i, j = 0, first = 1;
+
+	/*
+	 * Round kernel end to a page boundary.
+	 */
+	for (i = 0; i < 4; i++) {
+		paddr_t nstart, nend;
+
+		di = &decode_regs[i];
+		nstart = GT_LowAddr_GET(in32rb(gt_base + di->low_decode));
+		nend = GT_HighAddr_GET(in32rb(gt_base + di->high_decode)) + 1;
+		if (nstart >= nend)
+			continue;
+		if (first) {
+			/*
+			 * First entry?  Just remember it.
+			 */
+			start = nstart;
+			end = nend;
+			first = 0;
+		} else if (nstart == end) {
+			/*
+			 * Contiguous?  Just update the end.
+			 */
+			end = nend;
+		} else {
+			/*
+			 * Disjoint?  record it.
+			 */
+			gt_record_memory(j, start, end, endkernel);
+			start = nstart;
+			end = nend;
+			j++;
+		}
+	}
+	gt_record_memory(j, start, end, endkernel);
 }

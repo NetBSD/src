@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79.2.4 2010/04/25 21:08:41 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79.2.5 2010/05/30 05:16:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.4 2010/04/25 21:08:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.5 2010/05/30 05:16:49 rmind Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.4 2010/04/25 21:08:41 rmind Exp $
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/kcore.h>
+#include <machine/pcb.h>
 
 #ifdef	KGDB
 #include "com.h"
@@ -245,6 +246,9 @@ u_int hppa_btlb_size_min, hppa_btlb_size_max;
 struct extent *hp700_io_extent;
 static long hp700_io_extent_store[EXTENT_FIXED_STORAGE_SIZE(64) / sizeof(long)];
 
+struct pool hppa_fppl;
+struct fpreg lwp0_fpregs;
+
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store = {
 #ifdef MULTIPROCESSOR
@@ -304,79 +308,92 @@ int desidhash_u(void);
 const struct hppa_cpu_info cpu_types[] = {
 #ifdef HP7000_CPU
 	{ "PA7000", NULL, "PCX",
-	  hpcx,  0, 0, "1.0",
+	  hpcx,  0,
+	  0, "1.0",
 	  desidhash_x, itlb_x, dtlb_x, itlbna_x, dtlbna_x, tlbd_x,
 	  ibtlb_g, NULL, pbtlb_g }, /* XXXNH check */
 #endif
 #ifdef HP7000_CPU
 	{ "PA7000", NULL, "PCXS",
-	  hpcxs,  0, 0, "1.1a",
+	  hpcxs,  0,
+	  0, "1.1a",
 	  desidhash_s, itlb_x, dtlb_x, itlbna_x, dtlbna_x, tlbd_x,
 	  ibtlb_g, NULL, pbtlb_g }, /* XXXNH check */
 #endif
 #ifdef HP7100_CPU
 	{ "PA7100", "T-Bird", "PCXT",
-	  hpcxt, 0, HPPA_FTRS_BTLBU, "1.1b",
+	  hpcxt, 0,
+	  HPPA_FTRS_BTLBU, "1.1b",
 	  desidhash_t, itlb_t, dtlb_t, itlbna_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g },
 #endif
 #ifdef HP7100LC_CPU
 	{ "PA7100LC", "Hummingbird", "PCXL",
-	  hpcxl, HPPA_CPU_PCXL, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT, "1.1c",
+	  hpcxl, HPPA_CPU_PCXL,
+	  HPPA_FTRS_TLBU | HPPA_FTRS_BTLBU | HPPA_FTRS_HVT, "1.1c",
 	  desidhash_l, itlb_l, dtlb_l, itlbna_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g },
 #endif
 #ifdef HP7200_CPU
 	{ "PA7200", "T-Bird", "PCXT'",
-	  hpcxtp, HPPA_CPU_PCXT2, HPPA_FTRS_BTLBU, "1.1d",
+	  hpcxtp, HPPA_CPU_PCXT2,
+	  HPPA_FTRS_BTLBU, "1.1d",
 	  desidhash_t, itlb_t, dtlb_t, itlbna_t, dtlbna_t, tlbd_t,
 	  ibtlb_g, NULL, pbtlb_g },
 #endif
 #ifdef HP7300LC_CPU
 	{ "PA7300LC", "Velociraptor", "PCXL2",
-	  hpcxl2, HPPA_CPU_PCXL2, HPPA_FTRS_BTLBU|HPPA_FTRS_HVT, "1.1e",
+	  hpcxl2, HPPA_CPU_PCXL2,
+	  HPPA_FTRS_TLBU | HPPA_FTRS_BTLBU | HPPA_FTRS_HVT, "1.1e",
 	  desidhash_l, itlb_l, dtlb_l, itlbna_l, dtlbna_l, tlbd_l,
 	  ibtlb_g, NULL, pbtlb_g, hpti_g },
 #endif
 #ifdef HP8000_CPU
 	{ "PA8000", "Onyx", "PCXU",
-	  hpcxu, HPPA_CPU_PCXU, HPPA_FTRS_W32B, "2.0",
+	  hpcxu, HPPA_CPU_PCXU,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8200_CPU
 	{ "PA8200", "Vulcan", "PCXU+",
-	  hpcxup, HPPA_CPU_PCXUP, HPPA_FTRS_W32B, "2.0",
+	  hpcxup, HPPA_CPU_PCXUP,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8500_CPU
 	{ "PA8500", "Barra'Cuda", "PCXW",
-	  hpcxw, HPPA_CPU_PCXW, HPPA_FTRS_W32B, "2.0",
+	  hpcxw, HPPA_CPU_PCXW,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8600_CPU
 	{ "PA8600", "Landshark", "PCXW+",
-	  hpcxwp, HPPA_CPU_PCXW2 /*XXX NH */, HPPA_FTRS_W32B, "2.0",
+	  hpcxwp, HPPA_CPU_PCXW2 /*XXX NH */,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8700_CPU
 	{ "PA8700", "Piranha", "PCXW2",
-	  hpcxw2, HPPA_CPU_PCXW2, HPPA_FTRS_W32B, "2.0",
+	  hpcxw2, HPPA_CPU_PCXW2,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8800_CPU
 	{ "PA8800", "Mako", "Make",
-	  mako, HPPA_CPU_PCXW2, HPPA_FTRS_W32B, "2.0",
+	  mako, HPPA_CPU_PCXW2,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
 #ifdef HP8900_CPU
 	{ "PA8900", "Shortfin", "Shortfin",
-	  mako, HPPA_CPU_PCXW2, HPPA_FTRS_W32B, "2.0",
+	  mako, HPPA_CPU_PCXW2,
+	  HPPA_FTRS_W32B, "2.0",
 	  desidhash_u, itlb_u, dtlb_u, itlbna_u, dtlbna_u, tlbd_u,
  	  ibtlb_u, NULL, pbtlb_u },
 #endif
@@ -393,6 +410,7 @@ hppa_init(paddr_t start, void *bi)
 	struct btlb_slot *btlb_slot;
 	int btlb_slot_i;
 	struct btinfo_symtab *bi_sym;
+	struct pcb *pcb0;
 
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
@@ -571,6 +589,13 @@ do {									\
 	/* We will shortly go virtual. */
 	pagezero_mapped = 0;
 	fcacheall();
+
+	pcb0 = lwp_getpcb(&lwp0);
+	pcb0->pcb_fpregs = &lwp0_fpregs;
+	memset(&lwp0_fpregs, 0, sizeof(struct fpreg));
+
+	pool_init(&hppa_fppl, sizeof(struct fpreg), 16, 0, 0, "fppl", NULL,
+	    IPL_NONE);
 }
 
 void
@@ -771,7 +796,7 @@ cpuid(void)
 	cpu_revision = (*cpu_desidhash)();
 
 	/* force strong ordering for now */
-	if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
+	if (hppa_cpu_ispa20_p())
 		kpsw |= PSW_O;
 
 	snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
@@ -1668,7 +1693,7 @@ hppa_machine_check(int check_type)
 	if (pimerror < 0) {
 		printf(" - WARNING: could not transfer PIM info (%d)", pimerror);
 	} else {
-		if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B)
+		if (hppa_cpu_ispa20_p())
 			hppa_pim64_dump(check_type);
 		else
 			hppa_pim_dump(check_type);
@@ -1796,20 +1821,6 @@ dumpsys(void)
 	}
 }
 
-/* bcopy(), error on fault */
-int
-kcopy(const void *from, void *to, size_t size)
-{
-	struct pcb *pcb = lwp_getpcb(curlwp);
-	u_int oldh = pcb->pcb_onfault;
-
-	pcb->pcb_onfault = (u_int)&copy_on_fault;
-	memcpy(to, from, size);
-	pcb->pcb_onfault = oldh;
-
-	return 0;
-}
-
 /*
  * Set registers on exec.
  */
@@ -1842,11 +1853,10 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 
 	/* reset any of the pending FPU exceptions */
 	hppa_fpu_flush(l);
-	pcb->pcb_fpregs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
-	pcb->pcb_fpregs[1] = 0;
-	pcb->pcb_fpregs[2] = 0;
-	pcb->pcb_fpregs[3] = 0;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
+	pcb->pcb_fpregs->fpr_regs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
+	pcb->pcb_fpregs->fpr_regs[1] = 0;
+	pcb->pcb_fpregs->fpr_regs[2] = 0;
+	pcb->pcb_fpregs->fpr_regs[3] = 0;
 
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);

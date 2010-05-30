@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 2010/03/11 21:43:15 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.78.2.1 2010/05/30 05:16:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2010/03/11 21:43:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.2.1 2010/05/30 05:16:52 rmind Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2010/03/11 21:43:15 skrll Exp $");
 #include <sys/acct.h>
 #include <sys/signal.h>
 #include <sys/device.h>
-#include <sys/pool.h>
+#include <sys/kmem.h>
 #include <sys/userret.h>
 
 #include <net/netisr.h>
@@ -109,10 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2010/03/11 21:43:15 skrll Exp $");
 void ss_clear_breakpoints(struct lwp *l);
 int ss_put_value(struct lwp *, vaddr_t, u_int);
 int ss_get_value(struct lwp *, vaddr_t, u_int *);
-#endif
 
 /* single-step breakpoint */
 #define SSBREAKPOINT   (HPPA_BREAK_KERNEL | (HPPA_BREAK_SS << 13))
+
+#endif
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 /*
@@ -174,26 +175,23 @@ uint8_t fpopmap[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-volatile int astpending;
-
 void pmap_hptdump(void);
 void syscall(struct trapframe *, int *);
 
 #if defined(DEBUG)
 struct trapframe *sanity_frame;
 struct lwp *sanity_lwp;
-int sanity_checked = 0;
-void frame_sanity_check(int, int, struct trapframe *, struct lwp *);
+const char *sanity_string;
+void frame_sanity_check(const char *, int, int, struct trapframe *,
+    struct lwp *);
 #endif
 
 
 #ifdef USERTRACE
 /*
- * USERTRACE is a crude facility that traces the PC of
- * a single user process.  This tracing is normally
- * activated by the dispatching of a certain syscall
- * with certain arguments - see the activation code in
- * syscall().
+ * USERTRACE is a crude facility that traces the PC of a single user process.
+ * This tracing is normally activated by the dispatching of a certain syscall
+ * with certain arguments - see the activation code in syscall().
  */
 static void user_backtrace(struct trapframe *, struct lwp *, int);
 static void user_backtrace_raw(u_int, u_int);
@@ -206,11 +204,12 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
-	if (astpending) {
-		astpending = 0;
-		if (curcpu()->ci_want_resched) {
+	if (l->l_md.md_astpending) {
+		l->l_md.md_astpending = 0;
+		uvmexp.softs++;
+
+		if (curcpu()->ci_want_resched)
 			preempt();
-		}
 	}
 
 	mi_userret(l);
@@ -240,7 +239,7 @@ trap_kdebug(int type, int code, struct trapframe *frame)
 	u_int tf_iioq_head_old;
 	u_int tf_iioq_tail_old;
 
-	for(;;) {
+	for (;;) {
 
 		/* This trap has not been handled. */
 		handled = 0;
@@ -333,7 +332,7 @@ user_backtrace_raw(u_int pc, u_int fp)
 
 		printf("%3d: pc=%08x%s fp=0x%08x", frame_number, 
 		    pc & ~HPPA_PC_PRIV_MASK, USERMODE(pc) ? "  " : "**", fp);
-		for(arg_number = 0; arg_number < 4; arg_number++)
+		for (arg_number = 0; arg_number < 4; arg_number++)
 			printf(" arg%d=0x%08x", arg_number,
 			    (int) fuword(HPPA_FRAME_CARG(arg_number, fp)));
 		printf("\n");
@@ -374,16 +373,14 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 	user_backtrace_raw(tf->tf_iioq_head, fp);
 
 	/*
-	 * In case the frame pointer in r3 is not valid,
-	 * assuming the stack pointer is valid and the
-	 * faulting function is a non-leaf, if we can
-	 * find its prologue we can recover its frame
-	 * pointer.
+	 * In case the frame pointer in r3 is not valid, assuming the stack
+	 * pointer is valid and the faulting function is a non-leaf, if we can
+	 * find its prologue we can recover its frame pointer.
 	 */
 	pc = tf->tf_iioq_head;
 	fp = tf->tf_sp - HPPA_FRAME_SIZE;
 	printf("pid %d (%s) backtrace, starting with sp 0x%08x pc 0x%08x\n",
-		p->p_pid, p->p_comm, tf->tf_sp, pc);
+	    p->p_pid, p->p_comm, tf->tf_sp, pc);
 	for (pc &= ~HPPA_PC_PRIV_MASK; pc > 0; pc -= sizeof(inst)) {
 		inst = fuword((register_t *) pc);
 		if (inst == -1) {
@@ -403,12 +400,12 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 
 #ifdef DEBUG
 /*
- * This sanity-checks a trapframe.  It is full of various
- * assumptions about what a healthy CPU state should be,
- * with some documented elsewhere, some not.
+ * This sanity-checks a trapframe.  It is full of various assumptions about
+ * what a healthy CPU state should be, with some documented elsewhere, some not.
  */
 void
-frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
+frame_sanity_check(const char *func, int line, int type, struct trapframe *tf,
+    struct lwp *l)
 {
 	extern int kernel_text;
 	extern int etext;
@@ -419,10 +416,11 @@ do {							\
 	if (sanity_frame == NULL && !(e)) {		\
 		sanity_frame = tf;			\
 		sanity_lwp = l;				\
-		sanity_checked = __LINE__;		\
+		sanity_string = #e;			\
 	}						\
 } while (/* CONSTCOND */ 0)
 
+	KASSERT(l != NULL);
 	SANITY((tf->tf_ipsw & kpsw) == kpsw);
 	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
@@ -431,9 +429,8 @@ do {							\
 		uv = uvm_lwp_getuarea(l);
 
 		/*
-		 * If the trap happened in the gateway
-		 * page, we take the easy way out and 
-		 * assume that the trapframe is okay.
+		 * If the trap happened in the gateway page, we take the easy
+		 * way out and assume that the trapframe is okay.
 		 */
 		if ((tf->tf_iioq_head & ~PAGE_MASK) == SYSCALLGATE)
 			goto out;
@@ -457,29 +454,24 @@ do {							\
 		maxsp = uv + USPACE + PAGE_SIZE;
 		minsp = uv + PAGE_SIZE;
 
-		SANITY(l != NULL || (tf->tf_sp >= minsp && tf->tf_sp < maxsp));
+		SANITY(tf->tf_sp >= minsp && tf->tf_sp < maxsp);
 	} else {
-		bool ok;
-		paddr_t pa;
-
-		ok = pmap_extract(pmap_kernel(), uvm_lwp_getuarea(l), &pa);
-		KASSERT(ok);
+		struct pcb *pcb = lwp_getpcb(l);
 
 		SANITY(USERMODE(tf->tf_iioq_head));
 		SANITY(USERMODE(tf->tf_iioq_tail));
-		SANITY(l != NULL && tf->tf_cr30 == pa);
+		SANITY(tf->tf_cr30 == (u_int)pcb->pcb_fpregs);
 	}
 #undef SANITY
 out:
 	if (sanity_frame == tf) {
-		printf("insanity: where 0x%x type 0x%x tf %p lwp %p line %d "
-		       "sp 0x%x pc 0x%x\n",
-		       where, type, sanity_frame, sanity_lwp, sanity_checked,
-		       tf->tf_sp, tf->tf_iioq_head);
+		printf("insanity: '%s' at %s:%d type 0x%x tf %p lwp %p "
+		    "sp 0x%x pc 0x%x\n",
+		    sanity_string, func, line, type, sanity_frame, sanity_lwp,
+		    tf->tf_sp, tf->tf_iioq_head);
 		(void) trap_kdebug(T_IBREAK, 0, tf);
 		sanity_frame = NULL;
 		sanity_lwp = NULL;
-		sanity_checked = 0;
 	}
 }
 #endif /* DEBUG */
@@ -502,13 +494,16 @@ trap(int type, struct trapframe *frame)
 	int trapnum;
 #ifdef DIAGNOSTIC
 	extern int emergency_stack_start, emergency_stack_end;
-	int oldcpl = cpl;
+	struct cpu_info *ci = curcpu();
+	int oldcpl = ci->ci_cpl;
 #endif
 
 	trapnum = type & ~T_USER;
 	opcode = frame->tf_iir;
-	if (trapnum == T_ITLBMISS || trapnum == T_ITLBMISSNA ||
-	    trapnum == T_IBREAK || trapnum == T_TAKENBR) {
+
+	if (trapnum <= T_EXCEPTION || trapnum == T_HIGHERPL ||
+	    trapnum == T_LOWERPL || trapnum == T_TAKENBR ||
+	    trapnum == T_IDEBUG || trapnum == T_PERFMON) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
 		vftype = VM_PROT_EXECUTE;
@@ -558,7 +553,7 @@ trap(int type, struct trapframe *frame)
 #endif /* DIAGNOSTIC */
 		
 #ifdef DEBUG
-	frame_sanity_check(0xdead01, type, frame, l);
+	frame_sanity_check(__func__, __LINE__, type, frame, l);
 #endif /* DEBUG */
 
 	if (frame->tf_flags & TFF_LAST)
@@ -606,7 +601,7 @@ trap(int type, struct trapframe *frame)
 #endif
 	case T_RECOVERY|T_USER:
 #ifdef USERTRACE
-		for(;;) {
+		for (;;) {
 			if (frame->tf_iioq_head != rctr_next_iioq)
 				printf("-%08x\nr %08x",
 					rctr_next_iioq - 4,
@@ -654,11 +649,13 @@ trap(int type, struct trapframe *frame)
 		break;
 
 	case T_DATALIGN:
-		if (pcb->pcb_onfault) {
+		onfault = pcb->pcb_onfault;
+		if (onfault) {
+			ret = EFAULT;
 do_onfault:
-			frame->tf_iioq_head = pcb->pcb_onfault;
-			frame->tf_iioq_tail = 4 + frame->tf_iioq_head;
-			pcb->pcb_onfault = 0;
+			frame->tf_iioq_head = onfault;
+			frame->tf_iioq_tail = frame->tf_iioq_head + 4;
+			frame->tf_ret0 = ret;
 			break;
 		}
 		/*FALLTHROUGH*/
@@ -734,7 +731,7 @@ do_onfault:
 		int i;
 
 		hppa_fpu_flush(l);
-		fpp = pcb->pcb_fpregs;
+		fpp = (uint64_t *)pcb->pcb_fpregs;
 
 		/* skip the status register */
 		pex = (uint32_t *)&fpp[0];
@@ -872,7 +869,7 @@ do_onfault:
 		}
 
 		/* Never call uvm_fault in interrupt context. */
-		KASSERT(hppa_intr_depth == 0);
+		KASSERT(curcpu()->ci_cpl == 0);
 
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = 0;
@@ -914,7 +911,7 @@ do_onfault:
 				ksi.ksi_addr = (void *)va;
 				trapsignal(l, &ksi);
 			} else {
-				if (pcb->pcb_onfault) {
+				if (onfault) {
 					goto do_onfault;
 				}
 				panic("trap: uvm_fault(%p, %lx, %d): %d",
@@ -962,19 +959,19 @@ do_onfault:
 	}
 
 #ifdef DIAGNOSTIC
-	if (cpl != oldcpl)
+	if (ci->ci_cpl != oldcpl)
 		printf("WARNING: SPL (%d) NOT LOWERED ON TRAP (%d) EXIT\n",
-		    cpl, trapnum);
+		    ci->ci_cpl, trapnum);
 #endif
 
 	if (type & T_USER)
 		userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 
 #ifdef DEBUG
-	frame_sanity_check(0xdead02, type, frame, l);
+	frame_sanity_check(__func__, __LINE__, type, frame, l);
 	if (frame->tf_flags & TFF_LAST && (curlwp->l_flag & LW_IDLE) == 0)
-		frame_sanity_check(0xdead03, type, curlwp->l_md.md_regs,
-				   curlwp);
+		frame_sanity_check(__func__, __LINE__, type,
+		    curlwp->l_md.md_regs, curlwp);
 #endif /* DEBUG */
 }
 
@@ -990,7 +987,7 @@ child_return(void *arg)
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 	ktrsysret(SYS_fork, 0, 0);
 #ifdef DEBUG
-	frame_sanity_check(0xdead04, 0, l->l_md.md_regs, l);
+	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */
 }
 
@@ -1110,13 +1107,14 @@ syscall(struct trapframe *frame, int *args)
 	int tmp;
 	int rval[2];
 #ifdef DIAGNOSTIC
-	int oldcpl = cpl;
+	struct cpu_info *ci = curcpu();
+	int oldcpl = ci->ci_cpl;
 #endif
 
 	uvmexp.syscalls++;
 
 #ifdef DEBUG
-	frame_sanity_check(0xdead04, 0, frame, curlwp);
+	frame_sanity_check(__func__, __LINE__, 0, frame, curlwp);
 #endif /* DEBUG */
 
 	if (!USERMODE(frame->tf_iioq_head))
@@ -1279,16 +1277,16 @@ out:
 	userret(l, frame->tf_iioq_head, 0);
 
 #ifdef DIAGNOSTIC
-	if (cpl != oldcpl) {
+	if (ci->ci_cpl != oldcpl) {
 		printf("WARNING: SPL (0x%x) NOT LOWERED ON "
 		    "syscall(0x%x, 0x%x, 0x%x, 0x%x...) EXIT, PID %d\n",
-		    cpl, code, args[0], args[1], args[2], p->p_pid);
-		cpl = oldcpl;
+		    ci->ci_cpl, code, args[0], args[1], args[2], p->p_pid);
+		ci->ci_cpl = oldcpl;
 	}
 #endif
 
 #ifdef DEBUG
-	frame_sanity_check(0xdead05, 0, frame, l);
+	frame_sanity_check(__func__, __LINE__, 0, frame, l);
 #endif /* DEBUG */
 }
 
@@ -1298,18 +1296,14 @@ out:
 void
 startlwp(void *arg)
 {
-	int err;
 	ucontext_t *uc = arg;
-	struct lwp *l = curlwp;
+	lwp_t *l = curlwp;
+	int error;
 
-	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
-#if DIAGNOSTIC
-	if (err) {
-		printf("Error %d from cpu_setmcontext.", err);
-	}
-#endif
-	pool_put(&lwp_uc_pool, uc);
+	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+	KASSERT(error == 0);
 
+	kmem_free(uc, sizeof(ucontext_t));
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 }
 

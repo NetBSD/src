@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.163 2009/12/10 12:39:12 drochner Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.163.4.1 2010/05/30 05:17:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.163 2009/12/10 12:39:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.163.4.1 2010/05/30 05:17:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -178,22 +178,32 @@ sys___clock_gettime50(struct lwp *l,
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 	} */
-	clockid_t clock_id;
+	int error;
 	struct timespec ats;
 
-	clock_id = SCARG(uap, clock_id);
-	switch (clock_id) {
-	case CLOCK_REALTIME:
-		nanotime(&ats);
-		break;
-	case CLOCK_MONOTONIC:
-		nanouptime(&ats);
-		break;
-	default:
-		return (EINVAL);
-	}
+	error = clock_gettime1(SCARG(uap, clock_id), &ats);
+	if (error != 0)
+		return error;
 
 	return copyout(&ats, SCARG(uap, tp), sizeof(ats));
+}
+
+int
+clock_gettime1(clockid_t clock_id, struct timespec *ts)
+{
+
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+		nanotime(ts);
+		break;
+	case CLOCK_MONOTONIC:
+		nanouptime(ts);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 /* ARGSUSED */
@@ -243,28 +253,36 @@ sys___clock_getres50(struct lwp *l, const struct sys___clock_getres50_args *uap,
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 	} */
-	clockid_t clock_id;
 	struct timespec ts;
 	int error = 0;
 
-	clock_id = SCARG(uap, clock_id);
-	switch (clock_id) {
-	case CLOCK_REALTIME:
-	case CLOCK_MONOTONIC:
-		ts.tv_sec = 0;
-		if (tc_getfrequency() > 1000000000)
-			ts.tv_nsec = 1;
-		else
-			ts.tv_nsec = 1000000000 / tc_getfrequency();
-		break;
-	default:
-		return (EINVAL);
-	}
+	if ((error = clock_getres1(SCARG(uap, clock_id), &ts)) != 0)
+		return error;
 
 	if (SCARG(uap, tp))
 		error = copyout(&ts, SCARG(uap, tp), sizeof(ts));
 
 	return error;
+}
+
+int
+clock_getres1(clockid_t clock_id, struct timespec *ts)
+{
+
+	switch (clock_id) {
+	case CLOCK_REALTIME:
+	case CLOCK_MONOTONIC:
+		ts->tv_sec = 0;
+		if (tc_getfrequency() > 1000000000)
+			ts->tv_nsec = 1;
+		else
+			ts->tv_nsec = 1000000000 / tc_getfrequency();
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
 }
 
 /* ARGSUSED */

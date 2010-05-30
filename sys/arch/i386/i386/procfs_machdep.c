@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.33 2010/01/18 22:31:14 rmind Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.33.4.1 2010/05/30 05:16:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.33 2010/01/18 22:31:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.33.4.1 2010/05/30 05:16:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 	p = featurebuf;
 	left = sizeof(featurebuf);
 	for (i = 0; i < 32; i++) {
-		if ((ci->ci_feature_flags & (1 << i)) && x86_features[i]) {
+		if ((ci->ci_feat_val[0] & (1 << i)) && x86_features[i]) {
 			l = snprintf(p, left, "%s ", x86_features[i]);
 			left -= l;
 			p += l;
