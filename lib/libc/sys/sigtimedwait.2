@@ -1,4 +1,4 @@
-.\" $NetBSD: sigtimedwait.2,v 1.5 2009/02/25 20:50:16 ad Exp $
+.\" $NetBSD: sigtimedwait.2,v 1.6 2010/05/30 19:31:39 drochner Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 10, 2003
+.Dd May 30, 2010
 .Dt SIGTIMEDWAIT 2
 .Os
 .Sh NAME
@@ -88,9 +88,16 @@ Behaviour of these functions is unspecified if any of the signals in
 .Fa set
 are unblocked at the time these functions are called.
 .Sh RETURN VALUES
-Upon successful completion
+Upon successful completion of
+.Fn sigtimedwait
+or
+.Fn sigwaitinfo
 .Fa info
-is updated with signal information, and the function returns 0.
+is updated with signal information, and the function returns the signal number.
+Upon successful completion of
+.Fn sigwait
+.Fa sig
+is updated with ihe signal number, and the function returns 0.
 Otherwise, \-1 is returned and the global variable
 .Va errno
 indicates the error.
