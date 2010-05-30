@@ -1,4 +1,4 @@
-/* $NetBSD: sigwait.c,v 1.2 2008/04/28 20:23:00 martin Exp $ */
+/* $NetBSD: sigwait.c,v 1.3 2010/05/30 19:31:39 drochner Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sigwait.c,v 1.2 2008/04/28 20:23:00 martin Exp $");
+__RCSID("$NetBSD: sigwait.c,v 1.3 2010/05/30 19:31:39 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -53,12 +53,11 @@ int	_sigwait __P((const sigset_t * __restrict, int * __restrict));
 int
 _sigwait(const sigset_t * __restrict set, int * __restrict signum)
 {
-	siginfo_t si;
-	int error;
+	int sig;
 	
-	error = sigtimedwait(set, &si, NULL);
-	if (!error)
-		*signum = si.si_signo;
-
-	return (error);
+	sig = __sigtimedwait(set, NULL, NULL);
+	if (sig < 0)
+		return (-1);
+	*signum = sig;
+	return (0);
 }
