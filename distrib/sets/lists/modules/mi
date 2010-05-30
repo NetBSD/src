@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 2010/05/30 04:38:04 pgoyette Exp $
+# $NetBSD: mi,v 1.17 2010/05/30 17:44:07 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -62,6 +62,8 @@
 ./@MODULEDIR@/lfs/lfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/mfs				base-kernel-modules	kmod
 ./@MODULEDIR@/mfs/mfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/miiverbose			base-kernel-modules	kmod
+./@MODULEDIR@/miiverbose/miiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/miniroot				base-kernel-modules	kmod
 ./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mqueue				base-kernel-modules	kmod
