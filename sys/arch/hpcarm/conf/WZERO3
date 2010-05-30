@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.4 2010/05/09 10:39:59 nonaka Exp $
+#	$NetBSD: WZERO3,v 1.5 2010/05/30 10:00:27 nonaka Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.4 $"
+#ident 		"GENERIC-$Revision: 1.5 $"
 
 # estimated number of users
 maxusers	32
@@ -175,17 +175,21 @@ saost*	at pxaip? addr 0x40a00000 size 0x20
 lcd* at pxaip?
 wsdisplay* at lcd? console ?
 
-# for touchpad
+# for touchpad, keypad
 wzero3ssp0 at pxaip?
 
 # touchpad
 wzero3tp0 at pxaip?
 wsmouse* at wzero3tp? mux 0
 
-# Keyboard
+# keyboard
 wzero3kbd0 at pxaip?
 hpckbd*	at wzero3kbd?
 wskbd0 at hpckbd? mux 1
+
+# keypad
+wzero3keypad0 at pxaip?
+wskbd1 at wzero3keypad? mux 1
 
 # integrated MMC/SD contoller
 pxamci0 at pxaip? addr 0x41100000 size 0x48

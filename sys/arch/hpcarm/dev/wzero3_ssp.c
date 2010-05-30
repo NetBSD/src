@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_ssp.c,v 1.3 2010/05/22 15:37:58 nonaka Exp $	*/
+/*	$NetBSD: wzero3_ssp.c,v 1.4 2010/05/30 10:00:27 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_ssp.c,v 1.3 2010/05/22 15:37:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_ssp.c,v 1.4 2010/05/30 10:00:27 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: wzero3_ssp.c,v 1.3 2010/05/22 15:37:58 nonaka Exp $"
 #define WS003SH_SSCR0_MAX1233	0x0000048f	/* 16bit/SPI/div by 5 */
 #define WS007SH_SSCR0_ADS7846	0x000006ab	/* 12bit/Microwire/div by 7 */
 #define WS011SH_SSCR0_AK4184_TP 0x0010068f	/* 32bit/SPI/div by 7 */
-#define WS011SH_SSCR0_AK4184_TENKEY 0x0000068f	/* 16bit/SPI/div by 7 */
+#define WS011SH_SSCR0_AK4184_KEYPAD 0x0000068f	/* 16bit/SPI/div by 7 */
 
 struct wzero3ssp_model;
 struct wzero3ssp_softc {
@@ -72,7 +72,9 @@ static bool	wzero3ssp_resume(device_t dv, const pmf_qual_t *);
 static uint32_t	wzero3ssp_read_ads7846(struct wzero3ssp_softc *, uint32_t);
 static uint32_t	wzero3ssp_read_max1233(struct wzero3ssp_softc *, uint32_t,
 		    uint32_t);
-static uint32_t	wzero3ssp_read_ak4184(struct wzero3ssp_softc *, uint32_t);
+static uint32_t	wzero3ssp_read_ak4184_tp(struct wzero3ssp_softc *, uint32_t);
+static uint16_t	wzero3ssp_read_ak4184_keypad(struct wzero3ssp_softc *, uint32_t,
+		    uint32_t);
 
 static struct wzero3ssp_softc *wzero3ssp_sc;
 
@@ -239,7 +241,8 @@ wzero3ssp_ic_start(int ic, uint32_t cmd)
 			pxa2x0_gpio_set_bit(GPIO_WS007SH_ADS7846_CS);
 	}
 	if (platid_match(&platid, &platid_mask_MACH_SHARP_WZERO3_WS011SH)) {
-		if (ic != WZERO3_SSP_IC_AK4184)
+		if (ic != WZERO3_SSP_IC_AK4184_TP
+		 && ic != WZERO3_SSP_IC_AK4184_KEYPAD)
 			pxa2x0_gpio_set_bit(GPIO_WS011SH_AK4184_CS);
 	}
 
@@ -255,7 +258,7 @@ wzero3ssp_ic_start(int ic, uint32_t cmd)
 		    & SSSR_TNF) != SSSR_TNF)
 			continue;	/* poll */
 		break;
-	case WZERO3_SSP_IC_AK4184:
+	case WZERO3_SSP_IC_AK4184_TP:
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, 0);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0,
 		    WS011SH_SSCR0_AK4184_TP);
@@ -270,6 +273,7 @@ wzero3ssp_ic_start(int ic, uint32_t cmd)
 			continue;	/* poll */
 		break;
 	case WZERO3_SSP_IC_MAX1233:
+	case WZERO3_SSP_IC_AK4184_KEYPAD:
 	case WZERO3_SSP_IC_NUM:
 	default:
 		break;
@@ -297,7 +301,7 @@ wzero3ssp_ic_stop(int ic)
 		rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
 		pxa2x0_gpio_set_bit(GPIO_WS007SH_ADS7846_CS);
 		break;
-	case WZERO3_SSP_IC_AK4184:
+	case WZERO3_SSP_IC_AK4184_TP:
 		/* read result of last command */
 		while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
 		    & SSSR_RNE) != SSSR_RNE)
@@ -306,6 +310,7 @@ wzero3ssp_ic_stop(int ic)
 		pxa2x0_gpio_set_bit(GPIO_WS011SH_AK4184_CS);
 		break;
 	case WZERO3_SSP_IC_MAX1233:
+	case WZERO3_SSP_IC_AK4184_KEYPAD:
 	case WZERO3_SSP_IC_NUM:
 	default:
 		rv = 0;
@@ -337,8 +342,10 @@ wzero3ssp_ic_send(int ic, uint32_t data, uint32_t data2)
 		return wzero3ssp_read_ads7846(sc, data);
 	case WZERO3_SSP_IC_MAX1233:
 		return wzero3ssp_read_max1233(sc, data, data2);
-	case WZERO3_SSP_IC_AK4184:
-		return wzero3ssp_read_ak4184(sc, data);
+	case WZERO3_SSP_IC_AK4184_TP:
+		return wzero3ssp_read_ak4184_tp(sc, data);
+	case WZERO3_SSP_IC_AK4184_KEYPAD:
+		return wzero3ssp_read_ak4184_keypad(sc, data, data2);
 	case WZERO3_SSP_IC_NUM:
 	default:
 		aprint_error("%s: invalid IC %d\n", __func__, ic);
@@ -418,7 +425,7 @@ wzero3ssp_read_max1233(struct wzero3ssp_softc *sc, uint32_t cmd, uint32_t data)
 }
 
 static uint32_t
-wzero3ssp_read_ak4184(struct wzero3ssp_softc *sc, uint32_t cmd)
+wzero3ssp_read_ak4184_tp(struct wzero3ssp_softc *sc, uint32_t cmd)
 {
 	uint32_t rv;
 
@@ -430,6 +437,7 @@ wzero3ssp_read_ak4184(struct wzero3ssp_softc *sc, uint32_t cmd)
 
 	pxa2x0_gpio_clear_bit(GPIO_WS011SH_AK4184_CS);
 
+	/* clear rx fifo */
 	(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
 
 	/* send cmd */
@@ -442,6 +450,49 @@ wzero3ssp_read_ak4184(struct wzero3ssp_softc *sc, uint32_t cmd)
 	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_RNE))
 		continue;	/* poll */
 	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
+
+	pxa2x0_gpio_set_bit(GPIO_WS011SH_AK4184_CS);
+
+	mutex_exit(&sc->sc_mtx);
+
+	return rv;
+}
+
+static uint16_t
+wzero3ssp_read_ak4184_keypad(struct wzero3ssp_softc *sc, uint32_t cmd,
+    uint32_t data)
+{
+	uint16_t rv;
+
+	mutex_enter(&sc->sc_mtx);
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0,
+	    WS011SH_SSCR0_AK4184_KEYPAD);
+
+	pxa2x0_gpio_clear_bit(GPIO_WS011SH_AK4184_CS);
+
+	/* clear rx fifo */
+	(void) bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
+
+	/* send cmd */
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_TNF))
+		continue;	/* poll */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SSP_SSDR, (uint16_t)cmd);
+	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_BUSY)
+		continue;	/* poll */
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_RNE))
+		continue;	/* poll */
+	(void) bus_space_read_2(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
+
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_TNF))
+		continue;	/* poll */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SSP_SSDR, (uint16_t)data);
+	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_BUSY)
+		continue;	/* poll */
+	while (!(bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR) & SSSR_RNE))
+		continue;	/* poll */
+	rv = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
 
 	pxa2x0_gpio_set_bit(GPIO_WS011SH_AK4184_CS);
 

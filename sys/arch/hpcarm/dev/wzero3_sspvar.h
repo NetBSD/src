@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_sspvar.h,v 1.3 2010/05/22 15:37:58 nonaka Exp $	*/
+/*	$NetBSD: wzero3_sspvar.h,v 1.4 2010/05/30 10:00:27 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -30,9 +30,10 @@
 #define	_HPCARM_DEV_WZERO3_SSPVAR_H_
 
 enum {
-	WZERO3_SSP_IC_ADS7846,	/* touch screen controller */
-	WZERO3_SSP_IC_MAX1233,	/* touch screen controller */
-	WZERO3_SSP_IC_AK4184,	/* touch screen controller */
+	WZERO3_SSP_IC_ADS7846,
+	WZERO3_SSP_IC_MAX1233,
+	WZERO3_SSP_IC_AK4184_TP,
+	WZERO3_SSP_IC_AK4184_KEYPAD,
 	WZERO3_SSP_IC_NUM
 };
 
