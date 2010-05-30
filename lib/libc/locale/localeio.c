@@ -1,4 +1,4 @@
-/*	$NetBSD: localeio.c,v 1.3 2009/01/11 02:46:28 christos Exp $	*/
+/*	$NetBSD: localeio.c,v 1.4 2010/05/30 08:28:53 tnozaki Exp $	*/
 /*
  * Copyright (c) 2008, The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeio.c,v 1.3 2009/01/11 02:46:28 christos Exp $");
+__RCSID("$NetBSD: localeio.c,v 1.4 2010/05/30 08:28:53 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -54,11 +54,11 @@ int
 __loadlocale(const char *name, size_t nstr, size_t nbytes,
     size_t localesize, void *currentlocale)
 {
-	int fd, i, ret;
+	int fd, ret;
 	unsigned char **ap, *buf, *bp, *cp, *cbp, *ebp;
 	unsigned char ***locale;
 	struct stat st;
-	size_t bufsize;
+	size_t i, bufsize;
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(localesize != 0);
@@ -86,7 +86,7 @@ __loadlocale(const char *name, size_t nstr, size_t nbytes,
 	}
 
 	ap = (unsigned char **)(void *)buf;
-	for (i = 0, ebp = buf + bufsize; i < nstr; i++) {
+	for (i = (size_t)0, ebp = buf + bufsize; i < nstr; i++) {
 		ap[i] = bp;
 		while (bp != ebp && *bp != '\n')
 			bp++;
