@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.36 2008/04/28 20:23:58 martin Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.37 2010/05/30 04:38:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.36 2008/04/28 20:23:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.37 2010/05/30 04:38:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,29 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.36 2008/04/28 20:23:58 martin Exp $
 #include <dev/scsipi/scsipi_base.h>
 
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
+
+/* Function pointers and stub routines for scsiverbose module */
+int     (*scsipi_print_sense)(struct scsipi_xfer *, int) =
+		scsipi_print_sense_stub;
+void    (*scsipi_print_sense_data)(struct scsi_sense_data *, int) =
+		scsipi_print_sense_data_stub;
+char   *(*scsipi_decode_sense)(void *, int) = scsipi_decode_sense_stub;
+
+int     scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
+{
+	return 0;
+}
+
+void    scsipi_print_sense_data_stub(struct scsi_sense_data *sense,
+				     int verbosity)
+{
+	return;
+}
+
+char   *scsipi_decode_sense_stub(void *sinfo, int flag)
+{
+	return NULL;
+}
 
 int
 scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
