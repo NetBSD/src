@@ -1,4 +1,4 @@
-/* $NetBSD: bsdctype.h,v 1.2 2009/01/11 02:46:28 christos Exp $ */
+/* $NetBSD: bsdctype.h,v 1.3 2010/05/30 08:28:53 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,6 +28,8 @@
 
 #ifndef _BSDCTYPE_H_
 #define _BSDCTYPE_H_
+
+#include "ctype_local.h"
 
 typedef struct _BSDCTypeLocale {
 	const unsigned char	*ctype_tab;
