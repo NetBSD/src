@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.151 2010/02/12 11:39:33 pooka Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.152 2010/05/30 04:38:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.151 2010/02/12 11:39:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.152 2010/05/30 04:38:04 pgoyette Exp $");
 
 #include "opt_scsi.h"
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.151 2010/02/12 11:39:33 pooka Exp 
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/hash.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -81,6 +82,27 @@ static void	scsipi_async_event_xfer_mode(struct scsipi_channel *,
 static void	scsipi_async_event_channel_reset(struct scsipi_channel *);
 
 static struct pool scsipi_xfer_pool;
+
+/*              
+ * Load/unload the scsiverbose module
+ */
+void
+scsipi_verbose_ctl(bool load)
+{
+	static int loaded = 0;
+ 
+	if (load) {
+		if (loaded++ == 0)
+			if (module_load("scsiverbose", MODCTL_LOAD_FORCE,
+					NULL, MODULE_CLASS_MISC) != 0)
+		loaded = 0;
+		return;
+	}
+	if (loaded == 0)
+		return;
+	if (--loaded == 0)
+		module_unload("scsiverbose");
+} 
 
 /*
  * scsipi_init:
@@ -707,7 +729,7 @@ scsipi_kill_pending(struct scsipi_periph *periph)
 /*
  * scsipi_print_cdb:
  * prints a command descriptor block (for debug purpose, error messages,
- * SCSIPI_VERBOSE, ...)
+ * SCSIVERBOSE, ...)
  */
 void
 scsipi_print_cdb(struct scsipi_generic *cmd)
@@ -768,7 +790,6 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 	struct scsipi_periph *periph = xs->xs_periph;
 	u_int8_t key;
 	int error;
-#ifndef	SCSIVERBOSE
 	u_int32_t info;
 	static const char *error_mes[] = {
 		"soft error (corrected)",
@@ -780,7 +801,6 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		"search returned equal", "volume overflow",
 		"verify miscompare", "unknown error key"
 	};
-#endif
 
 	sense = &xs->sense.scsi_sense;
 #ifdef SCSIPI_DEBUG
@@ -857,12 +877,10 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 		printf(" DEFERRED ERROR, key = 0x%x\n", key);
 		/* FALLTHROUGH */
 	case 0x70:
-#ifndef	SCSIVERBOSE
 		if ((sense->response_code & SSD_RCODE_VALID) != 0)
 			info = _4btol(sense->info);
 		else
 			info = 0;
-#endif
 		key = SSD_SENSE_KEY(sense->flags);
 
 		switch (key) {
@@ -947,44 +965,44 @@ scsipi_interpret_sense(struct scsipi_xfer *xs)
 			break;
 		}
 
-#ifdef SCSIVERBOSE
-		if (key && (xs->xs_control & XS_CTL_SILENT) == 0)
-			scsipi_print_sense(xs, 0);
-#else
-		if (key) {
-			scsipi_printaddr(periph);
-			printf("%s", error_mes[key - 1]);
-			if ((sense->response_code & SSD_RCODE_VALID) != 0) {
-				switch (key) {
-				case SKEY_NOT_READY:
-				case SKEY_ILLEGAL_REQUEST:
-				case SKEY_UNIT_ATTENTION:
-				case SKEY_DATA_PROTECT:
-					break;
-				case SKEY_BLANK_CHECK:
-					printf(", requested size: %d (decimal)",
-					    info);
-					break;
-				case SKEY_ABORTED_COMMAND:
-					if (xs->xs_retries)
-						printf(", retrying");
-					printf(", cmd 0x%x, info 0x%x",
-					    xs->cmd->opcode, info);
-					break;
-				default:
-					printf(", info = %d (decimal)", info);
-				}
+		/* Print verbose decode if appropriate and possible */
+		if ((key == 0) ||
+		    ((xs->xs_control & XS_CTL_SILENT) != 0) ||
+		    (scsipi_print_sense(xs, 0) != 0))
+			return (error);
+
+		/* Print brief(er) sense information */
+		scsipi_printaddr(periph);
+		printf("%s", error_mes[key - 1]);
+		if ((sense->response_code & SSD_RCODE_VALID) != 0) {
+			switch (key) {
+			case SKEY_NOT_READY:
+			case SKEY_ILLEGAL_REQUEST:
+			case SKEY_UNIT_ATTENTION:
+			case SKEY_DATA_PROTECT:
+				break;
+			case SKEY_BLANK_CHECK:
+				printf(", requested size: %d (decimal)",
+				    info);
+				break;
+			case SKEY_ABORTED_COMMAND:
+				if (xs->xs_retries)
+					printf(", retrying");
+				printf(", cmd 0x%x, info 0x%x",
+				    xs->cmd->opcode, info);
+				break;
+			default:
+				printf(", info = %d (decimal)", info);
 			}
-			if (sense->extra_len != 0) {
-				int n;
-				printf(", data =");
-				for (n = 0; n < sense->extra_len; n++)
-					printf(" %02x",
-					    sense->csi[n]);
-			}
-			printf("\n");
 		}
-#endif
+		if (sense->extra_len != 0) {
+			int n;
+			printf(", data =");
+			for (n = 0; n < sense->extra_len; n++)
+				printf(" %02x",
+				    sense->csi[n]);
+		}
+		printf("\n");
 		return (error);
 
 	/*
@@ -1441,9 +1459,7 @@ scsipi_complete(struct scsipi_xfer *xs)
 			if (xs->resid < xs->datalen) {
 				printf("we read %d bytes of sense anyway:\n",
 				    xs->datalen - xs->resid);
-#ifdef SCSIVERBOSE
 				scsipi_print_sense_data((void *)xs->data, 0);
-#endif
 			}
 			return EINVAL;
 		}

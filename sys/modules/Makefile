@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2010/05/29 01:14:30 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.44 2010/05/30 04:38:03 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -45,6 +45,7 @@ SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	miniroot
+SUBDIR+=	scsiverbose
 SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
