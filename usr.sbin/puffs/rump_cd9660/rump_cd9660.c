@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_cd9660.c,v 1.7 2009/12/13 21:16:54 pooka Exp $	*/
+/*	$NetBSD: rump_cd9660.c,v 1.8 2010/05/30 04:32:09 dholland Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mount.h>
 
 #include <isofs/cd9660/cd9660_mount.h>
