@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_tp.c,v 1.4 2010/05/22 15:37:58 nonaka Exp $	*/
+/*	$NetBSD: wzero3_tp.c,v 1.5 2010/05/30 10:00:27 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.4 2010/05/22 15:37:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.5 2010/05/30 10:00:27 nonaka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -795,7 +795,7 @@ ak4184_init(void)
 {
 
 	/* Enable automatic low power mode. */
-	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184,
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184_TP,
 	    (1<<AKMCTRL_STS_SH) | (0<<AKMCTRL_ADR_SH) | (0<<AKMCTRL_PD_SH), 0);
 }
 
@@ -843,7 +843,7 @@ ak4184_readpos(struct wzero3tp_pos *pos)
 		pos->z = 1;
 
 	/* Enable automatic low power mode. */
-	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184,
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184_TP,
 	    (1<<AKMCTRL_STS_SH) | (0<<AKMCTRL_ADR_SH) | (0<<AKMCTRL_PD_SH), 0);
 
 	return pos->z;
@@ -861,7 +861,7 @@ ak4184_resume(void)
 {
 
 	/* Enable automatic low power mode. */
-	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184,
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184_TP,
 	    (1<<AKMCTRL_STS_SH) | (0<<AKMCTRL_ADR_SH) | (0<<AKMCTRL_PD_SH), 0);
 }
 
@@ -871,14 +871,14 @@ ak4184_sync(int dorecv, int dosend, uint32_t cmd)
 	uint32_t rv = 0;
 
 	if (dorecv)
-		rv = wzero3ssp_ic_stop(WZERO3_SSP_IC_AK4184);
+		rv = wzero3ssp_ic_stop(WZERO3_SSP_IC_AK4184_TP);
 
 	if (dosend) {
 		/* send dummy command; discard SSDR */
-		(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184, cmd, 0);
+		(void)wzero3ssp_ic_send(WZERO3_SSP_IC_AK4184_TP, cmd, 0);
 
 		/* send the actual command; keep AK4184 enabled */
-		wzero3ssp_ic_start(WZERO3_SSP_IC_AK4184, cmd);
+		wzero3ssp_ic_start(WZERO3_SSP_IC_AK4184_TP, cmd);
 	}
 
 	return rv;
