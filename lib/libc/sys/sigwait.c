@@ -1,4 +1,4 @@
-/* $NetBSD: sigwait.c,v 1.3 2010/05/30 19:31:39 drochner Exp $ */
+/* $NetBSD: sigwait.c,v 1.4 2010/05/31 11:02:24 drochner Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sigwait.c,v 1.3 2010/05/30 19:31:39 drochner Exp $");
+__RCSID("$NetBSD: sigwait.c,v 1.4 2010/05/31 11:02:24 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: sigwait.c,v 1.3 2010/05/30 19:31:39 drochner Exp $");
 #include <sys/syscall.h>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
 
 #ifdef __weak_alias
 __weak_alias(sigwait,_sigwait)
@@ -53,11 +54,14 @@ int	_sigwait __P((const sigset_t * __restrict, int * __restrict));
 int
 _sigwait(const sigset_t * __restrict set, int * __restrict signum)
 {
-	int sig;
+	int saved_errno, new_errno, sig;
 	
+	saved_errno = errno;
 	sig = __sigtimedwait(set, NULL, NULL);
+	new_errno = errno;
+	errno = saved_errno;
 	if (sig < 0)
-		return (-1);
+		return (new_errno);
 	*signum = sig;
 	return (0);
 }
