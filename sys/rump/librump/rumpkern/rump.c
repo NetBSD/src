@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.172 2010/05/28 16:44:14 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.173 2010/05/31 23:18:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.172 2010/05/28 16:44:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.173 2010/05/31 23:18:33 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -265,6 +265,7 @@ rump__init(int rump_version)
 	rumpuser_thrinit(rump_user_schedule, rump_user_unschedule,
 	    rump_threads);
 	rump_intr_init();
+	rump_tsleep_init();
 
 	/* init minimal lwp/cpu context */
 	l = &lwp0;
