@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.24.2.2 2010/04/28 08:31:06 uebayasi Exp $ */
+/* $NetBSD: pmap.c,v 1.24.2.3 2010/05/31 13:26:37 uebayasi Exp $ */
 
 
 /*-
@@ -85,9 +85,9 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.2.2 2010/04/28 08:31:06 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.24.2.3 2010/05/31 13:26:37 uebayasi Exp $");
 
-#include "opt_device_page.h"
+#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>

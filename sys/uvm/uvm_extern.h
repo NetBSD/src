@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.161.2.6 2010/04/30 14:44:37 uebayasi Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.161.2.7 2010/05/31 13:26:38 uebayasi Exp $	*/
 
 /*
  *
@@ -721,9 +721,9 @@ void			uvm_pagerealloc(struct vm_page *,
 void			*uvm_page_physload(paddr_t, paddr_t,
 			    paddr_t, paddr_t, int);
 void			uvm_page_physunload(void *);
-void			*uvm_page_physload_device(paddr_t, paddr_t,
+void			*uvm_page_physload_direct(paddr_t, paddr_t,
 			    paddr_t, paddr_t, int, int);
-void			uvm_page_physunload_device(void *);
+void			uvm_page_physunload_direct(void *);
 void			uvm_setpagesize(void);
 
 /* uvm_pager.c */
