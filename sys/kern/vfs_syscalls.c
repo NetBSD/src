@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.403.2.2 2010/04/30 14:44:14 uebayasi Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.403.2.3 2010/05/31 03:29:43 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.403.2.2 2010/04/30 14:44:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.403.2.3 2010/05/31 03:29:43 uebayasi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -200,12 +200,12 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_XIP);
+	    MNT_LOG);
 	mp->mnt_flag |= flags &
 	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_XIP | MNT_IGNORE);
+	    MNT_LOG | MNT_IGNORE);
 
 	error = VFS_MOUNT(mp, path, data, data_len);
 
@@ -357,7 +357,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	   (MNT_FORCE | MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_LOG | MNT_XIP | MNT_IGNORE | MNT_RDONLY);
+	    MNT_LOG | MNT_IGNORE | MNT_RDONLY);
 
 	mutex_enter(&mp->mnt_updating);
 	error = VFS_MOUNT(mp, path, data, data_len);
