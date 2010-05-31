@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.38 2010/05/31 06:38:34 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.39 2010/05/31 13:26:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,12 +97,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.38 2010/05/31 06:38:34 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.39 2010/05/31 13:26:38 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
-#include "opt_device_page.h"
+#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
@@ -135,7 +135,7 @@ int vm_nphysmem = 0;
 static struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
 static struct vm_physseg_freelist vm_physmem_freelist =
     SIMPLEQ_HEAD_INITIALIZER(vm_physmem_freelist);
-#ifdef DEVICE_PAGE
+#ifdef DIRECT_PAGE
 struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
 int vm_nphysdev = 0;
 static struct vm_physseg vm_physdev_store[VM_PHYSSEG_MAX];
@@ -195,9 +195,9 @@ vaddr_t uvm_zerocheckkva;
 
 static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
 static void uvm_pageremove(struct uvm_object *, struct vm_page *);
-#ifdef DEVICE_PAGE
-static void vm_page_device_mdpage_insert(paddr_t);
-static void vm_page_device_mdpage_remove(paddr_t);
+#ifdef DIRECT_PAGE
+static void vm_page_direct_mdpage_insert(paddr_t);
+static void vm_page_direct_mdpage_remove(paddr_t);
 #endif
 
 /*
@@ -842,9 +842,9 @@ uvm_page_physunload(void *cookie)
 	vm_nphysmem--;
 }
 
-#ifdef DEVICE_PAGE
+#ifdef DIRECT_PAGE
 void *
-uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
+uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int prot, int flags)
 {
 	struct vm_physseg *seg;
@@ -856,18 +856,18 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 	seg->prot = prot;
 	seg->flags = flags;	/* XXXUEBS BUS_SPACE_MAP_* */
 	for (paddr_t pf = start; pf < end; pf++)
-		vm_page_device_mdpage_insert(pf);
+		vm_page_direct_mdpage_insert(pf);
 	vm_nphysdev++;
 	return seg;
 }
 
 void
-uvm_page_physunload_device(void *cookie)
+uvm_page_physunload_direct(void *cookie)
 {
 	struct vm_physseg *seg = cookie;
 
 	for (paddr_t pf = seg->start; pf < seg->end; pf++)
-		vm_page_device_mdpage_remove(pf);
+		vm_page_direct_mdpage_remove(pf);
 	uvm_page_physunload_common(&vm_physdev_freelist, vm_physdev_ptrs, seg);
 	vm_nphysdev--;
 }
@@ -924,7 +924,7 @@ uvm_page_physseg_init(void)
 		SIMPLEQ_INSERT_TAIL(&vm_physmem_freelist,
 		    &vm_physmem_store[lcv], list);
 	}
-#ifdef DEVICE_PAGE
+#ifdef DIRECT_PAGE
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
 		SIMPLEQ_INSERT_TAIL(&vm_physdev_freelist,
 		    &vm_physdev_store[lcv], list);
@@ -1029,9 +1029,9 @@ vm_physseg_find(paddr_t pframe, int *offp)
 	    pframe, NULL, offp);
 }
 
-#ifdef DEVICE_PAGE
+#ifdef DIRECT_PAGE
 int
-vm_physseg_find_device(paddr_t pframe, int *offp)
+vm_physseg_find_direct(paddr_t pframe, int *offp)
 {
 
 	return VM_PHYSSEG_FIND(vm_physdev_ptrs, vm_nphysdev, VM_PHYSSEG_OP_PF,
@@ -1157,7 +1157,7 @@ vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
 }
 
 
-#ifdef DEVICE_PAGE
+#ifdef DIRECT_PAGE
 /*
  * Device pages don't have struct vm_page objects for various reasons:
  *
@@ -1175,31 +1175,31 @@ vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
 
 /* Assume struct vm_page * is aligned to 4 bytes. */
 /* XXXUEBS Consider to improve this. */
-#define	VM_PAGE_DEVICE_MAGIC		0x2
-#define	VM_PAGE_DEVICE_MAGIC_MASK	0x3
-#define	VM_PAGE_DEVICE_MAGIC_SHIFT	2
+#define	VM_PAGE_DIRECT_MAGIC		0x2
+#define	VM_PAGE_DIRECT_MAGIC_MASK	0x3
+#define	VM_PAGE_DIRECT_MAGIC_SHIFT	2
 
 struct vm_page *
-uvm_phys_to_vm_page_device(paddr_t pa)
+uvm_phys_to_vm_page_direct(paddr_t pa)
 {
 	paddr_t pf = pa >> PAGE_SHIFT;
-	uintptr_t cookie = pf << VM_PAGE_DEVICE_MAGIC_SHIFT;
-	return (void *)(cookie | VM_PAGE_DEVICE_MAGIC);
+	uintptr_t cookie = pf << VM_PAGE_DIRECT_MAGIC_SHIFT;
+	return (void *)(cookie | VM_PAGE_DIRECT_MAGIC);
 }
 
 static inline paddr_t
-VM_PAGE_DEVICE_TO_PHYS(const struct vm_page *pg)
+VM_PAGE_DIRECT_TO_PHYS(const struct vm_page *pg)
 {
-	uintptr_t cookie = (uintptr_t)pg & ~VM_PAGE_DEVICE_MAGIC_MASK;
-	paddr_t pf = cookie >> VM_PAGE_DEVICE_MAGIC_SHIFT;
+	uintptr_t cookie = (uintptr_t)pg & ~VM_PAGE_DIRECT_MAGIC_MASK;
+	paddr_t pf = cookie >> VM_PAGE_DIRECT_MAGIC_SHIFT;
 	return pf << PAGE_SHIFT;
 }
 
 bool
-uvm_pageisdevice_p(const struct vm_page *pg)
+uvm_pageisdirect_p(const struct vm_page *pg)
 {
 
-	return ((uintptr_t)pg & VM_PAGE_DEVICE_MAGIC_MASK) == VM_PAGE_DEVICE_MAGIC;
+	return ((uintptr_t)pg & VM_PAGE_DIRECT_MAGIC_MASK) == VM_PAGE_DIRECT_MAGIC;
 }
 #endif
 
@@ -1216,10 +1216,10 @@ uvm_phys_to_vm_page(paddr_t pa)
 	int	off;
 	int	psi;
 
-#ifdef DEVICE_PAGE
-	psi = vm_physseg_find_device(pf, &off);
+#ifdef DIRECT_PAGE
+	psi = vm_physseg_find_direct(pf, &off);
 	if (psi != -1)
-		return(uvm_phys_to_vm_page_device(pa));
+		return(uvm_phys_to_vm_page_direct(pa));
 #endif
 	psi = vm_physseg_find(pf, &off);
 	if (psi != -1)
@@ -1231,20 +1231,12 @@ paddr_t
 uvm_vm_page_to_phys(const struct vm_page *pg)
 {
 
-#ifdef DEVICE_PAGE
-	if (uvm_pageisdevice_p(pg)) {
-		return VM_PAGE_DEVICE_TO_PHYS(pg);
+#ifdef DIRECT_PAGE
+	if (uvm_pageisdirect_p(pg)) {
+		return VM_PAGE_DIRECT_TO_PHYS(pg);
 	}
 #endif
 	return pg->phys_addr;
-	const struct vm_physseg *seg;
-	int psi;
-
-	psi = VM_PHYSSEG_FIND(vm_physmem_ptrs, vm_nphysmem, VM_PHYSSEG_OP_PG, 0, pg, NULL);
-	KASSERT(psi != -1);
-	seg = vm_physmem_ptrs[psi];
-	return (seg->start + pg - seg->pgs) * PAGE_SIZE;
-#endif
 }
 
 
@@ -1260,19 +1252,19 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
  * XXX Consider to allocate slots on-demand.
  */
 
-static struct vm_page_md *vm_page_device_mdpage_lookup(struct vm_page *);
+static struct vm_page_md *vm_page_direct_mdpage_lookup(struct vm_page *);
 
 struct vm_page_md *
 uvm_vm_page_to_md(struct vm_page *pg)
 {
 
-	return uvm_pageisdevice_p(pg) ?
-	    vm_page_device_mdpage_lookup(pg) : &pg->mdpage;
+	return uvm_pageisdirect_p(pg) ?
+	    vm_page_direct_mdpage_lookup(pg) : &pg->mdpage;
 }
 
-struct vm_page_device_mdpage_entry {
+struct vm_page_direct_mdpage_entry {
 	struct vm_page_md mde_mdpage;
-	SLIST_ENTRY(vm_page_device_mdpage_entry) mde_hash;
+	SLIST_ENTRY(vm_page_direct_mdpage_entry) mde_hash;
 	paddr_t mde_pf;
 };
 
@@ -1285,38 +1277,38 @@ struct vm_page_device_mdpage_entry {
 #define	MDPG_HASH_SIZE		256	/* XXX */
 #define	MDPG_HASH_LOCK_CNT	4	/* XXX */
 
-struct vm_page_device_mdpage {
+struct vm_page_direct_mdpage {
 	kmutex_t locks[MDPG_HASH_LOCK_CNT];
-	struct vm_page_device_mdpage_head {
-		SLIST_HEAD(, vm_page_device_mdpage_entry) list;
+	struct vm_page_direct_mdpage_head {
+		SLIST_HEAD(, vm_page_direct_mdpage_entry) list;
 	} heads[MDPG_HASH_SIZE];
 };
 
 /* Global for now.  Consider to make this per-vm_physseg. */
-struct vm_page_device_mdpage vm_page_device_mdpage;
+struct vm_page_direct_mdpage vm_page_direct_mdpage;
 
-static struct vm_page_device_mdpage_head *
-vm_page_device_mdpage_head(u_int hash)
+static struct vm_page_direct_mdpage_head *
+vm_page_direct_mdpage_head(u_int hash)
 {
 
-	return &vm_page_device_mdpage.heads[hash % MDPG_HASH_SIZE];
+	return &vm_page_direct_mdpage.heads[hash % MDPG_HASH_SIZE];
 }
 
 static kmutex_t *
-vm_page_device_mdpage_lock(u_int hash)
+vm_page_direct_mdpage_lock(u_int hash)
 {
 
-	return &vm_page_device_mdpage.locks[hash % MDPG_HASH_LOCK_CNT];
+	return &vm_page_direct_mdpage.locks[hash % MDPG_HASH_LOCK_CNT];
 }
 
 static void
-vm_page_device_mdpage_insert(paddr_t pf)
+vm_page_direct_mdpage_insert(paddr_t pf)
 {
 	u_int hash = (u_int)pf;
-	kmutex_t *lock = vm_page_device_mdpage_lock(hash);
-	struct vm_page_device_mdpage_head *head = vm_page_device_mdpage_head(hash);
+	kmutex_t *lock = vm_page_direct_mdpage_lock(hash);
+	struct vm_page_direct_mdpage_head *head = vm_page_direct_mdpage_head(hash);
 
-	struct vm_page_device_mdpage_entry *mde = kmem_zalloc(sizeof(*mde), KM_SLEEP);
+	struct vm_page_direct_mdpage_entry *mde = kmem_zalloc(sizeof(*mde), KM_SLEEP);
 
 	VM_MDPAGE_INIT(&mde->mde_mdpage, pf << PAGE_SHIFT);
 	mde->mde_pf = pf;
@@ -1327,14 +1319,14 @@ vm_page_device_mdpage_insert(paddr_t pf)
 }
 
 static void
-vm_page_device_mdpage_remove(paddr_t pf)
+vm_page_direct_mdpage_remove(paddr_t pf)
 {
 	u_int hash = (u_int)pf;
-	kmutex_t *lock = vm_page_device_mdpage_lock(hash);
-	struct vm_page_device_mdpage_head *head = vm_page_device_mdpage_head(hash);
+	kmutex_t *lock = vm_page_direct_mdpage_lock(hash);
+	struct vm_page_direct_mdpage_head *head = vm_page_direct_mdpage_head(hash);
 
-	struct vm_page_device_mdpage_entry *mde;
-	struct vm_page_device_mdpage_entry *prev = NULL;
+	struct vm_page_direct_mdpage_entry *mde;
+	struct vm_page_direct_mdpage_entry *prev = NULL;
 
 	mutex_spin_enter(lock);
 	SLIST_FOREACH(mde, &head->list, mde_hash) {
@@ -1354,14 +1346,14 @@ vm_page_device_mdpage_remove(paddr_t pf)
 }
 
 static struct vm_page_md *
-vm_page_device_mdpage_lookup(struct vm_page *pg)
+vm_page_direct_mdpage_lookup(struct vm_page *pg)
 {
-	paddr_t pf = VM_PAGE_DEVICE_TO_PHYS(pg) >> PAGE_SHIFT;
+	paddr_t pf = VM_PAGE_DIRECT_TO_PHYS(pg) >> PAGE_SHIFT;
 	u_int hash = (u_int)pf;
-	kmutex_t *lock = vm_page_device_mdpage_lock(hash);
-	struct vm_page_device_mdpage_head *head = vm_page_device_mdpage_head(hash);
+	kmutex_t *lock = vm_page_direct_mdpage_lock(hash);
+	struct vm_page_direct_mdpage_head *head = vm_page_direct_mdpage_head(hash);
 
-	struct vm_page_device_mdpage_entry *mde = NULL;
+	struct vm_page_direct_mdpage_entry *mde = NULL;
 
 	mutex_spin_enter(lock);
 	SLIST_FOREACH(mde, &head->list, mde_hash)
@@ -2371,8 +2363,8 @@ uvm_pageismanaged(paddr_t pa)
 {
 
 	return
-#ifdef DEVICE_PAGE
-	    (vm_physseg_find_device(atop(pa), NULL) != -1) ||
+#ifdef DIRECT_PAGE
+	    (vm_physseg_find_direct(atop(pa), NULL) != -1) ||
 #endif
 	    (vm_physseg_find(atop(pa), NULL) != -1);
 }

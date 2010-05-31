@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.974.2.3 2010/04/30 14:43:03 uebayasi Exp $
+#	$NetBSD: files,v 1.974.2.4 2010/05/31 13:26:37 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20090313
@@ -119,10 +119,10 @@ defflag	opt_gre.h		GRE_DEBUG
 defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
 defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 
-defflag opt_device_page.h	DEVICE_PAGE
+defflag opt_direct_page.h	DIRECT_PAGE
 
 # eXecute In Place
-defflag opt_xip.h		XIP: DEVICE_PAGE
+defflag opt_xip.h		XIP: DIRECT_PAGE
 
 # compatibility options
 #

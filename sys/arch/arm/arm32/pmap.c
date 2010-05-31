@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.12 2010/04/30 14:39:07 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.13 2010/05/31 13:26:36 uebayasi Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -191,7 +191,7 @@
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
-#include "opt_device_page.h"
+#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
@@ -213,7 +213,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.12 2010/04/30 14:39:07 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.13 2010/05/31 13:26:36 uebayasi Exp $");
 
 #ifdef PMAP_DEBUG
 

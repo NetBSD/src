@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.1.2.8 2010/04/29 06:29:29 uebayasi Exp $	*/
+/*	$Id: flash.c,v 1.1.2.9 2010/05/31 13:26:37 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -238,9 +238,9 @@ found:
 
 #ifdef XIP
 #ifndef __BUS_SPACE_HAS_PHYSLOAD
-#error bus_space_physload_device(9) must be supported to use XIP!
+#error bus_space_physload_direct(9) must be supported to use XIP!
 #else
-	sc->sc_phys = bus_space_physload_device(sc->sc_iot, sc->sc_addr, sc->sc_size,
+	sc->sc_phys = bus_space_physload_direct(sc->sc_iot, sc->sc_addr, sc->sc_size,
 	    PROT_READ | PROT_WRITE, 0);
 #endif
 #endif

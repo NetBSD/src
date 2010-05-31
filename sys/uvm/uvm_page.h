@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.21 2010/05/31 06:38:34 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.22 2010/05/31 13:26:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -268,7 +268,7 @@ extern bool vm_page_zero_enable;
 
 extern struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
 extern int vm_nphysmem;
-#ifdef DEVICE_PAGE
+#ifdef DIRECT_PAGE
 extern struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
 extern int vm_nphysdev;
 #endif
@@ -304,10 +304,10 @@ void uvm_pagewake(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
-#ifdef DEVICE_PAGE
-bool uvm_pageisdevice_p(const struct vm_page *);
+#ifdef DIRECT_PAGE
+bool uvm_pageisdirect_p(const struct vm_page *);
 #else
-#define	uvm_pageisdevice_p(x)	false
+#define	uvm_pageisdirect_p(x)	false
 #endif
 
 int uvm_page_lookup_freelist(struct vm_page *);
@@ -316,9 +316,9 @@ int vm_physseg_find(paddr_t, int *);
 struct vm_page *uvm_phys_to_vm_page(paddr_t);
 paddr_t uvm_vm_page_to_phys(const struct vm_page *);
 #ifdef XIP
-int vm_physseg_find_device(paddr_t, int *);
-struct vm_page *uvm_phys_to_vm_page_device(paddr_t);
-paddr_t uvm_vm_page_to_phys_device(const struct vm_page *);
+int vm_physseg_find_direct(paddr_t, int *);
+struct vm_page *uvm_phys_to_vm_page_direct(paddr_t);
+paddr_t uvm_vm_page_to_phys_direct(const struct vm_page *);
 #endif
 
 /*
