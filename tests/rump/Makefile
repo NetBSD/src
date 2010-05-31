@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2009/05/02 16:02:19 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/05/31 23:32:50 pooka Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/rump
 
-SUBDIR=	rumpkern
+SUBDIR=	kernspace .WAIT rumpkern
 
 .include <bsd.test.mk>
 .include <bsd.subdir.mk>
