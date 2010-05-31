@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.2 2010/04/26 23:47:25 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.3 2010/05/31 23:44:54 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -20,19 +20,14 @@
 
 #include <miscfs/kernfs/kernfs.h>
 
-#define USE_ATF
 #include "../../h_macros.h"
 
-#ifdef USE_ATF
 ATF_TC(getdents);
 ATF_TC_HEAD(getdents, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "kernfs directory contains files");
 }
-#else
-#define atf_tc_fail(...) errx(1, __VA_ARGS__)
-#endif
 
 static void
 mountkernfs(void)
@@ -46,11 +41,7 @@ mountkernfs(void)
 		atf_tc_fail_errno("could not mount kernfs");
 }
 
-#ifdef USE_ATF
 ATF_TC_BODY(getdents, tc)
-#else
-int main(int argc, char *argv[])
-#endif
 {
 	struct dirent *dent;
 	char buf[8192];
@@ -77,7 +68,6 @@ int main(int argc, char *argv[])
 	/* done */
 }
 
-#ifdef USE_ATF
 ATF_TC(hostname);
 ATF_TC_HEAD(hostname, tc)
 {
@@ -141,4 +131,3 @@ ATF_TP_ADD_TCS(tp)
 
 	return atf_no_error();
 }
-#endif

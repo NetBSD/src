@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.2 2010/05/01 10:43:31 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.3 2010/05/31 23:44:54 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -18,18 +18,13 @@
 #include <miscfs/union/union.h>
 #include <ufs/ufs/ufsmount.h>
 
-#define USE_ATF
 #include "../../h_macros.h"
 
-#ifdef USE_ATF
 ATF_TC(basic);
 ATF_TC_HEAD(basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "basic union functionality: two views");
 }
-#else
-#define atf_tc_fail(...) errx(1, __VA_ARGS__)
-#endif
 
 #define MSTR "magic bus"
 
@@ -69,11 +64,7 @@ xread_tfile(const char *path)
 #define DEV2 "/dev/fs2"
 #define newfs_base "newfs -F -s 10000 "
 
-#ifdef USE_ATF
 ATF_TC_BODY(basic, tc)
-#else
-int main(int argc, char *argv[])
-#endif
 {
 	struct ufs_args args;
 	struct union_args unionargs;
@@ -128,10 +119,8 @@ int main(int argc, char *argv[])
 	/* unmount etc. yaddayadda if non-lazy */
 }
 
-#ifdef USE_ATF
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, basic);
 	return 0; /*XXX?*/
 }
-#endif
