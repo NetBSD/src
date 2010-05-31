@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.71 2010/04/27 05:57:43 jruoho Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.72 2010/05/31 17:41:24 plunky Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.71 2010/04/27 05:57:43 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.72 2010/05/31 17:41:24 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -499,8 +499,8 @@ acpitz_get_zone(void *opaque, int verbose)
 		}
 
 		if (sc->sc_first != false)
-			aprint_normal(" active cooling level %d: %sC", i,
-			    acpitz_celcius_string(sc->sc_zone.ac[i]));
+			aprint_normal_dev(dv, "active cooling level %d: %sC\n",
+			    i, acpitz_celcius_string(sc->sc_zone.ac[i]));
 
 		valid_levels++;
 	}
