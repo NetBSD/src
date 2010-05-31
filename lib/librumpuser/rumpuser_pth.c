@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.2 2010/05/18 14:58:41 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.3 2010/05/31 23:09:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_pth.c,v 1.2 2010/05/18 14:58:41 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_pth.c,v 1.3 2010/05/31 23:09:30 pooka Exp $");
 #endif /* !lint */
 
 #ifdef __linux__
@@ -209,16 +209,37 @@ rumpuser__thrdestroy(void)
 #endif
 
 int
-rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname)
+rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname,
+	int joinable, void **ptcookie)
 {
 	pthread_t ptid;
+	pthread_t *ptidp;
+	pthread_attr_t pattr;
 	int rv;
 
-	rv = pthread_create(&ptid, NULL, f, arg);
+	if ((rv = pthread_attr_init(&pattr)) != 0)
+		return rv;
+
+	if (joinable) {
+		NOFAIL(ptidp = malloc(sizeof(*ptidp)));
+		pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_JOINABLE);
+	} else {
+		ptidp = &ptid;
+		pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
+	}
+
+	rv = pthread_create(ptidp, &pattr, f, arg);
 #ifdef __NetBSD__
 	if (rv == 0 && thrname)
 		pthread_setname_np(ptid, thrname, NULL);
 #endif
+
+	if (joinable) {
+		assert(ptcookie);
+		*ptcookie = ptidp;
+	}
+
+	pthread_attr_destroy(&pattr);
 
 	return rv;
 }
@@ -228,6 +249,19 @@ rumpuser_thread_exit(void)
 {
 
 	pthread_exit(NULL);
+}
+
+int
+rumpuser_thread_join(void *ptcookie)
+{
+	pthread_t *pt = ptcookie;
+	int rv;
+
+	KLOCK_WRAP((rv = pthread_join(*pt, NULL)));
+	if (rv == 0)
+		free(pt);
+
+	return rv;
 }
 
 void
