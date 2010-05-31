@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.221 2010/01/23 16:06:57 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.222 2010/05/31 03:16:47 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.221 2010/01/23 16:06:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.222 2010/05/31 03:16:47 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -65,6 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.221 2010/01/23 16:06:57 mrg Exp $");
 #include <sys/malloc.h>
 #include <sys/simplelock.h>
 #include <sys/kernel.h>
+#if 0
+#include <sys/xcall.h>
+#endif
 
 #include <uvm/uvm.h>
 
@@ -636,6 +639,26 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 
 	mutex_spin_exit(&xpmsg_mutex);
 }
+
+#if 0
+/*
+ * MI interface to call xc_ipi_handler() everywhere.
+ */
+void
+xc_send_ipi(struct cpu_info *target)
+{
+	u_int cpuset;
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != target);
+
+	if (target)
+		cpuset = 1 << target->ci_cpuid;
+	else
+		cpuset = CPUSET_ALL & ~(1 << cpuinfo.ci_cpuid);
+	XCALL0(xc_ipi_handler, cpuset);
+}
+#endif
 
 /*
  * Tell all CPUs other than the current one to enter the PROM idle loop.
