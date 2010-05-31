@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.37 2010/05/28 06:41:15 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.38 2010/05/31 06:38:34 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.37 2010/05/28 06:41:15 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.38 2010/05/31 06:38:34 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -488,9 +488,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 		/* init and free vm_pages (we've already zeroed them) */
 		paddr = ctob(vm_physmem_ptrs[lcv]->start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
-#if 1
 			seg->pgs[i].phys_addr = paddr;
-#endif
 #ifdef __HAVE_VM_PAGE_MD
 			VM_MDPAGE_INIT(&seg->pgs[i].mdpage, paddr);
 #endif
@@ -1238,9 +1236,7 @@ uvm_vm_page_to_phys(const struct vm_page *pg)
 		return VM_PAGE_DEVICE_TO_PHYS(pg);
 	}
 #endif
-#if 1
 	return pg->phys_addr;
-#else
 	const struct vm_physseg *seg;
 	int psi;
 
