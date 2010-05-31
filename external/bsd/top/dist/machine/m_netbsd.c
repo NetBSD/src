@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.13 2010/05/31 03:18:33 rmind Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.14 2010/05/31 18:14:59 rmind Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.13 2010/05/31 03:18:33 rmind Exp $
+ * $Id: m_netbsd.c,v 1.14 2010/05/31 18:14:59 rmind Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.13 2010/05/31 03:18:33 rmind Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.14 2010/05/31 18:14:59 rmind Exp $");
 #endif
 
 #include <sys/param.h>
@@ -842,8 +842,8 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 		case LSRUN:
 		case LSSLEEP:
 		case LSIDL:
-			(void)snprintf(state, sizeof(state), "%.6s/%lu", 
-			     statep, pp->p_cpuid);
+			(void)snprintf(state, sizeof(state), "%.6s/%u", 
+			     statep, (unsigned int)pp->p_cpuid);
 			statep = state;
 			break;
 		}
@@ -915,8 +915,8 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 		case LSRUN:
 		case LSSLEEP:			
 		case LSIDL:
-			(void)snprintf(state, sizeof(state), "%.6s/%lu", 
-			     statep, pl->l_cpuid);
+			(void)snprintf(state, sizeof(state), "%.6s/%u", 
+			     statep, (unsigned int)pl->l_cpuid);
 			statep = state;
 			break;
 		}
