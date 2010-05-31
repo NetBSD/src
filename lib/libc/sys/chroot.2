@@ -1,4 +1,4 @@
-.\"	$NetBSD: chroot.2,v 1.22 2004/05/13 10:20:57 wiz Exp $
+.\"	$NetBSD: chroot.2,v 1.23 2010/05/31 12:16:20 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,9 +83,9 @@ will fail and the root directory will be unchanged if:
 A component of the path name is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
+.Brq Dv NAME_MAX
 characters, or an entire path name exceeded
-.Dv {PATH_MAX}
+.Brq Dv PATH_MAX
 characters.
 .It Bq Er ENOENT
 The named directory does not exist.
