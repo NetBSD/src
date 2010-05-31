@@ -1,4 +1,4 @@
-.\" $NetBSD: sigtimedwait.2,v 1.6 2010/05/30 19:31:39 drochner Exp $
+.\" $NetBSD: sigtimedwait.2,v 1.7 2010/05/31 11:02:24 drochner Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,13 +94,14 @@ or
 .Fn sigwaitinfo
 .Fa info
 is updated with signal information, and the function returns the signal number.
+Otherwise, \-1 is returned and the global variable
+.Va errno
+indicates the error.
 Upon successful completion of
 .Fn sigwait
 .Fa sig
 is updated with ihe signal number, and the function returns 0.
-Otherwise, \-1 is returned and the global variable
-.Va errno
-indicates the error.
+Otherwise, a non-zero error code is returned,
 .Sh ERRORS
 .Fn sigwaitinfo
 and
