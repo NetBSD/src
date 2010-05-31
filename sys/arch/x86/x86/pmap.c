@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105.2.8 2010/05/30 05:17:13 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.9 2010/05/31 01:12:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.8 2010/05/30 05:17:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.9 2010/05/31 01:12:14 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -328,15 +328,12 @@ const int ptp_shifts[] = PTP_SHIFT_INITIALIZER;
 const long nkptpmax[] = NKPTPMAX_INITIALIZER;
 const long nbpd[] = NBPD_INITIALIZER;
 pd_entry_t * const normal_pdes[] = PDES_INITIALIZER;
-pd_entry_t * const alternate_pdes[] = APDES_INITIALIZER;
 
 long nkptp[] = NKPTP_INITIALIZER;
 
 static kmutex_t pmaps_lock;
 
 static vaddr_t pmap_maxkvaddr;
-
-#define COUNT(x)	/* nothing */
 
 /*
  * XXX kludge: dummy locking to make KASSERTs in uvm_page.c comfortable.
@@ -571,9 +568,6 @@ static void		 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  vaddr_t, vaddr_t, vaddr_t,
 					  struct pv_entry **);
 
-#ifdef XEN
-static void		 pmap_unmap_apdp(void);
-#endif
 static bool		 pmap_get_physpage(vaddr_t, int, paddr_t *);
 static void		 pmap_alloc_level(pd_entry_t * const *, vaddr_t, int,
 					  long *);
@@ -706,43 +700,6 @@ pmap_is_active(struct pmap *pmap, struct cpu_info *ci, bool kernel)
 	    (kernel && (pmap->pm_kernel_cpus & ci->ci_cpumask) != 0));
 }
 
-#ifdef XEN
-static void
-pmap_apte_flush(struct pmap *pmap)
-{
-
-	KASSERT(kpreempt_disabled());
-
-	/*
-	 * Flush the APTE mapping from all other CPUs that
-	 * are using the pmap we are using (who's APTE space
-	 * is the one we've just modified).
-	 *
-	 * XXXthorpej -- find a way to defer the IPI.
-	 */
-	pmap_tlb_shootdown(pmap, (vaddr_t)-1LL, 0, TLBSHOOT_APTE);
-	pmap_tlb_shootnow();
-}
-
-/*
- * Unmap the content of APDP PDEs
- */
-static void
-pmap_unmap_apdp(void)
-{
-	int i;
-
-	for (i = 0; i < PDP_SIZE; i++) {
-		pmap_pte_set(APDP_PDE+i, 0);
-#if defined (PAE)
-		/* clear shadow entries too */
-		pmap_pte_set(APDP_PDE_SHADOW+i, 0);
-#endif
-	}
-}
-
-#endif /* XEN */
-
 /*
  *	Add a reference to the specified pmap.
  */
@@ -753,6 +710,8 @@ pmap_reference(struct pmap *pmap)
 
 	atomic_inc_uint(&pmap->pm_obj[0].uo_refs);
 }
+
+#ifndef XEN
 
 /*
  * pmap_map_ptes: map a pmap's PTEs into KVM and lock them in
@@ -765,116 +724,6 @@ void
 pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	      pd_entry_t **ptepp, pd_entry_t * const **pdeppp)
 {
-#ifdef XEN
-	pd_entry_t opde, npde;
-	struct pmap *ourpmap;
-	struct cpu_info *ci;
-	struct lwp *l;
-	bool iscurrent;
-	uint64_t ncsw;
-	int s;
-
-	/* the kernel's pmap is always accessible */
-	if (pmap == pmap_kernel()) {
-		*pmap2 = NULL;
-		*ptepp = PTE_BASE;
-		*pdeppp = normal_pdes;
-		return;
-	}
-	KASSERT(kpreempt_disabled());
-
- retry:
-	l = curlwp;
-	ncsw = l->l_ncsw;
- 	ourpmap = NULL;
-	ci = curcpu();
-#if defined(__x86_64__)
-	/*
-	 * curmap can only be pmap_kernel so at this point
-	 * pmap_is_curpmap is always false
-	 */
-	iscurrent = 0;
-	ourpmap = pmap_kernel();
-#else /* __x86_64__*/
-	if (ci->ci_want_pmapload &&
-	    vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap) {
-		pmap_load();
-		if (l->l_ncsw != ncsw)
-			goto retry;
-	}
-	iscurrent = pmap_is_curpmap(pmap);
-	/* if curpmap then we are always mapped */
-	if (iscurrent) {
-		mutex_enter(pmap->pm_lock);
-		*pmap2 = NULL;
-		*ptepp = PTE_BASE;
-		*pdeppp = normal_pdes;
-		goto out;
-	}
-	ourpmap = ci->ci_pmap;
-#endif /* __x86_64__ */
-
-	/* need to lock both curpmap and pmap: use ordered locking */
-	pmap_reference(ourpmap);
-	if ((uintptr_t) pmap < (uintptr_t) ourpmap) {
-		mutex_enter(pmap->pm_lock);
-		mutex_enter(ourpmap->pm_lock);
-	} else {
-		mutex_enter(ourpmap->pm_lock);
-		mutex_enter(pmap->pm_lock);
-	}
-
-	if (l->l_ncsw != ncsw)
-		goto unlock_and_retry;
-
-	/* need to load a new alternate pt space into curpmap? */
-	COUNT(apdp_pde_map);
-	opde = *APDP_PDE;
-	if (!pmap_valid_entry(opde) ||
-	    pmap_pte2pa(opde) != pmap_pdirpa(pmap, 0)) {
-		int i;
-		s = splvm();
-		/* Make recursive entry usable in user PGD */
-		for (i = 0; i < PDP_SIZE; i++) {
-			npde = pmap_pa2pte(
-			    pmap_pdirpa(pmap, i * NPDPG)) | PG_k | PG_V;
-			xpq_queue_pte_update(
-			    xpmap_ptom(pmap_pdirpa(pmap, PDIR_SLOT_PTE + i)),
-			    npde);
-			xpq_queue_pte_update(xpmap_ptetomach(&APDP_PDE[i]),
-			    npde);
-#ifdef PAE
-			/* update shadow entry too */
-			xpq_queue_pte_update(
-			    xpmap_ptetomach(&APDP_PDE_SHADOW[i]), npde);
-#endif /* PAE */
-			xpq_queue_invlpg(
-			    (vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE + i]);
-		}
-		if (pmap_valid_entry(opde))
-			pmap_apte_flush(ourpmap);
-		splx(s);
-	}
-	*pmap2 = ourpmap;
-	*ptepp = APTE_BASE;
-	*pdeppp = alternate_pdes;
-	KASSERT(l->l_ncsw == ncsw);
-#if !defined(__x86_64__)
- out:
-#endif
- 	/*
- 	 * might have blocked, need to retry?
- 	 */
-	if (l->l_ncsw != ncsw) {
- unlock_and_retry:
-	    	if (ourpmap != NULL) {
-			mutex_exit(ourpmap->pm_lock);
-			pmap_destroy(ourpmap);
-		}
-		mutex_exit(pmap->pm_lock);
-		goto retry;
-	}
-#else /* XEN */
 	struct pmap *curpmap;
 	struct cpu_info *ci;
 	uint32_t cpumask;
@@ -931,7 +780,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	*pmap2 = curpmap;
 	*ptepp = PTE_BASE;
 	*pdeppp = normal_pdes;
-#endif /* XEN */
 }
 
 /*
@@ -941,31 +789,6 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 void
 pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 {
-#ifdef XEN 
-
-	if (pmap == pmap_kernel()) {
-		return;
-	}
-	KASSERT(kpreempt_disabled());
-	if (pmap2 == NULL) {
-		mutex_exit(pmap->pm_lock);
-	} else {
-#if defined(__x86_64__)
-		KASSERT(pmap2 == pmap_kernel());
-#else
-		KASSERT(curcpu()->ci_pmap == pmap2);
-#endif
-#if defined(MULTIPROCESSOR)
-		pmap_unmap_apdp();
-		pmap_pte_flush();
-		pmap_apte_flush(pmap2);
-#endif /* MULTIPROCESSOR */
-		COUNT(apdp_pde_unmap);
-		mutex_exit(pmap->pm_lock);
-		mutex_exit(pmap2->pm_lock);
-		pmap_destroy(pmap2);
-	}
-#else /* XEN */
 	struct cpu_info *ci;
 	struct pmap *mypmap;
 
@@ -1005,8 +828,9 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	 */
 	pmap_reference(pmap);
 	pmap_destroy(pmap2);
-#endif /* XEN */
 }
+
+#endif
 
 inline static void
 pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
@@ -2059,7 +1883,7 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	int npde;
 #endif
 #ifdef XEN
-	int s, i;
+	int s;
 #endif
 
 	/*

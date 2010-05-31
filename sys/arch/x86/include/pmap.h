@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29.2.5 2010/05/30 05:17:12 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.2.6 2010/05/31 01:12:13 rmind Exp $	*/
 
 /*
  *
@@ -435,6 +435,9 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 
 paddr_t	vtomach(vaddr_t);
 #define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
+
+void	pmap_apte_flush(struct pmap *);
+void	pmap_unmap_apdp(void);
 
 #endif	/* XEN */
 
