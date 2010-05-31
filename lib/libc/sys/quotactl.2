@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.25 2010/03/22 19:30:55 joerg Exp $
+.\"	$NetBSD: quotactl.2,v 1.26 2010/05/31 12:16:20 njoly Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -166,9 +166,9 @@ search permission is denied for a component of a path prefix.
 A component of a path prefix was not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
+.Brq Dv NAME_MAX
 characters, or an entire path name exceeded
-.Dv {PATH_MAX}
+.Brq Dv PATH_MAX
 characters.
 .It Bq Er ENOENT
 A filename does not exist.
