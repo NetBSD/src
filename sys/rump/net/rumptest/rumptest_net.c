@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.20 2010/04/30 21:05:52 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.21 2010/05/31 23:13:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -366,8 +366,14 @@ main(int argc, char *argv[])
 	size_t off;
 	int s;
 
+	struct timeval tv1, tv2, tvr;
+
+	gettimeofday(&tv1, NULL);
 	if (rump_init())
 		errx(1, "rump_init failed");
+	gettimeofday(&tv2, NULL);
+	timersub(&tv2, &tv1, &tvr);
+	printf("init took: %d/%d (s/us)\n", (int)tvr.tv_sec, (int)tvr.tv_usec);
 
 #ifdef FULL_NETWORK_STACK
 	configure_interface();
