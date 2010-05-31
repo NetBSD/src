@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.196 2010/05/23 22:05:54 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.197 2010/05/31 20:32:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.196 2010/05/23 22:05:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.197 2010/05/31 20:32:29 pgoyette Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.196 2010/05/23 22:05:54 christos Exp $");
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -85,10 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.196 2010/05/23 22:05:54 christos Exp $");
 #include <dev/acpi/acpi_power.h>
 #include <dev/acpi/acpi_timer.h>
 #include <dev/acpi/acpi_wakedev.h>
-
-#ifdef ACPIVERBOSE
-#include <dev/acpi/acpidevs_data.h>
-#endif
 
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi")
@@ -186,11 +183,6 @@ static void		acpi_rescan_nodes(struct acpi_softc *);
 static void		acpi_rescan_capabilities(struct acpi_softc *);
 static int		acpi_print(void *aux, const char *);
 
-#ifdef ACPIVERBOSE
-static void		acpi_print_devnodes(struct acpi_softc *);
-static void		acpi_print_tree(struct acpi_devnode *, uint32_t);
-#endif
-
 static void		acpi_notify_handler(ACPI_HANDLE, uint32_t, void *);
 
 static void		acpi_register_fixed_button(struct acpi_softc *, int);
@@ -209,6 +201,41 @@ static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
 static void		  acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 
 extern struct cfdriver acpi_cd;
+
+/* Handle routine vectors and loading for acpiverbose module */
+void acpi_verbose_ctl(bool load);
+void acpi_null(void);
+
+void (*acpi_print_devnodes)(struct acpi_softc *) = (void *)acpi_null;
+void (*acpi_print_tree)(struct acpi_devnode *, uint32_t) = (void *)acpi_null;
+void (*acpi_print_dev)(const char *) = (void *)acpi_null;
+void (*acpi_wmidump)(void *) = (void *)acpi_null;
+
+/* acpiverbose support */
+void
+acpi_null(void)
+{
+	/* Nothing to do */
+}
+
+void
+acpi_verbose_ctl(bool load)
+{
+	static int loaded = 0;
+  
+	if (load) { 
+		if (loaded++ == 0)
+			if (module_load("acpiverbose", MODCTL_LOAD_FORCE,
+					NULL, MODULE_CLASS_MISC) != 0)
+				loaded = 0;
+		return;
+	}
+	if (loaded == 0) 
+		return;
+	if (--loaded == 0)
+		module_unload("acpiverbose");
+}  
+
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
     acpi_match, acpi_attach, acpi_detach, NULL, acpi_rescan, acpi_childdet);
@@ -374,6 +401,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	if (acpi_softc != NULL)
 		panic("%s: already attached", __func__);
 
+	acpi_verbose_ctl(true);
+
 	rsdt = acpi_map_rsdt();
 
 	if (rsdt == NULL)
@@ -538,6 +567,8 @@ acpi_detach(device_t self, int flags)
 
 	acpi_softc = NULL;
 
+	acpi_verbose_ctl(false);
+
 	return 0;
 }
 
@@ -623,11 +654,8 @@ acpi_build_tree(struct acpi_softc *sc)
 
 	(void)acpi_pcidev_scan(sc->sc_root);
 
-#ifdef ACPIVERBOSE
 	acpi_print_devnodes(sc);
-	aprint_normal("\n");
 	acpi_print_tree(sc->sc_root, 0);
-#endif
 }
 
 static ACPI_STATUS
@@ -1049,21 +1077,9 @@ acpi_print(void *aux, const char *pnp)
 				}
 				ACPI_FREE(buf.Pointer);
 			}
-#ifdef ACPIVERBOSE
-			else {
-				int i;
+			else
+				acpi_print_dev(pnpstr);
 
-				for (i = 0; i < __arraycount(acpi_knowndevs);
-				    i++) {
-					if (strcmp(acpi_knowndevs[i].pnp,
-					    pnpstr) == 0) {
-						aprint_normal("[%s] ",
-						    acpi_knowndevs[i].str);
-					}
-				}
-			}
-
-#endif
 			aprint_normal("at %s", pnp);
 		} else if (aa->aa_node->ad_devinfo->Type != ACPI_TYPE_DEVICE) {
 			aprint_normal("%s (ACPI Object Type '%s' "
@@ -1091,74 +1107,6 @@ acpi_print(void *aux, const char *pnp)
 
 	return UNCONF;
 }
-
-#ifdef ACPIVERBOSE
-static void
-acpi_print_devnodes(struct acpi_softc *sc)
-{
-	struct acpi_devnode *ad;
-	ACPI_DEVICE_INFO *di;
-
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
-
-		di = ad->ad_devinfo;
-		aprint_normal_dev(sc->sc_dev, "%-5s ", ad->ad_name);
-
-		aprint_normal("HID %-10s ",
-		    ((di->Valid & ACPI_VALID_HID) != 0) ?
-		    di->HardwareId.String: "-");
-
-		aprint_normal("UID %-4s ",
-		    ((di->Valid & ACPI_VALID_UID) != 0) ?
-		    di->UniqueId.String : "-");
-
-		if ((di->Valid & ACPI_VALID_STA) != 0)
-			aprint_normal("STA 0x%08X ", di->CurrentStatus);
-		else
-			aprint_normal("STA %10s ", "-");
-
-		if ((di->Valid & ACPI_VALID_ADR) != 0)
-			aprint_normal("ADR 0x%016" PRIX64"", di->Address);
-		else
-			aprint_normal("ADR -");
-
-		aprint_normal("\n");
-	}
-}
-
-static void
-acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
-{
-	struct acpi_devnode *child;
-	uint32_t i;
-
-	for (i = 0; i < level; i++)
-		aprint_normal("    ");
-
-	aprint_normal("%-5s [%02u] [%c%c] ", ad->ad_name, ad->ad_type,
-	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : ' ',
-	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : ' ');
-
-	if (ad->ad_pciinfo != NULL) {
-
-		aprint_normal("(PCI) @ 0x%02X:0x%02X:0x%02X:0x%02X ",
-		    ad->ad_pciinfo->ap_segment, ad->ad_pciinfo->ap_bus,
-		    ad->ad_pciinfo->ap_device, ad->ad_pciinfo->ap_function);
-
-		if ((ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) != 0)
-			aprint_normal("[R] ");
-
-		if (ad->ad_pciinfo->ap_bridge != false)
-			aprint_normal("[B] -> 0x%02X",
-			    ad->ad_pciinfo->ap_downbus);
-	}
-
-	aprint_normal("\n");
-
-	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
-	    acpi_print_tree(child, level + 1);
-}
-#endif
 
 /*
  * Notify.
