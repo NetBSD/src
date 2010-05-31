@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.12 2010/05/12 15:59:52 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.13 2010/05/31 20:10:56 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.12 2010/05/12 15:59:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.13 2010/05/31 20:10:56 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -378,13 +378,13 @@ acpi_power_set(struct acpi_devnode *ad, int state)
 
 	KASSERT(ad != NULL && ad->ad_root != NULL);
 
-	if (state < ACPI_STATE_D0 || state > ACPI_STATE_D3) {
-		rv = AE_BAD_PARAMETER;
-		goto fail;
+	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
+		ad->ad_state = ACPI_STATE_ERROR;
+		return false;
 	}
 
-	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
-		rv = AE_SUPPORT;
+	if (state < ACPI_STATE_D0 || state > ACPI_STATE_D3) {
+		rv = AE_BAD_PARAMETER;
 		goto fail;
 	}
 
