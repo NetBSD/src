@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.76 2010/05/21 16:59:12 pooka Exp $
+# $NetBSD: mi,v 1.77 2010/05/31 23:37:52 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -200,6 +200,9 @@
 ./usr/libdata/debug/usr/tests/rump/rumpkern				tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modlinkset.debug		tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_threads.debug		tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_tsleep.debug		tests-syscall-debug	debug,atf
+./usr/libdata/debug/usr/tests/rump/rumpkern/t_vm.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall					tests-syscall-debug
 ./usr/libdata/debug/usr/tests/syscall/t_cmsg.debug			tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/syscall/t_timer.debug			tests-syscall-debug	debug,atf
@@ -1117,6 +1120,9 @@
 ./usr/tests/rump/rumpkern/Atffile		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_modcmd		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_modlinkset		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/t_threads		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/t_tsleep		tests-rump-tests	atf
+./usr/tests/rump/rumpkern/t_vm			tests-rump-tests	atf
 ./usr/tests/sys				tests-sys-tests
 ./usr/tests/sys/Atffile			tests-sys-tests	atf
 ./usr/tests/sys/rc				tests-sys-tests
