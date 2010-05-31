@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.1 2010/03/30 01:02:47 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.2 2010/05/31 23:44:54 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -18,18 +18,13 @@
 #include <miscfs/nullfs/null.h>
 #include <fs/tmpfs/tmpfs_args.h>
 
-#define USE_ATF
 #include "../../h_macros.h"
 
-#ifdef USE_ATF
 ATF_TC(basic);
 ATF_TC_HEAD(basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "basic nullfs functionality");
 }
-#else
-#define atf_tc_fail(...) errx(1, __VA_ARGS__)
-#endif
 
 #define MSTR "magic bus"
 
@@ -63,11 +58,7 @@ xread_tfile(const char *path, const char *mstr)
 	return EPROGMISMATCH;
 }
 
-#ifdef USE_ATF
 ATF_TC_BODY(basic, tc)
-#else
-int main(int argc, char *argv[])
-#endif
 {
 	struct null_args nargs;
 	struct tmpfs_args targs;
@@ -128,10 +119,8 @@ int main(int argc, char *argv[])
 	/* done */
 }
 
-#ifdef USE_ATF
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, basic);
 	return 0; /*XXX?*/
 }
-#endif
