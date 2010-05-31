@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modcmd.c,v 1.8 2010/05/31 23:44:54 pooka Exp $	*/
+/*	$NetBSD: t_modcmd.c,v 1.9 2010/05/31 23:51:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -58,9 +58,6 @@ ATF_TC_HEAD(cmsg_modcmd, tc)
 	atf_tc_set_md_var(tc, "descr", "Checks that loading and unloading "
 	    "a module (vfs/tmpfs) is possible");
 }
-#else
-#define atf_tc_fail_errno(...) err(1, __VA_ARGS__)
-#endif
 
 static int
 disable_autoload(void)
