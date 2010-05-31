@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.53 2010/04/27 08:37:07 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.54 2010/05/31 20:32:29 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -318,5 +318,15 @@ int acpi_find_quirks(void);
 #ifdef ACPI_DEBUG
 void acpi_debug_init(void);
 #endif
+
+/* Misc routines with vectors updated by acpiverbose module */
+extern void	(*acpi_print_devnodes)(struct acpi_softc *);
+extern void	(*acpi_print_tree)(struct acpi_devnode *, uint32_t); 
+extern void	(*acpi_print_dev)(const char *);
+extern void	(*acpi_wmidump)(void *);
+
+void		acpi_wmidump_real(void *);
+
+void	acpi_null(void);
 
 #endif	/* !_SYS_DEV_ACPI_ACPIVAR_H */

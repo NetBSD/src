@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.4 2010/04/15 07:02:24 jruoho Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.5 2010/05/31 20:32:29 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.4 2010/04/15 07:02:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.5 2010/05/31 20:32:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,70 +50,6 @@ ACPI_MODULE_NAME            ("wmi_acpi")
  *
  * (Obtained on Thu Feb 12 18:21:44 EET 2009.)
  */
-struct guid_t {
-
-	/*
-	 * The GUID itself. The used format is the usual 32-16-16-64-bit
-	 * representation. All except the fourth field are in native byte
-	 * order. A 32-16-16-16-48-bit hexadecimal notation with hyphens
-	 * is used for human-readable GUIDs.
-	 */
-	struct {
-		uint32_t data1;
-		uint16_t data2;
-		uint16_t data3;
-		uint8_t  data4[8];
-	} __packed;
-
-	union {
-		char oid[2];            /* ACPI object ID. */
-
-		struct {
-			uint8_t nid;    /* Notification value. */
-			uint8_t res;    /* Reserved. */
-		} __packed;
-	} __packed;
-
-	uint8_t count;	                /* Number of instances. */
-	uint8_t flags;		        /* Additional flags. */
-
-} __packed;
-
-struct wmi_t {
-	struct guid_t         guid;
-	bool                  eevent;
-
-	SIMPLEQ_ENTRY(wmi_t)  wmi_link;
-};
-
-struct acpi_wmi_softc {
-	device_t	      sc_dev;
-	device_t              sc_child;
-        ACPI_NOTIFY_HANDLER   sc_handler;
-	struct acpi_devnode  *sc_node;
-
-	SIMPLEQ_HEAD(, wmi_t) wmi_head;
-};
-
-#define ACPI_WMI_FLAG_EXPENSIVE 0x01
-#define ACPI_WMI_FLAG_METHOD    0x02
-#define ACPI_WMI_FLAG_STRING    0x04
-#define ACPI_WMI_FLAG_EVENT     0x08
-#define ACPI_WMI_FLAG_DATA      (ACPI_WMI_FLAG_EXPENSIVE |		\
-	                         ACPI_WMI_FLAG_STRING)
-
-#define UGET16(x)   (*(uint16_t *)(x))
-#define UGET64(x)   (*(uint64_t *)(x))
-
-#define HEXCHAR(x)  (((x) >= '0' && (x) <= '9') ||			\
-	             ((x) >= 'a' && (x) <= 'f') ||			\
-		     ((x) >= 'A' && (x) <= 'F'))
-
-#define GUIDCMP(a, b)							\
-	((a)->data1 == (b)->data1 &&					\
-	 (a)->data2 == (b)->data2 &&					\
-	 (a)->data3 == (b)->data3 &&					\
-	 UGET64((a)->data4) == UGET64((b)->data4))
 
 static int         acpi_wmi_match(device_t, cfdata_t, void *);
 static void        acpi_wmi_attach(device_t, device_t, void *);
@@ -122,10 +58,6 @@ static int         acpi_wmi_print(void *, const char *);
 static bool        acpi_wmi_init(struct acpi_wmi_softc *);
 static bool        acpi_wmi_add(struct acpi_wmi_softc *, ACPI_OBJECT *);
 static void        acpi_wmi_del(struct acpi_wmi_softc *);
-
-#ifdef ACPIVERBOSE
-static void        acpi_wmi_dump(struct acpi_wmi_softc *);
-#endif
 
 static ACPI_STATUS acpi_wmi_guid_get(struct acpi_wmi_softc *,
                                      const char *, struct wmi_t **);
@@ -174,9 +106,7 @@ acpi_wmi_attach(device_t parent, device_t self, void *aux)
 	if (acpi_wmi_init(sc) != true)
 		return;
 
-#ifdef ACPIVERBOSE
-	acpi_wmi_dump(sc);
-#endif
+	acpi_wmidump(sc);
 
 	acpi_wmi_event_add(sc);
 
@@ -312,31 +242,6 @@ acpi_wmi_del(struct acpi_wmi_softc *sc)
 		kmem_free(wmi, sizeof(*wmi));
 	}
 }
-
-#ifdef ACPIVERBOSE
-static void
-acpi_wmi_dump(struct acpi_wmi_softc *sc)
-{
-	struct wmi_t *wmi;
-
-	KASSERT(SIMPLEQ_EMPTY(&sc->wmi_head) == 0);
-
-	SIMPLEQ_FOREACH(wmi, &sc->wmi_head, wmi_link) {
-
-		aprint_normal_dev(sc->sc_dev, "{%08X-%04X-%04X-",
-		    wmi->guid.data1, wmi->guid.data2, wmi->guid.data3);
-
-		aprint_normal("%02X%02X-%02X%02X%02X%02X%02X%02X} ",
-		    wmi->guid.data4[0], wmi->guid.data4[1],
-		    wmi->guid.data4[2], wmi->guid.data4[3],
-		    wmi->guid.data4[4], wmi->guid.data4[5],
-		    wmi->guid.data4[6], wmi->guid.data4[7]);
-
-		aprint_normal("oid %04X count %02X flags %02X\n",
-		    UGET16(wmi->guid.oid), wmi->guid.count, wmi->guid.flags);
-	}
-}
-#endif
 
 static ACPI_STATUS
 acpi_wmi_guid_get(struct acpi_wmi_softc *sc,

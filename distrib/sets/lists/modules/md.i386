@@ -1,4 +1,6 @@
-# $NetBSD: md.i386,v 1.3 2010/04/09 13:49:12 ahoka Exp $
+# $NetBSD: md.i386,v 1.4 2010/05/31 20:32:28 pgoyette Exp $
+./@MODULEDIR@/acpiverbose			base-kernel-modules	kmod
+./@MODULEDIR@/acpiverbose/acpiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/azalia				base-kernel-modules	kmod
 ./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_freebsd			base-kernel-modules	kmod
