@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.74 2009/03/29 01:02:49 mrg Exp $	*/
+/*	$NetBSD: ps.c,v 1.75 2010/05/31 03:18:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.74 2009/03/29 01:02:49 mrg Exp $");
+__RCSID("$NetBSD: ps.c,v 1.75 2010/05/31 03:18:33 rmind Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,8 +168,6 @@ main(int argc, char *argv[])
 		termwidth = 79;
 	else
 		termwidth = ws.ws_col - 1;
-
-	setncpu();
 
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
