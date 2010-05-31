@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1211 2010/05/30 22:22:18 wiz Exp $
+# $NetBSD: mi,v 1.1212 2010/05/31 14:46:22 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1008,8 +1008,10 @@
 ./usr/share/man/cat4/hp300/tc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/hp300/topcat.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/asp.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/astro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/cpu.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/dino.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/elroy.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/gsc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/gsckbc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/harmony.0		man-sys-catman		.cat
@@ -1020,6 +1022,7 @@
 ./usr/share/man/cat4/hp700/mongoose.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/pdc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/phantomas.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/ssio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/wax.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcarm/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hpcarm/j720kbd.0		man-sys-catman		.cat
@@ -3659,8 +3662,10 @@
 ./usr/share/man/html4/hp300/rtc.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp300/topcat.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/asp.html		man-sys-htmlman		html
+./usr/share/man/html4/hp700/astro.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/cpu.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/dino.html		man-sys-htmlman		html
+./usr/share/man/html4/hp700/elroy.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/gsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/gsckbc.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/harmony.html	man-sys-htmlman		html
@@ -3671,6 +3676,7 @@
 ./usr/share/man/html4/hp700/mongoose.html	man-sys-htmlman		html
 ./usr/share/man/html4/hp700/pdc.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/phantomas.html	man-sys-htmlman		html
+./usr/share/man/html4/hp700/ssio.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/wax.html		man-sys-htmlman		html
 ./usr/share/man/html4/hpcarm/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/hpcarm/j720kbd.html	man-sys-htmlman		html
@@ -6108,8 +6114,10 @@
 ./usr/share/man/man4/hp300/tc.4			man-obsolete		obsolete
 ./usr/share/man/man4/hp300/topcat.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/asp.4		man-sys-man		.man
+./usr/share/man/man4/hp700/astro.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/cpu.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/dino.4		man-sys-man		.man
+./usr/share/man/man4/hp700/elroy.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/gsc.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/gsckbc.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/harmony.4		man-sys-man		.man
@@ -6120,6 +6128,7 @@
 ./usr/share/man/man4/hp700/mongoose.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/pdc.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/phantomas.4		man-sys-man		.man
+./usr/share/man/man4/hp700/ssio.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/wax.4		man-sys-man		.man
 ./usr/share/man/man4/hpcarm/intro.4		man-sys-man		.man
 ./usr/share/man/man4/hpcarm/j720kbd.4		man-sys-man		.man
