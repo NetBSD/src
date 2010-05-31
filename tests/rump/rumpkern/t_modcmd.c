@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modcmd.c,v 1.7 2010/05/01 12:11:53 pooka Exp $	*/
+/*	$NetBSD: t_modcmd.c,v 1.8 2010/05/31 23:44:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -45,10 +45,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-
-#define USE_ATF
-
-#ifdef USE_ATF
 
 #include "../../h_macros.h"
 /*
@@ -119,11 +115,7 @@ disable_autoload(void)
 }
 
 #define TMPFSMODULE "librumpfs_tmpfs.so"
-#ifdef USE_ATF
 ATF_TC_BODY(cmsg_modcmd, tc)
-#else
-int main(int argc, char *argv[])
-#endif
 {
 	struct tmpfs_args args;
 	const struct modinfo *const *mi_start, *const *mi_end;
@@ -185,11 +177,9 @@ int main(int argc, char *argv[])
 		atf_tc_fail("mount unexpectedly succeeded");
 }
 
-#ifdef USE_ATF
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, cmsg_modcmd);
 
 	return atf_no_error();
 }
-#endif

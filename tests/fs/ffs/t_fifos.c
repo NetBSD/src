@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fifos.c,v 1.2 2010/05/01 10:46:29 pooka Exp $	*/
+/*	$NetBSD: t_fifos.c,v 1.3 2010/05/31 23:44:54 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -17,10 +17,6 @@
 
 #include <ufs/ufs/ufsmount.h>
 
-/* for debugging */
-#define USE_ATF
-
-#ifdef USE_ATF
 #include "../../h_macros.h"
 
 ATF_TC_WITH_CLEANUP(fifos);
@@ -29,11 +25,6 @@ ATF_TC_HEAD(fifos, tc)
 	atf_tc_set_md_var(tc, "descr", "test fifo support in ffs");
 	atf_tc_set_md_var(tc, "timeout", "5");
 }
-#else
-#include <err.h>
-#define atf_tc_fail_errno(a) err(1, a)
-#define atf_tc_fail(...) err(1, __VA_ARGS__)
-#endif
 
 #define teststr1 "raving & drooling"
 #define teststr2 "haha, charade"
@@ -111,11 +102,7 @@ r2(void *arg)
 const char *newfs = "newfs -F -s 10000 " IMGNAME;
 #define FAKEBLK "/dev/sp00ka"
 
-#ifdef USE_ATF
 ATF_TC_BODY(fifos, tc)
-#else
-int main(int argc, char *argv[])
-#endif
 {
 	struct ufs_args args;
 	pthread_t ptw1, ptw2, ptr1, ptr2;
@@ -158,7 +145,6 @@ int main(int argc, char *argv[])
 		atf_tc_fail_errno("unmount failed");
 }
 
-#ifdef USE_ATF
 ATF_TC_CLEANUP(fifos, tc)
 {
 
@@ -170,4 +156,3 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, fifos);
 	return 0;
 }
-#endif

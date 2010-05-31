@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.2 2010/05/30 06:09:17 dholland Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.3 2010/05/31 23:44:54 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -20,18 +20,13 @@
 #include <fs/tmpfs/tmpfs_args.h>
 #include <miscfs/umapfs/umap.h>
 
-#define USE_ATF
 #include "../../h_macros.h"
 
-#ifdef USE_ATF
 ATF_TC(basic);
 ATF_TC_HEAD(basic, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "basic umapfs mapping");
 }
-#else
-#define atf_tc_fail(...) errx(1, __VA_ARGS__)
-#endif
 
 /* deal with time_t change for running this on 5.0 */
 #if __NetBSD_Prereq__(5,99,7)
@@ -78,11 +73,7 @@ testuidgid(const char *path, uid_t uid, gid_t gid)
 	}
 }
 
-#ifdef USE_ATF
 ATF_TC_BODY(basic, tc)
-#else
-int main(int argc, char *argv[])
-#endif
 {
 	struct umap_args umargs;
 	struct tmpfs_args targs;
@@ -154,10 +145,8 @@ int main(int argc, char *argv[])
 	
 }
 
-#ifdef USE_ATF
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, basic);
 	return 0; /*XXX?*/
 }
-#endif
