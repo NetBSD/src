@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 2010/05/31 19:40:21 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.92 2010/05/31 20:19:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2010/05/31 19:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2010/05/31 20:19:33 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1053,6 +1053,7 @@ process_sstep(struct lwp *l, int sstep)
 
 	/* We're continuing... */
 	if (sstep == 0) {
+		tf->tf_ipsw &= ~PSW_T;
 		return 0;
 	}
 
@@ -1080,7 +1081,7 @@ process_sstep(struct lwp *l, int sstep)
 		return error;
 
 	if ((tf->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE)
-		tf->tf_ipsw &= PSW_T;
+		tf->tf_ipsw &= ~PSW_T;
 	else
 		tf->tf_ipsw |= PSW_T;
 
