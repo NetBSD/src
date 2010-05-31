@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.127 2010/02/24 22:38:09 dyoung Exp $ */
+/* $NetBSD: wskbd.c,v 1.128 2010/05/31 04:27:18 dholland Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.127 2010/02/24 22:38:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.128 2010/05/31 04:27:18 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1507,7 +1507,7 @@ static int
 internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	keysym_t ksym2)
 {
-#ifdef WSDISPLAY_SCROLLSUPPORT
+#if NWSDISPLAY > 0 && defined(WSDISPLAY_SCROLLSUPPORT)
 	u_int state = 0;
 #endif
 	switch (ksym) {
@@ -1523,7 +1523,7 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 		if (*type == WSCONS_EVENT_KEY_DOWN)
 			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
 		break;
-#ifdef WSDISPLAY_SCROLLSUPPORT
+#if NWSDISPLAY > 0 && defined(WSDISPLAY_SCROLLSUPPORT)
 	case KS_Cmd_ScrollFastUp:
 	case KS_Cmd_ScrollFastDown:
 		if (*type == WSCONS_EVENT_KEY_DOWN) {
