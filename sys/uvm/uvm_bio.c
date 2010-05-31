@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.2 2010/02/23 07:05:05 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.3 2010/05/31 13:26:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.2 2010/02/23 07:05:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.3 2010/05/31 13:26:38 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
-#include "opt_device_page.h"
+#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
@@ -339,7 +339,7 @@ again:
 
 		mutex_enter(&uobj->vmobjlock);
 
-		if (uvm_pageisdevice_p(pg)) {
+		if (uvm_pageisdirect_p(pg)) {
 			UVMHIST_LOG(ubchist, "pg is device", i, 0,0,0);
 			goto ubc_fault_enter;
 		}
@@ -387,11 +387,11 @@ ubc_fault_enter:
 		 */
 
 		/* XXXUEBS device pages are always read-only for now */
-		rdonly = uvm_pageisdevice_p(pg) ||
+		rdonly = uvm_pageisdirect_p(pg) ||
 		    ((access_type & VM_PROT_WRITE) == 0 &&
 		     (pg->flags & PG_RDONLY) != 0) ||
 		    UVM_OBJ_NEEDS_WRITEFAULT(uobj);
-		KASSERT(uvm_pageisdevice_p(pg) ||
+		KASSERT(uvm_pageisdirect_p(pg) ||
 		    (pg->flags & PG_RDONLY) == 0 ||
 		    (access_type & VM_PROT_WRITE) == 0 ||
 		    pg->offset < umap->writeoff ||
@@ -401,7 +401,7 @@ ubc_fault_enter:
 		error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 		    prot & mask, PMAP_CANFAIL | (access_type & mask));
 
-		if (uvm_pageisdevice_p(pg))
+		if (uvm_pageisdirect_p(pg))
 			goto ubc_fault_done;
 
 		mutex_enter(&uvm_pageqlock);
@@ -552,7 +552,7 @@ again_faultbusy:
 		for (i = 0; i < npages; i++) {
 			struct vm_page *pg = pgs[i];
 
-			if (uvm_pageisdevice_p(pg))
+			if (uvm_pageisdirect_p(pg))
 				goto ubc_alloc_enter;
 
 			KASSERT(pg->uobject == uobj);

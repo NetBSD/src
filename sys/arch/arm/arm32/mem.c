@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.26.6.3 2010/02/25 03:30:22 uebayasi Exp $	*/
+/*	$NetBSD: mem.c,v 1.26.6.4 2010/05/31 13:26:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -74,11 +74,11 @@
 
 #include "opt_arm32_pmap.h"
 #include "opt_compat_netbsd.h"
-#include "opt_device_page.h"
+#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.3 2010/02/25 03:30:22 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.26.6.4 2010/05/31 13:26:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

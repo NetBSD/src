@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.7 2010/04/28 16:33:47 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.8 2010/05/31 13:26:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,9 +31,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.7 2010/04/28 16:33:47 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.8 2010/05/31 13:26:37 uebayasi Exp $");
 
-#include "opt_device_page.h"
+#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
@@ -822,7 +822,7 @@ genfs_do_getpages_xip(void *v)
 			    (off - (lbn << fs_bshift));
 		}
 
-		pps[i] = uvm_phys_to_vm_page_device(phys_addr);
+		pps[i] = uvm_phys_to_vm_page_direct(phys_addr);
 
 		UVMHIST_LOG(ubchist, "xip pgs %d => phys_addr=0x%lx (%p)",
 			i,
