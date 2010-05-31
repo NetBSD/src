@@ -1,4 +1,4 @@
-.\"	$NetBSD: pathconf.2,v 1.23 2010/04/22 08:00:34 jruoho Exp $
+.\"	$NetBSD: pathconf.2,v 1.24 2010/05/31 12:16:20 njoly Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -94,7 +94,7 @@ Return 1 if appropriate privileges are required for the
 system call, otherwise 0.
 .It Li _PC_NO_TRUNC
 Return 1 if filenames longer than
-.Dv {NAME_MAX}
+.Brq Dv NAME_MAX
 are truncated.
 .It Li _PC_VDISABLE
 Returns the terminal character disabling value.

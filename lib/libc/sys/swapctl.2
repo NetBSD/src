@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.36 2010/05/17 12:23:05 jruoho Exp $
+.\"	$NetBSD: swapctl.2,v 1.37 2010/05/31 12:16:20 njoly Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -216,9 +216,9 @@ succeeds unless:
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv NAME_MAX
+.Brq Dv NAME_MAX
 characters, or an entire path name exceeded
-.Dv PATH_MAX
+.Brq Dv PATH_MAX
 characters.
 .It Bq Er ENOENT
 The named device does not exist.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.2,v 1.25 2006/10/21 18:26:08 rillig Exp $
+.\"	$NetBSD: chflags.2,v 1.26 2010/05/31 12:16:20 njoly Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -118,9 +118,9 @@ will fail if:
 A component of the path prefix is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
-.Dv {NAME_MAX}
+.Brq Dv NAME_MAX
 characters, or an entire path name exceeded
-.Dv {PATH_MAX}
+.Brq Dv PATH_MAX
 characters.
 .It Bq Er ENOENT
 The named file does not exist.
