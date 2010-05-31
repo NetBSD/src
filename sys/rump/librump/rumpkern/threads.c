@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.9 2010/05/28 16:44:14 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.10 2010/05/31 23:09:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,9 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.9 2010/05/28 16:44:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.10 2010/05/31 23:09:29 pooka Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
@@ -150,12 +151,17 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 		strlcpy(l->l_name, thrname, MAXCOMLEN);
 	}
 		
-	rv = rumpuser_thread_create(threadbouncer, k, thrname);
+	rv = rumpuser_thread_create(threadbouncer, k, thrname,
+	    (flags & KTHREAD_JOINABLE) == KTHREAD_JOINABLE, &l->l_ctxlink);
 	if (rv)
 		return rv;
 
-	if (newlp)
+	if (newlp) {
 		*newlp = l;
+	} else {
+		KASSERT((flags & KTHREAD_JOINABLE) == 0);
+	}
+
 	return 0;
 }
 
@@ -166,6 +172,19 @@ kthread_exit(int ecode)
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_UNLOCK_LAST(NULL);
 	rump_lwp_release(curlwp);
+	/* unschedule includes membar */
 	rump_unschedule();
 	rumpuser_thread_exit();
+}
+
+int
+kthread_join(struct lwp *l)
+{
+	int rv;
+
+	KASSERT(l->l_ctxlink != NULL);
+	rv = rumpuser_thread_join(l->l_ctxlink);
+	membar_consumer();
+
+	return rv;
 }
