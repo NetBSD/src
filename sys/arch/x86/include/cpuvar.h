@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.31.4.1 2010/05/30 05:17:12 rmind Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.31.4.2 2010/05/31 01:12:13 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -96,9 +96,7 @@ struct cpu_attach_args {
 #endif
 #endif /* defined(_KERNEL_OPT) */
 
-#ifdef MULTIPROCESSOR
 extern uint32_t cpus_running;
-#endif
 
 int x86_ipi(int, int, int);
 void x86_self_ipi(int);

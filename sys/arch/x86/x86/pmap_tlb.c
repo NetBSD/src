@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.1 2010/05/26 04:55:24 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.2 2010/05/31 01:12:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.1 2010/05/26 04:55:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.2 2010/05/31 01:12:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -204,11 +204,10 @@ pmap_tlb_shootnow(void)
 {
 	struct pmap_tlb_packet *tp;
 	struct pmap_tlb_mailbox *tm;
-	struct cpu_info *ci, *lci;
-	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	uint32_t remote;
 	uintptr_t gen;
-	int s, err, i, count;
+	int s, i, count;
 
 	KASSERT(kpreempt_disabled());
 
@@ -222,7 +221,12 @@ pmap_tlb_shootnow(void)
 	gen = 0; /* XXXgcc */
 	tm = &pmap_tlb_mailbox;
 	remote = tp->tp_cpumask & ~ci->ci_cpumask;
+
+#ifdef MULTIPROCESSOR
 	if (remote != 0) {
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *lci;
+		int err;
 		/*
 		 * Gain ownership of the shootdown mailbox.  We must stay
 		 * at IPL_VM once we own it or could deadlock against an
@@ -275,7 +279,7 @@ pmap_tlb_shootnow(void)
 			panic("pmap_tlb_shootdown: IPI failed");
 		}
 	}
-
+#endif
 	/*
 	 * Shootdowns on remote CPUs are now in flight.  In the meantime,
 	 * perform local shootdowns and do not forget to update emap gen.
