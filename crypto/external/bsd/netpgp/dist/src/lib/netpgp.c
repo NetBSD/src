@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.56 2010/05/25 01:05:10 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.57 2010/06/01 05:22:38 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -755,9 +755,12 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	cp = NULL;
 	__ops_sprint_keydata(netpgp->io, NULL, key, &cp, "pub", &key->key.seckey.pubkey, 0);
 	(void) fprintf(stdout, "%s", cp);
-	/* write public key, and try to re-read it */
+	/* write public key */
 	(void) snprintf(dir, sizeof(dir), "%s/%.16s", netpgp_getvar(netpgp, "homedir"), &cp[31]);
-	(void) mkdir(dir, 0700);
+	if (mkdir(dir, 0700) < 0) {
+		(void) fprintf(io->errs, "can't mkdir '%s'\n", dir);
+		return 0;
+	}
 	(void) fprintf(io->errs, "netpgp: generated keys in directory %s\n", dir);
 	(void) snprintf(ringfile = filename, sizeof(filename), "%s/pubring.gpg", dir);
 	if ((fd = __ops_setup_file_append(&create, ringfile)) < 0) {
@@ -772,12 +775,10 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 		return 0;
 	}
 	__ops_teardown_file_write(create, fd);
-	__ops_keyring_free(netpgp->pubring);
-	if (!__ops_keyring_fileread(netpgp->pubring, noarmor, ringfile)) {
-		(void) fprintf(io->errs, "Cannot read pubring %s\n", ringfile);
-		return 0;
+	if (netpgp->pubring != NULL) {
+		__ops_keyring_free(netpgp->pubring);
 	}
-	/* write secret key, and try to re-read it */
+	/* write secret key */
 	(void) snprintf(ringfile = filename, sizeof(filename), "%s/secring.gpg", dir);
 	if ((fd = __ops_setup_file_append(&create, ringfile)) < 0) {
 		fd = __ops_setup_file_write(&create, ringfile, 0);
@@ -791,10 +792,8 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 		return 0;
 	}
 	__ops_teardown_file_write(create, fd);
-	__ops_keyring_free(netpgp->secring);
-	if (!__ops_keyring_fileread(netpgp->secring, noarmor, ringfile)) {
-		(void) fprintf(io->errs, "Can't read secring %s\n", ringfile);
-		return 0;
+	if (netpgp->secring != NULL) {
+		__ops_keyring_free(netpgp->secring);
 	}
 	__ops_keydata_free(key);
 	free(cp);
