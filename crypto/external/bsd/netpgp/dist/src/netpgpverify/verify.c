@@ -1,4 +1,4 @@
-/* $NetBSD: verify.c,v 1.12 2010/06/01 06:01:29 agc Exp $ */
+/* $NetBSD: verify.c,v 1.13 2010/06/01 06:07:56 agc Exp $ */
 
 /*-
  * Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ stdin_to_mem(netpgp_t *netpgp, char **temp, char **out, unsigned *maxsize)
 
 	*maxsize = (unsigned)atoi(netpgp_getvar(netpgp, "max mem alloc"));
 	size = 0;
-	*temp = NULL;
+	*out = *temp = NULL;
 	while ((n = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
 		/* round up the allocation */
 		newsize = size + ((n / BUFSIZ) + 1) * BUFSIZ;
