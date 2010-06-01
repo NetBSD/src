@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term.h,v 1.52 2010/03/23 12:42:22 kristaps Exp $ */
+/*	$Vendor-Id: term.h,v 1.57 2010/05/24 21:51:20 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -29,14 +29,20 @@ enum	termfont {
 	TERMFONT_UNDER
 };
 
+#define	TERM_MAXMARGIN	  100000 /* FIXME */
+
 struct	termp {
+	size_t		  defrmargin;	/* Right margin of the device.. */
 	size_t		  rmargin;	/* Current right margin. */
 	size_t		  maxrmargin;	/* Max right margin. */
 	size_t		  maxcols;	/* Max size of buf. */
 	size_t		  offset;	/* Margin offest. */
+	size_t		  tabwidth;	/* Distance of tab positions. */
 	size_t		  col;		/* Bytes in buf. */
+	size_t		  viscol;	/* Chars on current line. */
 	int		  overstep;	/* See termp_flushln(). */
 	int		  flags;
+#define	TERMP_SENTENCE	 (1 << 1)	/* Space before a sentence. */
 #define	TERMP_NOSPACE	 (1 << 2)	/* No space before words. */
 #define	TERMP_NOLPAD	 (1 << 3)	/* See term_flushln(). */
 #define	TERMP_NOBREAK	 (1 << 4)	/* See term_flushln(). */

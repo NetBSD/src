@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.h,v 1.27 2010/03/27 10:13:16 kristaps Exp $ */
+/*	$Vendor-Id: man.h,v 1.36 2010/05/26 14:03:54 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -55,12 +55,7 @@ enum	mant {
 	MAN_Sp,
 	MAN_Vb,
 	MAN_Ve,
-	MAN_de,
-	MAN_dei,
-	MAN_am,
-	MAN_ami,
-	MAN_ig,
-	MAN_dot,
+	MAN_AT,
 	MAN_MAX
 };
 
@@ -74,8 +69,9 @@ enum	man_type {
 };
 
 struct	man_meta {
-	int		 msec;
+	char		*msec;
 	time_t		 date;
+	char		*rawdate;
 	char		*vol;
 	char		*title;
 	char		*source;
@@ -93,6 +89,7 @@ struct	man_node {
 	int		 flags;
 #define	MAN_VALID	(1 << 0)
 #define	MAN_ACTED	(1 << 1)
+#define	MAN_EOS		(1 << 2)
 	enum man_type	 type;
 	char		*string;
 	struct man_node	*head;
@@ -100,24 +97,18 @@ struct	man_node {
 };
 
 #define	MAN_IGN_MACRO	 (1 << 0)
-#define	MAN_IGN_CHARS	 (1 << 1)
 #define	MAN_IGN_ESCAPE	 (1 << 2)
 
 extern	const char *const *man_macronames;
-
-struct	man_cb {
-	int	(*man_warn)(void *, int, int, const char *);
-	int	(*man_err)(void *, int, int, const char *);
-};
 
 __BEGIN_DECLS
 
 struct	man;
 
 void	 	  man_free(struct man *);
-struct	man	 *man_alloc(void *, int, const struct man_cb *);
+struct	man	 *man_alloc(void *, int, mandocmsg);
 void		  man_reset(struct man *);
-int	 	  man_parseln(struct man *, int, char *buf);
+int	 	  man_parseln(struct man *, int, char *, int);
 int		  man_endparse(struct man *);
 
 const struct man_node *man_node(const struct man *);

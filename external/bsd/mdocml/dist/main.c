@@ -1,4 +1,4 @@
-/*	$Vendor-Id: main.c,v 1.60 2010/03/22 20:43:00 kristaps Exp $ */
+/*	$Vendor-Id: main.c,v 1.79 2010/05/17 22:11:42 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -18,6 +18,7 @@
 #include "config.h"
 #endif
 
+#include <sys/mman.h>
 #include <sys/stat.h>
 
 #include <assert.h>
@@ -28,8 +29,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "mandoc.h"
 #include "mdoc.h"
 #include "man.h"
+#include "roff.h"
 #include "main.h"
 
 #define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
@@ -69,56 +72,118 @@ struct	curparse {
 	const char	 *file;		/* Current parse. */
 	int		  fd;		/* Current parse. */
 	int		  wflags;
+	/* FIXME: set by max error */
 #define	WARN_WALL	 (1 << 0)	/* All-warnings mask. */
 #define	WARN_WERR	 (1 << 2)	/* Warnings->errors. */
 	int		  fflags;
 #define	FL_IGN_SCOPE	 (1 << 0) 	/* Ignore scope errors. */
 #define	FL_NIGN_ESCAPE	 (1 << 1) 	/* Don't ignore bad escapes. */
 #define	FL_NIGN_MACRO	 (1 << 2) 	/* Don't ignore bad macros. */
-#define	FL_NIGN_CHARS	 (1 << 3)	/* Don't ignore bad chars. */
 #define	FL_IGN_ERRORS	 (1 << 4)	/* Ignore failed parse. */
-	enum intt	  inttype;	/* Input parsers... */
-	struct man	 *man;
-	struct man	 *lastman;
-	struct mdoc	 *mdoc;
-	struct mdoc	 *lastmdoc;
-	enum outt	  outtype;	/* Output devices... */
-	out_mdoc	  outmdoc;
-	out_man	  	  outman;
-	out_free	  outfree;
-	void		 *outdata;
-	char		  outopts[BUFSIZ];
+#define	FL_STRICT	  FL_NIGN_ESCAPE | \
+			  FL_NIGN_MACRO /* ignore nothing */
+	enum intt	  inttype;	/* which parser to use */
+	struct man	 *man;		/* man parser */
+	struct mdoc	 *mdoc;		/* mdoc parser */
+	struct roff	 *roff;		/* roff parser (!NULL) */
+	enum outt	  outtype; 	/* which output to use */
+	out_mdoc	  outmdoc;	/* mdoc output ptr */
+	out_man	  	  outman;	/* man output ptr */
+	out_free	  outfree;	/* free output ptr */
+	void		 *outdata;	/* data for output */
+	char		  outopts[BUFSIZ]; /* buf of output opts */
 };
 
-#define	FL_STRICT	  FL_NIGN_ESCAPE | \
-			  FL_NIGN_MACRO | \
- 			  FL_NIGN_CHARS
+static	const char * const	mandocerrs[MANDOCERR_MAX] = {
+	"ok",
+	"text should be uppercase",
+	"sections out of conentional order",
+	"section name repeats",
+	"out of order prologue",
+	"repeated prologue entry",
+	"list type must come first",
+	"column syntax is inconsistent",
+	"bad standard",
+	"bad library",
+	"bad escape sequence",
+	"unterminated quoted string",
+	"argument requires the width argument",
+	"superfluous width argument",
+	"bad date argument",
+	"bad width argument",
+	"unknown manual sction",
+	"section not in conventional manual section",
+	"end of line whitespace",
+	"scope open on exit",
+	"NAME section must come first",
+	"bad Boolean value",
+	"child violates parent syntax",
+	"bad AT&T symbol",
+	"list type repeated",
+	"display type repeated",
+	"argument repeated",
+	"manual name not yet set",
+	"obsolete macro ignored",
+	"empty macro ignored",
+	"macro not allowed in body",
+	"macro not allowed in prologue",
+	"bad character",
+	"bad NAME section contents",
+	"no blank lines",
+	"no text in this context",
+	"bad comment style",
+	"unknown macro will be lost",
+	"line scope broken",
+	"scope broken",
+	"argument count wrong",
+	"request scope close w/none open",
+	"scope already open",
+	"macro requires line argument(s)",
+	"macro requires body argument(s)",
+	"macro requires argument(s)",
+	"no title in document",
+	"line argument(s) will be lost",
+	"body argument(s) will be lost",
+	"missing font type",
+	"missing display type",
+	"missing list type",
+	"displays may not be nested",
+	"no scope to rewind: syntax violated",
+	"scope broken, syntax violated",
+	"line scope broken, syntax violated",
+	"argument count wrong, violates syntax",
+	"child violates parent syntax",
+	"argument count wrong, violates syntax",
+	"no document body",
+	"no document prologue",
+	"utsname system call failed",
+	"memory exhausted",
+};
 
+static	void		  fdesc(struct curparse *);
+static	void		  ffile(const char *, struct curparse *);
 static	int		  foptions(int *, char *);
-static	int		  toptions(struct curparse *, char *);
-static	int		  moptions(enum intt *, char *);
-static	int		  woptions(int *, char *);
-static	int		  merr(void *, int, int, const char *);
-static	int		  mwarn(void *, int, int, const char *);
-static	int		  ffile(struct buf *, struct buf *, 
-				const char *, struct curparse *);
-static	int		  fdesc(struct buf *, struct buf *,
-				struct curparse *);
-static	int		  pset(const char *, int, struct curparse *,
-				struct man **, struct mdoc **);
 static	struct man	 *man_init(struct curparse *);
 static	struct mdoc	 *mdoc_init(struct curparse *);
-static	void		  version(void) __attribute__((noreturn));
+static	struct roff	 *roff_init(struct curparse *);
+static	int		  moptions(enum intt *, char *);
+static	int		  mmsg(enum mandocerr, void *, 
+				int, int, const char *);
+static	int		  pset(const char *, int, struct curparse *,
+				struct man **, struct mdoc **);
+static	int		  toptions(struct curparse *, char *);
 static	void		  usage(void) __attribute__((noreturn));
+static	void		  version(void) __attribute__((noreturn));
+static	int		  woptions(int *, char *);
 
 static	const char	 *progname;
-
+static 	int		  with_error;
+static	int		  with_warning;
 
 int
 main(int argc, char *argv[])
 {
-	int		 c, rc;
-	struct buf	 ln, blk;
+	int		 c;
 	struct curparse	 curp;
 
 	progname = strrchr(argv[0], '/');
@@ -166,52 +231,32 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	memset(&ln, 0, sizeof(struct buf));
-	memset(&blk, 0, sizeof(struct buf));
-
-	rc = 1;
-
 	if (NULL == *argv) {
 		curp.file = "<stdin>";
 		curp.fd = STDIN_FILENO;
 
-		c = fdesc(&blk, &ln, &curp);
-		if ( ! (FL_IGN_ERRORS & curp.fflags)) 
-			rc = 1 == c ? 1 : 0;
-		else
-			rc = -1 == c ? 0 : 1;
+		fdesc(&curp);
 	}
 
-	while (rc && *argv) {
-		c = ffile(&blk, &ln, *argv, &curp);
-		if ( ! (FL_IGN_ERRORS & curp.fflags)) 
-			rc = 1 == c ? 1 : 0;
-		else
-			rc = -1 == c ? 0 : 1;
+	while (*argv) {
+		ffile(*argv, &curp);
 
-		argv++;
-		if (*argv && rc) {
-			if (curp.lastman)
-				man_reset(curp.lastman);
-			if (curp.lastmdoc)
-				mdoc_reset(curp.lastmdoc);
-			curp.lastman = NULL;
-			curp.lastmdoc = NULL;
-		}
+		if (with_error && !(curp.fflags & FL_IGN_ERRORS))
+			break;
+		++argv;
 	}
 
-	if (blk.buf)
-		free(blk.buf);
-	if (ln.buf)
-		free(ln.buf);
 	if (curp.outfree)
 		(*curp.outfree)(curp.outdata);
 	if (curp.mdoc)
 		mdoc_free(curp.mdoc);
 	if (curp.man)
 		man_free(curp.man);
+	if (curp.roff)
+		roff_free(curp.roff);
 
-	return(rc ? EXIT_SUCCESS : EXIT_FAILURE);
+	return((with_warning || with_error) ? 
+			EXIT_FAILURE :  EXIT_SUCCESS);
 }
 
 
@@ -228,9 +273,9 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: %s [-V] [-foption...] "
+	(void)fprintf(stderr, "usage: %s [-V] [-foption] "
 			"[-mformat] [-Ooption] [-Toutput] "
-			"[-Werr...]\n", progname);
+			"[-Werr] [file...]\n", progname);
 	exit(EXIT_FAILURE);
 }
 
@@ -239,23 +284,25 @@ static struct man *
 man_init(struct curparse *curp)
 {
 	int		 pflags;
-	struct man_cb	 mancb;
-
-	mancb.man_err = merr;
-	mancb.man_warn = mwarn;
 
 	/* Defaults from mandoc.1. */
 
-	pflags = MAN_IGN_MACRO | MAN_IGN_ESCAPE | MAN_IGN_CHARS;
+	pflags = MAN_IGN_MACRO | MAN_IGN_ESCAPE;
 
 	if (curp->fflags & FL_NIGN_MACRO)
 		pflags &= ~MAN_IGN_MACRO;
-	if (curp->fflags & FL_NIGN_CHARS)
-		pflags &= ~MAN_IGN_CHARS;
 	if (curp->fflags & FL_NIGN_ESCAPE)
 		pflags &= ~MAN_IGN_ESCAPE;
 
-	return(man_alloc(curp, pflags, &mancb));
+	return(man_alloc(curp, pflags, mmsg));
+}
+
+
+static struct roff *
+roff_init(struct curparse *curp)
+{
+
+	return(roff_alloc(mmsg, curp));
 }
 
 
@@ -263,14 +310,10 @@ static struct mdoc *
 mdoc_init(struct curparse *curp)
 {
 	int		 pflags;
-	struct mdoc_cb	 mdoccb;
-
-	mdoccb.mdoc_err = merr;
-	mdoccb.mdoc_warn = mwarn;
 
 	/* Defaults from mandoc.1. */
 
-	pflags = MDOC_IGN_MACRO | MDOC_IGN_ESCAPE | MDOC_IGN_CHARS;
+	pflags = MDOC_IGN_MACRO | MDOC_IGN_ESCAPE;
 
 	if (curp->fflags & FL_IGN_SCOPE)
 		pflags |= MDOC_IGN_SCOPE;
@@ -278,156 +321,262 @@ mdoc_init(struct curparse *curp)
 		pflags &= ~MDOC_IGN_ESCAPE;
 	if (curp->fflags & FL_NIGN_MACRO)
 		pflags &= ~MDOC_IGN_MACRO;
-	if (curp->fflags & FL_NIGN_CHARS)
-		pflags &= ~MDOC_IGN_CHARS;
 
-	return(mdoc_alloc(curp, pflags, &mdoccb));
+	return(mdoc_alloc(curp, pflags, mmsg));
 }
 
 
-static int
-ffile(struct buf *blk, struct buf *ln, 
-		const char *file, struct curparse *curp)
+static void
+ffile(const char *file, struct curparse *curp)
 {
-	int		 c;
 
 	curp->file = file;
 	if (-1 == (curp->fd = open(curp->file, O_RDONLY, 0))) {
 		perror(curp->file);
-		return(-1);
+		with_error = 1;
+		return;
 	}
 
-	c = fdesc(blk, ln, curp);
+	fdesc(curp);
 
 	if (-1 == close(curp->fd))
 		perror(curp->file);
-
-	return(c);
 }
 
 
 static int
-fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
+resize_buf(struct buf *buf, size_t initial)
 {
-	size_t		 sz;
-	ssize_t		 ssz;
+	void *tmp;
+	size_t sz;
+
+	if (buf->sz == 0)
+		sz = initial;
+	else
+		sz = 2 * buf->sz;
+	tmp = realloc(buf->buf, sz);
+	if (NULL == tmp) {
+		perror(NULL);
+		return(0);
+	}
+	buf->buf = tmp;
+	buf->sz = sz;
+	return(1);
+}
+
+
+static int
+read_whole_file(struct curparse *curp, struct buf *fb, int *with_mmap)
+{
 	struct stat	 st;
-	int		 j, i, pos, lnn, comment;
-	struct man	*man;
-	struct mdoc	*mdoc;
+	size_t		 off;
+	ssize_t		 ssz;
 
-	sz = BUFSIZ;
-	man = NULL;
-	mdoc = NULL;
-
-	/*
-	 * Two buffers: ln and buf.  buf is the input buffer optimised
-	 * here for each file's block size.  ln is a line buffer.  Both
-	 * growable, hence passed in by ptr-ptr.
-	 */
-
-	if (-1 == fstat(curp->fd, &st))
+	if (-1 == fstat(curp->fd, &st)) {
 		perror(curp->file);
-	else if ((size_t)st.st_blksize > sz)
-		sz = st.st_blksize;
-
-	if (sz > blk->sz) {
-		blk->buf = realloc(blk->buf, sz);
-		if (NULL == blk->buf) {
-			perror(NULL);
-			exit(EXIT_FAILURE);
-		}
-		blk->sz = sz;
+		with_error = 1;
+		return(0);
 	}
 
-	/* Fill buf with file blocksize. */
+	/*
+	 * If we're a regular file, try just reading in the whole entry
+	 * via mmap().  This is faster than reading it into blocks, and
+	 * since each file is only a few bytes to begin with, I'm not
+	 * concerned that this is going to tank any machines.
+	 */
 
-	for (lnn = pos = comment = 0; ; ) {
-		if (-1 == (ssz = read(curp->fd, blk->buf, sz))) {
-			perror(curp->file);
-			return(-1);
-		} else if (0 == ssz) 
-			break;
-
-		/* Parse the read block into partial or full lines. */
-
-		for (i = 0; i < (int)ssz; i++) {
-			if (pos >= (int)ln->sz) {
-				ln->sz += 256; /* Step-size. */
-				ln->buf = realloc(ln->buf, ln->sz);
-				if (NULL == ln->buf) {
-					perror(NULL);
-					return(EXIT_FAILURE);
-				}
-			}
-
-			if ('\n' != blk->buf[i]) {
-				if (comment)
-					continue;
-				ln->buf[pos++] = blk->buf[i];
-
-				/* Handle in-line `\"' comments. */
-
-				if (1 == pos || '\"' != ln->buf[pos - 1])
-					continue;
-
-				for (j = pos - 2; j >= 0; j--)
-					if ('\\' != ln->buf[j])
-						break;
-
-				if ( ! ((pos - 2 - j) % 2))
-					continue;
-
-				comment = 1;
-				pos -= 2;
-				continue;
-			} 
-
-			/* Handle escaped `\\n' newlines. */
-
-			if (pos > 0 && 0 == comment && 
-					'\\' == ln->buf[pos - 1]) {
-				for (j = pos - 1; j >= 0; j--)
-					if ('\\' != ln->buf[j])
-						break;
-				if ( ! ((pos - j) % 2)) {
-					pos--;
-					lnn++;
-					continue;
-				}
-			}
-
-			ln->buf[pos] = 0;
-			lnn++;
-
-			/* If unset, assign parser in pset(). */
-
-			if ( ! (man || mdoc) && ! pset(ln->buf, 
-						pos, curp, &man, &mdoc))
-				return(-1);
-
-			pos = comment = 0;
-
-			/* Pass down into parsers. */
-
-			if (man && ! man_parseln(man, lnn, ln->buf))
-				return(0);
-			if (mdoc && ! mdoc_parseln(mdoc, lnn, ln->buf))
-				return(0);
+	if (S_ISREG(st.st_mode)) {
+		if (st.st_size >= (1U << 31)) {
+			fprintf(stderr, "%s: input too large\n", 
+					curp->file);
+			with_error = 1;
+			return(0);
 		}
+		*with_mmap = 1;
+		fb->sz = (size_t)st.st_size;
+		fb->buf = mmap(NULL, fb->sz, PROT_READ, 
+				MAP_FILE, curp->fd, 0);
+		if (fb->buf != MAP_FAILED)
+			return(1);
+	}
+
+	/*
+	 * If this isn't a regular file (like, say, stdin), then we must
+	 * go the old way and just read things in bit by bit.
+	 */
+
+	*with_mmap = 0;
+	off = 0;
+	fb->sz = 0;
+	fb->buf = NULL;
+	for (;;) {
+		if (off == fb->sz) {
+			if (fb->sz == (1U << 31)) {
+				fprintf(stderr, "%s: input too large\n", 
+						curp->file);
+				break;
+			}
+			if (! resize_buf(fb, 65536))
+				break;
+		}
+		ssz = read(curp->fd, fb->buf + (int)off, fb->sz - off);
+		if (ssz == 0) {
+			fb->sz = off;
+			return(1);
+		}
+		if (ssz == -1) {
+			perror(curp->file);
+			break;
+		}
+		off += (size_t)ssz;
+	}
+
+	free(fb->buf);
+	fb->buf = NULL;
+	with_error = 1;
+	return(0);
+}
+
+
+static void
+fdesc(struct curparse *curp)
+{
+	struct buf	 ln, blk;
+	int		 i, pos, lnn, lnn_start, with_mmap, of;
+	enum rofferr	 re;
+	struct man	*man;
+	struct mdoc	*mdoc;
+	struct roff	*roff;
+
+	man = NULL;
+	mdoc = NULL;
+	roff = NULL;
+	memset(&ln, 0, sizeof(struct buf));
+
+	/*
+	 * Two buffers: ln and buf.  buf is the input file and may be
+	 * memory mapped.  ln is a line buffer and grows on-demand.
+	 */
+
+	if ( ! read_whole_file(curp, &blk, &with_mmap))
+		return;
+
+	if (NULL == curp->roff) 
+		curp->roff = roff_init(curp);
+	if (NULL == (roff = curp->roff))
+		goto bailout;
+
+	for (i = 0, lnn = 1; i < (int)blk.sz;) {
+		pos = 0;
+		lnn_start = lnn;
+		while (i < (int)blk.sz) {
+			if ('\n' == blk.buf[i]) {
+				++i;
+				++lnn;
+				break;
+			}
+			/* Trailing backslash is like a plain character. */
+			if ('\\' != blk.buf[i] || i + 1 == (int)blk.sz) {
+				if (pos >= (int)ln.sz)
+					if (! resize_buf(&ln, 256))
+						goto bailout;
+				ln.buf[pos++] = blk.buf[i++];
+				continue;
+			}
+			/* Found an escape and at least one other character. */
+			if ('\n' == blk.buf[i + 1]) {
+				/* Escaped newlines are skipped over */
+				i += 2;
+				++lnn;
+				continue;
+			}
+			if ('"' == blk.buf[i + 1]) {
+				i += 2;
+				/* Comment, skip to end of line */
+				for (; i < (int)blk.sz; ++i) {
+					if ('\n' == blk.buf[i]) {
+						++i;
+						++lnn;
+						break;
+					}
+				}
+				/* Backout trailing whitespaces */
+				for (; pos > 0; --pos) {
+					if (ln.buf[pos - 1] != ' ')
+						break;
+					if (pos > 2 && ln.buf[pos - 2] == '\\')
+						break;
+				}
+				break;
+			}
+			/* Some other escape sequence, copy and continue. */
+			if (pos + 1 >= (int)ln.sz)
+				if (! resize_buf(&ln, 256))
+					goto bailout;
+
+			ln.buf[pos++] = blk.buf[i++];
+			ln.buf[pos++] = blk.buf[i++];
+		}
+
+ 		if (pos >= (int)ln.sz)
+			if (! resize_buf(&ln, 256))
+				goto bailout;
+		ln.buf[pos] = '\0';
+
+		/*
+		 * A significant amount of complexity is contained by
+		 * the roff preprocessor.  It's line-oriented but can be
+		 * expressed on one line, so we need at times to
+		 * readjust our starting point and re-run it.  The roff
+		 * preprocessor can also readjust the buffers with new
+		 * data, so we pass them in wholesale.
+		 */
+
+		of = 0;
+		do {
+			re = roff_parseln(roff, lnn_start, 
+					&ln.buf, &ln.sz, of, &of);
+		} while (ROFF_RERUN == re);
+
+		if (ROFF_IGN == re)
+			continue;
+		else if (ROFF_ERR == re)
+			goto bailout;
+
+		/*
+		 * If input parsers have not been allocated, do so now.
+		 * We keep these instanced betwen parsers, but set them
+		 * locally per parse routine since we can use different
+		 * parsers with each one.
+		 */
+
+		if ( ! (man || mdoc))
+			if ( ! pset(ln.buf + of, pos - of, curp, &man, &mdoc))
+				goto bailout;
+
+		/* Lastly, push down into the parsers themselves. */
+
+		if (man && ! man_parseln(man, lnn_start, ln.buf, of))
+			goto bailout;
+		if (mdoc && ! mdoc_parseln(mdoc, lnn_start, ln.buf, of))
+			goto bailout;
 	}
 
 	/* NOTE a parser may not have been assigned, yet. */
 
 	if ( ! (man || mdoc)) {
 		fprintf(stderr, "%s: Not a manual\n", curp->file);
-		return(0);
+		goto bailout;
 	}
 
+	/* Clean up the parse routine ASTs. */
+
 	if (mdoc && ! mdoc_endparse(mdoc))
-		return(0);
+		goto bailout;
 	if (man && ! man_endparse(man))
-		return(0);
+		goto bailout;
+	if (roff && ! roff_endparse(roff))
+		goto bailout;
 
 	/* If unset, allocate output dev now (if applicable). */
 
@@ -452,7 +601,7 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 		case (OUTT_LINT):
 			break;
 		default:
-			curp->outdata = ascii_alloc();
+			curp->outdata = ascii_alloc(80);
 			curp->outman = terminal_man;
 			curp->outmdoc = terminal_mdoc;
 			curp->outfree = terminal_free;
@@ -467,7 +616,25 @@ fdesc(struct buf *blk, struct buf *ln, struct curparse *curp)
 	if (mdoc && curp->outmdoc)
 		(*curp->outmdoc)(curp->outdata, mdoc);
 
-	return(1);
+ cleanup:
+	if (mdoc)
+		mdoc_reset(mdoc);
+	if (man)
+		man_reset(man);
+	if (roff)
+		roff_reset(roff);
+	if (ln.buf)
+		free(ln.buf);
+	if (with_mmap)
+		munmap(blk.buf, blk.sz);
+	else
+		free(blk.buf);
+
+	return;
+
+ bailout:
+	with_error = 1;
+	goto cleanup;
 }
 
 
@@ -485,7 +652,7 @@ pset(const char *buf, int pos, struct curparse *curp,
 	 * default to -man, which is more lenient.
 	 */
 
-	if (buf[0] == '.') {
+	if ('.' == buf[0] || '\'' == buf[0]) {
 		for (i = 1; buf[i]; i++)
 			if (' ' != buf[i] && '\t' != buf[i])
 				break;
@@ -499,14 +666,12 @@ pset(const char *buf, int pos, struct curparse *curp,
 			curp->mdoc = mdoc_init(curp);
 		if (NULL == (*mdoc = curp->mdoc))
 			return(0);
-		curp->lastmdoc = *mdoc;
 		return(1);
 	case (INTT_MAN):
 		if (NULL == curp->man) 
 			curp->man = man_init(curp);
 		if (NULL == (*man = curp->man))
 			return(0);
-		curp->lastman = *man;
 		return(1);
 	default:
 		break;
@@ -517,7 +682,6 @@ pset(const char *buf, int pos, struct curparse *curp,
 			curp->mdoc = mdoc_init(curp);
 		if (NULL == (*mdoc = curp->mdoc))
 			return(0);
-		curp->lastmdoc = *mdoc;
 		return(1);
 	} 
 
@@ -525,7 +689,6 @@ pset(const char *buf, int pos, struct curparse *curp,
 		curp->man = man_init(curp);
 	if (NULL == (*man = curp->man))
 		return(0);
-	curp->lastman = *man;
 	return(1);
 }
 
@@ -584,11 +747,10 @@ foptions(int *fflags, char *arg)
 	toks[0] = "ign-scope";
 	toks[1] = "no-ign-escape";
 	toks[2] = "no-ign-macro";
-	toks[3] = "no-ign-chars";
-	toks[4] = "ign-errors";
-	toks[5] = "strict";
-	toks[6] = "ign-escape";
-	toks[7] = NULL;
+	toks[3] = "ign-errors";
+	toks[4] = "strict";
+	toks[5] = "ign-escape";
+	toks[6] = NULL;
 
 	while (*arg) {
 		o = arg;
@@ -603,15 +765,12 @@ foptions(int *fflags, char *arg)
 			*fflags |= FL_NIGN_MACRO;
 			break;
 		case (3):
-			*fflags |= FL_NIGN_CHARS;
-			break;
-		case (4):
 			*fflags |= FL_IGN_ERRORS;
 			break;
-		case (5):
+		case (4):
 			*fflags |= FL_STRICT;
 			break;
-		case (6):
+		case (5):
 			*fflags &= ~FL_NIGN_ESCAPE;
 			break;
 		default:
@@ -653,37 +812,34 @@ woptions(int *wflags, char *arg)
 }
 
 
-/* ARGSUSED */
 static int
-merr(void *arg, int line, int col, const char *msg)
+mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 {
-	struct curparse *curp;
+	struct curparse *cp;
 
-	curp = (struct curparse *)arg;
+	cp = (struct curparse *)arg;
 
-	(void)fprintf(stderr, "%s:%d:%d: error: %s\n", 
-			curp->file, line, col + 1, msg);
+	if (t <= MANDOCERR_ERROR) {
+		if ( ! (cp->wflags & WARN_WALL))
+			return(1);
+		with_warning = 1;
+	} else
+		with_error = 1;
 
-	return(0);
+	fprintf(stderr, "%s:%d:%d: %s", cp->file, 
+			ln, col + 1, mandocerrs[t]);
+
+	if (msg)
+		fprintf(stderr, ": %s", msg);
+
+	fputc('\n', stderr);
+
+	/* This is superfluous, but whatever. */
+	if (t > MANDOCERR_ERROR)
+		return(0);
+	if (cp->wflags & WARN_WERR) {
+		with_error = 1;
+		return(0);
+	}
+	return(1);
 }
-
-
-static int
-mwarn(void *arg, int line, int col, const char *msg)
-{
-	struct curparse *curp;
-
-	curp = (struct curparse *)arg;
-
-	if ( ! (curp->wflags & WARN_WALL))
-		return(1);
-
-	(void)fprintf(stderr, "%s:%d:%d: warning: %s\n", 
-			curp->file, line, col + 1, msg);
-
-	if ( ! (curp->wflags & WARN_WERR))
-		return(1);
-	
-	return(0);
-}
-

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: chars.h,v 1.1 2009/09/17 07:41:28 kristaps Exp $ */
+/*	$Vendor-Id: chars.h,v 1.3 2010/05/25 12:37:20 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *

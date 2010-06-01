@@ -1,6 +1,6 @@
-/*	$Vendor-Id: arch.c,v 1.7 2010/05/17 22:11:42 kristaps Exp $ */
+/*	$Vendor-Id: roff.h,v 1.15 2010/05/17 00:06:36 kristaps Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,25 +14,27 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef ROFF_H
+#define ROFF_H
 
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+enum	rofferr {
+	ROFF_CONT, /* continue processing line */
+	ROFF_RERUN, /* re-run roff interpreter with offset */
+	ROFF_IGN, /* ignore current line */
+	ROFF_ERR /* badness: puke and stop */
+};
 
-#include "mandoc.h"
-#include "libmdoc.h"
+__BEGIN_DECLS
 
-#define LINE(x, y) \
-	if (0 == strcmp(p, x)) return(y);
+struct	roff;
 
-const char *
-mdoc_a2arch(const char *p)
-{
+void	 	  roff_free(struct roff *);
+struct	roff	 *roff_alloc(mandocmsg, void *);
+void		  roff_reset(struct roff *);
+enum	rofferr	  roff_parseln(struct roff *, int, 
+			char **, size_t *, int, int *);
+int		  roff_endparse(struct roff *);
 
-#include "arch.in" 
+__END_DECLS
 
-	return(NULL);
-}
+#endif /*!ROFF_H*/

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: html.c,v 1.97 2010/04/03 12:46:35 kristaps Exp $ */
+/*	$Vendor-Id: html.c,v 1.100 2010/05/25 12:37:20 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -29,6 +29,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "mandoc.h"
 #include "out.h"
 #include "chars.h"
 #include "html.h"
@@ -54,7 +55,7 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"h1",		0}, /* TAG_H1 */
 	{"h2",		0}, /* TAG_H2 */
 	{"span",	0}, /* TAG_SPAN */
-	{"link",	HTML_CLRLINE | HTML_NOSTACK}, /* TAG_LINK */
+	{"link",	HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_LINK */
 	{"br",		HTML_CLRLINE | HTML_NOSTACK | HTML_AUTOCLOSE}, /* TAG_BR */
 	{"a",		0}, /* TAG_A */
 	{"table",	HTML_CLRLINE}, /* TAG_TABLE */
@@ -296,11 +297,12 @@ print_encode(struct html *h, const char *p, int norecurse)
 	int		 len, nospace;
 	const char	*seq;
 	enum roffdeco	 deco;
+	static const char rejs[6] = { '\\', '<', '>', '&', ASCII_HYPH, '\0' };
 
 	nospace = 0;
 
 	for (; *p; p++) {
-		sz = strcspn(p, "\\<>&");
+		sz = strcspn(p, rejs);
 
 		fwrite(p, 1, sz, stdout);
 		p += /* LINTED */
@@ -314,6 +316,15 @@ print_encode(struct html *h, const char *p, int norecurse)
 			continue;
 		} else if ('&' == *p) {
 			printf("&amp;");
+			continue;
+		} else if (ASCII_HYPH == *p) {
+			/*
+			 * Note: "soft hyphens" aren't graphically
+			 * displayed when not breaking the text; we want
+			 * them to be displayed.
+			 */
+			/*printf("&#173;");*/
+			putchar('-');
 			continue;
 		} else if ('\0' == *p)
 			break;
@@ -443,21 +454,9 @@ print_gen_decls(struct html *h)
 static void
 print_xmltype(struct html *h)
 {
-	const char	*decl;
 
-	switch (h->type) {
-	case (HTML_XHTML_1_0_STRICT):
-		decl = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-		break;
-	default:
-		decl = NULL;
-		break;
-	}
-
-	if (NULL == decl)
-		return;
-
-	printf("%s\n", decl);
+	if (HTML_XHTML_1_0_STRICT == h->type)
+		printf("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 }
 
 
@@ -521,10 +520,12 @@ print_text(struct html *h, const char *p)
 	if ( ! print_encode(h, p, 0))
 		h->flags &= ~HTML_NOSPACE;
 
+	/* 
+	 * Note that we don't process the pipe: the parser sees it as
+	 * punctuation, but we don't in terms of typography.
+	 */
 	if (*p && 0 == *(p + 1))
 		switch (*p) {
-		case('|'):
-			/* FALLTHROUGH */
 		case('('):
 			/* FALLTHROUGH */
 		case('['):

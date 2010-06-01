@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.c,v 1.59 2010/03/29 10:10:35 kristaps Exp $ */
+/*	$Vendor-Id: man.c,v 1.75 2010/05/26 14:03:54 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -27,33 +27,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "libman.h"
 #include "libmandoc.h"
-
-const	char *const __man_merrnames[WERRMAX] = {		 
-	"invalid character", /* WNPRINT */
-	"invalid manual section", /* WMSEC */
-	"invalid date format", /* WDATE */
-	"scope of prior line violated", /* WLNSCOPE */
-	"over-zealous prior line scope violation", /* WLNSCOPE2 */
-	"trailing whitespace", /* WTSPACE */
-	"unterminated quoted parameter", /* WTQUOTE */
-	"document has no body", /* WNODATA */
-	"document has no title/section", /* WNOTITLE */
-	"invalid escape sequence", /* WESCAPE */
-	"invalid number format", /* WNUMFMT */
-	"expected block head arguments", /* WHEADARGS */
-	"expected block body arguments", /* WBODYARGS */
-	"expected empty block head", /* WNHEADARGS */
-	"ill-formed macro", /* WMACROFORM */
-	"scope open on exit", /* WEXITSCOPE */
-	"no scope context", /* WNOSCOPE */
-	"literal context already open", /* WOLITERAL */
-	"no literal context open", /* WNLITERAL */
-	"invalid nesting of roff declarations", /* WROFFNEST */
-	"scope in roff instructions broken", /* WROFFSCOPE */
-	"document title should be uppercase", /* WTITLECASE */
-};
 
 const	char *const __man_macronames[MAN_MAX] = {		 
 	"br",		"TH",		"SH",		"SS",
@@ -64,9 +40,7 @@ const	char *const __man_macronames[MAN_MAX] = {
 	"RI",		"na",		"i",		"sp",
 	"nf",		"fi",		"r",		"RE",
 	"RS",		"DT",		"UC",		"PD",
-	"Sp",		"Vb",		"Ve",		"de",
-	"dei",		"am",		"ami",		"ig",
-	".",
+	"Sp",		"Vb",		"Ve",		"AT",
 	};
 
 const	char * const *man_macronames = __man_macronames;
@@ -78,13 +52,11 @@ static	int		 man_node_append(struct man *,
 static	void		 man_node_free(struct man_node *);
 static	void		 man_node_unlink(struct man *, 
 				struct man_node *);
-static	int		 man_ptext(struct man *, int, char *);
-static	int		 man_pmacro(struct man *, int, char *);
+static	int		 man_ptext(struct man *, int, char *, int);
+static	int		 man_pmacro(struct man *, int, char *, int);
 static	void		 man_free1(struct man *);
 static	void		 man_alloc1(struct man *);
-static	int		 pstring(struct man *, int, int, 
-				const char *, size_t);
-static	int		 macrowarn(struct man *, int, const char *);
+static	int		 macrowarn(struct man *, int, const char *, int);
 
 
 const struct man_node *
@@ -122,18 +94,16 @@ man_free(struct man *man)
 
 
 struct man *
-man_alloc(void *data, int pflags, const struct man_cb *cb)
+man_alloc(void *data, int pflags, mandocmsg msg)
 {
 	struct man	*p;
 
 	p = mandoc_calloc(1, sizeof(struct man));
 
-	if (cb)
-		memcpy(&p->cb, cb, sizeof(struct man_cb));
-
 	man_hash_init();
 	p->data = data;
 	p->pflags = pflags;
+	p->msg = msg;
 
 	man_alloc1(p);
 	return(p);
@@ -154,12 +124,15 @@ man_endparse(struct man *m)
 
 
 int
-man_parseln(struct man *m, int ln, char *buf)
+man_parseln(struct man *m, int ln, char *buf, int offs)
 {
 
-	return('.' == *buf || '\'' == *buf ? 
-			man_pmacro(m, ln, buf) : 
-			man_ptext(m, ln, buf));
+	if (MAN_HALT & m->flags)
+		return(0);
+
+	return(('.' == buf[offs] || '\'' == buf[offs]) ? 
+			man_pmacro(m, ln, buf, offs) : 
+			man_ptext(m, ln, buf, offs));
 }
 
 
@@ -173,8 +146,12 @@ man_free1(struct man *man)
 		free(man->meta.title);
 	if (man->meta.source)
 		free(man->meta.source);
+	if (man->meta.rawdate)
+		free(man->meta.rawdate);
 	if (man->meta.vol)
 		free(man->meta.vol);
+	if (man->meta.msec)
+		free(man->meta.msec);
 }
 
 
@@ -317,32 +294,26 @@ man_block_alloc(struct man *m, int line, int pos, enum mant tok)
 }
 
 
-static int
-pstring(struct man *m, int line, int pos, 
-		const char *p, size_t len)
+int
+man_word_alloc(struct man *m, int line, int pos, const char *word)
 {
 	struct man_node	*n;
-	size_t		 sv;
+	size_t		 sv, len;
+
+	len = strlen(word);
 
 	n = man_node_alloc(line, pos, MAN_TEXT, MAN_MAX);
 	n->string = mandoc_malloc(len + 1);
-	sv = strlcpy(n->string, p, len + 1);
+	sv = strlcpy(n->string, word, len + 1);
 
 	/* Prohibit truncation. */
 	assert(sv < len + 1);
 
 	if ( ! man_node_append(m, n))
 		return(0);
+
 	m->next = MAN_NEXT_SIBLING;
 	return(1);
-}
-
-
-int
-man_word_alloc(struct man *m, int line, int pos, const char *word)
-{
-
-	return(pstring(m, line, pos, word, strlen(word)));
 }
 
 
@@ -373,74 +344,73 @@ man_node_delete(struct man *m, struct man_node *p)
 
 
 static int
-man_ptext(struct man *m, int line, char *buf)
+man_ptext(struct man *m, int line, char *buf, int offs)
 {
-	int		 i, j;
-	char		 sv;
+	int		 i;
+
+	/* Ignore bogus comments. */
+
+	if ('\\' == buf[offs] && 
+			'.' == buf[offs + 1] && 
+			'"' == buf[offs + 2])
+		return(man_pmsg(m, line, offs, MANDOCERR_BADCOMMENT));
 
 	/* Literal free-form text whitespace is preserved. */
 
 	if (MAN_LITERAL & m->flags) {
-		if ( ! man_word_alloc(m, line, 0, buf))
+		if ( ! man_word_alloc(m, line, offs, buf + offs))
 			return(0);
 		goto descope;
 	}
 
-	/* First de-chunk and allocate words. */
+	/* Pump blank lines directly into the backend. */
 
-	for (i = 0; ' ' == buf[i]; i++)
+	for (i = offs; ' ' == buf[i]; i++)
 		/* Skip leading whitespace. */ ;
 
 	if ('\0' == buf[i]) {
-		/* Trailing whitespace? */
-		if (i && ' ' == buf[i - 1])
-			if ( ! man_pwarn(m, line, i - 1, WTSPACE))
-				return(0);
-		if ( ! pstring(m, line, 0, &buf[i], 0))
+		/* Allocate a blank entry. */
+		if ( ! man_word_alloc(m, line, offs, ""))
 			return(0);
 		goto descope;
 	}
 
-	for (j = i; buf[i]; i++) {
-		if (' ' != buf[i])
-			continue;
+	/* 
+	 * Warn if the last un-escaped character is whitespace. Then
+	 * strip away the remaining spaces (tabs stay!).   
+	 */
 
-		/* Escaped whitespace. */
-		if (i && ' ' == buf[i] && '\\' == buf[i - 1])
-			continue;
+	i = (int)strlen(buf);
+	assert(i);
 
-		sv = buf[i];
-		buf[i++] = '\0';
-
-		if ( ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
-			return(0);
-
-		/* Trailing whitespace?  Check at overwritten byte. */
-
-		if (' ' == sv && '\0' == buf[i])
-			if ( ! man_pwarn(m, line, i - 1, WTSPACE))
+	if (' ' == buf[i - 1] || '\t' == buf[i - 1]) {
+		if (i > 1 && '\\' != buf[i - 2])
+			if ( ! man_pmsg(m, line, i - 1, MANDOCERR_EOLNSPACE))
 				return(0);
 
-		for ( ; ' ' == buf[i]; i++)
-			/* Skip trailing whitespace. */ ;
+		for (--i; i && ' ' == buf[i]; i--)
+			/* Spin back to non-space. */ ;
 
-		j = i;
+		/* Jump ahead of escaped whitespace. */
+		i += '\\' == buf[i] ? 2 : 1;
 
-		/* Trailing whitespace? */
-
-		if (' ' == buf[i - 1] && '\0' == buf[i])
-			if ( ! man_pwarn(m, line, i - 1, WTSPACE))
-				return(0);
-
-		if ('\0' == buf[i])
-			break;
+		buf[i] = '\0';
 	}
 
-	if (j != i && ! pstring(m, line, j, &buf[j], (size_t)(i - j)))
+	if ( ! man_word_alloc(m, line, offs, buf + offs))
 		return(0);
 
-descope:
+	/*
+	 * End-of-sentence check.  If the last character is an unescaped
+	 * EOS character, then flag the node as being the end of a
+	 * sentence.  The front-end will know how to interpret this.
+	 */
 
+	assert(i);
+	if (mandoc_eos(buf, (size_t)i))
+		m->last->flags |= MAN_EOS;
+
+descope:
 	/*
 	 * Co-ordinate what happens with having a next-line scope open:
 	 * first close out the element scope (if applicable), then close
@@ -449,7 +419,7 @@ descope:
 
 	if (MAN_ELINE & m->flags) {
 		m->flags &= ~MAN_ELINE;
-		if ( ! man_unscope(m, m->last->parent, WERRMAX))
+		if ( ! man_unscope(m, m->last->parent, MANDOCERR_MAX))
 			return(0);
 	}
 
@@ -457,26 +427,27 @@ descope:
 		return(1);
 	m->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(m, m->last->parent, WERRMAX))
+	if ( ! man_unscope(m, m->last->parent, MANDOCERR_MAX))
 		return(0);
-	return(man_body_alloc(m, line, 0, m->last->tok));
+	return(man_body_alloc(m, line, offs, m->last->tok));
 }
 
 
 static int
-macrowarn(struct man *m, int ln, const char *buf)
+macrowarn(struct man *m, int ln, const char *buf, int offs)
 {
-	if ( ! (MAN_IGN_MACRO & m->pflags))
-		return(man_verr(m, ln, 0, 
-				"unknown macro: %s%s", 
-				buf, strlen(buf) > 3 ? "..." : ""));
-	return(man_vwarn(m, ln, 0, "unknown macro: %s%s",
-				buf, strlen(buf) > 3 ? "..." : ""));
+	int		 rc;
+
+	rc = man_vmsg(m, MANDOCERR_MACRO, ln, offs, 
+			"unknown macro: %s%s",
+			buf, strlen(buf) > 3 ? "..." : "");
+
+	return(MAN_IGN_MACRO & m->pflags ? rc : 0);
 }
 
 
 int
-man_pmacro(struct man *m, int ln, char *buf)
+man_pmacro(struct man *m, int ln, char *buf, int offs)
 {
 	int		 i, j, ppos;
 	enum mant	 tok;
@@ -485,15 +456,18 @@ man_pmacro(struct man *m, int ln, char *buf)
 
 	/* Comments and empties are quickly ignored. */
 
-	if ('\0' == buf[1])
+	offs++;
+
+	if ('\0' == buf[offs])
 		return(1);
 
-	i = 1;
+	i = offs;
 
 	/*
 	 * Skip whitespace between the control character and initial
 	 * text.  "Whitespace" is both spaces and tabs.
 	 */
+
 	if (' ' == buf[i] || '\t' == buf[i]) {
 		i++;
 		while (buf[i] && (' ' == buf[i] || '\t' == buf[i]))
@@ -516,23 +490,21 @@ man_pmacro(struct man *m, int ln, char *buf)
 
 		if (isgraph((u_char)buf[i]))
 			continue;
-		return(man_perr(m, ln, i, WNPRINT));
+		if ( ! man_pmsg(m, ln, i, MANDOCERR_BADCHAR))
+			return(0);
+		i--;
 	}
 
 	mac[j] = '\0';
 
 	if (j == 4 || j < 1) {
-		if ( ! (MAN_IGN_MACRO & m->pflags)) {
-			(void)man_perr(m, ln, ppos, WMACROFORM);
-			goto err;
-		} 
-		if ( ! man_pwarn(m, ln, ppos, WMACROFORM))
+		if ( ! macrowarn(m, ln, mac, ppos))
 			goto err;
 		return(1);
 	}
 	
 	if (MAN_MAX == (tok = man_hash_find(mac))) {
-		if ( ! macrowarn(m, ln, mac))
+		if ( ! macrowarn(m, ln, mac, ppos))
 			goto err;
 		return(1);
 	}
@@ -542,19 +514,19 @@ man_pmacro(struct man *m, int ln, char *buf)
 	while (buf[i] && ' ' == buf[i])
 		i++;
 
-	/* Trailing whitespace? */
+	/* 
+	 * Trailing whitespace.  Note that tabs are allowed to be passed
+	 * into the parser as "text", so we only warn about spaces here.
+	 */
 
 	if ('\0' == buf[i] && ' ' == buf[i - 1])
-		if ( ! man_pwarn(m, ln, i - 1, WTSPACE))
+		if ( ! man_pmsg(m, ln, i - 1, MANDOCERR_EOLNSPACE))
 			goto err;
 
 	/* 
 	 * Remove prior ELINE macro, as it's being clobbering by a new
 	 * macro.  Note that NSCOPED macros do not close out ELINE
 	 * macros---they don't print text---so we let those slip by.
-	 * NOTE: we don't allow roff blocks (NOCLOSE) to be embedded
-	 * here because that would stipulate blocks as children of
-	 * elements!
 	 */
 
 	if ( ! (MAN_NSCOPED & man_macros[tok].flags) &&
@@ -570,8 +542,10 @@ man_pmacro(struct man *m, int ln, char *buf)
 		 *   I hate man macros.
 		 * Flat-out disallow this madness.
 		 */
-		if (MAN_NSCOPED & man_macros[m->last->tok].flags)
-			return(man_perr(m, ln, ppos, WLNSCOPE));
+		if (MAN_NSCOPED & man_macros[m->last->tok].flags) {
+			man_pmsg(m, ln, ppos, MANDOCERR_SYNTLINESCOPE);
+			return(0);
+		}
 
 		n = m->last;
 
@@ -579,7 +553,7 @@ man_pmacro(struct man *m, int ln, char *buf)
 		assert(NULL == n->child);
 		assert(0 == n->nchild);
 
-		if ( ! man_nwarn(m, n, WLNSCOPE))
+		if ( ! man_nmsg(m, n, MANDOCERR_LINESCOPE))
 			return(0);
 
 		man_node_delete(m, n);
@@ -636,9 +610,9 @@ out:
 	assert(MAN_BLINE & m->flags);
 	m->flags &= ~MAN_BLINE;
 
-	if ( ! man_unscope(m, m->last->parent, WERRMAX))
+	if ( ! man_unscope(m, m->last->parent, MANDOCERR_MAX))
 		return(0);
-	return(man_body_alloc(m, ln, 0, m->last->tok));
+	return(man_body_alloc(m, ln, offs, m->last->tok));
 
 err:	/* Error out. */
 
@@ -648,49 +622,16 @@ err:	/* Error out. */
 
 
 int
-man_verr(struct man *man, int ln, int pos, const char *fmt, ...)
+man_vmsg(struct man *man, enum mandocerr t, 
+		int ln, int pos, const char *fmt, ...)
 {
 	char		 buf[256];
 	va_list		 ap;
 
-	if (NULL == man->cb.man_err)
-		return(0);
-
 	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
+	vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
 	va_end(ap);
-	return((*man->cb.man_err)(man->data, ln, pos, buf));
-}
-
-
-int
-man_vwarn(struct man *man, int ln, int pos, const char *fmt, ...)
-{
-	char		 buf[256];
-	va_list		 ap;
-
-	if (NULL == man->cb.man_warn)
-		return(0);
-
-	va_start(ap, fmt);
-	(void)vsnprintf(buf, sizeof(buf) - 1, fmt, ap);
-	va_end(ap);
-	return((*man->cb.man_warn)(man->data, ln, pos, buf));
-}
-
-
-int
-man_err(struct man *m, int line, int pos, int iserr, enum merr type)
-{
-	const char	 *p;
-	
-	p = __man_merrnames[(int)type];
-	assert(p);
-
-	if (iserr)
-		return(man_verr(m, line, pos, p));
-
-	return(man_vwarn(m, line, pos, p));
+	return((*man->msg)(t, man->data, ln, pos, buf));
 }
 
 

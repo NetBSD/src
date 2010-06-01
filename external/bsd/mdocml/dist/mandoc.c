@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.c,v 1.11 2010/04/07 11:25:38 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.c,v 1.16 2010/05/25 12:37:20 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -300,3 +300,71 @@ mandoc_a2time(int flags, const char *p)
 	return(0);
 }
 
+
+int
+mandoc_eos(const char *p, size_t sz)
+{
+
+	if (0 == sz)
+		return(0);
+
+	/*
+	 * End-of-sentence recognition must include situations where
+	 * some symbols, such as `)', allow prior EOS punctuation to
+	 * propogate outward.
+	 */
+
+	for ( ; sz; sz--) {
+		switch (p[(int)sz - 1]) {
+		case ('\"'):
+			/* FALLTHROUGH */
+		case ('\''):
+			/* FALLTHROUGH */
+		case (']'):
+			/* FALLTHROUGH */
+		case (')'):
+			break;
+		case ('.'):
+			/* Escaped periods. */
+			if (sz > 1 && '\\' == p[(int)sz - 2])
+				return(0);
+			/* FALLTHROUGH */
+		case ('!'):
+			/* FALLTHROUGH */
+		case ('?'):
+			return(1);
+		default:
+			return(0);
+		}
+	}
+
+	return(0);
+}
+
+
+int
+mandoc_hyph(const char *start, const char *c)
+{
+
+	/*
+	 * Choose whether to break at a hyphenated character.  We only
+	 * do this if it's free-standing within a word.
+	 */
+
+	/* Skip first/last character of buffer. */
+	if (c == start || '\0' == *(c + 1))
+		return(0);
+	/* Skip first/last character of word. */
+	if ('\t' == *(c + 1) || '\t' == *(c - 1))
+		return(0);
+	if (' ' == *(c + 1) || ' ' == *(c - 1))
+		return(0);
+	/* Skip double invocations. */
+	if ('-' == *(c + 1) || '-' == *(c - 1))
+		return(0);
+	/* Skip escapes. */
+	if ('\\' == *(c - 1))
+		return(0);
+
+	return(1);
+}
