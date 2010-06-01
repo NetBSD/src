@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: sdpd,v 1.2 2007/03/18 15:53:54 plunky Exp $
+# $NetBSD: sdpd,v 1.3 2010/06/01 21:08:13 wiz Exp $
 #
 
 # PROVIDE: sdpd
 # REQUIRE: bluetooth
 # BEFORE: LOGIN
 
-$rc_subr_loaded . /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="sdpd"
 rcvar=$name

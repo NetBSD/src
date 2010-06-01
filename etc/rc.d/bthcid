@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: bthcid,v 1.1 2006/06/19 15:44:36 gdamore Exp $
+# $NetBSD: bthcid,v 1.2 2010/06/01 21:08:13 wiz Exp $
 #
 
 # PROVIDE: bthcid
 # REQUIRE: bluetooth
 # BEFORE: LOGIN
 
-$rc_subr_loaded . /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="bthcid"
 rcvar=$name
