@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.76 2010/06/01 10:29:21 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.77 2010/06/01 19:18:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.76 2010/06/01 10:29:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.77 2010/06/01 19:18:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -595,21 +595,15 @@ uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 vaddr_t
 uvm_km_alloc_poolpage_cache(struct vm_map *map, bool waitok)
 {
-	void *rv;
-	int error;
 
-	rv = rumpuser_anonmmap(PAGE_SIZE, PAGE_SHIFT, 0, &error);
-	if (rv == NULL && waitok)
-		panic("fixme: poolpage alloc failed");
-
-	return (vaddr_t)rv;
+	return uvm_km_alloc_poolpage(map, waitok);
 }
 
 void
 uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t vaddr)
 {
 
-	rumpuser_unmap((void *)vaddr, PAGE_SIZE);
+	uvm_km_free_poolpage(map, vaddr);
 }
 
 void
