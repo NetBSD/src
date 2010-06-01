@@ -1,4 +1,4 @@
-/* $NetBSD: localeio_lc_ctype.c,v 1.2 2009/01/11 02:46:28 christos Exp $ */
+/* $NetBSD: localeio_lc_ctype.c,v 1.3 2010/06/01 13:52:08 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,14 +28,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeio_lc_ctype.c,v 1.2 2009/01/11 02:46:28 christos Exp $");
+__RCSID("$NetBSD: localeio_lc_ctype.c,v 1.3 2010/06/01 13:52:08 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
 #include <sys/types.h>
+#include <sys/ctype_bits.h>
 #include <sys/queue.h>
 #include <assert.h>
-#include <ctype.h>
 #include <errno.h>
 #include <langinfo.h>
 #include <limits.h>

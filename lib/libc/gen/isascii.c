@@ -1,4 +1,4 @@
-/*	$NetBSD: isascii.c,v 1.2 2003/08/07 16:42:51 agc Exp $	*/
+/*	$NetBSD: isascii.c,v 1.3 2010/06/01 13:52:08 tnozaki Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,12 +38,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isascii.c,v 1.2 2003/08/07 16:42:51 agc Exp $");
+__RCSID("$NetBSD: isascii.c,v 1.3 2010/06/01 13:52:08 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#define _CTYPE_NOINLINE
 #include <ctype.h>
 
-#undef isascii
 int
 isascii(c)
 	int c;

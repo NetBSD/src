@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.35 2010/05/22 07:18:43 tnozaki Exp $	*/
+/*	$NetBSD: rune.c,v 1.36 2010/06/01 13:52:08 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -63,19 +63,20 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.35 2010/05/22 07:18:43 tnozaki Exp $");
+__RCSID("$NetBSD: rune.c,v 1.36 2010/06/01 13:52:08 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <wchar.h>
 #include <sys/types.h>
+#include <sys/ctype_bits.h>
 #include <sys/stat.h>
+#include <assert.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <wchar.h>
 
 #include "citrus_module.h"
 #include "citrus_ctype.h"
@@ -351,9 +352,6 @@ _NukeRune(rl)
 /*
  * read in old LC_CTYPE declaration file, convert into runelocale info
  */
-#include <limits.h>
-#include <ctype.h>
-
 _RuneLocale *
 _Read_CTypeAsRune(fp)
 	FILE *fp;
