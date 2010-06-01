@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.4 2010/04/28 00:33:45 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.5 2010/06/01 20:11:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.4 2010/04/28 00:33:45 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.5 2010/06/01 20:11:33 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -193,32 +193,23 @@ rumpuser_nanosleep(uint64_t *sec, uint64_t *nsec, int *error)
 }
 
 void *
-rumpuser__malloc(size_t howmuch, int canfail, const char *func, int line)
+rumpuser_malloc(size_t howmuch, int alignment)
 {
-	void *rv;
+	void *mem;
 
-	rv = malloc(howmuch);
-	if (rv == NULL && canfail == 0) {
-		warn("malloc failed %s (%d)", func, line);
-		abort();
-	}
+	if (alignment == 0)
+		alignment = sizeof(void *);
 
-	return rv;
+	posix_memalign(&mem, alignment, howmuch);
+
+	return mem;
 }
 
 void *
-rumpuser__realloc(void *ptr, size_t howmuch, int canfail,
-	const char *func, int line)
+rumpuser_realloc(void *ptr, size_t howmuch)
 {
-	void *rv;
 
-	rv = realloc(ptr, howmuch);
-	if (rv == NULL && canfail == 0) {
-		warn("realloc failed %s (%d)", func, line);
-		abort();
-	}
-
-	return rv;
+	return realloc(ptr, howmuch);
 }
 
 void
