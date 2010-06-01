@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.72 2010/05/31 17:41:24 plunky Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.73 2010/06/01 19:20:43 plunky Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.72 2010/05/31 17:41:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.73 2010/06/01 19:20:43 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -554,7 +554,7 @@ acpitz_get_zone(void *opaque, int verbose)
 		}
 
 		if (sc->sc_zone.psv != ATZ_TMP_INVALID) {
-			aprint_normal("%spassive %s C", comma ? ", " : "",
+			aprint_verbose("%spassive %s C", comma ? ", " : "",
 			    acpitz_celcius_string(sc->sc_zone.psv));
 			comma = 1;
 		}
