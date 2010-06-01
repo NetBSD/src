@@ -1,4 +1,4 @@
-/* $NetBSD: ctypeio.c,v 1.12 2010/05/22 06:38:15 tnozaki Exp $ */
+/* $NetBSD: ctypeio.c,v 1.13 2010/06/01 13:52:08 tnozaki Exp $ */
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -26,12 +26,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ctypeio.c,v 1.12 2010/05/22 06:38:15 tnozaki Exp $");
+__RCSID("$NetBSD: ctypeio.c,v 1.13 2010/06/01 13:52:08 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <assert.h>
-#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
