@@ -1,4 +1,4 @@
-/* $NetBSD: bsdctype.h,v 1.3 2010/05/30 08:28:53 tnozaki Exp $ */
+/* $NetBSD: bsdctype.h,v 1.4 2010/06/01 18:00:28 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -31,13 +31,26 @@
 
 #include "ctype_local.h"
 
-typedef struct _BSDCTypeLocale {
-	const unsigned char	*ctype_tab;
-	const short		*tolower_tab;
-	const short		*toupper_tab;
+typedef struct {
+	char			fbl_id[8];
+	uint32_t		fbl_rev;
+	uint32_t		fbl_num_chars;
+	uint8_t			fbl_ctype_tab  [_CTYPE_NUM_CHARS];
+	int16_t			fbl_tolower_tab[_CTYPE_NUM_CHARS];
+	int16_t			fbl_toupper_tab[_CTYPE_NUM_CHARS];
+} __packed _FileBSDCTypeLocale;
+
+typedef struct {
+	const unsigned char	*bl_ctype_tab;
+	const short		*bl_tolower_tab;
+	const short		*bl_toupper_tab;
 } _BSDCTypeLocale;
 
 extern const _BSDCTypeLocale _DefaultBSDCTypeLocale;
 extern const _BSDCTypeLocale *_CurrentBSDCTypeLocale;
+
+__BEGIN_DECLS
+int _bsdctype_load(const char * __restrict, _BSDCTypeLocale ** __restrict);
+__END_DECLS
 
 #endif /*_BSDCTYPE_H_*/
