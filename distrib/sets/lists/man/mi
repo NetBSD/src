@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1212 2010/05/31 14:46:22 pgoyette Exp $
+# $NetBSD: mi,v 1.1213 2010/06/01 10:24:14 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1018,6 +1018,7 @@
 ./usr/share/man/cat4/hp700/intro.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/io.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/lasi.0		man-sys-catman		.cat
+./usr/share/man/cat4/hp700/lcd.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/mem.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/mongoose.0		man-sys-catman		.cat
 ./usr/share/man/cat4/hp700/pdc.0		man-sys-catman		.cat
@@ -3672,6 +3673,7 @@
 ./usr/share/man/html4/hp700/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/io.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/lasi.html		man-sys-htmlman		html
+./usr/share/man/html4/hp700/lcd.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/hp700/mongoose.html	man-sys-htmlman		html
 ./usr/share/man/html4/hp700/pdc.html		man-sys-htmlman		html
@@ -6124,6 +6126,7 @@
 ./usr/share/man/man4/hp700/intro.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/io.4			man-sys-man		.man
 ./usr/share/man/man4/hp700/lasi.4		man-sys-man		.man
+./usr/share/man/man4/hp700/lcd.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/mem.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/mongoose.4		man-sys-man		.man
 ./usr/share/man/man4/hp700/pdc.4		man-sys-man		.man
