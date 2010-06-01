@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2009/10/21 18:04:52 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2010/06/01 21:32:40 joerg Exp $
 
-MAN=		mandoc_man.7 mandoc_char.7 mandoc_mdoc.7 manuals.7
+MAN=		mandoc_man.7 mandoc_char.7 mandoc_mdoc.7 mandoc_roff.7 \
+		manuals.7
 
 .include <bsd.init.mk>
 
@@ -13,6 +14,11 @@ mandoc_mdoc.7:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
 	${TOOL_CAT} ${DISTDIR}/mdoc.7 > ${.TARGET}
+
+mandoc_roff.7:
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
+	${TOOL_CAT} ${DISTDIR}/roff.7 > ${.TARGET}
 
 CLEANFILES+=	mandoc_man.7 mandoc_mdoc.7
 
