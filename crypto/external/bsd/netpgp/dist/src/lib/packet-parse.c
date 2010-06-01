@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.35 2010/05/25 01:05:10 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.36 2010/06/01 03:19:26 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2246,7 +2246,6 @@ __ops_seckey_free(__ops_seckey_t *key)
 			__ops_show_pka(key->pubkey.alg));
 	}
 	free(key->checkhash);
-	__ops_pubkey_free(&key->pubkey);
 }
 
 static int 
