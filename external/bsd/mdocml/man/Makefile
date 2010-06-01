@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2010/06/01 21:32:40 joerg Exp $
+# $NetBSD: Makefile,v 1.3 2010/06/01 23:29:10 joerg Exp $
 
 MAN=		mandoc_man.7 mandoc_char.7 mandoc_mdoc.7 mandoc_roff.7 \
 		manuals.7
@@ -21,5 +21,10 @@ mandoc_roff.7:
 	${TOOL_CAT} ${DISTDIR}/roff.7 > ${.TARGET}
 
 CLEANFILES+=	mandoc_man.7 mandoc_mdoc.7
+
+.if (${MKHTML} != "no") && (${MKMAN} != "no")
+FILES=		${DISTDIR}/style.css
+FILESDIR=	/usr/share/man
+.endif
 
 .include <bsd.man.mk>
