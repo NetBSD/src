@@ -1,4 +1,4 @@
-/*	$Vendor-Id: chars.c,v 1.17 2010/03/23 13:25:01 kristaps Exp $ */
+/*	$Vendor-Id: chars.c,v 1.18 2010/05/25 12:37:20 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "chars.h"
 
 #define	PRINT_HI	 126

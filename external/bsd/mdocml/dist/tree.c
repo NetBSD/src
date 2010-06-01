@@ -1,4 +1,4 @@
-/*	$Vendor-Id: tree.c,v 1.19 2010/01/01 17:14:31 kristaps Exp $ */
+/*	$Vendor-Id: tree.c,v 1.20 2010/05/17 22:11:42 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <time.h>
 
+#include "mandoc.h"
 #include "mdoc.h"
 #include "man.h"
 #include "main.h"

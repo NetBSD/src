@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_html.c,v 1.30 2010/03/24 20:10:53 kristaps Exp $ */
+/*	$Vendor-Id: man_html.c,v 1.36 2010/05/26 14:03:54 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mandoc.h"
 #include "out.h"
 #include "html.h"
 #include "man.h"
@@ -106,12 +107,7 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_br_pre, NULL }, /* Sp */
 	{ man_ign_pre, NULL }, /* Vb */
 	{ NULL, NULL }, /* Ve */
-	{ man_ign_pre, NULL }, /* de */
-	{ man_ign_pre, NULL }, /* dei */
-	{ man_ign_pre, NULL }, /* am */
-	{ man_ign_pre, NULL }, /* ami */
-	{ man_ign_pre, NULL }, /* ig */
-	{ NULL, NULL }, /* . */
+	{ man_ign_pre, NULL }, /* AT */
 };
 
 
@@ -162,7 +158,7 @@ print_man_head(MAN_ARGS)
 
 	print_gen_head(h);
 	bufinit(h);
-	buffmt(h, "%s(%d)", m->title, m->msec);
+	buffmt(h, "%s(%s)", m->title, m->msec);
 
 	print_otag(h, TAG_TITLE, 0, NULL);
 	print_text(h, h->buf);
@@ -267,7 +263,7 @@ man_root_pre(MAN_ARGS)
 	if (m->vol)
 		(void)strlcat(b, m->vol, BUFSIZ);
 
-	snprintf(title, BUFSIZ - 1, "%s(%d)", m->title, m->msec);
+	snprintf(title, BUFSIZ - 1, "%s(%s)", m->title, m->msec);
 
 	PAIR_CLASS_INIT(&tag[0], "header");
 	bufcat_style(h, "width", "100%");
@@ -312,7 +308,10 @@ man_root_post(MAN_ARGS)
 	struct tag	*t, *tt;
 	char		 b[DATESIZ];
 
-	time2a(m->date, b, DATESIZ);
+	if (m->rawdate)
+		strlcpy(b, m->rawdate, DATESIZ);
+	else
+		time2a(m->date, b, DATESIZ);
 
 	PAIR_CLASS_INIT(&tag[0], "footer");
 	bufcat_style(h, "width", "100%");
