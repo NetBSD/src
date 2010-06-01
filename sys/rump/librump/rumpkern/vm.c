@@ -1,9 +1,11 @@
-/*	$NetBSD: vm.c,v 1.75 2010/05/26 21:48:20 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.76 2010/06/01 10:29:21 pooka Exp $	*/
 
 /*
- * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
  *
- * Development of this software was supported by Google Summer of Code.
+ * Development of this software was supported by
+ * The Finnish Cultural Foundation and the Research Foundation of
+ * The Helsinki University of Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.75 2010/05/26 21:48:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.76 2010/06/01 10:29:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -91,7 +93,8 @@ struct vm_map *kernel_map = &kernel_map_store.vmk_map;
 
 /* called with the object locked */
 struct vm_page *
-rumpvm_makepage(struct uvm_object *uobj, voff_t off)
+uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
+	int flags, int strat, int free_list)
 {
 	struct vm_page *pg;
 
@@ -99,21 +102,15 @@ rumpvm_makepage(struct uvm_object *uobj, voff_t off)
 	pg->offset = off;
 	pg->uobject = uobj;
 
-	pg->uanon = (void *)kmem_zalloc(PAGE_SIZE, KM_SLEEP);
+	pg->uanon = (void *)kmem_alloc(PAGE_SIZE, KM_SLEEP);
+	if (flags & UVM_PGA_ZERO)
+		memset(pg->uanon, 0, PAGE_SIZE);
 	pg->flags = PG_CLEAN|PG_BUSY|PG_FAKE;
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 	uobj->uo_npages++;
 
 	return pg;
-}
-
-struct vm_page *
-uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
-	int flags, int strat, int free_list)
-{
-
-	return rumpvm_makepage(uobj, off);
 }
 
 /*
@@ -173,7 +170,8 @@ ao_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 			pg->flags |= PG_BUSY;
 			pgs[i] = pg;
 		} else {
-			pg = rumpvm_makepage(uobj, off + (i << PAGE_SHIFT));
+			pg = uvm_pagealloc(uobj,
+			    off + (i << PAGE_SHIFT), NULL, UVM_PGA_ZERO);
 			pgs[i] = pg;
 		}
 	}
