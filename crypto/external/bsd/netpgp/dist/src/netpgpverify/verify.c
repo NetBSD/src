@@ -1,4 +1,4 @@
-/* $NetBSD: verify.c,v 1.11 2010/05/20 00:33:01 agc Exp $ */
+/* $NetBSD: verify.c,v 1.12 2010/06/01 06:01:29 agc Exp $ */
 
 /*-
  * Copyright (c) 2009,2010 The NetBSD Foundation, Inc.
@@ -201,7 +201,6 @@ show_output(char *out, int size, const char *header)
 static int
 netpgp_cmd(netpgp_t *netpgp, prog_t *p, char *f)
 {
-	const int	 cleartext = 1;
 	unsigned	 maxsize;
 	char		*out;
 	char		*in;
