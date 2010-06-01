@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.37 2010/05/21 21:46:49 njoly Exp $
+# $NetBSD: mi,v 1.38 2010/06/01 21:32:39 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -464,6 +464,7 @@
 ./usr/share/man/cat7/mandoc_char.0		text-mdocml-catman	.cat
 ./usr/share/man/cat7/mandoc_man.0		text-mdocml-catman	.cat
 ./usr/share/man/cat7/mandoc_mdoc.0		text-mdocml-catman	.cat
+./usr/share/man/cat7/mandoc_roff.0		text-mdocml-catman	.cat
 ./usr/share/man/cat7/manuals.0			text-mdocml-catman	.cat
 ./usr/share/man/cat7/mdoc.samples.0		text-groff-catman	.cat,groff
 ./usr/share/man/cat7/me.0			text-groff-catman	.cat
@@ -520,6 +521,7 @@
 ./usr/share/man/html7/mandoc_char.html		text-mdocml-htmlman	html
 ./usr/share/man/html7/mandoc_man.html		text-mdocml-htmlman	html
 ./usr/share/man/html7/mandoc_mdoc.html		text-mdocml-htmlman	html
+./usr/share/man/html7/mandoc_roff.html		text-mdocml-htmlman	html
 ./usr/share/man/html7/manuals.html		text-mdocml-htmlman	html
 ./usr/share/man/html7/mdoc.samples.html		text-groff-htmlman	html,groff
 ./usr/share/man/html7/me.html			text-groff-htmlman	html
@@ -579,6 +581,7 @@
 ./usr/share/man/man7/mandoc_char.7		text-mdocml-man		.man
 ./usr/share/man/man7/mandoc_man.7		text-mdocml-man		.man
 ./usr/share/man/man7/mandoc_mdoc.7		text-mdocml-man		.man
+./usr/share/man/man7/mandoc_roff.7		text-mdocml-man		.man
 ./usr/share/man/man7/manuals.7			text-mdocml-man		.man
 ./usr/share/man/man7/mdoc.samples.7		text-groff-man		.man,groff
 ./usr/share/man/man7/me.7			text-groff-man		.man
