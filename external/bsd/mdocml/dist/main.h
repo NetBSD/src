@@ -1,4 +1,4 @@
-/*	$Vendor-Id: main.h,v 1.2 2010/01/29 14:39:38 kristaps Exp $ */
+/*	$Vendor-Id: main.h,v 1.3 2010/05/15 16:18:23 joerg Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -38,7 +38,7 @@ void		  html_free(void *);
 void		  tree_mdoc(void *, const struct mdoc *);
 void		  tree_man(void *, const struct man *);
 
-void		 *ascii_alloc(void);
+void		 *ascii_alloc(size_t);
 void		  terminal_mdoc(void *, const struct mdoc *);
 void		  terminal_man(void *, const struct man *);
 void		  terminal_free(void *);

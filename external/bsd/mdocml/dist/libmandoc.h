@@ -1,4 +1,4 @@
-/*	$Vendor-Id: libmandoc.h,v 1.4 2009/11/02 06:22:45 kristaps Exp $ */
+/*	$Vendor-Id: libmandoc.h,v 1.6 2010/05/25 12:37:20 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -29,6 +29,8 @@ time_t		 mandoc_a2time(int, const char *);
 #define		 MTIME_REDUCED		(1 << 1)
 #define		 MTIME_MDOCDATE		(1 << 2)
 #define		 MTIME_ISO_8601		(1 << 3)
+int		 mandoc_eos(const char *, size_t);
+int		 mandoc_hyph(const char *, const char *);
 
 __END_DECLS
 
