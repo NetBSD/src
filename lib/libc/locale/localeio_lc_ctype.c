@@ -1,4 +1,4 @@
-/* $NetBSD: localeio_lc_ctype.c,v 1.3 2010/06/01 13:52:08 tnozaki Exp $ */
+/* $NetBSD: localeio_lc_ctype.c,v 1.4 2010/06/01 18:00:28 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeio_lc_ctype.c,v 1.3 2010/06/01 13:52:08 tnozaki Exp $");
+__RCSID("$NetBSD: localeio_lc_ctype.c,v 1.4 2010/06/01 18:00:28 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: localeio_lc_ctype.c,v 1.3 2010/06/01 13:52:08 tnozaki Exp $");
 
 #include "aliasname_local.h"
 #include "bsdctype.h"
-#include "ctypeio.h"
 
 /*
  * macro required by all template headers
@@ -76,7 +75,7 @@ _localeio_LC_CTYPE_create_impl(const char * __restrict root,
 
 	snprintf(path, sizeof(path),
 	    "%s/%s/LC_CTYPE", root, name);
-	return __loadctype(path, pdata);
+	return _bsdctype_load(path, pdata);
 }
 
 static __inline void
@@ -86,10 +85,10 @@ _PREFIX(build_cache)(struct _locale_cache_t * __restrict cache,
 	_DIAGASSERT(cache != NULL);
 	_DIAGASSERT(data != NULL);
 
-	cache->ctype_tab = data->ctype_tab;
-	cache->tolower_tab = data->tolower_tab;
-	cache->toupper_tab = data->toupper_tab;
-	cache->mb_cur_max = (size_t)1;
+	cache->ctype_tab   = data->bl_ctype_tab;
+	cache->tolower_tab = data->bl_tolower_tab;
+	cache->toupper_tab = data->bl_toupper_tab;
+	cache->mb_cur_max  = (size_t)1;
 }
 
 static __inline void
@@ -97,9 +96,9 @@ _PREFIX(fixup)(_BSDCTypeLocale *data)
 {
 	_DIAGASSERT(data != NULL);
 
-	_ctype_ = data->ctype_tab;
-	_tolower_tab_ = data->tolower_tab;
-	_toupper_tab_ = data->toupper_tab;
+	_ctype_       = data->bl_ctype_tab;
+	_tolower_tab_ = data->bl_tolower_tab;
+	_toupper_tab_ = data->bl_toupper_tab;
 }
 
 /*
