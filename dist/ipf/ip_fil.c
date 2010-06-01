@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.18 2010/04/17 21:00:08 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.19 2010/06/01 08:53:20 plunky Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -709,7 +709,7 @@ fr_info_t *fin;
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */
 /* ------------------------------------------------------------------------ */
-INLINE u_short fr_nextipid(fin)
+EXTERN_INLINE u_short fr_nextipid(fin)
 fr_info_t *fin;
 {
 	static u_short ipid = 0;
@@ -723,7 +723,7 @@ fr_info_t *fin;
 }
 
 
-INLINE void fr_checkv4sum(fin)
+EXTERN_INLINE void fr_checkv4sum(fin)
 fr_info_t *fin;
 {
 	if (fr_checkl4sum(fin) == -1)
@@ -732,7 +732,7 @@ fr_info_t *fin;
 
 
 #ifdef	USE_INET6
-INLINE void fr_checkv6sum(fin)
+EXTERN_INLINE void fr_checkv6sum(fin)
 fr_info_t *fin;
 {
 	if (fr_checkl4sum(fin) == -1)

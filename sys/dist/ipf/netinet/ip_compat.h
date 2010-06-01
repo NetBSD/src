@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.28 2010/04/17 21:00:44 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.29 2010/06/01 08:53:20 plunky Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1579,6 +1579,14 @@ typedef union {
 # endif
 #else
 # define	INLINE	__inline__
+#endif
+
+#ifndef EXTERN_INLINE
+# if defined(__GNUC__) && !defined(__GNUC_STDC_INLINE__)
+#  define	EXTERN_INLINE	inline
+# else
+#  define	EXTERN_INLINE	extern inline
+# endif
 #endif
 
 #if defined(linux) && defined(_KERNEL)
