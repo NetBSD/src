@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.103 2010/03/01 22:00:07 joerg Exp $
+#	$NetBSD: bsd.man.mk,v 1.104 2010/06/01 23:29:10 joerg Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -197,18 +197,8 @@ realall:	${HTMLPAGES}
 
 ${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
 	${_MKTARGET_FORMAT}
-.if ${MKMANDOC} == "yes" && !defined(NOMANDOC)
-	if test ""${NOMANDOC.${.IMPSRC:T}:tl:Q} != "yes"; then \
-		${TOOL_MANDOC_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
-		    mv ${.TARGET}.tmp ${.TARGET}; \
-	else \
-		${TOOL_ROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
-		    mv ${.TARGET}.tmp ${.TARGET}; \
-	fi
-.else
-	${TOOL_ROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
+	${TOOL_MANDOC_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
 	    mv ${.TARGET}.tmp ${.TARGET}
-.endif
 
 .for F in ${HTMLPAGES:O:u}
 # construct installed path
