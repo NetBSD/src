@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1213 2010/06/01 10:24:14 skrll Exp $
+# $NetBSD: mi,v 1.1214 2010/06/01 23:29:09 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7894,3 +7894,4 @@
 ./usr/share/man/man8/zic.8			man-sysutil-man		.man
 ./usr/share/man/man8/zzz.8			man-sysutil-man		.man
 ./usr/share/man/man9/boot.9			man-obsolete		obsolete
+./usr/share/man/style.css			man-mdocml-htmlman	html
