@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.1 2010/05/18 16:29:36 pooka Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.2 2010/06/01 20:11:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.1 2010/05/18 16:29:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.2 2010/06/01 20:11:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 	 * XXX: pool_cache would be nice, but not easily possible,
 	 * as pool cache init wants to call mutex_init() ...
 	 */
-	upm = rumpuser_malloc(sizeof(*upm), 1);
+	upm = rumpuser_malloc(sizeof(*upm), 0);
 	memset(upm, 0, sizeof(*upm));
 	rumpuser_cv_init(&upm->upm_rucv);
 	memcpy(mtx, &upm, sizeof(void *));
