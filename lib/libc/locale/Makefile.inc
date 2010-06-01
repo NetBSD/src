@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.55 2010/05/30 08:28:53 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.56 2010/06/01 18:00:28 tnozaki Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -29,7 +29,7 @@ CPPFLAGS+=	-UWITH_RUNE
 SRCS+=	aliasname.c bsdctype.c localeio.c \
 	multibyte_sb.c iswctype_sb.c \
 	localeio_lc_ctype.c localeio_lc_monetary.c \
-	localeio_lc_numeric.c localeio_lc_time.c
+	localeio_lc_numeric.c localeio_lc_time.c localeio_lc_messages.c
 .endif
 
 MAN+=	setlocale.3 nl_langinfo.3
