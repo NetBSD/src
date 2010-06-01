@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_.c,v 1.18 2010/06/01 13:52:08 tnozaki Exp $	*/
+/* $NetBSD: ctype_inline.h,v 1.1 2010/06/01 13:52:08 tnozaki Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -32,43 +32,51 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)ctype.h	5.3 (Berkeley) 4/3/91
+ *	NetBSD: ctype.h,v 1.30 2010/05/22 06:38:15 tnozaki Exp
  */
 
+#ifndef _CTYPE_INLINE_H_
+#define _CTYPE_INLINE_H_
+
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-/*static char *sccsid = "from: @(#)ctype_.c	5.6 (Berkeley) 6/1/90";*/
-#else
-__RCSID("$NetBSD: ctype_.c,v 1.18 2010/06/01 13:52:08 tnozaki Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+#include <sys/featuretest.h>
 
 #include <sys/ctype_bits.h>
-#include <stdio.h>
-#include "ctype_local.h"
 
-#if EOF != -1
-#error "EOF != -1"
+#define	isdigit(c)	((int)((_ctype_ + 1)[(c)] & _N))
+#define	islower(c)	((int)((_ctype_ + 1)[(c)] & _L))
+#define	isspace(c)	((int)((_ctype_ + 1)[(c)] & _S))
+#define	ispunct(c)	((int)((_ctype_ + 1)[(c)] & _P))
+#define	isupper(c)	((int)((_ctype_ + 1)[(c)] & _U))
+#define	isalpha(c)	((int)((_ctype_ + 1)[(c)] & (_U|_L)))
+#define	isxdigit(c)	((int)((_ctype_ + 1)[(c)] & (_N|_X)))
+#define	isalnum(c)	((int)((_ctype_ + 1)[(c)] & (_U|_L|_N)))
+#define	isprint(c)	((int)((_ctype_ + 1)[(c)] & (_P|_U|_L|_N|_B)))
+#define	isgraph(c)	((int)((_ctype_ + 1)[(c)] & (_P|_U|_L|_N)))
+#define	iscntrl(c)	((int)((_ctype_ + 1)[(c)] & _C))
+#define	tolower(c)	((int)((_tolower_tab_ + 1)[(c)]))
+#define	toupper(c)	((int)((_toupper_tab_ + 1)[(c)]))
+
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
+#define	isascii(c)	((unsigned)(c) <= 0177)
+#define	toascii(c)	((c) & 0177)
+#define _tolower(c)	((c) - 'A' + 'a')
+#define _toupper(c)	((c) - 'a' + 'A')
 #endif
 
-const unsigned char _C_ctype_[1 + _CTYPE_NUM_CHARS] = {
-	0,
-	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
-	_C,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C,	_C,
-	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
-	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
-	_S|_B,	_P,	_P,	_P,	_P,	_P,	_P,	_P,
-	_P,	_P,	_P,	_P,	_P,	_P,	_P,	_P,
-	_N,	_N,	_N,	_N,	_N,	_N,	_N,	_N,
-	_N,	_N,	_P,	_P,	_P,	_P,	_P,	_P,
-	_P,	_U|_X,	_U|_X,	_U|_X,	_U|_X,	_U|_X,	_U|_X,	_U,
-	_U,	_U,	_U,	_U,	_U,	_U,	_U,	_U,
-	_U,	_U,	_U,	_U,	_U,	_U,	_U,	_U,
-	_U,	_U,	_U,	_P,	_P,	_P,	_P,	_P,
-	_P,	_L|_X,	_L|_X,	_L|_X,	_L|_X,	_L|_X,	_L|_X,	_L,
-	_L,	_L,	_L,	_L,	_L,	_L,	_L,	_L,
-	_L,	_L,	_L,	_L,	_L,	_L,	_L,	_L,
-	_L,	_L,	_L,	_P,	_P,	_P,	_P,	_C
-};
+#if defined(_ISO_C99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
+    (_XOPEN_SOURCE - 0) > 600 || defined(_NETBSD_SOURCE)
 
-const unsigned char *_ctype_ = &_C_ctype_[0];
+/*
+ * isblank() is implemented as C function, due to insufficient bitwidth in
+ * _ctype_.  Note that _B does not mean isblank - it means isprint && !isgraph.
+ */
+#if 0
+#define isblank(c)	((int)((_ctype_ + 1)[(c)] & _B))
+#endif
+
+#endif
+
+#endif /* !_CTYPE_INLINE_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: fix_grouping.c,v 1.4 2009/01/11 02:46:28 christos Exp $ */
+/* $NetBSD: fix_grouping.c,v 1.5 2010/06/01 13:52:08 tnozaki Exp $ */
 
 /*
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -35,10 +35,9 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fix_grouping.c,v 1.4 2009/01/11 02:46:28 christos Exp $");
+__RCSID("$NetBSD: fix_grouping.c,v 1.5 2010/06/01 13:52:08 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include <ctype.h>
 #include <limits.h>
 #include <stddef.h>
 
@@ -55,7 +54,6 @@ __RCSID("$NetBSD: fix_grouping.c,v 1.4 2009/01/11 02:46:28 christos Exp $");
 static const char nogrouping[] = { NBCHAR_MAX, '\0' };
 
 /* don't use libc's isdigit, it owes locale. */
-#undef isdigit
 #define isdigit(c)	(c >= '0' && c <= '9')
 
 /*

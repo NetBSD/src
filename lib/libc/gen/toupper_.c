@@ -1,4 +1,4 @@
-/*	$NetBSD: toupper_.c,v 1.12 2010/05/22 06:38:15 tnozaki Exp $	*/
+/*	$NetBSD: toupper_.c,v 1.13 2010/06/01 13:52:08 tnozaki Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,10 +7,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-__RCSID("$NetBSD: toupper_.c,v 1.12 2010/05/22 06:38:15 tnozaki Exp $");
+__RCSID("$NetBSD: toupper_.c,v 1.13 2010/06/01 13:52:08 tnozaki Exp $");
 #endif /* LIBC_RCS and not lint */
 
-#include <ctype.h>
+#include <sys/ctype_bits.h>
 #include <stdio.h>
 #include "ctype_local.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: isctype.c,v 1.19 2010/05/22 13:15:59 tnozaki Exp $ */
+/* $NetBSD: isctype.c,v 1.20 2010/06/01 13:52:08 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,11 +28,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: isctype.c,v 1.19 2010/05/22 13:15:59 tnozaki Exp $");
+__RCSID("$NetBSD: isctype.c,v 1.20 2010/06/01 13:52:08 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
+#include <sys/ctype_bits.h>
+#define _CTYPE_NOINLINE
 #include <ctype.h>
 #include <langinfo.h>
 #define __SETLOCALE_SOURCE__
@@ -45,18 +47,6 @@ __RCSID("$NetBSD: isctype.c,v 1.19 2010/05/22 13:15:59 tnozaki Exp $");
 #include "setlocale_local.h"
 
 #define _CTYPE_TAB(table, i)	((_current_cache()->table + 1)[i])
-
-#undef isalnum
-#undef isalpha
-#undef iscntrl
-#undef isdigit
-#undef isgraph
-#undef islower
-#undef isprint
-#undef ispunct
-#undef isspace
-#undef isupper
-#undef isxdigit
 
 #define _ISCTYPE_FUNC(name, bit) \
 int \
@@ -77,7 +67,6 @@ _ISCTYPE_FUNC(space,  _S            )
 _ISCTYPE_FUNC(upper,  _U            )
 _ISCTYPE_FUNC(xdigit, _N|_X         )
 
-#undef isblank
 int
 isblank(int c)
 {
@@ -85,28 +74,24 @@ isblank(int c)
         return c == ' ' || c == '\t';
 }
 
-#undef toupper
 int
 toupper(int c)
 {
 	return (int)_CTYPE_TAB(toupper_tab, c);
 }
 
-#undef tolower
 int
 tolower(int c)
 {
 	return (int)_CTYPE_TAB(tolower_tab, c);
 }
 
-#undef _toupper
 int
 _toupper(int c)
 {
 	return (c - 'a' + 'A');
 }
 
-#undef _tolower
 int
 _tolower(int c)
 {

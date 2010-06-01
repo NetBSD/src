@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype_.c,v 1.18 2010/06/01 13:52:08 tnozaki Exp $	*/
+/* $NetBSD: ctype_bits.h,v 1.1 2010/06/01 13:52:08 tnozaki Exp $ */
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -32,43 +32,25 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)ctype.h	5.3 (Berkeley) 4/3/91
+ *	NetBSD: ctype.h,v 1.30 2010/05/22 06:38:15 tnozaki Exp
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-/*static char *sccsid = "from: @(#)ctype_.c	5.6 (Berkeley) 6/1/90";*/
-#else
-__RCSID("$NetBSD: ctype_.c,v 1.18 2010/06/01 13:52:08 tnozaki Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+#ifndef _SYS_CTYPE_BITS_H_
+#define _SYS_CTYPE_BITS_H_
 
-#include <sys/ctype_bits.h>
-#include <stdio.h>
-#include "ctype_local.h"
+#define	_U	0x01
+#define	_L	0x02
+#define	_N	0x04
+#define	_S	0x08
+#define	_P	0x10
+#define	_C	0x20
+#define	_X	0x40
+#define	_B	0x80
 
-#if EOF != -1
-#error "EOF != -1"
-#endif
+extern const unsigned char	*_ctype_;
+extern const short	*_tolower_tab_;
+extern const short	*_toupper_tab_;
 
-const unsigned char _C_ctype_[1 + _CTYPE_NUM_CHARS] = {
-	0,
-	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
-	_C,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C|_S,	_C,	_C,
-	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
-	_C,	_C,	_C,	_C,	_C,	_C,	_C,	_C,
-	_S|_B,	_P,	_P,	_P,	_P,	_P,	_P,	_P,
-	_P,	_P,	_P,	_P,	_P,	_P,	_P,	_P,
-	_N,	_N,	_N,	_N,	_N,	_N,	_N,	_N,
-	_N,	_N,	_P,	_P,	_P,	_P,	_P,	_P,
-	_P,	_U|_X,	_U|_X,	_U|_X,	_U|_X,	_U|_X,	_U|_X,	_U,
-	_U,	_U,	_U,	_U,	_U,	_U,	_U,	_U,
-	_U,	_U,	_U,	_U,	_U,	_U,	_U,	_U,
-	_U,	_U,	_U,	_P,	_P,	_P,	_P,	_P,
-	_P,	_L|_X,	_L|_X,	_L|_X,	_L|_X,	_L|_X,	_L|_X,	_L,
-	_L,	_L,	_L,	_L,	_L,	_L,	_L,	_L,
-	_L,	_L,	_L,	_L,	_L,	_L,	_L,	_L,
-	_L,	_L,	_L,	_P,	_P,	_P,	_P,	_C
-};
-
-const unsigned char *_ctype_ = &_C_ctype_[0];
+#endif /* !_SYS_CTYPE_BITS_H_ */
