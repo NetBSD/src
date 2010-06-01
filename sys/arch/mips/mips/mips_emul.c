@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.14.78.10 2010/05/15 20:27:48 matt Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.14.78.11 2010/06/01 19:10:45 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.10 2010/05/15 20:27:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.14.78.11 2010/06/01 19:10:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ vaddr_t
 MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
     int allowNonBranch)
 {
-#define	BRANCHTARGET(i) (4 + ((i).word) + ((short)(i).IType.imm << 2))
+#define	BRANCHTARGET(pc, i) (4 + (pc) + ((short)(i).IType.imm << 2))
 	InstFmt inst;
 	vaddr_t nextpc;
 
@@ -129,7 +129,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 		case OP_BLTZL:		/* squashed */
 		case OP_BLTZALL:	/* squashed */
 			if ((int)(tf->tf_regs[inst.RType.rs]) < 0)
-				nextpc = BRANCHTARGET(inst);
+				nextpc = BRANCHTARGET(instpc, inst);
 			else
 				nextpc = instpc + 8;
 			break;
@@ -139,7 +139,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 		case OP_BGEZL:		/* squashed */
 		case OP_BGEZALL:	/* squashed */
 			if ((int)(tf->tf_regs[inst.RType.rs]) >= 0)
-				nextpc = BRANCHTARGET(inst);
+				nextpc = BRANCHTARGET(instpc, inst);
 			else
 				nextpc = instpc + 8;
 			break;
@@ -159,7 +159,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 	case OP_BEQ:
 	case OP_BEQL:	/* squashed */
 		if (tf->tf_regs[inst.RType.rs] == tf->tf_regs[inst.RType.rt])
-			nextpc = BRANCHTARGET(inst);
+			nextpc = BRANCHTARGET(instpc, inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -167,7 +167,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 	case OP_BNE:
 	case OP_BNEL:	/* squashed */
 		if (tf->tf_regs[inst.RType.rs] != tf->tf_regs[inst.RType.rt])
-			nextpc = BRANCHTARGET(inst);
+			nextpc = BRANCHTARGET(instpc, inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -175,7 +175,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 	case OP_BLEZ:
 	case OP_BLEZL:	/* squashed */
 		if ((int)(tf->tf_regs[inst.RType.rs]) <= 0)
-			nextpc = BRANCHTARGET(inst);
+			nextpc = BRANCHTARGET(instpc, inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -183,7 +183,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 	case OP_BGTZ:
 	case OP_BGTZL:	/* squashed */
 		if ((int)(tf->tf_regs[inst.RType.rs]) > 0)
-			nextpc = BRANCHTARGET(inst);
+			nextpc = BRANCHTARGET(instpc, inst);
 		else
 			nextpc = instpc + 8;
 		break;
@@ -194,7 +194,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 			if ((inst.RType.rt & COPz_BC_TF_MASK) != COPz_BC_TRUE)
 				condition = !condition;
 			if (condition)
-				nextpc = BRANCHTARGET(inst);
+				nextpc = BRANCHTARGET(instpc, inst);
 			else
 				nextpc = instpc + 8;
 		}
@@ -211,6 +211,7 @@ MachEmulateBranch(struct trapframe *tf, vaddr_t instpc, unsigned fpuCSR,
 			    __func__, "non-branch", inst.word, instpc);
 		nextpc = instpc + 4;
 	}
+	KASSERT((nextpc & 0x3) == 0);
 	return nextpc;
 #undef	BRANCHTARGET
 }
