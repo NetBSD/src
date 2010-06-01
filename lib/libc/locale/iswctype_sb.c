@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_sb.c,v 1.10 2010/06/01 13:52:08 tnozaki Exp $ */
+/* $NetBSD: iswctype_sb.c,v 1.11 2010/06/01 18:00:28 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_sb.c,v 1.10 2010/06/01 13:52:08 tnozaki Exp $");
+__RCSID("$NetBSD: iswctype_sb.c,v 1.11 2010/06/01 18:00:28 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -36,7 +36,9 @@ __RCSID("$NetBSD: iswctype_sb.c,v 1.10 2010/06/01 13:52:08 tnozaki Exp $");
 #define _CTYPE_NOINLINE
 #include <ctype.h>
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
+#include <wchar.h>
 #include <wctype.h>
 
 #define _ISWCTYPE_FUNC(name)				\
