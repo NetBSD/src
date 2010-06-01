@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.42.16.5 2010/01/23 20:03:28 matt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.42.16.6 2010/06/01 19:04:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.5 2010/01/23 20:03:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.42.16.6 2010/06/01 19:04:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	limit = min(high, ps->avail_end);
 	pagemask = ~((boundary >> PAGE_SHIFT) - 1);
 	skip = 0;
-	second_pass = true;
+	second_pass = false;
 	pgs = ps->pgs;
 
 	for (;;) {
