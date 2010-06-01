@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_mb.c,v 1.7 2010/05/22 07:18:43 tnozaki Exp $ */
+/* $NetBSD: iswctype_mb.c,v 1.8 2010/06/01 13:52:08 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,18 +28,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_mb.c,v 1.7 2010/05/22 07:18:43 tnozaki Exp $");
+__RCSID("$NetBSD: iswctype_mb.c,v 1.8 2010/06/01 13:52:08 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <assert.h>
-#include <ctype.h>
 #include <errno.h>
-#include <langinfo.h>
 #define __SETLOCALE_SOURCE__
 #include <locale.h>
-#include <stdlib.h>
 #include <string.h>
 #include <wctype.h>
 
