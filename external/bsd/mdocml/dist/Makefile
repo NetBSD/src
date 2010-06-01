@@ -1,17 +1,19 @@
 .SUFFIXES:	.html .xml .sgml .1 .3 .7 .md5 .tar.gz .1.txt .3.txt .7.txt .1.sgml .3.sgml .7.sgml .h .h.html
 
+PREFIX		= /usr/local
 BINDIR		= $(PREFIX)/bin
 INCLUDEDIR	= $(PREFIX)/include
 LIBDIR		= $(PREFIX)/lib
 MANDIR		= $(PREFIX)/man
 EXAMPLEDIR	= $(PREFIX)/share/examples/mandoc
-INSTALL_PROGRAM	= install -m 0755
-INSTALL_DATA	= install -m 0444
-INSTALL_LIB	= install -m 0644
+INSTALL		= install
+INSTALL_PROGRAM	= $(INSTALL) -m 0755
+INSTALL_DATA	= $(INSTALL) -m 0444
+INSTALL_LIB	= $(INSTALL) -m 0644
 INSTALL_MAN	= $(INSTALL_DATA)
 
-VERSION	   = 1.9.23
-VDATE	   = 07 April 2010
+VERSION	   = 1.10.0
+VDATE	   = 29 May 2010
 
 VFLAGS	   = -DVERSION="\"$(VERSION)\""
 WFLAGS     = -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings
@@ -21,73 +23,120 @@ CFLAGS    += -g $(WFLAGS) $(VFLAGS) -DHAVE_CONFIG_H
 # in the lower-left hand corner of -mdoc manuals.
 # CFLAGS += -DOSNAME="\"OpenBSD 4.5\""
 
-# Specify this if you want to accept Xo/Xc macros extending the head of
-# block full-implicit macros.
-# CFLAGS += -DUGLY
+# Unset this if you don't want Xo/Xc allowing split `It' lines, which
+# breaks symmetry.
+CFLAGS	  += -DUGLY
 
 LINTFLAGS += $(VFLAGS)
 
 MANDOCFLAGS = -Wall -fstrict
+
 MANDOCHTML = -Thtml -Ostyle=style.css,man=%N.%S.html,includes=%I.html
+
+ROFFLNS    = roff.ln
+
+ROFFSRCS   = roff.c
+
+ROFFOBJS   = roff.o
+
+MANDOCLNS  = mandoc.ln
+
+MANDOCSRCS = mandoc.c
+
+MANDOCOBJS = mandoc.o
 
 MDOCLNS	   = mdoc_macro.ln mdoc.ln mdoc_hash.ln mdoc_strings.ln \
 	     mdoc_argv.ln mdoc_validate.ln mdoc_action.ln \
-	     lib.ln att.ln arch.ln vol.ln msec.ln st.ln \
-	     mandoc.ln
+	     lib.ln att.ln arch.ln vol.ln msec.ln st.ln
+
 MDOCOBJS   = mdoc_macro.o mdoc.o mdoc_hash.o mdoc_strings.o \
 	     mdoc_argv.o mdoc_validate.o mdoc_action.o lib.o att.o \
-	     arch.o vol.o msec.o st.o mandoc.o
+	     arch.o vol.o msec.o st.o
+
 MDOCSRCS   = mdoc_macro.c mdoc.c mdoc_hash.c mdoc_strings.c \
 	     mdoc_argv.c mdoc_validate.c mdoc_action.c lib.c att.c \
-	     arch.c vol.c msec.c st.c mandoc.c
+	     arch.c vol.c msec.c st.c
 
 MANLNS	   = man_macro.ln man.ln man_hash.ln man_validate.ln \
-	     man_action.ln mandoc.ln man_argv.ln
+	     man_action.ln man_argv.ln
+
 MANOBJS	   = man_macro.o man.o man_hash.o man_validate.o \
-	     man_action.o mandoc.o man_argv.o
+	     man_action.o man_argv.o
 MANSRCS	   = man_macro.c man.c man_hash.c man_validate.c \
 	     man_action.c mandoc.c man_argv.c
 
 MAINLNS	   = main.ln mdoc_term.ln chars.ln term.ln tree.ln \
 	     compat.ln man_term.ln html.ln mdoc_html.ln \
 	     man_html.ln out.ln
+
 MAINOBJS   = main.o mdoc_term.o chars.o term.o tree.o compat.o \
 	     man_term.o html.o mdoc_html.o man_html.o out.o
+
 MAINSRCS   = main.c mdoc_term.c chars.c term.c tree.c compat.c \
 	     man_term.c html.c mdoc_html.c man_html.c out.c
 
-LLNS	   = llib-llibmdoc.ln llib-llibman.ln llib-lmandoc.ln
-LNS	   = $(MAINLNS) $(MDOCLNS) $(MANLNS)
-LIBS	   = libmdoc.a libman.a
-OBJS	   = $(MDOCOBJS) $(MAINOBJS) $(MANOBJS)
-SRCS	   = $(MDOCSRCS) $(MAINSRCS) $(MANSRCS)
+LLNS	   = llib-llibmdoc.ln llib-llibman.ln llib-lmandoc.ln \
+	     llib-llibmandoc.ln llib-llibroff.ln
+
+LNS	   = $(MAINLNS) $(MDOCLNS) $(MANLNS) \
+	     $(MANDOCLNS) $(ROFFLNS)
+
+LIBS	   = libmdoc.a libman.a libmandoc.a libroff.a
+
+OBJS	   = $(MDOCOBJS) $(MAINOBJS) $(MANOBJS) \
+	     $(MANDOCOBJS) $(ROFFOBJS)
+
+SRCS	   = $(MDOCSRCS) $(MAINSRCS) $(MANSRCS) \
+	     $(MANDOCSRCS) $(ROFFSRCS)
+
 DATAS	   = arch.in att.in lib.in msec.in st.in \
 	     vol.in chars.in
+
 HEADS	   = mdoc.h libmdoc.h man.h libman.h term.h \
-	     libmandoc.h html.h chars.h out.h main.h
+	     libmandoc.h html.h chars.h out.h main.h roff.h \
+	     mandoc.h
+
 GSGMLS	   = mandoc.1.sgml mdoc.3.sgml mdoc.7.sgml manuals.7.sgml \
-	     mandoc_char.7.sgml man.7.sgml man.3.sgml
+	     mandoc_char.7.sgml man.7.sgml man.3.sgml roff.7.sgml \
+	     roff.3.sgml
+
 SGMLS	   = index.sgml
-HTMLS	   = ChangeLog.html index.html man.h.html mdoc.h.html
+
+HTMLS	   = ChangeLog.html index.html man.h.html mdoc.h.html \
+	     mandoc.h.html roff.h.html mandoc.1.html mdoc.3.html \
+	     man.3.html mdoc.7.html man.7.html mandoc_char.7.html \
+	     manuals.7.html roff.7.html roff.3.html
+
 XSLS	   = ChangeLog.xsl
-GHTMLS	   = mandoc.1.html mdoc.3.html man.3.html mdoc.7.html \
-	     man.7.html mandoc_char.7.html manuals.7.html
+
 TEXTS	   = mandoc.1.txt mdoc.3.txt man.3.txt mdoc.7.txt man.7.txt \
-	     mandoc_char.7.txt manuals.7.txt ChangeLog.txt
+	     mandoc_char.7.txt manuals.7.txt ChangeLog.txt \
+	     roff.7.txt roff.3.txt
+
 EXAMPLES   = example.style.css
+
 XMLS	   = ChangeLog.xml
+
 STATICS	   = index.css style.css external.png
+
 MD5S	   = mdocml-$(VERSION).md5 
+
 TARGZS	   = mdocml-$(VERSION).tar.gz
-MANS	   = mandoc.1 mdoc.3 mdoc.7 manuals.7 mandoc_char.7 \
-	     man.7 man.3
+
+MANS	   = mandoc.1 mdoc.3 mdoc.7 manuals.7 mandoc_char.7 man.7 \
+	     man.3 roff.7 roff.3
+
 BINS	   = mandoc
+
 TESTS	   = test-strlcat.c test-strlcpy.c
+
 CONFIGS	   = config.h.pre config.h.post
-CLEAN	   = $(BINS) $(LNS) $(LLNS) $(LIBS) $(OBJS) $(HTMLS) \
+
+DOCLEAN	   = $(BINS) $(LNS) $(LLNS) $(LIBS) $(OBJS) $(HTMLS) \
 	     $(TARGZS) tags $(MD5S) $(XMLS) $(TEXTS) $(GSGMLS) \
-	     $(GHTMLS) config.h config.log
-INSTALL	   = $(SRCS) $(HEADS) Makefile $(MANS) $(SGMLS) $(STATICS) \
+	     config.h config.log
+
+DOINSTALL  = $(SRCS) $(HEADS) Makefile $(MANS) $(SGMLS) $(STATICS) \
 	     $(DATAS) $(XSLS) $(EXAMPLES) $(TESTS) $(CONFIGS)
 
 all:	$(BINS)
@@ -95,44 +144,43 @@ all:	$(BINS)
 lint:	$(LLNS)
 
 clean:
-	rm -f $(CLEAN)
+	rm -f $(DOCLEAN)
 
 cleanlint:
 	rm -f $(LNS) $(LLNS)
 
 cleanhtml:
-	rm -f $(HTMLS) $(GSGMLS) $(GHTMLS)
+	rm -f $(HTMLS) $(GSGMLS)
 
 dist:	mdocml-$(VERSION).tar.gz
 
-www:	all $(GSGMLS) $(GHTMLS) $(HTMLS) $(TEXTS) $(MD5S) $(TARGZS)
-
-htmls:	all $(GSGMLS) $(GHTMLS)
+www:	all $(GSGMLS) $(HTMLS) $(TEXTS) $(MD5S) $(TARGZS)
 
 installwww: www
-	install -m 0444 $(GHTMLS) $(HTMLS) $(TEXTS) $(STATICS) $(PREFIX)/
-	install -m 0444 mdocml-$(VERSION).tar.gz $(PREFIX)/snapshots/
-	install -m 0444 mdocml-$(VERSION).md5 $(PREFIX)/snapshots/
-	install -m 0444 mdocml-$(VERSION).tar.gz $(PREFIX)/snapshots/mdocml.tar.gz
-	install -m 0444 mdocml-$(VERSION).md5 $(PREFIX)/snapshots/mdocml.md5
+	$(INSTALL_DATA) $(HTMLS) $(TEXTS) $(STATICS) $(DESTDIR)$(PREFIX)/
+	$(INSTALL_DATA) mdocml-$(VERSION).tar.gz $(DESTDIR)$(PREFIX)/snapshots/
+	$(INSTALL_DATA) mdocml-$(VERSION).md5 $(DESTDIR)$(PREFIX)/snapshots/
+	$(INSTALL_DATA) mdocml-$(VERSION).tar.gz $(DESTDIR)$(PREFIX)/snapshots/mdocml.tar.gz
+	$(INSTALL_DATA) mdocml-$(VERSION).md5 $(DESTDIR)$(PREFIX)/snapshots/mdocml.md5
 
 install:
-	mkdir -p $(BINDIR)
-	mkdir -p $(EXAMPLEDIR)
-	mkdir -p $(MANDIR)/man1
-	mkdir -p $(MANDIR)/man7
-	$(INSTALL_PROGRAM) mandoc $(BINDIR)
-	$(INSTALL_MAN) mandoc.1 $(MANDIR)/man1
-	$(INSTALL_MAN) man.7 mdoc.7 mandoc_char.7 $(MANDIR)/man7
-	$(INSTALL_DATA) example.style.css $(EXAMPLEDIR)
+	mkdir -p $(DESTDIR)$(BINDIR)
+	mkdir -p $(DESTDIR)$(EXAMPLEDIR)
+	mkdir -p $(DESTDIR)$(MANDIR)/man1
+	mkdir -p $(DESTDIR)$(MANDIR)/man7
+	$(INSTALL_PROGRAM) mandoc $(DESTDIR)$(BINDIR)
+	$(INSTALL_MAN) mandoc.1 $(DESTDIR)$(MANDIR)/man1
+	$(INSTALL_MAN) man.7 mdoc.7 roff.7 mandoc_char.7 $(DESTDIR)$(MANDIR)/man7
+	$(INSTALL_DATA) example.style.css $(DESTDIR)$(EXAMPLEDIR)
 
 uninstall:
-	rm -f $(BINDIR)/mandoc
-	rm -f $(MANDIR)/man1/mandoc.1
-	rm -f $(MANDIR)/man7/mdoc.7
-	rm -f $(MANDIR)/man7/man.7
-	rm -f $(MANDIR)/man7/mandoc_char.7
-	rm -f $(EXAMPLEDIR)/example.style.css
+	rm -f $(DESTDIR)$(BINDIR)/mandoc
+	rm -f $(DESTDIR)$(MANDIR)/man1/mandoc.1
+	rm -f $(DESTDIR)$(MANDIR)/man7/mdoc.7
+	rm -f $(DESTDIR)$(MANDIR)/man7/roff.7
+	rm -f $(DESTDIR)$(MANDIR)/man7/man.7
+	rm -f $(DESTDIR)$(MANDIR)/man7/mandoc_char.7
+	rm -f $(DESTDIR)$(EXAMPLEDIR)/example.style.css
 
 $(OBJS): config.h
 
@@ -168,7 +216,7 @@ mdoc.ln mdoc.o: mdoc.c libmdoc.h
 
 man.ln man.o: man.c libman.h
 
-main.ln main.o: main.c mdoc.h
+main.ln main.o: main.c mdoc.h man.h roff.h
 
 compat.ln compat.o: compat.c 
 
@@ -181,6 +229,8 @@ mdoc_html.ln mdoc_html.o: mdoc_html.c html.h mdoc.h
 man_html.ln man_html.o: man_html.c html.h man.h out.h
 
 out.ln out.o: out.c out.h
+
+mandoc.ln mandoc.o: mandoc.c libmandoc.h
 
 tree.ln tree.o: tree.c man.h mdoc.h
 
@@ -205,9 +255,9 @@ ChangeLog.txt:
 ChangeLog.html: ChangeLog.xml ChangeLog.xsl
 	xsltproc -o $@ ChangeLog.xsl ChangeLog.xml
 
-mdocml-$(VERSION).tar.gz: $(INSTALL)
+mdocml-$(VERSION).tar.gz: $(DOINSTALL)
 	mkdir -p .dist/mdocml/mdocml-$(VERSION)/
-	cp -f $(INSTALL) .dist/mdocml/mdocml-$(VERSION)/
+	cp -f $(DOINSTALL) .dist/mdocml/mdocml-$(VERSION)/
 	( cd .dist/mdocml/ && tar zcf ../../$@ mdocml-$(VERSION)/ )
 	rm -rf .dist/
 
@@ -217,8 +267,14 @@ llib-llibmdoc.ln: $(MDOCLNS)
 llib-llibman.ln: $(MANLNS)
 	$(LINT) -Clibman $(MANLNS)
 
-llib-lmandoc.ln: $(MAINLNS) llib-llibmdoc.ln
-	$(LINT) -Cmandoc $(MAINLNS) llib-llibmdoc.ln
+llib-llibmandoc.ln: $(MANDOCLNS)
+	$(LINT) -Clibmandoc $(MANDOCLNS)
+
+llib-llibroff.ln: $(ROFFLNS)
+	$(LINT) -Clibroff $(ROFFLNS)
+
+llib-lmandoc.ln: $(MAINLNS) llib-llibmdoc.ln llib-llibman.ln llib-llibmandoc.ln llib-llibroff.ln
+	$(LINT) -Cmandoc $(MAINLNS) llib-llibmdoc.ln llib-llibman.ln llib-llibmandoc.ln llib-llibroff.ln
 
 libmdoc.a: $(MDOCOBJS)
 	$(AR) rs $@ $(MDOCOBJS)
@@ -226,8 +282,14 @@ libmdoc.a: $(MDOCOBJS)
 libman.a: $(MANOBJS)
 	$(AR) rs $@ $(MANOBJS)
 
-mandoc: $(MAINOBJS) libmdoc.a libman.a
-	$(CC) $(CFLAGS) -o $@ $(MAINOBJS) libmdoc.a libman.a
+libmandoc.a: $(MANDOCOBJS)
+	$(AR) rs $@ $(MANDOCOBJS)
+
+libroff.a: $(ROFFOBJS)
+	$(AR) rs $@ $(ROFFOBJS)
+
+mandoc: $(MAINOBJS) libroff.a libmdoc.a libman.a libmandoc.a
+	$(CC) $(CFLAGS) -o $@ $(MAINOBJS) libroff.a libmdoc.a libman.a libmandoc.a
 
 .sgml.html:
 	validate --warn $<
