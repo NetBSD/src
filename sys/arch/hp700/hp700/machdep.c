@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2010/04/30 15:36:45 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2010/06/01 10:20:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2010/04/30 15:36:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2010/06/01 10:20:29 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -130,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2010/04/30 15:36:45 skrll Exp $");
 #endif
 
 #include "ksyms.h"
+#include "lcd.h"
 
 /*
  * Different kinds of flags used throughout the kernel.
@@ -205,6 +206,10 @@ enum hppa_cpu_type cpu_type;
 int	cpu_hvers;
 int	cpu_revision;
 
+#if NLCD > 0
+int	lcd_blink_p;
+#endif
+
 /*
  * exported methods for cpus
  */
@@ -265,6 +270,9 @@ static inline void fall(int, int, int, int, int);
 void dumpsys(void);
 void cpuid(void);
 enum hppa_cpu_type cpu_model_cpuid(int);
+#if NLCD > 0
+void blink_lcd_timeout(void *);
+#endif
 
 /*
  * wide used hardware params
@@ -1910,6 +1918,29 @@ sysctl_machdep_boot(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
+#if NLCD > 0
+static int
+sysctl_machdep_heartbeat(SYSCTLFN_ARGS)
+{
+	int oldval, error;
+	struct sysctlnode node = *rnode;
+	
+	oldval = lcd_blink_p;
+	/*
+	 * If we were false and are now true, start the timer.
+	 */
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return (error);
+
+	if (!oldval && lcd_blink_p > oldval)
+		blink_lcd_timeout(NULL);
+
+	return 0;
+}
+#endif
+
 /*
  * machine dependent system variables.
  */
@@ -1933,6 +1964,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRING, "booted_kernel", NULL,
 		       sysctl_machdep_boot, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+#if NLCD > 0
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_BOOL, "lcd_blink", "Display heartbeat on the LCD display",
+		       sysctl_machdep_heartbeat, 0, &lcd_blink_p, 0,
+		       CTL_MACHDEP, CPU_LCD_BLINK, CTL_EOL);
+#endif
 }
 
 /*
@@ -1972,6 +2010,56 @@ consinit(void)
 		cninit();
 	}
 }
+
+#if NLCD > 0
+struct blink_lcd_softc {
+	SLIST_HEAD(, blink_lcd) bls_head;
+	int bls_on;
+	struct callout bls_to;
+} blink_sc = { SLIST_HEAD_INITIALIZER(bls_head), 0 };
+
+void
+blink_lcd_register(struct blink_lcd *l)
+{
+	if (SLIST_EMPTY(&blink_sc.bls_head)) {
+		callout_init(&blink_sc.bls_to, 0);
+		callout_setfunc(&blink_sc.bls_to, blink_lcd_timeout, &blink_sc);
+		blink_sc.bls_on = 0;
+		if (lcd_blink_p)
+			callout_schedule(&blink_sc.bls_to, 1);
+	}
+	SLIST_INSERT_HEAD(&blink_sc.bls_head, l, bl_next);
+}
+
+void
+blink_lcd_timeout(void *vsc)
+{
+	struct blink_lcd_softc *sc = &blink_sc;
+	struct blink_lcd *l;
+	int t;
+
+	if (SLIST_EMPTY(&sc->bls_head))
+		return;
+
+	SLIST_FOREACH(l, &sc->bls_head, bl_next) {
+		(*l->bl_func)(l->bl_arg, sc->bls_on);
+	}
+	sc->bls_on = !sc->bls_on;
+
+	if (!lcd_blink_p)
+		return;
+
+	/*
+	 * Blink rate is:
+	 *      full cycle every second if completely idle (loadav = 0)
+	 *      full cycle every 2 seconds if loadav = 1
+	 *      full cycle every 3 seconds if loadav = 2
+	 * etc.
+	 */
+	t = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	callout_schedule(&sc->bls_to, t);
+}
+#endif
 
 #ifdef MODULAR
 /*

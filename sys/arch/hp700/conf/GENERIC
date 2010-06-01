@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.99 2010/05/08 22:16:27 mrg Exp $
+# $NetBSD: GENERIC,v 1.100 2010/06/01 10:20:28 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.99 $"
+#ident 		"GENERIC-$Revision: 1.100 $"
 
 maxusers	32		# estimated number of users
 
@@ -226,6 +226,7 @@ mem*	at mainbus0		# /dev/*mem and memory controller
 # Miscellaneous
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 power0	at mainbus0		# power/fail manager
+lcd0	at mainbus0		# LCD
 
 # STI graphics
 sti*	at mainbus0		# [H]CRX-{8,24,48}[Z] and Visualize graphics

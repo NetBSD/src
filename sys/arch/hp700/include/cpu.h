@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2010/04/26 15:25:24 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 2010/06/01 10:20:29 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -322,8 +322,20 @@ int	cpu_dump(void);
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
+#define CPU_LCD_BLINK           3	/* int: twiddle heartbeat LED/LCD */ 
+#define	CPU_MAXID		4	/* number of valid machdep ids */
 
+#ifdef _KERNEL
+#include <sys/queue.h>
+
+struct blink_lcd {
+	void (*bl_func)(void *, int);
+	void *bl_arg;
+	SLIST_ENTRY(blink_lcd) bl_next;
+};
+
+extern void blink_lcd_register(struct blink_lcd *);
+#endif	/* _KERNEL */
 #endif	/* !_LOCORE */
 
 #endif /* _MACHINE_CPU_H_ */

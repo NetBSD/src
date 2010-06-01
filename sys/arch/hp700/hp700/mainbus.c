@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.69 2010/04/30 15:49:40 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.70 2010/06/01 10:20:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,10 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.69 2010/04/30 15:49:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.70 2010/06/01 10:20:29 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
+#include "lcd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.69 2010/04/30 15:49:40 skrll Exp $");
 #include <hp700/dev/cpudevs.h>
 
 static struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
+#if NLCD > 0
+static struct pdc_chassis_info pdc_chassis_info PDC_ALIGNMENT;
+static struct pdc_chassis_lcd pdc_chassis_lcd PDC_ALIGNMENT;
+#endif
 
 #ifdef MBUSDEBUG
 
@@ -1405,6 +1410,24 @@ mbattach(device_t parent, device_t self, void *aux)
 	config_found(self, &nca, mbprint);
 #endif
 
+#if NLCD > 0
+	if (!pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_INFO,
+	    &pdc_chassis_info, &pdc_chassis_lcd, sizeof(pdc_chassis_lcd)) &&
+	    pdc_chassis_lcd.enabled) {
+		memset(&nca, 0, sizeof(nca));
+		nca.ca_name = "lcd";
+		nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] = 
+		nca.ca_dp.dp_bc[3] = nca.ca_dp.dp_bc[4] = nca.ca_dp.dp_bc[5] = -1;
+		nca.ca_dp.dp_mod = -1;
+		nca.ca_irq = -1;
+		nca.ca_iot = &hppa_bustag;
+		nca.ca_hpa = pdc_chassis_lcd.cmd_addr;
+		nca.ca_pdc_iodc_read = (void *)&pdc_chassis_lcd;
+
+		config_found(self, &nca, mbprint);
+	}
+#endif	
+
 	switch (cpu_hvers) {
 	case HPPA_BOARD_HP809:
 	case HPPA_BOARD_HP819:
@@ -1489,12 +1512,15 @@ mbprint(void *aux, const char *pnp)
 		aprint_normal("\"%s\" at %s (type 0x%x, sv 0x%x)", ca->ca_name,
 		    pnp, ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
-		aprint_normal(" hpa 0x%lx path ", ca->ca_hpa);
-		for (n = 0; n < 6; n++) {
-			if (ca->ca_dp.dp_bc[n] >= 0)
-				aprint_normal("%d/", ca->ca_dp.dp_bc[n]);
+		aprint_normal(" hpa 0x%lx", ca->ca_hpa);
+		if (ca->ca_dp.dp_mod >=0) {
+			aprint_normal(" path ");
+			for (n = 0; n < 6; n++) {
+				if (ca->ca_dp.dp_bc[n] >= 0)
+					aprint_normal("%d/", ca->ca_dp.dp_bc[n]);
+			}
+			aprint_normal("%d", ca->ca_dp.dp_mod);
 		}
-		aprint_normal("%d", ca->ca_dp.dp_mod);
 		if (!pnp && ca->ca_irq >= 0) {
 			aprint_normal(" irq %d", ca->ca_irq);
 			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)

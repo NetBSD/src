@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.22 2009/05/28 08:41:29 skrll Exp $
+#	$NetBSD: files.hp700,v 1.23 2010/06/01 10:20:28 skrll Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -76,6 +76,10 @@ file	arch/hp700/dev/pdc.c		pdc
 device	power
 attach	power at gedoens
 file	arch/hp700/dev/power.c		power needs-flag
+
+device	lcd
+attach	lcd at gedoens
+file	arch/hp700/dev/lcd.c		lcd needs-flag
 
 device	mem
 attach	mem at gedoens
