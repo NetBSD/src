@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.18 2010/01/18 19:17:42 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.19 2010/06/01 18:20:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.18 2010/01/18 19:17:42 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.19 2010/06/01 18:20:26 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -146,20 +146,24 @@ fn_filename_completion_function(const char *text, int state)
 			nptr = realloc(filename, strlen(temp) + 1);
 			if (nptr == NULL) {
 				free(filename);
+				filename = NULL;
 				return NULL;
 			}
 			filename = nptr;
 			(void)strcpy(filename, temp);
 			len = temp - text;	/* including last slash */
+
 			nptr = realloc(dirname, len + 1);
 			if (nptr == NULL) {
-				free(filename);
+				free(dirname);
+				dirname = NULL;
 				return NULL;
 			}
 			dirname = nptr;
 			(void)strncpy(dirname, text, len);
 			dirname[len] = '\0';
 		} else {
+			free(filename);
 			if (*text == 0)
 				filename = NULL;
 			else {
@@ -167,6 +171,7 @@ fn_filename_completion_function(const char *text, int state)
 				if (filename == NULL)
 					return NULL;
 			}
+			free(dirname);
 			dirname = NULL;
 		}
 
@@ -176,12 +181,14 @@ fn_filename_completion_function(const char *text, int state)
 		}
 
 		/* support for ``~user'' syntax */
+
 		free(dirpath);
-
-		if (dirname == NULL && (dirname = strdup("./")) == NULL)
-			return NULL;
-
-		if (*dirname == '~')
+		dirpath = NULL;
+		if (dirname == NULL) {
+			if ((dirname = strdup("")) == NULL)
+				return NULL;
+			dirpath = strdup("./");
+		} else if (*dirname == '~')
 			dirpath = fn_tilde_expand(dirname);
 		else
 			dirpath = strdup(dirname);
