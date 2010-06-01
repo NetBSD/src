@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.42 2010/05/31 23:09:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.43 2010/06/01 20:11:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -51,11 +51,8 @@ int rumpuser_getfileinfo(const char *, uint64_t *, int *, int *);
 #define RUMPUSER_FT_CHR 4
 int rumpuser_nanosleep(uint64_t *, uint64_t *, int *);
 
-#define rumpuser_malloc(a,b) rumpuser__malloc(a,b,__func__,__LINE__);
-#define rumpuser_realloc(a,b,c) rumpuser__realloc(a,b,c,__func__,__LINE__);
-
-void *rumpuser__malloc(size_t, int, const char *, int);
-void *rumpuser__realloc(void *, size_t, int, const char *, int);
+void *rumpuser_malloc(size_t, int);
+void *rumpuser_realloc(void *, size_t);
 void rumpuser_free(void *);
 
 void *rumpuser_anonmmap(size_t, int, int, int *);
