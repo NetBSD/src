@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.5 2010/01/15 19:01:04 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.6 2010/06/01 20:11:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.5 2010/01/15 19:01:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.6 2010/06/01 20:11:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -73,7 +73,7 @@ kern_malloc(unsigned long size, struct malloc_type *type, int flags)
 {
 	void *rv;
 
-	rv = rumpuser_malloc(size, (flags & (M_CANFAIL | M_NOWAIT)) != 0);
+	rv = rumpuser_malloc(size, 0);
 	if (rv && flags & M_ZERO)
 		memset(rv, 0, size);
 
@@ -84,7 +84,7 @@ void *
 kern_realloc(void *ptr, unsigned long size, struct malloc_type *type, int flags)
 {
 
-	return rumpuser_realloc(ptr, size, (flags & (M_CANFAIL|M_NOWAIT)) != 0);
+	return rumpuser_realloc(ptr, size);
 }
 
 void
@@ -110,7 +110,7 @@ void *
 kmem_alloc(size_t size, km_flag_t kmflag)
 {
 
-	return rumpuser_malloc(size, kmflag == KM_NOSLEEP);
+	return rumpuser_malloc(size, 0);
 }
 
 void *
@@ -153,6 +153,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int align_offset,
 {
 
 	pp->pr_size = size;
+	pp->pr_align = align;
 }
 
 void
@@ -246,7 +247,7 @@ pool_get(struct pool *pp, int flags)
 		panic("%s: pool unit size 0.  not initialized?", __func__);
 #endif
 
-	rv = rumpuser_malloc(pp->pr_size, 1);
+	rv = rumpuser_malloc(pp->pr_size, pp->pr_align);
 	if (rv == NULL && (flags & PR_WAITOK && (flags & PR_LIMITFAIL) == 0))
 		panic("%s: out of memory and PR_WAITOK", __func__);
 

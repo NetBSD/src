@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.77 2010/06/01 19:18:20 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.78 2010/06/01 20:11:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.77 2010/06/01 19:18:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.78 2010/06/01 20:11:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -582,7 +582,7 @@ vaddr_t
 uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 {
 
-	return (vaddr_t)rumpuser_malloc(PAGE_SIZE, !waitok);
+	return (vaddr_t)rumpuser_malloc(PAGE_SIZE, PAGE_SIZE);
 }
 
 void
