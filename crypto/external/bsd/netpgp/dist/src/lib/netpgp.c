@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.57 2010/06/01 05:22:38 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.58 2010/06/02 03:38:01 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -561,6 +561,10 @@ netpgp_end(netpgp_t *netpgp)
 int
 netpgp_list_keys(netpgp_t *netpgp, const int psigs)
 {
+	if (netpgp->pubring == NULL) {
+		(void) fprintf(stderr, "No keyring\n");
+		return 0;
+	}
 	return __ops_keyring_list(netpgp->io, netpgp->pubring, psigs);
 }
 
