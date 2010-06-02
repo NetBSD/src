@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.97 2009/10/15 10:05:48 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.98 2010/06/02 09:56:59 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.97 2009/10/15 10:05:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.98 2010/06/02 09:56:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -684,6 +684,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		*blkp++ = blkno + loc;
 	for (; cg < fs->fs_ncg; cg++)
 		*blkp++ = fragstoblks(fs, cgtod(fs, cg));
+	(*snaplist)[0] = blkp - &(*snaplist)[0];
 
 out:
 	if (has_wapbl)
