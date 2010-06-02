@@ -1,4 +1,4 @@
-/* $NetBSD: _wctype.c,v 1.7 2010/06/01 13:52:08 tnozaki Exp $ */
+/* $NetBSD: _wctype.c,v 1.8 2010/06/02 15:47:25 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _wctype.c,v 1.7 2010/06/01 13:52:08 tnozaki Exp $");
+__RCSID("$NetBSD: _wctype.c,v 1.8 2010/06/02 15:47:25 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -109,38 +109,4 @@ _iswctype_priv(_RuneLocale const *rl,
     wint_t wc, _WCTypeEntry const *te)
 {
 	return !!(_runetype_priv(rl, wc) & te->te_mask);
-}
-
-wint_t
-/*ARGSUSED*/
-_towctrans_priv(_RuneLocale const *rl,
-    wint_t wc, _WCTransEntry const *te)
-{
-	__nbrune_t wc0;
-	_RuneRange *rr;
-	_RuneEntry *base, *re;
-	uint32_t x;
-
-	_DIAGASSERT(rl != NULL);
-	_DIAGASSERT(te != NULL);
-
-	if (wc == WEOF)
-		return wc;
-	_DIAGASSERT(te->te_name != NULL);
-	if (_RUNE_ISCACHED(wc))
-		return te->te_cached[(size_t)wc];
-	wc0 = (__nbrune_t)wc;
-	rr = te->te_extmap;
-	_DIAGASSERT(rr != NULL);
-	base = rr->rr_rune_ranges;
-	for (x = rr->rr_nranges; x != (uint32_t)0; x >>= 1) {
-		re = base + (x >> 1);
-		if (re->re_min <= wc0 && re->re_max >= wc0) {
-			return re->re_map + wc0 - re->re_min;
-		} else if (wc0 >= re->re_max) {
-			base = re + 1;
-			--x;
-		}
-	}
-	return wc;
 }
