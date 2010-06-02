@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.23 2010/06/02 06:24:59 kiyohara Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.24 2010/06/02 06:33:40 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.23 2010/06/02 06:24:59 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.24 2010/06/02 06:33:40 kiyohara Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -144,15 +144,21 @@ gtpci_attach(device_t parent, device_t self, void *aux)
 
 #if NPCI > 0
 	iot = prop_dictionary_get(dict, "io-bus-tag");
-	if (iot == NULL)
+	if (iot != NULL) {
+		KASSERT(prop_object_type(iot) == PROP_TYPE_DATA);
+		gtpci_io_bs_tag = __UNCONST(prop_data_data_nocopy(iot));
+	} else {
 		aprint_error_dev(self, "no io-bus-tag property\n");
-	KASSERT(prop_object_type(iot) == PROP_TYPE_DATA);
-	gtpci_io_bs_tag = __UNCONST(prop_data_data_nocopy(iot));
+		gtpci_io_bs_tag = NULL;
+	}
 	memt = prop_dictionary_get(dict, "mem-bus-tag");
-	if (memt == NULL)
+	if (memt != NULL) {
+		KASSERT(prop_object_type(memt) == PROP_TYPE_DATA);
+		gtpci_mem_bs_tag = __UNCONST(prop_data_data_nocopy(memt));
+	} else {
 		aprint_error_dev(self, "no mem-bus-tag property\n");
-	KASSERT(prop_object_type(memt) == PROP_TYPE_DATA);
-	gtpci_mem_bs_tag = __UNCONST(prop_data_data_nocopy(memt));
+		gtpci_mem_bs_tag = NULL;
+	}
 	pc = prop_dictionary_get(dict, "pci-chipset");
 	if (pc == NULL) {
 		aprint_error_dev(self, "no pci-chipset property\n");
