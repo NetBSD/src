@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.1 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.2 2010/06/02 06:05:32 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,14 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.1 2010/04/28 13:51:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.2 2010/06/02 06:05:32 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/endian.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_param.h>	/* For PAGE_SIZE */
 
@@ -367,7 +367,7 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = mva->mva_dmat;
 	n = idmac_nchan * GTIDMAC_NDESC + xore_nchan * MVXORE_NDESC;
 	sc->sc_dd_buffer =
-	    malloc(sizeof(struct gtidmac_dma_desc) * n, M_DEVBUF, M_NOWAIT);
+	    kmem_alloc(sizeof(struct gtidmac_dma_desc) * n, KM_SLEEP);
 	if (sc->sc_dd_buffer == NULL) {
 		aprint_error_dev(self, "can't allocate memory\n");
 		goto fail1;
@@ -635,7 +635,7 @@ fail4:
 fail3:
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_pattern_segment, 1);
 fail2:
-	free(sc->sc_dd_buffer, M_DEVBUF);
+	kmem_free(sc->sc_dd_buffer, sizeof(struct gtidmac_dma_desc) * n);
 fail1:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, mva->mva_size);
 	return;
