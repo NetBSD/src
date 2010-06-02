@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.173 2010/05/31 23:18:33 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.174 2010/06/02 10:55:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.173 2010/05/31 23:18:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.174 2010/06/02 10:55:18 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.173 2010/05/31 23:18:33 pooka Exp $");
 
 #include <prop/proplib.h>
 
+#include <uvm/uvm_extern.h>
 #include <uvm/uvm_readahead.h>
 
 #include "rump_private.h"
@@ -276,7 +277,7 @@ rump__init(int rump_version)
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpuser_mutex_recursive_init(&rump_giantlock);
 	ksyms_init();
-	rumpvm_init();
+	uvm_init();
 	evcnt_init();
 
 	once_init();
