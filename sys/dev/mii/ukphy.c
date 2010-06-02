@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.41 2010/05/30 17:44:08 pgoyette Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.42 2010/06/02 19:47:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.41 2010/05/30 17:44:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.42 2010/06/02 19:47:34 martin Exp $");
 
 #include "opt_mii.h"
 
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.41 2010/05/30 17:44:08 pgoyette Exp $");
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
-#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -80,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.41 2010/05/30 17:44:08 pgoyette Exp $");
 static int	ukphymatch(device_t, cfdata_t, void *);
 static void	ukphyattach(device_t, device_t, void *);
 
-const char *(*mii_get_descr)(int, int) = mii_get_descr_stub;
-
 CFATTACH_DECL3_NEW(ukphy, sizeof(struct mii_softc),
     ukphymatch, ukphyattach, mii_phy_detach, mii_phy_activate, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
@@ -91,31 +88,6 @@ static int	ukphy_service(struct mii_softc *, struct mii_data *, int);
 static const struct mii_phy_funcs ukphy_funcs = {
 	ukphy_service, ukphy_status, mii_phy_reset,
 };
-
-const char *mii_get_descr_stub(int oui, int model)
-{
-	return NULL;
-}
-
-/*    
- * Routine to load/unload the miiverbose kernel module as needed
- */
-void mii_verbose_ctl(bool load)
-{
-	static int loaded = 0;
- 
-	if (load) {
-		if (loaded++ == 0)
-			if (module_load("miiverbose", MODCTL_LOAD_FORCE,
-					NULL, MODULE_CLASS_MISC) !=0 )
-				loaded = 0;
-		return; 
-	}
-	if (loaded == 0)
-		return; 
-	if (--loaded == 0)
-		module_unload("miiverbose");
-}  
 
 static int
 ukphymatch(device_t parent, cfdata_t match, void *aux)

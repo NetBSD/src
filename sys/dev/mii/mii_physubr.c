@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.68 2010/03/02 08:30:40 martin Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.69 2010/06/02 19:47:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.68 2010/03/02 08:30:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.69 2010/06/02 19:47:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.68 2010/03/02 08:30:40 martin Exp 
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
+#include <sys/module.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -51,6 +52,33 @@ __KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.68 2010/03/02 08:30:40 martin Exp 
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+
+const char *(*mii_get_descr)(int, int) = mii_get_descr_stub;
+
+const char *mii_get_descr_stub(int oui, int model)
+{
+	return NULL;
+}
+
+/*    
+ * Routine to load/unload the miiverbose kernel module as needed
+ */
+void mii_verbose_ctl(bool load)
+{
+	static int loaded = 0;
+ 
+	if (load) {
+		if (loaded++ == 0)
+			if (module_load("miiverbose", MODCTL_LOAD_FORCE,
+					NULL, MODULE_CLASS_MISC) !=0 )
+				loaded = 0;
+		return; 
+	}
+	if (loaded == 0)
+		return; 
+	if (--loaded == 0)
+		module_unload("miiverbose");
+}  
 
 static void mii_phy_statusmsg(struct mii_softc *);
 
