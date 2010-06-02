@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.30 2010/05/15 20:47:23 jakllsch Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.31 2010/06/02 18:53:39 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -192,9 +192,11 @@ typedef u_int32_t ehci_isoc_trans_t;
 typedef u_int32_t ehci_isoc_bufr_ptr_t;
 
 /* Isochronous Transfer Descriptor */
+#define EHCI_ITD_NUFRAMES USB_UFRAMES_PER_FRAME
+#define EHCI_ITD_NBUFFERS 7
 typedef struct {
 	volatile ehci_link_t		itd_next;
-	volatile ehci_isoc_trans_t	itd_ctl[8];
+	volatile ehci_isoc_trans_t	itd_ctl[EHCI_ITD_NUFRAMES];
 #define EHCI_ITD_GET_STATUS(x) (((x) >> 28) & 0xf)
 #define EHCI_ITD_SET_STATUS(x) (((x) & 0xf) << 28)
 #define EHCI_ITD_ACTIVE		0x80000000
@@ -210,7 +212,7 @@ typedef struct {
 #define EHCI_ITD_SET_PG(x) (((x) & 0x7) << 12)
 #define EHCI_ITD_GET_OFFS(x) (((x) >> 0) & 0xfff)
 #define EHCI_ITD_SET_OFFS(x) (((x) & 0xfff) << 0)
-	volatile ehci_isoc_bufr_ptr_t	itd_bufr[7];
+	volatile ehci_isoc_bufr_ptr_t	itd_bufr[EHCI_ITD_NBUFFERS];
 #define EHCI_ITD_GET_BPTR(x) ((x) & 0xfffff000)
 #define EHCI_ITD_SET_BPTR(x) ((x) & 0xfffff000)
 #define EHCI_ITD_GET_EP(x) (((x) >> 8) & 0xf)
@@ -223,7 +225,7 @@ typedef struct {
 #define EHCI_ITD_SET_MAXPKT(x) ((x) & 0x7ff)
 #define EHCI_ITD_GET_MULTI(x) ((x) & 0x3)
 #define EHCI_ITD_SET_MULTI(x) ((x) & 0x3)
-	volatile ehci_isoc_bufr_ptr_t	itd_bufr_hi[7];
+	volatile ehci_isoc_bufr_ptr_t	itd_bufr_hi[EHCI_ITD_NBUFFERS];
 } ehci_itd_t;
 #define EHCI_ITD_ALIGN 32
 
