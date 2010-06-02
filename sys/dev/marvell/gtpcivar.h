@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcivar.h,v 1.9 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtpcivar.h,v 1.10 2010/06/02 06:44:32 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -37,6 +37,12 @@ struct gtpci_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	pci_chipset_tag_t sc_pc;
+};
+
+/* protection flags */ 
+struct gtpci_prot {
+	uint32_t acbl_flags;
+	uint32_t acs_flags;
 };
 
 #if NPCI > 0
