@@ -1,4 +1,4 @@
-/* $NetBSD: bsdctype.c,v 1.5 2010/06/01 18:00:28 tnozaki Exp $ */
+/* $NetBSD: bsdctype.c,v 1.6 2010/06/02 16:04:52 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bsdctype.c,v 1.5 2010/06/01 18:00:28 tnozaki Exp $");
+__RCSID("$NetBSD: bsdctype.c,v 1.6 2010/06/02 16:04:52 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/stat.h>
@@ -52,18 +52,18 @@ const _BSDCTypeLocale _DefaultBSDCTypeLocale = {
 const _BSDCTypeLocale *_CurrentBSDCTypeLocale = &_DefaultBSDCTypeLocale;
 
 typedef struct {
-	_BSDCTypeLocale bl;
-	uint8_t blp_ctype_tab  [_CTYPE_NUM_CHARS + 1];
-	int16_t blp_tolower_tab[_CTYPE_NUM_CHARS + 1];
-	int16_t blp_toupper_tab[_CTYPE_NUM_CHARS + 1];
+	_BSDCTypeLocale	bl;
+	unsigned char	blp_ctype_tab  [_CTYPE_NUM_CHARS + 1];
+	short		blp_tolower_tab[_CTYPE_NUM_CHARS + 1];
+	short		blp_toupper_tab[_CTYPE_NUM_CHARS + 1];
 } _BSDCTypeLocalePriv;
 
 static __inline void
 _bsdctype_init_priv(_BSDCTypeLocalePriv *blp)
 {
-	blp->blp_ctype_tab  [0] = (uint8_t)0;
-	blp->blp_tolower_tab[0] = (int16_t)EOF;
-	blp->blp_toupper_tab[0] = (int16_t)EOF;
+	blp->blp_ctype_tab  [0] = 0;
+	blp->blp_tolower_tab[0] = EOF;
+	blp->blp_toupper_tab[0] = EOF;
 	blp->bl.bl_ctype_tab   = &blp->blp_ctype_tab  [0];
 	blp->bl.bl_tolower_tab = &blp->blp_tolower_tab[0];
 	blp->bl.bl_toupper_tab = &blp->blp_toupper_tab[0];
