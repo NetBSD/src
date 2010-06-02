@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.78 2010/06/01 20:11:33 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.79 2010/06/02 10:55:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.78 2010/06/01 20:11:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.79 2010/06/02 10:55:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -229,7 +229,7 @@ uao_detach(struct uvm_object *uobj)
 static kmutex_t pagermtx;
 
 void
-rumpvm_init(void)
+uvm_init(void)
 {
 
 	uvmexp.free = 1024*1024; /* XXX */
