@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.15 2010/04/28 13:51:55 kiyohara Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.16 2010/06/02 06:44:33 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.15 2010/04/28 13:51:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.16 2010/06/02 06:44:33 kiyohara Exp $");
 
 #include "opt_ev64260.h"
 #include "opt_pci.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.15 2010/04/28 13:51:55 kiyohara Exp
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/extent.h>
-#include <sys/malloc.h>
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -82,6 +81,15 @@ int gtpci_md_conf_hook(void *, int, int, int, pcireg_t);
 
 CFATTACH_DECL_NEW(gt, sizeof(struct gt_softc), gt_match, gt_attach, NULL, NULL);
 
+struct gtpci_prot gtpci_prot = {
+	GTPCI_GT64260_ACBL_PCISWAP_NOSWAP	|
+	GTPCI_GT64260_ACBL_WBURST_8_QW		|
+	GTPCI_GT64260_ACBL_RDMULPREFETCH	|
+	GTPCI_GT64260_ACBL_RDLINEPREFETCH	|
+	GTPCI_GT64260_ACBL_RDPREFETCH		|
+	GTPCI_GT64260_ACBL_PREFETCHEN,
+	0,
+};
 
 int
 gt_match(device_t parent, cfdata_t cf, void *aux)
