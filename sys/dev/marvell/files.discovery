@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.12 2010/05/07 17:06:32 kiyohara Exp $
+#	$NetBSD: files.discovery,v 1.13 2010/06/02 06:18:11 kiyohara Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -62,12 +62,12 @@ file	dev/marvell/obio.c		obio
 #file	dev/marvell/mvsata_mv.c		mvsata_gt | mvsata_mbus
 
 # Gigabit Ethernet Controller Interface
-#define	mvgbec { [port = -1], [irq = -1] }
-#device	mvgbec: mvgbec
-#attach	mvgbec at gt with mvgbec_gt
-#device	mvgbe: ether, ifnet, arp, mii
-#attach	mvgbe at mvgbec
-#file	dev/marvell/if_mvgbe.c		mvgbec | mvgbe
+define	mvgbec { [port = -1], [irq = -1] }
+device	mvgbec: mvgbec
+attach	mvgbec at gt with mvgbec_gt
+device	mvgbe: ether, ifnet, arp, mii
+attach	mvgbe at mvgbec
+file	dev/marvell/if_mvgbe.c		mvgbec | mvgbe
 
 # USB 2.0 Interface
 #attach	ehci at gt with mvusb_gt
