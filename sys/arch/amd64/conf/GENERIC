@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.280 2010/06/02 18:02:57 dholland Exp $
+# $NetBSD: GENERIC,v 1.281 2010/06/02 18:05:28 dholland Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.280 $"
+#ident 		"GENERIC-$Revision: 1.281 $"
 
 maxusers	64		# estimated number of users
 
@@ -1065,8 +1065,6 @@ sdmmc* at sdhc?		# SD/MMC bus
 
 ld*    at sdmmc?
 
-
-# Mice
 
 # Middle Digital, Inc. PCI-Weasel serial console board control
 # devices (watchdog timer, etc.)
