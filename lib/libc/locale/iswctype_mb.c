@@ -1,4 +1,4 @@
-/* $NetBSD: iswctype_mb.c,v 1.8 2010/06/01 13:52:08 tnozaki Exp $ */
+/* $NetBSD: iswctype_mb.c,v 1.9 2010/06/02 15:47:25 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype_mb.c,v 1.8 2010/06/01 13:52:08 tnozaki Exp $");
+__RCSID("$NetBSD: iswctype_mb.c,v 1.9 2010/06/02 15:47:25 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -82,7 +82,7 @@ tow##name(wint_t wc)					\
 							\
 	rl = _RUNE_LOCALE();				\
 	te = &rl->rl_wctrans[index];			\
-	return _towctrans_priv(rl, wc, te);		\
+	return _towctrans_priv(wc, te);			\
 }
 _TOWCTRANS_FUNC(upper, _WCTRANS_INDEX_UPPER)
 _TOWCTRANS_FUNC(lower, _WCTRANS_INDEX_LOWER)
@@ -134,16 +134,14 @@ iswctype(wint_t wc, wctype_t charclass)
 wint_t
 towctrans(wint_t wc, wctrans_t charmap)
 {
-	_RuneLocale const *rl;
 	_WCTransEntry const *te;
 
 	if (charmap == NULL) {
 		errno = EINVAL;
 		return wc;
 	}
-	rl = _RUNE_LOCALE();
 	te = (_WCTransEntry const *)(void *)charmap;
-	return _towctrans_priv(rl, wc, te);
+	return _towctrans_priv(wc, te);
 }
 
 __weak_alias(wcwidth,_wcwidth)
