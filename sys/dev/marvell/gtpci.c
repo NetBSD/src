@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.22 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.23 2010/06/02 06:24:59 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.22 2010/04/28 13:51:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.23 2010/06/02 06:24:59 kiyohara Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -36,7 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.22 2010/04/28 13:51:56 kiyohara Exp $");
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/extent.h>
-#include <sys/gpio.h>
 #include <sys/malloc.h>
 
 #include <prop/proplib.h>
