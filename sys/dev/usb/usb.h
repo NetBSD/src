@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.85 2010/05/15 20:45:43 jakllsch Exp $	*/
+/*	$NetBSD: usb.h,v 1.86 2010/06/02 17:27:57 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ MALLOC_DECLARE(M_USBHC);
 #define USB_MAX_ENDPOINTS 16
 
 #define USB_FRAMES_PER_SECOND 1000
+#define USB_UFRAMES_PER_FRAME 8
 
 /*
  * The USB records contain some unaligned little-endian word
