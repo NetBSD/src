@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.13.16.3 2010/04/25 21:08:45 rmind Exp $	*/
+/*	$NetBSD: mm.c,v 1.13.16.4 2010/06/02 03:12:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.13.16.3 2010/04/25 21:08:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.13.16.4 2010/06/02 03:12:43 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -90,13 +90,49 @@ mm_init(void)
 	pg = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	KASSERT(pg != 0);
 	pmap_protect(pmap_kernel(), pg, pg + PAGE_SIZE, VM_PROT_READ);
+	pmap_update(pmap_kernel());
 	dev_zero_page = (void *)pg;
 
-#ifndef __HAVE_MM_MD_PREFER_VA
+#ifndef __HAVE_MM_MD_CACHE_ALIASING
 	/* KVA for mappings during I/O. */
 	dev_mem_addr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY|UVM_KMF_WAITVA);
 	KASSERT(dev_mem_addr != 0);
+#else
+	dev_mem_addr = 0;
+#endif
+}
+
+
+/*
+ * dev_mem_getva: get a special virtual address.  If architecture requires,
+ * allocate VA according to PA, which avoids cache-aliasing issues.  Use a
+ * constant, general mapping address otherwise.
+ */
+static inline vaddr_t
+dev_mem_getva(paddr_t pa)
+{
+#ifdef __HAVE_MM_MD_CACHE_ALIASING
+	const vsize_t coloroff = trunc_page(pa) & ptoa(uvmexp.colormask);
+	const vaddr_t kva = uvm_km_alloc(kernel_map, PAGE_SIZE + coloroff,
+	    ptoa(uvmexp.ncolors), UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+
+	return kva + coloroff;
+#else
+	return dev_mem_addr;
+#endif
+}
+
+static inline void
+dev_mem_relva(paddr_t pa, vaddr_t va)
+{
+#ifdef __HAVE_MM_MD_CACHE_ALIASING
+	const vsize_t coloroff = trunc_page(pa) & ptoa(uvmexp.colormask);
+	const vaddr_t origva = va - coloroff;
+
+	uvm_km_free(kernel_map, origva, PAGE_SIZE + coloroff, UVM_KMF_VAONLY);
+#else
+	KASSERT(dev_mem_addr == va);
 #endif
 }
 
@@ -133,12 +169,9 @@ dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 	have_direct = false;
 #endif
 	if (!have_direct) {
-#ifndef __HAVE_MM_MD_PREFER_VA
-		const vaddr_t va = dev_mem_addr;
-#else
 		/* Get a special virtual address. */
-		const vaddr_t va = mm_md_getva(paddr);
-#endif
+		const vaddr_t va = dev_mem_getva(paddr);
+
 		/* Map selected KVA to physical address. */
 		mutex_enter(&dev_mem_lock);
 		pmap_kenter_pa(va, paddr, prot, 0);
@@ -148,14 +181,13 @@ dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 		vaddr = va + offset;
 		error = uiomove((void *)vaddr, len, uio);
 
-		/* Unmap.  Note: no need for pmap_update(). */
+		/* Unmap, flush before unlock. */
 		pmap_kremove(va, PAGE_SIZE);
+		pmap_update(pmap_kernel());
 		mutex_exit(&dev_mem_lock);
 
-#ifdef __HAVE_MM_MD_PREFER_VA
 		/* "Release" the virtual address. */
-		mm_md_relva(va);
-#endif
+		dev_mem_relva(paddr, va);
 	} else {
 		/* Direct map, just perform I/O. */
 		vaddr += offset;

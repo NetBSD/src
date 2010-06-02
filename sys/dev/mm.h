@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.1.2.2 2010/04/25 15:27:35 rmind Exp $	*/
+/*	$NetBSD: mm.h,v 1.1.2.3 2010/06/02 03:12:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -87,12 +87,9 @@ bool	mm_md_direct_mapped_phys(paddr_t, vaddr_t *);
 bool	mm_md_direct_mapped_io(void *, paddr_t *);
 
 /*
- * Optional hooks to select and release a special virtual address,
- * in order to avoid cache aliasing issues on certain architectures.
+ * Some architectures may need to deal with cache aliasing issues.
  *
- * machine/types.h must define __HAVE_MM_MD_PREFER_VA to use this.
+ * machine/types.h must define __HAVE_MM_MD_CACHE_ALIASING to note that.
  */
-vaddr_t	mm_md_getva(paddr_t);
-void	mm_md_relva(vaddr_t);
 
 #endif /* _SYS_DEV_MM_H_ */
