@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.2 2010/06/01 20:11:33 pooka Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.3 2010/06/03 10:56:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.2 2010/06/01 20:11:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.3 2010/06/03 10:56:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 	 * XXX: pool_cache would be nice, but not easily possible,
 	 * as pool cache init wants to call mutex_init() ...
 	 */
-	upm = rumpuser_malloc(sizeof(*upm), 0);
+	upm = rump_hypermalloc(sizeof(*upm), 0, true, "mutex_init");
 	memset(upm, 0, sizeof(*upm));
 	rumpuser_cv_init(&upm->upm_rucv);
 	memcpy(mtx, &upm, sizeof(void *));
@@ -178,7 +178,7 @@ rw_init(krwlock_t *rw)
 	CTASSERT(sizeof(krwlock_t) >= sizeof(void *));
 	checkncpu();
 
-	uprw = rumpuser_malloc(sizeof(*uprw), 0);
+	uprw = rump_hypermalloc(sizeof(*uprw), 0, true, "rwinit");
 	memset(uprw, 0, sizeof(*uprw));
 	rumpuser_cv_init(&uprw->uprw_rucv_reader);
 	rumpuser_cv_init(&uprw->uprw_rucv_writer);
