@@ -768,7 +768,7 @@ do_getrusage(os_emul_data *emul,
   if (WITH_TRACE && ppc_trace[trace_os_emul])
     printf_filtered ("%d, 0x%lx", who, (long)rusage_addr);
 
-  SYS(getrusage);
+  SYS(__getrusage50);
   emul_write_status(processor, status, err);
   if (status == 0) {
     if (rusage_addr != 0)
