@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/05/28 06:26:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2010/06/03 09:44:19 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -19,8 +19,11 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${X11SRCDIR.xf86-video-openchrome}/src
 
-#LIBDPLIBS=	Xext	${.CURDIR}/../libXext 
-#		X11	${.CURDIR}/../libX11/dynamic
+LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
+		X11	${.CURDIR}/../libX11/dynamic \
+		Xv	${.CURDIR}/../libXv \
+		XvMC	${.CURDIR}/../libXvMC \
+		drm	${.CURDIR}/../libdrm
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
