@@ -1,4 +1,4 @@
-/*	$NetBSD: cdbr.c,v 1.1 2010/04/25 00:54:46 joerg Exp $	*/
+/*	$NetBSD: cdbr.c,v 1.2 2010/06/03 12:40:52 veego Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cdbr.c,v 1.1 2010/04/25 00:54:46 joerg Exp $");
+__RCSID("$NetBSD: cdbr.c,v 1.2 2010/06/03 12:40:52 veego Exp $");
 
 #include "namespace.h"
 
@@ -122,7 +122,7 @@ cdbr_open(const char *path, int flags)
 		cdbr->index_size = 4;
 
 	cdbr->mmap_size = (size_t)sb.st_size;
-	cdbr->mmap_base = mmap(NULL, cdbr->mmap_size, PROT_READ, MAP_FILE, fd, 0);
+	cdbr->mmap_base = mmap(NULL, cdbr->mmap_size, PROT_READ, MAP_FILE|MAP_SHARED, fd, 0);
 	close(fd);
 
 	if (cdbr->mmap_base == MAP_FAILED) {
