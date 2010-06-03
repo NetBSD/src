@@ -1,4 +1,5 @@
-/*	$Id: local2.c,v 1.1.1.1 2009/09/04 00:27:30 gmcgarry Exp $	*/
+/*	Id: local2.c,v 1.18 2010/05/30 15:32:45 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.2 2010/06/03 18:57:08 plunky Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -393,8 +394,6 @@ zzzcode(NODE *p, int c)
 
 	case 'C':  /* remove from stack after subroutine call */
 		pr = p->n_qual;
-		if (p->n_op == STCALL || p->n_op == USTCALL)
-			pr += 4; /* XXX */
 		if (p->n_op == UCALL)
 			return; /* XXX remove ZC from UCALL */
 		if (pr)
@@ -430,6 +429,13 @@ zzzcode(NODE *p, int c)
 	case 'N': /* output extended reg name */
 		printf("%s", rnames[getlr(p, '1')->n_rval]);
 		break;
+#endif
+
+	case 'P': /* Put hidden argument in rdi */
+		printf("\tleaq -%d(%%rbp),%%rdi\n", stkpos);
+		break;
+
+#if 0
 
 	case 'S': /* emit eventual move after cast from longlong */
 		pr = DECRA(p->n_reg, 0);
@@ -601,16 +607,16 @@ adrcon(CONSZ val)
 void
 conput(FILE *fp, NODE *p)
 {
-	int val = p->n_lval;
+	long val = p->n_lval;
 
 	switch (p->n_op) {
 	case ICON:
 		if (p->n_name[0] != '\0') {
 			fprintf(fp, "%s", p->n_name);
 			if (val)
-				fprintf(fp, "+%d", val);
+				fprintf(fp, "+%ld", val);
 		} else
-			fprintf(fp, "%d", val);
+			fprintf(fp, "%ld", val);
 		return;
 
 	default:
@@ -628,6 +634,7 @@ insput(NODE *p)
 /*
  * Write out the upper address, like the upper register of a 2-register
  * reference, or the next memory location.
+ * XXX - not needed on amd64
  */
 void
 upput(NODE *p, int size)
@@ -679,10 +686,15 @@ adrput(FILE *io, NODE *p)
 		if (p->n_name[0])
 			printf("%s%s", p->n_name, p->n_lval ? "+" : "");
 		if (p->n_lval)
-			fprintf(io, "%d", (int)p->n_lval);
+			fprintf(io, "%lld", p->n_lval);
 		if (R2TEST(r)) {
-			fprintf(io, "(%s,%s,8)", rnames[R2UPK1(r)],
-			    rnames[R2UPK2(r)]);
+			int r1 = R2UPK1(r);
+			int r2 = R2UPK2(r);
+			int sh = R2UPK3(r);
+
+			fprintf(io, "(%s,%s,%d)", 
+			    r1 == MAXREGS ? "" : rnames[r1],
+			    r2 == MAXREGS ? "" : rnames[r2], sh);
 		} else
 			fprintf(io, "(%s)", rnames[p->n_rval]);
 		return;

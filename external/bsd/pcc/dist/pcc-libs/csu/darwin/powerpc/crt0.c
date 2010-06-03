@@ -1,4 +1,5 @@
-/*	$Id: crt0.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $	*/
+/*	Id: crt0.c,v 1.5 2009/02/14 21:02:58 gmcgarry Exp 	*/	
+/*	$NetBSD: crt0.c,v 1.1.1.3 2010/06/03 18:58:04 plunky Exp $	*/
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -157,4 +158,5 @@ asm("\t.subsections_via_symbols\n");
 
 #include "common.c"
 
-IDENT("$Id: crt0.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $");
+IDENT("Id: crt0.c,v 1.5 2009/02/14 21:02:58 gmcgarry Exp ");	
+IDENT("$NetBSD: crt0.c,v 1.1.1.3 2010/06/03 18:58:04 plunky Exp $");

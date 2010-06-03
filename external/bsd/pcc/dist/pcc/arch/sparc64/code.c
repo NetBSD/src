@@ -25,6 +25,9 @@ defloc(struct symtab *sp)
 	char *n;
 	int s;
 
+	if (sp == NULL)
+		return;
+
 	t = sp->stype;
 	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
 	if (s != lastloc)

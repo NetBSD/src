@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.1.1.1 2009/09/04 00:27:37 gmcgarry Exp $	*/
+/*	NetBSD: softfloat.h,v 1.5 2006/05/16 20:55:51 mrg Exp 	*/
 
 /* This is a derivative work. */
 

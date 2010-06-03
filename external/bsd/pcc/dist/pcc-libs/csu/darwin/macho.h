@@ -1,4 +1,5 @@
-/*	$Id: macho.h,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $	*/
+/*	Id: macho.h,v 1.1 2008/06/01 01:28:34 gmcgarry Exp 	*/	
+/*	$NetBSD: macho.h,v 1.1.1.2 2010/06/03 18:58:04 plunky Exp $	*/
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *

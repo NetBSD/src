@@ -29,16 +29,6 @@ typedef __SIZE_TYPE__ size_t;
 typedef unsigned long size_t;
 #endif
 #endif
-#if !defined(_OFF_T) && !defined(__off_t_defined) && !defined(_OFF_T_)
-#define _OFF_T
-#define _OFF_T_
-#define __off_t_defined
-#ifdef __OFF_TYPE__
-typedef __OFF_TYPE__ off_t;
-#else
-typedef long off_t;
-#endif
-#endif
 #endif
 
 #if defined(_LIBPCC_STDDEF_H_) || defined(__need_wchar_t)

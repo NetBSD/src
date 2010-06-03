@@ -1,4 +1,5 @@
-/*	$Id: dylib1.c,v 1.1.1.1 2009/09/04 00:27:35 gmcgarry Exp $	*/
+/*	Id: dylib1.c,v 1.1 2009/02/14 11:40:28 gmcgarry Exp 	*/	
+/*	$NetBSD: dylib1.c,v 1.1.1.2 2010/06/03 18:58:04 plunky Exp $	*/
 /*-
  * Copyright (c) 2009 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -85,4 +86,5 @@ asm(
 
 asm("\t.subsections_via_symbols\n");
 
-IDENT("$Id: dylib1.c,v 1.1.1.1 2009/09/04 00:27:35 gmcgarry Exp $");
+IDENT("Id: dylib1.c,v 1.1 2009/02/14 11:40:28 gmcgarry Exp ");	
+IDENT("$NetBSD: dylib1.c,v 1.1.1.2 2010/06/03 18:58:04 plunky Exp $");

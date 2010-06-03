@@ -218,7 +218,7 @@ instring(struct symtab *sp)
 	str = sp->sname;
 
 	printf("\t.ascii \"");
-	for (s = str; *s != 0; *s++) {
+	for (s = str; *s != 0; ) {
 		if (*s++ == '\\')
 			esccon(&s);
 		if (s - str > 60) {

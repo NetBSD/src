@@ -1,4 +1,5 @@
-/*	$Id: util.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $	*/
+/*	Id: util.c,v 1.4 2008/05/04 10:38:33 ragge Exp 	*/	
+/*	$NetBSD: util.c,v 1.1.1.2 2010/06/03 18:58:12 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

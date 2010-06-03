@@ -1,4 +1,4 @@
-/* $NetBSD: negdf2.c,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $ */
+/* NetBSD: negdf2.c,v 1.1 2000/06/06 08:15:07 bjh21 Exp  */
 
 /*
  * Written by Ben Harris, 2000.  This file is in the Public Domain.
