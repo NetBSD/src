@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.149 2010/04/23 00:18:50 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.150 2010/06/03 15:40:15 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.149 2010/04/23 00:18:50 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.150 2010/06/03 15:40:15 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.149 2010/04/23 00:18:50 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.150 2010/06/03 15:40:15 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2171,13 +2171,13 @@ Job_Init(void)
     /*
      * Install a SIGCHLD handler.
      */
-    (void)signal(SIGCHLD, JobChildSig);
+    (void)bmake_signal(SIGCHLD, JobChildSig);
     sigaddset(&caught_signals, SIGCHLD);
 
 #define ADDSIG(s,h)				\
-    if (signal(s, SIG_IGN) != SIG_IGN) {	\
+    if (bmake_signal(s, SIG_IGN) != SIG_IGN) {	\
 	sigaddset(&caught_signals, s);		\
-	(void)signal(s, h);			\
+	(void)bmake_signal(s, h);			\
     }
 
     /*
@@ -2218,7 +2218,7 @@ static void JobSigReset(void)
 {
 #define DELSIG(s)					\
     if (sigismember(&caught_signals, s)) {		\
-	(void)signal(s, SIG_DFL);			\
+	(void)bmake_signal(s, SIG_DFL);			\
     }
 
     DELSIG(SIGINT)
@@ -2231,7 +2231,7 @@ static void JobSigReset(void)
     DELSIG(SIGWINCH)
     DELSIG(SIGCONT)
 #undef DELSIG
-    (void)signal(SIGCHLD, SIG_DFL);
+    (void)bmake_signal(SIGCHLD, SIG_DFL);
 }
 
 /*-
