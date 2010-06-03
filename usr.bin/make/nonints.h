@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.58 2010/04/07 00:11:27 sjg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.59 2010/06/03 15:40:16 sjg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -195,3 +195,6 @@ void Var_Dump(GNode *);
 void Var_ExportVars(void);
 void Var_Export(char *, int);
 void Var_UnExport(char *);
+
+/* util.c */
+void (*bmake_signal(int, void (*)(int)))(int);
