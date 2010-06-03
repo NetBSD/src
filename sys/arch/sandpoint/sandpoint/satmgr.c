@@ -1,4 +1,4 @@
-/* $NetBSD: satmgr.c,v 1.1 2010/05/29 22:47:02 phx Exp $ */
+/* $NetBSD: satmgr.c,v 1.2 2010/06/03 10:44:21 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -59,7 +59,6 @@ struct satmgr_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	kmutex_t		sc_lock;
 	struct selinfo		sc_rsel;
 	callout_t		sc_ch_wdog;
 	callout_t		sc_ch_pbutton;
@@ -67,6 +66,8 @@ struct satmgr_softc {
 	int			sc_open;
 	void			*sc_si;
 	uint32_t		sc_ierror, sc_overr;
+	kmutex_t		sc_lock;
+	kcondvar_t		sc_rdcv, sc_wrcv;
 	char sc_rd_buf[16], *sc_rd_lim, *sc_rd_cur, *sc_rd_ptr;
 	char sc_wr_buf[16], *sc_wr_lim, *sc_wr_cur, *sc_wr_ptr;
 	int sc_rd_cnt, sc_wr_cnt;
@@ -100,6 +101,7 @@ static void wdog_tickle(void *);
 static void send_sat(struct satmgr_softc *, const char *);
 static int hwintr(void *);
 static void rxintr(struct satmgr_softc *);
+static void txintr(struct satmgr_softc *);
 static void startoutput(struct satmgr_softc *);
 static void swintr(void *);
 static void kbutton(struct satmgr_softc *, int);
@@ -114,11 +116,12 @@ struct satmsg {
 	void (*dispatch)(struct satmgr_softc *, int);
 };
 
-const struct satmsg satmodel[] = {
+static const struct satmsg satmodel[] = {
     { "kurobox",  "CCGG", "EEGG", kbutton },
     { "synology", "C",    "1",    sbutton },
     { "qnap",     "f",    "A",    qbutton }
-} *satmgr_msg;
+};
+static const struct satmsg *satmgr_msg;
 
 /* single byte stride register layout */
 #define RBR		0
@@ -182,10 +185,13 @@ satmgr_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wr_cnt = 0;
 	sc->sc_wr_cur = sc->sc_wr_ptr = &sc->sc_wr_buf[0];
 	sc->sc_wr_lim = sc->sc_wr_cur + sizeof(sc->sc_wr_buf);
+	sc->sc_ierror = sc->sc_overr = 0;
 	selinit(&sc->sc_rsel);
 	callout_init(&sc->sc_ch_wdog, 0);
 	callout_init(&sc->sc_ch_pbutton, 0);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
+	cv_init(&sc->sc_rdcv, "satrd");
+	cv_init(&sc->sc_wrcv, "satwr");
 
 	epicirq = (eaa->eumb_unit == 0) ? 24 : 25;
 	intr_establish(epicirq + 16, IST_LEVEL, IPL_SERIAL, hwintr, sc);
@@ -345,12 +351,14 @@ satread(dev_t dev, struct uio *uio, int flags)
 	if (sc == NULL)
 		return ENXIO;
 
-	mutex_spin_enter(&sc->sc_lock);
-	if (sc->sc_rd_cnt == 0 && (flags & IO_NDELAY))
-		return EWOULDBLOCK;
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_rd_cnt == 0 && (flags & IO_NDELAY)) {
+		error = EWOULDBLOCK;
+		goto out;
+	}
 	error = 0;
 	while (sc->sc_rd_cnt == 0) {
-		error = tsleep(sc->sc_rd_buf, PZERO|PCATCH, "satrd", 0);
+		error = cv_wait_sig(&sc->sc_rdcv, &sc->sc_lock);
 		if (error)
 			goto out;
 	}
@@ -366,7 +374,7 @@ satread(dev_t dev, struct uio *uio, int flags)
 			sc->sc_rd_ptr = &sc->sc_rd_buf[0];
 	}
  out:
-	mutex_spin_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 	return error;
 }
 
@@ -381,12 +389,14 @@ satwrite(dev_t dev, struct uio *uio, int flags)
 	if (sc == NULL)
 		return ENXIO;
 
-	mutex_spin_enter(&sc->sc_lock);
-	if (sc->sc_wr_cnt == sizeof(sc->sc_wr_buf) && (flags & IO_NDELAY))
-		return EWOULDBLOCK;
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_wr_cnt == sizeof(sc->sc_wr_buf) && (flags & IO_NDELAY)) {
+		error = EWOULDBLOCK;
+		goto out;
+	}
 	error = 0;
 	while (sc->sc_wr_cnt == sizeof(sc->sc_wr_buf)) {
-		error = tsleep(sc->sc_wr_buf, PZERO|PCATCH, "satwr", 0);
+		error = cv_wait_sig(&sc->sc_wrcv, &sc->sc_lock);
 		if (error)
 			goto out;
 	}
@@ -403,7 +413,7 @@ satwrite(dev_t dev, struct uio *uio, int flags)
 	}
 	startoutput(sc); /* start xmit */
  out:
-	mutex_spin_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 	return error;
 }
 
@@ -448,7 +458,7 @@ filt_read(struct knote *kn, long hint)
 static const struct filterops read_filtops =
 	{ 1, NULL, filt_rdetach, filt_read };			
 
-int
+static int
 satkqfilter(dev_t dev, struct knote *kn)
 {
 	struct satmgr_softc *sc = device_lookup_private(&satmgr_cd, 0);
@@ -493,7 +503,7 @@ hwintr(void *arg)
 			rxintr(sc);
 			break;
 		case IIR_TXRDY: /* TxFIFO is ready to swallow data */
-			startoutput(sc);
+			txintr(sc);
 			break;
 		case IIR_MLSC:	/* MSR updated */
 			break;
@@ -534,6 +544,14 @@ rxintr(struct satmgr_softc *sc)
 }
 
 static void
+txintr(struct satmgr_softc *sc)
+{
+
+	cv_signal(&sc->sc_wrcv);
+	startoutput(sc);
+}
+
+static void
 startoutput(struct satmgr_softc *sc)
 {
 	int n, ch;
@@ -555,6 +573,7 @@ swintr(void *arg)
 	int n;
 
 	/* we're now in softint(9) context */
+	mutex_spin_enter(&sc->sc_lock);
 	ptr = sc->sc_rd_ptr;
 	for (n = 0; n < sc->sc_rd_cnt; n++) {
 		(*satmgr_msg->dispatch)(sc, *ptr);
@@ -564,13 +583,15 @@ swintr(void *arg)
 	if (sc->sc_open == 0) {
 		sc->sc_rd_cnt = 0;
 		sc->sc_rd_ptr = ptr;
+		mutex_spin_exit(&sc->sc_lock);
 		return; /* drop characters down to floor */
 	}
-	wakeup(sc->sc_rd_buf);
+	cv_signal(&sc->sc_rdcv);
 	selnotify(&sc->sc_rsel, 0, 0);
+	mutex_spin_exit(&sc->sc_lock);
 }
 
-void
+static void
 kbutton(struct satmgr_softc *sc, int ch)
 {
 
@@ -594,7 +615,7 @@ kbutton(struct satmgr_softc *sc, int ch)
 	}
 }
 
-void
+static void
 sbutton(struct satmgr_softc *sc, int ch)
 {
 
@@ -603,13 +624,13 @@ sbutton(struct satmgr_softc *sc, int ch)
 		/* notified after 3 secord guard time */
 		sysmon_task_queue_sched(0, sched_sysmon_pbutton, sc);
 		break;
-	case '?':
+	case 'a':
 	case '`':
 		break;
 	}
 }
 
-void
+static void
 qbutton(struct satmgr_softc *sc, int ch)
 {
 	/* research in progress */
