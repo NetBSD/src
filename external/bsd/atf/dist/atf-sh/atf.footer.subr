@@ -535,7 +535,7 @@ _atf_run_tc()
 #
 _atf_sighup_handler()
 {
-    Held_Signals="${Held_Signals} SIGHUP"
+    Held_Signals="${Held_Signals} HUP"
 }
 
 #
@@ -546,7 +546,7 @@ _atf_sighup_handler()
 #
 _atf_sigint_handler()
 {
-    Held_Signals="${Held_Signals} SIGINT"
+    Held_Signals="${Held_Signals} INT"
 }
 
 #
@@ -557,7 +557,7 @@ _atf_sigint_handler()
 #
 _atf_sigterm_handler()
 {
-    Held_Signals="${Held_Signals} SIGTERM"
+    Held_Signals="${Held_Signals} TERM"
 }
 
 #
