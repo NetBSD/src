@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.185 2010/05/12 08:11:16 rmind Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.186 2010/06/03 10:40:17 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.185 2010/05/12 08:11:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.186 2010/06/03 10:40:17 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -1745,12 +1745,13 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 	}
 }
 
-void
+bool
 pool_drain_end(struct pool *pp, uint64_t where)
 {
+	bool reclaimed;
 
 	if (pp == NULL)
-		return;
+		return false;
 
 	KASSERT(pp->pr_refcnt > 0);
 
@@ -1759,13 +1760,15 @@ pool_drain_end(struct pool *pp, uint64_t where)
 		xc_wait(where);
 
 	/* Drain the cache (if any) and pool.. */
-	pool_reclaim(pp);
+	reclaimed = pool_reclaim(pp);
 
 	/* Finally, unlock the pool. */
 	mutex_enter(&pool_head_lock);
 	pp->pr_refcnt--;
 	cv_broadcast(&pool_busy);
 	mutex_exit(&pool_head_lock);
+
+	return reclaimed;
 }
 
 /*
