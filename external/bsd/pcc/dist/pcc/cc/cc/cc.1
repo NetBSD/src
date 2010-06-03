@@ -1,5 +1,5 @@
-.\"	$Id: cc.1,v 1.2 2010/01/08 16:31:51 joerg Exp $
-.\"	$NetBSD: cc.1,v 1.2 2010/01/08 16:31:51 joerg Exp $
+.\"	Id: cc.1,v 1.16 2010/04/05 14:24:06 reed Exp 	
+.\"	$NetBSD: cc.1,v 1.3 2010/06/03 19:07:59 plunky Exp $
 .\"	$OpenBSD$
 .\"
 .\" Copyright (c) 2007 Jeremy C. Reed <reed@reedmedia.net>
@@ -191,11 +191,11 @@ to generate dependencies for
 Target-dependent option.
 .Bl -tag -width PowerPC
 .It ARM
--mlittle-endian -mbig-endian -mfpe=fpa -mfpe=vpf -msoft-float -march=armv1 -march=armv2 -march=armv2a -march=armv3 -march=armv4 -march=armv4t -march=armv4tej -march=armv5 -march=armv6 -march=armv6t2 -march=armv6kz -march=armv6k -march=armv7
+\-mlittle-endian \-mbig-endian \-mfpe=fpa \-mfpe=vpf \-msoft-float \-march=armv1 \-march=armv2 \-march=armv2a \-march=armv3 \-march=armv4 \-march=armv4t \-march=armv4tej \-march=armv5 \-march=armv6 \-march=armv6t2 \-march=armv6kz \-march=armv6k \-march=armv7
 .It HPPA
 .It i386
 .It MIPS
--mlittle-endian -mbig-endian -mhard-float -msoft-float
+\-mlittle-endian \-mbig-endian \-mhard-float \-msoft-float
 .It PDP-10
 .It PowerPC
 .It Sparc64
@@ -234,7 +234,7 @@ Defines
 preprocessor directive for
 .Xr cpp 1 .
 Uses
-.Sy -lpthread
+.Sy \-lpthread
 for the
 .Xr ld 1
 linker.
@@ -307,7 +307,7 @@ option.
 .It __PCC_MINOR__
 Set to the minor version.
 .It __PCC_MINORMINOR__
-Set to the minor-minor version -- the number after the minor version.
+Set to the minor-minor version \(em the number after the minor version.
 .It _PTHREADS
 Defined when
 .Fl pthread
