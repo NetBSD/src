@@ -1,4 +1,5 @@
-/*      $Id: ssp.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
+/*      Id: ssp.c,v 1.8 2009/01/23 20:31:09 gmcgarry Exp 	*/	
+/*      $NetBSD: ssp.c,v 1.1.1.3 2010/06/03 18:58:14 plunky Exp $	*/
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *

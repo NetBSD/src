@@ -1,4 +1,5 @@
-#	$Id: Makefile.in,v 1.1.1.1 2008/08/24 05:33:01 gmcgarry Exp $
+#	Id: Makefile.in,v 1.3 2008/01/06 17:18:55 ragge Exp 	
+#	$NetBSD: Makefile.in,v 1.1.1.2 2010/06/03 18:57:33 plunky Exp $
 #
 # Makefile.in for top-level of pcc.
 #

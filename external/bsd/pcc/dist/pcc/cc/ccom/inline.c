@@ -1,4 +1,5 @@
-/*	$Id: inline.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: inline.c,v 1.33 2010/04/30 11:21:22 ragge Exp 	*/	
+/*	$NetBSD: inline.c,v 1.1.1.3 2010/06/03 18:57:40 plunky Exp $	*/
 /*
  * Copyright (c) 2003, 2008 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -78,6 +79,8 @@ tcnt(NODE *p, void *arg)
 	if (nlabs > 1 && (p->n_op == REG || p->n_op == OREG) &&
 	    regno(p) == FPREG)
 		SLIST_FIRST(&ipole)->flags &= ~CANINL; /* no stack refs */
+	if (p->n_op == NAME || p->n_op == ICON)
+		p->n_sp = NULL; /* let symtabs be freed for inline funcs */
 	if (nflag)
 		printf("locking node %p\n", p);
 }

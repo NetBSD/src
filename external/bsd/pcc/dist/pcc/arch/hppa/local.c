@@ -34,7 +34,10 @@
 
 /*	this file contains code which is dependent on the target machine */
 
+#define	IALLOC(sz)	(isinlining ? permalloc(sz) : tmpalloc(sz))
+
 struct symtab *makememcpy(void);
+char *section2string(char *, int);
 
 /* clocal() is called to do local transformations on
  * an expression tree preparitory to its being
@@ -185,7 +188,7 @@ clocal(NODE *p)
 			l->n_lval = (unsigned)l->n_lval;
 			goto delp;
 		}
-		if (l->n_type < INT || l->n_type == LONGLONG || 
+		if (l->n_type < INT || l->n_type == LONGLONG ||
 		    l->n_type == ULONGLONG) {
 			/* float etc? */
 			p->n_left = block(SCONV, l, NIL,
@@ -212,7 +215,7 @@ clocal(NODE *p)
 		nfree(p);
 		p = l;
 		break;
-		
+
 	case SCONV:
 		l = p->n_left;
 
@@ -369,7 +372,7 @@ clocal(NODE *p)
 		p->n_op = ASSIGN;
 		p->n_right = p->n_left;
 		p->n_left = block(REG, NIL, NIL, p->n_type, p->n_df, p->n_sue);
-		p->n_left->n_rval = p->n_left->n_type == BOOL ? 
+		p->n_left->n_rval = p->n_left->n_type == BOOL ?
 		    RETREG(CHAR) : RETREG(p->n_type);
 		if (p->n_right->n_op != FLD)
 			break;
@@ -555,17 +558,17 @@ myp2tree(NODE *p)
 	struct symtab *sp;
 	int o = p->n_op;
 
-	if (o != FCON) 
+	if (o != FCON)
 		return;
 
 	/* Write float constants to memory */
 	/* Should be volontary per architecture */
- 
+
 #if 0
 	setloc1(RDATA);
 	defalign(p->n_type == FLOAT ? ALFLOAT : p->n_type == DOUBLE ?
 	    ALDOUBLE : ALLDOUBLE );
-	deflab1(i = getlab()); 
+	deflab1(i = getlab());
 #endif
 	sp = inlalloc(sizeof(struct symtab));
 	sp->sclass = STATIC;
@@ -580,7 +583,7 @@ myp2tree(NODE *p)
 	ninval(0, btdims[p->n_type].suesize, p);
 
 	p->n_op = NAME;
-	p->n_lval = 0;	
+	p->n_lval = 0;
 	p->n_sp = sp;
 
 }
@@ -874,7 +877,7 @@ ctype(TWORD type)
 }
 
 void
-calldec(NODE *f, NODE *a) 
+calldec(NODE *f, NODE *a)
 {
 	struct symtab *q;
 	if (f->n_op == UMUL && f->n_left->n_op == PLUS &&
@@ -912,7 +915,28 @@ defzero(struct symtab *sp)
 		printf(LABFMT ",0%o\n", sp->soffset, off);
 }
 
+char *
+section2string(char *name, int len)
+{
+	char *s;
+	int n;
+
+	if (strncmp(name, "link_set", 8) == 0) {
+		const char *postfix = ",\"aw\",@progbits";
+		n = len + strlen(postfix) + 1;
+		s = IALLOC(n);
+		strlcpy(s, name, n);
+		strlcat(s, postfix, n);
+		return s;
+	}
+
+	return newstring(name, len);
+}
+
 char *nextsect;
+char *alias;
+int constructor;
+int destructor;
 
 #define	SSECTION	010000
 
@@ -922,10 +946,25 @@ char *nextsect;
 int
 mypragma(char **ary)
 {
-	if (strcmp(ary[1], "section") || ary[2] == NULL)
-		return 0;
-	nextsect = newstring(ary[2], strlen(ary[2]));
-	return 1;
+	if (strcmp(ary[1], "constructor") == 0 || strcmp(ary[1], "init") == 0) {
+		constructor = 1;
+		return 1;
+	}
+	if (strcmp(ary[1], "destructor") == 0 || strcmp(ary[1], "fini") == 0) {
+		destructor = 1;
+		return 1;
+	}
+	if (strcmp(ary[1], "section") == 0 && ary[2] != NULL) {
+		nextsect = section2string(ary[2], strlen(ary[2]));
+		return 1;
+	}
+	if (strcmp(ary[1], "alias") == 0 && ary[2] != NULL) {
+		alias = tmpstrdup(ary[2]);
+		return 1;
+	}
+	if (strcmp(ary[1], "ident") == 0)
+		return 1; /* Just ignore */
+	return 0;
 }
 
 /*
@@ -934,6 +973,17 @@ mypragma(char **ary)
 void
 fixdef(struct symtab *sp)
 {
+	if (alias != NULL && (sp->sclass != PARAM)) {
+		printf("\t.globl %s\n%s = %s\n", exname(sp->soname),
+		    exname(sp->soname), exname(alias));
+		alias = NULL;
+	}
+	if ((constructor || destructor) && (sp->sclass != PARAM)) {
+		printf("\t.section .%ctors,\"aw\",@progbits\n"
+		    "\t.p2align 2\n\t.long %s\n\t.previous\n",
+		    constructor ? 'c' : 'd', exname(sp->sname));
+		constructor = destructor = 0;
+	}
 }
 
 void

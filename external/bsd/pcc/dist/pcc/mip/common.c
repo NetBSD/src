@@ -1,4 +1,5 @@
-/*	$Id: common.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
+/*	Id: common.c,v 1.92 2010/03/27 23:46:12 mickey Exp 	*/	
+/*	$NetBSD: common.c,v 1.1.1.3 2010/06/03 18:57:53 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -70,7 +71,7 @@
 # endif
 
 int nerrors = 0;  /* number of errors */
-char *ftitle;
+extern char *ftitle;
 int lineno;
 
 int warniserr = 0;

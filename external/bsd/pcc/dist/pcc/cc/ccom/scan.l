@@ -1,5 +1,6 @@
 %{
-/*	$Id: scan.l,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: scan.l,v 1.91 2010/05/21 19:37:32 ragge Exp 	*/	
+/*	$NetBSD: scan.l,v 1.1.1.3 2010/06/03 18:57:43 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -106,7 +107,7 @@ extern void yyset_lineno (int);
 "extern"		{ 	return resw(EXTERN, C_CLASS); }
 "float"			{ 	return resw(FLOAT, C_TYPE); }
 "for"			{ return(C_FOR); }
-"goto"			{ return(C_GOTO); }
+"goto"			{ notype=1; return(C_GOTO); }
 "if"			{ return(C_IF); }
 "_Imaginary"		{ 	return resw(IMAG, C_TYPE); }
 "inline"		{ return(C_FUNSPEC); }
@@ -370,7 +371,7 @@ esccon(char **sptr)
 	case '\"': val = '\"'; break;
 	case 'x': val = strtoul(wr, &wr, 16); break;
 	/* ISO/IEC 9099:1999 (E) 6.4.3 */
-	case 'U'|0x80:
+	case 'U'|(char)0x80:
 		esccon_warn = 0;
 		/* FALLTHROUGH */
 	case 'U':

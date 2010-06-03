@@ -1,4 +1,5 @@
-/*	$Id: r_erfc.c,v 1.1.1.1 2008/08/24 05:34:47 gmcgarry Exp $	*/
+/*	Id: r_erfc.c,v 1.2 2008/02/26 19:54:41 ragge Exp 	*/	
+/*	$NetBSD: r_erfc.c,v 1.1.1.2 2010/06/03 18:58:09 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

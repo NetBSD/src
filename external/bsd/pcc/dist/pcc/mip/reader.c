@@ -1,4 +1,5 @@
-/*	$Id: reader.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
+/*	Id: reader.c,v 1.260 2010/05/21 16:10:03 ragge Exp 	*/	
+/*	$NetBSD: reader.c,v 1.1.1.3 2010/06/03 18:57:57 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -74,8 +75,7 @@
 /*	some storage declarations */
 int nrecur;
 int lflag;
-int x2debug;
-int udebug = 0;
+int x2debug, udebug, odebug;
 int thisline;
 int fregs;
 int p2autooff, p2maxautooff;
@@ -320,6 +320,7 @@ deluseless(NODE *p)
 void
 pass2_compile(struct interpass *ip)
 {
+	void deljumps(struct p2env *);
 	struct p2env *p2e = &p2env;
 	int *addrp;
 	MARK mark;
@@ -380,15 +381,6 @@ pass2_compile(struct interpass *ip)
 	}
 #endif
 
-#if 0
-	DLIST_FOREACH(ip, &p2e->ipole, qelem) {
-		if (ip->type != IP_NODE)
-			continue;
-		if (xtemps == 0)
-			walkf(ip->ip_node, deltemp, 0);
-	}
-#endif
-
 	DLIST_INIT(&prepole, qelem);
 	DLIST_FOREACH(ip, &p2e->ipole, qelem) {
 		if (ip->type != IP_NODE)
@@ -409,6 +401,9 @@ pass2_compile(struct interpass *ip)
 
 	optimize(p2e);
 	ngenregs(p2e);
+
+	if (xssaflag && xtemps && xdeljumps)
+		deljumps(p2e);
 
 	DLIST_FOREACH(ip, &p2e->ipole, qelem)
 		emit(ip);
@@ -536,10 +531,7 @@ prcook(int cookie)
 	}
 	return buf;
 }
-
 #endif
-
-int odebug = 0;
 
 int
 geninsn(NODE *p, int cookie)
@@ -571,7 +563,7 @@ again:	switch (o = p->n_op) {
 		p1 = p->n_left;
 		p2 = p->n_right;
 		if (p2->n_op == ICON && p2->n_lval == 0 &&
-		    optype(p1->n_op) == BITYPE) {
+		    (dope[p1->n_op] & (FLOFLG|DIVFLG|SIMPFLG|SHFFLG))) {
 #ifdef mach_pdp11 /* XXX all targets? */
 			if ((rv = geninsn(p1, FORCC|QUIET)) != FFAIL)
 				break;
@@ -742,7 +734,7 @@ rewrite(NODE *p, int dorewrite, int cookie)
 	p->n_lval = 0;
 	p->n_name = "";
 
-	if (o == ASSIGN) {
+	if (o == ASSIGN || o == STASG) {
 		/* special rewrite care */
 		int reg = DECRA(p->n_reg, 0);
 #define	TL(x) (TBLIDX(x->n_su) || x->n_op == REG)
@@ -1508,7 +1500,7 @@ again:
 	case 'r': /* general reg */
 		/* set register class */
 		p->n_label = gclass(p->n_left->n_type);
-		if (p->n_left->n_op == REG || p->n_left->n_op == TEMP)
+		if (p->n_left->n_op == REG)
 			break;
 		q = p->n_left;
 		r = (cw & XASMINOUT ? tcopy(q) : q);

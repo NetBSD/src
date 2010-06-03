@@ -1,4 +1,5 @@
-/*	$Id: optim2.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
+/*	Id: optim2.c,v 1.78 2010/05/24 05:11:07 ragge Exp 	*/	
+/*	$NetBSD: optim2.c,v 1.1.1.3 2010/06/03 18:57:56 plunky Exp $	*/
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -57,21 +58,23 @@ void printip(struct interpass *pole);
 static struct varinfo defsites;
 struct interpass *storesave;
 
-void bblocks_build(struct p2env *, struct labelinfo *, struct bblockinfo *);
-void cfg_build(struct p2env *, struct labelinfo *labinfo);
+void bblocks_build(struct p2env *);
+void cfg_build(struct p2env *);
 void cfg_dfs(struct basicblock *bb, unsigned int parent, 
 	     struct bblockinfo *bbinfo);
-void dominators(struct p2env *, struct bblockinfo *bbinfo);
+void dominators(struct p2env *);
 struct basicblock *
 ancestorwithlowestsemi(struct basicblock *bblock, struct bblockinfo *bbinfo);
 void link(struct basicblock *parent, struct basicblock *child);
-void computeDF(struct basicblock *bblock, struct bblockinfo *bbinfo);
-void printDF(struct p2env *p2e, struct bblockinfo *bbinfo);
+void computeDF(struct p2env *, struct basicblock *bblock);
+void printDF(struct p2env *p2e);
 void findTemps(struct interpass *ip);
-void placePhiFunctions(struct p2env *, struct bblockinfo *bbinfo);
-void renamevar(struct p2env *p2e,struct basicblock *bblock, struct bblockinfo *bbinfo);
-void removephi(struct p2env *p2e, struct labelinfo *,struct bblockinfo *bbinfo);
+void placePhiFunctions(struct p2env *);
+void renamevar(struct p2env *p2e,struct basicblock *bblock);
+void removephi(struct p2env *p2e);
 void remunreach(struct p2env *);
+static void liveanal(struct p2env *p2e);
+static void printip2(struct interpass *);
 
 /* create "proper" basic blocks, add labels where needed (so bblocks have labels) */
 /* run before bb generate */
@@ -94,15 +97,13 @@ void BBLiveDead(struct basicblock* bblock, int what, unsigned int variable) ;
 void LiveDead(struct p2env* p2e, int what, unsigned int variable) ;
 
 #ifdef PCC_DEBUG
-void printflowdiagram(struct p2env *,struct labelinfo *labinfo,struct bblockinfo *bbinfo,char *);
+void printflowdiagram(struct p2env *, char *);
 #endif
 
 void
 optimize(struct p2env *p2e)
 {
 	struct interpass *ipole = &p2e->ipole;
-	struct labelinfo labinfo;
-	struct bblockinfo bbinfo;
 
 	if (b2debug) {
 		printf("initial links\n");
@@ -125,58 +126,58 @@ optimize(struct p2env *p2e)
 	}
 #endif
 	if (xssaflag || xtemps) {
-		DLIST_INIT(&p2e->bblocks, bbelem);
-		bblocks_build(p2e, &labinfo, &bbinfo);
+		bblocks_build(p2e);
 		BDEBUG(("Calling cfg_build\n"));
-		cfg_build(p2e, &labinfo);
+		cfg_build(p2e);
 	
 #ifdef PCC_DEBUG
-		printflowdiagram(p2e, &labinfo, &bbinfo,"first");
+		printflowdiagram(p2e, "first");
 #endif
 	}
 	if (xssaflag) {
+		BDEBUG(("Calling liveanal\n"));
+		liveanal(p2e);
 		BDEBUG(("Calling dominators\n"));
-		dominators(p2e, &bbinfo);
+		dominators(p2e);
 		BDEBUG(("Calling computeDF\n"));
-		computeDF(DLIST_NEXT(&p2e->bblocks, bbelem), &bbinfo);
+		computeDF(p2e, DLIST_NEXT(&p2e->bblocks, bbelem));
 
 		if (b2debug) {
-			printDF(p2e,&bbinfo);
+			printDF(p2e);
 		}
 
 		BDEBUG(("Calling placePhiFunctions\n"));
 
-		placePhiFunctions(p2e, &bbinfo);
+		placePhiFunctions(p2e);
 
 		BDEBUG(("Calling renamevar\n"));
 
-		renamevar(p2e,DLIST_NEXT(&p2e->bblocks, bbelem), &bbinfo);
+		renamevar(p2e,DLIST_NEXT(&p2e->bblocks, bbelem));
 
 		BDEBUG(("Calling removephi\n"));
 
 #ifdef PCC_DEBUG
-		printflowdiagram(p2e, &labinfo, &bbinfo,"ssa");
+		printflowdiagram(p2e, "ssa");
 #endif
 
-		removephi(p2e,&labinfo,&bbinfo);
+		removephi(p2e);
 
 		BDEBUG(("Calling remunreach\n"));
 /*		remunreach(p2e); */
 		
 		/*
-		 Recalculate basic blocks and cfg that was destroyed
-		 by removephi
+		 * Recalculate basic blocks and cfg that was destroyed
+		 * by removephi
 		 */
 		/* first, clean up all what deljumps should have done, and more */
 
-		/*TODO: add the basic blocks done by the ssa code by hand. 
-		 * The trace scheduler should not change the order in which blocks
-		 * are executed or what data is calculated. Thus, the BBlock order
-		 * should remain correct.
+		/* TODO: add the basic blocks done by the ssa code by hand. 
+		 * The trace scheduler should not change the order in
+		 * which blocks are executed or what data is calculated.
+		 * Thus, the BBlock order should remain correct.
 		 */
 
 #ifdef ENABLE_NEW
-		DLIST_INIT(&p2e->bblocks, bbelem);
 		bblocks_build(p2e, &labinfo, &bbinfo);
 		BDEBUG(("Calling cfg_build\n"));
 		cfg_build(p2e, &labinfo);
@@ -197,13 +198,12 @@ optimize(struct p2env *p2e)
 		if (xdeljumps)
 			deljumps(p2e); /* Delete redundant jumps and dead code */
 
-		DLIST_INIT(&p2e->bblocks, bbelem);
-		bblocks_build(p2e, &labinfo, &bbinfo);
+		bblocks_build(p2e);
 		BDEBUG(("Calling cfg_build\n"));
-		cfg_build(p2e, &labinfo);
+		cfg_build(p2e);
 
 #ifdef PCC_DEBUG
-		printflowdiagram(p2e, &labinfo, &bbinfo,"no_phi");
+		printflowdiagram(p2e, "no_phi");
 
 		if (b2debug) {
 			printf("new tree\n");
@@ -227,227 +227,425 @@ optimize(struct p2env *p2e)
 /*
  * Delete unused labels, excess of labels, gotos to gotos.
  * This routine can be made much more efficient.
+ *
+ * Layout of the statement list here (_must_ look this way!):
+ *	PROLOG
+ *	LABEL	- states beginning of function argument moves
+ *	...code to save/move arguments
+ *	LABEL	- states beginning of execution code
+ *	...code + labels in function in function
+ *	EPILOG
+ *
+ * This version of deljumps is based on the c2 implementation
+ * that were included in 2BSD.
  */
+#define	LABEL 1
+#define	JBR	2
+#define	CBR	3
+#define	STMT	4
+#define	EROU	5
+struct dlnod {
+	int op;
+	struct interpass *dlip;
+	struct dlnod *forw;
+	struct dlnod *back;
+	struct dlnod *ref;
+	int labno;
+	int refc;
+};
+
+#ifdef DLJDEBUG
+static void
+dumplink(struct dlnod *dl)
+{
+	printf("dumplink %p\n", dl);
+	for (; dl; dl = dl->forw) {
+		if (dl->op == STMT) {
+			printf("STMT(%p)\n", dl);
+			fwalk(dl->dlip->ip_node, e2print, 0);
+		} else if (dl->op == EROU) {
+			printf("EROU(%p)\n", dl);
+		} else {
+			static char *str[] = { 0, "LABEL", "JBR", "CBR" };
+			printf("%s(%p) %d refc %d ref %p\n", str[dl->op], 
+			    dl, dl->labno, dl->refc, dl->ref);
+		}
+	}
+	printf("end dumplink\n");
+}
+#endif
+
+/*
+ * Create the linked list that we can work on.
+ */
+static void
+listsetup(struct interpass *ipole, struct dlnod *dl)
+{
+	struct interpass *ip = DLIST_NEXT(ipole, qelem);
+	struct interpass *nip;
+	struct dlnod *p, *lastp;
+	NODE *q;
+
+	lastp = dl;
+	while (ip->type != IP_DEFLAB)
+		ip = DLIST_NEXT(ip,qelem);
+	ip = DLIST_NEXT(ip,qelem);
+	while (ip->type != IP_DEFLAB)
+		ip = DLIST_NEXT(ip,qelem);
+	/* Now ip is at the beginning */
+	for (;;) {
+		ip = DLIST_NEXT(ip,qelem);
+		if (ip == ipole)
+			break;
+		p = tmpalloc(sizeof(struct dlnod));
+		p->labno = 0;
+		p->dlip = ip;
+		switch (ip->type) {
+		case IP_DEFLAB:
+			p->op = LABEL;
+			p->labno = ip->ip_lbl;
+			break;
+
+		case IP_NODE:
+			q = ip->ip_node;
+			switch (q->n_op) {
+			case GOTO:
+				p->op = JBR;
+				p->labno = q->n_left->n_lval;
+				break;
+			case CBRANCH:
+				p->op = CBR;
+				p->labno = q->n_right->n_lval;
+				break;
+			case ASSIGN:
+				/* remove ASSIGN to self for regs */
+				if (q->n_left->n_op == REG && 
+				    q->n_right->n_op == REG &&
+				    regno(q->n_left) == regno(q->n_right)) {
+					nip = DLIST_PREV(ip, qelem);
+					tfree(q);
+					DLIST_REMOVE(ip, qelem);
+					ip = nip;
+					continue;
+				}
+				/* FALLTHROUGH */
+			default:
+				p->op = STMT;
+				break;
+			}
+			break;
+
+		case IP_ASM:
+			p->op = STMT;
+			break;
+
+		case IP_EPILOG:
+			p->op = EROU;
+			break;
+
+		default:
+			comperr("listsetup: bad ip node %d", ip->type);
+		}
+		p->forw = 0;
+		p->back = lastp;
+		lastp->forw = p;
+		lastp = p;
+		p->ref = 0;
+	}
+}
+
+static struct dlnod *
+nonlab(struct dlnod *p)
+{
+	while (p && p->op==LABEL)
+		p = p->forw;
+	return(p);
+}
+
+static void
+iprem(struct dlnod *p)
+{
+	if (p->dlip->type == IP_NODE)
+		tfree(p->dlip->ip_node);
+	DLIST_REMOVE(p->dlip, qelem);
+}
+
+static void
+decref(struct dlnod *p)
+{
+	if (--p->refc <= 0) {
+		iprem(p);
+		p->back->forw = p->forw;
+		p->forw->back = p->back;
+	}
+}
+
+static void
+setlab(struct dlnod *p, int labno)
+{
+	p->labno = labno;
+	if (p->op == JBR)
+		p->dlip->ip_node->n_left->n_lval = labno;
+	else if (p->op == CBR) {
+		p->dlip->ip_node->n_right->n_lval = labno;
+		p->dlip->ip_node->n_left->n_label = labno;
+	} else
+		comperr("setlab bad op %d", p->op);
+}
+
+/*
+ * Label reference counting and removal of unused labels.
+ */
+#define	LABHS 127
+static void
+refcount(struct p2env *p2e, struct dlnod *dl)
+{
+	struct dlnod *p, *lp;
+	struct dlnod *labhash[LABHS];
+	struct dlnod **hp, *tp;
+
+	/* Clear label hash */
+	for (hp = labhash; hp < &labhash[LABHS];)
+		*hp++ = 0;
+	/* Enter labels into hash.  Later overwrites earlier */
+	for (p = dl->forw; p!=0; p = p->forw)
+		if (p->op==LABEL) {
+			labhash[p->labno % LABHS] = p;
+			p->refc = 0;
+		}
+
+	/* search for jumps to labels and fill in reference */
+	for (p = dl->forw; p!=0; p = p->forw) {
+		if (p->op==JBR || p->op==CBR) {
+			p->ref = 0;
+			lp = labhash[p->labno % LABHS];
+			if (lp==0 || p->labno!=lp->labno)
+			    for (lp = dl->forw; lp!=0; lp = lp->forw) {
+				if (lp->op==LABEL && p->labno==lp->labno)
+					break;
+			    }
+			if (lp) {
+				tp = nonlab(lp)->back;
+				if (tp!=lp) {
+					setlab(p, tp->labno);
+					lp = tp;
+				}
+				p->ref = lp;
+				lp->refc++;
+			}
+		}
+	}
+	for (p = dl->forw; p!=0; p = p->forw)
+		if (p->op==LABEL && p->refc==0 && (lp = nonlab(p))->op)
+			decref(p);
+}
+
+static int nchange;
+
+static struct dlnod *
+codemove(struct dlnod *p)
+{
+	struct dlnod *p1, *p2, *p3;
+#ifdef notyet
+	struct dlnod *t, *tl;
+	int n;
+#endif
+
+	p1 = p;
+	if (p1->op!=JBR || (p2 = p1->ref)==0)
+		return(p1);
+	while (p2->op == LABEL)
+		if ((p2 = p2->back) == 0)
+			return(p1);
+	if (p2->op!=JBR)
+		goto ivloop;
+	if (p1==p2)
+		return(p1);
+	p2 = p2->forw;
+	p3 = p1->ref;
+	while (p3) {
+		if (p3->op==JBR) {
+			if (p1==p3 || p1->forw==p3 || p1->back==p3)
+				return(p1);
+			nchange++;
+			p1->back->forw = p2;
+			p1->dlip->qelem.q_back->qelem.q_forw = p2->dlip;
+
+			p1->forw->back = p3;
+			p1->dlip->qelem.q_forw->qelem.q_back = p3->dlip;
+
+
+			p2->back->forw = p3->forw;
+			p2->dlip->qelem.q_back->qelem.q_forw = p3->forw->dlip;
+
+			p3->forw->back = p2->back;
+			p3->dlip->qelem.q_forw->qelem.q_back = p2->back->dlip;
+
+			p2->back = p1->back;
+			p2->dlip->qelem.q_back = p1->dlip->qelem.q_back;
+
+			p3->forw = p1->forw;
+			p3->dlip->qelem.q_forw = p1->forw->dlip;
+
+			decref(p1->ref);
+			if (p1->dlip->type == IP_NODE)
+				tfree(p1->dlip->ip_node);
+
+			return(p2);
+		} else
+			p3 = p3->forw;
+	}
+	return(p1);
+
+ivloop:
+	if (p1->forw->op!=LABEL)
+		return(p1);
+	return(p1);
+
+#ifdef notyet
+	p3 = p2 = p2->forw;
+	n = 16;
+	do {
+		if ((p3 = p3->forw) == 0 || p3==p1 || --n==0)
+			return(p1);
+	} while (p3->op!=CBR || p3->labno!=p1->forw->labno);
+	do 
+		if ((p1 = p1->back) == 0)
+			return(p);
+	while (p1!=p3);
+	p1 = p;
+	tl = insertl(p1);
+	p3->subop = revbr[p3->subop];
+	decref(p3->ref);
+		p2->back->forw = p1;
+	p3->forw->back = p1;
+	p1->back->forw = p2;
+	p1->forw->back = p3;
+	t = p1->back;
+	p1->back = p2->back;
+	p2->back = t;
+	t = p1->forw;
+	p1->forw = p3->forw;
+	p3->forw = t;
+	p2 = insertl(p1->forw);
+	p3->labno = p2->labno;
+	p3->ref = p2;
+	decref(tl);
+	if (tl->refc<=0)
+		nrlab--;
+	nchange++;
+	return(p3);
+#endif
+}
+
+static void
+iterate(struct p2env *p2e, struct dlnod *dl)
+{
+	struct dlnod *p, *rp, *p1;
+	extern int negrel[];
+	extern size_t negrelsize;
+	int i;
+
+	nchange = 0;
+	for (p = dl->forw; p!=0; p = p->forw) {
+		if ((p->op==JBR||p->op==CBR) && p->ref) {
+			/* Resolves:
+			 * jbr L7
+			 * ...
+			 * L7: jbr L8
+			 */
+			rp = nonlab(p->ref);
+			if (rp->op==JBR && rp->labno && p->labno!=rp->labno) {
+				setlab(p, rp->labno);
+				decref(p->ref);
+				rp->ref->refc++;
+				p->ref = rp->ref;
+				nchange++;
+			}
+		}
+		if (p->op==CBR && (p1 = p->forw)->op==JBR) {
+			/* Resolves:
+			 * cbr L7
+			 * jbr L8
+			 * L7:
+			 */
+			rp = p->ref;
+			do
+				rp = rp->back;
+			while (rp->op==LABEL);
+			if (rp==p1) {
+				decref(p->ref);
+				p->ref = p1->ref;
+				setlab(p, p1->labno);
+
+				iprem(p1);
+
+				p1->forw->back = p;
+				p->forw = p1->forw;
+
+				i = p->dlip->ip_node->n_left->n_op;
+				if (i < EQ || i - EQ >= (int)negrelsize)
+					comperr("deljumps: unexpected op");
+				p->dlip->ip_node->n_left->n_op = negrel[i - EQ];
+				nchange++;
+			}
+		}
+		if (p->op == JBR) {
+			/* Removes dead code */
+			while (p->forw && p->forw->op!=LABEL &&
+			    p->forw->op!=EROU) {
+				nchange++;
+				if (p->forw->ref)
+					decref(p->forw->ref);
+
+				iprem(p->forw);
+
+				p->forw = p->forw->forw;
+				p->forw->back = p;
+			}
+			rp = p->forw;
+			while (rp && rp->op==LABEL) {
+				if (p->ref == rp) {
+					p->back->forw = p->forw;
+					p->forw->back = p->back;
+					iprem(p);
+					p = p->back;
+					decref(rp);
+					nchange++;
+					break;
+				}
+				rp = rp->forw;
+			}
+		}
+		if (p->op == JBR) {
+			/* xjump(p); * needs tree rewrite; not yet */
+			p = codemove(p);
+		}
+	}
+}
+
 void
 deljumps(struct p2env *p2e)
 {
 	struct interpass *ipole = &p2e->ipole;
-	struct interpass *ip, *n, *ip2, *start;
-	int gotone,low, high;
-	int *lblary, *jmpary, sz, o, i, j, lab1, lab2;
-	int del;
-	extern int negrel[];
-	extern size_t negrelsize;
+	struct dlnod dln;
+	MARK mark;
 
-	low = p2e->ipp->ip_lblnum;
-	high = p2e->epp->ip_lblnum;
+	markset(&mark);
 
+	memset(&dln, 0, sizeof(dln));
+	listsetup(ipole, &dln);
+	do {
+		refcount(p2e, &dln);
+		do {
+			iterate(p2e, &dln);
+		} while (nchange);
 #ifdef notyet
-	mark = tmpmark(); /* temporary used memory */
+		comjump();
 #endif
+	} while (nchange);
 
-	sz = (high-low) * sizeof(int);
-	lblary = tmpalloc(sz);
-	jmpary = tmpalloc(sz);
-
-	/*
-	 * XXX: Find the first two labels. They may not be deleted,
-	 * because the register allocator expects them to be there.
-	 * These will not be coalesced with any other label.
-	 */
-	lab1 = lab2 = -1;
-	start = NULL;
-	DLIST_FOREACH(ip, ipole, qelem) {
-		if (ip->type != IP_DEFLAB)
-			continue;
-		if (lab1 < 0)
-			lab1 = ip->ip_lbl;
-		else if (lab2 < 0) {
-			lab2 = ip->ip_lbl;
-			start = ip;
-		} else	/* lab1 >= 0 && lab2 >= 0, we're done. */
-			break;
-	}
-	if (lab1 < 0 || lab2 < 0)
-		comperr("deljumps");
-
-again:	gotone = 0;
-	memset(lblary, 0, sz);
-	lblary[lab1 - low] = lblary[lab2 - low] = 1;
-	memset(jmpary, 0, sz);
-
-	/* refcount and coalesce all labels */
-	DLIST_FOREACH(ip, ipole, qelem) {
-		if (ip->type == IP_DEFLAB && ip->ip_lbl != lab1 &&
-		    ip->ip_lbl != lab2) {
-			n = DLIST_NEXT(ip, qelem);
-
-			/*
-			 * Find unconditional jumps directly following a
-			 * label. Jumps jumping to themselves are not
-			 * taken into account.
-			 */
-			if (n->type == IP_NODE && n->ip_node->n_op == GOTO) {
-				i = (int)n->ip_node->n_left->n_lval;
-				if (i != ip->ip_lbl)
-					jmpary[ip->ip_lbl - low] = i;
-			}
-
-			while (n->type == IP_DEFLAB) {
-				if (n->ip_lbl != lab1 && n->ip_lbl != lab2 &&
-				    lblary[n->ip_lbl-low] >= 0) {
-					/*
-					 * If the label is used, mark the
-					 * label to be coalesced with as
-					 * used, too.
-					 */
-					if (lblary[n->ip_lbl - low] > 0 &&
-					    lblary[ip->ip_lbl - low] == 0)
-						lblary[ip->ip_lbl - low] = 1;
-					lblary[n->ip_lbl - low] = -ip->ip_lbl;
-				}
-				n = DLIST_NEXT(n, qelem);
-			}
-		}
-		if (ip->type != IP_NODE)
-			continue;
-		o = ip->ip_node->n_op;
-		if (o == GOTO)
-			i = (int)ip->ip_node->n_left->n_lval;
-		else if (o == CBRANCH)
-			i = (int)ip->ip_node->n_right->n_lval;
-		else
-			continue;
-
-		/*
-		 * Mark destination label i as used, if it is not already.
-		 * If i is to be merged with label j, mark j as used, too.
-		 */
-		if (lblary[i - low] == 0)
-			lblary[i-low] = 1;
-		else if ((j = lblary[i - low]) < 0 && lblary[-j - low] == 0)
-			lblary[-j - low] = 1;
-	}
-
-	/* delete coalesced/unused labels and rename gotos */
-	DLIST_FOREACH(ip, ipole, qelem) {
-		n = DLIST_NEXT(ip, qelem);
-		if (n->type == IP_DEFLAB) {
-			if (lblary[n->ip_lbl-low] <= 0) {
-				DLIST_REMOVE(n, qelem);
-				gotone = 1;
-			}
-		}
-		if (ip->type != IP_NODE)
-			continue;
-		o = ip->ip_node->n_op;
-		if (o == GOTO)
-			i = (int)ip->ip_node->n_left->n_lval;
-		else if (o == CBRANCH)
-			i = (int)ip->ip_node->n_right->n_lval;
-		else
-			continue;
-
-		/* Simplify (un-)conditional jumps to unconditional jumps. */
-		if (jmpary[i - low] > 0) {
-			gotone = 1;
-			i = jmpary[i - low];
-			if (o == GOTO)
-				ip->ip_node->n_left->n_lval = i;
-			else
-				ip->ip_node->n_right->n_lval = i;
-		}
-
-		/* Fixup for coalesced labels. */
-		if (lblary[i-low] < 0) {
-			if (o == GOTO)
-				ip->ip_node->n_left->n_lval = -lblary[i-low];
-			else
-				ip->ip_node->n_right->n_lval = -lblary[i-low];
-		}
-	}
-
-	/* Delete gotos to the next statement */
-	DLIST_FOREACH(ip, ipole, qelem) {
-		n = DLIST_NEXT(ip, qelem);
-		if (n->type != IP_NODE)
-			continue;
-		o = n->ip_node->n_op;
-		if (o == GOTO)
-			i = (int)n->ip_node->n_left->n_lval;
-#if 0 /* XXX must check for side effects in expression */
-		else if (o == CBRANCH)
-			i = (int)n->ip_node->n_right->n_lval;
-#endif
-		else
-			continue;
-
-		ip2 = n;
-		ip2 = DLIST_NEXT(ip2, qelem);
-
-		if (ip2->type != IP_DEFLAB)
-			continue;
-		if (ip2->ip_lbl == i && i != lab1 && i != lab2) {
-			tfree(n->ip_node);
-			DLIST_REMOVE(n, qelem);
-			gotone = 1;
-		}
-	}
-
-	/*
-	 * Transform cbranch cond, 1; goto 2; 1: ... into
-	 * cbranch !cond, 2; 1: ...
-	 */
-	DLIST_FOREACH(ip, ipole, qelem) {
-		n = DLIST_NEXT(ip, qelem);
-		ip2 = DLIST_NEXT(n, qelem);
-		if (ip->type != IP_NODE || ip->ip_node->n_op != CBRANCH)
-			continue;
-		if (n->type != IP_NODE || n->ip_node->n_op != GOTO)
-			continue;
-		if (ip2->type != IP_DEFLAB)
-			continue;
-		i = (int)ip->ip_node->n_right->n_lval;
-		j = (int)n->ip_node->n_left->n_lval;
-		if (j == lab1 || j == lab2)
-			continue;
-		if (i != ip2->ip_lbl || i == lab1 || i == lab2)
-			continue;
-		ip->ip_node->n_right->n_lval = j;
-		i = ip->ip_node->n_left->n_op;
-		if (i < EQ || i - EQ >= (int)negrelsize)
-			comperr("deljumps: unexpected op");
-		ip->ip_node->n_left->n_op = negrel[i - EQ];
-		tfree(n->ip_node);
-		DLIST_REMOVE(n, qelem);
-		gotone = 1;
-	}
-
-	/* Delete everything after a goto up to the next label. */
-	for (ip = start, del = 0; ip != DLIST_ENDMARK(ipole);
-	     ip = DLIST_NEXT(ip, qelem)) {
-loop:
-		if ((n = DLIST_NEXT(ip, qelem)) == DLIST_ENDMARK(ipole))
-			break;
-		if (n->type != IP_NODE) {
-			del = 0;
-			continue;
-		}
-		if (del) {
-			tfree(n->ip_node);
-			DLIST_REMOVE(n, qelem);
-			gotone = 1;
-			goto loop;
-		} else if (n->ip_node->n_op == GOTO)
-			del = 1;
-	}
-
-	if (gotone)
-		goto again;
-
-#ifdef notyet
-	tmpfree(mark);
-#endif
+	markfree(&mark);
 }
 
 void
@@ -479,8 +677,7 @@ optdump(struct interpass *ip)
  */
 
 void
-bblocks_build(struct p2env *p2e, struct labelinfo *labinfo,
-    struct bblockinfo *bbinfo)
+bblocks_build(struct p2env *p2e)
 {
 	struct interpass *ipole = &p2e->ipole;
 	struct interpass *ip;
@@ -489,7 +686,7 @@ bblocks_build(struct p2env *p2e, struct labelinfo *labinfo,
 	int count = 0;
 	int i;
 
-	BDEBUG(("bblocks_build (%p, %p)\n", labinfo, bbinfo));
+	BDEBUG(("bblocks_build (%p, %p)\n", &p2e->labinfo, &p2e->bbinfo));
 	low = p2e->ipp->ip_lblnum;
 	high = p2e->epp->ip_lblnum;
 
@@ -498,6 +695,7 @@ bblocks_build(struct p2env *p2e, struct labelinfo *labinfo,
 	 * Any statement that is target of a jump is a leader.
 	 * Any statement that immediately follows a jump is a leader.
 	 */
+	DLIST_INIT(&p2e->bblocks, bbelem);
 	DLIST_FOREACH(ip, ipole, qelem) {
 		if (bb == NULL || (ip->type == IP_EPILOG) ||
 		    (ip->type == IP_DEFLAB) || (ip->type == IP_DEFNAM)) {
@@ -534,36 +732,45 @@ bblocks_build(struct p2env *p2e, struct labelinfo *labinfo,
 		printf("Basic blocks in func: %d, low %d, high %d\n",
 		    count, low, high);
 		DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {
-			printf("bb %p: first %p last %p\n", bb,
+			printf("bb(%d) %p: first %p last %p\n", bb->bbnum, bb,
 			    bb->first, bb->last);
 		}
 	}
 
-	labinfo->low = low;
-	labinfo->size = high - low + 1;
-	labinfo->arr = tmpalloc(labinfo->size * sizeof(struct basicblock *));
-	for (i = 0; i < labinfo->size; i++) {
-		labinfo->arr[i] = NULL;
+	p2e->labinfo.low = low;
+	p2e->labinfo.size = high - low + 1;
+	p2e->labinfo.arr = tmpalloc(p2e->labinfo.size * sizeof(struct basicblock *));
+	for (i = 0; i < p2e->labinfo.size; i++) {
+		p2e->labinfo.arr[i] = NULL;
 	}
 	
-	bbinfo->size = count + 1;
-	bbinfo->arr = tmpalloc(bbinfo->size * sizeof(struct basicblock *));
-	for (i = 0; i < bbinfo->size; i++) {
-		bbinfo->arr[i] = NULL;
+	p2e->bbinfo.size = count + 1;
+	p2e->bbinfo.arr = tmpalloc(p2e->bbinfo.size * sizeof(struct basicblock *));
+	for (i = 0; i < p2e->bbinfo.size; i++) {
+		p2e->bbinfo.arr[i] = NULL;
 	}
 
 	/* Build the label table */
 	DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {
 		if (bb->first->type == IP_DEFLAB)
-			labinfo->arr[bb->first->ip_lbl - low] = bb;
+			p2e->labinfo.arr[bb->first->ip_lbl - low] = bb;
 	}
 
 	if (b2debug) {
+		DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {
+			printf("bblock %d\n", bb->bbnum);
+			for (ip = bb->first; ip != bb->last;
+			    ip = DLIST_NEXT(ip, qelem)) {
+				printip2(ip);
+			}
+			printip2(ip);
+		}
+
 		printf("Label table:\n");
-		for (i = 0; i < labinfo->size; i++)
-			if (labinfo->arr[i])
+		for (i = 0; i < p2e->labinfo.size; i++)
+			if (p2e->labinfo.arr[i])
 				printf("Label %d bblock %p\n", i+low,
-				    labinfo->arr[i]);
+				    p2e->labinfo.arr[i]);
 	}
 }
 
@@ -572,7 +779,7 @@ bblocks_build(struct p2env *p2e, struct labelinfo *labinfo,
  */
 
 void
-cfg_build(struct p2env *p2e, struct labelinfo *labinfo)
+cfg_build(struct p2env *p2e)
 {
 	/* Child and parent nodes */
 	struct cfgnode *cnode; 
@@ -592,25 +799,25 @@ cfg_build(struct p2env *p2e, struct labelinfo *labinfo)
 		if ((bb->last->type == IP_NODE) && 
 		    (bb->last->ip_node->n_op == GOTO) &&
 		    (bb->last->ip_node->n_left->n_op == ICON))  {
-			if (bb->last->ip_node->n_left->n_lval - labinfo->low > 
-			    labinfo->size) {
+			if (bb->last->ip_node->n_left->n_lval - p2e->labinfo.low > 
+			    p2e->labinfo.size) {
 				comperr("Label out of range: %d, base %d", 
 					bb->last->ip_node->n_left->n_lval, 
-					labinfo->low);
+					p2e->labinfo.low);
 			}
-			cnode->bblock = labinfo->arr[bb->last->ip_node->n_left->n_lval - labinfo->low];
+			cnode->bblock = p2e->labinfo.arr[bb->last->ip_node->n_left->n_lval - p2e->labinfo.low];
 			SLIST_INSERT_LAST(&cnode->bblock->parents, pnode, cfgelem);
 			SLIST_INSERT_LAST(&bb->children, cnode, cfgelem);
 			continue;
 		}
 		if ((bb->last->type == IP_NODE) && 
 		    (bb->last->ip_node->n_op == CBRANCH)) {
-			if (bb->last->ip_node->n_right->n_lval - labinfo->low > 
-			    labinfo->size) 
+			if (bb->last->ip_node->n_right->n_lval - p2e->labinfo.low > 
+			    p2e->labinfo.size) 
 				comperr("Label out of range: %d", 
 					bb->last->ip_node->n_left->n_lval);
 
-			cnode->bblock = labinfo->arr[bb->last->ip_node->n_right->n_lval - labinfo->low];
+			cnode->bblock = p2e->labinfo.arr[bb->last->ip_node->n_right->n_lval - p2e->labinfo.low];
 			SLIST_INSERT_LAST(&cnode->bblock->parents, pnode, cfgelem);
 			SLIST_INSERT_LAST(&bb->children, cnode, cfgelem);
 			cnode = tmpalloc(sizeof(struct cfgnode));
@@ -658,7 +865,7 @@ setalloc(int nelem)
  */
 
 void
-dominators(struct p2env *p2e, struct bblockinfo *bbinfo)
+dominators(struct p2env *p2e)
 {
 	struct cfgnode *cnode;
 	struct basicblock *bb, *y, *v;
@@ -666,13 +873,13 @@ dominators(struct p2env *p2e, struct bblockinfo *bbinfo)
 	int h, i;
 
 	DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {
-		bb->bucket = setalloc(bbinfo->size);
-		bb->df = setalloc(bbinfo->size);
-		bb->dfchildren = setalloc(bbinfo->size);
+		bb->bucket = setalloc(p2e->bbinfo.size);
+		bb->df = setalloc(p2e->bbinfo.size);
+		bb->dfchildren = setalloc(p2e->bbinfo.size);
 	}
 
 	dfsnum = 0;
-	cfg_dfs(DLIST_NEXT(&p2e->bblocks, bbelem), 0, bbinfo);
+	cfg_dfs(DLIST_NEXT(&p2e->bblocks, bbelem), 0, &p2e->bbinfo);
 
 	if (b2debug) {
 		struct basicblock *bbb;
@@ -691,9 +898,9 @@ dominators(struct p2env *p2e, struct bblockinfo *bbinfo)
 		}
 	}
 
-	for(h = bbinfo->size - 1; h > 1; h--) {
-		bb = bbinfo->arr[h];
-		p = s = bbinfo->arr[bb->dfparent];
+	for(h = p2e->bbinfo.size - 1; h > 1; h--) {
+		bb = p2e->bbinfo.arr[h];
+		p = s = p2e->bbinfo.arr[bb->dfparent];
 		SLIST_FOREACH(cnode, &bb->parents, cfgelem) {
 			if (cnode->bblock->dfnum ==0)
 				continue; /* Ignore unreachable code */
@@ -701,25 +908,25 @@ dominators(struct p2env *p2e, struct bblockinfo *bbinfo)
 			if (cnode->bblock->dfnum <= bb->dfnum) 
 				sprime = cnode->bblock;
 			else 
-				sprime = bbinfo->arr[ancestorwithlowestsemi
-					      (cnode->bblock, bbinfo)->semi];
+				sprime = p2e->bbinfo.arr[ancestorwithlowestsemi
+					      (cnode->bblock, &p2e->bbinfo)->semi];
 			if (sprime->dfnum < s->dfnum)
 				s = sprime;
 		}
 		bb->semi = s->dfnum;
 		BITSET(s->bucket, bb->dfnum);
 		link(p, bb);
-		for (i = 1; i < bbinfo->size; i++) {
+		for (i = 1; i < p2e->bbinfo.size; i++) {
 			if(TESTBIT(p->bucket, i)) {
-				v = bbinfo->arr[i];
-				y = ancestorwithlowestsemi(v, bbinfo);
+				v = p2e->bbinfo.arr[i];
+				y = ancestorwithlowestsemi(v, &p2e->bbinfo);
 				if (y->semi == v->semi) 
 					v->idom = p->dfnum;
 				else
 					v->samedom = y->dfnum;
 			}
 		}
-		memset(p->bucket, 0, (bbinfo->size + 7)/8);
+		memset(p->bucket, 0, (p2e->bbinfo.size + 7)/8);
 	}
 
 	if (b2debug) {
@@ -730,17 +937,17 @@ dominators(struct p2env *p2e, struct bblockinfo *bbinfo)
 		}
 	}
 
-	for(h = 2; h < bbinfo->size; h++) {
-		bb = bbinfo->arr[h];
+	for(h = 2; h < p2e->bbinfo.size; h++) {
+		bb = p2e->bbinfo.arr[h];
 		if (bb->samedom != 0) {
-			bb->idom = bbinfo->arr[bb->samedom]->idom;
+			bb->idom = p2e->bbinfo.arr[bb->samedom]->idom;
 		}
 	}
 	DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {
 		if (bb->idom != 0 && bb->idom != bb->dfnum) {
 			BDEBUG(("Setting child %d of %d\n",
-			    bb->dfnum, bbinfo->arr[bb->idom]->dfnum));
-			BITSET(bbinfo->arr[bb->idom]->dfchildren, bb->dfnum);
+			    bb->dfnum, p2e->bbinfo.arr[bb->idom]->dfnum));
+			BITSET(p2e->bbinfo.arr[bb->idom]->dfchildren, bb->dfnum);
 		}
 	}
 }
@@ -768,7 +975,7 @@ link(struct basicblock *parent, struct basicblock *child)
 }
 
 void
-computeDF(struct basicblock *bblock, struct bblockinfo *bbinfo)
+computeDF(struct p2env *p2e, struct basicblock *bblock)
 {
 	struct cfgnode *cnode;
 	int h, i;
@@ -777,20 +984,20 @@ computeDF(struct basicblock *bblock, struct bblockinfo *bbinfo)
 		if (cnode->bblock->idom != bblock->dfnum)
 			BITSET(bblock->df, cnode->bblock->dfnum);
 	}
-	for (h = 1; h < bbinfo->size; h++) {
+	for (h = 1; h < p2e->bbinfo.size; h++) {
 		if (!TESTBIT(bblock->dfchildren, h))
 			continue;
-		computeDF(bbinfo->arr[h], bbinfo);
-		for (i = 1; i < bbinfo->size; i++) {
-			if (TESTBIT(bbinfo->arr[h]->df, i) && 
-			    (bbinfo->arr[i] == bblock ||
-			     (bblock->dfnum != bbinfo->arr[i]->idom))) 
+		computeDF(p2e, p2e->bbinfo.arr[h]);
+		for (i = 1; i < p2e->bbinfo.size; i++) {
+			if (TESTBIT(p2e->bbinfo.arr[h]->df, i) && 
+			    (p2e->bbinfo.arr[i] == bblock ||
+			     (bblock->dfnum != p2e->bbinfo.arr[i]->idom))) 
 			    BITSET(bblock->df, i);
 		}
 	}
 }
 
-void printDF(struct p2env *p2e, struct bblockinfo *bbinfo)
+void printDF(struct p2env *p2e)
 {
 	struct basicblock *bb;
 	int i;
@@ -800,7 +1007,7 @@ void printDF(struct p2env *p2e, struct bblockinfo *bbinfo)
 	DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {
 		printf("bb %d : ", bb->dfnum);
 	
-		for (i=1; i < bbinfo->size;i++) {
+		for (i=1; i < p2e->bbinfo.size;i++) {
 			if (TESTBIT(bb->df,i)) {
 				printf("%d ",i);
 			}
@@ -865,7 +1072,7 @@ void findTemps(struct interpass *ip)
  */
 
 void
-placePhiFunctions(struct p2env *p2e, struct bblockinfo *bbinfo)
+placePhiFunctions(struct p2env *p2e)
 {
 	struct basicblock *bb;
 	struct basicblock *y;
@@ -903,7 +1110,7 @@ placePhiFunctions(struct p2env *p2e, struct bblockinfo *bbinfo)
 		/* Make sure we get the last statement in the bblock */
 		findTemps(ip);
 	}
-    
+
 	/* For each variable */
 	for (i = 0; i < defsites.size; i++) {
 		/* While W not empty */
@@ -912,14 +1119,14 @@ placePhiFunctions(struct p2env *p2e, struct bblockinfo *bbinfo)
 			n = defsites.arr[i];
 			defsites.arr[i] = n->next;
 			/* For each y in n->bb->df */
-			for (j = 0; j < bbinfo->size; j++) {
+			for (j = 0; j < p2e->bbinfo.size; j++) {
 				if (!TESTBIT(n->bb->df, j))
 					continue;
 				
-				if (TESTBIT(bbinfo->arr[j]->Aphi, i))
+				if (TESTBIT(p2e->bbinfo.arr[j]->Aphi, i))
 					continue;
 
-				y=bbinfo->arr[j];
+				y=p2e->bbinfo.arr[j];
 				ntype = n->n_type;
 				k = 0;
 				/* Amount of predecessors for y */
@@ -937,7 +1144,19 @@ placePhiFunctions(struct p2env *p2e, struct bblockinfo *bbinfo)
 			    
 				if (phifound==0) {
 					if (b2debug)
-					    printf("Phi in %d (%p) for %d\n",y->dfnum,y,i+defsites.low);
+					    printf("Phi in %d(%d) (%p) for %d\n",
+					    y->dfnum,y->bbnum,y,i+defsites.low);
+
+					/* If no live in, no phi node needed */
+					if (!TESTBIT(y->in,
+					    (i+defsites.low-p2e->ipp->ip_tmpnum+MAXREGS))) {
+					if (b2debug)
+					printf("tmp %d bb %d unused, no phi\n",
+					    i+defsites.low, y->bbnum);
+						/* No live in */
+						BITSET(p2e->bbinfo.arr[j]->Aphi, i);
+						continue;
+					}
 
 					phi = tmpcalloc(sizeof(struct phiinfo));
 			    
@@ -952,16 +1171,14 @@ placePhiFunctions(struct p2env *p2e, struct bblockinfo *bbinfo)
 					printf("Phi already in %d for %d\n",y->dfnum,i+defsites.low);
 				}
 
-				BITSET(bbinfo->arr[j]->Aphi, i);
-				if (!TESTBIT(bbinfo->arr[j]->Aorig, i)) {
+				BITSET(p2e->bbinfo.arr[j]->Aphi, i);
+				if (!TESTBIT(p2e->bbinfo.arr[j]->Aorig, i)) {
 					pv = tmpalloc(sizeof(struct pvarinfo));
 					pv->bb = y;
 				        pv->n_type=ntype;
 					pv->next = defsites.arr[i];
 					defsites.arr[i] = pv;
 				}
-					
-
 			}
 		}
 	}
@@ -1014,7 +1231,7 @@ renamevarhelper(struct p2env *p2e,NODE *t,void *poplistarg)
 
 
 void
-renamevar(struct p2env *p2e,struct basicblock *bb, struct bblockinfo *bbinfo)
+renamevar(struct p2env *p2e,struct basicblock *bb)
 {
     	struct interpass *ip;
 	int h,j;
@@ -1024,15 +1241,15 @@ renamevar(struct p2env *p2e,struct basicblock *bb, struct bblockinfo *bbinfo)
 	struct cfgnode *cfgn2;
 	int tmpregno,newtmpregno;
 	struct phiinfo *phi;
-	
+
 	SLIST_INIT(&poplist);
-	
+
 	SLIST_FOREACH(phi,&bb->phi,phielem) {
 		tmpregno=phi->tmpregno-defsites.low;
 		
 		newtmpregno=p2e->epp->ip_tmpnum++;
 		phi->newtmpregno=newtmpregno;
-		
+
 		stacke=tmpcalloc(sizeof (struct varstack));
 		stacke->tmpregno=newtmpregno;
 		SLIST_INSERT_FIRST(&defsites.stack[tmpregno],stacke,varstackelem);
@@ -1041,24 +1258,24 @@ renamevar(struct p2env *p2e,struct basicblock *bb, struct bblockinfo *bbinfo)
 		stacke->tmpregno=tmpregno;
 		SLIST_INSERT_FIRST(&poplist,stacke,varstackelem);		
 	}
-	
-	
+
+
 	ip=bb->first;
-	
+
 	while (1) {		
 		if ( ip->type == IP_NODE) {
 			renamevarhelper(p2e,ip->ip_node,&poplist);
 		}
-		
+
 		if (ip==bb->last)
 			break;
-		
+
 		ip = DLIST_NEXT(ip, qelem);
 	}
-	
+
 	SLIST_FOREACH(cfgn,&bb->children,cfgelem) {
 		j=0;
-		
+
 		SLIST_FOREACH(cfgn2, &cfgn->bblock->parents, cfgelem) { 
 			if (cfgn2->bblock->dfnum==bb->dfnum)
 				break;
@@ -1071,14 +1288,14 @@ renamevar(struct p2env *p2e,struct basicblock *bb, struct bblockinfo *bbinfo)
 		}
 		
 	}
-	
-	for (h = 1; h < bbinfo->size; h++) {
+
+	for (h = 1; h < p2e->bbinfo.size; h++) {
 		if (!TESTBIT(bb->dfchildren, h))
 			continue;
-		
-		renamevar(p2e,bbinfo->arr[h], bbinfo);
+
+		renamevar(p2e,p2e->bbinfo.arr[h]);
 	}
-	
+
 	SLIST_FOREACH(stacke,&poplist,varstackelem) {
 		tmpregno=stacke->tmpregno;
 		
@@ -1094,7 +1311,7 @@ enum pred_type {
 } ;
 
 void
-removephi(struct p2env *p2e, struct labelinfo *labinfo,struct bblockinfo *bbinfo)
+removephi(struct p2env *p2e)
 {
 	struct basicblock *bb,*bbparent;
 	struct cfgnode *cfgn;
@@ -1108,7 +1325,7 @@ removephi(struct p2env *p2e, struct labelinfo *labinfo,struct bblockinfo *bbinfo
 
 	int label=0;
 	int newlabel;
-	
+
 	DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {		
 		SLIST_FOREACH(phi,&bb->phi,phielem) {
 			/* Look at only one, notice break at end */
@@ -1131,96 +1348,101 @@ removephi(struct p2env *p2e, struct labelinfo *labinfo,struct bblockinfo *bbinfo
 					BDEBUG((" CBRANCH "));
 					label = (int)pip->ip_node->n_right->n_lval;
 					
-					if (bb==labinfo->arr[label - p2e->ipp->ip_lblnum])
+					if (bb==p2e->labinfo.arr[label - p2e->ipp->ip_lblnum])
 						complex = pred_cond ;
-                                        else
-                                                complex = pred_falltrough ;
+					else
+						complex = pred_falltrough ;
 
-		        		} else if (DLIST_PREV(bb, bbelem) == bbparent) {
-                                                complex = pred_falltrough ;
-                                        } else {
-                                            /* PANIC */
-                                            comperr("Assumption blown in rem-phi") ;
-                                        }
+				} else if (DLIST_PREV(bb, bbelem) == bbparent) {
+					complex = pred_falltrough ;
+				} else {
+					    /* PANIC */
+					comperr("Assumption blown in rem-phi") ;
+				}
        
-        				BDEBUG((" Complex: %d\n",complex)) ;
+				BDEBUG((" Complex: %d ",complex)) ;
 
-	        			switch (complex) {
-	        			  case pred_goto:
-	        				/* gotos can only go to this place. No bounce tab needed */
-	        				SLIST_FOREACH(phi,&bb->phi,phielem) {
-	        					if (phi->intmpregno[i]>0) {
-	        						n_type=phi->n_type;
-	        						ip = ipnode(mkbinode(ASSIGN,
-								     mktemp(phi->newtmpregno, n_type),
-								     mktemp(phi->intmpregno[i],n_type),
-								     n_type));
-					
-	        						DLIST_INSERT_BEFORE((bbparent->last), ip, qelem);
-	        					}
-	        				}
-                                            break ;
-	        			  case pred_cond:
-	        				/* Here, we need a jump pad */
-	        				newlabel=getlab2();
+				switch (complex) {
+				  case pred_goto:
+					/* gotos can only go to this place. No bounce tab needed */
+					SLIST_FOREACH(phi,&bb->phi,phielem) {
+						if (phi->intmpregno[i]>0) {
+							n_type=phi->n_type;
+							ip = ipnode(mkbinode(ASSIGN,
+							     mktemp(phi->newtmpregno, n_type),
+							     mktemp(phi->intmpregno[i],n_type),
+							     n_type));
+							BDEBUG(("(%p, %d -> %d) ", ip, phi->intmpregno[i], phi->newtmpregno));
 				
-	        				ip = tmpalloc(sizeof(struct interpass));
-	        				ip->type = IP_DEFLAB;
-	        				/* Line number?? ip->lineno; */
-	        				ip->ip_lbl = newlabel;
-	        				DLIST_INSERT_BEFORE((bb->first), ip, qelem);
+							DLIST_INSERT_BEFORE((bbparent->last), ip, qelem);
+						}
+					}
+					break ;
+				  case pred_cond:
+					/* Here, we need a jump pad */
+					newlabel=getlab2();
+			
+					ip = tmpalloc(sizeof(struct interpass));
+					ip->type = IP_DEFLAB;
+					/* Line number?? ip->lineno; */
+					ip->ip_lbl = newlabel;
+					DLIST_INSERT_BEFORE((bb->first), ip, qelem);
 
+					SLIST_FOREACH(phi,&bb->phi,phielem) {
+						if (phi->intmpregno[i]>0) {
+							n_type=phi->n_type;
+							ip = ipnode(mkbinode(ASSIGN,
+							     mktemp(phi->newtmpregno, n_type),
+							     mktemp(phi->intmpregno[i],n_type),
+							     n_type));
 
-	        				SLIST_FOREACH(phi,&bb->phi,phielem) {
-	        					if (phi->intmpregno[i]>0) {
-	        						n_type=phi->n_type;
-	        						ip = ipnode(mkbinode(ASSIGN,
-								     mktemp(phi->newtmpregno, n_type),
-								     mktemp(phi->intmpregno[i],n_type),
-								     n_type));
-					
-	        						DLIST_INSERT_BEFORE((bb->first), ip, qelem);
-	        					}
-	        				}
-	        				/* add a jump to us */
-	        				ip = ipnode(mkunode(GOTO, mklnode(ICON, label, 0, INT), 0, INT));
-	        				DLIST_INSERT_BEFORE((bb->first), ip, qelem);
-	        				pip->ip_node->n_right->n_lval=newlabel;
-                                            break ;
-	        			  case pred_falltrough:
-                                		if (bb->first->type == IP_DEFLAB) { 
-                                                    label = bb->first->ip_lbl; 
-                                                    BDEBUG(("falltrough label %d\n", label));
-                                                } else {
-                                                    comperr("BBlock has no label?") ;
-                                                }
+							BDEBUG(("(%p, %d -> %d) ", ip, phi->intmpregno[i], phi->newtmpregno));
+							DLIST_INSERT_BEFORE((bb->first), ip, qelem);
+						}
+					}
+					/* add a jump to us */
+					ip = ipnode(mkunode(GOTO, mklnode(ICON, label, 0, INT), 0, INT));
+					DLIST_INSERT_BEFORE((bb->first), ip, qelem);
+					pip->ip_node->n_right->n_lval=newlabel;
+					if (!logop(pip->ip_node->n_left->n_op))
+						comperr("SSA not logop");
+					pip->ip_node->n_left->n_label=newlabel;
+					break ;
+				  case pred_falltrough:
+					if (bb->first->type == IP_DEFLAB) { 
+						label = bb->first->ip_lbl; 
+						BDEBUG(("falltrough label %d\n", label));
+					} else {
+						comperr("BBlock has no label?") ;
+					}
 
-	                                        /* 
-                                                 * add a jump to us. We _will_ be, or already have, added code in between.
-                                                 * The code is created in the wrong order and switched at the insert, thus
-                                                 * comming out correctly
-                                                 */
+					/* 
+					 * add a jump to us. We _will_ be, or already have, added code in between.
+					 * The code is created in the wrong order and switched at the insert, thus
+					 * comming out correctly
+					 */
 
-                        	                ip = ipnode(mkunode(GOTO, mklnode(ICON, label, 0, INT), 0, INT));
-	                                        DLIST_INSERT_AFTER((bbparent->last), ip, qelem);
+					ip = ipnode(mkunode(GOTO, mklnode(ICON, label, 0, INT), 0, INT));
+					DLIST_INSERT_AFTER((bbparent->last), ip, qelem);
 
-                	                        /* Add the code to the end, add a jump to us. */
-	                                        SLIST_FOREACH(phi,&bb->phi,phielem) {
-        		                                if (phi->intmpregno[i]>0) {
-        			                                n_type=phi->n_type;
-                			                        ip = ipnode(mkbinode(ASSIGN,
-        				                                mktemp(phi->newtmpregno, n_type),
-        				                                mktemp(phi->intmpregno[i],n_type),
-        				                                n_type));
-	
-        			                                DLIST_INSERT_AFTER((bbparent->last), ip, qelem);
-        		                                }
-                	                        }
-                                            break ;
-        				  default:
-                                            comperr("assumption blown, complex is %d\n", complex) ;
-                                }
+					/* Add the code to the end, add a jump to us. */
+					SLIST_FOREACH(phi,&bb->phi,phielem) {
+						if (phi->intmpregno[i]>0) {
+							n_type=phi->n_type;
+							ip = ipnode(mkbinode(ASSIGN,
+								mktemp(phi->newtmpregno, n_type),
+								mktemp(phi->intmpregno[i],n_type),
+								n_type));
 
+							BDEBUG(("(%p, %d -> %d) ", ip, phi->intmpregno[i], phi->newtmpregno));
+							DLIST_INSERT_AFTER((bbparent->last), ip, qelem);
+						}
+					}
+					break ;
+				default:
+					comperr("assumption blown, complex is %d\n", complex) ;
+				}
+				BDEBUG(("\n"));
 				i++;
 			}
 			break;
@@ -1273,52 +1495,58 @@ remunreach(struct p2env *p2e)
 	}
 }
 
-void
-printip(struct interpass *pole)
+static void
+printip2(struct interpass *ip)
 {
 	static char *foo[] = {
 	   0, "NODE", "PROLOG", "STKOFF", "EPILOG", "DEFLAB", "DEFNAM", "ASM" };
-	struct interpass *ip;
 	struct interpass_prolog *ipplg, *epplg;
 	unsigned i;
 
-	DLIST_FOREACH(ip, pole, qelem) {
-		if (ip->type > MAXIP)
-			printf("IP(%d) (%p): ", ip->type, ip);
-		else
-			printf("%s (%p): ", foo[ip->type], ip);
-		switch (ip->type) {
-		case IP_NODE: printf("\n");
+	if (ip->type > MAXIP)
+		printf("IP(%d) (%p): ", ip->type, ip);
+	else
+		printf("%s (%p): ", foo[ip->type], ip);
+	switch (ip->type) {
+	case IP_NODE: printf("\n");
 #ifdef PCC_DEBUG
-			fwalk(ip->ip_node, e2print, 0); break;
+	fwalk(ip->ip_node, e2print, 0); break;
 #endif
-		case IP_PROLOG:
-			ipplg = (struct interpass_prolog *)ip;
-			printf("%s %s regs",
-			    ipplg->ipp_name, ipplg->ipp_vis ? "(local)" : "");
-			for (i = 0; i < NIPPREGS; i++)
-				printf("%s0x%lx", i? ":" : " ",
-				    (long) ipplg->ipp_regs[i]);
-			printf(" autos %d mintemp %d minlbl %d\n",
-			    ipplg->ipp_autos, ipplg->ip_tmpnum, ipplg->ip_lblnum);
-			break;
-		case IP_EPILOG:
-			epplg = (struct interpass_prolog *)ip;
-			printf("%s %s regs",
-			    epplg->ipp_name, epplg->ipp_vis ? "(local)" : "");
-			for (i = 0; i < NIPPREGS; i++)
-				printf("%s0x%lx", i? ":" : " ",
-				    (long) epplg->ipp_regs[i]);
-			printf(" autos %d mintemp %d minlbl %d\n",
-			    epplg->ipp_autos, epplg->ip_tmpnum, epplg->ip_lblnum);
-			break;
-		case IP_DEFLAB: printf(LABFMT "\n", ip->ip_lbl); break;
-		case IP_DEFNAM: printf("\n"); break;
-		case IP_ASM: printf("%s\n", ip->ip_asm); break;
-		default:
-			break;
-		}
+	case IP_PROLOG:
+		ipplg = (struct interpass_prolog *)ip;
+		printf("%s %s regs",
+		    ipplg->ipp_name, ipplg->ipp_vis ? "(local)" : "");
+		for (i = 0; i < NIPPREGS; i++)
+			printf("%s0x%lx", i? ":" : " ",
+			    (long) ipplg->ipp_regs[i]);
+		printf(" autos %d mintemp %d minlbl %d\n",
+		    ipplg->ipp_autos, ipplg->ip_tmpnum, ipplg->ip_lblnum);
+		break;
+	case IP_EPILOG:
+		epplg = (struct interpass_prolog *)ip;
+		printf("%s %s regs",
+		    epplg->ipp_name, epplg->ipp_vis ? "(local)" : "");
+		for (i = 0; i < NIPPREGS; i++)
+			printf("%s0x%lx", i? ":" : " ",
+			    (long) epplg->ipp_regs[i]);
+		printf(" autos %d mintemp %d minlbl %d\n",
+		    epplg->ipp_autos, epplg->ip_tmpnum, epplg->ip_lblnum);
+		break;
+	case IP_DEFLAB: printf(LABFMT "\n", ip->ip_lbl); break;
+	case IP_DEFNAM: printf("\n"); break;
+	case IP_ASM: printf("%s\n", ip->ip_asm); break;
+	default:
+		break;
 	}
+}
+
+void
+printip(struct interpass *pole)
+{
+	struct interpass *ip;
+
+	DLIST_FOREACH(ip, pole, qelem)
+		printip2(ip);
 }
 
 #ifdef PCC_DEBUG
@@ -1390,7 +1618,8 @@ flownodeprint(NODE *p,FILE *flowdiagramfile)
 	fprintf(flowdiagramfile,"}");
 }
 
-void printflowdiagram(struct p2env *p2e,struct labelinfo *labinfo,struct bblockinfo *bbinfo,char *type) {
+void
+printflowdiagram(struct p2env *p2e, char *type) {
 	struct basicblock *bbb;
 	struct cfgnode *ccnode;
 	struct interpass *ip;
@@ -1472,7 +1701,7 @@ void printflowdiagram(struct p2env *p2e,struct labelinfo *labinfo,struct bblocki
 			if (pip->type == IP_NODE && pip->ip_node->n_op == CBRANCH) {
 				int label = (int)pip->ip_node->n_right->n_lval;
 				
-				if (ccnode->bblock==labinfo->arr[label - p2e->ipp->ip_lblnum])
+				if (ccnode->bblock==p2e->labinfo.arr[label - p2e->ipp->ip_lblnum])
 					color="red";
 			}
 			
@@ -1491,17 +1720,17 @@ void WalkAll(struct p2env* p2e, void (*f) (NODE*, void*), void* arg, int type)
 {
 	struct interpass *ipole = &p2e->ipole;
 	struct interpass *ip ;
-        if (0 != type) {
-        	DLIST_FOREACH(ip, ipole, qelem) {
-	        	if (ip->type == IP_NODE && ip->ip_node->n_op == type)
-                                walkf(ip->ip_node, f, arg) ;
-                }
-        } else {
-        	DLIST_FOREACH(ip, ipole, qelem) {
+	if (0 != type) {
+		DLIST_FOREACH(ip, ipole, qelem) {
+			if (ip->type == IP_NODE && ip->ip_node->n_op == type)
+				walkf(ip->ip_node, f, arg) ;
+		}
+	} else {
+		DLIST_FOREACH(ip, ipole, qelem) {
 			if (ip->type == IP_NODE)
-	                        walkf(ip->ip_node, f, arg) ;
-                }
-        }
+				walkf(ip->ip_node, f, arg) ;
+		}
+	}
 }
 #if 0
 static int is_goto_label(struct interpass*g, struct interpass* l)
@@ -1604,7 +1833,7 @@ static unsigned long map_blocks(struct p2env* p2e, struct block_map* map, unsign
 								block2=cnode->bblock ;
 #if 1
 								if (i+1 < count && map[i+1].block == block2)
-									break ;	/* pick that one */
+									break ; /* pick that one */
 #else
 								if (block2) break ;
 #endif
@@ -1680,7 +1909,7 @@ static void add_labels(struct p2env* p2e)
 	struct interpass *ip ;
 
 	DLIST_FOREACH(ip, ipole, qelem) {
-        	if (ip->type == IP_NODE && ip->ip_node->n_op == CBRANCH) {
+		if (ip->type == IP_NODE && ip->ip_node->n_op == CBRANCH) {
 			struct interpass *n = DLIST_NEXT(ip, qelem);
 			if (n && n->type != IP_DEFLAB) {
 				struct interpass* lab;
@@ -1702,7 +1931,7 @@ static void add_labels(struct p2env* p2e)
 #ifdef ENABLE_NEW
 struct node_map {
 	NODE* node ;		/* the node */
-	unsigned int node_num ;	/* node is equal to that one */
+	unsigned int node_num ; /* node is equal to that one */
 	unsigned int var_num ;	/* node computes this variable */
 } ;
 
@@ -1720,3 +1949,195 @@ static void do_cse(struct p2env* p2e)
 }
 #endif
 
+#define BITALLOC(ptr,all,sz) { \
+	int sz__s = BIT2BYTE(sz); ptr = all(sz__s); memset(ptr, 0, sz__s); }
+#define VALIDREG(p)	(p->n_op == REG && TESTBIT(validregs, regno(p)))
+#define XCHECK(x) if (x < 0 || x >= xbits) printf("x out of range %d\n", x)
+#define RUP(x) (((x)+NUMBITS-1)/NUMBITS)
+#define SETCOPY(t,f,i,n) for (i = 0; i < RUP(n); i++) t[i] = f[i]
+#define SETSET(t,f,i,n) for (i = 0; i < RUP(n); i++) t[i] |= f[i]
+#define SETCLEAR(t,f,i,n) for (i = 0; i < RUP(n); i++) t[i] &= ~f[i]
+#define SETCMP(v,t,f,i,n) for (i = 0; i < RUP(n); i++) \
+	if (t[i] != f[i]) v = 1
+
+static int xxx, xbits;
+/*
+ * Set/clear long term liveness for regs and temps.
+ */
+static void
+unionize(NODE *p, struct basicblock *bb, int suboff)
+{
+	int o, ty;
+
+	if ((o = p->n_op) == TEMP || VALIDREG(p)) {
+		int b = regno(p);
+		if (o == TEMP)
+			b = b - suboff + MAXREGS;
+XCHECK(b);
+		BITSET(bb->gen, b);
+	}
+	if (asgop(o)) {
+		if (p->n_left->n_op == TEMP || VALIDREG(p)) {
+			int b = regno(p->n_left);
+			if (p->n_left->n_op == TEMP)
+				b = b - suboff + MAXREGS;
+XCHECK(b);
+			BITCLEAR(bb->gen, b);
+			BITSET(bb->killed, b);
+			unionize(p->n_right, bb, suboff);
+			return;
+		}
+	}
+	ty = optype(o);
+	if (ty != LTYPE)
+		unionize(p->n_left, bb, suboff);
+	if (ty == BITYPE)
+		unionize(p->n_right, bb, suboff);
+}
+
+/*
+ * Found an extended assembler node, so growel out gen/killed nodes.
+ */
+static void
+xasmionize(NODE *p, void *arg)
+{
+	struct basicblock *bb = arg;
+	int cw, b;
+
+	if (p->n_op == ICON && p->n_type == STRTY)
+		return; /* dummy end marker */
+
+	cw = xasmcode(p->n_name);
+	if (XASMVAL(cw) == 'n' || XASMVAL(cw) == 'm')
+		return; /* no flow analysis */
+	p = p->n_left;
+ 
+	if (XASMVAL(cw) == 'g' && p->n_op != TEMP && p->n_op != REG)
+		return; /* no flow analysis */
+
+	b = regno(p);
+#if 0
+	if (XASMVAL(cw) == 'r' && p->n_op == TEMP)
+		addnotspill(b);
+#endif
+#define MKTOFF(r)	((r) - xxx)
+	if (XASMISOUT(cw)) {
+		if (p->n_op == TEMP) {
+			BITCLEAR(bb->gen, MKTOFF(b));
+			BITSET(bb->killed, MKTOFF(b));
+		} else if (p->n_op == REG) {
+			BITCLEAR(bb->gen, b);
+			BITSET(bb->killed, b);	 
+		} else
+			uerror("bad xasm node type %d", p->n_op);
+	}
+	if (XASMISINP(cw)) {
+		if (p->n_op == TEMP) {
+			BITSET(bb->gen, MKTOFF(b));
+		} else if (p->n_op == REG) {
+			BITSET(bb->gen, b);
+		} else if (optype(p->n_op) != LTYPE) {
+			if (XASMVAL(cw) == 'r')
+				uerror("couldn't find available register");
+			else
+				uerror("bad xasm node type2");
+		}
+	}
+}
+
+/*
+ * Do variable liveness analysis.  Only analyze the long-lived
+ * variables, and save the live-on-exit temporaries in a bit-field
+ * at the end of each basic block. This bit-field is later used
+ * when doing short-range liveness analysis in Build().
+ */
+void
+liveanal(struct p2env *p2e)
+{
+	struct basicblock *bb;
+	struct interpass *ip;
+	struct cfgnode *cn;
+	bittype *saved;
+	int i, mintemp, again;
+
+	xbits = p2e->epp->ip_tmpnum - p2e->ipp->ip_tmpnum + MAXREGS;
+	mintemp = p2e->ipp->ip_tmpnum;
+
+	/* Just fetch space for the temporaries from heap */
+	DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {
+		BITALLOC(bb->gen,tmpalloc,xbits);
+		BITALLOC(bb->killed,tmpalloc,xbits);
+		BITALLOC(bb->in,tmpalloc,xbits);
+		BITALLOC(bb->out,tmpalloc,xbits);
+	}
+	BITALLOC(saved,tmpalloc,xbits);
+
+	xxx = mintemp;
+	/*
+	 * generate the gen-killed sets for all basic blocks.
+	 */
+	DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {
+		for (ip = bb->last; ; ip = DLIST_PREV(ip, qelem)) {
+			/* gen/killed is 'p', this node is 'n' */
+			if (ip->type == IP_NODE) {
+				if (ip->ip_node->n_op == XASM)
+					flist(ip->ip_node->n_left,
+					    xasmionize, bb);
+				else
+					unionize(ip->ip_node, bb, mintemp);
+			}
+			if (ip == bb->first)
+				break;
+		}
+		memcpy(bb->in, bb->gen, BIT2BYTE(xbits));
+#ifdef PCC_DEBUG
+#define PRTRG(x) printf("%d ", i < MAXREGS ? i : i + p2e->ipp->ip_tmpnum-MAXREGS)
+		if (b2debug > 1) {
+			printf("basic block %d\ngen: ", bb->bbnum);
+			for (i = 0; i < xbits; i++)
+				if (TESTBIT(bb->gen, i))
+					PRTRG(i);
+			printf("\nkilled: ");
+			for (i = 0; i < xbits; i++)
+				if (TESTBIT(bb->killed, i))
+					PRTRG(i);
+			printf("\n");
+		}
+#endif
+	}
+	/* do liveness analysis on basic block level */
+	do {
+		int j;
+
+		again = 0;
+		/* XXX - loop should be in reversed execution-order */
+		DLIST_FOREACH_REVERSE(bb, &p2e->bblocks, bbelem) {
+			SETCOPY(saved, bb->out, j, xbits);
+			SLIST_FOREACH(cn, &bb->children, cfgelem) {
+				SETSET(bb->out, cn->bblock->in, j, xbits);
+			}
+			SETCMP(again, saved, bb->out, j, xbits);
+			SETCOPY(saved, bb->in, j, xbits);
+			SETCOPY(bb->in, bb->out, j, xbits);
+			SETCLEAR(bb->in, bb->killed, j, xbits);
+			SETSET(bb->in, bb->gen, j, xbits);
+			SETCMP(again, saved, bb->in, j, xbits);
+		}
+	} while (again);
+
+#ifdef PCC_DEBUG
+	DLIST_FOREACH(bb, &p2e->bblocks, bbelem) {
+		if (b2debug) {
+			printf("all basic block %d\nin: ", bb->bbnum);
+			for (i = 0; i < xbits; i++)
+				if (TESTBIT(bb->in, i))
+					PRTRG(i);
+			printf("\nout: ");
+			for (i = 0; i < xbits; i++)
+				if (TESTBIT(bb->out, i))
+					PRTRG(i);
+			printf("\n");
+		}
+	}
+#endif
+}

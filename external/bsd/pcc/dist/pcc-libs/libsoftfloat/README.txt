@@ -1,4 +1,4 @@
-$NetBSD: README.txt,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $
+NetBSD: README.txt,v 1.1 2000/06/06 08:15:02 bjh21 Exp 
 
 Package Overview for SoftFloat Release 2a
 

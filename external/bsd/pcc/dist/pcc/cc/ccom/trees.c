@@ -1,4 +1,5 @@
-/*	$Id: trees.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: trees.c,v 1.248 2010/06/02 10:39:52 ragge Exp 	*/	
+/*	$NetBSD: trees.c,v 1.1.1.3 2010/06/03 18:57:45 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -143,15 +144,6 @@ static char *tnames[] = {
 
 int bdebug = 0;
 extern int negrel[];
-
-/* sometimes int is smaller than pointers */
-#if SZPOINT(CHAR) <= SZINT
-#define	INTPTR	INT
-#elif SZPOINT(CHAR) <= SZLONG
-#define INTPTR	LONG
-#else
-#error int size unknown
-#endif
 
 NODE *
 buildtree(int o, NODE *l, NODE *r)
@@ -390,8 +382,6 @@ runtime:
 				uerror("struct or union required");
 				break;
 			}
-
-#define	GETSUE(x, y)	for (x = y; x->suep; x = x->suep)
 
 			/* find type sue */
 			GETSUE(sue, l->n_sue);
@@ -676,6 +666,42 @@ nametree(struct symtab *sp)
 }
 
 /*
+ * Cast a node to another type by inserting a cast.
+ * Just a nicer interface to buildtree.
+ * Returns the new tree.
+ */
+NODE *
+cast(NODE *p, TWORD t, TWORD u)
+{
+	NODE *q;
+
+	q = block(NAME, NIL, NIL, t, 0, MKSUE(BTYPE(t)));
+	q->n_qual = u;
+	q = buildtree(CAST, q, p);
+	p = q->n_right;
+	nfree(q->n_left);
+	nfree(q);
+	return p;
+}
+
+/*
+ * Cast and complain if necessary by not inserining a cast.
+ */
+NODE *
+ccast(NODE *p, TWORD t, TWORD u, union dimfun *df, struct suedef *sue)
+{
+	NODE *q;
+
+	/* let buildtree do typechecking (and casting) */ 
+	q = block(NAME, NIL, NIL, t, df, sue);
+	p = buildtree(ASSIGN, q, p);
+	nfree(p->n_left);
+	q = optim(p->n_right);
+	nfree(p);
+	return q;
+}
+
+/*
  * Do a conditional branch.
  */
 void
@@ -906,7 +932,11 @@ chkpun(NODE *p)
 		d1 = p->n_left->n_df;
 		d2 = p->n_right->n_df;
 		if (t1 == t2) {
-			if (p->n_left->n_sue->suem != p->n_right->n_sue->suem)
+			struct suedef *s1, *s2;
+
+			GETSUE(s1, p->n_left->n_sue);
+			GETSUE(s2, p->n_right->n_sue);
+			if (s1->suem != s2->suem)
 				werror("illegal structure pointer combination");
 			return;
 		}
@@ -2416,6 +2446,8 @@ p2tree(NODE *p)
 		p->n_stsize = (int)((tsize(STRTY, p->n_left->n_df,
 		    p->n_left->n_sue)+SZCHAR-1)/SZCHAR);
 		p->n_stalign = talign(STRTY,p->n_left->n_sue)/SZCHAR;
+		if (p->n_stalign == 0)
+			p->n_stalign = 1; /* At least char for packed structs */
 		break;
 
 	case XARG:
@@ -2472,6 +2504,17 @@ ecode(NODE *p)
 	if (nerrors)	
 		return;
 
+#ifdef GCC_COMPAT
+	{
+		NODE *q = p;
+
+		if (q->n_op == UMUL)
+			q = p->n_left;
+		if (cdope(q->n_op)&CALLFLG &&
+		    gcc_get_attr(q->n_sue, GCC_ATYP_WARN_UNUSED_RESULT))
+			werror("return value ignored");
+	}
+#endif
 	p = optim(p);
 	p = delasgop(p);
 	walkf(p, delvoid, 0);
@@ -2613,10 +2656,10 @@ cdope(int op)
 	case QUALIFIER:
 	case CLASS:
 	case RB:
-	case DOT:
 	case ELLIPSIS:
 	case TYPE:
 		return LTYPE;
+	case DOT:
 	case SZOF:
 	case COMOP:
 	case QUEST:

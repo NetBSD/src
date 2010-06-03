@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat-for-gcc.h,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $ */
+/* NetBSD: softfloat-for-gcc.h,v 1.7 2004/09/26 21:13:27 jmmv Exp  */
 
 /*
  * Move private identifiers with external linkage into implementation
