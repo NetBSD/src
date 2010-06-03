@@ -1,4 +1,5 @@
-/*	$Id: code.c,v 1.1.1.2 2009/09/04 00:27:32 gmcgarry Exp $	*/
+/*	Id: code.c,v 1.22 2009/05/15 06:28:11 gmcgarry Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.3 2010/06/03 18:57:27 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

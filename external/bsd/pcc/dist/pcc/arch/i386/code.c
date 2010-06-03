@@ -1,4 +1,5 @@
-/*	$Id: code.c,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
+/*	Id: code.c,v 1.52 2010/04/28 14:53:54 ragge Exp 	*/	
+/*	$NetBSD: code.c,v 1.1.1.3 2010/06/03 18:57:14 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -55,6 +56,8 @@ defloc(struct symtab *sp)
 	}
 	t = sp->stype;
 	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
+	if ((name = sp->soname) == NULL)
+		name = exname(sp->sname);
 #ifdef TLS
 	if (sp->sflags & STLS) {
 		if (s != DATA)
@@ -70,10 +73,23 @@ defloc(struct symtab *sp)
 			nextsect = ga->a1.sarg;
 		if ((ga = gcc_get_attr(sp->ssue, GCC_ATYP_WEAK)) != NULL)
 			weak = 1;
+		if (gcc_get_attr(sp->ssue, GCC_ATYP_DESTRUCTOR)) {
+			printf("\t.section\t.dtors,\"aw\",@progbits\n");
+			printf("\t.align 4\n\t.long\t%s\n", name);
+			lastloc = -1;
+		}
+		if (gcc_get_attr(sp->ssue, GCC_ATYP_CONSTRUCTOR)) {
+			printf("\t.section\t.ctors,\"aw\",@progbits\n");
+			printf("\t.align 4\n\t.long\t%s\n", name);
+			lastloc = -1;
+		}
+		if ((ga = gcc_get_attr(sp->ssue, GCC_ATYP_VISIBILITY)) &&
+		    strcmp(ga->a1.sarg, "default"))
+			printf("\t.%s %s\n", ga->a1.sarg, name);
 	}
 #endif
 	if (nextsect) {
-		printf("	.section %s\n", nextsect);
+		printf("	.section %s,\"wa\",@progbits\n", nextsect);
 		nextsect = NULL;
 		s = -1;
 	} else if (s != lastloc)
@@ -84,17 +100,15 @@ defloc(struct symtab *sp)
 	al = ISFTN(t) ? ALINT : talign(t, sp->ssue);
 	if (al > ALCHAR)
 		printf("	.align %d\n", al/ALCHAR);
-	if (weak || sp->sclass == EXTDEF || sp->slevel == 0 || ISFTN(t))
-		if ((name = sp->soname) == NULL)
-			name = exname(sp->sname);
 	if (weak)
 		printf("	.weak %s\n", name);
-	else if (sp->sclass == EXTDEF)
+	else if (sp->sclass == EXTDEF) {
 		printf("	.globl %s\n", name);
 #if defined(ELFABI)
-	if (ISFTN(t))
-		printf("\t.type %s,@function\n", name);
+		printf("\t.type %s,@%s\n", name,
+		    ISFTN(t)? "function" : "object");
 #endif
+	}
 	if (sp->slevel == 0)
 		printf("%s:\n", name);
 	else
@@ -153,9 +167,7 @@ efcode()
 void
 bfcode(struct symtab **sp, int cnt)
 {
-#ifdef os_win32
 	extern int argstacksize;
-#endif
 	struct symtab *sp2;
 	extern int gotnr;
 	NODE *n, *p;
@@ -173,14 +185,22 @@ bfcode(struct symtab **sp, int cnt)
 				sp[i]->soffset += SZPOINT(INT);
 	}
 
-#ifdef os_win32
+#ifdef GCC_COMPAT
+	if (gcc_get_attr(cftnsp->ssue, GCC_ATYP_STDCALL) != NULL)
+		cftnsp->sflags |= SSTDCALL;
+#endif
+
 	/*
-	 * Count the arguments and mangle name in symbol table as a callee.
+	 * Count the arguments
 	 */
 	argstacksize = 0;
 	if (cftnsp->sflags & SSTDCALL) {
+#ifdef os_win32
+
 		char buf[256];
 		char *name;
+#endif
+
 		for (i = 0; i < cnt; i++) {
 			TWORD t = sp[i]->stype;
 			if (t == STRTY || t == UNIONTY)
@@ -189,12 +209,16 @@ bfcode(struct symtab **sp, int cnt)
 			else
 				argstacksize += szty(t) * SZINT / SZCHAR;
 		}
+#ifdef os_win32
+		/*
+		 * mangle name in symbol table as a callee.
+		 */
 		if ((name = cftnsp->soname) == NULL)
 			name = exname(cftnsp->sname);
 		snprintf(buf, 256, "%s@%d", name, argstacksize);
 		cftnsp->soname = addname(buf);
-	}
 #endif
+	}
 
 	if (kflag) {
 #define	STL	200

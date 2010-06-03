@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.1.1.1 2008/08/24 05:34:51 gmcgarry Exp $ */
+/* NetBSD: softfloat.c,v 1.5 2007/11/08 21:31:04 martin Exp  */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.

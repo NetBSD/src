@@ -1,4 +1,5 @@
-/*	$Id: pass1.h,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: pass1.h,v 1.195 2010/06/02 10:39:51 ragge Exp 	*/	
+/*	$NetBSD: pass1.h,v 1.1.1.3 2010/06/03 18:57:41 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -184,6 +185,7 @@ int mygenswitch(int, TWORD, struct swents **, int);
 extern	int blevel;
 extern	int instruct, got_type;
 extern	int oldstyle;
+extern	int oflag;
 
 extern	int lineno, nerrors;
 
@@ -308,12 +310,13 @@ char *tmpvsprintf(char *, va_list);
 void asginit(NODE *);
 void desinit(NODE *);
 void endinit(void);
+void endictx(void);
 void sspinit(void);
 void sspstart(void);
 void sspend(void);
 void ilbrace(void);
 void irbrace(void);
-void scalinit(NODE *);
+CONSZ scalinit(NODE *);
 void p1print(char *, ...);
 char *copst(int);
 int cdope(int);
@@ -345,6 +348,11 @@ NODE *imop(int op, NODE *l, NODE *r);
 NODE *cxelem(int op, NODE *p);
 NODE *cxconj(NODE *p);
 NODE *cxret(NODE *p, NODE *q);
+NODE *cast(NODE *p, TWORD t, TWORD q);
+NODE *ccast(NODE *p, TWORD t, TWORD u, union dimfun *df, struct suedef *sue);
+
+NODE *builtin_check(NODE *f, NODE *a);
+
 
 #ifdef SOFTFLOAT
 typedef struct softfloat SF;
@@ -406,6 +414,9 @@ enum {	GCC_ATYP_NONE,
 	GCC_ATYP_DEPRECATED,
 	GCC_ATYP_MAYALIAS,
 
+	/* variable attributes */
+	GCC_ATYP_MODE,
+
 	/* function attributes */
 	GCC_ATYP_NORETURN,
 	GCC_ATYP_FORMAT,
@@ -414,6 +425,17 @@ enum {	GCC_ATYP_NONE,
 	GCC_ATYP_WEAK,
 	GCC_ATYP_FORMATARG,
 	GCC_ATYP_GNU_INLINE,
+	GCC_ATYP_MALLOC,
+	GCC_ATYP_NOTHROW,
+	GCC_ATYP_CONST,
+	GCC_ATYP_PURE,
+	GCC_ATYP_CONSTRUCTOR,
+	GCC_ATYP_DESTRUCTOR,
+	GCC_ATYP_VISIBILITY,
+	GCC_ATYP_STDCALL,
+	GCC_ATYP_CDECL,
+	GCC_ATYP_WARN_UNUSED_RESULT,
+	GCC_ATYP_USED,
 
 	/* other stuff */
 	GCC_ATYP_BOUNDED,	/* OpenBSD extra boundary checks */
@@ -464,6 +486,17 @@ void stabs_struct(struct symtab *, struct suedef *);
 /* to make character constants into character connstants */
 /* this is a macro to defend against cross-compilers, etc. */
 #define CHARCAST(x) (char)(x)
+#endif
+
+/* sometimes int is smaller than pointers */
+#if SZPOINT(CHAR) <= SZINT
+#define INTPTR  INT
+#elif SZPOINT(CHAR) <= SZLONG
+#define INTPTR  LONG
+#elif SZPOINT(CHAR) <= SZLONGLONG
+#define INTPTR  LONGLONG
+#else
+#error int size unknown
 #endif
 
 /*

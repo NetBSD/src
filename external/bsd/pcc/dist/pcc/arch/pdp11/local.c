@@ -1,4 +1,5 @@
-/*	$Id: local.c,v 1.1.1.1 2009/09/04 00:27:31 gmcgarry Exp $	*/
+/*	Id: local.c,v 1.6 2009/05/07 02:34:11 gmcgarry Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.2 2010/06/03 18:57:24 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

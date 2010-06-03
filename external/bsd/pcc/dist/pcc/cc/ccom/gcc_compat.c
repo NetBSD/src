@@ -1,4 +1,5 @@
-/*      $Id: gcc_compat.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $     */
+/*      Id: gcc_compat.c,v 1.52 2010/05/15 15:58:33 ragge Exp      */	
+/*      $NetBSD: gcc_compat.c,v 1.1.1.3 2010/06/03 18:57:39 plunky Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -63,16 +64,54 @@ static struct kw {
 /* 16 */{ "__attribute", NULL, 0 },
 /* 17 */{ "__real__", NULL, 0 },
 /* 18 */{ "__imag__", NULL, 0 },
+/* 19 */{ "__builtin_offsetof", NULL, PCC_OFFSETOF },
 	{ NULL, NULL, 0 },
 };
+
+/* g77 stuff */
+#if SZFLOAT == SZLONG
+#define G77_INTEGER LONG
+#define G77_UINTEGER ULONG
+#elif SZFLOAT == SZINT
+#define G77_INTEGER INT
+#define G77_UINTEGER UNSIGNED
+#else
+#error fix g77 stuff
+#endif
+#if SZFLOAT*2 == SZLONG
+#define G77_LONGINT LONG
+#define G77_ULONGINT ULONG
+#elif SZFLOAT*2 == SZLONGLONG
+#define G77_LONGINT LONGLONG
+#define G77_ULONGINT ULONGLONG
+#else
+#error fix g77 long stuff
+#endif
+
+static TWORD g77t[] = { G77_INTEGER, G77_UINTEGER, G77_LONGINT, G77_ULONGINT };
+static char *g77n[] = { "__g77_integer", "__g77_uinteger",
+	"__g77_longint", "__g77_ulongint" };
 
 void
 gcc_init()
 {
 	struct kw *kwp;
+	NODE *p;
+	TWORD t;
+	int i;
 
 	for (kwp = kw; kwp->name; kwp++)
 		kwp->ptr = addname(kwp->name);
+
+	for (i = 0; i < 4; i++) {
+		struct symtab *sp;
+		t = ctype(g77t[i]);
+		p = block(NAME, NIL, NIL, t, NULL, MKSUE(t));
+		sp = lookup(addname(g77n[i]), 0);
+		p->n_sp = sp;
+		defid(p, TYPEDEF);
+		nfree(p);
+	}
 
 }
 
@@ -150,33 +189,100 @@ gcc_keyword(char *str, NODE **n)
 #define	A_1ARG	0x02
 #define	A_2ARG	0x04
 #define	A_3ARG	0x08
-/* arg # is string */
-#define	A1_STR	0x10
-#define	A2_STR	0x20
-#define	A3_STR	0x40
+/* arg # is a name */
+#define	A1_NAME	0x10
+#define	A2_NAME	0x20
+#define	A3_NAME	0x40
 #define	A_MANY	0x80
+/* arg # is "string" */
+#define	A1_STR	0x100
+#define	A2_STR	0x200
+#define	A3_STR	0x400
 
 struct atax {
 	int typ;
 	char *name;
 } atax[GCC_ATYP_MAX] = {
+#ifndef __MSC__
 	[GCC_ATYP_ALIGNED] =	{ A_0ARG|A_1ARG, "aligned" },
 	[GCC_ATYP_PACKED] =	{ A_0ARG|A_1ARG, "packed" },
 	[GCC_ATYP_SECTION] = 	{ A_1ARG|A1_STR, "section" },
 	[GCC_ATYP_UNUSED] =	{ A_0ARG, "unused" },
 	[GCC_ATYP_DEPRECATED] =	{ A_0ARG, "deprecated" },
 	[GCC_ATYP_NORETURN] =	{ A_0ARG, "noreturn" },
-	[GCC_ATYP_FORMAT] =	{ A_3ARG|A1_STR, "format" },
-	[GCC_ATYP_BOUNDED] =	{ A_3ARG|A_MANY|A1_STR, "bounded" },
+	[GCC_ATYP_FORMAT] =	{ A_3ARG|A1_NAME, "format" },
+	[GCC_ATYP_BOUNDED] =	{ A_3ARG|A_MANY|A1_NAME, "bounded" },
 	[GCC_ATYP_NONNULL] =	{ A_MANY, "nonnull" },
 	[GCC_ATYP_SENTINEL] =	{ A_0ARG|A_1ARG, "sentinel" },
 	[GCC_ATYP_WEAK] =	{ A_0ARG, "weak" },
 	[GCC_ATYP_FORMATARG] =	{ A_1ARG, "format_arg" },
 	[GCC_ATYP_GNU_INLINE] =	{ A_0ARG, "gnu_inline" },
+	[GCC_ATYP_MALLOC] =	{ A_0ARG, "malloc" },
+	[GCC_ATYP_NOTHROW] =	{ A_0ARG, "nothrow" },
+	[GCC_ATYP_MODE] =	{ A_1ARG|A1_NAME, "mode" },
+	[GCC_ATYP_CONST] =	{ A_0ARG, "const" },
+	[GCC_ATYP_PURE] =	{ A_0ARG, "pure" },
+	[GCC_ATYP_CONSTRUCTOR] ={ A_0ARG, "constructor" },
+	[GCC_ATYP_DESTRUCTOR] =	{ A_0ARG, "destructor" },
+	[GCC_ATYP_VISIBILITY] =	{ A_1ARG|A1_STR, "visibility" },
+	[GCC_ATYP_STDCALL] =	{ A_0ARG, "stdcall" },
+	[GCC_ATYP_CDECL] =	{ A_0ARG, "cdecl" },
+	[GCC_ATYP_WARN_UNUSED_RESULT] = { A_0ARG, "warn_unused_result" },
+	[GCC_ATYP_USED] =	{ A_0ARG, "used" },
+#else
+	{ 0, NULL },
+	{ A_0ARG|A_1ARG, "aligned" },
+	{ A_0ARG, "packed" },
+	{ A_1ARG|A1_STR, "section" },
+	{ 0, NULL }, 	/* GCC_ATYP_TRANSP_UNION */
+	{ A_0ARG, "unused" },
+	{ A_0ARG, "deprecated" },
+	{ 0, NULL }, 	/* GCC_ATYP_MAYALIAS */
+	{ A_1ARG|A1_NAME, "mode" },
+	{ A_0ARG, "noreturn" },
+	{ A_3ARG|A1_STR, "format" },
+	{ A_MANY, "nonnull" },
+	{ A_0ARG|A_1ARG, "sentinel" },
+	{ A_0ARG, "weak" },
+	{ A_1ARG, "format_arg" },
+	{ A_0ARG, "gnu_inline" },
+	{ A_0ARG, "malloc" },
+	{ A_0ARG, "nothrow" },
+	{ A_0ARG, "const" },
+	{ A_0ARG, "pure" },
+	{ A_0ARG, "constructor" },
+	{ A_0ARG, "destructor" },
+	{ A_1ARG|A1_STR, "visibility" },
+	{ A_0ARG, "stdcall" },
+	{ A_0ARG, "cdecl" },
+	{ A_0ARG, "warn_unused_result" },
+	{ A_0ARG, "used" },
+	{ A_3ARG|A_MANY|A1_STR, "bounded" },
+	{ 0, NULL },	/* ATTR_COMPLEX */
+#endif
 };
+#if SZPOINT(CHAR) == SZLONGLONG
+#define	GPT	LONGLONG
+#else
+#define	GPT	INT
+#endif
+
+struct atax mods[] = {
+	{ 0, NULL },
+	{ INT, "SI" },
+	{ INT, "word" },
+	{ GPT, "pointer" },
+	{ CHAR, "byte" },
+	{ CHAR, "QI" },
+	{ SHORT, "HI" },
+	{ LONGLONG, "DI" },
+	{ FLOAT, "SF" },
+	{ DOUBLE, "DF" },
+};
+#define	ATSZ	(sizeof(mods)/sizeof(mods[0]))
 
 static int
-amatch(char *s)
+amatch(char *s, struct atax *at, int mx)
 {
 	int i, len;
 
@@ -185,8 +291,8 @@ amatch(char *s)
 	len = strlen(s);
 	if (len > 2 && s[len-1] == '_' && s[len-2] == '_')
 		len -= 2;
-	for (i = 0; i < GCC_ATYP_MAX; i++) {
-		char *t = atax[i].name;
+	for (i = 0; i < mx; i++) {
+		char *t = at[i].name;
 		if (t != NULL && strncmp(s, t, len) == 0 && t[len] == 0)
 			return i;
 	}
@@ -197,7 +303,10 @@ static void
 setaarg(int str, union gcc_aarg *aa, NODE *p)
 {
 	if (str) {
-		aa->sarg = (char *)p->n_sp;
+		if (((str & (A1_STR|A2_STR|A3_STR)) && p->n_op != STRING) ||
+		    ((str & (A1_NAME|A2_NAME|A3_NAME)) && p->n_op != NAME))
+			uerror("bad arg to attribute");
+		aa->sarg = p->n_op == STRING ? p->n_name : (char *)p->n_sp;
 		nfree(p);
 	} else
 		aa->iarg = (int)icons(eve(p));
@@ -211,8 +320,8 @@ gcc_attribs(NODE *p, void *arg)
 {
 	NODE *q, *r;
 	gcc_ap_t *gap = arg;
-	char *name = NULL;
-	int num, cw, attr, narg;
+	char *name = NULL, *c;
+	int num, cw, attr, narg, i;
 
 	if (p->n_op == NAME) {
 		name = (char *)p->n_sp;
@@ -221,7 +330,7 @@ gcc_attribs(NODE *p, void *arg)
 	} else
 		cerror("bad variable attribute");
 
-	if ((attr = amatch(name)) == 0) {
+	if ((attr = amatch(name, atax, GCC_ATYP_MAX)) == 0) {
 		werror("unsupported attribute '%s'", name);
 		goto out;
 	}
@@ -250,19 +359,19 @@ gcc_attribs(NODE *p, void *arg)
 		}
 		/* FALLTHROUGH */
 	case 3:
-		setaarg(cw & A3_STR, &gap->ga[num].a3, q->n_right);
+		setaarg(cw & (A3_NAME|A3_STR), &gap->ga[num].a3, q->n_right);
 		r = q;
 		q = q->n_left;
 		nfree(r);
 		/* FALLTHROUGH */
 	case 2:
-		setaarg(cw & A2_STR, &gap->ga[num].a2, q->n_right);
+		setaarg(cw & (A2_NAME|A2_STR), &gap->ga[num].a2, q->n_right);
 		r = q;
 		q = q->n_left;
 		nfree(r);
 		/* FALLTHROUGH */
 	case 1:
-		setaarg(cw & A1_STR, &gap->ga[num].a1, q);
+		setaarg(cw & (A1_NAME|A1_STR), &gap->ga[num].a1, q);
 		p->n_op = UCALL;
 		/* FALLTHROUGH */
 	case 0:
@@ -283,6 +392,20 @@ gcc_attribs(NODE *p, void *arg)
 		else
 			gap->ga[num].a1.iarg *= SZCHAR;
 		break;
+
+	case GCC_ATYP_MODE:
+		if ((i = amatch(gap->ga[num].a1.sarg, mods, ATSZ)) == 0)
+			werror("unknown mode arg %s", gap->ga[num].a1.sarg);
+		gap->ga[num].a1.iarg = mods[i].typ;
+		break;
+
+	case GCC_ATYP_VISIBILITY:
+		c = gap->ga[num].a1.sarg;
+		if (strcmp(c, "default") && strcmp(c, "hidden") &&
+		    strcmp(c, "internal") && strcmp(c, "protected"))
+			werror("unknown visibility %s", c);
+		break;
+
 	default:
 		break;
 	}
@@ -298,12 +421,13 @@ gcc_ap_t *
 gcc_attr_parse(NODE *p)
 {
 	gcc_ap_t *gap;
-	NODE *q;
+	NODE *q, *r;
 	int i, sz;
 
-	/* count number of elems */
+	/* count number of elems and build tower to the left */
 	for (q = p, i = 1; q->n_op == CM; q = q->n_left, i++)
-		;
+		if (q->n_right->n_op == CM)
+			r = q->n_right, q->n_right = q->n_left, q->n_left = r;
 
 	/* get memory for struct */
 	sz = sizeof(struct gcc_attr_pack) + sizeof(struct gcc_attrib) * i;

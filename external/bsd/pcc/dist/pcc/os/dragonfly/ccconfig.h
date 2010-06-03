@@ -1,4 +1,5 @@
-/*	$Id: ccconfig.h,v 1.1.1.1 2008/08/24 05:33:10 gmcgarry Exp $	*/
+/*	Id: ccconfig.h,v 1.6 2008/06/03 05:58:22 gmcgarry Exp 	*/	
+/*	$NetBSD: ccconfig.h,v 1.1.1.2 2010/06/03 18:57:59 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).

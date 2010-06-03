@@ -1,4 +1,5 @@
-/*	$Id: cpy.y,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: cpy.y,v 1.18 2010/02/25 15:49:00 ragge Exp 	*/	
+/*	$NetBSD: cpy.y,v 1.1.1.3 2010/06/03 18:57:35 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -65,7 +66,7 @@
 
 #include "cpp.h"
 
-void yyerror(char *);
+void yyerror(const char *);
 int yylex(void);
 int setd(int l, int r);
 
@@ -201,7 +202,7 @@ term:
 %%
 
 void
-yyerror(char *err)
+yyerror(const char *err)
 {
 	error(err);
 }
