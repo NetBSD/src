@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 2010/04/28 06:06:11 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.25 2010/06/03 22:34:26 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 2010/04/28 06:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.25 2010/06/03 22:34:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,16 +400,23 @@ paddr_t
 mmmmap(dev_t dev, off_t off, int prot)
 {
 
+        /*
+         * /dev/mem is the only one that makes sense through this
+         * interface.  For /dev/kmem any physaddr we return here
+         * could be transient and hence incorrect or invalid at
+         * a later time.  /dev/null just doesn't make any sense
+         * and /dev/zero is a hack that is handled via the default
+         * pager in mmap().
+         */
+
 	if (minor(dev) != DEV_MEM)
 		return -1;
 
 	/*
 	 * Allow access only in RAM.
 	 */
-#if 0
-	if (off < ptoa(firstusablepage) ||
-	    off >= ptoa(lastusablepage + 1))
+	if (off > ptoa(physmem))
 		return -1;
-#endif
+
 	return btop(off);
 }
