@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/05/22 10:31:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/06/03 09:42:40 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -29,8 +29,8 @@ INCSDIR=${X11INCDIR}
 
 PKGDIST=	${LIB}
 
-LDADD+=	-lpci
-DPADD+=	${LIBPCI}
+LDADD+=	-lpci -lz
+DPADD+=	${LIBPCI} ${LIBZ}
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
