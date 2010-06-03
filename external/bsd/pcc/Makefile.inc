@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2010/02/11 14:36:32 plunky Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2010/06/03 19:17:22 plunky Exp $
 
 PCC_DIR:=${.PARSEDIR}
 PCC_DIST=${PCC_DIR}/dist/pcc
@@ -23,6 +23,7 @@ VERSSTR = PACKAGE_STRING " for ${TARGOS}-${TARGMACH}"
 libexecdir = /usr/libexec
 includedir = /usr/include
 
+CPPFLAGS+=	-DGCC_COMPAT
 CPPFLAGS+=	-DVERSSTR=${VERSSTR:Q}
 CPPFLAGS+=	-DLIBEXECDIR=\"${libexecdir}/\"
 CPPFLAGS+=	-DINCLUDEDIR=\"${includedir}/\"
