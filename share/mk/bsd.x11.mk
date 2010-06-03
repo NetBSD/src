@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.83 2010/06/02 19:40:12 joerg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.84 2010/06/03 10:08:34 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -370,7 +370,7 @@ X11MANCPP?=	yes
 _X11MANTRANSFORM+= \
 	__vendorversion__	${X11VERSION:C/ /%/gW}
 .else
-XORGVERSION=	"X Version 11"
+XORGVERSION=	'"X Version 11"'
 X11MANCPP?=	no
 _X11MANTRANSFORM+= \
 	__vendorversion__	${XORGVERSION:C/ /%/gW} \
