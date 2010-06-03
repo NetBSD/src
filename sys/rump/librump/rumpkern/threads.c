@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.10 2010/05/31 23:09:29 pooka Exp $	*/
+/*	$NetBSD: threads.c,v 1.11 2010/06/03 19:36:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,12 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.10 2010/05/31 23:09:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.11 2010/06/03 19:36:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <machine/stdarg.h>
@@ -59,11 +60,13 @@ threadbouncer(void *arg)
 
 	f = k->f;
 	thrarg = k->arg;
-	rumpuser_free(k);
 
 	/* schedule ourselves */
 	rumpuser_set_curlwp(l);
 	rump_schedule();
+
+	/* free dance struct */
+	free(k, M_TEMP);
 
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_LOCK(1, NULL);
@@ -133,7 +136,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	}
 	KASSERT(fmt != NULL);
 
-	k = rumpuser_malloc(sizeof(struct kthdesc), 0);
+	k = malloc(sizeof(*k), M_TEMP, M_WAITOK);
 	k->f = func;
 	k->arg = arg;
 	k->mylwp = l = rump_lwp_alloc(0, rump_nextlid());

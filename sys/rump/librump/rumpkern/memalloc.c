@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.7 2010/06/03 10:56:20 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.8 2010/06/03 19:36:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.7 2010/06/03 10:56:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.8 2010/06/03 19:36:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -171,7 +171,7 @@ pool_cache_init(size_t size, u_int align, u_int align_offset, u_int flags,
 {
 	pool_cache_t pc;
 
-	pc = rumpuser_malloc(sizeof(*pc), 0);
+	pc = rump_hypermalloc(sizeof(*pc), 0, true, "pcinit");
 	pool_cache_bootstrap(pc, size, align, align_offset, flags, wchan,
 	    palloc, ipl, ctor, dtor, arg);
 	return pc;
