@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.6 2010/06/01 20:11:33 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.7 2010/06/03 10:56:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.6 2010/06/01 20:11:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.7 2010/06/03 10:56:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -73,7 +73,7 @@ kern_malloc(unsigned long size, struct malloc_type *type, int flags)
 {
 	void *rv;
 
-	rv = rumpuser_malloc(size, 0);
+	rv = rump_hypermalloc(size, 0, (flags & M_WAITOK) != 0, "malloc");
 	if (rv && flags & M_ZERO)
 		memset(rv, 0, size);
 
@@ -110,7 +110,7 @@ void *
 kmem_alloc(size_t size, km_flag_t kmflag)
 {
 
-	return rumpuser_malloc(size, 0);
+	return rump_hypermalloc(size, 0, kmflag == KM_SLEEP, "kmem_alloc");
 }
 
 void *
@@ -240,18 +240,14 @@ pool_cache_cpu_init(struct cpu_info *ci)
 void *
 pool_get(struct pool *pp, int flags)
 {
-	void *rv;
 
 #ifdef DIAGNOSTIC
 	if (pp->pr_size == 0)
 		panic("%s: pool unit size 0.  not initialized?", __func__);
 #endif
 
-	rv = rumpuser_malloc(pp->pr_size, pp->pr_align);
-	if (rv == NULL && (flags & PR_WAITOK && (flags & PR_LIMITFAIL) == 0))
-		panic("%s: out of memory and PR_WAITOK", __func__);
-
-	return rv;
+	return rump_hypermalloc(pp->pr_size, pp->pr_align,
+	    (flags & PR_WAITOK) != 0, "pget");
 }
 
 void
@@ -297,6 +293,20 @@ pool_cache_set_drain_hook(pool_cache_t pc, void (*fn)(void *, int), void *arg)
 	/* XXX: notused */
 	pc->pc_pool.pr_drain_hook = fn;
 	pc->pc_pool.pr_drain_hook_arg = arg;
+}
+
+void
+pool_drain_start(struct pool **ppp, uint64_t *wp)
+{
+
+	/* nada */
+}
+
+void
+pool_drain_end(struct pool *pp, uint64_t w)
+{
+
+	/* nada again */
 }
 
 int
