@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/03/07 16:27:18 plunky Exp $
-
-WARNS?=	2
+#	$NetBSD: Makefile,v 1.8 2010/06/03 19:17:22 plunky Exp $
 
 .include <bsd.init.mk>
 

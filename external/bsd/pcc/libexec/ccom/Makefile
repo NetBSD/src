@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/02/05 08:37:48 plunky Exp $
+#	$NetBSD: Makefile,v 1.6 2010/06/03 19:17:22 plunky Exp $
 
 WARNS?=	2
 
@@ -13,7 +13,7 @@ PROG=	ccom
 SRCS=   cgram.y
 SRCS+=	scan.l
 SRCS+=	optim.c pftn.c trees.c inline.c symtabs.c
-SRCS+=	gcc_compat.c init.c local.c code.c stabs.c
+SRCS+=	gcc_compat.c init.c local.c code.c stabs.c builtins.c
 SRCS+=	match.c reader.c optim2.c regs.c local2.c order.c table.c
 SRCS+=	common.c main.c external.c
 
@@ -23,16 +23,11 @@ MAN=    ccom.1
 YHEADER=
 
 CPPFLAGS+=	-DPCC_DEBUG
-CPPFLAGS+=	-DGCC_COMPAT
 CPPFLAGS+=	-I${.OBJDIR}
 CPPFLAGS+=	-I${PCC_DIST}/mip
 CPPFLAGS+=	-I${PCC_DIST}/os/${TARGOS}
 CPPFLAGS+=	-I${PCC_DIST}/arch/${TARGMACH}
 CPPFLAGS+=	-I${PCC_DIST}/cc/ccom
-
-COPTS.scan.c+= -Wno-error
-COPTS.cgram.c+=-Wno-uninitialized
-COPTS.local.c+=-Wno-unused
 
 DPSRCS=	external.c external.h
 
