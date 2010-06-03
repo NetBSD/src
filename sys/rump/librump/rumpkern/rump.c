@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.174 2010/06/02 10:55:18 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.175 2010/06/03 10:56:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.174 2010/06/02 10:55:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.175 2010/06/03 10:56:20 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.174 2010/06/02 10:55:18 pooka Exp $");
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/kprintf.h>
+#include <sys/kthread.h>
 #include <sys/ksyms.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
@@ -357,6 +358,15 @@ rump__init(int rump_version)
 	pipe_init();
 	resource_init();
 
+	/* start page baroness */
+	if (rump_threads) {
+		if (kthread_create(PRI_PGDAEMON, KTHREAD_MPSAFE, NULL,
+		    uvm_pageout, NULL, &uvm.pagedaemon_lwp, "pdaemon") != 0)
+			panic("pagedaemon create failed");
+	} else
+		uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
+
+	/* process dso's */
 	rumpuser_dl_bootstrap(add_linkedin_modules, rump_kernelfsym_load);
 
 	/* these do nothing if not present */

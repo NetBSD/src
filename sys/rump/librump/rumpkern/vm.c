@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.79 2010/06/02 10:55:18 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.80 2010/06/03 10:56:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -43,15 +43,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.79 2010/06/02 10:55:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.80 2010/06/03 10:56:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/buf.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
-#include <sys/buf.h>
 
 #include <machine/pmap.h>
 
@@ -86,6 +87,10 @@ const struct rb_tree_ops uvm_page_tree_ops;
 
 static struct vm_map_kernel kernel_map_store;
 struct vm_map *kernel_map = &kernel_map_store.vmk_map;
+
+static unsigned int pdaemon_waiters;
+static kmutex_t pdaemonmtx;
+static kcondvar_t pdaemoncv, oomwait;
 
 /*
  * vm pages 
@@ -233,11 +238,14 @@ uvm_init(void)
 {
 
 	uvmexp.free = 1024*1024; /* XXX */
-	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
 	rump_vmspace.vm_map.pmap = pmap_kernel();
 
 	mutex_init(&pagermtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
+
+	mutex_init(&pdaemonmtx, MUTEX_DEFAULT, 0);
+	cv_init(&pdaemoncv, "pdaemon");
+	cv_init(&oomwait, "oomwait");
 
 	kernel_map->pmap = pmap_kernel();
 	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
@@ -460,31 +468,10 @@ bool
 vm_map_starved_p(struct vm_map *map)
 {
 
+	if (map->flags & VM_MAP_WANTVA)
+		return true;
+
 	return false;
-}
-
-void
-uvm_pageout_start(int npages)
-{
-
-	uvmexp.paging += npages;
-}
-
-void
-uvm_pageout_done(int npages)
-{
-
-	uvmexp.paging -= npages;
-
-	/*
-	 * wake up either of pagedaemon or LWPs waiting for it.
-	 */
-
-	if (uvmexp.free <= uvmexp.reserve_kernel) {
-		wakeup(&uvm.pagedaemon);
-	} else {
-		wakeup(&uvmexp.free);
-	}
 }
 
 int
@@ -582,14 +569,15 @@ vaddr_t
 uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 {
 
-	return (vaddr_t)rumpuser_malloc(PAGE_SIZE, PAGE_SIZE);
+	return (vaddr_t)rump_hypermalloc(PAGE_SIZE, PAGE_SIZE,
+	    waitok, "kmalloc");
 }
 
 void
 uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 
-	rumpuser_unmap((void *)addr, PAGE_SIZE);
+	rumpuser_free((void *)addr);
 }
 
 vaddr_t
@@ -648,13 +636,6 @@ vunmapbuf(struct buf *bp, vsize_t len)
 }
 
 void
-uvm_wait(const char *msg)
-{
-
-	/* nothing to wait for */
-}
-
-void
 uvmspace_free(struct vmspace *vm)
 {
 
@@ -702,4 +683,130 @@ uvm_pageenqueue(struct vm_page *pg)
 {
 
 	/* nada */
+}
+
+/*
+ * Routines related to the Page Baroness.
+ */
+
+void
+uvm_wait(const char *msg)
+{
+
+	if (__predict_false(curlwp == uvm.pagedaemon_lwp))
+		panic("pagedaemon out of memory");
+	if (__predict_false(rump_threads == 0))
+		panic("pagedaemon missing (RUMP_THREADS = 0)");
+
+	mutex_enter(&pdaemonmtx);
+	pdaemon_waiters++;
+	cv_signal(&pdaemoncv);
+	cv_wait(&oomwait, &pdaemonmtx);
+	mutex_exit(&pdaemonmtx);
+}
+
+void
+uvm_pageout_start(int npages)
+{
+
+	/* we don't have the heuristics */
+}
+
+void
+uvm_pageout_done(int npages)
+{
+
+	/* could wakeup waiters, but just let the pagedaemon do it */
+}
+
+/*
+ * Under-construction page mistress.  This is lacking vfs support, namely:
+ *
+ *  1) draining vfs buffers
+ *  2) paging out pages in vm vnode objects
+ *     (we will not page out anon memory on the basis that
+ *     that's the task of the host)
+ */
+
+void
+uvm_pageout(void *arg)
+{
+	struct pool *pp, *pp_first;
+	uint64_t where;
+	int timo = 0;
+	bool succ;
+
+	mutex_enter(&pdaemonmtx);
+	for (;;) {
+		cv_timedwait(&pdaemoncv, &pdaemonmtx, timo);
+		uvmexp.pdwoke++;
+		kernel_map->flags |= VM_MAP_WANTVA;
+		mutex_exit(&pdaemonmtx);
+
+		succ = false;
+		pool_drain_start(&pp_first, &where);
+		pp = pp_first;
+		for (;;) {
+			succ = pool_drain_end(pp, where);
+			if (succ)
+				break;
+			pool_drain_start(&pp, &where);
+			if (pp == pp_first) {
+				succ = pool_drain_end(pp, where);
+				break;
+			}
+		}
+		mutex_enter(&pdaemonmtx);
+
+		if (!succ) {
+			rumpuser_dprintf("pagedaemoness: failed to reclaim "
+			    "memory ... sleeping (deadlock?)\n");
+			timo = hz;
+			continue;
+		}
+		kernel_map->flags &= ~VM_MAP_WANTVA;
+		timo = 0;
+
+		if (pdaemon_waiters) {
+			pdaemon_waiters = 0;
+			cv_broadcast(&oomwait);
+		}
+	}
+
+	panic("you can swap out any time you like, but you can never leave");
+}
+
+/*
+ * In a regular kernel the pagedaemon is activated when memory becomes
+ * low.  In a virtual rump kernel we do not know exactly how much memory
+ * we have available -- it depends on the conditions on the host.
+ * Therefore, we cannot preemptively kick the pagedaemon.  Rather, we
+ * wait until things we desperate and we're forced to uvm_wait().
+ *
+ * The alternative would be to allocate a huge chunk of memory at
+ * startup, but that solution has a number of problems including
+ * being a resource hog, failing anyway due to host memory overcommit
+ * and core dump size.
+ */
+
+void
+uvm_kick_pdaemon()
+{
+
+	/* nada */
+}
+
+void *
+rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
+{
+	void *rv;
+
+ again:
+	rv = rumpuser_malloc(howmuch, alignment);
+	if (__predict_false(rv == NULL && waitok)) {
+		uvm_wait(wmsg);
+		goto again;
+	}
+
+	return rv;
 }
