@@ -1,4 +1,5 @@
-/*	$Id: crt0.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $	*/
+/*	Id: crt0.c,v 1.4 2009/02/14 23:49:40 gmcgarry Exp 	*/	
+/*	$NetBSD: crt0.c,v 1.1.1.3 2010/06/03 18:58:05 plunky Exp $	*/
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -54,4 +55,5 @@ __start(int argc, char *argv[], char *envp[])
 
 #include "common.c"
 
-IDENT("$Id: crt0.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $");
+IDENT("Id: crt0.c,v 1.4 2009/02/14 23:49:40 gmcgarry Exp ");	
+IDENT("$NetBSD: crt0.c,v 1.1.1.3 2010/06/03 18:58:05 plunky Exp $");

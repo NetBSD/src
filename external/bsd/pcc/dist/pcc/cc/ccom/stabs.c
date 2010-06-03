@@ -1,4 +1,5 @@
-/*	$Id: stabs.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: stabs.c,v 1.30 2009/06/14 11:43:41 ragge Exp 	*/	
+/*	$NetBSD: stabs.c,v 1.1.1.3 2010/06/03 18:57:43 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).

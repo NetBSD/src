@@ -1,4 +1,5 @@
-/*	$Id: error.c,v 1.1.1.1 2008/08/24 05:33:06 gmcgarry Exp $	*/
+/*	Id: error.c,v 1.8 2008/05/10 07:53:41 ragge Exp 	*/	
+/*	$NetBSD: error.c,v 1.1.1.2 2010/06/03 18:57:46 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

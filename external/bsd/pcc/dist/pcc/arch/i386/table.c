@@ -1,4 +1,5 @@
-/*	$Id: table.c,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
+/*	Id: table.c,v 1.120 2010/05/14 11:49:59 ragge Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.3 2010/06/03 18:57:16 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -404,7 +405,7 @@ struct optab table[] = {
 	SCON,	TANY,
 	SANY,	TANY,
 		0,	0,
-		"	call CL\n", },
+		"	call CL\nZC", },
 
 { CALL,		FOREFF,
 	SCON,	TANY,
@@ -416,7 +417,7 @@ struct optab table[] = {
 	SCON,	TANY,
 	SAREG,	TWORD|TPOINT,
 		0,	0,
-		"	call CL\n", },
+		"	call CL\nZC", },
 
 { CALL,	INAREG,
 	SCON,	TANY,
@@ -428,7 +429,7 @@ struct optab table[] = {
 	SCON,	TANY,
 	SAREG,	TSHORT|TUSHORT|TWORD|TPOINT,
 		NAREG|NASL,	RESC1,	/* should be 0 */
-		"	call CL\n", },
+		"	call CL\nZC", },
 
 { CALL,	INBREG,
 	SCON,	TANY,
@@ -440,7 +441,7 @@ struct optab table[] = {
 	SCON,	TANY,
 	SBREG,	TCHAR|TUCHAR,
 		NBREG,	RESC1,	/* should be 0 */
-		"	call CL\n", },
+		"	call CL\nZC", },
 
 { CALL,		INCREG,
 	SCON,	TANY,
@@ -452,7 +453,7 @@ struct optab table[] = {
 	SCON,	TANY,
 	SCREG,	TANY,
 		NCREG|NCSL,	RESC1,	/* should be 0 */
-		"	call CL\n", },
+		"	call CL\nZC", },
 
 { CALL,	INDREG,
 	SCON,	TANY,
@@ -604,12 +605,6 @@ struct optab table[] = {
 		0,	RLEFT,
 		"	incl AL\n", },
 
-{ PLUS,		INAREG,
-	SAREG,	TWORD|TPOINT,
-	SCON,	TANY,
-		NAREG|NASL,	RESC1,
-		"	leal CR(AL),A1\n", },
-
 { PLUS,		INAREG|FOREFF,
 	SAREG|SNAME|SOREG,	TSHORT|TUSHORT,
 	SONE,	TANY,
@@ -647,12 +642,6 @@ struct optab table[] = {
 		"	decb AL\n", },
 
 /* address as register offset, negative */
-{ MINUS,	INAREG,
-	SAREG,	TWORD|TPOINT,
-	SPCON,	TANY,
-		NAREG|NASL,	RESC1,
-		"	leal -CR(AL),A1\n", },
-
 { MINUS,	INLL|FOREFF,
 	SHLL,	TLL,
 	SHLL|SNAME|SOREG,	TLL,
@@ -752,6 +741,19 @@ struct optab table[] = {
 	SHLL|SCON,	TLL,
 		0,	RLEFT,
 		"	Ol AR,AL\n	Ol UR,UL\n", },
+
+/* Try use-reg instructions first */
+{ PLUS,		INAREG,
+	SAREG,	TWORD|TPOINT,
+	SCON,	TANY,
+		NAREG|NASL,	RESC1,
+		"	leal CR(AL),A1\n", },
+
+{ MINUS,	INAREG,
+	SAREG,	TWORD|TPOINT,
+	SPCON,	TANY,
+		NAREG|NASL,	RESC1,
+		"	leal -CR(AL),A1\n", },
 
 
 /*
@@ -1107,7 +1109,7 @@ struct optab table[] = {
 { STASG,	INAREG|FOREFF,
 	SOREG|SNAME,	TANY,
 	SAREG|SOREG|SNAME,	TPTRTO|TANY,
-		NSPECIAL,	RRIGHT,
+		NSPECIAL,	RDEST,
 		"ZQ", },
 
 /*

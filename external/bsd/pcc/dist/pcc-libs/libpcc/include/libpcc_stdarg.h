@@ -10,6 +10,7 @@
 #ifndef _VA_LIST
 typedef char * va_list;
 #define _VA_LIST
+#define _VA_LIST_DEFINED
 #endif
 /* For broken glibc headers */
 #ifndef __GNUC_VA_LIST

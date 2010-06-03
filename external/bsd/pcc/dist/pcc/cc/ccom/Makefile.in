@@ -1,4 +1,5 @@
-#	$Id: Makefile.in,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $
+#	Id: Makefile.in,v 1.32 2010/04/11 15:01:04 ragge Exp 	
+#	$NetBSD: Makefile.in,v 1.1.1.3 2010/06/03 18:57:37 plunky Exp $
 #
 # Makefile.in for ccom
 #
@@ -36,7 +37,7 @@ MDIR=$(top_srcdir)/arch/$(TARGMACH)
 MIPDIR=$(top_srcdir)/mip
 
 OBJS1=optim.o pftn.o scan.o trees.o cgram.o inline.o symtabs.o \
-	gcc_compat.o init.o local.o code.o stabs.o
+	gcc_compat.o init.o local.o code.o stabs.o builtins.o
 
 OBJS2=match.o reader.o optim2.o regs.o local2.o order.o table.o
 

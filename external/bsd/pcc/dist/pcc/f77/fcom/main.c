@@ -1,4 +1,5 @@
-/*	$Id: main.c,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
+/*	Id: main.c,v 1.14 2009/02/09 15:59:48 ragge Exp 	*/	
+/*	$NetBSD: main.c,v 1.1.1.3 2010/06/03 18:57:50 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

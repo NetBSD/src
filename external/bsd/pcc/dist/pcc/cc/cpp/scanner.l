@@ -1,5 +1,6 @@
 %{
-/*	$Id: scanner.l,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $   */
+/*	Id: scanner.l,v 1.49 2009/02/14 09:23:55 ragge Exp    */	
+/*	$NetBSD: scanner.l,v 1.1.1.3 2010/06/03 18:57:36 plunky Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.

@@ -1,4 +1,5 @@
-/*	$Id: f77config.h,v 1.1.1.1 2008/08/24 05:33:10 gmcgarry Exp $	*/
+/*	Id: f77config.h,v 1.1 2007/09/15 07:37:49 ragge Exp 	*/	
+/*	$NetBSD: f77config.h,v 1.1.1.2 2010/06/03 18:57:59 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).

@@ -1,4 +1,5 @@
-/* $Id: crtn.c,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $ */
+/* Id: crtn.c,v 1.2 2008/07/02 00:19:20 gmcgarry Exp  */	
+/* $NetBSD: crtn.c,v 1.1.1.2 2010/06/03 18:58:05 plunky Exp $ */
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -27,4 +28,5 @@ asm(	"	.section .fini			\n"
 	"	ret				\n"
 	"	.previous			\n");
 
-IDENT("$Id: crtn.c,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $");
+IDENT("Id: crtn.c,v 1.2 2008/07/02 00:19:20 gmcgarry Exp ");	
+IDENT("$NetBSD: crtn.c,v 1.1.1.2 2010/06/03 18:58:05 plunky Exp $");

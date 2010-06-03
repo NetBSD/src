@@ -1,4 +1,5 @@
-/*	$Id: macdefs.h,v 1.1.1.1 2009/09/04 00:27:30 gmcgarry Exp $	*/
+/*	Id: macdefs.h,v 1.10 2010/04/18 19:34:14 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.2 2010/06/03 18:57:08 plunky Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -272,13 +273,13 @@ int numconv(void *ip, void *p, void *q);
 #define TARGET_VALIST
 #define TARGET_STDARGS
 #define TARGET_BUILTINS							\
-	{ "__builtin_stdarg_start", amd64_builtin_stdarg_start },	\
-	{ "__builtin_va_start", amd64_builtin_stdarg_start },	\
-	{ "__builtin_va_arg", amd64_builtin_va_arg },			\
-	{ "__builtin_va_end", amd64_builtin_va_end },			\
-	{ "__builtin_va_copy", amd64_builtin_va_copy },			\
-	{ "__builtin_frame_address", i386_builtin_frame_address },	\
-	{ "__builtin_return_address", i386_builtin_return_address },
+	{ "__builtin_stdarg_start", amd64_builtin_stdarg_start, 2 },	\
+	{ "__builtin_va_start", amd64_builtin_stdarg_start, 2 },	\
+	{ "__builtin_va_arg", amd64_builtin_va_arg, 2 },		\
+	{ "__builtin_va_end", amd64_builtin_va_end, 1 },		\
+	{ "__builtin_va_copy", amd64_builtin_va_copy, 2 },		\
+	{ "__builtin_frame_address", i386_builtin_frame_address, -1 },	\
+	{ "__builtin_return_address", i386_builtin_return_address, -1 },
 
 #define NODE struct node
 struct node;

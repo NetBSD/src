@@ -1,4 +1,5 @@
-/*	$Id: defs.h,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: defs.h,v 1.22 2008/12/24 17:40:41 sgk Exp 	*/	
+/*	$NetBSD: defs.h,v 1.1.1.3 2010/06/03 18:57:46 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

@@ -36,7 +36,7 @@
 void acon(NODE *p);
 void prtprolog(struct interpass_prolog *, int);
 int countargs(NODE *p, int *);
-void fixcalls(NODE *p);
+void fixcalls(NODE *p, void *);
 
 static int stkpos;
 int p2calls;
@@ -415,8 +415,6 @@ fldexpand(NODE *p, int cookie, char **cp)
 int
 flshape(NODE *p)
 {
-	int o = p->n_op;
-
 	if (isreg(p))
 		return SRDIR; /* Direct match */
 
@@ -750,7 +748,7 @@ COLORMAP(int c, int *r)
 	return 0; /* XXX gcc */
 }
 
-const char * const rnames[MAXREGS] = {
+char * rnames[MAXREGS] = {
 	"%r0", "%r1", "%rp", "%r3", "%r4", "%r5", "%r6", "%r7", "%r8", "%r9",
 	"%r10", "%r11", "%r12", "%r13", "%r14", "%r15", "%r16", "%r17", "%r18",
 	"%t4", "%t3", "%t2", "%t1", "%arg3", "%arg2", "%arg1", "%arg0", "%dp",

@@ -1,4 +1,5 @@
-/*	$Id: table.c,v 1.1.1.1 2008/08/24 05:32:53 gmcgarry Exp $	*/
+/*	Id: table.c,v 1.19 2008/05/16 02:20:36 gmcgarry Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.2 2010/06/03 18:57:11 plunky Exp $	*/
 /*-
  * Copyright (c) 2007 Gregory McGarry <g.mcgarry@ieee.org>
  *

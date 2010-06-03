@@ -1,4 +1,5 @@
-/*	$Id: cpp.h,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: cpp.h,v 1.43 2010/02/25 15:49:00 ragge Exp 	*/	
+/*	$NetBSD: cpp.h,v 1.1.1.3 2010/06/03 18:57:35 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -70,22 +71,25 @@ extern	int	ofd;
 /* definition for include file info */
 struct includ {
 	struct includ *next;
-	usch *fname;	/* current fn, changed if #line found */
-	usch *orgfn;	/* current fn, not changed */
+	const usch *fname;	/* current fn, changed if #line found */
+	const usch *orgfn;	/* current fn, not changed */
 	int lineno;
 	int infil;
 	usch *curptr;
 	usch *maxread;
 	usch *ostr;
 	usch *buffer;
+	int idx;
+	void *incs;
+	const usch *fn;
 	usch bbuf[NAMEMAX+CPPBUF+1];
 } *ifiles;
 
 /* Symbol table entry  */
 struct symtab {
-	usch *namep;    
-	usch *value;    
-	usch *file;
+	const usch *namep;    
+	const usch *value;    
+	const usch *file;
 	int line;
 };
 
@@ -114,11 +118,11 @@ struct nd {
 
 struct recur;	/* not used outside cpp.c */
 int subst(struct symtab *, struct recur *);
-struct symtab *lookup(usch *namep, int enterf);
+struct symtab *lookup(const usch *namep, int enterf);
 usch *gotident(struct symtab *nl);
 int slow;	/* scan slowly for new tokens */
 
-int pushfile(usch *fname);
+int pushfile(const usch *fname, const usch *fn, int idx, void *incs);
 void popfile(void);
 void prtline(void);
 int yylex(void);
@@ -129,15 +133,15 @@ char *curfile(void);
 void setline(int);
 void setfile(char *);
 int yyparse(void);
-void yyerror(char *);
-void unpstr(usch *);
-usch *savstr(usch *str);
+void yyerror(const char *);
+void unpstr(const usch *);
+usch *savstr(const usch *str);
 void savch(int c);
 void mainscan(void);
 void putch(int);
-void putstr(usch *s);
+void putstr(const usch *s);
 void line(void);
-usch *sheap(char *fmt, ...);
+usch *sheap(const char *fmt, ...);
 void xwarning(usch *);
 void xerror(usch *);
 #ifdef HAVE_CPP_VARARG_MACRO_GCC

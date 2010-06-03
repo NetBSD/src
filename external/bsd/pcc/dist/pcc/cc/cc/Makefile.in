@@ -1,4 +1,5 @@
-#	$Id: Makefile.in,v 1.1.1.1 2008/08/24 05:33:01 gmcgarry Exp $
+#	Id: Makefile.in,v 1.22 2009/11/14 16:27:23 ragge Exp 	
+#	$NetBSD: Makefile.in,v 1.1.1.2 2010/06/03 18:57:33 plunky Exp $
 #
 # Makefile.in for the cc part of pcc.
 #
@@ -24,7 +25,8 @@ VERSION = @PACKAGE_VERSION@
 PCCLIBDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/lib
 PCCINCDIR = $(libdir)/pcc/$(TARGET)/$(VERSION)/include
 CFLAGS = @CFLAGS@ @ADD_CFLAGS@
-CPPFLAGS = @CPPFLAGS@ -DLIBEXECDIR=\"${libexecdir}/\" -DINCLUDEDIR=\"${includedir}/\" \
+CPPFLAGS = @CPPFLAGS@ -DLIBEXECDIR=\"${libexecdir}/\" \
+	@ADD_CPPFLAGS@ -DINCLUDEDIR=\"${includedir}/\" \
 	-DPCCINCDIR=\"${PCCINCDIR}/\" -DPCCLIBDIR=\"${PCCLIBDIR}/\" \
 	-Dos_${TARGOS} -DTARGMACH=${TARGMACH} -Dmach_${TARGMACH} \
 	-I${top_builddir} -I${top_srcdir}/os/${TARGOS} -I${MIPDIR} -I${MDIR}

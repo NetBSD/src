@@ -1,4 +1,5 @@
-/*	$Id: init.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: init.c,v 1.59 2010/05/14 11:58:38 ragge Exp 	*/	
+/*	$NetBSD: init.c,v 1.1.1.3 2010/06/03 18:57:39 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -248,9 +249,13 @@ beginit(struct symtab *sp)
 	csym = sp;
 
 	numents = 0; /* no entries in array list */
-	if (ISARY(sp->stype))
+	if (ISARY(sp->stype)) {
 		basesz = tsize(DECREF(sp->stype), sp->sdf+1, sp->ssue);
-	else
+		if (basesz == 0) {
+			uerror("array has incomplete type");
+			basesz = SZINT;
+		}
+	} else
 		basesz = tsize(DECREF(sp->stype), sp->sdf, sp->ssue);
 	SLIST_INIT(&lpole);
 
@@ -321,7 +326,7 @@ stkpush(void)
 		is->in_lnk = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->suem : 0;
 		is->in_t = DECREF(t);
 		is->in_sym = sp;
-		if (pstk->in_df->ddim != NOOFFSET &&
+		if (pstk->in_df->ddim != NOOFFSET && pstk->in_df->ddim &&
 		    pstk->in_n >= pstk->in_df->ddim) {
 			werror("excess of initializing elements");
 			pstk->in_n--;
@@ -399,7 +404,7 @@ findoff(void)
 
 #ifdef PCC_DEBUG
 	if (ISARY(pstk->in_t) || ISSOU(pstk->in_t))
-		cerror("findoff on bad type");
+		cerror("findoff on bad type %x", pstk->in_t);
 #endif
 
 	/*
@@ -478,8 +483,9 @@ nsetval(CONSZ off, int fsz, NODE *p)
  * take care of generating a value for the initializer p
  * inoff has the current offset (last bit written)
  * in the current word being generated
+ * Returns the offset.
  */
-void
+CONSZ
 scalinit(NODE *p)
 {
 	CONSZ woff;
@@ -495,7 +501,7 @@ scalinit(NODE *p)
 #endif
 
 	if (nerrors)
-		return;
+		return 0;
 
 	p = optim(p);
 
@@ -508,7 +514,7 @@ scalinit(NODE *p)
 	/* Out of elements? */
 	if (pstk == NULL) {
 		uerror("excess of initializing elements");
-		return;
+		return 0;
 	}
 
 	/*
@@ -540,6 +546,7 @@ scalinit(NODE *p)
 		printf("scalinit e(%p)\n", p);
 	}
 #endif
+	return woff;
 }
 
 /*
@@ -687,19 +694,28 @@ endinit(void)
 		clearbf(lastoff, tbit-lastoff);
 	} else
 		zbits(lastoff, tbit-lastoff);
-	if (inilnk) {
-		struct initctx *ict = inilnk;
-		pstk = ict->pstk;
-		csym = ict->psym;
-		lpole = ict->lpole;
-		basesz = ict->basesz;
-		numents = ict->numents;
-		inilnk = inilnk->prev;
+	
+	endictx();
+}
+
+void
+endictx(void)
+{
+	struct initctx *ict = inilnk;
+
+	if (ict == NULL)
+		return;
+
+	pstk = ict->pstk;
+	csym = ict->psym;
+	lpole = ict->lpole;
+	basesz = ict->basesz;
+	numents = ict->numents;
+	inilnk = inilnk->prev;
 #ifdef PCC_DEBUG
-		if (idebug)
-			printf("endinit: restoring ctx pstk %p\n", pstk);
+	if (idebug)
+		printf("endinit: restoring ctx pstk %p\n", pstk);
 #endif
-	}
 }
 
 /*
@@ -769,8 +785,11 @@ mkstack(NODE *p)
 {
 
 #ifdef PCC_DEBUG
-	if (idebug)
+	if (idebug) {
 		printf("mkstack: %p\n", p);
+		if (idebug > 1 && p)
+			fwalk(p, eprint, 0);
+	}
 #endif
 
 	if (p == NULL)
@@ -898,6 +917,8 @@ asginit(NODE *p)
 				pstk->in_fl = 1; /* simulate ilbrace */
 
 			strcvt(p);
+			if (ISARY(csym->stype) && csym->sdf->ddim == NOOFFSET)
+				asginit(bcon(0)); /* Null-term arrays */
 			if (g == 0)
 				irbrace();
 			return;

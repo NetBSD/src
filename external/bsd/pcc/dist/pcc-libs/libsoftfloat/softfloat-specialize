@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.1.1.1 2008/08/24 05:34:49 gmcgarry Exp $	*/
+/*	NetBSD: softfloat-specialize,v 1.4 2004/09/26 21:13:27 jmmv Exp 	*/
 
 /* This is a derivative work. */
 

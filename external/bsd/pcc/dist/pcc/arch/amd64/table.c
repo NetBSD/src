@@ -1,4 +1,5 @@
-/*	$Id: table.c,v 1.1.1.1 2009/09/04 00:27:30 gmcgarry Exp $	*/
+/*	Id: table.c,v 1.16 2010/05/02 17:05:26 ragge Exp 	*/	
+/*	$NetBSD: table.c,v 1.1.1.2 2010/06/03 18:57:09 plunky Exp $	*/
 /*
  * Copyright (c) 2008 Michael Shalayeff
  * Copyright (c) 2008 Anders Magnusson (ragge@ludd.ltu.se).
@@ -226,7 +227,7 @@ struct optab table[] = {
 	SAREG|SOREG|SNAME,	TUNSIGNED,
 	SBREG,			TFLOAT|TDOUBLE,
 		NAREG|NBREG,	RESC2,
-		"	movl AL,A1\n	cvtsi2sZfq A1,A2\n", },
+		"	movl AL,Z1\n	cvtsi2sZfq A1,A2\n", },
 
 /* convert unsigned long to float/double */
 { SCONV,	INBREG,
@@ -355,37 +356,37 @@ struct optab table[] = {
 	SCON,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	0,
-		"	call CL\nZC", },
+		"ZP	call CL\nZC", },
 
 { USTCALL,	INAREG,
 	SCON,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	RESC1,	/* should be 0 */
-		"	call CL\nZC", },
+		"ZP	call CL\nZC", },
 
 { USTCALL,	INAREG,
 	SNAME|SAREG,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	RESC1,	/* should be 0 */
-		"	call *AL\nZC", },
+		"ZP	call *AL\nZC", },
 
 { STCALL,	FOREFF,
 	SCON,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	0,
-		"	call CL\nZC", },
+		"ZP	call CL\nZC", },
 
 { STCALL,	INAREG,
 	SCON,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	RESC1,	/* should be 0 */
-		"	call CL\nZC", },
+		"ZP	call CL\nZC", },
 
 { STCALL,	INAREG,
 	SNAME|SAREG,	TANY,
 	SANY,	TANY,
 		NAREG|NASL,	RESC1,	/* should be 0 */
-		"	call *AL\nZC", },
+		"ZP	call *AL\nZC", },
 
 /*
  * The next rules handle all binop-style operators.
@@ -534,11 +535,13 @@ struct optab table[] = {
 		"	Ob AR,AL\n", },
 
 /* m/r |= const */
+#ifdef notdef	/* amd64 lacks immediate 64-bit simple ops */
 { OPSIMP,	INAREG|FOREFF|FORCC,
 	SAREG|SNAME|SOREG,	TLL|TPOINT,
 	SCON,	TANY,
 		0,	RLEFT|RESCC,
 		"	Oq AR,AL\n", },
+#endif
 
 { OPSIMP,	INAREG|FOREFF|FORCC,
 	SAREG|SNAME|SOREG,	TWORD,
@@ -884,7 +887,7 @@ struct optab table[] = {
 { STASG,	INAREG|FOREFF,
 	SOREG|SNAME,	TANY,
 	SAREG|SOREG|SNAME,	TPTRTO|TANY,
-		NSPECIAL,	RRIGHT,
+		NSPECIAL,	RDEST,
 		"ZQ", },
 
 /*
@@ -1217,7 +1220,7 @@ struct optab table[] = {
 
 { OPLTYPE,	INBREG,
 	SANY,		TFLOAT|TDOUBLE,
-	SOREG|SNAME,	TFLOAT|TDOUBLE,
+	SOREG|SNAME|SBREG,	TFLOAT|TDOUBLE,
 		NBREG,	RESC1,
 		"	movsZf AL,A1\n", },
 
@@ -1249,7 +1252,7 @@ struct optab table[] = {
 		0,	RLEFT,
 		"	negb AL\n", },
 
-{ UMINUS,	INBREG|FOREFF,
+{ UMINUS,	INBREG,
 	SBREG|SNAME|SOREG,	TDOUBLE|TFLOAT,
 	SBREG,			TDOUBLE|TFLOAT,
 		NBREG,	RESC1,

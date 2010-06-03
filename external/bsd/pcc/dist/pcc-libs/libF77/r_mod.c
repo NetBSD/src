@@ -1,4 +1,5 @@
-/*	$Id: r_mod.c,v 1.1.1.1 2008/08/24 05:34:47 gmcgarry Exp $	*/
+/*	Id: r_mod.c,v 1.3 2008/02/28 16:48:50 ragge Exp 	*/	
+/*	$NetBSD: r_mod.c,v 1.1.1.2 2010/06/03 18:58:09 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

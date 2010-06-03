@@ -1,4 +1,5 @@
-/* $Id: common.h,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $ */
+/* Id: common.h,v 1.5 2009/02/14 23:49:40 gmcgarry Exp  */	
+/* $NetBSD: common.h,v 1.1.1.3 2010/06/03 18:58:04 plunky Exp $ */
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *

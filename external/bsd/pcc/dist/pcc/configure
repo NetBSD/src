@@ -1902,7 +1902,7 @@ endian=little
 targosver=0
 tls=no
 gcccompat=yes
-wchar_type=UNSIGNED
+wchar_type=INT
 wchar_size=4
 
 case "$target_os" in

@@ -1,4 +1,5 @@
-/*	$Id: local2.c,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
+/*	Id: local2.c,v 1.139 2010/04/30 12:54:23 ragge Exp 	*/	
+/*	$NetBSD: local2.c,v 1.1.1.3 2010/06/03 18:57:15 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -131,18 +132,12 @@ eoftn(struct interpass_prolog *ipp)
 	if (ftype == STRTY || ftype == UNIONTY) {
 		printf("	movl 8(%%ebp),%%eax\n");
 		printf("	leave\n");
-#ifdef os_win32
 		printf("	ret $%d\n", 4 + ipp->ipp_argstacksize);
-#else
-		printf("	ret $%d\n", 4);
-#endif
 	} else {
 		printf("	leave\n");
-#ifdef os_win32
 		if (ipp->ipp_argstacksize)
 			printf("	ret $%d\n", ipp->ipp_argstacksize);
 		else
-#endif
 			printf("	ret\n");
 	}
 
@@ -226,14 +221,13 @@ tlen(p) NODE *p;
 static void
 twollcomp(NODE *p)
 {
-	int o = p->n_op;
+	int u;
 	int s = getlab2();
 	int e = p->n_label;
 	int cb1, cb2;
 
-	if (o >= ULE)
-		o -= (ULE-LE);
-	switch (o) {
+	u = p->n_op;
+	switch (p->n_op) {
 	case NE:
 		cb1 = 0;
 		cb2 = NE;
@@ -244,11 +238,19 @@ twollcomp(NODE *p)
 		break;
 	case LE:
 	case LT:
+		u += (ULE-LE);
+		/* FALLTHROUGH */
+	case ULE:
+	case ULT:
 		cb1 = GT;
 		cb2 = LT;
 		break;
 	case GE:
 	case GT:
+		u += (ULE-LE);
+		/* FALLTHROUGH */
+	case UGE:
+	case UGT:
 		cb1 = LT;
 		cb2 = GT;
 		break;
@@ -262,7 +264,7 @@ twollcomp(NODE *p)
 	if (cb1) cbgen(cb1, s);
 	if (cb2) cbgen(cb2, e);
 	expand(p, 0, "	cmpl AR,AL\n");
-	cbgen(p->n_op, e);
+	cbgen(u, e);
 	deflab(s);
 }
 
@@ -467,7 +469,7 @@ fcast(NODE *p)
 void
 zzzcode(NODE *p, int c)
 {
-	NODE *r, *l;
+	NODE *l;
 	int pr, lr, s;
 	char *ch;
 
@@ -505,6 +507,8 @@ zzzcode(NODE *p, int c)
 		pr = p->n_qual;
 		if (p->n_op == STCALL || p->n_op == USTCALL)
 			pr += 4;
+		if (p->n_flags & FFPPOP)
+			printf("	fstp	%%st(0)\n");
 		if (p->n_op == UCALL)
 			return; /* XXX remove ZC from UCALL */
 		if (pr)
@@ -576,7 +580,6 @@ zzzcode(NODE *p, int c)
                 break;
 
 	case 'P': /* push hidden argument on stack */
-		r = (NODE *)p->n_sue;
 		printf("\tleal -%d(%%ebp),", stkpos);
 		adrput(stdout, getlr(p, '1'));
 		printf("\n\tpushl ");
@@ -588,23 +591,25 @@ zzzcode(NODE *p, int c)
 		/*
 		 * With <= 16 bytes, put out mov's, otherwise use movsb/w/l.
 		 * esi/edi/ecx are available.
+		 * XXX should not need esi/edi if not rep movsX.
+		 * XXX can save one insn if src ptr in reg.
 		 */
+		expand(p, INAREG, "	movl AR,%esi\n");
 		switch (p->n_stsize) {
 		case 1:
-			expand(p, INAREG, "	movb (AR),%cl\n");
+			expand(p, INAREG, "	movb (%esi),%cl\n");
 			expand(p, INAREG, "	movb %cl,AL\n");
 			break;
 		case 2:
-			expand(p, INAREG, "	movw (AR),%cx\n");
+			expand(p, INAREG, "	movw (%esi),%cx\n");
 			expand(p, INAREG, "	movw %cx,AL\n");
 			break;
 		case 4:
-			expand(p, INAREG, "	movl (AR),%ecx\n");
+			expand(p, INAREG, "	movl (%esi),%ecx\n");
 			expand(p, INAREG, "	movl %ecx,AL\n");
 			break;
 		default:
 			expand(p, INAREG, "	leal AL,%edi\n");
-			expand(p, INAREG, "	movl AR,%esi\n");
 			if (p->n_stsize <= 16 && (p->n_stsize & 3) == 0) {
 				printf("	movl (%%esi),%%ecx\n");
 				printf("	movl %%ecx,(%%edi)\n");
@@ -1317,11 +1322,12 @@ int
 myxasm(struct interpass *ip, NODE *p)
 {
 	struct interpass *ip2;
+	int Cmax[] = { 31, 63, 127, 0xffff, 3, 255 };
 	NODE *in = 0, *ut = 0;
 	TWORD t;
 	char *w;
 	int reg;
-	int cw;
+	int c, cw, v;
 
 	cw = xasmcode(p->n_name);
 	if (cw & (XASMASG|XASMINOUT))
@@ -1329,7 +1335,8 @@ myxasm(struct interpass *ip, NODE *p)
 	if ((cw & XASMASG) == 0)
 		in = p->n_left;
 
-	switch (XASMVAL(cw)) {
+	c = XASMVAL(cw);
+	switch (c) {
 	case 'D': reg = EDI; break;
 	case 'S': reg = ESI; break;
 	case 'a': reg = EAX; break;
@@ -1350,6 +1357,24 @@ myxasm(struct interpass *ip, NODE *p)
 		w = strchr(p->n_name, 'q');
 		*w = 'r';
 		return 0;
+
+	case 'I':
+	case 'J':
+	case 'K':
+	case 'L':
+	case 'M':
+	case 'N':
+		if (p->n_left->n_op != ICON)
+			uerror("xasm arg not constant");
+		v = p->n_left->n_lval;
+		if ((c == 'K' && v < -128) ||
+		    (c == 'L' && v != 0xff && v != 0xffff) ||
+		    (c != 'K' && v < 0) ||
+		    (v > Cmax[c-'I']))
+			uerror("xasm val out of range");
+		p->n_name = "i";
+		return 1;
+
 	default:
 		return 0;
 	}

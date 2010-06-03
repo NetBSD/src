@@ -1,4 +1,5 @@
-/*	$Id: node.h,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
+/*	Id: node.h,v 1.35 2008/09/04 08:00:11 ragge Exp 	*/	
+/*	$NetBSD: node.h,v 1.1.1.3 2010/06/03 18:57:55 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

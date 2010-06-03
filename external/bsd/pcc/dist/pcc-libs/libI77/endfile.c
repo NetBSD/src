@@ -1,4 +1,5 @@
-/*	$Id: endfile.c,v 1.1.1.1 2008/08/24 05:34:47 gmcgarry Exp $	*/
+/*	Id: endfile.c,v 1.4 2008/05/04 10:38:33 ragge Exp 	*/	
+/*	$NetBSD: endfile.c,v 1.1.1.2 2010/06/03 18:58:11 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

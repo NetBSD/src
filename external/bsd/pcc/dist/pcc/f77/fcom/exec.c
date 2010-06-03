@@ -1,4 +1,5 @@
-/*	$Id: exec.c,v 1.1.1.1 2008/08/24 05:33:06 gmcgarry Exp $	*/
+/*	Id: exec.c,v 1.14 2008/05/11 15:28:03 ragge Exp 	*/	
+/*	$NetBSD: exec.c,v 1.1.1.2 2010/06/03 18:57:46 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

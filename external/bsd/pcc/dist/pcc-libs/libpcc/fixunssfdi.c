@@ -1,5 +1,6 @@
-/*	$Id: fixunssfdi.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
-/*	$NetBSD: fixunssfdi.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
+/*	Id: fixunssfdi.c,v 1.3 2009/03/15 00:20:41 gmcgarry Exp 	*/	
+/*	$NetBSD: fixunssfdi.c,v 1.1.1.3 2010/06/03 18:58:13 plunky Exp $	*/
+/*	NetBSD: fixunssfdi.c,v 1.6 2003/08/07 16:43:16 agc Exp 	*/
 
 /*-
  * Copyright (c) 1992, 1993

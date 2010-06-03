@@ -1,4 +1,5 @@
-/*	$Id: order.c,v 1.1.1.1 2008/08/24 05:33:01 gmcgarry Exp $	*/
+/*	Id: order.c,v 1.4 2007/11/26 00:10:03 gmcgarry Exp 	*/	
+/*	$NetBSD: order.c,v 1.1.1.2 2010/06/03 18:57:33 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

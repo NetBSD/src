@@ -1,4 +1,5 @@
-/*	$Id: common.c,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $	*/
+/*	Id: common.c,v 1.3 2008/07/02 00:18:18 gmcgarry Exp 	*/	
+/*	$NetBSD: common.c,v 1.1.1.2 2010/06/03 18:58:04 plunky Exp $	*/
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -117,4 +118,5 @@ _dyld_fini(void)
 
 #endif
 
-IDENT("$Id: common.c,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $");
+IDENT("Id: common.c,v 1.3 2008/07/02 00:18:18 gmcgarry Exp ");	
+IDENT("$NetBSD: common.c,v 1.1.1.2 2010/06/03 18:58:04 plunky Exp $");

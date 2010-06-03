@@ -1,4 +1,4 @@
-/* $NetBSD: unordsf2.c,v 1.1.1.1 2008/08/24 05:34:49 gmcgarry Exp $ */
+/* NetBSD: unordsf2.c,v 1.1 2003/05/06 08:58:20 rearnsha Exp  */
 
 /*
  * Written by Richard Earnshaw, 2003.  This file is in the Public Domain.

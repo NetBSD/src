@@ -1,4 +1,5 @@
-/*	$Id: hl_ge.c,v 1.1.1.1 2008/08/24 05:34:46 gmcgarry Exp $	*/
+/*	Id: hl_ge.c,v 1.3 2008/02/28 16:48:50 ragge Exp 	*/	
+/*	$NetBSD: hl_ge.c,v 1.1.1.2 2010/06/03 18:58:07 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

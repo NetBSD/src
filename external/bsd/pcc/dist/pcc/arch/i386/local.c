@@ -1,4 +1,5 @@
-/*	$Id: local.c,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
+/*	Id: local.c,v 1.121 2010/05/27 19:45:46 ragge Exp 	*/	
+/*	$NetBSD: local.c,v 1.1.1.3 2010/06/03 18:57:14 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -97,6 +98,7 @@ picsymtab(char *p, char *s, char *s2)
 	strlcpy(sp->soname, p, len);
 	strlcat(sp->soname, s, len);
 	strlcat(sp->soname, s2, len);
+	sp->ssue = NULL;
 	sp->sclass = EXTERN;
 	sp->sflags = sp->slevel = 0;
 	return sp;
@@ -144,6 +146,11 @@ picext(NODE *p)
 	if ((name = p->n_sp->soname) == NULL)
 		name = p->n_sp->sname;
 	sp = picsymtab("", name, "@GOT");
+#ifdef GCC_COMPAT
+	if (gcc_get_attr(p->n_sp->ssue, GCC_ATYP_STDCALL) != NULL)
+		p->n_sp->sflags |= SSTDCALL;
+#endif
+	sp->sflags = p->n_sp->sflags & SSTDCALL;
 	r = xbcon(0, sp, INT);
 	q = buildtree(PLUS, q, r);
 	q = block(UMUL, q, 0, PTR|VOID, 0, MKSUE(VOID));
@@ -359,7 +366,10 @@ clocal(NODE *p)
 {
 
 	register struct symtab *q;
-	register NODE *r, *l, *s, *n;
+	register NODE *r, *l;
+#if defined(os_openbsd)
+	register NODE *s, *n;
+#endif
 	register int o;
 	register int m;
 	TWORD t;
@@ -817,23 +827,20 @@ fixnames(NODE *p, void *arg)
 #endif
 }
 
+static void mangle(NODE *p);
+
 void
 myp2tree(NODE *p)
 {
 	struct symtab *sp;
 
 	if (kflag)
-		walkf(p, fixnames, 0); /* XXX walkf not needed */
+		fixnames(p, 0);
+
+	mangle(p);
+
 	if (p->n_op != FCON)
 		return;
-
-#if 0
-	/* put floating constants in memory */
-	setloc1(RDATA);
-	defalign(ALLDOUBLE);
-	deflab1(i = getlab());
-	ninval(0, btdims[p->n_type].suesize, p);
-#endif
 
 	sp = IALLOC(sizeof(struct symtab));
 	sp->sclass = STATIC;
@@ -1116,7 +1123,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 		break;
 	case INT:
 	case UNSIGNED:
-		printf("\t.long 0x%x", (int)p->n_lval);
+		printf("\t.long %d", (int)p->n_lval);
 		if ((q = p->n_sp) != NULL) {
 			if ((q->sclass == STATIC && q->slevel > 0)) {
 				printf("+" LABFMT, q->soffset);
@@ -1152,7 +1159,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 		/* XXX probably broken on most hosts */
 		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[2], u.i[1], u.i[0]);
 #else
-		printf("\t.long\t0x%x,0x%x,0x%x\n", u.i[0], u.i[1], u.i[2]);
+		printf("\t.long\t%d,%d,%d\n", u.i[0], u.i[1], u.i[2] & 0177777);
 #endif
 		break;
 	case DOUBLE:
@@ -1160,12 +1167,12 @@ ninval(CONSZ off, int fsz, NODE *p)
 #if defined(HOST_BIG_ENDIAN)
 		printf("\t.long\t0x%x,0x%x\n", u.i[1], u.i[0]);
 #else
-		printf("\t.long\t0x%x,0x%x\n", u.i[0], u.i[1]);
+		printf("\t.long\t%d,%d\n", u.i[0], u.i[1]);
 #endif
 		break;
 	case FLOAT:
 		u.f = (float)p->n_dcon;
-		printf("\t.long\t0x%x\n", u.i[0]);
+		printf("\t.long\t%d\n", u.i[0]);
 		break;
 	default:
 		cerror("ninval");
@@ -1235,6 +1242,7 @@ defzero(struct symtab *sp)
 {
 	int off;
 	int al;
+	char *name;
 
 #ifdef TLS
 	if (sp->sflags & STLS) {
@@ -1245,19 +1253,31 @@ defzero(struct symtab *sp)
 	}
 #endif
 
+	if ((name = sp->soname) == NULL)
+		name = exname(sp->sname);
 	al = talign(sp->stype, sp->ssue)/SZCHAR;
 	off = (int)tsize(sp->stype, sp->sdf, sp->ssue);
 	off = (off+(SZCHAR-1))/SZCHAR;
+#ifdef GCC_COMPAT
+	{
+		struct gcc_attrib *ga;
+		if ((ga = gcc_get_attr(sp->ssue, GCC_ATYP_VISIBILITY)) &&
+		    strcmp(ga->a1.sarg, "default"))
+			printf("\t.%s %s\n", ga->a1.sarg, name);
+	}
+#endif
 	printf("	.%scomm ", sp->sclass == STATIC ? "l" : "");
 	if (sp->slevel == 0)
-		printf("%s,0%o",
-		    sp->soname ? sp->soname : exname(sp->sname), off);
+		printf("%s,0%o", name, off);
 	else
 		printf(LABFMT ",0%o", sp->soffset, off);
-#if !defined(PECOFFABI)
-	if (sp->sclass != STATIC)
+	if (sp->sclass != STATIC) {
+#if defined(ELFABI)
 		printf(",%d", al);
+#elif defined(MACHOABI)
+		printf(",%d", ispow2(al));
 #endif
+	}
 	printf("\n");
 }
 
@@ -1285,8 +1305,8 @@ char *nextsect;
 #ifdef TLS
 static int gottls;
 #endif
-#ifdef os_win32
 static int stdcall;
+#ifdef os_win32
 static int dllindirect;
 #endif
 static char *alias;
@@ -1305,7 +1325,6 @@ mypragma(char **ary)
 		return 1;
 	}
 #endif
-#ifdef os_win32
 	if (strcmp(ary[1], "stdcall") == 0) {
 		stdcall = 1;
 		return 1;
@@ -1314,6 +1333,7 @@ mypragma(char **ary)
 		stdcall = 0;
 		return 1;
 	}
+#ifdef os_win32
 	if (strcmp(ary[1], "fastcall") == 0) {
 		stdcall = 2;
 		return 1;
@@ -1392,13 +1412,18 @@ fixdef(struct symtab *sp)
 #endif
 		printf("\t.p2align 2\n");
 		printf("\t.long %s\n", exname(sp->sname));
+#ifdef MACHOABI
+		printf("\t.text\n");
+#else
+		printf("\t.previous\n");
+#endif
 		constructor = destructor = 0;
 	}
-#ifdef os_win32
 	if (stdcall && (sp->sclass != PARAM)) {
 		sp->sflags |= SSTDCALL;
 		stdcall = 0;
 	}
+#ifdef os_win32
 	if (dllindirect && (sp->sclass != PARAM)) {
 		sp->sflags |= SDLLINDIRECT;
 		dllindirect = 0;
@@ -1459,21 +1484,28 @@ bad:
         return bcon(0);
 }
 
-#ifdef os_win32
 /*
  *  Postfix external functions with the arguments size.
  */
 static void
-mangle(NODE *p, void *arg)
+mangle(NODE *p)
 {
-	NODE *l, *r;
-	TWORD t;
-	int size = 0;
-	char buf[256];
+	NODE *l;
+
+	if (p->n_op == NAME || p->n_op == ICON) {
+		p->n_flags = 0; /* for later setting of STDCALL */
+		if (p->n_sp) {
+			 if (p->n_sp->sflags & SSTDCALL)
+				p->n_flags = FSTDCALL;
+		}
+	} else if (p->n_op == TEMP)
+		p->n_flags = 0; /* STDCALL fun ptr not allowed */
 
 	if (p->n_op != CALL && p->n_op != STCALL &&
 	    p->n_op != UCALL && p->n_op != USTCALL)
 		return;
+
+	p->n_flags = 0;
 
 	l = p->n_left;
 	if (l->n_op == TEMP)
@@ -1482,8 +1514,18 @@ mangle(NODE *p, void *arg)
 		l = l->n_left;
 	if (l->n_sp == NULL)
 		return;
+#ifdef GCC_COMPAT
+	if (gcc_get_attr(l->n_sp->ssue, GCC_ATYP_STDCALL) != NULL)
+		l->n_sp->sflags |= SSTDCALL;
+#endif
+#ifdef os_win32
 	if (l->n_sp->sflags & SSTDCALL) {
 		if (strchr(l->n_name, '@') == NULL) {
+			int size = 0;
+			char buf[256];
+			NODE *r;
+			TWORD t;
+
 			if (p->n_op == CALL || p->n_op == STCALL) {
 				for (r = p->n_right;	
 				    r->n_op == CM; r = r->n_left) {
@@ -1503,22 +1545,20 @@ mangle(NODE *p, void *arg)
 	        	l->n_name = IALLOC(strlen(buf) + 1);
 			strcpy(l->n_name, buf);
 		}
-
-		l->n_flags = FSTDCALL;
 	}
-}
 #endif
+}
 
 void
 pass1_lastchance(struct interpass *ip)
 {
-#ifdef os_win32
+	if (ip->type == IP_NODE &&
+	    (ip->ip_node->n_op == CALL || ip->ip_node->n_op == UCALL) &&
+	    ISFTY(ip->ip_node->n_type))
+		ip->ip_node->n_flags = FFPPOP;
+ 
 	if (ip->type == IP_EPILOG) {
 		struct interpass_prolog *ipp = (struct interpass_prolog *)ip;
 		ipp->ipp_argstacksize = argstacksize;
 	}
-
-	if (ip->type == IP_NODE)
-                walkf(ip->ip_node, mangle, 0);
-#endif
 }

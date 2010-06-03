@@ -1,4 +1,5 @@
-/*	$Id: pass2.h,v 1.1.1.2 2009/09/04 00:27:34 gmcgarry Exp $	*/
+/*	Id: pass2.h,v 1.124 2010/05/21 16:08:28 ragge Exp 	*/	
+/*	$NetBSD: pass2.h,v 1.1.1.3 2010/06/03 18:57:56 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -457,8 +458,7 @@ struct basicblock {
 	bittype *Aphi;
 	SLIST_HEAD(, phiinfo) phi;
 
-	bittype *vin, *vout, *vgen, *vkill ;
-	bittype *exin, *exout ;
+	bittype *gen, *killed, *in, *out;	/* Liveness analysis */
 
 	struct interpass *first; /* first element of basic block */
 	struct interpass *last;  /* last element of basic block */
@@ -517,6 +517,8 @@ struct phiinfo {
 struct p2env {
 	struct interpass ipole;			/* all statements */
 	struct interpass_prolog *ipp, *epp;	/* quick references */
+	struct bblockinfo bbinfo;
+	struct labelinfo labinfo;
 	struct basicblock bblocks;
 	int nbblocks;
 };

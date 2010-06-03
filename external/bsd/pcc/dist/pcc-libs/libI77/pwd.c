@@ -1,4 +1,5 @@
-/*	$Id: pwd.c,v 1.1.1.1 2008/08/24 05:34:47 gmcgarry Exp $	*/
+/*	Id: pwd.c,v 1.2 2008/02/26 19:54:44 ragge Exp 	*/	
+/*	$NetBSD: pwd.c,v 1.1.1.2 2010/06/03 18:58:12 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *

@@ -1,4 +1,5 @@
-/*	$Id: cc.c,v 1.1.1.2 2009/09/04 00:27:32 gmcgarry Exp $	*/
+/*	Id: cc.c,v 1.157 2010/04/21 08:54:19 ragge Exp 	*/	
+/*	$NetBSD: cc.c,v 1.1.1.3 2010/06/03 18:57:34 plunky Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -271,6 +272,20 @@ struct Wflags {
 };
 
 #define	SZWFL	(sizeof(Wflags)/sizeof(Wflags[0]))
+
+/*
+ * Wide char defines.
+ */
+#if WCHAR_TYPE == USHORT
+#define	WCT "short unsigned int"
+#define WCM "65535U"
+#elif WCHAR_TYPE == INT
+#define WCT "int"
+#define WCM "2147483647"
+#elif WCHAR_TYPE == UNSIGNED
+#define WCT "unsigned int"
+#define WCM "294967295U"
+#endif
 
 int
 main(int argc, char *argv[])
@@ -686,6 +701,14 @@ main(int argc, char *argv[])
 		av[na++] = "-D__PCC__=" MKS(PCC_MAJOR);
 		av[na++] = "-D__PCC_MINOR__=" MKS(PCC_MINOR);
 		av[na++] = "-D__PCC_MINORMINOR__=" MKS(PCC_MINORMINOR);
+#ifndef os_win32
+#ifdef GCC_COMPAT
+		av[na++] = "-D__GNUC__=4";
+		av[na++] = "-D__GNUC_MINOR__=3";
+		av[na++] = "-D__GNUC_PATCHLEVEL__=1";
+		av[na++] = "-D__GNUC_STDC_INLINE__=1";
+#endif
+#endif
 		if (ascpp)
 			av[na++] = "-D__ASSEMBLER__";
 		if (sspflag)
@@ -705,14 +728,10 @@ main(int argc, char *argv[])
 		for (j = 0; cppadd[j]; j++)
 			av[na++] = cppadd[j];
 		av[na++] = "-D__STDC_ISO_10646__=200009L";
-#if WCHAR_SIZE == 2
-		av[na++] = "-D__WCHAR_TYPE__=short unsigned int";
-		av[na++] = "-D__SIZEOF_WCHAR_T__=2";
-		av[na++] = "-D__WCHAR_MAX__=65535U";
-#else
-		av[na++] = "-D__WCHAR_TYPE__=unsigned int";
-		av[na++] = "-D__SIZEOF_WCHAR_T__=4";
-		av[na++] = "-D__WCHAR_MAX__=4294967295U";
+#ifdef WCHAR_SIZE
+		av[na++] = "-D__WCHAR_TYPE__=" WCT;
+		av[na++] = "-D__SIZEOF_WCHAR_T__=" MKS(WCHAR_SIZE);
+		av[na++] = "-D__WCHAR_MAX__=" WCM;
 #endif
 		av[na++] = "-D__WINT_TYPE__=unsigned int";
 		av[na++] = "-D__SIZE_TYPE__=unsigned long";

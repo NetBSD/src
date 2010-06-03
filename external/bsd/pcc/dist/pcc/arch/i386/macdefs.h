@@ -1,4 +1,5 @@
-/*	$Id: macdefs.h,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
+/*	Id: macdefs.h,v 1.73 2010/05/14 11:49:19 ragge Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.3 2010/06/03 18:57:15 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -46,7 +47,11 @@
 #define SZINT		32
 #define SZFLOAT		32
 #define SZDOUBLE	64
+#ifdef MACHOABI
+#define SZLDOUBLE	128
+#else
 #define SZLDOUBLE	96
+#endif
 #define SZLONG		32
 #define SZSHORT		16
 #define SZLONGLONG	64
@@ -60,7 +65,11 @@
 #define ALINT		32
 #define ALFLOAT		32
 #define ALDOUBLE	32
+#ifdef MACHOABI
+#define ALLDOUBLE	128
+#else
 #define ALLDOUBLE	32
+#endif
 #define ALLONG		32
 #define ALLONGLONG	32
 #define ALSHORT		16
@@ -317,7 +326,8 @@ int COLORMAP(int c, int *r);
 /*
  * i386-specific node flags.
  */
-#define FSTDCALL	0x01
+#define FSTDCALL	NLOCAL1
+#define FFPPOP		NLOCAL2
 
 /*
  * i386-specific interpass stuff.
@@ -342,8 +352,8 @@ int xasmconstregs(char *);
  * builtins.
  */
 #define TARGET_BUILTINS							\
-	{ "__builtin_frame_address", i386_builtin_frame_address },	\
-	{ "__builtin_return_address", i386_builtin_return_address },
+	{ "__builtin_frame_address", i386_builtin_frame_address, -1 },	\
+	{ "__builtin_return_address", i386_builtin_return_address, -1 },
 
 #define NODE struct node
 struct node;

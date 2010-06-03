@@ -1,4 +1,5 @@
-/*	$Id: macdefs.h,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $	*/
+/*	Id: macdefs.h,v 1.12 2009/01/24 21:43:48 gmcgarry Exp 	*/	
+/*	$NetBSD: macdefs.h,v 1.1.1.3 2010/06/03 18:57:10 plunky Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

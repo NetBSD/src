@@ -1,4 +1,5 @@
-/*	$Id: _alloca.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $	*/
+/*	Id: _alloca.c,v 1.4 2009/03/15 00:20:41 gmcgarry Exp 	*/	
+/*	$NetBSD: _alloca.c,v 1.1.1.3 2010/06/03 18:58:13 plunky Exp $	*/
 /*
  * This explanation of _alloca() comes from Chris Giese, posted to
  * alt.os.dev:
