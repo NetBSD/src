@@ -1,4 +1,5 @@
-/* $Id: common.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $	*/
+/* Id: common.c,v 1.4 2009/01/23 07:10:09 gmcgarry Exp 	*/	
+/* $NetBSD: common.c,v 1.1.1.3 2010/06/03 18:58:04 plunky Exp $	*/
 /*-
  * Copyright (c) 2008 Gregory McGarry <g.mcgarry@ieee.org>
  *
@@ -21,4 +22,5 @@
 asm("	.text\n_eprol:");
 #endif
 
-IDENT("$Id: common.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $");
+IDENT("Id: common.c,v 1.4 2009/01/23 07:10:09 gmcgarry Exp ");	
+IDENT("$NetBSD: common.c,v 1.1.1.3 2010/06/03 18:58:04 plunky Exp $");

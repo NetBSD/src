@@ -1,4 +1,5 @@
-/*	$Id: crtbegin.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $	*/
+/*	Id: crtbegin.c,v 1.6 2009/08/16 23:07:07 gmcgarry Exp 	*/	
+/*	$NetBSD: crtbegin.c,v 1.1.1.3 2010/06/03 18:58:04 plunky Exp $	*/
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -120,4 +121,5 @@ void __call_##func(void)						\
 MD_CALL_STATIC_FUNCTION(.init, __do_global_ctors_aux)
 MD_CALL_STATIC_FUNCTION(.fini, __do_global_dtors_aux)
 
-IDENT("$Id: crtbegin.c,v 1.1.1.2 2009/09/04 00:27:35 gmcgarry Exp $");
+IDENT("Id: crtbegin.c,v 1.6 2009/08/16 23:07:07 gmcgarry Exp ");	
+IDENT("$NetBSD: crtbegin.c,v 1.1.1.3 2010/06/03 18:58:04 plunky Exp $");

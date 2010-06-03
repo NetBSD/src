@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetsticky.c,v 1.1.1.2 2009/09/04 00:27:36 gmcgarry Exp $ */
+/* NetBSD: fpsetsticky.c,v 1.3 2008/04/28 20:23:00 martin Exp  */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

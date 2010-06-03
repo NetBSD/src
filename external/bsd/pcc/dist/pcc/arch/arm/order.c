@@ -1,4 +1,5 @@
-/*      $Id: order.c,v 1.1.1.2 2009/09/04 00:27:30 gmcgarry Exp $    */
+/*      Id: order.c,v 1.9 2008/09/27 07:35:22 ragge Exp     */	
+/*      $NetBSD: order.c,v 1.1.1.3 2010/06/03 18:57:10 plunky Exp $    */
 /*
  * Copyright (c) 2007 Gregory McGarry (g.mcgarry@ieee.org).
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).

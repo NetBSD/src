@@ -1,4 +1,5 @@
-/*	$Id: main.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: main.c,v 1.103 2009/08/18 08:51:20 gmcgarry Exp 	*/	
+/*	$NetBSD: main.c,v 1.1.1.3 2010/06/03 18:57:40 plunky Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.

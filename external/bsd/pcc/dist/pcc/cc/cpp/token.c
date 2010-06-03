@@ -1,4 +1,5 @@
-/*	$Id: token.c,v 1.1.1.2 2009/09/04 00:27:33 gmcgarry Exp $	*/
+/*	Id: token.c,v 1.34 2010/04/20 11:20:20 ragge Exp 	*/	
+/*	$NetBSD: token.c,v 1.1.1.3 2010/06/03 18:57:37 plunky Exp $	*/
 
 /*
  * Copyright (c) 2004,2009 Anders Magnusson. All rights reserved.
@@ -71,6 +72,7 @@ static void badop(const char *);
 static int chktg(void);
 static void ppdir(void);
 void  include(void);
+void  include_next(void);
 void  define(void);
 static int inpch(void);
 
@@ -108,7 +110,7 @@ static char spechr[256] = {
 	0,	0,	0,	0,	0,	0,	0,	0,
 
 	0,	C_2,	C_SPEC,	0,	0,	0,	C_2,	C_SPEC,
-	0,	0,	0,	C_2,	0,	C_2,	0,	C_SPEC,
+	0,	0,	0,	C_2,	0,	C_2,	0,	C_SPEC|C_2,
 	C_I,	C_I,	C_I,	C_I,	C_I,	C_I,	C_I,	C_I,
 	C_I,	C_I,	0,	0,	C_2,	C_2,	C_2,	C_SPEC,
 
@@ -398,8 +400,11 @@ chlit:
 			int c, wrn;
 			extern int readmac;
 
-			if (Cflag && !flslvl && readmac)
+			if (Cflag && !flslvl && readmac) {
+				unch(ch);
+				yytext[yyp] = 0;
 				return CMNT;
+			}
 
 			wrn = 0;
 		more:	while ((c = inch()) && c != '*') {
@@ -537,6 +542,20 @@ yylex()
 			badop("");
 		break;
 
+	case '/':
+		if (Cflag == 0 || c2 != '*')
+			break;
+		/* Found comment that need to be skipped */
+		for (;;) {
+			ch = inpch();
+		c1:	if (ch != '*')
+				continue;
+			if ((ch = inpch()) == '/')
+				break;
+			goto c1;
+		}
+		return yylex();
+
 	case NUMBER:
 		if (yytext[0] == '\'') {
 			yylval.node.op = NUMBER;
@@ -631,7 +650,8 @@ msdos:		if ((c = inpch()) == '\n') {
 static void
 prinit(struct initar *it, struct includ *ic)
 {
-	char *a, *pre, *post;
+	const char *pre, *post;
+	char *a;
 
 	if (it->next)
 		prinit(it->next, ic);
@@ -672,7 +692,7 @@ prinit(struct initar *it, struct includ *ic)
  * Return 0 on success, -1 if file to be included is not found.
  */
 int
-pushfile(usch *file)
+pushfile(const usch *file, const usch *fn, int idx, void *incs)
 {
 	extern struct initar *initar;
 	struct includ ibuf;
@@ -683,20 +703,23 @@ pushfile(usch *file)
 	ic->next = ifiles;
 
 	if (file != NULL) {
-		if ((ic->infil = open((char *)file, O_RDONLY)) < 0)
+		if ((ic->infil = open((const char *)file, O_RDONLY)) < 0)
 			return -1;
 		ic->orgfn = ic->fname = file;
 		if (++inclevel > MAX_INCLEVEL)
 			error("Limit for nested includes exceeded");
 	} else {
 		ic->infil = 0;
-		ic->orgfn = ic->fname = (usch *)"<stdin>";
+		ic->orgfn = ic->fname = (const usch *)"<stdin>";
 	}
 	ic->buffer = ic->bbuf+NAMEMAX;
 	ic->curptr = ic->buffer;
 	ifiles = ic;
 	ic->lineno = 1;
 	ic->maxread = ic->curptr;
+	ic->idx = idx;
+	ic->incs = incs;
+	ic->fn = fn;
 	prtline();
 	if (initar) {
 		*ic->maxread = 0;
@@ -735,7 +758,7 @@ prtline()
 			write(ofd, s, strlen((char *)s));
 		}
 	} else if (!Pflag)
-		putstr(sheap("# %d \"%s\"\n", ifiles->lineno, ifiles->fname));
+		putstr(sheap("\n# %d \"%s\"\n", ifiles->lineno, ifiles->fname));
 	stringbuf = os;
 }
 
@@ -1048,7 +1071,7 @@ pragmastmt(void)
 	if (sloscan() != WSPACE)
 		error("bad pragma");
 	if (!flslvl)
-		putstr((usch *)"#pragma ");
+		putstr((const usch *)"#pragma ");
 	do {
 		c = inch();
 		if (!flslvl)
@@ -1102,7 +1125,7 @@ chktg()
 }
 
 static struct {
-	char *name;
+	const char *name;
 	void (*fun)(void);
 } ppd[] = {
 	{ "ifndef", ifndefstmt },
@@ -1117,6 +1140,9 @@ static struct {
 	{ "line", line },
 	{ "pragma", pragmastmt },
 	{ "elif", elifstmt },
+#ifdef GCC_COMPAT
+	{ "include_next", include_next },
+#endif
 };
 
 /*
@@ -1125,11 +1151,15 @@ static struct {
 void
 ppdir(void)
 {
-	char bp[10];
+	char bp[20];
 	int ch, i;
 
 	while ((ch = inch()) == ' ' || ch == '\t')
 		;
+	if (ch == '\n') { /* empty directive */
+		unch(ch);
+		return;
+	}
 	if (ch < 'a' || ch > 'z')
 		goto out; /* something else, ignore */
 	i = 0;
@@ -1138,7 +1168,7 @@ ppdir(void)
 		if (i == sizeof(bp)-1)
 			goto out; /* too long */
 		ch = inch();
-	} while (ch >= 'a' && ch <= 'z');
+	} while ((ch >= 'a' && ch <= 'z') || (ch == '_'));
 	unch(ch);
 	bp[i++] = 0;
 
