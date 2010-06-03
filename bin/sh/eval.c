@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.98 2009/10/07 18:12:11 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.99 2010/06/03 16:06:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.98 2009/10/07 18:12:11 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.99 2010/06/03 16:06:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ evalcmd(int argc, char **argv)
                         STPUTC('\0', concat);
                         p = grabstackstr(concat);
                 }
-                evalstring(p, EV_TESTED);
+                evalstring(p, 0);
         }
         return exitstatus;
 }
