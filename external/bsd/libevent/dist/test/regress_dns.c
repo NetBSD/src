@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_dns.c,v 1.1.1.1 2009/11/02 10:01:03 plunky Exp $	*/
+/*	$NetBSD: regress_dns.c,v 1.2 2010/06/03 07:08:41 plunky Exp $	*/
 /*
  * Copyright (c) 2003-2006 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -65,10 +65,13 @@
 #include "log.h"
 
 static int dns_ok = 0;
+#if 0
 static int dns_err = 0;
+#endif
 
 void dns_suite(void);
 
+#if 0
 static void
 dns_gethostbyname_cb(int result, char type, int count, int ttl,
     void *addresses, void *arg)
@@ -185,6 +188,7 @@ dns_gethostbyaddr(void)
 		exit(1);
 	}
 }
+#endif
 
 static int n_server_responses = 0;
 
@@ -368,10 +372,12 @@ dns_suite(void)
 {
 	dns_server(); /* Do this before we call evdns_init. */
 
+#if 0
 	evdns_init();
 	dns_gethostbyname();
 	dns_gethostbyname6();
 	dns_gethostbyaddr();
 
 	evdns_shutdown(0);
+#endif
 }
