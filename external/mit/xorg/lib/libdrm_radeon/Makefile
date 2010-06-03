@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.2 2010/05/23 01:30:26 mrg Exp $
+#      $NetBSD: Makefile,v 1.3 2010/06/03 09:43:16 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 -I${X11SRCDIR.drm}
 
 COPTS.radeon_cs_gem.c+=	-Wno-error	# XXX
+
+LIBDPLIBS=	drm	${.CURDIR}/../libdrm
 
 PKGCONFIG=	libdrm_radeon
 PKGDIST=	drm
