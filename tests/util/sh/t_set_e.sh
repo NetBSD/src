@@ -1,4 +1,4 @@
-# $NetBSD: t_set_e.sh,v 1.6 2008/05/26 22:06:10 dholland Exp $
+# $NetBSD: t_set_e.sh,v 1.7 2010/06/03 16:06:19 christos Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -106,8 +106,8 @@ all_body() {
 
 	# according to the standard, only failing *simple* commands
 	# cause an exit under -e. () is not a simple command.
-	dcheck '(set -e; (set +e; false; echo OK; false); echo OK)' 'OK OK'
-	echeck '(set -e; (set +e; false; echo OK; false); echo OK)' 'OK OK'
+	dcheck '(set -e; (set +e; false; echo OK; false); echo OK)' 'OK'
+	echeck '(set -e; (set +e; false; echo OK; false); echo OK)' 'OK'
 
 	# make sure an inner nested shell does exit though.
 	dcheck '(set -e; (false; echo ERR)); echo OK' 'OK'
@@ -133,10 +133,10 @@ all_body() {
 	# is in effect and tested accordingly.
 	#
 	dcheck '(set -e; false || false; echo ERR); echo OK' 'OK'
-	dcheck '(set -e; false && false; echo ERR); echo OK' 'OK'
+	dcheck '(set -e; false && false; echo ERR); echo OK' 'ERR OK'
 	dcheck '(set -e; true && false; echo ERR); echo OK' 'OK'
 	echeck '(set -e; false || false; echo ERR); echo OK' 'OK'
-	echeck '(set -e; false && false; echo ERR); echo OK' 'OK'
+	echeck '(set -e; false && false; echo ERR); echo OK' 'ERR OK'
 	echeck '(set -e; true && false; echo ERR); echo OK' 'OK'
 
 	# A failure that is not reached because of short-circuit
@@ -174,8 +174,8 @@ all_body() {
 	# combined case with () and &&; the inner expression is false
 	# but does not itself exit, and the () should not cause an 
 	# exit even when failing.
-	dcheck '(set -e; (false && true); echo OK); echo OK' 'OK OK'
-	echeck '(set -e; (false && true); echo OK); echo OK' 'OK OK'
+	dcheck '(set -e; (false && true); echo OK); echo OK' 'OK'
+	echeck '(set -e; (false && true); echo OK); echo OK' 'OK'
 
 	# pipelines. only the right-hand end is significant.
 	dcheck '(set -e; false | true; echo OK); echo OK' 'OK OK'
@@ -203,8 +203,8 @@ all_body() {
 	dcheck 'echo OK; (set -e; false); echo OK' 'OK OK'
 	echeck 'echo OK; (set -e; false); echo OK' 'OK OK'
 	# 2. error if the whole shell does not exit (dsl's suggested behavior)
-	dcheck 'echo OK; (set -e; false); echo ERR' 'OK'
-	echeck 'echo OK; (set -e; false); echo ERR' 'OK'
+	dcheck 'echo OK; (set -e; false); echo ERR' 'OK ERR'
+	echeck 'echo OK; (set -e; false); echo ERR' 'OK ERR'
 
 	# The current behavior of the shell is that it exits out as
 	# far as -e is set and then stops. This is probably a
@@ -214,26 +214,26 @@ all_body() {
 	echeck '(set -e; (false; echo ERR); echo ERR); echo OK' 'OK'
 
 	# backquote expansion (PR bin/17514)
-	dcheck '(set -e; echo ERR `false`; echo ERR); echo OK' 'OK'
-	dcheck '(set -e; echo ERR $(false); echo ERR); echo OK' 'OK'
-	dcheck '(set -e; echo ERR `exit 3`; echo ERR); echo OK' 'OK'
-	dcheck '(set -e; echo ERR $(exit 3); echo ERR); echo OK' 'OK'
+	dcheck '(set -e; echo ERR `false`; echo ERR); echo OK' 'ERR ERR OK'
+	dcheck '(set -e; echo ERR $(false); echo ERR); echo OK' 'ERR ERR OK'
+	dcheck '(set -e; echo ERR `exit 3`; echo ERR); echo OK' 'ERR ERR OK'
+	dcheck '(set -e; echo ERR $(exit 3); echo ERR); echo OK' 'ERR ERR OK'
 	dcheck '(set -e; x=`false`; echo ERR); echo OK' 'OK'
 	dcheck '(set -e; x=$(false); echo ERR); echo OK' 'OK'
 	dcheck '(set -e; x=`exit 3`; echo ERR); echo OK' 'OK'
 	dcheck '(set -e; x=$(exit 3); echo ERR); echo OK' 'OK'
-	echeck '(set -e; echo ERR `false`; echo ERR); echo OK' 'OK'
-	echeck '(set -e; echo ERR $(false); echo ERR); echo OK' 'OK'
-	echeck '(set -e; echo ERR `exit 3`; echo ERR); echo OK' 'OK'
-	echeck '(set -e; echo ERR $(exit 3); echo ERR); echo OK' 'OK'
+	echeck '(set -e; echo ERR `false`; echo ERR); echo OK' 'ERR ERR OK'
+	echeck '(set -e; echo ERR $(false); echo ERR); echo OK' 'ERR ERR OK'
+	echeck '(set -e; echo ERR `exit 3`; echo ERR); echo OK' 'ERR ERR OK'
+	echeck '(set -e; echo ERR $(exit 3); echo ERR); echo OK' 'ERR ERR OK'
 	echeck '(set -e; x=`false`; echo ERR); echo OK' 'OK'
 	echeck '(set -e; x=$(false); echo ERR); echo OK' 'OK'
 	echeck '(set -e; x=`exit 3`; echo ERR); echo OK' 'OK'
 	echeck '(set -e; x=$(exit 3); echo ERR); echo OK' 'OK'
 
 	# shift (PR bin/37493)
-	dcheck '(set -e; shift || true; echo OK); echo OK' 'OK OK'
-	echeck '(set -e; shift || true; echo OK); echo OK' 'OK OK'
+	dcheck '(set -e; shift || true; echo OK); echo OK' 'OK'
+	echeck '(set -e; shift || true; echo OK); echo OK' 'OK'
 
 	# Done.
 
