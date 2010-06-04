@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.20 2010/03/16 16:20:19 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.21 2010/06/04 09:25:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20 2010/03/16 16:20:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.21 2010/06/04 09:25:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,7 @@ hppa_fpu_ls(struct trapframe *frame, struct lwp *l)
 	 * segfault.
 	 */
 	if (inst_s != pcb->pcb_space)
-		return (EFAULT);
+		return EFAULT;
 
 	/* See whether or not this is a doubleword load/store. */
 	log2size = (inst & OPCODE_DOUBLE) ? 3 : 2;

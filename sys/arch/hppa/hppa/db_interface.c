@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.21 2010/03/11 07:14:22 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.22 2010/06/04 09:25:18 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.21 2010/03/11 07:14:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.22 2010/06/04 09:25:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ kdb_trap(int type, int code, db_regs_t *regs)
 	splx(s);
 
 	*regs = ddb_regs;
-	return (1);
+	return 1;
 }
 
 /*
@@ -197,5 +197,5 @@ kdb_trap(int type, int code, db_regs_t *regs)
 int
 db_valid_breakpoint(db_addr_t addr)
 {
-	return (1);
+	return 1;
 }
