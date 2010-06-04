@@ -1,4 +1,4 @@
-# $NetBSD: t_mount.sh,v 1.4 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_mount.sh,v 1.5 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,7 @@ atf_test_case plain
 plain_head() {
 	atf_set "descr" "Tests a mount and unmount without any options"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 plain_body() {
 	test_mount
@@ -45,6 +46,7 @@ atf_test_case links
 links_head() {
 	atf_set "descr" "Tests that the mount point has two hard links"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 links_body() {
 	test_mount
@@ -58,6 +60,7 @@ atf_test_case options
 options_head() {
 	atf_set "descr" "Tests the read-only mount option"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 options_body() {
 	test_mount -o ro
@@ -71,6 +74,7 @@ attrs_head() {
 	atf_set "descr" "Tests that root directory attributes are set" \
 	                "correctly"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 attrs_body() {
 	test_mount -o -u1000 -o -g100 -o -m755
@@ -86,6 +90,7 @@ negative_head() {
 	atf_set "descr" "Tests that negative values passed to to -s are" \
 	                "handled correctly"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 negative_body() {
 	mkdir tmp
@@ -98,6 +103,7 @@ large_head() {
 	atf_set "descr" "Tests that extremely long values passed to -s" \
 	                "are handled correctly"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 large_body() {
 	test_mount -o -s9223372036854775807
@@ -116,6 +122,7 @@ mntpt_head() {
 	atf_set "descr" "Tests that the error messages printed when the" \
 	                "mount point is invalid do not show the source" \
 	                "unused parameter"
+	atf_set "use.fs" "true"
 }
 mntpt_body() {
 	mount_tmpfs unused $(pwd)/mnt >out 2>&1

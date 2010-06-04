@@ -1,4 +1,4 @@
-# $NetBSD: t_awk.sh,v 1.1 2009/02/13 05:19:51 jmmv Exp $
+# $NetBSD: t_awk.sh,v 1.2 2010/06/04 08:39:41 jmmv Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,6 +37,7 @@ atf_test_case big_regexp
 big_regexp_head()
 {
 	atf_set "descr" "Checks matching long regular expressions (PR/33392)"
+	atf_set "use.fs" "true"
 }
 big_regexp_body()
 {
@@ -48,6 +49,7 @@ end_head()
 {
 	atf_set "descr" "Checks that the last line of the input" \
 	                "is available under END pattern (PR/29659)"
+	atf_set "use.fs" "true"
 }
 end_body()
 {
@@ -59,6 +61,7 @@ atf_test_case string1
 string1_head()
 {
 	atf_set "descr" "Checks escaping newlines in string literals"
+	atf_set "use.fs" "true"
 }
 string1_body()
 {
@@ -73,6 +76,7 @@ multibyte_head()
 {
 	atf_set "descr" "Checks multibyte charsets support" \
 	                "in tolower and toupper (PR/36394)"
+	atf_set "use.fs" "true"
 }
 multibyte_body()
 {

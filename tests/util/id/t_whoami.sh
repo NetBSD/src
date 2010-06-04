@@ -1,4 +1,4 @@
-# $NetBSD: t_whoami.sh,v 1.4 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_whoami.sh,v 1.5 2010/06/04 08:39:41 jmmv Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,6 +37,7 @@ EOF
 atf_test_case correct
 correct_head() {
 	atf_set "descr" "Checks that correct queries work"
+	atf_set "use.fs" "true"
 }
 correct_body() {
 	create_run_whoami
@@ -54,6 +55,7 @@ correct_body() {
 atf_test_case syntax
 syntax_head() {
 	atf_set "descr" "Checks the command's syntax"
+	atf_set "use.fs" "true"
 }
 syntax_body() {
 	create_run_whoami

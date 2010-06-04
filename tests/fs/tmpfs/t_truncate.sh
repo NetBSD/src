@@ -1,4 +1,4 @@
-# $NetBSD: t_truncate.sh,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: t_truncate.sh,v 1.3 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,6 +29,7 @@ atf_test_case basic
 basic_head() {
 	atf_set "descr" "Verifies that the truncate operation works"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 basic_body() {
 	test_mount

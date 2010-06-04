@@ -1,4 +1,4 @@
-# $NetBSD: t_rmdir.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_rmdir.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,7 @@ atf_test_case mntpt
 mntpt_head() {
 	atf_set "descr" "Checks that the mount point cannot be removed"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 mntpt_body() {
 	test_mount
@@ -48,6 +49,7 @@ non_existent_head() {
 	atf_set "descr" "Checks that non-existent directories cannot" \
 	                "be removed"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 non_existent_body() {
 	test_mount
@@ -61,6 +63,7 @@ atf_test_case single
 single_head() {
 	atf_set "descr" "Checks that removing a single directory works"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 single_body() {
 	test_mount
@@ -81,6 +84,7 @@ atf_test_case nested
 nested_head() {
 	atf_set "descr" "Checks that removing nested directories works"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 nested_body() {
 	test_mount
@@ -97,6 +101,7 @@ atf_test_case dots
 dots_head() {
 	atf_set "descr" "Checks that '.' and '..' cannot be removed"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 dots_body() {
 	test_mount
@@ -113,6 +118,7 @@ atf_test_case non_empty
 non_empty_head() {
 	atf_set "descr" "Checks that non-empty directories cannot be removed"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 non_empty_body() {
 	test_mount
@@ -132,6 +138,7 @@ atf_test_case links
 links_head() {
 	atf_set "descr" "Checks the root directory's links after removals"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 links_body() {
 	test_mount
@@ -154,6 +161,7 @@ atf_test_case curdir
 curdir_head() {
 	atf_set "descr" "Checks that the current directory cannot be removed"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 curdir_body() {
 	test_mount
@@ -173,6 +181,7 @@ kqueue_head() {
 	atf_set "descr" "Checks that removing a directory raises the" \
 	                "correct kqueue events"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 kqueue_body() {
 	test_mount

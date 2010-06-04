@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.5 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_psshfs.sh,v 1.6 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -129,6 +129,7 @@ atf_test_case inode_nos
 inode_nos_head() {
 	atf_set "descr" "Checks that different files get different inode" \
 	    "numbers"
+	atf_set "use.fs" "true"
 }
 inode_nos_body() {
 	require_puffs
@@ -171,6 +172,7 @@ inode_nos_cleanup() {
 atf_test_case pwd
 pwd_head() {
 	atf_set "descr" "Checks that pwd works correctly"
+	atf_set "use.fs" "true"
 }
 pwd_body() {
 	require_puffs

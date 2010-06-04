@@ -1,4 +1,4 @@
-# $NetBSD: t_df.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_df.sh,v 1.4 2010/06/04 08:39:41 jmmv Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,6 +30,7 @@ normal_head() {
 	atf_set "descr" "Checks that the output of df without flags is" \
 	                "correct according to some already-known, sane" \
 	                "output"
+	atf_set "use.fs" "true"
 }
 normal_body() {
 	cat >expout <<EOF
@@ -88,6 +89,7 @@ hflag_head() {
 	atf_set "descr" "Checks that the output of df is correct according" \
 	                "to some already-known, sane output when using the" \
 	                "human readable format"
+	atf_set "use.fs" "true"
 }
 hflag_body() {
 	cat >expout <<EOF

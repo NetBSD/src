@@ -1,4 +1,4 @@
-# $NetBSD: t_times.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_times.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,7 @@ empty_head() {
 	atf_set "descr" "Tests that creating an empty file and later" \
 	                "manipulating it updates times correctly"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 empty_body() {
 	test_mount
@@ -66,6 +67,7 @@ non_empty_head() {
 	atf_set "descr" "Tests that creating a non-empty file and later" \
 	                "manipulating it updates times correctly"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 non_empty_body() {
 	test_mount
@@ -88,6 +90,7 @@ link_head() {
 	atf_set "descr" "Tests that linking to an existing file updates" \
 	                "times correctly"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 link_body() {
 	test_mount
@@ -110,6 +113,7 @@ rename_head() {
 	atf_set "descr" "Tests that renaming an existing file updates" \
 	                "times correctly"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 rename_body() {
 	test_mount

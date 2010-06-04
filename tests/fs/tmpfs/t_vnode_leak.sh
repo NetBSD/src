@@ -1,4 +1,4 @@
-# $NetBSD: t_vnode_leak.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_vnode_leak.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,7 @@ main_head() {
 	                "have to be recycled, which is what the reclaim" \
 	                "operation does."
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 main_body() {
 	echo "Lowering kern.maxvnodes to 2000"

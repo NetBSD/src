@@ -1,4 +1,4 @@
-# $NetBSD: t_ipf.awk,v 1.1 2009/02/20 21:42:59 jmmv Exp $
+# $NetBSD: t_ipf.awk,v 1.2 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,6 +37,7 @@ BEGIN {
 	printf "%s_head()\n", $2;
 	print  "{"
 	printf "	atf_set \"descr\" \"%s\"\n", desc;
+	printf "	atf_set \"use.fs\" \"true\"\n", desc;
 	print  "}"
 	printf "%s_body()\n", $2;
 	print  "{"

@@ -1,4 +1,4 @@
-# $NetBSD: t_m4.sh,v 1.1 2009/02/13 05:19:52 jmmv Exp $
+# $NetBSD: t_m4.sh,v 1.2 2010/06/04 08:39:42 jmmv Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,6 +29,7 @@ atf_test_case eof
 eof_head()
 {
 	atf_set "descr" "Checks that m4 doesn't confuse 0xFF with EOF"
+	atf_set "use.fs" "true"
 }
 eof_body()
 {
