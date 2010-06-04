@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.865 2010/05/08 08:14:37 jmmv Exp $
+# $NetBSD: mi,v 1.866 2010/06/04 08:37:09 jmmv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -332,6 +332,7 @@
 ./usr/bin/atf-config				base-atf-bin		atf
 ./usr/bin/atf-report				base-atf-bin		atf
 ./usr/bin/atf-run				base-atf-bin		atf
+./usr/bin/atf-sh				base-atf-bin		atf
 ./usr/bin/atf-version				base-atf-bin		atf
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
@@ -1363,9 +1364,10 @@
 ./usr/share/atf					base-atf-share		
 ./usr/share/atf/atf-run.hooks			base-atf-bin		share,atf
 ./usr/share/atf/atf.config.subr			base-obsolete		obsolete
-./usr/share/atf/atf.footer.subr			base-atf-share		share,atf
-./usr/share/atf/atf.header.subr			base-atf-share		share,atf
-./usr/share/atf/atf.init.subr			base-atf-share		share,atf
+./usr/share/atf/atf.footer.subr			base-obsolete		obsolete
+./usr/share/atf/atf.header.subr			base-obsolete		obsolete
+./usr/share/atf/atf.init.subr			base-obsolete		obsolete
+./usr/share/atf/libatf-sh.subr			base-atf-share		atf
 ./usr/share/calendar				base-calendar-share
 ./usr/share/calendar/calendar.birthday		base-calendar-share	share
 ./usr/share/calendar/calendar.christian		base-calendar-share	share
