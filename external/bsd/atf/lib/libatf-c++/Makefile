@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2009/12/22 13:38:10 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2010/06/04 08:33:41 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -64,6 +64,20 @@ INCSDIR=	/usr/include/atf-c++
 INCS+=		atf-c++.hpp
 INCSDIR_atf-c++.hpp=/usr/include
 
-MAN=		# empty
+MAN=		atf-c++-api.3
+
+.if ${MKSHARE} != "no"
+FILES+=		atf-c++.pc
+FILESDIR=	/usr/lib/pkgconfig
+
+realall: atf-c++.pc
+atf-c++.pc: Makefile atf-c++.pc.in
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.9,g' \
+	    -e 's,__CXX__,g++,g' \
+	    -e 's,__INCLUDEDIR__,/usr/include,g' \
+	    -e 's,__LIBDIR__,/usr/lib,g' \
+	    <${SRCDIR}/atf-c++/atf-c++.pc.in >atf-c++.pc
+CLEANFILES+=	atf-c++.pc
+.endif
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/01/19 07:13:05 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/06/04 08:33:42 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 TESTS_SH=	h_misc
 TESTS_SH+=	t_atf_check
 TESTS_SH+=	t_config
+TESTS_SH+=	t_integration
 TESTS_SH+=	t_normalize
 TESTS_SH+=	t_tc
 TESTS_SH+=	t_tp

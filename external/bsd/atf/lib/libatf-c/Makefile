@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2010/05/08 08:12:33 jmmv Exp $
+# $NetBSD: Makefile,v 1.5 2010/06/04 08:33:41 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -44,7 +44,6 @@ SRCS=		build.c \
 		io.c \
 		list.c \
 		map.c \
-		object.c \
 		process.c \
 		sanity.c \
 		text.c \
@@ -68,7 +67,6 @@ INCS=		build.h \
 		list.h \
 		macros.h \
 		map.h \
-		object.h \
 		process.h \
 		sanity.h \
 		tc.h \
@@ -82,7 +80,7 @@ INCSDIR=	/usr/include/atf-c
 INCS+=		atf-c.h
 INCSDIR_atf-c.h=/usr/include
 
-MAN=		# empty
+MAN=		atf-c-api.3
 
 CLEANFILES+=	defs.h
 
@@ -91,5 +89,19 @@ defs.h: defs.h.in
 	    's,@ATTRIBUTE_NORETURN@,__attribute__((__noreturn__)),g' \
 	    < ${.ALLSRC} > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
+
+.if ${MKSHARE} != "no"
+FILES+=		atf-c.pc
+FILESDIR=	/usr/lib/pkgconfig
+
+realall: atf-c.pc
+atf-c.pc: Makefile atf-c.pc.in
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.9,g' \
+	    -e 's,__CC__,gcc,g' \
+	    -e 's,__INCLUDEDIR__,/usr/include,g' \
+	    -e 's,__LIBDIR__,/usr/lib,g' \
+	    <${SRCDIR}/atf-c/atf-c.pc.in >atf-c.pc
+CLEANFILES+=	atf-c.pc
+.endif
 
 .include <bsd.lib.mk>
