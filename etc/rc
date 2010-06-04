@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.164 2009/09/11 18:17:04 apb Exp $
+# $NetBSD: rc,v 1.165 2010/06/04 18:42:54 christos Exp $
 #
 # rc --
 #	Run the scripts in /etc/rc.d with rcorder, and log output
@@ -270,7 +270,7 @@ rc_postprocess_metadata()
 		# If the command failed, report it, and add it to a list.
 		if [ "$2" != 0 ]; then
 			rc_failures="${rc_failures}${rc_failures:+ }$1"
-			msg="$1 reported failure status $2"
+			msg="$1 $(human_exit_code $2)"
 			rc_log_message "$msg"
 			if ! $rc_silent; then
 				printf "%s\n" "$msg"
