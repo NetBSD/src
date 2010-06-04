@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.2 2010/06/02 06:05:32 kiyohara Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.3 2010/06/04 06:31:50 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.2 2010/06/02 06:05:32 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.3 2010/06/04 06:31:50 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1195,11 +1195,14 @@ gtidmac_setup(void *tag, int chan, int ninputs, bus_dmamap_t *dmamap_in,
 
 	/* Set paddr of descriptor to Channel Next Descriptor Pointer */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_CNDPR(chan),
-	    fstdd->dd_paddr+1);
+	    fstdd->dd_paddr);
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_CCHR(chan),
 	    GTIDMAC_CCHR_DESCBYTESWAP | GTIDMAC_CCHR_ENDIAN_LE);
+#else
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_CCHR(chan),
+	    GTIDMAC_CCHR_DESCBYTESWAP | GTIDMAC_CCHR_ENDIAN_BE);
 #endif
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_CCLR(chan), ccl);
 
@@ -1483,7 +1486,7 @@ mvxore_setup(void *tag, int chan, int ninputs, bus_dmamap_t *dmamap_in,
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXCR(chan), xexc);
 
 #ifdef GTIDMAC_DEBUG
-	mvidmac_dump_xoredesc(sc, fstdd, xexc, 0/*pre*/);
+	gtidmac_dump_xoredesc(sc, fstdd, xexc, 0/*pre*/);
 #endif
 
 	sc->sc_cdesc_xore[chan].chan_totalcnt += size;
@@ -1683,9 +1686,8 @@ gtidmac_dump_idmacreg(struct gtidmac_softc *sc, int chan)
 	printf("IDMAC Registers\n");
 
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_CIDMABCR(chan));
-	bitmask_snprintf(val, "\177\020b\037Own\0b\036BCLeft\0", buf,
-	    sizeof(buf));
-	printf("  Byte Count                 : 0x%s\n", buf);
+	snprintb(buf, sizeof(buf), "\177\020b\037Own\0b\036BCLeft\0", val);
+	printf("  Byte Count                 : %s\n", buf);
 	printf("    ByteCnt                  :   0x%06x\n",
 	    val & GTIDMAC_CIDMABCR_BYTECNT_MASK);
 	printf("  Source Address             : 0x%08x\n",
@@ -1698,11 +1700,11 @@ gtidmac_dump_idmacreg(struct gtidmac_softc *sc, int chan)
 	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_CCDPR(chan)));
 
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_CCLR(chan));
-	bitmask_snprintf(val,
+	snprintb(buf, sizeof(buf),
 	    "\177\020b\024Abr\0b\021CDEn\0b\016ChanAct\0b\015FetchND\0"
 	    "b\014ChanEn\0b\012IntMode\0b\005DestHold\0b\003SrcHold\0",
-	    buf, sizeof(buf));
-	printf("  Channel Control (Low)      : 0x%s\n", buf);
+	    val);
+	printf("  Channel Control (Low)      : %s\n", buf);
 	printf("    SrcBurstLimit            : %s Bytes\n",
 	  (val & GTIDMAC_CCLR_SBL_MASK) == GTIDMAC_CCLR_SBL_128B ? "128" :
 	    (val & GTIDMAC_CCLR_SBL_MASK) == GTIDMAC_CCLR_SBL_64B ? "64" :
@@ -1724,9 +1726,9 @@ gtidmac_dump_idmacreg(struct gtidmac_softc *sc, int chan)
 	printf("    DescMode                 : %s\n",
 	    val & GTIDMAC_CCLR_DESCMODE_16M ? "16M" : "64k");
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, GTIDMAC_CCHR(chan));
-	bitmask_snprintf(val, "\177\020b\001DescByteSwap\0b\000Endianness\0",
-	    buf, sizeof(buf));
-	printf("  Channel Control (High)     : 0x%s\n", buf);
+	snprintb(buf, sizeof(buf),
+	    "\177\020b\001DescByteSwap\0b\000Endianness\0", val);
+	printf("  Channel Control (High)     : %s\n", buf);
 }
 
 static void
@@ -1750,10 +1752,10 @@ gtidmac_dump_idmacdesc(struct gtidmac_softc *sc, struct gtidmac_dma_desc *dd,
 
 		printf("%d (0x%lx)\n", i, dd->dd_paddr);
 		if (mode & GTIDMAC_CCLR_DESCMODE_16M) {
-			bitmask_snprintf(desc->bc.mode16m.bcnt,
+			snprintb(buf, sizeof(buf),
 			    "\177\020b\037Own\0b\036BCLeft\0",
-			    buf, sizeof(buf));
-			printf("  Byte Count              : 0x%s\n", buf);
+			    desc->bc.mode16m.bcnt);
+			printf("  Byte Count              : %s\n", buf);
 			printf("    ByteCount             :   0x%06x\n",
 			    desc->bc.mode16m.bcnt &
 			    GTIDMAC_CIDMABCR_BYTECNT_MASK);
@@ -1793,9 +1795,10 @@ gtidmac_dump_xorereg(struct gtidmac_softc *sc, int chan)
 	printf("XORE Registers\n");
 
 	val = bus_space_read_4(sc->sc_iot, sc->sc_ioh, MVXORE_XEXCR(chan));
-	bitmask_snprintf(val, "\177\020"
+	snprintb(buf, sizeof(buf),
+	    "\177\020"
 	    "b\017RegAccProtect\0b\016DesSwp\0b\015DwrReqSwp\0b\014DrdResSwp\0",
-	    buf, sizeof(buf));
+	    val);
 	printf(" Configuration    : 0x%s\n", buf);
 	opmode = val & MVXORE_XEXCR_OM_MASK;
 	printf("    OperationMode : %s operation\n",
@@ -1872,7 +1875,7 @@ static void
 gtidmac_dump_xoredesc(struct gtidmac_softc *sc, struct gtidmac_dma_desc *dd,
 		      uint32_t mode, int post)
 {
-	struct gtxore_desc *desc;
+	struct mvxore_desc *desc;
 	int i, j;
 	char buf[256];
 
@@ -1891,17 +1894,17 @@ gtidmac_dump_xoredesc(struct gtidmac_softc *sc, struct gtidmac_dma_desc *dd,
 
 		printf("%d (0x%lx)\n", i, dd->dd_paddr);
 
-		bitmask_snprintf(desc->stat, "\177\020b\037Own\0b\036Success\0",
-		    buf, sizeof(buf));
+		snprintb(buf, sizeof(buf), "\177\020b\037Own\0b\036Success\0",
+		    desc->stat);
 		printf("  Status                  : 0x%s\n", buf);
 		if (desc->cmd & MVXORE_DESC_CMD_CRCLAST && post)
 			printf("  CRC-32 Result           : 0x%08x\n",
 			    desc->result);
-		bitmask_snprintf(desc->cmd,
+		snprintb(buf, sizeof(buf),
 		    "\177\020b\037EODIntEn\0b\036CRCLast\0"
 		    "b\007Src7Cmd\0b\006Src6Cmd\0b\005Src5Cmd\0b\004Src4Cmd\0"
 		    "b\003Src3Cmd\0b\002Src2Cmd\0b\001Src1Cmd\0b\000Src0Cmd\0",
-		    buf, sizeof(buf));
+		    desc->cmd);
 		printf("  Command                 : 0x%s\n", buf);
 		printf("  Next Descriptor Address : 0x%08x\n", desc->nextda);
 		printf("  Byte Count              :   0x%06x\n", desc->bcnt);
