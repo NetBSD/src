@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_cardbus.c,v 1.1 2010/03/27 03:04:51 nonaka Exp $	*/
+/*	$NetBSD: sdhc_cardbus.c,v 1.2 2010/06/04 19:27:12 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.1 2010/03/27 03:04:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_cardbus.c,v 1.2 2010/06/04 19:27:12 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,8 +62,6 @@ struct sdhc_cardbus_softc {
 	pcitag_t sc_tag;
 	bus_space_tag_t sc_iot;		/* CardBus I/O space tag */
 	bus_space_tag_t sc_memt;	/* CardBus MEM space tag */
-	rbus_tag_t sc_rbus_iot;		/* CardBus i/o rbus tag */
-	rbus_tag_t sc_rbus_memt;	/* CardBus mem rbus tag */
 
 	void *sc_ih;
 };
@@ -120,8 +118,6 @@ sdhc_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_iot = ca->ca_iot;
 	sc->sc_memt = ca->ca_memt;
-	sc->sc_rbus_iot = ca->ca_rbus_iot;
-	sc->sc_rbus_memt = ca->ca_rbus_memt;
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
