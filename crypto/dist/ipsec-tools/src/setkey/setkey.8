@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.24 2010/06/04 13:06:03 vanhu Exp $
+.\"	$NetBSD: setkey.8,v 1.25 2010/06/04 21:53:36 wiz Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 19, 2004
+.Dd June 4, 2010
 .Dt SETKEY 8
 .Os
 .\"
@@ -332,16 +332,16 @@ Specify hard/soft life time duration of the SA measured in seconds.
 Specify hard/soft life time duration of the SA measured in bytes transported.
 .\"
 .It Fl ctx Ar doi Ar algorithm Ar context-name
-Specify an access control label. The access control label is interpreted 
-by the LSM (e.g., SELinux). Ultimately, it enables MAC on network 
-communications. 
+Specify an access control label.
+The access control label is interpreted by the LSM (e.g., SELinux).
+Ultimately, it enables MAC on network communications.
 .Bl -tag -width Fl -compact
 .It Ar doi
 The domain of interpretation, which is used by the
-IKE daemon to identify the domain in which negotiation takes place. 
+IKE daemon to identify the domain in which negotiation takes place.
 .It Ar algorithm
 Indicates the LSM for which the label is generated (e.g., SELinux).
-.It Ar context-name 
+.It Ar context-name
 The string representation of the label that is interpreted by the LSM.
 .El
 .El
@@ -462,11 +462,13 @@ You have to consider carefully what to use.
 .\"
 .Pp
 .It Ar label
-.Ar label 
-is the access control label for the policy. This label is interpreted
-by the LSM (e.g., SELinux). Ultimately, it enables MAC on network
-communications. When a policy contains an access control label, SAs
-negotiated with this policy will contain the label. It's format:
+.Ar label
+is the access control label for the policy.
+This label is interpreted by the LSM (e.g., SELinux).
+Ultimately, it enables MAC on network communications.
+When a policy contains an access control label, SAs
+negotiated with this policy will contain the label.
+Its format:
 .Bl -tag -width Fl -compact
 .\"
 .It Fl ctx Ar doi Ar algorithm Ar context-name
