@@ -77,19 +77,14 @@ atf_tp_init(atf_tp_t *tp, struct atf_map *config)
 
     PRE(config != NULL);
 
-    atf_object_init(&tp->m_object);
-
     err = atf_list_init(&tp->m_tcs);
     if (atf_is_error(err))
-        goto err_object;
+        goto out;
 
     tp->m_config = config;
 
     INV(!atf_is_error(err));
-    return err;
-
-err_object:
-    atf_object_fini(&tp->m_object);
+out:
     return err;
 }
 
@@ -103,8 +98,6 @@ atf_tp_fini(atf_tp_t *tp)
         atf_tc_fini(tc);
     }
     atf_list_fini(&tp->m_tcs);
-
-    atf_object_fini(&tp->m_object);
 }
 
 /*
