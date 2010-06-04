@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_bsd.h,v 1.3 2010/02/24 10:18:19 tron Exp $	*/
+/*	$NetBSD: dtrace_bsd.h,v 1.4 2010/06/04 23:17:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007-2008 John Birrell (jb@freebsd.org)
@@ -40,7 +40,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
 
@@ -190,7 +189,7 @@ static inline size_t
 kdtrace_proc_size()
 {
 
-	return(KDTRACE_PROC_SIZE);
+	return KDTRACE_PROC_SIZE;
 }
 
 /* Return the DTrace thread data size compiled in the kernel hooks. */
@@ -198,7 +197,7 @@ static inline size_t
 kdtrace_thread_size()
 {
 
-	return(KDTRACE_THREAD_SIZE);
+	return KDTRACE_THREAD_SIZE;
 }
 
 static inline void
@@ -206,8 +205,7 @@ kdtrace_proc_ctor(void *arg, struct proc *p)
 {
 
 #ifdef KDTRACE_HOOKS
-	p->p_dtrace = kmem_alloc(KDTRACE_PROC_SIZE, KM_SLEEP);
-	memset(p->p_dtrace, 0, KDTRACE_PROC_ZERO);
+	p->p_dtrace = kmem_zalloc(KDTRACE_PROC_SIZE, KM_SLEEP);
 #endif
 }
 
@@ -228,8 +226,7 @@ kdtrace_thread_ctor(void *arg, struct lwp *l)
 {
 
 #ifdef KDTRACE_HOOKS
-	l->l_dtrace = kmem_alloc(KDTRACE_THREAD_SIZE, KM_SLEEP);
-	memset(l->l_dtrace, 0, KDTRACE_THREAD_ZERO);
+	l->l_dtrace = kmem_zalloc(KDTRACE_THREAD_SIZE, KM_SLEEP);
 #endif
 }
 
