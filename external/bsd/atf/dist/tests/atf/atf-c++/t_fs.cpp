@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@ extern "C" {
 }
 
 #include <fstream>
+#include <cstdio>
 
 #include "atf-c++/exceptions.hpp"
 #include "atf-c++/fs.hpp"
@@ -211,6 +212,7 @@ ATF_TEST_CASE_HEAD(path_to_absolute)
 {
     set_md_var("descr", "Tests the conversion of a relative path to an "
                "absolute one");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(path_to_absolute)
 {
@@ -268,6 +270,7 @@ ATF_TEST_CASE_HEAD(directory_read)
 {
     set_md_var("descr", "Tests the directory class creation, which reads "
                "the contents of a directory");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(directory_read)
 {
@@ -289,6 +292,7 @@ ATF_TEST_CASE_HEAD(directory_file_info)
 {
     set_md_var("descr", "Tests that the file_info objects attached to the "
                "directory are valid");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(directory_file_info)
 {
@@ -319,6 +323,7 @@ ATF_TEST_CASE(directory_names);
 ATF_TEST_CASE_HEAD(directory_names)
 {
     set_md_var("descr", "Tests the directory's names method");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(directory_names)
 {
@@ -344,6 +349,7 @@ ATF_TEST_CASE(file_info_stat);
 ATF_TEST_CASE_HEAD(file_info_stat)
 {
     set_md_var("descr", "Tests the file_info creation and its basic contents");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(file_info_stat)
 {
@@ -370,6 +376,7 @@ ATF_TEST_CASE_HEAD(file_info_perms)
 {
     set_md_var("descr", "Tests the file_info methods to get the file's "
                "permissions");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(file_info_perms)
 {
@@ -445,6 +452,7 @@ ATF_TEST_CASE(temp_dir_raii);
 ATF_TEST_CASE_HEAD(temp_dir_raii)
 {
     set_md_var("descr", "Tests the RAII behavior of the temp_dir class");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(temp_dir_raii)
 {
@@ -507,6 +515,7 @@ ATF_TEST_CASE(temp_file_raii);
 ATF_TEST_CASE_HEAD(temp_file_raii)
 {
     set_md_var("descr", "Tests the RAII behavior of the temp_file class");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(temp_file_raii)
 {
@@ -564,6 +573,7 @@ ATF_TEST_CASE(temp_file_stream);
 ATF_TEST_CASE_HEAD(temp_file_stream)
 {
     set_md_var("descr", "Tests the stream in the temp_file class");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(temp_file_stream)
 {
@@ -589,6 +599,7 @@ ATF_TEST_CASE(temp_file_fd);
 ATF_TEST_CASE_HEAD(temp_file_fd)
 {
     set_md_var("descr", "Tests access to the fd in the temp_file class");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(temp_file_fd)
 {
@@ -617,6 +628,7 @@ ATF_TEST_CASE_HEAD(temp_file_delete)
 {
     set_md_var("descr", "Tests that the destructor does not complain if the "
                "file is deleted before it gets called");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(temp_file_delete)
 {
@@ -638,6 +650,7 @@ ATF_TEST_CASE(change_directory);
 ATF_TEST_CASE_HEAD(change_directory)
 {
     set_md_var("descr", "Tests the change_directory function");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(change_directory)
 {
@@ -664,6 +677,7 @@ ATF_TEST_CASE(exists);
 ATF_TEST_CASE_HEAD(exists)
 {
     set_md_var("descr", "Tests the exists function");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(exists)
 {
@@ -687,6 +701,7 @@ ATF_TEST_CASE(get_current_dir);
 ATF_TEST_CASE_HEAD(get_current_dir)
 {
     set_md_var("descr", "Tests the get_current_dir function");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(get_current_dir)
 {
@@ -713,6 +728,7 @@ ATF_TEST_CASE(is_executable);
 ATF_TEST_CASE_HEAD(is_executable)
 {
     set_md_var("descr", "Tests the is_executable function");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(is_executable)
 {
@@ -737,6 +753,7 @@ ATF_TEST_CASE(cleanup);
 ATF_TEST_CASE_HEAD(cleanup)
 {
     set_md_var("descr", "Tests the cleanup function");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(cleanup)
 {
@@ -759,6 +776,7 @@ ATF_TEST_CASE(remove);
 ATF_TEST_CASE_HEAD(remove)
 {
     set_md_var("descr", "Tests the remove function");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(remove)
 {
@@ -791,6 +809,32 @@ ATF_TEST_CASE_BODY(current_umask)
 
     umask(0222);
     ATF_CHECK_EQUAL(0222, current_umask());
+}
+
+ATF_TEST_CASE(set_immutable);
+ATF_TEST_CASE_HEAD(set_immutable)
+{
+    set_md_var("descr", "Tests the set_immutable function");
+    set_md_var("use.fs", "true");
+}
+ATF_TEST_CASE_BODY(set_immutable)
+{
+    using atf::fs::set_immutable;
+
+    if (::mkdir("dir", 0755) == -1)
+        ATF_FAIL("Failed to create test directory");
+
+    if (!set_immutable(atf::fs::path("dir"), true))
+        ATF_SKIP("Don't know how to set the immutable flag");
+
+    if (::mkdir("dir/other", 0755) != -1)
+        ATF_FAIL("Immutable flag was not correctly set");
+
+    if (!set_immutable(atf::fs::path("dir"), false))
+        ATF_SKIP("Don't know how to unset the immutable flag");
+
+    if (::mkdir("dir/other", 0755) == -1)
+        ATF_FAIL("Immutable flag was not correctly unset");
 }
 
 // ------------------------------------------------------------------------
@@ -843,6 +887,7 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, cleanup);
     ATF_ADD_TEST_CASE(tcs, remove);
     ATF_ADD_TEST_CASE(tcs, current_umask);
+    ATF_ADD_TEST_CASE(tcs, set_immutable);
 
     // Add the test cases for the header file.
     ATF_ADD_TEST_CASE(tcs, include);

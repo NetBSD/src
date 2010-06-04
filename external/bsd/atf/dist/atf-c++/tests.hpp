@@ -99,7 +99,7 @@ class tc : utils::noncopyable {
     atf_tc_t m_tc;
 
 protected:
-    virtual void head(void) = 0;
+    virtual void head(void);
     virtual void body(void) const = 0;
     virtual void cleanup(void) const;
 

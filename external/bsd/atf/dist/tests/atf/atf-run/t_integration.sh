@@ -82,6 +82,7 @@ config_head()
 {
     atf_set "descr" "Tests that the config files are read in the correct" \
                     "order"
+    atf_set "use.fs" "true"
 }
 config_body()
 {
@@ -151,6 +152,7 @@ vflag_head()
 {
     atf_set "descr" "Tests that the -v flag works and that it properly" \
                     "overrides the values in configuration files"
+    atf_set "use.fs" "true"
 }
 vflag_body()
 {
@@ -190,6 +192,7 @@ atffile_head()
 {
     atf_set "descr" "Tests that the variables defined by the Atffile" \
                     "are recognized and that they take the lowest priority"
+    atf_set "use.fs" "true"
 }
 atffile_body()
 {
@@ -232,6 +235,7 @@ atffile_recursive_head()
 {
     atf_set "descr" "Tests that variables defined by an Atffile are not" \
                     "inherited by other Atffiles."
+    atf_set "use.fs" "true"
 }
 atffile_recursive_body()
 {
@@ -256,6 +260,7 @@ atf_test_case fds
 fds_head()
 {
     atf_set "descr" "Tests that all streams are properly captured"
+    atf_set "use.fs" "true"
 }
 fds_body()
 {
@@ -273,6 +278,7 @@ missing_results_head()
 {
     atf_set "descr" "Ensures that atf-run correctly handles test cases that " \
                     "do not create the results file"
+    atf_set "use.fs" "true"
 }
 missing_results_body()
 {
@@ -295,6 +301,7 @@ broken_results_head()
 {
     atf_set "descr" "Ensures that atf-run reports test programs that" \
                     "provide a bogus results output as broken programs"
+    atf_set "use.fs" "true"
 }
 broken_results_body()
 {
@@ -320,6 +327,7 @@ broken_tp_list_head()
 {
     atf_set "descr" "Ensures that atf-run reports test programs that" \
                     "provide a bogus test case list"
+    atf_set "use.fs" "true"
 }
 broken_tp_list_body()
 {
@@ -352,6 +360,7 @@ zero_tcs_head()
 {
     atf_set "descr" "Ensures that atf-run reports test programs without" \
                     "test cases as errors"
+    atf_set "use.fs" "true"
 }
 zero_tcs_body()
 {
@@ -374,6 +383,7 @@ exit_codes_head()
 {
     atf_set "descr" "Ensures that atf-run reports bogus exit codes for" \
                     "programs correctly"
+    atf_set "use.fs" "true"
 }
 exit_codes_body()
 {
@@ -398,6 +408,7 @@ signaled_head()
 {
     atf_set "descr" "Ensures that atf-run reports test program's crashes" \
                     "correctly"
+    atf_set "use.fs" "true"
 }
 signaled_body()
 {
@@ -424,6 +435,7 @@ no_reason_head()
     atf_set "descr" "Ensures that atf-run reports bogus test programs" \
                     "that do not provide a reason for failed or skipped" \
                     "test cases"
+    atf_set "use.fs" "true"
 }
 no_reason_body()
 {
@@ -450,6 +462,7 @@ hooks_head()
 {
     atf_set "descr" "Checks that the default hooks work and that they" \
                     "can be overriden by the user"
+    atf_set "use.fs" "true"
 }
 hooks_body()
 {
@@ -528,6 +541,7 @@ isolation_env_head()
 {
     atf_set "descr" "Tests that atf-run sets a set of environment variables" \
                     "to known sane values"
+    atf_set "use.fs" "true"
 }
 isolation_env_body()
 {
@@ -562,6 +576,7 @@ atf_test_case isolation_home
 isolation_home_head()
 {
     atf_set "descr" "Tests that atf-run sets HOME to a sane and valid value"
+    atf_set "use.fs" "true"
 }
 isolation_home_body()
 {
@@ -574,6 +589,7 @@ atf_test_case isolation_umask
 isolation_umask_head()
 {
     atf_set "descr" "Tests that atf-run sets the umask to a known value"
+    atf_set "use.fs" "true"
 }
 isolation_umask_body()
 {
@@ -589,6 +605,7 @@ cleanup_pass_head()
 {
     atf_set "descr" "Tests that atf-run calls the cleanup routine of the test" \
         "case when the test case result is passed"
+    atf_set "use.fs" "true"
 }
 cleanup_pass_body()
 {
@@ -607,6 +624,7 @@ cleanup_fail_head()
 {
     atf_set "descr" "Tests that atf-run calls the cleanup routine of the test" \
         "case when the test case result is failed"
+    atf_set "use.fs" "true"
 }
 cleanup_fail_body()
 {
@@ -625,6 +643,7 @@ cleanup_skip_head()
 {
     atf_set "descr" "Tests that atf-run calls the cleanup routine of the test" \
         "case when the test case result is skipped"
+    atf_set "use.fs" "true"
 }
 cleanup_skip_body()
 {
@@ -643,6 +662,7 @@ cleanup_curdir_head()
 {
     atf_set "descr" "Tests that atf-run calls the cleanup routine in the same" \
         "work directory as the body so that they can share data"
+    atf_set "use.fs" "true"
 }
 cleanup_curdir_body()
 {
@@ -669,6 +689,7 @@ atf_test_case require_arch
 require_arch_head()
 {
     atf_set "descr" "Tests that atf-run validates the require.arch property"
+    atf_set "use.fs" "true"
 }
 require_arch_body()
 {
@@ -710,6 +731,7 @@ atf_test_case require_config
 require_config_head()
 {
     atf_set "descr" "Tests that atf-run validates the require.config property"
+    atf_set "use.fs" "true"
 }
 require_config_body()
 {
@@ -732,6 +754,7 @@ atf_test_case require_machine
 require_machine_head()
 {
     atf_set "descr" "Tests that atf-run validates the require.machine property"
+    atf_set "use.fs" "true"
 }
 require_machine_body()
 {
@@ -780,6 +803,7 @@ atf_test_case require_progs
 require_progs_head()
 {
     atf_set "descr" "Tests that atf-run validates the require.progs property"
+    atf_set "use.fs" "true"
 }
 require_progs_body()
 {
@@ -813,6 +837,7 @@ require_user_root_head()
 {
     atf_set "descr" "Tests that atf-run validates the require.user property" \
         "when it is set to 'root'"
+    atf_set "use.fs" "true"
 }
 require_user_root_body()
 {
@@ -832,6 +857,7 @@ require_user_unprivileged_head()
 {
     atf_set "descr" "Tests that atf-run validates the require.user property" \
         "when it is set to 'root'"
+    atf_set "use.fs" "true"
 }
 require_user_unprivileged_body()
 {
@@ -851,6 +877,7 @@ require_user_bad_head()
 {
     atf_set "descr" "Tests that atf-run validates the require.user property" \
         "when it is set to 'root'"
+    atf_set "use.fs" "true"
 }
 require_user_bad_body()
 {
@@ -866,6 +893,7 @@ atf_test_case timeout
 timeout_head()
 {
     atf_set "descr" "Tests that atf-run kills a test case that times out"
+    atf_set "use.fs" "true"
 }
 timeout_body()
 {
@@ -876,6 +904,30 @@ timeout_body()
     test -f finished && atf_fail "Test case was not killed after time out"
     atf_check -s eq:0 -o ignore -e empty grep \
         "${TESTCASE}, failed, .*timed out after 1 second" stdout
+}
+
+atf_test_case use_fs
+use_fs_head()
+{
+    atf_set "descr" "Tests that atf-run correctly handles the use.fs property"
+    atf_set "use.fs" "true"
+}
+use_fs_body()
+{
+    create_helper use_fs
+    create_atffile helper
+
+    atf_check -s eq:0 -o ignore -e ignore atf-run \
+        -v allowed=false -v access=false helper
+
+    atf_check -s eq:1 -o ignore -e ignore atf-run \
+        -v allowed=false -v access=true helper
+
+    atf_check -s eq:0 -o ignore -e ignore atf-run \
+        -v allowed=true -v access=false helper
+
+    atf_check -s eq:0 -o ignore -e ignore atf-run \
+        -v allowed=true -v access=true helper
 }
 
 atf_init_test_cases()
@@ -909,6 +961,7 @@ atf_init_test_cases()
     atf_add_test_case require_user_unprivileged
     atf_add_test_case require_user_bad
     atf_add_test_case timeout
+    atf_add_test_case use_fs
 }
 
 # vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4

@@ -27,10 +27,10 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include "atf-run/test-program.hpp"
-
 #include "atf-c++/macros.hpp"
 #include "atf-c++/parser.hpp"
+
+#include "test-program.hpp"
 
 namespace impl = atf::atf_run;
 
@@ -88,10 +88,11 @@ ATF_TEST_CASE_BODY(get_metadata_several_tcs) {
             md.test_cases.find("first");
         ATF_CHECK(iter != md.test_cases.end());
 
-        ATF_CHECK_EQUAL(3, (*iter).second.size());
+        ATF_CHECK_EQUAL(4, (*iter).second.size());
         check_property((*iter).second, "descr", "Description 1");
         check_property((*iter).second, "ident", "first");
         check_property((*iter).second, "timeout", "300");
+        check_property((*iter).second, "use.fs", "false");
     }
 
     {
@@ -99,10 +100,11 @@ ATF_TEST_CASE_BODY(get_metadata_several_tcs) {
             md.test_cases.find("second");
         ATF_CHECK(iter != md.test_cases.end());
 
-        ATF_CHECK_EQUAL(4, (*iter).second.size());
+        ATF_CHECK_EQUAL(5, (*iter).second.size());
         check_property((*iter).second, "descr", "Description 2");
         check_property((*iter).second, "ident", "second");
         check_property((*iter).second, "timeout", "500");
+        check_property((*iter).second, "use.fs", "true");
         check_property((*iter).second, "X-property", "Custom property");
     }
 
@@ -111,9 +113,10 @@ ATF_TEST_CASE_BODY(get_metadata_several_tcs) {
             md.test_cases.find("third");
         ATF_CHECK(iter != md.test_cases.end());
 
-        ATF_CHECK_EQUAL(2, (*iter).second.size());
+        ATF_CHECK_EQUAL(3, (*iter).second.size());
         check_property((*iter).second, "ident", "third");
         check_property((*iter).second, "timeout", "300");
+        check_property((*iter).second, "use.fs", "false");
     }
 }
 

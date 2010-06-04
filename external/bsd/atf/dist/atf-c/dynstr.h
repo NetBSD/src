@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,17 +31,16 @@
 #define ATF_C_DYNSTR_H
 
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #include <atf-c/error_fwd.h>
-#include <atf-c/object.h>
 
 /* ---------------------------------------------------------------------
  * The "atf_dynstr" type.
  * --------------------------------------------------------------------- */
 
 struct atf_dynstr {
-    atf_object_t m_object;
-
     char *m_data;
     size_t m_datasize;
     size_t m_length;

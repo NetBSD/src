@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@ ATF_TC(readline);
 ATF_TC_HEAD(readline, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_io_readline function");
+    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(readline, tc)
 {
@@ -128,6 +129,7 @@ ATF_TC(write_fmt);
 ATF_TC_HEAD(write_fmt, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_io_write_fmt function");
+    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(write_fmt, tc)
 {

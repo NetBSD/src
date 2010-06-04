@@ -30,9 +30,14 @@
 get_helpers()
 {
     srcdir=$(atf_get_srcdir)
-    echo ${srcdir}/h_c
-    echo ${srcdir}/h_cpp
-    echo ${srcdir}/h_sh
+
+    if [ ${#} -eq 0 ]; then
+        set -- h_c h_cpp h_sh
+    fi
+
+    for h_name in "${@}"; do
+        echo ${srcdir}/${h_name}
+    done
 }
 
 # vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4

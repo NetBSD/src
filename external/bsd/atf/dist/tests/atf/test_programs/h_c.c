@@ -299,6 +299,11 @@ ATF_TC_BODY(metadata_no_descr, tc)
 {
 }
 
+ATF_TC_WITHOUT_HEAD(metadata_no_head);
+ATF_TC_BODY(metadata_no_head, tc)
+{
+}
+
 /* ---------------------------------------------------------------------
  * Helper tests for "t_srcdir".
  * --------------------------------------------------------------------- */
@@ -373,6 +378,7 @@ ATF_TP_ADD_TCS(tp)
 
     /* Add helper tests for t_meta_data. */
     ATF_TP_ADD_TC(tp, metadata_no_descr);
+    ATF_TP_ADD_TC(tp, metadata_no_head);
 
     /* Add helper tests for t_srcdir. */
     ATF_TP_ADD_TC(tp, srcdir_exists);

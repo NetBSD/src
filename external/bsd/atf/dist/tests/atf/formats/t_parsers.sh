@@ -94,6 +94,7 @@ atf_test_case atffile
 atffile_head()
 {
     atf_set "descr" "Verifies the application/X-atf-atffile parser"
+    atf_set "use.fs" "true"
 }
 atffile_body()
 {
@@ -116,6 +117,7 @@ atf_test_case config
 config_head()
 {
     atf_set "descr" "Verifies the application/X-atf-config parser"
+    atf_set "use.fs" "true"
 }
 config_body()
 {
@@ -136,6 +138,7 @@ atf_test_case tcr
 tcr_head()
 {
     atf_set "descr" "Verifies the application/X-atf-tcr parser"
+    atf_set "use.fs" "true"
 }
 tcr_body()
 {
@@ -165,6 +168,7 @@ atf_test_case tp
 tp_head()
 {
     atf_set "descr" "Verifies the application/X-atf-tp parser"
+    atf_set "use.fs" "true"
 }
 tp_body()
 {
@@ -177,6 +181,7 @@ atf_test_case tps
 tps_head()
 {
     atf_set "descr" "Verifies the application/X-atf-tps parser"
+    atf_set "use.fs" "true"
 }
 tps_body()
 {

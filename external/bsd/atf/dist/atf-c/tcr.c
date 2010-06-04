@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -114,25 +114,11 @@ const atf_tcr_state_t atf_tcr_skipped_state = 2;
 atf_error_t
 atf_tcr_init(atf_tcr_t *tcr, atf_tcr_state_t state)
 {
-    atf_error_t err;
-
     PRE(!state_allows_reason(state));
-
-    atf_object_init(&tcr->m_object);
 
     tcr->m_state = state;
 
-    err = atf_dynstr_init(&tcr->m_reason);
-    if (atf_is_error(err))
-        goto err_object;
-
-    INV(!atf_is_error(err));
-    return err;
-
-err_object:
-    atf_object_fini(&tcr->m_object);
-
-    return err;
+    return atf_dynstr_init(&tcr->m_reason);
 }
 
 atf_error_t
@@ -144,22 +130,11 @@ atf_tcr_init_reason_ap(atf_tcr_t *tcr, atf_tcr_state_t state,
 
     PRE(state_allows_reason(state));
 
-    atf_object_init(&tcr->m_object);
-
     tcr->m_state = state;
 
     va_copy(ap2, ap);
     err = format_reason(&tcr->m_reason, fmt, ap2);
     va_end(ap2);
-    if (atf_is_error(err))
-        goto err_object;
-
-    INV(!atf_is_error(err));
-    return err;
-
-err_object:
-    atf_object_fini(&tcr->m_object);
-
     return err;
 }
 
@@ -181,8 +156,6 @@ void
 atf_tcr_fini(atf_tcr_t *tcr)
 {
     atf_dynstr_fini(&tcr->m_reason);
-
-    atf_object_fini(&tcr->m_object);
 }
 
 /*

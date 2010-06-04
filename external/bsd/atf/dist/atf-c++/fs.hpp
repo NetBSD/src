@@ -529,6 +529,14 @@ void rmdir(const path&);
 //!
 mode_t current_umask(void);
 
+//!
+//! \brief Changes the immutability of a file.
+//!
+//! Returns true if the operation was performed, or false if the operation
+//! is not supported.
+//!
+bool set_immutable(const atf::fs::path&, bool);
+
 } // namespace fs
 } // namespace atf
 
