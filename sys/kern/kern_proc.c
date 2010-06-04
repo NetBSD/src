@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.163 2010/02/26 18:47:13 jym Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.164 2010/06/04 23:02:18 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.163 2010/02/26 18:47:13 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.164 2010/06/04 23:02:18 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -444,9 +444,8 @@ proc0_init(void)
 	mutex_init(&p->p_sigacts->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	siginit(p);
 
-	kdtrace_proc_ctor(NULL, p);
-
 	proc_initspecific(p);
+	kdtrace_proc_ctor(NULL, p);
 	lwp_initspecific(l);
 
 	SYSCALL_TIME_LWP_INIT(l);
@@ -684,7 +683,7 @@ proc_alloc(void)
 	p->p_stat = SIDL;			/* protect against others */
 
 	proc_initspecific(p);
-	/* allocate next free pid */
+	kdtrace_proc_ctor(NULL, p);
 
 	for (;;expand_pid_table()) {
 		if (__predict_false(pid_alloc_cnt >= pid_alloc_lim))
@@ -713,9 +712,6 @@ proc_alloc(void)
 	/* Grab table slot */
 	pt->pt_proc = p;
 	pid_alloc_cnt++;
-
-	kdtrace_proc_ctor(NULL, p);
-
 	mutex_exit(proc_lock);
 
 	return p;
