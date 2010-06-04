@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,7 @@ atf_test_case file
 file_head()
 {
     atf_set "descr" "Tests that a single file can be removed"
+    atf_set "use.fs" "true"
 }
 file_body()
 {
@@ -71,6 +72,7 @@ dir_eacces_on_root_head()
 {
     atf_set "descr" "Tests that the parent of the root directory is not" \
                     "modified if the root cannot be removed"
+    atf_set "use.fs" "true"
 }
 dir_eacces_on_root_body()
 {
@@ -91,6 +93,7 @@ dir_eacces_on_subdir_head()
 {
     atf_set "descr" "Tests that a non-writable parent doesn't cause" \
                     "a removal error"
+    atf_set "use.fs" "true"
 }
 dir_eacces_on_subdir_body()
 {
@@ -108,6 +111,7 @@ atf_test_case dir_empty
 dir_empty_head()
 {
     atf_set "descr" "Tests that a single empty directory can be removed"
+    atf_set "use.fs" "true"
 }
 dir_empty_body()
 {
@@ -120,6 +124,7 @@ atf_test_case dir_full
 dir_full_head()
 {
     atf_set "descr" "Tests that a directory with contents can be removed"
+    atf_set "use.fs" "true"
 }
 dir_full_body()
 {
@@ -137,6 +142,7 @@ mount_head()
     atf_set "descr" "Tests that the removal algorithm does not cross" \
                     "mount points"
     atf_set "require.user" "root"
+    atf_set "use.fs" "true"
 }
 mount_body()
 {
@@ -175,6 +181,7 @@ symlink_head()
                     "symlinks, which may live in another device and thus" \
                     "be treated as mount points"
     atf_set "require.user" "root"
+    atf_set "use.fs" "true"
 }
 symlink_body()
 {

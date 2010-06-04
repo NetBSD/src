@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -213,6 +213,7 @@ ATF_TC_HEAD(serialization, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the atf_tcr_serialize and "
                       "atf_tcr_deserialize functions");
+    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(serialization, tc)
 {

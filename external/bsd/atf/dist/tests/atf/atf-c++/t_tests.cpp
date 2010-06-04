@@ -101,6 +101,7 @@ ATF_TEST_CASE(tcr_read_passed);
 ATF_TEST_CASE_HEAD(tcr_read_passed)
 {
     set_md_var("descr", "Tests reading a passed test case result");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(tcr_read_passed)
 {
@@ -120,6 +121,8 @@ ATF_TEST_CASE(tcr_read_failed);
 ATF_TEST_CASE_HEAD(tcr_read_failed)
 {
     set_md_var("descr", "Tests reading a failed test case result");
+    set_md_var("use.fs", "true");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(tcr_read_failed)
 {
@@ -141,6 +144,7 @@ ATF_TEST_CASE(tcr_read_skipped);
 ATF_TEST_CASE_HEAD(tcr_read_skipped)
 {
     set_md_var("descr", "Tests reading a skipped test case result");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(tcr_read_skipped)
 {
@@ -175,6 +179,7 @@ ATF_TEST_CASE(tcr_read_format_error);
 ATF_TEST_CASE_HEAD(tcr_read_format_error)
 {
     set_md_var("descr", "Tests reading a test case result with a format error");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(tcr_read_format_error)
 {
@@ -194,6 +199,7 @@ ATF_TEST_CASE(tcr_read_parse_error);
 ATF_TEST_CASE_HEAD(tcr_read_parse_error)
 {
     set_md_var("descr", "Tests reading a test case result with a parse error");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(tcr_read_parse_error)
 {
@@ -216,6 +222,7 @@ ATF_TEST_CASE(tcr_write_passed);
 ATF_TEST_CASE_HEAD(tcr_write_passed)
 {
     set_md_var("descr", "Tests writing a passed test case result");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(tcr_write_passed)
 {
@@ -240,6 +247,7 @@ ATF_TEST_CASE(tcr_write_failed);
 ATF_TEST_CASE_HEAD(tcr_write_failed)
 {
     set_md_var("descr", "Tests writing a failed test case result");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(tcr_write_failed)
 {
@@ -266,6 +274,7 @@ ATF_TEST_CASE(tcr_write_skipped);
 ATF_TEST_CASE_HEAD(tcr_write_skipped)
 {
     set_md_var("descr", "Tests writing a skipped test case result");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(tcr_write_skipped)
 {
@@ -293,6 +302,7 @@ ATF_TEST_CASE_HEAD(tcr_write_create_file_error)
 {
     set_md_var("descr", "Tests writing a test case result to an unwritable "
                "file");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(tcr_write_create_file_error)
 {

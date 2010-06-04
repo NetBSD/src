@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,16 @@
 
 #define ATF_TC_PACK_NAME(tc) \
     (atfu_ ## tc ## _tc_pack)
+
+#define ATF_TC_WITHOUT_HEAD(tc) \
+    static void atfu_ ## tc ## _body(const atf_tc_t *); \
+    static atf_tc_t atfu_ ## tc ## _tc; \
+    static atf_tc_pack_t atfu_ ## tc ## _tc_pack = { \
+        .m_ident = #tc, \
+        .m_head = NULL, \
+        .m_body = atfu_ ## tc ## _body, \
+        .m_cleanup = NULL, \
+    }
 
 #define ATF_TC(tc) \
     static void atfu_ ## tc ## _head(atf_tc_t *); \

@@ -8,9 +8,7 @@ tp: atf-sh
 tp: test_programs
 tp: atf-check
 tp: atf-cleanup
-tp: atf-compile
 tp: atf-config
 tp: atf-report
 tp: atf-run
 tp: formats
-tp: data

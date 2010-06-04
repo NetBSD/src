@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -223,6 +223,8 @@ public:
 // Free functions.
 // ------------------------------------------------------------------------
 
+// TODO: The void* cookie can probably be templatized, thus also allowing
+// const data structures.
 template< class OutStream, class ErrStream >
 child
 fork(void (*start)(void*), const OutStream& outsb,

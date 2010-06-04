@@ -22,3 +22,4 @@ tp: t_exceptions
 tp: t_formats
 tp: t_sanity
 tp: t_ui
+tp: t_pkg_config

@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -116,8 +116,6 @@ stream_is_valid(const atf_process_stream_t *sb)
 atf_error_t
 atf_process_stream_init_capture(atf_process_stream_t *sb)
 {
-    atf_object_init(&sb->m_object);
-
     sb->m_type = atf_process_stream_type_capture;
 
     POST(stream_is_valid(sb));
@@ -132,8 +130,6 @@ atf_process_stream_init_connect(atf_process_stream_t *sb,
     PRE(tgt_fd >= 0);
     PRE(src_fd != tgt_fd);
 
-    atf_object_init(&sb->m_object);
-
     sb->m_type = atf_process_stream_type_connect;
     sb->m_src_fd = src_fd;
     sb->m_tgt_fd = tgt_fd;
@@ -145,8 +141,6 @@ atf_process_stream_init_connect(atf_process_stream_t *sb,
 atf_error_t
 atf_process_stream_init_inherit(atf_process_stream_t *sb)
 {
-    atf_object_init(&sb->m_object);
-
     sb->m_type = atf_process_stream_type_inherit;
 
     POST(stream_is_valid(sb));
@@ -157,8 +151,6 @@ atf_error_t
 atf_process_stream_init_redirect_fd(atf_process_stream_t *sb,
                                     const int fd)
 {
-    atf_object_init(&sb->m_object);
-
     sb->m_type = atf_process_stream_type_redirect_fd;
     sb->m_fd = fd;
 
@@ -170,8 +162,6 @@ atf_error_t
 atf_process_stream_init_redirect_path(atf_process_stream_t *sb,
                                       const atf_fs_path_t *path)
 {
-    atf_object_init(&sb->m_object);
-
     sb->m_type = atf_process_stream_type_redirect_path;
     sb->m_path = path;
 
@@ -183,8 +173,6 @@ void
 atf_process_stream_fini(atf_process_stream_t *sb)
 {
     PRE(stream_is_valid(sb));
-
-    atf_object_fini(&sb->m_object);
 }
 
 int
@@ -202,8 +190,6 @@ atf_process_stream_type(const atf_process_stream_t *sb)
 atf_error_t
 atf_process_status_init(atf_process_status_t *s, int status)
 {
-    atf_object_init(&s->m_object);
-
     s->m_status = status;
 
     return atf_no_error();
@@ -212,7 +198,6 @@ atf_process_status_init(atf_process_status_t *s, int status)
 void
 atf_process_status_fini(atf_process_status_t *s)
 {
-    atf_object_fini(&s->m_object);
 }
 
 bool
@@ -265,8 +250,6 @@ static
 atf_error_t
 atf_process_child_init(atf_process_child_t *c)
 {
-    atf_object_init(&c->m_object);
-
     c->m_pid = 0;
     c->m_stdout = -1;
     c->m_stderr = -1;
@@ -278,7 +261,6 @@ static
 void
 atf_process_child_fini(atf_process_child_t *c)
 {
-    atf_object_fini(&c->m_object);
 }
 
 atf_error_t
@@ -440,7 +422,6 @@ do_child(void (*start)(void *),
 {
     atf_error_t err;
 
-    atf_reset_exit_checks();
     err = child_connect(outsp, STDOUT_FILENO);
     if (atf_is_error(err))
         goto out;
@@ -612,7 +593,6 @@ do_exec(void *v)
 {
     struct exec_args *ea = v;
 
-    atf_reset_exit_checks();
     const int ret = const_execvp(atf_fs_path_cstring(ea->m_prog), ea->m_argv);
     const int errnocopy = errno;
     INV(ret == -1);

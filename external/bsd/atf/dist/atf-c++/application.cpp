@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,10 +40,6 @@ extern "C" {
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-
-extern "C" {
-#include "atf-c/object.h"
-}
 
 #include "atf-c++/application.hpp"
 #include "atf-c++/sanity.hpp"
@@ -116,7 +112,6 @@ impl::app::app(const std::string& description,
     m_manpage(manpage),
     m_global_manpage(global_manpage)
 {
-    atf_init_objects();
 }
 
 impl::app::~app(void)
@@ -258,11 +253,19 @@ impl::app::run(int argc, char* const* argv)
     m_argc = argc;
     m_argv = argv;
 
+    m_argv0 = m_argv[0];
+
     m_prog_name = std::strrchr(m_argv[0], '/');
     if (m_prog_name == NULL)
         m_prog_name = m_argv[0];
     else
         m_prog_name++;
+
+    // Libtool workaround: if running from within the source tree (binaries
+    // that are not installed yet), skip the "lt-" prefix added to files in
+    // the ".libs" directory to show the real (not temporary) name.
+    if (std::strncmp(m_prog_name, "lt-", 3) == 0)
+        m_prog_name += 3;
 
     const std::string bug =
         std::string("This is probably a bug in ") + m_prog_name +

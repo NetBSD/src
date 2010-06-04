@@ -27,11 +27,11 @@
 // IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#include "atf-run/requirements.hpp"
-
 #include "atf-c++/config.hpp"
 #include "atf-c++/macros.hpp"
 #include "atf-c++/user.hpp"
+
+#include "requirements.hpp"
 
 namespace impl = atf::atf_run;
 

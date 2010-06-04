@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2008 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@ AC_DEFUN([ATF_MODULE_DEFS], [
     dnl Sun's cc does support the noreturn attribute but CC (the C++
     dnl compiler) does not.  And in that case, CC just raises a warning
     dnl during compilation, not an error, which later breaks the
-    dnl data/t_pkg_config:cxx_build check.
+    dnl atf-c++/t_pkg_config:cxx_build check.
     AC_MSG_CHECKING(whether __attribute__((noreturn)) is supported)
     AC_RUN_IFELSE(
         [int main(void)

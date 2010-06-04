@@ -31,7 +31,7 @@ dnl -----------------------------------------------------------------------
 dnl Initialize the GNU build system.
 dnl -----------------------------------------------------------------------
 
-AC_INIT([Automated Testing Framework], [0.8], [atf-devel@NetBSD.org], [atf],
+AC_INIT([Automated Testing Framework], [0.9], [atf-devel@NetBSD.org], [atf],
         [http://www.NetBSD.org/~jmmv/atf/])
 AC_PREREQ([2.65])
 AC_COPYRIGHT([Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.])
@@ -52,6 +52,9 @@ dnl This is just a hack to reverse the meaning of the --enable-shared
 dnl flag provided by libtool.  We want it to default to building static
 dnl libraries only for now, but these are painful during development.
 dnl It is nice to have an easy way to enable shared library builds.
+dnl
+dnl TODO(1.0): Enable shared libraries by default, and fix their
+dnl -version-info.
 AC_ARG_ENABLE(unstable-shared,
     AS_HELP_STRING([--enable-unstable-shared],
         [Enables the build of shared libraries with unstable ABIs/APIs]),
