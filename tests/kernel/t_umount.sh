@@ -1,4 +1,4 @@
-# $NetBSD: t_umount.sh,v 1.1 2009/02/20 21:39:57 jmmv Exp $
+# $NetBSD: t_umount.sh,v 1.2 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,6 +38,7 @@ umount_head()
 {
 	atf_set "descr" "Checks forced unmounting"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 umount_body()
 {

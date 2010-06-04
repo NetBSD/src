@@ -1,4 +1,4 @@
-# $NetBSD: t_grep.sh,v 1.1 2009/02/13 05:19:52 jmmv Exp $
+# $NetBSD: t_grep.sh,v 1.2 2010/06/04 08:39:41 jmmv Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,6 +51,7 @@ atf_test_case recurse
 recurse_head()
 {
 	atf_set "descr" "Checks recursive searching"
+	atf_set "use.fs" "true"
 }
 recurse_body()
 {
@@ -65,6 +66,7 @@ atf_test_case recurse_symlink
 recurse_symlink_head()
 {
 	atf_set "descr" "Checks symbolic link recursion"
+	atf_set "use.fs" "true"
 }
 recurse_symlink_body()
 {
@@ -149,6 +151,7 @@ atf_test_case context
 context_head()
 {
 	atf_set "descr" "Checks displaying context with -A, -B and -C flags"
+	atf_set "use.fs" "true"
 }
 context_body()
 {
@@ -186,6 +189,7 @@ atf_test_case zgrep
 zgrep_head()
 {
 	atf_set "descr" "Checks handling of gzipped files with zgrep"
+	atf_set "use.fs" "true"
 }
 zgrep_body()
 {
@@ -210,6 +214,7 @@ atf_test_case context2
 context2_head()
 {
 	atf_set "descr" "Checks displaying context with -z flag"
+	atf_set "use.fs" "true"
 }
 context2_body()
 {

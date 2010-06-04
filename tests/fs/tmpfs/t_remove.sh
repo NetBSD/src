@@ -1,4 +1,4 @@
-# $NetBSD: t_remove.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_remove.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,7 @@ atf_test_case single
 single_head() {
 	atf_set "descr" "Checks that file removal works"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 single_body() {
 	test_mount
@@ -51,6 +52,7 @@ uchg_head() {
 	atf_set "descr" "Checks that files with the uchg flag set cannot" \
 	                "be removed"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 uchg_body() {
 	test_mount
@@ -69,6 +71,7 @@ atf_test_case dot
 dot_head() {
 	atf_set "descr" "Checks that '.' cannot be removed"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 dot_body() {
 	test_mount
@@ -85,6 +88,7 @@ kqueue_head() {
 	atf_set "descr" "Removes a file and checks the kqueue events" \
 	                "raised"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 kqueue_body() {
 	test_mount

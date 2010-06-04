@@ -1,4 +1,4 @@
-# $NetBSD: t_make.awk,v 1.1 2009/02/13 05:19:52 jmmv Exp $
+# $NetBSD: t_make.awk,v 1.2 2010/06/04 08:39:42 jmmv Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,7 @@ BEGIN {
 	printf "%s_head()\n", $2;
 	print  "{"
 	printf "	atf_set \"descr\" \"%s\"\n", $3;
+	printf "	atf_set \"use.fs\" \"true\"\n", $3;
 	print  "}"
 	printf "%s_body()\n", $2;
 	print  "{"
