@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.81 2010/03/15 18:59:47 jmmv Exp $
+# $NetBSD: rc.subr,v 1.82 2010/06/04 18:42:54 christos Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1174,5 +1174,23 @@ twiddle()
 	printf "%s\b" "$_next" >/dev/tty
 	_twiddle_state="$_next"
 }
+
+#
+# human_exit_code
+#	Print the a human version of the exit code.
+#
+human_exit_code()
+{
+	if [ $1 -lt 127 ]
+	then
+		echo "exited with code $1"
+	elif [ $1 -eq 127 ]
+	then
+		echo "stopped with signal $(expr $1 / 256)"
+	else
+		echo "terminated with signal $(expr $1 - 128)"
+	fi
+}
+	
 
 _rc_subr_loaded=:
