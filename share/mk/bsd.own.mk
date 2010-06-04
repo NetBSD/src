@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.627 2010/06/01 23:29:10 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.628 2010/06/04 08:35:09 jmmv Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -227,7 +227,6 @@ TOOL_AMIGAAOUT2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-aout2bb
 TOOL_AMIGAELF2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-elf2bb
 TOOL_AMIGATXLT=		${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-txlt
 TOOL_ASN1_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}asn1_compile
-TOOL_ATF_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}atf-compile
 TOOL_AWK=		${TOOLDIR}/bin/${_TOOL_PREFIX}awk
 TOOL_CAP_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}cap_mkdb
 TOOL_CAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}cat
@@ -304,7 +303,6 @@ TOOL_AMIGAAOUT2BB=	amiga-aout2bb
 TOOL_AMIGAELF2BB=	amiga-elf2bb
 TOOL_AMIGATXLT=		amiga-txlt
 TOOL_ASN1_COMPILE=	asn1_compile
-TOOL_ATF_COMPILE=	atf-compile
 TOOL_AWK=		awk
 TOOL_CAP_MKDB=		cap_mkdb
 TOOL_CAT=		cat
