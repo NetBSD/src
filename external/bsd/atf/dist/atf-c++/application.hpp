@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -87,6 +87,7 @@ protected:
     int m_argc;
     char* const* m_argv;
 
+    const char* m_argv0;
     const char* m_prog_name;
     std::string m_description;
     std::string m_manpage, m_global_manpage;

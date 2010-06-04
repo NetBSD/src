@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,15 +38,12 @@
 
 #include <atf-c/dynstr.h>
 #include <atf-c/error_fwd.h>
-#include <atf-c/object.h>
 
 /* ---------------------------------------------------------------------
  * The "atf_fs_path" type.
  * --------------------------------------------------------------------- */
 
 struct atf_fs_path {
-    atf_object_t m_object;
-
     atf_dynstr_t m_data;
 };
 typedef struct atf_fs_path atf_fs_path_t;
@@ -79,8 +76,6 @@ bool atf_equal_fs_path_fs_path(const atf_fs_path_t *,
  * --------------------------------------------------------------------- */
 
 struct atf_fs_stat {
-    atf_object_t m_object;
-
     int m_type;
     struct stat m_sb;
 };
@@ -133,6 +128,7 @@ atf_error_t atf_fs_getcwd(atf_fs_path_t *);
 atf_error_t atf_fs_mkdtemp(atf_fs_path_t *);
 atf_error_t atf_fs_mkstemp(atf_fs_path_t *, int *);
 atf_error_t atf_fs_rmdir(const atf_fs_path_t *);
+atf_error_t atf_fs_set_immutable(const atf_fs_path_t *, bool, bool *);
 atf_error_t atf_fs_unlink(const atf_fs_path_t *);
 
 #endif /* !defined(ATF_C_FS_H) */

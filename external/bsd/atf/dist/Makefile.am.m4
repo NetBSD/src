@@ -63,6 +63,7 @@ INIT_VAR([$1_PROGRAMS])
 $1_PROGRAMS += $2/$2
 AUTOMAKE_ID([$2/$2])_SOURCES = $2/$2.cpp $3
 nodist_[]AUTOMAKE_ID([$2/$2])_SOURCES = $4
+AUTOMAKE_ID([$2/$2])_CPPFLAGS = -I$(srcdir)/$2 -I$2
 AUTOMAKE_ID([$2/$2])_LDADD = libatf-c++.la
 dist_man_MANS += $2/$2.1
 ])
@@ -99,10 +100,6 @@ AM_CPPFLAGS = "-DATF_ARCH=\"$(atf_arch)\"" \
               "-DATF_PKGDATADIR=\"$(pkgdatadir)\"" \
               "-DATF_SHELL=\"$(ATF_SHELL)\"" \
               "-DATF_WORKDIR=\"$(ATF_WORKDIR)\""
-
-ATF_COMPILE_DEPS = $(srcdir)/atf-sh/atf.init.subr
-ATF_COMPILE_DEPS += atf-compile/atf-host-compile
-ATF_COMPILE_SH = ./atf-compile/atf-host-compile
 
 # DISTFILE_DOC name src
 #
@@ -213,8 +210,6 @@ libatf_c_la_SOURCES = atf-c/build.c \
                       atf-c/macros.h \
                       atf-c/map.c \
                       atf-c/map.h \
-                      atf-c/object.c \
-                      atf-c/object.h \
                       atf-c/process.c \
                       atf-c/process.h \
                       atf-c/sanity.c \
@@ -255,7 +250,6 @@ atf_c_HEADERS = atf-c/build.h \
                 atf-c/list.h \
                 atf-c/macros.h \
                 atf-c/map.h \
-                atf-c/object.h \
                 atf-c/process.h \
                 atf-c/sanity.h \
                 atf-c/tc.h \
@@ -267,6 +261,19 @@ atf_c_HEADERS = atf-c/build.h \
 atf_cdir = $(includedir)/atf-c
 
 dist_man_MANS = atf-c/atf-c-api.3
+
+pkgconfigdir = $(atf_pkgconfigdir)
+pkgconfig_DATA = atf-c/atf-c.pc
+CLEANFILES += atf-c/atf-c.pc
+EXTRA_DIST += atf-c/atf-c.pc.in
+atf-c/atf-c.pc: $(srcdir)/atf-c/atf-c.pc.in
+	test -d atf-c || mkdir -p atf-c
+	sed -e 's,__ATF_VERSION__,@PACKAGE_VERSION@,g' \
+	    -e 's,__CC__,$(CC),g' \
+	    -e 's,__INCLUDEDIR__,$(includedir),g' \
+	    -e 's,__LIBDIR__,$(libdir),g' \
+	    <$(srcdir)/atf-c/atf-c.pc.in >atf-c/atf-c.pc.tmp
+	mv atf-c/atf-c.pc.tmp atf-c/atf-c.pc
 
 # -------------------------------------------------------------------------
 # `atf-c++' directory.
@@ -340,6 +347,18 @@ atf_c__dir = $(includedir)/atf-c++
 
 dist_man_MANS += atf-c++/atf-c++-api.3
 
+pkgconfig_DATA += atf-c++/atf-c++.pc
+CLEANFILES += atf-c++/atf-c++.pc
+EXTRA_DIST += atf-c++/atf-c++.pc.in
+atf-c++/atf-c++.pc: $(srcdir)/atf-c++/atf-c++.pc.in
+	test -d atf-c++ || mkdir -p atf-c++
+	sed -e 's,__ATF_VERSION__,@PACKAGE_VERSION@,g' \
+	    -e 's,__CXX__,$(CXX),g' \
+	    -e 's,__INCLUDEDIR__,$(includedir),g' \
+	    -e 's,__LIBDIR__,$(libdir),g' \
+	    <$(srcdir)/atf-c++/atf-c++.pc.in >atf-c++/atf-c++.pc.tmp
+	mv atf-c++/atf-c++.pc.tmp atf-c++/atf-c++.pc
+
 # -------------------------------------------------------------------------
 # `atf-check' directory.
 # -------------------------------------------------------------------------
@@ -359,23 +378,6 @@ TOOL([bin], [atf-config])
 TOOL([libexec], [atf-cleanup])
 
 # -------------------------------------------------------------------------
-# `atf-compile' directory.
-# -------------------------------------------------------------------------
-
-TOOL([bin], [atf-compile])
-
-atf-compile/atf-host-compile: $(srcdir)/atf-compile/atf-host-compile.sh
-	sed -e 's,__ATF_PKGDATADIR__,$(srcdir)/atf-sh,g' \
-	    -e 's,__ATF_SHELL__,$(ATF_SHELL),g' \
-	    <$(srcdir)/atf-compile/atf-host-compile.sh \
-	    >atf-compile/atf-host-compile.tmp
-	chmod +x atf-compile/atf-host-compile.tmp
-	mv atf-compile/atf-host-compile.tmp atf-compile/atf-host-compile
-CLEANFILES += atf-compile/atf-host-compile
-CLEANFILES += atf-compile/atf-host-compile.tmp
-EXTRA_DIST += atf-compile/atf-host-compile.sh
-
-# -------------------------------------------------------------------------
 # `atf-format' directory.
 # -------------------------------------------------------------------------
 
@@ -386,6 +388,18 @@ TOOL([libexec], [atf-format])
 # -------------------------------------------------------------------------
 
 TOOL([bin], [atf-report])
+
+cssdir = $(atf_cssdir)
+css_DATA = atf-report/tests-results.css
+EXTRA_DIST += $(css_DATA)
+
+dtddir = $(atf_dtddir)
+dtd_DATA = atf-report/tests-results.dtd
+EXTRA_DIST += $(dtd_DATA)
+
+xsldir = $(atf_xsldir)
+xsl_DATA = atf-report/tests-results.xsl
+EXTRA_DIST += $(xsl_DATA)
 
 # -------------------------------------------------------------------------
 # `atf-run' directory.
@@ -404,9 +418,9 @@ TOOL([bin], [atf-run], [atf-run/config.cpp \
 # `atf-sh' directory.
 # -------------------------------------------------------------------------
 
-atf_sh_DATA = atf-sh/atf.footer.subr \
-              atf-sh/atf.header.subr \
-              atf-sh/atf.init.subr
+TOOL([bin], [atf-sh])
+
+atf_sh_DATA = atf-sh/libatf-sh.subr
 atf_shdir = $(pkgdatadir)
 EXTRA_DIST += $(atf_sh_DATA)
 
@@ -427,49 +441,12 @@ atf-version/revision.h: admin/revision.h $(srcdir)/admin/revision-dist.h
 CLEANFILES += atf-version/revision.h
 
 hooksdir = $(pkgdatadir)
-hooks_DATA = atf-run/atf-run.hooks
+hooks_DATA = atf-run/share/atf-run.hooks
 EXTRA_DIST += $(hooks_DATA)
 
-# -------------------------------------------------------------------------
-# `data' directory.
-# -------------------------------------------------------------------------
-
-cssdir = $(atf_cssdir)
-css_DATA = data/tests-results.css
-EXTRA_DIST += $(css_DATA)
-
-dtddir = $(atf_dtddir)
-dtd_DATA = data/tests-results.dtd
-EXTRA_DIST += $(dtd_DATA)
-
 egdir = $(atf_egdir)
-eg_DATA = data/atf-run.hooks
+eg_DATA = atf-run/sample/atf-run.hooks
 EXTRA_DIST += $(eg_DATA)
-
-pkgconfigdir = $(atf_pkgconfigdir)
-pkgconfig_DATA = data/atf-c.pc data/atf-c++.pc
-CLEANFILES += data/atf-c.pc data/atf-c++.pc
-EXTRA_DIST += data/atf-c.pc.in data/atf-c++.pc.in
-data/atf-c.pc: $(srcdir)/data/atf-c.pc.in
-	test -d data || mkdir -p data
-	sed -e 's,__ATF_VERSION__,@PACKAGE_VERSION@,g' \
-	    -e 's,__CC__,$(CC),g' \
-	    -e 's,__INCLUDEDIR__,$(includedir),g' \
-	    -e 's,__LIBDIR__,$(libdir),g' \
-	    <$(srcdir)/data/atf-c.pc.in >data/atf-c.pc.tmp
-	mv data/atf-c.pc.tmp data/atf-c.pc
-data/atf-c++.pc: $(srcdir)/data/atf-c++.pc.in
-	test -d data || mkdir -p data
-	sed -e 's,__ATF_VERSION__,@PACKAGE_VERSION@,g' \
-	    -e 's,__CXX__,$(CXX),g' \
-	    -e 's,__INCLUDEDIR__,$(includedir),g' \
-	    -e 's,__LIBDIR__,$(libdir),g' \
-	    <$(srcdir)/data/atf-c++.pc.in >data/atf-c++.pc.tmp
-	mv data/atf-c++.pc.tmp data/atf-c++.pc
-
-xsldir = $(atf_xsldir)
-xsl_DATA = data/tests-results.xsl
-EXTRA_DIST += $(xsl_DATA)
 
 # -------------------------------------------------------------------------
 # `doc' directory.
@@ -527,7 +504,6 @@ XML_DOC([copying])
 XML_DOC([install])
 XML_DOC([news])
 XML_DOC([readme])
-XML_DOC([roadmap])
 XML_DOC([specification])
 
 # -------------------------------------------------------------------------
@@ -539,6 +515,14 @@ ACLOCAL_AMFLAGS = -I m4
 # -------------------------------------------------------------------------
 # `tests/bootstrap' directory.
 # -------------------------------------------------------------------------
+
+# BUILD_SH_TP infile outfile
+#
+# Commands to build a test program using atf-sh.
+m4_define([BUILD_SH_TP], [echo '#! $(bindir)/atf-sh' >$2
+	cat $1 >>$2
+	chmod +x $2
+])
 
 check_PROGRAMS = tests/bootstrap/h_app_empty
 tests_bootstrap_h_app_empty_SOURCES = tests/bootstrap/h_app_empty.cpp
@@ -559,37 +543,31 @@ tests_bootstrap_h_tp_basic_cpp_LDADD = libatf-c++.la
 check_SCRIPTS = tests/bootstrap/h_tp_basic_sh
 CLEANFILES += tests/bootstrap/h_tp_basic_sh
 EXTRA_DIST += tests/bootstrap/h_tp_basic_sh.sh
-tests/bootstrap/h_tp_basic_sh: $(srcdir)/tests/bootstrap/h_tp_basic_sh.sh \
-                               $(ATF_COMPILE_DEPS)
+tests/bootstrap/h_tp_basic_sh: $(srcdir)/tests/bootstrap/h_tp_basic_sh.sh
 	test -d tests/bootstrap || mkdir -p tests/bootstrap
-	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/bootstrap/h_tp_basic_sh.sh
+	BUILD_SH_TP([$(srcdir)/tests/bootstrap/h_tp_basic_sh.sh], [$@])
 
 check_SCRIPTS += tests/bootstrap/h_tp_atf_check_sh
 CLEANFILES += tests/bootstrap/h_tp_atf_check_sh
 EXTRA_DIST += tests/bootstrap/h_tp_atf_check_sh.sh
 tests/bootstrap/h_tp_atf_check_sh: \
-		$(srcdir)/tests/bootstrap/h_tp_atf_check_sh.sh \
-		$(ATF_COMPILE_DEPS)
+		$(srcdir)/tests/bootstrap/h_tp_atf_check_sh.sh
 	test -d tests/bootstrap || mkdir -p tests/bootstrap
-	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/bootstrap/h_tp_atf_check_sh.sh
+	BUILD_SH_TP([$(srcdir)/tests/bootstrap/h_tp_atf_check_sh.sh], [$@])
 
 check_SCRIPTS += tests/bootstrap/h_tp_fail
 CLEANFILES += tests/bootstrap/h_tp_fail
 EXTRA_DIST += tests/bootstrap/h_tp_fail.sh
-tests/bootstrap/h_tp_fail: \
-		$(srcdir)/tests/bootstrap/h_tp_fail.sh \
-		$(ATF_COMPILE_DEPS)
+tests/bootstrap/h_tp_fail: $(srcdir)/tests/bootstrap/h_tp_fail.sh
 	test -d tests/bootstrap || mkdir -p tests/bootstrap
-	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/bootstrap/h_tp_fail.sh
+	BUILD_SH_TP([$(srcdir)/tests/bootstrap/h_tp_fail.sh], [$@])
 
 check_SCRIPTS += tests/bootstrap/h_tp_pass
 CLEANFILES += tests/bootstrap/h_tp_pass
 EXTRA_DIST += tests/bootstrap/h_tp_pass.sh
-tests/bootstrap/h_tp_pass: \
-		$(srcdir)/tests/bootstrap/h_tp_pass.sh \
-		$(ATF_COMPILE_DEPS)
+tests/bootstrap/h_tp_pass: $(srcdir)/tests/bootstrap/h_tp_pass.sh
 	test -d tests/bootstrap || mkdir -p tests/bootstrap
-	$(ATF_COMPILE_SH) -o $@ $(srcdir)/tests/bootstrap/h_tp_pass.sh
+	BUILD_SH_TP([$(srcdir)/tests/bootstrap/h_tp_pass.sh], [$@])
 
 DISTCLEANFILES = \
 		tests/bootstrap/atconfig \
@@ -686,7 +664,6 @@ atf_atf_c_DATA = tests/atf/atf-c/Atffile \
                  tests/atf/atf-c/d_include_list_h.c \
                  tests/atf/atf-c/d_include_macros_h.c \
                  tests/atf/atf-c/d_include_map_h.c \
-                 tests/atf/atf-c/d_include_object_h.c \
                  tests/atf/atf-c/d_include_process_h.c \
                  tests/atf/atf-c/d_include_sanity_h.c \
                  tests/atf/atf-c/d_include_tc_h.c \
@@ -703,7 +680,7 @@ noinst_LTLIBRARIES = tests/atf/atf-c/libh.la
 tests_atf_atf_c_libh_la_SOURCES = tests/atf/atf-c/h_lib.c \
                                   tests/atf/atf-c/h_lib.h
 
-# C_TP subdir progname extradeps extralibs
+# C_TP subdir progname extradeps extralibs cppflags
 #
 # Generates rules to build a C test program.  The 'subdir' is relative to
 # tests/ and progname is the source file name without .c.
@@ -711,32 +688,34 @@ m4_define([C_TP], [
 INIT_VAR(AUTOMAKE_ID([$1])_PROGRAMS)
 AUTOMAKE_ID([$1])_PROGRAMS += tests/$1/$2
 tests_[]AUTOMAKE_ID([$1_$2])_SOURCES = tests/$1/$2.c $3
+tests_[]AUTOMAKE_ID([$1_$2])_CPPFLAGS = $5
 tests_[]AUTOMAKE_ID([$1_$2])_LDADD = $4 libatf-c.la
 ])
 
-# CXX_TP subdir progname extradeps extralibs
+# CXX_TP subdir progname extradeps extralibs cppflags
 #
-# Generates rules to build a C test program.  The 'subdir' is relative to
+# Generates rules to build a C++ test program.  The 'subdir' is relative to
 # tests/ and progname is the source file name without .c.
 m4_define([CXX_TP], [
 INIT_VAR(AUTOMAKE_ID([$1])_PROGRAMS)
 AUTOMAKE_ID([$1])_PROGRAMS += tests/$1/$2
 tests_[]AUTOMAKE_ID([$1_$2])_SOURCES = tests/$1/$2.cpp $3
+tests_[]AUTOMAKE_ID([$1_$2])_CPPFLAGS = $5
 tests_[]AUTOMAKE_ID([$1_$2])_LDADD = $4 libatf-c++.la
 ])
 
 # SH_TP subdir progname extradeps
 #
-# Generates rules to build a C test program.  The 'subdir' is relative to
+# Generates rules to build a shell test program.  The 'subdir' is relative to
 # tests/ and progname is the source file name without .c.
 m4_define([SH_TP], [
 INIT_VAR(AUTOMAKE_ID([$1])_SCRIPTS)
 AUTOMAKE_ID([$1])_SCRIPTS += tests/$1/$2
 CLEANFILES += tests/$1/$2
 EXTRA_DIST += tests/$1/$2.sh
-tests/$1/$2: $(srcdir)/tests/$1/$2.sh $3 $(ATF_COMPILE_DEPS)
+tests/$1/$2: $(srcdir)/tests/$1/$2.sh $3
 	test -d tests/$1 || mkdir -p tests/$1
-	$(ATF_COMPILE_SH) -o tests/$1/$2 $(srcdir)/tests/$1/$2.sh $3
+	BUILD_SH_TP([$(srcdir)/tests/$1/$2.sh $3], [tests/$1/$2])
 ])
 
 C_TP([atf/atf-c], [t_atf_c], [], [tests/atf/atf-c/libh.la])
@@ -761,6 +740,7 @@ C_TP([atf/atf-c], [t_text], [], [tests/atf/atf-c/libh.la])
 C_TP([atf/atf-c], [t_tp], [], [tests/atf/atf-c/libh.la])
 C_TP([atf/atf-c], [t_ui], [], [tests/atf/atf-c/libh.la])
 C_TP([atf/atf-c], [t_user], [], [tests/atf/atf-c/libh.la])
+SH_TP([atf/atf-c], [t_pkg_config])
 
 atf_atf_c_PROGRAMS += tests/atf/atf-c/h_processes
 tests_atf_atf_c_h_processes_SOURCES = tests/atf/atf-c/h_processes.c
@@ -819,6 +799,7 @@ CXX_TP([atf/atf-c++], [t_text], [], [tests/atf/atf-c++/libh.la])
 CXX_TP([atf/atf-c++], [t_ui], [], [tests/atf/atf-c++/libh.la])
 CXX_TP([atf/atf-c++], [t_user], [], [tests/atf/atf-c++/libh.la])
 CXX_TP([atf/atf-c++], [t_utils], [], [tests/atf/atf-c++/libh.la])
+SH_TP([atf/atf-c++], [t_pkg_config])
 
 atf_atf_check_DATA = tests/atf/atf-check/Atffile
 atf_atf_checkdir = $(pkgtestsdir)/atf-check
@@ -831,13 +812,6 @@ atf_atf_cleanupdir = $(pkgtestsdir)/atf-cleanup
 EXTRA_DIST += $(atf_atf_cleanup_DATA)
 
 SH_TP([atf/atf-cleanup], [t_integration])
-
-atf_atf_compile_DATA = tests/atf/atf-compile/Atffile
-atf_atf_compiledir = $(pkgtestsdir)/atf-compile
-EXTRA_DIST += $(atf_atf_compile_DATA)
-
-CXX_TP([atf/atf-compile], [h_mode])
-SH_TP([atf/atf-compile], [t_integration])
 
 atf_atf_config_DATA = tests/atf/atf-config/Atffile
 atf_atf_configdir = $(pkgtestsdir)/atf-config
@@ -864,10 +838,12 @@ C_TP([atf/atf-run], [h_zero_tcs])
 CXX_TP([atf/atf-run], [h_fail])
 CXX_TP([atf/atf-run], [h_pass])
 CXX_TP([atf/atf-run], [h_misc])
-CXX_TP([atf/atf-run], [t_config], [atf-run/config.cpp])
-CXX_TP([atf/atf-run], [t_requirements], [atf-run/requirements.cpp])
+CXX_TP([atf/atf-run], [t_config], [atf-run/config.cpp], [],
+       [-I$(srcdir)/atf-run])
+CXX_TP([atf/atf-run], [t_requirements], [atf-run/requirements.cpp], [],
+       [-I$(srcdir)/atf-run])
 CXX_TP([atf/atf-run], [t_test_program],
-       [atf-run/test-program.cpp atf-run/timer.cpp])
+       [atf-run/test-program.cpp atf-run/timer.cpp], [], [-I$(srcdir)/atf-run])
 SH_TP([atf/atf-run], [t_integration])
 
 atf_atf_sh_DATA = tests/atf/atf-sh/Atffile
@@ -877,15 +853,10 @@ EXTRA_DIST += $(atf_atf_sh_DATA)
 SH_TP([atf/atf-sh], [h_misc])
 SH_TP([atf/atf-sh], [t_atf_check])
 SH_TP([atf/atf-sh], [t_config])
+SH_TP([atf/atf-sh], [t_integration])
 SH_TP([atf/atf-sh], [t_normalize])
 SH_TP([atf/atf-sh], [t_tc])
 SH_TP([atf/atf-sh], [t_tp])
-
-atf_data_DATA = tests/atf/data/Atffile
-atf_datadir = $(pkgtestsdir)/data
-EXTRA_DIST += $(atf_data_DATA)
-
-SH_TP([atf/data], [t_pkg_config])
 
 atf_formats_DATA = tests/atf/formats/Atffile \
                    tests/atf/formats/d_atffile_1 \

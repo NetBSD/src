@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,6 +35,13 @@
 #include <vector>
 
 #include <atf-c++/tests.hpp>
+
+#define ATF_TEST_CASE_WITHOUT_HEAD(name) \
+    class atfu_tc_ ## name : public atf::tests::tc { \
+        void body(void) const; \
+    public: \
+        atfu_tc_ ## name(void) : atf::tests::tc(#name) {} \
+    };
 
 #define ATF_TEST_CASE(name) \
     class atfu_tc_ ## name : public atf::tests::tc { \

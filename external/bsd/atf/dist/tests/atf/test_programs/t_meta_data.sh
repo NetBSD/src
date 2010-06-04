@@ -31,6 +31,7 @@ atf_test_case no_descr
 no_descr_head()
 {
     atf_set "descr" "Tests that the description may not be present"
+    atf_set "use.fs" "true"
 }
 no_descr_body()
 {
@@ -41,9 +42,25 @@ no_descr_body()
     done
 }
 
+atf_test_case no_head
+no_head_head()
+{
+    atf_set "descr" "Tests that the head may not be present"
+    atf_set "use.fs" "true"
+}
+no_head_body()
+{
+    for h in $(get_helpers); do
+        atf_check -s eq:0 -o ignore -e empty ${h} -s $(atf_get_srcdir) -l
+        atf_check -s eq:0 -o empty -e empty ${h} -s $(atf_get_srcdir) \
+            metadata_no_head
+    done
+}
+
 atf_init_test_cases()
 {
     atf_add_test_case no_descr
+    atf_add_test_case no_head
 }
 
 # vim: syntax=sh:expandtab:shiftwidth=4:softtabstop=4

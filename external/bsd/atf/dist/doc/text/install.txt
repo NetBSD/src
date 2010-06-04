@@ -108,10 +108,7 @@
 
     5. Check that the installed programs work by running 'make installcheck'.
        You do not need to be root to do this, even though some checks will
-       not be run otherwise. (Be aware that on, some systems, GNU Libtool
-       will break these checks. If you get some failures, try reconfiguring
-       the project providing the '--disable-fast-install' flag to 'configure'
-       and then rebuild and recheck.)
+       not be run otherwise.
 
                               Configuration flags
 
