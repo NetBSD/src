@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -567,6 +567,58 @@ add_destination_route(struct rt *rt, const struct interface *iface)
 	return r;
 }
 
+/* We should check to ensure the routers are on the same subnet
+ * OR supply a host route. If not, warn and add a host route. */
+static struct rt *
+add_router_host_route(struct rt *rt, const struct interface *ifp)
+{
+	struct rt *rtp, *rtl, *rtn;
+	const char *cp, *cp2, *cp3, *cplim;
+
+	for (rtp = rt, rtl = NULL; rtp; rtl = rtp, rtp = rtp->next) {
+		if (rtp->dest.s_addr != INADDR_ANY)
+			continue;
+		/* Scan for a route to match */
+		for (rtn = rt; rtn != rtp; rtn = rtn->next) {
+			/* match host */
+			if (rtn->dest.s_addr == rtp->gate.s_addr)
+				break;
+			/* match subnet */
+			cp = (const char *)&rtp->gate.s_addr;
+			cp2 = (const char *)&rtn->dest.s_addr;
+			cp3 = (const char *)&rtn->net.s_addr;
+			cplim = cp3 + sizeof(rtn->net.s_addr);
+			while (cp3 < cplim) {
+				if ((*cp++ ^ *cp2++) & *cp3++)
+					break;
+			}
+			if (cp3 == cplim)
+				break;
+		}
+		if (rtn != rtp)
+			continue;
+		if (ifp->flags & IFF_NOARP) {
+			syslog(LOG_WARNING,
+			    "%s: forcing router %s through interface",
+			    ifp->name, inet_ntoa(rtp->gate));
+			rtp->gate.s_addr = 0;
+			continue;
+		}
+		syslog(LOG_WARNING, "%s: router %s requires a host route",
+		    ifp->name, inet_ntoa(rtp->gate));
+		rtn = xmalloc(sizeof(*rtn));
+		rtn->dest.s_addr = rtp->gate.s_addr;
+		rtn->net.s_addr = INADDR_BROADCAST;
+		rtn->gate.s_addr = rtp->gate.s_addr;
+		rtn->next = rtp;
+		if (rtl == NULL)
+			rt = rtn;
+		else
+			rtl->next = rtn;
+	}
+	return rt;
+}
+
 void
 build_routes(void)
 {
@@ -578,6 +630,7 @@ build_routes(void)
 			continue;
 		dnr = get_routes(ifp);
 		dnr = add_subnet_route(dnr, ifp);
+		dnr = add_router_host_route(dnr, ifp);
 		dnr = add_destination_route(dnr, ifp);
 		for (rt = dnr; rt && (rtn = rt->next, 1); lrt = rt, rt = rtn) {
 			rt->iface = ifp;
