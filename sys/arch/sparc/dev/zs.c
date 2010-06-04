@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.117 2010/01/17 16:23:43 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.118 2010/06/04 06:04:15 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.117 2010/01/17 16:23:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.118 2010/06/04 06:04:15 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -454,6 +454,9 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		 * mouse line disciplines for SUN4 machines below.
 		 * Also, don't set the console flags, otherwise we
 		 * tell zstty_attach() to attach as console.
+		 * XXX
+		 * is this still necessary? sparc64 passes the console flags to
+		 * zstty etc. 
 		 */
 		if (zsc->zsc_promunit == 1) {
 			if ((hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0 &&
@@ -535,8 +538,16 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 			struct tty *tp = zstty_get_tty_from_dev(child);
 			kma.kmta_tp = tp;
 			kma.kmta_dev = tp->t_dev;
-			kma.kmta_consdev = zsc_args.consdev;
 
+			/*
+			 * we need to pass a consdev since that's how kbd knows
+			 * it's the console keyboard
+			 */
+			if (hwflags & ZS_HWFLAG_CONSOLE_INPUT) {
+				kma.kmta_consdev = &zs_consdev;
+			} else
+				kma.kmta_consdev = zsc_args.consdev;
+			
 			/* Attach 'em if we got 'em. */
 #if (NKBD > 0)
 			if (channel == 0) {
