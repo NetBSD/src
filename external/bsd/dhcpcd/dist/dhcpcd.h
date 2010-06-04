@@ -1,6 +1,6 @@
 /* 
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2009 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2010 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -91,7 +91,6 @@ struct interface {
 	size_t hwlen;
 	int metric;
 	int carrier;
-	int arpable;
 	int wireless;
 	char ssid[IF_SSIDSIZE];
 
@@ -135,6 +134,7 @@ void start_rebind(void *);
 void start_reboot(struct interface *);
 void start_expire(void *);
 void send_decline(struct interface *);
+void open_sockets(struct interface *);
 void close_sockets(struct interface *);
 void drop_config(struct interface *, const char *);
 int select_profile(struct interface *, const char *);
