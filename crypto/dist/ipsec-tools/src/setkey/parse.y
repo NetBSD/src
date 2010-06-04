@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.12 2009/03/06 11:45:03 tteras Exp $	*/
+/*	$NetBSD: parse.y,v 1.13 2010/06/04 13:06:03 vanhu Exp $	*/
 
 /*	$KAME: parse.y,v 1.81 2003/07/01 04:01:48 itojun Exp $	*/
 
@@ -131,7 +131,7 @@ static int setkeymsg_add __P((unsigned int, unsigned int,
 %token F_LIFEBYTE_HARD F_LIFEBYTE_SOFT
 %token DECSTRING QUOTEDSTRING HEXSTRING STRING ANY
 	/* SPD management */
-%token SPDADD SPDDELETE SPDDUMP SPDFLUSH
+%token SPDADD SPDUPDATE SPDDELETE SPDDUMP SPDFLUSH
 %token F_POLICY PL_REQUESTS
 %token F_AIFLAGS
 %token TAGGED
@@ -170,6 +170,7 @@ command
 	|	dump_command
 	|	exit_command
 	|	spdadd_command
+	|	spdupdate_command
 	|	spddelete_command
 	|	spddump_command
 	|	spdflush_command
@@ -572,6 +573,7 @@ extension
 	/* definition about command for SPD management */
 	/* spdadd */
 spdadd_command
+	/* XXX merge with spdupdate ??? */
 	:	SPDADD ipaddropts STRING prefix portstr STRING prefix portstr upper_spec upper_misc_spec context_spec policy_spec EOT
 		{
 			int status;
@@ -618,6 +620,60 @@ spdadd_command
 			int status;
 
 			status = setkeymsg_spdaddr_tag(SADB_X_SPDADD,
+			    $3.buf, &$4);
+			if (status < 0)
+				return -1;
+		}
+	;
+
+spdupdate_command
+	/* XXX merge with spdadd ??? */
+	:	SPDUPDATE ipaddropts STRING prefix portstr STRING prefix portstr upper_spec upper_misc_spec context_spec policy_spec EOT
+		{
+			int status;
+			struct addrinfo *src, *dst;
+
+#ifdef HAVE_PFKEY_POLICY_PRIORITY
+			last_msg_type = SADB_X_SPDUPDATE;
+#endif
+
+			/* fixed port fields if ulp is icmp */
+			if ($10.buf != NULL) {
+				if (($9 != IPPROTO_ICMPV6) &&
+					($9 != IPPROTO_ICMP) &&
+					($9 != IPPROTO_MH))
+					return -1;
+				free($5.buf);
+				free($8.buf);
+				if (fix_portstr(&$10, &$5, &$8))
+					return -1;
+			}
+
+			src = parse_addr($3.buf, $5.buf);
+			dst = parse_addr($6.buf, $8.buf);
+			if (!src || !dst) {
+				/* yyerror is already called */
+				return -1;
+			}
+			if (src->ai_next || dst->ai_next) {
+				yyerror("multiple address specified");
+				freeaddrinfo(src);
+				freeaddrinfo(dst);
+				return -1;
+			}
+
+			status = setkeymsg_spdaddr(SADB_X_SPDUPDATE, $9, &$12,
+			    src, $4, dst, $7);
+			freeaddrinfo(src);
+			freeaddrinfo(dst);
+			if (status < 0)
+				return -1;
+		}
+	|	SPDUPDATE TAGGED QUOTEDSTRING policy_spec EOT
+		{
+			int status;
+
+			status = setkeymsg_spdaddr_tag(SADB_X_SPDUPDATE,
 			    $3.buf, &$4);
 			if (status < 0)
 				return -1;

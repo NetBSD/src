@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.23 2010/03/05 06:47:58 tteras Exp $
+.\"	$NetBSD: setkey.8,v 1.24 2010/06/04 13:06:03 vanhu Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -192,6 +192,15 @@ Add an SPD entry.
 .\"
 .It Li spdadd tagged Ar tag Ar policy Li ;
 Add an SPD entry based on a PF tag.
+.Ar tag
+must be a string surrounded by double quotes.
+.\"
+.It Li spdupdate Oo Fl 46n Oc Ar src_range Ar dst_range Ar upperspec \
+Ar label Ar policy Li ;
+Updates an SPD entry.
+.\"
+.It Li spdupdate tagged Ar tag Ar policy Li ;
+Update an SPD entry based on a PF tag.
 .Ar tag
 must be a string surrounded by double quotes.
 .\"
