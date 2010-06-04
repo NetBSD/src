@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.48 2010/06/04 06:36:34 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.49 2010/06/04 06:39:38 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -270,7 +270,7 @@ hppa_curlwp(void)
 
 	__asm volatile("mfctl %1, %0" : "=r" (l): "i" (CR_CURLWP));
 
-	return (struct lwp *)l;
+	return l;
 }
 
 #define	curlwp				hppa_curlwp()
