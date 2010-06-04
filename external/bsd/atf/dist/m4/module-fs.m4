@@ -65,5 +65,13 @@ AC_DEFUN([ATF_MODULE_FS], [
                   [Define to 1 if getcwd(NULL, 0) works]),
         AC_MSG_RESULT(no))
 
-    AC_CHECK_FUNCS([unmount])
+    AC_CHECK_FUNCS([chflags unmount])
+
+    AC_PATH_PROG([CHATTR], [chattr])
+    if test -n "${CHATTR}"; then
+        AC_DEFINE([HAVE_CHATTR], [1],
+                  [Define to 1 if you have chattr(1)])
+        AC_DEFINE_UNQUOTED([CHATTR], ["${CHATTR}"],
+                           [Define to the path of chattr(1) if you have it])
+    fi
 ])

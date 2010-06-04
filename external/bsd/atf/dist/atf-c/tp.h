@@ -32,7 +32,6 @@
 
 #include <atf-c/error_fwd.h>
 #include <atf-c/list.h>
-#include <atf-c/object.h>
 
 struct atf_fs_path;
 struct atf_map;
@@ -44,8 +43,6 @@ struct atf_tcr;
  * --------------------------------------------------------------------- */
 
 struct atf_tp {
-    atf_object_t m_object;
-
     atf_list_t m_tcs;
     const struct atf_map *m_config;
 };

@@ -38,10 +38,6 @@ extern "C" {
 #include <string>
 #include <vector>
 
-extern "C" {
-#include "atf-c/object.h"
-}
-
 #include "atf-c++/formats.hpp"
 #include "atf-c++/io.hpp"
 #include "atf-c++/parser.hpp"
@@ -279,8 +275,6 @@ process(const std::string& file, const std::string& outname = "",
 int
 main(int argc, char* argv[])
 {
-    atf_init_objects();
-
     try {
         if (argc < 3) {
             std::cerr << "Missing arguments" << std::endl;

@@ -247,6 +247,7 @@ ATF_TC_HEAD(build_c_o, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Checks the atf_check_build_c_o "
                       "function");
+    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(build_c_o, tc)
 {
@@ -268,6 +269,7 @@ ATF_TC_HEAD(build_cpp, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Checks the atf_check_build_cpp "
                       "function");
+    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(build_cpp, tc)
 {
@@ -290,6 +292,7 @@ ATF_TC_HEAD(build_cxx_o, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Checks the atf_check_build_cxx_o "
                       "function");
+    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(build_cxx_o, tc)
 {

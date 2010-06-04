@@ -646,3 +646,13 @@ impl::current_umask(void)
     (void)umask(current);
     return current;
 }
+
+bool
+impl::set_immutable(const atf::fs::path& p, bool value)
+{
+    bool done;
+    atf_error_t err = atf_fs_set_immutable(p.c_path(), value, &done);
+    if (atf_is_error(err))
+        throw_atf_error(err);
+    return done;
+}

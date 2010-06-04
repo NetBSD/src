@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -83,6 +83,7 @@ atf_check_throw_inside_if(void)
 // can have the exact same name as macros.
 #define TEST_MACRO_1 invalid + name
 #define TEST_MACRO_2 invalid + name
+#define TEST_MACRO_3 invalid + name
 ATF_TEST_CASE(TEST_MACRO_1);
 ATF_TEST_CASE_HEAD(TEST_MACRO_1) { }
 ATF_TEST_CASE_BODY(TEST_MACRO_1) { }
@@ -96,5 +97,11 @@ ATF_TEST_CASE_BODY(TEST_MACRO_2) { }
 ATF_TEST_CASE_CLEANUP(TEST_MACRO_2) { }
 void instatiate_2(void) {
     atf::tests::tc* the_test = new ATF_TEST_CASE_NAME(TEST_MACRO_2)();
+    delete the_test;
+}
+ATF_TEST_CASE_WITH_CLEANUP(TEST_MACRO_3);
+ATF_TEST_CASE_BODY(TEST_MACRO_3) { }
+void instatiate_3(void) {
+    atf::tests::tc* the_test = new ATF_TEST_CASE_NAME(TEST_MACRO_3)();
     delete the_test;
 }

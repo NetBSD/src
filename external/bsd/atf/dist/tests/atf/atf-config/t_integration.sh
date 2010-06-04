@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -50,6 +50,7 @@ list_all_head()
 {
     atf_set "descr" "Tests that at atf-config prints all expected" \
                     "variables, and not more"
+    atf_set "use.fs" "true"
 }
 list_all_body()
 {
@@ -65,6 +66,7 @@ atf_test_case query_one
 query_one_head()
 {
     atf_set "descr" "Tests that querying a single variable works"
+    atf_set "use.fs" "true"
 }
 query_one_body()
 {
@@ -81,6 +83,7 @@ query_one_terse_head()
 {
     atf_set "descr" "Tests that querying a single variable in terse mode" \
                     "works"
+    atf_set "use.fs" "true"
 }
 query_one_terse_body()
 {
@@ -99,6 +102,7 @@ atf_test_case query_multiple
 query_multiple_head()
 {
     atf_set "descr" "Tests that querying multiple variables works"
+    atf_set "use.fs" "true"
 }
 query_multiple_body()
 {
@@ -115,6 +119,7 @@ query_unknown_head()
 {
     atf_set "descr" "Tests that querying an unknown variable delivers" \
                     "the correct error"
+    atf_set "use.fs" "true"
 }
 query_unknown_body()
 {
@@ -128,6 +133,7 @@ query_mixture_head()
 {
     atf_set "descr" "Tests that querying a known and an unknown variable" \
                     "delivers the correct error"
+    atf_set "use.fs" "true"
 }
 query_mixture_body()
 {
@@ -148,6 +154,7 @@ override_env_head()
 {
     atf_set "descr" "Tests that build-time variables can be overriden" \
                     "through their corresponding environment variables"
+    atf_set "use.fs" "true"
 }
 override_env_body()
 {

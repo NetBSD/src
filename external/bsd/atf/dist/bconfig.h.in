@@ -1,5 +1,14 @@
 /* bconfig.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Define to the path of chattr(1) if you have it */
+#undef CHATTR
+
+/* Define to 1 if you have chattr(1) */
+#undef HAVE_CHATTR
+
+/* Define to 1 if you have the `chflags' function. */
+#undef HAVE_CHFLAGS
+
 /* Define to 1 if basename takes a constant pointer */
 #undef HAVE_CONST_BASENAME
 

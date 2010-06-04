@@ -153,6 +153,7 @@ ATF_TEST_CASE(pass);
 ATF_TEST_CASE_HEAD(pass)
 {
     set_md_var("descr", "Tests the ATF_PASS macro");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(pass)
 {
@@ -166,6 +167,7 @@ ATF_TEST_CASE(fail);
 ATF_TEST_CASE_HEAD(fail)
 {
     set_md_var("descr", "Tests the ATF_FAIL macro");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(fail)
 {
@@ -180,6 +182,7 @@ ATF_TEST_CASE(skip);
 ATF_TEST_CASE_HEAD(skip)
 {
     set_md_var("descr", "Tests the ATF_SKIP macro");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(skip)
 {
@@ -194,6 +197,7 @@ ATF_TEST_CASE(check);
 ATF_TEST_CASE_HEAD(check)
 {
     set_md_var("descr", "Tests the ATF_CHECK macro");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(check)
 {
@@ -237,6 +241,7 @@ ATF_TEST_CASE(check_equal);
 ATF_TEST_CASE_HEAD(check_equal)
 {
     set_md_var("descr", "Tests the ATF_CHECK_EQUAL macro");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(check_equal)
 {
@@ -286,6 +291,7 @@ ATF_TEST_CASE(check_throw);
 ATF_TEST_CASE_HEAD(check_throw)
 {
     set_md_var("descr", "Tests the ATF_CHECK_THROW macro");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(check_throw)
 {

@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,6 @@
 
 #include <atf-c/dynstr.h>
 #include <atf-c/error_fwd.h>
-#include <atf-c/object.h>
 
 struct atf_fs_path;
 
@@ -46,8 +45,6 @@ struct atf_fs_path;
 typedef int atf_tcr_state_t;
 
 struct atf_tcr {
-    atf_object_t m_object;
-
     atf_tcr_state_t m_state;
     atf_dynstr_t m_reason;
 };

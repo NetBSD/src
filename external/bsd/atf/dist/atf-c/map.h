@@ -35,7 +35,6 @@
 
 #include <atf-c/error_fwd.h>
 #include <atf-c/list.h>
-#include <atf-c/object.h>
 
 /* ---------------------------------------------------------------------
  * The "atf_map_citer" type.
@@ -84,8 +83,6 @@ bool atf_equal_map_iter_map_iter(const atf_map_iter_t,
 /* A list-based map.  Typically very inefficient, but our maps are small
  * enough. */
 struct atf_map {
-    atf_object_t m_object;
-
     atf_list_t m_list;
 };
 typedef struct atf_map atf_map_t;

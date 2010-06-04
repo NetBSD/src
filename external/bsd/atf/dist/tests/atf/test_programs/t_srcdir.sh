@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,7 @@ default_head()
 {
     atf_set "descr" "Checks that the program can find its files if" \
                     "executed from the same directory"
+    atf_set "use.fs" "true"
 }
 default_body()
 {
@@ -48,9 +49,42 @@ default_body()
         cp ${hp} tmp
         atf_check -s eq:0 -o ignore -e ignore -x \
                   "cd tmp && ./${h} srcdir_exists"
-        atf_check -s eq:1 -o empty -e save:stderr "${hp}" srcdir_exists
-        atf_check -s eq:0 -o ignore -e empty \
-                  grep "Cannot.*find.*source.*directory" stderr
+        atf_check -s eq:1 -o empty -e empty "${hp}" -r res srcdir_exists
+        atf_check -s eq:0 -o ignore -e empty grep "Cannot find datafile" res
+    done
+}
+
+atf_test_case libtool
+libtool_head()
+{
+    atf_set "descr" "Checks that the program can find its files if" \
+                    "executed from the source directory and if it" \
+                    "was built with libtool"
+    atf_set "use.fs" "true"
+}
+libtool_body()
+{
+    create_files
+    mkdir tmp/.libs
+
+    for hp in $(get_helpers h_c h_cpp); do
+        h=${hp##*/}
+        cp ${hp} tmp
+        cp ${hp} tmp/.libs
+        atf_check -s eq:0 -o ignore -e ignore -x \
+                  "cd tmp && ./.libs/${h} srcdir_exists"
+        atf_check -s eq:1 -o empty -e empty "${hp}" -r res srcdir_exists
+        atf_check -s eq:0 -o ignore -e empty grep "Cannot find datafile" res
+    done
+
+    for hp in $(get_helpers h_c h_cpp); do
+        h=${hp##*/}
+        cp ${hp} tmp
+        cp ${hp} tmp/.libs/lt-${h}
+        atf_check -s eq:0 -o ignore -e ignore -x \
+                  "cd tmp && ./.libs/lt-${h} srcdir_exists"
+        atf_check -s eq:1 -o empty -e empty "${hp}" -r res srcdir_exists
+        atf_check -s eq:0 -o ignore -e empty grep "Cannot find datafile" res
     done
 }
 
@@ -59,6 +93,7 @@ sflag_head()
 {
     atf_set "descr" "Checks that the program can find its files when" \
                     "using the -s flag"
+    atf_set "use.fs" "true"
 }
 sflag_body()
 {
@@ -70,9 +105,8 @@ sflag_body()
         atf_check -s eq:0 -o ignore -e ignore -x \
                   "cd tmp && ./${h} -s $(pwd)/tmp \
                    srcdir_exists"
-        atf_check -s eq:1 -o empty -e save:stderr "${hp}" srcdir_exists
-        atf_check -s eq:0 -o ignore -e empty \
-                  grep "Cannot.*find.*source.*directory" stderr
+        atf_check -s eq:1 -o empty -e save:stderr "${hp}" -r res srcdir_exists
+        atf_check -s eq:0 -o ignore -e empty grep "Cannot find datafile" res
         atf_check -s eq:0 -o ignore -e ignore \
                   "${hp}" -s "$(pwd)"/tmp srcdir_exists
     done
@@ -83,6 +117,7 @@ relative_head()
 {
     atf_set "descr" "Checks that passing a relative path through -s" \
                     "works"
+    atf_set "use.fs" "true"
 }
 relative_body()
 {
@@ -98,9 +133,9 @@ relative_body()
 
             atf_check -s eq:0 -o ignore -e ignore \
                       "./tmp/${h}" -s "${p}" srcdir_exists
-            atf_check -s eq:1 -o empty -e save:stderr "${hp}" srcdir_exists
-            atf_check -s eq:0 -o ignore -e empty \
-                      grep "Cannot.*find.*source.*directory" stderr
+            atf_check -s eq:1 -o empty -e save:stderr "${hp}" -r res \
+                srcdir_exists
+            atf_check -s eq:0 -o ignore -e empty grep "Cannot find datafile" res
             atf_check -s eq:0 -o ignore -e ignore \
                       "${hp}" -s "${p}" srcdir_exists
         done
@@ -110,6 +145,7 @@ relative_body()
 atf_init_test_cases()
 {
     atf_add_test_case default
+    atf_add_test_case libtool
     atf_add_test_case sflag
     atf_add_test_case relative
 }

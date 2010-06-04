@@ -228,6 +228,7 @@ ATF_TEST_CASE_HEAD(systembuf_short_read)
 {
     set_md_var("descr", "Tests that a short read (one that fits in the "
                "internal buffer) works when using systembuf");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(systembuf_short_read)
 {
@@ -239,6 +240,7 @@ ATF_TEST_CASE_HEAD(systembuf_long_read)
 {
     set_md_var("descr", "Tests that a long read (one that does not fit in "
                "the internal buffer) works when using systembuf");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(systembuf_long_read)
 {
@@ -250,6 +252,7 @@ ATF_TEST_CASE_HEAD(systembuf_short_write)
 {
     set_md_var("descr", "Tests that a short write (one that fits in the "
                "internal buffer) works when using systembuf");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(systembuf_short_write)
 {
@@ -261,6 +264,7 @@ ATF_TEST_CASE_HEAD(systembuf_long_write)
 {
     set_md_var("descr", "Tests that a long write (one that does not fit "
                "in the internal buffer) works when using systembuf");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(systembuf_long_write)
 {
@@ -485,6 +489,7 @@ ATF_TEST_CASE(std_muxer_empty);
 ATF_TEST_CASE_HEAD(std_muxer_empty)
 {
     set_md_var("descr", "Tests the std_muxer class");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(std_muxer_empty)
 {
@@ -507,6 +512,7 @@ ATF_TEST_CASE(std_muxer_lines);
 ATF_TEST_CASE_HEAD(std_muxer_lines)
 {
     set_md_var("descr", "Tests the std_muxer class");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(std_muxer_lines)
 {

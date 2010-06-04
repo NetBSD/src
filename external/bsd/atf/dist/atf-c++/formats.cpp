@@ -853,6 +853,13 @@ impl::atf_tp_reader::validate_and_insert(const std::string& name,
         if (!atf::text::match(value, integer_regex))
             throw parse_error(lineno, "The timeout property requires an integer"
                               " value");
+    } else if (name == "use.fs") {
+        try {
+            (void)atf::text::to_bool(value);
+        } catch (const std::runtime_error& e) {
+            throw parse_error(lineno, "The use.fs property requires a boolean"
+                              " value");
+        }
     } else if (name.size() > 2 && name[0] == 'X' && name[1] == '-') {
         // Any non-empty value is valid.
     } else {

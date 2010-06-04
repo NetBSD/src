@@ -204,6 +204,12 @@ metadata_no_descr_body()
     :
 }
 
+atf_test_case metadata_no_head
+metadata_no_head_body()
+{
+    :
+}
+
 # -------------------------------------------------------------------------
 # Helper tests for "t_srcdir".
 # -------------------------------------------------------------------------
@@ -243,6 +249,7 @@ atf_init_test_cases()
 
     # Add helper tests for t_meta_data.
     atf_add_test_case metadata_no_descr
+    atf_add_test_case metadata_no_head
 
     # Add helper tests for t_srcdir.
     atf_add_test_case srcdir_exists

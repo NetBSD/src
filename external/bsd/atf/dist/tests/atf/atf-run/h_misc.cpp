@@ -168,6 +168,7 @@ ATF_TEST_CASE_WITH_CLEANUP(cleanup_curdir);
 ATF_TEST_CASE_HEAD(cleanup_curdir)
 {
     set_md_var("descr", "Helper test case for the t_integration test program");
+    set_md_var("use.fs", "true");
 }
 ATF_TEST_CASE_BODY(cleanup_curdir)
 {
@@ -252,6 +253,18 @@ ATF_TEST_CASE_BODY(timeout)
     touch(get_config_var("statedir") + "/finished");
 }
 
+ATF_TEST_CASE(use_fs);
+ATF_TEST_CASE_HEAD(use_fs)
+{
+    set_md_var("descr", "Helper test case for the t_integration test program");
+    set_md_var("use.fs", get_config_var("allowed", "not-set"));
+}
+ATF_TEST_CASE_BODY(use_fs)
+{
+    if (get_config_var("access") == "true")
+        touch("test-file");
+}
+
 // ------------------------------------------------------------------------
 // Main.
 // ------------------------------------------------------------------------
@@ -289,4 +302,6 @@ ATF_INIT_TEST_CASES(tcs)
         ATF_ADD_TEST_CASE(tcs, require_user);
     if (which == "timeout")
         ATF_ADD_TEST_CASE(tcs, timeout);
+    if (which == "use_fs")
+        ATF_ADD_TEST_CASE(tcs, use_fs);
 }

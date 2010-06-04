@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ srcdir_head()
 {
     atf_set "descr" "Verifies that the source directory can be queried" \
                     "from the initialization function"
+    atf_set "use.fs" "true"
 }
 srcdir_body()
 {

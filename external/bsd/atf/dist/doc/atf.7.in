@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 15, 2010
+.Dd May 9, 2010
 .Dt ATF 7
 .Os
 .Sh NAME
@@ -76,9 +76,6 @@ Public utilities:
 .It Xr atf-check 1
 Executes a command and checks that its exit code, its standard output
 and its standard error output match pre-specified expected values.
-.It Xr atf-compile 1
-Generates an executable test program based on the description of test
-cases written in shell scripting.
 .It Xr atf-config 1
 Queries static configuration information.
 .It Xr atf-report 1
@@ -88,6 +85,8 @@ to user-friendly and/or machine-parseable reports.
 .It Xr atf-run 1
 Automates the execution of a series of test programs and collects their
 results in a unified report.
+.It Xr atf-sh 1
+Shell interpreter for shell-based test programs.
 .El
 .Pp
 Internal utilities:
@@ -146,7 +145,7 @@ Everything recommended to users.
 .It
 .Xr atf-sh-api 3
 .It
-.Xr atf-compile 1
+.Xr atf-sh 1
 .It
 .Xr atf-check 1
 .El

@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,7 @@ ATF_TC(grep_file);
 ATF_TC_HEAD(grep_file, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the grep_file helper function");
+    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(grep_file, tc)
 {

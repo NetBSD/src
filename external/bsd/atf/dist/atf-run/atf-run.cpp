@@ -33,6 +33,7 @@
 
 extern "C" {
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
 }
@@ -87,11 +88,14 @@ class atf_run : public atf::application::app {
 
     int run_test(const atf::fs::path&,
                  atf::formats::atf_tps_writer&,
-                 const atf::tests::vars_map&);
+                 const atf::tests::vars_map&,
+                 const atf::fs::path&);
     int run_test_directory(const atf::fs::path&,
-                           atf::formats::atf_tps_writer&);
+                           atf::formats::atf_tps_writer&,
+                           const atf::fs::path&);
     int run_test_program(const atf::fs::path&, atf::formats::atf_tps_writer&,
-                         const atf::tests::vars_map&);
+                         const atf::tests::vars_map&,
+                         const atf::fs::path&);
 
     atf::tests::tcr get_tcr(const atf::process::status&,
                             const atf::fs::path&) const;
@@ -164,25 +168,27 @@ atf_run::parse_vflag(const std::string& str)
 int
 atf_run::run_test(const atf::fs::path& tp,
                   atf::formats::atf_tps_writer& w,
-                  const atf::tests::vars_map& config)
+                  const atf::tests::vars_map& config,
+                  const atf::fs::path& ro_workdir)
 {
     atf::fs::file_info fi(tp);
 
     int errcode;
     if (fi.get_type() == atf::fs::file_info::dir_type)
-        errcode = run_test_directory(tp, w);
+        errcode = run_test_directory(tp, w, ro_workdir);
     else {
         const atf::tests::vars_map effective_config =
             impl::merge_configs(config, m_cmdline_vars);
 
-        errcode = run_test_program(tp, w, effective_config);
+        errcode = run_test_program(tp, w, effective_config, ro_workdir);
     }
     return errcode;
 }
 
 int
 atf_run::run_test_directory(const atf::fs::path& tp,
-                            atf::formats::atf_tps_writer& w)
+                            atf::formats::atf_tps_writer& w,
+                            const atf::fs::path& ro_workdir)
 {
     atf::atffile::atffile af = atf::atffile::read(tp / "Atffile");
 
@@ -196,10 +202,11 @@ atf_run::run_test_directory(const atf::fs::path& tp,
 
     bool ok = true;
     for (std::vector< std::string >::const_iterator iter = af.tps().begin();
-         iter != af.tps().end(); iter++)
-        ok &= (run_test(tp / *iter, w,
-                        impl::merge_configs(af.conf(),
-                                            test_suite_vars)) == EXIT_SUCCESS);
+         iter != af.tps().end(); iter++) {
+        const bool result = run_test(tp / *iter, w,
+            impl::merge_configs(af.conf(), test_suite_vars), ro_workdir);
+        ok &= (result == EXIT_SUCCESS);
+    }
 
     return ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }
@@ -254,7 +261,8 @@ atf_run::get_tcr(const atf::process::status& s,
 int
 atf_run::run_test_program(const atf::fs::path& tp,
                           atf::formats::atf_tps_writer& w,
-                          const atf::tests::vars_map& config)
+                          const atf::tests::vars_map& config,
+                          const atf::fs::path& ro_workdir)
 {
     int errcode = EXIT_SUCCESS;
 
@@ -304,19 +312,36 @@ atf_run::run_test_program(const atf::fs::path& tp,
 
             const atf::fs::path resfile = resdir.get_path() / "tcr";
             try {
-                atf::fs::temp_dir workdir(atf::fs::path(atf::config::get(
-                    "atf_workdir")) / "atf-run.XXXXXX");
+                const bool use_fs = atf::text::to_bool(
+                    (*tcmd.find("use.fs")).second);
 
-                const atf::process::status body_status = impl::run_test_case(
-                    tp, tcname, "body", tcmd, config, resfile,
-                    workdir.get_path(), w);
-                const atf::process::status cleanup_status = impl::run_test_case(
-                    tp, tcname, "cleanup", tcmd, config, resfile,
-                    workdir.get_path(), w);
+                atf::tests::tcr tcr(atf::tests::tcr::passed_state);
 
-                // TODO: Force deletion of workdir.
+                if (use_fs) {
+                    atf::fs::temp_dir workdir(atf::fs::path(atf::config::get(
+                        "atf_workdir")) / "atf-run.XXXXXX");
 
-                const atf::tests::tcr tcr = get_tcr(body_status, resfile);
+                    const atf::process::status body_status =
+                        impl::run_test_case(tp, tcname, "body", tcmd, config,
+                                            resfile, workdir.get_path(), w);
+                    const atf::process::status cleanup_status =
+                        impl::run_test_case(tp, tcname, "cleanup", tcmd, config,
+                                            resfile, workdir.get_path(), w);
+
+                    // TODO: Force deletion of workdir.
+
+                    tcr = get_tcr(body_status, resfile);
+                } else {
+                    const atf::process::status body_status =
+                        impl::run_test_case(tp, tcname, "body", tcmd, config,
+                                            resfile, ro_workdir, w);
+                    const atf::process::status cleanup_status =
+                        impl::run_test_case(tp, tcname, "cleanup", tcmd, config,
+                                            resfile, ro_workdir, w);
+
+                    tcr = get_tcr(body_status, resfile);
+                }
+
                 w.end_tc(tcr);
                 if (tcr.get_state() == atf::tests::tcr::failed_state)
                     errcode = EXIT_FAILURE;
@@ -405,12 +430,22 @@ atf_run::main(void)
     call_hook("atf-run", "info_start_hook");
     w.ntps(count_tps(tps));
 
+    atf::fs::temp_dir ro_workdir(atf::fs::path(atf::config::get(
+        "atf_workdir")) / "atf-run.XXXXXX");
+    if (::chmod(ro_workdir.get_path().c_str(), S_IXUSR) == -1)
+        throw std::runtime_error("Failed to create read-only work directory");
+    if (!atf::fs::set_immutable(ro_workdir.get_path(), true)) {
+        // TODO: Report that use.fs may not work.  Non-fatal though.
+    }
+
     bool ok = true;
     for (std::vector< std::string >::const_iterator iter = tps.begin();
-         iter != tps.end(); iter++)
-        ok &= (run_test(atf::fs::path(*iter), w,
-                        impl::merge_configs(af.conf(),
-                                            test_suite_vars)) == EXIT_SUCCESS);
+         iter != tps.end(); iter++) {
+        const bool result = run_test(atf::fs::path(*iter), w,
+            impl::merge_configs(af.conf(), test_suite_vars),
+                                ro_workdir.get_path());
+        ok &= (result == EXIT_SUCCESS);
+    }
 
     call_hook("atf-run", "info_end_hook");
 

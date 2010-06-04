@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,10 @@
 #define ATF_C_LIST_H
 
 #include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
 
 #include <atf-c/error_fwd.h>
-#include <atf-c/object.h>
 
 /* ---------------------------------------------------------------------
  * The "atf_list_citer" type.
@@ -76,8 +77,6 @@ bool atf_equal_list_iter_list_iter(const atf_list_iter_t,
  * --------------------------------------------------------------------- */
 
 struct atf_list {
-    atf_object_t m_object;
-
     void *m_begin;
     void *m_end;
 

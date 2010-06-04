@@ -32,6 +32,7 @@ newlines_head()
 {
     atf_set "descr" "Tests that newlines provided as part of status'" \
                     "reasons are handled properly"
+    atf_set "use.fs" "true"
 }
 newlines_body()
 {

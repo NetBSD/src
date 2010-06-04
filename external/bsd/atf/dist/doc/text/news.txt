@@ -4,21 +4,50 @@
 
                                     Contents
 
-    1. Changes in version 0.8
+    1. Changes in version 0.9
 
-    2. Changes in version 0.7
+    2. Changes in version 0.8
 
-    3. Changes in version 0.6
+    3. Changes in version 0.7
 
-    4. Changes in version 0.5
+    4. Changes in version 0.6
 
-    5. Changes in version 0.4
+    5. Changes in version 0.5
 
-    6. Changes in version 0.3
+    6. Changes in version 0.4
 
-    7. Changes in version 0.2
+    7. Changes in version 0.3
 
-    8. Changes in version 0.1
+    8. Changes in version 0.2
+
+    9. Changes in version 0.1
+
+                             Changes in version 0.9
+
+   Experimental version released on June 3rd, 2010.
+
+     * Added atf-sh, an interpreter to process test programs written using
+       the shell API. This is not really a shell interpreter by itself
+       though: it is just a wrapper around the system shell that eases the
+       loading of the necessary ATF libraries.
+
+     * Removed atf-compile in favour of atf-sh.
+
+     * Added the use.fs metadata property to test case, which is used to
+       specify which test cases require file system access. This is to
+       highlight dependencies on external resources more clearly and to speed
+       up the execution of test suites by skipping the creation of many
+       unnecessary work directories.
+
+     * Fixed test programs to get a sane default value for their source
+       directory. This means that it should not be necessary any more to pass
+       -s when running test programs that do not live in the current
+       directory.
+
+     * Defining test case headers became optional. This is trivial to achieve
+       in shell-based tests but a bit ugly in C and C++. In C, use the new
+       ATF_TC_WITHOUT_HEAD macro to define the test case, and in C++ use
+       ATF_TEST_CASE_WITHOUT_HEAD.
 
                              Changes in version 0.8
 

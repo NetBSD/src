@@ -164,16 +164,7 @@ atf_equal_map_iter_map_iter(const atf_map_iter_t i1,
 atf_error_t
 atf_map_init(atf_map_t *m)
 {
-    atf_error_t err;
-
-    err = atf_list_init(&m->m_list);
-    if (atf_is_error(err))
-        goto out;
-
-    atf_object_init(&m->m_object);
-
-out:
-    return err;
+    return atf_list_init(&m->m_list);
 }
 
 void
@@ -190,8 +181,6 @@ atf_map_fini(atf_map_t *m)
         free(me);
     }
     atf_list_fini(&m->m_list);
-
-    atf_object_fini(&m->m_object);
 }
 
 /*

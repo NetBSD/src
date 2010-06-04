@@ -114,6 +114,11 @@ ATF_TEST_CASE_BODY(metadata_no_descr)
 {
 }
 
+ATF_TEST_CASE_WITHOUT_HEAD(metadata_no_head);
+ATF_TEST_CASE_BODY(metadata_no_head)
+{
+}
+
 // ------------------------------------------------------------------------
 // Helper tests for "t_srcdir".
 // ------------------------------------------------------------------------
@@ -171,6 +176,7 @@ ATF_INIT_TEST_CASES(tcs)
 
     // Add helper tests for t_meta_data.
     ATF_ADD_TEST_CASE(tcs, metadata_no_descr);
+    ATF_ADD_TEST_CASE(tcs, metadata_no_head);
 
     // Add helper tests for t_srcdir.
     ATF_ADD_TEST_CASE(tcs, srcdir_exists);

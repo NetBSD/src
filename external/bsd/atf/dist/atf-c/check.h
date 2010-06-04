@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,6 @@
 #include <atf-c/error_fwd.h>
 #include <atf-c/fs.h>
 #include <atf-c/list.h>
-#include <atf-c/object.h>
 #include <atf-c/process.h>
 
 /* ---------------------------------------------------------------------
@@ -41,8 +40,6 @@
  * --------------------------------------------------------------------- */
 
 struct atf_check_result {
-    atf_object_t m_object;
-
     atf_list_t m_argv;
     atf_fs_path_t m_dir;
     atf_fs_path_t m_stdout;

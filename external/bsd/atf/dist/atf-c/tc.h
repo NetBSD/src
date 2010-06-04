@@ -33,7 +33,6 @@
 #include <atf-c/defs.h>
 #include <atf-c/error_fwd.h>
 #include <atf-c/map.h>
-#include <atf-c/object.h>
 
 struct atf_dynstr;
 struct atf_fs_path;
@@ -64,8 +63,6 @@ typedef const struct atf_tc_pack atf_tc_pack_t;
  * --------------------------------------------------------------------- */
 
 struct atf_tc {
-    atf_object_t m_object;
-
     const char *m_ident;
 
     atf_map_t m_vars;

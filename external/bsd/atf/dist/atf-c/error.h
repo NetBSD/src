@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,16 +30,16 @@
 #if !defined(ATF_C_ERROR_H)
 #define ATF_C_ERROR_H
 
+#include <stdbool.h>
+#include <stddef.h>
+
 #include <atf-c/error_fwd.h>
-#include <atf-c/object.h>
 
 /* ---------------------------------------------------------------------
  * The "atf_error" type.
  * --------------------------------------------------------------------- */
 
 struct atf_error {
-    atf_object_t m_object;
-
     bool m_free;
     const char *m_type;
     void *m_data;

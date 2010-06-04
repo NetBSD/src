@@ -106,7 +106,9 @@ ATF_TEST_CASE_BODY(atffile_getters) {
 // ------------------------------------------------------------------------
 
 ATF_TEST_CASE(read_ok_simple);
-ATF_TEST_CASE_HEAD(read_ok_simple) {}
+ATF_TEST_CASE_HEAD(read_ok_simple) {
+    set_md_var("use.fs", "true");
+}
 ATF_TEST_CASE_BODY(read_ok_simple) {
     std::auto_ptr< std::ofstream > os = new_atffile();
     (*os) << "prop: test-suite = foo\n";
@@ -136,7 +138,9 @@ ATF_TEST_CASE_BODY(read_ok_simple) {
 }
 
 ATF_TEST_CASE(read_ok_some_globs);
-ATF_TEST_CASE_HEAD(read_ok_some_globs) {}
+ATF_TEST_CASE_HEAD(read_ok_some_globs) {
+    set_md_var("use.fs", "true");
+}
 ATF_TEST_CASE_BODY(read_ok_some_globs) {
     std::auto_ptr< std::ofstream > os = new_atffile();
     (*os) << "prop: test-suite = foo\n";
@@ -163,7 +167,9 @@ ATF_TEST_CASE_BODY(read_ok_some_globs) {
 }
 
 ATF_TEST_CASE(read_missing_test_suite);
-ATF_TEST_CASE_HEAD(read_missing_test_suite) {}
+ATF_TEST_CASE_HEAD(read_missing_test_suite) {
+    set_md_var("use.fs", "true");
+}
 ATF_TEST_CASE_BODY(read_missing_test_suite) {
     std::auto_ptr< std::ofstream > os = new_atffile();
     (*os).close();
@@ -177,7 +183,9 @@ ATF_TEST_CASE_BODY(read_missing_test_suite) {
 }
 
 ATF_TEST_CASE(read_missing_test_program);
-ATF_TEST_CASE_HEAD(read_missing_test_program) {}
+ATF_TEST_CASE_HEAD(read_missing_test_program) {
+    set_md_var("use.fs", "true");
+}
 ATF_TEST_CASE_BODY(read_missing_test_program) {
     std::auto_ptr< std::ofstream > os = new_atffile();
     (*os) << "tp: foo\n";

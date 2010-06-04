@@ -19,6 +19,11 @@ href="standalone.css" />
 <ol>
 <li>
 <p>
+<a href="#atf-0-9">Changes in version 0.9</a>
+</p>
+</li>
+<li>
+<p>
 <a href="#atf-0-8">Changes in version 0.8</a>
 </p>
 </li>
@@ -60,6 +65,63 @@ href="standalone.css" />
 </ol>
 </div>
 <div xmlns="" class="contents">
+<h1>
+<a name="atf-0-9">Changes in version 0.9</a>
+</h1>
+<p xml:space="preserve">
+Experimental version released on June 3rd, 2010.
+</p>
+<ul>
+<li>
+<p xml:space="preserve">
+Added atf-sh, an interpreter to process test programs
+written using the shell API.  This is not really a shell
+interpreter by
+itself though: it is just a wrapper around the system shell that
+eases
+the loading of the necessary ATF libraries.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Removed atf-compile in favour of atf-sh.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Added the 
+<tt>use.fs</tt> metadata property to
+test case, which is used to specify which test cases require file
+system
+access.  This is to highlight dependencies on external resources
+more
+clearly and to speed up the execution of test suites by skipping
+the
+creation of many unnecessary work directories.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Fixed test programs to get a sane default value for their
+source directory.  This means that it should not be necessary any
+more to
+pass 
+<tt>-s</tt> when running test programs that do not live in
+the current directory.
+</p>
+</li>
+<li>
+<p xml:space="preserve">
+Defining test case headers became optional.  This is
+trivial to achieve in shell-based tests but a bit ugly in C and
+C++.  In
+C, use the new 
+<tt>ATF_TC_WITHOUT_HEAD</tt> macro to define the
+test case, and in C++ use
+<tt>ATF_TEST_CASE_WITHOUT_HEAD</tt>.
+</p>
+</li>
+</ul>
 <h1>
 <a name="atf-0-8">Changes in version 0.8</a>
 </h1>

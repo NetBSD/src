@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -665,6 +665,7 @@ ATF_TC_HEAD(status_coredump, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests the status type for processes "
                       "that crash");
+    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(status_coredump, tc)
 {
@@ -915,6 +916,7 @@ ATF_TC(exec_list);
 ATF_TC_HEAD(exec_list, tc)
 {
     atf_tc_set_md_var(tc, "descr", "Tests execing a command");
+    atf_tc_set_md_var(tc, "use.fs", "true");
 }
 ATF_TC_BODY(exec_list, tc)
 {
@@ -1034,6 +1036,7 @@ ATF_TC_BODY(fork_cookie, tc)
     { \
         atf_tc_set_md_var(tc, "descr", "Tests forking a child, with " \
                           "stdout " #outlc " and stderr " #errlc); \
+        atf_tc_set_md_var(tc, "use.fs", "true"); \
     } \
     ATF_TC_BODY(fork_out_ ## outlc ## _err_ ## errlc, tc) \
     { \
