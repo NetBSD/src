@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,7 @@ static atf_error_t do_unmount(const atf_fs_path_t *);
 static atf_error_t normalize(atf_dynstr_t *, char *);
 static atf_error_t normalize_ap(atf_dynstr_t *, const char *, va_list);
 static void replace_contents(atf_fs_path_t *, const char *);
+static atf_error_t set_immutable(const char *, bool, bool *);
 static const char *stat_type_to_string(const int);
 
 /* ---------------------------------------------------------------------
@@ -231,8 +232,13 @@ cleanup_aux_dir(const char *pstr, const atf_fs_stat_t *st, bool erase)
     atf_error_t err;
     struct dirent *de;
 
-    if (erase && !(atf_fs_stat_get_mode(st) & S_IWUSR)) {
-        if (chmod(pstr, atf_fs_stat_get_mode(st) | S_IWUSR) == -1) {
+    if (erase && ((atf_fs_stat_get_mode(st) & S_IRWXU) != S_IRWXU)) {
+        bool unused_done;
+        err = set_immutable(pstr, false, &unused_done);
+        if (atf_is_error(err))
+            goto out;
+
+        if (chmod(pstr, atf_fs_stat_get_mode(st) | S_IRWXU) == -1) {
             err = atf_libc_error(errno, "Cannot grant write permissions "
                                  "to %s", pstr);
             goto out;
@@ -465,6 +471,76 @@ replace_contents(atf_fs_path_t *p, const char *buf)
 }
 
 static
+atf_error_t
+set_immutable(const char *filename, bool value, bool *done)
+{
+    atf_error_t err;
+
+#if HAVE_CHFLAGS
+    struct stat sb;
+
+    if (lstat(filename, &sb) == -1) {
+        err = atf_libc_error(errno, "lstat(%s) failed", filename);
+        goto out;
+    }
+
+    unsigned long new_flags = sb.st_flags;
+    if (value)
+        new_flags |= UF_IMMUTABLE;
+    else
+        new_flags &= ~UF_IMMUTABLE;
+
+    if (chflags(filename, new_flags) == -1) {
+        err = atf_libc_error(errno, "chflags(%s) failed", filename);
+        goto out;
+    }
+
+    err = atf_no_error();
+    *done = true;
+
+out:
+#elif HAVE_CHATTR
+    if (atf_user_is_root()) {
+        /* TODO: This should use ioctl(2) instead of chattr(1), but it looks
+         * like that the API to set the immutable value is file-system specific.
+         * Investigate this later. */
+        atf_fs_path_t prog;
+
+        err = atf_fs_path_init_fmt(&prog, CHATTR);
+        if (!atf_is_error(err)) {
+            atf_process_status_t status;
+            const char *argv[4] = { "chattr", value ? "+i" : "-i", filename,
+                                    NULL };
+
+            err = atf_process_exec_array(&status, &prog, argv, NULL, NULL);
+            if (!atf_is_error(err)) {
+                if (!atf_process_status_exited(&status) ||
+                    atf_process_status_exitstatus(&status) != EXIT_SUCCESS) {
+                    /* XXX: This is the wrong error type. */
+                    err = atf_libc_error(EINVAL, "Failed to exec chattr");
+                }
+
+                atf_process_status_fini(&status);
+            }
+
+            atf_fs_path_fini(&prog);
+        }
+        *done = true;
+    } else {
+        /* Linux doesn't allow to set the immutability bit by non-root; just
+         * report it as an unsupported case. */
+        err = atf_no_error();
+        *done = false;
+    }
+#else
+    err = atf_no_error();
+    *done = false;
+#endif
+
+    return err;
+}
+
+static
 const char *
 stat_type_to_string(const int type)
 {
@@ -508,8 +584,6 @@ atf_fs_path_init_ap(atf_fs_path_t *p, const char *fmt, va_list ap)
     atf_error_t err;
     va_list ap2;
 
-    atf_object_init(&p->m_object);
-
     va_copy(ap2, ap);
     err = normalize_ap(&p->m_data, fmt, ap2);
     va_end(ap2);
@@ -533,8 +607,6 @@ atf_fs_path_init_fmt(atf_fs_path_t *p, const char *fmt, ...)
 atf_error_t
 atf_fs_path_copy(atf_fs_path_t *dest, const atf_fs_path_t *src)
 {
-    atf_object_copy(&dest->m_object, &src->m_object);
-
     return atf_dynstr_copy(&dest->m_data, &src->m_data);
 }
 
@@ -542,8 +614,6 @@ void
 atf_fs_path_fini(atf_fs_path_t *p)
 {
     atf_dynstr_fini(&p->m_data);
-
-    atf_object_fini(&p->m_object);
 }
 
 /*
@@ -560,10 +630,8 @@ atf_fs_path_branch_path(const atf_fs_path_t *p, atf_fs_path_t *bp)
         err = atf_fs_path_init_fmt(bp, ".");
     else if (endpos == 0)
         err = atf_fs_path_init_fmt(bp, "/");
-    else {
-        atf_object_init(&bp->m_object);
+    else
         err = atf_dynstr_init_substr(&bp->m_data, &p->m_data, 0, endpos);
-    }
 
 #if defined(HAVE_CONST_DIRNAME)
     INV(atf_equal_dynstr_cstring(&bp->m_data,
@@ -736,17 +804,12 @@ atf_fs_stat_init(atf_fs_stat_t *st, const atf_fs_path_t *p)
         }
     }
 
-    if (!atf_is_error(err))
-        atf_object_init(&st->m_object);
-
     return err;
 }
 
 void
 atf_fs_stat_copy(atf_fs_stat_t *dest, const atf_fs_stat_t *src)
 {
-    atf_object_copy(&dest->m_object, &src->m_object);
-
     dest->m_type = src->m_type;
     dest->m_sb = src->m_sb;
 }
@@ -754,7 +817,6 @@ atf_fs_stat_copy(atf_fs_stat_t *dest, const atf_fs_stat_t *src)
 void
 atf_fs_stat_fini(atf_fs_stat_t *st)
 {
-    atf_object_fini(&st->m_object);
 }
 
 /*
@@ -1054,6 +1116,12 @@ atf_fs_rmdir(const atf_fs_path_t *p)
         err = atf_no_error();
 
     return err;
+}
+
+atf_error_t
+atf_fs_set_immutable(const atf_fs_path_t *p, bool value, bool *done)
+{
+    return set_immutable(atf_fs_path_cstring(p), value, done);
 }
 
 atf_error_t

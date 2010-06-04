@@ -82,8 +82,6 @@ atf_tc_init(atf_tc_t *tc, const char *ident, atf_tc_head_t head,
 {
     atf_error_t err;
 
-    atf_object_init(&tc->m_object);
-
     tc->m_ident = ident;
     tc->m_head = head;
     tc->m_body = body;
@@ -92,14 +90,15 @@ atf_tc_init(atf_tc_t *tc, const char *ident, atf_tc_head_t head,
 
     err = atf_map_init(&tc->m_vars);
     if (atf_is_error(err))
-        goto err_object;
+        goto err;
 
     err = atf_tc_set_md_var(tc, "ident", ident);
     if (atf_is_error(err))
         goto err_map;
 
     /* XXX Should the head be able to return error codes? */
-    tc->m_head(tc);
+    if (tc->m_head != NULL)
+        tc->m_head(tc);
 
     if (strcmp(atf_tc_get_md_var(tc, "ident"), ident) != 0)
         atf_tc_fail("Test case head modified the read-only 'ident' "
@@ -110,9 +109,7 @@ atf_tc_init(atf_tc_t *tc, const char *ident, atf_tc_head_t head,
 
 err_map:
     atf_map_fini(&tc->m_vars);
-err_object:
-    atf_object_fini(&tc->m_object);
-
+err:
     return err;
 }
 
@@ -128,8 +125,6 @@ void
 atf_tc_fini(atf_tc_t *tc)
 {
     atf_map_fini(&tc->m_vars);
-
-    atf_object_fini(&tc->m_object);
 }
 
 /*
@@ -251,8 +246,6 @@ static size_t current_tc_fail_count = 0;
 atf_error_t
 atf_tc_run(const atf_tc_t *tc, const atf_fs_path_t *resfile)
 {
-    atf_reset_exit_checks(); /* XXX */
-
     current_tc = tc;
     current_resfile = resfile;
     current_tc_fail_count = 0;
@@ -456,8 +449,6 @@ void
 atf_tc_fail_requirement(const char *file, int line, const char *fmt, ...)
 {
     va_list ap;
-
-    atf_reset_exit_checks();
 
     va_start(ap, fmt);
     fail_internal(file, line, "Requirement failed", "", fmt, ap,
