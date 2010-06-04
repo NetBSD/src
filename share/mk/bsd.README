@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.268 2010/05/26 14:52:10 njoly Exp $
+#	$NetBSD: bsd.README,v 1.269 2010/06/04 08:35:09 jmmv Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -654,8 +654,6 @@ TOOL_AMIGAELF2BB	ELF to Amiga bootblock converter.  [amiga-elf2bb]
 TOOL_AMIGATXLT		Amige assembly language format translator.  [amiga-txlt]
 
 TOOL_ASN1_COMPILE	ASN1 compiler.  [asn1_compile]
-
-TOOL_ATF_COMPILE	Generate POSIX shell test programs.  [atf-compile]
 
 TOOL_AWK		Pattern-directed scanning/processing language.  [awk]
 

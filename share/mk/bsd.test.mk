@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.7 2008/05/01 15:36:36 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.8 2010/06/04 08:35:09 jmmv Exp $
 #
 
 .include <bsd.init.mk>
@@ -37,20 +37,13 @@ _TESTS+=		${_T}
 CLEANFILES+=		${_T} ${_T}.tmp
 
 TESTS_SH_SRC_${_T}?=	${_T}.sh
-${_T}: ${TESTS_SH_SRC_${_T}} atf-compile-cookie
+${_T}: ${TESTS_SH_SRC_${_T}}
 	${_MKTARGET_BUILD}
-	${TOOL_ATF_COMPILE} -o ${.TARGET}.tmp ${.ALLSRC}
+	echo '#! /usr/bin/atf-sh' >${.TARGET}.tmp
+	cat ${.ALLSRC} >>${.TARGET}.tmp
+	chmod +x ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET}
 .  endfor
-.endif
-
-CLEANFILES+= atf-compile-cookie
-.if ${USETOOLS} == "yes"
-atf-compile-cookie: ${TOOL_ATF_COMPILE}
-	touch atf-compile-cookie
-.else
-atf-compile-cookie:
-	test -f atf-compile-cookie || touch atf-compile-cookie
 .endif
 
 .if !defined(NOATFFILE)
