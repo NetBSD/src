@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47 2010/06/01 10:20:29 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.48 2010/06/04 06:36:34 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -220,7 +220,15 @@ struct clockframe {
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast(l))
 
 #include <sys/cpu_data.h>
+
+/*
+ * Note that the alignment of ci_trap_save is important since we want to keep
+ * it within a single cache line.  As a result, it must be kept as the first
+ * entry within the cpu_info struct.
+ */
 struct cpu_info {
+	register_t	ci_trapsave[16];/* the "phys" part of frame */
+
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	struct	lwp	*ci_curlwp;	/* CPU owner */
@@ -232,9 +240,7 @@ struct cpu_info {
 	volatile int	ci_cpl;
 	volatile int	ci_ipending;	/* The pending interrupts. */
 	u_int		ci_intr_depth;	/* Nonzero iff running an interrupt. */
-
-	register_t	ci_trapsave[16];/* the "phys" part of frame */
-};
+} __aligned(64);
 
 
 extern struct cpu_info cpu_info_store;
