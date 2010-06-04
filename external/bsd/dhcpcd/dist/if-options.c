@@ -52,6 +52,7 @@
 #define O_BASE		MAX('z', 'Z') + 1
 #define O_ARPING	O_BASE + 1
 #define O_FALLBACK	O_BASE + 2
+#define O_DESTINATION	O_BASE + 3
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -90,7 +91,6 @@ const struct option cf_options[] = {
 	{"broadcast",       no_argument,       NULL, 'J'},
 	{"nolink",          no_argument,       NULL, 'K'},
 	{"noipv4ll",        no_argument,       NULL, 'L'},
-	{"destination",     required_argument, NULL, 'N'},
 	{"nooption",        optional_argument, NULL, 'O'},
 	{"require",         required_argument, NULL, 'Q'},
 	{"static",          required_argument, NULL, 'S'},
@@ -100,6 +100,7 @@ const struct option cf_options[] = {
 	{"blacklist",       required_argument, NULL, 'X'},
 	{"denyinterfaces",  required_argument, NULL, 'Z'},
 	{"arping",          required_argument, NULL, O_ARPING},
+	{"destination",     required_argument, NULL, O_DESTINATION},
 	{"fallback",        required_argument, NULL, O_FALLBACK},
 	{NULL,              0,                 NULL, '\0'}
 };
@@ -599,16 +600,6 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 	case 'L':
 		ifo->options &= ~DHCPCD_IPV4LL;
 		break;
-	case 'N':
-		if (make_option_mask(ifo->dstmask, arg, 2) != 0) {
-			if (errno == EINVAL)
-				syslog(LOG_ERR, "option `%s' does not take"
-				    " an IPv4 address", arg);
-			else
-				syslog(LOG_ERR, "unknown otpion `%s'", arg);
-			return -1;
-		}
-		break;
 	case 'O':
 		if (make_option_mask(ifo->requestmask, arg, -1) != 0 ||
 		    make_option_mask(ifo->requiremask, arg, -1) != 0 ||
@@ -731,6 +722,16 @@ parse_option(struct if_options *ifo, int opt, const char *arg)
 		ifo->arping = xrealloc(ifo->arping,
 		    sizeof(in_addr_t) * (ifo->arping_len + 1));
 		ifo->arping[ifo->arping_len++] = addr.s_addr;
+		break;
+	case O_DESTINATION:
+		if (make_option_mask(ifo->dstmask, arg, 2) != 0) {
+			if (errno == EINVAL)
+				syslog(LOG_ERR, "option `%s' does not take"
+				    " an IPv4 address", arg);
+			else
+				syslog(LOG_ERR, "unknown option `%s'", arg);
+			return -1;
+		}
 		break;
 	case O_FALLBACK:
 		free(ifo->fallback);
