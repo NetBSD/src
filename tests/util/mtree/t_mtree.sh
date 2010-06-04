@@ -1,4 +1,4 @@
-# $NetBSD: t_mtree.sh,v 1.4 2009/09/19 20:37:05 apb Exp $
+# $NetBSD: t_mtree.sh,v 1.5 2010/06/04 08:39:42 jmmv Exp $
 #
 # Copyright (c) 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,6 +46,7 @@ atf_test_case create
 create_head()
 {
 	atf_set "descr" "Create a specfile describing a directory tree"
+	atf_set "use.fs" "true"
 }
 create_setup()
 {
@@ -87,6 +88,7 @@ atf_test_case check
 check_head()
 {
 	atf_set "descr" "Check a directory tree against a specfile"
+	atf_set "use.fs" "true"
 }
 check_body()
 {
@@ -103,6 +105,7 @@ atf_test_case convert_C
 convert_C_head()
 {
 	atf_set "descr" "Convert a specfile to mtree -C format, unsorted"
+	atf_set "use.fs" "true"
 }
 convert_C_body()
 {
@@ -114,6 +117,7 @@ atf_test_case convert_C_S
 convert_C_S_head()
 {
 	atf_set "descr" "Convert a specfile to mtree -C format, sorted"
+	atf_set "use.fs" "true"
 }
 convert_C_S_body()
 {
@@ -125,6 +129,7 @@ atf_test_case convert_D
 convert_D_head()
 {
 	atf_set "descr" "Convert a specfile to mtree -D format, unsorted"
+	atf_set "use.fs" "true"
 }
 convert_D_body()
 {
@@ -136,6 +141,7 @@ atf_test_case convert_D_S
 convert_D_S_head()
 {
 	atf_set "descr" "Convert a specfile to mtree -D format, sorted"
+	atf_set "use.fs" "true"
 }
 convert_D_S_body()
 {
@@ -147,6 +153,7 @@ atf_test_case merge
 merge_head()
 {
 	atf_set "descr" "Merge records of different type"
+	atf_set "use.fs" "true"
 }
 merge_body()
 {

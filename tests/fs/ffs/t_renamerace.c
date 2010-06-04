@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.10 2010/05/30 05:35:48 dholland Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.11 2010/06/04 08:39:40 jmmv Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -32,6 +32,7 @@ ATF_TC_HEAD(renamerace, tc)
 	    "unlinked mid-operation, kern/40948");
 	/* XXX: test hangs in qemu for unknown reasons */
 	atf_tc_set_md_var(tc, "timeout", "20");
+	atf_tc_set_md_var(tc, "use.fs", "true");
 }
 
 volatile int quit;

@@ -1,4 +1,4 @@
-# $NetBSD: t_link.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_link.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,7 @@ basic_head() {
 	atf_set "descr" "Verifies that the link operation works on files" \
 	                "at the top directory"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 basic_body() {
 	test_mount
@@ -68,6 +69,7 @@ subdirs_head() {
 	atf_set "descr" "Verifies that the link operation works if used" \
 	                "in subdirectories"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 subdirs_body() {
 	test_mount
@@ -98,6 +100,7 @@ kqueue_head() {
 	atf_set "descr" "Verifies that creating a link raises the correct" \
 	                "kqueue events"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 kqueue_body() {
 	test_mount

@@ -1,4 +1,4 @@
-# $NetBSD: t_modload.sh,v 1.5 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_modload.sh,v 1.6 2010/06/04 08:39:41 jmmv Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,7 @@ atf_test_case plain
 plain_head() {
 	atf_set "descr" "Test load without arguments"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 plain_body() {
 	cat >experr <<EOF
@@ -56,6 +57,7 @@ atf_test_case bflag
 bflag_head() {
 	atf_set "descr" "Test the -b flag"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 bflag_body() {
 	echo "Checking error conditions"
@@ -96,6 +98,7 @@ atf_test_case iflag
 iflag_head() {
 	atf_set "descr" "Test the -i flag"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 iflag_body() {
 	echo "Checking error conditions"
@@ -139,6 +142,7 @@ atf_test_case sflag
 sflag_head() {
 	atf_set "descr" "Test the -s flag"
 	atf_set "require.user" "root"
+	atf_set "use.fs" "true"
 }
 sflag_body() {
 	echo "Checking error conditions"
