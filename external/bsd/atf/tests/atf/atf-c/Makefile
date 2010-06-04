@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2010/05/08 08:12:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/06/04 08:33:41 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,6 @@ FILES=		d_include_atf_c_h.c \
 		d_include_list_h.c \
 		d_include_macros_h.c \
 		d_include_map_h.c \
-		d_include_object_h.c \
 		d_include_process_h.c \
 		d_include_sanity_h.c \
 		d_include_tc_h.c \
@@ -66,5 +65,7 @@ TESTS_C+=	${test}
 SRCS.${test}=	${test}.c h_lib.c
 .endfor
 .undef test
+
+TESTS_SH=	t_pkg_config
 
 .include <bsd.test.mk>
