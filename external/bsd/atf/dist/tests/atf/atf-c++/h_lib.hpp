@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -48,6 +48,7 @@
     ATF_TEST_CASE_HEAD(name) \
     { \
         set_md_var("descr", descr); \
+        set_md_var("use.fs", "true"); \
     } \
     ATF_TEST_CASE_BODY(name) \
     { \

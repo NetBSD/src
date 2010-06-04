@@ -30,13 +30,14 @@
 #if defined(HAVE_CONFIG_H)
 #include "bconfig.h"
 #endif
-#include "atf-version/revision.h"
 
 #include <cstdlib>
 #include <iostream>
 
 #include "atf-c++/application.hpp"
 #include "atf-c++/ui.hpp"
+
+#include "revision.h"
 
 class atf_version : public atf::application::app {
     static const char* m_description;

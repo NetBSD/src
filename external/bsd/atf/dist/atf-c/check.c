@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -160,7 +160,6 @@ exec_child(void *v)
 {
     struct exec_data *ea = v;
 
-    atf_reset_exit_checks();
     const_execvp(ea->m_argv[0], ea->m_argv);
     fprintf(stderr, "execvp(%s) failed: %s\n", ea->m_argv[0], strerror(errno));
     exit(127);
@@ -343,8 +342,6 @@ atf_check_result_init(atf_check_result_t *r, const char *const *argv,
     atf_error_t err;
     const char *workdir;
 
-    atf_object_init(&r->m_object);
-
     workdir = atf_config_get("atf_workdir");
 
     err = array_to_list(argv, &r->m_argv);
@@ -389,8 +386,6 @@ atf_check_result_fini(atf_check_result_t *r)
     atf_fs_path_fini(&r->m_dir);
 
     atf_list_fini(&r->m_argv);
-
-    atf_object_fini(&r->m_object);
 }
 
 const atf_list_t *

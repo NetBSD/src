@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -218,8 +218,6 @@ atf_list_init(atf_list_t *l)
     l->m_begin = lebeg;
     l->m_end = leend;
 
-    atf_object_init(&l->m_object);
-
     return atf_no_error();
 }
 
@@ -241,8 +239,6 @@ atf_list_fini(atf_list_t *l)
         freed++;
     }
     INV(freed == l->m_size + 2);
-
-    atf_object_fini(&l->m_object);
 }
 
 /*
@@ -362,6 +358,4 @@ atf_list_append_list(atf_list_t *l, atf_list_t *src)
 
     l->m_end = src->m_end;
     l->m_size += src->m_size;
-
-    atf_object_fini(&src->m_object);
 }

@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,8 +67,6 @@ error_init(atf_error_t err, const char *type, void *data, size_t datalen,
     PRE(data != NULL || datalen == 0);
     PRE(datalen != 0 || data == NULL);
 
-    atf_object_init(&err->m_object);
-
     err->m_free = false;
     err->m_type = type;
     err->m_format = (format == NULL) ? error_format : format;
@@ -79,7 +77,6 @@ error_init(atf_error_t err, const char *type, void *data, size_t datalen,
     } else {
         err->m_data = malloc(datalen);
         if (err->m_data == NULL) {
-            atf_object_fini(&err->m_object);
             ok = false;
         } else
             memcpy(err->m_data, data, datalen);
@@ -132,8 +129,6 @@ atf_error_free(atf_error_t err)
 
     if (err->m_data != NULL)
         free(err->m_data);
-
-    atf_object_fini(&err->m_object);
 
     if (freeit)
         free(err);

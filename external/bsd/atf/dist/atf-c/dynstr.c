@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,7 @@
 
 #include <errno.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -121,22 +122,17 @@ atf_dynstr_init(atf_dynstr_t *ad)
 {
     atf_error_t err;
 
-    atf_object_init(&ad->m_object);
-
     ad->m_data = (char *)malloc(sizeof(char));
     if (ad->m_data == NULL) {
         err = atf_no_memory_error();
-        goto err_object;
+        goto out;
     }
 
     ad->m_data[0] = '\0';
     ad->m_datasize = 1;
     ad->m_length = 0;
     err = atf_no_error();
-    goto out;
 
-err_object:
-    atf_object_fini(&ad->m_object);
 out:
     return err;
 }
@@ -145,8 +141,6 @@ atf_error_t
 atf_dynstr_init_ap(atf_dynstr_t *ad, const char *fmt, va_list ap)
 {
     atf_error_t err;
-
-    atf_object_init(&ad->m_object);
 
     ad->m_datasize = strlen(fmt) + 1;
     ad->m_length = 0;
@@ -159,7 +153,7 @@ atf_dynstr_init_ap(atf_dynstr_t *ad, const char *fmt, va_list ap)
         ad->m_data = (char *)malloc(ad->m_datasize);
         if (ad->m_data == NULL) {
             err = atf_no_memory_error();
-            goto err_object;
+            goto out;
         }
 
         va_copy(ap2, ap);
@@ -168,7 +162,7 @@ atf_dynstr_init_ap(atf_dynstr_t *ad, const char *fmt, va_list ap)
         if (ret < 0) {
             free(ad->m_data);
             err = atf_libc_error(errno, "Cannot format string");
-            goto err_object;
+            goto out;
         }
 
         INV(ret >= 0);
@@ -180,10 +174,6 @@ atf_dynstr_init_ap(atf_dynstr_t *ad, const char *fmt, va_list ap)
     } while (ad->m_length >= ad->m_datasize);
 
     err = atf_no_error();
-    goto out;
-
-err_object:
-    atf_object_fini(&ad->m_object);
 out:
     POST(atf_is_error(err) || ad->m_data != NULL);
     return err;
@@ -207,17 +197,15 @@ atf_dynstr_init_raw(atf_dynstr_t *ad, const void *mem, size_t memlen)
 {
     atf_error_t err;
 
-    atf_object_init(&ad->m_object);
-
     if (memlen >= SIZE_MAX - 1) {
         err = atf_no_memory_error();
-        goto err_object;
+        goto out;
     }
 
     ad->m_data = (char *)malloc(memlen + 1);
     if (ad->m_data == NULL) {
         err = atf_no_memory_error();
-        goto err_object;
+        goto out;
     }
 
     ad->m_datasize = memlen + 1;
@@ -226,10 +214,7 @@ atf_dynstr_init_raw(atf_dynstr_t *ad, const void *mem, size_t memlen)
     ad->m_length = strlen(ad->m_data);
     INV(ad->m_length <= memlen);
     err = atf_no_error();
-    goto out;
 
-err_object:
-    atf_object_fini(&ad->m_object);
 out:
     return err;
 }
@@ -239,28 +224,23 @@ atf_dynstr_init_rep(atf_dynstr_t *ad, size_t len, char ch)
 {
     atf_error_t err;
 
-    atf_object_init(&ad->m_object);
-
     if (len == SIZE_MAX) {
         err = atf_no_memory_error();
-        goto err_object;
+        goto out;
     }
 
     ad->m_datasize = (len + 1) * sizeof(char);
     ad->m_data = (char *)malloc(ad->m_datasize);
     if (ad->m_data == NULL) {
         err = atf_no_memory_error();
-        goto err_object;
+        goto out;
     }
 
     memset(ad->m_data, ch, len);
     ad->m_data[len] = '\0';
     ad->m_length = len;
     err = atf_no_error();
-    goto out;
 
-err_object:
-    atf_object_fini(&ad->m_object);
 out:
     return err;
 }
@@ -283,8 +263,6 @@ atf_dynstr_copy(atf_dynstr_t *dest, const atf_dynstr_t *src)
 {
     atf_error_t err;
 
-    atf_object_copy(&dest->m_object, &src->m_object);
-
     dest->m_data = (char *)malloc(src->m_datasize);
     if (dest->m_data == NULL)
         err = atf_no_memory_error();
@@ -303,15 +281,11 @@ atf_dynstr_fini(atf_dynstr_t *ad)
 {
     INV(ad->m_data != NULL);
     free(ad->m_data);
-
-    atf_object_fini(&ad->m_object);
 }
 
 char *
 atf_dynstr_fini_disown(atf_dynstr_t *ad)
 {
-    atf_object_fini(&ad->m_object);
-
     INV(ad->m_data != NULL);
     return ad->m_data;
 }

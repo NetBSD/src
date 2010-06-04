@@ -1,7 +1,7 @@
 /*
  * Automated Testing Framework (atf)
  *
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,15 +37,12 @@
 #include <atf-c/error_fwd.h>
 #include <atf-c/fs.h>
 #include <atf-c/list.h>
-#include <atf-c/object.h>
 
 /* ---------------------------------------------------------------------
  * The "atf_process_stream" type.
  * --------------------------------------------------------------------- */
 
 struct atf_process_stream {
-    atf_object_t m_object;
-
     int m_type;
 
     /* Valid if m_type == connect. */
@@ -83,8 +80,6 @@ int atf_process_stream_type(const atf_process_stream_t *);
  * --------------------------------------------------------------------- */
 
 struct atf_process_status {
-    atf_object_t m_object;
-
     int m_status;
 };
 typedef struct atf_process_status atf_process_status_t;
@@ -102,8 +97,6 @@ bool atf_process_status_coredump(const atf_process_status_t *);
  * --------------------------------------------------------------------- */
 
 struct atf_process_child {
-    atf_object_t m_object;
-
     pid_t m_pid;
 
     int m_stdout;

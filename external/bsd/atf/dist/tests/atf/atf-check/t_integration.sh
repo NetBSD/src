@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -67,6 +67,7 @@ atf_test_case sflag
 sflag_head()
 {
     atf_set "descr" "Tests for the -s option"
+    atf_set "use.fs" "true"
 }
 sflag_body()
 {
@@ -102,6 +103,7 @@ atf_test_case oflag_empty
 oflag_empty_head()
 {
     atf_set "descr" "Tests for the -o option using the 'empty' argument"
+    atf_set "use.fs" "true"
 }
 oflag_empty_body()
 {
@@ -113,6 +115,7 @@ atf_test_case oflag_ignore
 oflag_ignore_head()
 {
     atf_set "descr" "Tests for the -o option using the 'ignore' argument"
+    atf_set "use.fs" "true"
 }
 oflag_ignore_body()
 {
@@ -124,6 +127,7 @@ atf_test_case oflag_file
 oflag_file_head()
 {
     atf_set "descr" "Tests for the -o option using the 'file:' argument"
+    atf_set "use.fs" "true"
 }
 oflag_file_body()
 {
@@ -142,6 +146,7 @@ atf_test_case oflag_inline
 oflag_inline_head()
 {
     atf_set "descr" "Tests for the -o option using the 'inline:' argument"
+    atf_set "use.fs" "true"
 }
 oflag_inline_body()
 {
@@ -169,6 +174,7 @@ atf_test_case oflag_save
 oflag_save_head()
 {
     atf_set "descr" "Tests for the -o option using the 'save:' argument"
+    atf_set "use.fs" "true"
 }
 oflag_save_body()
 {
@@ -181,6 +187,7 @@ atf_test_case eflag_empty
 eflag_empty_head()
 {
     atf_set "descr" "Tests for the -e option using the 'empty' argument"
+    atf_set "use.fs" "true"
 }
 eflag_empty_body()
 {
@@ -192,6 +199,7 @@ atf_test_case eflag_ignore
 eflag_ignore_head()
 {
     atf_set "descr" "Tests for the -e option using the 'ignore' argument"
+    atf_set "use.fs" "true"
 }
 eflag_ignore_body()
 {
@@ -203,6 +211,7 @@ atf_test_case eflag_file
 eflag_file_head()
 {
     atf_set "descr" "Tests for the -e option using the 'file:' argument"
+    atf_set "use.fs" "true"
 }
 eflag_file_body()
 {
@@ -221,6 +230,7 @@ atf_test_case eflag_inline
 eflag_inline_head()
 {
     atf_set "descr" "Tests for the -e option using the 'inline:' argument"
+    atf_set "use.fs" "true"
 }
 eflag_inline_body()
 {
@@ -248,6 +258,7 @@ atf_test_case eflag_save
 eflag_save_head()
 {
     atf_set "descr" "Tests for the -e option using the 'save:' argument"
+    atf_set "use.fs" "true"
 }
 eflag_save_body()
 {
@@ -261,6 +272,7 @@ invalid_umask_head()
 {
     atf_set "descr" "Tests for a correct error condition if the umask is" \
             "too restrictive"
+    atf_set "use.fs" "true"
 }
 invalid_umask_body()
 {
