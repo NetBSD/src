@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.233 2010/04/21 16:17:04 pooka Exp $
+	$NetBSD: syscalls.master,v 1.234 2010/06/04 16:32:00 njoly Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -368,8 +368,8 @@
 189	COMPAT_12 MODULAR { int|sys||fstat(int fd, struct stat12 *sb); } fstat12
 190	COMPAT_12 MODULAR { int|sys||lstat(const char *path, \
 			    struct stat12 *ub); } lstat12
-191	STD 		{ long|sys||pathconf(const char *path, int name); }
-192	STD 		{ long|sys||fpathconf(int fd, int name); }
+191	STD 	RUMP	{ long|sys||pathconf(const char *path, int name); }
+192	STD 	RUMP	{ long|sys||fpathconf(int fd, int name); }
 193	UNIMPL
 194	STD 	RUMP	{ int|sys||getrlimit(int which, \
 			    struct rlimit *rlp); }
