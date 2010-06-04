@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/05/08 08:12:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/06/04 08:33:42 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/atf-run
 .PATH:		${SRCDIR}/tests/atf/atf-run
 
-CPPFLAGS+=	-I${SRCDIR}
+CPPFLAGS+=	-I${SRCDIR}/atf-run
 
 TESTS_CXX=	h_bad_metadata
 TESTS_CXX+=	h_fail
