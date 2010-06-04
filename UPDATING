@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.212 2010/05/22 11:10:59 mrg Exp $
+$NetBSD: UPDATING,v 1.213 2010/06/04 15:11:31 jmmv Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20100604:
+	The update of ATF to 0.9 causes old tests written in shell to fail
+	unless they are rebuilt.  If you are building with MKUPDATE=yes,
+	you need to clean the src/external/bsd/atf/tests/ and the src/tests/
+	trees by hand.
 
 20100522:
 	Recent Xorg updates in xsrc/external/mit/ will cause various build
