@@ -1,4 +1,4 @@
-# $NetBSD: t_sdiff.sh,v 1.1 2009/02/13 05:19:52 jmmv Exp $
+# $NetBSD: t_sdiff.sh,v 1.2 2010/06/04 08:39:42 jmmv Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -94,6 +94,7 @@ atf_test_case merge
 merge_head()
 {
 	atf_set "descr" "Checks interactive merging"
+	atf_set "use.fs" "true"
 }
 merge_body()
 {
@@ -153,6 +154,7 @@ atf_test_case dot
 dot_head()
 {
 	atf_set "descr" "Checks comparing with file containing only one character"
+	atf_set "use.fs" "true"
 }
 dot_body()
 {
@@ -167,6 +169,7 @@ atf_test_case stdin
 stdin_head()
 {
 	atf_set "descr" "Checks reading data from stdin"
+	atf_set "use.fs" "true"
 }
 stdin_body()
 {
@@ -183,6 +186,7 @@ atf_test_case short
 short_head()
 {
 	atf_set "descr" "Checks premature stop of merging"
+	atf_set "use.fs" "true"
 }
 short_body()
 {

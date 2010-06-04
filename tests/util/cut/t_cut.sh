@@ -1,4 +1,4 @@
-# $NetBSD: t_cut.sh,v 1.1 2009/02/13 05:19:51 jmmv Exp $
+# $NetBSD: t_cut.sh,v 1.2 2010/06/04 08:39:41 jmmv Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,6 +47,7 @@ atf_test_case basic
 basic_head()
 {
 	atf_set "descr" "Checks basic functionality"
+	atf_set "use.fs" "true"
 }
 basic_body()
 {
@@ -58,6 +59,7 @@ atf_test_case sflag
 sflag_head()
 {
 	atf_set "descr" "Checks -s flag"
+	atf_set "use.fs" "true"
 }
 sflag_body()
 {
@@ -69,6 +71,7 @@ atf_test_case dflag
 dflag_head()
 {
 	atf_set "descr" "Checks -d flag"
+	atf_set "use.fs" "true"
 }
 dflag_body()
 {
@@ -80,6 +83,7 @@ atf_test_case dsflag
 dsflag_head()
 {
 	atf_set "descr" "Checks -s and -d flags combined"
+	atf_set "use.fs" "true"
 }
 dsflag_body()
 {

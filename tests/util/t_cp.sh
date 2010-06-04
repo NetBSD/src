@@ -1,4 +1,4 @@
-# $NetBSD: t_cp.sh,v 1.3 2009/01/19 07:15:46 jmmv Exp $
+# $NetBSD: t_cp.sh,v 1.4 2010/06/04 08:39:41 jmmv Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,7 @@ reset() {
 atf_test_case file_to_file
 file_to_file_head() {
 	atf_set "descr" "Checks the copy of a file to a file"
+	atf_set "use.fs" "true"
 }
 file_to_file_body() {
 	reset
@@ -103,6 +104,7 @@ file_to_file_noflags() {
 atf_test_case file_to_link
 file_to_link_head() {
 	atf_set "descr" "Checks the copy of a file to a symbolic link"
+	atf_set "use.fs" "true"
 }
 file_to_link_body() {
 	reset
@@ -113,6 +115,7 @@ file_to_link_body() {
 atf_test_case link_to_file
 link_to_file_head() {
 	atf_set "descr" "Checks the copy of a symbolic link to a file"
+	atf_set "use.fs" "true"
 }
 link_to_file_body() {
 	reset
@@ -126,6 +129,7 @@ atf_test_case file_over_link
 file_over_link_head() {
 	atf_set "descr" "Checks the copy of a file to a symbolic link" \
 	                "without following it"
+	atf_set "use.fs" "true"
 }
 file_over_link_body() {
 	reset
@@ -137,6 +141,7 @@ atf_test_case link_over_file
 link_over_file_head() {
 	atf_set "descr" "Checks the copy of a symbolic link to a file" \
 	                "without following the former"
+	atf_set "use.fs" "true"
 }
 link_over_file_body() {
 	reset
@@ -149,6 +154,7 @@ link_over_file_body() {
 atf_test_case files_to_dir
 files_to_dir_head() {
 	atf_set "descr" "Checks the copy of multiple files into a directory"
+	atf_set "use.fs" "true"
 }
 files_to_dir_body() {
 	reset
@@ -162,6 +168,7 @@ atf_test_case dir_to_file
 dir_to_file_head() {
 	atf_set "descr" "Checks the copy of a directory onto a file, which" \
 	                "should not work"
+	atf_set "use.fs" "true"
 }
 dir_to_file_body() {
 	reset
@@ -174,6 +181,7 @@ atf_test_case file_to_linkdir
 file_to_linkdir_head() {
 	atf_set "descr" "Checks the copy of a file to a symbolic link that" \
 	                "points to a directory"
+	atf_set "use.fs" "true"
 }
 file_to_linkdir_body() {
 	reset
@@ -190,6 +198,7 @@ atf_test_case linkdir_to_file
 linkdir_to_file_head() {
 	atf_set "descr" "Checks the copy of a symbolic link that points to" \
 	                "a directory onto a file"
+	atf_set "use.fs" "true"
 }
 linkdir_to_file_body() {
 	reset
@@ -269,6 +278,7 @@ dir_to_dir_setup() {
 atf_test_case dir_to_dir
 dir_to_dir_head() {
 	atf_set "descr" "Checks the copy of a directory onto another directory"
+	atf_set "use.fs" "true"
 }
 dir_to_dir_body() {
 	dir_to_dir_setup

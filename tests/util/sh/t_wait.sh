@@ -1,6 +1,6 @@
-# $NetBSD: t_wait.sh,v 1.1 2009/10/20 21:58:35 jmmv Exp $
+# $NetBSD: t_wait.sh,v 1.2 2010/06/04 08:39:42 jmmv Exp $
 #
-# Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -28,15 +28,31 @@
 atf_test_case individual
 individual_head() {
 	atf_set "descr" "Tests that waiting for individual jobs works"
+	atf_set "use.fs" "true"
 }
 individual_body() {
-	sleep 3 &
-	sleep 1 &
+	# atf-sh confuses wait for some reason; work it around by creating
+	# a helper script that executes /bin/sh directly.
+	cat >helper.sh <<EOF
+sleep 3 &
+sleep 1 &
 
-	wait %1
-	[ $? = 0 ] || atf_fail "Waiting of first job failed"
-	wait %2
-	[ $? = 0 ] || atf_fail "Waiting of second job failed"
+wait %1
+if [ \$? -ne 0 ]; then
+    echo "Waiting of first job failed"
+    exit 1
+fi
+
+wait %2
+if [ \$? -ne 0 ]; then
+    echo "Waiting of second job failed"
+    exit 1
+fi
+
+exit 0
+EOF
+	output=$(/bin/sh helper.sh)
+	[ $? -eq 0 ] || atf_fail "${output}"
 }
 
 atf_init_test_cases() {
