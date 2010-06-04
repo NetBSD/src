@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1455 2010/06/01 13:52:07 tnozaki Exp $
+#	$NetBSD: mi,v 1.1456 2010/06/04 08:37:09 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7,7 +7,7 @@
 ./usr/bin/ar					comp-util-bin		binutils
 ./usr/bin/as					comp-util-bin		binutils
 ./usr/bin/asa					comp-fortran-bin
-./usr/bin/atf-compile				comp-atf-bin		atf
+./usr/bin/atf-compile				comp-obsolete		obsolete
 ./usr/bin/c++					comp-cxx-bin		gcccmds
 ./usr/bin/c++filt				comp-cxx-bin		binutils
 ./usr/bin/c89					comp-c-bin
@@ -153,7 +153,7 @@
 ./usr/include/atf-c/list.h			comp-atf-include	atf
 ./usr/include/atf-c/macros.h			comp-atf-include	atf
 ./usr/include/atf-c/map.h			comp-atf-include	atf
-./usr/include/atf-c/object.h			comp-atf-include	atf
+./usr/include/atf-c/object.h			comp-obsolete		obsolete
 ./usr/include/atf-c/process.h			comp-atf-include	atf
 ./usr/include/atf-c/sanity.h			comp-atf-include	atf
 ./usr/include/atf-c/signals.h			comp-atf-include	obsolete
@@ -2971,10 +2971,11 @@
 ./usr/libdata/debug/usr/bin/asa.debug		comp-fortran-debug	debug
 ./usr/libdata/debug/usr/bin/at.debug		comp-cron-debug		debug
 ./usr/libdata/debug/usr/bin/atf-check.debug	comp-atf-debug		atf,debug
-./usr/libdata/debug/usr/bin/atf-compile.debug	comp-atf-debug		atf,debug
+./usr/libdata/debug/usr/bin/atf-compile.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/atf-config.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/bin/atf-report.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/bin/atf-run.debug	comp-atf-debug		atf,debug
+./usr/libdata/debug/usr/bin/atf-sh.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/bin/atf-version.debug	comp-atf-debug		atf,debug
 ./usr/libdata/debug/usr/bin/audioctl.debug	comp-audio-debug	debug
 ./usr/libdata/debug/usr/bin/audioplay.debug	comp-audio-debug	debug
