@@ -125,12 +125,17 @@ handle_ipv4ll_failure(void *arg)
 	struct interface *iface = arg;
 	time_t up;
 
-	if (iface->state->fail.s_addr == iface->state->lease.addr.s_addr) {
+	if (iface->state->fail.s_addr == iface->addr.s_addr) {
 		up = uptime();
 		if (iface->state->defend + DEFEND_INTERVAL > up) {
+			syslog(LOG_DEBUG,
+			    "%s: IPv4LL %d second defence failed",
+			    iface->name, DEFEND_INTERVAL);
 			drop_config(iface, "EXPIRE");
 			iface->state->conflicts = -1;
 		} else {
+			syslog(LOG_DEBUG, "%s: defended IPv4LL address",
+			    iface->name);
 			iface->state->defend = up;
 			return;
 		}
@@ -139,6 +144,7 @@ handle_ipv4ll_failure(void *arg)
 	close_sockets(iface);
 	free(iface->state->offer);
 	iface->state->offer = NULL;
+	delete_timeout(NULL, iface);
 	if (++iface->state->conflicts > MAX_CONFLICTS) {
 		syslog(LOG_ERR, "%s: failed to acquire an IPv4LL address",
 		    iface->name);

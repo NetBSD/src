@@ -78,10 +78,18 @@ send_arp(const struct interface *iface, int op, in_addr_t sip, in_addr_t tip)
 static void
 handle_arp_failure(struct interface *iface)
 {
-	if (iface->state->offer->cookie != htonl(MAGIC_COOKIE)) {
+
+	/* If we failed without a magic cookie then we need to try
+	 * and defend our IPv4LL address. */
+	if ((iface->state->offer != NULL &&
+		iface->state->offer->cookie != htonl(MAGIC_COOKIE)) ||
+	    (iface->state->new != NULL &&
+		iface->state->new->cookie != htonl(MAGIC_COOKIE)))
+	{
 		handle_ipv4ll_failure(iface);
 		return;
 	}
+
 	unlink(iface->leasefile);
 	if (!iface->state->lease.frominfo)
 		send_decline(iface);
