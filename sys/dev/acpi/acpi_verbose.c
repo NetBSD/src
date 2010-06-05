@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.1 2010/05/31 20:32:29 pgoyette Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.2 2010/06/05 06:07:12 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.1 2010/05/31 20:32:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.2 2010/06/05 06:07:12 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -81,10 +81,10 @@ void	acpi_print_devnodes_real(struct acpi_softc *);
 void	acpi_print_tree_real(struct acpi_devnode *, uint32_t);
 void	acpi_print_dev_real(const char *);
 
-MODULE(MODULE_CLASS_MISC, acpiverbose, NULL); 
+MODULE(MODULE_CLASS_MISC, acpiverbose, NULL);
 
 __weak_alias(acpi_wmidump_real, acpi_null);
- 
+
 static int
 acpiverbose_modcmd(modcmd_t cmd, void *arg)
 {

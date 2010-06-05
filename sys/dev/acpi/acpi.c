@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.197 2010/05/31 20:32:29 pgoyette Exp $	*/
+/*	$NetBSD: acpi.c,v 1.198 2010/06/05 06:07:12 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.197 2010/05/31 20:32:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.198 2010/06/05 06:07:12 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -222,19 +222,19 @@ void
 acpi_verbose_ctl(bool load)
 {
 	static int loaded = 0;
-  
-	if (load) { 
+
+	if (load) {
 		if (loaded++ == 0)
 			if (module_load("acpiverbose", MODCTL_LOAD_FORCE,
 					NULL, MODULE_CLASS_MISC) != 0)
 				loaded = 0;
 		return;
 	}
-	if (loaded == 0) 
+	if (loaded == 0)
 		return;
 	if (--loaded == 0)
 		module_unload("acpiverbose");
-}  
+}
 
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
