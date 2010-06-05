@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.58 2010/02/05 21:58:42 enami Exp $	*/
+/*	$NetBSD: sort.c,v 1.59 2010/06/05 17:44:51 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
  The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
-__RCSID("$NetBSD: sort.c,v 1.58 2010/02/05 21:58:42 enami Exp $");
+__RCSID("$NetBSD: sort.c,v 1.59 2010/06/05 17:44:51 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -147,13 +147,15 @@ main(int argc, char *argv[])
 	fldtab = emalloc(fldtab_sz * sizeof(*fldtab));
 	memset(fldtab, 0, fldtab_sz * sizeof(*fldtab));
 
+#define SORT_OPTS "bcdD:fik:mHno:rR:sSt:T:ux"
+
 	/* Convert "+field" args to -f format */
-	fixit(&argc, argv);
+	fixit(&argc, argv, SORT_OPTS);
 
 	if (!(tmpdir = getenv("TMPDIR")))
 		tmpdir = _PATH_TMP;
 
-	while ((ch = getopt(argc, argv, "bcdD:fik:mHno:rR:sSt:T:ux")) != -1) {
+	while ((ch = getopt(argc, argv, SORT_OPTS)) != -1) {
 		switch (ch) {
 		case 'b':
 			fldtab[0].flags |= BI | BT;
