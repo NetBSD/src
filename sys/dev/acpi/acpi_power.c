@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.13 2010/05/31 20:10:56 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.14 2010/06/05 07:59:13 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.13 2010/05/31 20:10:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.14 2010/06/05 07:59:13 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -379,8 +379,8 @@ acpi_power_set(struct acpi_devnode *ad, int state)
 	KASSERT(ad != NULL && ad->ad_root != NULL);
 
 	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
-		ad->ad_state = ACPI_STATE_ERROR;
-		return false;
+		rv = AE_SUPPORT;
+		goto fail;
 	}
 
 	if (state < ACPI_STATE_D0 || state > ACPI_STATE_D3) {
@@ -443,8 +443,8 @@ acpi_power_set(struct acpi_devnode *ad, int state)
 fail:
 	ad->ad_state = ACPI_STATE_ERROR;
 
-	aprint_error_dev(ad->ad_root, "failed to set power state to D%d "
-	    "for %s: %s\n", state, ad->ad_name, AcpiFormatException(rv));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "failed to set power state to D%d "
+		"for %s: %s\n", state, ad->ad_name, AcpiFormatException(rv)));
 
 	return false;
 }
