@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpivar.h,v 1.3 2010/05/31 20:32:29 pgoyette Exp $	*/
+/*	$NetBSD: wmi_acpivar.h,v 1.4 2010/06/05 06:07:12 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -31,7 +31,7 @@
 #define _SYS_DEV_ACPI_WMI_WMI_ACPIVAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpivar.h,v 1.3 2010/05/31 20:32:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpivar.h,v 1.4 2010/06/05 06:07:12 jruoho Exp $");
 
 ACPI_STATUS	acpi_wmi_event_register(device_t, ACPI_NOTIFY_HANDLER);
 ACPI_STATUS	acpi_wmi_event_deregister(device_t);
@@ -94,10 +94,10 @@ struct acpi_wmi_softc {
 	device_t		sc_dev;
 	device_t		sc_child;
 	ACPI_NOTIFY_HANDLER	sc_handler;
-	struct acpi_devnode	*sc_node; 
- 
+	struct acpi_devnode	*sc_node;
+
 	SIMPLEQ_HEAD(, wmi_t)	wmi_head;
-}; 
+};
 
 #define UGET16(x)	(*(uint16_t *)(x))
 #define UGET64(x)	(*(uint64_t *)(x))
@@ -105,7 +105,7 @@ struct acpi_wmi_softc {
 #define HEXCHAR(x)	(((x) >= '0' && (x) <= '9') ||	\
 			((x) >= 'a' && (x) <= 'f')  ||	\
 			((x) >= 'A' && (x) <= 'F'))
- 
+
 #define GUIDCMP(a, b)					\
 	((a)->data1 == (b)->data1 &&			\
 	 (a)->data2 == (b)->data2 &&			\
