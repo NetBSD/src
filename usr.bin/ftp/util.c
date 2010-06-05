@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.154 2010/03/05 07:41:10 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.155 2010/06/05 13:59:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.154 2010/03/05 07:41:10 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.155 2010/06/05 13:59:39 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1098,9 +1098,8 @@ ftpvis(char *dst, size_t dstlen, const char *src, size_t srclen)
 {
 	size_t	di, si;
 
-	for (di = si = 0;
-	    src[si] != '\0' && di < dstlen && si < srclen;
-	    di++, si++) {
+	di = si = 0;
+	while (src[si] != '\0' && di < dstlen && si < srclen) {
 		switch (src[si]) {
 		case '\\':
 		case ' ':
@@ -1108,12 +1107,18 @@ ftpvis(char *dst, size_t dstlen, const char *src, size_t srclen)
 		case '\r':
 		case '\n':
 		case '"':
-			dst[di++] = '\\';
-			if (di >= dstlen)
+			/*
+			 * Need room for two characters and NUL, avoiding
+			 * incomplete escape sequences at end of dst.
+			 */
+			if (di >= dstlen - 3)
 				break;
+			dst[di++] = '\\';
 			/* FALLTHROUGH */
 		default:
-			dst[di] = src[si];
+			dst[di] = src[si++];
+			if (di < dstlen)
+				di++;
 		}
 	}
 	dst[di] = '\0';
