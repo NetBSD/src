@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2009/04/07 13:52:07 apb Exp $
+# $NetBSD: Makefile,v 1.7 2010/06/05 22:38:39 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ TESTS_SH+=	t_dirname
 TESTS_SH+=	t_expr
 TESTS_SH+=	t_gzip
 TESTS_SH+=	t_pax
+TESTS_SH+=	t_sort
 TESTS_SH+=	t_tar
 
 .include <bsd.test.mk>
