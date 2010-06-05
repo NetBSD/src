@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.78 2010/06/04 08:37:10 jmmv Exp $
+# $NetBSD: mi,v 1.79 2010/06/05 22:39:18 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1352,4 +1352,5 @@
 ./usr/tests/util/t_expr				tests-util-tests
 ./usr/tests/util/t_gzip				tests-util-tests
 ./usr/tests/util/t_pax				tests-util-tests
+./usr/tests/util/t_sort				tests-util-tests
 ./usr/tests/util/t_tar				tests-util-tests
