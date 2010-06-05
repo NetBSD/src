@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.31 2010/02/05 21:58:42 enami Exp $	*/
+/*	$NetBSD: sort.h,v 1.32 2010/06/05 17:44:51 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ RECHEADER *allocrec(RECHEADER *, size_t);
 void	 append(RECHEADER **, int, FILE *, void (*)(const RECHEADER *, FILE *));
 void	 concat(FILE *, FILE *);
 length_t enterkey(RECHEADER *, const u_char *, u_char *, size_t, struct field *);
-void	 fixit(int *, char **);
+void	 fixit(int *, char **, const char *);
 void	 fldreset(struct field *);
 FILE	*ftmp(void);
 void	 fmerge(struct filelist *, int, FILE *, struct field *);
