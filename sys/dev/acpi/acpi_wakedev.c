@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.13 2010/06/05 15:31:21 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.14 2010/06/05 15:47:59 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.13 2010/06/05 15:31:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.14 2010/06/05 15:47:59 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -170,7 +170,7 @@ acpi_wakedev_method(struct acpi_devnode *ad, int enable, int state)
 
 	obj[0].Integer.Value = enable;
 	obj[1].Integer.Value = state;
-	obj[2].Integer.Value = 3;
+	obj[2].Integer.Value = ACPI_STATE_D0;
 
 	obj[0].Type = obj[1].Type = obj[2].Type = ACPI_TYPE_INTEGER;
 
@@ -203,7 +203,7 @@ acpi_wakedev_gpe(struct acpi_devnode *ad, int enable, int state)
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
 
-	rv = acpi_eval_struct(ad->ad_handle, METHOD_NAME__PRW, &buf);
+	rv = acpi_eval_struct(ad->ad_handle, "_PRW", &buf);
 
 	if (ACPI_FAILURE(rv))
 		return;
