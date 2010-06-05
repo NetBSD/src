@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.8 2010/05/22 18:15:21 tnozaki Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.9 2010/06/05 16:37:13 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -217,9 +217,6 @@ typedef struct _NBRuneLocale {
 
 /* magic number for LC_CTYPE (rune)locale declaration */
 #define	_NB_RUNE_MAGIC_1 "RuneCT10"	/* Indicates version 0 of RuneLocale */
-
-/* magic string for dynamic link module - type should be like "LC_CTYPE" */
-#define	_NB_RUNE_MODULE_1(type)	"RuneModule10." type
 
 /* codeset tag */
 #define _NB_RUNE_CODESET "CODESET="
