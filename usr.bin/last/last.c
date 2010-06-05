@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.33 2009/04/12 13:07:21 lukem Exp $	*/
+/*	$NetBSD: last.c,v 1.34 2010/06/05 03:24:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.33 2009/04/12 13:07:21 lukem Exp $");
+__RCSID("$NetBSD: last.c,v 1.34 2010/06/05 03:24:01 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -362,6 +362,10 @@ fmttime(time_t t, int flags)
 	static char tbuf[TBUFLEN];
 
 	tm = (flags & GMT) ? gmtime(&t) : localtime(&t);
+	if (tm == NULL) {
+		strcpy(tbuf, "????");
+		return tbuf;
+	}
 	strftime(tbuf, sizeof(tbuf),
 	    (flags & TIMEONLY)
 	     ? (flags & FULLTIME ? LTFMTS : TFMTS)
