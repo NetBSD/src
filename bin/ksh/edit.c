@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.24 2010/04/02 20:19:40 plunky Exp $	*/
+/*	$NetBSD: edit.c,v 1.25 2010/06/05 03:02:37 sjg Exp $	*/
 
 /*
  * Command line editing - common code
@@ -7,7 +7,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: edit.c,v 1.24 2010/04/02 20:19:40 plunky Exp $");
+__RCSID("$NetBSD: edit.c,v 1.25 2010/06/05 03:02:37 sjg Exp $");
 #endif
 
 
@@ -873,14 +873,14 @@ add_glob(str, slen)
 
 	/*
 	 * If the pathname contains a wildcard (an unquoted '*',
-	 * '?', or '[') or parameter expansion ('$'), or a ~username
+	 * '?', or '['), or a ~username
 	 * with no trailing slash, then it is globbed based on that
 	 * value (i.e., without the appended '*').
 	 */
 	for (s = toglob; *s; s++) {
 		if (*s == '\\' && s[1])
 			s++;
-		else if (*s == '*' || *s == '[' || *s == '?' || *s == '$'
+		else if (*s == '*' || *s == '[' || *s == '?'
 			 || (s[1] == '(' /*)*/ && strchr("*+?@!", *s)))
 			break;
 		else if (ISDIRSEP(*s))
