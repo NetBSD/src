@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.12 2010/04/18 14:05:26 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.13 2010/06/05 15:31:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.12 2010/04/18 14:05:26 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.13 2010/06/05 15:31:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,10 +36,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.12 2010/04/18 14:05:26 jruoho Exp
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_power.h>
 #include <dev/acpi/acpi_wakedev.h>
 
-#define _COMPONENT		   ACPI_BUS_COMPONENT
-ACPI_MODULE_NAME		   ("acpi_wakedev")
+#define _COMPONENT		ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME		("acpi_wakedev")
 
 static const char * const acpi_wakedev_default[] = {
 	"PNP0C0C",	/* power button */
@@ -51,8 +52,9 @@ static const char * const acpi_wakedev_default[] = {
 
 static const struct sysctlnode *rnode = NULL;
 
-static void	acpi_wakedev_prepare(struct acpi_devnode *, int, int);
-static void	acpi_wakedev_gpe(struct acpi_devnode *, int);
+static void	acpi_wakedev_method(struct acpi_devnode *, int, int);
+static void	acpi_wakedev_gpe(struct acpi_devnode *, int, int);
+static void	acpi_wakedev_power(ACPI_OBJECT *);
 
 SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 {
@@ -121,27 +123,26 @@ acpi_wakedev_commit(struct acpi_softc *sc, int state)
 	struct acpi_devnode *ad;
 
 	/*
-	 * As noted in ACPI 3.0 (p. 243), preparing
-	 * a device for wakeup is a two-step process:
+	 * To prepare a device for wakeup:
 	 *
-	 *  1.	Enable all power resources in _PRW.
+	 *  1.	Set appropriate GPEs.
 	 *
-	 *  2.	If present, execute _DSW/_PSW method.
+	 *  2.	Enable all power resources in _PRW.
 	 *
-	 * XXX: The first one is yet to be implemented.
+	 *  3.	If present, execute _DSW/_PSW method.
 	 */
 	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
 
 		if ((ad->ad_flags & ACPI_DEVICE_WAKEUP) == 0)
 			continue;
 
-		acpi_wakedev_gpe(ad, ad->ad_wake);
-		acpi_wakedev_prepare(ad, ad->ad_wake, state);
+		acpi_wakedev_gpe(ad, ad->ad_wake, state);
+		acpi_wakedev_method(ad, ad->ad_wake, state);
 	}
 }
 
 static void
-acpi_wakedev_prepare(struct acpi_devnode *ad, int enable, int state)
+acpi_wakedev_method(struct acpi_devnode *ad, int enable, int state)
 {
 	ACPI_OBJECT_LIST arg;
 	ACPI_OBJECT obj[3];
@@ -194,9 +195,10 @@ fail:
 }
 
 static void
-acpi_wakedev_gpe(struct acpi_devnode *ad, int enable)
+acpi_wakedev_gpe(struct acpi_devnode *ad, int enable, int state)
 {
 	ACPI_OBJECT *elm, *obj;
+	ACPI_HANDLE hdl = NULL;
 	ACPI_INTEGER val;
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
@@ -237,6 +239,7 @@ acpi_wakedev_gpe(struct acpi_devnode *ad, int enable)
 		if (elm->Package.Elements[1].Type != ACPI_TYPE_INTEGER)
 			goto out;
 
+		hdl = elm->Package.Elements[0].Reference.Handle;
 		val = elm->Package.Elements[1].Integer.Value;
 		break;
 
@@ -244,14 +247,35 @@ acpi_wakedev_gpe(struct acpi_devnode *ad, int enable)
 		goto out;
 	}
 
+ 	/*
+	 * The second element is an integer that contains the
+	 * lowest sleep state that can be entered while still
+	 * providing wake-up functionality. The rest of the
+	 * elements are references to power resources.
+	 */
+	elm = &obj->Package.Elements[1];
+
+	if (elm->Type != ACPI_TYPE_INTEGER)
+		goto out;
+
+	if (state > elm->Integer.Value)
+		aprint_error_dev(ad->ad_root, "sleep state S%d "
+		    "loses wake for %s\n", state, ad->ad_name);
+
+	/*
+	 * Turn on power resources.
+	 */
+	if (enable != 0)
+		acpi_wakedev_power(obj);
+
 	/*
 	 * Set or unset a GPE as both runtime and wake.
 	 */
 	if (enable == 0)
-		(void)AcpiDisableGpe(NULL, val, ACPI_NOT_ISR);
+		(void)AcpiDisableGpe(hdl, val, ACPI_NOT_ISR);
 	else {
-		(void)AcpiSetGpeType(NULL, val, ACPI_GPE_TYPE_WAKE_RUN);
-		(void)AcpiEnableGpe(NULL, val, ACPI_NOT_ISR);
+		(void)AcpiSetGpeType(hdl, val, ACPI_GPE_TYPE_WAKE_RUN);
+		(void)AcpiEnableGpe(hdl, val, ACPI_NOT_ISR);
 	}
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "wake GPE %s for %s\n",
@@ -259,4 +283,29 @@ acpi_wakedev_gpe(struct acpi_devnode *ad, int enable)
 
 out:
 	ACPI_FREE(buf.Pointer);
+}
+
+static void
+acpi_wakedev_power(ACPI_OBJECT *obj)
+{
+	ACPI_OBJECT *elm;
+	ACPI_HANDLE hdl;
+	ACPI_STATUS rv;
+	uint32_t i, n;
+
+	n = obj->Package.Count;
+
+	if (n < 3)
+		return;
+
+	for (i = 2; i < n; i++) {
+
+		elm = &obj->Package.Elements[i];
+		rv = acpi_eval_reference_handle(elm, &hdl);
+
+		if (ACPI_FAILURE(rv))
+			continue;
+
+		(void)acpi_power_set_from_handle(hdl, ACPI_STATE_D0);
+	}
 }
