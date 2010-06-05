@@ -1,4 +1,4 @@
-/*	$NetBSD: rune_local.h,v 1.14 2010/05/22 13:50:02 tnozaki Exp $	*/
+/*	$NetBSD: rune_local.h,v 1.15 2010/06/05 16:37:13 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -105,7 +105,6 @@
 #define _RuneRange		_NBRuneRange
 #define _RuneLocale		_NBRuneLocale
 #define _RUNE_MAGIC_1		_NB_RUNE_MAGIC_1
-#define _RUNE_MODULE_1		_NB_RUNE_MODULE_1
 #define _RUNE_CODESET		_NB_RUNE_CODESET
 
 /*
