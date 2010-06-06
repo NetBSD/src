@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.763 2010/06/04 09:10:53 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.764 2010/06/06 19:19:58 jruoho Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -25,7 +25,7 @@
 #     remaining lines until the end of the record are notes.
 
 Package:	acpica
-Version:	20100121
+Version:	20100528
 Current Vers:	20100528
 Maintainer:	INTEL
 Archive Site:	http://www.acpica.org/downloads/unix_source_code.php
