@@ -644,14 +644,14 @@ static const char           *AcpiGbl_DescTypeNames[] =
 };
 
 
-char *
+const char *
 AcpiUtGetDescriptorName (
     void                    *Object)
 {
 
     if (!Object)
     {
-        return __UNCONST("NULL OBJECT");
+        return ("NULL OBJECT");
     }
 
     if (ACPI_GET_DESCRIPTOR_TYPE (Object) > ACPI_DESC_TYPE_MAX)
