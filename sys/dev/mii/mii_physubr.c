@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.69 2010/06/02 19:47:34 martin Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.70 2010/06/06 18:58:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.69 2010/06/02 19:47:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.70 2010/06/06 18:58:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,29 +55,29 @@ __KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.69 2010/06/02 19:47:34 martin Exp 
 
 const char *(*mii_get_descr)(int, int) = mii_get_descr_stub;
 
+int mii_verbose_loaded = 0;
+
 const char *mii_get_descr_stub(int oui, int model)
 {
-	return NULL;
+	mii_load_verbose();
+	if (mii_verbose_loaded)
+		return mii_get_descr(oui, model);
+	else
+		return NULL;
 }
 
 /*    
- * Routine to load/unload the miiverbose kernel module as needed
+ * Routine to load the miiverbose kernel module as needed
  */
-void mii_verbose_ctl(bool load)
+void mii_load_verbose(void)
 {
-	static int loaded = 0;
- 
-	if (load) {
-		if (loaded++ == 0)
-			if (module_load("miiverbose", MODCTL_LOAD_FORCE,
-					NULL, MODULE_CLASS_MISC) !=0 )
-				loaded = 0;
-		return; 
-	}
-	if (loaded == 0)
-		return; 
-	if (--loaded == 0)
-		module_unload("miiverbose");
+	if (mii_verbose_loaded)
+		return;
+
+	mutex_enter(&module_lock);
+	if (module_autoload("miiverbose", MODULE_CLASS_MISC) ==0)
+		mii_verbose_loaded++;
+	mutex_exit(&module_lock);
 }  
 
 static void mii_phy_statusmsg(struct mii_softc *);

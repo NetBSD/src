@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_verbose.h,v 1.1 2010/05/30 17:44:08 pgoyette Exp $ */
+/*	$NetBSD: mii_verbose.h,v 1.2 2010/06/06 18:58:22 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,9 @@
 extern const char *	(*mii_get_descr)(int, int);
 
 const char *	mii_get_descr_stub(int, int);
-void		mii_verbose_ctl(bool);
+void		mii_load_verbose(void);
+
+extern int	mii_verbose_loaded;
 
 #endif /* _KERNEL */
 
