@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.48 2010/05/30 13:50:16 ahoka Exp $
+.\"     $NetBSD: vnode.9,v 1.49 2010/06/06 08:01:31 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 30, 2010
+.Dd June 6, 2010
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -161,7 +161,6 @@ struct vnode {
 	enum vtype	v_type;			/* vnode type */
 	enum vtagtype	v_tag;			/* type of underlying data */
 	struct vnlock	v_lock;			/* lock for this vnode */
-	struct vnlock	*v_vnlock;		/* pointer to lock */
 	void 		*v_data;		/* private data for fs */
 	struct klist	v_klist;		/* notes attached to vnode */
 };
@@ -434,7 +433,7 @@ systemV boot file system
 .El
 .Pp
 All vnode locking operations use
-.Em v_vnlock .
+.Em v_lock .
 This lock is acquired by calling
 .Xr vn_lock 9
 and released by calling
@@ -462,30 +461,13 @@ Multiple-reader locking functions equivalently only in the presence
 of big-lock SMP locking or a uni-processor machine.
 The lock may be held while sleeping.
 While the
-.Em v_vnlock
+.Em v_lock
 is acquired, the holder is guaranteed that the vnode will not be
 reclaimed or invalidated.
 Most file system functions require that you hold the vnode lock on entry.
 See
 .Xr lock 9
 for details on the kernel locking API.
-.Pp
-For leaf file systems (such as ffs, lfs, msdosfs, etc),
-.Em v_vnlock
-will point to
-.Em v_lock .
-For stacked file systems,
-.Em v_vnlock
-will generally point to
-.Em v_vlock
-of the lowest file system.
-Additionally, the implementation of the vnode lock is the
-responsibility of the individual file systems and
-.Em v_vnlock
-may also be NULL indicating that a leaf node does not export a lock
-for vnode locking.
-In this case, stacked file systems (such as nullfs) must call the
-underlying file system directly for locking.
 .Pp
 Each file system underlying a vnode allocates its own private area and
 hangs it from

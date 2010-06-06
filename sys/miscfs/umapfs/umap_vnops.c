@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.48 2010/01/08 11:35:11 pooka Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.49 2010/06/06 08:01:31 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.48 2010/01/08 11:35:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.49 2010/06/06 08:01:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ umap_bypass(void *v)
 	kauth_cred_t savecredp = 0, savecompcredp = 0;
 	kauth_cred_t compcredp = 0;
 	struct vnode **this_vp_p;
-	int error, error1;
+	int error;
 	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;
 	struct vnode **vps_p[VDESC_MAX_VPS];
 	struct vnode ***vppp;
@@ -261,8 +261,6 @@ umap_bypass(void *v)
 			break;   /* bail out at end of list */
 		if (old_vps[i]) {
 			*(vps_p[i]) = old_vps[i];
-			if (reles & VDESC_VP0_WILLUNLOCK)
-				LAYERFS_UPPERUNLOCK(*(vps_p[i]), 0, error1);
 			if (reles & VDESC_VP0_WILLRELE)
 				vrele(*(vps_p[i]));
 		}
