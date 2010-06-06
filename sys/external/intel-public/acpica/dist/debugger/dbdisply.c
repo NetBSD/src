@@ -816,7 +816,7 @@ AcpiDbDisplayGpes (
     ACPI_GPE_XRUPT_INFO     *GpeXruptInfo;
     ACPI_GPE_EVENT_INFO     *GpeEventInfo;
     ACPI_GPE_REGISTER_INFO  *GpeRegisterInfo;
-    char                    *GpeType;
+    const char              *GpeType;
     UINT32                  GpeIndex;
     UINT32                  Block = 0;
     UINT32                  i;
