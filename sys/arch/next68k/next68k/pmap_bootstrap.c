@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.35 2009/12/11 22:23:09 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.36 2010/06/06 04:50:08 mrg Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -44,8 +44,10 @@
  *	@(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.35 2009/12/11 22:23:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.36 2010/06/06 04:50:08 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.23 2009/12/10 05:10:02 rmind Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.24 2010/06/06 04:50:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -77,6 +77,7 @@
 #include "opt_fpu_emulate.h"
 #include "opt_lockdebug.h"
 #include "opt_pmap_debug.h"
+#include "opt_m68k_arch.h"
 
 /*
  * NOTICE: This is not a standalone file.  To use it, #include it in
