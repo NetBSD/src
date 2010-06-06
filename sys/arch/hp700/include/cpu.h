@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2010/06/06 10:22:43 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2010/06/06 12:13:36 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -231,7 +231,9 @@ struct cpu_info {
 
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
+#ifdef MULTIPROCESSOR
 	struct	lwp	*ci_curlwp;	/* CPU owner */
+#endif
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
 	int		ci_mtx_count;
 	int		ci_mtx_oldspl;
@@ -252,15 +254,31 @@ struct cpu_info {
 
 #ifdef MULTIPROCESSOR
 
+/* Number of CPUs in the system */
+extern int hppa_ncpus;
+
 #define	HPPA_MAXCPUS	4
 #define	cpu_number()			(curcpu()->ci_cpuid)
 
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_cpuid == 0)
 #define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpus[0], cii < ncpus; cii++, ci++
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpus[0], cii < hppa_ncpus; cii++, ci++
 
 void	cpu_boot_secondary_processors(void);
-#else /* MULTIPROCESSOR */
+
+static __inline struct cpu_info *
+hppa_curcpu(void)
+{
+	struct cpu_info *ci;
+
+	__asm volatile("mfctl %1, %0" : "=r" (ci): "i" (CR_CURCPU));
+
+	return ci;
+}
+
+#define	curcpu()			hppa_curcpu()
+
+#else /*  MULTIPROCESSOR */
 
 #define	HPPA_MAXCPUS	1
 #define	curcpu()			(&cpus[0])
