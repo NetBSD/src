@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.172 2010/05/13 18:10:16 joerg Exp $
+.\"	$NetBSD: make.1,v 1.173 2010/06/06 01:13:12 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -791,8 +791,10 @@ is set in the environment or on the command line.)
 .Pp
 Variable expansion is performed on the value before it's used,
 so expressions such as
-.Dl ${.CURDIR:C,^/usr/src,/var/obj,}
+.Dl ${.CURDIR:S,^/usr/src,/var/obj,}
 may be used.
+This is especially useful with
+.Ql Ev MAKEOBJDIR .
 .Pp
 .Ql Va .OBJDIR
 may be modified in the makefile as a global variable.
@@ -1320,6 +1322,15 @@ flag, so should be used with caution.
 Appending a variable name to
 .Va .MAKE.EXPORTED
 is equivalent to exporting a variable.
+.It Ic .export-env Ar variable ...
+The same as 
+.Ql .export ,
+except that the variable is not appended to 
+.Va .MAKE.EXPORTED .
+This allows exporting a value to the environment which is different from that 
+used by 
+.Nm
+internally.
 .It Ic .info Ar message
 The message is printed along with the name of the makefile and line number.
 .It Ic .undef Ar variable
