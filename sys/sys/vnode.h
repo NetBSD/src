@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.218 2010/04/30 10:03:14 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.219 2010/06/06 08:01:32 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ struct vnlock {
  *	n	namecache_lock
  *	s	syncer_data_lock
  *	u	locked by underlying filesystem
- *	v	v_vnlock
+ *	v	v_lock
  *	x	v_interlock + bufcache_lock to modify, either to inspect
  *
  * Each underlying filesystem allocates its own private area and hangs
@@ -177,7 +177,6 @@ struct vnode {
 	enum vtype	v_type;			/* :: vnode type */
 	enum vtagtype	v_tag;			/* :: type of underlying data */
 	struct vnlock	v_lock;			/* v: lock for this vnode */
-	struct vnlock	*v_vnlock;		/* v: pointer to lock */
 	void 		*v_data;		/* :: private data for fs */
 	struct klist	v_klist;		/* i: notes attached to vnode */
 };
@@ -193,20 +192,13 @@ typedef struct vnodelst vnodelst_t;
 typedef struct vnode vnode_t;
 
 /*
- * All vnode locking operations should use vp->v_vnlock. For leaf filesystems
- * (such as ffs, lfs, msdosfs, etc), vp->v_vnlock = &vp->v_lock. For
- * stacked filesystems, vp->v_vnlock may equal lowervp->v_vnlock.
- *
- * vp->v_vnlock may also be NULL, which indicates that a leaf node does not
- * export a struct lock for vnode locking. Stacked filesystems (such as
- * nullfs) must call the underlying fs for locking. See layerfs_ routines
- * for examples.
+ * All vnode locking operations should use vp->v_lock.
  *
  * All filesystems must (pretend to) understand lockmanager flags.
  */
 
 /*
- * Vnode flags.  The first set are locked by vp->v_vnlock or are stable.
+ * Vnode flags.  The first set are locked by vp->v_lock or are stable.
  * VSYSTEM is only used to skip vflush()ing quota files.  VISTTY is used
  * when reading dead vnodes.
  */

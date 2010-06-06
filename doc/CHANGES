@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1399 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1400 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -624,3 +624,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[mrg 20100527]
 	atf(7): Import 0.9.  [jmmv 20100604]
 	dhcpcd(8): Import dhcpcd-5.2.4. [roy 20100604]
+	vnode(9): Remove member v_vnlock. [hannken 20100605]

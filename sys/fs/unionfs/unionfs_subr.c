@@ -110,10 +110,6 @@ unionfs_nodeget(struct mount *mp, struct vnode *uppervp,
 	unp->un_uppervp = uppervp;
 	unp->un_lowervp = lowervp;
 	unp->un_dvp = dvp;
-	if (uppervp != NULLVP)
-		vp->v_vnlock = uppervp->v_vnlock;
-	else
-		vp->v_vnlock = lowervp->v_vnlock;
 
 	if (path != NULL) {
 		unp->un_path = (char *)
@@ -156,7 +152,6 @@ unionfs_noderem(struct vnode *vp)
 	lvp = unp->un_lowervp;
 	uvp = unp->un_uppervp;
 	unp->un_lowervp = unp->un_uppervp = NULLVP;
-	vp->v_vnlock = &(vp->v_lock);
 	vp->v_data = NULL;
 	
 	if (lvp != NULLVP)
@@ -490,9 +485,8 @@ unionfs_node_update(struct unionfs_node *unp, struct vnode *uvp)
 	 */
 	mutex_enter(&vp->v_interlock);
 	unp->un_uppervp = uvp;
-	vp->v_vnlock = uvp->v_vnlock;
-	lockcnt = lvp->v_vnlock->vl_recursecnt +
-	    rw_write_held(&lvp->v_vnlock->vl_lock);
+	lockcnt = lvp->v_lock.vl_recursecnt +
+	    rw_write_held(&lvp->v_lock.vl_lock);
 	if (lockcnt <= 0)
 		panic("unionfs: no exclusive lock");
 	mutex_exit(&vp->v_interlock);

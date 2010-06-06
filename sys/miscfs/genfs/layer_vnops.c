@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.39 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.40 2010/06/06 08:01:31 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.39 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.40 2010/06/06 08:01:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,10 +254,7 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.39 2010/01/08 11:35:10 pooka Exp $
  * This is the 08-June-99 bypass routine, based on the 10-Apr-92 bypass
  *		routine by John Heidemann.
  *	The new element for this version is that the whole nullfs
- * system gained the concept of locks on the lower node, and locks on
- * our nodes. When returning from a call to the lower layer, we may
- * need to update lock state ONLY on our layer. The LAYERFS_UPPER*LOCK()
- * macros provide this functionality.
+ * system gained the concept of locks on the lower node.
  *    The 10-Apr-92 version was optimized for speed, throwing away some
  * safety checks.  It should still always work, but it's not as
  * robust to programmer errors.
@@ -290,7 +287,7 @@ layer_bypass(void *v)
 	} */ *ap = v;
 	int (**our_vnodeop_p)(void *);
 	struct vnode **this_vp_p;
-	int error, error1;
+	int error;
 	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;
 	struct vnode **vps_p[VDESC_MAX_VPS];
 	struct vnode ***vppp;
@@ -368,8 +365,6 @@ layer_bypass(void *v)
 			break;   /* bail out at end of list */
 		if (old_vps[i]) {
 			*(vps_p[i]) = old_vps[i];
-			if (reles & VDESC_VP0_WILLUNLOCK)
-				LAYERFS_UPPERUNLOCK(*(vps_p[i]), 0, error1);
 			if (reles & VDESC_VP0_WILLRELE)
 				vrele(*(vps_p[i]));
 		}
@@ -588,9 +583,8 @@ layer_open(void *v)
 }
 
 /*
- * We need to process our own vnode lock and then clear the
- * interlock flag as it applies only to our vnode, not the
- * vnodes below us on the stack.
+ * We need to clear the interlock flag as it applies only to our vnode,
+ * not the vnodes below us on the stack.
  */
 int
 layer_lock(void *v)
@@ -600,48 +594,16 @@ layer_lock(void *v)
 		int a_flags;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp, *lowervp;
-	int	flags = ap->a_flags, error;
+	struct vnode *vp = ap->a_vp;
 
-	if (flags & LK_INTERLOCK) {
+	if (ap->a_flags & LK_INTERLOCK) {
 		mutex_exit(&vp->v_interlock);
-		flags &= ~LK_INTERLOCK;
+		ap->a_flags &= ~LK_INTERLOCK;
 	}
 
-	if (vp->v_vnlock != NULL) {
-		/*
-		 * The lower level has exported a struct lock to us. Use
-		 * it so that all vnodes in the stack lock and unlock
-		 * simultaneously. Note: we don't DRAIN the lock as DRAIN
-		 * decommissions the lock - just because our vnode is
-		 * going away doesn't mean the struct lock below us is.
-		 * LK_EXCLUSIVE is fine.
-		 */
-		return (vlockmgr(vp->v_vnlock, flags));
-	} else {
-		/*
-		 * Ahh well. It would be nice if the fs we're over would
-		 * export a struct lock for us to use, but it doesn't.
-		 *
-		 * To prevent race conditions involving doing a lookup
-		 * on "..", we have to lock the lower node, then lock our
-		 * node. Most of the time it won't matter that we lock our
-		 * node (as any locking would need the lower one locked
-		 * first).
-		 */
-		lowervp = LAYERVPTOLOWERVP(vp);
-		error = VOP_LOCK(lowervp, flags);
-		if (error)
-			return (error);
-		if ((error = vlockmgr(&vp->v_lock, flags))) {
-			VOP_UNLOCK(lowervp, 0);
-		}
-		return (error);
-	}
+	return LAYERFS_DO_BYPASS(vp, ap);
 }
 
-/*
- */
 int
 layer_unlock(void *v)
 {
@@ -651,19 +613,8 @@ layer_unlock(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int	flags = ap->a_flags;
 
-	if (flags & LK_INTERLOCK) {
-		mutex_exit(&vp->v_interlock);
-		flags &= ~LK_INTERLOCK;
-	}
-
-	if (vp->v_vnlock != NULL) {
-		return (vlockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE));
-	} else {
-		VOP_UNLOCK(LAYERVPTOLOWERVP(vp), flags);
-		return (vlockmgr(&vp->v_lock, flags | LK_RELEASE));
-	}
+	return LAYERFS_DO_BYPASS(vp, ap);
 }
 
 int
@@ -673,16 +624,8 @@ layer_islocked(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int lkstatus;
 
-	if (vp->v_vnlock != NULL)
-		return vlockstatus(vp->v_vnlock);
-
-	lkstatus = VOP_ISLOCKED(LAYERVPTOLOWERVP(vp));
-	if (lkstatus)
-		return lkstatus;
-
-	return vlockstatus(&vp->v_lock);
+	return LAYERFS_DO_BYPASS(vp, ap);
 }
 
 /*
