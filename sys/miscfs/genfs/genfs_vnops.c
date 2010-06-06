@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.177 2010/04/08 15:56:26 pooka Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.178 2010/06/06 08:01:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.177 2010/04/08 15:56:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.178 2010/06/06 08:01:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ genfs_lock(void *v)
 		mutex_exit(&vp->v_interlock);
 	}
 
-	return (vlockmgr(vp->v_vnlock, flags));
+	return (vlockmgr(&vp->v_lock, flags));
 }
 
 /*
@@ -311,7 +311,7 @@ genfs_unlock(void *v)
 
 	KASSERT(ap->a_flags == 0);
 
-	return (vlockmgr(vp->v_vnlock, LK_RELEASE));
+	return (vlockmgr(&vp->v_lock, LK_RELEASE));
 }
 
 /*
@@ -325,7 +325,7 @@ genfs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (vlockstatus(vp->v_vnlock));
+	return (vlockstatus(&vp->v_lock));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.35 2010/01/08 11:35:09 pooka Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.36 2010/06/06 08:01:31 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.35 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.36 2010/06/06 08:01:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -532,7 +532,6 @@ loop:
 
 	(*vpp)->v_vflag |= vflag;
 	(*vpp)->v_iflag |= iflag;
-	(*vpp)->v_vnlock = NULL;	/* Make upper layers call VOP_LOCK */
 	if (uppervp)
 		(*vpp)->v_type = uppervp->v_type;
 	else
