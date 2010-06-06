@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49 2010/06/04 06:39:38 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.50 2010/06/06 10:15:51 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -243,25 +243,28 @@ struct cpu_info {
 } __aligned(64);
 
 
-extern struct cpu_info cpu_info_store;
-
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
 
-#define	curcpu()			(&cpu_info_store)
-#define	cpu_number()			0
-
 #define	cpu_proc_fork(p1, p2)
 
 #ifdef MULTIPROCESSOR
-#define	CPU_IS_PRIMARY(ci)		1
+
+#define	HPPA_MAXCPUS	4
+#define	cpu_number()			(curcpu()->ci_cpuid)
+
+#define	CPU_IS_PRIMARY(ci)		((ci)->ci_cpuid == 0)
 #define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = curcpu(), cii < 1; cii++
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpu_info[0], cii < ncpus; cii++, ci++
 
 void	cpu_boot_secondary_processors(void);
-#endif /* MULTIPROCESSOR */
+#else /* MULTIPROCESSOR */
+
+#define	HPPA_MAXCPUS	1
+#define	curcpu()			(&cpus[0])
+#define	cpu_number()			0
 
 static __inline struct lwp *
 hppa_curlwp(void)
@@ -274,6 +277,10 @@ hppa_curlwp(void)
 }
 
 #define	curlwp				hppa_curlwp()
+
+#endif /* MULTIPROCESSOR */
+
+extern struct cpu_info cpus[HPPA_MAXCPUS];
 
 #define	DELAY(x) delay(x)
 
