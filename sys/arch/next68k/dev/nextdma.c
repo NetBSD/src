@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.46 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.47 2010/06/06 02:51:46 mrg Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.46 2010/04/24 19:58:13 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.47 2010/06/06 02:51:46 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ nextdma_init(struct nextdma_softc *nsc)
 		char sbuf[256];
 
 		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS,
-		    (NEXT_I_BIT(nsc->sc_chan->nd_intr));
+		    NEXT_I_BIT(nsc->sc_chan->nd_intr));
 		printf("DMA init ipl (%ld) intr(0x%s)\n",
 			NEXT_I_IPL(nsc->sc_chan->nd_intr), sbuf);
 	}
@@ -488,7 +488,7 @@ nextdma_enet_intr(void *arg)
 		char sbuf[256];
 
 		snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS,
-		    (NEXT_I_BIT(nsc->sc_chan->nd_intr));
+		    NEXT_I_BIT(nsc->sc_chan->nd_intr));
 		printf("DMA interrupt ipl (%ld) intr(0x%s)\n",
 		       NEXT_I_IPL(nsc->sc_chan->nd_intr), sbuf);
 	}
@@ -901,7 +901,7 @@ nextdma_print(struct nextdma_softc *nsc)
 	printf("NDMAP: dd->dd_stop         = 0x%08lx\n", dd_stop);
 
 	snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS,
-	    (NEXT_I_BIT(nsc->sc_chan->nd_intr)));
+	    NEXT_I_BIT(nsc->sc_chan->nd_intr));
 	printf("NDMAP: interrupt ipl (%ld) intr(0x%s)\n",
 			NEXT_I_IPL(nsc->sc_chan->nd_intr), sbuf);
 }
