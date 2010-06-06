@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.170 2010/05/29 06:44:22 cegger Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.171 2010/06/06 18:58:26 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.170 2010/05/29 06:44:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.171 2010/06/06 18:58:26 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -106,33 +106,43 @@ Static const char * const usbd_error_strs[] = {
 	"XXX",
 };
 
-void (*get_usb_vendor)(char *, usb_vendor_id_t) = (void *)get_usb_none;
-void (*get_usb_product)(char *, usb_vendor_id_t, usb_product_id_t) =
-	(void *)get_usb_none;
+void usb_load_verbose(void);
 
-void get_usb_none(void)
-{
-	/* Nothing happens */
-}
+void get_usb_vendor_stub(char *, usb_vendor_id_t);
+void get_usb_product_stub(char *, usb_vendor_id_t, usb_product_id_t);
+
+void (*get_usb_vendor)(char *, usb_vendor_id_t) = get_usb_vendor_stub;
+void (*get_usb_product)(char *, usb_vendor_id_t, usb_product_id_t) =
+	get_usb_product_stub;
+
+int usb_verbose_loaded = 0;
 
 /*
- * Load/unload the usbverbose module
+ * Load the usbverbose module
  */
-void usb_verbose_ctl(bool load)
+void usb_load_verbose(void)
 {
-	static int loaded = 0;
- 
-	if (load) {
-		if (loaded++ == 0)
-			if (module_load("usbverbose", MODCTL_LOAD_FORCE,
-					NULL, MODULE_CLASS_MISC) != 0)
-				loaded = 0;
-		return; 
-	}
-	if (loaded == 0)
-		return; 
-	if (--loaded == 0)
-		module_unload("usbverbose");
+	if (usb_verbose_loaded)
+		return;
+
+	mutex_enter(&module_lock);
+	if (module_autoload("usbverbose", MODULE_CLASS_MISC) == 0)
+		usb_verbose_loaded++;
+	mutex_exit(&module_lock);
+}
+
+void get_usb_vendor_stub(char *v, usb_vendor_id_t v_id)
+{
+	usb_load_verbose();
+	if (usb_verbose_loaded)
+		get_usb_vendor(v, v_id);
+}
+
+void get_usb_product_stub(char *p, usb_vendor_id_t v_id, usb_product_id_t p_id)
+{
+	usb_load_verbose();
+	if (usb_verbose_loaded)
+		get_usb_product(p, v_id, p_id);
 }
 
 const char *

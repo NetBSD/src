@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.121 2010/05/29 01:14:29 pgoyette Exp $	*/
+/*	$NetBSD: usb.c,v 1.122 2010/06/06 18:58:26 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.121 2010/05/29 01:14:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.122 2010/06/06 18:58:26 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -188,9 +188,6 @@ usb_attach(device_t parent, device_t self, void *aux)
 		USB_ATTACH_ERROR_RETURN;
 	}
 	aprint_normal("\n");
-
-	/* Try to load the usbverbose module */
-	usb_verbose_ctl(true);
 
 	config_interrupts(self, usb_doattach);
 }
@@ -985,9 +982,6 @@ usb_detach(device_t self, int flags)
 	ue = usb_alloc_event();
 	ue->u.ue_ctrlr.ue_bus = device_unit(self);
 	usb_add_event(USB_EVENT_CTRLR_DETACH, ue);
-
-	/* Try to unload the usbverbose module */
-	usb_verbose_ctl(false);
 
 	return (0);
 }
