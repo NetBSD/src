@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2010/06/06 09:12:39 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 2010/06/06 10:15:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2010/06/06 09:12:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2010/06/06 10:15:51 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -256,8 +256,7 @@ struct fpreg lwp0_fpregs;
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
 
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store = {
+struct cpu_info cpus[HPPA_MAXCPUS] = {
 #ifdef MULTIPROCESSOR
 	.ci_curlwp = &lwp0
 #endif
