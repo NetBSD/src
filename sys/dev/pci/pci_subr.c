@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.82 2010/05/26 09:42:42 martin Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.83 2010/06/06 18:58:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.82 2010/05/26 09:42:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.83 2010/06/06 18:58:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -61,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.82 2010/05/26 09:42:42 martin Exp $")
 #include <dev/pci/pcireg.h>
 #ifdef _KERNEL
 #include <dev/pci/pcivar.h>
-#else
-const char *pci_null(pcireg_t);
 #endif
 
 /*
@@ -295,13 +293,18 @@ static const struct pci_class pci_class[] = {
 	    NULL,						},
 };
 
+void pci_load_verbose(void);
+
 #if defined(_KERNEL)
 /*
  * In kernel, these routines are provided and linked via the
  * pciverbose module.
  */
-const char *(*pci_findvendor)(pcireg_t id_reg) = pci_null;
-const char *(*pci_findproduct)(pcireg_t id_reg) = pci_null;
+const char *pci_findvendor_stub(pcireg_t);
+const char *pci_findproduct_stub(pcireg_t);
+
+const char *(*pci_findvendor)(pcireg_t) = pci_findvendor_stub;
+const char *(*pci_findproduct)(pcireg_t) = pci_findproduct_stub;
 const char *pci_unmatched = "";
 #else
 /*
@@ -312,31 +315,39 @@ const char *(*pci_findproduct)(pcireg_t id_reg) = pci_findproduct_real;
 const char *pci_unmatched = "unmatched ";
 #endif
 
-const char *
-pci_null(pcireg_t id_reg)
-{
-	return (NULL);
-}
+int pciverbose_loaded = 0;
 
 #if defined(_KERNEL)
 /*
- * Routine to load/unload the pciverbose kernel module as needed
+ * Routine to load the pciverbose kernel module as needed
  */
-void pci_verbose_ctl(bool load)
+void pci_load_verbose(void)
 {
-	static int loaded = 0;
+	if (pciverbose_loaded)
+		return;
 
-	if (load) {
-		if (loaded++ == 0)
-			if (module_load("pciverbose", MODCTL_LOAD_FORCE, NULL,
-				    MODULE_CLASS_MISC) !=0 )
-				loaded = 0;
-		return;
-	}
-	if (loaded == 0)
-		return;
-	if (--loaded == 0)
-		module_unload("pciverbose");
+	mutex_enter(&module_lock);
+	if (module_autoload("pciverbose", MODULE_CLASS_MISC) == 0 )
+		pciverbose_loaded++;
+	mutex_exit(&module_lock);
+}
+
+const char *pci_findvendor_stub(pcireg_t id_reg)
+{
+	pci_load_verbose();
+	if (pciverbose_loaded)
+		return pci_findvendor(id_reg);
+	else
+		return NULL;
+}
+
+const char *pci_findproduct_stub(pcireg_t id_reg)
+{
+	pci_load_verbose();
+	if (pciverbose_loaded)
+		return pci_findproduct(id_reg);
+	else
+		return NULL;
 }
 #endif
 
