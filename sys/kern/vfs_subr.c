@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.403 2010/05/27 23:58:38 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.404 2010/06/06 08:01:31 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.403 2010/05/27 23:58:38 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.404 2010/06/06 08:01:31 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -649,7 +649,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	KASSERT(LIST_EMPTY(&vp->v_dnclist));
 
 	vp->v_type = VNON;
-	vp->v_vnlock = &vp->v_lock;
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	insmntque(vp, mp);
@@ -1951,7 +1950,6 @@ vclean(vnode_t *vp, int flags)
 	mutex_enter(&vp->v_interlock);
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
-	vp->v_vnlock = &vp->v_lock;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
 	vp->v_vflag &= ~VV_LOCKSWORK;
@@ -2732,7 +2730,7 @@ vprint(const char *label, struct vnode *vp)
 	char bf[96];
 	int flag;
 
-	vl = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
+	vl = &vp->v_lock;
 	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
 	snprintb(bf, sizeof(bf), vnode_flagbits, flag);
 
@@ -3300,7 +3298,7 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	      ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	      vp->v_mount, vp->v_mountedhere);
 
-	(*pr)("v_lock %p v_vnlock %p\n", &vp->v_lock, vp->v_vnlock);
+	(*pr)("v_lock %p\n", &vp->v_lock);
 
 	if (full) {
 		struct buf *bp;

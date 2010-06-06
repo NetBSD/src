@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.28 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.29 2010/06/06 08:01:31 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.28 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.29 2010/06/06 08:01:31 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,10 +170,7 @@ loop:
 			 * We must not let vget() try to lock the layer
 			 * vp, since the lower vp is already locked and
 			 * locking the layer vp will involve locking
-			 * the lower vp (whether or not they actually
-			 * share a lock).  Instead, take the layer vp's
-			 * lock separately afterward, but only if it
-			 * does not share the lower vp's lock.
+			 * the lower vp.
 			 */
 			error = vget(vp, LK_INTERLOCK | LK_NOWAIT);
 			if (error) {
@@ -181,7 +178,6 @@ loop:
 				mutex_enter(&lmp->layerm_hashlock);
 				goto loop;
 			}
-			LAYERFS_UPPERLOCK(vp, LK_EXCLUSIVE, error);
 			return (vp);
 		}
 	}
@@ -247,21 +243,6 @@ layer_node_alloc(struct mount *mp, struct vnode *lowervp, struct vnode **vpp)
 		vrele(vp);			/* get rid of it. */
 		return (0);
 	}
-
-	/*
-	 * Now lock the new node. We rely on the fact that we were passed
-	 * a locked vnode. If the lower node is exporting a struct lock
-	 * (v_vnlock != NULL) then we just set the upper v_vnlock to the
-	 * lower one, and both are now locked. If the lower node is exporting
-	 * NULL, then we copy that up and manually lock the upper node.
-	 *
-	 * LAYERFS_UPPERLOCK already has the test, so we use it after copying
-	 * up the v_vnlock from below.
-	 */
-
-	vp->v_vnlock = lowervp->v_vnlock;
-	LAYERFS_UPPERLOCK(vp, LK_EXCLUSIVE, error);
-	KASSERT(error == 0);
 
 	/*
 	 * Insert the new node into the hash.
