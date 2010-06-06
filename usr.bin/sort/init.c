@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.26 2010/06/05 17:46:08 dholland Exp $	*/
+/*	$NetBSD: init.c,v 1.27 2010/06/06 00:00:33 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include "sort.h"
 
-__RCSID("$NetBSD: init.c,v 1.26 2010/06/05 17:46:08 dholland Exp $");
+__RCSID("$NetBSD: init.c,v 1.27 2010/06/06 00:00:33 wiz Exp $");
 
 #include <ctype.h>
 #include <string.h>
@@ -277,7 +277,7 @@ options_need_argument(const char *arg, const char *opts)
  * Replace historic +SPEC arguments with appropriate -kSPEC.
  *
  * The form can be either a single +SPEC or a pair +SPEC -SPEC.
- * The followiing -SPEC is not recognized unless it follows
+ * The following -SPEC is not recognized unless it follows
  * immediately.
  */ 
 void
