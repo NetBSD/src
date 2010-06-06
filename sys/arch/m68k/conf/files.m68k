@@ -1,7 +1,12 @@
-#	$NetBSD: files.m68k,v 1.45 2008/11/19 18:35:59 ad Exp $
+#	$NetBSD: files.m68k,v 1.46 2010/06/06 04:51:33 mrg Exp $
 #
 
 defflag	opt_fpsp.h		FPSP
+defflag	opt_m68k_arch.h		M68010
+defflag	opt_m68k_arch.h		M68020
+defflag	opt_m68k_arch.h		M68030
+defflag	opt_m68k_arch.h		M68040
+defflag	opt_m68k_arch.h		M68060
 defflag				FPU_EMULATE
 defflag				PMAP_DEBUG
 
