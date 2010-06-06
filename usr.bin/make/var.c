@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.158 2010/04/21 04:25:27 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.159 2010/06/06 01:13:12 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.158 2010/04/21 04:25:27 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.159 2010/06/06 01:13:12 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.158 2010/04/21 04:25:27 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.159 2010/06/06 01:13:12 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -682,6 +682,7 @@ Var_Export(char *str, int isExport)
     char *val;
     char **av;
     char *as;
+    int track;
     int ac;
     int i;
 
@@ -690,6 +691,12 @@ Var_Export(char *str, int isExport)
 	return;
     }
 
+    if (strncmp(str, "-env", 4) == 0) {
+	track = 0;
+	str += 4;
+    } else {
+	track = VAR_EXPORT_PARENT;
+    }
     val = Var_Subst(NULL, str, VAR_GLOBAL, 0);
     av = brk_string(val, &ac, FALSE, &as);
     for (i = 0; i < ac; i++) {
@@ -709,10 +716,10 @@ Var_Export(char *str, int isExport)
 		continue;
 	    }
 	}
-	if (Var_Export1(name, VAR_EXPORT_PARENT)) {
+	if (Var_Export1(name, track)) {
 	    if (VAR_EXPORTED_ALL != var_exportedVars)
 		var_exportedVars = VAR_EXPORTED_YES;
-	    if (isExport) {
+	    if (isExport && track) {
 		Var_Append(MAKE_EXPORTED, name, VAR_GLOBAL);
 	    }
 	}
