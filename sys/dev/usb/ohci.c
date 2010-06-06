@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.206 2010/02/24 22:38:09 dyoung Exp $	*/
+/*	$NetBSD: ohci.c,v 1.207 2010/06/06 18:58:26 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.206 2010/02/24 22:38:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.207 2010/06/06 18:58:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1291,7 +1291,8 @@ ohci_softintr(void *v)
 			DPRINTFN(5,("add ITD %p\n", sitd));
 			continue;
 		}
-		panic("ohci_softintr: addr 0x%08lx not found", (u_long)done);
+		printf("ohci_softintr: addr 0x%08lx not found", (u_long)done);
+		return;
 	}
 
 	DPRINTFN(10,("ohci_softintr: sdone=%p sidone=%p\n", sdone, sidone));
