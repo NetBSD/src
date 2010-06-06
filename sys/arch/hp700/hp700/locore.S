@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.46 2010/04/05 12:56:51 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.47 2010/06/06 12:13:35 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -140,6 +140,16 @@
 #define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
 #define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
 #define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
+#endif
+
+#ifdef MULTIPROCESSOR
+#define	GET_CURCPU(r)	mfctl	CR_CURCPU, r
+#define	GET_CURLWP(r)	mfctl	CR_CURCPU, r ! ldw	CI_CURLWP(r), r
+#define	SET_CURLWP(r,s)	mfctl	CR_CURCPU, s ! stw	r, CI_CURLWP(s)
+#else
+#define	GET_CURCPU(r)	mfctl	CR_CURLWP, r ! ldw	L_CPU(r), r
+#define	GET_CURLWP(r)	mfctl	CR_CURLWP, r
+#define	SET_CURLWP(r,s)	mtctl	r, CR_CURLWP
 #endif
 
 	.import	$global$, data
@@ -537,8 +547,7 @@ EXIT(pdc_call)
  * int splraise(int ncpl);
  */
 LEAF_ENTRY(splraise)
-	mfctl	CR_CURLWP, %t1
-	ldw	L_CPU(%t1),%t1
+	GET_CURCPU(%t1)
 	ldw	CI_CPL(%t1), %ret0
 	or	%ret0, %arg0, %arg0
 	bv	%r0(%rp)
@@ -549,8 +558,7 @@ EXIT(splraise)
  * int spllower(int ncpl);
  */
 ENTRY(spllower,HPPA_FRAME_SIZE)
-	mfctl	CR_CURLWP, %t1
-	ldw	L_CPU(%t1),%t1
+	GET_CURCPU(%t1)
 
 	ldw	CI_IPENDING(%t1), %r1	; load ipending
 	andcm,<> %r1, %arg0, %r1	; and with complement of new cpl
@@ -615,8 +623,7 @@ EXIT(spllower)
  * void hp700_intr_schedule(int mask);
  */
 ENTRY(hp700_intr_schedule,0)
-	mfctl	CR_CURLWP, %t1
-	ldw	L_CPU(%t1),%t2
+	GET_CURCPU(%t2)
 	mfctl	%eiem, %arg1
 	mtctl	%r0, %eiem			; disable interrupts
 	ldw	CI_IPENDING(%t2), %r1		; load ipending
@@ -870,12 +877,7 @@ switch_exited:
 	ldw	TF_CR30(%t1), %t2		/* pmap_activate? */
 	mtctl	%t2, CR_FPPADDR			/* pmap_activate? */
 
-	mtctl	%arg1, CR_CURLWP
-
-#ifdef MULTIPROCESSOR
-	ldw	L_CPU(%arg1),%t2		; %t2 = curcpu()
-	stw	%arg1, CI_CURLWP(%t2)
-#endif
+	SET_CURLWP(%arg1, %t2)
 
 	ldo	-(HPPA_FRAME_SIZE+16*4)(%sp), %r3
 
@@ -991,7 +993,7 @@ ALTENTRY(setfunc_trampoline)
 	 * this LWP was created by the fork()
 	 * syscall, which we now return from.
 	 */
-	mfctl	CR_CURLWP, %t2
+	GET_CURLWP(%t2)
 	.call
 	b	syscall_return
 	ldw	L_MD(%t2), %t3

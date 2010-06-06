@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2010/06/06 10:15:51 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 2010/06/06 12:13:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2010/06/06 10:15:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2010/06/06 12:13:35 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -256,10 +256,13 @@ struct fpreg lwp0_fpregs;
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
 
+/* Our exported CPU info */
 struct cpu_info cpus[HPPA_MAXCPUS] = {
+	{
 #ifdef MULTIPROCESSOR
-	.ci_curlwp = &lwp0
+		.ci_curlwp = &lwp0,
 #endif
+	},
 };
 
 struct vm_map *phys_map = NULL;
@@ -426,8 +429,12 @@ hppa_init(paddr_t start, void *bi)
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
 #endif
-	/* Setup curlwp early for LOCKDEBUG */
+	/* Setup curlwp/curcpu early for LOCKDEBUG */
+#ifdef MULTIPROCESSOR
+	mtctl(&cpus[0], CR_CURCPU);
+#else
 	mtctl(&lwp0, CR_CURLWP);
+#endif
 
 	/* Copy bootinfo */
 	if (bi != NULL)
