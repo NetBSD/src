@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.21 2010/05/02 06:35:21 dholland Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.22 2010/06/06 06:20:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.21 2010/05/02 06:35:21 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.22 2010/06/06 06:20:16 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -902,7 +902,7 @@ bad:
 
 		default:
 #ifdef DIAGNOSTIC
-			printf("%s: unknown note type %d\n", epp->ep_name,
+			printf("%s: unknown note type %d\n", epp->ep_kname,
 			    np->n_type);
 #endif
 			break;
