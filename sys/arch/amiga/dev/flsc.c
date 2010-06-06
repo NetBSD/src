@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.42 2009/11/23 00:11:43 rmind Exp $ */
+/*	$NetBSD: flsc.c,v 1.43 2010/06/06 04:50:06 mrg Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -42,9 +42,10 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.42 2009/11/23 00:11:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.43 2010/06/06 04:50:06 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

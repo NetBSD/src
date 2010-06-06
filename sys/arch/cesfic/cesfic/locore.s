@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 2010/02/25 07:15:25 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 2010/06/06 04:50:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -84,6 +84,7 @@
 #include "opt_ddb.h"
 #include "opt_fpsp.h"
 #include "opt_fpu_emulate.h"
+#include "opt_m68k_arch.h"
 
 #include "ksyms.h"
 #include "assym.h"
