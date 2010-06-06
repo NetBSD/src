@@ -382,7 +382,7 @@ AcpiUtEvaluateObject (
             PrefixNode, Path, AE_TYPE);
 
         ACPI_ERROR ((AE_INFO,
-            "Type returned from %s was incorrect: %s, expected Btypes: %X",
+            "Type returned from %s was incorrect: %s, expected Btypes: 0x%X",
             Path, AcpiUtGetObjectTypeName (Info->ReturnObject),
             ExpectedReturnBtypes));
 
