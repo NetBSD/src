@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.49 2010/04/23 19:18:09 rmind Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.50 2010/06/06 07:46:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.49 2010/04/23 19:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.50 2010/06/06 07:46:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,6 +82,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
+	struct schedstate_percpu *spc;
 	vaddr_t uaddr;
 	ucontext_t *newuc;
 	int error, lid;
@@ -133,20 +134,23 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 	 */
 	mutex_enter(p->p_lock);
 	lwp_lock(l2);
+	spc = &l2->l_cpu->ci_schedstate;
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0 &&
 	    (l->l_flag & (LW_WREBOOT | LW_WSUSPEND | LW_WEXIT)) == 0) {
-	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0)
+	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
+			KASSERT(l2->l_wchan == NULL);
 	    		l2->l_stat = LSSTOP;
-		else {
-			KASSERT(lwp_locked(l2, l2->l_cpu->ci_schedstate.spc_mutex));
+			lwp_unlock_to(l2, spc->spc_lwplock);
+		} else {
+			KASSERT(lwp_locked(l2, spc->spc_mutex));
 			p->p_nrlwps++;
 			l2->l_stat = LSRUN;
 			sched_enqueue(l2, false);
+			lwp_unlock(l2);
 		}
-		lwp_unlock(l2);
 	} else {
 		l2->l_stat = LSSUSPENDED;
-		lwp_unlock_to(l2, l2->l_cpu->ci_schedstate.spc_lwplock);
+		lwp_unlock_to(l2, spc->spc_lwplock);
 	}
 	mutex_exit(p->p_lock);
 
