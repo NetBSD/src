@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.122 2008/05/22 19:49:43 hauke Exp $
+#	$NetBSD: files.mac68k,v 1.123 2010/06/06 04:52:17 mrg Exp $
 
 # mac68k-specific configuration info
 
@@ -6,6 +6,7 @@
 # (note, these are case-sensitive)
 defflag	opt_adb.h		ADB_DEBUG MRG_ADB ALTXBUTTONS
 defflag	opt_mac68k.h		DISABLE_EXT_CACHE ZS_CONSOLE_ABORT
+defflag	opt_grf_compat.h	GRF_COMPAT
 
 defflag	opt_wsdisplay_compat.h	WSDISPLAY_COMPAT_ITEFONT
 
