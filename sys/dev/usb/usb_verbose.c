@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_verbose.c,v 1.1 2010/05/29 01:14:29 pgoyette Exp $ */
+/*	$NetBSD: usb_verbose.c,v 1.2 2010/06/06 18:58:26 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_verbose.c,v 1.1 2010/05/29 01:14:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_verbose.c,v 1.2 2010/06/06 18:58:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -64,14 +64,21 @@ MODULE(MODULE_CLASS_MISC, usbverbose, NULL);
 static int
 usbverbose_modcmd(modcmd_t cmd, void *arg)
 {
+	static void (*saved_usb_vendor)(char *, usb_vendor_id_t);
+	static void (*saved_usb_product)(char *, usb_vendor_id_t,
+		usb_product_id_t);
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		saved_usb_vendor = get_usb_vendor;
+		saved_usb_product = get_usb_product;
 		get_usb_vendor = get_usb_vendor_real;
 		get_usb_product = get_usb_product_real;
 		return 0;
 	case MODULE_CMD_FINI:
-		get_usb_vendor = (void *)get_usb_none;
-		get_usb_product = (void *)get_usb_none;
+		get_usb_vendor = saved_usb_vendor;
+		get_usb_product = saved_usb_product;
+		usb_verbose_loaded = 0;
 		return 0;
 	default:
 		return ENOTTY;  
