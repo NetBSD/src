@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/05/23 14:08:05 veego Exp $
+#	$NetBSD: Makefile,v 1.6 2010/06/06 19:35:38 jruoho Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -35,9 +35,15 @@ SRCS+=	aslmain.c
 SRCS+=	aslmap.c
 SRCS+=	aslopcodes.c
 SRCS+=	asloperands.c
+SRCS+=	aslpredef.c
 SRCS+=	aslresource.c
 SRCS+=	aslrestype1.c
+SRCS+=	aslrestype1i.c
 SRCS+=	aslrestype2.c
+SRCS+=	aslrestype2d.c
+SRCS+=	aslrestype2e.c
+SRCS+=	aslrestype2q.c
+SRCS+=	aslrestype2w.c
 SRCS+=	aslstartup.c
 SRCS+=	asltree.c
 SRCS+=	aslutils.c
@@ -45,6 +51,12 @@ SRCS+=	asltransform.c
 SRCS+=	aslfold.c
 SRCS+=	aslstubs.c
 SRCS+=	aslopt.c
+SRCS+=	dtcompile.c
+SRCS+=	dtfield.c
+SRCS+=	dtio.c
+SRCS+=	dtsubtable.c
+SRCS+=	dttable.c
+SRCS+=	dtutils.c
 .PATH: ${TOPDIR}/../common
 SRCS+=	getopt.c
 .PATH: ${TOPDIR}/../utilities
