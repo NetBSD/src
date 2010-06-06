@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.38 2010/05/21 10:52:17 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.39 2010/06/06 22:46:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -309,6 +309,8 @@ p2k_init(uint32_t puffs_flags)
 	PUFFSOP_SET(pops, p2k, node, readlink);
 	PUFFSOP_SET(pops, p2k, node, read);
 	PUFFSOP_SET(pops, p2k, node, write);
+
+	PUFFSOP_SET(pops, p2k, node, pathconf);
 
 	PUFFSOP_SET(pops, p2k, node, inactive);
 	PUFFSOP_SET(pops, p2k, node, reclaim);
@@ -1298,6 +1300,21 @@ p2k_node_write(struct puffs_usermount *pu, puffs_cookie_t opc,
 	RUMP_VOP_UNLOCK(vp, 0);
 	*resid = rump_pub_uio_free(uio);
 	cred_destroy(cred);
+
+	return rv;
+}
+
+/*ARGSUSED*/
+int
+p2k_node_pathconf(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int name, int *retval)
+{
+	struct vnode *vp = OPC2VP(opc);
+	int rv;
+
+	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
+	rv = RUMP_VOP_PATHCONF(vp, name, (register_t *)retval);
+	RUMP_VOP_UNLOCK(vp, 0);
 
 	return rv;
 }
