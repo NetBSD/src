@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2010/06/06 10:15:51 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2010/06/06 10:22:43 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -257,7 +257,7 @@ struct cpu_info {
 
 #define	CPU_IS_PRIMARY(ci)		((ci)->ci_cpuid == 0)
 #define	CPU_INFO_ITERATOR		int
-#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpu_info[0], cii < ncpus; cii++, ci++
+#define	CPU_INFO_FOREACH(cii, ci)	cii = 0; ci =  &cpus[0], cii < ncpus; cii++, ci++
 
 void	cpu_boot_secondary_processors(void);
 #else /* MULTIPROCESSOR */
