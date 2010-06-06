@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.198 2010/06/05 06:07:12 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.199 2010/06/06 10:44:40 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.198 2010/06/05 06:07:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.199 2010/06/06 10:44:40 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1252,8 +1252,10 @@ acpi_register_fixed_button(struct acpi_softc *sc, int event)
 	rv = AcpiInstallFixedEventHandler(event,
 	    acpi_fixed_button_handler, smpsw);
 
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv)) {
+		sysmon_pswitch_unregister(smpsw);
 		goto fail;
+	}
 
 	aprint_debug_dev(sc->sc_dev, "fixed %s button present\n",
 	    (type != ACPI_EVENT_SLEEP_BUTTON) ? "power" : "sleep");
@@ -1316,8 +1318,6 @@ acpi_fixed_button_handler(void *context)
 	static const int handler = OSL_NOTIFY_HANDLER;
 	struct sysmon_pswitch *smpsw = context;
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "fixed event\n"));
-
 	(void)AcpiOsExecute(handler, acpi_fixed_button_pressed, smpsw);
 
 	return ACPI_INTERRUPT_HANDLED;
@@ -1328,8 +1328,9 @@ acpi_fixed_button_pressed(void *context)
 {
 	struct sysmon_pswitch *smpsw = context;
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
-		"%s fixed button pressed\n", smpsw->smpsw_name));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s fixed button pressed\n",
+		(smpsw->smpsw_type != ACPI_EVENT_SLEEP_BUTTON) ?
+		"power" : "sleep"));
 
 	sysmon_pswitch_event(smpsw, PSWITCH_EVENT_PRESSED);
 }
