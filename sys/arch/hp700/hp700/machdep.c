@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2010/06/01 10:20:29 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 2010/06/06 09:12:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2010/06/01 10:20:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2010/06/06 09:12:39 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1879,6 +1879,8 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	pcb->pcb_fpregs->fpr_regs[1] = 0;
 	pcb->pcb_fpregs->fpr_regs[2] = 0;
 	pcb->pcb_fpregs->fpr_regs[3] = 0;
+
+	l->l_md.md_bpva = 0;
 
 	/* setup terminal stack frame */
 	stack = (u_long)STACK_ALIGN(stack, 63);
