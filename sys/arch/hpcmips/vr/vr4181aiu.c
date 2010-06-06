@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181aiu.c,v 1.6 2008/06/11 23:53:15 cegger Exp $ */
+/* $NetBSD: vr4181aiu.c,v 1.7 2010/06/06 06:10:03 dholland Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.6 2008/06/11 23:53:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.7 2010/06/06 06:10:03 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -235,7 +235,7 @@ vr4181aiuopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct vr4181aiu_softc	*sc;
 
-	sc = device_lookup_private(&vr4181aiu_cd, minor(dev);
+	sc = device_lookup_private(&vr4181aiu_cd, minor(dev));
 	if (sc == NULL)
 		return ENXIO;
 
