@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.h,v 1.2 2010/05/28 02:24:27 pgoyette Exp $ */
+/*	$NetBSD: pci_verbose.h,v 1.3 2010/06/06 18:58:24 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -40,8 +40,8 @@ typedef u_int32_t pcireg_t;		/* configuration space register XXX */
 
 const char *pci_findvendor_real(pcireg_t);
 const char *pci_findproduct_real(pcireg_t);
-const char *pci_null(pcireg_t);
-void pci_verbose_ctl(bool);
+
+extern int pciverbose_loaded;
 
 extern const char *(*pci_findvendor)(pcireg_t);
 extern const char *(*pci_findproduct)(pcireg_t);
