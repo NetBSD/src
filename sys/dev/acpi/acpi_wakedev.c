@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.14 2010/06/05 15:47:59 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.15 2010/06/06 18:40:51 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.14 2010/06/05 15:47:59 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.15 2010/06/06 18:40:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -271,12 +271,10 @@ acpi_wakedev_gpe(struct acpi_devnode *ad, int enable, int state)
 	/*
 	 * Set or unset a GPE as both runtime and wake.
 	 */
-	if (enable == 0)
-		(void)AcpiDisableGpe(hdl, val, ACPI_NOT_ISR);
-	else {
-		(void)AcpiSetGpeType(hdl, val, ACPI_GPE_TYPE_WAKE_RUN);
-		(void)AcpiEnableGpe(hdl, val, ACPI_NOT_ISR);
-	}
+	if (enable != 0)
+		(void)AcpiEnableGpe(hdl, val, ACPI_GPE_TYPE_WAKE_RUN);
+	else
+		(void)AcpiDisableGpe(hdl, val, ACPI_GPE_TYPE_WAKE_RUN);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "wake GPE %s for %s\n",
 		(enable != 0) ? "enabled" : "disabled", ad->ad_name));

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.65 2010/04/14 19:27:28 jruoho Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.66 2010/06/06 18:40:51 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.65 2010/04/14 19:27:28 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.66 2010/06/06 18:40:51 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -366,14 +366,7 @@ acpiec_common_attach(device_t parent, device_t self,
 		goto post_csr_map;
 	}
 
-	rv = AcpiSetGpeType(sc->sc_gpeh, sc->sc_gpebit, ACPI_GPE_TYPE_RUNTIME);
-	if (rv != AE_OK) {
-		aprint_error_dev(self, "unable to set GPE type: %s\n",
-		    AcpiFormatException(rv));
-		goto post_csr_map;
-	}
-
-	rv = AcpiEnableGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_ISR);
+	rv = AcpiEnableGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_GPE_TYPE_RUNTIME);
 	if (rv != AE_OK) {
 		aprint_error_dev(self, "unable to enable GPE: %s\n",
 		    AcpiFormatException(rv));
@@ -582,7 +575,7 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 		}
 		if (sc->sc_state != EC_STATE_FREE) {
 			mutex_exit(&sc->sc_mtx);
-			AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+			AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit);
 			acpiec_unlock(dv);
 			aprint_error_dev(dv, "command timed out, state %d\n",
 			    sc->sc_state);
@@ -590,7 +583,7 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 		}
 	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
-		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit);
 		acpiec_unlock(dv);
 		aprint_error_dev(dv, "command takes over %d sec...\n", EC_CMD_TIMEOUT);
 		return AE_ERROR;
@@ -631,7 +624,7 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 		}
 		if (sc->sc_state != EC_STATE_FREE) {
 			mutex_exit(&sc->sc_mtx);
-			AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+			AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit);
 			acpiec_unlock(dv);
 			aprint_error_dev(dv, "command timed out, state %d\n",
 			    sc->sc_state);
@@ -639,7 +632,7 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 		}
 	} else if (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
-		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+		AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit);
 		acpiec_unlock(dv);
 		aprint_error_dev(dv, "command takes over %d sec...\n", EC_CMD_TIMEOUT);
 		return AE_ERROR;
@@ -849,7 +842,7 @@ acpiec_callout(void *arg)
 	device_t dv = arg;
 	struct acpiec_softc *sc = device_private(dv);
 
-	AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+	AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit);
 
 	mutex_enter(&sc->sc_mtx);
 	acpiec_gpe_state_machine(dv);
@@ -862,7 +855,7 @@ acpiec_gpe_handler(void *arg)
 	device_t dv = arg;
 	struct acpiec_softc *sc = device_private(dv);
 
-	AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_ISR);
+	AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit);
 
 	mutex_enter(&sc->sc_mtx);
 	acpiec_gpe_state_machine(dv);
