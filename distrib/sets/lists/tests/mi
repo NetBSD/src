@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.79 2010/06/05 22:39:18 dholland Exp $
+# $NetBSD: mi,v 1.80 2010/06/07 03:43:50 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -725,7 +725,7 @@
 ./usr/tests/fs/tmpfs/t_devices			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/t_dots			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/t_exec			tests-fs-tests		atf
-./usr/tests/fs/tmpfs/t_id_gen			tests-fs-tests		atf
+./usr/tests/fs/tmpfs/t_id_gen			tests-obsolete		obsolete
 ./usr/tests/fs/tmpfs/t_link			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/t_mkdir			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/t_mknod			tests-fs-tests		atf
