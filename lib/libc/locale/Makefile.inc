@@ -1,11 +1,11 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.56 2010/06/01 18:00:28 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.57 2010/06/07 13:52:30 tnozaki Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
 
 SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
-	setlocale.c setlocale1.c setlocale32.c __mb_cur_max.c \
+	setlocale.c __mb_cur_max.c \
 	current_locale.c global_locale.c fix_grouping.c \
 	localeconv.c nl_langinfo.c \
 	generic_lc_all.c dummy_lc_collate.c \

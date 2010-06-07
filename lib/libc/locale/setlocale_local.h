@@ -1,4 +1,4 @@
-/* $NetBSD: setlocale_local.h,v 1.6 2010/05/22 13:50:02 tnozaki Exp $ */
+/* $NetBSD: setlocale_local.h,v 1.7 2010/06/07 13:52:30 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -67,8 +67,8 @@ typedef struct {
 __BEGIN_DECLS
 _locale_category_t	*_find_category(int);
 const char		*_get_locale_env(const char *);
-extern struct _locale_impl_t	_global_locale;
 struct _locale_impl_t	**_current_locale(void);
+char			*__setlocale(int, const char *);
 __END_DECLS
 
 static __inline struct _locale_cache_t *
@@ -77,7 +77,7 @@ _current_cache(void)
 	return (*_current_locale())->cache;
 }
 
+extern struct _locale_impl_t	_global_locale;
 extern size_t __mb_len_max_runtime;
-#define __MB_LEN_MAX_RUNTIME	__mb_len_max_runtime
 
 #endif /*_SETLOCALE_LOCAL_H_*/

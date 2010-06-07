@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.11 2008/09/13 07:33:26 skrll Exp $	*/
+/*	$NetBSD: limits.h,v 1.12 2010/06/07 13:52:30 tnozaki Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
@@ -62,8 +62,6 @@
 #include <sys/featuretest.h>
 
 #define	CHAR_BIT	8		/* number of bits in a char */
-#define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
-
 
 /*
  * According to ANSI (section 2.2.4.2), the values below must be usable by
