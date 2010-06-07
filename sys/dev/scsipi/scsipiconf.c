@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.37 2010/05/30 04:38:04 pgoyette Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.38 2010/06/07 01:41:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,11 +48,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.37 2010/05/30 04:38:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.38 2010/06/07 01:41:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 
@@ -63,26 +64,26 @@ __KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.37 2010/05/30 04:38:04 pgoyette Exp
 #define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 /* Function pointers and stub routines for scsiverbose module */
-int     (*scsipi_print_sense)(struct scsipi_xfer *, int) =
-		scsipi_print_sense_stub;
-void    (*scsipi_print_sense_data)(struct scsi_sense_data *, int) =
+int (*scsipi_print_sense)(struct scsipi_xfer *, int) = scsipi_print_sense_stub;
+void (*scsipi_print_sense_data)(struct scsi_sense_data *, int) =
 		scsipi_print_sense_data_stub;
-char   *(*scsipi_decode_sense)(void *, int) = scsipi_decode_sense_stub;
 
-int     scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
+int scsi_verbose_loaded = 0; 
+
+int scsipi_print_sense_stub(struct scsipi_xfer * xs, int verbosity)
 {
-	return 0;
+	scsipi_load_verbose();
+	if (scsi_verbose_loaded)
+		return scsipi_print_sense(xs, verbosity);
+	else
+		return 0;
 }
 
-void    scsipi_print_sense_data_stub(struct scsi_sense_data *sense,
-				     int verbosity)
+void scsipi_print_sense_data_stub(struct scsi_sense_data *sense, int verbosity)
 {
-	return;
-}
-
-char   *scsipi_decode_sense_stub(void *sinfo, int flag)
-{
-	return NULL;
+	scsipi_load_verbose();
+	if (scsi_verbose_loaded)
+		scsipi_print_sense_data(sense, verbosity);
 }
 
 int
@@ -98,6 +99,21 @@ scsipi_command(struct scsipi_periph *periph, struct scsipi_generic *cmd,
 		return (ENOMEM);
 
 	return (scsipi_execute_xs(xs));
+}
+
+/* 
+ * Load the scsiverbose module
+ */   
+void
+scsipi_load_verbose(void)
+{
+	if (scsi_verbose_loaded)
+		return;
+ 
+	mutex_enter(&module_lock);
+	if (module_autoload("scsiverbose", MODULE_CLASS_MISC) == 0)
+		scsi_verbose_loaded++; 
+	mutex_exit(&module_lock);
 }
 
 /*
