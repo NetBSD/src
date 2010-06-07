@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.73 2010/05/21 11:29:42 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.74 2010/06/07 11:21:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -562,7 +562,7 @@ struct puffs_vnmsg_pathconf {
 	struct puffs_req	pvn_pr;
 
 	int			pvnr_name;		/* OUT	*/
-	int			pvnr_retval;		/* IN	*/
+	register_t		pvnr_retval;		/* IN	*/
 };
 
 struct puffs_vnmsg_advlock {
