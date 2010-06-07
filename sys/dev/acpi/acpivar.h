@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.55 2010/06/05 06:07:12 jruoho Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.56 2010/06/07 01:45:27 pgoyette Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -326,6 +326,10 @@ extern void	(*acpi_print_dev)(const char *);
 extern void	(*acpi_wmidump)(void *);
 
 void		acpi_wmidump_real(void *);
+
 void		acpi_null(void);
+
+void		acpi_load_verbose(void);
+extern int	acpi_verbose_loaded;
 
 #endif	/* !_SYS_DEV_ACPI_ACPIVAR_H */

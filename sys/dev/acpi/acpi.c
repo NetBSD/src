@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.199 2010/06/06 10:44:40 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.200 2010/06/07 01:45:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.199 2010/06/06 10:44:40 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.200 2010/06/07 01:45:27 pgoyette Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -203,13 +203,19 @@ static void		  acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 extern struct cfdriver acpi_cd;
 
 /* Handle routine vectors and loading for acpiverbose module */
-void acpi_verbose_ctl(bool load);
 void acpi_null(void);
 
-void (*acpi_print_devnodes)(struct acpi_softc *) = (void *)acpi_null;
-void (*acpi_print_tree)(struct acpi_devnode *, uint32_t) = (void *)acpi_null;
-void (*acpi_print_dev)(const char *) = (void *)acpi_null;
-void (*acpi_wmidump)(void *) = (void *)acpi_null;
+void acpi_print_devnodes_stub(struct acpi_softc *);
+void acpi_print_tree_stub(struct acpi_devnode *, uint32_t);
+void acpi_print_dev_stub(const char *);
+void acpi_wmidump_stub(void *);
+
+void (*acpi_print_devnodes)(struct acpi_softc *) = acpi_print_devnodes_stub;
+void (*acpi_print_tree)(struct acpi_devnode *, uint32_t) = acpi_print_tree_stub;
+void (*acpi_print_dev)(const char *) = acpi_print_dev_stub;
+void (*acpi_wmidump)(void *) = acpi_wmidump_stub;
+
+int acpi_verbose_loaded = 0;
 
 /* acpiverbose support */
 void
@@ -219,23 +225,44 @@ acpi_null(void)
 }
 
 void
-acpi_verbose_ctl(bool load)
+acpi_load_verbose(void)
 {
-	static int loaded = 0;
+	if (acpi_verbose_loaded)
+		return;
 
-	if (load) {
-		if (loaded++ == 0)
-			if (module_load("acpiverbose", MODCTL_LOAD_FORCE,
-					NULL, MODULE_CLASS_MISC) != 0)
-				loaded = 0;
-		return;
-	}
-	if (loaded == 0)
-		return;
-	if (--loaded == 0)
-		module_unload("acpiverbose");
+	mutex_enter(&module_lock);
+	if (module_autoload("acpiverbose", MODULE_CLASS_MISC) == 0)
+		acpi_verbose_loaded++;
+	mutex_exit(&module_lock);
+}  
+
+void acpi_print_devnodes_stub(struct acpi_softc *sc)
+{
+	acpi_load_verbose();
+	if (acpi_verbose_loaded)
+		acpi_print_devnodes(sc);
 }
 
+void acpi_print_tree_stub(struct acpi_devnode *ad, uint32_t level)
+{
+	acpi_load_verbose();
+	if (acpi_verbose_loaded)
+		acpi_print_tree(ad, level);
+}
+
+void acpi_print_dev_stub(const char *pnpstr)
+{
+	acpi_load_verbose();
+	if (acpi_verbose_loaded)
+		acpi_print_dev(pnpstr);
+}
+
+void acpi_wmidump_stub(void *arg)
+{
+	acpi_load_verbose();
+	if (acpi_verbose_loaded)
+		acpi_wmidump(arg);
+}
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
     acpi_match, acpi_attach, acpi_detach, NULL, acpi_rescan, acpi_childdet);
@@ -401,8 +428,6 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	if (acpi_softc != NULL)
 		panic("%s: already attached", __func__);
 
-	acpi_verbose_ctl(true);
-
 	rsdt = acpi_map_rsdt();
 
 	if (rsdt == NULL)
@@ -566,8 +591,6 @@ acpi_detach(device_t self, int flags)
 	pmf_device_deregister(self);
 
 	acpi_softc = NULL;
-
-	acpi_verbose_ctl(false);
 
 	return 0;
 }
