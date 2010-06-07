@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.16 2010/06/07 14:07:25 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.17 2010/06/07 17:28:17 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.16 2010/06/07 14:07:25 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.17 2010/06/07 17:28:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -198,10 +198,12 @@ acpi_power_res_get(ACPI_HANDLE hdl)
 }
 
 bool
-acpi_power_register(struct acpi_devnode *ad)
+acpi_power_register(ACPI_HANDLE hdl)
 {
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 
-	KASSERT(ad != NULL && ad->ad_root != NULL);
+	if (ad == NULL)
+		return false;
 
 	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0)
 		return false;
@@ -210,11 +212,13 @@ acpi_power_register(struct acpi_devnode *ad)
 }
 
 void
-acpi_power_deregister(struct acpi_devnode *ad)
+acpi_power_deregister(ACPI_HANDLE hdl)
 {
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 	struct acpi_power_res *res;
 
-	KASSERT(ad != NULL && ad->ad_root != NULL);
+	if (ad == NULL)
+		return;
 
 	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0)
 		return;
@@ -226,24 +230,17 @@ acpi_power_deregister(struct acpi_devnode *ad)
 	    (void)acpi_power_res_deref(res, ad->ad_handle);
 }
 
-void
-acpi_power_deregister_from_handle(ACPI_HANDLE hdl)
-{
-	struct acpi_devnode *ad = acpi_get_node(hdl);
-
-	if (ad == NULL)
-		return;
-
-	acpi_power_deregister(ad);
-}
-
 /*
  * Get the D-state of an ACPI device node.
  */
 bool
-acpi_power_get(struct acpi_devnode *ad, int *state)
+acpi_power_get(ACPI_HANDLE hdl, int *state)
 {
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 	ACPI_STATUS rv;
+
+	if (ad == NULL)
+		return false;
 
 	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
 		rv = AE_SUPPORT;
@@ -356,13 +353,15 @@ out:
  * Set the D-state of an ACPI device node.
  */
 bool
-acpi_power_set(struct acpi_devnode *ad, int state)
+acpi_power_set(ACPI_HANDLE hdl, int state)
 {
+	struct acpi_devnode *ad = acpi_get_node(hdl);
 	ACPI_STATUS rv;
 	char path[5];
 	int old;
 
-	KASSERT(ad != NULL && ad->ad_root != NULL);
+	if (ad == NULL)
+		return false;
 
 	if ((ad->ad_flags & ACPI_DEVICE_POWER) == 0) {
 		rv = AE_SUPPORT;
@@ -433,20 +432,6 @@ fail:
 		"for %s: %s\n", state, ad->ad_name, AcpiFormatException(rv)));
 
 	return false;
-}
-
-/*
- * Set the D-state of an ACPI device node from a handle.
- */
-bool
-acpi_power_set_from_handle(ACPI_HANDLE hdl, int state)
-{
-	struct acpi_devnode *ad = acpi_get_node(hdl);
-
-	if (ad == NULL)
-		return false;
-
-	return acpi_power_set(ad, state);
 }
 
 static ACPI_STATUS
