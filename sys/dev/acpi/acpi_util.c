@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.4 2010/04/27 08:15:07 jruoho Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.5 2010/06/07 17:13:52 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.4 2010/04/27 08:15:07 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.5 2010/06/07 17:13:52 jruoho Exp $");
 
 #include <sys/param.h>
 
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.4 2010/04/27 08:15:07 jruoho Exp $")
 
 #define _COMPONENT		ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME		("acpi_util")
+
+static void	acpi_clean_node(ACPI_HANDLE, void *);
 
 /*
  * Evaluate an integer object.
@@ -266,22 +268,34 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 struct acpi_devnode *
 acpi_get_node(ACPI_HANDLE handle)
 {
-	struct acpi_softc *sc = acpi_softc; /* XXX. */
 	struct acpi_devnode *ad;
+	ACPI_STATUS rv;
 
-	if (sc == NULL || handle == NULL)
+	if (handle == NULL)
 		return NULL;
 
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+	rv = AcpiGetData(handle, acpi_clean_node, (void **)&ad);
 
-		if (ad->ad_handle == handle)
-			return ad;
-	}
+	if (ACPI_FAILURE(rv))
+		return NULL;
 
-	aprint_debug_dev(sc->sc_dev, "%s: failed to "
-	    "find node %s\n", __func__, acpi_name(handle));
+	return ad;
+}
 
-	return NULL;
+/*
+ * Associate a device node with a handle.
+ */
+void
+acpi_set_node(struct acpi_devnode *ad)
+{
+
+	(void)AcpiAttachData(ad->ad_handle, acpi_clean_node, ad);
+}
+
+static void
+acpi_clean_node(ACPI_HANDLE handle, void *aux)
+{
+	/* Nothing. */
 }
 
 /*
