@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.5 2008/01/06 01:37:58 matt Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.6 2010/06/07 15:17:24 bsh Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.5 2008/01/06 01:37:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.6 2010/06/07 15:17:24 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,8 +323,7 @@ sskbd_attach(struct device *parent, struct device *self, void *aux)
 	sc->soft_ih = softint_establish(SOFTINT_SERIAL, sskbd_soft_intr, sc);
 
 	if (sc->atn_ih == NULL || sc->spi_ih == NULL)
-		aprint_error("%s: can't establish interrupt handler\n",
-		    sc->dev.dv_xname);
+		aprint_error_dev(self, "can't establish interrupt handler\n");
 
 	/* setup SPI control register, and prescaler */
 	s3c24x0_spi_setup((struct ssspi_softc *)device_parent(self), 
@@ -448,7 +447,7 @@ sskbd_enable(void *v, int on)
 	struct sskbd_softc *sc = v;
 
 #ifdef KBD_DEBUG
-	printf("%s: enable\n", sc->dev.dv_xname);
+	printf("%s: enable\n", device_xname(sc->dev));
 #endif
 
 #if 0
