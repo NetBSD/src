@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.152 2010/05/30 04:38:04 pgoyette Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.153 2010/06/07 01:41:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.152 2010/05/30 04:38:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.153 2010/06/07 01:41:39 pgoyette Exp $");
 
 #include "opt_scsi.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.152 2010/05/30 04:38:04 pgoyette E
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/hash.h>
-#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -82,27 +81,6 @@ static void	scsipi_async_event_xfer_mode(struct scsipi_channel *,
 static void	scsipi_async_event_channel_reset(struct scsipi_channel *);
 
 static struct pool scsipi_xfer_pool;
-
-/*              
- * Load/unload the scsiverbose module
- */
-void
-scsipi_verbose_ctl(bool load)
-{
-	static int loaded = 0;
- 
-	if (load) {
-		if (loaded++ == 0)
-			if (module_load("scsiverbose", MODCTL_LOAD_FORCE,
-					NULL, MODULE_CLASS_MISC) != 0)
-		loaded = 0;
-		return;
-	}
-	if (loaded == 0)
-		return;
-	if (--loaded == 0)
-		module_unload("scsiverbose");
-} 
 
 /*
  * scsipi_init:
