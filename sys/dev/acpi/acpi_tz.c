@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.73 2010/06/01 19:20:43 plunky Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.74 2010/06/07 17:28:17 jruoho Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.73 2010/06/01 19:20:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.74 2010/06/07 17:28:17 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -240,7 +240,7 @@ acpitz_detach(device_t self, int flags)
 		rv = acpi_eval_reference_handle(al.Pointer, &hdl);
 
 		if (ACPI_SUCCESS(rv))
-			acpi_power_deregister_from_handle(hdl);
+			acpi_power_deregister(hdl);
 
 		ACPI_FREE(sc->sc_zone.al[i].Pointer);
 	}
@@ -406,7 +406,7 @@ acpitz_switch_cooler(ACPI_OBJECT *obj, void *arg)
 	if (ACPI_FAILURE(rv))
 		return rv;
 
-	(void)acpi_power_set_from_handle(cooler, pwr_state);
+	(void)acpi_power_set(cooler, pwr_state);
 
 	return AE_OK;
 }
