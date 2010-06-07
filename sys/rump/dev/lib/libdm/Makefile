@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/16 20:42:45 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/06/07 13:57:20 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/dm
@@ -11,8 +11,6 @@ SRCS=   device-mapper.c dm_dev.c dm_ioctl.c dm_pdev.c dm_table.c dm_target.c \
 SRCS+=	component.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
-
-LDADD+=         -lrumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
