@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.217 2010/04/25 00:54:46 joerg Exp $
+#	$NetBSD: shlib_version,v 1.218 2010/06/07 13:52:29 tnozaki Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -19,10 +19,6 @@
 # - libc/stdio: make fpos_t larger.  see BUGS section in fgetpos(3).
 #   probably s/fpos_t/off_t/ in __sFILE and __sseek().  it involves
 #   funopen(3) api change.
-# - libc/locale/{__mb_cur_max.c,rune.h}: remove __mb_len_max_runtime
-# - libc/locale/setlocale.c: __setlocale -> setlocale
-# - libc/locale/setlocale{1,32}.c: remove
-# - libc/citrus/citrus_lc_ctype.c: __MB_LEN_MAX_RUNTIME -> MB_LEN_MAX
 # - remove frexp, ldexp, modf: they belong to libm.
 # - make sure we can support thread local [on arm don't use r9 for example,
 #   consider other risc architectures: mips, powerpc, sparc, etc]
@@ -34,7 +30,5 @@
 # - change _ctype_ table in ctype.h and gen/ctype_.c 8bit -> 16 or 32bit.
 #   it's insufficient bitwidth to implement all ctype class.
 #   see isblank's comment in ctype.h.
-# - increase MB_LEN_MAX 6 -> 32 sys/arch/hppa/include/limits.h
-#   and make it's definition MD -> MI.
 major=12
-minor=172
+minor=173

@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale1.c,v 1.4 2010/05/22 13:50:02 tnozaki Exp $	*/
+/* $NetBSD: compat_setlocale32.c,v 1.1 2010/06/07 13:52:30 tnozaki Exp $ */
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -24,35 +24,30 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * NetBSD: setlocale32.c,v 1.6 2010/05/22 13:50:02 tnozaki Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale1.c,v 1.4 2010/05/22 13:50:02 tnozaki Exp $");
+__RCSID("$NetBSD: compat_setlocale32.c,v 1.1 2010/06/07 13:52:30 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
 #include <sys/types.h>
-#define __SETLOCALE_SOURCE__
-#include <locale.h>
+#include <compat/include/locale.h>
+
 #include "setlocale_local.h"
-#include "rune_local.h"
 
-__warn_references(setlocale,
-    "warning: reference to compatibility setlocale(); include <locale.h> for correct reference")
+__warn_references(__setlocale_mb_len_max_32,
+    "warning: reference to compatibility __setlocale_mb_len_max_32();"
+    "include <locale.h> for correct reference")
 
-/*
- * Preparation for the future import of multibyte locale.
- * This function will ensure binary compatibility for old executables.
- */
 char *
-setlocale(category, locale)
-	int category;
-	const char *locale;
+__setlocale_mb_len_max_32(int category, const char *locale)
 {
 
 	/* locale may be NULL */
 
-	__mb_len_max_runtime = 1;
+	__mb_len_max_runtime = 32;
 	return __setlocale(category, locale);
 }

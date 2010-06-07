@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.89 2010/05/21 11:07:20 pooka Exp $
+# $NetBSD: md.amd64,v 1.90 2010/06/07 13:52:29 tnozaki Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -65,7 +65,7 @@
 ./usr/lib/i386/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libbz2.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/i386/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/i386/libc.so.12.172			base-compat-shlib	compat,pic
+./usr/lib/i386/libc.so.12.173			base-compat-shlib	compat,pic
 ./usr/lib/i386/libcom_err.so.6			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libcom_err.so.6.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/i386/libcrypt.so.1			base-compat-shlib	compat,pic
