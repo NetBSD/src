@@ -1,4 +1,4 @@
-.\" $NetBSD: mq.3,v 1.1 2010/06/07 07:11:28 jruoho Exp $
+.\" $NetBSD: mq.3,v 1.2 2010/06/07 07:39:43 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\"
@@ -226,9 +226,6 @@ to retrieve and set attributes once
 the message queue has been created,
 the resource limits cannot be changed
 by an user once the queue has been created.
-.\" The super user can however control the limits via few
-.\" .Xr sysctl 7
-.\" variables.
 To avoid blocking in case the maximum number of messages has been reached, the
 .Dv O_NONBLOCK
 flag can be set as an argument to
@@ -291,31 +288,6 @@ the user may consider other functions from the
 The process scheduling interface described in
 .Xr sched 3
 can be mentioned as an example.
-.\"
-.\" XXX: Move this to sysctl(7).
-.\"
-.\" .Sh SYSCTL
-.\" The
-.\" .Nx
-.\" implementation defines few
-.\" .Xr sysctl 8
-.\" variables available for the superuser.
-.\" .Bl -tag -width "kern.mq_max_msgsize "-offset indent
-.\" .It kern.posix_msg
-.\" The version of the
-.\" .Tn POSIX
-.\" standard to which the system attempts
-.\" to conform with respect to the message queues.
-.\" .It kern.mq_open_max
-.\" The maximum number of message queue descriptors
-.\" that any process is able to open.
-.\" .It kern.mq_prio_max
-.\" The maximum priority of any message.
-.\" .It kern.mq_max_msgsize
-.\" The maximum size of any message.
-.\" .It kern.mq_def_maxmsg
-.\" The default number of messages in a message queue.
-.\" .El
 .Sh FUNCTIONS
 The following functions are available in the
 .Tn API.
@@ -332,20 +304,6 @@ The following functions are available in the
 .It Xr mq_setattr 3 Ta set message queue attributes
 .It Xr mq_notify 3 Ta register asynchronous notify
 .El
-.\"
-.\" XXX: Fill this with fileops?
-.\"
-.\" .In addition, the
-.\" .Nx
-.\" implementation allows the following standard
-.\" .Tn I/O
-.\" and file manipulation calls to be used with message queues:
-.\" The following functions are available in the
-.\" .Tn API.
-.\" .Bl -column -offset indent "mq_timedreceive " "XXX"
-.\" .It Sy Function Ta Sy Description
-.\" .It Xr ...
-.\" .El
 .Sh COMPATIBILITY
 Despite of some early fears, the
 .Tn POSIX
