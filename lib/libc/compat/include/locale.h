@@ -1,8 +1,8 @@
-/*	$NetBSD: setlocale32.c,v 1.6 2010/05/22 13:50:02 tnozaki Exp $	*/
+/* $NetBSD: locale.h,v 1.1 2010/06/07 13:52:30 tnozaki Exp $ */
 
-/*-
- * Copyright (c)1999 Citrus Project,
- * All rights reserved.
+/*
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,11 +12,14 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -24,29 +27,18 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)locale.h	8.1 (Berkeley) 6/2/93
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setlocale32.c,v 1.6 2010/05/22 13:50:02 tnozaki Exp $");
-#endif /* LIBC_SCCS and not lint */
+#ifndef _COMPAT_LOCALE_H_
+#define _COMPAT_LOCALE_H_
 
-#include "namespace.h"
-#include <sys/types.h>
-#define __SETLOCALE_SOURCE__
-#include <locale.h>
-#include <limits.h>
-#include "setlocale_local.h"
-#include "rune_local.h"
+#define _LC_LAST	7		/* marks end */
 
-char *
-__setlocale_mb_len_max_32(category, locale)
-	int category;
-	const char *locale;
-{
+__BEGIN_DECLS
+char *setlocale(int, const char *);
+char *__setlocale_mb_len_max_32(int, const char *);
+__END_DECLS
 
-	/* locale may be NULL */
-
-	__mb_len_max_runtime = MB_LEN_MAX;
-	return __setlocale(category, locale);
-}
+#endif /* _COMPAT_LOCALE_H_ */

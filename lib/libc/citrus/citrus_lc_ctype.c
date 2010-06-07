@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_lc_ctype.c,v 1.6 2010/06/01 13:52:08 tnozaki Exp $ */
+/* $NetBSD: citrus_lc_ctype.c,v 1.7 2010/06/07 13:52:29 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.6 2010/06/01 13:52:08 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_lc_ctype.c,v 1.7 2010/06/07 13:52:29 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -103,7 +103,7 @@ _citrus_LC_CTYPE_create_impl(const char * __restrict root,
 	   data->rl_variable, data->rl_variable_len, _PRIVSIZE);
 	if (!ret)
 		ret = __runetable_to_netbsd_ctype(data);
-	if (ret || __MB_LEN_MAX_RUNTIME <
+	if (ret || __mb_len_max_runtime <
 	    _citrus_ctype_get_mb_cur_max(data->rl_citrus_ctype)) {
 		_NukeRune(data);
 		return EINVAL;
