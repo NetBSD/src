@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.79 2010/02/13 02:09:41 martin Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.80 2010/06/07 01:56:51 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.79 2010/02/13 02:09:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.80 2010/06/07 01:56:51 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},
-	/* IBEAD devices don't like all SCSI commands */
+	/* Some Sigmatel-based devices don't like all SCSI commands */
 	{ { USB_VENDOR_SIGMATEL, USB_PRODUCT_SIGMATEL_MUSICSTICK },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
@@ -221,6 +221,37 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
+	{ { USB_VENDOR_PHILIPS, USB_PRODUCT_PHILIPS_SA235 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/* iRiver iFP-[135]xx players fail on PREVENT/ALLOW, see PR 25440 */
+	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_1XX },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_3XX },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_5XX },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
 	/* Meizu M6 doesn't like synchronize-cache, see PR 40442 */
 	{ { USB_VENDOR_MEIZU, USB_PRODUCT_MEIZU_M6_SL },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC, 
