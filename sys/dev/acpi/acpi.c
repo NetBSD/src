@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.200 2010/06/07 01:45:27 pgoyette Exp $	*/
+/*	$NetBSD: acpi.c,v 1.201 2010/06/07 13:04:31 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.200 2010/06/07 01:45:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.201 2010/06/07 13:04:31 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1002,16 +1002,9 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		/*
 		 * Handled internally.
 		 */
-		if (di->Type == ACPI_TYPE_PROCESSOR)
+		if (di->Type == ACPI_TYPE_POWER ||
+		    di->Type == ACPI_TYPE_PROCESSOR)
 			continue;
-
-		/*
-		 * Ditto, but bind power resources.
-		 */
-		if (di->Type == ACPI_TYPE_POWER) {
-			acpi_power_res_add(ad);
-			continue;
-		}
 
 		/*
 		 * Skip ignored HIDs.
