@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.39 2010/06/06 22:46:17 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.40 2010/06/07 11:23:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -1307,13 +1307,13 @@ p2k_node_write(struct puffs_usermount *pu, puffs_cookie_t opc,
 /*ARGSUSED*/
 int
 p2k_node_pathconf(struct puffs_usermount *pu, puffs_cookie_t opc,
-	int name, int *retval)
+	int name, register_t *retval)
 {
 	struct vnode *vp = OPC2VP(opc);
 	int rv;
 
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
-	rv = RUMP_VOP_PATHCONF(vp, name, (register_t *)retval);
+	rv = RUMP_VOP_PATHCONF(vp, name, retval);
 	RUMP_VOP_UNLOCK(vp, 0);
 
 	return rv;
