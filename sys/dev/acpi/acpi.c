@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.201 2010/06/07 13:04:31 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.202 2010/06/07 17:13:52 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.201 2010/06/07 13:04:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.202 2010/06/07 17:13:52 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -217,11 +217,13 @@ void (*acpi_wmidump)(void *) = acpi_wmidump_stub;
 
 int acpi_verbose_loaded = 0;
 
-/* acpiverbose support */
+/*
+ * Support for ACPIVERBOSE.
+ */
 void
 acpi_null(void)
 {
-	/* Nothing to do */
+	/* Nothing to do. */
 }
 
 void
@@ -234,30 +236,34 @@ acpi_load_verbose(void)
 	if (module_autoload("acpiverbose", MODULE_CLASS_MISC) == 0)
 		acpi_verbose_loaded++;
 	mutex_exit(&module_lock);
-}  
+}
 
-void acpi_print_devnodes_stub(struct acpi_softc *sc)
+void
+acpi_print_devnodes_stub(struct acpi_softc *sc)
 {
 	acpi_load_verbose();
 	if (acpi_verbose_loaded)
 		acpi_print_devnodes(sc);
 }
 
-void acpi_print_tree_stub(struct acpi_devnode *ad, uint32_t level)
+void
+acpi_print_tree_stub(struct acpi_devnode *ad, uint32_t level)
 {
 	acpi_load_verbose();
 	if (acpi_verbose_loaded)
 		acpi_print_tree(ad, level);
 }
 
-void acpi_print_dev_stub(const char *pnpstr)
+void
+acpi_print_dev_stub(const char *pnpstr)
 {
 	acpi_load_verbose();
 	if (acpi_verbose_loaded)
 		acpi_print_dev(pnpstr);
 }
 
-void acpi_wmidump_stub(void *arg)
+void
+acpi_wmidump_stub(void *arg)
 {
 	acpi_load_verbose();
 	if (acpi_verbose_loaded)
@@ -747,6 +753,8 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 
 		SIMPLEQ_INIT(&ad->ad_child_head);
 		SIMPLEQ_INSERT_TAIL(&sc->ad_head, ad, ad_list);
+
+		acpi_set_node(ad);
 
 		if (ad->ad_parent != NULL) {
 
