@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.14 2010/06/05 07:59:13 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.15 2010/06/07 13:04:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.14 2010/06/05 07:59:13 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.15 2010/06/07 13:04:31 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -120,21 +120,6 @@ static ACPI_OBJECT	*acpi_power_pkg_get(ACPI_HANDLE, int);
 static int		 acpi_power_sysctl(SYSCTLFN_ARGS);
 static const char	*acpi_xname(ACPI_HANDLE);
 
-void
-acpi_power_res_add(struct acpi_devnode *ad)
-{
-	struct acpi_power_res *res;
-
-	KASSERT(ad != NULL && ad->ad_root != NULL);
-	KASSERT(ad->ad_devinfo->Type == ACPI_TYPE_POWER);
-
-	res = acpi_power_res_init(ad->ad_handle);
-
-	if (res == NULL)
-		aprint_error_dev(ad->ad_root, "failed to "
-		    "add power resource %s\n", ad->ad_name);
-}
-
 static struct acpi_power_res *
 acpi_power_res_init(ACPI_HANDLE hdl)
 {
@@ -189,6 +174,9 @@ acpi_power_res_init(ACPI_HANDLE hdl)
 
 	if (tmp == NULL)
 		TAILQ_INSERT_TAIL(&res_head, res, res_list);
+
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s added to the "
+		"power resource queue\n", res->res_name));
 
 out:
 	if (buf.Pointer != NULL)
