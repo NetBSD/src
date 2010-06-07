@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1457 2010/06/07 07:11:27 jruoho Exp $
+#	$NetBSD: mi,v 1.1458 2010/06/07 07:26:20 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7175,6 +7175,8 @@
 ./usr/share/man/cat3/mq_receive.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mq_send.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mq_setattr.0		comp-c-catman		.cat
+./usr/share/man/cat3/mq_timedreceive.0		comp-c-catman		.cat
+./usr/share/man/cat3/mq_timedsend.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mq_unlink.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mqueue.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mrand48.0			comp-c-catman		.cat
@@ -13002,6 +13004,8 @@
 ./usr/share/man/html3/mq_receive.html		comp-c-htmlman		html
 ./usr/share/man/html3/mq_send.html		comp-c-htmlman		html
 ./usr/share/man/html3/mq_setattr.html		comp-c-htmlman		html
+./usr/share/man/html3/mq_timedreceive.html	comp-c-htmlman		html
+./usr/share/man/html3/mq_timedsend.html		comp-c-htmlman		html
 ./usr/share/man/html3/mq_unlink.html		comp-c-htmlman		html
 ./usr/share/man/html3/mqueue.html		comp-c-htmlman		html
 ./usr/share/man/html3/mrand48.html		comp-c-htmlman		html
@@ -18817,6 +18821,8 @@
 ./usr/share/man/man3/mq_receive.3		comp-c-man		.man
 ./usr/share/man/man3/mq_send.3			comp-c-man		.man
 ./usr/share/man/man3/mq_setattr.3		comp-c-man		.man
+./usr/share/man/man3/mq_timedreceive.3		comp-c-man		.man
+./usr/share/man/man3/mq_timedsend.3		comp-c-man		.man
 ./usr/share/man/man3/mq_unlink.3		comp-c-man		.man
 ./usr/share/man/man3/mqueue.3			comp-c-man		.man
 ./usr/share/man/man3/mrand48.3			comp-c-man		.man
