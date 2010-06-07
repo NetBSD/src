@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_create.3,v 1.5 2008/05/02 18:11:04 martin Exp $
+.\" $NetBSD: pthread_create.3,v 1.6 2010/06/07 04:36:34 dholland Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_create.3,v 1.16 2002/09/16 19:29:28 mini Exp $
 .\"
-.Dd January 30, 2003
+.Dd June 6, 2010
 .Dt PTHREAD_CREATE 3
 .Os
 .Sh NAME
@@ -77,20 +77,29 @@ If
 is
 .Dv NULL ,
 the default attributes are used.
-If the attribute object pointed to by
+.Pp
+The attributes specified via
 .Fa attr
-are modified later, the thread's attributes are not affected.
+are copied into the new thread.
+Any subsequent modifications to the attributes object
+.Fa attr
+points to will have no effect upon already-created threads.
+It is thus also safe to pass the same
+.Fa attr
+to multiple calls to
+.Fn pthread_create .
+.Pp
 Upon
 successful completion
 .Fn pthread_create
 will store the ID of the created thread in the location specified by
 .Fa thread .
-.Pp
 The thread is created executing
 .Fa start_routine
 with
 .Fa arg
 as its sole argument.
+.Pp
 If the
 .Fa start_routine
 returns, the effect is as if there was an implicit call to
@@ -138,6 +147,7 @@ is invalid.
 .El
 .Sh SEE ALSO
 .Xr fork 2 ,
+.Xr pthread_attr 3 ,
 .Xr pthread_cleanup_pop 3 ,
 .Xr pthread_cleanup_push 3 ,
 .Xr pthread_exit 3 ,
