@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.116 2010/05/21 11:29:42 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.117 2010/06/07 11:21:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -216,7 +216,7 @@ struct puffs_ops {
 	int (*puffs_node_inactive)(struct puffs_usermount *, puffs_cookie_t);
 	int (*puffs_node_print)(struct puffs_usermount *, puffs_cookie_t);
 	int (*puffs_node_pathconf)(struct puffs_usermount *,
-	    puffs_cookie_t, int, int *);
+	    puffs_cookie_t, int, register_t *);
 	int (*puffs_node_advlock)(struct puffs_usermount *,
 	    puffs_cookie_t, void *, int, struct flock *, int);
 	int (*puffs_node_read)(struct puffs_usermount *, puffs_cookie_t,
@@ -361,7 +361,7 @@ enum {
 	int fsname##_node_print(struct puffs_usermount *,		\
 	    puffs_cookie_t);						\
 	int fsname##_node_pathconf(struct puffs_usermount *,		\
-	    puffs_cookie_t, int, int *);				\
+	    puffs_cookie_t, int, register_t *);				\
 	int fsname##_node_advlock(struct puffs_usermount *,		\
 	    puffs_cookie_t, void *, int, struct flock *, int);		\
 	int fsname##_node_read(struct puffs_usermount *, puffs_cookie_t,\
