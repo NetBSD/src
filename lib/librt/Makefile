@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2010/06/07 07:11:28 jruoho Exp $
+#	$NetBSD: Makefile,v 1.13 2010/06/07 07:26:21 jruoho Exp $
 #
 
 WARNS=	2
@@ -16,6 +16,8 @@ MAN+=	aio.3 aio_cancel.3 aio_error.3 aio_fsync.3 aio_read.3 aio_return.3 \
 	sem_wait.3
 
 MLINKS+=	mq.3 mqueue.3
+MLINKS+=	mq_receive.3 mq_timedreceive.3
+MLINKS+=	mq_send.3 mq_timedsend.3
 
 MLINKS+=	sem_open.3 sem_close.3
 MLINKS+=	sem_open.3 sem_unlink.3
