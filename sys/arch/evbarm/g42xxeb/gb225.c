@@ -1,4 +1,4 @@
-/*	$NetBSD: gb225.c,v 1.8 2010/03/13 11:26:42 bsh Exp $ */
+/*	$NetBSD: gb225.c,v 1.9 2010/06/07 15:17:24 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -146,7 +146,7 @@ opio_attach(device_t parent, device_t self, void *aux)
 	/* Map on-board FPGA registers */
 	if( bus_space_map( iot, GB225_PLDREG_BASE, GB225_PLDREG_SIZE,
 	    0, &(sc->sc_ioh) ) ){
-		aprint_error("%s: can't map FPGA registers\n", self->dv_xname);
+		aprint_error_dev(self, "can't map FPGA registers\n");
 	}
 
 	aprint_normal("\n");
@@ -165,8 +165,7 @@ opio_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #ifdef DEBUG
-	printf("%s: CF_DET=%x PCMCIA_DET=%x\n",
-	    self->dv_xname,
+	aprint_debug_dev(self, "CF_DET=%x PCMCIA_DET=%x\n",
 	    bus_space_read_1(sc->sc_iot, sc->sc_ioh, GB225_CFDET),
 	    bus_space_read_1(sc->sc_iot, sc->sc_ioh, GB225_PCMCIADET));
 #endif
