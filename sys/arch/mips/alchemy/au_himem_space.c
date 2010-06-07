@@ -1,4 +1,4 @@
-/* $NetBSD: au_himem_space.c,v 1.10 2009/12/16 08:26:14 matt Exp $ */
+/* $NetBSD: au_himem_space.c,v 1.11 2010/06/07 13:33:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.10 2009/12/16 08:26:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_himem_space.c,v 1.11 2010/06/07 13:33:33 martin Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -225,7 +225,7 @@ au_himem_map(void *cookie, bus_addr_t addr, bus_size_t size,
 	 * calculation is the offset into the first page, plus the
 	 * intended size, rounded up to a whole number of pages.
 	 */
-	realsz = ROUND_PAGE((addr % PAGE_SIZE) + size);
+	realsz = ROUND_PAGE((addr & PAGE_MASK) + size);
 
 	va = uvm_km_alloc(kernel_map,
 	    realsz, PAGE_SIZE, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
@@ -234,7 +234,7 @@ au_himem_map(void *cookie, bus_addr_t addr, bus_size_t size,
 	}
 
 	/* virtual address in handle (offset appropriately) */
-	*bshp = va + (addr % PAGE_SIZE);
+	*bshp = va + (addr & PAGE_MASK);
 
 	/* map the pages in the kernel pmap */
 	s = splhigh();
@@ -269,7 +269,7 @@ au_himem_unmap(void *cookie, bus_space_handle_t bsh, bus_size_t size, int acct)
 	int			s;
 
 	va = (vaddr_t)TRUNC_PAGE(bsh);
-	realsz = (vsize_t)ROUND_PAGE((bsh % PAGE_SIZE) + size);
+	realsz = (vsize_t)ROUND_PAGE((bsh & PAGE_MASK) + size);
 
 	s = splhigh();
 
@@ -294,7 +294,7 @@ au_himem_unmap(void *cookie, bus_space_handle_t bsh, bus_size_t size, int acct)
 
 	if (acct) {
 		bus_addr_t		addr;
-		addr = ((pa - c->c_physoff) + (bsh % PAGE_SIZE));
+		addr = ((pa - c->c_physoff) + (bsh & PAGE_MASK));
 		extent_free(c->c_extent, addr, size, EX_NOWAIT);
 	}
 }
