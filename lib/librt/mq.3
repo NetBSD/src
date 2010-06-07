@@ -1,4 +1,4 @@
-.\" $NetBSD: mq.3,v 1.2 2010/06/07 07:39:43 jruoho Exp $
+.\" $NetBSD: mq.3,v 1.3 2010/06/07 16:33:45 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\"
@@ -51,7 +51,6 @@ message queues (see for example
 .Xr ipcs 1
 or
 .Xr msgget 2 ) .
-.Pp
 .Ss Rationale
 The rationale behind
 .Nm
@@ -116,7 +115,7 @@ an abbreviation from a
 .Dq message queue descriptor .
 In the
 .Nx
-implementation this is actuallly an ordinary file descriptor.
+implementation this is actually an ordinary file descriptor.
 This means that it is possible, but not portable, to
 monitor a message queue descriptor by using
 .Xr poll 2
@@ -124,7 +123,7 @@ or
 .Xr select 2 .
 .Pp
 Message queues are named by character
-strings that represents (absolute) pathnames.
+strings that represent (absolute) pathnames.
 The used interface is analogous to the conventional file concepts.
 But unlike
 .Tn FIFOs
@@ -290,7 +289,7 @@ The process scheduling interface described in
 can be mentioned as an example.
 .Sh FUNCTIONS
 The following functions are available in the
-.Tn API.
+.Tn API .
 .Bl -column -offset indent "mq_timedreceive " "XXX"
 .It Sy Function Ta Sy Description
 .It Xr mq_open 3 Ta open a message queue
