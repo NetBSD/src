@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.117 2010/05/30 04:38:04 pgoyette Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.118 2010/06/07 01:41:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -623,7 +623,7 @@ struct scsi_quirk_inquiry_pattern {
 
 #ifdef _KERNEL
 void	scsipi_init(void);
-void	scsipi_verbose_ctl(bool);
+void	scsipi_load_verbose(void);
 int	scsipi_command(struct scsipi_periph *, struct scsipi_generic *, int,
 	    u_char *, int, int, int, struct buf *, int);
 void	scsipi_create_completion_thread(void *);
@@ -655,11 +655,11 @@ struct scsipi_periph *scsipi_alloc_periph(int);
 /* Function pointers for scsiverbose module */
 extern int	(*scsipi_print_sense)(struct scsipi_xfer *, int);
 extern void	(*scsipi_print_sense_data)(struct scsi_sense_data *, int);
-extern char    *(*scsipi_decode_sense)(void *, int);
 
 int     scsipi_print_sense_stub(struct scsipi_xfer *, int);
 void    scsipi_print_sense_data_stub(struct scsi_sense_data *, int);
-char   *scsipi_decode_sense_stub(void *, int);
+
+extern int	scsi_verbose_loaded;
 
 void	scsipi_print_cdb(struct scsipi_generic *cmd);
 int	scsipi_thread_call_callback(struct scsipi_channel *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.30 2010/05/30 04:38:04 pgoyette Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.31 2010/06/07 01:41:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.30 2010/05/30 04:38:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.31 2010/06/07 01:41:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.30 2010/05/30 04:38:04 pgoyette
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsiconf.h>
 
-int	scsipi_print_sense_real(struct scsipi_xfer *, int);
-void	scsipi_print_sense_data_real(struct scsi_sense_data *, int);
-char   *scsipi_decode_sense_real(void *, int);
+int		scsipi_print_sense_real(struct scsipi_xfer *, int);
+void		scsipi_print_sense_data_real(struct scsi_sense_data *, int);
+static char    *scsipi_decode_sense(void *, int);
 
 static const char *sense_keys[16] = {
 	"No Additional Sense",
@@ -606,16 +606,20 @@ MODULE(MODULE_CLASS_MISC, scsiverbose, NULL);
 static int
 scsiverbose_modcmd(modcmd_t cmd, void *arg)
 {
+	static int   (*saved_print_sense)(struct scsipi_xfer *, int);
+	static void  (*saved_print_sense_data)(struct scsi_sense_data *, int);
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		saved_print_sense = scsipi_print_sense;
+		saved_print_sense_data = scsipi_print_sense_data;
 		scsipi_print_sense = scsipi_print_sense_real;
 		scsipi_print_sense_data = scsipi_print_sense_data_real;
-		scsipi_decode_sense = scsipi_decode_sense_real;
 		return 0;
 	case MODULE_CMD_FINI:
-		scsipi_print_sense = scsipi_print_sense_stub;
-		scsipi_print_sense_data = scsipi_print_sense_data_stub;
-		scsipi_decode_sense = scsipi_decode_sense_stub;
+		scsipi_print_sense = saved_print_sense;
+		scsipi_print_sense_data = saved_print_sense_data;
+		scsi_verbose_loaded = 0;
 		return 0;
 	default:
 		return ENOTTY;
@@ -626,7 +630,6 @@ int	(*scsipi_print_sense)(struct scsipi_xfer *, int) =
 		scsipi_print_sense_real;
 void	(*scsipi_print_sense_data)(struct scsi_sense_data *, int) =
 		scsipi_print_sense_data_real; 
-char   *(*scsipi_decode_sense)(void *, int) = scsipi_decode_sense_real;
 #endif
 
 static void
@@ -768,8 +771,8 @@ scsipi_print_sense_data_real(struct scsi_sense_data *sense, int verbosity)
 	printf("\n\n");
 }
 
-char *
-scsipi_decode_sense_real(void *sinfo, int flag)
+static char *
+scsipi_decode_sense(void *sinfo, int flag)
 {
 	unsigned char *snsbuf;
 	unsigned char skey;
