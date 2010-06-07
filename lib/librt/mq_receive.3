@@ -1,8 +1,8 @@
-.\"	$NetBSD: mq_receive.3,v 1.2 2010/03/22 22:00:37 joerg Exp $
+.\"	$NetBSD: mq_receive.3,v 1.3 2010/06/07 07:21:52 jruoho Exp $
 .\"
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
 .\"
-.Dd January 5, 2009
+.Dd June 7, 2010
 .Dt MQ_RECEIVE 3
 .Os
 .Sh NAME
@@ -144,13 +144,8 @@ flag was not set when the message queue was opened,
 but no message arrived on the queue before the specified timeout expired.
 .El
 .Sh SEE ALSO
-.Xr mq_close 3 ,
-.Xr mq_getattr 3 ,
-.Xr mq_notify 3 ,
-.Xr mq_open 3 ,
-.Xr mq_send 3 ,
-.Xr mq_setattr 3 ,
-.Xr mq_unlink 3
+.Xr mq 3 ,
+.Xr mq_send 3
 .Sh STANDARDS
 These functions are expected to conform to the
 .St -p1003.1-2001

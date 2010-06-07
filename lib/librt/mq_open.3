@@ -1,8 +1,8 @@
-.\"	$NetBSD: mq_open.3,v 1.4 2010/05/14 08:30:34 wiz Exp $
+.\"	$NetBSD: mq_open.3,v 1.5 2010/06/07 07:21:52 jruoho Exp $
 .\"
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
 .\"
-.Dd May 6, 2010
+.Dd June 7, 2010
 .Dt MQ_OPEN 3
 .Os
 .Sh NAME
@@ -249,12 +249,8 @@ is not set and the named message queue does not exist.
 There is insufficient space for the creation of the new message queue.
 .El
 .Sh SEE ALSO
+.Xr mq 3 ,
 .Xr mq_close 3 ,
-.Xr mq_getattr 3 ,
-.Xr mq_notify 3 ,
-.Xr mq_receive 3 ,
-.Xr mq_send 3 ,
-.Xr mq_setattr 3 ,
 .Xr mq_unlink 3
 .Sh STANDARDS
 This function conforms to the
