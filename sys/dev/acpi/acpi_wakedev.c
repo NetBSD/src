@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wakedev.c,v 1.16 2010/06/07 04:08:26 jruoho Exp $ */
+/* $NetBSD: acpi_wakedev.c,v 1.17 2010/06/07 14:12:20 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.16 2010/06/07 04:08:26 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakedev.c,v 1.17 2010/06/07 14:12:20 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,7 @@ static const struct sysctlnode *rnode = NULL;
 
 static void	acpi_wakedev_method(struct acpi_devnode *, int, int);
 static void	acpi_wakedev_gpe(struct acpi_devnode *, int, int);
-static void	acpi_wakedev_power(ACPI_OBJECT *);
+static void	acpi_wakedev_power(struct acpi_devnode *, ACPI_OBJECT *);
 
 SYSCTL_SETUP(sysctl_acpi_wakedev_setup, "sysctl hw.acpi.wake subtree setup")
 {
@@ -266,7 +266,7 @@ acpi_wakedev_gpe(struct acpi_devnode *ad, int enable, int state)
 	 * Turn on power resources.
 	 */
 	if (enable != 0)
-		acpi_wakedev_power(obj);
+		acpi_wakedev_power(ad, obj);
 
 	/*
 	 * Set both runtime and wake GPEs, but unset only wake GPEs.
@@ -284,7 +284,7 @@ out:
 }
 
 static void
-acpi_wakedev_power(ACPI_OBJECT *obj)
+acpi_wakedev_power(struct acpi_devnode *ad, ACPI_OBJECT *obj)
 {
 	ACPI_OBJECT *elm;
 	ACPI_HANDLE hdl;
@@ -304,6 +304,6 @@ acpi_wakedev_power(ACPI_OBJECT *obj)
 		if (ACPI_FAILURE(rv))
 			continue;
 
-		(void)acpi_power_set_from_handle(hdl, ACPI_STATE_D0);
+		(void)acpi_power_res(hdl, ad->ad_handle, true);
 	}
 }
