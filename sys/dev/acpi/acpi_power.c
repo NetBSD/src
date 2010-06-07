@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.15 2010/06/07 13:04:31 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.16 2010/06/07 14:07:25 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.15 2010/06/07 13:04:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.16 2010/06/07 14:07:25 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -108,8 +108,6 @@ static ACPI_STATUS	 acpi_power_get_direct(struct acpi_devnode *);
 static ACPI_STATUS	 acpi_power_get_indirect(struct acpi_devnode *);
 static ACPI_STATUS	 acpi_power_switch(struct acpi_devnode *,
 						   int, bool);
-static ACPI_STATUS	 acpi_power_res_on(ACPI_OBJECT *, void *);
-static ACPI_STATUS	 acpi_power_res_off(ACPI_OBJECT *, void *);
 static ACPI_STATUS	 acpi_power_res_ref(struct acpi_power_res *,
 					    ACPI_HANDLE);
 static ACPI_STATUS	 acpi_power_res_deref(struct acpi_power_res *,
@@ -454,88 +452,81 @@ acpi_power_set_from_handle(ACPI_HANDLE hdl, int state)
 static ACPI_STATUS
 acpi_power_switch(struct acpi_devnode *ad, int state, bool on)
 {
-	ACPI_OBJECT *pkg;
-	ACPI_STATUS rv;
+	ACPI_OBJECT *elm, *pkg;
+	ACPI_STATUS rv = AE_OK;
+	ACPI_HANDLE hdl;
+	uint32_t i, n;
 
+	/*
+	 * For each element in the _PRx package, fetch
+	 * the reference handle, search for this handle
+	 * from the power resource queue, and turn the
+	 * resource behind the handle on or off.
+	 */
 	pkg = acpi_power_pkg_get(ad->ad_handle, state);
 
 	if (pkg == NULL)
 		return AE_CTRL_CONTINUE;
 
-	if (on != false)
-		rv = acpi_foreach_package_object(pkg, acpi_power_res_on, ad);
-	else
-		rv = acpi_foreach_package_object(pkg, acpi_power_res_off, ad);
+	n = pkg->Package.Count;
 
-	if (rv == AE_CTRL_CONTINUE)
-		rv = AE_ERROR;
+	for (i = 0; i < n; i++) {
+
+		elm = &pkg->Package.Elements[i];
+		rv = acpi_eval_reference_handle(elm, &hdl);
+
+		if (ACPI_FAILURE(rv))
+			continue;
+
+		(void)acpi_power_res(hdl, ad->ad_handle, on);
+	}
 
 	ACPI_FREE(pkg);
 
 	return rv;
 }
 
-static ACPI_STATUS
-acpi_power_res_on(ACPI_OBJECT *elm, void *arg)
+ACPI_STATUS
+acpi_power_res(ACPI_HANDLE hdl, ACPI_HANDLE ref, bool on)
 {
-	struct acpi_devnode *ad = arg;
 	struct acpi_power_res *res;
-	ACPI_HANDLE hdl;
+	const char *str;
 	ACPI_STATUS rv;
 
 	/*
-	 * For each element in the _PRx package, first
-	 * fetch the reference handle and then search
-	 * for this handle from the power resource list.
+	 * Search for the resource.
 	 */
-	rv = acpi_eval_reference_handle(elm, &hdl);
-
-	if (ACPI_FAILURE(rv))
-		return rv;
-
 	res = acpi_power_res_get(hdl);
 
 	if (res == NULL)
 		return AE_NOT_FOUND;
 
 	/*
-	 * Reference the resource.
+	 * (De)reference the resource.
 	 */
-	rv = acpi_power_res_ref(res, ad->ad_handle);
+	switch (on) {
+
+	case true:
+		rv = acpi_power_res_ref(res, ref);
+		str = "_ON";
+		break;
+
+	case false:
+		rv = acpi_power_res_deref(res, ref);
+		str = "_OFF";
+		break;
+
+	default:
+		return AE_BAD_PARAMETER;
+	}
 
 	if (ACPI_FAILURE(rv))
 		return rv;
 
 	/*
-	 * Turn the resource on.
+	 * Turn the resource on or off.
 	 */
-	return AcpiEvaluateObject(res->res_handle, "_ON", NULL, NULL);
-}
-
-static ACPI_STATUS
-acpi_power_res_off(ACPI_OBJECT *elm, void *arg)
-{
-	struct acpi_devnode *ad = arg;
-	struct acpi_power_res *res;
-	ACPI_HANDLE hdl;
-	ACPI_STATUS rv;
-
-	rv = acpi_eval_reference_handle(elm, &hdl);
-
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	res = acpi_power_res_get(hdl);
-
-	if (res == NULL)
-		return AE_NOT_FOUND;
-
-	rv = acpi_power_res_deref(res, ad->ad_handle);
-
-	if (ACPI_FAILURE(rv))
-		return rv;
-
-	return AcpiEvaluateObject(res->res_handle, "_OFF", NULL, NULL);
+	return AcpiEvaluateObject(res->res_handle, str, NULL, NULL);
 }
 
 static ACPI_STATUS
