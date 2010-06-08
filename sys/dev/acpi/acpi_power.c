@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.17 2010/06/07 17:28:17 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.18 2010/06/08 18:18:24 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.17 2010/06/07 17:28:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.18 2010/06/08 18:18:24 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -395,6 +395,17 @@ acpi_power_set(ACPI_HANDLE hdl, int state)
 	}
 
 	/*
+	 * As noted in ACPI 4.0 (appendix A.2.1), the bus power state
+	 * should never be lower than the highest state of one of its
+	 * devices. Consequently, we cannot set the state to a lower
+	 * (i.e. higher power) state than the parent device's state.
+	 */
+	if (ad->ad_parent != NULL && ad->ad_parent->ad_state > state) {
+		rv = AE_ABORT_METHOD;
+		goto fail;
+	}
+
+	/*
 	 * We first sweep through the resources required for the target
 	 * state, turning things on and building references. After this
 	 * we dereference the resources required for the current state,
@@ -418,8 +429,8 @@ acpi_power_set(ACPI_HANDLE hdl, int state)
 	(void)snprintf(path, sizeof(path), "_PS%d", state);
 	(void)AcpiEvaluateObject(ad->ad_handle, path, NULL, NULL);
 
-	aprint_debug_dev(ad->ad_root, "%s turned from "
-	    "D%d to D%d\n", ad->ad_name, old, state);
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s turned from "
+		"D%d to D%d\n", ad->ad_name, old, state));
 
 	ad->ad_state = state;
 
