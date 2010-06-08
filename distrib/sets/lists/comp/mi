@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1458 2010/06/07 07:26:20 jruoho Exp $
+#	$NetBSD: mi,v 1.1459 2010/06/08 05:40:26 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8720,6 +8720,11 @@
 ./usr/share/man/cat9/be64enc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/be64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bintime.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bintime_add.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bintime_addx.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bintime_sub.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bintime2timespec.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bintime2timeval.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bintobcd.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/binuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/biodone.0			comp-sys-catman		.cat
@@ -9692,6 +9697,8 @@
 ./usr/share/man/cat9/time_uptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/timecounter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/timeout.0			comp-sys-catman		.cat
+./usr/share/man/cat9/timespec2bintime.0		comp-sys-catman		.cat
+./usr/share/man/cat9/timeval2bintime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tmpfs.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/todr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/todr_getcal.0		comp-obsolete		obsolete
@@ -14485,6 +14492,11 @@
 ./usr/share/man/html9/be64enc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/be64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bintime.html		comp-sys-htmlman	html
+./usr/share/man/html9/bintime_add.html		comp-sys-htmlman	html
+./usr/share/man/html9/bintime_addx.html		comp-sys-htmlman	html
+./usr/share/man/html9/bintime_sub.html		comp-sys-htmlman	html
+./usr/share/man/html9/bintime2timespec.html	comp-sys-htmlman	html
+./usr/share/man/html9/bintime2timeval.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bintobcd.html		comp-sys-htmlman	html
 ./usr/share/man/html9/binuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/biodone.html		comp-sys-htmlman	html
@@ -15408,6 +15420,8 @@
 ./usr/share/man/html9/time_uptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/timecounter.html		comp-sys-htmlman	html
 ./usr/share/man/html9/timeout.html		comp-sys-htmlman	html
+./usr/share/man/html9/timespec2bintime.html	comp-sys-htmlman	html
+./usr/share/man/html9/timeval2bintime.html	comp-sys-htmlman	html
 ./usr/share/man/html9/todr.html			comp-sys-htmlman	html
 ./usr/share/man/html9/todr_gettime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/todr_settime.html		comp-sys-htmlman	html
@@ -20361,6 +20375,11 @@
 ./usr/share/man/man9/be64enc.9			comp-sys-man		.man
 ./usr/share/man/man9/be64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/bintime.9			comp-sys-man		.man
+./usr/share/man/man9/bintime_add.9		comp-sys-man		.man
+./usr/share/man/man9/bintime_addx.9		comp-sys-man		.man
+./usr/share/man/man9/bintime_sub.9		comp-sys-man		.man
+./usr/share/man/man9/bintime2timespec.9		comp-sys-man		.man
+./usr/share/man/man9/bintime2timeval.9		comp-sys-man		.man
 ./usr/share/man/man9/bintobcd.9			comp-sys-man		.man
 ./usr/share/man/man9/binuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/biodone.9			comp-sys-man		.man
@@ -21333,6 +21352,8 @@
 ./usr/share/man/man9/time_uptime.9		comp-sys-man		.man
 ./usr/share/man/man9/timecounter.9		comp-sys-man		.man
 ./usr/share/man/man9/timeout.9			comp-sys-man		.man
+./usr/share/man/man9/timespec2bintime.9		comp-sys-man		.man
+./usr/share/man/man9/timeval2bintime.9		comp-sys-man		.man
 ./usr/share/man/man9/tmpfs.9			comp-obsolete		obsolete
 ./usr/share/man/man9/todr.9			comp-sys-man		.man
 ./usr/share/man/man9/todr_getcal.9		comp-obsolete		obsolete
