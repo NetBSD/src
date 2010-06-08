@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1459 2010/06/08 05:40:26 jruoho Exp $
+#	$NetBSD: mi,v 1.1460 2010/06/08 08:51:08 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6175,6 +6175,7 @@
 ./usr/share/man/cat3/if_indextoname.0		comp-c-catman		.cat
 ./usr/share/man/cat3/if_nameindex.0		comp-c-catman		.cat
 ./usr/share/man/cat3/if_nametoindex.0		comp-c-catman		.cat
+./usr/share/man/cat3/ilog2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ilogb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ilogbf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/imaxabs.0			comp-c-catman		.cat
@@ -12046,6 +12047,7 @@
 ./usr/share/man/html3/if_indextoname.html	comp-c-htmlman		html
 ./usr/share/man/html3/if_nameindex.html		comp-c-htmlman		html
 ./usr/share/man/html3/if_nametoindex.html	comp-c-htmlman		html
+./usr/share/man/html3/ilog2.html		comp-c-htmlman		html
 ./usr/share/man/html3/ilogb.html		comp-c-htmlman		html
 ./usr/share/man/html3/ilogbf.html		comp-c-htmlman		html
 ./usr/share/man/html3/imaxabs.html		comp-c-htmlman		html
@@ -17835,6 +17837,7 @@
 ./usr/share/man/man3/if_indextoname.3		comp-c-man		.man
 ./usr/share/man/man3/if_nameindex.3		comp-c-man		.man
 ./usr/share/man/man3/if_nametoindex.3		comp-c-man		.man
+./usr/share/man/man3/ilog2.3			comp-c-man		.man
 ./usr/share/man/man3/ilogb.3			comp-c-man		.man
 ./usr/share/man/man3/ilogbf.3			comp-c-man		.man
 ./usr/share/man/man3/imaxabs.3			comp-c-man		.man
