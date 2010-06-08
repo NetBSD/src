@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.84 2010/06/08 13:48:58 christos Exp $
+# $NetBSD: rc.subr,v 1.85 2010/06/08 18:04:17 christos Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1184,7 +1184,7 @@ human_exit_code()
 	if [ "$1" -lt 127 ]
 	then
 		echo "exited with code $1"
-	elif [ "$(expr $1 & 255)" -eq 127 ]
+	elif [ "$(expr $1 % 256)" -eq 127 ]
 	then
 		# This cannot really happen because the shell will not
 		# pass stopped job status out and the exit code is limited
