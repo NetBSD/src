@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.52 2010/05/26 21:50:56 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.53 2010/06/08 17:17:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.52 2010/05/26 21:50:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.53 2010/06/08 17:17:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -144,7 +144,18 @@ rump_vfs_init(void)
 	 * modules from the host will be autoloaded to rump kernels.
 	 */
 #ifdef _RUMP_NATIVE_ABI
-	rump_etfs_register(module_base, module_base, RUMP_ETFS_DIR_SUBDIRS);
+	{
+	char *mbase;
+
+	if (rumpuser_getenv("RUMP_MODULEBASE", buf, sizeof(buf), &error) == 0)
+		mbase = buf;
+	else
+		mbase = module_base;
+
+	if (strlen(mbase) != 0 && *mbase != '0') {
+		rump_etfs_register(mbase, mbase, RUMP_ETFS_DIR_SUBDIRS);
+	}
+	}
 #endif
 
 	module_init_class(MODULE_CLASS_VFS);
