@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1029 2010/05/15 20:11:41 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1030 2010/06/08 04:58:36 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1032 2010/05/15 20:10:37 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.1033 2010/06/08 04:58:03 mrg Exp
  */
 
 /*
@@ -1129,6 +1129,7 @@
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_300	0x4361		/* IXP AC'97 Audio Controller */
 #define	PCI_PRODUCT_ATI_SB300_SMB	0x4363		/* SB300 SMBus Controller */
 #define	PCI_PRODUCT_ATI_IXP_IDE_300	0x4369		/* SB300 IXP IDE Controller */
+#define	PCI_PRODUCT_ATI_IXP_SATA_300	0x436e		/* IXP300 SATA Controller */
 #define	PCI_PRODUCT_ATI_IXP_AUDIO_400	0x4370		/* IXP AC'97 Audio Controller */
 #define	PCI_PRODUCT_ATI_SB400_PPB	0x4371		/* SB400 PCI-PCI Bridge */
 #define	PCI_PRODUCT_ATI_SB400_SMB	0x4372		/* SB400 SMBus Controller */
@@ -1651,6 +1652,7 @@
 
 /* Inclusion of 'A' in the following entry is probably wrong. */
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
+#define	PCI_PRODUCT_CMDTECH_240	0x0240		/* Sil240 SATALink */
 #define	PCI_PRODUCT_CMDTECH_650A	0x0650		/* PCI0650A */
 #define	PCI_PRODUCT_CMDTECH_670	0x0670		/* USB0670 */
 #define	PCI_PRODUCT_CMDTECH_673	0x0673		/* USB0673 */
