@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.17 2008/02/11 03:49:13 dyoung Exp $
+.\" $NetBSD: evcnt.9,v 1.18 2010/06/08 08:20:37 jruoho Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd January 11, 2005
+.Dd June 8, 2010
 .Dt EVCNT 9
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@ hierarchical event counting facility, which is useful for tracking
 system events (including device interrupts).
 .Pp
 The fundamental component of this framework is the
-.Nm evcnt
+.Em evcnt
 structure.
 Its user-accessible fields are:
 .Bd -literal
@@ -83,7 +83,7 @@ Each event counter is marked (in the
 .Fa ev_type
 field) with the type of event being counted.
 The following types are currently defined:
-.Bl -tag -offset indent -width EVCNT_TYPE_MISC -compact
+.Bl -tag -offset indent -width EVCNT_TYPE_MISC
 .It Ev EVCNT_TYPE_MISC
 Miscellaneous; doesn't fit into one of the other types.
 .It Ev EVCNT_TYPE_INTR
@@ -143,7 +143,7 @@ The
 and
 .Fa name
 arguments must be constant strings.
-.Pp
+.Sh FUNCTIONS
 The following is a brief description of each function in the framework:
 .Bl -tag -width indent
 .It Fn "void evcnt_attach_dynamic" "struct evcnt *ev" "int type" "const struct evcnt *parent" "const char *group" "const char *name"
