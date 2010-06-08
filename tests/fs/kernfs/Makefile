@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/04/26 23:47:25 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/06/08 10:43:40 pooka Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/fs/kernfs
@@ -8,9 +8,7 @@ TESTS_C=	t_basic
 
 .include <bsd.own.mk>
 
-.ifndef RUMPKMOD
 LDADD+=	-lrumpfs_kernfs						# fs driver
-.endif
 LDADD+=	-lrumpvfs -lrump -lrumpuser -lpthread			# base
 
 .include <bsd.test.mk>
