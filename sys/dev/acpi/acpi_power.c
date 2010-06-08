@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.18 2010/06/08 18:18:24 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.19 2010/06/08 18:38:18 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.18 2010/06/08 18:18:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.19 2010/06/08 18:38:18 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -250,7 +250,7 @@ acpi_power_get(ACPI_HANDLE hdl, int *state)
 	/*
 	 * Because the _PSC control method, like _STA,
 	 * is known to be implemented incorrectly in
-	 * many systems, we first try to retrieve the
+	 * some systems, we first try to retrieve the
 	 * power state indirectly via power resources.
 	 */
 	rv = acpi_power_get_indirect(ad);
@@ -548,7 +548,7 @@ acpi_power_res_ref(struct acpi_power_res *res, ACPI_HANDLE hdl)
 	mutex_exit(&res->res_mutex);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s referenced "
-		"by %s?\n", res->res_name, acpi_xname(hdl)));
+		"by %s\n", res->res_name, acpi_xname(hdl)));
 
 	return AE_OK;
 
@@ -599,7 +599,7 @@ acpi_power_res_deref(struct acpi_power_res *res, ACPI_HANDLE hdl)
 	mutex_exit(&res->res_mutex);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s dereferenced "
-		"by %s?\n", res->res_name, acpi_xname(hdl)));
+		"by %s\n", res->res_name, acpi_xname(hdl)));
 
 	return AE_OK;
 }
