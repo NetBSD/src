@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.192.4.1.4.2 2010/01/26 04:51:03 cliff Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.192.4.1.4.3 2010/06/08 18:29:11 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.1.4.2 2010/01/26 04:51:03 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.1.4.3 2010/06/08 18:29:11 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -974,20 +974,11 @@ setroot(struct device *bootdv, int bootpartition)
 		 */
 
 		/*
-		 * if rootspec is not configured, ask (again)
-		 */
-		dv = finddevice(rootspec);
-		if (dv == NULL) {
-			printf("device %s not configured\n", rootspec);
-			boothowto |= RB_ASKNAME;
-			goto top;
-		}
-
-		/*
 		 * If it's a network interface, we can bail out
 		 * early.
 		 */
-		if (device_class(dv) == DV_IFNET) {
+		dv = finddevice(rootspec);
+		if (dv != NULL && device_class(dv) == DV_IFNET) {
 			rootdv = dv;
 			goto haveroot;
 		}
