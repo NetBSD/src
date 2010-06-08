@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.3 2010/03/05 18:47:50 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.4 2010/06/08 15:32:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.3 2010/03/05 18:47:50 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.4 2010/06/08 15:32:55 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -84,32 +84,6 @@ reservespace(void *store, size_t *storesize,
  * Macros to make handling elf32/64 in the code a little saner.
  */
 
-#define EHDR_GETMEMBER(base, thevar, result)				\
-do {									\
-	if (eident == ELFCLASS32) {					\
-		Elf32_Ehdr *ehdr = base;				\
-		/*LINTED*/						\
-		result = ehdr->thevar;					\
-	} else {							\
-		Elf64_Ehdr *ehdr = base;				\
-		/*LINTED*/						\
-		result = ehdr->thevar;					\
-	}								\
-} while (/*CONSTCOND*/0)
-
-#define SHDRn_GETMEMBER(base, n, thevar, result)			\
-do {									\
-	if (eident == ELFCLASS32) {					\
-		Elf32_Shdr *shdr = base;				\
-		/*LINTED*/						\
-		result = shdr[n].thevar;				\
-	} else {							\
-		Elf64_Shdr *shdr = base;				\
-		/*LINTED*/						\
-		result = shdr[n].thevar;				\
-	}								\
-} while (/*CONSTCOND*/0)
-
 #define DYNn_GETMEMBER(base, n, thevar, result)				\
 do {									\
 	if (eident == ELFCLASS32) {					\
@@ -126,11 +100,11 @@ do {									\
 #define SYMn_GETMEMBER(base, n, thevar, result)				\
 do {									\
 	if (eident == ELFCLASS32) {					\
-		Elf32_Sym *sym = base;					\
+		const Elf32_Sym *sym = base;				\
 		/*LINTED*/						\
 		result = sym[n].thevar;					\
 	} else {							\
-		Elf64_Sym *sym = base;					\
+		const Elf64_Sym *sym = base;				\
 		/*LINTED*/						\
 		result = sym[n].thevar;					\
 	}								\
@@ -149,78 +123,61 @@ do {									\
 	}								\
 } while (/*CONSTCOND*/0)
 
+#define GETVECWORDn(base, n, result)					\
+do {									\
+	if (eident == ELFCLASS32) {					\
+		Elf32_Word *vec = base;					\
+		result = vec[n];					\
+	} else {							\
+		Elf64_Word *vec = base;					\
+		result = vec[n];					\
+	}								\
+} while (/*CONSTCOND*/0)
+
 #define SYM_GETSIZE() ((eident==ELFCLASS32)?sizeof(Elf32_Sym):sizeof(Elf64_Sym))
 
 static int
 getsymbols(struct link_map *map)
 {
-	void *libbase = map->l_addr;
-	int i = 0, fd;
 	char *str_base;
 	void *syms_base = NULL; /* XXXgcc */
-	size_t cursymsize, curstrsize;
-	void *shdr_base;
-	size_t shsize;
-	int shnum;
-	uint64_t shoff;
+	size_t curstrsize;
 	void *ed_base;
 	uint64_t ed_tag;
-	int sverrno;
+	size_t cursymcount;
+	unsigned i;
 
-	if (memcmp(libbase, ELFMAG, SELFMAG) != 0)
-		return ENOEXEC;
-	eident = *(unsigned char *)(map->l_addr + EI_CLASS);
-	if (eident != ELFCLASS32 && eident != ELFCLASS64)
-		return ENOEXEC;
-
-	/* read the section headers from disk to determine size of dynsym */
-	fd = open(map->l_name, O_RDONLY);
-	if (fd == -1) {
-		sverrno = errno;
-		fprintf(stderr, "open %s failed\n", map->l_name);
-		return sverrno;
+	if (map->l_addr) {
+		if (memcmp(map->l_addr, ELFMAG, SELFMAG) != 0)
+			return ENOEXEC;
+		eident = *(unsigned char *)(map->l_addr + EI_CLASS);
+		if (eident != ELFCLASS32 && eident != ELFCLASS64)
+			return ENOEXEC;
 	}
 
-	EHDR_GETMEMBER(libbase, e_shnum, shnum);
-	EHDR_GETMEMBER(libbase, e_shentsize, shsize);
-	EHDR_GETMEMBER(libbase, e_shoff, shoff);
-	shdr_base = malloc(shnum * shsize);
-	if (pread(fd, shdr_base, shnum * shsize, (off_t)shoff)
-	    != (ssize_t)(shnum*shsize)){
-		sverrno = errno;
-		fprintf(stderr, "read section headers for %s failed\n",
-		    map->l_name);
-		free(shdr_base);
-		close(fd);
-		return sverrno;
-	}
-	cursymsize = (size_t)-1;
-	for (i = 1; i <= shnum; i++) {
-		int shtype;
-
-		SHDRn_GETMEMBER(shdr_base, i, sh_type, shtype);
-		if (shtype != SHT_DYNSYM)
-			continue;
-		SHDRn_GETMEMBER(shdr_base, i, sh_size, cursymsize);
-		break;
-	}
-	free(shdr_base);
-	close(fd);
-	if (cursymsize == (size_t)-1) {
-		fprintf(stderr, "could not find dynsym size from %s\n",
-		    map->l_name);
-		return ENOEXEC;
+	/*
+	 * ok, we probably have only the main object.  instead of going
+	 * to disk and reading the ehdr, just try to guess the size.
+	 */
+	if (eident == 0) {
+		if (/*CONSTCOND*/sizeof(void *) == 4)
+			eident = ELFCLASS32;
+		else
+			eident = ELFCLASS64;
 	}
 
-	/* find symtab, strtab and strtab size */
+	/*
+	 * Find symtab and strtab and their sizes.
+	 */
 	str_base = NULL;
-	curstrsize = (size_t)-1;
+	curstrsize = 0;
+	cursymcount = 0;
 	ed_base = map->l_ld;
-	i = 0;
-	DYNn_GETMEMBER(ed_base, i, d_tag, ed_tag);
-	while (ed_tag != DT_NULL) {
+	DYNn_GETMEMBER(ed_base, 0, d_tag, ed_tag);
+	for (i = 0; ed_tag != DT_NULL;) {
 		uintptr_t edptr;
 		size_t edval;
+		void *hashtab;
 
 		switch (ed_tag) {
 		case DT_SYMTAB:
@@ -235,15 +192,25 @@ getsymbols(struct link_map *map)
 			DYNn_GETMEMBER(ed_base, i, d_un.d_val, edval);
 			curstrsize = edval;
 			break;
+		case DT_HASH:
+			DYNn_GETMEMBER(ed_base, i, d_un.d_ptr, edptr);
+			hashtab = map->l_addr + edptr;
+			GETVECWORDn(hashtab, 1, cursymcount);
+			break;
+		case DT_SYMENT:
+			DYNn_GETMEMBER(ed_base, i, d_un.d_val, edval);
+			assert(edval == SYM_GETSIZE());
+			break;
 		default:
 			break;
 		}
 		i++;
 		DYNn_GETMEMBER(ed_base, i, d_tag, ed_tag);
-	} while (ed_tag != DT_NULL);
+	}
 
-	if (str_base == NULL || syms_base == NULL || curstrsize == (size_t)-1) {
-		fprintf(stderr, "could not find strtab, symtab or strtab size "
+	if (str_base == NULL || syms_base == NULL ||
+	    curstrsize == 0 || cursymcount == 0) {
+		fprintf(stderr, "could not find strtab, symtab or their sizes "
 		    "in %s\n", map->l_name);
 		return ENOEXEC;
 	}
@@ -254,7 +221,8 @@ getsymbols(struct link_map *map)
 	 * space will be smaller due to undefined symbols we are not
 	 * interested in.
 	 */
-	symtab = reservespace(symtab, &symtabsize, symtaboff, cursymsize);
+	symtab = reservespace(symtab, &symtabsize,
+	    symtaboff, cursymcount * SYM_GETSIZE());
 	strtab = reservespace(strtab, &strtabsize, strtaboff, curstrsize);
 	if (symtab == NULL || strtab == NULL) {
 		fprintf(stderr, "failed to reserve memory");
@@ -262,8 +230,8 @@ getsymbols(struct link_map *map)
 	}
 
 	/* iterate over all symbols in current symtab */
-	for (i = 0; i * SYM_GETSIZE() < cursymsize; i++) {
-		char *cursymname;
+	for (i = 0; i < cursymcount; i++) {
+		const char *cursymname;
 		int shndx, name;
 		uintptr_t value;
 		void *csym;
@@ -276,8 +244,20 @@ getsymbols(struct link_map *map)
 		/* get symbol name */
 		SYMn_GETMEMBER(syms_base, i, st_name, name);
 		cursymname = name + str_base;
+
+		/*
+		 * Only accept symbols which are decidedly in
+		 * the rump kernel namespace.
+		 * XXX: quirks, but they wouldn't matter here
+		 */
+		if (strncmp(cursymname, "rump", 4) != 0 &&
+		    strncmp(cursymname, "RUMP", 4) != 0 &&
+		    strncmp(cursymname, "__", 2) != 0) {
+			continue;
+		}
+
 		memcpy(symtab + symtaboff,
-		    (uint8_t *)syms_base + i*SYM_GETSIZE(), SYM_GETSIZE());
+		    (const uint8_t *)syms_base + i*SYM_GETSIZE(),SYM_GETSIZE());
 
 		/*
 		 * set name to point at new strtab, offset symbol value
@@ -352,9 +332,10 @@ rumpuser_dl_bootstrap(rump_modinit_fn domodinit,
 	 */
 	error = 0;
 	for (map = origmap; map && !error; map = map->l_prev) {
-		if (map->l_addr == NULL)
-			continue;
 		if (strstr(map->l_name, "librump") != NULL)
+			error = getsymbols(map);
+		/* this should be the main object */
+		else if (map->l_addr == NULL && map->l_prev == NULL)
 			error = getsymbols(map);
 	}
 
