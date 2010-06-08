@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.138 2010/06/06 03:26:57 mrg Exp $
+.\"	$NetBSD: ddb.4,v 1.139 2010/06/08 06:14:57 mrg Exp $
 .\"
 .\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -921,10 +921,12 @@ set (e.g.
 Some of these commands are:
 .Ss ALPHA
 .Bl -tag -width "traptrace" -compact
-.It Ic halt
-Call the PROM monitor to halt the CPU.
-.It Ic reboot
-Call the PROM monitor to reboot the CPU.
+.It Ic cpu
+Switch to another cpu.
+.\" .It Ic halt
+.\" Call the PROM monitor to halt the CPU.
+.\" .It Ic reboot
+.\" Call the PROM monitor to reboot the CPU.
 .El
 .Ss ARM32
 .Bl -tag -width "traptrace" -compact
