@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/05/28 02:35:46 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2010/06/08 04:31:43 mrg Exp $
 
 DRIVER=		xf86-video-openchrome
 DRIVER_NAME=	openchrome_drv
@@ -39,5 +39,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
 
 .include "../Makefile.xf86-driver"
