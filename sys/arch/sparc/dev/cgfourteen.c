@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.62 2009/08/27 20:52:18 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.63 2010/06/08 06:30:41 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -67,13 +67,6 @@
  * cg14 into their space.
  */
 #undef CG14_MAP_REGS
-
-/*
- * The following enables 24-bit operation: when opened, the framebuffer
- * will switch to 24-bit mode (actually 32-bit mode), and provide a
- * simple cg8 emulation.
- */
-#define CG14_CG8
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,16 +243,9 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	/* Mask out invalid flags from the user. */
 	fb->fb_flags = device_cfdata(sc->sc_dev)->cf_flags & FB_USERMASK;
 
-	/*
-	 * We're emulating a cg3/8, so represent ourselves as one
-	 */
-#ifdef CG14_CG8
-	fb->fb_type.fb_type = FBTYPE_MEMCOLOR;
+	fb->fb_type.fb_type = FBTYPE_MDICOLOR;
 	fb->fb_type.fb_depth = 32;
-#else
-	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
-	fb->fb_type.fb_depth = 8;
-#endif
+
 	fb_setsize_obp(fb, sc->sc_fb.fb_type.fb_depth, 1152, 900, node);
 	ramsize = roundup(fb->fb_type.fb_height * fb->fb_linebytes, NBPG);
 
@@ -308,13 +294,9 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	/*
 	 * Let the user know that we're here
 	 */
-#ifdef CG14_CG8
-	printf(": cgeight emulated at %dx%dx24bpp",
+	printf(": %dx%d",
 		fb->fb_type.fb_width, fb->fb_type.fb_height);
-#else
-	printf(": cgthree emulated at %dx%dx8bpp",
-		fb->fb_type.fb_width, fb->fb_type.fb_height);
-#endif
+
 	/*
 	 * Enable the video.
 	 */
@@ -474,9 +456,6 @@ cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	case FBIOPUTCMAP:
 		/* copy to software map */
 #define p ((struct fbcmap *)data)
-#ifdef CG14_CG8
-		p->index &= 0xffffff;
-#endif
 		error = cg14_put_cmap(p, &sc->sc_cmap, CG14_CLUT_SIZE);
 		if (error)
 			return (error);
@@ -633,25 +612,11 @@ cg14_init(struct cgfourteen_softc *sc)
 		sc->sc_savexlut[i] = xlut[i];
 	}
 
-#ifdef CG14_CG8
-	/*
-	 * Enable the video, and put in 24 bit mode.
-	 */
-	sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | CG14_MCTL_PIXMODE_32 |
-		CG14_MCTL_POWERCTL;
-
-	/*
-	 * Zero the xlut to enable direct-color mode
-	 */
-	for (i = 0; i < CG14_CLUT_SIZE; i++)
-		sc->sc_xlut->xlut_lut[i] = 0;
-#else
 	/*
 	 * Enable the video and put it in 8 bit mode
 	 */
 	sc->sc_ctl->ctl_mctl = CG14_MCTL_ENABLEVID | CG14_MCTL_PIXMODE_8 |
 		CG14_MCTL_POWERCTL;
-#endif
 }
 
 static void
@@ -930,6 +895,7 @@ cg14_getcmap(struct cgfourteen_softc *sc, struct wsdisplay_cmap *cm)
 
 	return 0;
 }
+
 static int
 cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
