@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.53 2010/06/08 17:17:33 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.54 2010/06/08 21:57:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.53 2010/06/08 17:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.54 2010/06/08 21:57:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -153,7 +153,7 @@ rump_vfs_init(void)
 		mbase = module_base;
 
 	if (strlen(mbase) != 0 && *mbase != '0') {
-		rump_etfs_register(mbase, mbase, RUMP_ETFS_DIR_SUBDIRS);
+		rump_etfs_register(module_base, mbase, RUMP_ETFS_DIR_SUBDIRS);
 	}
 	}
 #endif
