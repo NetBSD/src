@@ -1,4 +1,4 @@
-.\"	$NetBSD: timecounter.9,v 1.8 2010/05/18 06:05:08 jruoho Exp $
+.\"	$NetBSD: timecounter.9,v 1.9 2010/06/08 05:50:01 jruoho Exp $
 .\"	$OpenBSD: tc_init.9,v 1.4 2007/05/31 19:20:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -37,7 +37,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 18, 2010
+.Dd June 8, 2010
 .Dt TIMECOUNTER 9
 .Os
 .Sh NAME
@@ -176,18 +176,9 @@ structure and related functions are defined in the file
 .Xr ntp_adjtime 2 ,
 .Xr settimeofday 2 ,
 .Xr bintime 9 ,
+.Xr bintime_add 9 ,
 .Xr binuptime 9 ,
-.Xr getbintime 9 ,
-.Xr getbinuptime 9 ,
-.Xr getmicrotime 9 ,
-.Xr getmicrouptime 9 ,
-.Xr getnanotime 9 ,
-.Xr getnanouptime 9 ,
 .Xr hz 9 ,
-.Xr microtime 9 ,
-.Xr microuptime 9 ,
-.Xr nanotime 9 ,
-.Xr nanouptime 9 ,
 .Xr time_second 9
 .Rs
 .%A Poul-Henning Kamp
