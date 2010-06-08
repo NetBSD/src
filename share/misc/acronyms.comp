@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.99 2010/05/29 22:45:41 dholland Exp $
+$NetBSD: acronyms.comp,v 1.100 2010/06/08 12:52:51 jruoho Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -174,6 +174,7 @@ FTP	file transfer protocol
 FTPS	file transfer protocol, secure
 GC	garbage collector
 GCR	group-coded recording
+GDT	global descriptor table
 GID	group identifier
 GIF	graphics interchange format
 GNU	GNU's not Unix
@@ -206,6 +207,7 @@ IDE	integrated drive electronics
 IDE	integrated development environment
 IDRP	inter-domain routing protocol
 IDS	intrusion detection system
+IDT	interrupt descriptor table
 IE	Internet Explorer
 IEC	international electrotechnical commission
 IEEE	Institute [of] Electrical [and] Electronics Engineers
@@ -236,6 +238,9 @@ ISN	initial serial number
 ISO	international standards organization
 ISOC	Internet society
 ISP	Internet service provider
+ISR	interrupt service routine
+IST	interrupt stack table
+IVT	interrupt vector table
 JBOD	just a bunch of disks
 JIT	just in time
 JPEG	joint photographic experts group
@@ -252,6 +257,7 @@ LBA	logical block addressing
 LCD	liquid crystal display
 LCP	link control protocol
 LDAP	lightweight directory access protocol
+LDT	local descriptor table
 LED	light emitting diode
 LFS	log-structured file system
 LIFO	last in first out
@@ -266,6 +272,7 @@ LRC	longitudinal redundancy check
 LSB	least significant bit [or: byte]
 LSB	Linux standards base
 LSI	large scale integration
+LTR	load task register
 LUN	logical unit number
 LV	logical volume
 LVM	logical volume management
@@ -289,6 +296,7 @@ MPEG	moving picture experts group
 MPLS	multiprotocol label switching
 MSB	most significant bit [or: byte]
 MSF	minutes seconds frames
+MSI	message signaled interrupt
 MSS	maximum segment size
 MTA	mail transfer agent
 MTU	maximum transmission unit
@@ -422,6 +430,7 @@ SB	sound blaster
 SCM	software configuration management
 SCM	source code management
 SCP	secure copy
+SCI	system control interrupt
 SCSI	small computer system interface
 SCTP	stream control transmission protocol
 SDK	software development kit
@@ -434,6 +443,7 @@ SIP	session initiation protocol
 SIR	slow infrared
 SLDRAM	synchronous-link dynamic random access memory
 SMART	self-monitoring analysis and reporting technology
+SMI	system management interrupt
 SMP	symmetric multiprocessing
 SMTP	simple mail transfer protocol
 SNMP	simple network management protocol
@@ -479,7 +489,9 @@ TMDS	transition minimized differential signaling
 TOS	terms of service
 TOS	type of service
 TR	token ring
+TR	task register
 TRNG	true random number generator
+TSS	task state segment
 TTL	time to live
 TTY	teletype
 TZ	time zone
