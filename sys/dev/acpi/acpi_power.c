@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.19 2010/06/08 18:38:18 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.20 2010/06/08 21:47:26 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.19 2010/06/08 18:38:18 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.20 2010/06/08 21:47:26 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -400,9 +400,13 @@ acpi_power_set(ACPI_HANDLE hdl, int state)
 	 * devices. Consequently, we cannot set the state to a lower
 	 * (i.e. higher power) state than the parent device's state.
 	 */
-	if (ad->ad_parent != NULL && ad->ad_parent->ad_state > state) {
-		rv = AE_ABORT_METHOD;
-		goto fail;
+	if ((ad->ad_parent != NULL) &&
+	    (ad->ad_parent->ad_flags & ACPI_DEVICE_POWER) != 0) {
+
+		if (ad->ad_parent->ad_state > state) {
+			rv = AE_ABORT_METHOD;
+			goto fail;
+		}
 	}
 
 	/*
