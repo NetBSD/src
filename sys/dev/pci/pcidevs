@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1032 2010/05/15 20:10:37 jakllsch Exp $
+$NetBSD: pcidevs,v 1.1033 2010/06/08 04:58:03 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1122,6 +1122,7 @@ product ATI SB200_SMB		0x4353	SB200 SMBus Controller
 product ATI IXP_AUDIO_300	0x4361	IXP AC'97 Audio Controller
 product ATI SB300_SMB 		0x4363	SB300 SMBus Controller
 product ATI IXP_IDE_300 	0x4369	SB300 IXP IDE Controller
+product ATI IXP_SATA_300 	0x436e	IXP300 SATA Controller
 product ATI IXP_AUDIO_400	0x4370	IXP AC'97 Audio Controller
 product ATI SB400_PPB		0x4371	SB400 PCI-PCI Bridge
 product ATI SB400_SMB		0x4372	SB400 SMBus Controller
@@ -1644,6 +1645,7 @@ product CMDTECH 649		0x0649	PCI0649
 
 /* Inclusion of 'A' in the following entry is probably wrong. */
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
+product CMDTECH 240		0x0240	Sil240 SATALink
 product CMDTECH 650A		0x0650	PCI0650A
 product CMDTECH 670		0x0670	USB0670
 product CMDTECH 673		0x0673	USB0673
