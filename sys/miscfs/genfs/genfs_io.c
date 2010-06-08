@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.9 2010/06/07 16:57:17 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.10 2010/06/08 03:30:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.9 2010/06/07 16:57:17 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.10 2010/06/08 03:30:00 uebayasi Exp $");
 
 #include "opt_direct_page.h"
 #include "opt_xip.h"
@@ -114,7 +114,6 @@ genfs_getpages(void *v)
 	} */ * const ap = v;
 	struct vnode * const vp = ap->a_vp;
 
-	/* XXX should be merged into genfs_do_getpages() */
 	if ((vp->v_vflag & VV_XIP) != 0)
 		return genfs_do_getpages_xip(v);
 	else
@@ -783,8 +782,6 @@ genfs_do_getpages_xip(void *v)
 	UVMHIST_FUNC("genfs_do_getpages_xip"); UVMHIST_CALLED(ubchist);
 
 	KASSERT((vp->v_vflag & VV_XIP) != 0);
-
-	/* XXXUEBS should we care about PGO_LOCKED? */
 
 	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_MEM);
 	npages = MIN(*npagesp, round_page(eof - offset) >> PAGE_SHIFT);
