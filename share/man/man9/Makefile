@@ -1,10 +1,10 @@
-#       $NetBSD: Makefile,v 1.331 2010/05/13 13:08:08 jruoho Exp $
+#       $NetBSD: Makefile,v 1.332 2010/06/08 05:40:27 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
-	bcdtobin.9 bcmp.9 bcopy.9 bluetooth.9 boothowto.9 bpf.9 \
+	bcdtobin.9 bcmp.9 bcopy.9 bintime_add.9 bluetooth.9 boothowto.9 bpf.9 \
 	buffercache.9 bufq.9 bus_dma.9 bus_space.9 byteorder.9 bzero.9 \
 	callback.9 callout.9 cardbus.9 cnmagic.9 condvar.9 config.9 \
 	cons.9 copy.9 coredump_write.9 \
@@ -105,6 +105,12 @@ MLINKS+=autoconf.9 config_search_loc.9 \
 	autoconf.9 config_pending_decr.9 \
 	autoconf.9 config_finalize_register.9
 MLINKS+=bcdtobin.9 bintobcd.9
+MLINKS+=bintime_add.9 bintime_addx.9 \
+	bintime_add.9 bintime_sub.9 \
+	bintime_add.9 bintime2timespec.9 \
+	bintime_add.9 timespec2bintime.9 \
+	bintime_add.9 bintime2timeval.9 \
+	bintime_add.9 timeval2bintime.9
 MLINKS+=buffercache.9 bread.9 \
 	buffercache.9 breada.9 \
 	buffercache.9 breadn.9 \
