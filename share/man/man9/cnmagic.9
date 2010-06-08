@@ -1,4 +1,4 @@
-.\" $NetBSD: cnmagic.9,v 1.13 2004/10/06 05:57:33 dbj Exp $
+.\" $NetBSD: cnmagic.9,v 1.14 2010/06/08 19:44:28 jruoho Exp $
 .\"
 .\" Copyright (c) 2000 Eduardo Horvath
 .\" All rights reserved.
@@ -32,21 +32,22 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd November 11, 2000
+.Dd June 8, 2010
 .Dt CNMAGIC 9
 .Os
 .Sh NAME
+.Nm cn_init_magic ,
 .Nm cn_trap ,
 .Nm cn_isconsole ,
 .Nm cn_check_magic ,
-.Nm cn_init_magic ,
+.Nm cn_destroy_magic ,
 .Nm cn_set_magic ,
-.Nm cn_get_magic ,
-.Nm cn_destroy_magic
+.Nm cn_get_magic
 .Nd console magic key sequence management
 .Sh SYNOPSIS
 .In sys/systm.h
-.Va typedef struct cnm_state cnm_state_t;
+.Ft void
+.Fn cn_init_magic "cnm_state_t *cnms"
 .Ft void
 .Fn cn_trap
 .Ft int
@@ -54,13 +55,11 @@
 .Ft void
 .Fn cn_check_magic "dev_t dev" "int k" "cnm_state_t *cnms"
 .Ft void
-.Fn cn_init_magic "cnm_state_t *cnms"
+.Fn cn_destroy_magic "cnm_state_t *cnms"
 .Ft int
 .Fn cn_set_magic "char *magic"
 .Ft int
 .Fn cn_get_magic "char *magic" "int len"
-.Ft void
-.Fn cn_destroy_magic "cnm_state_t *cnms"
 .Sh DESCRIPTION
 The
 .Nx
@@ -97,22 +96,19 @@ The magic key sequence can be accessed through the
 variable.
 This is the raw data and may be keycodes rather than
 processed characters, depending on the console device.
-.Pp
-Here is a description of the console magic interface:
+.Sh FUNCTIONS
+The following functions describe the console magic interface.
 .Bl -tag -width indent
-.It Fn "void cn_init_magic" "cnm_state_t *cnm"
-.Pp
+.It Fn cn_init_magic "cnm"
 Initialize the console magic state pointed to by
 .Fa cnm
 to a usable state.
-.It Fn "void cnm_trap"
-.Pp
+.It Fn cn_trap
 Trap into the kernel debugger or ROM monitor.
 By default this routine is defined to be
 .Fn console_debugger
 but can be overridden in MI header files.
-.It Fn "int cn_isconsole" "dev_t dev"
-.Pp
+.It Fn cn_isconsole "dev"
 Determine whether a given
 .Fa dev
 is the system console.
@@ -121,8 +117,7 @@ This macro tests to see if
 is the same as
 .Va cn_tab-\*[Gt]cn_dev
 but can be overridden in MI header files.
-.It Fn "void cn_check_magic" "dev_t dev" "int k" "cnm_state_t *cnms"
-.Pp
+.It Fn cn_check_magic "dev" "k" "cnms"
 All input should be passed through
 .Fn cn_check_magic
 so the state machine remains in a consistent state.
@@ -142,12 +137,11 @@ Some input may need to be translated to state machine
 values such as the serial line
 .Li BREAK
 sequence.
-.It Fn "void cn_destroy_magic" "cnm_state_t *cnms"
-.Pp
+.It Fn cn_destroy_magic "cnms"
 This should be called once what
 .Fa cnms
 points to is no longer needed.
-.It Fn "int cn_set_magic" "char *magic"
+.It Fn cn_set_magic "magic"
 .Fn cn_set_magic
 encodes a
 .Li nul
@@ -169,10 +163,11 @@ sequence.
 .Li Nul
 character.
 .El
+.Pp
 Returns
 .Li 0
 on success or a non-zero error value.
-.It Fn "int cn_get_magic" "char *magic" "int len"
+.It Fn cn_get_magic "magic" "len"
 Extract the current magic sequence from the state machine and return
 up to
 .Fa len
@@ -185,7 +180,8 @@ Returns
 on success or a non-zero error value.
 .El
 .Sh SEE ALSO
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr cons 9
 .Sh HISTORY
 The
 .Nx
