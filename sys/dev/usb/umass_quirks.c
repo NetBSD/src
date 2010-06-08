@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.80 2010/06/07 01:56:51 jakllsch Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.81 2010/06/08 20:40:07 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.80 2010/06/07 01:56:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.81 2010/06/08 20:40:07 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,6 +222,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  NULL, NULL
 	},
 	{ { USB_VENDOR_PHILIPS, USB_PRODUCT_PHILIPS_SA235 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+	/* Creative Nomad MuVo, NetBSD PR 30389, FreeBSD PR 53094 */
+	{ { USB_VENDOR_CREATIVE, USB_PRODUCT_CREATIVE_NOMAD },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NODOORLOCK | PQUIRK_NOSYNCCACHE,
