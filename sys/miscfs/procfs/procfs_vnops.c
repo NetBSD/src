@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.177 2010/01/08 11:35:11 pooka Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.178 2010/06/08 08:24:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.177 2010/01/08 11:35:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.178 2010/06/08 08:24:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1153,8 +1153,7 @@ procfs_lookup(void *v)
 			vref(fvp);
 			closef(fp);
 			procfs_proc_unlock(p);
-			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY |
-			    (p == curproc ? LK_CANRECURSE : 0));
+			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 			*vpp = fvp;
 			return 0;
 		}
