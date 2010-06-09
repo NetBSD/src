@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.99 2009/02/06 21:09:46 mschuett Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.100 2010/06/09 21:55:42 riz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.99 2009/02/06 21:09:46 mschuett Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.100 2010/06/09 21:55:42 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -2114,7 +2114,7 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 	int e = 0, len = 0;
 	size_t msglen, linelen, tlsprefixlen, prilen;
 	char *p, *line = NULL, *lineptr = NULL;
-#ifndef DISABLE_TLS
+#ifndef DISABLE_SIGN
 	bool newhash = false;
 #endif
 #define REPBUFSIZE 80
@@ -3248,8 +3248,8 @@ init(int fd, short event, void *ev)
 	struct filed *f, *newf, **nextp, *f2;
 	char *p;
 	sigset_t newmask, omask;
-	char *tls_status_msg = NULL;
 #ifndef DISABLE_TLS
+	char *tls_status_msg = NULL;
 	struct peer_cred *cred = NULL;
 #endif /* !DISABLE_TLS */
 
@@ -3818,8 +3818,10 @@ cfline(size_t linenum, const char *line, struct filed *f, const char *prog,
 		break;
 
 	case '|':
+#ifndef DISABLE_SIGN
 		if (GlobalSign.sg == 3)
 			f->f_flags |= FFLAG_SIGN;
+#endif
 		f->f_un.f_pipe.f_pid = 0;
 		(void) strlcpy(f->f_un.f_pipe.f_pname, p + 1,
 		    sizeof(f->f_un.f_pipe.f_pname));
@@ -4200,6 +4202,7 @@ send_queue(int fd, short event, void *arg)
 #define SQ_CHUNK_SIZE 250
 	size_t cnt = 0;
 
+#ifndef DISABLE_TLS
 	if (f->f_type == F_TLS) {
 		/* use a flag to prevent recursive calls to send_queue() */
 		if (f->f_un.f_tls.tls_conn->send_queue)
@@ -4209,6 +4212,7 @@ send_queue(int fd, short event, void *arg)
 	}
 	DPRINTF((D_DATA|D_CALL), "send_queue(f@%p with %zu msgs, "
 		"cnt@%p = %zu)\n", f, f->f_qelements, &cnt, cnt);
+#endif /* !DISABLE_TLS */
 
 	while ((qentry = STAILQ_FIRST(&f->f_qhead))) {
 #ifndef DISABLE_TLS
@@ -4246,8 +4250,11 @@ send_queue(int fd, short event, void *arg)
 			break;
 		}
 	}
+#ifndef DISABLE_TLS
 	if (f->f_type == F_TLS)
 		f->f_un.f_tls.tls_conn->send_queue = false;
+#endif
+
 }
 
 /*
