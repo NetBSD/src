@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz.c,v 1.1.2.5 2010/02/23 20:33:48 matt Exp $ */
+/* $NetBSD: sbbrz.c,v 1.1.2.6 2010/06/09 14:22:17 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -212,10 +212,10 @@ sbbrz_print(void *aux, const char *pnp)
 	/* only PCIs can attach to sbbrz; easy. */
 	if (pnp)
 #if _has_pba_busname
-		printf("%s at %s\n", pba->pba_busname, pnp);
+		aprint_normal("%s at %s\n", pba->pba_busname, pnp);
 #else
-		printf("\n* sbbrz_pci at %s", pnp);
+		aprint_normal("\n* sbbrz_pci at %s", pnp);
 #endif
-	printf(" bus %d", pba->pba_bus);
+	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }       

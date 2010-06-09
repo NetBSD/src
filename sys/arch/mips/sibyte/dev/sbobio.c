@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.16.98.1 2009/11/23 18:28:47 matt Exp $ */
+/* $NetBSD: sbobio.c,v 1.16.98.2 2010/06/09 14:22:16 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.16.98.1 2009/11/23 18:28:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.16.98.2 2010/06/09 14:22:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,10 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: sbobio.c,v 1.16.98.1 2009/11/23 18:28:47 matt Exp $"
 
 #include "locators.h"
 
-static int	sbobio_match(struct device *, struct cfdata *, void *);
-static void	sbobio_attach(struct device *, struct device *, void *);
+static int	sbobio_match(device_t, cfdata_t, void *);
+static void	sbobio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sbobio, sizeof(struct device),
+CFATTACH_DECL_NEW(sbobio, 0,
     sbobio_match, sbobio_attach, NULL, NULL);
 
 static int	sbobio_print(void *, const char *);
@@ -104,7 +104,7 @@ static const int sb112x_sbobio_dev_count =
     sizeof sb112x_sbobio_devs / sizeof sb112x_sbobio_devs[0];
 
 static int
-sbobio_match(struct device *parent, struct cfdata *match, void *aux)
+sbobio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct zbbus_attach_args *zap = aux;
 	uint64_t sysrev;
@@ -128,7 +128,7 @@ sbobio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sbobio_attach(struct device *parent, struct device *self, void *aux)
+sbobio_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbobio_attach_args sa;
 	const char *dscr;
@@ -163,7 +163,7 @@ sbobio_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	printf(": %s peripherals\n", dscr);
+	aprint_normal(": %s peripherals\n", dscr);
 
 	for (i = 0; i < devcount; i++) {
 		memset(&sa, 0, sizeof sa);
