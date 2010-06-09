@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.10.96.1 2009/11/23 18:28:46 matt Exp $ */
+/* $NetBSD: sbgbus.c,v 1.10.96.2 2010/06/09 14:22:16 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.10.96.1 2009/11/23 18:28:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.10.96.2 2010/06/09 14:22:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,18 +47,17 @@ __KERNEL_RCSID(0, "$NetBSD: sbgbus.c,v 1.10.96.1 2009/11/23 18:28:46 matt Exp $"
 
 extern struct cfdriver sbgbus_cd;
 
-static int	sbgbus_match(struct device *, struct cfdata *, void *);
-static void	sbgbus_attach(struct device *, struct device *, void *);
+static int	sbgbus_match(device_t, cfdata_t, void *);
+static void	sbgbus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(sbgbus, sizeof(struct device),
+CFATTACH_DECL_NEW(sbgbus, 0,
     sbgbus_match, sbgbus_attach, NULL, NULL);
 
-static int	sbgbussearch(struct device *, struct cfdata *,
-			     const int *, void *);
+static int	sbgbussearch(device_t, cfdata_t, const int *, void *);
 static int	sbgbusprint(void *, const char *);
 
 static int
-sbgbus_match(struct device *parent, struct cfdata *match, void *aux)
+sbgbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct sbobio_attach_args *sap = aux;
 
@@ -69,7 +68,7 @@ sbgbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-sbgbus_attach(struct device *parent, struct device *self, void *aux)
+sbgbus_attach(device_t parent, device_t self, void *aux)
 {
 
 	/* Configure children using indirect configuration. */
@@ -95,7 +94,7 @@ sbgbusprint(void *aux, const char *pnp)
 }
 
 static int
-sbgbussearch(struct device *parent, struct cfdata *cf,
+sbgbussearch(device_t parent, cfdata_t cf,
 	     const int *ldesc, void *aux)
 {
 	struct sbgbus_attach_args sga;
