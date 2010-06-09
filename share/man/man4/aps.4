@@ -1,4 +1,4 @@
-.\"	$NetBSD: aps.4,v 1.2 2007/09/11 22:27:04 wiz Exp $
+.\"	$NetBSD: aps.4,v 1.3 2010/06/09 13:44:24 jruoho Exp $
 .\"	$OpenBSD: aps.4,v 1.7 2007/05/31 19:19:49 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 11, 2007
+.Dd June 9, 2010
 .Dt APS 4
 .Os
 .Sh NAME
@@ -45,6 +45,7 @@ interface are:
 .El
 .Sh SEE ALSO
 .Xr envsys 4 ,
+.Xr thinkpad 4 ,
 .Xr envstat 8
 .Sh HISTORY
 The
@@ -60,14 +61,24 @@ The
 driver was written by
 .An Jonathan Gray Aq jsg@openbsd.org .
 .Sh CAVEATS
+Few issues can be mentioned.
+.Bl -bullet
+.It
 The
 .Nm
-driver does not yet maintain state and subsequently does not take
+driver does not maintain state and subsequently does not take
 evasive action when it thinks the hard drive is in danger.
-.Pp
+Possible actions would include spinning down the hard drive
+in case excessive tremor is detected by the sensors.
+.It
 The Y axis on X40 and possibly other models seems to be inverted.
 It is unknown how to distinguish between different versions of the
 accelerometer to compensate for this in the driver at this time.
-.Pp
+.It
+The sensor values are refreshed every 0.5 seconds.
+Because no protection measures are taken,
+this is unnecessary and may have a negative effect on battery life.
+.It
 As IBM provides no documentation, it is not known what all the available
 sensors are used for.
+.El
