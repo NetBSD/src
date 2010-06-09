@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2009/12/23 00:17:40 darran Exp $
+#	$NetBSD: Makefile,v 1.16 2010/06/09 23:02:44 christos Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -18,10 +18,10 @@ SUBDIR+= ../apache2/mDNSResponder/lib
 
 .if (${MKCRYPTO} != "no")
 SUBDIR+= ../../crypto/external/lib .WAIT
+.endif
 
 .if (${MKLDAP} != "no")
 SUBDIR+= ../bsd/openldap/lib
-.endif
 .endif
 
 .if (${MKISCSI} != "no")
