@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.7 2010/05/31 13:26:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.8 2010/06/09 15:29:58 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.7 2010/05/31 13:26:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.8 2010/06/09 15:29:58 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_direct_page.h"
@@ -1719,7 +1719,7 @@ uvm_fault_lower_lookup(
 		if (curpg == NULL || curpg == PGO_DONTCARE) {
 			continue;
 		}
-		KASSERT(uvm_pageisdirect_p(uobjpage) || curpg->uobject == uobj);
+		KASSERT(uvm_pageisdirect_p(curpg) || curpg->uobject == uobj);
 
 		/*
 		 * if center page is resident and not PG_BUSY|PG_RELEASED
@@ -1732,7 +1732,7 @@ uvm_fault_lower_lookup(
 			    "(0x%x) with locked get",
 			    curpg, 0,0,0);
 		} else {
-			bool readonly = uvm_pageisdirect_p(uobjpage)
+			bool readonly = uvm_pageisdirect_p(curpg)
 			    || (curpg->flags & PG_RDONLY)
 			    || (curpg->loan_count > 0)
 			    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
