@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.5 2010/06/09 17:37:23 phx Exp $
+.\"	$NetBSD: install,v 1.6 2010/06/09 21:49:41 wiz Exp $
 .
-.Ss2 Prerare the NFS server
+.Ss2 Prepare the NFS server
 .
 Set up an NFS server and copy the install kernel renamed into
 .Pa netbsd
