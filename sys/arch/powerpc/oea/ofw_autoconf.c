@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.11 2010/01/20 16:36:55 macallan Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.12 2010/06/09 04:41:43 kiyohara Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.11 2010/01/20 16:36:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.12 2010/06/09 04:41:43 kiyohara Exp $");
+
+#ifdef ofppc
+#include "gtpci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,13 +50,21 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.11 2010/01/20 16:36:55 macallan E
 #include <machine/stdarg.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/marvell/marvellvar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#if NGTPCI > 0
+#include <dev/marvell/gtpcivar.h>
+#endif
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
+
+#include <machine/pci_machdep.h>
+
+#include <prop/proplib.h>
 
 extern char bootpath[256];
 char cbootpath[256];
@@ -199,12 +211,82 @@ device_register(struct device *dev, void *aux)
 	static char *bp = bootpath + 1, *cp = cbootpath;
 	unsigned long addr, addr2;
 	char *p;
+#if NGTPCI > 0
+	struct powerpc_bus_space *gtpci_mem_bs_tag = NULL;
+#endif
 
 	/* Skip over devices not represented in the OF tree. */
 	if (device_is_a(dev, "mainbus")) {
 		parent = dev;
 		return;
 	}
+#if NGTPCI > 0
+	if (device_is_a(dev, "gtpci")) {
+		extern struct gtpci_prot gtpci0_prot, gtpci1_prot;
+		extern struct powerpc_bus_space
+		    gtpci0_io_bs_tag, gtpci0_mem_bs_tag,
+		    gtpci1_io_bs_tag, gtpci1_mem_bs_tag;
+		extern struct genppc_pci_chipset
+		    genppc_gtpci0_chipset, genppc_gtpci1_chipset;
+
+		struct marvell_attach_args *mva = aux;
+		struct gtpci_prot *gtpci_prot;
+		struct powerpc_bus_space *gtpci_io_bs_tag;
+		struct genppc_pci_chipset *genppc_gtpci_chipset;
+		prop_dictionary_t dict = device_properties(dev);
+		prop_data_t prot, io_bs_tag, mem_bs_tag, pc;
+		int iostart, ioend;
+
+		if (mva->mva_unit == 0) {
+			gtpci_prot = &gtpci0_prot;
+			gtpci_io_bs_tag = &gtpci0_io_bs_tag;
+			gtpci_mem_bs_tag = &gtpci0_mem_bs_tag;
+			genppc_gtpci_chipset = &genppc_gtpci0_chipset;
+			iostart = 0;
+			ioend = 0;
+		} else {
+			gtpci_prot = &gtpci1_prot;
+			gtpci_io_bs_tag = &gtpci1_io_bs_tag;
+			gtpci_mem_bs_tag = &gtpci1_mem_bs_tag;
+			genppc_gtpci_chipset = &genppc_gtpci1_chipset;
+			iostart = 0x1400;
+			ioend = 0xffff;
+		}
+
+		prot = prop_data_create_data_nocopy(
+		    gtpci_prot, sizeof(struct gtpci_prot));
+		KASSERT(prot != NULL);
+		prop_dictionary_set(dict, "prot", prot);
+		prop_object_release(prot);
+
+		io_bs_tag = prop_data_create_data_nocopy(
+		    gtpci_io_bs_tag, sizeof(struct powerpc_bus_space));
+		KASSERT(io_bs_tag != NULL);
+		prop_dictionary_set(dict, "io-bus-tag", io_bs_tag);
+		prop_object_release(io_bs_tag);
+		mem_bs_tag = prop_data_create_data_nocopy(
+		    gtpci_mem_bs_tag, sizeof(struct powerpc_bus_space));
+		KASSERT(mem_bs_tag != NULL);
+		prop_dictionary_set(dict, "mem-bus-tag", mem_bs_tag);
+		prop_object_release(mem_bs_tag);
+
+		genppc_gtpci_chipset->pc_conf_v = device_private(dev);
+		pc = prop_data_create_data_nocopy(genppc_gtpci_chipset,
+		    sizeof(struct genppc_pci_chipset));
+		KASSERT(pc != NULL);
+		prop_dictionary_set(dict, "pci-chipset", pc);
+		prop_object_release(pc);
+
+		prop_dictionary_set_uint64(dict, "iostart", iostart);
+		prop_dictionary_set_uint64(dict, "ioend", ioend);
+		prop_dictionary_set_uint64(dict, "memstart",
+		    gtpci_mem_bs_tag->pbs_base);
+		prop_dictionary_set_uint64(dict, "memend",
+		    gtpci_mem_bs_tag->pbs_limit - 1);
+		prop_dictionary_set_uint32(dict, "cache-line-size",
+		    CACHELINESIZE);
+	}
+#endif
 	if (device_is_a(dev, "atapibus") || device_is_a(dev, "pci") ||
 	    device_is_a(dev, "scsibus") || device_is_a(dev, "atabus"))
 		return;
@@ -305,7 +387,32 @@ device_register(struct device *dev, void *aux)
 
 		if (strcmp(ca->ca_name, "ofw") == 0)		/* XXX */
 			return;
+		if (strcmp(ca->ca_name, "gt") == 0)
+			parent = dev;
 		if (addr != ca->ca_reg[0])
+			return;
+	} else if (device_is_a(device_parent(dev), "gt")) {
+		/*
+		 * Special handle for MV64361 on PegasosII(ofppc).
+		 */
+		if (device_is_a(dev, "mvgbec")) {
+			/*
+			 * Fix cp to /port@N from /ethernet/portN. (N is 0...2)
+			 */
+			static char fix_cp[8] = "/port@N";
+
+			if (strlen(cp) != 15 ||
+			    strncmp(cp, "/ethernet/port", 14) != 0)
+				return;
+			fix_cp[7] = *(cp + 15);
+			p = fix_cp;
+#if NGTPCI > 0
+		} else if (device_is_a(dev, "gtpci")) {
+			if (gtpci_mem_bs_tag != NULL &&
+			    addr != gtpci_mem_bs_tag->pbs_base)
+				return;
+#endif
+		} else
 			return;
 	} else if (device_is_a(device_parent(dev), "pci")) {
 		struct pci_attach_args *pa = aux;
