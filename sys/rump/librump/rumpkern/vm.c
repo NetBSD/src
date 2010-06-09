@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.81 2010/06/09 11:35:36 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.82 2010/06/09 12:02:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.81 2010/06/09 11:35:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.82 2010/06/09 12:02:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -528,15 +528,39 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 vaddr_t
 uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 {
-	void *rv;
+	void *rv, *desired = NULL;
 	int alignbit, error;
+
+#ifdef __x86_64__
+	/*
+	 * On amd64, allocate all module memory from the lowest 2GB.
+	 * This is because NetBSD kernel modules are compiled
+	 * with -mcmodel=kernel and reserve only 4 bytes for
+	 * offsets.  If we load code compiled with -mcmodel=kernel
+	 * anywhere except the lowest or highest 2GB, it will not
+	 * work.  Since userspace does not have access to the highest
+	 * 2GB, use the lowest 2GB.
+	 * 
+	 * Note: this assumes the rump kernel resides in
+	 * the lowest 2GB as well.
+	 *
+	 * Note2: yes, it's a quick hack, but since this the only
+	 * place where we care about the map we're allocating from,
+	 * just use a simple "if" instead of coming up with a fancy
+	 * generic solution.
+	 */
+	extern struct vm_map *module_map;
+	if (map == module_map) {
+		desired = (void *)(0x80000000 - size);
+	}
+#endif
 
 	alignbit = 0;
 	if (align) {
 		alignbit = ffs(align)-1;
 	}
 
-	rv = rumpuser_anonmmap(NULL, size, alignbit, flags & UVM_KMF_EXEC,
+	rv = rumpuser_anonmmap(desired, size, alignbit, flags & UVM_KMF_EXEC,
 	    &error);
 	if (rv == NULL) {
 		if (flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT))
