@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.175 2010/06/03 10:56:20 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.176 2010/06/09 13:51:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.175 2010/06/03 10:56:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.176 2010/06/09 13:51:02 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -313,7 +313,9 @@ rump__init(int rump_version)
 	LIST_INIT(&allproc);
 	LIST_INSERT_HEAD(&allproc, &proc0, p_list);
 	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+
 	lwpinit_specificdata();
+	lwp_initspecific(&lwp0);
 
 	mutex_init(&rump_limits.pl_lock, MUTEX_DEFAULT, IPL_NONE);
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
