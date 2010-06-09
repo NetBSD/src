@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.15 2010/06/09 14:20:00 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.16 2010/06/09 18:16:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.15 2010/06/09 14:20:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.16 2010/06/09 18:16:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 	p2->p_md.md_abi = p1->p_md.md_abi;
 #ifdef _LP64
-	p2->p_flag = p1->p_flag & PK_32;
+	p2->p_flag |= p1->p_flag & PK_32;
 #endif
 }
 
