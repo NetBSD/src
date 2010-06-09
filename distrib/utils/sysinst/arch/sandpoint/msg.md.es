@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.4 2008/02/02 05:34:02 itohy Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.5 2010/06/09 17:37:24 phx Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,3 +54,5 @@ message dobootblks
 message set_kernel_1
 {Núcleo (GENERIC)}
 
+message set_kernel_2
+{Núcleo (KUROBOX)}

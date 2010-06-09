@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.12 2007/11/12 15:07:36 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.13 2010/06/09 17:37:24 phx Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,7 +55,11 @@
  *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define SET_KERNEL_2_NAME	"kern-KUROBOX"
 
+
+/* have support for booting from UFS2 */
+#define	HAVE_UFS2_BOOT
 
 /*
  * Machine-specific command to write a new label to a disk.
