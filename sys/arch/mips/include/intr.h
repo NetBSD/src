@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3.96.12 2010/05/16 00:34:45 matt Exp $ */
+/* $NetBSD: intr.h,v 1.3.96.13 2010/06/09 14:24:12 matt Exp $ */
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,6 +46,8 @@
 #define	IPL_HIGH	(IPL_DDB+1)
 
 #define	_IPL_N		(IPL_HIGH+1)
+#define	_IPL_NAMES(pfx)	{ pfx"none", pfx"softclock/bio", pfx"softnet/serial", \
+			  pfx"vm", pfx"sched", pfx"ddb", pfx"high" }
 
 #define	IST_UNUSABLE	-1		/* interrupt cannot be used */
 #define	IST_NONE	0		/* none (dummy) */
