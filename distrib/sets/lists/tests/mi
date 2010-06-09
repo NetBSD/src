@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.80 2010/06/07 03:43:50 riz Exp $
+# $NetBSD: mi,v 1.81 2010/06/09 12:40:49 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -197,6 +197,8 @@
 ./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/net/sys/t_listen.debug			tests-net-debug		debug,atf
 ./usr/libdata/debug/usr/tests/rump					tests-syscall-debug
+./usr/libdata/debug/usr/tests/rump/modautoload				tests-syscall-debug
+./usr/libdata/debug/usr/tests/rump/modautoload/t_modautoload		tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern				tests-syscall-debug
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modcmd.debug		tests-syscall-debug	debug,atf
 ./usr/libdata/debug/usr/tests/rump/rumpkern/t_modlinkset.debug		tests-syscall-debug	debug,atf
@@ -1119,6 +1121,9 @@
 ./usr/tests/net/sys/t_listen			tests-net-tests		atf
 ./usr/tests/rump				tests-rump-tests
 ./usr/tests/rump/Atffile			tests-rump-tests	atf
+./usr/tests/rump/modautoload			tests-rump-tests
+./usr/tests/rump/modautoload/Atffile		tests-rump-tests	atf
+./usr/tests/rump/modautoload/t_modautoload	tests-rump-tests	atf
 ./usr/tests/rump/rumpkern			tests-rump-tests
 ./usr/tests/rump/rumpkern/Atffile		tests-rump-tests	atf
 ./usr/tests/rump/rumpkern/t_modcmd		tests-rump-tests	atf
