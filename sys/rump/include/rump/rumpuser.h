@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.43 2010/06/01 20:11:33 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.44 2010/06/09 11:35:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -55,7 +55,7 @@ void *rumpuser_malloc(size_t, int);
 void *rumpuser_realloc(void *, size_t);
 void rumpuser_free(void *);
 
-void *rumpuser_anonmmap(size_t, int, int, int *);
+void *rumpuser_anonmmap(void *, size_t, int, int, int *);
 #define RUMPUSER_FILEMMAP_READ		0x01
 #define RUMPUSER_FILEMMAP_WRITE		0x02
 #define RUMPUSER_FILEMMAP_TRUNCATE	0x04

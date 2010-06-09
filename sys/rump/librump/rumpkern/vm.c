@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.80 2010/06/03 10:56:20 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.81 2010/06/09 11:35:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.80 2010/06/03 10:56:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.81 2010/06/09 11:35:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -289,7 +289,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 	if (*addr != 0)
 		panic("uvm_mmap() variant unsupported");
 
-	uaddr = rumpuser_anonmmap(size, 0, 0, &error);
+	uaddr = rumpuser_anonmmap(NULL, size, 0, 0, &error);
 	if (uaddr == NULL)
 		return error;
 
@@ -536,7 +536,8 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		alignbit = ffs(align)-1;
 	}
 
-	rv = rumpuser_anonmmap(size, alignbit, flags & UVM_KMF_EXEC, &error);
+	rv = rumpuser_anonmmap(NULL, size, alignbit, flags & UVM_KMF_EXEC,
+	    &error);
 	if (rv == NULL) {
 		if (flags & (UVM_KMF_CANFAIL | UVM_KMF_NOWAIT))
 			return 0;
