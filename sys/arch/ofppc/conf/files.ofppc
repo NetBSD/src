@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.41 2010/03/14 10:14:14 kiyohara Exp $
+#	$NetBSD: files.ofppc,v 1.42 2010/06/09 04:41:42 kiyohara Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -89,9 +89,11 @@ device ofwpci: pcibus
 attach ofwpci at mainbus
 file	arch/ofppc/pci/ofwpci.c			ofwpci
 
-device pegasospci: pcibus
-attach pegasospci at mainbus
-file	arch/ofppc/pci/pegasospci.c		pegasospci
+# Marvell System-Controller MV64361(Discovery II) (on PegasosII)
+include "dev/marvell/files.discovery"
+attach	gt at mainbus
+file	arch/ofppc/pci/gt_mainbus.c		gt
+file	arch/powerpc/marvell/pci_machdep.c	gtpci
 
 device pchb: pcibus
 attach pchb at pci
