@@ -1,9 +1,9 @@
-#	$NetBSD: RAMDISK,v 1.4 2009/02/06 18:50:28 jym Exp $
+#	$NetBSD: INSTALL_KURO,v 1.1 2010/06/09 17:34:32 phx Exp $
 #
-# GENERIC for Motorola Sandpoint
+# GENERIC install kernel for KuroBox / LinkStation
 #
 
-include "arch/sandpoint/conf/GENERIC"
+include "arch/sandpoint/conf/KUROBOX"
 
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on RAM disk
