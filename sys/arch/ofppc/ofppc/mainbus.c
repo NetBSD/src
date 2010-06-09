@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.25 2010/03/10 18:06:57 kiyohara Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26 2010/06/09 04:41:42 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2010/03/10 18:06:57 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2010/06/09 04:41:42 kiyohara Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -260,6 +260,18 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		config_found(self, &oba, NULL);
 	}
 
+	if (strcmp(model_name, "Pegasos2") == 0) {
+		/*
+		 * Configure to System Controller MV64361.
+		 * And skip other devices.  These attached from it.
+		 */
+		ca.ca_name = "gt";
+
+		config_found(self, &ca, NULL);
+
+		goto config_fin;
+	}
+
 	/* this primarily searches for pci bridges on the root bus */
 	for (node = OF_child(OF_finddevice("/")); node; node = OF_peer(node)) {
 		memset(name, 0, sizeof(name));
@@ -273,9 +285,11 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		ca.ca_node = node;
 		ca.ca_nreg = OF_getprop(node, "reg", reg, sizeof(reg));
 		ca.ca_reg  = reg;
-		config_found(self, &ca, NULL);
 
+		config_found(self, &ca, NULL);
 	}
+
+config_fin:
 	pic_finish_setup();
 }
 

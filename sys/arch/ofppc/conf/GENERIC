@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129 2010/05/08 22:16:29 mrg Exp $
+# $NetBSD: GENERIC,v 1.130 2010/06/09 04:41:42 kiyohara Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129 $"
+#ident 		"GENERIC-$Revision: 1.130 $"
 
 maxusers	32
 
@@ -180,11 +180,15 @@ cpu*		at mainbus?
 # Generic OpenFirmware console support
 rtas*		at mainbus?
 
+gt*		at mainbus?			# Marvell MV64361 Discovery II
+mvgbec* 	at gt? offset ?			# Gigabit Ethernet
+mvgbe0		at mvgbec? port 1 irq 9
+
 # PCI root nodes
 ofwpci*		at mainbus?
 pci*		at ofwpci? bus ?
-pegasospci*	at mainbus?
-pci*		at pegasospci? bus ?
+gtpci*		at gt? unit ?
+pci*		at gtpci? bus ?
 
 # PCI bridges
 pchb*		at pci? dev ? function ?
