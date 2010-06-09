@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.159 2009/10/08 05:28:22 snj Exp $
+.\"	$NetBSD: contents,v 1.160 2010/06/09 17:37:23 phx Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@ conventions for indicating italic and bold display.
 .	(tag kernel/ -compact \" binary/
 .		It Pa kernel/
 .		(tag netbsd.gz -compact \" binary/kernel
-.if !\n[atari]:\n[mac68k]:\n[sgimips]:\n[evbppc] \{\
+.if !\n[atari]:\n[mac68k]:\n[sgimips]:\n[evbppc]:\n[sandpoint] \{\
 .			It Pa netbsd-GENERIC.gz
 A gzipped
 .Nx
@@ -64,7 +64,7 @@ The installation kernel.
 .if \n[hpcmips] \{\
 This kernel runs on Vr41xx and TX3922 CPUs only.
 .\} \" hpcmips
-.\} \" !atari/mac68k/sgimips/evgppc
+.\} \" !atari/mac68k/sgimips/evbppc/sandpoint
 .if \n[alpha]:\n[macppc]:\n[sparc]:\n[sparc64]:\n[vax] \{\
 .			It Pa netbsd-GENERIC.MP.gz
 A gzipped
@@ -176,6 +176,16 @@ A kernel for MVME172 boards.
 .			It Pa netbsd-VME177.gz
 A kernel for MVME177 boards.
 .\}
+.if \n[sandpoint] \{\
+.			It Pa netbsd-GENERIC.gz
+A generic kernel suitable for most Sandpoint-based NAS products.
+.			It Pa netbsd-INSTALL.gz
+An install kernel for most Sandpoint-based NAS products.
+.			It Pa netbsd-INSTALL_KURO.gz
+An install kernel for KuroBox / LinkStation NAS boards.
+.			It Pa netbsd-KUROBOX.gz
+A kernel for KuroBox / LinkStation NAS boards.
+.\}
 .if \n[sparc] \{\
 .			It Pa netbsd-GENERIC_SCSI3.gz
 A kernel with SCSI ID 3 explicitly mapped to 
@@ -271,8 +281,7 @@ see below.
 Netbootable RAM disk kernel and the file system in the RAM disk; see below.
 .\}
 .if \n[alpha]:\n[amd64]:\n[amiga]:\n[atari]:\n[bebox]:\n[ews4800mips]:\
-\n[i386]:\n[news68k]:\n[newsmips]:\n[sparc]:\n[x68k]:\n[prep]:\
-\n[sandpoint] \{\
+\n[i386]:\n[news68k]:\n[newsmips]:\n[sparc]:\n[x68k]:\n[prep] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
 .\}
@@ -306,12 +315,14 @@ this image.
 \*M boot and installation kernels; see installation section (Sysinst
 Method), below.
 .\}
-.if \n[amiga]:\n[atari]:\n[hp300]:\n[mvme68k]:\n[sparc]:\n[sparc64]:\n[sun2]:\n[sun3] \{\
+.if \n[amiga]:\n[atari]:\n[hp300]:\n[mvme68k]:\n[sparc]:\n[sparc64]:\
+\n[sun2]:\n[sun3] \{\
 .		It Pa miniroot/
 \*M miniroot file system image; see below.
 .\}
 .
-.if !\n[alpha]:\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\n[sparc]:\n[xen] \{\
+.if !\n[alpha]:\n[cats]:\n[evbppc]:\n[mvme68k]:\n[macppc]:\n[sgimips]:\
+\n[sandpoint]:\n[sparc]:\n[xen] \{\
 .		It Pa misc/
 .
 Miscellaneous \*M installation utilities; see
@@ -353,6 +364,13 @@ see below.
 Two programs needed to boot \*M kernels over the network; see below.
 .		It Pa tapeimage/
 Tape boot programs, and a RAMDISK kernel; see below.
+.\}
+.
+.if \n[sandpoint] \{\
+.		It Pa netboot
+\*M bootloader in ELF format; see below
+.		It Pa netboot.bin
+\*M bootloader in binary format; see below
 .\}
 .
 .if \n[sgimips] \{\
@@ -779,6 +797,28 @@ This set contains a
 kernel, which will use multiple processors (if present), named
 .Pa /netbsd .
 .showsize 4 8
+.\}
+.el \{\
+.ie \n[sandpoint] \{\
+.It Sy kern-GENERIC
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC
+kernel for most Sandpoint-based NAS products, named
+.Pa /netbsd .
+.It Sy kern-KUROBOX
+This set contains a
+.Nx*M
+\*V
+.Li KUROBOX
+kernel for KuroBox / LinkStation boards, named
+.Pa /netbsd .
+.Pp
+You
+.Em must
+install one of these distribution sets for your machine.
+.showsize 2 4
 .\}
 .el \{\
 .ie \n[sgimips] \{\

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.10 2006/02/24 22:13:16 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.11 2010/06/09 17:37:24 phx Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/10/24 19:43:40 briggs Exp */
 
@@ -56,3 +56,5 @@ message dobootblks
 message set_kernel_1
 {Kernel (GENERIC)}
 
+message set_kernel_2
+{Kernel (KUROBOX)}
