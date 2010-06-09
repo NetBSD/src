@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.42 2010/06/09 04:41:42 kiyohara Exp $
+#	$NetBSD: files.ofppc,v 1.43 2010/06/09 04:44:01 kiyohara Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -116,10 +116,10 @@ include "dev/pckbport/files.pckbport"
 
 # Floppy disk controller
 device	fdc {drive = -1}: isadma
-file	dev/isa/fd.c			fdc needs-flag
+file	dev/isa/fd.c				fdc needs-flag
 
 attach	fdc at isa with fdc_isa
-file	dev/isa/fdc_isa.c		fdc_isa
+file	dev/isa/fdc_isa.c			fdc_isa
 
 device	fd: disk
 attach	fd at fdc
