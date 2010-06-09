@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.174 2010/06/06 17:28:48 wiz Exp $
+.\"	$NetBSD: make.1,v 1.175 2010/06/09 16:58:22 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd June 6, 2010
+.Dd June 9, 2010
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -536,11 +536,48 @@ If the result of expanding a variable contains a dollar sign
 .Pq Ql \&$
 the string is expanded again.
 .Pp
-Variable substitution occurs at two distinct times, depending on where
+Variable substitution occurs at three distinct times, depending on where
 the variable is being used.
+.Bl -enum
+.It 
 Variables in dependency lines are expanded as the line is read.
+.It
 Variables in shell commands are expanded when the shell command is
 executed.
+.It
+.Dq .for
+loop index variables are expanded on each loop iteration. 
+Note that other variables are not expanded inside loops so 
+the following example code:
+.Bd -literal -offset indent
+
+.Dv .for i in 1 2 3
+a+=     ${i}
+j=      ${i}
+b+=     ${j}
+.Dv .endfor
+
+all:
+        @echo ${a}
+	@echo ${b}
+
+.Ed
+will print:
+.Bd -literal -offset indent
+1 2 3
+3 3 3
+
+.Ed
+Because while ${a} contains
+.Dq 1 2 3
+after the loop is executed, ${b}
+contains
+.Dq ${j} ${j} ${j}
+which expands to
+.Dq 3 3 3
+since after the loop completes ${j} contains
+.Dq 3 .
+.El
 .Ss Variable classes
 The four different classes of variables (in order of increasing precedence)
 are:
