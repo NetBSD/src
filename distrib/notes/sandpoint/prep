@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.4 2010/06/09 17:37:23 phx Exp $
+.\"	$NetBSD: prep,v 1.5 2010/06/09 21:49:41 wiz Exp $
 .
 To install
 .Nx \*V
@@ -16,7 +16,7 @@ The
 .Pa netboot.bin
 binary loads a
 .Nx
-kernel from the root parition of a local disk or from NFS.
+kernel from the root partition of a local disk or from NFS.
 This file should be made available by one of the following methods
 (depending on the firmware):
 .(bullet -compact
