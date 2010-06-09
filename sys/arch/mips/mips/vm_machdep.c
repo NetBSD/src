@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.14 2010/03/01 19:27:21 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.6.1.2.15 2010/06/09 14:20:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.14 2010/03/01 19:27:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.6.1.2.15 2010/06/09 14:20:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,19 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
 	KASSERT(pcb->pcb_context.val[_L_SR] & MIPS_SR_INT_IE);
+}
+
+/*
+ * Routine to copy MD stuff from proc to proc on a fork.
+ * For mips, this is the ABI and "32 bit process on a 64 bit kernel" flag.
+ */
+void
+cpu_proc_fork(struct proc *p1, struct proc *p2)
+{
+	p2->p_md.md_abi = p1->p_md.md_abi;
+#ifdef _LP64
+	p2->p_flag = p1->p_flag & PK_32;
+#endif
 }
 
 static struct evcnt uarea_remapped = 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90.16.28 2010/03/21 18:17:21 cliff Exp $	*/
+/*	$NetBSD: cpu.h,v 1.90.16.29 2010/06/09 14:20:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -197,7 +197,6 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #else
 #define	cpu_number()		(0L)
 #endif
-#define	cpu_proc_fork(p1, p2)	((void)((p2)->p_md.md_abi = (p1)->p_md.md_abi))
 
 /* XXX simonb
  * Should the following be in a cpu_info type structure?

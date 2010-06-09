@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.46 2010/05/28 21:24:47 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.47 2010/06/09 14:20:00 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.46 2010/05/28 21:24:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.205.4.1.2.1.2.47 2010/06/09 14:20:00 matt Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -1228,7 +1228,8 @@ cpu_identify(device_t dev)
 void
 setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
-	struct trapframe *tf = l->l_md.md_utf;
+	struct trapframe * const tf = l->l_md.md_utf;
+	struct proc * const p = l->l_proc;
 
 	memset(tf, 0, sizeof(struct trapframe));
 	tf->tf_regs[_R_SP] = (int)stack;
@@ -1239,13 +1240,25 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	/*
 	 * allow 64bit ops in userland for non-O32 ABIs
 	 */
-	if (l->l_proc->p_md.md_abi == _MIPS_BSD_API_N32 && CPUISMIPS64) {
+	if (p->p_md.md_abi == _MIPS_BSD_API_N32 && CPUISMIPS64) {
 		tf->tf_regs[_R_SR] |= MIPS_SR_PX;
-	} else if (l->l_proc->p_md.md_abi != _MIPS_BSD_API_O32) {
+	} else if (p->p_md.md_abi != _MIPS_BSD_API_O32) {
 		tf->tf_regs[_R_SR] |= MIPS_SR_UX;
 	}
-	if (_MIPS_SIM_NEWABI_P(l->l_proc->p_md.md_abi))
+	if (_MIPS_SIM_NEWABI_P(p->p_md.md_abi))
 		tf->tf_regs[_R_SR] |= MIPS3_SR_FR;
+#endif
+#ifdef _LP64
+	/*
+	 * If we are using a 32-bit ABI on a 64-bit kernel, mark the process
+	 * that way.  If we aren't, clear it.
+	 */
+	if (p->p_md.md_abi == _MIPS_BSD_API_N32
+	    || p->p_md.md_abi == _MIPS_BSD_API_O32) {
+		p->p_flag |= PK_32;
+	} else {
+		p->p_flag &= ~PK_32;
+	}
 #endif
 	/*
 	 * Set up arguments for _start():
@@ -1259,7 +1272,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	tf->tf_regs[_R_A0] = (intptr_t)stack;
 	tf->tf_regs[_R_A1] = 0;
 	tf->tf_regs[_R_A2] = 0;
-	tf->tf_regs[_R_A3] = (intptr_t)l->l_proc->p_psstr;
+	tf->tf_regs[_R_A3] = (intptr_t)p->p_psstr;
 
 	if (l->l_md.md_flags & MDP_FPUSED)
 		fpudiscard_lwp(l);
@@ -1662,7 +1675,9 @@ mips_init_lwp0_uarea(void)
 	lwp0.l_md.md_utf = (struct trapframe *)(v + USPACE) - 1;
 #ifdef _LP64
 	lwp0.l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX;
-	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] = MIPS_SR_KX | MIPS_SR_INT_IE;
+	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] =
+	    (ipl_sr_map.sr_bits[IPL_SCHED] ^ MIPS_INT_MASK)
+	    | MIPS_SR_KX | MIPS_SR_INT_IE;
 #else
 	lwp0.l_addr->u_pcb.pcb_context.val[_L_SR] = MIPS_SR_INT_IE;
 #endif

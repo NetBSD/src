@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.21.36.8 2010/05/15 20:27:48 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.21.36.9 2010/06/09 14:20:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,8 +70,11 @@ struct mdproc {
 #define	MDP_FPUSED	0x0001	/* floating point coprocessor used */
 
 #ifdef _KERNEL
+struct lwp;
+struct proc;
 /* kernel single-step emulation */
-int mips_singlestep(struct lwp *l);
+int	mips_singlestep(struct lwp *);
+void	cpu_proc_fork(struct proc *, struct proc *);
 
 #define	LWP0_CPU_INFO	&cpu_info_store	/* staticly set in lwp0 */
 #endif /* _KERNEL */
