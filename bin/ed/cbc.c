@@ -1,4 +1,4 @@
-/*	$NetBSD: cbc.c,v 1.21 2009/07/26 02:07:12 dholland Exp $	*/
+/*	$NetBSD: cbc.c,v 1.22 2010/06/09 19:20:18 riz Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
@@ -72,7 +72,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-__RCSID("$NetBSD: cbc.c,v 1.21 2009/07/26 02:07:12 dholland Exp $");
+__RCSID("$NetBSD: cbc.c,v 1.22 2010/06/09 19:20:18 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,12 +141,14 @@ static int des_n = 0;		/* index for put_des_char/get_des_char */
 #endif
 
 
+#ifdef DES
 static void des_error(const char *);
 static int hex_to_binary(int, int);
 static void expand_des_key(char *, char *);
 static void set_des_key(char *);
 static int cbc_decode(char *, FILE *);
 static int cbc_encode(char *, int, FILE *);
+#endif
 
 
 /* init_des_cipher: initialize DES */
