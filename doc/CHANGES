@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1401 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1402 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -626,3 +626,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.4. [roy 20100604]
 	vnode(9): Remove member v_vnlock. [hannken 20100605]
 	acpi(4): Updated ACPICA to 20100528. [jruoho 20100606]
+	ofppc: Support Gigabit Ethernet Controller for MV64361 on PegasosII
+		by mvgbe@gt.  [kiyohara 20100609]
