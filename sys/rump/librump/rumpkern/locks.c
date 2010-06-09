@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.41 2010/05/18 15:12:19 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.42 2010/06/09 07:54:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.41 2010/05/18 15:12:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.42 2010/06/09 07:54:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -206,7 +206,7 @@ void
 cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 {
 
-	if (rump_threads == 0)
+	if (__predict_false(rump_threads == 0))
 		panic("cv_wait without threads");
 	rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
 }
@@ -215,6 +215,8 @@ int
 cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
 {
 
+	if (__predict_false(rump_threads == 0))
+		panic("cv_wait without threads");
 	rumpuser_cv_wait(RUMPCV(cv), RUMPMTX(mtx));
 	return 0;
 }
@@ -225,19 +227,19 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 	struct timespec ts, tick;
 	extern int hz;
 
-	/*
-	 * XXX: this fetches rump kernel time, but rumpuser_cv_timedwait
-	 * uses host time.
-	 */
-	nanotime(&ts);
-	tick.tv_sec = ticks / hz;
-	tick.tv_nsec = (ticks % hz) * (1000000000/hz);
-	timespecadd(&ts, &tick, &ts);
-
 	if (ticks == 0) {
 		cv_wait(cv, mtx);
 		return 0;
 	} else {
+		/*
+		 * XXX: this fetches rump kernel time, but
+		 * rumpuser_cv_timedwait uses host time.
+		 */
+		nanotime(&ts);
+		tick.tv_sec = ticks / hz;
+		tick.tv_nsec = (ticks % hz) * (1000000000/hz);
+		timespecadd(&ts, &tick, &ts);
+
 		if (rumpuser_cv_timedwait(RUMPCV(cv), RUMPMTX(mtx),
 		    ts.tv_sec, ts.tv_nsec))
 			return EWOULDBLOCK;
