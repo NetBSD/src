@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.176 2010/06/09 13:51:02 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.177 2010/06/09 14:08:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.176 2010/06/09 13:51:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.177 2010/06/09 14:08:17 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -216,6 +216,13 @@ rump__init(int rump_version)
 		panic("rump_init: host process restart required");
 	else
 		rump_inited = 1;
+
+	if (rumpuser_getversion() != RUMPUSER_VERSION) {
+		/* let's hope the ABI of rumpuser_dprintf is the same ;) */
+		rumpuser_dprintf("rumpuser version mismatch: %d vs. %d\n",
+		    rumpuser_getversion(), RUMPUSER_VERSION);
+		return EPROGMISMATCH;
+	}
 
 	if (rumpuser_getenv("RUMP_VERBOSE", buf, sizeof(buf), &error) == 0) {
 		if (*buf != '0')

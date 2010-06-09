@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.7 2010/06/09 11:35:36 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.8 2010/06/09 14:08:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.7 2010/06/09 11:35:36 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.8 2010/06/09 14:08:17 pooka Exp $");
 #endif /* !lint */
 
 /* thank the maker for this */
@@ -66,6 +66,13 @@ __RCSID("$NetBSD: rumpuser.c,v 1.7 2010/06/09 11:35:36 pooka Exp $");
 #include <rump/rumpuser.h>
 
 #include "rumpuser_int.h"
+
+int
+rumpuser_getversion()
+{
+
+	return RUMPUSER_VERSION;
+}
 
 int
 rumpuser_getfileinfo(const char *path, uint64_t *sizep, int *ftp, int *error)
