@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.30 2009/09/19 14:57:29 abs Exp $ */
+/*	$NetBSD: md.c,v 1.31 2010/06/09 17:37:24 phx Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,6 +40,7 @@
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/utsname.h>
 #include <stdio.h>
 #include <util.h>
 
@@ -56,7 +57,28 @@ md_init(void)
 void
 md_init_set_status(int minimal)
 {
+	struct utsname instsys;
+
 	(void)minimal;
+
+	/*
+	 * Get the name of the Install Kernel we are running under and
+	 * enable the installation of the corresponding GENERIC kernel.
+	 *
+	 * Note:  In md.h the two kernels are disabled.  If they are
+	 *        enabled there the logic here needs to be switched.
+	 */
+        uname(&instsys);
+        if (strstr(instsys.version, "(INSTALL_KURO)"))
+		/*
+		 * Running the KuroBox Installation Kernel, so enable KUROBOX
+		 */
+		set_kernel_set(SET_KERNEL_2);
+        else
+		/*
+		 * Running the GENERIC Installation Kernel, so enable GENERIC
+		 */
+		set_kernel_set(SET_KERNEL_1);
 }
 
 int
@@ -123,11 +145,7 @@ md_post_disklabel(void)
 int
 md_post_newfs(void)
 {
-	/* boot blocks ... */
-	printf (msg_string(MSG_dobootblks), diskdev);
-	run_program(RUN_DISPLAY, 
-	    "/usr/mdec/installboot -v /usr/mdec/biosboot.sym /dev/r%sa",
-	    diskdev);
+	/* no boot blocks, we are using netboot */
 	return 0;
 }
 

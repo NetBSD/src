@@ -1,22 +1,25 @@
-.\"	$NetBSD: install,v 1.4 2008/09/06 22:22:39 tsutsui Exp $
+.\"	$NetBSD: install,v 1.5 2010/06/09 17:37:23 phx Exp $
+.
+.Ss2 Prerare the NFS server
+.
+Set up an NFS server and copy the install kernel renamed into
+.Pa netbsd
+to its root partition.
 .
 .Ss2 Booting the installer
-.
-Once the kernel is downloaded, type "go 90000" to start the kernel.
-.
-.Ss2 Example of a normal boot
-.
-Of course, a lot of the information in this example depends on your model
-and what your boot method is, but we'll include this anyways just so you
-get an idea of what to expect (user-typed commands are in
-.Ic bold ) .
-.(disp
-.No DINK32\*[Gt]\*[Gt] Ic go 90000
-[ XXX - insert boot w/ installer on ramdisk instead of this example ]
-.disp)
-.
-.Ss2 Common Problems and Error Messages
-.
-Insufficient data.
+Depending whether the serial console is attached to the first or the
+second UART you will have to boot
+.Pa netbsd-INSTALL
+(1st UART at 0x4500)
+or
+.Pa netbsd-INSTALL_KURO
+(2nd UART at 0x4600).
+KuroBox and LinkStation systems are known to have the console on the
+second UART.
+.Pp
+Now boot the kernel by running netboot.
+The installation kernel will run
+.Pa sysinst
+from an internal memory disk image.
 .
 .so ../common/sysinst

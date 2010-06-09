@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.10 2009/10/24 14:41:58 stacktic Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.11 2010/06/09 17:37:24 phx Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,3 +54,5 @@ message dobootblks
 message set_kernel_1
 {Kernel (GENERIC)}
 
+message set_kernel_2
+{Kernel (KUROBOX)}

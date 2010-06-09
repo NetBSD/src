@@ -1,23 +1,32 @@
-.\"$NetBSD: hardware,v 1.6 2007/12/14 21:16:00 pavel Exp $
+.\"$NetBSD: hardware,v 1.7 2010/06/09 17:37:23 phx Exp $
 .
-Currently,
 .Nx*M
-requires the use of Motorola's
-.Tn "DINK32"
-ROM to load over a serial port.
-This means that there is no way to boot from a local disk or PCI device.
+is a port based on Motorola's
+.Tn "SandPoint"
+evaluation system.
+The
+.Tn "SandPoint"
+is the successor to the
+.Tn "Yellowknife"
+system.
+Based on the
+.Tn "SandPoint"
+824x architecture several consumer directed NAS (Network Attached Storage)
+systems were published.
+The main focus of this port is on these systems, while the original
+evaluation boards are still supported.
 .
-.Ss2 Supported processor cards
+.Ss2 SandPoint X3 supported processor cards
 .(bullet -offset indent
 Unity X4 with MPC8240
 .It
 Altimus X3 with either MPC755 or MPC7410
 .bullet)
 .Pp
-Other PMCs should work, but may need minor adjustments or more
-substantial work to support additional functionality.
+Other PMCs (Processor Mezzanine Cards) should work, but may need minor
+adjustments or more substantial work to support additional functionality.
 .
-.Ss2 Supported devices
+.Ss2 Supported SandPoint X3 devices
 .(bullet -offset indent
 Ethernet
 .(bullet -compact
@@ -132,7 +141,7 @@ Most MI PCI cards should work, although very few have been tested with
 .bullet)
 .bullet)
 .
-.Ss2 Unsupported devices
+.Ss2 Unsupported SandPoint X3 devices
 .(bullet -offset indent
 Built-in PS/2 keyboard & mouse
 .It
@@ -143,7 +152,72 @@ Built-in floppy
 Built-in IDE
 .bullet)
 .
-.Ss2 Supported boot devices and media
+.Pp
+The SandPoint X3 requires the use of Motorola's
+.Tn "DINK32"
+ROM to load over a serial port.
+This means that there is no way to boot from a local disk or PCI device.
 .
+.Ss2 SandPoint X3 supported boot devices and media
 Currently, the only way to boot the system is with the DINK32 ROM
 monitor's serial download or a JTAG device.
+.
+.Ss2 Supported 824x based NAS systems
+The listed models of the following vendors are supported (installed NIC
+and disk device in brackets):
+.(tag 8n
+.It Em "KuroBox, Buffalo"
+.Pp
+.(bullet -compact
+.Pq Em "tlp/cmdide"
+Classic KuroBox, LinkStation HD-HDLAN(LS1)
+.It
+.Pq Em "re/cmdide"
+KuroBox HG
+.It
+.Pq Em "re/iteide"
+Gigabit LinkStation HD-HGLAN
+.It
+.Pq Em "sk/iteide"
+LinkStation LANxxxG
+.It
+.Pq Em "re/iteide"
+Classic TeraStation HD-HTGL
+.It
+.Pq Em "re/satalink"
+TeraStation Pro TS-TGL v1
+.bullet)
+.It Em "Synology"
+.Pp
+.(bullet -compact
+.Pq Em "sk/iteide"
+DS-106j
+.It
+.Pq Em "sk/satalink"
+DS-101g+, DS-106e, DS-106, DS-106x, DS-107e, DS-107, DS-207, DS-108j,
+DS-109j, DS-209j
+.It
+.Pq Em "sk/satalink"
+CS-406, RS-406, CS-406e, CS-407e
+.bullet)
+.It Em "QNAP"
+.Pp
+.(bullet -compact
+.Pq Em "wm/satalink"
+TS-100
+.It
+.Pq Em "wm/satalink"
+TS-101, TS-201
+.bullet)
+.It Em "iomega"
+.Pp
+.(bullet -compact
+.Pq Em "re/viaide"
+StorCenter XXX
+.bullet)
+.
+.Ss2 824x NAS supported boot devices and media
+.Nx
+is booted by
+.Pa netboot
+, which can load the kernel from NFS or from the local disk.

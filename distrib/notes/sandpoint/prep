@@ -1,20 +1,44 @@
-.\"	$NetBSD: prep,v 1.3 2002/07/11 04:52:51 scottr Exp $
+.\"	$NetBSD: prep,v 1.4 2010/06/09 17:37:23 phx Exp $
 .
-When installing NetBSD for your
+To install
 .Nx \*V
-system, you have to decide where you want your root partition and
-how you'll be downloading your kernel.
-Since the
-.Tn IBM
-ROM rather limits your boot options, you won't be able to have the
-machine boot independently.
-Once you load the kernel, however, you may have the root file system on a
-local disk or you can configure a diskless setup.
+on your 824x based NAS system you need to get access to its serial console.
+This requires to open the case, locate the serial header on the main board
+and attach a (usually
+.Tn "MAX232"
+based) RS/232 cable to it, which you will
+connect to a terminal.
+The detailed procedure to build such a cable for your NAS system is not
+part of this documentation.
+.
+.Ss2 netboot
+The
+.Pa netboot.bin
+binary loads a
+.Nx
+kernel from the root parition of a local disk or from NFS.
+This file should be made available by one of the following methods
+(depending on the firmware):
+.(bullet -compact
+TFTP server
+.It
+Serial line upload
+.It
+Flash ROM
+.bullet)
 .Pp
-In either case, you'll need to set up to boot the kernel over the network
-or over a serial line.
-.
-.Ss2 Booting over a serial line
-.
-This is not currently documented or supported.
-If you would like to attempt this and supply documentation, please do!
+In most cases the Flash ROM of your NAS will contain
+.Tn "PPCBoot"
+or
+.Tn "U-Boot"
+as firmware. You have to find a way to get access to its command line.
+When auto-booting is enabled this will usually require to press a key
+quickly after the system is switched on.
+Then load the
+.Pa netboot.bin
+file into memory at
+.Pa 0x1000000
+and start it with
+.Pp
+.Dl > Ic "go 0x1000000"
+.Pp
