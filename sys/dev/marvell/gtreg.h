@@ -1,4 +1,4 @@
-/*	$NetBSD: gtreg.h,v 1.4 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtreg.h,v 1.5 2010/06/09 02:19:51 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -176,8 +176,16 @@
 #define GT_CPU_Error_Cause		0x0140
 #define GT_CPU_Error_Mask		0x0148
 
-#define	GT_LowAddr_GET(v)		 (GT__EXT((v), 0, 12) << 20)
-#define	GT_HighAddr_GET(v)		((GT__EXT((v), 0, 12) << 20) | 0xfffff)
+#define	GT_LowAddr_GET(v)		(GT__EXT((v), 0, 12) << 20)
+#define	GT_HighAddr_GET(v)	\
+    ((v) != 0 ? ((GT__EXT((v), 0, 12) << 20) | 0xfffff) : 0)
+#define	GT_LowAddr2_GET(v)		(GT__EXT((v), 0, 16) << 16)
+#define	GT_HighAddr2_GET(v)	\
+    ((v) != 0 ? ((GT__EXT((v), 0, 16) << 16) | 0xffff) : 0)
+#define	GT_LADDR_GET(v, mdl)	\
+    (((mdl) == MARVELL_DISCOVERY) ? GT_LowAddr_GET(v) : GT_LowAddr2_GET(v))
+#define	GT_HADDR_GET(v, mdl)	\
+    (((mdl) == MARVELL_DISCOVERY) ? GT_HighAddr_GET(v) : GT_HighAddr2_GET(v))
 
 #define GT_MPP_Control0			0xf000
 #define GT_MPP_Control1			0xf004
