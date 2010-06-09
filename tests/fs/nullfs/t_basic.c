@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.2 2010/05/31 23:44:54 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.3 2010/06/09 08:37:16 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -58,9 +58,20 @@ xread_tfile(const char *path, const char *mstr)
 	return EPROGMISMATCH;
 }
 
-ATF_TC_BODY(basic, tc)
+static void
+mountnull(const char *what, const char *mp, int flags)
 {
 	struct null_args nargs;
+
+	memset(&nargs, 0, sizeof(nargs));
+	nargs.nulla_target = __UNCONST(what);
+	if (rump_sys_mount(MOUNT_NULL, mp, flags, &nargs, sizeof(nargs)) == -1)
+		atf_tc_fail_errno("could not mount nullfs");
+
+}
+
+ATF_TC_BODY(basic, tc)
+{
 	struct tmpfs_args targs;
 	struct stat sb;
 	int error;
@@ -78,10 +89,7 @@ ATF_TC_BODY(basic, tc)
 	if (rump_sys_mount(MOUNT_TMPFS, "/td1", 0, &targs, sizeof(targs)) == -1)
 		atf_tc_fail_errno("could not mount tmpfs td1");
 
-	memset(&nargs, 0, sizeof(nargs));
-	nargs.nulla_target = __UNCONST("/td1");
-	if (rump_sys_mount(MOUNT_NULL, "/td2", 0, &nargs, sizeof(nargs)) == -1)
-		atf_tc_fail_errno("could not mount nullfs");
+	mountnull("/td1", "/td2", 0);
 
 	/* test unnull -> null */
 	xput_tfile("/td1/tensti", "jeppe");
@@ -119,8 +127,48 @@ ATF_TC_BODY(basic, tc)
 	/* done */
 }
 
+ATF_TC(twistymount);
+ATF_TC_HEAD(twistymount, tc)
+{
+
+	/* this is expected to fail until the PR is fixed */
+	atf_tc_set_md_var(tc, "descr", "\"recursive\" mounts deadlock"
+	    " (kern/43439)");
+}
+
+/*
+ * Mapping to identifiers in kern/43439:
+ *  /td		= /home/current/pkgsrc
+ *  /td/dist	= /home/current/pkgsrc/distiles
+ *  /mp		= /usr/pkgsrc
+ *  /mp/dist	= /usr/pkgsrc/distfiles -- "created" by first null mount
+ */
+
+ATF_TC_BODY(twistymount, tc)
+{
+	int mkd = 0;
+
+	rump_init();
+
+	if (rump_sys_mkdir("/td", 0777) == -1)
+		atf_tc_fail_errno("mkdir %d", mkd++);
+	if (rump_sys_mkdir("/td/dist", 0777) == -1)
+		atf_tc_fail_errno("mkdir %d", mkd++);
+	if (rump_sys_mkdir("/mp", 0777) == -1)
+		atf_tc_fail_errno("mkdir %d", mkd++);
+
+	/* MNT_RDONLY doesn't matter, but just for compat with the PR */
+	mountnull("/td", "/mp", MNT_RDONLY);
+	mountnull("/td/dist", "/mp/dist", 0);
+
+	/* if we didn't get a locking-against-meself panic, we passed */
+}
+
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, basic);
-	return 0; /*XXX?*/
+	ATF_TP_ADD_TC(tp, twistymount);
+
+	return atf_no_error();
 }
