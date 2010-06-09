@@ -1,4 +1,4 @@
-/* $NetBSD: sbscnvar.h,v 1.3 2006/03/07 14:01:41 he Exp $ */
+/* $NetBSD: sbscnvar.h,v 1.3.88.1 2010/06/09 14:22:17 matt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -162,7 +162,7 @@ struct sbscn_channel {
 };
 
 struct sbscn_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 
 	/* shared data structures */
 	u_long	sc_addr;	/* phys addr of DUART XXX bus_space */

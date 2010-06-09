@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.7.94.2 2010/05/15 06:22:38 matt Exp $ */
+/* $NetBSD: sbwdog.c,v 1.7.94.3 2010/06/09 14:22:17 matt Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.7.94.2 2010/05/15 06:22:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.7.94.3 2010/06/09 14:22:17 matt Exp $");
 
 #include "locators.h"
 #include <sys/param.h>
@@ -66,8 +66,8 @@ struct sbwdog_softc {
 	int sc_wdog_period;
 };
 
-static int sbwdog_match(struct device *, struct cfdata *, void *);
-static void sbwdog_attach(struct device *, struct device *, void *);
+static int sbwdog_match(device_t, cfdata_t, void *);
+static void sbwdog_attach(device_t, device_t, void *);
 static int sbwdog_tickle(struct sysmon_wdog *);
 static int sbwdog_setmode(struct sysmon_wdog *);
 static void sbwdog_intr(void *, uint32_t, vaddr_t);
@@ -79,7 +79,7 @@ CFATTACH_DECL_NEW(sbwdog, sizeof(struct sbwdog_softc),
 #define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
 
 static int
-sbwdog_match(struct device *parent, struct cfdata *cf, void *aux)
+sbwdog_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbscd_attach_args *sa = aux;
 
@@ -90,7 +90,7 @@ sbwdog_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-sbwdog_attach(struct device *parent, struct device *self, void *aux)
+sbwdog_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbwdog_softc *sc = device_private(self);
 	struct sbscd_attach_args *sa = aux;
