@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.51 2008/07/20 01:20:23 lukem Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.52 2010/06/09 04:51:53 riz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.51 2008/07/20 01:20:23 lukem Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.52 2010/06/09 04:51:53 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -395,6 +395,7 @@ die_you_gravy_sucking_pig_dog(void)
 			*arg++ = bootstr;
 		*arg++ = 0;
 #ifndef DEBUG
+		(void)unlink(_PATH_NOLOGIN);
 		(void)execve(path, __UNCONST(args), NULL);
 		serrno = errno;
 		syslog(LOG_ERR, "Can't exec `%s' (%m)", path);
