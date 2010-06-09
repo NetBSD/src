@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.93 2009/12/05 16:29:11 pooka Exp $
+#	$NetBSD: RESPONSIBLE,v 1.94 2010/06/09 21:54:21 tron Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -40,7 +40,7 @@ pax/tar		christos
 pcc		ragge
 ping		christos
 ping6		core
-postfix		heas
+postfix		tron
 postinstall	core
 ppp(async)	christos
 ppp(sync)	martin?
