@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.1.2.6 2010/05/16 00:34:45 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.1.2.7 2010/06/09 14:25:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.1.2.6 2010/05/16 00:34:45 matt Exp $")
+RCSID("$NetBSD: spl.S,v 1.1.2.7 2010/06/09 14:25:30 matt Exp $")
 
 #include "assym.h"
 
@@ -144,7 +144,7 @@ STATIC_LEAF(_splsw_spl0)
 	INT_L	v1, _C_LABEL(ipl_sr_map) + 4*IPL_NONE
 	xor	v1, MIPS_INT_MASK | MIPS_SR_INT_IE # invert and or in IE
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
-	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
+	#mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
 	COP0_SYNC
 	mfc0	v0, MIPS_COP_0_STATUS
 	nop
