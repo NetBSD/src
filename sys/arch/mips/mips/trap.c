@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.217.12.26 2010/05/06 05:31:49 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.217.12.27 2010/06/10 00:33:50 cliff Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.26 2010/05/06 05:31:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.217.12.27 2010/06/10 00:33:50 cliff Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -235,7 +235,10 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			printf(" tf=%p ksp=%p ra=%#" PRIxREGISTER "\n",
 			   tf, tf+1, tf->tf_regs[_R_RA]);
 		}
-			
+
+		if ((TRAPTYPE(cause) == 6) || (TRAPTYPE(cause) == 7))
+			(void)(*mips_locoresw.lsw_bus_error)(cause);
+
 #if defined(DDB)
 		kdb_trap(type, &tf->tf_registers);
 		/* XXX force halt XXX */
