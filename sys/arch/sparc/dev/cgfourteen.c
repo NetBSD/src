@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.63 2010/06/08 06:30:41 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.64 2010/06/10 13:21:13 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -281,7 +281,10 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_regh = bh;
-
+	sc->sc_regaddr = BUS_ADDR(sa->sa_slot, sa->sa_offset);
+	sc->sc_fbaddr = BUS_ADDR(sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
+				sc->sc_physadr[CG14_PXL_IDX].sbr_offset);
+	
 	sc->sc_ctl   = (struct cg14ctl  *) (bh);
 	sc->sc_hwc   = (struct cg14curs *) (bh + CG14_OFFSET_CURS);
 	sc->sc_dac   = (struct cg14dac  *) (bh + CG14_OFFSET_DAC);
@@ -473,6 +476,25 @@ cgfourteenioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 		cg14_set_video(sc, *(int *)data);
 		break;
 
+	case CG14_SET_PIXELMODE: {
+		int depth = *(int *)data;
+
+		switch (depth) {
+		case 8:
+			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
+			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
+			    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL);
+			break;
+		case 32:
+			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
+			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
+			    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL);
+			break;
+		default:
+			return EINVAL;
+		}
+		}
+		break;
 	default:
 		return (ENOTTY);
 	}
@@ -501,34 +523,13 @@ cgfourteenunblank(device_t dev)
 /*
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
- *
- * Since we're pretending to be a cg8, we put the main video RAM at the
- *  same place the cg8 does, at offset 256k.  The cg8 has an enable
- *  plane in the 256k space; our "enable" plane works differently.  We
- *  can't emulate the enable plane very well, but all X uses it for is
- *  to clear it at startup - so we map the first page of video RAM over
- *  and over to fill that 256k space.  We also map some other views of
- *  the video RAM space.
- *
- * Our memory map thus looks like
- *
- *	mmap range		space	base offset
- *	00000000-00040000	vram	0 (multi-mapped - see above)
- *	00040000-00434800	vram	00000000
- *	01000000-01400000	vram	01000000
- *	02000000-02200000	vram	02000000
- *	02800000-02a00000	vram	02800000
- *	03000000-03100000	vram	03000000
- *	03400000-03500000	vram	03400000
- *	03800000-03900000	vram	03800000
- *	03c00000-03d00000	vram	03c00000
- *	10000000-10010000	regs	00000000 (only if CG14_MAP_REGS)
- */
+  */
 paddr_t
 cgfourteenmmap(dev_t dev, off_t off, int prot)
 {
 	struct cgfourteen_softc *sc =
 	    device_lookup_private(&cgfourteen_cd, minor(dev));
+	off_t offset = -1;
 
 	if (off & PGOFSET)
 		panic("cgfourteenmmap");
@@ -536,43 +537,40 @@ cgfourteenmmap(dev_t dev, off_t off, int prot)
 	if (off < 0)
 		return (-1);
 
-#if defined(CG14_MAP_REGS) /* XXX: security hole */
-	/*
-	 * Map the control registers into user space. Should only be
-	 * used for debugging!
-	 */
-	if ((u_int)off >= 0x10000000 && (u_int)off < 0x10000000 + 16*4096) {
-		off -= 0x10000000;
-		return (bus_space_mmap(sc->sc_bustag,
-			BUS_ADDR(sc->sc_physadr[CG14_CTL_IDX].sbr_slot,
-				   sc->sc_physadr[CG14_CTL_IDX].sbr_offset),
-			off, prot, BUS_SPACE_MAP_LINEAR));
-	}
-#endif
-
-	if (off < COLOUR_OFFSET)
-		off = 0;
-	else if (off < COLOUR_OFFSET+(1152*900*4))
-		off -= COLOUR_OFFSET;
-	else {
-		switch (off >> 20) {
-			case 0x010: case 0x011: case 0x012: case 0x013:
-			case 0x020: case 0x021:
-			case 0x028: case 0x029:
-			case 0x030:
-			case 0x034:
-			case 0x038:
-			case 0x03c:
-				break;
-			default:
-				return(-1);
-		}
-	}
-
-	return (bus_space_mmap(sc->sc_bustag,
-		BUS_ADDR(sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
-			   sc->sc_physadr[CG14_PXL_IDX].sbr_offset),
-		off, prot, BUS_SPACE_MAP_LINEAR));
+	if (off >= 0 && off < 0x10000) {
+		offset = sc->sc_regaddr;
+	} else if (off >= CG14_CURSOR_VOFF &&
+		   off < (CG14_CURSOR_VOFF + 0x1000)) {
+		offset = sc->sc_regaddr + CG14_OFFSET_CURS;
+		off -= CG14_CURSOR_VOFF;
+	} else if (off >= CG14_DIRECT_VOFF &&
+		   off < (CG14_DIRECT_VOFF + sc->sc_vramsize)) {
+		offset = sc->sc_fbaddr + CG14_FB_VRAM;
+		off -= CG14_DIRECT_VOFF;
+	} else if (off >= CG14_BGR_VOFF &&
+		   off < (CG14_BGR_VOFF + sc->sc_vramsize)) {
+		offset = sc->sc_fbaddr + CG14_FB_CBGR;
+		off -= CG14_BGR_VOFF;
+	} else if (off >= CG14_X32_VOFF &&
+		   off < (CG14_X32_VOFF + (sc->sc_vramsize >> 2))) {
+		offset = sc->sc_fbaddr + CG14_FB_PX32;
+		off -= CG14_X32_VOFF;
+	} else if (off >= CG14_B32_VOFF &&
+		   off < (CG14_B32_VOFF + (sc->sc_vramsize >> 2))) {
+		offset = sc->sc_fbaddr + CG14_FB_PB32;
+		off -= CG14_B32_VOFF;
+	} else if (off >= CG14_G32_VOFF &&
+		   off < (CG14_G32_VOFF + (sc->sc_vramsize >> 2))) {
+		offset = sc->sc_fbaddr + CG14_FB_PG32;
+		off -= CG14_G32_VOFF;
+	} else if (off >= CG14_R32_VOFF &&
+		   off < CG14_R32_VOFF + (sc->sc_vramsize >> 2)) {
+		offset = sc->sc_fbaddr + CG14_FB_PR32;
+		off -= CG14_R32_VOFF;
+	} else
+		return -1;
+	return (bus_space_mmap(sc->sc_bustag, offset, off, prot,
+		    BUS_SPACE_MAP_LINEAR));
 }
 
 int
