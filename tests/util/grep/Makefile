@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/02/13 05:19:51 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/06/10 23:49:48 pooka Exp $
 
 NOMAN=		# defined
 
@@ -23,7 +23,8 @@ FILES+=		d_context_b.out
 FILES+=		d_context_c.out
 FILES+=		d_context_d.out
 FILES+=		d_egrep.out
-FILES+=		d_file_exp.inout
+FILES+=		d_file_exp.in
+FILES+=		d_file_exp.out
 FILES+=		d_ignore_case.out
 FILES+=		d_input
 FILES+=		d_invert.in
