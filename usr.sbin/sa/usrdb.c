@@ -1,4 +1,4 @@
-/* $NetBSD: usrdb.c,v 1.12 2010/06/10 06:09:10 dholland Exp $ */
+/* $NetBSD: usrdb.c,v 1.13 2010/06/10 06:17:21 dholland Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usrdb.c,v 1.12 2010/06/10 06:09:10 dholland Exp $");
+__RCSID("$NetBSD: usrdb.c,v 1.13 2010/06/10 06:17:21 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static int uid_compare(const DBT *, const DBT *);
 static DB	*usracct_db;
 
 int
-usracct_init()
+usracct_init(void)
 {
 	DB *saved_usracct_db;
 	BTREEINFO bti;
@@ -130,15 +130,14 @@ out:
 }
 
 void
-usracct_destroy()
+usracct_destroy(void)
 {
 	if (DB_CLOSE(usracct_db) < 0)
 		warn("destroying user accounting stats");
 }
 
 int
-usracct_add(ci)
-	const struct cmdinfo *ci;
+usracct_add(const struct cmdinfo *ci)
 {
 	DBT key, data;
 	struct userinfo newui;
@@ -188,7 +187,7 @@ usracct_add(ci)
 }
 
 int
-usracct_update()
+usracct_update(void)
 {
 	DB *saved_usracct_db;
 	DBT key, data;
@@ -240,7 +239,7 @@ usracct_update()
 }
 
 void
-usracct_print()
+usracct_print(void)
 {
 	DBT key, data;
 	struct userinfo uistore, *ui = &uistore;
@@ -291,8 +290,7 @@ usracct_print()
 }
 
 static int
-uid_compare(k1, k2)
-	const DBT *k1, *k2;
+uid_compare(const DBT *k1, const DBT *k2)
 {
 	u_long d1, d2;
 

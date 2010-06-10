@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.26 2010/06/10 06:09:10 dholland Exp $ */
+/* $NetBSD: main.c,v 1.27 2010/06/10 06:17:21 dholland Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  Christopher G. Demetriou.  All rights reserved.");
 
-__RCSID("$NetBSD: main.c,v 1.26 2010/06/10 06:09:10 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2010/06/10 06:17:21 dholland Exp $");
 #endif
 
 /*
@@ -83,9 +83,7 @@ static const int	dfltargc = (sizeof(dfltargv)/sizeof(char *));
 cmpf_t   sa_cmp = cmp_usrsys;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch;
 	int error;
@@ -297,9 +295,7 @@ main(argc, argv)
 }
 
 static int
-acct_load(pn, wr)
-	char *pn;
-	int wr;
+acct_load(char *pn, int wr)
 {
 	struct acct ac;
 	struct cmdinfo ci;
@@ -393,8 +389,7 @@ decode_comp_t(comp_t comp)
 
 /* sort commands, doing the right thing in terms of reversals */
 static int
-cmp_comm(s1, s2)
-	const char *s1, *s2;
+cmp_comm(const char *s1, const char *s2)
 {
 	int rv;
 
@@ -406,8 +401,7 @@ cmp_comm(s1, s2)
 
 /* sort by total user and system time */
 static int
-cmp_usrsys(d1, d2)
-	const DBT *d1, *d2;
+cmp_usrsys(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 	u_quad_t t1, t2;
@@ -428,8 +422,7 @@ cmp_usrsys(d1, d2)
 
 /* sort by average user and system time */
 static int
-cmp_avgusrsys(d1, d2)
-	const DBT *d1, *d2;
+cmp_avgusrsys(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 	double t1, t2;
@@ -453,8 +446,7 @@ cmp_avgusrsys(d1, d2)
 
 /* sort by total number of disk I/O operations */
 static int
-cmp_dkio(d1, d2)
-	const DBT *d1, *d2;
+cmp_dkio(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 
@@ -471,8 +463,7 @@ cmp_dkio(d1, d2)
 
 /* sort by average number of disk I/O operations */
 static int
-cmp_avgdkio(d1, d2)
-	const DBT *d1, *d2;
+cmp_avgdkio(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 	double n1, n2;
@@ -493,8 +484,7 @@ cmp_avgdkio(d1, d2)
 
 /* sort by the CPU-storage integral */
 static int
-cmp_cpumem(d1, d2)
-	const DBT *d1, *d2;
+cmp_cpumem(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 
@@ -511,8 +501,7 @@ cmp_cpumem(d1, d2)
 
 /* sort by the CPU-time average memory usage */
 static int
-cmp_avgcpumem(d1, d2)
-	const DBT *d1, *d2;
+cmp_avgcpumem(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 	u_quad_t t1, t2;
@@ -537,8 +526,7 @@ cmp_avgcpumem(d1, d2)
 
 /* sort by the number of invocations */
 static int
-cmp_calls(d1, d2)
-	const DBT *d1, *d2;
+cmp_calls(const DBT *d1, const DBT *d2)
 {
 	struct cmdinfo c1, c2;
 
@@ -554,7 +542,7 @@ cmp_calls(d1, d2)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
@@ -564,8 +552,7 @@ usage()
 }
 
 const char *
-fmt(key)
-	const DBT *key;
+fmt(const DBT *key)
 {
 	static char *buf = NULL;
 	static size_t len = 0;
