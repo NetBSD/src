@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.82 2010/06/09 12:02:37 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.83 2010/06/10 21:40:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.82 2010/06/09 12:02:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.83 2010/06/10 21:40:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -79,7 +79,6 @@ kmutex_t uvm_pageqlock;
 struct uvmexp uvmexp;
 struct uvm uvm;
 
-struct vmspace rump_vmspace;
 struct vm_map rump_vmmap;
 static struct vm_map_kernel kmem_map_store;
 struct vm_map *kmem_map = &kmem_map_store.vmk_map;
@@ -238,7 +237,6 @@ uvm_init(void)
 {
 
 	uvmexp.free = 1024*1024; /* XXX */
-	rump_vmspace.vm_map.pmap = pmap_kernel();
 
 	mutex_init(&pagermtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
@@ -253,6 +251,13 @@ uvm_init(void)
 	callback_head_init(&kmem_map_store.vmk_reclaim_callback, IPL_VM);
 }
 
+void
+uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t vmin, vaddr_t vmax)
+{
+
+	vm->vm_map.pmap = pmap_kernel();
+	vm->vm_refcnt = 1;
+}
 
 void
 uvm_pagewire(struct vm_page *pg)
@@ -267,6 +272,21 @@ uvm_pageunwire(struct vm_page *pg)
 
 	/* nada */
 }
+
+/* where's your schmonz now? */
+#define PUNLIMIT(a)	\
+p->p_rlimit[a].rlim_cur = p->p_rlimit[a].rlim_max = RLIM_INFINITY;
+void
+uvm_init_limits(struct proc *p)
+{
+
+	PUNLIMIT(RLIMIT_STACK);
+	PUNLIMIT(RLIMIT_DATA);
+	PUNLIMIT(RLIMIT_RSS);
+	PUNLIMIT(RLIMIT_AS);
+	/* nice, cascade */
+}
+#undef PUNLIMIT
 
 /*
  * This satisfies the "disgusting mmap hack" used by proplib.
@@ -634,7 +654,7 @@ int
 uvm_vslock(struct vmspace *vs, void *addr, size_t len, vm_prot_t access)
 {
 
-	KASSERT(vs == &rump_vmspace);
+	KASSERT(vs == &vmspace0);
 	return 0;
 }
 
@@ -642,7 +662,7 @@ void
 uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
 {
 
-	KASSERT(vs == &rump_vmspace);
+	KASSERT(vs == &vmspace0);
 }
 
 void
@@ -658,6 +678,16 @@ vunmapbuf(struct buf *bp, vsize_t len)
 
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
+}
+
+void
+uvmspace_addref(struct vmspace *vm)
+{
+
+	/*
+	 * there is only vmspace0.  we're not planning on
+	 * feeding it to the fishes.
+	 */
 }
 
 void

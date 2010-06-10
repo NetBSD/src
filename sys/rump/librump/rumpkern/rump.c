@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.177 2010/06/09 14:08:17 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.178 2010/06/10 21:40:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.177 2010/06/09 14:08:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.178 2010/06/10 21:40:42 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.177 2010/06/09 14:08:17 pooka Exp $");
 #include "rump_vfs_private.h"
 #include "rump_dev_private.h"
 
-struct proc proc0;
+/* is this still necessary or use kern_proc stuff? */
 struct session rump_session = {
 	.s_count = 1,
 	.s_flags = 0,
@@ -97,10 +97,7 @@ struct pgrp rump_pgrp = {
 	.pg_session = &rump_session,
 	.pg_jobc = 1,
 };
-struct pstats rump_stats;
-struct plimit rump_limits;
-struct filedesc rump_filedesc0;
-struct proclist allproc;
+
 char machine[] = MACHINE;
 static kauth_cred_t rump_susercred;
 
@@ -204,7 +201,6 @@ rump__init(int rump_version)
 	char buf[256];
 	struct timespec ts;
 	uint64_t sec, nsec;
-	struct proc *p;
 	struct lwp *l;
 	int i, numcpu;
 	int error;
@@ -280,6 +276,7 @@ rump__init(int rump_version)
 	l = &lwp0;
 	l->l_lid = 1;
 	l->l_cpu = l->l_target_cpu = rump_cpu;
+	l->l_fd = &filedesc0;
 	rumpuser_set_curlwp(l);
 
 	mutex_init(&tty_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -305,30 +302,13 @@ rump__init(int rump_version)
 	kauth_init();
 	rump_susercred = rump_cred_create(0, 0, 0, NULL);
 
-	/* init proc0 and rest of lwp0 now that we can allocate memory */
-	p = &proc0;
-	p->p_stats = &rump_stats;
-	p->p_limit = &rump_limits;
-	p->p_pgrp = &rump_pgrp;
-	p->p_pid = 0;
-	p->p_fd = &rump_filedesc0;
-	p->p_vmspace = &rump_vmspace;
-	p->p_emul = &emul_netbsd;
-	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	l->l_cred = rump_cred_suserget();
-	l->l_proc = p;
-	LIST_INIT(&allproc);
-	LIST_INSERT_HEAD(&allproc, &proc0, p_list);
-	proc_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	l->l_proc = &proc0;
 
+	procinit();
+	proc0_init();
 	lwpinit_specificdata();
 	lwp_initspecific(&lwp0);
-
-	mutex_init(&rump_limits.pl_lock, MUTEX_DEFAULT, IPL_NONE);
-	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
-	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
-	rump_limits.pl_rlimit[RLIMIT_SBSIZE].rlim_cur = RLIM_INFINITY;
-	rump_limits.pl_corename = defcorename;
 
 	rump_scheduler_init();
 	/* revert temporary context and schedule a real context */
@@ -400,8 +380,6 @@ rump__init(int rump_version)
 	hostnamelen = strlen(hostname);
 
 	sigemptyset(&sigcantmask);
-
-	lwp0.l_fd = proc0.p_fd = fd_init(&rump_filedesc0);
 
 	if (rump_threads)
 		vmem_rehash_start();
@@ -536,15 +514,17 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 		p = kmem_zalloc(sizeof(*p), KM_SLEEP);
 		if (rump_proc_vfs_init)
 			rump_proc_vfs_init(p);
-		p->p_stats = &rump_stats;
-		p->p_limit = lim_copy(&rump_limits);
+		p->p_stats = proc0.p_stats; /* XXX */
+		p->p_limit = lim_copy(proc0.p_limit);
 		p->p_pid = pid;
-		p->p_vmspace = &rump_vmspace;
+		p->p_vmspace = &vmspace0;
 		p->p_emul = &emul_netbsd;
 		p->p_fd = fd_init(NULL);
 		p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 		p->p_pgrp = &rump_pgrp;
 		l->l_cred = rump_cred_suserget();
+
+		atomic_inc_uint(&nprocs);
 	} else {
 		p = &proc0;
 		l->l_cred = rump_susercred;
@@ -591,6 +571,8 @@ rump_lwp_release(struct lwp *l)
 		rump_cred_put(l->l_cred);
 		limfree(p->p_limit);
 		kmem_free(p, sizeof(*p));
+
+		atomic_dec_uint(&nprocs);
 	}
 	KASSERT((l->l_flag & LW_WEXIT) == 0);
 	l->l_flag |= LW_WEXIT;
