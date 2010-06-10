@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.2 2010/01/14 00:40:35 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.3 2010/06/10 00:43:06 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.2 2010/01/14 00:40:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.2.3 2010/06/10 00:43:06 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ findroot(void)
 		for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
 		     dv = TAILQ_NEXT(dv, dv_list))
 			if (device_class(dv) == DV_DISK &&
-			    device_is_a(dv, "wd"))
+			    (device_is_a(dv, "wd") || device_is_a(dv, "sd")))
 				    booted_device = dv;
 
 	/*
