@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.164 2010/06/04 23:02:18 rmind Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.165 2010/06/10 19:06:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,11 +62,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.164 2010/06/04 23:02:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.165 2010/06/10 19:06:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
 #include "opt_dtrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
