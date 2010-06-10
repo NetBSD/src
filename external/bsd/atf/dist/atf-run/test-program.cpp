@@ -187,23 +187,6 @@ exec_or_exit(const atf::fs::path& executable,
 }
 
 static
-void
-create_timeout_resfile(const atf::fs::path& path, const unsigned int timeout)
-{
-    std::ofstream os(path.c_str());
-    if (!os)
-        throw std::runtime_error("Failed to create " + path.str());
-
-    const std::string reason = "Test case timed out after " +
-        atf::text::to_string(timeout) + " " +
-        (timeout == 1 ? "second" : "seconds");
-
-    atf::formats::atf_tcr_writer writer(os);
-    writer.result("failed");
-    writer.reason(reason);
-}
-
-static
 std::vector< std::string >
 config_to_args(const atf::tests::vars_map& config)
 {
@@ -309,7 +292,7 @@ impl::get_metadata(const atf::fs::path& executable,
     return metadata(parser.get_tcs());
 }
 
-atf::process::status
+std::pair< std::string, atf::process::status >
 impl::run_test_case(const atf::fs::path& executable,
                     const std::string& test_case_name,
                     const std::string& test_case_part,
@@ -357,11 +340,14 @@ impl::run_test_case(const atf::fs::path& executable,
     atf::process::status status = child.wait();
     ::killpg(child_pid, SIGKILL);
 
+    std::string reason;
+
     if (timeout_timer.fired()) {
         INV(status.signaled());
         INV(status.termsig() == SIGKILL);
-        create_timeout_resfile(resfile, timeout);
+        reason = "Test case timed out after " + atf::text::to_string(timeout) +
+            " " + (timeout == 1 ? "second" : "seconds");
     }
 
-    return status;
+    return std::make_pair(reason, status);
 }

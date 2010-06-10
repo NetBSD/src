@@ -97,7 +97,7 @@ class atf_run : public atf::application::app {
                          const atf::tests::vars_map&,
                          const atf::fs::path&);
 
-    atf::tests::tcr get_tcr(const atf::process::status&,
+    atf::tests::tcr get_tcr(const std::string&, const atf::process::status&,
                             const atf::fs::path&) const;
 
 public:
@@ -212,11 +212,15 @@ atf_run::run_test_directory(const atf::fs::path& tp,
 }
 
 atf::tests::tcr
-atf_run::get_tcr(const atf::process::status& s,
+atf_run::get_tcr(const std::string& broken_reason,
+                 const atf::process::status& s,
                  const atf::fs::path& resfile)
     const
 {
     using atf::tests::tcr;
+
+    if (!broken_reason.empty())
+        return tcr(tcr::failed_state, broken_reason);
 
     if (s.exited()) {
         try {
@@ -244,14 +248,10 @@ atf_run::get_tcr(const atf::process::status& s,
                        std::string(e.what()));
         }
     } else if (s.signaled()) {
-        try {
-            return tcr::read(resfile);
-        } catch (...) {
-            return tcr(tcr::failed_state,
-                       "Test program received signal " +
-                       atf::text::to_string(s.termsig()) +
-                       (s.coredump() ? " (core dumped)" : ""));
-        }
+        return tcr(tcr::failed_state,
+                   "Test program received signal " +
+                   atf::text::to_string(s.termsig()) +
+                   (s.coredump() ? " (core dumped)" : ""));
     } else {
         UNREACHABLE;
         throw std::runtime_error("Unknown exit status");
@@ -311,6 +311,7 @@ atf_run::run_test_program(const atf::fs::path& tp,
             }
 
             const atf::fs::path resfile = resdir.get_path() / "tcr";
+            INV(!atf::fs::exists(resfile));
             try {
                 const bool use_fs = atf::text::to_bool(
                     (*tcmd.find("use.fs")).second);
@@ -321,34 +322,35 @@ atf_run::run_test_program(const atf::fs::path& tp,
                     atf::fs::temp_dir workdir(atf::fs::path(atf::config::get(
                         "atf_workdir")) / "atf-run.XXXXXX");
 
-                    const atf::process::status body_status =
+                    std::pair< std::string, const atf::process::status > s =
                         impl::run_test_case(tp, tcname, "body", tcmd, config,
                                             resfile, workdir.get_path(), w);
-                    const atf::process::status cleanup_status =
-                        impl::run_test_case(tp, tcname, "cleanup", tcmd, config,
-                                            resfile, workdir.get_path(), w);
+                    (void)impl::run_test_case(tp, tcname, "cleanup", tcmd, config,
+                                              resfile, workdir.get_path(), w);
 
                     // TODO: Force deletion of workdir.
 
-                    tcr = get_tcr(body_status, resfile);
+                    tcr = get_tcr(s.first, s.second, resfile);
                 } else {
-                    const atf::process::status body_status =
+                    std::pair< std::string, const atf::process::status > s =
                         impl::run_test_case(tp, tcname, "body", tcmd, config,
                                             resfile, ro_workdir, w);
-                    const atf::process::status cleanup_status =
-                        impl::run_test_case(tp, tcname, "cleanup", tcmd, config,
-                                            resfile, ro_workdir, w);
+                    (void)impl::run_test_case(tp, tcname, "cleanup", tcmd, config,
+                                              resfile, ro_workdir, w);
 
-                    tcr = get_tcr(body_status, resfile);
+                    tcr = get_tcr(s.first, s.second, resfile);
                 }
-
                 w.end_tc(tcr);
                 if (tcr.get_state() == atf::tests::tcr::failed_state)
                     errcode = EXIT_FAILURE;
             } catch (...) {
-                atf::fs::remove(resfile);
+                if (atf::fs::exists(resfile))
+                    atf::fs::remove(resfile);
                 throw;
             }
+            if (atf::fs::exists(resfile))
+                atf::fs::remove(resfile);
+
         }
         w.end_tp("");
     }

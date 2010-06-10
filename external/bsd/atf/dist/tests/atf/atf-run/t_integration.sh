@@ -49,6 +49,7 @@ create_helper()
 
 create_helper_stdin()
 {
+    # TODO: This really, really, really must use real test programs.
     cat >${1} <<EOF
 #! $(atf-config -t atf_shell)
 while [ \${#} -gt 0 ]; do
@@ -57,12 +58,11 @@ while [ \${#} -gt 0 ]; do
             echo 'Content-Type: application/X-atf-tp; version="1"'
             echo
 EOF
-    cnt=${2}
-    while [ ${cnt} -gt 0 ]; do
+    cnt=1
+    while [ ${cnt} -le ${2} ]; do
         echo "echo 'ident: tc${cnt}'" >>${1}
-        cnt=$((${cnt} - 1))
-
-        [ ${cnt} -gt 0 ] && echo
+        [ ${cnt} -lt ${2} ] && echo "echo" >>${1}
+        cnt=$((${cnt} + 1))
     done
 cat >>${1} <<EOF
             exit 0
@@ -71,6 +71,7 @@ cat >>${1} <<EOF
             resfile=\$(echo \${1} | cut -d r -f 2-)
             ;;
     esac
+    testcase=\$(echo \${1} | cut -d : -f 1)
     shift
 done
 EOF
@@ -412,20 +413,21 @@ signaled_head()
 }
 signaled_body()
 {
-    create_helper_stdin helper 1 <<EOF
-echo 'Content-Type: application/X-atf-tcs; version="1"' 1>&9
-echo 1>&9
-echo "tcs-count: 1" 1>&9
-echo "tc-start: tc1" 1>&9
-echo "tc-end: tc1, failed, Will fail" 1>&9
-kill -9 \$\$
+    create_helper_stdin helper 2 <<EOF
+echo 'Content-Type: application/X-atf-tcr; version="1"' >\${resfile}
+echo >>\${resfile}
+echo "result: passed" >>\${resfile}
+case \${testcase} in
+    tc1) ;;
+    tc2) echo "Killing myself!" ; kill -9 \$\$ ;;
+esac
 EOF
     chmod +x helper
 
     create_atffile helper
 
     atf_check -s eq:1 -o save:stdout -e empty atf-run
-    atf_check -s eq:0 -o save:stdout -e empty grep '^tc-end: tc1, ' stdout
+    atf_check -s eq:0 -o save:stdout -e empty grep '^tc-end: tc2, ' stdout
     atf_check -s eq:0 -o ignore -e empty grep 'received signal 9' stdout
 }
 
@@ -451,7 +453,6 @@ EOF
         create_atffile helper
 
         atf_check -s eq:1 -o save:stdout -e empty atf-run
-        cat stdout
         atf_check -s eq:0 -o ignore -e empty \
                   grep '^tc-end: tc1,.*No reason specified' stdout
     done
