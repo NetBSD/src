@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.175 2010/06/09 16:58:22 christos Exp $
+.\"	$NetBSD: make.1,v 1.176 2010/06/10 18:35:22 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -539,15 +539,15 @@ the string is expanded again.
 Variable substitution occurs at three distinct times, depending on where
 the variable is being used.
 .Bl -enum
-.It 
+.It
 Variables in dependency lines are expanded as the line is read.
 .It
 Variables in shell commands are expanded when the shell command is
 executed.
 .It
 .Dq .for
-loop index variables are expanded on each loop iteration. 
-Note that other variables are not expanded inside loops so 
+loop index variables are expanded on each loop iteration.
+Note that other variables are not expanded inside loops so
 the following example code:
 .Bd -literal -offset indent
 
@@ -558,7 +558,7 @@ b+=     ${j}
 .Dv .endfor
 
 all:
-        @echo ${a}
+	@echo ${a}
 	@echo ${b}
 
 .Ed
@@ -1360,12 +1360,12 @@ Appending a variable name to
 .Va .MAKE.EXPORTED
 is equivalent to exporting a variable.
 .It Ic .export-env Ar variable ...
-The same as 
+The same as
 .Ql .export ,
-except that the variable is not appended to 
+except that the variable is not appended to
 .Va .MAKE.EXPORTED .
-This allows exporting a value to the environment which is different from that 
-used by 
+This allows exporting a value to the environment which is different from that
+used by
 .Nm
 internally.
 .It Ic .info Ar message
