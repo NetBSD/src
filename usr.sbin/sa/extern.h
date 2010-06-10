@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.7 2003/11/12 13:31:07 grant Exp $ */
+/* $NetBSD: extern.h,v 1.8 2010/06/10 06:09:10 dholland Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -64,25 +64,25 @@ struct userinfo {
 
 /* typedefs */
 
-typedef	int (*cmpf_t) __P((const DBT *, const DBT *));
+typedef	int (*cmpf_t)(const DBT *, const DBT *);
 
 /* external functions in sa.c */
-int	main		__P((int, char **));
-const char *fmt		__P((const DBT *));
+int main(int argc, char **argv);
+const char *fmt(const DBT *);
 
 /* external functions in pdb.c */
-int	pacct_init	__P((void));
-void	pacct_destroy	__P((void));
-int	pacct_add	__P((const struct cmdinfo *));
-int	pacct_update	__P((void));
-void	pacct_print	__P((void));
+int	pacct_init(void);
+void	pacct_destroy(void);
+int	pacct_add(const struct cmdinfo *);
+int	pacct_update(void);
+void	pacct_print(void);
 
 /* external functions in usrdb.c */
-int	usracct_init	__P((void));
-void	usracct_destroy	__P((void));
-int	usracct_add	__P((const struct cmdinfo *));
-int	usracct_update	__P((void));
-void	usracct_print	__P((void));
+int	usracct_init(void);
+void	usracct_destroy(void);
+int	usracct_add(const struct cmdinfo *);
+int	usracct_update(void);
+void	usracct_print(void);
 
 /* variables */
 
