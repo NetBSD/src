@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.202 2010/06/07 17:13:52 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.203 2010/06/10 20:36:55 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.202 2010/06/07 17:13:52 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.203 2010/06/10 20:36:55 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1425,8 +1425,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		if (ACPI_SUCCESS(rv))
 			aprint_debug_dev(sc->sc_dev, "evaluated _TTS\n");
 
-		acpi_wakedev_commit(sc, state);
-
 		if (state != ACPI_STATE_S1 &&
 		    pmf_system_suspend(PMF_Q_NONE) != true) {
 			aprint_error_dev(sc->sc_dev, "aborting suspend\n");
@@ -1437,7 +1435,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		 * This will evaluate the  _PTS and _SST methods,
 		 * but unlike the documentation claims, not _GTS,
 		 * which is evaluated in AcpiEnterSleepState().
-		 *
 		 * This must be called with interrupts enabled.
 		 */
 		rv = AcpiEnterSleepStatePrep(state);
@@ -1447,6 +1444,12 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			    "S%d: %s\n", state, AcpiFormatException(rv));
 			break;
 		}
+
+		/*
+		 * After the _PTS method has been evaluated, we can
+		 * enable wake and evaluate _PSW (ACPI 4.0, p. 284).
+		 */
+		acpi_wakedev_commit(sc, state);
 
 		sc->sc_sleepstate = state;
 
