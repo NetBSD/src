@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.48 2009/04/02 21:02:06 christos Exp $ */
+/*	$NetBSD: arp.c,v 1.49 2010/06/10 06:03:20 dholland Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.48 2009/04/02 21:02:06 christos Exp $");
+__RCSID("$NetBSD: arp.c,v 1.49 2010/06/10 06:03:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -195,8 +195,14 @@ file(const char *name)
 	int i, retval;
 	FILE *fp;
 
-	if ((fp = fopen(name, "r")) == NULL)
-		err(1, "cannot open %s", name);
+	if (!strcmp(name, "-")) {
+		fp = stdin;
+	} else {
+		fp = fopen(name, "r");
+		if (fp == NULL) {
+			err(1, "Cannot open %s", name);
+		}
+	}
 	retval = 0;
 	for (; (line = fparseln(fp, NULL, NULL, NULL, 0)) != NULL; free(line)) {
 		char **ap, *inputstring;
@@ -216,7 +222,8 @@ file(const char *name)
 		if (set(i, argv))
 			retval = 1;
 	}
-	(void)fclose(fp);
+	if (fp != stdin)
+		(void)fclose(fp);
 	return retval;
 }
 
