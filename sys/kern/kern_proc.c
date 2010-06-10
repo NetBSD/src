@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.165 2010/06/10 19:06:26 pooka Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.166 2010/06/10 20:54:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.165 2010/06/10 19:06:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.166 2010/06/10 20:54:53 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -166,7 +166,6 @@ struct plimit limit0;
 struct pstats pstat0;
 struct vmspace vmspace0;
 struct sigacts sigacts0;
-struct turnstile turnstile0;
 struct proc proc0 = {
 	.p_lwps = LIST_HEAD_INITIALIZER(&proc0.p_lwps),
 	.p_sigwaiters = LIST_HEAD_INITIALIZER(&proc0.p_sigwaiters),
@@ -189,25 +188,6 @@ struct proc proc0 = {
 	.p_vmspace = &vmspace0,
 	.p_stats = &pstat0,
 	.p_sigacts = &sigacts0,
-};
-struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
-#ifdef LWP0_CPU_INFO
-	.l_cpu = LWP0_CPU_INFO,
-#endif
-	.l_proc = &proc0,
-	.l_lid = 1,
-	.l_flag = LW_SYSTEM,
-	.l_stat = LSONPROC,
-	.l_ts = &turnstile0,
-	.l_syncobj = &sched_syncobj,
-	.l_refcnt = 1,
-	.l_priority = PRI_USER + NPRI_USER - 1,
-	.l_inheritedprio = -1,
-	.l_class = SCHED_OTHER,
-	.l_psid = PS_NONE,
-	.l_pi_lenders = SLIST_HEAD_INITIALIZER(&lwp0.l_pi_lenders),
-	.l_name = __UNCONST("swapper"),
-	.l_fd = &filedesc0,
 };
 kauth_cred_t cred0;
 
@@ -361,16 +341,11 @@ proc0_init(void)
 {
 	struct proc *p;
 	struct pgrp *pg;
-	struct lwp *l;
 	rlim_t lim;
 	int i;
 
 	p = &proc0;
 	pg = &pgrp0;
-	l = &lwp0;
-
-	KASSERT((void *)uvm_lwp_getuarea(l) != NULL);
-	KASSERT(l->l_lid == p->p_nlwpid);
 
 	mutex_init(&p->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
@@ -380,11 +355,10 @@ proc0_init(void)
 	cv_init(&p->p_waitcv, "wait");
 	cv_init(&p->p_lwpcv, "lwpwait");
 
-	LIST_INSERT_HEAD(&p->p_lwps, l, l_sibling);
+	LIST_INSERT_HEAD(&p->p_lwps, &lwp0, l_sibling);
 
 	pid_table[0].pt_proc = p;
 	LIST_INSERT_HEAD(&allproc, p, p_list);
-	LIST_INSERT_HEAD(&alllwp, l, l_list);
 
 	pid_table[0].pt_pgrp = pg;
 	LIST_INSERT_HEAD(&pg->pg_members, p, p_pglist);
@@ -393,15 +367,9 @@ proc0_init(void)
 	(*p->p_emul->e_syscall_intern)(p);
 #endif
 
-	callout_init(&l->l_timeout_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&l->l_timeout_ch, sleepq_timeout, l);
-	cv_init(&l->l_sigcv, "sigwait");
-
 	/* Create credentials. */
 	cred0 = kauth_cred_alloc();
 	p->p_cred = cred0;
-	kauth_cred_hold(cred0);
-	l->l_cred = cred0;
 
 	/* Create the CWD info. */
 	rw_init(&cwdi0.cwdi_lock);
@@ -448,9 +416,6 @@ proc0_init(void)
 
 	proc_initspecific(p);
 	kdtrace_proc_ctor(NULL, p);
-	lwp_initspecific(l);
-
-	SYSCALL_TIME_LWP_INIT(l);
 }
 
 /*

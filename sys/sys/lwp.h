@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.133 2010/05/30 02:25:15 dholland Exp $	*/
+/*	$NetBSD: lwp.h,v 1.134 2010/06/10 20:54:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -305,6 +305,7 @@ lwp_t	*lwp_find_first(proc_t *);
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001
 void	lwpinit(void);
+void	lwp0_init(void);
 int 	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
 void	lwp_continue(lwp_t *);
 void	lwp_unstop(lwp_t *);
