@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.38.10.8 2010/03/21 17:38:35 cliff Exp $ */
+/* $NetBSD: machdep.c,v 1.38.10.9 2010/06/10 00:35:18 cliff Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.8 2010/03/21 17:38:35 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.9 2010/06/10 00:35:18 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"       /* for SYMTAB_SPACE */
@@ -100,6 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38.10.8 2010/03/21 17:38:35 cliff Exp 
 #include <machine/nvram.h>
 #endif /* XXXCGD */
 #include <machine/leds.h>
+
+#include <mips/sibyte/dev/sbbuswatchvar.h>
 
 #include "ksyms.h"
 
@@ -218,6 +220,10 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * Clear out the I and D caches.
 	 */
 	mips_vector_init(NULL);
+
+	mips_locoresw.lsw_bus_error = sibyte_bus_watch_check;
+
+	sb1250_ipl_map_init();
 
 #ifdef DEBUG
 	printf("fwhandle=%08X magic=%08X bootdata=%08X reserved=%08X\n",
