@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.463 2010/05/03 16:15:05 tsutsui Exp $
+.\"	$NetBSD: main,v 1.464 2010/06/10 17:49:32 dholland Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1134,7 +1134,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Jarom\('ir Dolecek Ta Mt jdolecek@NetBSD.org
 .It Ta Andy Doran Ta Mt ad@NetBSD.org
 .It Ta Roland Dowdeswell Ta Mt elric@NetBSD.org
-.IT Ta Steven Drake Ta Mt sbd@NetBSD.org
+.It Ta Steven Drake Ta Mt sbd@NetBSD.org
 .It Ta Emmanuel Dreyfus Ta Mt manu@NetBSD.org
 .It Ta Matthias Drochner Ta Mt drochner@NetBSD.org
 .It Ta Jun Ebihara Ta Mt jun@NetBSD.org
