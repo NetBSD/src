@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.192.4.1.4.3 2010/06/08 18:29:11 cliff Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.192.4.1.4.4 2010/06/10 00:42:16 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.1.4.3 2010/06/08 18:29:11 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192.4.1.4.4 2010/06/10 00:42:16 cliff Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -973,17 +973,28 @@ setroot(struct device *bootdv, int bootpartition)
 		 * `root on <dev> ...'
 		 */
 
+		dv = finddevice(rootspec);
+
+		/*
+		 * if the lookup failed and we have no rootdev
+		 * then we have to ask
+		 */
+		if (dv == NULL && rootdev == NODEV) {
+			printf("device %s not configured\n", rootspec);
+			boothowto |= RB_ASKNAME;
+			goto top;
+		}
+
 		/*
 		 * If it's a network interface, we can bail out
 		 * early.
 		 */
-		dv = finddevice(rootspec);
 		if (dv != NULL && device_class(dv) == DV_IFNET) {
 			rootdv = dv;
 			goto haveroot;
 		}
 
-		if (rootdev == NODEV &&
+		if (dv != NULL && rootdev == NODEV &&
 		    device_class(dv) == DV_DISK && device_is_a(dv, "dk") &&
 		    (majdev = devsw_name2blk(device_xname(dv), NULL, 0)) >= 0)
 			rootdev = makedev(majdev, device_unit(dv));
