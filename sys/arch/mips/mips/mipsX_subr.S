@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.31 2010/04/28 03:14:45 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.26.36.1.2.32 2010/06/10 00:37:12 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1084,7 +1084,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	REG_S	t8, TF_BASE+TF_REG_T8(sp)	# MIPS_CURLWP
 	REG_S	t9, TF_BASE+TF_REG_T9(sp)
 	REG_S	ra, TF_BASE+TF_REG_RA(sp)
-	REG_S	a0, TF_BASE+TF_REG_SR(sp)
+	REG_S	s1, TF_BASE+TF_REG_SR(sp)
 	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
 	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
 /*
