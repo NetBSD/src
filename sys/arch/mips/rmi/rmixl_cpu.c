@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.1.2.11 2010/05/01 06:10:04 cliff Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.1.2.12 2010/06/10 01:11:26 cliff Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.11 2010/05/01 06:10:04 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.1.2.12 2010/06/10 01:11:26 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -90,6 +90,37 @@ CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct rmixl_cpu_softc),
 static struct rmixl_cpu_trampoline_args rmixl_cpu_trampoline_args;
 #endif
 
+/*
+ * cpu_xls616_erratum
+ *
+ * on the XLS616, COUNT/COMPARE clock regs seem to interact between
+ * threads on a core 
+ *
+ * the symptom of the error is retarded clock interrupts
+ * and very slow apparent system performance
+ *
+ * other XLS chips may have the same problem.
+ * we may need to add other PID checks.
+ */
+static inline bool
+cpu_xls616_erratum(device_t parent, struct cpucore_attach_args *ca)
+{
+	if (mips_options.mips_cpu->cpu_pid == MIPS_XLS616) {
+		if (ca->ca_thread > 0) {
+			aprint_error_dev(parent, "XLS616 CLOCK ERRATUM: "
+				"deconfigure cpu%d\n", ca->ca_thread);
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool
+cpu_rmixl_erratum(device_t parent, struct cpucore_attach_args *ca)
+{
+	return cpu_xls616_erratum(parent, ca);
+}
+
 static int
 cpu_rmixl_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -103,7 +134,8 @@ cpu_rmixl_match(device_t parent, cfdata_t cf, void *aux)
 #ifndef MULTIPROCESSOR
 	    && ca->ca_thread == 0
 #endif
-	    && (thread == CPUCORECF_THREAD_DEFAULT || thread == ca->ca_thread))
+	    && (thread == CPUCORECF_THREAD_DEFAULT || thread == ca->ca_thread)
+	    && (!cpu_rmixl_erratum(parent, ca)))
 			return 1;
 
 	return 0;
@@ -115,6 +147,7 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 	struct rmixl_cpu_softc * const sc = device_private(self);
 	struct cpucore_attach_args *ca = aux;
 	struct cpu_info *ci = NULL;
+	extern void rmixl_spl_init_cpu(void);
 
 	if (ca->ca_thread == 0 && ca->ca_core == 0) {
 		ci = curcpu();
@@ -122,6 +155,7 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ci = ci;
 		ci->ci_softc = (void *)sc;
 
+		rmixl_spl_init_cpu();	/* spl initialization for CPU#0 */
 		cpu_rmixl_attach_once(sc);
 
 #ifdef MULTIPROCESSOR
@@ -130,9 +164,6 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 		struct cpucore_softc * const ccsc = device_private(parent);
 		rmixlfw_psb_type_t psb_type = rmixl_configuration.rc_psb_type;
 		cpuid_t cpuid;
-		int s;
-
-		s = splhigh();
 
 		KASSERT(ca->ca_core < 8);
 		KASSERT(ca->ca_thread < 4);
@@ -164,9 +195,6 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": failed to hatch\n");
 			return;
 		}
-
-		splx(s);
-
 #endif	/* MULTIPROCESSOR */
 	}
 
@@ -233,6 +261,10 @@ cpu_fmn_intr(void *arg, rmixl_fmn_rxmsg_t *rxmsg)
 void
 cpu_rmixl_hatch(struct cpu_info *ci)
 {
+	extern void rmixl_spl_init_cpu(void);
+
+	rmixl_spl_init_cpu();	/* spl initialization for this CPU */
+
 	(void)splhigh();
 
 #ifdef DEBUG
