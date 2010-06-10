@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.84 2010/06/10 22:07:33 pooka Exp $
+# $NetBSD: mi,v 1.85 2010/06/10 23:50:04 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1234,7 +1234,9 @@
 ./usr/tests/util/grep/d_context_c.out		tests-util-tests
 ./usr/tests/util/grep/d_context_d.out		tests-util-tests
 ./usr/tests/util/grep/d_egrep.out		tests-util-tests
-./usr/tests/util/grep/d_file_exp.inout		tests-util-tests
+./usr/tests/util/grep/d_file_exp.in		tests-util-tests
+./usr/tests/util/grep/d_file_exp.out		tests-util-tests
+./usr/tests/util/grep/d_file_exp.inout		tests-obsolete		obsolete
 ./usr/tests/util/grep/d_ignore_case.out		tests-util-tests
 ./usr/tests/util/grep/d_input			tests-util-tests
 ./usr/tests/util/grep/d_invert.in		tests-util-tests
