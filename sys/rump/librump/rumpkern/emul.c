@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.137 2010/05/11 20:25:14 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.138 2010/06/10 21:40:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.137 2010/05/11 20:25:14 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.138 2010/06/10 21:40:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.137 2010/05/11 20:25:14 pooka Exp $");
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/file.h>
-#include <sys/filedesc.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
@@ -62,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.137 2010/05/11 20:25:14 pooka Exp $");
 
 #include "rump_private.h"
 
-kmutex_t *proc_lock;
 struct lwp lwp0;
 struct vnode *rootvp;
 dev_t rootdev = NODEV;
@@ -114,28 +112,12 @@ struct emul emul_netbsd = {
 	.e_name = "netbsd-rump",
 	.e_sysent = rump_sysent,
 	.e_vm_default_addr = uvm_default_mapaddr,
+#ifdef __HAVE_SYSCALL_INTERN
+	.e_syscall_intern = syscall_intern,
+#endif
 };
 
-struct proc *
-p_find(pid_t pid, uint flags)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-struct pgrp *
-pg_find(pid_t pid, uint flags)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-int
-pgid_in_session(struct proc *p, pid_t pg_id)
-{
-
-	panic("%s: not implemented", __func__);
-}
+u_int nprocs = 1;
 
 int
 kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
@@ -188,27 +170,6 @@ assert_sleepable(void)
 	/* always sleepable, although we should improve this */
 }
 
-int
-proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-proc_crmod_enter(void)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
 void
 module_init_md(void)
 {
@@ -235,29 +196,6 @@ rump_delay(unsigned int us)
 	rumpuser_nanosleep(&sec, &nsec, &error);
 }
 void (*delay_func)(unsigned int) = rump_delay;
-
-void
-proc_sesshold(struct session *ss)
-{
-
-	panic("proc_sesshold() impossible, session %p", ss);
-}
-
-void
-proc_sessrele(struct session *ss)
-{
-
-	panic("proc_sessrele() impossible, session %p", ss);
-}
-
-int
-proc_vmspace_getref(struct proc *p, struct vmspace **vm)
-{
-
-	/* XXX */
-	*vm = p->p_vmspace;
-	return 0;
-}
 
 int
 ttycheckoutq(struct tty *tp, int wait)
@@ -298,3 +236,12 @@ cpu_reboot(int howto, char *bootstr)
 	/* this function is __dead, we must exit */
 	rumpuser_exit(0);
 }
+
+#ifdef __HAVE_SYSCALL_INTERN
+void
+syscall_intern(struct proc *p)
+{
+
+	/* no you don't */
+}
+#endif
