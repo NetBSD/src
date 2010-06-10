@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.24 2010/05/04 17:15:36 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.25 2010/06/10 00:37:58 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.24 2010/05/04 17:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.25 2010/06/10 00:37:58 cliff Exp $");
 
 /*
  *	Manages physical address maps.
@@ -518,7 +518,11 @@ pmap_bootstrap(void)
 	Sysmapsize += poolpage.size;
 #endif
 	/* XXX: else runs out of space on 256MB sbmips!! */
+#ifdef _LP64
+	Sysmapsize += physmem;
+#else
 	Sysmapsize += 20000;
+#endif
 
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on
@@ -528,7 +532,7 @@ pmap_bootstrap(void)
 	 */
 	mips_avail_start = vm_physmem[0].start << PGSHIFT;
 	mips_avail_end = vm_physmem[vm_nphysseg - 1].end << PGSHIFT;
-	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + Sysmapsize * NBPG;
+	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + (vaddr_t)Sysmapsize * NBPG;
 #ifndef _LP64
 	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS) {
 		mips_virtual_end = VM_MAX_KERNEL_ADDRESS;
