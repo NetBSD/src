@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.78.36.1.2.24 2010/05/11 22:08:02 matt Exp $ */
+/* $NetBSD: locore.h,v 1.78.36.1.2.25 2010/06/10 00:32:11 cliff Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -360,6 +360,7 @@ struct locoresw {
 	int		(*lsw_send_ipi)(struct cpu_info *, int);
 	void		(*lsw_cpu_offline_md)(void);
 	void		(*lsw_cpu_init)(struct cpu_info *);
+	int		(*lsw_bus_error)(unsigned int);
 };
 
 struct mips_vmfreelist {
