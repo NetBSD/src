@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.22 2010/02/03 15:34:40 roy Exp $	*/
+/*	$NetBSD: screen.c,v 1.23 2010/06/10 05:24:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.22 2010/02/03 15:34:40 roy Exp $");
+__RCSID("$NetBSD: screen.c,v 1.23 2010/06/10 05:24:55 dholland Exp $");
 #endif
 #endif					/* not lint */
 
@@ -117,7 +117,7 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	if ((type == NULL) && (sp = getenv("TERM")) == NULL)
 		return NULL;
 
-	if ((new_screen = (SCREEN *) malloc(sizeof(SCREEN))) == NULL)
+	if ((new_screen = calloc(1, sizeof(SCREEN))) == NULL)
 		return NULL;
 
 #ifdef DEBUG
