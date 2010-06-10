@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.1.1.1 2009/06/23 10:08:54 tron Exp $	*/
+/*	$NetBSD: smtp.c,v 1.2 2010/06/10 17:06:01 riz Exp $	*/
 
 /*++
 /* NAME
@@ -950,6 +950,7 @@ static void pre_init(char *unused_name, char **unused_argv)
 #endif
 
     if (*var_smtp_tls_level != 0)
+#ifdef USE_TLS
 	switch (tls_level_lookup(var_smtp_tls_level)) {
 	case TLS_LEV_SECURE:
 	case TLS_LEV_VERIFY:
@@ -969,6 +970,7 @@ static void pre_init(char *unused_name, char **unused_argv)
 	    /* session_tls_init() assumes that var_smtp_tls_level is sane. */
 	    msg_fatal("Invalid TLS level \"%s\"", var_smtp_tls_level);
 	}
+#endif
     use_tls = (var_smtp_use_tls || var_smtp_enforce_tls);
 
     /*
