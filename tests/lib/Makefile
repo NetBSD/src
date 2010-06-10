@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2009/11/02 10:15:45 plunky Exp $
+# $NetBSD: Makefile,v 1.3 2010/06/10 22:03:43 pooka Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		libc libevent
+SUBDIR=		libc libevent semaphore
 
 TESTSDIR=	${TESTSBASE}/lib
 
