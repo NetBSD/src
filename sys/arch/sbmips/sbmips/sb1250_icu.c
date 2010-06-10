@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.9.36.14 2010/05/16 00:34:45 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.9.36.15 2010/06/10 17:40:20 cliff Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.14 2010/05/16 00:34:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.9.36.15 2010/06/10 17:40:20 cliff Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -238,11 +238,17 @@ sb1250_cpu_init(struct cpu_softc *cpu)
 }
 
 void
+sb1250_ipl_map_init(void)
+{
+	ipl_sr_map = sb1250_ipl_sr_map;
+}
+
+void
 sb1250_icu_init(void)
 {
 	const uint64_t imr_all = 0xffffffffffffffffULL;
 
-	ipl_sr_map = sb1250_ipl_sr_map;
+	KASSERT(memcmp((const void *)&ipl_sr_map, (const void *)&sb1250_ipl_sr_map, sizeof(ipl_sr_map)) == 0);
 
 	/* zero out the list of used interrupts/lines */
 	memset(ints_for_ipl, 0, sizeof ints_for_ipl);
