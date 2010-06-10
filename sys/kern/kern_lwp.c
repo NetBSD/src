@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.146 2010/04/23 19:18:09 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.147 2010/06/10 20:54:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.146 2010/04/23 19:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.147 2010/06/10 20:54:53 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -259,6 +259,27 @@ SDT_PROBE_DEFINE(proc,,,lwp_exit,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL);
 
+struct turnstile turnstile0;
+struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
+#ifdef LWP0_CPU_INFO
+	.l_cpu = LWP0_CPU_INFO,
+#endif
+	.l_proc = &proc0,
+	.l_lid = 1,
+	.l_flag = LW_SYSTEM,
+	.l_stat = LSONPROC,
+	.l_ts = &turnstile0,
+	.l_syncobj = &sched_syncobj,
+	.l_refcnt = 1,
+	.l_priority = PRI_USER + NPRI_USER - 1,
+	.l_inheritedprio = -1,
+	.l_class = SCHED_OTHER,
+	.l_psid = PS_NONE,
+	.l_pi_lenders = SLIST_HEAD_INITIALIZER(&lwp0.l_pi_lenders),
+	.l_name = __UNCONST("swapper"),
+	.l_fd = &filedesc0,
+};
+
 void
 lwpinit(void)
 {
@@ -267,6 +288,28 @@ lwpinit(void)
 	lwp_sys_init();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
 	    "lwppl", NULL, IPL_NONE, NULL, NULL, NULL);
+}
+
+void
+lwp0_init(void)
+{
+	struct lwp *l = &lwp0;
+
+	KASSERT((void *)uvm_lwp_getuarea(l) != NULL);
+	KASSERT(l->l_lid == p->p_nlwpid);
+
+	LIST_INSERT_HEAD(&alllwp, l, l_list);
+
+	callout_init(&l->l_timeout_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&l->l_timeout_ch, sleepq_timeout, l);
+	cv_init(&l->l_sigcv, "sigwait");
+
+	kauth_cred_hold(proc0.p_cred);
+	l->l_cred = proc0.p_cred;
+
+	lwp_initspecific(l);
+
+	SYSCALL_TIME_LWP_INIT(l);
 }
 
 /*
