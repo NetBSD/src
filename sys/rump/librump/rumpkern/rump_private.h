@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.50 2010/06/03 10:56:20 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.51 2010/06/10 21:40:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,16 +48,17 @@
 #include "rumpkern_if_priv.h"
 
 extern kauth_cred_t rump_cred;
-extern struct vmspace rump_vmspace;
 
 extern struct rumpuser_mtx *rump_giantlock;
 
-#define UIO_VMSPACE_SYS (&rump_vmspace)
+#define UIO_VMSPACE_SYS (&vmspace0)
 
 extern int rump_threads;
 extern struct device rump_rootdev;
 
 extern struct sysent rump_sysent[];
+
+extern struct vmspace vmspace0;
 
 enum rump_component_type {
 	RUMP_COMPONENT_DEV,
