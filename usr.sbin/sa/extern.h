@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.8 2010/06/10 06:09:10 dholland Exp $ */
+/* $NetBSD: extern.h,v 1.9 2010/06/10 06:17:21 dholland Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -67,7 +67,6 @@ struct userinfo {
 typedef	int (*cmpf_t)(const DBT *, const DBT *);
 
 /* external functions in sa.c */
-int main(int argc, char **argv);
 const char *fmt(const DBT *);
 
 /* external functions in pdb.c */
