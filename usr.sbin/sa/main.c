@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.27 2010/06/10 06:17:21 dholland Exp $ */
+/* $NetBSD: main.c,v 1.28 2010/06/10 06:28:33 dholland Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  Christopher G. Demetriou.  All rights reserved.");
 
-__RCSID("$NetBSD: main.c,v 1.27 2010/06/10 06:17:21 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2010/06/10 06:28:33 dholland Exp $");
 #endif
 
 /*
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: main.c,v 1.27 2010/06/10 06:17:21 dholland Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-static int acct_load(char *, int);
+static int acct_load(const char *, int);
 static u_quad_t decode_comp_t(comp_t);
 static int cmp_comm(const char *, const char *);
 static int cmp_usrsys(const DBT *, const DBT *);
@@ -295,7 +295,7 @@ main(int argc, char **argv)
 }
 
 static int
-acct_load(char *pn, int wr)
+acct_load(const char *pn, int wr)
 {
 	struct acct ac;
 	struct cmdinfo ci;
