@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.419 2010/04/21 16:51:24 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.420 2010/06/10 20:54:53 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.419 2010/04/21 16:51:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.420 2010/06/10 20:54:53 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -247,7 +247,6 @@ struct timeval50 boottime50;
 #include <sys/userconf.h>
 #endif
 
-extern struct proc proc0;
 extern struct lwp lwp0;
 extern time_t rootfstime;
 
@@ -387,6 +386,7 @@ main(void)
 
 	/* Create process 0. */
 	proc0_init();
+	lwp0_init();
 
 	/* Disable preemption during boot. */
 	kpreempt_disable();
