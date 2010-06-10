@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.25 2009/11/17 18:37:45 drochner Exp $ */
+/* $NetBSD: main.c,v 1.26 2010/06/10 06:09:10 dholland Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994\
  Christopher G. Demetriou.  All rights reserved.");
 
-__RCSID("$NetBSD: main.c,v 1.25 2009/11/17 18:37:45 drochner Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2010/06/10 06:09:10 dholland Exp $");
 #endif
 
 /*
@@ -60,17 +60,17 @@ __RCSID("$NetBSD: main.c,v 1.25 2009/11/17 18:37:45 drochner Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-static int	acct_load	__P((char *, int));
-static u_quad_t	decode_comp_t	__P((comp_t));
-static int	cmp_comm	__P((const char *, const char *));
-static int	cmp_usrsys	__P((const DBT *, const DBT *));
-static int	cmp_avgusrsys	__P((const DBT *, const DBT *));
-static int	cmp_dkio	__P((const DBT *, const DBT *));
-static int	cmp_avgdkio	__P((const DBT *, const DBT *));
-static int	cmp_cpumem	__P((const DBT *, const DBT *));
-static int	cmp_avgcpumem	__P((const DBT *, const DBT *));
-static int	cmp_calls	__P((const DBT *, const DBT *));
-static void	usage		__P((void)) __dead;
+static int acct_load(char *, int);
+static u_quad_t decode_comp_t(comp_t);
+static int cmp_comm(const char *, const char *);
+static int cmp_usrsys(const DBT *, const DBT *);
+static int cmp_avgusrsys(const DBT *, const DBT *);
+static int cmp_dkio(const DBT *, const DBT *);
+static int cmp_avgdkio(const DBT *, const DBT *);
+static int cmp_cpumem(const DBT *, const DBT *);
+static int cmp_avgcpumem(const DBT *, const DBT *);
+static int cmp_calls(const DBT *, const DBT *);
+static void usage(void) __dead;
 
 int aflag, bflag, cflag, dflag, Dflag, fflag, iflag, jflag, kflag;
 int Kflag, lflag, mflag, qflag, rflag, sflag, tflag, uflag, vflag;

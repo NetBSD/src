@@ -1,4 +1,4 @@
-/* $NetBSD: pdb.c,v 1.13 2009/04/18 13:37:04 lukem Exp $ */
+/* $NetBSD: pdb.c,v 1.14 2010/06/10 06:09:10 dholland Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pdb.c,v 1.13 2009/04/18 13:37:04 lukem Exp $");
+__RCSID("$NetBSD: pdb.c,v 1.14 2010/06/10 06:09:10 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,9 +49,9 @@ __RCSID("$NetBSD: pdb.c,v 1.13 2009/04/18 13:37:04 lukem Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-static int check_junk __P((struct cmdinfo *));
-static void add_ci __P((const struct cmdinfo *, struct cmdinfo *));
-static void print_ci __P((const struct cmdinfo *, const struct cmdinfo *));
+static int check_junk(struct cmdinfo *);
+static void add_ci(const struct cmdinfo *, struct cmdinfo *);
+static void print_ci(const struct cmdinfo *, const struct cmdinfo *);
 
 static DB	*pacct_db;
 

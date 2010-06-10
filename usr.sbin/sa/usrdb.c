@@ -1,4 +1,4 @@
-/* $NetBSD: usrdb.c,v 1.11 2003/11/12 13:31:08 grant Exp $ */
+/* $NetBSD: usrdb.c,v 1.12 2010/06/10 06:09:10 dholland Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usrdb.c,v 1.11 2003/11/12 13:31:08 grant Exp $");
+__RCSID("$NetBSD: usrdb.c,v 1.12 2010/06/10 06:09:10 dholland Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: usrdb.c,v 1.11 2003/11/12 13:31:08 grant Exp $");
 #include "extern.h"
 #include "pathnames.h"
 
-static int uid_compare __P((const DBT *, const DBT *));
+static int uid_compare(const DBT *, const DBT *);
 
 static DB	*usracct_db;
 
