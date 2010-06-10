@@ -1,4 +1,4 @@
-/*	$NetBSD: sbbuswatch.c,v 1.1.2.1 2010/06/10 00:30:01 cliff Exp $	*/
+/*	$NetBSD: sbbuswatch.c,v 1.1.2.2 2010/06/10 17:35:04 cliff Exp $	*/
 /*
  * Copyright (c) 2010, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -25,6 +25,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

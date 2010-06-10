@@ -1,4 +1,4 @@
-/*	$NetBSD: sbbuswatchvar.h,v 1.1.2.1 2010/06/10 00:30:01 cliff Exp $	*/
+/*	$NetBSD: sbbuswatchvar.h,v 1.1.2.2 2010/06/10 17:33:21 cliff Exp $	*/
 /*
  * Copyright (c) 2010, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -25,6 +25,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef _ARCH_SIBYTE_DEV_SBBUSWATCHVAR_H
 #define	_ARCH_SIBYTE_DEV_SBBUSWATCHVAR_H
