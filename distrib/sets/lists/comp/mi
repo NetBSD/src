@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1461 2010/06/09 19:06:31 riz Exp $
+#	$NetBSD: mi,v 1.1462 2010/06/10 22:00:03 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2716,6 +2716,9 @@
 ./usr/lib/librumpvfs_layerfs.a			comp-c-lib
 ./usr/lib/librumpvfs_layerfs_g.a		-unknown-		debuglib
 ./usr/lib/librumpvfs_layerfs_p.a		comp-c-proflib		profile
+./usr/lib/librumpkern_ksem.a			comp-c-lib
+./usr/lib/librumpkern_ksem_g.a			-unknown-		debuglib
+./usr/lib/librumpkern_ksem_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet.a				comp-c-lib
 ./usr/lib/librumpnet_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_p.a			comp-c-proflib		profile
