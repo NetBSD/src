@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179.16.25 2010/06/10 00:37:58 cliff Exp $	*/
+/*	$NetBSD: pmap.c,v 1.179.16.26 2010/06/10 05:45:50 cliff Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.25 2010/06/10 00:37:58 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179.16.26 2010/06/10 05:45:50 cliff Exp $");
 
 /*
  *	Manages physical address maps.
@@ -517,10 +517,10 @@ pmap_bootstrap(void)
 	poolpage.size = nkmempages + MCLBYTES * nmbclusters;
 	Sysmapsize += poolpage.size;
 #endif
-	/* XXX: else runs out of space on 256MB sbmips!! */
 #ifdef _LP64
 	Sysmapsize += physmem;
 #else
+	/* XXX: else runs out of space on 256MB sbmips!! */
 	Sysmapsize += 20000;
 #endif
 
