@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.11 2010/05/04 17:14:17 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.12 2010/06/10 00:38:11 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.11 2010/05/04 17:14:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.12 2010/06/10 00:38:11 cliff Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -226,7 +226,7 @@ pmap_tlb_attach_evcnt(struct pmap_tlb_info *ti)
 	    ti->ti_name, "icache sync asts");
 	evcnt_attach_dynamic(&ti->ti_evcnt_synci_all,
 	    EVCNT_TYPE_MISC, &ti->ti_evcnt_synci_asts,
-	    ti->ti_name, "iacche full syncs");
+	    ti->ti_name, "icache full syncs");
 	evcnt_attach_dynamic(&ti->ti_evcnt_synci_pages,
 	    EVCNT_TYPE_MISC, &ti->ti_evcnt_synci_asts,
 	    ti->ti_name, "icache pages synced");
