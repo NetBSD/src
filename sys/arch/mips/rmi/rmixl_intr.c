@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.1.2.21 2010/05/28 22:14:53 cliff Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.1.2.22 2010/06/10 00:41:43 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.21 2010/05/28 22:14:53 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.1.2.22 2010/06/10 00:41:43 cliff Exp $");
 
 #include "opt_ddb.h"
 #define	__INTR_PRIVATE
@@ -474,11 +474,8 @@ void
 rmixl_intr_init_cpu(struct cpu_info *ci)
 {
 	struct rmixl_cpu_softc *sc = (void *)ci->ci_softc;
-	extern void rmixl_spl_init_cpu(void);
 
 	KASSERT(sc != NULL);
-
-	rmixl_spl_init_cpu();
 
 	for (int vec=0; vec < NINTRVECS; vec++)
 		evcnt_attach_dynamic(&sc->sc_vec_evcnts[vec],
@@ -869,28 +866,39 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
 		int vec;
 
 		asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
+		asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
 
 #ifdef IOINTR_DEBUG
-		asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
 		printf("%s: eirr %#"PRIx64", eimr %#"PRIx64", mask %#"PRIx64"\n",
 			__func__, eirr, eimr, ipl_eimr_map[ipl-1]);
 #endif	/* IOINTR_DEBUG */
 
+		/*
+		 * reduce eirr to
+		 * - ints that are enabled at or below this ipl
+		 * - exclude count/compare clock and soft ints
+		 *   they are handled elsewhere
+		 */
 		eirr &= ipl_eimr_map[ipl-1];
-		eirr &= ~ipl_eimr_map[ipl];		/* mask off higher ints */
-		eirr &= ~(MIPS_SOFT_INT_MASK >> 8);	/* mask off soft ints */
+		eirr &= ~ipl_eimr_map[ipl];
+		eirr &= ~((MIPS_INT_MASK_5 | MIPS_SOFT_INT_MASK) >> 8);
 		if (eirr == 0)
 			break;
 
 		vec = 63 - dclz(eirr);
 		ih = &rmixl_intrhand[vec];
-		KASSERT (ih->ih_ipl == ipl);
-
-		asm volatile("dmfc0 %0, $9, 7;" : "=r"(eimr));
-		asm volatile("dmtc0 $0, $9, 7;");
 		vecbit = 1ULL << vec;
+		KASSERT (ih->ih_ipl == ipl);
 		KASSERT ((vecbit & eimr) == 0);
 		KASSERT ((vecbit & RMIXL_EIRR_PRESERVE_MASK) == 0);
+
+		/*
+		 * ack in EIRR the irq we are about to handle
+		 * disable all interrupt to prevent a race that would allow
+		 * e.g. softints set from a higher interrupt getting
+		 * clobbered by the EIRR read-modify-write 
+		 */
+		asm volatile("dmtc0 $0, $9, 7;");
 		asm volatile("dmfc0 %0, $9, 6;" : "=r"(eirr));
 		eirr &= RMIXL_EIRR_PRESERVE_MASK;
 		eirr |= vecbit;
@@ -929,7 +937,7 @@ rmixl_send_ipi(struct cpu_info *ci, int tag)
 	uint32_t r;
 	extern volatile u_long cpus_running;
 
-	if ((cpus_running & 1 << ci->ci_cpuid) == 0)
+	if ((cpus_running & 1 << ci->ci_index) == 0)
 		return -1;
 
 	KASSERT(tag < NIPIS);
