@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.866 2010/06/04 08:37:09 jmmv Exp $
+# $NetBSD: mi,v 1.867 2010/06/11 18:21:44 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1367,7 +1367,7 @@
 ./usr/share/atf/atf.footer.subr			base-obsolete		obsolete
 ./usr/share/atf/atf.header.subr			base-obsolete		obsolete
 ./usr/share/atf/atf.init.subr			base-obsolete		obsolete
-./usr/share/atf/libatf-sh.subr			base-atf-share		atf
+./usr/share/atf/libatf-sh.subr			base-atf-share		atf,share
 ./usr/share/calendar				base-calendar-share
 ./usr/share/calendar/calendar.birthday		base-calendar-share	share
 ./usr/share/calendar/calendar.christian		base-calendar-share	share
