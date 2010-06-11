@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.147 2010/06/10 20:54:53 pooka Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.148 2010/06/11 07:32:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.147 2010/06/10 20:54:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.148 2010/06/11 07:32:32 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -296,7 +296,7 @@ lwp0_init(void)
 	struct lwp *l = &lwp0;
 
 	KASSERT((void *)uvm_lwp_getuarea(l) != NULL);
-	KASSERT(l->l_lid == p->p_nlwpid);
+	KASSERT(l->l_lid == proc0.p_nlwpid);
 
 	LIST_INSERT_HEAD(&alllwp, l, l_list);
 
