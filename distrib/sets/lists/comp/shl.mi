@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.120 2010/06/10 22:00:03 pooka Exp $
+# $NetBSD: shl.mi,v 1.121 2010/06/11 15:12:45 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -318,6 +318,7 @@
 ./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
 ./usr/libdata/debug/usr/lib/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libss.so.6.0.debug		comp-krb5-debug	kerberos,debug
