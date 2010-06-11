@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1462 2010/06/10 22:00:03 pooka Exp $
+#	$NetBSD: mi,v 1.1463 2010/06/11 18:21:44 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2825,8 +2825,8 @@
 ./usr/lib/libzpool_g.a				-unknown-		debuglib,zfs
 ./usr/lib/libzpool_p.a				comp-zfs-proflib	profile,zfs
 ./usr/lib/pkgconfig				comp-c-lib
-./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib		atf
-./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf
+./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib		atf,share
+./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
