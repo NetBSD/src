@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenreg.h,v 1.6 2007/10/17 19:57:12 garbled Exp $ */
+/*	$NetBSD: cgfourteenreg.h,v 1.7 2010/06/12 21:25:56 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -62,7 +62,9 @@
 #define CG14_FB_VRAM		0x00000000
 #define CG14_FB_CBGR		0x01000000
 #define CG14_FB_PX32		0x03000000
+#define CG14_FB_PB32		0x03400000
 #define CG14_FB_PG32		0x03800000
+#define CG14_FB_PR32		0x03c00000
 
 /* Main control register set */
 struct cg14ctl {
