@@ -1,4 +1,4 @@
-# $NetBSD: t_umount.sh,v 1.2 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_umount.sh,v 1.3 2010/06/12 13:31:35 pooka Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,6 +66,7 @@ EOF
 	test -e "${TMPMP}/in_mounted_directory" || \
 	    atf_fail "Test file not present in mounted directory!"
 
+	mydir="`pwd`"
 	cd "${TMPMP}"
 	atf_check -o ignore -e ignore umount -f "${BVND}${MPART}"
 
@@ -77,7 +78,7 @@ EOF
 	atf_check -s ne:0 -e ignore -o inline:"cd: can't cd to ..\n" \
 	    -x "cd .. 2>&1"
 
-	cd ..
+	cd "${mydir}"
 
 	test -e "${TMPMP}/under_the_mount" || \
 	    atf_fail "Original mount point dissapeared!"
