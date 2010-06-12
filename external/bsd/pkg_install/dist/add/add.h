@@ -1,4 +1,4 @@
-/* $NetBSD: add.h,v 1.1.1.2.6.3 2009/10/18 15:41:55 bouyer Exp $ */
+/* $NetBSD: add.h,v 1.1.1.2.6.4 2010/06/12 18:25:48 riz Exp $ */
 
 /* from FreeBSD Id: add.h,v 1.8 1997/02/22 16:09:15 peter Exp  */
 
@@ -25,7 +25,6 @@
 #ifndef _INST_ADD_H_INCLUDE
 #define _INST_ADD_H_INCLUDE
 
-extern const char *PlainPkgdb;
 extern char *Destdir;
 extern char *OverrideMachine;
 extern char *Prefix;
@@ -38,6 +37,7 @@ extern Boolean Force;
 extern Boolean Automatic;
 extern int LicenseCheck;
 extern int Replace;
+extern int ReplaceSame;
 
 extern Boolean ForceDepends;
 
