@@ -1,4 +1,4 @@
-/*	$NetBSD: runeglue.c,v 1.18 2010/06/01 13:52:08 tnozaki Exp $	*/
+/*	$NetBSD: runeglue.c,v 1.19 2010/06/12 05:54:05 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: runeglue.c,v 1.18 2010/06/01 13:52:08 tnozaki Exp $");
+__RCSID("$NetBSD: runeglue.c,v 1.19 2010/06/12 05:54:05 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -105,19 +105,19 @@ __runetable_to_netbsd_ctype(rl)
 		if (ch == EOF)
 			continue;
 
-		if (rl->rl_runetype[i] & _CTYPE_U)
+		if (rl->rl_runetype[i] & _RUNETYPE_U)
 			new_ctype[i + 1] |= _U;
-		if (rl->rl_runetype[i] & _CTYPE_L)
+		if (rl->rl_runetype[i] & _RUNETYPE_L)
 			new_ctype[i + 1] |= _L;
-		if (rl->rl_runetype[i] & _CTYPE_D)
+		if (rl->rl_runetype[i] & _RUNETYPE_D)
 			new_ctype[i + 1] |= _N;
-		if (rl->rl_runetype[i] & _CTYPE_S)
+		if (rl->rl_runetype[i] & _RUNETYPE_S)
 			new_ctype[i + 1] |= _S;
-		if (rl->rl_runetype[i] & _CTYPE_P)
+		if (rl->rl_runetype[i] & _RUNETYPE_P)
 			new_ctype[i + 1] |= _P;
-		if (rl->rl_runetype[i] & _CTYPE_C)
+		if (rl->rl_runetype[i] & _RUNETYPE_C)
 			new_ctype[i + 1] |= _C;
-		if (rl->rl_runetype[i] & _CTYPE_X)
+		if (rl->rl_runetype[i] & _RUNETYPE_X)
 			new_ctype[i + 1] |= _X;
 		/*
 		 * TWEAK!  _B has been used incorrectly (or with older
@@ -127,10 +127,10 @@ __runetable_to_netbsd_ctype(rl)
 		 * function (i.e. isblank() is inherently locale unfriendly).
 		 */
 #if 1
-		if ((rl->rl_runetype[i] & (_CTYPE_R | _CTYPE_G)) == _CTYPE_R)
+		if ((rl->rl_runetype[i] & (_RUNETYPE_R | _RUNETYPE_G)) == _RUNETYPE_R)
 			new_ctype[i + 1] |= _B;
 #else
-		if (rl->rl_runetype[i] & _CTYPE_B)
+		if (rl->rl_runetype[i] & _RUNETYPE_B)
 			new_ctype[i + 1] |= _B;
 #endif
 		new_toupper[i + 1] = (short)rl->rl_mapupper[i];
