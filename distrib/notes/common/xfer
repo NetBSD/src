@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.63.2.1 2009/04/25 23:16:34 snj Exp $
+.\"	$NetBSD: xfer,v 1.63.2.2 2010/06/12 01:14:20 riz Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -655,10 +655,10 @@ If you don't have access to a functioning nameserver during
 installation, the IPv4 address of
 .Sy ftp.NetBSD.org
 is
-.Li 204.152.190.13
+.Li 204.152.190.15
 and the IPv6 address is
-.Li 2001:4f8:3:7:230:48ff:fe31:43f2
-(as of April, 2009).
+.Li 2001:4f8:3:7:230:48ff:fec6:9aaa:21
+(as of May, 2010).
 .Pp
 Once you have this information, you can proceed to the next
 step in the installation or upgrade process.
