@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.30 2006/11/26 16:16:31 jmmv Exp $	*/
+/*	$NetBSD: interact.c,v 1.30.26.1 2010/06/12 01:11:42 riz Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.30 2006/11/26 16:16:31 jmmv Exp $");
+__RCSID("$NetBSD: interact.c,v 1.30.26.1 2010/06/12 01:11:42 riz Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -72,7 +72,7 @@ static int	getinput(const char *, const char *, const char *, char *);
 static int	alphacmp(const void *, const void *);
 static void	defnum(struct disklabel *, char *, uint32_t);
 static void	dumpnames(const char *, const char * const *, size_t);
-static int	getnum(struct disklabel *, char *, int);
+static intmax_t	getnum(struct disklabel *, char *, intmax_t);
 
 static int rounding = 0;	/* sector rounding */
 static int chaining = 0;	/* make partitions contiguous */
@@ -449,6 +449,7 @@ static void
 cmd_part(struct disklabel *lp, char *s, int fd)
 {
 	int	i;
+	intmax_t im;
 	char	line[BUFSIZ];
 	char	def[BUFSIZ];
 	int	part;
@@ -508,14 +509,15 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 				    cp[line[0] - 'a'].p_size;
 			}
 		} else {
-			if ((i = getnum(lp, line, 0)) == -1) {
+			if ((im = getnum(lp, line, 0)) == -1 || im < 0) {
 				printf("Bad offset `%s'\n", line);
 				continue;
-			} else if (i > lp->d_secperunit) {
+			} else if (im > 0xffffffffLL ||
+				   (uint32_t)im > lp->d_secperunit) {
 				printf("Offset `%s' out of range\n", line);
 				continue;
 			}
-			p->p_offset = i;
+			p->p_offset = (uint32_t)im;
 		}
 		break;
 	}
@@ -527,16 +529,16 @@ cmd_part(struct disklabel *lp, char *s, int fd)
 			return;
 		else if (i == 0)
 			break;
-		if ((i = getnum(lp, line, lp->d_secperunit - p->p_offset))
+		if ((im = getnum(lp, line, lp->d_secperunit - p->p_offset))
 		    == -1) {
 			printf("Bad size `%s'\n", line);
 			continue;
-		} else if
-		    ((i + p->p_offset) > lp->d_secperunit) {
+		} else if (im > 0xffffffffLL ||
+			   (im + p->p_offset) > lp->d_secperunit) {
 			printf("Size `%s' out of range\n", line);
 			continue;
 		}
-		p->p_size = i;
+		p->p_size = im;
 		break;
 	}
 
@@ -713,15 +715,15 @@ defnum(struct disklabel *lp, char *buf, uint32_t size)
 }
 
 
-static int
-getnum(struct disklabel *lp, char *buf, int max)
+static intmax_t
+getnum(struct disklabel *lp, char *buf, intmax_t defaultval)
 {
 	char	*ep;
 	double	 d;
-	int	 rv;
+	intmax_t rv;
 
-	if (max && buf[0] == '$' && buf[1] == 0)
-		return max;
+	if (defaultval && buf[0] == '$' && buf[1] == 0)
+		return defaultval;
 
 	d = strtod(buf, &ep);
 	if (buf == ep)
@@ -734,32 +736,32 @@ getnum(struct disklabel *lp, char *buf, int max)
 	case '\0':
 	case 's':
 	case 'S':
-		rv = (int) d;
+		rv = (intmax_t) d;
 		break;
 
 	case 'c':
 	case 'C':
-		rv = (int) (d * lp->d_secpercyl);
+		rv = (intmax_t) (d * lp->d_secpercyl);
 		break;
 
 	case 'k':
 	case 'K':
-		rv =  (int) (d * 1024 / lp->d_secsize);
+		rv =  (intmax_t) (d * 1024 / lp->d_secsize);
 		break;
 
 	case 'm':
 	case 'M':
-		rv =  (int) (d * 1024 * 1024 / lp->d_secsize);
+		rv =  (intmax_t) (d * 1024 * 1024 / lp->d_secsize);
 		break;
 
 	case 'g':
 	case 'G':
-		rv =  (int) (d * 1024 * 1024 * 1024 / lp->d_secsize);
+		rv =  (intmax_t) (d * 1024 * 1024 * 1024 / lp->d_secsize);
 		break;
 
 	case 't':
 	case 'T':
-		rv =  (int) (d * 1024 * 1024 * 1024 * 1024 / lp->d_secsize);
+		rv =  (intmax_t) (d * 1024 * 1024 * 1024 * 1024 / lp->d_secsize);
 		break;
 
 	default:
