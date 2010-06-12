@@ -1,4 +1,4 @@
-# $NetBSD: t_sort.sh,v 1.1 2010/06/05 22:38:39 dholland Exp $
+# $NetBSD: t_sort.sh,v 1.2 2010/06/12 13:15:01 pooka Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,9 +27,6 @@
 
 # the implementation of "sort" to test
 : ${TEST_SORT:="sort"}
-
-# a file large enough that sort makes temporary files
-WORDS=/usr/share/dict/words
 
 
 atf_test_case basic
@@ -177,7 +174,8 @@ plusopts_body()
 	# old behavior: sort: ftmp: mkstemp("-k1.1"): No such file or directory
 	echo "----- test: sort -T + $WORDS -----"
 	mkdir ./+
-	$TEST_SORT -T + $WORDS > /dev/null || atf_fail "program failed"
+	yes | sed 200000q | $TEST_SORT -T + > /dev/null \
+	    || atf_fail "program failed"
 	rm -rf ./+
 }
 
