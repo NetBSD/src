@@ -158,8 +158,12 @@ static int init384(EVP_MD_CTX *ctx)
 static int init512(EVP_MD_CTX *ctx)
 	{ return SHA512_Init(ctx->md_data); }
 /* See comment in SHA224/256 section */
+static int update384(EVP_MD_CTX *ctx,const void *data,size_t count)
+	{ return SHA384_Update(ctx->md_data,data,count); }
 static int update512(EVP_MD_CTX *ctx,const void *data,size_t count)
 	{ return SHA512_Update(ctx->md_data,data,count); }
+static int final384(EVP_MD_CTX *ctx,unsigned char *md)
+	{ return SHA384_Final(md,ctx->md_data); }
 static int final512(EVP_MD_CTX *ctx,unsigned char *md)
 	{ return SHA512_Final(md,ctx->md_data); }
 
@@ -170,8 +174,8 @@ static const EVP_MD sha384_md=
 	SHA384_DIGEST_LENGTH,
 	0,
 	init384,
-	update512,
-	final512,
+	update384,
+	final384,
 	NULL,
 	NULL,
 	EVP_PKEY_RSA_method,
