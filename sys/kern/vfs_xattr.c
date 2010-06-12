@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.19 2008/06/23 11:30:41 ad Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.19.6.1 2010/06/12 00:59:57 riz Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.19 2008/06/23 11:30:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.19.6.1 2010/06/12 00:59:57 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 		syscallarg(int) attrnamespace;
 		syscallarg(const char *) attrname;
 	} */
-	struct vnode *vp;
+	struct vnode *vp, *path_vp;
 	struct nameidata nd;
 	char attrname[EXTATTR_MAXNAMELEN];
 	int error;
@@ -161,30 +161,32 @@ sys_extattrctl(struct lwp *l, const struct sys_extattrctl_args *uap, register_t 
 			return (error);
 	}
 
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
+	error = namei(&nd);
+	if (error) {
+		return (error);
+	}
+	path_vp = nd.ni_vp;
+
 	vp = NULL;
 	if (SCARG(uap, filename) != NULL) {
 		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 		    SCARG(uap, filename));
 		error = namei(&nd);
-		if (error)
+		if (error) {
+			vrele(path_vp);
 			return (error);
+		}
 		vp = nd.ni_vp;
 	}
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path));
-	error = namei(&nd);
-	if (error) {
-		if (vp != NULL)
-			vput(vp);
-		return (error);
-	}
-
-	error = VFS_EXTATTRCTL(nd.ni_vp->v_mount, SCARG(uap, cmd), vp,
+	error = VFS_EXTATTRCTL(path_vp->v_mount, SCARG(uap, cmd), vp,
 	    SCARG(uap, attrnamespace),
 	    SCARG(uap, attrname) != NULL ? attrname : NULL);
 
 	if (vp != NULL)
 		vrele(vp);
+	vrele(path_vp);
 
 	return (error);
 }
