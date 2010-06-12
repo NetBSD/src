@@ -1,4 +1,4 @@
-# $NetBSD: t_ipf.in,v 1.1 2009/02/20 21:42:59 jmmv Exp $
+# $NetBSD: t_ipf.in,v 1.2 2010/06/12 14:07:18 pooka Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -321,17 +321,17 @@ tc:i20:itest:desc_i:text:ipf
 tc:i21:itest:desc_i:text:ipf
 
 tc_desc:desc_n:Checks NAT
-tc:n1:nattest:desc_n:text:text
-tc:n2:nattest:desc_n:text:text
+tc_skip:n1:nattest:desc_n:text:text
+tc_skip:n2:nattest:desc_n:text:text
 tc:n3:nattest:desc_n:text:text
-tc:n4:nattest:desc_n:text:text
-tc:n5:nattest:desc_n:text:text
-tc:n6:nattest:desc_n:text:text
+tc_skip:n4:nattest:desc_n:text:text
+tc_skip:n5:nattest:desc_n:text:text
+tc_skip:n6:nattest:desc_n:text:text
 tc:n7:nattest:desc_n:text:text
 tc:n8:nattest:desc_n:hex:hex:-T fr_update_ipid=0
 tc:n9:nattest:desc_n:hex:hex:-T fr_update_ipid=0
 tc:n10:nattest:desc_n:hex:hex:-T fr_update_ipid=0
-tc:n11:nattest:desc_n:text:text
+tc_skip:n11:nattest:desc_n:text:text
 tc:n12:nattest:desc_n:hex:hex:-T fr_update_ipid=0
 tc:n13:nattest:desc_n:text:text
 tc:n14:nattest:desc_n:text:text
@@ -343,20 +343,20 @@ tc:ni1:natipftest:desc_ni:multi:hex:hex:-T fr_update_ipid=1
 tc:ni2:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
 tc:ni3:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
 tc:ni4:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
-tc:ni5:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc_skip:ni5:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
 tc:ni6:natipftest:desc_ni:multi:hex:hex:-T fr_update_ipid=1
 tc:ni7:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
 tc:ni8:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
 tc:ni9:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
-tc:ni10:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
-tc:ni11:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
-tc:ni12:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc_skip:ni10:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc_skip:ni11:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
+tc_skip:ni12:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
 tc:ni13:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
 tc:ni14:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
 tc:ni15:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
 tc:ni16:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=1
-tc:ni19:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=0
-tc:ni20:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=0
+tc_skip:ni19:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=0
+tc_skip:ni20:natipftest:desc_ni:single:hex:hex:-T fr_update_ipid=0
 tc:ni21:natipftest:desc_ni:multi:text:text
 tc:ni23:natipftest:desc_ni:multi:text:text:-D
 
@@ -389,8 +389,8 @@ tc:ipv6_5:dotest6:desc_ipv6:hex:hex
 tc:ipv6_6:dotest6:desc_ipv6:hex:text
 
 tc_desc:desc_bpf:Checks BPF
-tc:bpf1:itest:desc_bpf:text:ipf
-tc:bpf_f1:bpftest:desc_bpf:text:text
+tc_skip:bpf1:itest:desc_bpf:text:ipf
+tc_skip:bpf_f1:bpftest:desc_bpf:text:text
 
 atf_init_test_cases()
 {

@@ -1,4 +1,4 @@
-# $NetBSD: t_ipf.awk,v 1.2 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_ipf.awk,v 1.3 2010/06/12 14:07:18 pooka Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,28 +29,48 @@ BEGIN {
 	FS = ":";
 };
 
-/^tc:/ {
+function maketc(name, type, desc, rest, skip)
+{
 
-	desc = ($4 in descs) ? descs[$4] : $4;
-
-	printf "atf_test_case %s\n", $2;
-	printf "%s_head()\n", $2;
+	printf "atf_test_case %s\n", name;
+	printf "%s_head()\n", name;
 	print  "{"
 	printf "	atf_set \"descr\" \"%s\"\n", desc;
 	printf "	atf_set \"use.fs\" \"true\"\n", desc;
 	print  "}"
-	printf "%s_body()\n", $2;
+	printf "%s_body()\n", name;
 	print  "{"
 
-	printf "	h_%s %s", $3, $2;
-	for (i = 5; i <= NF; ++i)
-		printf " \"%s\"", $i;
+	if (skip) {
+		printf "	atf_skip \"test suspected to be broken\"\n\n"
+	}
+	printf "	h_%s %s %s", type, name, rest;
 	printf "\n";
 
 	print  "}"
 	print  ""
 
 	tcs[count++] = $2;
+}
+
+/^tc:/ {
+	desc = ($4 in descs) ? descs[$4] : $4;
+	rest = "\"" $5 "\""
+	for (i = 6; i <= NF; ++i)
+		rest = rest " \"" $i "\""
+
+	maketc($2, $3, desc, rest, 0)
+
+	next
+}
+
+/^tc_skip:/ {
+	desc = ($4 in descs) ? descs[$4] : $4;
+	rest = "\"" $5 "\""
+	for (i = 6; i <= NF; ++i)
+		rest = rest " \"" $i "\""
+
+	maketc($2, $3, desc, rest, 1)
 
 	next
 }
