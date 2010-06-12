@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.34 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.34.8.1 2010/06/12 18:38:00 riz Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.34 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.34.8.1 2010/06/12 18:38:00 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,8 +517,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (caddr_t)SCARG(uap, dent))
+	if (outp == (caddr_t)SCARG(uap, dent)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:

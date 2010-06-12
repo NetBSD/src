@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.39 2006/10/16 20:18:55 martin Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.39.2.1 2010/06/12 18:38:01 riz Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.39 2006/10/16 20:18:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.39.2.1 2010/06/12 18:38:01 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,8 +365,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (char *)(u_long) SCARG(uap, dp))
+	if (outp == (char *)(u_long) SCARG(uap, dp)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:
@@ -491,8 +495,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (caddr_t)(u_long)SCARG(uap, buf))
+	if (outp == (caddr_t)(u_long)SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;	/* update the vnode offset */
 
 eof:
