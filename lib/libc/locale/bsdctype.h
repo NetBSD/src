@@ -1,4 +1,4 @@
-/* $NetBSD: bsdctype.h,v 1.4 2010/06/01 18:00:28 tnozaki Exp $ */
+/* $NetBSD: bsdctype.h,v 1.5 2010/06/12 18:03:09 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -35,9 +35,9 @@ typedef struct {
 	char			fbl_id[8];
 	uint32_t		fbl_rev;
 	uint32_t		fbl_num_chars;
-	uint8_t			fbl_ctype_tab  [_CTYPE_NUM_CHARS];
-	int16_t			fbl_tolower_tab[_CTYPE_NUM_CHARS];
-	int16_t			fbl_toupper_tab[_CTYPE_NUM_CHARS];
+	uint8_t			fbl_ctype_tab  [_CTYPE_CACHE_SIZE];
+	int16_t			fbl_tolower_tab[_CTYPE_CACHE_SIZE];
+	int16_t			fbl_toupper_tab[_CTYPE_CACHE_SIZE];
 } __packed _FileBSDCTypeLocale;
 
 typedef struct {
