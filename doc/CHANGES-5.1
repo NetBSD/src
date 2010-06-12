@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.233 2010/06/12 02:51:37 riz Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.234 2010/06/12 16:40:14 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17341,6 +17341,11 @@ UPDATING					1.197 via patch
 
 	add a note about native xorg updates
 	[mrg, ticket #1413]
+
+sys/net/if.c					1.244
+
+	Correct the argument order of ifreqn2o conversion.  Fixes PR/42585.
+	[skrll, ticket #1416]
 
 gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
