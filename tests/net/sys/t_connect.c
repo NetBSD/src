@@ -1,4 +1,4 @@
-/*	$NetBSD: t_connect.c,v 1.2 2010/06/12 14:31:29 pooka Exp $	*/
+/*	$NetBSD: t_connect.c,v 1.3 2010/06/12 15:01:04 wiz Exp $	*/
 /*
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -52,7 +52,7 @@ ATF_TC_BODY(low_port, tc)
 	slist = socket(AF_INET, SOCK_STREAM, 0);
 	sd = socket(AF_INET, SOCK_STREAM, 0);
 
-	/* bind listening sucket */
+	/* bind listening socket */
 	memset(&sinlist, 0, sizeof(sinlist));
 	sinlist.sin_family = AF_INET;
 	sinlist.sin_port = htons(31522);
