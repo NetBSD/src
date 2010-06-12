@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.42 2006/11/14 13:34:30 elad Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.42.2.1 2010/06/12 18:38:01 riz Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.42 2006/11/14 13:34:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.42.2.1 2010/06/12 18:38:01 riz Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -821,8 +821,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (caddr_t)(u_long)SCARG(uap, buf))
+	if (outp == (caddr_t)(u_long)SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;		/* update the vnode offset */
 
 eof:
