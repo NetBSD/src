@@ -1,4 +1,4 @@
-/* $NetBSD: ctypeio.c,v 1.3 2010/05/22 06:38:16 tnozaki Exp $ */
+/* $NetBSD: ctypeio.c,v 1.4 2010/06/12 18:02:31 tnozaki Exp $ */
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ctypeio.c,v 1.3 2010/05/22 06:38:16 tnozaki Exp $");
+__RCSID("$NetBSD: ctypeio.c,v 1.4 2010/06/12 18:02:31 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __savectype(const char *name, unsigned char *new_ctype,
     short *new_toupper, short *new_tolower)
 {
 	FILE *fp;
-	uint32_t i, len = _CTYPE_NUM_CHARS;
+	uint32_t i, len = _CTYPE_CACHE_SIZE;
 
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(new_ctype != NULL);
