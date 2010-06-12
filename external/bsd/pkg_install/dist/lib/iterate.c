@@ -1,4 +1,4 @@
-/*	$NetBSD: iterate.c,v 1.1.1.2.6.3 2009/10/18 15:41:56 bouyer Exp $	*/
+/*	$NetBSD: iterate.c,v 1.1.1.2.6.4 2010/06/12 18:25:49 riz Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -154,7 +154,7 @@ iterate_pkg_db(int (*matchiter)(const char *, void *), void *cookie)
 	DIR *dirp;
 	int retval;
 
-	if ((dirp = opendir(_pkgdb_getPKGDB_DIR())) == NULL) {
+	if ((dirp = opendir(pkgdb_get_dir())) == NULL) {
 		if (errno == ENOENT)
 			return 0; /* No pkgdb directory == empty pkgdb */
 		return -1;
