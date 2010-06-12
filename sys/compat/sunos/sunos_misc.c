@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.143 2006/11/14 13:34:30 elad Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.143.2.1 2010/06/12 18:38:01 riz Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.143 2006/11/14 13:34:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.143.2.1 2010/06/12 18:38:01 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -594,8 +594,12 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == SCARG(uap, buf))
+	if (outp == SCARG(uap, buf)) {
+		if (cookiebuf)
+			free(cookiebuf, M_TEMP);
+		cookiebuf = NULL;
 		goto again;
+	}
 	fp->f_offset = off;		/* update the vnode offset */
 
 eof:
