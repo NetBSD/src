@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.29 2010/05/22 17:43:29 tnozaki Exp $	*/
+/*	$NetBSD: yacc.y,v 1.30 2010/06/12 02:51:34 tnozaki Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.29 2010/05/22 17:43:29 tnozaki Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.30 2010/06/12 02:51:34 tnozaki Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: yacc.y,v 1.29 2010/05/22 17:43:29 tnozaki Exp $");
 #include <arpa/inet.h>	/* Needed for htonl on POSIX systems. */
 
 #include <err.h>
-#include "runetype_local.h"
 #include <locale.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -60,6 +59,8 @@ __RCSID("$NetBSD: yacc.y,v 1.29 2010/05/22 17:43:29 tnozaki Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <ctype.h>
+
+#include "runetype_local.h"
 
 #include "ldef.h"
 
@@ -69,7 +70,10 @@ rune_map	maplower = { { 0, }, };
 rune_map	mapupper = { { 0, }, };
 rune_map	types = { { 0, }, };
 
-_NBRuneLocale	new_locale = { { 0, }, };
+_FileRuneLocale new_locale = { { 0, }, };
+
+size_t rl_variable_len = (size_t)0; 
+void *rl_variable = NULL;
 
 __nbrune_t	charsetbits = (__nbrune_t)0x00000000;
 #if 0
@@ -134,10 +138,11 @@ table	:	entry
 	;
 
 entry	:	ENCODING STRING
-		{ strncpy(new_locale.rl_encoding, $2, sizeof(new_locale.rl_encoding)); }
+		{ strncpy(new_locale.frl_encoding, $2, sizeof(new_locale.frl_encoding)); }
 	|	VARIABLE
-		{ new_locale.rl_variable_len = strlen($1) + 1;
-		  new_locale.rl_variable = strdup($1);
+		{ rl_variable_len = strlen($1) + 1;
+		  rl_variable = strdup($1);
+		  new_locale.frl_variable_len = htonl((u_int32_t)rl_variable_len);
 		}
 	|	CHARSET RUNE
 		{ charsetbits = $2; charsetmask = 0x0000007f; }
@@ -176,7 +181,7 @@ entry	:	ENCODING STRING
 		  }
 		}
 	|	INVALID RUNE
-		{ new_locale.rl_invalid_rune = $2; }
+		{ new_locale.frl_invalid_rune = htonl((u_int32_t)$2); }
 	|	LIST list
 		{ set_map(&types, $2, $1); }
 	|	MAPLOWER map
@@ -308,8 +313,8 @@ main(ac, av)
 	maplower.map[x] = x;
     }
 
-    new_locale.rl_invalid_rune = _NB_DEFAULT_INVALID_RUNE;
-    memcpy(new_locale.rl_magic, _NB_RUNE_MAGIC_1, sizeof(new_locale.rl_magic));
+    new_locale.frl_invalid_rune = htonl((u_int32_t)_NB_DEFAULT_INVALID_RUNE);
+    memcpy(new_locale.frl_magic, _NB_RUNE_MAGIC_1, sizeof(new_locale.frl_magic));
 
     yyparse();
 
@@ -624,10 +629,8 @@ dump_tables()
 {
     int x, n;
     rune_list *list;
-    _FileRuneLocale file_new_locale;
     FILE *fp = ofile;
-
-    memset(&file_new_locale, 0, sizeof(file_new_locale));
+    u_int32_t nranges;
 
     /*
      * See if we can compress some of the istype arrays
@@ -642,13 +645,6 @@ dump_tables()
 	}
     }
 
-    memcpy(&file_new_locale.frl_magic, new_locale.rl_magic,
-	sizeof(file_new_locale.frl_magic));
-    memcpy(&file_new_locale.frl_encoding, new_locale.rl_encoding,
-	sizeof(file_new_locale.frl_encoding));
-
-    file_new_locale.frl_invalid_rune = htonl(new_locale.rl_invalid_rune);
-
     /*
      * Fill in our tables.  Do this in network order so that
      * diverse machines have a chance of sharing data.
@@ -656,9 +652,9 @@ dump_tables()
      *  word size.  Sigh.  We tried.)
      */
     for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
-	file_new_locale.frl_runetype[x] = htonl(types.map[x]);
-	file_new_locale.frl_maplower[x] = htonl(maplower.map[x]);
-	file_new_locale.frl_mapupper[x] = htonl(mapupper.map[x]);
+	new_locale.frl_runetype[x] = htonl(types.map[x]);
+	new_locale.frl_maplower[x] = htonl(maplower.map[x]);
+	new_locale.frl_mapupper[x] = htonl(mapupper.map[x]);
     }
 
     /*
@@ -666,32 +662,33 @@ dump_tables()
      */
     list = types.root;
 
+    nranges = (u_int32_t)0;
     while (list) {
-	new_locale.rl_runetype_ext.rr_nranges++;
+	++nranges;
 	list = list->next;
     }
-    file_new_locale.frl_runetype_ext.frr_nranges =
-	htonl(new_locale.rl_runetype_ext.rr_nranges);
+    new_locale.frl_runetype_ext.frr_nranges =
+	htonl(nranges);
 
     list = maplower.root;
 
+    nranges = (u_int32_t)0;
     while (list) {
-	new_locale.rl_maplower_ext.rr_nranges++;
+	++nranges;
 	list = list->next;
     }
-    file_new_locale.frl_maplower_ext.frr_nranges =
-	htonl(new_locale.rl_maplower_ext.rr_nranges);
+    new_locale.frl_maplower_ext.frr_nranges =
+	htonl(nranges);
 
     list = mapupper.root;
 
+    nranges = (u_int32_t)0;
     while (list) {
-	new_locale.rl_mapupper_ext.rr_nranges++;
+	++nranges;
 	list = list->next;
     }
-    file_new_locale.frl_mapupper_ext.frr_nranges =
-	htonl(new_locale.rl_mapupper_ext.rr_nranges);
-
-    file_new_locale.frl_variable_len = htonl(new_locale.rl_variable_len);
+    new_locale.frl_mapupper_ext.frr_nranges =
+	htonl(nranges);
 
     /*
      * Okay, we are now ready to write the new locale file.
@@ -700,8 +697,8 @@ dump_tables()
     /*
      * PART 1: The _RuneLocale structure
      */
-    if (fwrite((char *)&file_new_locale, sizeof(file_new_locale), 1, fp) != 1)
-	err(1, "writing _RuneLocale to %s", locale_file);
+    if (fwrite((char *)&new_locale, sizeof(new_locale), 1, fp) != 1)
+	err(1, "writing _FileRuneLocale to %s", locale_file);
     /*
      * PART 2: The runetype_ext structures (not the actual tables)
      */
@@ -761,20 +758,20 @@ dump_tables()
     /*
      * PART 5: And finally the variable data
      */
-    if (new_locale.rl_variable_len != 0 &&
-	fwrite((char *)new_locale.rl_variable,
-	       new_locale.rl_variable_len, 1, fp) != 1)
+    if (rl_variable_len != 0 &&
+	fwrite((char *)rl_variable, rl_variable_len, 1, fp) != 1)
 	err(1, "writing variable data to %s", locale_file);
     fclose(fp);
 
     if (!debug)
 	return;
 
-    if (new_locale.rl_encoding[0])
-	fprintf(stderr, "ENCODING	%s\n", new_locale.rl_encoding);
-    if (new_locale.rl_variable)
-	fprintf(stderr, "VARIABLE	%s\n",
-		(char *)new_locale.rl_variable);
+    if (new_locale.frl_encoding[0])
+	fprintf(stderr, "ENCODING	%.*s\n",
+	    (int)sizeof(new_locale.frl_encoding), new_locale.frl_encoding);
+    if (rl_variable)
+	fprintf(stderr, "VARIABLE	%.*s\n",
+	    (int)rl_variable_len, (char *)rl_variable);
 
     fprintf(stderr, "\nMAPLOWER:\n\n");
 
