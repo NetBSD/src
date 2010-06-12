@@ -1,4 +1,4 @@
-# $NetBSD: t_sort.sh,v 1.2 2010/06/12 13:15:01 pooka Exp $
+# $NetBSD: t_sort.sh,v 1.3 2010/06/12 13:15:54 pooka Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -172,7 +172,7 @@ plusopts_body()
 	rm -f in
 
 	# old behavior: sort: ftmp: mkstemp("-k1.1"): No such file or directory
-	echo "----- test: sort -T + $WORDS -----"
+	echo "----- test: yes | sed 200000q | sort -T + -----"
 	mkdir ./+
 	yes | sed 200000q | $TEST_SORT -T + > /dev/null \
 	    || atf_fail "program failed"
