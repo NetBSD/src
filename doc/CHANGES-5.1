@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.231 2010/05/20 18:46:36 snj Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.232 2010/06/12 01:58:35 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17309,4 +17309,36 @@ sys/sys/param.h					patch
 
 	Welcome to 5.1_RC2!
 	[snj]
+
+sys/netinet/tcp_input.c				1.304-305
+
+	Avoid KASSERT() in kern_timeout.c because pool_put() is called from
+	ipintr context.
+	[bouyer, ticket #1382]
+
+sys/kern/vfs_xattr.c				1.21 via patch
+
+	Don't namei while holding vnode lock.  kern/43328
+	[pooka, ticket #1405]
+
+sys/dev/usb/ehci.c				1.167
+
+	ehci(4) workaround for Nvidia controllers.  Fixes PR#37884.
+	[jakllsch, ticket #1409]
+
+sbin/disklabel/interact.c			1.34 via patch
+
+	Change getnum() to use intmax_t instead of int, so it doesn't overflow
+	between 2^31 and 2^32. Adjust call sites accordingly. PR 43354.
+	[dholland, ticket #1410]
+
+distrib/notes/common/xfer			1.68
+
+	Update IP addresses (both IPv4 and IPv6) of current ftp.NetBSD.org.
+	[tsutsui, ticket #1408]
+
+UPDATING					1.197 via patch
+
+	add a note about native xorg updates
+	[mrg, ticket #1413]
 
