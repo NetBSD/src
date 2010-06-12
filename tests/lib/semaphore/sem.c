@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.2 2010/06/10 22:20:38 pooka Exp $	*/
+/*	$NetBSD: sem.c,v 1.3 2010/06/12 22:59:59 pooka Exp $	*/
 
 /*
  * Common code for semaphore tests.  This can be included both into
@@ -115,6 +115,8 @@ hthread(void *arg)
 		sem_wait(&semmarit[1]);
 		sem_wait(&semmarit[0]);
 	}
+
+	return NULL;
 }
 
 ATF_TC_BODY(busydestroy, tc)
