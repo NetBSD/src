@@ -1,4 +1,4 @@
-/*	$NetBSD: t_connect.c,v 1.1 2008/05/01 15:38:17 jmmv Exp $	*/
+/*	$NetBSD: t_connect.c,v 1.2 2010/06/12 14:31:29 pooka Exp $	*/
 /*
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,10 +45,22 @@ ATF_TC_HEAD(low_port, tc)
 }
 ATF_TC_BODY(low_port, tc)
 {
-	struct sockaddr_in sin;
-	int sd, val;
+	struct sockaddr_in sin, sinlist;
+	int sd, val, slist;
+	socklen_t slen;
 
+	slist = socket(AF_INET, SOCK_STREAM, 0);
 	sd = socket(AF_INET, SOCK_STREAM, 0);
+
+	/* bind listening sucket */
+	memset(&sinlist, 0, sizeof(sinlist));
+	sinlist.sin_family = AF_INET;
+	sinlist.sin_port = htons(31522);
+	sinlist.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	ATF_REQUIRE_EQ(bind(slist,
+	    (struct sockaddr *)&sinlist, sizeof(sinlist)), 0);
+	ATF_REQUIRE_EQ(listen(slist, 1), 0);
 
 	val = IP_PORTRANGE_LOW;
 	if (setsockopt(sd, IPPROTO_IP, IP_PORTRANGE, &val,
@@ -57,8 +69,8 @@ ATF_TC_BODY(low_port, tc)
 
 	memset(&sin, 0, sizeof(sin));
 
-	sin.sin_port = htons(80);
-	sin.sin_addr.s_addr = inet_addr("204.152.190.12"); /* www.NetBSD.org */
+	sin.sin_port = htons(31522);
+	sin.sin_addr.s_addr = inet_addr("127.0.0.1");
 	sin.sin_family = AF_INET;
 
 	if (connect(sd, (struct sockaddr *)&sin, sizeof(sin)) == -1) {
@@ -68,6 +80,11 @@ ATF_TC_BODY(low_port, tc)
 		    err != EACCES ? "" : " (see http://mail-index.netbsd.org/"
 		    "source-changes/2007/12/16/0011.html)");
 	}
+
+	slen = sizeof(sin);
+	ATF_REQUIRE_EQ(getsockname(sd, (struct sockaddr *)&sin, &slen), 0);
+	ATF_REQUIRE_EQ(slen, sizeof(sin));
+	ATF_REQUIRE(ntohs(sin.sin_port) <= IPPORT_RESERVEDMAX);
 
 	close(sd);
 }
