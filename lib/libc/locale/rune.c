@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.36 2010/06/01 13:52:08 tnozaki Exp $	*/
+/*	$NetBSD: rune.c,v 1.37 2010/06/12 05:54:05 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.36 2010/06/01 13:52:08 tnozaki Exp $");
+__RCSID("$NetBSD: rune.c,v 1.37 2010/06/12 05:54:05 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -433,37 +433,37 @@ _Read_CTypeAsRune(fp)
 		 * - isprint() declaration in ctype.h incorrectly uses _B.
 		 *   _B means "isprint but !isgraph", not "isblank" with the
 		 *   declaration.
-		 * - _X and _CTYPE_X have negligible difference in meaning.
+		 * - _X and _RUNETYPE_X have negligible difference in meaning.
 		 * - we don't set digit value, fearing that it would be
 		 *   too much of hardcoding.  we may need to revisit it.
 		 */
 
 		if (new_ctype[1 + x] & _U)
-			rl->rl_runetype[x] |= _CTYPE_U;
+			rl->rl_runetype[x] |= _RUNETYPE_U;
 		if (new_ctype[1 + x] & _L)
-			rl->rl_runetype[x] |= _CTYPE_L;
+			rl->rl_runetype[x] |= _RUNETYPE_L;
 		if (new_ctype[1 + x] & _N)
-			rl->rl_runetype[x] |= _CTYPE_D;
+			rl->rl_runetype[x] |= _RUNETYPE_D;
 		if (new_ctype[1 + x] & _S)
-			rl->rl_runetype[x] |= _CTYPE_S;
+			rl->rl_runetype[x] |= _RUNETYPE_S;
 		if (new_ctype[1 + x] & _P)
-			rl->rl_runetype[x] |= _CTYPE_P;
+			rl->rl_runetype[x] |= _RUNETYPE_P;
 		if (new_ctype[1 + x] & _C)
-			rl->rl_runetype[x] |= _CTYPE_C;
+			rl->rl_runetype[x] |= _RUNETYPE_C;
 		/* derived flag bits, duplicate of ctype.h */
 		if (new_ctype[1 + x] & (_U | _L))
-			rl->rl_runetype[x] |= _CTYPE_A;
+			rl->rl_runetype[x] |= _RUNETYPE_A;
 		if (new_ctype[1 + x] & (_N | _X))
-			rl->rl_runetype[x] |= _CTYPE_X;
+			rl->rl_runetype[x] |= _RUNETYPE_X;
 		if (new_ctype[1 + x] & (_P|_U|_L|_N))
-			rl->rl_runetype[x] |= _CTYPE_G;
+			rl->rl_runetype[x] |= _RUNETYPE_G;
 		/* we don't really trust _B in the file.  see above. */
 		if (new_ctype[1 + x] & _B)
-			rl->rl_runetype[x] |= _CTYPE_B;
+			rl->rl_runetype[x] |= _RUNETYPE_B;
 		if ((new_ctype[1 + x] & (_P|_U|_L|_N|_B)) || x == ' ')
-			rl->rl_runetype[x] |= (_CTYPE_R | _CTYPE_SW1);
+			rl->rl_runetype[x] |= (_RUNETYPE_R | _RUNETYPE_SW1);
 		if (x == ' ' || x == '\t')
-			rl->rl_runetype[x] |= _CTYPE_B;
+			rl->rl_runetype[x] |= _RUNETYPE_B;
 
 		/* XXX may fail on non-8bit encoding only */
 		rl->rl_mapupper[x] = ntohs(new_toupper[1 + x]);
