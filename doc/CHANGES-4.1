@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.199 2010/06/12 18:27:43 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.200 2010/06/12 18:39:02 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4117,3 +4117,26 @@ external/bsd/pkg_install/dist/lib/version.h		patch
 	
 	Update to pkg_install-20100204.
 	[joerg, ticket #1385]
+
+crypto/dist/openssl/crypto/evp/m_sha1.c		patch
+
+	Ensure that SHA384 always calls the SHA384 functions.
+	Should fix PR 42881.
+	[joerg, ticket #1386]
+
+sys/compat/common/vfs_syscalls_30.c		1.31 via patch
+sys/compat/ibcs2/ibcs2_misc.c			1.110 via patch
+sys/compat/irix/irix_dirent.c			1.24 via patch
+sys/compat/linux/common/linux_file64.c		1.50 via patch
+sys/compat/linux/common/linux_misc.c		1.214 via patch
+sys/compat/linux32/common/linux32_dirent.c	1.10 via patch
+sys/compat/osf1/osf1_file.c			1.38 via patch
+sys/compat/sunos/sunos_misc.c			1.166 via patch
+sys/compat/sunos32/sunos32_misc.c		1.69 via patch
+sys/compat/svr4/svr4_misc.c			1.149 via patch
+sys/compat/svr4_32/svr4_32_misc.c		1.68 via patch
+
+	Ensure that we free the cookie buffer before re-doing
+	VOP_READDIR, so that we don't leak memory. PR#42661.
+	[he, ticket #1387]
+
