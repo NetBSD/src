@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.184 2010/04/23 15:38:47 pooka Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.185 2010/06/12 21:10:55 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.184 2010/04/23 15:38:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.185 2010/06/12 21:10:55 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1049,7 +1049,7 @@ again:
 				pgs[i]->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
 			}
 			mutex_exit(&uobj->vmobjlock);
-			return 0;
+			goto out;
 		} else if (error == NFSERR_STALEWRITEVERF) {
 			nfs_clearcommit(vp->v_mount);
 			goto again;
