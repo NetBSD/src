@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.89 2010/06/10 21:40:42 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.90 2010/06/13 15:17:02 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -115,6 +115,10 @@ ARCHDIR=	${RUMPTOP}/librump/rumpkern/arch/${MACHINE_ARCH}
 .PATH:	${ARCHDIR}
 .else
 SRCS+=	kobj_stubs.c rumpcpu_generic.c
+.endif
+
+.if ${MACHINE} == "sun3"
+CPPFLAGS+=	-Dsun3
 .endif
 
 # include libkern source files
