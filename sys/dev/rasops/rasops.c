@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.64 2010/05/06 04:30:18 macallan Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.65 2010/06/13 01:55:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.64 2010/05/06 04:30:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.65 2010/06/13 01:55:24 tsutsui Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -1456,7 +1456,8 @@ rasops_putchar_rotated_ccw(void *cookie, int row, int col, u_int uc, long attr)
 
 	/* Do rotated underline */
 	rp = ri->ri_bits + (ri->ri_cols - col - 1) * ri->ri_yscale +
-	    row * ri->ri_xscale;
+	    row * ri->ri_xscale +
+	    (ri->ri_font->fontwidth - 1) * ri->ri_pelbytes;
 	height = ri->ri_font->fontheight;
 
 	/* XXX this assumes 16-bit color depth */
