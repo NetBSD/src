@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.201 2010/06/13 06:01:35 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.202 2010/06/13 18:16:30 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4152,4 +4152,28 @@ external/bsd/fetch/dist/libfetch/ftp.c			patch
 
 	Libfetch 2.31 import.
 	[joerg, ticket #1390]
+
+sys/net/bpf_filter.c				1.36
+
+	The correct check for BPF_K is with BPF_SRC for BPF_ALU ops.            
+	Fixes possible division-by-zero crashes by evil filter expressions      
+	like "len / 0 = 1".  Fixes PR kern/43185.                               
+	[drochner, ticket #1393]
+
+lib/libusbhid/data.c				1.6
+
+	hid_get_data() will read an extra byte if the data being read ends on
+	a byte boundary. Fix this by rounding up and ending the loop
+	one earlier.
+	[plunky, ticket #1394]
+
+libexec/ftpd/popen.c				1.37
+
+	Fix ftpd remote crash.  (From FreeBSD) PR#43023.
+	[dholland, ticket #1395]
+
+bin/date/date.c					1.53
+
+	Don't blow up on date +''. PR#39392.
+	[dholland, ticket #1396]
 
