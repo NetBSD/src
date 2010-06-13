@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.176 2010/03/01 21:10:16 darran Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.177 2010/06/13 04:13:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.176 2010/03/01 21:10:16 darran Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.177 2010/06/13 04:13:31 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -502,6 +502,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	getmicrotime(&p2->p_stats->p_start);
 	p2->p_acflag = AFORK;
 	lwp_lock(l2);
+	KASSERT(p2->p_nrlwps == 1);
 	if (p2->p_sflag & PS_STOPFORK) {
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;

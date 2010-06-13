@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.31 2010/01/30 21:23:46 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.32 2010/06/13 04:13:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.31 2010/01/30 21:23:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.32 2010/06/13 04:13:31 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -216,7 +216,6 @@ aio_procinit(struct proc *p)
 
 	/* Complete the initialization of thread, and run it */
 	aio->aio_worker = l;
-	p->p_nrlwps++;
 	lwp_lock(l);
 	l->l_stat = LSRUN;
 	l->l_priority = MAXPRI_USER;
