@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.20 2009/10/21 14:15:50 rmind Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.21 2010/06/13 02:11:23 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.20 2009/10/21 14:15:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.21 2010/06/13 02:11:23 tsutsui Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -226,6 +226,11 @@ ixp425_intr_calculate_masks(void)
 	ixp425_imask[IPL_SOFTBIO] = SI_TO_IRQBIT(SI_SOFTBIO);
 	ixp425_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
 	ixp425_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+#else
+	KASSERT(ixp425_imask[IPL_SOFTCLOCK] == 0);
+	KASSERT(ixp425_imask[IPL_SOFTBIO] == 0);
+	KASSERT(ixp425_imask[IPL_SOFTNET] == 0);
+	KASSERT(ixp425_imask[IPL_SOFTSERIAL] == 0);
 #endif
 
 	/*
@@ -233,10 +238,6 @@ ixp425_intr_calculate_masks(void)
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	ixp425_imask[IPL_SOFTBIO] |= ixp425_imask[IPL_SOFTCLOCK];
-	ixp425_imask[IPL_SOFTNET] |= ixp425_imask[IPL_SOFTBIO];
-	ixp425_imask[IPL_SOFTSERIAL] |= ixp425_imask[IPL_SOFTNET];
-	ixp425_imask[IPL_VM] |= ixp425_imask[IPL_SOFTSERIAL];
 	ixp425_imask[IPL_SCHED] |= ixp425_imask[IPL_VM];
 	ixp425_imask[IPL_HIGH] |= ixp425_imask[IPL_SCHED];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.30 2008/11/19 06:30:49 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.31 2010/06/13 02:11:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30 2008/11/19 06:30:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2010/06/13 02:11:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,10 +65,14 @@ set_spl_masks(void)
 		spl_masks[loop] = 0xffffffff;
 	}
 
-	spl_masks[IPL_VM]	= irqmasks[IPL_VM];
-	spl_masks[IPL_SCHED]	= irqmasks[IPL_SCHED];
-	spl_masks[IPL_HIGH]	= irqmasks[IPL_HIGH];
-	spl_masks[IPL_NONE]	= irqmasks[IPL_NONE];
+	spl_masks[IPL_VM]	  = irqmasks[IPL_VM];
+	spl_masks[IPL_SCHED]	  = irqmasks[IPL_SCHED];
+	spl_masks[IPL_HIGH]	  = irqmasks[IPL_HIGH];
+	spl_masks[IPL_SOFTSERIAL] = irqmasks[IPL_SOFTSERIAL];
+	spl_masks[IPL_SOFTNET]	  = irqmasks[IPL_SOFTNET];
+	spl_masks[IPL_SOFTBIO]	  = irqmasks[IPL_SOFTBIO];
+	spl_masks[IPL_SOFTCLOCK]  = irqmasks[IPL_SOFTCLOCK];
+	spl_masks[IPL_NONE]	  = irqmasks[IPL_NONE];
 
 }
 

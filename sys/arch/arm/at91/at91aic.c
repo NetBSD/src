@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.3 2009/10/23 06:53:12 snj Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.3 2009/10/23 06:53:12 snj Exp $	*/
+/*	$Id: at91aic.c,v 1.4 2010/06/13 02:11:22 tsutsui Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.4 2010/06/13 02:11:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -145,23 +145,20 @@ at91aic_calculate_masks(void)
 		aic_imask[ipl] = aic_irqs;
 	}
 
-	aic_imask[IPL_NONE] = 0;
+	/* IPL_NONE must open up all interrupts */
+	KASSERT(aic_imask[IPL_NONE] == 0);
+	KASSERT(aic_imask[IPL_SOFTCLOCK] == 0);
+	KASSERT(aic_imask[IPL_SOFTBIO] == 0);
+	KASSERT(aic_imask[IPL_SOFTNET] == 0);
+	KASSERT(aic_imask[IPL_SOFTSERIAL] == 0);
 
 	/*
-	 * splvm() blocks all interrupts that use the kernel memory
-	 * allocation facilities.
+	 * Enforce a hierarchy that gives "slow" device (or devices with
+	 * limited input buffer space/"real-time" requirements) a better
+	 * chance at not dropping data.
 	 */
-	aic_imask[IPL_VM] |= aic_imask[IPL_NONE];
-
-	/*
-	 * splclock() must block anything that uses the scheduler.
-	 */
-	aic_imask[IPL_CLOCK] |= aic_imask[IPL_VM];
-
-	/*
-	 * splhigh() must block "everything".
-	 */
-	aic_imask[IPL_HIGH] |= aic_imask[IPL_CLOCK];
+	aic_imask[IPL_SCHED] |= aic_imask[IPL_VM];
+	aic_imask[IPL_HIGH] |= aic_imask[IPL_SCHED];
 
 	/*
 	 * Now compute which IRQs must be blocked when servicing any

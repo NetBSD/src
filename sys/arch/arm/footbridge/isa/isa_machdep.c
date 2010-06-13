@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.16 2009/08/20 12:51:28 he Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.17 2010/06/13 02:11:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.16 2009/08/20 12:51:28 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.17 2010/06/13 02:11:22 tsutsui Exp $");
 
 #include "opt_irqstats.h"
 
@@ -203,12 +203,6 @@ intr_calculatemasks(void)
 		imask[level] = irqs;
 	}
 
-	imask[IPL_NONE] = 0;
-	imask[IPL_SOFTCLOCK] |= imask[IPL_NONE];
-	imask[IPL_SOFTBIO] |= imask[IPL_SOFTCLOCK];
-	imask[IPL_SOFTNET] |= imask[IPL_SOFTBIO];
-	imask[IPL_SOFTSERIAL] |= imask[IPL_SOFTNET];
-	imask[IPL_VM] |= imask[IPL_SOFTSERIAL];
 	imask[IPL_SCHED] |= imask[IPL_VM];
 	imask[IPL_HIGH] |= imask[IPL_SCHED];
 
