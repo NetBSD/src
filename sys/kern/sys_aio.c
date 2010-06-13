@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.32 2010/06/13 04:13:31 yamt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.33 2010/06/13 04:45:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.32 2010/06/13 04:13:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.33 2010/06/13 04:45:50 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -520,13 +520,6 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	aio = p->p_aio;
 	if (aio) {
 		mutex_enter(&aio->aio_mtx);
-		if (aio->curjob) {
-			a_job = aio->curjob;
-			if (a_job->aiocb_uptr == aiocb_uptr) {
-				mutex_exit(&aio->aio_mtx);
-				return EINVAL;
-			}
-		}
 		TAILQ_FOREACH(a_job, &aio->jobs_queue, list) {
 			if (a_job->aiocb_uptr != aiocb_uptr)
 				continue;
