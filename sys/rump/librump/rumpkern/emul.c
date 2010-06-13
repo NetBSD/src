@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.140 2010/06/13 11:35:41 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.141 2010/06/13 15:17:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.140 2010/06/13 11:35:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.141 2010/06/13 15:17:02 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -104,7 +104,7 @@ int pgshift = 12;
 #endif
 
 /* sun3 is sun3 with broken kernel modules */
-#if _MACHINE == sun3
+#ifdef sun3
 char KERNBASE[1]; /* this is completely random ... */
 #endif
 
