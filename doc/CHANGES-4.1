@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.200 2010/06/12 18:39:02 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.201 2010/06/13 06:01:35 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4139,4 +4139,17 @@ sys/compat/svr4_32/svr4_32_misc.c		1.68 via patch
 	Ensure that we free the cookie buffer before re-doing
 	VOP_READDIR, so that we don't leak memory. PR#42661.
 	[he, ticket #1387]
+
+sys/arch/xen/x86/xen_bus_dma.c			1.20 via patch
+
+	Fix failed allocation of DMA memory under dom0.
+	[jym, ticket #1388]
+
+external/bsd/fetch/dist/libfetch/common.c		patch
+external/bsd/fetch/dist/libfetch/common.h		patch
+external/bsd/fetch/dist/libfetch/fetch.cat3		removed
+external/bsd/fetch/dist/libfetch/ftp.c			patch
+
+	Libfetch 2.31 import.
+	[joerg, ticket #1390]
 
