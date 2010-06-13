@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.138 2010/06/10 21:40:42 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.139 2010/06/13 11:05:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.138 2010/06/10 21:40:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.139 2010/06/13 11:05:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -96,9 +96,11 @@ krwlock_t exec_lock;
 
 struct lwplist alllwp = LIST_HEAD_INITIALIZER(alllwp);
 
-/* sparc doesn't sport constant page size */
+/* sparc doesn't sport constant page size, pretend we have 4k pages */
 #ifdef __sparc__
 int nbpg = 4096;
+int pgofset = 4096-1;
+int pgshift = 12;
 #endif
 
 struct loadavg averunnable = {
