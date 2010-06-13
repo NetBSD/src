@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.31 2010/06/09 17:37:24 phx Exp $ */
+/*	$NetBSD: md.c,v 1.32 2010/06/13 15:32:00 phx Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -160,6 +160,14 @@ md_cleanup_install(void)
 {
 #ifndef DEBUG
 	enable_rc_conf();
+
+	/*
+	 * For KUROBOX set the console speed to 57600 in /etc/ttys.
+	 */
+	if (get_kernel_set() == SET_KERNEL_2)
+		run_program(RUN_CHROOT,
+		    "sed -an -e 's/115200/57600/;H;$!d;g;w /etc/ttys'"
+		    " /etc/ttys");
 #endif
 }
 
