@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.148 2010/06/11 07:32:32 pooka Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.149 2010/06/13 04:13:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.148 2010/06/11 07:32:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.149 2010/06/13 04:13:31 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -745,6 +745,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_lid = p2->p_nlwpid;
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
 	p2->p_nlwps++;
+	p2->p_nrlwps++;
 
 	if ((p2->p_flag & PK_SYSTEM) == 0) {
 		/* Inherit an affinity */

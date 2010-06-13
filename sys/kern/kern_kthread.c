@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.29 2010/05/12 15:53:20 haad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.30 2010/06/13 04:13:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.29 2010/05/12 15:53:20 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.30 2010/06/13 04:13:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,12 +149,6 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 		lwp_unlock(l);
 	} else
 		lwp_unlock_to(l, ci->ci_schedstate.spc_lwplock);
-
-	/*
-	 * The LWP is not created suspended or stopped and cannot be set
-	 * into those states later, so must be considered runnable.
-	 */
-	proc0.p_nrlwps++;
 	mutex_exit(proc0.p_lock);
 
 	/* All done! */
