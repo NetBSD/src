@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.12 2009/10/21 21:12:05 rmind Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.13 2010/06/13 04:13:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.12 2009/10/21 21:12:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.13 2010/06/13 04:13:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1837,9 +1837,6 @@ sa_newcachelwp(struct lwp *l, struct sadata_vp *targ_vp)
 	 * newlwp helpfully puts it there. Unclear if newlwp should
 	 * be tweaked.
 	 */
-	mutex_enter(p->p_lock);
-	p->p_nrlwps++;
-	mutex_exit(p->p_lock);
 
 	vp = (targ_vp) ? targ_vp : l->l_savp;
 	mutex_enter(&vp->savp_mutex);
