@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.c,v 1.37 2010/06/12 05:54:05 tnozaki Exp $	*/
+/*	$NetBSD: rune.c,v 1.38 2010/06/13 04:14:57 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rune.c,v 1.37 2010/06/12 05:54:05 tnozaki Exp $");
+__RCSID("$NetBSD: rune.c,v 1.38 2010/06/13 04:14:57 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,8 +81,8 @@ __RCSID("$NetBSD: rune.c,v 1.37 2010/06/12 05:54:05 tnozaki Exp $");
 #include "citrus_module.h"
 #include "citrus_ctype.h"
 
-#include "bsdctype.h"
-#include "rune_local.h"
+#include "bsdctype_local.h"
+#include "runetype_local.h"
 
 static int readrange __P((_RuneLocale *, _RuneRange *, _FileRuneRange *, void *, FILE *));
 static void _freeentry __P((_RuneRange *));
@@ -251,7 +251,7 @@ _Read_RuneMagi(fp)
 
 	if (fread(&frl, sizeof(frl), 1, fp) != 1)
 		return NULL;
-	if (memcmp(frl.frl_magic, _RUNE_MAGIC_1, sizeof(frl.frl_magic)))
+	if (memcmp(frl.frl_magic, _RUNECT10_MAGIC, sizeof(frl.frl_magic)))
 		return NULL;
 
 	hostdatalen = sizeof(*rl) + ntohl((u_int32_t)frl.frl_variable_len) +
@@ -416,7 +416,7 @@ _Read_CTypeAsRune(fp)
 	rl = (_RuneLocale *)(void *)hostdata;
 	rl->rl_variable = NULL;
 
-	memcpy(rl->rl_magic, _RUNE_MAGIC_1, sizeof(rl->rl_magic));
+	memcpy(rl->rl_magic, _RUNECT10_MAGIC, sizeof(rl->rl_magic));
 	memcpy(rl->rl_encoding, "NONE", 4);
 
 	rl->rl_invalid_rune = _DefaultRuneLocale.rl_invalid_rune;	/*XXX*/
