@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.235 2010/05/26 23:53:21 pooka Exp $	*/
+/*	$NetBSD: tty.c,v 1.236 2010/06/13 03:34:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.235 2010/05/26 23:53:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.236 2010/06/13 03:34:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2575,8 +2575,8 @@ out:
 
 /*
  * Sleep on chan, returning ERESTART if tty changed while we napped and
- * returning any errors (e.g. EINTR/ETIMEDOUT) reported by tsleep.  If
- * the tty is revoked, restarting a pending call will redo validation done
+ * returning any errors (e.g. EINTR/ETIMEDOUT) reported by cv_timedwait(_sig).
+ * If the tty is revoked, restarting a pending call will redo validation done
  * at the start of the call.
  *
  * Must be called with the tty lock held.
