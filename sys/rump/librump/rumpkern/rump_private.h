@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.52 2010/06/12 07:13:54 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.53 2010/06/13 16:49:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -79,6 +79,13 @@ static const struct rump_component rumpcomp = {		\
 };							\
 __link_set_add_rodata(rump_components, rumpcomp);	\
 static void rumpcompinit(void)
+
+#define FLAWLESSCALL(call)						\
+do {									\
+	int att_error;							\
+	if ((att_error = call) != 0)					\
+		panic("\"%s\" failed", #call);				\
+} while (/*CONSTCOND*/0)
 
 void		rump_component_init(enum rump_component_type);
 int		rump_component_count(enum rump_component_type);
