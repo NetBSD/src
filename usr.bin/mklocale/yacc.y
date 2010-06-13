@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.30 2010/06/12 02:51:34 tnozaki Exp $	*/
+/*	$NetBSD: yacc.y,v 1.31 2010/06/13 04:14:57 tnozaki Exp $	*/
 
 %{
 /*-
@@ -43,7 +43,7 @@
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.30 2010/06/12 02:51:34 tnozaki Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.31 2010/06/13 04:14:57 tnozaki Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: yacc.y,v 1.30 2010/06/12 02:51:34 tnozaki Exp $");
 #include <unistd.h>
 #include <ctype.h>
 
-#include "runetype_local.h"
+#include "runetype_file.h"
 
 #include "ldef.h"
 
@@ -313,8 +313,8 @@ main(ac, av)
 	maplower.map[x] = x;
     }
 
-    new_locale.frl_invalid_rune = htonl((u_int32_t)_NB_DEFAULT_INVALID_RUNE);
-    memcpy(new_locale.frl_magic, _NB_RUNE_MAGIC_1, sizeof(new_locale.frl_magic));
+    new_locale.frl_invalid_rune = htonl((u_int32_t)_DEFAULT_INVALID_RUNE);
+    memcpy(new_locale.frl_magic, _RUNECT10_MAGIC, sizeof(new_locale.frl_magic));
 
     yyparse();
 

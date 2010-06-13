@@ -1,4 +1,4 @@
-/* $NetBSD: localeio_lc_ctype.c,v 1.4 2010/06/01 18:00:28 tnozaki Exp $ */
+/* $NetBSD: localeio_lc_ctype.c,v 1.5 2010/06/13 04:14:57 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeio_lc_ctype.c,v 1.4 2010/06/01 18:00:28 tnozaki Exp $");
+__RCSID("$NetBSD: localeio_lc_ctype.c,v 1.5 2010/06/13 04:14:57 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -45,10 +45,10 @@ __RCSID("$NetBSD: localeio_lc_ctype.c,v 1.4 2010/06/01 18:00:28 tnozaki Exp $");
 #include <stdio.h>
 #include <string.h>
 
-#include "setlocale_local.h"
-
+#include "bsdctype_local.h"
 #include "aliasname_local.h"
-#include "bsdctype.h"
+
+#include "setlocale_local.h"
 
 /*
  * macro required by all template headers

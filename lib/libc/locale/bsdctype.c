@@ -1,4 +1,4 @@
-/* $NetBSD: bsdctype.c,v 1.6 2010/06/02 16:04:52 tnozaki Exp $ */
+/* $NetBSD: bsdctype.c,v 1.7 2010/06/13 04:14:57 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bsdctype.c,v 1.6 2010/06/02 16:04:52 tnozaki Exp $");
+__RCSID("$NetBSD: bsdctype.c,v 1.7 2010/06/13 04:14:57 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/stat.h>
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: bsdctype.c,v 1.6 2010/06/02 16:04:52 tnozaki Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "bsdctype.h"
+#include "bsdctype_local.h"
 
 const _BSDCTypeLocale _DefaultBSDCTypeLocale = {
     _C_ctype_,

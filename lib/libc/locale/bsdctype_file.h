@@ -1,7 +1,7 @@
-/* $NetBSD: ctype_local.h,v 1.4 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: bsdctype_file.h,v 1.1 2010/06/13 04:14:57 tnozaki Exp $ */
 
 /*-
- * Copyright (c) 2010 Citrus Project,
+ * Copyright (c)2008 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,16 +25,22 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef _CTYPE_LOCAL_H_
-#define _CTYPE_LOCAL_H_
 
-#include <limits.h>
+#ifndef _BSDCTYPE_FILE_H_
+#define _BSDCTYPE_FILE_H_
 
-#define _CTYPE_NUM_CHARS	(1 << CHAR_BIT)
-#define _CTYPE_CACHE_SIZE	(1 << 8)
+#include "ctype_local.h"
 
-extern const unsigned char _C_ctype_[];
-extern const short _C_toupper_[];
-extern const short _C_tolower_[];
+typedef struct {
+	char			fbl_id[8];
+	uint32_t		fbl_rev;
+	uint32_t		fbl_num_chars;
+	uint8_t			fbl_ctype_tab  [_CTYPE_CACHE_SIZE];
+	int16_t			fbl_tolower_tab[_CTYPE_CACHE_SIZE];
+	int16_t			fbl_toupper_tab[_CTYPE_CACHE_SIZE];
+} __packed _FileBSDCTypeLocale;
 
-#endif /*_CTYPE_LOCAL_H_*/
+#define _CTYPE_ID		"BSDCTYPE"
+#define _CTYPE_REV		2
+
+#endif /*_BSDCTYPE_FILE_H_*/
