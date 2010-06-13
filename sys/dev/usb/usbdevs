@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.554 2010/06/12 23:15:18 pgoyette Exp $
+$NetBSD: usbdevs,v 1.555 2010/06/13 02:33:54 tsutsui Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -177,6 +177,7 @@ vendor WACOM		0x056a	WACOM
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
 vendor ELECOM		0x056e	Elecom
+vendor XYRATEX		0x0572	Xyratex
 vendor HAUPPAUGE	0x0573	Hauppauge Computer Works
 vendor BAFO		0x0576	BAFO/Quality Computer Accessories
 vendor YEDATA		0x057b	Y-E Data
@@ -333,6 +334,7 @@ vendor AUTHENTEC	0x08ff	AuthenTec
 vendor AUDIOTECHNICA	0x0909	Audio-Technica
 vendor TRUMPION		0x090a	Trumpion Microelectronics
 vendor ALATION		0x0910	Alation Systems
+vendor GLOBESPAN	0x0915	Globespan
 vendor CONCORDCAMERA	0x0919	Concord Camera
 vendor GARMIN		0x091e	Garmin
 vendor GOHUBS		0x0921	GoHubs
@@ -395,6 +397,7 @@ vendor USR		0x0baf	U.S. Robotics
 vendor AMBIT		0x0bb2	Ambit Microsystems
 vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
+vendor FSC		0x0bf8	Fujitsu Siemens Computers
 vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
 vendor CHICONY2		0x0c45	Chicony Electronics
@@ -408,6 +411,7 @@ vendor SMC3		0x0d5c	Standard Microsystems
 vendor PEN		0x0d7d	Pen Drive
 vendor ACDC		0x0d7e	American Computer & Digital Components
 vendor CMEDIA		0x0d8c	C-Media Electronics Inc.
+vendor CONCEPTRONIC2	0x0d8e	Conceptronic
 vendor MSI		0x0db0	Micro Star
 vendor ELCON		0x0db7	ELCON Systemtechnik
 vendor SITECOMEU	0x0df6	Sitecom Europe
@@ -445,6 +449,7 @@ vendor TOPFIELD		0x11db	Topfield Co., Ltd
 vendor NETINDEX		0x11f6	NetIndex
 vendor FUJITSU2		0x1221	Fujitsu Ltd.
 vendor TSUNAMI		0x1241	Tsunami
+vendor PHEENET		0x124a	Pheenet
 vendor TARGUS		0x1267	Targus
 vendor TWINMOS		0x126f	TwinMOS
 vendor CREATIVE2	0x1292	Creative Labs
@@ -574,6 +579,7 @@ product ABOCOM WUG2700		0xb21f	WUG2700
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet Adapter
 product ACCTON 111		0x3503	T-Sinus 111 WLAN
 product ACCTON SMCWUSBG		0x4505	SMCWUSB-G
+product ACCTON PRISM_GT		0x4521	PrismGT USB 2.0 WLAN
 product ACCTON SS1001		0x5046	SpeedStream Ethernet Adapter
 product ACCTON ZD1211B		0xe501	ZD1211B
 
@@ -654,6 +660,10 @@ product AIRPRIME PC5220		0x0112	CDMA Wireless PC Card
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
+
+/* Alcatel Telecom products */
+product ALCATELT ST120G		0x0120	SpeedTouch 120g
+product ALCATELT ST121G		0x0121	SpeedTouch 121g
 
 /* Alcor Micro, Inc. products */
 product ALCOR2 KBD_HUB		0x2802	Kbd Hub
@@ -853,6 +863,8 @@ product CHPRODUCTS FIGHTERSTICK 0x00f3	Fighterstick
 product CHPRODUCTS FLIGHTYOKE	0x00ff	Flight Sim Yoke
 
 /* Cisco-Linksys products */
+product CISCOLINKSYS WUSB54GV2	0x000a	WUSB54G v2
+product CISCOLINKSYS WUSB54AG	0x000c	WUSB54AG
 product CISCOLINKSYS WUSB54G	0x000d	WUSB54G Wireless-G USB Network Adapter
 product CISCOLINKSYS WUSB54GP	0x0011	WUSB54GP Wireless-G USB Network Adapter
 product CISCOLINKSYS USB200MV2	0x0018	USB200M v2
@@ -874,6 +886,7 @@ product COMPAQ HNE200		0x8511	HNE-200 USB Ethernet adapter
 product COMPOSITE USBPS2	0x0001	USB to PS2 Adaptor
 
 /* Conceptronic products */
+product CONCEPTRONIC2 PRISM_GT	0x3762	PrismGT USB 2.0 WLAN
 product CONCEPTRONIC C54RU	0x3c02	C54RU WLAN
 product CONCEPTRONIC C54RU2	0x3c22	C54RU
 
@@ -891,6 +904,7 @@ product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 product COREGA WLANUSB		0x0012	Wireless LAN USB Stick-11
 product COREGA FETHER_USB2_TX	0x0017	FEther USB2-TX
 product COREGA WLUSB_11_KEY	0x001a	ULUSB-11 Key
+product COREGA CGWLUSB2GTST	0x0020	CG-WLUSB2GTST
 product COREGA CGUSBRS232R	0x002a	CG-USBRS232R
 product COREGA CGWLUSB2GL	0x002d	CG-WLUSB2GL
 product COREGA CGWLUSB2GPX	0x002e	CG-WLUSB2GPX
@@ -940,7 +954,9 @@ product DELL X3			0x4002	Axim X3 PDA
 product DELL X30		0x4003	Axim X30 PDA
 product DELL BC02		0x8000	BC02 Bluetooth USB Adapter
 product DELL TM1180		0x8100	TrueMobile 1180 WLAN
+product DELL PRISM_GT_1		0x8102	PrismGT USB 2.0 WLAN
 product DELL TM350		0x8103	TrueMobile 350 Bluetooth USB Adapter
+product DELL PRISM_GT_2		0x8104	PrismGT USB 2.0 WLAN
 product DELL HSDPA		0x8137	Dell/Novatel Wireless HSDPA Modem
 product DELL W5500		0x8155	Dell Wireless W5500 HSDPA Modem
 
@@ -989,6 +1005,7 @@ product DISPLAYLINK UM7X0	0x401a	nanovision MiMo
 product DLINK DUBE100		0x1a00	10/100 ethernet adapter
 product DLINK DSB650TX4		0x200c	10/100 ethernet adapter
 product DLINK DWL122		0x3700	Wireless DWL122
+product DLINK DWLG122A2		0x3704	DWL-G122 rev A2
 product DLINK DWLG122		0x3c00	AirPlus G Wireless USB Adapter
 product DLINK2 DWLG122C1	0x3c03	DWL-G122 rev C1
 product DLINK2 WUA1340		0x3c04	WUA-1340
@@ -1133,6 +1150,9 @@ product FUJIPHOTO MASS0100	0x0100	Mass Storage
 /* Fujitsu protducts */
 product FUJITSU AH_F401U	0x105b	AH-F401U Air H device
 
+/* Fujitsu Siemens Computers products */
+product FSC E5400		0x1009	PrismGT USB 2.0 WLAN
+
 /* General Instruments (Motorola) products */
 product GENERALINSTMNTS SB5100	0x5100	SURFboard SB5100 Cable modem
 
@@ -1159,6 +1179,10 @@ product GMATE YP3X00		0x1001	YP3X00 PDA
 
 /* Garmin products */
 product GARMIN FORERUNNER305	0x0003	Forerunner 305
+
+/* Globespan products */
+product GLOBESPAN PRISM_GT_1	0x2000	PrismGT USB 2.0 WLAN
+product GLOBESPAN PRISM_GT_2	0x2002	PrismGT USB 2.0 WLAN
 
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
@@ -1328,6 +1352,7 @@ product INTEL I2011B		0x1111	Wireless 2011B
 product INTEL TESTBOARD		0x9890	82930 test board
 
 /* Intersil products */
+product INTERSIL PRISM_GT	0x1000	PrismGT USB 2.0 WLAN
 product INTERSIL PRISM_2X	0x3642	Prism2.x WLAN
 
 /* Interpid Control Systems products */
@@ -1865,6 +1890,9 @@ product PERACOM ENET		0x0002	Ethernet adapter
 product PERACOM ENET3		0x0003	At Home Ethernet Adapter
 product PERACOM ENET2		0x0005	Ethernet adapter
 
+/* Pheenet products */
+product PHEENET GWU513		0x4025	GWU513
+
 /* Philips products */
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
@@ -1879,6 +1907,7 @@ product PHILIPS PCVC730K	0x0310	PCVC730K ToUCam Fun PC Camera
 product PHILIPS PCVC740K	0x0311	PCVC740K ToUCam Pro PC Camera
 product PHILIPS PCVC750K	0x0312	PCVC750K ToUCam Pro Scan PC Camera
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
+product PHILIPS CPWUA054	0x1230	CPWUA054
 product PHILIPS SNU5600		0x1236	SNU5600
 product PHILIPS DIVAUSB		0x1801	DIVA USB mp3 player
 
@@ -2110,6 +2139,7 @@ product SHARP A300		0x8005	A300
 product SHARP SL5600		0x8006	SL5600
 product SHARP C700		0x8007	C700
 product SHARP C750		0x9031	C750
+product SHARP RUITZ1016YCZZ	0x90fd	WS003SH WLAN
 product SHARP WS007SH		0x9123	WS007SH
 product SHARP WS011SH		0x91ac	WS011SH
 
@@ -2416,6 +2446,7 @@ product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
 
 /* U.S. Robotics products */
 product USR USR1120		0x00eb	USR1120 WLAN
+product USR USR5422		0x0118	USR5422 WLAN
 product USR USR5423		0x0121	USR5423 WLAN
 
 /* USI products */
@@ -2465,11 +2496,16 @@ product WINCHIPHEAD CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
 product WINCHIPHEAD2 CH341	0x7523	CH341 serial/parallel
 
 /* Wistron NeWeb products */
+product WISTRONNEWEB UR045G	0x0427	PrismGT USB 2.0 WLAN
 product WISTRONNEWEB UR055G	0x0711	UR055G
 
 /* Xirlink products */
 product XIRLINK IMAGING		0x800d	IMAGING DEVICE
 product XIRLINK PCCAM		0x8080	IBM PC Camera
+
+/* Xyratex */
+product XYRATEX PRISM_GT_1	0x2000	PrismGT USB 2.0 WLAN
+product XYRATEX PRISM_GT_2	0x2002	PrismGT USB 2.0 WLAN
 
 /* Yamaha products */
 product YAMAHA UX256		0x1000	UX256 MIDI I/F
@@ -2499,6 +2535,8 @@ product YEDATA FLASHBUSTERU	0x0000	Flashbuster-U
 
 /* Z-Com products */
 product ZCOM 725		0x0002	725/726 Prism2.5 WLAN
+product ZCOM MD40900		0x0006	MD40900
+product ZCOM XG703A		0x0008	PrismGT USB 2.0 WLAN
 product ZCOM ZD1211		0x0011	ZD1211
 product ZCOM ZD1211B		0x001a	ZD1211B
 
