@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.85 2010/06/10 23:50:04 pooka Exp $
+# $NetBSD: mi,v 1.86 2010/06/14 14:55:04 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -137,6 +137,9 @@
 ./usr/libdata/debug/usr/tests/fs/msdosfs/t_snapshot.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/nullfs/t_basic.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ptyfs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/ptyfs/t_ptyfs.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ptyfs/t_nullrevoke.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
@@ -714,6 +717,10 @@
 ./usr/tests/fs/nullfs				tests-fs-tests
 ./usr/tests/fs/nullfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/nullfs/t_basic			tests-fs-tests		atf
+./usr/tests/fs/ptyfs				tests-fs-tests
+./usr/tests/fs/ptyfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/ptyfs/t_ptyfs			tests-fs-tests		atf
+./usr/tests/fs/ptyfs/t_nullrevoke		tests-fs-tests		atf
 ./usr/tests/fs/puffs				tests-fs-tests
 ./usr/tests/fs/puffs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/puffs/h_have_puffs		tests-fs-tests		atf
