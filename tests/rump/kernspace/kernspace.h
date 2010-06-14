@@ -1,4 +1,4 @@
-/*	$NetBSD: kernspace.h,v 1.1 2010/05/31 23:32:51 pooka Exp $	*/
+/*	$NetBSD: kernspace.h,v 1.2 2010/06/14 21:06:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,5 +34,6 @@ void rumptest_busypage(void);
 void rumptest_threadjoin(void);
 void rumptest_thread(void);
 void rumptest_tsleep(void);
+void rumptest_alloc(size_t);
 
 #endif /* _TESTS_RUMP_KERNSPACE_KERNSPACE_H_ */
