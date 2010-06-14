@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1464 2010/06/14 14:39:12 pooka Exp $
+#	$NetBSD: mi,v 1.1465 2010/06/14 14:42:20 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -647,6 +647,7 @@
 ./usr/include/fs/hfsp/libhfsp.h			comp-obsolete		obsolete
 ./usr/include/fs/nilfs/nilfs_fs.h		comp-c-include
 ./usr/include/fs/nilfs/nilfs_mount.h		comp-c-include
+./usr/include/fs/ptyfs/ptyfs.h			comp-c-include
 ./usr/include/fs/puffs/puffs_msgif.h		comp-puffs-include
 ./usr/include/fs/smbfs/smbfs.h			comp-c-include
 ./usr/include/fs/sysvbfs/bfs.h			comp-c-include
