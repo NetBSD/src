@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.50 2010/05/11 16:59:42 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.51 2010/06/14 13:40:25 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.50 2010/05/11 16:59:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.51 2010/06/14 13:40:25 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.50 2010/05/11 16:59:42 pooka Exp $");
 static int rump_vop_lookup(void *);
 static int rump_vop_getattr(void *);
 static int rump_vop_mkdir(void *);
+static int rump_vop_rmdir(void *);
 static int rump_vop_mknod(void *);
 static int rump_vop_create(void *);
 static int rump_vop_inactive(void *);
@@ -83,6 +84,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_lookup_desc, rump_vop_lookup },
 	{ &vop_getattr_desc, rump_vop_getattr },
 	{ &vop_mkdir_desc, rump_vop_mkdir },
+	{ &vop_rmdir_desc, rump_vop_rmdir },
 	{ &vop_mknod_desc, rump_vop_mknod },
 	{ &vop_create_desc, rump_vop_create },
 	{ &vop_symlink_desc, genfs_eopnotsupp },
@@ -497,10 +499,27 @@ makedir(struct rumpfs_node *rnd,
 	LIST_INSERT_HEAD(&rnd->rn_dir, rdent, rd_entries);
 }
 
+static void
+freedir(struct rumpfs_node *rnd, struct componentname *cnp)
+{
+	struct rumpfs_dent *rd = NULL;
+
+	LIST_FOREACH(rd, &rnd->rn_dir, rd_entries) {
+		if (rd->rd_namelen == cnp->cn_namelen &&
+		    strncmp(rd->rd_name, cnp->cn_nameptr,
+		            cnp->cn_namelen) == 0)
+			break;
+	}
+	if (rd == NULL)
+		panic("could not find directory entry: %s", cnp->cn_nameptr);
+
+	LIST_REMOVE(rd, rd_entries);
+	kmem_free(rd->rd_name, rd->rd_namelen+1);
+	kmem_free(rd, sizeof(*rd));
+}
+
 /*
- * Simple lookup for faking lookup of device entry for rump file systems
- * and for locating/creating directories.  Yes, this will panic if you
- * call it with the wrong arguments.
+ * Simple lookup for rump file systems.
  *
  * uhm, this is twisted.  C F C C, hope of C C F C looming
  */
@@ -522,8 +541,7 @@ rump_vop_lookup(void *v)
 	int rv;
 
 	/* we handle only some "non-special" cases */
-	if (!(((cnp->cn_flags & ISLASTCN) == 0)
-	    || (cnp->cn_nameiop == LOOKUP || cnp->cn_nameiop == CREATE)))
+	if (!(((cnp->cn_flags & ISLASTCN) == 0) || (cnp->cn_nameiop != RENAME)))
 		return EOPNOTSUPP;
 	if (!((cnp->cn_flags & ISDOTDOT) == 0))
 		return EOPNOTSUPP;
@@ -605,6 +623,9 @@ rump_vop_lookup(void *v)
 		cnp->cn_flags |= SAVENAME;
 		return EJUSTRETURN;
 	}
+	if ((cnp->cn_flags & ISLASTCN) && cnp->cn_nameiop == DELETE)
+		cnp->cn_flags |= SAVENAME;
+
 	rn = rd->rd_node;
 
  getvnode:
@@ -663,7 +684,39 @@ rump_vop_mkdir(void *v)
 	makedir(rnd, cnp, rn);
 
  out:
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
+	return rv;
+}
+
+static int
+rump_vop_rmdir(void *v)
+{
+        struct vop_rmdir_args /* {
+                struct vnode *a_dvp;
+                struct vnode *a_vp;
+                struct componentname *a_cnp;
+        }; */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode *vp = ap->a_vp;
+	struct componentname *cnp = ap->a_cnp;
+	struct rumpfs_node *rnd = dvp->v_data;
+	struct rumpfs_node *rn = vp->v_data;
+	int rv = 0;
+
+	if (!LIST_EMPTY(&rn->rn_dir)) {
+		rv = ENOTEMPTY;
+		goto out;
+	}
+
+	freedir(rnd, cnp);
+	rn->rn_flags |= RUMPNODE_CANRECLAIM;
+
+out:
+	PNBUF_PUT(cnp->cn_pnbuf);
+	vput(dvp);
+	vput(vp);
+
 	return rv;
 }
 
@@ -890,7 +943,10 @@ rump_vop_success(void *v)
 static int
 rump_vop_inactive(void *v)
 {
-	struct vop_inactive_args *ap = v;
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		bool *a_recycle;
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct rumpfs_node *rn = vp->v_data;
 	int error;
@@ -905,6 +961,7 @@ rump_vop_inactive(void *v)
 			rn->rn_writefd = -1;
 		}
 	}
+	*ap->a_recycle = (rn->rn_flags & RUMPNODE_CANRECLAIM) ? true : false;
 		
 	VOP_UNLOCK(vp, 0);
 	return 0;
