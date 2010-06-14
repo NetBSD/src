@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.25 2009/12/12 14:18:27 cherry Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.26 2010/06/14 19:05:24 riz Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.25 2009/12/12 14:18:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.26 2010/06/14 19:05:24 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ static const struct ugensa_type ugensa_devs[] = {
 	{{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K }, 0 },
 	{{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }, 0 },
 	{{ USB_VENDOR_QUALCOMMINC, USB_PRODUCT_QUALCOMMINC_AC8700 }, 0 },
+	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_USB305 }, 0 },
 
 	/*
 	 * The following devices are untested, but they are purported to
