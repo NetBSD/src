@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.142 2010/06/14 13:25:40 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.143 2010/06/14 13:28:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.142 2010/06/14 13:25:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.143 2010/06/14 13:28:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -228,7 +228,6 @@ rump_tputchar(int c, int flags, struct tty *tp)
 }
 __weak_alias(tputchar,rump_tputchar);
 
-//struct cdevsw cons_cdevsw;
 void
 cnputc(int c)
 {
