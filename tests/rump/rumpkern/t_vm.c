@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vm.c,v 1.1 2010/05/31 23:36:12 pooka Exp $	*/
+/*	$NetBSD: t_vm.c,v 1.2 2010/06/14 21:06:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 #include <rump/rump.h>
 
 #include <atf-c.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "../../h_macros.h"
 #include "../kernspace/kernspace.h"
@@ -55,9 +57,35 @@ ATF_TC_BODY(busypage, tc)
 	rump_unschedule();
 }
 
+ATF_TC(uvmwait);
+ATF_TC_HEAD(uvmwait, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Tests that uvm_wait works");
+	atf_tc_set_md_var(tc, "timeout", "10");
+}
+
+#define UVMWAIT_LIMIT 1024*1024
+ATF_TC_BODY(uvmwait, tc)
+{
+	char buf[64];
+
+	/* limit rump kernel memory */
+	snprintf(buf, sizeof(buf), "%d", UVMWAIT_LIMIT);
+	setenv("RUMP_MEMLIMIT", buf, 1);
+
+	rump_init();
+
+	rump_schedule();
+	rumptest_alloc(UVMWAIT_LIMIT);
+	rump_unschedule();
+}
+
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, busypage);
+	ATF_TP_ADD_TC(tp, uvmwait);
 
 	return atf_no_error();
 }

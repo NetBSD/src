@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2010/05/31 23:53:02 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/06/14 21:06:09 pooka Exp $
 #
 
 .include <bsd.own.mk>
 
 LIB=	kernspace
-SRCS=	thread.c busypage.c tsleep.c
+SRCS=	thread.c busypage.c tsleep.c alloc.c
 
 RUMPTOP=${NETBSDSRCDIR}/sys/rump
 
