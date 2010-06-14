@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1463 2010/06/11 18:21:44 riz Exp $
+#	$NetBSD: mi,v 1.1464 2010/06/14 14:39:12 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2683,6 +2683,9 @@
 ./usr/lib/librumpfs_nullfs.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_nullfs_g.a			comp-obsolete		obsolete
 ./usr/lib/librumpfs_nullfs_p.a			comp-obsolete		obsolete
+./usr/lib/librumpfs_ptyfs.a			comp-c-lib
+./usr/lib/librumpfs_ptyfs_g.a			-unknown-		debuglib
+./usr/lib/librumpfs_ptyfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_smbfs.a			comp-c-lib
 ./usr/lib/librumpfs_smbfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_smbfs_p.a			comp-c-proflib		profile
