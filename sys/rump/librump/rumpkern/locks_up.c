@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.3 2010/06/03 10:56:20 pooka Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.4 2010/06/14 21:04:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.3 2010/06/03 10:56:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.4 2010/06/14 21:04:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -88,7 +88,7 @@ mutex_destroy(kmutex_t *mtx)
 	KASSERT(upm->upm_owner == NULL);
 	KASSERT(upm->upm_wanted == 0);
 	rumpuser_cv_destroy(upm->upm_rucv);
-	rumpuser_free(upm);
+	rump_hyperfree(upm, sizeof(*upm));
 }
 
 void
@@ -192,7 +192,7 @@ rw_destroy(krwlock_t *rw)
 
 	rumpuser_cv_destroy(uprw->uprw_rucv_reader);
 	rumpuser_cv_destroy(uprw->uprw_rucv_writer);
-	rumpuser_free(uprw);
+	rump_hyperfree(uprw, sizeof(*uprw));
 }
 
 /* take rwlock.  prefer writers over readers (see rw_tryenter and rw_exit) */
