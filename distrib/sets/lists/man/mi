@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1216 2010/06/08 05:38:32 riz Exp $
+# $NetBSD: mi,v 1.1217 2010/06/14 05:27:51 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -38,7 +38,7 @@
 ./usr/share/info/tar.info			man-obsolete		obsolete
 ./usr/share/info/texinfo.info			man-texinfo-info	info
 ./usr/share/info/uucp.info			man-obsolete		obsolete
-./usr/share/info/vi.info			man-sys-info		info
+./usr/share/info/vi.info			man-sys-info		doc,info
 ./usr/share/man/cat1/Mail.0			man-mail-catman		.cat
 ./usr/share/man/cat1/[.0			man-util-catman		.cat
 ./usr/share/man/cat1/alias.0			man-util-catman		.cat
