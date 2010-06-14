@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.556 2010/06/14 18:55:31 riz Exp $
+$NetBSD: usbdevs,v 1.557 2010/06/14 18:57:49 riz Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2167,22 +2167,17 @@ product SIEMENS2 MC75		0x0034	Wireless Modules MC75
 product SIEMENS2 WL54G		0x3c06	54g USB Network Adapter
 
 /* Sierra Wireless products */
-product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
+product SIERRA EM5625		0x0017	EM5625
+product SIERRA MC5720_2		0x0018	MC5720
 product SIERRA AIRCARD595	0x0019	Sierra Wireless AirCard 595
-product SIERRA AC595U		0x0120	Sierra Wireless AirCard 595U
+product SIERRA MC5725		0x0020	MC5725
 product SIERRA AC597E		0x0021	Sierra Wireless AirCard 597E
 product SIERRA C597		0x0023	Sierra Wireless Compass 597
-product SIERRA AC880		0x6850	Sierra Wireless AirCard 880
-product SIERRA AC881		0x6851	Sierra Wireless AirCard 881
-product SIERRA AC880E		0x6852	Sierra Wireless AirCard 880E
-product SIERRA AC881E		0x6853	Sierra Wireless AirCard 881E
-product SIERRA AC880U		0x6855	Sierra Wireless AirCard 880U
-product SIERRA AC881U		0x6856	Sierra Wireless AirCard 881U
-product SIERRA EM5625		0x0017	EM5625
+product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
+product SIERRA AC595U		0x0120	Sierra Wireless AirCard 595U
 product SIERRA MC5720		0x0218	MC5720 Wireless Modem
-product SIERRA MC5720_2		0x0018	MC5720
-product SIERRA MC5725		0x0020	MC5725
 product SIERRA MINI5725		0x0220	Sierra Wireless miniPCI 5275
+product SIERRA INSTALLER	0x0fff	Aircard Driver Installer
 product SIERRA MC8755_2		0x6802	MC8755
 product SIERRA MC8765		0x6803	MC8765
 product SIERRA MC8755		0x6804	MC8755
@@ -2192,7 +2187,12 @@ product SIERRA MC8775_2		0x6815	MC8775
 product SIERRA AIRCARD875	0x6820	Aircard 875 HSDPA
 product SIERRA MC8780		0x6832	MC8780
 product SIERRA MC8781		0x6833	MC8781
-product SIERRA INSTALLER	0x0fff	Aircard Driver Installer
+product SIERRA AC880		0x6850	Sierra Wireless AirCard 880
+product SIERRA AC881		0x6851	Sierra Wireless AirCard 881
+product SIERRA AC880E		0x6852	Sierra Wireless AirCard 880E
+product SIERRA AC881E		0x6853	Sierra Wireless AirCard 881E
+product SIERRA AC880U		0x6855	Sierra Wireless AirCard 880U
+product SIERRA AC881U		0x6856	Sierra Wireless AirCard 881U
 product SIERRA USB305		0x68a3	Sierra Wireless AirCard USB 305
 
 /* Sigmatel products */
