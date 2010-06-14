@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2010/02/10 02:31:00 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/06/14 14:48:51 pooka Exp $
 #
 
 PROG=	tipsy
 
 LDADD+=	-lrumpvfs
 LDADD+=	-lrumpdev_usb -lrumpdev_ugenhc -lrumpdev_ucom -lrumpdev
+LDADD+=	-lrumpkern_tty
 LDADD+=	-lrump
 LDADD+=	-lrumpuser -lpthread
 
