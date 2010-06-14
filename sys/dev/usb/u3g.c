@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.11 2010/02/19 15:10:02 pooka Exp $	*/
+/*	$NetBSD: u3g.c,v 1.12 2010/06/14 19:05:24 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.11 2010/02/19 15:10:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.12 2010/06/14 19:05:24 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,6 +238,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8775_2 },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8780 },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8781 },
+	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_USB305 },
 };
 
 static int
