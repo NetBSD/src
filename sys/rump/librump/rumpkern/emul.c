@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.141 2010/06/13 15:17:02 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.142 2010/06/14 13:25:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.141 2010/06/13 15:17:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.142 2010/06/14 13:25:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -204,13 +204,31 @@ rump_delay(unsigned int us)
 }
 void (*delay_func)(unsigned int) = rump_delay;
 
+/*
+ * Provide weak aliases for tty routines used by printf.
+ * They will be used unless the rumpkern_tty component is present.
+ */
+
+int rump_ttycheckoutq(struct tty *, int);
 int
-ttycheckoutq(struct tty *tp, int wait)
+rump_ttycheckoutq(struct tty *tp, int wait)
 {
 
 	return 1;
 }
+__weak_alias(ttycheckoutq,rump_ttycheckoutq);
 
+int rump_tputchar(int, int, struct tty *);
+int
+rump_tputchar(int c, int flags, struct tty *tp)
+{
+
+	cnputc(c);
+	return 0;
+}
+__weak_alias(tputchar,rump_tputchar);
+
+//struct cdevsw cons_cdevsw;
 void
 cnputc(int c)
 {
@@ -224,14 +242,6 @@ cnflush(void)
 {
 
 	/* done */
-}
-
-int
-tputchar(int c, int flags, struct tty *tp)
-{
-
-	cnputc(c);
-	return 0;
 }
 
 void
