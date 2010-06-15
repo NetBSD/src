@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.39 2010/05/01 14:37:53 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.40 2010/06/15 18:53:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.39 2010/05/01 14:37:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.40 2010/06/15 18:53:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -384,7 +384,6 @@ rumpblk_init(void)
 	}
 }
 
-/* XXX: no deregister */
 int
 rumpblk_register(const char *path, devminor_t *dmin,
 	uint64_t offset, uint64_t size)
@@ -439,6 +438,39 @@ rumpblk_register(const char *path, devminor_t *dmin,
 	mutex_exit(&rumpblk_lock);
 
 	*dmin = i;
+	return 0;
+}
+
+/*
+ * Unregister rumpblk.  It's the callers responsibility to make
+ * sure it's no longer in use.
+ */
+int
+rumpblk_deregister(const char *path)
+{
+	struct rblkdev *rblk;
+	int i;
+
+	mutex_enter(&rumpblk_lock);
+	for (i = 0; i < RUMPBLK_SIZE; i++) {
+		if (minors[i].rblk_path&&strcmp(minors[i].rblk_path, path)==0) {
+			break;
+		}
+	}
+	mutex_exit(&rumpblk_lock);
+
+	if (i == RUMPBLK_SIZE)
+		return ENOENT;
+
+	rblk = &minors[i];
+	KASSERT(rblk->rblk_fd == -1);
+	KASSERT(rblk->rblk_opencnt == 0);
+
+	wincleanup(rblk);
+	free(rblk->rblk_path, M_TEMP);
+	rblk->rblk_path = NULL;
+	memset(&rblk->rblk_label, 0, sizeof(rblk->rblk_label));
+
 	return 0;
 }
 
