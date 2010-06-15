@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.52 2010/06/15 17:23:31 njoly Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.53 2010/06/15 18:53:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.52 2010/06/15 17:23:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.53 2010/06/15 18:53:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -172,6 +172,8 @@ struct etfs {
 	char et_key[MAXPATHLEN];
 	size_t et_keylen;
 	bool et_prefixkey;
+	bool et_removing;
+	devminor_t et_blkmin;
 
 	LIST_ENTRY(etfs) et_entries;
 
@@ -267,7 +269,7 @@ doregister(const char *key, const char *hostpath,
 	struct rumpfs_node *rn;
 	uint64_t fsize;
 	dev_t rdev = NODEV;
-	devminor_t dmin;
+	devminor_t dmin = -1;
 	int hft, error;
 
 	if (rumpuser_getfileinfo(hostpath, &fsize, &hft, &error))
@@ -303,8 +305,10 @@ doregister(const char *key, const char *hostpath,
 	strcpy(et->et_key, key);
 	et->et_keylen = strlen(et->et_key);
 	et->et_rn = rn = makeprivate(ettype_to_vtype(ftype), rdev, size);
+	et->et_removing = false;
+	et->et_blkmin = dmin;
 
-	if (ftype == RUMP_ETFS_REG || REGDIR(ftype)) {
+	if (ftype == RUMP_ETFS_REG || REGDIR(ftype) || et->et_blkmin != -1) {
 		size_t len = strlen(hostpath)+1;
 
 		rn->rn_hostpath = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
@@ -325,11 +329,12 @@ doregister(const char *key, const char *hostpath,
 	mutex_enter(&etfs_lock);
 	if (etfs_find(key, NULL, REGDIR(ftype))) {
 		mutex_exit(&etfs_lock);
+		if (et->et_blkmin != -1)
+			rumpblk_deregister(hostpath);
 		if (et->et_rn->rn_hostpath != NULL)
 			free(et->et_rn->rn_hostpath, M_TEMP);
 		kmem_free(et->et_rn, sizeof(*et->et_rn));
 		kmem_free(et, sizeof(*et));
-		/* XXX: rumpblk_deregister(hostpath); */
 		return EEXIST;
 	}
 	LIST_INSERT_HEAD(&etfs_list, et, et_entries);
@@ -366,27 +371,53 @@ rump_etfs_register_withsize(const char *key, const char *hostpath,
 	return doregister(key, hostpath, ftype, begin, size);
 }
 
+/* remove etfs mapping.  caller's responsibility to make sure it's not in use */
 int
 rump_etfs_remove(const char *key)
 {
 	struct etfs *et;
 	size_t keylen = strlen(key);
+	int rv;
 
 	mutex_enter(&etfs_lock);
 	LIST_FOREACH(et, &etfs_list, et_entries) {
 		if (keylen == et->et_keylen && strcmp(et->et_key, key) == 0) {
-			LIST_REMOVE(et, et_entries);
-			if (et->et_rn->rn_hostpath != NULL)
-				free(et->et_rn->rn_hostpath, M_TEMP);
-			kmem_free(et->et_rn, sizeof(*et->et_rn));
-			kmem_free(et, sizeof(*et));
+			if (et->et_removing)
+				et = NULL;
+			else
+				et->et_removing = true;
 			break;
 		}
 	}
 	mutex_exit(&etfs_lock);
-
 	if (!et)
 		return ENOENT;
+
+	/*
+	 * ok, we know what we want to remove and have signalled there
+	 * actually are men at work.  first, unregister from rumpblk
+	 */
+	if (et->et_blkmin != -1) {
+		rv = rumpblk_deregister(et->et_rn->rn_hostpath);
+	} else {
+		rv = 0;
+	}
+	KASSERT(rv == 0);
+
+	/* then do the actual removal */
+	mutex_enter(&etfs_lock);
+	LIST_REMOVE(et, et_entries);
+	mutex_exit(&etfs_lock);
+
+	/* node is unreachable, safe to nuke all device copies */
+	if (et->et_blkmin != -1)
+		vdevgone(RUMPBLK_DEVMAJOR, et->et_blkmin, et->et_blkmin, VBLK);
+
+	if (et->et_rn->rn_hostpath != NULL)
+		free(et->et_rn->rn_hostpath, M_TEMP);
+	kmem_free(et->et_rn, sizeof(*et->et_rn));
+	kmem_free(et, sizeof(*et));
+
 	return 0;
 }
 
