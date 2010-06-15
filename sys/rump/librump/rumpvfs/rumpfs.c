@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.51 2010/06/14 13:40:25 njoly Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.52 2010/06/15 17:23:31 njoly Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.51 2010/06/14 13:40:25 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.52 2010/06/15 17:23:31 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -325,6 +325,9 @@ doregister(const char *key, const char *hostpath,
 	mutex_enter(&etfs_lock);
 	if (etfs_find(key, NULL, REGDIR(ftype))) {
 		mutex_exit(&etfs_lock);
+		if (et->et_rn->rn_hostpath != NULL)
+			free(et->et_rn->rn_hostpath, M_TEMP);
+		kmem_free(et->et_rn, sizeof(*et->et_rn));
 		kmem_free(et, sizeof(*et));
 		/* XXX: rumpblk_deregister(hostpath); */
 		return EEXIST;
@@ -373,6 +376,9 @@ rump_etfs_remove(const char *key)
 	LIST_FOREACH(et, &etfs_list, et_entries) {
 		if (keylen == et->et_keylen && strcmp(et->et_key, key) == 0) {
 			LIST_REMOVE(et, et_entries);
+			if (et->et_rn->rn_hostpath != NULL)
+				free(et->et_rn->rn_hostpath, M_TEMP);
+			kmem_free(et->et_rn, sizeof(*et->et_rn));
 			kmem_free(et, sizeof(*et));
 			break;
 		}
