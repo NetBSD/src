@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.404 2010/03/03 00:47:31 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.405 2010/06/15 09:43:36 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.404 2010/03/03 00:47:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.405 2010/06/15 09:43:36 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -290,11 +290,12 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 
 static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
-    const char *path, int flags, void *data, size_t *data_len, u_int recurse)
+    const char *path, int flags, void *data, size_t *data_len)
 {
 	struct mount *mp;
 	struct vnode *vp = *vpp;
 	struct vattr va;
+	struct nameidata nd;
 	int error;
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
@@ -327,19 +328,6 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 		return EINVAL;
 	}
 
-	if ((error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0)) != 0) {
-		vfs_delref(vfsops);
-		return error;
-	}
-
-	/*
-	 * Check if a file-system is not already mounted on this vnode.
-	 */
-	if (vp->v_mountedhere != NULL) {
-		vfs_delref(vfsops);
-		return EBUSY;
-	}
-
 	if ((mp = vfs_mountalloc(vfsops, vp)) == NULL) {
 		vfs_delref(vfsops);
 		return ENOMEM;
@@ -363,30 +351,55 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 
+	if (error != 0)
+		goto err_unmounted;
+
+	/*
+	 * Validate and prepare the mount point.
+	 */
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT,
+	    UIO_USERSPACE, path);
+	error = namei(&nd);
+	if (error != 0) {
+		goto err_mounted;
+	}
+	if (nd.ni_vp != vp) {
+		vput(nd.ni_vp);
+		error = EINVAL;
+		goto err_mounted;
+	}
+	if (vp->v_mountedhere != NULL) {
+		vput(nd.ni_vp);
+		error = EBUSY;
+		goto err_mounted;
+	}
+	error = vinvalbuf(vp, V_SAVE, l->l_cred, l, 0, 0);
+	if (error != 0) {
+		vput(nd.ni_vp);
+		goto err_mounted;
+	}
+
 	/*
 	 * Put the new filesystem on the mount list after root.
 	 */
 	cache_purge(vp);
-	if (error != 0) {
-		vp->v_mountedhere = NULL;
-		mutex_exit(&mp->mnt_updating);
-		vfs_unbusy(mp, false, NULL);
-		vfs_destroy(mp);
-		return error;
-	}
-
 	mp->mnt_iflag &= ~IMNT_WANTRDWR;
+
 	mutex_enter(&mountlist_lock);
-	vp->v_mountedhere = mp;
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
-    	vn_restorerecurse(vp, recurse);
-	VOP_UNLOCK(vp, 0);
-	checkdirs(vp);
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 		error = vfs_allocate_syncvnode(mp);
-	/* Hold an additional reference to the mount across VFS_START(). */
+	if (error == 0)
+		vp->v_mountedhere = mp;
+	vput(nd.ni_vp);
+	if (error != 0)
+		goto err_onmountlist;
+
+	checkdirs(vp);
 	mutex_exit(&mp->mnt_updating);
+
+	/* Hold an additional reference to the mount across VFS_START(). */
 	vfs_unbusy(mp, true, NULL);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
@@ -395,6 +408,24 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	/* Drop reference held for VFS_START(). */
 	vfs_destroy(mp);
 	*vpp = NULL;
+	return error;
+
+err_onmountlist:
+	mutex_enter(&mountlist_lock);
+	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
+	mp->mnt_iflag |= IMNT_GONE;
+	mutex_exit(&mountlist_lock);
+
+err_mounted:
+	if (VFS_UNMOUNT(mp, MNT_FORCE) != 0)
+		panic("Unmounting fresh file system failed");
+
+err_unmounted:
+	vp->v_mountedhere = NULL;
+	mutex_exit(&mp->mnt_updating);
+	vfs_unbusy(mp, false, NULL);
+	vfs_destroy(mp);
+
 	return error;
 }
 
@@ -457,7 +488,6 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 {
 	struct vnode *vp;
 	void *data_buf = data;
-	u_int recurse;
 	bool vfsopsrele = false;
 	int error;
 
@@ -470,33 +500,20 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	 */
 	error = namei_simple_user(path, NSM_FOLLOW_TRYEMULROOT, &vp);
 	if (error != 0) {
-		/* XXXgcc */
 		vp = NULL;
-		recurse = 0;
 		goto done;
 	}
 
-	/*
-	 * A lookup in VFS_MOUNT might result in an attempt to
-	 * lock this vnode again, so make the lock recursive.
-	 */
 	if (vfsops == NULL) {
 		if (flags & (MNT_GETARGS | MNT_UPDATE)) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			recurse = vn_setrecurse(vp);
 			vfsops = vp->v_mount->mnt_op;
 		} else {
 			/* 'type' is userspace */
 			error = mount_get_vfsops(type, &vfsops);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			recurse = vn_setrecurse(vp);
 			if (error != 0)
 				goto done;
 			vfsopsrele = true;
 		}
-	} else {
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		recurse = vn_setrecurse(vp);
 	}
 
 	if (data != NULL && data_seg == UIO_USERSPACE) {
@@ -540,7 +557,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		/* Locking is handled internally in mount_domount(). */
 		KASSERT(vfsopsrele == true);
 		error = mount_domount(l, &vp, vfsops, path, flags, data_buf,
-		    &data_len, recurse);
+		    &data_len);
 		vfsopsrele = false;
 	}
 
@@ -548,8 +565,7 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	if (vfsopsrele)
 		vfs_delref(vfsops);
     	if (vp != NULL) {
-	    	vn_restorerecurse(vp, recurse);
-	    	vput(vp);
+	    	vrele(vp);
 	}
 	if (data_buf != data)
 		kmem_free(data_buf, data_len);
