@@ -1,4 +1,4 @@
-6: Unexpected token `passe'; expected passed, failed or skipped
+6: Unexpected token `passe'; expected passed, failed, skipped or xfail
 8: Unexpected token `,'; expected new line
 10: Unexpected token `<<NEWLINE>>'; expected `,'
 12: Empty reason for failed test case result
