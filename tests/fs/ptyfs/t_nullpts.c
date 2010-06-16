@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nullpts.c,v 1.2 2010/06/16 15:39:41 pooka Exp $	*/
+/*	$NetBSD: t_nullpts.c,v 1.3 2010/06/16 15:57:11 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -77,13 +77,18 @@ ATF_TC_BODY(nullrevoke, tc)
 	mountptyfs("/dev/pts", 0);
 
 	/*
-	 * null mount /dev to /null/dev
+	 * null mount /dev/pts to /null/dev/pts
 	 */
 	if (rump_sys_mkdir("/null", 0777) == -1) {
 		if (errno != EEXIST)
 			atf_tc_fail_errno("null create /null");
 	}
-	mountnull("/dev", "/null/dev", 0);
+	if (rump_sys_mkdir("/null/dev", 0777) == -1) {
+		if (errno != EEXIST)
+			atf_tc_fail_errno("null create /null/dev");
+	}
+
+	mountnull("/dev/pts", "/null/dev/pts", 0);
 
 	/*
 	 * get slave/master pair.
@@ -95,7 +100,7 @@ ATF_TC_BODY(nullrevoke, tc)
 	/*
 	 * Build nullfs path to slave.
 	 */
-	strcpy(path, "/null/");
+	strcpy(path, "/null");
 	strcat(path, ptg.sn);
 
 	/*
