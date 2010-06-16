@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.24 2010/06/16 11:45:21 pooka Exp $	*/
+/*	$NetBSD: pmap_x86.c,v 1.1 2010/06/16 11:45:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,18 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.24 2010/06/16 11:45:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_x86.c,v 1.1 2010/06/16 11:45:21 pooka Exp $");
 
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
-
-/*
- * This is the MI pmap implementation for rump.  It's used only by
- * architectures which do not conform to the kernel ABI.  The kernel
- * ABI conformant architectures provide their own pmap under librump/arch
- * (due to various messiness with macros in the pmap "interface").
- */
 
 struct pmap *const kernel_pmap_ptr = (struct pmap *const)-1;
 
@@ -62,6 +55,39 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	panic("%s: unavailable", __func__);
 }
 
+bool
+pmap_clear_attrs(struct vm_page *pg, unsigned what)
+{
+
+	return false;
+}
+
+void
+pmap_page_remove(struct vm_page *pg)
+{
+
+}
+
+bool
+pmap_test_attrs(struct vm_page *pg, unsigned what)
+{
+
+	return true;
+}
+
+paddr_t
+vtophys(vaddr_t va)
+{
+
+	return (paddr_t)va;
+}
+
+void
+pmap_update(pmap_t pmap)
+{
+
+}
+
 void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
@@ -74,19 +100,5 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 
 	*pap = va;
-	return true;
-}
-
-void
-pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
-{
-
-	/* nada */
-}
-
-bool
-pmap_clear_modify(struct vm_page *pg)
-{
-
 	return true;
 }
