@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.41 2008/08/27 11:04:23 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.42 2010/06/16 22:06:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -200,6 +200,7 @@
 #define CPU_ID_ARM1176JS	0x410fb760
 #define CPU_ID_CORTEXA8R1	0x411fc080
 #define CPU_ID_CORTEXA8R2	0x412fc080
+#define CPU_ID_CORTEXA8R3	0x413fc080
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
 #define	CPU_ID_TI925T		0x54029250
@@ -445,5 +446,10 @@
 #define	ARM11_PMCEVT_RETURN_HIT		37	/* return address predicted */
 #define	ARM11_PMCEVT_RETURN_MISS	38	/* return addr. mispredicted */
 #define	ARM11_PMCEVT_CYCLE		255	/* Increment each cycle */
+
+/* Defines for ARM CORTEXA8 performance counters */
+#define CORTEXA8_CNTENS_C __BIT(31) /* Enables the cycle counter */
+#define CORTEXA8_CNTENC_C __BIT(31) /* Disables the cycle counter */
+#define CORTEXA8_CNTOFL_C __BIT(31)  /* Cycle counter overflow flag */
 
 #endif	/* _ARM_ARMREG_H */
