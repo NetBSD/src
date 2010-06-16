@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.22 2010/06/08 17:04:49 jruoho Exp $
+# $NetBSD: acpidevs,v 1.23 2010/06/16 06:17:48 jruoho Exp $
 #
 # Originally extracted from:
 
@@ -353,6 +353,9 @@ PNPB018	MediaVision Pro Audio Spectrum 8-bit
 PNPB019	MediaVision Pro Audio Spectrum Basic (no Trantor SCSI, Thunder chip Disabled)
 PNPB020	Yamaha OPL3-compatible FM synthesizer device
 PNPB02F	Joystick/Game port
+CSC0000	Crystal PnP Audio (codec)
+CSC0003	Crystal PnP Audio (MPU-401)
+CSC0010	Crystal PnP Audio (registers)
 # ***** Modems - PNPCxxx-Dxxx****************************
 PNPC000	Compaq 14400 Modem (TBD)
 PNPC001	Compaq 2400/9600 Modem (TBD)
