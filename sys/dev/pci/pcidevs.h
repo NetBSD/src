@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1031 2010/06/08 13:36:34 pgoyette Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1032 2010/06/16 03:28:49 riz Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1034 2010/06/08 13:22:04 pgoyette Exp
+ *	NetBSD: pcidevs,v 1.1035 2010/06/16 03:27:48 riz Exp
  */
 
 /*
@@ -2226,6 +2226,16 @@
 #define	PCI_PRODUCT_IMS_TT128M	0x9128		/* TwinTurbo 128M */
 
 /* Intel products */
+#define	PCI_PRODUCT_INTEL_IRONLAKE_D_HB	0x0040		/* Iron Lake Host Bridge */
+#define	PCI_PRODUCT_INTEL_IRONLAKE_D_IGD	0x0042		/* Iron Lake Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_IRONLAKE_M_HB	0x0044		/* Iron Lake Host Bridge */
+#define	PCI_PRODUCT_INTEL_IRONLAKE_M_IGD	0x0046		/* Iron Lake Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_IRONLAKE_MA_HB	0x0062		/* Iron Lake Host Bridge */
+#define	PCI_PRODUCT_INTEL_IRONLAKE_MC2_HB	0x006a		/* Iron Lake Host Bridge */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_HB	0x0100		/* Sandy Bridge Host Bridge */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_IGD	0x0102		/* Sandy Bridge Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_M_HB	0x0104		/* Sandy Bridge Host Bridge */
+#define	PCI_PRODUCT_INTEL_SANDYBRIDGE_M_IGD	0x0106		/* Sandy Bridge Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion Chip */
 #define	PCI_PRODUCT_INTEL_80321	0x0319		/* 80321 I/O Processor */
 #define	PCI_PRODUCT_INTEL_IOP333_A	0x0370		/* IOP333 PCI Express-to-PCI Bridge #0 */
@@ -2515,6 +2525,9 @@
 #define	PCI_PRODUCT_INTEL_82915G_IGD	0x2582		/* 82915G/GL Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82925X_HB	0x2584		/* 82925X Host */
 #define	PCI_PRODUCT_INTEL_82925X_EX	0x2585		/* 82925X PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_E7221_HB	0x2588		/* E7221 Host Bridge */
+#define	PCI_PRODUCT_INTEL_E7221_IGD	0x258a		/* E7221 Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82915G_IGD	0x2582		/* 82915G/GL Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82915GM_HB	0x2590		/* 82915PM/GM/GMS,82910GML Host Bridge */
 #define	PCI_PRODUCT_INTEL_82915GM_EX	0x2591		/* 82915PM/GM PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82915GM_IGD	0x2592		/* 82915GM/GMS,82910GML Integrated Graphics Device */
@@ -2719,6 +2732,8 @@
 #define	PCI_PRODUCT_INTEL_82965PM_MEI	0x2a04		/* 82965PM MEI Controller */
 #define	PCI_PRODUCT_INTEL_82965PM_IDE	0x2a06		/* 82965PM IDE Interface */
 #define	PCI_PRODUCT_INTEL_82965PM_KT	0x2a07		/* 82965PM Serial Interface */
+#define	PCI_PRODUCT_INTEL_82965GME_HB	0x2a10		/* 82965GME Host Bridge */
+#define	PCI_PRODUCT_INTEL_82965GME_IGD	0x2a12		/* 82965GME Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82GM45_HB	0x2a40		/* 82GM45 Host Bridge */
 #define	PCI_PRODUCT_INTEL_82GM45_IGD	0x2a42		/* 82GM45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82GM45_IGD_1	0x2a43		/* 82GM45 Integrated Graphics Device */
@@ -2728,6 +2743,10 @@
 #define	PCI_PRODUCT_INTEL_82Q45_IGD	0x2e12		/* 82Q45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82G45_HB	0x2e20		/* 82G45 Host Bridge */
 #define	PCI_PRODUCT_INTEL_82G45_IGD	0x2e22		/* 82G45 Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82G41_HB	0x2e30		/* 82G41 Host Bridge */
+#define	PCI_PRODUCT_INTEL_82G41_IGD	0x2e32		/* 82G41 Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82B43_HB	0x2e40		/* 82B43 Host Bridge */
+#define	PCI_PRODUCT_INTEL_82B43_IGD	0x2e42		/* 82B43 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_DDR	0x3340		/* 82855PM MCH Host Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-AGP Bridge */
@@ -2851,6 +2870,10 @@
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
 #define	PCI_PRODUCT_INTEL_82451NX_MIOC	0x84ca		/* 82451NX Memory & I/O Controller (MIOC) */
 #define	PCI_PRODUCT_INTEL_82451NX_PXB	0x84cb		/* 82451NX PCI Expander Bridge (PXB) */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_HB	0xa000		/* Pineview Host Bridge */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_IGD	0xa001		/* Pineview Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_HB	0xa010		/* Pineview Host Bridge */
+#define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGD	0xa011		/* Pineview Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* S21152BA,S21154AE/BE PCI-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_21555	0xb555		/* 21555 Non-Transparent PCI-PCI Bridge */
