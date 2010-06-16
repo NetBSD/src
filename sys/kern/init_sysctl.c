@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.173 2010/02/13 11:22:21 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.174 2010/06/16 18:49:22 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.173 2010/02/13 11:22:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.174 2010/06/16 18:49:22 pooka Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -3104,6 +3104,8 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	struct timeval tv;
 
 	KASSERT(lwp_locked(l, NULL));
+
+	memset(kl, 0, sizeof(*kl));
 
 	kl->l_forw = 0;
 	kl->l_back = 0;
