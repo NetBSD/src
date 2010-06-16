@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.54 2010/06/16 19:03:08 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.55 2010/06/16 19:26:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.54 2010/06/16 19:03:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.55 2010/06/16 19:26:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -93,6 +93,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_read_desc, rump_vop_read },
 	{ &vop_write_desc, rump_vop_write },
 	{ &vop_open_desc, rump_vop_open },
+	{ &vop_seek_desc, genfs_seek },
 	{ &vop_putpages_desc, genfs_null_putpages },
 	{ &vop_fsync_desc, rump_vop_success },
 	{ &vop_lock_desc, genfs_lock },
@@ -838,7 +839,9 @@ rump_vop_open(void *v)
 			return 0;
 		rn->rn_readfd = rumpuser_open(rn->rn_hostpath,
 		    O_RDONLY, &error);
-	} else if (mode & FWRITE) {
+	}
+
+	if (mode & FWRITE) {
 		if (rn->rn_writefd != -1)
 			return 0;
 		rn->rn_writefd = rumpuser_open(rn->rn_hostpath,
@@ -966,7 +969,7 @@ rump_vop_write(void *v)
 		goto out;
 	KASSERT(uio->uio_resid == 0);
 	n = rumpuser_pwrite(rn->rn_writefd, buf, bufsize,
-	    uio->uio_offset + rn->rn_offset, &error);
+	    (uio->uio_offset-bufsize) + rn->rn_offset, &error);
 	if (n >= 0) {
 		KASSERT(n <= bufsize);
 		uio->uio_resid = bufsize - n;
