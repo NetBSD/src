@@ -130,8 +130,8 @@ Example resolvconf.conf for named:
 .Pp
 Example named.conf:
 .D1 options {
-.D1 Ta listen-on { 127.0.0.1; };
-.D1 Ta include "/etc/named-options.conf";
+.D1 	listen-on { 127.0.0.1; };
+.D1 	include "/etc/named-options.conf";
 .D1 };
 .D1 include "/etc/named-zones.conf";
 .It Sy unbound_conf
