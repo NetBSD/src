@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.3 2010/06/12 22:59:59 pooka Exp $	*/
+/*	$NetBSD: sem.c,v 1.4 2010/06/16 15:39:41 pooka Exp $	*/
 
 /*
  * Common code for semaphore tests.  This can be included both into
@@ -265,7 +265,8 @@ ATF_TC_HEAD(unlink, tc)
 
 	/* this is currently broken.  i'll append the PR number soon */
 	atf_tc_set_md_var(tc, "descr", "tests unlinked semaphores can be "
-	    "closed, PR kern/43452 (%s)", LIBNAME);
+	    "closed (%s)", LIBNAME);
+	atf_tc_set_md_var(tc, "xfail", "PR kern/43452");
 }
 
 #define SEM "/thesem"
