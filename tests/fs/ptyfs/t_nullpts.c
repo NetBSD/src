@@ -1,4 +1,4 @@
-/*	$NetBSD: t_nullpts.c,v 1.1 2010/06/11 23:52:38 pooka Exp $	*/
+/*	$NetBSD: t_nullpts.c,v 1.2 2010/06/16 15:39:41 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -59,8 +59,8 @@ mountnull(const char *what, const char *mp, int flags)
 ATF_TC(nullrevoke);
 ATF_TC_HEAD(nullrevoke, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "null mount ptyfs and revoke "
-	    "(PR kern/43456)");
+	atf_tc_set_md_var(tc, "descr", "null mount ptyfs and revoke");
+	atf_tc_set_md_var(tc, "xfail", "PR kern/43456");
 }
 
 ATF_TC_BODY(nullrevoke, tc)
