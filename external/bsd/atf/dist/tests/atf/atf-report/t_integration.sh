@@ -223,6 +223,7 @@ Failed test cases:
 Summary for 5 test programs:
     2 passed test cases.
     2 failed test cases.
+    0 expected failures.
     0 skipped test cases.
 EOF
 

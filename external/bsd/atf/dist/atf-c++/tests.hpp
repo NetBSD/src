@@ -74,6 +74,7 @@ public:
     static const state passed_state;
     static const state failed_state;
     static const state skipped_state;
+    static const state xfail_state;
 
     tcr(state);
     tcr(state, const std::string&);
