@@ -1,10 +1,10 @@
-/*	$NetBSD: acpidevs_data.h,v 1.18 2010/05/26 09:48:26 jruoho Exp $	*/
+/*	$NetBSD: acpidevs_data.h,v 1.19 2010/06/16 06:19:16 jruoho Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	# NetBSD: acpidevs,v 1.20 2010/05/26 09:47:17 jruoho Exp
+ *	# NetBSD: acpidevs,v 1.23 2010/06/16 06:17:48 jruoho Exp
  */
 
 const struct { const char *pnp, *str; } acpi_knowndevs[] = {
@@ -410,7 +410,7 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0C08",
-	    "ACPI system board hardware",
+	    "ACPI System Board Hardware",
 	},
 	{
 	    "PNP0C09",
@@ -426,27 +426,27 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0C0C",
-	    "ACPI power button device",
+	    "ACPI Power Button Device",
 	},
 	{
 	    "PNP0C0D",
-	    "ACPI lid device",
+	    "ACPI Lid Device",
 	},
 	{
 	    "PNP0C0E",
-	    "ACPI sleep button device",
+	    "ACPI Sleep Button Device",
 	},
 	{
 	    "PNP0C0F",
-	    "PCI interrupt link device",
+	    "PCI Interrupt Link Device",
 	},
 	{
 	    "PNP0C10",
-	    "ACPI system indicator device",
+	    "ACPI System Indicator Device",
 	},
 	{
 	    "PNP0C11",
-	    "ACPI thermal zone",
+	    "ACPI Thermal Zone",
 	},
 	{
 	    "PNP0C12",
@@ -458,15 +458,19 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	},
 	{
 	    "PNP0C14",
-	    "WMI mapper device",
+	    "WMI Mapper Device",
 	},
 	{
 	    "PNP0C15",
-	    "ACPI docking station",
+	    "ACPI Docking Station",
+	},
+	{
+	    "PNP0C33",
+	    "ACPI Hardware Error Device",
 	},
 	{
 	    "PNP0C80",
-	    "Memory Device",
+	    "Hotplug Memory Device",
 	},
 	{
 	    "PNP0E00",
@@ -1299,6 +1303,18 @@ const struct { const char *pnp, *str; } acpi_knowndevs[] = {
 	{
 	    "PNPB02F",
 	    "Joystick/Game port",
+	},
+	{
+	    "CSC0000",
+	    "Crystal PnP Audio (codec)",
+	},
+	{
+	    "CSC0003",
+	    "Crystal PnP Audio (MPU-401)",
+	},
+	{
+	    "CSC0010",
+	    "Crystal PnP Audio (registers)",
 	},
 	{
 	    "PNPC000",
