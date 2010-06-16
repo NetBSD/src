@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.23 2010/06/14 14:53:08 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.24 2010/06/16 19:30:11 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -230,6 +230,7 @@
 ./usr/libdata/debug/usr/tests/rump
 ./usr/libdata/debug/usr/tests/rump/modautoload
 ./usr/libdata/debug/usr/tests/rump/rumpkern
+./usr/libdata/debug/usr/tests/rump/rumpvfs
 ./usr/libdata/debug/usr/tests/syscall
 ./usr/libdata/debug/usr/tests/util
 ./usr/libdata/debug/usr/tests/util/df
@@ -1132,6 +1133,7 @@
 ./usr/tests/rump
 ./usr/tests/rump/modautoload
 ./usr/tests/rump/rumpkern
+./usr/tests/rump/rumpvfs
 ./usr/tests/sys
 ./usr/tests/sys/rc
 ./usr/tests/syscall
