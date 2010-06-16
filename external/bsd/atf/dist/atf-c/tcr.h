@@ -54,6 +54,7 @@ typedef struct atf_tcr atf_tcr_t;
 extern const atf_tcr_state_t atf_tcr_passed_state;
 extern const atf_tcr_state_t atf_tcr_failed_state;
 extern const atf_tcr_state_t atf_tcr_skipped_state;
+extern const atf_tcr_state_t atf_tcr_xfail_state;
 
 /* Constructors/destructors. */
 atf_error_t atf_tcr_init(atf_tcr_t *, int);
