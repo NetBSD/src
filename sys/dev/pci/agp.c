@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.68 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: agp.c,v 1.69 2010/06/16 03:35:01 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.68 2010/02/24 22:37:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.69 2010/06/16 03:35:01 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,22 @@ const struct agp_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82Q45_HB,
 	  NULL, 		agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82G45_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82G41_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_E7221_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965GME_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82B43_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_IRONLAKE_D_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_IRONLAKE_M_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_IRONLAKE_MA_HB,
+	  NULL, 		agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_IRONLAKE_MC2_HB,
 	  NULL, 		agp_i810_attach },
 #endif
 
