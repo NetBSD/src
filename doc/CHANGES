@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1402 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1403 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -561,6 +561,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	wcfb: A driver for 3Dlabs Wildcat graphics cards [macallan 20100224]
 	ld.so_elf: Implement negative symbol lookup cache [roy 20100227]
 	dhcpcd(8): Import dhcpcd-5.2.1. [roy 20100227]
+	ddb(4): Add 'mach frame' for hp700.  [skrll 20100302]
 	ne(4): Add proper support for NE2000 8 bit mode. [tsutsui 20090303]
 	uhso(4): Add a driver for Option N.V. Wireless WAN modems.
 		[plunky 20100306]
@@ -602,6 +603,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	tftpd(8): Add -c so files can be uploaded without requiring them
 		to be created before the upload. See the section on security 
 		considerations before enabling. [hubertf 20100429]
+	hp700: Add support for elroy(4), astro(4) and ssio(4) based 64-bit
+		machines running in 32-bit mode. [skrll 20100430]
 	hpcsh: Add sysinst(8) support. [tsutsui 20100503]
 	sandpoint: Added support for Marvell-SKnet in netboot.
 		[phx 20100503]
@@ -626,5 +629,6 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	dhcpcd(8): Import dhcpcd-5.2.4. [roy 20100604]
 	vnode(9): Remove member v_vnlock. [hannken 20100605]
 	acpi(4): Updated ACPICA to 20100528. [jruoho 20100606]
+	lcd(4): Driver for hp700 lcds added. [skrll 20100601]
 	ofppc: Support Gigabit Ethernet Controller for MV64361 on PegasosII
 		by mvgbe@gt.  [kiyohara 20100609]
