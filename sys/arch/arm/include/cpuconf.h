@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.16 2009/02/27 03:57:41 msaitoh Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.17 2010/06/16 22:06:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 #define	ARM_ARCH_5	0
 #endif
 
-#if defined(CPU_ARM11)
+#if defined(CPU_ARM11) || defined(CPU_CORTEXA8)
 #define ARM_ARCH_6	1
 #else
 #define ARM_ARCH_6	0
@@ -197,8 +197,16 @@
 #define	ARM_MMU_V6		0
 #endif
 
+#if !defined(_KERNEL_OPT) ||						\
+	 defined(CPU_CORTEXA8)
+#define	ARM_MMU_V7		1
+#else
+#define	ARM_MMU_V7		0
+#endif
+
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
-				 ARM_MMU_SA1 + ARM_MMU_XSCALE + ARM_MMU_V6)
+				 ARM_MMU_SA1 + ARM_MMU_XSCALE +		\
+				 ARM_MMU_V6 + ARM_MMU_V7)
 #if ARM_NMMUS == 0
 #error ARM_NMMUS is 0
 #endif
