@@ -48,7 +48,8 @@ static
 bool
 state_allows_reason(atf_tcr_state_t state)
 {
-    return state == atf_tcr_failed_state || state == atf_tcr_skipped_state;
+    return state == atf_tcr_failed_state || state == atf_tcr_skipped_state
+	|| state == atf_tcr_xfail_state;
 }
 
 static
@@ -106,6 +107,7 @@ out:
 const atf_tcr_state_t atf_tcr_passed_state = 0;
 const atf_tcr_state_t atf_tcr_failed_state = 1;
 const atf_tcr_state_t atf_tcr_skipped_state = 2;
+const atf_tcr_state_t atf_tcr_xfail_state = 3;
 
 /*
  * Constructors/destructors.

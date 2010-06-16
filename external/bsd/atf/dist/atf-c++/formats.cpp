@@ -463,6 +463,7 @@ static const atf::parser::token_type& tc_end_type = 11;
 static const atf::parser::token_type& passed_type = 12;
 static const atf::parser::token_type& failed_type = 13;
 static const atf::parser::token_type& skipped_type = 14;
+static const atf::parser::token_type& xfail_type = 15;
 static const atf::parser::token_type& info_type = 16;
 
 class tokenizer : public atf::parser::tokenizer< std::istream > {
@@ -483,6 +484,7 @@ public:
         add_keyword("passed", passed_type);
         add_keyword("failed", failed_type);
         add_keyword("skipped", skipped_type);
+        add_keyword("xfail", xfail_type);
         add_keyword("info", info_type);
     }
 };
@@ -860,6 +862,9 @@ impl::atf_tp_reader::validate_and_insert(const std::string& name,
             throw parse_error(lineno, "The use.fs property requires a boolean"
                               " value");
         }
+    } else if (name == "xfail") {
+        if (value.empty())
+	    throw parse_error(lineno, "'xfail' requires a non-empty reason");
     } else if (name.size() > 2 && name[0] == 'X' && name[1] == '-') {
         // Any non-empty value is valid.
     } else {
@@ -1155,8 +1160,8 @@ impl::atf_tps_reader::read_tc(void* pptr)
 
     t = p.expect(comma_type, "`,'");
 
-    t = p.expect(passed_type, failed_type, skipped_type,
-                 "passed, failed or skipped");
+    t = p.expect(passed_type, failed_type, skipped_type, xfail_type,
+                 "passed, failed, skipped or xfail");
     if (t.type() == passed_type) {
         CALLBACK(p, got_tc_end(tcr(tcr::passed_state)));
     } else if (t.type() == failed_type) {
@@ -1173,6 +1178,13 @@ impl::atf_tps_reader::read_tc(void* pptr)
             throw parse_error(t.lineno(),
                               "Empty reason for skipped test case result");
         CALLBACK(p, got_tc_end(tcr(tcr::skipped_state, reason)));
+    } else if (t.type() == xfail_type) {
+        t = p.expect(comma_type, "`,'");
+        std::string reason = text::trim(p.rest_of_line());
+        if (reason.empty())
+            throw parse_error(t.lineno(),
+                              "Empty reason for xfail test case result");
+        CALLBACK(p, got_tc_end(tcr(tcr::xfail_state, reason)));
     } else
         UNREACHABLE;
 
@@ -1307,6 +1319,8 @@ impl::atf_tps_writer::end_tc(const atf::tests::tcr& tcr)
         str += "skipped, " + tcr.get_reason();
     else if (tcr.get_state() == atf::tests::tcr::failed_state)
         str += "failed, " + tcr.get_reason();
+    else if (tcr.get_state() == atf::tests::tcr::xfail_state)
+	str += "xfail, " + tcr.get_reason();
     else
         UNREACHABLE;
     m_os << str << std::endl;

@@ -75,6 +75,7 @@ namespace impl = atf::tests;
 const impl::tcr::state impl::tcr::passed_state = atf_tcr_passed_state;
 const impl::tcr::state impl::tcr::failed_state = atf_tcr_failed_state;
 const impl::tcr::state impl::tcr::skipped_state = atf_tcr_skipped_state;
+const impl::tcr::state impl::tcr::xfail_state = atf_tcr_xfail_state;
 
 impl::tcr::tcr(state s)
 {
@@ -87,7 +88,7 @@ impl::tcr::tcr(state s)
 
 impl::tcr::tcr(state s, const std::string& r)
 {
-    PRE(s == failed_state || s == skipped_state);
+    PRE(s == failed_state || s == skipped_state || s == xfail_state);
     PRE(!r.empty());
 
     atf_error_t err = atf_tcr_init_reason_fmt(&m_tcr, s, "%s", r.c_str());
