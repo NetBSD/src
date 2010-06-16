@@ -176,7 +176,7 @@ class ticker_writer : public writer {
     ostream_ptr m_os;
 
     size_t m_curtp, m_ntps;
-    size_t m_tcs_passed, m_tcs_failed, m_tcs_skipped;
+    size_t m_tcs_passed, m_tcs_failed, m_tcs_skipped, m_tcs_xfail;
     std::string m_tcname, m_tpname;
     std::vector< std::string > m_failed_tcs;
     std::vector< std::string > m_failed_tps;
@@ -197,6 +197,7 @@ class ticker_writer : public writer {
         m_tcs_passed = 0;
         m_tcs_failed = 0;
         m_tcs_skipped = 0;
+        m_tcs_xfail = 0;
         m_ntps = ntps;
     }
 
@@ -261,6 +262,9 @@ class ticker_writer : public writer {
         } else if (s == atf::tests::tcr::skipped_state) {
             str = "Skipped: " + tcr.get_reason();
             m_tcs_skipped++;
+	} else if (s == atf::tests::tcr::xfail_state) {
+            str = "Expected failure: " + tcr.get_reason();
+            m_tcs_xfail++;
         } else
             UNREACHABLE;
 
@@ -306,6 +310,10 @@ class ticker_writer : public writer {
                                         " failed test cases.",
                                         "    ", false)
                 << std::endl;
+        (*m_os) << format_text_with_tag(to_string(m_tcs_xfail) +
+                                        " expected failures.",
+                                        "    ", false)
+                << std::endl;
         (*m_os) << format_text_with_tag(to_string(m_tcs_skipped) +
                                         " skipped test cases.",
                                         "    ", false)
@@ -334,7 +342,7 @@ class xml_writer : public writer {
     ostream_ptr m_os;
 
     size_t m_curtp, m_ntps;
-    size_t m_tcs_passed, m_tcs_failed, m_tcs_skipped;
+    size_t m_tcs_passed, m_tcs_failed, m_tcs_skipped, m_tcs_xfail;
     std::string m_tcname, m_tpname;
     std::vector< std::string > m_failed_tcs;
     std::vector< std::string > m_failed_tps;
