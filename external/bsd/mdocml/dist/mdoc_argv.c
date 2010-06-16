@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_argv.c,v 1.49 2010/05/17 22:11:42 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_argv.c,v 1.52 2010/05/31 13:39:13 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -210,6 +210,7 @@ static	int mdoc_argflags[MDOC_MAX] = {
 	0, /* br */
 	0, /* sp */
 	0, /* %U */
+	0, /* Ta */
 };
 
 
@@ -226,7 +227,7 @@ mdoc_argv(struct mdoc *m, int line, enum mdoct tok,
 	struct mdoc_argv tmp;
 	struct mdoc_arg	 *arg;
 
-	if (0 == buf[*pos])
+	if ('\0' == buf[*pos])
 		return(ARGV_EOLN);
 
 	assert(' ' != buf[*pos]);
@@ -247,10 +248,10 @@ mdoc_argv(struct mdoc *m, int line, enum mdoct tok,
 
 	/* XXX - save zeroed byte, if not an argument. */
 
-	sv = 0;
+	sv = '\0';
 	if (buf[*pos]) {
 		sv = buf[*pos];
-		buf[(*pos)++] = 0;
+		buf[(*pos)++] = '\0';
 	}
 
 	(void)memset(&tmp, 0, sizeof(struct mdoc_argv));
@@ -339,7 +340,7 @@ enum margserr
 mdoc_args(struct mdoc *m, int line, int *pos, 
 		char *buf, enum mdoct tok, char **v)
 {
-	int		  fl, c, i;
+	int		  fl;
 	struct mdoc_node *n;
 
 	fl = mdoc_argflags[tok];
@@ -347,26 +348,20 @@ mdoc_args(struct mdoc *m, int line, int *pos,
 	if (MDOC_It != tok)
 		return(args(m, line, pos, buf, fl, v));
 
-	/* 
-	 * The `It' macro is a special case, as it acquires parameters from its
-	 * parent `Bl' context, specifically, we're concerned with -column.
+	/*
+	 * We know that we're in an `It', so it's reasonable to expect
+	 * us to be sitting in a `Bl'.  Someday this may not be the case
+	 * (if we allow random `It's sitting out there), so provide a
+	 * safe fall-back into the default behaviour.
 	 */
 
 	for (n = m->last; n; n = n->parent)
-		if (MDOC_BLOCK == n->type && MDOC_Bl == n->tok)
+		if (MDOC_Bl == n->tok)
 			break;
 
-	assert(n);
-	c = (int)(n->args ? n->args->argc : 0);
-	assert(c > 0);
-
-	/* LINTED */
-	for (i = 0; i < c; i++) {
-		if (MDOC_Column != n->args->argv[i].arg) 
-			continue;
+	if (n && LIST_column == n->data.list) {
 		fl |= ARGS_TABSEP;
 		fl &= ~ARGS_DELIM;
-		break;
 	}
 
 	return(args(m, line, pos, buf, fl, v));
@@ -377,9 +372,10 @@ static enum margserr
 args(struct mdoc *m, int line, int *pos, 
 		char *buf, int fl, char **v)
 {
-	int		  i;
-	char		 *p, *pp;
-	enum margserr	  rc;
+	int		 i;
+	char		*p, *pp;
+	enum margserr	 rc;
+	enum mdelim	 d;
 
 	/*
 	 * Parse out the terms (like `val' in `.Xx -arg val' or simply
@@ -396,7 +392,6 @@ args(struct mdoc *m, int line, int *pos,
 	 *   phrases like in `Bl -column'.
 	 */
 
-	assert(*pos);
 	assert(' ' != buf[*pos]);
 
 	if ('\0' == buf[*pos]) {
@@ -424,7 +419,7 @@ args(struct mdoc *m, int line, int *pos,
 
 	if ((fl & ARGS_DELIM) && DELIM_CLOSE == mdoc_iscdelim(buf[*pos])) {
 		for (i = *pos; buf[i]; ) {
-			enum mdelim d = mdoc_iscdelim(buf[i]);
+			d = mdoc_iscdelim(buf[i]);
 			if (DELIM_NONE == d || DELIM_OPEN == d)
 				break;
 			i++;
@@ -437,7 +432,7 @@ args(struct mdoc *m, int line, int *pos,
 
 		if ('\0' == buf[i]) {
 			*v = &buf[*pos];
-			if (' ' != buf[i - 1])
+			if (i && ' ' != buf[i - 1])
 				return(ARGS_PUNCT);
 			if (ARGS_NOWARN & fl)
 				return(ARGS_PUNCT);
@@ -468,7 +463,7 @@ args(struct mdoc *m, int line, int *pos,
 					break;
 				if (pp > *v && ' ' != *(pp - 1))
 					continue;
-				if (' ' == *(pp + 2) || 0 == *(pp + 2))
+				if (' ' == *(pp + 2) || '\0' == *(pp + 2))
 					break;
 			}
 
@@ -495,7 +490,7 @@ args(struct mdoc *m, int line, int *pos,
 		}
 
 		/* Whitespace check for eoln case... */
-		if (0 == *p && ' ' == *(p - 1) && ! (ARGS_NOWARN & fl))
+		if ('\0' == *p && ' ' == *(p - 1) && ! (ARGS_NOWARN & fl))
 			if ( ! mdoc_pmsg(m, line, *pos, MANDOCERR_EOLNSPACE))
 				return(ARGS_ERROR);
 
@@ -568,7 +563,7 @@ args(struct mdoc *m, int line, int *pos,
 	 */
 
 	for ( ; buf[*pos]; (*pos)++)
-		if (' ' == buf[*pos] && '\\' != buf[*pos - 1])
+		if (*pos && ' ' == buf[*pos] && '\\' != buf[*pos - 1])
 			break;
 
 	if ('\0' == buf[*pos])

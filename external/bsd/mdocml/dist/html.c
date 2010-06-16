@@ -1,4 +1,4 @@
-/*	$Vendor-Id: html.c,v 1.100 2010/05/25 12:37:20 kristaps Exp $ */
+/*	$Vendor-Id: html.c,v 1.101 2010/06/07 10:52:44 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -34,8 +34,6 @@
 #include "chars.h"
 #include "html.h"
 #include "main.h"
-
-#define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
 
 struct	htmldata {
 	const char	 *name;
