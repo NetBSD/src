@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.53 2010/06/15 18:53:48 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.54 2010/06/16 19:03:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.53 2010/06/15 18:53:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.54 2010/06/16 19:03:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -926,14 +926,16 @@ rump_vop_read(void *v)
 	struct uio *uio = ap->a_uio;
 	uint8_t *buf;
 	size_t bufsize;
+	ssize_t n;
 	int error = 0;
 
 	bufsize = uio->uio_resid;
 	buf = kmem_alloc(bufsize, KM_SLEEP);
-	if (rumpuser_pread(rn->rn_readfd, buf, bufsize,
-	    uio->uio_offset + rn->rn_offset, &error) == -1)
+	if ((n = rumpuser_pread(rn->rn_readfd, buf, bufsize,
+	    uio->uio_offset + rn->rn_offset, &error)) == -1)
 		goto out;
-	error = uiomove(buf, bufsize, uio);
+	KASSERT(n <= bufsize);
+	error = uiomove(buf, n, uio);
 
  out:
 	kmem_free(buf, bufsize);
@@ -954,6 +956,7 @@ rump_vop_write(void *v)
 	struct uio *uio = ap->a_uio;
 	uint8_t *buf;
 	size_t bufsize;
+	ssize_t n;
 	int error = 0;
 
 	bufsize = uio->uio_resid;
@@ -962,8 +965,12 @@ rump_vop_write(void *v)
 	if (error)
 		goto out;
 	KASSERT(uio->uio_resid == 0);
-	rumpuser_pwrite(rn->rn_writefd, buf, bufsize,
+	n = rumpuser_pwrite(rn->rn_writefd, buf, bufsize,
 	    uio->uio_offset + rn->rn_offset, &error);
+	if (n >= 0) {
+		KASSERT(n <= bufsize);
+		uio->uio_resid = bufsize - n;
+	}
 
  out:
 	kmem_free(buf, bufsize);
