@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: roff.7,v 1.7 2010/05/24 23:54:18 schwarze Exp $
+.\"	$Vendor-Id: roff.7,v 1.8 2010/06/01 11:54:23 kristaps Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 24 2010 $
+.Dd $Mdocdate: June 1 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -207,7 +207,9 @@ macro is discarded.
 Furthermore, if an explicit closing sequence
 .Sq \e}
 is specified in a free-form line, the entire line is accepted within the
-scope of the prior macro, not only the text preceding the close.
+scope of the prior macro, not only the text preceding the close, with the
+.Sq \e}
+collapsing into a zero-width space.
 .Ss \&ig
 Ignore input.
 Accepts the following syntax:

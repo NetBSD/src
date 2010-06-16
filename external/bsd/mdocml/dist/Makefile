@@ -1,4 +1,4 @@
-.SUFFIXES:	.html .xml .sgml .1 .3 .7 .md5 .tar.gz .1.txt .3.txt .7.txt .1.sgml .3.sgml .7.sgml .h .h.html
+.SUFFIXES:	.html .xml .sgml .1 .3 .7 .md5 .tar.gz .1.txt .3.txt .7.txt .1.sgml .3.sgml .7.sgml .h .h.html .1.ps .3.ps .7.ps
 
 PREFIX		= /usr/local
 BINDIR		= $(PREFIX)/bin
@@ -12,8 +12,8 @@ INSTALL_DATA	= $(INSTALL) -m 0444
 INSTALL_LIB	= $(INSTALL) -m 0644
 INSTALL_MAN	= $(INSTALL_DATA)
 
-VERSION	   = 1.10.0
-VDATE	   = 29 May 2010
+VERSION	   = 1.10.1
+VDATE	   = 07 June 2010
 
 VFLAGS	   = -DVERSION="\"$(VERSION)\""
 WFLAGS     = -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings
@@ -32,6 +32,8 @@ LINTFLAGS += $(VFLAGS)
 MANDOCFLAGS = -Wall -fstrict
 
 MANDOCHTML = -Thtml -Ostyle=style.css,man=%N.%S.html,includes=%I.html
+
+MANDOCPS   = -Tps
 
 ROFFLNS    = roff.ln
 
@@ -96,7 +98,7 @@ HEADS	   = mdoc.h libmdoc.h man.h libman.h term.h \
 	     libmandoc.h html.h chars.h out.h main.h roff.h \
 	     mandoc.h
 
-GSGMLS	   = mandoc.1.sgml mdoc.3.sgml mdoc.7.sgml manuals.7.sgml \
+GSGMLS	   = mandoc.1.sgml mdoc.3.sgml mdoc.7.sgml \
 	     mandoc_char.7.sgml man.7.sgml man.3.sgml roff.7.sgml \
 	     roff.3.sgml
 
@@ -105,12 +107,15 @@ SGMLS	   = index.sgml
 HTMLS	   = ChangeLog.html index.html man.h.html mdoc.h.html \
 	     mandoc.h.html roff.h.html mandoc.1.html mdoc.3.html \
 	     man.3.html mdoc.7.html man.7.html mandoc_char.7.html \
-	     manuals.7.html roff.7.html roff.3.html
+	     roff.7.html roff.3.html
+
+PSS	   = mandoc.1.ps mdoc.3.ps man.3.ps mdoc.7.ps man.7.ps \
+	     mandoc_char.7.ps roff.7.ps roff.3.ps
 
 XSLS	   = ChangeLog.xsl
 
 TEXTS	   = mandoc.1.txt mdoc.3.txt man.3.txt mdoc.7.txt man.7.txt \
-	     mandoc_char.7.txt manuals.7.txt ChangeLog.txt \
+	     mandoc_char.7.txt ChangeLog.txt \
 	     roff.7.txt roff.3.txt
 
 EXAMPLES   = example.style.css
@@ -123,7 +128,7 @@ MD5S	   = mdocml-$(VERSION).md5
 
 TARGZS	   = mdocml-$(VERSION).tar.gz
 
-MANS	   = mandoc.1 mdoc.3 mdoc.7 manuals.7 mandoc_char.7 man.7 \
+MANS	   = mandoc.1 mdoc.3 mdoc.7 mandoc_char.7 man.7 \
 	     man.3 roff.7 roff.3
 
 BINS	   = mandoc
@@ -134,7 +139,7 @@ CONFIGS	   = config.h.pre config.h.post
 
 DOCLEAN	   = $(BINS) $(LNS) $(LLNS) $(LIBS) $(OBJS) $(HTMLS) \
 	     $(TARGZS) tags $(MD5S) $(XMLS) $(TEXTS) $(GSGMLS) \
-	     config.h config.log
+	     config.h config.log $(PSS)
 
 DOINSTALL  = $(SRCS) $(HEADS) Makefile $(MANS) $(SGMLS) $(STATICS) \
 	     $(DATAS) $(XSLS) $(EXAMPLES) $(TESTS) $(CONFIGS)
@@ -146,15 +151,11 @@ lint:	$(LLNS)
 clean:
 	rm -f $(DOCLEAN)
 
-cleanlint:
-	rm -f $(LNS) $(LLNS)
-
-cleanhtml:
-	rm -f $(HTMLS) $(GSGMLS)
-
 dist:	mdocml-$(VERSION).tar.gz
 
-www:	all $(GSGMLS) $(HTMLS) $(TEXTS) $(MD5S) $(TARGZS)
+www:	all $(GSGMLS) $(HTMLS) $(TEXTS) $(MD5S) $(TARGZS) $(PSS)
+
+ps:	$(PSS)
 
 installwww: www
 	$(INSTALL_DATA) $(HTMLS) $(TEXTS) $(STATICS) $(DESTDIR)$(PREFIX)/
@@ -300,6 +301,9 @@ mandoc: $(MAINOBJS) libroff.a libmdoc.a libman.a libmandoc.a
 
 .1.1.sgml .3.3.sgml .7.7.sgml:
 	./mandoc $(MANDOCFLAGS) $(MANDOCHTML) $< > $@
+
+.1.1.ps .3.3.ps .7.7.ps:
+	./mandoc $(MANDOCFLAGS) $(MANDOCPS) $< > $@
 
 .tar.gz.md5:
 	md5 $< > $@

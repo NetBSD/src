@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term.h,v 1.57 2010/05/24 21:51:20 schwarze Exp $ */
+/*	$Vendor-Id: term.h,v 1.58 2010/06/07 20:57:09 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -19,8 +19,15 @@
 
 __BEGIN_DECLS
 
+struct	termp;
+
 enum	termenc {
 	TERMENC_ASCII
+};
+
+enum	termtype {
+	TERMTYPE_CHAR,
+	TERMTYPE_PS
 };
 
 enum	termfont {
@@ -31,7 +38,10 @@ enum	termfont {
 
 #define	TERM_MAXMARGIN	  100000 /* FIXME */
 
+typedef void	(*term_margin)(struct termp *, const void *);
+
 struct	termp {
+	enum termtype	  type;
 	size_t		  defrmargin;	/* Right margin of the device.. */
 	size_t		  rmargin;	/* Current right margin. */
 	size_t		  maxrmargin;	/* Max right margin. */
@@ -60,12 +70,24 @@ struct	termp {
 	enum termfont	  fontl;	/* Last font set. */
 	enum termfont	  fontq[10];	/* Symmetric fonts. */
 	int		  fonti;	/* Index of font stack. */
+	term_margin	  headf;	/* invoked to print head */
+	term_margin	  footf;	/* invoked to print foot */
+	const void	 *argf;		/* arg for headf/footf */
+	int		  psstate;	/* -Tps: state of ps output */
+#define	PS_INLINE	 (1 << 0)	
+#define	PS_MARGINS	 (1 << 1)	
+	size_t		  pscol;	/* -Tps: visible column */
+	size_t		  psrow;	/* -Tps: visible row */
+	size_t		  pspage;	/* -Tps: current page */
 };
 
 void		  term_newln(struct termp *);
 void		  term_vspace(struct termp *);
 void		  term_word(struct termp *, const char *);
 void		  term_flushln(struct termp *);
+void		  term_begin(struct termp *, term_margin, 
+			term_margin, const void *);
+void		  term_end(struct termp *);
 
 size_t		  term_hspan(const struct roffsu *);
 size_t		  term_vspan(const struct roffsu *);

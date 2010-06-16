@@ -1,4 +1,4 @@
-/*	$Vendor-Id: chars.in,v 1.23 2010/05/16 01:35:37 schwarze Exp $ */
+/*	$Vendor-Id: chars.in,v 1.24 2010/06/01 11:47:28 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
  *
@@ -44,6 +44,7 @@ CHAR("%",			1,	"",		0,	"",		0)
 CHAR("&",			1,	"",		0,	"",		0)
 CHAR("^",			1,	"",		0,	"",		0)
 CHAR("|",			1,	"",		0,	"",		0)
+CHAR("}",			1,	"",		0,	"",		0)
 
 /* Accents. */
 CHAR("a\"",			2,	"\"",		1,	"&#779;",	6)
