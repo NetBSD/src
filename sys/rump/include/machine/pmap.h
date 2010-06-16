@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.24 2010/06/16 11:45:21 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 2010/06/16 11:45:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -25,68 +25,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.24 2010/06/16 11:45:21 pooka Exp $");
+#ifndef _SYS_RUMP_PMAP_H_
+#define _SYS_RUMP_PMAP_H_
 
-#include <sys/param.h>
+#define pmap_update(v)
+#define pmap_is_modified(a) (true)
+#define pmap_is_referenced(a) (true)
 
-#include <uvm/uvm_extern.h>
-
-/*
- * This is the MI pmap implementation for rump.  It's used only by
- * architectures which do not conform to the kernel ABI.  The kernel
- * ABI conformant architectures provide their own pmap under librump/arch
- * (due to various messiness with macros in the pmap "interface").
- */
-
-struct pmap *const kernel_pmap_ptr = (struct pmap *const)-1;
-
-void
-pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int fl)
-{
-
-	panic("%s: unavailable", __func__);
-}
-
-void
-pmap_kremove(vaddr_t va, vsize_t size)
-{
-
-	panic("%s: unavailable", __func__);
-}
-
-int
-pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
-{
-
-	panic("%s: unavailable", __func__);
-}
-
-void
-pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
-{
-
-	panic("%s: unavailable", __func__);
-}
-
-bool
-pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
-{
-
-	*pap = va;
-	return true;
-}
-
-void
-pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
-{
-
-	/* nada */
-}
-
-bool
-pmap_clear_modify(struct vm_page *pg)
-{
-
-	return true;
-}
+#endif /* _SYS_RUMP_PMAP_H_ */
