@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.13 2010/06/14 22:22:44 riz Exp $	*/
+/*	$NetBSD: u3g.c,v 1.14 2010/06/17 23:25:01 riz Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.13 2010/06/14 22:22:44 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.14 2010/06/17 23:25:01 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,9 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_ES620 },
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MC950D },
 #if 0
+	/* These are matched in u3ginit_match() */
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MC950D_DRIVER },
+	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U760_DRIVER },
 #endif
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MERLINU740 },
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MERLINV620 },
@@ -199,6 +201,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U720 },
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U727 },
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U740_2 },
+	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U760 },
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U870 },
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_V740 },
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_X950D },
@@ -453,9 +456,16 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 			return u3g_huawei_reinit(uaa->device);
 	}
 
-	if (uaa->vendor == USB_VENDOR_NOVATEL2 &&
-	    uaa->product == USB_PRODUCT_NOVATEL2_MC950D_DRIVER)
-		return u3g_novatel_reinit(uaa->device);
+	if (uaa->vendor == USB_VENDOR_NOVATEL2) {
+		switch (uaa->product){
+		case USB_PRODUCT_NOVATEL2_MC950D_DRIVER:
+		case USB_PRODUCT_NOVATEL2_U760_DRIVER:
+			return u3g_novatel_reinit(uaa->device);
+			break;
+		default:
+			break;
+		}
+	}
 
 	if (uaa->vendor == USB_VENDOR_SIERRA &&
 	    uaa->product == USB_PRODUCT_SIERRA_INSTALLER)
@@ -472,10 +482,16 @@ u3ginit_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Switching to 3G mode\n");
 
-	if (uaa->vendor == USB_VENDOR_NOVATEL2 &&
-	    uaa->product == USB_PRODUCT_NOVATEL2_MC950D_DRIVER) {
-		/* About to disappear... */
-		return;
+	if (uaa->vendor == USB_VENDOR_NOVATEL2) {
+		switch (uaa->product) {
+	    	case USB_PRODUCT_NOVATEL2_MC950D_DRIVER:
+	    	case USB_PRODUCT_NOVATEL2_U760_DRIVER:
+			/* About to disappear... */
+			return;
+			break;
+		default:
+			break;
+		}
 	}
 
 	/* Move the device into the configured state. */
