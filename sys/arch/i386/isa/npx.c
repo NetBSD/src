@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.136 2010/04/18 23:47:51 jym Exp $	*/
+/*	$NetBSD: npx.c,v 1.137 2010/06/17 14:41:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.136 2010/04/18 23:47:51 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.137 2010/06/17 14:41:50 christos Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -396,7 +396,8 @@ npxintr(void *arg, struct intrframe *frame)
 	/*
 	 * Clear the interrupt latch.
 	 */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0);
+	if (sc->sc_type == NPX_INTERRUPT)
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, 0);
 #endif
 
 	/*
