@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.8 2010/04/05 07:20:25 joerg Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.9 2010/06/17 06:41:05 mrg Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.8 2010/04/05 07:20:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.9 2010/06/17 06:41:05 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -783,6 +783,9 @@ cas_reset(struct cas_softc *sc)
 	DPRINTF(sc, ("%s: cas_reset\n", device_xname(sc->sc_dev)));
 	cas_reset_rx(sc);
 	cas_reset_tx(sc);
+
+	/* Disable interrupts */
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, CAS_INTMASK, ~(uint32_t)0);
 
 	/* Do a full reset */
 	bus_space_write_4(t, h, CAS_RESET,
