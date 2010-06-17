@@ -396,10 +396,25 @@ filter request record to each incoming mail message, with content
 "filter:dummy". This record overrides the normal mail routing
 and causes mail to be given to the content filter instead. </p>
 
-<p> The <a href="postconf.5.html#content_filter">content_filter</a> configuration parameter accepts the same syntax
-as the right-hand side in a Postfix transport table.  </p>
+<p> The <a href="postconf.5.html#content_filter">content_filter</a> configuration parameter expects a value of
+the form <i>transport:destination</i>. The <i>transport</i> name
+specifies the first field of a mail delivery agent definition in
+<a href="master.5.html">master.cf</a>; the syntax of the next-hop <i>destination</i> is described
+in the manual page of the corresponding delivery agent. </p>
 
-<li> <p> Execute "<b>postfix reload</b>" to complete the change.  </p>
+<p> The meaning of an empty next-hop filter <i>destination</i> is
+version dependent.  Postfix 2.7 and later will use the recipient
+domain; earlier versions will use $<a href="postconf.5.html#myhostname">myhostname</a>.  Specify
+"<a href="postconf.5.html#default_filter_nexthop">default_filter_nexthop</a> = $<a href="postconf.5.html#myhostname">myhostname</a>" for compatibility with Postfix
+2.6 or earlier, or specify a non-empty next-hop filter <i>destination</i>.
+</p>
+
+<p> The <a href="postconf.5.html#content_filter">content_filter</a> setting has lower precedence than a FILTER
+action that is specified in an <a href="access.5.html">access(5)</a>, <a href="header_checks.5.html">header_checks(5)</a> or
+<a href="header_checks.5.html">body_checks(5)</a> table. </p>
+
+<li> <p> Execute "<b>postfix reload</b>" to complete the change.
+</p>
 
 </ul>
 
@@ -590,6 +605,12 @@ specify in <a href="postconf.5.html">main.cf</a>:  </p>
 
 <ul>
 
+<li> <p> The "<a href="postconf.5.html#receive_override_options">receive_override_options</a>" line disables address
+manipulation before the content filter, so that the content filter
+sees the original mail addresses instead of the result of virtual
+alias expansion, canonical mapping, automatic bcc, address
+masquerading, etc. </p>
+
 <li> <p> The "<a href="postconf.5.html#content_filter">content_filter</a>" line causes Postfix to add one content
 filter request record to each incoming mail message, with content
 "scan:localhost:10025".  The content filter request records are
@@ -602,11 +623,21 @@ queue file contains a content filter request, the queue manager
 will deliver the mail to the specified content filter regardless
 of its final destination. </p>
 
-<li> <p> The "<a href="postconf.5.html#receive_override_options">receive_override_options</a>" line disables address
-manipulation before the content filter, so that the content filter
-sees the original mail addresses instead of the result of virtual
-alias expansion, canonical mapping, automatic bcc, address
-masquerading, etc. </p>
+<li> <p> The <a href="postconf.5.html#content_filter">content_filter</a> configuration parameter expects a value
+of the form <i>transport:destination</i>. The <i>transport</i> name
+specifies the first field of a mail delivery agent definition in
+<a href="master.5.html">master.cf</a>; the syntax of the next-hop <i>destination</i> is described
+in the manual page of the corresponding delivery agent. </p>
+
+<li> <p> The meaning of an empty next-hop filter <i>destination</i>
+is version dependent.  Postfix 2.7 and later will use the recipient
+domain; earlier versions will use $<a href="postconf.5.html#myhostname">myhostname</a>.  Specify
+"<a href="postconf.5.html#default_filter_nexthop">default_filter_nexthop</a> = $<a href="postconf.5.html#myhostname">myhostname</a>" for compatibility with Postfix
+2.6 or earlier, or specify a non-empty next-hop filter <i>destination</i>.
+
+<li> <p> The <a href="postconf.5.html#content_filter">content_filter</a> setting has lower precedence than a
+FILTER action that is specified in an <a href="access.5.html">access(5)</a>, <a href="header_checks.5.html">header_checks(5)</a>
+or <a href="header_checks.5.html">body_checks(5)</a> table. </p>
 
 </ul>
 

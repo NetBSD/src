@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.1.1.2 2010/04/17 10:24:54 tron Exp $	*/
+/*	$NetBSD: resolve.c,v 1.1.1.3 2010/06/17 18:07:10 tron Exp $	*/
 
 /*++
 /* NAME
@@ -155,6 +155,7 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
     char   *oper;
     char   *junk;
     const char *relay;
+    const char *xport;
     const char *sender_key;
 
     *flags = 0;
@@ -501,8 +502,27 @@ static void resolve_addr(RES_CONTEXT *rp, char *sender, char *addr,
 	     * Other off-host destination.
 	     */
 	    else {
-		vstring_strcpy(channel, RES_PARAM_VALUE(rp->def_transport));
-		blame = rp->def_transport_name;
+		if (rp->snd_def_xp_info
+		    && (xport = mail_addr_find(rp->snd_def_xp_info,
+					    sender_key = (*sender ? sender :
+					       var_null_def_xport_maps_key),
+					       (char **) 0)) != 0) {
+		    if (*xport == 0) {
+			msg_warn("%s: ignoring null lookup result for %s",
+				 rp->snd_def_xp_maps_name, sender_key);
+			xport = "DUNNO";
+		    }
+		    vstring_strcpy(channel, strcasecmp(xport, "DUNNO") == 0 ?
+				RES_PARAM_VALUE(rp->def_transport) : xport);
+		    blame = rp->snd_def_xp_maps_name;
+		} else if (dict_errno != 0) {
+		    msg_warn("%s lookup failure", rp->snd_def_xp_maps_name);
+		    *flags |= RESOLVE_FLAG_FAIL;
+		    FREE_MEMORY_AND_RETURN;
+		} else {
+		    vstring_strcpy(channel, RES_PARAM_VALUE(rp->def_transport));
+		    blame = rp->def_transport_name;
+		}
 		*flags |= RESOLVE_CLASS_DEFAULT;
 	    }
 

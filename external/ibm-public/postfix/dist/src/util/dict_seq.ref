@@ -1,0 +1,22 @@
+> put 5 5
+5=5
+> put 3 3
+3=3
+> put 4 4
+4=4
+> put 1 1
+1=1
+> put 2 2
+2=2
+> first
+4=4
+> next
+2=2
+> next
+5=5
+> next
+3=3
+> next
+1=1
+> next
+not found

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_xforward.c,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_xforward.c,v 1.1.1.2 2010/06/17 18:07:08 tron Exp $	*/
 
 /*++
 /* NAME
@@ -53,7 +53,7 @@
 
 #include <smtpd.h>
 
-/* smtpd_xforward_init - initialize XCLIENT attributes */
+/* smtpd_xforward_init - initialize xforward attributes */
 
 void    smtpd_xforward_init(SMTPD_STATE *state)
 {
@@ -97,7 +97,7 @@ void    smtpd_xforward_preset(SMTPD_STATE *state)
     /* Leave domain context at zero. */
 }
 
-/* smtpd_xforward_reset - reset XCLIENT attributes */
+/* smtpd_xforward_reset - reset xforward attributes */
 
 void    smtpd_xforward_reset(SMTPD_STATE *state)
 {
