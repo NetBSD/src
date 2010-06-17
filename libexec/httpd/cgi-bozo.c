@@ -1,4 +1,4 @@
-/*	$eterna: cgi-bozo.c,v 1.36 2010/05/10 14:36:37 mrg Exp $	*/
+/*	$eterna: cgi-bozo.c,v 1.37 2010/06/09 07:54:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -247,6 +247,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	const char *type, *clen, *info, *cgihandler;
 	char	*query, *s, *t, *path, *env, *command, *file, *url;
 	char	**envp, **curenvp, *argv[4];
+	char	*uri;
 	size_t	len;
 	ssize_t rbytes;
 	pid_t	pid;
@@ -256,9 +257,14 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	if (!httpd->cgibin && !httpd->process_cgi)
 		return 0;
 
-	asprintf(&file, "/%s", request->hr_file);
+	uri = request->hr_oldfile ? request->hr_oldfile : request->hr_file;
+	if (uri[0] == '/')
+		file = bozostrdup(httpd, uri);
+	else
+		asprintf(&file, "/%s", uri);
 	if (file == NULL)
 		return 0;
+
 	if (request->hr_query && strlen(request->hr_query))
 		query = bozostrdup(httpd, request->hr_query);
 	else
@@ -380,7 +386,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	bozo_setenv(httpd, "SCRIPT_FILENAME", file + 1, curenvp++);
 	bozo_setenv(httpd, "SERVER_SOFTWARE", httpd->server_software,
 			curenvp++);
-	bozo_setenv(httpd, "REQUEST_URI", request->hr_file, curenvp++);
+	bozo_setenv(httpd, "REQUEST_URI", uri, curenvp++);
 	bozo_setenv(httpd, "DATE_GMT", bozo_http_date(date, sizeof(date)),
 			curenvp++);
 	if (query && *query)

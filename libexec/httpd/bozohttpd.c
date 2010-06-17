@@ -1,4 +1,4 @@
-/*	$eterna: bozohttpd.c,v 1.169 2010/05/13 04:17:58 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.172 2010/06/17 19:27:32 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -107,7 +107,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20100512"
+#define SERVER_SOFTWARE		"bozohttpd/20100617"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -337,6 +337,7 @@ bozo_clean_request(bozo_httpreq_t *request)
 	MF(hr_remoteaddr);
 	MF(hr_serverport);
 	MF(hr_file);
+	MF(hr_oldfile);
 	MF(hr_query);
 #undef MF
 	bozo_auth_cleanup(request);
@@ -519,10 +520,14 @@ bozo_read_request(bozohttpd_t *httpd)
 	bozo_httpreq_t *request;
 
 	/*
-	 * if we're in daemon mode, bozo_daemon_fork() will return here once
-	 * for each child, then we can setup SSL.
+	 * if we're in daemon mode, bozo_daemon_fork() will return here twice
+	 * for each call.  once in the child, returning 0, and once in the
+	 * parent, returning 1.  for each child, then we can setup SSL, and
+	 * the parent can signal the caller there was no request to process
+	 * and it will wait for another.
 	 */
-	bozo_daemon_fork(httpd);
+	if (bozo_daemon_fork(httpd))
+		return NULL;
 	bozo_ssl_accept(httpd);
 
 	request = bozomalloc(httpd, sizeof(*request));
@@ -534,6 +539,7 @@ bozo_read_request(bozohttpd_t *httpd)
 	request->hr_last_byte_pos = -1;
 	request->hr_if_modified_since = NULL;
 	request->hr_file = NULL;
+	request->hr_oldfile = NULL;
 
 	slen = sizeof(ss);
 	if (getpeername(0, (struct sockaddr *)(void *)&ss, &slen) < 0)
@@ -1308,7 +1314,7 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 		goto bad_done;
 
 	if (strlen(newfile)) {
-		free(request->hr_file);
+		request->hr_oldfile = request->hr_file;
 		request->hr_file = newfile;
 	}
 
@@ -2001,6 +2007,9 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	if ((cp = bozo_get_pref(prefs, "directory indexing")) != NULL &&
 	    strcmp(cp, "true") == 0) {
 		httpd->dir_indexing = 1;
+	}
+	if ((cp = bozo_get_pref(prefs, "public_html")) != NULL) {
+		httpd->public_html = strdup(cp);
 	}
 	httpd->server_software =
 			strdup(bozo_get_pref(prefs, "server software"));
