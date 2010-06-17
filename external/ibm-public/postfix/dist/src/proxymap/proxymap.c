@@ -1,4 +1,4 @@
-/*	$NetBSD: proxymap.c,v 1.1.1.1 2009/06/23 10:08:52 tron Exp $	*/
+/*	$NetBSD: proxymap.c,v 1.1.1.2 2010/06/17 18:06:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -594,12 +594,6 @@ static void post_jail_init(char *service_name, char **unused_argv)
 	    (void) htable_enter(proxy_auth_maps, type_name, (char *) 0);
     }
     myfree(saved_filter);
-
-    /*
-     * This process is called by clients that already enforce the max_idle
-     * time, so we don't have to do it another time.
-     */
-    var_idle_limit = 1;
 
     /*
      * Never, ever, get killed by a master signal, as that could corrupt a

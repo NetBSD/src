@@ -219,8 +219,20 @@ Once you're satisfied with the content filtering script:
     This record overrides the normal mail routing and causes mail to be given
     to the content filter instead.
 
-    The content_filter configuration parameter accepts the same syntax as the
-    right-hand side in a Postfix transport table.
+    The content_filter configuration parameter expects a value of the form
+    transport:destination. The transport name specifies the first field of a
+    mail delivery agent definition in master.cf; the syntax of the next-hop
+    destination is described in the manual page of the corresponding delivery
+    agent.
+
+    The meaning of an empty next-hop filter destination is version dependent.
+    Postfix 2.7 and later will use the recipient domain; earlier versions will
+    use $myhostname. Specify "default_filter_nexthop = $myhostname" for
+    compatibility with Postfix 2.6 or earlier, or specify a non-empty next-hop
+    filter destination.
+
+    The content_filter setting has lower precedence than a FILTER action that
+    is specified in an access(5), header_checks(5) or body_checks(5) table.
 
   * Execute "ppoossttffiixx rreellooaadd" to complete the change.
 
@@ -312,6 +324,11 @@ To enable the advanced content filter method for all mail, specify in main.cf:
         content_filter = scan:localhost:10025
         receive_override_options = no_address_mappings
 
+  * The "receive_override_options" line disables address manipulation before
+    the content filter, so that the content filter sees the original mail
+    addresses instead of the result of virtual alias expansion, canonical
+    mapping, automatic bcc, address masquerading, etc.
+
   * The "content_filter" line causes Postfix to add one content filter request
     record to each incoming mail message, with content "scan:localhost:10025".
     The content filter request records are added by the smtpd(8) and pickup(8)
@@ -322,10 +339,20 @@ To enable the advanced content filter method for all mail, specify in main.cf:
     content filter request, the queue manager will deliver the mail to the
     specified content filter regardless of its final destination.
 
-  * The "receive_override_options" line disables address manipulation before
-    the content filter, so that the content filter sees the original mail
-    addresses instead of the result of virtual alias expansion, canonical
-    mapping, automatic bcc, address masquerading, etc.
+  * The content_filter configuration parameter expects a value of the form
+    transport:destination. The transport name specifies the first field of a
+    mail delivery agent definition in master.cf; the syntax of the next-hop
+    destination is described in the manual page of the corresponding delivery
+    agent.
+
+  * The meaning of an empty next-hop filter destination is version dependent.
+    Postfix 2.7 and later will use the recipient domain; earlier versions will
+    use $myhostname. Specify "default_filter_nexthop = $myhostname" for
+    compatibility with Postfix 2.6 or earlier, or specify a non-empty next-hop
+    filter destination.
+
+  * The content_filter setting has lower precedence than a FILTER action that
+    is specified in an access(5), header_checks(5) or body_checks(5) table.
 
 AAddvvaanncceedd ccoonntteenntt ffiilltteerr:: sseennddiinngg uunnffiilltteerreedd mmaaiill ttoo tthhee ccoonntteenntt ffiilltteerr
 

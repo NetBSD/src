@@ -651,30 +651,125 @@ align="center" bgcolor="#f0f0ff"> smtp<br> session<br> cache </td>
 
 <li> <p> The verify(8) server verifies that a sender or recipient
 address is deliverable before the smtpd(8) server accepts it.  The
-verify(8) server injects probe messages into the Postfix queue and
-processes status updates from delivery agents and/or queue manager.
+verify(8) server queries a cache with address verification results.
+If a result is not found, the verify(8) server injects a probe
+message into the Postfix queue and processes the status update from
+a delivery agent or queue manager.
 This process is described in the ADDRESS_VERIFICATION_README
 document.  The verify(8) service is available with Postfix version
 2.1 and later. </p>
 
 <table>
 
-<tr> <td> Network </td> <td> <tt> -&gt; </tt> </td> <td align="center"
-bgcolor="#f0f0ff"> smtpd(8) </td> <td> <tt> &lt;-&gt; </tt> </td>
-<td align="center" bgcolor="#f0f0ff"> verify(8) </td> <td> <tt>
--&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff"> cleanup(8)
-</td> <td> <tt> -&gt; </tt> </td> <td align="center" bgcolor="#f0f0ff">
-qmgr(8)<br> Postfix <br>queue </td> <td> <tt> -&gt; </tt> </td>
-<td align="center" bgcolor="#f0f0ff"> Delivery<br> agents</td>
+<tr>
+
+    <td rowspan="2" colspan="5" align="center" valign="middle">
+    &nbsp; </td> <td rowspan="3" align="center" valign="bottom">
+    <tt> -&gt; </tt> </td> <td rowspan="3" align="center"
+    valign="middle"> probe<br> message </td> <td rowspan="3"
+    align="center" valign="middle"> <tt> -&gt; </tt> </td> <td
+    rowspan="3" bgcolor="#f0f0ff" align="center" valign="middle">
+    Postfix<br> mail<br> queue </td>
+
 </tr>
 
-<tr> <td colspan="5"> </td> <td align="right"> <table> <tr> <td>
-\ </td> <td> </td> </tr> <tr> <td> </td> <td> \ </td> </tr> </table>
-</td> <td align="center" valign="bottom"> <tt> &lt;- </tt> </td>
-<td valign="bottom"> <tt> &lt;- </tt> </td> <td align="center">
-<tt> |<br> v </tt> </td> <td align="center"> <table> <tr> <td>
-</td> <td> / </td> </tr> <tr> <td> / </td> <td> </td> </tr> </table>
+<tr> </tr>
+
+<tr>
+
+    <td rowspan="3" align="center" valign="middle"> Network </td>
+    <td rowspan="3" align="center" valign="middle"> <tt> -&gt; </tt>
+    </td> <td rowspan="3" bgcolor="#f0f0ff" align="center"
+    valign="middle"> smtpd(8) </td> <td rowspan="3" align="center"
+    valign="middle"> <tt> &lt;-&gt; </tt> </td> <td rowspan="3"
+    bgcolor="#f0f0ff" align="center" valign="middle"> verify(8)
+    </td>
+
+</tr>
+
+<tr>
+
+    <td rowspan="1" colspan="3"> </td> <td rowspan="1" align="center"
+    valign="middle"> <tt> |</tt><br> <tt> v</tt> </td>
+
+</tr>
+
+<tr>
+
+    <td rowspan="3" align="center" valign="top"> <tt> &lt;- </tt>
+    </td> <td rowspan="3" align="center" valign="middle"> probe<br>
+    status </td> <td rowspan="3" align="center" valign="middle">
+    <tt> &lt;- </tt> </td> <td rowspan="3" bgcolor="#f0f0ff"
+    align="center" valign="middle"> Postfix<br> delivery<br> agents
+    </td> <td rowspan="3" align="left" valign="middle"> <tt>-&gt;</tt>
+    Local<br> <tt>-&gt;</tt> Network</td>
+
+</tr>
+
+<tr>
+
+    <td rowspan="3" colspan="4" align="center" valign="middle">
+    &nbsp; </td> <td rowspan="3" align="center" valign="middle">
+    <tt> ^</tt><br> <tt> |</tt><br> <tt> v</tt> </td>
+
+</tr>
+
+<tr> </tr>
+
+<tr> <td colspan="4"> &nbsp; </td> </tr>
+
+<tr>
+
+    <td colspan="4" align="center" valign="middle"> &nbsp; </td>
+    <td bgcolor="#f0f0ff" align="center" valign="middle"> Address<br>
+    verification<br> cache </td>
+
+</tr>
+
+</table>
+
+<li> <p> The postscreen(8) server can be put "in front" of Postfix
+smtpd(8) processes. Its purpose is to accept connections from the
+network and to decide what SMTP clients are allowed to talk to
+Postfix.  According to the 2008 MessageLabs annual report, 81% of
+all email was spam, and 90% of that was sent by botnets.  While
+postscreen(8) keeps the zombies away, more smtpd(8) processes remain
+available for legitimate clients.  </p>
+
+<p> The postscreen(8) server is still evolving, and is likely to
+undergo changes that break compatibility with earlier versions.
+For this reason the postscreen(8) server is not installed with the
+stable Postfix release. </p>
+
+<table>
+
+<tr> <td> zombie </td> </tr>
+
+<tr> <td>  </td> <td align="left"> <tt> \ </tt> </td> </tr>
+
+<tr> <td> zombie </td> <td align="left"> <tt> - </tt> </td> <td>
+</td> <td>  </td> <td>  </td> <td align="right"> <tt> - </tt> </td>
+<td bgcolor="#f0f0ff" align="center"> smtpd(8) </td> </tr>
+
+<tr> <td>  </td> <td align="right"> <tt> \ </tt> </td> <td> </td>
+<td align="left"> <tt> / </tt> </td> </tr>
+
+<tr> <td bgcolor="#f0f0ff" align="center"> other </td> <td> <tt>
+--- </tt> </td> <td bgcolor="#f0f0ff" align="center" valign="middle">
+postscreen(8) </td> </tr>
+
+<tr> <td>  </td> <td align="right"> <tt> / </tt> </td> <td> </td>
+<td align="right"> <tt> \ </tt> </td> </tr>
+
+<tr> <td bgcolor="#f0f0ff" align="center"> other </td> <td align="left">
+<tt> - </tt> </td> <td> </td> <td>  </td> <td>  </td> <td align="right">
+<tt> - </tt> </td> <td bgcolor="#f0f0ff" align="center"> smtpd(8)
 </td> </tr>
+
+<tr> <td>  </td> <td align="left"> <tt> / </tt> </td> </tr>
+
+<tr> <td> zombie </td> </tr>
+
 
 </table>
 

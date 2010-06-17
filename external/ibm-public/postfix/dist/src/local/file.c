@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.2 2010/06/17 18:06:53 tron Exp $	*/
 
 /*++
 /* NAME
@@ -113,8 +113,8 @@ int     deliver_file(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
      */
     if ((local_file_deliver_mask & state.msg_attr.exp_type) == 0) {
 	dsb_simple(why, "5.7.1", "mail to file is restricted");
-	return (bounce_append(BOUNCE_FLAGS(state.request),
-			      BOUNCE_ATTR(state.msg_attr)));
+	/* Account for possible owner- sender address override. */
+	return (bounce_workaround(state));
     }
 
     /*
@@ -186,11 +186,13 @@ int     deliver_file(LOCAL_STATE state, USER_ATTR usr_attr, char *path)
     } else if (mail_copy_status != 0) {
 	vstring_sprintf_prepend(why->reason,
 				"cannot append message to file %s: ", path);
-	deliver_status =
-	    (STR(why->status)[0] == '4' ?
-	     defer_append : bounce_append)
-	    (BOUNCE_FLAGS(state.request),
-	     BOUNCE_ATTR(state.msg_attr));
+	if (STR(why->status)[0] == '4')
+	    deliver_status =
+		defer_append(BOUNCE_FLAGS(state.request),
+			     BOUNCE_ATTR(state.msg_attr));
+	else
+	    /* Account for possible owner- sender address override. */
+	    deliver_status = bounce_workaround(state);
     } else {
 	dsb_simple(why, "2.0.0", "delivered to file: %s", path);
 	deliver_status = sent(BOUNCE_FLAGS(state.request),

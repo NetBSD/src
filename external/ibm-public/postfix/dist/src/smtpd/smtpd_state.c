@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_state.c,v 1.1.1.1 2009/06/23 10:08:56 tron Exp $	*/
+/*	$NetBSD: smtpd_state.c,v 1.1.1.2 2010/06/17 18:07:07 tron Exp $	*/
 
 /*++
 /* NAME
@@ -120,9 +120,7 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream,
     state->expand_buf = 0;
     state->prepend = 0;
     state->proxy = 0;
-    state->proxy_buffer = 0;
     state->proxy_mail = 0;
-    state->proxy_xforward_features = 0;
     state->saved_filter = 0;
     state->saved_redirect = 0;
     state->saved_bcc = 0;
@@ -209,8 +207,6 @@ void    smtpd_state_reset(SMTPD_STATE *state)
 	vstring_free(state->defer_if_reject.reason);
     if (state->expand_buf)
 	vstring_free(state->expand_buf);
-    if (state->proxy_buffer)
-	vstring_free(state->proxy_buffer);
     if (state->instance)
 	vstring_free(state->instance);
     if (state->dsn_buf)
