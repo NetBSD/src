@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 2010/06/16 11:45:21 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6 2010/06/17 08:19:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -31,5 +31,6 @@
 #define pmap_update(v)
 #define pmap_is_modified(a) (true)
 #define pmap_is_referenced(a) (true)
+#define pmap_resident_count(a) (0)
 
 #endif /* _SYS_RUMP_PMAP_H_ */
