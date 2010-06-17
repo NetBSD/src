@@ -1,6 +1,6 @@
-/*	$NetBSD: daemon-bozo.c,v 1.9 2010/05/10 14:44:19 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.10 2010/06/17 19:43:30 mrg Exp $	*/
 
-/*	$eterna: daemon-bozo.c,v 1.20 2010/05/10 04:39:00 mrg Exp $	*/
+/*	$eterna: daemon-bozo.c,v 1.21 2010/06/07 21:48:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -176,7 +176,7 @@ daemon_poll_err(bozohttpd_t *httpd, int fd, int idx)
  * the parent never returns from this function, only children that
  * are ready to run... XXXMRG - still true in fork-lesser bozo?
  */
-void
+int
 bozo_daemon_fork(bozohttpd_t *httpd)
 {
 	int i;
@@ -241,10 +241,16 @@ again:
 				continue;
 			}
 
+#if 0
+			/*
+			 * This code doesn't work.  It interacts very poorly
+			 * with ~user translation and needs to be fixed.
+			 */
 			if (httpd->request_times > 0) {
 				daemon_runchild(httpd, fd);
-				return;
+				return 0;
 			}
+#endif
 
 			switch (fork()) {
 			case -1: /* eep, failure */
@@ -256,7 +262,7 @@ again:
 
 			case 0: /* child */
 				daemon_runchild(httpd, fd);
-				return;
+				return 0;
 
 			default: /* parent */
 				close(fd);
@@ -264,6 +270,7 @@ again:
 			}
 		}
 	}
+	return 0;
 }
 
 #endif /* NO_DAEMON_MODE */
