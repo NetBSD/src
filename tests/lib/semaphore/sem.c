@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.4 2010/06/16 15:39:41 pooka Exp $	*/
+/*	$NetBSD: sem.c,v 1.5 2010/06/17 09:37:50 pooka Exp $	*/
 
 /*
  * Common code for semaphore tests.  This can be included both into
@@ -167,6 +167,7 @@ ATF_TC_HEAD(blockwait, tc)
 
 	atf_tc_set_md_var(tc, "descr", "tests sem_wait can handle blocking "
 	    "(%s)", LIBNAME);
+	atf_tc_set_md_var(tc, "timeout", "2");
 }
 
 ATF_TC_BODY(blockwait, tc)
@@ -193,8 +194,6 @@ ATF_TC_BODY(blockwait, tc)
 		sem_post(&semmarit[1]);
 
 	}
-	if (i == 1000)
-		atf_tc_fail("sem destroy not reporting EBUSY");
 }
 
 ATF_TC(named);
