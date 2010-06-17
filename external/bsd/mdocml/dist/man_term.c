@@ -159,8 +159,6 @@ terminal_man(void *arg, const struct man *man)
 	p->overstep = 0;
 	p->maxrmargin = p->defrmargin;
 
-	term_begin(p, print_man_head, print_man_foot, man_meta(man));
-
 	if (NULL == p->symtab)
 		switch (p->enc) {
 		case (TERMENC_ASCII):
@@ -174,6 +172,7 @@ terminal_man(void *arg, const struct man *man)
 	n = man_node(man);
 	m = man_meta(man);
 
+	term_begin(p, print_man_head, print_man_foot, man_meta(man));
 	p->flags |= TERMP_NOSPACE;
 
 	mt.fl = 0;

@@ -276,8 +276,6 @@ terminal_mdoc(void *arg, const struct mdoc *mdoc)
 	p->maxrmargin = p->defrmargin;
 	p->tabwidth = 5;
 
-	term_begin(p, print_mdoc_head, print_foot, mdoc_meta(mdoc));
-
 	if (NULL == p->symtab)
 		switch (p->enc) {
 		case (TERMENC_ASCII):
@@ -290,6 +288,8 @@ terminal_mdoc(void *arg, const struct mdoc *mdoc)
 
 	n = mdoc_node(mdoc);
 	m = mdoc_meta(mdoc);
+
+	term_begin(p, print_mdoc_head, print_foot, mdoc_meta(mdoc));
 
 	if (n->child)
 		print_mdoc_nodelist(p, NULL, m, n->child);
