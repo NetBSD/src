@@ -366,7 +366,7 @@ This feature is available in Postfix version 2.1 and later.
 Example:
 
     /etc/postfix/master.cf:
-        :10026      inet  n       -       n       -       -       smtpd
+        127.0.0.1:10026    inet  n      -      n      -      -     smtpd
             -o receive_override_options=no_address_mappings
 
 Note: do not specify whitespace around the "=" here.
@@ -439,7 +439,7 @@ file. This feature is available in Postfix version 2.1 and later.
 Example:
 
     /etc/postfix/master.cf:
-        :10026      inet  n       -       n       -       -       smtpd
+        127.0.0.1:10026    inet  n      -      n      -      -     smtpd
             -o receive_override_options=no_address_mappings
 
 Note: do not specify whitespace around the "=" here.
@@ -475,7 +475,7 @@ settings in the master.cf file. This feature is available in Postfix version
 Example:
 
     /etc/postfix/master.cf:
-        :10026      inet  n       -       n       -       -       smtpd
+        127.0.0.1:10026    inet  n      -      n      -      -     smtpd
             -o receive_override_options=no_address_mappings
 
 Note: do not specify whitespace around the "=" here.
@@ -520,7 +520,7 @@ This feature is available in Postfix version 2.1 and later.
 Example:
 
     /etc/postfix/master.cf:
-        :10026      inet  n       -       n       -       -       smtpd
+        127.0.0.1:10026    inet  n      -      n      -      -     smtpd
             -o receive_override_options=no_address_mappings
 
 Note: do not specify whitespace around the "=" here.

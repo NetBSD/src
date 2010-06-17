@@ -318,6 +318,10 @@ Translation:
     listed in $mydestination, or when it matches $inet_interfaces or
     $proxy_interfaces.
 
+Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//vviirrttuuaall" after editing the file.
+
+.
+
 RRuunnnniinngg PPoossttffiixx bbeehhiinndd aa ffiirreewwaallll
 
 The simplest way to set up Postfix on a host behind a firewalled network is to

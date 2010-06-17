@@ -1,4 +1,4 @@
-/*	$NetBSD: qmqpd.c,v 1.1.1.1 2009/06/23 10:08:53 tron Exp $	*/
+/*	$NetBSD: qmqpd.c,v 1.1.1.2 2010/06/17 18:07:01 tron Exp $	*/
 
 /*++
 /* NAME
@@ -47,8 +47,8 @@
 /* .ad
 /* .fi
 /* .IP "\fBcontent_filter (empty)\fR"
-/*	The name of a mail delivery transport that filters mail after
-/*	it is queued.
+/*	After the message is queued, send the entire message to the
+/*	specified \fItransport:destination\fR.
 /* .IP "\fBreceive_override_options (empty)\fR"
 /*	Enable or disable recipient validation, built-in content
 /*	filtering, or address mapping.

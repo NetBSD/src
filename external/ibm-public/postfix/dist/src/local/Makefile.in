@@ -2,11 +2,11 @@ SHELL	= /bin/sh
 SRCS	= alias.c command.c dotforward.c file.c forward.c \
 	include.c indirect.c local.c mailbox.c recipient.c resolve.c token.c \
 	deliver_attr.c maildir.c biff_notify.c unknown.c \
-	local_expand.c
+	local_expand.c bounce_workaround.c
 OBJS	= alias.o command.o dotforward.o file.o forward.o \
 	include.o indirect.o local.o mailbox.o recipient.o resolve.o token.o \
 	deliver_attr.o maildir.o biff_notify.o unknown.o \
-	local_expand.o
+	local_expand.o bounce_workaround.c
 HDRS	= local.h
 TESTSRC	=
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
@@ -101,6 +101,37 @@ biff_notify.o: ../../include/msg.h
 biff_notify.o: ../../include/sys_defs.h
 biff_notify.o: biff_notify.c
 biff_notify.o: biff_notify.h
+bounce_workaround.o: ../../include/argv.h
+bounce_workaround.o: ../../include/attr.h
+bounce_workaround.o: ../../include/been_here.h
+bounce_workaround.o: ../../include/bounce.h
+bounce_workaround.o: ../../include/canon_addr.h
+bounce_workaround.o: ../../include/deliver_request.h
+bounce_workaround.o: ../../include/delivered_hdr.h
+bounce_workaround.o: ../../include/dict.h
+bounce_workaround.o: ../../include/dsn.h
+bounce_workaround.o: ../../include/dsn_buf.h
+bounce_workaround.o: ../../include/fold_addr.h
+bounce_workaround.o: ../../include/htable.h
+bounce_workaround.o: ../../include/mail_params.h
+bounce_workaround.o: ../../include/maps.h
+bounce_workaround.o: ../../include/mbox_conf.h
+bounce_workaround.o: ../../include/msg.h
+bounce_workaround.o: ../../include/msg_stats.h
+bounce_workaround.o: ../../include/mymalloc.h
+bounce_workaround.o: ../../include/recipient_list.h
+bounce_workaround.o: ../../include/resolve_clnt.h
+bounce_workaround.o: ../../include/split_addr.h
+bounce_workaround.o: ../../include/split_at.h
+bounce_workaround.o: ../../include/stringops.h
+bounce_workaround.o: ../../include/strip_addr.h
+bounce_workaround.o: ../../include/sys_defs.h
+bounce_workaround.o: ../../include/tok822.h
+bounce_workaround.o: ../../include/vbuf.h
+bounce_workaround.o: ../../include/vstream.h
+bounce_workaround.o: ../../include/vstring.h
+bounce_workaround.o: bounce_workaround.c
+bounce_workaround.o: local.h
 command.o: ../../include/argv.h
 command.o: ../../include/attr.h
 command.o: ../../include/been_here.h

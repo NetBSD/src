@@ -70,7 +70,8 @@
 #	\fBre_format\fR(7) with 4.4BSD, in \fBregex\fR(5) with Solaris, and in
 #	\fBregex\fR(7) with Linux. Other systems may use other document names.
 #
-#	The expression delimiter can be any character, except whitespace
+#	The expression delimiter can be any non-alphanumerical
+#	character, except whitespace
 #	or characters that have special meaning (traditionally the forward
 #	slash is used). The regular expression can contain whitespace.
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: postmulti.c,v 1.1.1.2 2010/04/17 10:24:43 tron Exp $	*/
+/*	$NetBSD: postmulti.c,v 1.1.1.3 2010/06/17 18:06:59 tron Exp $	*/
 
 /*++
 /* NAME
@@ -7,6 +7,12 @@
 /*	Postfix multi-instance manager
 /* SYNOPSIS
 /* .fi
+/*	\fBENABLING MULTI-INSTANCE MANAGEMENT:\fR
+/*
+/*	\fBpostmulti\fR \fB-e init\fR [\fB-v\fR]
+/*
+/*	\fBITERATOR MODE:\fR
+/*
 /*	\fBpostmulti\fR \fB-l\fR [\fB-aRv\fR] [\fB-g \fIgroup\fR]
 /*	[\fB-i \fIname\fR]
 /*
@@ -16,7 +22,7 @@
 /*	\fBpostmulti\fR \fB-x\fR [\fB-aRv\fR] [\fB-g \fIgroup\fR]
 /*	[\fB-i \fIname\fR] \fIcommand...\fR
 /*
-/*	\fBpostmulti\fR \fB-e init\fR [\fB-v\fR]
+/*	\fBLIFE-CYCLE MANAGEMENT:\fR
 /*
 /*	\fBpostmulti\fR \fB-e create\fR [\fB-av\fR]
 /*	[\fB-g \fIgroup\fR] [\fB-i \fIname\fR] [\fB-G \fIgroup\fR]

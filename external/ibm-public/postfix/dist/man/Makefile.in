@@ -59,6 +59,11 @@ man8/discard.8: ../src/discard/discard.c
 	    (cmp -s junk $? || mv junk $?) && rm -f junk
 	../mantools/srctoman $? >$@
 
+man8/dnsblog.8: ../src/dnsblog/dnsblog.c
+	../mantools/fixman ../proto/postconf.proto $? >junk && \
+	    (cmp -s junk $? || mv junk $?) && rm -f junk
+	../mantools/srctoman $? >$@
+
 man8/error.8: ../src/error/error.c
 	../mantools/fixman ../proto/postconf.proto $? >junk && \
 	    (cmp -s junk $? || mv junk $?) && rm -f junk
@@ -96,6 +101,11 @@ man8/pickup.8: ../src/pickup/pickup.c
 	../mantools/srctoman $? >$@
 
 man8/pipe.8: ../src/pipe/pipe.c
+	../mantools/fixman ../proto/postconf.proto $? >junk && \
+	    (cmp -s junk $? || mv junk $?) && rm -f junk
+	../mantools/srctoman $? >$@
+
+man8/postscreen.8: ../src/postscreen/postscreen.c
 	../mantools/fixman ../proto/postconf.proto $? >junk && \
 	    (cmp -s junk $? || mv junk $?) && rm -f junk
 	../mantools/srctoman $? >$@
