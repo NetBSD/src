@@ -1,6 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
-
-/*	$NetBSD: cleanup.h,v 1.2 2009/06/23 11:41:06 tron Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.3 2010/06/17 18:18:15 tron Exp $	*/
 
 /*++
 /* NAME
@@ -36,6 +34,7 @@
 #include <mime_state.h>
 #include <string_list.h>
 #include <cleanup_user.h>
+#include <header_body_checks.h>
 
  /*
   * Milter library.
@@ -82,6 +81,8 @@ typedef struct CLEANUP_STATE {
     off_t   append_rcpt_pt_target;	/* target of above record */
     off_t   append_hdr_pt_offset;	/* append header here */
     off_t   append_hdr_pt_target;	/* target of above record */
+    off_t   append_meta_pt_offset;	/* append meta record here */
+    off_t   append_meta_pt_target;	/* target of above record */
     ssize_t rcpt_count;			/* recipient count */
     char   *reason;			/* failure reason */
     char   *smtp_reply;			/* failure reason, SMTP-style */
@@ -112,6 +113,8 @@ typedef struct CLEANUP_STATE {
     VSTRING *milter_ext_from;		/* externalized sender */
     VSTRING *milter_ext_rcpt;		/* externalized recipient */
     VSTRING *milter_err_text;		/* milter call-back reply */
+    HBC_CHECKS *milter_hbc_checks;	/* Milter header checks */
+    VSTRING *milter_hbc_reply;		/* Milter header checks reply */
 
     /*
      * Support for Milter body replacement requests.
