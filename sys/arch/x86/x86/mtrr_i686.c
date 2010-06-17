@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.20 2009/11/21 03:11:01 rmind Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.21 2010/06/17 06:38:19 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.20 2009/11/21 03:11:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.21 2010/06/17 06:38:19 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -301,8 +301,8 @@ i686_mtrr_init_first(void)
 	i686_mtrr_vcnt = i686_mtrr_cap & MTRR_I686_CAP_VCNT_MASK;
 
 	if (i686_mtrr_vcnt > MTRR_I686_NVAR_MAX)
-		printf("\%s: FIXME: more than %d MTRRs\n", __FILE__,
-		    MTRR_I686_NVAR_MAX);
+		printf("\%s: FIXME: more than %d MTRRs (%d)\n", __FILE__,
+		    MTRR_I686_NVAR_MAX, i686_mtrr_vcnt);
 	else if (i686_mtrr_vcnt < MTRR_I686_NVAR_MAX) {
 		for (i = MTRR_I686_NVAR_MAX - i686_mtrr_vcnt; i; i--) {
 			mtrr_raw[16 - (i*2)].msraddr = 0;
