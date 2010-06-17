@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.557 2010/06/14 18:57:49 riz Exp $
+$NetBSD: usbdevs,v 1.558 2010/06/17 23:22:21 riz Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1798,6 +1798,8 @@ product NOVATEL2 U720		0x2110	U720
 product NOVATEL2 U727		0x4100	U727
 product NOVATEL2 MC950D		0x4400	Novatel Wireless HSUPA Modem
 product NOVATEL2 MC950D_DRIVER	0x5010	Novatel Wireless HSUPA Modem Windows Driver
+product NOVATEL2 U760_DRIVER	0x5030	Novatel Wireless U760 Windows/Mac Driver
+product NOVATEL2 U760		0x6000	Novatel 760USB
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
