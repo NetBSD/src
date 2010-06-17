@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.766 2010/06/17 07:13:34 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.767 2010/06/17 19:49:38 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -142,8 +142,8 @@ License:	GPLv2, LGPLv2, BSD
 Notes:
 
 Package:	bozohttpd 
-Version:	20090522
-Current Vers:	20090522
+Version:	20100617
+Current Vers:	20100617
 Maintainer:	mrg@eterna.com.au
 Archive Site:	ftp://ftp.NetBSD.org/pub/NetBSD/packages/distfiles/LOCAL_PORTS/
 Home Page:	http://eterna.com.au/bozohttpd/
