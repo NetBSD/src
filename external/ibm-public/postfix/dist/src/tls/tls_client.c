@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.2 2009/07/20 17:17:56 christos Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.3 2010/06/17 18:18:16 tron Exp $	*/
 
 /*++
 /* NAME
