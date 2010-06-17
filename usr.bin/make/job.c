@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.150 2010/06/03 15:40:15 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.151 2010/06/17 03:36:05 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.150 2010/06/03 15:40:15 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.151 2010/06/17 03:36:05 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.150 2010/06/03 15:40:15 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.151 2010/06/17 03:36:05 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1020,8 +1020,11 @@ JobFinish(Job *job, int status)
 				job->node->name,
 			       WEXITSTATUS(status),
 			       (job->flags & JOB_IGNERR) ? "(ignored)" : "");
-		if (job->flags & JOB_IGNERR)
+		if (job->flags & JOB_IGNERR) {
 		    status = 0;
+		} else {
+		    PrintOnError(job->node, NULL);
+		}
 	    } else if (DEBUG(JOB)) {
 		if (job->node != lastNode) {
 		    MESSAGE(stdout, job->node);
