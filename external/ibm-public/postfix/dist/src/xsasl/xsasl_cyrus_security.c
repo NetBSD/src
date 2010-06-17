@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_cyrus_security.c,v 1.1.1.1 2009/06/23 10:09:02 tron Exp $	*/
+/*	$NetBSD: xsasl_cyrus_security.c,v 1.1.1.2 2010/06/17 18:07:18 tron Exp $	*/
 
 /*++
 /* NAME
@@ -27,6 +27,8 @@
 /* .IP nodictionary
 /*	Disallow authentication methods that are vulnerable to
 /*	passive dictionary attack.
+/* .IP forward_secrecy
+/*	Require forward secrecy between sessions.
 /* .IP noanonymous
 /*	Disallow anonymous logins.
 /* .RE
@@ -66,6 +68,9 @@ static const NAME_MASK xsasl_cyrus_sec_mask[] = {
     "noplaintext", SASL_SEC_NOPLAINTEXT,
     "noactive", SASL_SEC_NOACTIVE,
     "nodictionary", SASL_SEC_NODICTIONARY,
+#ifdef SASL_SEC_FORWARD_SECRECY
+    "forward_secrecy", SASL_SEC_FORWARD_SECRECY,
+#endif
     "noanonymous", SASL_SEC_NOANONYMOUS,
 #if SASL_VERSION_MAJOR >= 2
     "mutual_auth", SASL_SEC_MUTUAL_AUTH,

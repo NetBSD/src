@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_bounce.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup_bounce.c,v 1.1.1.2 2010/06/17 18:06:42 tron Exp $	*/
 
 /*++
 /* NAME
@@ -223,6 +223,7 @@ int     cleanup_bounce(CLEANUP_STATE *state)
 	    encoding = MAIL_ATTR_ENC_NONE;
 	dsn_envid = state->dsn_envid ?
 	    state->dsn_envid : "";
+	/* Do not send unfiltered (body) content. */
 	dsn_ret = (state->errs & (CLEANUP_STAT_CONT | CLEANUP_STAT_SIZE)) ?
 	    DSN_RET_HDRS : state->dsn_ret;
 

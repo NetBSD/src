@@ -468,7 +468,7 @@ WWoorrkkaarroouunnddss
     queue ID in the message header.
 
     To fix the ugly message header, you will need to add code that looks up the
-    Postfix queue ID at some later point im time. The example below adds the
+    Postfix queue ID at some later point in time. The example below adds the
     lookup after the end-of-message.
 
       o Edit the filter source file (typically named xxx-filter/xxx-filter.c or

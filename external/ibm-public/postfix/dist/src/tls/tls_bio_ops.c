@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_bio_ops.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_bio_ops.c,v 1.1.1.2 2010/06/17 18:07:08 tron Exp $	*/
 
 /*++
 /* NAME
@@ -56,7 +56,7 @@
 /*
 /*	The TLS layer to network interface is realized with a BIO pair:
 /*
-/*	 Postfix             |   TLS layer
+/*	Postfix SMTP layer   |   TLS layer
 /*	                     |
 /*	smtp/smtpd           |
 /*	 /\    ||            |
@@ -66,7 +66,7 @@
 /*	                     |     ||    \/
 /*	                     |   BIO pair (internal_bio)
 /*	                     |   BIO pair (network_bio)
-/*	                     |     /\    ||
+/*	Postfix socket layer |     /\    ||
 /*	                     |     ||    \/
 /*	socket read/write  <===> BIO read/write
 /*	 /\    ||            |

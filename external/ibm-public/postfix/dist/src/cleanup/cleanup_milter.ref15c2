@@ -1,0 +1,29 @@
+*** ENVELOPE RECORDS test-queue-file15c.tmp ***
+        0 message_size:             365             221               1               0             365
+       81 message_arrival_time: Fri Jun  5 14:06:34 2009
+       99 create_time: Fri Jun  5 14:06:34 2009
+      123 named_attribute: rewrite_context=local
+      146 sender_fullname: Wietse Venema
+      161 sender: wietse@ahost.example.com
+      187 pointer_record:             0
+      202 pointer_record:               0
+      219 *** MESSAGE CONTENTS test-queue-file15c.tmp ***
+      221 regular_text: Received: by ahost.example.com (Postfix, from userid 1001)
+      281 regular_text: 	id 06F8B2510C2; Fri,  5 Jun 2009 14:06:34 -0400 (EDT)
+      337 regular_text: To: wietse@ahost.example.com
+      367 regular_text: Message-Id: <20090605180634.06F8B2510C2@ahost.example.com>
+      427 regular_text: Date: Fri,  5 Jun 2009 14:06:34 -0400 (EDT)
+      472 regular_text: From: wietse@ahost.example.com (Wietse Venema)
+      520 pointer_record:             641
+      641 regular_text: X-SPAM-FLAG: YES
+      659 pointer_record:             537
+      537 regular_text: 
+      539 regular_text: Fri Jun  5 14:06:34 EDT 2009
+      569 pointer_record:               0
+      586 *** HEADER EXTRACTED test-queue-file15c.tmp ***
+      588 pointer_record:             676
+      676 redirect_to: foo@examle.com
+      692 pointer_record:             605
+      605 original_recipient: wietse
+      613 recipient: wietse@ahost.example.com
+      639 *** MESSAGE FILE END test-queue-file15c.tmp ***

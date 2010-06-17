@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.2 2010/04/17 10:24:59 tron Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.1.1.3 2010/06/17 18:07:16 tron Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -113,7 +113,7 @@
 #define HAS_DUPLEX_PIPE			/* 4.1 breaks with kqueue(2) */
 #endif
 
-#if __FreeBSD_version >= 800098		/* commit: r194262 */
+#if __FreeBSD_version >= 800107		/* safe; don't believe the experts */
 #define HAS_CLOSEFROM
 #endif
 
@@ -210,7 +210,6 @@
 #define DEF_DB_TYPE	"hash"
 #define ALIAS_DB_MAP	"hash:/etc/aliases"
 #define GETTIMEOFDAY(t) gettimeofday(t,(struct timezone *) 0)
-#define RESOLVE_H_NEEDS_NAMESER8_COMPAT_H
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
 #define USE_STATFS
 #define STATFS_IN_SYS_MOUNT_H
@@ -1490,6 +1489,19 @@ typedef int pid_t;
 #define SCANFLIKE(x,y) __attribute__ ((format (scanf, (x), (y))))
 #else
 #define SCANFLIKE(x,y)
+#endif
+#endif
+
+ /*
+  * Some gcc implementations don't grok these attributes with pointer to
+  * function. Again, wild guess of what is supported. To override, specify
+  * #define PRINTPTRFLIKE  in the system-dependent sections above.
+  */
+#ifndef PRINTFPTRLIKE
+#if (__GNUC__ >= 3)			/* XXX Rough estimate */
+#define PRINTFPTRLIKE(x,y) PRINTFLIKE(x,y)
+#else
+#define PRINTFPTRLIKE(x,y)
 #endif
 #endif
 

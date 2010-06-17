@@ -222,6 +222,7 @@ smtp_connect.o: ../../include/host_port.h
 smtp_connect.o: ../../include/htable.h
 smtp_connect.o: ../../include/inet_addr_list.h
 smtp_connect.o: ../../include/iostuff.h
+smtp_connect.o: ../../include/mail_addr.h
 smtp_connect.o: ../../include/mail_error.h
 smtp_connect.o: ../../include/mail_params.h
 smtp_connect.o: ../../include/mail_proto.h

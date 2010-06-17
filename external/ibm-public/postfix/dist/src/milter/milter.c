@@ -1,4 +1,4 @@
-/*	$NetBSD: milter.c,v 1.1.1.1 2009/06/23 10:08:49 tron Exp $	*/
+/*	$NetBSD: milter.c,v 1.1.1.2 2010/06/17 18:06:55 tron Exp $	*/
 
 /*++
 /* NAME
@@ -903,7 +903,7 @@ int     main(int argc, char **argv)
 		msg_warn("no milters");
 		continue;
 	    }
-	    resp = milter_rcpt_event(milters, (const char **) args);
+	    resp = milter_rcpt_event(milters, 0, (const char **) args);
 	} else if (strcmp(cmd, "unknown") == 0 && argv->argc > 0) {
 	    if (milters == 0) {
 		msg_warn("no milters");

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.1.1.2 2010/06/17 18:06:47 tron Exp $	*/
 
 /*++
 /* NAME
@@ -1084,11 +1084,20 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
     static VSTRING *result;
     int     rc = 0;
     int     sizelimit;
+    const char *cp;
 
     dict_errno = 0;
 
     if (msg_verbose)
 	msg_info("%s: In dict_ldap_lookup", myname);
+
+    for (cp = name; *cp; ++cp)
+    	if (!ISASCII(*cp)) {
+	    if (msg_verbose)
+		msg_info("%s: %s: Skipping lookup of non-ASCII key '%s'",
+			 myname, dict_ldap->parser->name, name);
+	    return (0);
+	}
 
     /*
      * Optionally fold the key.
@@ -1107,7 +1116,8 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
      */
     if (db_common_check_domain(dict_ldap->ctx, name) == 0) {
 	if (msg_verbose)
-	    msg_info("%s: Skipping lookup of '%s'", myname, name);
+	    msg_info("%s: %s: Skipping lookup of key '%s': domain mismatch",
+		     myname, dict_ldap->parser->name, name);
 	return (0);
     }
 #define INIT_VSTR(buf, len) do { \

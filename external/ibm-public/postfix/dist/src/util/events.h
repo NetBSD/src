@@ -1,4 +1,4 @@
-/*	$NetBSD: events.h,v 1.1.1.1 2009/06/23 10:08:59 tron Exp $	*/
+/*	$NetBSD: events.h,v 1.1.1.2 2010/06/17 18:07:13 tron Exp $	*/
 
 #ifndef _EVENTS_H_INCLUDED_
 #define _EVENTS_H_INCLUDED_
@@ -32,6 +32,7 @@ extern time_t event_request_timer(EVENT_NOTIFY_TIME, char *, int);
 extern int event_cancel_timer(EVENT_NOTIFY_TIME, char *);
 extern void event_loop(int);
 extern void event_drain(int);
+extern void event_fork(void);
 
  /*
   * Event codes.

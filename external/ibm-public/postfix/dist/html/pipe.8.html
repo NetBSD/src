@@ -200,12 +200,12 @@ PIPE(8)                                                                PIPE(8)
        <b>user</b>=<i>username</i> (required)
 
        <b>user</b>=<i>username</i>:<i>groupname</i>
-              Execute the external command with the rights of the
-              specified <i>username</i>.  The software refuses  to  exe-
-              cute  commands  with  root  privileges, or with the
-              privileges of the mail system owner.  If  <i>groupname</i>
-              is  specified,  the  corresponding group ID is used
-              instead of the group ID of <i>username</i>.
+              Execute  the  external command with the user ID and
+              group ID of the specified <i>username</i>.   The  software
+              refuses  to  execute commands with root privileges,
+              or with the privileges of the mail system owner. If
+              <i>groupname</i>  is specified, the corresponding group ID
+              is used instead of the group ID of <i>username</i>.
 
        <b>argv</b>=<i>command</i>... (required)
               The command to be executed. This must be  specified
@@ -381,72 +381,73 @@ PIPE(8)                                                                PIPE(8)
        ventions defined in &lt;<b>sysexits.h</b>&gt;.   Exit  status  0  means
        normal successful completion.
 
-       Postfix  version  2.3  and  later  support  <a href="http://tools.ietf.org/html/rfc3463">RFC 3463</a>-style
-       enhanced status codes.  If a  command  terminates  with  a
-       non-zero  exit  status, and the command output begins with
-       an enhanced status code, this status code takes precedence
-       over the non-zero exit status.
+       In the case of a non-zero exit status, a limited amount of
+       command output is reported in an delivery status notifica-
+       tion.   When  the  output  begins  with  a  4.X.X or 5.X.X
+       enhanced status code, the  status  code  takes  precedence
+       over  the  non-zero  exit  status (Postfix version 2.3 and
+       later).
 
-       Problems  and transactions are logged to <b>syslogd</b>(8).  Cor-
-       rupted message files are marked so that the queue  manager
+       Problems and transactions are logged to <b>syslogd</b>(8).   Cor-
+       rupted  message files are marked so that the queue manager
        can move them to the <b>corrupt</b> queue for further inspection.
 
 <b>SECURITY</b>
-       This program needs a dual personality  1)  to  access  the
-       private  Postfix  queue and IPC mechanisms, and 2) to exe-
+       This  program  needs  a  dual personality 1) to access the
+       private Postfix queue and IPC mechanisms, and 2)  to  exe-
        cute external commands as the specified user. It is there-
        fore security sensitive.
 
 <b>CONFIGURATION PARAMETERS</b>
-       Changes  to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as <a href="pipe.8.html"><b>pipe</b>(8)</a>
-       processes run for only a limited amount of time.  Use  the
+       Changes to <a href="postconf.5.html"><b>main.cf</b></a> are picked up automatically as  <a href="pipe.8.html"><b>pipe</b>(8)</a>
+       processes  run  for only a limited amount of time. Use the
        command "<b>postfix reload</b>" to speed up a change.
 
-       The  text  below  provides  only  a parameter summary. See
+       The text below provides  only  a  parameter  summary.  See
        <a href="postconf.5.html"><b>postconf</b>(5)</a> for more details including examples.
 
 <b>RESOURCE AND RATE CONTROLS</b>
-       In the text below, <i>transport</i> is the first field in a  <b>mas-</b>
+       In  the text below, <i>transport</i> is the first field in a <b>mas-</b>
        <b>ter.cf</b> entry.
 
        <b><a href="postconf.5.html#transport_destination_concurrency_limit"><i>transport</i>_destination_concurrency_limit</a> ($<a href="postconf.5.html#default_destination_concurrency_limit">default_destina</a>-</b>
        <b><a href="postconf.5.html#default_destination_concurrency_limit">tion_concurrency_limit</a>)</b>
               Limit the number of parallel deliveries to the same
-              destination, for delivery via the named  <i>transport</i>.
+              destination,  for delivery via the named <i>transport</i>.
               The limit is enforced by the Postfix queue manager.
 
        <b><a href="postconf.5.html#transport_destination_recipient_limit"><i>transport</i>_destination_recipient_limit</a>   ($<a href="postconf.5.html#default_destination_recipient_limit">default_destina</a>-</b>
        <b><a href="postconf.5.html#default_destination_recipient_limit">tion_recipient_limit</a>)</b>
-              Limit the number of recipients per  message  deliv-
-              ery,  for  delivery  via  the named <i>transport</i>.  The
+              Limit  the  number of recipients per message deliv-
+              ery, for delivery via  the  named  <i>transport</i>.   The
               limit is enforced by the Postfix queue manager.
 
        <b><a href="postconf.5.html#transport_time_limit"><i>transport</i>_time_limit</a> ($<a href="postconf.5.html#command_time_limit">command_time_limit</a>)</b>
-              Limit the time for delivery  to  external  command,
+              Limit  the  time  for delivery to external command,
               for delivery via the named <i>transport</i>.  The limit is
               enforced by the pipe delivery agent.
 
-              Postfix 2.4 and later support a suffix that  speci-
-              fies  the  time  unit:  s (seconds), m (minutes), h
+              Postfix  2.4 and later support a suffix that speci-
+              fies the time unit: s  (seconds),  m  (minutes),  h
               (hours), d (days), w (weeks). The default time unit
               is seconds.
 
 <b>MISCELLANEOUS CONTROLS</b>
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location  of  the Postfix <a href="postconf.5.html">main.cf</a> and
+              The default location of  the  Postfix  <a href="postconf.5.html">main.cf</a>  and
               <a href="master.5.html">master.cf</a> configuration files.
 
        <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
-              How much time a Postfix daemon process may take  to
-              handle  a  request  before  it  is  terminated by a
+              How  much time a Postfix daemon process may take to
+              handle a request  before  it  is  terminated  by  a
               built-in watchdog timer.
 
        <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
-              The maximal number  of  digits  after  the  decimal
+              The  maximal  number  of  digits  after the decimal
               point when logging sub-second delay values.
 
        <b><a href="postconf.5.html#export_environment">export_environment</a> (see 'postconf -d' output)</b>
-              The  list  of  environment variables that a Postfix
+              The list of environment variables  that  a  Postfix
               process will export to non-Postfix processes.
 
        <b><a href="postconf.5.html#ipc_timeout">ipc_timeout</a> (3600s)</b>
@@ -458,25 +459,25 @@ PIPE(8)                                                                PIPE(8)
               and most Postfix daemon processes.
 
        <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
-              The maximum amount of time  that  an  idle  Postfix
-              daemon  process  waits  for  an incoming connection
+              The  maximum  amount  of  time that an idle Postfix
+              daemon process waits  for  an  incoming  connection
               before terminating voluntarily.
 
        <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
-              The maximal number of incoming connections  that  a
-              Postfix  daemon  process will service before termi-
+              The  maximal  number of incoming connections that a
+              Postfix daemon process will service  before  termi-
               nating voluntarily.
 
        <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
-              The process ID  of  a  Postfix  command  or  daemon
+              The  process  ID  of  a  Postfix  command or daemon
               process.
 
        <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
-              The  process  name  of  a Postfix command or daemon
+              The process name of a  Postfix  command  or  daemon
               process.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
-              The location of the Postfix top-level queue  direc-
+              The  location of the Postfix top-level queue direc-
               tory.
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
@@ -487,8 +488,8 @@ PIPE(8)                                                                PIPE(8)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              The mail system  name  that  is  prepended  to  the
-              process  name  in  syslog  records, so that "smtpd"
+              The  mail  system  name  that  is  prepended to the
+              process name in syslog  records,  so  that  "smtpd"
               becomes, for example, "postfix/smtpd".
 
 <b>SEE ALSO</b>
@@ -500,7 +501,7 @@ PIPE(8)                                                                PIPE(8)
        syslogd(8), system logging
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: access.5,v 1.1.1.2 2010/04/17 10:24:09 tron Exp $
+.\"	$NetBSD: access.5,v 1.1.1.3 2010/06/17 18:06:25 tron Exp $
 .\"
 .TH ACCESS 5 
 .ad
@@ -269,18 +269,39 @@ prevents Postfix from trying substrings of the lookup key
 This feature is available in Postfix 2.0 and later.
 .IP "\fBFILTER \fItransport:destination\fR"
 After the message is queued, send the entire message through
-the specified external content filter. The \fItransport:destination\fR
-syntax is described in the \fBtransport\fR(5) manual page.
-More information
-about external content filters is in the Postfix FILTER_README file.
+the specified external content filter. The \fItransport\fR
+name specifies the first field of a mail delivery agent
+definition in master.cf; the syntax of the next-hop
+\fIdestination\fR is described in the manual page of the
+corresponding delivery agent.  More information about
+external content filters is in the Postfix FILTER_README
+file.
 .sp
-Note: this action overrides the \fBcontent_filter\fR setting,
-and currently affects all recipients of the message.
+Note 1: do not use $\fInumber\fR regular expression
+substitutions for \fItransport\fR or \fIdestination\fR
+unless you know that the information has a trusted origin.
+.sp
+Note 2: this action overrides the main.cf \fBcontent_filter\fR
+setting, and affects all recipients of the message. In the
+case that multiple \fBFILTER\fR actions fire, only the last
+one is executed.
+.sp
+Note 3: the purpose of the FILTER command is to override
+message routing.  To override the recipient's \fItransport\fR
+but not the next-hop \fIdestination\fR, specify an empty
+filter \fIdestination\fR (Postfix 2.7 and later), or specify
+a \fItransport:destination\fR that delivers through a
+different Postfix instance (Postfix 2.6 and earlier). Other
+options are using the recipient-dependent \fBtrans\%port\%_maps\fR
+or the sen\%der-dependent
+\fBsender\%_de\%pen\%dent\%_de\%fault\%_trans\%port\%_maps\fR
+features.
 .sp
 This feature is available in Postfix 2.0 and later.
 .IP "\fBHOLD \fIoptional text...\fR"
-Place the message on the \fBhold\fR queue, where it will sit
-until someone either deletes it or releases it for delivery.
+Place the message on the \fBhold\fR queue, where it will
+sit until someone either deletes it or releases it for
+delivery.
 Log the optional text if specified, otherwise log a generic
 message.
 

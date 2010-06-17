@@ -167,7 +167,7 @@ below shows how to use this mechanism for the example.com domain.
  2     <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> = example.com ...other <a href="VIRTUAL_README.html#canonical">hosted domains</a>...
  3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
  4 
- 5 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+ 5 /etc/postfix/virtual:
  6     postmaster@example.com postmaster
  7     info@example.com       joe
  8     sales@example.com      jane
@@ -271,7 +271,7 @@ section at the top of this document.</p>
 14     # @example.com      example.com/catchall
 15     ...virtual mailboxes for more domains...
 16 
-17 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+17 /etc/postfix/virtual:
 18     postmaster@example.com postmaster
 </pre>
 </blockquote>
@@ -389,7 +389,7 @@ to a non-Postfix delivery agent: </p>
 12     # @example.com      whatever
 13     ...virtual mailboxes for more domains...
 14 
-15 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+15 /etc/postfix/virtual:
 16     postmaster@example.com postmaster
 </pre>
 </blockquote>
@@ -486,7 +486,7 @@ as a mail forwarding domain: </p>
  2     <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> = example.com ...other <a href="VIRTUAL_README.html#canonical">hosted domains</a>...
  3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
  4 
- 5 /etc/postfix/<a href="virtual.8.html">virtual</a>:
+ 5 /etc/postfix/virtual:
  6     postmaster@example.com postmaster
  7     joe@example.com        joe@somewhere
  8     jane@example.com       jane@somewhere-else
@@ -553,7 +553,7 @@ virtual addresses to the local delivery agent: </p>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 
-/etc/postfix/<a href="virtual.8.html">virtual</a>:
+/etc/postfix/virtual:
     listname-request@example.com listname-request
     listname@example.com         listname
     owner-listname@example.com   owner-listname
@@ -601,7 +601,7 @@ table: </p>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 
-/etc/postfix/<a href="virtual.8.html">virtual</a>:
+/etc/postfix/virtual:
     user@domain.tld user@domain.tld, user@domain.tld@autoreply.<a href="postconf.5.html#mydomain">mydomain</a>.tld
 </pre>
 </blockquote>

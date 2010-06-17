@@ -602,7 +602,7 @@ in the <a href="master.5.html">master.cf</a> file.  This feature is available in
 <blockquote>
 <pre>
 /etc/postfix/<a href="master.5.html">master.cf</a>:
-    :10026      inet  n       -       n       -       -       smtpd
+    127.0.0.1:10026    inet  n      -      n      -      -     smtpd
         -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
 </blockquote>
@@ -701,7 +701,7 @@ Postfix version 2.1 and later. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="master.5.html">master.cf</a>:
-    :10026      inet  n       -       n       -       -       smtpd
+    127.0.0.1:10026    inet  n      -      n      -      -     smtpd
         -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
 </blockquote>
@@ -751,7 +751,7 @@ is available in Postfix version 2.1 and later. </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="master.5.html">master.cf</a>:
-    :10026      inet  n       -       n       -       -       smtpd
+    127.0.0.1:10026    inet  n      -      n      -      -     smtpd
         -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
 </blockquote>
@@ -785,7 +785,7 @@ commas. </p>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = hash:/etc/postfix/virtual
 
-/etc/postfix/<a href="virtual.8.html">virtual</a>:
+/etc/postfix/virtual:
     Wietse.Venema        wietse
 </pre>
 </blockquote>
@@ -810,7 +810,7 @@ in the <a href="master.5.html">master.cf</a> file.  This feature is available in
 <blockquote>
 <pre>
 /etc/postfix/<a href="master.5.html">master.cf</a>:
-    :10026      inet  n       -       n       -       -       smtpd
+    127.0.0.1:10026    inet  n      -      n      -      -     smtpd
         -o <a href="postconf.5.html#receive_override_options">receive_override_options</a>=<a href="postconf.5.html#no_address_mappings">no_address_mappings</a>
 </pre>
 </blockquote>

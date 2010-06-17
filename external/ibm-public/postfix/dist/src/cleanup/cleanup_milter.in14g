@@ -1,0 +1,7 @@
+#verbose on
+open test-queue-file14g.tmp
+
+header_checks regexp:cleanup_milter.reg14g
+upd_header 1 X-SPAM-FLAG YES
+
+close

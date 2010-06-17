@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_certkey.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_certkey.c,v 1.1.1.2 2010/06/17 18:07:09 tron Exp $	*/
 
 /*++
 /* NAME
@@ -160,7 +160,7 @@ int     tls_set_my_certificate_key_info(SSL_CTX *ctx,
 	return (-1);			/* logged */
     if (*dcert_file && !set_cert_stuff(ctx, "DSA", dcert_file, dkey_file))
 	return (-1);				/* logged */
-#if OPENSSL_VERSION_NUMBER >= 0x00909000 && !defined(OPENSSL_NO_ECDH)
+#if OPENSSL_VERSION_NUMBER >= 0x1000000fL && !defined(OPENSSL_NO_ECDH)
     if (*eccert_file && !set_cert_stuff(ctx, "ECDSA", eccert_file, eckey_file))
 	return (-1);				/* logged */
 #else

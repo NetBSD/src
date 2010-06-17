@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.h,v 1.1.1.1 2009/06/23 10:08:55 tron Exp $	*/
+/*	$NetBSD: smtpd.h,v 1.1.1.2 2010/06/17 18:07:06 tron Exp $	*/
 
 /*++
 /* NAME
@@ -66,7 +66,7 @@ typedef struct {
     char   *domain;			/* rewrite context */
 } SMTPD_XFORWARD_ATTR;
 
-typedef struct SMTPD_STATE {
+typedef struct {
     int     flags;			/* see below */
     int     err;			/* cleanup server/queue file errors */
     VSTREAM *client;			/* SMTP client handle */
@@ -155,10 +155,8 @@ typedef struct SMTPD_STATE {
     /*
      * Pass-through proxy client.
      */
-    VSTREAM *proxy;			/* proxy handle */
-    VSTRING *proxy_buffer;		/* proxy query/reply buffer */
+    struct SMTPD_PROXY *proxy;
     char   *proxy_mail;			/* owned by mail_cmd() */
-    int     proxy_xforward_features;	/* XFORWARD proxy state */
 
     /*
      * XFORWARD server state.
@@ -351,6 +349,11 @@ extern int smtpd_input_transp_mask;
   * More Milter support.
   */
 extern MILTERS *smtpd_milters;
+
+ /*
+  * Message size multiplication factor for free space check.
+  */
+extern double smtpd_space_multf;
 
 /* LICENSE
 /* .ad

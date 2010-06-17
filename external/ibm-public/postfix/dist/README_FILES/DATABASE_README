@@ -204,6 +204,9 @@ To find out what database types your Postfix system supports, use the "ppooss
         created with the postmap(1) or postalias(1) command. The database name
         as used in "hash:table" is the database file name without the ".db"
         suffix.
+    iinntteerrnnaall
+        A non-shared, in-memory hash table. Its content are lost when a process
+        terminates.
     llddaapp (read-only)
         Perform lookups using the LDAP protocol. Configuration details are
         given in the ldap_table(5).
@@ -245,8 +248,7 @@ To find out what database types your Postfix system supports, use the "ppooss
         Access information through a TCP/IP server. The protocol is described
         in tcp_table(5). The lookup table name is "tcp:host:port" where "host"
         specifies a symbolic hostname or a numeric IP address, and "port"
-        specifies a symbolic service name or a numeric port number. This
-        protocol is not available in the stable Postfix release.
+        specifies a symbolic service name or a numeric port number.
     uunniixx (read-only)
         A limited way to query the UNIX authentication database. The following
         tables are implemented:

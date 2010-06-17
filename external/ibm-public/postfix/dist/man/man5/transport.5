@@ -1,4 +1,4 @@
-.\"	$NetBSD: transport.5,v 1.1.1.1 2009/06/23 10:08:34 tron Exp $
+.\"	$NetBSD: transport.5,v 1.1.1.2 2010/06/17 18:06:28 tron Exp $
 .\"
 .TH TRANSPORT 5 
 .ad
@@ -46,9 +46,9 @@ recipient domain.
 .IP "\fBdefault_transport (default: smtp:)\fR"
 This is the default for remote delivery to other destinations.
 In order of decreasing precedence, the \fInexthop\fR
-destination is taken from \fBdefault_transport\fR,
-\fBsender_dependent_relayhost_maps\fR, \fBrelayhost\fR, or from the
-recipient domain.
+destination is taken from \fBsender_dependent_default_transport_maps,
+\fBdefault_transport\fR, \fBsender_dependent_relayhost_maps\fR,
+\fBrelayhost\fR, or from the recipient domain.
 .PP
 Normally, the \fBtransport\fR(5) table is specified as a text file
 that serves as input to the \fBpostmap\fR(1) command.

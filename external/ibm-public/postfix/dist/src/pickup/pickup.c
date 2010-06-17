@@ -1,4 +1,4 @@
-/*	$NetBSD: pickup.c,v 1.1.1.2 2010/04/17 10:24:40 tron Exp $	*/
+/*	$NetBSD: pickup.c,v 1.1.1.3 2010/06/17 18:06:57 tron Exp $	*/
 
 /*++
 /* NAME
@@ -48,8 +48,8 @@
 /* .ad
 /* .fi
 /* .IP "\fBcontent_filter (empty)\fR"
-/*	The name of a mail delivery transport that filters mail after
-/*	it is queued.
+/*	After the message is queued, send the entire message to the
+/*	specified \fItransport:destination\fR.
 /* .IP "\fBreceive_override_options (empty)\fR"
 /*	Enable or disable recipient validation, built-in content
 /*	filtering, or address mapping.
