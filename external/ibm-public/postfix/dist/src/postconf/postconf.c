@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.1 2009/06/23 10:08:51 tron Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.2 2010/06/17 18:06:58 tron Exp $	*/
 
 /*++
 /* NAME
@@ -123,6 +123,9 @@
 /*	An indexed file type based on hashing.
 /*	This is available on systems with support for Berkeley DB
 /*	databases.
+/* .IP \fBinternal\fR
+/*	A non-shared, in-memory hash table. Its content are lost
+/*	when a process terminates.
 /* .IP "\fBldap\fR (read-only)"
 /*	Perform lookups using the LDAP protocol. This is described
 /*	in \fBldap_table\fR(5).

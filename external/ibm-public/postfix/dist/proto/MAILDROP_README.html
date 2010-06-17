@@ -119,15 +119,18 @@ use the following instead: </p>
 /etc/postfix/master.cf:
     maildrop  unix  -       n       n       -       -       pipe
       flags=ODRhu user=vmail argv=/path/to/maildrop 
-      -d ${user}@${nexthop} ${extension} ${recipient} ${user} ${nexthop}
+      -d ${user}@${domain} ${extension} ${recipient} ${user} ${nexthop}
 </pre>
 </blockquote>
 
-<p> The mail is delivered to ${user}@${nexthop} (match key for
+<p> The mail is delivered to ${user}@${domain} (search key for
 maildrop userdb lookup). The ${extension} and the other address
 components are available to maildrop rules as $1, $2, $3, ...  and
 can be omitted from master.cf or ignored by maildrop when not
 needed. </p>
+
+<p> With Postfix 2.4 and earlier, use ${nexthop} instead of ${domain}.
+</p>
 
 <h2><a name="indirect">Indirect delivery via the local delivery agent</a></h2>
 

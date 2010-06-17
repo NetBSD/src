@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_local.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: inet_addr_local.c,v 1.1.1.2 2010/06/17 18:07:14 tron Exp $	*/
 
 /*++
 /* NAME
@@ -186,9 +186,15 @@ static int ial_getifaddrs(INET_ADDR_LIST *addr_list,
 	if (!(ifa->ifa_flags & IFF_UP) || ifa->ifa_addr == 0)
 	    continue;
 	sa = ifa->ifa_addr;
-	sam = ifa->ifa_netmask;
 	if (af != AF_UNSPEC && sa->sa_family != af)
 	    continue;
+	sam = ifa->ifa_netmask;
+	if (sam == 0) {
+	    /* XXX In mynetworks, a null netmask would match everyone. */
+	    msg_warn("ignoring interface with null netmask, address family %d",
+		     sa->sa_family);
+	    continue;
+	}
 	switch (sa->sa_family) {
 	case AF_INET:
 	    if (SOCK_ADDR_IN_ADDR(sa).s_addr == INADDR_ANY)
@@ -585,7 +591,8 @@ int     main(int unused_argc, char **argv)
     msg_vstream_init(argv[0], VSTREAM_ERR);
     msg_verbose = 1;
 
-    proto_info = inet_proto_init(argv[0], INET_PROTO_NAME_ALL);
+    proto_info = inet_proto_init(argv[0],
+				 argv[1] ? argv[1] : INET_PROTO_NAME_ALL);
     inet_addr_list_init(&addr_list);
     inet_addr_list_init(&mask_list);
     inet_addr_local(&addr_list, &mask_list, proto_info->ai_family_list);

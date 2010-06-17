@@ -1659,7 +1659,7 @@ by the smtp_tls_mandatory_ciphers configuration parameter. This setting
 controls the minimum acceptable SMTP client TLS cipher grade for use with
 mandatory TLS encryption. The default value "medium" is suitable for most
 destinations with which you may want to enforce TLS, and is beyond the reach of
-today's crypt-analytic methods. See smtp_tls_policy_maps for information on how
+today's cryptanalytic methods. See smtp_tls_policy_maps for information on how
 to configure ciphers on a per-destination basis.
 
 By default anonymous ciphers are allowed, and automatically disabled when

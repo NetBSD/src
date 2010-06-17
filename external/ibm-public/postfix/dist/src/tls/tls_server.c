@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_server.c,v 1.1.1.1 2009/06/23 10:08:57 tron Exp $	*/
+/*	$NetBSD: tls_server.c,v 1.1.1.2 2010/06/17 18:07:09 tron Exp $	*/
 
 /*++
 /* NAME
@@ -556,7 +556,7 @@ TLS_SESS_STATE *tls_server_start(const TLS_SERVER_START_PROPS *props)
 {
     int     sts;
     TLS_SESS_STATE *TLScontext;
-    SSL_CIPHER *cipher;
+    const SSL_CIPHER *cipher;
     X509   *peer;
     char    buf[CCERT_BUFSIZ];
     const char *cipher_list;

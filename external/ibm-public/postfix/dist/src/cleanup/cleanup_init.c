@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_init.c,v 1.1.1.1 2009/06/23 10:08:43 tron Exp $	*/
+/*	$NetBSD: cleanup_init.c,v 1.1.1.2 2010/06/17 18:06:43 tron Exp $	*/
 
 /*++
 /* NAME
@@ -163,6 +163,7 @@ char   *var_milt_eoh_macros;		/* end-of-header macros */
 char   *var_milt_eod_macros;		/* end-of-data macros */
 char   *var_milt_unk_macros;		/* unknown command macros */
 char   *var_cleanup_milters;		/* non-SMTP mail */
+char   *var_milt_head_checks;		/* post-Milter header checks */
 int     var_auto_8bit_enc_hdr;		/* auto-detect 8bit encoding header */
 int     var_always_add_hdrs;		/* always add missing headers */
 
@@ -229,6 +230,7 @@ CONFIG_STR_TABLE cleanup_str_table[] = {
     VAR_MILT_EOD_MACROS, DEF_MILT_EOD_MACROS, &var_milt_eod_macros, 0, 0,
     VAR_MILT_UNK_MACROS, DEF_MILT_UNK_MACROS, &var_milt_unk_macros, 0, 0,
     VAR_CLEANUP_MILTERS, DEF_CLEANUP_MILTERS, &var_cleanup_milters, 0, 0,
+    VAR_MILT_HEAD_CHECKS, DEF_MILT_HEAD_CHECKS, &var_milt_head_checks, 0, 0,
     0,
 };
 

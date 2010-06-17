@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.c,v 1.1.1.1 2009/06/23 10:08:42 tron Exp $	*/
+/*	$NetBSD: bounce.c,v 1.1.1.2 2010/06/17 18:06:40 tron Exp $	*/
 
 /*++
 /* NAME
@@ -37,10 +37,11 @@
 /* STANDARDS
 /*	RFC 822 (ARPA Internet Text Messages)
 /*	RFC 2045 (Format of Internet Message Bodies)
-/*	RFC 2822 (ARPA Internet Text Messages)
+/*	RFC 2822 (Internet Message Format)
 /*	RFC 3462 (Delivery Status Notifications)
 /*	RFC 3464 (Delivery Status Notifications)
 /*	RFC 3834 (Auto-Submitted: message header)
+/*	RFC 5322 (Internet Message Format)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /* CONFIGURATION PARAMETERS
