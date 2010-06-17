@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_x86.c,v 1.1 2010/06/16 11:45:21 pooka Exp $	*/
+/*	$NetBSD: pmap_x86.c,v 1.2 2010/06/17 08:22:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_x86.c,v 1.1 2010/06/16 11:45:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_x86.c,v 1.2 2010/06/17 08:22:02 pooka Exp $");
 
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
 
-struct pmap *const kernel_pmap_ptr = (struct pmap *const)-1;
+static struct pmap thepmap;
+struct pmap *const kernel_pmap_ptr = &thepmap;
 
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int fl)
