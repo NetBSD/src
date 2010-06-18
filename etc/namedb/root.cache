@@ -1,4 +1,4 @@
-;	$NetBSD: root.cache,v 1.14 2009/07/24 16:34:02 christos Exp $
+;	$NetBSD: root.cache,v 1.15 2010/06/18 05:53:39 spz Exp $
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
 ;       (e.g. reference this file in the "cache  .  <file>"
@@ -6,12 +6,12 @@
 ;
 ;       This file is made available by InterNIC 
 ;       under anonymous FTP as
-;           file                /domain/named.root
+;           file                /domain/named.cache
 ;           on server           FTP.INTERNIC.NET
 ;       -OR-                    RS.INTERNIC.NET
 ;
-;       last update:    Dec 12, 2008
-;       related version of root zone:   2008121200
+;       last update:    Jun 17, 2010
+;       related version of root zone:   2010061700
 ;
 ; formerly NS.INTERNIC.NET
 ;
@@ -60,6 +60,7 @@ H.ROOT-SERVERS.NET.      3600000      AAAA  2001:500:1::803F:235
 ;
 .                        3600000      NS    I.ROOT-SERVERS.NET.
 I.ROOT-SERVERS.NET.      3600000      A     192.36.148.17
+I.ROOT-SERVERS.NET.      3600000      AAAA  2001:7FE::53
 ;
 ; OPERATED BY VERISIGN, INC.
 ;
@@ -70,14 +71,14 @@ J.ROOT-SERVERS.NET.      3600000      AAAA  2001:503:C27::2:30
 ; OPERATED BY RIPE NCC
 ;
 .                        3600000      NS    K.ROOT-SERVERS.NET.
-K.ROOT-SERVERS.NET.      3600000      A     193.0.14.129 
+K.ROOT-SERVERS.NET.      3600000      A     193.0.14.129
 K.ROOT-SERVERS.NET.      3600000      AAAA  2001:7FD::1
 ;
 ; OPERATED BY ICANN
 ;
 .                        3600000      NS    L.ROOT-SERVERS.NET.
 L.ROOT-SERVERS.NET.      3600000      A     199.7.83.42
-L.ROOT-SERVERS.NET.      3600000      AAAA  2001:500:3::42   
+L.ROOT-SERVERS.NET.      3600000      AAAA  2001:500:3::42
 ;
 ; OPERATED BY WIDE
 ;
