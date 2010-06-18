@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.219 2010/06/06 08:01:32 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.220 2010/06/18 16:29:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -124,8 +124,6 @@ TAILQ_HEAD(vnodelst, vnode);
 
 struct vnlock {
 	krwlock_t	vl_lock;
-	u_int		vl_canrecurse;
-	u_int		vl_recursecnt;
 };
 
 /*
@@ -616,8 +614,6 @@ int 	vn_rdwr(enum uio_rw, struct vnode *, void *, int, off_t, enum uio_seg,
     int, kauth_cred_t, size_t *, struct lwp *);
 int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
     off_t **, int *);
-void	vn_restorerecurse(struct vnode *, u_int);
-u_int	vn_setrecurse(struct vnode *);
 int	vn_stat(struct vnode *, struct stat *);
 int	vn_kqfilter(struct file *, struct knote *);
 int	vn_writechk(struct vnode *);
