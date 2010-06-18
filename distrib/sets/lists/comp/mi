@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1468 2010/06/18 16:29:01 hannken Exp $
+#	$NetBSD: mi,v 1.1469 2010/06/18 18:57:27 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -47,6 +47,7 @@
 ./usr/bin/lorder				comp-util-bin
 ./usr/bin/menuc					comp-c-bin
 ./usr/bin/mkstr					comp-c-bin
+./usr/bin/mkubootimage				comp-util-bin
 ./usr/bin/msgattrib				comp-c-bin
 ./usr/bin/msgc					comp-c-bin
 ./usr/bin/msgcat				comp-c-bin
