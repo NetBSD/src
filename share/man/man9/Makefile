@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.332 2010/06/08 05:40:27 jruoho Exp $
+#       $NetBSD: Makefile,v 1.333 2010/06/18 16:29:01 hannken Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -868,9 +868,7 @@ MLINKS+=vnsubr.9 vn_bwrite.9 \
 	vnsubr.9 vn_lock.9 \
 	vnsubr.9 vn_markexec.9 \
 	vnsubr.9 vn_marktext.9 \
-	vnsubr.9 vn_restorerecurse.9 \
 	vnsubr.9 vn_rdwr.9 \
-	vnsubr.9 vn_setrecurse.9 \
 	vnsubr.9 vn_stat.9 \
 	vnsubr.9 vn_open.9 \
 	vnsubr.9 vn_writechk.9

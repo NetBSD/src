@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.172 2010/06/06 08:01:31 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.173 2010/06/18 16:29:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.172 2010/06/06 08:01:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.173 2010/06/18 16:29:02 hannken Exp $");
 
 #include "veriexec.h"
 
@@ -772,8 +772,7 @@ vn_lock(struct vnode *vp, int flags)
 	    || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
 	KASSERT((flags &
-	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY|
-	    LK_CANRECURSE))
+	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY))
 	    == 0);
 
 #ifdef DIAGNOSTIC
@@ -819,28 +818,6 @@ vn_closefile(file_t *fp)
 {
 
 	return vn_close(fp->f_data, fp->f_flag, fp->f_cred);
-}
-
-/*
- * Enable LK_CANRECURSE on lock. Return prior status.
- */
-u_int
-vn_setrecurse(struct vnode *vp)
-{
-
-	atomic_inc_uint(&vp->v_lock.vl_canrecurse);
-
-	return 0;
-}
-
-/*
- * Called when done with locksetrecurse.
- */
-void
-vn_restorerecurse(struct vnode *vp, u_int flags)
-{
-
-	atomic_dec_uint(&vp->v_lock.vl_canrecurse);
 }
 
 /*
