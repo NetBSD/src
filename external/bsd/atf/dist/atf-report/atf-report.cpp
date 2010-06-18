@@ -154,6 +154,9 @@ public:
         } else if (tcr.get_state() == atf::tests::tcr::skipped_state) {
             str += m_tpname + ", " + m_tcname + ", skipped, " +
                    tcr.get_reason();
+        } else if (tcr.get_state() == atf::tests::tcr::xfail_state) {
+            str += m_tpname + ", " + m_tcname + ", xfail, " +
+                   tcr.get_reason();
         } else
             UNREACHABLE;
         (*m_os) << str << std::endl;
@@ -425,6 +428,9 @@ class xml_writer : public writer {
         } else if (s == atf::tests::tcr::skipped_state) {
             (*m_os) << "<skipped>" << elemval(tcr.get_reason())
                     << "</skipped>" << std::endl;
+        } else if (s == atf::tests::tcr::xfail_state) {
+            (*m_os) << "<xfail>" << elemval(tcr.get_reason())
+                    << "</xfail>" << std::endl;
         } else
             UNREACHABLE;
         (*m_os) << "</tc>" << std::endl;
