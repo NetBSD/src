@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1467 2010/06/18 04:21:22 mrg Exp $
+#	$NetBSD: mi,v 1.1468 2010/06/18 16:29:01 hannken Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9880,8 +9880,8 @@
 ./usr/share/man/cat9/vn_poll.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_rdwr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_read.0			comp-sys-catman		.cat
-./usr/share/man/cat9/vn_restorerecurse.0	comp-sys-catman		.cat
-./usr/share/man/cat9/vn_setrecurse.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vn_restorerecurse.0	comp-sys-catman		obsolete
+./usr/share/man/cat9/vn_setrecurse.0		comp-sys-catman		obsolete
 ./usr/share/man/cat9/vn_start_write.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vn_stat.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_statfile.0		comp-sys-catman		.cat
@@ -15582,8 +15582,8 @@
 ./usr/share/man/html9/vn_poll.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vn_rdwr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vn_read.html		comp-sys-htmlman	html
-./usr/share/man/html9/vn_restorerecurse.html	comp-sys-htmlman	html
-./usr/share/man/html9/vn_setrecurse.html	comp-sys-htmlman	html
+./usr/share/man/html9/vn_restorerecurse.html	comp-sys-htmlman	obsolete
+./usr/share/man/html9/vn_setrecurse.html	comp-sys-htmlman	obsolete
 ./usr/share/man/html9/vn_stat.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vn_statfile.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vn_write.html		comp-sys-htmlman	html
@@ -21537,8 +21537,8 @@
 ./usr/share/man/man9/vn_poll.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_rdwr.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_read.9			comp-sys-man		.man
-./usr/share/man/man9/vn_restorerecurse.9	comp-sys-man		.man
-./usr/share/man/man9/vn_setrecurse.9		comp-sys-man		.man
+./usr/share/man/man9/vn_restorerecurse.9	comp-sys-man		obsolete
+./usr/share/man/man9/vn_setrecurse.9		comp-sys-man		obsolete
 ./usr/share/man/man9/vn_start_write.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vn_stat.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_statfile.9		comp-sys-man		.man

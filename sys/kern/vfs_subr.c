@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.404 2010/06/06 08:01:31 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.405 2010/06/18 16:29:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.404 2010/06/06 08:01:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.405 2010/06/18 16:29:02 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2738,11 +2738,11 @@ vprint(const char *label, struct vnode *vp)
 		printf("%s: ", label);
 	printf("vnode @ %p, flags (%s)\n\ttag %s(%d), type %s(%d), "
 	    "usecount %d, writecount %d, holdcount %d\n"
-	    "\tfreelisthd %p, mount %p, data %p lock %p recursecnt %d\n",
+	    "\tfreelisthd %p, mount %p, data %p lock %p\n",
 	    vp, bf, ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt,
-	    vp->v_freelisthd, vp->v_mount, vp->v_data, vl, vl->vl_recursecnt);
+	    vp->v_freelisthd, vp->v_mount, vp->v_data, vl);
 	if (vp->v_data != NULL) {
 		printf("\t");
 		VOP_PRINT(vp);
@@ -2928,40 +2928,24 @@ int
 vlockmgr(struct vnlock *vl, int flags)
 {
 
-	KASSERT((flags & ~(LK_CANRECURSE | LK_NOWAIT | LK_TYPE_MASK)) == 0);
+	KASSERT((flags & ~(LK_NOWAIT | LK_TYPE_MASK)) == 0);
 
-	switch (flags & LK_TYPE_MASK) {
+	switch (flags & (LK_NOWAIT | LK_TYPE_MASK)) {
 	case LK_SHARED:
-		if (rw_tryenter(&vl->vl_lock, RW_READER)) {
-			return 0;
-		}
-		if ((flags & LK_NOWAIT) != 0) {
-			return EBUSY;
-		}
 		rw_enter(&vl->vl_lock, RW_READER);
 		return 0;
 
+	case LK_SHARED | LK_NOWAIT:
+		return rw_tryenter(&vl->vl_lock, RW_READER) ? 0 : EBUSY;
+
 	case LK_EXCLUSIVE:
-		if (rw_tryenter(&vl->vl_lock, RW_WRITER)) {
-			return 0;
-		}
-		if ((vl->vl_canrecurse || (flags & LK_CANRECURSE) != 0) &&
-		    rw_write_held(&vl->vl_lock)) {
-			vl->vl_recursecnt++;
-			return 0;
-		}
-		if ((flags & LK_NOWAIT) != 0) {
-			return EBUSY;
-		}
 		rw_enter(&vl->vl_lock, RW_WRITER);
 		return 0;
 
+	case LK_EXCLUSIVE | LK_NOWAIT:
+		return rw_tryenter(&vl->vl_lock, RW_WRITER) ? 0 : EBUSY;
+
 	case LK_RELEASE:
-		if (vl->vl_recursecnt != 0) {
-			KASSERT(rw_write_held(&vl->vl_lock));
-			vl->vl_recursecnt--;
-			return 0;
-		}
 		rw_exit(&vl->vl_lock);
 		return 0;
 

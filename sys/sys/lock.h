@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.83 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: lock.h,v 1.84 2010/06/18 16:29:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -80,7 +80,6 @@
 #define	LK_EXCLOTHER	0x00000008	/* other process holds lock */
 
 #define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
-#define	LK_CANRECURSE	0x00000040	/* this may be recursive lock attempt */
 #define	LK_INTERLOCK	0x00010000	/* unlock passed simple lock after
 					   getting lk_interlock */
 #define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
