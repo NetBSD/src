@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2009/12/13 05:04:36 nonaka Exp $
+#	$NetBSD: Makefile,v 1.20 2010/06/18 09:15:23 tsutsui Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -54,7 +54,8 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
-.if ${MACHINE} == "sgimips"
+.if ${MACHINE} == "hpcmips" || \
+    ${MACHINE} == "sgimips"
 SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
@@ -62,6 +63,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endif
 
 .if ${MACHINE} == "cats" || \
+    ${MACHINE} == "hpcarm" || \
     ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || \
     ${MACHINE} == "zaurus"
@@ -70,6 +72,13 @@ SRCS.bsd+=      ppc_video.c stdResource.c pm_noop.c agp_noop.c
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 CPPFLAGS.arm_video.c=	-Wno-error
+.endif
+
+.if ${MACHINE} == "hpcsh"
+SRCS.bsd+=	ppc_video.c stdResource.c pm_noop.c agp_noop.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.endfor
 .endif
 
 # some platforms will probably need ioperm_noop.c
