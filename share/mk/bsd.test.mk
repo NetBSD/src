@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.9 2010/06/18 10:10:57 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.10 2010/06/18 13:14:21 jmmv Exp $
 #
 
 .include <bsd.init.mk>
@@ -79,14 +79,15 @@ _TESTS_LOG = ${.OBJDIR}/atf-run.log
 CLEANFILES += ${_TESTS_FIFO} ${_TESTS_LOG}
 
 .PHONY: test
-.if ${TESTSDIR} == ${TESTSBASE}
+.if defined(TESTSDIR)
+.  if ${TESTSDIR} == ${TESTSBASE}
 # Forbid this case.  It is likely to cause false positives/negatives and it
 # does not cover all the tests (e.g. it misses testing software in external).
 test:
 	@echo "*** Sorry, you cannot use make test from src/tests.  Install the"
 	@echo "*** tests into their final location and run them from /usr/tests"
 	@false
-.else
+.  else
 test:
 	@echo "*** WARNING: make test is experimental"
 	@echo "***"
@@ -94,7 +95,8 @@ test:
 	@echo "*** installed in /usr/tests.  This test run may raise false"
 	@echo "*** positives and/or false negatives."
 	@echo
-	@cd ${DESTDIR}${TESTSDIR}; \
+	@set -e; \
+	cd ${DESTDIR}${TESTSDIR}; \
 	mkfifo ${_TESTS_FIFO}; \
 	cat ${_TESTS_FIFO} | tee ${_TESTS_LOG} | \
 	    ${TESTS_ENV} ${DESTDIR}/usr/bin/atf-report & \
@@ -106,4 +108,8 @@ test:
 	echo "*** The verbatim output of atf-run has been saved to ${_TESTS_LOG}"; \
 	echo "*** Once again, note that "make test" is unsupported."; \
 	test $${result} -eq 0
+.  endif
+.else
+test:
+	@echo "*** No TESTSDIR defined; nothing to do."
 .endif
