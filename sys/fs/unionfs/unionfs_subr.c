@@ -473,7 +473,6 @@ unionfs_relookup_for_rename(struct vnode *dvp, struct componentname *cnp)
 static void
 unionfs_node_update(struct unionfs_node *unp, struct vnode *uvp)
 {
-	int		count, lockcnt;
 	struct vnode   *vp;
 	struct vnode   *lvp;
 
@@ -485,13 +484,8 @@ unionfs_node_update(struct unionfs_node *unp, struct vnode *uvp)
 	 */
 	mutex_enter(&vp->v_interlock);
 	unp->un_uppervp = uvp;
-	lockcnt = lvp->v_lock.vl_recursecnt +
-	    rw_write_held(&lvp->v_lock.vl_lock);
-	if (lockcnt <= 0)
-		panic("unionfs: no exclusive lock");
+	KASSERT(rw_write_held(&lvp->v_lock.vl_lock));
 	mutex_exit(&vp->v_interlock);
-	for (count = 1; count < lockcnt; count++)
-		vn_lock(uvp, LK_EXCLUSIVE | LK_CANRECURSE | LK_RETRY);
 }
 
 /*
