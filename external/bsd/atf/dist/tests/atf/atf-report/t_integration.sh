@@ -34,6 +34,7 @@ create_helpers()
     cp $(atf_get_srcdir)/h_fail dir1/tp2
     cp $(atf_get_srcdir)/h_pass tp3
     cp $(atf_get_srcdir)/h_fail tp4
+    cp $(atf_get_srcdir)/h_xfail tp6
 
     cat >tp5 <<EOF
 #! $(atf-config -t atf_shell)
@@ -50,6 +51,7 @@ tp: dir1
 tp: tp3
 tp: tp4
 tp: tp5
+tp: tp6
 EOF
 
     cat >dir1/Atffile <<EOF
@@ -180,6 +182,9 @@ tp, tp3, passed
 tc, tp4, main, failed, This always fails
 tp, tp4, failed
 tp, tp5, bogus, Invalid format for test case list: 1: Unexpected token \`<<NEWLINE>>'; expected \`:'
+tc, tp6, xfail_no, failed, Test case is expected to fail but reported success
+tc, tp6, xfail_yes, xfail, xfailmen
+tp, tp6, failed
 EOF
 # NO_CHECK_STYLE_END
 
@@ -199,31 +204,35 @@ output_ticker_body()
 
 # NO_CHECK_STYLE_BEGIN
     cat >expout <<EOF
-dir1/tp1 (1/5): 1 test cases
+dir1/tp1 (1/6): 1 test cases
     main: Passed.
 
-dir1/tp2 (2/5): 1 test cases
+dir1/tp2 (2/6): 1 test cases
     main: Failed: This always fails
 
-tp3 (3/5): 1 test cases
+tp3 (3/6): 1 test cases
     main: Passed.
 
-tp4 (4/5): 1 test cases
+tp4 (4/6): 1 test cases
     main: Failed: This always fails
 
-tp5 (5/5): 0 test cases
+tp5 (5/6): 0 test cases
 tp5: BOGUS TEST PROGRAM: Cannot trust its results because of \`Invalid format for test case list: 1: Unexpected token \`<<NEWLINE>>'; expected \`:''
+
+tp6 (6/6): 2 test cases
+    xfail_no: Failed: Test case is expected to fail but reported success
+    xfail_yes: Expected failure: xfailmen
 
 Failed (bogus) test programs:
     tp5
 
 Failed test cases:
-    dir1/tp2:main, tp4:main
+    dir1/tp2:main, tp4:main, tp6:xfail_no
 
-Summary for 5 test programs:
+Summary for 6 test programs:
     2 passed test cases.
-    2 failed test cases.
-    0 expected failures.
+    3 failed test cases.
+    1 expected failures.
     0 skipped test cases.
 EOF
 
@@ -271,6 +280,14 @@ output_xml_body()
 </tp>
 <tp id="tp5">
 <failed>Invalid format for test case list: 1: Unexpected token \`&lt;&lt;NEWLINE&gt;&gt;'; expected \`:'</failed>
+</tp>
+<tp id="tp6">
+<tc id="xfail_no">
+<failed>Test case is expected to fail but reported success</failed>
+</tc>
+<tc id="xfail_yes">
+<xfail>xfailmen</xfail>
+</tc>
 </tp>
 <info class="endinfo">Another value</info>
 </tests-results>
