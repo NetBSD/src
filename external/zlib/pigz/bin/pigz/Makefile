@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2010/06/18 04:21:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/06/18 05:26:12 mrg Exp $
+
+.ifdef HOSTPROG
+
+.include <bsd.own.mk>
 
 BINDIR=		/usr/bin
 
@@ -37,3 +41,21 @@ DIST=		${NETBSDSRCDIR}/external/zlib/pigz/dist
 .PATH:	${DIST}
 GZIPDIST=	${NETBSDSRCDIR}/usr.bin/gzip
 .PATH:	${GZIPDIST}
+
+.else	# HOSTPROG
+
+SRCS=		pigz.c
+
+HOST_LDFLAGS=	-lz
+
+#HAVE_PTHREAD_H!=	if echo '#include <pthread.h>' | ${HOST_CC} -E - > /dev/null; then echo yes; else echo no; fi
+HAVE_PTHREAD_H?=	yes
+
+.if ${HAVE_PTHREAD_H} != "no"
+SRCS+=		yarn.c
+HOST_LDFLAGS+=	-lpthread
+.else
+HOST_CPPFLAGS+=	-DNOTHREAD
+.endif
+
+.endif	# HOSTPROG
