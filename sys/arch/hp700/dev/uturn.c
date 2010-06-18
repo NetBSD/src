@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.6 2009/11/15 15:53:05 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.7 2010/06/18 06:15:31 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -95,7 +95,7 @@ uturnattach(device_t parent, device_t self, void *aux)
 	sc->sc_regs = (struct uturn_regs *)ca->ca_hpa;
 
 	aprint_normal(": %s rev %d\n",
-	    ca->ca_type.iodc_revision < 0x10? "U2" : "UTurn",
+	    ca->ca_type.iodc_revision < 0x10 ? "U2" : "UTurn",
 	    ca->ca_type.iodc_revision & 0xf);
 
 	/* keep it real */
