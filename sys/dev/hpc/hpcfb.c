@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.55 2010/05/15 08:53:27 tsutsui Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.56 2010/06/18 09:11:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.55 2010/05/15 08:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.56 2010/06/18 09:11:44 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -581,6 +581,10 @@ hpcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		wdf->depth = dc->dc_rinfo.ri_depth;
 		wdf->cmsize = 256;	/* XXXX */
 		return (0);
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = dc->dc_rinfo.ri_stride;
+		return 0;
 
 	case WSDISPLAYIO_SMODE:
 		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){
