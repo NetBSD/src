@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.868 2010/06/14 15:23:41 pooka Exp $
+# $NetBSD: mi,v 1.869 2010/06/18 04:21:21 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -540,6 +540,7 @@
 ./usr/bin/pawd					base-amd-bin
 ./usr/bin/paxctl				base-obsolete		obsolete
 ./usr/bin/pgrep					base-util-bin
+./usr/bin/pigz					base-util-bin		pigz
 ./usr/bin/pkill					base-util-bin
 ./usr/bin/pmap					base-util-bin
 ./usr/bin/pr					base-util-bin
