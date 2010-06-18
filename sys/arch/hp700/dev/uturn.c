@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.7 2010/06/18 06:15:31 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.8 2010/06/18 06:30:53 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -40,11 +40,60 @@
 
 #include <hp700/dev/cpudevs.h>
 
+#define	UTURNDEBUG
+#ifdef UTURNDEBUG
+
+#define	DPRINTF(s)	do {	\
+	if (uturndebug)		\
+		printf s;	\
+} while(0)
+
+int uturndebug = 0;
+#else
+#define	DPRINTF(s)	/* */
+#endif
+
 struct uturn_regs {
-	uint64_t	resv0[2];
-	uint64_t	status;		/* 0x10: */
-	uint64_t	resv1[5];
-	uint64_t	debug;		/* 0x40: */
+	/* Runway Supervisory Set */
+	int32_t		unused1[12];
+	uint32_t	io_command;		/* Offset 12 */
+#define	UTURN_CMD_TLB_PURGE		33	/* Purge I/O TLB entry */
+#define	UTURN_CMD_TLB_DIRECT_WRITE	35	/* I/O TLB Writes */
+
+	uint32_t	io_status;		/* Offset 13 */
+	uint32_t	io_control;		/* Offset 14 */
+#define	UTURN_IOCTRL_TLB_REAL		0x00000000
+#define	UTURN_IOCTRL_TLB_ERROR		0x00010000
+#define	UTURN_IOCTRL_TLB_NORMAL		0x00020000
+
+#define	UTURN_IOCTRL_MODE_OFF		0x00000000
+#define	UTURN_IOCTRL_MODE_INCLUDE	0x00000080
+#define	UTURN_IOCTRL_MODE_PEEK		0x00000180
+
+#define	UTURN_VIRTUAL_MODE	\
+	(UTURN_IOCTRL_TLB_NORMAL | UTURN_IOCTRL_MODE_INCLUDE)
+
+#define	UTURN_REAL_MODE		\
+	UTURN_IOCTRL_MODE_INCLUDE
+
+	int32_t		unused2[1];
+
+	/* Runway Auxiliary Register Set */
+	uint32_t	io_err_resp;		/* Offset  0 */
+	uint32_t	io_err_info;		/* Offset  1 */
+	uint32_t	io_err_req;		/* Offset  2 */
+	uint32_t	io_err_resp_hi;		/* Offset  3 */
+	uint32_t	io_tlb_entry_m;		/* Offset  4 */
+	uint32_t	io_tlb_entry_l;		/* Offset  5 */
+	uint32_t	unused3[1];
+	uint32_t	io_pdir_base;		/* Offset  7 */
+	uint32_t	io_io_low_hv;		/* Offset  8 */
+	uint32_t	io_io_high_hv;		/* Offset  9 */
+	uint32_t	unused4[1];
+	uint32_t	io_chain_id_mask;	/* Offset 11 */
+	uint32_t	unused5[2];
+	uint32_t	io_io_low;		/* Offset 14 */
+	uint32_t	io_io_high;		/* Offset 15 */
 };
 
 struct uturn_softc {
@@ -98,8 +147,7 @@ uturnattach(device_t parent, device_t self, void *aux)
 	    ca->ca_type.iodc_revision < 0x10 ? "U2" : "UTurn",
 	    ca->ca_type.iodc_revision & 0xf);
 
-	/* keep it real */
-	((struct iomod *)ioh)->io_control = 0x80;
+	((struct iomod *)ioh)->io_control = UTURN_REAL_MODE;
 
 	/*
 	 * U2/UTurn is actually a combination of an Upper Bus Converter (UBC)
