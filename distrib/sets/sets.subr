@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.122 2010/03/03 16:13:42 tron Exp $
+#	$NetBSD: sets.subr,v 1.123 2010/06/18 04:21:21 mrg Exp $
 #
 
 #
@@ -168,7 +168,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.122 2010/03/03 16:13:42 tron Exp $
+# 	# $NetBSD: sets.subr,v 1.123 2010/06/18 04:21:21 mrg Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -228,6 +228,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	pcccmds			${MKPCCCMDS} != no
 #	pf			${MKPF} != no
 #	pic			${MKPIC} != no
+#	pigz			${MKPIGZ} != no
 #	postfix			${MKPOSTFIX} != no
 #	profile			${MKPROFILE} != no
 #	share			${MKSHARE} != no
