@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1469 2010/06/18 18:57:27 jmcneill Exp $
+#	$NetBSD: mi,v 1.1470 2010/06/19 03:50:30 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3206,7 +3206,7 @@
 ./usr/libdata/debug/usr/bin/paxctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/pcc.debug		comp-c-debug		pcccmds,debug
 ./usr/libdata/debug/usr/bin/pfbtops.debug	comp-groff-debug	groff,debug
-./usr/libdata/debug/usr/bin/pigz.debug		comp-util-debug		debug,pigz
+./usr/libdata/debug/usr/bin/pigz.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pic.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/pkill.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pmap.debug		comp-util-debug		debug

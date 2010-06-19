@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.271 2010/06/17 06:17:02 mrg Exp $
+#	$NetBSD: bsd.README,v 1.272 2010/06/19 03:50:30 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -304,7 +304,7 @@ MKPIE		If "no", create regular executables. Otherwise create
 		PIE (Position Independent Executables).
 		Default: no
 
-MKPIGZ		If "no", disables building of pigz and uses NetBSD gzip.
+MKPIGZGZIP	If "no", only install pigz as pigz, not gzip.
 		Default: no
 
 MKPOSTFIX	If "no", don't build or install postfix(1).
