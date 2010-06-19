@@ -1,4 +1,4 @@
-/*	$NetBSD: localeio.c,v 1.4 2010/05/30 08:28:53 tnozaki Exp $	*/
+/*	$NetBSD: localeio.c,v 1.5 2010/06/19 13:26:52 tnozaki Exp $	*/
 /*
  * Copyright (c) 2008, The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,13 +30,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeio.c,v 1.4 2010/05/30 08:28:53 tnozaki Exp $");
+__RCSID("$NetBSD: localeio.c,v 1.5 2010/06/19 13:26:52 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -49,6 +50,54 @@ __RCSID("$NetBSD: localeio.c,v 1.4 2010/05/30 08:28:53 tnozaki Exp $");
 #include <unistd.h>
 
 #include "localeio.h"
+
+int
+_localeio_map_file(const char * __restrict path,
+    void ** __restrict pvar, size_t * __restrict plenvar)
+{
+	int fd, ret;
+	struct stat st;
+	void *var;
+	size_t lenvar;
+
+	_DIAGASSERT(path != NULL);
+	_DIAGASSERT(pvar != NULL);
+	_DIAGASSERT(plenvar != NULL);
+
+	fd = open(path, O_RDONLY);
+	if (fd == -1)
+		return errno;
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1 || fstat(fd, &st) == 1) {
+		ret = errno;
+		goto error;
+	}
+	if (!S_ISREG(st.st_mode)) {
+		ret = EBADF;
+		goto error;
+	}
+	lenvar = (size_t)st.st_size;
+	if (lenvar < 1) {
+		ret = EFTYPE;
+		goto error;
+	}
+	var = mmap(NULL, lenvar, PROT_READ,
+	    MAP_FILE|MAP_PRIVATE, fd, (off_t)0);
+	if (var == MAP_FAILED) {
+		ret = errno;
+		goto error;
+	}
+	*pvar = var;
+	*plenvar = lenvar;
+	return 0;
+error:
+	return ret;
+}
+
+void
+_localeio_unmap_file(void *var, size_t lenvar)
+{
+	munmap(var, lenvar);
+}
 
 int
 __loadlocale(const char *name, size_t nstr, size_t nbytes,
