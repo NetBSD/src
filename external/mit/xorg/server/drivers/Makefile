@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2010/06/18 09:15:23 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.44 2010/06/19 18:17:55 tsutsui Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -161,6 +161,9 @@ SUBDIR+= \
 	xf86-video-trident \
 	xf86-video-tseng \
 
+.elif ${MACHINE} == "dreamcast"
+SUBDIR+= \
+	xf86-video-wsfb
 .elif ${MACHINE} == "hpcarm" || ${MACHINE} == "hpcmips" || ${MACHINE} == "hpcsh"
 SUBDIR+= \
 	xf86-video-wsfb
