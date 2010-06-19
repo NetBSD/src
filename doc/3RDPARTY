@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.768 2010/06/17 20:14:01 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.769 2010/06/19 06:47:09 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1122,3 +1122,14 @@ Notes:
 5. Run:
 	services_mkdb -u services > /usr/src/etc/services
 	cp protocols /usr/src/etc/protocols
+
+Package:	pigz
+Version:	2.1.6
+Current Vers:	2.1.6
+Maintainer:	Mark Adler <madler@alumni.caltech.edu>
+Archive Site:	http://zlib.net/pigz/
+Home Page:	http://zlib.net/pigz/
+Mailing List:	http://mail.zlib.net/mailman/listinfo/pigz-announce_zlib.net
+Responsible:	mrg
+License:	zlib
+Notes:
