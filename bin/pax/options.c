@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.106 2009/12/14 05:04:48 dholland Exp $	*/
+/*	$NetBSD: options.c,v 1.107 2010/06/19 00:43:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.106 2009/12/14 05:04:48 dholland Exp $");
+__RCSID("$NetBSD: options.c,v 1.107 2010/06/19 00:43:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,6 +240,8 @@ struct option pax_longopts[] = {
 						OPT_INSECURE },
 	{ "force-local",	no_argument,		0,
 						OPT_FORCE_LOCAL },
+	{ "use-compress-program", required_argument,	0,
+						OPT_USE_COMPRESS_PROGRAM },
 	{ 0,			0,			0,
 						0 },
 };
@@ -474,6 +476,7 @@ pax_options(int argc, char **argv)
 			/*
 			 * use gzip.  Non standard option.
 			 */
+			zflag = 1;
 			gzip_program = GZIP_CMD;
 			break;
 		case 'A':
@@ -641,6 +644,10 @@ pax_options(int argc, char **argv)
 			break;
 		case OPT_FORCE_LOCAL:
 			forcelocal = 0;
+			break;
+		case OPT_USE_COMPRESS_PROGRAM:
+			zflag = 1;
+			gzip_program = optarg;
 			break;
 		case '?':
 		default:
