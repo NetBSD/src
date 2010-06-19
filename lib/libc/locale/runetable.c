@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.26 2010/06/13 04:14:57 tnozaki Exp $	*/
+/*	$NetBSD: runetable.c,v 1.27 2010/06/19 13:26:52 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.26 2010/06/13 04:14:57 tnozaki Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.27 2010/06/19 13:26:52 tnozaki Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,10 +52,6 @@ __RCSID("$NetBSD: runetable.c,v 1.26 2010/06/13 04:14:57 tnozaki Exp $");
 #include "runetype_local.h"
 
 const _RuneLocale _DefaultRuneLocale = {
-    _RUNECT10_MAGIC,
-    "NONE",
-    _DEFAULT_INVALID_RUNE,
-
     {	/*00*/	_RUNETYPE_C,
 		_RUNETYPE_C,
 		_RUNETYPE_C,

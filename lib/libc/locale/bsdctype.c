@@ -1,4 +1,4 @@
-/* $NetBSD: bsdctype.c,v 1.7 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: bsdctype.c,v 1.8 2010/06/19 13:26:52 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,11 +28,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bsdctype.c,v 1.7 2010/06/13 04:14:57 tnozaki Exp $");
+__RCSID("$NetBSD: bsdctype.c,v 1.8 2010/06/19 13:26:52 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/stat.h>
-#include <sys/mman.h>
+#include <sys/endian.h>
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -42,6 +41,7 @@ __RCSID("$NetBSD: bsdctype.c,v 1.7 2010/06/13 04:14:57 tnozaki Exp $");
 #include <unistd.h>
 
 #include "bsdctype_local.h"
+#include "runetype_file.h"
 
 const _BSDCTypeLocale _DefaultBSDCTypeLocale = {
     _C_ctype_,
@@ -61,6 +61,15 @@ typedef struct {
 static __inline void
 _bsdctype_init_priv(_BSDCTypeLocalePriv *blp)
 {
+#if _CTYPE_CACHE_SIZE != _CTYPE_NUM_CHARS
+	int i;
+
+	for (i = _CTYPE_CACHE_SIZE; i < _CTYPE_NUM_CHARS; ++i) {
+		blp->blp_ctype_tab  [i + 1] = 0;
+		blp->blp_tolower_tab[i + 1] = i;
+		blp->blp_toupper_tab[i + 1] = i;
+	}
+#endif
 	blp->blp_ctype_tab  [0] = 0;
 	blp->blp_tolower_tab[0] = EOF;
 	blp->blp_toupper_tab[0] = EOF;
@@ -77,103 +86,93 @@ _bsdctype_read_file(const char * __restrict var, size_t lenvar,
 	uint32_t value;
 	int i;
 
+	_DIAGASSERT(blp != NULL);
+
 	if (lenvar < sizeof(*fbl))
 		return EFTYPE;
 	fbl = (const _FileBSDCTypeLocale *)(const void *)var;
 	if (memcmp(&fbl->fbl_id[0], _CTYPE_ID, sizeof(fbl->fbl_id)))
 		return EFTYPE;
-	value = ntohl(fbl->fbl_rev);
+	value = be32toh(fbl->fbl_rev);
 	if (value != _CTYPE_REV)
 		return EFTYPE;
-	value = ntohl(fbl->fbl_num_chars);
+	value = be32toh(fbl->fbl_num_chars);
 	if (value != _CTYPE_CACHE_SIZE)
 		return EFTYPE;
 	for (i = 0; i < _CTYPE_CACHE_SIZE; ++i) {
 		blp->blp_ctype_tab  [i + 1] = fbl->fbl_ctype_tab[i];
-		blp->blp_tolower_tab[i + 1] = ntohs(fbl->fbl_tolower_tab[i]);
-		blp->blp_toupper_tab[i + 1] = ntohs(fbl->fbl_toupper_tab[i]);
+		blp->blp_tolower_tab[i + 1] = be16toh(fbl->fbl_tolower_tab[i]);
+		blp->blp_toupper_tab[i + 1] = be16toh(fbl->fbl_toupper_tab[i]);
 	}
-#if _CTYPE_CACHE_SIZE != _CTYPE_NUM_CHARS
-	for (i = _CTYPE_CACHE_SIZE; i < _CTYPE_NUM_CHARS; ++i) {
-		blp->blp_ctype_tab  [i + 1] = 0;
-		blp->blp_tolower_tab[i + 1] = i;
-		blp->blp_toupper_tab[i + 1] = i;
-	}
-#endif
 	return 0;
 }
 
 static __inline int
-_bsdctype_load_priv(const char * __restrict path,
+_bsdctype_read_runetype(const char * __restrict var, size_t lenvar,
     _BSDCTypeLocalePriv * __restrict blp)
 {
-	int fd, ret;
-	struct stat st;
-	size_t lenvar;
-	char *var;
+	const _FileRuneLocale *frl;
+	int i;
 
-	fd = open(path, O_RDONLY);
-	if (fd == -1)
-		goto err;
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1)
-		goto err;
-	if (fstat(fd, &st) == -1)
-		goto err;
-	if (!S_ISREG(st.st_mode)) {
-		close(fd);
-		return EBADF;
-	}
-	lenvar = (size_t)st.st_size;
-	if (lenvar < 1) {
-		close(fd);
+	_DIAGASSERT(blp != NULL);
+
+	if (lenvar < sizeof(*frl))
 		return EFTYPE;
+	lenvar -= sizeof(*frl);
+	frl = (const _FileRuneLocale *)(const void *)var;
+	if (memcmp(_RUNECT10_MAGIC, &frl->frl_magic[0], sizeof(frl->frl_magic)))
+		return EFTYPE;
+	if (frl->frl_encoding[0] != 'N' || frl->frl_encoding[1] != 'O' ||
+	    frl->frl_encoding[2] != 'N' || frl->frl_encoding[3] != 'E' ||
+	    frl->frl_encoding[4] != '\0') /* XXX */
+		return EFTYPE;
+	if (be32toh(frl->frl_runetype_ext.frr_nranges) != 0 ||
+	    be32toh(frl->frl_maplower_ext.frr_nranges) != 0 ||
+	    be32toh(frl->frl_mapupper_ext.frr_nranges) != 0)
+		return EFTYPE;
+	if (lenvar < be32toh((uint32_t)frl->frl_variable_len))
+		return EFTYPE;
+	for (i = 0; i < _CTYPE_CACHE_SIZE; ++i) {
+		blp->blp_ctype_tab  [i + 1] = (unsigned char)
+		    _runetype_to_ctype((_RuneType)
+		    be32toh(frl->frl_runetype[i]));
+		blp->blp_tolower_tab[i + 1] = (short)
+		    be32toh((uint32_t)frl->frl_maplower[i]);
+		blp->blp_toupper_tab[i + 1] = (short)
+		    be32toh((uint32_t)frl->frl_mapupper[i]);
 	}
-	var = mmap(NULL, lenvar, PROT_READ,
-	    MAP_FILE|MAP_PRIVATE, fd, (off_t)0);
-	if (var == MAP_FAILED)
-		goto err;
-	if (close(fd) == -1) {
-		ret = errno;
-		munmap(var, lenvar);
-		return ret;
-	}
+	return 0;
+}
+
+int
+_bsdctype_load(const char * __restrict var, size_t lenvar,
+    _BSDCTypeLocale ** __restrict pbl)
+{
+	int ret;
+	_BSDCTypeLocalePriv *blp;
+
+	_DIAGASSERT(var != NULL || lenvar < 1);
+	_DIAGASSERT(pbl != NULL);
+
+	if (lenvar < 1)
+		return EFTYPE;
+	blp = malloc(sizeof(*blp));
+	if (blp == NULL)
+		return errno;
+	_bsdctype_init_priv(blp);
 	switch (*var) {
 	case 'B':
-		ret = _bsdctype_read_file(var, lenvar, blp);
+		_bsdctype_read_file(var, lenvar, blp);
+		break;
+	case 'R':
+		_bsdctype_read_runetype(var, lenvar, blp);
 		break;
 	default:
 		ret = EFTYPE;
 	}
-	munmap(var, lenvar);
-	return ret;
-err:
-	ret = errno;
-	close(fd);
-	return ret;
-}
-
-int
-_bsdctype_load(const char * __restrict path,
-    _BSDCTypeLocale ** __restrict pbl)
-{
-	int sverr, ret;
-	_BSDCTypeLocalePriv *blp;
-
-	sverr = errno;
-	errno = 0;
-	blp = malloc(sizeof(*blp));
-	if (blp == NULL) {
-		ret = errno;
-		errno = sverr;
-		return ret;
-	}
-	_bsdctype_init_priv(blp);
-	ret = _bsdctype_load_priv(path, blp);
-	if (ret) {
+	if (ret)
 		free(blp);
-		errno = sverr;
-		return ret;
-	}
-	*pbl = &blp->bl;
-	return 0;
+	else
+		*pbl = &blp->bl;
+	return ret;
 }

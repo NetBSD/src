@@ -1,4 +1,4 @@
-/*	$NetBSD: localeio.h,v 1.3 2009/01/11 02:46:28 christos Exp $	*/
+/*	$NetBSD: localeio.h,v 1.4 2010/06/19 13:26:52 tnozaki Exp $	*/
 /*
  * Copyright (c) 2008, The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,5 +29,8 @@
  */
 
 __BEGIN_DECLS
+int _localeio_map_file(const char * __restrict,
+    void ** __restrict, size_t * __restrict);
+void _localeio_unmap_file(void *, size_t);
 int __loadlocale(const char *, size_t, size_t, size_t, void *);
 __END_DECLS

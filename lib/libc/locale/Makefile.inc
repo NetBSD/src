@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.57 2010/06/07 13:52:30 tnozaki Exp $
+#	$NetBSD: Makefile.inc,v 1.58 2010/06/19 13:26:52 tnozaki Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -16,10 +16,9 @@ SRCS+=	_def_messages.c _def_monetary.c _def_numeric.c _def_time.c \
 # citrus multibyte locale support
 # we have quirk for libc.a - see the last part of lib/libc/Makefile
 CPPFLAGS+=	-DWITH_RUNE -I${.CURDIR}
-SRCS+=	_wctrans.c _wctype.c rune.c runeglue.c runetable.c \
+SRCS+=	_wctrans.c _wctype.c rune.c runetable.c \
 	multibyte_c90.c multibyte_amd1.c iswctype_mb.c
 CPPFLAGS.rune.c+=		-I${LIBCDIR}/citrus
-CPPFLAGS.runeglue.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.runetable.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_c90.c+=	-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_amd1.c+=	-I${LIBCDIR}/citrus
