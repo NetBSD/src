@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2010/06/18 05:26:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2010/06/19 03:50:31 mrg Exp $
 
-.ifdef HOSTPROG
+.ifndef HOSTPROG
 
 .include <bsd.own.mk>
 
@@ -11,11 +11,13 @@ USE_FORT?= yes	# data-driven bugs?
 PROG=		pigz
 SRCS=		pigz.c yarn.c
 MAN=		pigz.1
-# these ones are from mrg's gzip
-MAN+=		gzexe.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
 
 DPADD=		${LIBM} ${LIBPTHREAD}
 LDADD=		-lz -lpthread
+
+.if ${MKPIGZGZIP} != "no"
+# these ones are from mrg's gzip
+MAN+=		gzexe.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
 
 SCRIPTS=	gzexe zdiff zforce zgrep zmore znew
 
@@ -34,13 +36,16 @@ LINKS+=		${BINDIR}/pigz ${BINDIR}/gzip \
 		${BINDIR}/zdiff ${BINDIR}/zcmp \
 		${BINDIR}/zgrep ${BINDIR}/zegrep \
 		${BINDIR}/zgrep ${BINDIR}/zfgrep
+.endif
 
 .include <bsd.prog.mk>
 
 DIST=		${NETBSDSRCDIR}/external/zlib/pigz/dist
 .PATH:	${DIST}
+.if ${MKPIGZGZIP} != "no"
 GZIPDIST=	${NETBSDSRCDIR}/usr.bin/gzip
 .PATH:	${GZIPDIST}
+.endif
 
 .else	# HOSTPROG
 
