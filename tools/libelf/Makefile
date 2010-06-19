@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/12/29 17:32:18 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2010/06/19 23:11:10 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -76,7 +76,7 @@ CPPFLAGS+=	-I${COMPATOBJ}
 HOST_CPPFLAGS:=	${CPPFLAGS}
 CPPFLAGS:=	# empty
 
-.include "${.CURDIR}/../Makefile.disklabel"
+.include "${.CURDIR}/../Makefile.nbincludes"
 .include <bsd.hostlib.mk>
 
 # Keep the .SUFFIXES line after the include of bsd.hostlib.mk

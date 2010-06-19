@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/24 21:34:57 darran Exp $
+#	$NetBSD: Makefile,v 1.2 2010/06/19 23:11:10 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -61,5 +61,5 @@ ${TOOLDIR}/lib/libctf.a:: libctf.a
 	mkdir -p ${TOOLDIR}/lib
 	${HOST_INSTALL_FILE} -m ${BINMODE} libctf.a ${.TARGET}
 
-.include "${.CURDIR}/../Makefile.disklabel"
+.include "${.CURDIR}/../Makefile.nbincludes"
 .include <bsd.hostlib.mk>

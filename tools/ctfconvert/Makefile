@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/24 21:34:57 darran Exp $
+#	$NetBSD: Makefile,v 1.2 2010/06/19 23:11:10 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -53,5 +53,5 @@ LDADD+=		-L${ELFOBJ} -lelf
 .PATH:		${OPENSOLARIS_DISTDIR}/tools/ctf/common
 .PATH:		${OPENSOLARIS_DISTDIR}/tools/ctf/cvt
 
-.include "${.CURDIR}/../Makefile.disklabel"
+.include "${.CURDIR}/../Makefile.nbincludes"
 .include "${.CURDIR}/../Makefile.host"

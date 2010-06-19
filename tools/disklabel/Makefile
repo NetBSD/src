@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/01/05 15:45:26 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2010/06/19 23:11:10 riz Exp $
 
 HOSTPROGNAME=	nbdisklabel-${MAKEWRAPPERMACHINE}
 HOST_SRCDIR=	sbin/disklabel
@@ -14,7 +14,7 @@ CPPFLAGS+= -DTARGET_BYTE_ORDER=LITTLE_ENDIAN
 CPPFLAGS+= -DTARGET_BYTE_ORDER=BIG_ENDIAN
 .endif
 
-.include "${.CURDIR}/../Makefile.disklabel"
+.include "${.CURDIR}/../Makefile.nbincludes"
 .include "${.CURDIR}/../Makefile.host"
 
 .PATH: ${.CURDIR}/../../lib/libc/gen
