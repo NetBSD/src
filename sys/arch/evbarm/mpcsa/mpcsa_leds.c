@@ -1,5 +1,5 @@
-/*	$Id: mpcsa_leds.c,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
-/*	$NetBSD: mpcsa_leds.c,v 1.2 2008/07/03 01:15:39 matt Exp $	*/
+/*	$Id: mpcsa_leds.c,v 1.3 2010/06/19 19:47:34 matt Exp $	*/
+/*	$NetBSD: mpcsa_leds.c,v 1.3 2010/06/19 19:47:34 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.2 2008/07/03 01:15:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpcsa_leds.c,v 1.3 2010/06/19 19:47:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/lock.h>
+#include <sys/gpio.h>
 #include <dev/spi/spivar.h>
 #include <dev/gpio/gpiovar.h>
 #include <evbarm/mpcsa/mpcsa_leds_var.h>
