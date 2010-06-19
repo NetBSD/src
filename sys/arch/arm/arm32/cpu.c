@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.74 2010/06/19 19:44:57 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.75 2010/06/19 19:49:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.74 2010/06/19 19:44:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2010/06/19 19:49:24 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -448,7 +448,7 @@ const struct cpu_classtab cpu_classes[] = {
 	[CPU_CLASS_XSCALE] =	{ "XScale",	"CPU_XSCALE_..." },
 	[CPU_CLASS_ARM11J] =	{ "ARM11J",	"CPU_ARM11" },
 	[CPU_CLASS_ARMV4] =	{ "ARMv4",	"CPU_ARMV4" },
-	[CPU_CLASS_CORTEX] =	{ "ARMv4",	"CPU_CORTEX" },
+	[CPU_CLASS_CORTEX] =	{ "Cortex",	"CPU_CORTEX" },
 };
 
 /*
