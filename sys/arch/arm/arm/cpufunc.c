@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.95 2010/06/16 22:06:53 jmcneill Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.96 2010/06/19 19:44:57 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.95 2010/06/16 22:06:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.96 2010/06/19 19:44:57 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1081,8 +1081,8 @@ struct cpu_functions xscale_cpufuncs = {
 #endif
 /* CPU_XSCALE_80200 || CPU_XSCALE_80321 || __CPU_XSCALE_PXA2XX || CPU_XSCALE_IXP425 */
 
-#if defined(CPU_CORTEXA8)
-struct cpu_functions cortexa8_cpufuncs = {
+#if defined(CPU_CORTEX)
+struct cpu_functions cortex_cpufuncs = {
 	/* CPU functions */
 
 	.cf_id			= cpufunc_id,
@@ -1139,7 +1139,7 @@ struct cpu_functions cortexa8_cpufuncs = {
 	.cf_setup		= armv7_setup
 
 };
-#endif /* CPU_CORTEXA8 */
+#endif /* CPU_CORTEX */
 
 
 /*
@@ -1155,7 +1155,7 @@ u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
     defined(CPU_FA526) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
-    defined(CPU_CORTEXA8)
+    defined(CPU_CORTEX)
 static void get_cachetype_cp15(void);
 
 /* Additional cache information local to this file.  Log2 of some of the
@@ -1170,10 +1170,10 @@ get_cachesize_cp15(int cssr)
 {
     u_int csid;
 
-#if (CPU_CORTEXA8) > 0
+#if (CPU_CORTEX) > 0
+    __asm volatile(".arch\tarmv7a");
     __asm volatile("mcr p15, 2, %0, c0, c0, 0" :: "r" (cssr));
-    /* GAS does not have the ISB instruction ATM */
-    __asm volatile(".word 0xF57FF06F;"); /* sync to the new cssr */
+    __asm volatile("isb");	/* sync to the new cssr */
 #else
     __asm volatile("mcr p15, 1, %0, c0, c0, 2" :: "r" (cssr));
 #endif
@@ -1693,11 +1693,12 @@ set_cpufuncs(void)
 		return 0;
 	}
 #endif /* CPU_XSCALE_IXP425 */
-#if defined(CPU_CORTEXA8)
+#if defined(CPU_CORTEX)
 	if (cputype == CPU_ID_CORTEXA8R1 ||
 	    cputype == CPU_ID_CORTEXA8R2 ||
-	    cputype == CPU_ID_CORTEXA8R3) {
-		cpufuncs = cortexa8_cpufuncs;
+	    cputype == CPU_ID_CORTEXA8R3 ||
+	    cputype == CPU_ID_CORTEXA9R1) {
+		cpufuncs = cortex_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		cpu_do_powersave = 1;			/* Enable powersave */
 		get_cachetype_cp15();
@@ -1707,7 +1708,7 @@ set_cpufuncs(void)
 
 		return 0;
 	}
-#endif /* CPU_CORTEXA8 */
+#endif /* CPU_CORTEX */
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
@@ -2094,7 +2095,7 @@ late_abort_fixup(void *arg)
 	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
 	defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || \
 	defined(CPU_ARM10) || defined(CPU_ARM11) || defined(CPU_ARM1136) || \
-	defined(CPU_FA526) || defined(CPU_CORTEXA8)
+	defined(CPU_FA526) || defined(CPU_CORTEX)
 
 #define IGN	0
 #define OR	1
@@ -2546,7 +2547,7 @@ arm11_setup(char *args)
 }
 #endif	/* CPU_ARM11 */
 
-#if defined(CPU_CORTEXA8)
+#if defined(CPU_CORTEX)
 struct cpu_option armv7_options[] = {
     { "cpu.cache",      BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
     { "cpu.nocache",    OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -2629,18 +2630,20 @@ armv7_dcache_wbinv_all()
 
 			for (way = ways; way >= 0; way--) {
 				/* Clean by set/way */
-				u_int sw = (way << wayshift) | (nsets << setshift) |
-					(level << 1);
+				const u_int sw = (way << wayshift)
+				    | (nsets << setshift)
+				    | (level << 1);
 
-				__asm volatile("mcr\tp15, 0, %0, c7, c10, 2" :: "r"(sw));
+				__asm volatile("mcr\tp15, 0, %0, c7, c10, 2"
+				    :: "r"(sw));
 			}
 		}
 	}
 
-	__asm volatile("mcr\tp15, 0, r0, c7, c10, 4"); /* DSB */
-	__asm volatile(".word 0xF57FF06F;");	       /* ISB */
+	__asm volatile("dsb");
+	__asm volatile("isb");
 }
-#endif /* CPU_CORTEXA8 */
+#endif /* CPU_CORTEX */
 
 
 
@@ -2965,7 +2968,7 @@ ixp12x0_setup(char *args)
 #endif /* CPU_IXP12X0 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
-    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || defined(CPU_CORTEXA8)
+    defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425) || defined(CPU_CORTEX)
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
 	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },

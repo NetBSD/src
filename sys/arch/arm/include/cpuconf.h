@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.17 2010/06/16 22:06:53 jmcneill Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.18 2010/06/19 19:44:58 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -71,6 +71,9 @@
 			 defined(CPU_ARM11) +				\
 			 defined(CPU_ARM1136) +				\
 			 defined(CPU_ARM1176) +				\
+			 defined(CPU_CORTEX) +				\
+			 defined(CPU_CORTEXA8) +			\
+			 defined(CPU_CORTEXA9) +			\
 			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
 			 defined(CPU_SA1110) +				\
 			 defined(CPU_FA526) +				\
@@ -125,13 +128,19 @@
 #define ARM_ARCH_6	0
 #endif
 
+#if defined(CPU_CORTEX)
+#define ARM_ARCH_7	1
+#else
+#define ARM_ARCH_7	0
+#endif
+
 #define	ARM_NARCH	(ARM_ARCH_2 + ARM_ARCH_3 + ARM_ARCH_4 + \
-			 ARM_ARCH_5 + ARM_ARCH_6)
+			 ARM_ARCH_5 + ARM_ARCH_6 + ARM_ARCH_7)
 #if ARM_NARCH == 0
 #error ARM_NARCH is 0
 #endif
 
-#if ARM_ARCH_5 || ARM_ARCH_6
+#if ARM_ARCH_5 || ARM_ARCH_6 || ARM_ARCH_7
 /*
  * We could support Thumb code on v4T, but the lack of clean interworking
  * makes that hard.
@@ -198,7 +207,7 @@
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-	 defined(CPU_CORTEXA8)
+	 defined(CPU_CORTEX)
 #define	ARM_MMU_V7		1
 #else
 #define	ARM_MMU_V7		0
