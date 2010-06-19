@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.88 2010/06/16 19:31:18 pooka Exp $
+# $NetBSD: mi,v 1.89 2010/06/19 19:09:52 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -60,6 +60,7 @@
 ./usr/libdata/debug/usr/tests/atf/atf-report/h_fail.debug		tests-atf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-report/h_misc.debug		tests-atf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-report/h_pass.debug		tests-atf-tests		debug,atf
+./usr/libdata/debug/usr/tests/atf/atf-report/h_xfail.debug		tests-atf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-run				tests-atf-tests
 ./usr/libdata/debug/usr/tests/atf/atf-run/h_bad_metadata.debug		tests-atf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/atf/atf-run/h_fail.debug			tests-atf-tests		debug,atf
@@ -346,6 +347,7 @@
 ./usr/tests/atf/atf-report/h_fail		tests-atf-tests		atf
 ./usr/tests/atf/atf-report/h_misc		tests-atf-tests		atf
 ./usr/tests/atf/atf-report/h_pass		tests-atf-tests		atf
+./usr/tests/atf/atf-report/h_xfail		tests-atf-tests		atf
 ./usr/tests/atf/atf-report/t_integration	tests-atf-tests		atf
 ./usr/tests/atf/atf-run				tests-atf-tests
 ./usr/tests/atf/atf-run/Atffile			tests-atf-tests		atf
