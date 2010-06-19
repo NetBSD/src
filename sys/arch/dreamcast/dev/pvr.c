@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.27 2010/05/15 08:53:27 tsutsui Exp $	*/
+/*	$NetBSD: pvr.c,v 1.28 2010/06/19 08:42:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.27 2010/05/15 08:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.28 2010/06/19 08:42:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,6 +330,10 @@ pvrioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		wsd_fbip->depth = sc->sc_dc->dc_depth;
 		wsd_fbip->cmsize = 0;	/* XXX Colormap */
 #undef wsd_fbip
+		return 0;
+
+	case WSDISPLAYIO_LINEBYTES:
+		*(u_int *)data = sc->sc_dc->rinfo.ri_stride;
 		return 0;
 
 	case WSDISPLAYIO_GETCMAP:
