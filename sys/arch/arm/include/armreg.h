@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.43 2010/06/19 19:44:58 matt Exp $	*/
+/*	$NetBSD: armreg.h,v 1.44 2010/06/19 20:42:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -346,7 +346,7 @@
 #define	CPU_CSID_CTYPE_WB	0x40000000	/* write-back avail */ 
 #define	CPU_CSID_CTYPE_RA	0x20000000	/* read-allocation avail */ 
 #define	CPU_CSID_CTYPE_WA	0x10000000	/* write-allocation avail */ 
-#define	CPU_CSID_NUMSETS(x)	(((x) >> 12) & 0xffff)
+#define	CPU_CSID_NUMSETS(x)	(((x) >> 13) & 0x7fff)
 #define	CPU_CSID_ASSOC(x)	(((x) >> 3) & 0x1ff)
 #define	CPU_CSID_LEN(x)		((x) & 0x03)
 
