@@ -1,4 +1,4 @@
-/* $NetBSD: runetype_file.h,v 1.1 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: runetype_file.h,v 1.2 2010/06/19 13:26:52 tnozaki Exp $ */
 
 /*-
  * Copyright (c) 1993
@@ -39,6 +39,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
+#include <sys/ctype_bits.h>
 
 #include "ctype_local.h"
 
@@ -77,6 +78,92 @@ typedef uint32_t _RuneType;
 #define	_RUNETYPE_SW1	UINT32_C(0x40000000)	/* 1 width character */
 #define	_RUNETYPE_SW2	UINT32_C(0x80000000)	/* 2 width character */
 #define	_RUNETYPE_SW3	UINT32_C(0xc0000000)	/* 3 width character */
+
+static __inline int
+_runetype_to_ctype(_RuneType bits)
+{
+	int ret;
+
+	if (bits == (_RuneType)0)
+		return 0;
+	ret = 0;
+	if (bits & _RUNETYPE_U)
+		ret |= _U;
+	if (bits & _RUNETYPE_L)
+		ret |= _L;
+	if (bits & _RUNETYPE_D)
+		ret |= _N;
+	if (bits & _RUNETYPE_S)
+		ret |= _S;
+	if (bits & _RUNETYPE_P)
+		ret |= _P;
+	if (bits & _RUNETYPE_C)
+		ret |= _C;
+	if (bits & _RUNETYPE_X)
+		ret |= _X;
+	/*
+	 * TWEAK!  _B has been used incorrectly (or with older
+	 * declaration) in ctype.h isprint() macro.
+	 * _B does not mean isblank, it means "isprint && !isgraph".
+	 * the following is okay since isblank() was hardcoded in
+	 * function (i.e. isblank() is inherently locale unfriendly).
+	 */
+#if 1
+	if ((bits & (_RUNETYPE_R | _RUNETYPE_G)) == _RUNETYPE_R)
+		ret |= _B;
+#else
+	if (bits & _RUNETYPE_B)
+		ret |= _B;
+#endif
+	return ret;
+}
+
+static __inline _RuneType
+_runetype_from_ctype(int bits, int ch)
+{
+        _RuneType ret;
+
+	/*
+	 * TWEAKS!
+	 * - old locale file declarations do not have proper _B
+	 *   in many cases.
+	 * - isprint() declaration in ctype.h incorrectly uses _B.
+	 *   _B means "isprint but !isgraph", not "isblank" with the
+	 *   declaration.
+	 * - _X and _RUNETYPE_X have negligible difference in meaning.
+	 * - we don't set digit value, fearing that it would be
+	 *   too much of hardcoding.  we may need to revisit it.
+	 */
+
+	ret = (_RuneType)0;
+	if (bits & _U)
+		ret |= _RUNETYPE_U;
+	if (bits & _L)
+		ret |= _RUNETYPE_L;
+	if (bits & _N)
+		ret |= _RUNETYPE_D;
+	if (bits & _S)
+		ret |= _RUNETYPE_S;
+	if (bits & _P)
+		ret |= _RUNETYPE_P;
+	if (bits & _C)
+		ret |= _RUNETYPE_C;
+	/* derived flag bits, duplicate of ctype.h */
+	if (bits & (_U|_L))
+		ret |= _RUNETYPE_A;
+	if (bits & (_N|_X))
+		ret |= _RUNETYPE_X;
+	if (bits & (_P|_U|_L|_N))
+		ret |= _RUNETYPE_G;
+	/* we don't really trust _B in the file.  see above. */
+	if (bits & _B)
+		ret |= _RUNETYPE_B;
+	if ((bits & (_P|_U|_L|_N|_B)) || ch == ' ')
+		ret |= (_RUNETYPE_R | _RUNETYPE_SW1);
+	if (ch == ' ' || ch == '\t')
+		ret |= _RUNETYPE_B;
+	return ret;
+}
 
 
 /*

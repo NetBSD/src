@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.10 2010/06/13 04:14:57 tnozaki Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.11 2010/06/19 13:26:52 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -105,9 +105,6 @@ typedef struct _RuneLocale {
 	/*
 	 * copied from _FileRuneLocale
 	 */
-	char		rl_magic[8];	/* Magic saying what version we are */
-	char		rl_encoding[32];/* ASCII name of this encoding */
-	__nbrune_t	rl_invalid_rune;
 	_RuneType	rl_runetype[_CTYPE_CACHE_SIZE];
 	__nbrune_t	rl_maplower[_CTYPE_CACHE_SIZE];
 	__nbrune_t	rl_mapupper[_CTYPE_CACHE_SIZE];
@@ -138,13 +135,7 @@ extern const _RuneLocale _DefaultRuneLocale;
 extern const _RuneLocale *_CurrentRuneLocale;
 
 __BEGIN_DECLS
-/* rune.c */
-extern _RuneLocale *_Read_RuneMagi(FILE *fp);
-extern _RuneLocale *_Read_CTypeAsRune(FILE *fp);
-extern void _NukeRune(_RuneLocale *);
-
-/* runeglue.c */
-extern int __runetable_to_netbsd_ctype(_RuneLocale *);
+int _rune_load(const char * __restrict, size_t, _RuneLocale ** __restrict);
 __END_DECLS
 
 #endif	/* !_RUNETYPE_LOCAL_H_ */

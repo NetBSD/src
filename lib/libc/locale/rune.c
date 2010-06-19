@@ -1,7 +1,7 @@
-/*	$NetBSD: rune.c,v 1.38 2010/06/13 04:14:57 tnozaki Exp $	*/
+/* $NetBSD: rune.c,v 1.39 2010/06/19 13:26:52 tnozaki Exp $ */
 
 /*-
- * Copyright (c)1999 Citrus Project,
+ * Copyright (c)2010 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,468 +26,321 @@
  * SUCH DAMAGE.
  */
 
-/*-
- * Copyright (c) 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Paul Borman at Krystal Technologies.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- */
-
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)rune.c	8.1 (Berkeley) 6/4/93";
-#else
-__RCSID("$NetBSD: rune.c,v 1.38 2010/06/13 04:14:57 tnozaki Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
-
-#include "namespace.h"
-#include <sys/types.h>
-#include <sys/ctype_bits.h>
+#include <sys/endian.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
+#define __SETLOCALE_SOURCE__
+#include <locale.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <wchar.h>
+
+#include "setlocale_local.h"
 
 #include "citrus_module.h"
 #include "citrus_ctype.h"
 
-#include "bsdctype_local.h"
 #include "runetype_local.h"
+#include "bsdctype_local.h"
 
-static int readrange __P((_RuneLocale *, _RuneRange *, _FileRuneRange *, void *, FILE *));
-static void _freeentry __P((_RuneRange *));
-static void _wctype_init __P((_RuneLocale *rl));
+#include "multibyte.h"
 
-static int
-readrange(_RuneLocale *rl, _RuneRange *rr, _FileRuneRange *frr, void *lastp,
-	FILE *fp)
-{
-	uint32_t i;
-	_RuneEntry *re;
-	_FileRuneEntry fre;
+#include "_wctype_local.h"
+#include "_wctrans_local.h"
 
-	_DIAGASSERT(rl != NULL);
-	_DIAGASSERT(rr != NULL);
-	_DIAGASSERT(frr != NULL);
-	_DIAGASSERT(lastp != NULL);
-	_DIAGASSERT(fp != NULL);
+typedef struct {
+	_RuneLocale rl;
+	unsigned char	rlp_ctype_tab  [_CTYPE_NUM_CHARS + 1];
+	short		rlp_tolower_tab[_CTYPE_NUM_CHARS + 1];
+	short		rlp_toupper_tab[_CTYPE_NUM_CHARS + 1];
+	char		rlp_codeset[33]; /* XXX */
+} _RuneLocalePriv;
 
-	re = (_RuneEntry *)rl->rl_variable;
-
-	rr->rr_nranges = ntohl(frr->frr_nranges);
-	if (rr->rr_nranges == 0) {
-		rr->rr_rune_ranges = NULL;
-		return 0;
-	}
-
-	rr->rr_rune_ranges = re;
-	for (i = 0; i < rr->rr_nranges; i++) {
-		if (fread(&fre, sizeof(fre), 1, fp) != 1)
-			return -1;
-
-		re->re_min = ntohl((u_int32_t)fre.fre_min);
-		re->re_max = ntohl((u_int32_t)fre.fre_max);
-		re->re_map = ntohl((u_int32_t)fre.fre_map);
-		re++;
-
-		if ((void *)re > lastp)
-			return -1;
-	}
-	rl->rl_variable = re;
-	return 0;
-}
-
-static int
-readentry(_RuneRange *rr, FILE *fp)
-{
-	_RuneEntry *re;
-	size_t l, i, j;
-	int error;
-
-	_DIAGASSERT(rr != NULL);
-	_DIAGASSERT(fp != NULL);
-
-	re = rr->rr_rune_ranges;
-	for (i = 0; i < rr->rr_nranges; i++) {
-		if (re[i].re_map != 0) {
-			re[i].re_rune_types = NULL;
-			continue;
-		}
-
-		l = re[i].re_max - re[i].re_min + 1;
-		re[i].re_rune_types = malloc(l * sizeof(_RuneType));
-		if (!re[i].re_rune_types) {
-			error = ENOMEM;
-			goto fail;
-		}
-		memset(re[i].re_rune_types, 0, l * sizeof(_RuneType));
-
-		if (fread(re[i].re_rune_types, sizeof(_RuneType), l, fp) != l)
-			goto fail2;
-
-		for (j = 0; j < l; j++)
-			re[i].re_rune_types[j] = ntohl(re[i].re_rune_types[j]);
-	}
-	return 0;
-
-fail:
-	for (j = 0; j < i; j++) {
-		free(re[j].re_rune_types);
-		re[j].re_rune_types = NULL;
-	}
-	return error;
-fail2:
-	for (j = 0; j <= i; j++) {
-		free(re[j].re_rune_types);
-		re[j].re_rune_types = NULL;
-	}
-	return errno;
-}
-
-/* XXX: temporary implementation */
-static void
-find_codeset(_RuneLocale *rl)
-{
-	char *top, *codeset, *tail, *ep;
-
-	/* end of rl_variable region */
-	ep = (char *)rl->rl_variable;
-	ep += rl->rl_variable_len;
-	rl->rl_codeset = NULL;
-	if (!(top = strstr(rl->rl_variable, _RUNE_CODESET)))
-		return;
-	tail = strpbrk(top, " \t");
-	codeset = top + sizeof(_RUNE_CODESET) - 1;
-	if (tail) {
-		*top = *tail;
-		*tail = '\0';
-		rl->rl_codeset = strdup(codeset);
-		strlcpy(top + 1, tail + 1, (unsigned)(ep - (top + 1)));
-	} else {
-		*top = '\0';
-		rl->rl_codeset = strdup(codeset);
-	}
-}
-
-void
-_freeentry(_RuneRange *rr)
-{
-	_RuneEntry *re;
-	uint32_t i;
-
-	_DIAGASSERT(rr != NULL);
-
-	re = rr->rr_rune_ranges;
-	for (i = 0; i < rr->rr_nranges; i++) {
-		if (re[i].re_rune_types)
-			free(re[i].re_rune_types);
-		re[i].re_rune_types = NULL;
-	}
-}
-
-void
-_wctype_init(_RuneLocale *rl)
+static __inline void
+_rune_wctype_init(_RuneLocale *rl)
 {
 	memcpy(&rl->rl_wctype, &_DefaultRuneLocale.rl_wctype,
-	       sizeof(rl->rl_wctype));
+	    sizeof(rl->rl_wctype));
 }
 
-
-_RuneLocale *
-_Read_RuneMagi(fp)
-	FILE *fp;
+static __inline void
+_rune_wctrans_init(_RuneLocale *rl)
 {
-	/* file */
-	_FileRuneLocale frl;
-	/* host data */
-	char *hostdata;
-	size_t hostdatalen;
-	void *lastp;
-	_RuneLocale *rl;
-	struct stat sb;
-	int x;
-
-	_DIAGASSERT(fp != NULL);
-
-	if (fstat(fileno(fp), &sb) < 0)
-		return NULL;
-
-	if (sb.st_size < (off_t)sizeof(_FileRuneLocale))
-		return NULL;
-	/* XXX more validation? */
-
-	/* Someone might have read the magic number once already */
-	rewind(fp);
-
-	if (fread(&frl, sizeof(frl), 1, fp) != 1)
-		return NULL;
-	if (memcmp(frl.frl_magic, _RUNECT10_MAGIC, sizeof(frl.frl_magic)))
-		return NULL;
-
-	hostdatalen = sizeof(*rl) + ntohl((u_int32_t)frl.frl_variable_len) +
-	    ntohl(frl.frl_runetype_ext.frr_nranges) * sizeof(_RuneEntry) +
-	    ntohl(frl.frl_maplower_ext.frr_nranges) * sizeof(_RuneEntry) +
-	    ntohl(frl.frl_mapupper_ext.frr_nranges) * sizeof(_RuneEntry);
-
-	if ((hostdata = malloc(hostdatalen)) == NULL)
-		return NULL;
-	memset(hostdata, 0, hostdatalen);
-	lastp = hostdata + hostdatalen;
-
-	rl = (_RuneLocale *)(void *)hostdata;
-	rl->rl_variable = rl + 1;
-
-	memcpy(rl->rl_magic, frl.frl_magic, sizeof(rl->rl_magic));
-	memcpy(rl->rl_encoding, frl.frl_encoding, sizeof(rl->rl_encoding));
-
-	rl->rl_invalid_rune = ntohl((u_int32_t)frl.frl_invalid_rune);
-	rl->rl_variable_len = ntohl((u_int32_t)frl.frl_variable_len);
-
-	for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
-		rl->rl_runetype[x] = ntohl(frl.frl_runetype[x]);
-
-		/* XXX assumes rune_t = u_int32_t */
-		rl->rl_maplower[x] = ntohl((u_int32_t)frl.frl_maplower[x]);
-		rl->rl_mapupper[x] = ntohl((u_int32_t)frl.frl_mapupper[x]);
-	}
-
-	if (readrange(rl, &rl->rl_runetype_ext, &frl.frl_runetype_ext, lastp, fp))
-	{
-		free(hostdata);
-		return NULL;
-	}
-	if (readrange(rl, &rl->rl_maplower_ext, &frl.frl_maplower_ext, lastp, fp))
-	{
-		free(hostdata);
-		return NULL;
-	}
-	if (readrange(rl, &rl->rl_mapupper_ext, &frl.frl_mapupper_ext, lastp, fp))
-	{
-		free(hostdata);
-		return NULL;
-	}
-
-	if (readentry(&rl->rl_runetype_ext, fp) != 0) {
-		free(hostdata);
-		return NULL;
-	}
-
-	if ((u_int8_t *)rl->rl_variable + rl->rl_variable_len >
-	    (u_int8_t *)lastp) {
-		_freeentry(&rl->rl_runetype_ext);
-		free(hostdata);
-		return NULL;
-	}
-	if (rl->rl_variable_len == 0)
-		rl->rl_variable = NULL;
-	if (rl->rl_variable == NULL ||
-	    fread(rl->rl_variable, rl->rl_variable_len, 1, fp) != 1) {
-		_freeentry(&rl->rl_runetype_ext);
-		free(hostdata);
-		return NULL;
-	}
-	find_codeset(rl);
-	_wctype_init(rl);
-
-	/* error if we have junk at the tail */
-	if (ftell(fp) != sb.st_size) {
-		_freeentry(&rl->rl_runetype_ext);
-		free(hostdata);
-		return NULL;
-	}
-
-	return(rl);
+	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_name   = "tolower";
+	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_cached = &rl->rl_maplower[0];
+	rl->rl_wctrans[_WCTRANS_INDEX_LOWER].te_extmap = &rl->rl_maplower_ext;
+	rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_name   = "toupper";
+	rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_cached = &rl->rl_mapupper[0];
+	rl->rl_wctrans[_WCTRANS_INDEX_UPPER].te_extmap = &rl->rl_mapupper_ext;
 }
 
-void
-_NukeRune(rl)
-	_RuneLocale *rl;
+static __inline void
+_rune_init_priv(_RuneLocalePriv *rlp)
 {
+#if _CTYPE_CACHE_SIZE != _CTYPE_NUM_CHARS
+	int i;
 
-	_DIAGASSERT(rl != NULL);
-
-	if (rl != &_DefaultRuneLocale) {
-		_freeentry(&rl->rl_runetype_ext);
-		if (rl->rl_codeset)
-			free(__UNCONST(rl->rl_codeset));
-		if (rl->rl_citrus_ctype)
-			_citrus_ctype_close(rl->rl_citrus_ctype);
-		free(__UNCONST(rl->rl_ctype_tab));
-		free(__UNCONST(rl->rl_tolower_tab));
-		free(__UNCONST(rl->rl_toupper_tab));
-		free(rl);
+	for (i = _CTYPE_CACHE_SIZE; i < _CTYPE_NUM_CHARS; ++i) {
+		rlp->rlp_ctype_tab  [i + 1] = 0;
+		rlp->rlp_tolower_tab[i + 1] = i;
+		rlp->rlp_toupper_tab[i + 1] = i;
 	}
+#endif
+	rlp->rlp_ctype_tab  [0] = 0;
+	rlp->rlp_tolower_tab[0] = EOF;
+	rlp->rlp_toupper_tab[0] = EOF;
+
+	rlp->rl.rl_ctype_tab   = (const unsigned char *)&rlp->rlp_ctype_tab[0];
+	rlp->rl.rl_tolower_tab = (const short *)&rlp->rlp_tolower_tab[0];
+	rlp->rl.rl_toupper_tab = (const short *)&rlp->rlp_toupper_tab[0];
+	rlp->rl.rl_codeset     = (const char *)&rlp->rlp_codeset[0];
+
+	_rune_wctype_init(&rlp->rl);
+	_rune_wctrans_init(&rlp->rl);
 }
 
-/*
- * read in old LC_CTYPE declaration file, convert into runelocale info
- */
-_RuneLocale *
-_Read_CTypeAsRune(fp)
-	FILE *fp;
+static __inline void
+_rune_find_codeset(char *s, size_t n,
+    const char *var, size_t lenvar)
 {
-	char id[sizeof(_CTYPE_ID) - 1];
-	u_int32_t i, len;
-	u_int8_t *new_ctype = NULL;
-	int16_t *new_toupper = NULL, *new_tolower = NULL;
-	/* host data */
-	char *hostdata = NULL;
-	size_t hostdatalen;
+	const char *endvar;
+
+#define _RUNE_CODESET_LEN (sizeof(_RUNE_CODESET)-1)
+
+	for (/**/; lenvar > _RUNE_CODESET_LEN; ++var, --lenvar) {
+		if (!memcmp(var, _RUNE_CODESET, _RUNE_CODESET_LEN)) {
+			endvar = &var[_RUNE_CODESET_LEN];
+			while (n-- > 1 && lenvar-- > _RUNE_CODESET_LEN) {
+				if (*endvar == ' ' || *endvar == '\t')
+					break;
+				*s++ = *endvar++;
+			}
+			break;
+		}
+	}
+	*s = '\0';
+}
+
+static __inline int
+_rune_read_file(const char * __restrict var, size_t lenvar,
+    _RuneLocale ** __restrict prl)
+{
+	int ret, i;
+	const _FileRuneLocale *frl;
+	const _FileRuneEntry *fre;
+	const uint32_t *frune;
+	_RuneLocalePriv *rlp;
 	_RuneLocale *rl;
-	struct stat sb;
-	int x;
+	_RuneEntry *re;
+	uint32_t *rune;
+	uint32_t runetype_len, maplower_len, mapupper_len, variable_len;
+	size_t len, n;
 
-	_DIAGASSERT(fp != NULL);
+	if (lenvar < sizeof(*frl))
+		return EFTYPE;
+	lenvar -= sizeof(*frl);
+	frl = (const _FileRuneLocale *)(const void *)var;
+	if (memcmp(_RUNECT10_MAGIC, &frl->frl_magic[0], sizeof(frl->frl_magic)))
+		return EFTYPE;
 
-	if (fstat(fileno(fp), &sb) < 0)
-		return NULL;
+	runetype_len = be32toh(frl->frl_runetype_ext.frr_nranges);
+	maplower_len = be32toh(frl->frl_maplower_ext.frr_nranges);
+	mapupper_len = be32toh(frl->frl_mapupper_ext.frr_nranges);
+	len = runetype_len + maplower_len + mapupper_len;
 
-	if (sb.st_size < (off_t)sizeof(id))
-		return NULL;
-	/* XXX more validation? */
+	fre = (const _FileRuneEntry *)(const void *)(frl + 1);
+	frune = (const uint32_t *)(const void *)(fre + len);
 
-	/* Someone might have read the magic number once already */
-	rewind(fp);
+	variable_len = be32toh((uint32_t)frl->frl_variable_len);
 
-	if (fread(id, sizeof(id), 1, fp) != 1)
-		goto bad;
-	if (memcmp(id, _CTYPE_ID, sizeof(id)) != 0)
-		goto bad;
+	n = (len * sizeof(*fre)) + variable_len;
+	if (lenvar < n)
+		return EFTYPE;
+	lenvar -= n;
 
-	if (fread(&i, sizeof(u_int32_t), 1, fp) != 1) 
-		goto bad;
-	if ((i = ntohl(i)) != _CTYPE_REV)
-		goto bad;
+	n = sizeof(*rlp) + (len * sizeof(*re)) + lenvar;
+	rlp = (_RuneLocalePriv *)malloc(n);
+	if (rlp == NULL)
+		return ENOMEM;
+	_rune_init_priv(rlp);
 
-	if (fread(&len, sizeof(u_int32_t), 1, fp) != 1)
-		goto bad;
-	if ((len = ntohl(len)) != _CTYPE_CACHE_SIZE)
-		goto bad;
+	rl = &rlp->rl;
+	re = (_RuneEntry *)(void *)(rlp + 1);
+	rune = (uint32_t *)(void *)(re + len);
 
-	if ((new_ctype = malloc(sizeof(u_int8_t) * (1 + len))) == NULL ||
-	    (new_toupper = malloc(sizeof(int16_t) * (1 + len))) == NULL ||
-	    (new_tolower = malloc(sizeof(int16_t) * (1 + len))) == NULL)
-		goto bad;
-	new_ctype[0] = 0;
-	if (fread(&new_ctype[1], sizeof(u_int8_t), len, fp) != len)
-		goto bad;
-	new_toupper[0] = EOF;
-	if (fread(&new_toupper[1], sizeof(int16_t), len, fp) != len)
-		goto bad;
-	new_tolower[0] = EOF;
-	if (fread(&new_tolower[1], sizeof(int16_t), len, fp) != len)
-		goto bad;
-
-	hostdatalen = sizeof(*rl);
-
-	if ((hostdata = malloc(hostdatalen)) == NULL)
-		goto bad;
-	memset(hostdata, 0, hostdatalen);
-	rl = (_RuneLocale *)(void *)hostdata;
-	rl->rl_variable = NULL;
-
-	memcpy(rl->rl_magic, _RUNECT10_MAGIC, sizeof(rl->rl_magic));
-	memcpy(rl->rl_encoding, "NONE", 4);
-
-	rl->rl_invalid_rune = _DefaultRuneLocale.rl_invalid_rune;	/*XXX*/
-	rl->rl_variable_len = 0;
-
-	for (x = 0; x < _CTYPE_CACHE_SIZE; ++x) {
-		if ((uint32_t) x > len)
-			continue;
-
-		/*
-		 * TWEAKS!
-		 * - old locale file declarations do not have proper _B
-		 *   in many cases.
-		 * - isprint() declaration in ctype.h incorrectly uses _B.
-		 *   _B means "isprint but !isgraph", not "isblank" with the
-		 *   declaration.
-		 * - _X and _RUNETYPE_X have negligible difference in meaning.
-		 * - we don't set digit value, fearing that it would be
-		 *   too much of hardcoding.  we may need to revisit it.
-		 */
-
-		if (new_ctype[1 + x] & _U)
-			rl->rl_runetype[x] |= _RUNETYPE_U;
-		if (new_ctype[1 + x] & _L)
-			rl->rl_runetype[x] |= _RUNETYPE_L;
-		if (new_ctype[1 + x] & _N)
-			rl->rl_runetype[x] |= _RUNETYPE_D;
-		if (new_ctype[1 + x] & _S)
-			rl->rl_runetype[x] |= _RUNETYPE_S;
-		if (new_ctype[1 + x] & _P)
-			rl->rl_runetype[x] |= _RUNETYPE_P;
-		if (new_ctype[1 + x] & _C)
-			rl->rl_runetype[x] |= _RUNETYPE_C;
-		/* derived flag bits, duplicate of ctype.h */
-		if (new_ctype[1 + x] & (_U | _L))
-			rl->rl_runetype[x] |= _RUNETYPE_A;
-		if (new_ctype[1 + x] & (_N | _X))
-			rl->rl_runetype[x] |= _RUNETYPE_X;
-		if (new_ctype[1 + x] & (_P|_U|_L|_N))
-			rl->rl_runetype[x] |= _RUNETYPE_G;
-		/* we don't really trust _B in the file.  see above. */
-		if (new_ctype[1 + x] & _B)
-			rl->rl_runetype[x] |= _RUNETYPE_B;
-		if ((new_ctype[1 + x] & (_P|_U|_L|_N|_B)) || x == ' ')
-			rl->rl_runetype[x] |= (_RUNETYPE_R | _RUNETYPE_SW1);
-		if (x == ' ' || x == '\t')
-			rl->rl_runetype[x] |= _RUNETYPE_B;
-
-		/* XXX may fail on non-8bit encoding only */
-		rl->rl_mapupper[x] = ntohs(new_toupper[1 + x]);
-		rl->rl_maplower[x] = ntohs(new_tolower[1 + x]);
+	for (i = 0; i < _CTYPE_CACHE_SIZE; ++i) {
+		rl->rl_runetype[i] = be32toh(frl->frl_runetype[i]);
+		rl->rl_maplower[i] = be32toh((uint32_t)frl->frl_maplower[i]);
+		rl->rl_mapupper[i] = be32toh((uint32_t)frl->frl_mapupper[i]);
 	}
 
-	_wctype_init(rl);
+#define READ_RANGE(name)						\
+do {									\
+	const _FileRuneEntry *end_fre;					\
+	const uint32_t *end_frune;					\
+									\
+	rl->rl_##name##_ext.rr_nranges = name##_len;			\
+	rl->rl_##name##_ext.rr_rune_ranges = re;			\
+									\
+	end_fre = fre + name##_len;					\
+	while (fre < end_fre) {						\
+		re->re_min = be32toh((uint32_t)fre->fre_min);		\
+		re->re_max = be32toh((uint32_t)fre->fre_max);		\
+		re->re_map = be32toh((uint32_t)fre->fre_map);		\
+		if (re->re_map != 0) {					\
+			re->re_rune_types = NULL;			\
+		} else {						\
+			re->re_rune_types = rune;			\
+			len = re->re_max - re->re_min + 1;		\
+			n = len * sizeof(*frune);			\
+			if (lenvar < n) {				\
+				ret = EFTYPE;				\
+				goto err;				\
+			}						\
+			lenvar -= n;					\
+			end_frune = frune + len;			\
+			while (frune < end_frune)			\
+				*rune++ = be32toh(*frune++);		\
+		}							\
+		++fre, ++re;						\
+	}								\
+} while (/*CONSTCOND*/0)
 
-	/*
-	 * __runetable_to_netbsd_ctype() will be called from
-	 * setrunelocale.c:_newrunelocale(), and fill old ctype table.
-	 */
+	READ_RANGE(runetype);
+	READ_RANGE(maplower);
+	READ_RANGE(mapupper);
 
-	free(new_ctype);
-	free(new_toupper);
-	free(new_tolower);
-	return(rl);
+	memcpy((void *)rune, (void const *)frune, variable_len);
+	rl->rl_variable_len = variable_len;
+	rl->rl_variable = (void *)rune;
 
-bad:
-	if (new_ctype)
-		free(new_ctype);
-	if (new_toupper)
-		free(new_toupper);
-	if (new_tolower)
-		free(new_tolower);
-	return NULL;
+	if (lenvar > 0) {
+		ret = EFTYPE;
+		goto err;
+	}
+
+	_rune_find_codeset(rlp->rlp_codeset, sizeof(rlp->rlp_codeset),
+	    (const char *)rl->rl_variable, rl->rl_variable_len);
+
+	ret = _citrus_ctype_open(&rl->rl_citrus_ctype, frl->frl_encoding,
+	    rl->rl_variable, rl->rl_variable_len, _PRIVSIZE);
+	if (ret)
+		goto err;
+	if (__mb_len_max_runtime <
+	    _citrus_ctype_get_mb_cur_max(rl->rl_citrus_ctype)) {
+		ret = EINVAL;
+		goto err;
+	}
+
+	for (i = 0; i < _CTYPE_CACHE_SIZE; ++i) {
+		wint_t wc;
+
+		ret = _citrus_ctype_btowc(rl->rl_citrus_ctype, i, &wc);
+		if (ret)
+			goto err;
+		if (wc == WEOF) {
+			rlp->rlp_ctype_tab[i + 1] = 0;
+			rlp->rlp_tolower_tab[i + 1] = i;
+			rlp->rlp_toupper_tab[i + 1] = i;
+		} else {
+			rlp->rlp_ctype_tab[i + 1] = (unsigned char)
+			    _runetype_to_ctype(_runetype_priv(rl, wc));
+
+#define CONVERT_MAP(name)						\
+do {									\
+	wint_t map;							\
+	int c;								\
+									\
+	map = _towctrans_priv(wc, _wctrans_##name(rl));			\
+	if (map == wc || (_citrus_ctype_wctob(rl->rl_citrus_ctype,	\
+	    map, &c)  || c == EOF))					\
+		c = i;							\
+	rlp->rlp_to##name##_tab[i + 1] = (short)c;			\
+} while (/*CONSTCOND*/0)
+
+			CONVERT_MAP(lower);
+			CONVERT_MAP(upper);
+		}
+	}
+	*prl = rl;
+	return 0;
+
+err:
+	free(rlp);
+	return ret;
+}
+
+static __inline int
+_rune_read_bsdctype(const char * __restrict var, size_t lenvar,
+    _RuneLocale ** __restrict prl)
+{
+	const _FileBSDCTypeLocale *fbl;
+	uint32_t value;
+	int i, bits;
+	uint16_t lower, upper;
+	_RuneLocalePriv *rlp;
+	_RuneLocale *rl;
+
+        if (lenvar < sizeof(*fbl))
+		return EFTYPE;
+	fbl = (const _FileBSDCTypeLocale *)(const void *)var;
+	if (memcmp(&fbl->fbl_id[0], _CTYPE_ID, sizeof(fbl->fbl_id)))
+		return EFTYPE;
+	value = be32toh(fbl->fbl_rev);
+	if (value != _CTYPE_REV)
+		return EFTYPE;
+	value = be32toh(fbl->fbl_num_chars);
+	if (value != _CTYPE_CACHE_SIZE)
+		return EFTYPE;
+	rlp = (_RuneLocalePriv *)malloc(sizeof(*rlp));
+	if (rlp == NULL)
+		return ENOMEM;
+	_rune_init_priv(rlp);
+
+	rl = &rlp->rl;
+	for (i = 0; i < _CTYPE_CACHE_SIZE; ++i) {
+		bits  = fbl->fbl_ctype_tab[i];
+		lower = be16toh(fbl->fbl_tolower_tab[i]);
+		upper = be16toh(fbl->fbl_toupper_tab[i]);
+
+		rlp->rlp_ctype_tab  [i + 1] = (unsigned char)bits;
+		rlp->rlp_tolower_tab[i + 1] = (short)lower;
+		rlp->rlp_toupper_tab[i + 1] = (short)upper;
+
+		rl->rl_runetype[i] = _runetype_from_ctype(bits, i);
+		rl->rl_maplower[i] = (__nbrune_t)lower;
+		rl->rl_mapupper[i] = (__nbrune_t)upper;
+	}
+	*prl = rl;
+	return 0;
+}
+
+int
+_rune_load(const char * __restrict var, size_t lenvar,
+    _RuneLocale ** __restrict prl)
+{
+	int ret;
+
+	_DIAGASSERT(var != NULL || lenvar < 1);
+	_DIAGASSERT(prl != NULL);
+
+	if (lenvar < 1)
+		return EFTYPE;
+	switch (*var) {
+	case 'R':
+		ret = _rune_read_file(var, lenvar, prl);
+		break;
+	case 'B':
+		ret = _rune_read_bsdctype(var, lenvar, prl);
+		break;
+	default:
+		ret = EFTYPE;
+	}
+	return ret;
 }
