@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.14 2010/06/17 23:25:01 riz Exp $	*/
+/*	$NetBSD: u3g.c,v 1.15 2010/06/19 22:41:32 kardel Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.14 2010/06/17 23:25:01 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.15 2010/06/19 22:41:32 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,10 +450,15 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 		if (uaa->product == USB_PRODUCT_HUAWEI_K3765)
 			return UMATCH_NONE;
 
-		if (uaa->product == USB_PRODUCT_HUAWEI_K3765INIT)
+		switch (uaa->product) {
+		case USB_PRODUCT_HUAWEI_E1750INIT:
+		case USB_PRODUCT_HUAWEI_K3765INIT:
 			return u3g_huawei_k3765_reinit(uaa->device);
-		else
+			break;
+		default:
 			return u3g_huawei_reinit(uaa->device);
+			break;
+		}
 	}
 
 	if (uaa->vendor == USB_VENDOR_NOVATEL2) {
