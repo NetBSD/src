@@ -1,4 +1,4 @@
-/*	$NetBSD: t_etfs.c,v 1.1 2010/06/16 19:29:33 pooka Exp $	*/
+/*	$NetBSD: t_etfs.c,v 1.2 2010/06/19 13:40:09 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -106,10 +106,60 @@ ATF_TC_BODY(reregister_reg, tc)
 	ATF_REQUIRE_STREQ(buf, TESTSTR2);
 }
 
+ATF_TC(reregister_blk);
+ATF_TC_HEAD(reregister_blk, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Tests register/unregister/register "
+	    "for a block device");
+	atf_tc_set_md_var(tc, "use.fs", "true");
+}
+
+ATF_TC_BODY(reregister_blk, tc)
+{
+	char buf[512 * 128];
+	char cmpbuf[512 * 128];
+	int rv, tfd;
+
+	/* first, create some image files */
+	rv = system("dd if=/dev/zero bs=512 count=64 "
+	    "| tr '\\0' '\\1' > disk1.img");
+	ATF_REQUIRE_EQ(rv, 0);
+
+	rv = system("dd if=/dev/zero bs=512 count=128 "
+	    "| tr '\\0' '\\2' > disk2.img");
+	ATF_REQUIRE_EQ(rv, 0);
+
+	rump_init();
+
+	ATF_REQUIRE_EQ(rump_pub_etfs_register(TESTPATH1, "./disk1.img",
+	    RUMP_ETFS_BLK), 0);
+	tfd = rump_sys_open(TESTPATH1, O_RDONLY);
+	ATF_REQUIRE(tfd != -1);
+	ATF_REQUIRE_EQ(rump_sys_read(tfd, buf, sizeof(buf)), 64*512);
+	memset(cmpbuf, 1, sizeof(cmpbuf));
+	ATF_REQUIRE_EQ(memcmp(buf, cmpbuf, 64*512), 0);
+	rump_sys_close(tfd);
+	rump_pub_etfs_remove(TESTPATH1);
+
+	ATF_REQUIRE_EQ(rump_pub_etfs_register(TESTPATH2, "./disk2.img",
+	    RUMP_ETFS_BLK), 0);
+	tfd = rump_sys_open(TESTPATH2, O_RDONLY);
+	ATF_REQUIRE(tfd != -1);
+	ATF_REQUIRE_EQ(rump_sys_read(tfd, buf, sizeof(buf)), 128*512);
+	memset(cmpbuf, 2, sizeof(cmpbuf));
+	ATF_REQUIRE_EQ(memcmp(buf, cmpbuf, 128*512), 0);
+	rump_sys_close(tfd);
+	rump_pub_etfs_remove(TESTPATH1);
+
+	rump_sys_reboot(RUMP_RB_DUMP, NULL);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, reregister_reg);
+	ATF_TP_ADD_TC(tp, reregister_blk);
 
 	return atf_no_error();
 }
