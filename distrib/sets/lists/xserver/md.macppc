@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.55 2010/05/23 21:32:51 mrg Exp $
+# $NetBSD: md.macppc,v 1.56 2010/06/19 18:10:56 tsutsui Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xmacppc					-unknown-	x11
@@ -341,8 +341,8 @@
 ./usr/X11R7/lib/modules/drivers/imstt_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/mach64_drv.so           -unknown-       xorg
-./usr/X11R7/lib/modules/drivers/mach64_drv.so.6         -unknown-       xorg
+./usr/X11R7/lib/modules/drivers/mach64_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/mach64_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mga_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mga_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg

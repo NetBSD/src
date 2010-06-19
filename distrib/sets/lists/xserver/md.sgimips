@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.37 2010/05/22 21:12:31 mrg Exp $	x11
+# $NetBSD: md.sgimips,v 1.38 2010/06/19 18:10:56 tsutsui Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
@@ -412,8 +412,8 @@
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/newport_drv.so		-unknown-	xorg   
-./usr/X11R7/lib/modules/drivers/newport_drv.so.0	-unknown-	xorg   
+./usr/X11R7/lib/modules/drivers/newport_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/newport_drv.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ws_drv.so		-unknown-	xorg
