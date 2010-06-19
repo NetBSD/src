@@ -1,4 +1,4 @@
-/* $NetBSD: localeio_lc_ctype.c,v 1.5 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: localeio_lc_ctype.c,v 1.6 2010/06/19 13:26:52 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: localeio_lc_ctype.c,v 1.5 2010/06/13 04:14:57 tnozaki Exp $");
+__RCSID("$NetBSD: localeio_lc_ctype.c,v 1.6 2010/06/19 13:26:52 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: localeio_lc_ctype.c,v 1.5 2010/06/13 04:14:57 tnozaki Exp $");
 
 #include "bsdctype_local.h"
 #include "aliasname_local.h"
+#include "localeio.h"
 
 #include "setlocale_local.h"
 
@@ -68,6 +69,9 @@ _localeio_LC_CTYPE_create_impl(const char * __restrict root,
     const char * __restrict name, _BSDCTypeLocale ** __restrict pdata)
 {
 	char path[PATH_MAX + 1];
+	void *var;
+	size_t lenvar;
+	int ret;
 
 	_DIAGASSERT(root != NULL);
 	_DIAGASSERT(name != NULL);
@@ -75,7 +79,12 @@ _localeio_LC_CTYPE_create_impl(const char * __restrict root,
 
 	snprintf(path, sizeof(path),
 	    "%s/%s/LC_CTYPE", root, name);
-	return _bsdctype_load(path, pdata);
+	ret = _localeio_map_file(path, &var, &lenvar);
+	if (!ret) {
+		ret = _bsdctype_load((const char *)var, lenvar, pdata);
+		_localeio_unmap_file(var, lenvar);
+	}
+	return ret;
 }
 
 static __inline void

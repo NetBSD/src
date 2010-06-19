@@ -1,4 +1,4 @@
-/* $NetBSD: bsdctype_local.h,v 1.1 2010/06/13 04:14:57 tnozaki Exp $ */
+/* $NetBSD: bsdctype_local.h,v 1.2 2010/06/19 13:26:52 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2008 Citrus Project,
@@ -41,7 +41,8 @@ extern const _BSDCTypeLocale _DefaultBSDCTypeLocale;
 extern const _BSDCTypeLocale *_CurrentBSDCTypeLocale;
 
 __BEGIN_DECLS
-int _bsdctype_load(const char * __restrict, _BSDCTypeLocale ** __restrict);
+int _bsdctype_load(const char * __restrict, size_t,
+    _BSDCTypeLocale ** __restrict);
 __END_DECLS
 
 #endif /*_BSDCTYPE_LOCAL_H_*/
