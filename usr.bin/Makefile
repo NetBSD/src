@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.188 2010/06/18 18:57:27 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.189 2010/06/19 03:50:30 mrg Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -31,8 +31,10 @@ SUBDIR= apply apropos asa at audio awk \
 	wall wc what whatis whereis who whois window \
 	write xargs xinstall xlint xstr yes
 
-.if (${MKPIGZ} != "no")
 SUBDIR+= ../external/zlib/pigz/bin/pigz
+
+.if (${MKPIGZGZIP} != "no")
+# nothing
 .else
 SUBDIR+= gzip 
 .endif
