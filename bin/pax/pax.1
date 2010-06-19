@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.58 2010/06/19 00:43:57 christos Exp $
+.\"    $NetBSD: pax.1,v 1.59 2010/06/19 11:16:31 wiz Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -42,28 +42,15 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl 0cdjnOVvz
-.Bk -words
 .Op Fl E Ar limit
-.Ek
-.Bk -words
 .Op Fl f Ar archive
-.Ek
-.Bk -words
 .Op Fl N Ar dbdir
-.Ek
-.Bk -words
 .Op Fl s Ar replstr
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl U Ar user
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl G Ar group
 .Ar ...\&
-.Ek
-.Bk -words
 .Oo
 .Fl T
 .Sm off
@@ -72,41 +59,23 @@
 .Sm on
 .Oc
 .Ar ...\&
-.Ek
 .Op Ar pattern ...\&
 .Nm
 .Fl r
 .Op Fl AcDdijknOuVvYZz
-.Bk -words
 .Op Fl E Ar limit
-.Ek
-.Bk -words
 .Op Fl f Ar archive
-.Ek
-.Bk -words
 .Op Fl N Ar dbdir
-.Ek
-.Bk -words
 .Op Fl o Ar options
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl p Ar string
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl s Ar replstr
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl U Ar user
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl G Ar group
 .Ar ...\&
-.Ek
-.Bk -words
 .Oo
 .Fl T
 .Sm off
@@ -115,44 +84,26 @@
 .Sm on
 .Oc
 .Ar ...\&
-.Ek
 .Op Ar pattern ...\&
 .Nm
 .Fl w
 .Op Fl AdHijLMOPtuVvXz
-.Bk -words
 .Op Fl b Ar blocksize
-.Ek
 .Oo
 .Op Fl a
 .Op Fl f Ar archive
 .Oc
-.Bk -words
 .Op Fl x Ar format
-.Ek
-.Bk -words
 .Op Fl B Ar bytes
-.Ek
-.Bk -words
 .Op Fl N Ar dbdir
-.Ek
-.Bk -words
 .Op Fl o Ar options
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl s Ar replstr
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl U Ar user
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl G Ar group
 .Ar ...\&
-.Ek
-.Bk -words
 .Oo
 .Fl T
 .Sm off
@@ -162,32 +113,20 @@
 .Sm on
 .Oc
 .Ar ...\&
-.Ek
 .Op Ar file ...\&
 .Nm
 .Fl r
 .Fl w
 .Op Fl ADdHijkLlMnOPtuVvXYZz
-.Bk -words
 .Op Fl N Ar dbdir
-.Ek
-.Bk -words
 .Op Fl p Ar string
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl s Ar replstr
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl U Ar user
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Fl G Ar group
 .Ar ...\&
-.Ek
-.Bk -words
 .Oo
 .Fl T
 .Sm off
@@ -197,10 +136,7 @@
 .Sm on
 .Oc
 .Ar ...\&
-.Ek
-.Bk -words
 .Op Ar file ...\&
-.Ek
 .Ar directory
 .Sh DESCRIPTION
 .Nm
@@ -1089,9 +1025,9 @@ pathname created after all the file name modifications have completed.
 .It Fl 0
 Use the nul character instead of \en as the file separator when reading
 files from standard input.
-.It Fl -force-local
+.It Fl Fl force-local
 Do not interpret filenames that contain a `:' as remote files.
-.It Fl -insecure
+.It Fl Fl insecure
 Normally
 .Nm
 ignores filenames that contain
@@ -1101,7 +1037,7 @@ With this option,
 files that contain
 .Dq ..
 can be processed.
-.It Fl -use-compress-program
+.It Fl Fl use-compress-program
 Use the named program as the program to decompress the input or compress
 the output.
 .El
