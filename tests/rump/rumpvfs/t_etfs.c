@@ -1,4 +1,4 @@
-/*	$NetBSD: t_etfs.c,v 1.3 2010/06/19 13:43:29 pooka Exp $	*/
+/*	$NetBSD: t_etfs.c,v 1.4 2010/06/19 13:44:11 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -151,8 +151,6 @@ ATF_TC_BODY(reregister_blk, tc)
 	ATF_REQUIRE_EQ(memcmp(buf, cmpbuf, 128*512), 0);
 	ATF_REQUIRE_EQ(rump_sys_close(tfd), 0);
 	ATF_REQUIRE_EQ(rump_pub_etfs_remove(TESTPATH2), 0);
-
-	rump_sys_reboot(RUMP_RB_DUMP, NULL);
 }
 
 ATF_TP_ADD_TCS(tp)
