@@ -1,4 +1,4 @@
-/* $NetBSD: rune.c,v 1.39 2010/06/19 13:26:52 tnozaki Exp $ */
+/* $NetBSD: rune.c,v 1.40 2010/06/19 14:48:16 tnozaki Exp $ */
 
 /*-
  * Copyright (c)2010 Citrus Project,
@@ -302,6 +302,7 @@ _rune_read_bsdctype(const char * __restrict var, size_t lenvar,
 	if (rlp == NULL)
 		return ENOMEM;
 	_rune_init_priv(rlp);
+	rlp->rlp_codeset[0] = '\0';
 
 	rl = &rlp->rl;
 	for (i = 0; i < _CTYPE_CACHE_SIZE; ++i) {
