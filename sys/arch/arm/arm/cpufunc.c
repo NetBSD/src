@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.96 2010/06/19 19:44:57 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.97 2010/06/19 20:42:43 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.96 2010/06/19 19:44:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.97 2010/06/19 20:42:43 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1203,27 +1203,37 @@ get_cachetype_cp15()
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 	if (CPU_CT_FORMAT(ctype) == 4) { 
-		u_int csid1, csid2;
+		u_int csid0, csid1, csid2;
+
 		isize = 1U << (CPU_CT4_ILINE(ctype) + 2);
 		dsize = 1U << (CPU_CT4_DLINE(ctype) + 2);
 
-		csid1 = get_cachesize_cp15(CPU_CSSR_L1); /* select L1 cache values */
-		arm_pdcache_ways = CPU_CSID_ASSOC(csid1) + 1;
-		arm_pdcache_line_size = dsize << CPU_CSID_LEN(csid1);
+		csid0 = get_cachesize_cp15(CPU_CSSR_L1); /* select L1 dcache values */
+		arm_pdcache_ways = CPU_CSID_ASSOC(csid0) + 1;
+		arm_pdcache_line_size = dsize;
 		arm_pdcache_size = arm_pdcache_line_size * arm_pdcache_ways;
-		arm_pdcache_size *= CPU_CSID_NUMSETS(csid1);
+		arm_pdcache_size *= (CPU_CSID_NUMSETS(csid0) + 1);
+		arm_cache_prefer_mask = PAGE_SIZE;
+
+		arm_dcache_align = arm_pdcache_line_size;
+
+		csid1 = get_cachesize_cp15(CPU_CSSR_L1|CPU_CSSR_InD); /* select L1 icache values */
+		arm_picache_ways = CPU_CSID_ASSOC(csid1) + 1;
+		arm_picache_line_size = isize;
+		arm_picache_size = arm_picache_line_size * arm_picache_ways;
+		arm_picache_size *= (CPU_CSID_NUMSETS(csid1) + 1);
 		arm_cache_prefer_mask = PAGE_SIZE;
 
 		arm_dcache_align = arm_pdcache_line_size;
 
 		csid2 = get_cachesize_cp15(CPU_CSSR_L2); /* select L2 cache values */
 		arm_dcache_l2_assoc = CPU_CSID_ASSOC(csid2) + 1;
-		arm_dcache_l2_linesize = dsize << CPU_CSID_LEN(csid2);
+		arm_dcache_l2_linesize = 1 << (CPU_CSID_LEN(csid2) + 2);
 		arm_dcache_l2_nsets = CPU_CSID_NUMSETS(csid2) + 1;
 		arm_pcache_type = CPU_CT_CTYPE_WB14;
 		goto out;
 	}
-#endif /* ARM_MMU_V6 > 0 */
+#endif /* ARM_MMU_V6 + ARM_MMU_V7 > 0 */
 
 	if ((ctype & CPU_CT_S) == 0)
 		arm_pcache_unified = 1;
