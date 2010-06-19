@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.disklabel,v 1.15 2010/06/19 22:36:15 riz Exp $
+#	$NetBSD: Makefile.nbincludes,v 1.1 2010/06/19 23:11:10 riz Exp $
 
 # NOxxx definitions are copied from Makefile.host, and are
 # required before .include <bsd.own.mk>.   The include of bsd.own.mk

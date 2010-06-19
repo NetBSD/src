@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2010/02/24 21:34:57 darran Exp $
+#	$NetBSD: Makefile,v 1.2 2010/06/19 23:11:10 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -48,5 +48,5 @@ CPPFLAGS+=	-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
 HOST_CPPFLAGS:=	${CPPFLAGS}
 CPPFLAGS:=	# empty
 
-.include "${.CURDIR}/../Makefile.disklabel"
+.include "${.CURDIR}/../Makefile.nbincludes"
 .include <bsd.hostlib.mk>
