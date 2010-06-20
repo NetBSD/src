@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.272 2010/06/19 03:50:30 mrg Exp $
+#	$NetBSD: bsd.README,v 1.273 2010/06/20 06:54:24 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -205,7 +205,8 @@ MKSTRIPIDENT	Strip the RCS IDs from program binaries and shared libraries.
 		Default: no
 
 MKINET6		If "no", disables building of INET6 (IPv6) infrastructure
-		(libraries and support programs).
+		(libraries and support programs).  This option must not be
+		set to "no" if MKX11 is not "no".
 		Default: yes
 
 MKINFO		If "no", don't build or install Info documentation from
@@ -742,6 +743,8 @@ TOOL_MTREE		Map a directory hierarchy.  [mtree]
 TOOL_PAX		Manipulate file archives and copy directories.  [pax]
 
 TOOL_PIC		Compile pictures for groff.  [pic]
+
+TOOL_PIGZ		Parallel compressor.  [pigz]
 
 TOOL_POWERPCMKBOOTIMAGE	Make bootable image for powerpc.  [powerpc-mkbootimage]
 
