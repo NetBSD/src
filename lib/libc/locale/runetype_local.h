@@ -1,4 +1,4 @@
-/*	$NetBSD: runetype_local.h,v 1.11 2010/06/19 13:26:52 tnozaki Exp $	*/
+/*	$NetBSD: runetype_local.h,v 1.12 2010/06/20 02:23:15 tnozaki Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 
-#include "runetype_file.h"
+#include "runetype_misc.h"
 
 #define _RUNE_ISCACHED(c)	((c)>=0 && (c)<_CTYPE_CACHE_SIZE)
 
