@@ -1,4 +1,4 @@
-/*	$NetBSD: t_etfs.c,v 1.4 2010/06/19 13:44:11 pooka Exp $	*/
+/*	$NetBSD: t_etfs.c,v 1.5 2010/06/20 17:43:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -153,11 +153,77 @@ ATF_TC_BODY(reregister_blk, tc)
 	ATF_REQUIRE_EQ(rump_pub_etfs_remove(TESTPATH2), 0);
 }
 
+ATF_TC_WITH_CLEANUP(large_blk);
+ATF_TC_HEAD(large_blk, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Check etfs block devices work for "
+	    ">2TB images");
+	atf_tc_set_md_var(tc, "use.fs", "true");
+}
+
+#define IMG_ON_MFS "mfsdir/disk.img"
+ATF_TC_BODY(large_blk, tc)
+{
+	char buf[128];
+	char cmpbuf[128];
+	ssize_t n;
+	int rv, tfd;
+
+	/*
+	 * mount mfs.  it would be nice if this would not be required,
+	 * but a) tmpfs doesn't "support" sparse files b) we don't really
+	 * know what fs atf workdir is on anyway.
+	 */
+	if (mkdir("mfsdir", 0777) == -1)
+		atf_tc_fail_errno("mkdir failed");
+	if (system("mount_mfs -s 64m -o nosuid,nodev mfs mfsdir") != 0)
+		atf_tc_skip("could not mount mfs");
+
+	/* create a 8TB sparse file */
+	rv = system("dd if=/dev/zero of=" IMG_ON_MFS " bs=1 count=1 seek=8t");
+	ATF_REQUIRE_EQ(rv, 0);
+
+	/*
+	 * map it and issue write at 6TB, then unmap+remap and check
+	 * we get the same stuff back
+	 */
+
+	rump_init();
+	ATF_REQUIRE_EQ(rump_pub_etfs_register(TESTPATH1, IMG_ON_MFS,
+	    RUMP_ETFS_BLK), 0);
+	tfd = rump_sys_open(TESTPATH1, O_RDWR);
+	ATF_REQUIRE(tfd != -1);
+	memset(buf, 12, sizeof(buf));
+	n = rump_sys_pwrite(tfd, buf, sizeof(buf), 6*1024*1024*1024ULL*1024ULL);
+	ATF_REQUIRE_EQ(n, sizeof(buf));
+	ATF_REQUIRE_EQ(rump_sys_close(tfd), 0);
+	ATF_REQUIRE_EQ(rump_pub_etfs_remove(TESTPATH1), 0);
+
+	ATF_REQUIRE_EQ(rump_pub_etfs_register(TESTPATH2, IMG_ON_MFS,
+	    RUMP_ETFS_BLK), 0);
+	tfd = rump_sys_open(TESTPATH2, O_RDWR);
+	ATF_REQUIRE(tfd != -1);
+	memset(buf, 0, sizeof(buf));
+	n = rump_sys_pread(tfd, buf, sizeof(buf), 6*1024*1024*1024ULL*1024ULL);
+	ATF_REQUIRE_EQ(n, sizeof(buf));
+
+	memset(cmpbuf, 12, sizeof(cmpbuf));
+	ATF_REQUIRE_EQ(memcmp(cmpbuf, buf, 128), 0);
+}
+
+ATF_TC_CLEANUP(large_blk, tc)
+{
+
+	system("umount mfsdir");
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, reregister_reg);
 	ATF_TP_ADD_TC(tp, reregister_blk);
+	ATF_TP_ADD_TC(tp, large_blk);
 
 	return atf_no_error();
 }
