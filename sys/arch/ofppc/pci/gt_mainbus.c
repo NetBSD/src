@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.1 2010/06/09 04:41:42 kiyohara Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.2 2010/06/20 00:25:41 matt Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.1 2010/06/09 04:41:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.2 2010/06/20 00:25:41 matt Exp $");
 
 #include "opt_pci.h"
 #include "opt_marvell.h"
@@ -142,7 +142,7 @@ gt_match(device_t parent, cfdata_t cf, void *aux)
 			ethernet++;
 
 	}
-	if (pci == 2 && ethernet == 1)
+	if (pci == 2 && (ethernet == 1 || ethernet == 0))
 		return 1;
 	return 0;
 }
