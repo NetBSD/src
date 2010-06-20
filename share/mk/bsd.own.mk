@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.631 2010/06/19 03:50:30 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.632 2010/06/20 06:54:23 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -275,6 +275,7 @@ TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
 TOOL_NBPERF=		${TOOLDIR}/bin/${_TOOL_PREFIX}nbperf
 TOOL_PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
 TOOL_PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
+TOOL_PIGZ=		${TOOLDIR}/bin/${_TOOL_PREFIX}pigz
 TOOL_PKG_CREATE=	${TOOLDIR}/bin/${_TOOL_PREFIX}pkg_create
 TOOL_POWERPCMKBOOTIMAGE=${TOOLDIR}/bin/${_TOOL_PREFIX}powerpc-mkbootimage
 TOOL_PWD_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}pwd_mkdb
@@ -351,6 +352,7 @@ TOOL_MTREE=		mtree
 TOOL_NBPERF=		nbperf
 TOOL_PAX=		pax
 TOOL_PIC=		pic
+TOOL_PIGZ=		pigz
 TOOL_PKG_CREATE=	pkg_create
 TOOL_POWERPCMKBOOTIMAGE=	powerpc-mkbootimage
 TOOL_PWD_MKDB=		pwd_mkdb
