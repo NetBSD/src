@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.40 2010/06/15 18:53:48 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.41 2010/06/21 14:25:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.40 2010/06/15 18:53:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.41 2010/06/21 14:25:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -83,7 +83,8 @@ unsigned memwincnt = 16;
 
 #define STARTWIN(off)		((off) & ~((off_t)memwinsize-1))
 #define INWIN(win,off)		((win)->win_off == STARTWIN(off))
-#define WINSIZE(rblk, win)	(MIN((rblk->rblk_size-win->win_off),memwinsize))
+#define WINSIZE(rblk, win)	(MIN((rblk->rblk_hostsize-win->win_off), \
+				      memwinsize))
 #define WINVALID(win)		((win)->win_off != (off_t)-1)
 #define WINVALIDATE(win)	((win)->win_off = (off_t)-1)
 struct blkwin {
@@ -104,6 +105,7 @@ static struct rblkdev {
 #endif
 	uint64_t rblk_size;
 	uint64_t rblk_hostoffset;
+	uint64_t rblk_hostsize;
 	int rblk_ftype;
 
 	/* for mmap */
@@ -433,6 +435,7 @@ rumpblk_register(const char *path, devminor_t *dmin,
 		KASSERT(offset < flen);
 		rblk->rblk_size = flen - offset;
 	}
+	rblk->rblk_hostsize = flen;
 	rblk->rblk_ftype = ftype;
 	makedefaultlabel(&rblk->rblk_label, rblk->rblk_size, i);
 	mutex_exit(&rumpblk_lock);
