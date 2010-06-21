@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1470 2010/06/19 03:50:30 mrg Exp $
+#	$NetBSD: mi,v 1.1471 2010/06/21 10:37:46 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3161,6 +3161,7 @@
 ./usr/libdata/debug/usr/bin/mklocale.debug	comp-locale-debug	debug
 ./usr/libdata/debug/usr/bin/mkstr.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/mktemp.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/mkubootimage.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/modstat.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/mset.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/msgattrib.debug	comp-c-debug		debug
