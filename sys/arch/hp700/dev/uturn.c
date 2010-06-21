@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.10 2010/06/21 09:06:03 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.11 2010/06/21 11:04:27 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -267,7 +267,6 @@ uturn_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
 	struct uturn_softc *sc = v;
 	int err;
 	int i;
-	int d = 0;
 
 	DPRINTF(("%s: map %p addr %p size %lx proc %p flags %x\n", __func__,
 	    map, addr, size, p, flags));
@@ -279,12 +278,7 @@ uturn_dmamap_load(void *v, bus_dmamap_t map, void *addr, bus_size_t size,
 	for (i = 0; i < map->dm_nsegs; i++) {
 		DPRINTF(("%s: seg %2d ds_addr %lx _ds_va %lx\n", __func__, i,
 		    map->dm_segs[i].ds_addr, map->dm_segs[i]._ds_va)); 
-		if (map->dm_segs[i].ds_addr != map->dm_segs[i]._ds_va)
-			d = 1;
 	}
-	DPRINTF(("%s:\n", __func__));
-	if (uturndebug && d)
-		Debugger();
 
 	return err;
 }
