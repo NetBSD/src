@@ -1,4 +1,4 @@
-/*	$NetBSD: uturn.c,v 1.9 2010/06/21 07:09:59 skrll Exp $	*/
+/*	$NetBSD: uturn.c,v 1.10 2010/06/21 09:06:03 skrll Exp $	*/
 
 /*	$OpenBSD: uturn.c,v 1.6 2007/12/29 01:26:14 kettenis Exp $	*/
 
@@ -46,7 +46,6 @@
 
 #include <hp700/dev/cpudevs.h>
 
-#define	UTURNDEBUG
 #ifdef UTURNDEBUG
 
 #define	DPRINTF(s)	do {	\
