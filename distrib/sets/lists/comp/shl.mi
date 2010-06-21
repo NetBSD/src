@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.123 2010/06/14 14:50:47 pooka Exp $
+# $NetBSD: shl.mi,v 1.124 2010/06/21 21:46:59 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -137,6 +137,7 @@
 ./usr/lib/librumpfs_union_pic.a			comp-c-piclib
 ./usr/lib/librumpkern_ksem_pic.a		comp-c-piclib
 ./usr/lib/librumpkern_tty_pic.a			comp-c-piclib
+./usr/lib/librumpkern_z_pic.a			comp-c-piclib
 ./usr/lib/librumpnet_local_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_net80211_pic.a		comp-c-piclib
 ./usr/lib/librumpnet_net_pic.a			comp-c-piclib
@@ -323,6 +324,7 @@
 ./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpkern_tty.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
 ./usr/libdata/debug/usr/lib/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libss.so.6.0.debug		comp-krb5-debug	kerberos,debug
