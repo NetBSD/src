@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2010/06/14 14:45:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/06/21 21:43:28 pooka Exp $
 #
 
-SUBDIR+=	libksem libtty
+SUBDIR+=	libksem libtty libz
 
 .include <bsd.subdir.mk>
