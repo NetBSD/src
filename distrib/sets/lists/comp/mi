@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1471 2010/06/21 10:37:46 skrll Exp $
+#	$NetBSD: mi,v 1.1472 2010/06/21 21:46:58 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2727,6 +2727,9 @@
 ./usr/lib/librumpkern_tty.a			comp-c-lib
 ./usr/lib/librumpkern_tty_g.a			-unknown-		debuglib
 ./usr/lib/librumpkern_tty_p.a			comp-c-proflib		profile
+./usr/lib/librumpkern_z.a			comp-c-lib
+./usr/lib/librumpkern_z_g.a			-unknown-		debuglib
+./usr/lib/librumpkern_z_p.a			comp-c-proflib		profile
 ./usr/lib/librumpnet.a				comp-c-lib
 ./usr/lib/librumpnet_g.a			-unknown-		debuglib
 ./usr/lib/librumpnet_p.a			comp-c-proflib		profile
