@@ -1,4 +1,4 @@
-/*	$NetBSD: t_etfs.c,v 1.5 2010/06/20 17:43:33 pooka Exp $	*/
+/*	$NetBSD: t_etfs.c,v 1.6 2010/06/21 14:39:35 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -218,12 +218,52 @@ ATF_TC_CLEANUP(large_blk, tc)
 	system("umount mfsdir");
 }
 
+ATF_TC(range_blk);
+ATF_TC_HEAD(range_blk, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks ranged (offset,size) mappings");
+	atf_tc_set_md_var(tc, "use.fs", "true");
+}
+
+ATF_TC_BODY(range_blk, tc)
+{
+	char buf[32000];
+	char cmpbuf[32000];
+	ssize_t n;
+	int rv, tfd;
+
+	/* create a 64000 byte file with 16 1's at offset = 32000 */
+	rv = system("dd if=/dev/zero of=disk.img bs=1000 count=64");
+	ATF_REQUIRE_EQ(rv, 0);
+	rv = system("yes | tr '\\ny' '\\1' "
+	    "| dd of=disk.img conv=notrunc bs=1 count=16 seek=32000");
+	ATF_REQUIRE_EQ(rv, 0);
+
+	/* map the file at [16000,48000].  this puts our 1's at offset 16000 */
+	rump_init();
+	ATF_REQUIRE_EQ(rump_pub_etfs_register_withsize(TESTPATH1, "disk.img",
+	    RUMP_ETFS_BLK, 16000, 32000), 0);
+	tfd = rump_sys_open(TESTPATH1, O_RDWR);
+	ATF_REQUIRE(tfd != -1);
+	n = rump_sys_read(tfd, buf, sizeof(buf));
+	ATF_REQUIRE_EQ(n, sizeof(buf));
+	ATF_REQUIRE_EQ(rump_sys_close(tfd), 0);
+	ATF_REQUIRE_EQ(rump_pub_etfs_remove(TESTPATH1), 0);
+
+	/* check that we got what is expected */
+	memset(cmpbuf, 0, sizeof(cmpbuf));
+	memset(cmpbuf+16000, 1, 16);
+	ATF_REQUIRE_EQ(memcmp(buf, cmpbuf, sizeof(buf)), 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, reregister_reg);
 	ATF_TP_ADD_TC(tp, reregister_blk);
 	ATF_TP_ADD_TC(tp, large_blk);
+	ATF_TP_ADD_TC(tp, range_blk);
 
 	return atf_no_error();
 }
