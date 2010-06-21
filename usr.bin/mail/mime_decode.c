@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.16 2009/08/28 14:26:50 christos Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.17 2010/06/21 19:49:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.16 2009/08/28 14:26:50 christos Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.17 2010/06/21 19:49:31 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -1132,7 +1132,7 @@ decode_header(FILE *fi, FILE *fo, void *cookie __unused)
 		hdrstr = linebuf;
 		if (colon)
 			hdrstr = mime_decode_hfield(decbuf, sizeof(decbuf), hdrstr, hdrstr);
-		(void)fprintf(fo, hdrstr);
+		(void)fputs(hdrstr, fo);
 	}
 }
 
