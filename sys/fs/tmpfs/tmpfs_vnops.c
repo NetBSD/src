@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.69 2010/04/23 15:38:47 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.70 2010/06/22 18:32:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.69 2010/04/23 15:38:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.70 2010/06/22 18:32:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -861,6 +861,16 @@ tmpfs_rename(void *v)
 		goto out_unlocked;
 	}
 
+	/* Allocate memory, if necessary, for a new name. */
+	namelen = tcnp->cn_namelen;
+	if (tmpfs_strname_neqlen(fcnp, tcnp)) {
+		newname = tmpfs_strname_alloc(tmp, namelen);
+		if (newname == NULL) {
+			error = ENOSPC;
+			goto out_unlocked;
+		}
+	}
+
 	/* If we need to move the directory between entries, lock the
 	 * source so that we can safely operate on it. */
 
@@ -907,18 +917,6 @@ tmpfs_rename(void *v)
 		} else {
 			KASSERT(fnode->tn_type != VDIR &&
 			        tnode->tn_type != VDIR);
-		}
-	}
-
-	/* Ensure that we have enough memory to hold the new name, if it
-	 * has to be changed. */
-	namelen = tcnp->cn_namelen;
-	if (fcnp->cn_namelen != tcnp->cn_namelen ||
-	    memcmp(fcnp->cn_nameptr, tcnp->cn_nameptr, fcnp->cn_namelen) != 0) {
-		newname = tmpfs_str_pool_get(&tmp->tm_str_pool, namelen, 0);
-		if (newname == NULL) {
-			error = ENOSPC;
-			goto out;
 		}
 	}
 
@@ -989,8 +987,7 @@ tmpfs_rename(void *v)
 		KASSERT(tcnp->cn_namelen < MAXNAMLEN);
 		KASSERT(tcnp->cn_namelen < 0xffff);
 
-		tmpfs_str_pool_put(&tmp->tm_str_pool, de->td_name,
-		    de->td_namelen);
+		tmpfs_strname_free(tmp, de->td_name, de->td_namelen);
 		de->td_namelen = (uint16_t)namelen;
 		memcpy(newname, tcnp->cn_nameptr, namelen);
 		de->td_name = newname;
@@ -1025,9 +1022,9 @@ tmpfs_rename(void *v)
 	vrele(fdvp);
 	vrele(fvp);
 
-	if (newname != NULL)
-		tmpfs_str_pool_put(&tmp->tm_str_pool, newname, namelen);
-
+	if (newname != NULL) {
+		tmpfs_strname_free(tmp, newname, namelen);
+	}
 	return error;
 }
 
