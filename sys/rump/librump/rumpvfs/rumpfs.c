@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.55 2010/06/16 19:26:58 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.56 2010/06/22 12:33:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.55 2010/06/16 19:26:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.56 2010/06/22 12:33:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -357,17 +357,6 @@ int
 rump_etfs_register_withsize(const char *key, const char *hostpath,
 	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
 {
-
-	/*
-	 * Check that we're mapping at block offsets.  I guess this
-	 * is not technically necessary except for BLK/CHR backends
-	 * (i.e. what getfileinfo() returns, not ftype) and can be
-	 * removed later if there are problems.
-	 */
-	if ((begin & (DEV_BSIZE-1)) != 0)
-		return EINVAL;
-	if (size != RUMP_ETFS_SIZE_ENDOFF && (size & (DEV_BSIZE-1)) != 0)
-		return EINVAL;
 
 	return doregister(key, hostpath, ftype, begin, size);
 }
