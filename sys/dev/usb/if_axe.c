@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.32 2010/04/05 07:21:48 joerg Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.33 2010/06/22 21:30:55 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.32 2010/04/05 07:21:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.33 2010/06/22 21:30:55 pgoyette Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -350,6 +350,7 @@ axe_setmulti(struct axe_softc *sc)
 	allmulti:
 		rxmode |= AXE_RXCMD_ALLMULTI;
 		axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
+		axe_lock_mii(sc);
 		return;
 	} else
 		rxmode &= ~AXE_RXCMD_ALLMULTI;
