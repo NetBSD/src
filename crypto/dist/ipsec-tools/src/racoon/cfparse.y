@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.37 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.38 2010/06/22 09:41:33 vanhu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -237,7 +237,7 @@ static int load_x509(const char *file, char **filenameptr,
 %token PREFIX PORT PORTANY UL_PROTO ANY IKE_FRAG ESP_FRAG MODE_CFG
 %token PFS_GROUP LIFETIME LIFETYPE_TIME LIFETYPE_BYTE STRENGTH REMOTEID
 
-%token SCRIPT PHASE1_UP PHASE1_DOWN
+%token SCRIPT PHASE1_UP PHASE1_DOWN PHASE1_DEAD
 
 %token NUMBER SWITCH BOOLEAN
 %token HEXSTRING QUOTEDSTRING ADDRSTRING ADDRRANGE
@@ -2008,6 +2008,13 @@ remote_spec
 				vfree(cur_rmconf->script[SCRIPT_PHASE1_DOWN]);
 
 			cur_rmconf->script[SCRIPT_PHASE1_DOWN] = 
+			    script_path_add(vdup($2));
+		} EOS
+	|	SCRIPT QUOTEDSTRING PHASE1_DEAD { 
+			if (cur_rmconf->script[SCRIPT_PHASE1_DEAD] != NULL)
+				vfree(cur_rmconf->script[SCRIPT_PHASE1_DEAD]);
+
+			cur_rmconf->script[SCRIPT_PHASE1_DEAD] = 
 			    script_path_add(vdup($2));
 		} EOS
 	|	MODE_CFG SWITCH { cur_rmconf->mode_cfg = $2; } EOS
