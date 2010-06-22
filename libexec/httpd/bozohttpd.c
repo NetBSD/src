@@ -1,4 +1,4 @@
-/*	$eterna: bozohttpd.c,v 1.172 2010/06/17 19:27:32 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.174 2010/06/21 06:47:23 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -107,7 +107,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20100617"
+#define SERVER_SOFTWARE		"bozohttpd/20100621"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -327,9 +327,13 @@ void
 bozo_clean_request(bozo_httpreq_t *request)
 {
 	struct bozoheaders *hdr, *ohdr = NULL;
+	bozohttpd_t *httpd = request->hr_httpd;
 
 	if (request == NULL)
 		return;
+
+	/* If SSL enabled cleanup SSL structure. */
+	bozo_ssl_destroy(httpd);
 
 	/* clean up request */
 #define MF(x)	if (request->x) free(request->x)
@@ -749,9 +753,6 @@ next_header:
 
 cleanup:
 	bozo_clean_request(request);
-
-	/* If SSL enabled cleanup SSL structure. */
-	bozo_ssl_destroy(httpd);
 
 	return NULL;
 }
@@ -1938,8 +1939,8 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 {
 	struct passwd	 *pw;
 	extern char	**environ;
+	static char	 *cleanenv[1] = { NULL };
 	uid_t		  uid;
-	char		 *cleanenv[1];
 	char		 *chrootdir;
 	char		 *username;
 	char		 *portnum;
@@ -2061,10 +2062,9 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	 * by chroot. cross-user settings might result in undesirable
 	 * effects.
 	 */
-	if ((chrootdir != NULL || username != NULL) && !dirtyenv) {
-		cleanenv[0] = NULL;
+	if ((chrootdir != NULL || username != NULL) && !dirtyenv)
 		environ = cleanenv;
-	}
+
 #ifdef _SC_PAGESIZE
 	httpd->page_size = (long)sysconf(_SC_PAGESIZE);
 #else

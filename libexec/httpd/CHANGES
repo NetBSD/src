@@ -1,4 +1,10 @@
-$eterna: CHANGES,v 1.75 2010/06/17 19:26:54 mrg Exp $
+$eterna: CHANGES,v 1.76 2010/06/21 06:45:45 mrg Exp $
+
+changes since bozohttpd 20100617:
+	o  properly fully disable multi-file mode for now
+	o  fix the -t and -U options when used without the -e option, broken since
+	   the library-ifcation
+	o  be explicit that logs go to the FTP facility in syslog
 
 changes since bozohttpd 20100509:
 	o  fix some compile issues
