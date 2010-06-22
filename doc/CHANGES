@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1406 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1407 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -636,3 +636,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	vnsubr(9): Remove recursive vnode locks. [hannken 20100618]
 	mkubootimage(1): Added tool to generate u-boot kernel images.
 		[jmcneill 20100618]
+	httpd(8): Import bozohttpd-20100621. [mrg 20100621]
