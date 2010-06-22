@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.1 2010/06/18 18:55:48 jmcneill Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.2 2010/06/22 14:54:11 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -25,8 +25,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.1 2010/06/18 18:55:48 jmcneill Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.2 2010/06/22 14:54:11 dogcow Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
