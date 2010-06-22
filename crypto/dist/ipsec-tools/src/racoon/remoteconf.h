@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.h,v 1.11 2009/07/03 06:41:47 tteras Exp $	*/
+/*	$NetBSD: remoteconf.h,v 1.12 2010/06/22 09:41:33 vanhu Exp $	*/
 
 /* Id: remoteconf.h,v 1.26 2006/05/06 15:52:44 manubsd Exp */
 
@@ -80,7 +80,8 @@ struct rmconf_cert {
 /* Script hooks */
 #define SCRIPT_PHASE1_UP	0
 #define SCRIPT_PHASE1_DOWN	1
-#define SCRIPT_MAX		1
+#define SCRIPT_PHASE1_DEAD	2
+#define SCRIPT_MAX		2
 extern char *script_names[SCRIPT_MAX + 1];
 
 struct remoteconf {

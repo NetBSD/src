@@ -1,4 +1,4 @@
-/*	$NetBSD: remoteconf.c,v 1.18 2009/09/01 09:49:59 tteras Exp $	*/
+/*	$NetBSD: remoteconf.c,v 1.19 2010/06/22 09:41:33 vanhu Exp $	*/
 
 /* Id: remoteconf.c,v 1.38 2006/05/06 15:52:44 manubsd Exp */
 
@@ -84,7 +84,8 @@ static TAILQ_HEAD(_rmtree, remoteconf) rmtree, rmtree_save, rmtree_tmp;
 /*
  * Script hook names and script hook paths
  */
-char *script_names[SCRIPT_MAX + 1] = { "phase1_up", "phase1_down" };
+char *script_names[SCRIPT_MAX + 1] = {
+	"phase1_up", "phase1_down", "phase1_dead" };
 
 /*%%%*/
 
