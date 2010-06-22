@@ -1,6 +1,6 @@
-.\"	$NetBSD: bozohttpd.8,v 1.20 2010/06/17 19:43:30 mrg Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.21 2010/06/22 05:24:12 mrg Exp $
 .\"
-.\"	$eterna: bozohttpd.8,v 1.96 2010/06/17 19:27:32 mrg Exp $
+.\"	$eterna: bozohttpd.8,v 1.98 2010/06/21 06:47:23 mrg Exp $
 .\"
 .\" Copyright (c) 1997-2010 Matthew R. Green
 .\" All rights reserved.
@@ -65,6 +65,12 @@ as its name, which defaults to the local hostname, obtained from
 (but see the
 .Fl v
 option for virtual hosting.)
+.Nm
+writes logs to
+.Xr syslog 3 
+using the ftp facaility (but see the
+.Fl s
+option for testing.)
 .Nm
 is designed to be small, simple and relatively featureless,
 hopefully increasing its security.
@@ -458,7 +464,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20100617.
+version 20100621.
 .Sh AUTHORS
 .Nm
 was written by Matthew R. Green
