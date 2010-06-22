@@ -1,6 +1,6 @@
-/*	$NetBSD: daemon-bozo.c,v 1.10 2010/06/17 19:43:30 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.11 2010/06/22 05:24:12 mrg Exp $	*/
 
-/*	$eterna: daemon-bozo.c,v 1.21 2010/06/07 21:48:51 mrg Exp $	*/
+/*	$eterna: daemon-bozo.c,v 1.22 2010/06/21 06:45:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997-2010 Matthew R. Green
@@ -187,7 +187,12 @@ bozo_daemon_fork(bozohttpd_t *httpd)
 	/* if we've handled 5 files, exit and let someone else work */
 	if (httpd->request_times > 5 ||
 	    (httpd->background == 2 && httpd->request_times > 0))
-		exit(0);
+		_exit(0);
+
+#if 1
+	if (httpd->request_times > 0)
+		_exit(0);
+#endif
 
 	while (httpd->background) {
 		struct	sockaddr_storage ss;
