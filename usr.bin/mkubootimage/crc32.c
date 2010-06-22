@@ -1,4 +1,4 @@
-/* $NetBSD: crc32.c,v 1.1 2010/06/18 18:55:48 jmcneill Exp $ */
+/* $NetBSD: crc32.c,v 1.2 2010/06/22 14:54:11 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -28,8 +28,12 @@
  * CRC32 code derived from work by Gary S. Brown.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crc32.c,v 1.1 2010/06/18 18:55:48 jmcneill Exp $");
+__RCSID("$NetBSD: crc32.c,v 1.2 2010/06/22 14:54:11 dogcow Exp $");
 
 #include <sys/types.h>
 #include <stdint.h>
