@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.41 2009/07/03 06:41:46 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.42 2010/06/22 09:41:33 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1506,6 +1506,7 @@ isakmp_info_send_r_u(sc)
 			"DPD: remote (ISAKMP-SA spi=%s) seems to be dead.\n",
 			isakmp_pindex(&iph1->index, 0));
 
+		script_hook(iph1, SCRIPT_PHASE1_DEAD);
 		evt_phase1(iph1, EVT_PHASE1_DPD_TIMEOUT, NULL);
 		purge_remote(iph1);
 

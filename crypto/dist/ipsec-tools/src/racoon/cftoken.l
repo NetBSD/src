@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.20 2009/03/12 10:57:26 tteras Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.21 2010/06/22 09:41:33 vanhu Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -365,6 +365,7 @@ hexstring	0x{hexdigit}+
 <S_RMTS>script		{ YYD; return(SCRIPT); }
 <S_RMTS>phase1_up	{ YYD; return(PHASE1_UP); }
 <S_RMTS>phase1_down	{ YYD; return(PHASE1_DOWN); }
+<S_RMTS>phase1_dead	{ YYD; return(PHASE1_DEAD); }
 <S_RMTS>mode_cfg	{ YYD; return(MODE_CFG); }
 <S_RMTS>weak_phase1_check { YYD; return(WEAK_PHASE1_CHECK); }
 <S_RMTS>rekey		{ YYD; return(REKEY); }
