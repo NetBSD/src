@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.69 2010/05/29 23:17:53 rmind Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.70 2010/06/22 18:34:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.69 2010/05/29 23:17:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.70 2010/06/22 18:34:50 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -217,9 +217,11 @@ ubc_init(void)
 
 /*
  * ubc_fault_page: helper of ubc_fault to handle a single page.
+ *
+ * => Caller has UVM object locked.
  */
 
-static inline void
+static inline int
 ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
     struct vm_page *pg, vm_prot_t prot, vm_prot_t access_type, vaddr_t va)
 {
@@ -229,7 +231,8 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	bool rdonly;
 
 	uobj = pg->uobject;
-	mutex_enter(&uobj->vmobjlock);
+	KASSERT(mutex_owned(&uobj->vmobjlock));
+
 	if (pg->flags & PG_WANTED) {
 		wakeup(pg);
 	}
@@ -238,8 +241,7 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 		mutex_enter(&uvm_pageqlock);
 		uvm_pagefree(pg);
 		mutex_exit(&uvm_pageqlock);
-		mutex_exit(&uobj->vmobjlock);
-		return;
+		return 0;
 	}
 	if (pg->loan_count != 0) {
 
@@ -256,12 +258,7 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 			newpg = uvm_loanbreak(pg);
 			if (newpg == NULL) {
 				uvm_page_unbusy(&pg, 1);
-				mutex_exit(&uobj->vmobjlock);
-				uvm_wait("ubc_loanbrk");
-				/*
-				 * Note: will re-fault.
-				 */
-				return;
+				return ENOMEM;
 			}
 			pg = newpg;
 		}
@@ -290,14 +287,8 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	mutex_exit(&uvm_pageqlock);
 	pg->flags &= ~(PG_BUSY|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
-	mutex_exit(&uobj->vmobjlock);
 
-	if (error) {
-		/*
-		 * Note: will re-fault.
-		 */
-		uvm_wait("ubc_pmfail");
-	}
+	return error;
 }
 
 /*
@@ -386,7 +377,7 @@ again:
 	    0);
 
 	if (error == EAGAIN) {
-		kpause("ubc_fault", false, hz, NULL);
+		kpause("ubc_fault", false, hz >> 2, NULL);
 		goto again;
 	}
 	if (error) {
@@ -405,6 +396,16 @@ again:
 #else
 	prot = VM_PROT_READ | VM_PROT_WRITE;
 #endif
+
+	/*
+	 * Note: in the common case, all returned pages would have the same
+	 * UVM object.  However, due to layered file-systems and e.g. tmpfs,
+	 * returned pages may have different objects.  We "remember" the
+	 * last object in the loop to reduce locking overhead and to perform
+	 * pmap_update() before object unlock.
+	 */
+	uobj = NULL;
+
 	va = ufi->orig_rvaddr;
 	eva = ufi->orig_rvaddr + (npages << PAGE_SHIFT);
 
@@ -418,9 +419,33 @@ again:
 		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
-		ubc_fault_page(ufi, umap, pg, prot, access_type, va);
+		if (__predict_false(pg->uobject != uobj)) {
+			/* Check for the first iteration and error cases. */
+			if (uobj != NULL) {
+				/* Must make VA visible before the unlock. */
+				pmap_update(ufi->orig_map->pmap);
+				mutex_exit(&uobj->vmobjlock);
+			}
+			uobj = pg->uobject;
+			mutex_enter(&uobj->vmobjlock);
+		}
+		error = ubc_fault_page(ufi, umap, pg, prot, access_type, va);
+		if (error) {
+			/*
+			 * Flush (there might be pages entered), drop the lock,
+			 * "forget" the object and perform uvm_wait().
+			 * Note: page will re-fault.
+			 */
+			pmap_update(ufi->orig_map->pmap);
+			mutex_exit(&uobj->vmobjlock);
+			uobj = NULL;
+			uvm_wait("ubc_fault");
+		}
 	}
-	pmap_update(ufi->orig_map->pmap);
+	if (__predict_true(uobj != NULL)) {
+		pmap_update(ufi->orig_map->pmap);
+		mutex_exit(&uobj->vmobjlock);
+	}
 	return 0;
 }
 
