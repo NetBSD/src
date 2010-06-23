@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.143 2010/06/14 13:28:44 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.144 2010/06/23 08:36:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.143 2010/06/14 13:28:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.144 2010/06/23 08:36:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -261,3 +261,11 @@ syscall_intern(struct proc *p)
 	/* no you don't */
 }
 #endif
+
+void
+xc_send_ipi(struct cpu_info *ci)
+{
+
+	/* I'll think about the implementation if this is ever used */
+	panic("not implemented");
+}
