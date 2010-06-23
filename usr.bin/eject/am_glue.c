@@ -1,4 +1,4 @@
-/*	$NetBSD: am_glue.c,v 1.3 2010/02/26 22:44:17 christos Exp $	*/
+/*	$NetBSD: am_glue.c,v 1.4 2010/06/23 18:07:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: am_glue.c,v 1.3 2010/02/26 22:44:17 christos Exp $");
+__RCSID("$NetBSD: am_glue.c,v 1.4 2010/06/23 18:07:59 yamt Exp $");
 #endif /* not lint */
 
 #ifdef HAVE_CONFIG_H
@@ -38,6 +38,8 @@ __RCSID("$NetBSD: am_glue.c,v 1.3 2010/02/26 22:44:17 christos Exp $");
 #include <amu.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
+
+#include <stdbool.h>
 
 #include "am_glue.h"
 
@@ -85,10 +87,15 @@ ping_pmap(void)
 	return rv;
 }
 
-void
+static void
 am_init(void)
 {
 	static const char *server = "localhost";
+	static bool called;
+
+	if (called)
+		return;
+	called = true;
 
 	if (ping_pmap() == -1)
 		return;
@@ -111,6 +118,8 @@ am_unmount(const char *dirname)
 {
 	static struct timeval timeout = { ALLOWED_MOUNT_TIME, 0 };
 	amq_sync_umnt result;
+
+	am_init();
 
 	if (clnt == NULL)
 		return AMQ_UMNT_FAILED;
