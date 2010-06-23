@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: h_funcs.subr,v 1.2 2008/04/30 13:11:00 martin Exp $
+# $NetBSD: h_funcs.subr,v 1.3 2010/06/23 11:19:17 pooka Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,9 +36,18 @@
 #
 require_fs() {
 	local name
+	local autoload
 	name="${1}"
 
+	atf_require_prog mount
+	atf_require_prog mount_${name}
+	atf_require_prog umount
+
+	# if we have autoloadable modules, just assume the file system
 	atf_require_prog sysctl
+	autoload=$(sysctl -n kern.module.autoload)
+	[ "${autoload}" = "1" ] && return 0
+
 	set -- $(sysctl -n vfs.generic.fstypes)
 	found=no
 	while [ ${#} -gt 1 ];  do
@@ -51,8 +60,4 @@ require_fs() {
 	[ ${found} = yes ] || \
 		atf_skip "The kernel does not include support the " \
 		         "\`${name}' file system"
-
-	atf_require_prog mount
-	atf_require_prog mount_${name}
-	atf_require_prog umount
 }
