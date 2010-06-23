@@ -1,4 +1,4 @@
-/*	$NetBSD: am_glue.h,v 1.1 2009/01/16 17:31:22 christos Exp $	*/
+/*	$NetBSD: am_glue.h,v 1.2 2010/06/23 18:07:59 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,9 +28,6 @@
 #ifndef __AM_GLUE_H__
 #define __AM_GLUE_H__
 
-#include <rpc/rpc.h>
-
-void am_init(void);
 int am_unmount(const char *);
 
 #endif /* __AM_GLUE_H__ */

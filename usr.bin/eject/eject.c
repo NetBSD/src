@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.25 2009/01/16 17:31:22 christos Exp $	*/
+/*	$NetBSD: eject.c,v 1.26 2010/06/23 18:07:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999\
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.25 2009/01/16 17:31:22 christos Exp $");
+__RCSID("$NetBSD: eject.c,v 1.26 2010/06/23 18:07:59 yamt Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -332,9 +332,6 @@ unmount_dev(const char *name)
 	int i, nmnts;
 	const char *dn;
 
-#ifdef AMD_SUPPORT
-	am_init();
-#endif
 	nmnts = getmntinfo(&mounts, MNT_NOWAIT);
 	if (nmnts == 0)
 		err(1, "getmntinfo");
