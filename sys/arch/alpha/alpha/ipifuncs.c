@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.42 2010/06/22 18:29:01 rmind Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.43 2010/06/23 13:52:26 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.42 2010/06/22 18:29:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.43 2010/06/23 13:52:26 rmind Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.42 2010/06/22 18:29:01 rmind Exp $");
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -317,7 +318,7 @@ alpha_ipi_pause(struct cpu_info *ci, struct trapframe *framep)
  * MD support for xcall(9) interface.
  */
 
-static void
+void
 alpha_ipi_xcall(struct cpu_info *ci, struct trapframe *framep)
 {
 
