@@ -1,4 +1,4 @@
-.\"	$Vendor-Id: roff.7,v 1.8 2010/06/01 11:54:23 kristaps Exp $
+.\"	$Vendor-Id: roff.7,v 1.9 2010/06/10 21:42:02 kristaps Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 1 2010 $
+.Dd $Mdocdate: June 10 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -173,8 +173,19 @@ BODY...
 BODY
 .Ed
 .Pp
-COND is a conditional (for the time being, this always evaluates to
-false).
+COND is a conditional statement.
+roff allows for complicated conditionals; mandoc is much simpler.
+At this time, mandoc supports only
+.Sq n ,
+evaluating to true;
+and
+.Sq t ,
+.Sq e ,
+and
+.Sq o ,
+evaluating to false.
+All other invocations are read up to the next end of line or space and
+evaluate as false.
 .Pp
 If the BODY section is begun by an escaped brace
 .Sq \e{ ,

@@ -1,6 +1,6 @@
-/*	$Vendor-Id: term.h,v 1.58 2010/06/07 20:57:09 kristaps Exp $ */
+/*	$Vendor-Id: term.h,v 1.64 2010/06/19 20:46:28 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,6 +40,20 @@ enum	termfont {
 
 typedef void	(*term_margin)(struct termp *, const void *);
 
+struct	termp_ps {
+	int		  psstate;	/* state of ps output */
+#define	PS_INLINE	 (1 << 0)	/* we're in a word */
+#define	PS_MARGINS	 (1 << 1)	/* we're in the margins */
+	size_t		  pscol;	/* visible column */
+	size_t		  psrow;	/* visible row */
+	char		 *psmarg;	/* margin buf */
+	size_t		  psmargsz;	/* margin buf size */
+	size_t		  psmargcur;	/* current pos in margin buf */
+	size_t	 	  pspage;	/* current page */
+	char		  last;		/* character buffer */
+	enum termfont	  lastf;	/* last set font */
+};
+
 struct	termp {
 	enum termtype	  type;
 	size_t		  defrmargin;	/* Right margin of the device.. */
@@ -72,15 +86,19 @@ struct	termp {
 	int		  fonti;	/* Index of font stack. */
 	term_margin	  headf;	/* invoked to print head */
 	term_margin	  footf;	/* invoked to print foot */
+	void		(*letter)(struct termp *, char);
+	void		(*begin)(struct termp *);
+	void		(*end)(struct termp *);
+	void		(*endline)(struct termp *);
+	void		(*advance)(struct termp *, size_t);
 	const void	 *argf;		/* arg for headf/footf */
-	int		  psstate;	/* -Tps: state of ps output */
-#define	PS_INLINE	 (1 << 0)	
-#define	PS_MARGINS	 (1 << 1)	
-	size_t		  pscol;	/* -Tps: visible column */
-	size_t		  psrow;	/* -Tps: visible row */
-	size_t		  pspage;	/* -Tps: current page */
+	union {
+		struct termp_ps ps;
+	} engine;
 };
 
+struct termp	 *term_alloc(enum termenc);
+void		  term_free(struct termp *);
 void		  term_newln(struct termp *);
 void		  term_vspace(struct termp *);
 void		  term_word(struct termp *, const char *);

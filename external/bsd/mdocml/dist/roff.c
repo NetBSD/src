@@ -1,4 +1,4 @@
-/*	$Vendor-Id: roff.c,v 1.86 2010/06/01 11:47:28 kristaps Exp $ */
+/*	$Vendor-Id: roff.c,v 1.88 2010/06/10 21:42:02 kristaps Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,6 +31,14 @@
 
 #define	ROFF_CTL(c) \
 	('.' == (c) || '\'' == (c))
+
+#if 1
+#define	ROFF_DEBUG(fmt, args...) \
+	do { /* Nothing. */ } while (/*CONSTCOND*/ 0)
+#else
+#define	ROFF_DEBUG(fmt, args...) \
+	do { fprintf(stderr, fmt , ##args); } while (/*CONSTCOND*/ 0)
+#endif
 
 enum	rofft {
 	ROFF_am,
@@ -103,6 +111,7 @@ static	enum rofferr	 roff_ccond(ROFF_ARGS);
 static	enum rofferr	 roff_cond(ROFF_ARGS);
 static	enum rofferr	 roff_cond_text(ROFF_ARGS);
 static	enum rofferr	 roff_cond_sub(ROFF_ARGS);
+static	enum roffrule	 roff_evalcond(const char *, int *);
 static	enum rofferr	 roff_line(ROFF_ARGS);
 
 /* See roff_hash_find() */
@@ -306,10 +315,15 @@ roff_parseln(struct roff *r, int ln,
 	if (r->last && ! ROFF_CTL((*bufp)[pos])) {
 		t = r->last->tok;
 		assert(roffs[t].text);
+		ROFF_DEBUG("roff: intercept scoped text: %s, [%s]\n", 
+				roffs[t].name, &(*bufp)[pos]);
 		return((*roffs[t].text)
 				(r, t, bufp, szp, ln, pos, pos, offs));
-	} else if ( ! ROFF_CTL((*bufp)[pos]))
+	} else if ( ! ROFF_CTL((*bufp)[pos])) {
+		ROFF_DEBUG("roff: pass non-scoped text: [%s]\n", 
+				&(*bufp)[pos]);
 		return(ROFF_CONT);
+	}
 
 	/*
 	 * If a scope is open, go to the child handler for that macro,
@@ -319,6 +333,8 @@ roff_parseln(struct roff *r, int ln,
 	if (r->last) {
 		t = r->last->tok;
 		assert(roffs[t].sub);
+		ROFF_DEBUG("roff: intercept scoped context: %s\n", 
+				roffs[t].name);
 		return((*roffs[t].sub)
 				(r, t, bufp, szp, ln, pos, pos, offs));
 	}
@@ -330,9 +346,14 @@ roff_parseln(struct roff *r, int ln,
 	 */
 
 	ppos = pos;
-	if (ROFF_MAX == (t = roff_parse(*bufp, &pos)))
+	if (ROFF_MAX == (t = roff_parse(*bufp, &pos))) {
+		ROFF_DEBUG("roff: pass non-scoped non-macro: [%s]\n", 
+				&(*bufp)[pos]);
 		return(ROFF_CONT);
+	}
 
+	ROFF_DEBUG("roff: intercept new-scope: %s, [%s]\n", 
+			roffs[t].name, &(*bufp)[pos]);
 	assert(roffs[t].proc);
 	return((*roffs[t].proc)
 			(r, t, bufp, szp, ln, ppos, pos, offs));
@@ -621,11 +642,21 @@ roff_cond_sub(ROFF_ARGS)
 {
 	enum rofft	 t;
 	enum roffrule	 rr;
+	struct roffnode	*l;
 
 	ppos = pos;
 	rr = r->last->rule;
 
-	roff_cond_text(r, tok, bufp, szp, ln, ppos, pos, offs);
+	/* 
+	 * Clean out scope.  If we've closed ourselves, then don't
+	 * continue. 
+	 */
+
+	l = r->last;
+	roffnode_cleanscope(r);
+
+	if (l != r->last)
+		return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
 
 	if (ROFF_MAX == (t = roff_parse(*bufp, &pos)))
 		return(ROFFRULE_DENY == rr ? ROFF_IGN : ROFF_CONT);
@@ -674,12 +705,37 @@ roff_cond_text(ROFF_ARGS)
 }
 
 
+static enum roffrule
+roff_evalcond(const char *v, int *pos)
+{
+
+	switch (v[*pos]) {
+	case ('n'):
+		(*pos)++;
+		return(ROFFRULE_ALLOW);
+	case ('e'):
+		/* FALLTHROUGH */
+	case ('o'):
+		/* FALLTHROUGH */
+	case ('t'):
+		(*pos)++;
+		return(ROFFRULE_DENY);
+	default:
+		break;
+	}
+
+	while (v[*pos] && ' ' != v[*pos])
+		(*pos)++;
+	return(ROFFRULE_DENY);
+}
+
+
 /* ARGSUSED */
 static enum rofferr
 roff_cond(ROFF_ARGS)
 {
-	int		 cpos;  /* position of the condition */
 	int		 sv;
+	enum roffrule	 rule;
 
 	/* Stack overflow! */
 
@@ -688,20 +744,22 @@ roff_cond(ROFF_ARGS)
 		return(ROFF_ERR);
 	}
 
-	cpos = pos;
+	/* First, evaluate the conditional. */
 
-	if (ROFF_if == tok || ROFF_ie == tok) {
-		/*
-		 * Read ahead past the conditional.  FIXME: this does
-		 * not work, as conditionals don't end on whitespace,
-		 * but are parsed according to a formal grammar.  It's
-		 * good enough for now, however.
-		 */
-		while ((*bufp)[pos] && ' ' != (*bufp)[pos])
-			pos++;
-	}
+	if (ROFF_el == tok) {
+		/* 
+		 * An `.el' will get the value of the current rstack
+		 * entry set in prior `ie' calls or defaults to DENY.
+	 	 */
+		if (r->rstackpos < 0)
+			rule = ROFFRULE_DENY;
+		else
+			rule = r->rstack[r->rstackpos];
+	} else
+		rule = roff_evalcond(*bufp, &pos);
 
 	sv = pos;
+
 	while (' ' == (*bufp)[pos])
 		pos++;
 
@@ -711,30 +769,21 @@ roff_cond(ROFF_ARGS)
 	 * really doing anything.  Warn about this.  It's probably
 	 * wrong.
 	 */
+
 	if ('\0' == (*bufp)[pos] && sv != pos) {
-		if ( ! (*r->msg)(MANDOCERR_NOARGS, r->data, ln, ppos, NULL))
-			return(ROFF_ERR);
-		return(ROFF_IGN);
+		if ((*r->msg)(MANDOCERR_NOARGS, r->data, ln, ppos, NULL))
+			return(ROFF_IGN);
+		return(ROFF_ERR);
 	}
 
 	if ( ! roffnode_push(r, tok, ln, ppos))
 		return(ROFF_ERR);
 
-	/* XXX: Implement more conditionals. */
+	r->last->rule = rule;
 
-	if (ROFF_if == tok || ROFF_ie == tok)
-		r->last->rule = 'n' == (*bufp)[cpos] ?
-		    ROFFRULE_ALLOW : ROFFRULE_DENY;
-	else if (ROFF_el == tok) {
-		/* 
-		 * An `.el' will get the value of the current rstack
-		 * entry set in prior `ie' calls or defaults to DENY.
-	 	 */
-		if (r->rstackpos < 0)
-			r->last->rule = ROFFRULE_DENY;
-		else
-			r->last->rule = r->rstack[r->rstackpos];
-	}
+	ROFF_DEBUG("roff: cond: %s -> %s\n", roffs[tok].name, 
+			ROFFRULE_ALLOW == rule ?  "allow" : "deny");
+
 	if (ROFF_ie == tok) {
 		/*
 		 * An if-else will put the NEGATION of the current
@@ -746,15 +795,31 @@ roff_cond(ROFF_ARGS)
 		else
 			r->rstack[r->rstackpos] = ROFFRULE_DENY;
 	}
-	if (r->last->parent && ROFFRULE_DENY == r->last->parent->rule)
+
+	/* If the parent has false as its rule, then so do we. */
+
+	if (r->last->parent && ROFFRULE_DENY == r->last->parent->rule) {
 		r->last->rule = ROFFRULE_DENY;
+		ROFF_DEBUG("roff: cond override: %s -> deny\n",
+				roffs[tok].name);
+	}
+
+	/*
+	 * Determine scope.  If we're invoked with "\{" trailing the
+	 * conditional, then we're in a multiline scope.  Else our scope
+	 * expires on the next line.
+	 */
 
 	r->last->endspan = 1;
 
 	if ('\\' == (*bufp)[pos] && '{' == (*bufp)[pos + 1]) {
 		r->last->endspan = -1;
 		pos += 2;
-	} 
+		ROFF_DEBUG("roff: cond-scope: %s, multi-line\n", 
+				roffs[tok].name);
+	} else
+		ROFF_DEBUG("roff: cond-scope: %s, one-line\n", 
+				roffs[tok].name);
 
 	/*
 	 * If there are no arguments on the line, the next-line scope is
