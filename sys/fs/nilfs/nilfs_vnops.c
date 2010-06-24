@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.4 2010/01/08 11:35:08 pooka Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.5 2010/06/24 07:54:46 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.4 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.5 2010/06/24 07:54:46 hannken Exp $");
 #endif /* not lint */
 
 
@@ -1161,14 +1161,22 @@ nilfs_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	nilfs_node = VTOI(vp);
 
 	error = VOP_GETATTR(vp, &vap, FSCRED);
-	if (error)
+	if (error) {
+		VOP_UNLOCK(vp, 0);
 		return error;
+	}
 
 	/* check link count overflow */
-	if (vap.va_nlink >= (1<<16)-1)	/* uint16_t */
+	if (vap.va_nlink >= (1<<16)-1) {	/* uint16_t */
+		VOP_UNLOCK(vp, 0);
 		return EMLINK;
+	}
 
-	return nilfs_dir_attach(dir_node->ump, dir_node, nilfs_node, &vap, cnp);
+	error = nilfs_dir_attach(dir_node->ump, dir_node, nilfs_node,
+	    &vap, cnp);
+	if (error)
+		VOP_UNLOCK(vp, 0);
+	return error;
 }
 
 int
@@ -1187,9 +1195,6 @@ nilfs_link(void *v)
 	error = nilfs_do_link(dvp, vp, cnp);
 	if (error)
 		VOP_ABORTOP(dvp, cnp);
-
-	if ((vp != dvp) && (VOP_ISLOCKED(vp) == LK_EXCLUSIVE))
-		VOP_UNLOCK(vp, 0);
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
