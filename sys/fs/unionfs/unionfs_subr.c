@@ -320,7 +320,7 @@ unionfs_relookup(struct vnode *dvp, struct vnode **vpp,
 		cn->cn_flags |= (cnp->cn_flags & SAVESTART);
 
 	vref(dvp);
-	VOP_UNLOCK(dvp, 0);
+	VOP_UNLOCK(dvp);
 
 	if ((error = relookup(dvp, vpp, cn))) {
 		PNBUF_PUT(cn->cn_pnbuf);
@@ -663,7 +663,7 @@ unionfs_vn_create_on_upper(struct vnode **vpp, struct vnode *udvp,
 	*vpp = vp;
 
 unionfs_vn_create_on_upper_free_out1:
-	VOP_UNLOCK(udvp, 0);
+	VOP_UNLOCK(udvp);
 
 unionfs_vn_create_on_upper_free_out2:
 	if (cn.cn_flags & HASBUF) {

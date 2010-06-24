@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.85 2010/04/13 10:12:43 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.86 2010/06/24 13:03:09 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.85 2010/04/13 10:12:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.86 2010/06/24 13:03:09 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -363,7 +363,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			error = genfs_can_mount(devvp, VREAD | VWRITE,
 			    l->l_cred);
-			VOP_UNLOCK(devvp, 0);
+			VOP_UNLOCK(devvp);
 			DPRINTF(("genfs_can_mount %d\n", error));
 			if (error)
 				return (error);
@@ -405,7 +405,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		accessmode |= VWRITE;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = genfs_can_mount(devvp, accessmode, l->l_cred);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error) {
 		DPRINTF(("genfs_can_mount %d\n", error));
 		vrele(devvp);
@@ -428,7 +428,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			DPRINTF(("msdosfs_mountfs %d\n", error));
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void) VOP_CLOSE(devvp, xflags, NOCRED);
-			VOP_UNLOCK(devvp, 0);
+			VOP_UNLOCK(devvp);
 			goto fail;
 		}
 #ifdef MSDOSFS_DEBUG		/* only needed for the printf below */

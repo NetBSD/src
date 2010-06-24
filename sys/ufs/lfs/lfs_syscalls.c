@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.136 2010/02/16 23:20:30 mlelstv Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.137 2010/06/24 13:03:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.136 2010/02/16 23:20:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.137 2010/06/24 13:03:19 hannken Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -760,7 +760,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 					continue;
 				} else {
 					KASSERT(VOP_ISLOCKED(vp));
-					VOP_UNLOCK(vp, 0);
+					VOP_UNLOCK(vp);
 					numrefed++;
 				}
 			}
@@ -1188,7 +1188,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 	*vpp = vp;
 
 	KASSERT(VOP_ISLOCKED(vp));
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return (0);
 }

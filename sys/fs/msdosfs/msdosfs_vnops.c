@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.66 2010/05/25 10:15:34 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.67 2010/06/24 13:03:09 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.66 2010/05/25 10:15:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.67 2010/06/24 13:03:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -899,7 +899,7 @@ abortit:
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->de_flag & DE_RENAME)) {
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -932,7 +932,7 @@ abortit:
 	 * call to doscheckpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-	VOP_UNLOCK(fvp, 0);
+	VOP_UNLOCK(fvp);
 	if (VTODE(fdvp)->de_StartCluster != VTODE(tdvp)->de_StartCluster)
 		newparent = 1;
 
@@ -962,7 +962,7 @@ abortit:
 			panic("msdosfs_rename: lost to startdir");
 		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = relookup(tdvp, &tvp, tcnp)) != 0) {
-			VOP_UNLOCK(tdvp, 0);
+			VOP_UNLOCK(tdvp);
 			goto out;
 		}
 		/*
@@ -1020,10 +1020,10 @@ abortit:
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 	if ((fcnp->cn_flags & SAVESTART) == 0)
 		panic("msdosfs_rename: lost from startdir");
-	VOP_UNLOCK(tdvp, 0);
+	VOP_UNLOCK(tdvp);
 	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 	if ((error = relookup(fdvp, &fvp, fcnp))) {
-		VOP_UNLOCK(fdvp, 0);
+		VOP_UNLOCK(fdvp);
 		vrele(ap->a_fvp);
 		vrele(tdvp);
 		fstrans_done(fdvp->v_mount);
@@ -1042,7 +1042,7 @@ abortit:
 		return 0;
 	}
 	fdvp_dorele = 1;
-	VOP_UNLOCK(fdvp, 0);
+	VOP_UNLOCK(fdvp);
 	xp = VTODE(fvp);
 	zp = VTODE(fdvp);
 	from_diroffset = zp->de_fndoffset;
@@ -1079,14 +1079,14 @@ abortit:
 		error = createde(ip, dp, (struct denode **)0, tcnp);
 		if (error) {
 			memcpy(ip->de_Name, oldname, 11);
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			goto bad;
 		}
 		ip->de_refcnt++;
 		zp->de_fndoffset = from_diroffset;
 		if ((error = removede(zp, ip)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			goto bad;
 		}
 		cache_purge(fvp);
@@ -1095,7 +1095,7 @@ abortit:
 				       &ip->de_dirclust, 0);
 			if (error) {
 				/* XXX should really panic here, fs is corrupt */
-				VOP_UNLOCK(fvp, 0);
+				VOP_UNLOCK(fvp);
 				goto bad;
 			}
 			ip->de_diroffset = to_diroffset;
@@ -1121,7 +1121,7 @@ abortit:
 		if (error) {
 			/* XXX should really panic here, fs is corrupt */
 			brelse(bp, 0);
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			goto bad;
 		}
 		dotdotp = (struct direntry *)bp->b_data + 1;
@@ -1134,13 +1134,13 @@ abortit:
 		}
 		if ((error = bwrite(bp)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			goto bad;
 		}
 	}
 
 	VN_KNOTE(fvp, NOTE_RENAME);
-	VOP_UNLOCK(fvp, 0);
+	VOP_UNLOCK(fvp);
 bad:
 	if (tvp)
 		vput(tvp);
@@ -1155,7 +1155,7 @@ out:
 
 	/* XXX: uuuh */
 tdvpbad:
-	VOP_UNLOCK(tdvp, 0);
+	VOP_UNLOCK(tdvp);
 	goto bad;
 }
 

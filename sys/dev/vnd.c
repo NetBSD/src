@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.208 2010/03/02 21:32:29 pooka Exp $	*/
+/*	$NetBSD: vnd.c,v 1.209 2010/06/24 13:03:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.208 2010/03/02 21:32:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.209 2010/06/24 13:03:08 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -571,7 +571,7 @@ vnode_strategy_probe(struct vnd_softc *vnd)
 	error = 0;
 	vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_BMAP(vnd->sc_vp, 0, NULL, &nbn, NULL);
-	VOP_UNLOCK(vnd->sc_vp, 0);
+	VOP_UNLOCK(vnd->sc_vp);
 
 	/* Test if that worked. */
 	if (error == 0 && (long)nbn == -1)
@@ -815,7 +815,7 @@ handle_with_strategy(struct vnd_softc *vnd, const struct buf *obp,
 		nra = 0;
 		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_BMAP(vnd->sc_vp, bn / bsize, &vp, &nbn, &nra);
-		VOP_UNLOCK(vnd->sc_vp, 0);
+		VOP_UNLOCK(vnd->sc_vp);
 
 		if (error == 0 && (long)nbn == -1)
 			error = EIO;
@@ -1103,7 +1103,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			/* File is definitely sparse, reject here */
 			error = EINVAL;
 		if (error) {
-			VOP_UNLOCK(nd.ni_vp, 0);
+			VOP_UNLOCK(nd.ni_vp);
 			goto close_and_exit;
 		}
 
@@ -1126,7 +1126,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if (error) {
 				free(ch, M_TEMP);
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				goto close_and_exit;
 			}
  
@@ -1137,14 +1137,14 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			free(ch, M_TEMP);
 			if (vnd->sc_comp_blksz == 0 ||
 			    vnd->sc_comp_blksz % DEV_BSIZE !=0) {
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
 			if (sizeof(struct vnd_comp_header) +
 			  sizeof(u_int64_t) * vnd->sc_comp_numoffs >
 			  vattr.va_size) {
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
@@ -1166,7 +1166,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if (error) {
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				goto close_and_exit;
 			}
 			/*
@@ -1203,20 +1203,20 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				if (vnd->sc_comp_stream.msg)
 					printf("vnd%d: compressed file, %s\n",
 					  unit, vnd->sc_comp_stream.msg);
-				VOP_UNLOCK(nd.ni_vp, 0);
+				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
 			}
  
 			vnd->sc_flags |= VNF_COMP | VNF_READONLY;
 #else /* !VND_COMPRESSION */
-			VOP_UNLOCK(nd.ni_vp, 0);
+			VOP_UNLOCK(nd.ni_vp);
 			error = EOPNOTSUPP;
 			goto close_and_exit;
 #endif /* VND_COMPRESSION */
 		}
  
-		VOP_UNLOCK(nd.ni_vp, 0);
+		VOP_UNLOCK(nd.ni_vp);
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 
@@ -1498,7 +1498,7 @@ unlock_and_exit:
 		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_FSYNC(vnd->sc_vp, vnd->sc_cred,
 		    FSYNC_WAIT | FSYNC_DATAONLY | FSYNC_CACHE, 0, 0);
-		VOP_UNLOCK(vnd->sc_vp, 0);
+		VOP_UNLOCK(vnd->sc_vp);
 		return error;
 
 	default:
@@ -1547,7 +1547,7 @@ vndsetcred(struct vnd_softc *vnd, kauth_cred_t cred)
 		error = vinvalbuf(vnd->sc_vp, V_SAVE, vnd->sc_cred,
 			    curlwp, 0, 0);
 	}
-	VOP_UNLOCK(vnd->sc_vp, 0);
+	VOP_UNLOCK(vnd->sc_vp);
 
 	free(tmpbuf, M_TEMP);
 	return error;
@@ -1861,7 +1861,7 @@ compstrategy(struct buf *bp, off_t bn)
 			    NULL, NULL);
 			if (error) {
 				bp->b_error = error;
-				VOP_UNLOCK(vnd->sc_vp, 0);
+				VOP_UNLOCK(vnd->sc_vp);
 				splx(s);
 				return;
 			}
@@ -1878,12 +1878,12 @@ compstrategy(struct buf *bp, off_t bn)
 					    "compressed file, %s\n",
 					    vnd->sc_comp_stream.msg);
 				bp->b_error = EBADMSG;
-				VOP_UNLOCK(vnd->sc_vp, 0);
+				VOP_UNLOCK(vnd->sc_vp);
 				splx(s);
 				return;
 			}
 			vnd->sc_comp_buffblk = comp_block;
-			VOP_UNLOCK(vnd->sc_vp, 0);
+			VOP_UNLOCK(vnd->sc_vp);
 		}
 
 		/* transfer the usable uncompressed data */

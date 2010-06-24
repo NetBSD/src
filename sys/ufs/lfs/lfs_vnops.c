@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.228 2010/06/24 07:54:47 hannken Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.229 2010/06/24 13:03:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.228 2010/06/24 07:54:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.229 2010/06/24 13:03:19 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -354,7 +354,7 @@ lfs_inactive(void *v)
 		mutex_enter(&lfs_lock);
 		LFS_CLR_UINO(VTOI(ap->a_vp), IN_ALLMOD);
 		mutex_exit(&lfs_lock);
-		VOP_UNLOCK(ap->a_vp, 0);
+		VOP_UNLOCK(ap->a_vp);
 		return 0;
 	}
 
@@ -651,7 +651,7 @@ lfs_mknod(void *v)
 	 */
 	/* Used to be vput, but that causes us to call VOP_INACTIVE twice. */
 
-	VOP_UNLOCK(*vpp, 0);
+	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -1404,7 +1404,7 @@ lfs_flush_pchain(struct lfs *fs)
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		lfs_vunref(vp);
 
 		if (error == EAGAIN) {
@@ -2219,7 +2219,7 @@ lfs_putpages(void *v)
 		mutex_exit(&vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");
 		if (locked)
-			VOP_UNLOCK(vp, 0); /* XXX why? */
+			VOP_UNLOCK(vp); /* XXX why? */
 
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);

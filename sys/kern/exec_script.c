@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.64 2010/05/02 05:30:20 dholland Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.65 2010/06/24 13:03:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.64 2010/05/02 05:30:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.65 2010/06/24 13:03:11 hannken Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -220,7 +220,7 @@ check_shell:
 	 */
 	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_ACCESS(epp->ep_vp, VREAD, l->l_cred);
-	VOP_UNLOCK(epp->ep_vp, 0);
+	VOP_UNLOCK(epp->ep_vp);
 	if (error == EACCES
 #ifdef SETUIDSCRIPTS
 	    || script_sbits

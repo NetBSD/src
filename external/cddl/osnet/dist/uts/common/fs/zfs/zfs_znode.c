@@ -997,7 +997,7 @@ again:
 
 		vp = ZTOV(zp);
 		genfs_node_init(vp, &zfs_genfsops);
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 		err = 0;
 	} else {

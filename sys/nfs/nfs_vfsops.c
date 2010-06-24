@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.213 2010/06/24 07:54:47 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.214 2010/06/24 13:03:17 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.213 2010/06/24 07:54:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.214 2010/06/24 13:03:17 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -819,7 +819,7 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *
 	if (vp->v_type == VNON)
 		vp->v_type = VDIR;
 	vp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	*vpp = vp;
 
 	snprintf(iosname, sizeof(iosname), "nfs%u", nfs_mount_count++);

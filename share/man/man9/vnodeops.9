@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.79 2010/06/24 07:54:46 hannken Exp $
+.\"     $NetBSD: vnodeops.9,v 1.80 2010/06/24 13:03:06 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -169,7 +169,7 @@
 .Ft int
 .Fn VOP_LOCK "struct vnode *vp" "int flags"
 .Ft int
-.Fn VOP_UNLOCK "struct vnode *vp" "int flags"
+.Fn VOP_UNLOCK "struct vnode *vp"
 .Ft int
 .Fn VOP_ISLOCKED "struct vnode *vp"
 .Ft int
@@ -1083,16 +1083,11 @@ Kernel code should use
 to lock a vnode rather than calling
 .Fn VOP_LOCK
 directly.
-.It Fn VOP_UNLOCK "vp" "flags"
+.It Fn VOP_UNLOCK "vp"
 Wake up process sleeping on lock.
 The argument
 .Fa vp
 is the vnode of the file to be unlocked.
-The argument
-.Fa flags
-is a set of
-.Xr lockmgr 9
-flags.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_UNLOCK

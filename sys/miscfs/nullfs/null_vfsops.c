@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.80 2010/04/10 18:14:54 jld Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.81 2010/06/24 13:03:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.80 2010/04/10 18:14:54 jld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.81 2010/06/24 13:03:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Unlock the node
 	 */
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);

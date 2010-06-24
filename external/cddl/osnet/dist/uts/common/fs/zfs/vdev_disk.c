@@ -61,7 +61,7 @@ vdev_disk_flush(struct work *work, void *cookie)
 	cmd = 1;
 	error = VOP_IOCTL(vp, DIOCCACHESYNC, &cmd, FREAD|FWRITE,
 	    kauth_cred_get());
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	bp->b_error = error;
 	vdev_disk_io_intr(bp);
 }

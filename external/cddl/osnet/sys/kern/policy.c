@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: policy.c,v 1.2 2010/06/24 13:03:05 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ secpolicy_vnode_access(kauth_cred_t cred, struct vnode *vp, uint64_t owner,
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_ACCESS(vp, mode, cred);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return error;
 }
 

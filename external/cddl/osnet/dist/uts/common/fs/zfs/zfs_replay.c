@@ -526,11 +526,11 @@ zfs_replay_create(zfsvfs_t *zfsvfs, lr_create_t *lr, boolean_t byteswap)
 	default:
 		error = ENOTSUP;
 	}
-	VOP_UNLOCK(ZTOV(dzp), 0);
+	VOP_UNLOCK(ZTOV(dzp));
 
 out:
 	if (error == 0 && vp != NULL) {
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		VN_RELE(vp);
 	}
 
@@ -569,7 +569,7 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_LOOKUP(ZTOV(dzp), &vp, &cn);
 	if (error != 0) {
-		VOP_UNLOCK(ZTOV(dzp), 0);
+		VOP_UNLOCK(ZTOV(dzp));
 		goto fail;
 	}
 
@@ -584,7 +584,7 @@ zfs_replay_remove(zfsvfs_t *zfsvfs, lr_remove_t *lr, boolean_t byteswap)
 		error = ENOTSUP;
 	}
 	vput(vp);
-	VOP_UNLOCK(ZTOV(dzp), 0);
+	VOP_UNLOCK(ZTOV(dzp));
 fail:
 	VN_RELE(ZTOV(dzp));
 
@@ -620,8 +620,8 @@ zfs_replay_link(zfsvfs_t *zfsvfs, lr_link_t *lr, boolean_t byteswap)
 	vn_lock(ZTOV(dzp), LK_EXCLUSIVE | LK_RETRY);
 	vn_lock(ZTOV(zp), LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_LINK(ZTOV(dzp), ZTOV(zp), &cn /*,vflg*/);
-	VOP_UNLOCK(ZTOV(zp), 0);
-	VOP_UNLOCK(ZTOV(dzp), 0);
+	VOP_UNLOCK(ZTOV(zp));
+	VOP_UNLOCK(ZTOV(dzp));
 
 	VN_RELE(ZTOV(zp));
 	VN_RELE(ZTOV(dzp));
@@ -664,10 +664,10 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 	scn.cn_cred = kcred;
 	vn_lock(ZTOV(sdzp), LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_LOOKUP(ZTOV(sdzp), &svp, &scn);
-	VOP_UNLOCK(ZTOV(sdzp), 0);
+	VOP_UNLOCK(ZTOV(sdzp));
 	if (error != 0)
 		goto fail;
-	VOP_UNLOCK(svp, 0);
+	VOP_UNLOCK(svp);
 
 	tcn.cn_nameptr = tname;
 	tcn.cn_namelen = strlen(tname);
@@ -680,7 +680,7 @@ zfs_replay_rename(zfsvfs_t *zfsvfs, lr_rename_t *lr, boolean_t byteswap)
 	if (error == EJUSTRETURN)
 		tvp = NULL;
 	else if (error != 0) {
-		VOP_UNLOCK(ZTOV(tdzp), 0);
+		VOP_UNLOCK(ZTOV(tdzp));
 		goto fail;
 	}
 
@@ -857,7 +857,7 @@ zfs_replay_setattr(zfsvfs_t *zfsvfs, lr_setattr_t *lr, boolean_t byteswap)
 	vp = ZTOV(zp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_SETATTR(vp, vap, kcred);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	zfs_fuid_info_free(zfsvfs->z_fuid_replay);
 	zfsvfs->z_fuid_replay = NULL;

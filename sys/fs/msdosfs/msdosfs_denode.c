@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.38 2010/04/09 08:09:18 hannken Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.39 2010/06/24 13:03:09 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.38 2010/04/09 08:09:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.39 2010/06/24 13:03:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,7 +698,7 @@ out:
 		vp->v_usecount, dep->de_Name[0]);
 #endif
 	*ap->a_recycle = (dep->de_Name[0] == SLOT_DELETED);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fstrans_done(mp);
 	return (error);
 }

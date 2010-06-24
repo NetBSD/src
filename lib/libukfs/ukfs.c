@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.50 2010/04/14 14:15:48 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.51 2010/06/24 13:03:05 hannken Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -753,7 +753,7 @@ ukfs_opendir(struct ukfs *ukfs, const char *dirname, struct ukfs_dircookie **c)
 	postcall(ukfs);
 
 	if (rv == 0) {
-		RUMP_VOP_UNLOCK(vp, 0);
+		RUMP_VOP_UNLOCK(vp);
 	} else {
 		errno = rv;
 		rv = -1;
@@ -776,7 +776,7 @@ getmydents(struct vnode *vp, off_t *off, uint8_t *buf, size_t bufsize)
 	cred = rump_pub_cred_suserget();
 	rv = RUMP_VOP_READDIR(vp, uio, cred, &eofflag, NULL, NULL);
 	rump_pub_cred_put(cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	*off = rump_pub_uio_getoff(uio);
 	resid = rump_pub_uio_free(uio);
 

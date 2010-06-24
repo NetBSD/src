@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.405 2010/06/15 09:43:36 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.406 2010/06/24 13:03:12 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.405 2010/06/15 09:43:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.406 2010/06/24 13:03:12 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -666,7 +666,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
 	atomic_inc_uint(&mp->mnt_refcnt);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT, mp, NULL, NULL);
@@ -1136,7 +1136,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 			goto out;
 		vp = tdp;
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Disallow changing to a directory not under the process's
@@ -1182,7 +1182,7 @@ sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retva
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, l->l_cred);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (error)
 		goto out;
 	vref(vp);
@@ -1298,7 +1298,7 @@ chdir_lookup(const char *path, int where, struct vnode **vpp, struct lwp *l)
 	if (error)
 		vput(*vpp);
 	else
-		VOP_UNLOCK(*vpp, 0);
+		VOP_UNLOCK(*vpp);
 	return (error);
 }
 
@@ -1364,7 +1364,7 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 		type = F_FLOCK;
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred);
@@ -1374,7 +1374,7 @@ sys_open(struct lwp *l, const struct sys_open_args *uap, register_t *retval)
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		atomic_or_uint(&fp->f_flag, FHASLOCK);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
 	return (0);
@@ -1664,7 +1664,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	if (error != 0)
 		goto bad;
 	if (flags & O_TRUNC) {
-		VOP_UNLOCK(vp, 0);			/* XXX */
+		VOP_UNLOCK(vp);			/* XXX */
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);   /* XXX */
 		vattr_null(&va);
 		va.va_size = 0;
@@ -1697,7 +1697,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 		type = F_FLOCK;
 		if ((flags & FNONBLOCK) == 0)
 			type |= F_WAIT;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, type);
 		if (error) {
 			(void) vn_close(vp, fp->f_flag, fp->f_cred);
@@ -1707,7 +1707,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		atomic_or_uint(&fp->f_flag, FHASLOCK);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	*retval = indx;
 	fd_affix(p, fp, indx);
 	vfs_copyinfh_free(fh);
@@ -2576,7 +2576,7 @@ sys_fchflags(struct lwp *l, const struct sys_fchflags_args *uap, register_t *ret
 		return (error);
 	vp = fp->f_data;
 	error = change_flags(vp, SCARG(uap, flags), l);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
@@ -2718,7 +2718,7 @@ change_mode(struct vnode *vp, int mode, struct lwp *l)
 	vattr_null(&vattr);
 	vattr.va_mode = mode & ALLPERMS;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -2926,7 +2926,7 @@ change_owner(struct vnode *vp, uid_t uid, gid_t gid, struct lwp *l,
 #undef CHANGED
 
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -3051,7 +3051,7 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	if (vanull)
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	if (dorele != 0)
 		vrele(vp);
@@ -3125,7 +3125,7 @@ sys_ftruncate(struct lwp *l, const struct sys_ftruncate_args *uap, register_t *r
 		vattr.va_size = SCARG(uap, length);
 		error = VOP_SETATTR(vp, &vattr, fp->f_cred);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
  out:
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -3151,7 +3151,7 @@ sys_fsync(struct lwp *l, const struct sys_fsync_args *uap, register_t *retval)
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, 0, 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
@@ -3219,7 +3219,7 @@ sys_fsync_range(struct lwp *l, const struct sys_fsync_range_args *uap, register_
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, nflags, s, e);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 out:
 	fd_putfile(SCARG(uap, fd));
 	return (error);
@@ -3249,7 +3249,7 @@ sys_fdatasync(struct lwp *l, const struct sys_fdatasync_args *uap, register_t *r
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, 0, 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
@@ -3310,7 +3310,7 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
 	if (fromnd.ni_dvp != fromnd.ni_vp)
-		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VOP_UNLOCK(fromnd.ni_dvp);
 	fvp = fromnd.ni_vp;
 
 	fs = fvp->v_mount;
@@ -3357,15 +3357,15 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd);
 	fromnd.ni_cnd.cn_flags |= saveflag;
 	if (error) {
-		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VOP_UNLOCK(fromnd.ni_dvp);
 		VFS_RENAMELOCK_EXIT(fs);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
 		goto out1;
 	}
-	VOP_UNLOCK(fromnd.ni_vp, 0);
+	VOP_UNLOCK(fromnd.ni_vp);
 	if (fromnd.ni_dvp != fromnd.ni_vp)
-		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VOP_UNLOCK(fromnd.ni_dvp);
 	fvp = fromnd.ni_vp;
 
 	NDINIT(&tond, RENAME,

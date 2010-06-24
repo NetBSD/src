@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.23 2010/01/08 11:35:07 pooka Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.24 2010/06/24 13:03:06 hannken Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.23 2010/01/08 11:35:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.24 2010/06/24 13:03:06 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -187,7 +187,7 @@ irix_mmap(struct lwp *l, void *addr, size_t len, int prot, int flags, int fd, of
 
 			error = VOP_SETATTR(vp, &vattr, l->l_cred);
 
-			VOP_UNLOCK(vp, 0);
+			VOP_UNLOCK(vp);
 		}
 out:
 		fd_putfile(fd);

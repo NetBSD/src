@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.180 2010/06/24 10:39:35 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.181 2010/06/24 13:03:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.180 2010/06/24 10:39:35 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.181 2010/06/24 13:03:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,7 +227,7 @@ genfs_eopnotsupp(void *v)
 				}
 				break;
 			case VDESC_VP0_WILLUNLOCK:
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				break;
 			case VDESC_VP0_WILLRELE:
 				vrele(vp);
@@ -300,11 +300,8 @@ genfs_unlock(void *v)
 {
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
-		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-
-	KASSERT(ap->a_flags == 0);
 
 	return (vlockmgr(&vp->v_lock, LK_RELEASE));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.110 2010/03/03 08:20:39 he Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.111 2010/06/24 13:03:06 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.110 2010/03/03 08:20:39 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.111 2010/06/24 13:03:06 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,7 +483,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
@@ -616,7 +616,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);

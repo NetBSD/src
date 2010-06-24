@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.149 2010/03/03 08:20:38 he Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.150 2010/06/24 13:03:08 hannken Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.149 2010/03/03 08:20:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.150 2010/06/24 13:03:08 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
@@ -440,7 +440,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);

@@ -521,7 +521,7 @@ zvol_create_minor(const char *name)
 		struct stat sb;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		error = vn_stat(vp, &sb);
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		if (error == 0) {
 			minor = getminor(sb.st_rdev);
 		}

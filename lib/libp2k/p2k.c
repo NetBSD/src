@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.40 2010/06/07 11:23:07 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.41 2010/06/24 13:03:05 hannken Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -624,7 +624,7 @@ p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	rv = rump_pub_vfs_fhtovp(mp, fid, &vp);
 	if (rv)
 		return rv;
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 
 	p2n = getp2n(p2m, vp, false, NULL);
 	if (p2n == NULL)
@@ -687,7 +687,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	cn = makecn(pcn, 0);
 	RUMP_VOP_LOCK(dvp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_LOOKUP(dvp, &vp, cn);
-	RUMP_VOP_UNLOCK(dvp, 0);
+	RUMP_VOP_UNLOCK(dvp);
 	if (rump_pub_checksavecn(cn)) {
 		/*
 		 * XXX the rename lookup protocol is currently horribly
@@ -732,7 +732,7 @@ p2k_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 		}
 		return rv;
 	}
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 
 	p2n = getp2n(p2m, vp, false, NULL);
 	if (p2n == NULL) {
@@ -826,7 +826,7 @@ do_makenode(struct puffs_usermount *pu, struct p2k_node *p2n_dir,
 	freecn(cn, 0);
 
 	if (rv == 0) {
-		RUMP_VOP_UNLOCK(vp, 0);
+		RUMP_VOP_UNLOCK(vp);
 		p2n = getp2n(p2m, vp, true, p2n);
 		puffs_newinfo_setcookie(pni, p2n);
 	} else {
@@ -871,7 +871,7 @@ p2k_node_open(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_OPEN(vp, mode, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	return rv;
@@ -888,7 +888,7 @@ p2k_node_close(struct puffs_usermount *pu, puffs_cookie_t opc, int flags,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	RUMP_VOP_CLOSE(vp, flags, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	return 0;
@@ -906,7 +906,7 @@ p2k_node_access(struct puffs_usermount *pu, puffs_cookie_t opc, int mode,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_ACCESS(vp, mode, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	return rv;
@@ -935,7 +935,7 @@ p2k_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_GETATTR(vp, va_x, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	if (needcompat()) {
@@ -965,7 +965,7 @@ p2k_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_SETATTR(vp, va_x, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	UNDOCOMPAT(va_x);
@@ -989,7 +989,7 @@ p2k_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_FSYNC(vp, cred, flags, offlo, offhi);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	return rv;
@@ -1022,7 +1022,7 @@ p2k_node_seek(struct puffs_usermount *pu, puffs_cookie_t opc,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_SEEK(vp, oldoff, newoff, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	return rv;
@@ -1224,7 +1224,7 @@ p2k_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	} else {
 		rv = RUMP_VOP_READDIR(vp, uio, cred, eofflag, NULL, NULL);
 	}
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	if (rv == 0) {
 		*reslen = rump_pub_uio_getresid(uio);
 		*readoff = rump_pub_uio_getoff(uio);
@@ -1249,7 +1249,7 @@ p2k_node_readlink(struct puffs_usermount *pu, puffs_cookie_t opc,
 	uio = rump_pub_uio_setup(linkname, *linklen, 0, RUMPUIO_READ);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_READLINK(vp, uio, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	*linklen -= rump_pub_uio_free(uio);
 	cred_destroy(cred);
 
@@ -1271,7 +1271,7 @@ p2k_node_read(struct puffs_usermount *pu, puffs_cookie_t opc,
 	uio = rump_pub_uio_setup(buf, *resid, offset, RUMPUIO_READ);
 	RUMP_VOP_LOCK(vp, LK_SHARED);
 	rv = RUMP_VOP_READ(vp, uio, ioflag, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	*resid = rump_pub_uio_free(uio);
 	cred_destroy(cred);
 
@@ -1297,7 +1297,7 @@ p2k_node_write(struct puffs_usermount *pu, puffs_cookie_t opc,
 	uio = rump_pub_uio_setup(buf, *resid, offset, RUMPUIO_WRITE);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_WRITE(vp, uio, ioflag, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	*resid = rump_pub_uio_free(uio);
 	cred_destroy(cred);
 
@@ -1314,7 +1314,7 @@ p2k_node_pathconf(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_PATHCONF(vp, name, retval);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 
 	return rv;
 }
@@ -1339,7 +1339,7 @@ p2k_node_getextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_GETEXTATTR(vp, attrnamespace, attrname, uio,
 	    attrsize, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	if (uio)
@@ -1367,7 +1367,7 @@ p2k_node_setextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_SETEXTATTR(vp, attrnamespace, attrname, uio, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	if (uio)
@@ -1395,7 +1395,7 @@ p2k_node_listextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_LISTEXTATTR(vp, attrnamespace, uio, attrsize, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	if (uio)
@@ -1416,7 +1416,7 @@ p2k_node_deleteextattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	cred = cred_create(pcr);
 	RUMP_VOP_LOCK(vp, LK_EXCLUSIVE);
 	rv = RUMP_VOP_DELETEEXTATTR(vp, attrnamespace, attrname, cred);
-	RUMP_VOP_UNLOCK(vp, 0);
+	RUMP_VOP_UNLOCK(vp);
 	cred_destroy(cred);
 
 	return rv;
