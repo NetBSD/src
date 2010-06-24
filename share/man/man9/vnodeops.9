@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.78 2010/05/19 13:20:32 pooka Exp $
+.\"     $NetBSD: vnodeops.9,v 1.79 2010/06/24 07:54:46 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 19, 2010
+.Dd June 24, 2010
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -1063,9 +1063,16 @@ The argument
 is the vnode of the file to be locked.
 The argument
 .Fa flags
-is a set of
-.Xr lockmgr 9
-flags.
+is
+.Dv LK_EXCLUSIVE
+to take the lock exclusively or
+.Dv LK_SHARED
+to take a shared lock.
+If
+.Fa flags
+contains
+.Dv LK_NOWAIT
+and the lock is busy, the operation will return immediately with an error code.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .Fn VOP_LOCK
@@ -1100,6 +1107,9 @@ Possible return values are
 .Dv LK_SHARED
 or 0 for lock held exclusively by the calling thread, shared lock held
 by anyone or unlocked, respectively.
+.Pp
+This function must never be used to make locking decisions at run time:
+it is provided only for diagnostic purposes.
 .It Fn VOP_BMAP "vp" "bn" "vpp" "bnp" "runp"
 Convert the logical block number
 .Fa bn
