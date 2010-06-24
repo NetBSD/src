@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.35 2010/06/23 19:00:26 pgoyette Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.36 2010/06/24 14:39:57 tsutsui Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.35 2010/06/23 19:00:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.36 2010/06/24 14:39:57 tsutsui Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -755,16 +755,7 @@ axe_detach(device_t self, int flags)
 	if (!sc->axe_attached)
 		return 0;
 
-	callout_destroy(&sc->axe_stat_ch);
-
 	sc->axe_dying = 1;
-
-	if (sc->axe_ep[AXE_ENDPT_TX] != NULL)
-		usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_TX]);
-	if (sc->axe_ep[AXE_ENDPT_RX] != NULL)
-		usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_RX]);
-	if (sc->axe_ep[AXE_ENDPT_INTR] != NULL)
-		usbd_abort_pipe(sc->axe_ep[AXE_ENDPT_INTR]);
 
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
@@ -775,14 +766,11 @@ axe_detach(device_t self, int flags)
 
 	s = splusb();
 
-	if (--sc->axe_refcnt >= 0) {
-		/* Wait for processes to go away */
-		usb_detach_wait((sc->axe_dev));
-	}
-
 	if (ifp->if_flags & IFF_RUNNING)
 		axe_stop(ifp, 1);
 
+	callout_destroy(&sc->axe_stat_ch);
+	mutex_destroy(&sc->axe_mii_lock);
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
 #endif
@@ -1149,7 +1137,7 @@ axe_tick_task(void *xsc)
 		DPRINTF(("%s: %s: got link\n", device_xname(sc->axe_dev),
 		    __func__));
 		sc->axe_link++;
-		if (!IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		if (!IFQ_IS_EMPTY(&ifp->if_snd))
 			axe_start(ifp);
 	}
 
