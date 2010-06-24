@@ -471,7 +471,6 @@ unionfs_close(void *v)
 {
 	struct vop_close_args *ap = v;
 	int		error;
-	int		locked;
 	struct unionfs_node *unp;
 	struct unionfs_node_status *unsp;
 	kauth_cred_t   cred;
@@ -479,14 +478,10 @@ unionfs_close(void *v)
 
 	UNIONFS_INTERNAL_DEBUG("unionfs_close: enter\n");
 
-	locked = 0;
+	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
 	unp = VTOUNIONFS(ap->a_vp);
 	cred = ap->a_cred;
 
-	if (VOP_ISLOCKED(ap->a_vp) != LK_EXCLUSIVE) {
-		vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
-		locked = 1;
-	}
 	unionfs_get_node_status(unp, &unsp);
 
 	if (unsp->uns_lower_opencnt <= 0 && unsp->uns_upper_opencnt <= 0) {
@@ -521,9 +516,6 @@ unionfs_close(void *v)
 
 unionfs_close_abort:
 	unionfs_tryrem_node_status(unp, unsp);
-
-	if (locked != 0)
-		VOP_UNLOCK(ap->a_vp, 0);
 
 	UNIONFS_INTERNAL_DEBUG("unionfs_close: leave (%d)\n", error);
 
@@ -1537,11 +1529,6 @@ unionfs_lock(void *v)
 	uvp = unp->un_uppervp;
 	flags = ap->a_flags;
 	error = 0;
-
-	if ((flags & LK_INTERLOCK) != 0) {
-		mutex_exit(&ap->a_vp->v_interlock);
-		flags &= ~LK_INTERLOCK;
-	}
 
 	if (lvp != NULLVP) {
 		error = VOP_LOCK(lvp, flags);

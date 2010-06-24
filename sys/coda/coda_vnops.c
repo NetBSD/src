@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.71 2009/11/23 02:13:44 rmind Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.72 2010/06/24 07:54:46 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.71 2009/11/23 02:13:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.72 2010/06/24 07:54:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2018,6 +2018,7 @@ coda_getpages(void *v)
 	 * lock, and if we should serialize getpages calls by some
 	 * mechanism.
 	 */
+	/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
 	waslocked = VOP_ISLOCKED(vp);
 
 	/* Drop the vmobject lock. */

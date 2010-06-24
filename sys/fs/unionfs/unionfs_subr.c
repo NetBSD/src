@@ -484,7 +484,7 @@ unionfs_node_update(struct unionfs_node *unp, struct vnode *uvp)
 	 */
 	mutex_enter(&vp->v_interlock);
 	unp->un_uppervp = uvp;
-	KASSERT(rw_write_held(&lvp->v_lock.vl_lock));
+	KASSERT(VOP_ISLOCKED(lvp) == LK_EXCLUSIVE);
 	mutex_exit(&vp->v_interlock);
 }
 

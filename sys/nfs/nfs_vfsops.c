@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.212 2010/05/15 20:24:57 dholland Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.213 2010/06/24 07:54:47 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.212 2010/05/15 20:24:57 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.213 2010/06/24 07:54:47 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -965,14 +965,19 @@ loop:
 			continue;
 		mutex_enter(&vp->v_interlock);
 		/* XXX MNT_LAZY cannot be right? */
-		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
+		if (waitfor == MNT_LAZY ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     UVM_OBJ_IS_CLEAN(&vp->v_uobj))) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		if (error != 0) {
+			if (error != ENOENT) {
+				mutex_enter(&mntvnode_lock);
+				continue;
+			}
 			(void)vunmark(mvp);
 			goto loop;
 		}

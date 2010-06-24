@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.84 2010/06/18 16:29:02 hannken Exp $	*/
+/*	$NetBSD: lock.h,v 1.85 2010/06/24 07:54:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@
 #define	LK_SHARED	0x00000001	/* shared lock */
 #define	LK_EXCLUSIVE	0x00000002	/* exclusive lock */
 #define	LK_RELEASE	0x00000006	/* release any type of lock */
-#define	LK_EXCLOTHER	0x00000008	/* other process holds lock */
 
 #define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
 #define	LK_INTERLOCK	0x00010000	/* unlock passed simple lock after

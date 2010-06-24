@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.405 2010/06/18 16:29:02 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.406 2010/06/24 07:54:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.405 2010/06/18 16:29:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.406 2010/06/24 07:54:47 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -347,15 +347,8 @@ try_nextlist:
 		}
 		if (!mutex_tryenter(&vp->v_interlock))
 			continue;
-		/*
-		 * Our lwp might hold the underlying vnode
-		 * locked, so don't try to reclaim a VI_LAYER
-		 * node if it's locked.
-		 */
-		if ((vp->v_iflag & VI_XLOCK) == 0 &&
-		    ((vp->v_iflag & VI_LAYER) == 0 || VOP_ISLOCKED(vp) == 0)) {
+		if ((vp->v_iflag & VI_XLOCK) == 0)
 			break;
-		}
 		mutex_exit(&vp->v_interlock);
 	}
 
@@ -1901,7 +1894,8 @@ vclean(vnode_t *vp, int flags)
 	active = (vp->v_usecount > 1);
 
 	/* XXXAD should not lock vnode under layer */
-	VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+	mutex_exit(&vp->v_interlock);
+	VOP_LOCK(vp, LK_EXCLUSIVE);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
