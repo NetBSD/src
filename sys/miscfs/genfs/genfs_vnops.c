@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.178 2010/06/06 08:01:31 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.179 2010/06/24 07:54:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.178 2010/06/06 08:01:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.179 2010/06/24 07:54:47 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,11 +288,6 @@ genfs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int flags = ap->a_flags;
-
-	if ((flags & LK_INTERLOCK) != 0) {
-		flags &= ~LK_INTERLOCK;
-		mutex_exit(&vp->v_interlock);
-	}
 
 	return (vlockmgr(&vp->v_lock, flags));
 }

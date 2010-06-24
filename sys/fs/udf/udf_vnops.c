@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.57 2010/01/08 11:35:09 pooka Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.58 2010/06/24 07:54:46 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.57 2010/01/08 11:35:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.58 2010/06/24 07:54:46 hannken Exp $");
 #endif /* not lint */
 
 
@@ -1509,14 +1509,21 @@ udf_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	udf_node = VTOI(vp);
 
 	error = VOP_GETATTR(vp, &vap, FSCRED);
-	if (error)
+	if (error) {
+		VOP_UNLOCK(vp, 0);
 		return error;
+	}
 
 	/* check link count overflow */
-	if (vap.va_nlink >= (1<<16)-1)	/* uint16_t */
+	if (vap.va_nlink >= (1<<16)-1) {	/* uint16_t */
+		VOP_UNLOCK(vp, 0);
 		return EMLINK;
+	}
 
-	return udf_dir_attach(dir_node->ump, dir_node, udf_node, &vap, cnp);
+	error = udf_dir_attach(dir_node->ump, dir_node, udf_node, &vap, cnp);
+	if (error)
+		VOP_UNLOCK(vp, 0);
+	return error;
 }
 
 int
@@ -1535,9 +1542,6 @@ udf_link(void *v)
 	error = udf_do_link(dvp, vp, cnp);
 	if (error)
 		VOP_ABORTOP(dvp, cnp);
-
-	if ((vp != dvp) && (VOP_ISLOCKED(vp) == LK_EXCLUSIVE))
-		VOP_UNLOCK(vp, 0);
 
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.227 2010/03/29 13:11:34 pooka Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.228 2010/06/24 07:54:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.227 2010/03/29 13:11:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.228 2010/06/24 07:54:47 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1227,7 +1227,6 @@ lfs_flush_dirops(struct lfs *fs)
 	struct vnode *vp;
 	extern int lfs_dostats;
 	struct segment *sp;
-	int waslocked;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(fs->lfs_nadirop == 0);
@@ -1289,7 +1288,9 @@ lfs_flush_dirops(struct lfs *fs)
 			mutex_enter(&lfs_lock);
 			continue;
 		}
-		waslocked = VOP_ISLOCKED(vp);
+		/* XXX see below
+		 * waslocked = VOP_ISLOCKED(vp);
+		 */
 		if (vp->v_type != VREG &&
 		    ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp))) {
 			lfs_writefile(fs, sp, vp);
@@ -1303,8 +1304,12 @@ lfs_flush_dirops(struct lfs *fs)
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 		mutex_enter(&lfs_lock);
-		if (waslocked == LK_EXCLOTHER)
-			LFS_SET_UINO(ip, IN_MODIFIED);
+		/*
+		 * XXX
+		 * LK_EXCLOTHER is dead -- what is intended here?
+		 * if (waslocked == LK_EXCLOTHER)
+		 *	LFS_SET_UINO(ip, IN_MODIFIED);
+		 */
 	}
 	mutex_exit(&lfs_lock);
 	/* We've written all the dirops there are */
@@ -1383,7 +1388,7 @@ lfs_flush_pchain(struct lfs *fs)
 			continue;
 		mutex_exit(&lfs_lock);
 
-		if (VOP_ISLOCKED(vp)) {
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_RETRY) != 0) {
 			lfs_vunref(vp);
 			mutex_enter(&lfs_lock);
 			continue;
@@ -1399,6 +1404,7 @@ lfs_flush_pchain(struct lfs *fs)
 		KDASSERT(ip->i_number != LFS_IFILE_INUM);
 		(void) lfs_writeinode(fs, sp, ip);
 
+		VOP_UNLOCK(vp, 0);
 		lfs_vunref(vp);
 
 		if (error == EAGAIN) {
@@ -2208,6 +2214,7 @@ lfs_putpages(void *v)
 		int locked;
 
 		DLOG((DLOG_PAGE, "lfs_putpages: flushing VU_DIROP\n"));
+		/* XXX VOP_ISLOCKED() may not be used for lock decisions. */
 		locked = (VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 		mutex_exit(&vp->v_interlock);
 		lfs_writer_enter(fs, "ppdirop");
@@ -2218,11 +2225,9 @@ lfs_putpages(void *v)
 		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
 		mutex_exit(&lfs_lock);
 
+		if (locked)
+			VOP_LOCK(vp, LK_EXCLUSIVE);
 		mutex_enter(&vp->v_interlock);
-		if (locked) {
-			VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
-			mutex_enter(&vp->v_interlock);
-		}
 		lfs_writer_leave(fs);
 
 		/* XXX the flush should have taken care of this one too! */
