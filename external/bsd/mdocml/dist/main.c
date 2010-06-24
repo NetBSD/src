@@ -1,6 +1,6 @@
-/*	$Vendor-Id: main.c,v 1.85 2010/06/07 20:57:09 kristaps Exp $ */
+/*	$Vendor-Id: main.c,v 1.89 2010/06/19 20:46:27 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -109,6 +109,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unterminated quoted string",
 	"argument requires the width argument",
 	"superfluous width argument",
+	"ignoring argument",
 	"bad date argument",
 	"bad width argument",
 	"unknown manual section",
@@ -143,12 +144,13 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"macro requires argument(s)",
 	"no title in document",
 	"missing list type",
+	"missing display type",
 	"line argument(s) will be lost",
 	"body argument(s) will be lost",
 	"column syntax is inconsistent",
 	"missing font type",
-	"missing display type",
 	"displays may not be nested",
+	"unsupported display type",
 	"no scope to rewind: syntax violated",
 	"scope broken, syntax violated",
 	"line scope broken, syntax violated",
@@ -591,9 +593,11 @@ fdesc(struct curparse *curp)
 			break;
 		case (OUTT_ASCII):
 			curp->outdata = ascii_alloc(curp->outopts);
+			curp->outfree = ascii_free;
 			break;
 		case (OUTT_PS):
 			curp->outdata = ps_alloc();
+			curp->outfree = ps_free;
 			break;
 		default:
 			break;
@@ -616,7 +620,6 @@ fdesc(struct curparse *curp)
 		case (OUTT_PS):
 			curp->outman = terminal_man;
 			curp->outmdoc = terminal_mdoc;
-			curp->outfree = terminal_free;
 			break;
 		default:
 			break;

@@ -1,6 +1,6 @@
-/*	$Vendor-Id: libmdoc.h,v 1.52 2010/06/03 13:44:36 kristaps Exp $ */
+/*	$Vendor-Id: libmdoc.h,v 1.53 2010/06/19 20:46:27 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

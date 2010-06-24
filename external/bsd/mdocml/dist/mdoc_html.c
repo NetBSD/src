@@ -1,6 +1,6 @@
-/*	$Vendor-Id: mdoc_html.c,v 1.78 2010/06/07 11:01:15 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_html.c,v 1.85 2010/06/19 20:46:28 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1035,11 +1035,13 @@ mdoc_it_pre(MDOC_ARGS)
 	if (MDOC_BLOCK != n->type)
 		bl = bl->parent;
 
-	type = bl->data.list;
-
-	/* Set default width and offset. */
-
 	SCALE_HS_INIT(&offs, 0);
+
+	type = bl->data.Bl.type;
+	comp = bl->data.Bl.comp;
+
+	if (bl->data.Bl.offs)
+		a2offs(bl->data.Bl.offs, &offs);
 
 	switch (type) {
 	case (LIST_enum):
@@ -1056,22 +1058,14 @@ mdoc_it_pre(MDOC_ARGS)
 		break;
 	}
 
-	/* Get width, offset, and compact arguments. */
+	if (bl->data.Bl.width)
+		a2width(bl->data.Bl.width, &width);
 
 	wp = -1;
-	for (comp = i = 0; bl->args && i < (int)bl->args->argc; i++) 
+	for (i = 0; bl->args && i < (int)bl->args->argc; i++) 
 		switch (bl->args->argv[i].arg) {
 		case (MDOC_Column):
 			wp = i; /* Save for later. */
-			break;
-		case (MDOC_Width):
-			a2width(bl->args->argv[i].value[0], &width);
-			break;
-		case (MDOC_Offset):
-			a2offs(bl->args->argv[i].value[0], &offs);
-			break;
-		case (MDOC_Compact):
-			comp = 1;
 			break;
 		default:
 			break;
@@ -1123,7 +1117,7 @@ mdoc_bl_pre(MDOC_ARGS)
 		return(0);
 	if (MDOC_BLOCK != n->type)
 		return(1);
-	if (LIST_enum != n->data.list)
+	if (LIST_enum != n->data.Bl.type)
 		return(1);
 
 	ord = malloc(sizeof(struct ord));
@@ -1147,7 +1141,7 @@ mdoc_bl_post(MDOC_ARGS)
 
 	if (MDOC_BLOCK != n->type)
 		return;
-	if (LIST_enum != n->data.list)
+	if (LIST_enum != n->data.Bl.type)
 		return;
 
 	ord = h->ords.head;
@@ -1353,42 +1347,19 @@ static int
 mdoc_bd_pre(MDOC_ARGS)
 {
 	struct htmlpair	 	 tag[2];
-	int		 	 type, comp, i;
-	const struct mdoc_node	*bl, *nn;
+	int		 	 comp;
+	const struct mdoc_node	*nn;
 	struct roffsu		 su;
 
-	if (MDOC_BLOCK == n->type)
-		bl = n;
-	else if (MDOC_HEAD == n->type)
+	if (MDOC_HEAD == n->type)
 		return(0);
-	else
-		bl = n->parent;
 
 	SCALE_VS_INIT(&su, 0);
 
-	type = comp = 0;
-	for (i = 0; bl->args && i < (int)bl->args->argc; i++) 
-		switch (bl->args->argv[i].arg) {
-		case (MDOC_Offset):
-			a2offs(bl->args->argv[i].value[0], &su);
-			break;
-		case (MDOC_Compact):
-			comp = 1;
-			break;
-		case (MDOC_Centred):
-			/* FALLTHROUGH */
-		case (MDOC_Ragged):
-			/* FALLTHROUGH */
-		case (MDOC_Filled):
-			/* FALLTHROUGH */
-		case (MDOC_Unfilled):
-			/* FALLTHROUGH */
-		case (MDOC_Literal):
-			type = bl->args->argv[i].arg;
-			break;
-		default:
-			break;
-		}
+	if (n->data.Bd.offs)
+		a2offs(n->data.Bd.offs, &su);
+
+	comp = n->data.Bd.comp;
 
 	/* FIXME: -centered, etc. formatting. */
 	/* FIXME: does not respect -offset ??? */
@@ -1415,7 +1386,8 @@ mdoc_bd_pre(MDOC_ARGS)
 		return(1);
 	}
 
-	if (MDOC_Unfilled != type && MDOC_Literal != type)
+	if (DISP_unfilled != n->data.Bd.type && 
+			DISP_literal != n->data.Bd.type)
 		return(1);
 
 	PAIR_CLASS_INIT(&tag[0], "lit");

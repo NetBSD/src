@@ -1,6 +1,6 @@
-/*	$Vendor-Id: main.h,v 1.5 2010/06/07 20:57:09 kristaps Exp $ */
+/*	$Vendor-Id: main.h,v 1.7 2010/06/19 20:46:28 kristaps Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,10 +42,13 @@ void		  tree_mdoc(void *, const struct mdoc *);
 void		  tree_man(void *, const struct man *);
 
 void		 *ascii_alloc(char *);
+void		  ascii_free(void *);
+
 void		 *ps_alloc(void);
+void		  ps_free(void *);
+
 void		  terminal_mdoc(void *, const struct mdoc *);
 void		  terminal_man(void *, const struct man *);
-void		  terminal_free(void *);
 
 __END_DECLS
 

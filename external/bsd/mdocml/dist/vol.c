@@ -1,6 +1,6 @@
-/*	$Vendor-Id: vol.c,v 1.7 2010/05/17 22:11:42 kristaps Exp $ */
+/*	$Vendor-Id: vol.c,v 1.8 2010/06/19 20:46:28 kristaps Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

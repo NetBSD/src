@@ -1,6 +1,6 @@
-/*	$Vendor-Id: out.h,v 1.10 2010/04/07 11:25:38 kristaps Exp $ */
+/*	$Vendor-Id: out.h,v 1.11 2010/06/19 20:46:28 kristaps Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

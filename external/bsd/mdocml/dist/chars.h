@@ -1,6 +1,6 @@
-/*	$Vendor-Id: chars.h,v 1.3 2010/05/25 12:37:20 kristaps Exp $ */
+/*	$Vendor-Id: chars.h,v 1.4 2010/06/19 20:46:27 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

@@ -12,8 +12,8 @@ INSTALL_DATA	= $(INSTALL) -m 0444
 INSTALL_LIB	= $(INSTALL) -m 0644
 INSTALL_MAN	= $(INSTALL_DATA)
 
-VERSION	   = 1.10.1
-VDATE	   = 07 June 2010
+VERSION	   = 1.10.2
+VDATE	   = 19 June 2010
 
 VFLAGS	   = -DVERSION="\"$(VERSION)\""
 WFLAGS     = -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings
@@ -69,13 +69,15 @@ MANSRCS	   = man_macro.c man.c man_hash.c man_validate.c \
 
 MAINLNS	   = main.ln mdoc_term.ln chars.ln term.ln tree.ln \
 	     compat.ln man_term.ln html.ln mdoc_html.ln \
-	     man_html.ln out.ln
+	     man_html.ln out.ln term_ps.ln term_ascii.ln
 
 MAINOBJS   = main.o mdoc_term.o chars.o term.o tree.o compat.o \
-	     man_term.o html.o mdoc_html.o man_html.o out.o
+	     man_term.o html.o mdoc_html.o man_html.o out.o \
+	     term_ps.o term_ascii.o
 
 MAINSRCS   = main.c mdoc_term.c chars.c term.c tree.c compat.c \
-	     man_term.c html.c mdoc_html.c man_html.c out.c
+	     man_term.c html.c mdoc_html.c man_html.c out.c \
+	     term_ps.c term_ascii.c
 
 LLNS	   = llib-llibmdoc.ln llib-llibman.ln llib-lmandoc.ln \
 	     llib-llibmandoc.ln llib-llibroff.ln
@@ -158,7 +160,7 @@ www:	all $(GSGMLS) $(HTMLS) $(TEXTS) $(MD5S) $(TARGZS) $(PSS)
 ps:	$(PSS)
 
 installwww: www
-	$(INSTALL_DATA) $(HTMLS) $(TEXTS) $(STATICS) $(DESTDIR)$(PREFIX)/
+	$(INSTALL_DATA) $(HTMLS) $(PSS) $(TEXTS) $(STATICS) $(DESTDIR)$(PREFIX)/
 	$(INSTALL_DATA) mdocml-$(VERSION).tar.gz $(DESTDIR)$(PREFIX)/snapshots/
 	$(INSTALL_DATA) mdocml-$(VERSION).md5 $(DESTDIR)$(PREFIX)/snapshots/
 	$(INSTALL_DATA) mdocml-$(VERSION).tar.gz $(DESTDIR)$(PREFIX)/snapshots/mdocml.tar.gz
@@ -222,6 +224,10 @@ main.ln main.o: main.c mdoc.h man.h roff.h
 compat.ln compat.o: compat.c 
 
 term.ln term.o: term.c term.h man.h mdoc.h chars.h
+
+term_ps.ln term_ps.o: term_ps.c term.h main.h
+
+term_ascii.ln term_ascii.o: term_ascii.c term.h main.h
 
 html.ln html.o: html.c html.h chars.h
 
