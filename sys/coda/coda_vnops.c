@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.72 2010/06/24 07:54:46 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.73 2010/06/24 10:37:22 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.72 2010/06/24 07:54:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.73 2010/06/24 10:37:22 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1784,11 +1784,6 @@ coda_lock(void *v)
     if (coda_lockdebug) {
 	myprintf(("Attempting lock on %s\n",
 		  coda_f2s(&cp->c_fid)));
-    }
-
-    if ((flags & LK_INTERLOCK) != 0) {
-    	mutex_exit(&vp->v_interlock);
-    	flags &= ~LK_INTERLOCK;
     }
 
     return (vlockmgr(&vp->v_lock, flags));
