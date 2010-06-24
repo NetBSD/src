@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.22 2010/05/02 05:30:20 dholland Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.23 2010/06/24 13:03:07 hannken Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.22 2010/05/02 05:30:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.23 2010/06/24 13:03:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
         if (ldr_vp->v_mount->mnt_flag & MNT_NOSUID)
                 epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
-	VOP_UNLOCK(ldr_vp, 0);
+	VOP_UNLOCK(ldr_vp);
 
 	/*
 	 * read the header, and make sure we got all of it.
@@ -289,7 +289,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	return (0);
 
 badunlock:
-	VOP_UNLOCK(ldr_vp, 0);
+	VOP_UNLOCK(ldr_vp);
 bad:
 	vrele(ldr_vp);
 	return (error);

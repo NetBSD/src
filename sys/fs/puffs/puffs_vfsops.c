@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.89 2010/05/21 10:40:19 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.90 2010/06/24 13:03:10 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.89 2010/05/21 10:40:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.90 2010/06/24 13:03:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -795,7 +795,7 @@ puffs_vfsop_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
 		mutex_enter(&pnp->pn_mtx);
 		puffs_referencenode(pnp);
 		mutex_exit(&pnp->pn_mtx);
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 	error = puffs_msg_wait2(pmp, park_extattrctl, pnp, NULL);
 	PUFFS_MSG_RELEASE(extattrctl);

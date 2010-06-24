@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.55 2010/02/07 16:04:31 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.56 2010/06/24 13:03:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.55 2010/02/07 16:04:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.56 2010/06/24 13:03:08 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -903,7 +903,7 @@ dkwedge_discover(struct disk *pdk)
 		vput(vp);
 		goto out;
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * For each supported partition map type, look to see if
@@ -1022,7 +1022,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 			mutex_enter(&vp->v_interlock);
 			vp->v_writecount++;
 			mutex_exit(&vp->v_interlock);
-			VOP_UNLOCK(vp, 0);
+			VOP_UNLOCK(vp);
 			sc->sc_parent->dk_rawvp = vp;
 		}
 		sc->sc_parent->dk_rawopens++;

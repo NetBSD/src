@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.406 2010/06/24 07:54:47 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.407 2010/06/24 13:03:12 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.406 2010/06/24 07:54:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.407 2010/06/24 13:03:12 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1352,7 +1352,7 @@ vput(vnode_t *vp)
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	vrele(vp);
 }
 
@@ -1450,7 +1450,7 @@ vrelel(vnode_t *vp, int flags)
 			 * sleeping, don't try to inactivate it yet.
 			 */
 			if (__predict_false(vtryrele(vp))) {
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				mutex_exit(&vp->v_interlock);
 				return;
 			}
@@ -1925,7 +1925,7 @@ vclean(vnode_t *vp, int flags)
 		 * Any other processes trying to obtain this lock must first
 		 * wait for VI_XLOCK to clear, then call the new lock operation.
 		 */
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 
 	/* Disassociate the underlying file system from the vnode. */
@@ -2604,7 +2604,7 @@ done:
 			panic("cannot find root vnode, error=%d", error);
 		cwdi0.cwdi_cdir = rootvnode;
 		vref(cwdi0.cwdi_cdir);
-		VOP_UNLOCK(rootvnode, 0);
+		VOP_UNLOCK(rootvnode);
 		cwdi0.cwdi_rdir = NULL;
 
 		/*

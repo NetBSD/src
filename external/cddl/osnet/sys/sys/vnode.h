@@ -1,5 +1,5 @@
 
-/*	$NetBSD: vnode.h,v 1.4 2010/02/28 14:45:47 haad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.5 2010/06/24 13:03:05 hannken Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -522,7 +522,7 @@ zfs_vn_open(const char *pnamep, enum uio_seg seg, int filemode, int createmode,
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, pnamep);
 	error = vn_open(&nd, filemode, createmode);
 	if (error == 0) {
-		VOP_UNLOCK(nd.ni_vp, 0);
+		VOP_UNLOCK(nd.ni_vp);
 		*vpp = nd.ni_vp;
 	}
 	return (error);
@@ -566,7 +566,7 @@ zfs_vop_fsync(vnode_t *vp, int flag, cred_t *cr)
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, cr, FSYNC_WAIT, 0, 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 #define	VOP_FSYNC(vp, flag, cr, unk)	zfs_vop_fsync((vp), (flag), (cr))
@@ -591,7 +591,7 @@ zfs_vop_getattr(vnode_t *vp, vattr_t *ap, int flag, cred_t *cr)
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_GETATTR(vp, ap, cr);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 #define	VOP_GETATTR(vp, ap, flag, cr, unk)	zfs_vop_getattr((vp), (ap), (flag), (cr))
@@ -603,7 +603,7 @@ zfs_vop_seek(vnode_t *vp, off_t off, off_t *offp)
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_SEEK(vp, off, *offp, kauth_cred_get());
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 #define	VOP_SEEK(vp, off, offp, unk)	zfs_vop_seek(vp, off, offp)

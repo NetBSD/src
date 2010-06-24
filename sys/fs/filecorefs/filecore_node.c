@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.19 2009/03/15 22:16:50 cegger Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.20 2010/06/24 13:03:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.19 2009/03/15 22:16:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.20 2010/06/24 13:03:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ filecore_inactive(void *v)
 	 */
 	ip->i_flag = 0;
 	*ap->a_recycle = (filecore_staleinode(ip) != 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return error;
 }
 

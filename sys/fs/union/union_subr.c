@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.36 2010/06/06 08:01:31 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.37 2010/06/24 13:03:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.36 2010/06/06 08:01:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.37 2010/06/24 13:03:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,9 +639,9 @@ union_copyfile(struct vnode *fvp, struct vnode *tvp, kauth_cred_t cred,
 	uio.uio_offset = 0;
 	UIO_SETUP_SYSSPACE(&uio);
 
-	VOP_UNLOCK(fvp, 0);			/* XXX */
+	VOP_UNLOCK(fvp);			/* XXX */
 	vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
-	VOP_UNLOCK(tvp, 0);			/* XXX */
+	VOP_UNLOCK(tvp);			/* XXX */
 	vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 
 	tbuf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
@@ -724,7 +724,7 @@ union_copyup(struct union_node *un, int docopy, kauth_cred_t cred,
 			uvattr.va_flags = lvattr.va_flags;
         		error = VOP_SETATTR(uvp, &uvattr, cred);
 		}
-		VOP_UNLOCK(lvp, 0);
+		VOP_UNLOCK(lvp);
 #ifdef UNION_DIAGNOSTIC
 		if (error == 0)
 			uprintf("union: copied up %s\n", un->un_path);
@@ -750,7 +750,7 @@ union_copyup(struct union_node *un, int docopy, kauth_cred_t cred,
 			(void) VOP_OPEN(uvp, FREAD, cred);
 		}
 		un->un_openl = 0;
-		VOP_UNLOCK(lvp, 0);
+		VOP_UNLOCK(lvp);
 	}
 
 	return (error);
@@ -833,14 +833,14 @@ union_mkshadow(struct union_mount *um, struct vnode *dvp,
 	error = union_relookup(um, dvp, vpp, cnp, &cn,
 			cnp->cn_nameptr, cnp->cn_namelen);
 	if (error) {
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 		return (error);
 	}
 
 	if (*vpp) {
 		VOP_ABORTOP(dvp, &cn);
 		if (dvp != *vpp)
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 		vput(*vpp);
 		*vpp = NULLVP;
 		return (EEXIST);
@@ -880,7 +880,7 @@ union_mkwhiteout(struct union_mount *um, struct vnode *dvp,
 	struct vnode *wvp;
 	struct componentname cn;
 
-	VOP_UNLOCK(dvp, 0);
+	VOP_UNLOCK(dvp);
 	vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	error = union_relookup(um, dvp, &wvp, cnp, &cn, path, strlen(path));
 	if (error)
@@ -889,7 +889,7 @@ union_mkwhiteout(struct union_mount *um, struct vnode *dvp,
 	if (wvp) {
 		VOP_ABORTOP(dvp, &cn);
 		if (dvp != wvp)
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 		vput(wvp);
 		return (EEXIST);
 	}
@@ -947,14 +947,14 @@ union_vn_create(struct vnode **vpp, struct union_node *un, struct lwp *l)
 	vn_lock(un->un_dirvp, LK_EXCLUSIVE | LK_RETRY);
 	error = relookup(un->un_dirvp, &vp, &cn);
 	if (error) {
-		VOP_UNLOCK(un->un_dirvp, 0);
+		VOP_UNLOCK(un->un_dirvp);
 		return (error);
 	}
 
 	if (vp) {
 		VOP_ABORTOP(un->un_dirvp, &cn);
 		if (un->un_dirvp != vp)
-			VOP_UNLOCK(un->un_dirvp, 0);
+			VOP_UNLOCK(un->un_dirvp);
 		vput(vp);
 		return (EEXIST);
 	}
@@ -1020,7 +1020,7 @@ union_removed_upper(struct union_node *un)
 
 	if (un->un_flags & UN_ULOCK) {
 		un->un_flags &= ~UN_ULOCK;
-		VOP_UNLOCK(un->un_uppervp, 0);
+		VOP_UNLOCK(un->un_uppervp);
 	}
 }
 
@@ -1130,7 +1130,7 @@ union_dircache(struct vnode *vp, struct lwp *l)
 	}
 
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (nvp);
 }
 
@@ -1179,7 +1179,7 @@ union_readdirhook(struct vnode **vpp, struct file *fp, struct lwp *l)
 		vput(lvp);
 		return (error);
 	}
-	VOP_UNLOCK(lvp, 0);
+	VOP_UNLOCK(lvp);
 	fp->f_data = lvp;
 	fp->f_offset = 0;
 	error = vn_close(vp, FREAD, fp->f_cred);

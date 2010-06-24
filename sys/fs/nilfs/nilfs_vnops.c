@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.6 2010/06/24 12:15:46 reinoud Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.7 2010/06/24 13:03:10 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.6 2010/06/24 12:15:46 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.7 2010/06/24 13:03:10 hannken Exp $");
 #endif /* not lint */
 
 
@@ -81,7 +81,7 @@ nilfs_inactive(void *v)
 
 	if (nilfs_node == NULL) {
 		DPRINTF(NODE, ("nilfs_inactive: inactive NULL NILFS node\n"));
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		return 0;
 	}
 
@@ -90,7 +90,7 @@ nilfs_inactive(void *v)
 	 * referenced anymore in a directory we ought to free up the resources
 	 * on disc if applicable.
 	 */
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return 0;
 }
@@ -692,7 +692,7 @@ nilfs_lookup(void *v)
 			error = ENOENT;
 
 		/* first unlock parent */
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 
 		if (error == 0) {
 			DPRINTF(LOOKUP, ("\tfound '..'\n"));
@@ -1188,20 +1188,20 @@ nilfs_do_link(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 
 	error = VOP_GETATTR(vp, &vap, FSCRED);
 	if (error) {
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		return error;
 	}
 
 	/* check link count overflow */
 	if (vap.va_nlink >= (1<<16)-1) {	/* uint16_t */
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		return EMLINK;
 	}
 
 	error = nilfs_dir_attach(dir_node->ump, dir_node, nilfs_node,
 	    &vap, cnp);
 	if (error)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	return error;
 }
 
@@ -1405,7 +1405,7 @@ nilfs_rename(void *v)
 
 out:
         if (fdnode != tdnode)
-                VOP_UNLOCK(fdvp, 0);
+                VOP_UNLOCK(fdvp);
 
 out_unlocked:
 	VOP_ABORTOP(tdvp, tcnp);
