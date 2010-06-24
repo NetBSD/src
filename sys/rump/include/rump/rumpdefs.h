@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.6 2010/06/18 16:31:34 hannken Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.7 2010/06/24 07:56:22 hannken Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -40,12 +40,11 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 #define	EJUSTRETURN	-2		/* don't modify regs, just return */
 #endif /* EJUSTRETURN */
 
-/*	NetBSD: lock.h,v 1.84 2010/06/18 16:29:02 hannken Exp 	*/
+/*	NetBSD: lock.h,v 1.85 2010/06/24 07:54:47 hannken Exp 	*/
 #define	RUMP_LK_TYPE_MASK	0x0000000f	
 #define	RUMP_LK_SHARED	0x00000001	
 #define	RUMP_LK_EXCLUSIVE	0x00000002	
 #define	RUMP_LK_RELEASE	0x00000006	
-#define	RUMP_LK_EXCLOTHER	0x00000008	
 #define	RUMP_LK_NOWAIT	0x00000010	
 #define	RUMP_LK_INTERLOCK	0x00010000	
 #define	RUMP_LK_RETRY	0x00020000	
