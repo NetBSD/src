@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.179 2010/06/24 07:54:47 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.180 2010/06/24 10:39:35 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.179 2010/06/24 07:54:47 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.180 2010/06/24 10:39:35 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,18 +329,7 @@ genfs_islocked(void *v)
 int
 genfs_nolock(void *v)
 {
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct lwp *a_l;
-	} */ *ap = v;
 
-	/*
-	 * Since we are not using the lock manager, we must clear
-	 * the interlock here.
-	 */
-	if (ap->a_flags & LK_INTERLOCK)
-		mutex_exit(&ap->a_vp->v_interlock);
 	return (0);
 }
 
