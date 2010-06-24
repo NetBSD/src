@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.9 2010/06/24 14:41:31 tsutsui Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.10 2010/06/24 15:01:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -164,7 +164,7 @@
 
 struct axe_type {
 	struct usb_devno	axe_dev;
-	u_int16_t		axe_flags;
+	uint16_t		axe_flags;
 #define AX178		0x0001		/* AX88178 */
 #define AX772		0x0002		/* AX88772 */
 #define AXE_ANY_PHY	0x1000		/* Chip lies about valid phys */
@@ -192,8 +192,8 @@ struct axe_cdata {
 };
 
 struct axe_sframe_hdr {
-	u_int16_t		len;
-	u_int16_t		ilen;
+	uint16_t		len;
+	uint16_t		ilen;
 } __packed;
 
 struct axe_softc {
@@ -206,9 +206,9 @@ struct axe_softc {
 	usbd_device_handle	axe_udev;
 	usbd_interface_handle	axe_iface;
 
-	u_int16_t		axe_vendor;
-	u_int16_t		axe_product;
-	u_int16_t		axe_flags;
+	uint16_t		axe_vendor;
+	uint16_t		axe_product;
+	uint16_t		axe_flags;
 
 	int			axe_ed[AXE_ENDPT_MAX];
 	usbd_pipe_handle	axe_ep[AXE_ENDPT_MAX];
