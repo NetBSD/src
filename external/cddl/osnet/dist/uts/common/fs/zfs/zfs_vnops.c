@@ -1347,7 +1347,7 @@ zfs_lookup(vnode_t *dvp, char *nm, vnode_t **vpp, struct componentname *cnp,
 
 		if (cnp->cn_flags & ISDOTDOT) {
 			ltype = VOP_ISLOCKED(dvp);
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 		}
 		error = vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
 		if (cnp->cn_flags & ISDOTDOT)
@@ -5281,7 +5281,7 @@ zfs_netbsd_inactive(struct vop_inactive_args *ap)
 	 * vrele() will call us again.
 	 */
 	*ap->a_recycle = (zp->z_unlinked != 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (0);
 }
 

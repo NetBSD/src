@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyserv.c,v 1.1 2010/03/07 23:28:14 pooka Exp $	*/
+/*	$NetBSD: ttyserv.c,v 1.2 2010/06/24 13:03:05 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -102,14 +102,14 @@ handlereq(void *arg)
 		pr_open = (void *)pdr;
 		RUMP_VOP_LOCK(devvp, RUMP_LK_EXCLUSIVE);
 		rv = RUMP_VOP_OPEN(devvp, pr_open->pm_fmt, rootcred);
-		RUMP_VOP_UNLOCK(devvp, 0);
+		RUMP_VOP_UNLOCK(devvp);
 		break;
 
 	case PUD_CDEV_CLOSE:
 		pr_close = (void *)pdr;
 		RUMP_VOP_LOCK(devvp, RUMP_LK_EXCLUSIVE);
 		rv = RUMP_VOP_CLOSE(devvp, pr_close->pm_fmt, rootcred);
-		RUMP_VOP_UNLOCK(devvp, 0);
+		RUMP_VOP_UNLOCK(devvp);
 		break;
 
 	case PUD_CDEV_IOCTL:
@@ -125,7 +125,7 @@ handlereq(void *arg)
 		    pr_rw->pm_resid, pr_rw->pm_offset, RUMPUIO_READ);
 		RUMP_VOP_LOCK(devvp, RUMP_LK_SHARED);
 		rv = RUMP_VOP_READ(devvp, uio, 0, rootcred);
-		RUMP_VOP_UNLOCK(devvp, 0);
+		RUMP_VOP_UNLOCK(devvp);
 		reslen = rump_pub_uio_free(uio);
 		pdr->pdr_pth.pth_framelen -= reslen;
 		pr_rw->pm_resid = reslen;
@@ -137,7 +137,7 @@ handlereq(void *arg)
 		    pr_rw->pm_resid, pr_rw->pm_offset, RUMPUIO_WRITE);
 		RUMP_VOP_LOCK(devvp, RUMP_LK_EXCLUSIVE);
 		rv = RUMP_VOP_WRITE(devvp, uio, 0, rootcred);
-		RUMP_VOP_UNLOCK(devvp, 0);
+		RUMP_VOP_UNLOCK(devvp);
 		reslen = rump_pub_uio_free(uio);
 		pr_rw->pm_resid = reslen;
 		pdr->pdr_pth.pth_framelen=sizeof(struct pud_creq_write);

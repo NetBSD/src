@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.141 2010/03/31 01:27:05 pooka Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.142 2010/06/24 13:03:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.141 2010/03/31 01:27:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.142 2010/06/24 13:03:16 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1462,7 +1462,7 @@ kernfs_inactive(void *v)
 	default:
 		break;
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.70 2010/06/22 18:32:08 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.71 2010/06/24 13:03:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.70 2010/06/22 18:32:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.71 2010/06/24 13:03:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -155,7 +155,7 @@ tmpfs_lookup(void *v)
 	    !(cnp->cn_flags & ISDOTDOT)));
 
 	if (cnp->cn_flags & ISDOTDOT) {
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 
 		/* Allocate a new vnode on the matching entry. */
 		error = tmpfs_alloc_vp(dvp->v_mount,
@@ -795,7 +795,7 @@ tmpfs_link(void *v)
 	error = 0;
 
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 
@@ -1007,7 +1007,7 @@ tmpfs_rename(void *v)
 
  out:
 	if (fdnode != tdnode)
-		VOP_UNLOCK(fdvp, 0);
+		VOP_UNLOCK(fdvp);
 
  out_unlocked:
 	/* Release target nodes. */
@@ -1277,7 +1277,7 @@ tmpfs_inactive(void *v)
 
 	node = VP_TO_TMPFS_NODE(vp);
 	*((struct vop_inactive_args *)v)->a_recycle = (node->tn_links == 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return 0;
 }

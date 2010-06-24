@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.22 2010/06/06 06:20:16 dholland Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.23 2010/06/24 13:03:11 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.22 2010/06/06 06:20:16 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.23 2010/06/24 13:03:11 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -460,7 +460,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	if (error)
 		goto badunlock;
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	if ((error = exec_read_from(l, vp, 0, &eh, sizeof(eh))) != 0)
 		goto bad;
@@ -610,7 +610,7 @@ elf_load_file(struct lwp *l, struct exec_package *epp, char *path,
 	return 0;
 
 badunlock:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 bad:
 	if (ph != NULL)

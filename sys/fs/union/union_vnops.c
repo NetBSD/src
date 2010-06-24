@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.35 2010/05/01 10:44:59 pooka Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.36 2010/06/24 13:03:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.35 2010/05/01 10:44:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.36 2010/06/24 13:03:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
 			 */
 			tdvp = dvp;
 			*dvpp = dvp = dvp->v_mount->mnt_vnodecovered;
-			VOP_UNLOCK(tdvp, 0);
+			VOP_UNLOCK(tdvp);
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		}
 	}
@@ -329,7 +329,7 @@ union_lookup(void *v)
 		if (cnp->cn_flags & ISDOTDOT) {
 			/* retain lock on underlying VP */
 			dun->un_flags |= UN_KLOCK;
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 		}
 		uerror = union_lookup1(um->um_uppervp, &upperdvp,
 					&uppervp, cnp);
@@ -406,7 +406,7 @@ union_lookup(void *v)
 		cnp->cn_nameiop = nameiop;
 
 		if (lowervp != lowerdvp)
-			VOP_UNLOCK(lowerdvp, 0);
+			VOP_UNLOCK(lowerdvp);
 
 		if (cnp->cn_consume != 0) {
 			if (uppervp != NULLVP) {
@@ -486,7 +486,7 @@ union_lookup(void *v)
 			 */
 			if (upperdvp) {
 				dun->un_flags &= ~UN_ULOCK;
-				VOP_UNLOCK(upperdvp, 0);
+				VOP_UNLOCK(upperdvp);
 				uerror = union_mkshadow(um, upperdvp, cnp,
 				    &uppervp);
 				vn_lock(upperdvp, LK_EXCLUSIVE | LK_RETRY);
@@ -503,7 +503,7 @@ union_lookup(void *v)
 	}
 
 	if (lowervp != NULLVP)
-		VOP_UNLOCK(lowervp, 0);
+		VOP_UNLOCK(lowervp);
 
 	error = union_allocvp(ap->a_vpp, dvp->v_mount, dvp, upperdvp, cnp,
 			      uppervp, lowervp, 1);
@@ -657,7 +657,7 @@ union_open(void *v)
 		un->un_openl++;
 		vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(tvp, mode, cred);
-		VOP_UNLOCK(tvp, 0);
+		VOP_UNLOCK(tvp);
 
 		return (error);
 	}
@@ -768,7 +768,7 @@ union_access(void *v)
 				error = VCALL(vp, VOFFSET(vop_access), ap);
 			}
 		}
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		if (error)
 			return (error);
 	}
@@ -955,7 +955,7 @@ union_read(void *v)
 		FIXUP(VTOUNION(ap->a_vp));
 	error = VOP_READ(vp, ap->a_uio, ap->a_ioflag, ap->a_cred);
 	if (dolock)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 	/*
 	 * XXX
@@ -1109,7 +1109,7 @@ union_fsync(void *v)
 		error = VOP_FSYNC(targetvp, ap->a_cred, ap->a_flags,
 			    ap->a_offlo, ap->a_offhi);
 		if (dolock)
-			VOP_UNLOCK(targetvp, 0);
+			VOP_UNLOCK(targetvp);
 	}
 
 	return (error);
@@ -1211,7 +1211,7 @@ union_link(void *v)
 			vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 			if (dun->un_uppervp == un->un_dirvp) {
 				dun->un_flags &= ~UN_ULOCK;
-				VOP_UNLOCK(dun->un_uppervp, 0);
+				VOP_UNLOCK(dun->un_uppervp);
 			}
 			error = union_copyup(un, 1, cnp->cn_cred, curlwp);
 			if (dun->un_uppervp == un->un_dirvp) {
@@ -1230,7 +1230,7 @@ union_link(void *v)
 					 panic("union: null upperdvp?");
 				error = relookup(ap->a_dvp, &vp, ap->a_cnp);
 				if (error) {
-					VOP_UNLOCK(ap->a_vp, 0);
+					VOP_UNLOCK(ap->a_vp);
 					return EROFS;	/* ? */
 				}
 				if (vp != NULLVP) {
@@ -1239,13 +1239,13 @@ union_link(void *v)
 					 * mysteriously appeared (a race?)
 					 */
 					error = EEXIST;
-					VOP_UNLOCK(ap->a_vp, 0);
+					VOP_UNLOCK(ap->a_vp);
 					vput(ap->a_dvp);
 					vput(vp);
 					return (error);
 				}
 			}
-			VOP_UNLOCK(ap->a_vp, 0);
+			VOP_UNLOCK(ap->a_vp);
 		}
 		vp = un->un_uppervp;
 	}
@@ -1387,7 +1387,7 @@ union_mkdir(void *v)
 		FIXUP(un);
 		vref(dvp);
 		un->un_flags |= UN_KLOCK;
-		VOP_UNLOCK(ap->a_dvp, 0);
+		VOP_UNLOCK(ap->a_dvp);
 		error = VOP_MKDIR(dvp, &vp, cnp, ap->a_vap);
 		if (error) {
 			vrele(ap->a_dvp);
@@ -1531,7 +1531,7 @@ union_readlink(void *v)
 	ap->a_vp = vp;
 	error = VCALL(vp, VOFFSET(vop_readlink), ap);
 	if (dolock)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 	return (error);
 }
@@ -1558,7 +1558,7 @@ union_abortop(void *v)
 	ap->a_dvp = vp;
 	error = VCALL(vp, VOFFSET(vop_abortop), ap);
 	if (islocked && dolock)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 	return (error);
 }
@@ -1596,7 +1596,7 @@ union_inactive(void *v)
 	}
 
 	*ap->a_recycle = ((un->un_flags & UN_CACHED) == 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return (0);
 }
@@ -1722,7 +1722,7 @@ union_unlock(void *v)
 	un->un_flags &= ~UN_LOCKED;
 
 	if ((un->un_flags & (UN_ULOCK|UN_KLOCK)) == UN_ULOCK)
-		VOP_UNLOCK(un->un_uppervp, 0);
+		VOP_UNLOCK(un->un_uppervp);
 
 	un->un_flags &= ~(UN_ULOCK|UN_KLOCK);
 
@@ -1760,7 +1760,7 @@ union_bmap(void *v)
 	ap->a_vp = vp;
 	error = VCALL(vp, VOFFSET(vop_bmap), ap);
 	if (dolock)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 	return (error);
 }
@@ -1817,7 +1817,7 @@ union_pathconf(void *v)
 	ap->a_vp = vp;
 	error = VCALL(vp, VOFFSET(vop_pathconf), ap);
 	if (dolock)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 	return (error);
 }

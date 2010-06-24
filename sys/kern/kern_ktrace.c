@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.151 2010/03/03 00:47:30 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.152 2010/06/24 13:03:11 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.151 2010/03/03 00:47:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.152 2010/06/24 13:03:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1295,7 +1295,7 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 			return (error);
 		}
 		vp = nd.ni_vp;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		if (vp->v_type != VREG) {
 			vn_close(vp, FREAD|FWRITE, l->l_cred);
 			ktrexit(l);
