@@ -1,6 +1,6 @@
-/*	$Vendor-Id: libmandoc.h,v 1.6 2010/05/25 12:37:20 kristaps Exp $ */
+/*	$Vendor-Id: libmandoc.h,v 1.8 2010/06/19 20:46:27 kristaps Exp $ */
 /*
- * Copyright (c) 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@
 
 __BEGIN_DECLS
 
-int		 mandoc_special(const char *);
+int		 mandoc_special(char *);
 void		*mandoc_calloc(size_t, size_t);
 char		*mandoc_strdup(const char *);
 void		*mandoc_malloc(size_t);
