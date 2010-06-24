@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.5 2010/06/24 07:54:46 hannken Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.6 2010/06/24 12:15:46 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.5 2010/06/24 07:54:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.6 2010/06/24 12:15:46 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -318,9 +318,8 @@ return EIO;
 /* --------------------------------------------------------------------- */
 
 /*
- * `Special' bmap functionality that translates all incomming requests to
- * translate to vop_strategy() calls with the same blocknumbers effectively
- * not translating at all.
+ * bmap functionality that translates logical block numbers to the virtual
+ * block numbers to be stored on the vnode itself.
  */
 
 int
@@ -339,23 +338,51 @@ nilfs_trivial_bmap(void *v)
 	daddr_t  bn   = ap->a_bn;	/* origional	*/
 	int     *runp = ap->a_runp;
 	struct nilfs_node *node = VTOI(vp);
+	uint64_t *l2vmap;
 	uint32_t blocksize;
+	int blks, run, error;
 
 	DPRINTF(TRANSLATE, ("nilfs_bmap() called\n"));
 	/* XXX could return `-1' to indicate holes/zero's */
 
 	blocksize = node->nilfsdev->blocksize;
+	blks = MAXPHYS / blocksize;
 
-	/* translate 1:1 */
-	*bnp = bn;
+	/* get mapping memory */
+	l2vmap = malloc(sizeof(uint64_t) * blks, M_TEMP, M_WAITOK);
+
+	/* get virtual block numbers for the vnode's buffer span */
+	error = nilfs_btree_nlookup(node, bn, blks, l2vmap);
+	if (error) {
+		free(l2vmap, M_TEMP);
+		return error;
+	}
+
+	/* store virtual blocks on our own vp */
 	if (vpp)
 		*vpp = vp;
 
-	/* set runlength to maximum */
+	/* start at virt[0] */
+	*bnp = l2vmap[0];
+
+	/* get runlength */
+	run = 1;
+	while ((run < blks) && (l2vmap[run] == *bnp + run))
+		run++;
+	
+	/* set runlength */
 	if (runp)
-		*runp = MAXPHYS / blocksize;
+		*runp = run;
+
+	DPRINTF(TRANSLATE, ("\tstart %"PRIu64" -> %"PRIu64" run %d\n",
+		bn, *bnp, run));
+
+	/* mark not translated on virtual block number 0 */
+	if (*bnp == 0)
+		*bnp = -1;
 
 	/* return success */
+	free(l2vmap, M_TEMP);
 	return 0;
 }
 
@@ -395,9 +422,8 @@ nilfs_read_filebuf(struct nilfs_node *node, struct buf *bp)
 	v2pmap = malloc(sizeof(uint64_t) * blks, M_TEMP, M_WAITOK);
 
 	/* get virtual block numbers for the vnode's buffer span */
-	error = nilfs_btree_nlookup(node, from, blks, l2vmap);
-	if (error)
-		goto out;
+	for (i = 0; i < blks; i++)
+		l2vmap[i] = from + i;
 
 	/* translate virtual block numbers to physical block numbers */
 	error = nilfs_nvtop(node, blks, l2vmap, v2pmap);
