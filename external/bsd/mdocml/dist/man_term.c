@@ -1,6 +1,6 @@
-/*	$Vendor-Id: man_term.c,v 1.73 2010/06/07 20:57:09 kristaps Exp $ */
+/*	$Vendor-Id: man_term.c,v 1.76 2010/06/19 20:46:28 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@kth.se>
+ * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -73,9 +73,9 @@ struct	termact {
 static	int		  a2width(const struct man_node *);
 static	int		  a2height(const struct man_node *);
 
-static	void		  print_man_head(struct termp *, const void *);
 static	void		  print_man_nodelist(DECL_ARGS);
 static	void		  print_man_node(DECL_ARGS);
+static	void		  print_man_head(struct termp *, const void *);
 static	void		  print_man_foot(struct termp *, const void *);
 static	void		  print_bvspace(struct termp *, 
 				const struct man_node *);
@@ -158,6 +158,7 @@ terminal_man(void *arg, const struct man *man)
 
 	p->overstep = 0;
 	p->maxrmargin = p->defrmargin;
+	p->tabwidth = 5;
 
 	if (NULL == p->symtab)
 		switch (p->enc) {
@@ -172,7 +173,7 @@ terminal_man(void *arg, const struct man *man)
 	n = man_node(man);
 	m = man_meta(man);
 
-	term_begin(p, print_man_head, print_man_foot, man_meta(man));
+	term_begin(p, print_man_head, print_man_foot, m);
 	p->flags |= TERMP_NOSPACE;
 
 	mt.fl = 0;
