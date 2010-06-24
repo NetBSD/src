@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.80 2010/03/15 09:20:10 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.81 2010/06/24 13:03:20 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.80 2010/03/15 09:20:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.81 2010/06/24 13:03:20 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -168,7 +168,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	fstrans_done(transmp);
 	return (error);
 }

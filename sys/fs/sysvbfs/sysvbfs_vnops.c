@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.30 2010/05/27 23:40:12 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.31 2010/06/24 13:03:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.30 2010/05/27 23:40:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.31 2010/06/24 13:03:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -630,7 +630,7 @@ sysvbfs_inactive(void *arg)
 		*a->a_recycle = true;
 	else
 		*a->a_recycle = false;
-	VOP_UNLOCK(v, 0);
+	VOP_UNLOCK(v);
 
 	return 0;
 }

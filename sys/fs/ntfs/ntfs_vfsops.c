@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.80 2010/01/08 11:35:08 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.81 2010/06/24 13:03:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.80 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.81 2010/06/24 13:03:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ ntfs_mount (
 		if (err) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, flags, NOCRED);
-			VOP_UNLOCK(devvp, 0);
+			VOP_UNLOCK(devvp);
 			goto fail;
 		}
 	}
@@ -315,7 +315,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -539,7 +539,7 @@ ntfs_unmount(
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED);
 	KASSERT(error == 0);
-	VOP_UNLOCK(ntmp->ntm_devvp, 0);
+	VOP_UNLOCK(ntmp->ntm_devvp);
 
 	vrele(ntmp->ntm_devvp);
 

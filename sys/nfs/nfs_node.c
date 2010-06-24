@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.110 2009/03/15 17:20:10 cegger Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.111 2010/06/24 13:03:17 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.110 2009/03/15 17:20:10 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.111 2010/06/24 13:03:17 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -268,7 +268,7 @@ nfs_inactive(void *v)
 		nfs_invaldircache(vp,
 		    NFS_INVALDIRCACHE_FORCE | NFS_INVALDIRCACHE_KEEPEOF);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	if (sp != NULL) {
 		workqueue_enqueue(nfs_sillyworkq, &sp->s_work, NULL);

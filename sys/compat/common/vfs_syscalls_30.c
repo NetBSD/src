@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.31 2010/03/03 08:20:38 he Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.32 2010/06/24 13:03:06 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.31 2010/03/03 08:20:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.32 2010/06/24 13:03:06 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -316,7 +316,7 @@ again:
 eof:
 	*retval = SCARG(uap, count) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);

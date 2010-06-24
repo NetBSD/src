@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.40 2010/06/06 08:01:31 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.41 2010/06/24 13:03:16 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.40 2010/06/06 08:01:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.41 2010/06/24 13:03:16 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,7 @@ layer_inactive(void *v)
 	 * like they do in the name lookup cache code.
 	 * That's too much work for now.
 	 */
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return (0);
 }

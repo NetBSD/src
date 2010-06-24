@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.98 2010/06/02 09:56:59 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.99 2010/06/24 13:03:19 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.98 2010/06/02 09:56:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.99 2010/06/24 13:03:19 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -237,7 +237,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	error = VOP_FSYNC(vp, l->l_cred, FSYNC_WAIT, 0, 0);
 	if (error)
 		goto out;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	/*
 	 * All allocations are done, so we can now suspend the filesystem.
 	 */
@@ -1686,7 +1686,7 @@ ffs_snapshot_mount(struct mount *mp)
 		else
 			TAILQ_INSERT_TAIL(&si->si_snapshots, ip, i_nextsnap);
 		vp->v_vflag |= VV_SYSTEM;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 	/*
 	 * No usable snapshots found.
