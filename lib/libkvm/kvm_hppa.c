@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_hppa.c,v 1.4 2010/06/24 20:42:24 skrll Exp $	*/
+/*	$NetBSD: kvm_hppa.c,v 1.5 2010/06/24 20:46:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_hppa.c,v 1.4 2010/06/24 20:42:24 skrll Exp $");
+__RCSID("$NetBSD: kvm_hppa.c,v 1.5 2010/06/24 20:46:11 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,7 +108,7 @@ _kvm_kvatop(kvm_t *kd, u_long va, u_long *pa)
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
-		return (0);
+		return 0;
 	}
 
 	_kvm_syserr(kd, 0, "could not read PTE");
