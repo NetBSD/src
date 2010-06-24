@@ -1,4 +1,4 @@
-.\" $NetBSD: sigevent.3,v 1.7 2010/06/15 06:36:08 wiz Exp $
+.\" $NetBSD: sigevent.3,v 1.8 2010/06/24 04:21:58 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\"
@@ -23,7 +23,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 15, 2010
+.Dd June 24, 2010
 .Dt SIGEVENT 3
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ The possiblue values are:
 .It Dv SIGEV_NONE
 This constant specifies a
 .Dq null
-handler; when a notification arrives, nothing happens.
+handler: when a notification arrives, nothing happens.
 .It Dv SIGEV_SIGNAL
 The
 .Dv SIGEV_SIGNAL
@@ -156,8 +156,8 @@ to set
 It is not valid to call
 .Xr pthread_join 3
 in either case.
-Hence, it is also impossible to determine the lifetime of the created thread.
-This in turn means that it is neither possibly to recovery the memory nor
+Hence, it is impossible to determine the lifetime of the created thread.
+This in turn means that it is neither possible to recover the memory nor
 the address of the memory possibly dedicated as thread stack via
 .Fn pthread_attr_setstack
 or
