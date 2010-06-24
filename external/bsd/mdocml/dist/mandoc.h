@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.h,v 1.10 2010/06/03 13:44:36 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.h,v 1.12 2010/06/12 11:41:50 kristaps Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,7 +36,9 @@ enum	mandocerr {
 	MANDOCERR_BADESCAPE, /* bad escape sequence */
 	MANDOCERR_BADQUOTE, /* unterminated quoted string */
 	MANDOCERR_NOWIDTHARG, /* argument requires the width argument */
+	/* FIXME: merge with MANDOCERR_IGNARGV. */
 	MANDOCERR_WIDTHARG, /* superfluous width argument */
+	MANDOCERR_IGNARGV, /* macro ignoring argv */
 	MANDOCERR_BADDATE, /* bad date argument */
 	MANDOCERR_BADWIDTH, /* bad width argument */
 	MANDOCERR_BADMSEC, /* unknown manual section */
@@ -74,6 +76,7 @@ enum	mandocerr {
 	MANDOCERR_NOARGV, /* macro requires argument(s) */
 	MANDOCERR_NOTITLE, /* no title in document */
 	MANDOCERR_LISTTYPE, /* missing list type */
+	MANDOCERR_DISPTYPE, /* missing display type */
 	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
 	MANDOCERR_BODYLOST, /* body argument(s) will be lost */
 #define	MANDOCERR_ERROR		MANDOCERR_BODYLOST
@@ -82,9 +85,8 @@ enum	mandocerr {
 	/* FIXME: this should be a MANDOCERR_ERROR */
 	MANDOCERR_FONTTYPE, /* missing font type */
 	/* FIXME: this should be a MANDOCERR_ERROR */
-	MANDOCERR_DISPTYPE, /* missing display type */
-	/* FIXME: this should be a MANDOCERR_ERROR */
 	MANDOCERR_NESTEDDISP, /* displays may not be nested */
+	MANDOCERR_BADDISP, /* unsupported display type */
 	MANDOCERR_SYNTNOSCOPE, /* request scope close w/none open */
 	MANDOCERR_SYNTSCOPE, /* scope broken, syntax violated */
 	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
