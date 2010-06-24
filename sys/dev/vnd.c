@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.209 2010/06/24 13:03:08 hannken Exp $	*/
+/*	$NetBSD: vnd.c,v 1.210 2010/06/24 21:20:23 riz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.209 2010/06/24 13:03:08 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.210 2010/06/24 21:20:23 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -254,6 +254,8 @@ extern struct cfdriver vnd_cd;
 static struct vnd_softc	*vnd_spawn(int);
 int	vnd_destroy(device_t);
 
+static struct	dkdriver vnddkdriver = { vndstrategy, minphys };
+
 void
 vndattach(int num)
 {
@@ -282,7 +284,7 @@ vnd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_comp_buff = NULL;
 	sc->sc_comp_decombuf = NULL;
 	bufq_alloc(&sc->sc_tab, "disksort", BUFQ_SORT_RAWBLOCK);
-	disk_init(&sc->sc_dkdev, device_xname(self), NULL);
+	disk_init(&sc->sc_dkdev, device_xname(self), &vnddkdriver);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
@@ -1019,6 +1021,8 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
+	struct dkwedge_info *dkw;
+	struct dkwedge_list *dkwl;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -1500,6 +1504,33 @@ unlock_and_exit:
 		    FSYNC_WAIT | FSYNC_DATAONLY | FSYNC_CACHE, 0, 0);
 		VOP_UNLOCK(vnd->sc_vp);
 		return error;
+
+	case DIOCAWEDGE:
+		dkw = (void *) data;
+
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		/* If the ioctl happens here, the parent is us. */
+		strlcpy(dkw->dkw_parent, device_xname(vnd->sc_dev),
+		    sizeof(dkw->dkw_parent));
+		return dkwedge_add(dkw);
+
+	case DIOCDWEDGE:
+		dkw = (void *) data;
+
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+
+		/* If the ioctl happens here, the parent is us. */
+		strlcpy(dkw->dkw_parent, device_xname(vnd->sc_dev),
+		    sizeof(dkw->dkw_parent));
+		return dkwedge_del(dkw);
+
+	case DIOCLWEDGES:
+		dkwl = (void *) data;
+
+		return dkwedge_list(&vnd->sc_dkdev, dkwl, l);
 
 	default:
 		return ENOTTY;
