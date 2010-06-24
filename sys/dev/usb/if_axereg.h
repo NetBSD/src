@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axereg.h,v 1.8 2010/06/23 19:00:26 pgoyette Exp $	*/
+/*	$NetBSD: if_axereg.h,v 1.9 2010/06/24 14:41:31 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -221,7 +221,6 @@ struct axe_softc {
 	char			axe_attached;
 
 	struct usb_task		axe_tick_task;
-	struct usb_task		axe_stop_task;
 
 	kmutex_t		axe_mii_lock;
 
