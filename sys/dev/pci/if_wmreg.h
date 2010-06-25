@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.40 2010/03/07 09:05:19 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.41 2010/06/25 03:47:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -231,7 +231,7 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_PCIXSPD_66_100  STATUS_PCIXSPD(1)
 #define	STATUS_PCIXSPD_100_133 STATUS_PCIXSPD(2)
 #define	STATUS_PCIXSPD_MASK    STATUS_PCIXSPD(3)
-#define	STATUS_GIO_M_ENA (1U << 16)	/* PCIX master enable */
+#define	STATUS_GIO_M_ENA (1U << 19)	/* GIO master enable */
 
 #define	WMREG_EECD	0x0010	/* EEPROM Control Register */
 #define	EECD_SK		(1U << 0)	/* clock */
