@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.58 2010/06/02 03:38:01 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.59 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -249,6 +249,8 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 {
 	__ops_keyring_t	*pubring;
 	__ops_keyring_t	*secring;
+	unsigned	 hashtype;
+	char		*hash;
 	char		 f[MAXPATHLEN];
 	char		*filename;
 
@@ -260,7 +262,19 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 		(void) fprintf(stderr, "readsshkeys: bad alloc\n");
 		return 0;
 	}
-	if (!__ops_ssh2_readkeys(netpgp->io, pubring, NULL, filename, NULL)) {
+	/* openssh2 keys use md5 by default */
+	hashtype = OPS_HASH_MD5;
+	if ((hash = netpgp_getvar(netpgp, "hash")) != NULL) {
+		/* openssh 2 hasn't really caught up to anything else yet */
+		if (strcasecmp(hash, "md5") == 0) {
+			hashtype = OPS_HASH_MD5;
+		} else if (strcasecmp(hash, "sha1") == 0) {
+			hashtype = OPS_HASH_SHA1;
+		} else if (strcasecmp(hash, "sha256") == 0) {
+			hashtype = OPS_HASH_SHA256;
+		}
+	}
+	if (!__ops_ssh2_readkeys(netpgp->io, pubring, NULL, filename, NULL, hashtype)) {
 		free(pubring);
 		(void) fprintf(stderr, "readsshkeys: can't read %s\n",
 				filename);
@@ -284,7 +298,7 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 		(void) fprintf(stderr, "readsshkeys: bad alloc\n");
 		return 0;
 	}
-	if (__ops_ssh2_readkeys(netpgp->io, pubring, secring, NULL, filename)) {
+	if (__ops_ssh2_readkeys(netpgp->io, pubring, secring, NULL, filename, hashtype)) {
 		netpgp->secring = secring;
 		netpgp_setvar(netpgp, "sshsecfile", filename);
 	} else {

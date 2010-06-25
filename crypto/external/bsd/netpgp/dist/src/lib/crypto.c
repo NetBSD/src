@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.23 2010/05/16 02:46:25 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.24 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -109,9 +109,7 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "\nDECRYPTING\nencrypted data     : ");
-		hexdump(stderr, encmpibuf, 16, " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "encrypted", encmpibuf, 16);
 	}
 	n = __ops_rsa_private_decrypt(mpibuf, encmpibuf,
 				(unsigned)(BN_num_bits(encmpi) + 7) / 8,
@@ -122,21 +120,13 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "decrypted encoded m buf     : ");
-		hexdump(stderr, mpibuf, 16, " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "decrypted", mpibuf, 16);
 	}
 	if (n <= 0) {
 		return -1;
 	}
 
-	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, " decrypted=%d ", n);
-		hexdump(stderr, mpibuf, (unsigned)n, "");
-		fprintf(stderr, "\n");
-	}
 	/* Decode EME-PKCS1_V1_5 (RFC 2437). */
-
 	if (mpibuf[0] != 0 || mpibuf[1] != 2) {
 		return -1;
 	}
@@ -158,9 +148,7 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "decoded m buf:\n");
-		hexdump(stderr, buf, (size_t)(n - i), " ");
-		fprintf(stderr, "\n");
+		hexdump(stderr, "decoded m", buf, (size_t)(n - i));
 	}
 	return n - i;
 }
@@ -197,9 +185,7 @@ __ops_rsa_encrypt_mpi(const uint8_t *encoded_m_buf,
 	skp->rsa.encrypted_m = BN_bin2bn(encmpibuf, n, NULL);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "encrypted mpi buf     : ");
-		hexdump(stderr, encmpibuf, 16, " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "encrypted mpi", encmpibuf, 16);
 	}
 	return 1;
 }

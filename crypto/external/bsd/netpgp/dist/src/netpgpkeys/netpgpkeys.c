@@ -46,6 +46,8 @@
  */
 #define DEFAULT_NUMBITS 2048
 
+#define DEFAULT_HASH_ALG "SHA256"
+
 static const char *usage =
 	" --help OR\n"
 	"\t--export-keys [options] OR\n"
@@ -58,6 +60,7 @@ static const char *usage =
 	"\t--version\n"
 	"where options are:\n"
 	"\t[--coredumps] AND/OR\n"
+	"\t[--hash=<hash alg>] AND/OR\n"
 	"\t[--homedir=<homedir>] AND/OR\n"
 	"\t[--keyring=<keyring>] AND/OR\n"
 	"\t[--userid=<userid>] AND/OR\n"
@@ -81,6 +84,7 @@ enum optdefs {
 	USERID,
 	HOMEDIR,
 	NUMBITS,
+	HASH_ALG,
 	VERBOSE,
 	COREDUMPS,
 	PASSWDFD,
@@ -111,6 +115,9 @@ static struct option options[] = {
 	{"coredumps",	no_argument, 		NULL,	COREDUMPS},
 	{"keyring",	required_argument, 	NULL,	KEYRING},
 	{"userid",	required_argument, 	NULL,	USERID},
+	{"hash-alg",	required_argument, 	NULL,	HASH_ALG},
+	{"hash",	required_argument, 	NULL,	HASH_ALG},
+	{"algorithm",	required_argument, 	NULL,	HASH_ALG},
 	{"home",	required_argument, 	NULL,	HOMEDIR},
 	{"homedir",	required_argument, 	NULL,	HOMEDIR},
 	{"numbits",	required_argument, 	NULL,	NUMBITS},
@@ -206,6 +213,7 @@ main(int argc, char **argv)
 	netpgp_set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
 	netpgp_setvar(&netpgp, "sshkeydir", "/etc/ssh");
 	netpgp_setvar(&netpgp, "res", "<stdout>");
+	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
@@ -274,6 +282,14 @@ main(int argc, char **argv)
 				exit(EXIT_ERROR);
 			}
 			p.numbits = atoi(optarg);
+			break;
+		case HASH_ALG:
+			if (optarg == NULL) {
+				(void) fprintf(stderr,
+				"No hash algorithm argument provided\n");
+				exit(EXIT_ERROR);
+			}
+			netpgp_setvar(&netpgp, "hash", optarg);
 			break;
 		case PASSWDFD:
 			if (optarg == NULL) {

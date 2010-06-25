@@ -32,10 +32,10 @@
 #include "keyring.h"
 #include "types.h"
 
-int __ops_ssh2pubkey(__ops_io_t *, const char *, __ops_key_t *);
-int __ops_ssh2seckey(__ops_io_t *, const char *, __ops_key_t *, __ops_pubkey_t *);
+int __ops_ssh2pubkey(__ops_io_t *, const char *, __ops_key_t *, __ops_hash_alg_t);
+int __ops_ssh2seckey(__ops_io_t *, const char *, __ops_key_t *, __ops_pubkey_t *, __ops_hash_alg_t);
 
 int __ops_ssh2_readkeys(__ops_io_t *, __ops_keyring_t *, __ops_keyring_t *,
-		const char *, const char *);
+		const char *, const char *, unsigned);
 
 #endif

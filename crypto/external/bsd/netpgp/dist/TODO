@@ -95,3 +95,4 @@ add revocation information to public key display
 --list-sigs - these come out in __ops_check_subkey_sig()
 hkp to include sigs too
 make netpgpkeys work - add, import, commit, update, sign, passphrase
+fix ssh fingerprints not matching netpgp

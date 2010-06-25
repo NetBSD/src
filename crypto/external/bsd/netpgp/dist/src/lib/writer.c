@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.23 2010/05/25 01:05:11 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.24 2010/06/25 03:37:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -955,11 +955,8 @@ encrypt_writer(const uint8_t *src,
 					src + done, size);
 
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "WRITING:\nunencrypted: ");
-			hexdump(stderr, &src[done], 16, " ");
-			(void) fprintf(stderr, "\nencrypted:   ");
-			hexdump(stderr, encbuf, 16, " ");
-			(void) fprintf(stderr, "\n");
+			hexdump(stderr, "unencrypted", &src[done], 16);
+			hexdump(stderr, "encrypted", encbuf, 16);
 		}
 		if (!stacked_write(writer, encbuf, size, errors)) {
 			if (__ops_get_debug_level(__FILE__)) {
@@ -1165,9 +1162,7 @@ __ops_write_se_ip_pktset(__ops_output_t *output,
 	preamble[crypted->blocksize + 1] = preamble[crypted->blocksize - 1];
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "\npreamble: ");
-		hexdump(stderr, preamble, preamblesize, " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "preamble", preamble, preamblesize);
 	}
 
 	/* now construct MDC packet and add to the end of the buffer */
@@ -1176,11 +1171,8 @@ __ops_write_se_ip_pktset(__ops_output_t *output,
 	__ops_write_mdc(mdcoutput, hashed);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "\nplaintext: ");
-		hexdump(stderr, data, len, " ");
-		(void) fprintf(stderr, "\nmdc: ");
-		hexdump(stderr, __ops_mem_data(mdc), OPS_SHA1_HASH_SIZE + 1 + 1, " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "plaintext", data, len);
+		hexdump(stderr, "mdc", __ops_mem_data(mdc), OPS_SHA1_HASH_SIZE + 1 + 1);
 	}
 
 	/* and write it out */

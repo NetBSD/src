@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.23 2010/05/25 01:05:10 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.24 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -538,9 +538,7 @@ __ops_dsa_verify(const uint8_t *hash, size_t hash_length,
 	odsa->pub_key = dsa->y;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "hash passed in:\n");
-		hexdump(stderr, hash, hash_length, " ");
-		(void) fprintf(stderr, "\nhash_length=%" PRIsize "d\n", hash_length);
+		hexdump(stderr, "input hash", hash, hash_length);
 		(void) fprintf(stderr, "Q=%d\n", BN_num_bytes(odsa->q));
 	}
 	if ((qlen = (unsigned)BN_num_bytes(odsa->q)) < hash_length) {
@@ -823,8 +821,8 @@ rsa_generate_keypair(__ops_key_t *keydata,
 
 	RSA_free(rsa);
 
-	__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, &keydata->key.seckey.pubkey);
-	__ops_fingerprint(&keydata->fingerprint, &keydata->key.seckey.pubkey);
+	__ops_keyid(keydata->key_id, OPS_KEY_ID_SIZE, &keydata->key.seckey.pubkey, seckey->hash_alg);
+	__ops_fingerprint(&keydata->fingerprint, &keydata->key.seckey.pubkey, seckey->hash_alg);
 
 	/* Generate checksum */
 
