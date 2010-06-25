@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.30 2009/10/20 14:49:03 jmcneill Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.31 2010/06/25 15:35:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -509,7 +509,7 @@ biosdisk_close(struct open_file *f)
 
 	/* let the floppy drive go off */
 	if (d->ll.type == BIOSDISK_TYPE_FD)
-		delay(3000000);	/* 2s is enough on all PCs I found */
+		wait_sec(3);	/* 2s is enough on all PCs I found */
 
 	dealloc(d, sizeof(struct biosdisk));
 	f->f_devdata = NULL;
