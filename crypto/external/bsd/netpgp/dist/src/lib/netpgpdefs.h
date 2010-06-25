@@ -47,7 +47,7 @@
 /* number of elements in an array */
 #define OPS_ARRAY_SIZE(a)       (sizeof(a)/sizeof(*(a)))
 
-void            hexdump(FILE *, const uint8_t *, size_t, const char *);
+void            hexdump(FILE *, const char *, const uint8_t *, size_t);
 
 const char     *__ops_str_from_map(int, __ops_map_t *);
 

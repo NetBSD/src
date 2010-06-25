@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.30 2010/05/25 01:05:10 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.31 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ __RCSID("$NetBSD: misc.c,v 1.30 2010/05/25 01:05:10 agc Exp $");
 
 
 typedef struct {
-	__ops_keyring_t  *keyring;
+	__ops_keyring_t		*keyring;
 } accumulate_t;
 
 /**
@@ -402,6 +402,60 @@ __ops_free_errors(__ops_error_t *errstack)
 	}
 }
 
+/* hash a 32-bit integer */
+static int
+hash_uint32(__ops_hash_t *hash, uint32_t n)
+{
+	uint8_t	ibuf[4];
+
+	ibuf[0] = (uint8_t)(n >> 24) & 0xff;
+	ibuf[1] = (uint8_t)(n >> 16) & 0xff;
+	ibuf[2] = (uint8_t)(n >> 8) & 0xff;
+	ibuf[3] = (uint8_t)n & 0xff;
+	(*hash->add)(hash, (const uint8_t *)(void *)ibuf, sizeof(ibuf));
+	return sizeof(ibuf);
+}
+
+/* hash a string - first length, then string itself */
+static int
+hash_string(__ops_hash_t *hash, const uint8_t *buf, uint32_t len)
+{
+	if (__ops_get_debug_level(__FILE__)) {
+		hexdump(stderr, "hash_string", buf, len);
+	}
+	hash_uint32(hash, len);
+	(*hash->add)(hash, buf, len);
+	return sizeof(len) + (int)len;
+}
+
+/* hash a bignum, possibly padded - first length, then string itself */
+static int
+hash_bignum(__ops_hash_t *hash, BIGNUM *bignum)
+{
+	uint8_t	*bn;
+	size_t	 len;
+	int	 padbyte;
+
+	if (BN_is_zero(bignum)) {
+		hash_uint32(hash, 0);
+		return sizeof(len);
+	}
+	if ((len = (size_t) BN_num_bytes(bignum)) < 1) {
+		(void) fprintf(stderr, "hash_bignum: bad size\n");
+		return 0;
+	}
+	if ((bn = calloc(1, len)) == NULL) {
+		(void) fprintf(stderr, "hash_bignum: bad bn alloc\n");
+		return 0;
+	}
+	BN_bn2bin(bignum, bn + 1);
+	bn[0] = 0x0;
+	padbyte = (bn[1] & 0x80) ? 1 : 0;
+	hash_string(hash, bn + 1 - padbyte, len + padbyte);
+	free(bn);
+	return sizeof(len) + len + padbyte;
+}
+
 /** \file
  */
 
@@ -411,83 +465,81 @@ __ops_free_errors(__ops_error_t *errstack)
  * \param fp Where to put the calculated fingerprint
  * \param key The key for which the fingerprint is calculated
  */
-
-void 
-__ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
+int 
+__ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key, __ops_hash_alg_t hashtype)
 {
-	if (key->version == 2 || key->version == 3) {
-		unsigned char  *bn;
-		size_t		n;
-		__ops_hash_t	md5;
+	__ops_memory_t	*mem;
+	__ops_hash_t	 hash;
+	const char	*type;
+	uint32_t	 len;
 
+	mem = __ops_memory_new();
+	if (key->version == 2 || key->version == 3) {
 		if (key->alg != OPS_PKA_RSA &&
 		    key->alg != OPS_PKA_RSA_ENCRYPT_ONLY &&
 		    key->alg != OPS_PKA_RSA_SIGN_ONLY) {
 			(void) fprintf(stderr,
 				"__ops_fingerprint: bad algorithm\n");
-			return;
+			return 0;
 		}
-
-		__ops_hash_md5(&md5);
-		if (!md5.init(&md5)) {
+		__ops_hash_md5(&hash);
+		if (!hash.init(&hash)) {
 			(void) fprintf(stderr,
 				"__ops_fingerprint: bad md5 alloc\n");
-				return;
+			return 0;
 		}
-
-		n = (size_t) BN_num_bytes(key->key.rsa.n);
-		if ((bn = calloc(1, n)) == NULL) {
-			(void) fprintf(stderr,
-				"__ops_fingerprint: bad bn alloc\n");
-			return;
-		}
-		BN_bn2bin(key->key.rsa.n, bn);
-		md5.add(&md5, bn, n);
-		free(bn);
-
-		n = (size_t) BN_num_bytes(key->key.rsa.e);
-		if ((bn = calloc(1, n)) == NULL) {
-			(void) fprintf(stderr,
-				"__ops_fingerprint: bad bn alloc 2\n");
-			return;
-		}
-		BN_bn2bin(key->key.rsa.e, bn);
-		md5.add(&md5, bn, n);
-		free(bn);
-
-		md5.finish(&md5, fp->fingerprint);
-		fp->length = 16;
-	} else {
-		__ops_memory_t	*mem = __ops_memory_new();
-		__ops_hash_t	 sha1;
-		size_t		 len;
-
-		__ops_build_pubkey(mem, key, 0);
-
+		hash_bignum(&hash, key->key.rsa.n);
+		hash_bignum(&hash, key->key.rsa.e);
+		fp->length = hash.finish(&hash, fp->fingerprint);
 		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "-> creating key fingerprint\n");
+			hexdump(stderr, "v2/v3 fingerprint", fp->fingerprint, fp->length);
 		}
-		__ops_hash_sha1(&sha1);
-		if (!sha1.init(&sha1)) {
+	} else if (hashtype == OPS_HASH_MD5) {
+		__ops_hash_md5(&hash);
+		if (!hash.init(&hash)) {
+			(void) fprintf(stderr,
+				"__ops_fingerprint: bad md5 alloc\n");
+			return 0;
+		}
+		type = (key->alg == OPS_PKA_RSA) ? "ssh-rsa" : "ssh-dsa";
+		hash_string(&hash, (const uint8_t *)(const void *)type, strlen(type));
+		switch(key->alg) {
+		case OPS_PKA_RSA:
+			hash_bignum(&hash, key->key.rsa.e);
+			hash_bignum(&hash, key->key.rsa.n);
+			break;
+		case OPS_PKA_DSA:
+			hash_bignum(&hash, key->key.dsa.p);
+			hash_bignum(&hash, key->key.dsa.q);
+			hash_bignum(&hash, key->key.dsa.g);
+			hash_bignum(&hash, key->key.dsa.y);
+			break;
+		default:
+			break;
+		}
+		fp->length = hash.finish(&hash, fp->fingerprint);
+		if (__ops_get_debug_level(__FILE__)) {
+			hexdump(stderr, "md5 fingerprint", fp->fingerprint, fp->length);
+		}
+	} else {
+		__ops_build_pubkey(mem, key, 0);
+		__ops_hash_sha1(&hash);
+		if (!hash.init(&hash)) {
 			(void) fprintf(stderr,
 				"__ops_fingerprint: bad sha1 alloc\n");
-			return;
+			return 0;
 		}
-
 		len = __ops_mem_len(mem);
-
-		__ops_hash_add_int(&sha1, 0x99, 1);
-		__ops_hash_add_int(&sha1, len, 2);
-		sha1.add(&sha1, __ops_mem_data(mem), len);
-		sha1.finish(&sha1, fp->fingerprint);
-
-		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "<- finished making key fingerprint\n");
-		}
-		fp->length = OPS_FINGERPRINT_SIZE;
-
+		__ops_hash_add_int(&hash, 0x99, 1);
+		__ops_hash_add_int(&hash, len, 2);
+		hash.add(&hash, __ops_mem_data(mem), len);
+		fp->length = hash.finish(&hash, fp->fingerprint);
 		__ops_memory_free(mem);
+		if (__ops_get_debug_level(__FILE__)) {
+			hexdump(stderr, "sha1 fingerprint", fp->fingerprint, fp->length);
+		}
 	}
+	return 1;
 }
 
 /**
@@ -497,8 +549,8 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key)
  * \param key The key for which the ID is calculated
  */
 
-void 
-__ops_keyid(uint8_t *keyid, const size_t idlen, const __ops_pubkey_t *key)
+int 
+__ops_keyid(uint8_t *keyid, const size_t idlen, const __ops_pubkey_t *key, __ops_hash_alg_t hashtype)
 {
 	__ops_fingerprint_t finger;
 
@@ -509,22 +561,23 @@ __ops_keyid(uint8_t *keyid, const size_t idlen, const __ops_pubkey_t *key)
 		n = (unsigned) BN_num_bytes(key->key.rsa.n);
 		if (n > sizeof(bn)) {
 			(void) fprintf(stderr, "__ops_keyid: bad num bytes\n");
-			return;
+			return 0;
 		}
 		if (key->alg != OPS_PKA_RSA &&
 		    key->alg != OPS_PKA_RSA_ENCRYPT_ONLY &&
 		    key->alg != OPS_PKA_RSA_SIGN_ONLY) {
 			(void) fprintf(stderr, "__ops_keyid: bad algorithm\n");
-			return;
+			return 0;
 		}
 		BN_bn2bin(key->key.rsa.n, bn);
 		(void) memcpy(keyid, bn + n - idlen, idlen);
 	} else {
-		__ops_fingerprint(&finger, key);
+		__ops_fingerprint(&finger, key, hashtype);
 		(void) memcpy(keyid,
 				finger.fingerprint + finger.length - idlen,
 				idlen);
 	}
+	return 1;
 }
 
 /**
@@ -698,11 +751,8 @@ __ops_calc_mdc_hash(const uint8_t *preamble,
 	uint8_t		c;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "__ops_calc_mdc_hash():\npreamble: ");
-		hexdump(stderr, preamble, sz_preamble, " ");
-		(void) fprintf(stderr, "\nplaintext (len=%u): ", sz_plaintext);
-		hexdump(stderr, plaintext, sz_plaintext, " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "preamble", preamble, sz_preamble);
+		hexdump(stderr, "plaintext", plaintext, sz_plaintext);
 	}
 	/* init */
 	__ops_hash_any(&hash, OPS_HASH_SHA1);
@@ -727,9 +777,7 @@ __ops_calc_mdc_hash(const uint8_t *preamble,
 	hash.finish(&hash, hashed);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "\nhashed (len=%d): ", OPS_SHA1_HASH_SIZE);
-		hexdump(stderr, hashed, OPS_SHA1_HASH_SIZE, " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "hashed", hashed, OPS_SHA1_HASH_SIZE);
 	}
 }
 
@@ -1041,14 +1089,35 @@ __ops_str_from_map(int type, __ops_map_t *map)
 	return (str) ? str : "Unknown";
 }
 
-void 
-hexdump(FILE *fp, const uint8_t *src, size_t length, const char *sep)
-{
-	unsigned i;
+#define LINELEN	16
 
-	for (i = 0 ; i < length ; i += 2) {
-		(void) fprintf(fp, "%02x", *src++);
-		(void) fprintf(fp, "%02x%s", *src++, sep);
+/* show hexadecimal/ascii dump */
+void 
+hexdump(FILE *fp, const char *header, const uint8_t *src, size_t length)
+{
+	size_t	i;
+	char	line[LINELEN + 1];
+
+	(void) fprintf(fp, "%s%s", (header) ? header : "", (header) ? "\n" : "");
+	(void) fprintf(fp, "[%d chars]\n", length);
+	for (i = 0 ; i < length ; i++) {
+		if (i % LINELEN == 0) {
+			(void) fprintf(fp, "%.5d | ", i);
+		}
+		(void) fprintf(fp, "%.02x ", (uint8_t)src[i]);
+		line[i % LINELEN] = (isprint(src[i])) ? src[i] : '.';
+		if (i % LINELEN == LINELEN - 1) {
+			line[LINELEN] = 0x0;
+			(void) fprintf(fp, " | %s\n", line);
+		}
+	}
+	if (i % LINELEN != 0) {
+		for ( ; i % LINELEN != 0 ; i++) {
+			(void) fprintf(fp, "   ");
+			line[i % LINELEN] = ' ';
+		}
+		line[LINELEN] = 0x0;
+		(void) fprintf(fp, " | %s\n", line);
 	}
 }
 

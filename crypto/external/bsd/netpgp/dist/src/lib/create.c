@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.28 2010/05/25 01:05:10 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.29 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -422,10 +422,8 @@ write_seckey_body(const __ops_seckey_t *key,
 	__ops_encrypt_init(&crypted);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "\nWRITING:\niv=");
-		hexdump(stderr, key->iv, __ops_block_size(key->alg), " ");
-		(void) fprintf(stderr, "\nkey=");
-		hexdump(stderr, sesskey, CAST_KEY_LENGTH, " ");
+		hexdump(stderr, "writing: iv=", key->iv, __ops_block_size(key->alg));
+		hexdump(stderr, "key= ", sesskey, CAST_KEY_LENGTH);
 		(void) fprintf(stderr, "\nturning encryption on...\n");
 	}
 	__ops_push_enc_crypt(output, &crypted);
@@ -838,9 +836,7 @@ __ops_calc_sesskey_checksum(__ops_pk_sesskey_t *sesskey, uint8_t cs[2])
 	cs[1] = (uint8_t)(checksum & 0xff);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr,"\nm buf checksum: ");
-		hexdump(stderr, cs, 2, " ");
-		(void) fprintf(stderr,"\n");
+		hexdump(stderr, "nm buf checksum:", cs, 2);
 	}
 	return 1;
 }
@@ -922,9 +918,7 @@ encode_m_buf(const uint8_t *M, size_t mLen, const __ops_pubkey_t * pubkey,
 	(void) memcpy(EM + i, M, mLen);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "Encoded Message: \n");
-		hexdump(stderr, EM, mLen, " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "Encoded Message:", EM, mLen);
 	}
 	return 1;
 }
@@ -984,9 +978,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 			sizeof(sesskey->key_id));
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "Encrypting for RSA key id : ");
-		hexdump(stderr, key->key_id, sizeof(sesskey->key_id), " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "Encrypting for RSA keyid", key->key_id, sizeof(sesskey->key_id));
 	}
 	if (key->key.pubkey.alg != OPS_PKA_RSA) {
 		(void) fprintf(stderr,
@@ -1002,11 +994,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 	__ops_random(sesskey->key, CAST_KEY_LENGTH);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr,
-			"CAST5 session key created (len=%d):\n ",
-			CAST_KEY_LENGTH);
-		hexdump(stderr, sesskey->key, CAST_KEY_LENGTH, " ");
-		(void) fprintf(stderr, "\n");
+		hexdump(stderr, "CAST5 sesskey created", sesskey->key, CAST_KEY_LENGTH);
 	}
 	if (create_unencoded_m_buf(sesskey, &unencoded_m_buf[0]) == 0) {
 		free(encoded_m_buf);
@@ -1014,9 +1002,7 @@ __ops_create_pk_sesskey(const __ops_key_t *key)
 		return NULL;
 	}
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "unencoded m buf:\n");
-		hexdump(stderr, unencoded_m_buf, SZ_UNENCODED_M_BUF, " ");
-		fprintf(stderr, "\n");
+		hexdump(stderr, "uuencoded m buf", unencoded_m_buf, SZ_UNENCODED_M_BUF);
 	}
 	encode_m_buf(unencoded_m_buf, SZ_UNENCODED_M_BUF, pubkey, encoded_m_buf);
 
@@ -1238,7 +1224,7 @@ __ops_write_one_pass_sig(__ops_output_t *output,
 {
 	uint8_t   keyid[OPS_KEY_ID_SIZE];
 
-	__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
+	__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey, OPS_HASH_SHA1); /* XXX - hardcoded */
 	return __ops_write_ptag(output, OPS_PTAG_CT_1_PASS_SIG) &&
 		__ops_write_length(output, 1 + 1 + 1 + 1 + 8 + 1) &&
 		__ops_write_scalar(output, 3, 1)	/* version */ &&

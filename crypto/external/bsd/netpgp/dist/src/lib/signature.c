@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: signature.c,v 1.28 2010/05/25 01:05:11 agc Exp $");
+__RCSID("$NetBSD: signature.c,v 1.29 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -335,15 +335,10 @@ rsa_verify(__ops_hash_alg_t type,
 	}
 
 	if (__ops_get_debug_level(__FILE__)) {
-		(void) fprintf(stderr, "\nhashbuf_from_sig\n");
-		hexdump(stderr, hashbuf_from_sig, debug_len_decrypted, " ");
-		printf("\nprefix\n");
-		hexdump(stderr, prefix, plen, " ");
-		(void) fprintf(stderr, "\nhash from sig\n");
-		hexdump(stderr, &hashbuf_from_sig[n + plen], hash_length, " ");
-		(void) fprintf(stderr, "\nhash passed in (should match hash from sig)\n");
-		hexdump(stderr, hash, hash_length, " ");
-		printf("\n");
+		hexdump(stderr, "sig hashbuf", hashbuf_from_sig, debug_len_decrypted);
+		hexdump(stderr, "prefix", prefix, plen);
+		hexdump(stderr, "sig hash", &hashbuf_from_sig[n + plen], hash_length);
+		hexdump(stderr, "input hash", hash, hash_length);
 	}
 	return (memcmp(&hashbuf_from_sig[n], prefix, plen) == 0 &&
 	        memcmp(&hashbuf_from_sig[n + plen], hash, hash_length) == 0);
@@ -419,8 +414,7 @@ __ops_check_sig(const uint8_t *hash, unsigned length,
 	unsigned   ret;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		printf("__ops_check_sig: (length %d) hash=", length);
-		hexdump(stdout, hash, length, "");
+		hexdump(stdout, "hash", hash, length);
 	}
 	ret = 0;
 	switch (sig->info.key_alg) {
@@ -1036,7 +1030,7 @@ __ops_sign_file(__ops_io_t *io,
 			return 0;
 		}
 
-		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
+		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
 		ret = __ops_add_issuer_keyid(sig, keyid) &&
 			__ops_end_hashed_subpkts(sig) &&
 			__ops_write_sig(output, sig, &seckey->pubkey, seckey);
@@ -1079,7 +1073,7 @@ __ops_sign_file(__ops_io_t *io,
 		__ops_add_birthtime(sig, (long long)from);
 		__ops_add_expiration(sig, (long long)duration);
 		/* add key id to signature */
-		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
+		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
 		__ops_add_issuer_keyid(sig, keyid);
 		__ops_end_hashed_subpkts(sig);
 		__ops_write_sig(output, sig, &seckey->pubkey, seckey);
@@ -1204,7 +1198,7 @@ __ops_sign_buf(__ops_io_t *io,
 		__ops_add_birthtime(sig, from);
 		__ops_add_expiration(sig, (long long)duration);
 		/* add key id to signature */
-		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey);
+		__ops_keyid(keyid, OPS_KEY_ID_SIZE, &seckey->pubkey, hash_alg);
 		__ops_add_issuer_keyid(sig, keyid);
 		__ops_end_hashed_subpkts(sig);
 
@@ -1230,15 +1224,15 @@ __ops_sign_detached(__ops_io_t *io,
 			const unsigned armored, const unsigned overwrite)
 {
 	__ops_create_sig_t	*sig;
-	__ops_hash_alg_t	 alg;
+	__ops_hash_alg_t	 hash_alg;
 	__ops_output_t		*output;
 	__ops_memory_t		*mem;
 	uint8_t	 	 	 keyid[OPS_KEY_ID_SIZE];
 	int			 fd;
 
 	/* find out which hash algorithm to use */
-	alg = __ops_str_to_hash_alg(hash);
-	if (alg == OPS_HASH_UNKNOWN) {
+	hash_alg = __ops_str_to_hash_alg(hash);
+	if (hash_alg == OPS_HASH_UNKNOWN) {
 		(void) fprintf(io->errs,"Unknown hash algorithm: %s\n", hash);
 		return 0;
 	}
@@ -1253,7 +1247,7 @@ __ops_sign_detached(__ops_io_t *io,
 
 	/* create a new signature */
 	sig = __ops_create_sig_new();
-	__ops_start_sig(sig, seckey, alg, OPS_SIG_BINARY);
+	__ops_start_sig(sig, seckey, hash_alg, OPS_SIG_BINARY);
 
 	/* read the contents of 'f', and add that to the signature */
 	mem = __ops_memory_new();
@@ -1271,7 +1265,7 @@ __ops_sign_detached(__ops_io_t *io,
 	/* calculate the signature */
 	__ops_add_birthtime(sig, from);
 	__ops_add_expiration(sig, (long long)duration);
-	__ops_keyid(keyid, sizeof(keyid), &seckey->pubkey);
+	__ops_keyid(keyid, sizeof(keyid), &seckey->pubkey, hash_alg);
 	__ops_add_issuer_keyid(sig, keyid);
 	__ops_end_hashed_subpkts(sig);
 	__ops_write_sig(output, sig, &seckey->pubkey, seckey);
