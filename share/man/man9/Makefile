@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.333 2010/06/18 16:29:01 hannken Exp $
+#       $NetBSD: Makefile,v 1.334 2010/06/25 15:16:14 tsutsui Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -101,6 +101,7 @@ MLINKS+=autoconf.9 config_search_loc.9 \
 	autoconf.9 config_deactivate.9 \
 	autoconf.9 config_defer.9 \
 	autoconf.9 config_interrupts.9 \
+	autoconf.9 config_mountroot.9 \
 	autoconf.9 config_pending_incr.9 \
 	autoconf.9 config_pending_decr.9 \
 	autoconf.9 config_finalize_register.9
