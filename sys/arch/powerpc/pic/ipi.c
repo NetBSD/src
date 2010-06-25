@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.5 2010/06/22 18:29:02 rmind Exp $ */
+/* $NetBSD: ipi.c,v 1.6 2010/06/25 19:00:05 rmind Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.5 2010/06/22 18:29:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.6 2010/06/25 19:00:05 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pic.h"
@@ -37,8 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.5 2010/06/22 18:29:02 rmind Exp $");
 #include "opt_altivec.h"
 
 #include <sys/param.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/xcall.h>
 
 #include <powerpc/atomic.h>
 #include <powerpc/fpu.h>
