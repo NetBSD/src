@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.12 2010/06/25 03:37:28 agc Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.13 2010/06/25 07:40:35 wiz Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 31, 2010
+.Dd June 25, 2010
 .Dt NETPGPKEYS 1
 .Os
 .Sh NAME
@@ -313,13 +313,13 @@ utility will return 0 for success,
 or 2 if any other error occurs.
 .Sh EXAMPLES
 .Bd -literal
-% /usr/bin/netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys --hash=md5
+% netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys --hash=md5
 1 key
-pub 1024/RSA (Encrypt or Sign) fcdd1c608bef4c4b 2008-08-11 
-Key fingerprint: e935 902d ebf1 76ba fcdd 1c60 8bef 4c4b 
+pub 1024/RSA (Encrypt or Sign) fcdd1c608bef4c4b 2008-08-11
+Key fingerprint: e935 902d ebf1 76ba fcdd 1c60 8bef 4c4b
 uid              osx-vm1.crowthorne.alistaircrooks.co.uk (/etc/ssh/ssh_host_rsa_key.pub) <root@osx-vm1.crowthorne.alistaircrooks.co.uk>
 
-% ssh-keygen -l -f /etc/ssh/ssh_host_rsa_key.pub 
+% ssh-keygen -l -f /etc/ssh/ssh_host_rsa_key.pub
 1024 e9:35:90:2d:eb:f1:76:ba:fc:dd:1c:60:8b:ef:4c:4b /etc/ssh/ssh_host_rsa_key.pub (RSA)
 %
 .Ed
