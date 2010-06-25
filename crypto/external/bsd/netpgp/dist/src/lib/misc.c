@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.31 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.32 2010/06/25 18:30:16 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1099,10 +1099,10 @@ hexdump(FILE *fp, const char *header, const uint8_t *src, size_t length)
 	char	line[LINELEN + 1];
 
 	(void) fprintf(fp, "%s%s", (header) ? header : "", (header) ? "\n" : "");
-	(void) fprintf(fp, "[%d chars]\n", length);
+	(void) fprintf(fp, "[%" PRIsize "u char%s]\n", length, (length == 1) ? "" : "s");
 	for (i = 0 ; i < length ; i++) {
 		if (i % LINELEN == 0) {
-			(void) fprintf(fp, "%.5d | ", i);
+			(void) fprintf(fp, "%.5" PRIsize "u | ", i);
 		}
 		(void) fprintf(fp, "%.02x ", (uint8_t)src[i]);
 		line[i % LINELEN] = (isprint(src[i])) ? src[i] : '.';
