@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.420 2010/06/10 20:54:53 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.421 2010/06/25 15:10:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.420 2010/06/10 20:54:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.421 2010/06/25 15:10:42 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -266,6 +266,7 @@ static void check_console(struct lwp *l);
 static void start_init(void *);
 static void configure(void);
 static void configure2(void);
+static void configure3(void);
 void main(void);
 
 /*
@@ -626,6 +627,8 @@ main(void)
 	} while (error != 0);
 	mountroothook_destroy();
 
+	configure3();
+
 	/*
 	 * Initialise the time-of-day clock, passing the time recorded
 	 * in the root filesystem (if any) for use by systems that
@@ -777,6 +780,20 @@ configure2(void)
 	 * devices that want interrupts enabled.
 	 */
 	config_create_interruptthreads();
+
+	/* Get the threads going and into any sleeps before continuing. */
+	yield();
+}
+
+static void
+configure3(void)
+{
+
+	/*
+	 * Create threads to call back and finish configuration for
+	 * devices that want the mounted root file system.
+	 */
+	config_create_mountrootthreads();
 
 	/* Get the threads going and into any sleeps before continuing. */
 	yield();
