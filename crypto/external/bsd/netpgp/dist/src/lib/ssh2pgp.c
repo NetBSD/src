@@ -141,36 +141,6 @@ frombase64(char *dst, const char *src, size_t size, int flag)
 	return dstc;
 }
 
-#define LINELEN	16
-
-/* show hexadecimal/ascii dump */
-static void
-show(const char *header, char *in, int len)
-{
-	char	line[LINELEN + 1];
-	int	i;
-
-	printf("%s%s", (header) ? header : "", (header) ? "\n" : "");
-	printf("[%d chars]\n", len);
-	for (i = 0 ; i < len ; i++) {
-		if (i % LINELEN == 0) {
-			printf("%.5d | ", i);
-		}
-		printf("%.02x ", (uint8_t)in[i]);
-		line[i % LINELEN] = (isprint(in[i])) ? in[i] : '.';
-		if (i % LINELEN == LINELEN - 1) {
-			line[LINELEN] = 0x0;
-			printf(" | %s\n", line);
-		}
-	}
-	for ( ; i % LINELEN != 0 ; i++) {
-		printf("   ");
-		line[i % LINELEN] = ' ';
-	}
-	line[LINELEN] = 0x0;
-	printf(" | %s\n", line);
-}
-
 /* get a bignum from the buffer gap */
 static BIGNUM *
 getbignum(bufgap_t *bg, char *buf, const char *header)
@@ -184,11 +154,29 @@ getbignum(bufgap_t *bg, char *buf, const char *header)
 	(void) bufgap_getbin(bg, buf, len);
 	bignum = BN_bin2bn((const uint8_t *)buf, (int)len, NULL);
 	if (__ops_get_debug_level(__FILE__)) {
-		show(header, buf, (int)len);
+		hexdump(stderr, header, (const uint8_t *)(void *)buf, len);
 	}
 	(void) bufgap_seek(bg, len, BGFromHere, BGByte);
 	return bignum;
 }
+
+#if 0
+static int
+putbignum(bufgap_t *bg, BIGNUM *bignum)
+{
+	uint32_t	 len;
+
+	len = BN_num_bytes(bignum);
+	(void) bufgap_insert(bg, &len, sizeof(len));
+	(void) bufgap_insert(bg, buf, len);
+	bignum = BN_bin2bn((const uint8_t *)buf, (int)len, NULL);
+	if (__ops_get_debug_level(__FILE__)) {
+		hexdump(stderr, header, buf, (int)len);
+	}
+	(void) bufgap_seek(bg, len, BGFromHere, BGByte);
+	return bignum;
+}
+#endif
 
 static str_t	pkatypes[] = {
 	{	"ssh-rsa",	7,	OPS_PKA_RSA	},
@@ -212,7 +200,7 @@ findstr(str_t *array, const char *name)
 
 /* convert an ssh (host) pubkey to a pgp pubkey */
 int
-__ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
+__ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_hash_alg_t hashtype)
 {
 	__ops_pubkey_t	*pubkey;
 	struct stat	 st;
@@ -259,11 +247,11 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 		cc = (int)(space - buf);
 	}
 	if (__ops_get_debug_level(__FILE__)) {
-		show(NULL, buf, cc);
+		hexdump(stderr, NULL, (const uint8_t *)(const void *)buf, (size_t)cc);
 	}
 	cc = frombase64(bin, buf, (size_t)cc, 0);
 	if (__ops_get_debug_level(__FILE__)) {
-		show("decoded base64:", bin, cc);
+		hexdump(stderr, "decoded base64:", (const uint8_t *)(const void *)bin, (size_t)cc);
 	}
 	bufgap_delete(&bg, (uint64_t)bufgap_tell(&bg, BGFromEOF, BGByte));
 	bufgap_insert(&bg, bin, cc);
@@ -328,9 +316,9 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 						hostname,
 						f,
 						owner);
-		__ops_keyid(key->key_id, sizeof(key->key_id), pubkey);
+		__ops_keyid(key->key_id, sizeof(key->key_id), pubkey, hashtype);
 		__ops_add_userid(key, userid);
-		__ops_fingerprint(&key->fingerprint, pubkey);
+		__ops_fingerprint(&key->fingerprint, pubkey, hashtype);
 		free(userid);
 		if (__ops_get_debug_level(__FILE__)) {
 			/*__ops_print_keydata(io, keyring, key, "pub", pubkey, 0);*/
@@ -345,7 +333,7 @@ __ops_ssh2pubkey(__ops_io_t *io, const char *f, __ops_key_t *key)
 
 /* convert an ssh (host) seckey to a pgp seckey */
 int
-__ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t *pubkey)
+__ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t *pubkey, __ops_hash_alg_t hashtype)
 {
 	__ops_crypt_t	crypted;
 	__ops_hash_t	hash;
@@ -353,6 +341,7 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 	unsigned	i = 0;
 	uint8_t		sesskey[CAST_KEY_LENGTH];
 	uint8_t		hashed[OPS_SHA1_HASH_SIZE];
+	BIGNUM		*tmp;
 
 	__OPS_USED(io);
 	/* XXX - check for rsa/dsa */
@@ -369,6 +358,12 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 	key->key.seckey.alg = OPS_SA_CAST5;
 	key->key.seckey.s2k_specifier = OPS_S2KS_SALTED;
 	key->key.seckey.hash_alg = OPS_HASH_SHA1;
+	if (key->key.seckey.pubkey.alg == OPS_PKA_RSA) {
+		/* openssh and openssl have p and q swapped */
+		tmp = key->key.seckey.key.rsa.p;
+		key->key.seckey.key.rsa.p = key->key.seckey.key.rsa.q;
+		key->key.seckey.key.rsa.q = tmp;
+	}
 	for (done = 0, i = 0; done < CAST_KEY_LENGTH; i++) {
 		unsigned 	j;
 		uint8_t		zero = 0;
@@ -419,8 +414,8 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 	crypted.set_crypt_key(&crypted, sesskey);
 	__ops_encrypt_init(&crypted);
 	key->key.seckey.pubkey.alg = OPS_PKA_RSA;
-	__ops_fingerprint(&key->fingerprint, pubkey);
-	__ops_keyid(key->key_id, sizeof(key->key_id), pubkey);
+	__ops_fingerprint(&key->fingerprint, pubkey, hashtype);
+	__ops_keyid(key->key_id, sizeof(key->key_id), pubkey, hashtype);
 	return 1;
 }
 
@@ -428,7 +423,7 @@ __ops_ssh2seckey(__ops_io_t *io, const char *f, __ops_key_t *key, __ops_pubkey_t
 int
 __ops_ssh2_readkeys(__ops_io_t *io, __ops_keyring_t *pubring,
 		__ops_keyring_t *secring, const char *pubfile,
-		const char *secfile)
+		const char *secfile, unsigned hashtype)
 {
 	__ops_key_t		*pubkey;
 	__ops_key_t		*seckey;
@@ -440,7 +435,7 @@ __ops_ssh2_readkeys(__ops_io_t *io, __ops_keyring_t *pubring,
 		if (__ops_get_debug_level(__FILE__)) {
 			(void) fprintf(io->errs, "__ops_ssh2_readkeys: pubfile '%s'\n", pubfile);
 		}
-		__ops_ssh2pubkey(io, pubfile, &key);
+		__ops_ssh2pubkey(io, pubfile, &key, hashtype);
 		EXPAND_ARRAY(pubring, key);
 		pubkey = &pubring->keys[pubring->keyc++];
 		(void) memcpy(pubkey, &key, sizeof(key));
@@ -453,7 +448,7 @@ __ops_ssh2_readkeys(__ops_io_t *io, __ops_keyring_t *pubring,
 		if (pubkey == NULL) {
 			pubkey = &pubring->keys[0];
 		}
-		(void) __ops_ssh2seckey(io, secfile, &key, &pubkey->key.pubkey);
+		(void) __ops_ssh2seckey(io, secfile, &key, &pubkey->key.pubkey, hashtype);
 		EXPAND_ARRAY(secring, key);
 		seckey = &secring->keys[secring->keyc++];
 		(void) memcpy(seckey, &key, sizeof(key));

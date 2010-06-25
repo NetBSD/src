@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: validate.c,v 1.35 2010/05/25 01:05:11 agc Exp $");
+__RCSID("$NetBSD: validate.c,v 1.36 2010/06/25 03:37:28 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -204,11 +204,8 @@ check_binary_sig(const uint8_t *data,
 
 	case OPS_V4:
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "v4_hashlen %zu\n",
+			hexdump(stderr, "v4 hash", sig->info.v4_hashed,
 					sig->info.v4_hashlen);
-			hexdump(stderr, sig->info.v4_hashed,
-					sig->info.v4_hashlen, " ");
-			(void) fprintf(stderr, "\n");
 		}
 		hash.add(&hash, sig->info.v4_hashed, sig->info.v4_hashlen);
 		trailer[0] = 0x04;	/* version */
@@ -229,9 +226,7 @@ check_binary_sig(const uint8_t *data,
 
 	n = hash.finish(&hash, hashout);
 	if (__ops_get_debug_level(__FILE__)) {
-		printf("check_binary_sig: hash length %" PRIsize "u\n",
-			hash.size);
-		hexdump(stdout, hashout, n, "");
+		hexdump(stdout, "hash out", hashout, n);
 	}
 	return __ops_check_sig(hashout, n, sig, signer);
 }
@@ -471,14 +466,10 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	case OPS_PTAG_CT_SIGNATURE:	/* V3 sigs */
 	case OPS_PTAG_CT_SIGNATURE_FOOTER:	/* V4 sigs */
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(io->outs, "\n*** hashed data:\n");
-			hexdump(io->outs, content->sig.info.v4_hashed,
-					content->sig.info.v4_hashlen, " ");
-			(void) fprintf(io->outs, "\ntype=%02x signer_id=",
-					content->sig.info.type);
-			hexdump(io->outs, content->sig.info.signer_id,
-				sizeof(content->sig.info.signer_id), "");
-			(void) fprintf(io->outs, "\n");
+			hexdump(io->outs, "hashed data", content->sig.info.v4_hashed,
+					content->sig.info.v4_hashlen);
+			hexdump(io->outs, "signer id", content->sig.info.signer_id,
+				sizeof(content->sig.info.signer_id));
 		}
 		from = 0;
 		signer = __ops_getkeybyid(io, data->keyring,
@@ -514,9 +505,8 @@ validate_data_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 				__ops_mem_readfile(data->mem, data->detachname);
 			}
 			if (__ops_get_debug_level(__FILE__)) {
-				(void) fprintf(stderr, "about to check_binary_sig, dump of sig:\n");
-				hexdump(stderr, (const uint8_t *)(const void *)&content->sig,
-					sizeof(content->sig), "");
+				hexdump(stderr, "sig dump", (const uint8_t *)(const void *)&content->sig,
+					sizeof(content->sig));
 			}
 			valid = check_binary_sig(__ops_mem_data(data->mem),
 					__ops_mem_len(data->mem),

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.36 2010/06/01 03:19:26 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.37 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2485,11 +2485,8 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 
 		__ops_crypt_any(&decrypt, pkt.u.seckey.alg);
 		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "\nREADING:\niv=");
-			hexdump(stderr, pkt.u.seckey.iv, __ops_block_size(pkt.u.seckey.alg), " ");
-			fprintf(stderr, "\nkey=");
-			hexdump(stderr, key, CAST_KEY_LENGTH, " ");
-			fprintf(stderr, "\n");
+			hexdump(stderr, "input iv", pkt.u.seckey.iv, __ops_block_size(pkt.u.seckey.alg));
+			hexdump(stderr, "key", key, CAST_KEY_LENGTH);
 		}
 		decrypt.set_iv(&decrypt, pkt.u.seckey.iv);
 		decrypt.set_crypt_key(&decrypt, key);
@@ -2658,9 +2655,7 @@ parse_pk_sesskey(__ops_region_t *region,
 		return 0;
 	}
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "session key: public key id: x=%" PRIsize "d\n", sizeof(pkt.u.pk_sesskey.key_id));
-		hexdump(stderr, pkt.u.pk_sesskey.key_id, sizeof(pkt.u.pk_sesskey.key_id), " ");
-		fprintf(stderr, "\n");
+		hexdump(stderr, "sesskey: pubkey id", pkt.u.pk_sesskey.key_id, sizeof(pkt.u.pk_sesskey.key_id));
 	}
 	if (!limread(&c, 1, region, stream)) {
 		return 0;
@@ -2740,9 +2735,7 @@ parse_pk_sesskey(__ops_region_t *region,
 	(void) memcpy(pkt.u.pk_sesskey.key, unencoded_m_buf + 1, k);
 
 	if (__ops_get_debug_level(__FILE__)) {
-		fprintf(stderr, "session key recovered (len=%u):\n", k);
-		hexdump(stderr, pkt.u.pk_sesskey.key, k, " ");
-		fprintf(stderr, "\n");
+		hexdump(stderr, "recovered sesskey", pkt.u.pk_sesskey.key, k);
 	}
 	pkt.u.pk_sesskey.checksum = unencoded_m_buf[k + 1] +
 			(unencoded_m_buf[k + 2] << 8);
