@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.27 2009/08/26 13:28:48 jmcneill Exp $	 */
+/*	$NetBSD: pcio.c,v 1.28 2010/06/25 15:35:08 tsutsui Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -370,4 +370,11 @@ out:
 		printf("0 seconds.     \n");
 
 	return c;
+}
+
+void
+wait_sec(int sec)
+{
+
+	wait(sec * 1000000);
 }
