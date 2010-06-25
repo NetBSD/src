@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.6 2010/06/25 17:40:32 tsutsui Exp $
+#	$NetBSD: WZERO3,v 1.7 2010/06/25 17:42:02 tsutsui Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 # estimated number of users
 maxusers	32
@@ -138,7 +138,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	DDB		# in-kernel debugger
+options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
