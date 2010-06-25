@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2009/01/11 03:09:35 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2010/06/25 16:54:25 joerg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -6,6 +6,9 @@ NOLINT=		# defined
 .include <bsd.own.mk>
 
 LIB=		stdc++
+LDADD=		-lgcc_s
+
+LIBDPLIBS+=	m ${.CURDIR}/../../../lib/libm
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
