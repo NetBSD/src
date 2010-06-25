@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.42 2010/06/25 04:03:14 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.43 2010/06/25 04:16:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -334,8 +334,8 @@ struct livengood_tcpip_ctxdesc {
  * in 82580's datasheet.
  */
 #define EEPROM_OFF_LAN1	0x0080	/* Offset for LAN1 (82580)*/
-#define EEPROM_OFF_LAN2	0x00c0	/* Offset for LAN1 (82580)*/
-#define EEPROM_OFF_LAN3	0x0100	/* Offset for LAN1 (82580)*/
+#define EEPROM_OFF_LAN2	0x00c0	/* Offset for LAN2 (82580)*/
+#define EEPROM_OFF_LAN3	0x0100	/* Offset for LAN3 (82580)*/
 
 #define	WMREG_EERD	0x0014	/* EEPROM read */
 #define	EERD_DONE	0x02    /* done bit */
