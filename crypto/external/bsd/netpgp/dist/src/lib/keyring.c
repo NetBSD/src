@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.37 2010/05/25 01:05:10 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.38 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -822,12 +822,8 @@ __ops_getkeybyid(__ops_io_t *io, const __ops_keyring_t *keyring,
 {
 	for ( ; keyring && *from < keyring->keyc; *from += 1) {
 		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(io->errs,
-				"__ops_getkeybyid: keyring keyid ");
-			hexdump(io->errs, keyring->keys[*from].key_id, OPS_KEY_ID_SIZE, "");
-			(void) fprintf(io->errs, ", keyid ");
-			hexdump(io->errs, keyid, OPS_KEY_ID_SIZE, "");
-			(void) fprintf(io->errs, "\n");
+			hexdump(io->errs, "keyring keyid", keyring->keys[*from].key_id, OPS_KEY_ID_SIZE);
+			hexdump(io->errs, "keyid", keyid, OPS_KEY_ID_SIZE);
 		}
 		if (memcmp(keyring->keys[*from].key_id, keyid,
 				OPS_KEY_ID_SIZE) == 0) {
@@ -904,7 +900,7 @@ getkeybyname(__ops_io_t *io,
 	(void) memset(keyid, 0x0, sizeof(keyid));
 	str2keyid(name, keyid, sizeof(keyid));
 	if (__ops_get_debug_level(__FILE__)) {
-		hexdump(io->outs, keyid, 4, "");
+		hexdump(io->outs, "keyid", keyid, 4);
 	}
 	savedstart = *from;
 	if ((kp = __ops_getkeybyid(io, keyring, keyid, from)) != NULL) {
@@ -1031,8 +1027,8 @@ __ops_add_to_pubring(__ops_keyring_t *keyring, const __ops_pubkey_t *pubkey)
 	key = &keyring->keys[keyring->keyc++];
 	duration = key->key.pubkey.duration;
 	(void) memset(key, 0x0, sizeof(*key));
-	__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey);
-	__ops_fingerprint(&key->fingerprint, pubkey);
+	__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey, keyring->hashtype);
+	__ops_fingerprint(&key->fingerprint, pubkey, keyring->hashtype);
 	key->type = OPS_PTAG_CT_PUBLIC_KEY;
 	key->key.pubkey = *pubkey;
 	key->key.pubkey.duration = duration;
@@ -1050,8 +1046,8 @@ __ops_add_to_secring(__ops_keyring_t *keyring, const __ops_seckey_t *seckey)
 	key = &keyring->keys[keyring->keyc++];
 	(void) memset(key, 0x0, sizeof(*key));
 	pubkey = &seckey->pubkey;
-	__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey);
-	__ops_fingerprint(&key->fingerprint, pubkey);
+	__ops_keyid(key->key_id, OPS_KEY_ID_SIZE, pubkey, keyring->hashtype);
+	__ops_fingerprint(&key->fingerprint, pubkey, keyring->hashtype);
 	key->type = OPS_PTAG_CT_SECRET_KEY;
 	key->key.seckey = *seckey;
 	return 1;

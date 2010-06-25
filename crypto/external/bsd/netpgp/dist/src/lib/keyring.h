@@ -68,6 +68,7 @@ typedef struct __ops_key_t	__ops_key_t;
  */
 typedef struct __ops_keyring_t {
 	DYNARRAY(__ops_key_t,	key);
+	__ops_hash_alg_t	hashtype;
 } __ops_keyring_t;
 
 const __ops_key_t *__ops_getkeybyid(__ops_io_t *,

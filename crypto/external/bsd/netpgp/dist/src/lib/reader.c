@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.36 2010/05/25 01:05:11 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.37 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1465,11 +1465,8 @@ encrypted_data_reader(void *dest,
 					encrypted->decrypted, buffer, n);
 
 				if (__ops_get_debug_level(__FILE__)) {
-					(void) fprintf(stderr, "READING:\nencrypted: ");
-					hexdump(stderr, buffer, 16, " ");
-					(void) fprintf(stderr, "\ndecrypted: ");
-					hexdump(stderr, encrypted->decrypted, 16, " ");
-					(void) fprintf(stderr, "\n");
+					hexdump(stderr, "encrypted", buffer, 16);
+					hexdump(stderr, "decrypted", encrypted->decrypted, 16);
 				}
 			} else {
 				(void) memcpy(
@@ -1601,17 +1598,11 @@ se_ip_data_reader(void *dest_,
 			return -1;
 		}
 		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "\n\nentire SE IP packet (len=%d):\n",
-					decrypted_region.length);
-			hexdump(stderr, buf, decrypted_region.length, " "); 
-			fprintf(stderr, "\n\n");
+			hexdump(stderr, "SE IP packet", buf, decrypted_region.length); 
 		}
 		/* verify leading preamble */
-
 		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "\npreamble: ");
-			hexdump(stderr, buf, se_ip->decrypt->blocksize , " ");
-			fprintf(stderr, "\n");
+			hexdump(stderr, "preamble", buf, se_ip->decrypt->blocksize);
 		}
 		b = se_ip->decrypt->blocksize;
 		if (buf[b - 2] != buf[b] || buf[b - 1] != buf[b + 1]) {
@@ -1636,12 +1627,8 @@ se_ip_data_reader(void *dest_,
 		mdc_hash = mdc + 2;
 
 		if (__ops_get_debug_level(__FILE__)) {
-			fprintf(stderr, "\nplaintext (len=%" PRIsize "u): ",
-				sz_plaintext);
-			hexdump(stderr, plaintext, sz_plaintext, " ");
-			fprintf(stderr, "\nmdc (len=%" PRIsize "u): ", sz_mdc);
-			hexdump(stderr, mdc, sz_mdc, " ");
-			fprintf(stderr, "\n");
+			hexdump(stderr, "plaintext", plaintext, sz_plaintext);
+			hexdump(stderr, "mdc", mdc, sz_mdc);
 		}
 		__ops_calc_mdc_hash(preamble, sz_preamble, plaintext,
 				sz_plaintext, hashed);

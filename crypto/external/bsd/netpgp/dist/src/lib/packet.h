@@ -872,13 +872,15 @@ struct __ops_packet_t {
 
 /** __ops_fingerprint_t */
 typedef struct {
-	uint8_t		fingerprint[OPS_FINGERPRINT_SIZE];
-	unsigned        length;
+	uint8_t			fingerprint[OPS_FINGERPRINT_SIZE];
+	unsigned        	length;
+	__ops_hash_alg_t	hashtype;
 } __ops_fingerprint_t;
 
+int __ops_keyid(uint8_t *, const size_t, const __ops_pubkey_t *, __ops_hash_alg_t);
+int __ops_fingerprint(__ops_fingerprint_t *, const __ops_pubkey_t *, __ops_hash_alg_t);
+
 void __ops_finish(void);
-void __ops_keyid(uint8_t *, const size_t, const __ops_pubkey_t *);
-void __ops_fingerprint(__ops_fingerprint_t *, const __ops_pubkey_t *);
 void __ops_pubkey_free(__ops_pubkey_t *);
 void __ops_userid_free(uint8_t **);
 void __ops_data_free(__ops_data_t *);

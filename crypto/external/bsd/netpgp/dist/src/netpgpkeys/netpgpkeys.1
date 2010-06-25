@@ -1,4 +1,4 @@
-.\" $NetBSD: netpgpkeys.1,v 1.11 2010/06/01 05:55:56 agc Exp $
+.\" $NetBSD: netpgpkeys.1,v 1.12 2010/06/25 03:37:28 agc Exp $
 .\"
 .\" Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,6 +64,8 @@
 where the options for all commands are:
 .Pp
 .Op Fl Fl coredumps
+.br
+.Op Fl Fl hash Ns = Ns Ar hash-algorithm
 .br
 .Op Fl Fl homedir Ns = Ns Ar home-directory
 .br
@@ -190,6 +192,13 @@ library.
 In addition to one of the preceding commands, a number of qualifiers
 or options may be given.
 .Bl -tag -width Ar
+.It Fl Fl hash Ar hash-algorithm
+Specify the hash algorithm which is used during fingerprint calculation.
+For reference, at the present time,
+.Xr ssh-keygen 1
+uses
+.Dq MD5
+for its fingerprint values.
 .It Fl Fl homedir Ar home-directory
 Keyrings are normally located, for historical reasons, within
 the user's home directory in a subdirectory called
@@ -304,11 +313,14 @@ utility will return 0 for success,
 or 2 if any other error occurs.
 .Sh EXAMPLES
 .Bd -literal
-% netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys
+% /usr/bin/netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys --hash=md5
 1 key
-pub 1024/RSA (Encrypt or Sign) 040180871e00404a 2008-08-11
-Key fingerprint: c4aa b385 4796 e6ce 606c f0c2 0401 8087 1e00 404a
-uid              netbsd-vm1.crowthorne.alistaircrooks.co.uk (/etc/ssh/ssh_host_rsa_key.pub) \*[Lt]root@netbsd-vm1.crowthorne.alistaircrooks.co.uk\*[Gt]
+pub 1024/RSA (Encrypt or Sign) fcdd1c608bef4c4b 2008-08-11 
+Key fingerprint: e935 902d ebf1 76ba fcdd 1c60 8bef 4c4b 
+uid              osx-vm1.crowthorne.alistaircrooks.co.uk (/etc/ssh/ssh_host_rsa_key.pub) <root@osx-vm1.crowthorne.alistaircrooks.co.uk>
+
+% ssh-keygen -l -f /etc/ssh/ssh_host_rsa_key.pub 
+1024 e9:35:90:2d:eb:f1:76:ba:fc:dd:1c:60:8b:ef:4c:4b /etc/ssh/ssh_host_rsa_key.pub (RSA)
 %
 .Ed
 .Pp
@@ -338,6 +350,7 @@ uid              RSA 2048-bit key \*[Lt]agc@localhost\*[Gt]
 .Sh SEE ALSO
 .Xr netpgp 1 ,
 .Xr ssh 1 ,
+.Xr ssh-keygen 1 ,
 .Xr getpass 3 ,
 .\" .Xr libbz2 3 ,
 .Xr libnetpgp 3 ,

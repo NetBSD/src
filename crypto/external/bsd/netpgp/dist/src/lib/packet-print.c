@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.31 2010/05/25 01:05:11 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.32 2010/06/25 03:37:27 agc Exp $");
 #endif
 
 #include <string.h>
@@ -103,20 +103,14 @@ static void
 print_hexdump(int indent, const char *name, const uint8_t *data, unsigned len)
 {
 	print_name(indent, name);
-
-	printf("len=%u, data=0x", len);
-	hexdump(stdout, data, len, "");
-	printf("\n");
+	hexdump(stdout, NULL, data, len);
 }
 
 static void 
 hexdump_data(int indent, const char *name, const uint8_t *data, unsigned len)
 {
 	print_name(indent, name);
-
-	printf("0x");
-	hexdump(stdout, data, len, "");
-	printf("\n");
+	hexdump(stdout, NULL, data, len);
 }
 
 static void 
@@ -177,24 +171,7 @@ print_bn(int indent, const char *name, const BIGNUM *bn)
 static void 
 print_packet_hex(const __ops_subpacket_t *pkt)
 {
-	unsigned	rem;
-	unsigned	blksz = 4;
-	uint8_t		*cur;
-	int             i;
-
-	printf("\nhexdump of packet contents follows:\n");
-	for (i = 1, cur = pkt->raw;
-	     cur < (pkt->raw + pkt->length);
-	     cur += blksz, i++) {
-		rem = pkt->raw + pkt->length - cur;
-		hexdump(stdout, cur, (rem <= blksz) ? rem : blksz, "");
-		printf(" ");
-		if (i % 8 == 0) {
-			printf("\n");
-		}
-
-	}
-	printf("\n");
+	hexdump(stdout, "packet contents:", pkt->raw, pkt->length);
 }
 
 static void 
@@ -491,7 +468,7 @@ __ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 		strhexdump(keyid, key->key_id, OPS_KEY_ID_SIZE, ""),
 		ptimestr(t, sizeof(t), pubkey->birthtime),
 		expired,
-		strhexdump(fp, key->fingerprint.fingerprint, OPS_FINGERPRINT_SIZE, " "),
+		strhexdump(fp, key->fingerprint.fingerprint, key->fingerprint.length, " "),
 		uidbuf);
 }
 
@@ -840,12 +817,8 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 	case OPS_PTAG_CT_SE_IP_DATA_BODY:
 		print_tagname(print->indent, 
 			"SYMMETRIC ENCRYPTED INTEGRITY PROTECTED DATA BODY");
-		printf("  data body length=%u\n",
-		       content->se_data_body.length);
-		printf("    data=");
-		hexdump(stdout, content->se_data_body.data,
-			content->se_data_body.length, "");
-		printf("\n");
+		hexdump(stdout, "data", content->se_data_body.data,
+			content->se_data_body.length);
 		break;
 
 	case OPS_PTAG_CT_PUBLIC_KEY:
@@ -1016,10 +989,8 @@ __ops_print_packet(__ops_printstate_t *print, const __ops_packet_t *pkt)
 			printf(" (sensitive)");
 		}
 		printf(", algid=0x%x", content->ss_revocation_key.algid);
-		printf(", fingerprint=");
-		hexdump(stdout, content->ss_revocation_key.fingerprint,
-				OPS_FINGERPRINT_SIZE, "");
-		printf("\n");
+		hexdump(stdout, "fingerprint", content->ss_revocation_key.fingerprint,
+				OPS_FINGERPRINT_SIZE);
 		end_subpacket(&print->indent);
 		break;
 
