@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.208 2010/06/25 04:03:14 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.209 2010/06/25 04:35:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.208 2010/06/25 04:03:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.209 2010/06/25 04:35:54 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -4310,7 +4310,11 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_82576:
 	case WM_T_82580:
 	case WM_T_82580ER:
-		mask = EEMNGCTL_CFGDONE_0 << sc->sc_funcid;
+		if (sc->sc_type == WM_T_82571) {
+			/* Only 82571 shares port 0 */
+			mask = EEMNGCTL_CFGDONE_0;
+		} else
+			mask = EEMNGCTL_CFGDONE_0 << sc->sc_funcid;
 		for (i = 0; i < WM_PHY_CFG_TIMEOUT; i++) {
 			if (CSR_READ(sc, WMREG_EEMNGCTL) & mask)
 				break;
