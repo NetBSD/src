@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.118 2010/06/04 06:04:15 macallan Exp $	*/
+/*	$NetBSD: zs.c,v 1.119 2010/06/26 01:42:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.118 2010/06/04 06:04:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.119 2010/06/26 01:42:57 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -171,12 +171,8 @@ CFATTACH_DECL_NEW(zs_obio, sizeof(struct zsc_softc),
 
 extern struct cfdriver zs_cd;
 
-/* softintr(9) cookie, shared by all instances of this driver */
-static void *zs_sicookie;
-
 /* Interrupt handlers. */
 static int zshard(void *);
-static void zssoft(void *);
 
 static int zs_get_speed(struct zs_chanstate *);
 
@@ -396,7 +392,6 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
 	int channel;
-	static int didintr, prevpri;
 #if (NKBD > 0) || (NMS > 0)
 	int ch0_is_cons = 0;
 #endif
@@ -407,12 +402,11 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		return;
 	}
 
-	if (!didintr) {
-		zs_sicookie = softint_establish(SOFTINT_SERIAL, zssoft, NULL);
-		if (zs_sicookie == NULL) {
-			aprint_error(": cannot establish soft int handler\n");
-			return;
-		}
+	zsc->zsc_sicookie = softint_establish(SOFTINT_SERIAL,
+	    (void (*)(void *))zsc_intr_soft, zsc);
+	if (zsc->zsc_sicookie == NULL) {
+		aprint_error(": cannot establish soft int handler\n");
+		return;
 	}
 	aprint_normal(" softpri %d\n", IPL_SOFTSERIAL);
 
@@ -566,17 +560,9 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	}
 
 	/*
-	 * Now safe to install interrupt handlers.  Note the arguments
-	 * to the interrupt handlers aren't used.  Note, we only do this
-	 * once since both SCCs interrupt at the same level and vector.
+	 * Now safe to install interrupt handlers.
 	 */
-	if (!didintr) {
-		didintr = 1;
-		prevpri = pri;
-		bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL,
-				   zshard, NULL);
-	} else if (pri != prevpri)
-		panic("broken zs interrupt scheme");
+	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, zshard, zsc);
 
 	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    device_xname(zsc->zsc_dev), "intr");
@@ -625,79 +611,27 @@ zs_print(void *aux, const char *name)
 static volatile int zssoftpending;
 
 /*
- * Our ZS chips all share a common, autovectored interrupt,
- * so we have to look at all of them on each interrupt.
+ * Our ZS chips all share a common interrupt level,
+ * but we establish zshard handler per each ZS chips
+ * to avoid holding unnecessary locks in interrupt context.
  */
 static int
 zshard(void *arg)
 {
-	struct zsc_softc *zsc;
-	int unit, rr3, rval, softreq;
+	struct zsc_softc *zsc = arg;
+	int rr3, rval;
 
-	rval = softreq = 0;
-	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
-		struct zs_chanstate *cs;
-
-		zsc = device_lookup_private(&zs_cd, unit);
-		if (zsc == NULL)
-			continue;
-		rr3 = zsc_intr_hard(zsc);
-		/* Count up the interrupts. */
-		if (rr3) {
-			rval |= rr3;
-			zsc->zsc_intrcnt.ev_count++;
-		}
-		if ((cs = zsc->zsc_cs[0]) != NULL)
-			softreq |= cs->cs_softreq;
-		if ((cs = zsc->zsc_cs[1]) != NULL)
-			softreq |= cs->cs_softreq;
+	rval = 0;
+	rr3 = zsc_intr_hard(zsc);
+	/* Count up the interrupts. */
+	if (rr3) {
+		rval = rr3;
+		zsc->zsc_intrcnt.ev_count++;
 	}
-
-	/* We are at splzs here, so no need to lock. */
-	if (softreq && (zssoftpending == 0)) {
-		zssoftpending = 1;
-		softint_schedule(zs_sicookie);
-	}
+	if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq)
+		softint_schedule(zsc->zsc_sicookie);
 	return (rval);
 }
-
-/*
- * Similar scheme as for zshard (look at all of them)
- */
-static void
-zssoft(void *arg)
-{
-	struct zsc_softc *zsc;
-	int unit;
-
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return;
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.  The order of
-	 * these next two statements prevents our clearing
-	 * the soft intr bit just after zshard has set it.
-	 */
-	/* ienab_bic(IE_ZSSOFT); */
-	zssoftpending = 0;
-
-#if 0 /* not yet */
-	/* Make sure we call the tty layer with tty_lock held. */
-	mutex_spin_enter(&tty_lock);
-#endif
-	for (unit = 0; unit < zs_cd.cd_ndevs; unit++) {
-		zsc = device_lookup_private(&zs_cd, unit);
-		if (zsc == NULL)
-			continue;
-		(void)zsc_intr_soft(zsc);
-	}
-#if 0 /* not yet */
-	mutex_spin_exit(&tty_lock);
-#endif
-}
-
 
 /*
  * Compute the current baud rate given a ZS channel.
