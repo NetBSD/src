@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.1 2010/06/26 14:24:28 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.2 2010/06/26 15:17:56 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.1 2010/06/26 14:24:28 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.2 2010/06/26 15:17:56 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.1 2010/06/26 14:24:28 kefren Exp $");
 
 #include "if_mpls.h"
 
-void mplsattach(int);
+void ifmplsattach(int);
 
 static int mpls_clone_create(struct if_clone *, int);
 static int mpls_clone_destroy(struct ifnet *);
@@ -99,7 +99,7 @@ extern int mpls_defttl, mpls_mapttl_inet, mpls_mapttl_inet6, mpls_icmp_respond,
 
 /* ARGSUSED */
 void
-mplsattach(int count)
+ifmplsattach(int count)
 {
 	if_clone_attach(&mpls_if_cloner);
 }
