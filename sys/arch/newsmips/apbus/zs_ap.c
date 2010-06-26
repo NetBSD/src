@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.26 2010/06/26 03:44:49 tsutsui Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.27 2010/06/26 03:49:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.26 2010/06/26 03:44:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.27 2010/06/26 03:49:52 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,8 @@ zs_ap_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Now safe to install interrupt handlers.
 	 */
-	zsc->zsc_si = softint_establish(SOFTINT_SERIAL, zssoft, zsc);
+	zsc->zsc_si = softint_establish(SOFTINT_SERIAL,
+	    (void (*)(void *))zsc_intr_soft, zsc);
 	apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
 	    NEWS5000_INT1_SCC, 0, /* priority */
 	    zshard_ap, zsc, apa->apa_name, apa->apa_ctlnum);
