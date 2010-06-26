@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: keywords.sh,v 1.8 2010/05/12 19:26:33 kefren Exp $
+# $NetBSD: keywords.sh,v 1.9 2010/06/26 14:29:36 kefren Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
 # WARNING!  If you change this file, re-run it!
@@ -61,6 +61,8 @@ nocloned
 nocloning
 noblackhole
 noreject
+mpls
+tag
 _EOF_
 
 
