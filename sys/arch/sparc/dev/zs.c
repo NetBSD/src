@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.119 2010/06/26 01:42:57 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.120 2010/06/26 03:39:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.119 2010/06/26 01:42:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.120 2010/06/26 03:39:53 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -607,8 +607,6 @@ zs_print(void *aux, const char *name)
 
 	return (UNCONF);
 }
-
-static volatile int zssoftpending;
 
 /*
  * Our ZS chips all share a common interrupt level,
