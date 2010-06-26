@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1473 2010/06/25 15:16:13 tsutsui Exp $
+#	$NetBSD: mi,v 1.1474 2010/06/26 14:27:55 kefren Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1455,6 +1455,7 @@
 ./usr/include/net/if_ieee80211.h		comp-obsolete		obsolete
 ./usr/include/net/if_llc.h			comp-c-include
 ./usr/include/net/if_media.h			comp-c-include
+./usr/include/net/if_mpls.h			comp-c-include
 ./usr/include/net/if_pflog.h			comp-c-include
 ./usr/include/net/if_ppp.h			comp-c-include
 ./usr/include/net/if_pppoe.h			comp-c-include
@@ -1633,6 +1634,7 @@
 ./usr/include/netiso/tp_user.h			comp-c-include
 ./usr/include/netiso/tp_var.h			comp-c-include
 ./usr/include/netiso/tuba_table.h		comp-obsolete		obsolete
+./usr/include/netmpls/mpls.h			comp-c-include
 ./usr/include/netkey/key.h			comp-c-include
 ./usr/include/netkey/key_debug.h		comp-c-include
 ./usr/include/netkey/key_var.h			comp-c-include

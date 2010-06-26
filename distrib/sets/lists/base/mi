@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.870 2010/06/19 03:50:30 mrg Exp $
+# $NetBSD: mi,v 1.871 2010/06/26 14:27:55 kefren Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -794,6 +794,7 @@
 ./usr/include/netisdn				base-c-usr
 ./usr/include/netiso				base-c-usr
 ./usr/include/netkey				base-c-usr
+./usr/include/netmpls				base-c-usr
 ./usr/include/netnatm				base-c-usr
 ./usr/include/netns				base-obsolete		obsolete
 ./usr/include/netsmb				base-c-usr
