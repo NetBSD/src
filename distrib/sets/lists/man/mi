@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1220 2010/06/24 16:37:48 skrll Exp $
+# $NetBSD: mi,v 1.1221 2010/06/26 11:15:59 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1949,6 +1949,7 @@
 ./usr/share/man/cat7/sticky.0			man-reference-catman	.cat
 ./usr/share/man/cat7/symlink.0			man-reference-catman	.cat
 ./usr/share/man/cat7/sysctl.0			man-reference-catman	.cat
+./usr/share/man/cat7/tests.0			man-reference-catman	.cat
 ./usr/share/man/cat8/MAKEDEV.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/MAKEDEV.local.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/ac.0			man-sysutil-catman	.cat
@@ -4515,6 +4516,7 @@
 ./usr/share/man/html7/sticky.html		man-reference-htmlman	html
 ./usr/share/man/html7/symlink.html		man-reference-htmlman	html
 ./usr/share/man/html7/sysctl.html		man-reference-htmlman	html
+./usr/share/man/html7/tests.html		man-reference-htmlman	html
 ./usr/share/man/html8/MAKEDEV.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/MAKEDEV.local.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/ac.html			man-sysutil-htmlman	html
@@ -7064,6 +7066,7 @@
 ./usr/share/man/man7/sticky.7			man-reference-man	.man
 ./usr/share/man/man7/symlink.7			man-reference-man	.man
 ./usr/share/man/man7/sysctl.7			man-reference-man	.man
+./usr/share/man/man7/tests.7			man-reference-man	.man
 ./usr/share/man/man8/MAKEDEV.8			man-sysutil-man		.man
 ./usr/share/man/man8/MAKEDEV.local.8		man-sysutil-man		.man
 ./usr/share/man/man8/ac.8			man-sysutil-man		.man
