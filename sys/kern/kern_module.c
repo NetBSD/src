@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.69 2010/05/26 23:53:21 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.70 2010/06/26 07:23:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.69 2010/05/26 23:53:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.70 2010/06/26 07:23:57 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -87,9 +87,11 @@ static kauth_listener_t	module_listener;
 static modinfo_t module_dummy;
 __link_set_add_rodata(modules, module_dummy);
 
+static module_t	*module_newmodule(modsrc_t);
+static void	module_require_force(module_t *);
 static int	module_do_load(const char *, bool, int, prop_dictionary_t,
 		    module_t **, modclass_t class, bool);
-static int	module_do_unload(const char *);
+static int	module_do_unload(const char *, bool);
 static int	module_do_builtin(const char *, module_t **);
 static int	module_fetch_info(module_t *);
 static void	module_thread(void *);
@@ -155,6 +157,32 @@ module_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 }
 
 /*
+ * Allocate a new module_t
+ */
+static module_t *
+module_newmodule(modsrc_t source)
+{
+	module_t *mod;
+
+	mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
+	if (mod != NULL) {
+		mod->mod_source = source;
+		mod->mod_info = NULL;
+		mod->mod_flags = 0;
+	}
+	return mod;
+}
+
+/*
+ * Require the -f (force) flag to load a module
+ */
+static void
+module_require_force(struct module *mod)
+{
+	mod->mod_flags |= MODFLG_MUST_FORCE;
+}
+
+/*
  * Add modules to the builtin list.  This can done at boottime or
  * at runtime if the module is linked into the kernel with an
  * external linker.  All or none of the input will be handled.
@@ -192,9 +220,8 @@ module_builtin_add(modinfo_t *const *mip, size_t nmodinfo, bool init)
 			mipskip++;
 			continue;
 		}
-		modp[i] = kmem_zalloc(sizeof(*modp[i]), KM_SLEEP);
+		modp[i] = module_newmodule(MODULE_SOURCE_KERNEL);
 		modp[i]->mod_info = mip[i+mipskip];
-		modp[i]->mod_source = MODULE_SOURCE_KERNEL;
 	}
 	mutex_enter(&module_lock);
 
@@ -265,7 +292,7 @@ module_builtin_remove(modinfo_t *mi, bool fini)
 			return rv;
 
 		mutex_enter(&module_lock);
-		rv = module_do_unload(mi->mi_name);
+		rv = module_do_unload(mi->mi_name, true);
 		if (rv) {
 			goto out;
 		}
@@ -335,12 +362,12 @@ module_init(void)
 }
 
 /*
- * module_init2:
+ * module_start_unload_thread:
  *
  *	Start the auto unload kthread.
  */
 void
-module_init2(void)
+module_start_unload_thread(void)
 {
 	int error;
 
@@ -348,6 +375,24 @@ module_init2(void)
 	    NULL, NULL, "modunload");
 	if (error != 0)
 		panic("module_init: %d", error);
+}
+
+/*
+ * module_builtin_require_force
+ *
+ * Require MODCTL_MUST_FORCE to load any built-in modules that have 
+ * not yet been initialized
+ */
+void
+module_builtin_require_force(void)
+{
+	module_t *mod;
+
+	mutex_enter(&module_lock);
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		module_require_force(mod);
+	}
+	mutex_exit(&module_lock);
 }
 
 static struct sysctllog *module_sysctllog;
@@ -412,10 +457,14 @@ module_init_class(modclass_t class)
 			/*
 			 * If initializing a builtin module fails, don't try
 			 * to load it again.  But keep it around and queue it
-			 * on the disabled list after we're done with module
-			 * init.
+			 * on the builtins list after we're done with module
+			 * init.  Don't set it to MODFLG_MUST_FORCE in case a
+			 * future attempt to initialize can be successful.
+			 * (If the module has previously been set to
+			 * MODFLG_MUST_FORCE, don't try to override that!)
 			 */
-			if (module_do_builtin(mi->mi_name, NULL) != 0) {
+			if (mod->mod_flags & MODFLG_MUST_FORCE ||
+			    module_do_builtin(mi->mi_name, NULL) != 0) {
 				TAILQ_REMOVE(&module_builtins, mod, mod_chain);
 				TAILQ_INSERT_TAIL(&bi_fail, mod, mod_chain);
 			}
@@ -438,7 +487,7 @@ module_init_class(modclass_t class)
 		}
 	} while (mod != NULL);
 
-	/* failed builtin modules remain disabled */
+	/* return failed builtin modules to builtin list */
 	while ((mod = TAILQ_FIRST(&bi_fail)) != NULL) {
 		TAILQ_REMOVE(&bi_fail, mod, mod_chain);
 		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
@@ -544,7 +593,7 @@ module_unload(const char *name)
 	}
 
 	mutex_enter(&module_lock);
-	error = module_do_unload(name);
+	error = module_do_unload(name, true);
 	mutex_exit(&module_lock);
 
 	return error;
@@ -794,7 +843,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		}
 	}
 	if (mod) {
-		if ((flags & MODCTL_LOAD_FORCE) == 0) {
+		if ((mod->mod_flags & MODFLG_MUST_FORCE) &&
+		    (flags & MODCTL_LOAD_FORCE) == 0) {
 			if (!autoload) {
 				module_error("use -f to reinstate "
 				    "builtin module \"%s\"", name);
@@ -839,7 +889,7 @@ module_do_load(const char *name, bool isdep, int flags,
 				return 0;
 			}
 		}				
-		mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
+		mod = module_newmodule(MODULE_SOURCE_FILESYS);
 		if (mod == NULL) {
 			module_error("out of memory for `%s'", name);
 			depth--;
@@ -853,7 +903,6 @@ module_do_load(const char *name, bool isdep, int flags,
 			depth--;
 			return error;
 		}
-		mod->mod_source = MODULE_SOURCE_FILESYS;
 		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
 
 		error = module_fetch_info(mod);
@@ -1048,7 +1097,7 @@ module_do_load(const char *name, bool isdep, int flags,
  *	Helper routine: do the dirty work of unloading a module.
  */
 static int
-module_do_unload(const char *name)
+module_do_unload(const char *name, bool load_requires_force)
 {
 	module_t *mod;
 	int error;
@@ -1086,6 +1135,8 @@ module_do_unload(const char *name)
 	}
 	if (mod->mod_source == MODULE_SOURCE_KERNEL) {
 		mod->mod_nrequired = 0; /* will be re-parsed */
+		if (load_requires_force)
+			module_require_force(mod);
 		TAILQ_INSERT_TAIL(&module_builtins, mod, mod_chain);
 		module_builtinlist++;
 	} else {
@@ -1108,11 +1159,10 @@ module_prime(void *base, size_t size)
 	module_t *mod;
 	int error;
 
-	mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
+	mod = module_newmodule(MODULE_SOURCE_BOOT);
 	if (mod == NULL) {
 		return ENOMEM;
 	}
-	mod->mod_source = MODULE_SOURCE_BOOT;
 
 	error = kobj_load_mem(&mod->mod_kobj, base, size);
 	if (error != 0) {
@@ -1218,7 +1268,7 @@ module_thread(void *cookie)
 			mi = mod->mod_info;
 			error = (*mi->mi_modcmd)(MODULE_CMD_AUTOUNLOAD, NULL);
 			if (error == 0 || error == ENOTTY) {
-				(void)module_do_unload(mi->mi_name);
+				(void)module_do_unload(mi->mi_name, false);
 			}
 		}
 		mutex_exit(&module_lock);
