@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.45 2010/06/22 18:32:08 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.46 2010/06/26 03:38:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.45 2010/06/22 18:32:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.46 2010/06/26 03:38:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -325,23 +325,27 @@ tmpfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 static int
 tmpfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
-	fsfilcnt_t freenodes;
 	struct tmpfs_mount *tmp;
+	fsfilcnt_t freenodes;
+	size_t avail;
 
 	tmp = VFS_TO_TMPFS(mp);
 
 	sbp->f_iosize = sbp->f_frsize = sbp->f_bsize = PAGE_SIZE;
 
+	mutex_enter(&tmp->tm_acc_lock);
+	avail =  tmpfs_pages_avail(tmp);
 	sbp->f_blocks = (tmpfs_bytes_max(tmp) >> PAGE_SHIFT);
-	sbp->f_bavail = sbp->f_bfree = tmpfs_pages_avail(tmp);
+	sbp->f_bavail = sbp->f_bfree = avail;
 	sbp->f_bresvd = 0;
 
 	freenodes = MIN(tmp->tm_nodes_max - tmp->tm_nodes_cnt,
-	    tmpfs_pages_avail(tmp) * PAGE_SIZE / sizeof(struct tmpfs_node));
+	    avail * PAGE_SIZE / sizeof(struct tmpfs_node));
 
 	sbp->f_files = tmp->tm_nodes_cnt + freenodes;
 	sbp->f_favail = sbp->f_ffree = freenodes;
 	sbp->f_fresvd = 0;
+	mutex_exit(&tmp->tm_acc_lock);
 
 	copy_statvfs_info(sbp, mp);
 
