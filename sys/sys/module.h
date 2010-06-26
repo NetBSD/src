@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.23 2010/05/24 03:50:25 pgoyette Exp $	*/
+/*	$NetBSD: module.h,v 1.24 2010/06/26 07:23:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -90,6 +90,9 @@ typedef struct module {
 	time_t			mod_autotime;
 	void 			*mod_ctf;
 	u_int			mod_fbtentries;	/* DTrace FBT entrie count */
+	int			mod_flags;
+#define MODFLG_MUST_FORCE	0x01
+
 } module_t;
 
 /*
@@ -120,7 +123,8 @@ extern struct modlist	module_builtins;
 extern u_int		module_gen;
 
 void	module_init(void);
-void	module_init2(void);
+void	module_start_unload_thread(void);
+void	module_builtin_require_force(void);
 void	module_init_md(void);
 void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
