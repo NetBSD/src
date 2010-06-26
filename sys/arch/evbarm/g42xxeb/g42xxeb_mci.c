@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_mci.c,v 1.1 2010/03/13 11:37:47 bsh Exp $ */
+/*	$NetBSD: g42xxeb_mci.c,v 1.2 2010/06/26 07:51:45 bsh Exp $ */
 
 /*-
  * Copyright (c) 2009  Genetec Corporation.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: g42xxeb_mci.c,v 1.1 2010/03/13 11:37:47 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g42xxeb_mci.c,v 1.2 2010/06/26 07:51:45 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -162,6 +162,9 @@ pxamci_attach(device_t parent, device_t self, void *aux)
 	pxa.pxa_size = PXA2X0_MMC_SIZE;
 	pxa.pxa_intr = PXA2X0_INT_MMC;
 #endif
+
+	/* disable DMA for sdmmc for now. */
+	SET(sc->sc_mci.sc_caps, PMC_CAPS_NO_DMA);
 
 	if (pxamci_attach_sub(self, &pxa)) {
 		aprint_error_dev(self,
