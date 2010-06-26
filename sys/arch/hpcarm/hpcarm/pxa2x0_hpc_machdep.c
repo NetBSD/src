@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.7 2010/05/13 21:01:59 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.8 2010/06/26 00:25:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.7 2010/05/13 21:01:59 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.8 2010/06/26 00:25:02 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -417,6 +417,16 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 		platid.dw.dw0 = bootinfo->platid_cpu;
 		platid.dw.dw1 = bootinfo->platid_machine;
 	}
+
+#ifndef RTC_OFFSET
+	/*
+	 * rtc_offset from bootinfo.timezone set by hpcboot.exe
+	 */
+	if (rtc_offset == 0 &&
+	    (bootinfo->timezone > (-12 * 60) &&
+	     bootinfo->timezone <= (12 * 60)))
+		rtc_offset = bootinfo->timezone;
+#endif
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions.
