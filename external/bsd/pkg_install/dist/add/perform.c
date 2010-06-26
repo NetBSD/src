@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.16 2010/04/23 20:54:06 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.17 2010/06/26 00:14:26 joerg Exp $	*/
 #if HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -6,7 +6,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: perform.c,v 1.1.1.16 2010/04/23 20:54:06 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.17 2010/06/26 00:14:26 joerg Exp $");
 
 /*-
  * Copyright (c) 2003 Grant Beattie <grant@NetBSD.org>
@@ -339,9 +339,6 @@ check_already_installed(struct pkg_task *pkg)
 	char *filename;
 	int fd;
 
-	if (Force)
-		return 1;
-
 	filename = pkgdb_pkg_file(pkg->pkgname, CONTENTS_FNAME);
 	fd = open(filename, O_RDONLY);
 	free(filename);
@@ -361,6 +358,9 @@ check_already_installed(struct pkg_task *pkg)
 		}
 		return 1;
 	}
+
+	if (Force)
+		return 1;
 
 	/* We can only arrive here for explicitly requested packages. */
 	if (!Automatic && is_automatic_installed(pkg->pkgname)) {
@@ -1269,9 +1269,9 @@ check_vulnerable(struct pkg_task *pkg)
 
 	if (strcasecmp(check_vulnerabilities, "never") == 0)
 		return 0;
-	else if (strcasecmp(check_vulnerabilities, "always"))
+	else if (strcasecmp(check_vulnerabilities, "always") == 0)
 		require_check = 1;
-	else if (strcasecmp(check_vulnerabilities, "interactive"))
+	else if (strcasecmp(check_vulnerabilities, "interactive") == 0)
 		require_check = 0;
 	else {
 		warnx("Unknown value of the configuration variable"
@@ -1286,7 +1286,7 @@ check_vulnerable(struct pkg_task *pkg)
 			return require_check;
 	}
 
-	if (!audit_package(pv, pkg->pkgname, NULL, 0, 2))
+	if (!audit_package(pv, pkg->pkgname, NULL, 2))
 		return 0;
 
 	if (require_check)
