@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.8 2009/09/13 02:53:17 elad Exp $	*/
+/*	$NetBSD: show.c,v 1.9 2010/06/26 14:30:31 kefren Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netmpls/mpls.h>
 #include <arpa/inet.h>
 
 #include <err.h>
@@ -59,6 +60,7 @@
 
 char	*any_ntoa(const struct sockaddr *);
 char	*link_print(struct sockaddr *);
+char	*mpls_ntoa(const struct sockaddr *); 
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -288,6 +290,9 @@ pr_family(int paf)
 	case AF_APPLETALK:
 		afname = "AppleTalk";
 		break;
+	case AF_MPLS:
+		afname = "MPLS";
+		break;
 	default:
 		afname = NULL;
 		break;
@@ -419,6 +424,9 @@ routename(struct sockaddr *sa)
 
 	case AF_LINK:
 		return (link_print(sa));
+
+	case AF_MPLS:
+		return mpls_ntoa(sa);
 
 #if 0 /* XXX-elad */
 	case AF_UNSPEC:
@@ -683,4 +691,20 @@ link_print(struct sockaddr *sa)
 	default:
 		return (link_ntoa(sdl));
 	}
+}
+
+char *
+mpls_ntoa(const struct sockaddr *sa)
+{
+	static char obuf[100];
+	const struct sockaddr_mpls *sm;
+	union mpls_shim ms;
+
+	sm = (const struct sockaddr_mpls*)sa;
+	ms.s_addr = ntohl(sm->smpls_addr.s_addr);
+
+	snprintf(obuf, sizeof(obuf), "%u",
+	     ms.shim.label);
+
+	return obuf;
 }
