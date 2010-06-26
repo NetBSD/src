@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.60 2010/04/17 13:36:21 nonaka Exp $
+#	$NetBSD: IPAQ,v 1.61 2010/06/26 16:34:47 tsutsui Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -12,7 +12,8 @@ maxusers	32
 
 # Standard system options
 
-options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+				# (default timezone is passed from hpcboot)
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
