@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.207 2010/06/25 15:10:42 tsutsui Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.208 2010/06/26 06:43:13 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.207 2010/06/25 15:10:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.208 2010/06/26 06:43:13 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.207 2010/06/25 15:10:42 tsutsui 
 #include <sys/kthread.h>
 #include <sys/buf.h>
 #include <sys/dirent.h>
-#include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/unistd.h>
@@ -203,6 +202,7 @@ int interrupt_config_threads = 8;
 struct deferred_config_head mountroot_config_queue =
 	TAILQ_HEAD_INITIALIZER(mountroot_config_queue);
 int mountroot_config_threads = 2;
+static bool root_is_mounted = false;
 
 static void config_process_deferred(struct deferred_config_head *, device_t);
 
@@ -475,6 +475,9 @@ void
 config_create_mountrootthreads()
 {
 	int i;
+
+	if (!root_is_mounted)
+		root_is_mounted = true;
 
 	for (i = 0; i < mountroot_config_threads; i++) {
 		(void)kthread_create(PRI_NONE, 0, NULL,
@@ -1887,7 +1890,7 @@ config_mountroot(device_t dev, void (*func)(device_t))
 	/*
 	 * If root file system is mounted, callback now.
 	 */
-	if (rootvnode != NULL) {
+	if (root_is_mounted) {
 		(*func)(dev);
 		return;
 	}
