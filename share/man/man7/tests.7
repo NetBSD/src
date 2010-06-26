@@ -1,4 +1,4 @@
-.\"	$NetBSD: tests.7,v 1.1 2010/06/26 11:15:27 jmmv Exp $
+.\"	$NetBSD: tests.7,v 1.2 2010/06/26 11:26:17 jmmv Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,6 +91,18 @@ job, to ensure that any changes to the system (such as the installation of
 third-party packages or manual modifications to configuration files) do not
 introduce unexpected failures.
 .El
+.Ss Installing the tests
+If you chose to install the
+.Pa tests.tgz
+distribution set while setting up your
+.Nx
+system, the tests are already available in
+.Pa /usr/tests .
+Otherwise, install the set now by running:
+.Bd -literal -offset indent
+# cd /
+# tar xzpf /path/to/tests.tgz
+.Ed
 .Ss Running the tests
 Use the following commands to run the whole test suite:
 .Bd -literal -offset indent
@@ -154,6 +166,30 @@ The following properties are recognized:
 .It Va unprivileged_user
 Specifies the name of a local, unprivileged user, that will be used by those
 tests that need to perform checks as non-root.
+.El
+.Ss What to do if something fails?
+If there is
+.Em any failure
+during the execution of the test suite, please considering reporting it to the
+.Nx
+developers so that the failure can be analyzed and fixed.
+To do so, either send a message to the appropriate mailing list or file a
+problem report.
+For more details please refer to:
+.Bl -bullet -offset indent -compact
+.It
+.Pa http://www.netbsd.org/mailinglists/
+.It
+.Pa http://www.netbsd.org/support/send-pr.html
+.El
+.Sh FILES
+.Bl -tag -compact -width etcXatfXNetBSDXconfXX
+.It Pa /etc/atf/NetBSD.conf
+Configuration file for the
+.Nx
+test suite.
+.It Pa /usr/tests/
+Location of the test suites.
 .El
 .Sh SEE ALSO
 .Xr atf 7
