@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.8 2010/06/25 17:53:28 tsutsui Exp $
+#	$NetBSD: WZERO3,v 1.9 2010/06/26 00:25:02 tsutsui Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,14 +7,15 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 # estimated number of users
 maxusers	32
 
 # Standard system options
 
-options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+				# (default timezone is passed from hpcboot)
 #options 	NTP		# NTP phase/frequency locked loop
 
 # CPU options
