@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.181 2010/05/19 20:43:51 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.182 2010/06/26 14:24:28 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,13 +61,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.181 2010/05/19 20:43:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.182 2010/06/26 14:24:28 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
 #include "opt_ipx.h"
 #include "opt_mbuftrace.h"
+#include "opt_mpls.h"
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
 #include "opt_pppoe.h"
@@ -177,6 +178,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.181 2010/05/19 20:43:51 christos 
 extern u_char	at_org_code[3];
 extern u_char	aarp_org_code[3];
 #endif /* NETATALK */
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#include <netmpls/mpls_var.h>
+#endif
 
 static struct timeval bigpktppslim_last;
 static int bigpktppslim = 2;	/* XXX */
@@ -447,6 +453,15 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		senderr(EAFNOSUPPORT);
 	}
 
+#ifdef MPLS
+		if (rt0 != NULL && rt_gettag(rt0) != NULL) {
+			union mpls_shim msh;
+			msh.s_addr = MPLS_GETSADDR(rt0);
+			if (msh.shim.label != MPLS_LABEL_IMPLNULL)
+				etype = htons(ETHERTYPE_MPLS);
+		}
+#endif
+
 	if (mcopy)
 		(void)looutput(ifp, mcopy, dst, rt);
 
@@ -508,7 +523,6 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
 		altq_etherclassify(&ifp->if_snd, m, &pktattr);
 #endif
-
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
 bad:
@@ -640,7 +654,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	/*
 	 * Determine if the packet is within its size limits.
 	 */
-	if (m->m_pkthdr.len >
+	if (etype != ETHERTYPE_MPLS && m->m_pkthdr.len >
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
 		if (ppsratecheck(&bigpktppslim_last, &bigpktpps_count,
 			    bigpktppslim)) {
@@ -905,6 +919,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			aarpinput(ifp, m); /* XXX */
 			return;
 #endif /* NETATALK */
+#ifdef MPLS
+		case ETHERTYPE_MPLS:
+			schednetisr(NETISR_MPLS);
+			inq = &mplsintrq;
+			break;
+#endif
 		default:
 			m_freem(m);
 			return;

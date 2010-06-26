@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.122 2010/05/02 19:17:56 kefren Exp $	*/
+/*	$NetBSD: route.c,v 1.123 2010/06/26 14:24:28 kefren Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.122 2010/05/02 19:17:56 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.123 2010/06/26 14:24:28 kefren Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -804,6 +804,8 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		}
 		rt_set_ifa(rt, ifa);
+		if (info->rti_info[RTAX_TAG] != NULL)
+			rt_settag(rt, info->rti_info[RTAX_TAG]);
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (info->rti_info[RTAX_IFP] != NULL &&
 		    (ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP])) != NULL &&
@@ -1412,4 +1414,21 @@ rt_walktree(sa_family_t family, int (*f)(struct rtentry *, void *), void *v)
 	rw.rw_v = v;
 
 	return rn_walktree(rnh, rt_walktree_visitor, &rw);
+}
+
+const struct sockaddr *
+rt_settag(struct rtentry *rt, const struct sockaddr *tag)
+{
+	if (rt->rt_tag != tag) {
+		if (rt->rt_tag != NULL)
+			sockaddr_free(rt->rt_tag);
+		rt->rt_tag = sockaddr_dup(tag, M_NOWAIT);
+	}
+	return rt->rt_tag; 
+}
+
+struct sockaddr *
+rt_gettag(struct rtentry *rt)
+{
+	return rt->rt_tag;
 }
