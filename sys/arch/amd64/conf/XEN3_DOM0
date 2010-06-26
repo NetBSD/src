@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.54 2010/05/22 19:02:07 plunky Exp $
+# $NetBSD: XEN3_DOM0,v 1.55 2010/06/26 13:08:37 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -75,6 +75,13 @@ options 	COMPAT_LINUX
 options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
