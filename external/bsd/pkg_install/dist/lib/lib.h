@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.5 2010/04/23 20:55:31 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.6 2010/06/26 00:17:13 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -380,7 +380,7 @@ struct pkg_vulnerabilities *read_pkg_vulnerabilities_file(const char *, int, int
 struct pkg_vulnerabilities *read_pkg_vulnerabilities_memory(void *, size_t, int);
 void free_pkg_vulnerabilities(struct pkg_vulnerabilities *);
 int audit_package(struct pkg_vulnerabilities *, const char *, const char *,
-    int, int);
+    int);
 
 /* Parse configuration file */
 void pkg_install_config(void);
@@ -430,6 +430,7 @@ extern Boolean Force;
 extern const char *cert_chain_file;
 extern const char *certs_packages;
 extern const char *certs_pkg_vulnerabilities;
+extern const char *check_eol;
 extern const char *check_vulnerabilities;
 extern const char *config_file;
 extern const char *config_pkg_dbdir;
