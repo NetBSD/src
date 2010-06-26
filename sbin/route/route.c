@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.120 2010/05/12 17:56:13 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.121 2010/06/26 14:29:36 kefren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.120 2010/05/12 17:56:13 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.121 2010/06/26 14:29:36 kefren Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: route.c,v 1.120 2010/05/12 17:56:13 christos Exp $");
 #include <netinet/in.h>
 #include <netatalk/at.h>
 #include <netiso/iso.h>
+#include <netmpls/mpls.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 
@@ -83,13 +84,14 @@ union sockunion {
 	struct	sockaddr_dl sdl;
 #ifndef SMALL
 	struct	sockaddr_iso siso;
+	struct	sockaddr_mpls smpls;
 #endif /* SMALL */
 };
 
 typedef union sockunion *sup;
 
 struct sou {
-	union sockunion so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp;
+	union sockunion so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp, so_mpls;
 };
 
 static char *any_ntoa(const struct sockaddr *);
@@ -121,7 +123,7 @@ static void sockaddr(const char *, struct sockaddr *);
 int	pid, rtm_addrs;
 int	sock;
 int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, Sflag;
-int	iflag, verbose, aflen = sizeof(struct sockaddr_in);
+int	iflag, verbose, aflen = sizeof(struct sockaddr_in), rtag;
 int	locking, lockrest, debugonly, shortoutput;
 struct	rt_metrics rt_metrics;
 u_int32_t  rtm_inits;
@@ -575,6 +577,16 @@ routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 		    ((const struct sockaddr_at *)sa)->sat_addr.s_net,
 		    ((const struct sockaddr_at *)sa)->sat_addr.s_node);
 		break;
+	case AF_MPLS:
+		{
+		union mpls_shim ms;
+
+		ms.s_addr =((const struct sockaddr_mpls*)sa)->smpls_addr.s_addr;
+		ms.s_addr = ntohl(ms.s_addr);
+
+		snprintf(line, sizeof(line), "%u", ms.shim.label);
+		break;
+		}
 #endif /* SMALL */
 
 	default:
@@ -818,6 +830,16 @@ newroute(int argc, char *const *argv)
 			case K_ISO:
 				af = AF_ISO;
 				aflen = sizeof(struct sockaddr_iso);
+				break;
+			case K_MPLS:
+				af = AF_MPLS;
+				aflen = sizeof(struct sockaddr_mpls);
+				break;
+			case K_TAG:
+				if (!--argc)
+					usage(1+*argv);
+				aflen = sizeof(struct sockaddr_mpls);
+				(void)getaddr(RTA_TAG, *++argv, 0, soup);
 				break;
 #endif /* SMALL */
 
@@ -1140,6 +1162,10 @@ getaddr(int which, const char *s, struct hostent **hpp, struct sou *soup)
 		su = &soup->so_ifa;
 		su->sa.sa_family = af;
 		break;
+	case RTA_TAG:
+		su = &soup->so_mpls;
+		afamily = AF_MPLS;
+		break;
 	default:
 		su = NULL;
 		usage("Internal Error");
@@ -1245,6 +1271,17 @@ badataddr:
 		su->sat.sat_addr.s_node = val;
 		rtm_addrs |= RTA_NETMASK;
 		return(forcehost || su->sat.sat_addr.s_node != 0);
+	case AF_MPLS:
+		/* Tag should be a positive value, limited to 20 bits */
+		if (atoi(s) < 0 || atoi(s) >= (1 << 20))
+			errx(1, "bad tag: %s", s);
+		su->smpls.smpls_addr.s_addr = 0;
+		su->smpls.smpls_addr.shim.label = atoi(s);
+		su->smpls.smpls_addr.s_addr =
+			htonl(su->smpls.smpls_addr.s_addr);
+
+		/* We don't have netmasks for tags  */
+		return 1;
 #endif
 
 	case AF_LINK:
@@ -1468,6 +1505,7 @@ rtmsg(int cmd, int flags, struct sou *soup)
 	NEXTADDR(RTA_GENMASK, soup->so_genmask);
 	NEXTADDR(RTA_IFP, soup->so_ifp);
 	NEXTADDR(RTA_IFA, soup->so_ifa);
+	NEXTADDR(RTA_TAG, soup->so_mpls);
 	rtm.rtm_msglen = l = cp - (char *)&m_rtmsg;
 	if (verbose && ! shortoutput) {
 		if (rtm_addrs)
@@ -1574,7 +1612,7 @@ const char routeflags[] =
 const char ifnetflags[] =
 "\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5PTP\6NOTRAILERS\7RUNNING\010NOARP\011PPROMISC\012ALLMULTI\013OACTIVE\014SIMPLEX\015LINK0\016LINK1\017LINK2\020MULTICAST";
 const char addrnames[] =
-"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD";
+"\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\011TAG";
 
 
 #ifndef SMALL
@@ -1739,7 +1777,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 static int
 print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 {
-	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL, *ifa = NULL;
+	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL, *ifa = NULL, *mpls = NULL;
 	struct sockaddr_dl *ifp = NULL;
 	struct sockaddr *sa;
 	char *cp;
@@ -1785,6 +1823,9 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 				case RTA_IFA:
 					ifa = sa;
 					break;
+				case RTA_TAG:
+					mpls = sa;
+					break;
 				}
 				ADVANCE(cp, sa);
 			}
@@ -1812,6 +1853,17 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 		} else
 			(void)printf("    gateway: %s\n", name);
 	}
+	if (mpls) {
+		const char *name;
+		name = routename(mpls, NULL, RTF_HOST);
+		if(shortoutput) {
+			if (*name == '\0')
+				return 1;
+			printf("%s\n", name);
+		} else
+			printf("        Tag: %s\n", name);
+	}
+		
 	if (ifa && ! shortoutput)
 		(void)printf(" local addr: %s\n",
 		    routename(ifa, NULL, RTF_HOST));
@@ -1985,6 +2037,14 @@ sodump(sup su, const char *which)
 	case AF_ISO:
 		(void)printf("%s: iso %s; ",
 		    which, iso_ntoa(&su->siso.siso_addr));
+		break;
+	case AF_MPLS:
+		{
+		union mpls_shim ms;
+		ms.s_addr = ntohl(su->smpls.smpls_addr.s_addr);
+		printf("%s: mpls %u; ",
+		    which, ms.shim.label);
+		}
 		break;
 #endif /* SMALL */
 	default:

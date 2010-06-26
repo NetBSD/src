@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.40 2010/01/26 21:27:54 is Exp $	*/
+/*	$NetBSD: show.c,v 1.41 2010/06/26 14:29:36 kefren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.40 2010/01/26 21:27:54 is Exp $");
+__RCSID("$NetBSD: show.c,v 1.41 2010/06/26 14:29:36 kefren Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,11 +43,13 @@ __RCSID("$NetBSD: show.c,v 1.40 2010/01/26 21:27:54 is Exp $");
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/route.h>
 #include <netinet/in.h>
+#include <netmpls/mpls.h>
 
 #include <sys/sysctl.h>
 
@@ -136,6 +138,10 @@ parse_show_opts(int argc, char * const *argv, int *afp, int *flagsp,
 		case K_ISO:
 		case K_OSI:
 			af = AF_ISO;
+			afname = argv[argc - 1] + 1;
+			break;
+		case K_MPLS:
+			af = AF_MPLS;
 			afname = argv[argc - 1] + 1;
 			break;
 #endif /* SMALL */
@@ -319,6 +325,9 @@ pr_family(int af)
 	case AF_ISO:
 		afname = "ISO";
 		break;
+	case AF_MPLS:
+		afname = "MPLS";
+		break;
 #endif /* SMALL */
 	case AF_APPLETALK:
 		afname = "AppleTalk";
@@ -363,6 +372,18 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *nm, int flags, int width)
 #endif /* INET6 */
 
 #ifndef SMALL
+	case AF_MPLS:
+		{
+		struct sockaddr_mpls *smpls = (struct sockaddr_mpls *)sa;
+		union mpls_shim ms;
+
+		ms.s_addr = ntohl(smpls->smpls_addr.s_addr);
+
+		snprintf(workbuf, sizeof(workbuf), "%u",
+			ms.shim.label);
+		cp = workbuf;
+		}
+		break;
 	case AF_APPLETALK:
 		if (getnameinfo(sa, sa->sa_len, workbuf, sizeof(workbuf),
 		    NULL, 0, NI_NUMERICHOST) != 0)
