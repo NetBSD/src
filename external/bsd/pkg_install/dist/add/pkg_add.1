@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.1.1.10 2010/02/20 04:41:53 joerg Exp $
+.\" $NetBSD: pkg_add.1,v 1.1.1.11 2010/06/26 00:14:27 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -17,7 +17,7 @@
 .\"
 .\"     @(#)pkg_add.1
 .\"
-.Dd February 18, 2010
+.Dd June 16, 2010
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl AfILnRUuVv
+.Op Fl C Ar config
 .Op Fl K Ar pkg_dbdir
 .Op Fl m Ar machine
 .Op Fl P Ar destdir
@@ -116,6 +117,10 @@ a package without specifying
 .Fl A
 after it had already been automatically installed, the mark is
 removed.
+.It Fl C Ar config
+Read the configuration file from
+.Ar config
+instead of the system default.
 .It Fl f
 Force installation to proceed even if prerequisite packages are not
 installed or the install script fails.

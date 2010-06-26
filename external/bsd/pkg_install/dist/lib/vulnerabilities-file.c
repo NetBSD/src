@@ -1,4 +1,4 @@
-/*	$NetBSD: vulnerabilities-file.c,v 1.1.1.4 2010/04/23 20:54:12 joerg Exp $	*/
+/*	$NetBSD: vulnerabilities-file.c,v 1.1.1.5 2010/06/26 00:14:33 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -38,7 +38,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.4 2010/04/23 20:54:12 joerg Exp $");
+__RCSID("$NetBSD: vulnerabilities-file.c,v 1.1.1.5 2010/06/26 00:14:33 joerg Exp $");
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -607,13 +607,15 @@ check_ignored_entry(struct pkg_vulnerabilities *pv, size_t i)
 
 int
 audit_package(struct pkg_vulnerabilities *pv, const char *pkgname,
-    const char *limit_vul_types, int check_eol, int output_type)
+    const char *limit_vul_types, int output_type)
 {
 	FILE *output = output_type == 1 ? stdout : stderr;
 	size_t i;
-	int retval;
+	int retval, do_eol;
 
 	retval = 0;
+
+	do_eol = (strcasecmp(check_eol, "yes") == 0);
 
 	for (i = 0; i < pv->entries; ++i) {
 		if (check_ignored_entry(pv, i))
@@ -624,8 +626,9 @@ audit_package(struct pkg_vulnerabilities *pv, const char *pkgname,
 		if (!pkg_match(pv->vulnerability[i], pkgname))
 			continue;
 		if (strcmp("eol", pv->classification[i]) == 0) {
-			if (!check_eol)
+			if (!do_eol)
 				continue;
+			retval = 1;
 			if (output_type == 0) {
 				puts(pkgname);
 				continue;
