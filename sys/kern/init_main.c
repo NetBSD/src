@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.421 2010/06/25 15:10:42 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.422 2010/06/26 07:23:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.421 2010/06/25 15:10:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.422 2010/06/26 07:23:57 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -431,7 +431,7 @@ main(void)
 	loginit();
 
 	/* Second part of module system initialization. */
-	module_init2();
+	module_start_unload_thread();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
@@ -595,9 +595,11 @@ main(void)
 
 	/*
 	 * Load any remaining builtin modules, and hand back temporary
-	 * storage to the VM system.
+	 * storage to the VM system.  Then require force when loading any
+	 * remaining un-init'ed built-in modules to avoid later surprises.
 	 */
 	module_init_class(MODULE_CLASS_ANY);
+	module_builtin_require_force();
 
 	/*
 	 * Finalize configuration now that all real devices have been
