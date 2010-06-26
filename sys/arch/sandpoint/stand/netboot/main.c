@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.33 2010/05/20 20:18:51 phx Exp $ */
+/* $NetBSD: main.c,v 1.34 2010/06/26 21:45:49 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -61,41 +61,36 @@ void *bootinfo; /* low memory reserved to pass bootinfo structures */
 int bi_size;	/* BOOTINFO_MAXSIZE */
 char *bi_next;
 
-extern char bootfile[];	/* filled by DHCP */
-char rootdev[4];	/* NIF nickname, filled by netif_init() */
-uint8_t en[6];		/* NIC macaddr, fill by netif_init() */
-
-void main(int, char **);
 void bi_init(void *);
 void bi_add(void *, int, int);
 
+struct btinfo_memory bi_mem;
+struct btinfo_console bi_cons;
+struct btinfo_clock bi_clk;
+struct btinfo_prodfamily bi_fam;
+struct btinfo_bootpath bi_path;
+struct btinfo_rootdevice bi_rdev;
+struct btinfo_net bi_net;
+
+void main(int, char **);
 extern char bootprog_rev[], bootprog_maker[], bootprog_date[];
 
 int brdtype;
-char *consname;
-int consport;
-int consspeed;
-int ticks_per_sec;
 uint32_t busclock, cpuclock;
+
+static int check_bootname(char *);
+#define	BNAME_DEFAULT "nfs:"
 
 void
 main(int argc, char *argv[])
 {
-	struct btinfo_memory bi_mem;
-	struct btinfo_console bi_cons;
-	struct btinfo_clock bi_clk;
-	struct btinfo_bootpath bi_path;
-	struct btinfo_rootdevice bi_rdev;
-	struct btinfo_net bi_net;
-	struct btinfo_prodfamily bi_fam;
 	struct brdprop *brdprop;
 	unsigned long marks[MARK_MAX];
 	unsigned lata[1][2], lnif[1][2];
-	unsigned memsize, tag;
+	unsigned tag, dsk;
 	int b, d, f, fd, howto, i, n;
-
-	/* determine SDRAM size */
-	memsize = mpc107memsize();
+	char *bname;
+	void *dev;
 
 	printf("\n");
 	printf(">> NetBSD/sandpoint Boot, Revision %s\n", bootprog_rev);
@@ -103,17 +98,19 @@ main(int argc, char *argv[])
 
 	brdprop = brd_lookup(brdtype);
 	printf("%s, cpu %u MHz, bus %u MHz, %dMB SDRAM\n", brdprop->verbose,
-	    cpuclock / 1000000, busclock / 1000000, memsize >> 20);
+	    cpuclock / 1000000, busclock / 1000000, bi_mem.memsize >> 20);
 
 	n = pcilookup(PCI_CLASS_IDE, lata, sizeof(lata)/sizeof(lata[0]));
 	if (n == 0)
 		n = pcilookup(PCI_CLASS_MISCSTORAGE, lata,
 		    sizeof(lata)/sizeof(lata[0]));
-	if (n == 0)
+	if (n == 0) {
+		dsk = ~0;
 		printf("no IDE found\n");
+	}
 	else {
-		tag = lata[0][1];
-		pcidecomposetag(tag, &b, &d, &f);
+		dsk = lata[0][1];
+		pcidecomposetag(dsk, &b, &d, &f);
 		printf("%04x.%04x IDE %02d:%02d:%02d\n",
 		    PCI_VENDOR(lata[0][0]), PCI_PRODUCT(lata[0][0]),
 		    b, d, f);
@@ -135,20 +132,13 @@ main(int argc, char *argv[])
 	pcisetup();
 	pcifixup();
 
+	if (dskdv_init(dsk, &dev) == 0 || disk_scan(dev) == 0)
+		printf("no IDE/SATA device driver is found\n");
+
 	if (netif_init(tag) == 0)
 		printf("no NIC device driver is found\n");
 
-	if ((fd = open("net:", 0)) < 0) {
-		if (errno == ENOENT)
-			printf("\"%s\" not found\n", bootfile);
-		goto loadfail;
-	}
-	printf("loading \"%s\" ", bootfile);
-	marks[MARK_START] = 0;
-	if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
-		goto loadfail;
-
-	/* get boot mode and boot options */
+	/* get boot options and determine bootname */
 	howto = RB_AUTOBOOT;
 	for (n = 1; n < argc; n++) {
 		for (i = 0; i < sizeof(bootargs) / sizeof(bootargs[0]); i++) {
@@ -159,21 +149,30 @@ main(int argc, char *argv[])
 			}
 		}
 		if (i >= sizeof(bootargs) / sizeof(bootargs[0]))
-			break;	/* break on first garbage argument */
+			break;	/* break on first unknown string */
 	}
+	if (n == argc)
+		bname = BNAME_DEFAULT;
+	else {
+		bname = argv[n];
+		if (check_bootname(bname) == 0) {
+			printf("%s not a valid bootname\n", bname);
+			goto loadfail;
+		}
+	}
+
+	if ((fd = open(bname, 0)) < 0) {
+		if (errno == ENOENT)
+			printf("\"%s\" not found\n", bi_path.bootpath);
+		goto loadfail;
+	}
+	printf("loading \"%s\" ", bi_path.bootpath);
+	marks[MARK_START] = 0;
+	if (fdloadfile(fd, marks, LOAD_KERNEL) < 0)
+		goto loadfail;
 
 	bootinfo = (void *)0x4000;
 	bi_init(bootinfo);
-
-	bi_mem.memsize = memsize;
-	snprintf(bi_cons.devname, sizeof(bi_cons.devname), consname);
-	bi_cons.addr = consport;
-	bi_cons.speed = consspeed;
-	bi_clk.ticks_per_sec = ticks_per_sec;
-	snprintf(bi_path.bootpath, sizeof(bi_path.bootpath), bootfile);
-	snprintf(bi_rdev.devname, sizeof(bi_rdev.devname), rootdev);
-	bi_rdev.cookie = tag; /* PCI tag for fxp netboot case */
-	snprintf(bi_fam.name, sizeof(bi_fam.name), brdprop->family);
 
 	bi_add(&bi_cons, BTINFO_CONSOLE, sizeof(bi_cons));
 	bi_add(&bi_mem, BTINFO_MEMORY, sizeof(bi_mem));
@@ -183,9 +182,6 @@ main(int argc, char *argv[])
 	bi_add(&bi_fam, BTINFO_PRODFAMILY, sizeof(bi_fam));
 	if (brdtype == BRD_SYNOLOGY) {
 		/* need to set MAC address for Marvell-SKnet */
-		strcpy(bi_net.devname, "sk");
-		memcpy(bi_net.mac_address, en, sizeof(en));
-		bi_net.cookie = tag;
 		bi_add(&bi_net, BTINFO_NET, sizeof(bi_net));
 	}
 
@@ -293,4 +289,27 @@ allocaligned(size_t size, size_t align)
 		return alloc(size);
 	p = (uint32_t)alloc(size + align);
 	return (void *)((p + align) & ~align);
+}
+
+static int
+check_bootname(char *s)
+{
+	/*
+	 * nfs:
+	 * nfs:<bootfile>
+	 * tftp:
+	 * tftp:<bootfile>
+	 * wdN:<bootfile>
+	 *
+	 * net is a synonym of nfs.
+	 */
+	if (strncmp(s, "nfs:", 4) == 0 || strncmp(s, "net:", 4) == 0)
+		return 1;
+	if (strncmp(s, "tftp:", 5) == 0)
+		return 1;
+	if (s[0] == 'w' && s[1] == 'd'
+	    && s[2] >= '0' && s[2] <= '3' && s[3] == ':') {
+		return s[4] != '\0';
+	}
+	return 0;
 }
