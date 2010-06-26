@@ -34,6 +34,7 @@
 #include "r300_reg.h"
 
 #include "r600_microcode.h"
+#include "radeonhd_microcode.h"
 
 # define ATI_PCIGART_PAGE_SIZE		4096	/**< PCI GART page size */
 # define ATI_PCIGART_PAGE_MASK		(~(ATI_PCIGART_PAGE_SIZE-1))
@@ -415,6 +416,8 @@ static void r700_vm_init(struct drm_device *dev)
 /* load r600 microcode */
 static void r700_cp_load_microcode(drm_radeon_private_t * dev_priv)
 {
+	size_t pfp_req_size, me_req_size;
+
 	const u32 *pfp;
 	const u32 *cp;
 	int i;
@@ -436,8 +439,37 @@ static void r700_cp_load_microcode(drm_radeon_private_t * dev_priv)
 		pfp = RV710_pfp_microcode;
 		cp  = RV710_cp_microcode;
 		break;
+	case CHIP_CEDAR:
+		DRM_INFO("Loading CEDAR Microcode\n");
+		pfp = CEDAR_pfp_microcode;
+		cp  = CEDAR_me_microcode;
+		break;
+	case CHIP_REDWOOD:
+		DRM_INFO("Loading REDWOOD Microcode\n");
+		pfp = REDWOOD_pfp_microcode;
+		cp  = REDWOOD_me_microcode;
+		break;
+	case CHIP_JUNIPER:
+		DRM_INFO("Loading JUNIPER Microcode\n");
+		pfp = JUNIPER_pfp_microcode;
+		cp  = JUNIPER_me_microcode;
+		break;
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
+		DRM_INFO("Loading CYPRESS Microcode\n");
+		pfp = CYPRESS_pfp_microcode;
+		cp  = CYPRESS_me_microcode;
+		break;
 	default:
 		return;
+	}
+
+	if (((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_CEDAR)) {
+		pfp_req_size = EVERGREEN_PFP_UCODE_SIZE * 4;
+		me_req_size = EVERGREEN_PM4_UCODE_SIZE * 4;
+	} else {
+		pfp_req_size = R700_PFP_UCODE_SIZE * 4;
+		me_req_size = R700_PM4_UCODE_SIZE * 4;
 	}
 
 	r600_do_cp_stop(dev_priv);
@@ -453,12 +485,12 @@ static void r700_cp_load_microcode(drm_radeon_private_t * dev_priv)
 	RADEON_WRITE(R600_GRBM_SOFT_RESET, 0);
 
 	RADEON_WRITE(R600_CP_PFP_UCODE_ADDR, 0);
-	for (i = 0; i < R700_PFP_UCODE_SIZE; i++)
+	for (i = 0; i < pfp_req_size; i++)
 		RADEON_WRITE(R600_CP_PFP_UCODE_DATA, pfp[i]);
 	RADEON_WRITE(R600_CP_PFP_UCODE_ADDR, 0);
 
 	RADEON_WRITE(R600_CP_ME_RAM_WADDR, 0);
-	for (i = 0; i < R700_PM4_UCODE_SIZE; i++)
+	for (i = 0; i < me_req_size; i++)
 		RADEON_WRITE(R600_CP_ME_RAM_DATA, cp[i]);
 	RADEON_WRITE(R600_CP_ME_RAM_WADDR, 0);
 
@@ -2167,11 +2199,18 @@ void r600_do_cp_start(drm_radeon_private_t * dev_priv)
 	BEGIN_RING(7);
 	OUT_RING(CP_PACKET3(R600_IT_ME_INITIALIZE, 5));
 	OUT_RING(0x00000001);
-	if (((dev_priv->flags & RADEON_FAMILY_MASK) < CHIP_RV770))
-		OUT_RING(0x00000003);
-        else
+	if (((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_CEDAR)) {
 		OUT_RING(0x00000000);
-        OUT_RING((dev_priv->r600_max_hw_contexts - 1));
+		/* XXXMRG add/use evergreen_max_hw_contexts */
+		OUT_RING((dev_priv->r600_max_hw_contexts - 1));
+	} else if (((dev_priv->flags & RADEON_FAMILY_MASK) >= CHIP_RV770)) {
+		OUT_RING(0x00000000);
+		/* XXXMRG add/use rv770_max_hw_contexts */
+		OUT_RING((dev_priv->r600_max_hw_contexts - 1));
+        } else {
+		OUT_RING(0x00000003);
+		OUT_RING((dev_priv->r600_max_hw_contexts - 1));
+	}
 	OUT_RING(R600_ME_INITIALIZE_DEVICE_ID(1));
 	OUT_RING(0x00000000);
 	OUT_RING(0x00000000);
