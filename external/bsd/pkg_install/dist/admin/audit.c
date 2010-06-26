@@ -1,4 +1,4 @@
-/*	$NetBSD: audit.c,v 1.1.1.7 2010/04/23 20:54:06 joerg Exp $	*/
+/*	$NetBSD: audit.c,v 1.1.1.8 2010/06/26 00:14:27 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,7 +7,7 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: audit.c,v 1.1.1.7 2010/04/23 20:54:06 joerg Exp $");
+__RCSID("$NetBSD: audit.c,v 1.1.1.8 2010/06/26 00:14:27 joerg Exp $");
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -73,7 +73,6 @@ __RCSID("$NetBSD: audit.c,v 1.1.1.7 2010/04/23 20:54:06 joerg Exp $");
 #include "admin.h"
 #include "lib.h"
 
-static int check_eol = 0;
 static int check_signature = 0;
 static const char *limit_vul_types = NULL;
 static int update_pkg_vuln = 0;
@@ -100,7 +99,7 @@ parse_options(int argc, char **argv, const char *options)
 	while ((ch = getopt(argc, argv, options)) != -1) {
 		switch (ch) {
 		case 'e':
-			check_eol = 1;
+			check_eol = "yes";
 			break;
 		case 's':
 			check_signature = 1;
@@ -123,8 +122,7 @@ parse_options(int argc, char **argv, const char *options)
 static int
 check_exact_pkg(const char *pkg)
 {
-	return audit_package(pv, pkg, limit_vul_types, check_eol,
-	    quiet ? 0 : 1);
+	return audit_package(pv, pkg, limit_vul_types, quiet ? 0 : 1);
 }
 
 static int
