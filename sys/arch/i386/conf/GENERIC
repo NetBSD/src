@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.985 2010/06/26 14:36:48 kefren Exp $
+# $NetBSD: GENERIC,v 1.986 2010/06/26 15:17:56 kefren Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.985 $"
+#ident 		"GENERIC-$Revision: 1.986 $"
 
 maxusers	64		# estimated number of users
 
@@ -213,6 +213,7 @@ options 	INET6		# IPv6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
+#options	MPLS		# MultiProtocol Label Switching (needs ifmpls)
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	ISO,TPIP	# OSI
@@ -1536,7 +1537,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	mpls			# MultiProtocol Label Switching
+#pseudo-device	ifmpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #options	PPPOE_SERVER            # Enable PPPoE server via link0
