@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.74 2010/04/22 14:32:30 plunky Exp $	*/
+/*	$NetBSD: route.c,v 1.75 2010/06/27 06:52:38 kefren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.74 2010/04/22 14:32:30 plunky Exp $");
+__RCSID("$NetBSD: route.c,v 1.75 2010/06/27 06:52:38 kefren Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: route.c,v 1.74 2010/04/22 14:32:30 plunky Exp $");
 #include <netinet/in.h>
 #include <netatalk/at.h>
 #include <netiso/iso.h>
+#include <netmpls/mpls.h>
 
 #include <sys/sysctl.h>
 
@@ -272,6 +273,21 @@ p_krtentry(rt)
 	else
 		printf("%6s", "-");
 	putchar((rt->rt_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
+	if (tagflag == 1) {
+		if (rt->rt_tag != NULL) {
+			const struct sockaddr_mpls *sampls = 
+			    (const struct sockaddr_mpls*)kgetsa(rt->rt_tag);
+			union mpls_shim shim;
+
+			if (sampls->smpls_family == AF_MPLS) {
+				shim.s_addr = ntohl(sampls->smpls_addr.s_addr);
+				printf("%7d", shim.shim.label);
+			}
+			else
+				printf("%7s", "-");
+		} else
+			printf("%7s", "-");
+	}
 	if (rt->rt_ifp) {
 		if (rt->rt_ifp != lastif) {
 			kget(rt->rt_ifp, ifnet);

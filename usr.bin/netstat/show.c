@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.9 2010/06/26 14:30:31 kefren Exp $	*/
+/*	$NetBSD: show.c,v 1.10 2010/06/27 06:52:38 kefren Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ void	 pr_family(int);
 void	 p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 char	*routename4(in_addr_t);
 char	*routename6(struct sockaddr_in6 *);
+static void p_tag(const struct sockaddr *sa);
 
 /*
  * Print routing tables.
@@ -201,12 +202,18 @@ pr_rthdr(int paf, int pAflag)
 {
 	if (pAflag)
 		printf("%-*.*s ", PLEN, PLEN, "Address");
-	if (paf != PF_KEY)
-		printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s  %s\n",
-		    WID_DST(paf), WID_DST(paf), "Destination",
-		    WID_GW(paf), WID_GW(paf), "Gateway",
-		    "Flags", "Refs", "Use", "Mtu", "Interface");
-	else
+	if (paf != PF_KEY) {
+		if (tagflag == 1)
+			printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s %7.7s"
+			    " %s\n", WID_DST(paf), WID_DST(paf), "Destination",
+			    WID_GW(paf), WID_GW(paf), "Gateway",
+			    "Flags", "Refs", "Use", "Mtu", "Tag", "Interface");
+		else
+			printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s %s\n",
+			    WID_DST(paf), WID_DST(paf), "Destination",
+			    WID_GW(paf), WID_GW(paf), "Gateway",
+			    "Flags", "Refs", "Use", "Mtu", "Interface");
+	} else
 		printf("%-18s %-5s %-18s %-5s %-5s %-22s\n",
 		    "Source", "Port", "Destination",
 		    "Port", "Proto", "SA(Address/Proto/Type/Direction)");
@@ -265,6 +272,8 @@ p_rtentry(struct rt_msghdr *rtm)
 	else
 		printf("%6s", "-");
 	putchar((rtm->rtm_rmx.rmx_locks & RTV_MTU) ? 'L' : ' ');
+	if (tagflag == 1)
+		p_tag(rti_info[RTAX_TAG]);
 	printf(" %.16s", if_indextoname(rtm->rtm_index, ifbuf));
 	putchar('\n');
 }
@@ -371,6 +380,22 @@ p_flags(int f, const char *format)
 			*flags++ = p->b_val;
 	*flags = '\0';
 	printf(format, name);
+}
+
+static void
+p_tag(const struct sockaddr *sa)
+{
+	const struct sockaddr_mpls *sampls =
+	    (const struct sockaddr_mpls *)sa;
+	union mpls_shim mshim;
+
+	if (sa == NULL || sa->sa_family != AF_MPLS) {
+		printf("%7s", "-");
+		return;
+	}
+
+	mshim.s_addr = ntohl(sampls->smpls_addr.s_addr);
+	printf("%7d", mshim.shim.label);
 }
 
 static char line[MAXHOSTNAMELEN];

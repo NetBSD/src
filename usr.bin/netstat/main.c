@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.74 2010/02/24 11:00:27 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.75 2010/06/27 06:52:37 kefren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.74 2010/02/24 11:00:27 pooka Exp $");
+__RCSID("$NetBSD: main.c,v 1.75 2010/06/27 06:52:37 kefren Exp $");
 #endif
 #endif /* not lint */
 
@@ -429,7 +429,7 @@ main(argc, argv)
 	pcbaddr = 0;
 
 	while ((ch = getopt(argc, argv,
-	    "AabBdf:ghI:LliM:mN:nP:p:qrsStuvw:X")) != -1)
+	    "AabBdf:ghI:LliM:mN:nP:p:qrsStTuvw:X")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -527,6 +527,9 @@ main(argc, argv)
 			break;
 		case 't':
 			tflag = 1;
+			break;
+		case 'T':
+			tagflag = 1;
 			break;
 		case 'u':
 			af = AF_LOCAL;
