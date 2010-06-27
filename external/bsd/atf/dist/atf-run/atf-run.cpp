@@ -222,7 +222,10 @@ atf_run::get_tcr(const std::string& broken_reason,
     const bool default_fail = !config_xfail.empty();
 
     if (!broken_reason.empty()) {
-        return tcr(tcr::failed_state, broken_reason);
+        if (default_fail)
+            return tcr(tcr::xfail_state, config_xfail);
+        else
+            return tcr(tcr::failed_state, broken_reason);
     }
 
     if (s.exited()) {
