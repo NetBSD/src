@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.1 2010/06/26 22:13:32 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.2 2010/06/27 12:09:17 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -82,7 +82,6 @@ static void drive_ident(struct disk *, char *);
 static char *mkident(char *, int);
 static void set_xfermode(struct dkdev_ata *, int);
 static void decode_dlabel(struct disk *, char *);
-static int sii_spinwait_irqack(struct dkdev_ata *, int);
 static int lba_read(struct disk *, uint64_t, uint32_t, void *);
 static void issue48(struct dvata_chan *, uint64_t, uint32_t);
 static void issue28(struct dvata_chan *, uint64_t, uint32_t);
@@ -356,35 +355,12 @@ set_xfermode(struct dkdev_ata *l, int n)
 }
 
 static int
-sii_spinwait_irqack(struct dkdev_ata *l, int n)
-{
-/* 0x0a0, 0x0e0, 0x2a0, 0x2e0 */
-#define CNST_CH(n) (((n&02)<<8)+((n&01)<<6))
-#define CNST_TF(n) (0x0a0+CNST_CH(n))
-#define CNST_INT   (1<<11)
-	struct dvata_chan *chan = &l->chan[n];
-	uint32_t cnst = l->bar[5] + CNST_TF(n);
-	int loop, sts;
-
-	loop = 100;
-	do {
-		sts = CSR_READ_4(cnst);
-		if (sts & CNST_INT) {
-			sts = CSR_READ_1(chan->cmd + _STS);
-			return (sts & ATA_STS_ERR) == 0;
-		}
-		delay(1000);
-	} while (--loop > 0);
-	return 0;
-}
-
-static int
 lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
 {
 	struct dkdev_ata *l = d->dvops;
 	struct dvata_chan *chan;
 	void (*issue)(struct dvata_chan *, uint64_t, uint32_t);
-	uint32_t n, i, rdcnt;
+	uint32_t n, rdcnt;
 	uint16_t *p;
 	const char *err;
 	int error;
@@ -401,35 +377,14 @@ lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
 		if (spinwait_unbusy(l, n, 1000, &err) == 0) {
 			printf("%s blk %d %s\n", d->xname, (int)bno, err);
 			error = EIO;
-			goto skip;
 		}
-#if 1 /* XXX */
-		for (i = 0; i < rdcnt; i += 1) {
-			if (sii_spinwait_irqack(l, n) == 0) {
-				printf("%s blk %d no xfer ack\n", d->xname, (int)bno);
-				error = EIO;
-				goto skip;
-			}
-			for (n = 0; n < 512; n +=2) {
+		else {
+			for (n = 0; n < rdcnt * 512; n += 2) {
 				/* arrives in native order */
 				*p++ = *(uint16_t *)(chan->cmd + _DAT);
 			}
 			(void)CSR_READ_1(chan->cmd + _STS);
 		}
-#else
-		i = 0;
-		if (sii_spinwait_irqack(l, n) == 0) {
-			printf("%s blk %d no xfer ack\n", d->xname, (int)bno);
-			error = EIO;
-			goto skip;
-		}
-		for (n = 0; n < rdcnt * 512; n +=2) {
-			/* arrives in native order */
-			*p++ = *(uint16_t *)(chan->cmd + _DAT);
-		}
-		(void)CSR_READ_1(chan->cmd + _STS);
-#endif
-  skip:
 		bno += rdcnt; bcnt -= rdcnt;
 	}
 	return error;
@@ -511,9 +466,7 @@ dsk_open(struct open_file *f, ...)
 	}
 	return ENXIO;
   found:
-#if 1
 printf("dsk_open found %s\n", fsmod);
-#endif
 	d->fsops = fs;
 	f->f_devdata = d;
 
