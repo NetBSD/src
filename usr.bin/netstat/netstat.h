@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.40 2010/02/24 11:00:27 pooka Exp $	*/
+/*	$NetBSD: netstat.h,v 1.41 2010/06/27 06:52:37 kefren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@ int	pflag;		/* show given protocol */
 int	qflag;		/* show softintrq */
 int	rflag;		/* show routing tables (or routing stats) */
 int	sflag;		/* show protocol statistics */
+int	tagflag;	/* show route tags */
 int	tflag;		/* show i/f watchdog timers */
 int	vflag;		/* verbose route information or don't truncate names */
 
