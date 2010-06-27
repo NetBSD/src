@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.2 2010/06/26 15:17:56 kefren Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.3 2010/06/27 13:39:11 kefren Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.2 2010/06/26 15:17:56 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.3 2010/06/27 13:39:11 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -199,7 +199,7 @@ mpls_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst, struc
 		return ENETDOWN;
 	}
 
-	if (rt_gettag(rt) == NULL) {
+	if (rt_gettag(rt) == NULL || rt_gettag(rt)->sa_family != AF_MPLS) {
 		m_freem(m);
 		return EINVAL;
 	}
@@ -346,9 +346,10 @@ mpls_lse(struct mbuf *m)
 	if ((rt = rtalloc1((const struct sockaddr*)&dst, 1)) == NULL)
 		goto done;
 
-	/* MPLS packet with no tagged route ? */
+	/* MPLS packet with no MPLS tagged route ? */
 	if ((rt->rt_flags & RTF_GATEWAY) == 0 ||
-	     rt_gettag(rt) == NULL)
+	     rt_gettag(rt) == NULL ||
+	     rt_gettag(rt)->sa_family != AF_MPLS)
 		goto done;
 
 	tshim.s_addr = MPLS_GETSADDR(rt);
