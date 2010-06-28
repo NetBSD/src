@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.129 2010/06/26 14:24:28 kefren Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.130 2010/06/28 17:26:11 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.129 2010/06/26 14:24:28 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.130 2010/06/28 17:26:11 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -444,6 +444,8 @@ route_output(struct mbuf *m, ...)
 					rt->rt_ifp = ifp;
 				}
 			}
+			if (ifp && rt->rt_ifp != ifp)
+				rt->rt_ifp = ifp;
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
