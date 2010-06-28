@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.90 2010/06/28 09:46:27 pooka Exp $
+# $NetBSD: mi,v 1.91 2010/06/28 19:08:53 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -181,6 +181,8 @@
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/tty				tests-kernel-tests
+./usr/libdata/debug/usr/tests/kernel/tty/t_pr.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
@@ -1106,6 +1108,9 @@
 ./usr/tests/kernel/t_ucontext			tests-kernel-tests		atf
 ./usr/tests/kernel/t_umount			tests-kernel-tests		atf
 ./usr/tests/kernel/t_writev			tests-kernel-tests		atf
+./usr/tests/kernel/tty				tests-kernel-tests
+./usr/tests/kernel/tty/Atffile			tests-kernel-tests		atf
+./usr/tests/kernel/tty/t_pr			tests-kernel-tests		atf
 ./usr/tests/lib					tests-lib-tests
 ./usr/tests/lib/Atffile				tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
