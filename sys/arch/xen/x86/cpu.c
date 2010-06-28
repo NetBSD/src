@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.44 2010/05/04 23:27:14 jym Exp $	*/
+/*	$NetBSD: cpu.c,v 1.45 2010/06/28 00:47:53 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.44 2010/05/04 23:27:14 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45 2010/06/28 00:47:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -934,8 +934,12 @@ mp_cpu_start(struct cpu_info *ci, paddr_t target)
 	dwordptr[1] = target >> 4;
 
 	pmap_kenter_pa (0, 0, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_update(pmap_kernel());
+
 	memcpy ((uint8_t *) 0x467, dwordptr, 4);
+
 	pmap_kremove (0, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 
 #if NLAPIC > 0
 	/*
