@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.1 2010/06/22 18:32:07 rmind Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.2 2010/06/28 19:32:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.1 2010/06/22 18:32:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.2 2010/06/28 19:32:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -110,7 +110,7 @@ tmpfs_bytes_max(struct tmpfs_mount *mp)
 		freepages -= TMPFS_PAGES_RESERVED;
 	}
 	avail_mem = round_page(mp->tm_bytes_used) + (freepages << PAGE_SHIFT);
-	return min(mp->tm_mem_limit, avail_mem);
+	return MIN(mp->tm_mem_limit, avail_mem);
 }
 
 size_t
@@ -123,9 +123,10 @@ tmpfs_pages_avail(struct tmpfs_mount *mp)
 bool
 tmpfs_mem_incr(struct tmpfs_mount *mp, size_t sz)
 {
-	const uint64_t lim = tmpfs_bytes_max(mp);
+	uint64_t lim;
 
 	mutex_enter(&mp->tm_acc_lock);
+	lim = tmpfs_bytes_max(mp);
 	if (mp->tm_bytes_used + sz >= lim) {
 		mutex_exit(&mp->tm_acc_lock);
 		return false;
