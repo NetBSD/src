@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2010/05/21 16:47:45 pooka Exp $
+# $NetBSD: Makefile,v 1.5 2010/06/28 19:03:59 pooka Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,7 @@ NOMAN=		# defined
 
 TESTSDIR=	${TESTSBASE}/kernel
 
-SUBDIR=		kqueue
+SUBDIR=		kqueue tty
 
 TESTS_C=	t_lock
 TESTS_C+=	t_lwpctl
