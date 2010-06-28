@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.209 2010/06/25 04:35:54 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.210 2010/06/28 01:43:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.209 2010/06/25 04:35:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.210 2010/06/28 01:43:39 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -1607,10 +1607,11 @@ wm_attach(device_t parent, device_t self, void *aux)
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
 		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
 	} else {
-		if (wm_read_mac_addr(sc, enaddr) != 0)
+		if (wm_read_mac_addr(sc, enaddr) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to read Ethernet address\n");
-		return;
+			return;
+		}
 	}
 
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
@@ -4701,12 +4702,10 @@ static int
 wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 {
 	uint16_t myea[ETHER_ADDR_LEN / 2];
-	uint16_t offset;
+	uint16_t offset = EEPROM_OFF_MACADDR;
 	int do_invert = 0;
 
-	if (sc->sc_funcid == 0)
-		offset = EEPROM_OFF_MACADDR;
-	else {
+	if (sc->sc_funcid != 0)
 		switch (sc->sc_type) {
 		case WM_T_82580:
 		case WM_T_82580ER:
@@ -4763,7 +4762,7 @@ wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
 			do_invert = 1;
 			break;
 		}
-	}
+
  do_read:
 	if (wm_read_eeprom(sc, offset, sizeof(myea) / sizeof(myea[0]),
 		myea) != 0) {
