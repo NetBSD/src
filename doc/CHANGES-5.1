@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.234 2010/06/12 16:40:14 riz Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.235 2010/06/29 18:02:19 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17352,4 +17352,12 @@ sys/sys/param.h					patch
 
 	Welcome to 5.1_RC3!
 	[riz]
+
+usr.bin/sort/fsort.c				1.47
+usr.bin/sort/msort.c				1.30
+usr.bin/sort/sort.c				1.58
+usr.bin/sort/sort.h				1.31
+
+	Fix a segfault on large input files.
+	[dholland, ticket #1420]
 
