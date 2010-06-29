@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.19.6.1 2009/10/14 20:41:53 sborrill Exp $	*/
+/*	$NetBSD: sort.h,v 1.19.6.2 2010/06/29 18:01:11 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ extern int ncols;
 #define DEBUG(ch) (debug_flags & (1 << ((ch) & 31)))
 extern unsigned int debug_flags;
 
+RECHEADER *allocrec(RECHEADER *, size_t);
 void	 append(RECHEADER **, int, FILE *, void (*)(const RECHEADER *, FILE *));
 void	 concat(FILE *, FILE *);
 length_t enterkey(RECHEADER *, const u_char *, u_char *, size_t, struct field *);

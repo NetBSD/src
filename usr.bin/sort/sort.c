@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.46.4.1 2009/10/14 20:41:53 sborrill Exp $	*/
+/*	$NetBSD: sort.c,v 1.46.4.2 2010/06/29 18:01:11 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.46.4.1 2009/10/14 20:41:53 sborrill Exp $");
+__RCSID("$NetBSD: sort.c,v 1.46.4.2 2010/06/29 18:01:11 riz Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -404,4 +404,11 @@ usage(const char *msg)
 	(void)fprintf(stderr,
 	    "             [-t char] [file ...]\n");
 	exit(2);
+}
+
+RECHEADER *
+allocrec(RECHEADER *rec, size_t size)
+{
+
+	return (erealloc(rec, size + sizeof(long) - 1));
 }
