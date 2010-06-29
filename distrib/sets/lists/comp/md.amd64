@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.68 2010/06/07 13:52:29 tnozaki Exp $
+# $NetBSD: md.amd64,v 1.69 2010/06/29 04:16:25 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -530,11 +530,11 @@
 ./usr/lib/i386/libisccfg_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/libisccfg_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libisccfg_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/libiscsi.a			comp-c-lib		compat
-./usr/lib/i386/libiscsi.so			base-sys-shlib		compat,pic
-./usr/lib/i386/libiscsi_g.a			base-sys-shlib		compat,debuglib
-./usr/lib/i386/libiscsi_p.a			comp-c-proflib		compat,profile
-./usr/lib/i386/libiscsi_pic.a			comp-c-piclib		compat,pic
+./usr/lib/i386/libiscsi.a			comp-c-lib		compat,iscsi
+./usr/lib/i386/libiscsi.so			base-sys-shlib		compat,pic,iscsi
+./usr/lib/i386/libiscsi_g.a			base-sys-shlib		compat,debuglib,iscsi
+./usr/lib/i386/libiscsi_p.a			comp-c-proflib		compat,profile,iscsi
+./usr/lib/i386/libiscsi_pic.a			comp-c-piclib		compat,pic,iscsi
 ./usr/lib/i386/libkadm5clnt.a			comp-c-lib		compat,kerberos
 ./usr/lib/i386/libkadm5clnt.so			comp-sys-shlib		compat,pic,kerberos
 ./usr/lib/i386/libkadm5clnt_g.a			comp-c-proflib		compat,debuglib,kerberos
@@ -869,7 +869,7 @@
 ./usr/libdata/debug/usr/lib/i386/libisc.so.5.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libisccc.so.5.1.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libisccfg.so.5.1.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libiscsi.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libiscsi.so.2.0.debug	comp-compat-shlib	compat,pic,debug,iscsi
 ./usr/libdata/debug/usr/lib/i386/libkadm5clnt.so.12.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libkadm5srv.so.13.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
 ./usr/libdata/debug/usr/lib/i386/libkafs.so.11.0.debug	comp-compat-shlib	compat,pic,kerberos,debug
