@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.49 2010/01/29 22:26:48 is Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.50 2010/06/29 14:44:19 seanb Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.49 2010/01/29 22:26:48 is Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.50 2010/06/29 14:44:19 seanb Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -229,11 +229,6 @@ getnameinfo_inet(sa, salen, host, hostlen, serv, servlen, flags)
 
 	if (sa == NULL)
 		return EAI_FAIL;
-
-#ifdef BSD4_4
-	if (sa->sa_len != salen)
-		return EAI_FAIL;
-#endif
 
 	family = sa->sa_family;
 	for (i = 0; afdl[i].a_af; i++)
