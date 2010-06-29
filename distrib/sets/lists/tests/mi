@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.91 2010/06/28 19:08:53 pooka Exp $
+# $NetBSD: mi,v 1.92 2010/06/29 15:26:13 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -152,6 +152,7 @@
 ./usr/libdata/debug/usr/tests/fs/umapfs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/union					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/union/t_basic.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/union/t_pr.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests
@@ -776,6 +777,7 @@
 ./usr/tests/fs/union				tests-fs-tests
 ./usr/tests/fs/union/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/union/t_basic			tests-fs-tests		atf
+./usr/tests/fs/union/t_pr			tests-fs-tests		atf
 ./usr/tests/games				tests-games-tests
 ./usr/tests/games/Atffile			tests-games-tests
 ./usr/tests/games/t_factor			tests-games-tests
