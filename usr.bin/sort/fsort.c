@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.32.6.1 2009/10/14 20:41:53 sborrill Exp $	*/
+/*	$NetBSD: fsort.c,v 1.32.6.2 2010/06/29 18:01:11 riz Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.32.6.1 2009/10/14 20:41:53 sborrill Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.32.6.2 2010/06/29 18:01:11 riz Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 	int file_no;
 	int max_recs = DEBUG('m') ? 16 : MAXNUM;
 
-	buffer = malloc(bufsize);
+	buffer = allocrec(NULL, bufsize);
 	bufend = (u_char *)buffer + bufsize;
 	/* Allocate double length keymap for radix_sort */
 	keylist = malloc(2 * max_recs * sizeof(*keylist));
@@ -157,7 +157,7 @@ fsort(struct filelist *filelist, int nfiles, FILE *outfp, struct field *ftbl)
 			/* c == BUFFEND, and we can process more data */
 			/* Allocate a larger buffer for this lot of data */
 			bufsize *= 2;
-			nbuffer = realloc(buffer, bufsize);
+			nbuffer = allocrec(buffer, bufsize);
 			if (!nbuffer) {
 				err(2, "failed to realloc buffer to %zu bytes",
 					bufsize);
