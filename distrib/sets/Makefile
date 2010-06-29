@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78 2009/12/15 06:18:07 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.79 2010/06/29 05:51:53 mrg Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -19,6 +19,7 @@ SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MKTEMP=${TOOL_MKTEMP:Q} \
 		MTREE=${TOOL_MTREE:Q} \
 		PAX=${TOOL_PAX:Q} \
+		PIGZ=${TOOL_PIGZ:Q} \
 		PKG_CREATE=${TOOL_PKG_CREATE:Q} \
 		SED=${TOOL_SED:Q} \
 		TSORT=${TSORT:Q}
