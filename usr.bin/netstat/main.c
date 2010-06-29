@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.75 2010/06/27 06:52:37 kefren Exp $	*/
+/*	$NetBSD: main.c,v 1.76 2010/06/29 12:38:12 kefren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.75 2010/06/27 06:52:37 kefren Exp $");
+__RCSID("$NetBSD: main.c,v 1.76 2010/06/29 12:38:12 kefren Exp $");
 #endif
 #endif /* not lint */
 
@@ -462,6 +462,8 @@ main(argc, argv)
 				af = AF_ISO;
 			else if (strcmp(optarg, "atalk") == 0)
 				af = AF_APPLETALK;
+			else if (strcmp(optarg, "mpls") == 0)
+				af = AF_MPLS;
 			else
 				errx(1, "%s: unknown address family",
 				    optarg);
