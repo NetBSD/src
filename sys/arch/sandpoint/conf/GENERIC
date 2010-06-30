@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.48 2010/06/09 17:34:32 phx Exp $
+# $NetBSD: GENERIC,v 1.49 2010/06/30 17:49:32 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.49 $"
 
 maxusers	32
 
@@ -141,6 +141,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	fss			# file system snapshot device
 
 #
 # device
