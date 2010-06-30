@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.79 2010/04/07 00:11:27 sjg Exp $	*/
+/*	$NetBSD: make.c,v 1.80 2010/06/30 00:25:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.79 2010/04/07 00:11:27 sjg Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.80 2010/06/30 00:25:04 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.79 2010/04/07 00:11:27 sjg Exp $");
+__RCSID("$NetBSD: make.c,v 1.80 2010/06/30 00:25:04 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1331,6 +1331,7 @@ Make_ExpandUse(Lst targs)
 
 	(void)Dir_MTime(gn);
 	Var_Set(TARGET, gn->path ? gn->path : gn->name, gn, 0);
+	Var_Set(PREFIX, gn->name, gn, 0);
 	Lst_ForEach(gn->children, MakeUnmark, gn);
 	Lst_ForEach(gn->children, MakeHandleUse, gn);
 
