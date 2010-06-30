@@ -1,4 +1,4 @@
-.\"     $NetBSD: getdelim.3,v 1.7 2009/12/09 18:06:08 joerg Exp $
+.\"     $NetBSD: getdelim.3,v 1.8 2010/06/30 13:38:10 jruoho Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 30, 2009
+.Dd June 30, 2010
 .Dt GETDELIM 3
 .Os
 .Sh NAME
@@ -47,13 +47,16 @@ The
 .Fn getdelim
 function reads from the
 .Fa stream
-until it encounters a character matching the
-.Fa delimiter
-character, storing the input in
+until it encounters a character matching
+.Fa delimiter ,
+storing the input in
 .Fa *lineptr .
 The buffer is
 .Dv NUL Ns No -terminated
 and includes the delimiter.
+The
+.Fa delimiter
+character must be representable as an unsigned char.
 .Pp
 If
 .Fa *n
@@ -62,6 +65,10 @@ is non-zero, then
 must be pre-allocated to at least
 .Fa *n
 bytes.
+The buffer should be allocated dynamically;
+it must be possible to
+.Xr free 3
+.Fa *lineptr .
 .Fn getdelim
 ensures that
 .Fa *lineptr
@@ -69,17 +76,13 @@ is large enough to hold the input, updating
 .Fa *n
 to reflect the new size.
 .Pp
+The
+.Fn getline
+function is equivalent to
+.Fn getdelim
+with
 .Fa delimiter
-must be representable as an unsigned char, and
-.Fa *lineptr
-must be a
-.Xr free 3 Ns No able
-buffer.
-.Pp
-.Fa getline
-is equivalent to
-.Fa getdelim
-with the delimiter set to the newline character.
+set to the newline character.
 .Sh RETURN VALUES
 The
 .Fn getdelim
