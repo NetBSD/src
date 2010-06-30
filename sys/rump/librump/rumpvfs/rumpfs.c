@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.57 2010/06/24 13:03:18 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.58 2010/06/30 14:50:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.57 2010/06/24 13:03:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.58 2010/06/30 14:50:35 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -69,6 +69,8 @@ static int rump_vop_spec(void *);
 static int rump_vop_read(void *);
 static int rump_vop_write(void *);
 static int rump_vop_open(void *);
+static int rump_vop_symlink(void *);
+static int rump_vop_readlink(void *);
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -87,7 +89,8 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_rmdir_desc, rump_vop_rmdir },
 	{ &vop_mknod_desc, rump_vop_mknod },
 	{ &vop_create_desc, rump_vop_create },
-	{ &vop_symlink_desc, genfs_eopnotsupp },
+	{ &vop_symlink_desc, rump_vop_symlink },
+	{ &vop_readlink_desc, rump_vop_readlink },
 	{ &vop_access_desc, rump_vop_success },
 	{ &vop_readdir_desc, rump_vop_readdir },
 	{ &vop_read_desc, rump_vop_read },
@@ -144,12 +147,18 @@ struct rumpfs_node {
 			LIST_HEAD(, rumpfs_dent) dents;
 			int flags;
 		} dir;
+		struct {
+			char *target;
+			size_t len;
+		} link;
 	} rn_u;
 };
 #define rn_readfd	rn_u.reg.readfd
 #define rn_writefd	rn_u.reg.writefd
 #define rn_offset	rn_u.reg.offset
 #define rn_dir		rn_u.dir.dents
+#define rn_linktarg	rn_u.link.target
+#define rn_linklen	rn_u.link.len
 
 #define RUMPNODE_CANRECLAIM	0x01
 #define RUMPNODE_DIR_ET		0x02
@@ -485,7 +494,7 @@ makevnode(struct mount *mp, struct rumpfs_node *rn, struct vnode **vpp)
 	}
 	if (vpops != rump_specop_p && va->va_type != VDIR
 	    && !(va->va_type == VREG && rn->rn_hostpath != NULL)
-	    && va->va_type != VSOCK)
+	    && va->va_type != VSOCK && va->va_type != VLNK)
 		return EOPNOTSUPP;
 
 	rv = getnewvnode(VT_RUMP, mp, vpops, &vp);
@@ -808,6 +817,58 @@ rump_vop_create(void *v)
 }
 
 static int
+rump_vop_symlink(void *v)
+{
+	struct vop_symlink_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+		char *a_target;
+	}; */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct vnode **vpp = ap->a_vpp;
+	struct componentname *cnp = ap->a_cnp;
+	struct rumpfs_node *rnd = dvp->v_data, *rn;
+	const char *target = ap->a_target;
+	size_t linklen;
+	int rv;
+
+	linklen = strlen(target);
+	KASSERT(linklen < MAXPATHLEN);
+	rn = makeprivate(VLNK, NODEV, linklen);
+	rv = makevnode(dvp->v_mount, rn, vpp);
+	if (rv)
+		goto out;
+
+	makedir(rnd, cnp, rn);
+
+	KASSERT(linklen < MAXPATHLEN);
+	rn->rn_linktarg = PNBUF_GET();
+	rn->rn_linklen = linklen;
+	strcpy(rn->rn_linktarg, target);
+
+ out:
+	vput(dvp);
+	return rv;
+}
+
+static int
+rump_vop_readlink(void *v)
+{
+	struct vop_readlink_args /* {
+		struct vnode *a_vp;
+		struct uio *a_uio;
+		kauth_cred_t a_cred;
+	}; */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct rumpfs_node *rn = vp->v_data;
+	struct uio *uio = ap->a_uio;
+
+	return uiomove(rn->rn_linktarg, rn->rn_linklen, uio);
+}
+
+static int
 rump_vop_open(void *v)
 {
 	struct vop_open_args /* {
@@ -1018,6 +1079,8 @@ rump_vop_reclaim(void *v)
 	vp->v_data = NULL;
 
 	if (rn->rn_flags & RUMPNODE_CANRECLAIM) {
+		if (vp->v_type == VLNK)
+			PNBUF_PUT(rn->rn_linktarg);
 		if (rn->rn_hostpath)
 			free(rn->rn_hostpath, M_TEMP);
 		kmem_free(rn, sizeof(*rn));
