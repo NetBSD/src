@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.59 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.60 2010/06/30 15:17:40 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -414,6 +414,29 @@ resolve_userid(netpgp_t *netpgp, const __ops_keyring_t *keyring, const char *use
 	return key;
 }
 
+/* append a key to a keyring */
+static int
+appendkey(__ops_io_t *io, __ops_key_t *key, char *ringfile)
+{
+	__ops_output_t	*create;
+	const unsigned	 noarmor = 0;
+	int		 fd;
+
+	if ((fd = __ops_setup_file_append(&create, ringfile)) < 0) {
+		fd = __ops_setup_file_write(&create, ringfile, 0);
+	}
+	if (fd < 0) {
+		(void) fprintf(io->errs, "can't open pubring '%s'\n", ringfile);
+		return 0;
+	}
+	if (!__ops_write_xfer_pubkey(create, key, noarmor)) {
+		(void) fprintf(io->errs, "Cannot write pubkey\n");
+		return 0;
+	}
+	__ops_teardown_file_write(create, fd);
+	return 1;
+}
+
 /***************************************************************************/
 /* exported functions start here */
 /***************************************************************************/
@@ -720,23 +743,49 @@ netpgp_export_key(netpgp_t *netpgp, char *name)
 	return __ops_export_key(io, key, NULL);
 }
 
+#define IMPORT_ARMOR_HEAD	"-----BEGIN PGP PUBLIC KEY BLOCK-----"
+
 /* import a key into our keyring */
 int
 netpgp_import_key(netpgp_t *netpgp, char *f)
 {
-	const unsigned	noarmor = 0;
-	const unsigned	armor = 1;
+#if 0
+	__ops_keyring_t	*keyring;
+#endif
 	__ops_io_t	*io;
-	int		done;
+	unsigned	 realarmor;
+	FILE		*fp;
+#if 0
+	char		 ringfile[MAXPATHLEN];
+#endif
+	char		 buf[BUFSIZ];
+	int		 done;
 
 	io = netpgp->io;
-	if ((done = __ops_keyring_fileread(netpgp->pubring, noarmor, f)) == 0) {
-		done = __ops_keyring_fileread(netpgp->pubring, armor, f);
+	realarmor = 0;
+	if ((fp = fopen(f, "r")) == NULL) {
+		(void) fprintf(io->errs, "netpgp_import_key: can't open '%s'\n", f);
+		return 0;
 	}
+	if (fgets(buf, sizeof(buf), fp) == NULL) {
+		realarmor = 0;
+	} else {
+		realarmor = (strncmp(buf, IMPORT_ARMOR_HEAD, strlen(IMPORT_ARMOR_HEAD)) == 0);
+	}
+	(void) fclose(fp);
+	done = __ops_keyring_fileread(netpgp->pubring, realarmor, f);
 	if (!done) {
 		(void) fprintf(io->errs, "Cannot import key from file %s\n", f);
 		return 0;
 	}
+#if 0
+	keyring = netpgp->pubring;
+	(void) snprintf(ringfile, sizeof(ringfile), "%s/pubring.gpg", netpgp_getvar(netpgp, "homedir"));
+	if (!appendkey(io, &keyring->keys[keyring->keyc - 1], ringfile)) {
+		(void) fprintf(io->errs, "Cannot append imported key to pubring %s\n", ringfile);
+		return 0;
+	}
+#endif
 	return __ops_keyring_list(io, netpgp->pubring, 0);
 }
 
@@ -781,18 +830,10 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	}
 	(void) fprintf(io->errs, "netpgp: generated keys in directory %s\n", dir);
 	(void) snprintf(ringfile = filename, sizeof(filename), "%s/pubring.gpg", dir);
-	if ((fd = __ops_setup_file_append(&create, ringfile)) < 0) {
-		fd = __ops_setup_file_write(&create, ringfile, 0);
-	}
-	if (fd < 0) {
-		(void) fprintf(io->errs, "can't open pubring '%s'\n", ringfile);
+	if (!appendkey(io, key, ringfile)) {
+		(void) fprintf(io->errs, "Cannot write pubkey to '%s'\n", ringfile);
 		return 0;
 	}
-	if (!__ops_write_xfer_pubkey(create, key, noarmor)) {
-		(void) fprintf(io->errs, "Cannot write pubkey\n");
-		return 0;
-	}
-	__ops_teardown_file_write(create, fd);
 	if (netpgp->pubring != NULL) {
 		__ops_keyring_free(netpgp->pubring);
 	}
