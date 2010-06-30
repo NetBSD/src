@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_hp.c,v 1.1 2010/04/08 17:32:30 jruoho Exp $ */
+/*	$NetBSD: wmi_hp.c,v 1.2 2010/06/30 07:58:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.1 2010/04/08 17:32:30 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_hp.c,v 1.2 2010/06/30 07:58:11 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -252,6 +252,8 @@ wmi_hp_notify_handler(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	ACPI_STATUS rv;
 	uint32_t val;
 
+	buf.Pointer = NULL;
+
 	sc = device_private(self);
 	rv = acpi_wmi_event_get(sc->sc_parent, evt, &buf);
 
@@ -343,6 +345,7 @@ wmi_hp_method(struct wmi_hp_softc *sc)
 	KDASSERT(cmd != 0);
 	KDASSERT(sc->sc_arg[0] == WMI_HP_METHOD_ARG_MAGIC);
 
+	obuf.Pointer = NULL;
 	ibuf.Pointer = sc->sc_arg;
 	ibuf.Length = WMI_HP_METHOD_ARG_SIZE;
 
