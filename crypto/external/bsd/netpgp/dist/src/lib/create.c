@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: create.c,v 1.29 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: create.c,v 1.30 2010/06/30 15:18:10 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -169,6 +169,10 @@ static unsigned
 pubkey_length(const __ops_pubkey_t *key)
 {
 	switch (key->alg) {
+	case OPS_PKA_DSA:
+		return mpi_length(key->key.dsa.p) + mpi_length(key->key.dsa.q) +
+			mpi_length(key->key.dsa.g) + mpi_length(key->key.dsa.y);
+
 	case OPS_PKA_RSA:
 		return mpi_length(key->key.rsa.n) + mpi_length(key->key.rsa.e);
 
@@ -186,6 +190,8 @@ seckey_length(const __ops_seckey_t *key)
 
 	len = 0;
 	switch (key->pubkey.alg) {
+	case OPS_PKA_DSA:
+		return (unsigned)(mpi_length(key->key.dsa.x) + pubkey_length(&key->pubkey));
 	case OPS_PKA_RSA:
 		len = mpi_length(key->key.rsa.d) + mpi_length(key->key.rsa.p) +
 			mpi_length(key->key.rsa.q) + mpi_length(key->key.rsa.u);
