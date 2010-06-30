@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.5 2009/12/13 17:58:27 snj Exp $
+$NetBSD: README,v 1.6 2010/06/30 03:28:01 mrg Exp $
 
 
 Building multi- ABI libraries for NetBSD platforms.
@@ -19,11 +19,11 @@ for each ABI required.  e.g., src/compat/amd64/i386 is where we build
 the 32-bit compat libraries for the amd64 port.  In each of these
 subdirs, a small Makefile and makefile fragment should exist.  The
 Makefile should set BSD_MK_COMPAT_FILE to equal the fragment, and then
-include "../../Makefile.common".  Eg, amd64/i386/Makefile has:
+include "../../compatsubdir.mk"  Eg, amd64/i386/Makefile has:
 
 	BSD_MK_COMPAT_FILE=${.CURDIR}/bsd.i386.mk
 
-	.include "../../Makefile.common"
+	.include "../../compatsubdir.mk"
 
 In the makefile fragment any changes to ABI flags are passed here
 and the MLIBDIR variable must be set to the subdirectory in /usr/lib
@@ -41,9 +41,9 @@ helper Makefiles around.  amd64/i386/bsd.i386.mk looks like:
 	CRYPTO_MACHINE_CPU=	${MLIBDIR}
 	LDELFSO_MACHINE_CPU=	${MLIBDIR}
 
-	.include "${NETBSDSRCDIR}/compat/Makefile.m32"
+	.include "${NETBSDSRCDIR}/compat/m32.mk"
 
-and the referenced Makefile.m32 looks like:
+and the referenced m32.mk looks like:
 
 	COPTS+=			-m32
 	CPUFLAGS+=		-m32
@@ -54,10 +54,10 @@ and the referenced Makefile.m32 looks like:
 	.include "Makefile.compat"
 
 
-Makefile.common holds the list of subdirectories (the libraries and
+compatsubdir.mk holds the list of subdirectories (the libraries and
 ld.elf_so) to build with this ABI.
 
-Makefile.md_subdir holds the list of subdirectories for each port.
+archdirs.mk holds the list of subdirectories for each port.
 
 Makefile.compat has the basic framework to force the right paths for
 library and ld.elf_so linkage.  It contains a hack to create subdirs
