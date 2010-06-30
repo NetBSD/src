@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.92 2010/06/29 15:26:13 pooka Exp $
+# $NetBSD: mi,v 1.93 2010/06/30 21:54:56 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -130,6 +130,7 @@
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/t_mount.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/kernfs					tests-fs-debug
@@ -715,6 +716,7 @@
 ./usr/tests/fs/ffs				tests-fs-tests
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_fifos			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_mount			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_renamerace			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_snapshot			tests-fs-tests		atf
 ./usr/tests/fs/kernfs				tests-fs-tests

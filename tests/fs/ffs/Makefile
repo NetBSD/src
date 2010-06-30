@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2010/04/12 22:58:53 pooka Exp $
+#	$NetBSD: Makefile,v 1.8 2010/06/30 21:54:56 njoly Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/fs/ffs
@@ -7,6 +7,7 @@ WARNS=		4
 TESTS_C=	t_renamerace
 TESTS_C+=	t_fifos
 TESTS_C+=	t_snapshot
+TESTS_C+=	t_mount
 
 LDADD+=-lrumpfs_ffs						# ffs
 LDADD+=-lrumpdev_fss						# snapshot dev
