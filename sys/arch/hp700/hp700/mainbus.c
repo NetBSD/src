@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.70 2010/06/01 10:20:29 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.71 2010/06/30 06:33:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.70 2010/06/01 10:20:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.71 2010/06/30 06:33:52 skrll Exp $");
 
 #include "locators.h"
 #include "power.h"
@@ -1005,10 +1005,6 @@ mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
 		panic("mbus_dmamap_sync: bad length");
 #endif
 	
-	/* If the whole DMA map is marked as BUS_DMA_COHERENT, do nothing. */
-	if ((map->_dm_flags & BUS_DMA_COHERENT) != 0)
-		return;
-
 	/*
 	 * For a virtually-indexed write-back cache, we need to do the
 	 * following things:
