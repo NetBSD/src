@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.406 2010/06/24 13:03:12 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.407 2010/06/30 15:44:54 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.406 2010/06/24 13:03:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.407 2010/06/30 15:44:54 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2024,29 +2024,24 @@ out:
 	return (error);
 }
 
-/*
- * Make a symbolic link.
- */
-/* ARGSUSED */
 int
-sys_symlink(struct lwp *l, const struct sys_symlink_args *uap, register_t *retval)
+do_sys_symlink(const char *patharg, const char *link, enum uio_seg seg)
 {
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(const char *) link;
-	} */
-	struct proc *p = l->l_proc;
+	struct proc *p = curproc;
 	struct vattr vattr;
 	char *path;
 	int error;
 	struct nameidata nd;
 
 	path = PNBUF_GET();
-	error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL);
-	if (error)
-		goto out;
-	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, link));
+	if (seg == UIO_USERSPACE) {
+		if ((error = copyinstr(patharg, path, MAXPATHLEN, NULL)) != 0)
+			goto out;
+	} else {
+		KASSERT(strlen(patharg) < MAXPATHLEN);
+		strcpy(path, patharg);
+	}
+	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, seg, link);
 	if ((error = namei(&nd)) != 0)
 		goto out;
 	if (nd.ni_vp) {
@@ -2069,6 +2064,22 @@ sys_symlink(struct lwp *l, const struct sys_symlink_args *uap, register_t *retva
 out:
 	PNBUF_PUT(path);
 	return (error);
+}
+
+/*
+ * Make a symbolic link.
+ */
+/* ARGSUSED */
+int
+sys_symlink(struct lwp *l, const struct sys_symlink_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
+	} */
+
+	return do_sys_symlink(SCARG(uap, path), SCARG(uap, link),
+	    UIO_USERSPACE);
 }
 
 /*
