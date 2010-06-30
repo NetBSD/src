@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.178 2010/06/27 00:53:32 dholland Exp $
+.\"	$NetBSD: make.1,v 1.179 2010/06/30 01:03:54 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd June 27, 2010
+.Dd June 30, 2010
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -892,6 +892,8 @@ is set to the value of
 for all programs which
 .Nm
 executes.
+.It Ev .TARGETS
+The list of targets explicitly specified on the command line, if any.
 .It Ev VPATH
 Colon-separated
 .Pq Dq \&:
@@ -1630,6 +1632,9 @@ correspond to an actual file; it is always considered to be out of date,
 and will not be created with the
 .Fl t
 option.
+Suffix-transformation rules are not applied to
+.Ic .PHONY
+targets.
 .It Ic .PRECIOUS
 When
 .Nm
