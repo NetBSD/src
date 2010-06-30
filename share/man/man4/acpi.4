@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.51 2010/06/07 08:39:04 jruoho Exp $
+.\" $NetBSD: acpi.4,v 1.52 2010/06/30 07:42:36 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2004, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 7, 2010
+.Dd June 30, 2010
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -357,21 +357,26 @@ with the argument
 .Ic acpi_osd_debugger .
 .Ss Debug Output
 .Nx
-provides two
+provides three
 .Xr sysctl 8
 variables that control the debug output at runtime.
 The
 .Ic hw.acpi.debug.layer
-limits the output to a specific
+variable limits the output to a specific
 .Tn ACPI
 layer and the
 .Ic hw.acpi.debug.level
-controls the debug level.
+variable controls the debug level.
 Both
 .Xr sysctl 8
 variables are string literals.
+The third variable is
+.Ic hw.acpi.debug.object .
+This is a boolean that controls whether debug messages internal to the
+.Tn AML
+are enabled.
 .Pp
-The possible values are:
+For the first two variables, the possible values are:
 .Bl -column -offset indent \
 "ACPI_RESOURCE_COMPONENT     " "ACPI_RESOURCE_COMPONENT     "
 .It Sy LAYER Ta Sy LEVEL
@@ -484,6 +489,24 @@ whereas the debug level
 .Xr sysctl 8
 variable is always specified with the prefix
 .Dv ACPI_LV .
+.Pp
+Another example can be mentioned for the use of
+.Ic hw.acpi.debug.object .
+The following could appear in an
+.Tn ASL
+code:
+.Bd -literal -offset indent
+Method(_Q19, 0, NotSerialized)
+{
+	Store("_Q19 invoked", Debug)
+	Notify(ACAD, 0x80)
+}
+.Ed
+.Pp
+When
+.Ic hw.acpi.debug.object
+is set to 1, the message stored to the debug object
+is printed every time the method is called by the interpreter.
 .Sh SEE ALSO
 .Xr acpiacad 4 ,
 .Xr acpibat 4 ,
