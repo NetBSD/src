@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.1 2010/06/29 15:25:28 pooka Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.2 2010/06/30 14:10:14 hannken Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -25,7 +25,7 @@ ATF_TC_HEAD(multilayer, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "mount_union -b twice");
 	atf_tc_set_md_var(tc, "use.fs", "true");
-	atf_tc_set_md_var(tc, "xfail", "PR kern/23986");
+	/* atf_tc_set_md_var(tc, "xfail", "PR kern/23986"); */
 }
 
 #define IMG1 "atf1.img"
