@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/09 11:07:26 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/06/30 16:22:49 pooka Exp $
 #
 
 PROG=		rump_syspuffs
 
-LDADD+=		-lrumpfs_syspuffs
+LDADD+=		-lrumpfs_syspuffs -lrumpdev_putter
 DPADD+=		${LIBRUMPFS_SYSPUFFS}
 
 ISRUMP=		# indubitably
