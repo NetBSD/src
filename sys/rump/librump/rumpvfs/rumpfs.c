@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.58 2010/06/30 14:50:35 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.59 2010/06/30 15:40:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.58 2010/06/30 14:50:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.59 2010/06/30 15:40:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -780,6 +780,7 @@ rump_vop_mknod(void *v)
 	makedir(rnd, cnp, rn);
 
  out:
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return rv;
 }
@@ -812,6 +813,7 @@ rump_vop_create(void *v)
 	makedir(rnd, cnp, rn);
 
  out:
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return rv;
 }
