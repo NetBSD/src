@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.181 2010/06/24 13:03:16 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.182 2010/07/01 13:00:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.181 2010/06/24 13:03:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.182 2010/07/01 13:00:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,8 +288,18 @@ genfs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	int flags = ap->a_flags;
+	krw_t op;
 
-	return (vlockmgr(&vp->v_lock, flags));
+	KASSERT((flags & ~(LK_EXCLUSIVE | LK_SHARED | LK_NOWAIT)) == 0);
+
+	op = ((flags & LK_EXCLUSIVE) != 0 ? RW_WRITER : RW_READER);
+
+	if ((flags & LK_NOWAIT) != 0)
+		return (rw_tryenter(&vp->v_lock, op) ? 0 : EBUSY);
+
+	rw_enter(&vp->v_lock, op);
+
+	return 0;
 }
 
 /*
@@ -303,7 +313,9 @@ genfs_unlock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (vlockmgr(&vp->v_lock, LK_RELEASE));
+	rw_exit(&vp->v_lock);
+
+	return 0;
 }
 
 /*
@@ -317,7 +329,13 @@ genfs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (vlockstatus(&vp->v_lock));
+	if (rw_write_held(&vp->v_lock))
+		return LK_EXCLUSIVE;
+
+	if (rw_read_held(&vp->v_lock))
+		return LK_SHARED;
+
+	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.81 2010/06/24 13:03:10 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.82 2010/07/01 13:00:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.81 2010/06/24 13:03:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.82 2010/07/01 13:00:55 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -807,7 +807,7 @@ ntfs_vgetex(
 	if (ino == NTFS_ROOTINO)
 		vp->v_vflag |= VV_ROOT;
 
-	if (lkflags & LK_TYPE_MASK) {
+	if (lkflags & (LK_EXCLUSIVE | LK_SHARED)) {
 		error = vn_lock(vp, lkflags);
 		if (error) {
 			vput(vp);

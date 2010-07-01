@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.96 2010/07/01 02:38:31 rmind Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.97 2010/07/01 13:00:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.96 2010/07/01 02:38:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.97 2010/07/01 13:00:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,7 @@ procfs_hashins(struct pfsnode *pp)
 	struct pfs_hashhead *ppp;
 
 	/* lock the pfsnode, then put it on the appropriate hash list */
-	vlockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(PFSTOV(pp), LK_EXCLUSIVE);
 
 	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];

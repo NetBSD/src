@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.74 2010/06/24 13:03:06 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.75 2010/07/01 13:00:54 hannken Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.74 2010/06/24 13:03:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.75 2010/07/01 13:00:54 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1775,7 +1775,6 @@ coda_lock(void *v)
     struct vop_lock_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    int flags  = ap->a_flags;
 /* upcall decl */
 /* locals */
 
@@ -1786,7 +1785,7 @@ coda_lock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    return (vlockmgr(&vp->v_lock, flags));
+    return genfs_lock(v);
 }
 
 int
@@ -1805,17 +1804,16 @@ coda_unlock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    return (vlockmgr(&vp->v_lock, LK_RELEASE));
+    return genfs_unlock(v);
 }
 
 int
 coda_islocked(void *v)
 {
 /* true args */
-    struct vop_islocked_args *ap = v;
     ENTRY;
 
-    return (vlockstatus(&ap->a_vp->v_lock));
+    return genfs_islocked(v);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.220 2010/06/18 16:29:02 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.221 2010/07/01 13:00:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -122,10 +122,6 @@ struct buf;
 LIST_HEAD(buflists, buf);
 TAILQ_HEAD(vnodelst, vnode);
 
-struct vnlock {
-	krwlock_t	vl_lock;
-};
-
 /*
  * Reading or writing any of these items requires holding the appropriate
  * lock.  Field markings and the corresponding locks:
@@ -137,7 +133,7 @@ struct vnlock {
  *	n	namecache_lock
  *	s	syncer_data_lock
  *	u	locked by underlying filesystem
- *	v	v_lock
+ *	v	vnode lock
  *	x	v_interlock + bufcache_lock to modify, either to inspect
  *
  * Each underlying filesystem allocates its own private area and hangs
@@ -174,7 +170,7 @@ struct vnode {
 	} v_un;
 	enum vtype	v_type;			/* :: vnode type */
 	enum vtagtype	v_tag;			/* :: type of underlying data */
-	struct vnlock	v_lock;			/* v: lock for this vnode */
+	krwlock_t	v_lock;			/* v: lock for this vnode */
 	void 		*v_data;		/* :: private data for fs */
 	struct klist	v_klist;		/* i: notes attached to vnode */
 };
@@ -190,13 +186,7 @@ typedef struct vnodelst vnodelst_t;
 typedef struct vnode vnode_t;
 
 /*
- * All vnode locking operations should use vp->v_lock.
- *
- * All filesystems must (pretend to) understand lockmanager flags.
- */
-
-/*
- * Vnode flags.  The first set are locked by vp->v_lock or are stable.
+ * Vnode flags.  The first set are locked by vnode lock or are stable.
  * VSYSTEM is only used to skip vflush()ing quota files.  VISTTY is used
  * when reading dead vnodes.
  */
@@ -242,6 +232,15 @@ typedef struct vnode vnode_t;
  */
 #define	VC_XLOCK	0x80000000
 #define	VC_MASK		0x7fffffff
+
+/*
+ * vnode lock flags
+ */
+#define	LK_SHARED	0x00000001	/* shared lock */
+#define	LK_EXCLUSIVE	0x00000002	/* exclusive lock */
+#define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
+#define	LK_INTERLOCK	0x00010000	/* caller holds v_interlock */
+#define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
@@ -634,8 +633,6 @@ void	vn_syncer_add_to_worklist(struct vnode *, int);
 void	vn_syncer_remove_from_worklist(struct vnode *);
 int	speedup_syncer(void);
 int	dorevoke(struct vnode *, kauth_cred_t);
-int	vlockmgr(struct vnlock *, int);
-int	vlockstatus(struct vnlock *);
 int	rawdev_mounted(struct vnode *, struct vnode **);
 uint8_t	vtype2dt(enum vtype);
 
