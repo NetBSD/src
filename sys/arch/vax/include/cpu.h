@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.88 2010/06/22 18:29:02 rmind Exp $      */
+/*      $NetBSD: cpu.h,v 1.89 2010/07/01 19:50:12 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -79,7 +79,6 @@ struct cpu_dep {
 	void	(*cpu_clrf)(void);	/* Clear cold/warm start flags */
 	const char * const *cpu_devs;	/* mainbus devices */
 	void	(*cpu_attach_cpu)(device_t);	/* print CPU info */
-	void	(*cpu_subconf)(device_t, void *, cfprint_t);	/* attach dep. dev */
 	int     cpu_flags;
 	void	(*cpu_badaddr)(void);	/* cpu-specific badaddr() */
 };
