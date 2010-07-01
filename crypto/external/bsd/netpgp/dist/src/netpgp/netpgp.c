@@ -1,4 +1,4 @@
-/* $NetBSD: netpgp.c,v 1.11 2010/02/06 02:24:34 agc Exp $ */
+/* $NetBSD: netpgp.c,v 1.12 2010/07/01 04:27:21 agc Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@ static struct option options[] = {
 	{"show-keys",	no_argument, 		NULL,	SHOW_KEYS},
 	{"showkeys",	no_argument, 		NULL,	SHOW_KEYS},
 	/* options */
+	{"ssh",		no_argument, 		NULL,	SSHKEYS},
 	{"ssh-keys",	no_argument, 		NULL,	SSHKEYS},
 	{"sshkeyfile",	required_argument, 	NULL,	SSHKEYFILE},
 	{"coredumps",	no_argument, 		NULL,	COREDUMPS},
@@ -132,6 +133,7 @@ static struct option options[] = {
 	{"userid",	required_argument, 	NULL,	USERID},
 	{"home",	required_argument, 	NULL,	HOMEDIR},
 	{"homedir",	required_argument, 	NULL,	HOMEDIR},
+	{"ascii",	no_argument,		NULL,	ARMOUR},
 	{"armor",	no_argument,		NULL,	ARMOUR},
 	{"armour",	no_argument,		NULL,	ARMOUR},
 	{"detach",	no_argument,		NULL,	DETACHED},
@@ -337,6 +339,7 @@ main(int argc, char **argv)
 {
 	netpgp_t	netpgp;
 	prog_t          p;
+	int             homeset;
 	int             optindex;
 	int             ret;
 	int             ch;
@@ -355,7 +358,7 @@ main(int argc, char **argv)
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
 	/* 4 MiB for a memory file */
 	netpgp_setvar(&netpgp, "max mem alloc", "4194304");
-	netpgp_set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
+	homeset = 0;
 	optindex = 0;
 	while ((ch = getopt_long(argc, argv, "", options, &optindex)) != -1) {
 		switch (options[optindex].val) {
@@ -420,6 +423,7 @@ main(int argc, char **argv)
 				exit(EXIT_ERROR);
 			}
 			netpgp_set_homedir(&netpgp, optarg, NULL, 0);
+			homeset = 1;
 			break;
 		case HASH_ALG:
 			if (optarg == NULL) {
@@ -475,6 +479,10 @@ main(int argc, char **argv)
 			p.cmd = HELP_CMD;
 			break;
 		}
+	}
+	if (!homeset) {
+		netpgp_set_homedir(&netpgp, getenv("HOME"),
+			netpgp_getvar(&netpgp, "ssh keys") ? "/.ssh" : "/.gnupg", 1);
 	}
 	/* initialise, and read keys from file */
 	if (!netpgp_init(&netpgp)) {
