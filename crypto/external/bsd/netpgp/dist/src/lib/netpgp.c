@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.62 2010/07/01 03:52:13 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.63 2010/07/01 04:27:21 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -255,7 +255,7 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 	char		*filename;
 
 	if ((filename = netpgp_getvar(netpgp, "sshkeyfile")) == NULL) {
-		(void) snprintf(f, sizeof(f), "%s/.ssh/id_rsa.pub", homedir);
+		(void) snprintf(f, sizeof(f), "%s/id_rsa.pub", homedir);
 		filename = f;
 	}
 	if ((pubring = calloc(1, sizeof(*pubring))) == NULL) {
