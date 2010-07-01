@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.15 2010/04/20 21:25:25 plunky Exp $	*/
+/*	$NetBSD: parse.c,v 1.16 2010/07/01 16:44:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parse.c,v 1.15 2010/04/20 21:25:25 plunky Exp $");
+__RCSID("$NetBSD: parse.c,v 1.16 2010/07/01 16:44:05 dyoung Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -155,7 +155,7 @@ pstr_match(const struct parser *p, const struct match *im, struct match *om,
 	}
 
 	len = (int)sizeof(buf);
-	if (get_string(arg, NULL, buf, &len) == NULL) {
+	if (get_string(arg, NULL, buf, &len, ps->ps_hexok) == NULL) {
 		errno = EINVAL;
 		return -1;
 	}

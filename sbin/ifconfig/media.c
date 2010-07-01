@@ -1,6 +1,6 @@
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: media.c,v 1.3 2008/07/15 21:27:58 dyoung Exp $");
+__RCSID("$NetBSD: media.c,v 1.4 2010/07/01 16:44:05 dyoung Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -51,21 +51,21 @@ static const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
 static const struct ifmedia_status_description ifm_status_descriptions[] =
     IFM_STATUS_DESCRIPTIONS;
 
-static struct pstr mediamode = PSTR_INITIALIZER(&mediamode, "mediamode",
-    setmediamode, "mediamode", &command_root.pb_parser);
+static struct pstr mediamode = PSTR_INITIALIZER1(&mediamode, "mediamode",
+    setmediamode, "mediamode", false, &command_root.pb_parser);
 
 static struct pinteger mediainst = PINTEGER_INITIALIZER1(&mediainst,
     "mediainst", 0, IFM_INST_MAX, 10, setmediainst, "mediainst",
     &command_root.pb_parser);
 
-static struct pstr unmediaopt = PSTR_INITIALIZER(&unmediaopt, "-mediaopt",
-    unsetmediaopt, "unmediaopt", &command_root.pb_parser);
+static struct pstr unmediaopt = PSTR_INITIALIZER1(&unmediaopt, "-mediaopt",
+    unsetmediaopt, "unmediaopt", false, &command_root.pb_parser);
 
-static struct pstr mediaopt = PSTR_INITIALIZER(&mediaopt, "mediaopt",
-    setmediaopt, "mediaopt", &command_root.pb_parser);
+static struct pstr mediaopt = PSTR_INITIALIZER1(&mediaopt, "mediaopt",
+    setmediaopt, "mediaopt", false, &command_root.pb_parser);
 
-static struct pstr media = PSTR_INITIALIZER(&media, "media", setmedia, "media",
-    &command_root.pb_parser);
+static struct pstr media = PSTR_INITIALIZER1(&media, "media", setmedia, "media",
+    false, &command_root.pb_parser);
 
 static const struct kwinst mediakw[] = {
 	  {.k_word = "instance", .k_key = "anymedia", .k_type = KW_T_BOOL,

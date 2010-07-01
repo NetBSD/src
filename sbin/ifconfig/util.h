@@ -17,7 +17,7 @@ struct afswtch {
 };
 
 void print_link_addresses(prop_dictionary_t, bool);
-const char *get_string(const char *, const char *, u_int8_t *, int *);
+const char *get_string(const char *, const char *, u_int8_t *, int *, bool);
 const struct afswtch *lookup_af_byname(const char *);
 const struct afswtch *lookup_af_bynum(int);
 void	print_string(const u_int8_t *, int);

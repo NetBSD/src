@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.23 2009/01/18 00:24:29 lukem Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.24 2010/07/01 16:44:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.23 2009/01/18 00:24:29 lukem Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.24 2010/07/01 16:44:05 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -184,11 +184,11 @@ struct pinteger parse_powersavesleep =
     0, INT_MAX, 10, setifpowersavesleep, "powersavesleep",
     &command_root.pb_parser);
 
-struct pstr parse_nwkey = PSTR_INITIALIZER(&parse_nwkey, "nwkey", setifnwkey,
-    "nwkey", &command_root.pb_parser);
+struct pstr parse_nwkey = PSTR_INITIALIZER1(&parse_nwkey, "nwkey", setifnwkey,
+    "nwkey", false, &command_root.pb_parser);
 
-struct pstr parse_bssid = PSTR_INITIALIZER(&parse_bssid, "bssid", setifbssid,
-    "bssid", &command_root.pb_parser);
+struct pstr parse_bssid = PSTR_INITIALIZER1(&parse_bssid, "bssid", setifbssid,
+    "bssid", false, &command_root.pb_parser);
 
 static int
 set80211(prop_dictionary_t env, uint16_t type, int16_t val, int16_t len,
@@ -375,7 +375,7 @@ setifnwkey(prop_dictionary_t env, prop_dictionary_t oenv)
 			val += 2;
 			for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 				val = get_string(val, ",", keybuf[i],
-				    &nwkey.i_key[i].i_keylen);
+				    &nwkey.i_key[i].i_keylen, true);
 				if (val == NULL) {
 					errno = EINVAL;
 					return -1;
@@ -386,7 +386,7 @@ setifnwkey(prop_dictionary_t env, prop_dictionary_t oenv)
 			}
 		} else {
 			val = get_string(val, NULL, keybuf[0],
-			    &nwkey.i_key[0].i_keylen);
+			    &nwkey.i_key[0].i_keylen, true);
 			if (val == NULL) {
 				errno = EINVAL;
 				return -1;
