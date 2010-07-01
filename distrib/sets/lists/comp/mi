@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1476 2010/07/01 14:22:12 jruoho Exp $
+#	$NetBSD: mi,v 1.1477 2010/07/01 14:54:44 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9439,6 +9439,7 @@
 ./usr/share/man/cat9/pfind.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/pg_find.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/pgfind.0			comp-obsolete		obsolete
+./usr/share/man/cat9/pgrp_find.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pgsignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/physio.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pmap.0			comp-sys-catman		.cat
@@ -9507,6 +9508,7 @@
 ./usr/share/man/cat9/preempt.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/printf_nolog.0		comp-sys-catman		.cat
+./usr/share/man/cat9/proc_find.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/proc_trampoline.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/profhz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/prop_array_copyin_ioctl.0	comp-sys-catman		.cat
@@ -15184,6 +15186,7 @@
 ./usr/share/man/html9/pfind.html		comp-obsolete		obsolete
 ./usr/share/man/html9/pg_find.html		comp-obsolete		obsolete
 ./usr/share/man/html9/pgfind.html		comp-obsolete		obsolete
+./usr/share/man/html9/pgrp_find.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pgsignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/physio.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pmap.html			comp-sys-htmlman	html
@@ -15252,6 +15255,7 @@
 ./usr/share/man/html9/preempt.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/printf_nolog.html		comp-sys-htmlman	html
+./usr/share/man/html9/proc_find.html		comp-sys-htmlman	html
 ./usr/share/man/html9/proc_trampoline.html	comp-sys-htmlman	html
 ./usr/share/man/html9/profhz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/prop_array_copyin_ioctl.html	comp-sys-htmlman	html
@@ -21098,6 +21102,7 @@
 ./usr/share/man/man9/pfind.9			comp-obsolete		obsolete
 ./usr/share/man/man9/pg_find.9			comp-obsolete		obsolete
 ./usr/share/man/man9/pgfind.9			comp-obsolete		obsolete
+./usr/share/man/man9/pgrp_find.9		comp-sys-man		.man
 ./usr/share/man/man9/pgsignal.9			comp-sys-man		.man
 ./usr/share/man/man9/physio.9			comp-sys-man		.man
 ./usr/share/man/man9/pmap.9			comp-sys-man		.man
@@ -21166,6 +21171,7 @@
 ./usr/share/man/man9/preempt.9			comp-sys-man		.man
 ./usr/share/man/man9/printf.9			comp-sys-man		.man
 ./usr/share/man/man9/printf_nolog.9		comp-sys-man		.man
+./usr/share/man/man9/proc_find.9		comp-sys-man		.man
 ./usr/share/man/man9/proc_trampoline.9		comp-sys-man		.man
 ./usr/share/man/man9/profhz.9			comp-sys-man		.man
 ./usr/share/man/man9/prop_array_copyin_ioctl.9	comp-sys-man		.man
