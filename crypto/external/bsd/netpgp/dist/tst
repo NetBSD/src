@@ -165,13 +165,13 @@ echo "======> ascii detached armoured sig detection and verification"
 /usr/bin/netpgp --verify i.asc && passed=$(expr $passed + 1)
 echo "32 " $passed >> passed
 echo "======> host ssh fingerprint and netpgp fingerprint"
-netpgpkey=$(/usr/bin/netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys --hash=md5 | awk 'NR == 3 { print $3 $4 $5 $6 $7 $8 $9 $10 }')
+netpgpkey=$(/usr/bin/netpgpkeys --ssh --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys --hash=md5 | awk 'NR == 3 { print $3 $4 $5 $6 $7 $8 $9 $10 }')
 sshkey=$(/usr/bin/ssh-keygen -l -f /etc/ssh/ssh_host_rsa_key.pub | awk '{ gsub(":", "", $2); print $2 }')
 echo "host sshkey \"$sshkey\" = netpgpkey \"$netpgpkey\""
 [ $sshkey = $netpgpkey ] && passed=$(expr $passed + 1)
 echo "33 " $passed >> passed
 echo "======> user ssh fingerprint and netpgp fingerprint"
-netpgpkey=$(/usr/bin/netpgpkeys --ssh-keys --sshkeyfile=/home/agc/.ssh/id_rsa.pub --list-keys --hash=md5 | awk 'NR == 3 { print $3 $4 $5 $6 $7 $8 $9 $10 }')
+netpgpkey=$(/usr/bin/netpgpkeys --ssh --list-keys --hash=md5 | awk 'NR == 3 { print $3 $4 $5 $6 $7 $8 $9 $10 }')
 sshkey=$(/usr/bin/ssh-keygen -l -f /home/agc/.ssh/id_rsa.pub | awk '{ gsub(":", "", $2); print $2 }')
 echo "user sshkey \"$sshkey\" = netpgpkey \"$netpgpkey\""
 [ $sshkey = $netpgpkey ] && passed=$(expr $passed + 1)
