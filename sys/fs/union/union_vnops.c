@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.36 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.37 2010/07/01 13:00:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.36 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.37 2010/07/01 13:00:56 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1626,8 +1626,8 @@ union_lock(void *v)
 	int error;
 
 	/* XXX unionfs can't handle shared locks yet */
-	if ((flags & LK_TYPE_MASK) == LK_SHARED) {
-		flags = LK_EXCLUSIVE | (flags & ~LK_TYPE_MASK);
+	if ((flags & LK_SHARED) != 0) {
+		flags = (flags & ~LK_SHARED) | LK_EXCLUSIVE;
 	}
 
 	genfs_nolock(ap);

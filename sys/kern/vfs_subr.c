@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.407 2010/06/24 13:03:12 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.408 2010/07/01 13:00:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.407 2010/06/24 13:03:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.408 2010/07/01 13:00:56 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -713,7 +713,7 @@ vnalloc(struct mount *mp)
 		vp->v_type = VBAD;
 		vp->v_iflag = VI_MARKER;
 	} else {
-		rw_init(&vp->v_lock.vl_lock);
+		rw_init(&vp->v_lock);
 	}
 
 	return vp;
@@ -729,7 +729,7 @@ vnfree(vnode_t *vp)
 	KASSERT(vp->v_usecount == 0);
 
 	if ((vp->v_iflag & VI_MARKER) == 0) {
-		rw_destroy(&vp->v_lock.vl_lock);
+		rw_destroy(&vp->v_lock);
 		mutex_enter(&vnode_free_list_lock);
 		numvnodes--;
 		mutex_exit(&vnode_free_list_lock);
@@ -1332,7 +1332,7 @@ vget(vnode_t *vp, int flags)
 	 * Ok, we got it in good shape.  Just locking left.
 	 */
 	KASSERT((vp->v_iflag & VI_CLEAN) == 0);
-	if (flags & LK_TYPE_MASK) {
+	if (flags & (LK_EXCLUSIVE | LK_SHARED)) {
 		error = vn_lock(vp, flags | LK_INTERLOCK);
 		if (error != 0) {
 			vrele(vp);
@@ -2720,11 +2720,9 @@ const char vnode_flagbits[] = VNODE_FLAGBITS;
 void
 vprint(const char *label, struct vnode *vp)
 {
-	struct vnlock *vl;
 	char bf[96];
 	int flag;
 
-	vl = &vp->v_lock;
 	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
 	snprintb(bf, sizeof(bf), vnode_flagbits, flag);
 
@@ -2736,7 +2734,7 @@ vprint(const char *label, struct vnode *vp)
 	    vp, bf, ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt,
-	    vp->v_freelisthd, vp->v_mount, vp->v_data, vl);
+	    vp->v_freelisthd, vp->v_mount, vp->v_data, &vp->v_lock);
 	if (vp->v_data != NULL) {
 		printf("\t");
 		VOP_PRINT(vp);
@@ -2913,52 +2911,6 @@ void
 setrootfstime(time_t t)
 {
 	rootfstime = t;
-}
-
-/*
- * Sham lock manager for vnodes.  This is a temporary measure.
- */
-int
-vlockmgr(struct vnlock *vl, int flags)
-{
-
-	KASSERT((flags & ~(LK_NOWAIT | LK_TYPE_MASK)) == 0);
-
-	switch (flags & (LK_NOWAIT | LK_TYPE_MASK)) {
-	case LK_SHARED:
-		rw_enter(&vl->vl_lock, RW_READER);
-		return 0;
-
-	case LK_SHARED | LK_NOWAIT:
-		return rw_tryenter(&vl->vl_lock, RW_READER) ? 0 : EBUSY;
-
-	case LK_EXCLUSIVE:
-		rw_enter(&vl->vl_lock, RW_WRITER);
-		return 0;
-
-	case LK_EXCLUSIVE | LK_NOWAIT:
-		return rw_tryenter(&vl->vl_lock, RW_WRITER) ? 0 : EBUSY;
-
-	case LK_RELEASE:
-		rw_exit(&vl->vl_lock);
-		return 0;
-
-	default:
-		panic("vlockmgr: flags %x", flags);
-	}
-}
-
-int
-vlockstatus(struct vnlock *vl)
-{
-
-	if (rw_write_held(&vl->vl_lock)) {
-		return LK_EXCLUSIVE;
-	}
-	if (rw_read_held(&vl->vl_lock)) {
-		return LK_SHARED;
-	}
-	return 0;
 }
 
 static const uint8_t vttodt_tab[9] = {
