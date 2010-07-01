@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.174 2010/06/16 18:49:22 pooka Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.175 2010/07/01 02:38:30 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.174 2010/06/16 18:49:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.175 2010/07/01 02:38:30 rmind Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -1779,7 +1779,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 		mutex_exit(proc_lock);
 	} else {
 		mutex_enter(proc_lock);
-		p = p_find(pid, PFIND_LOCKED);
+		p = proc_find(pid);
 		if (p == NULL) {
 			error = ESRCH;
 			mutex_exit(proc_lock);
@@ -2427,7 +2427,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 
 	/* check pid */
 	mutex_enter(proc_lock);
-	if ((p = p_find(pid, PFIND_LOCKED)) == NULL) {
+	if ((p = proc_find(pid)) == NULL) {
 		error = EINVAL;
 		goto out_locked;
 	}

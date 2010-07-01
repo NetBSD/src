@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.95 2009/03/15 17:22:38 cegger Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.96 2010/07/01 02:38:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.95 2009/03/15 17:22:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.96 2010/07/01 02:38:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -681,7 +681,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 
 	if (pid == 0)
 		tp = &proc0;
-	else if ((tp = p_find(pid, PFIND_LOCKED)) == NULL)
+	else if ((tp = proc_find(pid)) == NULL)
 		error = notfound;
 	if (tp != NULL && !rw_tryenter(&tp->p_reflock, RW_READER))
 		error = EBUSY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.152 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.153 2010/07/01 02:38:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.152 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.153 2010/07/01 02:38:30 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1188,7 +1188,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
 		/*
 		 * by process group
 		 */
-		pg = pg_find(-pid, PFIND_LOCKED);
+		pg = pgrp_find(-pid);
 		if (pg == NULL)
 			error = ESRCH;
 		else {
@@ -1206,7 +1206,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, file_t *fp)
 		/*
 		 * by pid
 		 */
-		p = p_find(pid, PFIND_LOCKED);
+		p = proc_find(pid);
 		if (p == NULL)
 			error = ESRCH;
 		else if (descend)

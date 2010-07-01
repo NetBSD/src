@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.166 2010/06/10 20:54:53 pooka Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.167 2010/07/01 02:38:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.166 2010/06/10 20:54:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.167 2010/07/01 02:38:30 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -468,22 +468,23 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 
 	mutex_enter(proc_lock);
 	if (pg_id < 0) {
-		struct proc *p1 = p_find(-pg_id, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-		if (p1 == NULL)
-			return EINVAL;
+		struct proc *p1 = proc_find(-pg_id);
+		if (p1 == NULL) {
+			error = EINVAL;
+			goto fail;
+		}
 		pgrp = p1->p_pgrp;
 	} else {
-		pgrp = pg_find(pg_id, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-		if (pgrp == NULL)
-			return EINVAL;
+		pgrp = pgrp_find(pg_id);
+		if (pgrp == NULL) {
+			error = EINVAL;
+			goto fail;
+		}
 	}
 	session = pgrp->pg_session;
-	if (session != p->p_pgrp->pg_session)
-		error = EPERM;
-	else
-		error = 0;
+	error = (session != p->p_pgrp->pg_session) ? EPERM : 0;
+fail:
 	mutex_exit(proc_lock);
-
 	return error;
 }
 
@@ -503,57 +504,62 @@ p_inferior(struct proc *p, struct proc *q)
 }
 
 /*
- * Locate a process by number
+ * proc_find: locate a process by the ID.
+ *
+ * => Must be called with proc_lock held.
  */
-struct proc *
-p_find(pid_t pid, uint flags)
+proc_t *
+proc_find_raw(pid_t pid)
 {
-	struct proc *p;
-	char stat;
+	proc_t *p = pid_table[pid & pid_tbl_mask].pt_proc;
 
-	if (!(flags & PFIND_LOCKED))
-		mutex_enter(proc_lock);
+	if (__predict_false(!P_VALID(p) || p->p_pid != pid)) {
+		return NULL;
+	}
+	return p;
+}
 
-	p = pid_table[pid & pid_tbl_mask].pt_proc;
+proc_t *
+proc_find(pid_t pid)
+{
+	proc_t *p;
 
-	/* Only allow live processes to be found by pid. */
-	/* XXXSMP p_stat */
-	if (P_VALID(p) && p->p_pid == pid && ((stat = p->p_stat) == SACTIVE ||
-	    stat == SSTOP || ((flags & PFIND_ZOMBIE) &&
-	    (stat == SZOMB || stat == SDEAD || stat == SDYING)))) {
-		if (flags & PFIND_UNLOCK_OK)
-			 mutex_exit(proc_lock);
+	KASSERT(mutex_owned(proc_lock));
+
+	p = proc_find_raw(pid);
+	if (__predict_false(p == NULL)) {
+		return NULL;
+	}
+	/*
+	 * Only allow live processes to be found by PID.
+	 * XXX: p_stat might change, since unlocked.
+	 */
+	if (__predict_true(p->p_stat == SACTIVE || p->p_stat == SSTOP)) {
 		return p;
 	}
-	if (flags & PFIND_UNLOCK_FAIL)
-		mutex_exit(proc_lock);
 	return NULL;
 }
 
-
 /*
- * Locate a process group by number
+ * pgrp_find: locate a process group by the ID.
+ *
+ * => Must be called with proc_lock held.
  */
 struct pgrp *
-pg_find(pid_t pgid, uint flags)
+pgrp_find(pid_t pgid)
 {
 	struct pgrp *pg;
 
-	if (!(flags & PFIND_LOCKED))
-		mutex_enter(proc_lock);
+	KASSERT(mutex_owned(proc_lock));
+
 	pg = pid_table[pgid & pid_tbl_mask].pt_pgrp;
 	/*
-	 * Can't look up a pgrp that only exists because the session
-	 * hasn't died yet (traditional)
+	 * Cannot look up a process group that only exists because the
+	 * session has not died yet (traditional).
 	 */
 	if (pg == NULL || pg->pg_id != pgid || LIST_EMPTY(&pg->pg_members)) {
-		if (flags & PFIND_UNLOCK_FAIL)
-			 mutex_exit(proc_lock);
 		return NULL;
 	}
-
-	if (flags & PFIND_UNLOCK_OK)
-		mutex_exit(proc_lock);
 	return pg;
 }
 
@@ -765,9 +771,9 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 
 	/* Can only set another process under restricted circumstances. */
 	if (pid != curp->p_pid) {
-		/* must exist and be one of our children... */
-		if ((p = p_find(pid, PFIND_LOCKED)) == NULL ||
-		    !p_inferior(p, curp)) {
+		/* Must exist and be one of our children... */
+		p = proc_find(pid);
+		if (p == NULL || !p_inferior(p, curp)) {
 			rval = ESRCH;
 			goto done;
 		}
@@ -785,7 +791,7 @@ proc_enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, bool mksess)
 	} else {
 		/* ... setsid() cannot re-enter a pgrp */
 		if (mksess && (curp->p_pgid == curp->p_pid ||
-		    pg_find(curp->p_pid, PFIND_LOCKED)))
+		    pgrp_find(curp->p_pid)))
 			goto done;
 		p = curp;
 	}
