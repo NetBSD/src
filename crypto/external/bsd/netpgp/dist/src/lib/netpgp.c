@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.60 2010/06/30 15:17:40 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.61 2010/07/01 00:42:51 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -437,6 +437,26 @@ appendkey(__ops_io_t *io, __ops_key_t *key, char *ringfile)
 	return 1;
 }
 
+/* return 1 if the file contains ascii-armoured text */
+static unsigned
+isarmoured(__ops_io_t *io, const char *f, const char *text)
+{
+	unsigned	 armoured;
+	FILE		*fp;
+	char	 	 buf[BUFSIZ];
+
+	armoured = 0;
+	if ((fp = fopen(f, "r")) == NULL) {
+		(void) fprintf(io->errs, "isarmoured: can't open '%s'\n", f);
+		return 0;
+	}
+	if (fgets(buf, sizeof(buf), fp) != NULL) {
+		armoured = (strncmp(buf, text, strlen(text)) == 0);
+	}
+	(void) fclose(fp);
+	return armoured;
+}
+
 /***************************************************************************/
 /* exported functions start here */
 /***************************************************************************/
@@ -754,25 +774,13 @@ netpgp_import_key(netpgp_t *netpgp, char *f)
 #endif
 	__ops_io_t	*io;
 	unsigned	 realarmor;
-	FILE		*fp;
 #if 0
 	char		 ringfile[MAXPATHLEN];
 #endif
-	char		 buf[BUFSIZ];
 	int		 done;
 
 	io = netpgp->io;
-	realarmor = 0;
-	if ((fp = fopen(f, "r")) == NULL) {
-		(void) fprintf(io->errs, "netpgp_import_key: can't open '%s'\n", f);
-		return 0;
-	}
-	if (fgets(buf, sizeof(buf), fp) == NULL) {
-		realarmor = 0;
-	} else {
-		realarmor = (strncmp(buf, IMPORT_ARMOR_HEAD, strlen(IMPORT_ARMOR_HEAD)) == 0);
-	}
-	(void) fclose(fp);
+	realarmor = isarmoured(io, f, IMPORT_ARMOR_HEAD);
 	done = __ops_keyring_fileread(netpgp->pubring, realarmor, f);
 	if (!done) {
 		(void) fprintf(io->errs, "Cannot import key from file %s\n", f);
@@ -901,30 +909,18 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 	const unsigned	 overwrite = 1;
 	__ops_io_t	*io;
 	unsigned	 realarmor;
-	FILE		*fp;
-	char		 buf[BUFSIZ];
 
+	__OPS_USED(armored);
 	io = netpgp->io;
 	if (f == NULL) {
 		(void) fprintf(io->errs,
 			"netpgp_decrypt_file: no filename specified\n");
 		return 0;
 	}
-	realarmor = (unsigned)armored;
-	if ((fp = fopen(f, "r")) == NULL) {
-		(void) fprintf(io->errs,
-			"netpgp_decrypt_file: can't open '%s'\n", f);
-		return 0;
-	}
-	if (fgets(buf, sizeof(buf), fp) == NULL) {
-		realarmor = 0;
-	} else {
-		realarmor = (strcmp(buf, ARMOR_HEAD) == 0);
-	}
-	(void) fclose(fp);
+	realarmor = isarmoured(io, f, ARMOR_HEAD);
 	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
 				netpgp->pubring,
-				(unsigned)realarmor, overwrite,
+				realarmor, overwrite,
 				netpgp->passfp, get_passphrase_cb);
 }
 
@@ -1014,9 +1010,8 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 	__ops_validation_t	 result;
 	__ops_io_t		*io;
 	unsigned		 realarmor;
-	FILE			*fp;
-	char			 buf[BUFSIZ];
 
+	__OPS_USED(armored);
 	(void) memset(&result, 0x0, sizeof(result));
 	io = netpgp->io;
 	if (in == NULL) {
@@ -1024,18 +1019,7 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 			"netpgp_verify_file: no filename specified\n");
 		return 0;
 	}
-	realarmor = (unsigned)armored;
-	if ((fp = fopen(in, "r")) == NULL) {
-		(void) fprintf(io->errs,
-			"netpgp_decrypt_file: can't open '%s'\n", in);
-		return 0;
-	}
-	if (fgets(buf, sizeof(buf), fp) == NULL) {
-		realarmor = 0;
-	} else {
-		realarmor = (strcmp(buf, ARMOR_SIG_HEAD) == 0);
-	}
-	(void) fclose(fp);
+	realarmor = isarmoured(io, in, ARMOR_SIG_HEAD);
 	if (__ops_validate_file(io, &result, in, out, (const int)realarmor, netpgp->pubring)) {
 		resultp(io, in, &result, netpgp->pubring);
 		return 1;
