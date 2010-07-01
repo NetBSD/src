@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.334 2010/06/25 15:16:14 tsutsui Exp $
+#       $NetBSD: Makefile,v 1.335 2010/07/01 14:54:44 jruoho Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -38,9 +38,9 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
 	namei.9 opencrypto.9 optstr.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
-	pcmcia.9 pcq.9 percpu.9 pfil.9 pfind.9 physio.9 pmap.9 pmatch.9 \
+	pcmcia.9 pcq.9 percpu.9 pfil.9 physio.9 pmap.9 pmatch.9 \
 	pmc.9 pmf.9 pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
-	preempt.9 putter.9 \
+	preempt.9 proc_find.9 putter.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 roundup.9 \
 	rssadapt.9 rt_timer.9 rwlock.9 RUN_ONCE.9 \
 	sched_4bsd.9 sched_m2.9 scsipi.9 \
@@ -371,6 +371,7 @@ MAN+=	kpreempt.9
 MLINKS+=kpreempt.9 kpreempt_disable.9 \
 	kpreempt.9 kpreempt_disabled.9 \
 	kpreempt.9 kpreempt_enable.9
+MLINKS+=proc_find.9 pgrp_find.9
 MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 kprintf.9 sprintf.9 \
 	kprintf.9 snprintf.9 kprintf.9 vprintf.9 kprintf.9 vsprintf.9 \
 	kprintf.9 vsnprintf.9 kprintf.9 uprintf.9 kprintf.9 ttyprintf.9 \
@@ -541,9 +542,6 @@ MLINKS+=pfil.9 pfil_hook_get.9 \
 	pfil.9 pfil_head_unregister.9 \
 	pfil.9 pfil_head_get.9 \
 	pfil.9 pfil_run_hooks.9
-MLINKS+=pfind.9 p_find.9 \
-	pfind.9 pg_find.9 \
-	pfind.9 pgfind.9
 MLINKS+=pmc.9 pmc_get_num_counters.9 \
 	pmc.9 pmc_get_counter_type.9 \
 	pmc.9 pmc_save_context.9 \
