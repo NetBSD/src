@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.23 2010/06/16 06:17:48 jruoho Exp $
+# $NetBSD: acpidevs,v 1.24 2010/07/01 14:18:26 jruoho Exp $
 #
 # Originally extracted from:
 
@@ -379,4 +379,5 @@ ACPI000C	Processor Aggregator
 ACPI000D	Power Meter
 ACPI000E	Wake Alarm Device
 # **** Others ****
+HPQ0004	Hewlett-Packard 3D DriveGuard accelerometer
 INT0800	Intel Firmware Hub Device
