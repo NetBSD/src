@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.173 2010/05/08 22:16:30 mrg Exp $
+# $NetBSD: GENERIC,v 1.174 2010/07/01 19:50:11 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.173 $"
+#ident 		"GENERIC-$Revision: 1.174 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -176,7 +176,8 @@ mainbus0	at root
 cpu*		at mainbus0
 
 # All buses; from the beginning attached to mainbus.
-sbi0		at mainbus0		# SBI, master bus on 11/780, 8600.
+abus0		at mainbus0		# Master bus on VAX 86x0
+sbi0		at mainbus0		# SBI, master bus on 11/78x.
 cmi0		at mainbus0		# 11/750 internal bus.
 bi0		at mainbus0		# VAX 8200
 vsbus0		at mainbus0		# All VAXstations
@@ -231,6 +232,9 @@ kdb*		at bi? node?		# KDB50 MSCP disk ctlr
 mem*		at cmi? tr?		# Memory subsystems
 uba*		at cmi? tr?		# Unibus adapters
 mba*		at cmi? tr?		# Massbus adapters
+
+# ABUS (VAX 86x0)
+sbi*		at abus0		# VAX 86x0 can have up to 2 SBI's.
 
 # SBI (VAX 11/780, VAX 8600)
 mem*		at sbi? tr?		# Memory subsystems
@@ -301,10 +305,10 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
-#pseudo-device	sl	
-pseudo-device	ppp	
+#pseudo-device	sl
+pseudo-device	ppp
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-pseudo-device	tun	
+pseudo-device	tun
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
@@ -314,7 +318,7 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
-pseudo-device	vnd	
+pseudo-device	vnd
 #options 	VND_COMPRESSION		# compressed vnd(4)
 pseudo-device	ccd	4
 #pseudo-device	cgd	4		# cryptographic disk devices

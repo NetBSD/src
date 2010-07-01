@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.11 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: cmi.c,v 1.12 2010/07/01 19:50:12 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.11 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.12 2010/07/01 19:50:12 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,6 +76,8 @@ void
 cmi_attach(device_t parent, device_t self, void *aux)
 {
 	struct sbi_attach_args sa;
+
+        sa.sa_base = NEX750;
 
 	aprint_normal("\n");
 	/*
