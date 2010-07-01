@@ -1,4 +1,4 @@
-.\"	$NetBSD: mstohz.9,v 1.7 2010/03/01 17:21:02 jruoho Exp $
+.\"	$NetBSD: mstohz.9,v 1.8 2010/07/01 15:06:55 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 Manuel Bouyer.
 .\"
@@ -24,11 +24,12 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd February 10, 2010
+.Dd July 1, 2010
 .Dt MSTOHZ 9
 .Os
 .Sh NAME
-.Nm mstohz
+.Nm mstohz ,
+.Nm hztoms
 .Nd convert between milliseconds and system clock ticks
 .Sh SYNOPSIS
 .In sys/param.h
@@ -37,8 +38,10 @@
 .Ft int
 .Fn hztoms "int hz"
 .Sh DESCRIPTION
-.Nm
-can be used to convert time in milliseconds to system clock ticks, as used
+The
+.Fn mstohz
+macro can be used to convert time
+in milliseconds to system clock ticks, as used
 by the
 .Xr callout 9
 facility, in an integer-overflow safe way.
