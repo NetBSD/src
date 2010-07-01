@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.179 2010/06/24 13:03:17 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.180 2010/07/01 02:38:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.179 2010/06/24 13:03:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.180 2010/07/01 02:38:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ procfs_inactive(void *v)
 	struct pfsnode *pfs = VTOPFS(vp);
 
 	mutex_enter(proc_lock);
-	*ap->a_recycle = (p_find(pfs->pfs_pid, PFIND_LOCKED) == NULL);
+	*ap->a_recycle = (proc_find(pfs->pfs_pid) == NULL);
 	mutex_exit(proc_lock);
 
 	VOP_UNLOCK(vp);
