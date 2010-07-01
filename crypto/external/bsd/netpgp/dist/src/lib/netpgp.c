@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.61 2010/07/01 00:42:51 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.62 2010/07/01 03:52:13 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -255,7 +255,7 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 	char		*filename;
 
 	if ((filename = netpgp_getvar(netpgp, "sshkeyfile")) == NULL) {
-		(void) snprintf(f, sizeof(f), "%s/.ssh/is_rsa.pub", homedir);
+		(void) snprintf(f, sizeof(f), "%s/.ssh/id_rsa.pub", homedir);
 		filename = f;
 	}
 	if ((pubring = calloc(1, sizeof(*pubring))) == NULL) {
@@ -266,11 +266,11 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 	hashtype = OPS_HASH_MD5;
 	if ((hash = netpgp_getvar(netpgp, "hash")) != NULL) {
 		/* openssh 2 hasn't really caught up to anything else yet */
-		if (strcasecmp(hash, "md5") == 0) {
+		if (netpgp_strcasecmp(hash, "md5") == 0) {
 			hashtype = OPS_HASH_MD5;
-		} else if (strcasecmp(hash, "sha1") == 0) {
+		} else if (netpgp_strcasecmp(hash, "sha1") == 0) {
 			hashtype = OPS_HASH_SHA1;
-		} else if (strcasecmp(hash, "sha256") == 0) {
+		} else if (netpgp_strcasecmp(hash, "sha256") == 0) {
 			hashtype = OPS_HASH_SHA256;
 		}
 	}
