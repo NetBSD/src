@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.c,v 1.20 2010/06/08 21:47:26 jruoho Exp $ */
+/* $NetBSD: acpi_power.c,v 1.21 2010/07/01 09:28:37 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.20 2010/06/08 21:47:26 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_power.c,v 1.21 2010/07/01 09:28:37 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -373,7 +373,7 @@ acpi_power_set(ACPI_HANDLE hdl, int state)
 		goto fail;
 	}
 
-	if (acpi_power_get(ad, &old) != true) {
+	if (acpi_power_get(ad->ad_handle, &old) != true) {
 		rv = AE_NOT_FOUND;
 		goto fail;
 	}
@@ -761,7 +761,7 @@ acpi_power_sysctl(SYSCTLFN_ARGS)
 	node = *rnode;
 	ad = rnode->sysctl_data;
 
-	if (acpi_power_get(ad, &state) != true)
+	if (acpi_power_get(ad->ad_handle, &state) != true)
 		state = 0;
 
 	(void)memset(t, '\0', sizeof(t));
