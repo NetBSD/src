@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.128 2010/05/31 04:27:18 dholland Exp $ */
+/* $NetBSD: wskbd.c,v 1.129 2010/07/01 14:49:34 ahoka Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.128 2010/05/31 04:27:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.129 2010/07/01 14:49:34 ahoka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1845,6 +1845,9 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 				res = KS_Escape + (res - KS_3);
 			else if (res == KS_8)
 				res = KS_Delete;
+			/* convert CTL-/ to ^_ as xterm does (undo in emacs) */
+			else if (res == KS_slash)
+				res = KS_underscore & 0x1f;
 		}
 		if (MOD_ONESET(id, MOD_ANYMETA)) {
 			if (id->t_flags & WSKFL_METAESC) {
