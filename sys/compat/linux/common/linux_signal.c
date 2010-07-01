@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.69 2009/06/08 13:23:16 njoly Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.70 2010/07/01 02:38:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.69 2009/06/08 13:23:16 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.70 2010/07/01 02:38:29 rmind Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -629,7 +629,7 @@ linux_do_tkill(struct lwp *l, int tgid, int tid, int signum)
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
 
 	mutex_enter(proc_lock);
-	if ((p = p_find(tid, PFIND_LOCKED)) == NULL) {
+	if ((p = proc_find(tid)) == NULL) {
 		mutex_exit(proc_lock);
 		return ESRCH;
 	}

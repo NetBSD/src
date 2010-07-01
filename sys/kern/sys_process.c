@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.155 2010/04/07 13:10:46 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.156 2010/07/01 02:38:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.155 2010/04/07 13:10:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.156 2010/07/01 02:38:31 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -259,7 +259,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		mutex_enter(t->p_lock);
 	} else {
 		/* Find the process we're supposed to be operating on. */
-		if ((t = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
+		t = proc_find(SCARG(uap, pid));
+		if (t == NULL) {
 			mutex_exit(proc_lock);
 			return (ESRCH);
 		}

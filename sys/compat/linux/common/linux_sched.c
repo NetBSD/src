@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.61 2009/09/03 17:15:17 njoly Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.62 2010/07/01 02:38:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.61 2009/09/03 17:15:17 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.62 2010/07/01 02:38:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.61 2009/09/03 17:15:17 njoly Exp $
 #include <sys/wait.h>
 #include <sys/kauth.h>
 #include <sys/ptrace.h>
+#include <sys/types.h>
 
 #include <sys/cpu.h>
 
@@ -586,7 +587,8 @@ linux_sys_getppid(struct lwp *l, const void *v, register_t *retval)
 	if (led->s->flags & LINUX_LES_USE_NPTL) {
 
 		/* Find the thread group leader's parent */
-		if ((glp = p_find(led->s->group_pid, PFIND_LOCKED)) == NULL) {
+		glp = proc_find(led->s->group_pid);
+		if (glp == NULL) {
 			/* Maybe panic... */
 			printf("linux_sys_getppid: missing group leader PID"
 			    " %d\n", led->s->group_pid); 
@@ -623,34 +625,40 @@ linux_sys_sched_getaffinity(struct lwp *l, const struct linux_sys_sched_getaffin
 		syscallarg(unsigned long *) mask;
 	} */
 	int error, size, nb = ncpu;
-	unsigned long *p, *data;
+	unsigned long *c, *data;
+	proc_t *p;
 
 	/* Unlike Linux, dynamically calculate cpu mask size */
 	size = sizeof(long) * ((ncpu + LONG_BIT - 1) / LONG_BIT);
 	if (SCARG(uap, len) < size)
 		return EINVAL;
 
-	if (pfind(SCARG(uap, pid)) == NULL)
+	/* XXX: Pointless check.  TODO: Actually implement this. */
+	mutex_enter(proc_lock);
+	p = proc_find(SCARG(uap, pid));
+	mutex_exit(proc_lock);
+	if (p == NULL) {
 		return ESRCH;
+	}
 
 	/* 
 	 * return the actual number of CPU, tag all of them as available 
 	 * The result is a mask, the first CPU being in the least significant
 	 * bit.
 	 */
-	data = malloc(size, M_TEMP, M_WAITOK|M_ZERO);
-	p = data;
+	data = kmem_zalloc(size, KM_SLEEP);
+	c = data;
 	while (nb > LONG_BIT) {
-		*p++ = ~0UL;
+		*c++ = ~0UL;
 		nb -= LONG_BIT;
 	}
 	if (nb)
-		*p = (1 << ncpu) - 1;
+		*c = (1 << ncpu) - 1;
 
 	error = copyout(data, SCARG(uap, mask), size);
-	free(data, M_TEMP);
-	*retval = size;
+	kmem_free(data, size);
 
+	*retval = size;
 	return error;
 
 }
@@ -663,9 +671,15 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 		syscallarg(unsigned int) len;
 		syscallarg(unsigned long *) mask;
 	} */
+	proc_t *p;
 
-	if (pfind(SCARG(uap, pid)) == NULL)
+	/* XXX: Pointless check.  TODO: Actually implement this. */
+	mutex_enter(proc_lock);
+	p = proc_find(SCARG(uap, pid));
+	mutex_exit(proc_lock);
+	if (p == NULL) {
 		return ESRCH;
+	}
 
 	/* Let's ignore it */
 #ifdef DEBUG_LINUX

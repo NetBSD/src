@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.13 2010/06/13 04:13:31 yamt Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.14 2010/07/01 02:38:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.13 2010/06/13 04:13:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.14 2010/07/01 02:38:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2556,12 +2556,13 @@ debug_print_proc(int pid)
 {
 	struct proc *p;
 
-	p = pfind(pid);
+	mutex_enter(proc_lock);
+	p = proc_find(pid);
 	if (p == NULL)
 		printf("No process %d\n", pid);
 	else
 		debug_print_sa(p);
-
+	mutex_exit(proc_lock);
 	return 0;
 }
 

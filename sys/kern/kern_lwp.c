@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.149 2010/06/13 04:13:31 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.150 2010/07/01 02:38:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.149 2010/06/13 04:13:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.150 2010/07/01 02:38:30 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1135,22 +1135,29 @@ lwp_find2(pid_t pid, lwpid_t lid)
 	proc_t *p;
 	lwp_t *l;
 
-	/* Find the process */
-	p = (pid == 0) ? curlwp->l_proc : p_find(pid, PFIND_UNLOCK_FAIL);
-	if (p == NULL)
-		return NULL;
-	mutex_enter(p->p_lock);
+	/* Find the process. */
 	if (pid != 0) {
-		/* Case of p_find */
+		mutex_enter(proc_lock);
+		p = proc_find(pid);
+		if (p == NULL) {
+			mutex_exit(proc_lock);
+			return NULL;
+		}
+		mutex_enter(p->p_lock);
 		mutex_exit(proc_lock);
+	} else {
+		p = curlwp->l_proc;
+		mutex_enter(p->p_lock);
 	}
-
-	/* Find the thread */
-	l = (lid == 0) ? LIST_FIRST(&p->p_lwps) : lwp_find(p, lid);
+	/* Find the thread. */
+	if (lid != 0) {
+		l = lwp_find(p, lid);
+	} else {
+		l = LIST_FIRST(&p->p_lwps);
+	}
 	if (l == NULL) {
 		mutex_exit(p->p_lock);
 	}
-
 	return l;
 }
 
