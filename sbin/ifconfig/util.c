@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 2009/09/11 22:06:29 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.14 2010/07/01 16:12:23 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.13 2009/09/11 22:06:29 dyoung Exp $");
+__RCSID("$NetBSD: util.c,v 1.14 2010/07/01 16:12:23 dyoung Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -103,7 +103,7 @@ get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 				return NULL;
 			}
 		}
-		if (p > buf + len) {
+		if (p >= buf + len) {
 			if (hexstr)
 				warnx("hexadecimal digits too long");
 			else
