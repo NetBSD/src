@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.19 2010/06/24 13:03:10 hannken Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.20 2010/07/01 13:00:55 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.19 2010/06/24 13:03:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.20 2010/07/01 13:00:55 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,7 +388,7 @@ ptyfs_hashins(struct ptyfsnode *pp)
 	struct ptyfs_hashhead *ppp;
 
 	/* lock the ptyfsnode, then put it on the appropriate hash list */
-	vlockmgr(&pp->ptyfs_vnode->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(PTYFSTOV(pp), LK_EXCLUSIVE);
 
 	mutex_enter(&ptyfs_used_slock);
 	ppp = &ptyfs_used_tbl[PTYHASH(pp->ptyfs_type, pp->ptyfs_pty,
