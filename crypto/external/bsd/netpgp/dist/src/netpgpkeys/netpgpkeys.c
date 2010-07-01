@@ -103,8 +103,13 @@ static struct option options[] = {
 	{"list-keys",	no_argument,		NULL,	LIST_KEYS},
 	{"list-sigs",	no_argument,		NULL,	LIST_SIGS},
 	{"find-key",	no_argument,		NULL,	FIND_KEY},
+	{"export",	no_argument,		NULL,	EXPORT_KEY},
 	{"export-key",	no_argument,		NULL,	EXPORT_KEY},
+	{"import",	no_argument,		NULL,	IMPORT_KEY},
 	{"import-key",	no_argument,		NULL,	IMPORT_KEY},
+	{"gen",		optional_argument,	NULL,	GENERATE_KEY},
+	{"gen-key",	optional_argument,	NULL,	GENERATE_KEY},
+	{"generate",	optional_argument,	NULL,	GENERATE_KEY},
 	{"generate-key", optional_argument,	NULL,	GENERATE_KEY},
 	{"get-key", 	no_argument,		NULL,	GET_KEY},
 	/* debugging commands */
@@ -121,6 +126,7 @@ static struct option options[] = {
 	{"home",	required_argument, 	NULL,	HOMEDIR},
 	{"homedir",	required_argument, 	NULL,	HOMEDIR},
 	{"numbits",	required_argument, 	NULL,	NUMBITS},
+	{"ssh",		no_argument, 		NULL,	SSHKEYS},
 	{"ssh-keys",	no_argument, 		NULL,	SSHKEYS},
 	{"sshkeyfile",	required_argument, 	NULL,	SSHKEYFILE},
 	{"verbose",	no_argument, 		NULL,	VERBOSE},
@@ -196,6 +202,7 @@ main(int argc, char **argv)
 	struct stat	st;
 	netpgp_t	netpgp;
 	prog_t          p;
+	int             homeset;
 	int             optindex;
 	int             ret;
 	int             ch;
@@ -203,6 +210,7 @@ main(int argc, char **argv)
 
 	(void) memset(&p, 0x0, sizeof(p));
 	(void) memset(&netpgp, 0x0, sizeof(netpgp));
+	homeset = 0;
 	p.progname = argv[0];
 	p.numbits = DEFAULT_NUMBITS;
 	if (argc < 2) {
@@ -210,7 +218,6 @@ main(int argc, char **argv)
 		exit(EXIT_ERROR);
 	}
 	/* set some defaults */
-	netpgp_set_homedir(&netpgp, getenv("HOME"), "/.gnupg", 1);
 	netpgp_setvar(&netpgp, "sshkeydir", "/etc/ssh");
 	netpgp_setvar(&netpgp, "res", "<stdout>");
 	netpgp_setvar(&netpgp, "hash", DEFAULT_HASH_ALG);
@@ -273,6 +280,7 @@ main(int argc, char **argv)
 				exit(EXIT_ERROR);
 			}
 			netpgp_set_homedir(&netpgp, optarg, NULL, 0);
+			homeset = 1;
 			break;
 		case NUMBITS:
 			if (optarg == NULL) {
@@ -317,6 +325,10 @@ main(int argc, char **argv)
 			p.cmd = HELP_CMD;
 			break;
 		}
+	}
+	if (!homeset) {
+		netpgp_set_homedir(&netpgp, getenv("HOME"),
+			netpgp_getvar(&netpgp, "ssh keys") ? "/.ssh" : "/.gnupg", 1);
 	}
 	/* initialise, and read keys from file */
 	if (!netpgp_init(&netpgp)) {
