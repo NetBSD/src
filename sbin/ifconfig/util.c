@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.14 2010/07/01 16:12:23 dyoung Exp $	*/
+/*	$NetBSD: util.c,v 1.15 2010/07/01 16:44:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.14 2010/07/01 16:12:23 dyoung Exp $");
+__RCSID("$NetBSD: util.c,v 1.15 2010/07/01 16:44:05 dyoung Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -78,7 +78,8 @@ getsock(int naf)
 }
 
 const char *
-get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
+get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp,
+    bool hexok)
 {
 	int len;
 	bool hexstr;
@@ -86,7 +87,7 @@ get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 
 	len = *lenp;
 	p = buf;
-	hexstr = (val[0] == '0' && tolower((u_char)val[1]) == 'x');
+	hexstr = hexok && val[0] == '0' && tolower((u_char)val[1]) == 'x';
 	if (hexstr)
 		val += 2;
 	for (;;) {
