@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.203 2010/06/10 20:36:55 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.204 2010/07/02 05:00:48 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.203 2010/06/10 20:36:55 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.204 2010/07/02 05:00:48 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -177,8 +177,6 @@ static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE);
 #endif
 
 static int		acpi_rescan(device_t, const char *, const int *);
-static void		acpi_rescan1(struct acpi_softc *,
-				     const char *, const int *);
 static void		acpi_rescan_nodes(struct acpi_softc *);
 static void		acpi_rescan_capabilities(struct acpi_softc *);
 static int		acpi_print(void *aux, const char *);
@@ -678,7 +676,8 @@ acpi_build_tree(struct acpi_softc *sc)
 	/*
 	 * Scan the internal namespace.
 	 */
-	acpi_rescan1(sc, NULL, NULL);
+	(void)acpi_rescan(sc->sc_dev, NULL, NULL);
+
 	acpi_rescan_capabilities(sc);
 
 	(void)acpi_pcidev_scan(sc->sc_root);
@@ -947,21 +946,14 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct acpi_softc *sc = device_private(self);
 
-	acpi_rescan1(sc, ifattr, locators);
-
-	return 0;
-}
-
-static void
-acpi_rescan1(struct acpi_softc *sc, const char *ifattr, const int *locators)
-{
-
 	if (ifattr_match(ifattr, "acpinodebus"))
 		acpi_rescan_nodes(sc);
 
 	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL)
 		sc->sc_apmbus = config_found_ia(sc->sc_dev,
 		    "acpiapmbus", NULL, NULL);
+
+	return 0;
 }
 
 static void
