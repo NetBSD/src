@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnvar.h,v 1.11 2010/06/18 21:10:23 christos Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.12 2010/07/02 14:47:25 christos Exp $	*/
 /*	$OpenBSD: if_iwnvar.h,v 1.19 2010/05/05 19:47:43 damien Exp $	*/
 
 /*-
@@ -226,9 +226,9 @@ struct iwn_softc {
 #define IWN_FLAG_CALIB_DONE	(1 << 2)
 #define IWN_FLAG_USE_ICT	(1 << 3)
 #define IWN_FLAG_INTERNAL_PA	(1 << 4)
-#define IWN_FLAG_BUSY		(1 << 5)
 /* Added for NetBSD */
 #define IWN_FLAG_SCANNING	(1 << 8)
+#define IWN_FLAG_HW_INITED	(1 << 9)
 
 	uint8_t 		hw_type;
 	const struct iwn_hal	*sc_hal;
@@ -321,5 +321,8 @@ struct iwn_softc {
 	} sc_txtapu;
 #define sc_txtap	sc_txtapu.th
 	int			sc_txtap_len;
+
+	kmutex_t		sc_mtx;         /* mutex for init/stop */
+
 };
 
