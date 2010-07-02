@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.42 2010/07/02 03:16:01 rmind Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.43 2010/07/02 08:09:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.42 2010/07/02 03:16:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.43 2010/07/02 08:09:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -518,51 +518,6 @@ layer_open(void *v)
 	if (((lower_type == VBLK) || (lower_type == VCHR)) &&
 	    (vp->v_mount->mnt_flag & MNT_NODEV))
 		return ENXIO;
-
-	return LAYERFS_DO_BYPASS(vp, ap);
-}
-
-/*
- * We need to clear the interlock flag as it applies only to our vnode,
- * not the vnodes below us on the stack.
- */
-int
-layer_lock(void *v)
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	if (ap->a_flags & LK_INTERLOCK) {
-		mutex_exit(&vp->v_interlock);
-		ap->a_flags &= ~LK_INTERLOCK;
-	}
-	return LAYERFS_DO_BYPASS(vp, ap);
-}
-
-int
-layer_unlock(void *v)
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	return LAYERFS_DO_BYPASS(vp, ap);
-}
-
-int
-layer_islocked(void *v)
-{
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 
 	return LAYERFS_DO_BYPASS(vp, ap);
 }
