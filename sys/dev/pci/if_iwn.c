@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.46 2010/06/18 21:10:23 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.47 2010/07/02 14:47:25 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.46 2010/06/18 21:10:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.47 2010/07/02 14:47:25 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -416,6 +416,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	callout_init(&sc->calib_to, 0);
 	callout_setfunc(&sc->calib_to, iwn_calib_timeout, sc);
@@ -1836,8 +1837,10 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_SCAN:
 		/* XXX Do not abort a running scan. */
 		if (sc->sc_flags & IWN_FLAG_SCANNING) {
-			aprint_error_dev(sc->sc_dev,
-			    "scan request while scanning ignored\n");
+			if (ic->ic_state != nstate)
+				aprint_error_dev(sc->sc_dev, "scan request(%d) "
+				    "while scanning(%d) ignored\n", nstate,
+				    ic->ic_state);
 			break;
 		}
 
@@ -3161,22 +3164,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int s, error = 0;
 
 	s = splnet();
-	/*
-	 * Prevent processes from entering this function while another
-	 * process is tsleep'ing in it.
-	 */
-	if (sc->sc_flags & IWN_FLAG_BUSY) {
-		switch (cmd) {
-		case SIOCSIFADDR:
-			/* FALLTHROUGH */
-		case SIOCSIFFLAGS:
-			splx(s);
-			aprint_normal_dev(sc->sc_dev,
-			    "ioctl while busy cmd = 0x%lx\n", cmd);
-			return EBUSY;
-		}
-	}
-	sc->sc_flags |= IWN_FLAG_BUSY;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -3224,7 +3211,6 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 	}
 
-	sc->sc_flags &= ~IWN_FLAG_BUSY;
 	splx(s);
 	return error;
 }
@@ -5856,6 +5842,9 @@ iwn_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
 
+	mutex_spin_enter(&sc->sc_mtx);
+	if (sc->sc_flags & IWN_FLAG_HW_INITED)
+		return 0;
 	if ((error = iwn_hw_prepare(sc)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "hardware not ready\n");
@@ -5908,9 +5897,12 @@ iwn_init(struct ifnet *ifp)
 	else
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
+	sc->sc_flags |= IWN_FLAG_HW_INITED;
+	mutex_spin_exit(&sc->sc_mtx);
 	return 0;
 
-fail:	iwn_stop(ifp, 1);
+fail:	mutex_spin_exit(&sc->sc_mtx);
+	iwn_stop(ifp, 1);
 	return error;
 }
 
@@ -5920,6 +5912,8 @@ iwn_stop(struct ifnet *ifp, int disable)
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
+	mutex_spin_enter(&sc->sc_mtx);
+	sc->sc_flags &= ~IWN_FLAG_HW_INITED;
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
@@ -5933,6 +5927,7 @@ iwn_stop(struct ifnet *ifp, int disable)
 	sc->sc_sensor.value_cur = 0;
 	sc->sc_sensor.state = ENVSYS_SINVALID;
 #endif
+	mutex_spin_exit(&sc->sc_mtx);
 }
 
 /*
