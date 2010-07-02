@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_ttl.c,v 1.1 2010/06/26 14:24:29 kefren Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.2 2010/07/02 12:25:54 kefren Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.1 2010/06/26 14:24:29 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.2 2010/07/02 12:25:54 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -131,9 +131,8 @@ extern int icmpreturndatabytes;
 /* ICMP Extensions */
 
 #define ICMP_EXT_VERSION 2
-#define ICMP_EXT_OFFSET	(ICMP_MINLEN + 128)	/* 128 bytes from original
-						 * datagram required */
-#define MPLS_ICMP_LEN	(ICMP_EXT_OFFSET + sizeof(struct mpls_extension))
+#define	MPLS_RETURN_DATA 128
+#define	ICMP_EXT_OFFSET	128
 
 struct icmp_ext_cmn_hdr {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -172,12 +171,11 @@ static void
 mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
     int destmtu, union mpls_shim *shim)
 {
-        struct ip *oip = mtod(n, struct ip *), *nip;
-        unsigned oiplen = oip->ip_hl << 2;
-        struct icmp *icp;
-        struct mbuf *m;
-        unsigned icmplen, mblen;
-
+	struct ip *oip = mtod(n, struct ip *), *nip;
+	unsigned oiplen = oip->ip_hl << 2;
+	struct icmp *icp;
+	struct mbuf *m;
+	unsigned icmplen, mblen, packetlen;
 	struct mpls_extension mpls_icmp_ext;
 	
 	memset(&mpls_icmp_ext, 0, sizeof(mpls_icmp_ext));
@@ -238,6 +236,8 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 		mblen += m->m_len;
 	icmplen = min(mblen, icmplen);
 
+	packetlen = sizeof(struct ip) + ICMP_EXT_OFFSET + sizeof(mpls_icmp_ext);
+
 	/*
 	 * As we are not required to return everything we have,
 	 * we return whatever we can return at ease.
@@ -247,15 +247,10 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	 * icmp_sysctl will keep things below that limit.
 	 */
 
-	/* XXX: should we leave this here ? MCLBYTES should be > 200 anyway
-	 * XXX: but it's arch dependant after all and let's keep
-	 * XXX: surprises out
-	 */
-	KASSERT (MPLS_ICMP_LEN + ICMP_MINLEN <= MCLBYTES);
+	KASSERT (packetlen <= MCLBYTES);
 
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
-	/* XXX: MPLS_ICMP_LEN + ICMP_MINLEN should be always > MHLEN but ... */
-	if (m && (MPLS_ICMP_LEN + ICMP_MINLEN > MHLEN)) {
+	if (m && (packetlen > MHLEN)) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
@@ -265,9 +260,13 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	if (m == NULL)
 		goto freeit;
 	MCLAIM(m, n->m_owner);
-	m->m_len = MPLS_ICMP_LEN;
+	m->m_len = packetlen;
 	if ((m->m_flags & M_EXT) == 0)
 		MH_ALIGN(m, m->m_len);
+	else {
+		m->m_data += sizeof(struct ip);
+		m->m_len -= sizeof(struct ip);
+	}
 	icp = mtod(m, struct icmp *);
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp error");
@@ -290,20 +289,21 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	}
 
 	icp->icmp_code = code;
-	
-	/* Zero padding in case icmplen < ICMP_EXT_OFFSET */
-	memset(&icp->icmp_ip, 0, MPLS_ICMP_LEN);
+
+	memset(&icp->icmp_ip, 0, ICMP_EXT_OFFSET);
 	m_copydata(n, 0, icmplen, (char *)&icp->icmp_ip);
 
-	/* Copy the extension structures */
-	memcpy(((char*)&icp->icmp_ip) + ICMP_EXT_OFFSET - ICMP_MINLEN,
+	/* Append the extension structure */
+	memcpy(((char*)&icp->icmp_ip) + ICMP_EXT_OFFSET,
 	    &mpls_icmp_ext, sizeof(mpls_icmp_ext));
 
 	/*
 	 * Now, copy old ip header (without options)
 	 * in front of icmp message.
 	*/
-	KASSERT(m->m_data - sizeof(struct ip) >= m->m_pktdat);
+	if ((m->m_flags & M_EXT) == 0 &&
+	    m->m_data - sizeof(struct ip) < m->m_pktdat)
+		panic("icmp len");
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
 	m->m_pkthdr.len = m->m_len;
@@ -351,11 +351,11 @@ mpls_ttl_dec(struct mbuf *m)
 
 #ifdef INET
 		/*
-		 * shim ttl exceed 
+		 * shim ttl exceeded
 		 * send back ICMP type 11 code 0
 		 */
-		bossh.s_addr = top_shim.s_addr =
-			ntohl(mtod(m, union mpls_shim *)->s_addr);
+		bossh.s_addr = mshim->s_addr;
+		top_shim.s_addr = htonl(mshim->s_addr);
 		m_adj(m, sizeof(union mpls_shim));
 
 		/* Goto BOS */
@@ -371,6 +371,8 @@ mpls_ttl_dec(struct mbuf *m)
 
 		mpls_icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS,
 		    0, 0, &top_shim);
+#else
+		m_freem(m);
 #endif
 		return NULL;
 	}
