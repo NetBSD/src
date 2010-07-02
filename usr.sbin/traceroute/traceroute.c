@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.74 2008/07/21 13:37:00 lukem Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.75 2010/07/02 12:13:11 kefren Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: traceroute.c,v 1.74 2008/07/21 13:37:00 lukem Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.75 2010/07/02 12:13:11 kefren Exp $");
 #endif
 #endif
 
@@ -1128,7 +1128,8 @@ decode_extensions(unsigned char *buf, int ip_len)
 
         ip = (struct ip *)buf;
 
-        if (ip_len <= sizeof(struct ip) + ICMP_EXT_OFFSET) {
+        if (ip_len < (ip->ip_hl << 2) + ICMP_EXT_OFFSET +
+	    sizeof(struct icmp_ext_cmn_hdr)) {
 		/*
 		 * No support for ICMP extensions on this host
 		 */
@@ -1166,16 +1167,15 @@ decode_extensions(unsigned char *buf, int ip_len)
         buf += sizeof(*cmn_hdr);
         datalen -= sizeof(*cmn_hdr);
  
-        while (datalen > 0) {
+        while (datalen >= sizeof(struct icmp_ext_obj_hdr)) {
 		obj_hdr = (struct icmp_ext_obj_hdr *)buf;
 		obj_len = ntohs(obj_hdr->length);
 
 		/*
 		 * Sanity check the length field
 		 */
-		if (obj_len > datalen) {
+		if (obj_len > datalen)
 			return;
-		}
 
 		datalen -= obj_len;
  
