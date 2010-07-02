@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.37 2010/07/01 13:00:56 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.38 2010/07/02 07:56:46 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.37 2010/07/01 13:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.38 2010/07/02 07:56:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1630,7 +1630,6 @@ union_lock(void *v)
 		flags = (flags & ~LK_SHARED) | LK_EXCLUSIVE;
 	}
 
-	genfs_nolock(ap);
 	/*
 	 * Need to do real lockmgr-style locking here.
 	 * in the mean time, draining won't work quite right,
@@ -1640,7 +1639,6 @@ union_lock(void *v)
 	if ((flags & LK_TYPE_MASK) == LK_DRAIN)
 		return (0);
 	 */
-	flags &= ~LK_INTERLOCK;
 
 	un = VTOUNION(vp);
 start:
@@ -1734,7 +1732,6 @@ union_unlock(void *v)
 #ifdef DIAGNOSTIC
 	un->un_pid = 0;
 #endif
-	genfs_nounlock(ap);
 
 	return (0);
 }
