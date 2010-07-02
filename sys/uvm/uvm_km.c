@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.105.2.3 2010/05/30 05:18:10 rmind Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.105.2.4 2010/07/02 02:09:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -127,7 +127,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105.2.3 2010/05/30 05:18:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.105.2.4 2010/07/02 02:09:54 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -657,20 +657,24 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 
 	if (flags & UVM_KMF_PAGEABLE) {
 		/*
-		 * no need to lock for pmap, as the kernel is
-		 * self-consistent.  the pages cannot be in
-		 * use elsewhere.
+		 * No need to lock for pmap, since the kernel is always
+		 * self-consistent.  The pages cannot be in use elsewhere.
 		 */
-
-		pmap_remove(pmap_kernel(), addr, addr + size);
 		uvm_km_pgremove(addr, addr + size);
+		pmap_remove(pmap_kernel(), addr, addr + size);
+
 	} else if (flags & UVM_KMF_WIRED) {
-		pmap_kremove(addr, size);
+		/*
+		 * Note: uvm_km_pgremove_intrsafe() extracts mapping, thus
+		 * remove it after.  See comment below about KVA visibility.
+		 */
 		uvm_km_pgremove_intrsafe(map, addr, addr + size);
+		pmap_kremove(addr, size);
 	}
 
 	/*
-	 * uvm_unmap_remove calls pmap_update for us.
+	 * Note: uvm_unmap_remove() calls pmap_update() for us, before
+	 * KVA becomes globally available.
 	 */
 
 	uvm_unmap1(map, addr, addr + size, UVM_FLAG_QUANTUM|UVM_FLAG_VAONLY);
