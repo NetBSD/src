@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.57 2010/06/22 18:32:08 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.58 2010/07/02 03:29:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.57 2010/06/22 18:32:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.58 2010/07/02 03:29:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -536,6 +536,7 @@ tmpfs_dir_attach(struct vnode *vp, struct tmpfs_dirent *de)
 {
 	struct tmpfs_node *dnode;
 
+	KASSERT(VOP_ISLOCKED(vp));
 	dnode = VP_TO_TMPFS_DIR(vp);
 
 	TAILQ_INSERT_TAIL(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
@@ -563,7 +564,6 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 	struct tmpfs_node *dnode;
 
 	KASSERT(VOP_ISLOCKED(vp));
-
 	dnode = VP_TO_TMPFS_DIR(vp);
 
 	if (dnode->tn_spec.tn_dir.tn_readdir_lastp == de) {
