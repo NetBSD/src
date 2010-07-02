@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.1.2.2 2010/05/31 01:12:14 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.1.2.3 2010/07/02 02:11:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.2 2010/05/31 01:12:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.1.2.3 2010/07/02 02:11:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -172,7 +172,11 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	 */ 
 	s = splvm();
 	tp = (struct pmap_tlb_packet *)curcpu()->ci_pmap_data;
+
+	/* Whole address flush will be needed if PG_G is set. */
+	CTASSERT(PG_G == (uint16_t)PG_G);
 	tp->tp_pte |= (uint16_t)pte;
+
 	if (tp->tp_count < TP_MAXVA && va != (vaddr_t)-1LL) {
 		/* Flush a single page. */
 		tp->tp_va[tp->tp_count++] = va;
