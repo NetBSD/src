@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.123 2010/06/26 14:24:29 kefren Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.124 2010/07/02 07:02:00 kefren Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.123 2010/06/26 14:24:29 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.124 2010/07/02 07:02:00 kefren Exp $");
 
 #include "opt_ipsec.h"
 
@@ -309,6 +309,10 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	m->m_len = icmplen + ICMP_MINLEN;
 	if ((m->m_flags & M_EXT) == 0)
 		MH_ALIGN(m, m->m_len);
+	else {
+		m->m_data += sizeof(struct ip);
+		m->m_len -= sizeof(struct ip);
+	}
 	icp = mtod(m, struct icmp *);
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
@@ -337,7 +341,8 @@ icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	 * Now, copy old ip header (without options)
 	 * in front of icmp message.
 	 */
-	if (m->m_data - sizeof(struct ip) < m->m_pktdat)
+	if ((m->m_flags & M_EXT) == 0 &&
+	    m->m_data - sizeof(struct ip) < m->m_pktdat)
 		panic("icmp len");
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
