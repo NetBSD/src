@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_elf.h,v 1.31 2010/06/01 22:13:30 mjf Exp $	*/
+/*	$NetBSD: cdefs_elf.h,v 1.32 2010/07/02 11:38:20 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -160,6 +160,9 @@
 #define	__link_set_count(set)						\
 	(__link_set_end(set) - __link_set_start(set))
 
+
+#ifdef _KERNEL
+
 /*
  * On multiprocessor systems we can gain an improvement in performance
  * by being mindful of which cachelines data is placed in.
@@ -193,5 +196,7 @@
 #define	__cacheline_aligned					\
     __attribute__((__aligned__(COHERENCY_UNIT)			\
 		 __section__(".data.cacheline_aligned")))
+
+#endif /* _KERNEL */
 
 #endif /* !_SYS_CDEFS_ELF_H_ */
