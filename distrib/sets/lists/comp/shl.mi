@@ -1,8 +1,10 @@
-# $NetBSD: shl.mi,v 1.125 2010/06/30 16:17:13 pooka Exp $
+# $NetBSD: shl.mi,v 1.126 2010/07/02 07:43:36 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+./usr/lib/crtbeginS.o				comp-c-lib
 ./usr/lib/crtbeginT.o				comp-c-lib
+./usr/lib/crtendS.o				comp-c-lib
 ./usr/lib/libarchive_pic.a			comp-c-piclib
 ./usr/lib/libasn1_pic.a				comp-c-piclib		kerberos
 ./usr/lib/libatf-c++_pic.a			comp-atf-piclib		atf
@@ -98,8 +100,8 @@
 ./usr/lib/librumpdev_dm_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_fss_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_netsmb_pic.a		comp-c-piclib
-./usr/lib/librumpdev_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_pad_pic.a			comp-c-piclib
+./usr/lib/librumpdev_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_putter_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_raidframe_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_rnd_pic.a			comp-c-piclib
@@ -311,6 +313,9 @@
 ./usr/libdata/debug/usr/lib/librumpfs_udf.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_umap.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_union.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpkern_tty.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet_local.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpnet_net.so.0.0.debug	comp-rump-debug	debug
@@ -324,9 +329,6 @@
 ./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs_fifofs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpvfs_layerfs.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpkern_ksem.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpkern_tty.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpkern_z.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/libskey.so.2.0.debug	comp-sys-debug	skey,debug
 ./usr/libdata/debug/usr/lib/libsl.so.4.0.debug		comp-krb5-debug	kerberos,debug
 ./usr/libdata/debug/usr/lib/libss.so.6.0.debug		comp-krb5-debug	kerberos,debug
