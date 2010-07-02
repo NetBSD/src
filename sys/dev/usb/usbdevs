@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.560 2010/06/27 10:32:13 kardel Exp $
+$NetBSD: usbdevs,v 1.561 2010/07/02 08:35:41 tnn Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2100,6 +2100,7 @@ product SAITEK CYBORG_3D_GOLD	0x0006	Cyborg 3D Gold Joystick
 product SAMSUNG MIGHTYDRIVE	0x1623	Mighty Drive
 product SAMSUNG ML6060		0x3008	ML-6060 laser printer
 product SAMSUNG GTB3710		0x6876	GT-B3710 LTE/4G datacard
+product SAMSUNG GTB3730		0x689a	GT-B3730 LTE/4G datacard
 
 /* SanDisk products */
 product SANDISK SDDR05A		0x0001	ImageMate SDDR-05a
