@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.49 2010/06/06 08:01:31 hannken Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.50 2010/07/02 08:09:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.49 2010/06/06 08:01:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.50 2010/07/02 08:09:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,9 +86,6 @@ const struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_print_desc,	umap_print },
 	{ &vop_rename_desc,	umap_rename },
 
-	{ &vop_lock_desc,	layer_lock },
-	{ &vop_unlock_desc,	layer_unlock },
-	{ &vop_islocked_desc,	layer_islocked },
 	{ &vop_fsync_desc,	layer_fsync },
 	{ &vop_inactive_desc,	layer_inactive },
 	{ &vop_reclaim_desc,	layer_reclaim },
