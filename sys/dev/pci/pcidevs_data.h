@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1031 2010/06/16 03:28:49 riz Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1032 2010/07/02 08:25:30 mrg Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1035 2010/06/16 03:27:48 riz Exp
+ *	NetBSD: pcidevs,v 1.1036 2010/07/02 08:25:05 mrg Exp
  */
 
 /*
@@ -5120,6 +5120,8 @@ static const uint16_t pci_products[] = {
 	    12000, 10098, 558, 19943, 19948, 9414, 0,
 	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9855, 
 	    19956, 12000, 10098, 558, 19943, 19948, 9414, 0,
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901, 
+	    9455, 14070, 10098, 0,
 	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751, 
 	    14414, 0,
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501, 
@@ -8735,7 +8737,7 @@ static const char pci_words[] = { "."
 	    "(NB-SB\0" /* 2 refs @ 9436 */
 	    "Link)\0" /* 2 refs @ 9443 */
 	    "RD890\0" /* 17 refs @ 9449 */
-	    "Dual\0" /* 26 refs @ 9455 */
+	    "Dual\0" /* 27 refs @ 9455 */
 	    "Slot\0" /* 3 refs @ 9460 */
 	    "2x16\0" /* 1 refs @ 9465 */
 	    "GFX\0" /* 3 refs @ 9470 */
@@ -8832,7 +8834,7 @@ static const char pci_words[] = { "."
 	    "bridge\0" /* 1 refs @ 10069 */
 	    "single-channel\0" /* 2 refs @ 10076 */
 	    "RS-485\0" /* 8 refs @ 10091 */
-	    "UART\0" /* 15 refs @ 10098 */
+	    "UART\0" /* 16 refs @ 10098 */
 	    "dual-channel\0" /* 3 refs @ 10103 */
 	    "quad-channel\0" /* 3 refs @ 10116 */
 	    "octal-channel\0" /* 3 refs @ 10129 */
@@ -9343,7 +9345,7 @@ static const char pci_words[] = { "."
 	    "PATA133\0" /* 1 refs @ 14044 */
 	    "88SE6121\0" /* 1 refs @ 14052 */
 	    "88SE614X\0" /* 1 refs @ 14061 */
-	    "PCI-E\0" /* 3 refs @ 14070 */
+	    "PCI-E\0" /* 4 refs @ 14070 */
 	    "88SE6145\0" /* 1 refs @ 14076 */
 	    "88F6180\0" /* 1 refs @ 14085 */
 	    "Kirkwood\0" /* 3 refs @ 14093 */
