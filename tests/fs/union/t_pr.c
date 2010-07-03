@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.4 2010/07/03 12:08:37 pooka Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.5 2010/07/03 12:10:35 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -16,7 +16,6 @@
 #include <rump/rump_syscalls.h>
 
 #include <miscfs/union/union.h>
-#include <ufs/ufs/ufsmount.h>
 
 #include "../../h_macros.h"
 
@@ -24,28 +23,13 @@ ATF_TC(multilayer);
 ATF_TC_HEAD(multilayer, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "mount_union -b twice");
-	atf_tc_set_md_var(tc, "use.fs", "true");
 }
-
-#define IMG1 "atf1.img"
-#define DEV1 "/dev/fs1"
-#define newfs_base "newfs -F -s 10000 "
 
 ATF_TC_BODY(multilayer, tc)
 {
-	struct ufs_args args;
 	struct union_args unionargs;
 
-	if (system(newfs_base IMG1) == -1)
-		atf_tc_fail_errno("create img1");
-
 	rump_init();
-        rump_pub_etfs_register(DEV1, IMG1, RUMP_ETFS_BLK);
-
-	memset(&args, 0, sizeof(args));
-	args.fspec = __UNCONST(DEV1);
-	if (rump_sys_mount(MOUNT_FFS, "/", 0, &args, sizeof(args)) == -1)
-		atf_tc_fail_errno("could not mount root");
 
 	if (rump_sys_mkdir("/Tunion", 0777) == -1)
 		atf_tc_fail_errno("mkdir mp1");
@@ -66,7 +50,6 @@ ATF_TC_BODY(multilayer, tc)
 	unionargs.target = __UNCONST("/Tunion2/B");
 	unionargs.mntflags = UNMNT_BELOW;
 
-	/* BADABOOM */
 	/* atf_tc_expect_signal(-1, "PR kern/23986"); */
 	rump_sys_mount(MOUNT_UNION, "/Tunion", 0,&unionargs,sizeof(unionargs));
 }
