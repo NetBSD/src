@@ -28,15 +28,16 @@
 //
 
 extern "C" {
+#include <fcntl.h>
 #include <poll.h>
 #include <unistd.h>
 }
 
 #include <cerrno>
+#include <cstring>
 
 extern "C" {
 #include "atf-c/error.h"
-#include "atf-c/io.h"
 }
 
 #include "atf-c++/exceptions.hpp"
@@ -422,11 +423,41 @@ impl::getline(unbuffered_istream& uis, std::string& str)
 int
 impl::cmp(const fs::path& p1, const fs::path& p2)
 {
-    int r;
+    bool equal = false;
 
-    atf_error_t err = atf_io_cmp(&r, p1.c_path(), p2.c_path());
-    if (atf_is_error(err))
-        throw_atf_error(err);
+    int fd1 = ::open(p1.c_str(), O_RDONLY);
+    if (fd1 == -1)
+        throw system_error(IMPL_NAME "::cmp", "open(2) failed", errno);
+    file_handle f1(fd1);
 
-    return r;
+    int fd2 = ::open(p2.c_str(), O_RDONLY);
+    if (fd2 == -1)
+        throw system_error(IMPL_NAME "::cmp", "open(2) failed", errno);
+    file_handle f2(fd2);
+
+    for (;;) {
+        ssize_t r1, r2;
+        char buf1[512], buf2[512];
+
+        r1 = ::read(fd1, buf1, sizeof(buf1));
+        if (r1 < 0)
+            throw system_error(IMPL_NAME "::cmp", "read(2) failed for " +
+                               p1.str(), errno);
+
+        r2 = read(fd2, buf2, sizeof(buf2));
+        if (r2 < 0)
+            throw system_error(IMPL_NAME "::cmp", "read(2) failed for " +
+                               p2.str(), errno);
+
+        if ((r1 == 0) && (r2 == 0)) {
+            equal = true;
+            break;
+        }
+
+        if ((r1 != r2) || (std::memcmp(buf1, buf2, r1) != 0)) {
+            break;
+        }
+    }
+
+    return equal;
 }

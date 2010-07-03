@@ -35,6 +35,24 @@
 namespace atf {
 namespace atf_run {
 
+namespace detail {
+
+class atf_config_reader {
+    std::istream& m_is;
+
+protected:
+    virtual void got_var(const std::string&, const std::string &);
+    virtual void got_eof(void);
+
+public:
+    atf_config_reader(std::istream&);
+    virtual ~atf_config_reader(void);
+
+    void read(void);
+};
+
+} // namespace detail
+
 atf::tests::vars_map merge_configs(const atf::tests::vars_map&,
                                    const atf::tests::vars_map&);
 atf::tests::vars_map read_config_files(const std::string&);

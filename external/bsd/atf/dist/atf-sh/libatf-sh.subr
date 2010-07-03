@@ -33,12 +33,14 @@
 
 # Values of configuration variables obtained from atf-config.
 Atf_Arch=$(atf-config -t atf_arch)
-Atf_Cleanup=$(atf-config -t atf_libexecdir)/atf-cleanup
-Atf_Format=$(atf-config -t atf_libexecdir)/atf-format
 Atf_Machine=$(atf-config -t atf_machine)
 
 # The list of all test cases defined by the test program.
 Defined_Test_Cases=
+
+# Values for the expect property.
+Expect=pass
+Expect_Reason=
 
 # A boolean variable that indicates whether we are parsing a test case's
 # head or not.
@@ -48,7 +50,7 @@ Parsing_Head=false
 Prog_Name=${0##*/}
 
 # The file to which the test case will print its result.
-Results_File=resfile # XXX
+Results_File=
 
 # The test program's source directory: i.e. where its auxiliary data files
 # and helper utilities can be found.  Can be overriden through the '-s' flag.
@@ -63,6 +65,7 @@ Test_Case_Vars=
 # The list of all test cases provided by the test program.
 # Subset of ${Defined_Test_Cases}.
 Test_Cases=
+Test_Cases_With_Cleanup=
 
 # ------------------------------------------------------------------------
 # PUBLIC INTERFACE
@@ -147,6 +150,101 @@ atf_config_has()
 }
 
 #
+# atf_expect_death reason
+#
+#   Sets the expectations to 'death'.
+#
+atf_expect_death()
+{
+    _atf_validate_expect
+
+    Expect=death
+    _atf_create_resfile expected_death -1 "${@}"
+}
+
+#
+# atf_expect_timeout reason
+#
+#   Sets the expectations to 'timeout'.
+#
+atf_expect_timeout()
+{
+    _atf_validate_expect
+
+    Expect=timeout
+    _atf_create_resfile expected_timeout -1 "${@}"
+}
+
+#
+# atf_expect_exit exitcode reason
+#
+#   Sets the expectations to 'exit'.
+#
+atf_expect_exit()
+{
+    _exitcode="${1}"; shift
+
+    _atf_validate_expect
+
+    Expect=exit
+    _atf_create_resfile expected_exit "${_exitcode}" "${@}"
+}
+
+#
+# atf_expect_fail reason
+#
+#   Sets the expectations to 'fail'.
+#
+atf_expect_fail()
+{
+    _atf_validate_expect
+
+    Expect=fail
+    Expect_Reason="${*}"
+}
+
+#
+# atf_expect_pass
+#
+#   Sets the expectations to 'pass'.
+#
+atf_expect_pass()
+{
+    _atf_validate_expect
+
+    Expect=pass
+    Expect_Reason=
+}
+
+#
+# atf_expect_signal signo reason
+#
+#   Sets the expectations to 'signal'.
+#
+atf_expect_signal()
+{
+    _signo="${1}"; shift
+
+    _atf_validate_expect
+
+    Expect=signal
+    _atf_create_resfile expected_signal "${_signo}" "${@}"
+}
+
+#
+# atf_expected_failure msg1 [.. msgN]
+#
+#   Makes the test case report an expected failure with the given error
+#   message.  Multiple words can be provided, which are concatenated with
+#   a single blank space.
+#
+atf_expected_failure()
+{
+    _atf_create_resfile expected_failure -1 "${Expect_Reason}:" "${@}"
+    exit 0
+}
+
+#
 # atf_fail msg1 [.. msgN]
 #
 #   Makes the test case fail with the given error message.  Multiple
@@ -155,13 +253,18 @@ atf_config_has()
 #
 atf_fail()
 {
-    cat >${Results_File} <<EOF
-Content-Type: application/X-atf-tcr; version="1"
-
-result: failed
-reason: ${*}
-EOF
-    exit 1
+    case "${Expect}" in
+        fail)
+            atf_expected_failure "${@}"
+            ;;
+        pass)
+            _atf_create_resfile failed -1 "${@}"
+            exit 1
+            ;;
+        *)
+            _atf_error 128 "Unreachable"
+            ;;
+    esac
 }
 
 #
@@ -205,16 +308,19 @@ atf_init_test_cases()
 #
 atf_pass()
 {
-    _create_pass_file
-    exit 0
-}
-
-_create_pass_file() {
-    cat >${Results_File} <<EOF
-Content-Type: application/X-atf-tcr; version="1"
-
-result: passed
-EOF
+    case "${Expect}" in
+        fail)
+            Expect=pass
+            atf_fail "Test case was expecting a failure but got a pass instead"
+            ;;
+        pass)
+            _atf_create_resfile passed -1
+            exit 0
+            ;;
+        *)
+            _atf_error 128 "Unreachable"
+            ;;
+    esac
 }
 
 #
@@ -273,22 +379,17 @@ atf_set()
 #
 atf_skip()
 {
-    cat >${Results_File} <<EOF
-Content-Type: application/X-atf-tcr; version="1"
-
-result: skipped
-reason: ${*}
-EOF
+    _atf_create_resfile skipped -1 "${@}"
     exit 0
 }
 
 #
-# atf_test_case tc-name
+# atf_test_case tc-name cleanup
 #
 #   Defines a new test case named tc-name.  The name provided here must be
 #   accompanied by two functions named after it: <tc-name>_head and
-#   <tc-name>_body, and may also be accompanied by a <tc-name>_cleanup
-#   function.
+#   <tc-name>_body.  If cleanup is set to 'cleanup', then this also expects
+#   a <tc-name>_cleanup function to be defined.
 #
 atf_test_case()
 {
@@ -296,7 +397,13 @@ atf_test_case()
 
     eval "${1}_head() { :; }"
     eval "${1}_body() { :; }"
-    eval "${1}_cleanup() { :; }"
+    if [ "${2}" = cleanup ]; then
+        Test_Cases_With_Cleanup="${Test_Cases_With_Cleanup} ${1}"
+        eval "${1}_cleanup() { :; }"
+    else
+        eval "${1}_cleanup() {
+            _atf_error 1 'Test case ${1} declared without a cleanup routine'; }"
+    fi
 }
 
 # ------------------------------------------------------------------------
@@ -335,14 +442,32 @@ _atf_config_set_from_str()
 }
 
 #
-# _atf_echo [-l indent] [-t tag] [msg1 [.. msgN]]
+# _atf_create_resfile result arg [reason ...]
 #
-#   Prints a formatted message using atf-format(1).  See its manual
-#   page for details on the syntax of this function.
+#   Creates the results file.
 #
-_atf_echo()
+_atf_create_resfile()
 {
-    ${Atf_Format} "${@}"
+    _result="${1}"; shift
+    if [ "${1}" -eq -1 ]; then
+        _arg=""
+        shift
+    else
+        _arg="(${1})"
+        shift
+    fi
+    if [ ${#} -gt 0 ]; then
+        _reason=": ${*}"
+    else
+        _reason=""
+    fi
+
+    if [ -n "${Results_File}" ]; then
+        echo "${_result}${_arg}${_reason}" >"${Results_File}" || \
+            _atf_error 128 "Cannot create results file '${Results_File}'"
+    else
+        echo "${_result}${_arg}${_reason}"
+    fi
 }
 
 #
@@ -395,7 +520,7 @@ _atf_error()
 {
     _error_code="${1}"; shift
 
-    _atf_echo -r -t "${Prog_Name}: " "ERROR:" "$@" 1>&2
+    echo "${Prog_Name}: ERROR:" "$@" 1>&2
     exit ${_error_code}
 }
 
@@ -523,6 +648,10 @@ _atf_parse_head()
     Test_Case="${1}"
     Test_Case_Vars=
 
+    if _atf_has_cleanup "${1}"; then
+        atf_set has.cleanup "true"
+    fi
+
     atf_set ident "${1}"
     ${1}_head
     _atf_ensure_not_empty ident
@@ -565,10 +694,13 @@ _atf_run_tc()
         case ${_tcpart} in
         body)
             ${_tcname}_body
-            _create_pass_file
+            _atf_validate_expect
+            _atf_create_resfile passed -1
             ;;
         cleanup)
-            ${_tcname}_cleanup
+            if _atf_has_cleanup "${_tcname}"; then
+                ${_tcname}_cleanup
+            fi
             ;;
         *)
             _atf_error 128 "Unknown test case part"
@@ -620,9 +752,8 @@ _atf_sigterm_handler()
 #
 _atf_syntax_error()
 {
-    _atf_echo -r -t "${Prog_Name}: " "ERROR: ${@}" 1>&2
-    _atf_echo -r -t "${Prog_Name}: " "Type \`${Prog_Name} -h' for more" \
-                                     "details." 1>&2
+    echo "${Prog_Name}: ERROR: ${@}" 1>&2
+    echo "${Prog_Name}: See atf-test-program(1) for usage details." 1>&2
     exit 1
 }
 
@@ -641,28 +772,57 @@ _atf_is_tc_defined()
 }
 
 #
-# _atf_usage
+# _atf_has_cleanup tc-name
 #
-#   Prints usage information and exits the program.
+#   Returns a boolean indicating if the given test case has a cleanup
+#   routine or not.
 #
-_atf_usage()
+_atf_has_cleanup()
 {
-    _atf_echo -t "Usage: " "${Prog_Name} [options] test_case"
-    echo
-    _atf_echo "This is an independent atf test program."
-    echo
-    _atf_echo "Available options:"
-    _atf_echo -t "    -h              " "Shows this help message"
-    _atf_echo -t "    -l              " "List test cases and their purpose"
-    _atf_echo -t "    -r resfile      " "The file to which the test program " \
-                                        "will write the results of the " \
-                                        "executed test case"
-    _atf_echo -t "    -s srcdir       " "Directory where the test's data" \
-                                        "files are located"
-    _atf_echo -t "    -v var=value    " "Sets the configuration variable" \
-                                        "\`var' to \`value'"
-    echo
-    _atf_echo "For more details please see atf-test-program(1) and atf(7)."
+    for _tc in ${Test_Cases_With_Cleanup}; do
+        [ ${_tc} = ${1} ] && return 0
+    done
+    return 1
+}
+
+#
+# _atf_validate_expect
+#
+#   Ensures that the current test case state is correct regarding the expect
+#   status.
+#
+_atf_validate_expect()
+{
+    case "${Expect}" in
+        death)
+            Expect=pass
+            atf_fail "Test case was expected to terminate abruptly but it" \
+                "continued execution"
+            ;;
+        exit)
+            Expect=pass
+            atf_fail "Test case was expected to exit cleanly but it continued" \
+                "execution"
+            ;;
+        fail)
+            Expect=pass
+            atf_fail "Test case was expecting a failure but none were raised"
+            ;;
+        pass)
+            ;;
+        signal)
+            Expect=pass
+            atf_fail "Test case was expected to receive a termination signal" \
+                "but it continued execution"
+            ;;
+        timeout)
+            Expect=pass
+            atf_fail "Test case was expected to hang but it continued execution"
+            ;;
+        *)
+            _atf_error 128 "Unreachable"
+            ;;
+    esac
 }
 
 #
@@ -676,7 +836,7 @@ _atf_usage()
 #
 _atf_warning()
 {
-    _atf_echo -r -t "${Prog_Name}: " "WARNING:" "$@" 1>&2
+    echo "${Prog_Name}: WARNING:" "$@" 1>&2
 }
 
 #
@@ -688,14 +848,9 @@ main()
 {
     # Process command-line options first.
     _numargs=${#}
-    _hflag=false
     _lflag=false
-    while getopts :hlr:s:v: arg; do
+    while getopts :lr:s:v: arg; do
         case ${arg} in
-        h)
-            _hflag=true
-            ;;
-
         l)
             _lflag=true
             ;;
@@ -719,13 +874,6 @@ main()
         esac
     done
     shift `expr ${OPTIND} - 1`
-
-    if [ ${_hflag} = true ]; then
-        [ ${_numargs} -eq 1 ] || _atf_syntax_error "-h must be given alone."
-        _atf_usage
-        true
-        return
-    fi
 
     # First of all, make sure that the source directory is correct.  It
     # doesn't matter if the user did not change it, because the default

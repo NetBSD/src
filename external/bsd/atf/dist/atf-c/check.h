@@ -57,6 +57,8 @@ const atf_fs_path_t *atf_check_result_stdout(const atf_check_result_t *);
 const atf_fs_path_t *atf_check_result_stderr(const atf_check_result_t *);
 bool atf_check_result_exited(const atf_check_result_t *);
 int atf_check_result_exitcode(const atf_check_result_t *);
+bool atf_check_result_signaled(const atf_check_result_t *);
+int atf_check_result_termsig(const atf_check_result_t *);
 
 /* ---------------------------------------------------------------------
  * Free functions.

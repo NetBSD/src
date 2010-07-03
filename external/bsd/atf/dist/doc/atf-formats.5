@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 4, 2010
+.Dd June 7, 2010
 .Dt ATF-FORMATS 5
 .Os
 .Sh NAME
@@ -148,36 +148,6 @@ An example:
 
 var1 = this is a variable value
 var2 = this is another one      # Optional comment at the end.
-.Ed
-.Ss Format: application/X-atf-tcr, version: 1
-The
-.Sq application/X-atf-tcr
-format is used to represent the result of a single test case.
-It is composed of a mandatory result type and an optional reason fields.
-Its grammar is as follows:
-.Bd -literal -offset indent
-DATA ::= RESULT REASON? EOF
-RESULT ::= 'result' COLON ('passed' | 'failed' | 'skipped')
-REASON ::= 'reason' COLON STRING
-.Ed
-.Pp
-The reason string is a free-format string ending at the first encountered
-newline character; it should not be quoted, as otherwise the quotation
-characters will appear as part of the reason message.
-.Pp
-The reason field can only appear when the result is not
-.Sq passed .
-.Pp
-An example:
-An example:
-.Bd -literal -offset indent
-result: passed
-.Ed
-.Pp
-Another example:
-.Bd -literal -offset indent
-result: skipped
-reason: This test requires superuser privileges
 .Ed
 .Ss Format: application/X-atf-tps, version: 2
 The

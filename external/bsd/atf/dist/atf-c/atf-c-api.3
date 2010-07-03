@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 1, 2010
+.Dd June 28, 2010
 .Dt ATF-C-API 3
 .Os
 .Sh NAME
@@ -36,12 +36,14 @@
 .Nm ATF_CHECK_EQ_MSG ,
 .Nm ATF_CHECK_STREQ ,
 .Nm ATF_CHECK_STREQ_MSG ,
+.Nm ATF_CHECK_ERRNO ,
 .Nm ATF_REQUIRE ,
 .Nm ATF_REQUIRE_MSG ,
 .Nm ATF_REQUIRE_EQ ,
 .Nm ATF_REQUIRE_EQ_MSG ,
 .Nm ATF_REQUIRE_STREQ ,
 .Nm ATF_REQUIRE_STREQ_MSG ,
+.Nm ATF_REQUIRE_ERRNO ,
 .Nm ATF_TC ,
 .Nm ATF_TC_BODY ,
 .Nm ATF_TC_BODY_NAME ,
@@ -55,6 +57,12 @@
 .Nm ATF_TP_ADD_TC ,
 .Nm ATF_TP_ADD_TCS ,
 .Nm atf_no_error ,
+.Nm atf_tc_expect_death ,
+.Nm atf_tc_expect_exit ,
+.Nm atf_tc_expect_fail ,
+.Nm atf_tc_expect_pass ,
+.Nm atf_tc_expect_signal ,
+.Nm atf_tc_expect_timeout ,
 .Nm atf_tc_fail ,
 .Nm atf_tc_fail_nonfatal ,
 .Nm atf_tc_pass ,
@@ -68,12 +76,14 @@
 .Fn ATF_CHECK_EQ_MSG "expression_1" "expression_2" "fail_msg_fmt" ...
 .Fn ATF_CHECK_STREQ "string_1" "string_2"
 .Fn ATF_CHECK_STREQ_MSG "string_1" "string_2" "fail_msg_fmt" ...
+.Fn ATF_CHECK_ERRNO "exp_errno" "bool_expression"
 .Fn ATF_REQUIRE "expression"
 .Fn ATF_REQUIRE_MSG "expression" "fail_msg_fmt" ...
 .Fn ATF_REQUIRE_EQ "expression_1" "expression_2"
 .Fn ATF_REQUIRE_EQ_MSG "expression_1" "expression_2" "fail_msg_fmt" ...
 .Fn ATF_REQUIRE_STREQ "string_1" "string_2"
 .Fn ATF_REQUIRE_STREQ_MSG "string_1" "string_2" "fail_msg_fmt" ...
+.Fn ATF_REQUIRE_ERRNO "exp_errno" "bool_expression"
 .Fn ATF_TC "name"
 .Fn ATF_TC_BODY "name" "tc"
 .Fn ATF_TC_BODY_NAME "name"
@@ -84,9 +94,15 @@
 .Fn ATF_TC_NAME "name"
 .Fn ATF_TC_WITH_CLEANUP "name"
 .Fn ATF_TC_WITHOUT_HEAD "name"
-.Fn ATF_TP_ADD_TC "tp_name"
-.Fn ATF_TP_ADD_TCS "tp_name" "tc_name"
+.Fn ATF_TP_ADD_TC "tp_name" "tc_name"
+.Fn ATF_TP_ADD_TCS "tp_name"
 .Fn atf_no_error
+.Fn atf_tc_expect_death "reason" "..."
+.Fn atf_tc_expect_exit "exitcode" "reason" "..."
+.Fn atf_tc_expect_fail "reason" "..."
+.Fn atf_tc_expect_pass
+.Fn atf_tc_expect_signal "signo" "reason" "..."
+.Fn atf_tc_expect_timeout "reason" "..."
 .Fn atf_tc_fail "reason"
 .Fn atf_tc_fail_nonfatal "reason"
 .Fn atf_tc_pass
@@ -132,7 +148,7 @@ ATF_TC_BODY(tc3, tc)
 
 .Ns ... additional test cases ...
 
-ATF_TP_ADD_TCS(tp, tcs)
+ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tcs, tc1);
     ATF_TP_ADD_TC(tcs, tc2);
@@ -146,7 +162,7 @@ ATF_TP_ADD_TCS(tp, tcs)
 Test cases have an identifier and are composed of three different parts:
 the header, the body and an optional cleanup routine, all of which are
 described in
-.Xr atf-test-case 8 .
+.Xr atf-test-case 4 .
 To define test cases, one can use the
 .Fn ATF_TC ,
 .Fn ATF_TC_WITH_CLEANUP
@@ -262,6 +278,65 @@ a user-friendly manner, why the test case failed or was skipped,
 respectively.
 It is very important to provide a clear error message in both cases so that
 the user can quickly know why the test did not pass.
+.Ss Expectations
+Everything explained in the previous section changes when the test case
+expectations are redefined by the programmer.
+.Pp
+Each test case has an internal state called
+.Sq expect
+that describes what the test case expectations are at any point in time.
+The value of this property can change during execution by any of:
+.Bl -tag -width indent
+.It Fn atf_tc_expect_death "reason" "..."
+Expects the test case to exit prematurely regardless of the nature of the
+exit.
+.It Fn atf_tc_expect_exit "exitcode" "reason" "..."
+Expects the test case to exit cleanly.
+If
+.Va exitcode
+is not
+.Sq -1 ,
+.Xr atf-run 1
+will validate that the exit code of the test case matches the one provided
+in this call.
+Otherwise, the exact value will be ignored.
+.It Fn atf_tc_expect_fail "reason" "..."
+Any failure (be it fatal or non-fatal) raised in this mode is recorded.
+However, such failures do not report the test case as failed; instead, the
+test case finalizes cleanly and is reported as
+.Sq expected failure ;
+this report includes the provided
+.Fa reason
+as part of it.
+If no error is raised while running in this mode, then the test case is
+reported as
+.Sq failed .
+.Pp
+This mode is useful to reproduce actual known bugs in tests.
+Whenever the developer fixes the bug later on, the test case will start
+reporting a failure, signaling the developer that the test case must be
+adjusted to the new conditions.
+In this situation, it is useful, for example, to set
+.Fa reason
+as the bug number for tracking purposes.
+.It Fn atf_tc_expect_pass
+This is the normal mode of execution.
+In this mode, any failure is reported as such to the user and the test case
+is marked as
+.Sq failed .
+.It Fn atf_tc_expect_signal "signo" "reason" "..."
+Expects the test case to terminate due to the reception of a signal.
+If
+.Va signo
+is not
+.Sq -1 ,
+.Xr atf-run 1
+will validate that the signal that terminated the test case matches the one
+provided in this call.
+Otherwise, the exact value will be ignored.
+.It Fn atf_tc_expect_timeout "reason" "..."
+Expects the test case to execute for longer than its timeout.
+.El
 .Ss Helper macros for common checks
 The library provides several macros that are very handy in multiple
 situations.
@@ -316,6 +391,16 @@ take two expressions and fail if the two evaluated values are not equal.
 and
 .Fn ATF_REQUIRE_STREQ_MSG
 take two strings and fail if the two are not equal character by character.
+.Pp
+.Fn ATF_CHECK_ERRNO
+and
+.Fn ATF_REQUIRE_ERRNO
+take, first, the error code that the check is expecting to find in the
+.Va errno
+variable and, second, a boolean expression that, if evaluates to true,
+means that a call failed and
+.Va errno
+has to be checked against the first value.
 .Sh EXAMPLES
 The following shows a complete test program with a single test case that
 validates the addition operator:
@@ -352,15 +437,42 @@ ATF_TC_BODY(string_formatting, tc)
     ATF_CHECK_STREQ_MSG("a string", buf, "%s is not working");
 }
 
+ATF_TC(open_failure);
+ATF_TC_HEAD(open_failure, tc)
+{
+    atf_tc_set_md_var(tc, "descr",
+                      "Sample tests for the open function");
+}
+ATF_TC_BODY(open_failure, tc)
+{
+    ATF_CHECK_ERRNO(ENOENT, open("non-existent", O_RDONLY) == -1);
+}
+
+ATF_TC(known_bug);
+ATF_TC_HEAD(known_bug, tc)
+{
+    atf_tc_set_md_var(tc, "descr",
+                      "Reproduces a known bug");
+}
+ATF_TC_BODY(known_bug, tc)
+{
+    atf_tc_expect_fail("See bug number foo/bar");
+    ATF_CHECK_EQ(3, 1 + 1);
+    atf_tc_expect_pass();
+    ATF_CHECK_EQ(3, 1 + 2);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
     ATF_TP_ADD_TC(tp, addition);
     ATF_TP_ADD_TC(tp, string_formatting);
+    ATF_TP_ADD_TC(tp, open_failure);
+    ATF_TP_ADD_TC(tp, known_bug);
 
     return atf_no_error();
 }
 .Ed
 .Sh SEE ALSO
 .Xr atf-test-program 1 ,
-.Xr atf 7 ,
-.Xr atf-test-case 8
+.Xr atf-test-case 4 ,
+.Xr atf 7

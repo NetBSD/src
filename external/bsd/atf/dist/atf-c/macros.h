@@ -135,10 +135,16 @@
     } while(0)
 
 #define ATF_REQUIRE(x) \
-    ATF_REQUIRE_MSG(x, #x " not met")
+    do { \
+        if (!(x)) \
+            atf_tc_fail_requirement(__FILE__, __LINE__, "%s", #x " not met"); \
+    } while(0)
 
 #define ATF_CHECK(x) \
-    ATF_CHECK_MSG(x, #x " not met")
+    do { \
+        if (!(x)) \
+            atf_tc_fail_check(__FILE__, __LINE__, "%s", #x " not met"); \
+    } while(0)
 
 #define ATF_REQUIRE_EQ(x, y) \
     ATF_REQUIRE_MSG((x) == (y), "%s != %s", #x, #y)
@@ -165,5 +171,11 @@
 #define ATF_CHECK_STREQ_MSG(x, y, fmt, ...) \
     ATF_CHECK_MSG(strcmp(x, y) == 0, "%s != %s (%s != %s): " fmt, \
                     #x, #y, x, y, ##__VA_ARGS__)
+
+#define ATF_CHECK_ERRNO(exp_errno, bool_expr) \
+    atf_tc_check_errno(__FILE__, __LINE__, exp_errno, #bool_expr, bool_expr)
+
+#define ATF_REQUIRE_ERRNO(exp_errno, bool_expr) \
+    atf_tc_require_errno(__FILE__, __LINE__, exp_errno, #bool_expr, bool_expr)
 
 #endif /* !defined(ATF_C_MACROS_H) */

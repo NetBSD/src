@@ -40,7 +40,7 @@
     class atfu_tc_ ## name : public atf::tests::tc { \
         void body(void) const; \
     public: \
-        atfu_tc_ ## name(void) : atf::tests::tc(#name) {} \
+        atfu_tc_ ## name(void) : atf::tests::tc(#name, false) {} \
     };
 
 #define ATF_TEST_CASE(name) \
@@ -48,7 +48,7 @@
         void head(void); \
         void body(void) const; \
     public: \
-        atfu_tc_ ## name(void) : atf::tests::tc(#name) {} \
+        atfu_tc_ ## name(void) : atf::tests::tc(#name, false) {} \
     };
 
 #define ATF_TEST_CASE_WITH_CLEANUP(name) \
@@ -57,7 +57,7 @@
         void body(void) const; \
         void cleanup(void) const; \
     public: \
-        atfu_tc_ ## name(void) : atf::tests::tc(#name) {} \
+        atfu_tc_ ## name(void) : atf::tests::tc(#name, true) {} \
     };
 
 #define ATF_TEST_CASE_NAME(name) atfu_tc_ ## name
@@ -101,7 +101,7 @@
         } \
     } while (false)
 
-#define ATF_CHECK_THROW(x, e) \
+#define ATF_CHECK_THROW(e, x) \
     do { \
         try { \
             x; \
@@ -122,6 +122,14 @@
             atf::tests::tc::fail(atfu_ss.str()); \
         } \
     } while (false)
+
+#define ATF_CHECK_ERRNO(exp_errno, bool_expr) \
+    atf::tests::tc::check_errno(__FILE__, __LINE__, exp_errno, #bool_expr, \
+                                bool_expr)
+
+#define ATF_REQUIRE_ERRNO(exp_errno, bool_expr) \
+    atf::tests::tc::require_errno(__FILE__, __LINE__, exp_errno, #bool_expr, \
+                                  bool_expr)
 
 #define ATF_INIT_TEST_CASES(tcs) \
     namespace atf { \

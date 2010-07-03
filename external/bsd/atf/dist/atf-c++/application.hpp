@@ -91,6 +91,7 @@ protected:
     const char* m_prog_name;
     std::string m_description;
     std::string m_manpage, m_global_manpage;
+    const bool m_use_ui;
 
     options_set options(void);
 
@@ -101,7 +102,8 @@ protected:
     virtual int main(void) = 0;
 
 public:
-    app(const std::string&, const std::string&, const std::string&);
+    app(const std::string&, const std::string&, const std::string&,
+        bool = true);
     virtual ~app(void);
 
     int run(int, char* const*);

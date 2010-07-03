@@ -82,6 +82,21 @@ impl::check_result::exitcode(void)
     return atf_check_result_exitcode(&m_result);
 }
 
+bool
+impl::check_result::signaled(void)
+    const
+{
+    return atf_check_result_signaled(&m_result);
+}
+
+int
+impl::check_result::termsig(void)
+    const
+{
+    PRE(signaled());
+    return atf_check_result_termsig(&m_result);
+}
+
 const atf::fs::path
 impl::check_result::stdout_path(void)
     const

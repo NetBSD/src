@@ -32,16 +32,41 @@
 
 #include "atf-c++/config.hpp"
 #include "atf-c++/env.hpp"
-#include "atf-c++/formats.hpp"
 #include "atf-c++/fs.hpp"
+#include "atf-c++/sanity.hpp"
+#include "atf-c++/parser.hpp"
 
 #include "config.hpp"
 
 namespace impl = atf::atf_run;
+namespace detail = atf::atf_run::detail;
 
 namespace {
 
-class config_reader : public atf::formats::atf_config_reader {
+namespace atf_config {
+
+static const atf::parser::token_type& eof_type = 0;
+static const atf::parser::token_type& nl_type = 1;
+static const atf::parser::token_type& text_type = 2;
+static const atf::parser::token_type& dblquote_type = 3;
+static const atf::parser::token_type& equal_type = 4;
+static const atf::parser::token_type& hash_type = 5;
+
+class tokenizer : public atf::parser::tokenizer< std::istream > {
+public:
+    tokenizer(std::istream& is, size_t curline) :
+        atf::parser::tokenizer< std::istream >
+            (is, true, eof_type, nl_type, text_type, curline)
+    {
+        add_delim('=', equal_type);
+        add_delim('#', hash_type);
+        add_quote('"', dblquote_type);
+    }
+};
+
+} // namespace atf_config
+
+class config_reader : public detail::atf_config_reader {
     atf::tests::vars_map m_vars;
 
     void
@@ -52,7 +77,7 @@ class config_reader : public atf::formats::atf_config_reader {
 
 public:
     config_reader(std::istream& is) :
-        atf::formats::atf_config_reader(is)
+        atf_config_reader(is)
     {
     }
 
@@ -99,6 +124,76 @@ get_config_dirs(void)
 }
 
 } // anonymous namespace
+
+detail::atf_config_reader::atf_config_reader(std::istream& is) :
+    m_is(is)
+{
+}
+
+detail::atf_config_reader::~atf_config_reader(void)
+{
+}
+
+void
+detail::atf_config_reader::got_var(const std::string& var,
+                                   const std::string& val)
+{
+}
+
+void
+detail::atf_config_reader::got_eof(void)
+{
+}
+
+void
+detail::atf_config_reader::read(void)
+{
+    using atf::parser::parse_error;
+    using namespace atf_config;
+
+    std::pair< size_t, atf::parser::headers_map > hml =
+        atf::parser::read_headers(m_is, 1);
+    atf::parser::validate_content_type(hml.second,
+        "application/X-atf-config", 1);
+
+    tokenizer tkz(m_is, hml.first);
+    atf::parser::parser< tokenizer > p(tkz);
+
+    for (;;) {
+        try {
+            atf::parser::token t = p.expect(eof_type, hash_type, text_type,
+                                            nl_type,
+                                            "eof, #, new line or text");
+            if (t.type() == eof_type)
+                break;
+
+            if (t.type() == hash_type) {
+                (void)p.rest_of_line();
+                t = p.expect(nl_type, "new line");
+            } else if (t.type() == text_type) {
+                std::string name = t.text();
+
+                t = p.expect(equal_type, "equal sign");
+
+                t = p.expect(text_type, "word or quoted string");
+                ATF_PARSER_CALLBACK(p, got_var(name, t.text()));
+
+                t = p.expect(nl_type, hash_type, "new line or comment");
+                if (t.type() == hash_type) {
+                    (void)p.rest_of_line();
+                    t = p.expect(nl_type, "new line");
+                }
+            } else if (t.type() == nl_type) {
+            } else
+                UNREACHABLE;
+        } catch (const parse_error& pe) {
+            p.add_error(pe);
+            p.reset(nl_type);
+        }
+    }
+
+    ATF_PARSER_CALLBACK(p, got_eof());
+}
 
 atf::tests::vars_map
 impl::merge_configs(const atf::tests::vars_map& lower,

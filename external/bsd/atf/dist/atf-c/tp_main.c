@@ -45,7 +45,6 @@
 #include "atf-c/sanity.h"
 #include "atf-c/tc.h"
 #include "atf-c/tp.h"
-#include "atf-c/ui.h"
 
 #if defined(HAVE_GNU_GETOPT)
 #   define GETOPT_POSIX "+"
@@ -110,66 +109,20 @@ FREE_FORM_ERROR(user);
  * Printing functions.
  * --------------------------------------------------------------------- */
 
-/* XXX: Why are these functions here?  We have got a ui module, and it
- * seems the correct place to put these.  Otherwise, the functions that
- * currently live there only format text, so they'd be moved to the text
- * module instead and kill ui completely. */
-
-static
-atf_error_t
-print_tag(FILE *f, const char *tag, bool repeat, size_t col,
-          const char *fmt, ...)
-{
-    atf_error_t err;
-    va_list ap;
-    atf_dynstr_t dest;
-
-    err = atf_dynstr_init(&dest);
-    if (atf_is_error(err))
-        goto out;
-
-    va_start(ap, fmt);
-    err = atf_ui_format_ap(&dest, tag, repeat, col, fmt, ap);
-    va_end(ap);
-    if (atf_is_error(err))
-        goto out_dest;
-
-    fprintf(f, "%s\n", atf_dynstr_cstring(&dest));
-
-out_dest:
-    atf_dynstr_fini(&dest);
-out:
-    return err;
-}
-
 static
 void
 print_error(const atf_error_t err)
 {
+    char buf[4096];
+
     PRE(atf_is_error(err));
 
-    if (atf_error_is(err, "no_memory")) {
-        char buf[1024];
+    atf_error_format(err, buf, sizeof(buf));
+    fprintf(stderr, "%s: ERROR: %s\n", progname, buf);
 
-        atf_error_format(err, buf, sizeof(buf));
-
-        fprintf(stderr, "%s: %s\n", progname, buf);
-    } else {
-        atf_dynstr_t tag;
-        char buf[4096];
-
-        atf_error_format(err, buf, sizeof(buf));
-
-        atf_dynstr_init_fmt(&tag, "%s: ", progname);
-        print_tag(stderr, atf_dynstr_cstring(&tag), true, 0,
-                  "ERROR: %s", buf);
-
-        if (atf_error_is(err, "usage"))
-            print_tag(stderr, atf_dynstr_cstring(&tag), true, 0,
-                      "Type `%s -h' for more details.", progname);
-
-        atf_dynstr_fini(&tag);
-    }
+    if (atf_error_is(err, "usage"))
+        fprintf(stderr, "%s: See atf-test-program(1) for usage details.\n",
+                progname);
 }
 
 /* ---------------------------------------------------------------------
@@ -178,7 +131,6 @@ print_error(const atf_error_t err)
 
 struct params {
     bool m_do_list;
-    bool m_do_usage;
     atf_fs_path_t m_srcdir;
     char *m_tcname;
     enum tc_part m_tcpart;
@@ -211,7 +163,6 @@ params_init(struct params *p, const char *argv0)
     atf_error_t err;
 
     p->m_do_list = false;
-    p->m_do_usage = false;
     p->m_tcname = NULL;
     p->m_tcpart = BODY;
 
@@ -219,7 +170,7 @@ params_init(struct params *p, const char *argv0)
     if (atf_is_error(err))
         return err;
 
-    err = atf_fs_path_init_fmt(&p->m_resfile, "resfile"); /* XXX Bad default */
+    err = atf_fs_path_init_fmt(&p->m_resfile, "/dev/stdout");
     if (atf_is_error(err)) {
         atf_fs_path_fini(&p->m_srcdir);
         return err;
@@ -326,33 +277,6 @@ list_tcs(const atf_tp_t *tp)
  * --------------------------------------------------------------------- */
 
 static
-void
-usage(void)
-{
-    print_tag(stdout, "Usage: ", false, 0, "%s [options] test_case", progname);
-    printf("\n");
-    print_tag(stdout, "", false, 0, "This is an independent atf test "
-              "program.");
-    printf("\n");
-    print_tag(stdout, "", false, 0, "Available options:");
-    print_tag(stdout, "    -h              ", false, 0,
-              "Shows this help message");
-    print_tag(stdout, "    -l              ", false, 0,
-              "List test cases and their purpose");
-    print_tag(stdout, "    -r resfile      ", false, 0,
-              "The file to which the test program will write the results "
-              "of the executed test case");
-    print_tag(stdout, "    -s srcdir       ", false, 0,
-              "Directory where the test's data files are "
-              "located");
-    print_tag(stdout, "    -v var=value    ", false, 0,
-              "Sets the configuration variable `var' to `value'");
-    printf("\n");
-    print_tag(stdout, "", false, 0, "For more details please see "
-              "atf-test-program(1) and atf(7).");
-}
-
-static
 atf_error_t
 handle_tcarg(const char *tcarg, char **tcname, enum tc_part *tcpart)
 {
@@ -389,7 +313,6 @@ static
 atf_error_t
 process_params(int argc, char **argv, struct params *p)
 {
-    const int original_argc = argc;
     atf_error_t err;
     int ch;
 
@@ -399,12 +322,8 @@ process_params(int argc, char **argv, struct params *p)
 
     opterr = 0;
     while (!atf_is_error(err) &&
-           (ch = getopt(argc, argv, GETOPT_POSIX ":hlr:s:v:")) != -1) {
+           (ch = getopt(argc, argv, GETOPT_POSIX ":lr:s:v:")) != -1) {
         switch (ch) {
-        case 'h':
-            p->m_do_usage = true;
-            break;
-
         case 'l':
             p->m_do_list = true;
             break;
@@ -434,10 +353,7 @@ process_params(int argc, char **argv, struct params *p)
     argv += optind;
 
     if (!atf_is_error(err)) {
-        if (p->m_do_usage) {
-            if (original_argc != 2)
-                err = usage_error("-h must be given alone.");
-        } else if (p->m_do_list) {
+        if (p->m_do_list) {
             if (argc > 0)
                 err = usage_error("Cannot provide test case names with -l");
         } else {
@@ -603,12 +519,6 @@ controlled_main(int argc, char **argv,
     err = process_params(argc, argv, &p);
     if (atf_is_error(err))
         goto out;
-
-    if (p.m_do_usage) {
-        usage();
-        *exitcode = EXIT_SUCCESS;
-        goto out_p;
-    }
 
     err = handle_srcdir(&p);
     if (atf_is_error(err))
