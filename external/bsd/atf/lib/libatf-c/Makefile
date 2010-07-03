@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2010/06/04 08:33:41 jmmv Exp $
+# $NetBSD: Makefile,v 1.6 2010/07/03 08:14:11 jmmv Exp $
 
 NOLINT=		# defined
 
@@ -41,16 +41,13 @@ SRCS=		build.c \
 		env.c \
 		error.c \
 		fs.c \
-		io.c \
 		list.c \
 		map.c \
 		process.c \
 		sanity.c \
 		text.c \
-		ui.c \
 		user.c \
 		tc.c \
-		tcr.c \
 		tp.c \
 		tp_main.c
 
@@ -63,17 +60,14 @@ INCS=		build.h \
 		error.h \
 		error_fwd.h \
 		fs.h \
-		io.h \
 		list.h \
 		macros.h \
 		map.h \
 		process.h \
 		sanity.h \
 		tc.h \
-		tcr.h \
 		text.h \
 		tp.h \
-		ui.h \
 		user.h
 INCSDIR=	/usr/include/atf-c
 
@@ -96,7 +90,7 @@ FILESDIR=	/usr/lib/pkgconfig
 
 realall: atf-c.pc
 atf-c.pc: Makefile atf-c.pc.in
-	${TOOL_SED} -e 's,__ATF_VERSION__,0.9,g' \
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.10,g' \
 	    -e 's,__CC__,gcc,g' \
 	    -e 's,__INCLUDEDIR__,/usr/include,g' \
 	    -e 's,__LIBDIR__,/usr/lib,g' \
