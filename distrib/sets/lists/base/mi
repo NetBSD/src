@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.872 2010/07/01 17:35:14 christos Exp $
+# $NetBSD: mi,v 1.873 2010/07/03 08:16:50 jmmv Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -884,9 +884,9 @@
 ./usr/libdata/ldscripts				base-c-usr
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
-./usr/libexec/atf-cleanup			base-atf-bin		atf
+./usr/libexec/atf-cleanup			base-obsolete		obsolete
 ./usr/libexec/atf-exec				base-atf-bin		obsolete
-./usr/libexec/atf-format			base-atf-bin		atf
+./usr/libexec/atf-format			base-obsolete		obsolete
 ./usr/libexec/atf-killpg			base-obsolete		obsolete
 ./usr/libexec/atrun				base-cron-bin
 ./usr/libexec/ching				base-games-usr
