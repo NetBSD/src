@@ -1,5 +1,0 @@
-got_prop(foo, bar)
-got_conf(foo, bar)
-got_tp(foo, false)
-got_tp(foo, true)
-got_eof()

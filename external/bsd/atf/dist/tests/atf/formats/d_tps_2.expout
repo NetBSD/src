@@ -1,6 +1,0 @@
-got_ntps(2)
-got_tp_start(first-prog, 0)
-got_tp_end()
-got_tp_start(second-prog, 0)
-got_tp_end(This program failed)
-got_eof()

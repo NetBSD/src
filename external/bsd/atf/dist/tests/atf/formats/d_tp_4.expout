@@ -1,2 +1,0 @@
-got_tc(single_test, {descr=Some description, ident=single_test})
-got_eof()

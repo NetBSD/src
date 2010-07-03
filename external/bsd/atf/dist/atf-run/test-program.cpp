@@ -41,21 +41,44 @@ extern "C" {
 #include <fstream>
 
 #include "atf-c++/env.hpp"
-#include "atf-c++/formats.hpp"
+#include "atf-c++/parser.hpp"
 #include "atf-c++/process.hpp"
 #include "atf-c++/sanity.hpp"
 #include "atf-c++/signals.hpp"
 #include "atf-c++/text.hpp"
 
 #include "config.hpp"
+#include "fs.hpp"
 #include "test-program.hpp"
 #include "timer.hpp"
 
 namespace impl = atf::atf_run;
+namespace detail = atf::atf_run::detail;
 
 namespace {
 
-class metadata_reader : public atf::formats::atf_tp_reader {
+namespace atf_tp {
+
+static const atf::parser::token_type eof_type = 0;
+static const atf::parser::token_type nl_type = 1;
+static const atf::parser::token_type text_type = 2;
+static const atf::parser::token_type colon_type = 3;
+static const atf::parser::token_type dblquote_type = 4;
+
+class tokenizer : public atf::parser::tokenizer< std::istream > {
+public:
+    tokenizer(std::istream& is, size_t curline) :
+        atf::parser::tokenizer< std::istream >
+            (is, true, eof_type, nl_type, text_type, curline)
+    {
+        add_delim(':', colon_type);
+        add_quote('"', dblquote_type);
+    }
+};
+
+} // namespace atf_tp
+
+class metadata_reader : public detail::atf_tp_reader {
     impl::test_cases_map m_tcs;
 
     void got_tc(const std::string& ident, const atf::tests::vars_map& props)
@@ -64,6 +87,9 @@ class metadata_reader : public atf::formats::atf_tp_reader {
             throw(std::runtime_error("Duplicate test case " + ident +
                                      " in test program"));
         m_tcs[ident] = props;
+
+        if (m_tcs[ident].find("has.cleanup") == m_tcs[ident].end())
+            m_tcs[ident].insert(std::make_pair("has.cleanup", "false"));
 
         if (m_tcs[ident].find("timeout") == m_tcs[ident].end())
             m_tcs[ident].insert(std::make_pair("timeout", "300"));
@@ -74,7 +100,7 @@ class metadata_reader : public atf::formats::atf_tp_reader {
 
 public:
     metadata_reader(std::istream& is) :
-        atf::formats::atf_tp_reader(is)
+        detail::atf_tp_reader(is)
     {
     }
 
@@ -87,7 +113,7 @@ public:
 };
 
 class output_muxer : public atf::io::std_muxer {
-    atf::formats::atf_tps_writer& m_writer;
+    impl::atf_tps_writer& m_writer;
 
     void
     got_stdout_line(const std::string& line)
@@ -102,7 +128,7 @@ class output_muxer : public atf::io::std_muxer {
     }
 
 public:
-    output_muxer(atf::formats::atf_tps_writer& writer) :
+    output_muxer(impl::atf_tps_writer& writer) :
         m_writer(writer)
     {
     }
@@ -222,7 +248,7 @@ prepare_child(const atf::fs::path& workdir)
     atf::env::unset("LC_TIME");
     atf::env::unset("TZ");
 
-    atf::fs::change_directory(workdir);
+    impl::change_directory(workdir);
 }
 
 static
@@ -265,7 +291,315 @@ run_test_case_child(void* raw_params)
     exec_or_exit(absolute_executable, argv);
 }
 
+static void
+tokenize_result(const std::string& line, std::string& out_state,
+                std::string& out_arg, std::string& out_reason)
+{
+    const std::string::size_type pos = line.find_first_of(":(");
+    if (pos == std::string::npos) {
+        out_state = line;
+        out_arg = "";
+        out_reason = "";
+    } else if (line[pos] == ':') {
+        out_state = line.substr(0, pos);
+        out_arg = "";
+        out_reason = atf::text::trim(line.substr(pos + 1));
+    } else if (line[pos] == '(') {
+        const std::string::size_type pos2 = line.find("):", pos);
+        if (pos2 == std::string::npos)
+            throw std::runtime_error("Invalid test case result '" + line +
+                "': unclosed optional argument");
+        out_state = line.substr(0, pos);
+        out_arg = line.substr(pos + 1, pos2 - pos - 1);
+        out_reason = atf::text::trim(line.substr(pos2 + 2));
+    } else
+        UNREACHABLE;
+}
+
+static impl::test_case_result
+handle_result(const std::string& state, const std::string& arg,
+              const std::string& reason)
+{
+    PRE(state == "passed");
+
+    if (!arg.empty() || !reason.empty())
+        throw std::runtime_error("The test case result '" + state + "' cannot "
+            "be accompanied by a reason nor an expected value");
+
+    return impl::test_case_result(state, -1, reason);
+}
+
+static impl::test_case_result
+handle_result_with_reason(const std::string& state, const std::string& arg,
+                          const std::string& reason)
+{
+    PRE(state == "expected_death" || state == "expected_failure" ||
+        state == "expected_timeout" || state == "failed" || state == "skipped");
+
+    if (!arg.empty() || reason.empty())
+        throw std::runtime_error("The test case result '" + state + "' must "
+            "be accompanied by a reason but not by an expected value");
+
+    return impl::test_case_result(state, -1, reason);
+}
+
+static impl::test_case_result
+handle_result_with_reason_and_arg(const std::string& state,
+                                  const std::string& arg,
+                                  const std::string& reason)
+{
+    PRE(state == "expected_exit" || state == "expected_signal");
+
+    if (reason.empty())
+        throw std::runtime_error("The test case result '" + state + "' must "
+            "be accompanied by a reason");
+
+    int value;
+    if (arg.empty()) {
+        value = -1;
+    } else {
+        try {
+            value = atf::text::to_type< int >(arg);
+        } catch (const std::runtime_error& e) {
+            throw std::runtime_error("The value '" + arg + "' passed to the '" +
+                state + "' state must be an integer");
+        }
+    }
+
+    return impl::test_case_result(state, value, reason);
+}
+
 } // anonymous namespace
+
+detail::atf_tp_reader::atf_tp_reader(std::istream& is) :
+    m_is(is)
+{
+}
+
+detail::atf_tp_reader::~atf_tp_reader(void)
+{
+}
+
+void
+detail::atf_tp_reader::got_tc(const std::string& ident,
+                              const std::map< std::string, std::string >& md)
+{
+}
+
+void
+detail::atf_tp_reader::got_eof(void)
+{
+}
+
+void
+detail::atf_tp_reader::validate_and_insert(const std::string& name,
+    const std::string& value, const size_t lineno,
+    std::map< std::string, std::string >& md)
+{
+    using atf::parser::parse_error;
+
+    if (value.empty())
+        throw parse_error(lineno, "The value for '" + name +"' cannot be "
+                          "empty");
+
+    const std::string ident_regex = "^[_A-Za-z0-9]+$";
+    const std::string integer_regex = "^[0-9]+$";
+
+    if (name == "descr") {
+        // Any non-empty value is valid.
+    } else if (name == "has.cleanup") {
+        try {
+            (void)atf::text::to_bool(value);
+        } catch (const std::runtime_error& e) {
+            throw parse_error(lineno, "The has.cleanup property requires a"
+                              " boolean value");
+        }
+    } else if (name == "ident") {
+        if (!atf::text::match(value, ident_regex))
+            throw parse_error(lineno, "The identifier must match " +
+                              ident_regex + "; was '" + value + "'");
+    } else if (name == "require.arch") {
+    } else if (name == "require.config") {
+    } else if (name == "require.machine") {
+    } else if (name == "require.progs") {
+    } else if (name == "require.user") {
+    } else if (name == "timeout") {
+        if (!atf::text::match(value, integer_regex))
+            throw parse_error(lineno, "The timeout property requires an integer"
+                              " value");
+    } else if (name == "use.fs") {
+        try {
+            (void)atf::text::to_bool(value);
+        } catch (const std::runtime_error& e) {
+            throw parse_error(lineno, "The use.fs property requires a boolean"
+                              " value");
+        }
+    } else if (name.size() > 2 && name[0] == 'X' && name[1] == '-') {
+        // Any non-empty value is valid.
+    } else {
+        throw parse_error(lineno, "Unknown property '" + name + "'");
+    }
+
+    md.insert(std::make_pair(name, value));
+}
+
+void
+detail::atf_tp_reader::read(void)
+{
+    using atf::parser::parse_error;
+    using namespace atf_tp;
+
+    std::pair< size_t, atf::parser::headers_map > hml =
+        atf::parser::read_headers(m_is, 1);
+    atf::parser::validate_content_type(hml.second,
+        "application/X-atf-tp", 1);
+
+    tokenizer tkz(m_is, hml.first);
+    atf::parser::parser< tokenizer > p(tkz);
+
+    try {
+        atf::parser::token t = p.expect(text_type, "property name");
+        if (t.text() != "ident")
+            throw parse_error(t.lineno(), "First property of a test case "
+                              "must be 'ident'");
+
+        std::map< std::string, std::string > props;
+        do {
+            const std::string name = t.text();
+            t = p.expect(colon_type, "`:'");
+            const std::string value = atf::text::trim(p.rest_of_line());
+            t = p.expect(nl_type, "new line");
+            validate_and_insert(name, value, t.lineno(), props);
+
+            t = p.expect(eof_type, nl_type, text_type, "property name, new "
+                         "line or eof");
+            if (t.type() == nl_type || t.type() == eof_type) {
+                const std::map< std::string, std::string >::const_iterator
+                    iter = props.find("ident");
+                if (iter == props.end())
+                    throw parse_error(t.lineno(), "Test case definition did "
+                                      "not define an 'ident' property");
+                ATF_PARSER_CALLBACK(p, got_tc((*iter).second, props));
+                props.clear();
+
+                if (t.type() == nl_type) {
+                    t = p.expect(text_type, "property name");
+                    if (t.text() != "ident")
+                        throw parse_error(t.lineno(), "First property of a "
+                                          "test case must be 'ident'");
+                }
+            }
+        } while (t.type() != eof_type);
+        ATF_PARSER_CALLBACK(p, got_eof());
+    } catch (const parse_error& pe) {
+        p.add_error(pe);
+        p.reset(nl_type);
+    }
+}
+
+impl::test_case_result
+detail::parse_test_case_result(const std::string& line)
+{
+    std::string state, arg, reason;
+    tokenize_result(line, state, arg, reason);
+
+    if (state == "expected_death")
+        return handle_result_with_reason(state, arg, reason);
+    else if (state.compare(0, 13, "expected_exit") == 0)
+        return handle_result_with_reason_and_arg(state, arg, reason);
+    else if (state.compare(0, 16, "expected_failure") == 0)
+        return handle_result_with_reason(state, arg, reason);
+    else if (state.compare(0, 15, "expected_signal") == 0)
+        return handle_result_with_reason_and_arg(state, arg, reason);
+    else if (state.compare(0, 16, "expected_timeout") == 0)
+        return handle_result_with_reason(state, arg, reason);
+    else if (state == "failed")
+        return handle_result_with_reason(state, arg, reason);
+    else if (state == "passed")
+        return handle_result(state, arg, reason);
+    else if (state == "skipped")
+        return handle_result_with_reason(state, arg, reason);
+    else
+        throw std::runtime_error("Unknown test case result type in: " + line);
+}
+
+impl::atf_tps_writer::atf_tps_writer(std::ostream& os) :
+    m_os(os)
+{
+    atf::parser::headers_map hm;
+    atf::parser::attrs_map ct_attrs;
+    ct_attrs["version"] = "2";
+    hm["Content-Type"] =
+        atf::parser::header_entry("Content-Type", "application/X-atf-tps",
+                                  ct_attrs);
+    atf::parser::write_headers(hm, m_os);
+}
+
+void
+impl::atf_tps_writer::info(const std::string& what, const std::string& val)
+{
+    m_os << "info: " << what << ", " << val << std::endl;
+    m_os.flush();
+}
+
+void
+impl::atf_tps_writer::ntps(size_t p_ntps)
+{
+    m_os << "tps-count: " << p_ntps << std::endl;
+    m_os.flush();
+}
+
+void
+impl::atf_tps_writer::start_tp(const std::string& tp, size_t ntcs)
+{
+    m_tpname = tp;
+    m_os << "tp-start: " << tp << ", " << ntcs << std::endl;
+    m_os.flush();
+}
+
+void
+impl::atf_tps_writer::end_tp(const std::string& reason)
+{
+    PRE(reason.find('\n') == std::string::npos);
+    if (reason.empty())
+        m_os << "tp-end: " << m_tpname << std::endl;
+    else
+        m_os << "tp-end: " << m_tpname << ", " << reason << std::endl;
+    m_os.flush();
+}
+
+void
+impl::atf_tps_writer::start_tc(const std::string& tcname)
+{
+    m_tcname = tcname;
+    m_os << "tc-start: " << tcname << std::endl;
+    m_os.flush();
+}
+
+void
+impl::atf_tps_writer::stdout_tc(const std::string& line)
+{
+    m_os << "tc-so:" << line << std::endl;
+    m_os.flush();
+}
+
+void
+impl::atf_tps_writer::stderr_tc(const std::string& line)
+{
+    m_os << "tc-se:" << line << std::endl;
+    m_os.flush();
+}
+
+void
+impl::atf_tps_writer::end_tc(const std::string& state,
+                             const std::string& reason)
+{
+    std::string str = "tc-end: " + m_tcname + ", " + state;
+    if (!reason.empty())
+        str += ", " + reason;
+    m_os << str << std::endl;
+    m_os.flush();
+}
 
 impl::metadata
 impl::get_metadata(const atf::fs::path& executable,
@@ -286,10 +620,30 @@ impl::get_metadata(const atf::fs::path& executable,
 
     const atf::process::status status = child.wait();
     if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
-        throw atf::formats::format_error("Test program returned failure "
-                                         "exit status for test case list");
+        throw atf::parser::format_error("Test program returned failure "
+                                        "exit status for test case list");
 
     return metadata(parser.get_tcs());
+}
+
+impl::test_case_result
+impl::read_test_case_result(const atf::fs::path& results_path)
+{
+    std::ifstream results_file(results_path.c_str());
+    if (!results_file)
+        throw std::runtime_error("Failed to open " + results_path.str());
+
+    std::string line, extra_line;
+    std::getline(results_file, line);
+    if (!results_file.good())
+        throw std::runtime_error("Results file is empty");
+
+    while (std::getline(results_file, extra_line).good())
+        line += "<<NEWLINE UNEXPECTED>>" + extra_line;
+
+    results_file.close();
+
+    return detail::parse_test_case_result(line);
 }
 
 std::pair< std::string, atf::process::status >
@@ -300,7 +654,7 @@ impl::run_test_case(const atf::fs::path& executable,
                     const atf::tests::vars_map& config,
                     const atf::fs::path& resfile,
                     const atf::fs::path& workdir,
-                    atf::formats::atf_tps_writer& writer)
+                    atf_tps_writer& writer)
 {
     // TODO: Capture termination signals and deliver them to the subprocess
     // instead.  Or maybe do something else; think about it.
