@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/06/04 08:33:42 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/03 08:14:13 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,8 @@ SRCS=		atf-sh.cpp
 MAN=		atf-sh.1 atf-sh-api.3
 
 LDADD+=		-latf-c++ -latf-c
+
+CPPFLAGS+=	-DHAVE_CONFIG_H
 
 WARNS?=		2
 
