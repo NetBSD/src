@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.2 2010/06/30 14:10:14 hannken Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.3 2010/07/03 08:18:30 jmmv Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -25,7 +25,6 @@ ATF_TC_HEAD(multilayer, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "mount_union -b twice");
 	atf_tc_set_md_var(tc, "use.fs", "true");
-	/* atf_tc_set_md_var(tc, "xfail", "PR kern/23986"); */
 }
 
 #define IMG1 "atf1.img"
@@ -68,6 +67,7 @@ ATF_TC_BODY(multilayer, tc)
 	unionargs.mntflags = UNMNT_BELOW;
 
 	/* BADABOOM */
+	/* atf_tc_expect_signal(-1, "PR kern/23986"); */
 	rump_sys_mount(MOUNT_UNION, "/Tunion", 0,&unionargs,sizeof(unionargs));
 }
 
