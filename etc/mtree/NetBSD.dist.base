@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.27 2010/07/03 08:14:47 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.28 2010/07/03 15:29:22 njoly Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -196,7 +196,7 @@
 ./usr/libdata/debug/usr/tests/atf/atf-report
 ./usr/libdata/debug/usr/tests/atf/atf-run
 ./usr/libdata/debug/usr/tests/atf/formats
-./usr/libdata/debug/usr/tests/atf/test_programs
+./usr/libdata/debug/usr/tests/atf/test-programs
 ./usr/libdata/debug/usr/tests/crypto
 ./usr/libdata/debug/usr/tests/crypto/libcrypto
 ./usr/libdata/debug/usr/tests/fs
