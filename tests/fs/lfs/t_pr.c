@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.2 2010/07/03 08:18:30 jmmv Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.3 2010/07/03 08:31:37 jmmv Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -48,6 +48,7 @@ ATF_TC_BODY(mknod, tc)
 	if (rump_sys_mount(MOUNT_LFS, "/mp", 0, &args, sizeof(args)) == -1)
 		atf_tc_fail_errno("rump_sys_mount failed");
 
+	//atf_tc_expect_timeout("PR kern/43503");
 	if (rump_sys_mknod("/mp/node", S_IFCHR | 0777, 0) == -1)
 		atf_tc_fail_errno("mknod failed");
 }
