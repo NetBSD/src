@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2010/06/04 08:33:42 jmmv Exp $
+# $NetBSD: Makefile,v 1.5 2010/07/03 08:14:13 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -12,14 +12,9 @@ MAN=		atf-version.1
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libatf-c
-CPPFLAGS+=	-I.
+CPPFLAGS+=	-I${.CURDIR}
 LDADD+=		-latf-c++ -latf-c
 
 WARNS?=		2
-
-CLEANFILES=	revision.h
-atf-version.cpp: revision.h
-revision.h: revision-dist.h
-	cp -f ${SRCDIR}/admin/revision-dist.h revision.h
 
 .include <bsd.prog.mk>

@@ -1,68 +1,44 @@
-# $NetBSD: Makefile,v 1.3 2010/06/04 08:33:41 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/07/03 08:14:12 jmmv Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/atf-c++
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
-.PATH:		${SRCDIR}/tests/atf/atf-c++
+.PATH:		${SRCDIR}/atf-c++
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libatf-c
 
 FILESDIR=	${TESTSDIR}
-FILES=		d_include_application_hpp.cpp \
-		d_include_atf_c++_hpp.cpp \
-		d_include_atffile_hpp.cpp \
-		d_include_build_hpp.cpp \
-		d_include_check_hpp.cpp \
-		d_include_config_hpp.cpp \
-		d_include_env_hpp.cpp \
-		d_include_exceptions_hpp.cpp \
-		d_include_expand_hpp.cpp \
-		d_include_formats_hpp.cpp \
-		d_include_fs_hpp.cpp \
-		d_include_io_hpp.cpp \
-		d_include_macros_hpp.cpp \
-		d_include_parser_hpp.cpp \
-		d_include_process_hpp.cpp \
-		d_include_sanity_hpp.cpp \
-		d_include_signals_hpp.cpp \
-		d_include_tests_hpp.cpp \
-		d_include_text_hpp.cpp \
-		d_include_ui_hpp.cpp \
-		d_include_user_hpp.cpp \
-		d_include_utils_hpp.cpp \
-		d_use_macros_hpp.cpp
+FILES=		macros_hpp_test.cpp
 
 TESTS_CXX=
-.for test in	t_application \
-		t_atf_c++ \
-		t_atffile \
-		t_build \
-		t_check \
-		t_config \
-		t_env \
-		t_exceptions \
-		t_expand \
-		t_formats \
-		t_fs \
-		t_io \
-		t_macros \
-		t_parser \
-		t_process \
-		t_sanity \
-		t_signals \
-		t_tests \
-		t_text \
-		t_ui \
-		t_user \
-		t_utils
+.for test in	application_test \
+		atf_c++_test \
+		build_test \
+		check_test \
+		config_test \
+		env_test \
+		exceptions_test \
+		expand_test \
+		fs_test \
+		io_test \
+		macros_test \
+		parser_test \
+		process_test \
+		sanity_test \
+		signals_test \
+		tests_test \
+		text_test \
+		ui_test \
+		user_test \
+		utils_test
 TESTS_CXX+=	${test}
-SRCS.${test}=	${test}.cpp h_lib.cpp
+SRCS.${test}=	${test}.cpp test_helpers.cpp
 .endfor
 .undef test
 
-TESTS_SH=	t_pkg_config
+TESTS_SH=	pkg_config_test
 
 .include <bsd.test.mk>
