@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.58 2010/02/24 22:37:59 dyoung Exp $	*/
+/*	$NetBSD: miivar.h,v 1.58.2.1 2010/07/03 01:19:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 
 #include <sys/queue.h>
 #include <sys/callout.h>
+
+#include <dev/mii/mii_verbose.h>
 
 /*
  * Media Independent Interface datat structure definitions.

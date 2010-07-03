@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19.4.1 2010/05/30 05:17:05 rmind Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.4.2 2010/07/03 01:19:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.4.1 2010/05/30 05:17:05 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.4.2 2010/07/03 01:19:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,37 +137,9 @@ device_register(struct device *dev, void *aux)
 		}
 	}
 	if (bi_rdev != NULL && dev->dv_class == DV_DISK
-	    && device_is_a(dev, bi_rdev->devname)) {
+	    && device_is_a(dev, bi_rdev->devname)
+	    && dev->dv_unit == bi_rdev->cookie) {
 		booted_device = dev;
 		booted_partition = 0;
 	}
 }
-
-#if 0
-void
-findroot(void)
-{
-	int unit, part;
-	device_t dv;
-	const char *name;
-
-#if 0
-	printf("howto %x bootdev %x ", boothowto, bootdev);
-#endif
-
-	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
-		return;
-
-	name = devsw_blk2name((bootdev >> B_TYPESHIFT) & B_TYPEMASK);
-	if (name == NULL)
-		return;
-
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-
-	if ((dv = device_find_by_driver_unit(name, unit)) != NULL) {
-		booted_device = dv;
-		booted_partition = part;
-	}
-}
-#endif

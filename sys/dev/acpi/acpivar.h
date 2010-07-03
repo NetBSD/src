@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.43.2.1 2010/05/30 05:17:17 rmind Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.43.2.2 2010/07/03 01:19:34 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -57,18 +57,12 @@
  * This structure is used to attach the ACPI "bus".
  */
 struct acpibus_attach_args {
-	bus_space_tag_t aa_iot;		/* PCI I/O space tag */
-	bus_space_tag_t aa_memt;	/* PCI MEM space tag */
-	pci_chipset_tag_t aa_pc;	/* PCI chipset */
-	int aa_pciflags;		/* PCI bus flags */
-	isa_chipset_tag_t aa_ic;	/* ISA chipset */
+	bus_space_tag_t		 aa_iot;	/* PCI I/O space tag */
+	bus_space_tag_t		 aa_memt;	/* PCI MEM space tag */
+	pci_chipset_tag_t	 aa_pc;		/* PCI chipset */
+	int			 aa_pciflags;	/* PCI bus flags */
+	isa_chipset_tag_t	 aa_ic;		/* ISA chipset */
 };
-
-/*
- * ACPI driver capabilities.
- */
-#define ACPI_DEVICE_POWER		__BIT(0)
-#define ACPI_DEVICE_WAKEUP		__BIT(1)
 
 /*
  * PCI information for ACPI device nodes that correspond to PCI devices.
@@ -94,6 +88,9 @@ struct acpi_pci_info {
  *	ad_notify	NULL if there is no notify handler
  *	ad_devinfo	never NULL
  *	ad_handle	never NULL
+ *
+ * Each ACPI device node is associated with its handle. The function
+ * acpi_get_node() can be used to get the node structure from a handle.
  */
 struct acpi_devnode {
 	device_t		 ad_device;	/* Device */
@@ -113,6 +110,13 @@ struct acpi_devnode {
 	SIMPLEQ_ENTRY(acpi_devnode)	ad_child_list;
 	SIMPLEQ_HEAD(, acpi_devnode)	ad_child_head;
 };
+
+/*
+ * ACPI driver capabilities.
+ */
+#define ACPI_DEVICE_POWER	__BIT(0)	/* Support for D-states  */
+#define ACPI_DEVICE_WAKEUP	__BIT(1)	/* Support for wake-up */
+#define ACPI_DEVICE_EJECT	__BIT(2)	/* Support for "ejection" */
 
 /*
  * Software state of the ACPI subsystem.
@@ -166,7 +170,6 @@ struct acpi_attach_args {
  *	acpi_irq	Interrupt Request
  *	acpi_drq	DMA request
  */
-
 struct acpi_io {
 	SIMPLEQ_ENTRY(acpi_io) ar_list;
 	int		ar_index;
@@ -318,5 +321,18 @@ int acpi_find_quirks(void);
 #ifdef ACPI_DEBUG
 void acpi_debug_init(void);
 #endif
+
+/* Misc routines with vectors updated by acpiverbose module */
+extern void	(*acpi_print_devnodes)(struct acpi_softc *);
+extern void	(*acpi_print_tree)(struct acpi_devnode *, uint32_t);
+extern void	(*acpi_print_dev)(const char *);
+extern void	(*acpi_wmidump)(void *);
+
+void		acpi_wmidump_real(void *);
+
+void		acpi_null(void);
+
+void		acpi_load_verbose(void);
+extern int	acpi_verbose_loaded;
 
 #endif	/* !_SYS_DEV_ACPI_ACPIVAR_H */

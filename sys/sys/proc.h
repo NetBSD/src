@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.296 2010/03/03 00:45:55 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.296.2.1 2010/07/03 01:20:04 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -458,19 +458,11 @@ extern const struct proclist_desc proclists[];
 
 extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 
-struct proc *p_find(pid_t, uint);	/* Find process by id */
-struct pgrp *pg_find(pid_t, uint);	/* Find process group by id */
-/* Flags values for p_find() and pg_find(). */
-#define PFIND_ZOMBIE		1	/* look for zombies as well */
-#define PFIND_LOCKED		2	/* proclist locked on entry */
-#define PFIND_UNLOCK_FAIL	4	/* unlock proclist on failure */
-#define PFIND_UNLOCK_OK		8	/* unlock proclist on success */
-#define PFIND_UNLOCK		(PFIND_UNLOCK_OK | PFIND_UNLOCK_FAIL)
-/* For source compatibility. but UNLOCK_OK gives a stale answer... */
-#define pfind(pid) p_find((pid), PFIND_UNLOCK)
-#define pgfind(pgid) pg_find((pgid), PFIND_UNLOCK)
-
 struct simplelock;
+
+proc_t *	proc_find_raw(pid_t);
+proc_t *	proc_find(pid_t);		/* Find process by ID */
+struct pgrp *	pgrp_find(pid_t);		/* Find process group by ID */
 
 void	procinit(void);
 int	proc_enterpgrp(struct proc *, pid_t, pid_t, bool);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.85.2.1 2010/05/30 05:17:39 rmind Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.85.2.2 2010/07/03 01:19:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,7 @@
  * Structures and definitions needed by the machine-dependent header.
  */
 struct pcibus_attach_args;
+struct pci_attach_args;
 struct pci_softc;
 
 #ifdef _KERNEL

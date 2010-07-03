@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.42.4.1 2010/03/16 15:38:08 rmind Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.42.4.2 2010/07/03 01:19:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.42.4.1 2010/03/16 15:38:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.42.4.2 2010/07/03 01:19:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ smbfs_inactive(void *v)
 		np->n_flag &= ~NOPEN;
 		smbfs_attr_cacheremove(vp);
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	*ap->a_recycle = false; /* XXX: should set the value properly */
 

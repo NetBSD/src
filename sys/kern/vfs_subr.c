@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.398.2.2 2010/05/30 05:17:58 rmind Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.398.2.3 2010/07/03 01:19:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.2 2010/05/30 05:17:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.398.2.3 2010/07/03 01:19:56 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -347,15 +347,8 @@ try_nextlist:
 		}
 		if (!mutex_tryenter(vp->v_interlock))
 			continue;
-		/*
-		 * Our lwp might hold the underlying vnode
-		 * locked, so don't try to reclaim a VI_LAYER
-		 * node if it's locked.
-		 */
-		if ((vp->v_iflag & VI_XLOCK) == 0 &&
-		    ((vp->v_iflag & VI_LAYER) == 0 || VOP_ISLOCKED(vp) == 0)) {
+		if ((vp->v_iflag & VI_XLOCK) == 0)
 			break;
-		}
 		mutex_exit(vp->v_interlock);
 	}
 
@@ -649,7 +642,6 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	KASSERT(LIST_EMPTY(&vp->v_dnclist));
 
 	vp->v_type = VNON;
-	vp->v_vnlock = &vp->v_lock;
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	insmntque(vp, mp);
@@ -721,7 +713,7 @@ vnalloc(struct mount *mp)
 		vp->v_type = VBAD;
 		vp->v_iflag = VI_MARKER;
 	} else {
-		rw_init(&vp->v_lock.vl_lock);
+		rw_init(&vp->v_lock);
 	}
 
 	return vp;
@@ -737,7 +729,7 @@ vnfree(vnode_t *vp)
 	KASSERT(vp->v_usecount == 0);
 
 	if ((vp->v_iflag & VI_MARKER) == 0) {
-		rw_destroy(&vp->v_lock.vl_lock);
+		rw_destroy(&vp->v_lock);
 		mutex_enter(&vnode_free_list_lock);
 		numvnodes--;
 		mutex_exit(&vnode_free_list_lock);
@@ -1340,7 +1332,7 @@ vget(vnode_t *vp, int flags)
 	 * Ok, we got it in good shape.  Just locking left.
 	 */
 	KASSERT((vp->v_iflag & VI_CLEAN) == 0);
-	if (flags & LK_TYPE_MASK) {
+	if (flags & (LK_EXCLUSIVE | LK_SHARED)) {
 		error = vn_lock(vp, flags | LK_INTERLOCK);
 		if (error != 0) {
 			vrele(vp);
@@ -1360,7 +1352,7 @@ vput(vnode_t *vp)
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	vrele(vp);
 }
 
@@ -1458,7 +1450,7 @@ vrelel(vnode_t *vp, int flags)
 			 * sleeping, don't try to inactivate it yet.
 			 */
 			if (__predict_false(vtryrele(vp))) {
-				VOP_UNLOCK(vp, 0);
+				VOP_UNLOCK(vp);
 				mutex_exit(vp->v_interlock);
 				return;
 			}
@@ -1902,7 +1894,8 @@ vclean(vnode_t *vp, int flags)
 	active = (vp->v_usecount > 1);
 
 	/* XXXAD should not lock vnode under layer */
-	VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+	mutex_exit(vp->v_interlock);
+	VOP_LOCK(vp, LK_EXCLUSIVE);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -1932,7 +1925,7 @@ vclean(vnode_t *vp, int flags)
 		 * Any other processes trying to obtain this lock must first
 		 * wait for VI_XLOCK to clear, then call the new lock operation.
 		 */
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 
 	/* Disassociate the underlying file system from the vnode. */
@@ -1951,7 +1944,6 @@ vclean(vnode_t *vp, int flags)
 	mutex_enter(vp->v_interlock);
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
-	vp->v_vnlock = &vp->v_lock;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
 	vp->v_vflag &= ~VV_LOCKSWORK;
@@ -2612,7 +2604,7 @@ done:
 			panic("cannot find root vnode, error=%d", error);
 		cwdi0.cwdi_cdir = rootvnode;
 		vref(cwdi0.cwdi_cdir);
-		VOP_UNLOCK(rootvnode, 0);
+		VOP_UNLOCK(rootvnode);
 		cwdi0.cwdi_rdir = NULL;
 
 		/*
@@ -2728,11 +2720,9 @@ const char vnode_flagbits[] = VNODE_FLAGBITS;
 void
 vprint(const char *label, struct vnode *vp)
 {
-	struct vnlock *vl;
 	char bf[96];
 	int flag;
 
-	vl = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
 	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
 	snprintb(bf, sizeof(bf), vnode_flagbits, flag);
 
@@ -2740,11 +2730,11 @@ vprint(const char *label, struct vnode *vp)
 		printf("%s: ", label);
 	printf("vnode @ %p, flags (%s)\n\ttag %s(%d), type %s(%d), "
 	    "usecount %d, writecount %d, holdcount %d\n"
-	    "\tfreelisthd %p, mount %p, data %p lock %p recursecnt %d\n",
+	    "\tfreelisthd %p, mount %p, data %p lock %p\n",
 	    vp, bf, ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt,
-	    vp->v_freelisthd, vp->v_mount, vp->v_data, vl, vl->vl_recursecnt);
+	    vp->v_freelisthd, vp->v_mount, vp->v_data, &vp->v_lock);
 	if (vp->v_data != NULL) {
 		printf("\t");
 		VOP_PRINT(vp);
@@ -2921,68 +2911,6 @@ void
 setrootfstime(time_t t)
 {
 	rootfstime = t;
-}
-
-/*
- * Sham lock manager for vnodes.  This is a temporary measure.
- */
-int
-vlockmgr(struct vnlock *vl, int flags)
-{
-
-	KASSERT((flags & ~(LK_CANRECURSE | LK_NOWAIT | LK_TYPE_MASK)) == 0);
-
-	switch (flags & LK_TYPE_MASK) {
-	case LK_SHARED:
-		if (rw_tryenter(&vl->vl_lock, RW_READER)) {
-			return 0;
-		}
-		if ((flags & LK_NOWAIT) != 0) {
-			return EBUSY;
-		}
-		rw_enter(&vl->vl_lock, RW_READER);
-		return 0;
-
-	case LK_EXCLUSIVE:
-		if (rw_tryenter(&vl->vl_lock, RW_WRITER)) {
-			return 0;
-		}
-		if ((vl->vl_canrecurse || (flags & LK_CANRECURSE) != 0) &&
-		    rw_write_held(&vl->vl_lock)) {
-			vl->vl_recursecnt++;
-			return 0;
-		}
-		if ((flags & LK_NOWAIT) != 0) {
-			return EBUSY;
-		}
-		rw_enter(&vl->vl_lock, RW_WRITER);
-		return 0;
-
-	case LK_RELEASE:
-		if (vl->vl_recursecnt != 0) {
-			KASSERT(rw_write_held(&vl->vl_lock));
-			vl->vl_recursecnt--;
-			return 0;
-		}
-		rw_exit(&vl->vl_lock);
-		return 0;
-
-	default:
-		panic("vlockmgr: flags %x", flags);
-	}
-}
-
-int
-vlockstatus(struct vnlock *vl)
-{
-
-	if (rw_write_held(&vl->vl_lock)) {
-		return LK_EXCLUSIVE;
-	}
-	if (rw_read_held(&vl->vl_lock)) {
-		return LK_SHARED;
-	}
-	return 0;
 }
 
 static const uint8_t vttodt_tab[9] = {
@@ -3300,7 +3228,7 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	      ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	      vp->v_mount, vp->v_mountedhere);
 
-	(*pr)("v_lock %p v_vnlock %p\n", &vp->v_lock, vp->v_vnlock);
+	(*pr)("v_lock %p\n", &vp->v_lock);
 
 	if (full) {
 		struct buf *bp;

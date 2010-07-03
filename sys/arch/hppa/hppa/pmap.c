@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71.2.2 2010/05/30 05:16:52 rmind Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71.2.3 2010/07/03 01:19:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71.2.2 2010/05/30 05:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71.2.3 2010/07/03 01:19:19 rmind Exp $");
 
 #include "opt_cputype.h"
 
@@ -1477,8 +1477,8 @@ pmap_changebit(struct vm_page *pg, u_int set, u_int clear)
 	DPRINTF(PDB_FOLLOW|PDB_BITS, 
 	    ("%s(%p, %x, %x)\n", __func__, pg, set, clear));
 
-	KASSERT((set & ~(PVF_REF)) == 0);
-	KASSERT((clear & ~(PVF_MOD|PVF_WRITE)) == 0);
+	KASSERT((set & ~(PVF_REF|PVF_UNCACHEABLE)) == 0);
+	KASSERT((clear & ~(PVF_MOD|PVF_WRITE|PVF_UNCACHEABLE)) == 0);
 
 	mutex_enter(&pg->mdpage.pvh_lock);
 

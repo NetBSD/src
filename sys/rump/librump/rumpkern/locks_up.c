@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.1.2.2 2010/05/30 05:18:06 rmind Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.1.2.3 2010/07/03 01:20:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.1.2.2 2010/05/30 05:18:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.1.2.3 2010/07/03 01:20:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 	 * XXX: pool_cache would be nice, but not easily possible,
 	 * as pool cache init wants to call mutex_init() ...
 	 */
-	upm = rumpuser_malloc(sizeof(*upm), 1);
+	upm = rump_hypermalloc(sizeof(*upm), 0, true, "mutex_init");
 	memset(upm, 0, sizeof(*upm));
 	rumpuser_cv_init(&upm->upm_rucv);
 	memcpy(mtx, &upm, sizeof(void *));
@@ -88,7 +88,7 @@ mutex_destroy(kmutex_t *mtx)
 	KASSERT(upm->upm_owner == NULL);
 	KASSERT(upm->upm_wanted == 0);
 	rumpuser_cv_destroy(upm->upm_rucv);
-	rumpuser_free(upm);
+	rump_hyperfree(upm, sizeof(*upm));
 }
 
 void
@@ -178,7 +178,7 @@ rw_init(krwlock_t *rw)
 	CTASSERT(sizeof(krwlock_t) >= sizeof(void *));
 	checkncpu();
 
-	uprw = rumpuser_malloc(sizeof(*uprw), 0);
+	uprw = rump_hypermalloc(sizeof(*uprw), 0, true, "rwinit");
 	memset(uprw, 0, sizeof(*uprw));
 	rumpuser_cv_init(&uprw->uprw_rucv_reader);
 	rumpuser_cv_init(&uprw->uprw_rucv_writer);
@@ -192,7 +192,7 @@ rw_destroy(krwlock_t *rw)
 
 	rumpuser_cv_destroy(uprw->uprw_rucv_reader);
 	rumpuser_cv_destroy(uprw->uprw_rucv_writer);
-	rumpuser_free(uprw);
+	rump_hyperfree(uprw, sizeof(*uprw));
 }
 
 /* take rwlock.  prefer writers over readers (see rw_tryenter and rw_exit) */

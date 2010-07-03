@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.61.4.1 2010/05/30 05:17:55 rmind Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.61.4.2 2010/07/03 01:19:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.61.4.1 2010/05/30 05:17:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.61.4.2 2010/07/03 01:19:50 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -289,7 +289,7 @@ filecore_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = genfs_can_mount(devvp, VREAD, l->l_cred);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
 		return (error);
@@ -428,7 +428,7 @@ out:
 	}
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	return error;
 }
 

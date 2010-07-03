@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.c,v 1.5.2.2 2010/05/30 05:17:36 rmind Exp $	*/
+/*	$NetBSD: pci_verbose.c,v 1.5.2.3 2010/07/03 01:19:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.5.2.2 2010/05/30 05:17:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_verbose.c,v 1.5.2.3 2010/07/03 01:19:37 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -74,16 +74,24 @@ MODULE(MODULE_CLASS_MISC, pciverbose, NULL);
 static int
 pciverbose_modcmd(modcmd_t cmd, void *arg)
 {
+	static const char *(*saved_findvendor)(pcireg_t);
+	static const char *(*saved_findproduct)(pcireg_t);
+	static const char *saved_unmatched;
+
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		saved_findvendor = pci_findvendor;
+		saved_findproduct = pci_findproduct;
+		saved_unmatched = pci_unmatched;
 		pci_findvendor = pci_findvendor_real;
 		pci_findproduct = pci_findproduct_real;
 		pci_unmatched = "unmatched ";
 		return 0;
 	case MODULE_CMD_FINI:
-		pci_findvendor = pci_null;
-		pci_findproduct = pci_null;
-		pci_unmatched = "";
+		pci_findvendor = saved_findvendor;
+		pci_findproduct = saved_findproduct;
+		pci_unmatched = saved_unmatched;
+		pciverbose_loaded = 0;
 		return 0;
 	default:
 		return ENOTTY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.35.2.1 2010/05/30 05:17:08 rmind Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.35.2.2 2010/07/03 01:19:27 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,14 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.35.2.1 2010/05/30 05:17:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.35.2.2 2010/07/03 01:19:27 rmind Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/simplelock.h>
+#include <sys/xcall.h>
 
 #include <machine/db_machdep.h>
 
@@ -463,6 +463,10 @@ sparc64_ipi_error(const char *s, sparc64_cpuset_t cpus_succeeded,
 	printf("\n");
 }
 
+/*
+ * MD support for xcall(9) interface.
+ */
+
 void
 sparc64_generic_xcall(struct cpu_info *target, ipi_c_call_func_t func,
 	void *arg)
@@ -478,14 +482,9 @@ sparc64_generic_xcall(struct cpu_info *target, ipi_c_call_func_t func,
 	}
 }
 
-#if 0
-/* XXX: remove once a public prototype is available */
-void	xc_ipi_handler(void);
-void	xc_send_ipi(struct cpu_info *);
-
 void
 xc_send_ipi(struct cpu_info *target)
 {
+
 	sparc64_generic_xcall(target, (ipi_c_call_func_t)xc_ipi_handler, NULL);
 }
-#endif

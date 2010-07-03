@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.160 2010/02/25 07:17:48 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.160.2.1 2010/07/03 01:19:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -114,8 +114,11 @@
 #include "opt_fpu_emulate.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
-#include "assym.h"
 #include "opt_fpsp.h"
+#include "opt_m68k_arch.h"
+
+#include "assym.h"
+
 #include <machine/asm.h>
 #include <machine/trap.h>
 

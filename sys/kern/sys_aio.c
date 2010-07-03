@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.31 2010/01/30 21:23:46 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.31.4.1 2010/07/03 01:19:54 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.31 2010/01/30 21:23:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.31.4.1 2010/07/03 01:19:54 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -216,7 +216,6 @@ aio_procinit(struct proc *p)
 
 	/* Complete the initialization of thread, and run it */
 	aio->aio_worker = l;
-	p->p_nrlwps++;
 	lwp_lock(l);
 	l->l_stat = LSRUN;
 	l->l_priority = MAXPRI_USER;
@@ -433,7 +432,7 @@ aio_process(struct aio_job *a_job)
 			error = VOP_FSYNC(vp, fp->f_cred,
 			    FSYNC_WAIT, 0, 0);
 		}
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		fd_putfile(fd);
 
 		/* Store the result value */
@@ -521,13 +520,6 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	aio = p->p_aio;
 	if (aio) {
 		mutex_enter(&aio->aio_mtx);
-		if (aio->curjob) {
-			a_job = aio->curjob;
-			if (a_job->aiocb_uptr == aiocb_uptr) {
-				mutex_exit(&aio->aio_mtx);
-				return EINVAL;
-			}
-		}
 		TAILQ_FOREACH(a_job, &aio->jobs_queue, list) {
 			if (a_job->aiocb_uptr != aiocb_uptr)
 				continue;

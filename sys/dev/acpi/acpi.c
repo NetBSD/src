@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.159.2.1 2010/05/30 05:17:16 rmind Exp $	*/
+/*	$NetBSD: acpi.c,v 1.159.2.2 2010/07/03 01:19:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.159.2.1 2010/05/30 05:17:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.159.2.2 2010/07/03 01:19:34 rmind Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.159.2.1 2010/05/30 05:17:16 rmind Exp $")
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -85,10 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.159.2.1 2010/05/30 05:17:16 rmind Exp $")
 #include <dev/acpi/acpi_power.h>
 #include <dev/acpi/acpi_timer.h>
 #include <dev/acpi/acpi_wakedev.h>
-
-#ifdef ACPIVERBOSE
-#include <dev/acpi/acpidevs_data.h>
-#endif
 
 #define _COMPONENT	ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	("acpi")
@@ -147,8 +144,6 @@ static const char * const acpi_ignored_ids[] = {
 	"PNP0200",	/* AT DMA controller is handled internally */
 	"PNP0A??",	/* PCI Busses are handled internally */
 	"PNP0B00",	/* AT RTC is handled internally */
-	"PNP0C01",	/* No "System Board" driver */
-	"PNP0C02",	/* No "PnP motherboard register resources" driver */
 	"PNP0C0B",	/* No need for "ACPI fan" driver */
 	"PNP0C0F",	/* ACPI PCI link devices are handled internally */
 	"IFX0102",	/* No driver for Infineon TPM */
@@ -180,16 +175,9 @@ static ACPI_STATUS	acpi_allocate_resources(ACPI_HANDLE);
 #endif
 
 static int		acpi_rescan(device_t, const char *, const int *);
-static void		acpi_rescan1(struct acpi_softc *,
-				     const char *, const int *);
 static void		acpi_rescan_nodes(struct acpi_softc *);
 static void		acpi_rescan_capabilities(struct acpi_softc *);
 static int		acpi_print(void *aux, const char *);
-
-#ifdef ACPIVERBOSE
-static void		acpi_print_devnodes(struct acpi_softc *);
-static void		acpi_print_tree(struct acpi_devnode *, uint32_t);
-#endif
 
 static void		acpi_notify_handler(ACPI_HANDLE, uint32_t, void *);
 
@@ -209,6 +197,74 @@ static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
 static void		  acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
 
 extern struct cfdriver acpi_cd;
+
+/* Handle routine vectors and loading for acpiverbose module */
+void acpi_null(void);
+
+void acpi_print_devnodes_stub(struct acpi_softc *);
+void acpi_print_tree_stub(struct acpi_devnode *, uint32_t);
+void acpi_print_dev_stub(const char *);
+void acpi_wmidump_stub(void *);
+
+void (*acpi_print_devnodes)(struct acpi_softc *) = acpi_print_devnodes_stub;
+void (*acpi_print_tree)(struct acpi_devnode *, uint32_t) = acpi_print_tree_stub;
+void (*acpi_print_dev)(const char *) = acpi_print_dev_stub;
+void (*acpi_wmidump)(void *) = acpi_wmidump_stub;
+
+int acpi_verbose_loaded = 0;
+
+/*
+ * Support for ACPIVERBOSE.
+ */
+void
+acpi_null(void)
+{
+	/* Nothing to do. */
+}
+
+void
+acpi_load_verbose(void)
+{
+	if (acpi_verbose_loaded)
+		return;
+
+	mutex_enter(&module_lock);
+	if (module_autoload("acpiverbose", MODULE_CLASS_MISC) == 0)
+		acpi_verbose_loaded++;
+	mutex_exit(&module_lock);
+}
+
+void
+acpi_print_devnodes_stub(struct acpi_softc *sc)
+{
+	acpi_load_verbose();
+	if (acpi_verbose_loaded)
+		acpi_print_devnodes(sc);
+}
+
+void
+acpi_print_tree_stub(struct acpi_devnode *ad, uint32_t level)
+{
+	acpi_load_verbose();
+	if (acpi_verbose_loaded)
+		acpi_print_tree(ad, level);
+}
+
+void
+acpi_print_dev_stub(const char *pnpstr)
+{
+	acpi_load_verbose();
+	if (acpi_verbose_loaded)
+		acpi_print_dev(pnpstr);
+}
+
+void
+acpi_wmidump_stub(void *arg)
+{
+	acpi_load_verbose();
+	if (acpi_verbose_loaded)
+		acpi_wmidump(arg);
+}
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
     acpi_match, acpi_attach, acpi_detach, NULL, acpi_rescan, acpi_childdet);
@@ -618,16 +674,14 @@ acpi_build_tree(struct acpi_softc *sc)
 	/*
 	 * Scan the internal namespace.
 	 */
-	acpi_rescan1(sc, NULL, NULL);
+	(void)acpi_rescan(sc->sc_dev, NULL, NULL);
+
 	acpi_rescan_capabilities(sc);
 
 	(void)acpi_pcidev_scan(sc->sc_root);
 
-#ifdef ACPIVERBOSE
 	acpi_print_devnodes(sc);
-	aprint_normal("\n");
 	acpi_print_tree(sc->sc_root, 0);
-#endif
 }
 
 static ACPI_STATUS
@@ -696,6 +750,8 @@ acpi_make_devnode(ACPI_HANDLE handle, uint32_t level,
 
 		SIMPLEQ_INIT(&ad->ad_child_head);
 		SIMPLEQ_INSERT_TAIL(&sc->ad_head, ad, ad_list);
+
+		acpi_set_node(ad);
 
 		if (ad->ad_parent != NULL) {
 
@@ -888,21 +944,14 @@ acpi_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct acpi_softc *sc = device_private(self);
 
-	acpi_rescan1(sc, ifattr, locators);
-
-	return 0;
-}
-
-static void
-acpi_rescan1(struct acpi_softc *sc, const char *ifattr, const int *locators)
-{
-
 	if (ifattr_match(ifattr, "acpinodebus"))
 		acpi_rescan_nodes(sc);
 
 	if (ifattr_match(ifattr, "acpiapmbus") && sc->sc_apmbus == NULL)
 		sc->sc_apmbus = config_found_ia(sc->sc_dev,
 		    "acpiapmbus", NULL, NULL);
+
+	return 0;
 }
 
 static void
@@ -951,16 +1000,9 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		/*
 		 * Handled internally.
 		 */
-		if (di->Type == ACPI_TYPE_PROCESSOR)
+		if (di->Type == ACPI_TYPE_POWER ||
+		    di->Type == ACPI_TYPE_PROCESSOR)
 			continue;
-
-		/*
-		 * Ditto, but bind power resources.
-		 */
-		if (di->Type == ACPI_TYPE_POWER) {
-			acpi_power_res_add(ad);
-			continue;
-		}
 
 		/*
 		 * Skip ignored HIDs.
@@ -1049,21 +1091,9 @@ acpi_print(void *aux, const char *pnp)
 				}
 				ACPI_FREE(buf.Pointer);
 			}
-#ifdef ACPIVERBOSE
-			else {
-				int i;
+			else
+				acpi_print_dev(pnpstr);
 
-				for (i = 0; i < __arraycount(acpi_knowndevs);
-				    i++) {
-					if (strcmp(acpi_knowndevs[i].pnp,
-					    pnpstr) == 0) {
-						aprint_normal("[%s] ",
-						    acpi_knowndevs[i].str);
-					}
-				}
-			}
-
-#endif
 			aprint_normal("at %s", pnp);
 		} else if (aa->aa_node->ad_devinfo->Type != ACPI_TYPE_DEVICE) {
 			aprint_normal("%s (ACPI Object Type '%s' "
@@ -1091,74 +1121,6 @@ acpi_print(void *aux, const char *pnp)
 
 	return UNCONF;
 }
-
-#ifdef ACPIVERBOSE
-static void
-acpi_print_devnodes(struct acpi_softc *sc)
-{
-	struct acpi_devnode *ad;
-	ACPI_DEVICE_INFO *di;
-
-	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
-
-		di = ad->ad_devinfo;
-		aprint_normal_dev(sc->sc_dev, "%-5s ", ad->ad_name);
-
-		aprint_normal("HID %-10s ",
-		    ((di->Valid & ACPI_VALID_HID) != 0) ?
-		    di->HardwareId.String: "-");
-
-		aprint_normal("UID %-4s ",
-		    ((di->Valid & ACPI_VALID_UID) != 0) ?
-		    di->UniqueId.String : "-");
-
-		if ((di->Valid & ACPI_VALID_STA) != 0)
-			aprint_normal("STA 0x%08X ", di->CurrentStatus);
-		else
-			aprint_normal("STA %10s ", "-");
-
-		if ((di->Valid & ACPI_VALID_ADR) != 0)
-			aprint_normal("ADR 0x%016" PRIX64"", di->Address);
-		else
-			aprint_normal("ADR -");
-
-		aprint_normal("\n");
-	}
-}
-
-static void
-acpi_print_tree(struct acpi_devnode *ad, uint32_t level)
-{
-	struct acpi_devnode *child;
-	uint32_t i;
-
-	for (i = 0; i < level; i++)
-		aprint_normal("    ");
-
-	aprint_normal("%-5s [%02u] [%c%c] ", ad->ad_name, ad->ad_type,
-	    ((ad->ad_flags & ACPI_DEVICE_POWER)  != 0) ? 'P' : ' ',
-	    ((ad->ad_flags & ACPI_DEVICE_WAKEUP) != 0) ? 'W' : ' ');
-
-	if (ad->ad_pciinfo != NULL) {
-
-		aprint_normal("(PCI) @ 0x%02X:0x%02X:0x%02X:0x%02X ",
-		    ad->ad_pciinfo->ap_segment, ad->ad_pciinfo->ap_bus,
-		    ad->ad_pciinfo->ap_device, ad->ad_pciinfo->ap_function);
-
-		if ((ad->ad_devinfo->Flags & ACPI_PCI_ROOT_BRIDGE) != 0)
-			aprint_normal("[R] ");
-
-		if (ad->ad_pciinfo->ap_bridge != false)
-			aprint_normal("[B] -> 0x%02X",
-			    ad->ad_pciinfo->ap_downbus);
-	}
-
-	aprint_normal("\n");
-
-	SIMPLEQ_FOREACH(child, &ad->ad_child_head, ad_child_list)
-	    acpi_print_tree(child, level + 1);
-}
-#endif
 
 /*
  * Notify.
@@ -1304,8 +1266,10 @@ acpi_register_fixed_button(struct acpi_softc *sc, int event)
 	rv = AcpiInstallFixedEventHandler(event,
 	    acpi_fixed_button_handler, smpsw);
 
-	if (ACPI_FAILURE(rv))
+	if (ACPI_FAILURE(rv)) {
+		sysmon_pswitch_unregister(smpsw);
 		goto fail;
+	}
 
 	aprint_debug_dev(sc->sc_dev, "fixed %s button present\n",
 	    (type != ACPI_EVENT_SLEEP_BUTTON) ? "power" : "sleep");
@@ -1368,8 +1332,6 @@ acpi_fixed_button_handler(void *context)
 	static const int handler = OSL_NOTIFY_HANDLER;
 	struct sysmon_pswitch *smpsw = context;
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "fixed event\n"));
-
 	(void)AcpiOsExecute(handler, acpi_fixed_button_pressed, smpsw);
 
 	return ACPI_INTERRUPT_HANDLED;
@@ -1380,8 +1342,9 @@ acpi_fixed_button_pressed(void *context)
 {
 	struct sysmon_pswitch *smpsw = context;
 
-	ACPI_DEBUG_PRINT((ACPI_DB_INFO,
-		"%s fixed button pressed\n", smpsw->smpsw_name));
+	ACPI_DEBUG_PRINT((ACPI_DB_INFO, "%s fixed button pressed\n",
+		(smpsw->smpsw_type != ACPI_EVENT_SLEEP_BUTTON) ?
+		"power" : "sleep"));
 
 	sysmon_pswitch_event(smpsw, PSWITCH_EVENT_PRESSED);
 }
@@ -1452,8 +1415,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		if (ACPI_SUCCESS(rv))
 			aprint_debug_dev(sc->sc_dev, "evaluated _TTS\n");
 
-		acpi_wakedev_commit(sc, state);
-
 		if (state != ACPI_STATE_S1 &&
 		    pmf_system_suspend(PMF_Q_NONE) != true) {
 			aprint_error_dev(sc->sc_dev, "aborting suspend\n");
@@ -1464,7 +1425,6 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 		 * This will evaluate the  _PTS and _SST methods,
 		 * but unlike the documentation claims, not _GTS,
 		 * which is evaluated in AcpiEnterSleepState().
-		 *
 		 * This must be called with interrupts enabled.
 		 */
 		rv = AcpiEnterSleepStatePrep(state);
@@ -1474,6 +1434,12 @@ acpi_enter_sleep_state(struct acpi_softc *sc, int state)
 			    "S%d: %s\n", state, AcpiFormatException(rv));
 			break;
 		}
+
+		/*
+		 * After the _PTS method has been evaluated, we can
+		 * enable wake and evaluate _PSW (ACPI 4.0, p. 284).
+		 */
+		acpi_wakedev_commit(sc, state);
 
 		sc->sc_sleepstate = state;
 

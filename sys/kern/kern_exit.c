@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.227.2.1 2010/05/30 05:17:56 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.227.2.2 2010/07/03 01:19:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.227.2.1 2010/05/30 05:17:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.227.2.2 2010/07/03 01:19:53 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -768,9 +768,9 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 		LIST_FOREACH(child, &parent->p_children, p_sibling) {
 			if (pid >= 0) {
 				if (child->p_pid != pid) {
-					child = p_find(pid, PFIND_ZOMBIE |
-					    PFIND_LOCKED);
+					child = proc_find_raw(pid);
 					if (child == NULL ||
+					    child->p_stat == SIDL ||
 					    child->p_pptr != parent) {
 						child = NULL;
 						break;

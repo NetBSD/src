@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.140.4.1 2010/05/30 05:17:59 rmind Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.140.4.2 2010/07/03 01:19:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.140.4.1 2010/05/30 05:17:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.140.4.2 2010/07/03 01:19:57 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1462,7 +1462,7 @@ kernfs_inactive(void *v)
 	default:
 		break;
 	}
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (0);
 }
 

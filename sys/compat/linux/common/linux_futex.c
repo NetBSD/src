@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.24 2009/03/14 20:18:27 christos Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.24.4.1 2010/07/03 01:19:31 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.24 2009/03/14 20:18:27 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.24.4.1 2010/07/03 01:19:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -524,8 +524,8 @@ linux_sys_get_robust_list(struct lwp *l,
 		struct proc *p;
 
 		mutex_enter(proc_lock); 
-		if ((p = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL ||
-		    p->p_emul != &emul_linux) {
+		p = proc_find(SCARG(uap, pid));
+		if (p == NULL || p->p_emul != &emul_linux) {
 			mutex_exit(proc_lock);
 			return ESRCH;
 		}
@@ -534,6 +534,7 @@ linux_sys_get_robust_list(struct lwp *l,
 		mutex_exit(proc_lock);
 	}
 
+	/* FIXME unlocked */
 	error = copyout(&len, SCARG(uap, len), sizeof(len));
 	if (error)
 		return error;

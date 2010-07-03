@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.128.2.1 2010/05/30 05:18:08 rmind Exp $	*/
+/*	$NetBSD: lwp.h,v 1.128.2.2 2010/07/03 01:20:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -33,6 +33,7 @@
 #ifndef _SYS_LWP_H_
 #define _SYS_LWP_H_
 
+#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
@@ -304,13 +305,14 @@ lwp_t	*lwp_find_first(proc_t *);
 /* Flags for _lwp_wait1 */
 #define LWPWAIT_EXITCONTROL	0x00000001
 void	lwpinit(void);
+void	lwp0_init(void);
 int 	lwp_wait1(lwp_t *, lwpid_t, lwpid_t *, int);
 void	lwp_continue(lwp_t *);
 void	lwp_unstop(lwp_t *);
 void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
-void	lwp_exit(lwp_t *) __dead;
+void	lwp_exit(lwp_t *);
 void	lwp_exit_switchaway(lwp_t *) __dead;
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);

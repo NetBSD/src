@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.44 2010/01/08 11:35:10 pooka Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.44.4.1 2010/07/03 01:19:55 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.44 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.44.4.1 2010/07/03 01:19:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,7 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	 * before we take the parent lock.
 	 */
 
-	VOP_UNLOCK(lvp, 0);
+	VOP_UNLOCK(lvp);
 	error = vget(uvp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.31.4.1 2010/03/16 15:38:08 rmind Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.31.4.2 2010/07/03 01:19:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.31.4.1 2010/03/16 15:38:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.31.4.2 2010/07/03 01:19:51 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -212,7 +212,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
  out:
 	if (devopen && error)
 		VOP_CLOSE(devvp, oflags, NOCRED);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.142.4.1 2010/05/30 05:18:01 rmind Exp $ */
+/*	$NetBSD: if_gre.c,v 1.142.4.2 2010/07/03 01:19:59 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,11 +45,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.142.4.1 2010/05/30 05:18:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.142.4.2 2010/07/03 01:19:59 rmind Exp $");
 
 #include "opt_atalk.h"
 #include "opt_gre.h"
 #include "opt_inet.h"
+#include "opt_mpls.h"
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -93,6 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.142.4.1 2010/05/30 05:18:01 rmind Exp $
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
+#endif
+
+#ifdef MPLS
+#include <netmpls/mpls.h>
+#include <netmpls/mpls_var.h>
 #endif
 
 #ifdef NETATALK
@@ -899,6 +905,13 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
 		af = AF_INET6;
 		break;
 #endif
+#ifdef MPLS
+	case ETHERTYPE_MPLS:
+		ifq = &mplsintrq;
+		isr = NETISR_MPLS;
+		af = AF_MPLS;
+		break;
+#endif
 	default:	   /* others not yet supported */
 		GRE_DPRINTF(sc, "unhandled ethertype 0x%04x\n",
 		    ntohs(gh->ptype));
@@ -980,6 +993,15 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		error = EAFNOSUPPORT;
 		goto end;
 	}
+
+#ifdef MPLS
+		if (rt != NULL && rt_gettag(rt) != NULL) {
+			union mpls_shim msh;
+			msh.s_addr = MPLS_GETSADDR(rt);
+			if (msh.shim.label != MPLS_LABEL_IMPLNULL)
+				etype = htons(ETHERTYPE_MPLS);
+		}
+#endif
 
 	M_PREPEND(m, sizeof(*gh), M_DONTWAIT);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.84.4.1 2010/03/16 15:38:10 rmind Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.84.4.2 2010/07/03 01:19:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.84.4.1 2010/03/16 15:38:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.84.4.2 2010/07/03 01:19:55 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -396,7 +396,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	if (vp == dvp) {	/* lookup on "." */
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 		error = vn_lock(vp, LK_EXCLUSIVE);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else {

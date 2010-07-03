@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.82.4.1 2010/05/30 05:18:00 rmind Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.82.4.2 2010/07/03 01:19:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.82.4.1 2010/05/30 05:18:00 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.82.4.2 2010/07/03 01:19:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ umapfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * Unlock the node (either the lower or the alias)
 	 */
 	vp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Keep a held reference to the root vnode.

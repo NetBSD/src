@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.252.2.4 2010/05/30 05:17:09 rmind Exp $ */
+/*	$NetBSD: machdep.c,v 1.252.2.5 2010/07/03 01:19:27 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.4 2010/05/30 05:17:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252.2.5 2010/07/03 01:19:27 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1456,14 +1456,13 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	size_t size, void **kvap, int flags)
 {
 	vaddr_t va, sva;
-	int r, cbit;
+	int r;
 	size_t oversize;
 	u_long align;
 
 	if (nsegs != 1)
 		panic("_bus_dmamem_map: nsegs = %d", nsegs);
 
-	cbit = PMAP_NC;
 	align = PAGE_SIZE;
 
 	size = round_page(size);

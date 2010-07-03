@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.12.4.1 2010/05/30 05:17:31 rmind Exp $ */
+/* $NetBSD: pad.c,v 1.12.4.2 2010/07/03 01:19:36 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.12.4.1 2010/05/30 05:17:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.12.4.2 2010/07/03 01:19:36 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -359,8 +359,10 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 			    hz/100);
 			if (err != 0 && err != EWOULDBLOCK) {
 				mutex_exit(&sc->sc_mutex);
-				aprint_error_dev(sc->sc_dev,
-				    "cv_timedwait_sig returned %d\n", err);
+				if (err != ERESTART)
+					aprint_error_dev(sc->sc_dev,
+					    "cv_timedwait_sig returned %d\n",
+					    err);
 				return EINTR;
 			}
 			intr = sc->sc_intr;

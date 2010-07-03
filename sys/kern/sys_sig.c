@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.26.4.1 2010/05/30 05:17:58 rmind Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.26.4.2 2010/07/03 01:19:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.26.4.1 2010/05/30 05:17:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.26.4.2 2010/07/03 01:19:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -235,7 +235,8 @@ sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 	if (SCARG(uap, pid) > 0) {
 		/* kill single process */
 		mutex_enter(proc_lock);
-		if ((p = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
+		p = proc_find(SCARG(uap, pid));
+		if (p == NULL) {
 			mutex_exit(proc_lock);
 			return ESRCH;
 		}

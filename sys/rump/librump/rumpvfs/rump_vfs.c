@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.43.2.2 2010/05/30 05:18:07 rmind Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.43.2.3 2010/07/03 01:20:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43.2.2 2010/05/30 05:18:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.43.2.3 2010/07/03 01:20:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -144,12 +144,25 @@ rump_vfs_init(void)
 	 * modules from the host will be autoloaded to rump kernels.
 	 */
 #ifdef _RUMP_NATIVE_ABI
-	rump_etfs_register(module_base, module_base, RUMP_ETFS_DIR_SUBDIRS);
+	{
+	char *mbase;
+
+	if (rumpuser_getenv("RUMP_MODULEBASE", buf, sizeof(buf), &error) == 0)
+		mbase = buf;
+	else
+		mbase = module_base;
+
+	if (strlen(mbase) != 0 && *mbase != '0') {
+		rump_etfs_register(module_base, mbase, RUMP_ETFS_DIR_SUBDIRS);
+	}
+	}
 #endif
 
 	module_init_class(MODULE_CLASS_VFS);
 
 	rump_vfs_builddevs(devsw_conv0, max_devsw_convs);
+
+	rump_component_init(RUMP_COMPONENT_VFS);
 }
 
 void
@@ -378,7 +391,7 @@ rump_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
 		return rv;
 
 	if (!lock)
-		VOP_UNLOCK(*vpp, 0);
+		VOP_UNLOCK(*vpp);
 
 	return 0;
 }

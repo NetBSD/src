@@ -182,7 +182,7 @@ AeCtrlCHandler (
     signal (SIGINT, SIG_IGN);
     SigintCount++;
 
-    AcpiOsPrintf ("Caught a ctrl-c (#%d)\n\n", SigintCount);
+    AcpiOsPrintf ("Caught a ctrl-c (#%u)\n\n", SigintCount);
 
     if (AcpiGbl_MethodExecuting)
     {
@@ -618,7 +618,7 @@ AeInstallHandlers (void)
         if (ACPI_FAILURE (Status))
         {
             ACPI_EXCEPTION ((AE_INFO, Status,
-                "Could not install an OpRegion handler for %s space(%d)",
+                "Could not install an OpRegion handler for %s space(%u)",
                 AcpiUtGetRegionName((UINT8) SpaceId[i]), SpaceId[i]));
             return (Status);
         }
@@ -922,7 +922,7 @@ AeRegionHandler (
         ((UINT64)(RegionElement->Address) + RegionElement->Length))
     {
         ACPI_WARNING ((AE_INFO,
-            "Request on [%4.4s] is beyond region limit Req-%X+%X, Base=%X, Len-%X",
+            "Request on [%4.4s] is beyond region limit Req-0x%X+0x%X, Base=0x%X, Len-0x%X",
             (RegionObject->Region.Node)->Name.Ascii, (UINT32) Address,
             ByteWidth, (UINT32)(RegionElement->Address),
             RegionElement->Length));

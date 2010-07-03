@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.16 2009/11/27 03:23:04 rmind Exp $	*/
+/*	$NetBSD: copy.S,v 1.16.4.1 2010/07/03 01:19:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -501,7 +501,7 @@ ENTRY(ucas_64)
 	/* Fail if kernel-space */
 	movq	$VM_MAXUSER_ADDRESS-8, %r8
 	cmpq	%r8, %rdi
-	ja	1f
+	ja	_C_LABEL(ucas_fault)
 	/* Label for fault handler */
 .Lucas64_start:
 	/* Perform the CAS */
@@ -518,9 +518,6 @@ ENTRY(ucas_64)
 	xorq	%rax, %rax
 	/* Clear the fault handler */
 	movq	%rax, PCB_ONFAULT(%r8)
-1:
-	/* Failure case */
-	movq	$EFAULT, %rax
 	ret
 	DEFERRED_SWITCH_CALL
 
@@ -532,7 +529,7 @@ ENTRY(ucas_32)
 	/* Fail if kernel-space */
 	movq	$VM_MAXUSER_ADDRESS-4, %r8
 	cmpq	%r8, %rdi
-	ja	1f
+	ja	_C_LABEL(ucas_fault)
 	/* Label for fault handler */
 .Lucas32_start:
 	/* Perform the CAS */
@@ -545,9 +542,6 @@ ENTRY(ucas_32)
 	 */
 	movl	%eax, (%rcx)
 	xorq	%rax, %rax
-1:
-	/* Failure case */
-	movq	$EFAULT, %rax
 	ret
 	DEFERRED_SWITCH_CALL
 

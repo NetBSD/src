@@ -137,7 +137,7 @@ unionfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		uid = va.va_uid;
 		gid = va.va_gid;
 	}
-	VOP_UNLOCK(mp->mnt_vnodecovered, 0);
+	VOP_UNLOCK(mp->mnt_vnodecovered);
 	if (error)
 		return (error);
 
@@ -187,7 +187,7 @@ unionfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	 * Save reference
 	 */
 	if (below) {
-		VOP_UNLOCK(upperrootvp, 0);
+		VOP_UNLOCK(upperrootvp);
 		vn_lock(lowerrootvp, LK_EXCLUSIVE | LK_RETRY);
 		ump->um_lowervp = upperrootvp;
 		ump->um_uppervp = lowerrootvp;
@@ -222,7 +222,7 @@ unionfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		error = VOP_WHITEOUT(ump->um_uppervp, &fakecn, LOOKUP);
 		if (error) {
 			if (below) {
-				VOP_UNLOCK(ump->um_uppervp, 0);
+				VOP_UNLOCK(ump->um_uppervp);
 				vrele(upperrootvp);
 			} else
 				vput(ump->um_uppervp);
@@ -235,7 +235,7 @@ unionfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Unlock the node
 	 */
-	VOP_UNLOCK(ump->um_uppervp, 0);
+	VOP_UNLOCK(ump->um_uppervp);
 
 	ump->um_op = args->mntflags & UNMNT_OPMASK;
 

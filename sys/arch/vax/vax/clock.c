@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.52 2009/12/12 14:44:09 tsutsui Exp $	 */
+/*	$NetBSD: clock.c,v 1.52.4.1 2010/07/03 01:19:28 rmind Exp $	 */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.52 2009/12/12 14:44:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.52.4.1 2010/07/03 01:19:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -45,6 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.52 2009/12/12 14:44:09 tsutsui Exp $");
 #include <machine/uvax.h>
 
 #include "opt_cputype.h"
+
+struct evcnt clock_misscnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "clock", "intr miss");
+
+EVCNT_ATTACH_STATIC(clock_misscnt);
 
 struct evcnt clock_intrcnt =
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");

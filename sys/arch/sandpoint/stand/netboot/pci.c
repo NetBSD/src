@@ -1,4 +1,4 @@
-/* $NetBSD: pci.c,v 1.12.4.1 2010/05/30 05:17:05 rmind Exp $ */
+/* $NetBSD: pci.c,v 1.12.4.2 2010/07/03 01:19:26 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,18 +33,6 @@
 
 #include <lib/libsa/stand.h>
 
-/*
- * "Map B" layout
- *
- * practice direct mode configuration scheme with CONFIG_ADDR
- * (0xfec0'0000) and CONFIG_DATA (0xfee0'0000).
- */
-#define PCI_MEMBASE	0x80000000
-#define PCI_MEMLIMIT	0xfbffffff	/* EUMB is next to this */
-#define PCI_IOBASE	0x00001000	/* reserves room for via 686B */
-#define PCI_IOLIMIT	0x000fffff
-#define CONFIG_ADDR	0xfec00000
-#define CONFIG_DATA	0xfee00000
 
 #define MAXNDEVS 32
 

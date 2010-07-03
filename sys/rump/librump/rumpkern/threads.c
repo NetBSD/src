@@ -1,4 +1,4 @@
-/*	$NetBSD: threads.c,v 1.8.4.1 2010/05/30 05:18:06 rmind Exp $	*/
+/*	$NetBSD: threads.c,v 1.8.4.2 2010/07/03 01:20:02 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007-2009 Antti Kantee.  All Rights Reserved.
@@ -29,11 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.8.4.1 2010/05/30 05:18:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: threads.c,v 1.8.4.2 2010/07/03 01:20:02 rmind Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <machine/stdarg.h>
@@ -58,11 +60,13 @@ threadbouncer(void *arg)
 
 	f = k->f;
 	thrarg = k->arg;
-	rumpuser_free(k);
 
 	/* schedule ourselves */
 	rumpuser_set_curlwp(l);
 	rump_schedule();
+
+	/* free dance struct */
+	free(k, M_TEMP);
 
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_LOCK(1, NULL);
@@ -132,7 +136,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	}
 	KASSERT(fmt != NULL);
 
-	k = rumpuser_malloc(sizeof(struct kthdesc), 0);
+	k = malloc(sizeof(*k), M_TEMP, M_WAITOK);
 	k->f = func;
 	k->arg = arg;
 	k->mylwp = l = rump_lwp_alloc(0, rump_nextlid());
@@ -150,12 +154,17 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 		strlcpy(l->l_name, thrname, MAXCOMLEN);
 	}
 		
-	rv = rumpuser_thread_create(threadbouncer, k, thrname);
+	rv = rumpuser_thread_create(threadbouncer, k, thrname,
+	    (flags & KTHREAD_JOINABLE) == KTHREAD_JOINABLE, &l->l_ctxlink);
 	if (rv)
 		return rv;
 
-	if (newlp)
+	if (newlp) {
 		*newlp = l;
+	} else {
+		KASSERT((flags & KTHREAD_JOINABLE) == 0);
+	}
+
 	return 0;
 }
 
@@ -166,6 +175,19 @@ kthread_exit(int ecode)
 	if ((curlwp->l_pflag & LP_MPSAFE) == 0)
 		KERNEL_UNLOCK_LAST(NULL);
 	rump_lwp_release(curlwp);
+	/* unschedule includes membar */
 	rump_unschedule();
 	rumpuser_thread_exit();
+}
+
+int
+kthread_join(struct lwp *l)
+{
+	int rv;
+
+	KASSERT(l->l_ctxlink != NULL);
+	rv = rumpuser_thread_join(l->l_ctxlink);
+	membar_consumer();
+
+	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.97.4.2 2010/03/17 06:03:19 rmind Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.97.4.3 2010/07/03 01:20:06 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.97.4.2 2010/03/17 06:03:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.97.4.3 2010/07/03 01:20:06 rmind Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -230,6 +230,8 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	 */
 
 	pmap_kremove(kva, npages << PAGE_SHIFT);
+	pmap_update(pmap_kernel());
+
 	if (kva == emergva) {
 		mutex_enter(&pager_map_wanted_lock);
 		emerginuse = false;
@@ -249,7 +251,6 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	vm_map_unlock(pager_map);
 	if (entries)
 		uvm_unmap_detach(entries, 0);
-	pmap_update(pmap_kernel());
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.118.4.1 2010/03/18 04:36:47 rmind Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.118.4.2 2010/07/03 01:19:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -34,9 +34,10 @@
 #include "opt_amigaccgrf.h"
 #include "opt_p5ppc68kboard.h"
 #include "opt_devreload.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.118.4.1 2010/03/18 04:36:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.118.4.2 2010/07/03 01:19:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

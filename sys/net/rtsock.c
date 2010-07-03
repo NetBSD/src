@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.127.4.1 2010/05/30 05:18:02 rmind Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.127.4.2 2010/07/03 01:19:59 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,9 +61,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.127.4.1 2010/05/30 05:18:02 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.127.4.2 2010/07/03 01:19:59 rmind Exp $");
 
 #include "opt_inet.h"
+#include "opt_mpls.h"
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #endif
@@ -86,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.127.4.1 2010/05/30 05:18:02 rmind Exp $
 #include <net/if.h>
 #include <net/route.h>
 #include <net/raw_cb.h>
+
+#include <netmpls/mpls.h>
 
 #if defined(COMPAT_14) || defined(COMPAT_50)
 #include <compat/net/if.h>
@@ -128,11 +131,14 @@ rt_adjustcount(int af, int cnt)
 	case AF_IPX:
 		route_cb.ipx_count += cnt;
 		return;
-	case AF_NS:
-		route_cb.ns_count += cnt;
-		return;
 	case AF_ISO:
 		route_cb.iso_count += cnt;
+		return;
+	case AF_MPLS:
+		route_cb.mpls_count += cnt;
+		return;
+	case AF_NS:
+		route_cb.ns_count += cnt;
 		return;
 	}
 }
@@ -339,6 +345,7 @@ route_output(struct mbuf *m, ...)
 			info.rti_info[RTAX_DST] = rt_getkey(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+			info.rti_info[RTAX_TAG] = (struct sockaddr*)rt_gettag(rt);
 			if ((rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) == 0)
 				;
 			else if ((ifp = rt->rt_ifp) != NULL) {
@@ -403,6 +410,8 @@ route_output(struct mbuf *m, ...)
 			if (info.rti_info[RTAX_GATEWAY] &&
 			    rt_setgate(rt, info.rti_info[RTAX_GATEWAY]))
 				senderr(EDQUOT);
+			if (info.rti_info[RTAX_TAG])
+				rt_settag(rt, info.rti_info[RTAX_TAG]);
 			/* new gateway could require new ifaddr, ifp;
 			   flags may also be different; ifp may be specified
 			   by ll sockaddr when protocol address is ambiguous */
@@ -435,6 +444,8 @@ route_output(struct mbuf *m, ...)
 					rt->rt_ifp = ifp;
 				}
 			}
+			if (ifp && rt->rt_ifp != ifp)
+				rt->rt_ifp = ifp;
 			rt_setmetrics(rtm->rtm_inits, &rtm->rtm_rmx,
 			    &rt->rt_rmx);
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)

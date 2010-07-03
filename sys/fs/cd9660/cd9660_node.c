@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.24.22.1 2010/03/16 15:38:06 rmind Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.24.22.2 2010/07/03 01:19:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.24.22.1 2010/03/16 15:38:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.24.22.2 2010/07/03 01:19:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ cd9660_ihashins(struct iso_node *ip)
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	mutex_exit(&cd9660_ihash_lock);
 
-	vlockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(ITOV(ip), LK_EXCLUSIVE);
 }
 
 /*
@@ -213,7 +213,7 @@ cd9660_inactive(void *v)
 	 */
 	ip->i_flag = 0;
 	*ap->a_recycle = (ip->inode.iso_mode == 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return error;
 }
 

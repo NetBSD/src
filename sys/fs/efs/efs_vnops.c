@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.20.4.1 2010/05/30 05:17:55 rmind Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.20.4.2 2010/07/03 01:19:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.20.4.1 2010/05/30 05:17:55 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.20.4.2 2010/07/03 01:19:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ efs_lookup(void *v)
 		if (err)
 			return (err);
 
-		VOP_UNLOCK(ap->a_dvp, 0);	/* preserve lock order */
+		VOP_UNLOCK(ap->a_dvp);	/* preserve lock order */
 
 		err = VFS_VGET(ap->a_dvp->v_mount, ino, &vp);
 		if (err) {
@@ -583,7 +583,7 @@ efs_inactive(void *v)
 	struct efs_inode *eip = EFS_VTOI(ap->a_vp);
 
 	*ap->a_recycle = (eip->ei_mode == 0);
-	VOP_UNLOCK(ap->a_vp, 0);
+	VOP_UNLOCK(ap->a_vp);
 
 	return (0);
 }

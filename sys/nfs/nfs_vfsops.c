@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.211.2.2 2010/05/30 05:18:03 rmind Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.211.2.3 2010/07/03 01:20:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.211.2.2 2010/05/30 05:18:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.211.2.3 2010/07/03 01:20:00 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -819,7 +819,7 @@ mountnfs(struct nfs_args *argp, struct mount *mp, struct mbuf *nam, const char *
 	if (vp->v_type == VNON)
 		vp->v_type = VDIR;
 	vp->v_vflag |= VV_ROOT;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	*vpp = vp;
 
 	snprintf(iosname, sizeof(iosname), "nfs%u", nfs_mount_count++);
@@ -965,14 +965,19 @@ loop:
 			continue;
 		mutex_enter(vp->v_interlock);
 		/* XXX MNT_LAZY cannot be right? */
-		if (waitfor == MNT_LAZY || VOP_ISLOCKED(vp) ||
+		if (waitfor == MNT_LAZY ||
 		    (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     UVM_OBJ_IS_CLEAN(&vp->v_uobj))) {
 			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		if (error != 0) {
+			if (error != ENOENT) {
+				mutex_enter(&mntvnode_lock);
+				continue;
+			}
 			(void)vunmark(mvp);
 			goto loop;
 		}

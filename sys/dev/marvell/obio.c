@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.12.4.1 2010/05/30 05:17:30 rmind Exp $	*/
+/*	$NetBSD: obio.c,v 1.12.4.2 2010/07/03 01:19:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.12.4.1 2010/05/30 05:17:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.12.4.2 2010/07/03 01:19:36 rmind Exp $");
 
 #include "opt_marvell.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.12.4.1 2010/05/30 05:17:30 rmind Exp $");
 #include <sys/extent.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/marvell/gtreg.h>

@@ -1,9 +1,9 @@
-#	$NetBSD: KUROBOX,v 1.2.2.2 2010/05/30 05:17:05 rmind Exp $
+#	$NetBSD: KUROBOX,v 1.2.2.3 2010/07/03 01:19:25 rmind Exp $
 #
 # KuroBox/LinkStation support
 #
 
-include "arch/sandpoint/conf/GENERIC.NAS"
+include "arch/sandpoint/conf/GENERIC"
 
 no com0
 no satmgr0

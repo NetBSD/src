@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.37.4.1 2010/05/30 05:18:07 rmind Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.37.4.2 2010/07/03 01:20:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.37.4.1 2010/05/30 05:18:07 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.37.4.2 2010/07/03 01:20:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -83,7 +83,8 @@ unsigned memwincnt = 16;
 
 #define STARTWIN(off)		((off) & ~((off_t)memwinsize-1))
 #define INWIN(win,off)		((win)->win_off == STARTWIN(off))
-#define WINSIZE(rblk, win)	(MIN((rblk->rblk_size-win->win_off),memwinsize))
+#define WINSIZE(rblk, win)	(MIN((rblk->rblk_hostsize-win->win_off), \
+				      memwinsize))
 #define WINVALID(win)		((win)->win_off != (off_t)-1)
 #define WINVALIDATE(win)	((win)->win_off = (off_t)-1)
 struct blkwin {
@@ -104,6 +105,7 @@ static struct rblkdev {
 #endif
 	uint64_t rblk_size;
 	uint64_t rblk_hostoffset;
+	uint64_t rblk_hostsize;
 	int rblk_ftype;
 
 	/* for mmap */
@@ -384,7 +386,6 @@ rumpblk_init(void)
 	}
 }
 
-/* XXX: no deregister */
 int
 rumpblk_register(const char *path, devminor_t *dmin,
 	uint64_t offset, uint64_t size)
@@ -434,11 +435,45 @@ rumpblk_register(const char *path, devminor_t *dmin,
 		KASSERT(offset < flen);
 		rblk->rblk_size = flen - offset;
 	}
+	rblk->rblk_hostsize = flen;
 	rblk->rblk_ftype = ftype;
 	makedefaultlabel(&rblk->rblk_label, rblk->rblk_size, i);
 	mutex_exit(&rumpblk_lock);
 
 	*dmin = i;
+	return 0;
+}
+
+/*
+ * Unregister rumpblk.  It's the callers responsibility to make
+ * sure it's no longer in use.
+ */
+int
+rumpblk_deregister(const char *path)
+{
+	struct rblkdev *rblk;
+	int i;
+
+	mutex_enter(&rumpblk_lock);
+	for (i = 0; i < RUMPBLK_SIZE; i++) {
+		if (minors[i].rblk_path&&strcmp(minors[i].rblk_path, path)==0) {
+			break;
+		}
+	}
+	mutex_exit(&rumpblk_lock);
+
+	if (i == RUMPBLK_SIZE)
+		return ENOENT;
+
+	rblk = &minors[i];
+	KASSERT(rblk->rblk_fd == -1);
+	KASSERT(rblk->rblk_opencnt == 0);
+
+	wincleanup(rblk);
+	free(rblk->rblk_path, M_TEMP);
+	rblk->rblk_path = NULL;
+	memset(&rblk->rblk_label, 0, sizeof(rblk->rblk_label));
+
 	return 0;
 }
 

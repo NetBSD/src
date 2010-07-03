@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.rumpfs,v 1.18.2.1 2010/05/30 05:18:05 rmind Exp $
+#	$NetBSD: Makefile.rumpfs,v 1.18.2.2 2010/07/03 01:20:01 rmind Exp $
 #
 
 RUMPFSLIST=	cd9660 efs ext2fs fdesc ffs hfs kernfs lfs mfs msdos	\
-		nfs nilfs ntfs nullfs smbfs syspuffs sysvbfs tmpfs udf	\
-		umapfs union
+		nfs nilfs ntfs nullfs ptyfs smbfs syspuffs sysvbfs	\
+		tmpfs udf umapfs union
 
 RUMPFSLIST+=	fifovfs layervfs
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.156.2.1 2010/03/16 15:38:14 rmind Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.156.2.2 2010/07/03 01:20:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.156.2.1 2010/03/16 15:38:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.156.2.2 2010/07/03 01:20:04 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -391,7 +391,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = genfs_can_mount(devvp, accessmode, l->l_cred);
-		VOP_UNLOCK(devvp, 0);
+		VOP_UNLOCK(devvp);
 	}
 
 	if (error) {
@@ -413,7 +413,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		if (error) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, xflags, NOCRED);
-			VOP_UNLOCK(devvp, 0);
+			VOP_UNLOCK(devvp);
 			goto fail;
 		}
 
@@ -535,7 +535,7 @@ ext2fs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	devvp = ump->um_devvp;
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, 0, cred, l, 0, 0);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error)
 		panic("ext2fs_reload: dirty1");
 	/*
@@ -672,7 +672,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
-	VOP_UNLOCK(devvp, 0);
+	VOP_UNLOCK(devvp);
 	if (error)
 		return (error);
 
@@ -973,7 +973,7 @@ loop:
 		if ((error = VOP_FSYNC(ump->um_devvp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 			allerror = error;
-		VOP_UNLOCK(ump->um_devvp, 0);
+		VOP_UNLOCK(ump->um_devvp);
 	}
 	/*
 	 * Write back modified superblock.
