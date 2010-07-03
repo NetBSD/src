@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.31.2.1 2010/05/30 05:16:53 rmind Exp $
+#	$NetBSD: XEN3_DOM0,v 1.31.2.2 2010/07/03 01:19:20 rmind Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -104,6 +104,13 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS

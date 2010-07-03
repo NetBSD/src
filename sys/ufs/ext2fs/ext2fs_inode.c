@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.71.4.1 2010/03/16 15:38:14 rmind Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.71.4.2 2010/07/03 01:20:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.71.4.1 2010/03/16 15:38:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.71.4.2 2010/07/03 01:20:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ out:
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 

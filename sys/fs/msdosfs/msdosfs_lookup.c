@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.20 2010/01/08 11:35:08 pooka Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.20.4.1 2010/07/03 01:19:50 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.20 2010/01/08 11:35:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.20.4.1 2010/07/03 01:19:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,7 +538,7 @@ foundroot:
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		error = deget(pmp, cluster, blkoff, &tdp);
 		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {

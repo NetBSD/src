@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.15.4.1 2010/03/16 15:38:13 rmind Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.15.4.2 2010/07/03 01:20:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.15.4.1 2010/03/16 15:38:13 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.15.4.2 2010/07/03 01:20:03 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -50,15 +50,21 @@ uvm_aio_aiodone(struct buf *bp)
 	int i, npages = bp->b_bufsize >> PAGE_SHIFT;
 	struct vm_page **pgs;
 	vaddr_t va;
+	int pageout = 0;
 
 	pgs = kmem_alloc(npages * sizeof(*pgs), KM_SLEEP);
 	for (i = 0; i < npages; i++) {
 		va = (vaddr_t)bp->b_data + (i << PAGE_SHIFT);
 		pgs[i] = uvm_pageratop(va);
-		pgs[i]->flags &= ~PG_PAGEOUT;
+		if (pgs[i]->flags & PG_PAGEOUT) {
+			KASSERT((pgs[i]->flags & PG_FAKE) == 0);
+			pageout++;
+			pgs[i]->flags &= ~PG_PAGEOUT;
+		}
 	}
 
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
+	uvm_pageout_done(pageout);
 	uvm_page_unbusy(pgs, npages);
 
 	if (BUF_ISWRITE(bp) && (bp->b_cflags & BC_AGE) != 0) {

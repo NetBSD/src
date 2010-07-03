@@ -242,7 +242,7 @@ opcic_card_detect(void *arg, int val)
 	}
 	splx(s);
 
-	DPRINTF(("%s: card %d %s\n", sc->sc_pc.sc_dev.dv_xname, sock_no,
+	DPRINTF(("%s: card %d %s\n", device_xname(sc->sc_pc.sc_dev), sock_no,
 	    HAVE_CARD(val) ? "inserted" : "removed"));
 
 	sapcic_intr(arg);

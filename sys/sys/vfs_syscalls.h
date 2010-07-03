@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.13 2009/08/09 22:49:00 haad Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.13.4.1 2010/07/03 01:20:04 rmind Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ int	do_sys_rename(const char *, const char *, enum uio_seg, int);
 int	do_sys_mknod(struct lwp *, const char *, mode_t, dev_t, register_t *,
     enum uio_seg);
 int	do_sys_mkdir(const char *, mode_t, enum uio_seg);
+int	do_sys_symlink(const char *, const char *, enum uio_seg);
 
 int	chdir_lookup(const char *, int, struct vnode **, struct lwp *);
 void	change_root(struct cwdinfo *, struct vnode *, struct lwp *);

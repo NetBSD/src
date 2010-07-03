@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.117.2.1 2010/03/16 15:38:15 rmind Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.117.2.2 2010/07/03 01:20:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.117.2.1 2010/03/16 15:38:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.117.2.2 2010/07/03 01:20:05 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,9 +216,9 @@ lfs_reserveavail(struct lfs *fs, struct vnode *vp,
 		 * XXX ideally, we should unlock vnodes here
 		 * because we might sleep very long time.
 		 */
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		if (vp2 != NULL) {
-			VOP_UNLOCK(vp2, 0);
+			VOP_UNLOCK(vp2);
 		}
 #else
 		/*

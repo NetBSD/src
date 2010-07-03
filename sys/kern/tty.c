@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.234.4.1 2010/05/30 05:17:58 rmind Exp $	*/
+/*	$NetBSD: tty.c,v 1.234.4.2 2010/07/03 01:19:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234.4.1 2010/05/30 05:17:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.234.4.2 2010/07/03 01:19:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1190,14 +1190,18 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 
 		if (pgid < 0) {
-			pgrp = pg_find(-pgid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-			if (pgrp == NULL)
+			pgrp = pgrp_find(-pgid);
+			if (pgrp == NULL) {
+				mutex_exit(proc_lock);
 				return (EINVAL);
+			}
 		} else {
 			struct proc *p1;
-			p1 = p_find(pgid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-			if (!p1)
+			p1 = proc_find(pgid);
+			if (!p1) {
+				mutex_exit(proc_lock);
 				return (ESRCH);
+			}
 			pgrp = p1->p_pgrp;
 		}
 
@@ -1219,9 +1223,11 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 			mutex_exit(proc_lock);
 			return (ENOTTY);
 		}
-		pgrp = pg_find(*(int *)data, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-		if (pgrp == NULL)
+		pgrp = pgrp_find(*(pid_t *)data);
+		if (pgrp == NULL) {
+			mutex_exit(proc_lock);
 			return (EINVAL);
+		}
 		if (pgrp->pg_session != p->p_session) {
 			mutex_exit(proc_lock);
 			return (EPERM);
@@ -2575,8 +2581,8 @@ out:
 
 /*
  * Sleep on chan, returning ERESTART if tty changed while we napped and
- * returning any errors (e.g. EINTR/ETIMEDOUT) reported by tsleep.  If
- * the tty is revoked, restarting a pending call will redo validation done
+ * returning any errors (e.g. EINTR/ETIMEDOUT) reported by cv_timedwait(_sig).
+ * If the tty is revoked, restarting a pending call will redo validation done
  * at the start of the call.
  *
  * Must be called with the tty lock held.

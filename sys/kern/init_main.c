@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.418.4.2 2010/05/30 05:17:56 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.418.4.3 2010/07/03 01:19:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.2 2010/05/30 05:17:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.418.4.3 2010/07/03 01:19:52 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -247,7 +247,6 @@ struct timeval50 boottime50;
 #include <sys/userconf.h>
 #endif
 
-extern struct proc proc0;
 extern struct lwp lwp0;
 extern time_t rootfstime;
 
@@ -267,6 +266,7 @@ static void check_console(struct lwp *l);
 static void start_init(void *);
 static void configure(void);
 static void configure2(void);
+static void configure3(void);
 void main(void);
 
 /*
@@ -387,6 +387,7 @@ main(void)
 
 	/* Create process 0. */
 	proc0_init();
+	lwp0_init();
 
 	/* Disable preemption during boot. */
 	kpreempt_disable();
@@ -430,7 +431,7 @@ main(void)
 	loginit();
 
 	/* Second part of module system initialization. */
-	module_init2();
+	module_start_unload_thread();
 
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
@@ -596,9 +597,11 @@ main(void)
 
 	/*
 	 * Load any remaining builtin modules, and hand back temporary
-	 * storage to the VM system.
+	 * storage to the VM system.  Then require force when loading any
+	 * remaining un-init'ed built-in modules to avoid later surprises.
 	 */
 	module_init_class(MODULE_CLASS_ANY);
+	module_builtin_require_force();
 
 	/*
 	 * Finalize configuration now that all real devices have been
@@ -627,6 +630,8 @@ main(void)
 		}
 	} while (error != 0);
 	mountroothook_destroy();
+
+	configure3();
 
 	/*
 	 * Initialise the time-of-day clock, passing the time recorded
@@ -779,6 +784,20 @@ configure2(void)
 	 * devices that want interrupts enabled.
 	 */
 	config_create_interruptthreads();
+
+	/* Get the threads going and into any sleeps before continuing. */
+	yield();
+}
+
+static void
+configure3(void)
+{
+
+	/*
+	 * Create threads to call back and finish configuration for
+	 * devices that want the mounted root file system.
+	 */
+	config_create_mountrootthreads();
 
 	/* Get the threads going and into any sleeps before continuing. */
 	yield();

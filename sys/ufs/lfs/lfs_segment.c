@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.215.2.1 2010/03/16 15:38:15 rmind Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.215.2.2 2010/07/03 01:20:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.215.2.1 2010/03/16 15:38:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.215.2.2 2010/07/03 01:20:05 rmind Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -787,7 +787,7 @@ lfs_segwrite(struct mount *mp, int flags)
 		}
 #endif
 		mutex_exit(vp->v_interlock);
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	} else {
 		(void) lfs_writeseg(fs, sp);
 	}

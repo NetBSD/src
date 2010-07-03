@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.4.4.1 2010/05/30 05:17:17 rmind Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.4.4.2 2010/07/03 01:19:34 rmind Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.4.4.1 2010/05/30 05:17:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.4.4.2 2010/07/03 01:19:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -273,10 +273,7 @@ acpi_pcidev_ppb_downbus(uint16_t segment, uint16_t bus, uint16_t device,
 	if (bus > 255 || device > 31 || function > 7)
 		return AE_BAD_PARAMETER;
 
-	if (sc == NULL)
-		pc = NULL;
-	else
-		pc = sc->sc_pc;
+	pc = sc->sc_pc;
 
 	tag = pci_make_tag(pc, bus, device, function);
 

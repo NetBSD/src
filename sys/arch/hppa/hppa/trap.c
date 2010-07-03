@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78.2.1 2010/05/30 05:16:52 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.78.2.2 2010/07/03 01:19:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.2.1 2010/05/30 05:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78.2.2 2010/07/03 01:19:19 rmind Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1052,28 +1052,26 @@ process_sstep(struct lwp *l, int sstep)
 	ss_clear_breakpoints(l);
 
 	/* We're continuing... */
-	/* Don't touch the syscall gateway page. */
-	/* XXX head */
-	if (sstep == 0 ||
-	    (tf->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE) {
+	if (sstep == 0) {
 		tf->tf_ipsw &= ~PSW_T;
 		return 0;
 	}
 
-	l->l_md.md_bpva = tf->tf_iioq_tail & ~HPPA_PC_PRIV_MASK;
-
 	/*
-	 * Insert two breakpoint instructions; the first one might be
-	 * nullified.  Of course we need to save two instruction
-	 * first.
+	 * Don't touch the syscall gateway page.  Instead, insert a
+	 * breakpoint where we're supposed to return.
 	 */
+	if ((tf->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE)
+		l->l_md.md_bpva = tf->tf_r31 & ~HPPA_PC_PRIV_MASK;
+	else
+		l->l_md.md_bpva = tf->tf_iioq_tail & ~HPPA_PC_PRIV_MASK;
 
 	error = ss_get_value(l, l->l_md.md_bpva, &l->l_md.md_bpsave[0]);
 	if (error)
-		return (error);
+		return error;
 	error = ss_get_value(l, l->l_md.md_bpva + 4, &l->l_md.md_bpsave[1]);
 	if (error)
-		return (error);
+		return error;
 
 	error = ss_put_value(l, l->l_md.md_bpva, SSBREAKPOINT);
 	if (error)
@@ -1082,7 +1080,10 @@ process_sstep(struct lwp *l, int sstep)
 	if (error)
 		return error;
 
-	tf->tf_ipsw |= PSW_T;
+	if ((tf->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE)
+		tf->tf_ipsw &= ~PSW_T;
+	else
+		tf->tf_ipsw |= PSW_T;
 
 	return 0;
 }

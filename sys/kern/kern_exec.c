@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.294.2.1 2010/05/30 05:17:56 rmind Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.294.2.2 2010/07/03 01:19:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.294.2.1 2010/05/30 05:17:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.294.2.2 2010/07/03 01:19:53 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -327,7 +327,7 @@ check_exec(struct lwp *l, struct exec_package *epp, const char *kpath)
 		goto bad1;
 
 	/* unlock vp, since we need it unlocked from here on out. */
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 #if NVERIEXEC > 0
 	error = veriexec_verify(l, vp, epp->ep_resolvedname,

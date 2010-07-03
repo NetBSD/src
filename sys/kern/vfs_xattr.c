@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.20.4.1 2010/05/30 05:17:59 rmind Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.20.4.2 2010/07/03 01:19:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.20.4.1 2010/05/30 05:17:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.20.4.2 2010/07/03 01:19:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 {
 
 	if (vp != NULL)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	return (EOPNOTSUPP);
 }
 
@@ -234,7 +234,7 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	retval[0] = cnt;
 
  done:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -291,7 +291,7 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		retval[0] = size;
 
  done:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -313,7 +313,7 @@ extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL,
 		    l->l_cred);
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -364,7 +364,7 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 		retval[0] = size;
 
  done:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 

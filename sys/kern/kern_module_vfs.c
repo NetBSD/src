@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_vfs.c,v 1.3.4.1 2010/05/30 05:17:57 rmind Exp $	*/
+/*	$NetBSD: kern_module_vfs.c,v 1.3.4.2 2010/07/03 01:19:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.3.4.1 2010/05/30 05:17:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_vfs.c,v 1.3.4.2 2010/07/03 01:19:53 rmind Exp $");
 
 #define _MODULE_INTERNAL
 #include <sys/param.h>
@@ -194,7 +194,7 @@ module_load_plist_vfs(const char *modpath, const bool nochroot,
 	KASSERT(error == 0);
 
 out:
-	VOP_UNLOCK(nd.ni_vp, 0);
+	VOP_UNLOCK(nd.ni_vp);
 	vn_close(nd.ni_vp, FREAD, kauth_cred_get());
 
 out1:

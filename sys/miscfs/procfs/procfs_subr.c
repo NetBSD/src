@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.95.4.1 2010/03/16 15:38:11 rmind Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.95.4.2 2010/07/03 01:19:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.95.4.1 2010/03/16 15:38:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.95.4.2 2010/07/03 01:19:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,7 +620,7 @@ procfs_hashins(struct pfsnode *pp)
 	struct pfs_hashhead *ppp;
 
 	/* lock the pfsnode, then put it on the appropriate hash list */
-	vlockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(PFSTOV(pp), LK_EXCLUSIVE);
 
 	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];
@@ -681,7 +681,7 @@ procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 
 	if (pid == 0)
 		tp = &proc0;
-	else if ((tp = p_find(pid, PFIND_LOCKED)) == NULL)
+	else if ((tp = proc_find(pid)) == NULL)
 		error = notfound;
 	if (tp != NULL && !rw_tryenter(&tp->p_reflock, RW_READER))
 		error = EBUSY;

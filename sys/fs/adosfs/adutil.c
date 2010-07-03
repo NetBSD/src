@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.11.4.1 2010/03/16 15:38:06 rmind Exp $	*/
+/*	$NetBSD: adutil.c,v 1.11.4.2 2010/07/03 01:19:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.11.4.1 2010/03/16 15:38:06 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.11.4.2 2010/07/03 01:19:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -87,7 +87,7 @@ start_over:
 void
 adosfs_ainshash(struct adosfsmount *amp, struct anode *ap)
 {
-	vlockmgr(&ap->vp->v_lock, LK_EXCLUSIVE);
+	VOP_LOCK(ATOV(ap), LK_EXCLUSIVE);
 
 	simple_lock(&adosfs_hashlock);
 	LIST_INSERT_HEAD(&amp->anodetab[AHASH(ap->block)], ap, link);

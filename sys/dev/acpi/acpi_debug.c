@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_debug.c,v 1.1.6.1 2010/05/30 05:17:17 rmind Exp $ */
+/* $NetBSD: acpi_debug.c,v 1.1.6.2 2010/07/03 01:19:34 rmind Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.1.6.1 2010/05/30 05:17:17 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_debug.c,v 1.1.6.2 2010/07/03 01:19:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -115,6 +115,15 @@ acpi_debug_init(void)
 	    CTLFLAG_READWRITE, CTLTYPE_STRING, "level",
 	    SYSCTL_DESCR("ACPI debug level"),
 	    acpi_debug_sysctl_level, 0, acpi_debug_level_s, ACPI_DEBUG_MAX,
+	    CTL_CREATE, CTL_EOL);
+
+	if (rv != 0)
+		goto fail;
+
+	rv = sysctl_createv(NULL, 0, &rnode, NULL,
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "object",
+	    SYSCTL_DESCR("ACPI debug object"),
+	    NULL, 0, &AcpiGbl_EnableAmlDebugObject, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	if (rv != 0)

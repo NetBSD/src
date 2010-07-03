@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.282.4.2 2010/05/30 05:18:03 rmind Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.282.4.3 2010/07/03 01:20:00 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.282.4.2 2010/05/30 05:18:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.282.4.3 2010/07/03 01:20:00 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -857,7 +857,7 @@ nfs_lookup(void *v)
 		 */
 		newvp = *vpp;
 		if ((flags & ISDOTDOT) != 0) {
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 		}
 		error = vn_lock(newvp, LK_EXCLUSIVE);
 		if ((flags & ISDOTDOT) != 0) {
@@ -967,7 +967,7 @@ dorpc:
 		/*
 		 * ".." lookup
 		 */
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 		error = nfs_nget(dvp->v_mount, fhp, fhsize, &np);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
@@ -2096,7 +2096,7 @@ nfs_link(void *v)
 		cache_purge1(dvp, cnp, 0);
 	PNBUF_PUT(cnp->cn_pnbuf);
 	if (dvp != vp)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	vput(dvp);

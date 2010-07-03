@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.180.4.1 2010/05/30 05:17:33 rmind Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.180.4.2 2010/07/03 01:19:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.1 2010/05/30 05:17:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.180.4.2 2010/07/03 01:19:36 rmind Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -1842,7 +1842,7 @@ bge_chipinit(struct bge_softc *sc)
 		/* Conventional PCI bus: 256 bytes for read and write. */
 	  	DPRINTFN(4, ("(%s: PCI 2.2 DMA setting)\n",
 		    device_xname(sc->bge_dev)));
-		dma_rw_ctl = (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
+		dma_rw_ctl |= (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
 		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
 		if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5705 &&
 		    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5750)

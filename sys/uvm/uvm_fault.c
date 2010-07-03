@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.173.2.3 2010/05/30 05:18:09 rmind Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.173.2.4 2010/07/03 01:20:06 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173.2.3 2010/05/30 05:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.173.2.4 2010/07/03 01:20:06 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1492,8 +1492,8 @@ uvm_fault_upper_enter(
 	 * done case 1!  finish up by unlocking everything and returning success
 	 */
 
-	uvmfault_unlockall(ufi, amap, uobj);
 	pmap_update(ufi->orig_map->pmap);
+	uvmfault_unlockall(ufi, amap, uobj);
 	return 0;
 }
 
@@ -2179,8 +2179,9 @@ uvm_fault_lower_enter(
 
 	uvm_fault_lower_done(ufi, flt, uobj, anon, pg);
 
-	uvmfault_unlockall(ufi, amap, uobj);
 	pmap_update(ufi->orig_map->pmap);
+	uvmfault_unlockall(ufi, amap, uobj);
+
 	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
 	return 0;
 }

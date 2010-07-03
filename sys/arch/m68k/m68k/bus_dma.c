@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.29 2008/06/04 12:41:41 ad Exp $ */
+/* $NetBSD: bus_dma.c,v 1.29.20.1 2010/07/03 01:19:22 rmind Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -37,9 +37,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29 2008/06/04 12:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.29.20.1 2010/07/03 01:19:22 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
