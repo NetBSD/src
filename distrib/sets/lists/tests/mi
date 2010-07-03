@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.94 2010/07/03 08:16:51 jmmv Exp $
+# $NetBSD: mi,v 1.95 2010/07/03 18:59:38 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -130,9 +130,12 @@
 ./usr/libdata/debug/usr/tests/atf/formats				tests-atf-debug
 ./usr/libdata/debug/usr/tests/atf/formats/h_parser.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/formats/t_writers.debug		tests-atf-debug		debug,atf
-./usr/libdata/debug/usr/tests/atf/test_programs				tests-atf-debug
-./usr/libdata/debug/usr/tests/atf/test_programs/h_c.debug		tests-atf-debug		debug,atf
-./usr/libdata/debug/usr/tests/atf/test_programs/h_cpp.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/test_programs				tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/atf/test_programs/h_c.debug		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/atf/test_programs/h_cpp.debug		tests-obsolete		obsolete
+./usr/libdata/debug/usr/tests/atf/test-programs				tests-atf-debug
+./usr/libdata/debug/usr/tests/atf/test-programs/h_c.debug		tests-atf-debug		debug,atf
+./usr/libdata/debug/usr/tests/atf/test-programs/h_cpp.debug		tests-atf-debug		debug,atf
 ./usr/libdata/debug/usr/tests/atf/tools					tests-atf-debug		obsolete
 ./usr/libdata/debug/usr/tests/atf/tools/h_fail.debug			tests-atf-debug		obsolete
 ./usr/libdata/debug/usr/tests/atf/tools/h_misc.debug			tests-atf-debug		obsolete
