@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.202 2009/12/20 09:36:05 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.202.4.1 2010/07/03 01:19:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.202 2009/12/20 09:36:05 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.202.4.1 2010/07/03 01:19:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1676,26 +1676,31 @@ fd_dupopen(int old, int *new, int mode, int error)
 int
 fsetown(pid_t *pgid, u_long cmd, const void *data)
 {
-	int id = *(const int *)data;
+	pid_t id = *(const pid_t *)data;
 	int error;
 
 	switch (cmd) {
 	case TIOCSPGRP:
 		if (id < 0)
-			return (EINVAL);
+			return EINVAL;
 		id = -id;
 		break;
 	default:
 		break;
 	}
-
-	if (id > 0 && !pfind(id))
-		return (ESRCH);
-	else if (id < 0 && (error = pgid_in_session(curproc, -id)))
-		return (error);
-
-	*pgid = id;
-	return (0);
+	if (id > 0) {
+		mutex_enter(proc_lock);
+		error = proc_find(id) ? 0 : ESRCH;
+		mutex_exit(proc_lock);
+	} else if (id < 0) {
+		error = pgid_in_session(curproc, -id);
+	} else {
+		error = 0;
+	}
+	if (!error) {
+		*pgid = id;
+	}
+	return error;
 }
 
 /*
@@ -1741,7 +1746,7 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	if (pgid > 0) {
 		struct proc *p1;
 
-		p1 = p_find(pgid, PFIND_LOCKED);
+		p1 = proc_find(pgid);
 		if (p1 != NULL) {
 			kpsignal(p1, &ksi, fdescdata);
 		}
@@ -1749,7 +1754,7 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 		struct pgrp *pgrp;
 
 		KASSERT(pgid < 0);
-		pgrp = pg_find(-pgid, PFIND_LOCKED);
+		pgrp = pgrp_find(-pgid);
 		if (pgrp != NULL) {
 			kpgsignal(pgrp, &ksi, fdescdata, 0);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.169.4.2 2010/05/30 05:17:58 rmind Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.169.4.3 2010/07/03 01:19:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169.4.2 2010/05/30 05:17:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.169.4.3 2010/07/03 01:19:56 rmind Exp $");
 
 #include "veriexec.h"
 
@@ -215,7 +215,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	}
 
 	if (fmode & O_TRUNC) {
-		VOP_UNLOCK(vp, 0);			/* XXX */
+		VOP_UNLOCK(vp);			/* XXX */
 
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 		vattr_null(&va);
@@ -426,7 +426,7 @@ vn_rdwr(enum uio_rw rw, struct vnode *vp, void *base, int len, off_t offset,
 
  out:
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 	return (error);
 }
@@ -465,7 +465,7 @@ unionread:
 	mutex_enter(&fp->f_lock);
 	fp->f_offset = auio.uio_offset;
 	mutex_exit(&fp->f_lock);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (error)
 		return (error);
 
@@ -521,7 +521,7 @@ vn_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	error = VOP_READ(vp, uio, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET)
 		*offset += count - uio->uio_resid;
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -575,7 +575,7 @@ vn_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	}
 
  out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
@@ -590,7 +590,7 @@ vn_statfile(file_t *fp, struct stat *sb)
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = vn_stat(vp, sb);
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return error;
 }
 
@@ -772,8 +772,7 @@ vn_lock(struct vnode *vp, int flags)
 	    || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
 	KASSERT((flags &
-	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY|
-	    LK_CANRECURSE))
+	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY))
 	    == 0);
 
 #ifdef DIAGNOSTIC
@@ -822,32 +821,6 @@ vn_closefile(file_t *fp)
 }
 
 /*
- * Enable LK_CANRECURSE on lock. Return prior status.
- */
-u_int
-vn_setrecurse(struct vnode *vp)
-{
-	struct vnlock *lkp;
-
-	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
-	atomic_inc_uint(&lkp->vl_canrecurse);
-
-	return 0;
-}
-
-/*
- * Called when done with locksetrecurse.
- */
-void
-vn_restorerecurse(struct vnode *vp, u_int flags)
-{
-	struct vnlock *lkp;
-
-	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
-	atomic_dec_uint(&lkp->vl_canrecurse);
-}
-
-/*
  * Simplified in-kernel wrapper calls for extended attribute access.
  * Both calls pass in a NULL credential, authorizing a "kernel" access.
  * Set IO_NODELOCKED in ioflg if the vnode is already locked.
@@ -876,7 +849,7 @@ vn_extattr_get(struct vnode *vp, int ioflg, int attrnamespace,
 	error = VOP_GETEXTATTR(vp, attrnamespace, attrname, &auio, NULL, NULL);
 
 	if ((ioflg & IO_NODELOCKED) == 0)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 
 	if (error == 0)
 		*buflen = *buflen - auio.uio_resid;
@@ -912,7 +885,7 @@ vn_extattr_set(struct vnode *vp, int ioflg, int attrnamespace,
 	error = VOP_SETEXTATTR(vp, attrnamespace, attrname, &auio, NULL);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 
 	return (error);
@@ -933,7 +906,7 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 		error = VOP_SETEXTATTR(vp, attrnamespace, attrname, NULL, NULL);
 
 	if ((ioflg & IO_NODELOCKED) == 0) {
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 	}
 
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.56 2009/12/14 00:47:10 matt Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.56.4.1 2010/07/03 01:19:31 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.56 2009/12/14 00:47:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.56.4.1 2010/07/03 01:19:31 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -190,8 +190,6 @@ irix_e_proc_exit(struct proc *p)
 	 */
 	mutex_enter(proc_lock);
 	PROCLIST_FOREACH(pp, &allproc) {
-		if ((pp->p_flag & PK_MARKER) != 0)
-			continue;
 		/* Select IRIX processes */
 		if (irix_check_exec(pp) == 0)
 			continue;

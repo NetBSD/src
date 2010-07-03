@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.982.2.1 2010/05/30 05:17:16 rmind Exp $
+#	$NetBSD: files,v 1.982.2.2 2010/07/03 01:19:33 rmind Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -193,6 +193,7 @@ include "netinet6/files.netinet6"
 include "netinet6/files.ipsec"
 include "netipsec/files.netipsec"
 include "netiso/files.netiso"
+include "netmpls/files.netmpls"
 include "netnatm/files.netnatm"
 include "netsmb/files.netsmb"
 include "net/files.pf"
@@ -1273,6 +1274,7 @@ defpseudo strip:	ifnet
 defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
+defpseudo ifmpls:	ifnet
 defpseudo srt:		ifnet
 defpseudo stf:		ifnet
 defpseudodev tap:	ifnet, ether, arp
@@ -1611,6 +1613,7 @@ file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
 file	net/if_loop.c			loop			needs-flag
 file	net/if_media.c
+file	net/if_mpls.c			ifmpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
 file	net/if_stf.c			stf & inet & inet6	needs-flag

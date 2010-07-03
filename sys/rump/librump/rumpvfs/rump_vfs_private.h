@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs_private.h,v 1.10.4.1 2010/05/30 05:18:07 rmind Exp $	*/
+/*	$NetBSD: rump_vfs_private.h,v 1.10.4.2 2010/07/03 01:20:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -41,6 +41,7 @@ int		rump_devnull_init(void);
 #define RUMPBLK_DEVMAJOR 197 /* from conf/majors, XXX: not via config yet */
 #define RUMPBLK_SIZENOTSET ((uint64_t)-1)
 int	rumpblk_register(const char *, devminor_t *, uint64_t, uint64_t);
+int	rumpblk_deregister(const char *);
 int	rumpblk_init(void);
 
 void	rump_biodone(void *, size_t, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.221 2010/01/23 16:06:57 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.221.4.1 2010/07/03 01:19:27 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.221 2010/01/23 16:06:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.221.4.1 2010/07/03 01:19:27 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.221 2010/01/23 16:06:57 mrg Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/simplelock.h>
 #include <sys/kernel.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm.h>
 
@@ -635,6 +635,24 @@ xcall(xcall_func_t func, xcall_trap_t trap, int arg0, int arg1, int arg2,
 		printf_nolog("\n");
 
 	mutex_spin_exit(&xpmsg_mutex);
+}
+
+/*
+ * MD support for MI xcall(9) interface.
+ */
+void
+xc_send_ipi(struct cpu_info *target)
+{
+	u_int cpuset;
+
+	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu() != target);
+
+	if (target)
+		cpuset = 1 << target->ci_cpuid;
+	else
+		cpuset = CPUSET_ALL & ~(1 << cpuinfo.ci_cpuid);
+	XCALL0(xc_ipi_handler, cpuset);
 }
 
 /*

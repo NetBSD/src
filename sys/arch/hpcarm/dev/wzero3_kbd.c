@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_kbd.c,v 1.5.2.2 2010/05/30 05:16:51 rmind Exp $	*/
+/*	$NetBSD: wzero3_kbd.c,v 1.5.2.3 2010/07/03 01:19:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.5.2.2 2010/05/30 05:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_kbd.c,v 1.5.2.3 2010/07/03 01:19:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -531,7 +531,7 @@ wzero3kbd_tick(void *arg)
 
 	(void) wzero3kbd_poll1(sc);
 
-	callout_reset(&sc->sc_keyscan_ch, sc->sc_interval, wzero3kbd_tick, sc);
+	callout_schedule(&sc->sc_keyscan_ch, sc->sc_interval);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.104.4.1 2010/05/30 05:16:38 rmind Exp $	*/
+/*	$NetBSD: locore.s,v 1.104.4.2 2010/07/03 01:19:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -91,6 +91,8 @@
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_mbtype.h"
+#include "opt_m68k_arch.h"
+
 #include "kbd.h"
 #include "ncrscsi.h"
 #include "zs.h"

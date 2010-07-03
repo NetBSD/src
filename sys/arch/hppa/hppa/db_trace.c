@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.8 2010/03/11 07:15:25 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.8.2.1 2010/07/03 01:19:19 rmind Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.8 2010/03/11 07:15:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.8.2.1 2010/07/03 01:19:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				(*pr)("trace: pid %d ", p->p_pid);
 			} else {
 				(*pr)("trace: pid %d ", (int)addr);
-				p = p_find(addr, PFIND_LOCKED);
+				p = proc_find_raw(addr);
 				if (p == NULL) {
 					(*pr)("not found\n");
 					return;

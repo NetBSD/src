@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.132.4.1 2010/03/16 15:38:18 rmind Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.132.4.2 2010/07/03 01:20:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.132.4.1 2010/03/16 15:38:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.132.4.2 2010/07/03 01:20:06 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1193,7 +1193,7 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 				vp->v_iflag |= VI_WRMAP;
 				mutex_exit(vp->v_interlock);
 			}
-			VOP_UNLOCK(vp, 0);
+			VOP_UNLOCK(vp);
 		}
 	}
 

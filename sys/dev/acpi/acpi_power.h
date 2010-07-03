@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_power.h,v 1.3.4.2 2010/05/30 05:17:17 rmind Exp $ */
+/* $NetBSD: acpi_power.h,v 1.3.4.3 2010/07/03 01:19:34 rmind Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -34,13 +34,11 @@
 
 #define ACPI_STATE_ERROR	-1
 
-void	acpi_power_res_add(struct acpi_devnode *);
-bool	acpi_power_register(struct acpi_devnode *);
-void	acpi_power_deregister(struct acpi_devnode *);
-void	acpi_power_deregister_from_handle(ACPI_HANDLE);
-bool	acpi_power_get(struct acpi_devnode *, int *);
-bool	acpi_power_set(struct acpi_devnode *, int);
-bool	acpi_power_set_from_handle(ACPI_HANDLE, int);
-void	acpi_power_add(struct acpi_devnode *);
+bool		acpi_power_register(ACPI_HANDLE);
+void		acpi_power_deregister(ACPI_HANDLE);
+bool		acpi_power_get(ACPI_HANDLE, int *);
+bool		acpi_power_set(ACPI_HANDLE, int);
+ACPI_STATUS	acpi_power_res(ACPI_HANDLE, ACPI_HANDLE, bool);
+void		acpi_power_add(struct acpi_devnode *);
 
 #endif	/* !_SYS_DEV_ACPI_ACPI_POWER_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.127.4.1 2010/05/30 05:16:36 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.127.4.2 2010/07/03 01:19:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -81,9 +81,10 @@
 #include "opt_execfmt.h"
 #include "opt_compat_sunos.h"
 #include "opt_fpu_emulate.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127.4.1 2010/05/30 05:16:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.127.4.2 2010/07/03 01:19:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

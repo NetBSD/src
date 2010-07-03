@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39.2.1 2010/05/30 05:18:00 rmind Exp $
+#	$NetBSD: Makefile,v 1.39.2.2 2010/07/03 01:19:58 rmind Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +28,8 @@ SUBDIR+=	ksem
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
 SUBDIR+=	mfs
+SUBDIR+=	miiverbose
+SUBDIR+=	miniroot
 SUBDIR+=	mqueue
 SUBDIR+=	msdos
 SUBDIR+=	nfs
@@ -44,7 +46,7 @@ SUBDIR+=	procfs
 SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
-SUBDIR+=	miniroot
+SUBDIR+=	scsiverbose
 SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
@@ -79,6 +81,12 @@ SUBDIR+=	exec_elf64
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	tprof_pmi
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "ia64" || \
+    ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	acpiverbose
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"

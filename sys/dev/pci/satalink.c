@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.39.4.1 2010/05/30 05:17:39 rmind Exp $	*/
+/*	$NetBSD: satalink.c,v 1.39.4.2 2010/07/03 01:19:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.39.4.1 2010/05/30 05:17:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.39.4.2 2010/07/03 01:19:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,6 +273,11 @@ static const struct pciide_product_desc pciide_satalink_products[] =  {
 	  "Silicon Image SATALink 3112",
 	  sii3112_chip_map,
 	},
+	{ PCI_PRODUCT_CMDTECH_240,
+	  0,
+	  "Silicon Image SATALink Sil240",
+	  sii3112_chip_map,
+	},
 	{ PCI_PRODUCT_CMDTECH_3512,
 	  0,
 	  "Silicon Image SATALink 3512",
@@ -287,6 +292,11 @@ static const struct pciide_product_desc pciide_satalink_products[] =  {
 	  0,
 	  "Silicon Image SATALink 3114",
 	  sii3114_chip_map,
+	},
+	{ PCI_PRODUCT_ATI_IXP_SATA_300,
+	  0,
+	  "ATI IXP 300 SATA",
+	  sii3112_chip_map,
 	},
 	{ 0,
 	  0,

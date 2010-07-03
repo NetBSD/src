@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.104 2010/03/02 15:18:22 pooka Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.104.2.1 2010/07/03 01:20:05 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.104 2010/03/02 15:18:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.104.2.1 2010/07/03 01:20:05 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -536,7 +536,7 @@ found:
 			goto out;
 		}
 		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp, 0); /* race to get the inode */
+			VOP_UNLOCK(vdp); /* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
@@ -581,7 +581,7 @@ found:
 			goto out;
 		}
 		if (flags & ISDOTDOT)
-			VOP_UNLOCK(vdp, 0); /* race to get the inode */
+			VOP_UNLOCK(vdp); /* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
@@ -614,7 +614,7 @@ found:
 	 */
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
@@ -1219,7 +1219,7 @@ ufs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
 		}
 		if (ufs_rw32(dirbuf.dotdot_ino, needswap) == rootino)
 			break;
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = VFS_VGET(vp->v_mount,
 		    ufs_rw32(dirbuf.dotdot_ino, needswap), &nextvp);
 		vrele(vp);

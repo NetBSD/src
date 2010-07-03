@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.8.4.1 2010/05/30 05:17:05 rmind Exp $ */
+/* $NetBSD: brdsetup.c,v 1.8.4.2 2010/07/03 01:19:26 rmind Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 #include <lib/libkern/libkern.h>
+
+#include <machine/bootinfo.h>
 
 #include "globals.h"
 
@@ -105,7 +107,7 @@ static struct brdprop brdlist[] = {
 };
 
 static struct brdprop *brdprop;
-static uint32_t ns_per_tick;
+static uint32_t ticks_per_sec, ns_per_tick;
 
 static void brdfixup(void);
 static void setup(void);
@@ -138,7 +140,7 @@ unsigned uart2base;	/* optional satellite processor */
 #define UART_READ(base, r)	*(volatile char *)(base + (r))
 #define UART_WRITE(base, r, v)	*(volatile char *)(base + (r)) = (v)
 
-void brdsetup(void);
+void brdsetup(void);	/* called by entry.S */
 
 void
 brdsetup(void)
@@ -155,8 +157,14 @@ brdsetup(void)
 		20, 25, 20, 30, 35, 40, 40, 20,
 		30, 25, 40, 30, 30, 25, 35, 00
 	};
+	char *consname;
+	int consport;
 	uint32_t extclk;
 	unsigned pchb, pcib, val;
+	extern struct btinfo_memory bi_mem;
+	extern struct btinfo_console bi_cons;
+	extern struct btinfo_clock bi_clk;
+	extern struct btinfo_prodfamily bi_fam;
 
 	/*
 	 * CHRP specification "Map-B" BAT012 layout
@@ -217,11 +225,9 @@ brdsetup(void)
 	ticks_per_sec = busclock >> 2;
 	ns_per_tick = 1000000000 / ticks_per_sec;
 
+	/* now prepare serial console */
 	consname = brdprop->consname;
 	consport = brdprop->consport;
-	consspeed = brdprop->consspeed;
-
-	/* now prepare serial console */
 	if (strcmp(consname, "eumb") == 0) {
 		uart1base = 0xfc000000 + consport;	/* 0x4500, 0x4600 */
 		UART_WRITE(uart1base, DCR, 0x01);	/* enable DUART mode */
@@ -231,6 +237,13 @@ brdsetup(void)
 
 	/* more brd adjustments */
 	brdfixup();
+
+	bi_mem.memsize = mpc107memsize();
+	snprintf(bi_cons.devname, sizeof(bi_cons.devname), consname);
+	bi_cons.addr = consport;
+	bi_cons.speed = brdprop->consspeed;
+	bi_clk.ticks_per_sec = ticks_per_sec;
+	snprintf(bi_fam.name, sizeof(bi_fam.name), brdprop->family);
 }
 
 struct brdprop *

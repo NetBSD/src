@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.8.2.1 2010/05/30 05:18:09 rmind Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.8.2.2 2010/07/03 01:20:06 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.8.2.1 2010/05/30 05:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.8.2.2 2010/07/03 01:20:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,13 +239,13 @@ wapbl_ufs_rename(void *v)
 	fdp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t) ip->i_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		error = EMLINK;
 		goto abortit;
 	}
 	if ((ip->i_flags & (IMMUTABLE | APPEND)) ||
 		(fdp->i_flags & APPEND)) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		error = EPERM;
 		goto abortit;
 	}
@@ -258,7 +258,7 @@ wapbl_ufs_rename(void *v)
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -291,7 +291,7 @@ wapbl_ufs_rename(void *v)
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-	VOP_UNLOCK(fvp, 0);
+	VOP_UNLOCK(fvp);
 	if (oldparent != tdp->i_number)
 		newparent = tdp->i_number;
 	if (doingdirectory && newparent) {

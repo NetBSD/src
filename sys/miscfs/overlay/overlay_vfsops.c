@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.54 2008/12/05 13:05:38 ad Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.54.8.1 2010/07/03 01:19:58 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.54 2008/12/05 13:05:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.54.8.1 2010/07/03 01:19:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ ov_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/*
 	 * Unlock the node
 	 */
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	/*
 	 * Keep a held reference to the root vnode.

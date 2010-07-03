@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.91.4.1 2010/05/30 05:18:08 rmind Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.91.4.2 2010/07/03 01:20:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.91.4.1 2010/05/30 05:18:08 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.91.4.2 2010/07/03 01:20:04 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ ext2fs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	VOP_UNLOCK(*vpp, 0);
+	VOP_UNLOCK(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -609,7 +609,7 @@ ext2fs_link(void *v)
 	PNBUF_PUT(cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 out2:
 	VN_KNOTE(vp, NOTE_LINK);
 	VN_KNOTE(dvp, NOTE_WRITE);
@@ -725,13 +725,13 @@ abortit:
 	dp = VTOI(fdvp);
 	ip = VTOI(fvp);
 	if ((nlink_t) ip->i_e2fs_nlink >= LINK_MAX) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		error = EMLINK;
 		goto abortit;
 	}
 	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(dp->i_e2fs_flags & EXT2_APPEND)) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		error = EPERM;
 		goto abortit;
 	}
@@ -740,7 +740,7 @@ abortit:
 		if (!error && tvp)
 			error = VOP_ACCESS(tvp, VWRITE, tcnp->cn_cred);
 		if (error) {
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			error = EACCES;
 			goto abortit;
 		}
@@ -752,7 +752,7 @@ abortit:
 		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
-			VOP_UNLOCK(fvp, 0);
+			VOP_UNLOCK(fvp);
 			error = EINVAL;
 			goto abortit;
 		}
@@ -780,7 +780,7 @@ abortit:
 	ip->i_e2fs_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	if ((error = ext2fs_update(fvp, NULL, NULL, UPDATE_WAIT)) != 0) {
-		VOP_UNLOCK(fvp, 0);
+		VOP_UNLOCK(fvp);
 		goto bad;
 	}
 
@@ -795,7 +795,7 @@ abortit:
 	 * call to checkpath().
 	 */
 	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred);
-	VOP_UNLOCK(fvp, 0);
+	VOP_UNLOCK(fvp);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
 	if (doingdirectory && newparent) {

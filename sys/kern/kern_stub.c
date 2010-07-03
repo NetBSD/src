@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.22.2.1 2010/05/30 05:17:57 rmind Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.22.2.2 2010/07/03 01:19:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.22.2.1 2010/05/30 05:17:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.22.2.2 2010/07/03 01:19:54 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -267,5 +267,6 @@ nullop(void *v)
 bool
 default_bus_space_is_equal(bus_space_tag_t t1, bus_space_tag_t t2)
 {
+
 	return memcmp(&t1, &t2, sizeof(t1)) == 0;
 }

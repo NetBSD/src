@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.53.4.1 2010/05/30 05:17:46 rmind Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.53.4.2 2010/07/03 01:19:43 rmind Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.53.4.1 2010/05/30 05:17:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.53.4.2 2010/07/03 01:19:43 rmind Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.67 2009/12/19 05:41:08 darrenr Exp";
@@ -1817,7 +1817,7 @@ u_short fr_nextipid(fr_info_t *fin)
 }
 
 
-INLINE void fr_checkv4sum(fin)
+EXTERN_INLINE void fr_checkv4sum(fin)
 fr_info_t *fin;
 {
 #ifdef M_CSUM_TCP_UDP_BAD
@@ -1891,7 +1891,7 @@ skipauto:
 
 
 #ifdef USE_INET6
-INLINE void fr_checkv6sum(fin)
+EXTERN_INLINE void fr_checkv6sum(fin)
 fr_info_t *fin;
 {
 # ifdef M_CSUM_TCP_UDP_BAD

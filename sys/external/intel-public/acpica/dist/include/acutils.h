@@ -213,7 +213,7 @@ char *
 AcpiUtGetNodeName (
     void                    *Object);
 
-char *
+const char *
 AcpiUtGetDescriptorName (
     void                    *Object);
 

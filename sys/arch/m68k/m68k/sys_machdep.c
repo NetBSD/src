@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14 2007/12/31 13:38:51 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.14.32.1 2010/07/03 01:19:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -30,6 +30,8 @@
  *
  *	@(#)sys_machdep.c	8.2 (Berkeley) 1/13/94
  */
+
+#include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, "$NetBSD");

@@ -1,4 +1,4 @@
-/*      $NetBSD: usb_verbose.h,v 1.1.2.2 2010/05/30 05:17:45 rmind Exp $ */
+/*      $NetBSD: usb_verbose.h,v 1.1.2.3 2010/07/03 01:19:42 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
 typedef u_int16_t usb_vendor_id_t;
 typedef u_int16_t usb_product_id_t;
 
-void get_usb_none(void);
-void usb_verbose_ctl(bool);
 extern void (*get_usb_vendor)(char *, usb_vendor_id_t);
 extern void (*get_usb_product)(char *, usb_vendor_id_t, usb_product_id_t);
+
+extern int usb_verbose_loaded;
 
 #endif /* _DEV_USB_USBVERBOSE_H_ */

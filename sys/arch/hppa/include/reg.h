@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.10.4.1 2010/05/30 05:16:52 rmind Exp $	*/
+/*	$NetBSD: reg.h,v 1.10.4.2 2010/07/03 01:19:19 rmind Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -82,7 +82,11 @@
 #define	CR_EIRR		23
 
 /* Temporary control registers */
+#ifdef MULTIPROCESSOR
+#define	CR_CURCPU	24	/* tr0: curcpu				*/
+#else
 #define	CR_CURLWP	24	/* tr0: curlwp				*/
+#endif
 #define	CR_VTOP		25	/* tr1: virt to phys table address	*/
 #define	CR_TR2		26	/* tr2: temporary			*/
 #define	CR_TLS		27	/* tr3: thread local storage pointer	*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.109 2010/01/08 11:35:10 pooka Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.109.4.1 2010/07/03 01:19:57 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.109 2010/01/08 11:35:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.109.4.1 2010/07/03 01:19:57 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ fdesc_lookup(void *v)
 
 	case Fdevfd:
 		if (cnp->cn_namelen == 2 && memcmp(pname, "..", 2) == 0) {
-			VOP_UNLOCK(dvp, 0);
+			VOP_UNLOCK(dvp);
 			error = fdesc_root(dvp->v_mount, vpp);
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			if (error)
@@ -811,7 +811,7 @@ fdesc_read(void *v)
 
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = cdev_read(devctty, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
@@ -838,7 +838,7 @@ fdesc_write(void *v)
 
 	switch (VTOFDESC(vp)->fd_type) {
 	case Fctty:
-		VOP_UNLOCK(vp, 0);
+		VOP_UNLOCK(vp);
 		error = cdev_write(devctty, ap->a_uio, ap->a_ioflag);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		break;
@@ -942,7 +942,7 @@ fdesc_inactive(void *v)
 	 * Clear out the v_type field to avoid
 	 * nasty things happening in vgone().
 	 */
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	vp->v_type = VNON;
 	return (0);
 }

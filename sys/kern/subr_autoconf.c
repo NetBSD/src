@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.203.2.1 2010/05/30 05:17:57 rmind Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.203.2.2 2010/07/03 01:19:54 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.203.2.1 2010/05/30 05:17:57 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.203.2.2 2010/07/03 01:19:54 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.203.2.1 2010/05/30 05:17:57 rmin
 #include <sys/kthread.h>
 #include <sys/buf.h>
 #include <sys/dirent.h>
-#include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/unistd.h>
@@ -200,6 +199,10 @@ struct deferred_config_head deferred_config_queue =
 struct deferred_config_head interrupt_config_queue =
 	TAILQ_HEAD_INITIALIZER(interrupt_config_queue);
 int interrupt_config_threads = 8;
+struct deferred_config_head mountroot_config_queue =
+	TAILQ_HEAD_INITIALIZER(mountroot_config_queue);
+int mountroot_config_threads = 2;
+static bool root_is_mounted = false;
 
 static void config_process_deferred(struct deferred_config_head *, device_t);
 
@@ -427,6 +430,7 @@ config_deferred(device_t dev)
 {
 	config_process_deferred(&deferred_config_queue, dev);
 	config_process_deferred(&interrupt_config_queue, dev);
+	config_process_deferred(&mountroot_config_queue, dev);
 }
 
 static void
@@ -451,6 +455,33 @@ config_create_interruptthreads()
 	for (i = 0; i < interrupt_config_threads; i++) {
 		(void)kthread_create(PRI_NONE, 0, NULL,
 		    config_interrupts_thread, NULL, NULL, "config");
+	}
+}
+
+static void
+config_mountroot_thread(void *cookie)
+{
+	struct deferred_config *dc;
+
+	while ((dc = TAILQ_FIRST(&mountroot_config_queue)) != NULL) {
+		TAILQ_REMOVE(&mountroot_config_queue, dc, dc_queue);
+		(*dc->dc_func)(dc->dc_dev);
+		kmem_free(dc, sizeof(*dc));
+	}
+	kthread_exit(0);
+}
+
+void
+config_create_mountrootthreads()
+{
+	int i;
+
+	if (!root_is_mounted)
+		root_is_mounted = true;
+
+	for (i = 0; i < mountroot_config_threads; i++) {
+		(void)kthread_create(PRI_NONE, 0, NULL,
+		    config_mountroot_thread, NULL, NULL, "config");
 	}
 }
 
@@ -1845,6 +1876,39 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
 	config_pending_incr();
+}
+
+/*
+ * Defer some autoconfiguration for a device until after root file system
+ * is mounted (to load firmware etc).
+ */
+void
+config_mountroot(device_t dev, void (*func)(device_t))
+{
+	struct deferred_config *dc;
+
+	/*
+	 * If root file system is mounted, callback now.
+	 */
+	if (root_is_mounted) {
+		(*func)(dev);
+		return;
+	}
+
+#ifdef DIAGNOSTIC
+	TAILQ_FOREACH(dc, &mountroot_config_queue, dc_queue) {
+		if (dc->dc_dev == dev)
+			panic("%s: deferred twice", __func__);
+	}
+#endif
+
+	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
+	if (dc == NULL)
+		panic("%s: unable to allocate callback", __func__);
+
+	dc->dc_dev = dev;
+	dc->dc_func = func;
+	TAILQ_INSERT_TAIL(&mountroot_config_queue, dc, dc_queue);
 }
 
 /*

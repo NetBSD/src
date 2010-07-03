@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.27.4.1 2010/03/16 15:38:12 rmind Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.27.4.2 2010/07/03 01:19:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.27.4.1 2010/03/16 15:38:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.27.4.2 2010/07/03 01:19:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -214,7 +214,7 @@ sync_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	return (0);
 }
 

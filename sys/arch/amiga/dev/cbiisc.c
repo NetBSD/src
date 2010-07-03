@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiisc.c,v 1.29 2009/11/23 00:11:43 rmind Exp $ */
+/*	$NetBSD: cbiisc.c,v 1.29.4.1 2010/07/03 01:19:12 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -31,8 +31,10 @@
  *
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.29 2009/11/23 00:11:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiisc.c,v 1.29.4.1 2010/07/03 01:19:12 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

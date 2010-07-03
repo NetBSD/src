@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.142.4.2 2010/05/30 05:17:56 rmind Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.142.4.3 2010/07/03 01:19:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.142.4.2 2010/05/30 05:17:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.142.4.3 2010/07/03 01:19:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -511,7 +511,7 @@ puffs_vnop_lookup(void *v)
 	    cnp, PUFFS_USE_FULLPNBUF(pmp));
 
 	if (cnp->cn_flags & ISDOTDOT)
-		VOP_UNLOCK(dvp, 0);
+		VOP_UNLOCK(dvp);
 
 	puffs_msg_setinfo(park_lookup, PUFFSOP_VN,
 	    PUFFS_VN_LOOKUP, VPTOPNC(dvp));
@@ -612,7 +612,7 @@ do {									\
 	mutex_enter(&b->pn_mtx);					\
 	puffs_referencenode(b);						\
 	mutex_exit(&b->pn_mtx);						\
-	VOP_UNLOCK(a, 0);						\
+	VOP_UNLOCK(a);						\
 } while (/*CONSTCOND*/0)
 
 #define REFPN(b)							\
@@ -1054,7 +1054,7 @@ puffs_vnop_inactive(void *v)
 		*ap->a_recycle = true;
 	}
 
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 
 	return 0;
 }

@@ -1,0 +1,3 @@
+/*	$NetBSD: opt_ptm.h,v 1.1.2.2 2010/07/03 01:20:02 rmind Exp $	*/
+
+#define COMPAT_BSDPTY

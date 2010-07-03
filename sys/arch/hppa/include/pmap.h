@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25.2.2 2010/05/30 05:16:52 rmind Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25.2.3 2010/07/03 01:19:19 rmind Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -64,6 +64,7 @@ struct pmap {
 #define	PVF_MOD		PTE_PROT(TLB_DIRTY)	/* pg/mp is modified */
 #define	PVF_REF		PTE_PROT(TLB_REFTRAP)	/* pg/mp (inv) is referenced */
 #define	PVF_WRITE	PTE_PROT(TLB_WRITE)	/* pg/mp is writable */
+#define	PVF_UNCACHEABLE	PTE_PROT(TLB_UNCACHEABLE)	/* pg/mp is uncacheable */
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd

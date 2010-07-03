@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_reg.h,v 1.5.2.2 2010/05/30 05:16:51 rmind Exp $	*/
+/*	$NetBSD: wzero3_reg.h,v 1.5.2.3 2010/07/03 01:19:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009, 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -93,7 +93,7 @@ port	I/O(Active)	name 	desc
  */
 #define	GPIO_WS011SH_RESET_BUTTON	1	/* In */
 #define	GPIO_WS011SH_POWER_BUTTON	9	/* In */
-#define	GPIO_WS011SH_TENKEY		14	/* In */
+#define	GPIO_WS011SH_KEYPAD		14	/* In */
 #define	GPIO_WS011SH_TOUCH_PANEL	21	/* In */
 #define	GPIO_WS011SH_AK4184_CS		33	/* Out */
 #define	GPIO_WS011SH_USB_HOST_POWER	37	/* Out */

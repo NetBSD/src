@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.38.2.1 2010/05/30 05:17:16 rmind Exp $ */
+/* $NetBSD: osf1_file.c,v 1.38.2.2 2010/07/03 01:19:32 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.38.2.1 2010/05/30 05:17:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.38.2.2 2010/07/03 01:19:32 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -243,7 +243,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbytes) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	kmem_free(buf, buflen);

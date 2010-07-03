@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.12 2010/03/11 19:28:55 eeh Exp $
+\	$NetBSD: bootblk.fth,v 1.12.2.1 2010/07/03 01:19:27 rmind Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -343,7 +343,7 @@ niaddr /w* constant narraysize
 
 \ Assume UFS2 dinodes are always biger than UFS1
 ufs2_dinode_SIZEOF buffer: cur-inode
-h# 2000 buffer: indir-block
+0 value indir-block
 create indir-addr -1 , -1 ,
 
 \
@@ -747,6 +747,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
       abort
    then
    dup  to  cur-blocksize alloc-mem  to  cur-block    \ Allocate cur-block
+   cur-blocksize alloc-mem  to  indir-block
    boot-debug?  if  ." ufs-open complete" cr  then
 ;
 
@@ -755,7 +756,8 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 	cif-close -1  to  boot-ihandle 
     then
     cur-block 0<> if
-	cur-block cur-blocksize free-mem
+       cur-block cur-blocksize free-mem
+       indir-block cur-blocksize free-mem
     then
 ;
 
@@ -888,7 +890,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 
 : do-boot ( bootfile -- )
    ." NetBSD IEEE 1275 Multi-FS Bootblock" cr
-   ." Version $NetBSD: bootblk.fth,v 1.12 2010/03/11 19:28:55 eeh Exp $" cr
+   ." Version $NetBSD: bootblk.fth,v 1.12.2.1 2010/07/03 01:19:27 rmind Exp $" cr
    boot-path load-file ( -- load-base )
    dup 0<>  if  " init-program " evaluate  then
 ; 

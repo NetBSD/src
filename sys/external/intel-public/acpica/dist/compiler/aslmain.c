@@ -167,7 +167,7 @@ AslDoResponseFile (
 
 
 #define ASL_TOKEN_SEPARATORS    " \t\n"
-#define ASL_SUPPORTED_OPTIONS   "@:2b:cd^e:fgh^i^I:l^o:p:r:s:t:v:w:x:"
+#define ASL_SUPPORTED_OPTIONS   "@:2b:c:d^e:fgh^i^I:l^no:p:r:s:t:v:w:x:yz"
 
 
 /*******************************************************************************
@@ -203,13 +203,14 @@ Options (
     printf ("\nAML Output Files:\n");
     printf ("  -s<a|c>        Create AML in assembler or C source file (*.asm or *.c)\n");
     printf ("  -i<a|c>        Create assembler or C include file (*.inc or *.h)\n");
-    printf ("  -t<a|c>        Create AML in assembler or C hex table (*.hex)\n");
+    printf ("  -t<a|c|s>      Create AML in assembler, C, or ASL hex table (*.hex)\n");
 
     printf ("\nAML Code Generation:\n");
     printf ("  -oa            Disable all optimizations (compatibility mode)\n");
     printf ("  -of            Disable constant folding\n");
     printf ("  -oi            Disable integer optimization to Zero/One/Ones\n");
     printf ("  -on            Disable named reference string optimization\n");
+    printf ("  -cr            Disable Resource Descriptor error checking\n");
     printf ("  -r<Revision>   Override table header Revision (1-255)\n");
 
     printf ("\nListings:\n");
@@ -264,9 +265,11 @@ HelpMessage (
     printf ("  -b<p|t|b>      Create compiler debug/trace file (*.txt)\n");
     printf ("                   Types: Parse/Tree/Both\n");
     printf ("  -f             Ignore errors, force creation of AML output file(s)\n");
-    printf ("  -c             Parse only, no output generation\n");
+    printf ("  -n             Parse only, no output generation\n");
     printf ("  -ot            Display compile times\n");
     printf ("  -x<level>      Set debug level for trace output\n");
+    printf ("  -y             Temporary: Enable data table compiler\n");
+    printf ("  -z             Do not insert new compiler ID for DataTables\n");
 }
 
 
@@ -507,10 +510,16 @@ AslDoOptions (
 
 
     case 'c':
+        switch (AcpiGbl_Optarg[0])
+        {
+        case 'r':
+            Gbl_NoResourceChecking = TRUE;
+            break;
 
-        /* Parse only */
-
-        Gbl_ParseOnlyFlag = TRUE;
+        default:
+            printf ("Unknown option: -c%s\n", AcpiGbl_Optarg);
+            return (-1);
+        }
         break;
 
 
@@ -570,7 +579,7 @@ AslDoOptions (
         case 'r':
             /* reserved names */
 
-            MpDisplayReservedNames ();
+            ApDisplayReservedNames ();
             exit (0);
 
         default:
@@ -688,6 +697,14 @@ AslDoOptions (
         break;
 
 
+    case 'n':
+
+        /* Parse only */
+
+        Gbl_ParseOnlyFlag = TRUE;
+        break;
+
+
     case 'p':
 
         /* Override default AML output filename */
@@ -739,6 +756,10 @@ AslDoOptions (
 
         case 'c':
             Gbl_HexOutputFlag = HEX_OUTPUT_C;
+            break;
+
+        case 's':
+            Gbl_HexOutputFlag = HEX_OUTPUT_ASL;
             break;
 
         default:
@@ -809,6 +830,18 @@ AslDoOptions (
     case 'x':
 
         AcpiDbgLevel = strtoul (AcpiGbl_Optarg, NULL, 16);
+        break;
+
+
+    case 'y':
+
+        Gbl_DataTableCompilerAvailable = TRUE;
+        break;
+
+
+    case 'z':
+
+        Gbl_UseOriginalCompilerId = TRUE;
         break;
 
 

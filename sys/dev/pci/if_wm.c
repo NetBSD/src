@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.205.2.1 2010/05/30 05:17:35 rmind Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.205.2.2 2010/07/03 01:19:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.205.2.1 2010/05/30 05:17:35 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.205.2.2 2010/07/03 01:19:37 rmind Exp $");
 
 #include "rnd.h"
 
@@ -510,6 +510,7 @@ static int	wm_add_rxbuf(struct wm_softc *, int);
 static int	wm_read_eeprom(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_read_eeprom_eerd(struct wm_softc *, int, int, u_int16_t *);
 static int	wm_validate_eeprom_checksum(struct wm_softc *);
+static int	wm_read_mac_addr(struct wm_softc *, uint8_t *);
 static void	wm_tick(void *);
 
 static void	wm_set_filter(struct wm_softc *);
@@ -1098,7 +1099,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_data_t ea;
 	prop_number_t pn;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	uint16_t myea[ETHER_ADDR_LEN / 2], cfg1, cfg2, swdpin, io3;
+	uint16_t cfg1, cfg2, swdpin, io3;
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
 	uint32_t reg;
@@ -1246,7 +1247,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
 	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
-	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576))
+	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
+	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER))
 		sc->sc_funcid = (CSR_READ(sc, WMREG_STATUS)
 		    >> STATUS_FUNCID_SHIFT) & STATUS_FUNCID_MASK;
 	else
@@ -1605,29 +1607,11 @@ wm_attach(device_t parent, device_t self, void *aux)
 		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
 		memcpy(enaddr, prop_data_data_nocopy(ea), ETHER_ADDR_LEN);
 	} else {
-		if (wm_read_eeprom(sc, EEPROM_OFF_MACADDR,
-		    sizeof(myea) / sizeof(myea[0]), myea)) {
+		if (wm_read_mac_addr(sc, enaddr) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to read Ethernet address\n");
 			return;
 		}
-		enaddr[0] = myea[0] & 0xff;
-		enaddr[1] = myea[0] >> 8;
-		enaddr[2] = myea[1] & 0xff;
-		enaddr[3] = myea[1] >> 8;
-		enaddr[4] = myea[2] & 0xff;
-		enaddr[5] = myea[2] >> 8;
-	}
-
-	/*
-	 * Toggle the LSB of the MAC address on the second port
-	 * of the dual port controller.
-	 */
-	if ((sc->sc_type == WM_T_82546) || (sc->sc_type == WM_T_82546_3)
-	    || (sc->sc_type ==  WM_T_82571) || (sc->sc_type == WM_T_80003)
-	    || (sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)) {
-		if (sc->sc_funcid == 1)
-			enaddr[5] ^= 1;
 	}
 
 	aprint_normal_dev(sc->sc_dev, "Ethernet address %s\n",
@@ -3595,6 +3579,8 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
+	case WM_T_82580:
+	case WM_T_82580ER:
 	case WM_T_82583:
 	default:
 		/* Everything else can safely use the documented method. */
@@ -3653,6 +3639,8 @@ wm_reset(struct wm_softc *sc)
 		break;
 	case WM_T_82575:
 	case WM_T_82576:
+	case WM_T_82580:
+	case WM_T_82580ER:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -3671,18 +3659,29 @@ wm_reset(struct wm_softc *sc)
 	switch (sc->sc_type) {
 	case WM_T_82575:
 	case WM_T_82576:
+#if 0 /* XXX */
 	case WM_T_82580:
+	case WM_T_82580ER:
+#endif
 	case WM_T_ICH8:
 	case WM_T_ICH9:
 		if ((CSR_READ(sc, WMREG_EECD) & EECD_EE_PRES) == 0) {
 			/* Not found */
 			sc->sc_flags |= WM_F_EEPROM_INVALID;
-			if (sc->sc_type == WM_T_82575) /* 82575 only */
+			if ((sc->sc_type == WM_T_82575)
+			    || (sc->sc_type == WM_T_82576)
+			    || (sc->sc_type == WM_T_82580)
+			    || (sc->sc_type == WM_T_82580ER))
 				wm_reset_init_script_82575(sc);
 		}
 		break;
 	default:
 		break;
+	}
+
+	if ((sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)) {
+		/* clear global device reset status bit */
+		CSR_WRITE(sc, WMREG_STATUS, STATUS_DEV_RST_SET);
 	}
 
 	/* Clear any pending interrupt events. */
@@ -4224,6 +4223,8 @@ wm_get_auto_rd_done(struct wm_softc *sc)
 	case WM_T_82583:
 	case WM_T_82575:
 	case WM_T_82576:
+	case WM_T_82580:
+	case WM_T_82580ER:
 	case WM_T_80003:
 	case WM_T_ICH8:
 	case WM_T_ICH9:
@@ -4309,7 +4310,12 @@ wm_get_cfg_done(struct wm_softc *sc)
 	case WM_T_82575:
 	case WM_T_82576:
 	case WM_T_82580:
-		mask = EEMNGCTL_CFGDONE_0 << sc->sc_funcid;
+	case WM_T_82580ER:
+		if (sc->sc_type == WM_T_82571) {
+			/* Only 82571 shares port 0 */
+			mask = EEMNGCTL_CFGDONE_0;
+		} else
+			mask = EEMNGCTL_CFGDONE_0 << sc->sc_funcid;
 		for (i = 0; i < WM_PHY_CFG_TIMEOUT; i++) {
 			if (CSR_READ(sc, WMREG_EEMNGCTL) & mask)
 				break;
@@ -4690,6 +4696,99 @@ wm_poll_eerd_eewr_done(struct wm_softc *sc, int rw)
 	}
 
 	return done;
+}
+
+static int
+wm_read_mac_addr(struct wm_softc *sc, uint8_t *enaddr)
+{
+	uint16_t myea[ETHER_ADDR_LEN / 2];
+	uint16_t offset = EEPROM_OFF_MACADDR;
+	int do_invert = 0;
+
+	if (sc->sc_funcid != 0)
+		switch (sc->sc_type) {
+		case WM_T_82580:
+		case WM_T_82580ER:
+			switch (sc->sc_funcid) {
+			case 1:
+				offset = EEPROM_OFF_LAN1;
+				break;
+			case 2:
+				offset = EEPROM_OFF_LAN2;
+				break;
+			case 3:
+				offset = EEPROM_OFF_LAN3;
+				break;
+			default:
+				goto bad;
+				/* NOTREACHED */
+				break;
+			}
+			break;
+		case WM_T_82571:
+		case WM_T_82575:
+		case WM_T_82576:
+		case WM_T_80003:
+			if (wm_read_eeprom(sc, EEPROM_ALT_MAC_ADDR_PTR, 1,
+				&offset) != 0) {
+				goto bad;
+			}
+
+			/* no pointer */
+			if (offset == 0xffff) {
+				/* reset the offset to LAN0 */
+				offset = EEPROM_OFF_MACADDR;
+				do_invert = 1;
+				goto do_read;
+			}
+
+			switch (sc->sc_funcid) {
+			case 1:
+				offset += EEPROM_OFF_MACADDR_LAN1;
+				break;
+			case 2:
+				offset += EEPROM_OFF_MACADDR_LAN2;
+				break;
+			case 3:
+				offset += EEPROM_OFF_MACADDR_LAN3;
+				break;
+			default:
+				goto bad;
+				/* NOTREACHED */
+				break;
+			}
+			break;
+		default:
+			do_invert = 1;
+			break;
+		}
+
+ do_read:
+	if (wm_read_eeprom(sc, offset, sizeof(myea) / sizeof(myea[0]),
+		myea) != 0) {
+		goto bad;
+	}
+
+	enaddr[0] = myea[0] & 0xff;
+	enaddr[1] = myea[0] >> 8;
+	enaddr[2] = myea[1] & 0xff;
+	enaddr[3] = myea[1] >> 8;
+	enaddr[4] = myea[2] & 0xff;
+	enaddr[5] = myea[2] >> 8;
+
+	/*
+	 * Toggle the LSB of the MAC address on the second port
+	 * of some dual port cards.
+	 */
+	if (do_invert != 0)
+		enaddr[5] ^= 1;
+
+	return 0;
+
+ bad:
+	aprint_error_dev(sc->sc_dev, "unable to read Ethernet address\n");
+
+	return -1;
 }
 
 /*
@@ -5494,8 +5593,35 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus);
 
-	mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, MIIF_DOPAUSE);
+	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)
+	    || (sc->sc_type == WM_T_82580) || (sc->sc_type == WM_T_82580ER)) {
+		if ((sc->sc_flags & WM_F_SGMII) == 0) {
+			/* Attach only one port */
+			mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, 1,
+			    MII_OFFSET_ANY, MIIF_DOPAUSE);
+		} else {
+			int i;
+			uint32_t ctrl_ext;
+
+			/* Power on sgmii phy if it is disabled */
+			ctrl_ext = CSR_READ(sc, WMREG_CTRL_EXT);
+			CSR_WRITE(sc, WMREG_CTRL_EXT,
+			    ctrl_ext &~ CTRL_EXT_SWDPIN(3));
+			CSR_WRITE_FLUSH(sc);
+			delay(300*1000); /* XXX too long */
+
+			/* from 1 to 8 */
+			for (i = 1; i < 8; i++)
+				mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff,
+				    i, MII_OFFSET_ANY, MIIF_DOPAUSE);
+
+			/* restore previous sfp cage power state */
+			CSR_WRITE(sc, WMREG_CTRL_EXT, ctrl_ext);
+		}
+	} else {
+		mii_attach(sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
+		    MII_OFFSET_ANY, MIIF_DOPAUSE);
+	}
 
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		/* if failed, retry with *_bm_* */
@@ -7290,6 +7416,10 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82574:
 	case WM_T_82575:
 	case WM_T_82576:
+#if 0 /* XXX */
+	case WM_T_82580:
+	case WM_T_82580ER:
+#endif
 		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
 			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;

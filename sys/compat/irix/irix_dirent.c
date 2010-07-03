@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.24 2010/03/03 08:20:38 he Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.24.2.1 2010/07/03 01:19:31 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.24 2010/03/03 08:20:38 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.24.2.1 2010/07/03 01:19:31 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -184,7 +184,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbyte) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
@@ -339,7 +339,7 @@ again:
 eof:
 	*retval = SCARG(uap, nbyte) - resid;
 out:
-	VOP_UNLOCK(vp, 0);
+	VOP_UNLOCK(vp);
 	if (cookiebuf)
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
