@@ -1,18 +1,20 @@
-# $NetBSD: Makefile,v 1.2 2010/06/04 08:33:42 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2010/07/03 08:14:12 jmmv Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/atf-sh
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
-.PATH:		${SRCDIR}/tests/atf/atf-sh
+.PATH:		${SRCDIR}/atf-sh
 
-TESTS_SH=	h_misc
-TESTS_SH+=	t_atf_check
-TESTS_SH+=	t_config
-TESTS_SH+=	t_integration
-TESTS_SH+=	t_normalize
-TESTS_SH+=	t_tc
-TESTS_SH+=	t_tp
+CPPFLAGS+=	-DHAVE_CONFIG_H
+
+TESTS_SH=	atf_check_test
+TESTS_SH+=	config_test
+TESTS_SH+=	integration_test
+TESTS_SH+=	misc_helpers
+TESTS_SH+=	normalize_test
+TESTS_SH+=	tc_test
+TESTS_SH+=	tp_test
 
 .include <bsd.test.mk>

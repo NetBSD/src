@@ -1,12 +1,14 @@
-# $NetBSD: Makefile,v 1.1 2010/05/08 08:12:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/03 08:14:12 jmmv Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/atf-config
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
-.PATH:		${SRCDIR}/tests/atf/atf-config
+.PATH:		${SRCDIR}/atf-config
 
-TESTS_SH=	t_integration
+CPPFLAGS+=	-DHAVE_CONFIG_H
+
+TESTS_SH=	integration_test
 
 .include <bsd.test.mk>
