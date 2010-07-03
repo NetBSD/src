@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.6 2010/07/03 12:23:04 pooka Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.7 2010/07/03 13:37:22 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -81,12 +81,13 @@ ATF_TC_BODY(devnull1, tc)
 	fd = rump_sys_open("/mp/null", O_WRONLY | O_CREAT | O_TRUNC);
 
 	atf_tc_expect_fail("PR kern/43560");
-	if (fd == -1 && errno == EROFS)
+	if (fd == -1 && errno == EROFS) {
 		atf_tc_fail("open returned EROFS");
-	else if (fd == -1)
+	} else if (fd == -1) {
+		atf_tc_expect_pass();
 		atf_tc_fail_errno("open fail");
+	}
 
-	atf_tc_expect_pass();
 }
 
 ATF_TC(devnull2);
