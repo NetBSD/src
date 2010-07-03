@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.47 2010/07/02 14:47:25 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.48 2010/07/03 21:43:37 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.47 2010/07/02 14:47:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.48 2010/07/03 21:43:37 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -5842,7 +5842,7 @@ iwn_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
 
-	mutex_spin_enter(&sc->sc_mtx);
+	mutex_enter(&sc->sc_mtx);
 	if (sc->sc_flags & IWN_FLAG_HW_INITED)
 		return 0;
 	if ((error = iwn_hw_prepare(sc)) != 0) {
@@ -5898,10 +5898,10 @@ iwn_init(struct ifnet *ifp)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	sc->sc_flags |= IWN_FLAG_HW_INITED;
-	mutex_spin_exit(&sc->sc_mtx);
+	mutex_exit(&sc->sc_mtx);
 	return 0;
 
-fail:	mutex_spin_exit(&sc->sc_mtx);
+fail:	mutex_exit(&sc->sc_mtx);
 	iwn_stop(ifp, 1);
 	return error;
 }
@@ -5912,7 +5912,7 @@ iwn_stop(struct ifnet *ifp, int disable)
 	struct iwn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
-	mutex_spin_enter(&sc->sc_mtx);
+	mutex_enter(&sc->sc_mtx);
 	sc->sc_flags &= ~IWN_FLAG_HW_INITED;
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -5927,7 +5927,7 @@ iwn_stop(struct ifnet *ifp, int disable)
 	sc->sc_sensor.value_cur = 0;
 	sc->sc_sensor.state = ENVSYS_SINVALID;
 #endif
-	mutex_spin_exit(&sc->sc_mtx);
+	mutex_exit(&sc->sc_mtx);
 }
 
 /*
