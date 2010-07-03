@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.1 2010/06/28 19:04:00 pooka Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.2 2010/07/03 08:18:30 jmmv Exp $	*/
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -15,7 +15,6 @@ ATF_TC_HEAD(ptyioctl, tc)
 {
 
 	atf_tc_set_md_var(tc, "descr", "ioctl on pty");
-	atf_tc_set_md_var(tc, "xfail", "PR kern/40688");
 }
 
 ATF_TC_BODY(ptyioctl, tc)
@@ -29,6 +28,7 @@ ATF_TC_BODY(ptyioctl, tc)
 		err(1, "open");
 
 	/* boom, dies with null deref under ptcwakeup() */
+	atf_tc_expect_signal(-1, "PR kern/40688");
 	rump_sys_ioctl(fd, TIOCGETA, &tio);
 }
 
