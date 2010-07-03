@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.59 2010/06/30 15:40:30 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.60 2010/07/03 10:55:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.59 2010/06/30 15:40:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.60 2010/07/03 10:55:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -71,6 +71,7 @@ static int rump_vop_write(void *);
 static int rump_vop_open(void *);
 static int rump_vop_symlink(void *);
 static int rump_vop_readlink(void *);
+static int rump_vop_whiteout(void *);
 
 int (**fifo_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
@@ -98,6 +99,7 @@ const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
 	{ &vop_open_desc, rump_vop_open },
 	{ &vop_seek_desc, genfs_seek },
 	{ &vop_putpages_desc, genfs_null_putpages },
+	{ &vop_whiteout_desc, rump_vop_whiteout },
 	{ &vop_fsync_desc, rump_vop_success },
 	{ &vop_lock_desc, genfs_lock },
 	{ &vop_unlock_desc, genfs_unlock },
@@ -123,6 +125,8 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 	NULL
 };
 
+#define RUMPFS_WHITEOUT NULL
+#define RDENT_ISWHITEOUT(rdp) (rdp->rd_node == RUMPFS_WHITEOUT)
 struct rumpfs_dent {
 	char *rd_name;
 	int rd_namelen;
@@ -424,7 +428,8 @@ rump_etfs_remove(const char *key)
  * rumpfs
  */
 
-static int lastino = 1;
+#define INO_WHITEOUT 1
+static int lastino = 2;
 static kmutex_t reclock;
 
 static struct rumpfs_node *
@@ -871,6 +876,36 @@ rump_vop_readlink(void *v)
 }
 
 static int
+rump_vop_whiteout(void *v)
+{
+	struct vop_whiteout_args /* {
+		struct vnode            *a_dvp;
+		struct componentname    *a_cnp;
+		int                     a_flags;
+	} */ *ap = v;
+	struct vnode *dvp = ap->a_dvp;
+	struct rumpfs_node *rnd = dvp->v_data;
+	struct componentname *cnp = ap->a_cnp;
+	int flags = ap->a_flags;
+
+	switch (flags) {
+	case LOOKUP:
+		break;
+	case CREATE:
+		makedir(rnd, cnp, RUMPFS_WHITEOUT);
+		break;
+	case DELETE:
+		cnp->cn_flags &= ~DOWHITEOUT; /* cargo culting never fails ? */
+		freedir(rnd, cnp);
+		break;
+	default:
+		panic("unknown whiteout op %d", flags);
+	}
+
+	return 0;
+}
+
+static int
 rump_vop_open(void *v)
 {
 	struct vop_open_args /* {
@@ -935,11 +970,17 @@ rump_vop_readdir(void *v)
 	    rdent = LIST_NEXT(rdent, rd_entries), i++) {
 		struct dirent dent;
 
-		dent.d_fileno = rdent->rd_node->rn_va.va_fileid;
 		strlcpy(dent.d_name, rdent->rd_name, sizeof(dent.d_name));
 		dent.d_namlen = strlen(dent.d_name);
-		dent.d_type = vtype2dt(rdent->rd_node->rn_va.va_type);
 		dent.d_reclen = _DIRENT_RECLEN(&dent, dent.d_namlen);
+
+		if (__predict_false(RDENT_ISWHITEOUT(rdent))) {
+			dent.d_fileno = INO_WHITEOUT;
+			dent.d_type = DT_WHT;
+		} else {
+			dent.d_fileno = rdent->rd_node->rn_va.va_fileid;
+			dent.d_type = vtype2dt(rdent->rd_node->rn_va.va_type);
+		}
 
 		if (uio->uio_resid < dent.d_reclen) {
 			i--;
