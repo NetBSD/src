@@ -29,13 +29,97 @@
 
 #include <map>
 
-#include <atf-c++/formats.hpp>
 #include <atf-c++/fs.hpp>
 #include <atf-c++/process.hpp>
 #include <atf-c++/tests.hpp>
 
 namespace atf {
 namespace atf_run {
+
+struct test_case_result {
+    std::string m_state;
+    int m_value;
+    std::string m_reason;
+
+public:
+    test_case_result(void) :
+        m_state("UNINITIALIZED"),
+        m_value(-1),
+        m_reason("")
+    {
+    }
+
+    test_case_result(const std::string& p_state, const int p_value,
+                     const std::string& p_reason) :
+        m_state(p_state),
+        m_value(p_value),
+        m_reason(p_reason)
+    {
+    }
+
+    const std::string&
+    state(void) const
+    {
+        return m_state;
+    }
+
+    int
+    value(void) const
+    {
+        return m_value;
+    }
+
+    const std::string&
+    reason(void) const
+    {
+        return m_reason;
+    }
+};
+
+namespace detail {
+
+class atf_tp_reader {
+    std::istream& m_is;
+
+    void validate_and_insert(const std::string&, const std::string&,
+                             const size_t,
+                             std::map< std::string, std::string >&);
+
+protected:
+    virtual void got_tc(const std::string&,
+                        const std::map< std::string, std::string >&);
+    virtual void got_eof(void);
+
+public:
+    atf_tp_reader(std::istream&);
+    virtual ~atf_tp_reader(void);
+
+    void read(void);
+};
+
+test_case_result parse_test_case_result(const std::string&);
+
+} // namespace detail
+
+class atf_tps_writer {
+    std::ostream& m_os;
+
+    std::string m_tpname, m_tcname;
+
+public:
+    atf_tps_writer(std::ostream&);
+
+    void info(const std::string&, const std::string&);
+    void ntps(size_t);
+
+    void start_tp(const std::string&, size_t);
+    void end_tp(const std::string&);
+
+    void start_tc(const std::string&);
+    void stdout_tc(const std::string&);
+    void stderr_tc(const std::string&);
+    void end_tc(const std::string&, const std::string&);
+};
 
 typedef std::map< std::string, atf::tests::vars_map > test_cases_map;
 
@@ -52,11 +136,14 @@ struct metadata {
     }
 };
 
+class atf_tps_writer;
+
 metadata get_metadata(const atf::fs::path&, const atf::tests::vars_map&);
-std::pair< std::string, atf::process::status > run_test_case(const atf::fs::path&,
-    const std::string&, const std::string&, const atf::tests::vars_map&,
-    const atf::tests::vars_map&, const atf::fs::path&, const atf::fs::path&,
-    atf::formats::atf_tps_writer&);
+test_case_result read_test_case_result(const atf::fs::path&);
+std::pair< std::string, atf::process::status > run_test_case(
+    const atf::fs::path&, const std::string&, const std::string&,
+    const atf::tests::vars_map&, const atf::tests::vars_map&,
+    const atf::fs::path&, const atf::fs::path&, atf_tps_writer&);
 
 } // namespace atf_run
 } // namespace atf

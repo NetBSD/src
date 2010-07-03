@@ -48,7 +48,6 @@
 
 #include "atf-c/error.h"
 #include "atf-c/fs.h"
-#include "atf-c/process.h"
 #include "atf-c/sanity.h"
 #include "atf-c/text.h"
 #include "atf-c/user.h"
@@ -58,16 +57,12 @@
  * --------------------------------------------------------------------- */
 
 static bool check_umask(const mode_t, const mode_t);
-static atf_error_t cleanup_aux(const atf_fs_path_t *, dev_t, bool);
-static atf_error_t cleanup_aux_dir(const char *, const atf_fs_stat_t *, bool);
 static atf_error_t copy_contents(const atf_fs_path_t *, char **);
 static mode_t current_umask(void);
 static atf_error_t do_mkdtemp(char *);
-static atf_error_t do_unmount(const atf_fs_path_t *);
 static atf_error_t normalize(atf_dynstr_t *, char *);
 static atf_error_t normalize_ap(atf_dynstr_t *, const char *, va_list);
 static void replace_contents(atf_fs_path_t *, const char *);
-static atf_error_t set_immutable(const char *, bool, bool *);
 static const char *stat_type_to_string(const int);
 
 /* ---------------------------------------------------------------------
@@ -177,100 +172,6 @@ check_umask(const mode_t exp_mode, const mode_t min_mode)
     return (actual_mode & min_mode) == min_mode;
 }
 
-/* The erase parameter in this routine is to control nested mount points.
- * We want to descend into a mount point to unmount anything that is
- * mounted under it, but we do not want to delete any files while doing
- * this traversal.  In other words, we erase files until we cross the
- * first mount point, and after that point we only scan and unmount. */
-static
-atf_error_t
-cleanup_aux(const atf_fs_path_t *p, dev_t parent_device, bool erase)
-{
-    const char *pstr = atf_fs_path_cstring(p);
-    atf_error_t err;
-    atf_fs_stat_t st;
-
-    err = atf_fs_stat_init(&st, p);
-    if (atf_is_error(err))
-        goto out;
-
-    if (atf_fs_stat_get_type(&st) == atf_fs_stat_dir_type) {
-        err = cleanup_aux_dir(pstr, &st,
-                              atf_fs_stat_get_device(&st) == parent_device);
-        if (atf_is_error(err))
-            goto out_st;
-    }
-
-    if (atf_fs_stat_get_device(&st) != parent_device) {
-        err = do_unmount(p);
-        if (atf_is_error(err))
-            goto out_st;
-    }
-
-    if (erase) {
-        if (atf_fs_stat_get_type(&st) == atf_fs_stat_dir_type) {
-            err = atf_fs_rmdir(p);
-        } else {
-            if (unlink(pstr) == -1)
-                err = atf_libc_error(errno, "Cannot remove file %s", pstr);
-            else
-                INV(!atf_is_error(err));
-        }
-    }
-
-out_st:
-    atf_fs_stat_fini(&st);
-out:
-    return err;
-}
-
-static
-atf_error_t
-cleanup_aux_dir(const char *pstr, const atf_fs_stat_t *st, bool erase)
-{
-    DIR *d;
-    atf_error_t err;
-    struct dirent *de;
-
-    if (erase && ((atf_fs_stat_get_mode(st) & S_IRWXU) != S_IRWXU)) {
-        bool unused_done;
-        err = set_immutable(pstr, false, &unused_done);
-        if (atf_is_error(err))
-            goto out;
-
-        if (chmod(pstr, atf_fs_stat_get_mode(st) | S_IRWXU) == -1) {
-            err = atf_libc_error(errno, "Cannot grant write permissions "
-                                 "to %s", pstr);
-            goto out;
-        }
-    }
-
-    d = opendir(pstr);
-    if (d == NULL) {
-        err = atf_libc_error(errno, "Cannot open directory %s", pstr);
-        goto out;
-    }
-
-    err = atf_no_error();
-    while (!atf_is_error(err) && (de = readdir(d)) != NULL) {
-        atf_fs_path_t p;
-
-        err = atf_fs_path_init_fmt(&p, "%s/%s", pstr, de->d_name);
-        if (!atf_is_error(err)) {
-            if (strcmp(de->d_name, ".") != 0 &&
-                strcmp(de->d_name, "..") != 0)
-                err = cleanup_aux(&p, atf_fs_stat_get_device(st), erase);
-
-            atf_fs_path_fini(&p);
-        }
-    }
-
-    closedir(d);
-
-out:
-    return err;
-}
-
 static
 atf_error_t
 copy_contents(const atf_fs_path_t *p, char **buf)
@@ -332,69 +233,6 @@ do_mkstemp(char *tmpl, int *fdout)
     else
         err = atf_no_error();
 
-    return err;
-}
-
-static
-atf_error_t
-do_unmount(const atf_fs_path_t *p)
-{
-    atf_error_t err;
-    atf_fs_path_t pa;
-    const char *pastr;
-
-    /* At least, FreeBSD's unmount(2) requires the path to be absolute.
-     * Let's make it absolute in all cases just to be safe that this does
-     * not affect other systems. */
-
-    if (!atf_fs_path_is_absolute(p))
-        err = atf_fs_path_to_absolute(p, &pa);
-    else
-        err = atf_fs_path_copy(&pa, p);
-    if (atf_is_error(err))
-        goto out;
-    pastr = atf_fs_path_cstring(&pa);
-
-#if defined(HAVE_UNMOUNT)
-    if (unmount(pastr, 0) == -1)
-        err = atf_libc_error(errno, "Cannot unmount %s", pastr);
-    else
-        err = atf_no_error();
-#else
-    {
-        /* We could use umount(2) instead if it was available... but
-         * trying to do so under, e.g. Linux, is a nightmare because we
-         * also have to update /etc/mtab to match what we did.  It is
-         * simpler to just leave the system-specific umount(8) tool deal
-         * with it, at least for now. */
-        atf_fs_path_t prog;
-
-        /* TODO: Should have an atf_fs_find_in_path function or similar to
-         * avoid relying on the automatic path lookup of exec, which I'd
-         * like to get rid of. */
-        err = atf_fs_path_init_fmt(&prog, "umount");
-        if (!atf_is_error(err)) {
-            atf_process_status_t status;
-            const char *argv[3] = { "unmount", pastr, NULL };
-
-            err = atf_process_exec_array(&status, &prog, argv, NULL, NULL);
-            if (!atf_is_error(err)) {
-                if (!atf_process_status_exited(&status) ||
-                    atf_process_status_exitstatus(&status) != EXIT_SUCCESS) {
-                    /* XXX: This is the wrong error type. */
-                    err = atf_libc_error(EINVAL, "Failed to exec unmount");
-                }
-
-                atf_process_status_fini(&status);
-            }
-
-            atf_fs_path_fini(&prog);
-        }
-    }
-#endif
-
-    atf_fs_path_fini(&pa);
-out:
     return err;
 }
 
@@ -468,76 +306,6 @@ replace_contents(atf_fs_path_t *p, const char *buf)
     err = atf_dynstr_append_fmt(&p->m_data, "%s", buf);
 
     INV(!atf_is_error(err));
-}
-
-static
-atf_error_t
-set_immutable(const char *filename, bool value, bool *done)
-{
-    atf_error_t err;
-
-#if HAVE_CHFLAGS
-    struct stat sb;
-
-    if (lstat(filename, &sb) == -1) {
-        err = atf_libc_error(errno, "lstat(%s) failed", filename);
-        goto out;
-    }
-
-    unsigned long new_flags = sb.st_flags;
-    if (value)
-        new_flags |= UF_IMMUTABLE;
-    else
-        new_flags &= ~UF_IMMUTABLE;
-
-    if (chflags(filename, new_flags) == -1) {
-        err = atf_libc_error(errno, "chflags(%s) failed", filename);
-        goto out;
-    }
-
-    err = atf_no_error();
-    *done = true;
-
-out:
-#elif HAVE_CHATTR
-    if (atf_user_is_root()) {
-        /* TODO: This should use ioctl(2) instead of chattr(1), but it looks
-         * like that the API to set the immutable value is file-system specific.
-         * Investigate this later. */
-        atf_fs_path_t prog;
-
-        err = atf_fs_path_init_fmt(&prog, CHATTR);
-        if (!atf_is_error(err)) {
-            atf_process_status_t status;
-            const char *argv[4] = { "chattr", value ? "+i" : "-i", filename,
-                                    NULL };
-
-            err = atf_process_exec_array(&status, &prog, argv, NULL, NULL);
-            if (!atf_is_error(err)) {
-                if (!atf_process_status_exited(&status) ||
-                    atf_process_status_exitstatus(&status) != EXIT_SUCCESS) {
-                    /* XXX: This is the wrong error type. */
-                    err = atf_libc_error(EINVAL, "Failed to exec chattr");
-                }
-
-                atf_process_status_fini(&status);
-            }
-
-            atf_fs_path_fini(&prog);
-        }
-        *done = true;
-    } else {
-        /* Linux doesn't allow to set the immutability bit by non-root; just
-         * report it as an unsupported case. */
-        err = atf_no_error();
-        *done = false;
-    }
-#else
-    err = atf_no_error();
-    *done = false;
-#endif
-
-    return err;
 }
 
 static
@@ -916,23 +684,6 @@ const int atf_fs_access_r = 1 << 1;
 const int atf_fs_access_w = 1 << 2;
 const int atf_fs_access_x = 1 << 3;
 
-atf_error_t
-atf_fs_cleanup(const atf_fs_path_t *p)
-{
-    atf_error_t err;
-    atf_fs_stat_t info;
-
-    err = atf_fs_stat_init(&info, p);
-    if (atf_is_error(err))
-        return err;
-
-    err = cleanup_aux(p, atf_fs_stat_get_device(&info), true);
-
-    atf_fs_stat_fini(&info);
-
-    return err;
-}
-
 /*
  * An implementation of access(2) but using the effective user value
  * instead of the real one.  Also avoids false positives for root when
@@ -1116,12 +867,6 @@ atf_fs_rmdir(const atf_fs_path_t *p)
         err = atf_no_error();
 
     return err;
-}
-
-atf_error_t
-atf_fs_set_immutable(const atf_fs_path_t *p, bool value, bool *done)
-{
-    return set_immutable(atf_fs_path_cstring(p), value, done);
 }
 
 atf_error_t

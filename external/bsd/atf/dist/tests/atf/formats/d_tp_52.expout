@@ -1,2 +1,0 @@
-got_tc(test1, {ident=test1})
-got_eof()

@@ -35,7 +35,6 @@
 
 extern "C" {
 #include <atf-c/tc.h>
-#include <atf-c/tcr.h>
 }
 
 #include <atf-c++/fs.hpp>
@@ -44,51 +43,28 @@ extern "C" {
 namespace atf {
 namespace tests {
 
+namespace detail {
+
+class atf_tp_writer {
+    std::ostream& m_os;
+
+    bool m_is_first;
+
+public:
+    atf_tp_writer(std::ostream&);
+
+    void start_tc(const std::string&);
+    void end_tc(void);
+    void tc_meta_data(const std::string&, const std::string&);
+};
+
+} // namespace
+
 // ------------------------------------------------------------------------
 // The "vars_map" class.
 // ------------------------------------------------------------------------
 
 typedef std::map< std::string, std::string > vars_map;
-
-// ------------------------------------------------------------------------
-// The "tcr" class.
-// ------------------------------------------------------------------------
-
-//!
-//! \brief Holds the results of a test case's execution.
-//!
-//! The tcr class holds the information that describes the results of a
-//! test case's execution.  This is composed of an exit code and a reason
-//! for that exit code.
-//!
-//! TODO: Complete documentation for this class.  Not done yet because it
-//! is worth to investigate if this class could be rewritten as several
-//! different classes, one for each status.
-//!
-class tcr {
-    atf_tcr_t m_tcr;
-
-public:
-    typedef atf_tcr_state_t state;
-
-    static const state passed_state;
-    static const state failed_state;
-    static const state skipped_state;
-    static const state xfail_state;
-
-    tcr(state);
-    tcr(state, const std::string&);
-    tcr(const tcr&);
-    ~tcr(void);
-
-    state get_state(void) const;
-    const std::string get_reason(void) const;
-
-    tcr& operator=(const tcr&);
-
-    static tcr read(const fs::path&);
-    void write(const fs::path&) const;
-};
 
 // ------------------------------------------------------------------------
 // The "tc" class.
@@ -98,6 +74,7 @@ class tc : utils::noncopyable {
     std::string m_ident;
     atf_map_t m_config;
     atf_tc_t m_tc;
+    bool m_has_cleanup;
 
 protected:
     virtual void head(void);
@@ -111,7 +88,7 @@ protected:
     static void wrap_cleanup(const atf_tc_t *);
 
 public:
-    tc(const std::string&);
+    tc(const std::string&, const bool);
     virtual ~tc(void);
 
     void init(const vars_map&);
@@ -131,7 +108,18 @@ public:
     // To be called from the child process only.
     static void pass(void);
     static void fail(const std::string&);
+    static void fail_nonfatal(const std::string&);
     static void skip(const std::string&);
+    static void check_errno(const char*, const int, const int, const char*,
+                            const bool);
+    static void require_errno(const char*, const int, const int, const char*,
+                              const bool);
+    static void expect_pass(void);
+    static void expect_fail(const std::string&);
+    static void expect_exit(const int, const std::string&);
+    static void expect_signal(const int, const std::string&);
+    static void expect_death(const std::string&);
+    static void expect_timeout(const std::string&);
 };
 
 } // namespace tests

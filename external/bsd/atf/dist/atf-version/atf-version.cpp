@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -64,22 +64,22 @@ atf_version::main(void)
     using atf::ui::format_text_with_tag;
 
     std::cout << PACKAGE_STRING " (" PACKAGE_TARNAME "-" PACKAGE_VERSION
-                 ")" << std::endl
-              << PACKAGE_COPYRIGHT << std::endl
-              << std::endl;
+                 ")\n" PACKAGE_COPYRIGHT "\n\n";
 
+#if defined(PACKAGE_REVISION_TYPE_DIST)
+    std::cout << format_text("Built from a distribution file; no revision "
+        "information available.") << "\n";
+#elif defined(PACKAGE_REVISION_TYPE_MTN)
     std::cout << format_text_with_tag(PACKAGE_REVISION_BRANCH, "Branch: ",
-                                      false) << std::endl;
+                                      false) << "\n";
     std::cout << format_text_with_tag(PACKAGE_REVISION_BASE
-#if PACKAGE_REVISION_MODIFIED
-                                      " (locally modified)"
-#endif
-                                      , "Base revision: ", false)
-              << std::endl;
-#if PACKAGE_REVISION_CACHED
-    std::cout << format_text("Information gathered from data cached in "
-                             "distribution; further changes may have been "
-                             "made.") << std::endl;
+#   if PACKAGE_REVISION_MODIFIED
+        " (locally modified)"
+#   endif
+        " " PACKAGE_REVISION_DATE,
+        "Base revision: ", false) << "\n";
+#else
+#   error "Unknown PACKAGE_REVISION_TYPE value"
 #endif
 
     return EXIT_SUCCESS;
