@@ -418,6 +418,18 @@ atf_check_result_exitcode(const atf_check_result_t *r)
     return atf_process_status_exitstatus(&r->m_status);
 }
 
+bool
+atf_check_result_signaled(const atf_check_result_t *r)
+{
+    return atf_process_status_signaled(&r->m_status);
+}
+
+int
+atf_check_result_termsig(const atf_check_result_t *r)
+{
+    return atf_process_status_termsig(&r->m_status);
+}
+
 /* ---------------------------------------------------------------------
  * Free functions.
  * --------------------------------------------------------------------- */
