@@ -30,7 +30,9 @@
 #if !defined(_ATF_CXX_PARSER_HPP_)
 #define _ATF_CXX_PARSER_HPP_
 
+#include <istream>
 #include <map>
+#include <ostream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -70,6 +72,15 @@ public:
     ~parse_errors(void) throw();
 
     const char* what(void) const throw();
+};
+
+// ------------------------------------------------------------------------
+// The "format_error" class.
+// ------------------------------------------------------------------------
+
+class format_error : public std::runtime_error {
+public:
+    format_error(const std::string&);
 };
 
 // ------------------------------------------------------------------------
@@ -354,6 +365,17 @@ public:
            const token_type&,
            const token_type&,
            const std::string&);
+
+    token
+    expect(const token_type&,
+           const token_type&,
+           const token_type&,
+           const token_type&,
+           const token_type&,
+           const token_type&,
+           const token_type&,
+           const token_type&,
+           const std::string&);
 };
 
 template< class TKZ >
@@ -519,6 +541,65 @@ parser< TKZ >::expect(const token_type& t1,
 
     return t;
 }
+
+template< class TKZ >
+token
+parser< TKZ >::expect(const token_type& t1,
+                      const token_type& t2,
+                      const token_type& t3,
+                      const token_type& t4,
+                      const token_type& t5,
+                      const token_type& t6,
+                      const token_type& t7,
+                      const token_type& t8,
+                      const std::string& textual)
+{
+    token t = next();
+
+    if (t.type() != t1 && t.type() != t2 && t.type() != t3 &&
+        t.type() != t4 && t.type() != t5 && t.type() != t6 &&
+        t.type() != t7 && t.type() != t8)
+        throw parse_error(t.lineno(),
+                          "Unexpected token `" + t.text() +
+                          "'; expected " + textual);
+
+    return t;
+}
+
+#define ATF_PARSER_CALLBACK(parser, func) \
+    do { \
+        if (!(parser).has_errors()) \
+            func; \
+    } while (false)
+
+// ------------------------------------------------------------------------
+// Header parsing.
+// ------------------------------------------------------------------------
+
+typedef std::map< std::string, std::string > attrs_map;
+
+class header_entry {
+    std::string m_name;
+    std::string m_value;
+    attrs_map m_attrs;
+
+public:
+    header_entry(void);
+    header_entry(const std::string&, const std::string&,
+                 attrs_map = attrs_map());
+
+    const std::string& name(void) const;
+    const std::string& value(void) const;
+    const attrs_map& attrs(void) const;
+    bool has_attr(const std::string&) const;
+    const std::string& get_attr(const std::string&) const;
+};
+
+typedef std::map< std::string, header_entry > headers_map;
+
+std::pair< size_t, headers_map > read_headers(std::istream&, size_t);
+void write_headers(const headers_map&, std::ostream&);
+void validate_content_type(const headers_map&, const std::string&, int);
 
 } // namespace parser
 } // namespace atf

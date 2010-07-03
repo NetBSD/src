@@ -54,6 +54,7 @@ extern "C" {
 #include "atf-c++/env.hpp"
 #include "atf-c++/fs.hpp"
 #include "atf-c++/io.hpp"
+#include "atf-c++/process.hpp"
 #include "atf-c++/sanity.hpp"
 #include "atf-c++/text.hpp"
 #include "atf-c++/user.hpp"
@@ -65,6 +66,8 @@ namespace impl = atf::fs;
 // ------------------------------------------------------------------------
 // Auxiliary functions.
 // ------------------------------------------------------------------------
+
+static bool safe_access(const impl::path&, int, int);
 
 //!
 //! \brief A controlled version of access(2).
@@ -446,34 +449,6 @@ impl::directory::names(void)
 }
 
 // ------------------------------------------------------------------------
-// The "temp_dir" class.
-// ------------------------------------------------------------------------
-
-impl::temp_dir::temp_dir(const path& p)
-{
-    atf::utils::auto_array< char > buf(new char[p.str().length() + 1]);
-    std::strcpy(buf.get(), p.c_str());
-    if (::mkdtemp(buf.get()) == NULL)
-        throw system_error(IMPL_NAME "::temp_dir::temp_dir(" +
-                           p.str() + ")", "mkdtemp(3) failed",
-                           errno);
-
-    m_path.reset(new path(buf.get()));
-}
-
-impl::temp_dir::~temp_dir(void)
-{
-    cleanup(*m_path);
-}
-
-const impl::path&
-impl::temp_dir::get_path(void)
-    const
-{
-    return *m_path;
-}
-
-// ------------------------------------------------------------------------
 // The "temp_file" class.
 // ------------------------------------------------------------------------
 
@@ -533,20 +508,6 @@ impl::temp_file::fd(void)
 // Free functions.
 // ------------------------------------------------------------------------
 
-impl::path
-impl::change_directory(const path& dir)
-{
-    path olddir = get_current_dir();
-
-    if (olddir != dir) {
-        if (::chdir(dir.c_str()) == -1)
-            throw system_error(IMPL_NAME "::chdir(" + dir.str() + ")",
-                               "chdir(2) failed", errno);
-    }
-
-    return olddir;
-}
-
 bool
 impl::exists(const path& p)
 {
@@ -583,20 +544,6 @@ impl::have_prog_in_path(const std::string& prog)
     return found;
 }
 
-impl::path
-impl::get_current_dir(void)
-{
-    atf_fs_path_t cwd;
-
-    atf_error_t err = atf_fs_getcwd(&cwd);
-    if (atf_is_error(err))
-        throw_atf_error(err);
-
-    path p(atf_fs_path_cstring(&cwd));
-    atf_fs_path_fini(&cwd);
-    return p;
-}
-
 bool
 impl::is_executable(const path& p)
 {
@@ -619,40 +566,9 @@ impl::remove(const path& p)
 }
 
 void
-impl::cleanup(const path& p)
-{
-    atf_error_t err;
-
-    err = atf_fs_cleanup(p.c_path());
-    if (atf_is_error(err))
-        throw_atf_error(err);
-}
-
-void
 impl::rmdir(const path& p)
 {
     atf_error_t err = atf_fs_rmdir(p.c_path());
     if (atf_is_error(err))
         throw_atf_error(err);
-}
-
-// XXX: This is racy if we have other threads.  We should grab the current
-// umask durent program initialization and never query it again, provided
-// that we don't modify it, of course.
-mode_t
-impl::current_umask(void)
-{
-    const mode_t current = umask(0);
-    (void)umask(current);
-    return current;
-}
-
-bool
-impl::set_immutable(const atf::fs::path& p, bool value)
-{
-    bool done;
-    atf_error_t err = atf_fs_set_immutable(p.c_path(), value, &done);
-    if (atf_is_error(err))
-        throw_atf_error(err);
-    return done;
 }
