@@ -33,10 +33,8 @@
 
 #include "atf-c/error.h"
 #include "atf-c/fs.h"
-#include "atf-c/io.h"
 #include "atf-c/sanity.h"
 #include "atf-c/tc.h"
-#include "atf-c/tcr.h"
 #include "atf-c/tp.h"
 
 /* ---------------------------------------------------------------------

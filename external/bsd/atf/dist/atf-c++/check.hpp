@@ -105,6 +105,16 @@ public:
     int exitcode(void) const;
 
     //!
+    //! \brief Returns whether the command received a signal or not.
+    //!
+    bool signaled(void) const;
+
+    //!
+    //! \brief Returns the signal that terminated the command.
+    //!
+    int termsig(void) const;
+
+    //!
     //! \brief Returns the path to file contaning command's stdout.
     //!
     const atf::fs::path stdout_path(void) const;

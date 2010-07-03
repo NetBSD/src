@@ -354,49 +354,6 @@ public:
 };
 
 // ------------------------------------------------------------------------
-// The "temp_dir" class.
-// ------------------------------------------------------------------------
-
-//!
-//! \brief A RAII model for temporary directories.
-//!
-//! The temp_dir class provides a RAII model for temporary directories.
-//! During construction, a safe temporary directory is created and during
-//! destruction it is carefully removed by making use of the cleanup
-//! function.
-//!
-class temp_dir {
-    //!
-    //! \brief The path to this temporary directory.
-    //!
-    std::auto_ptr< path > m_path;
-
-public:
-    //!
-    //! \brief Creates a new temporary directory.
-    //!
-    //! Creates a new temporary directory based on the provided name
-    //! template.  The template must end with six X characters preceded
-    //! by a dot.  These characters are replaced with a unique name on
-    //! the file system as described in mkdtemp(3).
-    //!
-    temp_dir(const path&);
-
-    //!
-    //! \brief Destroys the temporary directory.
-    //!
-    //! Destroys this temporary directory object as well as its file
-    //! system representation.
-    //!
-    ~temp_dir(void);
-
-    //!
-    //! \brief Returns the path to this temporary directory.
-    //!
-    const path& get_path(void) const;
-};
-
-// ------------------------------------------------------------------------
 // The "temp_file" class.
 // ------------------------------------------------------------------------
 
@@ -467,16 +424,6 @@ public:
 // ------------------------------------------------------------------------
 
 //!
-//! \brief Changes the current working directory.
-//!
-//! Changes the current working directory to the given path.  Returns the
-//! path to the directory just left.
-//!
-//! \throw system_error If ::chdir failed.
-//!
-path change_directory(const path&);
-
-//!
 //! \brief Checks if the given path exists.
 //!
 bool exists(const path&);
@@ -490,16 +437,6 @@ bool exists(const path&);
 bool have_prog_in_path(const std::string&);
 
 //!
-//! \brief Returns the path to the current working directory.
-//!
-//! Calculates and returns the path to the current working directory, which
-//! is guessed using the ::getcwd function.
-//!
-//! \throw system_error If ::getcwd failed.
-//!
-path get_current_dir(void);
-
-//!
 //! \brief Checks if the given path exists, is accessible and is executable.
 //!
 bool is_executable(const path&);
@@ -510,32 +447,9 @@ bool is_executable(const path&);
 void remove(const path&);
 
 //!
-//! \brief Recursively cleans up a directory.
-//!
-//! This function cleans up a directory hierarchy.  First of all, it looks
-//! for any file system that may be mounted under the given path and, if
-//! any is found, an attempt is made to unmount it.  Later on, the
-//! directory is removed alongside all of its contents.
-//!
-void cleanup(const path&);
-
-//!
 //! \brief Removes an empty directory.
 //!
 void rmdir(const path&);
-
-//!
-//! \brief Gets the current umask.
-//!
-mode_t current_umask(void);
-
-//!
-//! \brief Changes the immutability of a file.
-//!
-//! Returns true if the operation was performed, or false if the operation
-//! is not supported.
-//!
-bool set_immutable(const atf::fs::path&, bool);
 
 } // namespace fs
 } // namespace atf
