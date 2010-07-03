@@ -56,165 +56,57 @@ extern "C" {
 #include "atf-c++/application.hpp"
 #include "atf-c++/env.hpp"
 #include "atf-c++/exceptions.hpp"
-#include "atf-c++/formats.hpp"
 #include "atf-c++/fs.hpp"
 #include "atf-c++/io.hpp"
+#include "atf-c++/parser.hpp"
 #include "atf-c++/sanity.hpp"
 #include "atf-c++/tests.hpp"
 #include "atf-c++/text.hpp"
-#include "atf-c++/ui.hpp"
 #include "atf-c++/user.hpp"
 
 namespace impl = atf::tests;
+namespace detail = atf::tests::detail;
 #define IMPL_NAME "atf::tests"
 
 // ------------------------------------------------------------------------
-// The "tcr" class.
+// The "atf_tp_writer" class.
 // ------------------------------------------------------------------------
 
-const impl::tcr::state impl::tcr::passed_state = atf_tcr_passed_state;
-const impl::tcr::state impl::tcr::failed_state = atf_tcr_failed_state;
-const impl::tcr::state impl::tcr::skipped_state = atf_tcr_skipped_state;
-const impl::tcr::state impl::tcr::xfail_state = atf_tcr_xfail_state;
-
-impl::tcr::tcr(state s)
+detail::atf_tp_writer::atf_tp_writer(std::ostream& os) :
+    m_os(os),
+    m_is_first(true)
 {
-    PRE(s == passed_state);
-
-    atf_error_t err = atf_tcr_init(&m_tcr, s);
-    if (atf_is_error(err))
-        throw_atf_error(err);
-}
-
-impl::tcr::tcr(state s, const std::string& r)
-{
-    PRE(s == failed_state || s == skipped_state || s == xfail_state);
-    PRE(!r.empty());
-
-    atf_error_t err = atf_tcr_init_reason_fmt(&m_tcr, s, "%s", r.c_str());
-    if (atf_is_error(err))
-        throw_atf_error(err);
-}
-
-impl::tcr::tcr(const tcr& o)
-{
-    if (o.get_state() == passed_state)
-        atf_tcr_init(&m_tcr, o.get_state());
-    else
-        atf_tcr_init_reason_fmt(&m_tcr, o.get_state(), "%s",
-                                o.get_reason().c_str());
-}
-
-impl::tcr::~tcr(void)
-{
-    atf_tcr_fini(&m_tcr);
-}
-
-impl::tcr::state
-impl::tcr::get_state(void)
-    const
-{
-    return atf_tcr_get_state(&m_tcr);
-}
-
-const std::string
-impl::tcr::get_reason(void)
-    const
-{
-    const atf_dynstr_t* r = atf_tcr_get_reason(&m_tcr);
-    return atf_dynstr_cstring(r);
-}
-
-impl::tcr&
-impl::tcr::operator=(const tcr& o)
-{
-    if (this != &o) {
-        atf_tcr_fini(&m_tcr);
-
-        if (o.get_state() == passed_state)
-            atf_tcr_init(&m_tcr, o.get_state());
-        else
-            atf_tcr_init_reason_fmt(&m_tcr, o.get_state(), "%s",
-                                    o.get_reason().c_str());
-    }
-    return *this;
-}
-
-namespace {
-
-class tcr_reader : public atf::formats::atf_tcr_reader {
-    std::string m_result, m_reason;
-
-    void
-    got_result(const std::string& str)
-    {
-        m_result = str;
-    }
-
-    void
-    got_reason(const std::string& str)
-    {
-        m_reason = str;
-    }
-
-public:
-    tcr_reader(std::istream& is) :
-        atf_tcr_reader(is)
-    {
-    }
-
-    atf::tests::tcr
-    get_tcr(void)
-        const
-    {
-        using atf::tests::tcr;
-
-        if (m_result == "passed")
-            return tcr(tcr::passed_state);
-        else if (m_result == "failed")
-            return tcr(tcr::failed_state, m_reason);
-        else if (m_result == "skipped")
-            return tcr(tcr::skipped_state, m_reason);
-        else {
-            UNREACHABLE;
-            return tcr(tcr::failed_state, "UNKNOWN");
-        }
-    }
-};
-
-} // anonymous namespace
-
-impl::tcr
-impl::tcr::read(const fs::path& p)
-{
-    std::ifstream is(p.c_str());
-    if (!is)
-        throw std::runtime_error("Cannot open results file `" + p.str() + "'");
-
-    tcr_reader r(is);
-    r.read();
-    return r.get_tcr();
+    atf::parser::headers_map hm;
+    atf::parser::attrs_map ct_attrs;
+    ct_attrs["version"] = "1";
+    hm["Content-Type"] = atf::parser::header_entry("Content-Type",
+        "application/X-atf-tp", ct_attrs);
+    atf::parser::write_headers(hm, m_os);
 }
 
 void
-impl::tcr::write(const fs::path& p)
-    const
+detail::atf_tp_writer::start_tc(const std::string& ident)
 {
-    std::ofstream os(p.c_str());
-    if (!os)
-        throw std::runtime_error("Cannot create results file `" + p.str() +
-                                 "'");
+    if (!m_is_first)
+        m_os << std::endl;
+    m_os << "ident: " << ident << std::endl;
+    m_os.flush();
+}
 
-    atf::formats::atf_tcr_writer w(os);
-    if (get_state() == impl::tcr::passed_state) {
-        w.result("passed");
-    } else if (get_state() == impl::tcr::failed_state) {
-        w.result("failed");
-        w.reason(get_reason());
-    } else if (get_state() == impl::tcr::skipped_state) {
-        w.result("skipped");
-        w.reason(get_reason());
-    }
+void
+detail::atf_tp_writer::end_tc(void)
+{
+    if (m_is_first)
+        m_is_first = false;
+}
+
+void
+detail::atf_tp_writer::tc_meta_data(const std::string& name,
+                                    const std::string& value)
+{
+    PRE(name != "ident");
+    m_os << name << ": " << value << std::endl;
+    m_os.flush();
 }
 
 // ------------------------------------------------------------------------
@@ -250,8 +142,9 @@ impl::tc::wrap_cleanup(const atf_tc_t *tc)
     (*iter).second->cleanup();
 }
 
-impl::tc::tc(const std::string& ident) :
-    m_ident(ident)
+impl::tc::tc(const std::string& ident, const bool has_cleanup) :
+    m_ident(ident),
+    m_has_cleanup(has_cleanup)
 {
 }
 
@@ -289,7 +182,7 @@ impl::tc::init(const vars_map& config)
     cwraps[&m_tc] = this;
 
     err = atf_tc_init(&m_tc, m_ident.c_str(), wrap_head, wrap_body,
-                      wrap_cleanup, &m_config);
+                      m_has_cleanup ? wrap_cleanup : NULL, &m_config);
     if (atf_is_error(err)) {
         atf_map_fini(&m_config);
         throw_atf_error(err);
@@ -358,9 +251,15 @@ void
 impl::tc::run(const fs::path& resfile)
     const
 {
-    atf_error_t err = atf_tc_run(&m_tc, resfile.c_path());
-    if (atf_is_error(err))
-        throw_atf_error(err);
+    try {
+        atf_error_t err = atf_tc_run(&m_tc, resfile.c_path());
+        if (atf_is_error(err))
+            throw_atf_error(err);
+    } catch (const std::exception& e) {
+        fail("Caught unhandled exception: " + std::string(e.what()));
+    } catch (...) {
+        fail("Caught unknown exception");
+    }
 }
 
 void
@@ -403,9 +302,65 @@ impl::tc::fail(const std::string& reason)
 }
 
 void
+impl::tc::fail_nonfatal(const std::string& reason)
+{
+    atf_tc_fail_nonfatal("%s", reason.c_str());
+}
+
+void
 impl::tc::skip(const std::string& reason)
 {
     atf_tc_skip("%s", reason.c_str());
+}
+
+void
+impl::tc::check_errno(const char* file, const int line, const int exp_errno,
+                      const char* expr_str, const bool result)
+{
+    atf_tc_check_errno(file, line, exp_errno, expr_str, result);
+}
+
+void
+impl::tc::require_errno(const char* file, const int line, const int exp_errno,
+                        const char* expr_str, const bool result)
+{
+    atf_tc_require_errno(file, line, exp_errno, expr_str, result);
+}
+
+void
+impl::tc::expect_pass(void)
+{
+    atf_tc_expect_pass();
+}
+
+void
+impl::tc::expect_fail(const std::string& reason)
+{
+    atf_tc_expect_fail("%s", reason.c_str());
+}
+
+void
+impl::tc::expect_exit(const int exitcode, const std::string& reason)
+{
+    atf_tc_expect_exit(exitcode, "%s", reason.c_str());
+}
+
+void
+impl::tc::expect_signal(const int signo, const std::string& reason)
+{
+    atf_tc_expect_signal(signo, "%s", reason.c_str());
+}
+
+void
+impl::tc::expect_death(const std::string& reason)
+{
+    atf_tc_expect_death("%s", reason.c_str());
+}
+
+void
+impl::tc::expect_timeout(const std::string& reason)
+{
+    atf_tc_expect_timeout("%s", reason.c_str());
 }
 
 // ------------------------------------------------------------------------
@@ -459,9 +414,9 @@ const char* tp::m_description =
     "This is an independent atf test program.";
 
 tp::tp(void (*add_tcs)(tc_vector&)) :
-    app(m_description, "atf-test-program(1)", "atf(7)"),
+    app(m_description, "atf-test-program(1)", "atf(7)", false),
     m_lflag(false),
-    m_resfile("resfile"), // XXX
+    m_resfile("/dev/stdout"),
     m_srcdir("."),
     m_add_tcs(add_tcs)
 {
@@ -600,7 +555,7 @@ void
 tp::list_tcs(void)
 {
     tc_vector tcs = init_tcs();
-    atf::formats::atf_tp_writer writer(std::cout);
+    detail::atf_tp_writer writer(std::cout);
 
     for (tc_vector::const_iterator iter = tcs.begin();
          iter != tcs.end(); iter++) {
@@ -679,7 +634,7 @@ tp::run_tc(const std::string& tcarg)
         }
         return EXIT_SUCCESS;
     } catch (const std::runtime_error& e) {
-        // TODO: Handle error.
+        std::cerr << "ERROR: " << e.what() << "\n";
         return EXIT_FAILURE;
     }
 }
