@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.22 2010/07/04 15:31:04 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.23 2010/07/04 15:44:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -101,7 +101,7 @@ configure_interface(void)
 		uint8_t m_space[512];
 	} m_rtmsg;
 #define rtm m_rtmsg.m_rtm
-	uint8_t *bp = &m_rtmsg.m_space;
+	uint8_t *bp = m_rtmsg.m_space;
 	int s, rv;
 
 	if ((rv = rump_pub_virtif_create(0)) != 0) {
