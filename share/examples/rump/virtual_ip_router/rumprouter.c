@@ -1,4 +1,4 @@
-/*	$NetBSD: rumprouter.c,v 1.4 2010/07/04 15:44:46 pooka Exp $	*/
+/*	$NetBSD: rumprouter.c,v 1.5 2010/07/04 17:24:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -126,7 +126,7 @@ configure_routing(const char *dst, const char *mask, const char *gw)
 	DP("Entering %s\n", __FUNCTION__);
 
 	DP("Open a routing socket\n");
-	s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0);
+	s = rump_sys_socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s == -1) {
 		err(1, "rump_sys_socket");
 	}
