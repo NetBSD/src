@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1223 2010/07/03 08:16:51 jmmv Exp $
+# $NetBSD: mi,v 1.1224 2010/07/04 15:21:57 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1609,6 +1609,7 @@
 ./usr/share/man/cat4/umodem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ums.0			man-sys-catman		.cat
 ./usr/share/man/cat4/unix.0			man-sys-catman		.cat
+./usr/share/man/cat4/upgt.0			man-sys-catman		.cat
 ./usr/share/man/cat4/upl.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uplcom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/urandom.0			man-sys-catman		.cat
@@ -4204,6 +4205,7 @@
 ./usr/share/man/html4/umodem.html		man-sys-htmlman		html
 ./usr/share/man/html4/ums.html			man-sys-htmlman		html
 ./usr/share/man/html4/unix.html			man-sys-htmlman		html
+./usr/share/man/html4/upgt.html			man-sys-htmlman		html
 ./usr/share/man/html4/upl.html			man-sys-htmlman		html
 ./usr/share/man/html4/uplcom.html		man-sys-htmlman		html
 ./usr/share/man/html4/urandom.html		man-sys-htmlman		html
@@ -6729,6 +6731,7 @@
 ./usr/share/man/man4/umodem.4			man-sys-man		.man
 ./usr/share/man/man4/ums.4			man-sys-man		.man
 ./usr/share/man/man4/unix.4			man-sys-man		.man
+./usr/share/man/man4/upgt.4			man-sys-man		.man
 ./usr/share/man/man4/upl.4			man-sys-man		.man
 ./usr/share/man/man4/uplcom.4			man-sys-man		.man
 ./usr/share/man/man4/urandom.4			man-sys-man		.man
