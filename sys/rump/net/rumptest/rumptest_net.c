@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.21 2010/05/31 23:13:17 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.22 2010/07/04 15:31:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -98,7 +98,7 @@ configure_interface(void)
 	ssize_t len;
 	struct {
 		struct rt_msghdr m_rtm;
-		uint8_t m_space;
+		uint8_t m_space[512];
 	} m_rtmsg;
 #define rtm m_rtmsg.m_rtm
 	uint8_t *bp = &m_rtmsg.m_space;

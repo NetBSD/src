@@ -1,4 +1,4 @@
-/*	$NetBSD: rumprouter.c,v 1.2 2010/03/29 11:01:16 pooka Exp $	*/
+/*	$NetBSD: rumprouter.c,v 1.3 2010/07/04 15:31:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -116,7 +116,7 @@ configure_routing(const char *dst, const char *mask, const char *gw)
 	size_t len;
 	struct {
 		struct rt_msghdr m_rtm;
-		uint8_t m_space;
+		uint8_t m_space[512];
 	} m_rtmsg;
 #define rtm m_rtmsg.m_rtm
 	uint8_t *bp = &m_rtmsg.m_space;
