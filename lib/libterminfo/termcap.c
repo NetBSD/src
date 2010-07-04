@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.7 2010/03/04 15:35:26 roy Exp $ */
+/* $NetBSD: termcap.c,v 1.8 2010/07/04 07:30:33 roy Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.7 2010/03/04 15:35:26 roy Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.8 2010/07/04 07:30:33 roy Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -132,7 +132,7 @@ tgetnum(const char *id)
 }
 
 char *
-tgetstr(const char *id, __unused char **area)
+tgetstr(const char *id, char **area)
 {
 	uint32_t ind;
 	size_t i;
