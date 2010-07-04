@@ -1,4 +1,4 @@
-/*	$NetBSD: rumprouter.c,v 1.3 2010/07/04 15:31:04 pooka Exp $	*/
+/*	$NetBSD: rumprouter.c,v 1.4 2010/07/04 15:44:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -119,7 +119,7 @@ configure_routing(const char *dst, const char *mask, const char *gw)
 		uint8_t m_space[512];
 	} m_rtmsg;
 #define rtm m_rtmsg.m_rtm
-	uint8_t *bp = &m_rtmsg.m_space;
+	uint8_t *bp = m_rtmsg.m_space;
 	struct sockaddr_in sinstore;
 	int s, rv;
 
