@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.28 2010/07/03 15:29:22 njoly Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.29 2010/07/04 19:33:18 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -228,6 +228,7 @@
 ./usr/libdata/debug/usr/tests/modules
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/bpf
+./usr/libdata/debug/usr/tests/net/icmp
 ./usr/libdata/debug/usr/tests/net/sys
 ./usr/libdata/debug/usr/tests/rump
 ./usr/libdata/debug/usr/tests/rump/modautoload
@@ -1131,6 +1132,7 @@
 ./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/bpf
+./usr/tests/net/icmp
 ./usr/tests/net/sys
 ./usr/tests/rump
 ./usr/tests/rump/modautoload
