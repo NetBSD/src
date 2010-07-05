@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_ttl.c,v 1.2 2010/07/02 12:25:54 kefren Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.3 2010/07/05 09:54:26 kefren Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.2 2010/07/02 12:25:54 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.3 2010/07/05 09:54:26 kefren Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -160,10 +160,12 @@ struct mpls_extension {
 	union mpls_shim ms;
 } __packed;
 
-static void mpls_icmp_error(struct mbuf*, int, int, n_long, int, union mpls_shim *);
+static void mpls_icmp_error(struct mbuf *, int, int, n_long, int,
+	union mpls_shim *);
+static bool ip4_check(struct mbuf *);
 
 /*
- * http://www.ietf.org/proceedings/01aug/I-D/draft-ietf-mpls-icmp-02.txt
+ * Reference: http://tools.ietf.org/html/rfc4950
  * This should be in sync with icmp_error() in sys/netinet/ip_icmp.c
  */
 
@@ -326,6 +328,45 @@ freeit:
 
 }
 
+static bool
+ip4_check(struct mbuf *m)
+{
+	struct ip *iph;
+	int hlen, len;
+
+	if (m->m_len < sizeof(struct ip) &&
+	    (m = m_pullup(m, sizeof(struct ip))) == NULL)
+		return false;
+
+	iph = mtod(m, struct ip *);
+
+	if (iph->ip_v != IPVERSION)
+		goto freeit;
+	hlen = iph->ip_hl << 2;
+	if (hlen < sizeof(struct ip))
+		goto freeit;
+	if (hlen > m->m_len) {
+		if ((m = m_pullup(m, hlen)) == NULL)
+			return false;
+		iph = mtod(m, struct ip *);
+	}
+	if (IN_MULTICAST(iph->ip_src.s_addr) ||
+	    (ntohl(iph->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
+	    (ntohl(iph->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
+	    in_cksum(m, hlen) != 0)
+		goto freeit;
+
+	len = ntohs(iph->ip_len);
+	if (len < hlen || m->m_pkthdr.len < len)
+		goto freeit;
+
+	return true;
+freeit:
+	m_freem(m);
+	return false;
+
+}
+
 #endif	/* INET */
 
 struct mbuf *
@@ -368,9 +409,10 @@ mpls_ttl_dec(struct mbuf *m)
 			bossh.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr);
 			m_adj(m, sizeof(union mpls_shim));
 		}
-
-		mpls_icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS,
-		    0, 0, &top_shim);
+		
+		if (ip4_check(m) == true)
+			mpls_icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS,
+			    0, 0, &top_shim);
 #else
 		m_freem(m);
 #endif
