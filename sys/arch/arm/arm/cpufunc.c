@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.98 2010/07/05 06:50:01 kiyohara Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.99 2010/07/05 06:54:48 kiyohara Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.98 2010/07/05 06:50:01 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.99 2010/07/05 06:54:48 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -102,7 +102,7 @@ int	arm_pdcache_ways;
 #if (ARM_MMU_V6 + ARM_MMU_V7) != 0
 int	arm_cache_prefer_mask;
 #endif
- 
+
 
 int	arm_pcache_type;
 int	arm_pcache_unified;
@@ -116,7 +116,7 @@ int cpu_do_powersave;
 #ifdef CPU_ARM2
 struct cpu_functions arm2_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= arm2_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -157,7 +157,7 @@ struct cpu_functions arm2_cpufuncs = {
 
 	/* Soft functions */
 
-	.cf_dataabt_fixup	= early_abort_fixup,	
+	.cf_dataabt_fixup	= early_abort_fixup,
 	.cf_prefetchabt_fixup	= cpufunc_null_fixup,
 
 	.cf_setup		= (void *)cpufunc_nullop
@@ -168,7 +168,7 @@ struct cpu_functions arm2_cpufuncs = {
 #ifdef CPU_ARM250
 struct cpu_functions arm250_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= arm250_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -220,7 +220,7 @@ struct cpu_functions arm250_cpufuncs = {
 #ifdef CPU_ARM3
 struct cpu_functions arm3_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -272,10 +272,10 @@ struct cpu_functions arm3_cpufuncs = {
 #ifdef CPU_ARM6
 struct cpu_functions arm6_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= cpufunc_nullop,
- 
+
 	/* MMU functions */
 
 	.cf_control		= cpufunc_control,
@@ -334,7 +334,7 @@ struct cpu_functions arm6_cpufuncs = {
 #ifdef CPU_ARM7
 struct cpu_functions arm7_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -392,7 +392,7 @@ struct cpu_functions arm7_cpufuncs = {
 #ifdef CPU_ARM7TDMI
 struct cpu_functions arm7tdmi_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -450,7 +450,7 @@ struct cpu_functions arm7tdmi_cpufuncs = {
 #ifdef CPU_ARM8
 struct cpu_functions arm8_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -501,7 +501,7 @@ struct cpu_functions arm8_cpufuncs = {
 	.cf_context_switch	= arm8_context_switch,
 
 	.cf_setup		= arm8_setup
-};          
+};
 #endif	/* CPU_ARM8 */
 
 #ifdef CPU_ARM9
@@ -797,7 +797,7 @@ struct cpu_functions arm1136_cpufuncs = {
 #ifdef CPU_SA110
 struct cpu_functions sa110_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -848,13 +848,13 @@ struct cpu_functions sa110_cpufuncs = {
 	.cf_context_switch	= sa110_context_switch,
 
 	.cf_setup		= sa110_setup
-};          
+};
 #endif	/* CPU_SA110 */
 
 #if defined(CPU_SA1100) || defined(CPU_SA1110)
 struct cpu_functions sa11x0_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -905,13 +905,13 @@ struct cpu_functions sa11x0_cpufuncs = {
 	.cf_context_switch	= sa11x0_context_switch,
 
 	.cf_setup		= sa11x0_setup
-};          
+};
 #endif	/* CPU_SA1100 || CPU_SA1110 */
 
 #if defined(CPU_FA526)
 struct cpu_functions fa526_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -962,13 +962,13 @@ struct cpu_functions fa526_cpufuncs = {
 	.cf_context_switch	= fa526_context_switch,
 
 	.cf_setup		= fa526_setup
-};          
+};
 #endif	/* CPU_FA526 */
 
 #ifdef CPU_IXP12X0
 struct cpu_functions ixp12x0_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= cpufunc_nullop,
 
@@ -1018,15 +1018,15 @@ struct cpu_functions ixp12x0_cpufuncs = {
 
 	.cf_context_switch	= ixp12x0_context_switch,
 
-	.cf_setup		= ixp12x0_setup	
-};          
+	.cf_setup		= ixp12x0_setup
+};
 #endif	/* CPU_IXP12X0 */
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
-	
+
 	.cf_id			= cpufunc_id,
 	.cf_cpwait		= xscale_cpwait,
 
@@ -1086,7 +1086,7 @@ struct cpu_functions cortex_cpufuncs = {
 	/* CPU functions */
 
 	.cf_id			= cpufunc_id,
-	.cf_cpwait		= cpufunc_nullop, 	
+	.cf_cpwait		= cpufunc_nullop,
 
 	/* MMU functions */
 
@@ -1114,7 +1114,7 @@ struct cpu_functions cortex_cpufuncs = {
 	.cf_dcache_wb_range	= armv7_dcache_wb_range,
 	.cf_dcache_wbinv_range	= armv7_dcache_wbinv_range,
 
-	.cf_icache_sync_range	= armv7_icache_sync_range, 
+	.cf_icache_sync_range	= armv7_icache_sync_range,
 	.cf_idcache_wbinv_range = armv7_idcache_wbinv_range,
 
 
@@ -1202,7 +1202,7 @@ get_cachetype_cp15()
 		goto out;
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
-	if (CPU_CT_FORMAT(ctype) == 4) { 
+	if (CPU_CT_FORMAT(ctype) == 4) {
 		u_int csid0, csid1, csid2;
 
 		isize = 1U << (CPU_CT4_ILINE(ctype) + 2);
@@ -1434,7 +1434,7 @@ set_cpufuncs(void)
 		pmap_pte_init_generic();
 		return 0;
 	}
-#endif	
+#endif
 #ifdef CPU_ARM8
 	if ((cputype & CPU_ID_IMPLEMENTOR_MASK) == CPU_ID_ARM_LTD &&
 	    (cputype & 0x0000f000) == 0x00008000) {
@@ -1453,7 +1453,7 @@ set_cpufuncs(void)
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		arm9_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		arm9_dcache_sets_max = 
+		arm9_dcache_sets_max =
 		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
 		    arm9_dcache_sets_inc;
 		arm9_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
@@ -1487,7 +1487,7 @@ set_cpufuncs(void)
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
 		armv5_dcache_sets_inc = 1U << arm_dcache_l2_linesize;
-		armv5_dcache_sets_max = 
+		armv5_dcache_sets_max =
 		    (1U << (arm_dcache_l2_linesize + arm_dcache_l2_nsets)) -
 		    armv5_dcache_sets_inc;
 		armv5_dcache_index_inc = 1U << (32 - arm_dcache_l2_assoc);
@@ -1830,7 +1830,7 @@ early_abort_fixup(void *arg)
 		int loop;
 		int count;
 		int *registers = &frame->tf_r0;
-        
+
 		DFC_PRINTF(("LDM/STM\n"));
 		DFC_DISASSEMBLE(fault_pc);
 		if (fault_instruction & (1 << 21)) {
@@ -1859,7 +1859,7 @@ early_abort_fixup(void *arg)
 		int base;
 		int offset;
 		int *registers = &frame->tf_r0;
-	
+
 		/* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
 
 		DFC_DISASSEMBLE(fault_pc);
@@ -1980,11 +1980,11 @@ late_abort_fixup(void *arg)
 		int *registers = &frame->tf_r0;
 
 		DFC_DISASSEMBLE(fault_pc);
-		
+
 		/* This is for late abort only */
 
 		if ((fault_instruction & (1 << 24)) == 0
-		    || (fault_instruction & (1 << 21)) != 0) {	
+		    || (fault_instruction & (1 << 21)) != 0) {
 			/* postindexed ldr/str with no writeback */
 
 			base = (fault_instruction >> 16) & 0x0f;
@@ -2010,7 +2010,7 @@ late_abort_fixup(void *arg)
 				offset = fault_instruction & 0x0f;
 				if (offset == base)
 					return ABORT_FIXUP_FAILED;
-                
+
 				/*
 				 * Register offset - hard we have to
 				 * cope with shifts !
@@ -2371,7 +2371,7 @@ arm8_setup(char *args)
 		clocktest |= (integer & 7) << 5;
 		setclock = 1;
 	}
-	
+
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
@@ -2379,7 +2379,7 @@ arm8_setup(char *args)
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 
-	/* Set the clock/test register */    
+	/* Set the clock/test register */
 	if (setclock)
 		arm8_clock_config(0x7f, clocktest);
 }
@@ -2494,7 +2494,7 @@ arm10_setup(char *args)
 }
 #endif	/* CPU_ARM9E || CPU_ARM10 */
 
-#if defined(CPU_ARM11) 
+#if defined(CPU_ARM11)
 struct cpu_option arm11_options[] = {
 	{ "cpu.cache",		BIC, OR,  (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
 	{ "cpu.nocache",	OR,  BIC, (CPU_CONTROL_IC_ENABLE | CPU_CONTROL_DC_ENABLE) },
@@ -2511,10 +2511,10 @@ arm11_setup(char *args)
 
 #if defined(PROCESS_ID_IS_CURCPU)
 	/* set curcpu() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store)); 
+        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
 #elif defined(PROCESS_ID_IS_CURLWP)
 	/* set curlwp() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0)); 
+        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
 #endif
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_SYST_ENABLE
@@ -2575,10 +2575,10 @@ armv7_setup(args)
 
 #if defined(PROCESS_ID_IS_CURCPU)
 	/* set curcpu() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store)); 
+        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
 #elif defined(PROCESS_ID_IS_CURLWP)
 	/* set curlwp() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0)); 
+        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
 #endif
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_IC_ENABLE
@@ -2672,10 +2672,10 @@ arm1136_setup(char *args)
 
 #if defined(PROCESS_ID_IS_CURCPU)
 	/* set curcpu() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store)); 
+        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&cpu_info_store));
 #elif defined(PROCESS_ID_IS_CURLWP)
 	/* set curlwp() */
-        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0)); 
+        __asm("mcr\tp15, 0, %0, c13, c0, 4" : : "r"(&lwp0));
 #endif
 
 	cpuid = cpu_id();
@@ -2812,7 +2812,7 @@ sa110_setup(char *args)
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
 
-	/* 
+	/*
 	 * enable clockswitching, note that this doesn't read or write to r0,
 	 * r0 is just to make it valid asm
 	 */
@@ -2870,7 +2870,7 @@ sa11x0_setup(char *args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
@@ -2922,7 +2922,7 @@ fa526_setup(char *args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
@@ -2973,7 +2973,7 @@ ixp12x0_setup(char *args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	/* cpu_control(0xffffffff, cpuctrl); */
 	cpu_control(cpuctrlmask, cpuctrl);
