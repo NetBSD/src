@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.1 2010/07/04 15:21:58 tsutsui Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.2 2010/07/05 14:27:26 tsutsui Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.1 2010/07/04 15:21:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.2 2010/07/05 14:27:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -665,7 +665,7 @@ upgt_fw_alloc(struct upgt_softc *sc)
 		    &sc->sc_fw_size);
 		if (error != 0) {
 			aprint_error_dev(sc->sc_dev,
-			    "could not read firmware %s", name);
+			    "could not read firmware %s\n", name);
 			aprint_error_dev(sc->sc_dev,
 			    "see upgt(4) man page for details\n");
 			return EIO;
