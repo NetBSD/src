@@ -1,4 +1,4 @@
-# $NetBSD: t_vnd.sh,v 1.4 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_vnd.sh,v 1.5 2010/07/05 16:27:08 jmmv Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # Verifies that vnd works with files stored in tmpfs.
 #
 
-atf_test_case basic
+atf_test_case basic cleanup
 basic_head() {
 	atf_set "descr" "Verifies that vnd works with files stored in tmpfs"
 	atf_set "require.user" "root"
