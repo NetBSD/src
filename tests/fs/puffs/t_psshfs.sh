@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.6 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_psshfs.sh,v 1.7 2010/07/05 16:27:08 jmmv Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -125,7 +125,7 @@ mount_psshfs() {
 # The test cases.
 # -------------------------------------------------------------------------
 
-atf_test_case inode_nos
+atf_test_case inode_nos cleanup
 inode_nos_head() {
 	atf_set "descr" "Checks that different files get different inode" \
 	    "numbers"
@@ -169,7 +169,7 @@ inode_nos_cleanup() {
 	stop_ssh
 }
 
-atf_test_case pwd
+atf_test_case pwd cleanup
 pwd_head() {
 	atf_set "descr" "Checks that pwd works correctly"
 	atf_set "use.fs" "true"

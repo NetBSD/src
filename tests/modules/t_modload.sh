@@ -1,4 +1,4 @@
-# $NetBSD: t_modload.sh,v 1.6 2010/06/04 08:39:41 jmmv Exp $
+# $NetBSD: t_modload.sh,v 1.7 2010/07/05 16:27:08 jmmv Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,7 +30,7 @@ check_sysctl() {
 	atf_check -s eq:0 -o file:expout -e empty sysctl ${1}
 }
 
-atf_test_case plain
+atf_test_case plain cleanup
 plain_head() {
 	atf_set "descr" "Test load without arguments"
 	atf_set "require.user" "root"
@@ -53,7 +53,7 @@ plain_cleanup() {
 	modunload k_helper >/dev/null 2>&1
 }
 
-atf_test_case bflag
+atf_test_case bflag cleanup
 bflag_head() {
 	atf_set "descr" "Test the -b flag"
 	atf_set "require.user" "root"
@@ -94,7 +94,7 @@ bflag_cleanup() {
 	modunload k_helper >/dev/null 2>&1
 }
 
-atf_test_case iflag
+atf_test_case iflag cleanup
 iflag_head() {
 	atf_set "descr" "Test the -i flag"
 	atf_set "require.user" "root"
@@ -138,7 +138,7 @@ iflag_cleanup() {
 	modunload k_helper >/dev/null 2>&1
 }
 
-atf_test_case sflag
+atf_test_case sflag cleanup
 sflag_head() {
 	atf_set "descr" "Test the -s flag"
 	atf_set "require.user" "root"

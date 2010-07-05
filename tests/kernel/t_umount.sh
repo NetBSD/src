@@ -1,4 +1,4 @@
-# $NetBSD: t_umount.sh,v 1.3 2010/06/12 13:31:35 pooka Exp $
+# $NetBSD: t_umount.sh,v 1.4 2010/07/05 16:27:08 jmmv Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@ BVND=/dev/${VND}
 CVND=/dev/r${VND}
 MPART=a
 
-atf_test_case umount
+atf_test_case umount cleanup
 umount_head()
 {
 	atf_set "descr" "Checks forced unmounting"
