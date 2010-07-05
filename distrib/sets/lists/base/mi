@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.873 2010/07/03 08:16:50 jmmv Exp $
+# $NetBSD: mi,v 1.874 2010/07/05 20:32:23 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -881,6 +881,48 @@
 ./usr/libdata/debug/usr/mdec			base-sys-usr
 ./usr/libdata/debug/usr/sbin			base-sys-usr
 ./usr/libdata/firmware				base-sys-usr
+./usr/libdata/firmware/radeon			base-sys-usr
+./usr/libdata/firmware/radeon/CEDAR_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/CEDAR_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/CEDAR_rlc.bin	base-sys-usr
+./usr/libdata/firmware/radeon/CYPRESS_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/CYPRESS_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/CYPRESS_rlc.bin	base-sys-usr
+./usr/libdata/firmware/radeon/JUNIPER_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/JUNIPER_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/JUNIPER_rlc.bin	base-sys-usr
+./usr/libdata/firmware/radeon/R100_cp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/R200_cp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/R300_cp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/R420_cp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/R520_cp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/R600_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/R600_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/R600_rlc.bin	base-sys-usr
+./usr/libdata/firmware/radeon/R700_rlc.bin	base-sys-usr
+./usr/libdata/firmware/radeon/REDWOOD_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/REDWOOD_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/REDWOOD_rlc.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RS600_cp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RS690_cp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RS780_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RS780_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV610_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV610_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV620_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV620_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV630_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV630_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV635_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV635_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV670_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV670_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV710_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV710_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV730_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV730_pfp.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV770_me.bin	base-sys-usr
+./usr/libdata/firmware/radeon/RV770_pfp.bin	base-sys-usr
 ./usr/libdata/ldscripts				base-c-usr
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
