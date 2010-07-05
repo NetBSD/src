@@ -35,7 +35,6 @@
 #include "radeon_drv.h"
 #include "r300_reg.h"
 
-#include "radeon_microcode.h"
 #define RADEON_FIFO_DEBUG	0
 
 static int radeon_do_cleanup_cp(struct drm_device * dev);
@@ -374,8 +373,10 @@ static void radeon_init_pipes(drm_radeon_private_t * dev_priv)
 /* Load the microcode for the CP */
 static void radeon_cp_load_microcode(drm_radeon_private_t * dev_priv)
 {
+	const char *chip_name;
 	const u32 (*cp)[2];
-	int i;
+	int i, error;
+	size_t cp_size;
 	DRM_DEBUG("\n");
 
 	switch (dev_priv->flags & RADEON_FAMILY_MASK) {
@@ -384,15 +385,13 @@ static void radeon_cp_load_microcode(drm_radeon_private_t * dev_priv)
 	case CHIP_RV200:
 	case CHIP_RS100:
 	case CHIP_RS200:
-		DRM_INFO("Loading R100 Microcode\n");
-		cp = R100_cp_microcode;
+		chip_name = "R100";
 		break;
 	case CHIP_R200:
 	case CHIP_RV250:
 	case CHIP_RV280:
 	case CHIP_RS300:
-		DRM_INFO("Loading R200 Microcode\n");
-		cp = R200_cp_microcode;
+		chip_name = "R200";
 		break;
 	case CHIP_R300:
 	case CHIP_R350:
@@ -400,23 +399,19 @@ static void radeon_cp_load_microcode(drm_radeon_private_t * dev_priv)
 	case CHIP_RV380:
 	case CHIP_RS400:
 	case CHIP_RS480:
-		DRM_INFO("Loading R300 Microcode\n");
-		cp = R300_cp_microcode;
+		chip_name = "R300";
 		break;
 	case CHIP_R420:
 	case CHIP_R423:
 	case CHIP_RV410:
-		DRM_INFO("Loading R400 Microcode\n");
-		cp = R420_cp_microcode;
+		chip_name = "R420";
 		break;
 	case CHIP_RS690:
 	case CHIP_RS740:
-		DRM_INFO("Loading RS690/RS740 Microcode\n");
-		cp = RS690_cp_microcode;
+		chip_name = "RS690";
 		break;
 	case CHIP_RS600:
-		DRM_INFO("Loading RS600 Microcode\n");
-		cp = RS600_cp_microcode;
+		chip_name = "RS600";
 		break;
 	case CHIP_RV515:
 	case CHIP_R520:
@@ -424,21 +419,27 @@ static void radeon_cp_load_microcode(drm_radeon_private_t * dev_priv)
 	case CHIP_R580:
 	case CHIP_RV560:
 	case CHIP_RV570:
-		DRM_INFO("Loading R500 Microcode\n");
-		cp = R520_cp_microcode;
+		chip_name = "R520";
 		break;
 	default:
 		return;
 	}
+
+	DRM_INFO("Loading %s Microcode\n", chip_name);
+
+	if ((error = radeon_load_a_microcode("%s_cp.bin", chip_name, (void **)&cp, &cp_size)) != 0)
+		return;
 
 	radeon_do_wait_for_idle(dev_priv);
 
 	RADEON_WRITE(RADEON_CP_ME_RAM_ADDR, 0);
 
 	for (i = 0; i != 256; i++) {
-		RADEON_WRITE(RADEON_CP_ME_RAM_DATAH, cp[i][1]);
-		RADEON_WRITE(RADEON_CP_ME_RAM_DATAL, cp[i][0]);
+		RADEON_WRITE(RADEON_CP_ME_RAM_DATAH, be32toh(cp[i][0]));
+		RADEON_WRITE(RADEON_CP_ME_RAM_DATAL, be32toh(cp[i][1]));
 	}
+
+	radeon_free_a_microcode(cp, cp_size);
 }
 
 

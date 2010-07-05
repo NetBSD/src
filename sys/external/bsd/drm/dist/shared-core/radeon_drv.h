@@ -548,6 +548,10 @@ extern void radeon_cp_discard_buffer(struct drm_device * dev, struct drm_buf * b
 extern int radeon_cs_ioctl(struct drm_device *dev, void *data, struct drm_file *fpriv);
 extern int r600_cs_init(struct drm_device *dev);
 
+/* part of platform code, usually radeon_drv.c */
+int radeon_load_a_microcode(const char *fmt, const char *chip_name, void **codep, size_t *sizep);
+void radeon_free_a_microcode(void *code, size_t size);
+
 /* Flags for stats.boxes
  */
 #define RADEON_BOX_DMA_IDLE      0x1
