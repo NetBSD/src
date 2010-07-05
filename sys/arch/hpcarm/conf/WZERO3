@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.9 2010/06/26 00:25:02 tsutsui Exp $
+#	$NetBSD: WZERO3,v 1.10 2010/07/05 14:30:00 tsutsui Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 # estimated number of users
 maxusers	32
@@ -243,6 +243,7 @@ urlphy* at mii? phy ?		# Realtek RTL8150L internal PHYs
 atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 #ral*	at uhub? port ?		# Ralink Technology RT25x0 802.11a/b/g
 rum*	at uhub? port ?		# Ralink Technology RT2501/RT2601 802.11a/b/g
+upgt*	at uhub? port ?		# Intersil PrismGT
 zyd*	at uhub? port ?		# Zydas ZD1211
 
 # SCSI bus support
