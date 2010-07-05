@@ -1,11 +1,11 @@
-/*	$NetBSD: h_fsmacros.h,v 1.1 2010/06/30 20:39:39 njoly Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.2 2010/07/05 14:53:03 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by 
+ * by Nicolas Joly.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
