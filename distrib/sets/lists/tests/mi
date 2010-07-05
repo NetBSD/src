@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.97 2010/07/04 19:34:44 pooka Exp $
+# $NetBSD: mi,v 1.98 2010/07/05 12:53:58 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -211,6 +211,8 @@
 ./usr/libdata/debug/usr/tests/fs/union					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/union/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/union/t_pr.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/vfs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/vfs/t_rmdirrace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests
@@ -919,6 +921,9 @@
 ./usr/tests/fs/union/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/union/t_basic			tests-fs-tests		atf
 ./usr/tests/fs/union/t_pr			tests-fs-tests		atf
+./usr/tests/fs/vfs				tests-fs-tests
+./usr/tests/fs/vfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/vfs/t_rmdirrace			tests-fs-tests		atf
 ./usr/tests/games				tests-games-tests
 ./usr/tests/games/Atffile			tests-games-tests
 ./usr/tests/games/t_factor			tests-games-tests

@@ -1,0 +1,6 @@
+Content-Type: application/X-atf-atffile; version="1"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.1 2010/07/05 12:53:58 njoly Exp $"
+
+prop: test-suite = "NetBSD"
+
+tp: t_rmdirrace
