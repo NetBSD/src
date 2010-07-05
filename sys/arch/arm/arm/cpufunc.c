@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.97 2010/06/19 20:42:43 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.98 2010/07/05 06:50:01 kiyohara Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.97 2010/06/19 20:42:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.98 2010/07/05 06:50:01 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2604,7 +2604,10 @@ armv7_setup(args)
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
-	/* set some cortrol register? */
+
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
+	cpu_control(0xffffffff, cpuctrl);
 }
 
 /* Clean the data cache to the level of coherency. Slow. */
