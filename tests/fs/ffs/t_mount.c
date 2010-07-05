@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mount.c,v 1.2 2010/07/05 16:34:41 jmmv Exp $	*/
+/*	$NetBSD: t_mount.c,v 1.3 2010/07/05 17:12:48 pooka Exp $	*/
 
 /*
  * Adapted for rump and atf from a testcase supplied
@@ -28,11 +28,12 @@ ATF_TC_BODY(48Kimage, tc)
 	if (ffs_newfs(&tmp, IMGNAME, IMGSIZE) != 0)
 		atf_tc_fail("newfs failed");
 
+	atf_tc_expect_fail("PR kern/43573");
 	if (ffs_mount(tmp, MNTDIR, 0) != 0) {
-		atf_tc_expect_fail("No PR yet");
 		atf_tc_fail("mount failed");
-		atf_tc_expect_pass();
 	}
+	atf_tc_expect_pass();
+
 	if (ffs_unmount(MNTDIR, 0) != 0)
 		atf_tc_fail("unmount failed");
 
