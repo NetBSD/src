@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.91 2010/07/06 12:05:18 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.92 2010/07/06 12:28:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.91 2010/07/06 12:05:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.92 2010/07/06 12:28:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -77,6 +77,16 @@ static struct putter_ops puffs_putter = {
 	.pop_dispatch	= puffs_msgif_dispatch,
 	.pop_close	= puffs_msgif_close,
 };
+
+/*
+ * Try to ensure data structures used by the puffs protocol
+ * do not unexpectedly change.
+ */
+#ifdef __i386__
+CTASSERT(sizeof(struct puffs_kargs) == 3928);
+CTASSERT(sizeof(struct vattr) == 136);
+CTASSERT(sizeof(struct puffs_req) == 44);
+#endif
 
 int
 puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
