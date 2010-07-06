@@ -1,4 +1,4 @@
-#	$NetBSD: files.drm,v 1.3 2010/05/24 01:57:06 mrg Exp $
+#	$NetBSD: files.drm,v 1.4 2010/07/06 16:33:31 mrg Exp $
 
 # direct rendering modules
 define	drmbase
@@ -79,7 +79,7 @@ file	external/bsd/drm/dist/shared-core/mga_warp.c		mgadrm
 #file	external/bsd/drm/dist/shared-core/nv04_instmem.c	nouveaudrm
 #file	external/bsd/drm/dist/shared-core/nv50_instmem.c	nouveaudrm
 
-device	r128drm: drmbase, drmpci
+device	r128drm: drmbase, drmpci, firmload
 attach	r128drm at drm
 file	external/bsd/drm/dist/bsd-core/ati_pcigart.c		(r128drm | radeondrm)
 file	external/bsd/drm/dist/bsd-core/r128_drv.c		r128drm
