@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 2010/05/10 18:46:58 dyoung Exp $	*/
+/*	$NetBSD: pmap.h,v 1.31 2010/07/06 20:50:35 cegger Exp $	*/
 
 /*
  *
@@ -178,7 +178,6 @@ struct pmap {
 /*
  * MD flags that we use for pmap_enter and pmap_kenter_pa:
  */
-#define PMAP_NOCACHE	0x01000000	/* set the non-cacheable bit */
 
 /*
  * global kernel variables

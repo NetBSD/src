@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.42 2010/03/22 18:58:33 joerg Exp $
+.\"	$NetBSD: pmap.9,v 1.43 2010/07/06 20:50:33 cegger Exp $
 .\"
 .\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -486,8 +486,23 @@ resources, the
 .Nm
 module must panic.
 .It PMAP_NOCACHE
-The mapping being created is not cached.
+The mapping being created is
+.Em not
+cached.
 Write accesses have a write-through policy.
+No speculative memory accesses.
+.It PMAP_WRITE_COMBINE
+The mapping being created is
+.Em not
+cached.
+Writes are combined and done in one burst.
+Speculative read accesses may be allowed.
+.It PMAP_WRITE_BACK
+All accesses to the created mapping are cached.
+On reads, cachelines become shared or exclusive if allocated on cache miss.
+On writes, cachelines become modified on a cache miss.
+.It PMAP_NOCACHE_OVR
+Same as PMAP_NOCACHE but mapping is overrideable (e.g. on x86 by MTRRs).
 .El
 .Pp
 The access type provided in the
@@ -633,6 +648,19 @@ The mapping being created is
 .Em not
 cached.
 Write accesses have a write-through policy.
+No speculative memory accesses.
+.It PMAP_WRITE_COMBINE
+The mapping being created is
+.Em not
+cached.
+Writes are combined and done in one burst.
+Speculative read accesses may be allowed.
+.It PMAP_WRITE_BACK
+All accesses to the created mapping are cached.
+On reads, cachelines become shared or exclusive if allocated on cache miss.
+On writes, cachelines become modified on a cache miss.
+.It PMAP_NOCACHE_OVR
+Same as PMAP_NOCACHE but mapping is overrideable (e.g. on x86 by MTRRs).
 .El
 .Pp
 Mappings of this type are always

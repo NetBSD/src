@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.41 2010/05/04 23:27:14 jym Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.42 2010/07/06 20:50:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -343,6 +343,7 @@
 #define	MSR_MTRRfix4K_E8000	0x26d
 #define	MSR_MTRRfix4K_F0000	0x26e
 #define	MSR_MTRRfix4K_F8000	0x26f
+#define	MSR_CR_PAT		0x277
 #define MSR_MTRRdefType		0x2ff
 #define MSR_MC0_CTL		0x400
 #define MSR_MC0_STATUS		0x401
