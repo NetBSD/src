@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2010/02/22 23:05:39 roy Exp $
+#	$NetBSD: Makefile,v 1.12 2010/07/06 05:59:53 mrg Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -85,7 +85,6 @@ SYMLINKS+=	libterminfo.so.${SHLIB_FULLVERSION} \
 		${LIBDIR}/libtermlib.so.0.6
 .endif
 
-.if (${OBJECT_FMT} == "ELF")
 SYMLINKS+=	libterminfo.so.${SHLIB_MAJOR} \
 		${_LIBSODIR}/libtermcap.so.0
 SYMLINKS+=	libterminfo.so ${_LIBSODIR}/libtermcap.so
@@ -94,12 +93,11 @@ SYMLINKS+=	libterminfo.so.${SHLIB_MAJOR} \
 SYMLINKS+=	libterminfo.so ${_LIBSODIR}/libtermlib.so
 .if ${_LIBSODIR} != ${LIBDIR}
 SYMLINKS+=	libterminfo.so.${SHLIB_MAJOR} \
-	${LIBDIR}/libtermcap.so.0
+		${LIBDIR}/libtermcap.so.0
 SYMLINKS+=	libterminfo.so ${LIBDIR}/libtermcap.so
 SYMLINKS+=	libterminfo.so.${SHLIB_MAJOR} \
 		${LIBDIR}/libtermlib.so.0
 SYMLINKS+=	libterminfo.so ${LIBDIR}/libtermlib.so
-.endif
 .endif
 .endif	# exists shlib_version
 

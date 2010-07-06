@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 2010/03/20 16:36:35 skrll Exp $
+#	$NetBSD: Makefile,v 1.97 2010/07/06 05:59:56 mrg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -13,7 +13,7 @@ WARNS?=4
 # We are not building this with PIE
 PIE_CFLAGS=
 PIE_LDFLAGS=
-.include <bsd.init.mk>			# for OBJECT_FMT definition
+.include <bsd.init.mk>			# for MKPIC definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
 
 .if defined(LDELFSO_MACHINE_CPU) && !empty(LDELFSO_MACHINE_CPU) && \
@@ -36,7 +36,7 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "sparc64") ||					\
      (${MACHINE_ARCH} == "x86_64") ||					\
      (${MACHINE_ARCH} == "vax")) &&					\
-    ${OBJECT_FMT} == "ELF" && ${MKPIC} != "no"
+    ${MKPIC} != "no"
 
 LDFLAGS+=	-shared -symbolic -nostartfiles
 LDFLAGS+=	-Wl,-static

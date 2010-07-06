@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.277 2010/06/10 22:41:41 pooka Exp $
+#	$NetBSD: Makefile,v 1.278 2010/07/06 05:59:50 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -467,12 +467,7 @@ do-libpcc: .PHONY .MAKE
 
 do-ld.so: .PHONY .MAKE
 .for targ in dependall install
-.if (${OBJECT_FMT} == "a.out")
-	${MAKEDIRTARGET} libexec/ld.aout_so ${targ}
-.endif
-.if (${OBJECT_FMT} == "ELF")
 	${MAKEDIRTARGET} libexec/ld.elf_so ${targ}
-.endif
 .endfor
 
 do-build: .PHONY .MAKE
