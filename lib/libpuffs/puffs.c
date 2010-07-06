@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.112 2010/07/06 18:01:14 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.113 2010/07/06 18:22:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.112 2010/07/06 18:01:14 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.113 2010/07/06 18:22:20 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -511,7 +511,6 @@ int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	puffs_cookie_t cookie)
 {
-	char rp[MAXPATHLEN];
 	int rv, fd, sverrno;
 	char *comfd;
 
@@ -521,16 +520,6 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	/* kauth doesn't provide this service any longer */
 	if (geteuid() != 0)
 		mntflags |= MNT_NOSUID | MNT_NODEV;
-
-	if (realpath(dir, rp) == NULL) {
-		rv = -1;
-		goto out;
-	}
-
-	if (strcmp(dir, rp) != 0) {
-		warnx("puffs_mount: \"%s\" is a relative path.", dir);
-		warnx("puffs_mount: using \"%s\" instead.", rp);
-	}
 
 	/*
 	 * Undocumented...  Well, documented only here.
@@ -583,6 +572,18 @@ do {									\
 
 		rv = 0;
 	} else {
+		char rp[MAXPATHLEN];
+
+		if (realpath(dir, rp) == NULL) {
+			rv = -1;
+			goto out;
+		}
+
+		if (strcmp(dir, rp) != 0) {
+			warnx("puffs_mount: \"%s\" is a relative path.", dir);
+			warnx("puffs_mount: using \"%s\" instead.", rp);
+		}
+
 		fd = open(_PATH_PUFFS, O_RDWR);
 		if (fd == -1) {
 			warnx("puffs_mount: cannot open %s", _PATH_PUFFS);
