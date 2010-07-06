@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: sftp.c,v 1.3 2010/07/06 15:09:41 christos Exp $	*/
 /* $OpenBSD: sftp.c,v 1.107 2009/02/02 11:15:14 dtucker Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.3 2010/07/06 15:09:41 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -556,7 +556,7 @@ process_put(struct sftp_conn *conn, char *src, char *dst, char *pwd, int pflag)
 
 	memset(&g, 0, sizeof(g));
 	debug3("Looking up %s", src);
-	if (glob(src, GLOB_NOCHECK, NULL, &g)) {
+	if (glob(src, GLOB_NOCHECK|GLOB_LIMIT, NULL, &g)) {
 		error("File \"%s\" not found.", src);
 		err = -1;
 		goto out;
