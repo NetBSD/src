@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1478 2010/07/03 08:16:50 jmmv Exp $
+#	$NetBSD: mi,v 1.1479 2010/07/06 21:36:34 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7563,6 +7563,7 @@
 ./usr/share/man/cat3/pthread_atfork.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_destroy.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_attr_get_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getdetachstate.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getguardsize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getinheritsched.0	comp-c-catman		.cat
@@ -13400,6 +13401,7 @@
 ./usr/share/man/html3/pthread_atfork.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_destroy.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_attr_get_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_getdetachstate.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_getguardsize.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_getinheritsched.html	comp-c-htmlman		html
@@ -19231,6 +19233,7 @@
 ./usr/share/man/man3/pthread_atfork.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_attr.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_destroy.3	comp-c-man		.man
+./usr/share/man/man3/pthread_attr_get_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getdetachstate.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getguardsize.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getinheritsched.3	comp-c-man		.man
