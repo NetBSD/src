@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.110 2010/06/07 11:22:36 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.111 2010/07/06 13:27:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.110 2010/06/07 11:22:36 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.111 2010/07/06 13:27:16 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -556,8 +556,6 @@ puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 			rv = -1;
 			goto out;
 		}
-			
-		len = strlen(dir)+1;
 
 #define allwrite(buf, len)						\
 do {									\
@@ -567,16 +565,18 @@ do {									\
 		if (al_rv != -1)					\
 			errno = EIO;					\
 		rv = -1;						\
-		abort();\
 		goto out;						\
 	}								\
 } while (/*CONSTCOND*/0)
+		len = strlen(dir)+1;
 		allwrite(&len, sizeof(len));
 		allwrite(dir, len);
 		len = strlen(pu->pu_kargp->pa_mntfromname)+1;
 		allwrite(&len, sizeof(len));
 		allwrite(pu->pu_kargp->pa_mntfromname, len);
 		allwrite(&mntflags, sizeof(mntflags));
+		len = sizeof(*pu->pu_kargp);
+		allwrite(&len, sizeof(len));
 		allwrite(pu->pu_kargp, sizeof(*pu->pu_kargp));
 		allwrite(&pu->pu_flags, sizeof(pu->pu_flags));
 #undef allwrite

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.10 2009/10/20 02:14:54 pooka Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.11 2010/07/06 13:27:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -139,6 +139,8 @@ mount_syspuffs_parseargs(int argc, char *argv[],
 		err(1, "fn 2");
 	if (read(sv[1], mntflags, sizeof(*mntflags)) != sizeof(*mntflags))
 		err(1, "mntflags");
+	if (read(sv[1], kargs, sizeof(len)) != sizeof(len)) /* unused now */
+		err(1, "unused len");
 	if (read(sv[1], kargs, sizeof(*kargs)) != sizeof(*kargs))
 		err(1, "puffs_args");
 	if (read(sv[1], pflags, sizeof(*pflags)) != sizeof(*pflags))
