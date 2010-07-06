@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.8 2006/02/18 22:54:51 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2010/07/06 05:59:52 mrg Exp $
 
-.if ${OBJECT_FMT} == "ELF"
 SRCS+=	__longjmp14.c
-.endif
 SRCS+=	__sigaction14_sigtramp.c __sigtramp3.S
 
 CPPFLAGS+= -I.
