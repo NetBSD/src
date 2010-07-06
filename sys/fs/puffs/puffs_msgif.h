@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.74 2010/06/07 11:21:31 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.75 2010/07/06 13:47:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -146,7 +146,9 @@ struct puffs_kargs {
 
 	struct statvfs	pa_svfsb;
 
-	uint32_t	pa_spare[128];
+	uint32_t	pa_time32;
+
+	uint32_t	pa_spare[127];
 };
 #define pa_root_rdev devunion.dev
 
