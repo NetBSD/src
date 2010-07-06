@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.98 2010/07/05 12:53:58 njoly Exp $
+# $NetBSD: mi,v 1.99 2010/07/06 14:10:06 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -198,11 +198,13 @@
 ./usr/libdata/debug/usr/tests/fs/msdosfs/t_snapshot.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/nullfs/t_basic.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/psshfs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/psshfs/h_have_puffs.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ptyfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ptyfs/t_ptyfs.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ptyfs/t_nullpts.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
-./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/tmpfs/t_renamerace.debug		tests-fs-debug		debug,atf
@@ -872,18 +874,26 @@
 ./usr/tests/fs/nullfs				tests-fs-tests
 ./usr/tests/fs/nullfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/nullfs/t_basic			tests-fs-tests		atf
+./usr/tests/fs/psshfs				tests-fs-tests
+./usr/tests/fs/psshfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/psshfs/h_have_puffs		tests-fs-tests		atf
+./usr/tests/fs/psshfs/ssh_config.in		tests-fs-tests		atf
+./usr/tests/fs/psshfs/ssh_host_key		tests-fs-tests		atf
+./usr/tests/fs/psshfs/ssh_host_key.pub		tests-fs-tests		atf
+./usr/tests/fs/psshfs/sshd_config.in		tests-fs-tests		atf
+./usr/tests/fs/psshfs/t_psshfs			tests-fs-tests		atf
 ./usr/tests/fs/ptyfs				tests-fs-tests
 ./usr/tests/fs/ptyfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/ptyfs/t_ptyfs			tests-fs-tests		atf
 ./usr/tests/fs/ptyfs/t_nullpts			tests-fs-tests		atf
 ./usr/tests/fs/puffs				tests-fs-tests
-./usr/tests/fs/puffs/Atffile			tests-fs-tests		atf
-./usr/tests/fs/puffs/h_have_puffs		tests-fs-tests		atf
-./usr/tests/fs/puffs/ssh_config.in		tests-fs-tests		atf
-./usr/tests/fs/puffs/ssh_host_key		tests-fs-tests		atf
-./usr/tests/fs/puffs/ssh_host_key.pub		tests-fs-tests		atf
-./usr/tests/fs/puffs/sshd_config.in		tests-fs-tests		atf
-./usr/tests/fs/puffs/t_psshfs			tests-fs-tests		atf
+./usr/tests/fs/puffs/Atffile			tests-obsolete		obsolete
+./usr/tests/fs/puffs/h_have_puffs		tests-obsolete		obsolete
+./usr/tests/fs/puffs/ssh_config.in		tests-obsolete		obsolete
+./usr/tests/fs/puffs/ssh_host_key		tests-obsolete		obsolete
+./usr/tests/fs/puffs/ssh_host_key.pub		tests-obsolete		obsolete
+./usr/tests/fs/puffs/sshd_config.in		tests-obsolete		obsolete
+./usr/tests/fs/puffs/t_psshfs			tests-obsolete		obsolete
 ./usr/tests/fs/tmpfs				tests-fs-tests
 ./usr/tests/fs/tmpfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/tmpfs/h_funcs.subr		tests-fs-tests		atf
