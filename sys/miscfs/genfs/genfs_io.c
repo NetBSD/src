@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.10 2010/06/08 03:30:00 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.11 2010/07/06 07:20:27 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.10 2010/06/08 03:30:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.11 2010/07/06 07:20:27 uebayasi Exp $");
 
 #include "opt_direct_page.h"
 #include "opt_xip.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.10 2010/06/08 03:30:00 uebayasi 
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 #include <sys/buf.h>
+#include <sys/once.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -742,6 +743,20 @@ out_err:
 }
 
 #ifdef XIP
+static struct uvm_object xip_zero_obj;
+static struct vm_page *xip_zero_page;
+
+static int
+xip_zero_page_init(void)
+{
+
+	UVM_OBJ_INIT(&xip_zero_obj, NULL, 0);
+	xip_zero_page = uvm_pagealloc(&xip_zero_obj, 0, NULL, UVM_PGA_ZERO);
+	KASSERT(xip_zero_page != NULL);
+	uvm_pagewire(xip_zero_page);
+	return 0;
+}
+
 /*
  * genfs_do_getpages_xip
  *      Return "direct pages" of XIP vnode.  The block addresses of XIP
@@ -814,8 +829,10 @@ genfs_do_getpages_xip(void *v)
 		UVMHIST_LOG(ubchist, "xip VOP_BMAP: lbn=%ld blkno=%ld run=%d", (long)lbn, (long)blkno, run, 0);
 
 		if (blkno < 0) {
-			/* unallocated page is redirected to read-only zero-filled page */
-			phys_addr = uvm_pageofzero_xip_phys_addr();
+			static ONCE_DECL(xip_zero_page_inited);
+
+			RUN_ONCE(&xip_zero_page_inited, xip_zero_page_init);
+			phys_addr = xip_zero_page->phys_addr;
 		} else {
 			struct vm_physseg *seg;
 
