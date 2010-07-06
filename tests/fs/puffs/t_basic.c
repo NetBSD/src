@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.1 2010/07/06 14:44:30 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.2 2010/07/06 15:42:24 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -244,13 +244,12 @@ ATF_TC_BODY(mount, tc)
 	    atf_tc_get_config_var(tc, "srcdir"));
 	dtfsargv[1] = dtfs_path;
 
-	rump_init();
-
 	rv = parseargs(__arraycount(dtfsargv), dtfsargv,
 	    &pargs, &mntflag, canon_dev, canon_dir);
 	if (rv)
 		atf_tc_fail("comfd parseargs");
 
+	rump_init();
 	fd = rump_sys_open("/dev/puffs", O_RDWR);
 	if (fd == -1)
 		atf_tc_fail_errno("open puffs fd");
