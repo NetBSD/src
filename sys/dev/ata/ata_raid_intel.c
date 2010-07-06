@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.5 2010/07/06 18:03:21 bsh Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.6 2010/07/06 18:09:04 bsh Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.5 2010/07/06 18:03:21 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.6 2010/07/06 18:09:04 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -252,7 +252,7 @@ findvol:
 
 	aai->aai_type = ATA_RAID_TYPE_INTEL;
 	aai->aai_capacity = map->total_sectors;
-	aai->aai_interleave = map->stripe_sectors / 2;
+	aai->aai_interleave = map->stripe_sectors;
 	aai->aai_ndisks = map->total_disks;
 	aai->aai_heads = 255;
 	aai->aai_sectors = 63;
