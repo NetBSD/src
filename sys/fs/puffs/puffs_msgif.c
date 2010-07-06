@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.81 2010/07/06 13:47:47 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.82 2010/07/06 17:00:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.81 2010/07/06 13:47:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.82 2010/07/06 17:00:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -127,8 +127,6 @@ puffs_msgif_destroy(void)
 	pool_cache_destroy(parkpc);
 }
 
-static int alloced;
-
 static struct puffs_msgpark *
 puffs_msgpark_alloc(int waitok)
 {
@@ -174,7 +172,6 @@ puffs_msgpark_release1(struct puffs_msgpark *park, int howmany)
 	KASSERT(refcnt >= 0);
 
 	if (refcnt == 0) {
-		alloced--;
 		if (preq)
 			kmem_free(preq, park->park_maxlen);
 #if 1
