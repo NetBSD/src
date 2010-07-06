@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1036 2010/07/02 08:25:05 mrg Exp $
+$NetBSD: pcidevs,v 1.1037 2010/07/06 00:02:27 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -556,6 +556,7 @@ vendor ABOCOM		0x13d1	AboCom Systems
 vendor NETBOOST		0x13dc	NetBoost
 vendor SUNDANCETI	0x13f0	Sundance Technology
 vendor CMEDIA		0x13f6	C-Media Electronics
+vendor ADVANTECH	0x13fe	Advantech
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing
 vendor ETIMEDIA		0x1409	eTIMedia Technology
 vendor ICENSEMBLE	0x1412	IC Ensemble / VIA Technologies
@@ -633,6 +634,7 @@ vendor S3		0x5333	S3
 vendor NETPOWER2	0x5700	NetPower (2nd PCI Vendor ID)
 vendor XENSOURCE	0x5853	XenSource, Inc.
 vendor C4T		0x6374	c't Magazin
+vendor DCI		0x6666	Decision Computer
 vendor KURUSUGAWA	0x6809	Kurusugawa Electronics
 vendor PCHDTV		0x7063	pcHDTV
 vendor QUANCM		0x8008	Quancm Electronic GmbH
@@ -767,6 +769,10 @@ product ACCTON EN2242	0x1216	EN2242 10/100 Ethernet
 
 /* Acer products */
 product ACER M1435	0x1435	M1435 VL-PCI Bridge
+
+/* Advantech products */
+product ADVANTECH PCI1620AE0	0x1600	PCI-1620-AE 8 port serial (1-4)
+product ADVANTECH PCI1620AE1	0x16ff	PCI-1620-AE 8 port serial (5-8)
 
 /* Acer Labs products */
 product ALI M1445	0x1445	M1445 VL-PCI Bridge
@@ -1795,6 +1801,11 @@ product DATUM BC635PCI_U	0x4013	BC635PCI-U TC & FREQ. Processor
 
 /* Davicom Semiconductor products */
 product DAVICOM DM9102	0x9102	DM9102 10/100 Ethernet
+
+/* Decision Computer Inc */
+product DCI APCI4		0x0001	PCCOM 4-port
+product DCI APCI8		0x0002	PCCOM 8-port
+product DCI APCI2		0x0004	PCCOM 2-port
 
 /* DEC products */
 product DEC 21050	0x0001	DC21050 PCI-PCI Bridge
