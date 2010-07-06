@@ -1,0 +1,3 @@
+	$NetBSD: README,v 1.1 2010/07/06 14:16:45 pooka Exp $
+
+dtfs moved to src/tests/fs/puffs/h_dtfs

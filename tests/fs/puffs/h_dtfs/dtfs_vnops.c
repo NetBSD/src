@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.43 2010/07/06 13:56:40 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.1 2010/07/06 14:16:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
