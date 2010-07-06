@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2010/07/06 14:06:22 pooka Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/06 16:44:26 pooka Exp $
 
-TESTSDIR=	${TESTSBASE}/fs/puffs
+TESTSDIR=	${TESTSBASE}/fs/psshfs
 
 PROGS=			h_have_puffs
 SRCS.h_have_puffs=	h_have_puffs.c
