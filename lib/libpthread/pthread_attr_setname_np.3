@@ -1,4 +1,4 @@
-.\"     $NetBSD: pthread_attr_setname_np.3,v 1.2 2008/05/26 08:41:42 wiz Exp $
+.\"     $NetBSD: pthread_attr_setname_np.3,v 1.3 2010/07/06 22:24:56 jruoho Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd December 15, 2007
+.Dd July 7, 2010
 .Dt PTHREAD_ATTR_SETNAME_NP 3
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd set descriptive name of an attribute
 .\" ------------------------------------------------------------
 .Sh LIBRARY
-.Lb libc
+.Lb libpthread
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In pthread.h
@@ -42,10 +42,11 @@
     "void *arg"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
+The
 .Fn pthread_attr_setname_np
-sets the descriptive name of the attribute.
-It takes the following arguments.
-.Bl -tag -width attr
+function sets the descriptive name of a thread attribute.
+It takes the following arguments:
+.Bl -tag -width attr -offset indent
 .It Fa attr
 The attribute whose descriptive name will be set.
 .It Fa name
@@ -61,16 +62,26 @@ argument used with
 .Fa name .
 .El
 .\" ------------------------------------------------------------
+.Sh COMPATIBILITY
+The
+.Fn pthread_attr_setname_np
+function is a non-standard extension.
+.\" ------------------------------------------------------------
 .Sh RETURN VALUES
+The
 .Fn pthread_attr_setname_np
-returns 0 on success.
-Otherwise,
+function returns 0 on success.
+Otherwise an error number is returned to indicate the error.
+.\" ------------------------------------------------------------
+.Sh ERRORS
+The
 .Fn pthread_attr_setname_np
-returns an error number described in
-.Xr errno 2 .
-.\" ------------------------------------------------------------
-.\".Sh ERRORS
-.\" ------------------------------------------------------------
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid parameter.
+.It Bq Er ENOMEM
+Insufficient memory.
+.El
 .Sh SEE ALSO
-.Xr errno 2 ,
 .Xr pthread_attr_getname_np 3
