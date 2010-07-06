@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.25 2010/07/02 21:13:10 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.26 2010/07/06 14:59:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.25 2010/07/02 21:13:10 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.26 2010/07/06 14:59:22 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,10 +87,13 @@ __RCSID("$NetBSD: glob.c,v 1.25 2010/07/02 21:13:10 christos Exp $");
 #define NO_GETPW_R
 #endif
 
-#if !defined(ARG_MAX)
-#include <limits.h>
-#define	ARG_MAX	_POSIX_ARG_MAX
-#endif
+#define	GLOB_LIMIT_MALLOC	65536
+#define	GLOB_LIMIT_STAT		128
+#define	GLOB_LIMIT_READDIR	16384
+
+#define	GLOB_INDEX_MALLOC	0
+#define	GLOB_INDEX_STAT		1
+#define	GLOB_INDEX_READDIR	2
 
 /*
  * XXX: For NetBSD 1.4.x compatibility. (kill me l8r)
@@ -178,7 +181,8 @@ glob(const char *pattern, int flags, int (*errfunc)(const char *, int),
 	const u_char *patnext;
 	int c;
 	Char *bufnext, *bufend, patbuf[MAXPATHLEN+1];
-	size_t limit = 0;
+	/* 0 = malloc(), 1 = stat(), 2 = readdir() */
+	size_t limit[] = { 0, 0, 0 };
 
 	_DIAGASSERT(pattern != NULL);
 
@@ -214,9 +218,9 @@ glob(const char *pattern, int flags, int (*errfunc)(const char *, int),
 	*bufnext = EOS;
 
 	if (flags & GLOB_BRACE)
-	    return globexp1(patbuf, pglob, &limit);
+	    return globexp1(patbuf, pglob, limit);
 	else
-	    return glob0(patbuf, pglob, &limit);
+	    return glob0(patbuf, pglob, limit);
 }
 
 /*
@@ -612,6 +616,13 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern, glob_t *pglob,
 			if (g_lstat(pathbuf, &sb, pglob))
 				return 0;
 		
+			if ((pglob->gl_flags & GLOB_LIMIT) &&
+			    limit[GLOB_INDEX_STAT]++ >= GLOB_LIMIT_STAT) {
+				errno = 0;
+				*pathend++ = SEP;
+				*pathend = EOS;
+				return GLOB_NOSPACE;
+			}
 			if (((pglob->gl_flags & GLOB_MARK) &&
 			    pathend[-1] != SEP) && (S_ISDIR(sb.st_mode) ||
 			    (S_ISLNK(sb.st_mode) &&
@@ -728,6 +739,14 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern,
 		u_char *sc;
 		Char *dc;
 
+		if ((pglob->gl_flags & GLOB_LIMIT) &&
+		    limit[GLOB_INDEX_READDIR]++ >= GLOB_LIMIT_READDIR) {
+			errno = 0;
+			*pathend++ = SEP;
+			*pathend = EOS;
+			return GLOB_NOSPACE;
+		}
+
 		/*
 		 * Initial DOT must be matched literally, unless we have
 		 * GLOB_PERIOD set.
@@ -774,7 +793,8 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern,
 			*pathend = EOS;
 			continue;
 		}
-		error = glob2(pathbuf, --dc, pathlim, restpattern, pglob, limit);
+		error = glob2(pathbuf, --dc, pathlim, restpattern, pglob,
+		    limit);
 		if (error)
 			break;
 	}
@@ -836,7 +856,7 @@ globextend(const Char *path, glob_t *pglob, size_t *limit)
 	for (p = path; *p++;)
 		continue;
 	len = (size_t)(p - path);
-	*limit += len;
+	limit[GLOB_INDEX_MALLOC] += len;
 	if ((copy = malloc(len)) != NULL) {
 		if (g_Ctoc(path, copy, len)) {
 			free(copy);
@@ -846,7 +866,8 @@ globextend(const Char *path, glob_t *pglob, size_t *limit)
 	}
 	pathv[pglob->gl_offs + pglob->gl_pathc] = NULL;
 
-	if ((pglob->gl_flags & GLOB_LIMIT) && (newsize + *limit) >= ARG_MAX) {
+	if ((pglob->gl_flags & GLOB_LIMIT) &&
+	    (newsize + limit[GLOB_INDEX_MALLOC]) >= GLOB_LIMIT_MALLOC) {
 		errno = 0;
 		return GLOB_NOSPACE;
 	}
