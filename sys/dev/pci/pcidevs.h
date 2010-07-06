@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1033 2010/07/02 08:25:30 mrg Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1034 2010/07/06 00:04:21 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1036 2010/07/02 08:25:05 mrg Exp
+ *	NetBSD: pcidevs,v 1.1037 2010/07/06 00:02:27 msaitoh Exp
  */
 
 /*
@@ -563,6 +563,7 @@
 #define	PCI_VENDOR_NETBOOST	0x13dc		/* NetBoost */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics */
+#define	PCI_VENDOR_ADVANTECH	0x13fe		/* Advantech */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing */
 #define	PCI_VENDOR_ETIMEDIA	0x1409		/* eTIMedia Technology */
 #define	PCI_VENDOR_ICENSEMBLE	0x1412		/* IC Ensemble / VIA Technologies */
@@ -640,6 +641,7 @@
 #define	PCI_VENDOR_NETPOWER2	0x5700		/* NetPower (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_XENSOURCE	0x5853		/* XenSource, Inc. */
 #define	PCI_VENDOR_C4T	0x6374		/* c't Magazin */
+#define	PCI_VENDOR_DCI	0x6666		/* Decision Computer */
 #define	PCI_VENDOR_KURUSUGAWA	0x6809		/* Kurusugawa Electronics */
 #define	PCI_VENDOR_PCHDTV	0x7063		/* pcHDTV */
 #define	PCI_VENDOR_QUANCM	0x8008		/* Quancm Electronic GmbH */
@@ -774,6 +776,10 @@
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI Bridge */
+
+/* Advantech products */
+#define	PCI_PRODUCT_ADVANTECH_PCI1620AE0	0x1600		/* PCI-1620-AE 8 port serial (1-4) */
+#define	PCI_PRODUCT_ADVANTECH_PCI1620AE1	0x16ff		/* PCI-1620-AE 8 port serial (5-8) */
 
 /* Acer Labs products */
 #define	PCI_PRODUCT_ALI_M1445	0x1445		/* M1445 VL-PCI Bridge */
@@ -1802,6 +1808,11 @@
 
 /* Davicom Semiconductor products */
 #define	PCI_PRODUCT_DAVICOM_DM9102	0x9102		/* DM9102 10/100 Ethernet */
+
+/* Decision Computer Inc */
+#define	PCI_PRODUCT_DCI_APCI4	0x0001		/* PCCOM 4-port */
+#define	PCI_PRODUCT_DCI_APCI8	0x0002		/* PCCOM 8-port */
+#define	PCI_PRODUCT_DCI_APCI2	0x0004		/* PCCOM 2-port */
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* DC21050 PCI-PCI Bridge */
