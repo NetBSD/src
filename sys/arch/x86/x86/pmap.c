@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2010/05/10 18:46:58 dyoung Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2010/07/06 20:50:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2010/05/10 18:46:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2010/07/06 20:50:35 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -359,6 +359,20 @@ struct evcnt pmap_ldt_evcnt;
  */
 struct evcnt pmap_tlb_evcnt __aligned(64);
 struct pmap_mbox pmap_mbox __aligned(64);
+
+/*
+ * PAT
+ */
+#define	PATENTRY(n, type)	(type << ((n) * 8))
+#define	PAT_UC		0x0ULL
+#define	PAT_WC		0x1ULL
+#define	PAT_WT		0x4ULL
+#define	PAT_WP		0x5ULL
+#define	PAT_WB		0x6ULL
+#define	PAT_UCMINUS	0x7ULL
+
+static bool cpu_pat_enabled = false;
+
 
 /*
  * Per-CPU data.  The pmap mailbox is cache intensive so gets its
@@ -1004,6 +1018,57 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 }
 #endif /* !defined(__x86_64__) */
 
+void
+pat_init(struct cpu_info *ci)
+{
+	uint64_t pat;
+
+	if (!(ci->ci_feat_val[0] & CPUID_PAT))
+		return;
+
+	/* We change WT to WC. Leave all other entries the default values. */
+	pat = PATENTRY(0, PAT_WB) | PATENTRY(1, PAT_WC) |
+	      PATENTRY(2, PAT_UCMINUS) | PATENTRY(3, PAT_UC) |
+	      PATENTRY(4, PAT_WB) | PATENTRY(5, PAT_WC) |
+	      PATENTRY(6, PAT_UCMINUS) | PATENTRY(7, PAT_UC);
+
+	wrmsr(MSR_CR_PAT, pat);
+	cpu_pat_enabled = true;
+	aprint_debug_dev(ci->ci_dev, "PAT enabled\n");
+}
+
+static pt_entry_t
+pmap_pat_flags(u_int flags)
+{
+	u_int cacheflags = (flags & PMAP_CACHE_MASK);
+
+	if (!cpu_pat_enabled) {
+		switch (cacheflags) {
+		case PMAP_NOCACHE:
+		case PMAP_NOCACHE_OVR:
+			/* results in PGC_UCMINUS on cpus which have
+			 * the cpuid PAT but PAT "disabled"
+			 */
+			return PG_N;
+		default:
+			return 0;
+		}
+	}
+
+	switch (cacheflags) {
+	case PMAP_NOCACHE:
+		return PGC_UC;
+	case PMAP_WRITE_COMBINE:
+		return PGC_WC;
+	case PMAP_WRITE_BACK:
+		return PGC_WB;
+	case PMAP_NOCACHE_OVR:
+		return PGC_UCMINUS;
+	}
+
+	return 0;
+}
+
 /*
  * p m a p   k e n t e r   f u n c t i o n s
  *
@@ -1041,8 +1106,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 #endif /* DOM0OPS */
 		npte = pmap_pa2pte(pa);
 	npte |= protection_codes[prot] | PG_k | PG_V | pmap_pg_g;
-	if (flags & PMAP_NOCACHE)
-		npte |= PG_N;
+	npte |= pmap_pat_flags(flags);
 	opte = pmap_pte_testset(pte, npte); /* zap! */
 #if defined(DIAGNOSTIC)
 	/* XXX For now... */
@@ -3961,10 +4025,9 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 #endif /* XEN */
 
 	npte = ma | protection_codes[prot] | PG_V;
+	npte |= pmap_pat_flags(flags);
 	if (wired)
 	        npte |= PG_W;
-	if (flags & PMAP_NOCACHE)
-		npte |= PG_N;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)

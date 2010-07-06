@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.32 2010/04/18 23:47:51 jym Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.33 2010/07/06 20:50:35 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -140,12 +140,13 @@ int	p4_get_bus_clock(struct cpu_info *);
 #endif
 
 void	cpu_get_tsc_freq(struct cpu_info *);
+void	pat_init(struct cpu_info *);
 
 extern int cpu_vendor;
 extern bool x86_mp_online;
 
 extern uint32_t cpu_feature[5];
 
-#endif
+#endif /* _KERNEL */
 
 #endif /* !_X86_CPUVAR_H_ */
