@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.32 2010/07/06 14:10:26 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.33 2010/07/06 14:47:48 pooka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -208,6 +208,7 @@
 ./usr/libdata/debug/usr/tests/fs/psshfs
 ./usr/libdata/debug/usr/tests/fs/ptyfs
 ./usr/libdata/debug/usr/tests/fs/puffs
+./usr/libdata/debug/usr/tests/fs/puffs/h_dtfs
 ./usr/libdata/debug/usr/tests/fs/tmpfs
 ./usr/libdata/debug/usr/tests/fs/umapfs
 ./usr/libdata/debug/usr/tests/fs/union
@@ -1111,6 +1112,7 @@
 ./usr/tests/fs/psshfs
 ./usr/tests/fs/ptyfs
 ./usr/tests/fs/puffs
+./usr/tests/fs/puffs/h_dtfs
 ./usr/tests/fs/tmpfs
 ./usr/tests/fs/umapfs
 ./usr/tests/fs/union
