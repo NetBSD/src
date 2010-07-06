@@ -119,27 +119,49 @@ static std::map< const atf_tc_t*, const impl::tc* > cwraps;
 void
 impl::tc::wrap_head(atf_tc_t *tc)
 {
-    std::map< atf_tc_t*, impl::tc* >::iterator iter = wraps.find(tc);
-    INV(iter != wraps.end());
-    (*iter).second->head();
+    try {
+        std::map< atf_tc_t*, impl::tc* >::iterator iter = wraps.find(tc);
+        INV(iter != wraps.end());
+        (*iter).second->head();
+    } catch (const std::exception& e) {
+        std::cerr << "Caught unhandled exception: " + std::string(e.what());
+	std::abort();
+    } catch (...) {
+        std::cerr << "Caught unknown exception";
+	std::abort();
+    }
 }
 
 void
 impl::tc::wrap_body(const atf_tc_t *tc)
 {
-    std::map< const atf_tc_t*, const impl::tc* >::const_iterator iter =
-        cwraps.find(tc);
-    INV(iter != cwraps.end());
-    (*iter).second->body();
+    try {
+        std::map< const atf_tc_t*, const impl::tc* >::const_iterator iter =
+            cwraps.find(tc);
+        INV(iter != cwraps.end());
+        (*iter).second->body();
+    } catch (const std::exception& e) {
+        fail("Caught unhandled exception: " + std::string(e.what()));
+    } catch (...) {
+        fail("Caught unknown exception");
+    }
 }
 
 void
 impl::tc::wrap_cleanup(const atf_tc_t *tc)
 {
-    std::map< const atf_tc_t*, const impl::tc* >::const_iterator iter =
-        cwraps.find(tc);
-    INV(iter != cwraps.end());
-    (*iter).second->cleanup();
+    try {
+        std::map< const atf_tc_t*, const impl::tc* >::const_iterator iter =
+            cwraps.find(tc);
+        INV(iter != cwraps.end());
+        (*iter).second->cleanup();
+    } catch (const std::exception& e) {
+        std::cerr << "Caught unhandled exception: " + std::string(e.what());
+	std::abort();
+    } catch (...) {
+        std::cerr << "Caught unknown exception";
+	std::abort();
+    }
 }
 
 impl::tc::tc(const std::string& ident, const bool has_cleanup) :
@@ -251,15 +273,9 @@ void
 impl::tc::run(const fs::path& resfile)
     const
 {
-    try {
-        atf_error_t err = atf_tc_run(&m_tc, resfile.c_path());
-        if (atf_is_error(err))
-            throw_atf_error(err);
-    } catch (const std::exception& e) {
-        fail("Caught unhandled exception: " + std::string(e.what()));
-    } catch (...) {
-        fail("Caught unknown exception");
-    }
+    atf_error_t err = atf_tc_run(&m_tc, resfile.c_path());
+    if (atf_is_error(err))
+        throw_atf_error(err);
 }
 
 void
