@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.36 2010/07/06 17:56:14 bsh Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.37 2010/07/06 18:09:04 bsh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.36 2010/07/06 17:56:14 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.37 2010/07/06 18:09:04 bsh Exp $");
 
 #include "bio.h"
 #include "rnd.h"
@@ -621,6 +621,7 @@ ld_ataraid_biovol(struct ld_ataraid_softc *sc, struct bioc_vol *bv)
 {
 	struct ataraid_array_info *aai = sc->sc_aai;
 	struct ld_softc *ld = &sc->sc_ld;
+#define	to_kibytes(ld,s)	(ld->sc_secsize*(s)/1024)
 
 	/* Fill in data for _this_ volume */
 	bv->bv_percent = -1;
@@ -640,7 +641,7 @@ ld_ataraid_biovol(struct ld_ataraid_softc *sc, struct bioc_vol *bv)
 	switch (aai->aai_level) {
 	case AAI_L_SPAN:
 	case AAI_L_RAID0:
-		bv->bv_stripe_size = aai->aai_interleave;
+		bv->bv_stripe_size = to_kibytes(ld, aai->aai_interleave);
 		bv->bv_level = 0;
 		break;
 	case AAI_L_RAID1:
@@ -648,7 +649,7 @@ ld_ataraid_biovol(struct ld_ataraid_softc *sc, struct bioc_vol *bv)
 		bv->bv_level = 1;
 		break;
 	case AAI_L_RAID5:
-		bv->bv_stripe_size = aai->aai_interleave;
+		bv->bv_stripe_size = to_kibytes(ld, aai->aai_interleave);
 		bv->bv_level = 5;
 		break;
 	}
