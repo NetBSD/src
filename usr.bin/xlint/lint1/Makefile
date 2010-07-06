@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2009/05/01 22:03:36 christos Exp $
+#	$NetBSD: Makefile,v 1.44 2010/07/06 06:00:03 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,17 +12,7 @@ YHEADER=
 
 CPPFLAGS+=	-I${.CURDIR} -I. -DPASS=\"${PROG}.h\"
 
-.if ${OBJECT_FMT} == "a.out"
-CPPFLAGS+=	-DTARGET_OBJFMT_AOUT
-.elif ${OBJECT_FMT} == "COFF"
-CPPFLAGS+=	-DTARGET_OBJFMT_COFF
-.elif ${OBJECT_FMT} == "ELF"
 CPPFLAGS+=	-DTARGET_OBJFMT_ELF
-.else
-.BEGIN:
-	@echo "Unrecognized OBJECT_FMT ${OBJECT_FMT}"
-	@false
-.endif
 
 LINTFLAGS=	-aehpz
 BINDIR=		/usr/libexec
