@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.90 2010/06/24 13:03:10 hannken Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.91 2010/07/06 12:05:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.90 2010/06/24 13:03:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.91 2010/07/06 12:05:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -127,6 +127,15 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 		printf("puffs_mount: invalid FHFLAGs 0x%x\n", args->pa_fhflags);
 		error = EINVAL;
 		goto out;
+	}
+
+	for (i = 0; i < __arraycount(args->pa_spare); i++) {
+		if (args->pa_spare[i] != 0) {
+			printf("puffs_mount: pa_spare[%d] = 0x%x\n",
+			    i, args->pa_spare[i]);
+			error = EINVAL;
+			goto out;
+		}
 	}
 
 	/* use dummy value for passthrough */
