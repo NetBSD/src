@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.33 2010/07/06 14:47:48 pooka Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.34 2010/07/06 23:33:28 njoly Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -64,6 +64,7 @@
 ./libdata/firmware/if_wpi
 ./libdata/firmware/ral
 ./libdata/firmware/rum
+./libdata/firmware/upgt
 ./libdata/firmware/zyd
 ./libexec
 ./libexec/dhcpcd-hooks
