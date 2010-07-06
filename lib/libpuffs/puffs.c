@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.111 2010/07/06 13:27:16 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.112 2010/07/06 18:01:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.111 2010/07/06 13:27:16 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.112 2010/07/06 18:01:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -652,6 +652,10 @@ puffs_init(struct puffs_ops *pops, const char *mntfromname,
 	pargs->pa_root_vsize = 0;
 	pargs->pa_root_rdev = 0;
 	pargs->pa_maxmsglen = 0;
+	if (sizeof(time_t) == 4)
+		pargs->pa_time32 = 1;
+	else
+		pargs->pa_time32 = 0;
 
 	pu->pu_flags = pflags;
 	pu->pu_ops = *pops;
