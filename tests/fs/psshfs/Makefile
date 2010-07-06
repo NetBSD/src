@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2007/12/26 22:33:54 jmmv Exp $
+# $NetBSD: Makefile,v 1.1 2010/07/06 14:06:22 pooka Exp $
 
 TESTSDIR=	${TESTSBASE}/fs/puffs
 

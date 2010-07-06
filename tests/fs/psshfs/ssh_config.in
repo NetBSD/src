@@ -1,4 +1,4 @@
-# $NetBSD: ssh_config.in,v 1.1 2007/12/26 20:50:07 jmmv Exp $
+# $NetBSD: ssh_config.in,v 1.1 2010/07/06 14:06:22 pooka Exp $
 
 # Basic settings.
 Port 10000
