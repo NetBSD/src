@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.92 2010/07/06 12:28:40 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.93 2010/07/06 13:47:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.92 2010/07/06 12:28:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.93 2010/07/06 13:47:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -292,6 +292,7 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	pmp->pmp_root_vtype = args->pa_root_vtype;
 	pmp->pmp_root_vsize = args->pa_root_vsize;
 	pmp->pmp_root_rdev = args->pa_root_rdev;
+	pmp->pmp_docompat = args->pa_time32;
 
 	mutex_init(&pmp->pmp_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&pmp->pmp_sopmtx, MUTEX_DEFAULT, IPL_NONE);
