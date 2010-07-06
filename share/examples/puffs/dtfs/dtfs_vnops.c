@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.42 2007/12/19 14:01:30 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.43 2010/07/06 13:56:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -493,6 +493,16 @@ dtfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 
 	dtfs_updatetimes(pn, 0, 1, 1);
 
+	return 0;
+}
+
+int
+dtfs_node_inactive(struct puffs_usermount *pu, puffs_cookie_t opc)
+{
+	struct puffs_node *pn = opc;
+
+	if (pn->pn_va.va_nlink == 0)
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N1);
 	return 0;
 }
 
