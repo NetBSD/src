@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/03/14 00:26:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2010/07/06 06:09:57 mrg Exp $
 
 ### what we need:
 
@@ -38,7 +38,7 @@ all: ${FILES}
 
 ### special  rules for bootblocks ###
 
-INCPATH = -I${DIR_TOP} -I${DIR_TOP}/lib/libsa -I${DIR_BOOT} -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../aout2bb -I${.OBJDIR}
+INCPATH = -I${DIR_TOP} -I${DIR_TOP}/lib/libsa -I${DIR_BOOT} -I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../elf2bb -I${.OBJDIR}
 
 AFLAGS += -m68030 -l
 CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH}
