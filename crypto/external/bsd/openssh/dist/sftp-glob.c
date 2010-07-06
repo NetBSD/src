@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-glob.c,v 1.2 2009/06/07 22:38:47 christos Exp $	*/
+/*	$NetBSD: sftp-glob.c,v 1.3 2010/07/06 15:09:41 christos Exp $	*/
 /* $OpenBSD: sftp-glob.c,v 1.22 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-glob.c,v 1.2 2009/06/07 22:38:47 christos Exp $");
+__RCSID("$NetBSD: sftp-glob.c,v 1.3 2010/07/06 15:09:41 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -121,5 +121,5 @@ remote_glob(struct sftp_conn *conn, const char *pattern, int flags,
 	memset(&cur, 0, sizeof(cur));
 	cur.conn = conn;
 
-	return(glob(pattern, flags | GLOB_ALTDIRFUNC, errfunc, pglob));
+	return(glob(pattern, flags|GLOB_ALTDIRFUNC|GLOB_LIMIT, errfunc, pglob));
 }
