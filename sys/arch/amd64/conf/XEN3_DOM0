@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.55 2010/06/26 13:08:37 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.56 2010/07/06 15:00:09 cherry Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -12,6 +12,8 @@ maxusers	32		# estimated number of users
 
 #
 options 	DOM0OPS
+#options         XEN_BALLOON     # Xen memory ballooning - Experimental
+
 # boot messages with MPBIOS, acpi and ioapic can be quite large
 options 	MSGBUFSIZE=24576
 

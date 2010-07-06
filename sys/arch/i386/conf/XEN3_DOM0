@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3_DOM0,v 1.35 2010/06/26 13:08:37 bouyer Exp $
+#	$NetBSD: XEN3_DOM0,v 1.36 2010/07/06 15:00:09 cherry Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -23,6 +23,7 @@ options 	DOM0OPS
 # making MCLBYTES = PAGE_SIZE avoids a copy when a mbuf cluster is sent
 # to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
+#options         XEN_BALLOON     # Xen memory ballooning - Experimental
 
 makeoptions 	CPUFLAGS="-march=i686"
 
