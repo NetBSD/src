@@ -1,4 +1,4 @@
-# $NetBSD: t_psshfs.sh,v 1.7 2010/07/05 16:27:08 jmmv Exp $
+# $NetBSD: t_psshfs.sh,v 1.1 2010/07/06 14:06:22 pooka Exp $
 #
 # Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
