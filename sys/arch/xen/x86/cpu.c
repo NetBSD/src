@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.45 2010/06/28 00:47:53 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.46 2010/07/06 20:50:35 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45 2010/06/28 00:47:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46 2010/07/06 20:50:35 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -517,6 +517,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		panic("unknown processor type??\n");
 	}
 
+	pat_init(ci);
 	atomic_or_32(&cpus_attached, ci->ci_cpumask);
 
 #if 0
