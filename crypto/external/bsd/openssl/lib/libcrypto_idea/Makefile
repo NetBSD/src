@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/07/19 23:30:56 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2010/07/06 05:59:50 mrg Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -37,11 +37,6 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/idea
 SRCS+=		i_cbc.c i_skey.c e_idea.c c_allc.c
 
-# XXX
-.if ${OBJECT_FMT} == "ELF"
 AFLAGS+=	-DELF
-.else
-AFLAGS+=	-DOUT
-.endif
 
 .include <bsd.lib.mk>

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.132 2009/12/14 13:39:33 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.133 2010/07/06 05:59:51 mrg Exp $
 
-# for OBJECT_FMT
 .include <bsd.own.mk>
 
 SUBDIR+=	bc

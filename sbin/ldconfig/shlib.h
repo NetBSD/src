@@ -1,11 +1,11 @@
-/* $NetBSD: chksum.h,v 1.5 2008/04/28 20:23:13 martin Exp $ */
+/*	$NetBSD: shlib.h,v 1.1 2010/07/06 05:59:56 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ignatios Souvatzis.
+ * by Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +29,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define CHKSUMOFFS 1
+/*
+ * Functions and data exported from shlib.c
+ */
+extern char	**search_dirs;	/* Directories to search for libraries. */
+extern int	n_search_dirs;	/* Length of above. */
 
-u_int32_t chksum(u_int32_t *, int);
+void		std_search_path(void);
+int		getdewey(int[], char *);
+int		cmpndewey(int[], int, int[], int);
 
+/* XXX - Common Utility functions currently also in shlib.c */
+void		*xmalloc(size_t);
+void		*xrealloc(void *, size_t);
+char		*concat(const char *, const char *, const char *);

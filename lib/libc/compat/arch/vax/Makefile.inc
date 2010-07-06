@@ -1,4 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.2 2006/03/11 23:04:04 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2010/07/06 05:59:52 mrg Exp $
 
-.include "${COMPATARCHDIR}/gen/Makefile.inc"
 .include "${COMPATARCHDIR}/sys/Makefile.inc"

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.307 2010/04/27 14:32:14 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.308 2010/07/06 05:59:56 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -140,7 +140,6 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 
 # Data-driven table using make variables to control how shared libraries
 # are built for different platforms and object formats.
-# OBJECT_FMT:		currently either "ELF" or "a.out", from <bsd.own.mk>
 # SHLIB_MAJOR, SHLIB_MINOR, SHLIB_TEENY: Major, minor, and teeny version
 #			numbers of shared library
 # SHLIB_SOVERSION:	version number to be compiled into a shared library
@@ -168,8 +167,7 @@ CPPPICFLAGS?= -DPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS ?=
 
-.elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") && \
-       ${OBJECT_FMT} == "ELF"						# } {
+.elif (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64") 	# } {
 
 # If you use -fPIC you need to define BIGPIC to turn on 32-bit
 # relocations in asm code
@@ -203,13 +201,11 @@ MKSHLIBOBJS= no
 .endif
 
 # Platform-independent linker flags for ELF shared libraries
-.if ${OBJECT_FMT} == "ELF"
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
 SHLIB_SHFLAGS=		-Wl,-soname,${_LIB_PREFIX}${LIB}.so.${SHLIB_SOVERSION}
 SHLIB_SHFLAGS+=		-Wl,--warn-shared-textrel
 SHLIB_LDSTARTFILE?=	${_GCC_CRTDIR}/crti.o ${_GCC_CRTBEGINS}
 SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${_GCC_CRTDIR}/crtn.o
-.endif
 
 CFLAGS+=	${COPTS}
 OBJCFLAGS+=	${OBJCOPTS}
@@ -446,7 +442,7 @@ SOBJS+=${OBJS:.o=.pico}
 .endif
 .if defined(SHLIB_FULLVERSION)
 _LIB.so:=lib${LIB}.so.${SHLIB_FULLVERSION}
-.if ${MKDEBUG} != "no" && ${OBJECT_FMT} == "ELF"
+.if ${MKDEBUG} != "no"
 _LIB.debug:=${_LIB.so}.debug
 .endif
 _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
@@ -576,7 +572,6 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 	    -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${_LDADD.lib${LIB}}
 .endif
-.if ${OBJECT_FMT} == "ELF"
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
@@ -587,7 +582,6 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 .endif
 	${HOST_LN} -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
 	mv -f lib${LIB}.so.tmp lib${LIB}.so
-.endif
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
@@ -734,10 +728,6 @@ ${_LIB_SO_TGT}.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 		${_LIB_SO_TGT}.${SHLIB_FULLVERSION} \
 		${_LIB_SO_TGTLIBDIR}.${SHLIB_FULLVERSION}
 .endif
-.if ${OBJECT_FMT} == "a.out" && !defined(DESTDIR)
-	/sbin/ldconfig -m ${_LIBSODIR} ${LIBDIR}
-.endif
-.if ${OBJECT_FMT} == "ELF"
 .if defined(SHLIB_FULLVERSION) && defined(SHLIB_MAJOR) && \
     "${SHLIB_FULLVERSION}" != "${SHLIB_MAJOR}"
 	${INSTALL_SYMLINK} \
@@ -757,7 +747,6 @@ ${_LIB_SO_TGT}.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 	${INSTALL_SYMLINK} -l r \
 		${_LIB_SO_TGT}.${SHLIB_FULLVERSION} \
 		${_LIB_SO_TGTLIBDIR}
-.endif
 .endif
 .endif
 .endif

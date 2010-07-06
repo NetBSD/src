@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2009/01/11 03:09:35 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2010/07/06 05:59:51 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -40,9 +40,4 @@ CLEANFILES+= unwind.h
 ${OBJS}: ${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH}/defs.mk
 .else
 .include <bsd.prog.mk> # do nothing
-.endif
-
-.if (${OBJECT_FMT} == "a.out")
-LDADD=	${DESTDIR}/usr/lib/c++rt0.o
-DPADD=	${DESTDIR}/usr/lib/c++rt0.o
 .endif

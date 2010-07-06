@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2003/12/23 19:29:11 junyoung Exp $
+#	$NetBSD: Makefile,v 1.7 2010/07/06 05:59:56 mrg Exp $
 
 NOMAN=		# defined
 
 .include <bsd.own.mk>
-
-.if (${OBJECT_FMT} == "ELF")
 
 .if exists(arch/${MACHINE_CPU}/initfini_asm.S)
 PROG=		initfini
@@ -24,8 +22,6 @@ regress: ${PROG}
 .else
 regress:
 	@echo "FAILED -- asm stub not written for ${MACHINE_CPU}"
-.endif
-
 .endif
 
 .include <bsd.prog.mk>

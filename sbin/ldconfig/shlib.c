@@ -1,4 +1,4 @@
-/*	$NetBSD: shlib.c,v 1.23 2009/08/16 18:01:49 martin Exp $	*/
+/*	$NetBSD: shlib.c,v 1.1 2010/07/06 05:59:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@ int	isdigit();
 #define	STANDARD_SEARCH_DIRS	"/usr/lib"
 #endif
 
+static	void	add_search_dir(const char *);
+
 /*
  * Actual vector of library search directories,
  * including `-L'ed and LD_LIBRARY_PATH spec'd ones.
@@ -71,7 +73,7 @@ const char	*standard_search_dirs[] = {
 	STANDARD_SEARCH_DIRS
 };
 
-void
+static void
 add_search_dir(name)
 	const char	*name;
 {
@@ -83,56 +85,6 @@ add_search_dir(name)
 	    xmalloc(sizeof(_PATH_EMUL_AOUT) + strlen(name));
 	strcpy(search_dirs[n_search_dirs - 1], _PATH_EMUL_AOUT);
 	strcat(search_dirs[n_search_dirs - 1], name);
-}
-
-void
-remove_search_dir(name)
-	char	*name;
-{
-	int	n;
-
-	for (n = 0; n < n_search_dirs; n++) {
-		if (strcmp(search_dirs[n], name))
-			continue;
-		free(search_dirs[n]);
-		free(search_dirs[n+1]);
-		if (n < (n_search_dirs - 2))
-			bcopy(&search_dirs[n+2], &search_dirs[n],
-			      (n_search_dirs - n - 2) * sizeof search_dirs[0]);
-		n_search_dirs -= 2;
-	}
-}
-
-void
-add_search_path(path)
-char	*path;
-{
-	register char	*cp, *dup;
-
-	if (path == NULL)
-		return;
-
-	/* Add search directories from `path' */
-	path = dup = strdup(path);
-	while ((cp = strsep(&path, ":")) != NULL)
-		add_search_dir(cp);
-	free(dup);
-}
-
-void
-remove_search_path(path)
-char	*path;
-{
-	register char	*cp, *dup;
-
-	if (path == NULL)
-		return;
-
-	/* Remove search directories from `path' */
-	path = dup = strdup(path);
-	while ((cp = strsep(&path, ":")) != NULL)
-		remove_search_dir(cp);
-	free(dup);
 }
 
 void
@@ -208,147 +160,6 @@ int	n1, n2;
 
 	errx(1, "cmpndewey: cant happen");
 	return 0;
-}
-
-/*
- * Search directories for a shared library matching the given
- * major and minor version numbers.
- *
- * MAJOR == -1 && MINOR == -1	--> find highest version
- * MAJOR != -1 && MINOR == -1   --> find highest minor version
- * MAJOR == -1 && MINOR != -1   --> invalid
- * MAJOR != -1 && MINOR != -1   --> find highest micro version
- */
-
-/* Not interested in devices right now... */
-#undef major
-#undef minor
-
-char *
-findshlib(name, majorp, minorp, do_dot_a)
-char	*name;
-int	*majorp, *minorp;
-int	do_dot_a;
-{
-	int		dewey[MAXDEWEY];
-	int		ndewey;
-	int		tmp[MAXDEWEY];
-	int		i;
-	int		len;
-	char		*lname, *path = NULL;
-	int		major = *majorp, minor = *minorp;
-
-	len = strlen(name) + sizeof("lib");
-#if defined(__SSP__) || defined(__SSP_ALL__)
-	lname = xmalloc(len);
-#else
-	lname = alloca(len);
-#endif
-	len--;
-	sprintf(lname, "lib%s", name);
-
-	ndewey = 0;
-
-	for (i = 0; i < n_search_dirs; i++) {
-		DIR		*dd = opendir(search_dirs[i]);
-		struct dirent	*dp;
-		int		found_dot_a = 0;
-		int		found_dot_so = 0;
-
-		if (dd == NULL)
-			continue;
-
-		while ((dp = readdir(dd)) != NULL) {
-			int	n;
-			struct exec ex;
-			char *xpath;
-			FILE *fp;
-
-			if (do_dot_a && path == NULL &&
-					dp->d_namlen == len + 2 &&
-					strncmp(dp->d_name, lname, len) == 0 &&
-					(dp->d_name+len)[0] == '.' &&
-					(dp->d_name+len)[1] == 'a') {
-
-				path = concat(search_dirs[i], "/", dp->d_name);
-				found_dot_a = 1;
-			}
-
-			if (dp->d_namlen < len + 4)
-				continue;
-			if (strncmp(dp->d_name, lname, len) != 0)
-				continue;
-			if (strncmp(dp->d_name+len, ".so.", 4) != 0)
-				continue;
-
-			if ((n = getdewey(tmp, dp->d_name+len+4)) == 0)
-				continue;
-
-			if (major != -1 && found_dot_a) { /* XXX */
-				free(path);
-				path = NULL;
-				found_dot_a = 0;
-			}
-
-			/* verify the library is a.out */
-			xpath = concat(search_dirs[i], "/", dp->d_name);
-			fp = fopen(xpath, "r");
-			free(xpath);
-			if (fp == NULL) {
-				continue;
-			}
-			if (sizeof(ex) != fread(&ex, 1, sizeof(ex), fp)) {
-				fclose(fp);
-				continue;
-			}
-			fclose(fp);
-			if (N_GETMAGIC(ex) != ZMAGIC
-			    || (N_GETFLAG(ex) & EX_DYNAMIC) == 0) {
-				continue;
-			}
-
-			if (major == -1 && minor == -1) {
-				goto compare_version;
-			} else if (major != -1 && minor == -1) {
-				if (tmp[0] == major)
-					goto compare_version;
-			} else if (major != -1 && minor != -1) {
-				if (tmp[0] == major) {
-					if (n == 1 || tmp[1] >= minor)
-						goto compare_version;
-				}
-			}
-
-			/* else, this file does not qualify */
-			continue;
-
-		compare_version:
-			if (cmpndewey(tmp, n, dewey, ndewey) <= 0)
-				continue;
-
-			/* We have a better version */
-			found_dot_so = 1;
-			if (path)
-				free(path);
-			path = concat(search_dirs[i], "/", dp->d_name);
-			found_dot_a = 0;
-			bcopy(tmp, dewey, sizeof(dewey));
-			ndewey = n;
-			*majorp = dewey[0];
-			*minorp = dewey[1];
-		}
-		closedir(dd);
-
-		if (found_dot_a || found_dot_so)
-			/*
-			 * There's a lib in this dir; take it.
-			 */
-			return path;
-	}
-#if defined(__SSP__) || defined(__SSP_ALL__)
-	free(lname);
-#endif
-	return path;
 }
 
 

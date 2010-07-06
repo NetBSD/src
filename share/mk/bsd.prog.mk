@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.248 2010/04/24 07:57:04 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.249 2010/07/06 05:59:56 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -70,7 +70,6 @@ CTFMFLAGS+= -g
 .endif
 
 # ELF platforms depend on crti.o, crtbegin.o, crtend.o, and crtn.o
-.if ${OBJECT_FMT} == "ELF"
 .ifndef LIBCRTBEGIN
 LIBCRTBEGIN=	${DESTDIR}/usr/lib/crti.o ${_GCC_CRTBEGIN}
 .MADE: ${LIBCRTBEGIN}
@@ -80,11 +79,6 @@ LIBCRTEND=	${_GCC_CRTEND} ${DESTDIR}/usr/lib/crtn.o
 .MADE: ${LIBCRTEND}
 .endif
 _SHLINKER=	${SHLINKDIR}/ld.elf_so
-.else
-LIBCRTBEGIN?=
-LIBCRTEND?=
-_SHLINKER=	${SHLINKDIR}/ld.so
-.endif
 
 .ifndef LIBCRT0
 LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
@@ -167,9 +161,7 @@ CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
 
 _PROGLDOPTS=
 .if ${SHLINKDIR} != "/usr/libexec"	# XXX: change or remove if ld.so moves
-.if ${OBJECT_FMT} == "ELF"
 _PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
-.endif
 .endif
 .if ${SHLIBDIR} != "/usr/lib"
 _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR} \
@@ -262,7 +254,7 @@ _CCLINK.${_P}=	${CXX} ${_CCLINKFLAGS}
 BINDIR.${_P}?=		${BINDIR}
 PROGNAME.${_P}?=	${_P}
 
-.if ${MKDEBUG} != "no" && ${OBJECT_FMT} == "ELF" && !commands(${_P})
+.if ${MKDEBUG} != "no" && !commands(${_P})
 _PROGDEBUG.${_P}:=	${PROGNAME.${_P}}.debug
 .endif
 
