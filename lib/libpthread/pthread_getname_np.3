@@ -1,4 +1,4 @@
-.\"     $NetBSD: pthread_getname_np.3,v 1.1 2007/12/14 21:51:22 yamt Exp $
+.\"     $NetBSD: pthread_getname_np.3,v 1.2 2010/07/06 21:54:12 jruoho Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd December 15, 2007
+.Dd July 7, 2010
 .Dt PTHREAD_GETNAME_NP 3
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Nd set descriptive name of a thread
 .\" ------------------------------------------------------------
 .Sh LIBRARY
-.Lb libc
+.Lb libpthread
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In pthread.h
@@ -41,10 +41,11 @@
 .Fn pthread_getname_np "pthread_t thread" "char *name" "size_t len"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
+The
 .Fn pthread_getname_np
-gets the descriptive name of the thread.
-It takes the following arguments.
-.Bl -tag -width target
+function obtains the descriptive name of a thread.
+It takes the following arguments:
+.Bl -tag -width target -offset indent
 .It Fa thread
 The thread whose descriptive name will be obtained.
 .It Fa name
@@ -55,16 +56,28 @@ The size of the buffer
 in bytes.
 .El
 .\" ------------------------------------------------------------
+.Sh COMPATIBILITY
+The
+.Fn pthread_getname_np
+function is a non-standard extension.
+.\" ------------------------------------------------------------
 .Sh RETURN VALUES
+The
 .Fn pthread_getname_np
-returns 0 on success.
-Otherwise,
+function returns 0 on success.
+Otherwise, an error number is returned to indicate the error.
+.\" ------------------------------------------------------------
+.Sh ERRORS
+The
 .Fn pthread_getname_np
-returns an error number described in
-.Xr errno 2 .
-.\" ------------------------------------------------------------
-.\".Sh ERRORS
-.\" ------------------------------------------------------------
+function will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid parameter.
+.It Bq Er ESRCH
+Non-existent
+.Fa thread .
+.El
 .Sh SEE ALSO
-.Xr errno 2 ,
+.Xr pthread_attr_get_np 3 ,
 .Xr pthread_setname_np 3
