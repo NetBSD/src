@@ -1,4 +1,4 @@
-/* $NetBSD: h_have_puffs.c,v 1.2 2008/04/28 20:24:12 martin Exp $ */
+/* $NetBSD: h_have_puffs.c,v 1.1 2010/07/06 14:06:22 pooka Exp $ */
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
