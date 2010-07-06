@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1034 2010/07/06 00:04:21 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1035 2010/07/06 00:36:28 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1037 2010/07/06 00:02:27 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1038 2010/07/06 00:35:55 msaitoh Exp
  */
 
 /*
@@ -778,8 +778,8 @@
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI Bridge */
 
 /* Advantech products */
-#define	PCI_PRODUCT_ADVANTECH_PCI1620AE0	0x1600		/* PCI-1620-AE 8 port serial (1-4) */
-#define	PCI_PRODUCT_ADVANTECH_PCI1620AE1	0x16ff		/* PCI-1620-AE 8 port serial (5-8) */
+#define	PCI_PRODUCT_ADVANTECH_PCI1620AAE0	0x1600		/* PCI-1620A-AE 8 port serial (1-4) */
+#define	PCI_PRODUCT_ADVANTECH_PCI1620AAE1	0x16ff		/* PCI-1620A-AE 8 port serial (5-8) */
 
 /* Acer Labs products */
 #define	PCI_PRODUCT_ALI_M1445	0x1445		/* M1445 VL-PCI Bridge */
