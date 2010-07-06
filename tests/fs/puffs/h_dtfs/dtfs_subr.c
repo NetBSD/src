@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.21 2007/10/11 13:50:42 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.1 2010/07/06 14:16:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
