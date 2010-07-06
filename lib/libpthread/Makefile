@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57 2010/05/19 20:04:43 jruoho Exp $
+#	$NetBSD: Makefile,v 1.58 2010/07/06 21:36:34 jruoho Exp $
 #
 
 WARNS=	4
@@ -89,6 +89,7 @@ COPTS.pthread.c += -Wno-stack-protector
 
 MAN+=	affinity.3 pthread.3 \
 	pthread_attr.3 \
+	pthread_attr_get_np.3 \
 	pthread_attr_getname_np.3 \
 	pthread_attr_setcreatesuspend_np.3 \
 	pthread_attr_setname_np.3 \
