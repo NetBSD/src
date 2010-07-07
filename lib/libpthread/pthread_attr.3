@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr.3,v 1.12 2010/07/07 08:41:11 jruoho Exp $
+.\"	$NetBSD: pthread_attr.3,v 1.13 2010/07/07 08:57:36 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,8 +65,6 @@
 .Nm pthread_attr_getguardsize ,
 .Nm pthread_attr_setstackaddr ,
 .Nm pthread_attr_getstackaddr ,
-.Nm pthread_attr_setdetachstate ,
-.Nm pthread_attr_getdetachstate ,
 .Nm pthread_attr_setinheritsched ,
 .Nm pthread_attr_getinheritsched ,
 .Nm pthread_attr_setschedparam ,
@@ -94,10 +92,6 @@
 .Fn pthread_attr_setstackaddr "pthread_attr_t *attr" "void *stackaddr"
 .Ft int
 .Fn pthread_attr_getstackaddr "const pthread_attr_t * restrict attr" "void ** restrict stackaddr"
-.Ft int
-.Fn pthread_attr_setdetachstate "pthread_attr_t *attr" "int detachstate"
-.Ft int
-.Fn pthread_attr_getdetachstate "const pthread_attr_t *attr" "int *detachstate"
 .Ft int
 .Fn pthread_attr_setinheritsched "pthread_attr_t *attr" "int inheritsched"
 .Ft int
@@ -136,23 +130,6 @@ The
 .Fn pthread_attr_get*
 functions copy the value of the attribute that corresponds to each function name
 to the location pointed to by the second function parameter.
-.Pp
-The attribute parameters for the
-.Fn pthread_attr_setdetachstate
-and
-.Fn pthread_attr_getdetachstate
-are mutually exclusive and must be one of:
-.Bl -tag -width xxxxxxxx
-.It Dv PTHREAD_CREATE_JOINABLE
-The threads must explicitly be waited for using the
-.Fn pthread_join
-function once they exit for their status to be received and their resources
-to be freed.
-This is the default.
-.It Dv PTHREAD_CREATE_DETACHED
-The thread's resources will automatically be freed once the thread exits,
-and the thread will not be joined.
-.El
 .Sh RETURN VALUES
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
@@ -180,15 +157,6 @@ may fail if:
 .Fa stacksize
 is less than
 .Dv PTHREAD_STACK_MIN .
-.El
-.Pp
-.Fn pthread_attr_setdetachstate
-should fail if:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The value specified by
-.Fa detachstate
-is invalid.
 .El
 .Pp
 Fn pthread_attr_setinheritsched
@@ -232,8 +200,6 @@ Invalid or unsupported value for
 .Fn pthread_attr_getstacksize ,
 .Fn pthread_attr_setstackaddr ,
 .Fn pthread_attr_getstackaddr ,
-.Fn pthread_attr_setdetachstate ,
-.Fn pthread_attr_getdetachstate ,
 .Fn pthread_attr_setinheritsched ,
 .Fn pthread_attr_getinheritsched ,
 .Fn pthread_attr_setschedparam ,
