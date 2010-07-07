@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.229 2010/07/01 02:38:30 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.230 2010/07/07 01:30:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.229 2010/07/01 02:38:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.230 2010/07/07 01:30:37 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -932,7 +932,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	/*
 	 * Let pid be reallocated.
 	 */
-	proc_free_pid(p);
+	proc_free_pid(p->p_pid);
 
 	/*
 	 * Unlink process from its process group.
