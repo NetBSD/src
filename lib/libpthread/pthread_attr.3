@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr.3,v 1.14 2010/07/07 11:04:54 jruoho Exp $
+.\"	$NetBSD: pthread_attr.3,v 1.15 2010/07/07 13:04:20 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,8 +59,6 @@
 .Sh NAME
 .Nm pthread_attr_init ,
 .Nm pthread_attr_destroy ,
-.Nm pthread_attr_setguardsize ,
-.Nm pthread_attr_getguardsize ,
 .Nm pthread_attr_setinheritsched ,
 .Nm pthread_attr_getinheritsched ,
 .Nm pthread_attr_setschedparam ,
@@ -76,10 +74,6 @@
 .Fn pthread_attr_init "pthread_attr_t *attr"
 .Ft int
 .Fn pthread_attr_destroy "pthread_attr_t *attr"
-.Ft int
-.Fn pthread_attr_setguardsize "pthread_attr_t *attr" "size_t guardsize"
-.Ft int
-.Fn pthread_attr_getguardsize "const pthread_attr_t * restrict attr" "size_t * restrict guardsize"
 .Ft int
 .Fn pthread_attr_setinheritsched "pthread_attr_t *attr" "int inheritsched"
 .Ft int
