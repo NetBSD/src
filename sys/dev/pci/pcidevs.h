@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1035 2010/07/06 00:36:28 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1036 2010/07/07 04:57:39 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1038 2010/07/06 00:35:55 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1039 2010/07/07 04:56:44 msaitoh Exp
  */
 
 /*
@@ -565,7 +565,7 @@
 #define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics */
 #define	PCI_VENDOR_ADVANTECH	0x13fe		/* Advantech */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava Semiconductor Manufacturing */
-#define	PCI_VENDOR_ETIMEDIA	0x1409		/* eTIMedia Technology */
+#define	PCI_VENDOR_SUNIX	0x1409		/* SUNIX */
 #define	PCI_VENDOR_ICENSEMBLE	0x1412		/* IC Ensemble / VIA Technologies */
 #define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft */
 #define	PCI_VENDOR_OXFORDSEMI	0x1415		/* Oxford Semiconductor */
