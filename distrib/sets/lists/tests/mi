@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.100 2010/07/06 14:47:20 pooka Exp $
+# $NetBSD: mi,v 1.101 2010/07/07 14:54:19 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -204,6 +204,7 @@
 ./usr/libdata/debug/usr/tests/fs/ptyfs/t_ptyfs.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ptyfs/t_nullpts.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/fs/puffs/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/puffs/h_dtfs				tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/puffs/h_dtfs/h_dtfs.debug		tests-fs-debug		debug,atf
