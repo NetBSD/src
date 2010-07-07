@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.9 2010/07/07 14:29:37 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.10 2010/07/07 16:35:26 uebayasi Exp $	*/
 
 /*
  *
@@ -39,10 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.9 2010/07/07 14:29:37 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.10 2010/07/07 16:35:26 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
-#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>

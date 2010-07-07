@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.3 2010/05/31 13:26:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.4 2010/07/07 16:35:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,11 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.3 2010/05/31 13:26:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.4 2010/07/07 16:35:26 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
-#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
