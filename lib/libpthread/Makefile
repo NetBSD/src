@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2010/07/07 16:04:19 jruoho Exp $
+#	$NetBSD: Makefile,v 1.65 2010/07/07 16:22:30 jruoho Exp $
 #
 
 WARNS=	4
@@ -95,6 +95,7 @@ MAN+=	affinity.3 pthread.3 \
 	pthread_attr_getinheritsched.3 \
 	pthread_attr_getname_np.3 \
 	pthread_attr_getschedparam.3 \
+	pthread_attr_getschedpolicy.3 \
 	pthread_attr_getscope.3 \
 	pthread_attr_getstack.3 \
 	pthread_attr_setcreatesuspend_np.3 \
@@ -125,13 +126,12 @@ MLINKS+=	affinity.3 pthread_getaffinity_np.3
 
 MLINKS+=	pthread_attr.3 pthread_attr_init.3
 MLINKS+=	pthread_attr.3 pthread_attr_destroy.3
-MLINKS+=	pthread_attr.3 pthread_attr_setschedpolicy.3
-MLINKS+=	pthread_attr.3 pthread_attr_getschedpolicy.3
 
 MLINKS+=	pthread_attr_getdetachstate.3 pthread_attr_setdetachstate.3
 MLINKS+=	pthread_attr_getguardsize.3 pthread_attr_setguardsize.3
 MLINKS+=	pthread_attr_getinheritsched.3 pthread_attr_setinheritsched.3
 MLINKS+=	pthread_attr_getschedparam.3 pthread_attr_setschedparam.3
+MLINKS+=	pthread_attr_getschedpolicy.3 pthread_attr_setschedpolicy.3
 MLINKS+=	pthread_attr_getscope.3 pthread_attr_setscope.3
 MLINKS+=	pthread_attr_getstack.3 pthread_attr_setstack.3 \
 		pthread_attr_getstack.3 pthread_attr_getstacksize.3 \

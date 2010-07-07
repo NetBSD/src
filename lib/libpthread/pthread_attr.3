@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr.3,v 1.17 2010/07/07 16:04:19 jruoho Exp $
+.\"	$NetBSD: pthread_attr.3,v 1.18 2010/07/07 16:22:30 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,9 +58,7 @@
 .Os
 .Sh NAME
 .Nm pthread_attr_init ,
-.Nm pthread_attr_destroy ,
-.Nm pthread_attr_setschedpolicy ,
-.Nm pthread_attr_getschedpolicy
+.Nm pthread_attr_destroy
 .Nd thread attribute operations
 .Sh LIBRARY
 .Lb libpthread
@@ -70,10 +68,6 @@
 .Fn pthread_attr_init "pthread_attr_t *attr"
 .Ft int
 .Fn pthread_attr_destroy "pthread_attr_t *attr"
-.Ft int
-.Fn pthread_attr_setschedpolicy "pthread_attr_t *attr" "int policy"
-.Ft int
-.Fn pthread_attr_getschedpolicy "const pthread_attr_t * restrict attr" "int * restrict policy"
 .Sh DESCRIPTION
 Thread attributes are used to specify parameters to
 .Fn pthread_create .
@@ -105,7 +99,7 @@ If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
 .Sh ERRORS
 .Fn pthread_attr_init
-should fail if:
+may fail if:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
 Out of memory.
@@ -119,25 +113,13 @@ The value specified by
 .Fa attr
 is invalid.
 .El
-.Pp
-.Fn pthread_attr_setschedpolicy
-may fail if:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-Invalid value for
-.Fa attr .
-.It Bq Er ENOTSUP
-Invalid or unsupported value for
-.Fa policy .
-.El
 .Sh SEE ALSO
 .Xr pthread_create 3 ,
 .Xr pthread_join 3
 .Sh STANDARDS
-.Fn pthread_attr_init ,
-.Fn pthread_attr_destroy ,
-.Fn pthread_attr_setschedpolicy ,
+The
+.Fn pthread_attr_init
 and
-.Fn pthread_attr_getschedpolicy
-conform to
+.Fn pthread_attr_destroy
+functions conform to
 .St -p1003.1-96 .
