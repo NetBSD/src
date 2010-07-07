@@ -25,7 +25,7 @@ struct devsw_conv devsw_conv0[] = {
 	{ "bthub", -1, 175, DEVNODE_SINGLE, 0, { 0, 0 }},
 	{ "amr", -1, 176, DEVNODE_VECTOR, 0, { 1, 0 }},
 	{ "lockstat", -1, 177, DEVNODE_SINGLE, 0, { 0, 0 }},
-	{ "putter", -1, 178, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
+	{ "putter", -1, 178, DEVNODE_SINGLE, 0, { 0, 0 }},
 	{ "srt", -1, 179, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "drm", -1, 180, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "bio", -1, 181, DEVNODE_SINGLE, 0, { 0, 0 }},
