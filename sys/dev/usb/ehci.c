@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.168 2010/06/02 18:53:39 jakllsch Exp $ */
+/*	$NetBSD: ehci.c,v 1.169 2010/07/07 03:55:01 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.168 2010/06/02 18:53:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.169 2010/07/07 03:55:01 msaitoh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1581,7 +1581,13 @@ ehci_open(usbd_pipe_handle pipe)
 		return USBD_INVAL;
 	}
 
-	naks = 8;		/* XXX */
+	/*
+	 * For interrupt transfer, nak throttling must be disabled, but for
+	 * the other transfer type, nak throttling should be enabled from the
+	 * veiwpoint that avoids the memory thrashing.
+	 */
+	naks = (xfertype == UE_INTERRUPT) ? 0
+	    : ((speed == EHCI_QH_SPEED_HIGH) ? 4 : 0);
 
 	/* Allocate sqh for everything, save isoc xfers */
 	if (xfertype != UE_ISOCHRONOUS) {
