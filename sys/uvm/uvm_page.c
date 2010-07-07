@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.39 2010/05/31 13:26:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.40 2010/07/07 14:29:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.39 2010/05/31 13:26:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.40 2010/07/07 14:29:38 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -195,10 +195,6 @@ vaddr_t uvm_zerocheckkva;
 
 static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
 static void uvm_pageremove(struct uvm_object *, struct vm_page *);
-#ifdef DIRECT_PAGE
-static void vm_page_direct_mdpage_insert(paddr_t);
-static void vm_page_direct_mdpage_remove(paddr_t);
-#endif
 
 /*
  * per-object tree of pages
@@ -780,7 +776,7 @@ uvm_page_physget(paddr_t *paddrp)
 static struct vm_physseg *
 uvm_page_physload_common(struct vm_physseg_freelist * const,
     struct vm_physseg **, int,
-    const paddr_t, const paddr_t, const paddr_t, const paddr_t);
+    const paddr_t, const paddr_t);
 static void
 uvm_page_physunload_common(struct vm_physseg_freelist *,
     struct vm_physseg **, struct vm_physseg *);
@@ -804,7 +800,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 		panic("uvm_page_physload: bad free list %d", free_list);
 
 	seg = uvm_page_physload_common(&vm_physmem_freelist, vm_physmem_ptrs,
-	    vm_nphysmem, start, end, avail_start, avail_end);
+	    vm_nphysmem, start, end);
 	KASSERT(seg != NULL);
 
 	seg->avail_start = avail_start;
@@ -848,15 +844,38 @@ uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int prot, int flags)
 {
 	struct vm_physseg *seg;
+	int i;
 
 	seg = uvm_page_physload_common(&vm_physdev_freelist, vm_physdev_ptrs,
-	    vm_nphysdev, start, end, avail_start, avail_end);
+	    vm_nphysdev, start, end);
 	KASSERT(seg != NULL);
 
 	seg->prot = prot;
 	seg->flags = flags;	/* XXXUEBS BUS_SPACE_MAP_* */
-	for (paddr_t pf = start; pf < end; pf++)
-		vm_page_direct_mdpage_insert(pf);
+
+	/*
+	 * XIP page metadata
+	 * - Only "phys_addr" and "vm_page_md" (== "PV" management) are used.
+	 * - No "pageq" operation is done.
+	 */
+	seg->pgs = kmem_zalloc(sizeof(struct vm_page) * (end - start),
+	    KM_SLEEP);
+	KASSERT(seg->pgs != NULL);
+	seg->endpg = seg->pgs + (end - start);
+	seg->start = start;
+	seg->end = end;
+
+	for (i = 0; i < end - start; i++) {
+		struct vm_page *pg = seg->pgs + i;
+		paddr_t paddr = (start + i) << PAGE_SHIFT;
+
+		pg->phys_addr = paddr;
+		pg->flags |= PG_DIRECT;
+#ifdef __HAVE_VM_PAGE_MD
+		VM_MDPAGE_INIT(&pg->mdpage, paddr);
+#endif
+	}
+
 	vm_nphysdev++;
 	return seg;
 }
@@ -866,8 +885,7 @@ uvm_page_physunload_direct(void *cookie)
 {
 	struct vm_physseg *seg = cookie;
 
-	for (paddr_t pf = seg->start; pf < seg->end; pf++)
-		vm_page_direct_mdpage_remove(pf);
+	kmem_free(seg->pgs, sizeof(struct vm_page) * (seg->end - seg->start));
 	uvm_page_physunload_common(&vm_physdev_freelist, vm_physdev_ptrs, seg);
 	vm_nphysdev--;
 }
@@ -876,8 +894,7 @@ uvm_page_physunload_direct(void *cookie)
 static struct vm_physseg *
 uvm_page_physload_common(struct vm_physseg_freelist *freelist,
     struct vm_physseg **segs, int nsegs,
-    const paddr_t start, const paddr_t end,
-    const paddr_t avail_start, const paddr_t avail_end)
+    const paddr_t start, const paddr_t end)
 {
 	struct vm_physseg *ps;
 	static int uvm_page_physseg_inited;
@@ -1156,52 +1173,13 @@ vm_physseg_lt_p(struct vm_physseg *seg, int op, paddr_t pframe,
 	}
 }
 
-
-#ifdef DIRECT_PAGE
-/*
- * Device pages don't have struct vm_page objects for various reasons:
- *
- * - Device pages are volatile; not paging involved.  Which means we have
- *   much less state information to keep for each page.
- *
- * - Volatile, directly memory-mappable devices (framebuffers, audio devices,
- *   etc.) only need physical address and attribute (protection and some
- *   accelaration specific to physical bus) common to all the pages.
- *   Allocating vm_page objects to keep such informations is wasteful.
- *
- * - Per-page MD information is only used for XIP vnodes' copy-on-write from
- *   a device page to anon.
- */
-
-/* Assume struct vm_page * is aligned to 4 bytes. */
-/* XXXUEBS Consider to improve this. */
-#define	VM_PAGE_DIRECT_MAGIC		0x2
-#define	VM_PAGE_DIRECT_MAGIC_MASK	0x3
-#define	VM_PAGE_DIRECT_MAGIC_SHIFT	2
-
-struct vm_page *
-uvm_phys_to_vm_page_direct(paddr_t pa)
-{
-	paddr_t pf = pa >> PAGE_SHIFT;
-	uintptr_t cookie = pf << VM_PAGE_DIRECT_MAGIC_SHIFT;
-	return (void *)(cookie | VM_PAGE_DIRECT_MAGIC);
-}
-
-static inline paddr_t
-VM_PAGE_DIRECT_TO_PHYS(const struct vm_page *pg)
-{
-	uintptr_t cookie = (uintptr_t)pg & ~VM_PAGE_DIRECT_MAGIC_MASK;
-	paddr_t pf = cookie >> VM_PAGE_DIRECT_MAGIC_SHIFT;
-	return pf << PAGE_SHIFT;
-}
-
 bool
 uvm_pageisdirect_p(const struct vm_page *pg)
 {
 
-	return ((uintptr_t)pg & VM_PAGE_DIRECT_MAGIC_MASK) == VM_PAGE_DIRECT_MAGIC;
+	KASSERT(pg != NULL);
+	return (pg->flags & PG_DIRECT) != 0;
 }
-#endif
 
 
 /*
@@ -1219,7 +1197,7 @@ uvm_phys_to_vm_page(paddr_t pa)
 #ifdef DIRECT_PAGE
 	psi = vm_physseg_find_direct(pf, &off);
 	if (psi != -1)
-		return(uvm_phys_to_vm_page_direct(pa));
+		return(&vm_physdev_ptrs[psi]->pgs[off]);
 #endif
 	psi = vm_physseg_find(pf, &off);
 	if (psi != -1)
@@ -1231,141 +1209,8 @@ paddr_t
 uvm_vm_page_to_phys(const struct vm_page *pg)
 {
 
-#ifdef DIRECT_PAGE
-	if (uvm_pageisdirect_p(pg)) {
-		return VM_PAGE_DIRECT_TO_PHYS(pg);
-	}
-#endif
 	return pg->phys_addr;
 }
-
-
-#ifdef __HAVE_VM_PAGE_MD
-#ifdef XIP
-/*
- * Device page's mdpage lookup.
- *
- * - Needed when promoting an XIP vnode page and invalidating its old mapping.
- *
- * - Hashing code is based on sys/arch/x86/x86/pmap.c.
- *
- * XXX Consider to allocate slots on-demand.
- */
-
-static struct vm_page_md *vm_page_direct_mdpage_lookup(struct vm_page *);
-
-struct vm_page_md *
-uvm_vm_page_to_md(struct vm_page *pg)
-{
-
-	return uvm_pageisdirect_p(pg) ?
-	    vm_page_direct_mdpage_lookup(pg) : &pg->mdpage;
-}
-
-struct vm_page_direct_mdpage_entry {
-	struct vm_page_md mde_mdpage;
-	SLIST_ENTRY(vm_page_direct_mdpage_entry) mde_hash;
-	paddr_t mde_pf;
-};
-
-/*
- * These can be optimized depending on the size of XIP'ed executables' .data
- * segments.  If page size is 4K and .data is 1M, .data spans across 256
- * pages.  Considering these pages' physical addresses are continuous, linear
- * hash should suffice.
- */
-#define	MDPG_HASH_SIZE		256	/* XXX */
-#define	MDPG_HASH_LOCK_CNT	4	/* XXX */
-
-struct vm_page_direct_mdpage {
-	kmutex_t locks[MDPG_HASH_LOCK_CNT];
-	struct vm_page_direct_mdpage_head {
-		SLIST_HEAD(, vm_page_direct_mdpage_entry) list;
-	} heads[MDPG_HASH_SIZE];
-};
-
-/* Global for now.  Consider to make this per-vm_physseg. */
-struct vm_page_direct_mdpage vm_page_direct_mdpage;
-
-static struct vm_page_direct_mdpage_head *
-vm_page_direct_mdpage_head(u_int hash)
-{
-
-	return &vm_page_direct_mdpage.heads[hash % MDPG_HASH_SIZE];
-}
-
-static kmutex_t *
-vm_page_direct_mdpage_lock(u_int hash)
-{
-
-	return &vm_page_direct_mdpage.locks[hash % MDPG_HASH_LOCK_CNT];
-}
-
-static void
-vm_page_direct_mdpage_insert(paddr_t pf)
-{
-	u_int hash = (u_int)pf;
-	kmutex_t *lock = vm_page_direct_mdpage_lock(hash);
-	struct vm_page_direct_mdpage_head *head = vm_page_direct_mdpage_head(hash);
-
-	struct vm_page_direct_mdpage_entry *mde = kmem_zalloc(sizeof(*mde), KM_SLEEP);
-
-	VM_MDPAGE_INIT(&mde->mde_mdpage, pf << PAGE_SHIFT);
-	mde->mde_pf = pf;
-
-	mutex_spin_enter(lock);
-	SLIST_INSERT_HEAD(&head->list, mde, mde_hash);
-	mutex_spin_exit(lock);
-}
-
-static void
-vm_page_direct_mdpage_remove(paddr_t pf)
-{
-	u_int hash = (u_int)pf;
-	kmutex_t *lock = vm_page_direct_mdpage_lock(hash);
-	struct vm_page_direct_mdpage_head *head = vm_page_direct_mdpage_head(hash);
-
-	struct vm_page_direct_mdpage_entry *mde;
-	struct vm_page_direct_mdpage_entry *prev = NULL;
-
-	mutex_spin_enter(lock);
-	SLIST_FOREACH(mde, &head->list, mde_hash) {
-		if (mde->mde_pf == pf) {
-			if (prev != NULL) {
-				SLIST_REMOVE_AFTER(prev, mde_hash);
-			} else {
-				SLIST_REMOVE_HEAD(&head->list, mde_hash);
-			}
-			break;
-		}
-		prev = mde;
-	}
-	mutex_spin_exit(lock);
-	KASSERT(mde != NULL);
-	kmem_free(mde, sizeof(*mde));
-}
-
-static struct vm_page_md *
-vm_page_direct_mdpage_lookup(struct vm_page *pg)
-{
-	paddr_t pf = VM_PAGE_DIRECT_TO_PHYS(pg) >> PAGE_SHIFT;
-	u_int hash = (u_int)pf;
-	kmutex_t *lock = vm_page_direct_mdpage_lock(hash);
-	struct vm_page_direct_mdpage_head *head = vm_page_direct_mdpage_head(hash);
-
-	struct vm_page_direct_mdpage_entry *mde = NULL;
-
-	mutex_spin_enter(lock);
-	SLIST_FOREACH(mde, &head->list, mde_hash)
-		if (mde->mde_pf == pf)
-			break;
-	mutex_spin_exit(lock);
-	KASSERT(mde != NULL);
-	return &mde->mde_mdpage;
-}
-#endif
-#endif
-
 
 /*
  * uvm_page_recolor: Recolor the pages if the new bucket count is
