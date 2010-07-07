@@ -43,7 +43,7 @@ struct devsw_conv devsw_conv0[] = {
 	{ "rumpblk", 197, 197, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "cons", -1, 0, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "ctty", -1, 1, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
-	{ "mem", -1, 2, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
+	{ "null", -1, 2, DEVNODE_SINGLE, 0, { 0, 0 }},
 	{ "wd", 0, 3, DEVNODE_VECTOR, 0, { 8, 8 }},
 	{ "swap", 1, 4, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
 	{ "pts", -1, 5, DEVNODE_DONTBOTHER, 0, { 0, 0 }},
