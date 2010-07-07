@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1038 2010/07/06 00:35:55 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1039 2010/07/07 04:56:44 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -558,7 +558,7 @@ vendor SUNDANCETI	0x13f0	Sundance Technology
 vendor CMEDIA		0x13f6	C-Media Electronics
 vendor ADVANTECH	0x13fe	Advantech
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing
-vendor ETIMEDIA		0x1409	eTIMedia Technology
+vendor SUNIX		0x1409	SUNIX
 vendor ICENSEMBLE	0x1412	IC Ensemble / VIA Technologies
 vendor MICROSOFT	0x1414	Microsoft
 vendor OXFORDSEMI	0x1415	Oxford Semiconductor
