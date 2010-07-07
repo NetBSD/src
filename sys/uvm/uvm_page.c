@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.40 2010/07/07 14:29:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.41 2010/07/07 16:35:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,12 +97,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.40 2010/07/07 14:29:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.41 2010/07/07 16:35:26 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
-#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
@@ -135,7 +134,7 @@ int vm_nphysmem = 0;
 static struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
 static struct vm_physseg_freelist vm_physmem_freelist =
     SIMPLEQ_HEAD_INITIALIZER(vm_physmem_freelist);
-#ifdef DIRECT_PAGE
+#ifdef XIP
 struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
 int vm_nphysdev = 0;
 static struct vm_physseg vm_physdev_store[VM_PHYSSEG_MAX];
@@ -838,7 +837,7 @@ uvm_page_physunload(void *cookie)
 	vm_nphysmem--;
 }
 
-#ifdef DIRECT_PAGE
+#ifdef XIP
 void *
 uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int prot, int flags)
@@ -854,7 +853,7 @@ uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
 	seg->flags = flags;	/* XXXUEBS BUS_SPACE_MAP_* */
 
 	/*
-	 * XIP page metadata
+	 * XIP page metadata initialization
 	 * - Only "phys_addr" and "vm_page_md" (== "PV" management) are used.
 	 * - No "pageq" operation is done.
 	 */
@@ -941,7 +940,7 @@ uvm_page_physseg_init(void)
 		SIMPLEQ_INSERT_TAIL(&vm_physmem_freelist,
 		    &vm_physmem_store[lcv], list);
 	}
-#ifdef DIRECT_PAGE
+#ifdef XIP
 	for (lcv = 0; lcv < VM_PHYSSEG_MAX; lcv++) {
 		SIMPLEQ_INSERT_TAIL(&vm_physdev_freelist,
 		    &vm_physdev_store[lcv], list);
@@ -1046,7 +1045,7 @@ vm_physseg_find(paddr_t pframe, int *offp)
 	    pframe, NULL, offp);
 }
 
-#ifdef DIRECT_PAGE
+#ifdef XIP
 int
 vm_physseg_find_direct(paddr_t pframe, int *offp)
 {
@@ -1194,7 +1193,7 @@ uvm_phys_to_vm_page(paddr_t pa)
 	int	off;
 	int	psi;
 
-#ifdef DIRECT_PAGE
+#ifdef XIP
 	psi = vm_physseg_find_direct(pf, &off);
 	if (psi != -1)
 		return(&vm_physdev_ptrs[psi]->pgs[off]);
@@ -2208,7 +2207,7 @@ uvm_pageismanaged(paddr_t pa)
 {
 
 	return
-#ifdef DIRECT_PAGE
+#ifdef XIP
 	    (vm_physseg_find_direct(atop(pa), NULL) != -1) ||
 #endif
 	    (vm_physseg_find(atop(pa), NULL) != -1);
