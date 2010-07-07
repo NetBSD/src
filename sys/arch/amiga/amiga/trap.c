@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.129 2010/06/06 04:50:05 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.130 2010/07/07 01:16:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -84,7 +84,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.129 2010/06/06 04:50:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.130 2010/07/07 01:16:23 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,6 +428,10 @@ trapmmufault(int type, u_int code, u_int v, struct frame *fp, struct lwp *l, u_q
 		printf("vmfault %s %lx returned %d\n",
 		    map == kernel_map ? "kernel" : "user", va, rv);
 #endif
+	if (map == kernel_map && rv == 0 && ucas_ras_check(&fp->F_t)) {
+		return;
+	}
+
 #ifdef M68060
 	if ((machineid & AMIGA_68060) == 0 && mmutype == MMU_68040) {
 #else
