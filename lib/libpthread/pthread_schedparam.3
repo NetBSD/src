@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_schedparam.3,v 1.5 2008/05/04 19:43:05 martin Exp $
+.\" $NetBSD: pthread_schedparam.3,v 1.6 2010/07/07 16:07:10 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_schedparam.3,v 1.7 2002/09/16 19:29:29 mini Exp $
-.Dd January 30, 2003
+.Dd July 7, 2010
 .Dt PTHREAD_SCHEDPARAM 3
 .Os
 .Sh NAME
@@ -71,14 +71,16 @@ The
 and
 .Fn pthread_getschedparam
 functions set and get the scheduling parameters of individual threads.
-The scheduling policy for a thread can either be
-.Dv SCHED_FIFO
-(first in, first out),
-.Dv SCHED_RR
-(round-robin),
-or
-.Dv SCHED_OTHER
-(system default).
+The scheduling policy for a thread can be:
+.Bl -tag -width SCHED_OTHER -offset indent
+.It Dv SCHED_FIFO
+First in, first out.
+.It Dv SCHED_RR
+Round-robin.
+.It Dv SCHED_OTHER
+The system default.
+.El
+.Pp
 The thread priority (accessed via
 .Va param-\*[Gt]sched_priority )
 must be at least
@@ -110,6 +112,9 @@ may fail if:
 Non-existent thread
 .Va thread .
 .El
+.Sh SEE ALSO
+.Xr pthread_attr_getschedparam 3 ,
+.Xr sched 3
 .Sh STANDARDS
 .Fn pthread_setschedparam
 and
