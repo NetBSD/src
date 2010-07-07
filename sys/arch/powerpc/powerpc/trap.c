@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.135 2010/04/23 19:18:10 rmind Exp $	*/
+/*	$NetBSD: trap.c,v 1.136 2010/07/07 01:19:54 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2010/04/23 19:18:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136 2010/07/07 01:19:54 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -71,6 +71,9 @@ static int emulated_opcode(struct lwp *, struct trapframe *);
 static int fix_unaligned(struct lwp *, struct trapframe *);
 static inline vaddr_t setusr(vaddr_t, size_t *);
 static inline void unsetusr(void);
+
+extern int do_ucas_32(volatile int32_t *, int32_t, int32_t, int32_t *);
+int ucas_32(volatile int32_t *, int32_t, int32_t, int32_t *);
 
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
 /* Why are these not defined in a header? */
@@ -621,6 +624,34 @@ kcopy(const void *src, void *dst, size_t len)
 	curpcb->pcb_onfault = oldfault;
 	return rv;
 }
+
+int
+ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret)
+{
+	vaddr_t uva = (vaddr_t)uptr;
+	vaddr_t p;
+	struct faultbuf env;
+	size_t seglen;
+	int rv;
+
+	if (uva & 3) {
+		return EFAULT;
+	}
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
+		goto out;
+	}
+	p = setusr(uva, &seglen);
+	KASSERT(seglen >= sizeof(*uptr));
+	do_ucas_32((void *)p, old, new, ret);
+	unsetusr();
+
+out:
+	curpcb->pcb_onfault = 0;
+	return rv;
+}
+__strong_alias(ucas_ptr,ucas_32);
+__strong_alias(ucas_int,ucas_32);
 
 int
 badaddr(void *addr, size_t size)
