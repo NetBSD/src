@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_attr_get_np.3,v 1.2 2010/07/06 23:15:47 njoly Exp $
+.\" $NetBSD: pthread_attr_get_np.3,v 1.3 2010/07/07 09:54:07 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -75,15 +75,15 @@ When the returned
 .Fa attr
 is no longer needed, it should be destroyed by using
 .Xr pthread_attr_destroy 3 .
-.Sh COMPATIBILITY
-The
-.Fn pthread_attr_get_np
-function is a non-standard extension.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn pthread_attr_get_np
 returns 0.
 Otherwise an error number is returned to indicate the error.
+.Sh COMPATIBILITY
+The
+.Fn pthread_attr_get_np
+function is a non-standard extension.
 .Sh ERRORS
 The
 .Fn pthread_attr_get_np
