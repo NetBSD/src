@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr.3,v 1.13 2010/07/07 08:57:36 jruoho Exp $
+.\"	$NetBSD: pthread_attr.3,v 1.14 2010/07/07 11:04:54 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,12 +59,8 @@
 .Sh NAME
 .Nm pthread_attr_init ,
 .Nm pthread_attr_destroy ,
-.Nm pthread_attr_setstacksize ,
-.Nm pthread_attr_getstacksize ,
 .Nm pthread_attr_setguardsize ,
 .Nm pthread_attr_getguardsize ,
-.Nm pthread_attr_setstackaddr ,
-.Nm pthread_attr_getstackaddr ,
 .Nm pthread_attr_setinheritsched ,
 .Nm pthread_attr_getinheritsched ,
 .Nm pthread_attr_setschedparam ,
@@ -81,17 +77,9 @@
 .Ft int
 .Fn pthread_attr_destroy "pthread_attr_t *attr"
 .Ft int
-.Fn pthread_attr_setstacksize "pthread_attr_t *attr" "size_t stacksize"
-.Ft int
-.Fn pthread_attr_getstacksize "const pthread_attr_t * restrict attr" "size_t * restrict stacksize"
-.Ft int
 .Fn pthread_attr_setguardsize "pthread_attr_t *attr" "size_t guardsize"
 .Ft int
 .Fn pthread_attr_getguardsize "const pthread_attr_t * restrict attr" "size_t * restrict guardsize"
-.Ft int
-.Fn pthread_attr_setstackaddr "pthread_attr_t *attr" "void *stackaddr"
-.Ft int
-.Fn pthread_attr_getstackaddr "const pthread_attr_t * restrict attr" "void ** restrict stackaddr"
 .Ft int
 .Fn pthread_attr_setinheritsched "pthread_attr_t *attr" "int inheritsched"
 .Ft int
@@ -150,16 +138,7 @@ The value specified by
 is invalid.
 .El
 .Pp
-.Fn pthread_attr_setstacksize
-may fail if:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-.Fa stacksize
-is less than
-.Dv PTHREAD_STACK_MIN .
-.El
-.Pp
-Fn pthread_attr_setinheritsched
+.Fn pthread_attr_setinheritsched
 may fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
@@ -196,10 +175,6 @@ Invalid or unsupported value for
 .Sh STANDARDS
 .Fn pthread_attr_init ,
 .Fn pthread_attr_destroy ,
-.Fn pthread_attr_setstacksize ,
-.Fn pthread_attr_getstacksize ,
-.Fn pthread_attr_setstackaddr ,
-.Fn pthread_attr_getstackaddr ,
 .Fn pthread_attr_setinheritsched ,
 .Fn pthread_attr_getinheritsched ,
 .Fn pthread_attr_setschedparam ,

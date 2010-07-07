@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1479 2010/07/06 21:36:34 jruoho Exp $
+#	$NetBSD: mi,v 1.1480 2010/07/07 11:04:52 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7571,6 +7571,7 @@
 ./usr/share/man/cat3/pthread_attr_getschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getschedpolicy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getscope.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_attr_getstack.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getstackaddr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_getstacksize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_init.0	comp-c-catman		.cat
@@ -7582,6 +7583,7 @@
 ./usr/share/man/cat3/pthread_attr_setschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setschedpolicy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setscope.0		comp-c-catman		.cat
+./usr/share/man/cat3/pthread_attr_setstack.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setstackaddr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_attr_setstacksize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barierattr_destroy.0	comp-obsolete		obsolete
@@ -13409,6 +13411,7 @@
 ./usr/share/man/html3/pthread_attr_getschedparam.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_getschedpolicy.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_getscope.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_attr_getstack.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_getstackaddr.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_getstacksize.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_init.html	comp-c-htmlman		html
@@ -13420,6 +13423,7 @@
 ./usr/share/man/html3/pthread_attr_setschedparam.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_setschedpolicy.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_setscope.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_attr_setstack.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_setstackaddr.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_setstacksize.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_barrier_destroy.html	comp-c-htmlman		html
@@ -19241,6 +19245,7 @@
 ./usr/share/man/man3/pthread_attr_getschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getschedpolicy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getscope.3	comp-c-man		.man
+./usr/share/man/man3/pthread_attr_getstack.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getstackaddr.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_getstacksize.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_init.3	comp-c-man		.man
@@ -19252,6 +19257,7 @@
 ./usr/share/man/man3/pthread_attr_setschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setschedpolicy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setscope.3	comp-c-man		.man
+./usr/share/man/man3/pthread_attr_setstack.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setstackaddr.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_attr_setstacksize.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barierattr_destroy.3	comp-obsolete		obsolete
