@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.8 2010/06/16 22:06:54 jmcneill Exp $	*/
+/*	$Id: omap2_obio.c,v 1.9 2010/07/07 22:55:03 macallan Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.8 2010/06/16 22:06:54 jmcneill Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.9 2010/07/07 22:55:03 macallan Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.8 2010/06/16 22:06:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.9 2010/07/07 22:55:03 macallan Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -202,9 +202,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": On-Board IO\n");
 
 	sc->sc_ioh = 0;
-#ifdef NOTYET
 	sc->sc_dmat = &omap_bus_dma_tag;
-#endif
 	sc->sc_base = mb->mb_iobase;
 	sc->sc_size = mb->mb_iosize;
 
