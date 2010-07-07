@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.9 2010/04/23 16:07:33 joerg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.10 2010/07/07 01:20:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.9 2010/04/23 16:07:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.10 2010/07/07 01:20:50 chs Exp $");
 
 #include "opt_mtrr.h"
 
@@ -179,23 +179,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * newly-created child process to go directly to user level with a
 	 * parent return value of 0 from fork(), while the parent process
 	 * returns normally.
-	 * 
-	 * Also, copy PCB %fs/%gs base from parent.
 	 */
 	uv = uvm_lwp_getuarea(l2);
 
 #ifdef __x86_64__
 	pcb2->pcb_rsp0 = (uv + KSTACK_SIZE - 16) & ~0xf;
 	tf = (struct trapframe *)pcb2->pcb_rsp0 - 1;
-
-	pcb2->pcb_fs = pcb1->pcb_fs;
-	pcb2->pcb_gs = pcb1->pcb_gs;
 #else
 	pcb2->pcb_esp0 = (uv + KSTACK_SIZE - 16);
 	tf = (struct trapframe *)pcb2->pcb_esp0 - 1;
 
-	memcpy(&pcb2->pcb_fsd, &pcb1->pcb_fsd, sizeof(pcb2->pcb_fsd));
-	memcpy(&pcb2->pcb_gsd, &pcb1->pcb_gsd, sizeof(pcb2->pcb_gsd));
 	pcb2->pcb_iomap = NULL;
 #endif
 	l2->l_md.md_regs = tf;
