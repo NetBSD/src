@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.51 2010/06/13 04:13:32 yamt Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.52 2010/07/07 01:30:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.51 2010/06/13 04:13:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.52 2010/07/07 01:30:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,12 +190,7 @@ sys__lwp_setprivate(struct lwp *l, const struct sys__lwp_setprivate_args *uap,
 		syscallarg(void *) ptr;
 	} */
 
-	l->l_private = SCARG(uap, ptr);
-#ifdef __HAVE_CPU_LWP_SETPRIVATE
-	cpu_lwp_setprivate(l, SCARG(uap, ptr));
-#endif
-
-	return 0;
+	return lwp_setprivate(l, SCARG(uap, ptr));
 }
 
 int
