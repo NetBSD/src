@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.33 2010/02/23 06:27:40 cegger Exp $	*/
+/*	$NetBSD: vector.S,v 1.34 2010/07/07 01:14:52 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -154,11 +154,9 @@ IDTVEC(trap02)
 	movq	%rsp,%rdi
 	incl	CPUVAR(NTRAP)
 	call	_C_LABEL(trap)
-	swapgs
-	movw	TF_GS(%rsp),%gs
-	movw	TF_FS(%rsp),%fs
 	movw	TF_ES(%rsp),%es
 	movw	TF_DS(%rsp),%ds
+	swapgs
 	jmp	2f
 1:
 	movq	%rsp,%rdi
