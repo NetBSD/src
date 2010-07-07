@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.18 2010/06/27 13:44:26 simonb Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.19 2010/07/07 01:23:42 chs Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.18 2010/06/27 13:44:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.19 2010/07/07 01:23:42 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ void	MachEmulateInst(uint32_t, uint32_t, vaddr_t, struct frame *);
 void	MachEmulateLWC0(uint32_t, struct frame *, uint32_t);
 void	MachEmulateSWC0(uint32_t, struct frame *, uint32_t);
 void	MachEmulateSpecial(uint32_t, struct frame *, uint32_t);
+void	MachEmulateSpecial3(uint32_t, struct frame *, uint32_t);
 void	MachEmulateLWC1(uint32_t, struct frame *, uint32_t);
 void	MachEmulateLDC1(uint32_t, struct frame *, uint32_t);
 void	MachEmulateSWC1(uint32_t, struct frame *, uint32_t);
@@ -237,6 +238,9 @@ MachEmulateInst(uint32_t status, uint32_t cause, vaddr_t opc,
 	case OP_SPECIAL:
 		MachEmulateSpecial(inst, frame, cause);
 		break;
+	case OP_SPECIAL3:
+		MachEmulateSpecial3(inst, frame, cause);
+		break;
 	case OP_COP1:
 		MachEmulateFP(inst, frame, cause);
 		break;
@@ -389,6 +393,7 @@ void
 MachEmulateSpecial(uint32_t inst, struct frame *frame, uint32_t cause)
 {
 	ksiginfo_t ksi;
+
 	switch (((InstFmt)inst).RType.func) {
 	case OP_SYNC:
 		/* nothing */
@@ -405,6 +410,37 @@ MachEmulateSpecial(uint32_t inst, struct frame *frame, uint32_t cause)
 		break;
 	}
 
+	update_pc(frame, cause);
+}
+
+void
+MachEmulateSpecial3(uint32_t inst, struct frame *frame, uint32_t cause)
+{
+	ksiginfo_t ksi;
+	InstFmt instfmt = (InstFmt)inst;
+
+	switch (instfmt.RType.func) {
+	case OP_RDHWR:
+		switch (instfmt.RType.rd) {
+		case 29:
+			frame->f_regs[instfmt.RType.rt] =
+				(mips_reg_t)curlwp->l_private;
+			goto out;
+		}
+		/* FALLTHROUGH */
+	default:
+		frame->f_regs[_R_CAUSE] = cause;
+		frame->f_regs[_R_BADVADDR] = frame->f_regs[_R_PC];
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_trap = cause;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (void *)(intptr_t)frame->f_regs[_R_PC];
+		(*curproc->p_emul->e_trapsignal)(curlwp, &ksi);
+		break;
+	}
+
+out:
 	update_pc(frame, cause);
 }
 
