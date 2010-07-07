@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.104.2.5 2010/07/06 07:20:26 uebayasi Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.104.2.6 2010/07/07 16:35:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -127,10 +127,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.104.2.5 2010/07/06 07:20:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.104.2.6 2010/07/07 16:35:26 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
-#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>

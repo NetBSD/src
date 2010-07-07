@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63.2.5 2010/05/31 13:26:37 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63.2.6 2010/07/07 16:35:25 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,9 +65,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.5 2010/05/31 13:26:37 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63.2.6 2010/07/07 16:35:25 uebayasi Exp $");
 
-#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include "opt_cputype.h"
