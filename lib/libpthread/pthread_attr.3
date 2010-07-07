@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr.3,v 1.15 2010/07/07 13:04:20 jruoho Exp $
+.\"	$NetBSD: pthread_attr.3,v 1.16 2010/07/07 15:30:32 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,8 +59,6 @@
 .Sh NAME
 .Nm pthread_attr_init ,
 .Nm pthread_attr_destroy ,
-.Nm pthread_attr_setinheritsched ,
-.Nm pthread_attr_getinheritsched ,
 .Nm pthread_attr_setschedparam ,
 .Nm pthread_attr_getschedparam
 .Nm pthread_attr_setschedpolicy ,
@@ -74,10 +72,6 @@
 .Fn pthread_attr_init "pthread_attr_t *attr"
 .Ft int
 .Fn pthread_attr_destroy "pthread_attr_t *attr"
-.Ft int
-.Fn pthread_attr_setinheritsched "pthread_attr_t *attr" "int inheritsched"
-.Ft int
-.Fn pthread_attr_getinheritsched "const pthread_attr_t * restrict attr" "int * restrict inheritsched"
 .Ft int
 .Fn pthread_attr_setschedparam "pthread_attr_t * restrict attr" "const struct sched_param * restrict param"
 .Ft int
@@ -132,14 +126,6 @@ The value specified by
 is invalid.
 .El
 .Pp
-.Fn pthread_attr_setinheritsched
-may fail if:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-Invalid value for
-.Fa attr .
-.El
-.Pp
 .Fn pthread_attr_setschedparam
 may fail if:
 .Bl -tag -width Er
@@ -169,8 +155,6 @@ Invalid or unsupported value for
 .Sh STANDARDS
 .Fn pthread_attr_init ,
 .Fn pthread_attr_destroy ,
-.Fn pthread_attr_setinheritsched ,
-.Fn pthread_attr_getinheritsched ,
 .Fn pthread_attr_setschedparam ,
 .Fn pthread_attr_setschedparam ,
 and
