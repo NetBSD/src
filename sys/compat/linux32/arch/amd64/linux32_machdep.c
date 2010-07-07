@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.24 2010/07/07 01:30:35 chs Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.25 2010/07/07 12:43:18 jmmv Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.24 2010/07/07 01:30:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.25 2010/07/07 12:43:18 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.24 2010/07/07 01:30:35 chs Exp
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_errno.h>
 #include <compat/linux/common/linux_exec.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -56,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.24 2010/07/07 01:30:35 chs Exp
 #include <compat/linux32/common/linux32_machdep.h>
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/common/linux32_exec.h>
+#include <compat/linux32/common/linux32_ipc.h>
+#include <compat/linux32/common/linux32_sem.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
 #ifdef DEBUG_LINUX
