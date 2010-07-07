@@ -1,4 +1,4 @@
-.\"     $NetBSD: pthread_attr_getname_np.3,v 1.2 2010/07/06 22:24:56 jruoho Exp $
+.\"     $NetBSD: pthread_attr_getname_np.3,v 1.3 2010/07/07 09:54:07 wiz Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -57,11 +57,6 @@ The size of the buffer
 in bytes.
 .El
 .\" ------------------------------------------------------------
-.Sh COMPATIBILITY
-The
-.Fn pthread_attr_getname_np
-function is a non-standard extension.
-.\" ------------------------------------------------------------
 .Sh RETURN VALUES
 The
 .Fn pthread_attr_getname_np
@@ -69,6 +64,11 @@ function returns 0 on success.
 Otherwise, an error number described in
 .Xr errno 2
 is returned.
+.\" ------------------------------------------------------------
+.Sh COMPATIBILITY
+The
+.Fn pthread_attr_getname_np
+function is a non-standard extension.
 .\" ------------------------------------------------------------
 .\".Sh ERRORS
 .\" ------------------------------------------------------------
