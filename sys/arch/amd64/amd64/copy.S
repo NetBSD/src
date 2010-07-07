@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.17 2010/06/22 18:26:05 rmind Exp $	*/
+/*	$NetBSD: copy.S,v 1.18 2010/07/07 01:13:29 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -502,13 +502,11 @@ ENTRY(ucas_64)
 	movq	$VM_MAXUSER_ADDRESS-8, %r8
 	cmpq	%r8, %rdi
 	ja	_C_LABEL(ucas_fault)
-	/* Label for fault handler */
+	movq	%rsi, %rax
 .Lucas64_start:
 	/* Perform the CAS */
 	lock
 	cmpxchgq %rdx, (%rdi)
-	/* Clear the fault handler */
-	movq	%rax, PCB_ONFAULT(%r8)
 .Lucas64_end:
 	/*
 	 * Note: %rax is "old" value.
@@ -516,8 +514,6 @@ ENTRY(ucas_64)
 	 */
 	movq	%rax, (%rcx)
 	xorq	%rax, %rax
-	/* Clear the fault handler */
-	movq	%rax, PCB_ONFAULT(%r8)
 	ret
 	DEFERRED_SWITCH_CALL
 
@@ -530,7 +526,7 @@ ENTRY(ucas_32)
 	movq	$VM_MAXUSER_ADDRESS-4, %r8
 	cmpq	%r8, %rdi
 	ja	_C_LABEL(ucas_fault)
-	/* Label for fault handler */
+	movl	%esi, %eax
 .Lucas32_start:
 	/* Perform the CAS */
 	lock
@@ -546,15 +542,15 @@ ENTRY(ucas_32)
 	DEFERRED_SWITCH_CALL
 
 /*
- * Fault handler for ucas_32() and ucas_64().
- * Unset the handler and return the failure.
+ * Fault handler for ucas_*().
+ * Just return the error set by trap().
  */
 NENTRY(ucas_fault)
-	movq	$EFAULT, %rax
 	ret
 
 /*
- * int	ucas_ptr(volatile void *uptr, void *old, void *new, void *ret);
+ * int	ucas_ptr(volatile void **uptr, void *old, void *new, void **ret);
+ * int	ucas_int(volatile int *uptr, int old, intnew, int *ret);
  */
 STRONG_ALIAS(ucas_ptr, ucas_64)
 STRONG_ALIAS(ucas_int, ucas_32)
