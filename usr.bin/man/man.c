@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.40 2010/05/23 22:04:36 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.41 2010/07/07 21:24:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.40 2010/05/23 22:04:36 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.41 2010/07/07 21:24:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -956,7 +956,8 @@ getclass(const char *machine)
 	TAG *t;
 	snprintf(buf, sizeof(buf), "_%s", machine);
 	t = gettag(buf, 0);
-	return t != NULL && t->s ? t->s : NULL;
+	return t != NULL && !TAILQ_EMPTY(&t->entrylist) ?
+	    TAILQ_FIRST(&t->entrylist)->s : NULL;
 }
 
 static void
