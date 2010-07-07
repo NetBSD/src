@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.24 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.25 2010/07/07 01:23:08 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -191,6 +191,7 @@ Lcpu_switch_noctxsave:
 	tstl	%a2			| vm == VM_MAP_NULL?
 	jeq	Lcpu_switch_badsw	| panic
 #endif
+	pea	%a0@			| save newlwp
 #if !defined(_SUN3X_) || defined(PMAP_DEBUG)
 	movl	%a2@(VM_PMAP),%sp@-	| push vm->vm_map.pmap
 	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
@@ -220,6 +221,9 @@ Lsame_mmuctx:
 	 */
 	pea	%a0@			| push newlwp
 	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(newlwp)
+	/* Note that newlwp will be popped off the stack later. */
+#endif
+
 	/*
 	 *  Check for restartable atomic sequences (RAS)
 	 */
@@ -237,11 +241,10 @@ Lsame_mmuctx:
 	jeq	1f
 	movl	_C_LABEL(curlwp),%a1
 	movl	%a1@(L_MD_REGS),%a1
-	movel	%a0,%a1@(TF_PC)
+	movl	%a0,%a1@(TF_PC)
 1:
 	movl	%sp@+,%d0		| restore newlwp
 	movl	_C_LABEL(curpcb),%a1	| restore pcb
-#endif
 
 	movl	%sp@(4),%d1		| restore oldlwp for a return value
 	lea     _ASM_LABEL(tmpstk),%sp	| now goto a tmp stack for NMI
@@ -410,5 +413,3 @@ ENTRY_NOPROFILE(setfunc_trampoline)
 	moveml	%sp@+,#0x7FFF		| restore most user regs
 	addql	#8,%sp			| toss SP and stack adjust
 	jra	_ASM_LABEL(rei)		| and return
-
-
