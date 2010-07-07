@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.168 2010/04/05 08:03:42 he Exp $ */
+/* $NetBSD: vmstat.c,v 1.169 2010/07/07 11:42:18 pooka Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.168 2010/04/05 08:03:42 he Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.169 2010/07/07 11:42:18 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -1671,7 +1671,7 @@ hist_dodump(struct uvm_history *histp)
 	size_t histsize;
 	char *fmt = NULL, *fn = NULL;
 	size_t fmtlen = 0, fnlen = 0;
-	int i;
+	unsigned i;
 
 	histsize = sizeof(struct uvm_history_ent) * histp->n;
 
