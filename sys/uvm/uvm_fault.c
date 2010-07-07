@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.8 2010/06/09 15:29:58 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.9 2010/07/07 14:29:37 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.8 2010/06/09 15:29:58 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.9 2010/07/07 14:29:37 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_direct_page.h"
@@ -1657,9 +1657,9 @@ uvm_fault_lower(
 	 *  - at this point uobjpage could be PG_WANTED (handle later)
 	 */
 
-	KASSERT(uvm_pageisdirect_p(uobjpage) || uobj == NULL ||
+	KASSERT(uobj == NULL || uvm_pageisdirect_p(uobjpage) ||
 	    uobj == uobjpage->uobject);
-	KASSERT(uvm_pageisdirect_p(uobjpage) || uobj == NULL ||
+	KASSERT(uobj == NULL || uvm_pageisdirect_p(uobjpage) ||
 	    !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
 	    (uobjpage->flags & PG_CLEAN) != 0);
 
