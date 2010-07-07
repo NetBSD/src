@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.15 2010/07/01 02:38:28 rmind Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.16 2010/07/07 01:30:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.15 2010/07/01 02:38:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.16 2010/07/07 01:30:33 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -101,6 +101,10 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	} */
 	struct proc *p = l->l_proc, *t;
 	struct lwp *lt;
+#ifdef _ARM_ARCH_6
+	struct pcb *pcb;
+	void *val;
+#endif
 	struct reg *regs = NULL;
 	struct linux_reg *linux_regs = NULL;
 	int request, error;
@@ -193,7 +197,19 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 		regs->r_pc = linux_regs->uregs[LINUX_REG_PC];
 		regs->r_cpsr = linux_regs->uregs[LINUX_REG_CPSR];
 		error = process_write_regs(lt, regs);
-		/* FALLTHROUGH */
+		mutex_exit(t->p_lock);
+		break;
+
+#ifdef _ARM_ARCH_6
+#define LINUX_PTRACE_GET_THREAD_AREA	22
+	case LINUX_PTRACE_GET_THREAD_AREA:
+		mutex_exit(t->p_lock);
+		pcb = lwp_getpcb(l);
+		val = (void *)pcb->pcb_un.un_32.pcb32_user_pid_ro;
+		error = copyout(&val, (void *)SCARG(uap, data), sizeof(val));
+		break;
+#endif
+
 	default:
 		mutex_exit(t->p_lock);
 	}

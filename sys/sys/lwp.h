@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.135 2010/06/13 03:31:28 yamt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.136 2010/07/07 01:30:38 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -230,7 +230,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_SA_BLOCKING	0x00800000 /* Blocking in tsleep() */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
-#define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
 #define	LW_SA_YIELD	0x40000000 /* LWP on VP is yielding */
@@ -240,6 +239,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
 #define	LP_KTRCSW	0x00000002 /* ktrace context switch marker */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
+#define	LP_PIDLID	0x00000008 /* free LID from PID space on exit */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
@@ -259,7 +259,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
  * user.
  */
 #define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
-		    LW_WUSERRET|LW_SA_BLOCKING|LW_SA_UPCALL)
+		    LW_SA_BLOCKING|LW_SA_UPCALL)
 
 /*
  * Status values.
@@ -326,6 +326,7 @@ void	lwp_free(lwp_t *, bool, bool);
 void	lwp_sys_init(void);
 void	lwp_unsleep(lwp_t *, bool);
 uint64_t lwp_pctr(void);
+int	lwp_setprivate(lwp_t *, void *);
 
 void	lwpinit_specificdata(void);
 int	lwp_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
@@ -498,6 +499,9 @@ KPREEMPT_ENABLE(lwp_t *l)
 /* Flags for _lwp_create(), as per Solaris. */
 #define LWP_DETACHED    0x00000040
 #define LWP_SUSPENDED   0x00000080
+
+/* Kernel-internal flags for LWP creation. */
+#define	LWP_PIDLID	0x40000000
 #define	LWP_VFORK	0x80000000
 
 #endif	/* !_SYS_LWP_H_ */

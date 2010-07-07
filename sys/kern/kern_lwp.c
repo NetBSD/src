@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.150 2010/07/01 02:38:30 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.151 2010/07/07 01:30:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.150 2010/07/01 02:38:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.151 2010/07/07 01:30:37 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -641,6 +641,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 {
 	struct lwp *l2, *isfree;
 	turnstile_t *ts;
+	lwpid_t lid;
 
 	KASSERT(l1 == curlwp || l1->l_proc == &proc0);
 
@@ -727,6 +728,13 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	uvm_lwp_fork(l1, l2, stack, stacksize, func,
 	    (arg != NULL) ? arg : l2);
 
+	if ((flags & LWP_PIDLID) != 0) {
+		lid = proc_alloc_pid(p2);
+		l2->l_pflag |= LP_PIDLID;
+	} else {
+		lid = 0;
+	}
+
 	mutex_enter(p2->p_lock);
 
 	if ((flags & LWP_DETACHED) != 0) {
@@ -739,10 +747,13 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	CIRCLEQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
 
-	p2->p_nlwpid++;
-	if (p2->p_nlwpid == 0)
+	if (lid == 0) {
 		p2->p_nlwpid++;
-	l2->l_lid = p2->p_nlwpid;
+		if (p2->p_nlwpid == 0)
+			p2->p_nlwpid++;
+		lid = p2->p_nlwpid;
+	}
+	l2->l_lid = lid;
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
 	p2->p_nlwps++;
 	p2->p_nrlwps++;
@@ -876,9 +887,13 @@ lwp_exit(struct lwp *l)
 
 	/*
 	 * Remove the LWP from the global list.
+	 * Free its LID from the PID namespace if needed.
 	 */
 	mutex_enter(proc_lock);
 	LIST_REMOVE(l, l_list);
+	if ((l->l_pflag & LP_PIDLID) != 0 && l->l_lid != p->p_pid) {
+		proc_free_pid(l->l_lid);
+	}
 	mutex_exit(proc_lock);
 
 	/*
@@ -904,7 +919,7 @@ lwp_exit(struct lwp *l)
 
 	/*
 	 * If we find a pending signal for the process and we have been
-	 * asked to check for signals, then we loose: arrange to have
+	 * asked to check for signals, then we lose: arrange to have
 	 * all other LWPs in the process check for signals.
 	 */
 	if ((l->l_flag & LW_PENDSIG) != 0 &&
@@ -1162,12 +1177,12 @@ lwp_find2(pid_t pid, lwpid_t lid)
 }
 
 /*
- * Look up a live LWP within the speicifed process, and return it locked.
+ * Look up a live LWP within the specified process, and return it locked.
  *
  * Must be called with p->p_lock held.
  */
 struct lwp *
-lwp_find(struct proc *p, int id)
+lwp_find(struct proc *p, lwpid_t id)
 {
 	struct lwp *l;
 
@@ -1340,7 +1355,6 @@ void
 lwp_userret(struct lwp *l)
 {
 	struct proc *p;
-	void (*hook)(void);
 	int sig;
 
 	KASSERT(l == curlwp);
@@ -1409,16 +1423,6 @@ lwp_userret(struct lwp *l)
 			lwp_exit(l);
 			KASSERT(0);
 			/* NOTREACHED */
-		}
-
-		/* Call userret hook; used by Linux emulation. */
-		if ((l->l_flag & LW_WUSERRET) != 0) {
-			lwp_lock(l);
-			l->l_flag &= ~LW_WUSERRET;
-			lwp_unlock(l);
-			hook = p->p_userret;
-			p->p_userret = NULL;
-			(*hook)();
 		}
 	}
 
@@ -1769,6 +1773,21 @@ lwp_pctr(void)
 {
 
 	return curlwp->l_ncsw;
+}
+
+/*
+ * Set an LWP's private data pointer.
+ */
+int
+lwp_setprivate(struct lwp *l, void *ptr)
+{
+	int error = 0;
+
+	l->l_private = ptr;
+#ifdef __HAVE_CPU_LWP_SETPRIVATE
+	error = cpu_lwp_setprivate(l, ptr);
+#endif
+	return error;
 }
 
 #if defined(DDB)

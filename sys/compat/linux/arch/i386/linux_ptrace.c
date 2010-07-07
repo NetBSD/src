@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.25 2010/07/01 02:38:28 rmind Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.26 2010/07/07 01:30:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.25 2010/07/01 02:38:28 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.26 2010/07/07 01:30:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -135,6 +135,7 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	struct fpreg *fpregs = NULL;
 	struct linux_reg *linux_regs = NULL;
 	struct linux_fpctx *linux_fpregs = NULL;
+	struct linux_emuldata *led;
 	int request, error, addr;
 
 	if (linux_ptrace_disabled)
@@ -293,7 +294,7 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 		error = 0;
 		if (addr < LUSR_OFF(lusr_startgdb)) {
 			/* XXX should provide appropriate register */
-			error = 1;
+			error = ENOTSUP;
 		} else if (addr == LUSR_OFF(u_tsize))
 			*retval = p->p_vmspace->vm_tsize;
 		else if (addr == LUSR_OFF(u_dsize))
@@ -311,51 +312,51 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 			int off = (addr - LUSR_OFF(u_debugreg)) / sizeof(int);
 
 			/* only do this for Linux processes */
-			if (t->p_emul != &emul_linux)
-				error = EINVAL;
-			else {
-				*retval = ((struct linux_emuldata *)
-						t->p_emuldata)->debugreg[off];
+			if (t->p_emul != &emul_linux) {
+				mutex_exit(t->p_lock);
+				return EINVAL;
 			}
+
+			led = lt->l_emuldata;
+			*retval = led->led_debugreg[off];
 		} else if (addr == LUSR_OFF(__signal)) {
-			error = 1;
+			error = ENOTSUP;
 		} else if (addr == LUSR_OFF(__signal)) {
-			error = 1;
+			error = ENOTSUP;
 		} else if (addr == LUSR_OFF(u_fpstate)) {
-			error = 1;
+			error = ENOTSUP;
 		} else if (addr == LUSR_OFF(__magic)) {
-			error = 1;
+			error = ENOTSUP;
 		} else if (addr == LUSR_OFF(u_comm)) {
-			error = 1;
+			error = ENOTSUP;
 		} else {
 #ifdef DEBUG_LINUX
 			printf("linux_ptrace: unsupported address: %d\n", addr);
 #endif
-			error = 1;
+			error = ENOTSUP;
 		}
-		if (error == 0) {
-			mutex_exit(t->p_lock);
-			break;
-		}
-		/* FALLTHROUGH */
+		mutex_exit(t->p_lock);
+		break;
 
 	case LINUX_PTRACE_POKEUSR:
 		/* we only support setting debugregs for now */
 		addr = SCARG(uap, addr);
-		if (addr >= LUSR_OFF(u_debugreg)
-			   && addr <= LUSR_OFF(u_debugreg_end)) {
+		if (addr >= LUSR_OFF(u_debugreg) &&
+		    addr <= LUSR_OFF(u_debugreg_end)) {
 			int off = (addr - LUSR_OFF(u_debugreg)) / sizeof(int);
 			int data = SCARG(uap, data);
 
 			/* only do this for Linux processes */
 			if (t->p_emul != &emul_linux) {
-				error = EINVAL;
-			} else {
-				((struct linux_emuldata *)t->p_emuldata)->debugreg[off] = data;
+				mutex_exit(t->p_lock);
+				return EINVAL;
 			}
-			error = 0;
+			led = lt->l_emuldata;
+			led->led_debugreg[off] = data;
 		}
-		/* FALLTHROUGH */
+		mutex_exit(t->p_lock);
+		break;
+
 	default:
 		mutex_exit(t->p_lock);
 		break;

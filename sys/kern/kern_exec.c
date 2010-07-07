@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.298 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.299 2010/07/07 01:30:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.298 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.299 2010/07/07 01:30:37 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_modular.h"
@@ -766,10 +766,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (p->p_lwpctl != NULL)
 		lwp_ctl_exit();
 
-	/* This is now LWP 1 */
-	l->l_lid = 1;
-	p->p_nlwpid = 1;
-
 #ifdef KERN_SA
 	/* Release any SA state. */
 	if (p->p_sa)
@@ -1124,6 +1120,14 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (p->p_emul && p->p_emul->e_proc_exit
 	    && p->p_emul != pack.ep_esch->es_emul)
 		(*p->p_emul->e_proc_exit)(p);
+
+	/*
+	 * This is now LWP 1.
+	 */
+	mutex_enter(p->p_lock);
+	p->p_nlwpid = 1;
+	l->l_lid = 1;
+	mutex_exit(p->p_lock);
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything

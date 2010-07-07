@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.21 2008/04/28 20:23:43 martin Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.22 2010/07/07 01:30:34 chs Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,15 +41,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.21 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.22 2010/07/07 01:30:34 chs Exp $");
 
-#if defined (__alpha__)
-#define ELFSIZE 64
-#elif defined (__powerpc__)
 #define ELFSIZE 32
-#else
-#error Unified linux_elf_{32|64}copyargs not tested for this platform
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

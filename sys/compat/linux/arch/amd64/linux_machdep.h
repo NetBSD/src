@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.12 2008/04/21 22:38:18 njoly Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.13 2010/07/07 01:30:33 chs Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -114,9 +114,10 @@ __END_DECLS
 #define LINUX_VSYSCALL_MAXNR	3
 
 #define LINUX_UNAME_ARCH MACHINE_ARCH
-#define LINUX_NPTL
 #define LINUX_LARGEFILE64
 #define LINUX_IPC_FORCE64
+
+#define LINUX_LWP_SETPRIVATE	linux_lwp_setprivate
 
 /*
  * Used in ugly patch to fake device numbers.
