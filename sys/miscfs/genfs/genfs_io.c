@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.11 2010/07/06 07:20:27 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.12 2010/07/07 14:29:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.11 2010/07/06 07:20:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.12 2010/07/07 14:29:39 uebayasi Exp $");
 
 #include "opt_direct_page.h"
 #include "opt_xip.h"
@@ -828,11 +828,18 @@ genfs_do_getpages_xip(void *v)
 		KASSERT(error == 0);
 		UVMHIST_LOG(ubchist, "xip VOP_BMAP: lbn=%ld blkno=%ld run=%d", (long)lbn, (long)blkno, run, 0);
 
+		/*
+		 * XIP page metadata assignment
+		 * - Unallocated block is redirected to the dedicated zero'ed
+		 *   page.
+		 * - Assume that struct vm_page *[] array of this segment is
+		 *   allocated and linearly ordered by physical address.
+		 */
 		if (blkno < 0) {
 			static ONCE_DECL(xip_zero_page_inited);
 
 			RUN_ONCE(&xip_zero_page_inited, xip_zero_page_init);
-			phys_addr = xip_zero_page->phys_addr;
+			pps[i] = xip_zero_page;
 		} else {
 			struct vm_physseg *seg;
 
@@ -842,9 +849,11 @@ genfs_do_getpages_xip(void *v)
 			phys_addr = pmap_phys_address(seg->start) +
 			    (blkno << dev_bshift) +
 			    (off - (lbn << fs_bshift));
+			pps[i] = seg->pgs +
+			    ((phys_addr >> PAGE_SHIFT) - seg->start);
+			KASSERT(pps[i]->phys_addr == phys_addr);
+			KASSERT((pps[i]->flags & PG_DIRECT) != 0);
 		}
-
-		pps[i] = uvm_phys_to_vm_page_direct(phys_addr);
 
 		UVMHIST_LOG(ubchist, "xip pgs %d => phys_addr=0x%lx (%p)",
 			i,

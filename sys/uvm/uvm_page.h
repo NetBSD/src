@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.22 2010/05/31 13:26:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.23 2010/07/07 14:29:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -181,12 +181,13 @@ struct vm_page {
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
+#define	PG_DIRECT	0x0200		/* page is direct vnode data */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
 #define	UVM_PGFLAGBITS \
 	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
-	"\11ZERO\15PAGER1"
+	"\11ZERO\12DIRECT\15PAGER1"
 
 #define PQ_FREE		0x0001		/* page is on free list */
 #define PQ_ANON		0x0002		/* page is part of an anon, rather
@@ -304,11 +305,7 @@ void uvm_pagewake(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
-#ifdef DIRECT_PAGE
 bool uvm_pageisdirect_p(const struct vm_page *);
-#else
-#define	uvm_pageisdirect_p(x)	false
-#endif
 
 int uvm_page_lookup_freelist(struct vm_page *);
 
@@ -317,8 +314,6 @@ struct vm_page *uvm_phys_to_vm_page(paddr_t);
 paddr_t uvm_vm_page_to_phys(const struct vm_page *);
 #ifdef XIP
 int vm_physseg_find_direct(paddr_t, int *);
-struct vm_page *uvm_phys_to_vm_page_direct(paddr_t);
-paddr_t uvm_vm_page_to_phys_direct(const struct vm_page *);
 #endif
 
 /*
@@ -330,12 +325,7 @@ paddr_t uvm_vm_page_to_phys_direct(const struct vm_page *);
 #define VM_PAGE_TO_PHYS(entry)	uvm_vm_page_to_phys(entry)
 
 #ifdef __HAVE_VM_PAGE_MD
-#ifndef XIP
 #define	VM_PAGE_TO_MD(pg)	(&(pg)->mdpage)
-#else
-struct vm_page_md *uvm_vm_page_to_md(struct vm_page *);
-#define	VM_PAGE_TO_MD(pg)	uvm_vm_page_to_md(pg)
-#endif
 #endif
 
 /*
