@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.25 2010/03/31 17:46:21 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.26 2010/07/07 01:18:39 chs Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.25 2010/03/31 17:46:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.26 2010/07/07 01:18:39 chs Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -370,9 +370,6 @@ hppa_intr(struct trapframe *frame)
 	int hp700_intr_ipending_new(struct hp700_int_reg *, int);
 	struct cpu_info *ci = curcpu();
 
-	extern char ucas_ras_start[];
-	extern char ucas_ras_end[];
-
 #ifndef LOCKDEBUG
 	extern char mutex_enter_crit_start[];
 	extern char mutex_enter_crit_end[];
@@ -398,13 +395,6 @@ hppa_intr(struct trapframe *frame)
 	    frame->tf_ret0 != 0)
 		((kmutex_t *)frame->tf_arg0)->mtx_owner = (uintptr_t)curlwp;
 #endif
-
-	if (frame->tf_iisq_head == HPPA_SID_KERNEL &&
-	    frame->tf_iioq_head >= (u_int)ucas_ras_start &&
-	    frame->tf_iioq_head <= (u_int)ucas_ras_end) {
-		frame->tf_iioq_head = (u_int)ucas_ras_start;
-		frame->tf_iioq_tail = (u_int)ucas_ras_start + 4;
-	}
 
 	/*
 	 * Read the CPU interrupt register and acknowledge all interrupts.
