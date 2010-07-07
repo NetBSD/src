@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.155 2010/05/08 22:16:27 mrg Exp $
+# $NetBSD: GENERIC,v 1.156 2010/07/07 01:24:52 chs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.155 $"
+#ident 		"GENERIC-$Revision: 1.156 $"
 
 maxusers	32		# estimated number of users
 
@@ -67,7 +67,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# Kernel Dynamic Debugger
-#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
 #options 	KGDB		# remote debugger
 #makeoptions	DEBUG="-g"	# netbsd.gdb with full debugging symbols
 
