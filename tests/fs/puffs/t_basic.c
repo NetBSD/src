@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.2 2010/07/06 15:42:24 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.3 2010/07/07 10:49:51 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -9,6 +9,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <puffs.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -158,9 +159,6 @@ parseargs(int argc, char *argv[],
 	ssize_t n;
 	int rv;
 
-	if (argc < 2)
-		errx(1, "invalid usage");
-
 	/* Create sucketpair for communication with the real file server */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) == -1)
 		err(1, "socketpair");
@@ -170,14 +168,13 @@ parseargs(int argc, char *argv[],
 		close(sv[1]);
 		snprintf(comfd, sizeof(sv[0]), "%d", sv[0]);
 		if (setenv("PUFFS_COMFD", comfd, 1) == -1)
-			err(1, "setenv");
+			atf_tc_fail_errno("setenv");
 
-		argv++;
 		if (execvp(argv[0], argv) == -1)
-			err(1, "execvp here");
+			atf_tc_fail_errno("execvp");
 		/*NOTREACHED*/
 	case -1:
-		err(1, "fork");
+		atf_tc_fail_errno("fork");
 		/*NOTREACHED*/
 	default:
 		close(sv[0]);
@@ -215,37 +212,36 @@ parseargs(int argc, char *argv[],
 	return 0;
 }
 
-ATF_TC(mount);
-ATF_TC_HEAD(mount, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", "puffs+dtfs un/mount test");
-}
-
-char *dtfsargv[] = {
-	"dtfs",
-	"BUILT_AT_RUNTIME",
-	"dtfs",
-	"/mp",
-	NULL
-};
-
-ATF_TC_BODY(mount, tc)
+#define dtfsmountv(a, b)						\
+    struct puffs_args pa;						\
+    dtfsmount1(a, __arraycount(b), b, atf_tc_get_config_var(tc, "srcdir"), &pa)
+static void
+dtfsmount1(const char *mp, int optcount, char *opts[], const char *srcdir,
+	struct puffs_args *pa)
 {
 	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
-	char dtfs_path[MAXPATHLEN];
-	struct puffs_args pargs;
+	char dtfs_path[MAXPATHLEN], mountpath[MAXPATHLEN];
+	char **dtfsargv;
 	int mntflag;
-	int rv;
+	int rv, i;
 	int fd;
 
-	/* build dtfs exec path for atf */
-	sprintf(dtfs_path, "%s/h_dtfs/h_dtfs",
-	    atf_tc_get_config_var(tc, "srcdir"));
-	dtfsargv[1] = dtfs_path;
+	dtfsargv = malloc(sizeof(char *) * (optcount+3));
 
-	rv = parseargs(__arraycount(dtfsargv), dtfsargv,
-	    &pargs, &mntflag, canon_dev, canon_dir);
+	/* build dtfs exec path for atf */
+	sprintf(dtfs_path, "%s/h_dtfs/h_dtfs", srcdir);
+	dtfsargv[0] = dtfs_path;
+
+	for (i = 0; i < optcount; i++) {
+		dtfsargv[i+1] = opts[i];
+	}
+
+	strlcpy(mountpath, mp, sizeof(mountpath));
+	dtfsargv[optcount+1] = mountpath;
+	dtfsargv[optcount+2] = NULL;
+
+	rv = parseargs(optcount+3, dtfsargv,
+	    pa, &mntflag, canon_dev, canon_dir);
 	if (rv)
 		atf_tc_fail("comfd parseargs");
 
@@ -254,27 +250,203 @@ ATF_TC_BODY(mount, tc)
 	if (fd == -1)
 		atf_tc_fail_errno("open puffs fd");
 #if 0
-	pargs->pa_fd = fd;
+	pa->pa_fd = fd;
 #else
 	assert(fd == 0); /* XXX: FIXME */
 #endif
 
-	if (rump_sys_mkdir("/mp", 0777) == -1)
+	if (rump_sys_mkdir(mp, 0777) == -1)
 		atf_tc_fail_errno("mkdir mountpoint");
 
-	if (rump_sys_mount(MOUNT_PUFFS, "/mp", 0,
-	    pargs.us_pargs, pargs.us_pargslen) == -1)
+	if (rump_sys_mount(MOUNT_PUFFS, mp, 0,
+	    pa->us_pargs, pa->us_pargslen) == -1)
 		atf_tc_fail_errno("mount");
 
-	rumpshovels(fd, pargs.us_servfd);
+	rumpshovels(fd, pa->us_servfd);
+}
 
+ATF_TC(mount);
+ATF_TC_HEAD(mount, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "puffs+dtfs un/mount test");
+}
+
+ATF_TC_BODY(mount, tc)
+{
+	char *myopts[] = {
+		"dtfs",
+	};
+
+	dtfsmountv("/mp", myopts);
+	if (rump_sys_unmount("/mp", 0) == -1)
+		atf_tc_fail_errno("unmount");
+}
+
+ATF_TC(root_reg);
+ATF_TC_HEAD(root_reg, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "root is a regular file");
+}
+
+ATF_TC_BODY(root_reg, tc)
+{
+	char *myopts[] = {
+		"-r","reg",
+		"dtfs",
+	};
+	int fd, rv;
+
+	dtfsmountv("/mp", myopts);
+
+	fd = rump_sys_open("/mp", O_RDWR);
+	if (fd == -1)
+		atf_tc_fail_errno("open root");
+	if (rump_sys_write(fd, &fd, sizeof(fd)) != sizeof(fd))
+		atf_tc_fail_errno("write to root");
+	rv = rump_sys_mkdir("/mp/test", 0777);
+	ATF_REQUIRE(errno == ENOTDIR);
+	ATF_REQUIRE(rv == -1);
+	rump_sys_close(fd);
+
+	if (rump_sys_unmount("/mp", 0) == -1)
+		atf_tc_fail_errno("unmount");
+}
+
+ATF_TC(root_lnk);
+ATF_TC_HEAD(root_lnk, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "root is a symbolic link");
+}
+
+#define LINKSTR "/path/to/nowhere"
+ATF_TC_BODY(root_lnk, tc)
+{
+	char *myopts[] = {
+		"-r", "lnk " LINKSTR,
+		"-s",
+		"dtfs",
+	};
+	char buf[PATH_MAX];
+	ssize_t len;
+	int rv;
+
+	dtfsmountv("/mp", myopts);
+
+	if ((len = rump_sys_readlink("/mp", buf, sizeof(buf)-1)) == -1)
+		atf_tc_fail_errno("readlink");
+	buf[len] = '\0';
+
+	ATF_REQUIRE_STREQ(buf, LINKSTR);
+
+#if 0 /* XXX: unmount uses FOLLOW */
+	if (rump_sys_unmount("/mp", 0) == -1)
+		atf_tc_fail_errno("unmount");
+#endif
+
+	/*
+	 * XXX2: due to atf issue #53, we must make sure the child dies
+	 * before we exit.
+	 */
+	if (kill(pa.us_childpid, SIGTERM) == -1)
+		err(1, "kill");
+}
+
+ATF_TC(root_fifo);
+ATF_TC_HEAD(root_fifo, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "root is a symbolic link");
+}
+
+#define MAGICSTR "nakit ja muusiperunat maustevoilla"
+static void *
+dofifow(void *arg)
+{
+	int fd = (int)(uintptr_t)arg;
+	char buf[512];
+
+	printf("writing\n");
+	strcpy(buf, MAGICSTR);
+	if (rump_sys_write(fd, buf, strlen(buf)+1) != strlen(buf)+1)
+		atf_tc_fail_errno("write to fifo");
+
+	return NULL;
+}
+
+ATF_TC_BODY(root_fifo, tc)
+{
+	char *myopts[] = {
+		"-r", "fifo",
+		"dtfs",
+	};
+	pthread_t pt;
+	char buf[512];
+	ssize_t len;
+	int fd;
+
+	dtfsmountv("/mp", myopts);
+	fd = rump_sys_open("/mp", O_RDWR);
+	if (fd == -1)
+		atf_tc_fail_errno("open fifo");
+
+	pthread_create(&pt, NULL, dofifow, (void *)(uintptr_t)fd);
+
+	printf("reading\n");
+	memset(buf, 0, sizeof(buf));
+	if (rump_sys_read(fd, buf, sizeof(buf)) == -1)
+		atf_tc_fail_errno("read fifo");
+
+	ATF_REQUIRE_STREQ(buf, MAGICSTR);
+
+	rump_sys_close(fd);
+	if (rump_sys_unmount("/mp", 0) == -1)
+		atf_tc_fail_errno("unmount");
+}
+
+ATF_TC(root_chrdev);
+ATF_TC_HEAD(root_chrdev, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "root is /dev/null");
+}
+
+ATF_TC_BODY(root_chrdev, tc)
+{
+	char *myopts[] = {
+		"-r", "chr 2 0",
+		"dtfs",
+	};
+	ssize_t rv;
+	char buf[512];
+	int fd;
+
+	dtfsmountv("/mp", myopts);
+	fd = rump_sys_open("/mp", O_RDWR);
+	if (fd == -1)
+		atf_tc_fail_errno("open null");
+
+	rv = rump_sys_write(fd, buf, sizeof(buf));
+	ATF_REQUIRE(rv == sizeof(buf));
+
+	rv = rump_sys_read(fd, buf, sizeof(buf));
+	ATF_REQUIRE(rv == 0);
+
+	rump_sys_close(fd);
 	if (rump_sys_unmount("/mp", 0) == -1)
 		atf_tc_fail_errno("unmount");
 }
 
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, mount);
+
+	ATF_TP_ADD_TC(tp, root_fifo);
+	ATF_TP_ADD_TC(tp, root_lnk);
+	ATF_TP_ADD_TC(tp, root_reg);
+	ATF_TP_ADD_TC(tp, root_chrdev);
 
 	return atf_no_error();
 }
