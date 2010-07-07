@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.141 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.142 2010/07/07 01:16:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.141 2010/06/06 04:50:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.142 2010/07/07 01:16:25 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -618,6 +618,9 @@ copyfault:
 				uvm_grow(p, va);
 
 			if (type == T_MMUFLT) {
+				if (ucas_ras_check(&fp->F_t)) {
+					return;
+				}
 #if defined(M68040)
 				if (mmutype == MMU_68040)
 					(void)writeback(fp, 1);

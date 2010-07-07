@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.107 2010/06/06 04:50:06 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.108 2010/07/07 01:16:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107 2010/06/06 04:50:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2010/07/07 01:16:23 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -672,6 +672,9 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 				uvm_grow(p, va);
 
 			if (type == T_MMUFLT) {
+				if (ucas_ras_check(&fp->F_t)) {
+					return;
+				}
 #ifdef M68040
 				if (cputype == CPU_68040)
 					(void) writeback(fp, 1);
