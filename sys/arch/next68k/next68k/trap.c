@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 2010/06/06 04:50:08 mrg Exp $	*/
+/*	$NetBSD: trap.c,v 1.81 2010/07/07 01:16:25 chs Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2010/06/06 04:50:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2010/07/07 01:16:25 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -638,6 +638,9 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 				uvm_grow(p, va);
 
 			if (type == T_MMUFLT) {
+				if (ucas_ras_check(&fp->F_t)) {
+					return;
+				}
 #ifdef M68040
 				if (cputype == CPU_68040)
 					(void) writeback(fp, 1);
