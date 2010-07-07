@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.28 2010/04/23 19:18:09 rmind Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.29 2010/07/07 01:17:26 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.28 2010/04/23 19:18:09 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.29 2010/07/07 01:17:26 chs Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -276,4 +276,16 @@ bool
 cpu_intr_p(void)
 {
 	return curcpu()->ci_intr_depth != 0;
+}
+
+void
+ucas_ras_check(trapframe_t *tf)
+{
+	extern char ucas_32_ras_start[];
+	extern char ucas_32_ras_end[];
+
+	if (tf->tf_pc > (vaddr_t)ucas_32_ras_start &&
+	    tf->tf_pc < (vaddr_t)ucas_32_ras_end) {
+		tf->tf_pc = (vaddr_t)ucas_32_ras_start;
+	}
 }

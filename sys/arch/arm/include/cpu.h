@@ -384,7 +384,7 @@ void	savectx(struct pcb *);
 /* ast.c */
 void userret(register struct lwp *);
 
-/* machdep.h */
+/* *_machdep.c */
 void bootsync(void);
 
 /* fault.c */
@@ -392,6 +392,9 @@ int badaddr_read(void *, size_t, void *);
 
 /* syscall.c */
 void swi_handler(trapframe_t *);
+
+/* arm_machdep.c */
+void ucas_ras_check(trapframe_t *);
 
 #endif	/* !_LOCORE */
 
