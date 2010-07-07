@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.17 2010/06/06 12:13:36 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.18 2010/07/07 01:18:39 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -363,14 +363,11 @@ LEAF_ENTRY(ucas_32)
 
 ucas_ras_start:
 	ldw	0(%sr1, %arg0), %t1
-	comb,<>	%arg1, %t1, 2f
-	 copy	%t1, %ret1
-ucas_ras_end:
+	comb,<>	%arg1, %t1, ucas_ras_end
+	 copy	%r0, %ret0
 	stw	%arg2, 0(%sr1, %arg0)
-	copy	%arg1, %ret1
-2:
-	stw	%ret1,	0(%sr1, %arg3)
-	copy	%r0, %ret0
+ucas_ras_end:
+	stw	%t1, 0(%arg3)
 
 L$ucas_32_fault:
 	bv	0(%rp)
@@ -380,4 +377,3 @@ L$ucas_32_fault:
 	bv	0(%rp)
 	 ldi	EFAULT, %ret0
 EXIT(ucas_32)
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.92 2010/05/31 20:19:33 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.93 2010/07/07 01:18:39 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2010/05/31 20:19:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 2010/07/07 01:18:39 chs Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -916,6 +916,15 @@ do_onfault:
 				}
 				panic("trap: uvm_fault(%p, %lx, %d): %d",
 				    map, va, vftype, ret);
+			}
+		} else if ((type & T_USER) == 0) {
+			extern char ucas_ras_start[];
+			extern char ucas_ras_end[];
+
+			if (frame->tf_iioq_head > (u_int)ucas_ras_start &&
+			    frame->tf_iioq_head < (u_int)ucas_ras_end) {
+				frame->tf_iioq_head = (u_int)ucas_ras_start;
+				frame->tf_iioq_tail = (u_int)ucas_ras_start + 4;
 			}
 		}
 		break;
