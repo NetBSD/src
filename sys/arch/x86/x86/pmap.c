@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110 2010/07/06 20:50:35 cegger Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111 2010/07/07 01:14:53 chs Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2010/07/06 20:50:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2010/07/07 01:14:53 chs Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2557,8 +2557,6 @@ pmap_activate(struct lwp *l)
 	ci = curcpu();
 
 	if (l == ci->ci_curlwp) {
-		struct pcb *pcb;
-
 		KASSERT(ci->ci_want_pmapload == 0);
 		KASSERT(ci->ci_tlbstate != TLBSTATE_VALID);
 #ifdef KSTACK_CHECK_DR0
@@ -2581,15 +2579,7 @@ pmap_activate(struct lwp *l)
 			return;
 		}
 
-		pcb = lwp_getpcb(l);
 		ci->ci_want_pmapload = 1;
-
-#if defined(__x86_64__)
-		if (pcb->pcb_flags & PCB_GS64)
-			wrmsr(MSR_KERNELGSBASE, pcb->pcb_gs);
-		if (pcb->pcb_flags & PCB_FS64)
-			wrmsr(MSR_FSBASE, pcb->pcb_fs);
-#endif /* defined(__x86_64__) */
 	}
 }
 
