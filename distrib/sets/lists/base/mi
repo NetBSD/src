@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.875 2010/07/06 15:07:34 tsutsui Exp $
+# $NetBSD: mi,v 1.876 2010/07/08 22:01:34 tron Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3287,6 +3287,7 @@
 ./usr/share/man/cat4/tahoe			base-obsolete		obsolete
 ./usr/share/man/cat4/vax			base-man-share
 ./usr/share/man/cat4/x68k			base-man-share
+./usr/share/man/cat4/x86			base-man-share
 ./usr/share/man/cat5				base-man-share
 ./usr/share/man/cat6				base-man-share
 ./usr/share/man/cat7				base-man-share
@@ -3405,6 +3406,7 @@
 ./usr/share/man/html4/sun3			base-man-share
 ./usr/share/man/html4/vax			base-man-share
 ./usr/share/man/html4/x68k			base-man-share
+./usr/share/man/html4/x86			base-man-share
 ./usr/share/man/html5				base-man-share
 ./usr/share/man/html6				base-man-share
 ./usr/share/man/html7				base-man-share
@@ -3526,6 +3528,7 @@
 ./usr/share/man/man4/tahoe			base-obsolete		obsolete
 ./usr/share/man/man4/vax			base-man-share
 ./usr/share/man/man4/x68k			base-man-share
+./usr/share/man/man4/x86			base-man-share
 ./usr/share/man/man5				base-man-share
 ./usr/share/man/man6				base-man-share
 ./usr/share/man/man7				base-man-share
