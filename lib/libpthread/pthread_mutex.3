@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.2 2010/07/08 20:07:23 jruoho Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.3 2010/07/08 20:09:29 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,7 +128,7 @@ will not block waiting for the mutex, but will return an error condition.
 .\" -----
 The
 .Fn pthread_mutex_unlock
-unlocks an acquired
+function unlocks an acquired
 .Fa mutex .
 When operating with the default mutex type,
 undefined behavior follows if a thread tries to unlock a mutex
