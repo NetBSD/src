@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.11 2010/07/08 02:23:28 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.12 2010/07/08 06:55:13 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.11 2010/07/08 02:23:28 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.12 2010/07/08 06:55:13 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -1731,8 +1731,7 @@ uvm_fault_lower_lookup(
 			    "(0x%x) with locked get",
 			    curpg, 0,0,0);
 		} else {
-			bool readonly = uvm_pageisdirect_p(curpg)
-			    || (curpg->flags & PG_RDONLY)
+			bool readonly = (curpg->flags & PG_RDONLY)
 			    || (curpg->loan_count > 0)
 			    || UVM_OBJ_NEEDS_WRITEFAULT(curpg->uobject);
 
@@ -2177,11 +2176,9 @@ uvm_fault_lower_enter(
 	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
 	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, flt->promote);
 	KASSERT((flt->access_type & VM_PROT_WRITE) == 0 ||
-		uvm_pageisdirect_p(pg) || (pg->flags & PG_RDONLY) == 0);
-	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr,
-	    VM_PAGE_TO_PHYS(pg),
-	    (uvm_pageisdirect_p(pg) || pg->flags & PG_RDONLY) ?
-	    (flt->enter_prot & ~VM_PROT_WRITE) : flt->enter_prot,
+		(pg->flags & PG_RDONLY) == 0);
+	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr, VM_PAGE_TO_PHYS(pg),
+	    pg->flags & PG_RDONLY ? flt->enter_prot & ~VM_PROT_WRITE : flt->enter_prot,
 	    flt->access_type | PMAP_CANFAIL | (flt->wire_mapping ? PMAP_WIRED : 0)) != 0) {
 
 		if (uvm_pageisdirect_p(pg)) {
