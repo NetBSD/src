@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.41 2010/07/07 16:35:26 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.42 2010/07/08 06:55:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.41 2010/07/07 16:35:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.42 2010/07/08 06:55:13 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -125,7 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.41 2010/07/07 16:35:26 uebayasi
 /*
  * physical memory config is stored in vm_physmem.
  */
-/* XXXUEBS merge these two */
 
 SIMPLEQ_HEAD(vm_physseg_freelist, vm_physseg);
 
@@ -134,6 +133,7 @@ int vm_nphysmem = 0;
 static struct vm_physseg vm_physmem_store[VM_PHYSSEG_MAX];
 static struct vm_physseg_freelist vm_physmem_freelist =
     SIMPLEQ_HEAD_INITIALIZER(vm_physmem_freelist);
+
 #ifdef XIP
 struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
 int vm_nphysdev = 0;
@@ -856,6 +856,7 @@ uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
 	 * XIP page metadata initialization
 	 * - Only "phys_addr" and "vm_page_md" (== "PV" management) are used.
 	 * - No "pageq" operation is done.
+	 * - XIP pages are read-only (for now).
 	 */
 	seg->pgs = kmem_zalloc(sizeof(struct vm_page) * (end - start),
 	    KM_SLEEP);
@@ -869,7 +870,7 @@ uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
 		paddr_t paddr = (start + i) << PAGE_SHIFT;
 
 		pg->phys_addr = paddr;
-		pg->flags |= PG_DIRECT;
+		pg->flags |= PG_RDONLY | PG_DIRECT;
 #ifdef __HAVE_VM_PAGE_MD
 		VM_MDPAGE_INIT(&pg->mdpage, paddr);
 #endif
