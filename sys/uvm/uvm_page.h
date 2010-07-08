@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.24 2010/07/08 05:30:43 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.25 2010/07/08 07:47:37 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -268,7 +268,7 @@ extern bool vm_page_zero_enable;
 
 extern struct vm_physseg *vm_physmem_ptrs[VM_PHYSSEG_MAX];
 extern int vm_nphysmem;
-#ifdef DIRECT_PAGE
+#ifdef XIP
 extern struct vm_physseg *vm_physdev_ptrs[VM_PHYSSEG_MAX];
 extern int vm_nphysdev;
 #endif
