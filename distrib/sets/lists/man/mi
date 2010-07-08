@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1225 2010/07/08 20:02:56 christos Exp $
+# $NetBSD: mi,v 1.1226 2010/07/08 21:43:58 tron Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4323,6 +4323,7 @@
 ./usr/share/man/html4/x68k/neptune.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/pow.html		man-sys-htmlman		html
 ./usr/share/man/html4/x68k/vs.html		man-sys-htmlman		html
+./usr/share/man/html4/x86/balloon.html		man-sys-htmlman		html
 ./usr/share/man/html4/xbox.html			man-sys-htmlman		html
 ./usr/share/man/html4/xge.html			man-sys-htmlman		html
 ./usr/share/man/html4/xi.html			man-sys-htmlman		html
