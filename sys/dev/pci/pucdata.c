@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.63 2010/07/08 06:12:41 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.64 2010/07/08 08:49:54 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.63 2010/07/08 06:12:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.64 2010/07/08 08:49:54 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,10 @@ const struct puc_device_description puc_devices[] = {
 	/*
 	 * Advantech multi serial cards
 	 */
-	{   "Advantech PCI-1620A-AE (1-4) UARTs",
-	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1620AAE0,
-		0x0,	0x0 },
-	    {	0xffff,	0xffff,	0x0,	0x0 },
+	{   "Advantech PCI-1610 UARTs",
+	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1600,
+		PCI_PRODUCT_ADVANTECH_PCI1610,	0x0 },
+	    {	0xffff,	0xffff,	0xffff,	0x0 },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
@@ -64,10 +64,36 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	{   "Advantech PCI-1620A-AE (5-8) UARTs",
-	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1620AAE1,
-		0x0,	0x0 },
-	    {	0xffff,	0xffff,	0x0,	0x0 },
+	{   "Advantech PCI-1612 UARTs",
+	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1600,
+		PCI_PRODUCT_ADVANTECH_PCI1612,	0x0 },
+	    {	0xffff,	0xffff,	0xffff,	0x0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	/* The use of subvendor ID is bit strange... */
+	{   "Advantech PCI-1620 (1-4) UARTs",
+	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1600,
+		PCI_PRODUCT_ADVANTECH_PCI1620,	0x0 },
+	    {	0xffff,	0xffff,	0xffff,	0x0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	/* The use of subvendor ID is bit strange... */
+	{   "Advantech PCI-1620 (5-8) UARTs",
+	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1620_1,
+		PCI_PRODUCT_ADVANTECH_PCI1620,	0x0 },
+	    {	0xffff,	0xffff,	0xffff,	0x0 },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
