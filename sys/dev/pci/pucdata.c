@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.64 2010/07/08 08:49:54 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.65 2010/07/08 12:09:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.64 2010/07/08 08:49:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.65 2010/07/08 12:09:31 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
-	/* Moxa Technologies Co., Ltd. PCI I/O Card 8S RS232 */
+	/* Moxa Technologies Co., Ltd. PCI-Express I/O Card 8S RS232 */
 	{   "Moxa Technologies, SmartIO C168EL/PCIe",
 	    {	PCI_VENDOR_MOXA,	0x1682,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
@@ -488,19 +488,19 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 8 },
 	    },
 	},
-	/* Moxa Technologies Co., Ltd. PCI I/O Card 8S RS232 */
-	{   "Moxa Technologies, SmartIO C168EL-A/PCI",
+	/* Moxa Technologies Co., Ltd. PCI-Express I/O Card 8S RS232 */
+	{   "Moxa Technologies, SmartIO CP-168EL-A/PCIe",
 	    {	PCI_VENDOR_MOXA,	0x1683,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x600, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x800, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0xa00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0xc00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0xe00, COM_FREQ * 8 },
 	    },
 	},
 
@@ -655,6 +655,15 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCIe Peripheral Controller :UART part */
+	{   "NetMos NM9901 UART",
+	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901, 0xa000, 0x1000 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
