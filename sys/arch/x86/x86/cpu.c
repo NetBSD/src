@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.71 2010/07/06 20:50:35 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.72 2010/07/08 11:22:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2010/07/06 20:50:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2010/07/08 11:22:24 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -300,10 +300,9 @@ cpu_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 		aprint_naive(": Application Processor\n");
-		ptr = (uintptr_t)kmem_alloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		ptr = (uintptr_t)kmem_zalloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
 		    KM_SLEEP);
 		ci = (struct cpu_info *)roundup2(ptr, CACHE_LINE_SIZE);
-		memset(ci, 0, sizeof(*ci));
 		ci->ci_curldt = -1;
 #ifdef TRAPLOG
 		ci->ci_tlog_base = kmem_zalloc(sizeof(struct tlog), KM_SLEEP);
