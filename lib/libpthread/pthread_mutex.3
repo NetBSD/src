@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.3 2010/07/08 20:09:29 jruoho Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.4 2010/07/08 21:34:22 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -144,12 +144,12 @@ may fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
 The system lacks the resources to initialize another mutex.
-.It Bq Er ENOMEM
-The process cannot allocate enough memory to initialize another mutex.
 .It Bq Er EINVAL
 The value specified by
 .Fa attr
 is invalid.
+.It Bq Er ENOMEM
+The process cannot allocate enough memory to initialize another mutex.
 .El
 .Pp
 .\" -----
@@ -207,7 +207,7 @@ The current thread does not hold a lock on
 .Xr pthread 3 ,
 .Xr pthread_barrier 3 ,
 .Xr pthread_cond 3 ,
-.Xr pthread_mutexattr 3
+.Xr pthread_mutexattr 3 ,
 .Xr pthread_rwlock 3 ,
 .Xr pthread_spin 3
 .\" ----------------------------------------------------------------------------
