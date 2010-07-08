@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.136 2010/07/07 01:30:38 chs Exp $	*/
+/*	$NetBSD: lwp.h,v 1.137 2010/07/08 12:23:31 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -134,10 +134,16 @@ struct lwp {
 	int		l_prflag;	/* p: process level flags */
 	u_int		l_refcnt;	/* p: reference count on this LWP */
 	lwpid_t		l_lid;		/* (: LWP identifier; local to proc */
-	int		l_selflag;	/* S: select() flags */
-	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
-	struct selcluster *l_selcluster;/* !: associated select data */
 	char		*l_name;	/* (: name, optional */
+
+	/* State of select() or poll() */
+	int		l_selflag;	/* S: polling state flags */
+	SLIST_HEAD(,selinfo) l_selwait;	/* S: descriptors waited on */
+	int		l_selret;	/* S: return value of select/poll */
+	uintptr_t	l_selrec;	/* (: argument for selrecord() */
+	struct selcluster *l_selcluster;/* (: associated cluster data */
+	void *		l_selbits;	/* (: select() bit-field */
+	size_t		l_selni;	/* (: size of a single bit-field */
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
