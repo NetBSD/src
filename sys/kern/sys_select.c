@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.23 2010/07/08 12:23:31 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.24 2010/07/08 23:15:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.23 2010/07/08 12:23:31 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.24 2010/07/08 23:15:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,6 @@ state_check:
 			mutex_spin_exit(lock);
 			continue;
 		}
-		KASSERT(l->l_selflag == SEL_SCANNING);
 		/* Nothing happen, therefore - sleep. */
 		l->l_selflag = SEL_BLOCKING;
 		l->l_kpriority = true;
