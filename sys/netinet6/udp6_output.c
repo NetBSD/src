@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.39 2009/05/06 21:41:59 elad Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.40 2010/07/08 00:12:35 dyoung Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.39 2009/05/06 21:41:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.40 2010/07/08 00:12:35 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -112,8 +112,9 @@ __KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.39 2009/05/06 21:41:59 elad Exp $"
  */
 
 int
-udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6, 
-	struct mbuf *control, struct lwp *l)
+udp6_output(struct in6pcb * const in6p, struct mbuf *m,
+    struct mbuf * const addr6, struct mbuf * const control,
+    struct lwp * const l)
 {
 	struct rtentry *rt;
 	u_int32_t ulen = m->m_pkthdr.len;
