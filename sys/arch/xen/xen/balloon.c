@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.1 2010/07/06 15:00:09 cherry Exp $ */
+/* $NetBSD: balloon.c,v 1.2 2010/07/08 14:19:53 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.1 2010/07/06 15:00:09 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.2 2010/07/08 14:19:53 cherry Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/param.h>
@@ -782,7 +782,17 @@ sysctl_kern_xen_balloon(SYSCTLFN_ARGS)
 		node_val = xenmem_get_currentreservation();
 		node.sysctl_data = &node_val;
 		return sysctl_lookup(SYSCTLFN_CALL(&node));
-
+#ifndef XEN_BALLOON /* Read only, if balloon is disabled */
+	} else if (strcmp(node.sysctl_name, "target") == 0) {
+		if (newp != NULL || newlen != 0) {
+			return (EPERM);
+		}
+		node_val = xenmem_get_currentreservation();
+		node.sysctl_data = &node_val;
+		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+		return error;
+	}
+#else
 	} else if (strcmp(node.sysctl_name, "target") == 0) {
 		node_val = * (int64_t *) rnode->sysctl_data;
 		node.sysctl_data = &node_val;
@@ -826,6 +836,7 @@ sysctl_kern_xen_balloon(SYSCTLFN_ARGS)
 
 		return 0;
 	}
+#endif /* XEN_BALLOON */
 
 	return EINVAL;
 }
