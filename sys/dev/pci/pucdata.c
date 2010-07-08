@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.61 2010/07/08 00:03:31 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.62 2010/07/08 00:59:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.61 2010/07/08 00:03:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.62 2010/07/08 00:59:47 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,33 @@ __KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.61 2010/07/08 00:03:31 msaitoh Exp $")
 #include <dev/ic/comreg.h>
 
 const struct puc_device_description puc_devices[] = {
+	/*
+	 * Advantech multi serial cards
+	 */
+	{   "Advantech PCI-1620A-AE (1-4) UARTs",
+	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1620AAE0,
+		0x0,	0x0 },
+	    {	0xffff,	0xffff,	0x0,	0x0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	{   "Advantech PCI-1620A-AE (5-8) UARTs",
+	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1620AAE1,
+		0x0,	0x0 },
+	    {	0xffff,	0xffff,	0x0,	0x0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
 	/*
 	 * Addi-Data APCI-7800 8-port serial card.
 	 * Uses an AMCC chip as PCI bridge.
@@ -116,6 +143,47 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/*
+	 * Decision PCCOM PCI series. PLX 9052 with 1 or 2 16554 UARTS
+	 */
+	/* Decision Computer Inc PCCOM 2 Port RS232/422/485: 2S */
+	{   "Decision Computer Inc PCCOM 2 Port RS232/422/485",
+	    {	PCI_VENDOR_DCI,	PCI_PRODUCT_DCI_APCI2,	0x0,	0x0	},
+	    {	0xffff,	0xffff,	0x0,	0x0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x08, COM_FREQ},
+	    },
+	},
+
+	/* Decision Computer Inc PCCOM 4 Port RS232/422/485: 4S */
+	{   "Decision Computer Inc PCCOM 4 Port RS232/422/485",
+	    {	PCI_VENDOR_DCI,	PCI_PRODUCT_DCI_APCI4,	0x0,	0x0	},
+	    {	0xffff,	0xffff,	0x0,	0x0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x08, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x10, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x18, COM_FREQ},
+	    },
+	},
+
+	/* Decision Computer Inc PCCOM 8 Port RS232/422/485: 8S */
+	{   "Decision Computer Inc PCCOM 8 Port RS232/422/485",
+	    {	PCI_VENDOR_DCI,	PCI_PRODUCT_DCI_APCI8,	0x0,	0x0	},
+	    {	0xffff,	0xffff,	0x0,	0x0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x08, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x10, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x18, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x20, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x28, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x30, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x38, COM_FREQ},
+	    },
+	},
+
 	/* Digi International Digi Neo 4 Serial */
 	{ "Digi International Digi Neo 4 Serial",
 	    {	PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO4,		0, 0  },
@@ -162,6 +230,23 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
 	    },
 	},
+
+	/*
+	 * Multi-Tech ISI5634PCI/4 4-port modem board.
+	 * Has a 4-channel Exar XR17C154 UART, but with bogus product ID in its
+	 * config EEPROM.
+	 */
+	{   "Multi-Tech ISI5634PCI/4",
+	    {   PCI_VENDOR_EXAR, 0x0158, 0x2205,      0x2003       },
+	    {   0xffff, 0xffff, 0xffff,      0xffff       },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0000, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0200, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0400, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x0600, COM_FREQ * 8 },
+	    },
+	},
+
 	{   "EXAR XR17D158",
 	    {   PCI_VENDOR_EXAR, 0x0158, 0,      0       },
 	    {   0xffff, 0xffff, 0,      0       },
@@ -306,6 +391,18 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232 */
+	{   "Moxa Technologies, SmartIO CP104-EL/PCIe",
+	    {	PCI_VENDOR_MOXA,	0x1043,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
 	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232/422/485 */
 	{   "Moxa Technologies, SmartIO CP-114/PCI",
 	    {	PCI_VENDOR_MOXA,	0x1141,	0,	0	},
@@ -321,6 +418,53 @@ const struct puc_device_description puc_devices[] = {
 	/* Moxa Technologies Co., Ltd. PCI I/O Card 8S RS232 */
 	{   "Moxa Technologies, SmartIO C168H/PCI",
 	    {	PCI_VENDOR_MOXA,	0x1680,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 8 },
+	    },
+	},
+
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 8S RS232 */
+	{   "Moxa Technologies, SmartIO C168U/PCI",
+	    {	PCI_VENDOR_MOXA,	0x1681,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 8 },
+	    },
+	},
+
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 8S RS232 */
+	{   "Moxa Technologies, SmartIO C168EL/PCIe",
+	    {	PCI_VENDOR_MOXA,	0x1682,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 8 },
+	    },
+	},
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 8S RS232 */
+	{   "Moxa Technologies, SmartIO C168EL-A/PCI",
+	    {	PCI_VENDOR_MOXA,	0x1683,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
@@ -369,6 +513,15 @@ const struct puc_device_description puc_devices[] = {
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
 		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
+	    },
+	},
+
+	/* NetMos 1S PCI NM9835 : 1S */
+	{   "NetMos NM9835 UART",
+	    {	PCI_VENDOR_NETMOS, 0x9835, 0x1000, 0x0001	},
+	    {	0xffff, 0xffff, 0xffff, 0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -458,6 +611,36 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+       /* NetMos 6S PCI NM9865 : 1S */
+       {   "NetMos NM9865 1 UART",
+	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x1000	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+       /* NetMos 6S PCI NM9865 : 4S */
+       {   "NetMos NM9865 4 UART",
+	    {	PCI_VENDOR_NETMOS,	0x9865,	0xa000,	0x3004	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+       /* NetMos PCIe NM9901 : 1P */
+       {   "NetMos NM9901 LPT",
+	    {	PCI_VENDOR_NETMOS,	0x9901,	0xa000,	0x2000	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
 	/*
 	 * Boards with an Oxford Semiconductor chip.
 	 *
@@ -497,6 +680,42 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* I-O DATA RSA-PCI2 four/eight(1-4) UARTs based on OX16PCI954 */
+	{   "IO-DATA RSA-PCI2/P4 or P8 (1-4) UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_IODATA, 0xd007	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	/* OEM of Oxford Semiconductor PCI UARTs? */
+	{   "SIIG Cyber 4 PCI 16550",
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_SIIG, 0x2050	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 10 },
+	    },
+	},
+
+	/* OEM of Oxford Semiconductor PCI UARTs? */
+	{   "SIIG Cyber 4S PCI 16C650 (20x family)",
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_SIIG, 0x2051	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 10 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 10 },
+	    },
+	},
+
 	/* OEM of Oxford Semiconductor PCI UARTs? */
 	{   "Avlab LP PCI 4S Quartet",
 	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_AVLAB, 0x2150 },
@@ -511,13 +730,49 @@ const struct puc_device_description puc_devices[] = {
 
 	/* Oxford Semiconductor OX16PCI954 PCI UARTs */
 	{   "Oxford Semiconductor OX16PCI954 UARTs",
-	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	0,	0	},
-	    {	0xffff,	0xffff,	0,	0	},
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_OXFORDSEMI,	0 },
+	    {	0xffff,	0xffff,	0xffff,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8},
 		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8},
+	    },
+	},
+
+	/* Oxford Semiconductor OX16PCI954 PCI UARTs (default for 0x9501) */
+	{   "Oxford Semiconductor OX16PCI954 UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ},
+	    },
+	},
+
+	/* I-O DATA RSA-PCI2 eight(5-8) UARTs base on OX16PCI954 */
+	{   "IO-DATA RSA-PCI2/P8 (5-8) UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9511,	PCI_VENDOR_IODATA, 0xd007 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	/* Exsys EX-41098, second part of SIIG Cyber 8S PCI Card */
+	{   "Exsys EX-41098",
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9511,	PCI_VENDOR_SIIG, 0x2082	},
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 10},
 	    },
 	},
 
@@ -527,6 +782,22 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* Oxford Semiconductor OX16PCI958 UARTs */
+	{   "Oxford Semiconductor OX16PCI958 UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9538,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x10, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x18, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x20, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x28, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x30, COM_FREQ * 10},
+		{ PUC_PORT_TYPE_COM, 0x18, 0x38, COM_FREQ * 10},
 	    },
 	},
 
