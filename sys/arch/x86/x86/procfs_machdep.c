@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15 2010/04/18 23:47:50 jym Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.1 2010/07/08 11:25:00 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15 2010/04/18 23:47:50 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.1 2010/07/08 11:25:00 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ static const char * const x86_features[] = {
 	"cx8", "apic", NULL, "sep", "mtrr", "pge", "mca", "cmov",
 	"pat", "pse36", "pn", "clflush", NULL, "dts", "acpi", "mmx",
 	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", NULL,
-
+#ifdef __x86_64__
 	/* AMD-defined */
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 	NULL, NULL, NULL, "syscall", NULL, NULL, NULL, NULL, 
@@ -102,6 +102,7 @@ static const char * const x86_features[] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
+#endif
 };
 
 static int	procfs_getonecpu(int, struct cpu_info *, char *, int *);
@@ -233,3 +234,67 @@ procfs_getonecpu(int xcpu, struct cpu_info *ci, char *bf, int *len)
 
 	return 1;
 }
+
+#if defined(__HAVE_PROCFS_MACHDEP) && !defined(__x86_64__)
+
+void
+procfs_machdep_allocvp(struct vnode *vp)
+{
+	struct pfsnode *pfs = vp->v_data;
+
+	switch (pfs->pfs_type) {
+	case Pmachdep_xmmregs:
+		/* /proc/N/xmmregs = -rw------- */
+		pfs->pfs_mode = S_IRUSR|S_IWUSR;
+		vp->v_type = VREG;
+		break;
+	default:
+		KASSERT(false);
+	}
+}
+
+int
+procfs_machdep_rw(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
+    struct uio *uio)
+{
+
+	switch (pfs->pfs_type) {
+	case Pmachdep_xmmregs:
+		return (procfs_machdep_doxmmregs(curl, l, pfs, uio));
+	default:
+		KASSERT(false);
+	}
+	return EINVAL;
+}
+
+int
+procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
+{
+	struct pfsnode *pfs = VTOPFS(vp);
+
+	switch (pfs->pfs_type) {
+	case Pmachdep_xmmregs:
+		vap->va_bytes = vap->va_size = sizeof(struct xmmregs);
+		break;
+	default:
+		KASSERT(false);
+	}
+	return 0;
+}
+
+int
+procfs_machdep_doxmmregs(struct lwp *curl, struct lwp *l,
+    struct pfsnode *pfs, struct uio *uio)
+{
+
+	return process_machdep_doxmmregs(curl, l, uio);
+}
+
+int
+procfs_machdep_validxmmregs(struct lwp *l, struct mount *mp)
+{
+
+	return process_machdep_validxmmregs(l->l_proc);
+}
+
+#endif

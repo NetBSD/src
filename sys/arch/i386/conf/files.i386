@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.354 2010/04/10 17:55:25 jruoho Exp $
+#	$NetBSD: files.i386,v 1.355 2010/07/08 11:24:59 rmind Exp $
 #
 # new style config file for i386 architecture
 #
@@ -85,7 +85,6 @@ file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
-file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/trap.c
 file	dev/cons.c
 
