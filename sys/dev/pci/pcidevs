@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1040 2010/07/08 08:46:19 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1041 2010/07/08 18:49:28 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -580,6 +580,7 @@ vendor DELTA		0x1500	Delta Electronics
 vendor ENE		0x1524	ENE Technology
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems
+vendor SYBA		0x1592	Syba
 vendor FARADAY		0x159b	Faraday Technology
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
@@ -1427,7 +1428,9 @@ product AVANCE2 ALG2302	0x2302	ALG2302
 product AVANCE2 ALS4000	0x4000	ALS4000 Audio
 
 /* Avlab Technology products */
+product AVLAB PCI2S	0x2130	Low Profile PCI 4 Serial
 product AVLAB LPPCI4S	0x2150	Low Profile PCI 4 Serial
+product AVLAB LPPCI4S_2	0x2152	Low Profile PCI 4 Serial
 
 /* CCUBE products */
 product CCUBE CINEMASTER	0x8888	Cinemaster C 3.0 DVD Decoder
@@ -3076,6 +3079,7 @@ product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
 product MOT MPC5200B	0x5809	MPC5200B Host Bridge
 
 /* Moxa Technologies products */
+product	MOXA CP102U	0x1022	CP102U
 product	MOXA C104H	0x1040	C104H
 product	MOXA CP104	0x1041	CP104UL
 product	MOXA CP114	0x1141	CP114
@@ -4103,6 +4107,10 @@ product SUNDANCETI ST2021	0x2021	ST2021 Gigabit Ethernet
 /* Surecom Technology products */
 product SURECOM NE34	0x0e34	NE-34 Ethernet
 
+/* Syba */
+product SYBA 4S2P		0x0781	4S2P
+product SYBA 4S			0x0786	4S
+
 /* Symphony Labs products */
 product SYMPHONY	82C101	0x0001	82C101
 product SYMPHONY	82C103	0x0103	82C103
@@ -4210,9 +4218,23 @@ product TI	PCI2040		0xac60	PCI2040 PCI-DSP Bridge
 product TI	PCI7420YENTA	0xac8e	PCI7420 PCI-Cardbus Bridge w/ IEEE 1394 Host Controller
 
 /* Titan Electronics products */
-product TITAN PCI800L		0x8080	PCI-800L
-product TITAN PCI800H		0xa003	PCI-800H
-product TITAN PCI100H		0xa001	PCI-100H
+
+product TITAN VSCOM_PCI010L	0x8001	PCI-010L
+product TITAN VSCOM_PCI100L	0x8010	PCI-100L
+product TITAN VSCOM_PCI110L	0x8011	PCI-110L
+product TITAN VSCOM_PCI200L	0x8020	PCI-200L
+product TITAN VSCOM_PCI210L	0x8021	PCI-210L
+product MOLEX VSCOM_PCI400L	0x8040	PCI-400L
+product TITAN VSCOM_PCI800L	0x8080	PCI-800L
+product TITAN VSCOM_PCI011H	0x8403	PCI-011H
+product TITAN VSCOM_PCIx10H	0xa000	PCI-x10H
+product TITAN VSCOM_PCI100H	0xa001	PCI-100H
+product TITAN VSCOM_PCI800H	0xa003	PCI-800H
+product TITAN VSCOM_PCI800H_1	0xa004	PCI-800H_1
+product TITAN VSCOM_PCI200H	0xa005	PCI-200H
+product TITAN VSCOM_PCI010HV2	0xe001	PCI-010HV2
+product TITAN VSCOM_PCI200HV2	0xe020	PCI-200HV2
+
 
 /* Toshiba America products */
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
