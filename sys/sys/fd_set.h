@@ -1,4 +1,4 @@
-/*	$NetBSD: fd_set.h,v 1.3 2010/07/08 12:23:31 rmind Exp $	*/
+/*	$NetBSD: fd_set.h,v 1.4 2010/07/08 13:58:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  * POSIX does not specify them.
  */
 
-typedef	__int32_t	__fd_mask;
+typedef	__uint32_t	__fd_mask;
 
 /* 32 = 2 ^ 5 */
 #define	__NFDBITS	(32)
