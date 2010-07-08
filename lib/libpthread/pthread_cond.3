@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond.3,v 1.1 2010/07/08 19:20:20 rmind Exp $
+.\" $NetBSD: pthread_cond.3,v 1.2 2010/07/08 21:34:06 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -254,13 +254,13 @@ may fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
 The system lacks the resources to initialize another condition variable.
-.It Bq Er ENOMEM
-The process cannot allocate enough memory to initialize another condition
-variable.
 .It Bq Er EINVAL
 The value specified by
 .Fa attr
 is invalid.
+.It Bq Er ENOMEM
+The process cannot allocate enough memory to initialize another condition
+variable.
 .El
 .Pp
 .\" -----
@@ -304,9 +304,6 @@ is invalid.
 .Fn pthread_cond_timedwait
 may fail if:
 .Bl -tag -width Er
-.It Bq Er ETIMEDOUT
-The system time has reached or exceeded the time specified in
-.Fa abstime .
 .It Bq Er EINVAL
 The value specified by
 .Fa cond ,
@@ -314,6 +311,9 @@ The value specified by
 or
 .Fa abstime
 is invalid.
+.It Bq Er ETIMEDOUT
+The system time has reached or exceeded the time specified in
+.Fa abstime .
 .El
 .Pp
 .Fn pthread_cond_wait
