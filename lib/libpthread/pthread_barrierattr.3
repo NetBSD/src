@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrierattr.3,v 1.7 2010/07/08 23:23:37 jruoho Exp $
+.\" $NetBSD: pthread_barrierattr.3,v 1.8 2010/07/08 23:27:50 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,18 @@ function destroys
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
 .Sh ERRORS
-No error codes are defined for either function.
+No error codes are defined for
+.Fn pthread_barrierattr_init .
+.Pp
+The
+.Fn pthread_barrierattr_destroy
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value specified by
+.Fa attr
+is invalid.
+.El
 .Sh SEE ALSO
 .Xr pthread_barrier_init 3
 .Sh STANDARDS
