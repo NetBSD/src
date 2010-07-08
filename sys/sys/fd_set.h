@@ -1,4 +1,4 @@
-/*	$NetBSD: fd_set.h,v 1.4 2010/07/08 13:58:52 rmind Exp $	*/
+/*	$NetBSD: fd_set.h,v 1.5 2010/07/08 18:56:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -66,11 +66,11 @@ typedef	struct fd_set {
 } fd_set;
 
 #define	FD_SET(n, p)	\
-    ((p)->fds_bits[(n) >> __NFDSHIFT] |= (1 << ((n) & __NFDMASK)))
+    ((p)->fds_bits[(unsigned)(n) >> __NFDSHIFT] |= (1 << ((n) & __NFDMASK)))
 #define	FD_CLR(n, p)	\
-    ((p)->fds_bits[(n) >> __NFDSHIFT] &= ~(1 << ((n) & __NFDMASK)))
+    ((p)->fds_bits[(unsigned)(n) >> __NFDSHIFT] &= ~(1 << ((n) & __NFDMASK)))
 #define	FD_ISSET(n, p)	\
-    ((p)->fds_bits[(n) >> __NFDSHIFT] & (1 << ((n) & __NFDMASK)))
+    ((p)->fds_bits[(unsigned)(n) >> __NFDSHIFT] & (1 << ((n) & __NFDMASK)))
 #if __GNUC_PREREQ__(2, 95)
 #define	FD_ZERO(p)	(void)__builtin_memset((p), 0, sizeof(*(p)))
 #else
