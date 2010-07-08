@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.33 2008/07/30 22:03:40 dsl Exp $	*/
+/*	$NetBSD: du.c,v 1.34 2010/07/08 20:52:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,10 +42,11 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.33 2008/07/30 22:03:40 dsl Exp $");
+__RCSID("$NetBSD: du.c,v 1.34 2010/07/08 20:52:22 rmind Exp $");
 #endif
 #endif /* not lint */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
