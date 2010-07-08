@@ -1,7 +1,8 @@
-.\" $NetBSD: pthread_barrier_wait.3,v 1.7 2008/04/30 13:10:52 martin Exp $
+.\" $NetBSD: pthread_barrier.3,v 1.1 2010/07/08 19:20:16 rmind Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -10,6 +11,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -22,19 +24,50 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 30, 2003
-.Dt PTHREAD_BARRIER_WAIT 3
+.\" ----------------------------------------------------------------------------
+.Dd July 8, 2010
+.Dt PTHREAD_BARRIER 3
 .Os
 .Sh NAME
-.Nm pthread_barrier_wait
-.Nd wait for a barrier
+.Nm pthread_barrier
+.Nd barrier interface
 .Sh LIBRARY
 .Lb libpthread
 .Sh SYNOPSIS
 .In pthread.h
 .Ft int
+.Fn pthread_barrier_init "pthread_barrier_t * restrict barrier" \
+"const pthread_barrierattr_t * restrict attr" "unsigned int count"
+.Ft int
+.Fn pthread_barrier_destroy "pthread_barrier_t *barrier"
+.Ft int
 .Fn pthread_barrier_wait "pthread_barrier_t *barrier"
+.\" ----------------------------------------------------------------------------
 .Sh DESCRIPTION
+The
+.Fn pthread_barrier_init
+function creates a new barrier, with attributes specified with
+.Fa attr
+and
+.Fa count .
+The
+.Fa count
+parameter indicates the number of threads which will participate in the barrier.
+If
+.Fa attr
+is NULL the default attributes are used.
+Barriers are most commonly used in the decomposition of parallel loops.
+.Pp
+.\" -----
+The
+.Fn pthread_barrier_destroy
+function causes the resources allocated to
+.Fa barrier
+to be released.
+No threads should be blocked on
+.Fa barrier .
+.Pp
+.\" -----
 The
 .Fn pthread_barrier_wait
 function causes the current thread to wait on the barrier specified.
@@ -47,7 +80,21 @@ call have called
 all threads will wake up, return from their respective
 .Fn pthread_barrier_wait
 calls and continue execution.
+.\" ----------------------------------------------------------------------------
 .Sh RETURN VALUES
+If successful,
+.Fn pthread_barrier_init
+will return zero and put the new barrier id into
+.Fa barrier ,
+otherwise an error number will be returned to indicate the error.
+.Pp
+.\" -----
+If successful,
+.Fn pthread_barrier_destroy
+will return zero.
+Otherwise an error value will be returned.
+.Pp
+.\" -----
 If successful,
 .Fn pthread_barrier_wait
 will return zero for all waiting threads except for one.
@@ -59,7 +106,40 @@ It is the responsibility of this thread to insure the visibility
 and atomicity of any updates to shared data with respect to the
 other threads participating in the barrier.
 In the case of failure, an error value will be returned.
+.\" ----------------------------------------------------------------------------
 .Sh ERRORS
+.Fn pthread_barrier_init
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EAGAIN
+The system lacks the resources to initialize another barrier.
+.It Bq Er EINVAL
+The value specified by
+.Fa count
+is zero or
+.Fa attr
+is invalid.
+.It Bq Er ENOMEM
+Insufficient memory exists to initialize the barrier.
+.It Bq Er EBUSY
+The barrier structure has been initialized already.
+.El
+.Pp
+.\" -----
+.Fn pthread_barrier_destroy
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EBUSY
+The
+.Fa barrier
+still has active threads associated with it.
+.It Bq Er EINVAL
+The value specified by
+.Fa barrier
+is invalid.
+.El
+.Pp
+.\" -----
 .Fn pthread_barrier_wait
 may fail if:
 .Bl -tag -width Er
@@ -68,12 +148,14 @@ The value specified by
 .Fa barrier
 is invalid.
 .El
+.\" ----------------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr pthread_barrier_destroy 3 ,
-.Xr pthread_barrier_init 3 ,
-.Xr pthread_barrierattr_destroy 3 ,
-.Xr pthread_barrierattr_init 3
+.Xr pthread 3 ,
+.Xr pthread_barrierattr 3 ,
+.Xr pthread_cond 3
+.Xr pthread_mutex 3 ,
+.Xr pthread_rwlock 3 ,
+.Xr pthread_spin 3
 .Sh STANDARDS
-.Fn pthread_barrier_wait
-conforms to
+These functions conform to
 .St -p1003.1-2001 .

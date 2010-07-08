@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1480 2010/07/07 11:04:52 jruoho Exp $
+#	$NetBSD: mi,v 1.1481 2010/07/08 19:20:27 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7588,6 +7588,7 @@
 ./usr/share/man/cat3/pthread_attr_setstacksize.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barierattr_destroy.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/pthread_barierattr_init.0	comp-obsolete		obsolete
+./usr/share/man/cat3/pthread_barrier.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrier_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrier_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrier_wait.0	comp-c-catman		.cat
@@ -7597,6 +7598,7 @@
 ./usr/share/man/cat3/pthread_cancel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cleanup_pop.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cleanup_push.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_cond.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cond_broadcast.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cond_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cond_init.0	comp-c-catman		.cat
@@ -7618,6 +7620,7 @@
 ./usr/share/man/cat3/pthread_key_create.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_key_delete.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_kill.0		comp-c-catman		.cat
+./usr/share/man/cat3/pthread_mutex.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutex_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutex_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutex_lock.0	comp-c-catman		.cat
@@ -7630,6 +7633,7 @@
 ./usr/share/man/cat3/pthread_mutexattr_settype.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_once.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_resume_np.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_rwlock.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_rwlock_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_rwlock_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_rwlock_rdlock.0	comp-c-catman		.cat
@@ -7651,6 +7655,7 @@
 ./usr/share/man/cat3/pthread_setschedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_setspecific.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_sigmask.0		comp-c-catman		.cat
+./usr/share/man/cat3/pthread_spin.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_spin_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_spin_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_spin_lock.0	comp-c-catman		.cat
@@ -13426,6 +13431,7 @@
 ./usr/share/man/html3/pthread_attr_setstack.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_setstackaddr.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_attr_setstacksize.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_barrier.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_barrier_destroy.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_barrier_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_barrier_wait.html	comp-c-htmlman		html
@@ -13435,6 +13441,7 @@
 ./usr/share/man/html3/pthread_cancel.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_cleanup_pop.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_cleanup_push.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_cond.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_cond_broadcast.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_cond_destroy.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_cond_init.html	comp-c-htmlman		html
@@ -13456,6 +13463,7 @@
 ./usr/share/man/html3/pthread_key_create.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_key_delete.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_kill.html		comp-c-htmlman		html
+./usr/share/man/html3/pthread_mutex.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutex_destroy.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutex_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutex_lock.html	comp-c-htmlman		html
@@ -13468,6 +13476,7 @@
 ./usr/share/man/html3/pthread_mutexattr_settype.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_once.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_resume_np.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_rwlock.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_rwlock_destroy.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_rwlock_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_rwlock_rdlock.html	comp-c-htmlman		html
@@ -13489,6 +13498,7 @@
 ./usr/share/man/html3/pthread_setschedparam.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_setspecific.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_sigmask.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_spin.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_spin_destroy.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_spin_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_spin_lock.html	comp-c-htmlman		html
@@ -19262,6 +19272,7 @@
 ./usr/share/man/man3/pthread_attr_setstacksize.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barierattr_destroy.3	comp-obsolete		obsolete
 ./usr/share/man/man3/pthread_barierattr_init.3	comp-obsolete		obsolete
+./usr/share/man/man3/pthread_barrier.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_barrier_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barrier_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barrier_wait.3	comp-c-man		.man
@@ -19271,6 +19282,7 @@
 ./usr/share/man/man3/pthread_cancel.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_cleanup_pop.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_cleanup_push.3	comp-c-man		.man
+./usr/share/man/man3/pthread_cond.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_cond_broadcast.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_cond_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_cond_init.3	comp-c-man		.man
@@ -19292,6 +19304,7 @@
 ./usr/share/man/man3/pthread_key_create.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_key_delete.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_kill.3		comp-c-man		.man
+./usr/share/man/man3/pthread_mutex.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_mutex_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_mutex_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_mutex_lock.3	comp-c-man		.man
@@ -19304,6 +19317,7 @@
 ./usr/share/man/man3/pthread_mutexattr_settype.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_once.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_resume_np.3	comp-c-man		.man
+./usr/share/man/man3/pthread_rwlock.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_rwlock_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_rwlock_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_rwlock_rdlock.3	comp-c-man		.man
@@ -19325,6 +19339,7 @@
 ./usr/share/man/man3/pthread_setschedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_setspecific.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_sigmask.3		comp-c-man		.man
+./usr/share/man/man3/pthread_spin.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_spin_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_spin_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_spin_lock.3	comp-c-man		.man
