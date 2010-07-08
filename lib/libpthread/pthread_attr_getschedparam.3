@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr_getschedparam.3,v 1.1 2010/07/07 16:04:19 jruoho Exp $
+.\"	$NetBSD: pthread_attr_getschedparam.3,v 1.2 2010/07/08 22:19:26 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm pthread_attr_getschedparam
-.Nd get and set scheduling parameter attribute
+.Nd get and set scheduling attributes
 .Sh LIBRARY
 .Lb libpthread
 .Sh SYNOPSIS
@@ -41,6 +41,11 @@
 .Ft int
 .Fn pthread_attr_setschedparam \
 "pthread_attr_t *attr" "const struct sched_param *param"
+.Ft int
+.Fn pthread_attr_getschedpolicy \
+"const pthread_attr_t * restrict attr" "int * restrict policy"
+.Ft int
+.Fn pthread_attr_setschedpolicy "pthread_attr_t *attr" "int policy"
 .Sh DESCRIPTION
 The
 .Fn pthread_attr_getschedparam
@@ -60,11 +65,27 @@ Refer to
 and
 .Xr sched 3
 for additional details.
+.Pp
+The
+.Fn pthread_attr_getschedpolicy
+and
+.Fn pthread_attr_setschedpolicy
+functions get and set the scheduling policy attribute,
+.Fa policy ,
+in the
+.Fa attr
+object.
+The supported values of
+.Fa policy
+are the same ones listed in
+.Xr pthread_schedparam 3 .
 .Sh RETURN VALUES
-If successful, both functions return 0.
+If successful, all described functions return 0.
 Otherwise, an error number is returned to indicate the error.
 .Sh ERRORS
-Both functions may fail if:
+The
+.Fn pthread_attr_getschedparam
+function may fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 An invalid parameter was specified.
@@ -72,15 +93,32 @@ An invalid parameter was specified.
 .Pp
 The
 .Fn pthread_attr_setschedparam
-function may also fail if:
+function may fail if:
 .Bl -tag -width Er
+.It Bq Er EINVAL
+An invalid parameter was specified.
 .It Bq Er ENOMEM
 There was insufficient memory.
 .El
+.Pp
+The
+.Fn pthread_attr_setschedpolicy
+function may fail if:
+.Bl -tag -width Er
+.It Bq Er ENOMEM
+There was insufficient memory.
+.It Bq Er ENOTSUP
+An unsupported
+.Fa policy
+was specified.
+.El
+.Pp
+No errors are defined for
+.Fn pthread_attr_getschedpolicy .
 .Sh SEE ALSO
 .Xr pthread_attr 3 ,
 .Xr pthread_schedparam 3 ,
 .Xr sched 3
 .Sh STANDARDS
-Both functions conform to
+These functions conform to
 .St -p1003.1-2008 .
