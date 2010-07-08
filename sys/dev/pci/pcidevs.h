@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1037 2010/07/08 08:47:04 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1038 2010/07/08 18:50:35 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1040 2010/07/08 08:46:19 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1041 2010/07/08 18:49:28 msaitoh Exp
  */
 
 /*
@@ -587,6 +587,7 @@
 #define	PCI_VENDOR_ENE	0x1524		/* ENE Technology */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems */
+#define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_FARADAY	0x159b		/* Faraday Technology */
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
@@ -1434,7 +1435,9 @@
 #define	PCI_PRODUCT_AVANCE2_ALS4000	0x4000		/* ALS4000 Audio */
 
 /* Avlab Technology products */
+#define	PCI_PRODUCT_AVLAB_PCI2S	0x2130		/* Low Profile PCI 4 Serial */
 #define	PCI_PRODUCT_AVLAB_LPPCI4S	0x2150		/* Low Profile PCI 4 Serial */
+#define	PCI_PRODUCT_AVLAB_LPPCI4S_2	0x2152		/* Low Profile PCI 4 Serial */
 
 /* CCUBE products */
 #define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster C 3.0 DVD Decoder */
@@ -3083,6 +3086,7 @@
 #define	PCI_PRODUCT_MOT_MPC5200B	0x5809		/* MPC5200B Host Bridge */
 
 /* Moxa Technologies products */
+#define	PCI_PRODUCT_MOXA_CP102U	0x1022		/* CP102U */
 #define	PCI_PRODUCT_MOXA_C104H	0x1040		/* C104H */
 #define	PCI_PRODUCT_MOXA_CP104	0x1041		/* CP104UL */
 #define	PCI_PRODUCT_MOXA_CP114	0x1141		/* CP114 */
@@ -4110,6 +4114,10 @@
 /* Surecom Technology products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* NE-34 Ethernet */
 
+/* Syba */
+#define	PCI_PRODUCT_SYBA_4S2P	0x0781		/* 4S2P */
+#define	PCI_PRODUCT_SYBA_4S	0x0786		/* 4S */
+
 /* Symphony Labs products */
 #define	PCI_PRODUCT_SYMPHONY_82C101	0x0001		/* 82C101 */
 #define	PCI_PRODUCT_SYMPHONY_82C103	0x0103		/* 82C103 */
@@ -4217,9 +4225,23 @@
 #define	PCI_PRODUCT_TI_PCI7420YENTA	0xac8e		/* PCI7420 PCI-Cardbus Bridge w/ IEEE 1394 Host Controller */
 
 /* Titan Electronics products */
-#define	PCI_PRODUCT_TITAN_PCI800L	0x8080		/* PCI-800L */
-#define	PCI_PRODUCT_TITAN_PCI800H	0xa003		/* PCI-800H */
-#define	PCI_PRODUCT_TITAN_PCI100H	0xa001		/* PCI-100H */
+
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI010L	0x8001		/* PCI-010L */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI100L	0x8010		/* PCI-100L */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI110L	0x8011		/* PCI-110L */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI200L	0x8020		/* PCI-200L */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI210L	0x8021		/* PCI-210L */
+#define	PCI_PRODUCT_MOLEX_VSCOM_PCI400L	0x8040		/* PCI-400L */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI800L	0x8080		/* PCI-800L */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI011H	0x8403		/* PCI-011H */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCIx10H	0xa000		/* PCI-x10H */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI100H	0xa001		/* PCI-100H */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI800H	0xa003		/* PCI-800H */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI800H_1	0xa004		/* PCI-800H_1 */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI200H	0xa005		/* PCI-200H */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI010HV2	0xe001		/* PCI-010HV2 */
+#define	PCI_PRODUCT_TITAN_VSCOM_PCI200HV2	0xe020		/* PCI-200HV2 */
+
 
 /* Toshiba America products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x0009		/* R4x00 Host-PCI Bridge */
