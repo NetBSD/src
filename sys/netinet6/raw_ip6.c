@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.105 2009/09/16 15:23:05 pooka Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.106 2010/07/08 01:13:01 dyoung Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.105 2009/09/16 15:23:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.106 2010/07/08 01:13:01 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -396,8 +396,8 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
  * Tack on options user may have setup with control call.
  */
 int
-rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
-    struct mbuf *control)
+rip6_output(struct mbuf *m, struct socket * const so,
+    struct sockaddr_in6 * const dstsock, struct mbuf * const control)
 {
 	struct in6_addr *dst;
 	struct ip6_hdr *ip6;
