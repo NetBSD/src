@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1224 2010/07/04 15:21:57 tsutsui Exp $
+# $NetBSD: mi,v 1.1225 2010/07/08 20:02:56 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1730,6 +1730,7 @@
 ./usr/share/man/cat4/x68k/neptune.0		man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/pow.0			man-sys-catman		.cat
 ./usr/share/man/cat4/x68k/vs.0			man-sys-catman		.cat
+./usr/share/man/cat4/x86/balloon.0		man-sys-catman		.cat
 ./usr/share/man/cat4/xbox.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/xi.0			man-sys-catman		.cat
@@ -6852,6 +6853,7 @@
 ./usr/share/man/man4/x68k/neptune.4		man-sys-man		.man
 ./usr/share/man/man4/x68k/pow.4			man-sys-man		.man
 ./usr/share/man/man4/x68k/vs.4			man-sys-man		.man
+./usr/share/man/man4/x86/balloon.4		man-sys-man		.man
 ./usr/share/man/man4/xbox.4			man-sys-man		.man
 ./usr/share/man/man4/xge.4			man-sys-man		.man
 ./usr/share/man/man4/xi.4			man-sys-man		.man
