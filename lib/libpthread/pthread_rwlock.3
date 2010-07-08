@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock.3,v 1.1 2010/07/08 19:20:24 rmind Exp $
+.\" $NetBSD: pthread_rwlock.3,v 1.2 2010/07/08 21:34:48 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -210,8 +210,6 @@ function may fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
 The system lacks the resources to initialize another read-write lock.
-.It Bq Er ENOMEM
-Insufficient memory exists to initialize the read-write lock.
 .It Bq Er EBUSY
 The system has detected an attempt to re-initialize the object
 referenced by
@@ -221,6 +219,8 @@ a previously initialized but not yet destroyed read/write lock.
 The value specified by
 .Fa attr
 is invalid.
+.It Bq Er ENOMEM
+Insufficient memory exists to initialize the read-write lock.
 .El
 .Pp
 .\" -----
@@ -331,7 +331,7 @@ The current thread does not own the read/write lock.
 .Sh SEE ALSO
 .Xr pthread 3 ,
 .Xr pthread_barrier 3 ,
-.Xr pthread_cond 3
+.Xr pthread_cond 3 ,
 .Xr pthread_mutex 3 ,
 .Xr pthread_rwlockattr 3 ,
 .Xr pthread_spin 3
