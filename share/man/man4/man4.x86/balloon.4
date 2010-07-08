@@ -1,4 +1,4 @@
-.\"	$NetBSD: balloon.4,v 1.1 2010/07/08 20:00:24 christos Exp $
+.\"	$NetBSD: balloon.4,v 1.2 2010/07/08 21:33:02 wiz Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 06, 2010 
+.Dd July 6, 2010
 .Dt BALLOON 4 xen
 .Os
 .Sh NAME
@@ -42,9 +42,10 @@ The Xen
 driver can be enabled to allow the Xen hypervisor to dynamically
 resize the amount of RAM a
 .Nx
-VM is allowed to use. This allows the hypervisor to manage RAM more
+VM is allowed to use.
+This allows the hypervisor to manage RAM more
 efficiently, similar in spirit to how the
-.Nx 
+.Nx
 kernel would manage RAM wrt processes, with
 .Xr uvm 9 .
 .Pp
@@ -52,13 +53,13 @@ The
 .Nm
 driver negotiates domain VM memory allocation change requests from
 the Xen hypervisor, by reserving "pinned" memory for itself from the
-NetBSD
+.Nx
 .Xr uvm 9
 subsystem.
 .Pp
 There are two methods to notify the
 .Nm
-driver of memory allocation change requests. 
+driver of memory allocation change requests.
 .Bl -tag -width "Xr sysctl 3" -offset indent
 .It xenbus
 In the xenbus method, the change notification originates outside the
@@ -67,7 +68,8 @@ xenbus interface.
 .It Xr sysctl 3
 In the
 .Xr sysctl 3
-method, the change notification originates from within the VM. Two
+method, the change notification originates from within the VM.
+Two
 .Xr sysctl 7
 nodes are provided:
 .Bl -ohang -width kern.xen.balloon.current
@@ -76,18 +78,21 @@ This node is read-only and returns the number of memory pages
 currently allocated to the VM.
 .It Va kern.xen.balloon.target
 This node can be written to, and sets a new target memory reservation,
-in pages. Note that targets set this way from within the VM do not
-reflect in the hypervisor. This is therefore a less preferred way to
-use the
+in pages.
+Note that targets set this way from within the VM do not
+reflect in the hypervisor.
+This is therefore a less preferred way to use the
 .Nm
 .El
 .El
 .Pp
 In either case, once a new allocation target is set, the balloon
 driver thread asynchronously attempts to reach this target in discrete
-steps. Every step, if it fails, is tried more than once. When the
-target is reached, the thread goes back to sleep, waiting for a new
-incoming target. If it is not reached, the target is updated to
+steps.
+Every step, if it fails, is tried more than once.
+When the target is reached, the thread goes back to sleep, waiting
+for a new incoming target.
+If it is not reached, the target is updated to
 reflect the value after the last successful step.
 .Sh EXAMPLES
 .Bd -literal
@@ -98,7 +103,7 @@ reflect the value after the last successful step.
    #
    # # Change the current target to 30000 kernel pages.
    # sysctl -w kern.xen.balloon.target=30000
-   kern.xen.balloon.target: 32512 -> 30000
+   kern.xen.balloon.target: 32512 -\*[Gt] 30000
    #
 .Ed
 .Sh SEE ALSO
@@ -113,7 +118,9 @@ reflect the value after the last successful step.
 .An Cherry G. Mathew Aq cherry@zyx.in
 .An Jean-Yves Migeon Aq jym@NetBSD.org
 .Sh CAVEATS
-VMs can be inadvertently crashed/panic()ed by over expanding the
+VMs can be inadvertently
+.No crashed/ Ns Fn panic Ns ed
+by over expanding the
 balloon allocation, creating extreme OS memory pressure.
 .Sh BUGS
 .Fn xenmem_get_maxreservation
