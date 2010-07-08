@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.9 2010/06/14 21:04:56 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.10 2010/07/08 11:39:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.9 2010/06/14 21:04:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.10 2010/07/08 11:39:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -74,6 +74,10 @@ kern_malloc(unsigned long size, struct malloc_type *type, int flags)
 	void *rv;
 
 	rv = rumpuser_malloc(size, 0);
+
+	if (__predict_false(rv == NULL && (flags & (M_CANFAIL|M_NOWAIT)) == 0))
+		panic("malloc %lu bytes failed", size);
+
 	if (rv && flags & M_ZERO)
 		memset(rv, 0, size);
 
