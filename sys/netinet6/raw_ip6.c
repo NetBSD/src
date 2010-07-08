@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.106 2010/07/08 01:13:01 dyoung Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.107 2010/07/08 01:22:28 dyoung Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.106 2010/07/08 01:13:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.107 2010/07/08 01:22:28 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -469,7 +469,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	 * Source address selection.
 	 */
 	if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
-	    (struct route *)&in6p->in6p_route, &in6p->in6p_laddr, &oifp,
+	    &in6p->in6p_route, &in6p->in6p_laddr, &oifp,
 	    &error)) == 0) {
 		if (error == 0)
 			error = EADDRNOTAVAIL;
@@ -765,7 +765,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 
 		/* Source address selection. XXX: need pcblookup? */
 		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
-		    in6p->in6p_moptions, (struct route *)&in6p->in6p_route,
+		    in6p->in6p_moptions, &in6p->in6p_route,
 		    &in6p->in6p_laddr, &ifp, &error);
 		if (in6a == NULL) {
 			if (error == 0)
