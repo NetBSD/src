@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier.3,v 1.2 2010/07/08 20:59:43 jruoho Exp $
+.\" $NetBSD: pthread_barrier.3,v 1.3 2010/07/08 21:33:38 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,6 +120,8 @@ may fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
 The system lacks the resources to initialize another barrier.
+.It Bq Er EBUSY
+The barrier structure has been initialized already.
 .It Bq Er EINVAL
 The value specified by
 .Fa count
@@ -128,8 +130,6 @@ is zero or
 is invalid.
 .It Bq Er ENOMEM
 Insufficient memory exists to initialize the barrier.
-.It Bq Er EBUSY
-The barrier structure has been initialized already.
 .El
 .Pp
 .\" -----
@@ -159,7 +159,7 @@ is invalid.
 .Sh SEE ALSO
 .Xr pthread 3 ,
 .Xr pthread_barrierattr 3 ,
-.Xr pthread_cond 3
+.Xr pthread_cond 3 ,
 .Xr pthread_mutex 3 ,
 .Xr pthread_rwlock 3 ,
 .Xr pthread_spin 3
