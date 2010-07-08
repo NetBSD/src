@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.2 2010/07/05 14:53:03 njoly Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.3 2010/07/08 13:21:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 
 #include "ext2fs.c"
 #include "ffs.c"
+#include "lfs.c"
 #include "msdosfs.c"
 #include "sysvbfs.c"
 #include "tmpfs.c"
@@ -73,6 +74,7 @@
 #define ATF_TC_FSAPPLY(func,desc) \
   ATF_TC_FSADD(ext2fs,"ext2fs",func,desc) \
   ATF_TC_FSADD(ffs,"ffs",func,desc) \
+  ATF_TC_FSADD(lfs,"lfs",func,desc) \
   ATF_TC_FSADD(msdosfs,"msdosfs",func,desc) \
   ATF_TC_FSADD(sysvbfs,"sysvbfs",func,desc) \
   ATF_TC_FSADD(tmpfs,"tmpfs",func,desc)
@@ -80,6 +82,7 @@
 #define ATF_TP_FSAPPLY(func) \
   ATF_TP_FSADD(ext2fs,func); \
   ATF_TP_FSADD(ffs,func); \
+  ATF_TP_FSADD(lfs,func); \
   ATF_TP_FSADD(msdosfs,func); \
   ATF_TP_FSADD(sysvbfs,func); \
   ATF_TP_FSADD(tmpfs,func);
