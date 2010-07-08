@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.1 2010/07/08 19:20:23 rmind Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.2 2010/07/08 20:07:23 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .Os
 .Sh NAME
 .Nm pthread_mutex
-.Nd mutex interface
+.Nd mutual exclusion primitives
 .Sh LIBRARY
 .Lb libpthread
 .\" ----------------------------------------------------------------------------
@@ -66,8 +66,6 @@
 .Ft int
 .Fn pthread_mutex_init "pthread_mutex_t * restrict mutex" \
 "const pthread_mutexattr_t * restrict attr"
-.Pp
-.Va pthread_mutex_t mutex = Dv PTHREAD_MUTEX_INITIALIZER;
 .Ft int
 .Fn pthread_mutex_destroy "pthread_mutex_t *mutex"
 .Ft int
@@ -76,6 +74,8 @@
 .Fn pthread_mutex_trylock "pthread_mutex_t *mutex"
 .Ft int
 .Fn pthread_mutex_unlock "pthread_mutex_t *mutex"
+.Pp
+.Va pthread_mutex_t mutex = Dv PTHREAD_MUTEX_INITIALIZER;
 .\" ----------------------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -103,6 +103,8 @@ The
 .Fn pthread_mutex_destroy
 function frees the resources allocated for
 .Fa mutex .
+It is possible to reinitialize a destroyed mutex, but undefined
+behavior may follow if the destroyed object is otherwise referenced.
 .Pp
 .\" -----
 The
@@ -111,6 +113,9 @@ function locks
 .Fa mutex .
 If the mutex is already locked, the calling thread will block until the
 mutex becomes available.
+The error conditions may vary depending on the type of the mutex; see
+.Xr pthread_mutexattr 3
+for additional details.
 .Pp
 The
 .Fn pthread_mutex_trylock
@@ -121,31 +126,18 @@ If the mutex is already locked,
 will not block waiting for the mutex, but will return an error condition.
 .Pp
 .\" -----
-If the current thread holds the lock on
-.Fa mutex ,
-then the
+The
 .Fn pthread_mutex_unlock
-function unlocks
+unlocks an acquired
 .Fa mutex .
+When operating with the default mutex type,
+undefined behavior follows if a thread tries to unlock a mutex
+that has not been locked by it, or if a thread tries to release
+a mutex that is already unlocked.
 .\" ----------------------------------------------------------------------------
 .Sh RETURN VALUES
-If successful,
-.Fn pthread_mutex_init
-will return zero and put the new mutex id into
-.Fa mutex ,
-otherwise an error number will be returned to indicate the error.
-.Pp
-.\" -----
-If successful,
-.Fn pthread_mutex_destroy ,
-.Fn pthread_mutex_lock ,
-.Fn pthread_mutex_trylock
-and
-.Fn pthread_mutex_unlock
-will return zero, otherwise an error number will be returned to
-indicate the error.
-.Pp
-.\" ----------------------------------------------------------------------------
+Upon success all described functions return zero.
+Otherwise, an error number will be returned to indicate the error.
 .Sh ERRORS
 .Fn pthread_mutex_init
 may fail if:
