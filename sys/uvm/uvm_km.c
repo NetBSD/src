@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.104.2.6 2010/07/07 16:35:26 uebayasi Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.104.2.7 2010/07/08 05:30:11 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -127,17 +127,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.104.2.6 2010/07/07 16:35:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.104.2.7 2010/07/08 05:30:11 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
-#include "opt_xip.h"
 
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <sys/once.h>
 
 #include <uvm/uvm.h>
 
