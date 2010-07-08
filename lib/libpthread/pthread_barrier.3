@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier.3,v 1.1 2010/07/08 19:20:16 rmind Exp $
+.\" $NetBSD: pthread_barrier.3,v 1.2 2010/07/08 20:59:43 jruoho Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,16 +46,23 @@
 .Sh DESCRIPTION
 The
 .Fn pthread_barrier_init
-function creates a new barrier, with attributes specified with
+function creates a new barrier with attributes
 .Fa attr
 and
 .Fa count .
 The
 .Fa count
-parameter indicates the number of threads which will participate in the barrier.
+parameter indicates the number of threads
+which will participate in the barrier.
+The
+.Xr pthread_barrierattr_init 3
+function may be used to specify the attributes supplied in
+.Fa attr .
 If
 .Fa attr
-is NULL the default attributes are used.
+is
+.Dv NULL ,
+the default attributes are used.
 Barriers are most commonly used in the decomposition of parallel loops.
 .Pp
 .\" -----
