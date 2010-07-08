@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.10 2010/07/07 16:35:26 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.11 2010/07/08 02:23:28 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.10 2010/07/07 16:35:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.11 2010/07/08 02:23:28 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -1210,7 +1210,7 @@ uvm_fault_upper_neighbor(
  *	3. handle loan.
  *	4. dispatch direct or promote handlers.
  */
-  
+
 static int
 uvm_fault_upper(
 	struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
@@ -1959,6 +1959,7 @@ uvm_fault_lower_direct(
 	 *
 	 * set "pg" to the page we want to map in (uobjpage, usually)
 	 */
+
 	pg = uobjpage;		/* map in the actual object */
 	uvmexp.flt_obj++;
 
