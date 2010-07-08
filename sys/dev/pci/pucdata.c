@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.65 2010/07/08 12:09:31 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.66 2010/07/08 18:55:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.65 2010/07/08 12:09:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.66 2010/07/08 18:55:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,10 +95,10 @@ const struct puc_device_description puc_devices[] = {
 		PCI_PRODUCT_ADVANTECH_PCI1620,	0x0 },
 	    {	0xffff,	0xffff,	0xffff,	0x0 },
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 2 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 2 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 2 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 2 },
 	    },
 	},
 
@@ -121,10 +121,32 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Avlab Technology, Inc. PCI 2 Serial: 2S */
+	{   "Avlab PCI 2 Serial",
+	    {	PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_PCI2S,	0, 0  },
+	    {	0xffff,	0xffff,					0, 0  },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	    },
+	},
+
 	/* Avlab Technology, Inc. Low Profile PCI 4 Serial: 4S */
 	{   "Avlab Low Profile PCI 4 Serial",
-	    {	PCI_VENDOR_AVLAB,	0x2150,	0,	0	},
+	    {	PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_LPPCI4S,	0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Avlab Technology, Inc. Low Profile PCI 4 Serial: 4S */
+	{   "Avlab Low Profile PCI 4 Serial",
+	    {	PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_LPPCI4S_2,	0, 0  },
+	    {	0xffff,	0xffff,					0, 0  },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
@@ -291,7 +313,7 @@ const struct puc_device_description puc_devices[] = {
 	/* IBM SurePOS 300 Series (481033H) serial ports */
 	{   "IBM SurePOS 300 Series (481033H)",
 	    {   PCI_VENDOR_IBM, PCI_PRODUCT_IBM_4810_SCC, 0, 0 },
-	    {   0xffff, 0xfff,                            0, 0 },
+	    {   0xffff, 0xffff,                           0, 0 },
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ }, /* Port C */
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ }, /* Port D */
@@ -378,6 +400,16 @@ const struct puc_device_description puc_devices[] = {
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Moxa Technologies Co., Ltd. PCI I/O Card 2S RS232 */
+	{   "Moxa Technologies, SmartIO CP-102/PCI",
+	    {	PCI_VENDOR_MOXA,	0x1022,	0,	0	},
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x08, COM_FREQ * 8 },
 	    },
 	},
 
@@ -717,7 +749,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/* I-O DATA RSA-PCI2 four/eight(1-4) UARTs based on OX16PCI954 */
 	{   "I-O DATA RSA-PCI2/P4 or P8 (1-4) UARTs",
-	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_IODATA, 0xd007	},
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_IODATA, 0xd007 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
@@ -1549,6 +1581,15 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	{   "SUNIX 4036 2S",
+	    {	PCI_VENDOR_SUNIX, 0x7168, PCI_VENDOR_SUNIX, 0x0002 },
+	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8},
+	    },
+	},
+
 	{   "SUNIX 405X 4S",
 	    {	PCI_VENDOR_SUNIX, 0x7168, PCI_VENDOR_SUNIX, 0x4050 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
@@ -1627,57 +1668,117 @@ const struct puc_device_description puc_devices[] = {
 	 * XXX Dolphin Peripherals 4078 (dual serial and single parallel)
 	 */
 
-	{   "Titan PCI-010HV2",
-	    {   PCI_VENDOR_TITAN, 0xe001, 0,      0       },
-	    {   0xffff, 0xffff, 0,      0       },
+	/* SD-LAB PCI I/O Card 4S */
+	{   "Syba Tech Ltd. PCI-4S",
+	    {   PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S,		0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x3e8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x2e8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x3f8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x2f8, COM_FREQ },
 	    },
 	},
-	{   "Titan PCI-200HV2",
-	    {   PCI_VENDOR_TITAN, 0xe020, 0,      0       },
-	    {   0xffff, 0xffff, 0,      0       },
+
+	/* SD-LAB PCI I/O Card 4S2P */
+	{   "Syba Tech Ltd. PCI-4S2P-550-ECP",
+	    {   PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S2P,		0, 0	},
+	    {	0xffff,	0xffff,					0, 0	},
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x2e8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x2f8, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x000, 0x00 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x3e8, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x3f8, COM_FREQ },
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x000, 0x00 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 010L
+	 * one lpt
+	 * untested
+	 */
+	{   "VScom PCI-010L",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI010L,    0, 0 },
+	    {	0xffff, 0xffff,					0, 0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 100L
+	 * one com
+	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * jumper J1 set to 2-3.
+	 */
+	{   "VScom PCI-100L",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI100L,	0, 0 },
+	    {	0xffff, 0xffff,						0, 0 },
+	    {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
 	    },
 	},
 
 	/*
-	 * VScom PCI-800H. Uses 8 16950 UART, behind a PCI chips that offers
-	 * 4 com port on PCI device 0 and 4 on PCI device 1. PCI device 0 has
-	 * device ID 3 and PCI device 1 device ID 4.
+	 * VScom PCI 110L
+	 * one com, one lpt
+	 * untested
 	 */
-	{   "Titan PCI-800H",
-	    {	PCI_VENDOR_TITAN,	0xa003,	0,	0	},
-	    {	0xffff,	0xffff,	0,	0	},
+	{   "VScom PCI-110L",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI110L,	0, 0 },
+	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
 	    },
 	},
-	{   "Titan PCI-800H",
-	    {	PCI_VENDOR_TITAN,	0xa004,	0,	0	},
-	    {	0xffff,	0xffff,	0,	0	},
+
+	/*
+	 * VScom PCI-200L has 2 x 16550 UARTS.
+	 * The board has a jumper which allows you to select a clock speed
+	 * of either 14.7456MHz or 1.8432MHz. By default it runs at
+	 * the fast speed.
+	 */
+	{   "VScom PCI-200L with 2 x 16550 UARTS",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI200L,	0, 0 },
+	    {	0xffff, 0xffff,						0, 0 },
 	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
-		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
 	    },
 	},
-        {   "Titan PCI-200H",
-            {   PCI_VENDOR_TITAN, 0xa005, 0,      0       },
-            {   0xffff, 0xffff, 0,      0       },
-            {
-                { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
-                { PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
-            },
-        },
-	{   "Titan PCI-800L",
-	    {	PCI_VENDOR_TITAN,	0x8080,	0,	0	},
+
+	/*
+	 * VScom PCI-210L
+	 * Has a jumper for frequency selection, defaults to 8x as used here
+	 * two com, one lpt
+	 */
+	{   "VScom PCI-210L",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI210L,	0, 0 },
+	    {	0xffff, 0xffff,					0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_LPT, 0x1c, 0x00, 0x00 },
+	    },
+	},
+
+	/* PCI-400L: VendorID is reported to be 0x10d2 instead of 0x14d2. */
+	{   "VScom PCI-400L",
+	    {	PCI_VENDOR_MOLEX, PCI_PRODUCT_MOLEX_VSCOM_PCI400L,	0, 0 },
+	    {	0xffff, 0xffff,					0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x20, 0x08, COM_FREQ * 8 },
+	    },
+	},
+
+	{   "VScom PCI-800L",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI800L,	0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
@@ -1688,6 +1789,90 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x20, 0x18, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x20, 0x20, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x20, 0x28, COM_FREQ * 8 },
+	    },
+	},
+
+	{   "VScom PCI-011H",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI011H,	0, 0 },
+	    {	0xffff, 0xffff,					0, 0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/*
+	 * VScom PCI x10H, 1 lpt.
+	 * is the lpt part of VScom 110H, 210H, 410H
+	 */
+	{   "VScom PCI-x10H",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCIx10H,	0, 0 },
+	    {	0xffff, 0xffff,					0, 0 },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/*
+	 * VScom PCI 100H, little sister of 800H, 1 com.
+	 * also com part of VScom 110H
+	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * jumper J1 set to 2-3.
+	 */
+	{   "VScom PCI-100H",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI100H,	0, 0 },
+	    {	0xffff, 0xffff,					0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+	    },
+	},
+
+	/*
+	 * VScom PCI-800H. Uses 8 16950 UART, behind a PCI chips that offers
+	 * 4 com port on PCI device 0 and 4 on PCI device 1. PCI device 0 has
+	 * device ID 3 and PCI device 1 device ID 4.
+	 */
+	{   "VScom PCI-800H",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI800H,	0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+	{   "VScom PCI-800H",
+	    {	PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI800H_1,	0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+        {   "VScom PCI-200H",
+            {   PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI200H, 0, 0 },
+            {   0xffff, 0xffff, 0,      0       },
+            {
+                { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+                { PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+            },
+        },
+
+	{   "VScom PCI-010HV2",
+	    {   PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI010HV2,	0, 0 },
+	    {   0xffff, 0xffff, 0,      0       },
+	    {
+		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+	{   "VScom PCI-200HV2",
+	    {   PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_VSCOM_PCI200HV2,	0, 0 },
+	    {   0xffff, 0xffff, 0,      0       },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
 	    },
 	},
 
