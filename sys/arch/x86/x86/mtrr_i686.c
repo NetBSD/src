@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_i686.c,v 1.21 2010/06/17 06:38:19 mrg Exp $ */
+/*	$NetBSD: mtrr_i686.c,v 1.22 2010/07/08 09:42:08 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.21 2010/06/17 06:38:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_i686.c,v 1.22 2010/07/08 09:42:08 cegger Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -98,7 +98,7 @@ mtrr_raw[] = {
 
 };
 
-static const int nmtrr_raw = sizeof(mtrr_raw)/sizeof(mtrr_raw[0]);
+static const int nmtrr_raw = __arraycount(mtrr_raw);
 static int i686_mtrr_vcnt = 0;
 
 static struct mtrr_state *mtrr_var_raw;
