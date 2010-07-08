@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.29 2010/07/08 14:45:08 rmind Exp $	*/
+/*	$NetBSD: svc.c,v 1.30 2010/07/08 20:12:37 tron Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.29 2010/07/08 14:45:08 rmind Exp $");
+__RCSID("$NetBSD: svc.c,v 1.30 2010/07/08 20:12:37 tron Exp $");
 #endif
 #endif
 
@@ -643,7 +643,7 @@ svc_getreqset(readfds)
 
 	maskp = readfds->fds_bits;
 	for (sock = 0; sock < FD_SETSIZE; sock += NFDBITS) {
-	    for (mask = *maskp++; (bit = ffs(mask)) != 0;
+	    for (mask = *maskp++; (bit = ffs((int)mask)) != 0;
 		mask ^= (1 << (bit - 1))) {
 		/* sock has input waiting */
 		fd = sock + bit - 1;
