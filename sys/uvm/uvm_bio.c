@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.4 2010/07/07 16:35:26 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.5 2010/07/08 06:55:13 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.4 2010/07/07 16:35:26 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.5 2010/07/08 06:55:13 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -385,13 +385,10 @@ ubc_fault_enter:
 		 * is marked as PG_RDONLY.
 		 */
 
-		/* XXXUEBS device pages are always read-only for now */
-		rdonly = uvm_pageisdirect_p(pg) ||
-		    ((access_type & VM_PROT_WRITE) == 0 &&
-		     (pg->flags & PG_RDONLY) != 0) ||
+		rdonly = ((access_type & VM_PROT_WRITE) == 0 &&
+		    (pg->flags & PG_RDONLY) != 0) ||
 		    UVM_OBJ_NEEDS_WRITEFAULT(uobj);
-		KASSERT(uvm_pageisdirect_p(pg) ||
-		    (pg->flags & PG_RDONLY) == 0 ||
+		KASSERT((pg->flags & PG_RDONLY) == 0 ||
 		    (access_type & VM_PROT_WRITE) == 0 ||
 		    pg->offset < umap->writeoff ||
 		    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
