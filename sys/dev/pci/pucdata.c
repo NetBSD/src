@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.62 2010/07/08 00:59:47 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.63 2010/07/08 06:12:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.62 2010/07/08 00:59:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.63 2010/07/08 06:12:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,7 +368,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232 */
-	{   "Moxa Technologies, SmartIO CP104/PCI",
+	{   "Moxa Technologies, SmartIO CP-104/PCI",
 	    {	PCI_VENDOR_MOXA,	0x1041,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
@@ -380,7 +380,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232 */
-	{   "Moxa Technologies, SmartIO CP104-V2/PCI",
+	{   "Moxa Technologies, SmartIO CP-104-V2/PCI",
 	    {	PCI_VENDOR_MOXA,	0x1042,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
@@ -392,7 +392,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* Moxa Technologies Co., Ltd. PCI I/O Card 4S RS232 */
-	{   "Moxa Technologies, SmartIO CP104-EL/PCIe",
+	{   "Moxa Technologies, SmartIO CP-104-EL/PCIe",
 	    {	PCI_VENDOR_MOXA,	0x1043,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
@@ -681,7 +681,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* I-O DATA RSA-PCI2 four/eight(1-4) UARTs based on OX16PCI954 */
-	{   "IO-DATA RSA-PCI2/P4 or P8 (1-4) UARTs",
+	{   "I-O DATA RSA-PCI2/P4 or P8 (1-4) UARTs",
 	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_IODATA, 0xd007	},
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
@@ -753,7 +753,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	/* I-O DATA RSA-PCI2 eight(5-8) UARTs base on OX16PCI954 */
-	{   "IO-DATA RSA-PCI2/P8 (5-8) UARTs",
+	{   "I-O DATA RSA-PCI2/P8 (5-8) UARTs",
 	    {	PCI_VENDOR_OXFORDSEMI,	0x9511,	PCI_VENDOR_IODATA, 0xd007 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
