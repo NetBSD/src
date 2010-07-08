@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrierattr.3,v 1.6 2008/04/30 13:10:52 martin Exp $
+.\" $NetBSD: pthread_barrierattr.3,v 1.7 2010/07/08 23:23:37 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -22,7 +22,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 30, 2003
+.Dd July 9, 2010
 .Dt PTHREAD_BARRIERATTR 3
 .Os
 .Sh NAME
@@ -38,8 +38,8 @@
 .Ft int
 .Fn pthread_barrierattr_destroy "pthread_barrierattr_t *attr"
 .Sh DESCRIPTION
-Barrier attributes are used to specify parameters to
-.Fn pthread_barrier_init .
+Barrier attributes are used to specify parameters to be used with
+.Xr pthread_barrier_init 3 .
 One attribute object can be used in multiple calls to
 .Fn pthread_barrier_init ,
 with or without modifications between calls.
@@ -48,7 +48,7 @@ The
 .Fn pthread_barrierattr_init
 function initializes
 .Fa attr
-with all the default barrier attributes.
+with the default barrier attributes.
 .Pp
 The
 .Fn pthread_barrierattr_destroy
@@ -58,35 +58,9 @@ function destroys
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
 .Sh ERRORS
-.Fn pthread_barrierattr_init
-shall fail if:
-.Bl -tag -width Er
-.It Bq Er ENOMEM
-Insufficient memory exists to initialize the barrier attributes object.
-.El
-.Pp
-.Fn pthread_barrierattr_init
-may fail if:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The value specified by
-.Fa attr
-is invalid.
-.El
-.Pp
-.Fn pthread_barrierattr_destroy
-may fail if:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The value specified by
-.Fa attr
-is invalid
-.El
+No error codes are defined for either function.
 .Sh SEE ALSO
 .Xr pthread_barrier_init 3
 .Sh STANDARDS
-.Fn pthread_barrierattr_init
-and
-.Fn pthread_barrierattr_destroy
-conform to
+Both functions conform to
 .St -p1003.1-2001 .
