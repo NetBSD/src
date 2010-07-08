@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.115 2010/03/25 01:15:00 explorer Exp $	*/
+/*	$NetBSD: pthread.c,v 1.116 2010/07/08 15:13:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.115 2010/03/25 01:15:00 explorer Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.116 2010/07/08 15:13:35 rmind Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -415,11 +415,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		flag |= LWP_SUSPENDED;
 	ret = _lwp_create(&newthread->pt_uc, flag, &newthread->pt_lid);
 	if (ret != 0) {
-		free(name);
-		newthread->pt_state = PT_STATE_DEAD;
-		pthread_mutex_lock(&pthread__deadqueue_lock);
-		PTQ_INSERT_HEAD(&pthread__deadqueue, newthread, pt_deadq);
-		pthread_mutex_unlock(&pthread__deadqueue_lock);
+		pthread_mutex_lock(&newthread->pt_lock);
+		/* Will unlock and free name. */
+		pthread__reap(newthread);
 		return ret;
 	}
 
