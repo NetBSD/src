@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.13 2010/04/10 19:02:39 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.14 2010/07/08 23:27:17 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.13 2010/04/10 19:02:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.14 2010/07/08 23:27:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,8 +80,8 @@ static bool	sdtemp_pmf_resume(device_t, const pmf_qual_t *);
 
 struct sdtemp_dev_entry {
 	const uint16_t sdtemp_mfg_id;
-	const uint8_t  sdtemp_dev_id;
-	const uint8_t  sdtemp_rev_id;
+	const uint16_t  sdtemp_devrev;
+	const uint16_t  sdtemp_mask;
 	const uint8_t  sdtemp_resolution;
 	const char    *sdtemp_desc;
 };
@@ -100,36 +100,41 @@ struct sdtemp_dev_entry {
  */
 static const struct sdtemp_dev_entry
 sdtemp_dev_table[] = {
-    { MAXIM_MANUFACTURER_ID, MAX_6604_DEVICE_ID,    0xff, 3,
+    { MAXIM_MANUFACTURER_ID, MAX_6604_DEVICE_ID,    MAX_6604_MASK,   3,
 	"Maxim MAX604" },
-    { MCP_MANUFACTURER_ID,   MCP_9805_DEVICE_ID,    0xff, 2,
-	"Microchip Tech MCP9805" },
-    { MCP_MANUFACTURER_ID,   MCP_98242_DEVICE_ID,   0xff, -4,
+    { MCP_MANUFACTURER_ID,   MCP_9805_DEVICE_ID,    MCP_9805_MASK,   2,
+	"Microchip Tech MCP9805/MCP9843" },
+    { MCP_MANUFACTURER_ID,   MCP_98243_DEVICE_ID,   MCP_98243_MASK, -4,
+	"Microchip Tech MCP98243" },
+    { MCP_MANUFACTURER_ID,   MCP_98242_DEVICE_ID,   MCP_98242_MASK, -4,
 	"Microchip Tech MCP98242" },
-    { ADT_MANUFACTURER_ID,   ADT_7408_DEVICE_ID,    0xff, 4,
+    { ADT_MANUFACTURER_ID,   ADT_7408_DEVICE_ID,    ADT_7408_MASK,   4,
 	"Analog Devices ADT7408" },
-    { NXP_MANUFACTURER_ID,   NXP_SE97_DEVICE_ID,    0xff, 3,
-	"NXP Semiconductors SE97/SE98" },
-    { STTS_MANUFACTURER_ID,  STTS_424E02_DEVICE_ID, 0x00, 2,
-	"STmicroelectronics STTS424E02-DA" }, 
-    { STTS_MANUFACTURER_ID,  STTS_424E02_DEVICE_ID, 0x01, 2,
-	"STmicroelectronics STTS424E02-DN" }, 
-    { CAT_MANUFACTURER_ID,   CAT_34TS02_DEVICE_ID,  0xff, 4,
+    { NXP_MANUFACTURER_ID,   NXP_SE98_DEVICE_ID,    NXP_SE98_MASK,   3,
+	"NXP Semiconductors SE97B/SE98" },
+    { NXP_MANUFACTURER_ID,   NXP_SE97_DEVICE_ID,    NXP_SE97_MASK,   3,
+	"NXP Semiconductors SE97" },
+    { STTS_MANUFACTURER_ID,  STTS_424E_DEVICE_ID,   STTS_424E_MASK,  2,
+	"STmicroelectronics STTS424E" }, 
+    { STTS_MANUFACTURER_ID,  STTS_424_DEVICE_ID,    STTS_424_MASK,   2,
+	"STmicroelectronics STTS424" }, 
+    { CAT_MANUFACTURER_ID,   CAT_34TS02_DEVICE_ID,  CAT_34TS02_MASK, 4,
 	"Catalyst CAT34TS02/CAT6095" },
     { 0, 0, 0, 2, "Unknown" }
 };
 
 static int
-sdtemp_lookup(uint16_t mfg, uint16_t dev, uint16_t rev)
+sdtemp_lookup(uint16_t mfg, uint16_t devrev)
 {
 	int i;
 
-	for (i = 0; sdtemp_dev_table[i].sdtemp_mfg_id; i++)
-		if (sdtemp_dev_table[i].sdtemp_mfg_id == mfg &&
-		    sdtemp_dev_table[i].sdtemp_dev_id == dev &&
-		    (sdtemp_dev_table[i].sdtemp_rev_id == 0xff ||
-		     sdtemp_dev_table[i].sdtemp_rev_id == rev))
+	for (i = 0; sdtemp_dev_table[i].sdtemp_mfg_id; i++) {
+		if (mfg != sdtemp_dev_table[i].sdtemp_mfg_id)
+			continue;
+		if ((devrev & sdtemp_dev_table[i].sdtemp_mask) ==
+		    sdtemp_dev_table[i].sdtemp_devrev)
 			break;
+	}
 
 	return i;
 }
@@ -157,7 +162,7 @@ sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 	if (error)
 		return 0;
 
-	i = sdtemp_lookup(mfgid, devid >> 8, devid & 0xff);
+	i = sdtemp_lookup(mfgid, devid);
 	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0) {
 		aprint_debug("sdtemp: No match for mfg 0x%04x dev 0x%02x "
 		    "rev 0x%02x at address 0x%02x\n", mfgid, devid >> 8,
@@ -189,7 +194,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": attach error %d\n", error);
 		return;
 	}
-	i = sdtemp_lookup(mfgid, devid >> 8, devid & 0xff);
+	i = sdtemp_lookup(mfgid, devid);
 	sc->sc_resolution =
 	    sdtemp_dev_table[i].sdtemp_resolution;
 
