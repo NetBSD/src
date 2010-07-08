@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.2 2010/07/08 14:19:53 cherry Exp $ */
+/* $NetBSD: balloon.c,v 1.3 2010/07/08 14:51:14 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.2 2010/07/08 14:19:53 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.3 2010/07/08 14:51:14 cherry Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/param.h>
@@ -755,6 +755,7 @@ balloon_xenbus_setup(void)
 
 }
 
+#if DOM0OPS
 
 /* 
  * sysctl(9) stuff 
@@ -886,3 +887,5 @@ SYSCTL_SETUP(sysctl_kern_xen_balloon_setup, "sysctl kern.xen.balloon setup")
 	    sysctl_kern_xen_balloon, 0, &sysctl_target, 0,
 	    CTL_CREATE, CTL_EOL);
 }
+
+#endif /* DOM0OPS */
