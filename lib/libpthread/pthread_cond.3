@@ -1,7 +1,8 @@
-.\" $NetBSD: pthread_cond_wait.3,v 1.15 2010/05/20 04:41:11 jruoho Exp $
+.\" $NetBSD: pthread_cond.3,v 1.1 2010/07/08 19:20:20 rmind Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -10,6 +11,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -49,24 +51,109 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/lib/libpthread/man/pthread_cond_wait.3,v 1.16 2002/09/16 19:29:28 mini Exp $
-.\"
-.Dd May 19, 2010
-.Dt PTHREAD_COND_WAIT 3
+.\" ----------------------------------------------------------------------------
+.Dd July 8, 2010
+.Dt PTHREAD_COND 3
 .Os
 .Sh NAME
-.Nm pthread_cond_wait ,
-.Nm pthread_cond_timedwait
-.Nd wait on a condition variable
+.Nm pthread_cond
+.Nd condition variable interface
 .Sh LIBRARY
 .Lb libpthread
+.\" ----------------------------------------------------------------------------
 .Sh SYNOPSIS
 .In pthread.h
 .Ft int
-.Fn pthread_cond_wait "pthread_cond_t * restrict cond" "pthread_mutex_t * restrict mutex"
+.Fn pthread_cond_init "pthread_cond_t * restrict cond" \
+"const pthread_condattr_t * restrict attr"
+.Pp
+.Va pthread_cond_t cond = Dv PTHREAD_COND_INITIALIZER;
 .Ft int
-.Fn pthread_cond_timedwait "pthread_cond_t * restrict cond" "pthread_mutex_t * restrict mutex" "const struct timespec * restrict abstime"
+.Fn pthread_cond_destroy "pthread_cond_t *cond"
+.Ft int
+.Fn pthread_cond_broadcast "pthread_cond_t *cond"
+.Ft int
+.Fn pthread_cond_signal "pthread_cond_t *cond"
+.Ft int
+.Fn pthread_cond_wait "pthread_cond_t * restrict cond" \
+"pthread_mutex_t * restrict mutex"
+.Ft int
+.Fn pthread_cond_timedwait "pthread_cond_t * restrict cond" \
+"pthread_mutex_t * restrict mutex" "const struct timespec * restrict abstime"
+.\" ----------------------------------------------------------------------------
 .Sh DESCRIPTION
+The
+.Fn pthread_cond_init
+function creates a new condition variable, with attributes specified with
+.Fa attr .
+If
+.Fa attr
+is NULL the default attributes are used.
+.Pp
+Condition variables are intended to be used to communicate changes in
+the state of data shared between threads.
+Condition variables are always associated with a mutex to provide
+synchronized access to the shared data.
+A single predicate should always be associated with a
+condition variable.
+The predicate should identify a state of the
+shared data that must be true before the thread proceeds.
+.Pp
+The macro
+.Dv PTHREAD_COND_INITIALIZER
+can be used to initialize a condition variable when it can be statically
+allocated and the default attributes are appropriate.
+The effect is similar to calling
+.Fn pthread_cond_init
+with
+.Fa attr
+specified as
+.Dv NULL ,
+except that no error checking is done.
+.Pp
+.\" -----
+The
+.Fn pthread_cond_destroy
+function frees the resources allocated by the condition variable
+.Fa cond .
+.Pp
+.\" -----
+The
+.Fn pthread_cond_broadcast
+function unblocks all threads waiting for the condition variable
+.Fa cond .
+If no threads are waiting on
+.Fa cond ,
+the
+.Fn pthread_cond_broadcast
+function has no effect.
+.Pp
+The
+.Fn pthread_cond_signal
+function unblocks one thread waiting for the condition variable
+.Fa cond .
+If no threads are waiting on
+.Fa cond ,
+the
+.Fn pthread_cond_signal
+function has no effect.
+.Pp
+When calling
+.Fn pthread_cond_wait
+and/or
+.Fn pthread_cond_timedwait ,
+a temporary binding is established between the condition variable
+.Fa cond
+and a caller-supplied mutex.
+.Pp
+The same mutex must be held while calling
+.Fn pthread_cond_broadcast
+and
+.Fn pthread_cond_signal .
+Neither function enforces this requirement, but if the mutex is not
+held the resulting behaviour is undefined.
+.Pp
+.\" -----
 The
 .Fn pthread_cond_wait
 function atomically blocks the current thread waiting on the condition
@@ -142,15 +229,67 @@ change the mutex associated with it.
 In this implementation, none of the functions enforce this requirement, but
 if the mutex is not held or independent mutexes are used the resulting
 behaviour is undefined.
+.\" ----------------------------------------------------------------------------
 .Sh RETURN VALUES
 If successful, the
+.Fn pthread_cond_init
+function will return zero and put the new condition variable id into
+.Fa cond ,
+otherwise an error number will be returned to indicate the error.
+.Pp
+.\" -----
+If successful, the
+.Fn pthread_cond_destroy ,
+.Fn pthread_cond_signal ,
+.Fn pthread_cond_broadcast ,
 .Fn pthread_cond_wait
 and
 .Fn pthread_cond_timedwait
-functions will return zero.
-Otherwise an error number will be returned to
+will return zero, otherwise an error number will be returned to
 indicate the error.
+.\" ----------------------------------------------------------------------------
 .Sh ERRORS
+.Fn pthread_cond_init
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EAGAIN
+The system lacks the resources to initialize another condition variable.
+.It Bq Er ENOMEM
+The process cannot allocate enough memory to initialize another condition
+variable.
+.It Bq Er EINVAL
+The value specified by
+.Fa attr
+is invalid.
+.El
+.Pp
+.\" -----
+.Fn pthread_cond_destroy
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EBUSY
+The variable
+.Fa cond
+is locked by another thread.
+.It Bq Er EINVAL
+The value specified by
+.Fa cond
+is invalid.
+.El
+.Pp
+.\" -----
+.Fn pthread_cond_broadcast
+and
+.Fn pthread_cond_signal
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value specified by
+.Fa cond
+is invalid.
+.El
+.Pp
+.\" -----
 .Fn pthread_cond_wait
 may fail if:
 .Bl -tag -width Er
@@ -163,16 +302,11 @@ is invalid.
 .El
 .Pp
 .Fn pthread_cond_timedwait
-shall fail if:
+may fail if:
 .Bl -tag -width Er
 .It Bq Er ETIMEDOUT
 The system time has reached or exceeded the time specified in
 .Fa abstime .
-.El
-.Pp
-.Fn pthread_cond_timedwait
-may fail if:
-.Bl -tag -width Er
 .It Bq Er EINVAL
 The value specified by
 .Fa cond ,
@@ -192,14 +326,14 @@ The value specified by
 .Fa mutex
 is not locked in condition wait.
 .El
+.\" ----------------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr pthread_cond_broadcast 3 ,
-.Xr pthread_cond_destroy 3 ,
-.Xr pthread_cond_init 3 ,
-.Xr pthread_cond_signal 3
+.Xr pthread 3 ,
+.Xr pthread_barrier 3 ,
+.Xr pthread_condattr 3 ,
+.Xr pthread_mutex 3 ,
+.Xr pthread_rwlock 3 ,
+.Xr pthread_spin 3
 .Sh STANDARDS
-.Fn pthread_cond_wait
-and
-.Fn pthread_cond_timedwait
-conform to
-.St -p1003.1-96 .
+These functions conform to
+.St -p1003.1-2001 .
