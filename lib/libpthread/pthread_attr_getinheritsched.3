@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr_getinheritsched.3,v 1.1 2010/07/07 15:30:32 jruoho Exp $
+.\"	$NetBSD: pthread_attr_getinheritsched.3,v 1.2 2010/07/08 18:15:27 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -89,6 +89,9 @@ Scheduling contention scope; see
 .Sh RETURN VALUES
 If successful, both functions return 0.
 Otherwise, an error number is returned to indicate the error.
+.Sh COMPATIBILITY
+The standard leaves it unspecified which (if any) is the default
+inherit scheduler attribute in a newly initialized attribute object.
 .Sh ERRORS
 No errors are defined for
 .Fn pthread_attr_getinheritsched .
@@ -104,9 +107,6 @@ is invalid.
 .El
 .Sh SEE ALSO
 .Xr pthread_attr 3
-.Sh COMPATIBILITY
-The standard leaves it unspecified which (if any) is the default
-inherit scheduler attribute in a newly initialized attribute object.
 .Sh STANDARDS
 Both functions conform to
 .St -p1003.1-2008 .
