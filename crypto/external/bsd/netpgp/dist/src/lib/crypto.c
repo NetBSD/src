@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: crypto.c,v 1.24 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: crypto.c,v 1.25 2010/07/09 05:35:34 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -89,11 +89,11 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 				const BIGNUM *encmpi,
 				const __ops_seckey_t *seckey)
 {
-	uint8_t   encmpibuf[NETPGP_BUFSIZ];
-	uint8_t   mpibuf[NETPGP_BUFSIZ];
 	unsigned        mpisize;
-	int             n;
+	uint8_t		encmpibuf[NETPGP_BUFSIZ];
+	uint8_t		mpibuf[NETPGP_BUFSIZ];
 	int             i;
+	int             n;
 
 	mpisize = (unsigned)BN_num_bytes(encmpi);
 	/* MPI can't be more than 65,536 */
@@ -103,54 +103,52 @@ __ops_decrypt_decode_mpi(uint8_t *buf,
 	}
 	BN_bn2bin(encmpi, encmpibuf);
 
-	if (seckey->pubkey.alg != OPS_PKA_RSA) {
+	switch (seckey->pubkey.alg) {
+	case OPS_PKA_RSA:
+		if (__ops_get_debug_level(__FILE__)) {
+			hexdump(stderr, "encrypted", encmpibuf, 16);
+		}
+		n = __ops_rsa_private_decrypt(mpibuf, encmpibuf,
+					(unsigned)(BN_num_bits(encmpi) + 7) / 8,
+					&seckey->key.rsa, &seckey->pubkey.key.rsa);
+		if (n == -1) {
+			(void) fprintf(stderr, "ops_rsa_private_decrypt failure\n");
+			return -1;
+		}
+		if (__ops_get_debug_level(__FILE__)) {
+			hexdump(stderr, "decrypted", mpibuf, 16);
+		}
+		if (n <= 0) {
+			return -1;
+		}
+		/* Decode EME-PKCS1_V1_5 (RFC 2437). */
+		if (mpibuf[0] != 0 || mpibuf[1] != 2) {
+			return -1;
+		}
+		/* Skip the random bytes. */
+		for (i = 2; i < n && mpibuf[i]; ++i) {
+		}
+		if (i == n || i < 10) {
+			return -1;
+		}
+		/* Skip the zero */
+		i += 1;
+		/* this is the unencoded m buf */
+		if ((unsigned) (n - i) <= buflen) {
+			(void) memcpy(buf, mpibuf + i, (unsigned)(n - i)); /* XXX - Flexelint */
+		}
+		if (__ops_get_debug_level(__FILE__)) {
+			hexdump(stderr, "decoded m", buf, (size_t)(n - i));
+		}
+		return n - i;
+	case OPS_PKA_DSA:
+	case OPS_PKA_ELGAMAL:
+		(void) fprintf(stderr, "XXX - no support for DSA/Elgamal yet\n");
+		return 0;
+	default:
 		(void) fprintf(stderr, "pubkey algorithm wrong\n");
 		return -1;
 	}
-
-	if (__ops_get_debug_level(__FILE__)) {
-		hexdump(stderr, "encrypted", encmpibuf, 16);
-	}
-	n = __ops_rsa_private_decrypt(mpibuf, encmpibuf,
-				(unsigned)(BN_num_bits(encmpi) + 7) / 8,
-				&seckey->key.rsa, &seckey->pubkey.key.rsa);
-	if (n == -1) {
-		(void) fprintf(stderr, "ops_rsa_private_decrypt failure\n");
-		return -1;
-	}
-
-	if (__ops_get_debug_level(__FILE__)) {
-		hexdump(stderr, "decrypted", mpibuf, 16);
-	}
-	if (n <= 0) {
-		return -1;
-	}
-
-	/* Decode EME-PKCS1_V1_5 (RFC 2437). */
-	if (mpibuf[0] != 0 || mpibuf[1] != 2) {
-		return -1;
-	}
-
-	/* Skip the random bytes. */
-	for (i = 2; i < n && mpibuf[i]; ++i) {
-	}
-
-	if (i == n || i < 10) {
-		return -1;
-	}
-
-	/* Skip the zero */
-	i += 1;
-
-	/* this is the unencoded m buf */
-	if ((unsigned) (n - i) <= buflen) {
-		(void) memcpy(buf, mpibuf + i, (unsigned)(n - i)); /* XXX - Flexelint */
-	}
-
-	if (__ops_get_debug_level(__FILE__)) {
-		hexdump(stderr, "decoded m", buf, (size_t)(n - i));
-	}
-	return n - i;
 }
 
 /**
@@ -215,16 +213,16 @@ write_parsed_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		break;
 
 	case OPS_PTAG_CT_PK_SESSION_KEY:
-		return pk_sesskey_cb(pkt, cbinfo);
+		return __ops_pk_sesskey_cb(pkt, cbinfo);
 
 	case OPS_GET_SECKEY:
-		return get_seckey_cb(pkt, cbinfo);
+		return __ops_get_seckey_cb(pkt, cbinfo);
 
 	case OPS_GET_PASSPHRASE:
 		return cbinfo->cryptinfo.getpassphrase(pkt, cbinfo);
 
 	case OPS_PTAG_CT_LITDATA_BODY:
-		return litdata_cb(pkt, cbinfo);
+		return __ops_litdata_cb(pkt, cbinfo);
 
 	case OPS_PTAG_CT_ARMOUR_HEADER:
 	case OPS_PTAG_CT_ARMOUR_TRAILER:
@@ -291,7 +289,10 @@ __ops_encrypt_file(__ops_io_t *io,
 	}
 
 	/* Push the encrypted writer */
-	__ops_push_enc_se_ip(output, pubkey);
+	if (!__ops_push_enc_se_ip(output, pubkey)) {
+		__ops_memory_free(inmem);
+		return 0;
+	}
 
 	/* This does the writing */
 	__ops_write(output, __ops_mem_data(inmem), __ops_mem_len(inmem));

@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.63 2010/07/01 04:27:21 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.64 2010/07/09 05:35:34 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -245,7 +245,7 @@ readkeyring(netpgp_t *netpgp, const char *name)
 
 /* read keys from ssh key files */
 static int
-readsshkeys(netpgp_t *netpgp, char *homedir)
+readsshkeys(netpgp_t *netpgp, char *homedir, const char *needseckey)
 {
 	__ops_keyring_t	*pubring;
 	__ops_keyring_t	*secring;
@@ -285,25 +285,26 @@ readsshkeys(netpgp_t *netpgp, char *homedir)
 	} else {
 		__ops_append_keyring(netpgp->pubring, pubring);
 	}
-	netpgp_setvar(netpgp, "sshpubfile", filename);
-	/* try to take the ".pub" off the end */
-	if (filename == f) {
-		f[strlen(f) - 4] = 0x0;
-	} else {
-		(void) snprintf(f, sizeof(f), "%.*s",
-				(int)strlen(filename) - 4, filename);
-		filename = f;
-	}
-	if ((secring = calloc(1, sizeof(*secring))) == NULL) {
-		(void) fprintf(stderr, "readsshkeys: bad alloc\n");
-		return 0;
-	}
-	if (__ops_ssh2_readkeys(netpgp->io, pubring, secring, NULL, filename, hashtype)) {
+	if (needseckey) {
+		netpgp_setvar(netpgp, "sshpubfile", filename);
+		/* try to take the ".pub" off the end */
+		if (filename == f) {
+			f[strlen(f) - 4] = 0x0;
+		} else {
+			(void) snprintf(f, sizeof(f), "%.*s",
+					(int)strlen(filename) - 4, filename);
+			filename = f;
+		}
+		if ((secring = calloc(1, sizeof(*secring))) == NULL) {
+			(void) fprintf(stderr, "readsshkeys: bad alloc\n");
+			return 0;
+		}
+		if (!__ops_ssh2_readkeys(netpgp->io, pubring, secring, NULL, filename, hashtype)) {
+			(void) fprintf(stderr, "readsshkeys: can't read sec %s\n", filename);
+			return 0;
+		}
 		netpgp->secring = secring;
 		netpgp_setvar(netpgp, "sshsecfile", filename);
-	} else {
-		(void) fprintf(stderr, "readsshkeys: can't read sec %s (%d)\n",
-				filename, errno);
 	}
 	return 1;
 }
@@ -439,21 +440,25 @@ appendkey(__ops_io_t *io, __ops_key_t *key, char *ringfile)
 
 /* return 1 if the file contains ascii-armoured text */
 static unsigned
-isarmoured(__ops_io_t *io, const char *f, const char *text)
+isarmoured(__ops_io_t *io, const char *f, const void *memory, const char *text)
 {
 	unsigned	 armoured;
 	FILE		*fp;
 	char	 	 buf[BUFSIZ];
 
 	armoured = 0;
-	if ((fp = fopen(f, "r")) == NULL) {
-		(void) fprintf(io->errs, "isarmoured: can't open '%s'\n", f);
-		return 0;
+	if (f) {
+		if ((fp = fopen(f, "r")) == NULL) {
+			(void) fprintf(io->errs, "isarmoured: can't open '%s'\n", f);
+			return 0;
+		}
+		if (fgets(buf, sizeof(buf), fp) != NULL) {
+			armoured = (strncmp(buf, text, strlen(text)) == 0);
+		}
+		(void) fclose(fp);
+	} else {
+		armoured = (strncmp(memory, text, strlen(text)) == 0);
 	}
-	if (fgets(buf, sizeof(buf), fp) != NULL) {
-		armoured = (strncmp(buf, text, strlen(text)) == 0);
-	}
-	(void) fclose(fp);
 	return armoured;
 }
 
@@ -563,8 +568,8 @@ netpgp_init(netpgp_t *netpgp)
 		}
 	} else {
 		last = (netpgp->pubring != NULL);
-		if (!readsshkeys(netpgp, homedir)) {
-			(void) fprintf(io->errs, "Can't read ssh pub key\n");
+		if (!readsshkeys(netpgp, homedir, netpgp_getvar(netpgp, "need userid"))) {
+			(void) fprintf(io->errs, "Can't read ssh keys\n");
 			return 0;
 		}
 		if ((userid = netpgp_getvar(netpgp, "userid")) == NULL) {
@@ -769,31 +774,17 @@ netpgp_export_key(netpgp_t *netpgp, char *name)
 int
 netpgp_import_key(netpgp_t *netpgp, char *f)
 {
-#if 0
-	__ops_keyring_t	*keyring;
-#endif
 	__ops_io_t	*io;
 	unsigned	 realarmor;
-#if 0
-	char		 ringfile[MAXPATHLEN];
-#endif
 	int		 done;
 
 	io = netpgp->io;
-	realarmor = isarmoured(io, f, IMPORT_ARMOR_HEAD);
+	realarmor = isarmoured(io, f, NULL, IMPORT_ARMOR_HEAD);
 	done = __ops_keyring_fileread(netpgp->pubring, realarmor, f);
 	if (!done) {
 		(void) fprintf(io->errs, "Cannot import key from file %s\n", f);
 		return 0;
 	}
-#if 0
-	keyring = netpgp->pubring;
-	(void) snprintf(ringfile, sizeof(ringfile), "%s/pubring.gpg", netpgp_getvar(netpgp, "homedir"));
-	if (!appendkey(io, &keyring->keys[keyring->keyc - 1], ringfile)) {
-		(void) fprintf(io->errs, "Cannot append imported key to pubring %s\n", ringfile);
-		return 0;
-	}
-#endif
 	return __ops_keyring_list(io, netpgp->pubring, 0);
 }
 
@@ -900,7 +891,7 @@ netpgp_encrypt_file(netpgp_t *netpgp,
 					overwrite);
 }
 
-#define ARMOR_HEAD	"-----BEGIN PGP MESSAGE-----\r\n"
+#define ARMOR_HEAD	"-----BEGIN PGP MESSAGE-----"
 
 /* decrypt a file */
 int
@@ -917,7 +908,7 @@ netpgp_decrypt_file(netpgp_t *netpgp, const char *f, char *out, int armored)
 			"netpgp_decrypt_file: no filename specified\n");
 		return 0;
 	}
-	realarmor = isarmoured(io, f, ARMOR_HEAD);
+	realarmor = isarmoured(io, f, NULL, ARMOR_HEAD);
 	return __ops_decrypt_file(netpgp->io, f, out, netpgp->secring,
 				netpgp->pubring,
 				realarmor, overwrite,
@@ -1019,7 +1010,7 @@ netpgp_verify_file(netpgp_t *netpgp, const char *in, const char *out, int armore
 			"netpgp_verify_file: no filename specified\n");
 		return 0;
 	}
-	realarmor = isarmoured(io, in, ARMOR_SIG_HEAD);
+	realarmor = isarmoured(io, in, NULL, ARMOR_SIG_HEAD);
 	if (__ops_validate_file(io, &result, in, out, (const int)realarmor, netpgp->pubring)) {
 		resultp(io, in, &result, netpgp->pubring);
 		return 1;
@@ -1212,20 +1203,20 @@ netpgp_decrypt_memory(netpgp_t *netpgp, const void *input, const size_t insize,
 {
 	__ops_memory_t	*mem;
 	__ops_io_t	*io;
-	unsigned	 realarmor;
+	unsigned	 realarmour;
 	size_t		 m;
 
+	__OPS_USED(armored);
 	io = netpgp->io;
-	realarmor = (unsigned) armored;
 	if (input == NULL) {
 		(void) fprintf(io->errs,
 			"netpgp_decrypt_memory: no memory\n");
 		return 0;
 	}
-	realarmor = (strncmp(input, ARMOR_HEAD, sizeof(ARMOR_HEAD) - 1) == 0);
+	realarmour = isarmoured(io, NULL, input, ARMOR_HEAD);
 	mem = __ops_decrypt_buf(netpgp->io, input, insize, netpgp->secring,
 				netpgp->pubring,
-				realarmor, netpgp->passfp,
+				realarmour, netpgp->passfp,
 				get_passphrase_cb);
 	m = MIN(__ops_mem_len(mem), outsize);
 	(void) memcpy(out, __ops_mem_data(mem), m);
