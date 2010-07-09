@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: openssl_crypto.c,v 1.24 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: openssl_crypto.c,v 1.25 2010/07/09 05:35:34 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_DSA_H
@@ -834,9 +834,8 @@ rsa_generate_keypair(__ops_key_t *keydata,
 	__ops_push_checksum_writer(output, seckey);
 
 	switch (seckey->pubkey.alg) {
-		/* case OPS_PKA_DSA: */
-		/* return __ops_write_mpi(output, key->key.dsa.x); */
-
+	case OPS_PKA_DSA:
+		return __ops_write_mpi(output, seckey->key.dsa.x);
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
 	case OPS_PKA_RSA_SIGN_ONLY:
@@ -847,9 +846,8 @@ rsa_generate_keypair(__ops_key_t *keydata,
 			return 0;
 		}
 		break;
-
-		/* case OPS_PKA_ELGAMAL: */
-		/* return __ops_write_mpi(output, key->key.elgamal.x); */
+	case OPS_PKA_ELGAMAL:
+		return __ops_write_mpi(output, seckey->key.elgamal.x);
 
 	default:
 		(void) fprintf(stderr, "Bad seckey->pubkey.alg\n");

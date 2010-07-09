@@ -75,7 +75,7 @@ unsigned __ops_write_se_ip_pktset(__ops_output_t *, const uint8_t *,
 		       const unsigned,
 		       __ops_crypt_t *);
 void __ops_push_enc_crypt(__ops_output_t *, __ops_crypt_t *);
-void __ops_push_enc_se_ip(__ops_output_t *, const __ops_key_t *);
+int __ops_push_enc_se_ip(__ops_output_t *, const __ops_key_t *);
 
 /* Secret Key checksum */
 void __ops_push_checksum_writer(__ops_output_t *, __ops_seckey_t *);
@@ -117,9 +117,9 @@ void __ops_teardown_file_read(__ops_stream_t *, int);
 unsigned __ops_reader_set_accumulate(__ops_stream_t *, unsigned);
 
 /* useful callbacks */
-__ops_cb_ret_t litdata_cb(const __ops_packet_t *, __ops_cbdata_t *);
-__ops_cb_ret_t pk_sesskey_cb(const __ops_packet_t *, __ops_cbdata_t *);
-__ops_cb_ret_t get_seckey_cb(const __ops_packet_t *, __ops_cbdata_t *);
+__ops_cb_ret_t __ops_litdata_cb(const __ops_packet_t *, __ops_cbdata_t *);
+__ops_cb_ret_t __ops_pk_sesskey_cb(const __ops_packet_t *, __ops_cbdata_t *);
+__ops_cb_ret_t __ops_get_seckey_cb(const __ops_packet_t *, __ops_cbdata_t *);
 
 int __ops_getpassphrase(void *, char *, size_t);
 

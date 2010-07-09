@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: misc.c,v 1.32 2010/06/25 18:30:16 agc Exp $");
+__RCSID("$NetBSD: misc.c,v 1.33 2010/07/09 05:35:34 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -111,21 +111,18 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 	__ops_keyring_t		*keyring;
 	accumulate_t		*accumulate;
 
+	if (__ops_get_debug_level(__FILE__)) {
+		(void) fprintf(stderr, "accumulate callback: packet tag %u\n", pkt->tag);
+	}
 	accumulate = __ops_callback_arg(cbinfo);
 	keyring = accumulate->keyring;
 	switch (pkt->tag) {
 	case OPS_PTAG_CT_PUBLIC_KEY:
+		__ops_add_to_pubring(keyring, &content->pubkey);
+		return OPS_KEEP_MEMORY;
 	case OPS_PTAG_CT_SECRET_KEY:
 	case OPS_PTAG_CT_ENCRYPTED_SECRET_KEY:
-		if (__ops_get_debug_level(__FILE__)) {
-			(void) fprintf(stderr, "Creating key %u - tag %u\n",
-				keyring->keyc, pkt->tag);
-		}
-		if (pkt->tag == OPS_PTAG_CT_PUBLIC_KEY) {
-			__ops_add_to_pubring(keyring, &content->pubkey);
-		} else {
-			__ops_add_to_secring(keyring, &content->seckey);
-		}
+		__ops_add_to_secring(keyring, &content->seckey);
 		return OPS_KEEP_MEMORY;
 	case OPS_PTAG_CT_USER_ID:
 		if (__ops_get_debug_level(__FILE__)) {
@@ -133,14 +130,12 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 					content->userid,
 					keyring->keyc - 1);
 		}
-		if (keyring->keyc > 0) {
-			__ops_add_userid(&keyring->keys[keyring->keyc - 1],
-						content->userid);
-			return OPS_KEEP_MEMORY;
+		if (keyring->keyc == 0) {
+			OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID, "No userid found");
+		} else {
+			__ops_add_userid(&keyring->keys[keyring->keyc - 1], content->userid);
 		}
-		OPS_ERROR(cbinfo->errors, OPS_E_P_NO_USERID, "No userid found");
 		return OPS_KEEP_MEMORY;
-
 	case OPS_PARSER_PACKET_END:
 		if (keyring->keyc > 0) {
 			__ops_add_subpacket(&keyring->keys[keyring->keyc - 1],
@@ -148,20 +143,16 @@ accumulate_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			return OPS_KEEP_MEMORY;
 		}
 		return OPS_RELEASE_MEMORY;
-
 	case OPS_PARSER_ERROR:
 		(void) fprintf(stderr, "Error: %s\n", content->error);
 		return OPS_FINISHED;
-
 	case OPS_PARSER_ERRCODE:
 		(void) fprintf(stderr, "parse error: %s\n",
 				__ops_errcode(content->errcode.errcode));
 		break;
-
 	default:
 		break;
 	}
-
 	/* XXX: we now exclude so many things, we should either drop this or */
 	/* do something to pass on copies of the stuff we keep */
 	return __ops_stacked_callback(pkt, cbinfo);
@@ -501,7 +492,7 @@ __ops_fingerprint(__ops_fingerprint_t *fp, const __ops_pubkey_t *key, __ops_hash
 				"__ops_fingerprint: bad md5 alloc\n");
 			return 0;
 		}
-		type = (key->alg == OPS_PKA_RSA) ? "ssh-rsa" : "ssh-dsa";
+		type = (key->alg == OPS_PKA_RSA) ? "ssh-rsa" : "ssh-dss";
 		hash_string(&hash, (const uint8_t *)(const void *)type, strlen(type));
 		switch(key->alg) {
 		case OPS_PKA_RSA:
