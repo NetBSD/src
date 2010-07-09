@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.60 2010/07/03 10:55:47 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.61 2010/07/09 08:10:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.60 2010/07/03 10:55:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.61 2010/07/09 08:10:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1207,7 +1207,8 @@ rumpfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct rumpfs_mount *rfsmp = mp->mnt_data;
 
-	vget(rfsmp->rfsmp_rvp, LK_EXCLUSIVE | LK_RETRY);
+	vref(rfsmp->rfsmp_rvp);
+	vn_lock(rfsmp->rfsmp_rvp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = rfsmp->rfsmp_rvp;
 	return 0;
 }

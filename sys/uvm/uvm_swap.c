@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.151 2010/06/24 13:03:20 hannken Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.152 2010/07/09 08:13:33 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.151 2010/06/24 13:03:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.152 2010/07/09 08:13:33 hannken Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -552,7 +552,9 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap, register_t *retva
 	 */
 	if (SCARG(uap, arg) == NULL) {
 		vp = rootvp;		/* miniroot */
-		if (vget(vp, LK_EXCLUSIVE)) {
+		vref(vp);
+		if (vn_lock(vp, LK_EXCLUSIVE)) {
+			vrele(vp);
 			error = EBUSY;
 			goto out;
 		}

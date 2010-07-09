@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.43 2010/06/24 13:03:10 hannken Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.44 2010/07/09 08:16:28 hannken Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.43 2010/06/24 13:03:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.44 2010/07/09 08:16:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,11 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 		if (dvp == NULL)
 			return EINVAL;
 		vp = VTOSMB(VTOSMB(dvp)->n_parent)->n_vnode;
-		if ((error = vget(vp, LK_EXCLUSIVE | LK_RETRY)) == 0)
+		vref(vp);
+		if ((error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY)) == 0)
 			*vpp = vp;
+		else
+			vrele(vp);
 		return (error);
 	}
 
