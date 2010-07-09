@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_condattr.3,v 1.6 2010/07/09 16:54:30 jruoho Exp $
+.\" $NetBSD: pthread_condattr.3,v 1.7 2010/07/09 17:54:08 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,18 @@ function destroys a condition attribute object.
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
 .Sh ERRORS
-No errors are defined for either function.
+No errors are defined for
+.Fn pthread_condattr_init .
+.Pp
+The
+.Fn pthread_condattr_destroy
+function may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value specified by
+.Fa attr
+is invalid.
+.El
 .Sh SEE ALSO
 .Xr pthread_cond_init 3
 .Sh STANDARDS
