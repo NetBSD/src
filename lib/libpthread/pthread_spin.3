@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_spin.3,v 1.3 2010/07/08 21:48:07 jruoho Exp $
+.\" $NetBSD: pthread_spin.3,v 1.4 2010/07/09 08:31:35 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,7 +98,6 @@ function is used to release the read/write lock previously obtained by
 or
 .Fn pthread_spin_trylock .
 The results are undefined if the lock is not held by the calling thread.
-
 .\" ----------------------------------------------------------------------------
 .Sh RETURN VALUES
 If successful, all described functions return zero.
