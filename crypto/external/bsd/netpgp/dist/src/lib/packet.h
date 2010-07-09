@@ -398,13 +398,6 @@ typedef struct {
 				 * with x being the secret) */
 } __ops_elgamal_pubkey_t;
 
-/** Union to hold public key params of any algorithm */
-typedef union {
-	__ops_dsa_pubkey_t dsa;	/* A DSA public key */
-	__ops_rsa_pubkey_t rsa;	/* An RSA public key */
-	__ops_elgamal_pubkey_t elgamal;	/* An ElGamal public key */
-} __ops_pubkey_union_t;
-
 /** Version.
  * OpenPGP has two different protocol versions: version 3 and version 4.
  *
@@ -427,7 +420,11 @@ typedef struct {
 		* v3 keys.  */
 	unsigned		days_valid;	/* v4 duration */
 	__ops_pubkey_alg_t	alg;	/* Public Key Algorithm type */
-	__ops_pubkey_union_t	key;	/* Public Key Parameters */
+	union {
+		__ops_dsa_pubkey_t dsa;	/* A DSA public key */
+		__ops_rsa_pubkey_t rsa;	/* An RSA public key */
+		__ops_elgamal_pubkey_t elgamal;	/* An ElGamal public key */
+	}			key;	/* Public Key Parameters */
 } __ops_pubkey_t;
 
 /** Structure to hold data for one RSA secret key
@@ -448,13 +445,6 @@ typedef struct {
 typedef struct {
 	BIGNUM         *x;
 } __ops_elgamal_seckey_t;
-
-/** __ops_seckey_union_t */
-typedef union {
-	__ops_rsa_seckey_t rsa;
-	__ops_dsa_seckey_t dsa;
-	__ops_elgamal_seckey_t elgamal;
-} __ops_seckey_union_t;
 
 /** s2k_usage_t
  */
@@ -544,7 +534,11 @@ typedef struct __ops_seckey_t {
 	uint8_t				salt[OPS_SALT_SIZE];
 	unsigned			octetc;
 	uint8_t				iv[OPS_MAX_BLOCK_SIZE];
-	__ops_seckey_union_t		key;
+	union {
+		__ops_rsa_seckey_t		rsa;
+		__ops_dsa_seckey_t		dsa;
+		__ops_elgamal_seckey_t		elgamal;
+	}				key;
 	unsigned			checksum;
 	uint8_t			       *checkhash;
 } __ops_seckey_t;
@@ -606,14 +600,6 @@ typedef struct __ops_elgamal_sig_t {
 	BIGNUM         *s;
 } __ops_elgamal_sig_t;
 
-/** Union to hold signature params of any algorithm */
-typedef union {
-	__ops_rsa_sig_t rsa;/* An RSA Signature */
-	__ops_dsa_sig_t dsa;/* A DSA Signature */
-	__ops_elgamal_sig_t elgamal;	/* deprecated */
-	__ops_data_t unknown;	/* private or experimental */
-} __ops_sig_union_t;
-
 #define OPS_KEY_ID_SIZE		8
 #define OPS_FINGERPRINT_SIZE	20
 
@@ -631,7 +617,12 @@ typedef struct __ops_sig_info_t {
 							 * of signer */
 	__ops_pubkey_alg_t key_alg;	/* public key algorithm number */
 	__ops_hash_alg_t hash_alg;	/* hashing algorithm number */
-	__ops_sig_union_t sig;	/* signature params */
+	union {
+		__ops_rsa_sig_t	rsa;	/* An RSA Signature */
+		__ops_dsa_sig_t	dsa;	/* A DSA Signature */
+		__ops_elgamal_sig_t	elgamal;	/* deprecated */
+		__ops_data_t	unknown;	/* private or experimental */
+	}			sig;	/* signature params */
 	size_t          v4_hashlen;
 	uint8_t		*v4_hashed;
 	unsigned	 birthtime_set:1;
