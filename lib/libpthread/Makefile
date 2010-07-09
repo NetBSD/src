@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2010/07/09 07:31:01 jruoho Exp $
+#	$NetBSD: Makefile,v 1.69 2010/07/09 08:22:04 jruoho Exp $
 #
 
 WARNS=	4
@@ -105,11 +105,11 @@ MAN+=	affinity.3 pthread.3 \
 	pthread_exit.3 \
 	pthread_getname_np.3 \
 	pthread_getspecific.3 pthread_join.3 \
-	pthread_key_create.3 pthread_key_delete.3 pthread_kill.3 \
+	pthread_key_create.3 pthread_kill.3 \
 	pthread_mutex.3 pthread_mutexattr.3 \
 	pthread_once.3 pthread_rwlock.3 pthread_rwlockattr.3 \
 	pthread_schedparam.3 pthread_self.3 \
-	pthread_setspecific.3 pthread_sigmask.3 pthread_spin.3 \
+	pthread_sigmask.3 pthread_spin.3 \
 	pthread_suspend_np.3 pthread_testcancel.3
 
 MLINKS+=	affinity.3 pthread_setaffinity_np.3
@@ -155,6 +155,8 @@ MLINKS+=	pthread_condattr.3 pthread_condattr_init.3
 MLINKS+=	pthread_condattr.3 pthread_condattr_destroy.3
 
 MLINKS+=	pthread_getname_np.3 pthread_setname_np.3
+MLINKS+=	pthread_getspecific.3 pthread_setspecific.3
+MLINKS+=	pthread_key_create.3 pthread_key_delete.3
 
 MLINKS+=	pthread_mutex.3 pthread_mutex_init.3
 MLINKS+=	pthread_mutex.3 pthread_mutex_destroy.3
