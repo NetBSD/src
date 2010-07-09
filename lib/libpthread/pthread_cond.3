@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond.3,v 1.4 2010/07/09 18:01:53 jruoho Exp $
+.\" $NetBSD: pthread_cond.3,v 1.5 2010/07/09 20:56:01 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,7 +126,7 @@ is that the former unblocks all threads waiting for the condition variable,
 whereas the latter blocks only one waiting thread.
 If no threads are waiting on
 .Fa cond ,
-neihter function has any effect.
+neither function has any effect.
 If more than one thread is blocked on a condition variable,
 the used scheduling policy determines the order in which threads are unblocked.
 The same mutex used for waiting must be held while calling either function.
