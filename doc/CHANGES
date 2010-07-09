@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1411 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1412 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -644,3 +644,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	upgt(4): Add a driver for Conexant/Intersil PrismGT SoftMAC USB
 		IEEE 802.11b/g WLAN device, ported from OpenBSD by
 		FUKAUMI Naoki. [tsutsui 20100704]
+	compat_linux(8): Update linux emulation to support NPTL.
+		We now claim to be linux kernel version 2.6.18.  [chs 20100706]
