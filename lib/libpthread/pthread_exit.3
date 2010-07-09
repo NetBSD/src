@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_exit.3,v 1.4 2008/05/02 18:11:04 martin Exp $
+.\" $NetBSD: pthread_exit.3,v 1.5 2010/07/09 08:51:28 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_exit.3,v 1.16 2002/09/16 19:29:28 mini Exp $
 .\"
-.Dd January 30, 2003
+.Dd July 9, 2010
 .Dt PTHREAD_EXIT 3
 .Os
 .Sh NAME
@@ -125,6 +125,5 @@ None.
 .Xr pthread_create 3 ,
 .Xr pthread_join 3
 .Sh STANDARDS
-.Fn pthread_exit
-conforms to
-.St -p1003.1-96 .
+The function conforms to
+.St -p1003.1-2001 .
