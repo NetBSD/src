@@ -1,6 +1,6 @@
-.\" $NetBSD: pthread_suspend_np.3,v 1.4 2010/07/09 08:51:28 jruoho Exp $
+.\" $NetBSD: pthread_suspend_np.3,v 1.5 2010/07/09 09:18:45 jruoho Exp $
 .\"
-.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2003, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -46,10 +46,10 @@
 The
 .Fn pthread_suspend_np
 function suspends the
-.Ar thread
+.Fa thread
 given as argument.
 If
-.Ar thread
+.Fa thread
 is the currently running thread as returned by
 .Xr pthread_self 3 ,
 the function fails and returns
@@ -57,35 +57,42 @@ the function fails and returns
 Otherwise, it removes the named thread from the running queue, and
 adds it to the suspended queue.
 The
-.Ar thread
+.Fa thread
 will remain blocked until
 .Fn pthread_resume_np
 is called on it.
-.Pp
+In other words,
 .Fn pthread_resume_np
 resumes the
-.Ar thread
+.Fa thread
 given as argument, if it was suspended.
 .Sh RETURN VALUES
-The
-.Fn pthread_suspend_np
-function returns 0 on success and an error number indicating the
+Both functions return 0 on success and an error number indicating the
 reason for the failure.
-The
-.Fn pthread_resume_np
-function always returns 0.
 .Sh COMPATIBILITY
 These functions are non-standard extensions.
 .Sh ERRORS
+The
 .Fn pthread_suspend_np
-shall fail if:
+function may fail if:
 .Bl -tag -width Er
 .It Bq Er EDEADLK
 The thread requested to suspend was the currently running thread.
+.It Bq Er ESRCH
+The supplied
+.Fa thread
+was invalid.
 .El
 .Pp
+The
 .Fn pthread_resume_np
-never fails.
+function may fail if:
+.Bl -tag -width Er
+.It Bq Er ESRCH
+The supplied
+.Fa thread
+was invalid.
+.El
 .Sh NOTES
 Some
 .Fn pthread_suspend_np
@@ -100,8 +107,10 @@ in a signal handler, this is currently not allowed.
 .Pp
 In
 .Fn pthread_resume_np
-we don't check if the
-.Ar thread
+the
+.Nx
+implementation does not check if the
+.Fa thread
 argument is not already suspended.
 Some implementations might return an error condition if
 .Fn pthread_resume_np
