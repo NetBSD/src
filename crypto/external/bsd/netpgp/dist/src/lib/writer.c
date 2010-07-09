@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: writer.c,v 1.24 2010/06/25 03:37:28 agc Exp $");
+__RCSID("$NetBSD: writer.c,v 1.25 2010/07/09 05:35:35 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1025,7 +1025,7 @@ static void     encrypt_se_ip_destroyer(__ops_writer_t *);
 \ingroup Core_WritersNext
 \brief Push Encrypted SE IP Writer onto stack
 */
-void 
+int 
 __ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 {
 	__ops_pk_sesskey_t *encrypted_pk_sesskey;
@@ -1035,25 +1035,28 @@ __ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 
 	if ((se_ip = calloc(1, sizeof(*se_ip))) == NULL) {
 		(void) fprintf(stderr, "__ops_push_enc_se_ip: bad alloc\n");
-		return;
+		return 0;
 	}
 
 	/* Create and write encrypted PK session key */
-	encrypted_pk_sesskey = __ops_create_pk_sesskey(pubkey);
+	if ((encrypted_pk_sesskey = __ops_create_pk_sesskey(pubkey)) == NULL) {
+		(void) fprintf(stderr, "__ops_push_enc_se_ip: null pk sesskey\n");
+		return 0;
+	}
 	__ops_write_pk_sesskey(output, encrypted_pk_sesskey);
 
 	/* Setup the se_ip */
 	if ((encrypted = calloc(1, sizeof(*encrypted))) == NULL) {
 		free(se_ip);
 		(void) fprintf(stderr, "__ops_push_enc_se_ip: bad alloc\n");
-		return;
+		return 0;
 	}
 	__ops_crypt_any(encrypted, encrypted_pk_sesskey->symm_alg);
 	if ((iv = calloc(1, encrypted->blocksize)) == NULL) {
 		free(se_ip);
 		free(encrypted);
 		(void) fprintf(stderr, "__ops_push_enc_se_ip: bad alloc\n");
-		return;
+		return 0;
 	}
 	encrypted->set_iv(encrypted, iv);
 	encrypted->set_crypt_key(encrypted, &encrypted_pk_sesskey->key[0]);
@@ -1067,6 +1070,7 @@ __ops_push_enc_se_ip(__ops_output_t *output, const __ops_key_t *pubkey)
 	/* tidy up */
 	free(encrypted_pk_sesskey);
 	free(iv);
+	return 1;
 }
 
 static unsigned 

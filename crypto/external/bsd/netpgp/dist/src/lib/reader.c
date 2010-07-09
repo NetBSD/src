@@ -54,7 +54,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: reader.c,v 1.37 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: reader.c,v 1.38 2010/07/09 05:35:35 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2081,12 +2081,12 @@ __ops_teardown_file_read(__ops_stream_t *stream, int fd)
 }
 
 __ops_cb_ret_t
-litdata_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
+__ops_litdata_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 
 	if (__ops_get_debug_level(__FILE__)) {
-		printf("litdata_cb: ");
+		printf("__ops_litdata_cb: ");
 		__ops_print_packet(&cbinfo->printstate, pkt);
 	}
 	/* Read data from packet into static buffer */
@@ -2095,7 +2095,7 @@ litdata_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		/* if writer enabled, use it */
 		if (cbinfo->output) {
 			if (__ops_get_debug_level(__FILE__)) {
-				printf("litdata_cb: length is %u\n",
+				printf("__ops_litdata_cb: length is %u\n",
 					content->litdata_body.length);
 			}
 			__ops_write(cbinfo->output,
@@ -2116,7 +2116,7 @@ litdata_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 }
 
 __ops_cb_ret_t
-pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
+__ops_pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	unsigned		 from;
@@ -2134,7 +2134,7 @@ pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 		}
 		if (!cbinfo->cryptinfo.secring) {
 			(void) fprintf(io->errs,
-				"pk_sesskey_cb: bad keyring\n");
+				"__ops_pk_sesskey_cb: bad keyring\n");
 			return (__ops_cb_ret_t)0;
 		}
 		from = 0;
@@ -2168,7 +2168,7 @@ pk_sesskey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 */
 
 __ops_cb_ret_t
-get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
+__ops_get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 {
 	const __ops_contents_t	*content = &pkt->u;
 	const __ops_seckey_t	*secret;
@@ -2199,9 +2199,12 @@ get_seckey_cb(const __ops_packet_t *pkt, __ops_cbdata_t *cbinfo)
 			return (__ops_cb_ret_t)0;
 		}
 		keypair = cbinfo->cryptinfo.keydata;
+		if (pubkey == NULL) {
+			pubkey = keypair;
+		}
 		do {
 			/* print out the user id */
-			__ops_print_keydata(io, cbinfo->cryptinfo.pubring,pubkey, "pub", &pubkey->key.pubkey, 0);
+			__ops_print_keydata(io, cbinfo->cryptinfo.pubring, pubkey, "pub", &pubkey->key.pubkey, 0);
 			/* now decrypt key */
 			secret = __ops_decrypt_seckey(keypair, cbinfo->passfp);
 			if (secret == NULL) {

@@ -57,7 +57,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: keyring.c,v 1.38 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: keyring.c,v 1.39 2010/07/09 05:35:34 agc Exp $");
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -377,12 +377,13 @@ unsigned
 __ops_is_key_supported(const __ops_key_t *key)
 {
 	if (key->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		if (key->key.pubkey.alg == OPS_PKA_RSA) {
+		switch(key->key.pubkey.alg) {
+		case OPS_PKA_RSA:
+		case OPS_PKA_DSA:
+		case OPS_PKA_ELGAMAL:
 			return 1;
-		}
-	} else if (key->type == OPS_PTAG_CT_PUBLIC_KEY) {
-		if (key->key.pubkey.alg == OPS_PKA_DSA) {
-			return 1;
+		default:
+			break;
 		}
 	}
 	return 0;
@@ -1023,6 +1024,9 @@ __ops_add_to_pubring(__ops_keyring_t *keyring, const __ops_pubkey_t *pubkey)
 	__ops_key_t	*key;
 	time_t		 duration;
 
+	if (__ops_get_debug_level(__FILE__)) {
+		fprintf(stderr, "__ops_add_to_pubring\n");
+	}
 	EXPAND_ARRAY(keyring, key);
 	key = &keyring->keys[keyring->keyc++];
 	duration = key->key.pubkey.duration;
@@ -1042,6 +1046,17 @@ __ops_add_to_secring(__ops_keyring_t *keyring, const __ops_seckey_t *seckey)
 	const __ops_pubkey_t	*pubkey;
 	__ops_key_t		*key;
 
+	if (__ops_get_debug_level(__FILE__)) {
+		fprintf(stderr, "__ops_add_to_secring\n");
+	}
+	if (keyring->keyc > 0) {
+		key = &keyring->keys[keyring->keyc - 1];
+		if (__ops_get_debug_level(__FILE__) &&
+		    key->key.pubkey.alg == OPS_PKA_DSA &&
+		    seckey->pubkey.alg == OPS_PKA_ELGAMAL) {
+			fprintf(stderr, "__ops_add_to_secring: found elgamal seckey\n");
+		}
+	}
 	EXPAND_ARRAY(keyring, key);
 	key = &keyring->keys[keyring->keyc++];
 	(void) memset(key, 0x0, sizeof(*key));
@@ -1050,6 +1065,9 @@ __ops_add_to_secring(__ops_keyring_t *keyring, const __ops_seckey_t *seckey)
 	__ops_fingerprint(&key->fingerprint, pubkey, keyring->hashtype);
 	key->type = OPS_PTAG_CT_SECRET_KEY;
 	key->key.seckey = *seckey;
+	if (__ops_get_debug_level(__FILE__)) {
+		fprintf(stderr, "__ops_add_to_secring: keyc %u\n", keyring->keyc);
+	}
 	return 1;
 }
 

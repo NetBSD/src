@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-print.c,v 1.32 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: packet-print.c,v 1.33 2010/07/09 05:35:34 agc Exp $");
 #endif
 
 #include <string.h>
@@ -411,7 +411,7 @@ __ops_sprint_keydata(__ops_io_t *io, const __ops_keyring_t *keyring,
 	int			 n;
 	int			 r;
 
-	if (key->revoked) {
+	if (key == NULL || key->revoked) {
 		return -1;
 	}
 	now = time(NULL);
