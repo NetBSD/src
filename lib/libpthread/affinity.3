@@ -1,4 +1,4 @@
-.\"	$NetBSD: affinity.3,v 1.4 2009/01/20 01:57:36 rmind Exp $
+.\"	$NetBSD: affinity.3,v 1.5 2010/07/09 18:16:31 jruoho Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 18, 2008
+.Dd July 9, 2010
 .Dt AFFINITY 3
 .Os
 .Sh NAME
@@ -46,6 +46,7 @@
 .Sh DESCRIPTION
 Thread affinity allows to run the thread on specified CPU or CPUs only.
 .Pp
+The
 .Fn pthread_setaffinity_np
 function sets the affinity mask
 .Fa set
@@ -59,7 +60,6 @@ function gets the affinity mask of
 .Fa thread
 into
 .Fa set .
-.Pp
 Note that
 .Fa set
 must be created and initialized using the
@@ -72,6 +72,8 @@ and
 .Fn pthread_getaffinity_np
 functions return 0 on success.
 Otherwise, an error number is returned to indicate the error.
+.Sh COMPATIBILITY
+Both functions are non-standard extensions.
 .Sh EXAMPLES
 An example of code fragment, which sets the affinity for the current
 thread to the CPU whose ID is 0:
@@ -95,11 +97,7 @@ thread to the CPU whose ID is 0:
 	cpuset_destroy(cset);
 .Ed
 .Sh ERRORS
-The
-.Fn pthread_setaffinity_np
-and
-.Fn pthread_getaffinity_np
-functions fail if:
+Both functions may fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The specified
