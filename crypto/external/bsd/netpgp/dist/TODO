@@ -1,5 +1,6 @@
 To Do
 =====
+elgamal enc/decryption?
 agent
 agentctl
 convert to and from ascii armored sigs
@@ -12,7 +13,7 @@ separate from libcrypto?
 64-bit offsets
 thresholds
 default compression when signing?
-elgamal enc/decryption?
+json/yaml output
 
 Done
 ====
