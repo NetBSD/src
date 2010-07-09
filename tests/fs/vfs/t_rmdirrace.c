@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rmdirrace.c,v 1.2 2010/07/05 13:03:19 njoly Exp $	*/
+/*	$NetBSD: t_rmdirrace.c,v 1.3 2010/07/09 14:16:05 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <atf-c.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <rump/rump_syscalls.h>
@@ -62,10 +63,15 @@ static void *func2(void *arg)
 }
 
 static void
-race(const char *path)
+race(const char *type, const char *path)
 {
 	int res, fd, quit;
 	pthread_t th1, th2;
+
+	if (strcmp(type, "lfs") == 0)
+		atf_tc_expect_signal(-1, "PR kern/43582");
+	if (strcmp(type, "sysvbfs") == 0)
+		atf_tc_skip("%s does not support rmdir(2)", type);
 
 	fd = rump_sys_open(".", O_RDONLY, 0666);
 	if (fd == -1)
@@ -97,6 +103,14 @@ race(const char *path)
 	res = rump_sys_fchdir(fd);
 	if (res == -1)
 		atf_tc_fail("fchdir failed");
+
+	/*
+	 * Rarely the LFS test does not crash.  atf currently has no way of
+	 * saying "just chill even if the test doesn't fail", so this
+	 * takes care of it.
+	 */
+	if (strcmp(type, "lfs") == 0)
+		abort();
 }
 
 ATF_FSAPPLY(race, "rmdir(2) race");
