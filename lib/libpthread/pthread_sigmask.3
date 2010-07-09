@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_sigmask.3,v 1.7 2008/05/04 19:43:05 martin Exp $
+.\" $NetBSD: pthread_sigmask.3,v 1.8 2010/07/09 08:51:28 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_sigmask.3,v 1.10 2002/09/16 19:29:29 mini Exp $
-.Dd January 7, 2006
+.Dd July 9, 2010
 .Dt PTHREAD_SIGMASK 3
 .Os
 .Sh NAME
@@ -116,6 +116,5 @@ is not one of the defined values.
 .Xr sigwait 2 ,
 .Xr sigsetops 3
 .Sh STANDARDS
-.Fn pthread_sigmask
-conforms to
-.St -p1003.1-96
+The function conforms to
+.St -p1003.1-2001 .
