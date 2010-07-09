@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.3 2010/07/08 13:21:02 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.4 2010/07/09 14:16:05 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
       atf_tc_fail("newfs failed"); \
     if (fs##_mount(tmp, MNTNAME, 0) != 0) \
       atf_tc_fail("mount failed"); \
-    func(MNTNAME); \
+    func(type,MNTNAME); \
     if (fs##_unmount(MNTNAME, 0) != 0) \
       atf_tc_fail("unmount failed"); \
     if (fs##_delfs(tmp) != 0) \
