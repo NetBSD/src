@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.12 2010/07/07 01:19:09 chs Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13 2010/07/09 21:47:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -139,18 +139,18 @@ STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_uint)
 STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_uint)
 
 /*
- * int ucas_32(volatile int32_t *uptr, int32_t old, int32_t new, int32_t *ret);
+ * int ucas_int(volatile int *uptr, int old, int new, int *ret);
  */
-LEAF(ucas_32)
+LEAF(ucas_int)
 	blt	a0, zero, 4f
 	 PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, 3f
 	PTR_S	v0, PCB_ONFAULT(v1)
 1:
-	ll	t0, (a0)
+	INT_LL	t0, (a0)
 	bne	t0, a1, 2f
 	 move	t1, a2
-	sc	t1, (a0)
+	INT_SC	t1, (a0)
 	beq	t1, zero, 1b
 2:
 	 INT_S	t0, (a3)
@@ -161,25 +161,24 @@ LEAF(ucas_32)
 4:
 	b	3b
 	 li	v0, EFAULT
-END(ucas_32)
-STRONG_ALIAS(ucas_int,ucas_32)
+END(ucas_int)
 
 /*
- * int ucas_64(volatile int64_t *uptr, int64_t old, int64_t new, int64_t *ret);
+ * int ucas_ptr(volatile void **uptr, void *old, void *new, void **ret);
  */
-LEAF(ucas_64)
+LEAF(ucas_ptr)
 	blt	a0, zero, 4f
 	 PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, 3f
 	PTR_S	v0, PCB_ONFAULT(v1)
 1:
-	lld	t0, (a0)
+	PTR_LL	t0, (a0)
 	bne	t0, a1, 2f
 	 move	t1, a2
-	scd	t1, (a0)
+	PTR_SC	t1, (a0)
 	beq	t1, zero, 1b
 2:
-	 INT_S	t0, (a3)
+	 PTR_S	t0, (a3)
 	move	v0, zero
 3:
 	j	ra
@@ -187,12 +186,7 @@ LEAF(ucas_64)
 4:
 	b	3b
 	 li	v0, EFAULT
-END(ucas_64)
-#ifdef _LP64
-STRONG_ALIAS(ucas_ptr,ucas_64)
-#else
-STRONG_ALIAS(ucas_ptr,ucas_32)
-#endif
+END(ucas_ptr)
 
 #ifndef LOCKDEBUG
 
