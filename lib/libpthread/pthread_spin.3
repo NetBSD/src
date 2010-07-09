@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_spin.3,v 1.4 2010/07/09 08:31:35 wiz Exp $
+.\" $NetBSD: pthread_spin.3,v 1.5 2010/07/09 10:55:11 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -118,7 +118,9 @@ function may fail if:
 .It Bq Er EINVAL
 The
 .Fa lock
-parameter was NULL or the
+parameter was
+.Dv NULL
+or the
 .Fa pshared
 parameter was neither
 .Dv PTHREAD_PROCESS_SHARED

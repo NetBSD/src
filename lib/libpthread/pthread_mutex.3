@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.4 2010/07/08 21:34:22 wiz Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.5 2010/07/09 10:55:11 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,7 +84,9 @@ function creates a new mutex, with attributes specified with
 .Fa attr .
 If
 .Fa attr
-is NULL the default attributes are used.
+is
+.Dv NULL ,
+the default attributes are used.
 .Pp
 The macro
 .Dv PTHREAD_MUTEX_INITIALIZER

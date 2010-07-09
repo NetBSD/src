@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock.3,v 1.2 2010/07/08 21:34:48 wiz Exp $
+.\" $NetBSD: pthread_rwlock.3,v 1.3 2010/07/09 10:55:11 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,7 +92,9 @@ specified by
 .Fa attr .
 If
 .Fa attr
-is NULL, the default read/write lock attributes are used.
+is
+.Dv NULL ,
+the default read/write lock attributes are used.
 .Pp
 The results of calling
 .Fn pthread_rwlock_init
