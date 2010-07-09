@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_getspecific.3,v 1.4 2010/07/09 08:22:04 jruoho Exp $
+.\" $NetBSD: pthread_getspecific.3,v 1.5 2010/07/09 10:49:48 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,8 +106,10 @@ function will return the thread-specific data value associated with the given
 .Fa key .
 If no thread-specific data value is associated with
 .Fa key ,
-then the value NULL is returned.
-If successful,  the
+then the value
+.Dv NULL
+is returned.
+If successful, the
 .Fn pthread_setspecific
 function will return zero.
 Otherwise an error number will be returned to
