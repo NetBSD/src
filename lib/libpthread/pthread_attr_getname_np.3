@@ -1,4 +1,4 @@
-.\"     $NetBSD: pthread_attr_getname_np.3,v 1.5 2010/07/09 08:32:39 wiz Exp $
+.\"     $NetBSD: pthread_attr_getname_np.3,v 1.6 2010/07/09 10:55:57 jruoho Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -37,6 +37,12 @@
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In pthread.h
+.Ft int
+.Fn pthread_attr_getname_np \
+"const pthread_attr_t attr" "char *name" "size_t len"
+.Ft int
+.Fn pthread_attr_setname_np \
+"pthread_attr_t attr" "const char *name" "void *arg"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 The
