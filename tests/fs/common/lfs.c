@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.2 2010/07/08 13:30:53 pooka Exp $	*/
+/*	$NetBSD: lfs.c,v 1.3 2010/07/09 14:16:05 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -84,11 +84,6 @@ lfs_newfs(void **buf, const char *image, off_t size)
 
 	*buf = args;
 	num++;
-
-	/*
-	 * XXX: this should be IN THE TEST, not here
-	 */
-	atf_tc_expect_signal(-1, "PR kern/43582");
 
 	return 0;
 }
