@@ -124,13 +124,13 @@ echo "======> verify memory by recognising ascii armour"
 diff g g2 && passed=$(expr $passed + 1)
 echo "22 " $passed >> passed
 echo "======> list ssh host RSA public key"
-/usr/bin/netpgpkeys --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys && passed=$(expr $passed + 1)
+/usr/bin/netpgpkeys --ssh --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --list-keys && passed=$(expr $passed + 1)
 echo "23 " $passed >> passed
 echo "======> sign/verify file with ssh host keys"
 cp configure a
-sudo /usr/bin/netpgp --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --sign a
+sudo /usr/bin/netpgp --ssh --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub --sign a
 sudo chmod 644 a.gpg
-/usr/bin/netpgp --verify --ssh-keys --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub a.gpg && passed=$(expr $passed + 1)
+/usr/bin/netpgp --verify --ssh --sshkeyfile=/etc/ssh/ssh_host_rsa_key.pub a.gpg && passed=$(expr $passed + 1)
 echo "24 " $passed >> passed
 echo "======> pipeline and memory encrypt/decrypt"
 /usr/bin/netpgp --encrypt < a | /usr/bin/netpgp --decrypt > a4
