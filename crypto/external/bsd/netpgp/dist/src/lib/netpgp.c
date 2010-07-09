@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.64 2010/07/09 05:35:34 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.65 2010/07/09 14:45:43 agc Exp $");
 #endif
 
 #include <sys/types.h>
@@ -115,6 +115,7 @@ conffile(netpgp_t *netpgp, char *homedir, char *userid, size_t length)
 		}
 	}
 	(void) fclose(fp);
+	regfree(&keyre);
 	return 1;
 }
 
