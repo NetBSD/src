@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr_getstack.3,v 1.3 2010/07/09 08:51:28 jruoho Exp $
+.\"	$NetBSD: pthread_attr_getstack.3,v 1.4 2010/07/09 12:00:38 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -96,7 +96,7 @@ In addition, undefined behavior may follow if the
 function is called before the
 .Fa stackaddr
 attribute has been set.
-.Sh RATIONALE
+.Ss Rationale
 The rationale behind these functions is to address cases where an application
 may be used in an environment where the stack of a thread must be placed to
 some particular region of memory.
