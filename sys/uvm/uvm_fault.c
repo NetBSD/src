@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.12 2010/07/08 06:55:13 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.13 2010/07/09 12:49:21 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.12 2010/07/08 06:55:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.13 2010/07/09 12:49:21 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -574,8 +574,7 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 
 	KASSERT(amap != NULL);
 	KASSERT(uobjpage != NULL);
-	KASSERT(uobjpage == PGO_DONTCARE || uvm_pageisdirect_p(uobjpage) ||
-	    (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobjpage == PGO_DONTCARE || (uobjpage->flags & PG_BUSY) != 0);
 	KASSERT(mutex_owned(&amap->am_l));
 	KASSERT(oanon == NULL || mutex_owned(&oanon->an_lock));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
@@ -1581,8 +1580,7 @@ uvm_fault_lower(
 	/* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobjpage == NULL || uvm_pageisdirect_p(uobjpage) ||
-	    (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * note that at this point we are done with any front or back pages.
@@ -1601,8 +1599,7 @@ uvm_fault_lower(
 	 */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobjpage == NULL || uvm_pageisdirect_p(uobjpage) ||
-	    (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobjpage == NULL || (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * note that uobjpage can not be PGO_DONTCARE at this point.  we now
@@ -1645,8 +1642,7 @@ uvm_fault_lower(
 	 */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobj == NULL || uvm_pageisdirect_p(uobjpage) ||
-	    (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
 
 	/*
 	 * notes:
@@ -1656,10 +1652,8 @@ uvm_fault_lower(
 	 *  - at this point uobjpage could be PG_WANTED (handle later)
 	 */
 
-	KASSERT(uobj == NULL || uvm_pageisdirect_p(uobjpage) ||
-	    uobj == uobjpage->uobject);
-	KASSERT(uobj == NULL || uvm_pageisdirect_p(uobjpage) ||
-	    !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
+	KASSERT(uobj == NULL || uobj == uobjpage->uobject);
+	KASSERT(uobj == NULL || !UVM_OBJ_IS_CLEAN(uobjpage->uobject) ||
 	    (uobjpage->flags & PG_CLEAN) != 0);
 
 	if (flt->promote == false) {
@@ -1718,7 +1712,7 @@ uvm_fault_lower_lookup(
 		if (curpg == NULL || curpg == PGO_DONTCARE) {
 			continue;
 		}
-		KASSERT(uvm_pageisdirect_p(curpg) || curpg->uobject == uobj);
+		KASSERT(curpg->uobject == uobj);
 
 		/*
 		 * if center page is resident and not PG_BUSY|PG_RELEASED
@@ -1780,10 +1774,11 @@ uvm_fault_lower_neighbor(
 	KASSERT((pg->flags & PG_WANTED) == 0);
 	KASSERT(!UVM_OBJ_IS_CLEAN(pg->uobject) ||
 	    (pg->flags & PG_CLEAN) != 0);
+
+uvm_fault_lower_neighbor_enter:
 	pg->flags &= ~(PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
 
-uvm_fault_lower_neighbor_enter:
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
 	    ufi->orig_map->pmap, currva, pg, 0);
@@ -2113,10 +2108,11 @@ uvm_fault_lower_promote(
 		if (uobjpage->flags & PG_WANTED)
 			/* still have the obj lock */
 			wakeup(uobjpage);
+
+uvm_fault_lower_promote_done:
 		uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(uobjpage, NULL);
 
-uvm_fault_lower_promote_done:
 		mutex_exit(&uobj->vmobjlock);
 		uobj = NULL;
 
@@ -2162,10 +2158,9 @@ uvm_fault_lower_enter(
 	 */
 	KASSERT(amap == NULL || mutex_owned(&amap->am_l));
 	KASSERT(uobj == NULL || mutex_owned(&uobj->vmobjlock));
-	KASSERT(uobj == NULL || uvm_pageisdirect_p(uobjpage) ||
-	    (uobjpage->flags & PG_BUSY) != 0);
+	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
 	KASSERT(anon == NULL || mutex_owned(&anon->an_lock));
-	KASSERT(uvm_pageisdirect_p(pg) || (pg->flags & PG_BUSY) != 0);
+	KASSERT((pg->flags & PG_BUSY) != 0);
 
 	/*
 	 * all resources are present.   we can now map it in and free our
@@ -2203,10 +2198,9 @@ uvm_fault_lower_enter(
 		 */
 		KASSERT((pg->flags & PG_RELEASED) == 0);
 
+uvm_fault_lower_enter_error_done:
 		pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
-
-uvm_fault_lower_enter_error_done:
 		uvmfault_unlockall(ufi, amap, uobj, anon);
 		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist,
@@ -2222,6 +2216,9 @@ uvm_fault_lower_enter_error_done:
 
 	if (!uvm_pageisdirect_p(pg))
 		uvm_fault_lower_done(ufi, flt, uobj, anon, pg);
+
+	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
+	UVM_PAGE_OWN(pg, NULL);
 
 	uvmfault_unlockall(ufi, amap, uobj, anon);
 	pmap_update(ufi->orig_map->pmap);
@@ -2269,9 +2266,6 @@ uvm_fault_lower_done(
 	 * lock since the last time we checked.
 	 */
 	KASSERT((pg->flags & PG_RELEASED) == 0);
-
-	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
-	UVM_PAGE_OWN(pg, NULL);
 }
 
 

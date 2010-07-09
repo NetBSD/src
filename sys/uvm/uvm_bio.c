@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.5 2010/07/08 06:55:13 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.6 2010/07/09 12:49:21 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.5 2010/07/08 06:55:13 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.6 2010/07/09 12:49:21 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -393,7 +393,6 @@ ubc_fault_enter:
 		    pg->offset < umap->writeoff ||
 		    pg->offset + PAGE_SIZE > umap->writeoff + umap->writelen);
 		mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
-
 		error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 		    prot & mask, PMAP_CANFAIL | (access_type & mask));
 
@@ -403,10 +402,10 @@ ubc_fault_enter:
 		mutex_enter(&uvm_pageqlock);
 		uvm_pageactivate(pg);
 		mutex_exit(&uvm_pageqlock);
-		pg->flags &= ~(PG_BUSY|PG_WANTED);
-		UVM_PAGE_OWN(pg, NULL);
 
 ubc_fault_done:
+		pg->flags &= ~(PG_BUSY|PG_WANTED);
+		UVM_PAGE_OWN(pg, NULL);
 		mutex_exit(&uobj->vmobjlock);
 		if (error) {
 			UVMHIST_LOG(ubchist, "pmap_enter fail %d",

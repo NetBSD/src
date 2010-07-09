@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.12 2010/07/07 14:29:39 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.13 2010/07/09 12:49:21 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.12 2010/07/07 14:29:39 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.13 2010/07/09 12:49:21 uebayasi Exp $");
 
 #include "opt_direct_page.h"
 #include "opt_xip.h"
@@ -816,8 +816,7 @@ genfs_do_getpages_xip(void *v)
 
 	/* XXX optimize */
 	off = offset;
-	i = 0;
-	while (i < npages) {
+	for (i = 0; i < npages; i++) {
 		daddr_t lbn, blkno;
 		int run;
 		struct vnode *devvp;
@@ -842,6 +841,7 @@ genfs_do_getpages_xip(void *v)
 			pps[i] = xip_zero_page;
 		} else {
 			struct vm_physseg *seg;
+			struct vm_page *pg;
 
 			seg = devvp->v_physseg;
 			KASSERT(seg != NULL);
@@ -849,10 +849,11 @@ genfs_do_getpages_xip(void *v)
 			phys_addr = pmap_phys_address(seg->start) +
 			    (blkno << dev_bshift) +
 			    (off - (lbn << fs_bshift));
-			pps[i] = seg->pgs +
+			pg = seg->pgs +
 			    ((phys_addr >> PAGE_SHIFT) - seg->start);
-			KASSERT(pps[i]->phys_addr == phys_addr);
-			KASSERT((pps[i]->flags & PG_DIRECT) != 0);
+			KASSERT(pg->phys_addr == phys_addr);
+
+			pps[i] = pg;
 		}
 
 		UVMHIST_LOG(ubchist, "xip pgs %d => phys_addr=0x%lx (%p)",
@@ -862,10 +863,30 @@ genfs_do_getpages_xip(void *v)
 			0);
 
 		off += PAGE_SIZE;
-		i++;
 	}
 
-	*npagesp = i;
+	if ((flags & PGO_LOCKED) == 0)
+		mutex_enter(&uobj->vmobjlock);
+	KASSERT(mutex_owned(&uobj->vmobjlock));
+
+	for (i = 0; i < npages; i++) {
+		struct vm_page *pg = pps[i];
+
+		if (pg == xip_zero_page) {
+		} else {
+			KASSERT((pg->flags & PG_BUSY) == 0);
+			KASSERT((pg->flags & PG_RDONLY) != 0);
+			KASSERT((pg->flags & PG_CLEAN) != 0);
+			KASSERT((pg->flags & PG_DIRECT) != 0);
+			pg->flags |= PG_BUSY;
+			pg->uobject = &vp->v_uobj;
+		}
+	}
+
+	if ((flags & PGO_LOCKED) == 0)
+		mutex_exit(&uobj->vmobjlock);
+
+	*npagesp = npages;
 
 	return 0;
 }
