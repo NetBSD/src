@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.68 2010/02/24 11:00:27 pooka Exp $	*/
+/*	$NetBSD: if.c,v 1.69 2010/07/09 07:04:30 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.68 2010/02/24 11:00:27 pooka Exp $");
+__RCSID("$NetBSD: if.c,v 1.69 2010/07/09 07:04:30 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -869,9 +869,9 @@ loop:
 			if (hflag && humanize_number(humbuf,
 			    sizeof(humbuf), sum->ift_ib - total->ift_ib, "",
 			    HN_AUTOSCALE, HN_NOSPACE | HN_B) > 0)
-				printf("%10s %8.8s ", humbuf, " ");
+				printf("  %10s %8.8s ", humbuf, " ");
 			else
-				printf("%10llu %8.8s ", 
+				printf("  %10llu %8.8s ", 
 				    (unsigned long long)
 				    (sum->ift_ib - total->ift_ib), " ");
 
