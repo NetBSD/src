@@ -1,4 +1,4 @@
-.\"     $NetBSD: pthread_attr_getname_np.3,v 1.3 2010/07/07 09:54:07 wiz Exp $
+.\"     $NetBSD: pthread_attr_getname_np.3,v 1.4 2010/07/09 07:31:01 jruoho Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -30,16 +30,13 @@
 .Os
 .Sh NAME
 .Nm pthread_attr_getname_np
-.Nd set descriptive name of an attribute
+.Nd get and set descriptive name of an attribute
 .\" ------------------------------------------------------------
 .Sh LIBRARY
 .Lb libpthread
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In pthread.h
-.Ft int
-.Fn pthread_attr_getname_np "const pthread_attr_t attr" "char *name" \
-    "size_t len"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -56,21 +53,51 @@ The size of the buffer
 .Fa name
 in bytes.
 .El
+.Pp
+The
+.Fn pthread_attr_setname_np
+function sets the descriptive name of a thread attribute.
+It takes the following arguments:
+.Bl -tag -width attr -offset indent
+.It Fa attr
+The attribute whose descriptive name will be set.
+.It Fa name
+The
+.Xr printf 3
+format string to be used to construct the descriptive name of the attribute.
+The resulted descriptive name should be shorter than
+.Dv PTHREAD_MAX_NAMELEN_NP .
+.It Fa arg
+The
+.Xr printf 3
+argument used with
+.Fa name .
+.El
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
-The
-.Fn pthread_attr_getname_np
-function returns 0 on success.
-Otherwise, an error number described in
-.Xr errno 2
-is returned.
+Both functions return 0 on success.
+Otherwise, an error number is returned.
 .\" ------------------------------------------------------------
 .Sh COMPATIBILITY
-The
-.Fn pthread_attr_getname_np
-function is a non-standard extension.
+Both functions are non-standard extensions.
 .\" ------------------------------------------------------------
-.\".Sh ERRORS
+.Sh ERRORS
+No errors are defined for
+.Fn pthread_attr_getname_np .
+.Pp
+The
+.Fn pthread_attr_setname_np
+function may fail if:
+.Bl -tag -width Er
+.It Bq Er ENOMEM
+There was insufficient memory for the operation.
+.It Bq Er EINVAL
+The supplied descriptive
+.Fa name
+was longer than
+.Dv PTHREAD_MAX_NAMELEN_NP .
+.El
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
-.Xr pthread_attr_setname_np 3
+.Xr pthread_attr 3 ,
+.Xr pthread_getname_np 3
