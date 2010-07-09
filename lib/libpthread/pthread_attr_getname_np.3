@@ -1,4 +1,4 @@
-.\"     $NetBSD: pthread_attr_getname_np.3,v 1.4 2010/07/09 07:31:01 jruoho Exp $
+.\"     $NetBSD: pthread_attr_getname_np.3,v 1.5 2010/07/09 08:32:39 wiz Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -89,13 +89,13 @@ The
 .Fn pthread_attr_setname_np
 function may fail if:
 .Bl -tag -width Er
-.It Bq Er ENOMEM
-There was insufficient memory for the operation.
 .It Bq Er EINVAL
 The supplied descriptive
 .Fa name
 was longer than
 .Dv PTHREAD_MAX_NAMELEN_NP .
+.It Bq Er ENOMEM
+There was insufficient memory for the operation.
 .El
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
