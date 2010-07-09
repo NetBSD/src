@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.4 2010/07/09 14:16:05 njoly Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.5 2010/07/09 14:30:53 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef __H_FSMACROS_H_
 #define __H_FSMACROS_H_
+
+#include <sys/mount.h>
 
 #include <atf-c.h>
 #include <string.h>
@@ -72,12 +74,12 @@
   ATF_TP_ADD_TC(tp,fs##_##func)
 
 #define ATF_TC_FSAPPLY(func,desc) \
-  ATF_TC_FSADD(ext2fs,"ext2fs",func,desc) \
-  ATF_TC_FSADD(ffs,"ffs",func,desc) \
-  ATF_TC_FSADD(lfs,"lfs",func,desc) \
-  ATF_TC_FSADD(msdosfs,"msdosfs",func,desc) \
-  ATF_TC_FSADD(sysvbfs,"sysvbfs",func,desc) \
-  ATF_TC_FSADD(tmpfs,"tmpfs",func,desc)
+  ATF_TC_FSADD(ext2fs,MOUNT_EXT2FS,func,desc) \
+  ATF_TC_FSADD(ffs,MOUNT_FFS,func,desc) \
+  ATF_TC_FSADD(lfs,MOUNT_LFS,func,desc) \
+  ATF_TC_FSADD(msdosfs,MOUNT_MSDOS,func,desc) \
+  ATF_TC_FSADD(sysvbfs,MOUNT_SYSVBFS,func,desc) \
+  ATF_TC_FSADD(tmpfs,MOUNT_TMPFS,func,desc)
 
 #define ATF_TP_FSAPPLY(func) \
   ATF_TP_FSADD(ext2fs,func); \
@@ -107,5 +109,12 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
     return;
   atf_tc_skip("filesystem not selected");
 }
+
+#define FSTYPE_EXT2FS(type)	(strcmp(type, MOUNT_EXT2FS) == 0)
+#define FSTYPE_FFS(type)	(strcmp(type, MOUNT_FFS) == 0)
+#define FSTYPE_LFS(type)	(strcmp(type, MOUNT_LFS) == 0)
+#define FSTYPE_MSDOS(type)	(strcmp(type, MOUNT_MSDOS) == 0)
+#define FSTYPE_SYSVBFS(type)	(strcmp(type, MOUNT_SYSVBFS) == 0)
+#define FSTYPE_TMPFS(type)	(strcmp(type, MOUNT_TMPFS) == 0)
 
 #endif /* __H_FSMACROS_H_ */

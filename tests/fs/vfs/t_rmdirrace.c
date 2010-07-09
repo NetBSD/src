@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rmdirrace.c,v 1.3 2010/07/09 14:16:05 njoly Exp $	*/
+/*	$NetBSD: t_rmdirrace.c,v 1.4 2010/07/09 14:30:53 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 #include <atf-c.h>
 #include <fcntl.h>
 #include <pthread.h>
-#include <string.h>
 #include <unistd.h>
 
 #include <rump/rump_syscalls.h>
@@ -68,9 +67,9 @@ race(const char *type, const char *path)
 	int res, fd, quit;
 	pthread_t th1, th2;
 
-	if (strcmp(type, "lfs") == 0)
+	if (FSTYPE_LFS(type))
 		atf_tc_expect_signal(-1, "PR kern/43582");
-	if (strcmp(type, "sysvbfs") == 0)
+	if (FSTYPE_SYSVBFS(type))
 		atf_tc_skip("%s does not support rmdir(2)", type);
 
 	fd = rump_sys_open(".", O_RDONLY, 0666);
@@ -109,7 +108,7 @@ race(const char *type, const char *path)
 	 * saying "just chill even if the test doesn't fail", so this
 	 * takes care of it.
 	 */
-	if (strcmp(type, "lfs") == 0)
+	if (FSTYPE_LFS(type))
 		abort();
 }
 
