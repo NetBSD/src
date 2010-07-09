@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr_getstack.3,v 1.4 2010/07/09 12:00:38 jruoho Exp $
+.\"	$NetBSD: pthread_attr_getstack.3,v 1.5 2010/07/09 17:15:59 jruoho Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -119,6 +119,9 @@ The system page size, as specified by
 and the use of
 .Xr posix_memalign 3
 may guarantee some degree of portability.
+Also
+.Xr mmap 2
+provides means for alignment.
 .It
 If the application modifies the stack address, it claims also
 the responsibility of allocating the stack area and guarding it against
