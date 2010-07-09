@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_key_create.3,v 1.5 2010/07/09 08:22:04 jruoho Exp $
+.\" $NetBSD: pthread_key_create.3,v 1.6 2010/07/09 10:55:11 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,19 +90,27 @@ is associated with all
 defined keys in the new thread.
 .Pp
 An optional destructor function may be associated with each key value.
-At thread exit, if a key value has a non-NULL destructor pointer, and the
-thread has a non-NULL value associated with the key, the function pointed
+At thread exit, if a key value has a
+.Pf non- Dv NULL
+destructor pointer, and the thread has a
+.Pf non- Dv NULL
+value associated with the key, the function pointed
 to is called with the current associated value as its sole argument.
 The order of destructor calls is unspecified if more
 than one destructor exists for a thread when it exits.
 .Pp
-If, after all the destructors have been called for all non-NULL values
-with associated destructors, there are still some non-NULL values with
-associated destructors, then the process is repeated.
+If, after all the destructors have been called for all
+.Pf non- Dv NULL
+values with associated destructors, there are still some
+.Pf non- Dv NULL
+values with associated destructors, then the process is repeated.
 If, after at least
 .Dv PTHREAD_DESTRUCTOR_ITERATIONS
-iterations of destructor calls for
-outstanding non-NULL values, there are still some non-NULL values with
+iterations of destructor calls for outstanding
+.Pf non- Dv NULL
+values, there are still some
+.Pf non- Dv NULL
+values with
 associated destructors, the implementation stops calling destructors.
 .Pp
 The
@@ -111,7 +119,9 @@ function deletes a thread-specific data key previously returned by
 .Fn pthread_key_create .
 The thread-specific data values associated with
 .Fa key
-need not be NULL at the time of the call.
+need not be
+.Dv NULL
+at the time of the call.
 It is the responsibility of the application to free any
 application storage or perform any cleanup actions for data structures
 related to the deleted key or associated thread-specific data in any threads;
