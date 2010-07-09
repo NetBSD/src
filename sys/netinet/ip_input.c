@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.286 2010/04/01 01:23:32 tls Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.287 2010/07/09 18:42:46 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.286 2010/04/01 01:23:32 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.287 2010/07/09 18:42:46 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -930,7 +930,7 @@ ours:
 	 * but it's not worth the time; just let them time out.)
 	 */
 	if (ip->ip_off & ~htons(IP_DF|IP_RF)) {
-		uint16_t off;
+		u_int off;
 		/*
 		 * Prevent TCP blind data attacks by not allowing non-initial
 		 * fragments to start at less than 68 bytes (minimal fragment
@@ -942,31 +942,6 @@ ours:
 			IP_STATINC(IP_STAT_BADFRAGS);
 			goto bad;
 		}
-		/*
-		 * Look for queue of fragments
-		 * of this datagram.
-		 */
-		IPQ_LOCK();
-		hash = IPREASS_HASH(ip->ip_src.s_addr, ip->ip_id);
-		LIST_FOREACH(fp, &ipq[hash], ipq_q) {
-			if (ip->ip_id == fp->ipq_id &&
-			    in_hosteq(ip->ip_src, fp->ipq_src) &&
-			    in_hosteq(ip->ip_dst, fp->ipq_dst) &&
-			    ip->ip_p == fp->ipq_p) {
-				/*
-				 * Make sure the TOS is matches previous
-				 * fragments.
-				 */
-				if (ip->ip_tos != fp->ipq_tos) {
-					IP_STATINC(IP_STAT_BADFRAGS);
-					IPQ_UNLOCK();
-					goto bad;
-				}
-				goto found;
-			}
-		}
-		fp = 0;
-found:
 
 		/*
 		 * Adjust ip_len to not reflect header,
@@ -976,18 +951,42 @@ found:
 		ip->ip_len = htons(ntohs(ip->ip_len) - hlen);
 		mff = (ip->ip_off & htons(IP_MF)) != 0;
 		if (mff) {
-		        /*
-		         * Make sure that fragments have a data length
+			/*
+			 * Make sure that fragments have a data length
 			 * that's a non-zero multiple of 8 bytes.
-		         */
+			 */
 			if (ntohs(ip->ip_len) == 0 ||
 			    (ntohs(ip->ip_len) & 0x7) != 0) {
 				IP_STATINC(IP_STAT_BADFRAGS);
-				IPQ_UNLOCK();
 				goto bad;
 			}
 		}
 		ip->ip_off = htons((ntohs(ip->ip_off) & IP_OFFMASK) << 3);
+
+		/*
+		 * Look for queue of fragments of this datagram.
+		 */
+		IPQ_LOCK();
+		hash = IPREASS_HASH(ip->ip_src.s_addr, ip->ip_id);
+		LIST_FOREACH(fp, &ipq[hash], ipq_q) {
+			if (ip->ip_id != fp->ipq_id)
+				continue;
+			if (!in_hosteq(ip->ip_src, fp->ipq_src))
+				continue;
+			if (!in_hosteq(ip->ip_dst, fp->ipq_dst))
+				continue;
+			if (ip->ip_p != fp->ipq_p)
+				continue;
+			/*
+			 * Make sure the TOS is matches previous fragments.
+			 */
+			if (ip->ip_tos != fp->ipq_tos) {
+				IP_STATINC(IP_STAT_BADFRAGS);
+				IPQ_UNLOCK();
+				goto bad;
+			}
+			break;
+		}
 
 		/*
 		 * If datagram marked as having more fragments
@@ -1008,7 +1007,7 @@ found:
 			ipqe->ipqe_m = m;
 			ipqe->ipqe_ip = ip;
 			m = ip_reass(ipqe, fp, &ipq[hash]);
-			if (m == 0) {
+			if (m == NULL) {
 				IPQ_UNLOCK();
 				return;
 			}
@@ -1016,9 +1015,9 @@ found:
 			ip = mtod(m, struct ip *);
 			hlen = ip->ip_hl << 2;
 			ip->ip_len = htons(ntohs(ip->ip_len) + hlen);
-		} else
-			if (fp)
-				ip_freef(fp);
+		} else if (fp) {
+			ip_freef(fp);
+		}
 		IPQ_UNLOCK();
 	}
 
