@@ -1,6 +1,6 @@
-.\" $NetBSD: pthread_key_create.3,v 1.4 2008/05/02 18:11:04 martin Exp $
+.\" $NetBSD: pthread_key_create.3,v 1.5 2010/07/09 08:22:04 jruoho Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -55,46 +55,46 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_key_create.3,v 1.12 2002/09/16 19:29:28 mini Exp $
 .\"
-.Dd January 30, 2003
+.Dd July 9, 2010
 .Dt PTHREAD_KEY_CREATE 3
 .Os
 .Sh NAME
 .Nm pthread_key_create
-.Nd thread-specific data key creation
+.Nd thread-specific data
 .Sh LIBRARY
 .Lb libpthread
 .Sh SYNOPSIS
 .In pthread.h
 .Ft int
 .Fn pthread_key_create "pthread_key_t *key" "void (*destructor)(void *)"
+.Ft int
+.Fn pthread_key_delete "pthread_key_t key"
 .Sh DESCRIPTION
 The
 .Fn pthread_key_create
 function creates a thread-specific data key visible to all threads in the
 process.
-Key values provided by
-.Fn pthread_key_create
-are opaque objects used to locate thread-specific data.
-Although the same
-key value may be used by different threads, the values bound to the key
-by
+Key values are opaque objects used to locate thread-specific data.
+The same key value may be used by different threads,
+but the values bound to the key by
 .Fn pthread_setspecific
-are maintained on a per-thread basis and persist for the life of the calling
-thread.
+are maintained on a per-thread basis and
+persist for the life of the calling thread.
 .Pp
-Upon key creation, the value NULL is associated with the new key in all
-active threads.
-Upon thread creation, the value NULL is associated with all
+Upon key creation, the value
+.Dv NULL
+is associated with the new key in all active threads.
+Upon thread creation, the value
+.Dv NULL
+is associated with all
 defined keys in the new thread.
 .Pp
 An optional destructor function may be associated with each key value.
-At
-thread exit, if a key value has a non-NULL destructor pointer, and the
+At thread exit, if a key value has a non-NULL destructor pointer, and the
 thread has a non-NULL value associated with the key, the function pointed
 to is called with the current associated value as its sole argument.
-The
-order of destructor calls is unspecified if more than one destructor exists
-for a thread when it exits.
+The order of destructor calls is unspecified if more
+than one destructor exists for a thread when it exits.
 .Pp
 If, after all the destructors have been called for all non-NULL values
 with associated destructors, there are still some non-NULL values with
@@ -104,17 +104,47 @@ If, after at least
 iterations of destructor calls for
 outstanding non-NULL values, there are still some non-NULL values with
 associated destructors, the implementation stops calling destructors.
+.Pp
+The
+.Fn pthread_key_delete
+function deletes a thread-specific data key previously returned by
+.Fn pthread_key_create .
+The thread-specific data values associated with
+.Fa key
+need not be NULL at the time of the call.
+It is the responsibility of the application to free any
+application storage or perform any cleanup actions for data structures
+related to the deleted key or associated thread-specific data in any threads;
+this cleanup can be done either before or after
+.Fn pthread_key_delete
+is called.
+Any attempt to use
+.Fa key
+following the call to
+.Fn pthread_key_delete
+results in undefined behavior.
+.Pp
+The
+.Fn pthread_key_delete
+function itself is callable from within destructor functions,
+but destructor functions are not invoked by the function.
+Any destructor function that may have been associated with
+.Fa key
+will no longer be called upon thread exit.
 .Sh RETURN VALUES
 If successful, the
 .Fn pthread_key_create
 function will store the newly created key value at the location specified by
 .Fa key
 and returns zero.
-Otherwise an error number will be returned to indicate
-the error.
+Also
+.Fn pthread_key_delete
+will return zero upon success.
+Upon failure both functions return an error number to indicate the cause.
 .Sh ERRORS
+The
 .Fn pthread_key_create
-shall fail if:
+may fail if:
 .Bl -tag -width Er
 .It Bq Er EAGAIN
 The system lacked the necessary resources to create another thread-specific
@@ -124,11 +154,24 @@ would be exceeded.
 .It Bq Er ENOMEM
 Insufficient memory exists to create the key.
 .El
+.Pp
+The
+.Fn pthread_key_delete
+function may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The
+.Fa key
+value is invalid.
+.El
 .Sh SEE ALSO
-.Xr pthread_getspecific 3 ,
-.Xr pthread_key_delete 3 ,
-.Xr pthread_setspecific 3
+.Xr pthread_getspecific 3
 .Sh STANDARDS
-.Fn pthread_key_create
-conforms to
-.St -p1003.1-96 .
+These functions conform to
+.St -p1003.1-2001 .
+.Sh BUGS
+The current specifications are flawed and
+do not permit a clean implementation without potential problems.
+The current implementation in
+.Nx
+addresses these problems by not supporting key reuse.
