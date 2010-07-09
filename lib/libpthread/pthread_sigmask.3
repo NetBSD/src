@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_sigmask.3,v 1.8 2010/07/09 08:51:28 jruoho Exp $
+.\" $NetBSD: pthread_sigmask.3,v 1.9 2010/07/09 10:55:11 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -88,7 +88,9 @@ Intersection of the current mask and the complement of
 .Pp
 If
 .Fa oset
-is not NULL, the previous signal mask is stored in the location pointed to by
+is not
+.Dv NULL ,
+the previous signal mask is stored in the location pointed to by
 .Fa oset .
 .Pp
 .Dv SIGKILL

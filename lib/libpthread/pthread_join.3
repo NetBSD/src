@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_join.3,v 1.5 2010/07/09 08:51:28 jruoho Exp $
+.\" $NetBSD: pthread_join.3,v 1.6 2010/07/09 10:55:11 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,8 @@ has already terminated.
 .Pp
 On return from a successful
 .Fn pthread_join
-call with a non-NULL
+call with a
+.Pf non- Dv NULL
 .Fa value_ptr
 argument, the value passed to
 .Fn pthread_exit
