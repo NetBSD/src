@@ -444,10 +444,16 @@ typedef struct {
 	BIGNUM         *x;
 } __ops_dsa_seckey_t;
 
+/** __ops_elgamal_seckey_t */
+typedef struct {
+	BIGNUM         *x;
+} __ops_elgamal_seckey_t;
+
 /** __ops_seckey_union_t */
 typedef union {
 	__ops_rsa_seckey_t rsa;
 	__ops_dsa_seckey_t dsa;
+	__ops_elgamal_seckey_t elgamal;
 } __ops_seckey_union_t;
 
 /** s2k_usage_t

@@ -58,7 +58,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: packet-parse.c,v 1.37 2010/06/25 03:37:27 agc Exp $");
+__RCSID("$NetBSD: packet-parse.c,v 1.38 2010/07/09 05:35:34 agc Exp $");
 #endif
 
 #ifdef HAVE_OPENSSL_CAST_H
@@ -2370,6 +2370,9 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 		int             keysize;
 		int             n;
 
+		if (__ops_get_debug_level(__FILE__)) {
+			(void) fprintf(stderr, "crypted seckey\n");
+		}
 		blocksize = __ops_block_size(pkt.u.seckey.alg);
 		if (blocksize == 0 || blocksize > OPS_MAX_BLOCK_SIZE) {
 			(void) fprintf(stderr,
@@ -2508,6 +2511,9 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 		saved_region = region;
 		region = &encregion;
 	}
+	if (__ops_get_debug_level(__FILE__)) {
+		fprintf(stderr, "parse_seckey: end of crypted passphrase\n");
+	}
 	if (pkt.u.seckey.s2k_usage == OPS_S2KU_ENCRYPTED_AND_HASHED) {
 		pkt.u.seckey.checkhash = calloc(1, OPS_CHECKHASH_SIZE);
 		if (pkt.u.seckey.checkhash == NULL) {
@@ -2519,7 +2525,9 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 	} else {
 		__ops_reader_push_sum16(stream);
 	}
-
+	if (__ops_get_debug_level(__FILE__)) {
+		fprintf(stderr, "parse_seckey: checkhash, reading MPIs\n");
+	}
 	switch (pkt.u.seckey.pubkey.alg) {
 	case OPS_PKA_RSA:
 	case OPS_PKA_RSA_ENCRYPT_ONLY:
@@ -2534,6 +2542,13 @@ parse_seckey(__ops_region_t *region, __ops_stream_t *stream)
 
 	case OPS_PKA_DSA:
 		if (!limread_mpi(&pkt.u.seckey.key.dsa.x, region, stream)) {
+			ret = 0;
+		}
+		break;
+
+	case OPS_PKA_ELGAMAL:
+printf("elgamal reading\n");
+		if (!limread_mpi(&pkt.u.seckey.key.elgamal.x, region, stream)) {
 			ret = 0;
 		}
 		break;
