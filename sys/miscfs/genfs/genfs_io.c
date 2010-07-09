@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.13 2010/07/09 12:49:21 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.14 2010/07/09 12:57:42 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,9 +31,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.13 2010/07/09 12:49:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.14 2010/07/09 12:57:42 uebayasi Exp $");
 
-#include "opt_direct_page.h"
 #include "opt_xip.h"
 
 #include <sys/param.h>
