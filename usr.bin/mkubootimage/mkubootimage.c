@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.2 2010/06/22 14:54:11 dogcow Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.3 2010/07/09 11:36:42 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.2 2010/06/22 14:54:11 dogcow Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.3 2010/07/09 11:36:42 kiyohara Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -128,7 +128,7 @@ get_comp(const char *name)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: mkuboot -A <arm|powerpc>");
+	fprintf(stderr, "usage: mkubootimage -A <arm|powerpc>");
 	fprintf(stderr, " -T <kernel|ramdisk|fs>");
 	fprintf(stderr, " -C <none|gz|bz2>");
 	fprintf(stderr, " -a <addr> -e <ep> -n <name>");
