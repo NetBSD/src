@@ -1,4 +1,4 @@
-.\"     $NetBSD: pthread_getname_np.3,v 1.3 2010/07/07 09:54:07 wiz Exp $
+.\"     $NetBSD: pthread_getname_np.3,v 1.4 2010/07/09 07:31:01 jruoho Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,12 +25,12 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd July 7, 2010
+.Dd July 9, 2010
 .Dt PTHREAD_GETNAME_NP 3
 .Os
 .Sh NAME
 .Nm pthread_getname_np
-.Nd set descriptive name of a thread
+.Nd get and set descriptive name of a thread
 .\" ------------------------------------------------------------
 .Sh LIBRARY
 .Lb libpthread
@@ -39,6 +39,8 @@
 .In pthread.h
 .Ft int
 .Fn pthread_getname_np "pthread_t thread" "char *name" "size_t len"
+.Ft int
+.Fn pthread_setname_np "pthread_t thread" "const char *name" "void *arg"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -55,22 +57,36 @@ The size of the buffer
 .Fa name
 in bytes.
 .El
+.Pp
+The
+.Fn pthread_setname_np
+function sets the descriptive name of a thread.
+It takes the following arguments:
+.Bl -tag -width target -offset indent
+.It Fa thread
+The thread whose descriptive name will be set.
+.It Fa name
+The
+.Xr printf 3
+format string to be used to construct the descriptive name of the thread.
+The resulted descriptive name should be shorter than
+.Dv PTHREAD_MAX_NAMELEN_NP .
+.It Fa arg
+The
+.Xr printf 3
+argument used with
+.Fa name .
+.El
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
-The
-.Fn pthread_getname_np
-function returns 0 on success.
+Both functions return 0 on success.
 Otherwise, an error number is returned to indicate the error.
 .\" ------------------------------------------------------------
 .Sh COMPATIBILITY
-The
-.Fn pthread_getname_np
-function is a non-standard extension.
+Both functions are non-standard extensions.
 .\" ------------------------------------------------------------
 .Sh ERRORS
-The
-.Fn pthread_getname_np
-function will fail if:
+Both functions may fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 Invalid parameter.
@@ -78,6 +94,14 @@ Invalid parameter.
 Non-existent
 .Fa thread .
 .El
+.Pp
+The
+.Fn pthread_setname_np
+function may also fail if:
+.Bl -tag -width Er
+.It Bq Er ENOMEM
+There was insufficient memory for the operation.
+.El
 .Sh SEE ALSO
 .Xr pthread_attr_get_np 3 ,
-.Xr pthread_setname_np 3
+.Xr pthread_attr_getname_np 3
