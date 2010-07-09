@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cleanup_push.3,v 1.5 2008/05/04 19:43:05 martin Exp $
+.\" $NetBSD: pthread_cleanup_push.3,v 1.6 2010/07/09 08:51:28 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_cleanup_push.3,v 1.11 2002/09/16 19:29:28 mini Exp $
 .\"
-.Dd January 30, 2003
+.Dd July 9, 2010
 .Dt PTHREAD_CLEANUP 3
 .Os
 .Sh NAME
@@ -114,8 +114,5 @@ None.
 .Sh SEE ALSO
 .Xr pthread_exit 3
 .Sh STANDARDS
-.Fn pthread_cleanup_push
-and
-.Fn pthread_cleanup_pop
-conform to
-.St -p1003.1-96 .
+Both functions conform to
+.St -p1003.1-2001 .

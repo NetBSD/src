@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_schedparam.3,v 1.6 2010/07/07 16:07:10 jruoho Exp $
+.\" $NetBSD: pthread_schedparam.3,v 1.7 2010/07/09 08:51:28 jruoho Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_schedparam.3,v 1.7 2002/09/16 19:29:29 mini Exp $
-.Dd July 7, 2010
+.Dd July 9, 2010
 .Dt PTHREAD_SCHEDPARAM 3
 .Os
 .Sh NAME
@@ -116,8 +116,5 @@ Non-existent thread
 .Xr pthread_attr_getschedparam 3 ,
 .Xr sched 3
 .Sh STANDARDS
-.Fn pthread_setschedparam
-and
-.Fn pthread_getschedparam
-conform to
-.St -p1003.1-96 .
+Both functions conform to
+.St -p1003.1-2001 .
