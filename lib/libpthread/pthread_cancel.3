@@ -1,6 +1,6 @@
-.\" $NetBSD: pthread_cancel.3,v 1.4 2010/07/09 08:51:28 jruoho Exp $
+.\" $NetBSD: pthread_cancel.3,v 1.5 2010/07/09 11:03:26 jruoho Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -42,17 +42,59 @@ function requests that
 .Fa thread
 be canceled.
 The target thread's cancelability state and type determines
-when the cancellation takes effect.
-When the cancellation is acted on,
-the cancellation cleanup handlers for
-.Fa thread
-are called.
+whether and when the target thread reacts to the cancellation request.
+.Bl -enum -offset 2n
+.It
+The cancelability
+.Em state
+of a thread is determined by the
+.Xr pthread_setcancelstate 3
+function.
+The state can be either:
+.Bl -bullet -offset 2n
+.It
+.Dv PTHREAD_CANCEL_ENABLE :
+the cancelability type determines when the actual cancellation occurs.
+This is the default.
+.It
+.Dv PTHREAD_CANCEL_DISABLE :
+the request from
+.Fn pthread_cancel
+remains queued until the cancellation is enabled by the thread.
+.El
+.It
+The cancellation
+.Em type
+of a thread is determined by the
+.Xr pthread_setcanceltype 3
+function.
+The type can be either:
+.Bl -bullet -offset 2n
+.It
+.Dv PTHREAD_CANCEL_DEFERRED :
+the cancellation will be delayed until the thread calls
+a function that is a cancellation point.
+This is the default.
+The available cancellation points are listed in
+.Xr pthread_setcanceltype 3 .
+.It
+.Dv PTHREAD_CANCEL_ASYNCHRONOUS :
+the thread can be canceled at any time.
+.El
+.El
+.Pp
+When the tread reacts to the cancellation request, the following occur:
+.Bl -enum -offset 2n
+.It
+The cancellation cleanup handlers for the thread are called; see
+.Xr pthread_cleanup_push 3 .
+.It
 When the last cancellation cleanup handler returns,
-the thread-specific data destructor functions will be called for
-.Fa thread .
-When the last destructor function returns,
-.Fa thread
-will be terminated.
+the thread-specific data destructor functions will be called for the thread.
+.It
+When the last destructor function returns, the thread will be terminated; see
+.Xr pthread_exit 3 .
+.El
 .Pp
 The cancellation processing in the target thread runs asynchronously with
 respect to the calling thread returning from
@@ -75,8 +117,9 @@ functions will return zero.
 Otherwise an error number will be returned to
 indicate the error.
 .Sh ERRORS
+The
 .Fn pthread_cancel
-may fail if:
+function may fail if:
 .Bl -tag -width Er
 .It Bq Er ESRCH
 No thread could be found corresponding to that specified by the given
@@ -84,19 +127,8 @@ thread ID.
 .El
 .Sh SEE ALSO
 .Xr pthread_cleanup_pop 3 ,
-.Xr pthread_cleanup_push 3 ,
-.Xr pthread_exit 3 ,
 .Xr pthread_join 3 ,
-.Xr pthread_setcancelstate 3 ,
-.Xr pthread_setcanceltype 3 ,
 .Xr pthread_testcancel 3
 .Sh STANDARDS
 The function conforms to
 .St -p1003.1-2001 .
-.Sh AUTHORS
-This man page was written by
-.An David Leonard Aq d@openbsd.org
-for the
-.Ox
-implementation of
-.Fn pthread_cancel .
