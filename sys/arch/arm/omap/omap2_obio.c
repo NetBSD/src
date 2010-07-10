@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.9 2010/07/07 22:55:03 macallan Exp $	*/
+/*	$Id: omap2_obio.c,v 1.10 2010/07/10 08:48:47 kiyohara Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.9 2010/07/07 22:55:03 macallan Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.10 2010/07/10 08:48:47 kiyohara Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.9 2010/07/07 22:55:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.10 2010/07/10 08:48:47 kiyohara Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -359,6 +359,7 @@ static const struct {
 #if 0
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
 #endif
+	{ .name = "omapmputmr0", .addr = GPT2_BASE, .required = true },
 };
 
 static void
@@ -387,15 +388,18 @@ obio_attach_critical(struct obio_softc *sc)
 		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
 		if (cf == NULL) {
 			if (critical_devs[i].required)
-				panic("obio_attach_critical: failed to find %s!",
+				panic(
+				    "obio_attach_critical: failed to find %s!",
 				    critical_devs[i].name);
 			continue;
 		}
 
-		oa.obio_addr = cf->cf_loc[OBIOCF_ADDR];
-		oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
-		oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
-		oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
+		if (oa.obio_size == OBIOCF_SIZE_DEFAULT)
+			oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
+		if (oa.obio_intr == OBIOCF_INTR_DEFAULT)
+			oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
+		if (oa.obio_intrbase == OBIOCF_INTRBASE_DEFAULT)
+			oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
 		config_attach(sc->sc_dev, cf, &oa, obio_print);
 	}
 }
