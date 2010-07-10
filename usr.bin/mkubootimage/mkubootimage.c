@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.3 2010/07/09 11:36:42 kiyohara Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.4 2010/07/10 07:48:25 kiyohara Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.3 2010/07/09 11:36:42 kiyohara Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.4 2010/07/10 07:48:25 kiyohara Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -131,7 +131,7 @@ usage(void)
 	fprintf(stderr, "usage: mkubootimage -A <arm|powerpc>");
 	fprintf(stderr, " -T <kernel|ramdisk|fs>");
 	fprintf(stderr, " -C <none|gz|bz2>");
-	fprintf(stderr, " -a <addr> -e <ep> -n <name>");
+	fprintf(stderr, " -a <addr> [-e <ep>] -n <name>");
 	fprintf(stderr, " <srcfile> <dstfile>\n");
 
 	exit(EXIT_FAILURE);
@@ -278,10 +278,12 @@ main(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
+	if (image_entrypoint == 0)
+		image_entrypoint = image_loadaddr;
+
 	if (image_arch == IH_ARCH_UNKNOWN ||
 	    image_type == IH_TYPE_UNKNOWN ||
 	    image_loadaddr == 0 ||
-	    image_entrypoint == 0 ||
 	    image_name == NULL)
 		usage();
 
