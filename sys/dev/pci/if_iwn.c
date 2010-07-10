@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.48 2010/07/03 21:43:37 christos Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.49 2010/07/10 04:09:35 christos Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.96 2010/05/13 09:25:03 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.48 2010/07/03 21:43:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.49 2010/07/10 04:09:35 christos Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -5844,7 +5844,7 @@ iwn_init(struct ifnet *ifp)
 
 	mutex_enter(&sc->sc_mtx);
 	if (sc->sc_flags & IWN_FLAG_HW_INITED)
-		return 0;
+		goto out;
 	if ((error = iwn_hw_prepare(sc)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "hardware not ready\n");
@@ -5898,6 +5898,7 @@ iwn_init(struct ifnet *ifp)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	sc->sc_flags |= IWN_FLAG_HW_INITED;
+out:
 	mutex_exit(&sc->sc_mtx);
 	return 0;
 
