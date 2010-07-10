@@ -1,6 +1,6 @@
-# $NetBSD: t_libcrypto.awk,v 1.1 2009/02/13 20:58:14 jmmv Exp $
+# $NetBSD: t_certs.sh,v 1.1 2010/07/10 16:43:25 jmmv Exp $
 #
-# Copyright (c) 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,41 +25,17 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-BEGIN { 
-	FS = ":";
-};
-
-/^tc:/ {
-	printf "atf_test_case %s\n", $2;
-	printf "%s_head()\n", $2;
-	print  "{"
-	printf "	atf_set \"descr\" \"%s\"\n", $4;
-	print  "}"
-	printf "%s_body()\n", $2;
-	print  "{"
-	printf "	h_check %s\n", $3;
-	print  "}"
-	print  ""
-
-	tcs[count++] = $2;
-
-	next
+atf_test_case x509v3
+x509v3_head()
+{
+	atf_set "descr" "Checks x509v3 certificates"
+}
+x509v3_body()
+{
+	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_x509v3test"
 }
 
-/^atf_test_case / {
-	tcs[count++] = substr($1, 15);
-
-	print
-	next
+atf_init_test_cases()
+{
+	atf_add_test_case x509v3
 }
-	
-
-/^tc_list/ {
-	for (i = 0; i < count; i++) {
-		printf("	atf_add_test_case %s\n", tcs[i]);
-	}
-
-	next
-}
-
-{ print }
