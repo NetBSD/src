@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_timer.c,v 1.17 2010/07/10 13:08:09 jruoho Exp $ */
+/* $NetBSD: acpi_timer.c,v 1.18 2010/07/10 19:37:38 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2006 Matthias Drochner <drochner@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.17 2010/07/10 13:08:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.18 2010/07/10 19:37:38 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_timer.c,v 1.17 2010/07/10 13:08:09 jruoho Exp $
 #include <machine/acpi_machdep.h>
 
 static int	acpitimer_test(void);
-static uint32_t	acpitimer_delta(uint32_t, uint32_t);
 
 static struct timecounter acpi_timecounter = {
 	acpitimer_read_safe,
@@ -63,7 +62,7 @@ acpitimer_init(struct acpi_softc *sc)
 	res = AcpiGetTimerResolution(&bits);
 
 	if (res != AE_OK)
-		return (-1);
+		return -1;
 
 	if (bits == 32)
 		acpi_timecounter.tc_counter_mask = 0xffffffff;
@@ -103,8 +102,8 @@ acpitimer_read_fast(struct timecounter *tc)
 }
 
 /*
- * Some chipsets (PIIX4 variants) do not latch correctly; there
- * is a chance that a transition is hit.
+ * Some chipsets (PIIX4 variants) do not latch correctly;
+ * there is a chance that a transition is hit.
  */
 u_int
 acpitimer_read_safe(struct timecounter *tc)
@@ -125,7 +124,7 @@ acpitimer_read_safe(struct timecounter *tc)
 	return t2;
 }
 
-static uint32_t
+uint32_t
 acpitimer_delta(uint32_t end, uint32_t start)
 {
 	const u_int mask = acpi_timecounter.tc_counter_mask;
