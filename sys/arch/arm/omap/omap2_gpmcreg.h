@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpmcreg.h,v 1.2 2008/10/22 10:45:47 matt Exp $	*/
+/*	$NetBSD: omap2_gpmcreg.h,v 1.3 2010/07/10 11:50:49 ahoka Exp $	*/
 /*
  * Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -183,6 +183,7 @@
 
 #define GPMC_SIZE			(GPMC_PSA_MSB + 4)
 #define GPMC_NCS			8	/* # Chip Selects */
+#define GPMC_CS_SIZE			(GPMC_CONFIG1_1 - GPMC_CONFIG1_0)
 
 /*
  * GPMC OMAP2430_GPMC_REVISION
