@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/02/13 05:19:52 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/10 16:16:12 jmmv Exp $
 
 NOMAN=			# defined
 
@@ -7,10 +7,6 @@ NOMAN=			# defined
 TESTSDIR=		${TESTSBASE}/util/make
 
 TESTS_SH=		t_make
-
-CLEANFILES+=		t_make.sh
-t_make.sh: t_make.awk t_make.in
-	${TOOL_AWK} -f ${.CURDIR}/t_make.awk ${.CURDIR}/t_make.in > t_make.sh
 
 FILESDIR=		${TESTSDIR}
 FILES=			d_comment.mk
