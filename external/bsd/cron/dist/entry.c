@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: entry.c,v 1.3 2010/07/10 21:42:29 christos Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.3 2010/07/10 21:42:29 christos Exp $");
 #endif
 #endif
 
@@ -305,7 +305,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		} else
 			log_it("CRON", getpid(), "error", "can't set HOME");
 	}
-#ifndef LOGIN_CAP
 	/* If login.conf is in used we will get the default PATH later. */
 	if (!env_get("PATH", e->envp)) {
 		if (glue_strings(envstr, sizeof envstr, "PATH",
@@ -318,7 +317,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		} else
 			log_it("CRON", getpid(), "error", "can't set PATH");
 	}
-#endif /* LOGIN_CAP */
 	if (glue_strings(envstr, sizeof envstr, "LOGNAME",
 			 pw->pw_name, '=')) {
 		if ((tenvp = env_set(e->envp, envstr)) == NULL) {
