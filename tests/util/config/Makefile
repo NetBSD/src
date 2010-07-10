@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/02/13 05:19:51 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/10 16:24:12 jmmv Exp $
 
 SUBDIR=			support
 
@@ -9,11 +9,6 @@ NOMAN=			# defined
 TESTSDIR=		${TESTSBASE}/util/config
 
 TESTS_SH=		t_config
-
-CLEANFILES+=		t_config.sh
-t_config.sh: t_config.awk t_config.in
-	${TOOL_AWK} -f ${.CURDIR}/t_config.awk ${.CURDIR}/t_config.in >t_config.sh.tmp
-	mv t_config.sh.tmp t_config.sh
 
 FILESDIR=		${TESTSDIR}
 FILES=			d_deffs_redef
