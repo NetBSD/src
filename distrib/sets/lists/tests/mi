@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.101 2010/07/07 14:54:19 njoly Exp $
+# $NetBSD: mi,v 1.102 2010/07/10 16:43:40 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -855,7 +855,11 @@
 ./usr/tests/crypto/libcrypto/h_shatest		tests-crypto-tests
 ./usr/tests/crypto/libcrypto/h_threadstest	tests-crypto-tests
 ./usr/tests/crypto/libcrypto/h_x509v3test	tests-crypto-tests
+./usr/tests/crypto/libcrypto/t_certs		tests-crypto-tests
+./usr/tests/crypto/libcrypto/t_ciphers		tests-crypto-tests
+./usr/tests/crypto/libcrypto/t_hashes		tests-crypto-tests
 ./usr/tests/crypto/libcrypto/t_libcrypto	tests-crypto-tests
+./usr/tests/crypto/libcrypto/t_pubkey		tests-crypto-tests
 ./usr/tests/fs					tests-fs-tests
 ./usr/tests/fs/Atffile				tests-fs-tests		atf
 ./usr/tests/fs/h_funcs.subr			tests-fs-tests		atf
