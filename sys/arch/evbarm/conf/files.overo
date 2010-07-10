@@ -1,4 +1,4 @@
-#	$NetBSD: files.overo,v 1.1 2010/07/10 08:17:48 kiyohara Exp $
+#	$NetBSD: files.overo,v 1.2 2010/07/10 08:31:34 kiyohara Exp $
 #
 # Gumstix. Inc. Overo boards configuration info
 #
@@ -15,7 +15,3 @@ include "arch/arm/omap/files.omap2"
 # NS16550 compatible serial ports
 attach com at obio with obiouart
 file	arch/arm/omap/obio_com.c		obiouart
-
-device omapnand { [addr = -1] }
-attach omapnand at gpmc
-file	arch/arm/omap/omap2_nand.c		omapnand
