@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.3 2010/07/08 14:51:14 cherry Exp $ */
+/* $NetBSD: balloon.c,v 1.4 2010/07/10 11:20:48 cherry Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.3 2010/07/08 14:51:14 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.4 2010/07/10 11:20:48 cherry Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/param.h>
@@ -90,6 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.3 2010/07/08 14:51:14 cherry Exp $");
 #define BALLOON_BALLAST 256 /* In pages */
 #define XEN_RESERVATION_MIN (uvmexp.freemin + BALLOON_BALLAST) /* In pages */
 #define XEN_RESERVATION_MAX nkmempages /* In pages */
+
+/* KB <-> PAGEs */
+#define BALLOON_PAGES_TO_KB(_pg) (_pg * PAGE_SIZE / 1024)
+#define BALLOON_KB_TO_PAGES(_kb) (_kb * 1024 / PAGE_SIZE)
+#define BALLOON_PAGE_FLOOR(_kb) (_kb & PAGE_MASK)
 
 /* Forward declaration */
 static void xenbus_balloon_watcher(struct xenbus_watch *, const char **,
@@ -193,18 +198,16 @@ xenbus_balloon_read_target(void)
 		return 0;
 	}
 
-	/* Convert to npages */
+	/* Returned in KB */
 
-	return new_target * 1024 / PAGE_SIZE;
+	return new_target;
 }
 
 static void
 xenbus_balloon_write_target(unsigned long long new_target)
 {
 
-	/* Convert to KB */
-	new_target = new_target * PAGE_SIZE / 1024;
-
+	/* new_target is in KB */
 	if (0 != xenbus_printf(NULL, "memory", "target", "%llu", new_target)) {
 		printf("error, couldn't write xenbus target node\n");
 	}
@@ -247,9 +250,9 @@ static void
 balloon_feedback_target(size_t newtarget)
 {
 	/* Notify XenStore. */
-	xenbus_balloon_write_target(newtarget);
+	xenbus_balloon_write_target(BALLOON_PAGES_TO_KB(newtarget));
 	/* Update sysctl value XXX: Locking ? */
-	sysctl_target = newtarget;
+	sysctl_target = BALLOON_PAGES_TO_KB(newtarget);
 
 	/* Finally update our private copy */
 	balloon_set_target(newtarget);
@@ -651,15 +654,18 @@ static void
 xenbus_balloon_watcher(struct xenbus_watch *watch, const char **vec,
 		       unsigned int len)
 {
-	size_t new_target;
+	size_t new_target; /* In KB */
 
 	if (0 == (new_target = (size_t) xenbus_balloon_read_target())) {
 		/* Don't update target value */
 		return;
 	}
+
+	new_target = BALLOON_PAGE_FLOOR(new_target);
+
 #if BALLOONDEBUG 
-	if (new_target < balloon_conf.xen_res_min ||
-	    new_target > balloon_conf.xen_res_max) {
+	if (new_target < BALLOON_KB_TO_PAGES(balloon_conf.xen_res_min) ||
+	    new_target > BALLOON_KB_TO_PAGES(balloon_conf.xen_res_max)) {
 		printf("Requested target is unacceptable.\n");
 		return;
 	}
@@ -669,7 +675,7 @@ xenbus_balloon_watcher(struct xenbus_watch *watch, const char **vec,
 	 * balloon_set_target() calls
 	 * xenbus_balloon_write_target(). Not sure if this is racy 
 	 */
-	balloon_set_target(new_target);
+	balloon_set_target(BALLOON_KB_TO_PAGES(new_target));
 
 #if BALLOONDEBUG
 	printf("Setting target to %zu\n", new_target);
@@ -727,7 +733,8 @@ balloon_xenbus_setup(void)
 	 * Initialise the sysctl_xxx copies of target and current
 	 * as above, because sysctl inits before balloon_xenbus_setup()
 	 */
-	sysctl_target = sysctl_current = currentpages;
+	sysctl_current = currentpages;
+	sysctl_target = BALLOON_PAGES_TO_KB(currentpages);
 
 	/* Setup xenbus node watch callback */
 	if (register_xenbus_watch(&xenbus_balloon_watch)) {
@@ -780,7 +787,7 @@ sysctl_kern_xen_balloon(SYSCTLFN_ARGS)
 	node = *rnode;
 
 	if (strcmp(node.sysctl_name, "current") == 0) {
-		node_val = xenmem_get_currentreservation();
+		node_val = BALLOON_PAGES_TO_KB(xenmem_get_currentreservation());
 		node.sysctl_data = &node_val;
 		return sysctl_lookup(SYSCTLFN_CALL(&node));
 #ifndef XEN_BALLOON /* Read only, if balloon is disabled */
@@ -788,7 +795,7 @@ sysctl_kern_xen_balloon(SYSCTLFN_ARGS)
 		if (newp != NULL || newlen != 0) {
 			return (EPERM);
 		}
-		node_val = xenmem_get_currentreservation();
+		node_val = BALLOON_PAGES_TO_KB(xenmem_get_currentreservation());
 		node.sysctl_data = &node_val;
 		error = sysctl_lookup(SYSCTLFN_CALL(&node));
 		return error;
@@ -796,6 +803,7 @@ sysctl_kern_xen_balloon(SYSCTLFN_ARGS)
 #else
 	} else if (strcmp(node.sysctl_name, "target") == 0) {
 		node_val = * (int64_t *) rnode->sysctl_data;
+		node_val = BALLOON_PAGE_FLOOR(node_val);
 		node.sysctl_data = &node_val;
 		error = sysctl_lookup(SYSCTLFN_CALL(&node));
 		if (error != 0) {
@@ -803,8 +811,8 @@ sysctl_kern_xen_balloon(SYSCTLFN_ARGS)
 		}
 
 		/* Sanity check new size */
-		if (node_val < XEN_RESERVATION_MIN || 
-   		    node_val > XEN_RESERVATION_MAX ) {
+		if (node_val < BALLOON_PAGES_TO_KB(XEN_RESERVATION_MIN) || 
+   		    node_val > BALLOON_PAGES_TO_KB(XEN_RESERVATION_MAX) ) {
 #if BALLOONDEBUG
 			printf("node_val out of range.\n");
 			printf("node_val = %"PRIu64"\n", node_val);
@@ -816,14 +824,14 @@ sysctl_kern_xen_balloon(SYSCTLFN_ARGS)
 		printf("node_val = %"PRIu64"\n", node_val);
 #endif
 
-		if (node_val != balloon_get_target()) {
+		if (node_val != BALLOON_PAGES_TO_KB(balloon_get_target())) {
 			* (int64_t *) rnode->sysctl_data = node_val;
 
 #if BALLOONDEBUG
 			printf("setting to %" PRIu64"\n", node_val);
 #endif
 
-			balloon_set_target(node_val);
+			balloon_set_target(BALLOON_KB_TO_PAGES(node_val));
 
 			/* Notify balloon thread, if we can. */
 			if (mutex_tryenter(&balloon_conf.flaglock)) {
