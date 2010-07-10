@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.205 2010/07/02 05:18:38 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.206 2010/07/10 13:08:09 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.205 2010/07/02 05:18:38 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.206 2010/07/10 13:08:09 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.205 2010/07/02 05:18:38 jruoho Exp $");
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -528,7 +529,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	acpi_register_fixed_button(sc, ACPI_EVENT_POWER_BUTTON);
 	acpi_register_fixed_button(sc, ACPI_EVENT_SLEEP_BUTTON);
 
-	acpitimer_init();
+	acpitimer_init(sc);
 
 #ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_PROBE)
