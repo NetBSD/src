@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.102 2010/07/10 16:43:40 jmmv Exp $
+# $NetBSD: mi,v 1.103 2010/07/10 17:29:12 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1242,7 +1242,15 @@
 ./usr/tests/ipf/regress/p3.pool			tests-ipf-tests
 ./usr/tests/ipf/regress/p5.ipf			tests-ipf-tests
 ./usr/tests/ipf/regress/p5.pool			tests-ipf-tests
-./usr/tests/ipf/t_ipf				tests-ipf-tests
+./usr/tests/ipf/t_bpf				tests-ipf-tests			atf
+./usr/tests/ipf/t_filter_exec			tests-ipf-tests			atf
+./usr/tests/ipf/t_filter_parse			tests-ipf-tests			atf
+./usr/tests/ipf/t_ipf				tests-obsolete			obsolete
+./usr/tests/ipf/t_logging			tests-ipf-tests			atf
+./usr/tests/ipf/t_nat_exec			tests-ipf-tests			atf
+./usr/tests/ipf/t_nat_ipf_exec			tests-ipf-tests			atf
+./usr/tests/ipf/t_nat_parse			tests-ipf-tests			atf
+./usr/tests/ipf/t_pools				tests-ipf-tests			atf
 ./usr/tests/kernel				tests-kernel-tests
 ./usr/tests/kernel/Atffile			tests-kernel-tests		atf
 ./usr/tests/kernel/kqueue			tests-kernel-tests
