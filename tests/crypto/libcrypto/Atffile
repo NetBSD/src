@@ -2,4 +2,8 @@ Content-Type: application/X-atf-atffile; version="1"
 
 prop: test-suite = "NetBSD"
 
+tp: t_certs
+tp: t_ciphers
+tp: t_hashes
 tp: t_libcrypto
+tp: t_pubkey
