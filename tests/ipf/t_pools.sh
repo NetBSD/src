@@ -1,6 +1,6 @@
-# $NetBSD: t_ipf.awk,v 1.3 2010/06/12 14:07:18 pooka Exp $
+# $NetBSD: t_pools.sh,v 1.1 2010/07/10 17:28:36 jmmv Exp $
 #
-# Copyright (c) 2008 The NetBSD Foundation, Inc.
+# Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,69 +24,50 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+#
+# (C)opyright 1993-1996 by Darren Reed.
+#
+# See the IPFILTER.LICENCE file for details on licencing.
+#
 
-BEGIN { 
-	FS = ":";
-};
-
-function maketc(name, type, desc, rest, skip)
+h_iptest()
 {
+	h_copydata $1
+	mkdir input
+	cp $(atf_get_srcdir)/input/ip2.data input/
 
-	printf "atf_test_case %s\n", name;
-	printf "%s_head()\n", name;
-	print  "{"
-	printf "	atf_set \"descr\" \"%s\"\n", desc;
-	printf "	atf_set \"use.fs\" \"true\"\n", desc;
-	print  "}"
-	printf "%s_body()\n", name;
-	print  "{"
-
-	if (skip) {
-		printf "	atf_skip \"test suspected to be broken\"\n\n"
-	}
-	printf "	h_%s %s %s", type, name, rest;
-	printf "\n";
-
-	print  "}"
-	print  ""
-
-	tcs[count++] = $2;
+	atf_check -o file:exp -e ignore ippool -f reg -nRv
 }
 
-/^tc:/ {
-	desc = ($4 in descs) ? descs[$4] : $4;
-	rest = "\"" $5 "\""
-	for (i = 6; i <= NF; ++i)
-		rest = rest " \"" $i "\""
+h_ptest()
+{
+	h_copydata $1
+	cp $(atf_get_srcdir)/regress/$1.pool pool 2>/dev/null
+	cp $(atf_get_srcdir)/regress/$1.ipf ipf
 
-	maketc($2, $3, desc, rest, 0)
+	if [ -f pool ] ; then
+		atf_check -o save:out ipftest -RD -b -P pool -r ipf -i in
+	else
+		atf_check -o save:out ipftest -RD -b -r ipf -i in
+	fi
 
-	next
+	echo "-------------------------------" >>out
+
 }
 
-/^tc_skip:/ {
-	desc = ($4 in descs) ? descs[$4] : $4;
-	rest = "\"" $5 "\""
-	for (i = 6; i <= NF; ++i)
-		rest = rest " \"" $i "\""
+test_case p1 ptest text text
+test_case p2 ptest text text
+test_case p3 ptest text text
+test_case p5 ptest text text
+test_case ip1 iptest text text
+test_case ip2 iptest text text
 
-	maketc($2, $3, desc, rest, 1)
-
-	next
+atf_init_test_cases()
+{
+	atf_add_test_case p1
+	atf_add_test_case p2
+	atf_add_test_case p3
+	atf_add_test_case p5
+	atf_add_test_case ip1
+	atf_add_test_case ip2
 }
-
-/^tc_desc/ {
-	descs[$2] = $3;
-
-	next
-}
-
-/^tc_list/ {
-	for (i = 0; i < count; i++) {
-		printf("	atf_add_test_case %s\n", tcs[i]);
-	}
-
-	next
-}
-
-{ print }

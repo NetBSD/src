@@ -1,6 +1,13 @@
 Content-Type: application/X-atf-atffile; version="1"
-X-NetBSD-Id: "$NetBSD: Atffile,v 1.1 2009/02/20 21:42:59 jmmv Exp $"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.2 2010/07/10 17:28:36 jmmv Exp $"
 
 prop: test-suite = "NetBSD"
 
-tp: t_ipf
+tp: t_bpf
+tp: t_filter_exec
+tp: t_filter_parse
+tp: t_logging
+tp: t_nat_exec
+tp: t_nat_ipf_exec
+tp: t_nat_parse
+tp: t_pools
