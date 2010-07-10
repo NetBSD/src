@@ -1,14 +1,13 @@
-#	$NetBSD: std.gumstix,v 1.5 2008/06/22 08:27:18 kiyohara Exp $
+#	$NetBSD: std.gumstix,v 1.6 2010/07/10 08:17:48 kiyohara Exp $
 #
 # standard NetBSD/evbarm for GUMSTIX options
 
 machine	evbarm arm
-include 	"conf/std"	# MI standard options
+include 	"conf/std"		# MI standard options
 include		"arch/arm/conf/std.arm"	# arch standard options
 
 include 	"arch/evbarm/conf/files.gumstix"
 
-options 	GUMSTIX
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 
