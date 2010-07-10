@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2009/02/13 22:01:49 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/07/10 16:43:25 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -17,13 +17,11 @@ SUBDIR+=mdc2
 
 TESTSDIR=	${TESTSBASE}/crypto/libcrypto
 
-TESTS_SH=	t_libcrypto
-
-CLEANFILES+=	t_libcrypto.sh
-t_libcrypto.sh: t_libcrypto.awk t_libcrypto.in
-	${TOOL_AWK} -f ${.CURDIR}/t_libcrypto.awk ${.CURDIR}/t_libcrypto.in \
-	    >t_libcrypto.sh.tmp
-	mv t_libcrypto.sh.tmp t_libcrypto.sh
+TESTS_SH=	t_certs
+TESTS_SH+=	t_ciphers
+TESTS_SH+=	t_hashes
+TESTS_SH+=	t_libcrypto
+TESTS_SH+=	t_pubkey
 
 .include <bsd.subdir.mk>
 .include <bsd.test.mk>
