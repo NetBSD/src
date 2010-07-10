@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.27 2010/07/10 08:17:48 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.28 2010/07/10 08:26:34 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -268,6 +268,7 @@ static void	process_kernel_args_liner(char *);
 #ifdef KGDB
 static void	kgdb_port_init(void);
 #endif
+static void	gumstix_device_register(device_t, void *);
 
 bs_protos(bs_notimpl);
 
@@ -983,6 +984,9 @@ initarm(void *arg)
 		Debugger();
 #endif
 
+	/* We have our own device_register() */
+	evbarm_device_register = gumstix_device_register;
+
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
@@ -1295,3 +1299,26 @@ kgdb_port_init(void)
 #endif
 }
 #endif
+
+static void
+gumstix_device_register(device_t dev, void *aux)
+{
+
+	if (device_is_a(dev, "ohci")) {
+		if (prop_dictionary_set_bool(device_properties(dev),
+		    "Ganged-power-mask-on-port1", 1) == false) {
+			printf("WARNING: unable to set power-mask for port1"
+			    " property for %s\n", dev->dv_xname);
+		}
+		if (prop_dictionary_set_bool(device_properties(dev),
+		    "Ganged-power-mask-on-port2", 1) == false) {
+			printf("WARNING: unable to set power-mask for port2"
+			    " property for %s\n", dev->dv_xname);
+		}
+		if (prop_dictionary_set_bool(device_properties(dev),
+		    "Ganged-power-mask-on-port3", 1) == false) {
+			printf("WARNING: unable to set power-mask for port3"
+			    " property for %s\n", dev->dv_xname);
+		}
+	}
+}
