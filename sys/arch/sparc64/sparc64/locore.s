@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.330 2010/05/23 18:49:14 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.331 2010/07/10 10:10:36 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -5483,13 +5483,9 @@ ENTRY(pseg_get_real)
  */
 ENTRY(pseg_set_real)
 #ifndef _LP64
-	sllx	%o4, 32, %o4				! Put args into 64-bit format
-	sllx	%o2, 32, %o2				! Shift to high 32-bits
-	clruw	%o3					! Zero extend
-	clruw	%o5
-	clruw	%o1
-	or	%o2, %o3, %o2
-	or	%o4, %o5, %o3
+	clruw	%o1					! Zero extend
+	COMBINE(%o2, %o3, %o2)
+	COMBINE(%o4, %o5, %o3)
 #endif
 	!!
 	!! However we managed to get here we now have:
