@@ -1,6 +1,6 @@
-# $NetBSD: t_libcrypto.in,v 1.3 2010/06/04 08:39:40 jmmv Exp $
+# $NetBSD: t_libcrypto.sh,v 1.1 2010/07/10 16:43:25 jmmv Exp $
 #
-# Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+# Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -25,79 +25,25 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-h_check()
+atf_test_case engine
+engine_head()
 {
-	atf_check -o ignore -e ignore "$(atf_get_srcdir)/$1"
+	atf_set "descr" "Checks ENGINE framework"
+}
+engine_body()
+{
+	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_enginetest"
 }
 
-# Symmetric ciphers
-tc:bf:h_bftest:Checks blowfish cipher
-tc:cast:h_casttest:Checks CAST cipher
-tc:des:h_destest:Checks DES cipher (libdes)
-tc:rc2:h_rc2test:Checks RC2 cipher
-tc:rc4:h_rc4test:Checks RC4 cipher
-
-atf_test_case idea
-idea_head()
+atf_test_case rand
+rand_head()
 {
-	atf_set "descr" "Checks IDEA cipher"
+	atf_set "descr" "Checks peudo-random number generator"
 }
-idea_body()
+rand_body()
 {
-	[ -x "$(atf_get_srcdir)/h_ideatest" ] \
-	    || atf_skip "IDEA support not available; system built" \
-	                "with MKCRYPTO_IDEA=no"
-	h_check h_ideatest
+	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_randtest"
 }
-
-atf_test_case rc5
-rc5_head()
-{
-	atf_set "descr" "Checks RC5 cipher"
-}
-rc5_body()
-{
-	[ -x "$(atf_get_srcdir)/h_rc5test" ] \
-	    || atf_skip "RC5 support not available; system built" \
-	                "with MKCRYPTO_RC5=no"
-	h_check h_rc5test
-}
-
-# Public key cryptography
-tc:dsa:h_dsatest:Checks DSA cipher
-tc:dh:h_dhtest:Checks Diffie-Hellman key agreement protocol
-tc:rsa:h_rsatest:Checks RSA
-tc:ec:h_ectest:Checks EC cipher
-tc:ecdh:h_ecdhtest:Checks ECDH key agreement protocol
-tc:ecdsa:h_ecdsatest:Checks ECDSA algorithm
-
-# Certificates
-tc:x509v3:h_x509v3test:Checks x509v3 certificates
-
-# Authentication codes, hash functions
-tc:hmac:h_hmactest:Checks HMAC message authentication code
-tc:md2:h_md2test:Checks MD2 digest
-tc:md4:h_md4test:Checks MD4 digest
-tc:md5:h_md5test:Checks MD5 digest
-tc:ripemd:h_ripemdtest:Checks RMD-160 digest
-tc:sha:h_shatest:Checks SHA-1 digest
-
-atf_test_case mdc2
-mdc2_head()
-{
-	atf_set "descr" "Checks MDC2 digest"
-}
-mdc2_body()
-{
-	[ -x "$(atf_get_srcdir)/h_mdc2test" ] \
-	    || atf_skip "MDC2 support not available; system built" \
-	                "with MKCRYPTO_MDC2=no"
-	h_check h_mdc2test
-}
-
-# Auxiliary
-tc:engine:h_enginetest:Checks ENGINE framework
-tc:rand:h_randtest:Checks pseudo-random number generator
 
 atf_test_case bn
 bn_head()
@@ -106,9 +52,9 @@ bn_head()
 }
 bn_body()
 {
-	h_check h_bntest
-	h_check h_divtest
-	h_check h_exptest
+	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_bntest"
+	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_divtest"
+	atf_check -o ignore -e ignore "$(atf_get_srcdir)/h_exptest"
 }
 
 atf_test_case conf
@@ -153,5 +99,10 @@ threads_body()
 
 atf_init_test_cases()
 {
-tc_list
+	atf_add_test_case engine
+	atf_add_test_case rand
+	atf_add_test_case bn
+	atf_add_test_case conf
+	atf_add_test_case lhash
+	atf_add_test_case threads
 }
