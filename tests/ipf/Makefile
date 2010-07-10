@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2009/02/20 21:42:59 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/10 17:28:36 jmmv Exp $
 
 NOMAN=		# defined
 
@@ -6,11 +6,11 @@ NOMAN=		# defined
 
 TESTSDIR=	${TESTSBASE}/ipf
 
-TESTS_SH=	t_ipf
-
-CLEANFILES+= t_ipf.sh
-t_ipf.sh: t_ipf.awk t_ipf.in
-	${TOOL_AWK} -f ${.CURDIR}/t_ipf.awk ${.CURDIR}/t_ipf.in >t_ipf.sh
+.for name in t_bpf t_filter_exec t_filter_parse t_logging t_nat_exec \
+             t_nat_ipf_exec t_nat_parse t_pools
+TESTS_SH+=		${name}
+TESTS_SH_SRC_${name}=	h_common.sh ${name}.sh
+.endfor
 
 SUBDIR=		regress input expected
 
