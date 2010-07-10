@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.24 2010/07/08 23:15:23 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.25 2010/07/10 17:04:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.24 2010/07/08 23:15:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.25 2010/07/10 17:04:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -633,13 +633,14 @@ sel_setevents(lwp_t *l, struct selinfo *sip, const int events)
 	 */
 	if (l->l_selbits != NULL) {
 		fd_mask *fds = (fd_mask *)l->l_selbits;
-		const int ni = l->l_selni;
+		const size_t ni = l->l_selni;
 		const int fd = sip->sel_fdinfo;
+		const int idx = fd >> __NFDSHIFT;
 		int n;
 
 		for (n = 0; n < 3; n++) {
 			if (sel_flag[n] | events) {
-				fds[fd >> __NFDSHIFT] |= (fd & __NFDMASK);
+				fds[idx] |= 1 << (fd & __NFDMASK);
 			}
 			fds = (fd_mask *)((char *)fds + ni);
 		}
