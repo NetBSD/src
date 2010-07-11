@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.464 2010/06/10 17:49:32 dholland Exp $
+.\"	$NetBSD: main,v 1.465 2010/07/11 20:00:52 gsutre Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1334,6 +1334,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Bill Studenmund Ta Mt wrstuden@NetBSD.org
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.org
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.org
+.It Ta Gr\('egoire Sutre Ta Mt gsutre@NetBSD.org
 .It Ta Sergey Svishchev Ta Mt shattered@NetBSD.org
 .It Ta Robert Swindells Ta Mt rjs@NetBSD.org
 .It Ta Shin Takemura Ta Mt takemura@NetBSD.org
