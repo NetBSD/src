@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.126 2010/07/02 07:43:36 mrg Exp $
+# $NetBSD: shl.mi,v 1.127 2010/07/11 06:16:56 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -92,7 +92,7 @@
 ./usr/lib/librpcsvc_pic.a			comp-c-piclib
 ./usr/lib/librt_pic.a				comp-c-piclib
 ./usr/lib/librump_pic.a				comp-c-piclib
-./usr/lib/librumpcrypto_pic.a			comp-c-piclib
+./usr/lib/librumpcrypto_pic.a			comp-c-piclib		crypto
 ./usr/lib/librumpdev_audio_pic.a		comp-c-piclib
 ./usr/lib/librumpdev_bpf_pic.a			comp-c-piclib
 ./usr/lib/librumpdev_cgd_pic.a			comp-c-piclib
@@ -270,7 +270,7 @@
 ./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug	comp-net-debug	debug
 ./usr/libdata/debug/usr/lib/librt.so.1.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/librump.so.0.0.debug	comp-rump-debug	debug
-./usr/libdata/debug/usr/lib/librumpcrypto.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpcrypto.so.0.0.debug	comp-rump-debug	debug,crypto
 ./usr/libdata/debug/usr/lib/librumpdev.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_audio.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpdev_bpf.so.0.0.debug	comp-rump-debug	debug

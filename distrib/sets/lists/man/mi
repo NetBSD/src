@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1226 2010/07/08 21:43:58 tron Exp $
+# $NetBSD: mi,v 1.1227 2010/07/11 06:16:57 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -75,7 +75,7 @@
 ./usr/share/man/cat1/bdes.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/bg.0			man-util-catman		.cat
 ./usr/share/man/cat1/biff.0			man-mail-catman		.cat
-./usr/share/man/cat1/bpm.0			man-pkgutil-catman	.cat
+./usr/share/man/cat1/bpm.0			man-pkgutil-catman	crypto,.cat
 ./usr/share/man/cat1/bthset.0			man-util-catman		.cat
 ./usr/share/man/cat1/btkey.0			man-util-catman		.cat
 ./usr/share/man/cat1/btpin.0			man-util-catman		.cat
@@ -378,11 +378,11 @@
 ./usr/share/man/cat1/pgrep.0			man-util-catman		.cat
 ./usr/share/man/cat1/pigz.0			man-util-catman		.cat
 ./usr/share/man/cat1/pim6stat.0			man-obsolete		obsolete
-./usr/share/man/cat1/pkg_add.0			man-pkgutil-catman	.cat
-./usr/share/man/cat1/pkg_admin.0		man-pkgutil-catman	.cat
-./usr/share/man/cat1/pkg_create.0		man-pkgutil-catman	.cat
-./usr/share/man/cat1/pkg_delete.0		man-pkgutil-catman	.cat
-./usr/share/man/cat1/pkg_info.0			man-pkgutil-catman	.cat
+./usr/share/man/cat1/pkg_add.0			man-pkgutil-catman	crypto,.cat
+./usr/share/man/cat1/pkg_admin.0		man-pkgutil-catman	crypto,.cat
+./usr/share/man/cat1/pkg_create.0		man-pkgutil-catman	crypto,.cat
+./usr/share/man/cat1/pkg_delete.0		man-pkgutil-catman	crypto,.cat
+./usr/share/man/cat1/pkg_info.0			man-pkgutil-catman	crypto,.cat
 ./usr/share/man/cat1/pkg_view.0			man-obsolete		obsolete
 ./usr/share/man/cat1/pkill.0			man-util-catman		.cat
 ./usr/share/man/cat1/pmap.0			man-util-catman		.cat
@@ -1871,8 +1871,8 @@
 ./usr/share/man/cat5/phones.0			man-sys-man		.cat
 ./usr/share/man/cat5/pim6dd.conf.0		man-obsolete		obsolete
 ./usr/share/man/cat5/pim6sd.conf.0		man-obsolete		obsolete
-./usr/share/man/cat5/pkg_install.conf.0		man-pkgutil-catman	.cat
-./usr/share/man/cat5/pkg_summary.0		man-pkgutil-catman	.cat
+./usr/share/man/cat5/pkg_install.conf.0		man-pkgutil-catman	crypto,.cat
+./usr/share/man/cat5/pkg_summary.0		man-pkgutil-catman	crypto,.cat
 ./usr/share/man/cat5/postconf.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/postfix-wrapper.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/primes.0			man-obsolete		obsolete
@@ -2582,7 +2582,7 @@
 ./usr/share/man/cat8/rump_msdos.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_nfs.0			man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_ntfs.0		man-puffs-catman	.cat
-./usr/share/man/cat8/rump_smbfs.0		man-puffs-catman	.cat
+./usr/share/man/cat8/rump_smbfs.0		man-puffs-catman	crypto,.cat
 ./usr/share/man/cat8/rump_syspuffs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_sysvbfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/rump_tmpfs.0		man-puffs-catman	.cat
@@ -2829,7 +2829,7 @@
 ./usr/share/man/html1/bdes.html			man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/bg.html			man-util-htmlman	html
 ./usr/share/man/html1/biff.html			man-mail-htmlman	html
-./usr/share/man/html1/bpm.html			man-pkgutil-htmlman	html
+./usr/share/man/html1/bpm.html			man-pkgutil-htmlman	crypto,html
 ./usr/share/man/html1/bthset.html		man-util-htmlman	html
 ./usr/share/man/html1/btkey.html		man-util-htmlman	html
 ./usr/share/man/html1/btpin.html		man-util-htmlman	html
@@ -3114,11 +3114,11 @@
 ./usr/share/man/html1/pcpp.html			man-util-htmlman	pcccmds,html
 ./usr/share/man/html1/pgrep.html		man-util-htmlman	html
 ./usr/share/man/html1/pigz.html			man-util-htmlman	html
-./usr/share/man/html1/pkg_add.html		man-pkgutil-htmlman	html
-./usr/share/man/html1/pkg_admin.html		man-pkgutil-htmlman	html
-./usr/share/man/html1/pkg_create.html		man-pkgutil-htmlman	html
-./usr/share/man/html1/pkg_delete.html		man-pkgutil-htmlman	html
-./usr/share/man/html1/pkg_info.html		man-pkgutil-htmlman	html
+./usr/share/man/html1/pkg_add.html		man-pkgutil-htmlman	crypto,html
+./usr/share/man/html1/pkg_admin.html		man-pkgutil-htmlman	crypto,html
+./usr/share/man/html1/pkg_create.html		man-pkgutil-htmlman	crypto,html
+./usr/share/man/html1/pkg_delete.html		man-pkgutil-htmlman	crypto,html
+./usr/share/man/html1/pkg_info.html		man-pkgutil-htmlman	crypto,html
 ./usr/share/man/html1/pkg_view.html		man-obsolete		obsolete
 ./usr/share/man/html1/pkill.html		man-util-htmlman	html
 ./usr/share/man/html1/pmap.html			man-util-htmlman	html
@@ -4452,8 +4452,8 @@
 ./usr/share/man/html5/pf.conf.html		man-pf-htmlman		pf,html
 ./usr/share/man/html5/pf.os.html		man-pf-htmlman		pf,html
 ./usr/share/man/html5/phones.html		man-sys-man		html
-./usr/share/man/html5/pkg_install.conf.html	man-pkgutil-htmlman	html
-./usr/share/man/html5/pkg_summary.html		man-pkgutil-htmlman	html
+./usr/share/man/html5/pkg_install.conf.html	man-pkgutil-htmlman	crypto,html
+./usr/share/man/html5/pkg_summary.html		man-pkgutil-htmlman	crypto,html
 ./usr/share/man/html5/postconf.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/postfix-wrapper.html	man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/printcap.html		man-lpr-htmlman		html
@@ -5005,7 +5005,7 @@
 ./usr/share/man/html8/rump_msdos.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rump_nfs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rump_ntfs.html		man-puffs-htmlman	html
-./usr/share/man/html8/rump_smbfs.html		man-puffs-htmlman	html
+./usr/share/man/html8/rump_smbfs.html		man-puffs-htmlman	crypto,html
 ./usr/share/man/html8/rump_syspuffs.html	man-puffs-htmlman	html
 ./usr/share/man/html8/rump_sysvbfs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/rump_tmpfs.html		man-puffs-htmlman	html
@@ -5199,7 +5199,7 @@
 ./usr/share/man/man1/bdes.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/bg.1			man-util-man		.man
 ./usr/share/man/man1/biff.1			man-mail-man		.man
-./usr/share/man/man1/bpm.1			man-pkgutil-man		.man
+./usr/share/man/man1/bpm.1			man-pkgutil-man		crypto,.man
 ./usr/share/man/man1/bthset.1			man-util-man		.man
 ./usr/share/man/man1/btkey.1			man-util-man		.man
 ./usr/share/man/man1/btpin.1			man-util-man		.man
@@ -5502,11 +5502,11 @@
 ./usr/share/man/man1/pgrep.1			man-util-man		.man
 ./usr/share/man/man1/pigz.1			man-util-man		.man
 ./usr/share/man/man1/pim6stat.1			man-obsolete		obsolete
-./usr/share/man/man1/pkg_add.1			man-pkgutil-man		.man
-./usr/share/man/man1/pkg_admin.1		man-pkgutil-man		.man
-./usr/share/man/man1/pkg_create.1		man-pkgutil-man		.man
-./usr/share/man/man1/pkg_delete.1		man-pkgutil-man		.man
-./usr/share/man/man1/pkg_info.1			man-pkgutil-man		.man
+./usr/share/man/man1/pkg_add.1			man-pkgutil-man		crypto,.man
+./usr/share/man/man1/pkg_admin.1		man-pkgutil-man		crypto,.man
+./usr/share/man/man1/pkg_create.1		man-pkgutil-man		crypto,.man
+./usr/share/man/man1/pkg_delete.1		man-pkgutil-man		crypto,.man
+./usr/share/man/man1/pkg_info.1			man-pkgutil-man		crypto,.man
 ./usr/share/man/man1/pkg_view.1			man-obsolete		obsolete
 ./usr/share/man/man1/pkill.1			man-util-man		.man
 ./usr/share/man/man1/pmap.1			man-util-man		.man
@@ -6995,8 +6995,8 @@
 ./usr/share/man/man5/phones.5			man-sys-man		.man
 ./usr/share/man/man5/pim6dd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/pim6sd.conf.5		man-obsolete		obsolete
-./usr/share/man/man5/pkg_install.conf.5		man-pkgutil-man		.man
-./usr/share/man/man5/pkg_summary.5		man-pkgutil-man		.man
+./usr/share/man/man5/pkg_install.conf.5		man-pkgutil-man		crypto,.man
+./usr/share/man/man5/pkg_summary.5		man-pkgutil-man		.crypto,man
 ./usr/share/man/man5/postconf.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/postfix-wrapper.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/primes.5			man-obsolete		obsolete
@@ -7706,7 +7706,7 @@
 ./usr/share/man/man8/rump_msdos.8		man-puffs-man		.man
 ./usr/share/man/man8/rump_nfs.8			man-puffs-man		.man
 ./usr/share/man/man8/rump_ntfs.8		man-puffs-man		.man
-./usr/share/man/man8/rump_smbfs.8		man-puffs-man		.man
+./usr/share/man/man8/rump_smbfs.8		man-puffs-man		crypto,.man
 ./usr/share/man/man8/rump_syspuffs.8		man-puffs-man		.man
 ./usr/share/man/man8/rump_sysvbfs.8		man-puffs-man		.man
 ./usr/share/man/man8/rump_tmpfs.8		man-puffs-man		.man

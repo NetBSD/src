@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.70 2010/07/07 00:10:14 njoly Exp $
+# $NetBSD: md.amd64,v 1.71 2010/07/11 06:16:55 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -704,11 +704,11 @@
 ./usr/lib/i386/librump_g.a			comp-c-proflib		compat,debuglib
 ./usr/lib/i386/librump_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/librump_pic.a			comp-c-piclib		compat,pic
-./usr/lib/i386/librumpcrypto.a			comp-c-lib		compat
-./usr/lib/i386/librumpcrypto.so			comp-sys-shlib		compat,pic
-./usr/lib/i386/librumpcrypto_g.a		comp-c-proflib		compat,debuglib
-./usr/lib/i386/librumpcrypto_p.a		comp-c-proflib		compat,profile
-./usr/lib/i386/librumpcrypto_pic.a		comp-c-piclib		compat,pic
+./usr/lib/i386/librumpcrypto.a			comp-c-lib		compat,crypto
+./usr/lib/i386/librumpcrypto.so			comp-sys-shlib		compat,pic,crypto
+./usr/lib/i386/librumpcrypto_g.a		comp-c-proflib		compat,debuglib,crypto
+./usr/lib/i386/librumpcrypto_p.a		comp-c-proflib		compat,profile,crypto
+./usr/lib/i386/librumpcrypto_pic.a		comp-c-piclib		compat,pic,crypto
 ./usr/lib/i386/librumpdev.a			comp-c-lib		compat
 ./usr/lib/i386/librumpdev.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/librumpdev_g.a			comp-c-proflib		compat,debuglib
@@ -903,7 +903,7 @@
 ./usr/libdata/debug/usr/lib/i386/librpcsvc.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librt.so.1.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librump.so.0.0.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/librumpcrypto.so.0.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/librumpcrypto.so.0.0.debug	comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/i386/librumpdev.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpnet.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/librumpuser.so.0.0.debug	comp-compat-shlib	compat,pic,debug
