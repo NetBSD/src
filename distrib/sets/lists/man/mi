@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1227 2010/07/11 06:16:57 mrg Exp $
+# $NetBSD: mi,v 1.1228 2010/07/11 10:15:07 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6996,7 +6996,7 @@
 ./usr/share/man/man5/pim6dd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/pim6sd.conf.5		man-obsolete		obsolete
 ./usr/share/man/man5/pkg_install.conf.5		man-pkgutil-man		crypto,.man
-./usr/share/man/man5/pkg_summary.5		man-pkgutil-man		.crypto,man
+./usr/share/man/man5/pkg_summary.5		man-pkgutil-man		crypto,.man
 ./usr/share/man/man5/postconf.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/postfix-wrapper.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/primes.5			man-obsolete		obsolete
