@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.66 2010/07/08 18:55:45 msaitoh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.67 2010/07/11 00:11:05 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.66 2010/07/08 18:55:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.67 2010/07/11 00:11:05 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,7 +701,7 @@ const struct puc_device_description puc_devices[] = {
 
        /* NetMos PCIe NM9901 : 1P */
        {   "NetMos NM9901 LPT",
-	    {	PCI_VENDOR_NETMOS,	0x9901,	0xa000,	0x2000	},
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901, 0xa000, 0x2000 },
 	    {	0xffff,	0xffff,	0xffff,	0xffff	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
