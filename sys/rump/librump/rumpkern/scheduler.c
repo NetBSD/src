@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.16 2010/05/28 18:17:24 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.17 2010/07/11 16:20:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.16 2010/05/28 18:17:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.17 2010/07/11 16:20:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -257,6 +257,7 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 	 * view of the world.
 	 */
 
+	KASSERT(l->l_target_cpu != NULL);
 	rcpu = &rcpu_storage[l->l_target_cpu-&rump_cpus[0]];
 	if (atomic_cas_ptr(&rcpu->rcpu_prevlwp, l, RCPULWP_BUSY) == l) {
 		if (__predict_true(interlock == rcpu->rcpu_mtx))
