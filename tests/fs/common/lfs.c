@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.3 2010/07/09 14:16:05 njoly Exp $	*/
+/*	$NetBSD: lfs.c,v 1.4 2010/07/11 11:25:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -128,13 +128,6 @@ static int
 lfs_unmount(const char *path, int flags)
 {
 	int res;
-
-	/*
-	 * Rarely the test does not crash.  atf currently has no way of
-	 * saying "just chill even if the test doesn't fail", so this
-	 * takes care of it.
-	 */
-	abort();
 
 	res = rump_sys_unmount(path, flags);
 	if (res == -1)
