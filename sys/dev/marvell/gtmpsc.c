@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.38 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.39 2010/07/11 08:43:36 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.38 2010/04/28 13:51:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.39 2010/07/11 08:43:36 kiyohara Exp $");
 
 #include "opt_kgdb.h"
 
@@ -229,8 +229,8 @@ gtmpscmatch(device_t parent, cfdata_t match, void *aux)
 	default:
 		return 0;
 	}
-	if (mva->mva_offset == GTCF_OFFSET_DEFAULT ||
-	    mva->mva_irq == GTCF_IRQ_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT ||
+	    mva->mva_irq == MVA_IRQ_DEFAULT)
 		return 0;
 
 	mva->mva_size = GTMPSC_SIZE;
@@ -251,7 +251,7 @@ gtmpscattach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Multi-Protocol Serial Controller\n");
 
-	if (mva->mva_unit != GTCF_UNIT_DEFAULT)
+	if (mva->mva_unit != MVA_UNIT_DEFAULT)
 		unit = mva->mva_unit;
 	else
 		unit = (mva->mva_offset == GTMPSC_BASE(0)) ? 0 : 1;

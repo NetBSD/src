@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.25 2010/06/02 06:44:32 kiyohara Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.26 2010/07/11 08:43:36 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.25 2010/06/02 06:44:32 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.26 2010/07/11 08:43:36 kiyohara Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -99,8 +99,8 @@ gtpci_match(device_t parent, struct cfdata *match, void *aux)
 	case MARVELL_DISCOVERY_V:
 	case MARVELL_DISCOVERY_VI:
 #endif
-		if (mva->mva_unit == GTCF_UNIT_DEFAULT ||
-		    mva->mva_offset != GTCF_OFFSET_DEFAULT)
+		if (mva->mva_unit == MVA_UNIT_DEFAULT ||
+		    mva->mva_offset != MVA_OFFSET_DEFAULT)
 			return 0;
 		break;
 
@@ -109,7 +109,7 @@ gtpci_match(device_t parent, struct cfdata *match, void *aux)
 	case MARVELL_ORION_1_88F5182:
 	case MARVELL_ORION_2_88F5281:
 	case MARVELL_ORION_1_88W8660:
-		if (mva->mva_offset == GTCF_OFFSET_DEFAULT)
+		if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 			return 0;
 		mva->mva_unit = 0;	/* unit 0 only */
 		break;
@@ -206,7 +206,7 @@ gtpci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_unit = mva->mva_unit;
 	sc->sc_iot = mva->mva_iot;
 	if (bus_space_subregion(mva->mva_iot, mva->mva_ioh,
-	    (mva->mva_offset != GTCF_OFFSET_DEFAULT) ? mva->mva_offset : 0,
+	    (mva->mva_offset != MVA_OFFSET_DEFAULT) ? mva->mva_offset : 0,
 	    mva->mva_size, &sc->sc_ioh)) {
 		aprint_error_dev(self, "can't map registers\n");
 		return;
