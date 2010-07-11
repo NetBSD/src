@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_compat.c,v 1.1 2010/07/06 13:47:47 pooka Exp $	*/
+/*	$NetBSD: puffs_compat.c,v 1.2 2010/07/11 11:17:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.1 2010/07/06 13:47:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_compat.c,v 1.2 2010/07/11 11:17:27 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -212,10 +212,10 @@ vattr_from_50(const struct vattr50 *va50, struct vattr *va)
  * XXX: cannot assert that sleeping is possible
  * (this always a valid assumption for now)
  */
-#define INIT(name)							\
+#define INIT(name, extra)						\
 	struct puffs50_##name *cmsg;					\
 	struct puffs_##name *omsg;					\
-	creq = kmem_zalloc(sizeof(struct puffs50_##name), KM_SLEEP);	\
+	creq =kmem_zalloc(sizeof(struct puffs50_##name)+extra,KM_SLEEP);\
 	cmsg = (struct puffs50_##name *)creq;				\
 	omsg = (struct puffs_##name *)oreq;				\
 	delta = sizeof(struct puffs50_##name)-sizeof(struct puffs_##name);
@@ -230,8 +230,10 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 	ssize_t delta = 0;
 	bool rv = false;
 
-	if (PUFFSOP_OPCLASS(oreq->preq_opclass == PUFFSOP_VFS)) {
-		INIT(vfsmsg_fhtonode);
+	if (PUFFSOP_OPCLASS(oreq->preq_opclass) == PUFFSOP_VFS
+	    && oreq->preq_optype == PUFFS_VFS_FHTOVP) {
+		INIT(vfsmsg_fhtonode,
+		    ((struct puffs_vfsmsg_fhtonode *)oreq)->pvfsr_dsize);
 
 		ASSIGN(pvfsr_pr);
 		ASSIGN(pvfsr_dsize);
@@ -240,7 +242,7 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 		switch (oreq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
 		{
-			INIT(vnmsg_lookup);
+			INIT(vnmsg_lookup, 0);
 
 			ASSIGN(pvn_pr);
 			ASSIGN(pvnr_cn);
@@ -251,7 +253,7 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 
 		case PUFFS_VN_CREATE:
 		{
-			INIT(vnmsg_create);
+			INIT(vnmsg_create, 0);
 
 			ASSIGN(pvn_pr);
 			ASSIGN(pvnr_cn);
@@ -263,7 +265,7 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 
 		case PUFFS_VN_MKNOD:
 		{
-			INIT(vnmsg_mknod);
+			INIT(vnmsg_mknod, 0);
 
 			ASSIGN(pvn_pr);
 			ASSIGN(pvnr_cn);
@@ -275,7 +277,7 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 
 		case PUFFS_VN_MKDIR:
 		{
-			INIT(vnmsg_mkdir);
+			INIT(vnmsg_mkdir, 0);
 
 			ASSIGN(pvn_pr);
 			ASSIGN(pvnr_cn);
@@ -287,7 +289,7 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 
 		case PUFFS_VN_SYMLINK:
 		{
-			INIT(vnmsg_symlink);
+			INIT(vnmsg_symlink, 0);
 
 			ASSIGN(pvn_pr);
 			ASSIGN(pvnr_cn);
@@ -301,7 +303,7 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 
 		case PUFFS_VN_SETATTR:
 		{
-			INIT(vnmsg_setattr);
+			INIT(vnmsg_setattr, 0);
 
 			ASSIGN(pvn_pr);
 			ASSIGN(pvnr_cred);
@@ -311,7 +313,7 @@ puffs_compat_outgoing(struct puffs_req *oreq,
 		}
 		case PUFFS_VN_GETATTR:
 		{
-			INIT(vnmsg_getattr);
+			INIT(vnmsg_getattr, 0);
 
 			ASSIGN(pvn_pr);
 			ASSIGN(pvnr_cred);
@@ -345,7 +347,8 @@ void
 puffs_compat_incoming(struct puffs_req *preq, struct puffs_req *creq)
 {
 
-	if (PUFFSOP_OPCLASS(preq->preq_opclass == PUFFSOP_VFS)) {
+	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS
+	    && preq->preq_optype == PUFFS_VFS_FHTOVP) {
 		INIT(vfsmsg_fhtonode);
 
 		ASSIGN(pvfsr_pr);
