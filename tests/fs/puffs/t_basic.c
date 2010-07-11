@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.3 2010/07/07 10:49:51 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.4 2010/07/11 12:26:19 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <puffs.h>
+#include <puffsdump.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -31,11 +32,48 @@ struct puffs_args {
 };
 
 #define BUFSIZE (64*1024)
+#define DTFS_DUMP "-o","dump"
 
 struct thefds {
 	int rumpfd;
 	int servfd;
 };
+
+int vfs_toserv_ops[PUFFS_VFS_MAX];
+int vn_toserv_ops[PUFFS_VN_MAX];
+
+/*
+ * Do a synchronous operation.  When this returns, all FAF operations
+ * have at least been delivered to the file system.
+ *
+ * XXX: is this really good enough considering puffs(9)-issued
+ * callback operations?
+ */
+static void
+syncbar(const char *fs)
+{
+	struct statvfs svb;
+
+	rump_sys_statvfs1(fs, &svb, ST_WAIT);
+}
+
+static void
+dumpopcount(void)
+{
+	size_t i;
+
+	printf("VFS OPS:\n");
+	for (i = 0; i < MIN(puffsdump_vfsop_count, PUFFS_VFS_MAX); i++) {
+		printf("\t%s: %d\n",
+		    puffsdump_vfsop_revmap[i], vfs_toserv_ops[i]);
+	}
+
+	printf("VN OPS:\n");
+	for (i = 0; i < MIN(puffsdump_vnop_count, PUFFS_VN_MAX); i++) {
+		printf("\t%s: %d\n",
+		    puffsdump_vnop_revmap[i], vn_toserv_ops[i]);
+	}
+}
 
 /*
  * Threads which shovel data between comfd and /dev/puffs.
@@ -44,6 +82,8 @@ struct thefds {
 static void *
 readshovel(void *arg)
 {
+	struct putter_hdr *phdr;
+	struct puffs_req *preq;
 	struct thefds *fds = arg;
 	char buf[BUFSIZE];
 	ssize_t n;
@@ -52,25 +92,37 @@ readshovel(void *arg)
 	comfd = fds->servfd;
 	puffsfd = fds->rumpfd;
 
+	phdr = (void *)buf;
+	preq = (void *)buf;
+
 	/* use static thread id */
-	rump_pub_lwp_alloc_and_switch(0, 0);
+	rump_pub_lwp_alloc_and_switch(0, 10);
 
 	for (;;) {
 		ssize_t n, n2;
 
-		n = rump_sys_read(puffsfd, buf, BUFSIZE);
-		if (n <= 0) {
+		n = rump_sys_read(puffsfd, buf, sizeof(*phdr));
+		if (n <= 0)
 			break;
+
+		assert(phdr->pth_framelen < BUFSIZE);
+		n = rump_sys_read(puffsfd, buf+sizeof(*phdr), 
+		    phdr->pth_framelen - sizeof(*phdr));
+		if (n <= 0)
+			break;
+
+		/* Analyze request */
+		if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {
+			assert(preq->preq_optype < PUFFS_VFS_MAX);
+			vfs_toserv_ops[preq->preq_optype]++;
+		} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
+			assert(preq->preq_optype < PUFFS_VN_MAX);
+			vn_toserv_ops[preq->preq_optype]++;
 		}
 
-		while (n) {
-			n2 = write(comfd, buf, n);
-			if (n2 == -1)
-				err(1, "readshovel failed write: %d");
-			if (n2 == 0)
-				break;
-			n -= n2;
-		}
+		n = phdr->pth_framelen;
+		if (write(comfd, buf, n) != n)
+			break;
 	}
 
 	return NULL;
@@ -86,7 +138,7 @@ writeshovel(void *arg)
 	int error, comfd, puffsfd;
 
 	/* use static thread id */
-	rump_pub_lwp_alloc_and_switch(0, 0);
+	rump_pub_lwp_alloc_and_switch(0, 11);
 
 	comfd = fds->servfd;
 	puffsfd = fds->rumpfd;
@@ -103,6 +155,7 @@ writeshovel(void *arg)
 		 */
 		off = 0;
 		toread = sizeof(struct putter_hdr);
+		assert(toread < BUFSIZE);
 		do {
 			n = read(comfd, buf+off, toread);
 			if (n <= 0) {
@@ -117,10 +170,9 @@ writeshovel(void *arg)
 
 		n = rump_sys_write(puffsfd, buf, phdr->pth_framelen);
 		if (n != phdr->pth_framelen)
-			goto out;
+			break;
 	}
 
- out:
 	return NULL;
 }
 
@@ -438,6 +490,179 @@ ATF_TC_BODY(root_chrdev, tc)
 		atf_tc_fail_errno("unmount");
 }
 
+/*
+ * Inactive/reclaim tests
+ */
+
+ATF_TC(inactive_basic);
+ATF_TC_HEAD(inactive_basic, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "inactive gets called");
+}
+
+ATF_TC_BODY(inactive_basic, tc)
+{
+	char *myopts[] = {
+		"-i",
+		"dtfs",
+	};
+	int fd;
+
+	dtfsmountv("/mp", myopts);
+	fd = rump_sys_open("/mp/file", O_CREAT | O_RDWR, 0777);
+	if (fd == -1)
+		atf_tc_fail_errno("create");
+
+	/* one for /mp */
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_INACTIVE], 1);
+
+	rump_sys_close(fd);
+
+	/* one for /mp/file */
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_INACTIVE], 2);
+
+	if (rump_sys_unmount("/mp", 0) == -1)
+		atf_tc_fail_errno("unmount");
+
+	/* one for /mp again */
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_INACTIVE], 3);
+}
+
+ATF_TC(inactive_reclaim);
+ATF_TC_HEAD(inactive_reclaim, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "inactive/reclaim gets called");
+}
+
+ATF_TC_BODY(inactive_reclaim, tc)
+{
+	char *myopts[] = {
+		"-i",
+		"dtfs",
+	};
+	int fd;
+
+	dtfsmountv("/mp", myopts);
+	fd = rump_sys_open("/mp/file", O_CREAT | O_RDWR, 0777);
+	if (fd == -1)
+		atf_tc_fail_errno("create");
+
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_INACTIVE], 1);
+
+	if (rump_sys_unlink("/mp/file") == -1)
+		atf_tc_fail_errno("remove");
+
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_INACTIVE], 2);
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_RECLAIM], 0);
+
+	rump_sys_close(fd);
+	syncbar("/mp");
+
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_INACTIVE], 4);
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_RECLAIM], 1);
+
+	if (rump_sys_unmount("/mp", 0) == -1)
+		atf_tc_fail_errno("unmount");
+}
+
+ATF_TC(reclaim_hardlink);
+ATF_TC_HEAD(reclaim_hardlink, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "reclaim gets called only after "
+	    "final link is gone");
+}
+
+ATF_TC_BODY(reclaim_hardlink, tc)
+{
+	char *myopts[] = {
+		"-i",
+		"dtfs",
+	};
+	int fd;
+	int ianow;
+
+	dtfsmountv("/mp", myopts);
+	fd = rump_sys_open("/mp/file", O_CREAT | O_RDWR, 0777);
+	if (fd == -1)
+		atf_tc_fail_errno("create");
+
+	if (rump_sys_link("/mp/file", "/mp/anotherfile") == -1)
+		atf_tc_fail_errno("create link");
+	rump_sys_close(fd);
+
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_RECLAIM], 0);
+
+	/* unlink first hardlink */
+	if (rump_sys_unlink("/mp/file") == -1)
+		atf_tc_fail_errno("unlink 1");
+
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_RECLAIM], 0);
+	ianow = vn_toserv_ops[PUFFS_VN_INACTIVE];
+
+	/* unlink second hardlink */
+	if (rump_sys_unlink("/mp/anotherfile") == -1)
+		atf_tc_fail_errno("unlink 2");
+
+	syncbar("/mp");
+
+	ATF_REQUIRE(ianow < vn_toserv_ops[PUFFS_VN_INACTIVE]);
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_RECLAIM], 1);
+
+	if (rump_sys_unmount("/mp", 0) == -1)
+		atf_tc_fail_errno("unmount");
+}
+
+ATF_TC(unlink_accessible);
+ATF_TC_HEAD(unlink_accessible, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "open file is accessible after "
+	    "having been unlinked");
+}
+
+ATF_TC_BODY(unlink_accessible, tc)
+{
+	char *myopts[] = {
+		"-i",
+		"-o","nopagecache",
+		"dtfs",
+	};
+	char buf[512];
+	int fd, ianow;
+
+	assert(sizeof(buf) > sizeof(MAGICSTR));
+
+	dtfsmountv("/mp", myopts);
+	fd = rump_sys_open("/mp/file", O_CREAT | O_RDWR, 0777);
+	if (fd == -1)
+		atf_tc_fail_errno("create");
+
+	if (rump_sys_write(fd, MAGICSTR, sizeof(MAGICSTR)) != sizeof(MAGICSTR))
+		atf_tc_fail_errno("write");
+	if (rump_sys_unlink("/mp/file") == -1)
+		atf_tc_fail_errno("unlink");
+
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_RECLAIM], 0);
+	ianow = vn_toserv_ops[PUFFS_VN_INACTIVE];
+
+	if (rump_sys_pread(fd, buf, sizeof(buf), 0) == -1)
+		atf_tc_fail_errno("read");
+	rump_sys_close(fd);
+
+	syncbar("/mp");
+
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_RECLAIM], 1);
+	ATF_REQUIRE_EQ(vn_toserv_ops[PUFFS_VN_INACTIVE], ianow+2);
+
+	ATF_REQUIRE_STREQ(buf, MAGICSTR);
+
+	if (rump_sys_unmount("/mp", 0) == -1)
+		atf_tc_fail_errno("unmount");
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -447,6 +672,11 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, root_lnk);
 	ATF_TP_ADD_TC(tp, root_reg);
 	ATF_TP_ADD_TC(tp, root_chrdev);
+
+	ATF_TP_ADD_TC(tp, inactive_basic);
+	ATF_TP_ADD_TC(tp, inactive_reclaim);
+	ATF_TP_ADD_TC(tp, reclaim_hardlink);
+	ATF_TP_ADD_TC(tp, unlink_accessible);
 
 	return atf_no_error();
 }
