@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2010/07/06 06:00:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.45 2010/07/11 12:07:32 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,6 @@ YHEADER=
 #CPPFLAGS+=-DYYDEBUG=1
 
 CPPFLAGS+=	-I${.CURDIR} -I. -DPASS=\"${PROG}.h\"
-
-CPPFLAGS+=	-DTARGET_OBJFMT_ELF
 
 LINTFLAGS=	-aehpz
 BINDIR=		/usr/libexec
