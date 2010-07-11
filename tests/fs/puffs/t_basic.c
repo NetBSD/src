@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.4 2010/07/11 12:26:19 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.5 2010/07/11 12:33:38 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -57,7 +57,7 @@ syncbar(const char *fs)
 	rump_sys_statvfs1(fs, &svb, ST_WAIT);
 }
 
-static void
+static void __unused
 dumpopcount(void)
 {
 	size_t i;
@@ -86,8 +86,7 @@ readshovel(void *arg)
 	struct puffs_req *preq;
 	struct thefds *fds = arg;
 	char buf[BUFSIZE];
-	ssize_t n;
-	int error, comfd, puffsfd;
+	int comfd, puffsfd;
 
 	comfd = fds->servfd;
 	puffsfd = fds->rumpfd;
@@ -99,7 +98,7 @@ readshovel(void *arg)
 	rump_pub_lwp_alloc_and_switch(0, 10);
 
 	for (;;) {
-		ssize_t n, n2;
+		ssize_t n;
 
 		n = rump_sys_read(puffsfd, buf, sizeof(*phdr));
 		if (n <= 0)
@@ -135,7 +134,7 @@ writeshovel(void *arg)
 	struct putter_hdr *phdr;
 	char buf[BUFSIZE];
 	size_t toread;
-	int error, comfd, puffsfd;
+	int comfd, puffsfd;
 
 	/* use static thread id */
 	rump_pub_lwp_alloc_and_switch(0, 11);
@@ -203,13 +202,11 @@ parseargs(int argc, char *argv[],
 	char *canon_dev, char *canon_dir)
 {
 	pid_t childpid;
-	pthread_t pt;
 	int *pflags = &args->us_pflags;
 	char comfd[16];
 	int sv[2];
 	size_t len;
 	ssize_t n;
-	int rv;
 
 	/* Create sucketpair for communication with the real file server */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) == -1)
@@ -382,7 +379,6 @@ ATF_TC_BODY(root_lnk, tc)
 	};
 	char buf[PATH_MAX];
 	ssize_t len;
-	int rv;
 
 	dtfsmountv("/mp", myopts);
 
@@ -435,7 +431,6 @@ ATF_TC_BODY(root_fifo, tc)
 	};
 	pthread_t pt;
 	char buf[512];
-	ssize_t len;
 	int fd;
 
 	dtfsmountv("/mp", myopts);
