@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.33 2010/05/21 10:43:07 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.34 2010/07/11 12:29:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.33 2010/05/21 10:43:07 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.34 2010/07/11 12:29:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: opdump.c,v 1.33 2010/05/21 10:43:07 pooka Exp $");
 
 #define DINT "    "
 
-/* XXX! */
-const char *vfsop_revmap[] = {
+const char *puffsdump_vfsop_revmap[] = {
 	"PUFFS_VFS_MOUNT",
 	"PUFFS_VFS_START",
 	"PUFFS_VFS_UNMOUNT",
@@ -67,8 +66,9 @@ const char *vfsop_revmap[] = {
 	"PUFFS_VFS_EXTATTRCTL",
 	"PUFFS_VFS_SUSPEND"
 };
-/* XXX! */
-const char *vnop_revmap[] = {
+size_t puffsdump_vfsop_count = __arraycount(puffsdump_vfsop_revmap);
+
+const char *puffsdump_vnop_revmap[] = {
 	"PUFFS_VN_LOOKUP",
 	"PUFFS_VN_CREATE",
 	"PUFFS_VN_MKNOD",
@@ -117,12 +117,14 @@ const char *vnop_revmap[] = {
 	"PUFFS_VN_SETEXTATTR",
 	"PUFFS_VN_CLOSEEXTATTR",
 };
+size_t puffsdump_vnop_count = __arraycount(puffsdump_vnop_revmap);
+
 /* XXX! */
-const char *cacheop_revmap[] = {
+const char *puffsdump_cacheop_revmap[] = {
 	"PUFFS_CACHE_WRITE"
 };
-/* XXX! */
-const char *errnot_revmap[] = {
+
+const char *puffsdump_errnot_revmap[] = {
 	"PUFFS_ERR_ERROR",
 	"PUFFS_ERR_MAKENODE",
 	"PUFFS_ERR_LOOKUP",
@@ -134,14 +136,16 @@ const char *errnot_revmap[] = {
 	"PUFFS_ERR_GETEXTATTR",
 	"PUFFS_ERR_LISTEXTATTR",
 };
-/* XXX! */
-const char *flush_revmap[] = {
+size_t puffsdump_errnot_count = __arraycount(puffsdump_errnot_revmap);
+
+const char *puffsdump_flush_revmap[] = {
 	"PUFFS_INVAL_NAMECACHE_NODE",
 	"PUFFS_INVAL_NAMECACHE_DIR",
 	"PUFFS_INVAL_NAMECACHE_ALL",
 	"PUFFS_INVAL_PAGECACHE_NODE_RANGE",
 	"PUFFS_FLUSH_PAGECACHE_NODE_RANGE",
 };
+size_t puffsdump_flush_count = __arraycount(puffsdump_flush_revmap);
 
 void
 puffsdump_req(struct puffs_req *preq)
@@ -158,25 +162,25 @@ puffsdump_req(struct puffs_req *preq)
 	opclass = PUFFSOP_OPCLASS(preq->preq_opclass);
 	switch (opclass) {
 	case PUFFSOP_VFS:
-		map = vfsop_revmap;
-		maxhandle = __arraycount(vfsop_revmap);
+		map = puffsdump_vfsop_revmap;
+		maxhandle = puffsdump_vfsop_count;
 		break;
 	case PUFFSOP_VN:
-		map = vnop_revmap;
-		maxhandle = __arraycount(vnop_revmap);
+		map = puffsdump_vnop_revmap;
+		maxhandle = puffsdump_vnop_count;
 		isvn = 1;
 		break;
 	case PUFFSOP_CACHE:
-		map = cacheop_revmap;
-		maxhandle = __arraycount(cacheop_revmap);
+		map = puffsdump_cacheop_revmap;
+		maxhandle = __arraycount(puffsdump_cacheop_revmap);
 		break;
 	case PUFFSOP_ERROR:
-		map = errnot_revmap;
-		maxhandle = __arraycount(errnot_revmap);
+		map = puffsdump_errnot_revmap;
+		maxhandle = puffsdump_errnot_count;
 		break;
 	case PUFFSOP_FLUSH:
-		map = flush_revmap;
-		maxhandle = __arraycount(flush_revmap);
+		map = puffsdump_flush_revmap;
+		maxhandle = puffsdump_flush_count;
 		break;
 	default:
 		printf("unhandled opclass %d\n", opclass);
