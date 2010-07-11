@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.1 2010/06/02 06:18:11 kiyohara Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.2 2010/07/11 08:43:36 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.1 2010/06/02 06:18:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.2 2010/07/11 08:43:36 kiyohara Exp $");
 
 #include "rnd.h"
 
@@ -297,7 +297,7 @@ mvgbec_match(device_t parent, struct cfdata *match, void *aux)
 	if (strcmp(mva->mva_name, match->cf_name) != 0)
 		return 0;
 
-	if (mva->mva_offset == GTCF_OFFSET_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
 
 	for (i = 0; i < __arraycount(mvgbe_ports); i++)
