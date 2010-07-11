@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.3 2003/05/29 18:12:13 christos Exp $	*/
+/*	$NetBSD: targparam.h,v 1.4 2010/07/11 12:07:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -43,23 +43,13 @@
  * kept in sync with the compiler!
  */     
 
-#if defined(TARGET_OBJFMT_ELF)
 #define	PTRDIFF_IS_LONG		1
 #define	SIZEOF_IS_ULONG		1
 #define	INTPTR_IS_LONG		1
-#else
-#define	PTRDIFF_IS_LONG		0
-#define	SIZEOF_IS_ULONG		0
-#define	INTPTR_IS_LONG		0
-#endif
 
 #define	FLOAT_SIZE		(4 * CHAR_BIT)
 #define	DOUBLE_SIZE		(8 * CHAR_BIT)
 #define	LDOUBLE_SIZE		(8 * CHAR_BIT)
 
-#if defined(TARGET_OBJFMT_ELF)
 /* XXX ARM ELF ABI says packed enums -- variable size! */
 #define	ENUM_SIZE		(4 * CHAR_BIT)
-#else
-#define	ENUM_SIZE		(4 * CHAR_BIT)
-#endif
