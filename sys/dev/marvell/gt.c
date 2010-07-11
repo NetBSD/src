@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.24 2010/06/09 02:19:51 kiyohara Exp $	*/
+/*	$NetBSD: gt.c,v 1.25 2010/07/11 08:43:36 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.24 2010/06/09 02:19:51 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.25 2010/07/11 08:43:36 kiyohara Exp $");
 
 #include "opt_marvell.h"
 #include "gtmpsc.h"
@@ -110,8 +110,8 @@ static int gt_watchdog_state = 0;
 #endif
 
 
-#define OFFSET_DEFAULT	GTCF_OFFSET_DEFAULT
-#define IRQ_DEFAULT	GTCF_IRQ_DEFAULT
+#define OFFSET_DEFAULT	MVA_OFFSET_DEFAULT
+#define IRQ_DEFAULT	MVA_IRQ_DEFAULT
 static const struct gt_dev {
 	int model;
 	const char *name;
@@ -159,15 +159,15 @@ gt_cfprint(void *aux, const char *pnp)
 		aprint_normal("%s at %s unit %d",
 		    mva->mva_name, pnp, mva->mva_unit);
 	else {
-		if (mva->mva_unit != GTCF_UNIT_DEFAULT)
+		if (mva->mva_unit != MVA_UNIT_DEFAULT)
 			aprint_normal(" unit %d", mva->mva_unit);
-		if (mva->mva_offset != GTCF_OFFSET_DEFAULT) {
+		if (mva->mva_offset != MVA_OFFSET_DEFAULT) {
 			aprint_normal(" offset 0x%04x", mva->mva_offset);
 			if (mva->mva_size > 0)
 				aprint_normal("-0x%04x",
 				    mva->mva_offset + mva->mva_size - 1);
 		}
-		if (mva->mva_irq != GTCF_IRQ_DEFAULT)
+		if (mva->mva_irq != MVA_IRQ_DEFAULT)
 			aprint_normal(" irq %d", mva->mva_irq);
 	}
 
@@ -181,7 +181,7 @@ gt_cfsearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct marvell_attach_args *mva = aux;
 
-	if (cf->cf_loc[GTCF_IRQ] != GTCF_IRQ_DEFAULT)
+	if (cf->cf_loc[GTCF_IRQ] != MVA_IRQ_DEFAULT)
 		mva->mva_irq = cf->cf_loc[GTCF_IRQ];
 
 	return config_match(parent, cf, aux);
