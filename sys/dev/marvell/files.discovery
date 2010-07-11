@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.13 2010/06/02 06:18:11 kiyohara Exp $
+#	$NetBSD: files.discovery,v 1.14 2010/07/11 08:34:57 kiyohara Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -28,15 +28,13 @@ device	gt: gt
 file	dev/marvell/gt.c		gt
 
 # PCI Interface
-define	gtpci
-file	dev/marvell/gtpci.c		gtpci & gtpci_gt needs-flag
 device	gtpci: pcibus
+file	dev/marvell/gtpci.c		gtpci & gtpci_gt needs-flag
 attach	gtpci at gt with gtpci_gt
 
 # PCI Express Interface
-#define	mvpex
-#file	dev/marvell/mvpex.c		mvpex & (mvpex_gt|mvpex_mbus) needs-flag
 #device	mvpex: pcibus
+#file	dev/marvell/mvpex.c		mvpex & (mvpex_gt|mvpex_mbus) needs-flag
 #attach	mvpex at gt with mvpex_gt
 
 # Fast ethernet
@@ -74,15 +72,13 @@ file	dev/marvell/if_mvgbe.c		mvgbec | mvgbe
 #file	dev/marvell/ehci_mv.c		mvusb_gt | mvusb_mbus
 
 # Cryptographic Engines and Security Accelerator
-#define	mvcesa
+#device	mvcesa: opencrypto
 #file	dev/marvell/mvcesa.c		mvcesa
-#device  mvcesa: opencrypto
-#attach  mvcesa at gt with mvcesa_gt
+#attach	mvcesa at gt with mvcesa_gt
 
 # Two-Wire Serial Interface
-define	gttwsi
+device	gttwsi: i2cbus
 file	dev/marvell/gttwsi.c		gttwsi
-device	gttwsi: i2cbus, gttwsi
 attach	gttwsi at gt with gttwsi_gt
 
 # UART Interface
@@ -90,7 +86,6 @@ attach	gttwsi at gt with gttwsi_gt
 #file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
 
 # IDMA Controller and XOR Engine
-define	gtidmac
-file	dev/marvell/gtidmac.c		gtidmac
 device	gtidmac: dmover_service
+file	dev/marvell/gtidmac.c		gtidmac
 attach	gtidmac at gt with gtidmac_gt
