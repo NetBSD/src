@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.25 2010/07/10 17:04:25 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.26 2010/07/11 11:17:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.25 2010/07/10 17:04:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.26 2010/07/11 11:17:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -689,7 +689,11 @@ selnotify(struct selinfo *sip, int events, long knhint)
 			 */
 			l = sip->sel_lwp;
 			oflag = l->l_selflag;
+#ifdef DIRECT_SELECT
 			sel_setevents(l, sip, events);
+#else
+			l->l_selflag = SEL_RESET;
+#endif
 			/*
 			 * If thread is sleeping, wake it up.  If it's not
 			 * yet asleep, it will notice the change in state
