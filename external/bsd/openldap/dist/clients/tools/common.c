@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.1.1.3 2010/03/08 02:14:14 lukem Exp $	*/
+/*	$NetBSD: common.c,v 1.2 2010/07/11 00:47:36 mrg Exp $	*/
 
 /* common.c - common routines for the ldap client tools */
 /* OpenLDAP: pkg/ldap/clients/tools/common.c,v 1.78.2.29 2009/09/29 21:47:37 quanah Exp */
@@ -1286,6 +1286,7 @@ dnssrv_free:;
 			exit( EXIT_FAILURE );
 		}
 
+#ifdef HAVE_TLS
 		if ( use_tls ) {
 			rc = ldap_start_tls_s( ld, NULL, NULL );
 			if ( rc != LDAP_SUCCESS ) {
@@ -1298,6 +1299,7 @@ dnssrv_free:;
 				}
 			}
 		}
+#endif
 
 		if ( nettimeout.tv_sec > 0 ) {
 	 		if ( ldap_set_option( ld, LDAP_OPT_NETWORK_TIMEOUT, (void *) &nettimeout )
