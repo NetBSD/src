@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.16 2010/06/29 05:48:13 mrg Exp $
+# $NetBSD: ad.mips64eb,v 1.17 2010/07/11 06:16:55 mrg Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib		compat
@@ -173,8 +173,8 @@
 ./usr/lib/64/librumpnet.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpuser.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpuser.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/64/librumpcrypto.so.0			base-compat-shlib	compat,pic
-./usr/lib/64/librumpcrypto.so.0.0		base-compat-shlib	compat,pic
+./usr/lib/64/librumpcrypto.so.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/64/librumpcrypto.so.0.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/64/librumpdev.so.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpdev.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/librumpvfs.so.0			base-compat-shlib	compat,pic
@@ -405,8 +405,8 @@
 ./usr/lib/o32/librumpnet.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpuser.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpuser.so.0.0		base-compat-shlib	compat,pic
-./usr/lib/o32/librumpcrypto.so.0		base-compat-shlib	compat,pic
-./usr/lib/o32/librumpcrypto.so.0.0		base-compat-shlib	compat,pic
+./usr/lib/o32/librumpcrypto.so.0		base-compat-shlib	compat,pic,crypto
+./usr/lib/o32/librumpcrypto.so.0.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/o32/librumpdev.so.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpdev.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/librumpvfs.so.0			base-compat-shlib	compat,pic

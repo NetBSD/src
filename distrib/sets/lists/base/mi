@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.876 2010/07/08 22:01:34 tron Exp $
+# $NetBSD: mi,v 1.877 2010/07/11 06:16:55 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1069,13 +1069,13 @@
 ./usr/sbin/amd					base-amd-bin
 ./usr/sbin/amq					base-amd-bin
 ./usr/sbin/arp					base-netutil-bin
-./usr/sbin/audit-packages			base-pkgutil-bin
+./usr/sbin/audit-packages			base-pkgutil-bin	crypto
 ./usr/sbin/authpf				base-pf-bin		pf
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
 ./usr/sbin/bootpgw				base-bootserver-bin
 ./usr/sbin/bootptest				base-bootserver-bin
-./usr/sbin/bpm					base-pkgutil-bin
+./usr/sbin/bpm					base-pkgutil-bin	crypto
 ./usr/sbin/btattach				base-sysutil-bin
 ./usr/sbin/btconfig				base-sysutil-bin
 ./usr/sbin/btcontrol				base-obsolete		obsolete
@@ -1108,7 +1108,7 @@
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-settime			base-bind-bin
 ./usr/sbin/dnssec-signzone			base-bind-bin
-./usr/sbin/download-vulnerability-list		base-pkgutil-bin
+./usr/sbin/download-vulnerability-list		base-pkgutil-bin	crypto
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
@@ -1258,11 +1258,11 @@
 ./usr/sbin/pim6dd				base-obsolete		obsolete
 ./usr/sbin/pim6sd				base-obsolete		obsolete
 ./usr/sbin/pim6stat				base-obsolete		obsolete
-./usr/sbin/pkg_add				base-pkgutil-bin
-./usr/sbin/pkg_admin				base-pkgutil-bin
-./usr/sbin/pkg_create				base-pkgutil-bin
-./usr/sbin/pkg_delete				base-pkgutil-bin
-./usr/sbin/pkg_info				base-pkgutil-bin
+./usr/sbin/pkg_add				base-pkgutil-bin	crypto
+./usr/sbin/pkg_admin				base-pkgutil-bin	crypto
+./usr/sbin/pkg_create				base-pkgutil-bin	crypto
+./usr/sbin/pkg_delete				base-pkgutil-bin	crypto
+./usr/sbin/pkg_info				base-pkgutil-bin	crypto
 ./usr/sbin/pkg_view				base-obsolete		obsolete
 ./usr/sbin/portmap				base-obsolete		obsolete
 ./usr/sbin/postalias				base-postfix-bin	postfix
@@ -1324,7 +1324,7 @@
 ./usr/sbin/rump_msdos				base-puffs-bin
 ./usr/sbin/rump_nfs				base-puffs-bin
 ./usr/sbin/rump_ntfs				base-puffs-bin
-./usr/sbin/rump_smbfs				base-puffs-bin
+./usr/sbin/rump_smbfs				base-puffs-bin		crypto
 ./usr/sbin/rump_syspuffs			base-puffs-bin
 ./usr/sbin/rump_sysvbfs				base-puffs-bin
 ./usr/sbin/rump_tmpfs				base-puffs-bin
