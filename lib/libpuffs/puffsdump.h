@@ -1,4 +1,4 @@
-/*	$NetBSD: puffsdump.h,v 1.14 2010/01/07 20:47:47 pooka Exp $	*/
+/*	$NetBSD: puffsdump.h,v 1.15 2010/07/11 12:29:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -54,5 +54,15 @@ void puffsdump_open(struct puffs_req *);
 
 void puffsdump_attr(struct puffs_req *);
 void puffsdump_targ(struct puffs_req *);
+
+extern const char *puffsdump_vfsop_revmap[];
+extern const char *puffsdump_vnop_revmap[];
+extern const char *puffsdump_errnot_revmap[];
+extern const char *puffsdump_flush_revmap[];
+
+extern size_t puffsdump_vfsop_count;
+extern size_t puffsdump_vnop_count;
+extern size_t puffsdump_errnot_count;
+extern size_t puffsdump_flush_count;
 
 #endif /* _PUFFSDUMP_H_ */
