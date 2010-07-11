@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2010/07/07 10:49:51 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2010/07/11 12:26:19 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -14,6 +14,7 @@ LDADD+=		-lrumpfs_syspuffs -lrumpvfs_fifofs
 LDADD+=		-lrumpnet_local -lrumpnet_net -lrumpnet
 LDADD+=		-lrumpvfs
 LDADD+=		-lrump -lrumpuser -lpthread
+LDADD+=		-lpuffs -lutil
 
 .include <bsd.test.mk>
 .include <bsd.subdir.mk>
