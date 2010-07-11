@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.179 2010/06/12 07:13:54 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.180 2010/07/11 11:37:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.179 2010/06/12 07:13:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.180 2010/07/11 11:37:24 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -538,6 +538,8 @@ rump_lwp_alloc(pid_t pid, lwpid_t lid)
 	l->l_proc = p;
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
+	if (pid == 0)
+		fd_hold(l);
 	l->l_cpu = NULL;
 	l->l_target_cpu = rump_cpu;
 	lwp_initspecific(l);
@@ -578,6 +580,8 @@ rump_lwp_release(struct lwp *l)
 		kmem_free(p, sizeof(*p));
 
 		atomic_dec_uint(&nprocs);
+	} else {
+		fd_free();
 	}
 	KASSERT((l->l_flag & LW_WEXIT) == 0);
 	l->l_flag |= LW_WEXIT;
