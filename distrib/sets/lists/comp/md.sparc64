@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.60 2010/07/11 06:16:55 mrg Exp $
+# $NetBSD: md.sparc64,v 1.61 2010/07/11 12:37:52 mrg Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -532,10 +532,10 @@
 ./usr/lib/sparc/libsdp.so			base-obsolete		obsolete
 ./usr/lib/sparc/libsdp_p.a			comp-obsolete		obsolete
 ./usr/lib/sparc/libsdp_pic.a			comp-obsolete		obsolete
-./usr/lib/sparc/libskey.a			comp-c-lib		compat
-./usr/lib/sparc/libskey.so			base-sys-shlib		compat,pic
-./usr/lib/sparc/libskey_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libskey_pic.a			comp-c-piclib		compat,pic
+./usr/lib/sparc/libskey.a			comp-c-lib		compat,skey
+./usr/lib/sparc/libskey.so			base-sys-shlib		compat,pic,skey
+./usr/lib/sparc/libskey_p.a			comp-c-proflib		compat,profile,skey
+./usr/lib/sparc/libskey_pic.a			comp-c-piclib		compat,pic,skey
 ./usr/lib/sparc/libsl.a				comp-c-lib		compat,kerberos
 ./usr/lib/sparc/libsl.so			base-sys-shlib		compat,pic,kerberos
 ./usr/lib/sparc/libsl_p.a			comp-c-proflib		compat,profile,kerberos
@@ -687,7 +687,7 @@
 ./usr/libdata/debug/usr/lib/sparc/librumpnet.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpuser.so.0.0.debug		comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/librumpvfs.so.0.0.debug		comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libskey.so.2.0.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libskey.so.2.0.debug			comp-compat-shlib	compat,pic,debug,skey
 ./usr/libdata/debug/usr/lib/sparc/libsl.so.4.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libss.so.6.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libssh.so.15.0.debug			comp-compat-shlib	compat,pic,debug
