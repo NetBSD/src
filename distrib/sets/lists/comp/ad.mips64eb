@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.8 2010/07/11 11:33:47 mrg Exp $
+# $NetBSD: ad.mips64eb,v 1.9 2010/07/11 12:37:52 mrg Exp $
 ./usr/bin/elf2aout				comp-obsolete	obsolete
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -459,10 +459,10 @@
 ./usr/lib/64/libsdp.so				base-obsolete		obsolete
 ./usr/lib/64/libsdp_p.a				comp-obsolete		obsolete
 ./usr/lib/64/libsdp_pic.a			comp-obsolete		obsolete
-./usr/lib/64/libskey.a				comp-c-lib		compat
-./usr/lib/64/libskey.so				base-sys-shlib		compat,pic
-./usr/lib/64/libskey_p.a			comp-c-proflib		compat,profile
-./usr/lib/64/libskey_pic.a			comp-c-piclib		compat,pic
+./usr/lib/64/libskey.a				comp-c-lib		compat,skey
+./usr/lib/64/libskey.so				base-sys-shlib		compat,pic,skey
+./usr/lib/64/libskey_p.a			comp-c-proflib		compat,profile,skey
+./usr/lib/64/libskey_pic.a			comp-c-piclib		compat,pic,skey
 ./usr/lib/64/libsl.a				comp-c-lib		compat,kerberos
 ./usr/lib/64/libsl.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/64/libsl_p.a				comp-c-proflib		compat,profile,kerberos
@@ -924,10 +924,10 @@
 ./usr/lib/o32/libsdp.so				base-obsolete		obsolete
 ./usr/lib/o32/libsdp_p.a			comp-obsolete		obsolete
 ./usr/lib/o32/libsdp_pic.a			comp-obsolete		obsolete
-./usr/lib/o32/libskey.a				comp-c-lib		compat
-./usr/lib/o32/libskey.so			base-sys-shlib		compat,pic
-./usr/lib/o32/libskey_p.a			comp-c-proflib		compat,profile
-./usr/lib/o32/libskey_pic.a			comp-c-piclib		compat,pic
+./usr/lib/o32/libskey.a				comp-c-lib		compat,skey
+./usr/lib/o32/libskey.so			base-sys-shlib		compat,pic,skey
+./usr/lib/o32/libskey_p.a			comp-c-proflib		compat,profile,skey
+./usr/lib/o32/libskey_pic.a			comp-c-piclib		compat,pic,skey
 ./usr/lib/o32/libsl.a				comp-c-lib		compat,kerberos
 ./usr/lib/o32/libsl.so				base-sys-shlib		compat,pic,kerberos
 ./usr/lib/o32/libsl_p.a				comp-c-proflib		compat,profile,kerberos

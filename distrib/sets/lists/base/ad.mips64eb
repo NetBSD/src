@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips64eb,v 1.18 2010/07/11 11:33:47 mrg Exp $
+# $NetBSD: ad.mips64eb,v 1.19 2010/07/11 12:37:51 mrg Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
 ./usr/lib/64					base-compat-lib		compat
@@ -181,8 +181,8 @@
 ./usr/lib/64/librumpvfs.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libsdp.so.2			base-obsolete		obsolete
 ./usr/lib/64/libsdp.so.2.0			base-obsolete		obsolete
-./usr/lib/64/libskey.so.2			base-compat-shlib	compat,pic
-./usr/lib/64/libskey.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/64/libskey.so.2			base-compat-shlib	compat,pic,skey
+./usr/lib/64/libskey.so.2.0			base-compat-shlib	compat,pic,skey
 ./usr/lib/64/libsl.so.4				base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libsl.so.4.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/64/libss.so.6				base-compat-shlib	compat,pic,kerberos
