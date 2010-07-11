@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.55 2008/09/06 19:57:14 tsutsui Exp $
+.\"	$NetBSD: install,v 1.56 2010/07/11 13:26:38 mrg Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,7 +136,7 @@ below.
 .
 If you wish to burn a CD-R containing a bootable NetBSD installation,
 then you can either burn the prepared disk image in
-.Pa installation/cdrom/sparccd-\*V.iso
+.Pa iso/sparccd.iso
 or create your own.
 If you wish to create your own, you should follow the directions on the
 .Nx
