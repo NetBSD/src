@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.85 2010/06/29 04:43:45 mrg Exp $
+# $NetBSD: md.sparc64,v 1.86 2010/07/11 06:16:55 mrg Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -68,12 +68,12 @@
 ./usr/lib/sparc/libcom_err.so.6.0		base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libcrypt.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypt.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libcrypto.so.6			base-compat-shlib	compat,pic
-./usr/lib/sparc/libcrypto.so.6.1		base-compat-shlib	compat,pic
+./usr/lib/sparc/libcrypto.so.6			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libcrypto.so.6.1		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libcurses.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcurses.so.7.0		base-compat-shlib	compat,pic
-./usr/lib/sparc/libdes.so.8			base-compat-shlib	compat,pic
-./usr/lib/sparc/libdes.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/sparc/libdes.so.8			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libdes.so.8.1			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libdns.so.5			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libdns.so.5.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libedit.so.3			base-compat-shlib	compat,pic
@@ -130,8 +130,8 @@
 ./usr/lib/sparc/libmagic.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmenu.so.6			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libmenu.so.6.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libnetpgp.so.3			base-compat-shlib	compat,pic
-./usr/lib/sparc/libnetpgp.so.3.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/libnetpgp.so.3			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libnetpgp.so.3.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libobjc.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libobjc.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libopcodes.so.4			base-compat-shlib	compat,pic,binutils
@@ -170,8 +170,8 @@
 ./usr/lib/sparc/librt.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librump.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librump.so.0.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/librumpcrypto.so.0		base-compat-shlib	compat,pic
-./usr/lib/sparc/librumpcrypto.so.0.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/librumpcrypto.so.0		base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/librumpcrypto.so.0.0		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/librumpdev.so.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpdev.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpnet.so.0			base-compat-shlib	compat,pic
@@ -186,10 +186,10 @@
 ./usr/lib/sparc/libsl.so.4.0			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libss.so.6			base-compat-shlib	compat,pic,kerberos
 ./usr/lib/sparc/libss.so.6.0			base-compat-shlib	compat,pic,kerberos
-./usr/lib/sparc/libssh.so.15			base-compat-shlib	compat,pic
-./usr/lib/sparc/libssh.so.15.0			base-compat-shlib	compat,pic
-./usr/lib/sparc/libssl.so.8			base-compat-shlib	compat,pic
-./usr/lib/sparc/libssl.so.8.1			base-compat-shlib	compat,pic
+./usr/lib/sparc/libssh.so.15			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssh.so.15.0			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssl.so.8			base-compat-shlib	compat,pic,crypto
+./usr/lib/sparc/libssl.so.8.1			base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/libstdc++.so.7			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libstdc++.so.7.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libsupc++.so.1			base-obsolete		obsolete
@@ -231,7 +231,7 @@
 ./usr/lib/sparc/security/pam_securetty.so.3	base-compat-shlib	compat,pic
 ./usr/lib/sparc/security/pam_self.so.3		base-compat-shlib	compat,pic
 ./usr/lib/sparc/security/pam_skey.so.3		base-compat-shlib	compat,pic
-./usr/lib/sparc/security/pam_ssh.so.3		base-compat-shlib	compat,pic
+./usr/lib/sparc/security/pam_ssh.so.3		base-compat-shlib	compat,pic,crypto
 ./usr/lib/sparc/security/pam_unix.so.3		base-compat-shlib	compat,pic
 ./usr/lkm/compat_netbsd32.o			base-obsolete		obsolete
 ./usr/lkm/compat_sunos32.o			base-obsolete		obsolete

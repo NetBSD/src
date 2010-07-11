@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.4 2010/07/10 16:43:25 jmmv Exp $
+# $NetBSD: Makefile,v 1.5 2010/07/11 06:16:54 mrg Exp $
 
 .include <bsd.own.mk>
+
+.if ${MKCRYPTO} != "no"
 
 SUBDIR+=bf bn cast conf des dh dsa ec ecdh ecdsa engine hmac lhash \
 	md2 md4 md5 rand rc2 rc4 ripemd rsa sha sha1 threads x509v3
@@ -23,5 +25,8 @@ TESTS_SH+=	t_hashes
 TESTS_SH+=	t_libcrypto
 TESTS_SH+=	t_pubkey
 
-.include <bsd.subdir.mk>
 .include <bsd.test.mk>
+
+.endif
+
+.include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1481 2010/07/08 19:20:27 rmind Exp $
+#	$NetBSD: mi,v 1.1482 2010/07/11 06:16:55 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2582,9 +2582,9 @@
 ./usr/lib/librump.a				comp-c-lib
 ./usr/lib/librump_g.a				-unknown-		debuglib
 ./usr/lib/librump_p.a				comp-c-proflib		profile
-./usr/lib/librumpcrypto.a			comp-c-lib
-./usr/lib/librumpcrypto_g.a			-unknown-		debuglib
-./usr/lib/librumpcrypto_p.a			comp-c-proflib		profile
+./usr/lib/librumpcrypto.a			comp-c-lib		crypto
+./usr/lib/librumpcrypto_g.a			-unknown-		debuglib,crypto
+./usr/lib/librumpcrypto_p.a			comp-c-proflib		profile,crypto
 ./usr/lib/librumpdev.a				comp-c-lib
 ./usr/lib/librumpdev_g.a			-unknown-		debuglib
 ./usr/lib/librumpdev_p.a			comp-c-proflib		profile
@@ -3633,11 +3633,11 @@
 ./usr/libdata/debug/usr/sbin/pac.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/paxctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pcictl.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/pkg_add.debug	comp-pkgutil-debug	debug
-./usr/libdata/debug/usr/sbin/pkg_admin.debug	comp-pkgutil-debug	debug
-./usr/libdata/debug/usr/sbin/pkg_create.debug	comp-pkgutil-debug	debug
-./usr/libdata/debug/usr/sbin/pkg_delete.debug	comp-pkgutil-debug	debug
-./usr/libdata/debug/usr/sbin/pkg_info.debug	comp-pkgutil-debug	debug
+./usr/libdata/debug/usr/sbin/pkg_add.debug	comp-pkgutil-debug	debug,crypto
+./usr/libdata/debug/usr/sbin/pkg_admin.debug	comp-pkgutil-debug	debug,crypto
+./usr/libdata/debug/usr/sbin/pkg_create.debug	comp-pkgutil-debug	debug,crypto
+./usr/libdata/debug/usr/sbin/pkg_delete.debug	comp-pkgutil-debug	debug,crypto
+./usr/libdata/debug/usr/sbin/pkg_info.debug	comp-pkgutil-debug	debug,crypto
 ./usr/libdata/debug/usr/sbin/postalias.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postcat.debug	comp-postfix-debug	postfix,debug
 ./usr/libdata/debug/usr/sbin/postconf.debug	comp-postfix-debug	postfix,debug
@@ -3692,7 +3692,7 @@
 ./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_nfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-puffs-debug	debug
-./usr/libdata/debug/usr/sbin/rump_smbfs.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/sbin/rump_smbfs.debug	comp-puffs-debug	crypto,debug
 ./usr/libdata/debug/usr/sbin/rump_syspuffs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_sysvbfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/rump_tmpfs.debug	comp-puffs-debug	debug
