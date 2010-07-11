@@ -1,8 +1,8 @@
-# $NetBSD: ad.mips64eb,v 1.19 2010/07/11 12:37:51 mrg Exp $
+# $NetBSD: ad.mips64eb,v 1.20 2010/07/11 12:54:26 mrg Exp $
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic
 ./libexec/ld.elf_so-o32				base-sysutil-bin	compat,pic
-./usr/lib/64					base-compat-lib		compat
-./usr/lib/64/i18n				base-compat-lib		compat
+./usr/lib/64					base-compat-lib
+./usr/lib/64/i18n				base-compat-lib
 ./usr/lib/64/i18n/libBIG5.so.5			base-i18n-shlib		compat,pic
 ./usr/lib/64/i18n/libBIG5.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/64/i18n/libDECHanyu.so.5		base-i18n-shlib		compat,pic
@@ -211,7 +211,7 @@
 ./usr/lib/64/libwrap.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/64/libz.so.1				base-compat-shlib	compat,pic
 ./usr/lib/64/libz.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/64/security				base-compat-shlib	compat
+./usr/lib/64/security				base-compat-shlib
 ./usr/lib/64/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/64/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam
 ./usr/lib/64/security/pam_deny.so.3		base-compat-shlib	compat,pic,pam
@@ -234,8 +234,8 @@
 ./usr/lib/64/security/pam_skey.so.3		base-compat-shlib	compat,pic,skey,pam
 ./usr/lib/64/security/pam_ssh.so.3		base-compat-shlib	compat,pic,crypto,pam
 ./usr/lib/64/security/pam_unix.so.3		base-compat-shlib	compat,pic,pam
-./usr/lib/o32					base-compat-lib		compat
-./usr/lib/o32/i18n				base-compat-lib		compat
+./usr/lib/o32					base-compat-lib
+./usr/lib/o32/i18n				base-compat-lib
 ./usr/lib/o32/i18n/libBIG5.so.5			base-i18n-shlib		compat,pic
 ./usr/lib/o32/i18n/libBIG5.so.5.0		base-i18n-shlib		compat,pic
 ./usr/lib/o32/i18n/libDECHanyu.so.5		base-i18n-shlib		compat,pic
@@ -444,7 +444,7 @@
 ./usr/lib/o32/libwrap.so.1.0			base-compat-shlib	compat,pic
 ./usr/lib/o32/libz.so.1				base-compat-shlib	compat,pic
 ./usr/lib/o32/libz.so.1.0			base-compat-shlib	compat,pic
-./usr/lib/o32/security				base-compat-shlib	compat
+./usr/lib/o32/security				base-compat-shlib
 ./usr/lib/o32/security/pam_afslog.so.3		base-compat-shlib	compat,pic,kerberos,pam
 ./usr/lib/o32/security/pam_chroot.so.3		base-compat-shlib	compat,pic,pam
 ./usr/lib/o32/security/pam_deny.so.3		base-compat-shlib	compat,pic,pam
