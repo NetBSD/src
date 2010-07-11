@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.36 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.37 2010/07/11 08:43:36 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.36 2010/04/28 13:51:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.37 2010/07/11 08:43:36 kiyohara Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -226,7 +226,7 @@ gfec_match(device_t parent, cfdata_t cf, void *aux)
 	default:
 		return 0;
 	}
-	if (mva->mva_offset == GTCF_OFFSET_DEFAULT)
+	if (mva->mva_offset == MVA_OFFSET_DEFAULT)
 		return 0;
 
 	mva->mva_size = ETHC_SIZE;
