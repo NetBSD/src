@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.10 2010/07/08 11:39:58 pooka Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.11 2010/07/11 11:27:47 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.10 2010/07/08 11:39:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memalloc.c,v 1.11 2010/07/11 11:27:47 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -306,11 +306,12 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 	/* nada */
 }
 
-void
+bool
 pool_drain_end(struct pool *pp, uint64_t w)
 {
 
-	/* nada again */
+	/* can't reclaim anything in this model */
+	return false;
 }
 
 int
