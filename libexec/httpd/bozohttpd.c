@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.21 2010/06/22 05:24:12 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.22 2010/07/11 03:13:08 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.174 2010/06/21 06:47:23 mrg Exp $	*/
 
@@ -329,13 +329,12 @@ void
 bozo_clean_request(bozo_httpreq_t *request)
 {
 	struct bozoheaders *hdr, *ohdr = NULL;
-	bozohttpd_t *httpd = request->hr_httpd;
 
 	if (request == NULL)
 		return;
 
 	/* If SSL enabled cleanup SSL structure. */
-	bozo_ssl_destroy(httpd);
+	bozo_ssl_destroy(request->hr_httpd);
 
 	/* clean up request */
 #define MF(x)	if (request->x) free(request->x)
