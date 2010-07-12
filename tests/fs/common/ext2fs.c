@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.2 2010/07/05 14:53:03 njoly Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.3 2010/07/12 21:37:47 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct ext2fstestargs {
 };
 
 static int
-ext2fs_newfs(void **buf, const char *image, off_t size)
+ext2fs_fstest_newfs(void **buf, const char *image, off_t size)
 {
 	char cmd[1024];
 	int res;
@@ -88,7 +88,7 @@ ext2fs_newfs(void **buf, const char *image, off_t size)
 }
 
 static int
-ext2fs_delfs(void *buf)
+ext2fs_fstest_delfs(void *buf)
 {
 	int res;
 	struct ext2fstestargs *args = buf;
@@ -107,7 +107,7 @@ ext2fs_delfs(void *buf)
 }
 
 static int
-ext2fs_mount(void *buf, const char *path, int flags)
+ext2fs_fstest_mount(void *buf, const char *path, int flags)
 {
 	int res;
 	struct ext2fstestargs *args = buf;
@@ -122,7 +122,7 @@ ext2fs_mount(void *buf, const char *path, int flags)
 }
 
 static int
-ext2fs_unmount(const char *path, int flags)
+ext2fs_fstest_unmount(const char *path, int flags)
 {
 	int res;
 
