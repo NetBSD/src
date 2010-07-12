@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.12 2010/06/19 18:17:55 tsutsui Exp $
+#	$NetBSD: Makefile.common,v 1.13 2010/07/12 07:54:12 kiyohara Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -49,7 +49,7 @@ XSERVER_XNEWSMIPS?=	yes
     ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder" || ${MACHINE} == "sparc64" || \
     ${MACHINE} == "sparc" || ${MACHINE} == "alpha" || \
-    ${MACHINE} == "zaurus"
+    ${MACHINE} == "zaurus" || ${MACHINE} == "prep"
 XSERVER_NEEDS_XFONT=	yes
 XSERVER_XFREE86=	yes
 .endif
