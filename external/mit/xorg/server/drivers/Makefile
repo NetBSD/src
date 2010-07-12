@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2010/06/19 18:17:55 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.45 2010/07/12 07:54:12 kiyohara Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -170,6 +170,13 @@ SUBDIR+= \
 .elif ${MACHINE} == "zaurus"
 SUBDIR+= \
 	xf86-video-wsfb
+.elif ${MACHINE} == "prep"
+SUBDIR+= \
+	xf86-video-cirrus \
+	xf86-video-cirrus_alpine \
+	xf86-video-mga \
+	xf86-video-s3 \
+	xf86-video-vga
 .endif
 
 # broken with xorg-server 1.6
