@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.c,v 1.2 2010/07/05 14:53:03 njoly Exp $	*/
+/*	$NetBSD: tmpfs.c,v 1.3 2010/07/12 21:37:47 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct tmpfstestargs {
 };
 
 static int
-tmpfs_newfs(void **buf, const char *image, off_t size)
+tmpfs_fstest_newfs(void **buf, const char *image, off_t size)
 {
 	int res;
 	struct tmpfstestargs *args;
@@ -70,7 +70,7 @@ tmpfs_newfs(void **buf, const char *image, off_t size)
 }
 
 static int
-tmpfs_delfs(void *buf)
+tmpfs_fstest_delfs(void *buf)
 {
 	struct tmpfstestargs *args = buf;
 
@@ -80,7 +80,7 @@ tmpfs_delfs(void *buf)
 }
 
 static int
-tmpfs_mount(void *buf, const char *path, int flags)
+tmpfs_fstest_mount(void *buf, const char *path, int flags)
 {
 	int res;
 	struct tmpfstestargs *args = buf;
@@ -95,7 +95,7 @@ tmpfs_mount(void *buf, const char *path, int flags)
 }
 
 static int
-tmpfs_unmount(const char *path, int flags)
+tmpfs_fstest_unmount(const char *path, int flags)
 {
 	int res;
 

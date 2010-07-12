@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs.c,v 1.2 2010/07/05 14:53:03 njoly Exp $	*/
+/*	$NetBSD: msdosfs.c,v 1.3 2010/07/12 21:37:47 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct msdosfstestargs {
 };
 
 static int
-msdosfs_newfs(void **buf, const char *image, off_t size)
+msdosfs_fstest_newfs(void **buf, const char *image, off_t size)
 {
 	char cmd[1024];
 	int res;
@@ -88,7 +88,7 @@ msdosfs_newfs(void **buf, const char *image, off_t size)
 }
 
 static int
-msdosfs_delfs(void *buf)
+msdosfs_fstest_delfs(void *buf)
 {
 	int res;
 	struct msdosfstestargs *args = buf;
@@ -107,7 +107,7 @@ msdosfs_delfs(void *buf)
 }
 
 static int
-msdosfs_mount(void *buf, const char *path, int flags)
+msdosfs_fstest_mount(void *buf, const char *path, int flags)
 {
 	int res;
 	struct msdosfstestargs *args = buf;
@@ -122,7 +122,7 @@ msdosfs_mount(void *buf, const char *path, int flags)
 }
 
 static int
-msdosfs_unmount(const char *path, int flags)
+msdosfs_fstest_unmount(const char *path, int flags)
 {
 	int res;
 
