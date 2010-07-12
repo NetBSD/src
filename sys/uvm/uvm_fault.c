@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.14 2010/07/09 12:58:00 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.15 2010/07/12 02:28:33 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.14 2010/07/09 12:58:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.15 2010/07/12 02:28:33 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -547,12 +547,12 @@ released:
 static int
 uvmfault_promote(struct uvm_faultinfo *ufi,
     struct vm_anon *oanon,
-    struct uvm_object *uobj,
     struct vm_page *uobjpage,
     struct vm_anon **nanon, /* OUT: allocated anon */
     struct vm_anon **spare)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
+	struct uvm_object *uobj;
 	struct vm_anon *anon;
 	struct vm_page *pg;
 	struct vm_page *opg;
@@ -570,6 +570,11 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 	} else {
 		/* ZFOD */
 		opg = NULL;
+	}
+	if (opg != NULL) {
+		uobj = opg->uobject;
+	} else {
+		uobj = NULL;
 	}
 
 	KASSERT(amap != NULL);
@@ -1385,7 +1390,7 @@ uvm_fault_upper_promote(
 	UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
 	uvmexp.flt_acow++;
 
-	error = uvmfault_promote(ufi, oanon, NULL, PGO_DONTCARE,
+	error = uvmfault_promote(ufi, oanon, PGO_DONTCARE,
 	    &anon, &flt->anon_spare);
 	switch (error) {
 	case 0:
@@ -2059,7 +2064,7 @@ uvm_fault_lower_promote(
 	if (amap == NULL)
 		panic("uvm_fault: want to promote data, but no anon");
 #endif
-	error = uvmfault_promote(ufi, NULL, uobj, uobjpage,
+	error = uvmfault_promote(ufi, NULL, uobjpage,
 	    &anon, &flt->anon_spare);
 	switch (error) {
 	case 0:
@@ -2112,7 +2117,6 @@ uvm_fault_lower_promote(
 uvm_fault_lower_promote_done:
 		uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(uobjpage, NULL);
-
 		mutex_exit(&uobj->vmobjlock);
 		uobj = NULL;
 
