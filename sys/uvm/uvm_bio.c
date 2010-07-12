@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.6 2010/07/09 12:49:21 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.7 2010/07/12 06:25:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.6 2010/07/09 12:49:21 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.7 2010/07/12 06:25:14 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -336,14 +336,8 @@ again:
 			continue;
 		}
 
-		mutex_enter(&uobj->vmobjlock);
-
-		if (uvm_pageisdirect_p(pg)) {
-			UVMHIST_LOG(ubchist, "pg is device", i, 0,0,0);
-			goto ubc_fault_enter;
-		}
-
 		KASSERT(uobj == pg->uobject);
+		mutex_enter(&uobj->vmobjlock);
 			
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
@@ -379,7 +373,6 @@ again:
 			}
 		}
 
-ubc_fault_enter:
 		/*
 		 * note that a page whose backing store is partially allocated
 		 * is marked as PG_RDONLY.
