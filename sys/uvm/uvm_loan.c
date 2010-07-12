@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.77.2.2 2010/05/31 13:26:38 uebayasi Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.77.2.3 2010/07/12 06:25:14 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.77.2.2 2010/05/31 13:26:38 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.77.2.3 2010/07/12 06:25:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,10 +540,6 @@ reget:
 		}
 		if (error)
 			goto fail;
-		if (uvm_pageisdirect_p(pgpp[0])) {
-			error = EBUSY;
-			goto fail2;
-		}
 
 		KASSERT(npages > 0);
 
@@ -610,7 +606,6 @@ reget:
 fail:
 	uvm_unloan(origpgpp, ndone, UVM_LOAN_TOPAGE);
 
-fail2:
 	return error;
 }
 
@@ -662,7 +657,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	 * then we fail the loan.
 	 */
 
-	if ((error && error != EBUSY) || uvm_pageisdirect_p(pg)) {
+	if (error && error != EBUSY) {
 		uvmfault_unlockall(ufi, amap, uobj, NULL);
 		return (-1);
 	}
