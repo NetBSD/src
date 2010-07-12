@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.4 2010/07/11 11:25:22 pooka Exp $	*/
+/*	$NetBSD: lfs.c,v 1.5 2010/07/12 21:37:47 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ struct lfstestargs {
 };
 
 static int
-lfs_newfs(void **buf, const char *image, off_t size)
+lfs_fstest_newfs(void **buf, const char *image, off_t size)
 {
 	char cmd[1024];
 	int res;
@@ -89,7 +89,7 @@ lfs_newfs(void **buf, const char *image, off_t size)
 }
 
 static int
-lfs_delfs(void *buf)
+lfs_fstest_delfs(void *buf)
 {
 	int res;
 	struct lfstestargs *args = buf;
@@ -108,7 +108,7 @@ lfs_delfs(void *buf)
 }
 
 static int
-lfs_mount(void *buf, const char *path, int flags)
+lfs_fstest_mount(void *buf, const char *path, int flags)
 {
 	int res;
 	struct lfstestargs *args = buf;
@@ -125,7 +125,7 @@ lfs_mount(void *buf, const char *path, int flags)
 }
 
 static int
-lfs_unmount(const char *path, int flags)
+lfs_fstest_unmount(const char *path, int flags)
 {
 	int res;
 
