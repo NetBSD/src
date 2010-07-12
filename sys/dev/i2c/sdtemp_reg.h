@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.4 2010/07/11 15:16:41 pgoyette Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.5 2010/07/12 03:39:05 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
 #define	ADT_7408_DEVICE_ID		0x8001
 #define	ADT_7408_MASK			0xFFFF
 
-#define	IDT_MANFUFACTUR_ID		0x00B3
+#define	IDT_MANUFACTURER_ID		0x00B3
 #define	IDT_TS3000B3_DEVICE_ID		0x2903	/* Also matches TSE2002B3 */
 #define	IDT_TS3000B3_MASK		0xFFFF
 
