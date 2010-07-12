@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.5 2010/07/11 12:33:38 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.6 2010/07/12 13:09:19 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -57,6 +57,7 @@ syncbar(const char *fs)
 	rump_sys_statvfs1(fs, &svb, ST_WAIT);
 }
 
+#ifdef PUFFSDUMP
 static void __unused
 dumpopcount(void)
 {
@@ -74,6 +75,7 @@ dumpopcount(void)
 		    puffsdump_vnop_revmap[i], vn_toserv_ops[i]);
 	}
 }
+#endif
 
 /*
  * Threads which shovel data between comfd and /dev/puffs.
