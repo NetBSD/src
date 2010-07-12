@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.47 2010/02/24 22:38:09 dyoung Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.48 2010/07/12 04:16:51 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ typedef struct ohci_softc {
 
 	usbd_xfer_handle sc_intrxfer;
 
-	char sc_vendor[16];
+	char sc_vendor[32];
 	int sc_id_vendor;
 
 	u_int32_t sc_control;		/* Preserved during suspend/standby */
