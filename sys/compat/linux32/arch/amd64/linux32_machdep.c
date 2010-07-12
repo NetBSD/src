@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.25 2010/07/07 12:43:18 jmmv Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.26 2010/07/12 02:55:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.25 2010/07/07 12:43:18 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.26 2010/07/12 02:55:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -119,8 +119,8 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		fp = (struct linux32_sigframe *)tf->tf_rsp;
 	fp--;
 
-	DPRINTF(("old: onstack = %d, fp = %p sig = %d rip = 0x%lx cr2 = 0x%lx\n",
-	    onstack, fp, sig, tf->tf_rip, lwp_getpcb(l)->pcb_cr2));
+	DPRINTF(("old: onstack = %d, fp = %p sig = %d rip = 0x%lx\n",
+	    onstack, fp, sig, tf->tf_rip));
 
 	/* Build stack frame for signal trampoline. */
 	NETBSD32PTR32(frame.sf_handler, catcher);
@@ -194,8 +194,8 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	NETBSD32PTR32(frame.sf_sip, &fp->sf_si);
 	NETBSD32PTR32(frame.sf_ucp, &fp->sf_uc);
 
-	DPRINTF(("rt: onstack = %d, fp = %p sig = %d rip = 0x%lx cr2 = 0x%lx\n",
-	    onstack, fp, sig, tf->tf_rip, lwp_getpcb(l)->pcb_cr2));
+	DPRINTF(("rt: onstack = %d, fp = %p sig = %d rip = 0x%lx\n",
+	    onstack, fp, sig, tf->tf_rip));
 
 	lsi = &frame.sf_si;
 	(void)memset(lsi, 0, sizeof(frame.sf_si));
