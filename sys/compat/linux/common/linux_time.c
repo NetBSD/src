@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.33 2010/04/08 15:59:37 njoly Exp $ */
+/*	$NetBSD: linux_time.c,v 1.34 2010/07/12 12:01:53 njoly Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.33 2010/04/08 15:59:37 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.34 2010/07/12 12:01:53 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -272,12 +272,14 @@ linux_sys_clock_nanosleep(struct lwp *l, const struct linux_sys_clock_nanosleep_
 	struct linux_timespec lrqts, lrmts;
 	struct timespec rqts, rmts;
 	int error, error1;
+	clockid_t nwhich;
 
 	if (SCARG(uap, flags) != 0)
 		return EINVAL;		/* XXX deal with TIMER_ABSTIME */
 
-	if (SCARG(uap, which) != LINUX_CLOCK_REALTIME)
-		return EINVAL;
+	error = linux_to_native_clockid(&nwhich, SCARG(uap, which));
+	if (error != 0)
+		return error;
 
 	error = copyin(SCARG(uap, rqtp), &lrqts, sizeof lrqts);
 	if (error != 0)
