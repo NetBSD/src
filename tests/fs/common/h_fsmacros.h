@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.5 2010/07/09 14:30:53 njoly Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.6 2010/07/12 21:05:19 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
   { \
     atf_tc_set_md_var(tc, "descr", type " test for " desc); \
     atf_tc_set_md_var(tc, "use.fs", "true"); \
+    atf_tc_set_md_var(tc, "X-fs.type", type); \
   } \
   ATF_TC_BODY(fs##_##func,tc) \
   { \
@@ -63,7 +64,7 @@
       atf_tc_fail("newfs failed"); \
     if (fs##_mount(tmp, MNTNAME, 0) != 0) \
       atf_tc_fail("mount failed"); \
-    func(type,MNTNAME); \
+    func(tc,MNTNAME); \
     if (fs##_unmount(MNTNAME, 0) != 0) \
       atf_tc_fail("unmount failed"); \
     if (fs##_delfs(tmp) != 0) \
