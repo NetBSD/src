@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.5 2010/07/13 12:53:42 kiyohara Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.6 2010/07/13 12:57:22 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.5 2010/07/13 12:53:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.6 2010/07/13 12:57:22 kiyohara Exp $");
 
 #include "opt_mvsata.h"
 
@@ -199,10 +199,8 @@ static void mvsata_print_crqb(struct mvsata_port *, int);
 static void mvsata_print_crpb(struct mvsata_port *, int);
 static void mvsata_print_eprd(struct mvsata_port *, int);
 #endif
-#endif
 
 
-#ifndef MVSATA_WITHOUTDMA
 struct ata_bustype mvsata_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
 	mvsata_bio,
@@ -290,7 +288,7 @@ mvsata_attach(struct mvsata_softc *sc, struct mvsata_product *product,
 	    (ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA);
 #endif
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
-#ifndef MVSATA_WITHOUTDMA
+#ifdef MVSATA_WITHOUTDMA
 	sc->sc_wdcdev.sc_atac.atac_dma_cap = 0;
 	sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
 #else
