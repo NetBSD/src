@@ -1,0 +1,134 @@
+/*	$NetBSD: t_vfsops.c,v 1.1 2010/07/13 11:51:59 pooka Exp $	*/
+
+/*-
+ * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/stat.h>
+#include <sys/statvfs.h>
+
+#include <atf-c.h>
+#include <unistd.h>
+
+#include <rump/rump_syscalls.h>
+#include <rump/rump.h>
+
+#include "../common/h_fsmacros.h"
+#include "../../h_macros.h"
+
+static void
+tmount(const atf_tc_t *tc, const char *path)
+{
+
+	return;
+}
+
+static void
+tstatvfs(const atf_tc_t *tc, const char *path)
+{
+	struct statvfs svb;
+
+	if (rump_sys_statvfs1(path, &svb, ST_WAIT) == -1)
+		atf_tc_fail_errno("statvfs");
+}
+
+static void
+tsync(const atf_tc_t *tc, const char *path)
+{
+
+	rump_sys_sync();
+}
+
+#define MAGICSTR "just a string, I like A"
+static void
+tfilehandle(const atf_tc_t *tc, const char *path)
+{
+	char fpath[MAXPATHLEN];
+	char buf[sizeof(MAGICSTR)];
+	size_t fhsize;
+	void *fhp;
+	int fd;
+
+	sprintf(fpath, "%s/file", path);
+	fd = rump_sys_open(fpath, O_RDWR | O_CREAT, 0777);
+	if (fd == -1)
+		atf_tc_fail_errno("open");
+
+	if (rump_sys_write(fd, MAGICSTR, sizeof(MAGICSTR)) != sizeof(MAGICSTR))
+		atf_tc_fail("write to file");
+	rump_sys_close(fd);
+
+	/*
+	 * Get file handle size.
+	 * This also weeds out unsupported file systems.
+	 */
+	fhsize = 0;
+	if (rump_sys_getfh(fpath, NULL, &fhsize) == -1) {
+		if (errno == EOPNOTSUPP) {
+			atf_tc_skip("file handles not supported");
+		} else if (errno != E2BIG) {
+			atf_tc_fail_errno("getfh size");
+		}
+	}
+
+	fhp = malloc(fhsize);
+	if (rump_sys_getfh(fpath, fhp, &fhsize) == -1)
+		atf_tc_fail_errno("getfh");
+
+	/* open file based on file handle */
+	fd = rump_sys_fhopen(fhp, fhsize, O_RDONLY);
+	if (FSTYPE_TMPFS(tc)) {
+		atf_tc_expect_fail("PR kern/43605");
+		if (fd != -1 || errno != EINVAL)
+			atf_tc_expect_pass();
+	}
+	if (fd == -1) {
+		atf_tc_fail_errno("fhopen");
+	}
+
+	/* check that we got the same file */
+	if (rump_sys_read(fd, buf, sizeof(buf)) != sizeof(MAGICSTR))
+		atf_tc_fail("read fhopened file");
+
+	ATF_REQUIRE_STREQ(buf, MAGICSTR);
+
+	rump_sys_close(fd);
+}
+
+ATF_TC_FSAPPLY(tmount, "mount/unmount");
+ATF_TC_FSAPPLY(tstatvfs, "statvfs");
+ATF_TC_FSAPPLY(tsync, "sync");
+ATF_TC_FSAPPLY(tfilehandle, "file handles");
+
+ATF_TP_ADD_TCS(tp)
+{
+
+	ATF_TP_FSAPPLY(tmount);
+	ATF_TP_FSAPPLY(tstatvfs);
+	ATF_TP_FSAPPLY(tsync);
+	ATF_TP_FSAPPLY(tfilehandle);
+
+	return atf_no_error();
+}

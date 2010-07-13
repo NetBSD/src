@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2010/07/08 13:21:02 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/07/13 11:51:59 pooka Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/fs/vfs
 WARNS=		4
 
 TESTS_C=	t_rmdirrace
+TESTS_C+=	t_vfsops
 
 LDADD+=-lrumpfs_ext2fs						# ext2fs
 LDADD+=-lrumpfs_ffs						# ffs
