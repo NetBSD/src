@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.16 2010/07/12 06:25:14 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.17 2010/07/13 01:47:23 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.16 2010/07/12 06:25:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.17 2010/07/13 01:47:23 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -1785,7 +1785,6 @@ uvm_fault_lower_neighbor_enter:
 	KASSERT((pg->flags & PG_WANTED) == 0);
 	KASSERT(!UVM_OBJ_IS_CLEAN(pg->uobject) ||
 	    (pg->flags & PG_CLEAN) != 0);
-
 	pg->flags &= ~(PG_BUSY);
 	UVM_PAGE_OWN(pg, NULL);
 
@@ -1959,12 +1958,11 @@ uvm_fault_lower_direct(
 	 * set "pg" to the page we want to map in (uobjpage, usually)
 	 */
 
-	pg = uobjpage;		/* map in the actual object */
 	uvmexp.flt_obj++;
-
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry) ||
 	    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
 		flt->enter_prot &= ~VM_PROT_WRITE;
+	pg = uobjpage;		/* map in the actual object */
 
 	KASSERT(uobjpage != PGO_DONTCARE);
 
