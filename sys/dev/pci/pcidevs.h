@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1038 2010/07/08 18:50:35 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1039 2010/07/13 13:57:36 kiyohara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1041 2010/07/08 18:49:28 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1042 2010/07/13 13:54:15 kiyohara Exp
  */
 
 /*
@@ -2076,6 +2076,8 @@
 #define	PCI_PRODUCT_MARVELL_MV64360	0x6460		/* MV6436x System Controller */
 #define	PCI_PRODUCT_MARVELL_MV64460	0x6480		/* MV6446x System Controller */
 #define	PCI_PRODUCT_MARVELL_88SX7042	0x7042		/* 88SX7042 SATA IIe */
+#define	PCI_PRODUCT_MARVELL_MV78100	0x7810		/* MV78100 SoC Discovery Innovation */
+#define	PCI_PRODUCT_MARVELL_MV78200	0x7820		/* MV78200 SoC Discovery Innovation */
 #define	PCI_PRODUCT_MARVELL_88W8660	0x8660		/* 88W8660 SoC Orion1 */
 
 /* Global Sun Tech products */
