@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1039 2010/07/13 13:57:36 kiyohara Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1040 2010/07/13 23:41:30 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1042 2010/07/13 13:54:15 kiyohara Exp
+ *	NetBSD: pcidevs,v 1.1043 2010/07/13 23:40:56 msaitoh Exp
  */
 
 /*
@@ -780,6 +780,7 @@
 
 /* Advantech products */
 #define	PCI_PRODUCT_ADVANTECH_PCI1600	0x1600		/* PCI-16[12]0 serial */
+#define	PCI_PRODUCT_ADVANTECH_PCI1604	0x1604		/* PCI-1604 serial */
 #define	PCI_PRODUCT_ADVANTECH_PCI1610	0x1610		/* PCI-1610 4 port serial */
 #define	PCI_PRODUCT_ADVANTECH_PCI1612	0x1612		/* PCI-1612 4 port serial */
 #define	PCI_PRODUCT_ADVANTECH_PCI1620	0x1620		/* PCI-1620 8 port serial (1-4) */
