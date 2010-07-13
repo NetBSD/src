@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.7 2010/07/12 06:25:14 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.8 2010/07/13 01:47:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.7 2010/07/12 06:25:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.8 2010/07/13 01:47:23 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -338,7 +338,6 @@ again:
 
 		KASSERT(uobj == pg->uobject);
 		mutex_enter(&uobj->vmobjlock);
-			
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
@@ -540,9 +539,6 @@ again_faultbusy:
 		for (i = 0; i < npages; i++) {
 			struct vm_page *pg = pgs[i];
 
-			if (uvm_pageisdirect_p(pg))
-				goto ubc_alloc_enter;
-
 			KASSERT(pg->uobject == uobj);
 			if (pg->loan_count != 0) {
 				mutex_enter(&uobj->vmobjlock);
@@ -561,8 +557,6 @@ again_faultbusy:
 				}
 				pgs[i] = pg;
 			}
-
-ubc_alloc_enter:
 			pmap_kenter_pa(va + slot_offset + (i << PAGE_SHIFT),
 			    VM_PAGE_TO_PHYS(pg),
 			    VM_PROT_READ | VM_PROT_WRITE, 0);
