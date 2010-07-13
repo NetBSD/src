@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vfsops.c,v 1.1 2010/07/13 11:51:59 pooka Exp $	*/
+/*	$NetBSD: t_vfsops.c,v 1.2 2010/07/13 11:53:47 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 #include <sys/statvfs.h>
 
 #include <atf-c.h>
+#include <fcntl.h>
 #include <unistd.h>
 
 #include <rump/rump_syscalls.h>
