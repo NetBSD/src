@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.770 2010/07/05 10:37:36 jruoho Exp $
+#	$NetBSD: 3RDPARTY,v 1.771 2010/07/13 11:56:43 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1092,7 +1092,7 @@ Notes:
 
 Package:	zlib
 Version:	1.2.3
-Current Vers:	1.2.3
+Current Vers:	1.2.5
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.zlib.net/
 Home Page:	http://www.zlib.net/
