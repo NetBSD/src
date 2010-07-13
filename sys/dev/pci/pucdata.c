@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.67 2010/07/11 00:11:05 mrg Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.68 2010/07/13 23:46:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.67 2010/07/11 00:11:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.68 2010/07/13 23:46:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,16 @@ const struct puc_device_description puc_devices[] = {
 	/*
 	 * Advantech multi serial cards
 	 */
+	/* Advantech PCI-1604UP 2 UARTs based on OX16PCI952 */
+	{   "Advantech PCI-1604UP UARTs",
+	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1604, 0, 0 },
+	    {	0xffff,	0xffff,	0x0,	0x0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ * 8 },
+	    },
+	},
+
 	{   "Advantech PCI-1610 UARTs",
 	    {	PCI_VENDOR_ADVANTECH,	PCI_PRODUCT_ADVANTECH_PCI1600,
 		PCI_PRODUCT_ADVANTECH_PCI1610,	0x0 },
@@ -744,6 +754,28 @@ const struct puc_device_description puc_devices[] = {
 	    {   0xffff, 0xffff, 0,	0	},
 	    {
 		{ PUC_PORT_TYPE_LPT, 0x10, 0x00, 0x00 },
+	    },
+	},
+
+	/* InnoSys Keyspan SX Pro OX16PCI954 based 4 UARTs */
+	{   "InnoSys Keyspan SX Pro Serial Card",
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_INNOSYS, 0x5850 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x10, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x18, COM_FREQ * 8 },
+	    },
+	},
+
+	/* I-O DATA RSA-PCI2 two UARTs based on OX16PCI954 */
+	{   "I-O DATA RSA-PCI2 UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI,	0x9501,	PCI_VENDOR_IODATA, 0xc070 },
+	    {	0xffff,	0xffff,	0xffff,	0xffff	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ * 8 },
+		{ PUC_PORT_TYPE_COM, 0x10, 0x08, COM_FREQ * 8 },
 	    },
 	},
 
