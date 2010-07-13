@@ -1,10 +1,9 @@
-# $NetBSD: Makefile,v 1.1 2009/02/13 05:19:51 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/13 21:13:31 jmmv Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/util/config
-
-NOATFFILE=	# defined
+ATFFILE=	no
 
 FILESDIR=	${TESTSDIR}/support/conf
 FILES=		files

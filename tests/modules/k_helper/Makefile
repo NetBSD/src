@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/05/31 19:58:35 dyoung Exp $
+#	$NetBSD: Makefile,v 1.5 2010/07/13 21:13:28 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ KMODULEDIR=	${DESTDIR}/${TESTSBASE}/modules/${KMOD}
 
 SRCS=   	k_helper.c
 
-NOATFFILE=	# defined
+ATFFILE=	no
 NOMAN=		# defined
 
 .include <bsd.test.mk>
