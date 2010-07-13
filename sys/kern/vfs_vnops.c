@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.174 2010/06/24 13:03:12 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.175 2010/07/13 15:38:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.174 2010/06/24 13:03:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.175 2010/07/13 15:38:15 pooka Exp $");
 
 #include "veriexec.h"
 
@@ -601,6 +601,7 @@ vn_stat(struct vnode *vp, struct stat *sb)
 	int error;
 	mode_t mode;
 
+	memset(&va, 0, sizeof(va));
 	error = VOP_GETATTR(vp, &va, kauth_cred_get());
 	if (error)
 		return (error);
@@ -649,6 +650,7 @@ vn_stat(struct vnode *vp, struct stat *sb)
 	sb->st_flags = va.va_flags;
 	sb->st_gen = 0;
 	sb->st_blocks = va.va_bytes / S_BLKSIZE;
+	memset(sb->st_spare, 0, sizeof(sb->st_spare));
 	return (0);
 }
 
