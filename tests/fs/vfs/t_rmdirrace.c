@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rmdirrace.c,v 1.5 2010/07/12 21:05:20 njoly Exp $	*/
+/*	$NetBSD: t_rmdirrace.c,v 1.6 2010/07/13 11:12:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -64,16 +64,13 @@ static void *func2(void *arg)
 static void
 race(const atf_tc_t *tc, const char *path)
 {
-	const char *type;
 	int res, fd, quit;
 	pthread_t th1, th2;
 
-	type = atf_tc_get_md_var(tc, "X-fs.type");
-
-	if (FSTYPE_LFS(type))
+	if (FSTYPE_LFS(tc))
 		atf_tc_expect_signal(-1, "PR kern/43582");
-	if (FSTYPE_SYSVBFS(type))
-		atf_tc_skip("%s does not support rmdir(2)", type);
+	if (FSTYPE_SYSVBFS(tc))
+		atf_tc_skip("rmdir(2) not supported by file system");
 
 	fd = rump_sys_open(".", O_RDONLY, 0666);
 	if (fd == -1)
@@ -111,7 +108,7 @@ race(const atf_tc_t *tc, const char *path)
 	 * saying "just chill even if the test doesn't fail", so this
 	 * takes care of it.
 	 */
-	if (FSTYPE_LFS(type))
+	if (FSTYPE_LFS(tc))
 		abort();
 }
 
