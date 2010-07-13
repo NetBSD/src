@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.7 2010/07/12 21:37:47 njoly Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.8 2010/07/13 11:12:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -111,11 +111,19 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
   atf_tc_skip("filesystem not selected");
 }
 
-#define FSTYPE_EXT2FS(type)	(strcmp(type, MOUNT_EXT2FS) == 0)
-#define FSTYPE_FFS(type)	(strcmp(type, MOUNT_FFS) == 0)
-#define FSTYPE_LFS(type)	(strcmp(type, MOUNT_LFS) == 0)
-#define FSTYPE_MSDOS(type)	(strcmp(type, MOUNT_MSDOS) == 0)
-#define FSTYPE_SYSVBFS(type)	(strcmp(type, MOUNT_SYSVBFS) == 0)
-#define FSTYPE_TMPFS(type)	(strcmp(type, MOUNT_TMPFS) == 0)
+#define FSTYPE_EXT2FS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_EXT2FS) == 0)
+#define FSTYPE_FFS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_FFS) == 0)
+#define FSTYPE_LFS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_LFS) == 0)
+#define FSTYPE_MSDOS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_MSDOS) == 0)
+#define FSTYPE_PUFFS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_PUFFS) == 0)
+#define FSTYPE_SYSVBFS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_SYSVBFS) == 0)
+#define FSTYPE_TMPFS(tc)\
+    (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_TMPFS) == 0)
 
 #endif /* __H_FSMACROS_H_ */
