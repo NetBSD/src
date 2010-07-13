@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.61 2010/07/09 08:10:50 hannken Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.62 2010/07/13 18:08:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.61 2010/07/09 08:10:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.62 2010/07/13 18:08:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -149,6 +149,7 @@ struct rumpfs_node {
 		} reg;
 		struct {		/* VDIR */
 			LIST_HEAD(, rumpfs_dent) dents;
+			struct rumpfs_node *parent;
 			int flags;
 		} dir;
 		struct {
@@ -161,6 +162,7 @@ struct rumpfs_node {
 #define rn_writefd	rn_u.reg.writefd
 #define rn_offset	rn_u.reg.offset
 #define rn_dir		rn_u.dir.dents
+#define rn_parent	rn_u.dir.parent
 #define rn_linktarg	rn_u.link.target
 #define rn_linklen	rn_u.link.len
 
@@ -579,13 +581,8 @@ rump_vop_lookup(void *v)
 	struct rumpfs_node *rnd = dvp->v_data, *rn;
 	struct rumpfs_dent *rd = NULL;
 	struct etfs *et;
-	int rv;
-
-	/* we handle only some "non-special" cases */
-	if (!(((cnp->cn_flags & ISLASTCN) == 0) || (cnp->cn_nameiop != RENAME)))
-		return EOPNOTSUPP;
-	if (!((cnp->cn_flags & ISDOTDOT) == 0))
-		return EOPNOTSUPP;
+	bool dotdot = (cnp->cn_flags & ISDOTDOT) != 0;
+	int rv = 0;
 
 	/* check for dot, return directly if the case */
 	if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
@@ -593,6 +590,10 @@ rump_vop_lookup(void *v)
 		*vpp = dvp;
 		return 0;
 	}
+
+	/* we handle only some "non-special" cases */
+	if (!(((cnp->cn_flags & ISLASTCN) == 0) || (cnp->cn_nameiop != RENAME)))
+		return EOPNOTSUPP;
 
 	/* check for etfs */
 	if (dvp == rootvnode && cnp->cn_nameiop == LOOKUP) {
@@ -622,6 +623,9 @@ rump_vop_lookup(void *v)
 		size_t newpathlen;
 		int hft, error;
 
+		if (dotdot)
+			return EOPNOTSUPP;
+
 		newpathlen = strlen(rnd->rn_hostpath) + 1 + cnp->cn_namelen + 1;
 		newpath = malloc(newpathlen, M_TEMP, M_WAITOK);
 
@@ -649,11 +653,16 @@ rump_vop_lookup(void *v)
 
 		goto getvnode;
 	} else {
-		LIST_FOREACH(rd, &rnd->rn_dir, rd_entries) {
-			if (rd->rd_namelen == cnp->cn_namelen &&
-			    strncmp(rd->rd_name, cnp->cn_nameptr,
-			      cnp->cn_namelen) == 0)
-				break;
+		if (dotdot) {
+			rn = rnd->rn_parent;
+			goto getvnode;
+		} else {
+			LIST_FOREACH(rd, &rnd->rn_dir, rd_entries) {
+				if (rd->rd_namelen == cnp->cn_namelen &&
+				    strncmp(rd->rd_name, cnp->cn_nameptr,
+				      cnp->cn_namelen) == 0)
+					break;
+			}
 		}
 	}
 
@@ -671,21 +680,25 @@ rump_vop_lookup(void *v)
 
  getvnode:
 	KASSERT(rn);
+	if (dotdot)
+		VOP_UNLOCK(dvp);
 	mutex_enter(&reclock);
 	if ((vp = rn->rn_vp)) {
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&reclock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			goto getvnode;
+		}
 		*vpp = vp;
 	} else {
 		mutex_exit(&reclock);
 		rv = makevnode(dvp->v_mount, rn, vpp);
-		if (rv)
-			return rv;
 	}
+	if (dotdot)
+		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 
-	return 0;
+	return rv;
 }
 
 static int
@@ -718,6 +731,7 @@ rump_vop_mkdir(void *v)
 	int rv = 0;
 
 	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
+	rn->rn_parent = rnd;
 	rv = makevnode(dvp->v_mount, rn, vpp);
 	if (rv)
 		goto out;
@@ -1254,6 +1268,7 @@ rumpfs_mountroot()
 	rfsmp = kmem_alloc(sizeof(*rfsmp), KM_SLEEP);
 
 	rn = makeprivate(VDIR, NODEV, DEV_BSIZE);
+	rn->rn_parent = rn;
 	error = makevnode(mp, rn, &rfsmp->rfsmp_rvp);
 	if (error)
 		panic("could not create root vnode: %d", error);
