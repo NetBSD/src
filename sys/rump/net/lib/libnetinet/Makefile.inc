@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.5 2010/02/16 20:42:47 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2010/07/13 22:16:10 rmind Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet ${.CURDIR}/../../../../netinet6
 
 # INET
 SRCS+=	in_proto.c igmp.c in.c in_offload.c in_pcb.c ip_icmp.c		\
-	ip_flow.c ip_id.c ip_input.c ip_output.c raw_ip.c in_cksum.c	\
-	cpu_in_cksum.c in4_cksum.c ip_encap.c
+	ip_flow.c ip_id.c ip_input.c ip_reass.c ip_output.c raw_ip.c	\
+	in_cksum.c cpu_in_cksum.c in4_cksum.c ip_encap.c
 
 # INET6
 SRCS+=	dest6.c frag6.c icmp6.c in6.c in6_cksum.c in6_ifattach.c	\

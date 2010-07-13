@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.91 2009/02/01 17:04:11 pooka Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.92 2010/07/13 22:16:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -198,7 +198,6 @@ extern int ip_maxflows;
 extern int ip_hashsize;
 #endif
 extern struct pool inmulti_pool;
-extern struct pool ipqent_pool;
 struct	 inpcb;
 struct   sockopt;
 
@@ -206,7 +205,6 @@ int	 ip_ctloutput(int, struct socket *, struct sockopt *);
 int	 ip_dooptions(struct mbuf *);
 void	 ip_drain(void);
 void	 ip_forward(struct mbuf *, int);
-void	 ip_freef(struct ipq *);
 void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_getmoptions(struct ip_moptions *, struct sockopt *);
 void	 ip_init(void);
@@ -215,8 +213,18 @@ u_int	 ip_optlen(struct inpcb *);
 int	 ip_output(struct mbuf *, ...);
 int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
 int	 ip_pcbopts(struct mbuf **, const struct sockopt *);
+
+struct ipq *
+	 ip_reass_lookup(struct ip *, u_int *);
+void	 ip_reass_unlock(void);
+struct ipqent *
+	ip_reass_getent(void);
 struct mbuf *
-	 ip_reass(struct ipqent *, struct ipq *, struct ipqhead *);
+	 ip_reass(struct ipqent *, struct ipq *, u_int);
+void	 ip_reass_slowtimo(void);
+void	 ip_reass_drain(void);
+void	 ip_freef(struct ipq *);
+
 struct in_ifaddr *
 	 ip_rtaddr(struct in_addr);
 void	 ip_savecontrol(struct inpcb *, struct mbuf **, struct ip *,
