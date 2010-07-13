@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.14 2010/07/11 08:34:57 kiyohara Exp $
+#	$NetBSD: files.discovery,v 1.15 2010/07/13 11:16:02 kiyohara Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -29,13 +29,13 @@ file	dev/marvell/gt.c		gt
 
 # PCI Interface
 device	gtpci: pcibus
-file	dev/marvell/gtpci.c		gtpci & gtpci_gt needs-flag
+file	dev/marvell/gtpci.c		gtpci & (gtpci_gt|gtpci_mbus) needs-flag
 attach	gtpci at gt with gtpci_gt
 
 # PCI Express Interface
-#device	mvpex: pcibus
-#file	dev/marvell/mvpex.c		mvpex & (mvpex_gt|mvpex_mbus) needs-flag
-#attach	mvpex at gt with mvpex_gt
+device	mvpex: pcibus
+file	dev/marvell/mvpex.c		mvpex & (mvpex_gt|mvpex_mbus) needs-flag
+attach	mvpex at gt with mvpex_gt
 
 # Fast ethernet
 define	gfec { [port = -1], [irq = -1] }
@@ -82,8 +82,8 @@ file	dev/marvell/gttwsi.c		gttwsi
 attach	gttwsi at gt with gttwsi_gt
 
 # UART Interface
-#attach	com at gt with mvuart_gt
-#file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
+attach	com at gt with mvuart_gt
+file	dev/marvell/com_mv.c		mvuart_gt | mvuart_mbus
 
 # IDMA Controller and XOR Engine
 device	gtidmac: dmover_service
