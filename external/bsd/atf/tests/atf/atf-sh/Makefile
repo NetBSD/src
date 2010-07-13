@@ -1,8 +1,9 @@
-# $NetBSD: Makefile,v 1.3 2010/07/03 08:14:12 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/07/13 21:12:39 jmmv Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/atf/atf-sh
+ATFFILE=	yes
 
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/atf/dist
 .PATH:		${SRCDIR}/atf-sh
