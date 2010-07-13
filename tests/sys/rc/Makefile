@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/03/15 19:03:08 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/13 21:13:30 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,5 +10,4 @@ SCRIPTSDIR=	${TESTSDIR}
 SCRIPTS=	h_args.sh \
 		h_simple.sh
 
-.include <bsd.subdir.mk>
 .include <bsd.test.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2008/11/12 12:36:29 ad Exp $
+# $NetBSD: Makefile,v 1.5 2010/07/13 21:13:28 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -16,5 +16,4 @@ TESTS_SH=	t_modload
 
 SUBDIR=		k_helper
 
-.include <bsd.subdir.mk>
 .include <bsd.test.mk>

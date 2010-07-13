@@ -1,8 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.2 2009/07/20 20:41:52 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3 2010/07/13 21:13:21 jmmv Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/crypto/libcrypto
+ATFFILE=	no
 
 .if defined(HELPER_NAME)
 HELPER_SRCS?=	${HELPER_NAME}.c
@@ -11,8 +12,6 @@ PROG=		h_${HELPER_NAME}
 SRCS=		${HELPER_SRCS}
 MAN=		# empty
 BINDIR=		${TESTSDIR}
-
-NOATFFILE=	yes
 
 DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
 LDADD+=		-lcrypto -lcrypt

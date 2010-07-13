@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2010/07/11 06:16:54 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2010/07/13 21:13:21 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -28,5 +28,3 @@ TESTS_SH+=	t_pubkey
 .include <bsd.test.mk>
 
 .endif
-
-.include <bsd.subdir.mk>

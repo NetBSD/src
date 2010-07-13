@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2007/11/21 15:39:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2010/07/13 21:13:32 jmmv Exp $
 
 NOMAN=		# defined
 
@@ -16,4 +16,3 @@ PROG=		h_id
 SRCS=		id.c pwgr.c
 
 .include <bsd.test.mk>
-.include <bsd.subdir.mk>

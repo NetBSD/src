@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2010/07/10 17:28:36 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2010/07/13 21:13:25 jmmv Exp $
 
 NOMAN=		# defined
 
@@ -15,4 +15,3 @@ TESTS_SH_SRC_${name}=	h_common.sh ${name}.sh
 SUBDIR=		regress input expected
 
 .include <bsd.test.mk>
-.include <bsd.subdir.mk>

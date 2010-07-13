@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2010/06/28 19:03:59 pooka Exp $
+# $NetBSD: Makefile,v 1.6 2010/07/13 21:13:25 jmmv Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,7 @@ NOMAN=		# defined
 
 TESTSDIR=	${TESTSBASE}/kernel
 
-SUBDIR=		kqueue tty
+TESTS_SUBDIRS=		kqueue tty
 
 TESTS_C=	t_lock
 TESTS_C+=	t_lwpctl
@@ -32,4 +32,3 @@ CPPFLAGS.t_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE
 CPPFLAGS.subr_extent.c=	-D_EXTENT_TESTING -D__POOL_EXPOSE
 
 .include <bsd.test.mk>
-.include <bsd.subdir.mk>
