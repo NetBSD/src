@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/07/12 13:09:19 pooka Exp $
+#	$NetBSD: Makefile,v 1.9 2010/07/13 21:13:23 jmmv Exp $
 #
 
 .include <bsd.own.mk>
@@ -21,4 +21,3 @@ LDADD+=		-lrump -lrumpuser -lpthread
 WARNS=2
 
 .include <bsd.test.mk>
-.include <bsd.subdir.mk>

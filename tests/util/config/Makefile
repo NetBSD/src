@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2010/07/10 16:24:12 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2010/07/13 21:13:31 jmmv Exp $
 
 SUBDIR=			support
 
@@ -24,4 +24,3 @@ FILES+=			support/arch/regress/conf/std.regress
 FILES+=			support/conf/files
 
 .include <bsd.test.mk>
-.include <bsd.subdir.mk>

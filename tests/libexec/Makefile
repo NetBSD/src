@@ -1,11 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2009/09/24 21:33:45 pooka Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/13 21:13:28 jmmv Exp $
 #
 
 .include <bsd.own.mk>
 
-SUBDIR=		ld.elf_so
+TESTS_SUBDIRS=		ld.elf_so
 
 TESTSDIR=	${TESTSBASE}/libexec
 
 .include <bsd.test.mk>
-.include <bsd.subdir.mk>
