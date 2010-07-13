@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/07/13 11:51:59 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/07/13 18:09:52 pooka Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/fs/vfs
@@ -11,6 +11,8 @@ LDADD+=-lrumpfs_ext2fs						# ext2fs
 LDADD+=-lrumpfs_ffs						# ffs
 LDADD+=-lrumpfs_lfs						# lfs
 LDADD+=-lrumpfs_msdos						# msdos
+LDADD+=-lrumpfs_syspuffs					# puffs
+LDADD+=-lrumpdev_putter -lrumpdev				#   \ putter
 LDADD+=-lrumpfs_sysvbfs						# sysvbfs
 LDADD+=-lrumpfs_tmpfs						# tmpfs
 LDADD+=-lrumpdev_disk -lrumpdev					# disk device
