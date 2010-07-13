@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.9 2010/07/13 15:50:31 njoly Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.10 2010/07/13 16:48:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include "ffs.c"
 #include "lfs.c"
 #include "msdosfs.c"
+#include "puffs.c"
 #include "sysvbfs.c"
 #include "tmpfs.c"
 
@@ -79,6 +80,7 @@
   ATF_TC_FSADD(ffs,MOUNT_FFS,func,desc) \
   ATF_TC_FSADD(lfs,MOUNT_LFS,func,desc) \
   ATF_TC_FSADD(msdosfs,MOUNT_MSDOS,func,desc) \
+  ATF_TC_FSADD(puffs,MOUNT_PUFFS,func,desc) \
   ATF_TC_FSADD(sysvbfs,MOUNT_SYSVBFS,func,desc) \
   ATF_TC_FSADD(tmpfs,MOUNT_TMPFS,func,desc)
 
@@ -87,6 +89,7 @@
   ATF_TP_FSADD(ffs,func); \
   ATF_TP_FSADD(lfs,func); \
   ATF_TP_FSADD(msdosfs,func); \
+  ATF_TP_FSADD(puffs,func); \
   ATF_TP_FSADD(sysvbfs,func); \
   ATF_TP_FSADD(tmpfs,func);
 
