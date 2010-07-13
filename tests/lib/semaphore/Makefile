@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2010/06/10 22:03:43 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/07/13 21:13:27 jmmv Exp $
 #
 
-SUBDIR=		pthread
+TESTS_SUBDIRS=		pthread
 
 TESTSDIR=	${TESTSBASE}/lib/semaphore
 
 .include <bsd.test.mk>
-.include <bsd.subdir.mk>

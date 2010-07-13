@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2010/07/06 16:43:48 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/07/13 21:13:23 jmmv Exp $
 
-NOATFFILE=	# defined
 TESTSDIR=       ${TESTSBASE}/fs/puffs/h_dtfs
+ATFFILE=	no
 
 TESTS_C=	h_dtfs
 
