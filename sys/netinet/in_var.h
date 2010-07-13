@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.62 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: in_var.h,v 1.63 2010/07/13 22:16:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -300,6 +300,7 @@ int	in_control(struct socket *, u_long, void *, struct ifnet *,
 	    struct lwp *);
 void	in_purgeaddr(struct ifaddr *);
 void	in_purgeif(struct ifnet *);
+void	ip_reass_init(void);
 void	ip_input(struct mbuf *);
 int	ipflow_fastforward(struct mbuf *);
 void	ip_initid(void);
