@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.1 2010/07/13 16:48:15 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.2 2010/07/13 17:49:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ writeshovel(void *arg)
 	phdr = (struct putter_hdr *)buf;
 
 	for (;;) {
-		off_t off;
+		uint64_t off;
 		ssize_t n;
 
 		/*
