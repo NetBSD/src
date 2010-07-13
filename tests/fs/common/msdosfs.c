@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs.c,v 1.3 2010/07/12 21:37:47 njoly Exp $	*/
+/*	$NetBSD: msdosfs.c,v 1.4 2010/07/13 15:50:31 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 
+#include <atf-c.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,7 +50,8 @@ struct msdosfstestargs {
 };
 
 static int
-msdosfs_fstest_newfs(void **buf, const char *image, off_t size)
+msdosfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
+    off_t size)
 {
 	char cmd[1024];
 	int res;
@@ -88,7 +90,7 @@ msdosfs_fstest_newfs(void **buf, const char *image, off_t size)
 }
 
 static int
-msdosfs_fstest_delfs(void *buf)
+msdosfs_fstest_delfs(const atf_tc_t *tc, void *buf)
 {
 	int res;
 	struct msdosfstestargs *args = buf;
@@ -107,7 +109,7 @@ msdosfs_fstest_delfs(void *buf)
 }
 
 static int
-msdosfs_fstest_mount(void *buf, const char *path, int flags)
+msdosfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 {
 	int res;
 	struct msdosfstestargs *args = buf;
@@ -122,7 +124,7 @@ msdosfs_fstest_mount(void *buf, const char *path, int flags)
 }
 
 static int
-msdosfs_fstest_unmount(const char *path, int flags)
+msdosfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
 	int res;
 
