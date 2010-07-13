@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.8 2010/07/13 11:12:19 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.9 2010/07/13 15:50:31 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -60,14 +60,14 @@
   { \
     void *tmp; \
     atf_check_fstype(tc, type); \
-    if (fs##_fstest_newfs(&tmp, IMGNAME, IMGSIZE) != 0) \
+    if (fs##_fstest_newfs(tc, &tmp, IMGNAME, IMGSIZE) != 0) \
       atf_tc_fail("newfs failed"); \
-    if (fs##_fstest_mount(tmp, MNTNAME, 0) != 0) \
+    if (fs##_fstest_mount(tc, tmp, MNTNAME, 0) != 0) \
       atf_tc_fail("mount failed"); \
     func(tc,MNTNAME); \
-    if (fs##_fstest_unmount(MNTNAME, 0) != 0) \
+    if (fs##_fstest_unmount(tc, MNTNAME, 0) != 0) \
       atf_tc_fail("unmount failed"); \
-    if (fs##_fstest_delfs(tmp) != 0) \
+    if (fs##_fstest_delfs(tc, tmp) != 0) \
       atf_tc_fail("delfs failed"); \
   }
 
