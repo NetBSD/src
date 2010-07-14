@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.107 2010/07/14 21:41:32 pooka Exp $
+# $NetBSD: mi,v 1.108 2010/07/14 21:48:31 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -247,6 +247,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_poll3w.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_posix_fadvise.debug		tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_rnd.debug			tests-kernel-tests	debug,atf
+./usr/libdata/debug/usr/tests/kernel/t_sigaction.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_time.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_ucontext.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/kernel/t_writev.debug			tests-kernel-tests	debug,atf
@@ -1286,6 +1287,7 @@
 ./usr/tests/kernel/t_poll3w			tests-kernel-tests		atf
 ./usr/tests/kernel/t_posix_fadvise		tests-kernel-tests		atf
 ./usr/tests/kernel/t_rnd			tests-kernel-tests		atf
+./usr/tests/kernel/t_sigaction			tests-kernel-tests		atf
 ./usr/tests/kernel/t_time			tests-kernel-tests		atf
 ./usr/tests/kernel/t_ucontext			tests-kernel-tests		atf
 ./usr/tests/kernel/t_umount			tests-kernel-tests		atf
