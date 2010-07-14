@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.72 2010/07/02 03:29:47 rmind Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.73 2010/07/14 16:03:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.72 2010/07/02 03:29:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.73 2010/07/14 16:03:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -179,6 +179,11 @@ tmpfs_lookup(void *v)
 		goto done;
 
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
+		if ((cnp->cn_flags & ISLASTCN) &&
+		    (cnp->cn_nameiop == RENAME)) {
+			error = EISDIR;
+			goto out;
+		}
 		vref(dvp);
 		*vpp = dvp;
 		error = 0;
