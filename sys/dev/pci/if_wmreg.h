@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.43 2010/06/25 04:16:28 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.44 2010/07/14 00:11:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -628,11 +628,11 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_TDFPC	0x3430	/* Transmit Data FIFO Packet Count */
 
-#define	WMREG_OLD_TBDAL	0x0420	/* Transmit Descriptor Base Lo */
-#define	WMREG_TBDAL	0x3800
+#define	WMREG_OLD_TDBAL	0x0420	/* Transmit Descriptor Base Lo */
+#define	WMREG_TDBAL	0x3800
 
-#define	WMREG_OLD_TBDAH	0x0424	/* Transmit Descriptor Base Hi */
-#define	WMREG_TBDAH	0x3804
+#define	WMREG_OLD_TDBAH	0x0424	/* Transmit Descriptor Base Hi */
+#define	WMREG_TDBAH	0x3804
 
 #define	WMREG_OLD_TDLEN	0x0428	/* Transmit Descriptor Length */
 #define	WMREG_TDLEN	0x3808
