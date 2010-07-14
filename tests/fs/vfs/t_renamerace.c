@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.1 2010/07/14 21:39:31 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.2 2010/07/14 21:44:40 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -68,6 +68,9 @@ static void
 renamerace(const atf_tc_t *tc, const char *mp)
 {
 	pthread_t pt1, pt2;
+
+	if (FSTYPE_LFS(tc))
+		atf_tc_expect_signal(-1, "PR kern/43582");
 
 	pthread_create(&pt1, NULL, w1, __UNCONST(mp));
 	pthread_create(&pt2, NULL, w2, __UNCONST(mp));
