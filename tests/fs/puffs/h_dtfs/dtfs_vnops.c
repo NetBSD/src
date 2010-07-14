@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.1 2010/07/06 14:16:44 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.2 2010/07/14 13:09:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -305,8 +305,15 @@ dtfs_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 {
 	struct dtfs_dirent *dfd_src;
 	struct puffs_node *pn_sdir = opc;
+	struct puffs_node *pn_sfile = src;
 	struct puffs_node *pn_tdir = targ_dir;
 	struct puffs_node *pn_tfile = targ;
+
+	/* check that we don't do the old amigados trick */
+	if (pn_sfile->pn_va.va_type == VDIR) {
+		if (dtfs_isunder(pn_tdir, pn_sfile))
+			return EINVAL;
+	}
 
 	dfd_src = dtfs_dirgetbyname(DTFS_PTOF(pn_sdir),
 	    pcn_src->pcn_name, pcn_src->pcn_namelen);

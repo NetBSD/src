@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.1 2010/07/06 14:16:44 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.2 2010/07/14 13:09:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -337,4 +337,19 @@ dtfs_updatetimes(struct puffs_node *pn, int doatime, int doctime, int domtime)
 		pn->pn_va.va_ctime = ts;
 	if (domtime)
 		pn->pn_va.va_mtime = ts;
+}
+
+bool
+dtfs_isunder(struct puffs_node *pn, struct puffs_node *pn_parent)
+{
+	struct dtfs_file *df;
+
+	while (pn) {
+		if (pn == pn_parent)
+			return true;
+		df = DTFS_CTOF(pn);
+		pn = df->df_dotdot;
+	}
+
+	return false;
 }
