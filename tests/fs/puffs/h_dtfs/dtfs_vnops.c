@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.5 2010/07/14 17:10:14 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.6 2010/07/14 21:24:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -325,6 +325,11 @@ dtfs_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 
 	dfd_src = dtfs_dirgetbyname(DTFS_PTOF(pn_sdir),
 	    pcn_src->pcn_name, pcn_src->pcn_namelen);
+
+	/* does it still exist, or did someone race us here? */
+	if (dfd_src == NULL) {
+		return ENOENT;
+	}
 
 	/* if there's a target file, nuke it for atomic replacement */
 	if (pn_tfile) {
