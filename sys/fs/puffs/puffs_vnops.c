@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.146 2010/06/24 13:03:10 hannken Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.147 2010/07/14 14:07:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.146 2010/06/24 13:03:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.147 2010/07/14 14:07:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -500,6 +500,10 @@ puffs_vnop_lookup(void *v)
 	}
 
 	if (isdot) {
+		/* deal with rename lookup semantics */
+		if (cnp->cn_nameiop == RENAME && (cnp->cn_flags & ISLASTCN))
+			return EISDIR;
+
 		vp = ap->a_dvp;
 		vref(vp);
 		*ap->a_vpp = vp;
