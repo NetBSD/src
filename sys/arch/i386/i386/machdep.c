@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.687 2010/05/04 23:27:13 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.688 2010/07/14 14:42:40 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.687 2010/05/04 23:27:13 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.688 2010/07/14 14:42:40 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1346,7 +1346,7 @@ init386(paddr_t first_avail)
 #endif
 
 	/*
-	 * Initailize PAGE_SIZE-dependent variables.
+	 * Initialize PAGE_SIZE-dependent variables.
 	 */
 	uvm_setpagesize();
 
