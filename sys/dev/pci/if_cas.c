@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.10 2010/07/14 04:50:28 jnemeth Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.11 2010/07/14 09:52:39 jnemeth Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.10 2010/07/14 04:50:28 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.11 2010/07/14 09:52:39 jnemeth Exp $");
 
 #include "opt_inet.h"
 
@@ -187,6 +187,11 @@ static const u_int8_t cas_promdat[] = {
 	PCI_VENDOR_SUN & 0xff, PCI_VENDOR_SUN >> 8,
 	PCI_PRODUCT_SUN_CASSINI & 0xff, PCI_PRODUCT_SUN_CASSINI >> 8
 };
+static const u_int8_t cas_promdat_ns[] = {
+	'P', 'C', 'I', 'R',
+	PCI_VENDOR_NS & 0xff, PCI_VENDOR_NS >> 8,
+	PCI_PRODUCT_NS_SATURN & 0xff, PCI_PRODUCT_NS_SATURN >> 8
+};
 
 static const u_int8_t cas_promdat2[] = {
 	0x18, 0x00,			/* structure length */
@@ -227,7 +232,8 @@ cas_pci_enaddr(struct cas_softc *sc, struct pci_attach_args *pa,
 		goto fail;
 
 	bus_space_read_region_1(romt, romh, dataoff, buf, sizeof(buf));
-	if (bcmp(buf, cas_promdat, sizeof(cas_promdat)) ||
+	if ((bcmp(buf, cas_promdat, sizeof(cas_promdat)) &&
+	     bcmp(buf, cas_promdat_ns, sizeof(cas_promdat_ns))) ||
 	    bcmp(buf + PROMDATA_DATA2, cas_promdat2, sizeof(cas_promdat2)))
 		goto fail;
 
