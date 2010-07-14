@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.210 2010/06/28 01:43:39 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.211 2010/07/14 00:11:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.210 2010/06/28 01:43:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.211 2010/07/14 00:11:06 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -3786,26 +3786,30 @@ wm_init(struct ifnet *ifp)
 	sc->sc_txnext = 0;
 
 	if (sc->sc_type < WM_T_82543) {
-		CSR_WRITE(sc, WMREG_OLD_TBDAH, WM_CDTXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_OLD_TBDAL, WM_CDTXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TDBAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TDBAL, WM_CDTXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_OLD_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
 		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
 		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
 	} else {
-		CSR_WRITE(sc, WMREG_TBDAH, WM_CDTXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_TBDAL, WM_CDTXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_TDBAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_TDBAL, WM_CDTXADDR_LO(sc, 0));
 		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
-		CSR_WRITE(sc, WMREG_TDT, 0);
 		CSR_WRITE(sc, WMREG_TIDV, 375);		/* ITR / 4 */
 		CSR_WRITE(sc, WMREG_TADV, 375);		/* should be same */
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+			/*
+			 * Don't write TDT before TCTL.EN is set.
+			 * See the document.
+			 */
 			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_QUEUE_ENABLE
 			    | TXDCTL_PTHRESH(0) | TXDCTL_HTHRESH(0)
 			    | TXDCTL_WTHRESH(0));
 		else {
+			CSR_WRITE(sc, WMREG_TDT, 0);
 			CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
 			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
@@ -3877,6 +3881,11 @@ wm_init(struct ifnet *ifp)
 		} else {
 			if ((sc->sc_flags & WM_F_NEWQUEUE) == 0)
 				WM_INIT_RXDESC(sc, i);
+			/*
+			 * For 82575 and newer device, the RX descriptors
+			 * must be initialized after the setting of RCTL.EN in
+			 * wm_set_filter()
+			 */
 		}
 	}
 	sc->sc_rxptr = 0;
@@ -4045,6 +4054,14 @@ wm_init(struct ifnet *ifp)
 		sc->sc_tctl |= TCTL_MULR;
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+		/*
+		 * Write TDT after TCTL.EN is set.
+		 * See the document.
+		 */
+		CSR_WRITE(sc, WMREG_TDT, 0);
+	}
+
 	if (sc->sc_type == WM_T_80003) {
 		reg = CSR_READ(sc, WMREG_TCTL_EXT);
 		reg &= ~TCTL_EXT_GCEX_MASK;
@@ -4103,7 +4120,7 @@ wm_init(struct ifnet *ifp)
 	/* Set the receive filter. */
 	wm_set_filter(sc);
 
-	/* On 575 and later set RDT only if RX enabled... */
+	/* On 575 and later set RDT only if RX enabled */
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
 		for (i = 0; i < WM_NRXDESC; i++)
 			WM_INIT_RXDESC(sc, i);
