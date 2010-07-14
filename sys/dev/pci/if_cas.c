@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.9 2010/06/17 06:41:05 mrg Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.10 2010/07/14 04:50:28 jnemeth Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.9 2010/06/17 06:41:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.10 2010/07/14 04:50:28 jnemeth Exp $");
 
 #include "opt_inet.h"
 
@@ -335,8 +335,10 @@ cas_attach(device_t parent, device_t self, void *aux)
 	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
 	    "mac-address")) != NULL)
 		memcpy(enaddr, prop_data_data_nocopy(data), ETHER_ADDR_LEN);
-	else if (cas_pci_enaddr(sc, pa, enaddr) != 0)
+	else if (cas_pci_enaddr(sc, pa, enaddr) != 0) {
 		aprint_error_dev(sc->sc_dev, "no Ethernet address found\n");
+		memset(enaddr, 0, sizeof(enaddr));
+	}
 
 	sc->sc_burst = 16;	/* XXX */
 
