@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.4 2010/07/14 16:59:35 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.5 2010/07/14 17:10:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -314,6 +314,13 @@ dtfs_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	if (pn_sfile->pn_va.va_type == VDIR) {
 		if (dtfs_isunder(pn_tdir, pn_sfile))
 			return EINVAL;
+
+		if ((pcn_src->pcn_namelen == 1 && pcn_src->pcn_name[0]=='.') ||
+		    opc == src ||
+		    PCNISDOTDOT(pcn_src) ||
+		    PCNISDOTDOT(pcn_targ)) {
+			return EINVAL;
+		}
 	}
 
 	dfd_src = dtfs_dirgetbyname(DTFS_PTOF(pn_sdir),
