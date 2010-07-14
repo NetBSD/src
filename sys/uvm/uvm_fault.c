@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.17 2010/07/13 01:47:23 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.18 2010/07/14 06:33:31 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.17 2010/07/13 01:47:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.18 2010/07/14 06:33:31 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -2088,14 +2088,6 @@ uvm_fault_lower_promote(
 			 */
 		}
 
-		if (uvm_pageisdirect_p(uobjpage)) {
-			/*
-			 * XIP devices pages are never paged out, no need to
-			 * dispose.
-			 */
-			goto uvm_fault_lower_promote_done;
-		}
-
 		/*
 		 * dispose of uobjpage.  it can't be PG_RELEASED
 		 * since we still hold the object lock.
@@ -2105,8 +2097,6 @@ uvm_fault_lower_promote(
 		if (uobjpage->flags & PG_WANTED)
 			/* still have the obj lock */
 			wakeup(uobjpage);
-
-uvm_fault_lower_promote_done:
 		uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(uobjpage, NULL);
 		mutex_exit(&uobj->vmobjlock);
