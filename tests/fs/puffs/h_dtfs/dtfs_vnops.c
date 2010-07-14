@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.2 2010/07/14 13:09:52 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.3 2010/07/14 14:22:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -304,6 +304,7 @@ dtfs_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	const struct puffs_cn *pcn_targ)
 {
 	struct dtfs_dirent *dfd_src;
+	struct dtfs_file *df_targ;
 	struct puffs_node *pn_sdir = opc;
 	struct puffs_node *pn_sfile = src;
 	struct puffs_node *pn_tdir = targ_dir;
@@ -325,7 +326,9 @@ dtfs_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	/* if there's a target file, nuke it for atomic replacement */
 	if (pn_tfile) {
 		if (pn_tfile->pn_va.va_type == VDIR) {
-			assert(/*CONSTCOND*/0); /* XXX FIXME */
+			df_targ = DTFS_CTOF(pn_tfile);
+			if (!LIST_EMPTY(&df_targ->df_dirents))
+				return ENOTEMPTY;
 		}
 		dtfs_nukenode(pn_tfile, pn_sdir,
 		    pcn_targ->pcn_name, pcn_targ->pcn_namelen);
