@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.106 2010/07/13 18:13:57 pooka Exp $
+# $NetBSD: mi,v 1.107 2010/07/14 21:41:32 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -188,7 +188,7 @@
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/ffs/t_fifos.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/ffs/t_mount.debug			tests-fs-debug		debug,atf
-./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/fs/ffs/t_renamerace.debug			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/kernfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		debug,atf
@@ -217,6 +217,7 @@
 ./usr/libdata/debug/usr/tests/fs/union/t_basic.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/union/t_pr.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/vfs/t_renamerace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_rmdirrace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vfsops.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vnops.debug			tests-fs-debug		debug,atf
@@ -869,7 +870,7 @@
 ./usr/tests/fs/ffs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_fifos			tests-fs-tests		atf
 ./usr/tests/fs/ffs/t_mount			tests-fs-tests		atf
-./usr/tests/fs/ffs/t_renamerace			tests-fs-tests		atf
+./usr/tests/fs/ffs/t_renamerace			tests-obsolete		obsolete
 ./usr/tests/fs/ffs/t_snapshot			tests-fs-tests		atf
 ./usr/tests/fs/kernfs				tests-fs-tests
 ./usr/tests/fs/kernfs/Atffile			tests-fs-tests		atf
@@ -945,6 +946,7 @@
 ./usr/tests/fs/union/t_pr			tests-fs-tests		atf
 ./usr/tests/fs/vfs				tests-fs-tests
 ./usr/tests/fs/vfs/Atffile			tests-fs-tests		atf
+./usr/tests/fs/vfs/t_renamerace			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_rmdirrace			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_vfsops			tests-fs-tests		atf
 ./usr/tests/fs/vfs/t_vnops			tests-fs-tests		atf
