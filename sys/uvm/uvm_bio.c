@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.68.2.8 2010/07/13 01:47:23 uebayasi Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.68.2.9 2010/07/15 08:33:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.8 2010/07/13 01:47:23 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.68.2.9 2010/07/15 08:33:46 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -387,15 +387,11 @@ again:
 		mask = rdonly ? ~VM_PROT_WRITE : VM_PROT_ALL;
 		error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 		    prot & mask, PMAP_CANFAIL | (access_type & mask));
-
-		if (uvm_pageisdirect_p(pg))
-			goto ubc_fault_done;
-
-		mutex_enter(&uvm_pageqlock);
-		uvm_pageactivate(pg);
-		mutex_exit(&uvm_pageqlock);
-
-ubc_fault_done:
+		if (__predict_true((pg->flags & PG_XIP) == 0)) {
+			mutex_enter(&uvm_pageqlock);
+			uvm_pageactivate(pg);
+			mutex_exit(&uvm_pageqlock);
+		}
 		pg->flags &= ~(PG_BUSY|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		mutex_exit(&uobj->vmobjlock);
