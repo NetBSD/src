@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.3 2010/07/10 21:42:29 christos Exp $	*/
+/*	$NetBSD: entry.c,v 1.4 2010/07/15 20:03:28 christos Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.3 2010/07/10 21:42:29 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.4 2010/07/15 20:03:28 christos Exp $");
 #endif
 #endif
 
@@ -110,7 +110,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	 * of a list of minutes.
 	 */
 
-	e = (entry *) calloc(sizeof(entry), sizeof(char));
+	e = calloc(sizeof(*e), sizeof(char));
 
 	if (ch == '@') {
 		/* all of these should be flagged and load-limited; i.e.,
