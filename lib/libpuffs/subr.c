@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.24 2008/12/28 22:45:05 christos Exp $	*/
+/*	$NetBSD: subr.c,v 1.25 2010/07/15 21:53:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.24 2008/12/28 22:45:05 christos Exp $");
+__RCSID("$NetBSD: subr.c,v 1.25 2010/07/15 21:53:10 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -102,10 +102,12 @@ int
 puffs_fsnop_statvfs(struct puffs_usermount *dontuse1, struct statvfs *sbp)
 {
 
-	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = 512;
+	sbp->f_bsize = sbp->f_frsize = sbp->f_iosize = DEV_BSIZE;
 
 	sbp->f_bfree=sbp->f_bavail=sbp->f_bresvd=sbp->f_blocks = (fsblkcnt_t)0;
 	sbp->f_ffree=sbp->f_favail=sbp->f_fresvd=sbp->f_files = (fsfilcnt_t)0;
+
+	sbp->f_namemax = MAXNAMLEN;
 
 	return 0;
 }
