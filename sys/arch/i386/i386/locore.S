@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.91 2009/11/27 03:23:10 rmind Exp $	*/
+/*	$NetBSD: locore.S,v 1.92 2010/07/15 18:55:27 jym Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -129,7 +129,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.91 2009/11/27 03:23:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.92 2010/07/15 18:55:27 jym Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -746,14 +746,12 @@ start:
 	movl	%eax,RELOC(cpuid_level)
 
 	call	xen_pmap_bootstrap
+
 	/*
 	 * First avail returned by xen_pmap_bootstrap in %eax
 	 */
 	movl	%eax, %esi;
 	movl	%esi, _C_LABEL(lwp0uarea)
-
-#define PROC0PDIR       ((0)              * PAGE_SIZE)
-#define PROC0STACK      ((1)              * PAGE_SIZE)
 
 	/* Set up bootstrap stack. */
 	leal	(KSTACK_SIZE-FRAMESIZE)(%eax),%esp
@@ -761,9 +759,13 @@ start:
 
 	addl	$USPACE, %esi
 	subl	$KERNBASE, %esi		#init386 want a physical address
+
+#ifdef PAE
+	pushl	$0	# init386() expects a 64 bits paddr_t with PAE
+#endif
 	pushl	%esi
 	call	_C_LABEL(init386)	# wire 386 chip for unix operation
-	addl	$4,%esp
+	addl	$PDE_SIZE,%esp
 	call 	_C_LABEL(main)
 
 #if defined(XEN) && !defined(XEN_COMPAT_030001)
