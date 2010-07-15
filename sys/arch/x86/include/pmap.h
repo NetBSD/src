@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.31 2010/07/06 20:50:35 cegger Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32 2010/07/15 19:02:26 jym Exp $	*/
 
 /*
  *
@@ -183,7 +183,12 @@ struct pmap {
  * global kernel variables
  */
 
-/* PDPpaddr: is the physical address of the kernel's PDP */
+/*
+ * PDPpaddr is the physical address of the kernel's PDP.
+ * - i386 non-PAE and amd64: PDPpaddr corresponds directly to the %cr3
+ * value associated to the kernel process, proc0.
+ * - Xen: it corresponds to the PFN of the kernel's PDP.
+ */
 extern u_long PDPpaddr;
 
 extern int pmap_pg_g;			/* do we support PG_G? */
