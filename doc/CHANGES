@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1413 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1414 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -497,6 +497,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	udl(4): Add a driver for DisplayLink DL-1x0/1x5 based USB LCDs and
 		USB-VGA adaptors. Ported from OpenBSD by FUKAUMI Naoki
 		with many modification. [tsutsui 20091130]
+	rump: Support binding threads to a specific CPU.  [pooka 20091201]
 	lvm(8): Import new lvm2tools 2.02.56 version and libdevmapper 1.02.40.
 		[haad 20091202]
 	resolvconf(8): Import openreslv-3.3.4. [roy 20091204]
@@ -520,9 +521,14 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	libc: Import tzcode2009k [mlelstv 20091231]
 	cas(4): Add a driver for Sun Cassini and Cassini+ Ethernet hardware.
 		From OpenBSD [jdc 20100107]
+	mount_psshfs(8): Add -u and -g for uid/gid remapping.  [pooka 20100107]
+	puffs(3): Support unmounting the file system from the
+		file server.  [pooka 20100107]
 	cobalt: Add LBA48 support to bootloader so that it can safely load
 		a kernel from NetBSD partition beyond >137GB boundary.
 		[tsutsui 20100110]
+	mount_puffs(8): Add a utility for querying puffs arguments
+		to make mount -vv work for puffs mounts.  [pooka 20100114]
 	sparc: Add apc(4), a driver for the Aurora Personality Chip (APC)
 		found on SPARCstation-4/5 and qemu. Allows to idle the
 		CPU when in the idle loop.  [bouyer 20100115]
@@ -540,11 +546,15 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	bpf(9): Make bpf interface with an ops vector backed by stubs
 		if bpf is not present in the kernel.  The client
 		linkage is now always the same.  [pooka 20100119]
+	network: Make TCP window size autoscaling the default.  [pooka 20100126]
 	dhcpcd(8): Import dhcpcd-5.1.5. [roy 20100131]
 	amigappc: A CSPPC system with ahsc(4) or cbiiisc(4) boots into
 		multiuser for the first time. [phx 20100202]
 	terminfo(3): Import my terminfo implementation to replace termcap.
 		[roy 20100203]
+	config(1): Add an experimental "ioconf" keyword which makes config
+		output only the device attachment tree in ioconf.c instead
+		of the entire kernel build infrastructure.  [pooka 20100203]
 	acpismbus(4): Add my experimental ACPI SMBus Control Method
 		Interface driver. [pgoyette 20100206]
 	uthum(4): Add a driver for TEMPer and TEMPerHUM usb thermometers.
@@ -556,22 +566,35 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		OpenBSD. [msaitoh 20100209]
 	aibs(4): New driver for ASUSTeK AI Booster (ACPI ASOC ATK0110)
 		hardware monitor with limit support.	[cnst 20100209]
+	u3g(4): Support Huawei K3765.  [pooka 20100219]
 	wbsio(4): New driver for Winbond Super I/O attachment of
 		lm(4) on any port.	[cnst 20100221]
 	wcfb: A driver for 3Dlabs Wildcat graphics cards [macallan 20100224]
+	netstat(8): Add -h which humanizes numbers from -bi.  [pooka 20100224]
 	ld.so_elf: Implement negative symbol lookup cache [roy 20100227]
 	dhcpcd(8): Import dhcpcd-5.2.1. [roy 20100227]
 	ddb(4): Add 'mach frame' for hp700.  [skrll 20100302]
 	ne(4): Add proper support for NE2000 8 bit mode. [tsutsui 20090303]
+	module: Remove all kernel compile time #defines indicating file
+		system support (e.g. fs_ffs.h / -DFFS).  [pooka 20100303]
+	module: Make it possible to disable builtin modules and
+		re-enable them.  [pooka 20100305]
 	uhso(4): Add a driver for Option N.V. Wireless WAN modems.
 		[plunky 20100306]
 	openldap: Update to 2.4.21.  [lukem 20100308]
+	config(1): Add experimental "pseudo-root" keyword which can
+		be used to specify any interface as the local root.
+		When used in conjunction with ioconf, this creates
+		the device tree from the pseudo-root downward (pseudo-root
+		itself not included).  [pooka 20100308]
 	atari: Add support for the SMC Elite Ultra Ethernet with
 		the SMC_TT VME-ISA bridge. [tsutsui 20100313]
 	aibs(4): Remove aiboost(4) as obsolete and redundant
 		since the introduction of aibs(4).	[cnst 20100319]
+	rump: Support bluetooth.  [pooka 20100322]
 	cgtwelve: A driver for Sun CG12 / Matrox SG3 graphics boards
 		[macallan 20100323]
+	rump: Support unionfs, layerfs, nullfs and umapfs.  [pooka 20100330]
 	dhcpcd(8): Import dhcpcd-5.2.2. [roy 20100331]
 	nca(4): Added PCI attachment for Domex DMX-3191D SCSI board.
 		[jakllsch 20100401]
@@ -587,6 +610,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	fss(4): Add snapshot support for MSDOS file systems. [hannken 20100409]
 	fsck_msdos(8): add -x option which allows to run fsck_msdos -n on
 		a snapshot of a live file system. [hannken 20100411]
+	rump: Support file system snapshots.  [pooka 20100412]
 	hpcarm: Add support for Sharp W-ZERO3 series. [nonaka 20100417]
 	acpi(4): Statistical event counters were added to hw.acpi.stat
 		sysctl(8) tree. Dynamic debug output messages provided by the
@@ -596,15 +620,24 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		from hw.wake to hw.acpi.wake. [jruoho 20100419]
 	acpiwmi(4): Added two mappings (child devices) for the ACPI WMI.
 		[jruoho 20100419]
+	kernel: Enforce RLIMIT_FSIZE above the file system.  This fixes
+		the feature for some file systems.  [pooka 20100423]
 	libc: Added a space-efficient write-once database (cdbr(3), cdbw(3)).
 		The database cache for services(5) has been updated to use
 		this. services_mkdb(8) can still be used to create the old
 		format. [joerg 20100425]
+	rump: Autoload host kernel modules from /stand/arch/modules on
+		x86 archs.  [pooka 20100426]
+	rump: Properly support virtual SMP on x86 hosts and default to
+		the same number of CPUs as on the host (configurable
+		with RUMP_NCPU).  [pooka 20100428]
 	tftpd(8): Add -c so files can be uploaded without requiring them
 		to be created before the upload. See the section on security 
 		considerations before enabling. [hubertf 20100429]
 	hp700: Add support for elroy(4), astro(4) and ssio(4) based 64-bit
 		machines running in 32-bit mode. [skrll 20100430]
+	rump: Autogenerate /dev device nodes.  [pooka 20100430]
+	rump: Support audio(9).  [pooka 20100501]
 	hpcsh: Add sysinst(8) support. [tsutsui 20100503]
 	sandpoint: Added support for Marvell-SKnet in netboot.
 		[phx 20100503]
@@ -613,6 +646,10 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	cron: Import 4.1 from isc. [christos 20100506]
 	atf(7): Import 0.8.  [jmmv 20100508]
 	bozohttpd: Update to bozohttpd-20100509.  [mrg 20100509]
+	rump: Add uniprocessor locking routines.  They can be used in
+		virtual uniprocessor configurations for a significant
+		performance boost.  [pooka 20100518]
+	puffs(3): Support extended attributes.  [pooka 20100521]
 	btmagic(4): Added Apple Magic Mouse driver.  [plunky 20100522]
 	X11: Updated many packages, notably: Mesa 7.7.1, xextproto 7.1.1,
 		libXext 1.1.1, libXi 1.3 (XInput2), libX11 1.3.3, pixman 0.18.2, 
@@ -625,6 +662,8 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[mrg 20100523]
 	X11: Added support for xf86-video-geode and xf86-video-openchrome.
 		[mrg 20100527]
+	rump: Implement a pagedaemon which releases weakly referenced
+		memory in case of a memory shortage.  [pooka 20100603]
 	atf(7): Import 0.9.  [jmmv 20100604]
 	dhcpcd(8): Import dhcpcd-5.2.4. [roy 20100604]
 	vnode(9): Remove member v_vnlock. [hannken 20100605]
@@ -633,6 +672,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	ofppc: Support Gigabit Ethernet Controller for MV64361 on PegasosII
 		by mvgbe@gt.  [kiyohara 20100609]
 	arm: Added support for Cortex-A8 CPUs. [jmcneill 20100616]
+	atf(7): Add support for expected test failures.  [pooka 20100616]
 	vnsubr(9): Remove recursive vnode locks. [hannken 20100618]
 	mkubootimage(1): Added tool to generate u-boot kernel images.
 		[jmcneill 20100618]
