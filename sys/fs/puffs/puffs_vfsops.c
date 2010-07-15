@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.93 2010/07/06 13:47:47 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.94 2010/07/15 21:55:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.93 2010/07/06 13:47:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.94 2010/07/15 21:55:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -223,6 +223,7 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 	if (error)
 		goto out;
 	mp->mnt_stat.f_iosize = DEV_BSIZE;
+	mp->mnt_stat.f_namemax = args->pa_svfsb.f_namemax;
 
 	/*
 	 * We can't handle the VFS_STATVFS() mount_domount() does
