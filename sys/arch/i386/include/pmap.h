@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.105 2010/03/01 00:55:33 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.106 2010/07/15 18:58:40 jym Exp $	*/
 
 /*
  *
@@ -219,12 +219,10 @@
 #ifdef PAE
 #define L2_SLOT_PTE	(KERNBASE/NBPD_L2-4) /* 1532: for recursive PDP map */
 #define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 1536: start of kernel space */
-#define	L2_SLOT_KERNBASE L2_SLOT_KERN
 #define L2_SLOT_APTE	1960                 /* 1964-2047 reserved by Xen */
 #else /* PAE */
 #define L2_SLOT_PTE	(KERNBASE/NBPD_L2-1) /* 767: for recursive PDP map */
 #define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 768: start of kernel space */
-#define	L2_SLOT_KERNBASE L2_SLOT_KERN
 #ifndef XEN
 #define L2_SLOT_APTE	1023		 /* 1023: alternative recursive slot */
 #else
@@ -232,6 +230,7 @@
 #endif
 #endif /* PAE */
 
+#define	L2_SLOT_KERNBASE L2_SLOT_KERN
 
 #define PDIR_SLOT_KERN	L2_SLOT_KERN
 #define PDIR_SLOT_PTE	L2_SLOT_PTE
