@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.688 2010/07/14 14:42:40 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.689 2010/07/15 22:19:19 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.688 2010/07/14 14:42:40 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.689 2010/07/15 22:19:19 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1236,7 +1236,7 @@ init386_pte0(void)
 
 	paddr = 4 * PAGE_SIZE;
 	vaddr = (vaddr_t)vtopte(0);
-	pmap_kenter_pa(vaddr, paddr, VM_PROT_READ | VM_PROT_WRITE, 0);
+	pmap_kenter_pa(vaddr, paddr, VM_PROT_ALL, 0);
 	pmap_update(pmap_kernel());
 	/* make sure it is clean before using */
 	memset((void *)vaddr, 0, PAGE_SIZE);
