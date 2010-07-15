@@ -1,4 +1,4 @@
-/*	$NetBSD: database.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.3 2010/07/15 20:04:14 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: database.c,v 1.7 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: database.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.3 2010/07/15 20:04:14 christos Exp $");
 #endif
 #endif
 
@@ -184,12 +184,19 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 {
 	struct passwd *pw = NULL;
 	int crontab_fd = OK - 1;
+	mode_t eqmode = 0600, badmode = 0;
 	user *u;
 
 	if (fname == NULL) {
-		/* must be set to something for logging purposes.
+		/*
+		 * SYSCRONTAB:
+		 * set fname to something for logging purposes.
+		 * Allow it to become readable by group and others, but
+		 * not writable.
 		 */
 		fname = "*system*";
+		eqmode = 0;
+		badmode = 022;
 	} else if ((pw = getpwnam(uname)) == NULL) {
 		/* file doesn't have a user in passwd file.
 		 */
@@ -212,7 +219,8 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		log_it(fname, getpid(), "NOT REGULAR", tabname);
 		goto next_crontab;
 	}
-	if ((statbuf->st_mode & 07777) != 0600) {
+	if ((eqmode && (statbuf->st_mode & 07777) != eqmode) ||
+	    (badmode && (statbuf->st_mode & badmode) != 0)) {
 		log_it(fname, getpid(), "BAD FILE MODE", tabname);
 		goto next_crontab;
 	}
