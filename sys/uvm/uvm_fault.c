@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.18 2010/07/14 06:33:31 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.19 2010/07/15 08:33:46 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.18 2010/07/14 06:33:31 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.19 2010/07/15 08:33:46 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -1754,20 +1754,17 @@ uvm_fault_lower_neighbor(
 
 	/* locked: maps(read), amap(if there), uobj */
 
-	if (uvm_pageisdirect_p(pg))
-		goto uvm_fault_lower_neighbor_enter;
-
 	/*
 	 * calling pgo_get with PGO_LOCKED returns us pages which
 	 * are neither busy nor released, so we don't need to check
 	 * for this.  we can just directly enter the pages.
 	 */
 
-	mutex_enter(&uvm_pageqlock);
-	uvm_pageenqueue(pg);
-	mutex_exit(&uvm_pageqlock);
-
-uvm_fault_lower_neighbor_enter:
+	if (__predict_true((pg->flags & PG_XIP) == 0)) {
+		mutex_enter(&uvm_pageqlock);
+		uvm_pageenqueue(pg);
+		mutex_exit(&uvm_pageqlock);
+	}
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
 	    ufi->orig_map->pmap, currva, pg, 0);
@@ -2195,7 +2192,7 @@ uvm_fault_lower_enter(
 		return ERESTART;
 	}
 
-	if (!uvm_pageisdirect_p(pg))
+	if (__predict_true((pg->flags & PG_XIP) == 0))
 		uvm_fault_lower_done(ufi, flt, uobj, anon, pg);
 
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);

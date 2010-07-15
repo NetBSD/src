@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.25 2010/07/08 07:47:37 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.26 2010/07/15 08:33:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -180,7 +180,7 @@ struct vm_page {
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
-#define	PG_DIRECT	0x0200		/* page is direct vnode data */
+#define	PG_XIP		0x0200		/* page is XIP vnode data */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
@@ -304,7 +304,6 @@ void uvm_pagewake(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
-bool uvm_pageisdirect_p(const struct vm_page *);
 
 int uvm_page_lookup_freelist(struct vm_page *);
 
