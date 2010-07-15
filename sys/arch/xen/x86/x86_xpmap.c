@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.19 2010/02/26 19:25:07 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.20 2010/07/15 23:20:34 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.19 2010/02/26 19:25:07 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.20 2010/07/15 23:20:34 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -816,7 +816,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #endif
 #ifdef __i386__
 	/* Save phys. addr of PDP, for libkvm. */
-	PDPpaddr = (long)pde;
+	PDPpaddr = (long)pde - KERNBASE;
 #ifdef PAE
 	/* also save the address of the L3 page */
 	pmap_l3pd = pdtpe;
