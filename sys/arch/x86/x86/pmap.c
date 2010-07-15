@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2010/07/07 01:14:53 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112 2010/07/15 21:14:31 jym Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2010/07/07 01:14:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2010/07/15 21:14:31 jym Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3405,6 +3405,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	pd_entry_t * const *pdes;
 	struct pv_entry *pv_tofree = NULL;
 	bool result;
+	int i;
 	paddr_t ptppa;
 	vaddr_t blkendva, va = sva;
 	struct vm_page *ptp;
@@ -3470,9 +3471,11 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		 * be VM_MAX_ADDRESS.
 		 */
 
-		if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE)
-			/* XXXCDC: ugly hack to avoid freeing PDP here */
-			continue;
+		/* XXXCDC: ugly hack to avoid freeing PDP here */
+		for (i = 0; i < PDP_SIZE; i++) {
+			if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE+i)
+				continue;
+		}
 
 		lvl = pmap_pdes_invalid(va, pdes, &pde);
 		if (lvl != 0) {
@@ -3829,6 +3832,7 @@ startover:
 void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
+	int i;
 	pt_entry_t *ptes, *epte;
 	pt_entry_t *spte;
 	pd_entry_t * const *pdes;
@@ -3861,8 +3865,10 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 */
 
 		/* XXXCDC: ugly hack to avoid freeing PDP here */
-		if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE)
-			continue;
+		for (i = 0; i < PDP_SIZE; i++) {
+			if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE+i)
+				continue;
+		}
 
 		/* empty block? */
 		if (!pmap_pdes_valid(va, pdes, NULL))
@@ -4282,7 +4288,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			}
 #endif
 #else /* XEN */
-			pdep[i] = pa | PG_RW | PG_V;
+			pdep[i] = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #endif /* XEN */
 			KASSERT(level != PTP_LEVELS || nkptp[level - 1] +
 			    pl_i(VM_MIN_KERNEL_ADDRESS, level) == i);
