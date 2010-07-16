@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.35 2010/07/08 20:13:19 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.36 2010/07/16 13:56:52 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -227,6 +227,14 @@
 ./usr/libdata/debug/usr/tests/lib/libevent
 ./usr/libdata/debug/usr/tests/lib/semaphore
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread
+./usr/libdata/debug/usr/tests/lib/libposix
+./usr/libdata/debug/usr/tests/lib/libposix/bsd
+./usr/libdata/debug/usr/tests/lib/libposix/posix1
+./usr/libdata/debug/usr/tests/lib/libposix/posix2
+./usr/libdata/debug/usr/tests/lib/libprop
+./usr/libdata/debug/usr/tests/lib/librt
+./usr/libdata/debug/usr/tests/lib/libskey
+./usr/libdata/debug/usr/tests/lib/libutil
 ./usr/libdata/debug/usr/tests/libexec
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so
 ./usr/libdata/debug/usr/tests/modules
@@ -1138,6 +1146,14 @@
 ./usr/tests/lib/semaphore
 ./usr/tests/lib/semaphore/pthread
 ./usr/tests/lib/libevent
+./usr/tests/lib/libposix
+./usr/tests/lib/libposix/bsd
+./usr/tests/lib/libposix/posix1
+./usr/tests/lib/libposix/posix2
+./usr/tests/lib/libprop
+./usr/tests/lib/librt
+./usr/tests/lib/libskey
+./usr/tests/lib/libutil
 ./usr/tests/libexec
 ./usr/tests/libexec/ld.elf_so
 ./usr/tests/modules
