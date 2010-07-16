@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.26 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.26.14.1 2010/07/16 19:40:10 riz Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.26 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.26.14.1 2010/07/16 19:40:10 riz Exp $");
 
 #include "opt_inet.h"
 
@@ -126,7 +126,8 @@ udp6_output(in6p, m, addr6, control, l)
 	int scope_ambiguous = 0;
 	u_int16_t fport;
 	int error = 0;
-	struct ip6_pktopts *optp, opt;
+	struct ip6_pktopts *optp = NULL;
+	struct ip6_pktopts opt;
 	int priv;
 	int af = AF_INET6, hlen = sizeof(struct ip6_hdr);
 #ifdef INET
@@ -167,7 +168,7 @@ udp6_output(in6p, m, addr6, control, l)
 		if (sin6->sin6_scope_id == 0 && !ip6_use_defzone)
 			scope_ambiguous = 1;
 		if ((error = sa6_embedscope(sin6, ip6_use_defzone)) != 0)
-			return (error);
+			goto release;
 	}
 
 	if (control) {
@@ -410,7 +411,8 @@ release:
 
 releaseopt:
 	if (control) {
-		ip6_clearpktopts(&opt, -1);
+		if (optp == &opt)
+			ip6_clearpktopts(&opt, -1);
 		m_freem(control);
 	}
 	return (error);
