@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.3 2010/07/16 10:50:55 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.4 2010/07/16 11:33:45 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -49,6 +49,24 @@ w1(void *arg)
 }
 
 static void *
+w1_dirs(void *arg)
+{
+
+	rump_pub_lwp_alloc_and_switch(0, 10);
+	rump_sys_chdir(arg);
+
+	while (!quittingtime) {
+		if (rump_sys_mkdir("rename.test1", 0777) == -1)
+			atf_tc_fail_errno("mkdir");
+		rump_sys_rmdir("rename.test1");
+	}
+
+	rump_sys_chdir("/");
+
+	return NULL;
+}
+
+static void *
 w2(void *arg)
 {
 
@@ -89,12 +107,42 @@ renamerace(const atf_tc_t *tc, const char *mp)
 		abort();
 }
 
+static void
+renamerace_dirs(const atf_tc_t *tc, const char *mp)
+{
+	pthread_t pt1, pt2;
+
+	/* XXX: msdosfs also sometimes hangs */
+	if (FSTYPE_FFS(tc) || FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) ||
+	    FSTYPE_MSDOS(tc))
+		atf_tc_expect_signal(-1, "PR notyet");
+
+	pthread_create(&pt1, NULL, w1_dirs, __UNCONST(mp));
+	pthread_create(&pt2, NULL, w2, __UNCONST(mp));
+
+	sleep(5);
+	quittingtime = 1;
+
+	pthread_join(pt1, NULL);
+	pthread_join(pt2, NULL);
+
+	/*
+	 * Doesn't always trigger when run on a slow backend
+	 * (i.e. not on tmpfs/mfs).  So do the usual kludge.
+	 */
+	if (FSTYPE_FFS(tc) || FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) ||
+	    FSTYPE_MSDOS(tc))
+		abort();
+}
+
 ATF_TC_FSAPPLY(renamerace, "rename(2) race with file unlinked mid-operation");
+ATF_TC_FSAPPLY(renamerace_dirs, "rename(2) race with directories");
 
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_FSAPPLY(renamerace); /* PR kern/41128 */
+	ATF_TP_FSAPPLY(renamerace_dirs);
 
 	return atf_no_error();
 }
