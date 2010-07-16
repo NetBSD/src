@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1414 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1415 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -688,3 +688,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		We now claim to be linux kernel version 2.6.18.  [chs 20100706]
 	prep: Support xserver.  It tested only on-board s3(864).
 		[kiyohara 20100712]
+	tests: Convert the libposix, libprop, librt, libskey and libutil tests
+		to ATF.  [jmmv 20010716]
