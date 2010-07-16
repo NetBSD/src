@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145 2008/01/06 18:50:30 mhitch Exp $	*/
+/*	$NetBSD: locore.s,v 1.145.20.1 2010/07/16 18:26:12 riz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.
@@ -1577,6 +1577,16 @@ Ldorebootend:
 	.align 2
 #endif
 	nop
+ENTRY_NOPROFILE(delay)
+ENTRY_NOPROFILE(DELAY)
+	movql #10,%d1		| 2 +2
+	movl %sp@(4),%d0	| 4 +4
+	lsll %d1,%d0		| 8 +2
+	movl _C_LABEL(delaydivisor),%d1	| A +6
+Ldelay:				| longword aligned again.
+	subl %d1,%d0
+	jcc Ldelay
+	rts
 
 #ifdef M68060
 ENTRY_NOPROFILE(intemu60)
@@ -1607,6 +1617,11 @@ GLOBAL(fputype)
 	.long	FPU_NONE
 GLOBAL(protorp)
 	.long	0x80000002,0	| prototype root pointer
+GLOBAL(delaydivisor)
+	.long	12		| should be enough for 80 MHz 68060
+				| will be adapted to other CPUs in
+				| start_c_cleanup and calibrated
+				| at clock attach time.
 
 GLOBAL(proc0paddr)
 	.long	0		| KVA of proc0 u-area
