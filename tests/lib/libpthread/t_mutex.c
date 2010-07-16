@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $ */
+/* $NetBSD: t_mutex.c,v 1.2 2010/07/16 18:16:43 njoly Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.2 2010/07/16 18:16:43 njoly Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -178,6 +178,8 @@ ATF_TC_BODY(mutex3, tc)
 	void *joinval;
 
 	printf("1: Mutex-test 3\n");
+
+	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
 
 	global_x = 0;
 	count = count2 = 10000000;
