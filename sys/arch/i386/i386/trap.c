@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.241.4.1.2.1 2010/05/20 05:56:29 snj Exp $	*/
+/*	$NetBSD: trap.c,v 1.241.4.1.2.2 2010/07/16 18:43:58 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.4.1.2.1 2010/05/20 05:56:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241.4.1.2.2 2010/07/16 18:43:58 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -401,6 +401,7 @@ copyfault:
 		 * returning from a trap, syscall, or interrupt.
 		 */
 
+kern_pagefault:
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_code = SEGV_ACCERR;
@@ -427,7 +428,8 @@ copyfault:
 			break;
 		case 0x8e:
 			switch (*(uint32_t *)frame->tf_eip) {
-			case 0x8e242c8e:	/* mov (%esp,%gs), then */
+			case 0x8e242c8e:	/* mov (%esp),%gs */
+			case 0x00246c8e:	/* mov 0x0(%esp),%gs */
 			case 0x0424648e:	/* mov 0x4(%esp),%fs */
 			case 0x0824448e:	/* mov 0x8(%esp),%es */
 			case 0x0c245c8e:	/* mov 0xc(%esp),%ds */
@@ -734,7 +736,7 @@ copyfault:
 				goto copyfault;
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
 			    map, va, ftype, error);
-			goto we_re_toast;
+			goto kern_pagefault;
 		}
 		if (error == ENOMEM) {
 			ksi.ksi_signo = SIGKILL;
