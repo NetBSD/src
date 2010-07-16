@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.202 2010/06/13 18:16:30 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.203 2010/07/16 19:39:53 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -4176,4 +4176,10 @@ bin/date/date.c					1.53
 
 	Don't blow up on date +''. PR#39392.
 	[dholland, ticket #1396]
+
+sys/netinet6/udp6_output.c			1.41 via patch
+
+	udp6_output(): call ip6_clearpktopts(&opt, ...) only if opt
+	was initialized.
+	[dyoung, ticket #1397]
 
