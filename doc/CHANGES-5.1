@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.235 2010/06/29 18:02:19 riz Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.236 2010/07/16 19:14:13 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17360,4 +17360,53 @@ usr.bin/sort/sort.h				1.31
 
 	Fix a segfault on large input files.
 	[dholland, ticket #1420]
+
+sys/arch/amiga/amiga/amiga_init.c		1.118
+sys/arch/amiga/amiga/locore.s			1.149 via patch
+sys/arch/amiga/dev/clock.c			1.51
+sys/arch/amiga/dev/kbd.c			1.53
+
+	Fix keyboard handshake problems with some A1200 models and
+	restore precision for short delays on DraCo systems.
+	[phx, ticket #1412]
+
+sys/nfs/nfs_bio.c				1.185
+
+	Fix memory leak during some NFS writes.
+	[jakllsch, ticket #1417]
+
+lib/libc/misc/initfini.c			1.6
+lib/libc/stdlib/exit.c				1.12
+
+	Ensure that initfini.c is referenced by exit.c. Fixes PR 37454.
+	[joerg, ticket #1423]
+
+sys/arch/amd64/amd64/netbsd32_machdep.c		patch
+sys/arch/i386/i386/trap.c			patch
+
+	Fix several panics that can be caused by applications using
+	bad segment register values with setcontext() or sigreturn().
+	[chs, ticket #1424]
+
+sys/netsmb/mchain.h				1.9
+sys/netsmb/smb_dev.h				1.7
+sys/netsmb/smb_subr.c				1.35
+sys/netsmb/smb_subr.h				1.19
+sys/netsmb/subr_mchain.c			1.19
+
+	Convert sizes/lengths to unsigned (size_t) or uint32_t
+	(for binary compatibility).
+	[christos, ticket #1426]
+
+gnu/dist/binutils/gas/config/atof-vax.c		patch
+gnu/dist/binutils/gas/atof-generic.c		patch
+
+	Fix vax FP handling, from Matt Thomas. PR#43303.
+	[jklos, ticket #1427]
+
+sys/netinet6/udp6_output.c			1.41 via patch
+
+	udp6_output(): call ip6_clearpktopts(&opt, ...) only if opt
+	was initialized.
+	[dyoung, ticket #1428]
 
