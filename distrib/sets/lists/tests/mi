@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.108 2010/07/14 21:48:31 jmmv Exp $
+# $NetBSD: mi,v 1.109 2010/07/16 13:57:16 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -266,6 +266,22 @@
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread/t_sem_pth.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libposix				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libposix/bsd				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libposix/bsd/t_rename			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libposix/posix1			tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libposix/posix1/t_rename		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libposix/posix2			tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libposix/posix2/t_rename		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libprop				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libprop/t_basic			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/librt/t_sem				tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libutil				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libutil/t_snprintb			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libutil/t_sockaddr_snprintf		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/libexec					tests-lib-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so				tests-libexec-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf
@@ -1317,6 +1333,30 @@
 ./usr/tests/lib/libevent/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libevent/h_event		tests-lib-tests		atf
 ./usr/tests/lib/libevent/t_event		tests-lib-tests		atf
+./usr/tests/lib/libposix			tests-lib-tests		atf
+./usr/tests/lib/libposix/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libposix/bsd			tests-lib-tests		atf
+./usr/tests/lib/libposix/bsd/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libposix/bsd/t_rename		tests-lib-tests		atf
+./usr/tests/lib/libposix/posix1			tests-lib-tests		atf
+./usr/tests/lib/libposix/posix1/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libposix/posix1/t_rename	tests-lib-tests		atf
+./usr/tests/lib/libposix/posix2			tests-lib-tests		atf
+./usr/tests/lib/libposix/posix2/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libposix/posix2/t_rename	tests-lib-tests		atf
+./usr/tests/lib/libprop				tests-lib-tests		atf
+./usr/tests/lib/libprop/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libprop/t_basic			tests-lib-tests		atf
+./usr/tests/lib/librt				tests-lib-tests		atf
+./usr/tests/lib/librt/Atffile			tests-lib-tests		atf
+./usr/tests/lib/librt/t_sem			tests-lib-tests		atf
+./usr/tests/lib/libskey				tests-lib-tests		atf
+./usr/tests/lib/libskey/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf
+./usr/tests/lib/libutil				tests-lib-tests		atf
+./usr/tests/lib/libutil/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libutil/t_snprintb		tests-lib-tests		atf
+./usr/tests/lib/libutil/t_sockaddr_snprintf	tests-lib-tests		atf
 ./usr/tests/libexec				tests-lib-tests
 ./usr/tests/libexec/Atffile			tests-lib-tests		atf
 ./usr/tests/libexec/ld.elf_so			tests-libexec-tests
