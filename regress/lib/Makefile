@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.23 2010/07/16 13:59:07 jmmv Exp $
+#	$NetBSD: Makefile,v 1.24 2010/07/16 15:46:01 jmmv Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= csu libc libm libpthread
+SUBDIR+= csu libc libm
 
 .if (${MACHINE_CPU} != "alpha" && \
      ${MACHINE_CPU} != "mips" && \
