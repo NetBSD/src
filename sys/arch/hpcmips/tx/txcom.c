@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.42 2010/07/16 15:28:38 tsutsui Exp $ */
+/*	$NetBSD: txcom.c,v 1.43 2010/07/16 15:30:10 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.42 2010/07/16 15:28:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.43 2010/07/16 15:30:10 tsutsui Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -749,7 +749,7 @@ txcom_txintr(void *arg)
 		sc->sc_tbc--;
 		sc->sc_tba++;
 	} else {
-		callout_reset(&sc->sc_rxsoft_ch, 1, txcom_txsoft, sc);
+		callout_reset(&sc->sc_txsoft_ch, 1, txcom_txsoft, sc);
 	}
 
 	return 0;
