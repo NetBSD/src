@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.36 2010/07/16 13:56:52 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.37 2010/07/16 15:43:23 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -232,6 +232,7 @@
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2
 ./usr/libdata/debug/usr/tests/lib/libprop
+./usr/libdata/debug/usr/tests/lib/libpthread
 ./usr/libdata/debug/usr/tests/lib/librt
 ./usr/libdata/debug/usr/tests/lib/libskey
 ./usr/libdata/debug/usr/tests/lib/libutil
@@ -1151,6 +1152,7 @@
 ./usr/tests/lib/libposix/posix1
 ./usr/tests/lib/libposix/posix2
 ./usr/tests/lib/libprop
+./usr/tests/lib/libpthread
 ./usr/tests/lib/librt
 ./usr/tests/lib/libskey
 ./usr/tests/lib/libutil
