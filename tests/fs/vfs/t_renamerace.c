@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.6 2010/07/16 13:07:23 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.7 2010/07/16 14:14:27 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -111,6 +111,9 @@ static void
 renamerace_dirs(const atf_tc_t *tc, const char *mp)
 {
 	pthread_t pt1, pt2;
+
+	if (FSTYPE_SYSVBFS(tc))
+		atf_tc_skip("directories not supported");
 
 	/* XXX: msdosfs also sometimes hangs */
 	if (FSTYPE_FFS(tc) || FSTYPE_EXT2FS(tc) || FSTYPE_LFS(tc) ||
