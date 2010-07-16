@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.41 2009/03/14 15:36:07 dsl Exp $ */
+/*	$NetBSD: txcom.c,v 1.42 2010/07/16 15:28:38 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.41 2009/03/14 15:36:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.42 2010/07/16 15:28:38 tsutsui Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -248,6 +248,10 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	/* initialize callouts */
+	callout_init(&sc->sc_txsoft_ch, 0);
+	callout_init(&sc->sc_rxsoft_ch, 0);
 
 	/* 
 	 * Enable interrupt
