@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.110 2010/07/16 15:26:04 njoly Exp $
+# $NetBSD: mi,v 1.111 2010/07/16 15:45:05 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -275,6 +275,27 @@
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2/t_rename.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libprop				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libprop/t_basic.debug			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libpthread/h_atexit.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/h_cancel.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/h_exit.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/h_resolv.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_barrier.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_cond.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_fork.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_fpu.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_kill.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_mutex.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_name.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_once.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_preempt.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_rwlock.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_sem.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_sigmask.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_sigsuspend.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_siglongjmp.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_sleep.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
@@ -1347,6 +1368,33 @@
 ./usr/tests/lib/libprop				tests-lib-tests		atf
 ./usr/tests/lib/libprop/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libprop/t_basic			tests-lib-tests		atf
+./usr/tests/lib/libpthread			tests-lib-tests
+./usr/tests/lib/libpthread/Atffile		tests-lib-tests		atf
+./usr/tests/lib/libpthread/d_mach		tests-lib-tests		atf
+./usr/tests/lib/libpthread/h_atexit		tests-lib-tests		atf
+./usr/tests/lib/libpthread/h_cancel		tests-lib-tests		atf
+./usr/tests/lib/libpthread/h_exit		tests-lib-tests		atf
+./usr/tests/lib/libpthread/h_resolv		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_atexit		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_barrier		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_cancel		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_cond		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_exit		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_fork		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_fpu		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_kill		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_mutex		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_name		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_once		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_preempt		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_resolv		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_rwlock		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_sem		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_sigmask		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_sigsuspend		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_siglongjmp		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_sleep		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_status		tests-lib-tests		atf
 ./usr/tests/lib/librt				tests-lib-tests		atf
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/librt/t_sem			tests-lib-tests		atf
