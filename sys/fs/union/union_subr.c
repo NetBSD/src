@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.37 2010/06/24 13:03:11 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.38 2010/07/16 08:23:28 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.37 2010/06/24 13:03:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.38 2010/07/16 08:23:28 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,8 +330,8 @@ union_allocvp(
 {
 	int error;
 	struct vattr va;
-	struct union_node *un = NULL;
-	struct vnode *xlowervp = NULLVP;
+	struct union_node *un = NULL, *un1;
+	struct vnode *vp, *xlowervp = NULLVP;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	voff_t uppersz, lowersz;
 	int hash = 0;
@@ -394,7 +394,9 @@ loop:
 			    (un->un_uppervp == uppervp ||
 			     un->un_uppervp == NULLVP) &&
 			    (UNIONTOV(un)->v_mount == mp)) {
-				if (vget(UNIONTOV(un), 0)) {
+				vp = UNIONTOV(un);
+				mutex_enter(&vp->v_interlock);
+				if (vget(vp, LK_INTERLOCK)) {
 					union_list_unlock(hash);
 					goto loop;
 				}
@@ -502,17 +504,7 @@ loop:
 	if (lowervp != NULLVP)
 		if (VOP_GETATTR(lowervp, &va, FSCRED) == 0)
 			lowersz = va.va_size;
-
-	if (docache) {
-		/*
-		 * otherwise lock the vp list while we call getnewvnode
-		 * since that can block.
-		 */
-		hash = UNION_HASH(uppervp, lowervp);
-
-		if (union_list_lock(hash))
-			goto loop;
-	}
+	hash = UNION_HASH(uppervp, lowervp);
 
 	error = getnewvnode(VT_UNION, mp, union_vnodeop_p, vpp);
 	if (error) {
@@ -526,6 +518,24 @@ loop:
 			vrele(lowervp);
 
 		goto out;
+	}
+
+	if (docache) {
+		while (union_list_lock(hash))
+			continue;
+		LIST_FOREACH(un1, &unhead[hash], un_cache) {
+			if (un1->un_lowervp == lowervp &&
+			    un1->un_uppervp == uppervp &&
+			    UNIONTOV(un1)->v_mount == mp) {
+				/*
+				 * Another thread beat us, push back freshly
+				 * allocated vnode and retry.
+				 */
+				union_list_unlock(hash);
+				ungetnewvnode(*vpp);
+				goto loop;
+			}
+		}
 	}
 
 	(*vpp)->v_data = malloc(sizeof(struct union_node), M_TEMP, M_WAITOK);
@@ -590,12 +600,18 @@ out:
 int
 union_freevp(struct vnode *vp)
 {
+	int hash;
 	struct union_node *un = VTOUNION(vp);
 
+	hash = UNION_HASH(un->un_uppervp, un->un_lowervp);
+
+	while (union_list_lock(hash))
+		continue;
 	if (un->un_flags & UN_CACHED) {
 		un->un_flags &= ~UN_CACHED;
 		LIST_REMOVE(un, un_cache);
 	}
+	union_list_unlock(hash);
 
 	if (un->un_pvp != NULLVP)
 		vrele(un->un_pvp);
@@ -998,6 +1014,8 @@ union_vn_close(struct vnode *vp, int fmode, kauth_cred_t cred, struct lwp *l)
 void
 union_removed_upper(struct union_node *un)
 {
+	int hash;
+
 #if 1
 	/*
 	 * We do not set the uppervp to NULLVP here, because lowervp
@@ -1013,10 +1031,15 @@ union_removed_upper(struct union_node *un)
 	union_newupper(un, NULLVP);
 #endif
 
+	hash = UNION_HASH(un->un_uppervp, un->un_lowervp);
+
+	while (union_list_lock(hash))
+		continue;
 	if (un->un_flags & UN_CACHED) {
 		un->un_flags &= ~UN_CACHED;
 		LIST_REMOVE(un, un_cache);
 	}
+	union_list_unlock(hash);
 
 	if (un->un_flags & UN_ULOCK) {
 		un->un_flags &= ~UN_ULOCK;
