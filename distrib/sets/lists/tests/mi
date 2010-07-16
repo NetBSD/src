@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.109 2010/07/16 13:57:16 jmmv Exp $
+# $NetBSD: mi,v 1.110 2010/07/16 15:26:04 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -268,20 +268,20 @@
 ./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libposix				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libposix/bsd/t_rename			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libposix/bsd/t_rename.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1			tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libposix/posix1/t_rename		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libposix/posix1/t_rename.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2			tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libposix/posix2/t_rename		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libposix/posix2/t_rename.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libprop				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libprop/t_basic			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libprop/t_basic.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/librt/t_sem				tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libutil				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libutil/t_snprintb			tests-lib-debug		debug,atf
-./usr/libdata/debug/usr/tests/lib/libutil/t_sockaddr_snprintf		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libutil/t_snprintb.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libutil/t_sockaddr_snprintf.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/libexec					tests-lib-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so				tests-libexec-debug
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/t_dlinfo.debug		tests-libexec-debug	debug,atf
