@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.5 2010/07/16 11:46:31 pooka Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.6 2010/07/16 13:07:23 pooka Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -101,7 +101,7 @@ renamerace(const atf_tc_t *tc, const char *mp)
 
 	/*
 	 * XXX: does not always fail on LFS, especially for unicpu
-	 * configurations.  see other ramlings about racy tests.
+	 * configurations.  see other ramblings about racy tests.
 	 */
 	if (FSTYPE_LFS(tc))
 		abort();
