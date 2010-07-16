@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.71 2010/03/28 18:49:06 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.72 2010/07/16 19:42:00 riz Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1038,4 +1038,10 @@ crypto/dist/openssl/ssl/s3_pkt.c		patch
 	"In TLS connections, certain incorrectly formatted records can cause
 	an OpenSSL client or server to crash due to a read attempt at NULL".
 	[bouyer, ticket #1392]
+
+sys/netinet6/udp6_output.c			1.41 via patch
+
+	udp6_output(): call ip6_clearpktopts(&opt, ...) only if opt
+	was initialized.
+	[dyoung, ticket #1397]
 
