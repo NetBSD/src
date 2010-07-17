@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.111 2010/07/16 15:45:05 jmmv Exp $
+# $NetBSD: mi,v 1.112 2010/07/17 19:27:39 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -221,6 +221,13 @@
 ./usr/libdata/debug/usr/tests/fs/vfs/t_rmdirrace.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vfsops.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vnops.debug			tests-fs-debug		debug,atf
+./usr/libdata/debug/usr/tests/include					tests-ipf-tests
+./usr/libdata/debug/usr/tests/include/sys				tests-ipf-tests
+./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-ipf-tests		debug,atf
+./usr/libdata/debug/usr/tests/include/t_bitstring.debug			tests-ipf-tests		debug,atf
+./usr/libdata/debug/usr/tests/include/t_inttypes.debug			tests-ipf-tests		debug,atf
+./usr/libdata/debug/usr/tests/include/t_limits.debug			tests-ipf-tests		debug,atf
+./usr/libdata/debug/usr/tests/include/t_stdint.debug			tests-ipf-tests		debug,atf
 ./usr/libdata/debug/usr/tests/ipf					tests-ipf-tests
 ./usr/libdata/debug/usr/tests/kernel					tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/kqueue				tests-kernel-tests
@@ -254,6 +261,8 @@
 ./usr/libdata/debug/usr/tests/kernel/tty				tests-kernel-tests
 ./usr/libdata/debug/usr/tests/kernel/tty/t_pr.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/csu					tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/csu/h_initfini			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
@@ -991,6 +1000,21 @@
 ./usr/tests/games				tests-games-tests
 ./usr/tests/games/Atffile			tests-games-tests
 ./usr/tests/games/t_factor			tests-games-tests
+./usr/tests/include				tests-include-tests
+./usr/tests/include/Atffile			tests-include-tests	atf
+./usr/tests/include/d_bitstring_27.out		tests-include-tests	atf
+./usr/tests/include/d_bitstring_32.out		tests-include-tests	atf
+./usr/tests/include/d_bitstring_49.out		tests-include-tests	atf
+./usr/tests/include/d_bitstring_64.out		tests-include-tests	atf
+./usr/tests/include/d_bitstring_67.out		tests-include-tests	atf
+./usr/tests/include/d_bitstring_8.out		tests-include-tests	atf
+./usr/tests/include/sys				tests-include-tests
+./usr/tests/include/sys/Atffile			tests-include-tests	atf
+./usr/tests/include/sys/t_bootblock		tests-include-tests	atf
+./usr/tests/include/t_bitstring			tests-include-tests	atf
+./usr/tests/include/t_inttypes			tests-include-tests	atf
+./usr/tests/include/t_limits			tests-include-tests	atf
+./usr/tests/include/t_stdint			tests-include-tests	atf
 ./usr/tests/ipf					tests-ipf-tests
 ./usr/tests/ipf/Atffile				tests-ipf-tests
 ./usr/tests/ipf/expected			tests-ipf-tests
@@ -1334,6 +1358,10 @@
 ./usr/tests/kernel/tty/t_pr			tests-kernel-tests		atf
 ./usr/tests/lib					tests-lib-tests
 ./usr/tests/lib/Atffile				tests-lib-tests		atf
+./usr/tests/lib/csu				tests-lib-tests
+./usr/tests/lib/csu/Atffile			tests-lib-tests		atf
+./usr/tests/lib/csu/h_initfini			tests-lib-tests		atf
+./usr/tests/lib/csu/t_crt0			tests-lib-tests		atf
 ./usr/tests/lib/libc				tests-lib-tests
 ./usr/tests/lib/libc/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libc/hash			tests-lib-tests
