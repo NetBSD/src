@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.634 2010/07/11 06:16:54 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.635 2010/07/17 22:53:29 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -892,6 +892,7 @@ X11FONTDIR?=		${X11ROOTDIR}/lib/X11/fonts
 X11INCDIR?=		${X11ROOTDIR}/include
 X11LIBDIR?=		${X11ROOTDIR}/lib/X11
 X11MANDIR?=		${X11ROOTDIR}/man
+X11SHAREDIR?=		${X11ROOTDIR}/share
 X11USRLIBDIR?=		${X11ROOTDIR}/lib
 
 #
@@ -902,14 +903,15 @@ X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
 	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
 	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xpm \
 	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
-	fontenc xkbfile xkbui Xaw lbxutil Xfontcache pciaccess
+	fontenc xkbfile xkbui Xaw lbxutil Xfontcache pciaccess xcb
 X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 .endfor
 
 .for _proto in \
 	xcmisc xext xf86bigfont bigreqs input kb x fonts fixes scrnsaver \
 	xinerama dri2 render resource record video xf86dga xf86misc \
-	xf86vidmode composite damage trap gl randr fontcache xf86dri
+	xf86vidmode composite damage trap gl randr fontcache xf86dri \
+	xcb-
 X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
 
@@ -928,7 +930,7 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
 	xwininfo xwud xprehashprinterlist xplsprinters xkbprint xkbevd \
 	xterm xwd xfs xfsinfo xphelloworld xtrap xkbutils xkbcomp \
-	xkeyboard-config xinput \
+	xkeyboard-config xinput xcb-util \
 	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
 	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
 	font-alias \
