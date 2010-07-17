@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.19 2010/07/17 21:36:26 pgoyette Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.20 2010/07/17 21:51:43 pgoyette Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.19 2010/07/17 21:36:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.20 2010/07/17 21:51:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -251,6 +251,9 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_hwmon_enabled = true;
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	/* The IT8705 doesn't support the WDT */
 	if (sc->sc_chipid == ITESIO_ID8705)
 		goto out2;
@@ -271,6 +274,7 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wdt_enabled = true;
 	aprint_normal_dev(self, "Watchdog Timer present\n");
 
+	pmf_device_deregister(self);
 	if (!pmf_device_register(self, itesio_wdt_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -280,10 +284,6 @@ out:
 	bus_space_unmap(sc->sc_iot, sc->sc_ec_ioh, 8);
 out2:
 	bus_space_unmap(sc->sc_iot, sc->sc_pnp_ioh, 2);
-
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
 }
 
 static int
