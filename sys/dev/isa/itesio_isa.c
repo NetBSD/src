@@ -1,4 +1,4 @@
-/*	$NetBSD: itesio_isa.c,v 1.18 2010/05/02 18:49:13 jakllsch Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.19 2010/07/17 21:36:26 pgoyette Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.18 2010/05/02 18:49:13 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.19 2010/07/17 21:36:26 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,6 +92,7 @@ static void	itesio_refresh_fans(struct itesio_softc *, envsys_data_t *);
 static void	itesio_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 /* sysmon_wdog glue */
+static bool	itesio_wdt_suspend(device_t, const pmf_qual_t *);
 static int	itesio_wdt_setmode(struct sysmon_wdog *);
 static int 	itesio_wdt_tickle(struct sysmon_wdog *);
 
@@ -250,9 +251,6 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_hwmon_enabled = true;
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
 	/* The IT8705 doesn't support the WDT */
 	if (sc->sc_chipid == ITESIO_ID8705)
 		goto out2;
@@ -272,12 +270,20 @@ itesio_isa_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_wdt_enabled = true;
 	aprint_normal_dev(self, "Watchdog Timer present\n");
+
+	if (!pmf_device_register(self, itesio_wdt_suspend, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return;
 
 out:
 	bus_space_unmap(sc->sc_iot, sc->sc_ec_ioh, 8);
 out2:
 	bus_space_unmap(sc->sc_iot, sc->sc_pnp_ioh, 2);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 }
 
 static int
@@ -295,6 +301,17 @@ itesio_isa_detach(device_t self, int flags)
 	}
 
 	return 0;
+}
+
+static bool
+itesio_wdt_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	struct itesio_softc *sc = device_private(dev);
+
+	/* Don't allow suspend if watchdog is armed */
+	if ((sc->sc_smw.smw_mode & WDOG_MODE_MASK) != WDOG_MODE_DISARMED)
+		return false;
+	return true;
 }
 
 /*
