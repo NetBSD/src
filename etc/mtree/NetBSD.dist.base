@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.37 2010/07/16 15:43:23 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.38 2010/07/17 19:26:50 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -214,6 +214,8 @@
 ./usr/libdata/debug/usr/tests/fs/umapfs
 ./usr/libdata/debug/usr/tests/fs/union
 ./usr/libdata/debug/usr/tests/fs/vfs
+./usr/libdata/debug/usr/tests/include
+./usr/libdata/debug/usr/tests/include/sys
 ./usr/libdata/debug/usr/tests/ipf
 ./usr/libdata/debug/usr/tests/kernel
 ./usr/libdata/debug/usr/tests/kernel/kqueue
@@ -221,6 +223,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write
 ./usr/libdata/debug/usr/tests/kernel/tty
 ./usr/libdata/debug/usr/tests/lib
+./usr/libdata/debug/usr/tests/lib/csu
 ./usr/libdata/debug/usr/tests/lib/libc
 ./usr/libdata/debug/usr/tests/lib/libc/hash
 ./usr/libdata/debug/usr/tests/lib/libc/stdlib
@@ -1131,6 +1134,8 @@
 ./usr/tests/fs/union
 ./usr/tests/fs/vfs
 ./usr/tests/games
+./usr/tests/include
+./usr/tests/include/sys
 ./usr/tests/ipf
 ./usr/tests/ipf/expected
 ./usr/tests/ipf/input
@@ -1141,6 +1146,7 @@
 ./usr/tests/kernel/kqueue/write
 ./usr/tests/kernel/tty
 ./usr/tests/lib
+./usr/tests/lib/csu
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/hash
 ./usr/tests/lib/libc/stdlib
