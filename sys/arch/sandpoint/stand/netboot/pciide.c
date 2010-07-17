@@ -1,4 +1,4 @@
-/* $NetBSD: pciide.c,v 1.8 2010/06/26 21:45:49 phx Exp $ */
+/* $NetBSD: pciide.c,v 1.9 2010/07/17 14:15:34 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,8 @@ struct myops {
 	int (*chipfix)(struct dkdev_ata *);
 	int (*presense)(struct dkdev_ata *, int);
 };
-static struct myops cmdideops = { NULL, NULL };
+static int cmdidefix(struct dkdev_ata *);
+static struct myops cmdideops = { cmdidefix, NULL };
 static struct myops *myops = &cmdideops;
 
 int pciide_match(unsigned, void *);
@@ -75,9 +76,6 @@ pciide_init(unsigned tag, void *data)
 	memset(l, 0, sizeof(struct dkdev_ata));
 	l->iobuf = allocaligned(512, 16);
 	l->tag = tag;
-
-	if (myops->chipfix)
-		(*myops->chipfix)(l);
 
 	val = pcicfgread(tag, PCI_CLASS_REG);
 	native = val & 03;
@@ -119,5 +117,27 @@ pciide_init(unsigned tag, void *data)
 		if (l->presense[n])
 			printf("channel %d present\n", n);
 	}
+
+	/* make sure to have PIO0 */
+	if (myops->chipfix)
+		(*myops->chipfix)(l);
+
 	return l;
+}
+
+static int
+cmdidefix(struct dkdev_ata *l)
+{
+	int v;
+
+	v = pcicfgread(l->tag, 0x80);
+	pcicfgwrite(l->tag, 0x80, (v & ~0xff) | 0x01);
+	v = pcicfgread(l->tag, 0x84);
+	pcicfgwrite(l->tag, 0x84, (v & ~0xff) | 0x01);
+	v = pcicfgread(l->tag, 0xa4);
+	pcicfgwrite(l->tag, 0xa4, (v & ~0xffff) | 0x328a);
+	v = pcicfgread(l->tag, 0xb4);
+	pcicfgwrite(l->tag, 0xb4, (v & ~0xffff) | 0x328a);
+
+	return 1;
 }
