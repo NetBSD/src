@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.32 2010/07/16 23:41:01 njoly Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.33 2010/07/17 00:13:42 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.32 2010/07/16 23:41:01 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.33 2010/07/17 00:13:42 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -574,7 +574,7 @@ sysvbfs_readdir(void *v)
 	struct bfs_dirent *file;
 	int i, n, error;
 
-	DPRINTF("%s: offset=%lld residue=%d\n", __func__,
+	DPRINTF("%s: offset=%" PRId64 " residue=%zu\n", __func__,
 	    uio->uio_offset, uio->uio_resid);
 
 	KDASSERT(vp->v_type == VDIR);
@@ -682,7 +682,8 @@ sysvbfs_bmap(void *arg)
 
 	*a->a_vpp = bmp->devvp;
 	*a->a_runp = 0;
-	DPRINTF("%s: %d + %lld\n", __func__, inode->start_sector, a->a_bn);
+	DPRINTF("%s: %d + %" PRId64 "\n", __func__, inode->start_sector,
+	    a->a_bn);
 
 	*a->a_bnp = blk;
 
