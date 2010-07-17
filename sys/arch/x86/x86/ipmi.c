@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.46 2010/04/10 19:02:39 pgoyette Exp $ */
+/*	$NetBSD: ipmi.c,v 1.47 2010/07/17 21:34:39 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.46 2010/04/10 19:02:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.47 2010/07/17 21:34:39 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -224,6 +224,8 @@ int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
 
 int	 add_child_sensors(struct ipmi_softc *, uint8_t *, int, int, int,
     int, int, int, const char *);
+
+bool	ipmi_suspend(device_t, const pmf_qual_t *);
 
 struct ipmi_if kcs_if = {
 	"KCS",
@@ -1934,6 +1936,10 @@ ipmi_thread(void *cookie)
 	sc->sc_wdog.smw_tickle = ipmi_watchdog_tickle;
 	sysmon_wdog_register(&sc->sc_wdog);
 
+	/* Set up a power handler so we can possibly sleep */
+	if (!pmf_device_register(self, ipmi_suspend, NULL))
+                aprint_error_dev(self, "couldn't establish a power handler\n");
+
 	mutex_enter(&sc->sc_poll_mtx);
 	while (sc->sc_thread_running) {
 		ipmi_refresh_sensors(sc);
@@ -2092,4 +2098,15 @@ ipmi_dotickle(struct ipmi_softc *sc)
 		printf("%s: watchdog tickle returned 0x%x\n",
 		    device_xname(sc->sc_dev), rc);
 	}
+}
+
+bool
+ipmi_suspend(device_t dev, const pmf_qual_t *qual)
+{
+	struct ipmi_softc *sc = device_private(dev);
+
+	/* Don't allow suspend if watchdog is armed */
+	if ((sc->sc_wdog.smw_mode & WDOG_MODE_MASK) != WDOG_MODE_DISARMED)
+		return false;
+	return true;
 }
