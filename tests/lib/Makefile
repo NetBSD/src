@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.6 2010/07/16 15:42:53 jmmv Exp $
+# $NetBSD: Makefile,v 1.7 2010/07/17 19:25:26 jmmv Exp $
 
 .include <bsd.own.mk>
 
-TESTS_SUBDIRS=	libc libevent libposix libprop librt libpthread libutil \
+TESTS_SUBDIRS=	csu libc libevent libposix libprop librt libpthread libutil \
 		semaphore
 
 .if (${MKSKEY} != "no")
