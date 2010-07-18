@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1418 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1419 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -691,3 +691,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	tests: Convert the libposix, libprop, libpthread, librt, libskey and
 		libutil tests to ATF.  [jmmv 20100716]
 	tests: Convert the include and csu tests to ATF.  [jmmv 20100717]
+	tests: Convert the lint1 tests to ATF.  [jmmv 20100718]
