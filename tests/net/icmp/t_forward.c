@@ -1,4 +1,4 @@
-/*	$NetBSD: t_forward.c,v 1.1 2010/07/04 19:30:59 pooka Exp $	*/
+/*	$NetBSD: t_forward.c,v 1.2 2010/07/18 12:43:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_forward.c,v 1.1 2010/07/04 19:30:59 pooka Exp $");
+__RCSID("$NetBSD: t_forward.c,v 1.2 2010/07/18 12:43:22 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ configure_interface(const char *busname, const char *addr, const char *mask,
 	int s, rv, ifnum;
 
 	if ((s = rump_pub_shmif_create(busname, &ifnum)) != 0) {
-		atf_tc_fail("rump_pub_virtif_create(%d)", s);
+		atf_tc_fail("rump_pub_shmif_create(%d)", s);
 	}
 
 	if ((s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
