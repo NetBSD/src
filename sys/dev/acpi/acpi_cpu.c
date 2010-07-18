@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: acpi_cpu.c,v 1.2 2010/07/18 09:39:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.1 2010/07/18 09:29:12 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.2 2010/07/18 09:39:45 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
