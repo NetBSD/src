@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.112 2010/07/17 19:27:39 jmmv Exp $
+# $NetBSD: mi,v 1.113 2010/07/18 10:11:59 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1696,3 +1696,43 @@
 ./usr/tests/util/t_pax				tests-util-tests
 ./usr/tests/util/t_sort				tests-util-tests
 ./usr/tests/util/t_tar				tests-util-tests
+./usr/tests/util/xlint				tests-util-tests
+./usr/tests/util/xlint/Atffile			tests-util-tests
+./usr/tests/util/xlint/lint1			tests-util-tests
+./usr/tests/util/xlint/lint1/Atffile		tests-util-tests
+./usr/tests/util/xlint/lint1/d_alignof.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_c99_complex_num.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_c99_for_loops.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_c99_func.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_c99_recursive_init.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_c99_struct_init.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_c99_union_init1.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_c99_union_init2.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_c99_union_init3.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_c9x_array_init.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_c9x_recursive_init.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_cast_init.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_cast_init2.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_cast_lhs.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_compound_literals1.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_compound_literals2.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_constant_conv1.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_constant_conv2.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_cvt_in_ternary.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_ellipsis_in_switch.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_gcc_compound_statements1.c	tests-util-tests
+./usr/tests/util/xlint/lint1/d_gcc_compound_statements2.c	tests-util-tests
+./usr/tests/util/xlint/lint1/d_gcc_compound_statements3.c	tests-util-tests
+./usr/tests/util/xlint/lint1/d_gcc_func.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_gcc_variable_array_init.c	tests-util-tests
+./usr/tests/util/xlint/lint1/d_incorrect_array_size.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_long_double_int.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_nested_structs.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_nolimit_init.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_packed_structs.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_shift_to_narrower_type.c		tests-util-tests
+./usr/tests/util/xlint/lint1/d_type_conv1.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_type_conv2.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_type_conv3.c			tests-util-tests
+./usr/tests/util/xlint/lint1/d_zero_sized_arrays.c		tests-util-tests
+./usr/tests/util/xlint/lint1/t_integration	tests-util-tests
