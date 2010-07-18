@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.8 2010/05/28 17:17:12 ghen Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.9 2010/07/18 07:07:09 mrg Exp $
 
 ./usr/X11R7
 ./usr/X11R7/bin
@@ -30,6 +30,7 @@
 ./usr/X11R7/include/freetype2/freetype/internal
 ./usr/X11R7/include/freetype2/freetype/internal/services
 ./usr/X11R7/include/pixman-1
+./usr/X11R7/include/xcb
 ./usr/X11R7/include/xorg
 ./usr/X11R7/lib
 ./usr/X11R7/lib/X11
@@ -173,6 +174,7 @@
 ./usr/X11R7/share/examples
 ./usr/X11R7/share/examples/ssh-askpass
 ./usr/X11R7/share/pciids
+./usr/X11R7/share/xcb
 ./usr/libdata/debug/usr/X11R7
 ./usr/libdata/debug/usr/X11R7/bin
 ./usr/libdata/debug/usr/X11R7/lib
