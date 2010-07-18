@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.206 2010/07/10 13:08:09 jruoho Exp $	*/
+/*	$NetBSD: acpi.c,v 1.207 2010/07/18 09:29:12 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.206 2010/07/10 13:08:09 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.207 2010/07/18 09:29:12 jruoho Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1001,8 +1001,7 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		/*
 		 * Handled internally.
 		 */
-		if (di->Type == ACPI_TYPE_POWER ||
-		    di->Type == ACPI_TYPE_PROCESSOR)
+		if (di->Type == ACPI_TYPE_POWER)
 			continue;
 
 		/*
