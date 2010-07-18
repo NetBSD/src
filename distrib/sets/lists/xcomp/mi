@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.111 2010/07/18 07:07:08 mrg Exp $
+#	 $NetBSD: mi,v 1.112 2010/07/18 10:58:06 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5816,6 +5816,17 @@
 ./usr/X11R7/include/xcb/sync.h				-unknown-	xorg
 ./usr/X11R7/include/xcb/xc_misc.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xcb.h				-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_atom.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_aux.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_bitops.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_event.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_icccm.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_image.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_keysyms.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_pixel.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_property.h			-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_renderutil.h		-unknown-	xorg
+./usr/X11R7/include/xcb/xcb_reply.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xcbext.h			-unknown-	xorg
 ./usr/X11R7/include/xcb/xevie.h				-unknown-	xorg
 ./usr/X11R7/include/xcb/xf86dri.h			-unknown-	xorg
