@@ -1,4 +1,4 @@
-/* $NetBSD: t_sem.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $ */
+/* $NetBSD: t_sem.c,v 1.2 2010/07/18 22:30:55 pooka Exp $ */
 
 /*
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.1 2010/07/16 15:42:53 jmmv Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.2 2010/07/18 22:30:55 pooka Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -191,7 +191,7 @@ ATF_TC_BODY(unnamed, tc)
 		}
 
 		for (i = 0; i < NTHREADS; i++) {
-			sleep(1);
+			usleep(10000);
 			printf("main loop %u: posting...\n", j+1);
 			SEM_REQUIRE(sem_post(&sem_a));
 		}
