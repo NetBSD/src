@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.86 2010/07/12 07:54:12 kiyohara Exp $
+#	$NetBSD: bsd.x11.mk,v 1.87 2010/07/18 07:05:39 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -252,6 +252,13 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 # And yes, it has to be splitted in two otherwise it's too long
 # for sed to handle.
 
+# missing transforms: 
+#   @GLU_PC_REQ@
+#   @GLW_PC_REQ_PRIV@
+#   @GLW_PC_LIB_PRIV@
+# hacky transforms:
+#   @XCBPROTO_VERSION@
+
 .SUFFIXES:	.pc.in .pc
 .pc.in.pc:
 	${_MKTARGET_CREATE}
@@ -269,6 +276,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@libdir@,\\$$\{prefix\}/lib,; \
 		s,@includedir@,\\$$\{prefix\}/include,; \
 		s,@datarootdir@,\\$$\{prefix\}/share,; \
+		s,@datadir@,\\$$\{datarootdir\},; \
 		s,@appdefaultdir@,\\$$\{libdir}/X11/app-default,; \
 		s,@MAPDIR@,\\$$\{libdir\}/X11/fonts/util,; \
 		s,@ICONDIR@,\\$$\{datarootdir\}/icons,; \
@@ -279,6 +287,8 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@FIXESEXT_VERSION@,$${_pkg_version%.*},; \
 		s,@RANDR_VERSION@,$${_pkg_version%.*},; \
 		s,@RENDER_VERSION@,$${_pkg_version%.*}," \
+		-e "s,@LIBS@,,; \
+		s,@NEEDED@,," \
 		-e "s,@moduledir@,\\$$\{libdir\}/modules,; \
 		s,@sdkdir@,\\$$\{includedir\}/xorg,; \
 		s,@PIXMAN_CFLAGS@,,; \
@@ -286,6 +296,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@INSTALL_LIB_DIR@,\\$$\{prefix\}/lib,; \
 		s,@INSTALL_INC_DIR@,\\$$\{prefix\}/include,; \
 		s,@XKBPROTO_REQUIRES@,kbproto,; \
+		s,@XCBPROTO_VERSION@,1.6,; \
 		s,@FREETYPE_REQUIRES@,freetype2,; \
 		s,@EXPAT_LIBS@,-lexpat,; \
 		s,@FREETYPE_LIBS@,-lfreetype,; \
@@ -294,15 +305,20 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@X11_EXTRA_DEPS@,,; \
 		s,@XTHREAD_CFLAGS@,-D_REENTRANT,; \
 		s,@XTHREADLIB@,-lpthread,; \
+		s,@GL_LIB@,GL,; \
 		s,@GL_PC_REQ_PRIV@,x11 xext,; \
 		s,@GL_PC_LIB_PRIV@,-lm -lpthread,; \
 		s,@GL_PC_CFLAGS@,,; \
+		s,@GLU_LIB@,GLU,; \
 		s,@GLU_PC_REQ_PRIV@,,; \
 		s,@GLU_PC_LIB_PRIV@,-lGLU,; \
 		s,@GLU_PC_CFLAGS@,,; \
+		s,@GLUT_LIB@,glut,; \
 		s,@GLUT_PC_REQ_PRIV@,gl glu,; \
 		s,@GLUT_PC_LIB_PRIV@,-lglut,; \
 		s,@GLUT_PC_CFLAGS@,,; \
+		s,@GLW_PC_CFLAGS@,,; \
+		s,@GLW_LIB@,GLw,; \
 		s,@abi_ansic@,0.4,; \
 		s,@abi_videodrv@,5.0,; \
 		s,@abi_xinput@,4.0,; \
