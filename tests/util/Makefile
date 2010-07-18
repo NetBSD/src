@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.8 2010/07/13 21:13:30 jmmv Exp $
+# $NetBSD: Makefile,v 1.9 2010/07/18 10:11:00 jmmv Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/util
 
-TESTS_SUBDIRS=		awk bzip2 config cut df grep id m4 make mtree ps sdiff sh
+TESTS_SUBDIRS=	awk bzip2 config cut df grep id m4 make mtree ps sdiff sh xlint
 
 TESTS_SH=	t_basename
 TESTS_SH+=	t_cp
