@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.2 2010/07/18 09:39:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.3 2010/07/18 13:09:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.2 2010/07/18 09:39:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.3 2010/07/18 13:09:04 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -292,6 +292,9 @@ acpicpu_cstate_cst(struct acpicpu_softc *sc)
 	(void)memset(sc->sc_cstate, 0,
 	    sizeof(*sc->sc_cstate) * ACPI_C_STATE_COUNT);
 
+	CTASSERT(ACPI_STATE_C0 == 0 && ACPI_STATE_C1 == 1);
+	CTASSERT(ACPI_STATE_C2 == 2 && ACPI_STATE_C3 == 3);
+
 	for (count = 0, i = 1; i <= n; i++) {
 
 		elm = &obj->Package.Elements[i];
@@ -324,7 +327,6 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 	ACPI_STATUS rv = AE_OK;
 	ACPI_OBJECT *obj;
 	uint32_t type;
-	int i;
 
 	(void)memset(&state, 0, sizeof(*cs));
 
@@ -349,6 +351,11 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 	}
 
 	type = obj->Integer.Value;
+
+	if (type < ACPI_STATE_C1 || type > ACPI_STATE_C3) {
+		rv = AE_TYPE;
+		goto out;
+	}
 
 	/*
 	 * Latency.
@@ -408,6 +415,19 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 			goto out;
 		}
 
+		/*
+		 * Check only that the address is in the mapped space.
+		 * Systems are allowed to change it when operating
+		 * with _CST (see ACPI 4.0, pp. 94-95). For instance,
+		 * the offset of P_LVL3 may change depending on whether
+		 * acpiacad(4) is connected or disconnected.
+		 */
+		if (reg->reg_addr > ao->ao_pblkaddr + ao->ao_pblklen) {
+			rv = AE_BAD_ADDRESS;
+			goto out;
+		}
+
+		state.cs_addr = reg->reg_addr;
 		break;
 
 	case ACPI_ADR_SPACE_FIXED_HARDWARE:
@@ -437,58 +457,7 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		goto out;
 	}
 
-	state.cs_addr = reg->reg_addr;
-
-	CTASSERT(ACPICPU_C_C2_LATENCY_MAX == 100);
-	CTASSERT(ACPICPU_C_C3_LATENCY_MAX == 1000);
-
-	CTASSERT(ACPI_STATE_C0 == 0 && ACPI_STATE_C1 == 1);
-	CTASSERT(ACPI_STATE_C2 == 2 && ACPI_STATE_C3 == 3);
-
-	switch (type) {
-
-	case ACPI_STATE_C1:
-		i = 1;
-		break;
-
-	case ACPI_STATE_C2:
-
-		if (state.cs_latency > ACPICPU_C_C2_LATENCY_MAX) {
-			rv = AE_BAD_VALUE;
-			goto out;
-		}
-
-		i = 2;
-		break;
-
-	case ACPI_STATE_C3:
-
-		if (state.cs_latency > ACPICPU_C_C3_LATENCY_MAX) {
-			rv = AE_BAD_VALUE;
-			goto out;
-		}
-
-		i = 3;
-		break;
-
-	default:
-		rv = AE_TYPE;
-		goto out;
-	}
-
-	/*
-	 * Check only that the address is in the mapped space.
-	 * Systems are allowed to change it when operating
-	 * with _CST (see ACPI 4.0, pp. 94-95). For instance,
-	 * the offset of P_LVL3 may change depending on whether
-	 * acpiacad(4) is connected or disconnected.
-	 */
-	if (state.cs_addr > ao->ao_pblkaddr + ao->ao_pblklen) {
-		rv = AE_BAD_ADDRESS;
-		goto out;
-	}
-
-	if (cs[i].cs_method != 0) {
+	if (cs[type].cs_method != 0) {
 		rv = AE_ALREADY_EXISTS;
 		goto out;
 	}
@@ -500,16 +469,16 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 	 *	haphazardly, depending on how long the system slept.
 	 *	For now, we disable the C3 state unconditionally.
 	 */
-	if (i == ACPI_STATE_C3) {
+	if (type == ACPI_STATE_C3) {
 		sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
 		goto out;
 	}
 #endif
 
-	cs[i].cs_addr = state.cs_addr;
-	cs[i].cs_power = state.cs_power;
-	cs[i].cs_latency = state.cs_latency;
-	cs[i].cs_method = state.cs_method;
+	cs[type].cs_addr = state.cs_addr;
+	cs[type].cs_power = state.cs_power;
+	cs[type].cs_latency = state.cs_latency;
+	cs[type].cs_method = state.cs_method;
 
 out:
 	if (ACPI_FAILURE(rv))
@@ -626,6 +595,9 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 
 	if (sc->sc_object.ao_pblklen < 6)
 		cs[ACPI_STATE_C3].cs_method = 0;
+
+	CTASSERT(ACPICPU_C_C2_LATENCY_MAX == 100);
+	CTASSERT(ACPICPU_C_C3_LATENCY_MAX == 1000);
 
 	if (AcpiGbl_FADT.C2Latency > ACPICPU_C_C2_LATENCY_MAX)
 		cs[ACPI_STATE_C2].cs_method = 0;
