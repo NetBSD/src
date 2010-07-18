@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2010/06/03 09:49:45 veego Exp $
+#	$NetBSD: Makefile,v 1.20 2010/07/18 07:07:09 mrg Exp $
 
 # build libraries for xorg
 
@@ -26,6 +26,7 @@ SUBDIR+=libchromeXvMC
 SUBDIR+=libGLU libGLw libXaw6 libXaw libXcursor \
 	libXrandr \
 	.WAIT \
-	libXft libglut
+	libXft libglut \
+	libxcb .WAIT xcb-util
 	
 .include <bsd.subdir.mk>
