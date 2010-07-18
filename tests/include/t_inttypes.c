@@ -1,4 +1,4 @@
-/*	$NetBSD: t_inttypes.c,v 1.1 2010/07/17 19:26:27 jmmv Exp $	*/
+/*	$NetBSD: t_inttypes.c,v 1.2 2010/07/18 12:16:19 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,8 +32,8 @@
 
 #include <atf-c.h>
 
-ATF_TC_WITHOUT_HEAD(fmt_io);
-ATF_TC_BODY(fmt_io, tc)
+ATF_TC_WITHOUT_HEAD(int_fmtio);
+ATF_TC_BODY(int_fmtio, tc)
 {
 	char buf[64];
 
@@ -67,9 +67,9 @@ ATF_TC_BODY(fmt_io, tc)
 	uintptr_t uip;
 
 #define	PRINT(fmt, var) \
-	ATF_CHECK(snprintf(buf, sizeof(buf), "%" fmt, var) > 0)
+	snprintf(buf, sizeof(buf), "%" fmt, var)
 #define	SCAN(fmt, var) \
-	ATF_CHECK(sscanf(buf, "%" fmt, &var) > 0)
+	sscanf(buf, "%" fmt, &var)
 
 	PRINT(PRId8, i8);
 	PRINT(PRId16, i16);
@@ -244,7 +244,7 @@ ATF_TC_BODY(fmt_io, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, fmt_io);
+	ATF_TP_ADD_TC(tp, int_fmtio);
 
 	return atf_no_error();
 }
