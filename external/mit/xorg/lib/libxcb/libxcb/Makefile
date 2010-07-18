@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/07/18 07:01:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2010/07/18 09:49:12 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,10 @@ SRCS=	xcb_auth.c \
 	xcb_out.c \
 	xcb_util.c \
 	xcb_xid.c
+
+SRCS+=	xproto.c \
+	bigreq.c \
+	xc_misc.c
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${X11SRCDIR.${LIB}}/../include
