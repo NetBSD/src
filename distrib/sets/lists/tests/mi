@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.113 2010/07/18 10:11:59 jmmv Exp $
+# $NetBSD: mi,v 1.114 2010/07/18 12:43:44 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -275,6 +275,8 @@
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread/t_sem_pth.debug	tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libevent				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libobjc				tests-lib-debug
+./usr/libdata/debug/usr/tests/lib/libobjc/t_threads.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libposix				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd/t_rename.debug		tests-lib-debug		debug,atf
@@ -1382,6 +1384,9 @@
 ./usr/tests/lib/libevent/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libevent/h_event		tests-lib-tests		atf
 ./usr/tests/lib/libevent/t_event		tests-lib-tests		atf
+./usr/tests/lib/libobjc				tests-lib-tests		atf
+./usr/tests/lib/libobjc/Atffile			tests-lib-tests		atf
+./usr/tests/lib/libobjc/t_threads		tests-lib-tests		atf
 ./usr/tests/lib/libposix			tests-lib-tests		atf
 ./usr/tests/lib/libposix/Atffile		tests-lib-tests		atf
 ./usr/tests/lib/libposix/bsd			tests-lib-tests		atf
