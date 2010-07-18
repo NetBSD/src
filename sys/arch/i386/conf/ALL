@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.260 2010/06/26 15:17:56 kefren Exp $
+# $NetBSD: ALL,v 1.261 2010/07/18 10:19:09 jruoho Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.260 $"
+#ident 		"ALL-$Revision: 1.261 $"
 
 maxusers	64		# estimated number of users
 
@@ -361,6 +361,7 @@ apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
+acpicpu*	at acpi?		# ACPI CPU
 acpidalb*	at acpi?		# ACPI Direct Application Launch Button
 # The ACPI Embedded Controller is generally configured via the special ECDT.
 # This is required as parts of the DSDT can reference the EC before the normal
