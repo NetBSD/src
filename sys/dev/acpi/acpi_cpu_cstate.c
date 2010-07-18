@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.3 2010/07/18 13:09:04 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.4 2010/07/18 20:20:04 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.3 2010/07/18 13:09:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.4 2010/07/18 20:20:04 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -39,11 +39,15 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.3 2010/07/18 13:09:04 jruoho E
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_cpu.h>
 #include <dev/acpi/acpi_timer.h>
 
 #include <machine/acpi_machdep.h>
+
+#define _COMPONENT	 ACPI_BUS_COMPONENT
+ACPI_MODULE_NAME	 ("acpi_cpu_cstate")
 
 /*
  * This is AML_RESOURCE_GENERIC_REGISTER,
