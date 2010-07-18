@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.24 2010/07/01 14:18:26 jruoho Exp $
+# $NetBSD: acpidevs,v 1.25 2010/07/18 06:58:48 jruoho Exp $
 #
 # Originally extracted from:
 
@@ -115,14 +115,14 @@ PNP0A08	PCI Express/PCI-X Mode-2 Host Bridge
 #-- Real Time Clock, BIOS, System board devices--
 PNP0800	AT-style speaker sound
 PNP0B00	AT Real-Time Clock
-PNP0C00	Plug and Play BIOS (only created by the root enumerator)
+PNP0C00	Plug and Play BIOS
 PNP0C01	System Board
-PNP0C02	Plug and Play motherboard register resources
-PNP0C03	Plug and Play BIOS Event Notification Interrupt
+PNP0C02	Motherboard Register Resources
+PNP0C03	BIOS Event Notification Interrupt
 PNP0C04	Math Coprocessor
-PNP0C05	APM BIOS (Version independent)
-PNP0C06	Reserved for identification of early Plug and Play BIOS implementation
-PNP0C07	Reserved for identification of early Plug and Play BIOS implementation
+PNP0C05	APM BIOS
+PNP0C06	Reserved
+PNP0C07	Reserved
 PNP0C08	ACPI System Board Hardware
 PNP0C09	ACPI Embedded Controller
 PNP0C0A	ACPI Control Method Battery
@@ -134,7 +134,7 @@ PNP0C0F	PCI Interrupt Link Device
 PNP0C10	ACPI System Indicator Device
 PNP0C11	ACPI Thermal Zone
 PNP0C12	Device Bay Controller
-PNP0C13	Plug and Play BIOS (used when ACPI mode cannot be used)
+PNP0C13	Plug and Play BIOS (for non-ACPI)
 PNP0C14	WMI Mapper Device
 PNP0C15	ACPI Docking Station
 PNP0C33	ACPI Hardware Error Device
@@ -342,15 +342,15 @@ PNPB006	MPU401 compatible
 PNPB007	Microsoft Windows Sound System-compatible sound device
 PNPB008	Compaq Business Audio
 PNPB009	Plug and Play Microsoft Windows Sound System Device
-PNPB00A	MediaVision Pro Audio Spectrum (Trantor SCSI enabled, Thunder Chip Disabled)
+PNPB00A	MediaVision Pro Audio Spectrum (SCSI)
 PNPB00B	MediaVision Pro Audio 3D
 PNPB00C	MusicQuest MQX-32M
-PNPB00D	MediaVision Pro Audio Spectrum Basic (No Trantor SCSI, Thunder Chip Enabled)
-PNPB00E	MediaVision Pro Audio Spectrum (Trantor SCSI enabled, Thunder Chip Enabled)
+PNPB00D	MediaVision Pro Audio Spectrum Basic (Thunder Chip)
+PNPB00E	MediaVision Pro Audio Spectrum (SCSI, Thunder Chip)
 PNPB00F	MediaVision Jazz-16 chipset (OEM Versions)
 PNPB010	Auravision VxP500 chipset - Orchid Videola
 PNPB018	MediaVision Pro Audio Spectrum 8-bit
-PNPB019	MediaVision Pro Audio Spectrum Basic (no Trantor SCSI, Thunder chip Disabled)
+PNPB019	MediaVision Pro Audio Spectrum Basic
 PNPB020	Yamaha OPL3-compatible FM synthesizer device
 PNPB02F	Joystick/Game port
 CSC0000	Crystal PnP Audio (codec)
