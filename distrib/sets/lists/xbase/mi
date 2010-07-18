@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.93 2010/05/28 12:38:34 ghen Exp $
+# $NetBSD: mi,v 1.94 2010/07/18 07:07:08 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1515,6 +1515,7 @@
 ./usr/X11R7/include/freetype2/freetype/internal		base-x11-root	xorg
 ./usr/X11R7/include/freetype2/freetype/internal/services base-x11-root	xorg
 ./usr/X11R7/include/pixman-1				base-x11-root	xorg
+./usr/X11R7/include/xcb					base-x11-root	xorg
 ./usr/X11R7/include/xorg				base-x11-root	xorg
 ./usr/X11R7/lib						base-x11-root	xorg
 ./usr/X11R7/lib/X11					base-x11-root	xorg
@@ -2851,6 +2852,7 @@
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-green.ad	-unknown-	xorg
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-motif.ad	-unknown-	xorg
 ./usr/X11R7/share/pciids				base-x11-root	xorg
+./usr/X11R7/share/xcb					base-x11-root	xorg
 ./usr/libdata/debug/usr/X11R6				base-sys-usr	x11
 ./usr/libdata/debug/usr/X11R6/bin			base-sys-usr	x11
 ./usr/libdata/debug/usr/X11R6/lib			base-sys-usr	x11

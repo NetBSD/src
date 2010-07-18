@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.23 2010/05/23 04:26:19 mrg Exp $
+#	$NetBSD: shl.mi,v 1.24 2010/07/18 07:07:08 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -102,6 +102,36 @@
 ./usr/X11R7/lib/libpciaccess_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libpixman-1_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libre_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libxcb-atom_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-aux_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-composite_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-damage_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-dpms_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-dri2_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-event_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-glx_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-icccm_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-image_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-keysyms_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-property_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-randr_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-record_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-render-util_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libxcb-render_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-reply_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-res_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-screensaver_pic.a		-unknown-	xorg
+./usr/X11R7/lib/libxcb-shape_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-shm_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-sync_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-xevie_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-xf86dri_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-xfixes_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-xinerama_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-xtest_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb-xv_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libxcb-xvmc_pic.a			-unknown-	xorg
+./usr/X11R7/lib/libxcb_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libxkbfile_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/libxkbui_pic.a				-unknown-	xorg
 ./usr/libdata/debug/usr/X11R6/lib/libFS.so.6.0.debug			-unknown-		x11,debug
