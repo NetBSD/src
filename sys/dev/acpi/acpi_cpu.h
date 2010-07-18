@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: acpi_cpu.h,v 1.2 2010/07/18 09:39:45 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
