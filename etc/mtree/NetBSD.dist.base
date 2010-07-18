@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.39 2010/07/18 10:11:31 jmmv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.40 2010/07/18 12:43:17 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -230,6 +230,7 @@
 ./usr/libdata/debug/usr/tests/lib/libevent
 ./usr/libdata/debug/usr/tests/lib/semaphore
 ./usr/libdata/debug/usr/tests/lib/semaphore/pthread
+./usr/libdata/debug/usr/tests/lib/libobjc
 ./usr/libdata/debug/usr/tests/lib/libposix
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1
@@ -1153,6 +1154,7 @@
 ./usr/tests/lib/semaphore
 ./usr/tests/lib/semaphore/pthread
 ./usr/tests/lib/libevent
+./usr/tests/lib/libobjc
 ./usr/tests/lib/libposix
 ./usr/tests/lib/libposix/bsd
 ./usr/tests/lib/libposix/posix1
