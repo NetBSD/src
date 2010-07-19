@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rmdirrace.c,v 1.6 2010/07/13 11:12:19 pooka Exp $	*/
+/*	$NetBSD: t_rmdirrace.c,v 1.7 2010/07/19 16:00:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <atf-c.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include <rump/rump_syscalls.h>
