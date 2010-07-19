@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.GLcore,v 1.2 2009/06/11 05:43:15 mrg Exp $
+#	$NetBSD: Makefile.GLcore,v 1.3 2010/07/19 05:34:27 mrg Exp $
 
 SRCS.GLcore= \
 	${SRCS.main} \
@@ -166,6 +166,7 @@ SRCS.shader= \
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/shader/grammar
 SRCS.grammar= \
 	grammar_mesa.c
+SRCS.grammar=
 
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/shader/slang
 SRCS.slang= \
@@ -182,7 +183,6 @@ SRCS.slang= \
 	slang_link.c \
 	slang_log.c \
 	slang_mem.c \
-	slang_preprocess.c \
 	slang_print.c \
 	slang_simplify.c \
 	slang_storage.c \
@@ -228,7 +228,6 @@ CPPFLAGS+= \
 	-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
 	-I${X11SRCDIR.MesaLib}/src/mesa/main \
 	-I${X11SRCDIR.MesaLib}/src/mesa/shader \
-	-I${X11SRCDIR.MesaLib}/src/mesa/shader/grammar \
 	-I${X11SRCDIR.MesaLib}/src/mesa/shader/slang \
 	-I${X11SRCDIR.xorg-server}/include
 

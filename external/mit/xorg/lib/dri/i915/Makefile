@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2010/05/23 21:31:52 mrg Exp $
+# $NetBSD: Makefile,v 1.10 2010/07/19 05:34:24 mrg Exp $
 
 MODULE=	i915
 
@@ -9,7 +9,6 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/i965 \
 DRI_EXTRA_PATHS=	${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/intel
 SRCS=	\
 	i830_context.c \
-	i830_metaops.c \
 	i830_state.c \
 	i830_texblend.c \
 	i830_texstate.c \
@@ -35,14 +34,12 @@ SRCS=	\
 	intel_pixel_read.c \
 	intel_buffers.c \
 	intel_blit.c \
-	intel_swapbuffers.c \
 	i915_tex_layout.c \
 	i915_texstate.c \
 	i915_context.c \
 	i915_debug.c \
 	i915_debug_fp.c \
 	i915_fragprog.c \
-	i915_metaops.c \
 	i915_program.c \
 	i915_state.c \
 	i915_vtbl.c \
@@ -60,7 +57,6 @@ CPPFLAGS+=	 -DI915 -DDRM_VBLANK_FLIP=DRM_VBLANK_FLIP
 LIBDPLIBS+=	drm_intel	${.CURDIR}/../../libdrm_intel
 
 COPTS.intel_context.c+=	-Wno-error	# XXX
-COPTS.intel_swapbuffers.c+=	-Wno-error	# XXX
 COPTS.intel_tex.c+=	-Wno-error	# XXX
 
 .include "${.CURDIR}/../dri.mk"

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2010/05/23 23:21:31 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2010/07/19 05:34:26 mrg Exp $
 
 MODULE=	radeon
 
@@ -8,6 +8,7 @@ CPPFLAGS+=	-DHAVE_LIBDRM_RADEON
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/radeon
 
 SRCS=	\
+	radeon_blit.c \
 	radeon_bo_legacy.c \
 	radeon_common_context.c \
 	radeon_common.c \
@@ -26,6 +27,7 @@ SRCS=	\
 	radeon_state.c \
 	radeon_state_init.c \
 	radeon_tex.c \
+	radeon_tex_copy.c \
 	radeon_texstate.c \
 	radeon_tcl.c \
 	radeon_swtcl.c \
