@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.211 2010/07/14 00:11:06 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.212 2010/07/19 15:46:37 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.211 2010/07/14 00:11:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.212 2010/07/19 15:46:37 jakllsch Exp $");
 
 #include "rnd.h"
 
@@ -252,6 +252,7 @@ struct wm_softc {
 	bus_size_t sc_ss;		/* bus space size */
 	bus_space_tag_t sc_iot;		/* I/O space tag */
 	bus_space_handle_t sc_ioh;	/* I/O space handle */
+	bus_size_t sc_ios;		/* I/O space size */
 	bus_space_tag_t sc_flasht;	/* flash registers space tag */
 	bus_space_handle_t sc_flashh;	/* flash registers space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
@@ -785,7 +786,7 @@ static const struct wm_product {
 	  WM_T_82572,		WMP_F_1000T },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
-	  "Intel® PRO/1000 PT Quad Port Server Adapter",
+	  "Intel PRO/1000 PT Quad Port Server Adapter",
 	  WM_T_82571,		WMP_F_1000T, },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
@@ -1200,7 +1201,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 				    "WARNING: I/O BAR at zero.\n");
 			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
 					0, &sc->sc_iot, &sc->sc_ioh,
-					NULL, NULL) == 0) {
+					NULL, &sc->sc_ios) == 0) {
 				sc->sc_flags |= WM_F_IOH_VALID;
 			} else {
 				aprint_error_dev(sc->sc_dev,
@@ -2038,6 +2039,7 @@ wm_detach(device_t self, int flags __unused)
 
 	/* Tell the firmware about the release */
 	wm_release_manageability(sc);
+	wm_release_hw_control(sc);
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
@@ -2074,13 +2076,16 @@ wm_detach(device_t self, int flags __unused)
 		sc->sc_ih = NULL;
 	}
 
-	/* Unmap the register */
+	/* Unmap the registers */
 	if (sc->sc_ss) {
 		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_ss);
 		sc->sc_ss = 0;
 	}
 
-	wm_release_hw_control(sc);
+	if (sc->sc_ios) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+		sc->sc_ios = 0;
+	}
 
 	return 0;
 }
