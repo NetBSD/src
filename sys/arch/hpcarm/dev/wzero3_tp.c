@@ -1,4 +1,4 @@
-/*	$NetBSD: wzero3_tp.c,v 1.5 2010/05/30 10:00:27 nonaka Exp $	*/
+/*	$NetBSD: wzero3_tp.c,v 1.6 2010/07/19 15:20:21 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2010 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.5 2010/05/30 10:00:27 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wzero3_tp.c,v 1.6 2010/07/19 15:20:21 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -549,8 +549,8 @@ ws007sh_wait_for_hsync(void)
 #define	MAXCTRL_RW_SH		15	/* R/W bit (0:Write/1:Read) */
 
 /* VREF=2.5V, sets interrupt initiated touch-screen scans
- * 3.5us/sample, 4 data ave., settling time: 100us */
-#define	MAX1233_ADCCTRL		0x8b43
+ * 3.5us/sample, 16 data ave., 12 bit, settling time: 100us */
+#define	MAX1233_ADCCTRL		0x8be3
 
 void
 max1233_init(void)
@@ -564,6 +564,10 @@ max1233_init(void)
 	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
 	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),
 	    MAX1233_ADCCTRL);
+	/* DAC on */
+	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (2<<MAXCTRL_ADDR_SH),
+	    0x0000);
 }
 
 void
@@ -601,36 +605,30 @@ max1233_resume(void)
 int
 max1233_readpos(struct wzero3tp_pos *pos)
 {
-	uint32_t z1 = 0, z2 = 0, rt;
+	uint32_t x, y, z1 = 0, z2 = 0, rt;
 	uint32_t status;
 	int down;
 
 	(void)wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
 	    (0<<MAXCTRL_RW_SH) | (1<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),
 	    0x0bf3);
+	DELAY(300);
 
 	while ((status = (wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
 		    (1<<MAXCTRL_RW_SH)
 		    | (1<<MAXCTRL_PAGE_SH)
 		    | (0<<MAXCTRL_ADDR_SH), 0) & 0x4000)) != 0x4000) {
 		DPRINTF(("%s: status=%#x\n", __func__, status));
+		DELAY(10);
 	}
 	DPRINTF(("%s: status=%#x\n", __func__, status));
 
-	z1 = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
-	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (2<<MAXCTRL_ADDR_SH),0);
-	DPRINTF(("%s: first z1=%d\n", __func__, z1));
-
-	down = (z1 >= 10);
-	if (!down)
-		goto out;
-
-	pos->x = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	x = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
 	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (0<<MAXCTRL_ADDR_SH),0);
-	DPRINTF(("%s: x=%d\n", __func__, pos->x));
-	pos->y = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
+	DPRINTF(("%s: x=%d\n", __func__, x));
+	y = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
 	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (1<<MAXCTRL_ADDR_SH),0);
-	DPRINTF(("%s: y=%d\n", __func__, pos->y));
+	DPRINTF(("%s: y=%d\n", __func__, y));
 	z1 = wzero3ssp_ic_send(WZERO3_SSP_IC_MAX1233,
 	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (2<<MAXCTRL_ADDR_SH),0);
 	DPRINTF(("%s: z1=%d\n", __func__, z1));
@@ -638,21 +636,22 @@ max1233_readpos(struct wzero3tp_pos *pos)
 	    (1<<MAXCTRL_RW_SH) | (0<<MAXCTRL_PAGE_SH) | (3<<MAXCTRL_ADDR_SH),0);
 	DPRINTF(("%s: z2=%d\n", __func__, z2));
 
-	if (z1) {
+	if (z1 >= 10) {
 		rt = 400 /* XXX: X plate ohms */;
-		rt *= pos->x;
+		rt *= x;
 		rt *= (z2 / z1) - 1;
 		rt >>= 12;
 	} else
 		rt = 0;
 	DPRINTF(("%s: rt=%d\n", __func__, rt));
 
-	/* check that pen is still down */
-	if (z1 == 0 || rt == 0)
-		down = 0;
+	down = (rt != 0);
+	if (down) {
+		pos->x = x;
+		pos->y = y;
+	}
 	pos->z = down;
 
-out:
 	return down;
 }
 
