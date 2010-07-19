@@ -17,7 +17,7 @@
    forward us bugs reported to you, if you determine that they are
    not bugs in your modifications.)  */
 
-const char bug_report_url[] = "<URL:http://www.NetBSD.org/Misc/send-pr.html>";
+const char bug_report_url[] = "<URL:http://gnats.NetBSD.org/support/send-pr.html>";
 
 /* The complete version string, assembled from several pieces.
    BASEVER, DATESTAMP, and DEVPHASE are defined by the Makefile.  */
