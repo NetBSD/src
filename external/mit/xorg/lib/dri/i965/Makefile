@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2010/05/23 21:31:52 mrg Exp $
+# $NetBSD: Makefile,v 1.12 2010/07/19 05:34:24 mrg Exp $
 
 MODULE=	i965
 
@@ -28,7 +28,6 @@ SRCS=	\
 	intel_pixel_draw.c \
 	intel_pixel_read.c \
 	intel_state.c \
-	intel_swapbuffers.c \
 	intel_syncobj.c \
 	intel_tex.c \
 	intel_tex_copy.c \
@@ -89,14 +88,24 @@ SRCS=	\
 	brw_wm_pass2.c \
 	brw_wm_sampler_state.c \
 	brw_wm_state.c \
-	brw_wm_surface_state.c 
+	brw_wm_surface_state.c \
+	gen6_cc.c \
+	gen6_clip_state.c \
+	gen6_depthstencil.c \
+	gen6_gs_state.c \
+	gen6_sampler_state.c \
+	gen6_scissor_state.c \
+	gen6_sf_state.c \
+	gen6_urb.c \
+	gen6_viewport_state.c \
+	gen6_vs_state.c \
+	gen6_wm_state.c
 
 COPTS.brw_draw_upload.c=	-Wno-error
 
 LIBDPLIBS+=	drm_intel	${.CURDIR}/../../libdrm_intel
 
 COPTS.intel_context.c+=	-Wno-error	# XXX
-COPTS.intel_swapbuffers.c+=	-Wno-error	# XXX
 COPTS.intel_tex.c+=	-Wno-error	# XXX
 
 .include "${.CURDIR}/../dri.mk"

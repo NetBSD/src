@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.5 2010/05/23 21:31:53 mrg Exp $
+#	$NetBSD: libmesa.mk,v 1.6 2010/07/19 05:34:27 mrg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -22,6 +22,7 @@ SRCS.main= \
 	clear.c \
 	clip.c \
 	colortab.c \
+	condrender.c \
 	context.c \
 	convolve.c \
 	cpuinfo.c \
@@ -33,7 +34,7 @@ SRCS.main= \
 	drawpix.c \
 	enable.c \
 	enums.c \
-	eval.c \
+	MESAeval.c \
 	execmem.c \
 	extensions.c \
 	fbobject.c \
@@ -55,8 +56,8 @@ SRCS.main= \
 	mipmap.c \
 	mm.c \
 	multisample.c \
-	pixel.c \
-	pixelstore.c \
+	MESApixel.c \
+	MESApixelstore.c \
 	points.c \
 	polygon.c \
 	queryobj.c \
@@ -87,15 +88,23 @@ SRCS.main= \
 	texstate.c \
 	texstore.c \
 	varray.c \
+	version.c \
 	viewport.c \
 	vtxfmt.c
+
+# XXX  avoid source name clashes with glx
+.PATH:		${X11SRCDIR.MesaLib}/src/mesa/main
+BUILDSYMLINKS=	${X11SRCDIR.MesaLib}/src/mesa/main/pixel.c MESApixel.c \
+		${X11SRCDIR.MesaLib}/src/mesa/main/pixelstore.c MESApixelstore.c \
+		${X11SRCDIR.MesaLib}/src/mesa/main/eval.c MESAeval.c
 
 # GL API sources
 PATHS.glapi=	glapi main
 SRCS.glapi= \
-	dispatch.c \
 	glapi.c \
+	glapi_dispatch.c \
 	glapi_getproc.c \
+	glapi_nop.c \
 	glthread.c
 
 # Math sources
@@ -196,13 +205,12 @@ COPTS.vbo_save_draw.c=	-Wno-error
 # statetracker
 
 # Shader sources
-PATHS.shader=		shader shader/grammar
-INCLUDES.shader=	shader/slang shader/grammar
+PATHS.shader=		shader
+INCLUDES.shader=	shader/slang
 SRCS.shader= \
 	arbprogparse.c \
 	arbprogram.c \
 	atifragshader.c \
-	grammar_mesa.c \
 	hash_table.c \
 	lex.yy.c \
 	nvfragparse.c \
@@ -227,7 +235,7 @@ SRCS.shader= \
 
 # Shader language sources
 PATHS.slang=	shader/slang
-INCLUDES.slang=	shader shader/grammar
+INCLUDES.slang=	shader
 SRCS.slang= \
 	slang_builtin.c	\
 	slang_codegen.c	\
@@ -242,7 +250,6 @@ SRCS.slang= \
 	slang_link.c	\
 	slang_log.c	\
 	slang_mem.c	\
-	slang_preprocess.c	\
 	slang_print.c	\
 	slang_simplify.c	\
 	slang_storage.c	\
@@ -330,3 +337,47 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/${_path_}
 .endfor
 
 LIBDPLIBS=	m	${NETBSDSRCDIR}/lib/libm
+
+# build the shader headers
+.include "../../tools/glsl/Makefile.glsl"
+
+CPPFLAGS+=	-I.
+
+# XXXX
+${SRCS.slang}: library/slang_120_core_gc.h \
+	library/slang_builtin_120_common_gc.h \
+	library/slang_builtin_120_fragment_gc.h \
+	library/slang_common_builtin_gc.h \
+	library/slang_core_gc.h \
+	library/slang_fragment_builtin_gc.h \
+	library/slang_vertex_builtin_gc.h
+
+library/slang_120_core_gc.h: slang_120_core.gc
+	-@mkdir -p library
+	$(GLSL) fragment $> library/slang_120_core_gc.h
+
+library/slang_builtin_120_common_gc.h: slang_builtin_120_common.gc
+	-@mkdir -p library
+	$(GLSL) fragment $> library/slang_builtin_120_common_gc.h
+
+library/slang_builtin_120_fragment_gc.h: slang_builtin_120_fragment.gc
+	-@mkdir -p library
+	$(GLSL) fragment $> library/slang_builtin_120_fragment_gc.h
+
+library/slang_common_builtin_gc.h: slang_common_builtin.gc
+	-@mkdir -p library
+	$(GLSL) fragment $> library/slang_common_builtin_gc.h
+
+library/slang_core_gc.h: slang_core.gc
+	-@mkdir -p library
+	$(GLSL) fragment $> library/slang_core_gc.h
+
+library/slang_fragment_builtin_gc.h: slang_fragment_builtin.gc
+	-@mkdir -p library
+	$(GLSL) fragment $> library/slang_fragment_builtin_gc.h
+
+library/slang_vertex_builtin_gc.h: slang_vertex_builtin.gc
+	-@mkdir -p library
+	$(GLSL) vertex $> library/slang_vertex_builtin_gc.h
+
+.PATH: ${X11SRCDIR.MesaLib}/src/mesa/shader/slang/library
