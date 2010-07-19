@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.26 2010/06/10 19:10:10 pooka Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.27 2010/07/19 15:38:55 pooka Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -143,5 +143,7 @@ int rump_sys_lstat(const char *, struct stat *) __RENAME(rump_sys___lstat50);
 int rump_sys_mknod(const char *, mode_t, dev_t) __RENAME(rump_sys___mknod50);
 int rump_sys_fhstat(const void *, size_t, struct stat *) __RENAME(rump_sys___fhstat50);
 int rump_sys_pipe(int *);
+
+#include <rump/rump_syscalls_compat.h>
 
 #endif /* _RUMP_RUMP_SYSCALLS_H_ */
