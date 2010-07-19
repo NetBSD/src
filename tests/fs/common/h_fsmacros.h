@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.10 2010/07/13 16:48:15 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.11 2010/07/19 16:09:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -37,13 +37,19 @@
 #include <atf-c.h>
 #include <string.h>
 
-#include "ext2fs.c"
-#include "ffs.c"
-#include "lfs.c"
-#include "msdosfs.c"
-#include "puffs.c"
-#include "sysvbfs.c"
-#include "tmpfs.c"
+#define FSPROTOS(_fs_)							\
+int _fs_##_fstest_newfs(const atf_tc_t *, void **, const char *, off_t);\
+int _fs_##_fstest_delfs(const atf_tc_t *, void *);			\
+int _fs_##_fstest_mount(const atf_tc_t *, void *, const char *, int);	\
+int _fs_##_fstest_unmount(const atf_tc_t *, const char *, int);
+
+FSPROTOS(ext2fs);
+FSPROTOS(ffs);
+FSPROTOS(lfs);
+FSPROTOS(msdosfs);
+FSPROTOS(puffs);
+FSPROTOS(sysvbfs);
+FSPROTOS(tmpfs);
 
 #define IMGNAME "image.fs"
 #define IMGSIZE (10000 * 512)
