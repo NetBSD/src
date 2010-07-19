@@ -1,4 +1,4 @@
-/*	$NetBSD: t_basic.c,v 1.3 2010/05/31 23:44:54 pooka Exp $	*/
+/*	$NetBSD: t_basic.c,v 1.4 2010/07/19 15:35:39 pooka Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -28,13 +28,6 @@ ATF_TC_HEAD(basic, tc)
 	atf_tc_set_md_var(tc, "descr", "basic umapfs mapping");
 }
 
-/* deal with time_t change for running this on 5.0 */
-#if __NetBSD_Prereq__(5,99,7)
-#define statfn rump_sys_stat
-#else
-#define statfn rump_pub_sys___stat30
-#endif
-
 static void
 xtouch(const char *path)
 {
@@ -59,7 +52,7 @@ testuidgid(const char *path, uid_t uid, gid_t gid)
 {
 	struct stat sb;
 
-	if (statfn(path, &sb) == -1)
+	if (rump_sys_stat(path, &sb) == -1)
 		atf_tc_fail_errno("stat %s", path);
 	if (uid != (uid_t)-1) {
 		if (sb.st_uid != uid)
