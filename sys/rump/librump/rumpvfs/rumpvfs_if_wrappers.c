@@ -1,8 +1,8 @@
-/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.6 2010/05/26 21:51:59 pooka Exp $	*/
+/*	$NetBSD: rumpvfs_if_wrappers.c,v 1.7 2010/07/19 15:30:43 pooka Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
- * from: NetBSD: rumpvfs.ifspec,v 1.4 2010/05/26 21:50:56 pooka Exp 
+ * from: NetBSD: rumpvfs.ifspec,v 1.5 2010/07/19 15:29:44 pooka Exp 
  * by:   NetBSD: makerumpif.sh,v 1.4 2009/10/15 00:29:19 pooka Exp 
  */
 
@@ -371,30 +371,6 @@ rump_pub_syspuffs_glueinit(int arg1, int *arg2)
 	return rv;
 }
 __weak_alias(rump_syspuffs_glueinit,rump_vfs_unavailable);
-
-int
-rump_pub_sys___stat30(const char *arg1, struct stat *arg2)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_sys___stat30(arg1, arg2);
-	rump_unschedule();
-
-	return rv;
-}
-
-int
-rump_pub_sys___lstat30(const char *arg1, struct stat *arg2)
-{
-	int rv;
-
-	rump_schedule();
-	rv = rump_sys___lstat30(arg1, arg2);
-	rump_unschedule();
-
-	return rv;
-}
 
 void
 rump_pub_vattr50_to_vattr(const struct vattr *arg1, struct vattr *arg2)
