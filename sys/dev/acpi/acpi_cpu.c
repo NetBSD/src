@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.2 2010/07/18 09:39:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.3 2010/07/19 00:59:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.2 2010/07/18 09:39:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.3 2010/07/19 00:59:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -77,6 +77,7 @@ static int
 acpicpu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
+	struct acpicpu_object ao;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_PROCESSOR)
 		return 0;
@@ -84,7 +85,10 @@ acpicpu_match(device_t parent, cfdata_t match, void *aux)
 	if (acpi_match_hid(aa->aa_node->ad_devinfo, acpicpu_hid) != 0)
 		return 1;
 
-	return acpicpu_object(aa->aa_node->ad_handle, NULL);
+	int rv = acpicpu_object(aa->aa_node->ad_handle, &ao);
+	if (rv == 0 || acpicpu_id(ao.ao_procid) == 0xFFFFFF)
+		return 0;
+	return 1;
 }
 
 static void
@@ -267,10 +271,10 @@ acpicpu_id(uint32_t id)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
+	KASSERT(id != 0);
 	for (CPU_INFO_FOREACH(cii, ci)) {
-
-		if (id == ci->ci_cpuid)
-			return id;
+		if (id - 1 == ci->ci_cpuid)
+			return id - 1;
 	}
 
 	return 0xFFFFFF;
@@ -433,6 +437,9 @@ acpicpu_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	device_t self = aux;
 
 	sc = device_private(self);
+
+	if ((sc->sc_flags & ACPICPU_FLAG_INIT) == 0)
+		return;
 
 	switch (evt) {
 
