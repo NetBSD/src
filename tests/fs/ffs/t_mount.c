@@ -1,4 +1,4 @@
-/*	$NetBSD: t_mount.c,v 1.5 2010/07/13 15:50:31 njoly Exp $	*/
+/*	$NetBSD: t_mount.c,v 1.6 2010/07/19 16:22:05 pooka Exp $	*/
 
 /*
  * Adapted for rump and atf from a testcase supplied
@@ -7,12 +7,12 @@
 
 #include <atf-c.h>
 
-#include "../common/ffs.c"
-
 #define IMGNAME "image.ffs"
 #define IMGSIZE (96 * 512)
 
 #define MNTDIR  "/mnt"
+
+#include "../common/h_fsmacros.h"
 
 ATF_TC(48Kimage);
 ATF_TC_HEAD(48Kimage, tc)
