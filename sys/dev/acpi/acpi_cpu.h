@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.2 2010/07/18 09:39:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.3 2010/07/19 00:59:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -86,6 +86,7 @@
 #define ACPICPU_FLAG_C_NOC3	 __BIT(7)
 #define ACPICPU_FLAG_C_MWAIT	 __BIT(8)
 #define ACPICPU_FLAG_C_C1E	 __BIT(9)
+#define ACPICPU_FLAG_INIT	 __BIT(31)
 
 struct acpicpu_cstate {
 	uint64_t		 cs_stat;
