@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.1 2010/07/19 15:28:20 pooka Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.2 2010/07/19 15:38:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -51,6 +51,9 @@
 _BEGIN_DECLS  
 #endif
 
+struct stat;
+struct pollfd;
+struct timespec;
 int rump_sys_nb5_stat(const char *, struct stat *);
 int rump_sys_nb5_lstat(const char *, struct stat *);
 int rump_sys_nb5_pollts(struct pollfd *, size_t,
