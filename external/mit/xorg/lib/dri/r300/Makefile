@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2010/05/27 01:20:14 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2010/07/19 05:34:25 mrg Exp $
 
 MODULE=	r300
 
@@ -27,11 +27,12 @@ SRCS=	\
 	radeon_mipmap_tree.c \
 	radeon_span.c \
 	radeon_queryobj.c \
+	radeon_tex_copy.c \
 	radeon_texture.c \
 	radeon_screen.c \
+	r300_blit.c \
 	r300_context.c \
 	r300_draw.c \
-	r300_ioctl.c \
 	r300_cmdbuf.c \
 	r300_state.c \
 	r300_render.c \
