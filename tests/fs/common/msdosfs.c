@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs.c,v 1.4 2010/07/13 15:50:31 njoly Exp $	*/
+/*	$NetBSD: msdosfs.c,v 1.5 2010/07/19 16:09:08 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -43,13 +43,15 @@
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
+#include "h_fsmacros.h"
+
 struct msdosfstestargs {
         struct msdosfs_args ta_uargs;
         char ta_devpath[MAXPATHLEN];
         char ta_imgpath[MAXPATHLEN];
 };
 
-static int
+int
 msdosfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
     off_t size)
 {
@@ -89,7 +91,7 @@ msdosfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image,
 	return 0;
 }
 
-static int
+int
 msdosfs_fstest_delfs(const atf_tc_t *tc, void *buf)
 {
 	int res;
@@ -108,7 +110,7 @@ msdosfs_fstest_delfs(const atf_tc_t *tc, void *buf)
 	return 0;
 }
 
-static int
+int
 msdosfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 {
 	int res;
@@ -123,7 +125,7 @@ msdosfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 	return res;
 }
 
-static int
+int
 msdosfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
 	int res;
