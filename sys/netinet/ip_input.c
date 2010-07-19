@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.288 2010/07/13 22:16:10 rmind Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.289 2010/07/19 14:09:45 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.288 2010/07/13 22:16:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.289 2010/07/19 14:09:45 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
@@ -412,14 +412,11 @@ ip_input(struct mbuf *m)
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct secpolicy *sp;
-	int error;
+	int error, s;
 #endif /* FAST_IPSEC */
 
 	MCLAIM(m, &ip_rx_mowner);
-#ifdef	DIAGNOSTIC
-	if ((m->m_flags & M_PKTHDR) == 0)
-		panic("ipintr no HDR");
-#endif
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
@@ -809,8 +806,8 @@ ours:
 	 * If offset or IP_MF are set, must reassemble.
 	 */
 	if (ip->ip_off & ~htons(IP_DF|IP_RF)) {
-		struct ipq *fp;
-		u_int off, hash;
+		struct mbuf *m_final;
+		u_int off, flen;
 		bool mff;
 
 		/*
@@ -825,65 +822,44 @@ ours:
 			goto bad;
 		}
 
-		/*
-		 * Adjust total IP length to not reflect header.  Set 'mff'
-		 * indicator, if more fragments are expected.  Convert offset
-		 * of this to bytes.
-		 */
-		ip->ip_len = htons(ntohs(ip->ip_len) - hlen);
+		/* Fragment length and MF flag. */
+		flen = ntohs(ip->ip_len) - hlen;
 		mff = (ip->ip_off & htons(IP_MF)) != 0;
 		if (mff) {
 			/*
 			 * Make sure that fragments have a data length
 			 * which is non-zero and multiple of 8 bytes.
 			 */
-			if (ntohs(ip->ip_len) == 0 ||
-			    (ntohs(ip->ip_len) & 0x7) != 0) {
+			if (flen == 0 || (flen & 0x7) != 0) {
 				IP_STATINC(IP_STAT_BADFRAGS);
 				goto bad;
 			}
 		}
-		ip->ip_off = htons((ntohs(ip->ip_off) & IP_OFFMASK) << 3);
-
-		/* Look for queue of fragments of this datagram. */
-		fp = ip_reass_lookup(ip, &hash);
-
-		/* Make sure the TOS matches previous fragments. */
-		if (fp && fp->ipq_tos != ip->ip_tos) {
-			IP_STATINC(IP_STAT_BADFRAGS);
-			ip_reass_unlock();
-			goto bad;
-		}
 
 		/*
-		 * If datagram marked as having more fragments
-		 * or if this is not the first fragment,
-		 * attempt reassembly; if it succeeds, proceed.
+		 * Adjust total IP length to not reflect header and convert
+		 * offset of this to bytes.  XXX: clobbers struct ip.
 		 */
-		if (mff || ip->ip_off != htons(0)) {
-			struct ipqent *ipqe;
+		ip->ip_len = htons(flen);
+		ip->ip_off = htons(off);
 
-			ipqe = ip_reass_getent();
-			if (ipqe == NULL) {
-				IP_STATINC(IP_STAT_RCVMEMDROP);
-				ip_reass_unlock();
-				goto bad;
-			}
-			ipqe->ipqe_mff = mff;
-			ipqe->ipqe_m = m;
-			ipqe->ipqe_ip = ip;
-			m = ip_reass(ipqe, fp, hash);
-			if (m == NULL) {
-				return;
-			}
-			IP_STATINC(IP_STAT_REASSEMBLED);
-			ip = mtod(m, struct ip *);
-			hlen = ip->ip_hl << 2;
-			ip->ip_len = htons(ntohs(ip->ip_len) + hlen);
-		} else if (fp) {
-			ip_freef(fp);
-			ip_reass_unlock();
+		/*
+		 * Pass to IP reassembly mechanism.
+		 */
+		if (ip_reass_packet(m, ip, mff, &m_final) != 0) {
+			/* Failed; invalid fragment(s) or packet. */
+			goto bad;
 		}
+		if (m_final == NULL) {
+			/* More fragments should come; silently return. */
+			return;
+		}
+		/* Reassembly is done, we have the final packet. */
+		m = m_final;
+
+		/* Updated local variable(s). */
+		ip = mtod(m, struct ip *);
+		hlen = ip->ip_hl << 2;
 	}
 
 #if defined(IPSEC)
