@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.4 2010/07/18 20:20:04 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.5 2010/07/19 00:59:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.4 2010/07/18 20:20:04 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.5 2010/07/19 00:59:32 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -204,7 +204,10 @@ acpicpu_cstate_start(device_t self)
 	if (rv != 0)
 		return rv;
 
-	return RUN_ONCE(&once_start, acpicpu_md_idle_start);
+	rv = RUN_ONCE(&once_start, acpicpu_md_idle_start);
+	if (rv == 0)
+		sc->sc_flags |= ACPICPU_FLAG_INIT;
+	return rv;
 }
 
 bool
