@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2010/05/22 05:45:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2010/07/19 05:34:27 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -59,6 +59,7 @@ CPPFLAGS.xdmcp.c=	${XDMCP_DEFINES} -DBSD44SOCKETS
 
 COPTS.xdmauth.c=	-Wno-error	# XXX
 COPTS.xstrans.c=	-Wno-error	# XXX
+COPTS.access.c=		-Wno-error	# XXX bigreqstr.h
 COPTS.io.c=		-Wno-error	# XXX bigreqstr.h
 
 .include <bsd.x11.mk>

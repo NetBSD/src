@@ -1,6 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2010/05/23 23:21:31 mrg Exp $
+# $NetBSD: Makefile,v 1.3 2010/07/19 05:34:25 mrg Exp $
 
 MODULE=	r600
+
+# Uses C99 for() variable decls.
+COPTS+=		-std=c99
 
 CPPFLAGS+=	-DRADEON_COMMON=1 -DRADEON_R600
 CPPFLAGS+=	-DHAVE_LIBDRM_RADEON
@@ -25,6 +28,8 @@ SRCS=	\
 	radeon_texture.c \
 	radeon_queryobj.c \
 	radeon_screen.c \
+	radeon_tex_copy.c \
+	r600_blit.c \
 	r600_context.c \
 	r600_cmdbuf.c \
 	r600_emit.c       \
@@ -51,5 +56,6 @@ SRCS+= \
 LIBDPLIBS+=	drm_radeon	${.CURDIR}/../../libdrm_radeon
 
 COPTS.radeon_screen.c=  -Wno-error	# XXX const
+COPTS.r700_assembler.c=  -Wno-error	# XXX pointer casts
 
 .include "${.CURDIR}/../dri.mk"
