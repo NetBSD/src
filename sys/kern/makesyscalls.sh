@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.97 2010/05/17 12:35:20 njoly Exp $
+#	$NetBSD: makesyscalls.sh,v 1.98 2010/07/19 15:25:47 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -806,6 +806,7 @@ END {
 cat $sysprotos >> $sysarghdr
 echo "#endif /* _${constprefix}SYSCALL_H_ */" >> $sysnumhdr
 echo "#endif /* _${constprefix}SYSCALLARGS_H_ */" >> $sysarghdr
+printf "\n#include <rump/rump_syscalls_compat.h>\n" >> $rumpcallshdr
 printf "\n#endif /* _RUMP_RUMP_SYSCALLS_H_ */\n" >> $rumpcallshdr
 cat $sysdcl $sysent > $syssw
 cat $sysnamesbottom >> $sysnames
