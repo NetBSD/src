@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.3 2010/07/16 19:16:41 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.4 2010/07/19 15:35:39 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,11 +39,6 @@
 
 #include "../common/h_fsmacros.h"
 #include "../../h_macros.h"
-
-/* make work when run with 5.0 userland */
-#if defined(__NetBSD_Version__) && (__NetBSD_Version__ < 599000700)
-#define rump_sys_stat rump_pub_sys___stat30
-#endif
 
 #define USES_DIRS \
     if (FSTYPE_SYSVBFS(tc)) atf_tc_skip("dirs not supported by file system")
