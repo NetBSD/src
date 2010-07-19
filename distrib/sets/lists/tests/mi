@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.114 2010/07/18 12:43:44 jmmv Exp $
+# $NetBSD: mi,v 1.115 2010/07/19 14:29:38 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -262,7 +262,7 @@
 ./usr/libdata/debug/usr/tests/kernel/tty/t_pr.debug			tests-kernel-tests	debug,atf
 ./usr/libdata/debug/usr/tests/lib					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/csu					tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/csu/h_initfini			tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/csu/h_initfini.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libc/hash/t_sha2.debug		tests-lib-debug		debug,atf
