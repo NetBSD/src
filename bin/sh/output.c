@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.31 2008/10/31 14:38:42 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.32 2010/07/19 01:15:17 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.31 2008/10/31 14:38:42 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.32 2010/07/19 01:15:17 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ void
 outshstr(const char *p, struct output *file)
 {
 	static const char norm_chars [] \
-		= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+		= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789/-=";
 	int need_q = p[0] == 0 || p[strspn(p, norm_chars)] != 0;
 	char c;
 
