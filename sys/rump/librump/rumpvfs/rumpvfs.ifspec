@@ -1,4 +1,4 @@
-;       $NetBSD: rumpvfs.ifspec,v 1.4 2010/05/26 21:50:56 pooka Exp $
+;       $NetBSD: rumpvfs.ifspec,v 1.5 2010/07/19 15:29:44 pooka Exp $
 
 NAME|vfs
 PUBHDR|include/rump/rumpvfs_if_pub.h
@@ -58,10 +58,6 @@ struct vnode *	|cdir_get	|void
 
 ; I picked the wrong header to stop sniffin' glue
 int		|syspuffs_glueinit	|int, int *	|WEAK
-
-; compat syscalls.  these are currently hand-"generated"
-int		|sys___stat30		|const char *, struct stat *
-int		|sys___lstat30		|const char *, struct stat *
 
 ; Other compat glue (for sniffing purposes)
 ; XXX: (lack of) types
