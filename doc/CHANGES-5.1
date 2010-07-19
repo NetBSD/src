@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.1,v 1.1.2.236 2010/07/16 19:14:13 riz Exp $
+# $NetBSD: CHANGES-5.1,v 1.1.2.237 2010/07/19 18:14:50 riz Exp $
 
 A complete list of changes from the NetBSD 5.0 release to the NetBSD 5.1
 release:
@@ -17409,4 +17409,12 @@ sys/netinet6/udp6_output.c			1.41 via patch
 	udp6_output(): call ip6_clearpktopts(&opt, ...) only if opt
 	was initialized.
 	[dyoung, ticket #1428]
+
+crypto/dist/ssh/sftp-glob.c			patch
+crypto/dist/ssh/sftp.c				patch
+lib/libc/gen/glob.3				1.37 via patch
+lib/libc/gen/glob.c				1.25-1.26
+
+	Fix globbing in libc and sftp.
+	[christos, ticket #1430]
 
