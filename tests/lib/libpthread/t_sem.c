@@ -1,4 +1,4 @@
-/* $NetBSD: t_sem.c,v 1.2 2010/07/18 22:30:55 pooka Exp $ */
+/* $NetBSD: t_sem.c,v 1.3 2010/07/19 10:31:46 jmmv Exp $ */
 
 /*
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.2 2010/07/18 22:30:55 pooka Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.3 2010/07/19 10:31:46 jmmv Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -99,6 +99,7 @@ __RCSID("$NetBSD: t_sem.c,v 1.2 2010/07/18 22:30:55 pooka Exp $");
 #include <unistd.h>
 
 #include <atf-c.h>
+#include <atf-c/config.h>
 
 #include "h_common.h"
 
@@ -215,60 +216,97 @@ sighandler(int signo)
 	SEM_REQUIRE(sem_post(&sem));
 }
 
+static void
+alarm_ms(const int ms)
+{
+	struct itimerval timer;
+	timer.it_interval.tv_sec = 0;
+	timer.it_interval.tv_usec = 0;
+	timer.it_value.tv_sec = 0;
+	timer.it_value.tv_usec = ms * 1000;
+	ATF_REQUIRE(setitimer(ITIMER_REAL, &timer, NULL) == 0);
+}
+
 static void *
 threadfunc(void *arg)
 {
 	int i;
 
+	printf("Entering loop\n");
 	for (i = 0; i < 10; ) {
-		int ret;
-
-		if ((i & 1) != 0)
-			ret = sem_wait(&sem);
-		else
-			ret = sem_trywait(&sem);
-
-		if (ret) {
-			ATF_REQUIRE_MSG((i & 1) == 0 && errno == EAGAIN,
-				"%s", strerror(errno));
-			continue;
+		if ((i & 1) != 0) {
+			ATF_REQUIRE(sem_wait(&sem) != -1);
+		} else {
+			const int ret = sem_trywait(&sem);
+			if (ret == -1) {
+				ATF_REQUIRE(errno == EAGAIN);
+				continue;
+			}
 		}
-
 		printf("%s: %d\n", __func__, i);
-		alarm(1);
+		alarm_ms(100);
 		i++;
 	}
 
 	return NULL;
 }
 
-ATF_TC(before_start);
-ATF_TC_HEAD(before_start, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Checks using semaphores before "
-	    "starting pthread");
-	atf_tc_set_md_var(tc, "timeout", "20");
-}
-ATF_TC_BODY(before_start, tc)
+static void
+before_start_test(const bool use_pthread)
 {
 	pthread_t t;
 
-	alarm(1);
-
 	SEM_REQUIRE(sem_init(&sem, 0, 0));
-
-	PTHREAD_REQUIRE(pthread_create(&t, NULL, threadfunc, NULL));
-
 	ATF_REQUIRE(SIG_ERR != signal(SIGALRM, sighandler));
 
-	PTHREAD_REQUIRE(pthread_join(t, NULL));
+	alarm_ms(100);
+
+	if (use_pthread) {
+		PTHREAD_REQUIRE(pthread_create(&t, NULL, threadfunc, NULL));
+		PTHREAD_REQUIRE(pthread_join(t, NULL));
+	} else {
+		threadfunc(NULL);
+	}
+}
+
+ATF_TC(before_start_no_threads);
+ATF_TC_HEAD(before_start_no_threads, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks using semaphores without any "
+	    "thread running");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+ATF_TC_BODY(before_start_no_threads, tc)
+{
+	before_start_test(false);
+}
+
+ATF_TC(before_start_one_thread);
+ATF_TC_HEAD(before_start_one_thread, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks using semaphores before "
+	    "starting one thread");
+	atf_tc_set_md_var(tc, "timeout", "20");
+}
+ATF_TC_BODY(before_start_one_thread, tc)
+{
+	if (strcmp("amd64", atf_config_get("atf_arch")) == 0) {
+		/* TODO(jmmv): This really is a race condition test.  However,
+		 * we cannot yet mark it as such because ATF does not provide
+		 * such functionality.  Let's just mark it as an unconditional
+		 * expected timeout as I haven't got it to pass any single
+		 * time. */
+		atf_tc_expect_timeout("Race condition detected");
+	}
+	before_start_test(true);
 }
 
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, named);
 	ATF_TP_ADD_TC(tp, unnamed);
-	ATF_TP_ADD_TC(tp, before_start);
+	ATF_TP_ADD_TC(tp, before_start_no_threads);
+	ATF_TP_ADD_TC(tp, before_start_one_thread);
 
 	return atf_no_error();
 }
