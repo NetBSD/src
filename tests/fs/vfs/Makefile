@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 2010/07/19 16:09:08 pooka Exp $
+#	$NetBSD: Makefile,v 1.8 2010/07/19 16:32:01 pooka Exp $
 #
+
+.include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/fs/vfs
 WARNS=		4
@@ -20,7 +22,7 @@ LDADD+=-lrumpfs_tmpfs						# tmpfs
 LDADD+=-lrumpdev_disk -lrumpdev					# disk device
 LDADD+=-lrumpvfs -lrump -lrumpuser -lpthread			# base
 
-LDFLAGS+=-L${.CURDIR}/../common
-LDADD+=-lvfstest
+VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
+LDADD+=-L${VFSTESTDIR} -lvfstest
 
 .include <bsd.test.mk>
