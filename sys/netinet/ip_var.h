@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.93 2010/07/19 14:09:45 rmind Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.94 2010/07/19 19:16:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -48,8 +48,6 @@ struct ipovly {
 	struct	  in_addr ih_dst;	/* destination internet address */
 } __packed;
 
-#ifdef _KERNEL
-
 /*
  * Ip (reassembly or sequence) queue structures.
  *
@@ -81,8 +79,6 @@ struct ipqent {
 };
 #define	ipqe_ip		_ipqe_u1._ip
 #define	ipqe_tcp	_ipqe_u1._tcp
-
-#endif  /* _KERNEL */
 
 /*
  * Structure stored in mbuf in inpcb.ip_options
