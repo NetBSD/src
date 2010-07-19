@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.2 2010/07/13 17:49:24 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.3 2010/07/19 16:09:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
+
+#include "h_fsmacros.h"
 
 struct puffstestargs {
 	uint8_t			*pta_pargs;
@@ -214,7 +216,7 @@ rumpshovels(int rumpfd, int servfd)
 }
 
 /* XXX: we don't support size */
-static int
+int
 puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	const char *image, off_t size)
 {
@@ -300,7 +302,7 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	return 0;
 }
 
-static int
+int
 puffs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 {
 	struct puffstestargs *pargs = arg;
@@ -331,7 +333,7 @@ puffs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 	return 0;
 }
 
-static int
+int
 puffs_fstest_delfs(const atf_tc_t *tc, void *arg)
 {
 	struct puffstestargs *pargs = arg;
@@ -350,7 +352,7 @@ puffs_fstest_delfs(const atf_tc_t *tc, void *arg)
 	return 0;
 }
 
-static int
+int
 puffs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
 	int rv;
