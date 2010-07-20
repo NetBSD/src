@@ -1,4 +1,4 @@
-/*	$NetBSD: ioblix_zbus.c,v 1.15 2010/02/02 19:03:31 phx Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.16 2010/07/20 05:32:46 jklos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.15 2010/02/02 19:03:31 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.16 2010/07/20 05:32:46 jklos Exp $");
 
 /* IOBlix Zorro driver */
 /* XXX to be done: we need to probe the com clock speed! */
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.15 2010/02/02 19:03:31 phx Exp $")
 #include <amiga/dev/supio.h>
 #include <amiga/dev/zbusvar.h>
 
+#include "opt_iobzclock.h"
 
 struct iobz_softc {
 	struct device sc_dev;
@@ -130,7 +131,7 @@ iobzattach(struct device *parent, struct device *self, void *auxp)
 	while (iobzd->name) {
 		supa.supio_name = iobzd->name;
 		supa.supio_iobase = iobzd->off;
-		supa.supio_arg = iobzclock /* XXX iobzd->arg */;
+		supa.supio_arg = iobzd->arg ? iobzclock : 0 /* XXX iobzd->arg */;
 		config_found(self, &supa, iobzprint); /* XXX */
 		++iobzd;
 	}
