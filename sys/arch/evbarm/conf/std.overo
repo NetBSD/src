@@ -1,4 +1,4 @@
-#	$NetBSD: std.overo,v 1.1 2010/07/10 08:17:48 kiyohara Exp $
+#	$NetBSD: std.overo,v 1.2 2010/07/20 12:14:16 kiyohara Exp $
 #
 # standard NetBSD/evbarm for OVERO options
 
@@ -20,6 +20,7 @@ options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	KERNEL_BASE_EXT=0x80000000
 makeoptions	LOADADDRESS="0x80200000"
 makeoptions	BOARDTYPE="overo"
+options 	EVBARM_BOARDTYPE=overo
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.gumstix"
 makeoptions	CPPFLAGS+="-I$S/../../../include"
 
