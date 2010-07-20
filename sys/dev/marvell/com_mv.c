@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mv.c,v 1.1 2010/07/13 11:16:02 kiyohara Exp $	*/
+/*	$NetBSD: com_mv.c,v 1.2 2010/07/20 11:50:18 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.1 2010/07/13 11:16:02 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mv.c,v 1.2 2010/07/20 11:50:18 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,6 +92,11 @@ mvuart_match(device_t parent, struct cfdata *match, void *aux)
 	case MARVELL_ORION_1_88W8660:
 	case MARVELL_ORION_2_88F1281:
 	case MARVELL_ORION_2_88F5281:
+	case MARVELL_KIRKWOOD_88F6180:
+	case MARVELL_KIRKWOOD_88F6192:
+	case MARVELL_KIRKWOOD_88F6281:
+	case MARVELL_MV78XX0_MV78100:
+	case MARVELL_MV78XX0_MV78200:
 		break;
 
 	default:
