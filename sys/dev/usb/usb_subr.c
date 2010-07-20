@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.171 2010/06/06 18:58:26 pgoyette Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.172 2010/07/20 20:56:06 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.171 2010/06/06 18:58:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.172 2010/07/20 20:56:06 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -594,8 +594,10 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 
 	/* Get the short descriptor. */
 	err = usbd_get_config_desc(dev, index, &cd);
-	if (err)
+	if (err) {
+		DPRINTF(("usbd_set_config_index: get_config_desc=%d\n", err));
 		return (err);
+	}
 	len = UGETW(cd.wTotalLength);
 	cdp = malloc(len, M_USB, M_NOWAIT);
 	if (cdp == NULL)
@@ -608,9 +610,10 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 			break;
 		usbd_delay_ms(dev, 200);
 	}
-	if (err)
+	if (err) {
+		DPRINTF(("usbd_set_config_index: get_desc=%d\n", err));
 		goto bad;
-
+	}
 	if (cdp->bDescriptorType != UDESC_CONFIG) {
 		DPRINTFN(-1,("usbd_set_config_index: bad desc %d\n",
 			     cdp->bDescriptorType));
@@ -1024,6 +1027,34 @@ usbd_reattach_device(device_t parent, usbd_device_handle dev,
 }
 
 /*
+ * Get the first 8 bytes of the device descriptor.
+ * Do as Windows does: try to read 64 bytes -- there are devices which
+ * recognize the initial descriptor fetch (before the control endpoint's
+ * MaxPacketSize is known by the host) by exactly this length.
+ */
+static usbd_status
+usbd_get_initial_ddesc(usbd_device_handle dev, usb_device_descriptor_t *desc)
+{
+	usb_device_request_t req;
+	char buf[64];
+	int res, actlen;
+
+	req.bmRequestType = UT_READ_DEVICE;
+	req.bRequest = UR_GET_DESCRIPTOR;
+	USETW2(req.wValue, UDESC_DEVICE, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 64);
+	res = usbd_do_request_flags(dev, &req, buf, USBD_SHORT_XFER_OK,
+		&actlen, USBD_DEFAULT_TIMEOUT);
+	if (res)
+		return res;
+	if (actlen < 8)
+		return USBD_SHORT_XFER;
+	memcpy(desc, buf, 8);
+	return USBD_NORMAL_COMPLETION;
+}
+
+/*
  * Called when a new device has been put in the powered state,
  * but not yet in the addressed state.
  * Get initial descriptor, set the address, get full descriptor,
@@ -1065,10 +1096,12 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	dev->def_ep_desc.bDescriptorType = UDESC_ENDPOINT;
 	dev->def_ep_desc.bEndpointAddress = USB_CONTROL_ENDPOINT;
 	dev->def_ep_desc.bmAttributes = UE_CONTROL;
-	if (speed == USB_SPEED_HIGH)
-		USETW(dev->def_ep_desc.wMaxPacketSize, 64);
-	else
-		USETW(dev->def_ep_desc.wMaxPacketSize, USB_MAX_IPACKET);
+	/*
+	 * temporary, will be fixed after first descriptor fetch
+	 * (which uses 64 bytes so it shouldn't be less),
+	 * highspeed devices must support 64 byte packets anyway
+	 */
+	USETW(dev->def_ep_desc.wMaxPacketSize, 64);
 	dev->def_ep_desc.bInterval = 0;
 
 	dev->quirks = &usbd_no_quirk;
@@ -1114,11 +1147,7 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	/* Try a few times in case the device is slow (i.e. outside specs.) */
 	for (i = 0; i < 10; i++) {
 		/* Get the first 8 bytes of the device descriptor. */
-		err = usbd_get_desc(dev, UDESC_DEVICE, 0, 
-			(speed == USB_SPEED_HIGH) ? USB_DEVICE_DESCRIPTOR_SIZE
-						  : USB_MAX_IPACKET,
-			 dd);
-
+		err = usbd_get_initial_ddesc(dev, dd);
 		if (!err)
 			break;
 		usbd_delay_ms(dev, 200);
