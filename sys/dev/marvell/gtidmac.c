@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmac.c,v 1.4 2010/07/11 08:43:36 kiyohara Exp $	*/
+/*	$NetBSD: gtidmac.c,v 1.5 2010/07/20 11:47:59 kiyohara Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.4 2010/07/11 08:43:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidmac.c,v 1.5 2010/07/20 11:47:59 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -316,15 +316,8 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 	case MARVELL_DISCOVERY:
 	case MARVELL_DISCOVERY_II:
 	case MARVELL_DISCOVERY_III:
-#if 0
-	case MARVELL_DISCOVERY_V:	????
-#endif
 		break;
 
-#if 0
-	case MARVELL_DISCOVERY_LT:	????
-	case MARVELL_DISCOVERY_VI:	????
-#endif
 	case MARVELL_ORION_1_88F1181:
 	case MARVELL_ORION_1_88F5082:
 	case MARVELL_ORION_1_88F5180N:
@@ -335,6 +328,11 @@ gtidmac_attach(device_t parent, device_t self, void *aux)
 		idmac_nchan = 4;
 		break;
 
+#if 0
+	case MARVELL_DISCOVERY_LT:
+	case MARVELL_DISCOVERY_V:
+	case MARVELL_DISCOVERY_VI:	????
+#endif
 	case MARVELL_ORION_1_88F5182:
 		idmac_nchan = 4;
 		xore_nchan = 2;
