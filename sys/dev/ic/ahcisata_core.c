@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.26 2010/04/07 17:51:16 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.27 2010/07/20 18:50:48 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.26 2010/04/07 17:51:16 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.27 2010/07/20 18:50:48 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -142,7 +142,7 @@ ahci_reset(struct ahci_softc *sc)
 void
 ahci_setup_ports(struct ahci_softc *sc)
 {
-	u_int32_t ahci_ports;
+	uint32_t ahci_ports;
 	int i, port;
 	
 	ahci_ports = AHCI_READ(sc, AHCI_PI);
@@ -161,7 +161,7 @@ ahci_setup_ports(struct ahci_softc *sc)
 void
 ahci_reprobe_drives(struct ahci_softc *sc)
 {
-	u_int32_t ahci_ports;
+	uint32_t ahci_ports;
 	int i, port;
 	struct ahci_channel *achp;
 	struct ata_channel *chp;
@@ -208,7 +208,7 @@ ahci_enable_intrs(struct ahci_softc *sc)
 void
 ahci_attach(struct ahci_softc *sc)
 {
-	u_int32_t ahci_cap, ahci_rev, ahci_ports;
+	uint32_t ahci_cap, ahci_rev, ahci_ports;
 	int i, j, port;
 	struct ahci_channel *achp;
 	struct ata_channel *chp;
@@ -412,7 +412,7 @@ int
 ahci_intr(void *v)
 {
 	struct ahci_softc *sc = v;
-	u_int32_t is;
+	uint32_t is;
 	int i, r = 0;
 
 	while ((is = AHCI_READ(sc, AHCI_IS))) {
@@ -430,7 +430,7 @@ ahci_intr(void *v)
 void
 ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 {
-	u_int32_t is, tfd;
+	uint32_t is, tfd;
 	struct ata_channel *chp = &achp->ata_channel;
 	struct ata_xfer *xfer = chp->ch_queue->active_xfer;
 	int slot;
@@ -556,7 +556,7 @@ ahci_probe_drive(struct ata_channel *chp)
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
 	int i, s;
-	u_int32_t sig;
+	uint32_t sig;
 
 	/* XXX This should be done by other code. */
 	for (i = 0; i < chp->ch_ndrive; i++) {
