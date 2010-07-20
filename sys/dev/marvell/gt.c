@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.25 2010/07/11 08:43:36 kiyohara Exp $	*/
+/*	$NetBSD: gt.c,v 1.26 2010/07/20 11:42:22 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.25 2010/07/11 08:43:36 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.26 2010/07/20 11:42:22 kiyohara Exp $");
 
 #include "opt_marvell.h"
 #include "gtmpsc.h"
@@ -147,6 +147,32 @@ static const struct gt_dev {
 	{ MARVELL_DISCOVERY_III,"gtpci",   1,	OFFSET_DEFAULT,	IRQ_DEFAULT },
 	{ MARVELL_DISCOVERY_III,"gttwsi",  0,	0xc000,		37 },
 	{ MARVELL_DISCOVERY_III,"mvgbec",  0,	0x0000,		IRQ_DEFAULT },
+
+#if 0	/* XXXXXX: from www.marvell.com */
+	/* Discovery LT (Discovery Light) MV644[23]0 */
+	{ MARVELL_DISCOVERY_LT,	"gtidmac", 0,	0x?000,		? /*...? */ },
+	{ MARVELL_DISCOVERY_LT,	"gtmpsc",  0,	0x?000,		? },
+	{ MARVELL_DISCOVERY_LT,	"gtmpsc",  1,	0x?000,		? },
+	{ MARVELL_DISCOVERY_LT,	"gtpci",   0,	OFFSET_DEFAULT,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_LT,	"gtpci",   1,	OFFSET_DEFAULT,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_LT,	"gttwsi",  0,	0x?000,		? },
+	{ MARVELL_DISCOVERY_LT,	"mvgbec",  0,	0x?000,		IRQ_DEFAULT },
+
+	/* Discovery V MV64560 */
+	{ MARVELL_DISCOVERY_V,	"com",     ?,	0x?0000,	? },
+	{ MARVELL_DISCOVERY_V,	"ehci",    0,	0x?0000,	? },
+	{ MARVELL_DISCOVERY_V,	"ehci",    1,	0x?0000,	? },
+	{ MARVELL_DISCOVERY_V,	"gtidmac", 0,	0x?0000,	? /*...? */ },
+	{ MARVELL_DISCOVERY_V,	"gtpci",   0,	0x?0000,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_V,	"gttwsi",  0,	0x?0000,	? },
+	{ MARVELL_DISCOVERY_V,	"mvgbec",  0,	0x?0000,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_V,	"mvpex or gtpci?", 0, 0x?0000,	IRQ_DEFAULT },
+	{ MARVELL_DISCOVERY_V,	"obio",    0,	OFFSET_DEFAULT,	IRQ_DEFAULT },
+
+	/* Discovery VI MV64660 */
+	/* MV64560 + SATA? */
+	{ MARVELL_DISCOVERY_VI, "mvsata",  0,	0x?0000,	? },
+#endif
 };
 
 
