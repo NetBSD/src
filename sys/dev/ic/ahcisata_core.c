@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.27 2010/07/20 18:50:48 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.28 2010/07/20 19:24:11 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.27 2010/07/20 18:50:48 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.28 2010/07/20 19:24:11 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -190,9 +190,9 @@ ahci_setup_port(struct ahci_softc *sc, int i)
 	achp = &sc->sc_channels[i];
 
 	AHCI_WRITE(sc, AHCI_P_CLB(i), achp->ahcic_bus_cmdh);
-	AHCI_WRITE(sc, AHCI_P_CLBU(i), 0);
+	AHCI_WRITE(sc, AHCI_P_CLBU(i), (uint64_t)achp->ahcic_bus_cmdh>>32);
 	AHCI_WRITE(sc, AHCI_P_FB(i), achp->ahcic_bus_rfis);
-	AHCI_WRITE(sc, AHCI_P_FBU(i), 0);
+	AHCI_WRITE(sc, AHCI_P_FBU(i), (uint64_t)achp->ahcic_bus_rfis>>32);
 }
 
 void
@@ -353,9 +353,10 @@ ahci_attach(struct ahci_softc *sc)
 		achp->ahcic_bus_rfis = sc->sc_cmd_hdrd->dm_segs[0].ds_addr +
 		     AHCI_CMDH_SIZE * sc->sc_atac.atac_nchannels + 
 		     AHCI_RFIS_SIZE * port;
-		AHCIDEBUG_PRINT(("port %d cmdh %p (0x%x) rfis %p (0x%x)\n", i,
-		   achp->ahcic_cmdh, (u_int)achp->ahcic_bus_cmdh,
-		   achp->ahcic_rfis, (u_int)achp->ahcic_bus_rfis),
+		AHCIDEBUG_PRINT(("port %d cmdh %p (0x%" PRIx64 ") "
+				         "rfis %p (0x%" PRIx64 ")\n", i,
+		   achp->ahcic_cmdh, (uint64_t)achp->ahcic_bus_cmdh,
+		   achp->ahcic_rfis, (uint64_t)achp->ahcic_bus_rfis),
 		   DEBUG_PROBE);
 		    
 		for (j = 0; j < sc->sc_ncmds; j++) {
@@ -365,11 +366,10 @@ ahci_attach(struct ahci_softc *sc)
 			     achp->ahcic_cmd_tbld->dm_segs[0].ds_addr +
 			     AHCI_CMDTBL_SIZE * j;
 			achp->ahcic_cmdh[j].cmdh_cmdtba =
-			    htole32(achp->ahcic_bus_cmd_tbl[j]);
-			achp->ahcic_cmdh[j].cmdh_cmdtbau = htole32(0);
-			AHCIDEBUG_PRINT(("port %d/%d tbl %p (0x%x)\n", i, j,
+			    htole64(achp->ahcic_bus_cmd_tbl[j]);
+			AHCIDEBUG_PRINT(("port %d/%d tbl %p (0x%" PRIx64 ")\n", i, j,
 			    achp->ahcic_cmd_tbl[j],
-			    (u_int)achp->ahcic_bus_cmd_tbl[j]), DEBUG_PROBE);
+			    (uint64_t)achp->ahcic_bus_cmd_tbl[j]), DEBUG_PROBE);
 			/* The xfer DMA map */
 			error = bus_dmamap_create(sc->sc_dmat, MAXPHYS,
 			    AHCI_NPRD, 0x400000 /* 4MB */, 0,
@@ -1152,9 +1152,8 @@ ahci_dma_setup(struct ata_channel *chp, int slot, void *data,
 	    achp->ahcic_datad[slot]->dm_mapsize, 
 	    (op == BUS_DMA_READ) ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 	for (seg = 0; seg <  achp->ahcic_datad[slot]->dm_nsegs; seg++) {
-		cmd_tbl->cmdt_prd[seg].prd_dba = htole32(
+		cmd_tbl->cmdt_prd[seg].prd_dba = htole64(
 		     achp->ahcic_datad[slot]->dm_segs[seg].ds_addr);
-		cmd_tbl->cmdt_prd[seg].prd_dbau = 0;
 		cmd_tbl->cmdt_prd[seg].prd_dbc = htole32(
 		    achp->ahcic_datad[slot]->dm_segs[seg].ds_len - 1);
 	}
