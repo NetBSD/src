@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.43 2010/07/16 15:30:10 tsutsui Exp $ */
+/*	$NetBSD: txcom.c,v 1.44 2010/07/20 15:03:53 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.43 2010/07/16 15:30:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.44 2010/07/20 15:03:53 tsutsui Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -99,8 +99,8 @@ struct txcom_softc {
 	struct tty		*sc_tty;
 	struct txcom_chip	*sc_chip;
 
-	struct callout		sc_txsoft_ch;
-	struct callout		sc_rxsoft_ch;
+	void		*sc_txsoft_cookie;
+	void		*sc_rxsoft_cookie;
 
  	u_int8_t	*sc_tba;	/* transmit buffer address */
  	int		sc_tbc;		/* transmit byte count */
@@ -249,10 +249,6 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	/* initialize callouts */
-	callout_init(&sc->sc_txsoft_ch, 0);
-	callout_init(&sc->sc_rxsoft_ch, 0);
-
 	/* 
 	 * Enable interrupt
 	 */
@@ -272,6 +268,11 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 	    txcom_parityerr_intr, sc);
 	tx_intr_establish(tc, TXCOMINTR(BREAK, slot), IST_EDGE, IPL_TTY,
 	    txcom_break_intr, sc);
+
+	sc->sc_txsoft_cookie =
+	    softint_establish(SOFTINT_SERIAL, txcom_txsoft, sc);
+	sc->sc_rxsoft_cookie =
+	    softint_establish(SOFTINT_SERIAL, txcom_rxsoft, sc);
 
 	/*
 	 * UARTA has external signal line. (its wiring is platform dependent)
@@ -700,7 +701,7 @@ txcom_rxintr(void *arg)
 	sc->sc_rbuf[sc->sc_rbput] = c;
 	sc->sc_rbput = (sc->sc_rbput + 1) % TXCOM_RING_MASK;
 	
-	callout_reset(&sc->sc_rxsoft_ch, 1, txcom_rxsoft, sc);
+	softint_schedule(sc->sc_rxsoft_cookie);
 
 	return 0;
 }
@@ -749,7 +750,7 @@ txcom_txintr(void *arg)
 		sc->sc_tbc--;
 		sc->sc_tba++;
 	} else {
-		callout_reset(&sc->sc_txsoft_ch, 1, txcom_txsoft, sc);
+		softint_schedule(sc->sc_txsoft_cookie);
 	}
 
 	return 0;
