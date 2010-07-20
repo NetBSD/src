@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.36.2.16 2010/07/15 14:13:11 uebayasi Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.36.2.17 2010/07/20 15:43:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.16 2010/07/15 14:13:11 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.36.2.17 2010/07/20 15:43:48 uebayasi Exp $");
 
 #include "opt_xip.h"
 
@@ -791,7 +791,6 @@ genfs_do_getpages_xip(void *v)
 	int npages;
 	int fs_bshift, fs_bsize, dev_bshift, dev_bsize;
 	int i;
-	paddr_t phys_addr;
 
 	UVMHIST_FUNC("genfs_do_getpages_xip"); UVMHIST_CALLED(ubchist);
 
@@ -840,24 +839,22 @@ genfs_do_getpages_xip(void *v)
 			pps[i] = xip_zero_page;
 		} else {
 			struct vm_physseg *seg;
+			daddr_t seg_off;
 			struct vm_page *pg;
 
 			seg = devvp->v_physseg;
 			KASSERT(seg != NULL);
 			/* bus_space_mmap cookie -> paddr_t */
-			phys_addr = pmap_phys_address(seg->start) +
-			    (blkno << dev_bshift) +
-			    (off - (lbn << fs_bshift));
-			pg = seg->pgs +
-			    ((phys_addr >> PAGE_SHIFT) - seg->start);
-			KASSERT(pg->phys_addr == phys_addr);
+			seg_off = (blkno << dev_bshift) + (off - (lbn << fs_bshift));
+			pg = seg->pgs + (seg_off >> PAGE_SHIFT);
+			KASSERT(pg->phys_addr == pmap_phys_address(seg->start) + seg_off);
 
 			pps[i] = pg;
 		}
 
 		UVMHIST_LOG(ubchist, "xip pgs %d => phys_addr=0x%lx (%p)",
 			i,
-			(long)phys_addr,
+			(long)pg->phys_addr,
 			pps[i],
 			0);
 
