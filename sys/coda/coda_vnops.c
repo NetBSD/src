@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.75 2010/07/01 13:00:54 hannken Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.76 2010/07/20 17:26:03 christos Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.75 2010/07/01 13:00:54 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.76 2010/07/20 17:26:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,7 +539,7 @@ coda_ioctl(void *v)
 	return(EINVAL);
     }
 
-    if (iap->vi.in_size > VC_MAXDATASIZE) {
+    if (iap->vi.in_size > VC_MAXDATASIZE || iap->vi.out_size > VC_MAXDATASIZE) {
 	vrele(tvp);
 	return(EINVAL);
     }
