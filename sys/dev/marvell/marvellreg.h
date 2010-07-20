@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellreg.h,v 1.4 2010/07/20 11:56:47 kiyohara Exp $	*/
+/*	$NetBSD: marvellreg.h,v 1.5 2010/07/20 12:01:33 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -67,16 +67,5 @@
 #define MARVELL_ATTR_SDRAM_CS1		0x0d
 #define MARVELL_ATTR_SDRAM_CS2		0x0b
 #define MARVELL_ATTR_SDRAM_CS3		0x07
-#define MARVELL_ATTR_PEX_CFG		0x79	/* bug workaround ?? */
-#define MARVELL_ATTR_PEX_MEM		0x59
-#define MARVELL_ATTR_PEX_IO		0x51
-#define MARVELL_ATTR_PCI_MEM		0x59
-#define MARVELL_ATTR_PCI_IO		0x51
-#define MARVELL_ATTR_DEVICE_CS0		0x1e
-#define MARVELL_ATTR_DEVICE_CS1		0x1d
-#define MARVELL_ATTR_DEVICE_CS2		0x1b
-#define MARVELL_ATTR_FLASH_CS		0x1b
-#define MARVELL_ATTR_BOOT_CS		0x0f
-#define MARVELL_ATTR_CRYPT		0x00
 
 #endif	/* _DEV_MARVELL_MARVELLREG_H_ */
