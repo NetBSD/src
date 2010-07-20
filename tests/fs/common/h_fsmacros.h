@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.12 2010/07/19 16:21:22 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.13 2010/07/20 17:44:01 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,25 +56,31 @@ FSPROTOS(tmpfs);
 #define FSTEST_MNTNAME "/mnt"
 
 #define ATF_TC_FSADD(fs,type,func,desc) \
-  ATF_TC(fs##_##func); \
+  ATF_TC_WITH_CLEANUP(fs##_##func); \
   ATF_TC_HEAD(fs##_##func,tc) \
   { \
     atf_tc_set_md_var(tc, "descr", type " test for " desc); \
     atf_tc_set_md_var(tc, "use.fs", "true"); \
     atf_tc_set_md_var(tc, "X-fs.type", type); \
   } \
+  void *fs##func##tmp; \
   ATF_TC_BODY(fs##_##func,tc) \
   { \
-    void *tmp; \
-    atf_check_fstype(tc, type); \
-    if (fs##_fstest_newfs(tc, &tmp, FSTEST_IMGNAME, FSTEST_IMGSIZE) != 0) \
+    if (!atf_check_fstype(tc, type)) \
+      atf_tc_skip("filesystem not selected"); \
+    if (fs##_fstest_newfs(tc, &fs##func##tmp, FSTEST_IMGNAME, FSTEST_IMGSIZE) != 0) \
       atf_tc_fail("newfs failed"); \
-    if (fs##_fstest_mount(tc, tmp, FSTEST_MNTNAME, 0) != 0) \
+    if (fs##_fstest_mount(tc, fs##func##tmp, FSTEST_MNTNAME, 0) != 0) \
       atf_tc_fail("mount failed"); \
     func(tc,FSTEST_MNTNAME); \
     if (fs##_fstest_unmount(tc, FSTEST_MNTNAME, 0) != 0) \
       atf_tc_fail("unmount failed"); \
-    if (fs##_fstest_delfs(tc, tmp) != 0) \
+  } \
+  ATF_TC_CLEANUP(fs##_##func,tc) \
+  { \
+    if (!atf_check_fstype(tc, type)) \
+      return; \
+    if (fs##_fstest_delfs(tc, fs##func##tmp) != 0) \
       atf_tc_fail("delfs failed"); \
   }
 
@@ -107,17 +113,17 @@ FSPROTOS(tmpfs);
     return atf_no_error(); \
   }
 
-static __inline void
+static __inline bool
 atf_check_fstype(const atf_tc_t *tc, const char *fs)
 {
   const char *fstype;
 
   if (!atf_tc_has_config_var(tc, "fstype"))
-    return;
+    return true;
   fstype = atf_tc_get_config_var(tc, "fstype");
   if (strcmp(fstype, fs) == 0)
-    return;
-  atf_tc_skip("filesystem not selected");
+    return true;
+  return false;
 }
 
 #define FSTYPE_EXT2FS(tc)\
