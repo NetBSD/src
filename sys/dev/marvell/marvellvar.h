@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellvar.h,v 1.2 2010/07/11 08:43:36 kiyohara Exp $	*/
+/*	$NetBSD: marvellvar.h,v 1.3 2010/07/20 11:37:39 kiyohara Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -33,6 +33,8 @@ enum marvell_tags {
 	MARVELL_TAG_SDRAM_CS1,
 	MARVELL_TAG_SDRAM_CS2,
 	MARVELL_TAG_SDRAM_CS3,
+
+	MARVELL_TAG_MAX,
 
 	MARVELL_TAG_UNDEFINED = -1,
 };
