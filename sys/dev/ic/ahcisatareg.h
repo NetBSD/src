@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.6 2010/07/20 18:50:48 jakllsch Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.7 2010/07/20 19:24:11 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -34,8 +34,7 @@
 /* in-memory structures used by the controller */
 /* physical region descriptor: points to a region of data (max 4MB) */
 struct ahci_dma_prd {
-	uint32_t prd_dba; /* data base address (64 bits) */
-	uint32_t prd_dbau;
+	uint64_t prd_dba; /* data base address */
 	uint32_t prd_res; /* reserved */
 	uint32_t prd_dbc; /* data byte count */
 #define AHCI_PRD_DBC_MASK 0x003fffff
@@ -76,8 +75,7 @@ struct ahci_cmd_header {
 #define AHCI_CMDH_F_CFL_SHIFT	0
 	uint16_t cmdh_prdtl;	/* number of cmdt_prd */
 	uint32_t cmdh_prdbc;	/* physical region descriptor byte count */
-	uint32_t cmdh_cmdtba;	/* phys. addr. of cmd_tbl */
-	uint32_t cmdh_cmdtbau;	/* (64bits, 128bytes aligned) */
+	uint64_t cmdh_cmdtba;	/* phys. addr. of cmd_tbl, 128bytes aligned */
 	uint32_t cmdh_res[4];	/* reserved */
 } __packed;
 
