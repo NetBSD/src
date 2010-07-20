@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.1 2010/07/10 08:17:48 kiyohara Exp $
+#	$NetBSD: OVERO,v 1.2 2010/07/20 12:09:50 kiyohara Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo platforms kernel
 #
@@ -175,7 +175,6 @@ obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6e000000
-omapnand0 at gpmc0 addr 0x30000000
 
 # Interrupt Controller
 omapicu0	at obio0 addr 0x48200000 size 0x1000 intrbase 0
