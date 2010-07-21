@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.6 2010/07/14 21:24:40 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.7 2010/07/21 06:58:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -512,6 +512,47 @@ dtfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	dtfs_updatetimes(pn, 0, 1, 1);
 
 	return 0;
+}
+
+int
+dtfs_node_pathconf(struct puffs_usermount *pu, puffs_cookie_t opc,
+	int name, register_t *retval)
+{
+
+	switch (name) {
+	case _PC_LINK_MAX:
+		*retval = LINK_MAX;
+		return 0;
+	case _PC_NAME_MAX:
+		*retval = NAME_MAX;
+		return 0;
+	case _PC_PATH_MAX:
+		*retval = PATH_MAX;
+		return 0;
+	case _PC_PIPE_BUF:
+		*retval = PIPE_BUF;
+		return 0;
+	case _PC_CHOWN_RESTRICTED:
+		*retval = 1;
+		return 0;
+	case _PC_NO_TRUNC:
+		*retval = 1;
+		return 0;
+	case _PC_SYNC_IO:
+		*retval = 1;
+		return 0;
+	case _PC_FILESIZEBITS:
+		*retval = 43; /* this one goes to 11 */
+		return 0;
+	case _PC_SYMLINK_MAX:
+		*retval = MAXPATHLEN;
+		return 0;
+	case _PC_2_SYMLINKS:
+		*retval = 1;
+		return 0;
+	default:
+		return EINVAL;
+	}
 }
 
 int
