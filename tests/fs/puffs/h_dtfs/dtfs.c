@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.1 2010/07/06 14:16:44 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.2 2010/07/21 06:58:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -206,6 +206,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, dtfs, node, readlink);
 	PUFFSOP_SET(pops, dtfs, node, mknod);
 	PUFFSOP_SET(pops, dtfs, node, inactive);
+	PUFFSOP_SET(pops, dtfs, node, pathconf);
 	PUFFSOP_SET(pops, dtfs, node, reclaim);
 
 	srandom(time(NULL)); /* for random generation numbers */
