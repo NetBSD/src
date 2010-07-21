@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.94 2010/07/15 21:55:05 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.95 2010/07/21 17:52:10 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.94 2010/07/15 21:55:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.95 2010/07/21 17:52:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -558,7 +558,7 @@ pageflush(struct mount *mp, kauth_cred_t cred, int waitfor)
 		 * vnodes through other routes in any case.  So there,
 		 * sync() doesn't actually sync.  Happy now?
 		 */
-		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (rv) {
 			mutex_enter(&mntvnode_lock);
 			if (rv == ENOENT) {

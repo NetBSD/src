@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.106 2010/07/01 13:00:55 hannken Exp $ */
+/* $NetBSD: udf_subr.c,v 1.107 2010/07/21 17:52:11 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.106 2010/07/01 13:00:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.107 2010/07/21 17:52:11 hannken Exp $");
 #endif /* not lint */
 
 
@@ -3445,7 +3445,7 @@ loop:
 		assert(vp);
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&ump->ihash_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+		if (vget(vp, LK_EXCLUSIVE))
 			goto loop;
 		return udf_node;
 	}
@@ -6401,7 +6401,7 @@ derailed:
 		}
 
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT)

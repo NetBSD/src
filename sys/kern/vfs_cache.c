@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.86 2010/07/21 09:01:36 hannken Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.87 2010/07/21 17:52:12 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.86 2010/07/21 09:01:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.87 2010/07/21 17:52:12 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -372,7 +372,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
-		error = vget(vp, LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_NOWAIT);
 		if (error) {
 			KASSERT(error == EBUSY);
 			/*
@@ -470,7 +470,7 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&ncp->nc_lock);
 		mutex_exit(&cpup->cpu_lock);
-		error = vget(vp, LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_NOWAIT);
 		if (error) {
 			KASSERT(error == EBUSY);
 			/*
@@ -555,7 +555,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 				mutex_enter(&dvp->v_interlock);
 				mutex_exit(&ncp->nc_lock); 
 				mutex_exit(namecache_lock);
-				error = vget(dvp, LK_NOWAIT | LK_INTERLOCK);
+				error = vget(dvp, LK_NOWAIT);
 				if (error) {
 					KASSERT(error == EBUSY);
 					if (bufp)

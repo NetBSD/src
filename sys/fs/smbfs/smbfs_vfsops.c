@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.92 2010/07/09 08:16:28 hannken Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.93 2010/07/21 17:52:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.92 2010/07/09 08:16:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.93 2010/07/21 17:52:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,7 @@ loop:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.33 2010/07/07 16:19:55 njoly Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.34 2010/07/21 17:52:11 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.33 2010/07/07 16:19:55 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.34 2010/07/21 17:52:11 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -314,7 +314,7 @@ sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		v = bnode->vnode;
 	    	mutex_enter(&v->v_interlock);
 		mutex_exit(&mntvnode_lock);
-		err = vget(v, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		err = vget(v, LK_EXCLUSIVE | LK_NOWAIT);
 		if (err == 0) {
 			err = VOP_FSYNC(v, cred, FSYNC_WAIT, 0, 0);
 			vput(v);
@@ -353,7 +353,7 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 			vp = bnode->vnode;
 			mutex_enter(&vp->v_interlock);
 			mutex_exit(&mntvnode_lock);
-			if (vget(vp, LK_EXCLUSIVE|LK_RETRY|LK_INTERLOCK) == 0) {
+			if (vget(vp, LK_EXCLUSIVE | LK_RETRY) == 0) {
 				*vpp = vp;
 				return 0;
 			} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.86 2010/06/24 13:03:09 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.87 2010/07/21 17:52:10 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.86 2010/06/24 13:03:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.87 2010/07/21 17:52:10 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -962,9 +962,9 @@ msdosfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	 * threads waiting on fstrans may have locked vnodes.
 	 */
 	if (is_suspending)
-		lk_flags = LK_INTERLOCK;
+		lk_flags = 0;
 	else
-		lk_flags = LK_INTERLOCK | LK_EXCLUSIVE | LK_NOWAIT;
+		lk_flags = LK_EXCLUSIVE | LK_NOWAIT;
 	/*
 	 * Write back each (modified) denode.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.21 2010/07/01 13:00:55 hannken Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.22 2010/07/21 17:52:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.21 2010/07/01 13:00:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.22 2010/07/21 17:52:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ loop:
 			vp = ITOV(ip);
 			mutex_enter(&vp->v_interlock);
 			simple_unlock(&filecore_ihash_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
 			return (vp);
 		}

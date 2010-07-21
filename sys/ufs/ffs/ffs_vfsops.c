@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.259 2010/06/24 13:03:19 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.260 2010/07/21 17:52:13 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.259 2010/06/24 13:03:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.260 2010/07/21 17:52:13 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -774,7 +774,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 		 */
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			(void)vunmark(mvp);
 			goto loop;
 		}
@@ -1555,9 +1555,9 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 	 * threads waiting on fstrans may have locked vnodes.
 	 */
 	if (is_suspending)
-		lk_flags = LK_INTERLOCK;
+		lk_flags = 0;
 	else
-		lk_flags = LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK;
+		lk_flags = LK_EXCLUSIVE | LK_NOWAIT;
 	/*
 	 * Write back each (modified) inode.
 	 */

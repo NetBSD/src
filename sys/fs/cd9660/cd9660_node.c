@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.26 2010/07/01 13:00:55 hannken Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.27 2010/07/21 17:52:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.26 2010/07/01 13:00:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.27 2010/07/21 17:52:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ loop:
 			} else {
 				mutex_enter(&vp->v_interlock);
 				mutex_exit(&cd9660_ihash_lock);
-				if (vget(vp, flags | LK_INTERLOCK))
+				if (vget(vp, flags))
 					goto loop;
 			}
 			return (vp);

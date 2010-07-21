@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.44 2010/07/09 08:16:28 hannken Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.45 2010/07/21 17:52:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.44 2010/07/09 08:16:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.45 2010/07/21 17:52:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ retry:
 		vp = SMBTOV(np);
 		mutex_enter(&(vp)->v_interlock);
 		mutex_exit(&smp->sm_hashlock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
+		if (vget(vp, LK_EXCLUSIVE) != 0)
 			goto retry;
 		*vpp = vp;
 		return (0);

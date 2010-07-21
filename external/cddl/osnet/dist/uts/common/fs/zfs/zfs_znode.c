@@ -949,7 +949,7 @@ again:
 			if ((vp = ZTOV(zp)) != NULL) {
 				mutex_enter(&vp->v_interlock);
 				mutex_exit(&zp->z_lock);
-				if (vget(vp, LK_INTERLOCK) != 0) {
+				if (vget(vp, 0) != 0) {
 					dmu_buf_rele(db, NULL);
 					mutex_exit(&vp->v_interlock);
 					goto again;
