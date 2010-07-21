@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.390 2010/05/08 22:25:11 mrg Exp $
+.\"	$NetBSD: options.4,v 1.391 2010/07/21 10:56:07 tsutsui Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1526,9 +1526,7 @@ is not invoked directly.
 has no impact on protocols other than
 .Tn IP ,
 such as
-.Tn CLNP
-or
-.Tn XNS ) .
+.Tn CLNP ) .
 .Em GATEWAY
 option also compiles IPv4 and IPv6 fast forwarding code into the kernel.
 .It Cd options ICMPPRINTFS
@@ -1837,14 +1835,6 @@ may perform better with
 .Em MCLSHIFT
 set to 12 or 13, giving mbuf cluster sizes of 4096 and 8192 bytes,
 respectively.
-.It Cd options NS
-Include support for the
-.Tn Xerox
-.Tn XNS
-protocol stack.
-See
-.Xr ns 4
-for details.
 .It Cd options ISO,TPIP
 Include support for the ubiquitous
 .Tn OSI
@@ -2795,7 +2785,6 @@ bolded
 .Xr inet 4 ,
 .Xr iso 4 ,
 .Xr md 4 ,
-.Xr ns 4 ,
 .Xr pcibios 4 ,
 .Xr pcmcia 4 ,
 .Xr ppp 4 ,
