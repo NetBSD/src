@@ -1,4 +1,4 @@
-/* $NetBSD: t_sem.c,v 1.3 2010/07/19 10:31:46 jmmv Exp $ */
+/* $NetBSD: t_sem.c,v 1.4 2010/07/21 17:23:08 jmmv Exp $ */
 
 /*
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.3 2010/07/19 10:31:46 jmmv Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.4 2010/07/21 17:23:08 jmmv Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -233,7 +233,7 @@ threadfunc(void *arg)
 	int i;
 
 	printf("Entering loop\n");
-	for (i = 0; i < 10; ) {
+	for (i = 0; i < 500; ) {
 		if ((i & 1) != 0) {
 			ATF_REQUIRE(sem_wait(&sem) != -1);
 		} else {
@@ -244,7 +244,7 @@ threadfunc(void *arg)
 			}
 		}
 		printf("%s: %d\n", __func__, i);
-		alarm_ms(100);
+		alarm_ms(5);
 		i++;
 	}
 
@@ -259,7 +259,7 @@ before_start_test(const bool use_pthread)
 	SEM_REQUIRE(sem_init(&sem, 0, 0));
 	ATF_REQUIRE(SIG_ERR != signal(SIGALRM, sighandler));
 
-	alarm_ms(100);
+	alarm_ms(5);
 
 	if (use_pthread) {
 		PTHREAD_REQUIRE(pthread_create(&t, NULL, threadfunc, NULL));
@@ -274,7 +274,7 @@ ATF_TC_HEAD(before_start_no_threads, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks using semaphores without any "
 	    "thread running");
-	atf_tc_set_md_var(tc, "timeout", "20");
+	atf_tc_set_md_var(tc, "timeout", "40");
 }
 ATF_TC_BODY(before_start_no_threads, tc)
 {
@@ -286,18 +286,17 @@ ATF_TC_HEAD(before_start_one_thread, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks using semaphores before "
 	    "starting one thread");
-	atf_tc_set_md_var(tc, "timeout", "20");
+	atf_tc_set_md_var(tc, "timeout", "40");
 }
 ATF_TC_BODY(before_start_one_thread, tc)
 {
-	if (strcmp("amd64", atf_config_get("atf_arch")) == 0) {
-		/* TODO(jmmv): This really is a race condition test.  However,
-		 * we cannot yet mark it as such because ATF does not provide
-		 * such functionality.  Let's just mark it as an unconditional
-		 * expected timeout as I haven't got it to pass any single
-		 * time. */
-		atf_tc_expect_timeout("Race condition detected");
-	}
+	/* TODO(jmmv): This really is a race condition test.  However, we can't
+	 * yet mark it as such because ATF does not provide such functionality.
+	 * Let's just mark it as an unconditional expected timeout as I haven't
+	 * got it to pass any single time. */
+	atf_tc_expect_timeout("Race condition; it is probably unsafe to call "
+	    "sem_post from a signal handler when using the pthread version");
+
 	before_start_test(true);
 }
 
