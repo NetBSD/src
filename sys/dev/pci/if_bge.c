@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.185 2010/06/03 00:05:36 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.186 2010/07/21 15:35:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.185 2010/06/03 00:05:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.186 2010/07/21 15:35:39 msaitoh Exp $");
 
 #include "vlan.h"
 #include "rnd.h"
@@ -208,6 +208,7 @@ static int bge_encap(struct bge_softc *, struct mbuf *, uint32_t *);
 
 static int bge_intr(void *);
 static void bge_start(struct ifnet *);
+static int bge_ifflags_cb(struct ethercom *);
 static int bge_ioctl(struct ifnet *, u_long, void *);
 static int bge_init(struct ifnet *);
 static void bge_stop(struct ifnet *, int);
@@ -3014,6 +3015,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	DPRINTFN(5, ("ether_ifattach\n"));
 	ether_ifattach(ifp, eaddr);
+	ether_set_ifflags_cb(&sc->ethercom, bge_ifflags_cb);
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->bge_dev),
 		RND_TYPE_NET, 0);
@@ -4371,6 +4373,7 @@ bge_init(struct ifnet *ifp)
 	callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
 
 out:
+	sc->bge_if_flags = ifp->if_flags;
 	splx(s);
 
 	return error;
@@ -4481,6 +4484,29 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 static int
+bge_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct bge_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->bge_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) == 0)
+		return 0;
+
+	if ((ifp->if_flags & IFF_PROMISC) == 0)
+		BGE_CLRBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+	else
+		BGE_SETBIT(sc, BGE_RX_MODE, BGE_RXMODE_RX_PROMISC);
+
+	bge_setmulti(sc);
+
+	sc->bge_if_flags = ifp->if_flags;
+	return 0;
+}
+
+static int
 bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct bge_softc *sc = ifp->if_softc;
@@ -4491,37 +4517,6 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 	s = splnet();
 
 	switch (command) {
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, command, data)) != 0)
-			break;
-		if (ifp->if_flags & IFF_UP) {
-			/*
-			 * If only the state of the PROMISC flag changed,
-			 * then just use the 'set promisc mode' command
-			 * instead of reinitializing the entire NIC. Doing
-			 * a full re-init means reloading the firmware and
-			 * waiting for it to start up, which may take a
-			 * second or two.
-			 */
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->bge_if_flags & IFF_PROMISC)) {
-				BGE_SETBIT(sc, BGE_RX_MODE,
-				    BGE_RXMODE_RX_PROMISC);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->bge_if_flags & IFF_PROMISC) {
-				BGE_CLRBIT(sc, BGE_RX_MODE,
-				    BGE_RXMODE_RX_PROMISC);
-			} else if (!(sc->bge_if_flags & IFF_UP))
-				bge_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				bge_stop(ifp, 1);
-		}
-		sc->bge_if_flags = ifp->if_flags;
-		error = 0;
-		break;
 	case SIOCSIFMEDIA:
 		/* XXX Flow control is not supported for 1000BASE-SX */
 		if (sc->bge_flags & BGE_PHY_FIBER_TBI) {
