@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.391 2010/07/21 10:56:07 tsutsui Exp $
+.\"	$NetBSD: options.4,v 1.392 2010/07/21 10:59:31 tsutsui Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1474,14 +1474,6 @@ even if
 reports false.
 Useful for systems where the cycle counter doesn't run at a constant rate
 (e.g. Soekris boxes).
-.It Cd options XSERVER
-Compiles in kernel support for
-.Tn X11
-on architectures that still use (or can use) the legacy
-.Em pccons
-console drivers rather than
-.Xr wscons 4 .
-These include bebox, i386, shark.
 .It Cd options XSERVER_DDB
 A supplement to XSERVER that adds support for entering
 .Xr ddb 4
