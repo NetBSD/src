@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.66 2010/06/24 13:03:20 hannken Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.67 2010/07/21 17:52:14 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.66 2010/06/24 13:03:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.67 2010/07/21 17:52:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -482,7 +482,7 @@ again:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			mutex_enter(&mntvnode_lock);
 			(void)vunmark(mvp);
 			goto again;
@@ -552,7 +552,7 @@ again:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			mutex_enter(&mntvnode_lock);
 			(void)vunmark(mvp);
 			goto again;
@@ -738,7 +738,7 @@ qsync(struct mount *mp)
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			if (error == ENOENT) {

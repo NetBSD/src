@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.62 2010/07/13 18:08:58 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.63 2010/07/21 17:52:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 2009  Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.62 2010/07/13 18:08:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.63 2010/07/21 17:52:13 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -686,7 +686,7 @@ rump_vop_lookup(void *v)
 	if ((vp = rn->rn_vp)) {
 		mutex_enter(&vp->v_interlock);
 		mutex_exit(&reclock);
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK)) {
+		if (vget(vp, LK_EXCLUSIVE)) {
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			goto getvnode;
 		}

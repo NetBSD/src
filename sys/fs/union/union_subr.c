@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.38 2010/07/16 08:23:28 hannken Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.39 2010/07/21 17:52:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.38 2010/07/16 08:23:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.39 2010/07/21 17:52:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,7 @@ loop:
 			    (UNIONTOV(un)->v_mount == mp)) {
 				vp = UNIONTOV(un);
 				mutex_enter(&vp->v_interlock);
-				if (vget(vp, LK_INTERLOCK)) {
+				if (vget(vp, 0)) {
 					union_list_unlock(hash);
 					goto loop;
 				}

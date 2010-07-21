@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.12 2010/07/01 13:00:55 hannken Exp $	*/
+/*	$NetBSD: adutil.c,v 1.13 2010/07/21 17:52:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.12 2010/07/01 13:00:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.13 2010/07/21 17:52:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -70,7 +70,7 @@ start_over:
 			vp = ATOV(ap);
 			mutex_enter(&vp->v_interlock);
 			simple_unlock(&adosfs_hashlock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE))
 				goto start_over;
 			return (ATOV(ap));
 		}

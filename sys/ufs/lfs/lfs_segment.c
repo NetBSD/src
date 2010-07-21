@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.216 2010/06/24 13:03:19 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.217 2010/07/21 17:52:13 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.216 2010/06/24 13:03:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.217 2010/07/21 17:52:13 hannken Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2737,7 +2737,7 @@ lfs_vref(struct vnode *vp)
 	 * being able to flush all of the pages from this vnode, which
 	 * will cause it to panic.  So, return 0 if a flush is in progress.
 	 */
-	error = vget(vp, LK_NOWAIT | LK_INTERLOCK);
+	error = vget(vp, LK_NOWAIT);
 	if (error == EBUSY && IS_FLUSHING(VTOI(vp)->i_lfs, vp)) {
 		++fs->lfs_flushvp_fakevref;
 		return 0;
