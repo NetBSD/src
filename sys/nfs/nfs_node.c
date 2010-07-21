@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.112 2010/07/01 13:00:56 hannken Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.113 2010/07/21 17:52:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.112 2010/07/01 13:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.113 2010/07/21 17:52:13 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -178,7 +178,7 @@ loop:
 		vp = NFSTOV(np);
 		mutex_enter(&vp->v_interlock);
 		rw_exit(&nmp->nm_rbtlock);
-		error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK | lkflags);
+		error = vget(vp, LK_EXCLUSIVE | lkflags);
 		if (error == EBUSY)
 			return error;
 		if (error)

@@ -207,7 +207,7 @@ loop:
 		}
 		vmark(mvp, vp);
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE);
 		if (error) {
 			mutex_enter(&mntvnode_lock);
 			nvp = vunmark(mvp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.409 2010/07/21 09:06:38 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.410 2010/07/21 17:52:12 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.409 2010/07/21 09:06:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.410 2010/07/21 17:52:12 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1274,6 +1274,7 @@ vtryget(vnode_t *vp)
  * grab the vnode, so the process is awakened when the transition is
  * completed, and an error returned to indicate that the vnode is no
  * longer usable (possibly having been changed to a new file system type).
+ * Called with v_interlock held.
  */
 int
 vget(vnode_t *vp, int flags)
@@ -1281,9 +1282,7 @@ vget(vnode_t *vp, int flags)
 	int error = 0;
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
-
-	if ((flags & LK_INTERLOCK) == 0)
-		mutex_enter(&vp->v_interlock);
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	/*
 	 * Before adding a reference, we must remove the vnode
@@ -2011,7 +2010,7 @@ vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 	}
 	mutex_enter(&vp->v_interlock);
 	mutex_exit(&device_lock);
-	if (vget(vp, LK_INTERLOCK) != 0)
+	if (vget(vp, 0) != 0)
 		return 0;
 	*vpp = vp;
 	return 1;
@@ -2043,7 +2042,7 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 				continue;
 			}
 			mutex_exit(&device_lock);
-			if (vget(vp, LK_INTERLOCK) == 0) {
+			if (vget(vp, 0) == 0) {
 				VOP_REVOKE(vp, REVOKEALL);
 				vrele(vp);
 			}

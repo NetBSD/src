@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.58 2010/07/02 03:29:47 rmind Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.59 2010/07/21 17:52:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.58 2010/07/02 03:29:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.59 2010/07/21 17:52:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -346,7 +346,7 @@ tmpfs_alloc_vp(struct mount *mp, struct tmpfs_node *node, struct vnode **vpp)
 		if ((vp = node->tn_vnode) != NULL) {
 			mutex_enter(&vp->v_interlock);
 			mutex_exit(&node->tn_vlock);
-			error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+			error = vget(vp, LK_EXCLUSIVE);
 			if (error == ENOENT) {
 				/* vnode was reclaimed. */
 				continue;

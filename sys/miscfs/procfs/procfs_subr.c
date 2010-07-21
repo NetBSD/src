@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.97 2010/07/01 13:00:56 hannken Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.98 2010/07/21 17:52:12 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.97 2010/07/01 13:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.98 2010/07/21 17:52:12 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,7 +601,7 @@ loop:
 			} else {
 				mutex_enter(&vp->v_interlock);
 				mutex_exit(&pfs_ihash_lock);
-				if (vget(vp, flags | LK_INTERLOCK))
+				if (vget(vp, flags))
 					goto loop;
 			}
 			return (vp);

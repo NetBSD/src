@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.5 2010/06/24 12:15:46 reinoud Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.6 2010/07/21 17:52:10 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.5 2010/06/24 12:15:46 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.6 2010/07/21 17:52:10 hannken Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -784,7 +784,7 @@ loop:
 			assert(vp);
 			mutex_enter(&vp->v_interlock);
 			mutex_exit(&ump->ihash_lock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
+			if (vget(vp, LK_EXCLUSIVE))
 				goto loop;
 			return node;
 		}
