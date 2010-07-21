@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.3 2010/07/19 00:59:32 christos Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.4 2010/07/21 14:59:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.3 2010/07/19 00:59:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.4 2010/07/21 14:59:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -271,10 +271,9 @@ acpicpu_id(uint32_t id)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 
-	KASSERT(id != 0);
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (id - 1 == ci->ci_cpuid)
-			return id - 1;
+		if (id == ci->ci_cpuid)
+			return id;
 	}
 
 	return 0xFFFFFF;
