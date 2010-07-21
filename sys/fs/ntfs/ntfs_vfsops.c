@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.83 2010/07/19 08:17:44 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.84 2010/07/21 17:52:10 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.83 2010/07/19 08:17:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.84 2010/07/21 17:52:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -785,7 +785,7 @@ loop:
 	if (vp) {
 		mutex_enter(&vp->v_interlock);
 		ntfs_ntput(ip);
-		if (vget(vp, LK_INTERLOCK | lkflags) != 0)
+		if (vget(vp, lkflags) != 0)
 			goto loop;
 		*vpp = vp;
 		return 0;

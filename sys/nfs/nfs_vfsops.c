@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.215 2010/07/09 08:25:57 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.216 2010/07/21 17:52:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.215 2010/07/09 08:25:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.216 2010/07/21 17:52:13 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -974,7 +974,7 @@ loop:
 			continue;
 		}
 		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error != 0) {
 			if (error != ENOENT) {
 				mutex_enter(&mntvnode_lock);
