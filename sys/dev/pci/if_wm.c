@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.212 2010/07/19 15:46:37 jakllsch Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.213 2010/07/21 15:35:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.212 2010/07/19 15:46:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.213 2010/07/21 15:35:39 msaitoh Exp $");
 
 #include "rnd.h"
 
@@ -499,6 +499,7 @@ do {									\
 
 static void	wm_start(struct ifnet *);
 static void	wm_watchdog(struct ifnet *);
+static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
@@ -1925,6 +1926,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, wm_ifflags_cb);
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, xname, RND_TYPE_NET, 0);
 #endif
@@ -2729,6 +2731,24 @@ wm_watchdog(struct ifnet *ifp)
 	wm_start(ifp);
 }
 
+static int
+wm_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct wm_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & (IFF_PROMISC | IFF_ALLMULTI)) == 0)
+		return 0;
+
+	wm_set_filter(sc);
+
+	sc->sc_if_flags = ifp->if_flags;
+	return 0;
+}
+
 /*
  * wm_ioctl:		[ifnet interface function]
  *
@@ -2741,40 +2761,11 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct sockaddr_dl *sdl;
-	int diff, s, error;
+	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
-		if (ifp->if_flags & IFF_UP) {
-			diff = (ifp->if_flags ^ sc->sc_if_flags)
-			    & (IFF_PROMISC | IFF_ALLMULTI);
-			if ((diff & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
-				/*
-				 * If the difference bettween last flag and
-				 * new flag is only IFF_PROMISC or
-				 * IFF_ALLMULTI, set multicast filter only
-				 * (don't reset to prevent link down).
-				 */
-				wm_set_filter(sc);
-			} else {
-				/*
-				 * Reset the interface to pick up changes in
-				 * any other flags that affect the hardware
-				 * state.
-				 */
-				wm_init(ifp);
-			}
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				wm_stop(ifp, 1);
-		}
-		sc->sc_if_flags = ifp->if_flags;
-		error = 0;
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		/* Flow control requires full-duplex mode. */
@@ -3936,7 +3927,7 @@ wm_init(struct ifnet *ifp)
 	else
 		sc->sc_ctrl &= ~CTRL_VME;
 
-	/* Write the control registers. */
+	/* Write the control register. */
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 	if (sc->sc_flags & WM_F_HAS_MII) {
@@ -4138,6 +4129,7 @@ wm_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
  out:
+	sc->sc_if_flags = ifp->if_flags;
 	if (error)
 		log(LOG_ERR, "%s: interface not running\n",
 		    device_xname(sc->sc_dev));
