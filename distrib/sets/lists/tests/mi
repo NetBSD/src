@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.115 2010/07/19 14:29:38 njoly Exp $
+# $NetBSD: mi,v 1.116 2010/07/21 11:47:26 nakayama Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -310,7 +310,7 @@
 ./usr/libdata/debug/usr/tests/lib/librt					tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/librt/t_sem.debug			tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libskey				tests-lib-debug
-./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf
+./usr/libdata/debug/usr/tests/lib/libskey/t_algorithms.debug		tests-lib-debug		debug,atf,skey
 ./usr/libdata/debug/usr/tests/lib/libutil				tests-lib-debug
 ./usr/libdata/debug/usr/tests/lib/libutil/t_snprintb.debug		tests-lib-debug		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libutil/t_sockaddr_snprintf.debug	tests-lib-debug		debug,atf
@@ -1432,8 +1432,8 @@
 ./usr/tests/lib/librt/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/librt/t_sem			tests-lib-tests		atf
 ./usr/tests/lib/libskey				tests-lib-tests		atf
-./usr/tests/lib/libskey/Atffile			tests-lib-tests		atf
-./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf
+./usr/tests/lib/libskey/Atffile			tests-lib-tests		atf,skey
+./usr/tests/lib/libskey/t_algorithms		tests-lib-tests		atf,skey
 ./usr/tests/lib/libutil				tests-lib-tests		atf
 ./usr/tests/lib/libutil/Atffile			tests-lib-tests		atf
 ./usr/tests/lib/libutil/t_snprintb		tests-lib-tests		atf
