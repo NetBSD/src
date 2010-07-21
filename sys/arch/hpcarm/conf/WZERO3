@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.10 2010/07/05 14:30:00 tsutsui Exp $
+#	$NetBSD: WZERO3,v 1.11 2010/07/21 12:16:54 tsutsui Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.pxa2x0"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.10 $"
+#ident 		"GENERIC-$Revision: 1.11 $"
 
 # estimated number of users
 maxusers	32
@@ -131,6 +131,8 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 #options 	WS_KERNEL_COLATTR=""
 #options 	WS_KERNEL_MONOATTR=""
+
+options 	FONT_VT220L8x16
 
 # Development and Debugging options
 
