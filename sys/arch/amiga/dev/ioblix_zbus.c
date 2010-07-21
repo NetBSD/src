@@ -1,4 +1,4 @@
-/*	$NetBSD: ioblix_zbus.c,v 1.16 2010/07/20 05:32:46 jklos Exp $ */
+/*	$NetBSD: ioblix_zbus.c,v 1.17 2010/07/21 01:33:59 jklos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.16 2010/07/20 05:32:46 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioblix_zbus.c,v 1.17 2010/07/21 01:33:59 jklos Exp $");
 
 /* IOBlix Zorro driver */
 /* XXX to be done: we need to probe the com clock speed! */
@@ -89,10 +89,10 @@ struct iobz_devs {
 	unsigned off;
 	int arg;
 } iobzdevices[] = {
-	{ "com", 0x100, 24000000 },	/* XXX see below */
-	{ "com", 0x108, 24000000 },
-	{ "com", 0x110, 24000000 },
+	{ "com", 0x108, 24000000 },	/* XXX see below */
+	{ "com", 0x100, 24000000 },
 	{ "com", 0x118, 24000000 },
+	{ "com", 0x110, 24000000 },
 	{ "lpt", 0x200, 0 },
 	{ "lpt", 0x300, 0 },
 	{ 0, 0, 0}
