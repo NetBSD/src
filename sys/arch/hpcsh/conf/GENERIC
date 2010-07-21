@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2010/05/22 19:02:08 plunky Exp $
+# $NetBSD: GENERIC,v 1.92 2010/07/21 11:10:14 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -68,9 +68,9 @@ options 	KLOADER
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
-#options 	SYSVMSG		# System V-like message queues
-#options 	SYSVSEM		# System V-like semaphores
-#options 	SYSVSHM		# System V-like memory sharing
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #options 	MODULAR		# new style module framework
