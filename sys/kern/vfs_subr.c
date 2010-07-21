@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.408 2010/07/01 13:00:56 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.409 2010/07/21 09:06:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.408 2010/07/01 13:00:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.409 2010/07/21 09:06:38 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1993,24 +1993,28 @@ vgone(vnode_t *vp)
 }
 
 /*
- * Lookup a vnode by device number.
+ * Lookup a vnode by device number and return it referenced.
  */
 int
 vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 {
 	vnode_t *vp;
-	int rc = 0;
 
 	mutex_enter(&device_lock);
 	for (vp = specfs_hash[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
-		if (dev != vp->v_rdev || type != vp->v_type)
-			continue;
-		*vpp = vp;
-		rc = 1;
-		break;
+		if (dev == vp->v_rdev && type == vp->v_type)
+			break;
 	}
+	if (vp == NULL) {
+		mutex_exit(&device_lock);
+		return 0;
+	}
+	mutex_enter(&vp->v_interlock);
 	mutex_exit(&device_lock);
-	return (rc);
+	if (vget(vp, LK_INTERLOCK) != 0)
+		return 0;
+	*vpp = vp;
+	return 1;
 }
 
 /*
@@ -3366,9 +3370,11 @@ rawdev_mounted(struct vnode *vp, struct vnode **bvpp)
 
 			blkdev = devsw_chr2blk(dev);
 			if (blkdev != NODEV) {
-				vfinddev(blkdev, VBLK, &bvp);
-				if (bvp != NULL)
+				if (vfinddev(blkdev, VBLK, &bvp) != 0) {
 					d_type = (cdev->d_flag & D_TYPEMASK);
+					/* XXX: what if bvp disappears? */
+					vrele(bvp);
+				}
 			}
 		}
 

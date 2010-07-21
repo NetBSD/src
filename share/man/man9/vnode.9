@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.49 2010/06/06 08:01:31 hannken Exp $
+.\"     $NetBSD: vnode.9,v 1.50 2010/07/21 09:06:37 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 6, 2010
+.Dd July 21, 2010
 .Dt VNODE 9
 .Os
 .Sh NAME
@@ -654,7 +654,7 @@ Create a vnode for a character device.
 is used for the console and kernfs special devices.
 .It Fn vfinddev "dev" "vtype" "vpp"
 Lookup a vnode by device number.
-The vnode is returned in the address specified by
+The vnode is referenced and returned in the address specified by
 .Fa vpp .
 .It Fn vdevgone "int maj" "int min" "int minh" "enum vtype type"
 Reclaim all vnodes that correspond to the specified minor number range
