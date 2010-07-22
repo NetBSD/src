@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.67 2010/06/24 13:03:09 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.68 2010/07/22 18:08:11 njoly Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.67 2010/06/24 13:03:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.68 2010/07/22 18:08:11 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ msdosfs_setattr(void *v)
 		    vap->va_type, vap->va_nlink, vap->va_fsid,
 		    (unsigned long long)vap->va_fileid);
 		printf("    va_blocksize %lx, va_rdev %"PRIx64", va_bytes %"PRIx64", va_gen %lx\n",
-		    vap->va_blocksize, vap->va_rdev, (long long)vap->va_bytes, vap->va_gen);
+		    vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
 #endif
 		return (EINVAL);
 	}
