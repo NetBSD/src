@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.72 2010/07/16 19:42:00 riz Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.73 2010/07/22 20:36:12 riz Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -1044,4 +1044,14 @@ sys/netinet6/udp6_output.c			1.41 via patch
 	udp6_output(): call ip6_clearpktopts(&opt, ...) only if opt
 	was initialized.
 	[dyoung, ticket #1397]
+
+sys/netsmb/mchain.h				1.9 via patch
+sys/netsmb/smb_dev.h				1.7
+sys/netsmb/smb_subr.c				1.35
+sys/netsmb/smb_subr.h				1.19
+sys/netsmb/subr_mchain.c			1.19 via patch
+
+	Convert sizes/lengths to unsigned (size_t) or uint32_t
+	(for binary compatibility).
+	[christos, ticket #1398]
 
