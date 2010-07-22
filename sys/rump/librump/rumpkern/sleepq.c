@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.6 2009/11/17 15:23:42 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.7 2010/07/22 21:00:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.6 2009/11/17 15:23:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.7 2010/07/22 21:00:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -112,6 +112,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
 		if (l->l_wchan == wchan) {
 			found = true;
 			l->l_wchan = NULL;
+			l->l_mutex = NULL;
 			TAILQ_REMOVE(sq, l, l_sleepchain);
 		}
 	}
@@ -127,6 +128,7 @@ sleepq_unsleep(struct lwp *l, bool cleanup)
 {
 
 	l->l_wchan = NULL;
+	l->l_mutex = NULL;
 	TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
 	cv_broadcast(&sq_cv);
 
