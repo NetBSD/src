@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.46 2010/07/22 07:49:45 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.47 2010/07/22 07:55:22 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.46 2010/07/22 07:49:45 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.47 2010/07/22 07:55:22 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -194,6 +194,16 @@ vaddr_t uvm_zerocheckkva;
 
 static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
 static void uvm_pageremove(struct uvm_object *, struct vm_page *);
+static struct vm_physseg *uvm_page_physload_common(
+    struct vm_physseg_freelist * const, struct vm_physseg **, int,
+    const paddr_t, const paddr_t);
+static void uvm_page_physunload_common(struct vm_physseg_freelist *,
+    struct vm_physseg **, struct vm_physseg *);
+static void uvm_page_physseg_init(void);
+static struct vm_physseg * uvm_physseg_insert(struct vm_physseg_freelist *,
+    struct vm_physseg **, int, const paddr_t, const paddr_t);
+static void uvm_physseg_remove(struct vm_physseg_freelist *,
+    struct vm_physseg **, struct vm_physseg *);
 
 /*
  * per-object tree of pages
@@ -771,22 +781,6 @@ uvm_page_physget(paddr_t *paddrp)
  * => areas marked by avail_start/avail_end get added to the free page pool
  * => we are limited to VM_PHYSSEG_MAX physical memory segments
  */
-
-static struct vm_physseg *
-uvm_page_physload_common(struct vm_physseg_freelist * const,
-    struct vm_physseg **, int,
-    const paddr_t, const paddr_t);
-static void
-uvm_page_physunload_common(struct vm_physseg_freelist *,
-    struct vm_physseg **, struct vm_physseg *);
-static void
-uvm_page_physseg_init(void);
-static struct vm_physseg *
-uvm_physseg_insert(struct vm_physseg_freelist *, struct vm_physseg **, int,
-    const paddr_t, const paddr_t);
-static void
-uvm_physseg_remove(struct vm_physseg_freelist *, struct vm_physseg **,
-    struct vm_physseg *);
 
 void *
 uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
