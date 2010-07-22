@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.59.2.26 2010/07/15 08:33:46 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.59.2.27 2010/07/22 07:49:45 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -180,7 +180,6 @@ struct vm_page {
 #define	PG_FAKE		0x0040		/* page is not yet initialized */
 #define	PG_RDONLY	0x0080		/* page must be mapped read-only */
 #define	PG_ZERO		0x0100		/* page is pre-zero'd */
-#define	PG_XIP		0x0200		/* page is XIP vnode data */
 
 #define PG_PAGER1	0x1000		/* pager-specific flag */
 
@@ -195,6 +194,7 @@ struct vm_page {
 					   uvm_object */
 #define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
 #define PQ_READAHEAD	0x0008	/* read-ahead but has not been "hit" yet */
+#define PQ_FIXED	0x0010	/* resident page (never paged out) */
 
 #define PQ_PRIVATE1	0x0100
 #define PQ_PRIVATE2	0x0200
