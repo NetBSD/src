@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.48 2010/07/22 12:48:00 tsutsui Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.49 2010/07/22 12:52:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.48 2010/07/22 12:48:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.49 2010/07/22 12:52:59 tsutsui Exp $");
 
 #include "opt_wsfont.h"
 
@@ -379,9 +379,9 @@ wsfont_rotate_cw_internal(struct wsdisplay_font *font)
 struct wsdisplay_font *
 wsfont_rotate_ccw_internal(struct wsdisplay_font *font)
 {
-	int b, n, r, namelen, newstride;
+	int b, n, r, newstride;
 	struct wsdisplay_font *newfont;
-	char *newname, *newbits;
+	char *newbits;
 
 	/* Duplicate the existing font... */
 	newfont = malloc(sizeof(*font), M_DEVBUF, M_WAITOK);
@@ -389,12 +389,6 @@ wsfont_rotate_ccw_internal(struct wsdisplay_font *font)
 		return (NULL);
 
 	*newfont = *font;
-
-	namelen = strlen(font->name) + 4;
-	newname = malloc(namelen, M_DEVBUF, M_WAITOK);
-	strlcpy(newname, font->name, namelen);
-	strlcat(newname, "_ccw", namelen);
-	newfont->name = newname;
 
 	/* Allocate a buffer big enough for the rotated font. */
 	newstride = (font->fontheight + 7) / 8;
