@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.166.2.19 2010/07/15 08:33:46 uebayasi Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.166.2.20 2010/07/22 07:49:45 uebayasi Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.19 2010/07/15 08:33:46 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.166.2.20 2010/07/22 07:49:45 uebayasi Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_xip.h"
@@ -1760,7 +1760,7 @@ uvm_fault_lower_neighbor(
 	 * for this.  we can just directly enter the pages.
 	 */
 
-	if (__predict_true((pg->flags & PG_XIP) == 0)) {
+	if (__predict_true((pg->pqflags & PQ_FIXED) == 0)) {
 		mutex_enter(&uvm_pageqlock);
 		uvm_pageenqueue(pg);
 		mutex_exit(&uvm_pageqlock);
@@ -2192,7 +2192,7 @@ uvm_fault_lower_enter(
 		return ERESTART;
 	}
 
-	if (__predict_true((pg->flags & PG_XIP) == 0))
+	if (__predict_true((pg->pqflags & PQ_FIXED) == 0))
 		uvm_fault_lower_done(ufi, flt, uobj, anon, pg);
 
 	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
