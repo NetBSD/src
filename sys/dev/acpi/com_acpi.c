@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.31 2010/03/05 14:00:17 jruoho Exp $ */
+/* $NetBSD: com_acpi.c,v 1.32 2010/07/22 16:35:24 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.31 2010/03/05 14:00:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.32 2010/07/22 16:35:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -157,7 +157,16 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, com_resume))
 		aprint_error_dev(self, "couldn't establish a power handler\n");
+	goto cleanup;
 
+	/*
+	 * In case of irq resource or i/o space mapping error, just set
+	 * a NULL power handler.  This may allow us to sleep later on.
+	 */
  out:
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish a power handler\n");
+
+ cleanup:
 	acpi_resource_cleanup(&res);
 }
