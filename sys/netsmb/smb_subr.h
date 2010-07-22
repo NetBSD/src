@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.16 2006/08/17 17:11:29 christos Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.16.6.1 2010/07/22 20:36:22 riz Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -109,18 +109,18 @@ void smb_makescred(struct smb_cred *scred, struct lwp *l,
     kauth_cred_t cred);
 int  smb_proc_intr(struct lwp *);
 char *smb_strdup(const char *s);
-char *smb_strdupin(char *s, int maxlen);
-void *smb_memdupin(void *umem, int len);
+char *smb_strdupin(char *s, size_t maxlen);
+void *smb_memdupin(void *umem, size_t len);
 void smb_strtouni(u_int16_t *dst, const char *src);
 void smb_strfree(char *s);
 void smb_memfree(void *s);
-void *smb_zmalloc(unsigned long size, struct malloc_type *type, int flags);
+void *smb_zmalloc(size_t size, struct malloc_type *type, int flags);
 
 int  smb_encrypt(const u_char *apwd, u_char *C8, u_char *RN);
 int  smb_ntencrypt(const u_char *apwd, u_char *C8, u_char *RN);
 int  smb_maperror(int eclass, int eno);
 int  smb_put_dmem(struct mbchain *mbp, struct smb_vc *vcp,
-	const char *src, int len, int caseopt);
+	const char *src, size_t len, int caseopt);
 int  smb_put_dstring(struct mbchain *mbp, struct smb_vc *vcp,
 	const char *src, int caseopt);
 int  smb_put_string(struct smb_rq *rqp, const char *src);
