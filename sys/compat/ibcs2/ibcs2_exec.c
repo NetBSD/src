@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.74 2010/07/07 01:30:32 chs Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.75 2010/07/22 03:18:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.74 2010/07/07 01:30:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec.c,v 1.75 2010/07/22 03:18:30 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -70,7 +70,7 @@ extern char ibcs2_sigcode[], ibcs2_esigcode[];
 void syscall(void);
 #endif
 
-#ifdef IBCS2_DEBUG
+#ifdef DEBUG_IBCS2
 int ibcs2_debug = 1;
 #endif
 
