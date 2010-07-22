@@ -59,8 +59,8 @@ typedef int mb_copy_t(struct mbchain *, const char *, char *, size_t);
 struct mbchain {
 	struct mbuf *	mb_top;		/* head of mbufs chain */
 	struct mbuf * 	mb_cur;		/* current mbuf */
-	int		mb_mleft;	/* free space in the current mbuf */
-	int		mb_count;	/* total number of bytes */
+	size_t		mb_mleft;	/* free space in the current mbuf */
+	size_t		mb_count;	/* total number of bytes */
 	mb_copy_t *	mb_copy;	/* user defined copy function */
 	void *		mb_udata;	/* user data */
 };
@@ -78,7 +78,7 @@ void mb_initm(struct mbchain *mbp, struct mbuf *m);
 void mb_done(struct mbchain *mbp);
 struct mbuf *mb_detach(struct mbchain *mbp);
 int  mb_fixhdr(struct mbchain *mbp);
-caddr_t mb_reserve(struct mbchain *mbp, int size);
+caddr_t mb_reserve(struct mbchain *mbp, size_t size);
 
 int  mb_put_uint8(struct mbchain *mbp, u_int8_t x);
 int  mb_put_uint16be(struct mbchain *mbp, u_int16_t x);
@@ -87,9 +87,9 @@ int  mb_put_uint32be(struct mbchain *mbp, u_int32_t x);
 int  mb_put_uint32le(struct mbchain *mbp, u_int32_t x);
 int  mb_put_int64be(struct mbchain *mbp, int64_t x);
 int  mb_put_int64le(struct mbchain *mbp, int64_t x);
-int  mb_put_mem(struct mbchain *mbp, const char * source, int size, int type);
+int  mb_put_mem(struct mbchain *mbp, const char * source, size_t size, int type);
 int  mb_put_mbuf(struct mbchain *mbp, struct mbuf *m);
-int  mb_put_uio(struct mbchain *mbp, struct uio *uiop, int size);
+int  mb_put_uio(struct mbchain *mbp, struct uio *uiop, size_t size);
 
 int  md_init(struct mdchain *mdp);
 void md_initm(struct mdchain *mbp, struct mbuf *m);
@@ -106,9 +106,9 @@ int  md_get_uint32le(struct mdchain *mdp, u_int32_t *x);
 int  md_get_int64(struct mdchain *mdp, int64_t *x);
 int  md_get_int64be(struct mdchain *mdp, int64_t *x);
 int  md_get_int64le(struct mdchain *mdp, int64_t *x);
-int  md_get_mem(struct mdchain *mdp, caddr_t target, int size, int type);
+int  md_get_mem(struct mdchain *mdp, caddr_t target, size_t size, int type);
 int  md_get_mbuf(struct mdchain *mdp, int size, struct mbuf **m);
-int  md_get_uio(struct mdchain *mdp, struct uio *uiop, int size);
+int  md_get_uio(struct mdchain *mdp, struct uio *uiop, size_t size);
 
 #endif	/* ifdef _KERNEL */
 
