@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.47 2010/05/04 04:53:59 macallan Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.48 2010/07/22 12:48:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.47 2010/05/04 04:53:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.48 2010/07/22 12:48:00 tsutsui Exp $");
 
 #include "opt_wsfont.h"
 
@@ -76,6 +76,11 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.47 2010/05/04 04:53:59 macallan Exp $")
 #ifdef FONT_VT220L8x16
 #define HAVE_FONT 1
 #include <dev/wsfont/vt220l8x16.h>
+#endif
+
+#ifdef FONT_VT220ISO8x8
+#define HAVE_FONT 1
+#include <dev/wsfont/vt220iso8x8.h>
 #endif
 
 #ifdef FONT_VT220ISO8x16
@@ -168,6 +173,9 @@ static struct font builtin_fonts[] = {
 #endif
 #ifdef FONT_VT220L8x16
 	{ { NULL, NULL }, &vt220l8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_VT220ISO8x8
+	{ { NULL, NULL }, &vt220iso8x8, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_VT220ISO8x16
 	{ { NULL, NULL }, &vt220iso8x16, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
@@ -371,9 +379,9 @@ wsfont_rotate_cw_internal(struct wsdisplay_font *font)
 struct wsdisplay_font *
 wsfont_rotate_ccw_internal(struct wsdisplay_font *font)
 {
-	int b, n, r, newstride;
+	int b, n, r, namelen, newstride;
 	struct wsdisplay_font *newfont;
-	char *newbits;
+	char *newname, *newbits;
 
 	/* Duplicate the existing font... */
 	newfont = malloc(sizeof(*font), M_DEVBUF, M_WAITOK);
@@ -381,6 +389,12 @@ wsfont_rotate_ccw_internal(struct wsdisplay_font *font)
 		return (NULL);
 
 	*newfont = *font;
+
+	namelen = strlen(font->name) + 4;
+	newname = malloc(namelen, M_DEVBUF, M_WAITOK);
+	strlcpy(newname, font->name, namelen);
+	strlcat(newname, "_ccw", namelen);
+	newfont->name = newname;
 
 	/* Allocate a buffer big enough for the rotated font. */
 	newstride = (font->fontheight + 7) / 8;
