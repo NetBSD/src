@@ -1,4 +1,4 @@
-.\"	$NetBSD: swwdog.4,v 1.4 2010/01/30 21:55:28 pooka Exp $
+.\"	$NetBSD: swwdog.4,v 1.5 2010/07/22 14:10:14 pgoyette Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Steven M. Bellovin
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 30, 2010
+.Dd July 21, 2010
 .\" Written by Steven M. Bellovin
 .Dt SWWDOG 4
 .Os
@@ -45,14 +45,26 @@ The
 .Nm
 driver provides a software watchdog timer that works with
 .Xr wdogctl 8 .
-If the timer expires, the system reboots unless the variable
+If the timer expires, the system reboots unless the boolean variable
 .Va swwdog_panic
-is non-zero; if it is, the system will panic instead.
+is
+.Dv true ;
+if it is, the system will panic instead.
+.Va swwdog_reboot
+is accessible as a
+.Xr sysctl 8
+variable, machdep.swwdog0.reboot and defaults to
+.Dv false .
 .Pp
 The default period of
 .Nm
 is 60 seconds.
+.Pp
+As with other watchdog timers, the
+.Nm
+driver prevents a system from suspending when the watchdog is armed.
 .Sh SEE ALSO
+.Xr sysctl 8
 .Xr wdogctl 8
 .Sh HISTORY
 The
@@ -61,7 +73,10 @@ driver was written by
 .An Steven M. Bellovin .
 .Sh BUGS
 Only one watchdog timer can be active at any given time.
-Arguably, this is a bug in the watchdog timer framework.
+(Arguably, this is a bug in the watchdog timer framework.)
+Therefore, only a single instance of the
+.Nm
+device can be created.
 .Pp
 Kernel tickle mode is useless with
 .Nm
