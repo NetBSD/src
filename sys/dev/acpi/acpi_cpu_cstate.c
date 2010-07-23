@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.6 2010/07/23 05:32:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.7 2010/07/23 08:11:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.6 2010/07/23 05:32:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.7 2010/07/23 08:11:49 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -171,8 +171,9 @@ acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 		}
 
 		aprint_debug_dev(sc->sc_dev, "C%d: %5s, "
-		    "latency %4u, power %4u, addr 0x%06x\n", i, method,
-		    cs->cs_latency, cs->cs_power, (uint32_t)cs->cs_addr);
+		    "latency %4u, power %4u, addr 0x%06x, flags 0x%02x\n",
+		    i, method, cs->cs_latency, cs->cs_power,
+		    (uint32_t)cs->cs_addr, cs->cs_flags);
 	}
 }
 
@@ -336,6 +337,8 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 
 	(void)memset(&state, 0, sizeof(*cs));
 
+	state.cs_flags = ACPICPU_FLAG_C_BM_STS;
+
 	if (elm->Type != ACPI_TYPE_PACKAGE) {
 		rv = AE_TYPE;
 		goto out;
@@ -456,6 +459,16 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 			}
 		}
 
+		if (sc->sc_cap != 0) {
+
+			/*
+			 * The _CST FFH GAS encoding may contain
+			 * additional hints on Intel processors.
+			 */
+			if ((reg->reg_accesssize & ACPICPU_PDC_GAS_BM) == 0)
+				state.cs_flags &= ~ACPICPU_FLAG_C_BM_STS;
+		}
+
 		break;
 
 	default:
@@ -483,8 +496,9 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 
 	cs[type].cs_addr = state.cs_addr;
 	cs[type].cs_power = state.cs_power;
-	cs[type].cs_latency = state.cs_latency;
+	cs[type].cs_flags = state.cs_flags;
 	cs[type].cs_method = state.cs_method;
+	cs[type].cs_latency = state.cs_latency;
 
 out:
 	if (ACPI_FAILURE(rv))
@@ -733,13 +747,13 @@ acpicpu_cstate_idle(void)
 	state = acpicpu_cstate_latency(sc);
 
 	/*
-	 * Check for bus master activity. Note that
-	 * particularly usb(4) causes high activity,
-	 * which may prevent the use of C3 states.
+	 * Check for bus master activity. Note that particularly usb(4)
+	 * causes high activity, which may prevent the use of C3 states.
 	 */
-	if (acpicpu_cstate_bm_check() != false) {
+	if ((sc->sc_cstate[state].cs_flags & ACPICPU_FLAG_C_BM_STS) != 0) {
 
-		state--;
+		if (acpicpu_cstate_bm_check() != false)
+			state--;
 
 		if (__predict_false(sc->sc_cstate[state].cs_method == 0))
 			state = ACPI_STATE_C1;
