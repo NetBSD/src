@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.282 2010/07/18 09:29:11 jruoho Exp $
+# $NetBSD: GENERIC,v 1.283 2010/07/23 00:43:20 jakllsch Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.282 $"
+#ident 		"GENERIC-$Revision: 1.283 $"
 
 maxusers	64		# estimated number of users
 
@@ -336,8 +336,9 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
 
-ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
-					# watchdog and Speedstep support.
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-LPC w/ timecounter,
+					# watchdog and Speedstep and HPET
+fwhrng* at ichlpcib?		# Intel 82802 FWH Random Number Generator
 #hpet* 	at ichlpcib?
 
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
