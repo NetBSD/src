@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.5 2010/07/19 00:59:32 christos Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.6 2010/07/23 05:32:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.5 2010/07/19 00:59:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.6 2010/07/23 05:32:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -94,12 +94,12 @@ acpicpu_cstate_attach(device_t self)
 	switch (rv) {
 
 	case AE_OK:
-		sc->sc_flags |= ACPICPU_FLAG_C | ACPICPU_FLAG_C_CST;
+		sc->sc_flags |= ACPICPU_FLAG_C_CST;
 		acpicpu_cstate_cst_bios();
 		break;
 
 	default:
-		sc->sc_flags |= ACPICPU_FLAG_C | ACPICPU_FLAG_C_FADT;
+		sc->sc_flags |= ACPICPU_FLAG_C_FADT;
 		acpicpu_cstate_fadt(sc);
 		break;
 	}
@@ -192,9 +192,6 @@ acpicpu_cstate_start(device_t self)
 	static ONCE_DECL(once_save);
 	int rv;
 
-	if ((sc->sc_flags & ACPICPU_FLAG_C) == 0)
-		return 0;
-
 	/*
 	 * Save the existing idle-mechanism and claim the idle_loop(9).
 	 * This should be called after all ACPI CPUs have been attached.
@@ -205,8 +202,10 @@ acpicpu_cstate_start(device_t self)
 		return rv;
 
 	rv = RUN_ONCE(&once_start, acpicpu_md_idle_start);
+
 	if (rv == 0)
-		sc->sc_flags |= ACPICPU_FLAG_INIT;
+		sc->sc_flags |= ACPICPU_FLAG_C;
+
 	return rv;
 }
 
