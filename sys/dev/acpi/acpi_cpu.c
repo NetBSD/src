@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.4 2010/07/21 14:59:31 cegger Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.5 2010/07/23 05:32:02 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.4 2010/07/21 14:59:31 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.5 2010/07/23 05:32:02 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -78,6 +78,7 @@ acpicpu_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 	struct acpicpu_object ao;
+	int rv;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_PROCESSOR)
 		return 0;
@@ -85,9 +86,11 @@ acpicpu_match(device_t parent, cfdata_t match, void *aux)
 	if (acpi_match_hid(aa->aa_node->ad_devinfo, acpicpu_hid) != 0)
 		return 1;
 
-	int rv = acpicpu_object(aa->aa_node->ad_handle, &ao);
-	if (rv == 0 || acpicpu_id(ao.ao_procid) == 0xFFFFFF)
+	rv = acpicpu_object(aa->aa_node->ad_handle, &ao);
+
+	if (rv != 0 || acpicpu_id(ao.ao_procid) == 0xFFFFFF)
 		return 0;
+
 	return 1;
 }
 
@@ -101,7 +104,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	rv = acpicpu_object(aa->aa_node->ad_handle, &sc->sc_object);
 
-	if (rv == 0)
+	if (rv != 0)
 		return;
 
 	rv = RUN_ONCE(&once_attach, acpicpu_once_attach);
@@ -262,7 +265,7 @@ out:
 	if (buf.Pointer != NULL)
 		ACPI_FREE(buf.Pointer);
 
-	return ACPI_FAILURE(rv) ? 0 : 1;
+	return ACPI_FAILURE(rv) ? 1 : 0;
 }
 
 static cpuid_t
@@ -272,6 +275,7 @@ acpicpu_id(uint32_t id)
 	struct cpu_info *ci;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
+
 		if (id == ci->ci_cpuid)
 			return id;
 	}
@@ -436,9 +440,6 @@ acpicpu_notify(ACPI_HANDLE hdl, uint32_t evt, void *aux)
 	device_t self = aux;
 
 	sc = device_private(self);
-
-	if ((sc->sc_flags & ACPICPU_FLAG_INIT) == 0)
-		return;
 
 	switch (evt) {
 
