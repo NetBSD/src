@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.18 2008/05/25 15:52:07 chris Exp $	*/
+/*	$NetBSD: errata.c,v 1.19 2010/07/23 22:31:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.18 2008/05/25 15:52:07 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.19 2010/07/23 22:31:35 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ x86_errata(void)
 			break;
 	}
 
-	ex = errata + sizeof(errata) / sizeof(errata[0]);
+	ex = errata + __arraycount(errata);
 	for (upgrade = 0, e = errata; e < ex; e++) {
 		if (e->e_reported)
 			continue;
