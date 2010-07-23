@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.10 2010/07/23 20:01:27 phx Exp $ */
+/* $NetBSD: siisata.c,v 1.11 2010/07/23 20:04:52 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,11 +34,6 @@
 #include <lib/libsa/stand.h>
 
 #include "globals.h"
-
-//#define CSR_READ_4(r)		in32rb(r)
-//#define CSR_WRITE_4(r,v)	out32rb(r,v)
-//#define CSR_READ_1(r)		*(volatile uint8_t *)(r)
-//#define CSR_WRITE_1(r,v)	*(volatile uint8_t *)(r)=(v)
 
 static uint32_t pciiobase = PCI_XIOBASE;
 
@@ -78,24 +73,17 @@ siisata_init(unsigned tag, void *data)
 	l->bar[3] = pciiobase + (pcicfgread(tag, 0x1c) &~ 01);
 	l->bar[4] = pciiobase + (pcicfgread(tag, 0x20) &~ 01);
 	l->bar[5] = pcicfgread(tag, 0x24) &~ 0x3ff;
-for (n=0; n<6; n++) printf("bar[%d]=0x%08x\n",n,(unsigned)l->bar[n]);
-	val = pcicfgread(tag, 0x88);
-//	pcicfgwrite(tag, 0x88, val | 0xc000f3);
-	pcicfgwrite(tag, 0x88, val | 0x0000f3);
-	delay(50 * 1000);
-//	pcicfgwrite(tag, 0x88, val & 0xc00000);
-	pcicfgwrite(tag, 0x88, val & 0x000000);
-	delay(50 * 1000);
 
 	val = pcicfgread(tag, PCI_ID_REG);
-	/* assume BA5 access is possible */
 	if ((PCI_PRODUCT(val) & 0xf) == 0x2) {
 		/* 3112/3512 */
-		l->chan[0].cmd = l->bar[5] + 0x080;
-		l->chan[0].ctl = l->chan[0].alt = (l->bar[5] + 0x088) | 02;
-		l->chan[1].cmd = l->bar[5] + 0x0c0;
-		l->chan[1].ctl = l->chan[1].alt = (l->bar[5] + 0x0c8) | 02;
-printf("3512! cmd=0x%08x ctl/alt=0x%08x\n",l->chan[0].cmd,l->chan[0].ctl);
+		l->chan[0].cmd = l->bar[0];
+		l->chan[0].ctl = l->chan[0].alt = l->bar[1] | 02;
+		l->chan[0].dma = l->bar[4] + 0x0;
+		l->chan[1].cmd = l->bar[2];
+		l->chan[1].ctl = l->chan[1].alt = l->bar[3] | 02;
+		l->chan[1].dma = l->bar[4] + 0x8;
+		/* assume BA5 access is possible */
 		nchan = 2;
 	}
 	else {
@@ -110,16 +98,10 @@ printf("3512! cmd=0x%08x ctl/alt=0x%08x\n",l->chan[0].cmd,l->chan[0].ctl);
 		l->chan[3].ctl = l->chan[3].alt = (l->bar[5] + 0x2c8) | 02;
 		nchan = 4;
 	}
-
 	for (n = 0; n < nchan; n++) {
 		l->presense[n] = satapresense(l, n);
 		if (l->presense[n])
 			printf("port %d device present\n", n);
 	}
-
-	out32rb(l->bar[5] + 0xb4, 01);
-	out32rb(l->bar[5] + 0xf4, 01);
-	out32rb(l->bar[5] + 0xa4, 0x328a);
-	out32rb(l->bar[5] + 0xe4, 0x328a);
 	return l;
 }
