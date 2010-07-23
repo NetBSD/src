@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.7 2010/07/23 08:11:49 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.8 2010/07/23 13:54:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.7 2010/07/23 08:11:49 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.8 2010/07/23 13:54:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -720,30 +720,28 @@ acpicpu_cstate_idle(void)
 	struct acpicpu_softc *sc;
 	int state;
 
-	if (__predict_false(ci->ci_want_resched) != 0)
-		return;
+	acpi_md_OsDisableInterrupt();
 
 	KASSERT(acpicpu_sc != NULL);
 	KASSERT(ci->ci_cpuid < maxcpus);
 	KASSERT(ci->ci_ilevel == IPL_NONE);
 
-	if (__predict_false(acpi_suspended != 0)) {
-		acpicpu_md_idle_enter(0, 0);
-		return;
-	}
-
 	sc = acpicpu_sc[ci->ci_cpuid];
 
 	/*
-	 * If all CPUs do not have an ACPI counterpart,
-	 * the softc may be NULL. In this case use C1.
+	 * If all CPUs do not have their ACPI counterparts, the softc
+	 * may be NULL. In this case fall back to normal C1 with HALT.
 	 */
 	if (__predict_false(sc == NULL)) {
-		acpicpu_md_idle_enter(0, 0);
+		acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
 		return;
 	}
 
-	acpi_md_OsDisableInterrupt();
+	if (__predict_false(acpi_suspended != 0)) {
+		acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
+		return;
+	}
+
 	state = acpicpu_cstate_latency(sc);
 
 	/*
@@ -822,7 +820,7 @@ acpicpu_cstate_idle_enter(struct acpicpu_softc *sc, int state)
 		break;
 
 	default:
-		acpicpu_md_idle_enter(0, 0);
+		acpicpu_md_idle_enter(ACPICPU_C_STATE_HALT, ACPI_STATE_C1);
 		break;
 	}
 
