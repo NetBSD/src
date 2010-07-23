@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.25 2010/07/23 00:43:21 jakllsch Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.26 2010/07/23 02:23:58 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.25 2010/07/23 00:43:21 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.26 2010/07/23 02:23:58 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1241,9 +1241,10 @@ lpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 static void
 lpcib_fwh_configure(device_t self)
 {
-	struct lpcib_softc *sc = device_private(self);
-
+	struct lpcib_softc *sc;
 	pcireg_t pr;
+
+	sc = device_private(self);
 
 	if (sc->sc_has_rcba) {
 		/*
@@ -1254,15 +1255,16 @@ lpcib_fwh_configure(device_t self)
 	} else {
 		/* Enable FWH write to identify FWH. */
 		pr = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
-		    0x4c);
+		    LPCIB_PCI_BIOS_CNTL);
 		pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
-		    0x4c, pr|__BIT(16));
+		    LPCIB_PCI_BIOS_CNTL, pr|LPCIB_PCI_BIOS_CNTL_BWE);
 	}
 
 	sc->sc_fwhbus = config_found_ia(self, "fwhichbus", NULL, NULL);
 
-	/* disable write */
-	pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag, 0x4c, pr);
+	/* restore previous write enable setting */
+	pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
+	    LPCIB_PCI_BIOS_CNTL, pr);
 }
 
 static int
