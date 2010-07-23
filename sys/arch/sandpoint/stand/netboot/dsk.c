@@ -1,4 +1,4 @@
-/* $NetBSD: dsk.c,v 1.2 2010/06/27 12:09:17 phx Exp $ */
+/* $NetBSD: dsk.c,v 1.3 2010/07/23 20:01:27 phx Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -357,10 +357,10 @@ set_xfermode(struct dkdev_ata *l, int n)
 static int
 lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
 {
-	struct dkdev_ata *l = d->dvops;
+	struct dkdev_ata *l;
 	struct dvata_chan *chan;
 	void (*issue)(struct dvata_chan *, uint64_t, uint32_t);
-	uint32_t n, rdcnt;
+	int n, rdcnt, i;
 	uint16_t *p;
 	const char *err;
 	int error;
@@ -370,22 +370,20 @@ lba_read(struct disk *d, uint64_t bno, uint32_t bcnt, void *buf)
 	p = (uint16_t *)buf;
 	chan = &l->chan[n];
 	error = 0;
-	while (bcnt > 0) {
+	for ( ; bcnt > 0; bno += rdcnt, bcnt -= rdcnt) {
 		issue = (bno < (1ULL<<28)) ? issue28 : issue48;
 		rdcnt = (bcnt > 255) ? 255 : bcnt;
 		(*issue)(chan, bno, rdcnt);
 		if (spinwait_unbusy(l, n, 1000, &err) == 0) {
 			printf("%s blk %d %s\n", d->xname, (int)bno, err);
 			error = EIO;
+			continue;
 		}
-		else {
-			for (n = 0; n < rdcnt * 512; n += 2) {
-				/* arrives in native order */
-				*p++ = *(uint16_t *)(chan->cmd + _DAT);
-			}
-			(void)CSR_READ_1(chan->cmd + _STS);
+		for (i = 0; i < rdcnt * 512; i += 2) {
+			/* arrives in native order */
+			*p++ = *(uint16_t *)(chan->cmd + _DAT);
 		}
-		bno += rdcnt; bcnt -= rdcnt;
+		(void)CSR_READ_1(chan->cmd + _STS);
 	}
 	return error;
 }
@@ -466,7 +464,9 @@ dsk_open(struct open_file *f, ...)
 	}
 	return ENXIO;
   found:
+#if 0
 printf("dsk_open found %s\n", fsmod);
+#endif
 	d->fsops = fs;
 	f->f_devdata = d;
 
@@ -520,4 +520,3 @@ dsk_fsops(struct open_file *f)
 
 	return d->fsops;
 }
-
