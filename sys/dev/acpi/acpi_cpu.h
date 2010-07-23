@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.4 2010/07/23 05:32:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.5 2010/07/23 08:11:49 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -53,6 +53,12 @@
 #define ACPICPU_PDC_P_HW          __BIT(11)	/* Px hardware coordination  */
 
 /*
+ * See ibid., table 4.
+ */
+#define ACPICPU_PDC_GAS_HW	  __BIT(0)	/* hw-coordinated state      */
+#define ACPICPU_PDC_GAS_BM	  __BIT(1)	/* bus master check required */
+
+/*
  * Notify values.
  */
 #define ACPICPU_P_NOTIFY	 0x80		/* _PPC */
@@ -73,19 +79,17 @@
 #define ACPICPU_C_STATE_FFH	 0x02
 #define ACPICPU_C_STATE_SYSIO	 0x03
 
-/*
- * Global flags in the softc.
- */
 #define ACPICPU_FLAG_C		 __BIT(0)
 #define ACPICPU_FLAG_P		 __BIT(1)
 #define ACPICPU_FLAG_T		 __BIT(2)
 #define ACPICPU_FLAG_C_CST	 __BIT(3)
 #define ACPICPU_FLAG_C_FADT	 __BIT(4)
 #define ACPICPU_FLAG_C_BM	 __BIT(5)
-#define ACPICPU_FLAG_C_ARB	 __BIT(6)
-#define ACPICPU_FLAG_C_NOC3	 __BIT(7)
-#define ACPICPU_FLAG_C_MWAIT	 __BIT(8)
-#define ACPICPU_FLAG_C_C1E	 __BIT(9)
+#define ACPICPU_FLAG_C_BM_STS	 __BIT(6)
+#define ACPICPU_FLAG_C_ARB	 __BIT(7)
+#define ACPICPU_FLAG_C_NOC3	 __BIT(8)
+#define ACPICPU_FLAG_C_MWAIT	 __BIT(9)
+#define ACPICPU_FLAG_C_C1E	 __BIT(10)
 
 struct acpicpu_cstate {
 	uint64_t		 cs_stat;
@@ -93,6 +97,7 @@ struct acpicpu_cstate {
 	uint32_t		 cs_power;	/* mW */
 	uint32_t		 cs_latency;	/* us */
 	int			 cs_method;
+	int			 cs_flags;
 };
 
 struct acpicpu_csd {
