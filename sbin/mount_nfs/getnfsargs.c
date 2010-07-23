@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.13 2009/11/30 17:17:55 pooka Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.14 2010/07/23 19:25:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.13 2009/11/30 17:17:55 pooka Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.14 2010/07/23 19:25:23 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,10 @@ struct nfhret {
 
 static int	xdr_dir(XDR *, char *);
 static int	xdr_fh(XDR *, struct nfhret *);
+
+#ifndef MOUNTNFS_RETRYRPC
+#define MOUNTNFS_RETRYRPC 60
+#endif
 
 int
 getnfsargs(char *spec, struct nfs_args *nfsargsp)
@@ -287,7 +291,7 @@ tryagain:
 				(void) chdir("/");
 				opflags |= ISBGRND;
 			}
-			sleep(60);
+			sleep(MOUNTNFS_RETRYRPC);
 		}
 	}
 	if (nfhret.stat == 0)
