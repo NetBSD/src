@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1420 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1421 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -692,3 +692,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		libutil tests to ATF.  [jmmv 20100716]
 	tests: Convert the include and csu tests to ATF.  [jmmv 20100717]
 	tests: Convert the lint1 and libobjc tests to ATF.  [jmmv 20100718]
+	amd64, i386: Intel Firmware Hub Random Number Generator support moved
+		from pchb(4) to fwhrng(4) at ichlpcib(4).  [jakllsch 20100723]
