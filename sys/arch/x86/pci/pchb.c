@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.22 2010/06/16 03:35:01 riz Exp $ */
+/*	$NetBSD: pchb.c,v 1.23 2010/07/23 00:43:21 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.22 2010/06/16 03:35:01 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.23 2010/07/23 00:43:21 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -409,13 +409,6 @@ pchbattach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-#if NRND > 0
-	/*
-	 * Attach a random number generator, if there is one.
-	 */
-	pchb_attach_rnd(sc, pa);
-#endif
-
 	if (!pmf_device_register(self, pchb_suspend, pchb_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -450,21 +443,12 @@ int
 pchbdetach(device_t self, int flags)
 {
 	int rc;
-#if NRND > 0
-	struct pchb_softc *sc = device_private(self);
-#endif
 
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
 
 	pmf_device_deregister(self);
 
-#if NRND > 0
-	/*
-	 * Attach a random number generator, if there is one.
-	 */
-	pchb_detach_rnd(sc);
-#endif
 	return 0;
 }
 
