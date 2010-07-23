@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.2 2010/07/18 09:39:45 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.3 2010/07/23 13:54:21 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.2 2010/07/18 09:39:45 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.3 2010/07/23 13:54:21 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -164,24 +164,35 @@ acpicpu_md_idle_stop(void)
 	return 0;
 }
 
+/*
+ * The MD idle loop. Called with interrupts disabled.
+ */
 void
 acpicpu_md_idle_enter(int method, int state)
 {
-
-	KASSERT(native_idle != NULL);
+	struct cpu_info *ci = curcpu();
 
 	switch (method) {
 
 	case ACPICPU_C_STATE_FFH:
+
+		x86_enable_intr();
+		x86_monitor(&ci->ci_want_resched, 0, 0);
+
+		if (__predict_false(ci->ci_want_resched) != 0)
+			return;
+
 		x86_mwait((state - 1) << 4, 0);
 		break;
 
 	case ACPICPU_C_STATE_HALT:
-		x86_stihlt();
-		break;
 
-	default:
-		(*native_idle)();
+		if (__predict_false(ci->ci_want_resched) != 0) {
+			x86_enable_intr();
+			return;
+		}
+
+		x86_stihlt();
 		break;
 	}
 }
