@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.c,v 1.7 2010/07/22 21:00:07 pooka Exp $	*/
+/*	$NetBSD: sleepq.c,v 1.8 2010/07/23 19:14:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.7 2010/07/22 21:00:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sleepq.c,v 1.8 2010/07/23 19:14:14 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -85,6 +85,7 @@ sleepq_block(int timo, bool catch)
 	int biglocks = l->l_biglocks;
 
 	while (l->l_wchan) {
+		l->l_mutex = mp;
 		if ((error=cv_timedwait(&sq_cv, mp, timo)) == EWOULDBLOCK) {
 			TAILQ_REMOVE(l->l_sleepq, l, l_sleepchain);
 			l->l_wchan = NULL;
