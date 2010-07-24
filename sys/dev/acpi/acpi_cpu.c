@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.5 2010/07/23 05:32:02 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.6 2010/07/24 22:44:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.5 2010/07/23 05:32:02 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.6 2010/07/24 22:44:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -62,7 +62,6 @@ static void		  acpicpu_notify(ACPI_HANDLE, uint32_t, void *);
 static bool		  acpicpu_suspend(device_t, const pmf_qual_t *);
 static bool		  acpicpu_resume(device_t, const pmf_qual_t *);
 
-kmutex_t		  acpicpu_mtx;
 struct acpicpu_softc	**acpicpu_sc = NULL;
 
 static const char * const acpicpu_hid[] = {
@@ -114,27 +113,22 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	KASSERT(acpicpu_sc != NULL);
 
-	mutex_enter(&acpicpu_mtx);
-
 	sc->sc_dev = self;
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_node = aa->aa_node;
 	sc->sc_cpuid = acpicpu_id(sc->sc_object.ao_procid);
 
 	if (sc->sc_cpuid == 0xFFFFFF) {
-		mutex_exit(&acpicpu_mtx);
 		aprint_error(": invalid CPU ID\n");
 		return;
 	}
 
 	if (acpicpu_sc[sc->sc_cpuid] != NULL) {
-		mutex_exit(&acpicpu_mtx);
-		aprint_error(": already probed\n");
+		aprint_error(": already attached\n");
 		return;
 	}
 
 	acpicpu_sc[sc->sc_cpuid] = sc;
-	mutex_exit(&acpicpu_mtx);
 
 	sc->sc_cap = acpicpu_cap(sc);
 	sc->sc_flags |= acpicpu_md_quirks();
@@ -210,8 +204,6 @@ acpicpu_once_attach(void)
 	for (i = 0; i < maxcpus; i++)
 		acpicpu_sc[i] = NULL;
 
-	mutex_init(&acpicpu_mtx, MUTEX_DEFAULT, IPL_VM);
-
 	return 0;
 }
 
@@ -222,7 +214,6 @@ acpicpu_once_detach(void)
 
 	KASSERT(acpicpu_sc != NULL);
 
-	mutex_destroy(&acpicpu_mtx);
 	kmem_free(acpicpu_sc, maxcpus * sizeof(*sc));
 	acpicpu_sc = NULL;
 
