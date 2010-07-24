@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.393 2010/07/21 11:08:10 wiz Exp $
+.\"	$NetBSD: options.4,v 1.394 2010/07/24 23:09:32 jym Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2491,6 +2491,19 @@ emulators and X servers to run BIOS code, e.g., for some VESA routines.
 .It Cd options USER_LDT
 Include i386-specific system calls for modifying the local descriptor table,
 used by Windows emulators.
+.It Cd options PAE
+Enable
+.Tn PAE (Physical Address Extension)
+mode.
+.Tn PAE
+permits up to 36 bits physical addressing (64GB of physical memory), and
+turns physical addresses to 64 bits entities in the memory management
+subsystem. Userland virtual address space remains at 32 bits (4GB).
+.Tn PAE
+mode is required to enable the
+.Tn NX/XD (No-eXecute/eXecute Disable)
+bit for pages, which allows marking certain ones as not being executable.
+Any attempt to execute code from such a page will raise an exception.
 .It Cd options REALBASEMEM=integer
 Overrides the base memory size passed in from the boot block.
 (Value given in kilobytes.)
