@@ -1,11 +1,11 @@
-#	$NetBSD: README,v 1.3 2003/02/06 00:27:06 perry Exp $
+#	$NetBSD: README,v 1.4 2010/07/24 06:10:43 jruoho Exp $
 
 This is the Intel ACPI Component Architecture, Intel's reference
 implementation of the core operating system ACPI support.  The
-portion in the Osd/ subdirectory is provided by the oprerating
+portion in the acpica/ subdirectory is provided by the operating
 system as the glue between the OS and the ACPICA.
 
-Please, do not import an updated ACPI CA snapshot from Intel unless
+Please, do not import an updated ACPICA snapshot from Intel unless
 you absolutely know what you're doing -- The Intel directory layout
 changes from release to release, and we must munge it (by hand) into
 something sane that we can use.
@@ -13,14 +13,13 @@ something sane that we can use.
 The routines that the operating system must provide are documented
 in the following document:
 
-	ACPI Component Architecture Programmer Reference
-	Intel Corp.
+	Intel Corp., ACPI Component Architecture Programmer Reference
 
 Copies of the document may be retrieved from:
 
-	http://developer.intel.com/technology/iapc/acpi/downloads.htm
+	http://www.acpica.org/download/acpica-reference.pdf
 
-Machine-dependent code must provide the following routines for Osd:
+Machine-dependent code must provide at least the following routines:
 
 ACPI_STATUS	acpi_md_OsInitialize(void);
 ACPI_STATUS	acpi_md_OsTerminate(void);
