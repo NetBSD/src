@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.2 2010/03/08 12:35:08 jruoho Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.3 2010/07/24 09:35:36 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -77,4 +77,3 @@ acpi_release_global_lock(uint32_t *lock)
 	return old & GL_BIT_PENDING;
 }
 
-#define	ACPI_FLUSH_CPU_CACHE()		wbinvd()

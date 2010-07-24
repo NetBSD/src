@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_func.h,v 1.2 2006/05/14 21:55:38 elad Exp $	*/
+/*	$NetBSD: acpi_func.h,v 1.3 2010/07/24 09:35:36 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI
@@ -31,7 +31,7 @@
 /******************************************************************************
  *
  * Name: acpica_machdep.h - arch-specific defines, etc.
- *       $Revision: 1.2 $
+ *       $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -48,8 +48,11 @@
 #define ACPI_DISABLE_IRQS() disable_intr()
 #define ACPI_ENABLE_IRQS()  enable_intr()
 
-#define ACPI_FLUSH_CPU_CACHE()	/* XXX ia64_fc()? */
+#ifdef ACPI_FLUSH_CPU_CACHE
+#undef ACPI_FLUSH_CPU_CACHE
+#endif
 
+#define ACPI_FLUSH_CPU_CACHE()	/* XXX ia64_fc()? */
 
 /* Section 5.2.9.1:  global lock acquire/release functions */
 extern int	acpi_acquire_global_lock(uint32_t *lock);
