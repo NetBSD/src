@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.6 2010/07/24 09:35:36 jruoho Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.7 2010/07/24 21:53:54 jruoho Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -48,12 +48,6 @@
 ACPI_STATUS		acpi_md_OsInitialize(void);
 ACPI_STATUS		acpi_md_OsTerminate(void);
 ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
-
-#ifdef ACPI_FLUSH_CPU_CACHE
-#undef ACPI_FLUSH_CPU_CACHE
-#endif
-
-#define	ACPI_FLUSH_CPU_CACHE()	wbinvd()
 
 #define	acpi_md_OsIn8(x)	inb((x))
 #define	acpi_md_OsIn16(x)	inw((x))
