@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.13 2009/12/19 07:08:23 kiyohara Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.14 2010/07/24 15:33:12 tsutsui Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -253,9 +253,9 @@ psh3tp_set_enable(struct psh3tp_softc *sc, int on, int child)
 
 
 static int
-psh3tp_wsmouse_enable(void *self)
+psh3tp_wsmouse_enable(void *cookie)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)cookie;
 
 	DPRINTFN(1, ("%s: wsmouse enable\n", sc->sc_dev.dv_xname));
 	return psh3tp_set_enable(sc, 1, PSH3TP_WSMOUSE_ENABLED);
@@ -263,9 +263,9 @@ psh3tp_wsmouse_enable(void *self)
 
 
 static void
-psh3tp_wsmouse_disable(void *self)
+psh3tp_wsmouse_disable(void *cookie)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)cookie;
 
 	DPRINTFN(1, ("%s: wsmouse disable\n", sc->sc_dev.dv_xname));
 	psh3tp_set_enable(sc, 0, PSH3TP_WSMOUSE_ENABLED);
@@ -273,9 +273,9 @@ psh3tp_wsmouse_disable(void *self)
 
 
 static int
-psh3tp_intr(void *self)
+psh3tp_intr(void *arg)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)arg;
 
 	uint8_t irr0;
 	uint8_t phdr, touched;
@@ -348,9 +348,9 @@ served:
  * Decide if we are going to report this touch as a mouse click/drag.
  */
 static void
-psh3tp_start_polling(void *self)
+psh3tp_start_polling(void *arg)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)arg;
 	uint8_t phdr;
 	int rawx, rawy;
 
@@ -403,9 +403,9 @@ psh3tp_stop_polling(struct psh3tp_softc *sc __unused)
  * We are reporting this touch as a mouse click/drag.
  */
 static void
-psh3tp_callout_wsmouse(void *self)
+psh3tp_callout_wsmouse(void *arg)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)arg;
 	uint8_t phdr;
 	int rawx, rawy;
 	int s;
@@ -488,10 +488,10 @@ psh3tp_get_raw_xy(int *rawxp, int *rawyp)
 
 
 static int
-psh3tp_wsmouse_ioctl(void *self, u_long cmd, void *data, int flag,
+psh3tp_wsmouse_ioctl(void *cookie, u_long cmd, void *data, int flag,
 		     struct lwp *l)
 {
-	struct psh3tp_softc *sc = (struct psh3tp_softc *)self;
+	struct psh3tp_softc *sc = (struct psh3tp_softc *)cookie;
 
 	return hpc_tpanel_ioctl(&sc->sc_tpcalib, cmd, data, flag, l);
 }
