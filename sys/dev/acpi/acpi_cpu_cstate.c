@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.8 2010/07/23 13:54:21 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.9 2010/07/24 22:44:00 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.8 2010/07/23 13:54:21 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.9 2010/07/24 22:44:00 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -76,7 +76,6 @@ static int		 acpicpu_cstate_latency(struct acpicpu_softc *);
 static bool		 acpicpu_cstate_bm_check(void);
 static void		 acpicpu_cstate_idle_enter(struct acpicpu_softc *,int);
 
-extern kmutex_t		      acpicpu_mtx;
 extern struct acpicpu_softc **acpicpu_sc;
 extern int		      acpi_suspended;
 
