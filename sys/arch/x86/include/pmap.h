@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32 2010/07/15 19:02:26 jym Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33 2010/07/24 00:45:56 jym Exp $	*/
 
 /*
  *
@@ -144,11 +144,7 @@ struct pmap {
 #define	pm_lock	pm_obj[0].vmobjlock
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
-#ifdef PAE
-	paddr_t pm_pdirpa[PDP_SIZE];
-#else
-	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
-#endif
+	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
@@ -166,13 +162,13 @@ struct pmap {
 					 of pmap */
 };
 
-/* macro to access pm_pdirpa */
+/* macro to access pm_pdirpa slots */
 #ifdef PAE
 #define pmap_pdirpa(pmap, index) \
 	((pmap)->pm_pdirpa[l2tol3(index)] + l2tol2(index) * sizeof(pd_entry_t))
 #else
 #define pmap_pdirpa(pmap, index) \
-	((pmap)->pm_pdirpa + (index) * sizeof(pd_entry_t))
+	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
 #endif
 
 /*
@@ -187,6 +183,8 @@ struct pmap {
  * PDPpaddr is the physical address of the kernel's PDP.
  * - i386 non-PAE and amd64: PDPpaddr corresponds directly to the %cr3
  * value associated to the kernel process, proc0.
+ * - i386 PAE: it still represents the PA of the kernel's PDP (L2). Due to
+ * the L3 PD, it cannot be considered as the equivalent of a %cr3 any more.
  * - Xen: it corresponds to the PFN of the kernel's PDP.
  */
 extern u_long PDPpaddr;
