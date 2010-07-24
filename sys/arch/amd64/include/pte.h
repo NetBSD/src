@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.7 2010/07/06 20:50:34 cegger Exp $	*/
+/*	$NetBSD: pte.h,v 1.8 2010/07/24 17:43:47 njoly Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,6 +37,8 @@
 
 #ifndef _AMD64_PTE_H_
 #define _AMD64_PTE_H_
+
+#ifdef __x86_64__
 
 /*
  * amd64 MMU hardware structure:
@@ -131,5 +133,11 @@ typedef uint64_t pt_entry_t;		/* PTE */
 #define	PG_KW		0x0000000000000002	/* kernel read-write */
 
 #include <x86/pte.h>
+
+#else   /*      !__x86_64__      */
+
+#include <i386/pte.h>
+
+#endif  /*      !__x86_64__      */
 
 #endif /* _AMD64_PTE_H_ */
