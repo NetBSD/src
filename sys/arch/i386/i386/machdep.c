@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.690 2010/07/15 23:20:34 jym Exp $	*/
+/*	$NetBSD: machdep.c,v 1.691 2010/07/24 00:45:54 jym Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.690 2010/07/15 23:20:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.691 2010/07/24 00:45:54 jym Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -320,7 +320,7 @@ int	biosmem_implicit;
  * boot loader.  Only be used by native_loader(). */
 struct bootinfo_source {
 	uint32_t bs_naddrs;
-	paddr_t bs_addrs[1]; /* Actually longer. */
+	void *bs_addrs[1]; /* Actually longer. */
 };
 
 /* Only called by locore.h; no need to be in a header file. */
@@ -384,10 +384,10 @@ native_loader(int bl_boothowto, int bl_bootdev,
 		for (i = 0; i < bl_bootinfo->bs_naddrs; i++) {
 			struct btinfo_common *bc;
 
-			bc = (struct btinfo_common *)(bl_bootinfo->bs_addrs[i]);
+			bc = bl_bootinfo->bs_addrs[i];
 
-			if ((paddr_t)(data + bc->len) >
-			    (paddr_t)(&bidest->bi_data[0] + BOOTINFO_MAXSIZE))
+			if ((data + bc->len) >
+			    (&bidest->bi_data[0] + BOOTINFO_MAXSIZE))
 				break;
 
 			memcpy(data, bc, bc->len);
@@ -1312,6 +1312,14 @@ init386(paddr_t first_avail)
 	    (void *)atdevbase));
 #endif
 
+#if defined(PAE) && !defined(XEN)
+	/*
+	 * Save VA and PA of L3 PD of boot processor (for Xen, this is done
+	 * in xen_pmap_bootstrap())
+	 */
+	cpu_info_primary.ci_pae_l3_pdirpa = rcr3();
+	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);
+#endif /* PAE && !XEN */
 
 #ifdef XBOX
 	/*
@@ -1457,6 +1465,9 @@ init386(paddr_t first_avail)
 		       VM_PROT_ALL, 0);		/* protection */
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
+
+	/* Needed early, for bioscall() and kvm86_call() */
+	cpu_info_primary.ci_pmap = pmap_kernel();
 #endif
 #endif /* !XEN */
 

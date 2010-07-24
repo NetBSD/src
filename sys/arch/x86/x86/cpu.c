@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.72 2010/07/08 11:22:24 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.73 2010/07/24 00:45:56 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2010/07/08 11:22:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.73 2010/07/24 00:45:56 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -717,9 +717,18 @@ cpu_hatch(void *v)
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
-	lcr3(pmap_kernel()->pm_pdirpa);
+#ifdef PAE
+	pd_entry_t * l3_pd = ci->ci_pae_l3_pdir;
+	for (i = 0 ; i < PDP_SIZE; i++) {
+		l3_pd[i] = pmap_kernel()->pm_pdirpa[i] | PG_V;
+	}
+	lcr3(ci->ci_pae_l3_pdirpa);
+#else
+	lcr3(pmap_pdirpa(pmap_kernel(), 0));
+#endif
+
 	pcb = lwp_getpcb(curlwp);
-	pcb->pcb_cr3 = pmap_kernel()->pm_pdirpa;
+	pcb->pcb_cr3 = rcr3();
 	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 	lcr0(pcb->pcb_cr0);
 
@@ -812,6 +821,8 @@ cpu_copy_trampoline(void)
 static void
 tss_init(struct i386tss *tss, void *stack, void *func)
 {
+	KASSERT(curcpu()->ci_pmap == pmap_kernel());
+
 	memset(tss, 0, sizeof *tss);
 	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
 	tss->tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
@@ -819,7 +830,8 @@ tss_init(struct i386tss *tss, void *stack, void *func)
 	tss->tss_fs = GSEL(GCPU_SEL, SEL_KPL);
 	tss->tss_gs = tss->__tss_es = tss->__tss_ds =
 	    tss->__tss_ss = GSEL(GDATA_SEL, SEL_KPL);
-	tss->tss_cr3 = pmap_kernel()->pm_pdirpa;
+	/* %cr3 contains the value associated to pmap_kernel */
+	tss->tss_cr3 = rcr3();
 	tss->tss_esp = (int)((char *)stack + USPACE - 16);
 	tss->tss_ldt = GSEL(GLDT_SEL, SEL_KPL);
 	tss->__tss_eflags = PSL_MBO | PSL_NT;	/* XXX not needed? */
@@ -1093,4 +1105,27 @@ x86_cpu_idle_halt(void)
 	} else {
 		x86_enable_intr();
 	}
+}
+
+/*
+ * Loads pmap for the current CPU.
+ */
+void
+cpu_load_pmap(struct pmap *pmap)
+{
+#ifdef PAE
+	int i, s;
+	struct cpu_info *ci;
+
+	s = splvm(); /* just to be safe */
+	ci = curcpu();
+	pd_entry_t *l3_pd = ci->ci_pae_l3_pdir;
+	for (i = 0 ; i < PDP_SIZE; i++) {
+		l3_pd[i] = pmap->pm_pdirpa[i] | PG_V;
+	}
+	splx(s);
+	tlbflush();
+#else /* PAE */
+	lcr3(pmap_pdirpa(pmap, 0));
+#endif /* PAE */
 }
