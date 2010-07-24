@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.48 2010/07/24 08:01:55 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.49 2010/07/24 08:22:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.48 2010/07/24 08:01:55 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.49 2010/07/24 08:22:14 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -194,16 +194,15 @@ vaddr_t uvm_zerocheckkva;
 
 static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
 static void uvm_pageremove(struct uvm_object *, struct vm_page *);
-static struct vm_physseg *uvm_page_physload_common(
+static struct vm_physseg *uvm_physseg_alloc(
     struct vm_physseg_freelist * const, struct vm_physseg **, int,
     const paddr_t, const paddr_t);
-static void uvm_page_physunload_common(struct vm_physseg_freelist *,
+static void uvm_physseg_free(struct vm_physseg_freelist *,
     struct vm_physseg **, struct vm_physseg *);
-static void uvm_page_physseg_init(void);
-static struct vm_physseg * uvm_physseg_insert(struct vm_physseg_freelist *,
-    struct vm_physseg **, int, const paddr_t, const paddr_t);
-static void uvm_physseg_remove(struct vm_physseg_freelist *,
-    struct vm_physseg **, struct vm_physseg *);
+static void uvm_physseg_init(void);
+static void uvm_physseg_insert(struct vm_physseg *,
+    struct vm_physseg **, int);
+static void uvm_physseg_remove(struct vm_physseg **, struct vm_physseg *);
 
 /*
  * per-object tree of pages
@@ -792,7 +791,7 @@ uvm_page_physload(paddr_t start, paddr_t end, paddr_t avail_start,
 	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
 		panic("uvm_page_physload: bad free list %d", free_list);
 
-	seg = uvm_page_physload_common(&vm_physmem_freelist, vm_physmem_ptrs,
+	seg = uvm_physseg_alloc(&vm_physmem_freelist, vm_physmem_ptrs,
 	    vm_nphysmem, start, end);
 	KASSERT(seg != NULL);
 
@@ -827,7 +826,7 @@ uvm_page_physunload(void *cookie)
 
 	/* XXX */
 
-	uvm_page_physunload_common(&vm_physmem_freelist, vm_physmem_ptrs, seg);
+	uvm_physseg_free(&vm_physmem_freelist, vm_physmem_ptrs, seg);
 	vm_nphysmem--;
 }
 
@@ -839,7 +838,7 @@ uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
 	struct vm_physseg *seg;
 	int i;
 
-	seg = uvm_page_physload_common(&vm_physdev_freelist, vm_physdev_ptrs,
+	seg = uvm_physseg_alloc(&vm_physdev_freelist, vm_physdev_ptrs,
 	    vm_nphysdev, start, end);
 	KASSERT(seg != NULL);
 
@@ -881,18 +880,18 @@ uvm_page_physunload_direct(void *cookie)
 	struct vm_physseg *seg = cookie;
 
 	kmem_free(seg->pgs, sizeof(struct vm_page) * (seg->end - seg->start));
-	uvm_page_physunload_common(&vm_physdev_freelist, vm_physdev_ptrs, seg);
+	uvm_physseg_free(&vm_physdev_freelist, vm_physdev_ptrs, seg);
 	vm_nphysdev--;
 }
 #endif
 
 static struct vm_physseg *
-uvm_page_physload_common(struct vm_physseg_freelist *freelist,
+uvm_physseg_alloc(struct vm_physseg_freelist *freelist,
     struct vm_physseg **segs, int nsegs,
     const paddr_t start, const paddr_t end)
 {
 	struct vm_physseg *ps;
-	static int uvm_page_physseg_inited;
+	static int uvm_physseg_inited;
 
 	if (uvmexp.pagesize == 0)
 		panic("uvm_page_physload: page size not set!");
@@ -906,29 +905,33 @@ uvm_page_physload_common(struct vm_physseg_freelist *freelist,
 		    VM_PHYSSEG_MAX, (long long)start, (long long)end);
 
 	/* XXXUEBS too early to use RUN_ONCE(9)? */
-	if (uvm_page_physseg_inited == 0) {
-		uvm_page_physseg_inited = 1;
-		uvm_page_physseg_init();
+	if (uvm_physseg_inited == 0) {
+		uvm_physseg_inited = 1;
+		uvm_physseg_init();
 	}
 
-	ps = uvm_physseg_insert(freelist, segs, nsegs, start, end);
+	ps = SIMPLEQ_FIRST(freelist);
 	KASSERT(ps != NULL);
+	SIMPLEQ_REMOVE_HEAD(freelist, list);
+
 	ps->start = start;
 	ps->end = end;
+	uvm_physseg_insert(ps, segs, nsegs);
 
 	return ps;
 }
 
 void
-uvm_page_physunload_common(struct vm_physseg_freelist *freelist,
+uvm_physseg_free(struct vm_physseg_freelist *freelist,
     struct vm_physseg **segs, struct vm_physseg *seg)
 {
 
-	uvm_physseg_remove(freelist, segs, seg);
+	uvm_physseg_remove(segs, seg);
+	SIMPLEQ_INSERT_TAIL(freelist, seg, list);
 }
 
 static void
-uvm_page_physseg_init(void)
+uvm_physseg_init(void)
 {
 	int lcv;
 
@@ -944,15 +947,10 @@ uvm_page_physseg_init(void)
 #endif
 }
 
-static struct vm_physseg *
-uvm_physseg_insert(struct vm_physseg_freelist *freelist,
-    struct vm_physseg **segs, int nsegs, const paddr_t start, const paddr_t end)
+static void
+uvm_physseg_insert(struct vm_physseg *ps,
+    struct vm_physseg **segs, int nsegs)
 {
-	struct vm_physseg *ps;
-
-	ps = SIMPLEQ_FIRST(freelist);
-	KASSERT(ps != NULL);
-	SIMPLEQ_REMOVE_HEAD(freelist, list);
 
 #if (VM_PHYSSEG_STRAT == VM_PSTRAT_RANDOM)
 	/* random: put it at the end (easy!) */
@@ -963,7 +961,7 @@ uvm_physseg_insert(struct vm_physseg_freelist *freelist,
 		int x;
 		/* sort by address for binary search */
 		for (lcv = 0 ; lcv < nsegs ; lcv++)
-			if (start < segs[lcv]->start)
+			if (ps->start < segs[lcv]->start)
 				break;
 		/* move back other entries, if necessary ... */
 		for (x = nsegs ; x > lcv ; x--)
@@ -976,7 +974,7 @@ uvm_physseg_insert(struct vm_physseg_freelist *freelist,
 		int x;
 		/* sort by largest segment first */
 		for (lcv = 0 ; lcv < nsegs ; lcv++)
-			if ((end - start) >
+			if ((ps->end - ps->start) >
 			    (segs[lcv]->end - segs[lcv]->start))
 				break;
 		/* move back other entries, if necessary ... */
@@ -987,12 +985,10 @@ uvm_physseg_insert(struct vm_physseg_freelist *freelist,
 #else
 	panic("uvm_page_physload: unknown physseg strategy selected!");
 #endif
-	return ps;
 }
 
 static void
-uvm_physseg_remove(struct vm_physseg_freelist *freelist, struct vm_physseg **segs,
-    struct vm_physseg *seg)
+uvm_physseg_remove(struct vm_physseg **segs, struct vm_physseg *seg)
 {
 	struct vm_physseg **segp;
 
@@ -1001,7 +997,6 @@ uvm_physseg_remove(struct vm_physseg_freelist *freelist, struct vm_physseg **seg
 			break;
 	if (segp == segs + VM_PHYSSEG_MAX)
 		panic("unknown segment: %p", seg);
-	SIMPLEQ_INSERT_TAIL(freelist, seg, list);
 	while (segp + 1 < segs + VM_PHYSSEG_MAX) {
 		*segp = *(segp + 1);
 		segp++;
