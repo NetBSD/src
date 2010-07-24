@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.20 2010/02/09 23:09:47 jym Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.21 2010/07/24 00:45:55 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.20 2010/02/09 23:09:47 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.21 2010/07/24 00:45:55 jym Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -159,6 +159,12 @@ _TRMP_LABEL(mp_startup)
 	orl	$CR4_PSE,%eax
 	movl	%eax,%cr4
 1:
+
+#ifdef PAE /* Enable PAE */
+	movl	%cr4,%eax
+	or	$CR4_PAE,%eax
+	movl	%eax,%cr4
+#endif
 
 	movl	RELOC(mp_pdirpa),%ecx
 	HALTT(0x5,%ecx)

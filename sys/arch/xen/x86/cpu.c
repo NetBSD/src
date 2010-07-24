@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.46 2010/07/06 20:50:35 cegger Exp $	*/
+/*	$NetBSD: cpu.c,v 1.47 2010/07/24 00:45:56 jym Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.46 2010/07/06 20:50:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.47 2010/07/24 00:45:56 jym Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -581,6 +581,11 @@ cpu_init(struct cpu_info *ci)
 		if (cpu_feature[0] & (CPUID_SSE|CPUID_SSE2))
 			lcr4(rcr4() | CR4_OSXMMEXCPT);
 	}
+
+#ifdef __x86_64__
+	/* No user PGD mapped for this CPU yet */
+	ci->ci_xen_current_user_pgd = 0;
+#endif
 
 	atomic_or_32(&cpus_running, ci->ci_cpumask);
 	atomic_or_32(&ci->ci_flags, CPUF_RUNNING);
@@ -1110,4 +1115,60 @@ x86_cpu_idle_xen(void)
 	} else {
 		x86_enable_intr();
 	}
+}
+
+/*
+ * Loads pmap for the current CPU.
+ */
+void
+cpu_load_pmap(struct pmap *pmap)
+{
+#ifdef i386
+#ifdef PAE
+	int i, s;
+	struct cpu_info *ci;
+
+	s = splvm(); /* just to be safe */
+	ci = curcpu();
+	paddr_t l3_pd = xpmap_ptom_masked(ci->ci_pae_l3_pdirpa);
+	/* don't update the kernel L3 slot */
+	for (i = 0 ; i < PDP_SIZE - 1; i++) {
+		xpq_queue_pte_update(l3_pd + i * sizeof(pd_entry_t),
+		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
+	}
+	splx(s);
+	tlbflush();
+#else /* PAE */
+	lcr3(pmap_pdirpa(pmap, 0));
+#endif /* PAE */
+#endif /* i386 */
+
+#ifdef __x86_64__
+	int i, s;
+	pd_entry_t *old_pgd, *new_pgd;
+	paddr_t addr;
+	struct cpu_info *ci;
+
+	/* kernel pmap always in cr3 and should never go in user cr3 */
+	if (pmap_pdirpa(pmap, 0) != pmap_pdirpa(pmap_kernel(), 0)) {
+		ci = curcpu();
+		/*
+		 * Map user space address in kernel space and load
+		 * user cr3
+		 */
+		s = splvm();
+		new_pgd = pmap->pm_pdir;
+		old_pgd = pmap_kernel()->pm_pdir;
+		addr = xpmap_ptom(pmap_pdirpa(pmap_kernel(), 0));
+		for (i = 0; i < PDIR_SLOT_PTE;
+		    i++, addr += sizeof(pd_entry_t)) {
+			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
+				xpq_queue_pte_update(addr, new_pgd[i]);
+		}
+		tlbflush();
+		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
+		ci->ci_xen_current_user_pgd = pmap_pdirpa(pmap, 0);
+		splx(s);
+	}
+#endif /* __x86_64__ */
 }

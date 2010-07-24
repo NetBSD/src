@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.20 2010/07/15 23:20:34 jym Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.21 2010/07/24 00:45:56 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.20 2010/07/15 23:20:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.21 2010/07/24 00:45:56 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -814,22 +814,26 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #else
 	xpq_queue_pin_table(xpmap_ptom_masked(new_pgd - KERNBASE));
 #endif
-#ifdef __i386__
+
 	/* Save phys. addr of PDP, for libkvm. */
-	PDPpaddr = (long)pde - KERNBASE;
 #ifdef PAE
-	/* also save the address of the L3 page */
-	pmap_l3pd = pdtpe;
-	pmap_l3paddr = (new_pgd - KERNBASE);
-#endif /* PAE */
-#endif /* i386 */
+	PDPpaddr = (u_long)pde - KERNBASE; /* PDP is the L2 with PAE */
+#else
+	PDPpaddr = (u_long)new_pgd - KERNBASE;
+#endif
+
 	/* Switch to new tables */
 	__PRINTK(("switch to PGD\n"));
 	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
 	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] now entry %#" PRIxPADDR "\n",
 	    bt_pgd[PDIR_SLOT_PTE]));
+
 #ifdef PAE
 	if (final) {
+		/* save the address of the L3 page */
+		cpu_info_primary.ci_pae_l3_pdir = pdtpe;
+		cpu_info_primary.ci_pae_l3_pdirpa = (new_pgd - KERNBASE);
+
 		/* now enter kernel's PTE mappings */
 		addr =  (u_long)pde - KERNBASE + PAGE_SIZE * 3;
 		xpq_queue_pte_update(
@@ -838,8 +842,6 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		xpq_flush_queue();
 	}
 #endif
-
-
 
 	/* Now we can safely reclaim space taken by old tables */
 	
