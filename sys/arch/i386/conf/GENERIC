@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.988 2010/07/23 00:43:20 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.989 2010/07/24 00:45:54 jym Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.988 $"
+#ident 		"GENERIC-$Revision: 1.989 $"
 
 maxusers	64		# estimated number of users
 
@@ -35,6 +35,7 @@ no options 	COREDUMP
 # CPU-related options.
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
+#options 	PAE		# PAE mode (36 bits physical addressing)
 
 # Enhanced SpeedStep Technology in the Pentium M
 options 	ENHANCED_SPEEDSTEP
