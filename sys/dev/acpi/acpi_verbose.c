@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_verbose.c,v 1.3 2010/06/07 01:45:27 pgoyette Exp $ */
+/*	$NetBSD: acpi_verbose.c,v 1.4 2010/07/25 12:54:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.3 2010/06/07 01:45:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_verbose.c,v 1.4 2010/07/25 12:54:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,6 +103,7 @@ acpiverbose_modcmd(modcmd_t cmd, void *arg)
 		acpi_print_tree = acpi_print_tree_real;
 		acpi_print_dev = acpi_print_dev_real;
 		acpi_wmidump = acpi_wmidump_real;
+		acpi_verbose_loaded = 1;
 		return 0;
 	case MODULE_CMD_FINI:
 		acpi_print_devnodes = saved_print_devnodes;
