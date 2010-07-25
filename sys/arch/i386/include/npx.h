@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.h,v 1.23 2009/09/25 13:51:27 mlelstv Exp $	*/
+/*	$NetBSD: npx.h,v 1.24 2010/07/25 19:19:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -189,6 +189,8 @@ int	npx586bug1(int, int);
 void 	npxinit(struct cpu_info *);
 void	process_xmm_to_s87(const struct savexmm *, struct save87 *);
 void	process_s87_to_xmm(const struct save87 *, struct savexmm *);
+struct lwp;
+int	npxtrap(struct lwp *);
 
 #endif
 
