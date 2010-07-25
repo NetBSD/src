@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.31 2010/06/07 01:41:39 pgoyette Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.32 2010/07/25 13:49:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.31 2010/06/07 01:41:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.32 2010/07/25 13:49:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -615,6 +615,7 @@ scsiverbose_modcmd(modcmd_t cmd, void *arg)
 		saved_print_sense_data = scsipi_print_sense_data;
 		scsipi_print_sense = scsipi_print_sense_real;
 		scsipi_print_sense_data = scsipi_print_sense_data_real;
+		scsi_verbose_loaded = 1;
 		return 0;
 	case MODULE_CMD_FINI:
 		scsipi_print_sense = saved_print_sense;
