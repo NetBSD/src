@@ -1,6 +1,7 @@
-.\"	$Vendor-Id: roff.3,v 1.1 2010/05/25 22:16:59 kristaps Exp $
+.\"	$Vendor-Id: roff.3,v 1.6 2010/07/07 15:04:54 kristaps Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 25 2010 $
+.Dd $Mdocdate: July 7 2010 $
 .Dt ROFF 3
 .Os
 .Sh NAME
@@ -29,7 +30,11 @@
 .In mandoc.h
 .In roff.h
 .Ft "struct roff *"
-.Fn roff_alloc "mandocmsg msgs" "void *data"
+.Fo roff_alloc
+.Fa "struct regset *regs"
+.Fa "mandocmsg msgs"
+.Fa "void *data"
+.Fc
 .Ft int
 .Fn roff_endparse "struct roff *roff"
 .Ft void
@@ -154,3 +159,15 @@ The
 .Nm
 library was written by
 .An Kristaps Dzonsons Aq kristaps@bsd.lv .
+.Sh BUGS
+The implementation of user-defined strings needs improvement:
+.Bl -dash
+.It
+String values are taken literally and are not interpreted.
+.It
+Parsing of quoted strings is incomplete.
+.It
+The stings are stored internally using a singly linked list,
+which is fine for small numbers of strings,
+but ineffient when handling many strings.
+.El

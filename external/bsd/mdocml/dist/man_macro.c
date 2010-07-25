@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_macro.c,v 1.47 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: man_macro.c,v 1.48 2010/06/26 16:07:08 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -290,6 +290,7 @@ blk_close(MACRO_PROT_ARGS)
 }
 
 
+/* ARGSUSED */
 int
 blk_exp(MACRO_PROT_ARGS)
 {
@@ -341,6 +342,7 @@ blk_exp(MACRO_PROT_ARGS)
  * scopes, such as `SH' closing out an `SS', are defined in the rew
  * routines.
  */
+/* ARGSUSED */
 int
 blk_imp(MACRO_PROT_ARGS)
 {
@@ -398,6 +400,7 @@ blk_imp(MACRO_PROT_ARGS)
 }
 
 
+/* ARGSUSED */
 int
 in_line_eoln(MACRO_PROT_ARGS)
 {
