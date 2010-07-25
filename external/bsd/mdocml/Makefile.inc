@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.11 2010/07/25 19:12:57 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.12 2010/07/25 19:16:18 joerg Exp $
 
 .include <bsd.own.mk>
 
-VERSION=	1.10.4
+VERSION!=	cd ${.PARSEDIR}/dist && ${MAKE} -V VERSION
 
 CPPFLAGS+=	-DVERSION=\"${VERSION}\" -DUGLY
 
