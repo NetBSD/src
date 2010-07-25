@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.84 2010/07/21 17:52:10 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.85 2010/07/25 09:54:37 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.84 2010/07/21 17:52:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.85 2010/07/25 09:54:37 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -659,7 +659,7 @@ ntfs_fhtovp(
 	    (unsigned long long)ntfh.ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfh.ntfid_ino, ntfh.ntfid_attr, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, vpp);
+			LK_EXCLUSIVE, 0, vpp);
 	if (error != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -848,8 +848,7 @@ ntfs_vget(
 	ino_t ino,
 	struct vnode **vpp)
 {
-	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, vpp);
+	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL, LK_EXCLUSIVE, 0, vpp);
 }
 
 extern const struct vnodeopv_desc ntfs_vnodeop_opv_desc;
