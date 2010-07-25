@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man.c,v 1.76 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: man.c,v 1.81 2010/07/07 15:04:54 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -94,7 +94,8 @@ man_free(struct man *man)
 
 
 struct man *
-man_alloc(void *data, int pflags, mandocmsg msg)
+man_alloc(struct regset *regs, void *data, 
+		int pflags, mandocmsg msg)
 {
 	struct man	*p;
 
@@ -104,6 +105,7 @@ man_alloc(void *data, int pflags, mandocmsg msg)
 	p->data = data;
 	p->pflags = pflags;
 	p->msg = msg;
+	p->regs = regs;
 
 	man_alloc1(p);
 	return(p);

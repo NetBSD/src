@@ -1,4 +1,4 @@
-/*	$Vendor-Id: html.c,v 1.102 2010/06/19 20:46:27 kristaps Exp $ */
+/*	$Vendor-Id: html.c,v 1.105 2010/07/06 12:37:17 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -393,8 +393,15 @@ print_otag(struct html *h, enum htmltag tag,
 		t = NULL;
 
 	if ( ! (HTML_NOSPACE & h->flags))
-		if ( ! (HTML_CLRLINE & htmltags[tag].flags))
-			putchar(' ');
+		if ( ! (HTML_CLRLINE & htmltags[tag].flags)) {
+			/* Manage keeps! */
+			if ( ! (HTML_KEEP & h->flags)) {
+				if (HTML_PREKEEP & h->flags)
+					h->flags |= HTML_KEEP;
+				putchar(' ');
+			} else
+				printf("&#160;");
+		}
 
 	/* Print out the tag name and attributes. */
 
@@ -484,11 +491,11 @@ print_doctype(struct html *h)
 
 
 void
-print_text(struct html *h, const char *p)
+print_text(struct html *h, const char *word)
 {
 
-	if (*p && 0 == *(p + 1))
-		switch (*p) {
+	if (word[0] && '\0' == word[1])
+		switch (word[0]) {
 		case('.'):
 			/* FALLTHROUGH */
 		case(','):
@@ -511,19 +518,26 @@ print_text(struct html *h, const char *p)
 			break;
 		}
 
-	if ( ! (h->flags & HTML_NOSPACE))
-		putchar(' ');
+	if ( ! (HTML_NOSPACE & h->flags)) {
+		/* Manage keeps! */
+		if ( ! (HTML_KEEP & h->flags)) {
+			if (HTML_PREKEEP & h->flags)
+				h->flags |= HTML_KEEP;
+			putchar(' ');
+		} else
+			printf("&#160;");
+	}
 
-	assert(p);
-	if ( ! print_encode(h, p, 0))
+	assert(word);
+	if ( ! print_encode(h, word, 0))
 		h->flags &= ~HTML_NOSPACE;
 
 	/* 
 	 * Note that we don't process the pipe: the parser sees it as
 	 * punctuation, but we don't in terms of typography.
 	 */
-	if (*p && 0 == *(p + 1))
-		switch (*p) {
+	if (word[0] && '\0' == word[1])
+		switch (word[0]) {
 		case('('):
 			/* FALLTHROUGH */
 		case('['):
@@ -718,11 +732,11 @@ bufcat_su(struct html *h, const char *p, const struct roffsu *su)
 		break;
 	}
 
-	if (su->pt)
-		buffmt(h, "%s: %f%s;", p, v, u);
-	else
-		/* LINTED */
-		buffmt(h, "%s: %d%s;", p, (int)v, u);
+	/* 
+	 * XXX: the CSS spec isn't clear as to which types accept
+	 * integer or real numbers, so we just make them all decimals.
+	 */
+	buffmt(h, "%s: %.2f%s;", p, v, u);
 }
 
 
