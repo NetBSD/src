@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.34 2010/07/21 17:52:11 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.35 2010/07/25 10:00:48 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.34 2010/07/21 17:52:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.35 2010/07/25 10:00:48 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -353,7 +353,7 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 			vp = bnode->vnode;
 			mutex_enter(&vp->v_interlock);
 			mutex_exit(&mntvnode_lock);
-			if (vget(vp, LK_EXCLUSIVE | LK_RETRY) == 0) {
+			if (vget(vp, LK_EXCLUSIVE) == 0) {
 				*vpp = vp;
 				return 0;
 			} else {

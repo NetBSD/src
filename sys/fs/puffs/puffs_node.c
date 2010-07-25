@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.16 2010/07/21 17:52:10 hannken Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.17 2010/07/25 10:03:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.16 2010/07/21 17:52:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.17 2010/07/25 10:03:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -399,7 +399,7 @@ puffs_cookie2vnode(struct puffs_mount *pmp, puffs_cookie_t ck, int lock,
 
 	vgetflags = 0;
 	if (lock)
-		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
+		vgetflags |= LK_EXCLUSIVE;
 	if ((rv = vget(vp, vgetflags)))
 		return rv;
 
