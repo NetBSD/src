@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.410 2010/07/21 17:52:12 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.411 2010/07/25 10:23:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.410 2010/07/21 17:52:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.411 2010/07/25 10:23:40 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1283,6 +1283,7 @@ vget(vnode_t *vp, int flags)
 
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 	KASSERT(mutex_owned(&vp->v_interlock));
+	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT)) == 0);
 
 	/*
 	 * Before adding a reference, we must remove the vnode
