@@ -1,4 +1,4 @@
-/* $NetBSD: h_macros.h,v 1.2 2009/04/14 10:19:38 pooka Exp $ */
+/* $NetBSD: h_macros.h,v 1.3 2010/07/25 22:29:15 pooka Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -26,11 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(_H_MACROS_H_)
-#   error "h_macros.h can only be included once."
-#else
-#   define _H_MACROS_H_
-#endif
+#ifndef SRC_TESTS_H_MACROS_H_
+#define SRC_TESTS_H_MACROS_H_
 
 #include <errno.h>
 #include <stdarg.h>
@@ -63,3 +60,5 @@ atf_tc_fail_errno(const char *fmt, ...)
 
 	atf_tc_fail(buf);
 }
+
+#endif
