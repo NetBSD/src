@@ -1,4 +1,4 @@
-/*	$NetBSD: t_forward.c,v 1.3 2010/07/25 21:39:21 pooka Exp $	*/
+/*	$NetBSD: netconfig.c,v 1.1 2010/07/25 21:39:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,54 +29,47 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_forward.c,v 1.3 2010/07/25 21:39:21 pooka Exp $");
+__RCSID("$NetBSD: netconfig.c,v 1.1 2010/07/25 21:39:20 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/sysctl.h>
-#include <sys/wait.h>
+#include <sys/ioctl.h>
 
-#include <arpa/inet.h>
-
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/icmp_var.h>
 #include <net/route.h>
+
+#include <atf-c.h>
+#include <errno.h>
+#include <string.h>
 
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 
-#include <atf-c.h>
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "../../h_macros.h"
-#include "../config/netconfig.c"
 
 static void
-configure_interface(const char *busname, const char *addr, const char *mask,
-	const char *bcast)
+netcfg_rump_makeshmif(const char *busname, char *ifname)
 {
-	char ifname[32];
+	int rv, ifnum;
+
+	if ((rv = rump_pub_shmif_create(busname, &ifnum)) != 0) {
+		atf_tc_fail("makeshmif: rump_pub_shmif_create %d", rv);
+	}
+	sprintf(ifname, "shmif%d", ifnum);
+}
+
+static void
+netcfg_rump_if(const char *ifname,
+	const char *addr, const char *mask, const char *bcast)
+{
 	struct ifaliasreq ia;
 	struct sockaddr_in *sin;
-	int s, rv, ifnum;
+	int s, rv;
 
-	if ((s = rump_pub_shmif_create(busname, &ifnum)) != 0) {
-		atf_tc_fail("rump_pub_shmif_create(%d)", s);
-	}
-
+	s = -1;
 	if ((s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
 		atf_tc_fail_errno("if config socket");
 	}
-	sprintf(ifname, "shmif%d", ifnum);
 
 	/* Address */
 	memset(&ia, 0, sizeof(ia));
@@ -105,8 +98,8 @@ configure_interface(const char *busname, const char *addr, const char *mask,
 	rump_sys_close(s);
 }
 
-static void
-configure_routing(const char *dst, const char *mask, const char *gw)
+static void __unused
+netcfg_rump_route(const char *dst, const char *mask, const char *gw)
 {
 	size_t len;
 	struct {
@@ -162,113 +155,4 @@ configure_routing(const char *dst, const char *mask, const char *gw)
 		atf_tc_fail_errno("write routing message");
 	}
 	rump_sys_close(s);
-}
-
-/*
- * Since our maxttl is in our private namespace, we don't need raw packet
- * construction like traceroute(8) -- we can just use the global maxttl.
- */
-static void
-sendttl(void)
-{
-	extern int rumpns_ip_defttl;
-	struct sockaddr_in sin;
-	char payload[1024];
-	char ifname[IFNAMSIZ];
-	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
-	int nv;
-	int s;
-
-	netcfg_rump_makeshmif("bus1", ifname);
-	netcfg_rump_if(ifname, "1.0.0.1", "255.255.255.0", "1.0.0.255");
-	netcfg_rump_route("0.0.0.0", "0.0.0.0", "1.0.0.2"); /* default router */
-
-	/* set global ttl to 1 */
-	nv = 1;
-	if (rump_sys___sysctl(mib, 4, NULL, NULL, &nv, sizeof(nv)) == -1)
-		atf_tc_fail_errno("set ttl");
-
-	s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0);
-	if (s == -1)
-		atf_tc_fail_errno("create send socket");
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_len = sizeof(sin);
-	sin.sin_family = AF_INET;
-	sin.sin_port = htons(33434);
-	sin.sin_addr.s_addr = inet_addr("9.9.9.9");
-
-	/* send udp datagram with ttl == 1 */
-	if (rump_sys_sendto(s, payload, sizeof(payload), 0,
-	    (struct sockaddr *)&sin, sizeof(sin)) == -1)
-		atf_tc_fail_errno("sendto");
-}
-
-static void
-router(void)
-{
-	int mib[4] = { CTL_NET, PF_INET, IPPROTO_ICMP,
-		    ICMPCTL_RETURNDATABYTES };
-	int nv;
-
-	/* set returndatabytes to 200 */
-	nv = 200;
-	if (rump_sys___sysctl(mib, 4, NULL, NULL, &nv, sizeof(nv)) == -1)
-		atf_tc_fail_errno("sysctl returndatabytes");
-
-	configure_interface("bus1", "1.0.0.2", "255.255.255.0", "1.0.0.255");
-
-	/*
-	 * Wait for parent to send us the data and for us to have
-	 * a chance to process it.
-	 */
-	sleep(1);
-	exit(0);
-}
-
-ATF_TC(returndatabytes);
-ATF_TC_HEAD(returndatabytes, tc)
-{
-
-	atf_tc_set_md_var(tc, "descr", "icmp.returndatabytes with certain "
-	    "packets can cause kernel panic");
-	atf_tc_set_md_var(tc, "use.fs", "true");
-	atf_tc_set_md_var(tc, "timeout", "4"); /* just in case */
-	/* PR kern/43548 */
-}
-
-ATF_TC_BODY(returndatabytes, tc)
-{
-	pid_t cpid;
-	int status;
-
-	cpid = fork();
-	rump_init();
-
-	switch (cpid) {
-	case -1:
-		atf_tc_fail_errno("fork failed");
-	case 0:
-		router();
-		break;
-	default:
-		sendttl();
-		if (wait(&status) == -1)
-			atf_tc_fail_errno("wait");
-		if (WIFEXITED(status)) {
-			if (WEXITSTATUS(status))
-				atf_tc_fail("child exited with status %d",
-				    WEXITSTATUS(status));
-		} else {
-			atf_tc_fail("child died");
-		}
-	}
-}
-
-ATF_TP_ADD_TCS(tp)
-{
-
-	ATF_TP_ADD_TC(tp, returndatabytes);
-
-	return atf_no_error();
 }
