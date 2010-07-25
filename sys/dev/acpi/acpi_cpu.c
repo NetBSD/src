@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.6 2010/07/24 22:44:00 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.7 2010/07/25 17:44:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.6 2010/07/24 22:44:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.7 2010/07/25 17:44:01 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -141,10 +141,7 @@ acpicpu_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * We should claim the bus space. However, we do this only
-	 * to announce that the space is in use. This is unnecessary
-	 * if system I/O type C-states are not used. Many systems also
-	 * report invalid values in the processor object. Finally, this
-	 * is known to conflict with other devices. But as is noted in
+	 * to announce that the space is in use. As is noted in
 	 * ichlpcib(4), we can continue our I/O without bus_space(9).
 	 */
 	if (sc->sc_object.ao_pblklen == 6 && sc->sc_object.ao_pblkaddr != 0) {
