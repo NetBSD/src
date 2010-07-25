@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.80 2009/10/10 19:05:29 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.81 2010/07/25 07:19:00 mrg Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -552,22 +552,6 @@ unconditionally.
 Indicates whether program binaries and shared libraries should be built
 to include RCS IDs for use with
 .Xr ident 1 .
-.DFLTn
-.
-.It Sy MKSUBPIXEL
-.YorN
-For X builds, decides if subpixel rendering code in FreeType
-is turned on.
-Turned off by default because of patent issues.
-.DFLTn
-.
-.It Sy MKTTINTERP
-.YorN
-For X builds, decides if the TrueType bytecode interpreter
-is turned on.
-See
-.Pa http://www.freetype.org/patents.html
-for details.
 .DFLTn
 .
 .It Sy MKUNPRIVED
