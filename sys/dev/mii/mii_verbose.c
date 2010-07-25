@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_verbose.c,v 1.2 2010/06/06 18:58:22 pgoyette Exp $ */
+/*	$NetBSD: mii_verbose.c,v 1.3 2010/07/25 14:44:34 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.2 2010/06/06 18:58:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_verbose.c,v 1.3 2010/07/25 14:44:34 pgoyette Exp $");
 
 #include <sys/module.h>
 #include <dev/mii/mii_verbose.h>
@@ -81,6 +81,7 @@ miiverbose_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_INIT:
 		saved_mii_get_descr = mii_get_descr;
 		mii_get_descr = mii_get_descr_real;
+		mii_verbose_loaded = 1;
 		return 0;
 	case MODULE_CMD_FINI:
 		mii_get_descr = saved_mii_get_descr;
