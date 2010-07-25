@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.9 2010/07/24 22:44:00 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.10 2010/07/25 17:44:01 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.9 2010/07/24 22:44:00 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.10 2010/07/25 17:44:01 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -78,6 +78,16 @@ static void		 acpicpu_cstate_idle_enter(struct acpicpu_softc *,int);
 
 extern struct acpicpu_softc **acpicpu_sc;
 extern int		      acpi_suspended;
+
+/*
+ * XXX:	The local APIC timer (as well as TSC) is typically
+ *	stopped in C3. For now, we cannot but disable C3.
+ */
+#ifdef ACPICPU_ENABLE_C3
+static int cs_state_max = ACPI_STATE_C3;
+#else
+static int cs_state_max = ACPI_STATE_C2;
+#endif
 
 void
 acpicpu_cstate_attach(device_t self)
@@ -399,13 +409,6 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		goto out;
 	}
 
-	/*
-	 * "When specifically directed by the CPU manufacturer, the
-	 *  system firmware may define an interface as functional
-	 *  fixed hardware by supplying a special address space
-	 *  identifier, FfixedHW (0x7F), in the address space ID
-	 *  field for register definitions (ACPI 3.0, p. 46)".
-	 */
 	reg = (struct acpicpu_reg *)obj->Buffer.Pointer;
 
 	switch (reg->reg_spaceid) {
@@ -463,6 +466,8 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 			/*
 			 * The _CST FFH GAS encoding may contain
 			 * additional hints on Intel processors.
+			 * Use these to determine whether we can
+			 * avoid the bus master activity check.
 			 */
 			if ((reg->reg_accesssize & ACPICPU_PDC_GAS_BM) == 0)
 				state.cs_flags &= ~ACPICPU_FLAG_C_BM_STS;
@@ -479,19 +484,6 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		rv = AE_ALREADY_EXISTS;
 		goto out;
 	}
-
-#ifndef ACPICPU_ENABLE_C3
-	/*
-	 * XXX: The local APIC timer (as well as TSC) is typically
-	 *	stopped in C3, causing the timer interrupt to fire
-	 *	haphazardly, depending on how long the system slept.
-	 *	For now, we disable the C3 state unconditionally.
-	 */
-	if (type == ACPI_STATE_C3) {
-		sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
-		goto out;
-	}
-#endif
 
 	cs[type].cs_addr = state.cs_addr;
 	cs[type].cs_power = state.cs_power;
@@ -623,11 +615,6 @@ acpicpu_cstate_fadt(struct acpicpu_softc *sc)
 
 	if (AcpiGbl_FADT.C3Latency > ACPICPU_C_C3_LATENCY_MAX)
 		cs[ACPI_STATE_C3].cs_method = 0;
-
-#ifndef ACPICPU_ENABLE_C3
-	cs[ACPI_STATE_C3].cs_method = 0;
-	sc->sc_flags |= ACPICPU_FLAG_C_NOC3;	/* XXX. */
-#endif
 }
 
 static void
@@ -638,7 +625,9 @@ acpicpu_cstate_quirks(struct acpicpu_softc *sc)
 	struct pci_attach_args pa;
 
 	/*
-	 * Check bus master arbitration.
+	 * Check bus master arbitration. If ARB_DIS
+	 * is not available, processor caches must be
+	 * flushed before C3 (ACPI 4.0, section 8.2).
 	 */
 	if (reg != 0 && len != 0)
 		sc->sc_flags |= ACPICPU_FLAG_C_ARB;
@@ -650,12 +639,13 @@ acpicpu_cstate_quirks(struct acpicpu_softc *sc)
 			sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
 		else {
 			/*
-			 * If WBINVD is present, but not functioning
-			 * properly according to FADT, flush all CPU
-			 * caches before entering the C3 state.
+			 * If WBINVD is present and functioning properly,
+			 * flush all processor caches before entering C3.
 			 */
 			if ((AcpiGbl_FADT.Flags & ACPI_FADT_WBINVD_FLUSH) == 0)
 				sc->sc_flags &= ~ACPICPU_FLAG_C_BM;
+			else
+				sc->sc_flags |= ACPICPU_FLAG_C_NOC3;
 		}
 	}
 
@@ -690,7 +680,7 @@ acpicpu_cstate_latency(struct acpicpu_softc *sc)
 	struct acpicpu_cstate *cs;
 	int i;
 
-	for (i = ACPI_STATE_C3; i > 0; i--) {
+	for (i = cs_state_max; i > 0; i--) {
 
 		cs = &sc->sc_cstate[i];
 
@@ -773,8 +763,8 @@ acpicpu_cstate_idle(void)
 		ACPI_FLUSH_CPU_CACHE();
 
 	/*
-	 * Some chipsets may not return back to C0
-	 * from C3 if bus master wake is not enabled.
+	 * Allow the bus master to request that any given
+	 * CPU should return immediately to C0 from C3.
 	 */
 	if ((sc->sc_flags & ACPICPU_FLAG_C_BM) != 0)
 		(void)AcpiWriteBitRegister(ACPI_BITREG_BUS_MASTER_RLD, 1);
