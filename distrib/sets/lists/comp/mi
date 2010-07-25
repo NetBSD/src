@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1483 2010/07/19 15:28:18 pooka Exp $
+#	$NetBSD: mi,v 1.1484 2010/07/25 21:05:14 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9032,6 +9032,11 @@
 ./usr/share/man/cat9/dumpsys.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/dupfdopen.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/edid.0			comp-sys-catman		.cat
+./usr/share/man/cat9/enodev.0			comp-sys-catman		.cat
+./usr/share/man/cat9/enoioctl.0			comp-sys-catman		.cat
+./usr/share/man/cat9/enosys.0			comp-sys-catman		.cat
+./usr/share/man/cat9/enxio.0			comp-sys-catman		.cat
+./usr/share/man/cat9/eopnotsupp.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/errno.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_addmulti.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ether_delmulti.0		comp-sys-catman		.cat
@@ -9356,6 +9361,7 @@
 ./usr/share/man/cat9/nanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/need_resched.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/nextrunqueue.0		comp-obsolete		obsolete
+./usr/share/man/cat9/nullop.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/old_sysctl.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/opencrypto.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/optstr.0			comp-sys-catman		.cat
@@ -9913,7 +9919,7 @@
 ./usr/share/man/cat9/vnode.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vnodeops.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vnsubr.0			comp-sys-catman		.cat
-./usr/share/man/cat9/vprint.0			comp-sys-catman		.cat
+./usr/share/man/cat9/voidop.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vput.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vrecycle.0			comp-sys-catman		.cat
@@ -14796,6 +14802,11 @@
 ./usr/share/man/html9/dumpsys.html		comp-sys-htmlman	html
 ./usr/share/man/html9/dupfdopen.html		comp-sys-htmlman	html
 ./usr/share/man/html9/edid.html			comp-sys-htmlman	html
+./usr/share/man/html9/enodev.html		comp-sys-htmlman	html
+./usr/share/man/html9/enoioctl.html		comp-sys-htmlman	html
+./usr/share/man/html9/enosys.html		comp-sys-htmlman	html
+./usr/share/man/html9/enxio.html		comp-sys-htmlman	html
+./usr/share/man/html9/eopnotsupp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/errno.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ether_addmulti.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ether_delmulti.html	comp-sys-htmlman	html
@@ -15112,6 +15123,7 @@
 ./usr/share/man/html9/namei.html		comp-sys-htmlman	html
 ./usr/share/man/html9/nanotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/nanouptime.html		comp-sys-htmlman	html
+./usr/share/man/html9/nullop.html		comp-sys-htmlman	html
 ./usr/share/man/html9/old_sysctl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/opencrypto.html		comp-sys-htmlman	html
 ./usr/share/man/html9/optstr.html		comp-sys-htmlman	html
@@ -15625,6 +15637,7 @@
 ./usr/share/man/html9/vnode.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vnodeops.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vnsubr.html		comp-sys-htmlman	html
+./usr/share/man/html9/voidop.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vprint.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vprintf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vput.html			comp-sys-htmlman	html
@@ -20711,6 +20724,11 @@
 ./usr/share/man/man9/dumpsys.9			comp-sys-man		.man
 ./usr/share/man/man9/dupfdopen.9		comp-sys-man		.man
 ./usr/share/man/man9/edid.9			comp-sys-man		.man
+./usr/share/man/man9/enodev.9			comp-sys-man		.man
+./usr/share/man/man9/enoioctl.9			comp-sys-man		.man
+./usr/share/man/man9/enosys.9			comp-sys-man		.man
+./usr/share/man/man9/enxio.9			comp-sys-man		.man
+./usr/share/man/man9/eopnotsupp.9		comp-sys-man		.man
 ./usr/share/man/man9/errno.9			comp-sys-man		.man
 ./usr/share/man/man9/ether_addmulti.9		comp-sys-man		.man
 ./usr/share/man/man9/ether_delmulti.9		comp-sys-man		.man
@@ -21035,6 +21053,7 @@
 ./usr/share/man/man9/nanouptime.9		comp-sys-man		.man
 ./usr/share/man/man9/need_resched.9		comp-obsolete		obsolete
 ./usr/share/man/man9/nextrunqueue.9		comp-obsolete		obsolete
+./usr/share/man/man9/nullop.9			comp-sys-man		.man
 ./usr/share/man/man9/old_sysctl.9		comp-sys-man		.man
 ./usr/share/man/man9/opencrypto.9		comp-sys-man		.man
 ./usr/share/man/man9/optstr.9			comp-sys-man		.man
@@ -21592,6 +21611,7 @@
 ./usr/share/man/man9/vnode.9			comp-sys-man		.man
 ./usr/share/man/man9/vnodeops.9			comp-sys-man		.man
 ./usr/share/man/man9/vnsubr.9			comp-sys-man		.man
+./usr/share/man/man9/voidop.9			comp-sys-man		.man
 ./usr/share/man/man9/vprint.9			comp-sys-man		.man
 ./usr/share/man/man9/vprintf.9			comp-sys-man		.man
 ./usr/share/man/man9/vput.9			comp-sys-man		.man
