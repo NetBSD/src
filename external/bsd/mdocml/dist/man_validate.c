@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_validate.c,v 1.44 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: man_validate.c,v 1.45 2010/06/28 14:39:17 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -222,6 +222,11 @@ check_text(CHKARGS)
 			if ( ! (MAN_IGN_ESCAPE & m->pflags) && ! c)
 				return(c);
 		}
+
+		/* 
+		 * FIXME: we absolutely cannot let \b get through or it
+		 * will destroy some assumptions in terms of format.
+	 	 */
 
 		if ('\t' == *p || isprint((u_char)*p) || ASCII_HYPH == *p) 
 			continue;

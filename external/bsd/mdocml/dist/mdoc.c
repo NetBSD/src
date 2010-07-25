@@ -1,6 +1,7 @@
-/*	$Vendor-Id: mdoc.c,v 1.146 2010/06/12 11:58:22 kristaps Exp $ */
+/*	$Vendor-Id: mdoc.c,v 1.158 2010/07/07 15:04:54 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -191,7 +192,8 @@ mdoc_free(struct mdoc *mdoc)
  * Allocate volatile and non-volatile parse resources.  
  */
 struct mdoc *
-mdoc_alloc(void *data, int pflags, mandocmsg msg)
+mdoc_alloc(struct regset *regs, void *data, 
+		int pflags, mandocmsg msg)
 {
 	struct mdoc	*p;
 
@@ -200,6 +202,7 @@ mdoc_alloc(void *data, int pflags, mandocmsg msg)
 	p->msg = msg;
 	p->data = data;
 	p->pflags = pflags;
+	p->regs = regs;
 
 	mdoc_hash_init();
 	mdoc_alloc1(p);
@@ -236,6 +239,20 @@ mdoc_parseln(struct mdoc *m, int ln, char *buf, int offs)
 		return(0);
 
 	m->flags |= MDOC_NEWLINE;
+
+	/*
+	 * Let the roff nS register switch SYNOPSIS mode early,
+	 * such that the parser knows at all times
+	 * whether this mode is on or off.
+	 * Note that this mode is also switched by the Sh macro.
+	 */
+	if (m->regs->regs[(int)REG_nS].set) {
+		if (m->regs->regs[(int)REG_nS].v.u)
+			m->flags |= MDOC_SYNOPSIS;
+		else
+			m->flags &= ~MDOC_SYNOPSIS;
+	}
+
 	return(('.' == buf[offs] || '\'' == buf[offs]) ? 
 			mdoc_pmacro(m, ln, buf, offs) :
 			mdoc_ptext(m, ln, buf, offs));
@@ -258,8 +275,7 @@ mdoc_vmsg(struct mdoc *mdoc, enum mandocerr t,
 
 
 int
-mdoc_macro(struct mdoc *m, enum mdoct tok, 
-		int ln, int pp, int *pos, char *buf)
+mdoc_macro(MACRO_PROT_ARGS)
 {
 	assert(tok < MDOC_MAX);
 
@@ -267,13 +283,13 @@ mdoc_macro(struct mdoc *m, enum mdoct tok,
 
 	if (MDOC_PROLOGUE & mdoc_macros[tok].flags && 
 			MDOC_PBODY & m->flags)
-		return(mdoc_pmsg(m, ln, pp, MANDOCERR_BADBODY));
+		return(mdoc_pmsg(m, line, ppos, MANDOCERR_BADBODY));
 
 	/* If we're in the prologue, deny "body" macros.  */
 
 	if ( ! (MDOC_PROLOGUE & mdoc_macros[tok].flags) && 
 			! (MDOC_PBODY & m->flags)) {
-		if ( ! mdoc_pmsg(m, ln, pp, MANDOCERR_BADPROLOG))
+		if ( ! mdoc_pmsg(m, line, ppos, MANDOCERR_BADPROLOG))
 			return(0);
 		if (NULL == m->meta.title)
 			m->meta.title = mandoc_strdup("UNKNOWN");
@@ -286,7 +302,7 @@ mdoc_macro(struct mdoc *m, enum mdoct tok,
 		m->flags |= MDOC_PBODY;
 	}
 
-	return((*mdoc_macros[tok].fp)(m, tok, ln, pp, pos, buf));
+	return((*mdoc_macros[tok].fp)(m, tok, line, ppos, pos, buf));
 }
 
 
@@ -330,6 +346,8 @@ node_append(struct mdoc *mdoc, struct mdoc_node *p)
 		p->parent->tail = p;
 		break;
 	case (MDOC_BODY):
+		if (p->end)
+			break;
 		assert(MDOC_BLOCK == p->parent->type);
 		p->parent->body = p;
 		break;
@@ -366,9 +384,17 @@ node_alloc(struct mdoc *m, int line, int pos,
 	p->pos = pos;
 	p->tok = tok;
 	p->type = type;
+
+	/* Flag analysis. */
+
+	if (MDOC_SYNOPSIS & m->flags)
+		p->flags |= MDOC_SYNPRETTY;
+	else
+		p->flags &= ~MDOC_SYNPRETTY;
 	if (MDOC_NEWLINE & m->flags)
 		p->flags |= MDOC_LINE;
 	m->flags &= ~MDOC_NEWLINE;
+
 	return(p);
 }
 
@@ -411,6 +437,22 @@ mdoc_body_alloc(struct mdoc *m, int line, int pos, enum mdoct tok)
 	if ( ! node_append(m, p))
 		return(0);
 	m->next = MDOC_NEXT_CHILD;
+	return(1);
+}
+
+
+int
+mdoc_endbody_alloc(struct mdoc *m, int line, int pos, enum mdoct tok,
+		struct mdoc_node *body, enum mdoc_endbody end)
+{
+	struct mdoc_node *p;
+
+	p = node_alloc(m, line, pos, tok, MDOC_BODY);
+	p->pending = body;
+	p->end = end;
+	if ( ! node_append(m, p))
+		return(0);
+	m->next = MDOC_NEXT_SIBLING;
 	return(1);
 }
 
@@ -472,9 +514,25 @@ mdoc_word_alloc(struct mdoc *m, int line, int pos, const char *p)
 }
 
 
-void
+static void
 mdoc_node_free(struct mdoc_node *p)
 {
+
+	/*
+	 * XXX: if these end up being problematic in terms of memory
+	 * management and dereferencing freed blocks, then make them
+	 * into reference-counted double-pointers.
+	 */
+
+	if (MDOC_Bd == p->tok && MDOC_BLOCK == p->type)
+		if (p->data.Bd)
+			free(p->data.Bd);
+	if (MDOC_Bl == p->tok && MDOC_BLOCK == p->type)
+		if (p->data.Bl)
+			free(p->data.Bl);
+	if (MDOC_Bf == p->tok && MDOC_HEAD == p->type)
+		if (p->data.Bf)
+			free(p->data.Bf);
 
 	if (p->string)
 		free(p->string);
@@ -568,7 +626,7 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	 */
 
 	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
-			LIST_column == n->data.Bl.type) {
+			LIST_column == n->data.Bl->type) {
 		/* `Bl' is open without any children. */
 		m->flags |= MDOC_FREECOL;
 		return(mdoc_macro(m, MDOC_It, line, offs, &offs, buf));
@@ -577,7 +635,7 @@ mdoc_ptext(struct mdoc *m, int line, char *buf, int offs)
 	if (MDOC_It == n->tok && MDOC_BLOCK == n->type &&
 			NULL != n->parent &&
 			MDOC_Bl == n->parent->tok &&
-			LIST_column == n->parent->data.Bl.type) {
+			LIST_column == n->parent->data.Bl->type) {
 		/* `Bl' has block-level `It' children. */
 		m->flags |= MDOC_FREECOL;
 		return(mdoc_macro(m, MDOC_It, line, offs, &offs, buf));
@@ -689,7 +747,7 @@ macrowarn(struct mdoc *m, int ln, const char *buf, int offs)
  * Parse a macro line, that is, a line beginning with the control
  * character.
  */
-int
+static int
 mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 {
 	enum mdoct	  tok;
@@ -783,9 +841,9 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	 */
 
 	if (MDOC_Bl == n->tok && MDOC_BODY == n->type &&
-			LIST_column == n->data.Bl.type) {
+			LIST_column == n->data.Bl->type) {
 		m->flags |= MDOC_FREECOL;
-		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf)) 
+		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf))
 			goto err;
 		return(1);
 	}
@@ -799,7 +857,7 @@ mdoc_pmacro(struct mdoc *m, int ln, char *buf, int offs)
 	if (MDOC_It == n->tok && MDOC_BLOCK == n->type &&
 			NULL != n->parent &&
 			MDOC_Bl == n->parent->tok &&
-			LIST_column == n->parent->data.Bl.type) {
+			LIST_column == n->parent->data.Bl->type) {
 		m->flags |= MDOC_FREECOL;
 		if ( ! mdoc_macro(m, MDOC_It, ln, sv, &sv, buf)) 
 			goto err;

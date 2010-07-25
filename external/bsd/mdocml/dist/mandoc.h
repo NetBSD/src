@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.h,v 1.12 2010/06/12 11:41:50 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.h,v 1.16 2010/07/05 20:10:22 kristaps Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,14 +17,20 @@
 #ifndef MANDOC_H
 #define MANDOC_H
 
+/*
+ * This contains declarations that are available system-wide.
+ */
+
 #define ASCII_NBRSP	 31  /* non-breaking space */
 #define	ASCII_HYPH	 30  /* breakable hyphen */
-
 
 __BEGIN_DECLS
 
 enum	mandocerr {
 	MANDOCERR_OK,
+
+	MANDOCERR_WARNING, /* ===== end of warnings ===== */
+
 	MANDOCERR_UPPERCASE, /* text should be uppercase */
 	MANDOCERR_SECOOO, /* sections out of conventional order */
 	MANDOCERR_SECREP, /* section name repeats */
@@ -38,14 +44,16 @@ enum	mandocerr {
 	MANDOCERR_NOWIDTHARG, /* argument requires the width argument */
 	/* FIXME: merge with MANDOCERR_IGNARGV. */
 	MANDOCERR_WIDTHARG, /* superfluous width argument */
-	MANDOCERR_IGNARGV, /* macro ignoring argv */
+	MANDOCERR_IGNARGV, /* ignoring argument */
 	MANDOCERR_BADDATE, /* bad date argument */
 	MANDOCERR_BADWIDTH, /* bad width argument */
 	MANDOCERR_BADMSEC, /* unknown manual section */
 	MANDOCERR_SECMSEC, /* section not in conventional manual section */
 	MANDOCERR_EOLNSPACE, /* end of line whitespace */
+	MANDOCERR_SCOPENEST, /* blocks badly nested */
 	MANDOCERR_SCOPEEXIT, /* scope open on exit */
-#define	MANDOCERR_WARNING	MANDOCERR_SCOPEEXIT
+
+	MANDOCERR_ERROR, /* ===== end of errors ===== */
 
 	MANDOCERR_NAMESECFIRST, /* NAME section must come first */
 	MANDOCERR_BADBOOL, /* bad Boolean value */
@@ -66,9 +74,8 @@ enum	mandocerr {
 	MANDOCERR_BADCOMMENT, /* bad comment style */
 	MANDOCERR_MACRO, /* unknown macro will be lost */
 	MANDOCERR_LINESCOPE, /* line scope broken */
-	MANDOCERR_SCOPE, /* scope broken */
 	MANDOCERR_ARGCOUNT, /* argument count wrong */
-	MANDOCERR_NOSCOPE, /* request scope close w/none open */
+	MANDOCERR_NOSCOPE, /* no such block is open */
 	MANDOCERR_SCOPEREP, /* scope already open */
 	/* FIXME: merge following with MANDOCERR_ARGCOUNT */
 	MANDOCERR_NOARGS, /* macro requires line argument(s) */
@@ -77,17 +84,18 @@ enum	mandocerr {
 	MANDOCERR_NOTITLE, /* no title in document */
 	MANDOCERR_LISTTYPE, /* missing list type */
 	MANDOCERR_DISPTYPE, /* missing display type */
+	MANDOCERR_FONTTYPE, /* missing font type */
 	MANDOCERR_ARGSLOST, /* line argument(s) will be lost */
 	MANDOCERR_BODYLOST, /* body argument(s) will be lost */
-#define	MANDOCERR_ERROR		MANDOCERR_BODYLOST
+
+	MANDOCERR_FATAL, /* ===== end of fatal errors ===== */
 
 	MANDOCERR_COLUMNS, /* column syntax is inconsistent */
 	/* FIXME: this should be a MANDOCERR_ERROR */
-	MANDOCERR_FONTTYPE, /* missing font type */
-	/* FIXME: this should be a MANDOCERR_ERROR */
 	MANDOCERR_NESTEDDISP, /* displays may not be nested */
 	MANDOCERR_BADDISP, /* unsupported display type */
-	MANDOCERR_SYNTNOSCOPE, /* request scope close w/none open */
+	MANDOCERR_SCOPEFATAL, /* blocks badly nested */
+	MANDOCERR_SYNTNOSCOPE, /* no scope to rewind: syntax violated */
 	MANDOCERR_SYNTSCOPE, /* scope broken, syntax violated */
 	MANDOCERR_SYNTLINESCOPE, /* line scope broken, syntax violated */
 	MANDOCERR_SYNTARGVCOUNT, /* argument count wrong, violates syntax */
@@ -95,15 +103,45 @@ enum	mandocerr {
 	MANDOCERR_SYNTARGCOUNT, /* argument count wrong, violates syntax */
 	MANDOCERR_NODOCBODY, /* no document body */
 	MANDOCERR_NODOCPROLOG, /* no document prologue */
-	MANDOCERR_UTSNAME, /* utsname() system call failed */
+	MANDOCERR_UTSNAME, /* utsname system call failed */
 	MANDOCERR_MEM, /* memory exhausted */
-#define	MANDOCERR_FATAL		MANDOCERR_MEM
 
 	MANDOCERR_MAX
 };
 
-typedef	int	(*mandocmsg)(enum mandocerr, 
-			void *, int, int, const char *);
+enum	regs {
+	REG_nS = 0,	/* register: nS */
+	REG__MAX
+};
+
+/*
+ * A single register entity.  If "set" is zero, the value of the
+ * register should be the default one, which is per-register.  It's
+ * assumed that callers know which type in "v" corresponds to which
+ * register value.
+ */
+struct	reg {
+	int		  set; /* whether set or not */
+	union {
+		unsigned  u; /* unsigned integer */
+	} v;
+};
+
+/*
+ * The primary interface to setting register values is in libroff,
+ * although libmdoc and libman from time to time will manipulate
+ * registers (such as `.Sh SYNOPSIS' enabling REG_nS).
+ */
+struct	regset {
+	struct reg	  regs[REG__MAX];
+};
+
+/*
+ * Callback function for warnings, errors, and fatal errors as they
+ * occur in the compilers libroff, libmdoc, and libman.
+ */
+typedef	int		(*mandocmsg)(enum mandocerr, void *,
+				int, int, const char *);
 
 __END_DECLS
 
