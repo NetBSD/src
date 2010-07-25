@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.257 2010/05/04 23:27:13 jym Exp $	*/
+/*	$NetBSD: trap.c,v 1.258 2010/07/25 19:19:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.257 2010/05/04 23:27:13 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.258 2010/07/25 19:19:06 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -603,14 +603,16 @@ copyfault:
 			ksi.ksi_code = xmm_si_code(l);
 			break;
 		case T_BOUND|T_USER:
+			ksi.ksi_code = FPE_FLTSUB;
+			break;
 		case T_OFLOW|T_USER:
-			ksi.ksi_code = FPE_FLTOVF;
+			ksi.ksi_code = FPE_INTOVF;
 			break;
 		case T_DIVIDE|T_USER:
-			ksi.ksi_code = FPE_FLTDIV;
+			ksi.ksi_code = FPE_INTDIV;
 			break;
 		case T_ARITHTRAP|T_USER:
-			ksi.ksi_code = FPE_INTOVF;
+			ksi.ksi_code = npxtrap(l);
 			break;
 		default:
 			ksi.ksi_code = 0;
