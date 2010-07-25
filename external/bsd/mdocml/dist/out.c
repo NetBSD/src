@@ -1,4 +1,4 @@
-/*	$Vendor-Id: out.c,v 1.16 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: out.c,v 1.17 2010/06/25 19:50:23 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -139,8 +139,6 @@ a2roffsu(const char *src, struct roffsu *dst, enum roffscale def)
 	if ((dst->scale = atof(buf)) < 0)
 		dst->scale = 0;
 	dst->unit = unit;
-	dst->pt = hasd;
-
 	return(1);
 }
 

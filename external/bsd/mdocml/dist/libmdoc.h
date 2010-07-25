@@ -1,4 +1,4 @@
-/*	$Vendor-Id: libmdoc.h,v 1.53 2010/06/19 20:46:27 kristaps Exp $ */
+/*	$Vendor-Id: libmdoc.h,v 1.60 2010/07/07 15:04:54 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,8 +25,8 @@ enum	mdoc_next {
 };
 
 struct	mdoc {
-	void		 *data;
-	mandocmsg	  msg;
+	void		 *data; /* private application data */
+	mandocmsg	  msg; /* message callback */
 	int		  flags;
 #define	MDOC_HALT	 (1 << 0) /* error in parse: halt */
 #define	MDOC_LITERAL	 (1 << 1) /* in a literal scope */
@@ -35,17 +35,23 @@ struct	mdoc {
 #define	MDOC_PHRASELIT	 (1 << 4) /* literal within a partila phrase */
 #define	MDOC_PPHRASE	 (1 << 5) /* within a partial phrase */
 #define	MDOC_FREECOL	 (1 << 6) /* `It' invocation should close */
+#define	MDOC_SYNOPSIS	 (1 << 7) /* SYNOPSIS-style formatting */
 	int		  pflags;
-	enum mdoc_next	  next;
-	struct mdoc_node *last;
-	struct mdoc_node *first;
-	struct mdoc_meta  meta;
+	enum mdoc_next	  next; /* where to put the next node */
+	struct mdoc_node *last; /* the last node parsed */
+	struct mdoc_node *first; /* the first node parsed */
+	struct mdoc_meta  meta; /* document meta-data */
 	enum mdoc_sec	  lastnamed;
 	enum mdoc_sec	  lastsec;
+	struct regset	 *regs; /* registers */
 };
 
-#define	MACRO_PROT_ARGS	struct mdoc *m, enum mdoct tok, \
-			int line, int ppos, int *pos, char *buf
+#define	MACRO_PROT_ARGS	struct mdoc *m, \
+			enum mdoct tok, \
+			int line, \
+			int ppos, \
+			int *pos, \
+			char *buf
 
 struct	mdoc_macro {
 	int		(*fp)(MACRO_PROT_ARGS);
@@ -103,6 +109,9 @@ int		  mdoc_block_alloc(struct mdoc *, int, int,
 int		  mdoc_head_alloc(struct mdoc *, int, int, enum mdoct);
 int		  mdoc_tail_alloc(struct mdoc *, int, int, enum mdoct);
 int		  mdoc_body_alloc(struct mdoc *, int, int, enum mdoct);
+int		  mdoc_endbody_alloc(struct mdoc *m, int line, int pos,
+			enum mdoct tok, struct mdoc_node *body,
+			enum mdoc_endbody end);
 void		  mdoc_node_delete(struct mdoc *, struct mdoc_node *);
 void		  mdoc_hash_init(void);
 enum mdoct	  mdoc_hash_find(const char *);

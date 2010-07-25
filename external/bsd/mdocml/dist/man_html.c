@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_html.c,v 1.37 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: man_html.c,v 1.41 2010/07/07 15:04:54 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *

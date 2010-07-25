@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc.h,v 1.90 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: mdoc.h,v 1.100 2010/07/04 21:59:30 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -155,6 +155,7 @@ enum	mdoct {
 
 /* What follows is a list of ALL possible macro arguments. */
 
+/* FIXME: make this into an enum. */
 #define	MDOC_Split	 0
 #define	MDOC_Nosplit	 1
 #define	MDOC_Ragged	 2
@@ -248,6 +249,12 @@ struct 	mdoc_arg {
 	unsigned int	  refcnt;
 };
 
+enum	mdoc_endbody {
+	ENDBODY_NOT = 0,
+	ENDBODY_SPACE,
+	ENDBODY_NOSPACE
+};
+
 enum	mdoc_list {
 	LIST__NONE = 0,
 	LIST_bullet,
@@ -272,6 +279,19 @@ enum	mdoc_disp {
 	DISP_literal
 };
 
+enum	mdoc_auth {
+	AUTH__NONE = 0,
+	AUTH_split,
+	AUTH_nosplit
+};
+
+enum	mdoc_font {
+	FONT__NONE = 0,
+	FONT_Em,
+	FONT_Li,
+	FONT_Sy
+};
+
 struct	mdoc_bd {
 	const char	 *offs; /* -offset */
 	enum mdoc_disp	  type; /* -ragged, etc. */
@@ -283,6 +303,16 @@ struct	mdoc_bl {
 	const char	 *offs; /* -offset */
 	enum mdoc_list	  type; /* -tag, -enum, etc. */
 	int		  comp; /* -compact */
+	size_t		  ncols; /* -column arg count */
+	const char	**cols; /* -column val ptr */
+};
+
+struct	mdoc_bf {
+	enum mdoc_font	  font; /* font */
+};
+
+struct	mdoc_an {
+	enum mdoc_auth	  auth; /* -split, etc. */
 };
 
 /* Node in AST. */
@@ -300,20 +330,24 @@ struct	mdoc_node {
 #define	MDOC_ACTED	 (1 << 1) /* has been acted upon */
 #define	MDOC_EOS	 (1 << 2) /* at sentence boundary */
 #define	MDOC_LINE	 (1 << 3) /* first macro/text on line */
+#define	MDOC_SYNPRETTY	 (1 << 4) /* SYNOPSIS-style formatting */
+#define	MDOC_ENDED	 (1 << 5) /* rendering has been ended */
 	enum mdoc_type	  type; /* AST node type */
 	enum mdoc_sec	  sec; /* current named section */
+	/* FIXME: these can be union'd to shave a few bytes. */
 	struct mdoc_arg	 *args; 	/* BLOCK/ELEM */
-#ifdef	UGLY
 	struct mdoc_node *pending;	/* BLOCK */
-#endif
 	struct mdoc_node *head;		/* BLOCK */
 	struct mdoc_node *body;		/* BLOCK */
 	struct mdoc_node *tail;		/* BLOCK */
 	char		 *string;	/* TEXT */
+	enum mdoc_endbody end;		/* BODY */
 
 	union {
-		struct mdoc_bl Bl;
-		struct mdoc_bd Bd;
+		struct mdoc_an  An;
+		struct mdoc_bd *Bd;
+		struct mdoc_bf *Bf;
+		struct mdoc_bl *Bl;
 	} data;
 };
 
@@ -333,7 +367,7 @@ struct	mdoc;
 /* See mdoc.3 for documentation. */
 
 void	 	  mdoc_free(struct mdoc *);
-struct	mdoc	 *mdoc_alloc(void *, int, mandocmsg);
+struct	mdoc	 *mdoc_alloc(struct regset *, void *, int, mandocmsg);
 void		  mdoc_reset(struct mdoc *);
 int	 	  mdoc_parseln(struct mdoc *, int, char *, int);
 const struct mdoc_node *mdoc_node(const struct mdoc *);

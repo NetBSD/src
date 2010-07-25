@@ -1,6 +1,7 @@
-.\"	$Vendor-Id: roff.7,v 1.9 2010/06/10 21:42:02 kristaps Exp $
+.\"	$Vendor-Id: roff.7,v 1.13 2010/07/07 15:04:54 kristaps Exp $
 .\"
 .\" Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+.\" Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2010 $
+.Dd $Mdocdate: July 7 2010 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -91,11 +92,20 @@ The syntax of this macro is the same as that of
 except that a leading argument must be specified.
 It is ignored, as are its children.
 .Ss \&ds
-Define a string.
-This macro is intended to have two arguments,
-the name of the string to define and its content.
-Currently, it is ignored including its arguments,
-and the number of arguments is not checked.
+Define a reserved word.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&ds No Cm key val
+.Pp
+The
+.Cm key
+and
+.Cm val
+strings are space-separated.
+The
+.Cm key
+values may be invoked in subsequent text by using \e*(NN for two-letter
+pairs, \e*N for one-letter, and \e*[NNN] for arbitrary-length values.
 .Ss \&de1
 The syntax of this macro is the same as that of
 .Sx \&ig ,
@@ -268,6 +278,37 @@ This macro is intended to have one argument,
 the name of the request, macro or string to be undefined.
 Currently, it is ignored including its arguments,
 and the number of arguments is not checked.
+.Ss \&nr
+Define a register.
+A register is an arbitrary string value that defines some sort of state,
+which influences parsing and/or formatting.
+Its syntax is as follows:
+.Pp
+.D1 Pf \. Sx \&nr Cm name value
+.Pp
+The
+.Cm value
+may, at the moment, only be an integer.
+The
+.Cm name
+is defined up to the next whitespace.
+The following register
+.Cm name
+requests are recognised:
+.Bl -tag -width Ds
+.It Cm nS
+If set to a positive integer value, certain
+.Xr mdoc 7
+macros will behave as if they were defined in the
+.Em SYNOPSIS
+section.
+Otherwise, this behaviour is unset (even if called within the
+.Em SYNOPSIS
+section itself).
+Note that invoking a new
+.Xr mdoc 7
+section will unset this value.
+.El
 .Ss \&tr
 Output character translation.
 This macro is intended to have one argument,
@@ -286,6 +327,12 @@ file re-write
 .Pq somewhere between 1.15 and 1.19 .
 .Pp
 .Bl -dash -compact
+.It
+The
+.Cm nS
+request to
+.Sx \&nr
+is only compatible with OpenBSD's groff.
 .It
 Historic groff did not accept white-space buffering the custom END tag
 for the

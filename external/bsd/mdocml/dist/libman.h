@@ -1,4 +1,4 @@
-/*	$Vendor-Id: libman.h,v 1.36 2010/06/19 20:46:27 kristaps Exp $ */
+/*	$Vendor-Id: libman.h,v 1.41 2010/07/07 15:04:54 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,8 +25,8 @@ enum	man_next {
 };
 
 struct	man {
-	void		*data;
-	mandocmsg	 msg;
+	void		*data; /* private application data */
+	mandocmsg	 msg; /* output message handler */
 	int		 pflags; /* parse flags (see man.h) */
 	int		 flags; /* parse flags */
 #define	MAN_HALT	(1 << 0) /* badness happened: die */
@@ -35,14 +35,19 @@ struct	man {
 #define	MAN_ILINE	(1 << 3) /* Ignored in next-line scope. */
 #define	MAN_LITERAL	(1 << 4) /* Literal input. */
 #define	MAN_BPLINE	(1 << 5)
-	enum man_next	 next;
-	struct man_node	*last;
-	struct man_node	*first;
-	struct man_meta	 meta;
+	enum man_next	 next; /* where to put the next node */
+	struct man_node	*last; /* the last parsed node */
+	struct man_node	*first; /* the first parsed node */
+	struct man_meta	 meta; /* document meta-data */
+	struct regset	*regs; /* registers */
 };
 
-#define	MACRO_PROT_ARGS	  struct man *m, enum mant tok, int line, \
-			  int ppos, int *pos, char *buf
+#define	MACRO_PROT_ARGS	  struct man *m, \
+			  enum mant tok, \
+			  int line, \
+			  int ppos, \
+			  int *pos, \
+			  char *buf
 
 struct	man_macro {
 	int		(*fp)(MACRO_PROT_ARGS);
