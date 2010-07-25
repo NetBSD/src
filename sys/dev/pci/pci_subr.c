@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.83 2010/06/06 18:58:23 pgoyette Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.84 2010/07/25 14:14:25 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.83 2010/06/06 18:58:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.84 2010/07/25 14:14:25 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -323,13 +323,11 @@ int pciverbose_loaded = 0;
  */
 void pci_load_verbose(void)
 {
-	if (pciverbose_loaded)
-		return;
-
-	mutex_enter(&module_lock);
-	if (module_autoload("pciverbose", MODULE_CLASS_MISC) == 0 )
-		pciverbose_loaded++;
-	mutex_exit(&module_lock);
+	if (pciverbose_loaded == 0) {
+		mutex_enter(&module_lock);
+		module_autoload("pciverbose", MODULE_CLASS_MISC);
+		mutex_exit(&module_lock);
+	}
 }
 
 const char *pci_findvendor_stub(pcireg_t id_reg)
