@@ -12,8 +12,8 @@ INSTALL_DATA	= $(INSTALL) -m 0444
 INSTALL_LIB	= $(INSTALL) -m 0644
 INSTALL_MAN	= $(INSTALL_DATA)
 
-VERSION	   = 1.10.2
-VDATE	   = 19 June 2010
+VERSION	   = 1.10.4
+VDATE	   = 12 July 2010
 
 VFLAGS	   = -DVERSION="\"$(VERSION)\""
 WFLAGS     = -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings
@@ -22,10 +22,6 @@ CFLAGS    += -g $(WFLAGS) $(VFLAGS) -DHAVE_CONFIG_H
 # Specify this if you want to hard-code the operating system to appear
 # in the lower-left hand corner of -mdoc manuals.
 # CFLAGS += -DOSNAME="\"OpenBSD 4.5\""
-
-# Unset this if you don't want Xo/Xc allowing split `It' lines, which
-# breaks symmetry.
-CFLAGS	  += -DUGLY
 
 LINTFLAGS += $(VFLAGS)
 
@@ -65,7 +61,7 @@ MANLNS	   = man_macro.ln man.ln man_hash.ln man_validate.ln \
 MANOBJS	   = man_macro.o man.o man_hash.o man_validate.o \
 	     man_action.o man_argv.o
 MANSRCS	   = man_macro.c man.c man_hash.c man_validate.c \
-	     man_action.c mandoc.c man_argv.c
+	     man_action.c man_argv.c
 
 MAINLNS	   = main.ln mdoc_term.ln chars.ln term.ln tree.ln \
 	     compat.ln man_term.ln html.ln mdoc_html.ln \

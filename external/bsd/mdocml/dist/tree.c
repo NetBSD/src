@@ -1,4 +1,4 @@
-/*	$Vendor-Id: tree.c,v 1.21 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: tree.c,v 1.24 2010/07/07 15:04:54 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -74,7 +74,10 @@ print_mdoc(const struct mdoc_node *n, int indent)
 		t = "block-head";
 		break;
 	case (MDOC_BODY):
-		t = "block-body";
+		if (n->end)
+			t = "body-end";
+		else
+			t = "block-body";
 		break;
 	case (MDOC_TAIL):
 		t = "block-tail";

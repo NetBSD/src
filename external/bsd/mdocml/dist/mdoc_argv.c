@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_argv.c,v 1.54 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_argv.c,v 1.55 2010/07/01 22:56:17 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -359,7 +359,8 @@ mdoc_args(struct mdoc *m, int line, int *pos,
 		if (MDOC_Bl == n->tok)
 			break;
 
-	if (n && LIST_column == n->data.Bl.type) {
+	assert(n->data.Bl);
+	if (n && LIST_column == n->data.Bl->type) {
 		fl |= ARGS_TABSEP;
 		fl &= ~ARGS_DELIM;
 	}

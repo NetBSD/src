@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term.h,v 1.64 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: term.h,v 1.73 2010/07/04 19:42:25 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,7 +33,8 @@ enum	termtype {
 enum	termfont {
 	TERMFONT_NONE = 0,
 	TERMFONT_BOLD,
-	TERMFONT_UNDER
+	TERMFONT_UNDER,
+	TERMFONT__MAX
 };
 
 #define	TERM_MAXMARGIN	  100000 /* FIXME */
@@ -41,17 +42,27 @@ enum	termfont {
 typedef void	(*term_margin)(struct termp *, const void *);
 
 struct	termp_ps {
-	int		  psstate;	/* state of ps output */
+	int		  flags;
 #define	PS_INLINE	 (1 << 0)	/* we're in a word */
 #define	PS_MARGINS	 (1 << 1)	/* we're in the margins */
-	size_t		  pscol;	/* visible column */
-	size_t		  psrow;	/* visible row */
+#define	PS_NEWPAGE	 (1 << 2)	/* new page, no words yet */
+	size_t		  pscol;	/* visible column (AFM units) */
+	size_t		  psrow;	/* visible row (AFM units) */
 	char		 *psmarg;	/* margin buf */
 	size_t		  psmargsz;	/* margin buf size */
-	size_t		  psmargcur;	/* current pos in margin buf */
-	size_t	 	  pspage;	/* current page */
+	size_t		  psmargcur;	/* cur index in margin buf */
 	char		  last;		/* character buffer */
 	enum termfont	  lastf;	/* last set font */
+	size_t		  scale;	/* font scaling factor */
+	size_t		  pages;	/* number of pages shown */
+	size_t		  lineheight;	/* line height (AFM units) */
+	size_t		  top;		/* body top (AFM units) */
+	size_t		  bottom;	/* body bottom (AFM units) */
+	size_t		  height;	/* page height (AFM units */
+	size_t		  width;	/* page width (AFM units) */
+	size_t		  left;		/* body left (AFM units) */
+	size_t		  header;	/* header pos (AFM units) */
+	size_t		  footer;	/* footer pos (AFM units) */
 };
 
 struct	termp {
@@ -78,6 +89,8 @@ struct	termp {
 #define	TERMP_NOSPLIT	 (1 << 11)	/* See termp_an_pre/post(). */
 #define	TERMP_SPLIT	 (1 << 12)	/* See termp_an_pre/post(). */
 #define	TERMP_ANPREC	 (1 << 13)	/* See termp_an_pre(). */
+#define	TERMP_KEEP	 (1 << 14)	/* Keep words together. */
+#define	TERMP_PREKEEP	 (1 << 15)	/* ...starting with the next one. */
 	char		 *buf;		/* Output buffer. */
 	enum termenc	  enc;		/* Type of encoding. */
 	void		 *symtab;	/* Encoded-symbol table. */
@@ -91,6 +104,9 @@ struct	termp {
 	void		(*end)(struct termp *);
 	void		(*endline)(struct termp *);
 	void		(*advance)(struct termp *, size_t);
+	size_t		(*width)(const struct termp *, char);
+	double		(*hspan)(const struct termp *,
+				const struct roffsu *);
 	const void	 *argf;		/* arg for headf/footf */
 	union {
 		struct termp_ps ps;
@@ -107,8 +123,12 @@ void		  term_begin(struct termp *, term_margin,
 			term_margin, const void *);
 void		  term_end(struct termp *);
 
-size_t		  term_hspan(const struct roffsu *);
-size_t		  term_vspan(const struct roffsu *);
+size_t		  term_hspan(const struct termp *, 
+			const struct roffsu *);
+size_t		  term_vspan(const struct termp *,
+			const struct roffsu *);
+size_t		  term_strlen(const struct termp *, const char *);
+size_t		  term_len(const struct termp *, size_t);
 
 enum termfont	  term_fonttop(struct termp *);
 const void	 *term_fontq(struct termp *);

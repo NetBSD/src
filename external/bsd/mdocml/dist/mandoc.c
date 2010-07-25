@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mandoc.c,v 1.19 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: mandoc.c,v 1.21 2010/07/06 22:04:31 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *

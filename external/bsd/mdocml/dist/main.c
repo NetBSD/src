@@ -1,6 +1,7 @@
-/*	$Vendor-Id: main.c,v 1.89 2010/06/19 20:46:27 kristaps Exp $ */
+/*	$Vendor-Id: main.c,v 1.98 2010/07/07 15:04:54 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,10 +31,10 @@
 #include <unistd.h>
 
 #include "mandoc.h"
+#include "main.h"
 #include "mdoc.h"
 #include "man.h"
 #include "roff.h"
-#include "main.h"
 
 #define	UNCONST(a)	((void *)(uintptr_t)(const void *)(a))
 
@@ -87,6 +88,7 @@ struct	curparse {
 	struct man	 *man;		/* man parser */
 	struct mdoc	 *mdoc;		/* mdoc parser */
 	struct roff	 *roff;		/* roff parser (!NULL) */
+	struct regset	  regs;		/* roff registers */
 	enum outt	  outtype; 	/* which output to use */
 	out_mdoc	  outmdoc;	/* mdoc output ptr */
 	out_man	  	  outman;	/* man output ptr */
@@ -97,6 +99,9 @@ struct	curparse {
 
 static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"ok",
+
+	"generic warning",
+
 	"text should be uppercase",
 	"sections out of conventional order",
 	"section name repeats",
@@ -115,7 +120,11 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"unknown manual section",
 	"section not in conventional manual section",
 	"end of line whitespace",
+	"blocks badly nested",
 	"scope open on exit",
+
+	"generic error",
+
 	"NAME section must come first",
 	"bad Boolean value",
 	"child violates parent syntax",
@@ -135,7 +144,6 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"bad comment style",
 	"unknown macro will be lost",
 	"line scope broken",
-	"scope broken",
 	"argument count wrong",
 	"request scope close w/none open",
 	"scope already open",
@@ -145,13 +153,17 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"no title in document",
 	"missing list type",
 	"missing display type",
+	"missing font type",
 	"line argument(s) will be lost",
 	"body argument(s) will be lost",
+
+	"generic fatal error",
+
 	"column syntax is inconsistent",
-	"missing font type",
 	"displays may not be nested",
 	"unsupported display type",
-	"no scope to rewind: syntax violated",
+	"blocks badly nested",
+	"no such block is open",
 	"scope broken, syntax violated",
 	"line scope broken, syntax violated",
 	"argument count wrong, violates syntax",
@@ -180,8 +192,8 @@ static	void		  version(void) __attribute__((noreturn));
 static	int		  woptions(int *, char *);
 
 static	const char	 *progname;
-static 	int		  with_error;
-static	int		  with_warning;
+static	int		  with_fatal;
+static	int		  with_error;
 
 int
 main(int argc, char *argv[])
@@ -244,7 +256,7 @@ main(int argc, char *argv[])
 	while (*argv) {
 		ffile(*argv, &curp);
 
-		if (with_error && !(curp.fflags & FL_IGN_ERRORS))
+		if (with_fatal && !(curp.fflags & FL_IGN_ERRORS))
 			break;
 		++argv;
 	}
@@ -258,7 +270,7 @@ main(int argc, char *argv[])
 	if (curp.roff)
 		roff_free(curp.roff);
 
-	return((with_warning || with_error) ? 
+	return((with_fatal || with_error) ? 
 			EXIT_FAILURE :  EXIT_SUCCESS);
 }
 
@@ -297,7 +309,7 @@ man_init(struct curparse *curp)
 	if (curp->fflags & FL_NIGN_ESCAPE)
 		pflags &= ~MAN_IGN_ESCAPE;
 
-	return(man_alloc(curp, pflags, mmsg));
+	return(man_alloc(&curp->regs, curp, pflags, mmsg));
 }
 
 
@@ -305,7 +317,7 @@ static struct roff *
 roff_init(struct curparse *curp)
 {
 
-	return(roff_alloc(mmsg, curp));
+	return(roff_alloc(&curp->regs, mmsg, curp));
 }
 
 
@@ -325,7 +337,7 @@ mdoc_init(struct curparse *curp)
 	if (curp->fflags & FL_NIGN_MACRO)
 		pflags &= ~MDOC_IGN_MACRO;
 
-	return(mdoc_alloc(curp, pflags, mmsg));
+	return(mdoc_alloc(&curp->regs, curp, pflags, mmsg));
 }
 
 
@@ -336,7 +348,7 @@ ffile(const char *file, struct curparse *curp)
 	curp->file = file;
 	if (-1 == (curp->fd = open(curp->file, O_RDONLY, 0))) {
 		perror(curp->file);
-		with_error = 1;
+		with_fatal = 1;
 		return;
 	}
 
@@ -377,7 +389,7 @@ read_whole_file(struct curparse *curp, struct buf *fb, int *with_mmap)
 
 	if (-1 == fstat(curp->fd, &st)) {
 		perror(curp->file);
-		with_error = 1;
+		with_fatal = 1;
 		return(0);
 	}
 
@@ -392,7 +404,7 @@ read_whole_file(struct curparse *curp, struct buf *fb, int *with_mmap)
 		if (st.st_size >= (1U << 31)) {
 			fprintf(stderr, "%s: input too large\n", 
 					curp->file);
-			with_error = 1;
+			with_fatal = 1;
 			return(0);
 		}
 		*with_mmap = 1;
@@ -436,7 +448,7 @@ read_whole_file(struct curparse *curp, struct buf *fb, int *with_mmap)
 
 	free(fb->buf);
 	fb->buf = NULL;
-	with_error = 1;
+	with_fatal = 1;
 	return(0);
 }
 
@@ -454,6 +466,7 @@ fdesc(struct curparse *curp)
 	man = NULL;
 	mdoc = NULL;
 	roff = NULL;
+
 	memset(&ln, 0, sizeof(struct buf));
 
 	/*
@@ -596,7 +609,7 @@ fdesc(struct curparse *curp)
 			curp->outfree = ascii_free;
 			break;
 		case (OUTT_PS):
-			curp->outdata = ps_alloc();
+			curp->outdata = ps_alloc(curp->outopts);
 			curp->outfree = ps_free;
 			break;
 		default:
@@ -634,6 +647,7 @@ fdesc(struct curparse *curp)
 		(*curp->outmdoc)(curp->outdata, mdoc);
 
  cleanup:
+	memset(&curp->regs, 0, sizeof(struct regset));
 	if (mdoc)
 		mdoc_reset(mdoc);
 	if (man)
@@ -650,7 +664,7 @@ fdesc(struct curparse *curp)
 	return;
 
  bailout:
-	with_error = 1;
+	with_fatal = 1;
 	goto cleanup;
 }
 
@@ -835,30 +849,37 @@ static int
 mmsg(enum mandocerr t, void *arg, int ln, int col, const char *msg)
 {
 	struct curparse *cp;
+	const char *level;
+	int rc;
 
 	cp = (struct curparse *)arg;
+	level = NULL;
+	rc = 1;
 
-	if (t <= MANDOCERR_ERROR) {
-		if ( ! (cp->wflags & WARN_WALL))
+	if (t >= MANDOCERR_FATAL) {
+		with_fatal = 1;
+		level = "FATAL";
+		rc = 0;
+	} else {
+		if ( ! (WARN_WALL & cp->wflags))
 			return(1);
-		with_warning = 1;
-	} else
-		with_error = 1;
+		if (t >= MANDOCERR_ERROR) {
+			with_error = 1;
+			level = "ERROR";
+		}
+		if (WARN_WERR & cp->wflags) {
+			with_fatal = 1;
+			rc = 0;
+		}
+	}
 
-	fprintf(stderr, "%s:%d:%d: %s", cp->file, 
-			ln, col + 1, mandocerrs[t]);
-
+	fprintf(stderr, "%s:%d:%d:", cp->file, ln, col + 1);
+	if (level)
+		fprintf(stderr, " %s:", level);
+	fprintf(stderr, " %s", mandocerrs[t]);
 	if (msg)
 		fprintf(stderr, ": %s", msg);
-
 	fputc('\n', stderr);
 
-	/* This is superfluous, but whatever. */
-	if (t > MANDOCERR_ERROR)
-		return(0);
-	if (cp->wflags & WARN_WERR) {
-		with_error = 1;
-		return(0);
-	}
-	return(1);
+	return(rc);
 }
