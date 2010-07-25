@@ -1,4 +1,4 @@
-# $NetBSD: acpidevs,v 1.25 2010/07/18 06:58:48 jruoho Exp $
+# $NetBSD: acpidevs,v 1.26 2010/07/25 16:23:51 jruoho Exp $
 #
 # Originally extracted from:
 
@@ -115,6 +115,8 @@ PNP0A08	PCI Express/PCI-X Mode-2 Host Bridge
 #-- Real Time Clock, BIOS, System board devices--
 PNP0800	AT-style speaker sound
 PNP0B00	AT Real-Time Clock
+PNP0B01 AT Real-Time Clock (PIIX4)
+PNP0B02 AT Real-Time Clock (Dallas Semiconductor)
 PNP0C00	Plug and Play BIOS
 PNP0C01	System Board
 PNP0C02	Motherboard Register Resources
