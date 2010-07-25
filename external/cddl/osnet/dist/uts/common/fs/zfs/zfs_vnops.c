@@ -5424,12 +5424,6 @@ zfs_netbsd_pathconf(struct vop_pathconf_args *ap)
 int
 zfs_netbsd_lock(struct vop_lock_args *ap)
 {
-	struct vnode *vp = ap->a_vp;
-	int flags = ap->a_flags;
-	
-	if ((flags & LK_INTERLOCK) != 0) {
-		mutex_exit(&vp->v_interlock);
-	}
 
 	return 0;
 }
