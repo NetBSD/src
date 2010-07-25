@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.172 2010/07/20 20:56:06 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.173 2010/07/25 13:19:27 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.172 2010/07/20 20:56:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.173 2010/07/25 13:19:27 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -122,13 +122,11 @@ int usb_verbose_loaded = 0;
  */
 void usb_load_verbose(void)
 {
-	if (usb_verbose_loaded)
-		return;
-
-	mutex_enter(&module_lock);
-	if (module_autoload("usbverbose", MODULE_CLASS_MISC) == 0)
-		usb_verbose_loaded++;
-	mutex_exit(&module_lock);
+	if (usb_verbose_loaded == 0) {
+		mutex_enter(&module_lock);
+		module_autoload("usbverbose", MODULE_CLASS_MISC);
+		mutex_exit(&module_lock);
+	}
 }
 
 void get_usb_vendor_stub(char *v, usb_vendor_id_t v_id)
