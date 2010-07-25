@@ -1,4 +1,4 @@
-/*	$NetBSD: netconfig.c,v 1.1 2010/07/25 21:39:20 pooka Exp $	*/
+/*	$NetBSD: netconfig.c,v 1.2 2010/07/25 22:28:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,14 +29,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netconfig.c,v 1.1 2010/07/25 21:39:20 pooka Exp $");
+__RCSID("$NetBSD: netconfig.c,v 1.2 2010/07/25 22:28:48 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
+#include <arpa/inet.h>
+
 #include <net/route.h>
+#include <netinet/in.h>
 
 #include <atf-c.h>
 #include <errno.h>
