@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.127 2010/07/11 06:16:56 mrg Exp $
+# $NetBSD: shl.mi,v 1.128 2010/07/26 16:23:32 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -124,6 +124,7 @@
 ./usr/lib/librumpfs_mfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_msdos_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_nfs_pic.a			comp-c-piclib
+./usr/lib/librumpfs_nfsserver_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_nilfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ntfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_null_pic.a			comp-c-piclib
@@ -302,6 +303,7 @@
 ./usr/libdata/debug/usr/lib/librumpfs_mfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_msdos.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_nfs.so.0.0.debug	comp-rump-debug	debug
+./usr/libdata/debug/usr/lib/librumpfs_nfsserver.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_nilfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_ntfs.so.0.0.debug	comp-rump-debug	debug
 ./usr/libdata/debug/usr/lib/librumpfs_null.so.0.0.debug	comp-rump-debug	debug
