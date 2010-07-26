@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.4 2010/07/19 15:35:39 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.5 2010/07/26 13:37:48 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <atf-c.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include <rump/rump_syscalls.h>
@@ -351,6 +352,96 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 	rump_sys_chdir("/");
 }
 
+static void
+create_nametoolong(const atf_tc_t *tc, const char *mp)
+{
+	char *name;
+	int fd;
+	long val;
+	size_t len;
+
+	if (rump_sys_chdir(mp) == -1)
+		atf_tc_fail_errno("chdir mountpoint");
+
+	val = rump_sys_pathconf(".", _PC_NAME_MAX);
+	if (val == -1)
+		atf_tc_fail_errno("pathconf");
+
+	len = val + 1;
+	name = malloc(len+1);
+	if (name == NULL)
+		atf_tc_fail_errno("malloc");
+
+	memset(name, 'a', len);
+	*(name+len) = '\0';
+
+	val = rump_sys_pathconf(".", _PC_NO_TRUNC);
+	if (val == -1)
+		atf_tc_fail_errno("pathconf");
+
+	if (FSTYPE_MSDOS(tc))
+		atf_tc_expect_fail("PR kern/43670");
+	fd = rump_sys_open(name, O_RDWR|O_CREAT, 0666);
+	if (val != 0 && (fd != -1 || errno != ENAMETOOLONG))
+		atf_tc_fail_errno("open");
+
+	if (val == 0 && rump_sys_close(fd) == -1)
+		atf_tc_fail_errno("close");
+	if (val == 0 && rump_sys_unlink(name) == -1)
+		atf_tc_fail_errno("unlink");
+
+	free(name);
+
+	rump_sys_chdir("/");
+}
+
+static void
+rename_nametoolong(const atf_tc_t *tc, const char *mp)
+{
+	char *name;
+	int res, fd;
+	long val;
+	size_t len;
+
+	if (rump_sys_chdir(mp) == -1)
+		atf_tc_fail_errno("chdir mountpoint");
+
+	val = rump_sys_pathconf(".", _PC_NAME_MAX);
+	if (val == -1)
+		atf_tc_fail_errno("pathconf");
+
+	len = val + 1;
+	name = malloc(len+1);
+	if (name == NULL)
+		atf_tc_fail_errno("malloc");
+
+	memset(name, 'a', len);
+	*(name+len) = '\0';
+
+	fd = rump_sys_open("dummy", O_RDWR|O_CREAT, 0666);
+	if (fd == -1)
+		atf_tc_fail_errno("open");
+	if (rump_sys_close(fd) == -1)
+		atf_tc_fail_errno("close");
+
+	val = rump_sys_pathconf(".", _PC_NO_TRUNC);
+	if (val == -1)
+		atf_tc_fail_errno("pathconf");
+
+	if (FSTYPE_MSDOS(tc))
+		atf_tc_expect_fail("PR kern/43670");
+	res = rump_sys_rename("dummy", name);
+	if (val != 0 && (res != -1 || errno != ENAMETOOLONG))
+		atf_tc_fail_errno("rename");
+
+	if (val == 0 && rump_sys_unlink(name) == -1)
+		atf_tc_fail_errno("unlink");
+
+	free(name);
+
+	rump_sys_chdir("/");
+}
+
 ATF_TC_FSAPPLY(lookup_simple, "simple lookup (./.. on root)");
 ATF_TC_FSAPPLY(lookup_complex, "lookup of non-dot entries");
 ATF_TC_FSAPPLY(dir_simple, "mkdir/rmdir");
@@ -358,6 +449,8 @@ ATF_TC_FSAPPLY(dir_notempty, "non-empty directories cannot be removed");
 ATF_TC_FSAPPLY(rename_dir, "exercise various directory renaming ops");
 ATF_TC_FSAPPLY(rename_dotdot, "rename dir ..");
 ATF_TC_FSAPPLY(rename_reg_nodir, "rename regular files, no subdirectories");
+ATF_TC_FSAPPLY(create_nametoolong, "create file with name too long");
+ATF_TC_FSAPPLY(rename_nametoolong, "rename to file with name too long");
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -369,6 +462,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(rename_dir);
 	ATF_TP_FSAPPLY(rename_dotdot);
 	ATF_TP_FSAPPLY(rename_reg_nodir);
+	ATF_TP_FSAPPLY(create_nametoolong);
+	ATF_TP_FSAPPLY(rename_nametoolong);
 
 	return atf_no_error();
 }
