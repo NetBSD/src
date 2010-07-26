@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.64 2010/04/19 18:24:26 dyoung Exp $	*/
+/*	$NetBSD: isadma.c,v 1.65 2010/07/26 22:33:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.64 2010/04/19 18:24:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.65 2010/07/26 22:33:24 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,7 +414,7 @@ _isa_dmastart(struct isa_dma_state *ids, int chan, void *addr, bus_size_t nbytes
 	dmaaddr = dmam->dm_segs[0].ds_addr;
 
 #ifdef ISADMA_DEBUG
-	printf("     dmaaddr 0x%lx\n", dmaaddr);
+	printf("     dmaaddr %#" PRIxPADDR "\n", dmaaddr);
 
 	__asm(".globl isa_dmastart_aftersync ; isa_dmastart_aftersync:");
 #endif

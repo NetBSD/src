@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.67 2010/05/16 11:27:49 phx Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.68 2010/07/26 22:33:24 jym Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.67 2010/05/16 11:27:49 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.68 2010/07/26 22:33:24 jym Exp $");
 
 #include "rnd.h"
 
@@ -1597,8 +1597,8 @@ skc_attach(device_t parent, device_t self, void *aux)
                 return;
 	}
 
-	DPRINTFN(2, ("skc_attach: iobase=%lx, iosize=%lx\n", iobase,
-	    (u_long)iosize));
+	DPRINTFN(2, ("skc_attach: iobase=%#" PRIxPADDR ", iosize=%zx\n",
+	    iobase, iosize));
 #endif
 	sc->sc_dmatag = pa->pa_dmat;
 
