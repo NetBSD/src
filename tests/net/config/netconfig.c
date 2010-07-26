@@ -1,4 +1,4 @@
-/*	$NetBSD: netconfig.c,v 1.2 2010/07/25 22:28:48 pooka Exp $	*/
+/*	$NetBSD: netconfig.c,v 1.3 2010/07/26 14:07:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netconfig.c,v 1.2 2010/07/25 22:28:48 pooka Exp $");
+__RCSID("$NetBSD: netconfig.c,v 1.3 2010/07/26 14:07:04 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -62,11 +62,11 @@ netcfg_rump_makeshmif(const char *busname, char *ifname)
 }
 
 static void
-netcfg_rump_if(const char *ifname,
-	const char *addr, const char *mask, const char *bcast)
+netcfg_rump_if(const char *ifname, const char *addr, const char *mask)
 {
 	struct ifaliasreq ia;
 	struct sockaddr_in *sin;
+	in_addr_t inaddr, inmask;
 	int s, rv;
 
 	s = -1;
@@ -74,25 +74,28 @@ netcfg_rump_if(const char *ifname,
 		atf_tc_fail_errno("if config socket");
 	}
 
+	inaddr = inet_addr(addr);
+	inmask = inet_addr(mask);
+
 	/* Address */
 	memset(&ia, 0, sizeof(ia));
 	strcpy(ia.ifra_name, ifname);
 	sin = (struct sockaddr_in *)&ia.ifra_addr;
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_addr.s_addr = inet_addr(addr);
+	sin->sin_addr.s_addr = inaddr;
 
 	/* Netmask */
 	sin = (struct sockaddr_in *)&ia.ifra_mask;
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_addr.s_addr = inet_addr(mask);
+	sin->sin_addr.s_addr = inmask;
 
 	/* Broadcast address */
 	sin = (struct sockaddr_in *)&ia.ifra_broadaddr;
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_addr.s_addr = inet_addr(bcast);
+	sin->sin_addr.s_addr = inaddr | ~inmask;
 
 	rv = rump_sys_ioctl(s, SIOCAIFADDR, &ia);
 	if (rv) {

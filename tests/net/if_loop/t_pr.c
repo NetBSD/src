@@ -1,4 +1,4 @@
-/*	$NetBSD: t_pr.c,v 1.1 2010/07/25 21:42:08 pooka Exp $	*/
+/*	$NetBSD: t_pr.c,v 1.2 2010/07/26 14:07:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_pr.c,v 1.1 2010/07/25 21:42:08 pooka Exp $");
+__RCSID("$NetBSD: t_pr.c,v 1.2 2010/07/26 14:07:04 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ ATF_TC_BODY(loopmtu, tc)
 	rump_init();
 
 	/* first, config lo0 & route */
-	netcfg_rump_if(ifname, "127.0.0.1", "255.0.0.0", "127.255.255.255");
+	netcfg_rump_if(ifname, "127.0.0.1", "255.0.0.0");
 	netcfg_rump_route("127.0.0.1", "255.0.0.0", "127.0.0.1");
 
 	if ((s = rump_sys_socket(PF_ROUTE, SOCK_RAW, 0)) == -1)

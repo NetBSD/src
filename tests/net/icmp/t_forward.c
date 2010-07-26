@@ -1,4 +1,4 @@
-/*	$NetBSD: t_forward.c,v 1.3 2010/07/25 21:39:21 pooka Exp $	*/
+/*	$NetBSD: t_forward.c,v 1.4 2010/07/26 14:07:04 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_forward.c,v 1.3 2010/07/25 21:39:21 pooka Exp $");
+__RCSID("$NetBSD: t_forward.c,v 1.4 2010/07/26 14:07:04 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -180,7 +180,7 @@ sendttl(void)
 	int s;
 
 	netcfg_rump_makeshmif("bus1", ifname);
-	netcfg_rump_if(ifname, "1.0.0.1", "255.255.255.0", "1.0.0.255");
+	netcfg_rump_if(ifname, "1.0.0.1", "255.255.255.0");
 	netcfg_rump_route("0.0.0.0", "0.0.0.0", "1.0.0.2"); /* default router */
 
 	/* set global ttl to 1 */
