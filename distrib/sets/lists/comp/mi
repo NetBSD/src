@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1485 2010/07/26 02:51:57 enami Exp $
+#	$NetBSD: mi,v 1.1486 2010/07/26 16:23:31 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2679,6 +2679,9 @@
 ./usr/lib/librumpfs_nfs.a			comp-c-lib
 ./usr/lib/librumpfs_nfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_nfs_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_nfsserver.a			comp-c-lib
+./usr/lib/librumpfs_nfsserver_g.a			-unknown-		debuglib
+./usr/lib/librumpfs_nfsserver_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_nilfs.a			comp-c-lib
 ./usr/lib/librumpfs_nilfs_g.a			-unknown-		debuglib
 ./usr/lib/librumpfs_nilfs_p.a			comp-c-proflib		profile
