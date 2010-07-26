@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.11 2010/04/25 15:39:41 rmind Exp $ */
+/* $NetBSD: siisata.c,v 1.12 2010/07/26 15:41:33 jakllsch Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.11 2010/04/25 15:39:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.12 2010/07/26 15:41:33 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -238,10 +238,8 @@ static void
 siisata_attach_port(struct siisata_softc *sc, int port)
 {
 	int j;
-	bus_dma_segment_t seg;
 	int dmasize;
 	int error;
-	int rseg;
 	void *prbp;
 	struct siisata_channel *schp;
 	struct ata_channel *chp;
@@ -266,7 +264,7 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 	    __func__, dmasize), DEBUG_FUNCS);
 
 	error = bus_dmamem_alloc(sc->sc_dmat, dmasize, PAGE_SIZE, 0,
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT);
+	    &schp->sch_prb_seg, 1, &schp->sch_prb_nseg, BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "unable to allocate PRB table memory, "
@@ -274,13 +272,15 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 		return;
 	}
 
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, dmasize,
-	    &prbp, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	error = bus_dmamem_map(sc->sc_dmat,
+	    &schp->sch_prb_seg, schp->sch_prb_nseg,
+	    dmasize, &prbp, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
 		aprint_error_dev(sc->sc_atac.atac_dev,
 		    "unable to map PRB table memory, "
 		    "error=%d\n", error);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_dmamem_free(sc->sc_dmat,
+		    &schp->sch_prb_seg, schp->sch_prb_nseg);
 		return;
 	}
 
@@ -291,7 +291,8 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 		    "unable to create PRB table map, "
 		    "error=%d\n", error);
 		bus_dmamem_unmap(sc->sc_dmat, prbp, dmasize);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_dmamem_free(sc->sc_dmat,
+		    &schp->sch_prb_seg, schp->sch_prb_nseg);
 		return;
 	}
 
@@ -303,7 +304,8 @@ siisata_attach_port(struct siisata_softc *sc, int port)
 		    "error=%d\n", error);
 		bus_dmamap_destroy(sc->sc_dmat, schp->sch_prbd);
 		bus_dmamem_unmap(sc->sc_dmat, prbp, dmasize);
-		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		bus_dmamem_free(sc->sc_dmat,
+		    &schp->sch_prb_seg, schp->sch_prb_nseg);
 		return;
 	}
 
@@ -362,7 +364,6 @@ siisata_detach(struct siisata_softc *sc, int flags)
 	struct scsipi_adapter *adapt = &atac->atac_atapi_adapter._generic;
 	struct siisata_channel *schp;
 	struct ata_channel *chp;
-	bus_dmamap_t dmam;
 	int i, j, error;
 
 	for (i = 0; i < sc->sc_atac.atac_nchannels; i++) {
@@ -377,12 +378,12 @@ siisata_detach(struct siisata_softc *sc, int flags)
 		for (j = 0; j < SIISATA_MAX_SLOTS; j++)
 			bus_dmamap_destroy(sc->sc_dmat, schp->sch_datad[j]);
 
-		dmam = schp->sch_prbd;
-		bus_dmamap_unload(sc->sc_dmat, dmam);
-		bus_dmamap_destroy(sc->sc_dmat, dmam);
+		bus_dmamap_unload(sc->sc_dmat, schp->sch_prbd);
+		bus_dmamap_destroy(sc->sc_dmat, schp->sch_prbd);
 		bus_dmamem_unmap(sc->sc_dmat, schp->sch_prb[0],
-		    dmam->dm_mapsize);
-		bus_dmamem_free(sc->sc_dmat, dmam->dm_segs, dmam->dm_nsegs);
+		    SIISATA_CMD_SIZE * SIISATA_MAX_SLOTS);
+		bus_dmamem_free(sc->sc_dmat,
+		    &schp->sch_prb_seg, schp->sch_prb_nseg);
 
 		free(chp->ch_queue, M_DEVBUF);
 		chp->atabus = NULL;
