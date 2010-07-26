@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.1 2010/07/26 15:53:00 pooka Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.2 2010/07/26 19:24:35 pooka Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.1 2010/07/26 15:53:00 pooka Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.2 2010/07/26 19:24:35 pooka Exp $");
 #endif
 #endif				/* not lint */
 
@@ -570,7 +570,7 @@ mntsrv(rqstp, transp)
 			error = 0;
 			if (rump_sys_getfh(dpath, &fhr.fhr_fh, &fh_size) < 0) {
 				bad = error;
-				syslog(LOG_ERR, "Can't get fh for %s %d %d", dpath, error, fh_size);
+				//syslog(LOG_ERR, "Can't get fh for %s %d %d", dpath, error, fh_size);
 				if (!svc_sendreply(transp, xdr_long,
 				    (char *)&bad))
 					syslog(LOG_ERR, "Can't send reply");
