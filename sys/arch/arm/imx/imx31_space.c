@@ -1,7 +1,7 @@
-/* $Id: imx31_space.c,v 1.3.2.3 2010/05/31 13:26:36 uebayasi Exp $ */
+/* $Id: imx31_space.c,v 1.3.2.4 2010/07/26 10:11:38 uebayasi Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx31_space.c,v 1.3.2.3 2010/05/31 13:26:36 uebayasi Exp $ */
+/*	$NetBSD: imx31_space.c,v 1.3.2.4 2010/07/26 10:11:38 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -166,8 +166,8 @@ struct bus_space imx31_bs_tag = {
 	/* physload */
 	imx31_bs_physload,
 	imx31_bs_physunload,
-	imx31_bs_physload_direct,
-	imx31_bs_physunload_direct,
+	imx31_bs_physload_device,
+	imx31_bs_physunload_device,
 };
 
 int
@@ -302,18 +302,18 @@ imx31_bs_physunload(void *t, void *phys)
 }
 
 void *
-imx31_bs_physload_direct(void *t, bus_addr_t addr, bus_size_t size, int prot, int flags)
+imx31_bs_physload_device(void *t, bus_addr_t addr, bus_size_t size, int prot, int flags)
 {
 	/* XXX */
 	const paddr_t start = imx31_bs_mmap(t, addr, 0, prot, flags);
 	const paddr_t end = imx31_bs_mmap(t, addr + size, 0, prot, flags);
 
-	return uvm_page_physload_direct(start, end, start, end, prot, flags);
+	return uvm_page_physload_device(start, end, start, end, prot, flags);
 }
 
 void
-imx31_bs_physunload_direct(void *t, void *phys)
+imx31_bs_physunload_device(void *t, void *phys)
 {
 
-	uvm_page_physunload_direct(phys);
+	uvm_page_physunload_device(phys);
 }
