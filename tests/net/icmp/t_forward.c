@@ -1,4 +1,4 @@
-/*	$NetBSD: t_forward.c,v 1.4 2010/07/26 14:07:04 pooka Exp $	*/
+/*	$NetBSD: t_forward.c,v 1.5 2010/07/26 14:10:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_forward.c,v 1.4 2010/07/26 14:07:04 pooka Exp $");
+__RCSID("$NetBSD: t_forward.c,v 1.5 2010/07/26 14:10:31 pooka Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -59,110 +59,6 @@ __RCSID("$NetBSD: t_forward.c,v 1.4 2010/07/26 14:07:04 pooka Exp $");
 
 #include "../../h_macros.h"
 #include "../config/netconfig.c"
-
-static void
-configure_interface(const char *busname, const char *addr, const char *mask,
-	const char *bcast)
-{
-	char ifname[32];
-	struct ifaliasreq ia;
-	struct sockaddr_in *sin;
-	int s, rv, ifnum;
-
-	if ((s = rump_pub_shmif_create(busname, &ifnum)) != 0) {
-		atf_tc_fail("rump_pub_shmif_create(%d)", s);
-	}
-
-	if ((s = rump_sys_socket(PF_INET, SOCK_DGRAM, 0)) < 0) {
-		atf_tc_fail_errno("if config socket");
-	}
-	sprintf(ifname, "shmif%d", ifnum);
-
-	/* Address */
-	memset(&ia, 0, sizeof(ia));
-	strcpy(ia.ifra_name, ifname);
-	sin = (struct sockaddr_in *)&ia.ifra_addr;
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_addr.s_addr = inet_addr(addr);
-
-	/* Netmask */
-	sin = (struct sockaddr_in *)&ia.ifra_mask;
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_addr.s_addr = inet_addr(mask);
-
-	/* Broadcast address */
-	sin = (struct sockaddr_in *)&ia.ifra_broadaddr;
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(struct sockaddr_in);
-	sin->sin_addr.s_addr = inet_addr(bcast);
-
-	rv = rump_sys_ioctl(s, SIOCAIFADDR, &ia);
-	if (rv) {
-		atf_tc_fail_errno("SIOCAIFADDR");
-	}
-	rump_sys_close(s);
-}
-
-static void
-configure_routing(const char *dst, const char *mask, const char *gw)
-{
-	size_t len;
-	struct {
-		struct rt_msghdr m_rtm;
-		uint8_t m_space[512];
-	} m_rtmsg;
-#define rtm m_rtmsg.m_rtm
-	uint8_t *bp = m_rtmsg.m_space;
-	struct sockaddr_in sinstore;
-	int s, rv;
-
-	s = rump_sys_socket(PF_ROUTE, SOCK_RAW, 0);
-	if (s == -1) {
-		atf_tc_fail_errno("routing socket");
-	}
-
-	memset(&m_rtmsg, 0, sizeof(m_rtmsg));
-	rtm.rtm_type = RTM_ADD;
-	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
-	rtm.rtm_version = RTM_VERSION;
-	rtm.rtm_seq = 2;
-	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
-
-	/* dst */
-	memset(&sinstore, 0, sizeof(sinstore));
-	sinstore.sin_family = AF_INET;
-	sinstore.sin_len = sizeof(sinstore);
-	sinstore.sin_addr.s_addr = inet_addr(dst);
-	memcpy(bp, &sinstore, sizeof(sinstore));
-	bp += sizeof(sinstore);
-
-	/* gw */
-	memset(&sinstore, 0, sizeof(sinstore));
-	sinstore.sin_family = AF_INET;
-	sinstore.sin_len = sizeof(sinstore);
-	sinstore.sin_addr.s_addr = inet_addr(gw);
-	memcpy(bp, &sinstore, sizeof(sinstore));
-	bp += sizeof(sinstore);
-
-	/* netmask */
-	memset(&sinstore, 0, sizeof(sinstore));
-	sinstore.sin_family = AF_INET;
-	sinstore.sin_len = sizeof(sinstore);
-	sinstore.sin_addr.s_addr = inet_addr(mask);
-	memcpy(bp, &sinstore, sizeof(sinstore));
-	bp += sizeof(sinstore);
-
-	len = bp - (uint8_t *)&m_rtmsg;
-	rtm.rtm_msglen = len;
-
-	rv = rump_sys_write(s, &m_rtmsg, len);
-	if (rv != (int)len) {
-		atf_tc_fail_errno("write routing message");
-	}
-	rump_sys_close(s);
-}
 
 /*
  * Since our maxttl is in our private namespace, we don't need raw packet
@@ -209,6 +105,7 @@ router(void)
 {
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_ICMP,
 		    ICMPCTL_RETURNDATABYTES };
+	char ifname[IFNAMSIZ];
 	int nv;
 
 	/* set returndatabytes to 200 */
@@ -216,7 +113,8 @@ router(void)
 	if (rump_sys___sysctl(mib, 4, NULL, NULL, &nv, sizeof(nv)) == -1)
 		atf_tc_fail_errno("sysctl returndatabytes");
 
-	configure_interface("bus1", "1.0.0.2", "255.255.255.0", "1.0.0.255");
+	netcfg_rump_makeshmif("bus1", ifname);
+	netcfg_rump_if(ifname, "1.0.0.2", "255.255.255.0");
 
 	/*
 	 * Wait for parent to send us the data and for us to have
