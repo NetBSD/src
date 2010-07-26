@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2010/07/26 16:17:21 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/07/26 19:17:37 pooka Exp $
 #
 
 NOMAN=	1
@@ -6,6 +6,10 @@ NOMAN=	1
 
 TESTSDIR=       ${TESTSBASE}/fs/nfs/nfsservice
 ATFFILE=	no
+
+# install pre-generated /etc/exports
+FILES+=			exports
+FILESDIR_exports=	${TESTSDIR}
 
 VFSTESTDIR != cd ${.CURDIR}/../../common && ${PRINTOBJDIR}
 LDADD+= -L${VFSTESTDIR} -Wl,--whole-archive -lvfstest -Wl,--no-whole-archive
