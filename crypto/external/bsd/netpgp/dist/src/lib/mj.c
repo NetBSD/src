@@ -275,7 +275,7 @@ mj_parse(mj_t *atom, const char *s, int *from, int *to, int *tok)
 		case MJ_NULL:
 		case MJ_FALSE:
 		case MJ_TRUE:
-			atom->c = (unsigned)to;
+			atom->c = (unsigned)*to;
 			return gettok(s, from, to, tok);
 		case MJ_OPEN_BRACKET:
 			mj_create(atom, "array");
