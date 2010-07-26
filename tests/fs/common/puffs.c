@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.3 2010/07/19 16:09:08 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.4 2010/07/26 14:53:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <pthread.h>
 #include <puffs.h>
 #include <puffsdump.h>
+#include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -215,6 +216,13 @@ rumpshovels(int rumpfd, int servfd)
 	pthread_detach(pt);
 }
 
+static void
+childfail(int sign)
+{
+
+	atf_tc_fail("child died"); /* almost signal-safe */
+}
+
 /* XXX: we don't support size */
 int
 puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
@@ -222,7 +230,7 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 {
 	struct puffstestargs *args;
 	char dtfs_path[MAXPATHLEN];
-	char *dtfsargv[5];
+	char *dtfsargv[6];
 	pid_t childpid;
 	int *pflags;
 	char comfd[16];
@@ -244,13 +252,16 @@ puffs_fstest_newfs(const atf_tc_t *tc, void **argp,
 	    atf_tc_get_config_var(tc, "srcdir"));
 	dtfsargv[0] = dtfs_path;
 	dtfsargv[1] = __UNCONST("-i");
-	dtfsargv[2] = __UNCONST("dtfs");
-	dtfsargv[3] = __UNCONST("fictional");
-	dtfsargv[4] = NULL;
+	dtfsargv[2] = __UNCONST("-s");
+	dtfsargv[3] = __UNCONST("dtfs");
+	dtfsargv[4] = __UNCONST("fictional");
+	dtfsargv[5] = NULL;
 
 	/* Create sucketpair for communication with the real file server */
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) == -1)
 		return errno;
+
+	signal(SIGCHLD, childfail);
 
 	switch ((childpid = fork())) {
 	case 0:
@@ -324,7 +335,8 @@ puffs_fstest_mount(const atf_tc_t *tc, void *arg, const char *path, int flags)
 
 	if (rump_sys_mount(MOUNT_PUFFS, path, flags,
 	    pargs->pta_pargs, pargs->pta_pargslen) == -1) {
-		printf("%d\n", errno);
+		/* apply "to kill a child" to avoid atf hang (kludge) */
+		kill(pargs->pta_childpid, SIGKILL);
 		return -1;
 	}
 
@@ -356,6 +368,9 @@ int
 puffs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
 	int rv;
+
+	/* ok, child might exit here */
+	signal(SIGCHLD, SIG_IGN);
 
 	rv = rump_sys_unmount(path, flags);
 	if (rv)	
