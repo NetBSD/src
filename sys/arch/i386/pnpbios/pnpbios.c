@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.69 2010/04/28 19:17:04 dyoung Exp $ */
+/* $NetBSD: pnpbios.c,v 1.70 2010/07/26 22:33:23 jym Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.69 2010/04/28 19:17:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.70 2010/07/26 22:33:23 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ pnpbios_mapit(paddr_t addr, u_long len, vm_prot_t prot)
 		pmap_kenter_pa(va, pa, prot, 0);
 	pmap_update(pmap_kernel());
 
-	return ((void *)(startva + (addr - startpa)));
+	return ((void *)(startva + (vaddr_t)(addr - startpa)));
 }
 
 static void
