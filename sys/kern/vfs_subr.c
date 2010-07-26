@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.411 2010/07/25 10:23:40 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.412 2010/07/26 15:22:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.411 2010/07/25 10:23:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.412 2010/07/26 15:22:16 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1332,13 +1332,12 @@ vget(vnode_t *vp, int flags)
 	 * Ok, we got it in good shape.  Just locking left.
 	 */
 	KASSERT((vp->v_iflag & VI_CLEAN) == 0);
+	mutex_exit(&vp->v_interlock);
 	if (flags & (LK_EXCLUSIVE | LK_SHARED)) {
-		error = vn_lock(vp, flags | LK_INTERLOCK);
+		error = vn_lock(vp, flags);
 		if (error != 0) {
 			vrele(vp);
 		}
-	} else {
-		mutex_exit(&vp->v_interlock);
 	}
 	return error;
 }
@@ -1438,8 +1437,8 @@ vrelel(vnode_t *vp, int flags)
 			 */
 			vp->v_iflag &= ~(VI_INACTREDO|VI_INACTNOW);
 			cv_broadcast(&vp->v_cv);
-			error = vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK |
-			    LK_RETRY);
+			mutex_exit(&vp->v_interlock);
+			error = vn_lock(vp, LK_EXCLUSIVE);
 			if (error != 0) {
 				/* XXX */
 				vpanic(vp, "vrele: unable to lock %p");
@@ -1467,8 +1466,8 @@ vrelel(vnode_t *vp, int flags)
 		} else {		
 			/* If we can't acquire the lock, then defer. */
 			vp->v_iflag &= ~VI_INACTREDO;
-			error = vn_lock(vp, LK_EXCLUSIVE | LK_INTERLOCK |
-			    LK_NOWAIT);
+			mutex_exit(&vp->v_interlock);
+			error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
 			if (error != 0) {
 				defer = true;
 				mutex_enter(&vp->v_interlock);
