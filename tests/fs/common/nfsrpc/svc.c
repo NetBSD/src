@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.1 2010/07/26 15:56:45 pooka Exp $	*/
+/*	$NetBSD: svc.c,v 1.2 2010/07/26 17:53:21 pooka Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.1 2010/07/26 15:56:45 pooka Exp $");
+__RCSID("$NetBSD: svc.c,v 1.2 2010/07/26 17:53:21 pooka Exp $");
 #endif
 #endif
 
@@ -673,7 +673,7 @@ svc_getreqset(readfds)
 	fd_set *readfds;
 {
 	int bit, fd;
-	int32_t mask, *maskp;
+	uint32_t mask, *maskp;
 	int sock;
 
 	_DIAGASSERT(readfds != NULL);
