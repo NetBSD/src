@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.c,v 1.7 2010/07/25 17:44:01 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.c,v 1.8 2010/07/26 15:14:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.7 2010/07/25 17:44:01 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu.c,v 1.8 2010/07/26 15:14:33 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -227,7 +227,7 @@ acpicpu_object(ACPI_HANDLE hdl, struct acpicpu_object *ao)
 	rv = acpi_eval_struct(hdl, NULL, &buf);
 
 	if (ACPI_FAILURE(rv))
-		return 0;
+		return 1;
 
 	obj = buf.Pointer;
 
