@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syscalls_compat.h,v 1.2 2010/07/19 15:38:03 pooka Exp $	*/
+/*	$NetBSD: rump_syscalls_compat.h,v 1.3 2010/07/26 11:52:25 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -43,6 +43,7 @@
 #define rump_sys_stat(a,b) rump_sys_nb5_stat(a,b)
 #define rump_sys_lstat(a,b) rump_sys_nb5_lstat(a,b)
 #define rump_sys_pollts(a,b,c,d) rump_sys_nb5_pollts(a,b,c,d)
+#define rump_sys_select(a,b,c,d,e) rump_sys_nb5_select(a,b,c,d,e)
 #endif /* __NetBSD_Prereq */
 #endif /* __NetBSD__ */
 #endif /* _KERNEL */
@@ -58,6 +59,7 @@ int rump_sys_nb5_stat(const char *, struct stat *);
 int rump_sys_nb5_lstat(const char *, struct stat *);
 int rump_sys_nb5_pollts(struct pollfd *, size_t,
 			const struct timespec *, const void *);
+int rump_sys_nb5_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 
 #ifdef _END_DECLS
 _END_DECLS
