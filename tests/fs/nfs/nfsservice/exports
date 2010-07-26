@@ -1,0 +1,11 @@
+#	$NetBSD: exports,v 1.1 2010/07/26 15:53:00 pooka Exp $
+#
+
+#
+# The export dir is currently hardcoded and is exposed to the
+# world, where "world" in this case means inside the rump shmif
+# IP network, i.e. not a very big world.  Probably needs some
+# adjustments if we want to test NFS features more carefully,
+# but this is enough for the current VFS level tests.
+#
+/myexport -noresvport -noresvmnt -maproot=0:0
