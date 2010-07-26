@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.213 2010/07/21 15:35:39 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.214 2010/07/26 22:33:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.213 2010/07/21 15:35:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.214 2010/07/26 22:33:24 jym Exp $");
 
 #include "rnd.h"
 
@@ -2627,10 +2627,10 @@ wm_start(struct ifnet *ifp)
 				lasttx = nexttx;
 
 				DPRINTF(WM_DEBUG_TX,
-				    ("%s: TX: desc %d: low 0x%08lx, "
-				     "len 0x%04x\n",
+				    ("%s: TX: desc %d: low %#" PRIxPADDR ", "
+				     "len %#04zx\n",
 				    device_xname(sc->sc_dev), nexttx,
-				    curaddr & 0xffffffffUL, (unsigned)curlen));
+				    curaddr & 0xffffffffUL, curlen));
 			}
 		}
 
