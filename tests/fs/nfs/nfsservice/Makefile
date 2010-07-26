@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2010/07/26 15:53:00 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2010/07/26 16:17:21 pooka Exp $
 #
 
 NOMAN=	1
 .include <bsd.own.mk>
 
-TESTSDIR=       ${TESTSBASE}/nfs/nfsservice
+TESTSDIR=       ${TESTSBASE}/fs/nfs/nfsservice
 ATFFILE=	no
 
 VFSTESTDIR != cd ${.CURDIR}/../../common && ${PRINTOBJDIR}
