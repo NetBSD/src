@@ -55,6 +55,7 @@
 
 #include "packet.h"
 #include "packet-parse.h"
+#include "mj.h"
 
 enum {
 	MAX_ID_LENGTH		= 128,
@@ -116,6 +117,9 @@ void __ops_keydata_init(__ops_key_t *, const __ops_content_enum);
 int __ops_parse_and_accumulate(__ops_keyring_t *, __ops_stream_t *);
 
 int __ops_sprint_keydata(__ops_io_t *, const __ops_keyring_t *,
+			const __ops_key_t *, char **, const char *,
+			const __ops_pubkey_t *, const int);
+int __ops_sprint_mj(__ops_io_t *, const __ops_keyring_t *,
 			const __ops_key_t *, char **, const char *,
 			const __ops_pubkey_t *, const int);
 int __ops_hkp_sprint_keydata(__ops_io_t *, const __ops_keyring_t *,
