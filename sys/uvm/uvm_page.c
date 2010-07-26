@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.49 2010/07/24 08:22:14 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.50 2010/07/26 10:11:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.49 2010/07/24 08:22:14 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.50 2010/07/26 10:11:39 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -832,7 +832,7 @@ uvm_page_physunload(void *cookie)
 
 #ifdef XIP
 void *
-uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
+uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
     paddr_t avail_end, int prot, int flags)
 {
 	struct vm_physseg *seg;
@@ -846,10 +846,11 @@ uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
 	seg->flags = flags;	/* XXXUEBS BUS_SPACE_MAP_* */
 
 	/*
-	 * XIP page metadata initialization
-	 * - Only "phys_addr" and "vm_page_md" (== "PV" management) are used.
-	 * - No "pageq" operation is done.
-	 * - XIP pages are read-only (for now).
+	 * Managed device page metadata initialization
+	 * - Pages are not used for general purpose memory.
+	 *   - Pages are not put in free lists.
+	 * - Pages are not paged out ("fixed").
+	 *   - No "pageq" operation is done.
 	 */
 	seg->pgs = kmem_zalloc(sizeof(struct vm_page) * (end - start),
 	    KM_SLEEP);
@@ -863,7 +864,9 @@ uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
 		paddr_t paddr = (start + i) << PAGE_SHIFT;
 
 		pg->phys_addr = paddr;
-		pg->flags |= PG_FAKE | PG_RDONLY | PG_CLEAN;
+		pg->flags |= PG_FAKE | PG_CLEAN;
+		if (prot == PROT_READ)
+			pg->flags |= PG_RDONLY;
 		pg->pqflags = PQ_FIXED;
 #ifdef __HAVE_VM_PAGE_MD
 		VM_MDPAGE_INIT(&pg->mdpage, paddr);
@@ -875,7 +878,7 @@ uvm_page_physload_direct(paddr_t start, paddr_t end, paddr_t avail_start,
 }
 
 void
-uvm_page_physunload_direct(void *cookie)
+uvm_page_physunload_device(void *cookie)
 {
 	struct vm_physseg *seg = cookie;
 
