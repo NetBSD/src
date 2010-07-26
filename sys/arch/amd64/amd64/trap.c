@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.63 2010/07/07 01:15:34 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.64 2010/07/26 12:39:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63 2010/07/07 01:15:34 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2010/07/26 12:39:04 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -464,13 +464,15 @@ copyfault:
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)frame->tf_rip;
-		switch (type ) {
+		switch (type) {
 		case T_BOUND|T_USER:
+			ksi.ksi_code = FPE_FLTSUB;
+			break;
 		case T_OFLOW|T_USER:
-			ksi.ksi_code = FPE_FLTOVF;
+			ksi.ksi_code = FPE_INTOVF;
 			break;
 		case T_DIVIDE|T_USER:
-			ksi.ksi_code = FPE_FLTDIV;
+			ksi.ksi_code = FPE_INTDIV;
 			break;
 		default:
 #ifdef DIAGNOSTIC
