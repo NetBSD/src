@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1484 2010/07/25 21:05:14 jruoho Exp $
+#	$NetBSD: mi,v 1.1485 2010/07/26 02:51:57 enami Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9920,6 +9920,7 @@
 ./usr/share/man/cat9/vnodeops.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vnsubr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/voidop.0			comp-sys-catman		.cat
+./usr/share/man/cat9/vprint.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vprintf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vput.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vrecycle.0			comp-sys-catman		.cat
