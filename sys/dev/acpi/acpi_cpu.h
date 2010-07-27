@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu.h,v 1.5 2010/07/23 08:11:49 jruoho Exp $ */
+/* $NetBSD: acpi_cpu.h,v 1.6 2010/07/27 05:11:32 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -52,11 +52,8 @@
 #define ACPICPU_PDC_C_C2C3_FFH    __BIT(9)	/* SMP C2 and C2 native      */
 #define ACPICPU_PDC_P_HW          __BIT(11)	/* Px hardware coordination  */
 
-/*
- * See ibid., table 4.
- */
-#define ACPICPU_PDC_GAS_HW	  __BIT(0)	/* hw-coordinated state      */
-#define ACPICPU_PDC_GAS_BM	  __BIT(1)	/* bus master check required */
+#define ACPICPU_PDC_GAS_HW	  __BIT(0)	/* HW-coordinated state      */
+#define ACPICPU_PDC_GAS_BM	  __BIT(1)	/* Bus master check required */
 
 /*
  * Notify values.
@@ -71,25 +68,32 @@
 #define ACPICPU_C_C2_LATENCY_MAX 100		/* us */
 #define ACPICPU_C_C3_LATENCY_MAX 1000		/* us */
 
-#define ACPICPU_C_CSD_SW_ALL	 0xFC
-#define ACPICPU_C_CSD_SW_ANY	 0xFD
-#define ACPICPU_C_CSD_HW_ALL	 0xFE
-
 #define ACPICPU_C_STATE_HALT	 0x01
 #define ACPICPU_C_STATE_FFH	 0x02
 #define ACPICPU_C_STATE_SYSIO	 0x03
 
-#define ACPICPU_FLAG_C		 __BIT(0)
-#define ACPICPU_FLAG_P		 __BIT(1)
-#define ACPICPU_FLAG_T		 __BIT(2)
-#define ACPICPU_FLAG_C_CST	 __BIT(3)
-#define ACPICPU_FLAG_C_FADT	 __BIT(4)
-#define ACPICPU_FLAG_C_BM	 __BIT(5)
-#define ACPICPU_FLAG_C_BM_STS	 __BIT(6)
-#define ACPICPU_FLAG_C_ARB	 __BIT(7)
-#define ACPICPU_FLAG_C_NOC3	 __BIT(8)
-#define ACPICPU_FLAG_C_MWAIT	 __BIT(9)
-#define ACPICPU_FLAG_C_C1E	 __BIT(10)
+/*
+ * Cross-CPU dependency coordination.
+ */
+#define ACPICPU_DEP_SW_ALL	 0xFC
+#define ACPICPU_DEP_SW_ANY	 0xFD
+#define ACPICPU_DEP_HW_ALL	 0xFE
+
+/*
+ * Flags.
+ */
+#define ACPICPU_FLAG_C		 __BIT(0)	/* C-states supported        */
+#define ACPICPU_FLAG_P		 __BIT(1)	/* P-states supported        */
+#define ACPICPU_FLAG_T		 __BIT(2)	/* T-states supported        */
+
+#define ACPICPU_FLAG_C_CST	 __BIT(3)	/* C-states with _CST	     */
+#define ACPICPU_FLAG_C_FADT	 __BIT(4)	/* C-states with FADT        */
+#define ACPICPU_FLAG_C_BM	 __BIT(5)	/* Bus master control        */
+#define ACPICPU_FLAG_C_BM_STS	 __BIT(6)	/* Bus master check required */
+#define ACPICPU_FLAG_C_ARB	 __BIT(7)	/* Bus master arbitration    */
+#define ACPICPU_FLAG_C_NOC3	 __BIT(8)	/* C3 disabled (quirk)       */
+#define ACPICPU_FLAG_C_MWAIT	 __BIT(9)	/* MONITOR/MWAIT supported   */
+#define ACPICPU_FLAG_C_C1E	 __BIT(10)	/* AMD C1E detected	     */
 
 struct acpicpu_cstate {
 	uint64_t		 cs_stat;
@@ -100,11 +104,11 @@ struct acpicpu_cstate {
 	int			 cs_flags;
 };
 
-struct acpicpu_csd {
-	uint32_t		 csd_domain;
-	uint32_t		 csd_coord;
-	uint32_t		 csd_ncpu;
-	uint32_t		 csd_index;
+struct acpicpu_dep {
+	uint32_t		 dep_domain;
+	uint32_t		 dep_coord;
+	uint32_t		 dep_ncpu;
+	uint32_t		 dep_index;
 };
 
 struct acpicpu_object {
@@ -125,6 +129,20 @@ struct acpicpu_softc {
 	uint32_t		 sc_cap;
 	uint32_t		 sc_flags;
 };
+
+/*
+ * This is AML_RESOURCE_GENERIC_REGISTER,
+ * included here separately for convenience.
+ */
+struct acpicpu_reg {
+	uint8_t			 reg_desc;
+	uint16_t		 reg_reslen;
+	uint8_t			 reg_spaceid;
+	uint8_t			 reg_bitwidth;
+	uint8_t			 reg_bitoffset;
+	uint8_t			 reg_accesssize;
+	uint64_t		 reg_addr;
+} __packed;
 
 void		acpicpu_cstate_attach(device_t);
 int		acpicpu_cstate_detach(device_t);
