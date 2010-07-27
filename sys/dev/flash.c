@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.1.2.10 2010/07/26 10:11:38 uebayasi Exp $	*/
+/*	$Id: flash.c,v 1.1.2.11 2010/07/27 01:16:21 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Tsubai Masanari.  All rights reserved.
@@ -96,7 +96,7 @@ flash_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	switch (cmd) {
 #ifdef XIP
-	case DIOCGPHYSADDR:
+	case DIOCGPHYSSEG:
 		if (sc->sc_addr == 0)
 			error = EINVAL;
 		else

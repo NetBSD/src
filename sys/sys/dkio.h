@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.15.2.4 2010/05/28 09:13:37 uebayasi Exp $	*/
+/*	$NetBSD: dkio.h,v 1.15.2.5 2010/07/27 00:50:30 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -109,6 +109,6 @@
 #define	DIOCTUR		_IOR('d', 128, int)	/* test unit ready */
 
 		/* get physical address cookie if directly memory-mappable (XIP) */
-#define	DIOCGPHYSADDR	_IOR('d', 129, paddr_t)
+#define	DIOCGPHYSSEG	_IOR('d', 129, void *)
 
 #endif /* _SYS_DKIO_H_ */
