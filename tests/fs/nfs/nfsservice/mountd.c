@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.2 2010/07/26 19:24:35 pooka Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.3 2010/07/27 14:04:47 macallan Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.2 2010/07/26 19:24:35 pooka Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.3 2010/07/27 14:04:47 macallan Exp $");
 #endif
 #endif				/* not lint */
 
@@ -477,7 +477,7 @@ mntsrv(rqstp, transp)
 	struct sockaddr_in6 *sin6;
 	struct sockaddr_in *sin;
 	size_t fh_size;
-	int error;
+	int error = 0;
 
 	(void)sigemptyset(&sighup_mask);
 	(void)sigaddset(&sighup_mask, SIGHUP);
@@ -874,7 +874,7 @@ parse_directory(line, lineno, tgrp, got_nondir, cp, ep, fsp)
 	struct exportlist **ep;
 	struct statvfs *fsp;
 {
-	int error;
+	int error = 0;
 
 	if (!check_dirpath(line, lineno, cp))
 		return 0;
