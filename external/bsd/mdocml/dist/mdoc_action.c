@@ -1,6 +1,6 @@
-/*	$Vendor-Id: mdoc_action.c,v 1.75 2010/07/04 21:59:30 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_action.c,v 1.77 2010/07/26 13:45:49 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -903,6 +903,11 @@ static int
 post_dd(POST_ARGS)
 {
 	char		buf[DATESIZ];
+
+	if (NULL == n->child) {
+		m->meta.date = time(NULL);
+		return(post_prol(m, n));
+	}
 
 	if ( ! concat(m, buf, n->child, DATESIZ))
 		return(0);
