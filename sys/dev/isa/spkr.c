@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.30 2009/03/18 10:22:40 cegger Exp $	*/
+/*	$NetBSD: spkr.c,v 1.31 2010/07/27 14:34:34 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1990 Eric S. Raymond (esr@snark.thyrsus.com)
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.30 2009/03/18 10:22:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.31 2010/07/27 14:34:34 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,7 +447,7 @@ spkrwrite(dev_t dev, struct uio *uio, int flags)
     int n;
     int error;
 #ifdef SPKRDEBUG
-    printf("spkrwrite: entering with dev = %"PRIx64", count = %d\n",
+    printf("spkrwrite: entering with dev = %"PRIx64", count = %zu\n",
 		dev, uio->uio_resid);
 #endif /* SPKRDEBUG */
 
