@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_term.c,v 1.173 2010/07/07 15:04:54 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_term.c,v 1.179 2010/07/27 08:38:04 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -151,7 +151,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_bl_pre, termp_bl_post }, /* Bl */
 	{ NULL, NULL }, /* El */
 	{ termp_it_pre, termp_it_post }, /* It */
-	{ NULL, NULL }, /* Ad */ 
+	{ termp_under_pre, NULL }, /* Ad */ 
 	{ termp_an_pre, termp_an_post }, /* An */
 	{ termp_under_pre, NULL }, /* Ar */
 	{ termp_cd_pre, NULL }, /* Cd */
@@ -208,7 +208,7 @@ static	const struct termact termacts[MDOC_MAX] = {
 	{ termp_under_pre, NULL }, /* Em */ 
 	{ NULL, NULL }, /* Eo */
 	{ termp_xx_pre, NULL }, /* Fx */
-	{ termp_bold_pre, NULL }, /* Ms */ /* FIXME: convert to symbol? */
+	{ termp_bold_pre, NULL }, /* Ms */
 	{ NULL, NULL }, /* No */
 	{ termp_ns_pre, NULL }, /* Ns */
 	{ termp_xx_pre, NULL }, /* Nx */
@@ -1026,7 +1026,8 @@ termp_nm_pre(DECL_ARGS)
 	if (NULL == n->child && NULL == m->name)
 		return(0);
 
-	synopsis_pre(p, n);
+	if (MDOC_HEAD == n->type)
+		synopsis_pre(p, n->parent);
 
 	if (MDOC_HEAD == n->type && n->next->child) {
 		p->flags |= TERMP_NOSPACE | TERMP_NOBREAK | TERMP_HANG;
@@ -1620,8 +1621,7 @@ termp_fa_pre(DECL_ARGS)
 static int
 termp_bd_pre(DECL_ARGS)
 {
-	size_t			 tabwidth;
-	size_t			 rm, rmax;
+	size_t			 tabwidth, rm, rmax;
 	const struct mdoc_node	*nn;
 
 	if (MDOC_BLOCK == n->type) {
@@ -1653,12 +1653,9 @@ termp_bd_pre(DECL_ARGS)
 	p->rmargin = p->maxrmargin = TERM_MAXMARGIN;
 
 	for (nn = n->child; nn; nn = nn->next) {
-		p->flags |= TERMP_NOSPACE;
+		if (nn->prev && nn->prev->line < nn->line)
+			term_newln(p);
 		print_mdoc_node(p, pair, m, nn);
-		if (NULL == nn->prev ||
-		    nn->prev->line < nn->line ||
-		    NULL == nn->next)
-			term_flushln(p);
 	}
 
 	p->tabwidth = tabwidth;
@@ -1905,6 +1902,11 @@ termp_sp_pre(DECL_ARGS)
 		len = 0;
 		break;
 	default:
+		assert(n->parent);
+		if ((NULL == n->next || NULL == n->prev) &&
+				(MDOC_Ss == n->parent->tok ||
+				 MDOC_Sh == n->parent->tok))
+			return(0);
 		len = 1;
 		break;
 	}
@@ -2066,9 +2068,11 @@ termp_sm_pre(DECL_ARGS)
 {
 
 	assert(n->child && MDOC_TEXT == n->child->type);
-	if (0 == strcmp("on", n->child->string))
+	if (0 == strcmp("on", n->child->string)) {
+		if (p->col)
+			p->flags &= ~TERMP_NOSPACE;
 		p->flags &= ~TERMP_NONOSPACE;
-	else
+	} else
 		p->flags |= TERMP_NONOSPACE;
 
 	return(0);
