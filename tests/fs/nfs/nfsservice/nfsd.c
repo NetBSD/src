@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.1 2010/07/26 15:53:00 pooka Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.2 2010/07/27 14:04:47 macallan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.1 2010/07/26 15:53:00 pooka Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.2 2010/07/27 14:04:47 macallan Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ nfsd_main(argc, argv)
 	int nfsdcnt, on = 1, reregister, sock, tcpflag, tcpsock;
 	int tcp6sock, ip6flag;
 	int tp4cnt, tp4flag, tpipcnt, tpipflag, udpflag, ecode, s;
-	int error;
+	int error = 0;
 
 #define	DEFNFSDCNT	 4
 	nfsdcnt = DEFNFSDCNT;
