@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_cstate.c,v 1.10 2010/07/25 17:44:01 jruoho Exp $ */
+/* $NetBSD: acpi_cpu_cstate.c,v 1.11 2010/07/27 05:11:33 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.10 2010/07/25 17:44:01 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.11 2010/07/27 05:11:33 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -49,26 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_cpu_cstate.c,v 1.10 2010/07/25 17:44:01 jruoho 
 #define _COMPONENT	 ACPI_BUS_COMPONENT
 ACPI_MODULE_NAME	 ("acpi_cpu_cstate")
 
-/*
- * This is AML_RESOURCE_GENERIC_REGISTER,
- * included here separately for convenience.
- */
-struct acpicpu_reg {
-	uint8_t		 reg_desc;
-	uint16_t	 reg_reslen;
-	uint8_t		 reg_spaceid;
-	uint8_t		 reg_bitwidth;
-	uint8_t		 reg_bitoffset;
-	uint8_t		 reg_accesssize;
-	uint64_t	 reg_addr;
-} __packed;
-
 static void		 acpicpu_cstate_attach_print(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst(struct acpicpu_softc *);
 static ACPI_STATUS	 acpicpu_cstate_cst_add(struct acpicpu_softc *,
 						ACPI_OBJECT *);
 static void		 acpicpu_cstate_cst_bios(void);
-static ACPI_STATUS	 acpicpu_cstate_csd(ACPI_HANDLE, struct acpicpu_csd *);
+static ACPI_STATUS	 acpicpu_cstate_csd(ACPI_HANDLE, struct acpicpu_dep *);
 static void		 acpicpu_cstate_fadt(struct acpicpu_softc *);
 static void		 acpicpu_cstate_quirks(struct acpicpu_softc *);
 static int		 acpicpu_cstate_quirks_piix4(struct pci_attach_args *);
@@ -121,20 +107,20 @@ void
 acpicpu_cstate_attach_print(struct acpicpu_softc *sc)
 {
 	struct acpicpu_cstate *cs;
-	struct acpicpu_csd csd;
+	struct acpicpu_dep dep;
 	const char *method;
 	ACPI_STATUS rv;
 	int i;
 
-	(void)memset(&csd, 0, sizeof(struct acpicpu_csd));
+	(void)memset(&dep, 0, sizeof(struct acpicpu_dep));
 
-	rv = acpicpu_cstate_csd(sc->sc_node->ad_handle, &csd);
+	rv = acpicpu_cstate_csd(sc->sc_node->ad_handle, &dep);
 
 	if (ACPI_SUCCESS(rv)) {
 		aprint_debug_dev(sc->sc_dev, "C%u:  _CSD, "
 		    "domain 0x%02x / 0x%02x, type 0x%02x\n",
-		    csd.csd_index, csd.csd_domain,
-		    csd.csd_ncpu, csd.csd_coord);
+		    dep.dep_index, dep.dep_domain,
+		    dep.dep_ncpu, dep.dep_coord);
 	}
 
 	aprint_debug_dev(sc->sc_dev, "Cx: %5s",
@@ -409,6 +395,13 @@ acpicpu_cstate_cst_add(struct acpicpu_softc *sc, ACPI_OBJECT *elm)
 		goto out;
 	}
 
+	CTASSERT(sizeof(struct acpicpu_reg) == 15);
+
+	if (obj->Buffer.Length < sizeof(struct acpicpu_reg)) {
+		rv = AE_LIMIT;
+		goto out;
+	}
+
 	reg = (struct acpicpu_reg *)obj->Buffer.Pointer;
 
 	switch (reg->reg_spaceid) {
@@ -512,7 +505,7 @@ acpicpu_cstate_cst_bios(void)
 }
 
 static ACPI_STATUS
-acpicpu_cstate_csd(ACPI_HANDLE hdl, struct acpicpu_csd *csd)
+acpicpu_cstate_csd(ACPI_HANDLE hdl, struct acpicpu_dep *dep)
 {
 	ACPI_OBJECT *elm, *obj;
 	ACPI_BUFFER buf;
@@ -558,10 +551,10 @@ acpicpu_cstate_csd(ACPI_HANDLE hdl, struct acpicpu_csd *csd)
 		goto out;
 	}
 
-	csd->csd_domain = elm[2].Integer.Value;
-	csd->csd_coord  = elm[3].Integer.Value;
-	csd->csd_ncpu   = elm[4].Integer.Value;
-	csd->csd_index  = elm[5].Integer.Value;
+	dep->dep_domain = elm[2].Integer.Value;
+	dep->dep_coord  = elm[3].Integer.Value;
+	dep->dep_ncpu   = elm[4].Integer.Value;
+	dep->dep_index  = elm[5].Integer.Value;
 
 out:
 	if (buf.Pointer != NULL)
