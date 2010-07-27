@@ -1,6 +1,6 @@
-/*	$Vendor-Id: mdoc_validate.c,v 1.109 2010/07/04 21:59:30 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_validate.c,v 1.114 2010/07/26 13:45:49 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -32,7 +32,6 @@
 #include "libmandoc.h"
 
 /* FIXME: .Bl -diag can't have non-text children in HEAD. */
-/* TODO: ignoring Pp (it's superfluous in some invocations). */
 
 #define	PRE_ARGS  struct mdoc *mdoc, struct mdoc_node *n
 #define	POST_ARGS struct mdoc *mdoc
@@ -146,7 +145,7 @@ static	v_pre	 pres_ss[] = { pre_ss, NULL };
 
 const	struct valids mdoc_valids[MDOC_MAX] = {
 	{ NULL, NULL },				/* Ap */
-	{ pres_dd, posts_text },		/* Dd */
+	{ pres_dd, posts_wtext },		/* Dd */
 	{ pres_dt, posts_dt },			/* Dt */
 	{ pres_os, NULL },			/* Os */
 	{ pres_sh, posts_sh },			/* Sh */ 
@@ -454,26 +453,29 @@ check_argv(struct mdoc *m, struct mdoc_node *n, struct mdoc_argv *v)
 
 
 static int
-check_text(struct mdoc *mdoc, int line, int pos, char *p)
+check_text(struct mdoc *m, int ln, int pos, char *p)
 {
 	int		 c;
-
-	/* 
-	 * FIXME: we absolutely cannot let \b get through or it will
-	 * destroy some assumptions in terms of format.
-	 */
+	size_t		 sz;
 
 	for ( ; *p; p++, pos++) {
-		if ('\t' == *p) {
-			if ( ! (MDOC_LITERAL & mdoc->flags))
-				if ( ! mdoc_pmsg(mdoc, line, pos, MANDOCERR_BADCHAR))
-					return(0);
-		} else if ( ! isprint((u_char)*p) && ASCII_HYPH != *p)
-			if ( ! mdoc_pmsg(mdoc, line, pos, MANDOCERR_BADCHAR))
-				return(0);
+		sz = strcspn(p, "\t\\");
+		p += (int)sz;
 
-		if ('\\' != *p)
-			continue;
+		if ('\0' == *p)
+			break;
+
+		pos += (int)sz;
+
+		if ('\t' == *p) {
+			if (MDOC_LITERAL & m->flags)
+				continue;
+			if (mdoc_pmsg(m, ln, pos, MANDOCERR_BADTAB))
+				continue;
+			return(0);
+		}
+
+		/* Check the special character. */
 
 		c = mandoc_special(p);
 		if (c) {
@@ -482,15 +484,13 @@ check_text(struct mdoc *mdoc, int line, int pos, char *p)
 			continue;
 		}
 
-		c = mdoc_pmsg(mdoc, line, pos, MANDOCERR_BADESCAPE);
-		if ( ! (MDOC_IGN_ESCAPE & mdoc->pflags) && ! c)
+		c = mdoc_pmsg(m, ln, pos, MANDOCERR_BADESCAPE);
+		if ( ! (MDOC_IGN_ESCAPE & m->pflags) && ! c)
 			return(c);
 	}
 
 	return(1);
 }
-
-
 
 
 static int
@@ -508,7 +508,6 @@ check_parent(PRE_ARGS, enum mdoct tok, enum mdoc_type t)
 					mdoc_macronames[tok]);
 	return(0);
 }
-
 
 
 static int
@@ -625,6 +624,8 @@ pre_bl(PRE_ARGS)
 			if ( ! mdoc_nmsg(mdoc, n, MANDOCERR_IGNARGV))
 				return(0);
 			break;
+		default:
+			continue;
 		}
 
 		/* Check: duplicate auxiliary arguments. */
@@ -947,7 +948,7 @@ static int
 post_bf(POST_ARGS)
 {
 	struct mdoc_node *np;
-	int		  arg;
+	enum mdocargt	  arg;
 
 	/*
 	 * Unlike other data pointers, these are "housed" by the HEAD

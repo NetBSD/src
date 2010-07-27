@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_macro.c,v 1.48 2010/06/26 16:07:08 kristaps Exp $ */
+/*	$Vendor-Id: man_macro.c,v 1.49 2010/07/22 23:03:15 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -83,6 +83,7 @@ const	struct man_macro __man_macros[MAN_MAX] = {
 	{ in_line_eoln, 0 }, /* Vb */
 	{ in_line_eoln, 0 }, /* Ve */
 	{ in_line_eoln, 0 }, /* AT */
+	{ in_line_eoln, 0 }, /* in */
 };
 
 const	struct man_macro * const man_macros = __man_macros;

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: st.in,v 1.13 2010/06/19 20:46:28 kristaps Exp $ */
+/*	$Vendor-Id: st.in,v 1.14 2010/07/19 15:43:10 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,6 +22,8 @@
  * the formatted output string.
  *
  * Be sure to escape strings.
+ *
+ * REMEMBER TO ADD NEW STANDARDS TO MDOC.7!
  */
 
 LINE("-p1003.1-88",	"IEEE Std 1003.1-1988 (\\(lqPOSIX.1\\(rq)")

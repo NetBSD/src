@@ -1,4 +1,4 @@
-/*	$Vendor-Id: main.c,v 1.98 2010/07/07 15:04:54 kristaps Exp $ */
+/*	$Vendor-Id: main.c,v 1.100 2010/07/25 11:44:31 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/stat.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -67,7 +68,8 @@ enum	outt {
 	OUTT_HTML,
 	OUTT_XHTML,
 	OUTT_LINT,
-	OUTT_PS
+	OUTT_PS,
+	OUTT_PDF
 };
 
 struct	curparse {
@@ -110,6 +112,7 @@ static	const char * const	mandocerrs[MANDOCERR_MAX] = {
 	"list type must come first",
 	"bad standard",
 	"bad library",
+	"tab in non-literal context",
 	"bad escape sequence",
 	"unterminated quoted string",
 	"argument requires the width argument",
@@ -491,6 +494,26 @@ fdesc(struct curparse *curp)
 				++lnn;
 				break;
 			}
+
+			/* 
+			 * Warn about bogus characters.  If you're using
+			 * non-ASCII encoding, you're screwing your
+			 * readers.  Since I'd rather this not happen,
+			 * I'll be helpful and drop these characters so
+			 * we don't display gibberish.  Note to manual
+			 * writers: use special characters.
+			 */
+
+			if ( ! isgraph((u_char)blk.buf[i]) &&
+					! isblank((u_char)blk.buf[i])) {
+				if ( ! mmsg(MANDOCERR_BADCHAR, curp, 
+						lnn_start, pos, 
+						"ignoring byte"))
+					goto bailout;
+				i++;
+				continue;
+			}
+
 			/* Trailing backslash is like a plain character. */
 			if ('\\' != blk.buf[i] || i + 1 == (int)blk.sz) {
 				if (pos >= (int)ln.sz)
@@ -608,9 +631,13 @@ fdesc(struct curparse *curp)
 			curp->outdata = ascii_alloc(curp->outopts);
 			curp->outfree = ascii_free;
 			break;
+		case (OUTT_PDF):
+			curp->outdata = pdf_alloc(curp->outopts);
+			curp->outfree = pspdf_free;
+			break;
 		case (OUTT_PS):
 			curp->outdata = ps_alloc(curp->outopts);
-			curp->outfree = ps_free;
+			curp->outfree = pspdf_free;
 			break;
 		default:
 			break;
@@ -628,6 +655,8 @@ fdesc(struct curparse *curp)
 			curp->outman = tree_man;
 			curp->outmdoc = tree_mdoc;
 			break;
+		case (OUTT_PDF):
+			/* FALLTHROUGH */
 		case (OUTT_ASCII):
 			/* FALLTHROUGH */
 		case (OUTT_PS):
@@ -762,6 +791,8 @@ toptions(struct curparse *curp, char *arg)
 		curp->outtype = OUTT_XHTML;
 	else if (0 == strcmp(arg, "ps"))
 		curp->outtype = OUTT_PS;
+	else if (0 == strcmp(arg, "pdf"))
+		curp->outtype = OUTT_PDF;
 	else {
 		fprintf(stderr, "%s: Bad argument\n", arg);
 		return(0);

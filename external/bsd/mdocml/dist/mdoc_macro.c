@@ -1,4 +1,4 @@
-/*	$Vendor-Id: mdoc_macro.c,v 1.92 2010/07/04 22:04:04 schwarze Exp $ */
+/*	$Vendor-Id: mdoc_macro.c,v 1.93 2010/07/18 17:00:26 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -610,7 +610,7 @@ append_delims(struct mdoc *m, int line, int *pos, char *buf)
 		 * knowing which symbols break this behaviour, for
 		 * example, `.  ;' shouldn't propogate the double-space.
 		 */
-		if (mandoc_eos(p, strlen(p)))
+		if (mandoc_eos(p, strlen(p), 0))
 			m->last->flags |= MDOC_EOS;
 	}
 
@@ -1266,7 +1266,7 @@ blk_part_imp(MACRO_PROT_ARGS)
 	 */
 
 	if (n && MDOC_TEXT == n->type && n->string)
-		if (mandoc_eos(n->string, strlen(n->string)))
+		if (mandoc_eos(n->string, strlen(n->string), 1))
 			n->flags |= MDOC_EOS;
 
 	/* Up-propogate the end-of-space flag. */

@@ -1,6 +1,6 @@
-/*	$Vendor-Id: mdoc_html.c,v 1.95 2010/07/07 15:04:54 kristaps Exp $ */
+/*	$Vendor-Id: mdoc_html.c,v 1.100 2010/07/27 08:38:04 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -125,6 +125,7 @@ static	int		  mdoc_pq_pre(MDOC_ARGS);
 static	int		  mdoc_rs_pre(MDOC_ARGS);
 static	int		  mdoc_rv_pre(MDOC_ARGS);
 static	int		  mdoc_sh_pre(MDOC_ARGS);
+static	int		  mdoc_sm_pre(MDOC_ARGS);
 static	int		  mdoc_sp_pre(MDOC_ARGS);
 static	void		  mdoc_sq_post(MDOC_ARGS);
 static	int		  mdoc_sq_pre(MDOC_ARGS);
@@ -209,7 +210,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{mdoc_em_pre, NULL}, /* Em */ 
 	{NULL, NULL}, /* Eo */
 	{mdoc_xx_pre, NULL}, /* Fx */
-	{mdoc_ms_pre, NULL}, /* Ms */ /* FIXME: convert to symbol? */
+	{mdoc_ms_pre, NULL}, /* Ms */
 	{NULL, NULL}, /* No */
 	{mdoc_ns_pre, NULL}, /* Ns */
 	{mdoc_xx_pre, NULL}, /* Nx */
@@ -227,7 +228,7 @@ static	const struct htmlmdoc mdocs[MDOC_MAX] = {
 	{NULL, NULL}, /* Sc */
 	{mdoc_sq_pre, mdoc_sq_post}, /* So */
 	{mdoc_sq_pre, mdoc_sq_post}, /* Sq */
-	{NULL, NULL}, /* Sm */ /* FIXME - no idea. */
+	{mdoc_sm_pre, NULL}, /* Sm */ 
 	{mdoc_sx_pre, NULL}, /* Sx */
 	{mdoc_sy_pre, NULL}, /* Sy */
 	{NULL, NULL}, /* Tn */
@@ -1456,14 +1457,11 @@ mdoc_bd_pre(MDOC_ARGS)
 	print_otag(h, TAG_DIV, 2, tag);
 
 	for (nn = n->child; nn; nn = nn->next) {
-		h->flags |= HTML_NOSPACE;
+		if (nn->prev && nn->prev->line < nn->line) {
+			print_text(h, "\n");
+			h->flags |= HTML_NOSPACE;
+		}
 		print_mdoc_node(m, nn, h);
-		if (NULL == nn->next)
-			continue;
-		if (nn->prev && nn->prev->line < nn->line)
-			print_text(h, "\n");
-		else if (NULL == nn->prev)
-			print_text(h, "\n");
 	}
 
 	return(0);
@@ -1722,6 +1720,23 @@ mdoc_fn_pre(MDOC_ARGS)
 
 /* ARGSUSED */
 static int
+mdoc_sm_pre(MDOC_ARGS)
+{
+
+	assert(n->child && MDOC_TEXT == n->child->type);
+	if (0 == strcmp("on", n->child->string)) {
+		/* FIXME: no p->col to check... */
+		h->flags &= ~HTML_NOSPACE;
+		h->flags &= ~HTML_NONOSPACE;
+	} else
+		h->flags |= HTML_NONOSPACE;
+
+	return(0);
+}
+
+
+/* ARGSUSED */
+static int
 mdoc_sp_pre(MDOC_ARGS)
 {
 	int		 len;
@@ -1737,6 +1752,11 @@ mdoc_sp_pre(MDOC_ARGS)
 		len = 0;
 		break;
 	default:
+		assert(n->parent);
+		if ((NULL == n->next || NULL == n->prev) &&
+				(MDOC_Ss == n->parent->tok ||
+				 MDOC_Sh == n->parent->tok))
+			return(0);
 		len = 1;
 		break;
 	}

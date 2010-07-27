@@ -1,4 +1,4 @@
-/*	$Vendor-Id: out.h,v 1.12 2010/06/25 19:50:23 kristaps Exp $ */
+/*	$Vendor-Id: out.h,v 1.14 2010/07/21 20:35:03 kristaps Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -37,13 +37,13 @@ enum	roffscale {
 
 enum	roffdeco {
 	DECO_NONE,
-	DECO_SPECIAL,
-	DECO_RESERVED,
+	DECO_SPECIAL, /* special character */
+	DECO_SSPECIAL, /* single-char special */
+	DECO_RESERVED, /* reserved word */
 	DECO_BOLD,
 	DECO_ITALIC,
 	DECO_ROMAN,
 	DECO_PREVIOUS,
-	DECO_SIZE,
 	DECO_NOSPACE,
 	DECO_FONT, /* font */
 	DECO_FFONT, /* font family */

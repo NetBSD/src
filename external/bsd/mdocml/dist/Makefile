@@ -1,4 +1,4 @@
-.SUFFIXES:	.html .xml .sgml .1 .3 .7 .md5 .tar.gz .1.txt .3.txt .7.txt .1.sgml .3.sgml .7.sgml .h .h.html .1.ps .3.ps .7.ps
+.SUFFIXES:	.html .xml .sgml .1 .3 .7 .md5 .tar.gz .1.txt .3.txt .7.txt .1.sgml .3.sgml .7.sgml .h .h.html .1.ps .3.ps .7.ps .1.pdf .3.pdf .7.pdf
 
 PREFIX		= /usr/local
 BINDIR		= $(PREFIX)/bin
@@ -12,8 +12,8 @@ INSTALL_DATA	= $(INSTALL) -m 0444
 INSTALL_LIB	= $(INSTALL) -m 0644
 INSTALL_MAN	= $(INSTALL_DATA)
 
-VERSION	   = 1.10.4
-VDATE	   = 12 July 2010
+VERSION	   = 1.10.5
+VDATE	   = 27 July 2010
 
 VFLAGS	   = -DVERSION="\"$(VERSION)\""
 WFLAGS     = -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings
@@ -24,12 +24,6 @@ CFLAGS    += -g $(WFLAGS) $(VFLAGS) -DHAVE_CONFIG_H
 # CFLAGS += -DOSNAME="\"OpenBSD 4.5\""
 
 LINTFLAGS += $(VFLAGS)
-
-MANDOCFLAGS = -Wall -fstrict
-
-MANDOCHTML = -Thtml -Ostyle=style.css,man=%N.%S.html,includes=%I.html
-
-MANDOCPS   = -Tps
 
 ROFFLNS    = roff.ln
 
@@ -110,6 +104,9 @@ HTMLS	   = ChangeLog.html index.html man.h.html mdoc.h.html \
 PSS	   = mandoc.1.ps mdoc.3.ps man.3.ps mdoc.7.ps man.7.ps \
 	     mandoc_char.7.ps roff.7.ps roff.3.ps
 
+PDFS	   = mandoc.1.pdf mdoc.3.pdf man.3.pdf mdoc.7.pdf man.7.pdf \
+	     mandoc_char.7.pdf roff.7.pdf roff.3.pdf
+
 XSLS	   = ChangeLog.xsl
 
 TEXTS	   = mandoc.1.txt mdoc.3.txt man.3.txt mdoc.7.txt man.7.txt \
@@ -137,7 +134,7 @@ CONFIGS	   = config.h.pre config.h.post
 
 DOCLEAN	   = $(BINS) $(LNS) $(LLNS) $(LIBS) $(OBJS) $(HTMLS) \
 	     $(TARGZS) tags $(MD5S) $(XMLS) $(TEXTS) $(GSGMLS) \
-	     config.h config.log $(PSS)
+	     config.h config.log $(PSS) $(PDFS)
 
 DOINSTALL  = $(SRCS) $(HEADS) Makefile $(MANS) $(SGMLS) $(STATICS) \
 	     $(DATAS) $(XSLS) $(EXAMPLES) $(TESTS) $(CONFIGS)
@@ -151,12 +148,14 @@ clean:
 
 dist:	mdocml-$(VERSION).tar.gz
 
-www:	all $(GSGMLS) $(HTMLS) $(TEXTS) $(MD5S) $(TARGZS) $(PSS)
+www:	all $(GSGMLS) $(HTMLS) $(TEXTS) $(MD5S) $(TARGZS) $(PSS) $(PDFS)
 
 ps:	$(PSS)
 
+pdf:	$(PDFS)
+
 installwww: www
-	$(INSTALL_DATA) $(HTMLS) $(PSS) $(TEXTS) $(STATICS) $(DESTDIR)$(PREFIX)/
+	$(INSTALL_DATA) $(HTMLS) $(PSS) $(PDFS) $(TEXTS) $(STATICS) $(DESTDIR)$(PREFIX)/
 	$(INSTALL_DATA) mdocml-$(VERSION).tar.gz $(DESTDIR)$(PREFIX)/snapshots/
 	$(INSTALL_DATA) mdocml-$(VERSION).md5 $(DESTDIR)$(PREFIX)/snapshots/
 	$(INSTALL_DATA) mdocml-$(VERSION).tar.gz $(DESTDIR)$(PREFIX)/snapshots/mdocml.tar.gz
@@ -299,13 +298,16 @@ mandoc: $(MAINOBJS) libroff.a libmdoc.a libman.a libmandoc.a
 	sed -e "s!@VERSION@!$(VERSION)!" -e "s!@VDATE@!$(VDATE)!" $< > $@
 
 .1.1.txt .3.3.txt .7.7.txt:
-	./mandoc $(MANDOCFLAGS) $< | col -b > $@
+	./mandoc -Tascii -Wall,error -fstrict $< | col -b > $@
 
 .1.1.sgml .3.3.sgml .7.7.sgml:
-	./mandoc $(MANDOCFLAGS) $(MANDOCHTML) $< > $@
+	./mandoc -Thtml -Wall,error -fstrict -Ostyle=style.css,man=%N.%S.html,includes=%I.html $< > $@
 
 .1.1.ps .3.3.ps .7.7.ps:
-	./mandoc $(MANDOCFLAGS) $(MANDOCPS) $< > $@
+	./mandoc -Tps -Wall,error -fstrict $< > $@
+
+.1.1.pdf .3.3.pdf .7.7.pdf:
+	./mandoc -Tpdf -Wall,error -fstrict $< > $@
 
 .tar.gz.md5:
 	md5 $< > $@
