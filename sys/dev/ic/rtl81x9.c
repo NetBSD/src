@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.90 2010/04/05 07:19:36 joerg Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.91 2010/07/27 21:02:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.90 2010/04/05 07:19:36 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.91 2010/07/27 21:02:00 jakllsch Exp $");
 
 #include "rnd.h"
 
@@ -848,6 +848,9 @@ rtk_detach(struct rtk_softc *sc)
 	bus_dmamem_unmap(sc->sc_dmat, sc->rtk_rx_buf,
 	    RTK_RXBUFLEN + 16);
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_dmaseg, sc->sc_dmanseg);
+
+	/* we don't want to run again */
+	sc->sc_flags &= ~RTK_ATTACHED;
 
 	return 0;
 }

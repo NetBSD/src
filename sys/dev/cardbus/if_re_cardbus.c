@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.25 2010/03/18 20:51:42 dyoung Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.26 2010/07/27 21:02:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.25 2010/03/18 20:51:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.26 2010/07/27 21:02:00 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,6 @@ struct re_cardbus_softc {
 	pcireg_t sc_csr;
 	int sc_bar_reg;
 	pcireg_t sc_bar_val;
-	bus_size_t sc_mapsize;
 	cardbus_intr_line_t sc_intrline;
 };
 
@@ -170,14 +169,14 @@ re_cardbus_attach(device_t parent, device_t self, void *aux)
 	csc->sc_csr = PCI_COMMAND_MASTER_ENABLE;
 #ifdef RTK_USEIOSPACE
 	if (Cardbus_mapreg_map(ct, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &csc->sc_mapsize) == 0) {
+	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &sc->rtk_bsize) == 0) {
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 		csc->sc_bar_reg = RTK_PCI_LOIO;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_IO;
 	}
 #else
 	if (Cardbus_mapreg_map(ct, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &csc->sc_mapsize) == 0) {
+	    &sc->rtk_btag, &sc->rtk_bhandle, &adr, &sc->rtk_bsize) == 0) {
 		csc->sc_csr |= PCI_COMMAND_MEM_ENABLE;
 		csc->sc_bar_reg = RTK_PCI_LOMEM;
 		csc->sc_bar_val = adr | PCI_MAPREG_TYPE_MEM;
@@ -231,7 +230,7 @@ re_cardbus_detach(device_t self, int flags)
 	 */
 	if (csc->sc_bar_reg != 0)
 		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg,
-		    sc->rtk_btag, sc->rtk_bhandle, csc->sc_mapsize);
+		    sc->rtk_btag, sc->rtk_bhandle, sc->rtk_bsize);
 
 	return 0;
 }
