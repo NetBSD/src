@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.158 2010/07/21 17:52:13 hannken Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.159 2010/07/27 05:15:56 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.158 2010/07/21 17:52:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.159 2010/07/27 05:15:56 jakllsch Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -682,7 +682,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	ump = NULL;
 
 #ifdef DEBUG_EXT2
-	printf("ext2 sb size: %d\n", sizeof(struct ext2fs));
+	printf("ext2 sb size: %zu\n", sizeof(struct ext2fs));
 #endif
 	error = bread(devvp, SBLOCK, SBSIZE, cred, 0, &bp);
 	if (error)
@@ -704,7 +704,7 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 	m_fs->e2fs_ronly = ronly;
 
 #ifdef DEBUG_EXT2
-	printf("ext2 ino size %d\n", EXT2_DINODE_SIZE(m_fs));
+	printf("ext2 ino size %zu\n", EXT2_DINODE_SIZE(m_fs));
 #endif
 	if (ronly == 0) {
 		if (m_fs->e2fs.e2fs_state == E2FS_ISCLEAN)
