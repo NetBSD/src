@@ -1,6 +1,6 @@
-/*	$Vendor-Id: term.h,v 1.73 2010/07/04 19:42:25 kristaps Exp $ */
+/*	$Vendor-Id: term.h,v 1.76 2010/07/25 22:15:07 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,8 @@ enum	termenc {
 
 enum	termtype {
 	TERMTYPE_CHAR,
-	TERMTYPE_PS
+	TERMTYPE_PS,
+	TERMTYPE_PDF
 };
 
 enum	termfont {
@@ -63,6 +64,11 @@ struct	termp_ps {
 	size_t		  left;		/* body left (AFM units) */
 	size_t		  header;	/* header pos (AFM units) */
 	size_t		  footer;	/* footer pos (AFM units) */
+	size_t		  pdfbytes; 	/* current output byte */
+	size_t		  pdflastpg;	/* byte of last page mark */
+	size_t		  pdfbody;	/* start of body object */
+	size_t		 *pdfobjs;	/* table of object offsets */
+	size_t		  pdfobjsz;	/* size of pdfobjs */
 };
 
 struct	termp {

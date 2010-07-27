@@ -1,6 +1,6 @@
-/*	$Vendor-Id: man_html.c,v 1.41 2010/07/07 15:04:54 kristaps Exp $ */
+/*	$Vendor-Id: man_html.c,v 1.45 2010/07/23 12:27:28 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,7 +40,13 @@
 
 #define	MAN_ARGS	  const struct man_meta *m, \
 			  const struct man_node *n, \
+			  struct mhtml *mh, \
 			  struct html *h
+
+struct	mhtml {
+	int		  fl;
+#define	MANH_LITERAL	 (1 << 0) /* literal context */
+};
 
 struct	htmlman {
 	int		(*pre)(MAN_ARGS);
@@ -58,6 +64,8 @@ static	int		  a2width(const struct man_node *,
 static	int		  man_alt_pre(MAN_ARGS);
 static	int		  man_br_pre(MAN_ARGS);
 static	int		  man_ign_pre(MAN_ARGS);
+static	int		  man_in_pre(MAN_ARGS);
+static	int		  man_literal_pre(MAN_ARGS);
 static	void		  man_root_post(MAN_ARGS);
 static	int		  man_root_pre(MAN_ARGS);
 static	int		  man_B_pre(MAN_ARGS);
@@ -96,8 +104,8 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ NULL, NULL }, /* na */
 	{ NULL, NULL }, /* i */
 	{ man_br_pre, NULL }, /* sp */
-	{ NULL, NULL }, /* nf */
-	{ NULL, NULL }, /* fi */
+	{ man_literal_pre, NULL }, /* nf */
+	{ man_literal_pre, NULL }, /* fi */
 	{ NULL, NULL }, /* r */
 	{ NULL, NULL }, /* RE */
 	{ man_RS_pre, NULL }, /* RS */
@@ -105,9 +113,10 @@ static	const struct htmlman mans[MAN_MAX] = {
 	{ man_ign_pre, NULL }, /* UC */
 	{ man_ign_pre, NULL }, /* PD */
 	{ man_br_pre, NULL }, /* Sp */
-	{ man_ign_pre, NULL }, /* Vb */
-	{ NULL, NULL }, /* Ve */
+	{ man_literal_pre, NULL }, /* Vb */
+	{ man_literal_pre, NULL }, /* Ve */
 	{ man_ign_pre, NULL }, /* AT */
+	{ man_in_pre, NULL }, /* in */
 };
 
 
@@ -116,13 +125,16 @@ html_man(void *arg, const struct man *m)
 {
 	struct html	*h;
 	struct tag	*t;
+	struct mhtml	 mh;
 
 	h = (struct html *)arg;
 
 	print_gen_decls(h);
 
+	memset(&mh, 0, sizeof(struct mhtml));
+
 	t = print_otag(h, TAG_HTML, 0, NULL);
-	print_man(man_meta(m), man_node(m), h);
+	print_man(man_meta(m), man_node(m), &mh, h);
 	print_tagq(h, t);
 
 	printf("\n");
@@ -137,7 +149,7 @@ print_man(MAN_ARGS)
 
 	t = print_otag(h, TAG_HEAD, 0, NULL);
 
-	print_man_head(m, n, h);
+	print_man_head(m, n, mh, h);
 	print_tagq(h, t);
 	t = print_otag(h, TAG_BODY, 0, NULL);
 
@@ -145,7 +157,7 @@ print_man(MAN_ARGS)
 	tag.val = "body";
 	print_otag(h, TAG_DIV, 1, &tag);
 
-	print_man_nodelist(m, n, h);
+	print_man_nodelist(m, n, mh, h);
 
 	print_tagq(h, t);
 }
@@ -169,9 +181,9 @@ static void
 print_man_nodelist(MAN_ARGS)
 {
 
-	print_man_node(m, n, h);
+	print_man_node(m, n, mh, h);
 	if (n->next)
-		print_man_nodelist(m, n->next, h);
+		print_man_nodelist(m, n->next, mh, h);
 }
 
 
@@ -194,10 +206,14 @@ print_man_node(MAN_ARGS)
 
 	switch (n->type) {
 	case (MAN_ROOT):
-		child = man_root_pre(m, n, h);
+		child = man_root_pre(m, n, mh, h);
 		break;
 	case (MAN_TEXT):
 		print_text(h, n->string);
+
+		if (MANH_LITERAL & mh->fl)
+			print_otag(h, TAG_BR, 0, NULL);
+
 		return;
 	default:
 		/* 
@@ -212,12 +228,12 @@ print_man_node(MAN_ARGS)
 			t = h->tags.head;
 		}
 		if (mans[n->tok].pre)
-			child = (*mans[n->tok].pre)(m, n, h);
+			child = (*mans[n->tok].pre)(m, n, mh, h);
 		break;
 	}
 
 	if (child && n->child)
-		print_man_nodelist(m, n->child, h);
+		print_man_nodelist(m, n->child, mh, h);
 
 	/* This will automatically close out any font scope. */
 	print_stagq(h, t);
@@ -226,13 +242,13 @@ print_man_node(MAN_ARGS)
 
 	switch (n->type) {
 	case (MAN_ROOT):
-		man_root_post(m, n, h);
+		man_root_post(m, n, mh, h);
 		break;
 	case (MAN_TEXT):
 		break;
 	default:
 		if (mans[n->tok].post)
-			(*mans[n->tok].post)(m, n, h);
+			(*mans[n->tok].post)(m, n, mh, h);
 		break;
 	}
 }
@@ -453,7 +469,7 @@ man_alt_pre(MAN_ARGS)
 		 * closed out with the scope.
 		 */
 		t = print_ofont(h, fp);
-		print_man_node(m, nn, h);
+		print_man_node(m, nn, mh, h);
 		print_tagq(h, t);
 	}
 
@@ -647,10 +663,10 @@ man_IP_pre(MAN_ARGS)
 
 	if (MAN_IP == n->tok)
 		for (nn = n->child; nn->next; nn = nn->next)
-			print_man_node(m, nn, h);
+			print_man_node(m, nn, mh, h);
 	if (MAN_TP == n->tok)
 		for (nn = n->child->next; nn; nn = nn->next)
-			print_man_node(m, nn, h);
+			print_man_node(m, nn, mh, h);
 
 	return(0);
 }
@@ -712,6 +728,37 @@ man_I_pre(MAN_ARGS)
 	
 	print_ofont(h, HTMLFONT_ITALIC);
 	return(1);
+}
+
+
+/* ARGSUSED */
+static int
+man_literal_pre(MAN_ARGS)
+{
+
+	switch (n->tok) {
+	case (MAN_nf):
+		/* FALLTHROUGH */
+	case (MAN_Vb):
+		print_otag(h, TAG_BR, 0, NULL);
+		mh->fl |= MANH_LITERAL;
+		return(MAN_Vb != n->tok);
+	default:
+		mh->fl &= ~MANH_LITERAL;
+		break;
+	}
+
+	return(1);
+}
+
+
+/* ARGSUSED */
+static int
+man_in_pre(MAN_ARGS)
+{
+
+	print_otag(h, TAG_BR, 0, NULL);
+	return(0);
 }
 
 
