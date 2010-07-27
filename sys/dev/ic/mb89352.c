@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.51 2009/11/23 02:13:46 rmind Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.52 2010/07/27 14:34:34 jakllsch Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.51 2009/11/23 02:13:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.52 2010/07/27 14:34:34 jakllsch Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -1954,7 +1954,7 @@ dophase:
 	case PH_DATAOUT:
 		if (sc->sc_state != SPC_CONNECTED)
 			break;
-		SPC_MISC(("dataout dleft=%d  ", sc->sc_dleft));
+		SPC_MISC(("dataout dleft=%zu  ", sc->sc_dleft));
 		if (sc->sc_dma_start != NULL &&
 		    sc->sc_dleft > SPC_MIN_DMA_LEN) {
 			(*sc->sc_dma_start)(sc, sc->sc_dp, sc->sc_dleft, 0);

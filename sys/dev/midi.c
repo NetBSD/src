@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.71 2009/12/06 22:42:48 dyoung Exp $	*/
+/*	$NetBSD: midi.c,v 1.72 2010/07/27 14:34:33 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.71 2009/12/06 22:42:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.72 2010/07/27 14:34:33 jakllsch Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1512,7 +1512,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 #ifdef MIDI_DEBUG
 		if (error)
 		        printf("midi_write:(1) uiomove failed %d; "
-			       "xfrcount=%d inp=%p\n",
+			       "xfrcount=%zu inp=%p\n",
 			       error, xfrcount, inp);
 #endif
 		if ( error )

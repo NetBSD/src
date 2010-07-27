@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.77 2009/11/01 21:08:32 rmind Exp $	*/
+/*	$NetBSD: rnd.c,v 1.78 2010/07/27 14:34:33 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.77 2009/11/01 21:08:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.78 2010/07/27 14:34:33 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -370,7 +370,7 @@ rndread(dev_t dev, struct uio *uio, int ioflag)
 	int ret;
 
 	DPRINTF(RND_DEBUG_READ,
-	    ("Random:  Read of %d requested, flags 0x%08x\n",
+	    ("Random:  Read of %zu requested, flags 0x%08x\n",
 	    uio->uio_resid, ioflag));
 
 	if (uio->uio_resid == 0)
@@ -459,7 +459,7 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 	int n, ret;
 
 	DPRINTF(RND_DEBUG_WRITE,
-	    ("Random: Write of %d requested\n", uio->uio_resid));
+	    ("Random: Write of %zu requested\n", uio->uio_resid));
 
 	if (uio->uio_resid == 0)
 		return (0);
