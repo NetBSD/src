@@ -1,4 +1,4 @@
-/*	$Vendor-Id: roff.c,v 1.94 2010/07/07 15:04:54 kristaps Exp $ */
+/*	$Vendor-Id: roff.c,v 1.97 2010/07/27 19:56:50 kristaps Exp $ */
 /*
  * Copyright (c) 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -132,8 +132,8 @@ static	const char	*roff_getstrn(const struct roff *,
 				const char *, size_t);
 static	enum rofferr	 roff_line(ROFF_ARGS);
 static	enum rofferr	 roff_nr(ROFF_ARGS);
-static	int		 roff_res(struct roff *, int, 
-				char **, size_t *, int, int *);
+static	int		 roff_res(struct roff *, 
+				char **, size_t *, int);
 static	void		 roff_setstr(struct roff *,
 				const char *, const char *);
 
@@ -332,14 +332,14 @@ roff_alloc(struct regset *regs, const mandocmsg msg, void *data)
  * is processed. 
  */
 static int
-roff_res(struct roff *r, int ln, char **bufp,
-		size_t *szp, int pos, int *offs)
+roff_res(struct roff *r, char **bufp, size_t *szp, int pos)
 {
 	const char	*cp, *cpp, *st, *res;
 	int		 i, maxl;
 	size_t		 nsz;
 	char		*n;
 
+	/* LINTED */
 	for (cp = &(*bufp)[pos]; (cpp = strstr(cp, "\\*")); cp++) {
 		cp = cpp + 2;
 		switch (*cp) {
@@ -406,7 +406,7 @@ roff_parseln(struct roff *r, int ln, char **bufp,
 	 * words to fill in.
 	 */
 
-	if (r->first_string && ! roff_res(r, ln, bufp, szp, pos, offs))
+	if (r->first_string && ! roff_res(r, bufp, szp, pos))
 		return(ROFF_RERUN);
 
 	/*
@@ -969,30 +969,40 @@ roff_cond(ROFF_ARGS)
 static enum rofferr
 roff_ds(ROFF_ARGS)
 {
-	char *name, *string, *end;
+	char		*name, *string;
+
+	/*
+	 * A symbol is named by the first word following the macro
+	 * invocation up to a space.  Its value is anything after the
+	 * name's trailing whitespace and optional double-quote.  Thus,
+	 *
+	 *  [.ds foo "bar  "     ]
+	 *
+	 * will have `bar  "     ' as its value.
+	 */
 
 	name = *bufp + pos;
 	if ('\0' == *name)
 		return(ROFF_IGN);
 
 	string = name;
+	/* Read until end of name. */
 	while (*string && ' ' != *string)
 		string++;
+
+	/* Nil-terminate name. */
 	if (*string)
 		*(string++) = '\0';
-	if (*string && '"' == *string)
-		string++;
+	
+	/* Read past spaces. */
 	while (*string && ' ' == *string)
 		string++;
-	end = string;
-	while (*end)
-		end++;
-	if (string < end) {
-		end--;
-		if (*end == '"')
-			*end = '\0';
-	}
 
+	/* Read passed initial double-quote. */
+	if (*string && '"' == *string)
+		string++;
+
+	/* The rest is the value. */
 	roff_setstr(r, name, string);
 	return(ROFF_IGN);
 }
@@ -1060,6 +1070,7 @@ roff_setstr(struct roff *r, const char *name, const char *string)
 	} else
 		free(n->string);
 
+	ROFF_DEBUG("roff: new symbol: [%s] = [%s]\n", name, string);
 	n->string = string ? strdup(string) : NULL;
 }
 
@@ -1070,7 +1081,7 @@ roff_getstrn(const struct roff *r, const char *name, size_t len)
 	const struct roffstr *n;
 
 	n = r->first_string;
-	while (n && (strncmp(name, n->name, len) || '\0' != n->name[len]))
+	while (n && (strncmp(name, n->name, len) || '\0' != n->name[(int)len]))
 		n = n->next;
 
 	return(n ? n->string : NULL);

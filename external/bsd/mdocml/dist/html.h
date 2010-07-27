@@ -1,6 +1,6 @@
-/*	$Vendor-Id: html.h,v 1.25 2010/07/06 12:37:17 kristaps Exp $ */
+/*	$Vendor-Id: html.h,v 1.27 2010/07/23 00:08:57 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -113,6 +113,7 @@ struct	html {
 #define	HTML_IGNDELIM	 (1 << 1)
 #define	HTML_KEEP	 (1 << 2)
 #define	HTML_PREKEEP	 (1 << 3)
+#define	HTML_NONOSPACE	 (1 << 4)
 	struct tagq	  tags;
 	struct ordq	  ords;
 	void		 *symtab;

@@ -1,4 +1,4 @@
-/*	$Vendor-Id: term.c,v 1.160 2010/07/07 15:04:54 kristaps Exp $ */
+/*	$Vendor-Id: term.c,v 1.166 2010/07/26 22:26:05 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010 Ingo Schwarze <schwarze@openbsd.org>
@@ -34,9 +34,9 @@
 #include "term.h"
 #include "main.h"
 
-static	void		  spec(struct termp *, const char *, size_t);
+static	void		  spec(struct termp *, enum roffdeco,
+				const char *, size_t);
 static	void		  res(struct termp *, const char *, size_t);
-static	void		  buffera(struct termp *, const char *, size_t);
 static	void		  bufferc(struct termp *, char);
 static	void		  adjbuf(struct termp *p, size_t);
 static	void		  encode(struct termp *, const char *, size_t);
@@ -241,10 +241,10 @@ term_flushln(struct termp *p)
 			if ('\t' == p->buf[i])
 				break;
 			if (' ' == p->buf[i]) {
-				while (' ' == p->buf[i]) {
-					vbl += (*p->width)(p, p->buf[i]);
+				j = i;
+				while (' ' == p->buf[i])
 					i++;
-				}
+				vbl += (i - j) * (*p->width)(p, ' ');
 				break;
 			}
 			if (ASCII_NBRSP == p->buf[i]) {
@@ -360,14 +360,16 @@ term_vspace(struct termp *p)
 
 
 static void
-spec(struct termp *p, const char *word, size_t len)
+spec(struct termp *p, enum roffdeco d, const char *word, size_t len)
 {
 	const char	*rhs;
 	size_t		 sz;
 
-	rhs = chars_a2ascii(p->symtab, word, len, &sz);
+	rhs = chars_spec2str(p->symtab, word, len, &sz);
 	if (rhs) 
 		encode(p, rhs, sz);
+	else if (DECO_SSPECIAL == d)
+		encode(p, word, len);
 }
 
 
@@ -377,7 +379,7 @@ res(struct termp *p, const char *word, size_t len)
 	const char	*rhs;
 	size_t		 sz;
 
-	rhs = chars_a2res(p->symtab, word, len, &sz);
+	rhs = chars_res2str(p->symtab, word, len, &sz);
 	if (rhs)
 		encode(p, rhs, sz);
 }
@@ -500,17 +502,18 @@ term_word(struct termp *p, const char *word)
 
 	if ( ! (p->flags & TERMP_NONOSPACE))
 		p->flags &= ~TERMP_NOSPACE;
+	else
+		p->flags |= TERMP_NOSPACE;
 
 	p->flags &= ~TERMP_SENTENCE;
 
-	/* FIXME: use strcspn. */
-
 	while (*word) {
-		if ('\\' != *word) {
-			encode(p, word, 1);
-			word++;
+		if ((ssz = strcspn(word, "\\")) > 0)
+			encode(p, word, ssz);
+
+		word += ssz;
+		if ('\\' != *word)
 			continue;
-		}
 
 		seq = ++word;
 		sz = a2roffdeco(&deco, &seq, &ssz);
@@ -520,7 +523,9 @@ term_word(struct termp *p, const char *word)
 			res(p, seq, ssz);
 			break;
 		case (DECO_SPECIAL):
-			spec(p, seq, ssz);
+			/* FALLTHROUGH */
+		case (DECO_SSPECIAL):
+			spec(p, deco, seq, ssz);
 			break;
 		case (DECO_BOLD):
 			term_fontrepl(p, TERMFONT_BOLD);
@@ -547,7 +552,7 @@ term_word(struct termp *p, const char *word)
 	 * Note that we don't process the pipe: the parser sees it as
 	 * punctuation, but we don't in terms of typography.
 	 */
-	if (sv[0] && 0 == sv[1])
+	if (sv[0] && '\0' == sv[1])
 		switch (sv[0]) {
 		case('('):
 			/* FALLTHROUGH */
@@ -578,18 +583,6 @@ adjbuf(struct termp *p, size_t sz)
 
 
 static void
-buffera(struct termp *p, const char *word, size_t sz)
-{
-
-	if (p->col + sz >= p->maxcols) 
-		adjbuf(p, p->col + sz);
-
-	memcpy(&p->buf[(int)p->col], word, sz);
-	p->col += sz;
-}
-
-
-static void
 bufferc(struct termp *p, char c)
 {
 
@@ -613,23 +606,31 @@ encode(struct termp *p, const char *word, size_t sz)
 	 */
 
 	if (TERMFONT_NONE == (f = term_fonttop(p))) {
-		buffera(p, word, sz);
+		if (p->col + sz >= p->maxcols) 
+			adjbuf(p, p->col + sz);
+		memcpy(&p->buf[(int)p->col], word, sz);
+		p->col += sz;
 		return;
 	}
 
+	/* Pre-buffer, assuming worst-case. */
+
+	if (p->col + 1 + (sz * 3) >= p->maxcols)
+		adjbuf(p, p->col + 1 + (sz * 3));
+
 	for (i = 0; i < (int)sz; i++) {
 		if ( ! isgraph((u_char)word[i])) {
-			bufferc(p, word[i]);
+			p->buf[(int)p->col++] = word[i];
 			continue;
 		}
 
 		if (TERMFONT_UNDER == f)
-			bufferc(p, '_');
+			p->buf[(int)p->col++] = '_';
 		else
-			bufferc(p, word[i]);
+			p->buf[(int)p->col++] = word[i];
 
-		bufferc(p, 8);
-		bufferc(p, word[i]);
+		p->buf[(int)p->col++] = 8;
+		p->buf[(int)p->col++] = word[i];
 	}
 }
 
