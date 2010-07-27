@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.30 2010/07/06 20:50:35 cegger Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.31 2010/07/27 13:54:19 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.30 2010/07/06 20:50:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.31 2010/07/27 13:54:19 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.30 2010/07/06 20:50:35 cegger Exp $"
 #define	BUS_SPACE_ADDRESS_SANITY(p, t, d)				\
 ({									\
 	if (BUS_SPACE_ALIGNED_ADDRESS((p), t) == 0) {			\
-		printf("%s 0x%lx not aligned to %d bytes %s:%d\n",	\
+		printf("%s 0x%lx not aligned to %zu bytes %s:%d\n",	\
 		    d, (u_long)(p), sizeof(t), __FILE__, __LINE__);	\
 	}								\
 	(void) 0;							\
