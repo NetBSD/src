@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.153.2.50 2010/07/26 10:11:39 uebayasi Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.153.2.51 2010/07/27 01:47:43 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.50 2010/07/26 10:11:39 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.153.2.51 2010/07/27 01:47:43 uebayasi Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -865,7 +865,7 @@ uvm_page_physload_device(paddr_t start, paddr_t end, paddr_t avail_start,
 
 		pg->phys_addr = paddr;
 		pg->flags |= PG_FAKE | PG_CLEAN;
-		if (prot == PROT_READ)
+		if (prot == VM_PROT_READ)
 			pg->flags |= PG_RDONLY;
 		pg->pqflags = PQ_FIXED;
 #ifdef __HAVE_VM_PAGE_MD
