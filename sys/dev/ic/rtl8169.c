@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.131 2010/04/09 10:40:59 nonaka Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.132 2010/07/27 21:02:00 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.131 2010/04/09 10:40:59 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.132 2010/07/27 21:02:00 jakllsch Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -954,6 +954,9 @@ re_detach(struct rtk_softc *sc)
 	    &sc->re_ldata.re_tx_listseg, sc->re_ldata.re_tx_listnseg);
 
 	pmf_device_deregister(sc->sc_dev);
+
+	/* we don't want to run again */
+	sc->sc_flags &= ~RTK_ATTACHED;
 
 	return 0;
 }
