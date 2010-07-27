@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.21 2010/07/26 22:33:24 jym Exp $	*/
+/*	$NetBSD: ciss.c,v 1.22 2010/07/27 18:50:32 jakllsch Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.21 2010/07/26 22:33:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.22 2010/07/27 18:50:32 jakllsch Exp $");
 
 #include "bio.h"
 
@@ -469,8 +469,8 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 		cmd->sgin = dmap->dm_nsegs;
 
 		sgd = dmap->dm_segs;
-		CISS_DPRINTF(CISS_D_DMA, ("data=%p/%u<%#" PRIxPADDR "/%zu",
-		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr,sgd->ds_len));
+		CISS_DPRINTF(CISS_D_DMA, ("data=%p/%zu<%#" PRIxPADDR "/%zu",
+		    ccb->ccb_data, ccb->ccb_len, sgd->ds_addr, sgd->ds_len));
 
 		for (i = 0; i < dmap->dm_nsegs; sgd++, i++) {
 			cmd->sgl[i].addr_lo = htole32(sgd->ds_addr);
