@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.39 2010/07/27 21:02:00 jakllsch Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.40 2010/07/27 21:48:41 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.39 2010/07/27 21:02:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.40 2010/07/27 21:48:41 jakllsch Exp $");
 
 #include <sys/types.h>
 
@@ -236,7 +236,10 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	    t->rtk_basetype == RTK_8101E)
 		sc->sc_quirk |= RTKQ_PCIE;
 
-	sc->sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa) && (sc->sc_quirk & RTKQ_PCIE))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	/*
 	 * No power/enable/disable machinery for PCI attach;
