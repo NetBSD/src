@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.20 2010/07/27 22:07:51 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.21 2010/07/27 22:27:52 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.20 2010/07/27 22:07:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.21 2010/07/27 22:27:52 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -51,6 +51,7 @@ struct ahci_pci_quirk {
 };
 
 #define AHCI_PCI_QUIRK_FORCE	__BIT(0)	/* force attach */
+#define AHCI_PCI_QUIRK_BAD64	__BIT(1)	/* broken 64-bit DMA */
 
 static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA,
@@ -67,6 +68,9 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	    AHCI_PCI_QUIRK_FORCE },
 	{ PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6121,
 	    AHCI_PCI_QUIRK_FORCE },
+	/* ATI SB600 AHCI 64-bit DMA only works on some boards/BIOSes */
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SATA_1,
+	    AHCI_PCI_QUIRK_BAD64 },
 };
 
 struct ahci_pci_softc {
@@ -143,6 +147,8 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	struct ahci_softc *sc = &psc->ah_sc;
 	char devinfo[256];
 	const char *intrstr;
+	bool ahci_cap_64bit;
+	bool ahci_bad_64bit;
 	pci_intr_handle_t intrhandle;
 
 	sc->sc_atac.atac_dev = self;
@@ -172,7 +178,20 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n",
 	    intrstr ? intrstr : "unknown interrupt");
+
 	sc->sc_dmat = pa->pa_dmat;
+
+	ahci_cap_64bit = (AHCI_READ(sc, AHCI_CAP) & AHCI_CAP_64BIT) != 0;
+	ahci_bad_64bit = ahci_pci_has_quirk(PCI_VENDOR(pa->pa_id),
+					    PCI_PRODUCT(pa->pa_id),
+					    AHCI_PCI_QUIRK_BAD64);
+
+	if (pci_dma64_available(pa) && ahci_cap_64bit) {
+		if (!ahci_bad_64bit)
+			sc->sc_dmat = pa->pa_dmat64;
+		aprint_verbose_dev(self, "64-bit DMA%s\n",
+		    (sc->sc_dmat == pa->pa_dmat) ? " unavailable" : "");
+	}
 
 	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID) {
 		AHCIDEBUG_PRINT(("%s: RAID mode\n", AHCINAME(sc)), DEBUG_PROBE);
