@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.28 2010/07/20 19:24:11 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.29 2010/07/27 22:07:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.28 2010/07/20 19:24:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.29 2010/07/27 22:07:50 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -54,39 +54,39 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.28 2010/07/20 19:24:11 jakllsch 
 int ahcidebug_mask = 0x0;
 #endif
 
-void ahci_probe_drive(struct ata_channel *);
-void ahci_setup_channel(struct ata_channel *);
+static void ahci_probe_drive(struct ata_channel *);
+static void ahci_setup_channel(struct ata_channel *);
 
-int  ahci_ata_bio(struct ata_drive_datas *, struct ata_bio *);
-void ahci_reset_drive(struct ata_drive_datas *, int);
-void ahci_reset_channel(struct ata_channel *, int);
-int  ahci_exec_command(struct ata_drive_datas *, struct ata_command *);
-int  ahci_ata_addref(struct ata_drive_datas *);
-void ahci_ata_delref(struct ata_drive_datas *);
-void ahci_killpending(struct ata_drive_datas *);
+static int  ahci_ata_bio(struct ata_drive_datas *, struct ata_bio *);
+static void ahci_reset_drive(struct ata_drive_datas *, int);
+static void ahci_reset_channel(struct ata_channel *, int);
+static int  ahci_exec_command(struct ata_drive_datas *, struct ata_command *);
+static int  ahci_ata_addref(struct ata_drive_datas *);
+static void ahci_ata_delref(struct ata_drive_datas *);
+static void ahci_killpending(struct ata_drive_datas *);
 
-void ahci_cmd_start(struct ata_channel *, struct ata_xfer *);
-int  ahci_cmd_complete(struct ata_channel *, struct ata_xfer *, int);
-void ahci_cmd_done(struct ata_channel *, struct ata_xfer *, int);
-void ahci_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
-void ahci_bio_start(struct ata_channel *, struct ata_xfer *);
-int  ahci_bio_complete(struct ata_channel *, struct ata_xfer *, int);
-void ahci_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
-void ahci_channel_stop(struct ahci_softc *, struct ata_channel *, int);
-void ahci_channel_start(struct ahci_softc *, struct ata_channel *);
-void ahci_timeout(void *);
-int  ahci_dma_setup(struct ata_channel *, int, void *, size_t, int);
+static void ahci_cmd_start(struct ata_channel *, struct ata_xfer *);
+static int  ahci_cmd_complete(struct ata_channel *, struct ata_xfer *, int);
+static void ahci_cmd_done(struct ata_channel *, struct ata_xfer *, int);
+static void ahci_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
+static void ahci_bio_start(struct ata_channel *, struct ata_xfer *);
+static int  ahci_bio_complete(struct ata_channel *, struct ata_xfer *, int);
+static void ahci_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
+static void ahci_channel_stop(struct ahci_softc *, struct ata_channel *, int);
+static void ahci_channel_start(struct ahci_softc *, struct ata_channel *);
+static void ahci_timeout(void *);
+static int  ahci_dma_setup(struct ata_channel *, int, void *, size_t, int);
 
 #if NATAPIBUS > 0
-void ahci_atapibus_attach(struct atabus_softc *);
-void ahci_atapi_kill_pending(struct scsipi_periph *);
-void ahci_atapi_minphys(struct buf *);
-void ahci_atapi_scsipi_request(struct scsipi_channel *,
+static void ahci_atapibus_attach(struct atabus_softc *);
+static void ahci_atapi_kill_pending(struct scsipi_periph *);
+static void ahci_atapi_minphys(struct buf *);
+static void ahci_atapi_scsipi_request(struct scsipi_channel *,
     scsipi_adapter_req_t, void *);
-void ahci_atapi_start(struct ata_channel *, struct ata_xfer *);
-int  ahci_atapi_complete(struct ata_channel *, struct ata_xfer *, int);
-void ahci_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
-void ahci_atapi_probe_device(struct atapibus_softc *, int);
+static void ahci_atapi_start(struct ata_channel *, struct ata_xfer *);
+static int  ahci_atapi_complete(struct ata_channel *, struct ata_xfer *, int);
+static void ahci_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
+static void ahci_atapi_probe_device(struct atapibus_softc *, int);
 
 static const struct scsipi_bustype ahci_atapi_bustype = {
 	SCSIPI_BUSTYPE_ATAPI,
@@ -113,11 +113,10 @@ const struct ata_bustype ahci_ata_bustype = {
 	ahci_killpending
 };
 
-void ahci_intr_port(struct ahci_softc *, struct ahci_channel *);
-
+static void ahci_intr_port(struct ahci_softc *, struct ahci_channel *);
 static void ahci_setup_port(struct ahci_softc *sc, int i);
 
-int
+static int
 ahci_reset(struct ahci_softc *sc)
 {
 	int i;
@@ -139,7 +138,7 @@ ahci_reset(struct ahci_softc *sc)
 	return 0;
 }
 
-void
+static void
 ahci_setup_ports(struct ahci_softc *sc)
 {
 	uint32_t ahci_ports;
@@ -158,7 +157,7 @@ ahci_setup_ports(struct ahci_softc *sc)
 	}
 }
 
-void
+static void
 ahci_reprobe_drives(struct ahci_softc *sc)
 {
 	uint32_t ahci_ports;
@@ -195,7 +194,7 @@ ahci_setup_port(struct ahci_softc *sc, int i)
 	AHCI_WRITE(sc, AHCI_P_FBU(i), (uint64_t)achp->ahcic_bus_rfis>>32);
 }
 
-void
+static void
 ahci_enable_intrs(struct ahci_softc *sc)
 {
 
@@ -213,8 +212,6 @@ ahci_attach(struct ahci_softc *sc)
 	struct ahci_channel *achp;
 	struct ata_channel *chp;
 	int error;
-	bus_dma_segment_t seg;
-	int rseg;
 	int dmasize;
 	void *cmdhp;
 	void *cmdtblp;
@@ -261,13 +258,14 @@ ahci_attach(struct ahci_softc *sc)
 	dmasize =
 	    (AHCI_RFIS_SIZE + AHCI_CMDH_SIZE) * sc->sc_atac.atac_nchannels;
 	error = bus_dmamem_alloc(sc->sc_dmat, dmasize, PAGE_SIZE, 0,
-	    &seg, 1, &rseg, BUS_DMA_NOWAIT);
+	    &sc->sc_cmd_hdr_seg, 1, &sc->sc_cmd_hdr_nseg, BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error("%s: unable to allocate command header memory"
 		    ", error=%d\n", AHCINAME(sc), error);
 		return;
 	}
-	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, dmasize,
+	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cmd_hdr_seg,
+	    sc->sc_cmd_hdr_nseg, dmasize,
 	    &cmdhp, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error) {
 		aprint_error("%s: unable to map command header memory"
@@ -302,7 +300,7 @@ ahci_attach(struct ahci_softc *sc)
 			break;
 		}
 		achp = &sc->sc_channels[i];
-		chp = (struct ata_channel *)achp;
+		chp = &achp->ata_channel;
 		sc->sc_chanarray[i] = chp;
 		chp->ch_channel = i;
 		chp->ch_atac = &sc->sc_atac;
@@ -315,13 +313,15 @@ ahci_attach(struct ahci_softc *sc)
 		}
 		dmasize = AHCI_CMDTBL_SIZE * sc->sc_ncmds;
 		error = bus_dmamem_alloc(sc->sc_dmat, dmasize, PAGE_SIZE, 0,
-		    &seg, 1, &rseg, BUS_DMA_NOWAIT);
+		    &achp->ahcic_cmd_tbl_seg, 1, &achp->ahcic_cmd_tbl_nseg,
+		    BUS_DMA_NOWAIT);
 		if (error) {
 			aprint_error("%s: unable to allocate command table "
 			    "memory, error=%d\n", AHCINAME(sc), error);
 			break;
 		}
-		error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, dmasize,
+		error = bus_dmamem_map(sc->sc_dmat, &achp->ahcic_cmd_tbl_seg,
+		    achp->ahcic_cmd_tbl_nseg, dmasize,
 		    &cmdtblp, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 		if (error) {
 			aprint_error("%s: unable to map command table memory"
@@ -409,6 +409,73 @@ end:
 }
 
 int
+ahci_detach(struct ahci_softc *sc, int flags)
+{
+	struct atac_softc *atac;
+	struct ahci_channel *achp;
+	struct ata_channel *chp;
+	struct scsipi_adapter *adapt;
+	uint32_t ahci_ports;
+	int i, j;
+	int error;
+
+	atac = &sc->sc_atac;
+	adapt = &atac->atac_atapi_adapter._generic;
+
+	ahci_ports = AHCI_READ(sc, AHCI_PI);
+	for (i = 0; i < AHCI_MAX_PORTS; i++) {
+		achp = &sc->sc_channels[i];
+		chp = &achp->ata_channel;
+
+		if ((ahci_ports & (1 << i)) == 0)
+			continue;
+		if (i >= sc->sc_atac.atac_nchannels) {
+			aprint_error("%s: more ports than announced\n",
+			    AHCINAME(sc));
+			break;
+		}
+
+		if (chp->atabus == NULL)
+			continue;
+		if ((error = config_detach(chp->atabus, flags)) != 0)
+			return error;
+
+		for (j = 0; j < sc->sc_ncmds; j++)
+			bus_dmamap_destroy(sc->sc_dmat, achp->ahcic_datad[j]);
+
+		bus_dmamap_unload(sc->sc_dmat, achp->ahcic_cmd_tbld);
+		bus_dmamap_destroy(sc->sc_dmat, achp->ahcic_cmd_tbld);
+		bus_dmamem_unmap(sc->sc_dmat, achp->ahcic_cmd_tbl[0],
+		    AHCI_CMDTBL_SIZE * sc->sc_ncmds);
+		bus_dmamem_free(sc->sc_dmat, &achp->ahcic_cmd_tbl_seg,
+		    achp->ahcic_cmd_tbl_nseg);
+
+		free(chp->ch_queue, M_DEVBUF);
+		chp->atabus = NULL;
+	}
+
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmd_hdrd);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmd_hdrd);
+	bus_dmamem_unmap(sc->sc_dmat, sc->sc_cmd_hdr,
+	    (AHCI_RFIS_SIZE + AHCI_CMDH_SIZE) * sc->sc_atac.atac_nchannels);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cmd_hdr_seg, sc->sc_cmd_hdr_nseg);
+
+	if (adapt->adapt_refcnt != 0)
+		return EBUSY;
+
+	return 0;
+}
+
+void
+ahci_resume(struct ahci_softc *sc)
+{
+	ahci_reset(sc);
+	ahci_setup_ports(sc);
+	ahci_reprobe_drives(sc);
+	ahci_enable_intrs(sc);
+}
+
+int
 ahci_intr(void *v)
 {
 	struct ahci_softc *sc = v;
@@ -427,7 +494,7 @@ ahci_intr(void *v)
 	return r;
 }
 
-void
+static void
 ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 {
 	uint32_t is, tfd;
@@ -483,7 +550,7 @@ ahci_intr_port(struct ahci_softc *sc, struct ahci_channel *achp)
 	}
 }
 
-void
+static void
 ahci_reset_drive(struct ata_drive_datas *drvp, int flags)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
@@ -491,7 +558,7 @@ ahci_reset_drive(struct ata_drive_datas *drvp, int flags)
 	return;
 }
 
-void
+static void
 ahci_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -532,25 +599,25 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 	return;
 }
 
-int
+static int
 ahci_ata_addref(struct ata_drive_datas *drvp)
 {
 	return 0;
 }
 
-void
+static void
 ahci_ata_delref(struct ata_drive_datas *drvp)
 {
 	return;
 }
 
-void
+static void
 ahci_killpending(struct ata_drive_datas *drvp)
 {
 	return;
 }
 
-void
+static void
 ahci_probe_drive(struct ata_channel *chp)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -622,13 +689,13 @@ ahci_probe_drive(struct ata_channel *chp)
 	}
 }
 
-void
+static void
 ahci_setup_channel(struct ata_channel *chp)
 {
 	return;
 }
 
-int
+static int
 ahci_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
@@ -679,7 +746,7 @@ ahci_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	return ret;
 }
 
-void
+static void
 ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -762,7 +829,7 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
 }
 
-void
+static void
 ahci_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	struct ata_command *ata_c = xfer->c_cmd;
@@ -783,7 +850,7 @@ ahci_cmd_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 	ahci_cmd_done(chp, xfer, 0 /* XXX slot */);
 }
 
-int
+static int
 ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 {
 	int slot = 0; /* XXX slot */
@@ -824,7 +891,7 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	return 0;
 }
 
-void
+static void
 ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -872,7 +939,7 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int slot)
 	return;
 }
 
-int
+static int
 ahci_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
@@ -899,7 +966,7 @@ ahci_ata_bio(struct ata_drive_datas *drvp, struct ata_bio *ata_bio)
 	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
-void
+static void
 ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -981,7 +1048,7 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
 }
 
-void
+static void
 ahci_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	int slot = 0;  /* XXX slot */
@@ -1009,7 +1076,7 @@ ahci_bio_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 	(*chp->ch_drive[drive].drv_done)(chp->ch_drive[drive].drv_softc);
 }
 
-int
+static int
 ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 {
 	int slot = 0; /* XXX slot */
@@ -1071,7 +1138,7 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int is)
 	return 0;
 }
 
-void
+static void
 ahci_channel_stop(struct ahci_softc *sc, struct ata_channel *chp, int flags)
 {
 	int i;
@@ -1095,7 +1162,7 @@ ahci_channel_stop(struct ahci_softc *sc, struct ata_channel *chp, int flags)
 	}
 }
 
-void
+static void
 ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp)
 {
 	/* clear error */
@@ -1108,7 +1175,7 @@ ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp)
 	    AHCI_P_CMD_FRE | AHCI_P_CMD_ST);
 }
 
-void
+static void
 ahci_timeout(void *v)
 {
 	struct ata_channel *chp = (struct ata_channel *)v;
@@ -1122,7 +1189,7 @@ ahci_timeout(void *v)
 	splx(s);
 }
 
-int
+static int
 ahci_dma_setup(struct ata_channel *chp, int slot, void *data,
     size_t count, int op)
 {
@@ -1165,7 +1232,7 @@ end:
 }
 
 #if NATAPIBUS > 0
-void
+static void
 ahci_atapibus_attach(struct atabus_softc * ata_sc)
 {
 	struct ata_channel *chp = ata_sc->sc_chan;
@@ -1197,7 +1264,7 @@ ahci_atapibus_attach(struct atabus_softc * ata_sc)
 		atapiprint);
 }
 
-void
+static void
 ahci_atapi_minphys(struct buf *bp)
 {
 	if (bp->b_bcount > MAXPHYS)
@@ -1210,7 +1277,7 @@ ahci_atapi_minphys(struct buf *bp)
  *
  * Must be called at splbio().
  */
-void
+static void
 ahci_atapi_kill_pending(struct scsipi_periph *periph)
 {
 	struct atac_softc *atac =
@@ -1221,7 +1288,7 @@ ahci_atapi_kill_pending(struct scsipi_periph *periph)
 	ata_kill_pending(&chp->ch_drive[periph->periph_target]);
 }
 
-void
+static void
 ahci_atapi_scsipi_request(struct scsipi_channel *chan,
     scsipi_adapter_req_t req, void *arg)
 {
@@ -1278,7 +1345,7 @@ ahci_atapi_scsipi_request(struct scsipi_channel *chan,
 	}
 }
 
-void
+static void
 ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -1360,7 +1427,7 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
 }
 
-int
+static int
 ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	int slot = 0; /* XXX slot */
@@ -1419,7 +1486,7 @@ ahci_atapi_complete(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 	return 0;
 }
 
-void
+static void
 ahci_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
@@ -1444,7 +1511,7 @@ ahci_atapi_kill_xfer(struct ata_channel *chp, struct ata_xfer *xfer, int reason)
 	scsipi_done(sc_xfer);
 }
 
-void
+static void
 ahci_atapi_probe_device(struct atapibus_softc *sc, int target)
 {
 	struct scsipi_channel *chan = sc->sc_channel;
