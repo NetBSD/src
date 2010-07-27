@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.60 2010/05/04 14:14:54 tsutsui Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.61 2010/07/27 14:25:23 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.60 2010/05/04 14:14:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.61 2010/07/27 14:25:23 jakllsch Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -305,7 +305,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_nmapsize = nsyms;
 #endif
 #ifdef KSYMS_DEBUG
-	printf("newstart %p sym %p ksyms_symsz %d str %p strsz %d send %p\n",
+	printf("newstart %p sym %p ksyms_symsz %zu str %p strsz %zu send %p\n",
 	    newstart, symstart, symsize, strstart, strsize,
 	    tab->sd_strstart + tab->sd_strsize);
 #endif
