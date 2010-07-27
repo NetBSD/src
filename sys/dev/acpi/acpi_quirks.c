@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.13 2010/04/28 17:52:17 jruoho Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.14 2010/07/27 06:14:37 jruoho Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.13 2010/04/28 17:52:17 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.14 2010/07/27 06:14:37 jruoho Exp $");
 
 #include "opt_acpi.h"
 
@@ -68,6 +68,9 @@ static struct acpi_quirk acpi_quirks[] = {
 
 	{ ACPI_SIG_FADT, "NVIDIA", 0x06040000, AQ_EQ, "CK8     ",
 	  ACPI_QUIRK_IRQ0 },
+
+	{ ACPI_SIG_DSDT, "NVIDIA", 0x00001000, AQ_EQ, "AWRDACPI",
+	  ACPI_QUIRK_BROKEN },
 
 	{ ACPI_SIG_FADT, "HP    ", 0x06040012, AQ_LTE, "HWPC20F ",
 	  ACPI_QUIRK_BROKEN },
