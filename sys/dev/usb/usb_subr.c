@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.173 2010/07/25 13:19:27 pgoyette Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.174 2010/07/27 16:15:30 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.173 2010/07/25 13:19:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.174 2010/07/27 16:15:30 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -1158,6 +1158,10 @@ usbd_new_device(device_t parent, usbd_bus_handle bus, int depth,
 		usbd_remove_device(dev, up);
 		return (err);
 	}
+
+	/* Windows resets the port here, do likewise */
+	if (up->parent)
+		usbd_reset_port(up->parent, port, &ps);
 
 	if (speed == USB_SPEED_HIGH) {
 		/* Max packet size must be 64 (sec 5.5.3). */
