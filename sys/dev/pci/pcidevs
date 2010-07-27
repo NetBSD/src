@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1043 2010/07/13 23:40:56 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1044 2010/07/27 23:56:29 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -544,6 +544,7 @@ vendor PACKETENGINES	0x1318	Packet Engines
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor SIIG		0x131f	Siig
 vendor DOMEX		0x134a	Domex
+vendor QUATECH		0x135c	Quatech
 vendor LMC		0x1376	LAN Media
 vendor NETGEAR		0x1385	Netgear
 vendor MOXA		0x1393	Moxa Technologies
@@ -567,6 +568,7 @@ vendor TAMARACK		0x143d	Tamarack Microelectronics
 vendor SAMSUNGELEC3	0x144d	Samsung Electronics (3rd vendor ID)
 vendor ASKEY		0x144f	Askey Computer
 vendor AVERMEDIA	0x1461	Avermedia Technologies
+vendor SYSTEMBASE	0x14a1	System Base
 vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics
 vendor MYRICOM		0x14c1	Myricom
@@ -579,6 +581,7 @@ vendor CONEXANT		0x14f1	Conexant Systems
 vendor DELTA		0x1500	Delta Electronics
 vendor ENE		0x1524	ENE Technology
 vendor TERRATEC		0x153b	TerraTec Electronic
+vendor PERLE		0x155f	Perle Systems
 vendor SOLIDUM		0x1588	Solidum Systems
 vendor SYBA		0x1592	Syba
 vendor FARADAY		0x159b	Faraday Technology
@@ -590,6 +593,7 @@ vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	Broadcom (SiByte)
 vendor MYSON		0x1516	Myson-Century Technology
+vendor SYBATECH		0x1592	Syba Tech
 vendor MELLANOX		0x15b3	Mellanox Technologies
 vendor NDC		0x15e8	National Datacomm
 vendor ACTIONTEC	0x1668	Action Tec Electronics
@@ -4120,6 +4124,9 @@ product SYMPHONY	82C103	0x0103	82C103
 product SYMPHONY	82C105	0x0105	82C105
 product SYMPHONY2	82C101	0x0001	82C101
 product SYMPHONY	83C553	0x0565	83C553 PCI-ISA Bridge
+
+/* System Base products */
+product SYSTEMBASE	SB16C1054	0x0004 SB16C1054 UARTs
 
 /* Schneider & Koch (really SysKonnect) products */
 product SCHNEIDERKOCH	SKNET_FDDI	0x4000	SK-NET FDDI-xP
