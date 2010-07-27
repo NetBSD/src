@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.109 2010/02/19 12:40:47 pooka Exp $	*/
+/*	$NetBSD: ugen.c,v 1.110 2010/07/27 20:20:46 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.109 2010/02/19 12:40:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.110 2010/07/27 20:20:46 jakllsch Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -81,9 +81,9 @@ int	ugendebug = 0;
 #define	UGEN_IBSIZE	1020	/* buffer size */
 #define	UGEN_BBSIZE	1024
 
-#define	UGEN_NISOFRAMES	500	/* 0.5 seconds worth */
-#define UGEN_NISOREQS	6	/* number of outstanding xfer requests */
-#define UGEN_NISORFRMS	4	/* number of frames (miliseconds) per req */
+#define UGEN_NISOREQS	4	/* number of outstanding xfer requests */
+#define UGEN_NISORFRMS	8	/* number of transactions per req */
+#define UGEN_NISOFRAMES	(UGEN_NISORFRMS * UGEN_NISOREQS)
 
 #define UGEN_BULK_RA_WB_BUFSIZE	16384		/* default buffer size */
 #define UGEN_BULK_RA_WB_BUFMAX	(1 << 20)	/* maximum allowed buffer */
