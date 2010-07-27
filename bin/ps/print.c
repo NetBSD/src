@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.113 2010/05/31 03:18:33 rmind Exp $	*/
+/*	$NetBSD: print.c,v 1.114 2010/07/27 12:40:48 njoly Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.113 2010/05/31 03:18:33 rmind Exp $");
+__RCSID("$NetBSD: print.c,v 1.114 2010/07/27 12:40:48 njoly Exp $");
 #endif
 #endif /* not lint */
 
@@ -1087,10 +1087,12 @@ pcpu(void *arg, VARENT *ve, int mode)
 {
 	struct kinfo_proc2 *k;
 	VAR *v;
+	double dbl;
 
 	k = arg;
 	v = ve->var;
-	doubleprintorsetwidth(v, getpcpu(k), 1, mode);
+	dbl = getpcpu(k);
+	doubleprintorsetwidth(v, dbl, (dbl >= 100.0) ? 0 : 1, mode);
 }
 
 double
