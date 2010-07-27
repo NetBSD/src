@@ -1129,16 +1129,17 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q")
+	 (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "g")
 			      (const_int 1)
 			      (const_int 0))
 	     (const_int 0))
 	 (label_ref (match_operand 1 "" ""))
 	 (pc)))]
-  "GET_CODE (XEXP (operands[0], 0)) != PLUS
-   || !REG_P (XEXP (XEXP (operands[0], 0), 0))
-   || !CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
-   || (INTVAL (XEXP (XEXP (operands[0], 0), 1)) & 3) == 0"
+  "! mode_dependent_address_p (XEXP (operands[0], 0))
+   && (GET_CODE (XEXP (operands[0], 0)) != PLUS
+       || !REG_P (XEXP (XEXP (operands[0], 0), 0))
+       || !CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
+       || (INTVAL (XEXP (XEXP (operands[0], 0), 1)) & 3) == 0)"
   "jlbs %0,%l1")
 
 (define_insn ""
@@ -1156,16 +1157,17 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (eq (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q")
+	 (eq (zero_extract:SI (match_operand:QI 0 "memory_operand" "g")
 			      (const_int 1)
 			      (const_int 0))
 	     (const_int 0))
 	 (label_ref (match_operand 1 "" ""))
 	 (pc)))]
-  "GET_CODE (XEXP (operands[0], 0)) != PLUS
-   || !REG_P (XEXP (XEXP (operands[0], 0), 0))
-   || !CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
-   || (INTVAL (XEXP (XEXP (operands[0], 0), 1)) & 3) == 0"
+  "! mode_dependent_address_p (XEXP (operands[0], 0))
+   && (GET_CODE (XEXP (operands[0], 0)) != PLUS
+       || !REG_P (XEXP (XEXP (operands[0], 0), 0))
+       || !CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
+       || (INTVAL (XEXP (XEXP (operands[0], 0), 1)) & 3) == 0)"
   "jlbc %0,%l1")
 
 (define_insn ""
