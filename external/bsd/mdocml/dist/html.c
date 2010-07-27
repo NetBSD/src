@@ -1,6 +1,6 @@
-/*	$Vendor-Id: html.c,v 1.105 2010/07/06 12:37:17 kristaps Exp $ */
+/*	$Vendor-Id: html.c,v 1.110 2010/07/26 22:26:05 kristaps Exp $ */
 /*
- * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2008, 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -88,7 +88,8 @@ static	const char	*const htmlattrs[ATTR_MAX] = {
 	"summary",
 };
 
-static	void		  print_spec(struct html *, const char *, size_t);
+static	void		  print_spec(struct html *, enum roffdeco,
+				const char *, size_t);
 static	void		  print_res(struct html *, const char *, size_t);
 static	void		  print_ctag(struct html *, enum htmltag);
 static	void		  print_doctype(struct html *);
@@ -215,30 +216,41 @@ print_gen_head(struct html *h)
 
 
 static void
-print_spec(struct html *h, const char *p, size_t len)
+print_spec(struct html *h, enum roffdeco d, const char *p, size_t len)
 {
+	int		 cp;
 	const char	*rhs;
 	size_t		 sz;
 
-	rhs = chars_a2ascii(h->symtab, p, len, &sz);
-
-	if (NULL == rhs) 
+	if ((cp = chars_spec2cp(h->symtab, p, len)) > 0) {
+		printf("&#%d;", cp);
 		return;
-	fwrite(rhs, 1, sz, stdout);
+	} else if (-1 == cp && DECO_SSPECIAL == d) {
+		fwrite(p, 1, len, stdout);
+		return;
+	} else if (-1 == cp)
+		return;
+
+	if (NULL != (rhs = chars_spec2str(h->symtab, p, len, &sz)))
+		fwrite(rhs, 1, sz, stdout);
 }
 
 
 static void
 print_res(struct html *h, const char *p, size_t len)
 {
+	int		 cp;
 	const char	*rhs;
 	size_t		 sz;
 
-	rhs = chars_a2res(h->symtab, p, len, &sz);
-
-	if (NULL == rhs)
+	if ((cp = chars_res2cp(h->symtab, p, len)) > 0) {
+		printf("&#%d;", cp);
 		return;
-	fwrite(rhs, 1, sz, stdout);
+	} else if (-1 == cp)
+		return;
+
+	if (NULL != (rhs = chars_res2str(h->symtab, p, len, &sz)))
+		fwrite(rhs, 1, sz, stdout);
 }
 
 
@@ -334,8 +346,10 @@ print_encode(struct html *h, const char *p, int norecurse)
 		case (DECO_RESERVED):
 			print_res(h, seq, sz);
 			break;
+		case (DECO_SSPECIAL):
+			/* FALLTHROUGH */
 		case (DECO_SPECIAL):
-			print_spec(h, seq, sz);
+			print_spec(h, deco, seq, sz);
 			break;
 		case (DECO_PREVIOUS):
 			/* FALLTHROUGH */
@@ -402,6 +416,11 @@ print_otag(struct html *h, enum htmltag tag,
 			} else
 				printf("&#160;");
 		}
+
+	if ( ! (h->flags & HTML_NONOSPACE))
+		h->flags &= ~HTML_NOSPACE;
+	else
+		h->flags |= HTML_NOSPACE;
 
 	/* Print out the tag name and attributes. */
 
@@ -530,7 +549,8 @@ print_text(struct html *h, const char *word)
 
 	assert(word);
 	if ( ! print_encode(h, word, 0))
-		h->flags &= ~HTML_NOSPACE;
+		if ( ! (h->flags & HTML_NONOSPACE))
+			h->flags &= ~HTML_NOSPACE;
 
 	/* 
 	 * Note that we don't process the pipe: the parser sees it as

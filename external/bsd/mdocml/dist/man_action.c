@@ -1,4 +1,4 @@
-/*	$Vendor-Id: man_action.c,v 1.39 2010/05/26 14:03:54 kristaps Exp $ */
+/*	$Vendor-Id: man_action.c,v 1.40 2010/07/22 23:03:15 kristaps Exp $ */
 /*
  * Copyright (c) 2008, 2009 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -73,6 +73,7 @@ const	struct actions man_actions[MAN_MAX] = {
 	{ post_nf }, /* Vb */
 	{ post_fi }, /* Ve */
 	{ post_AT }, /* AT */
+	{ NULL }, /* in */
 };
 
 
