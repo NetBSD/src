@@ -1129,30 +1129,56 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q,g")
+	 (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,nrmT"))
+			      (const_int 0))
 	     (const_int 0))
-	 (label_ref (match_operand 2 "" ""))
+	 (label_ref (match_operand 1 "" ""))
 	 (pc)))]
-  ""
-  "@
-   jlbs %0,%l2
-   jbs %1,%0,%l2")
+  "GET_CODE (XEXP (operands[0], 0)) != PLUS
+   || !REG_P (XEXP (XEXP (operands[0], 0), 0))
+   || !CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
+   || (INTVAL (XEXP (XEXP (operands[0], 0), 1)) & 3) == 0"
+  "jlbs %0,%l1")
 
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (eq (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q,g")
+	 (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "g")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,nrmT"))
+			      (match_operand:SI 1 "general_operand" "nrmT"))
 	     (const_int 0))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))]
   ""
-  "@
-   jlbc %0,%l2
-   jbc %1,%0,%l2")
+  "jbs %1,%0,%l2")
+
+(define_insn ""
+  [(set (pc)
+	(if_then_else
+	 (eq (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q")
+			      (const_int 1)
+			      (const_int 0))
+	     (const_int 0))
+	 (label_ref (match_operand 1 "" ""))
+	 (pc)))]
+  "GET_CODE (XEXP (operands[0], 0)) != PLUS
+   || !REG_P (XEXP (XEXP (operands[0], 0), 0))
+   || !CONST_INT_P (XEXP (XEXP (operands[0], 0), 1))
+   || (INTVAL (XEXP (XEXP (operands[0], 0), 1)) & 3) == 0"
+  "jlbc %0,%l1")
+
+(define_insn ""
+  [(set (pc)
+	(if_then_else
+	 (eq (zero_extract:SI (match_operand:QI 0 "memory_operand" "g")
+			      (const_int 1)
+			      (match_operand:SI 1 "general_operand" "nrmT"))
+	     (const_int 0))
+	 (label_ref (match_operand 2 "" ""))
+	 (pc)))]
+  ""
+  "jbc %1,%0,%l2")
 
 (define_insn ""
   [(set (pc)
