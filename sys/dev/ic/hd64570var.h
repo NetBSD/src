@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570var.h,v 1.9 2010/01/19 22:06:24 pooka Exp $	*/
+/*	$NetBSD: hd64570var.h,v 1.10 2010/07/27 19:40:16 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -106,9 +106,9 @@ struct sca_port {
 	 * of mapped memory described by sc_memt/sc_memh.
 	 */
 	u_int sp_ntxdesc;		/* number of tx descriptors */
-	u_int32_t sp_txdesc_p;		/* paddress of first tx desc */
+	bus_addr_t sp_txdesc_p;		/* paddress of first tx desc */
 	sca_desc_t *sp_txdesc;		/* vaddress of first tx desc */
-	u_int32_t sp_txbuf_p;		/* paddress of first tx buffer */
+	bus_addr_t sp_txbuf_p;		/* paddress of first tx buffer */
 	u_int8_t *sp_txbuf;		/* vaddress of first tx buffer */
 
 	volatile u_int sp_txcur;	/* last descriptor in chain */
@@ -116,9 +116,9 @@ struct sca_port {
 	volatile u_int sp_txstart;	/* start descriptor */
 
 	u_int sp_nrxdesc;		/* number of rx descriptors */
-	u_int32_t sp_rxdesc_p;		/* paddress of first rx desc */
+	bus_addr_t sp_rxdesc_p;		/* paddress of first rx desc */
 	sca_desc_t *sp_rxdesc;		/* vaddress of first rx desc */
-	u_int32_t sp_rxbuf_p;		/* paddress of first rx buffer */
+	bus_addr_t sp_rxbuf_p;		/* paddress of first rx buffer */
 	u_int8_t *sp_rxbuf;		/* vaddress of first rx buffer */
 
 	u_int sp_rxstart;		/* index of first descriptor */
