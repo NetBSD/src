@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.6 2010/07/20 18:50:48 jakllsch Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.7 2010/07/27 22:07:50 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -47,9 +47,12 @@ struct ahci_softc {
 	struct atac_softc sc_atac;
 	bus_space_tag_t sc_ahcit; /* ahci registers mapping */
 	bus_space_handle_t sc_ahcih;
+	bus_size_t sc_ahcis;
 	bus_dma_tag_t sc_dmat; /* DMA memory mappings: */
 	void *sc_cmd_hdr; /* command tables and received FIS */
 	bus_dmamap_t sc_cmd_hdrd;
+	bus_dma_segment_t sc_cmd_hdr_seg;
+	int sc_cmd_hdr_nseg;
 	int sc_atac_capflags;
 
 	int sc_ncmds; /* number of command slots */
@@ -66,6 +69,8 @@ struct ahci_softc {
 		bus_addr_t ahcic_bus_cmdh;
 		/* command tables (allocated per-channel) */
 		bus_dmamap_t ahcic_cmd_tbld;
+		bus_dma_segment_t ahcic_cmd_tbl_seg;
+		int ahcic_cmd_tbl_nseg;
 		struct ahci_cmd_tbl *ahcic_cmd_tbl[AHCI_MAX_CMDS];
 		bus_addr_t ahcic_bus_cmd_tbl[AHCI_MAX_CMDS];
 		bus_dmamap_t ahcic_datad[AHCI_MAX_CMDS];
@@ -93,10 +98,8 @@ struct ahci_softc {
     
 
 void ahci_attach(struct ahci_softc *);
-void ahci_enable_intrs(struct ahci_softc *);
-int  ahci_reset(struct ahci_softc *);
-void ahci_setup_ports(struct ahci_softc *);
-void ahci_reprobe_drives(struct ahci_softc *);
+int  ahci_detach(struct ahci_softc *, int);
+void ahci_resume(struct ahci_softc *);
 
 int  ahci_intr(void *);
 
