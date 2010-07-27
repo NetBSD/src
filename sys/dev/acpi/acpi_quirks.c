@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_quirks.c,v 1.14 2010/07/27 06:14:37 jruoho Exp $	*/
+/*	$NetBSD: acpi_quirks.c,v 1.15 2010/07/27 15:16:16 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.14 2010/07/27 06:14:37 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_quirks.c,v 1.15 2010/07/27 15:16:16 pgoyette Exp $");
 
 #include "opt_acpi.h"
 
@@ -120,7 +120,7 @@ acpi_find_quirks(void)
 	struct acpi_quirk *aqp;
 	ACPI_TABLE_HEADER fadt, dsdt, xsdt, *hdr;
 
-	nquirks = sizeof(acpi_quirks) / sizeof(struct acpi_quirk);
+	nquirks = __arraycount(acpi_quirks);
 
 	if (ACPI_FAILURE(AcpiGetTableHeader(ACPI_SIG_FADT, 0, &fadt)))
 		memset(&fadt, 0, sizeof(fadt));
