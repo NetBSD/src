@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.3 2010/07/27 14:04:47 macallan Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.4 2010/07/28 15:15:22 pooka Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.3 2010/07/27 14:04:47 macallan Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.4 2010/07/28 15:15:22 pooka Exp $");
 #endif
 #endif				/* not lint */
 
@@ -75,6 +75,7 @@ __RCSID("$NetBSD: mountd.c,v 1.3 2010/07/27 14:04:47 macallan Exp $");
 #include <netdb.h>
 #include <pwd.h>
 #include <netgroup.h>
+#include <pthread.h>
 #include <semaphore.h>
 #include <signal.h>
 #include <stdio.h>
@@ -305,6 +306,31 @@ rumpfopen(const char *path, const char *opts)
 }
 
 /*
+ * Make sure mountd signal handler is executed from a thread context
+ * instead of the signal handler.  This avoids the signal handler
+ * ruining our kernel context.
+ */
+static sem_t exportsem;
+static void
+signal_get_exportlist(int sig)
+{
+
+	sem_post(&exportsem);
+}
+
+static void *
+exportlist_thread(void *arg)
+{
+
+	for (;;) {
+		sem_wait(&exportsem);
+		get_exportlist(0);
+	}
+
+	return NULL;
+}
+
+/*
  * Mountd server for NFS mount protocol as described in:
  * NFS: Network File System Protocol Specification, RFC1094, Appendix A
  * The optional arguments are the exports file name
@@ -323,6 +349,7 @@ mountd_main(void *arg)
 	int maxrec = RPC_MAXDATASIZE;
 	in_port_t forcedport = 0;
 	extern sem_t gensem;
+	pthread_t ptdummy;
 
 	alloc_fdset();
 
@@ -361,6 +388,9 @@ mountd_main(void *arg)
 	argv += optind;
 #endif
 
+	sem_init(&exportsem, 0, 0);
+	pthread_create(&ptdummy, NULL, exportlist_thread, NULL);
+
 	grphead = NULL;
 	exphead = NULL;
 	mlhead = NULL;
@@ -381,7 +411,7 @@ mountd_main(void *arg)
 		(void)signal(SIGINT, SIG_IGN);
 		(void)signal(SIGQUIT, SIG_IGN);
 	}
-	(void)signal(SIGHUP, get_exportlist);
+	(void)signal(SIGHUP, signal_get_exportlist);
 	(void)signal(SIGTERM, send_umntall);
 	pidfile(NULL);
 
