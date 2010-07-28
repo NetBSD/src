@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.11 2010/07/28 16:26:56 jruoho Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.12 2010/07/28 16:29:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.11 2010/07/28 16:26:56 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.12 2010/07/28 16:29:11 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -116,12 +116,6 @@ struct SMB_INFO {
 
 static const char * const smbus_acpi_ids[] = {
 	"SMBUS01",	/* SMBus CMI v1.0 */
-	NULL
-};
-
-static const char * const pcibus_acpi_ids[] = {
-	"PNP0A03",
-	"PNP0A08",
 	NULL
 };
 
