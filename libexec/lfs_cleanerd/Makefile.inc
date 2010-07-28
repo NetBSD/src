@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.2 2009/10/09 20:19:44 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2010/07/28 22:35:52 pooka Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 WARNS?=3		# XXX: too many sign-compare issues
 
 .include <bsd.own.mk>
 
-SRCS=	lfs_cleanerd.c fdfs.c coalesce.c cleansrv.c
-SRCS+=  lfs_cksum.c
+SRCS+=	lfs_cleanerd.c fdfs.c coalesce.c cleansrv.c
+SRCS+=	lfs_cksum.c
 SRCS+=	bufcache.c vnode.c lfs.c kernelops.c # segwrite.c
 .PATH:	${NETBSDSRCDIR}/sys/ufs/lfs ${NETBSDSRCDIR}/sbin/fsck_lfs	\
 	${NETBSDSRCDIR}/libexec/lfs_cleanerd
