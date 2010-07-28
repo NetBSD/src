@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/07/16 15:42:53 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2010/07/28 21:29:15 jruoho Exp $
 
 NOMAN=		# defined
 
@@ -14,6 +14,7 @@ TESTS_C+=	t_cond
 TESTS_SH+=	t_exit
 TESTS_C+=	t_fork
 TESTS_C+=	t_fpu
+TESTS_C+=	t_join
 TESTS_C+=	t_kill
 TESTS_C+=	t_mutex
 TESTS_C+=	t_name
