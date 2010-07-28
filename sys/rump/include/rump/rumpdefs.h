@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.8 2010/07/02 10:45:16 hannken Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.9 2010/07/28 09:32:13 hannken Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -29,7 +29,7 @@
 #define	RUMP_O_DIRECT	0x00080000	/* direct I/O hint */
 #define	RUMP_O_NOCTTY	0x00008000	/* don't assign controlling terminal */
 
-/*	NetBSD: vnode.h,v 1.221 2010/07/01 13:00:57 hannken Exp 	*/
+/*	NetBSD: vnode.h,v 1.222 2010/07/28 09:31:00 hannken Exp 	*/
 #ifndef __VTYPE_DEFINED
 #define __VTYPE_DEFINED
 enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
@@ -37,7 +37,6 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 #define	RUMP_LK_SHARED	0x00000001	
 #define	RUMP_LK_EXCLUSIVE	0x00000002	
 #define	RUMP_LK_NOWAIT	0x00000010	
-#define	RUMP_LK_INTERLOCK	0x00010000	
 #define	RUMP_LK_RETRY	0x00020000	
 
 /*	NetBSD: errno.h,v 1.39 2006/10/31 00:38:07 cbiere Exp 	*/
