@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2010/07/28 15:24:54 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2010/07/28 19:23:01 pooka Exp $
 #
 
 .include <bsd.own.mk>
+
+TESTSDIR=       ${TESTSBASE}/fs/nfs
 
 SUBDIR+= 	nfsservice
 
