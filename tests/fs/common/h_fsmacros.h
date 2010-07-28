@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.14 2010/07/26 16:15:49 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.15 2010/07/28 14:23:02 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,6 +56,23 @@ FSPROTOS(tmpfs);
 #define FSTEST_IMGSIZE (10000 * 512)
 #define FSTEST_MNTNAME "/mnt"
 
+#define FSTEST_CONSTRUCTOR(_tc_, _fs_, _args_)				\
+do {									\
+	if (_fs_##_fstest_newfs(_tc_, &_args_,				\
+	    FSTEST_IMGNAME, FSTEST_IMGSIZE) != 0)			\
+		atf_tc_fail("newfs failed");				\
+	if (_fs_##_fstest_mount(_tc_, _args_, FSTEST_MNTNAME, 0) != 0)	\
+		atf_tc_fail("mount failed");				\
+} while (/*CONSTCOND*/0);
+
+#define FSTEST_DESTRUCTOR(_tc_, _fs_, _args_)				\
+do {									\
+	if (_fs_##_fstest_unmount(_tc_, FSTEST_MNTNAME, 0) != 0)	\
+		atf_tc_fail("unmount failed");				\
+	if (_fs_##_fstest_delfs(_tc_, _args_) != 0)			\
+		atf_tc_fail("delfs failed");				\
+} while (/*CONSTCOND*/0);
+
 #define ATF_TC_FSADD(fs,type,func,desc) \
   ATF_TC_WITH_CLEANUP(fs##_##func); \
   ATF_TC_HEAD(fs##_##func,tc) \
@@ -69,10 +86,7 @@ FSPROTOS(tmpfs);
   { \
     if (!atf_check_fstype(tc, type)) \
       atf_tc_skip("filesystem not selected"); \
-    if (fs##_fstest_newfs(tc, &fs##func##tmp, FSTEST_IMGNAME, FSTEST_IMGSIZE) != 0) \
-      atf_tc_fail("newfs failed"); \
-    if (fs##_fstest_mount(tc, fs##func##tmp, FSTEST_MNTNAME, 0) != 0) \
-      atf_tc_fail("mount failed"); \
+    FSTEST_CONSTRUCTOR(tc,fs,fs##func##tmp); \
     func(tc,FSTEST_MNTNAME); \
     if (fs##_fstest_unmount(tc, FSTEST_MNTNAME, 0) != 0) \
       atf_tc_fail("unmount failed"); \
