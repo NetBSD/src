@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.122 2010/07/28 20:08:45 pooka Exp $
+# $NetBSD: mi,v 1.123 2010/07/28 21:29:16 jruoho Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -301,6 +301,7 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_cond.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_fork.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_fpu.debug		tests-lib-tests		debug,atf
+./usr/libdata/debug/usr/tests/lib/libpthread/t_join.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_kill.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_mutex.debug		tests-lib-tests		debug,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_name.debug		tests-lib-tests		debug,atf
@@ -1433,6 +1434,7 @@
 ./usr/tests/lib/libpthread/t_exit		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_fork		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_fpu		tests-lib-tests		atf
+./usr/tests/lib/libpthread/t_join		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_kill		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_mutex		tests-lib-tests		atf
 ./usr/tests/lib/libpthread/t_name		tests-lib-tests		atf
