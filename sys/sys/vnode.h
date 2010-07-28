@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.221 2010/07/01 13:00:57 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.222 2010/07/28 09:31:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -239,7 +239,6 @@ typedef struct vnode vnode_t;
 #define	LK_SHARED	0x00000001	/* shared lock */
 #define	LK_EXCLUSIVE	0x00000002	/* exclusive lock */
 #define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
-#define	LK_INTERLOCK	0x00010000	/* caller holds v_interlock */
 #define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
 /*
