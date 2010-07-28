@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.47 2010/04/20 13:03:33 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.48 2010/07/28 20:49:12 jruoho Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd April 20, 2010
+.Dd July 28, 2010
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -691,6 +691,36 @@ for additional details.
 .It Li kern.module.verbose
 A boolean that enables or disables verbose
 debug messages related to kernel modules.
+.El
+.It Li kern.mqueue
+Settings related to
+.Tn POSIX
+message queues; see
+.Xr mqueue 3 .
+This node is created dynamically when
+the corresponding kernel module is loaded.
+The third level names for the settings are described below.
+.Bl -column "kern.mqueue.mq_max_msgsize" "integer" "Changeable" -offset indent
+.It Sy Third level name	Type	Changeable
+.It kern.mqueue.mq_open_max	integer	yes
+.It kern.mqueue.mq_prio_max	integer	yes
+.It kern.mqueue.mq_max_msgsize	integer	yes
+.It kern.mqueue.mq_def_maxmsg	integer	yes
+.It kern.mqueue.mq_max_maxmsg	integer	yes
+.El
+.Pp
+The variables are:
+.Bl -tag -width "123456"
+.It Li kern.mqueue.mq_open_max
+The maximum number of message queue descriptors any single process can open.
+.It Li kern.mqueue.mq_prio_max
+The maximum priority of a message.
+.It Li kern.mqueue.mq_max_msgsize
+The maximum size of a message in a message queue.
+.It Li kern.mqueue.mq_def_maxmsg
+The default maximum message count.
+.It Li kern.mqueue.mq_max_maxmsg
+The maximum number of messages in a message queue.
 .El
 .It Li kern.monotonic_clock ( KERN_MONOTONIC_CLOCK )
 Returns the standard version the implementation of the POSIX 1003.1b
