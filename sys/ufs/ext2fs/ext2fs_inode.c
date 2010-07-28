@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.72 2010/06/24 13:03:18 hannken Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.73 2010/07/28 11:03:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.72 2010/06/24 13:03:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.73 2010/07/28 11:03:48 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,10 +156,7 @@ ext2fs_inactive(void *v)
 		}
 		ip->i_e2fs_dtime = time_second;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		mutex_enter(&vp->v_interlock);
-		vp->v_iflag |= VI_FREEING;
-		mutex_exit(&vp->v_interlock);
-		ext2fs_vfree(vp, ip->i_number, ip->i_e2fs_mode);
+		ip->i_omode = 1;
 	}
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		ext2fs_update(vp, NULL, NULL, 0);
