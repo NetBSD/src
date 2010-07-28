@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.95 2010/05/18 04:30:16 mrg Exp $ */
+/*	$NetBSD: cpu.c,v 1.96 2010/07/28 21:34:57 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.95 2010/05/18 04:30:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2010/07/28 21:34:57 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -441,6 +441,7 @@ cpu_boot_secondary_processors(void)
 				break;
 			delay(10000);
 		}
+		settick(0);
 		setpstate(pstate);
 
 		if (!CPUSET_HAS(cpus_active, ci->ci_index))
