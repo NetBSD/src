@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20.2.3 2010/07/26 10:11:38 uebayasi Exp $	*/
+/*	$NetBSD: bus.h,v 1.20.2.4 2010/07/28 04:16:13 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ struct bus_space {
 
 #ifdef __BUS_SPACE_HAS_PHYSLOAD_METHODS
 	void *		(*bs_physload)(void *, bus_addr_t, bus_size_t,
-			    int, int);
+			    int);
 	void		(*bs_physunload)(void *, void *);
 	void *		(*bs_physload_device)(void *, bus_addr_t, bus_size_t,
 			    int, int);
@@ -702,7 +702,7 @@ void	__bs_c(f,_bs_c_8)(void *t, bus_space_handle_t bsh1,	\
 #ifdef __BUS_SPACE_HAS_PHYSLOAD_METHODS
 #define bs_physload_proto(f)						\
 void *	__bs_c(f,_bs_physload)(void *t,					\
-	    bus_addr_t addr, bus_size_t size, int prot, int flags);
+	    bus_addr_t addr, bus_size_t size, int freelist);
 #define bs_physunload_proto(f)						\
 void	__bs_c(f,_bs_physunload)(void *t, void *phys)
 #define bs_physload_device_proto(f)					\
@@ -768,7 +768,7 @@ bs_physunload_device_proto(f);
  * Load bus space as a physical segment for managed access.
  */
 #define bus_space_physload(t, a, s, p, f)				\
-	(*(t)->bs_physload)((t)->bs_cookie, (a), (s), (p), (f))
+	(*(t)->bs_physload)((t)->bs_cookie, (a), (s), (l))
 #define bus_space_physunload(t, p)					\
 	(*(t)->bs_physunload)((t)->bs_cookie, (p))
 #define bus_space_physload_device(t, a, s, p, f)			\
