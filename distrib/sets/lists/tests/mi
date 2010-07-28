@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.120 2010/07/28 13:51:38 joerg Exp $
+# $NetBSD: mi,v 1.121 2010/07/28 15:27:18 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -197,6 +197,7 @@
 ./usr/libdata/debug/usr/tests/fs/msdosfs				tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/msdosfs/t_snapshot.debug		tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nfs					tests-fs-debug
+./usr/libdata/debug/usr/tests/fs/nfs/t_mountd			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nfs/nfsservice					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/nfs/nfsservice/rumpnfsd.debug			tests-fs-debug		debug,atf
 ./usr/libdata/debug/usr/tests/fs/nullfs					tests-fs-debug
@@ -938,6 +939,7 @@
 ./usr/tests/fs/msdosfs/Atffile			tests-fs-tests		atf
 ./usr/tests/fs/msdosfs/t_snapshot		tests-fs-tests		atf
 ./usr/tests/fs/nfs				tests-fs-tests
+./usr/tests/fs/nfs/t_mountd				tests-fs-tests	atf
 ./usr/tests/fs/nfs/nfsservice				tests-fs-tests
 ./usr/tests/fs/nfs/nfsservice/exports			tests-fs-tests		atf
 ./usr/tests/fs/nfs/nfsservice/rumpnfsd			tests-fs-tests		atf
