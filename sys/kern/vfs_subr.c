@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.412 2010/07/26 15:22:16 hannken Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.413 2010/07/28 11:03:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.412 2010/07/26 15:22:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.413 2010/07/28 11:03:47 hannken Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1252,7 +1252,7 @@ vtryget(vnode_t *vp)
 	 * for vclean() by adding another reference without waiting.
 	 * This is not strictly necessary, but we'll do it anyway.
 	 */
-	if (__predict_false((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0)) {
+	if (__predict_false((vp->v_iflag & VI_XLOCK) != 0)) {
 		return false;
 	}
 	for (use = vp->v_usecount;; use = next) {
@@ -1300,14 +1300,14 @@ vget(vnode_t *vp, int flags)
 	 * If the vnode is in the process of being cleaned out for
 	 * another use, we wait for the cleaning to finish and then
 	 * return failure.  Cleaning is determined by checking if
-	 * the VI_XLOCK or VI_FREEING flags are set.
+	 * the VI_XLOCK flag is set.
 	 */
-	if ((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0) {
+	if ((vp->v_iflag & VI_XLOCK) != 0) {
 		if ((flags & LK_NOWAIT) != 0) {
 			vrelel(vp, 0);
 			return EBUSY;
 		}
-		vwait(vp, VI_XLOCK | VI_FREEING);
+		vwait(vp, VI_XLOCK);
 		vrelel(vp, 0);
 		return ENOENT;
 	}
@@ -1944,7 +1944,7 @@ vclean(vnode_t *vp, int flags)
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
-	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
+	vp->v_iflag &= ~VI_XLOCK;
 	vp->v_vflag &= ~VV_LOCKSWORK;
 	if ((flags & DOCLOSE) != 0) {
 		vp->v_iflag |= VI_CLEAN;
