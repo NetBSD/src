@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1040 2010/07/13 23:41:30 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1041 2010/07/28 00:00:11 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1043 2010/07/13 23:40:56 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1044 2010/07/27 23:56:29 msaitoh Exp
  */
 
 /*
@@ -551,6 +551,7 @@
 #define	PCI_VENDOR_FORTEMEDIA	0x1319		/* Forte Media */
 #define	PCI_VENDOR_SIIG	0x131f		/* Siig */
 #define	PCI_VENDOR_DOMEX	0x134a		/* Domex */
+#define	PCI_VENDOR_QUATECH	0x135c		/* Quatech */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_MOXA	0x1393		/* Moxa Technologies */
@@ -574,6 +575,7 @@
 #define	PCI_VENDOR_SAMSUNGELEC3	0x144d		/* Samsung Electronics (3rd vendor ID) */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
+#define	PCI_VENDOR_SYSTEMBASE	0x14a1		/* System Base */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
 #define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL Electronics */
 #define	PCI_VENDOR_MYRICOM	0x14c1		/* Myricom */
@@ -586,6 +588,7 @@
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
 #define	PCI_VENDOR_ENE	0x1524		/* ENE Technology */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
+#define	PCI_VENDOR_PERLE	0x155f		/* Perle Systems */
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems */
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_FARADAY	0x159b		/* Faraday Technology */
@@ -597,6 +600,7 @@
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom (SiByte) */
 #define	PCI_VENDOR_MYSON	0x1516		/* Myson-Century Technology */
+#define	PCI_VENDOR_SYBATECH	0x1592		/* Syba Tech */
 #define	PCI_VENDOR_MELLANOX	0x15b3		/* Mellanox Technologies */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics */
@@ -4127,6 +4131,9 @@
 #define	PCI_PRODUCT_SYMPHONY_82C105	0x0105		/* 82C105 */
 #define	PCI_PRODUCT_SYMPHONY2_82C101	0x0001		/* 82C101 */
 #define	PCI_PRODUCT_SYMPHONY_83C553	0x0565		/* 83C553 PCI-ISA Bridge */
+
+/* System Base products */
+#define	PCI_PRODUCT_SYSTEMBASE_SB16C1054	0x0004		/* SB16C1054 UARTs */
 
 /* Schneider & Koch (really SysKonnect) products */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SKNET_FDDI	0x4000		/* SK-NET FDDI-xP */
