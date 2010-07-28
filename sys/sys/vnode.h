@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.222 2010/07/28 09:31:00 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.223 2010/07/28 11:03:47 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -211,7 +211,6 @@ typedef struct vnode vnode_t;
 #define	VI_CLEAN	0x00080000	/* has been reclaimed */
 #define	VI_INACTPEND	0x00100000	/* inactivation is pending */
 #define	VI_INACTREDO	0x00200000	/* need to redo VOP_INACTIVE() */
-#define	VI_FREEING	0x00400000	/* vnode is being freed */
 #define	VI_INACTNOW	0x00800000	/* VOP_INACTIVE() in progress */
 
 /*
@@ -222,7 +221,7 @@ typedef struct vnode vnode_t;
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
     "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
+    "\22LAYER\24CLEAN\25INACTPEND\26INACTREDO" \
     "\30INACTNOW\31DIROP" 
 
 #define	VSIZENOTSET	((voff_t)-1)
