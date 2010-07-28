@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.21 2010/07/24 00:45:55 jym Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.22 2010/07/28 17:05:51 jym Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.21 2010/07/24 00:45:55 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.22 2010/07/28 17:05:51 jym Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -158,6 +158,7 @@ _TRMP_LABEL(mp_startup)
 	movl	%cr4,%eax
 	orl	$CR4_PSE,%eax
 	movl	%eax,%cr4
+
 1:
 
 #ifdef PAE /* Enable PAE */
@@ -180,6 +181,18 @@ _TRMP_LABEL(mp_startup)
 	leal    _C_LABEL(cpu_trace),%edi
 #endif
 	HALT(0x6)
+
+	/*
+	 * If EFER_NXE is not enabled, fetching a page with a NX bit set
+	 * will raise a #GP. Avoid that by setting the NXE feature now.
+	 */
+	movl	_C_LABEL(cpu_feature)+2*4,%eax	/* cpu_feature[2] */
+	andl	$CPUID_NOX,%eax
+	jz	1f
+	movl	$MSR_EFER,%ecx
+	rdmsr
+	orl	$EFER_NXE,%eax	/* enable No-Execute feature */
+	wrmsr
 
 /*
  * ok, we are now running with paging enabled and sharing page tables
