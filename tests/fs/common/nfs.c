@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.1 2010/07/26 16:15:49 pooka Exp $	*/
+/*	$NetBSD: nfs.c,v 1.2 2010/07/28 15:16:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -56,11 +56,6 @@
 #define CLIENTADDR "10.3.2.2"
 #define NETNETMASK "255.255.255.0"
 #define EXPORTPATH "/myexport"
-
-struct nfstestargs {
-	pid_t ta_childpid;
-	char ta_ethername[MAXPATHLEN];
-};
 
 static void
 childfail(int status)

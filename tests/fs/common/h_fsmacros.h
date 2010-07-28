@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.15 2010/07/28 14:23:02 pooka Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.16 2010/07/28 15:16:50 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -159,5 +159,12 @@ atf_check_fstype(const atf_tc_t *tc, const char *fs)
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_SYSVBFS) == 0)
 #define FSTYPE_TMPFS(tc)\
     (strcmp(atf_tc_get_md_var(tc, "X-fs.type"), MOUNT_TMPFS) == 0)
+
+
+/* file system args structures */
+struct nfstestargs {
+	pid_t ta_childpid;
+	char ta_ethername[MAXPATHLEN];
+};
 
 #endif /* __H_FSMACROS_H_ */
