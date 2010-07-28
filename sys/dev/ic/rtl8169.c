@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.132 2010/07/27 21:02:00 jakllsch Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.133 2010/07/28 23:30:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.132 2010/07/27 21:02:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.133 2010/07/28 23:30:21 msaitoh Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1742,7 +1742,7 @@ re_init(struct ifnet *ifp)
 	if ((sc->sc_quirk & RTKQ_8169NONS) != 0)
 		cfg |= (0x1 << 14);
 
-	if ((ifp->if_capenable & ETHERCAP_VLAN_HWTAGGING) != 0)
+	if ((sc->ethercom.ec_capenable & ETHERCAP_VLAN_HWTAGGING) != 0)
 		cfg |= RE_CPLUSCMD_VLANSTRIP;
 	if ((ifp->if_capenable & (IFCAP_CSUM_IPv4_Rx |
 	     IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx)) != 0)
