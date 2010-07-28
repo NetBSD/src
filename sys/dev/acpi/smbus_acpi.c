@@ -1,4 +1,4 @@
-/* $NetBSD: smbus_acpi.c,v 1.10 2010/04/15 07:02:24 jruoho Exp $ */
+/* $NetBSD: smbus_acpi.c,v 1.11 2010/07/28 16:26:56 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.10 2010/04/15 07:02:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbus_acpi.c,v 1.11 2010/07/28 16:26:56 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -176,12 +176,9 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct i2cbus_attach_args iba;
 	ACPI_STATUS rv;
-	ACPI_HANDLE native_dev, native_bus;
-	ACPI_DEVICE_INFO *native_dev_info, *native_bus_info;
 	ACPI_BUFFER smi_buf;
 	ACPI_OBJECT *e, *p;
 	struct SMB_INFO *info;
-	int pci_bus, pci_dev, pci_func;
 
 	aprint_naive("\n");
 
@@ -228,44 +225,6 @@ acpi_smbus_attach(device_t parent, device_t self, void *aux)
 		callout_schedule(&sc->sc_callout, sc->sc_poll_alert * hz);
 	}
 	aprint_normal("\n");
-
-	/*
-	 * Retrieve and display native controller info
-	 */
-	rv = AcpiGetParent(sc->sc_devnode->ad_handle, &native_dev);
-
-	native_bus_info = native_dev_info = NULL;
-
-	if (ACPI_SUCCESS(rv))
-		rv = AcpiGetParent(native_dev, &native_bus);
-
-	if (ACPI_SUCCESS(rv))
-		rv = AcpiGetObjectInfo(native_bus, &native_bus_info);
-
-	if (ACPI_SUCCESS(rv) &&
-	    acpi_match_hid(native_bus_info, pcibus_acpi_ids) != 0) {
-
-		rv = AcpiGetObjectInfo(native_dev, &native_dev_info);
-
-		if (ACPI_SUCCESS(rv)) {
-			pci_bus = native_bus_info->Address;
-			pci_dev = ACPI_ADR_PCI_DEV(native_dev_info->Address);
-			pci_func = ACPI_ADR_PCI_FUNC(native_dev_info->Address);
-			aprint_debug_dev(self, "Native i2c host controller"
-			    " is on PCI bus %d dev %d func %d\n",
-			    pci_bus, pci_dev, pci_func);
-			/*
-			 * XXX We really need a mechanism to prevent the
-			 * XXX native controller from attaching
-			 */
-		}
-	}
-
-	if (native_bus_info != NULL)
-		ACPI_FREE(native_bus_info);
-
-	if (native_dev_info != NULL)
-		ACPI_FREE(native_dev_info);
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c_tag;
