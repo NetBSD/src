@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.23 2010/04/14 19:32:35 jruoho Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.24 2010/07/28 18:10:31 jruoho Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.23 2010/04/14 19:32:35 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.24 2010/07/28 18:10:31 jruoho Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -188,53 +188,54 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 static ACPI_STATUS
 enter_s4_with_bios(void)
 {
-	ACPI_OBJECT_LIST	ArgList;
-	ACPI_OBJECT		Arg;
-	uint32_t		ret;
-	ACPI_STATUS		status;
+	ACPI_STATUS rv;
+	uint32_t val;
 
-	/* run the _PTS and _GTS methods */
+	/*
+	 * Run the _PTS and _GTS methods.
+	 */
+	(void)acpi_eval_set_integer(NULL, "\\_PTS", ACPI_STATE_S4);
+	(void)acpi_eval_set_integer(NULL, "\\_GTS", ACPI_STATE_S4);
 
-	(void)memset(&ArgList, 0, sizeof(ArgList));
+	/*
+	 * Clear wake status.
+	 */
+	(void)AcpiWriteBitRegister(ACPI_BITREG_WAKE_STATUS, 1);
 
-	ArgList.Count = 1;
-	ArgList.Pointer = &Arg;
+	/*
+	 * Enable wake GPEs.
+	 */
+	(void)AcpiHwDisableAllGpes();
+	(void)AcpiHwEnableAllWakeupGpes();
 
-	(void)memset(&Arg, 0, sizeof(Arg));
-
-	Arg.Type = ACPI_TYPE_INTEGER;
-	Arg.Integer.Value = ACPI_STATE_S4;
-
-	AcpiEvaluateObject(NULL, "\\_PTS", &ArgList, NULL);
-	AcpiEvaluateObject(NULL, "\\_GTS", &ArgList, NULL);
-
-	/* clear wake status */
-
-	AcpiWriteBitRegister(ACPI_BITREG_WAKE_STATUS, 1);
-
-	AcpiHwDisableAllGpes();
-	AcpiHwEnableAllWakeupGpes();
-
-	/* flush caches */
-
+	/*
+	 * Flush caches.
+	 */
 	ACPI_FLUSH_CPU_CACHE();
 
 	/*
-	 * write the value to command port and wait until we enter sleep state
+	 * Write the value to command port and wait until we enter sleep state.
 	 */
 	do {
 		AcpiOsStall(1000000);
-		AcpiOsWritePort(AcpiGbl_FADT.SmiCommand,
-				AcpiGbl_FADT.S4BiosRequest, 8);
-		status = AcpiReadBitRegister(ACPI_BITREG_WAKE_STATUS, &ret);
-		if (ACPI_FAILURE(status))
+
+		(void)AcpiOsWritePort(AcpiGbl_FADT.SmiCommand,
+				      AcpiGbl_FADT.S4BiosRequest, 8);
+
+		rv = AcpiReadBitRegister(ACPI_BITREG_WAKE_STATUS, &val);
+
+		if (ACPI_FAILURE(rv))
 			break;
-	} while (!ret);
 
-	AcpiHwDisableAllGpes();
-	AcpiHwEnableAllRuntimeGpes();
+	} while (val == 0);
 
-	return (AE_OK);
+	/*
+	 * Enable runtime GPEs.
+	 */
+	(void)AcpiHwDisableAllGpes();
+	(void)AcpiHwEnableAllRuntimeGpes();
+
+	return AE_OK;
 }
 
 void
