@@ -1,4 +1,4 @@
-# $NetBSD: t_crt0.sh,v 1.1 2010/07/17 19:25:27 jmmv Exp $
+# $NetBSD: t_crt0.sh,v 1.2 2010/07/28 13:51:38 joerg Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,24 +25,64 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-atf_test_case initfini
-initfini_head()
+atf_test_case initfini1
+initfini1_head()
 {
 	atf_set "descr" "Checks support for init/fini sections"
 	atf_set "use.fs" "true"
 }
-initfini_body()
+initfini1_body()
 {
 	cat >expout <<EOF
-I am init.
-I am main.
-I am fini.
+constructor executed
+main executed
+destructor executed
 EOF
 
-	atf_check -o file:expout "$(atf_get_srcdir)/h_initfini"
+	atf_check -o file:expout "$(atf_get_srcdir)/h_initfini1"
+}
+
+atf_test_case initfini2
+initfini2_head()
+{
+	atf_set "descr" "Checks support for init/fini sections in static binaries"
+	atf_set "use.fs" "true"
+}
+initfini2_body()
+{
+	cat >expout <<EOF
+constructor executed
+main executed
+destructor executed
+EOF
+
+	atf_check -o file:expout "$(atf_get_srcdir)/h_initfini2"
+}
+
+atf_test_case initfini3
+initfini3_head()
+{
+	atf_set "descr" "Checks support for init/fini sections in dlopen"
+	atf_set "use.fs" "true"
+}
+initfini3_body()
+{
+	cat >expout <<EOF
+constructor executed
+main started
+constructor2 executed
+main after dlopen
+destructor2 executed
+main terminated
+destructor executed
+EOF
+
+	atf_check -o file:expout "$(atf_get_srcdir)/h_initfini3"
 }
 
 atf_init_test_cases()
 {
-	atf_add_test_case initfini
+	atf_add_test_case initfini1
+	atf_add_test_case initfini2
+	atf_add_test_case initfini3
 }
