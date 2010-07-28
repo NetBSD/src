@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.15 2010/07/11 15:16:41 pgoyette Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.16 2010/07/28 18:43:10 pgoyette Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.15 2010/07/11 15:16:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.16 2010/07/28 18:43:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ struct sdtemp_dev_entry {
 static const struct sdtemp_dev_entry
 sdtemp_dev_table[] = {
     { MAXIM_MANUFACTURER_ID, MAX_6604_DEVICE_ID,    MAX_6604_MASK,   3,
-	"Maxim MAX604" },
+	"Maxim MAX6604" },
     { MCP_MANUFACTURER_ID,   MCP_9805_DEVICE_ID,    MCP_9805_MASK,   2,
 	"Microchip Tech MCP9805/MCP9843" },
     { MCP_MANUFACTURER_ID,   MCP_98243_DEVICE_ID,   MCP_98243_MASK, -4,
