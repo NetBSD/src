@@ -1,7 +1,7 @@
-/* $Id: imx31_space.c,v 1.3.2.4 2010/07/26 10:11:38 uebayasi Exp $ */
+/* $Id: imx31_space.c,v 1.3.2.5 2010/07/28 04:16:12 uebayasi Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx31_space.c,v 1.3.2.4 2010/07/26 10:11:38 uebayasi Exp $ */
+/*	$NetBSD: imx31_space.c,v 1.3.2.5 2010/07/28 04:16:12 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -285,13 +285,12 @@ imx31_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
 /* XXX generic */
 
 void *
-imx31_bs_physload(void *t, bus_addr_t addr, bus_size_t size, int prot, int flags)
+imx31_bs_physload(void *t, bus_addr_t addr, bus_size_t size, int freelist)
 {
-	/* XXX */
-	const paddr_t start = imx31_bs_mmap(t, addr, 0, prot, flags);
-	const paddr_t end = imx31_bs_mmap(t, addr + size, 0, prot, flags);
+	const paddr_t start = imx31_bs_mmap(t, addr, 0, VM_PROT_ALL, 0);
+	const paddr_t end = imx31_bs_mmap(t, addr + size, 0, VM_PROT_ALL, 0);
 
-	return uvm_page_physload(start, end, start, end, 0/* XXX freelist */);
+	return uvm_page_physload(start, end, start, end, freelist);
 }
 
 void
@@ -304,7 +303,6 @@ imx31_bs_physunload(void *t, void *phys)
 void *
 imx31_bs_physload_device(void *t, bus_addr_t addr, bus_size_t size, int prot, int flags)
 {
-	/* XXX */
 	const paddr_t start = imx31_bs_mmap(t, addr, 0, prot, flags);
 	const paddr_t end = imx31_bs_mmap(t, addr + size, 0, prot, flags);
 

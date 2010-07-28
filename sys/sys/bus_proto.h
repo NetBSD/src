@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_proto.h,v 1.3.2.2 2010/07/26 10:11:38 uebayasi Exp $	*/
+/*	$NetBSD: bus_proto.h,v 1.3.2.3 2010/07/28 04:16:12 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001, 2007 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ void	*bus_space_vaddr(bus_space_tag_t, bus_space_handle_t);
 void	bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t bsh,
 			  bus_size_t offset, bus_size_t len, int flags);
 void	*bus_space_physload(bus_space_tag_t, bus_addr_t, bus_size_t,
-			    int, int);
+			    int);
 void	bus_space_physunload(bus_space_tag_t, void *);
 void	*bus_space_physload_device(bus_space_tag_t, bus_addr_t, bus_size_t,
 			    int, int);
