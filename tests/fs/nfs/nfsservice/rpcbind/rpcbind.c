@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.1 2010/07/26 15:53:00 pooka Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.2 2010/07/28 15:11:30 pooka Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -173,7 +173,7 @@ rpcbind_main(void *arg)
 	(void) signal(SIGQUIT, terminate);
 	/* ignore others that could get sent */
 	(void) signal(SIGPIPE, SIG_IGN);
-	(void) signal(SIGHUP, SIG_IGN);
+	//(void) signal(SIGHUP, SIG_IGN); used by mountd
 	(void) signal(SIGUSR1, SIG_IGN);
 	(void) signal(SIGUSR2, SIG_IGN);
 #ifdef WARMSTART
