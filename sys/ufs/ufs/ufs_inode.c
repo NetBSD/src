@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.81 2010/06/24 13:03:20 hannken Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.82 2010/07/28 11:03:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.81 2010/06/24 13:03:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.82 2010/07/28 11:03:48 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -143,12 +143,12 @@ ufs_inactive(void *v)
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
+		ip->i_omode = mode;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		mutex_enter(&vp->v_interlock);
-		vp->v_iflag |= VI_FREEING;
-		mutex_exit(&vp->v_interlock);
-		UFS_VFREE(vp, ip->i_number, mode);
+		/*
+		 * Defer final inode free and update to ufs_reclaim().
+		 */
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
