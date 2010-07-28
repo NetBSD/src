@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.2 2010/07/27 14:04:47 macallan Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.3 2010/07/28 15:12:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.2 2010/07/27 14:04:47 macallan Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.3 2010/07/28 15:12:17 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,11 +220,16 @@ nfsd_main(argc, argv)
 		udpflag = 1;
 
 	if (debug == 0) {
+		fprintf(stderr, "non-debug not supported here\n");
+		exit(1);
+
+#ifdef not_the_debug_man
 		daemon(0, 0);
 		(void)signal(SIGHUP, SIG_IGN);
 		(void)signal(SIGINT, SIG_IGN);
 		(void)signal(SIGQUIT, SIG_IGN);
 		(void)signal(SIGSYS, nonfs);
+#endif
 	}
 
 	if (udpflag) {
