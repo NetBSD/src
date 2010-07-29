@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.24 2010/07/29 14:07:39 pooka Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.25 2010/07/29 14:09:45 pooka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1539,8 +1539,10 @@ lfs_cleaner_main(int argc, char **argv)
 	 * Main cleaning loop.
 	 */
 	loopcount = 0;
+#ifdef LFS_CLEANER_AS_LIB
 	if (semaddr)
 		sem_post(semaddr);
+#endif
 	while (nfss > 0) {
 		int cleaned_one;
 		do {
