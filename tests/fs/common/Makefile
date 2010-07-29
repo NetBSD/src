@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/07/29 14:15:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2010/07/29 14:47:44 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -19,5 +19,8 @@ SRCS+=	getnfsargs.c pathadj.c fattr.c mount_nfs.c
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sbin/mount_nfs -I${NETBSDSRCDIR}/sbin/mount
 CPPFLAGS+=	-DMOUNT_NOMAIN -DMOUNTNFS_RETRYRPC=1
+
+.include "../../../libexec/lfs_cleanerd/Makefile.inc"
+CPPFLAGS+=	-DUSE_RUMP -DLFS_CLEANER_AS_LIB
 
 .include <bsd.lib.mk>
