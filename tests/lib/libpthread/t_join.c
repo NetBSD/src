@@ -1,4 +1,4 @@
-/* $NetBSD: t_join.c,v 1.2 2010/07/29 12:03:10 jruoho Exp $ */
+/* $NetBSD: t_join.c,v 1.3 2010/07/29 12:17:31 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_join.c,v 1.2 2010/07/29 12:03:10 jruoho Exp $");
+__RCSID("$NetBSD: t_join.c,v 1.3 2010/07/29 12:17:31 jruoho Exp $");
 
 #include <errno.h>
 #include <pthread.h>
@@ -86,7 +86,7 @@ threadfunc1(void *arg)
 
 		error = true;
 
-		rv = pthread_create(&thread[i], NULL, threadfunc2, (void *)i);
+		rv = pthread_create(&thread[i], NULL, threadfunc2, NULL);
 
 		ATF_REQUIRE_EQ(rv, 0);
 
